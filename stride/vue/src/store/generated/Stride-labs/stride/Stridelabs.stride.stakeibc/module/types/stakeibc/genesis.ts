@@ -1,8 +1,5 @@
 /* eslint-disable */
 import { Params } from "../stakeibc/params";
-import { Validator } from "../stakeibc/validator";
-import { Delegation } from "../stakeibc/delegation";
-import { MinValidatorRequirements } from "../stakeibc/min_validator_requirements";
 import { Writer, Reader } from "protobufjs/minimal";
 
 export const protobufPackage = "Stridelabs.stride.stakeibc";
@@ -10,11 +7,8 @@ export const protobufPackage = "Stridelabs.stride.stakeibc";
 /** GenesisState defines the stakeibc module's genesis state. */
 export interface GenesisState {
   params: Params | undefined;
-  port_id: string;
-  validator: Validator | undefined;
-  delegation: Delegation | undefined;
   /** this line is used by starport scaffolding # genesis/proto/state */
-  minValidatorRequirements: MinValidatorRequirements | undefined;
+  port_id: string;
 }
 
 const baseGenesisState: object = { port_id: "" };
@@ -26,18 +20,6 @@ export const GenesisState = {
     }
     if (message.port_id !== "") {
       writer.uint32(18).string(message.port_id);
-    }
-    if (message.validator !== undefined) {
-      Validator.encode(message.validator, writer.uint32(26).fork()).ldelim();
-    }
-    if (message.delegation !== undefined) {
-      Delegation.encode(message.delegation, writer.uint32(34).fork()).ldelim();
-    }
-    if (message.minValidatorRequirements !== undefined) {
-      MinValidatorRequirements.encode(
-        message.minValidatorRequirements,
-        writer.uint32(42).fork()
-      ).ldelim();
     }
     return writer;
   },
@@ -54,18 +36,6 @@ export const GenesisState = {
           break;
         case 2:
           message.port_id = reader.string();
-          break;
-        case 3:
-          message.validator = Validator.decode(reader, reader.uint32());
-          break;
-        case 4:
-          message.delegation = Delegation.decode(reader, reader.uint32());
-          break;
-        case 5:
-          message.minValidatorRequirements = MinValidatorRequirements.decode(
-            reader,
-            reader.uint32()
-          );
           break;
         default:
           reader.skipType(tag & 7);
@@ -87,26 +57,6 @@ export const GenesisState = {
     } else {
       message.port_id = "";
     }
-    if (object.validator !== undefined && object.validator !== null) {
-      message.validator = Validator.fromJSON(object.validator);
-    } else {
-      message.validator = undefined;
-    }
-    if (object.delegation !== undefined && object.delegation !== null) {
-      message.delegation = Delegation.fromJSON(object.delegation);
-    } else {
-      message.delegation = undefined;
-    }
-    if (
-      object.minValidatorRequirements !== undefined &&
-      object.minValidatorRequirements !== null
-    ) {
-      message.minValidatorRequirements = MinValidatorRequirements.fromJSON(
-        object.minValidatorRequirements
-      );
-    } else {
-      message.minValidatorRequirements = undefined;
-    }
     return message;
   },
 
@@ -115,18 +65,6 @@ export const GenesisState = {
     message.params !== undefined &&
       (obj.params = message.params ? Params.toJSON(message.params) : undefined);
     message.port_id !== undefined && (obj.port_id = message.port_id);
-    message.validator !== undefined &&
-      (obj.validator = message.validator
-        ? Validator.toJSON(message.validator)
-        : undefined);
-    message.delegation !== undefined &&
-      (obj.delegation = message.delegation
-        ? Delegation.toJSON(message.delegation)
-        : undefined);
-    message.minValidatorRequirements !== undefined &&
-      (obj.minValidatorRequirements = message.minValidatorRequirements
-        ? MinValidatorRequirements.toJSON(message.minValidatorRequirements)
-        : undefined);
     return obj;
   },
 
@@ -141,26 +79,6 @@ export const GenesisState = {
       message.port_id = object.port_id;
     } else {
       message.port_id = "";
-    }
-    if (object.validator !== undefined && object.validator !== null) {
-      message.validator = Validator.fromPartial(object.validator);
-    } else {
-      message.validator = undefined;
-    }
-    if (object.delegation !== undefined && object.delegation !== null) {
-      message.delegation = Delegation.fromPartial(object.delegation);
-    } else {
-      message.delegation = undefined;
-    }
-    if (
-      object.minValidatorRequirements !== undefined &&
-      object.minValidatorRequirements !== null
-    ) {
-      message.minValidatorRequirements = MinValidatorRequirements.fromPartial(
-        object.minValidatorRequirements
-      );
-    } else {
-      message.minValidatorRequirements = undefined;
     }
     return message;
   },

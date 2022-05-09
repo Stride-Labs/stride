@@ -28089,8 +28089,21 @@ paths:
                 properties:
                   delegateAcctAddress:
                     type: string
-                  validatorAddr:
-                    type: string
+                  validator:
+                    type: object
+                    properties:
+                      name:
+                        type: string
+                      address:
+                        type: string
+                      status:
+                        type: string
+                      commissionRate:
+                        type: integer
+                        format: int32
+                      delegationAmt:
+                        type: integer
+                        format: int32
                   amt:
                     type: integer
                     format: int32
@@ -28169,6 +28182,8 @@ paths:
                   name:
                     type: string
                   address:
+                    type: string
+                  status:
                     type: string
                   commissionRate:
                     type: integer
@@ -48411,8 +48426,21 @@ definitions:
     properties:
       delegateAcctAddress:
         type: string
-      validatorAddr:
-        type: string
+      validator:
+        type: object
+        properties:
+          name:
+            type: string
+          address:
+            type: string
+          status:
+            type: string
+          commissionRate:
+            type: integer
+            format: int32
+          delegationAmt:
+            type: integer
+            format: int32
       amt:
         type: integer
         format: int32
@@ -48436,8 +48464,21 @@ definitions:
         properties:
           delegateAcctAddress:
             type: string
-          validatorAddr:
-            type: string
+          validator:
+            type: object
+            properties:
+              name:
+                type: string
+              address:
+                type: string
+              status:
+                type: string
+              commissionRate:
+                type: integer
+                format: int32
+              delegationAmt:
+                type: integer
+                format: int32
           amt:
             type: integer
             format: int32
@@ -48463,6 +48504,8 @@ definitions:
             type: string
           address:
             type: string
+          status:
+            type: string
           commissionRate:
             type: integer
             format: int32
@@ -48482,6 +48525,8 @@ definitions:
       name:
         type: string
       address:
+        type: string
+      status:
         type: string
       commissionRate:
         type: integer
