@@ -1,27 +1,24 @@
 /* eslint-disable */
+import { Validator } from "../stakeibc/validator";
 import { Writer, Reader } from "protobufjs/minimal";
 
 export const protobufPackage = "Stridelabs.stride.stakeibc";
 
 export interface Delegation {
   delegateAcctAddress: string;
-  validatorAddr: string;
+  validator: Validator | undefined;
   amt: number;
 }
 
-const baseDelegation: object = {
-  delegateAcctAddress: "",
-  validatorAddr: "",
-  amt: 0,
-};
+const baseDelegation: object = { delegateAcctAddress: "", amt: 0 };
 
 export const Delegation = {
   encode(message: Delegation, writer: Writer = Writer.create()): Writer {
     if (message.delegateAcctAddress !== "") {
       writer.uint32(10).string(message.delegateAcctAddress);
     }
-    if (message.validatorAddr !== "") {
-      writer.uint32(18).string(message.validatorAddr);
+    if (message.validator !== undefined) {
+      Validator.encode(message.validator, writer.uint32(18).fork()).ldelim();
     }
     if (message.amt !== 0) {
       writer.uint32(24).int32(message.amt);
@@ -40,7 +37,7 @@ export const Delegation = {
           message.delegateAcctAddress = reader.string();
           break;
         case 2:
-          message.validatorAddr = reader.string();
+          message.validator = Validator.decode(reader, reader.uint32());
           break;
         case 3:
           message.amt = reader.int32();
@@ -63,10 +60,10 @@ export const Delegation = {
     } else {
       message.delegateAcctAddress = "";
     }
-    if (object.validatorAddr !== undefined && object.validatorAddr !== null) {
-      message.validatorAddr = String(object.validatorAddr);
+    if (object.validator !== undefined && object.validator !== null) {
+      message.validator = Validator.fromJSON(object.validator);
     } else {
-      message.validatorAddr = "";
+      message.validator = undefined;
     }
     if (object.amt !== undefined && object.amt !== null) {
       message.amt = Number(object.amt);
@@ -80,8 +77,10 @@ export const Delegation = {
     const obj: any = {};
     message.delegateAcctAddress !== undefined &&
       (obj.delegateAcctAddress = message.delegateAcctAddress);
-    message.validatorAddr !== undefined &&
-      (obj.validatorAddr = message.validatorAddr);
+    message.validator !== undefined &&
+      (obj.validator = message.validator
+        ? Validator.toJSON(message.validator)
+        : undefined);
     message.amt !== undefined && (obj.amt = message.amt);
     return obj;
   },
@@ -96,10 +95,10 @@ export const Delegation = {
     } else {
       message.delegateAcctAddress = "";
     }
-    if (object.validatorAddr !== undefined && object.validatorAddr !== null) {
-      message.validatorAddr = object.validatorAddr;
+    if (object.validator !== undefined && object.validator !== null) {
+      message.validator = Validator.fromPartial(object.validator);
     } else {
-      message.validatorAddr = "";
+      message.validator = undefined;
     }
     if (object.amt !== undefined && object.amt !== null) {
       message.amt = object.amt;

@@ -22,7 +22,7 @@ export interface RpcStatus {
 
 export interface StakeibcDelegation {
   delegateAcctAddress?: string;
-  validatorAddr?: string;
+  validator?: StakeibcValidator;
 
   /** @format int32 */
   amt?: number;
@@ -64,6 +64,7 @@ export interface StakeibcQueryParamsResponse {
 export interface StakeibcValidator {
   name?: string;
   address?: string;
+  status?: string;
 
   /** @format int32 */
   commissionRate?: number;

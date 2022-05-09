@@ -9,18 +9,6 @@ import (
 // InitGenesis initializes the capability module's state from a provided genesis
 // state.
 func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) {
-	// Set if defined
-	if genState.Validator != nil {
-		k.SetValidator(ctx, *genState.Validator)
-	}
-	// Set if defined
-	if genState.Delegation != nil {
-		k.SetDelegation(ctx, *genState.Delegation)
-	}
-	// Set if defined
-	if genState.MinValidatorRequirements != nil {
-		k.SetMinValidatorRequirements(ctx, *genState.MinValidatorRequirements)
-	}
 	// this line is used by starport scaffolding # genesis/module/init
 	k.SetPort(ctx, genState.PortId)
 	// Only try to bind to port if it is not already bound, since we may already own
@@ -40,23 +28,6 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) 
 func ExportGenesis(ctx sdk.Context, k keeper.Keeper) *types.GenesisState {
 	genesis := types.DefaultGenesis()
 	genesis.Params = k.GetParams(ctx)
-
-	genesis.PortId = k.GetPort(ctx)
-	// Get all validator
-	validator, found := k.GetValidator(ctx)
-	if found {
-		genesis.Validator = &validator
-	}
-	// Get all delegation
-	delegation, found := k.GetDelegation(ctx)
-	if found {
-		genesis.Delegation = &delegation
-	}
-	// Get all minValidatorRequirements
-	minValidatorRequirements, found := k.GetMinValidatorRequirements(ctx)
-	if found {
-		genesis.MinValidatorRequirements = &minValidatorRequirements
-	}
 	// this line is used by starport scaffolding # genesis/module/export
 
 	return genesis

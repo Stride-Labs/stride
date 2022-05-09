@@ -12,9 +12,6 @@ const DefaultIndex uint64 = 1
 func DefaultGenesis() *GenesisState {
 	return &GenesisState{
 		PortId:                   PortID,
-		Validator:                nil,
-		Delegation:               nil,
-		MinValidatorRequirements: nil,
 		// this line is used by starport scaffolding # genesis/types/default
 		Params: DefaultParams(),
 	}

@@ -6,6 +6,7 @@ export const protobufPackage = "Stridelabs.stride.stakeibc";
 export interface Validator {
   name: string;
   address: string;
+  status: string;
   commissionRate: number;
   delegationAmt: number;
 }
@@ -13,6 +14,7 @@ export interface Validator {
 const baseValidator: object = {
   name: "",
   address: "",
+  status: "",
   commissionRate: 0,
   delegationAmt: 0,
 };
@@ -25,11 +27,14 @@ export const Validator = {
     if (message.address !== "") {
       writer.uint32(18).string(message.address);
     }
+    if (message.status !== "") {
+      writer.uint32(26).string(message.status);
+    }
     if (message.commissionRate !== 0) {
-      writer.uint32(24).int32(message.commissionRate);
+      writer.uint32(32).int32(message.commissionRate);
     }
     if (message.delegationAmt !== 0) {
-      writer.uint32(32).int32(message.delegationAmt);
+      writer.uint32(40).int32(message.delegationAmt);
     }
     return writer;
   },
@@ -48,9 +53,12 @@ export const Validator = {
           message.address = reader.string();
           break;
         case 3:
-          message.commissionRate = reader.int32();
+          message.status = reader.string();
           break;
         case 4:
+          message.commissionRate = reader.int32();
+          break;
+        case 5:
           message.delegationAmt = reader.int32();
           break;
         default:
@@ -73,6 +81,11 @@ export const Validator = {
     } else {
       message.address = "";
     }
+    if (object.status !== undefined && object.status !== null) {
+      message.status = String(object.status);
+    } else {
+      message.status = "";
+    }
     if (object.commissionRate !== undefined && object.commissionRate !== null) {
       message.commissionRate = Number(object.commissionRate);
     } else {
@@ -90,6 +103,7 @@ export const Validator = {
     const obj: any = {};
     message.name !== undefined && (obj.name = message.name);
     message.address !== undefined && (obj.address = message.address);
+    message.status !== undefined && (obj.status = message.status);
     message.commissionRate !== undefined &&
       (obj.commissionRate = message.commissionRate);
     message.delegationAmt !== undefined &&
@@ -108,6 +122,11 @@ export const Validator = {
       message.address = object.address;
     } else {
       message.address = "";
+    }
+    if (object.status !== undefined && object.status !== null) {
+      message.status = object.status;
+    } else {
+      message.status = "";
     }
     if (object.commissionRate !== undefined && object.commissionRate !== null) {
       message.commissionRate = object.commissionRate;
