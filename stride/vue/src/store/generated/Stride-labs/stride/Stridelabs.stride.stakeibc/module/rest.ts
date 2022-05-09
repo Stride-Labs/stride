@@ -31,6 +31,10 @@ export interface StakeibcDelegation {
 export interface StakeibcHostZone {
   portId?: string;
   channelId?: string;
+  validators?: StakeibcValidator[];
+  blacklistedValidators?: StakeibcValidator[];
+  rewardsAccount?: StakeibcICAAccount[];
+  feeAccount?: StakeibcICAAccount[];
 }
 
 export interface StakeibcICAAccount {
@@ -41,7 +45,7 @@ export interface StakeibcICAAccount {
 
   /** @format int32 */
   delegatedBalance?: number;
-  zone?: StakeibcHostZone;
+  delegations?: StakeibcDelegation[];
 }
 
 export interface StakeibcMinValidatorRequirements {

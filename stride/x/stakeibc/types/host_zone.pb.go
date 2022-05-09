@@ -23,8 +23,12 @@ var _ = math.Inf
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
 type HostZone struct {
-	PortId    string `protobuf:"bytes,1,opt,name=portId,proto3" json:"portId,omitempty"`
-	ChannelId string `protobuf:"bytes,2,opt,name=channelId,proto3" json:"channelId,omitempty"`
+	PortId                string        `protobuf:"bytes,1,opt,name=portId,proto3" json:"portId,omitempty"`
+	ChannelId             string        `protobuf:"bytes,2,opt,name=channelId,proto3" json:"channelId,omitempty"`
+	Validators            []*Validator  `protobuf:"bytes,3,rep,name=validators,proto3" json:"validators,omitempty"`
+	BlacklistedValidators []*Validator  `protobuf:"bytes,4,rep,name=blacklistedValidators,proto3" json:"blacklistedValidators,omitempty"`
+	RewardsAccount        []*ICAAccount `protobuf:"bytes,5,rep,name=rewardsAccount,proto3" json:"rewardsAccount,omitempty"`
+	FeeAccount            []*ICAAccount `protobuf:"bytes,6,rep,name=feeAccount,proto3" json:"feeAccount,omitempty"`
 }
 
 func (m *HostZone) Reset()         { *m = HostZone{} }
@@ -74,6 +78,34 @@ func (m *HostZone) GetChannelId() string {
 	return ""
 }
 
+func (m *HostZone) GetValidators() []*Validator {
+	if m != nil {
+		return m.Validators
+	}
+	return nil
+}
+
+func (m *HostZone) GetBlacklistedValidators() []*Validator {
+	if m != nil {
+		return m.BlacklistedValidators
+	}
+	return nil
+}
+
+func (m *HostZone) GetRewardsAccount() []*ICAAccount {
+	if m != nil {
+		return m.RewardsAccount
+	}
+	return nil
+}
+
+func (m *HostZone) GetFeeAccount() []*ICAAccount {
+	if m != nil {
+		return m.FeeAccount
+	}
+	return nil
+}
+
 func init() {
 	proto.RegisterType((*HostZone)(nil), "Stridelabs.stride.stakeibc.HostZone")
 }
@@ -81,19 +113,27 @@ func init() {
 func init() { proto.RegisterFile("stakeibc/host_zone.proto", fileDescriptor_a1d300c62c2b2d54) }
 
 var fileDescriptor_a1d300c62c2b2d54 = []byte{
-	// 183 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0x92, 0x28, 0x2e, 0x49, 0xcc,
-	0x4e, 0xcd, 0x4c, 0x4a, 0xd6, 0xcf, 0xc8, 0x2f, 0x2e, 0x89, 0xaf, 0xca, 0xcf, 0x4b, 0xd5, 0x2b,
-	0x28, 0xca, 0x2f, 0xc9, 0x17, 0x92, 0x0a, 0x2e, 0x29, 0xca, 0x4c, 0x49, 0xcd, 0x49, 0x4c, 0x2a,
-	0xd6, 0x2b, 0x06, 0x33, 0xf5, 0x60, 0x6a, 0x95, 0x1c, 0xb8, 0x38, 0x3c, 0xf2, 0x8b, 0x4b, 0xa2,
-	0xf2, 0xf3, 0x52, 0x85, 0xc4, 0xb8, 0xd8, 0x0a, 0xf2, 0x8b, 0x4a, 0x3c, 0x53, 0x24, 0x18, 0x15,
-	0x18, 0x35, 0x38, 0x83, 0xa0, 0x3c, 0x21, 0x19, 0x2e, 0xce, 0xe4, 0x8c, 0xc4, 0xbc, 0xbc, 0xd4,
-	0x1c, 0xcf, 0x14, 0x09, 0x26, 0xb0, 0x14, 0x42, 0xc0, 0xc9, 0xe3, 0xc4, 0x23, 0x39, 0xc6, 0x0b,
-	0x8f, 0xe4, 0x18, 0x1f, 0x3c, 0x92, 0x63, 0x9c, 0xf0, 0x58, 0x8e, 0xe1, 0xc2, 0x63, 0x39, 0x86,
-	0x1b, 0x8f, 0xe5, 0x18, 0xa2, 0xf4, 0xd2, 0x33, 0x4b, 0x32, 0x4a, 0x93, 0xf4, 0x92, 0xf3, 0x73,
-	0xf5, 0x21, 0x4e, 0xd0, 0x05, 0xb9, 0x41, 0x1f, 0xe2, 0x06, 0xfd, 0x0a, 0x7d, 0xb8, 0x8b, 0x4b,
-	0x2a, 0x0b, 0x52, 0x8b, 0x93, 0xd8, 0xc0, 0xce, 0x35, 0x06, 0x04, 0x00, 0x00, 0xff, 0xff, 0x01,
-	0x08, 0x81, 0x6a, 0xca, 0x00, 0x00, 0x00,
+	// 308 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x94, 0x91, 0xcf, 0x4a, 0xc3, 0x30,
+	0x1c, 0xc7, 0xdb, 0x4d, 0x8b, 0x8b, 0xe0, 0x21, 0xa0, 0x94, 0x22, 0x61, 0x08, 0xca, 0x2e, 0xa6,
+	0xa0, 0x4f, 0x30, 0x45, 0x59, 0x2f, 0x1e, 0x2a, 0xec, 0x30, 0x0f, 0x23, 0x4d, 0xa2, 0x0d, 0xab,
+	0x4d, 0x49, 0x32, 0xff, 0x3d, 0x85, 0x8f, 0xe5, 0x71, 0x47, 0x8f, 0xd2, 0xbe, 0x86, 0x07, 0xb1,
+	0x5d, 0xdb, 0x21, 0x2a, 0xec, 0x96, 0xe4, 0xfb, 0xfd, 0x7c, 0x92, 0xf0, 0x03, 0xae, 0x36, 0x64,
+	0xc6, 0x45, 0x44, 0xfd, 0x58, 0x6a, 0x33, 0x7d, 0x91, 0x29, 0xc7, 0x99, 0x92, 0x46, 0x42, 0xef,
+	0xda, 0x28, 0xc1, 0x78, 0x42, 0x22, 0x8d, 0x75, 0xb9, 0xc4, 0x75, 0xd7, 0x6b, 0xa9, 0x07, 0x92,
+	0x08, 0x46, 0x8c, 0x54, 0x15, 0xe5, 0x79, 0x4d, 0x22, 0x28, 0x99, 0x12, 0x4a, 0xe5, 0x3c, 0x35,
+	0x55, 0x76, 0xf0, 0xd9, 0x01, 0x5b, 0x23, 0xa9, 0xcd, 0x44, 0xa6, 0x1c, 0xee, 0x01, 0x27, 0x93,
+	0xca, 0x04, 0xcc, 0xb5, 0xfb, 0xf6, 0xa0, 0x17, 0x2e, 0x77, 0x70, 0x1f, 0xf4, 0x68, 0x4c, 0xd2,
+	0x94, 0x27, 0x01, 0x73, 0x3b, 0x65, 0xd4, 0x1e, 0xc0, 0x0b, 0x00, 0x9a, 0x1b, 0xb5, 0xdb, 0xed,
+	0x77, 0x07, 0xdb, 0x27, 0x87, 0xf8, 0xef, 0x97, 0xe2, 0x71, 0xdd, 0x0e, 0x57, 0x40, 0x78, 0x03,
+	0x76, 0xa3, 0x84, 0xd0, 0x59, 0x22, 0xb4, 0xe1, 0x6c, 0xdc, 0x1a, 0x37, 0xd6, 0x31, 0xfe, 0xee,
+	0x80, 0x57, 0x60, 0x47, 0xf1, 0x47, 0xa2, 0x98, 0x1e, 0x56, 0xdf, 0x77, 0x37, 0x4b, 0xeb, 0xd1,
+	0x7f, 0xd6, 0xe0, 0x7c, 0xb8, 0x6c, 0x87, 0x3f, 0x68, 0x78, 0x09, 0xc0, 0x2d, 0xe7, 0xb5, 0xcb,
+	0x59, 0xcb, 0xb5, 0x42, 0x9e, 0x8d, 0xde, 0x72, 0x64, 0x2f, 0x72, 0x64, 0x7f, 0xe4, 0xc8, 0x7e,
+	0x2d, 0x90, 0xb5, 0x28, 0x90, 0xf5, 0x5e, 0x20, 0x6b, 0x82, 0xef, 0x84, 0x89, 0xe7, 0x11, 0xa6,
+	0xf2, 0xde, 0xaf, 0xbc, 0xc7, 0xdf, 0x62, 0xbf, 0x12, 0xfb, 0x4f, 0x7e, 0x33, 0x54, 0xf3, 0x9c,
+	0x71, 0x1d, 0x39, 0xe5, 0x3c, 0x4f, 0xbf, 0x02, 0x00, 0x00, 0xff, 0xff, 0x1f, 0x88, 0xe4, 0xd1,
+	0x3d, 0x02, 0x00, 0x00,
 }
 
 func (m *HostZone) Marshal() (dAtA []byte, err error) {
@@ -116,6 +156,62 @@ func (m *HostZone) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	_ = i
 	var l int
 	_ = l
+	if len(m.FeeAccount) > 0 {
+		for iNdEx := len(m.FeeAccount) - 1; iNdEx >= 0; iNdEx-- {
+			{
+				size, err := m.FeeAccount[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				if err != nil {
+					return 0, err
+				}
+				i -= size
+				i = encodeVarintHostZone(dAtA, i, uint64(size))
+			}
+			i--
+			dAtA[i] = 0x32
+		}
+	}
+	if len(m.RewardsAccount) > 0 {
+		for iNdEx := len(m.RewardsAccount) - 1; iNdEx >= 0; iNdEx-- {
+			{
+				size, err := m.RewardsAccount[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				if err != nil {
+					return 0, err
+				}
+				i -= size
+				i = encodeVarintHostZone(dAtA, i, uint64(size))
+			}
+			i--
+			dAtA[i] = 0x2a
+		}
+	}
+	if len(m.BlacklistedValidators) > 0 {
+		for iNdEx := len(m.BlacklistedValidators) - 1; iNdEx >= 0; iNdEx-- {
+			{
+				size, err := m.BlacklistedValidators[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				if err != nil {
+					return 0, err
+				}
+				i -= size
+				i = encodeVarintHostZone(dAtA, i, uint64(size))
+			}
+			i--
+			dAtA[i] = 0x22
+		}
+	}
+	if len(m.Validators) > 0 {
+		for iNdEx := len(m.Validators) - 1; iNdEx >= 0; iNdEx-- {
+			{
+				size, err := m.Validators[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				if err != nil {
+					return 0, err
+				}
+				i -= size
+				i = encodeVarintHostZone(dAtA, i, uint64(size))
+			}
+			i--
+			dAtA[i] = 0x1a
+		}
+	}
 	if len(m.ChannelId) > 0 {
 		i -= len(m.ChannelId)
 		copy(dAtA[i:], m.ChannelId)
@@ -157,6 +253,30 @@ func (m *HostZone) Size() (n int) {
 	l = len(m.ChannelId)
 	if l > 0 {
 		n += 1 + l + sovHostZone(uint64(l))
+	}
+	if len(m.Validators) > 0 {
+		for _, e := range m.Validators {
+			l = e.Size()
+			n += 1 + l + sovHostZone(uint64(l))
+		}
+	}
+	if len(m.BlacklistedValidators) > 0 {
+		for _, e := range m.BlacklistedValidators {
+			l = e.Size()
+			n += 1 + l + sovHostZone(uint64(l))
+		}
+	}
+	if len(m.RewardsAccount) > 0 {
+		for _, e := range m.RewardsAccount {
+			l = e.Size()
+			n += 1 + l + sovHostZone(uint64(l))
+		}
+	}
+	if len(m.FeeAccount) > 0 {
+		for _, e := range m.FeeAccount {
+			l = e.Size()
+			n += 1 + l + sovHostZone(uint64(l))
+		}
 	}
 	return n
 }
@@ -259,6 +379,142 @@ func (m *HostZone) Unmarshal(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			m.ChannelId = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Validators", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowHostZone
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthHostZone
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthHostZone
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Validators = append(m.Validators, &Validator{})
+			if err := m.Validators[len(m.Validators)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 4:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field BlacklistedValidators", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowHostZone
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthHostZone
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthHostZone
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.BlacklistedValidators = append(m.BlacklistedValidators, &Validator{})
+			if err := m.BlacklistedValidators[len(m.BlacklistedValidators)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 5:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field RewardsAccount", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowHostZone
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthHostZone
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthHostZone
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.RewardsAccount = append(m.RewardsAccount, &ICAAccount{})
+			if err := m.RewardsAccount[len(m.RewardsAccount)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 6:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field FeeAccount", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowHostZone
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthHostZone
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthHostZone
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.FeeAccount = append(m.FeeAccount, &ICAAccount{})
+			if err := m.FeeAccount[len(m.FeeAccount)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex

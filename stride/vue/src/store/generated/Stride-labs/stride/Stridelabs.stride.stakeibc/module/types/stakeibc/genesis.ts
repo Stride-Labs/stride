@@ -9,7 +9,9 @@ export interface GenesisState {
   params: Params | undefined;
   /**
    * list of zones that are registered by the protocol
+   * TODO: TEST-10
    * repeated HostZone hostZone = 3 [(gogoproto.nullable) = false];
+   * TODO: TEST-10
    * ICAAccount iCAAccount = 4;
    * this line is used by starport scaffolding # genesis/proto/state
    */
