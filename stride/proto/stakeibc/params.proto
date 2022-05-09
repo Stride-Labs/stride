@@ -2,11 +2,24 @@ syntax = "proto3";
 package Stridelabs.stride.stakeibc;
 
 import "gogoproto/gogo.proto";
+import "stakeibc/ica_account.proto";
 
 option go_package = "github.com/Stride-labs/stride/x/stakeibc/types";
 
 // Params defines the parameters for the module.
 message Params {
   option (gogoproto.goproto_stringer) = false;
-  
+
+  // define epoch lengths, in blocks
+  uint64 sweeping_rewards_interval = 1;
+  uint64 invest_deposits_interval = 2;
+  uint64 calc_exchange_rate_interval = 3;
+
+  double stride_fee = 4;
+  // fee_address_weights stores which addresses to 
+  // send the Stride fee too, as well as what portion
+  // of the fee each address is entitled to
+  map<string, string> zone_fee_address = 5;
+
 }
+

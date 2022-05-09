@@ -4,6 +4,8 @@ import { Params } from "../stakeibc/params";
 import { Validator } from "../stakeibc/validator";
 import { Delegation } from "../stakeibc/delegation";
 import { MinValidatorRequirements } from "../stakeibc/min_validator_requirements";
+import { HostZone } from "../stakeibc/host_zone";
+import { ICAAccount } from "../stakeibc/ica_account";
 
 export const protobufPackage = "Stridelabs.stride.stakeibc";
 
@@ -32,6 +34,18 @@ export interface QueryGetMinValidatorRequirementsRequest {}
 
 export interface QueryGetMinValidatorRequirementsResponse {
   MinValidatorRequirements: MinValidatorRequirements | undefined;
+}
+
+export interface QueryGetHostZoneRequest {}
+
+export interface QueryGetHostZoneResponse {
+  HostZone: HostZone | undefined;
+}
+
+export interface QueryGetICAAccountRequest {}
+
+export interface QueryGetICAAccountResponse {
+  ICAAccount: ICAAccount | undefined;
 }
 
 const baseQueryParamsRequest: object = {};
@@ -519,6 +533,248 @@ export const QueryGetMinValidatorRequirementsResponse = {
   },
 };
 
+const baseQueryGetHostZoneRequest: object = {};
+
+export const QueryGetHostZoneRequest = {
+  encode(_: QueryGetHostZoneRequest, writer: Writer = Writer.create()): Writer {
+    return writer;
+  },
+
+  decode(input: Reader | Uint8Array, length?: number): QueryGetHostZoneRequest {
+    const reader = input instanceof Uint8Array ? new Reader(input) : input;
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = {
+      ...baseQueryGetHostZoneRequest,
+    } as QueryGetHostZoneRequest;
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(_: any): QueryGetHostZoneRequest {
+    const message = {
+      ...baseQueryGetHostZoneRequest,
+    } as QueryGetHostZoneRequest;
+    return message;
+  },
+
+  toJSON(_: QueryGetHostZoneRequest): unknown {
+    const obj: any = {};
+    return obj;
+  },
+
+  fromPartial(
+    _: DeepPartial<QueryGetHostZoneRequest>
+  ): QueryGetHostZoneRequest {
+    const message = {
+      ...baseQueryGetHostZoneRequest,
+    } as QueryGetHostZoneRequest;
+    return message;
+  },
+};
+
+const baseQueryGetHostZoneResponse: object = {};
+
+export const QueryGetHostZoneResponse = {
+  encode(
+    message: QueryGetHostZoneResponse,
+    writer: Writer = Writer.create()
+  ): Writer {
+    if (message.HostZone !== undefined) {
+      HostZone.encode(message.HostZone, writer.uint32(10).fork()).ldelim();
+    }
+    return writer;
+  },
+
+  decode(
+    input: Reader | Uint8Array,
+    length?: number
+  ): QueryGetHostZoneResponse {
+    const reader = input instanceof Uint8Array ? new Reader(input) : input;
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = {
+      ...baseQueryGetHostZoneResponse,
+    } as QueryGetHostZoneResponse;
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.HostZone = HostZone.decode(reader, reader.uint32());
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): QueryGetHostZoneResponse {
+    const message = {
+      ...baseQueryGetHostZoneResponse,
+    } as QueryGetHostZoneResponse;
+    if (object.HostZone !== undefined && object.HostZone !== null) {
+      message.HostZone = HostZone.fromJSON(object.HostZone);
+    } else {
+      message.HostZone = undefined;
+    }
+    return message;
+  },
+
+  toJSON(message: QueryGetHostZoneResponse): unknown {
+    const obj: any = {};
+    message.HostZone !== undefined &&
+      (obj.HostZone = message.HostZone
+        ? HostZone.toJSON(message.HostZone)
+        : undefined);
+    return obj;
+  },
+
+  fromPartial(
+    object: DeepPartial<QueryGetHostZoneResponse>
+  ): QueryGetHostZoneResponse {
+    const message = {
+      ...baseQueryGetHostZoneResponse,
+    } as QueryGetHostZoneResponse;
+    if (object.HostZone !== undefined && object.HostZone !== null) {
+      message.HostZone = HostZone.fromPartial(object.HostZone);
+    } else {
+      message.HostZone = undefined;
+    }
+    return message;
+  },
+};
+
+const baseQueryGetICAAccountRequest: object = {};
+
+export const QueryGetICAAccountRequest = {
+  encode(
+    _: QueryGetICAAccountRequest,
+    writer: Writer = Writer.create()
+  ): Writer {
+    return writer;
+  },
+
+  decode(
+    input: Reader | Uint8Array,
+    length?: number
+  ): QueryGetICAAccountRequest {
+    const reader = input instanceof Uint8Array ? new Reader(input) : input;
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = {
+      ...baseQueryGetICAAccountRequest,
+    } as QueryGetICAAccountRequest;
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(_: any): QueryGetICAAccountRequest {
+    const message = {
+      ...baseQueryGetICAAccountRequest,
+    } as QueryGetICAAccountRequest;
+    return message;
+  },
+
+  toJSON(_: QueryGetICAAccountRequest): unknown {
+    const obj: any = {};
+    return obj;
+  },
+
+  fromPartial(
+    _: DeepPartial<QueryGetICAAccountRequest>
+  ): QueryGetICAAccountRequest {
+    const message = {
+      ...baseQueryGetICAAccountRequest,
+    } as QueryGetICAAccountRequest;
+    return message;
+  },
+};
+
+const baseQueryGetICAAccountResponse: object = {};
+
+export const QueryGetICAAccountResponse = {
+  encode(
+    message: QueryGetICAAccountResponse,
+    writer: Writer = Writer.create()
+  ): Writer {
+    if (message.ICAAccount !== undefined) {
+      ICAAccount.encode(message.ICAAccount, writer.uint32(10).fork()).ldelim();
+    }
+    return writer;
+  },
+
+  decode(
+    input: Reader | Uint8Array,
+    length?: number
+  ): QueryGetICAAccountResponse {
+    const reader = input instanceof Uint8Array ? new Reader(input) : input;
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = {
+      ...baseQueryGetICAAccountResponse,
+    } as QueryGetICAAccountResponse;
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.ICAAccount = ICAAccount.decode(reader, reader.uint32());
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): QueryGetICAAccountResponse {
+    const message = {
+      ...baseQueryGetICAAccountResponse,
+    } as QueryGetICAAccountResponse;
+    if (object.ICAAccount !== undefined && object.ICAAccount !== null) {
+      message.ICAAccount = ICAAccount.fromJSON(object.ICAAccount);
+    } else {
+      message.ICAAccount = undefined;
+    }
+    return message;
+  },
+
+  toJSON(message: QueryGetICAAccountResponse): unknown {
+    const obj: any = {};
+    message.ICAAccount !== undefined &&
+      (obj.ICAAccount = message.ICAAccount
+        ? ICAAccount.toJSON(message.ICAAccount)
+        : undefined);
+    return obj;
+  },
+
+  fromPartial(
+    object: DeepPartial<QueryGetICAAccountResponse>
+  ): QueryGetICAAccountResponse {
+    const message = {
+      ...baseQueryGetICAAccountResponse,
+    } as QueryGetICAAccountResponse;
+    if (object.ICAAccount !== undefined && object.ICAAccount !== null) {
+      message.ICAAccount = ICAAccount.fromPartial(object.ICAAccount);
+    } else {
+      message.ICAAccount = undefined;
+    }
+    return message;
+  },
+};
+
 /** Query defines the gRPC querier service. */
 export interface Query {
   /** Parameters queries the parameters of the module. */
@@ -535,6 +791,12 @@ export interface Query {
   MinValidatorRequirements(
     request: QueryGetMinValidatorRequirementsRequest
   ): Promise<QueryGetMinValidatorRequirementsResponse>;
+  /** Queries a HostZone by index. */
+  HostZone(request: QueryGetHostZoneRequest): Promise<QueryGetHostZoneResponse>;
+  /** Queries a ICAAccount by index. */
+  ICAAccount(
+    request: QueryGetICAAccountRequest
+  ): Promise<QueryGetICAAccountResponse>;
 }
 
 export class QueryClientImpl implements Query {
@@ -593,6 +855,34 @@ export class QueryClientImpl implements Query {
     );
     return promise.then((data) =>
       QueryGetMinValidatorRequirementsResponse.decode(new Reader(data))
+    );
+  }
+
+  HostZone(
+    request: QueryGetHostZoneRequest
+  ): Promise<QueryGetHostZoneResponse> {
+    const data = QueryGetHostZoneRequest.encode(request).finish();
+    const promise = this.rpc.request(
+      "Stridelabs.stride.stakeibc.Query",
+      "HostZone",
+      data
+    );
+    return promise.then((data) =>
+      QueryGetHostZoneResponse.decode(new Reader(data))
+    );
+  }
+
+  ICAAccount(
+    request: QueryGetICAAccountRequest
+  ): Promise<QueryGetICAAccountResponse> {
+    const data = QueryGetICAAccountRequest.encode(request).finish();
+    const promise = this.rpc.request(
+      "Stridelabs.stride.stakeibc.Query",
+      "ICAAccount",
+      data
+    );
+    return promise.then((data) =>
+      QueryGetICAAccountResponse.decode(new Reader(data))
     );
   }
 }

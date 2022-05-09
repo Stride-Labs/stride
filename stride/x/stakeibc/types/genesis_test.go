@@ -22,22 +22,16 @@ func TestGenesisState_Validate(t *testing.T) {
 			desc: "valid genesis state",
 			genState: &types.GenesisState{
 				PortId: types.PortID,
-				Validator: &types.Validator{
-					Name:           "5",
-					Address:        "1",
-					CommissionRate: 9,
-					DelegationAmt:  49,
+				HostZone: &types.HostZone{
+					PortId:    "23",
+					ChannelId: "36",
 				},
-				Delegation: &types.Delegation{
-					DelegateAcctAddress: "67",
-					ValidatorAddr:       "17",
-					Amt:                 45,
-				},
-				MinValidatorRequirements: &types.MinValidatorRequirements{
-					CommissionRate: 49,
-					Uptime:         88,
-				},
-				// this line is used by starport scaffolding # types/genesis/validField
+				ICAAccount: &types.ICAAccount{
+		Address: "79",
+Balance: 2,
+DelegatedBalance: 8,
+},
+// this line is used by starport scaffolding # types/genesis/validField
 			},
 			valid: true,
 		},
