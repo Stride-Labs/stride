@@ -1,12 +1,12 @@
 package cli
 
 import (
-    "context"
+	"context"
 
+	"github.com/Stride-labs/stride/x/stakeibc/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/spf13/cobra"
-    "github.com/Stride-labs/stride/x/stakeibc/types"
 )
 
 func CmdShowICAAccount() *cobra.Command {
@@ -15,22 +15,22 @@ func CmdShowICAAccount() *cobra.Command {
 		Short: "shows ICAAccount",
 		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
-            clientCtx := client.GetClientContextFromCmd(cmd)
+			clientCtx := client.GetClientContextFromCmd(cmd)
 
-            queryClient := types.NewQueryClient(clientCtx)
+			queryClient := types.NewQueryClient(clientCtx)
 
-            params := &types.QueryGetICAAccountRequest{}
+			params := &types.QueryGetICAAccountRequest{}
 
-            res, err := queryClient.ICAAccount(context.Background(), params)
-            if err != nil {
-                return err
-            }
+			res, err := queryClient.ICAAccount(context.Background(), params)
+			if err != nil {
+				return err
+			}
 
-            return clientCtx.PrintProto(res)
+			return clientCtx.PrintProto(res)
 		},
 	}
 
 	flags.AddQueryFlagsToCmd(cmd)
 
-    return cmd
+	return cmd
 }

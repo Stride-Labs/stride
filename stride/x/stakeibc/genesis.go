@@ -14,10 +14,10 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) 
 		k.SetHostZone(ctx, *genState.HostZone)
 	}
 	// Set if defined
-if genState.ICAAccount != nil {
-	k.SetICAAccount(ctx, *genState.ICAAccount)
-}
-// this line is used by starport scaffolding # genesis/module/init
+	if genState.ICAAccount != nil {
+		k.SetICAAccount(ctx, *genState.ICAAccount)
+	}
+	// this line is used by starport scaffolding # genesis/module/init
 	k.SetPort(ctx, genState.PortId)
 	// Only try to bind to port if it is not already bound, since we may already own
 	// port capability from capability InitGenesis
@@ -44,11 +44,11 @@ func ExportGenesis(ctx sdk.Context, k keeper.Keeper) *types.GenesisState {
 		genesis.HostZone = &hostZone
 	}
 	// Get all iCAAccount
-iCAAccount, found := k.GetICAAccount(ctx)
-if found {
-	genesis.ICAAccount = &iCAAccount
-}
-// this line is used by starport scaffolding # genesis/module/export
+	iCAAccount, found := k.GetICAAccount(ctx)
+	if found {
+		genesis.ICAAccount = &iCAAccount
+	}
+	// this line is used by starport scaffolding # genesis/module/export
 
 	return genesis
 }
