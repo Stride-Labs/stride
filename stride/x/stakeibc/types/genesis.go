@@ -13,10 +13,10 @@ func DefaultGenesis() *GenesisState {
 	zones := []HostZone{}
 	return &GenesisState{
 		ICAAccount: nil,
-// this line is used by starport scaffolding # genesis/types/default
-		DefaultParams(),
-		PortID,
-		zones,
+		// this line is used by starport scaffolding # genesis/types/default
+		Params: DefaultParams(),
+		PortId: PortID,
+		HostZone: zones,
 	}
 }
 
