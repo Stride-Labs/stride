@@ -1,0 +1,15 @@
+syntax = "proto3";
+package Stridelabs.stride.stakeibc;
+
+import "gogoproto/gogo.proto";
+import "stakeibc/params.proto";
+// this line is used by starport scaffolding # genesis/proto/import
+
+option go_package = "github.com/Stride-labs/stride/x/stakeibc/types";
+
+// GenesisState defines the stakeibc module's genesis state.
+message GenesisState {
+  Params params = 1 [(gogoproto.nullable) = false];
+  string port_id = 2;
+  // this line is used by starport scaffolding # genesis/proto/state
+}
