@@ -1,0 +1,11 @@
+syntax = "proto3";
+package Stridelabs.stride.stakeibc;
+
+option go_package = "github.com/Stride-labs/stride/x/stakeibc/types";
+
+message Delegation {
+  string delegateAcctAddress = 1; 
+  string validatorAddr = 2; 
+  int32 amt = 3; 
+  
+}
