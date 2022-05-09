@@ -13,7 +13,7 @@ For example, adding a new message type and updating the logic of that message wo
 >>> git add . && git commit -m 'update loan list keeper method'
 ```
 
-An example of this can be found in this PR. Notice, you can easily differentiate changes made by ignite and those made manually by going through commits.
+An example of this can be found in [this PR](https://github.com/Stride-Labs/stride/pull/1). Notice, you can easily differentiate changes made by ignite and those made manually by going through commits. For example, in commit fd3e254bc0, it's easy to review the [files changed](https://github.com/Stride-Labs/stride/pull/1/commits/fd3e254bc0844fe65f5e98f12b366feef2a285f9) even though nearly ~300k LOC were scaffolded.
 
 ## Code review format
 Opening a PR will automatically create a Summary and Test plan field in the description. In the summary, add a high-level summary of what the change entails and the ignite commands run.
