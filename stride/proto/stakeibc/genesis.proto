@@ -12,6 +12,7 @@ option go_package = "github.com/Stride-labs/stride/x/stakeibc/types";
 message GenesisState {
   Params params = 1 [(gogoproto.nullable) = false];
   string port_id = 2;
-  HostZone hostZone = 3;
+  // list of zones that are registered by the protocol
+  repeated HostZone hostZone = 3;
   // this line is used by starport scaffolding # genesis/proto/state
 }
