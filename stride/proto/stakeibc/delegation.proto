@@ -5,7 +5,7 @@ option go_package = "github.com/Stride-labs/stride/x/stakeibc/types";
 
 message Delegation {
   string delegateAcctAddress = 1; 
-  string validatorAddr = 2; 
+  validator validator = 2; 
   int32 amt = 3; 
   
 }
