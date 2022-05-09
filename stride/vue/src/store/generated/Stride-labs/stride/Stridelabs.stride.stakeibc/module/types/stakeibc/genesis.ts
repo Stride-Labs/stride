@@ -1,5 +1,6 @@
 /* eslint-disable */
 import { Params } from "../stakeibc/params";
+import { HostZone } from "../stakeibc/host_zone";
 import { Writer, Reader } from "protobufjs/minimal";
 
 export const protobufPackage = "Stridelabs.stride.stakeibc";
@@ -7,8 +8,9 @@ export const protobufPackage = "Stridelabs.stride.stakeibc";
 /** GenesisState defines the stakeibc module's genesis state. */
 export interface GenesisState {
   params: Params | undefined;
-  /** this line is used by starport scaffolding # genesis/proto/state */
   port_id: string;
+  /** this line is used by starport scaffolding # genesis/proto/state */
+  hostZone: HostZone | undefined;
 }
 
 const baseGenesisState: object = { port_id: "" };
@@ -20,6 +22,9 @@ export const GenesisState = {
     }
     if (message.port_id !== "") {
       writer.uint32(18).string(message.port_id);
+    }
+    if (message.hostZone !== undefined) {
+      HostZone.encode(message.hostZone, writer.uint32(26).fork()).ldelim();
     }
     return writer;
   },
@@ -36,6 +41,9 @@ export const GenesisState = {
           break;
         case 2:
           message.port_id = reader.string();
+          break;
+        case 3:
+          message.hostZone = HostZone.decode(reader, reader.uint32());
           break;
         default:
           reader.skipType(tag & 7);
@@ -57,6 +65,11 @@ export const GenesisState = {
     } else {
       message.port_id = "";
     }
+    if (object.hostZone !== undefined && object.hostZone !== null) {
+      message.hostZone = HostZone.fromJSON(object.hostZone);
+    } else {
+      message.hostZone = undefined;
+    }
     return message;
   },
 
@@ -65,6 +78,10 @@ export const GenesisState = {
     message.params !== undefined &&
       (obj.params = message.params ? Params.toJSON(message.params) : undefined);
     message.port_id !== undefined && (obj.port_id = message.port_id);
+    message.hostZone !== undefined &&
+      (obj.hostZone = message.hostZone
+        ? HostZone.toJSON(message.hostZone)
+        : undefined);
     return obj;
   },
 
@@ -79,6 +96,11 @@ export const GenesisState = {
       message.port_id = object.port_id;
     } else {
       message.port_id = "";
+    }
+    if (object.hostZone !== undefined && object.hostZone !== null) {
+      message.hostZone = HostZone.fromPartial(object.hostZone);
+    } else {
+      message.hostZone = undefined;
     }
     return message;
   },

@@ -28,6 +28,11 @@ export interface StakeibcDelegation {
   amt?: number;
 }
 
+export interface StakeibcHostZone {
+  portId?: string;
+  channelId?: string;
+}
+
 export interface StakeibcMinValidatorRequirements {
   /** @format int32 */
   commissionRate?: number;
@@ -43,6 +48,10 @@ export type StakeibcParams = object;
 
 export interface StakeibcQueryGetDelegationResponse {
   Delegation?: StakeibcDelegation;
+}
+
+export interface StakeibcQueryGetHostZoneResponse {
+  HostZone?: StakeibcHostZone;
 }
 
 export interface StakeibcQueryGetMinValidatorRequirementsResponse {
@@ -280,6 +289,22 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
   queryDelegation = (params: RequestParams = {}) =>
     this.request<StakeibcQueryGetDelegationResponse, RpcStatus>({
       path: `/Stride-labs/stride/stakeibc/delegation`,
+      method: "GET",
+      format: "json",
+      ...params,
+    });
+
+  /**
+   * No description
+   *
+   * @tags Query
+   * @name QueryHostZone
+   * @summary Queries a HostZone by index.
+   * @request GET:/Stride-labs/stride/stakeibc/host_zone
+   */
+  queryHostZone = (params: RequestParams = {}) =>
+    this.request<StakeibcQueryGetHostZoneResponse, RpcStatus>({
+      path: `/Stride-labs/stride/stakeibc/host_zone`,
       method: "GET",
       format: "json",
       ...params,

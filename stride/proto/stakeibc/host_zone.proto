@@ -1,0 +1,10 @@
+syntax = "proto3";
+package Stridelabs.stride.stakeibc;
+
+option go_package = "github.com/Stride-labs/stride/x/stakeibc/types";
+
+message HostZone {
+  string portId = 1; 
+  string channelId = 2; 
+  
+}

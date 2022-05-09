@@ -28127,6 +28127,43 @@ paths:
                   additionalProperties: {}
       tags:
         - Query
+  /Stride-labs/stride/stakeibc/host_zone:
+    get:
+      summary: Queries a HostZone by index.
+      operationId: StridelabsStrideStakeibcHostZone
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              HostZone:
+                type: object
+                properties:
+                  portId:
+                    type: string
+                  channelId:
+                    type: string
+        default:
+          description: An unexpected error response.
+          schema:
+            type: object
+            properties:
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    '@type':
+                      type: string
+                  additionalProperties: {}
+      tags:
+        - Query
   /Stride-labs/stride/stakeibc/min_validator_requirements:
     get:
       summary: Queries a MinValidatorRequirements by index.
@@ -48444,6 +48481,13 @@ definitions:
       amt:
         type: integer
         format: int32
+  Stridelabs.stride.stakeibc.HostZone:
+    type: object
+    properties:
+      portId:
+        type: string
+      channelId:
+        type: string
   Stridelabs.stride.stakeibc.MinValidatorRequirements:
     type: object
     properties:
@@ -48482,6 +48526,16 @@ definitions:
           amt:
             type: integer
             format: int32
+  Stridelabs.stride.stakeibc.QueryGetHostZoneResponse:
+    type: object
+    properties:
+      HostZone:
+        type: object
+        properties:
+          portId:
+            type: string
+          channelId:
+            type: string
   Stridelabs.stride.stakeibc.QueryGetMinValidatorRequirementsResponse:
     type: object
     properties:
