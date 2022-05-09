@@ -20,10 +20,38 @@ export interface RpcStatus {
   details?: ProtobufAny[];
 }
 
+export interface StakeibcDelegation {
+  delegateAcctAddress?: string;
+  validator?: StakeibcValidator;
+
+  /** @format int32 */
+  amt?: number;
+}
+
+export interface StakeibcMinValidatorRequirements {
+  /** @format int32 */
+  commissionRate?: number;
+
+  /** @format int32 */
+  uptime?: number;
+}
+
 /**
  * Params defines the parameters for the module.
  */
 export type StakeibcParams = object;
+
+export interface StakeibcQueryGetDelegationResponse {
+  Delegation?: StakeibcDelegation;
+}
+
+export interface StakeibcQueryGetMinValidatorRequirementsResponse {
+  MinValidatorRequirements?: StakeibcMinValidatorRequirements;
+}
+
+export interface StakeibcQueryGetValidatorResponse {
+  Validator?: StakeibcValidator;
+}
 
 /**
  * QueryParamsResponse is response type for the Query/Params RPC method.
@@ -31,6 +59,18 @@ export type StakeibcParams = object;
 export interface StakeibcQueryParamsResponse {
   /** params holds all the parameters of this module. */
   params?: StakeibcParams;
+}
+
+export interface StakeibcValidator {
+  name?: string;
+  address?: string;
+  status?: string;
+
+  /** @format int32 */
+  commissionRate?: number;
+
+  /** @format int32 */
+  delegationAmt?: number;
 }
 
 export type QueryParamsType = Record<string | number, any>;
@@ -225,10 +265,58 @@ export class HttpClient<SecurityDataType = unknown> {
 }
 
 /**
- * @title stakeibc/genesis.proto
+ * @title stakeibc/delegation.proto
  * @version version not set
  */
 export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDataType> {
+  /**
+   * No description
+   *
+   * @tags Query
+   * @name QueryDelegation
+   * @summary Queries a Delegation by index.
+   * @request GET:/Stride-labs/stride/stakeibc/delegation
+   */
+  queryDelegation = (params: RequestParams = {}) =>
+    this.request<StakeibcQueryGetDelegationResponse, RpcStatus>({
+      path: `/Stride-labs/stride/stakeibc/delegation`,
+      method: "GET",
+      format: "json",
+      ...params,
+    });
+
+  /**
+   * No description
+   *
+   * @tags Query
+   * @name QueryMinValidatorRequirements
+   * @summary Queries a MinValidatorRequirements by index.
+   * @request GET:/Stride-labs/stride/stakeibc/min_validator_requirements
+   */
+  queryMinValidatorRequirements = (params: RequestParams = {}) =>
+    this.request<StakeibcQueryGetMinValidatorRequirementsResponse, RpcStatus>({
+      path: `/Stride-labs/stride/stakeibc/min_validator_requirements`,
+      method: "GET",
+      format: "json",
+      ...params,
+    });
+
+  /**
+   * No description
+   *
+   * @tags Query
+   * @name QueryValidator
+   * @summary Queries a Validator by index.
+   * @request GET:/Stride-labs/stride/stakeibc/validator
+   */
+  queryValidator = (params: RequestParams = {}) =>
+    this.request<StakeibcQueryGetValidatorResponse, RpcStatus>({
+      path: `/Stride-labs/stride/stakeibc/validator`,
+      method: "GET",
+      format: "json",
+      ...params,
+    });
+
   /**
    * No description
    *

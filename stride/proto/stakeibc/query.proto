@@ -5,6 +5,9 @@ import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
 import "cosmos/base/query/v1beta1/pagination.proto";
 import "stakeibc/params.proto";
+import "stakeibc/validator.proto";
+import "stakeibc/delegation.proto";
+import "stakeibc/min_validator_requirements.proto";
 // this line is used by starport scaffolding # 1
 
 option go_package = "github.com/Stride-labs/stride/x/stakeibc/types";
@@ -15,7 +18,19 @@ service Query {
   rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
     option (google.api.http).get = "/Stridelabs/stride/stakeibc/params";
   }
-  // this line is used by starport scaffolding # 2
+  // Queries a Validator by index.
+	rpc Validator(QueryGetValidatorRequest) returns (QueryGetValidatorResponse) {
+		option (google.api.http).get = "/Stride-labs/stride/stakeibc/validator";
+	}
+// Queries a Delegation by index.
+	rpc Delegation(QueryGetDelegationRequest) returns (QueryGetDelegationResponse) {
+		option (google.api.http).get = "/Stride-labs/stride/stakeibc/delegation";
+	}
+// Queries a MinValidatorRequirements by index.
+	rpc MinValidatorRequirements(QueryGetMinValidatorRequirementsRequest) returns (QueryGetMinValidatorRequirementsResponse) {
+		option (google.api.http).get = "/Stride-labs/stride/stakeibc/min_validator_requirements";
+	}
+// this line is used by starport scaffolding # 2
 }
 
 // QueryParamsRequest is request type for the Query/Params RPC method.
@@ -27,4 +42,19 @@ message QueryParamsResponse {
   Params params = 1 [(gogoproto.nullable) = false];
 }
 
+message QueryGetValidatorRequest {}
+
+message QueryGetValidatorResponse {
+	Validator Validator = 1 [(gogoproto.nullable) = false];
+}
+message QueryGetDelegationRequest {}
+
+message QueryGetDelegationResponse {
+	Delegation Delegation = 1 [(gogoproto.nullable) = false];
+}
+message QueryGetMinValidatorRequirementsRequest {}
+
+message QueryGetMinValidatorRequirementsResponse {
+	MinValidatorRequirements MinValidatorRequirements = 1 [(gogoproto.nullable) = false];
+}
 // this line is used by starport scaffolding # 3

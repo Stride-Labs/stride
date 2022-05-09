@@ -3,6 +3,9 @@ package Stridelabs.stride.stakeibc;
 
 import "gogoproto/gogo.proto";
 import "stakeibc/params.proto";
+import "stakeibc/validator.proto";
+import "stakeibc/delegation.proto";
+import "stakeibc/min_validator_requirements.proto";
 // this line is used by starport scaffolding # genesis/proto/import
 
 option go_package = "github.com/Stride-labs/stride/x/stakeibc/types";

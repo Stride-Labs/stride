@@ -31,3 +31,15 @@ var (
 func KeyPrefix(p string) []byte {
 	return []byte(p)
 }
+
+const (
+	ValidatorKey = "Validator-value-"
+)
+
+const (
+	DelegationKey = "Delegation-value-"
+)
+
+const (
+	MinValidatorRequirementsKey = "MinValidatorRequirements-value-"
+)
