@@ -14,8 +14,5 @@ option go_package = "github.com/Stride-labs/stride/x/stakeibc/types";
 message GenesisState {
   Params params = 1 [(gogoproto.nullable) = false];
   string port_id = 2;
-  Validator validator = 3;
-  Delegation delegation = 4;
-  MinValidatorRequirements minValidatorRequirements = 5;
   // this line is used by starport scaffolding # genesis/proto/state
 }
