@@ -21,6 +21,14 @@ const (
 
 	// PortID is the default port id that module binds to
 	PortID = "stakeibc"
+
+	ValidatorKey = "Validator-value-"
+	DelegationKey = "Delegation-value-"
+	
+	MinValidatorRequirementsKey = "MinValidatorRequirements-value-"
+	HostZoneKey = "HostZone-value-"
+	ICAAccountKey= "ICAAccount-value-"
+
 )
 
 var (
@@ -31,15 +39,3 @@ var (
 func KeyPrefix(p string) []byte {
 	return []byte(p)
 }
-
-const (
-	ValidatorKey = "Validator-value-"
-)
-
-const (
-	DelegationKey = "Delegation-value-"
-)
-
-const (
-	MinValidatorRequirementsKey = "MinValidatorRequirements-value-"
-)

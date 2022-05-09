@@ -3,9 +3,8 @@ package Stridelabs.stride.stakeibc;
 
 import "gogoproto/gogo.proto";
 import "stakeibc/params.proto";
-import "stakeibc/validator.proto";
-import "stakeibc/delegation.proto";
-import "stakeibc/min_validator_requirements.proto";
+import "stakeibc/host_zone.proto";
+import "stakeibc/ica_account.proto";
 // this line is used by starport scaffolding # genesis/proto/import
 
 option go_package = "github.com/Stride-labs/stride/x/stakeibc/types";
@@ -14,5 +13,8 @@ option go_package = "github.com/Stride-labs/stride/x/stakeibc/types";
 message GenesisState {
   Params params = 1 [(gogoproto.nullable) = false];
   string port_id = 2;
+  // list of zones that are registered by the protocol
+  repeated HostZone hostZone = 3 [(gogoproto.nullable) = false];
+  ICAAccount iCAAccount = 4;
   // this line is used by starport scaffolding # genesis/proto/state
 }
