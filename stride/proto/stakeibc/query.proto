@@ -9,6 +9,7 @@ import "stakeibc/validator.proto";
 import "stakeibc/delegation.proto";
 import "stakeibc/min_validator_requirements.proto";
 import "stakeibc/host_zone.proto";
+import "stakeibc/ica_account.proto";
 // this line is used by starport scaffolding # 1
 
 option go_package = "github.com/Stride-labs/stride/x/stakeibc/types";
@@ -34,6 +35,10 @@ service Query {
   // Queries a HostZone by index.
 	rpc HostZone(QueryGetHostZoneRequest) returns (QueryGetHostZoneResponse) {
 		option (google.api.http).get = "/Stride-labs/stride/stakeibc/host_zone";
+	}
+// Queries a ICAAccount by index.
+	rpc ICAAccount(QueryGetICAAccountRequest) returns (QueryGetICAAccountResponse) {
+		option (google.api.http).get = "/Stride-labs/stride/stakeibc/ica_account";
 	}
 // this line is used by starport scaffolding # 2
 }
@@ -66,5 +71,10 @@ message QueryGetHostZoneRequest {}
 
 message QueryGetHostZoneResponse {
 	HostZone HostZone = 1 [(gogoproto.nullable) = false];
+}
+message QueryGetICAAccountRequest {}
+
+message QueryGetICAAccountResponse {
+	ICAAccount ICAAccount = 1 [(gogoproto.nullable) = false];
 }
 // this line is used by starport scaffolding # 3

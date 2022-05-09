@@ -18,6 +18,11 @@ func TestGenesis(t *testing.T) {
 			PortId:    "76",
 			ChannelId: "85",
 		},
+		ICAAccount: &types.ICAAccount{
+		Address: "78",
+Balance: 49,
+DelegatedBalance: 80,
+},
 		// this line is used by starport scaffolding # genesis/test/state
 	}
 
@@ -32,5 +37,6 @@ func TestGenesis(t *testing.T) {
 	require.Equal(t, genesisState.PortId, got.PortId)
 
 	require.Equal(t, genesisState.HostZone, got.HostZone)
-	// this line is used by starport scaffolding # genesis/test/assert
+	require.Equal(t, genesisState.ICAAccount, got.ICAAccount)
+// this line is used by starport scaffolding # genesis/test/assert
 }

@@ -28164,6 +28164,54 @@ paths:
                   additionalProperties: {}
       tags:
         - Query
+  /Stride-labs/stride/stakeibc/ica_account:
+    get:
+      summary: Queries a ICAAccount by index.
+      operationId: StridelabsStrideStakeibcICAAccount
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              ICAAccount:
+                type: object
+                properties:
+                  address:
+                    type: string
+                  balance:
+                    type: integer
+                    format: int32
+                  delegatedBalance:
+                    type: integer
+                    format: int32
+                  zone:
+                    type: object
+                    properties:
+                      portId:
+                        type: string
+                      channelId:
+                        type: string
+        default:
+          description: An unexpected error response.
+          schema:
+            type: object
+            properties:
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    '@type':
+                      type: string
+                  additionalProperties: {}
+      tags:
+        - Query
   /Stride-labs/stride/stakeibc/min_validator_requirements:
     get:
       summary: Queries a MinValidatorRequirements by index.
@@ -28261,6 +28309,28 @@ paths:
               params:
                 description: params holds all the parameters of this module.
                 type: object
+                properties:
+                  sweeping_rewards_interval:
+                    type: string
+                    format: uint64
+                    title: 'define epoch lengths, in blocks'
+                  invest_deposits_interval:
+                    type: string
+                    format: uint64
+                  calc_exchange_rate_interval:
+                    type: string
+                    format: uint64
+                  stride_fee:
+                    type: number
+                    format: double
+                  zone_fee_address:
+                    type: object
+                    additionalProperties:
+                      type: string
+                    title: |-
+                      fee_address_weights stores which addresses to 
+                      send the Stride fee too, as well as what portion
+                      of the fee each address is entitled to
             description: >-
               QueryParamsResponse is response type for the Query/Params RPC
               method.
@@ -48488,6 +48558,24 @@ definitions:
         type: string
       channelId:
         type: string
+  Stridelabs.stride.stakeibc.ICAAccount:
+    type: object
+    properties:
+      address:
+        type: string
+      balance:
+        type: integer
+        format: int32
+      delegatedBalance:
+        type: integer
+        format: int32
+      zone:
+        type: object
+        properties:
+          portId:
+            type: string
+          channelId:
+            type: string
   Stridelabs.stride.stakeibc.MinValidatorRequirements:
     type: object
     properties:
@@ -48499,6 +48587,28 @@ definitions:
         format: int32
   Stridelabs.stride.stakeibc.Params:
     type: object
+    properties:
+      sweeping_rewards_interval:
+        type: string
+        format: uint64
+        title: 'define epoch lengths, in blocks'
+      invest_deposits_interval:
+        type: string
+        format: uint64
+      calc_exchange_rate_interval:
+        type: string
+        format: uint64
+      stride_fee:
+        type: number
+        format: double
+      zone_fee_address:
+        type: object
+        additionalProperties:
+          type: string
+        title: |-
+          fee_address_weights stores which addresses to 
+          send the Stride fee too, as well as what portion
+          of the fee each address is entitled to
     description: Params defines the parameters for the module.
   Stridelabs.stride.stakeibc.QueryGetDelegationResponse:
     type: object
@@ -48536,6 +48646,27 @@ definitions:
             type: string
           channelId:
             type: string
+  Stridelabs.stride.stakeibc.QueryGetICAAccountResponse:
+    type: object
+    properties:
+      ICAAccount:
+        type: object
+        properties:
+          address:
+            type: string
+          balance:
+            type: integer
+            format: int32
+          delegatedBalance:
+            type: integer
+            format: int32
+          zone:
+            type: object
+            properties:
+              portId:
+                type: string
+              channelId:
+                type: string
   Stridelabs.stride.stakeibc.QueryGetMinValidatorRequirementsResponse:
     type: object
     properties:
@@ -48572,6 +48703,28 @@ definitions:
       params:
         description: params holds all the parameters of this module.
         type: object
+        properties:
+          sweeping_rewards_interval:
+            type: string
+            format: uint64
+            title: 'define epoch lengths, in blocks'
+          invest_deposits_interval:
+            type: string
+            format: uint64
+          calc_exchange_rate_interval:
+            type: string
+            format: uint64
+          stride_fee:
+            type: number
+            format: double
+          zone_fee_address:
+            type: object
+            additionalProperties:
+              type: string
+            title: |-
+              fee_address_weights stores which addresses to 
+              send the Stride fee too, as well as what portion
+              of the fee each address is entitled to
     description: QueryParamsResponse is response type for the Query/Params RPC method.
   Stridelabs.stride.stakeibc.Validator:
     type: object

@@ -33,6 +33,17 @@ export interface StakeibcHostZone {
   channelId?: string;
 }
 
+export interface StakeibcICAAccount {
+  address?: string;
+
+  /** @format int32 */
+  balance?: number;
+
+  /** @format int32 */
+  delegatedBalance?: number;
+  zone?: StakeibcHostZone;
+}
+
 export interface StakeibcMinValidatorRequirements {
   /** @format int32 */
   commissionRate?: number;
@@ -44,7 +55,20 @@ export interface StakeibcMinValidatorRequirements {
 /**
  * Params defines the parameters for the module.
  */
-export type StakeibcParams = object;
+export interface StakeibcParams {
+  /** @format uint64 */
+  sweeping_rewards_interval?: string;
+
+  /** @format uint64 */
+  invest_deposits_interval?: string;
+
+  /** @format uint64 */
+  calc_exchange_rate_interval?: string;
+
+  /** @format double */
+  stride_fee?: number;
+  zone_fee_address?: Record<string, string>;
+}
 
 export interface StakeibcQueryGetDelegationResponse {
   Delegation?: StakeibcDelegation;
@@ -52,6 +76,10 @@ export interface StakeibcQueryGetDelegationResponse {
 
 export interface StakeibcQueryGetHostZoneResponse {
   HostZone?: StakeibcHostZone;
+}
+
+export interface StakeibcQueryGetICAAccountResponse {
+  ICAAccount?: StakeibcICAAccount;
 }
 
 export interface StakeibcQueryGetMinValidatorRequirementsResponse {
@@ -305,6 +333,22 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
   queryHostZone = (params: RequestParams = {}) =>
     this.request<StakeibcQueryGetHostZoneResponse, RpcStatus>({
       path: `/Stride-labs/stride/stakeibc/host_zone`,
+      method: "GET",
+      format: "json",
+      ...params,
+    });
+
+  /**
+   * No description
+   *
+   * @tags Query
+   * @name QueryIcaAccount
+   * @summary Queries a ICAAccount by index.
+   * @request GET:/Stride-labs/stride/stakeibc/ica_account
+   */
+  queryIcaAccount = (params: RequestParams = {}) =>
+    this.request<StakeibcQueryGetICAAccountResponse, RpcStatus>({
+      path: `/Stride-labs/stride/stakeibc/ica_account`,
       method: "GET",
       format: "json",
       ...params,

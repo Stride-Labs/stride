@@ -1,0 +1,12 @@
+syntax = "proto3";
+package Stridelabs.stride.stakeibc;
+import "stakeibc/host_zone.proto";
+
+option go_package = "github.com/Stride-labs/stride/x/stakeibc/types";
+
+message ICAAccount {
+  string address = 1; 
+  int32 balance = 2; 
+  int32 delegatedBalance = 3; 
+  HostZone zone = 4;
+}
