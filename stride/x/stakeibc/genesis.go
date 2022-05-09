@@ -9,6 +9,10 @@ import (
 // InitGenesis initializes the capability module's state from a provided genesis
 // state.
 func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) {
+	// Set if defined
+	if genState.HostZone != nil {
+		k.SetHostZone(ctx, *genState.HostZone)
+	}
 	// this line is used by starport scaffolding # genesis/module/init
 	k.SetPort(ctx, genState.PortId)
 	// Only try to bind to port if it is not already bound, since we may already own
@@ -28,6 +32,13 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) 
 func ExportGenesis(ctx sdk.Context, k keeper.Keeper) *types.GenesisState {
 	genesis := types.DefaultGenesis()
 	genesis.Params = k.GetParams(ctx)
+
+	genesis.PortId = k.GetPort(ctx)
+	// Get all hostZone
+	hostZone, found := k.GetHostZone(ctx)
+	if found {
+		genesis.HostZone = &hostZone
+	}
 	// this line is used by starport scaffolding # genesis/module/export
 
 	return genesis

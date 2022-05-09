@@ -4,6 +4,7 @@ import { Params } from "../stakeibc/params";
 import { Validator } from "../stakeibc/validator";
 import { Delegation } from "../stakeibc/delegation";
 import { MinValidatorRequirements } from "../stakeibc/min_validator_requirements";
+import { HostZone } from "../stakeibc/host_zone";
 
 export const protobufPackage = "Stridelabs.stride.stakeibc";
 
@@ -32,6 +33,12 @@ export interface QueryGetMinValidatorRequirementsRequest {}
 
 export interface QueryGetMinValidatorRequirementsResponse {
   MinValidatorRequirements: MinValidatorRequirements | undefined;
+}
+
+export interface QueryGetHostZoneRequest {}
+
+export interface QueryGetHostZoneResponse {
+  HostZone: HostZone | undefined;
 }
 
 const baseQueryParamsRequest: object = {};
@@ -519,6 +526,124 @@ export const QueryGetMinValidatorRequirementsResponse = {
   },
 };
 
+const baseQueryGetHostZoneRequest: object = {};
+
+export const QueryGetHostZoneRequest = {
+  encode(_: QueryGetHostZoneRequest, writer: Writer = Writer.create()): Writer {
+    return writer;
+  },
+
+  decode(input: Reader | Uint8Array, length?: number): QueryGetHostZoneRequest {
+    const reader = input instanceof Uint8Array ? new Reader(input) : input;
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = {
+      ...baseQueryGetHostZoneRequest,
+    } as QueryGetHostZoneRequest;
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(_: any): QueryGetHostZoneRequest {
+    const message = {
+      ...baseQueryGetHostZoneRequest,
+    } as QueryGetHostZoneRequest;
+    return message;
+  },
+
+  toJSON(_: QueryGetHostZoneRequest): unknown {
+    const obj: any = {};
+    return obj;
+  },
+
+  fromPartial(
+    _: DeepPartial<QueryGetHostZoneRequest>
+  ): QueryGetHostZoneRequest {
+    const message = {
+      ...baseQueryGetHostZoneRequest,
+    } as QueryGetHostZoneRequest;
+    return message;
+  },
+};
+
+const baseQueryGetHostZoneResponse: object = {};
+
+export const QueryGetHostZoneResponse = {
+  encode(
+    message: QueryGetHostZoneResponse,
+    writer: Writer = Writer.create()
+  ): Writer {
+    if (message.HostZone !== undefined) {
+      HostZone.encode(message.HostZone, writer.uint32(10).fork()).ldelim();
+    }
+    return writer;
+  },
+
+  decode(
+    input: Reader | Uint8Array,
+    length?: number
+  ): QueryGetHostZoneResponse {
+    const reader = input instanceof Uint8Array ? new Reader(input) : input;
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = {
+      ...baseQueryGetHostZoneResponse,
+    } as QueryGetHostZoneResponse;
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.HostZone = HostZone.decode(reader, reader.uint32());
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): QueryGetHostZoneResponse {
+    const message = {
+      ...baseQueryGetHostZoneResponse,
+    } as QueryGetHostZoneResponse;
+    if (object.HostZone !== undefined && object.HostZone !== null) {
+      message.HostZone = HostZone.fromJSON(object.HostZone);
+    } else {
+      message.HostZone = undefined;
+    }
+    return message;
+  },
+
+  toJSON(message: QueryGetHostZoneResponse): unknown {
+    const obj: any = {};
+    message.HostZone !== undefined &&
+      (obj.HostZone = message.HostZone
+        ? HostZone.toJSON(message.HostZone)
+        : undefined);
+    return obj;
+  },
+
+  fromPartial(
+    object: DeepPartial<QueryGetHostZoneResponse>
+  ): QueryGetHostZoneResponse {
+    const message = {
+      ...baseQueryGetHostZoneResponse,
+    } as QueryGetHostZoneResponse;
+    if (object.HostZone !== undefined && object.HostZone !== null) {
+      message.HostZone = HostZone.fromPartial(object.HostZone);
+    } else {
+      message.HostZone = undefined;
+    }
+    return message;
+  },
+};
+
 /** Query defines the gRPC querier service. */
 export interface Query {
   /** Parameters queries the parameters of the module. */
@@ -535,6 +660,8 @@ export interface Query {
   MinValidatorRequirements(
     request: QueryGetMinValidatorRequirementsRequest
   ): Promise<QueryGetMinValidatorRequirementsResponse>;
+  /** Queries a HostZone by index. */
+  HostZone(request: QueryGetHostZoneRequest): Promise<QueryGetHostZoneResponse>;
 }
 
 export class QueryClientImpl implements Query {
@@ -593,6 +720,20 @@ export class QueryClientImpl implements Query {
     );
     return promise.then((data) =>
       QueryGetMinValidatorRequirementsResponse.decode(new Reader(data))
+    );
+  }
+
+  HostZone(
+    request: QueryGetHostZoneRequest
+  ): Promise<QueryGetHostZoneResponse> {
+    const data = QueryGetHostZoneRequest.encode(request).finish();
+    const promise = this.rpc.request(
+      "Stridelabs.stride.stakeibc.Query",
+      "HostZone",
+      data
+    );
+    return promise.then((data) =>
+      QueryGetHostZoneResponse.decode(new Reader(data))
     );
   }
 }

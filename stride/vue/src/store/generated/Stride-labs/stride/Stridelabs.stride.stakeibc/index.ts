@@ -1,6 +1,7 @@
 import { txClient, queryClient, MissingWalletError , registry} from './module'
 
 import { Delegation } from "./module/types/stakeibc/delegation"
+import { HostZone } from "./module/types/stakeibc/host_zone"
 import { MinValidatorRequirements } from "./module/types/stakeibc/min_validator_requirements"
 import { StakeibcPacketData } from "./module/types/stakeibc/packet"
 import { NoData } from "./module/types/stakeibc/packet"
@@ -8,7 +9,7 @@ import { Params } from "./module/types/stakeibc/params"
 import { Validator } from "./module/types/stakeibc/validator"
 
 
-export { Delegation, MinValidatorRequirements, StakeibcPacketData, NoData, Params, Validator };
+export { Delegation, HostZone, MinValidatorRequirements, StakeibcPacketData, NoData, Params, Validator };
 
 async function initTxClient(vuexGetters) {
 	return await txClient(vuexGetters['common/wallet/signer'], {
@@ -50,9 +51,11 @@ const getDefaultState = () => {
 				Validator: {},
 				Delegation: {},
 				MinValidatorRequirements: {},
+				HostZone: {},
 				
 				_Structure: {
 						Delegation: getStructure(Delegation.fromPartial({})),
+						HostZone: getStructure(HostZone.fromPartial({})),
 						MinValidatorRequirements: getStructure(MinValidatorRequirements.fromPartial({})),
 						StakeibcPacketData: getStructure(StakeibcPacketData.fromPartial({})),
 						NoData: getStructure(NoData.fromPartial({})),
@@ -109,6 +112,12 @@ export default {
 						(<any> params).query=null
 					}
 			return state.MinValidatorRequirements[JSON.stringify(params)] ?? {}
+		},
+				getHostZone: (state) => (params = { params: {}}) => {
+					if (!(<any> params).query) {
+						(<any> params).query=null
+					}
+			return state.HostZone[JSON.stringify(params)] ?? {}
 		},
 				
 		getTypeStructure: (state) => (type) => {
@@ -227,6 +236,28 @@ export default {
 				return getters['getMinValidatorRequirements']( { params: {...key}, query}) ?? {}
 			} catch (e) {
 				throw new Error('QueryClient:QueryMinValidatorRequirements API Node Unavailable. Could not perform query: ' + e.message)
+				
+			}
+		},
+		
+		
+		
+		
+		 		
+		
+		
+		async QueryHostZone({ commit, rootGetters, getters }, { options: { subscribe, all} = { subscribe:false, all:false}, params, query=null }) {
+			try {
+				const key = params ?? {};
+				const queryClient=await initQueryClient(rootGetters)
+				let value= (await queryClient.queryHostZone()).data
+				
+					
+				commit('QUERY', { query: 'HostZone', key: { params: {...key}, query}, value })
+				if (subscribe) commit('SUBSCRIBE', { action: 'QueryHostZone', payload: { options: { all }, params: {...key},query }})
+				return getters['getHostZone']( { params: {...key}, query}) ?? {}
+			} catch (e) {
+				throw new Error('QueryClient:QueryHostZone API Node Unavailable. Could not perform query: ' + e.message)
 				
 			}
 		},
