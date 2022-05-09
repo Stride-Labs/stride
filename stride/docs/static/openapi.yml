@@ -28074,6 +28074,143 @@ paths:
           format: uint64
       tags:
         - Query
+  /Stride-labs/stride/stakeibc/delegation:
+    get:
+      summary: Queries a Delegation by index.
+      operationId: StridelabsStrideStakeibcDelegation
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              Delegation:
+                type: object
+                properties:
+                  delegateAcctAddress:
+                    type: string
+                  validator:
+                    type: object
+                    properties:
+                      name:
+                        type: string
+                      address:
+                        type: string
+                      status:
+                        type: string
+                      commissionRate:
+                        type: integer
+                        format: int32
+                      delegationAmt:
+                        type: integer
+                        format: int32
+                  amt:
+                    type: integer
+                    format: int32
+        default:
+          description: An unexpected error response.
+          schema:
+            type: object
+            properties:
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    '@type':
+                      type: string
+                  additionalProperties: {}
+      tags:
+        - Query
+  /Stride-labs/stride/stakeibc/min_validator_requirements:
+    get:
+      summary: Queries a MinValidatorRequirements by index.
+      operationId: StridelabsStrideStakeibcMinValidatorRequirements
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              MinValidatorRequirements:
+                type: object
+                properties:
+                  commissionRate:
+                    type: integer
+                    format: int32
+                  uptime:
+                    type: integer
+                    format: int32
+        default:
+          description: An unexpected error response.
+          schema:
+            type: object
+            properties:
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    '@type':
+                      type: string
+                  additionalProperties: {}
+      tags:
+        - Query
+  /Stride-labs/stride/stakeibc/validator:
+    get:
+      summary: Queries a Validator by index.
+      operationId: StridelabsStrideStakeibcValidator
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              Validator:
+                type: object
+                properties:
+                  name:
+                    type: string
+                  address:
+                    type: string
+                  status:
+                    type: string
+                  commissionRate:
+                    type: integer
+                    format: int32
+                  delegationAmt:
+                    type: integer
+                    format: int32
+        default:
+          description: An unexpected error response.
+          schema:
+            type: object
+            properties:
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    '@type':
+                      type: string
+                  additionalProperties: {}
+      tags:
+        - Query
   /Stridelabs/stride/stakeibc/params:
     get:
       summary: Parameters queries the parameters of the module.
@@ -48284,9 +48421,97 @@ definitions:
     description: >-
       QueryAppVersionResponse is the response type for the Query/AppVersion RPC
       method.
+  Stridelabs.stride.stakeibc.Delegation:
+    type: object
+    properties:
+      delegateAcctAddress:
+        type: string
+      validator:
+        type: object
+        properties:
+          name:
+            type: string
+          address:
+            type: string
+          status:
+            type: string
+          commissionRate:
+            type: integer
+            format: int32
+          delegationAmt:
+            type: integer
+            format: int32
+      amt:
+        type: integer
+        format: int32
+  Stridelabs.stride.stakeibc.MinValidatorRequirements:
+    type: object
+    properties:
+      commissionRate:
+        type: integer
+        format: int32
+      uptime:
+        type: integer
+        format: int32
   Stridelabs.stride.stakeibc.Params:
     type: object
     description: Params defines the parameters for the module.
+  Stridelabs.stride.stakeibc.QueryGetDelegationResponse:
+    type: object
+    properties:
+      Delegation:
+        type: object
+        properties:
+          delegateAcctAddress:
+            type: string
+          validator:
+            type: object
+            properties:
+              name:
+                type: string
+              address:
+                type: string
+              status:
+                type: string
+              commissionRate:
+                type: integer
+                format: int32
+              delegationAmt:
+                type: integer
+                format: int32
+          amt:
+            type: integer
+            format: int32
+  Stridelabs.stride.stakeibc.QueryGetMinValidatorRequirementsResponse:
+    type: object
+    properties:
+      MinValidatorRequirements:
+        type: object
+        properties:
+          commissionRate:
+            type: integer
+            format: int32
+          uptime:
+            type: integer
+            format: int32
+  Stridelabs.stride.stakeibc.QueryGetValidatorResponse:
+    type: object
+    properties:
+      Validator:
+        type: object
+        properties:
+          name:
+            type: string
+          address:
+            type: string
+          status:
+            type: string
+          commissionRate:
+            type: integer
+            format: int32
+          delegationAmt:
+            type: integer
+            format: int32
   Stridelabs.stride.stakeibc.QueryParamsResponse:
     type: object
     properties:
@@ -48294,6 +48519,21 @@ definitions:
         description: params holds all the parameters of this module.
         type: object
     description: QueryParamsResponse is response type for the Query/Params RPC method.
+  Stridelabs.stride.stakeibc.Validator:
+    type: object
+    properties:
+      name:
+        type: string
+      address:
+        type: string
+      status:
+        type: string
+      commissionRate:
+        type: integer
+        format: int32
+      delegationAmt:
+        type: integer
+        format: int32
   tendermint.spn.monitoringp.ConnectionChannelID:
     type: object
     properties:
