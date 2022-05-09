@@ -2,6 +2,7 @@ syntax = "proto3";
 package Stridelabs.stride.stakeibc;
 
 import "gogoproto/gogo.proto";
+import "stakeibc/ica_account.proto";
 
 option go_package = "github.com/Stride-labs/stride/x/stakeibc/types";
 
@@ -14,11 +15,11 @@ message Params {
   uint64 invest_deposits_interval = 2;
   uint64 calc_exchange_rate_interval = 3;
 
-  float64 stride_fee = 4;
+  double stride_fee = 4;
   // fee_address_weights stores which addresses to 
   // send the Stride fee too, as well as what portion
   // of the fee each address is entitled to
-  map<ICAAccount, uint64> fee_address_weights = 5;
+  map<string, string> zone_fee_address = 5;
 
 }
 

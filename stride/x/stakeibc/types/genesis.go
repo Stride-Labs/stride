@@ -12,7 +12,8 @@ const DefaultIndex uint64 = 1
 func DefaultGenesis() *GenesisState {
 	zones := []HostZone{}
 	return &GenesisState{
-		// this line is used by starport scaffolding # genesis/types/default
+		ICAAccount: nil,
+// this line is used by starport scaffolding # genesis/types/default
 		DefaultParams(),
 		PortID,
 		zones,
