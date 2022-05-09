@@ -22,13 +22,12 @@ const (
 	// PortID is the default port id that module binds to
 	PortID = "stakeibc"
 
-	ValidatorKey = "Validator-value-"
+	ValidatorKey  = "Validator-value-"
 	DelegationKey = "Delegation-value-"
-	
-	MinValidatorRequirementsKey = "MinValidatorRequirements-value-"
-	HostZoneKey = "HostZone-value-"
-	ICAAccountKey= "ICAAccount-value-"
 
+	MinValidatorRequirementsKey = "MinValidatorRequirements-value-"
+	HostZoneKey                 = "HostZone-value-"
+	ICAAccountKey               = "ICAAccount-value-"
 )
 
 var (

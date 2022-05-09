@@ -27,11 +27,11 @@ func TestGenesisState_Validate(t *testing.T) {
 					ChannelId: "36",
 				},
 				ICAAccount: &types.ICAAccount{
-		Address: "79",
-Balance: 2,
-DelegatedBalance: 8,
-},
-// this line is used by starport scaffolding # types/genesis/validField
+					Address:          "79",
+					Balance:          2,
+					DelegatedBalance: 8,
+				},
+				// this line is used by starport scaffolding # types/genesis/validField
 			},
 			valid: true,
 		},

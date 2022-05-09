@@ -12,14 +12,14 @@ import (
 	"github.com/Stride-labs/stride/testutil/network"
 	"github.com/Stride-labs/stride/testutil/nullify"
 	"github.com/Stride-labs/stride/x/stakeibc/client/cli"
-    "github.com/Stride-labs/stride/x/stakeibc/types"
+	"github.com/Stride-labs/stride/x/stakeibc/types"
 )
 
 func networkWithICAAccountObjects(t *testing.T) (*network.Network, types.ICAAccount) {
 	t.Helper()
 	cfg := network.DefaultConfig()
 	state := types.GenesisState{}
-    require.NoError(t, cfg.Codec.UnmarshalJSON(cfg.GenesisState[types.ModuleName], &state))
+	require.NoError(t, cfg.Codec.UnmarshalJSON(cfg.GenesisState[types.ModuleName], &state))
 
 	iCAAccount := &types.ICAAccount{}
 	nullify.Fill(&iCAAccount)
@@ -71,4 +71,3 @@ func TestShowICAAccount(t *testing.T) {
 		})
 	}
 }
-

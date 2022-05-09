@@ -96,6 +96,9 @@ import (
 	monitoringptypes "github.com/tendermint/spn/x/monitoringp/types"
 
 	"github.com/Stride-labs/stride/docs"
+	epochsmodule "github.com/Stride-labs/stride/x/epochs"
+	epochsmodulekeeper "github.com/Stride-labs/stride/x/epochs/keeper"
+	epochsmoduletypes "github.com/Stride-labs/stride/x/epochs/types"
 	stakeibcmodule "github.com/Stride-labs/stride/x/stakeibc"
 	stakeibcmodulekeeper "github.com/Stride-labs/stride/x/stakeibc/keeper"
 	stakeibcmoduletypes "github.com/Stride-labs/stride/x/stakeibc/types"
@@ -153,6 +156,7 @@ var (
 		vesting.AppModuleBasic{},
 		monitoringp.AppModuleBasic{},
 		stakeibcmodule.AppModuleBasic{},
+		epochsmodule.AppModuleBasic{},
 		// this line is used by starport scaffolding # stargate/app/moduleBasic
 	)
 
@@ -227,6 +231,8 @@ type App struct {
 
 	ScopedStakeibcKeeper capabilitykeeper.ScopedKeeper
 	StakeibcKeeper       stakeibcmodulekeeper.Keeper
+
+	EpochsKeeper epochsmodulekeeper.Keeper
 	// this line is used by starport scaffolding # stargate/app/keeperDeclaration
 
 	// mm is the module manager
@@ -264,6 +270,7 @@ func New(
 		govtypes.StoreKey, paramstypes.StoreKey, ibchost.StoreKey, upgradetypes.StoreKey, feegrant.StoreKey,
 		evidencetypes.StoreKey, ibctransfertypes.StoreKey, capabilitytypes.StoreKey, monitoringptypes.StoreKey,
 		stakeibcmoduletypes.StoreKey,
+		epochsmoduletypes.StoreKey,
 		// this line is used by starport scaffolding # stargate/app/storeKey
 	)
 	tkeys := sdk.NewTransientStoreKeys(paramstypes.TStoreKey)
@@ -391,6 +398,14 @@ func New(
 	)
 	stakeibcModule := stakeibcmodule.NewAppModule(appCodec, app.StakeibcKeeper, app.AccountKeeper, app.BankKeeper)
 
+	app.EpochsKeeper = *epochsmodulekeeper.NewKeeper(
+		appCodec,
+		keys[epochsmoduletypes.StoreKey],
+		keys[epochsmoduletypes.MemStoreKey],
+		app.GetSubspace(epochsmoduletypes.ModuleName),
+	)
+	epochsModule := epochsmodule.NewAppModule(appCodec, app.EpochsKeeper, app.AccountKeeper, app.BankKeeper)
+
 	// this line is used by starport scaffolding # stargate/app/keeperDefinition
 
 	// Create static IBC router, add transfer route, then set and seal it
@@ -433,6 +448,7 @@ func New(
 		transferModule,
 		monitoringModule,
 		stakeibcModule,
+		epochsModule,
 		// this line is used by starport scaffolding # stargate/app/appModule
 	)
 
@@ -460,6 +476,7 @@ func New(
 		paramstypes.ModuleName,
 		monitoringptypes.ModuleName,
 		stakeibcmoduletypes.ModuleName,
+		epochsmoduletypes.ModuleName,
 		// this line is used by starport scaffolding # stargate/app/beginBlockers
 	)
 
@@ -483,6 +500,7 @@ func New(
 		ibctransfertypes.ModuleName,
 		monitoringptypes.ModuleName,
 		stakeibcmoduletypes.ModuleName,
+		epochsmoduletypes.ModuleName,
 		// this line is used by starport scaffolding # stargate/app/endBlockers
 	)
 
@@ -511,6 +529,7 @@ func New(
 		feegrant.ModuleName,
 		monitoringptypes.ModuleName,
 		stakeibcmoduletypes.ModuleName,
+		epochsmoduletypes.ModuleName,
 		// this line is used by starport scaffolding # stargate/app/initGenesis
 	)
 
@@ -535,6 +554,7 @@ func New(
 		transferModule,
 		monitoringModule,
 		stakeibcModule,
+		epochsModule,
 		// this line is used by starport scaffolding # stargate/app/appModule
 	)
 	app.sm.RegisterStoreDecoders()
@@ -725,6 +745,7 @@ func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino
 	paramsKeeper.Subspace(ibchost.ModuleName)
 	paramsKeeper.Subspace(monitoringptypes.ModuleName)
 	paramsKeeper.Subspace(stakeibcmoduletypes.ModuleName)
+	paramsKeeper.Subspace(epochsmoduletypes.ModuleName)
 	// this line is used by starport scaffolding # stargate/app/paramSubspace
 
 	return paramsKeeper
