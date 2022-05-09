@@ -13,6 +13,6 @@ message GenesisState {
   Params params = 1 [(gogoproto.nullable) = false];
   string port_id = 2;
   // list of zones that are registered by the protocol
-  repeated HostZone hostZone = 3;
+  repeated HostZone hostZone = 3 [(gogoproto.nullable) = false];
   // this line is used by starport scaffolding # genesis/proto/state
 }
