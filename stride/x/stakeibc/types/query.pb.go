@@ -6,7 +6,7 @@ package types
 import (
 	context "context"
 	fmt "fmt"
-	_ "github.com/cosmos/cosmos-sdk/types/query"
+	query "github.com/cosmos/cosmos-sdk/types/query"
 	_ "github.com/gogo/protobuf/gogoproto"
 	grpc1 "github.com/gogo/protobuf/grpc"
 	proto "github.com/gogo/protobuf/proto"
@@ -357,86 +357,6 @@ func (m *QueryGetMinValidatorRequirementsResponse) GetMinValidatorRequirements()
 	return MinValidatorRequirements{}
 }
 
-type QueryGetHostZoneRequest struct {
-}
-
-func (m *QueryGetHostZoneRequest) Reset()         { *m = QueryGetHostZoneRequest{} }
-func (m *QueryGetHostZoneRequest) String() string { return proto.CompactTextString(m) }
-func (*QueryGetHostZoneRequest) ProtoMessage()    {}
-func (*QueryGetHostZoneRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_cc8fd2cb3c1d11f2, []int{8}
-}
-func (m *QueryGetHostZoneRequest) XXX_Unmarshal(b []byte) error {
-	return m.Unmarshal(b)
-}
-func (m *QueryGetHostZoneRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	if deterministic {
-		return xxx_messageInfo_QueryGetHostZoneRequest.Marshal(b, m, deterministic)
-	} else {
-		b = b[:cap(b)]
-		n, err := m.MarshalToSizedBuffer(b)
-		if err != nil {
-			return nil, err
-		}
-		return b[:n], nil
-	}
-}
-func (m *QueryGetHostZoneRequest) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_QueryGetHostZoneRequest.Merge(m, src)
-}
-func (m *QueryGetHostZoneRequest) XXX_Size() int {
-	return m.Size()
-}
-func (m *QueryGetHostZoneRequest) XXX_DiscardUnknown() {
-	xxx_messageInfo_QueryGetHostZoneRequest.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_QueryGetHostZoneRequest proto.InternalMessageInfo
-
-type QueryGetHostZoneResponse struct {
-	HostZone HostZone `protobuf:"bytes,1,opt,name=HostZone,proto3" json:"HostZone"`
-}
-
-func (m *QueryGetHostZoneResponse) Reset()         { *m = QueryGetHostZoneResponse{} }
-func (m *QueryGetHostZoneResponse) String() string { return proto.CompactTextString(m) }
-func (*QueryGetHostZoneResponse) ProtoMessage()    {}
-func (*QueryGetHostZoneResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_cc8fd2cb3c1d11f2, []int{9}
-}
-func (m *QueryGetHostZoneResponse) XXX_Unmarshal(b []byte) error {
-	return m.Unmarshal(b)
-}
-func (m *QueryGetHostZoneResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	if deterministic {
-		return xxx_messageInfo_QueryGetHostZoneResponse.Marshal(b, m, deterministic)
-	} else {
-		b = b[:cap(b)]
-		n, err := m.MarshalToSizedBuffer(b)
-		if err != nil {
-			return nil, err
-		}
-		return b[:n], nil
-	}
-}
-func (m *QueryGetHostZoneResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_QueryGetHostZoneResponse.Merge(m, src)
-}
-func (m *QueryGetHostZoneResponse) XXX_Size() int {
-	return m.Size()
-}
-func (m *QueryGetHostZoneResponse) XXX_DiscardUnknown() {
-	xxx_messageInfo_QueryGetHostZoneResponse.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_QueryGetHostZoneResponse proto.InternalMessageInfo
-
-func (m *QueryGetHostZoneResponse) GetHostZone() HostZone {
-	if m != nil {
-		return m.HostZone
-	}
-	return HostZone{}
-}
-
 type QueryGetICAAccountRequest struct {
 }
 
@@ -444,7 +364,7 @@ func (m *QueryGetICAAccountRequest) Reset()         { *m = QueryGetICAAccountReq
 func (m *QueryGetICAAccountRequest) String() string { return proto.CompactTextString(m) }
 func (*QueryGetICAAccountRequest) ProtoMessage()    {}
 func (*QueryGetICAAccountRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_cc8fd2cb3c1d11f2, []int{10}
+	return fileDescriptor_cc8fd2cb3c1d11f2, []int{8}
 }
 func (m *QueryGetICAAccountRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -481,7 +401,7 @@ func (m *QueryGetICAAccountResponse) Reset()         { *m = QueryGetICAAccountRe
 func (m *QueryGetICAAccountResponse) String() string { return proto.CompactTextString(m) }
 func (*QueryGetICAAccountResponse) ProtoMessage()    {}
 func (*QueryGetICAAccountResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_cc8fd2cb3c1d11f2, []int{11}
+	return fileDescriptor_cc8fd2cb3c1d11f2, []int{9}
 }
 func (m *QueryGetICAAccountResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -517,6 +437,190 @@ func (m *QueryGetICAAccountResponse) GetICAAccount() ICAAccount {
 	return ICAAccount{}
 }
 
+type QueryGetHostZoneRequest struct {
+	Id uint64 `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+}
+
+func (m *QueryGetHostZoneRequest) Reset()         { *m = QueryGetHostZoneRequest{} }
+func (m *QueryGetHostZoneRequest) String() string { return proto.CompactTextString(m) }
+func (*QueryGetHostZoneRequest) ProtoMessage()    {}
+func (*QueryGetHostZoneRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_cc8fd2cb3c1d11f2, []int{10}
+}
+func (m *QueryGetHostZoneRequest) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *QueryGetHostZoneRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_QueryGetHostZoneRequest.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *QueryGetHostZoneRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryGetHostZoneRequest.Merge(m, src)
+}
+func (m *QueryGetHostZoneRequest) XXX_Size() int {
+	return m.Size()
+}
+func (m *QueryGetHostZoneRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryGetHostZoneRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_QueryGetHostZoneRequest proto.InternalMessageInfo
+
+func (m *QueryGetHostZoneRequest) GetId() uint64 {
+	if m != nil {
+		return m.Id
+	}
+	return 0
+}
+
+type QueryGetHostZoneResponse struct {
+	HostZone HostZone `protobuf:"bytes,1,opt,name=HostZone,proto3" json:"HostZone"`
+}
+
+func (m *QueryGetHostZoneResponse) Reset()         { *m = QueryGetHostZoneResponse{} }
+func (m *QueryGetHostZoneResponse) String() string { return proto.CompactTextString(m) }
+func (*QueryGetHostZoneResponse) ProtoMessage()    {}
+func (*QueryGetHostZoneResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_cc8fd2cb3c1d11f2, []int{11}
+}
+func (m *QueryGetHostZoneResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *QueryGetHostZoneResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_QueryGetHostZoneResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *QueryGetHostZoneResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryGetHostZoneResponse.Merge(m, src)
+}
+func (m *QueryGetHostZoneResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *QueryGetHostZoneResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryGetHostZoneResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_QueryGetHostZoneResponse proto.InternalMessageInfo
+
+func (m *QueryGetHostZoneResponse) GetHostZone() HostZone {
+	if m != nil {
+		return m.HostZone
+	}
+	return HostZone{}
+}
+
+type QueryAllHostZoneRequest struct {
+	Pagination *query.PageRequest `protobuf:"bytes,1,opt,name=pagination,proto3" json:"pagination,omitempty"`
+}
+
+func (m *QueryAllHostZoneRequest) Reset()         { *m = QueryAllHostZoneRequest{} }
+func (m *QueryAllHostZoneRequest) String() string { return proto.CompactTextString(m) }
+func (*QueryAllHostZoneRequest) ProtoMessage()    {}
+func (*QueryAllHostZoneRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_cc8fd2cb3c1d11f2, []int{12}
+}
+func (m *QueryAllHostZoneRequest) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *QueryAllHostZoneRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_QueryAllHostZoneRequest.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *QueryAllHostZoneRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryAllHostZoneRequest.Merge(m, src)
+}
+func (m *QueryAllHostZoneRequest) XXX_Size() int {
+	return m.Size()
+}
+func (m *QueryAllHostZoneRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryAllHostZoneRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_QueryAllHostZoneRequest proto.InternalMessageInfo
+
+func (m *QueryAllHostZoneRequest) GetPagination() *query.PageRequest {
+	if m != nil {
+		return m.Pagination
+	}
+	return nil
+}
+
+type QueryAllHostZoneResponse struct {
+	HostZone   []HostZone          `protobuf:"bytes,1,rep,name=HostZone,proto3" json:"HostZone"`
+	Pagination *query.PageResponse `protobuf:"bytes,2,opt,name=pagination,proto3" json:"pagination,omitempty"`
+}
+
+func (m *QueryAllHostZoneResponse) Reset()         { *m = QueryAllHostZoneResponse{} }
+func (m *QueryAllHostZoneResponse) String() string { return proto.CompactTextString(m) }
+func (*QueryAllHostZoneResponse) ProtoMessage()    {}
+func (*QueryAllHostZoneResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_cc8fd2cb3c1d11f2, []int{13}
+}
+func (m *QueryAllHostZoneResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *QueryAllHostZoneResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_QueryAllHostZoneResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *QueryAllHostZoneResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryAllHostZoneResponse.Merge(m, src)
+}
+func (m *QueryAllHostZoneResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *QueryAllHostZoneResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryAllHostZoneResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_QueryAllHostZoneResponse proto.InternalMessageInfo
+
+func (m *QueryAllHostZoneResponse) GetHostZone() []HostZone {
+	if m != nil {
+		return m.HostZone
+	}
+	return nil
+}
+
+func (m *QueryAllHostZoneResponse) GetPagination() *query.PageResponse {
+	if m != nil {
+		return m.Pagination
+	}
+	return nil
+}
+
 func init() {
 	proto.RegisterType((*QueryParamsRequest)(nil), "Stridelabs.stride.stakeibc.QueryParamsRequest")
 	proto.RegisterType((*QueryParamsResponse)(nil), "Stridelabs.stride.stakeibc.QueryParamsResponse")
@@ -526,59 +630,68 @@ func init() {
 	proto.RegisterType((*QueryGetDelegationResponse)(nil), "Stridelabs.stride.stakeibc.QueryGetDelegationResponse")
 	proto.RegisterType((*QueryGetMinValidatorRequirementsRequest)(nil), "Stridelabs.stride.stakeibc.QueryGetMinValidatorRequirementsRequest")
 	proto.RegisterType((*QueryGetMinValidatorRequirementsResponse)(nil), "Stridelabs.stride.stakeibc.QueryGetMinValidatorRequirementsResponse")
-	proto.RegisterType((*QueryGetHostZoneRequest)(nil), "Stridelabs.stride.stakeibc.QueryGetHostZoneRequest")
-	proto.RegisterType((*QueryGetHostZoneResponse)(nil), "Stridelabs.stride.stakeibc.QueryGetHostZoneResponse")
 	proto.RegisterType((*QueryGetICAAccountRequest)(nil), "Stridelabs.stride.stakeibc.QueryGetICAAccountRequest")
 	proto.RegisterType((*QueryGetICAAccountResponse)(nil), "Stridelabs.stride.stakeibc.QueryGetICAAccountResponse")
+	proto.RegisterType((*QueryGetHostZoneRequest)(nil), "Stridelabs.stride.stakeibc.QueryGetHostZoneRequest")
+	proto.RegisterType((*QueryGetHostZoneResponse)(nil), "Stridelabs.stride.stakeibc.QueryGetHostZoneResponse")
+	proto.RegisterType((*QueryAllHostZoneRequest)(nil), "Stridelabs.stride.stakeibc.QueryAllHostZoneRequest")
+	proto.RegisterType((*QueryAllHostZoneResponse)(nil), "Stridelabs.stride.stakeibc.QueryAllHostZoneResponse")
 }
 
 func init() { proto.RegisterFile("stakeibc/query.proto", fileDescriptor_cc8fd2cb3c1d11f2) }
 
 var fileDescriptor_cc8fd2cb3c1d11f2 = []byte{
-	// 683 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xa4, 0x95, 0xdf, 0x6a, 0xd4, 0x4e,
-	0x14, 0xc7, 0x77, 0x7e, 0xfc, 0x2c, 0x75, 0xbc, 0x1b, 0x2b, 0x6e, 0xa3, 0x44, 0x09, 0xb5, 0xdd,
-	0x16, 0xcc, 0xd8, 0x3f, 0x2a, 0x5e, 0x69, 0xff, 0xa0, 0x2d, 0x28, 0x68, 0x05, 0x85, 0xde, 0x2c,
-	0x93, 0x74, 0x4c, 0xa3, 0xbb, 0x99, 0x34, 0x33, 0x5b, 0xac, 0x97, 0x3e, 0x81, 0x20, 0xbe, 0x80,
-	0x20, 0x78, 0xa1, 0x2f, 0xe0, 0x13, 0xf4, 0xb2, 0xe0, 0x8d, 0x57, 0x22, 0x5d, 0xf1, 0x39, 0xa4,
-	0xc9, 0xfc, 0x49, 0xbb, 0x49, 0x36, 0x8b, 0x77, 0x61, 0xce, 0xf9, 0x9e, 0xf3, 0x39, 0x39, 0x73,
-	0xce, 0xc0, 0x09, 0x2e, 0xc8, 0x2b, 0x1a, 0x7a, 0x3e, 0xde, 0xed, 0xd1, 0x64, 0xdf, 0x8d, 0x13,
-	0x26, 0x18, 0xb2, 0x9e, 0x8a, 0x24, 0xdc, 0xa6, 0x1d, 0xe2, 0x71, 0x97, 0xa7, 0x9f, 0xae, 0xf2,
-	0xb3, 0x26, 0x02, 0x16, 0xb0, 0xd4, 0x0d, 0x1f, 0x7f, 0x65, 0x0a, 0xeb, 0x72, 0xc0, 0x58, 0xd0,
-	0xa1, 0x98, 0xc4, 0x21, 0x26, 0x51, 0xc4, 0x04, 0x11, 0x21, 0x8b, 0xb8, 0xb4, 0xce, 0xf9, 0x8c,
-	0x77, 0x19, 0xc7, 0x1e, 0xe1, 0x34, 0x4b, 0x84, 0xf7, 0xe6, 0x3d, 0x2a, 0xc8, 0x3c, 0x8e, 0x49,
-	0x10, 0x46, 0xa9, 0xb3, 0xf4, 0xbd, 0xa0, 0x89, 0x62, 0x92, 0x90, 0xae, 0x0a, 0xd1, 0xd4, 0xc7,
-	0x7b, 0xa4, 0x13, 0x6e, 0x13, 0xc1, 0x12, 0x69, 0x99, 0xd4, 0x96, 0x6d, 0xda, 0xa1, 0x41, 0x3e,
-	0xd6, 0xac, 0x36, 0x75, 0xc3, 0xa8, 0xad, 0x85, 0xed, 0x84, 0xee, 0xf6, 0xc2, 0x84, 0x76, 0x69,
-	0x24, 0x06, 0xe3, 0xef, 0x30, 0x2e, 0xda, 0x6f, 0x58, 0x44, 0xa5, 0xc5, 0xd2, 0x96, 0xd0, 0x27,
-	0x6d, 0xe2, 0xfb, 0xac, 0x17, 0x89, 0xcc, 0xe6, 0x4c, 0x40, 0xf4, 0xe4, 0xb8, 0x9c, 0xc7, 0x29,
-	0xea, 0x26, 0xdd, 0xed, 0x51, 0x2e, 0x9c, 0xe7, 0xf0, 0xfc, 0x89, 0x53, 0x1e, 0xb3, 0x88, 0x53,
-	0x74, 0x0f, 0x8e, 0x65, 0x25, 0x35, 0xc1, 0x55, 0xd0, 0x3a, 0xb7, 0xe0, 0xb8, 0xe5, 0xbf, 0xd9,
-	0xcd, 0xb4, 0x2b, 0xff, 0x1f, 0xfc, 0xbc, 0xd2, 0xd8, 0x94, 0x3a, 0xc7, 0x82, 0xcd, 0x34, 0xf0,
-	0x03, 0x2a, 0x9e, 0xa9, 0x62, 0x54, 0xd2, 0x17, 0x70, 0xb2, 0xc0, 0x26, 0x53, 0x6f, 0xc0, 0xb3,
-	0xfa, 0x50, 0x66, 0xbf, 0x56, 0x95, 0x5d, 0x3b, 0x4b, 0x00, 0xa3, 0x76, 0x2e, 0x99, 0x3c, 0x6b,
-	0xfa, 0x7f, 0x2b, 0x88, 0x97, 0xd0, 0x2a, 0x32, 0x4a, 0x8a, 0x87, 0x10, 0x9a, 0x53, 0x89, 0x31,
-	0x5d, 0x85, 0x61, 0xbc, 0x25, 0x47, 0x4e, 0xef, 0xcc, 0xc2, 0x19, 0x95, 0xeb, 0x51, 0x18, 0x9d,
-	0xf8, 0x1f, 0xaa, 0xb7, 0x0a, 0xeb, 0x23, 0x80, 0xad, 0xe1, 0xbe, 0x92, 0x72, 0x0f, 0x36, 0xcb,
-	0x7c, 0x24, 0xf3, 0x52, 0x15, 0x73, 0x99, 0x56, 0x56, 0x50, 0x1a, 0xdb, 0x99, 0x84, 0x17, 0x15,
-	0xe3, 0x3a, 0xe3, 0x62, 0x8b, 0x45, 0x54, 0xf1, 0x7b, 0xa6, 0xef, 0xc6, 0x24, 0x71, 0xef, 0xc3,
-	0x71, 0x75, 0x26, 0xf1, 0xa6, 0xaa, 0xf0, 0x94, 0xaf, 0xc4, 0xd1, 0xda, 0x7c, 0x5f, 0x37, 0x56,
-	0x97, 0x97, 0xb3, 0x6b, 0x5e, 0xd0, 0xd7, 0xbc, 0xd1, 0xf4, 0xd5, 0x9c, 0xd6, 0xe9, 0xab, 0xf1,
-	0x56, 0x7d, 0x35, 0x27, 0x0b, 0xdf, 0xc6, 0xe1, 0x99, 0x34, 0x19, 0xfa, 0x00, 0xe0, 0x58, 0x36,
-	0x07, 0xc8, 0xad, 0x0a, 0x37, 0x38, 0x82, 0x16, 0xae, 0xed, 0x9f, 0xd5, 0xe0, 0xcc, 0xbd, 0xfd,
-	0xfe, 0xfb, 0xfd, 0x7f, 0x53, 0xc8, 0xc1, 0x46, 0x88, 0x33, 0x21, 0x3e, 0xb5, 0x91, 0xd0, 0x67,
-	0x90, 0x1b, 0x27, 0xb4, 0x34, 0x34, 0x55, 0xc1, 0xb8, 0x5a, 0x37, 0x47, 0x54, 0x49, 0x4c, 0x37,
-	0xc5, 0x6c, 0xa1, 0x69, 0x89, 0x79, 0xbd, 0x90, 0x53, 0x6f, 0x3a, 0xf4, 0x05, 0xe4, 0x67, 0x0e,
-	0xd5, 0xca, 0x3a, 0x30, 0xd6, 0xd6, 0xad, 0x51, 0x65, 0x92, 0x16, 0xa7, 0xb4, 0xb3, 0x68, 0xa6,
-	0x92, 0xd6, 0xac, 0x6d, 0xf4, 0x07, 0x94, 0x0f, 0x1f, 0x5a, 0xad, 0x43, 0x31, 0x64, 0x15, 0x58,
-	0x6b, 0xff, 0x16, 0x44, 0x16, 0x76, 0x37, 0x2d, 0xec, 0x0e, 0xba, 0x5d, 0x59, 0x58, 0xf9, 0xa3,
-	0x83, 0x3e, 0x01, 0x33, 0xb6, 0x68, 0xb1, 0x0e, 0xd3, 0xa9, 0x9d, 0x60, 0x2d, 0x8d, 0x26, 0x1a,
-	0xe9, 0xfe, 0xe8, 0x27, 0x10, 0x7d, 0x05, 0xf9, 0xd9, 0xae, 0x77, 0x7f, 0x06, 0xd6, 0x47, 0xbd,
-	0xfb, 0x33, 0xb8, 0x58, 0x9c, 0x1b, 0x29, 0xed, 0x1c, 0x6a, 0x55, 0xd2, 0xe6, 0x9e, 0xe5, 0x95,
-	0xf5, 0x83, 0x23, 0x1b, 0x1c, 0x1e, 0xd9, 0xe0, 0xd7, 0x91, 0x0d, 0xde, 0xf5, 0xed, 0xc6, 0x61,
-	0xdf, 0x6e, 0xfc, 0xe8, 0xdb, 0x8d, 0x2d, 0x37, 0x08, 0xc5, 0x4e, 0xcf, 0x73, 0x7d, 0xd6, 0x2d,
-	0x8a, 0xf6, 0xda, 0xc4, 0x13, 0xfb, 0x31, 0xe5, 0xde, 0x58, 0xfa, 0xc2, 0x2f, 0xfe, 0x0d, 0x00,
-	0x00, 0xff, 0xff, 0x2e, 0x7c, 0x90, 0x29, 0x22, 0x09, 0x00, 0x00,
+	// 790 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xa4, 0x96, 0xcb, 0x6e, 0xd3, 0x4c,
+	0x14, 0xc7, 0xe3, 0x7c, 0xfd, 0x2a, 0x3a, 0x95, 0x58, 0x0c, 0x45, 0xa4, 0x06, 0x05, 0x64, 0x95,
+	0x36, 0x29, 0xaa, 0x4d, 0x2f, 0x80, 0x58, 0x41, 0xda, 0xaa, 0x17, 0x09, 0xa4, 0x12, 0x24, 0x90,
+	0xba, 0x89, 0x26, 0xc9, 0xe0, 0x0e, 0x38, 0x9e, 0xd4, 0x9e, 0x54, 0x14, 0xc4, 0x86, 0x27, 0x40,
+	0x42, 0xbc, 0x00, 0x2b, 0xc4, 0xe5, 0x3d, 0xba, 0xac, 0xc4, 0x86, 0x15, 0x42, 0x2d, 0x62, 0xc1,
+	0x53, 0xa0, 0x8c, 0xe7, 0xe2, 0x34, 0x8e, 0xe3, 0xc2, 0xce, 0x9a, 0x73, 0xfe, 0xe7, 0xfc, 0xce,
+	0xb1, 0xfd, 0xb7, 0xc1, 0x44, 0xc8, 0xd0, 0x33, 0x4c, 0xea, 0x0d, 0x67, 0xb7, 0x83, 0x83, 0x7d,
+	0xbb, 0x1d, 0x50, 0x46, 0xa1, 0xf9, 0x90, 0x05, 0xa4, 0x89, 0x3d, 0x54, 0x0f, 0xed, 0x90, 0x5f,
+	0xda, 0x32, 0xcf, 0x9c, 0x70, 0xa9, 0x4b, 0x79, 0x9a, 0xd3, 0xbd, 0x8a, 0x14, 0xe6, 0x25, 0x97,
+	0x52, 0xd7, 0xc3, 0x0e, 0x6a, 0x13, 0x07, 0xf9, 0x3e, 0x65, 0x88, 0x11, 0xea, 0x87, 0x22, 0x3a,
+	0xdb, 0xa0, 0x61, 0x8b, 0x86, 0x4e, 0x1d, 0x85, 0x38, 0x6a, 0xe4, 0xec, 0xcd, 0xd7, 0x31, 0x43,
+	0xf3, 0x4e, 0x1b, 0xb9, 0xc4, 0xe7, 0xc9, 0x22, 0xf7, 0xbc, 0x22, 0x6a, 0xa3, 0x00, 0xb5, 0x64,
+	0x89, 0x82, 0x3a, 0xde, 0x43, 0x1e, 0x69, 0x22, 0x46, 0x03, 0x11, 0x99, 0x54, 0x91, 0x26, 0xf6,
+	0xb0, 0x1b, 0xaf, 0x55, 0x56, 0xa1, 0x16, 0xf1, 0x6b, 0x4a, 0x58, 0x0b, 0xf0, 0x6e, 0x87, 0x04,
+	0xb8, 0x85, 0x7d, 0x26, 0xeb, 0x9b, 0x2a, 0x95, 0x34, 0x50, 0x0d, 0x35, 0x1a, 0xb4, 0xe3, 0xb3,
+	0xbe, 0xde, 0x3b, 0x34, 0x64, 0xb5, 0x17, 0xd4, 0xc7, 0x51, 0xc4, 0x9a, 0x00, 0xf0, 0x41, 0x77,
+	0x9c, 0x2d, 0x8e, 0x5a, 0xc5, 0xbb, 0x1d, 0x1c, 0x32, 0xeb, 0x31, 0x38, 0xd7, 0x73, 0x1a, 0xb6,
+	0xa9, 0x1f, 0x62, 0x78, 0x17, 0x8c, 0x46, 0x23, 0x15, 0x8c, 0x2b, 0x46, 0x69, 0x7c, 0xc1, 0xb2,
+	0x07, 0xaf, 0xd9, 0x8e, 0xb4, 0xcb, 0x23, 0x07, 0xdf, 0x2f, 0xe7, 0xaa, 0x42, 0x67, 0x99, 0xa0,
+	0xc0, 0x0b, 0xaf, 0x63, 0xf6, 0x48, 0x0e, 0x23, 0x9b, 0x3e, 0x01, 0x93, 0x09, 0x31, 0xd1, 0x7a,
+	0x13, 0x8c, 0xa9, 0x43, 0xd1, 0xfd, 0x6a, 0x5a, 0x77, 0x95, 0x2c, 0x00, 0xb4, 0xda, 0xba, 0xa8,
+	0xfb, 0xac, 0xaa, 0x7d, 0x4b, 0x88, 0xa7, 0xc0, 0x4c, 0x0a, 0x0a, 0x8a, 0x7b, 0x00, 0xe8, 0x53,
+	0x81, 0x31, 0x9d, 0x86, 0xa1, 0xb3, 0x05, 0x47, 0x4c, 0x6f, 0x95, 0xc1, 0x8c, 0xec, 0x75, 0x9f,
+	0xf8, 0x3d, 0xfb, 0x90, 0xf7, 0x56, 0x62, 0xbd, 0x37, 0x40, 0x69, 0x78, 0xae, 0xa0, 0xdc, 0x03,
+	0x85, 0x41, 0x39, 0x82, 0x79, 0x29, 0x8d, 0x79, 0x90, 0x56, 0x4c, 0x30, 0xb0, 0x76, 0x7c, 0xb1,
+	0x9b, 0x2b, 0x95, 0x4a, 0xf4, 0x04, 0x26, 0x2c, 0x36, 0x1e, 0xd4, 0x8b, 0xd5, 0xa7, 0x59, 0x16,
+	0xab, 0xb3, 0xe5, 0x62, 0xf5, 0x89, 0x55, 0x06, 0x17, 0x64, 0xaf, 0x0d, 0x1a, 0xb2, 0x6d, 0xea,
+	0x63, 0x81, 0x01, 0xcf, 0x82, 0x3c, 0x69, 0xf2, 0x06, 0x23, 0xd5, 0x3c, 0x69, 0x5a, 0x75, 0xfd,
+	0x40, 0xea, 0x54, 0x01, 0xb5, 0x06, 0xce, 0xc8, 0x33, 0x81, 0x34, 0x95, 0x86, 0x24, 0x73, 0x05,
+	0x90, 0xd2, 0x5a, 0x48, 0xe0, 0x54, 0x3c, 0xef, 0x24, 0xce, 0x1a, 0x00, 0xda, 0x3f, 0xd4, 0xdc,
+	0x91, 0xd9, 0xd8, 0x5d, 0xb3, 0xb1, 0x23, 0x57, 0x13, 0x66, 0x63, 0x6f, 0x21, 0x57, 0x6a, 0xab,
+	0x31, 0xa5, 0xf5, 0xc9, 0x10, 0x73, 0xf4, 0xf4, 0x48, 0x9c, 0xe3, 0xbf, 0xbf, 0x9d, 0x03, 0xae,
+	0xf7, 0xc0, 0xe6, 0x39, 0xec, 0xcc, 0x50, 0xd8, 0x08, 0x22, 0x4e, 0xbb, 0xf0, 0x7b, 0x0c, 0xfc,
+	0xcf, 0x69, 0xe1, 0x3b, 0x03, 0x8c, 0x46, 0x46, 0x01, 0xed, 0x34, 0xa6, 0x7e, 0x8f, 0x32, 0x9d,
+	0xcc, 0xf9, 0x11, 0x81, 0x35, 0xfb, 0xfa, 0xeb, 0xcf, 0xb7, 0xf9, 0x29, 0x68, 0x39, 0x5a, 0xe8,
+	0x44, 0x42, 0xe7, 0x84, 0x65, 0xc3, 0x0f, 0x46, 0xcc, 0x6f, 0xe0, 0xd2, 0xd0, 0x56, 0x09, 0x7e,
+	0x66, 0xde, 0x38, 0xa5, 0x4a, 0x60, 0xda, 0x1c, 0xb3, 0x04, 0xa7, 0x05, 0xe6, 0x5c, 0x22, 0xa7,
+	0xfa, 0x14, 0xc0, 0xcf, 0x46, 0xdc, 0x94, 0x60, 0xa6, 0xae, 0x7d, 0xbe, 0x67, 0xde, 0x3c, 0xad,
+	0x4c, 0xd0, 0x3a, 0x9c, 0xb6, 0x0c, 0x67, 0x52, 0x69, 0xf5, 0x77, 0x0d, 0xfe, 0x32, 0x06, 0xbb,
+	0x13, 0x5c, 0xc9, 0x42, 0x31, 0xc4, 0x2b, 0xcd, 0xd5, 0x7f, 0x2b, 0x22, 0x06, 0xbb, 0xc3, 0x07,
+	0xbb, 0x0d, 0x6f, 0xa5, 0x0e, 0x36, 0xf8, 0xab, 0x0c, 0xbf, 0x18, 0x71, 0x4f, 0xcb, 0x76, 0x5f,
+	0xfa, 0x6c, 0x33, 0xdb, 0x7d, 0xe9, 0x37, 0x54, 0xeb, 0x3a, 0xc7, 0x9f, 0x85, 0xa5, 0x54, 0xfc,
+	0xd8, 0x9f, 0x02, 0xfc, 0x68, 0x68, 0x9b, 0x80, 0x8b, 0x59, 0xda, 0x9e, 0x30, 0x33, 0x73, 0xe9,
+	0x74, 0x22, 0x41, 0xba, 0xc8, 0x49, 0xe7, 0xe0, 0xb5, 0x54, 0x52, 0xf5, 0xdf, 0xe2, 0xbc, 0x24,
+	0xcd, 0x57, 0xdd, 0xf7, 0x73, 0x5c, 0x56, 0xaa, 0x78, 0x5e, 0x06, 0xde, 0x7e, 0xf3, 0xcd, 0xc0,
+	0x9b, 0xe0, 0xa6, 0x19, 0xdf, 0x4f, 0xc5, 0xbb, 0xbc, 0x71, 0x70, 0x54, 0x34, 0x0e, 0x8f, 0x8a,
+	0xc6, 0x8f, 0xa3, 0xa2, 0xf1, 0xe6, 0xb8, 0x98, 0x3b, 0x3c, 0x2e, 0xe6, 0xbe, 0x1d, 0x17, 0x73,
+	0xdb, 0xb6, 0x4b, 0xd8, 0x4e, 0xa7, 0x6e, 0x37, 0x68, 0x2b, 0xa9, 0xd6, 0x73, 0x5d, 0x8d, 0xed,
+	0xb7, 0x71, 0x58, 0x1f, 0xe5, 0xbf, 0x6c, 0x8b, 0x7f, 0x02, 0x00, 0x00, 0xff, 0xff, 0x55, 0x0a,
+	0x88, 0x0c, 0xf3, 0x0a, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -601,10 +714,12 @@ type QueryClient interface {
 	Delegation(ctx context.Context, in *QueryGetDelegationRequest, opts ...grpc.CallOption) (*QueryGetDelegationResponse, error)
 	// Queries a MinValidatorRequirements by index.
 	MinValidatorRequirements(ctx context.Context, in *QueryGetMinValidatorRequirementsRequest, opts ...grpc.CallOption) (*QueryGetMinValidatorRequirementsResponse, error)
-	// Queries a HostZone by index.
-	HostZone(ctx context.Context, in *QueryGetHostZoneRequest, opts ...grpc.CallOption) (*QueryGetHostZoneResponse, error)
 	// Queries a ICAAccount by index.
 	ICAAccount(ctx context.Context, in *QueryGetICAAccountRequest, opts ...grpc.CallOption) (*QueryGetICAAccountResponse, error)
+	// Queries a HostZone by id.
+	HostZone(ctx context.Context, in *QueryGetHostZoneRequest, opts ...grpc.CallOption) (*QueryGetHostZoneResponse, error)
+	// Queries a list of HostZone items.
+	HostZoneAll(ctx context.Context, in *QueryAllHostZoneRequest, opts ...grpc.CallOption) (*QueryAllHostZoneResponse, error)
 }
 
 type queryClient struct {
@@ -651,6 +766,15 @@ func (c *queryClient) MinValidatorRequirements(ctx context.Context, in *QueryGet
 	return out, nil
 }
 
+func (c *queryClient) ICAAccount(ctx context.Context, in *QueryGetICAAccountRequest, opts ...grpc.CallOption) (*QueryGetICAAccountResponse, error) {
+	out := new(QueryGetICAAccountResponse)
+	err := c.cc.Invoke(ctx, "/Stridelabs.stride.stakeibc.Query/ICAAccount", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *queryClient) HostZone(ctx context.Context, in *QueryGetHostZoneRequest, opts ...grpc.CallOption) (*QueryGetHostZoneResponse, error) {
 	out := new(QueryGetHostZoneResponse)
 	err := c.cc.Invoke(ctx, "/Stridelabs.stride.stakeibc.Query/HostZone", in, out, opts...)
@@ -660,9 +784,9 @@ func (c *queryClient) HostZone(ctx context.Context, in *QueryGetHostZoneRequest,
 	return out, nil
 }
 
-func (c *queryClient) ICAAccount(ctx context.Context, in *QueryGetICAAccountRequest, opts ...grpc.CallOption) (*QueryGetICAAccountResponse, error) {
-	out := new(QueryGetICAAccountResponse)
-	err := c.cc.Invoke(ctx, "/Stridelabs.stride.stakeibc.Query/ICAAccount", in, out, opts...)
+func (c *queryClient) HostZoneAll(ctx context.Context, in *QueryAllHostZoneRequest, opts ...grpc.CallOption) (*QueryAllHostZoneResponse, error) {
+	out := new(QueryAllHostZoneResponse)
+	err := c.cc.Invoke(ctx, "/Stridelabs.stride.stakeibc.Query/HostZoneAll", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -679,10 +803,12 @@ type QueryServer interface {
 	Delegation(context.Context, *QueryGetDelegationRequest) (*QueryGetDelegationResponse, error)
 	// Queries a MinValidatorRequirements by index.
 	MinValidatorRequirements(context.Context, *QueryGetMinValidatorRequirementsRequest) (*QueryGetMinValidatorRequirementsResponse, error)
-	// Queries a HostZone by index.
-	HostZone(context.Context, *QueryGetHostZoneRequest) (*QueryGetHostZoneResponse, error)
 	// Queries a ICAAccount by index.
 	ICAAccount(context.Context, *QueryGetICAAccountRequest) (*QueryGetICAAccountResponse, error)
+	// Queries a HostZone by id.
+	HostZone(context.Context, *QueryGetHostZoneRequest) (*QueryGetHostZoneResponse, error)
+	// Queries a list of HostZone items.
+	HostZoneAll(context.Context, *QueryAllHostZoneRequest) (*QueryAllHostZoneResponse, error)
 }
 
 // UnimplementedQueryServer can be embedded to have forward compatible implementations.
@@ -701,11 +827,14 @@ func (*UnimplementedQueryServer) Delegation(ctx context.Context, req *QueryGetDe
 func (*UnimplementedQueryServer) MinValidatorRequirements(ctx context.Context, req *QueryGetMinValidatorRequirementsRequest) (*QueryGetMinValidatorRequirementsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method MinValidatorRequirements not implemented")
 }
+func (*UnimplementedQueryServer) ICAAccount(ctx context.Context, req *QueryGetICAAccountRequest) (*QueryGetICAAccountResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ICAAccount not implemented")
+}
 func (*UnimplementedQueryServer) HostZone(ctx context.Context, req *QueryGetHostZoneRequest) (*QueryGetHostZoneResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method HostZone not implemented")
 }
-func (*UnimplementedQueryServer) ICAAccount(ctx context.Context, req *QueryGetICAAccountRequest) (*QueryGetICAAccountResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ICAAccount not implemented")
+func (*UnimplementedQueryServer) HostZoneAll(ctx context.Context, req *QueryAllHostZoneRequest) (*QueryAllHostZoneResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method HostZoneAll not implemented")
 }
 
 func RegisterQueryServer(s grpc1.Server, srv QueryServer) {
@@ -784,6 +913,24 @@ func _Query_MinValidatorRequirements_Handler(srv interface{}, ctx context.Contex
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Query_ICAAccount_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryGetICAAccountRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(QueryServer).ICAAccount(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/Stridelabs.stride.stakeibc.Query/ICAAccount",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(QueryServer).ICAAccount(ctx, req.(*QueryGetICAAccountRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _Query_HostZone_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(QueryGetHostZoneRequest)
 	if err := dec(in); err != nil {
@@ -802,20 +949,20 @@ func _Query_HostZone_Handler(srv interface{}, ctx context.Context, dec func(inte
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Query_ICAAccount_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(QueryGetICAAccountRequest)
+func _Query_HostZoneAll_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryAllHostZoneRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(QueryServer).ICAAccount(ctx, in)
+		return srv.(QueryServer).HostZoneAll(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/Stridelabs.stride.stakeibc.Query/ICAAccount",
+		FullMethod: "/Stridelabs.stride.stakeibc.Query/HostZoneAll",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(QueryServer).ICAAccount(ctx, req.(*QueryGetICAAccountRequest))
+		return srv.(QueryServer).HostZoneAll(ctx, req.(*QueryAllHostZoneRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -841,12 +988,16 @@ var _Query_serviceDesc = grpc.ServiceDesc{
 			Handler:    _Query_MinValidatorRequirements_Handler,
 		},
 		{
+			MethodName: "ICAAccount",
+			Handler:    _Query_ICAAccount_Handler,
+		},
+		{
 			MethodName: "HostZone",
 			Handler:    _Query_HostZone_Handler,
 		},
 		{
-			MethodName: "ICAAccount",
-			Handler:    _Query_ICAAccount_Handler,
+			MethodName: "HostZoneAll",
+			Handler:    _Query_HostZoneAll_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
@@ -1077,62 +1228,6 @@ func (m *QueryGetMinValidatorRequirementsResponse) MarshalToSizedBuffer(dAtA []b
 	return len(dAtA) - i, nil
 }
 
-func (m *QueryGetHostZoneRequest) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalToSizedBuffer(dAtA[:size])
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *QueryGetHostZoneRequest) MarshalTo(dAtA []byte) (int, error) {
-	size := m.Size()
-	return m.MarshalToSizedBuffer(dAtA[:size])
-}
-
-func (m *QueryGetHostZoneRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
-	i := len(dAtA)
-	_ = i
-	var l int
-	_ = l
-	return len(dAtA) - i, nil
-}
-
-func (m *QueryGetHostZoneResponse) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalToSizedBuffer(dAtA[:size])
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *QueryGetHostZoneResponse) MarshalTo(dAtA []byte) (int, error) {
-	size := m.Size()
-	return m.MarshalToSizedBuffer(dAtA[:size])
-}
-
-func (m *QueryGetHostZoneResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
-	i := len(dAtA)
-	_ = i
-	var l int
-	_ = l
-	{
-		size, err := m.HostZone.MarshalToSizedBuffer(dAtA[:i])
-		if err != nil {
-			return 0, err
-		}
-		i -= size
-		i = encodeVarintQuery(dAtA, i, uint64(size))
-	}
-	i--
-	dAtA[i] = 0xa
-	return len(dAtA) - i, nil
-}
-
 func (m *QueryGetICAAccountRequest) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
@@ -1186,6 +1281,151 @@ func (m *QueryGetICAAccountResponse) MarshalToSizedBuffer(dAtA []byte) (int, err
 	}
 	i--
 	dAtA[i] = 0xa
+	return len(dAtA) - i, nil
+}
+
+func (m *QueryGetHostZoneRequest) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *QueryGetHostZoneRequest) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *QueryGetHostZoneRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.Id != 0 {
+		i = encodeVarintQuery(dAtA, i, uint64(m.Id))
+		i--
+		dAtA[i] = 0x8
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *QueryGetHostZoneResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *QueryGetHostZoneResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *QueryGetHostZoneResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	{
+		size, err := m.HostZone.MarshalToSizedBuffer(dAtA[:i])
+		if err != nil {
+			return 0, err
+		}
+		i -= size
+		i = encodeVarintQuery(dAtA, i, uint64(size))
+	}
+	i--
+	dAtA[i] = 0xa
+	return len(dAtA) - i, nil
+}
+
+func (m *QueryAllHostZoneRequest) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *QueryAllHostZoneRequest) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *QueryAllHostZoneRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.Pagination != nil {
+		{
+			size, err := m.Pagination.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintQuery(dAtA, i, uint64(size))
+		}
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *QueryAllHostZoneResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *QueryAllHostZoneResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *QueryAllHostZoneResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.Pagination != nil {
+		{
+			size, err := m.Pagination.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintQuery(dAtA, i, uint64(size))
+		}
+		i--
+		dAtA[i] = 0x12
+	}
+	if len(m.HostZone) > 0 {
+		for iNdEx := len(m.HostZone) - 1; iNdEx >= 0; iNdEx-- {
+			{
+				size, err := m.HostZone[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				if err != nil {
+					return 0, err
+				}
+				i -= size
+				i = encodeVarintQuery(dAtA, i, uint64(size))
+			}
+			i--
+			dAtA[i] = 0xa
+		}
+	}
 	return len(dAtA) - i, nil
 }
 
@@ -1280,26 +1520,6 @@ func (m *QueryGetMinValidatorRequirementsResponse) Size() (n int) {
 	return n
 }
 
-func (m *QueryGetHostZoneRequest) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	return n
-}
-
-func (m *QueryGetHostZoneResponse) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	l = m.HostZone.Size()
-	n += 1 + l + sovQuery(uint64(l))
-	return n
-}
-
 func (m *QueryGetICAAccountRequest) Size() (n int) {
 	if m == nil {
 		return 0
@@ -1317,6 +1537,61 @@ func (m *QueryGetICAAccountResponse) Size() (n int) {
 	_ = l
 	l = m.ICAAccount.Size()
 	n += 1 + l + sovQuery(uint64(l))
+	return n
+}
+
+func (m *QueryGetHostZoneRequest) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.Id != 0 {
+		n += 1 + sovQuery(uint64(m.Id))
+	}
+	return n
+}
+
+func (m *QueryGetHostZoneResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = m.HostZone.Size()
+	n += 1 + l + sovQuery(uint64(l))
+	return n
+}
+
+func (m *QueryAllHostZoneRequest) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.Pagination != nil {
+		l = m.Pagination.Size()
+		n += 1 + l + sovQuery(uint64(l))
+	}
+	return n
+}
+
+func (m *QueryAllHostZoneResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if len(m.HostZone) > 0 {
+		for _, e := range m.HostZone {
+			l = e.Size()
+			n += 1 + l + sovQuery(uint64(l))
+		}
+	}
+	if m.Pagination != nil {
+		l = m.Pagination.Size()
+		n += 1 + l + sovQuery(uint64(l))
+	}
 	return n
 }
 
@@ -1858,139 +2133,6 @@ func (m *QueryGetMinValidatorRequirementsResponse) Unmarshal(dAtA []byte) error 
 	}
 	return nil
 }
-func (m *QueryGetHostZoneRequest) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowQuery
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= uint64(b&0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: QueryGetHostZoneRequest: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: QueryGetHostZoneRequest: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		default:
-			iNdEx = preIndex
-			skippy, err := skipQuery(dAtA[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if (skippy < 0) || (iNdEx+skippy) < 0 {
-				return ErrInvalidLengthQuery
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
-func (m *QueryGetHostZoneResponse) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowQuery
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= uint64(b&0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: QueryGetHostZoneResponse: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: QueryGetHostZoneResponse: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		case 1:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field HostZone", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowQuery
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				msglen |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if msglen < 0 {
-				return ErrInvalidLengthQuery
-			}
-			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthQuery
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			if err := m.HostZone.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			iNdEx = postIndex
-		default:
-			iNdEx = preIndex
-			skippy, err := skipQuery(dAtA[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if (skippy < 0) || (iNdEx+skippy) < 0 {
-				return ErrInvalidLengthQuery
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
 func (m *QueryGetICAAccountRequest) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -2100,6 +2242,364 @@ func (m *QueryGetICAAccountResponse) Unmarshal(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if err := m.ICAAccount.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipQuery(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *QueryGetHostZoneRequest) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowQuery
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: QueryGetHostZoneRequest: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: QueryGetHostZoneRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Id", wireType)
+			}
+			m.Id = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.Id |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		default:
+			iNdEx = preIndex
+			skippy, err := skipQuery(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *QueryGetHostZoneResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowQuery
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: QueryGetHostZoneResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: QueryGetHostZoneResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field HostZone", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if err := m.HostZone.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipQuery(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *QueryAllHostZoneRequest) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowQuery
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: QueryAllHostZoneRequest: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: QueryAllHostZoneRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Pagination", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.Pagination == nil {
+				m.Pagination = &query.PageRequest{}
+			}
+			if err := m.Pagination.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipQuery(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *QueryAllHostZoneResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowQuery
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: QueryAllHostZoneResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: QueryAllHostZoneResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field HostZone", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.HostZone = append(m.HostZone, HostZone{})
+			if err := m.HostZone[len(m.HostZone)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Pagination", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.Pagination == nil {
+				m.Pagination = &query.PageResponse{}
+			}
+			if err := m.Pagination.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex

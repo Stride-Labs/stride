@@ -47,4 +47,3 @@ func TestICAAccountQuery(t *testing.T) {
 		})
 	}
 }
-

@@ -22,18 +22,49 @@ func TestGenesisState_Validate(t *testing.T) {
 			desc: "valid genesis state",
 			genState: &types.GenesisState{
 				PortId: types.PortID,
-				HostZone: &types.HostZone{
-					PortId:    "23",
-					ChannelId: "36",
-				},
 				ICAAccount: &types.ICAAccount{
-		Address: "79",
-Balance: 2,
-DelegatedBalance: 8,
-},
-// this line is used by starport scaffolding # types/genesis/validField
+					Address:          "79",
+					Balance:          2,
+					DelegatedBalance: 8,
+				},
+				HostZoneList: []types.HostZone{
+					{
+						Id: 0,
+					},
+					{
+						Id: 1,
+					},
+				},
+				HostZoneCount: 2,
+				// this line is used by starport scaffolding # types/genesis/validField
 			},
 			valid: true,
+		},
+		{
+			desc: "duplicated hostZone",
+			genState: &types.GenesisState{
+				HostZoneList: []types.HostZone{
+					{
+						Id: 0,
+					},
+					{
+						Id: 0,
+					},
+				},
+			},
+			valid: false,
+		},
+		{
+			desc: "invalid hostZone count",
+			genState: &types.GenesisState{
+				HostZoneList: []types.HostZone{
+					{
+						Id: 1,
+					},
+				},
+				HostZoneCount: 0,
+			},
+			valid: false,
 		},
 		// this line is used by starport scaffolding # types/genesis/testcase
 	} {

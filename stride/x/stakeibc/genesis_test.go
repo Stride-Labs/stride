@@ -14,15 +14,20 @@ func TestGenesis(t *testing.T) {
 	genesisState := types.GenesisState{
 		Params: types.DefaultParams(),
 		PortId: types.PortID,
-		HostZone: &types.HostZone{
-			PortId:    "76",
-			ChannelId: "85",
-		},
 		ICAAccount: &types.ICAAccount{
-		Address: "78",
-Balance: 49,
-DelegatedBalance: 80,
-},
+			Address:          "78",
+			Balance:          49,
+			DelegatedBalance: 80,
+		},
+		HostZoneList: []types.HostZone{
+			{
+				Id: 0,
+			},
+			{
+				Id: 1,
+			},
+		},
+		HostZoneCount: 2,
 		// this line is used by starport scaffolding # genesis/test/state
 	}
 
@@ -36,7 +41,8 @@ DelegatedBalance: 80,
 
 	require.Equal(t, genesisState.PortId, got.PortId)
 
-	require.Equal(t, genesisState.HostZone, got.HostZone)
 	require.Equal(t, genesisState.ICAAccount, got.ICAAccount)
-// this line is used by starport scaffolding # genesis/test/assert
+	require.ElementsMatch(t, genesisState.HostZoneList, got.HostZoneList)
+	require.Equal(t, genesisState.HostZoneCount, got.HostZoneCount)
+	// this line is used by starport scaffolding # genesis/test/assert
 }
