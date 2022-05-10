@@ -26,7 +26,6 @@ const (
 	DelegationKey = "Delegation-value-"
 
 	MinValidatorRequirementsKey = "MinValidatorRequirements-value-"
-	HostZoneKey                 = "HostZone-value-"
 	ICAAccountKey               = "ICAAccount-value-"
 )
 
@@ -38,3 +37,8 @@ var (
 func KeyPrefix(p string) []byte {
 	return []byte(p)
 }
+
+const (
+	HostZoneKey      = "HostZone-value-"
+	HostZoneCountKey = "HostZone-count-"
+)
