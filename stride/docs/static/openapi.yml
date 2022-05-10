@@ -28304,8 +28304,8 @@ paths:
         - Query
   /Stride-labs/stride/stakeibc/host_zone:
     get:
-      summary: Queries a HostZone by index.
-      operationId: StridelabsStrideStakeibcHostZone
+      summary: Queries a list of HostZone items.
+      operationId: StridelabsStrideStakeibcHostZoneAll
       responses:
         '200':
           description: A successful response.
@@ -28313,12 +28313,155 @@ paths:
             type: object
             properties:
               HostZone:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      format: uint64
+                    portId:
+                      type: string
+                    channelId:
+                      type: string
+                    validators:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          name:
+                            type: string
+                          address:
+                            type: string
+                          status:
+                            type: string
+                          commissionRate:
+                            type: integer
+                            format: int32
+                          delegationAmt:
+                            type: integer
+                            format: int32
+                    blacklistedValidators:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          name:
+                            type: string
+                          address:
+                            type: string
+                          status:
+                            type: string
+                          commissionRate:
+                            type: integer
+                            format: int32
+                          delegationAmt:
+                            type: integer
+                            format: int32
+                    rewardsAccount:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          address:
+                            type: string
+                          balance:
+                            type: integer
+                            format: int32
+                          delegatedBalance:
+                            type: integer
+                            format: int32
+                          delegations:
+                            type: array
+                            items:
+                              type: object
+                              properties:
+                                delegateAcctAddress:
+                                  type: string
+                                validator:
+                                  type: object
+                                  properties:
+                                    name:
+                                      type: string
+                                    address:
+                                      type: string
+                                    status:
+                                      type: string
+                                    commissionRate:
+                                      type: integer
+                                      format: int32
+                                    delegationAmt:
+                                      type: integer
+                                      format: int32
+                                amt:
+                                  type: integer
+                                  format: int32
+                    feeAccount:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          address:
+                            type: string
+                          balance:
+                            type: integer
+                            format: int32
+                          delegatedBalance:
+                            type: integer
+                            format: int32
+                          delegations:
+                            type: array
+                            items:
+                              type: object
+                              properties:
+                                delegateAcctAddress:
+                                  type: string
+                                validator:
+                                  type: object
+                                  properties:
+                                    name:
+                                      type: string
+                                    address:
+                                      type: string
+                                    status:
+                                      type: string
+                                    commissionRate:
+                                      type: integer
+                                      format: int32
+                                    delegationAmt:
+                                      type: integer
+                                      format: int32
+                                amt:
+                                  type: integer
+                                  format: int32
+                  title: 'next id: 8'
+              pagination:
                 type: object
                 properties:
-                  portId:
+                  next_key:
                     type: string
-                  channelId:
+                    format: byte
+                    title: |-
+                      next_key is the key to be passed to PageRequest.key to
+                      query the next page most efficiently
+                  total:
                     type: string
+                    format: uint64
+                    title: >-
+                      total is total number of results available if
+                      PageRequest.count_total
+
+                      was set, its value is undefined otherwise
+                description: >-
+                  PageResponse is to be embedded in gRPC response messages where
+                  the
+
+                  corresponding request message has used PageRequest.
+
+                   message SomeResponse {
+                           repeated Bar results = 1;
+                           PageResponse page = 2;
+                   }
         default:
           description: An unexpected error response.
           schema:
@@ -28337,6 +28480,220 @@ paths:
                     '@type':
                       type: string
                   additionalProperties: {}
+      parameters:
+        - name: pagination.key
+          description: |-
+            key is a value returned in PageResponse.next_key to begin
+            querying the next page most efficiently. Only one of offset or key
+            should be set.
+          in: query
+          required: false
+          type: string
+          format: byte
+        - name: pagination.offset
+          description: >-
+            offset is a numeric offset that can be used when key is unavailable.
+
+            It is less efficient than using key. Only one of offset or key
+            should
+
+            be set.
+          in: query
+          required: false
+          type: string
+          format: uint64
+        - name: pagination.limit
+          description: >-
+            limit is the total number of results to be returned in the result
+            page.
+
+            If left empty it will default to a value to be set by each app.
+          in: query
+          required: false
+          type: string
+          format: uint64
+        - name: pagination.count_total
+          description: >-
+            count_total is set to true  to indicate that the result set should
+            include
+
+            a count of the total number of items available for pagination in
+            UIs.
+
+            count_total is only respected when offset is used. It is ignored
+            when key
+
+            is set.
+          in: query
+          required: false
+          type: boolean
+        - name: pagination.reverse
+          description: >-
+            reverse is set to true if results are to be returned in the
+            descending order.
+
+
+            Since: cosmos-sdk 0.43
+          in: query
+          required: false
+          type: boolean
+      tags:
+        - Query
+  '/Stride-labs/stride/stakeibc/host_zone/{id}':
+    get:
+      summary: Queries a HostZone by id.
+      operationId: StridelabsStrideStakeibcHostZone
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              HostZone:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    format: uint64
+                  portId:
+                    type: string
+                  channelId:
+                    type: string
+                  validators:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        name:
+                          type: string
+                        address:
+                          type: string
+                        status:
+                          type: string
+                        commissionRate:
+                          type: integer
+                          format: int32
+                        delegationAmt:
+                          type: integer
+                          format: int32
+                  blacklistedValidators:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        name:
+                          type: string
+                        address:
+                          type: string
+                        status:
+                          type: string
+                        commissionRate:
+                          type: integer
+                          format: int32
+                        delegationAmt:
+                          type: integer
+                          format: int32
+                  rewardsAccount:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        address:
+                          type: string
+                        balance:
+                          type: integer
+                          format: int32
+                        delegatedBalance:
+                          type: integer
+                          format: int32
+                        delegations:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              delegateAcctAddress:
+                                type: string
+                              validator:
+                                type: object
+                                properties:
+                                  name:
+                                    type: string
+                                  address:
+                                    type: string
+                                  status:
+                                    type: string
+                                  commissionRate:
+                                    type: integer
+                                    format: int32
+                                  delegationAmt:
+                                    type: integer
+                                    format: int32
+                              amt:
+                                type: integer
+                                format: int32
+                  feeAccount:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        address:
+                          type: string
+                        balance:
+                          type: integer
+                          format: int32
+                        delegatedBalance:
+                          type: integer
+                          format: int32
+                        delegations:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              delegateAcctAddress:
+                                type: string
+                              validator:
+                                type: object
+                                properties:
+                                  name:
+                                    type: string
+                                  address:
+                                    type: string
+                                  status:
+                                    type: string
+                                  commissionRate:
+                                    type: integer
+                                    format: int32
+                                  delegationAmt:
+                                    type: integer
+                                    format: int32
+                              amt:
+                                type: integer
+                                format: int32
+                title: 'next id: 8'
+        default:
+          description: An unexpected error response.
+          schema:
+            type: object
+            properties:
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    '@type':
+                      type: string
+                  additionalProperties: {}
+      parameters:
+        - name: id
+          in: path
+          required: true
+          type: string
+          format: uint64
       tags:
         - Query
   /Stride-labs/stride/stakeibc/ica_account:
@@ -28360,13 +28717,31 @@ paths:
                   delegatedBalance:
                     type: integer
                     format: int32
-                  zone:
-                    type: object
-                    properties:
-                      portId:
-                        type: string
-                      channelId:
-                        type: string
+                  delegations:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        delegateAcctAddress:
+                          type: string
+                        validator:
+                          type: object
+                          properties:
+                            name:
+                              type: string
+                            address:
+                              type: string
+                            status:
+                              type: string
+                            commissionRate:
+                              type: integer
+                              format: int32
+                            delegationAmt:
+                              type: integer
+                              format: int32
+                        amt:
+                          type: integer
+                          format: int32
         default:
           description: An unexpected error response.
           schema:
@@ -48807,10 +49182,124 @@ definitions:
   Stridelabs.stride.stakeibc.HostZone:
     type: object
     properties:
+      id:
+        type: string
+        format: uint64
       portId:
         type: string
       channelId:
         type: string
+      validators:
+        type: array
+        items:
+          type: object
+          properties:
+            name:
+              type: string
+            address:
+              type: string
+            status:
+              type: string
+            commissionRate:
+              type: integer
+              format: int32
+            delegationAmt:
+              type: integer
+              format: int32
+      blacklistedValidators:
+        type: array
+        items:
+          type: object
+          properties:
+            name:
+              type: string
+            address:
+              type: string
+            status:
+              type: string
+            commissionRate:
+              type: integer
+              format: int32
+            delegationAmt:
+              type: integer
+              format: int32
+      rewardsAccount:
+        type: array
+        items:
+          type: object
+          properties:
+            address:
+              type: string
+            balance:
+              type: integer
+              format: int32
+            delegatedBalance:
+              type: integer
+              format: int32
+            delegations:
+              type: array
+              items:
+                type: object
+                properties:
+                  delegateAcctAddress:
+                    type: string
+                  validator:
+                    type: object
+                    properties:
+                      name:
+                        type: string
+                      address:
+                        type: string
+                      status:
+                        type: string
+                      commissionRate:
+                        type: integer
+                        format: int32
+                      delegationAmt:
+                        type: integer
+                        format: int32
+                  amt:
+                    type: integer
+                    format: int32
+      feeAccount:
+        type: array
+        items:
+          type: object
+          properties:
+            address:
+              type: string
+            balance:
+              type: integer
+              format: int32
+            delegatedBalance:
+              type: integer
+              format: int32
+            delegations:
+              type: array
+              items:
+                type: object
+                properties:
+                  delegateAcctAddress:
+                    type: string
+                  validator:
+                    type: object
+                    properties:
+                      name:
+                        type: string
+                      address:
+                        type: string
+                      status:
+                        type: string
+                      commissionRate:
+                        type: integer
+                        format: int32
+                      delegationAmt:
+                        type: integer
+                        format: int32
+                  amt:
+                    type: integer
+                    format: int32
+    title: 'next id: 8'
   Stridelabs.stride.stakeibc.ICAAccount:
     type: object
     properties:
@@ -48822,13 +49311,31 @@ definitions:
       delegatedBalance:
         type: integer
         format: int32
-      zone:
-        type: object
-        properties:
-          portId:
-            type: string
-          channelId:
-            type: string
+      delegations:
+        type: array
+        items:
+          type: object
+          properties:
+            delegateAcctAddress:
+              type: string
+            validator:
+              type: object
+              properties:
+                name:
+                  type: string
+                address:
+                  type: string
+                status:
+                  type: string
+                commissionRate:
+                  type: integer
+                  format: int32
+                delegationAmt:
+                  type: integer
+                  format: int32
+            amt:
+              type: integer
+              format: int32
   Stridelabs.stride.stakeibc.MinValidatorRequirements:
     type: object
     properties:
@@ -48863,6 +49370,157 @@ definitions:
           send the Stride fee too, as well as what portion
           of the fee each address is entitled to
     description: Params defines the parameters for the module.
+  Stridelabs.stride.stakeibc.QueryAllHostZoneResponse:
+    type: object
+    properties:
+      HostZone:
+        type: array
+        items:
+          type: object
+          properties:
+            id:
+              type: string
+              format: uint64
+            portId:
+              type: string
+            channelId:
+              type: string
+            validators:
+              type: array
+              items:
+                type: object
+                properties:
+                  name:
+                    type: string
+                  address:
+                    type: string
+                  status:
+                    type: string
+                  commissionRate:
+                    type: integer
+                    format: int32
+                  delegationAmt:
+                    type: integer
+                    format: int32
+            blacklistedValidators:
+              type: array
+              items:
+                type: object
+                properties:
+                  name:
+                    type: string
+                  address:
+                    type: string
+                  status:
+                    type: string
+                  commissionRate:
+                    type: integer
+                    format: int32
+                  delegationAmt:
+                    type: integer
+                    format: int32
+            rewardsAccount:
+              type: array
+              items:
+                type: object
+                properties:
+                  address:
+                    type: string
+                  balance:
+                    type: integer
+                    format: int32
+                  delegatedBalance:
+                    type: integer
+                    format: int32
+                  delegations:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        delegateAcctAddress:
+                          type: string
+                        validator:
+                          type: object
+                          properties:
+                            name:
+                              type: string
+                            address:
+                              type: string
+                            status:
+                              type: string
+                            commissionRate:
+                              type: integer
+                              format: int32
+                            delegationAmt:
+                              type: integer
+                              format: int32
+                        amt:
+                          type: integer
+                          format: int32
+            feeAccount:
+              type: array
+              items:
+                type: object
+                properties:
+                  address:
+                    type: string
+                  balance:
+                    type: integer
+                    format: int32
+                  delegatedBalance:
+                    type: integer
+                    format: int32
+                  delegations:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        delegateAcctAddress:
+                          type: string
+                        validator:
+                          type: object
+                          properties:
+                            name:
+                              type: string
+                            address:
+                              type: string
+                            status:
+                              type: string
+                            commissionRate:
+                              type: integer
+                              format: int32
+                            delegationAmt:
+                              type: integer
+                              format: int32
+                        amt:
+                          type: integer
+                          format: int32
+          title: 'next id: 8'
+      pagination:
+        type: object
+        properties:
+          next_key:
+            type: string
+            format: byte
+            title: |-
+              next_key is the key to be passed to PageRequest.key to
+              query the next page most efficiently
+          total:
+            type: string
+            format: uint64
+            title: >-
+              total is total number of results available if
+              PageRequest.count_total
+
+              was set, its value is undefined otherwise
+        description: |-
+          PageResponse is to be embedded in gRPC response messages where the
+          corresponding request message has used PageRequest.
+
+           message SomeResponse {
+                   repeated Bar results = 1;
+                   PageResponse page = 2;
+           }
   Stridelabs.stride.stakeibc.QueryGetDelegationResponse:
     type: object
     properties:
@@ -48895,10 +49553,124 @@ definitions:
       HostZone:
         type: object
         properties:
+          id:
+            type: string
+            format: uint64
           portId:
             type: string
           channelId:
             type: string
+          validators:
+            type: array
+            items:
+              type: object
+              properties:
+                name:
+                  type: string
+                address:
+                  type: string
+                status:
+                  type: string
+                commissionRate:
+                  type: integer
+                  format: int32
+                delegationAmt:
+                  type: integer
+                  format: int32
+          blacklistedValidators:
+            type: array
+            items:
+              type: object
+              properties:
+                name:
+                  type: string
+                address:
+                  type: string
+                status:
+                  type: string
+                commissionRate:
+                  type: integer
+                  format: int32
+                delegationAmt:
+                  type: integer
+                  format: int32
+          rewardsAccount:
+            type: array
+            items:
+              type: object
+              properties:
+                address:
+                  type: string
+                balance:
+                  type: integer
+                  format: int32
+                delegatedBalance:
+                  type: integer
+                  format: int32
+                delegations:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      delegateAcctAddress:
+                        type: string
+                      validator:
+                        type: object
+                        properties:
+                          name:
+                            type: string
+                          address:
+                            type: string
+                          status:
+                            type: string
+                          commissionRate:
+                            type: integer
+                            format: int32
+                          delegationAmt:
+                            type: integer
+                            format: int32
+                      amt:
+                        type: integer
+                        format: int32
+          feeAccount:
+            type: array
+            items:
+              type: object
+              properties:
+                address:
+                  type: string
+                balance:
+                  type: integer
+                  format: int32
+                delegatedBalance:
+                  type: integer
+                  format: int32
+                delegations:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      delegateAcctAddress:
+                        type: string
+                      validator:
+                        type: object
+                        properties:
+                          name:
+                            type: string
+                          address:
+                            type: string
+                          status:
+                            type: string
+                          commissionRate:
+                            type: integer
+                            format: int32
+                          delegationAmt:
+                            type: integer
+                            format: int32
+                      amt:
+                        type: integer
+                        format: int32
+        title: 'next id: 8'
   Stridelabs.stride.stakeibc.QueryGetICAAccountResponse:
     type: object
     properties:
@@ -48913,13 +49685,31 @@ definitions:
           delegatedBalance:
             type: integer
             format: int32
-          zone:
-            type: object
-            properties:
-              portId:
-                type: string
-              channelId:
-                type: string
+          delegations:
+            type: array
+            items:
+              type: object
+              properties:
+                delegateAcctAddress:
+                  type: string
+                validator:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                    address:
+                      type: string
+                    status:
+                      type: string
+                    commissionRate:
+                      type: integer
+                      format: int32
+                    delegationAmt:
+                      type: integer
+                      format: int32
+                amt:
+                  type: integer
+                  format: int32
   Stridelabs.stride.stakeibc.QueryGetMinValidatorRequirementsResponse:
     type: object
     properties:
