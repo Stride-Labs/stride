@@ -1,11 +1,16 @@
 /* eslint-disable */
-import { Reader, Writer } from "protobufjs/minimal";
+import { Reader, util, configure, Writer } from "protobufjs/minimal";
+import * as Long from "long";
 import { Params } from "../stakeibc/params";
 import { Validator } from "../stakeibc/validator";
 import { Delegation } from "../stakeibc/delegation";
 import { MinValidatorRequirements } from "../stakeibc/min_validator_requirements";
-import { HostZone } from "../stakeibc/host_zone";
 import { ICAAccount } from "../stakeibc/ica_account";
+import { HostZone } from "../stakeibc/host_zone";
+import {
+  PageRequest,
+  PageResponse,
+} from "../cosmos/base/query/v1beta1/pagination";
 
 export const protobufPackage = "Stridelabs.stride.stakeibc";
 
@@ -36,16 +41,27 @@ export interface QueryGetMinValidatorRequirementsResponse {
   MinValidatorRequirements: MinValidatorRequirements | undefined;
 }
 
-export interface QueryGetHostZoneRequest {}
+export interface QueryGetICAAccountRequest {}
+
+export interface QueryGetICAAccountResponse {
+  ICAAccount: ICAAccount | undefined;
+}
+
+export interface QueryGetHostZoneRequest {
+  id: number;
+}
 
 export interface QueryGetHostZoneResponse {
   HostZone: HostZone | undefined;
 }
 
-export interface QueryGetICAAccountRequest {}
+export interface QueryAllHostZoneRequest {
+  pagination: PageRequest | undefined;
+}
 
-export interface QueryGetICAAccountResponse {
-  ICAAccount: ICAAccount | undefined;
+export interface QueryAllHostZoneResponse {
+  HostZone: HostZone[];
+  pagination: PageResponse | undefined;
 }
 
 const baseQueryParamsRequest: object = {};
@@ -533,124 +549,6 @@ export const QueryGetMinValidatorRequirementsResponse = {
   },
 };
 
-const baseQueryGetHostZoneRequest: object = {};
-
-export const QueryGetHostZoneRequest = {
-  encode(_: QueryGetHostZoneRequest, writer: Writer = Writer.create()): Writer {
-    return writer;
-  },
-
-  decode(input: Reader | Uint8Array, length?: number): QueryGetHostZoneRequest {
-    const reader = input instanceof Uint8Array ? new Reader(input) : input;
-    let end = length === undefined ? reader.len : reader.pos + length;
-    const message = {
-      ...baseQueryGetHostZoneRequest,
-    } as QueryGetHostZoneRequest;
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        default:
-          reader.skipType(tag & 7);
-          break;
-      }
-    }
-    return message;
-  },
-
-  fromJSON(_: any): QueryGetHostZoneRequest {
-    const message = {
-      ...baseQueryGetHostZoneRequest,
-    } as QueryGetHostZoneRequest;
-    return message;
-  },
-
-  toJSON(_: QueryGetHostZoneRequest): unknown {
-    const obj: any = {};
-    return obj;
-  },
-
-  fromPartial(
-    _: DeepPartial<QueryGetHostZoneRequest>
-  ): QueryGetHostZoneRequest {
-    const message = {
-      ...baseQueryGetHostZoneRequest,
-    } as QueryGetHostZoneRequest;
-    return message;
-  },
-};
-
-const baseQueryGetHostZoneResponse: object = {};
-
-export const QueryGetHostZoneResponse = {
-  encode(
-    message: QueryGetHostZoneResponse,
-    writer: Writer = Writer.create()
-  ): Writer {
-    if (message.HostZone !== undefined) {
-      HostZone.encode(message.HostZone, writer.uint32(10).fork()).ldelim();
-    }
-    return writer;
-  },
-
-  decode(
-    input: Reader | Uint8Array,
-    length?: number
-  ): QueryGetHostZoneResponse {
-    const reader = input instanceof Uint8Array ? new Reader(input) : input;
-    let end = length === undefined ? reader.len : reader.pos + length;
-    const message = {
-      ...baseQueryGetHostZoneResponse,
-    } as QueryGetHostZoneResponse;
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1:
-          message.HostZone = HostZone.decode(reader, reader.uint32());
-          break;
-        default:
-          reader.skipType(tag & 7);
-          break;
-      }
-    }
-    return message;
-  },
-
-  fromJSON(object: any): QueryGetHostZoneResponse {
-    const message = {
-      ...baseQueryGetHostZoneResponse,
-    } as QueryGetHostZoneResponse;
-    if (object.HostZone !== undefined && object.HostZone !== null) {
-      message.HostZone = HostZone.fromJSON(object.HostZone);
-    } else {
-      message.HostZone = undefined;
-    }
-    return message;
-  },
-
-  toJSON(message: QueryGetHostZoneResponse): unknown {
-    const obj: any = {};
-    message.HostZone !== undefined &&
-      (obj.HostZone = message.HostZone
-        ? HostZone.toJSON(message.HostZone)
-        : undefined);
-    return obj;
-  },
-
-  fromPartial(
-    object: DeepPartial<QueryGetHostZoneResponse>
-  ): QueryGetHostZoneResponse {
-    const message = {
-      ...baseQueryGetHostZoneResponse,
-    } as QueryGetHostZoneResponse;
-    if (object.HostZone !== undefined && object.HostZone !== null) {
-      message.HostZone = HostZone.fromPartial(object.HostZone);
-    } else {
-      message.HostZone = undefined;
-    }
-    return message;
-  },
-};
-
 const baseQueryGetICAAccountRequest: object = {};
 
 export const QueryGetICAAccountRequest = {
@@ -775,6 +673,314 @@ export const QueryGetICAAccountResponse = {
   },
 };
 
+const baseQueryGetHostZoneRequest: object = { id: 0 };
+
+export const QueryGetHostZoneRequest = {
+  encode(
+    message: QueryGetHostZoneRequest,
+    writer: Writer = Writer.create()
+  ): Writer {
+    if (message.id !== 0) {
+      writer.uint32(8).uint64(message.id);
+    }
+    return writer;
+  },
+
+  decode(input: Reader | Uint8Array, length?: number): QueryGetHostZoneRequest {
+    const reader = input instanceof Uint8Array ? new Reader(input) : input;
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = {
+      ...baseQueryGetHostZoneRequest,
+    } as QueryGetHostZoneRequest;
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.id = longToNumber(reader.uint64() as Long);
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): QueryGetHostZoneRequest {
+    const message = {
+      ...baseQueryGetHostZoneRequest,
+    } as QueryGetHostZoneRequest;
+    if (object.id !== undefined && object.id !== null) {
+      message.id = Number(object.id);
+    } else {
+      message.id = 0;
+    }
+    return message;
+  },
+
+  toJSON(message: QueryGetHostZoneRequest): unknown {
+    const obj: any = {};
+    message.id !== undefined && (obj.id = message.id);
+    return obj;
+  },
+
+  fromPartial(
+    object: DeepPartial<QueryGetHostZoneRequest>
+  ): QueryGetHostZoneRequest {
+    const message = {
+      ...baseQueryGetHostZoneRequest,
+    } as QueryGetHostZoneRequest;
+    if (object.id !== undefined && object.id !== null) {
+      message.id = object.id;
+    } else {
+      message.id = 0;
+    }
+    return message;
+  },
+};
+
+const baseQueryGetHostZoneResponse: object = {};
+
+export const QueryGetHostZoneResponse = {
+  encode(
+    message: QueryGetHostZoneResponse,
+    writer: Writer = Writer.create()
+  ): Writer {
+    if (message.HostZone !== undefined) {
+      HostZone.encode(message.HostZone, writer.uint32(10).fork()).ldelim();
+    }
+    return writer;
+  },
+
+  decode(
+    input: Reader | Uint8Array,
+    length?: number
+  ): QueryGetHostZoneResponse {
+    const reader = input instanceof Uint8Array ? new Reader(input) : input;
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = {
+      ...baseQueryGetHostZoneResponse,
+    } as QueryGetHostZoneResponse;
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.HostZone = HostZone.decode(reader, reader.uint32());
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): QueryGetHostZoneResponse {
+    const message = {
+      ...baseQueryGetHostZoneResponse,
+    } as QueryGetHostZoneResponse;
+    if (object.HostZone !== undefined && object.HostZone !== null) {
+      message.HostZone = HostZone.fromJSON(object.HostZone);
+    } else {
+      message.HostZone = undefined;
+    }
+    return message;
+  },
+
+  toJSON(message: QueryGetHostZoneResponse): unknown {
+    const obj: any = {};
+    message.HostZone !== undefined &&
+      (obj.HostZone = message.HostZone
+        ? HostZone.toJSON(message.HostZone)
+        : undefined);
+    return obj;
+  },
+
+  fromPartial(
+    object: DeepPartial<QueryGetHostZoneResponse>
+  ): QueryGetHostZoneResponse {
+    const message = {
+      ...baseQueryGetHostZoneResponse,
+    } as QueryGetHostZoneResponse;
+    if (object.HostZone !== undefined && object.HostZone !== null) {
+      message.HostZone = HostZone.fromPartial(object.HostZone);
+    } else {
+      message.HostZone = undefined;
+    }
+    return message;
+  },
+};
+
+const baseQueryAllHostZoneRequest: object = {};
+
+export const QueryAllHostZoneRequest = {
+  encode(
+    message: QueryAllHostZoneRequest,
+    writer: Writer = Writer.create()
+  ): Writer {
+    if (message.pagination !== undefined) {
+      PageRequest.encode(message.pagination, writer.uint32(10).fork()).ldelim();
+    }
+    return writer;
+  },
+
+  decode(input: Reader | Uint8Array, length?: number): QueryAllHostZoneRequest {
+    const reader = input instanceof Uint8Array ? new Reader(input) : input;
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = {
+      ...baseQueryAllHostZoneRequest,
+    } as QueryAllHostZoneRequest;
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.pagination = PageRequest.decode(reader, reader.uint32());
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): QueryAllHostZoneRequest {
+    const message = {
+      ...baseQueryAllHostZoneRequest,
+    } as QueryAllHostZoneRequest;
+    if (object.pagination !== undefined && object.pagination !== null) {
+      message.pagination = PageRequest.fromJSON(object.pagination);
+    } else {
+      message.pagination = undefined;
+    }
+    return message;
+  },
+
+  toJSON(message: QueryAllHostZoneRequest): unknown {
+    const obj: any = {};
+    message.pagination !== undefined &&
+      (obj.pagination = message.pagination
+        ? PageRequest.toJSON(message.pagination)
+        : undefined);
+    return obj;
+  },
+
+  fromPartial(
+    object: DeepPartial<QueryAllHostZoneRequest>
+  ): QueryAllHostZoneRequest {
+    const message = {
+      ...baseQueryAllHostZoneRequest,
+    } as QueryAllHostZoneRequest;
+    if (object.pagination !== undefined && object.pagination !== null) {
+      message.pagination = PageRequest.fromPartial(object.pagination);
+    } else {
+      message.pagination = undefined;
+    }
+    return message;
+  },
+};
+
+const baseQueryAllHostZoneResponse: object = {};
+
+export const QueryAllHostZoneResponse = {
+  encode(
+    message: QueryAllHostZoneResponse,
+    writer: Writer = Writer.create()
+  ): Writer {
+    for (const v of message.HostZone) {
+      HostZone.encode(v!, writer.uint32(10).fork()).ldelim();
+    }
+    if (message.pagination !== undefined) {
+      PageResponse.encode(
+        message.pagination,
+        writer.uint32(18).fork()
+      ).ldelim();
+    }
+    return writer;
+  },
+
+  decode(
+    input: Reader | Uint8Array,
+    length?: number
+  ): QueryAllHostZoneResponse {
+    const reader = input instanceof Uint8Array ? new Reader(input) : input;
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = {
+      ...baseQueryAllHostZoneResponse,
+    } as QueryAllHostZoneResponse;
+    message.HostZone = [];
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.HostZone.push(HostZone.decode(reader, reader.uint32()));
+          break;
+        case 2:
+          message.pagination = PageResponse.decode(reader, reader.uint32());
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): QueryAllHostZoneResponse {
+    const message = {
+      ...baseQueryAllHostZoneResponse,
+    } as QueryAllHostZoneResponse;
+    message.HostZone = [];
+    if (object.HostZone !== undefined && object.HostZone !== null) {
+      for (const e of object.HostZone) {
+        message.HostZone.push(HostZone.fromJSON(e));
+      }
+    }
+    if (object.pagination !== undefined && object.pagination !== null) {
+      message.pagination = PageResponse.fromJSON(object.pagination);
+    } else {
+      message.pagination = undefined;
+    }
+    return message;
+  },
+
+  toJSON(message: QueryAllHostZoneResponse): unknown {
+    const obj: any = {};
+    if (message.HostZone) {
+      obj.HostZone = message.HostZone.map((e) =>
+        e ? HostZone.toJSON(e) : undefined
+      );
+    } else {
+      obj.HostZone = [];
+    }
+    message.pagination !== undefined &&
+      (obj.pagination = message.pagination
+        ? PageResponse.toJSON(message.pagination)
+        : undefined);
+    return obj;
+  },
+
+  fromPartial(
+    object: DeepPartial<QueryAllHostZoneResponse>
+  ): QueryAllHostZoneResponse {
+    const message = {
+      ...baseQueryAllHostZoneResponse,
+    } as QueryAllHostZoneResponse;
+    message.HostZone = [];
+    if (object.HostZone !== undefined && object.HostZone !== null) {
+      for (const e of object.HostZone) {
+        message.HostZone.push(HostZone.fromPartial(e));
+      }
+    }
+    if (object.pagination !== undefined && object.pagination !== null) {
+      message.pagination = PageResponse.fromPartial(object.pagination);
+    } else {
+      message.pagination = undefined;
+    }
+    return message;
+  },
+};
+
 /** Query defines the gRPC querier service. */
 export interface Query {
   /** Parameters queries the parameters of the module. */
@@ -791,12 +997,16 @@ export interface Query {
   MinValidatorRequirements(
     request: QueryGetMinValidatorRequirementsRequest
   ): Promise<QueryGetMinValidatorRequirementsResponse>;
-  /** Queries a HostZone by index. */
-  HostZone(request: QueryGetHostZoneRequest): Promise<QueryGetHostZoneResponse>;
   /** Queries a ICAAccount by index. */
   ICAAccount(
     request: QueryGetICAAccountRequest
   ): Promise<QueryGetICAAccountResponse>;
+  /** Queries a HostZone by id. */
+  HostZone(request: QueryGetHostZoneRequest): Promise<QueryGetHostZoneResponse>;
+  /** Queries a list of HostZone items. */
+  HostZoneAll(
+    request: QueryAllHostZoneRequest
+  ): Promise<QueryAllHostZoneResponse>;
 }
 
 export class QueryClientImpl implements Query {
@@ -858,6 +1068,20 @@ export class QueryClientImpl implements Query {
     );
   }
 
+  ICAAccount(
+    request: QueryGetICAAccountRequest
+  ): Promise<QueryGetICAAccountResponse> {
+    const data = QueryGetICAAccountRequest.encode(request).finish();
+    const promise = this.rpc.request(
+      "Stridelabs.stride.stakeibc.Query",
+      "ICAAccount",
+      data
+    );
+    return promise.then((data) =>
+      QueryGetICAAccountResponse.decode(new Reader(data))
+    );
+  }
+
   HostZone(
     request: QueryGetHostZoneRequest
   ): Promise<QueryGetHostZoneResponse> {
@@ -872,17 +1096,17 @@ export class QueryClientImpl implements Query {
     );
   }
 
-  ICAAccount(
-    request: QueryGetICAAccountRequest
-  ): Promise<QueryGetICAAccountResponse> {
-    const data = QueryGetICAAccountRequest.encode(request).finish();
+  HostZoneAll(
+    request: QueryAllHostZoneRequest
+  ): Promise<QueryAllHostZoneResponse> {
+    const data = QueryAllHostZoneRequest.encode(request).finish();
     const promise = this.rpc.request(
       "Stridelabs.stride.stakeibc.Query",
-      "ICAAccount",
+      "HostZoneAll",
       data
     );
     return promise.then((data) =>
-      QueryGetICAAccountResponse.decode(new Reader(data))
+      QueryAllHostZoneResponse.decode(new Reader(data))
     );
   }
 }
@@ -895,6 +1119,16 @@ interface Rpc {
   ): Promise<Uint8Array>;
 }
 
+declare var self: any | undefined;
+declare var window: any | undefined;
+var globalThis: any = (() => {
+  if (typeof globalThis !== "undefined") return globalThis;
+  if (typeof self !== "undefined") return self;
+  if (typeof window !== "undefined") return window;
+  if (typeof global !== "undefined") return global;
+  throw "Unable to locate global object";
+})();
+
 type Builtin = Date | Function | Uint8Array | string | number | undefined;
 export type DeepPartial<T> = T extends Builtin
   ? T
@@ -905,3 +1139,15 @@ export type DeepPartial<T> = T extends Builtin
   : T extends {}
   ? { [K in keyof T]?: DeepPartial<T[K]> }
   : Partial<T>;
+
+function longToNumber(long: Long): number {
+  if (long.gt(Number.MAX_SAFE_INTEGER)) {
+    throw new globalThis.Error("Value is larger than Number.MAX_SAFE_INTEGER");
+  }
+  return long.toNumber();
+}
+
+if (util.Long !== Long) {
+  util.Long = Long as any;
+  configure();
+}

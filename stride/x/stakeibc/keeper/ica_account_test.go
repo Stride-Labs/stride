@@ -6,10 +6,10 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
+	keepertest "github.com/Stride-labs/stride/testutil/keeper"
+	"github.com/Stride-labs/stride/testutil/nullify"
 	"github.com/Stride-labs/stride/x/stakeibc/keeper"
 	"github.com/Stride-labs/stride/x/stakeibc/types"
-	keepertest "github.com/Stride-labs/stride/testutil/keeper"
-    "github.com/Stride-labs/stride/testutil/nullify"
 )
 
 func createTestICAAccount(keeper *keeper.Keeper, ctx sdk.Context) types.ICAAccount {
@@ -22,7 +22,7 @@ func TestICAAccountGet(t *testing.T) {
 	keeper, ctx := keepertest.StakeibcKeeper(t)
 	item := createTestICAAccount(keeper, ctx)
 	rst, found := keeper.GetICAAccount(ctx)
-    require.True(t, found)
+	require.True(t, found)
 	require.Equal(t,
 		nullify.Fill(&item),
 		nullify.Fill(&rst),
@@ -33,6 +33,6 @@ func TestICAAccountRemove(t *testing.T) {
 	keeper, ctx := keepertest.StakeibcKeeper(t)
 	createTestICAAccount(keeper, ctx)
 	keeper.RemoveICAAccount(ctx)
-    _, found := keeper.GetICAAccount(ctx)
-    require.False(t, found)
+	_, found := keeper.GetICAAccount(ctx)
+	require.False(t, found)
 }
