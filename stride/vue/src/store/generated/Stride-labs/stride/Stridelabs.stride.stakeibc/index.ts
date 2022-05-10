@@ -52,8 +52,9 @@ const getDefaultState = () => {
 				Validator: {},
 				Delegation: {},
 				MinValidatorRequirements: {},
-				HostZone: {},
 				ICAAccount: {},
+				HostZone: {},
+				HostZoneAll: {},
 				
 				_Structure: {
 						Delegation: getStructure(Delegation.fromPartial({})),
@@ -116,17 +117,23 @@ export default {
 					}
 			return state.MinValidatorRequirements[JSON.stringify(params)] ?? {}
 		},
+				getICAAccount: (state) => (params = { params: {}}) => {
+					if (!(<any> params).query) {
+						(<any> params).query=null
+					}
+			return state.ICAAccount[JSON.stringify(params)] ?? {}
+		},
 				getHostZone: (state) => (params = { params: {}}) => {
 					if (!(<any> params).query) {
 						(<any> params).query=null
 					}
 			return state.HostZone[JSON.stringify(params)] ?? {}
 		},
-				getICAAccount: (state) => (params = { params: {}}) => {
+				getHostZoneAll: (state) => (params = { params: {}}) => {
 					if (!(<any> params).query) {
 						(<any> params).query=null
 					}
-			return state.ICAAccount[JSON.stringify(params)] ?? {}
+			return state.HostZoneAll[JSON.stringify(params)] ?? {}
 		},
 				
 		getTypeStructure: (state) => (type) => {
@@ -255,11 +262,33 @@ export default {
 		 		
 		
 		
+		async QueryICAAccount({ commit, rootGetters, getters }, { options: { subscribe, all} = { subscribe:false, all:false}, params, query=null }) {
+			try {
+				const key = params ?? {};
+				const queryClient=await initQueryClient(rootGetters)
+				let value= (await queryClient.queryICAAccount()).data
+				
+					
+				commit('QUERY', { query: 'ICAAccount', key: { params: {...key}, query}, value })
+				if (subscribe) commit('SUBSCRIBE', { action: 'QueryICAAccount', payload: { options: { all }, params: {...key},query }})
+				return getters['getICAAccount']( { params: {...key}, query}) ?? {}
+			} catch (e) {
+				throw new Error('QueryClient:QueryICAAccount API Node Unavailable. Could not perform query: ' + e.message)
+				
+			}
+		},
+		
+		
+		
+		
+		 		
+		
+		
 		async QueryHostZone({ commit, rootGetters, getters }, { options: { subscribe, all} = { subscribe:false, all:false}, params, query=null }) {
 			try {
 				const key = params ?? {};
 				const queryClient=await initQueryClient(rootGetters)
-				let value= (await queryClient.queryHostZone()).data
+				let value= (await queryClient.queryHostZone( key.id)).data
 				
 					
 				commit('QUERY', { query: 'HostZone', key: { params: {...key}, query}, value })
@@ -277,18 +306,22 @@ export default {
 		 		
 		
 		
-		async QueryICAAccount({ commit, rootGetters, getters }, { options: { subscribe, all} = { subscribe:false, all:false}, params, query=null }) {
+		async QueryHostZoneAll({ commit, rootGetters, getters }, { options: { subscribe, all} = { subscribe:false, all:false}, params, query=null }) {
 			try {
 				const key = params ?? {};
 				const queryClient=await initQueryClient(rootGetters)
-				let value= (await queryClient.queryICAAccount()).data
+				let value= (await queryClient.queryHostZoneAll(query)).data
 				
 					
-				commit('QUERY', { query: 'ICAAccount', key: { params: {...key}, query}, value })
-				if (subscribe) commit('SUBSCRIBE', { action: 'QueryICAAccount', payload: { options: { all }, params: {...key},query }})
-				return getters['getICAAccount']( { params: {...key}, query}) ?? {}
+				while (all && (<any> value).pagination && (<any> value).pagination.next_key!=null) {
+					let next_values=(await queryClient.queryHostZoneAll({...query, 'pagination.key':(<any> value).pagination.next_key})).data
+					value = mergeResults(value, next_values);
+				}
+				commit('QUERY', { query: 'HostZoneAll', key: { params: {...key}, query}, value })
+				if (subscribe) commit('SUBSCRIBE', { action: 'QueryHostZoneAll', payload: { options: { all }, params: {...key},query }})
+				return getters['getHostZoneAll']( { params: {...key}, query}) ?? {}
 			} catch (e) {
-				throw new Error('QueryClient:QueryICAAccount API Node Unavailable. Could not perform query: ' + e.message)
+				throw new Error('QueryClient:QueryHostZoneAll API Node Unavailable. Could not perform query: ' + e.message)
 				
 			}
 		},
