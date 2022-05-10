@@ -1,0 +1,14 @@
+syntax = "proto3";
+package Stridelabs.stride.interchainquery;
+
+import "gogoproto/gogo.proto";
+import "interchainquery/params.proto";
+// this line is used by starport scaffolding # genesis/proto/import
+
+option go_package = "github.com/Stride-labs/stride/x/interchainquery/types";
+
+// GenesisState defines the interchainquery module's genesis state.
+message GenesisState {
+  Params params = 1 [(gogoproto.nullable) = false];
+  // this line is used by starport scaffolding # genesis/proto/state
+}
