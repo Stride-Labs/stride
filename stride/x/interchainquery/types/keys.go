@@ -12,9 +12,17 @@ const (
 
 	// QuerierRoute defines the module's query routing key
 	QuerierRoute = ModuleName
+)
 
-	// MemStoreKey defines the in-memory store key
-	MemStoreKey = "mem_interchainquery"
+// prefix bytes for the interchainquery persistent store
+const (
+	prefixData  = iota + 1
+	prefixQuery = iota + 1
+)
+
+var (
+	KeyPrefixData  = []byte{prefixData}
+	KeyPrefixQuery = []byte{prefixQuery}
 )
 
 func KeyPrefix(p string) []byte {
