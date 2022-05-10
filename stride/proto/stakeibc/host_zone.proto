@@ -4,7 +4,8 @@ package Stridelabs.stride.stakeibc;
 option go_package = "github.com/Stride-labs/stride/x/stakeibc/types";
 
 message HostZone {
-  string portId = 1; 
-  string channelId = 2; 
+  uint64 id = 1;
+  string portId = 2; 
+  string channelId = 3; 
   
 }

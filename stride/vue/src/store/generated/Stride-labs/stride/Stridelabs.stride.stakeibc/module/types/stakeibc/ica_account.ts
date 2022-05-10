@@ -1,5 +1,4 @@
 /* eslint-disable */
-import { HostZone } from "../stakeibc/host_zone";
 import { Writer, Reader } from "protobufjs/minimal";
 
 export const protobufPackage = "Stridelabs.stride.stakeibc";
@@ -8,7 +7,6 @@ export interface ICAAccount {
   address: string;
   balance: number;
   delegatedBalance: number;
-  zone: HostZone | undefined;
 }
 
 const baseICAAccount: object = { address: "", balance: 0, delegatedBalance: 0 };
@@ -23,9 +21,6 @@ export const ICAAccount = {
     }
     if (message.delegatedBalance !== 0) {
       writer.uint32(24).int32(message.delegatedBalance);
-    }
-    if (message.zone !== undefined) {
-      HostZone.encode(message.zone, writer.uint32(34).fork()).ldelim();
     }
     return writer;
   },
@@ -45,9 +40,6 @@ export const ICAAccount = {
           break;
         case 3:
           message.delegatedBalance = reader.int32();
-          break;
-        case 4:
-          message.zone = HostZone.decode(reader, reader.uint32());
           break;
         default:
           reader.skipType(tag & 7);
@@ -77,11 +69,6 @@ export const ICAAccount = {
     } else {
       message.delegatedBalance = 0;
     }
-    if (object.zone !== undefined && object.zone !== null) {
-      message.zone = HostZone.fromJSON(object.zone);
-    } else {
-      message.zone = undefined;
-    }
     return message;
   },
 
@@ -91,8 +78,6 @@ export const ICAAccount = {
     message.balance !== undefined && (obj.balance = message.balance);
     message.delegatedBalance !== undefined &&
       (obj.delegatedBalance = message.delegatedBalance);
-    message.zone !== undefined &&
-      (obj.zone = message.zone ? HostZone.toJSON(message.zone) : undefined);
     return obj;
   },
 
@@ -115,11 +100,6 @@ export const ICAAccount = {
       message.delegatedBalance = object.delegatedBalance;
     } else {
       message.delegatedBalance = 0;
-    }
-    if (object.zone !== undefined && object.zone !== null) {
-      message.zone = HostZone.fromPartial(object.zone);
-    } else {
-      message.zone = undefined;
     }
     return message;
   },

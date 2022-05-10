@@ -1,14 +1,14 @@
 package keeper
 
 import (
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/Stride-labs/stride/x/stakeibc/types"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // SetICAAccount set iCAAccount in the store
 func (k Keeper) SetICAAccount(ctx sdk.Context, iCAAccount types.ICAAccount) {
-	store :=  prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.ICAAccountKey))
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.ICAAccountKey))
 	b := k.cdc.MustMarshal(&iCAAccount)
 	store.Set([]byte{0}, b)
 }
@@ -18,9 +18,9 @@ func (k Keeper) GetICAAccount(ctx sdk.Context) (val types.ICAAccount, found bool
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.ICAAccountKey))
 
 	b := store.Get([]byte{0})
-    if b == nil {
-        return val, false
-    }
+	if b == nil {
+		return val, false
+	}
 
 	k.cdc.MustUnmarshal(b, &val)
 	return val, true
