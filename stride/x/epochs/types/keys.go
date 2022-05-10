@@ -12,10 +12,15 @@ const (
 
 	// QuerierRoute defines the module's query routing key
 	QuerierRoute = ModuleName
-
-	// MemStoreKey defines the in-memory store key
-	MemStoreKey = "mem_epochs"
 )
+
+// prefix bytes for the epoch persistent store
+const (
+	prefixEpoch = iota + 1
+)
+
+// KeyPrefixEpoch defines prefix key for storing epochs
+var KeyPrefixEpoch = []byte{prefixEpoch}
 
 func KeyPrefix(p string) []byte {
 	return []byte(p)

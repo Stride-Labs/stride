@@ -1,24 +1,33 @@
 package epochs
 
 import (
+	"time"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	"github.com/Stride-labs/stride/x/epochs/keeper"
 	"github.com/Stride-labs/stride/x/epochs/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // InitGenesis initializes the capability module's state from a provided genesis
 // state.
 func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) {
-	// this line is used by starport scaffolding # genesis/module/init
-	k.SetParams(ctx, genState.Params)
+	// set epoch info from genesis
+	for _, epoch := range genState.Epochs {
+		// Initialize empty epoch values via Cosmos SDK
+		if epoch.StartTime.Equal(time.Time{}) {
+			epoch.StartTime = ctx.BlockTime()
+		}
+
+		epoch.CurrentEpochStartHeight = ctx.BlockHeight()
+
+		k.SetEpochInfo(ctx, epoch)
+	}
 }
 
 // ExportGenesis returns the capability module's exported genesis.
 func ExportGenesis(ctx sdk.Context, k keeper.Keeper) *types.GenesisState {
-	genesis := types.DefaultGenesis()
-	genesis.Params = k.GetParams(ctx)
-
-	// this line is used by starport scaffolding # genesis/module/export
-
-	return genesis
+	return &types.GenesisState{
+		Epochs: k.AllEpochInfos(ctx),
+	}
 }
