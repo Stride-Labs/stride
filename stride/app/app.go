@@ -398,13 +398,19 @@ func New(
 	)
 	stakeibcModule := stakeibcmodule.NewAppModule(appCodec, app.StakeibcKeeper, app.AccountKeeper, app.BankKeeper)
 
-	app.EpochsKeeper = *epochsmodulekeeper.NewKeeper(
+	epochsKeeper := *epochsmodulekeeper.NewKeeper(
 		appCodec,
 		keys[epochsmoduletypes.StoreKey],
-		keys[epochsmoduletypes.MemStoreKey],
-		app.GetSubspace(epochsmoduletypes.ModuleName),
+		// keys[epochsmoduletypes.MemStoreKey],
+		// app.GetSubspace(epochsmoduletypes.ModuleName),
 	)
-	epochsModule := epochsmodule.NewAppModule(appCodec, app.EpochsKeeper, app.AccountKeeper, app.BankKeeper)
+	app.EpochsKeeper = *epochsKeeper.SetHooks(
+		epochsmoduletypes.NewMultiEpochHooks(
+		// insert epoch hooks receivers here
+		// todo add interchain staking hooks here.
+		),
+	)
+	epochsModule := epochsmodule.NewAppModule(appCodec, app.EpochsKeeper)
 
 	// this line is used by starport scaffolding # stargate/app/keeperDefinition
 

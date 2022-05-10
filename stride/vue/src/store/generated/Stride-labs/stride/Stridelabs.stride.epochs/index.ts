@@ -1,9 +1,9 @@
 import { txClient, queryClient, MissingWalletError , registry} from './module'
 
-import { Params } from "./module/types/epochs/params"
+import { EpochInfo } from "./module/types/epochs/genesis"
 
 
-export { Params };
+export { EpochInfo };
 
 async function initTxClient(vuexGetters) {
 	return await txClient(vuexGetters['common/wallet/signer'], {
@@ -41,10 +41,11 @@ function getStructure(template) {
 
 const getDefaultState = () => {
 	return {
-				Params: {},
+				EpochInfos: {},
+				CurrentEpoch: {},
 				
 				_Structure: {
-						Params: getStructure(Params.fromPartial({})),
+						EpochInfo: getStructure(EpochInfo.fromPartial({})),
 						
 		},
 		_Registry: registry,
@@ -73,11 +74,17 @@ export default {
 		}
 	},
 	getters: {
-				getParams: (state) => (params = { params: {}}) => {
+				getEpochInfos: (state) => (params = { params: {}}) => {
 					if (!(<any> params).query) {
 						(<any> params).query=null
 					}
-			return state.Params[JSON.stringify(params)] ?? {}
+			return state.EpochInfos[JSON.stringify(params)] ?? {}
+		},
+				getCurrentEpoch: (state) => (params = { params: {}}) => {
+					if (!(<any> params).query) {
+						(<any> params).query=null
+					}
+			return state.CurrentEpoch[JSON.stringify(params)] ?? {}
 		},
 				
 		getTypeStructure: (state) => (type) => {
@@ -118,18 +125,48 @@ export default {
 		 		
 		
 		
-		async QueryParams({ commit, rootGetters, getters }, { options: { subscribe, all} = { subscribe:false, all:false}, params, query=null }) {
+		async QueryEpochInfos({ commit, rootGetters, getters }, { options: { subscribe, all} = { subscribe:false, all:false}, params, query=null }) {
 			try {
 				const key = params ?? {};
 				const queryClient=await initQueryClient(rootGetters)
-				let value= (await queryClient.queryParams()).data
+				let value= (await queryClient.queryEpochInfos(query)).data
 				
 					
-				commit('QUERY', { query: 'Params', key: { params: {...key}, query}, value })
-				if (subscribe) commit('SUBSCRIBE', { action: 'QueryParams', payload: { options: { all }, params: {...key},query }})
-				return getters['getParams']( { params: {...key}, query}) ?? {}
+				while (all && (<any> value).pagination && (<any> value).pagination.next_key!=null) {
+					let next_values=(await queryClient.queryEpochInfos({...query, 'pagination.key':(<any> value).pagination.next_key})).data
+					value = mergeResults(value, next_values);
+				}
+				commit('QUERY', { query: 'EpochInfos', key: { params: {...key}, query}, value })
+				if (subscribe) commit('SUBSCRIBE', { action: 'QueryEpochInfos', payload: { options: { all }, params: {...key},query }})
+				return getters['getEpochInfos']( { params: {...key}, query}) ?? {}
 			} catch (e) {
-				throw new Error('QueryClient:QueryParams API Node Unavailable. Could not perform query: ' + e.message)
+				throw new Error('QueryClient:QueryEpochInfos API Node Unavailable. Could not perform query: ' + e.message)
+				
+			}
+		},
+		
+		
+		
+		
+		 		
+		
+		
+		async QueryCurrentEpoch({ commit, rootGetters, getters }, { options: { subscribe, all} = { subscribe:false, all:false}, params, query=null }) {
+			try {
+				const key = params ?? {};
+				const queryClient=await initQueryClient(rootGetters)
+				let value= (await queryClient.queryCurrentEpoch(query)).data
+				
+					
+				while (all && (<any> value).pagination && (<any> value).pagination.next_key!=null) {
+					let next_values=(await queryClient.queryCurrentEpoch({...query, 'pagination.key':(<any> value).pagination.next_key})).data
+					value = mergeResults(value, next_values);
+				}
+				commit('QUERY', { query: 'CurrentEpoch', key: { params: {...key}, query}, value })
+				if (subscribe) commit('SUBSCRIBE', { action: 'QueryCurrentEpoch', payload: { options: { all }, params: {...key},query }})
+				return getters['getCurrentEpoch']( { params: {...key}, query}) ?? {}
+			} catch (e) {
+				throw new Error('QueryClient:QueryCurrentEpoch API Node Unavailable. Could not perform query: ' + e.message)
 				
 			}
 		},
