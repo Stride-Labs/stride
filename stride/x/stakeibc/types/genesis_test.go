@@ -27,6 +27,15 @@ func TestGenesisState_Validate(t *testing.T) {
 					Balance:          2,
 					DelegatedBalance: 8,
 				},
+				HostZoneList: []types.HostZone{
+					{
+						Id: 0,
+					},
+					{
+						Id: 1,
+					},
+				},
+				HostZoneCount: 2,
 				// this line is used by starport scaffolding # types/genesis/validField
 			},
 			valid: true,
