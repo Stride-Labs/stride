@@ -399,9 +399,10 @@ func New(
 	)
 	stakeibcModule := stakeibcmodule.NewAppModule(appCodec, app.StakeibcKeeper, app.AccountKeeper, app.BankKeeper)
 
-	app.InterchainQueryKeeper = interchainquerykeeper.NewKeeper(appCodec, keys[interchainquerytypes.StoreKey])
-	interchainQueryModule := interchainquery.NewAppModule(appCodec, app.InterchainQueryKeeper)
-	app.InterchainQueryKeeper.SetCallbackHandler(interchainstakingtypes.ModuleName, app.InterchainstakingKeeper.CallbackHandler())
+	app.InterchainqueryKeeper = interchainquerykeeper.NewKeeper(appCodec, keys[interchainquerytypes.StoreKey])
+	interchainQueryModule := interchainquery.NewAppModule(appCodec, app.InterchainqueryKeeper)
+	// TODO(TEST-16): Enable ICQ callbacks
+	// app.InterchainqueryKeeper.SetCallbackHandler(stakeibcmoduletypes.ModuleName, app.StakeibcKeeper.CallbackHandler())
 
 	// this line is used by starport scaffolding # stargate/app/keeperDefinition
 
