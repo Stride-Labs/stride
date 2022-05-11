@@ -3,8 +3,8 @@ package keeper
 import (
 	"context"
 
+	"github.com/Stride-labs/stride/x/interchainquery/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/ingenuity-build/quicksilver/x/interchainquery/types"
 )
 
 type msgServer struct {

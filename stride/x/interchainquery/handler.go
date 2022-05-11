@@ -6,8 +6,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
-	"github.com/ingenuity-build/quicksilver/x/interchainquery/keeper"
-	"github.com/ingenuity-build/quicksilver/x/interchainquery/types"
+	"github.com/Stride-labs/stride/x/interchainquery/keeper"
+	"github.com/Stride-labs/stride/x/interchainquery/types"
 )
 
 // NewHandler returns a handler for interchainquery module messages
