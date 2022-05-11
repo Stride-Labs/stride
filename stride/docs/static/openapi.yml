@@ -28074,6 +28074,68 @@ paths:
           format: uint64
       tags:
         - Query
+  /interchainquery/tx/v1beta1/submitquery:
+    post:
+      summary: SubmitQueryResponse defines a method for submit query responses.
+      operationId: StrideInterchainquerySubmitQueryResponse
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            description: >-
+              MsgSubmitQueryResponseResponse defines the MsgSubmitQueryResponse
+              response
+
+              type.
+        default:
+          description: An unexpected error response.
+          schema:
+            type: object
+            properties:
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    '@type':
+                      type: string
+                  additionalProperties: {}
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            type: object
+            properties:
+              chain_id:
+                type: string
+              query_id:
+                type: string
+              result:
+                type: string
+                format: byte
+              height:
+                type: string
+                format: int64
+              from_address:
+                type: string
+                title: >-
+                  TODO(TEST-15): Add this type annotation back after installing
+                  cosmos_proto   
+
+                  string from_address = 5 [ (cosmos_proto.scalar) =
+                  "cosmos.AddressString" ];
+            description: >-
+              MsgSubmitQueryResponse represents a message type to fulfil a query
+              request.
+      tags:
+        - Msg
   /Stridelabs/stride/epochs:
     get:
       summary: EpochInfos provide running epochInfos
@@ -49078,6 +49140,35 @@ definitions:
     description: >-
       QueryAppVersionResponse is the response type for the Query/AppVersion RPC
       method.
+  stride.interchainquery.MsgSubmitQueryResponse:
+    type: object
+    properties:
+      chain_id:
+        type: string
+      query_id:
+        type: string
+      result:
+        type: string
+        format: byte
+      height:
+        type: string
+        format: int64
+      from_address:
+        type: string
+        title: >-
+          TODO(TEST-15): Add this type annotation back after installing
+          cosmos_proto   
+
+          string from_address = 5 [ (cosmos_proto.scalar) =
+          "cosmos.AddressString" ];
+    description: >-
+      MsgSubmitQueryResponse represents a message type to fulfil a query
+      request.
+  stride.interchainquery.MsgSubmitQueryResponseResponse:
+    type: object
+    description: |-
+      MsgSubmitQueryResponseResponse defines the MsgSubmitQueryResponse response
+      type.
   Stridelabs.stride.epochs.EpochInfo:
     type: object
     properties:

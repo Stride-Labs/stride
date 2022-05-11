@@ -96,9 +96,15 @@ import (
 	monitoringptypes "github.com/tendermint/spn/x/monitoringp/types"
 
 	"github.com/Stride-labs/stride/docs"
+
 	epochsmodule "github.com/Stride-labs/stride/x/epochs"
 	epochsmodulekeeper "github.com/Stride-labs/stride/x/epochs/keeper"
 	epochsmoduletypes "github.com/Stride-labs/stride/x/epochs/types"
+
+	"github.com/Stride-labs/stride/x/interchainquery"
+	interchainquerykeeper "github.com/Stride-labs/stride/x/interchainquery/keeper"
+	interchainquerytypes "github.com/Stride-labs/stride/x/interchainquery/types"
+
 	stakeibcmodule "github.com/Stride-labs/stride/x/stakeibc"
 	stakeibcmodulekeeper "github.com/Stride-labs/stride/x/stakeibc/keeper"
 	stakeibcmoduletypes "github.com/Stride-labs/stride/x/stakeibc/types"
@@ -157,19 +163,21 @@ var (
 		monitoringp.AppModuleBasic{},
 		stakeibcmodule.AppModuleBasic{},
 		epochsmodule.AppModuleBasic{},
+		interchainquery.AppModuleBasic{},
 		// this line is used by starport scaffolding # stargate/app/moduleBasic
 	)
 
 	// module account permissions
 	maccPerms = map[string][]string{
-		authtypes.FeeCollectorName:     nil,
-		distrtypes.ModuleName:          nil,
-		minttypes.ModuleName:           {authtypes.Minter},
-		stakingtypes.BondedPoolName:    {authtypes.Burner, authtypes.Staking},
-		stakingtypes.NotBondedPoolName: {authtypes.Burner, authtypes.Staking},
-		govtypes.ModuleName:            {authtypes.Burner},
-		ibctransfertypes.ModuleName:    {authtypes.Minter, authtypes.Burner},
-		stakeibcmoduletypes.ModuleName: {authtypes.Minter, authtypes.Burner, authtypes.Staking},
+		authtypes.FeeCollectorName:      nil,
+		distrtypes.ModuleName:           nil,
+		minttypes.ModuleName:            {authtypes.Minter},
+		stakingtypes.BondedPoolName:     {authtypes.Burner, authtypes.Staking},
+		stakingtypes.NotBondedPoolName:  {authtypes.Burner, authtypes.Staking},
+		govtypes.ModuleName:             {authtypes.Burner},
+		ibctransfertypes.ModuleName:     {authtypes.Minter, authtypes.Burner},
+		stakeibcmoduletypes.ModuleName:  {authtypes.Minter, authtypes.Burner, authtypes.Staking},
+		interchainquerytypes.ModuleName: nil,
 		// this line is used by starport scaffolding # stargate/app/maccPerms
 	}
 )
@@ -232,7 +240,8 @@ type App struct {
 	ScopedStakeibcKeeper capabilitykeeper.ScopedKeeper
 	StakeibcKeeper       stakeibcmodulekeeper.Keeper
 
-	EpochsKeeper epochsmodulekeeper.Keeper
+	EpochsKeeper          epochsmodulekeeper.Keeper
+	InterchainqueryKeeper interchainquerykeeper.Keeper
 	// this line is used by starport scaffolding # stargate/app/keeperDeclaration
 
 	// mm is the module manager
@@ -271,6 +280,7 @@ func New(
 		evidencetypes.StoreKey, ibctransfertypes.StoreKey, capabilitytypes.StoreKey, monitoringptypes.StoreKey,
 		stakeibcmoduletypes.StoreKey,
 		epochsmoduletypes.StoreKey,
+		interchainquerytypes.StoreKey,
 		// this line is used by starport scaffolding # stargate/app/storeKey
 	)
 	tkeys := sdk.NewTransientStoreKeys(paramstypes.TStoreKey)
@@ -411,6 +421,10 @@ func New(
 		),
 	)
 	epochsModule := epochsmodule.NewAppModule(appCodec, app.EpochsKeeper)
+	app.InterchainqueryKeeper = interchainquerykeeper.NewKeeper(appCodec, keys[interchainquerytypes.StoreKey])
+	interchainQueryModule := interchainquery.NewAppModule(appCodec, app.InterchainqueryKeeper)
+	// TODO(TEST-16): Enable ICQ callbacks
+	// app.InterchainqueryKeeper.SetCallbackHandler(stakeibcmoduletypes.ModuleName, app.StakeibcKeeper.CallbackHandler())
 
 	// this line is used by starport scaffolding # stargate/app/keeperDefinition
 
@@ -455,6 +469,7 @@ func New(
 		monitoringModule,
 		stakeibcModule,
 		epochsModule,
+		interchainQueryModule,
 		// this line is used by starport scaffolding # stargate/app/appModule
 	)
 
@@ -483,6 +498,7 @@ func New(
 		monitoringptypes.ModuleName,
 		stakeibcmoduletypes.ModuleName,
 		epochsmoduletypes.ModuleName,
+		interchainquerytypes.ModuleName,
 		// this line is used by starport scaffolding # stargate/app/beginBlockers
 	)
 
@@ -507,6 +523,7 @@ func New(
 		monitoringptypes.ModuleName,
 		stakeibcmoduletypes.ModuleName,
 		epochsmoduletypes.ModuleName,
+		interchainquerytypes.ModuleName,
 		// this line is used by starport scaffolding # stargate/app/endBlockers
 	)
 
@@ -536,6 +553,7 @@ func New(
 		monitoringptypes.ModuleName,
 		stakeibcmoduletypes.ModuleName,
 		epochsmoduletypes.ModuleName,
+		interchainquerytypes.ModuleName,
 		// this line is used by starport scaffolding # stargate/app/initGenesis
 	)
 
@@ -561,6 +579,7 @@ func New(
 		monitoringModule,
 		stakeibcModule,
 		epochsModule,
+		interchainQueryModule,
 		// this line is used by starport scaffolding # stargate/app/appModule
 	)
 	app.sm.RegisterStoreDecoders()
@@ -752,6 +771,7 @@ func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino
 	paramsKeeper.Subspace(monitoringptypes.ModuleName)
 	paramsKeeper.Subspace(stakeibcmoduletypes.ModuleName)
 	paramsKeeper.Subspace(epochsmoduletypes.ModuleName)
+	paramsKeeper.Subspace(interchainquerytypes.ModuleName)
 	// this line is used by starport scaffolding # stargate/app/paramSubspace
 
 	return paramsKeeper
