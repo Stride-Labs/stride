@@ -1,0 +1,37 @@
+syntax = "proto3";
+package quicksilver.interchainquery.v1;
+
+import "gogoproto/gogo.proto";
+import "cosmos_proto/cosmos.proto";
+import "google/api/annotations.proto";
+
+option go_package = "github.com/ingenuity-build/quicksilver/x/interchainquery/types";
+
+// Msg defines the interchainquery Msg service.
+service Msg {
+  // SubmitQueryResponse defines a method for submit query responses.
+  rpc SubmitQueryResponse(MsgSubmitQueryResponse)
+      returns (MsgSubmitQueryResponseResponse) {
+    option (google.api.http) = {
+      post : "/interchainquery/tx/v1beta1/submitquery"
+      body : "*"
+    };
+  };
+}
+
+// MsgSubmitQueryResponse represents a message type to fulfil a query request.
+message MsgSubmitQueryResponse {
+  option (gogoproto.equal) = false;
+  option (gogoproto.goproto_getters) = false;
+  option (gogoproto.goproto_stringer) = true;
+
+  string chain_id = 1 [ (gogoproto.moretags) = "yaml:\"chain_id\"" ];
+  string query_id = 2 [ (gogoproto.moretags) = "yaml:\"query_id\"" ];
+  bytes result = 3 [ (gogoproto.moretags) = "yaml:\"result\"" ];
+  int64 height = 4 [ (gogoproto.moretags) = "yaml:\"height\"" ];
+  string from_address = 5 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+}
+
+// MsgSubmitQueryResponseResponse defines the MsgSubmitQueryResponse response
+// type.
+message MsgSubmitQueryResponseResponse {}
