@@ -1,6 +1,8 @@
 // THIS FILE IS GENERATED AUTOMATICALLY. DO NOT MODIFY.
 
+import StrideLabsStrideStridelabsStrideInterchainquery from './Stride-labs/stride/Stridelabs.stride.interchainquery'
 import StrideLabsStrideStridelabsStrideStakeibc from './Stride-labs/stride/Stridelabs.stride.stakeibc'
+import StrideLabsStrideStrideInterchainquery from './Stride-labs/stride/stride.interchainquery'
 import CosmosCosmosSdkCosmosAuthV1Beta1 from './cosmos/cosmos-sdk/cosmos.auth.v1beta1'
 import CosmosCosmosSdkCosmosBankV1Beta1 from './cosmos/cosmos-sdk/cosmos.bank.v1beta1'
 import CosmosCosmosSdkCosmosBaseTendermintV1Beta1 from './cosmos/cosmos-sdk/cosmos.base.tendermint.v1beta1'
@@ -24,7 +26,9 @@ import CosmosIbcGoIbcCorePortV1 from './cosmos/ibc-go/ibc.core.port.v1'
 
 
 export default { 
+  StrideLabsStrideStridelabsStrideInterchainquery: load(StrideLabsStrideStridelabsStrideInterchainquery, 'Stridelabs.stride.interchainquery'),
   StrideLabsStrideStridelabsStrideStakeibc: load(StrideLabsStrideStridelabsStrideStakeibc, 'Stridelabs.stride.stakeibc'),
+  StrideLabsStrideStrideInterchainquery: load(StrideLabsStrideStrideInterchainquery, 'stride.interchainquery'),
   CosmosCosmosSdkCosmosAuthV1Beta1: load(CosmosCosmosSdkCosmosAuthV1Beta1, 'cosmos.auth.v1beta1'),
   CosmosCosmosSdkCosmosBankV1Beta1: load(CosmosCosmosSdkCosmosBankV1Beta1, 'cosmos.bank.v1beta1'),
   CosmosCosmosSdkCosmosBaseTendermintV1Beta1: load(CosmosCosmosSdkCosmosBaseTendermintV1Beta1, 'cosmos.base.tendermint.v1beta1'),
