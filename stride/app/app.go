@@ -406,8 +406,8 @@ func New(
 	)
 	app.EpochsKeeper = *epochsKeeper.SetHooks(
 		epochsmoduletypes.NewMultiEpochHooks(
-		// insert epoch hooks receivers here
-		// todo add interchain staking hooks here.
+		// TODO(TEST-18) insert epoch hooks receivers here
+		// TODO(TEST-18) add interchain staking hooks here.
 		),
 	)
 	epochsModule := epochsmodule.NewAppModule(appCodec, app.EpochsKeeper)
