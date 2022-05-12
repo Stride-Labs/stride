@@ -16,6 +16,7 @@ func (k msgServer) LiquidStake(goCtx context.Context, msg *types.MsgLiquidStake)
 	// get the sender address
 	sender, err := sdk.AccAddressFromBech32(msg.Creator)
 	if err != nil {
+		k.Logger(ctx).Info("Invalid address");
 		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "address invalid")
 	}
 	// get the coins to send, they need to be in the format {amount}{denom}
@@ -30,11 +31,13 @@ func (k msgServer) LiquidStake(goCtx context.Context, msg *types.MsgLiquidStake)
 	// Safety checks
 	// ensure Amount is non-negative, liquid staking 0 or less tokens is invalid
 	if msg.Amount < 1 {
+		k.Logger(ctx).Info("amount must be non-negative");
 		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidCoins, "amount must be non-negative")
 	}
 	// check that the token is an IBC token
 	isIbcToken := types.IsIBCToken(msg.Denom)
 	if !isIbcToken {
+		k.Logger(ctx).Info("invalid token denom");
 		return nil, sdkerrors.Wrapf(types.ErrInvalidToken, "invalid token denom (%s)", msg.Denom)
 	}
 
@@ -45,6 +48,7 @@ func (k msgServer) LiquidStake(goCtx context.Context, msg *types.MsgLiquidStake)
 	// NOTE: If sender doesn't have enough coins, this panics (error is hard to interpret)
 	sdkerror := k.bankKeeper.SendCoinsFromAccountToModule(ctx, sender, types.ModuleName, coins)
 	if sdkerror != nil {
+		k.Logger(ctx).Error("failed to send tokens from Account to Module");
 		panic(sdkerror)
 	}
 
@@ -52,6 +56,7 @@ func (k msgServer) LiquidStake(goCtx context.Context, msg *types.MsgLiquidStake)
 	// NOTE: We should ensure that denoms are unique - we don't want anyone spoofing denoms
 	err = k.MintStAsset(ctx, sender, msg.Amount, msg.Denom)
 	if err != nil {
+		k.Logger(ctx).Info("failed to send tokens from Account to Module");
 		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidCoins, "failed to mint stAssets to user")
 	}
 
@@ -62,11 +67,13 @@ func (k msgServer) MintStAsset(ctx sdk.Context, sender sdk.AccAddress, amount in
 	// repeat safety checks from LiquidStake in case MintStAsset is called from another site
 	// ensure Amount is non-negative, liquid staking 0 or less tokens is invalid
 	if amount < 1 {
+		k.Logger(ctx).Info("Amount to mint must be non-negative");
 		return nil
 	}
 	// check that the token is an IBC token
 	isIbcToken := types.IsIBCToken(denom)
 	if !isIbcToken {
+		k.Logger(ctx).Info("MintStAsset failed: token denom is not ibc/ token");
 		return nil
 	}
 
@@ -81,6 +88,7 @@ func (k msgServer) MintStAsset(ctx sdk.Context, sender sdk.AccAddress, amount in
 	coinString := strconv.Itoa(int(amount)) + stAssetDenom
 	stCoins, err := sdk.ParseCoinsNormalized(coinString)
 	if err != nil {
+		k.Logger(ctx).Info("Failed to parse coins");
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidCoins, "Failed to parse coins")
 	}
 
@@ -89,11 +97,13 @@ func (k msgServer) MintStAsset(ctx sdk.Context, sender sdk.AccAddress, amount in
 	// It will panic if the module account does not exist or is unauthorized.
 	sdkerror := k.bankKeeper.MintCoins(ctx, types.ModuleName, stCoins)
 	if sdkerror != nil {
+		k.Logger(ctx).Info("Failed to mint coins");
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidCoins, "Failed to mint coins")
 	}
 	// transfer those coins to the user
 	sdkerror = k.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, sender, stCoins)
 	if sdkerror != nil {
+		k.Logger(ctx).Info("Failed to send coins from module to account");
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidCoins, "Failed to send coins from module to account")
 	}
 	return nil
