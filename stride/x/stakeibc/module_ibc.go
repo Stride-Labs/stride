@@ -3,18 +3,30 @@ package stakeibc
 import (
 	"fmt"
 
+	"github.com/Stride-labs/stride/x/stakeibc/keeper"
 	"github.com/Stride-labs/stride/x/stakeibc/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
-	channeltypes "github.com/cosmos/ibc-go/v2/modules/core/04-channel/types"
-	porttypes "github.com/cosmos/ibc-go/v2/modules/core/05-port/types"
-	host "github.com/cosmos/ibc-go/v2/modules/core/24-host"
-	ibcexported "github.com/cosmos/ibc-go/v2/modules/core/exported"
+	channeltypes "github.com/cosmos/ibc-go/v3/modules/core/04-channel/types"
+	host "github.com/cosmos/ibc-go/v3/modules/core/24-host"
+	ibcexported "github.com/cosmos/ibc-go/v3/modules/core/exported"
 )
 
+// IBCModule implements the ICS26 interface for interchain accounts controller chains
+type IBCModule struct {
+	keeper keeper.Keeper
+}
+
+// NewIBCModule creates a new IBCModule given the keeper
+func NewIBCModule(k keeper.Keeper) IBCModule {
+	return IBCModule{
+		keeper: k,
+	}
+}
+
 // OnChanOpenInit implements the IBCModule interface
-func (am AppModule) OnChanOpenInit(
+func (im IBCModule) OnChanOpenInit(
 	ctx sdk.Context,
 	order channeltypes.Order,
 	connectionHops []string,
@@ -24,27 +36,30 @@ func (am AppModule) OnChanOpenInit(
 	counterparty channeltypes.Counterparty,
 	version string,
 ) error {
-
+	// Scaffolded for ibc v2
 	// Require portID is the portID module is bound to
-	boundPort := am.keeper.GetPort(ctx)
-	if boundPort != portID {
-		return sdkerrors.Wrapf(porttypes.ErrInvalidPort, "invalid port: %s, expected %s", portID, boundPort)
-	}
+	// boundPort := im.keeper.GetPort(ctx)
+	// if boundPort != portID {
+	// 	return sdkerrors.Wrapf(porttypes.ErrInvalidPort, "invalid port: %s, expected %s", portID, boundPort)
+	// }
 
-	if version != types.Version {
-		return sdkerrors.Wrapf(types.ErrInvalidVersion, "got %s, expected %s", version, types.Version)
-	}
+	// if version != types.Version {
+	// 	return sdkerrors.Wrapf(types.ErrInvalidVersion, "got %s, expected %s", version, types.Version)
+	// }
 
-	// Claim channel capability passed back by IBC module
-	if err := am.keeper.ClaimCapability(ctx, chanCap, host.ChannelCapabilityPath(portID, channelID)); err != nil {
-		return err
-	}
+	// // Claim channel capability passed back by IBC module
+	// if err := im.keeper.ClaimCapability(ctx, chanCap, host.ChannelCapabilityPath(portID, channelID)); err != nil {
+	// 	return err
+	// }
 
-	return nil
+	// return nil
+	// ibc v3 https://github.com/cosmos/ibc/blob/f19c5d188d6de301d10a212406155cbb2ba2982f/spec/app/ics-027-interchain-accounts/README.md
+	return im.keeper.ClaimCapability(ctx, chanCap, host.ChannelCapabilityPath(portID, channelID))
 }
 
+
 // OnChanOpenTry implements the IBCModule interface
-func (am AppModule) OnChanOpenTry(
+func (im IBCModule) OnChanOpenTry(
 	ctx sdk.Context,
 	order channeltypes.Order,
 	connectionHops []string,
@@ -52,53 +67,59 @@ func (am AppModule) OnChanOpenTry(
 	channelID string,
 	chanCap *capabilitytypes.Capability,
 	counterparty channeltypes.Counterparty,
-	version,
 	counterpartyVersion string,
-) error {
+) (string, error) {
+	// ibc v3
+	return "", nil
 
+	// ibc v2 scaffolded code
 	// Require portID is the portID module is bound to
-	boundPort := am.keeper.GetPort(ctx)
-	if boundPort != portID {
-		return sdkerrors.Wrapf(porttypes.ErrInvalidPort, "invalid port: %s, expected %s", portID, boundPort)
-	}
+	// boundPort := im.keeper.GetPort(ctx)
+	// if boundPort != portID {
+	// 	return sdkerrors.Wrapf(porttypes.ErrInvalidPort, "invalid port: %s, expected %s", portID, boundPort)
+	// }
 
-	if version != types.Version {
-		return sdkerrors.Wrapf(types.ErrInvalidVersion, "got: %s, expected %s", version, types.Version)
-	}
+	// if version != types.Version {
+	// 	return sdkerrors.Wrapf(types.ErrInvalidVersion, "got: %s, expected %s", version, types.Version)
+	// }
 
-	if counterpartyVersion != types.Version {
-		return sdkerrors.Wrapf(types.ErrInvalidVersion, "invalid counterparty version: got: %s, expected %s", counterpartyVersion, types.Version)
-	}
+	// if counterpartyVersion != types.Version {
+	// 	return sdkerrors.Wrapf(types.ErrInvalidVersion, "invalid counterparty version: got: %s, expected %s", counterpartyVersion, types.Version)
+	// }
 
-	// Module may have already claimed capability in OnChanOpenInit in the case of crossing hellos
-	// (ie chainA and chainB both call ChanOpenInit before one of them calls ChanOpenTry)
-	// If module can already authenticate the capability then module already owns it so we don't need to claim
-	// Otherwise, module does not have channel capability and we must claim it from IBC
-	if !am.keeper.AuthenticateCapability(ctx, chanCap, host.ChannelCapabilityPath(portID, channelID)) {
-		// Only claim channel capability passed back by IBC module if we do not already own it
-		if err := am.keeper.ClaimCapability(ctx, chanCap, host.ChannelCapabilityPath(portID, channelID)); err != nil {
-			return err
-		}
-	}
+	// // Module may have already claimed capability in OnChanOpenInit in the case of crossing hellos
+	// // (ie chainA and chainB both call ChanOpenInit before one of them calls ChanOpenTry)
+	// // If module can already authenticate the capability then module already owns it so we don't need to claim
+	// // Otherwise, module does not have channel capability and we must claim it from IBC
+	// if !im.keeper.AuthenticateCapability(ctx, chanCap, host.ChannelCapabilityPath(portID, channelID)) {
+	// 	// Only claim channel capability passed back by IBC module if we do not already own it
+	// 	if err := im.keeper.ClaimCapability(ctx, chanCap, host.ChannelCapabilityPath(portID, channelID)); err != nil {
+	// 		return err
+	// 	}
+	// }
 
-	return nil
+	// return nil
 }
 
 // OnChanOpenAck implements the IBCModule interface
-func (am AppModule) OnChanOpenAck(
+func (im IBCModule) OnChanOpenAck(
 	ctx sdk.Context,
 	portID,
 	channelID string,
+	counterpartyChannelID string,
 	counterpartyVersion string,
 ) error {
+	// TODO(TEST-21): Implement this!
 	if counterpartyVersion != types.Version {
 		return sdkerrors.Wrapf(types.ErrInvalidVersion, "invalid counterparty version: %s, expected %s", counterpartyVersion, types.Version)
 	}
 	return nil
 }
 
+
+
 // OnChanOpenConfirm implements the IBCModule interface
-func (am AppModule) OnChanOpenConfirm(
+func (im IBCModule) OnChanOpenConfirm(
 	ctx sdk.Context,
 	portID,
 	channelID string,
@@ -107,7 +128,7 @@ func (am AppModule) OnChanOpenConfirm(
 }
 
 // OnChanCloseInit implements the IBCModule interface
-func (am AppModule) OnChanCloseInit(
+func (im IBCModule) OnChanCloseInit(
 	ctx sdk.Context,
 	portID,
 	channelID string,
@@ -117,7 +138,7 @@ func (am AppModule) OnChanCloseInit(
 }
 
 // OnChanCloseConfirm implements the IBCModule interface
-func (am AppModule) OnChanCloseConfirm(
+func (im IBCModule) OnChanCloseConfirm(
 	ctx sdk.Context,
 	portID,
 	channelID string,
@@ -126,7 +147,7 @@ func (am AppModule) OnChanCloseConfirm(
 }
 
 // OnRecvPacket implements the IBCModule interface
-func (am AppModule) OnRecvPacket(
+func (im IBCModule) OnRecvPacket(
 	ctx sdk.Context,
 	modulePacket channeltypes.Packet,
 	relayer sdk.AccAddress,
@@ -153,7 +174,7 @@ func (am AppModule) OnRecvPacket(
 }
 
 // OnAcknowledgementPacket implements the IBCModule interface
-func (am AppModule) OnAcknowledgementPacket(
+func (im IBCModule) OnAcknowledgementPacket(
 	ctx sdk.Context,
 	modulePacket channeltypes.Packet,
 	acknowledgement []byte,
@@ -210,7 +231,7 @@ func (am AppModule) OnAcknowledgementPacket(
 }
 
 // OnTimeoutPacket implements the IBCModule interface
-func (am AppModule) OnTimeoutPacket(
+func (im IBCModule) OnTimeoutPacket(
 	ctx sdk.Context,
 	modulePacket channeltypes.Packet,
 	relayer sdk.AccAddress,
@@ -231,7 +252,7 @@ func (am AppModule) OnTimeoutPacket(
 	return nil
 }
 
-func (am AppModule) NegotiateAppVersion(
+func (im IBCModule) NegotiateAppVersion(
 	ctx sdk.Context,
 	order channeltypes.Order,
 	connectionID string,
