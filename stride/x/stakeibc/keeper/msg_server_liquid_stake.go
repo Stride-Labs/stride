@@ -68,13 +68,13 @@ func (k msgServer) MintStAsset(ctx sdk.Context, sender sdk.AccAddress, amount in
 	// ensure Amount is non-negative, liquid staking 0 or less tokens is invalid
 	if amount < 1 {
 		k.Logger(ctx).Info("Amount to mint must be non-negative");
-		return nil
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidCoins, "Amount to mint must be non-negative")
 	}
 	// check that the token is an IBC token
 	isIbcToken := types.IsIBCToken(denom)
 	if !isIbcToken {
 		k.Logger(ctx).Info("MintStAsset failed: token denom is not ibc/ token");
-		return nil
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidCoins, "MintStAsset failed: token denom is not ibc/ token")
 	}
 
 	// NOTE: should we pass in a zone to this function and pull the stAssetDenom off of that object?
