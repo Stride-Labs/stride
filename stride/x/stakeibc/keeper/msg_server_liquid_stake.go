@@ -79,6 +79,7 @@ func (k msgServer) MintStAsset(ctx sdk.Context, sender sdk.AccAddress, amount in
 
 	// NOTE: should we pass in a zone to this function and pull the stAssetDenom off of that object?
 	// get the asset type to transfer
+	// TODO(TEST-23): store denoms on HostZone
 	prefix := "st"
 	// get the denom of the st asset type to transfer
 	stAssetDenom := prefix + denom
