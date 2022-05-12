@@ -11,6 +11,7 @@ import {
   PageRequest,
   PageResponse,
 } from "../cosmos/base/query/v1beta1/pagination";
+import { DepositRecord } from "../stakeibc/deposit_record";
 
 export const protobufPackage = "Stridelabs.stride.stakeibc";
 
@@ -61,6 +62,23 @@ export interface QueryAllHostZoneRequest {
 
 export interface QueryAllHostZoneResponse {
   HostZone: HostZone[];
+  pagination: PageResponse | undefined;
+}
+
+export interface QueryGetDepositRecordRequest {
+  id: number;
+}
+
+export interface QueryGetDepositRecordResponse {
+  DepositRecord: DepositRecord | undefined;
+}
+
+export interface QueryAllDepositRecordRequest {
+  pagination: PageRequest | undefined;
+}
+
+export interface QueryAllDepositRecordResponse {
+  DepositRecord: DepositRecord[];
   pagination: PageResponse | undefined;
 }
 
@@ -981,6 +999,325 @@ export const QueryAllHostZoneResponse = {
   },
 };
 
+const baseQueryGetDepositRecordRequest: object = { id: 0 };
+
+export const QueryGetDepositRecordRequest = {
+  encode(
+    message: QueryGetDepositRecordRequest,
+    writer: Writer = Writer.create()
+  ): Writer {
+    if (message.id !== 0) {
+      writer.uint32(8).uint64(message.id);
+    }
+    return writer;
+  },
+
+  decode(
+    input: Reader | Uint8Array,
+    length?: number
+  ): QueryGetDepositRecordRequest {
+    const reader = input instanceof Uint8Array ? new Reader(input) : input;
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = {
+      ...baseQueryGetDepositRecordRequest,
+    } as QueryGetDepositRecordRequest;
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.id = longToNumber(reader.uint64() as Long);
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): QueryGetDepositRecordRequest {
+    const message = {
+      ...baseQueryGetDepositRecordRequest,
+    } as QueryGetDepositRecordRequest;
+    if (object.id !== undefined && object.id !== null) {
+      message.id = Number(object.id);
+    } else {
+      message.id = 0;
+    }
+    return message;
+  },
+
+  toJSON(message: QueryGetDepositRecordRequest): unknown {
+    const obj: any = {};
+    message.id !== undefined && (obj.id = message.id);
+    return obj;
+  },
+
+  fromPartial(
+    object: DeepPartial<QueryGetDepositRecordRequest>
+  ): QueryGetDepositRecordRequest {
+    const message = {
+      ...baseQueryGetDepositRecordRequest,
+    } as QueryGetDepositRecordRequest;
+    if (object.id !== undefined && object.id !== null) {
+      message.id = object.id;
+    } else {
+      message.id = 0;
+    }
+    return message;
+  },
+};
+
+const baseQueryGetDepositRecordResponse: object = {};
+
+export const QueryGetDepositRecordResponse = {
+  encode(
+    message: QueryGetDepositRecordResponse,
+    writer: Writer = Writer.create()
+  ): Writer {
+    if (message.DepositRecord !== undefined) {
+      DepositRecord.encode(
+        message.DepositRecord,
+        writer.uint32(10).fork()
+      ).ldelim();
+    }
+    return writer;
+  },
+
+  decode(
+    input: Reader | Uint8Array,
+    length?: number
+  ): QueryGetDepositRecordResponse {
+    const reader = input instanceof Uint8Array ? new Reader(input) : input;
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = {
+      ...baseQueryGetDepositRecordResponse,
+    } as QueryGetDepositRecordResponse;
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.DepositRecord = DepositRecord.decode(reader, reader.uint32());
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): QueryGetDepositRecordResponse {
+    const message = {
+      ...baseQueryGetDepositRecordResponse,
+    } as QueryGetDepositRecordResponse;
+    if (object.DepositRecord !== undefined && object.DepositRecord !== null) {
+      message.DepositRecord = DepositRecord.fromJSON(object.DepositRecord);
+    } else {
+      message.DepositRecord = undefined;
+    }
+    return message;
+  },
+
+  toJSON(message: QueryGetDepositRecordResponse): unknown {
+    const obj: any = {};
+    message.DepositRecord !== undefined &&
+      (obj.DepositRecord = message.DepositRecord
+        ? DepositRecord.toJSON(message.DepositRecord)
+        : undefined);
+    return obj;
+  },
+
+  fromPartial(
+    object: DeepPartial<QueryGetDepositRecordResponse>
+  ): QueryGetDepositRecordResponse {
+    const message = {
+      ...baseQueryGetDepositRecordResponse,
+    } as QueryGetDepositRecordResponse;
+    if (object.DepositRecord !== undefined && object.DepositRecord !== null) {
+      message.DepositRecord = DepositRecord.fromPartial(object.DepositRecord);
+    } else {
+      message.DepositRecord = undefined;
+    }
+    return message;
+  },
+};
+
+const baseQueryAllDepositRecordRequest: object = {};
+
+export const QueryAllDepositRecordRequest = {
+  encode(
+    message: QueryAllDepositRecordRequest,
+    writer: Writer = Writer.create()
+  ): Writer {
+    if (message.pagination !== undefined) {
+      PageRequest.encode(message.pagination, writer.uint32(10).fork()).ldelim();
+    }
+    return writer;
+  },
+
+  decode(
+    input: Reader | Uint8Array,
+    length?: number
+  ): QueryAllDepositRecordRequest {
+    const reader = input instanceof Uint8Array ? new Reader(input) : input;
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = {
+      ...baseQueryAllDepositRecordRequest,
+    } as QueryAllDepositRecordRequest;
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.pagination = PageRequest.decode(reader, reader.uint32());
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): QueryAllDepositRecordRequest {
+    const message = {
+      ...baseQueryAllDepositRecordRequest,
+    } as QueryAllDepositRecordRequest;
+    if (object.pagination !== undefined && object.pagination !== null) {
+      message.pagination = PageRequest.fromJSON(object.pagination);
+    } else {
+      message.pagination = undefined;
+    }
+    return message;
+  },
+
+  toJSON(message: QueryAllDepositRecordRequest): unknown {
+    const obj: any = {};
+    message.pagination !== undefined &&
+      (obj.pagination = message.pagination
+        ? PageRequest.toJSON(message.pagination)
+        : undefined);
+    return obj;
+  },
+
+  fromPartial(
+    object: DeepPartial<QueryAllDepositRecordRequest>
+  ): QueryAllDepositRecordRequest {
+    const message = {
+      ...baseQueryAllDepositRecordRequest,
+    } as QueryAllDepositRecordRequest;
+    if (object.pagination !== undefined && object.pagination !== null) {
+      message.pagination = PageRequest.fromPartial(object.pagination);
+    } else {
+      message.pagination = undefined;
+    }
+    return message;
+  },
+};
+
+const baseQueryAllDepositRecordResponse: object = {};
+
+export const QueryAllDepositRecordResponse = {
+  encode(
+    message: QueryAllDepositRecordResponse,
+    writer: Writer = Writer.create()
+  ): Writer {
+    for (const v of message.DepositRecord) {
+      DepositRecord.encode(v!, writer.uint32(10).fork()).ldelim();
+    }
+    if (message.pagination !== undefined) {
+      PageResponse.encode(
+        message.pagination,
+        writer.uint32(18).fork()
+      ).ldelim();
+    }
+    return writer;
+  },
+
+  decode(
+    input: Reader | Uint8Array,
+    length?: number
+  ): QueryAllDepositRecordResponse {
+    const reader = input instanceof Uint8Array ? new Reader(input) : input;
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = {
+      ...baseQueryAllDepositRecordResponse,
+    } as QueryAllDepositRecordResponse;
+    message.DepositRecord = [];
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.DepositRecord.push(
+            DepositRecord.decode(reader, reader.uint32())
+          );
+          break;
+        case 2:
+          message.pagination = PageResponse.decode(reader, reader.uint32());
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): QueryAllDepositRecordResponse {
+    const message = {
+      ...baseQueryAllDepositRecordResponse,
+    } as QueryAllDepositRecordResponse;
+    message.DepositRecord = [];
+    if (object.DepositRecord !== undefined && object.DepositRecord !== null) {
+      for (const e of object.DepositRecord) {
+        message.DepositRecord.push(DepositRecord.fromJSON(e));
+      }
+    }
+    if (object.pagination !== undefined && object.pagination !== null) {
+      message.pagination = PageResponse.fromJSON(object.pagination);
+    } else {
+      message.pagination = undefined;
+    }
+    return message;
+  },
+
+  toJSON(message: QueryAllDepositRecordResponse): unknown {
+    const obj: any = {};
+    if (message.DepositRecord) {
+      obj.DepositRecord = message.DepositRecord.map((e) =>
+        e ? DepositRecord.toJSON(e) : undefined
+      );
+    } else {
+      obj.DepositRecord = [];
+    }
+    message.pagination !== undefined &&
+      (obj.pagination = message.pagination
+        ? PageResponse.toJSON(message.pagination)
+        : undefined);
+    return obj;
+  },
+
+  fromPartial(
+    object: DeepPartial<QueryAllDepositRecordResponse>
+  ): QueryAllDepositRecordResponse {
+    const message = {
+      ...baseQueryAllDepositRecordResponse,
+    } as QueryAllDepositRecordResponse;
+    message.DepositRecord = [];
+    if (object.DepositRecord !== undefined && object.DepositRecord !== null) {
+      for (const e of object.DepositRecord) {
+        message.DepositRecord.push(DepositRecord.fromPartial(e));
+      }
+    }
+    if (object.pagination !== undefined && object.pagination !== null) {
+      message.pagination = PageResponse.fromPartial(object.pagination);
+    } else {
+      message.pagination = undefined;
+    }
+    return message;
+  },
+};
+
 /** Query defines the gRPC querier service. */
 export interface Query {
   /** Parameters queries the parameters of the module. */
@@ -1007,6 +1344,14 @@ export interface Query {
   HostZoneAll(
     request: QueryAllHostZoneRequest
   ): Promise<QueryAllHostZoneResponse>;
+  /** Queries a DepositRecord by id. */
+  DepositRecord(
+    request: QueryGetDepositRecordRequest
+  ): Promise<QueryGetDepositRecordResponse>;
+  /** Queries a list of DepositRecord items. */
+  DepositRecordAll(
+    request: QueryAllDepositRecordRequest
+  ): Promise<QueryAllDepositRecordResponse>;
 }
 
 export class QueryClientImpl implements Query {
@@ -1107,6 +1452,34 @@ export class QueryClientImpl implements Query {
     );
     return promise.then((data) =>
       QueryAllHostZoneResponse.decode(new Reader(data))
+    );
+  }
+
+  DepositRecord(
+    request: QueryGetDepositRecordRequest
+  ): Promise<QueryGetDepositRecordResponse> {
+    const data = QueryGetDepositRecordRequest.encode(request).finish();
+    const promise = this.rpc.request(
+      "Stridelabs.stride.stakeibc.Query",
+      "DepositRecord",
+      data
+    );
+    return promise.then((data) =>
+      QueryGetDepositRecordResponse.decode(new Reader(data))
+    );
+  }
+
+  DepositRecordAll(
+    request: QueryAllDepositRecordRequest
+  ): Promise<QueryAllDepositRecordResponse> {
+    const data = QueryAllDepositRecordRequest.encode(request).finish();
+    const promise = this.rpc.request(
+      "Stridelabs.stride.stakeibc.Query",
+      "DepositRecordAll",
+      data
+    );
+    return promise.then((data) =>
+      QueryAllDepositRecordResponse.decode(new Reader(data))
     );
   }
 }

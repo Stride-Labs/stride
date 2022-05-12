@@ -4,6 +4,7 @@ import { util, configure, Writer, Reader } from "protobufjs/minimal";
 import { Params } from "../stakeibc/params";
 import { ICAAccount } from "../stakeibc/ica_account";
 import { HostZone } from "../stakeibc/host_zone";
+import { DepositRecord } from "../stakeibc/deposit_record";
 
 export const protobufPackage = "Stridelabs.stride.stakeibc";
 
@@ -14,11 +15,17 @@ export interface GenesisState {
   /** list of zones that are registered by the protocol */
   iCAAccount: ICAAccount | undefined;
   hostZoneList: HostZone[];
-  /** this line is used by starport scaffolding # genesis/proto/state */
   hostZoneCount: number;
+  depositRecordList: DepositRecord[];
+  /** this line is used by starport scaffolding # genesis/proto/state */
+  depositRecordCount: number;
 }
 
-const baseGenesisState: object = { port_id: "", hostZoneCount: 0 };
+const baseGenesisState: object = {
+  port_id: "",
+  hostZoneCount: 0,
+  depositRecordCount: 0,
+};
 
 export const GenesisState = {
   encode(message: GenesisState, writer: Writer = Writer.create()): Writer {
@@ -37,6 +44,12 @@ export const GenesisState = {
     if (message.hostZoneCount !== 0) {
       writer.uint32(48).uint64(message.hostZoneCount);
     }
+    for (const v of message.depositRecordList) {
+      DepositRecord.encode(v!, writer.uint32(58).fork()).ldelim();
+    }
+    if (message.depositRecordCount !== 0) {
+      writer.uint32(64).uint64(message.depositRecordCount);
+    }
     return writer;
   },
 
@@ -45,6 +58,7 @@ export const GenesisState = {
     let end = length === undefined ? reader.len : reader.pos + length;
     const message = { ...baseGenesisState } as GenesisState;
     message.hostZoneList = [];
+    message.depositRecordList = [];
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
@@ -63,6 +77,14 @@ export const GenesisState = {
         case 6:
           message.hostZoneCount = longToNumber(reader.uint64() as Long);
           break;
+        case 7:
+          message.depositRecordList.push(
+            DepositRecord.decode(reader, reader.uint32())
+          );
+          break;
+        case 8:
+          message.depositRecordCount = longToNumber(reader.uint64() as Long);
+          break;
         default:
           reader.skipType(tag & 7);
           break;
@@ -74,6 +96,7 @@ export const GenesisState = {
   fromJSON(object: any): GenesisState {
     const message = { ...baseGenesisState } as GenesisState;
     message.hostZoneList = [];
+    message.depositRecordList = [];
     if (object.params !== undefined && object.params !== null) {
       message.params = Params.fromJSON(object.params);
     } else {
@@ -99,6 +122,22 @@ export const GenesisState = {
     } else {
       message.hostZoneCount = 0;
     }
+    if (
+      object.depositRecordList !== undefined &&
+      object.depositRecordList !== null
+    ) {
+      for (const e of object.depositRecordList) {
+        message.depositRecordList.push(DepositRecord.fromJSON(e));
+      }
+    }
+    if (
+      object.depositRecordCount !== undefined &&
+      object.depositRecordCount !== null
+    ) {
+      message.depositRecordCount = Number(object.depositRecordCount);
+    } else {
+      message.depositRecordCount = 0;
+    }
     return message;
   },
 
@@ -120,12 +159,22 @@ export const GenesisState = {
     }
     message.hostZoneCount !== undefined &&
       (obj.hostZoneCount = message.hostZoneCount);
+    if (message.depositRecordList) {
+      obj.depositRecordList = message.depositRecordList.map((e) =>
+        e ? DepositRecord.toJSON(e) : undefined
+      );
+    } else {
+      obj.depositRecordList = [];
+    }
+    message.depositRecordCount !== undefined &&
+      (obj.depositRecordCount = message.depositRecordCount);
     return obj;
   },
 
   fromPartial(object: DeepPartial<GenesisState>): GenesisState {
     const message = { ...baseGenesisState } as GenesisState;
     message.hostZoneList = [];
+    message.depositRecordList = [];
     if (object.params !== undefined && object.params !== null) {
       message.params = Params.fromPartial(object.params);
     } else {
@@ -150,6 +199,22 @@ export const GenesisState = {
       message.hostZoneCount = object.hostZoneCount;
     } else {
       message.hostZoneCount = 0;
+    }
+    if (
+      object.depositRecordList !== undefined &&
+      object.depositRecordList !== null
+    ) {
+      for (const e of object.depositRecordList) {
+        message.depositRecordList.push(DepositRecord.fromPartial(e));
+      }
+    }
+    if (
+      object.depositRecordCount !== undefined &&
+      object.depositRecordCount !== null
+    ) {
+      message.depositRecordCount = object.depositRecordCount;
+    } else {
+      message.depositRecordCount = 0;
     }
     return message;
   },

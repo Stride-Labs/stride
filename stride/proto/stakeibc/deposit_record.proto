@@ -1,0 +1,15 @@
+syntax = "proto3";
+package Stridelabs.stride.stakeibc;
+
+option go_package = "github.com/Stride-labs/stride/x/stakeibc/types";
+import "stakeibc/host_zone.proto"; 
+
+message DepositRecord {
+  uint64 id = 1;
+  int32 amount = 2; 
+  string denom = 3; 
+  HostZone hostZone = 4; 
+  string sender = 5; 
+  int32 purpose = 6; 
+  
+}
