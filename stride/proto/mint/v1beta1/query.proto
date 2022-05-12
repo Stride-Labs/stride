@@ -1,23 +1,23 @@
 syntax = "proto3";
-package quicksilver.mint.v1beta1;
+package stride.mint.v1beta1;
 
 import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
-import "quicksilver/mint/v1beta1/mint.proto";
+import "stride/mint/v1beta1/mint.proto";
 
-option go_package = "github.com/ingenuity-build/quicksilver/x/mint/types";
+option go_package = "github.com/Stride-Labs/stride/x/mint/types";
 
 // Query provides defines the gRPC querier service.
 service Query {
   // Params returns the total set of minting parameters.
   rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
-    option (google.api.http).get = "/quicksilver/mint/v1beta1/params";
+    option (google.api.http).get = "/stride/mint/v1beta1/params";
   }
 
   // EpochProvisions current minting epoch provisions value.
   rpc EpochProvisions(QueryEpochProvisionsRequest)
       returns (QueryEpochProvisionsResponse) {
-    option (google.api.http).get = "/quicksilver/mint/v1beta1/epoch_provisions";
+    option (google.api.http).get = "/stride/mint/v1beta1/epoch_provisions";
   }
 }
 
