@@ -1,7 +1,7 @@
 syntax = "proto3";
-package quicksilver.mint.v1beta1;
+package stride.mint.v1beta1;
 
-option go_package = "github.com/ingenuity-build/quicksilver/x/mint/types";
+option go_package = "github.com/Stride-Labs/stride/x/mint/types";
 
 import "gogoproto/gogo.proto";
 import "google/protobuf/timestamp.proto";
