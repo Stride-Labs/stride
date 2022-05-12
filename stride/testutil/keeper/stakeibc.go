@@ -19,7 +19,7 @@ import (
 	tmdb "github.com/tendermint/tm-db"
 )
 
-func StakeibcKeeper(t testing.TB) (*keeper.Keeper, sdk.Context) {
+func StakeibcKeeper(t testing.TB) (keeper.Keeper, sdk.Context) {
 	logger := log.NewNopLogger()
 
 	storeKey := sdk.NewKVStoreKey(types.StoreKey)
@@ -61,10 +61,10 @@ func StakeibcKeeper(t testing.TB) (*keeper.Keeper, sdk.Context) {
 		storeKey,
 		memStoreKey,
 		paramsSubspace,
-		IBCKeeper.ChannelKeeper,
-		&IBCKeeper.PortKeeper,
-		capabilityKeeper.ScopeToModule("StakeibcScopedKeeper"),
-		nil,
+		// IBCKeeper.ChannelKeeper,
+		// &IBCKeeper.PortKeeper,
+		// capabilityKeeper.ScopeToModule("StakeibcScopedKeeper"),
+		IBCKeeper,
 	)
 
 	ctx := sdk.NewContext(stateStore, tmproto.Header{}, false, logger)
