@@ -1,5 +1,6 @@
 // THIS FILE IS GENERATED AUTOMATICALLY. DO NOT MODIFY.
 
+import StrideLabsStrideStridelabsStrideEpochs from './Stride-labs/stride/Stridelabs.stride.epochs'
 import StrideLabsStrideStridelabsStrideInterchainquery from './Stride-labs/stride/Stridelabs.stride.interchainquery'
 import StrideLabsStrideStridelabsStrideStakeibc from './Stride-labs/stride/Stridelabs.stride.stakeibc'
 import StrideLabsStrideStrideInterchainquery from './Stride-labs/stride/stride.interchainquery'
@@ -26,6 +27,7 @@ import CosmosIbcGoIbcCorePortV1 from './cosmos/ibc-go/ibc.core.port.v1'
 
 
 export default { 
+  StrideLabsStrideStridelabsStrideEpochs: load(StrideLabsStrideStridelabsStrideEpochs, 'Stridelabs.stride.epochs'),
   StrideLabsStrideStridelabsStrideInterchainquery: load(StrideLabsStrideStridelabsStrideInterchainquery, 'Stridelabs.stride.interchainquery'),
   StrideLabsStrideStridelabsStrideStakeibc: load(StrideLabsStrideStridelabsStrideStakeibc, 'Stridelabs.stride.stakeibc'),
   StrideLabsStrideStrideInterchainquery: load(StrideLabsStrideStrideInterchainquery, 'stride.interchainquery'),

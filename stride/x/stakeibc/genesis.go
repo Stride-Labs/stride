@@ -11,7 +11,6 @@ import (
 func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) {
 	// TODO: TEST-10
 	// Set if defined
-
 	if genState.ICAAccount != nil {
 		k.SetICAAccount(ctx, *genState.ICAAccount)
 	}

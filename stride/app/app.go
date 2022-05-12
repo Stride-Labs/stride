@@ -105,9 +105,15 @@ import (
 	monitoringptypes "github.com/tendermint/spn/x/monitoringp/types"
 
 	"github.com/Stride-labs/stride/docs"
+
+	epochsmodule "github.com/Stride-labs/stride/x/epochs"
+	epochsmodulekeeper "github.com/Stride-labs/stride/x/epochs/keeper"
+	epochsmoduletypes "github.com/Stride-labs/stride/x/epochs/types"
+
 	"github.com/Stride-labs/stride/x/interchainquery"
 	interchainquerykeeper "github.com/Stride-labs/stride/x/interchainquery/keeper"
 	interchainquerytypes "github.com/Stride-labs/stride/x/interchainquery/types"
+
 	stakeibcmodule "github.com/Stride-labs/stride/x/stakeibc"
 	stakeibcmodulekeeper "github.com/Stride-labs/stride/x/stakeibc/keeper"
 	stakeibcmoduletypes "github.com/Stride-labs/stride/x/stakeibc/types"
@@ -165,6 +171,7 @@ var (
 		vesting.AppModuleBasic{},
 		monitoringp.AppModuleBasic{},
 		stakeibcmodule.AppModuleBasic{},
+		epochsmodule.AppModuleBasic{},
 		interchainquery.AppModuleBasic{},
 		ica.AppModuleBasic{},
 		// this line is used by starport scaffolding # stargate/app/moduleBasic
@@ -248,6 +255,7 @@ type App struct {
 	ScopedStakeibcKeeper capabilitykeeper.ScopedKeeper
 	StakeibcKeeper       stakeibcmodulekeeper.Keeper
 
+	EpochsKeeper          epochsmodulekeeper.Keeper
 	InterchainqueryKeeper interchainquerykeeper.Keeper
 	// this line is used by starport scaffolding # stargate/app/keeperDeclaration
 
@@ -286,6 +294,7 @@ func New(
 		govtypes.StoreKey, paramstypes.StoreKey, ibchost.StoreKey, upgradetypes.StoreKey, feegrant.StoreKey,
 		evidencetypes.StoreKey, ibctransfertypes.StoreKey, capabilitytypes.StoreKey, monitoringptypes.StoreKey,
 		stakeibcmoduletypes.StoreKey,
+		epochsmoduletypes.StoreKey,
 		interchainquerytypes.StoreKey,
 		icacontrollertypes.StoreKey, icahosttypes.StoreKey,
 		// this line is used by starport scaffolding # stargate/app/storeKey
@@ -439,6 +448,19 @@ func New(
 	icaControllerIBCModule := icacontroller.NewIBCModule(app.ICAControllerKeeper, stakeibcIBCModule)
 	icaHostIBCModule := icahost.NewIBCModule(app.ICAHostKeeper)
 
+	epochsKeeper := *epochsmodulekeeper.NewKeeper(
+		appCodec,
+		keys[epochsmoduletypes.StoreKey],
+		// keys[epochsmoduletypes.MemStoreKey],
+		// app.GetSubspace(epochsmoduletypes.ModuleName),
+	)
+	app.EpochsKeeper = *epochsKeeper.SetHooks(
+		epochsmoduletypes.NewMultiEpochHooks(
+		// TODO(TEST-18) insert epoch hooks receivers here
+		// TODO(TEST-18) add interchain staking hooks here.
+		),
+	)
+	epochsModule := epochsmodule.NewAppModule(appCodec, app.EpochsKeeper)
 	app.InterchainqueryKeeper = interchainquerykeeper.NewKeeper(appCodec, keys[interchainquerytypes.StoreKey])
 	interchainQueryModule := interchainquery.NewAppModule(appCodec, app.InterchainqueryKeeper)
 	// TODO(TEST-16): Enable ICQ callbacks
@@ -489,6 +511,7 @@ func New(
 		transferModule,
 		// monitoringModule,
 		stakeibcModule,
+		epochsModule,
 		interchainQueryModule,
 		icaModule,
 		// this line is used by starport scaffolding # stargate/app/appModule
@@ -519,6 +542,7 @@ func New(
 		monitoringptypes.ModuleName,
 		icatypes.ModuleName,
 		stakeibcmoduletypes.ModuleName,
+		epochsmoduletypes.ModuleName,
 		interchainquerytypes.ModuleName,
 		// this line is used by starport scaffolding # stargate/app/beginBlockers
 	)
@@ -544,6 +568,7 @@ func New(
 		monitoringptypes.ModuleName,
 		icatypes.ModuleName,
 		stakeibcmoduletypes.ModuleName,
+		epochsmoduletypes.ModuleName,
 		interchainquerytypes.ModuleName,
 		// this line is used by starport scaffolding # stargate/app/endBlockers
 	)
@@ -574,6 +599,7 @@ func New(
 		monitoringptypes.ModuleName,
 		icatypes.ModuleName,
 		stakeibcmoduletypes.ModuleName,
+		epochsmoduletypes.ModuleName,
 		interchainquerytypes.ModuleName,
 		// this line is used by starport scaffolding # stargate/app/initGenesis
 	)
@@ -599,6 +625,7 @@ func New(
 		transferModule,
 		// monitoringModule,
 		stakeibcModule,
+		epochsModule,
 		interchainQueryModule,
 		// this line is used by starport scaffolding # stargate/app/appModule
 	)
@@ -793,6 +820,7 @@ func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino
 	paramsKeeper.Subspace(ibchost.ModuleName)
 	paramsKeeper.Subspace(monitoringptypes.ModuleName)
 	paramsKeeper.Subspace(stakeibcmoduletypes.ModuleName)
+	paramsKeeper.Subspace(epochsmoduletypes.ModuleName)
 	paramsKeeper.Subspace(interchainquerytypes.ModuleName)
 	paramsKeeper.Subspace(icacontrollertypes.SubModuleName)
 	paramsKeeper.Subspace(icahosttypes.SubModuleName)
