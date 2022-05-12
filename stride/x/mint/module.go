@@ -17,12 +17,12 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/module"
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
 
-	"github.com/ingenuity-build/quicksilver/x/mint/client/cli"
-	"github.com/ingenuity-build/quicksilver/x/mint/client/rest"
-	"github.com/ingenuity-build/quicksilver/x/mint/keeper"
+	"github.com/Stride-Labs/stride/x/mint/client/cli"
+	"github.com/Stride-Labs/stride/x/mint/client/rest"
+	"github.com/Stride-Labs/stride/x/mint/keeper"
 
-	//"github.com/ingenuity-build/quicksilver/x/mint/simulation"
-	"github.com/ingenuity-build/quicksilver/x/mint/types"
+	//"github.com/Stride-Labs/stride/x/mint/simulation"
+	"github.com/Stride-Labs/stride/x/mint/types"
 )
 
 var (
