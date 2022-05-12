@@ -2,7 +2,7 @@ syntax = "proto3";
 package stride.mint.v1beta1;
 
 import "gogoproto/gogo.proto";
-import "stride/mint/v1beta1/mint.proto";
+import "mint/v1beta1/mint.proto";
 
 option go_package = "github.com/Stride-Labs/stride/x/mint/types";
 
