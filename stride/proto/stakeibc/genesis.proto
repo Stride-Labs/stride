@@ -5,6 +5,7 @@ import "gogoproto/gogo.proto";
 import "stakeibc/params.proto";
 import "stakeibc/ica_account.proto";
 import "stakeibc/host_zone.proto";
+import "stakeibc/deposit_record.proto";
 // this line is used by starport scaffolding # genesis/proto/import
 
 option go_package = "github.com/Stride-labs/stride/x/stakeibc/types";
@@ -17,5 +18,7 @@ message GenesisState {
   ICAAccount iCAAccount = 4;
   repeated HostZone hostZoneList = 5 [(gogoproto.nullable) = false];
   uint64 hostZoneCount = 6;
+  repeated DepositRecord depositRecordList = 7 [(gogoproto.nullable) = false];
+  uint64 depositRecordCount = 8;
   // this line is used by starport scaffolding # genesis/proto/state
 }

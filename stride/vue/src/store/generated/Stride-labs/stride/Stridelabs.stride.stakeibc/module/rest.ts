@@ -28,6 +28,20 @@ export interface StakeibcDelegation {
   amt?: number;
 }
 
+export interface StakeibcDepositRecord {
+  /** @format uint64 */
+  id?: string;
+
+  /** @format int32 */
+  amount?: number;
+  denom?: string;
+  hostZone?: StakeibcHostZone;
+  sender?: string;
+
+  /** @format int32 */
+  purpose?: number;
+}
+
 export interface StakeibcHostZone {
   /** @format uint64 */
   id?: string;
@@ -76,6 +90,21 @@ export interface StakeibcParams {
   zone_fee_address?: Record<string, string>;
 }
 
+export interface StakeibcQueryAllDepositRecordResponse {
+  DepositRecord?: StakeibcDepositRecord[];
+
+  /**
+   * PageResponse is to be embedded in gRPC response messages where the
+   * corresponding request message has used PageRequest.
+   *
+   *  message SomeResponse {
+   *          repeated Bar results = 1;
+   *          PageResponse page = 2;
+   *  }
+   */
+  pagination?: V1Beta1PageResponse;
+}
+
 export interface StakeibcQueryAllHostZoneResponse {
   HostZone?: StakeibcHostZone[];
 
@@ -93,6 +122,10 @@ export interface StakeibcQueryAllHostZoneResponse {
 
 export interface StakeibcQueryGetDelegationResponse {
   Delegation?: StakeibcDelegation;
+}
+
+export interface StakeibcQueryGetDepositRecordResponse {
+  DepositRecord?: StakeibcDepositRecord;
 }
 
 export interface StakeibcQueryGetHostZoneResponse {
@@ -401,6 +434,48 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
   queryDelegation = (params: RequestParams = {}) =>
     this.request<StakeibcQueryGetDelegationResponse, RpcStatus>({
       path: `/Stride-labs/stride/stakeibc/delegation`,
+      method: "GET",
+      format: "json",
+      ...params,
+    });
+
+  /**
+   * No description
+   *
+   * @tags Query
+   * @name QueryDepositRecordAll
+   * @summary Queries a list of DepositRecord items.
+   * @request GET:/Stride-labs/stride/stakeibc/deposit_record
+   */
+  queryDepositRecordAll = (
+    query?: {
+      "pagination.key"?: string;
+      "pagination.offset"?: string;
+      "pagination.limit"?: string;
+      "pagination.count_total"?: boolean;
+      "pagination.reverse"?: boolean;
+    },
+    params: RequestParams = {},
+  ) =>
+    this.request<StakeibcQueryAllDepositRecordResponse, RpcStatus>({
+      path: `/Stride-labs/stride/stakeibc/deposit_record`,
+      method: "GET",
+      query: query,
+      format: "json",
+      ...params,
+    });
+
+  /**
+   * No description
+   *
+   * @tags Query
+   * @name QueryDepositRecord
+   * @summary Queries a DepositRecord by id.
+   * @request GET:/Stride-labs/stride/stakeibc/deposit_record/{id}
+   */
+  queryDepositRecord = (id: string, params: RequestParams = {}) =>
+    this.request<StakeibcQueryGetDepositRecordResponse, RpcStatus>({
+      path: `/Stride-labs/stride/stakeibc/deposit_record/${id}`,
       method: "GET",
       format: "json",
       ...params,
