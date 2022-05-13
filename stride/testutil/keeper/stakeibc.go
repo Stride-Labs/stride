@@ -12,14 +12,14 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	capabilitykeeper "github.com/cosmos/cosmos-sdk/x/capability/keeper"
 	typesparams "github.com/cosmos/cosmos-sdk/x/params/types"
-	ibckeeper "github.com/cosmos/ibc-go/v2/modules/core/keeper"
+	ibckeeper "github.com/cosmos/ibc-go/v3/modules/core/keeper"
 	"github.com/stretchr/testify/require"
 	"github.com/tendermint/tendermint/libs/log"
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 	tmdb "github.com/tendermint/tm-db"
 )
 
-func StakeibcKeeper(t testing.TB) (*keeper.Keeper, sdk.Context) {
+func StakeibcKeeper(t testing.TB) (keeper.Keeper, sdk.Context) {
 	logger := log.NewNopLogger()
 
 	storeKey := sdk.NewKVStoreKey(types.StoreKey)
@@ -61,10 +61,10 @@ func StakeibcKeeper(t testing.TB) (*keeper.Keeper, sdk.Context) {
 		storeKey,
 		memStoreKey,
 		paramsSubspace,
-		IBCKeeper.ChannelKeeper,
-		&IBCKeeper.PortKeeper,
-		capabilityKeeper.ScopeToModule("StakeibcScopedKeeper"),
-		nil,
+		// IBCKeeper.ChannelKeeper,
+		// &IBCKeeper.PortKeeper,
+		// capabilityKeeper.ScopeToModule("StakeibcScopedKeeper"),
+		IBCKeeper,
 	)
 
 	ctx := sdk.NewContext(stateStore, tmproto.Header{}, false, logger)
