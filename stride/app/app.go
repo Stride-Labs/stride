@@ -56,6 +56,8 @@ import (
 	// "github.com/cosmos/cosmos-sdk/x/mint"
 	// mintkeeper "github.com/cosmos/cosmos-sdk/x/mint/keeper"
 	// minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
+	// "github.com/Stride-labs/stride/x/mint"
+
 	"github.com/Stride-labs/stride/x/mint"
 	mintkeeper "github.com/Stride-labs/stride/x/mint/keeper"
 	minttypes "github.com/Stride-labs/stride/x/mint/types"

@@ -1,8 +1,8 @@
 package mint
 
 import (
-	"github.com/Stride-Labs/stride/x/mint/keeper"
-	"github.com/Stride-Labs/stride/x/mint/types"
+	"github.com/Stride-labs/stride/x/mint/keeper"
+	"github.com/Stride-labs/stride/x/mint/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
