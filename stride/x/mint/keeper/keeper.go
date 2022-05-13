@@ -1,7 +1,7 @@
 package keeper
 
 import (
-	"github.com/Stride-Labs/stride/x/mint/types"
+	"github.com/Stride-labs/stride/x/mint/types"
 	"github.com/tendermint/tendermint/libs/log"
 
 	"github.com/cosmos/cosmos-sdk/codec"

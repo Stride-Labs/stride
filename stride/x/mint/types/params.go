@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	epochtypes "github.com/Stride-Labs/stride/x/epochs/types"
+	epochtypes "github.com/Stride-labs/stride/x/epochs/types"
 	yaml "gopkg.in/yaml.v2"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
