@@ -59,6 +59,7 @@ import (
 	"github.com/Stride-labs/stride/x/mint"
 	mintkeeper "github.com/Stride-labs/stride/x/mint/keeper"
 	minttypes "github.com/Stride-labs/stride/x/mint/types"
+
 	"github.com/cosmos/cosmos-sdk/x/params"
 	paramsclient "github.com/cosmos/cosmos-sdk/x/params/client"
 	paramskeeper "github.com/cosmos/cosmos-sdk/x/params/keeper"
