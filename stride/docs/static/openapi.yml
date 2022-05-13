@@ -49864,6 +49864,8 @@ definitions:
       uptime:
         type: integer
         format: int32
+  Stridelabs.stride.stakeibc.MsgLiquidStakeResponse:
+    type: object
   Stridelabs.stride.stakeibc.Params:
     type: object
     properties:

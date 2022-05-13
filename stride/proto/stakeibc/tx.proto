@@ -7,7 +7,17 @@ option go_package = "github.com/Stride-labs/stride/x/stakeibc/types";
 
 // Msg defines the Msg service.
 service Msg {
-    // this line is used by starport scaffolding # proto/tx/rpc
+      rpc LiquidStake(MsgLiquidStake) returns (MsgLiquidStakeResponse);
+// this line is used by starport scaffolding # proto/tx/rpc
+}
+
+message MsgLiquidStake {
+  string creator = 1;
+  int32 amount = 2;
+  string denom = 3;
+}
+
+message MsgLiquidStakeResponse {
 }
 
 // this line is used by starport scaffolding # proto/tx/message
