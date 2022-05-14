@@ -8,16 +8,16 @@ import (
 )
 
 // GetEpochInfo returns epoch info by identifier
-func (k Keeper) GetEpochInfo(ctx sdk.Context, identifier string) types.EpochInfo {
+func (k Keeper) GetEpochInfo(ctx sdk.Context, identifier string) (types.EpochInfo, bool) {
 	epoch := types.EpochInfo{}
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefixEpoch)
 	bz := store.Get([]byte(identifier))
 	if len(bz) == 0 {
-		return epoch
+		return epoch, false
 	}
 
 	k.cdc.MustUnmarshal(bz, &epoch)
-	return epoch
+	return epoch, true
 }
 
 // SetEpochInfo set epoch info

@@ -45,7 +45,7 @@ func NewParams(
 	}
 }
 
-// default minting module parameters.
+// TODO(TEST-25) default minting module parameters.
 func DefaultParams() Params {
 	return Params{
 		MintDenom:               sdk.DefaultBondDenom,
