@@ -57,7 +57,6 @@ func (im IBCModule) OnChanOpenInit(
 	return im.keeper.ClaimCapability(ctx, chanCap, host.ChannelCapabilityPath(portID, channelID))
 }
 
-
 // OnChanOpenTry implements the IBCModule interface
 func (im IBCModule) OnChanOpenTry(
 	ctx sdk.Context,
@@ -113,10 +112,19 @@ func (im IBCModule) OnChanOpenAck(
 	if counterpartyVersion != types.Version {
 		return sdkerrors.Wrapf(types.ErrInvalidVersion, "invalid counterparty version: %s, expected %s", counterpartyVersion, types.Version)
 	}
+
+	// Get HostZone from the chain associated with the connection for the input port
+	// Port has a connection => connection has a chain => chain has a HostZone
+
+	// SETUP HOSTZONE ATTRIBUTES
+	// set HostZone portId
+	// set HostZone channedId
+	// set HostZone validators
+	// set HostZone delegationAccounts
+	// set HostZone feeAccount
+
 	return nil
 }
-
-
 
 // OnChanOpenConfirm implements the IBCModule interface
 func (im IBCModule) OnChanOpenConfirm(
