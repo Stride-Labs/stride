@@ -28569,62 +28569,7 @@ paths:
                           delegationAmt:
                             type: integer
                             format: int32
-                    blacklistedValidators:
-                      type: array
-                      items:
-                        type: object
-                        properties:
-                          name:
-                            type: string
-                          address:
-                            type: string
-                          status:
-                            type: string
-                          commissionRate:
-                            type: integer
-                            format: int32
-                          delegationAmt:
-                            type: integer
-                            format: int32
-                    rewardsAccount:
-                      type: array
-                      items:
-                        type: object
-                        properties:
-                          address:
-                            type: string
-                          balance:
-                            type: integer
-                            format: int32
-                          delegatedBalance:
-                            type: integer
-                            format: int32
-                          delegations:
-                            type: array
-                            items:
-                              type: object
-                              properties:
-                                delegateAcctAddress:
-                                  type: string
-                                validator:
-                                  type: object
-                                  properties:
-                                    name:
-                                      type: string
-                                    address:
-                                      type: string
-                                    status:
-                                      type: string
-                                    commissionRate:
-                                      type: integer
-                                      format: int32
-                                    delegationAmt:
-                                      type: integer
-                                      format: int32
-                                amt:
-                                  type: integer
-                                  format: int32
-                    feeAccount:
+                    delegationAccounts:
                       type: array
                       items:
                         type: object
@@ -28804,62 +28749,7 @@ paths:
                         delegationAmt:
                           type: integer
                           format: int32
-                  blacklistedValidators:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        name:
-                          type: string
-                        address:
-                          type: string
-                        status:
-                          type: string
-                        commissionRate:
-                          type: integer
-                          format: int32
-                        delegationAmt:
-                          type: integer
-                          format: int32
-                  rewardsAccount:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        address:
-                          type: string
-                        balance:
-                          type: integer
-                          format: int32
-                        delegatedBalance:
-                          type: integer
-                          format: int32
-                        delegations:
-                          type: array
-                          items:
-                            type: object
-                            properties:
-                              delegateAcctAddress:
-                                type: string
-                              validator:
-                                type: object
-                                properties:
-                                  name:
-                                    type: string
-                                  address:
-                                    type: string
-                                  status:
-                                    type: string
-                                  commissionRate:
-                                    type: integer
-                                    format: int32
-                                  delegationAmt:
-                                    type: integer
-                                    format: int32
-                              amt:
-                                type: integer
-                                format: int32
-                  feeAccount:
+                  delegationAccounts:
                     type: array
                     items:
                       type: object
@@ -49521,62 +49411,7 @@ definitions:
             delegationAmt:
               type: integer
               format: int32
-      blacklistedValidators:
-        type: array
-        items:
-          type: object
-          properties:
-            name:
-              type: string
-            address:
-              type: string
-            status:
-              type: string
-            commissionRate:
-              type: integer
-              format: int32
-            delegationAmt:
-              type: integer
-              format: int32
-      rewardsAccount:
-        type: array
-        items:
-          type: object
-          properties:
-            address:
-              type: string
-            balance:
-              type: integer
-              format: int32
-            delegatedBalance:
-              type: integer
-              format: int32
-            delegations:
-              type: array
-              items:
-                type: object
-                properties:
-                  delegateAcctAddress:
-                    type: string
-                  validator:
-                    type: object
-                    properties:
-                      name:
-                        type: string
-                      address:
-                        type: string
-                      status:
-                        type: string
-                      commissionRate:
-                        type: integer
-                        format: int32
-                      delegationAmt:
-                        type: integer
-                        format: int32
-                  amt:
-                    type: integer
-                    format: int32
-      feeAccount:
+      delegationAccounts:
         type: array
         items:
           type: object
@@ -49719,62 +49554,7 @@ definitions:
                   delegationAmt:
                     type: integer
                     format: int32
-            blacklistedValidators:
-              type: array
-              items:
-                type: object
-                properties:
-                  name:
-                    type: string
-                  address:
-                    type: string
-                  status:
-                    type: string
-                  commissionRate:
-                    type: integer
-                    format: int32
-                  delegationAmt:
-                    type: integer
-                    format: int32
-            rewardsAccount:
-              type: array
-              items:
-                type: object
-                properties:
-                  address:
-                    type: string
-                  balance:
-                    type: integer
-                    format: int32
-                  delegatedBalance:
-                    type: integer
-                    format: int32
-                  delegations:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        delegateAcctAddress:
-                          type: string
-                        validator:
-                          type: object
-                          properties:
-                            name:
-                              type: string
-                            address:
-                              type: string
-                            status:
-                              type: string
-                            commissionRate:
-                              type: integer
-                              format: int32
-                            delegationAmt:
-                              type: integer
-                              format: int32
-                        amt:
-                          type: integer
-                          format: int32
-            feeAccount:
+            delegationAccounts:
               type: array
               items:
                 type: object
@@ -49894,62 +49674,7 @@ definitions:
                 delegationAmt:
                   type: integer
                   format: int32
-          blacklistedValidators:
-            type: array
-            items:
-              type: object
-              properties:
-                name:
-                  type: string
-                address:
-                  type: string
-                status:
-                  type: string
-                commissionRate:
-                  type: integer
-                  format: int32
-                delegationAmt:
-                  type: integer
-                  format: int32
-          rewardsAccount:
-            type: array
-            items:
-              type: object
-              properties:
-                address:
-                  type: string
-                balance:
-                  type: integer
-                  format: int32
-                delegatedBalance:
-                  type: integer
-                  format: int32
-                delegations:
-                  type: array
-                  items:
-                    type: object
-                    properties:
-                      delegateAcctAddress:
-                        type: string
-                      validator:
-                        type: object
-                        properties:
-                          name:
-                            type: string
-                          address:
-                            type: string
-                          status:
-                            type: string
-                          commissionRate:
-                            type: integer
-                            format: int32
-                          delegationAmt:
-                            type: integer
-                            format: int32
-                      amt:
-                        type: integer
-                        format: int32
-          feeAccount:
+          delegationAccounts:
             type: array
             items:
               type: object
