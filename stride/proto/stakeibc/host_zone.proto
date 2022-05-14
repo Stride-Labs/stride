@@ -12,5 +12,6 @@ message HostZone {
   string portId = 1; 
   string channelId = 2; 
   repeated Validator validators = 3;
-  repeated ICAAccount delegationAccounts = 5;
+  repeated ICAAccount delegationAccounts = 4;
+  repeated ICAAccount feeAccount = 5;  
 }

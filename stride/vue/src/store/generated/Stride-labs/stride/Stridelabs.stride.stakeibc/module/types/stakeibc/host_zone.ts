@@ -13,6 +13,7 @@ export interface HostZone {
   channelId: string;
   validators: Validator[];
   delegationAccounts: ICAAccount[];
+  feeAccount: ICAAccount[];
 }
 
 const baseHostZone: object = { id: 0, portId: "", channelId: "" };
@@ -32,6 +33,9 @@ export const HostZone = {
       Validator.encode(v!, writer.uint32(26).fork()).ldelim();
     }
     for (const v of message.delegationAccounts) {
+      ICAAccount.encode(v!, writer.uint32(34).fork()).ldelim();
+    }
+    for (const v of message.feeAccount) {
       ICAAccount.encode(v!, writer.uint32(42).fork()).ldelim();
     }
     return writer;
@@ -43,6 +47,7 @@ export const HostZone = {
     const message = { ...baseHostZone } as HostZone;
     message.validators = [];
     message.delegationAccounts = [];
+    message.feeAccount = [];
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
@@ -58,10 +63,13 @@ export const HostZone = {
         case 3:
           message.validators.push(Validator.decode(reader, reader.uint32()));
           break;
-        case 5:
+        case 4:
           message.delegationAccounts.push(
             ICAAccount.decode(reader, reader.uint32())
           );
+          break;
+        case 5:
+          message.feeAccount.push(ICAAccount.decode(reader, reader.uint32()));
           break;
         default:
           reader.skipType(tag & 7);
@@ -75,6 +83,7 @@ export const HostZone = {
     const message = { ...baseHostZone } as HostZone;
     message.validators = [];
     message.delegationAccounts = [];
+    message.feeAccount = [];
     if (object.id !== undefined && object.id !== null) {
       message.id = Number(object.id);
     } else {
@@ -103,6 +112,11 @@ export const HostZone = {
         message.delegationAccounts.push(ICAAccount.fromJSON(e));
       }
     }
+    if (object.feeAccount !== undefined && object.feeAccount !== null) {
+      for (const e of object.feeAccount) {
+        message.feeAccount.push(ICAAccount.fromJSON(e));
+      }
+    }
     return message;
   },
 
@@ -125,6 +139,13 @@ export const HostZone = {
     } else {
       obj.delegationAccounts = [];
     }
+    if (message.feeAccount) {
+      obj.feeAccount = message.feeAccount.map((e) =>
+        e ? ICAAccount.toJSON(e) : undefined
+      );
+    } else {
+      obj.feeAccount = [];
+    }
     return obj;
   },
 
@@ -132,6 +153,7 @@ export const HostZone = {
     const message = { ...baseHostZone } as HostZone;
     message.validators = [];
     message.delegationAccounts = [];
+    message.feeAccount = [];
     if (object.id !== undefined && object.id !== null) {
       message.id = object.id;
     } else {
@@ -158,6 +180,11 @@ export const HostZone = {
     ) {
       for (const e of object.delegationAccounts) {
         message.delegationAccounts.push(ICAAccount.fromPartial(e));
+      }
+    }
+    if (object.feeAccount !== undefined && object.feeAccount !== null) {
+      for (const e of object.feeAccount) {
+        message.feeAccount.push(ICAAccount.fromPartial(e));
       }
     }
     return message;

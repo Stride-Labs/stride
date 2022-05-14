@@ -28431,9 +28431,6 @@ paths:
           description: >-
             reverse is set to true if results are to be returned in the
             descending order.
-
-
-            Since: cosmos-sdk 0.43
           in: query
           required: false
           type: boolean
@@ -28607,6 +28604,44 @@ paths:
                                 amt:
                                   type: integer
                                   format: int32
+                    feeAccount:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          address:
+                            type: string
+                          balance:
+                            type: integer
+                            format: int32
+                          delegatedBalance:
+                            type: integer
+                            format: int32
+                          delegations:
+                            type: array
+                            items:
+                              type: object
+                              properties:
+                                delegateAcctAddress:
+                                  type: string
+                                validator:
+                                  type: object
+                                  properties:
+                                    name:
+                                      type: string
+                                    address:
+                                      type: string
+                                    status:
+                                      type: string
+                                    commissionRate:
+                                      type: integer
+                                      format: int32
+                                    delegationAmt:
+                                      type: integer
+                                      format: int32
+                                amt:
+                                  type: integer
+                                  format: int32
                   title: 'next id: 8'
               pagination:
                 type: object
@@ -28704,9 +28739,6 @@ paths:
           description: >-
             reverse is set to true if results are to be returned in the
             descending order.
-
-
-            Since: cosmos-sdk 0.43
           in: query
           required: false
           type: boolean
@@ -28750,6 +28782,44 @@ paths:
                           type: integer
                           format: int32
                   delegationAccounts:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        address:
+                          type: string
+                        balance:
+                          type: integer
+                          format: int32
+                        delegatedBalance:
+                          type: integer
+                          format: int32
+                        delegations:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              delegateAcctAddress:
+                                type: string
+                              validator:
+                                type: object
+                                properties:
+                                  name:
+                                    type: string
+                                  address:
+                                    type: string
+                                  status:
+                                    type: string
+                                  commissionRate:
+                                    type: integer
+                                    format: int32
+                                  delegationAmt:
+                                    type: integer
+                                    format: int32
+                              amt:
+                                type: integer
+                                format: int32
+                  feeAccount:
                     type: array
                     items:
                       type: object
@@ -49449,6 +49519,44 @@ definitions:
                   amt:
                     type: integer
                     format: int32
+      feeAccount:
+        type: array
+        items:
+          type: object
+          properties:
+            address:
+              type: string
+            balance:
+              type: integer
+              format: int32
+            delegatedBalance:
+              type: integer
+              format: int32
+            delegations:
+              type: array
+              items:
+                type: object
+                properties:
+                  delegateAcctAddress:
+                    type: string
+                  validator:
+                    type: object
+                    properties:
+                      name:
+                        type: string
+                      address:
+                        type: string
+                      status:
+                        type: string
+                      commissionRate:
+                        type: integer
+                        format: int32
+                      delegationAmt:
+                        type: integer
+                        format: int32
+                  amt:
+                    type: integer
+                    format: int32
     title: 'next id: 8'
   Stridelabs.stride.stakeibc.ICAAccount:
     type: object
@@ -49592,6 +49700,44 @@ definitions:
                         amt:
                           type: integer
                           format: int32
+            feeAccount:
+              type: array
+              items:
+                type: object
+                properties:
+                  address:
+                    type: string
+                  balance:
+                    type: integer
+                    format: int32
+                  delegatedBalance:
+                    type: integer
+                    format: int32
+                  delegations:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        delegateAcctAddress:
+                          type: string
+                        validator:
+                          type: object
+                          properties:
+                            name:
+                              type: string
+                            address:
+                              type: string
+                            status:
+                              type: string
+                            commissionRate:
+                              type: integer
+                              format: int32
+                            delegationAmt:
+                              type: integer
+                              format: int32
+                        amt:
+                          type: integer
+                          format: int32
           title: 'next id: 8'
       pagination:
         type: object
@@ -49675,6 +49821,44 @@ definitions:
                   type: integer
                   format: int32
           delegationAccounts:
+            type: array
+            items:
+              type: object
+              properties:
+                address:
+                  type: string
+                balance:
+                  type: integer
+                  format: int32
+                delegatedBalance:
+                  type: integer
+                  format: int32
+                delegations:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      delegateAcctAddress:
+                        type: string
+                      validator:
+                        type: object
+                        properties:
+                          name:
+                            type: string
+                          address:
+                            type: string
+                          status:
+                            type: string
+                          commissionRate:
+                            type: integer
+                            format: int32
+                          delegationAmt:
+                            type: integer
+                            format: int32
+                      amt:
+                        type: integer
+                        format: int32
+          feeAccount:
             type: array
             items:
               type: object
