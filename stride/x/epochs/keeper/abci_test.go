@@ -31,7 +31,7 @@ func (suite *KeeperTestSuite) TestEpochInfoChangesBeginBlockerAndInitGenesis() {
 			fn: func() {
 				suite.ctx = suite.ctx.WithBlockHeight(2).WithBlockTime(now.Add(time.Second))
 				suite.app.EpochsKeeper.BeginBlocker(suite.ctx)
-				epochInfo = suite.app.EpochsKeeper.GetEpochInfo(suite.ctx, "monthly")
+				epochInfo, _ = suite.app.EpochsKeeper.GetEpochInfo(suite.ctx, "monthly")
 			},
 		},
 		{
@@ -42,7 +42,7 @@ func (suite *KeeperTestSuite) TestEpochInfoChangesBeginBlockerAndInitGenesis() {
 			fn: func() {
 				suite.ctx = suite.ctx.WithBlockHeight(2).WithBlockTime(now.Add(time.Second))
 				suite.app.EpochsKeeper.BeginBlocker(suite.ctx)
-				epochInfo = suite.app.EpochsKeeper.GetEpochInfo(suite.ctx, "monthly")
+				epochInfo, _ = suite.app.EpochsKeeper.GetEpochInfo(suite.ctx, "monthly")
 			},
 		},
 		{
@@ -55,7 +55,7 @@ func (suite *KeeperTestSuite) TestEpochInfoChangesBeginBlockerAndInitGenesis() {
 				suite.app.EpochsKeeper.BeginBlocker(suite.ctx)
 				suite.ctx = suite.ctx.WithBlockHeight(3).WithBlockTime(now.Add(time.Hour * 24 * 31))
 				suite.app.EpochsKeeper.BeginBlocker(suite.ctx)
-				epochInfo = suite.app.EpochsKeeper.GetEpochInfo(suite.ctx, "monthly")
+				epochInfo, _ = suite.app.EpochsKeeper.GetEpochInfo(suite.ctx, "monthly")
 			},
 		},
 		// Test that incrementing _exactly_ 1 month increments the epoch count.
@@ -69,7 +69,7 @@ func (suite *KeeperTestSuite) TestEpochInfoChangesBeginBlockerAndInitGenesis() {
 				suite.app.EpochsKeeper.BeginBlocker(suite.ctx)
 				suite.ctx = suite.ctx.WithBlockHeight(3).WithBlockTime(now.Add(time.Hour * 24 * 32))
 				suite.app.EpochsKeeper.BeginBlocker(suite.ctx)
-				epochInfo = suite.app.EpochsKeeper.GetEpochInfo(suite.ctx, "monthly")
+				epochInfo, _ = suite.app.EpochsKeeper.GetEpochInfo(suite.ctx, "monthly")
 			},
 		},
 		{
@@ -84,7 +84,7 @@ func (suite *KeeperTestSuite) TestEpochInfoChangesBeginBlockerAndInitGenesis() {
 				suite.app.EpochsKeeper.BeginBlocker(suite.ctx)
 				suite.ctx.WithBlockHeight(4).WithBlockTime(now.Add(time.Hour * 24 * 33))
 				suite.app.EpochsKeeper.BeginBlocker(suite.ctx)
-				epochInfo = suite.app.EpochsKeeper.GetEpochInfo(suite.ctx, "monthly")
+				epochInfo, _ = suite.app.EpochsKeeper.GetEpochInfo(suite.ctx, "monthly")
 			},
 		},
 		{
@@ -99,7 +99,7 @@ func (suite *KeeperTestSuite) TestEpochInfoChangesBeginBlockerAndInitGenesis() {
 				suite.app.EpochsKeeper.BeginBlocker(suite.ctx)
 				suite.ctx.WithBlockHeight(4).WithBlockTime(now.Add(time.Hour * 24 * 33))
 				suite.app.EpochsKeeper.BeginBlocker(suite.ctx)
-				epochInfo = suite.app.EpochsKeeper.GetEpochInfo(suite.ctx, "monthly")
+				epochInfo, _ = suite.app.EpochsKeeper.GetEpochInfo(suite.ctx, "monthly")
 			},
 		},
 	}
@@ -174,7 +174,7 @@ func (suite *KeeperTestSuite) TestEpochStartingOneMonthAfterInitGenesis() {
 	})
 
 	// epoch not started yet
-	epochInfo := suite.app.EpochsKeeper.GetEpochInfo(suite.ctx, "monthly")
+	epochInfo, _ := suite.app.EpochsKeeper.GetEpochInfo(suite.ctx, "monthly")
 	suite.Require().Equal(epochInfo.CurrentEpoch, int64(0))
 	suite.Require().Equal(epochInfo.CurrentEpochStartHeight, initialBlockHeight)
 	suite.Require().Equal(epochInfo.CurrentEpochStartTime, time.Time{})
@@ -185,7 +185,7 @@ func (suite *KeeperTestSuite) TestEpochStartingOneMonthAfterInitGenesis() {
 	suite.app.EpochsKeeper.BeginBlocker(suite.ctx)
 
 	// epoch not started yet
-	epochInfo = suite.app.EpochsKeeper.GetEpochInfo(suite.ctx, "monthly")
+	epochInfo, _ = suite.app.EpochsKeeper.GetEpochInfo(suite.ctx, "monthly")
 	suite.Require().Equal(epochInfo.CurrentEpoch, int64(0))
 	suite.Require().Equal(epochInfo.CurrentEpochStartHeight, initialBlockHeight)
 	suite.Require().Equal(epochInfo.CurrentEpochStartTime, time.Time{})
@@ -196,7 +196,7 @@ func (suite *KeeperTestSuite) TestEpochStartingOneMonthAfterInitGenesis() {
 	suite.app.EpochsKeeper.BeginBlocker(suite.ctx)
 
 	// epoch started
-	epochInfo = suite.app.EpochsKeeper.GetEpochInfo(suite.ctx, "monthly")
+	epochInfo, _ = suite.app.EpochsKeeper.GetEpochInfo(suite.ctx, "monthly")
 	suite.Require().Equal(epochInfo.CurrentEpoch, int64(1))
 	suite.Require().Equal(epochInfo.CurrentEpochStartHeight, suite.ctx.BlockHeight())
 	suite.Require().Equal(epochInfo.CurrentEpochStartTime.UTC().String(), now.Add(month).UTC().String())

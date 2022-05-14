@@ -35,5 +35,5 @@ type DistrKeeper interface {
 
 // EpochKeeper defines the contract needed to be fulfilled for epochs keeper.
 type EpochKeeper interface {
-	GetEpochInfo(ctx sdk.Context, identifier string) epochstypes.EpochInfo
+	GetEpochInfo(ctx sdk.Context, identifier string) (epochstypes.EpochInfo, bool)
 }

@@ -51,7 +51,7 @@ func (k Keeper) CurrentEpoch(c context.Context, req *types.QueryCurrentEpochRequ
 
 	ctx := sdk.UnwrapSDKContext(c)
 
-	info := k.GetEpochInfo(ctx, req.Identifier)
+	info, _ := k.GetEpochInfo(ctx, req.Identifier)
 
 	return &types.QueryCurrentEpochResponse{
 		CurrentEpoch: info.CurrentEpoch,
