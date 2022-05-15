@@ -17,7 +17,7 @@ import (
 )
 
 // SubmitTx submits an ICA transaction
-// NOTE: this is
+// NOTE: this is not a standard message; only the stakeibc module can call this function
 func (k Keeper) DelegateOnHost(goCtx context.Context, hostZone types.HostZone, amt sdk.Coin) error {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	_ = ctx
