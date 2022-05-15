@@ -57,7 +57,7 @@ func (k Keeper) RegisterAccount(goCtx context.Context, connectionId string, owne
 }
 
 // SubmitTx submits an ICA transaction
-// NOTE: this is 
+// NOTE: this is not a standard message; only the stakeibc module can call this function
 func (k Keeper) SubmitTxs(goCtx context.Context, connectionId string, msgs []sdk.Msg, account types.ICAAccount) error {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
