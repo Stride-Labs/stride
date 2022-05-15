@@ -23,8 +23,8 @@ type (
 		storeKey   sdk.StoreKey
 		memKey     sdk.StoreKey
 		paramstore paramtypes.Subspace
-		ICAControllerKeeper icacontrollerkeeper.Keeper
-		IBCKeeper           ibckeeper.Keeper
+		icaControllerKeeper icacontrollerkeeper.Keeper
+		ibcKeeper           ibckeeper.Keeper
 		scopedKeeper        capabilitykeeper.ScopedKeeper
 
 		bankKeeper types.BankKeeper
@@ -40,7 +40,7 @@ func NewKeeper(
 	// portKeeper cosmosibckeeper.PortKeeper,
 	// scopedKeeper cosmosibckeeper.ScopedKeeper,
 	bankKeeper types.BankKeeper,
-	icacontrollerkeeper icacontrollerkeeper.Keeper,
+	icaControllerKeeper icacontrollerkeeper.Keeper,
 	ibcKeeper ibckeeper.Keeper,
 	scopedKeeper capabilitykeeper.ScopedKeeper,
 ) Keeper {
@@ -64,8 +64,8 @@ func NewKeeper(
 		memKey:     memKey,
 		paramstore: ps,
 		bankKeeper: bankKeeper,
-		ICAControllerKeeper: icacontrollerkeeper,
-		IBCKeeper:           ibcKeeper,
+		icaControllerKeeper: icaControllerKeeper,
+		ibcKeeper:           ibcKeeper,
 		scopedKeeper:        scopedKeeper,
 	}
 }
@@ -78,3 +78,4 @@ func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 func (k *Keeper) ClaimCapability(ctx sdk.Context, cap *capabilitytypes.Capability, name string) error {
 	return k.scopedKeeper.ClaimCapability(ctx, cap, name)
 }
+
