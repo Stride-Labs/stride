@@ -72,6 +72,8 @@ export interface StakeibcMinValidatorRequirements {
   uptime?: number;
 }
 
+export type StakeibcMsgLiquidStakeResponse = object;
+
 /**
  * Params defines the parameters for the module.
  */
