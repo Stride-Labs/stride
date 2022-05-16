@@ -19,3 +19,8 @@ message GenesisState {
   uint64 hostZoneCount = 6;
   // this line is used by starport scaffolding # genesis/proto/state
 }
+
+message PortConnectionTuple {
+  string connection_id = 1;
+  string port_id = 2;
+}

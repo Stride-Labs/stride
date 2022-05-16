@@ -2,6 +2,7 @@ package stakeibc
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/Stride-labs/stride/x/stakeibc/keeper"
 	"github.com/Stride-labs/stride/x/stakeibc/types"
@@ -114,15 +115,68 @@ func (im IBCModule) OnChanOpenAck(
 	}
 
 	// Get HostZone from the chain associated with the connection for the input port
-	// Port has a connection => connection has a chain => chain has a HostZone
+	// Port has a connection => connection has an ICA => chain has a HostZone
 
-	// SETUP HOSTZONE ATTRIBUTES
-	// set HostZone portId
-	// set HostZone channedId
-	// set HostZone validators
-	// set HostZone delegationAccounts
-	// set HostZone feeAccount
+	// Get connection from port
+	connectionId, err := im.keeper.GetConnectionForPort(ctx, portID)
+	if err != nil {
+		ctx.Logger().Error("Failed to get connectionID for port " + portID)
+	}
+	// Get ICA for connection
+	address, found := im.keeper.ICAControllerKeeper.GetInterchainAccountAddress(ctx, connectionId, portID)
+	if !found {
+		ctx.Logger().Error(fmt.Sprintf("Expected to find an address for %s/%s", connectionId, portID))
+	}
 
+	// Get chain for connection
+	chainID, err := im.keeper.GetChainID(ctx, connectionId)
+	if err != nil {
+		ctx.Logger().Error(
+			"Unable to obtain chain for given connection and port",
+			"ConnectionID", connectionId,
+			"PortID", portID,
+			"Error", err,
+		)
+		return nil
+	}
+
+	// Get zone info for chain
+	zoneInfo, found := im.keeper.GetHostZoneInfo(ctx, chainID)
+	if !found {
+		ctx.Logger().Error(fmt.Sprintf("Unable to find host zone info for %v", chainID))
+		return nil
+	}
+
+	// found a matching zone!
+	ctx.Logger().Info(fmt.Sprintf("Found address matching zone %s: %s (port: %s)", zoneInfo.Id, address, portID))
+	portParts := strings.Split(portID, ".")
+
+	// SETUP HOSTZONE ACCOUNTS FOR THIS ZONE
+	// TODO(TEST-43) understand portID nomenclature for this switch statement
+	switch {
+	case portParts[1] == "validator":
+		// set HostZone validators
+		// TODO(TEST-42) create validator setup helpers and replace dummy validator init values below
+		validator := &types.Validator{Name: "", Address: address, Status: "active", CommissionRate: 0, DelegationAmt: 0}
+		zoneInfo.Validators = append(zoneInfo.Validators, validator)
+	case portParts[1] == "delegation":
+		// set HostZone delegationAccounts
+		for _, existing := range zoneInfo.DelegationAccounts {
+			if existing.Address == address {
+				ctx.Logger().Error("Address is already a delegation address: " + address)
+			}
+		}
+		// TODO(TEST-) create delegation account setup helpers and replace dummy delegation account init values below
+		delegationAccount := &types.ICAAccount{Address: address, Balance: 0, DelegatedBalance: 0, Delegations: []*types.Delegation{}}
+		zoneInfo.DelegationAccounts = append(zoneInfo.DelegationAccounts, delegationAccount)
+	case portParts[1] == "feeAccount":
+		// set HostZone feeAccount
+		// TODO (TEST-) add Fee account safety checks (we can't have this changing without rigorous validation)
+		zoneInfo.FeeAccount = address
+	default:
+		ctx.Logger().Error("Unrecognized channel for portID: " + portID)
+	}
+	im.keeper.SetHostZone(ctx, zoneInfo)
 	return nil
 }
 

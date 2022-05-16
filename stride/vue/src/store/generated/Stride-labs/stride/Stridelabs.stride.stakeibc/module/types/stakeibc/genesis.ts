@@ -18,6 +18,11 @@ export interface GenesisState {
   hostZoneCount: number;
 }
 
+export interface PortConnectionTuple {
+  connection_id: string;
+  port_id: string;
+}
+
 const baseGenesisState: object = { port_id: "", hostZoneCount: 0 };
 
 export const GenesisState = {
@@ -150,6 +155,82 @@ export const GenesisState = {
       message.hostZoneCount = object.hostZoneCount;
     } else {
       message.hostZoneCount = 0;
+    }
+    return message;
+  },
+};
+
+const basePortConnectionTuple: object = { connection_id: "", port_id: "" };
+
+export const PortConnectionTuple = {
+  encode(
+    message: PortConnectionTuple,
+    writer: Writer = Writer.create()
+  ): Writer {
+    if (message.connection_id !== "") {
+      writer.uint32(10).string(message.connection_id);
+    }
+    if (message.port_id !== "") {
+      writer.uint32(18).string(message.port_id);
+    }
+    return writer;
+  },
+
+  decode(input: Reader | Uint8Array, length?: number): PortConnectionTuple {
+    const reader = input instanceof Uint8Array ? new Reader(input) : input;
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = { ...basePortConnectionTuple } as PortConnectionTuple;
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.connection_id = reader.string();
+          break;
+        case 2:
+          message.port_id = reader.string();
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): PortConnectionTuple {
+    const message = { ...basePortConnectionTuple } as PortConnectionTuple;
+    if (object.connection_id !== undefined && object.connection_id !== null) {
+      message.connection_id = String(object.connection_id);
+    } else {
+      message.connection_id = "";
+    }
+    if (object.port_id !== undefined && object.port_id !== null) {
+      message.port_id = String(object.port_id);
+    } else {
+      message.port_id = "";
+    }
+    return message;
+  },
+
+  toJSON(message: PortConnectionTuple): unknown {
+    const obj: any = {};
+    message.connection_id !== undefined &&
+      (obj.connection_id = message.connection_id);
+    message.port_id !== undefined && (obj.port_id = message.port_id);
+    return obj;
+  },
+
+  fromPartial(object: DeepPartial<PortConnectionTuple>): PortConnectionTuple {
+    const message = { ...basePortConnectionTuple } as PortConnectionTuple;
+    if (object.connection_id !== undefined && object.connection_id !== null) {
+      message.connection_id = object.connection_id;
+    } else {
+      message.connection_id = "";
+    }
+    if (object.port_id !== undefined && object.port_id !== null) {
+      message.port_id = object.port_id;
+    } else {
+      message.port_id = "";
     }
     return message;
   },

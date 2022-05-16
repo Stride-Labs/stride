@@ -1,6 +1,7 @@
 import { txClient, queryClient, MissingWalletError , registry} from './module'
 
 import { Delegation } from "./module/types/stakeibc/delegation"
+import { PortConnectionTuple } from "./module/types/stakeibc/genesis"
 import { HostZone } from "./module/types/stakeibc/host_zone"
 import { ICAAccount } from "./module/types/stakeibc/ica_account"
 import { MinValidatorRequirements } from "./module/types/stakeibc/min_validator_requirements"
@@ -10,7 +11,7 @@ import { Params } from "./module/types/stakeibc/params"
 import { Validator } from "./module/types/stakeibc/validator"
 
 
-export { Delegation, HostZone, ICAAccount, MinValidatorRequirements, StakeibcPacketData, NoData, Params, Validator };
+export { Delegation, PortConnectionTuple, HostZone, ICAAccount, MinValidatorRequirements, StakeibcPacketData, NoData, Params, Validator };
 
 async function initTxClient(vuexGetters) {
 	return await txClient(vuexGetters['common/wallet/signer'], {
@@ -58,6 +59,7 @@ const getDefaultState = () => {
 				
 				_Structure: {
 						Delegation: getStructure(Delegation.fromPartial({})),
+						PortConnectionTuple: getStructure(PortConnectionTuple.fromPartial({})),
 						HostZone: getStructure(HostZone.fromPartial({})),
 						ICAAccount: getStructure(ICAAccount.fromPartial({})),
 						MinValidatorRequirements: getStructure(MinValidatorRequirements.fromPartial({})),

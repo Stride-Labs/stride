@@ -13,10 +13,15 @@ export interface HostZone {
   channelId: string;
   validators: Validator[];
   delegationAccounts: ICAAccount[];
-  feeAccount: ICAAccount[];
+  feeAccount: string;
 }
 
-const baseHostZone: object = { id: 0, portId: "", channelId: "" };
+const baseHostZone: object = {
+  id: 0,
+  portId: "",
+  channelId: "",
+  feeAccount: "",
+};
 
 export const HostZone = {
   encode(message: HostZone, writer: Writer = Writer.create()): Writer {
@@ -35,8 +40,8 @@ export const HostZone = {
     for (const v of message.delegationAccounts) {
       ICAAccount.encode(v!, writer.uint32(34).fork()).ldelim();
     }
-    for (const v of message.feeAccount) {
-      ICAAccount.encode(v!, writer.uint32(42).fork()).ldelim();
+    if (message.feeAccount !== "") {
+      writer.uint32(42).string(message.feeAccount);
     }
     return writer;
   },
@@ -47,7 +52,6 @@ export const HostZone = {
     const message = { ...baseHostZone } as HostZone;
     message.validators = [];
     message.delegationAccounts = [];
-    message.feeAccount = [];
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
@@ -69,7 +73,7 @@ export const HostZone = {
           );
           break;
         case 5:
-          message.feeAccount.push(ICAAccount.decode(reader, reader.uint32()));
+          message.feeAccount = reader.string();
           break;
         default:
           reader.skipType(tag & 7);
@@ -83,7 +87,6 @@ export const HostZone = {
     const message = { ...baseHostZone } as HostZone;
     message.validators = [];
     message.delegationAccounts = [];
-    message.feeAccount = [];
     if (object.id !== undefined && object.id !== null) {
       message.id = Number(object.id);
     } else {
@@ -113,9 +116,9 @@ export const HostZone = {
       }
     }
     if (object.feeAccount !== undefined && object.feeAccount !== null) {
-      for (const e of object.feeAccount) {
-        message.feeAccount.push(ICAAccount.fromJSON(e));
-      }
+      message.feeAccount = String(object.feeAccount);
+    } else {
+      message.feeAccount = "";
     }
     return message;
   },
@@ -139,13 +142,7 @@ export const HostZone = {
     } else {
       obj.delegationAccounts = [];
     }
-    if (message.feeAccount) {
-      obj.feeAccount = message.feeAccount.map((e) =>
-        e ? ICAAccount.toJSON(e) : undefined
-      );
-    } else {
-      obj.feeAccount = [];
-    }
+    message.feeAccount !== undefined && (obj.feeAccount = message.feeAccount);
     return obj;
   },
 
@@ -153,7 +150,6 @@ export const HostZone = {
     const message = { ...baseHostZone } as HostZone;
     message.validators = [];
     message.delegationAccounts = [];
-    message.feeAccount = [];
     if (object.id !== undefined && object.id !== null) {
       message.id = object.id;
     } else {
@@ -183,9 +179,9 @@ export const HostZone = {
       }
     }
     if (object.feeAccount !== undefined && object.feeAccount !== null) {
-      for (const e of object.feeAccount) {
-        message.feeAccount.push(ICAAccount.fromPartial(e));
-      }
+      message.feeAccount = object.feeAccount;
+    } else {
+      message.feeAccount = "";
     }
     return message;
   },

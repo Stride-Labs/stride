@@ -35,7 +35,7 @@ export interface StakeibcHostZone {
   channelId?: string;
   validators?: StakeibcValidator[];
   delegationAccounts?: StakeibcICAAccount[];
-  feeAccount?: StakeibcICAAccount[];
+  feeAccount?: string;
 }
 
 export interface StakeibcICAAccount {
