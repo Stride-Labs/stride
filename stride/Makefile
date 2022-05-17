@@ -124,7 +124,7 @@ go.sum: go.mod
 draw-deps:
 	@# requires brew install graphviz or apt-get install graphviz
 	go get github.com/RobotsAndPencils/goviz
-	@goviz -i ./cmd/osmosisd -d 2 | dot -Tpng -o dependency-graph.png
+	@goviz -i ./cmd/strided -d 2 | dot -Tpng -o dependency-graph.png
 
 clean:
 	rm -rf $(BUILDDIR)/ artifacts/
@@ -169,8 +169,8 @@ docs:
 
 protoVer=v0.2
 protoImageName=tendermintdev/sdk-proto-gen:$(protoVer)
-containerProtoGen=osmosis-proto-gen-$(protoVer)
-containerProtoFmt=osmosis-proto-fmt-$(protoVer)
+containerProtoGen=stride-proto-gen-$(protoVer)
+containerProtoFmt=stride-proto-fmt-$(protoVer)
 
 proto-gen:
 	@echo "Generating Protobuf files"
@@ -244,13 +244,13 @@ format:
 ###                                Localnet                                 ###
 ###############################################################################
 
-build-docker-osmosisdnode:
+build-docker-stridednode:
 	$(MAKE) -C contrib/localtestnet
 
 # Run a 4-node testnet locally
-localnet-start: build-linux build-docker-osmosisdnode # localnet-stop
-	@if ! [ -f $(BUILDDIR)/node0/osmosisd/config/genesis.json ]; \
-	then docker run --rm -v $(BUILDDIR):/osmosisd:Z osmosis-labs/osmosisdnode testnet --v 4 -o . --starting-ip-address 192.168.10.2 --keyring-backend=test ; \
+localnet-start: build-linux build-docker-stridednode # localnet-stop
+	@if ! [ -f $(BUILDDIR)/node0/strided/config/genesis.json ]; \
+	then docker run --rm -v $(BUILDDIR):/strided:Z stride-labs/stridednode testnet --v 4 -o . --starting-ip-address 192.168.10.2 --keyring-backend=test ; \
 	fi
 	docker-compose up -d
 
@@ -273,11 +273,11 @@ test-docker-push: test-docker
 
 .PHONY: all build-linux install format lint \
 	go-mod-cache draw-deps clean build \
-	setup-transactions setup-contract-tests-data start-osmosis run-lcd-contract-tests contract-tests \
+	setup-transactions setup-contract-tests-data start-stride run-lcd-contract-tests contract-tests \
 	test test-all test-build test-cover test-unit test-race \
 	benchmark \
-	build-docker-osmosisdnode localnet-start localnet-stop \
+	build-docker-stridednode localnet-start localnet-stop \
 	docker-single-node
 
-# test:
-# 	./scripts/simple_test.sh
+test:
+	./scripts/simple_test.sh
