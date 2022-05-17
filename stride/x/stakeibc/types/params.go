@@ -5,6 +5,15 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
+// Default init params
+var (
+	// TODO FILL THESE OUT
+	DefaultDepositInterval uint64 = 50
+
+	// KeyDepositInterval is store's key for the DepositInterval option
+	KeyDepositInterval = []byte("DepositInterval")
+)
+
 var _ paramtypes.ParamSet = (*Params)(nil)
 
 // ParamKeyTable the param key table for launch module
