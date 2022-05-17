@@ -12,7 +12,7 @@ import "stakeibc/ica_account.proto";
 import "stakeibc/host_zone.proto";
 // this line is used by starport scaffolding # 1
 
-option go_package = "github.com/Stride-labs/stride/x/stakeibc/types";
+option go_package = "github.com/Stride-Labs/stride/x/stakeibc/types";
 
 // Query defines the gRPC querier service.
 service Query {
@@ -22,28 +22,28 @@ service Query {
   }
   // Queries a Validator by index.
 	rpc Validator(QueryGetValidatorRequest) returns (QueryGetValidatorResponse) {
-		option (google.api.http).get = "/Stride-labs/stride/stakeibc/validator";
+		option (google.api.http).get = "/Stride-Labs/stride/stakeibc/validator";
 	}
 // Queries a Delegation by index.
 	rpc Delegation(QueryGetDelegationRequest) returns (QueryGetDelegationResponse) {
-		option (google.api.http).get = "/Stride-labs/stride/stakeibc/delegation";
+		option (google.api.http).get = "/Stride-Labs/stride/stakeibc/delegation";
 	}
 // Queries a MinValidatorRequirements by index.
 	rpc MinValidatorRequirements(QueryGetMinValidatorRequirementsRequest) returns (QueryGetMinValidatorRequirementsResponse) {
-		option (google.api.http).get = "/Stride-labs/stride/stakeibc/min_validator_requirements";
+		option (google.api.http).get = "/Stride-Labs/stride/stakeibc/min_validator_requirements";
 	}
 // Queries a ICAAccount by index.
 	rpc ICAAccount(QueryGetICAAccountRequest) returns (QueryGetICAAccountResponse) {
-		option (google.api.http).get = "/Stride-labs/stride/stakeibc/ica_account";
+		option (google.api.http).get = "/Stride-Labs/stride/stakeibc/ica_account";
 	}
 // Queries a HostZone by id.
 	rpc HostZone(QueryGetHostZoneRequest) returns (QueryGetHostZoneResponse) {
-		option (google.api.http).get = "/Stride-labs/stride/stakeibc/host_zone/{id}";
+		option (google.api.http).get = "/Stride-Labs/stride/stakeibc/host_zone/{id}";
 	}
 
 	// Queries a list of HostZone items.
 	rpc HostZoneAll(QueryAllHostZoneRequest) returns (QueryAllHostZoneResponse) {
-		option (google.api.http).get = "/Stride-labs/stride/stakeibc/host_zone";
+		option (google.api.http).get = "/Stride-Labs/stride/stakeibc/host_zone";
 	}
 
 // this line is used by starport scaffolding # 2

@@ -4,7 +4,7 @@ package Stridelabs.stride.stakeibc;
 import "stakeibc/validator.proto";
 import "stakeibc/ica_account.proto";
 
-option go_package = "github.com/Stride-labs/stride/x/stakeibc/types";
+option go_package = "github.com/Stride-Labs/stride/x/stakeibc/types";
 
 // next id: 8
 message HostZone {
