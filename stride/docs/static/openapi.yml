@@ -28620,7 +28620,7 @@ paths:
                       type: string
                     totalOutstandingRewards:
                       type: string
-                  title: 'next id: 9'
+                  title: 'next id: 14'
               pagination:
                 type: object
                 properties:
@@ -28813,7 +28813,7 @@ paths:
                     type: string
                   totalOutstandingRewards:
                     type: string
-                title: 'next id: 9'
+                title: 'next id: 14'
         default:
           description: An unexpected error response.
           schema:
@@ -49491,7 +49491,7 @@ definitions:
         type: string
       totalOutstandingRewards:
         type: string
-    title: 'next id: 9'
+    title: 'next id: 14'
   Stridelabs.stride.stakeibc.ICAAccount:
     type: object
     properties:
@@ -49650,7 +49650,7 @@ definitions:
               type: string
             totalOutstandingRewards:
               type: string
-          title: 'next id: 9'
+          title: 'next id: 14'
       pagination:
         type: object
         properties:
@@ -49786,7 +49786,7 @@ definitions:
             type: string
           totalOutstandingRewards:
             type: string
-        title: 'next id: 9'
+        title: 'next id: 14'
   Stridelabs.stride.stakeibc.QueryGetICAAccountResponse:
     type: object
     properties:

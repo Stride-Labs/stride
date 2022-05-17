@@ -25,7 +25,7 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
-// next id: 9
+// next id: 14
 type HostZone struct {
 	Id                        uint64                                 `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
 	ChainId                   string                                 `protobuf:"bytes,2,opt,name=chainId,proto3" json:"chainId,omitempty"`

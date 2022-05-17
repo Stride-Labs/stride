@@ -12,6 +12,7 @@ import (
 	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
 
 	interchainquerykeeper "github.com/Stride-labs/stride/x/interchainquery/keeper"
+	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	icacontrollerkeeper "github.com/cosmos/ibc-go/v3/modules/apps/27-interchain-accounts/controller/keeper"
 	ibckeeper "github.com/cosmos/ibc-go/v3/modules/core/keeper"
@@ -28,8 +29,7 @@ type (
 		ICQKeeper           interchainquerykeeper.Keeper
 		IBCKeeper           ibckeeper.Keeper
 		scopedKeeper        capabilitykeeper.ScopedKeeper
-
-		bankKeeper types.BankKeeper
+		bankKeeper          bankkeeper.Keeper
 	}
 )
 
@@ -41,7 +41,7 @@ func NewKeeper(
 	// channelKeeper cosmosibckeeper.ChannelKeeper,
 	// portKeeper cosmosibckeeper.PortKeeper,
 	// scopedKeeper cosmosibckeeper.ScopedKeeper,
-	bankKeeper types.BankKeeper,
+	bankKeeper bankkeeper.Keeper,
 	icacontrollerkeeper icacontrollerkeeper.Keeper,
 	interchainquerykeeper interchainquerykeeper.Keeper,
 	ibcKeeper ibckeeper.Keeper,

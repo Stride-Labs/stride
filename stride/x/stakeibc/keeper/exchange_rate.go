@@ -10,35 +10,36 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 )
 
-// // is this the right keeper?
-// func (k Keeper) getStTokenExchRate(goCtx context.Context, hostZone types.HostZone, inclOutstandingRewards bool) (sdk.Dec, error) {
-// 	ctx := sdk.UnwrapSDKContext(goCtx)
+// is this the right keeper?
+func (k Keeper) getStTokenExchRate(ctx sdk.Context, hostZone types.HostZone, inclOutstandingRewards bool) (sdk.Dec, error) {
 
-// 	// TODO() enforce order for ICQ calls;
-// 	// with these ICQ calls running async and writing to HostZone store, it's possible one doesn't finish in time
-// 	// update delegated balance
-// 	k.ICQGetHostStakedBalance(ctx, hostZone)
+	// TODO() enforce order for ICQ calls;
+	// with these ICQ calls running async and writing to HostZone store, it's possible one doesn't finish in time
+	// update delegated balance
+	k.ICQQueryHostBalance(ctx, hostZone, "delegations")
 
-// 	// ICQ accrued rewards
-// 	if inclOutstandingRewards {
-// 		k.GetHostAccruedRewardsBalance(ctx, hostZone)
-// 		outstandingRewardsOfVirtualPoolOnHost := k.Interchain.Distribution.OutstandingRewards()
-// 		balOfVirtualPoolOnHost := delegatedBalOfVirtualPoolOnHost + outstandingRewardsOfVirtualPoolOnHost
-// 	} else {
-// 		balOfVirtualPoolOnHost := delegatedBalOfVirtualPoolOnHost
-// 	}
+	// declare balance here, initialize by condition
+	var balOfVirtualPoolOnHost sdk.Dec
+	// ICQ accrued rewards
+	if inclOutstandingRewards {
+		k.ICQQueryHostBalance(ctx, hostZone, "accrRewards")
+		balOfVirtualPoolOnHost = hostZone.TotalDelegatorDelegations.Add(hostZone.TotalOutstandingRewards)
+	} else {
+		balOfVirtualPoolOnHost = hostZone.TotalDelegatorDelegations
+	}
 
-// 	// Read stAsset supply
-// 	// supplyOfStTokens := k.bankKeeper.Supply(stDenom(inCoin.Denom))
-// 	// k.Logger(ctx).Info("stAsset outstanding supply:", supplyOfStTokens)
+	// Read stAsset supply
+	supplyOfStTokens := k.bankKeeper.GetSupply(ctx, hostZone.StDenom)
+	k.Logger(ctx).Info("stAsset outstanding supply:", supplyOfStTokens)
 
-// 	exchRate := balOfVirtualPoolOnHost.toDec() / supplyOfStTokens.toDec()
+	exchRate := balOfVirtualPoolOnHost.Quo(supplyOfStTokens.Amount.ToDec())
 
-// 	return exchRate
-// }
+	//TODO add error messages throughout this function
+	return exchRate, nil
+}
 
 // set store var to balance on host (either delegated balance, accumulated rewards or totalbalance)
-func (k Keeper) ICQGetHostBalance(ctx sdk.Context, hostZone types.HostZone, query_type string) error {
+func (k Keeper) ICQQueryHostBalance(ctx sdk.Context, hostZone types.HostZone, query_type string) error {
 
 	// does this func need to be a "Callback" type?
 	// seems like callback functions can't return anything (why?) so we'll need to write the result to state
@@ -138,6 +139,5 @@ func (k Keeper) ICQGetHostBalance(ctx sdk.Context, hostZone types.HostZone, quer
 			)
 		}
 	}
-
 	return nil
 }

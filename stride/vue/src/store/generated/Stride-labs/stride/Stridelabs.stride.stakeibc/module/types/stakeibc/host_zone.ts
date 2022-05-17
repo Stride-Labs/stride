@@ -6,7 +6,7 @@ import { ICAAccount } from "../stakeibc/ica_account";
 
 export const protobufPackage = "Stridelabs.stride.stakeibc";
 
-/** next id: 9 */
+/** next id: 14 */
 export interface HostZone {
   id: number;
   chainId: string;
