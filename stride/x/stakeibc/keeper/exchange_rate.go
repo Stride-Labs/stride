@@ -3,8 +3,8 @@ package keeper
 import (
 	"fmt"
 
-	icqtypes "github.com/Stride-labs/stride/x/interchainquery/types"
-	"github.com/Stride-labs/stride/x/stakeibc/types"
+	icqtypes "github.com/Stride-Labs/stride/x/interchainquery/types"
+	"github.com/Stride-Labs/stride/x/stakeibc/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"

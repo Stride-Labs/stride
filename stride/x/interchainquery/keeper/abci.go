@@ -7,7 +7,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/telemetry"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Stride-labs/stride/x/interchainquery/types"
+	"github.com/Stride-Labs/stride/x/interchainquery/types"
 )
 
 const (

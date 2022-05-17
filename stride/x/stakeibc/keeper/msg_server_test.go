@@ -4,9 +4,9 @@ import (
 	"context"
 	"testing"
 
-	keepertest "github.com/Stride-labs/stride/testutil/keeper"
-	"github.com/Stride-labs/stride/x/stakeibc/keeper"
-	"github.com/Stride-labs/stride/x/stakeibc/types"
+	keepertest "github.com/Stride-Labs/stride/testutil/keeper"
+	"github.com/Stride-Labs/stride/x/stakeibc/keeper"
+	"github.com/Stride-Labs/stride/x/stakeibc/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 

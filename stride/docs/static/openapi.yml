@@ -28302,6 +28302,470 @@ paths:
               request.
       tags:
         - Msg
+  /mint/v1beta1/epoch_provisions:
+    get:
+      summary: EpochProvisions current minting epoch provisions value.
+      operationId: StrideMintV1Beta1EpochProvisions
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              epoch_provisions:
+                type: string
+                format: byte
+                description: >-
+                  epoch_provisions is the current minting per epoch provisions
+                  value.
+            description: |-
+              QueryEpochProvisionsResponse is the response type for the
+              Query/EpochProvisions RPC method.
+        default:
+          description: An unexpected error response.
+          schema:
+            type: object
+            properties:
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    '@type':
+                      type: string
+                      description: >-
+                        A URL/resource name that uniquely identifies the type of
+                        the serialized
+
+                        protocol buffer message. This string must contain at
+                        least
+
+                        one "/" character. The last segment of the URL's path
+                        must represent
+
+                        the fully qualified name of the type (as in
+
+                        `path/google.protobuf.Duration`). The name should be in
+                        a canonical form
+
+                        (e.g., leading "." is not accepted).
+
+
+                        In practice, teams usually precompile into the binary
+                        all types that they
+
+                        expect it to use in the context of Any. However, for
+                        URLs which use the
+
+                        scheme `http`, `https`, or no scheme, one can optionally
+                        set up a type
+
+                        server that maps type URLs to message definitions as
+                        follows:
+
+
+                        * If no scheme is provided, `https` is assumed.
+
+                        * An HTTP GET on the URL must yield a
+                        [google.protobuf.Type][]
+                          value in binary format, or produce an error.
+                        * Applications are allowed to cache lookup results based
+                        on the
+                          URL, or have them precompiled into a binary to avoid any
+                          lookup. Therefore, binary compatibility needs to be preserved
+                          on changes to types. (Use versioned type names to manage
+                          breaking changes.)
+
+                        Note: this functionality is not currently available in
+                        the official
+
+                        protobuf release, and it is not used for type URLs
+                        beginning with
+
+                        type.googleapis.com.
+
+
+                        Schemes other than `http`, `https` (or the empty scheme)
+                        might be
+
+                        used with implementation specific semantics.
+                  additionalProperties: {}
+                  description: >-
+                    `Any` contains an arbitrary serialized protocol buffer
+                    message along with a
+
+                    URL that describes the type of the serialized message.
+
+
+                    Protobuf library provides support to pack/unpack Any values
+                    in the form
+
+                    of utility functions or additional generated methods of the
+                    Any type.
+
+
+                    Example 1: Pack and unpack a message in C++.
+
+                        Foo foo = ...;
+                        Any any;
+                        any.PackFrom(foo);
+                        ...
+                        if (any.UnpackTo(&foo)) {
+                          ...
+                        }
+
+                    Example 2: Pack and unpack a message in Java.
+
+                        Foo foo = ...;
+                        Any any = Any.pack(foo);
+                        ...
+                        if (any.is(Foo.class)) {
+                          foo = any.unpack(Foo.class);
+                        }
+
+                     Example 3: Pack and unpack a message in Python.
+
+                        foo = Foo(...)
+                        any = Any()
+                        any.Pack(foo)
+                        ...
+                        if any.Is(Foo.DESCRIPTOR):
+                          any.Unpack(foo)
+                          ...
+
+                     Example 4: Pack and unpack a message in Go
+
+                         foo := &pb.Foo{...}
+                         any, err := anypb.New(foo)
+                         if err != nil {
+                           ...
+                         }
+                         ...
+                         foo := &pb.Foo{}
+                         if err := any.UnmarshalTo(foo); err != nil {
+                           ...
+                         }
+
+                    The pack methods provided by protobuf library will by
+                    default use
+
+                    'type.googleapis.com/full.type.name' as the type URL and the
+                    unpack
+
+                    methods only use the fully qualified type name after the
+                    last '/'
+
+                    in the type URL, for example "foo.bar.com/x/y.z" will yield
+                    type
+
+                    name "y.z".
+
+
+
+                    JSON
+
+                    ====
+
+                    The JSON representation of an `Any` value uses the regular
+
+                    representation of the deserialized, embedded message, with
+                    an
+
+                    additional field `@type` which contains the type URL.
+                    Example:
+
+                        package google.profile;
+                        message Person {
+                          string first_name = 1;
+                          string last_name = 2;
+                        }
+
+                        {
+                          "@type": "type.googleapis.com/google.profile.Person",
+                          "firstName": <string>,
+                          "lastName": <string>
+                        }
+
+                    If the embedded message type is well-known and has a custom
+                    JSON
+
+                    representation, that representation will be embedded adding
+                    a field
+
+                    `value` which holds the custom JSON in addition to the
+                    `@type`
+
+                    field. Example (for message [google.protobuf.Duration][]):
+
+                        {
+                          "@type": "type.googleapis.com/google.protobuf.Duration",
+                          "value": "1.212s"
+                        }
+      tags:
+        - Query
+  /mint/v1beta1/params:
+    get:
+      summary: Params returns the total set of minting parameters.
+      operationId: StrideMintV1Beta1Params
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              params:
+                description: params defines the parameters of the module.
+                type: object
+                properties:
+                  mint_denom:
+                    type: string
+                    title: type of coin to mint
+                  genesis_epoch_provisions:
+                    type: string
+                    title: epoch provisions from the first epoch
+                  epoch_identifier:
+                    type: string
+                    title: mint epoch identifier
+                  reduction_period_in_epochs:
+                    type: string
+                    format: int64
+                    title: number of epochs take to reduce rewards
+                  reduction_factor:
+                    type: string
+                    title: reduction multiplier to execute on each period
+                  distribution_proportions:
+                    title: >-
+                      distribution_proportions defines the proportion of the
+                      minted denom
+                    type: object
+                    properties:
+                      staking:
+                        type: string
+                        description: >-
+                          staking defines the proportion of the minted
+                          minted_denom that is to be
+
+                          allocated as staking rewards.
+                      pool_incentives:
+                        type: string
+                        description: >-
+                          pool_incentives defines the proportion of the minted
+                          minted_denom that is
+
+                          to be allocated as pool incentives.
+                      participation_rewards:
+                        type: string
+                        description: >-
+                          participation_rewards defines the proportion of the
+                          minted minted_denom that is
+
+                          to be allocated to participation rewards address.
+                      community_pool:
+                        type: string
+                        description: >-
+                          community_pool defines the proportion of the minted
+                          minted_denom that is
+
+                          to be allocated to the community pool.
+                  minting_rewards_distribution_start_epoch:
+                    type: string
+                    format: int64
+                    title: start epoch to distribute minting rewards
+            description: >-
+              QueryParamsResponse is the response type for the Query/Params RPC
+              method.
+        default:
+          description: An unexpected error response.
+          schema:
+            type: object
+            properties:
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    '@type':
+                      type: string
+                      description: >-
+                        A URL/resource name that uniquely identifies the type of
+                        the serialized
+
+                        protocol buffer message. This string must contain at
+                        least
+
+                        one "/" character. The last segment of the URL's path
+                        must represent
+
+                        the fully qualified name of the type (as in
+
+                        `path/google.protobuf.Duration`). The name should be in
+                        a canonical form
+
+                        (e.g., leading "." is not accepted).
+
+
+                        In practice, teams usually precompile into the binary
+                        all types that they
+
+                        expect it to use in the context of Any. However, for
+                        URLs which use the
+
+                        scheme `http`, `https`, or no scheme, one can optionally
+                        set up a type
+
+                        server that maps type URLs to message definitions as
+                        follows:
+
+
+                        * If no scheme is provided, `https` is assumed.
+
+                        * An HTTP GET on the URL must yield a
+                        [google.protobuf.Type][]
+                          value in binary format, or produce an error.
+                        * Applications are allowed to cache lookup results based
+                        on the
+                          URL, or have them precompiled into a binary to avoid any
+                          lookup. Therefore, binary compatibility needs to be preserved
+                          on changes to types. (Use versioned type names to manage
+                          breaking changes.)
+
+                        Note: this functionality is not currently available in
+                        the official
+
+                        protobuf release, and it is not used for type URLs
+                        beginning with
+
+                        type.googleapis.com.
+
+
+                        Schemes other than `http`, `https` (or the empty scheme)
+                        might be
+
+                        used with implementation specific semantics.
+                  additionalProperties: {}
+                  description: >-
+                    `Any` contains an arbitrary serialized protocol buffer
+                    message along with a
+
+                    URL that describes the type of the serialized message.
+
+
+                    Protobuf library provides support to pack/unpack Any values
+                    in the form
+
+                    of utility functions or additional generated methods of the
+                    Any type.
+
+
+                    Example 1: Pack and unpack a message in C++.
+
+                        Foo foo = ...;
+                        Any any;
+                        any.PackFrom(foo);
+                        ...
+                        if (any.UnpackTo(&foo)) {
+                          ...
+                        }
+
+                    Example 2: Pack and unpack a message in Java.
+
+                        Foo foo = ...;
+                        Any any = Any.pack(foo);
+                        ...
+                        if (any.is(Foo.class)) {
+                          foo = any.unpack(Foo.class);
+                        }
+
+                     Example 3: Pack and unpack a message in Python.
+
+                        foo = Foo(...)
+                        any = Any()
+                        any.Pack(foo)
+                        ...
+                        if any.Is(Foo.DESCRIPTOR):
+                          any.Unpack(foo)
+                          ...
+
+                     Example 4: Pack and unpack a message in Go
+
+                         foo := &pb.Foo{...}
+                         any, err := anypb.New(foo)
+                         if err != nil {
+                           ...
+                         }
+                         ...
+                         foo := &pb.Foo{}
+                         if err := any.UnmarshalTo(foo); err != nil {
+                           ...
+                         }
+
+                    The pack methods provided by protobuf library will by
+                    default use
+
+                    'type.googleapis.com/full.type.name' as the type URL and the
+                    unpack
+
+                    methods only use the fully qualified type name after the
+                    last '/'
+
+                    in the type URL, for example "foo.bar.com/x/y.z" will yield
+                    type
+
+                    name "y.z".
+
+
+
+                    JSON
+
+                    ====
+
+                    The JSON representation of an `Any` value uses the regular
+
+                    representation of the deserialized, embedded message, with
+                    an
+
+                    additional field `@type` which contains the type URL.
+                    Example:
+
+                        package google.profile;
+                        message Person {
+                          string first_name = 1;
+                          string last_name = 2;
+                        }
+
+                        {
+                          "@type": "type.googleapis.com/google.profile.Person",
+                          "firstName": <string>,
+                          "lastName": <string>
+                        }
+
+                    If the embedded message type is well-known and has a custom
+                    JSON
+
+                    representation, that representation will be embedded adding
+                    a field
+
+                    `value` which holds the custom JSON in addition to the
+                    `@type`
+
+                    field. Example (for message [google.protobuf.Duration][]):
+
+                        {
+                          "@type": "type.googleapis.com/google.protobuf.Duration",
+                          "value": "1.212s"
+                        }
+      tags:
+        - Query
   /Stridelabs/stride/epochs:
     get:
       summary: EpochInfos provide running epochInfos
@@ -28474,7 +28938,7 @@ paths:
           type: string
       tags:
         - Query
-  /Stride-labs/stride/stakeibc/delegation:
+  /Stride-Labs/stride/stakeibc/delegation:
     get:
       summary: Queries a Delegation by index.
       operationId: StridelabsStrideStakeibcDelegation
@@ -28527,7 +28991,7 @@ paths:
                   additionalProperties: {}
       tags:
         - Query
-  /Stride-labs/stride/stakeibc/host_zone:
+  /Stride-Labs/stride/stakeibc/host_zone:
     get:
       summary: Queries a list of HostZone items.
       operationId: StridelabsStrideStakeibcHostZoneAll
@@ -28722,7 +29186,7 @@ paths:
           type: boolean
       tags:
         - Query
-  '/Stride-labs/stride/stakeibc/host_zone/{id}':
+  '/Stride-Labs/stride/stakeibc/host_zone/{id}':
     get:
       summary: Queries a HostZone by id.
       operationId: StridelabsStrideStakeibcHostZone
@@ -28840,7 +29304,7 @@ paths:
           format: uint64
       tags:
         - Query
-  /Stride-labs/stride/stakeibc/ica_account:
+  /Stride-Labs/stride/stakeibc/ica_account:
     get:
       summary: Queries a ICAAccount by index.
       operationId: StridelabsStrideStakeibcICAAccount
@@ -28906,7 +29370,7 @@ paths:
                   additionalProperties: {}
       tags:
         - Query
-  /Stride-labs/stride/stakeibc/min_validator_requirements:
+  /Stride-Labs/stride/stakeibc/min_validator_requirements:
     get:
       summary: Queries a MinValidatorRequirements by index.
       operationId: StridelabsStrideStakeibcMinValidatorRequirements
@@ -28945,7 +29409,7 @@ paths:
                   additionalProperties: {}
       tags:
         - Query
-  /Stride-labs/stride/stakeibc/validator:
+  /Stride-Labs/stride/stakeibc/validator:
     get:
       summary: Queries a Validator by index.
       operationId: StridelabsStrideStakeibcValidator
@@ -49309,6 +49773,165 @@ definitions:
     description: |-
       MsgSubmitQueryResponseResponse defines the MsgSubmitQueryResponse response
       type.
+  stride.mint.v1beta1.DistributionProportions:
+    type: object
+    properties:
+      staking:
+        type: string
+        description: >-
+          staking defines the proportion of the minted minted_denom that is to
+          be
+
+          allocated as staking rewards.
+      pool_incentives:
+        type: string
+        description: >-
+          pool_incentives defines the proportion of the minted minted_denom that
+          is
+
+          to be allocated as pool incentives.
+      participation_rewards:
+        type: string
+        description: >-
+          participation_rewards defines the proportion of the minted
+          minted_denom that is
+
+          to be allocated to participation rewards address.
+      community_pool:
+        type: string
+        description: >-
+          community_pool defines the proportion of the minted minted_denom that
+          is
+
+          to be allocated to the community pool.
+  stride.mint.v1beta1.Params:
+    type: object
+    properties:
+      mint_denom:
+        type: string
+        title: type of coin to mint
+      genesis_epoch_provisions:
+        type: string
+        title: epoch provisions from the first epoch
+      epoch_identifier:
+        type: string
+        title: mint epoch identifier
+      reduction_period_in_epochs:
+        type: string
+        format: int64
+        title: number of epochs take to reduce rewards
+      reduction_factor:
+        type: string
+        title: reduction multiplier to execute on each period
+      distribution_proportions:
+        title: distribution_proportions defines the proportion of the minted denom
+        type: object
+        properties:
+          staking:
+            type: string
+            description: >-
+              staking defines the proportion of the minted minted_denom that is
+              to be
+
+              allocated as staking rewards.
+          pool_incentives:
+            type: string
+            description: >-
+              pool_incentives defines the proportion of the minted minted_denom
+              that is
+
+              to be allocated as pool incentives.
+          participation_rewards:
+            type: string
+            description: >-
+              participation_rewards defines the proportion of the minted
+              minted_denom that is
+
+              to be allocated to participation rewards address.
+          community_pool:
+            type: string
+            description: >-
+              community_pool defines the proportion of the minted minted_denom
+              that is
+
+              to be allocated to the community pool.
+      minting_rewards_distribution_start_epoch:
+        type: string
+        format: int64
+        title: start epoch to distribute minting rewards
+    description: Params holds parameters for the mint module.
+  stride.mint.v1beta1.QueryEpochProvisionsResponse:
+    type: object
+    properties:
+      epoch_provisions:
+        type: string
+        format: byte
+        description: epoch_provisions is the current minting per epoch provisions value.
+    description: |-
+      QueryEpochProvisionsResponse is the response type for the
+      Query/EpochProvisions RPC method.
+  stride.mint.v1beta1.QueryParamsResponse:
+    type: object
+    properties:
+      params:
+        description: params defines the parameters of the module.
+        type: object
+        properties:
+          mint_denom:
+            type: string
+            title: type of coin to mint
+          genesis_epoch_provisions:
+            type: string
+            title: epoch provisions from the first epoch
+          epoch_identifier:
+            type: string
+            title: mint epoch identifier
+          reduction_period_in_epochs:
+            type: string
+            format: int64
+            title: number of epochs take to reduce rewards
+          reduction_factor:
+            type: string
+            title: reduction multiplier to execute on each period
+          distribution_proportions:
+            title: >-
+              distribution_proportions defines the proportion of the minted
+              denom
+            type: object
+            properties:
+              staking:
+                type: string
+                description: >-
+                  staking defines the proportion of the minted minted_denom that
+                  is to be
+
+                  allocated as staking rewards.
+              pool_incentives:
+                type: string
+                description: >-
+                  pool_incentives defines the proportion of the minted
+                  minted_denom that is
+
+                  to be allocated as pool incentives.
+              participation_rewards:
+                type: string
+                description: >-
+                  participation_rewards defines the proportion of the minted
+                  minted_denom that is
+
+                  to be allocated to participation rewards address.
+              community_pool:
+                type: string
+                description: >-
+                  community_pool defines the proportion of the minted
+                  minted_denom that is
+
+                  to be allocated to the community pool.
+          minting_rewards_distribution_start_epoch:
+            type: string
+            format: int64
+            title: start epoch to distribute minting rewards
+    description: QueryParamsResponse is the response type for the Query/Params RPC method.
   Stridelabs.stride.epochs.EpochInfo:
     type: object
     properties:
