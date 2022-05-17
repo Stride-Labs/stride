@@ -8,7 +8,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/tendermint/tendermint/libs/log"
 
-	"github.com/Stride-labs/stride/x/interchainquery/types"
+	"github.com/Stride-Labs/stride/x/interchainquery/types"
 )
 
 // Keeper of this module maintains collections of registered zones.

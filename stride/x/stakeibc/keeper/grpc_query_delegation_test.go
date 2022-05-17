@@ -8,9 +8,9 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	keepertest "github.com/Stride-labs/stride/testutil/keeper"
-	"github.com/Stride-labs/stride/testutil/nullify"
-	"github.com/Stride-labs/stride/x/stakeibc/types"
+	keepertest "github.com/Stride-Labs/stride/testutil/keeper"
+	"github.com/Stride-Labs/stride/testutil/nullify"
+	"github.com/Stride-Labs/stride/x/stakeibc/types"
 )
 
 func TestDelegationQuery(t *testing.T) {

@@ -9,10 +9,10 @@ import (
 	tmcli "github.com/tendermint/tendermint/libs/cli"
 	"google.golang.org/grpc/status"
 
-	"github.com/Stride-labs/stride/testutil/network"
-	"github.com/Stride-labs/stride/testutil/nullify"
-	"github.com/Stride-labs/stride/x/stakeibc/client/cli"
-	"github.com/Stride-labs/stride/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/testutil/network"
+	"github.com/Stride-Labs/stride/testutil/nullify"
+	"github.com/Stride-Labs/stride/x/stakeibc/client/cli"
+	"github.com/Stride-Labs/stride/x/stakeibc/types"
 )
 
 func networkWithICAAccountObjects(t *testing.T) (*network.Network, types.ICAAccount) {
