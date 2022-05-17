@@ -3,7 +3,7 @@ package types_test
 import (
 	"testing"
 
-	"github.com/Stride-labs/stride/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/x/stakeibc/types"
 	"github.com/stretchr/testify/require"
 )
 
