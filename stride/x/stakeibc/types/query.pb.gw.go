@@ -567,17 +567,17 @@ func RegisterQueryHandlerClient(ctx context.Context, mux *runtime.ServeMux, clie
 var (
 	pattern_Query_Params_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"Stridelabs", "stride", "stakeibc", "params"}, "", runtime.AssumeColonVerbOpt(true)))
 
-	pattern_Query_Validator_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"Stride-labs", "stride", "stakeibc", "validator"}, "", runtime.AssumeColonVerbOpt(true)))
+	pattern_Query_Validator_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"Stride-Labs", "stride", "stakeibc", "validator"}, "", runtime.AssumeColonVerbOpt(true)))
 
-	pattern_Query_Delegation_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"Stride-labs", "stride", "stakeibc", "delegation"}, "", runtime.AssumeColonVerbOpt(true)))
+	pattern_Query_Delegation_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"Stride-Labs", "stride", "stakeibc", "delegation"}, "", runtime.AssumeColonVerbOpt(true)))
 
-	pattern_Query_MinValidatorRequirements_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"Stride-labs", "stride", "stakeibc", "min_validator_requirements"}, "", runtime.AssumeColonVerbOpt(true)))
+	pattern_Query_MinValidatorRequirements_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"Stride-Labs", "stride", "stakeibc", "min_validator_requirements"}, "", runtime.AssumeColonVerbOpt(true)))
 
-	pattern_Query_ICAAccount_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"Stride-labs", "stride", "stakeibc", "ica_account"}, "", runtime.AssumeColonVerbOpt(true)))
+	pattern_Query_ICAAccount_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"Stride-Labs", "stride", "stakeibc", "ica_account"}, "", runtime.AssumeColonVerbOpt(true)))
 
-	pattern_Query_HostZone_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4}, []string{"Stride-labs", "stride", "stakeibc", "host_zone", "id"}, "", runtime.AssumeColonVerbOpt(true)))
+	pattern_Query_HostZone_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4}, []string{"Stride-Labs", "stride", "stakeibc", "host_zone", "id"}, "", runtime.AssumeColonVerbOpt(true)))
 
-	pattern_Query_HostZoneAll_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"Stride-labs", "stride", "stakeibc", "host_zone"}, "", runtime.AssumeColonVerbOpt(true)))
+	pattern_Query_HostZoneAll_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"Stride-Labs", "stride", "stakeibc", "host_zone"}, "", runtime.AssumeColonVerbOpt(true)))
 )
 
 var (
