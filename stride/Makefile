@@ -279,5 +279,5 @@ test-docker-push: test-docker
 	build-docker-osmosisdnode localnet-start localnet-stop \
 	docker-single-node
 
-test:
-	./scripts/simple_test.sh
+# test:
+# 	./scripts/simple_test.sh
