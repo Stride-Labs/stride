@@ -31,12 +31,18 @@ export interface StakeibcDelegation {
 export interface StakeibcHostZone {
   /** @format uint64 */
   id?: string;
+  chainId?: string;
   portId?: string;
   channelId?: string;
+  connectionID?: string;
   validators?: StakeibcValidator[];
-  blacklistedValidators?: StakeibcValidator[];
-  rewardsAccount?: StakeibcICAAccount[];
-  feeAccount?: StakeibcICAAccount[];
+  delegationAccounts?: StakeibcICAAccount[];
+  feeAccount?: string;
+  baseDenom?: string;
+  stDenom?: string;
+  totalDelegatorDelegations?: string;
+  totalAllBalances?: string;
+  totalOutstandingRewards?: string;
 }
 
 export interface StakeibcICAAccount {
@@ -171,11 +177,7 @@ export interface V1Beta1PageRequest {
    */
   count_total?: boolean;
 
-  /**
-   * reverse is set to true if results are to be returned in the descending order.
-   *
-   * Since: cosmos-sdk 0.43
-   */
+  /** reverse is set to true if results are to be returned in the descending order. */
   reverse?: boolean;
 }
 

@@ -28431,9 +28431,6 @@ paths:
           description: >-
             reverse is set to true if results are to be returned in the
             descending order.
-
-
-            Since: cosmos-sdk 0.43
           in: query
           required: false
           type: boolean
@@ -28548,9 +28545,13 @@ paths:
                     id:
                       type: string
                       format: uint64
+                    chainId:
+                      type: string
                     portId:
                       type: string
                     channelId:
+                      type: string
+                    connectionID:
                       type: string
                     validators:
                       type: array
@@ -28569,24 +28570,7 @@ paths:
                           delegationAmt:
                             type: integer
                             format: int32
-                    blacklistedValidators:
-                      type: array
-                      items:
-                        type: object
-                        properties:
-                          name:
-                            type: string
-                          address:
-                            type: string
-                          status:
-                            type: string
-                          commissionRate:
-                            type: integer
-                            format: int32
-                          delegationAmt:
-                            type: integer
-                            format: int32
-                    rewardsAccount:
+                    delegationAccounts:
                       type: array
                       items:
                         type: object
@@ -28625,44 +28609,18 @@ paths:
                                   type: integer
                                   format: int32
                     feeAccount:
-                      type: array
-                      items:
-                        type: object
-                        properties:
-                          address:
-                            type: string
-                          balance:
-                            type: integer
-                            format: int32
-                          delegatedBalance:
-                            type: integer
-                            format: int32
-                          delegations:
-                            type: array
-                            items:
-                              type: object
-                              properties:
-                                delegateAcctAddress:
-                                  type: string
-                                validator:
-                                  type: object
-                                  properties:
-                                    name:
-                                      type: string
-                                    address:
-                                      type: string
-                                    status:
-                                      type: string
-                                    commissionRate:
-                                      type: integer
-                                      format: int32
-                                    delegationAmt:
-                                      type: integer
-                                      format: int32
-                                amt:
-                                  type: integer
-                                  format: int32
-                  title: 'next id: 8'
+                      type: string
+                    baseDenom:
+                      type: string
+                    stDenom:
+                      type: string
+                    totalDelegatorDelegations:
+                      type: string
+                    totalAllBalances:
+                      type: string
+                    totalOutstandingRewards:
+                      type: string
+                  title: 'next id: 9'
               pagination:
                 type: object
                 properties:
@@ -28759,9 +28717,6 @@ paths:
           description: >-
             reverse is set to true if results are to be returned in the
             descending order.
-
-
-            Since: cosmos-sdk 0.43
           in: query
           required: false
           type: boolean
@@ -28783,9 +28738,13 @@ paths:
                   id:
                     type: string
                     format: uint64
+                  chainId:
+                    type: string
                   portId:
                     type: string
                   channelId:
+                    type: string
+                  connectionID:
                     type: string
                   validators:
                     type: array
@@ -28804,24 +28763,7 @@ paths:
                         delegationAmt:
                           type: integer
                           format: int32
-                  blacklistedValidators:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        name:
-                          type: string
-                        address:
-                          type: string
-                        status:
-                          type: string
-                        commissionRate:
-                          type: integer
-                          format: int32
-                        delegationAmt:
-                          type: integer
-                          format: int32
-                  rewardsAccount:
+                  delegationAccounts:
                     type: array
                     items:
                       type: object
@@ -28860,44 +28802,18 @@ paths:
                                 type: integer
                                 format: int32
                   feeAccount:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        address:
-                          type: string
-                        balance:
-                          type: integer
-                          format: int32
-                        delegatedBalance:
-                          type: integer
-                          format: int32
-                        delegations:
-                          type: array
-                          items:
-                            type: object
-                            properties:
-                              delegateAcctAddress:
-                                type: string
-                              validator:
-                                type: object
-                                properties:
-                                  name:
-                                    type: string
-                                  address:
-                                    type: string
-                                  status:
-                                    type: string
-                                  commissionRate:
-                                    type: integer
-                                    format: int32
-                                  delegationAmt:
-                                    type: integer
-                                    format: int32
-                              amt:
-                                type: integer
-                                format: int32
-                title: 'next id: 8'
+                    type: string
+                  baseDenom:
+                    type: string
+                  stDenom:
+                    type: string
+                  totalDelegatorDelegations:
+                    type: string
+                  totalAllBalances:
+                    type: string
+                  totalOutstandingRewards:
+                    type: string
+                title: 'next id: 9'
         default:
           description: An unexpected error response.
           schema:
@@ -49500,9 +49416,13 @@ definitions:
       id:
         type: string
         format: uint64
+      chainId:
+        type: string
       portId:
         type: string
       channelId:
+        type: string
+      connectionID:
         type: string
       validators:
         type: array
@@ -49521,24 +49441,7 @@ definitions:
             delegationAmt:
               type: integer
               format: int32
-      blacklistedValidators:
-        type: array
-        items:
-          type: object
-          properties:
-            name:
-              type: string
-            address:
-              type: string
-            status:
-              type: string
-            commissionRate:
-              type: integer
-              format: int32
-            delegationAmt:
-              type: integer
-              format: int32
-      rewardsAccount:
+      delegationAccounts:
         type: array
         items:
           type: object
@@ -49577,44 +49480,18 @@ definitions:
                     type: integer
                     format: int32
       feeAccount:
-        type: array
-        items:
-          type: object
-          properties:
-            address:
-              type: string
-            balance:
-              type: integer
-              format: int32
-            delegatedBalance:
-              type: integer
-              format: int32
-            delegations:
-              type: array
-              items:
-                type: object
-                properties:
-                  delegateAcctAddress:
-                    type: string
-                  validator:
-                    type: object
-                    properties:
-                      name:
-                        type: string
-                      address:
-                        type: string
-                      status:
-                        type: string
-                      commissionRate:
-                        type: integer
-                        format: int32
-                      delegationAmt:
-                        type: integer
-                        format: int32
-                  amt:
-                    type: integer
-                    format: int32
-    title: 'next id: 8'
+        type: string
+      baseDenom:
+        type: string
+      stDenom:
+        type: string
+      totalDelegatorDelegations:
+        type: string
+      totalAllBalances:
+        type: string
+      totalOutstandingRewards:
+        type: string
+    title: 'next id: 9'
   Stridelabs.stride.stakeibc.ICAAccount:
     type: object
     properties:
@@ -49698,9 +49575,13 @@ definitions:
             id:
               type: string
               format: uint64
+            chainId:
+              type: string
             portId:
               type: string
             channelId:
+              type: string
+            connectionID:
               type: string
             validators:
               type: array
@@ -49719,24 +49600,7 @@ definitions:
                   delegationAmt:
                     type: integer
                     format: int32
-            blacklistedValidators:
-              type: array
-              items:
-                type: object
-                properties:
-                  name:
-                    type: string
-                  address:
-                    type: string
-                  status:
-                    type: string
-                  commissionRate:
-                    type: integer
-                    format: int32
-                  delegationAmt:
-                    type: integer
-                    format: int32
-            rewardsAccount:
+            delegationAccounts:
               type: array
               items:
                 type: object
@@ -49775,44 +49639,18 @@ definitions:
                           type: integer
                           format: int32
             feeAccount:
-              type: array
-              items:
-                type: object
-                properties:
-                  address:
-                    type: string
-                  balance:
-                    type: integer
-                    format: int32
-                  delegatedBalance:
-                    type: integer
-                    format: int32
-                  delegations:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        delegateAcctAddress:
-                          type: string
-                        validator:
-                          type: object
-                          properties:
-                            name:
-                              type: string
-                            address:
-                              type: string
-                            status:
-                              type: string
-                            commissionRate:
-                              type: integer
-                              format: int32
-                            delegationAmt:
-                              type: integer
-                              format: int32
-                        amt:
-                          type: integer
-                          format: int32
-          title: 'next id: 8'
+              type: string
+            baseDenom:
+              type: string
+            stDenom:
+              type: string
+            totalDelegatorDelegations:
+              type: string
+            totalAllBalances:
+              type: string
+            totalOutstandingRewards:
+              type: string
+          title: 'next id: 9'
       pagination:
         type: object
         properties:
@@ -49873,9 +49711,13 @@ definitions:
           id:
             type: string
             format: uint64
+          chainId:
+            type: string
           portId:
             type: string
           channelId:
+            type: string
+          connectionID:
             type: string
           validators:
             type: array
@@ -49894,24 +49736,7 @@ definitions:
                 delegationAmt:
                   type: integer
                   format: int32
-          blacklistedValidators:
-            type: array
-            items:
-              type: object
-              properties:
-                name:
-                  type: string
-                address:
-                  type: string
-                status:
-                  type: string
-                commissionRate:
-                  type: integer
-                  format: int32
-                delegationAmt:
-                  type: integer
-                  format: int32
-          rewardsAccount:
+          delegationAccounts:
             type: array
             items:
               type: object
@@ -49950,44 +49775,18 @@ definitions:
                         type: integer
                         format: int32
           feeAccount:
-            type: array
-            items:
-              type: object
-              properties:
-                address:
-                  type: string
-                balance:
-                  type: integer
-                  format: int32
-                delegatedBalance:
-                  type: integer
-                  format: int32
-                delegations:
-                  type: array
-                  items:
-                    type: object
-                    properties:
-                      delegateAcctAddress:
-                        type: string
-                      validator:
-                        type: object
-                        properties:
-                          name:
-                            type: string
-                          address:
-                            type: string
-                          status:
-                            type: string
-                          commissionRate:
-                            type: integer
-                            format: int32
-                          delegationAmt:
-                            type: integer
-                            format: int32
-                      amt:
-                        type: integer
-                        format: int32
-        title: 'next id: 8'
+            type: string
+          baseDenom:
+            type: string
+          stDenom:
+            type: string
+          totalDelegatorDelegations:
+            type: string
+          totalAllBalances:
+            type: string
+          totalOutstandingRewards:
+            type: string
+        title: 'next id: 9'
   Stridelabs.stride.stakeibc.QueryGetICAAccountResponse:
     type: object
     properties:

@@ -11,6 +11,7 @@ import (
 	capabilitykeeper "github.com/cosmos/cosmos-sdk/x/capability/keeper"
 	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
 
+	interchainquerykeeper "github.com/Stride-labs/stride/x/interchainquery/keeper"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	icacontrollerkeeper "github.com/cosmos/ibc-go/v3/modules/apps/27-interchain-accounts/controller/keeper"
 	ibckeeper "github.com/cosmos/ibc-go/v3/modules/core/keeper"
@@ -19,11 +20,12 @@ import (
 type (
 	Keeper struct {
 		// *cosmosibckeeper.Keeper
-		cdc        codec.BinaryCodec
-		storeKey   sdk.StoreKey
-		memKey     sdk.StoreKey
-		paramstore paramtypes.Subspace
+		cdc                 codec.Codec
+		storeKey            sdk.StoreKey
+		memKey              sdk.StoreKey
+		paramstore          paramtypes.Subspace
 		ICAControllerKeeper icacontrollerkeeper.Keeper
+		ICQKeeper           interchainquerykeeper.Keeper
 		IBCKeeper           ibckeeper.Keeper
 		scopedKeeper        capabilitykeeper.ScopedKeeper
 
@@ -32,7 +34,7 @@ type (
 )
 
 func NewKeeper(
-	cdc codec.BinaryCodec,
+	cdc codec.Codec,
 	storeKey,
 	memKey sdk.StoreKey,
 	ps paramtypes.Subspace,
@@ -41,6 +43,7 @@ func NewKeeper(
 	// scopedKeeper cosmosibckeeper.ScopedKeeper,
 	bankKeeper types.BankKeeper,
 	icacontrollerkeeper icacontrollerkeeper.Keeper,
+	interchainquerykeeper interchainquerykeeper.Keeper,
 	ibcKeeper ibckeeper.Keeper,
 	scopedKeeper capabilitykeeper.ScopedKeeper,
 ) Keeper {
@@ -59,11 +62,11 @@ func NewKeeper(
 		// 	portKeeper,
 		// 	scopedKeeper,
 		// ),
-		cdc:        cdc,
-		storeKey:   storeKey,
-		memKey:     memKey,
-		paramstore: ps,
-		bankKeeper: bankKeeper,
+		cdc:                 cdc,
+		storeKey:            storeKey,
+		memKey:              memKey,
+		paramstore:          ps,
+		bankKeeper:          bankKeeper,
 		ICAControllerKeeper: icacontrollerkeeper,
 		IBCKeeper:           ibcKeeper,
 		scopedKeeper:        scopedKeeper,

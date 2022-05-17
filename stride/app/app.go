@@ -426,6 +426,7 @@ func New(
 		// &app.IBCKeeper.PortKeeper,
 		app.BankKeeper,
 		app.ICAControllerKeeper,
+		app.InterchainqueryKeeper,
 		*app.IBCKeeper,
 		scopedStakeibcKeeper,
 	)

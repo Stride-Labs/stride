@@ -4,15 +4,38 @@ package Stridelabs.stride.stakeibc;
 import "stakeibc/validator.proto";
 import "stakeibc/ica_account.proto";
 
+import "gogoproto/gogo.proto";
+import "cosmos_proto/cosmos.proto";
+
 option go_package = "github.com/Stride-labs/stride/x/stakeibc/types";
 
-// next id: 8
+// next id: 14
 message HostZone {
-  uint64 id = 7;
-  string portId = 1; 
-  string channelId = 2; 
-  repeated Validator validators = 3;
-  repeated Validator blacklistedValidators = 4;
-  repeated ICAAccount rewardsAccount = 5;
-  repeated ICAAccount feeAccount = 6;  
+  uint64 id = 1;
+  string chainId = 2;
+  string portId = 3; 
+  string channelId = 4; 
+  string connectionID = 5;
+  repeated Validator validators = 6;
+  repeated ICAAccount delegationAccounts = 7;
+  string feeAccount = 8;  
+  string baseDenom = 9;
+  string stDenom = 10;
+
+  string totalDelegatorDelegations = 11 [ 
+    (cosmos_proto.scalar) = "cosmos.Dec",
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+  string totalAllBalances = 12 [
+    (cosmos_proto.scalar) = "cosmos.Dec",
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+  string totalOutstandingRewards = 13 [
+    (cosmos_proto.scalar) = "cosmos.Dec",
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+
 }
