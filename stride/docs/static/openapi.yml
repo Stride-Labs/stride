@@ -29969,26 +29969,26 @@ paths:
                 description: params holds all the parameters of this module.
                 type: object
                 properties:
-                  sweeping_rewards_interval:
+                  rewards_interval:
                     type: string
                     format: uint64
-                    title: 'define epoch lengths, in blocks'
-                  invest_deposits_interval:
+                    title: 'define epoch lengths, in stride_epochs'
+                  deposit_interval:
                     type: string
                     format: uint64
-                  calc_exchange_rate_interval:
+                  exchange_rate_interval:
                     type: string
                     format: uint64
-                  stride_fee:
-                    type: number
-                    format: double
-                  zone_fee_address:
+                  stride_commission:
+                    type: string
+                    format: uint64
+                  zone_com_address:
                     type: object
                     additionalProperties:
                       type: string
                     title: |-
-                      fee_address_weights stores which addresses to 
-                      send the Stride fee too, as well as what portion
+                      zone_com_address stores which addresses to 
+                      send the Stride commission too, as well as what portion
                       of the fee each address is entitled to
             description: >-
               QueryParamsResponse is response type for the Query/Params RPC
@@ -50646,26 +50646,26 @@ definitions:
   Stridelabs.stride.stakeibc.Params:
     type: object
     properties:
-      sweeping_rewards_interval:
+      rewards_interval:
         type: string
         format: uint64
-        title: 'define epoch lengths, in blocks'
-      invest_deposits_interval:
+        title: 'define epoch lengths, in stride_epochs'
+      deposit_interval:
         type: string
         format: uint64
-      calc_exchange_rate_interval:
+      exchange_rate_interval:
         type: string
         format: uint64
-      stride_fee:
-        type: number
-        format: double
-      zone_fee_address:
+      stride_commission:
+        type: string
+        format: uint64
+      zone_com_address:
         type: object
         additionalProperties:
           type: string
         title: |-
-          fee_address_weights stores which addresses to 
-          send the Stride fee too, as well as what portion
+          zone_com_address stores which addresses to 
+          send the Stride commission too, as well as what portion
           of the fee each address is entitled to
     description: Params defines the parameters for the module.
   Stridelabs.stride.stakeibc.QueryAllDepositRecordResponse:
@@ -51352,26 +51352,26 @@ definitions:
         description: params holds all the parameters of this module.
         type: object
         properties:
-          sweeping_rewards_interval:
+          rewards_interval:
             type: string
             format: uint64
-            title: 'define epoch lengths, in blocks'
-          invest_deposits_interval:
+            title: 'define epoch lengths, in stride_epochs'
+          deposit_interval:
             type: string
             format: uint64
-          calc_exchange_rate_interval:
+          exchange_rate_interval:
             type: string
             format: uint64
-          stride_fee:
-            type: number
-            format: double
-          zone_fee_address:
+          stride_commission:
+            type: string
+            format: uint64
+          zone_com_address:
             type: object
             additionalProperties:
               type: string
             title: |-
-              fee_address_weights stores which addresses to 
-              send the Stride fee too, as well as what portion
+              zone_com_address stores which addresses to 
+              send the Stride commission too, as well as what portion
               of the fee each address is entitled to
     description: QueryParamsResponse is response type for the Query/Params RPC method.
   Stridelabs.stride.stakeibc.Validator:
