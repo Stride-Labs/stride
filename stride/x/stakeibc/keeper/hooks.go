@@ -3,35 +3,19 @@ package keeper
 import (
 	"fmt"
 
-	epochstypes "github.com/Stride-labs/stride/x/epochs/types"
+	epochstypes "github.com/Stride-Labs/stride/x/epochs/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochIdentifier string, epochNumber int64) {
 	// every epoch
-	k.Logger(ctx).Info(fmt.Sprintf("Handling epoch start %s", epochIdentifier))
-
-	if epochIdentifier == "day" {
-		k.Logger(ctx).Info("Starting day %d", epochNumber)
-	}
-	if epochIdentifier == "week" {
-		k.Logger(ctx).Info("Starting week %d", epochNumber)
-	}
-	// k.Logger(ctx).Info(fmt.Sprintf("Handling epoch START TEST %d, %s", uint64(epochNumber), epochIdentifier))
-	// if epochIdentifier == "epoch" {
-	// 	k.Logger(ctx).Info(fmt.Sprintf("STARTED epoch %d VISH %s", epochNumber, epochIdentifier))
-	// }
+	k.Logger(ctx).Info(fmt.Sprintf("Handling epoch start %s %d", epochIdentifier, epochNumber))
 }
 
 func (k Keeper) AfterEpochEnd(ctx sdk.Context, epochIdentifier string, epochNumber int64) {
 	// every epoch
-	k.Logger(ctx).Info("Handling epoch end")
-	if epochIdentifier == "day" {
-		k.Logger(ctx).Info("Finished day %d", epochNumber)
-	}
-	if epochIdentifier == "week" {
-		k.Logger(ctx).Info("Finished week %d", epochNumber)
-	}
+	k.Logger(ctx).Info(fmt.Sprintf("Handling epoch end %s %d", epochIdentifier, epochNumber))
+
 }
 
 // Hooks wrapper struct for incentives keeper
