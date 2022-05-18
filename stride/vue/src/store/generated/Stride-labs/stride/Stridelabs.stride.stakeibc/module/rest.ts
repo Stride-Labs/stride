@@ -204,11 +204,7 @@ export interface V1Beta1PageRequest {
    */
   count_total?: boolean;
 
-  /**
-   * reverse is set to true if results are to be returned in the descending order.
-   *
-   * Since: cosmos-sdk 0.43
-   */
+  /** reverse is set to true if results are to be returned in the descending order. */
   reverse?: boolean;
 }
 
@@ -431,11 +427,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
    * @tags Query
    * @name QueryDelegation
    * @summary Queries a Delegation by index.
-   * @request GET:/Stride-labs/stride/stakeibc/delegation
+   * @request GET:/Stride-Labs/stride/stakeibc/delegation
    */
   queryDelegation = (params: RequestParams = {}) =>
     this.request<StakeibcQueryGetDelegationResponse, RpcStatus>({
-      path: `/Stride-labs/stride/stakeibc/delegation`,
+      path: `/Stride-Labs/stride/stakeibc/delegation`,
       method: "GET",
       format: "json",
       ...params,
@@ -489,7 +485,7 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
    * @tags Query
    * @name QueryHostZoneAll
    * @summary Queries a list of HostZone items.
-   * @request GET:/Stride-labs/stride/stakeibc/host_zone
+   * @request GET:/Stride-Labs/stride/stakeibc/host_zone
    */
   queryHostZoneAll = (
     query?: {
@@ -502,7 +498,7 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     params: RequestParams = {},
   ) =>
     this.request<StakeibcQueryAllHostZoneResponse, RpcStatus>({
-      path: `/Stride-labs/stride/stakeibc/host_zone`,
+      path: `/Stride-Labs/stride/stakeibc/host_zone`,
       method: "GET",
       query: query,
       format: "json",
@@ -515,11 +511,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
    * @tags Query
    * @name QueryHostZone
    * @summary Queries a HostZone by id.
-   * @request GET:/Stride-labs/stride/stakeibc/host_zone/{id}
+   * @request GET:/Stride-Labs/stride/stakeibc/host_zone/{id}
    */
   queryHostZone = (id: string, params: RequestParams = {}) =>
     this.request<StakeibcQueryGetHostZoneResponse, RpcStatus>({
-      path: `/Stride-labs/stride/stakeibc/host_zone/${id}`,
+      path: `/Stride-Labs/stride/stakeibc/host_zone/${id}`,
       method: "GET",
       format: "json",
       ...params,
@@ -531,11 +527,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
    * @tags Query
    * @name QueryIcaAccount
    * @summary Queries a ICAAccount by index.
-   * @request GET:/Stride-labs/stride/stakeibc/ica_account
+   * @request GET:/Stride-Labs/stride/stakeibc/ica_account
    */
   queryIcaAccount = (params: RequestParams = {}) =>
     this.request<StakeibcQueryGetICAAccountResponse, RpcStatus>({
-      path: `/Stride-labs/stride/stakeibc/ica_account`,
+      path: `/Stride-Labs/stride/stakeibc/ica_account`,
       method: "GET",
       format: "json",
       ...params,
@@ -547,11 +543,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
    * @tags Query
    * @name QueryMinValidatorRequirements
    * @summary Queries a MinValidatorRequirements by index.
-   * @request GET:/Stride-labs/stride/stakeibc/min_validator_requirements
+   * @request GET:/Stride-Labs/stride/stakeibc/min_validator_requirements
    */
   queryMinValidatorRequirements = (params: RequestParams = {}) =>
     this.request<StakeibcQueryGetMinValidatorRequirementsResponse, RpcStatus>({
-      path: `/Stride-labs/stride/stakeibc/min_validator_requirements`,
+      path: `/Stride-Labs/stride/stakeibc/min_validator_requirements`,
       method: "GET",
       format: "json",
       ...params,
@@ -563,11 +559,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
    * @tags Query
    * @name QueryValidator
    * @summary Queries a Validator by index.
-   * @request GET:/Stride-labs/stride/stakeibc/validator
+   * @request GET:/Stride-Labs/stride/stakeibc/validator
    */
   queryValidator = (params: RequestParams = {}) =>
     this.request<StakeibcQueryGetValidatorResponse, RpcStatus>({
-      path: `/Stride-labs/stride/stakeibc/validator`,
+      path: `/Stride-Labs/stride/stakeibc/validator`,
       method: "GET",
       format: "json",
       ...params,
