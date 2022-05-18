@@ -10,6 +10,9 @@ import (
 func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochIdentifier string, epochNumber int64) {
 	// every epoch
 	k.Logger(ctx).Info(fmt.Sprintf("Handling epoch start %s %d", epochIdentifier, epochNumber))
+	if epochIdentifier == "stride_epoch" {
+		k.Logger(ctx).Info(fmt.Sprintf("Stride Epoch %d", epochNumber))
+	}
 }
 
 func (k Keeper) AfterEpochEnd(ctx sdk.Context, epochIdentifier string, epochNumber int64) {

@@ -79,17 +79,17 @@ export type StakeibcMsgLiquidStakeResponse = object;
  */
 export interface StakeibcParams {
   /** @format uint64 */
-  sweeping_rewards_interval?: string;
+  rewards_interval?: string;
 
   /** @format uint64 */
-  invest_deposits_interval?: string;
+  deposit_interval?: string;
 
   /** @format uint64 */
-  calc_exchange_rate_interval?: string;
+  exchange_rate_interval?: string;
 
-  /** @format double */
-  stride_fee?: number;
-  zone_fee_address?: Record<string, string>;
+  /** @format uint64 */
+  stride_commission?: string;
+  zone_com_address?: Record<string, string>;
 }
 
 export interface StakeibcQueryAllDepositRecordResponse {
