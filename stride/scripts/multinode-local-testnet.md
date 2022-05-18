@@ -10,9 +10,9 @@ Checkout the branch you are looking to test
 
 Make install / reload profile
 
-Give the script permission with `chmod +x multinode-local-testnet.sh`
+Give the script permission with `chmod +x scripts/multinode-local-testnet.sh`
 
-Run with `./multinode-local-testnet.sh` (allow ~45 seconds to run, required sleep commands due to multiple transactions)
+Run with `./scripts/multinode-local-testnet.sh` (allow ~45 seconds to run, required sleep commands due to multiple transactions)
 
 ## Logs
 
