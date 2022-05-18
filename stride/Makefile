@@ -210,7 +210,9 @@ sync-docs:
 
 include sims.mk
 
-test: test-unit test-build
+# TODO(TEST-)
+#test: test-unit test-build
+test: test-build
 
 test-all: check test-race test-cover
 
