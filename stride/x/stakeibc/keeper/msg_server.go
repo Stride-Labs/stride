@@ -1,7 +1,7 @@
 package keeper
 
 import (
-	"github.com/Stride-labs/stride/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/x/stakeibc/types"
 )
 
 type msgServer struct {

@@ -3,7 +3,7 @@ package main
 import (
 	"os"
 
-	"github.com/Stride-labs/stride/app"
+	"github.com/Stride-Labs/stride/app"
 	svrcmd "github.com/cosmos/cosmos-sdk/server/cmd"
 )
 
