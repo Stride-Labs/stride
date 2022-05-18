@@ -49,12 +49,12 @@ service Query {
 
 // Queries a DepositRecord by id.
 	rpc DepositRecord(QueryGetDepositRecordRequest) returns (QueryGetDepositRecordResponse) {
-		option (google.api.http).get = "/Stride-labs/stride/stakeibc/deposit_record/{id}";
+		option (google.api.http).get = "/Stride-Labs/stride/stakeibc/deposit_record/{id}";
 	}
 
 	// Queries a list of DepositRecord items.
 	rpc DepositRecordAll(QueryAllDepositRecordRequest) returns (QueryAllDepositRecordResponse) {
-		option (google.api.http).get = "/Stride-labs/stride/stakeibc/deposit_record";
+		option (google.api.http).get = "/Stride-Labs/stride/stakeibc/deposit_record";
 	}
 
 // this line is used by starport scaffolding # 2

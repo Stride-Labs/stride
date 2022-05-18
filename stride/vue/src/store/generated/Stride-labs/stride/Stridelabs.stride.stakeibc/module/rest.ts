@@ -443,7 +443,7 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
    * @tags Query
    * @name QueryDepositRecordAll
    * @summary Queries a list of DepositRecord items.
-   * @request GET:/Stride-labs/stride/stakeibc/deposit_record
+   * @request GET:/Stride-Labs/stride/stakeibc/deposit_record
    */
   queryDepositRecordAll = (
     query?: {
@@ -456,7 +456,7 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     params: RequestParams = {},
   ) =>
     this.request<StakeibcQueryAllDepositRecordResponse, RpcStatus>({
-      path: `/Stride-labs/stride/stakeibc/deposit_record`,
+      path: `/Stride-Labs/stride/stakeibc/deposit_record`,
       method: "GET",
       query: query,
       format: "json",
@@ -469,11 +469,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
    * @tags Query
    * @name QueryDepositRecord
    * @summary Queries a DepositRecord by id.
-   * @request GET:/Stride-labs/stride/stakeibc/deposit_record/{id}
+   * @request GET:/Stride-Labs/stride/stakeibc/deposit_record/{id}
    */
   queryDepositRecord = (id: string, params: RequestParams = {}) =>
     this.request<StakeibcQueryGetDepositRecordResponse, RpcStatus>({
-      path: `/Stride-labs/stride/stakeibc/deposit_record/${id}`,
+      path: `/Stride-Labs/stride/stakeibc/deposit_record/${id}`,
       method: "GET",
       format: "json",
       ...params,
