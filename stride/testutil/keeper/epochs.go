@@ -3,8 +3,8 @@ package keeper
 import (
 	"testing"
 
-	"github.com/Stride-labs/stride/x/epochs/keeper"
-	"github.com/Stride-labs/stride/x/epochs/types"
+	"github.com/Stride-Labs/stride/x/epochs/keeper"
+	"github.com/Stride-Labs/stride/x/epochs/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/store"
