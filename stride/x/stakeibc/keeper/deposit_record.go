@@ -23,43 +23,6 @@ func (k Keeper) GetDepositRecordCount(ctx sdk.Context) uint64 {
 	return binary.BigEndian.Uint64(bz)
 }
 
-// SetDepositRecordCount set the total number of depositRecord
-func (k Keeper) SetDepositRecordCount(ctx sdk.Context, count uint64) {
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte{})
-	byteKey := types.KeyPrefix(types.DepositRecordCountKey)
-	bz := make([]byte, 8)
-	binary.BigEndian.PutUint64(bz, count)
-	store.Set(byteKey, bz)
-}
-
-// AppendDepositRecord appends a depositRecord in the store with a new id and update the count
-func (k Keeper) AppendDepositRecord(
-	ctx sdk.Context,
-	depositRecord types.DepositRecord,
-) uint64 {
-	// Create the depositRecord
-	count := k.GetDepositRecordCount(ctx)
-
-	// Set the ID of the appended value
-	depositRecord.Id = count
-
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.DepositRecordKey))
-	appendedValue := k.cdc.MustMarshal(&depositRecord)
-	store.Set(GetDepositRecordIDBytes(depositRecord.Id), appendedValue)
-
-	// Update depositRecord count
-	k.SetDepositRecordCount(ctx, count+1)
-
-	return count
-}
-
-// SetDepositRecord set a specific depositRecord in the store
-func (k Keeper) SetDepositRecord(ctx sdk.Context, depositRecord types.DepositRecord) {
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.DepositRecordKey))
-	b := k.cdc.MustMarshal(&depositRecord)
-	store.Set(GetDepositRecordIDBytes(depositRecord.Id), b)
-}
-
 // GetDepositRecord returns a depositRecord from its id
 func (k Keeper) GetDepositRecord(ctx sdk.Context, id uint64) (val types.DepositRecord, found bool) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.DepositRecordKey))
@@ -69,12 +32,6 @@ func (k Keeper) GetDepositRecord(ctx sdk.Context, id uint64) (val types.DepositR
 	}
 	k.cdc.MustUnmarshal(b, &val)
 	return val, true
-}
-
-// RemoveDepositRecord removes a depositRecord from the store
-func (k Keeper) RemoveDepositRecord(ctx sdk.Context, id uint64) {
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.DepositRecordKey))
-	store.Delete(GetDepositRecordIDBytes(id))
 }
 
 // GetAllDepositRecord returns all depositRecord
