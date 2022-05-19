@@ -24,8 +24,6 @@ require (
 )
 
 replace (
-	// github.com/cosmos/ibc-go/v2 => github.com/cosmos/ibc-go/v3 v3.0.0
-	// github.com/cosmos/ibc-go/v3 v3.0.0 => /Users/vishal/Documents/Stride-Labs/ibc-go/
 	github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alpha.regen.1
 	github.com/ignite-hq/cli => github.com/ignite-hq/cli v0.21.0
 	github.com/keybase/go-keychain => github.com/99designs/go-keychain v0.0.0-20191008050251-8e49817e8af4
