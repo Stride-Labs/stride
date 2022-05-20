@@ -1,0 +1,48 @@
+version: '3.8'
+services: 
+  stride1:
+    # image: stridezone/stride:latest
+    image: stridezone:stride
+    hostname: stride
+    volumes:
+      - ./state/STRIDE_1:/stride/.strided
+    # command:
+    #   - /bin/sh
+    # stdin_open: true # docker run -i
+    # tty: true        # docker run -t
+    build:
+      context: .
+      dockerfile: Dockerfile.stride
+  stride2:
+    # image: stridezone/stride:latest
+    image: stridezone:stride
+    hostname: stride
+    volumes:
+      - ./state/STRIDE_2:/stride/.strided
+    build:
+      context: .
+      dockerfile: Dockerfile.stride
+  stride3:
+    # image: stridezone/stride:latest
+    image: stridezone:stride
+    hostname: stride
+    volumes:
+      - ./state/STRIDE_3:/stride/.strided
+    build:
+      context: .
+      dockerfile: Dockerfile.stride
+  # hermes:
+  #   image: stridezone/hermes:latest
+  #   hostname: hermes
+  #   # volumes:
+  #   #   - ./scripts/config/hermes.toml:/tmp/hermes.toml
+  #   #   - ./data/hermes:/hermes/.hermes
+  #   command:
+  #     - hermes
+  #     - -c
+  #     - /tmp/hermes.toml
+  #     - start
+  #   restart: always
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfile.hermes
