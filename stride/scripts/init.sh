@@ -4,7 +4,10 @@
 # define vars
 STATE=state
 STRIDE_CHAINS=(STRIDE_1 STRIDE_2 STRIDE_3)
-VAL_ACCT=val
+main_chain=${STRIDE_CHAINS[0]}
+
+VAL_ACCTS=(val1 val2 val3)
+
 V1="close soup mirror crew erode defy knock trigger gather eyebrow tent farm gym gloom base lemon sleep weekend rich forget diagram hurt prize fly"
 V2="timber vacant teach wedding disease fashion place merge poet produce promote renew sunny industry enforce heavy inch three call sustain deal flee athlete intact"
 V3="enjoy dignity rule multiply kitchen arrange flight rocket kingdom domain motion fire wage viable enough comic cry motor memory fancy dish sing border among"
@@ -25,26 +28,32 @@ echo 'Initializing chains...'
 for i in "${!STRIDE_CHAINS[@]}"; do
     chain_name=${STRIDE_CHAINS[i]}
     vkey=${VKEYS[i]}
+    val_acct=${VAL_ACCTS[i]}
     echo "\t$chain_name"
     $BASE_RUN init test --chain-id $chain_name --overwrite --home "$STATE/$chain_name" 2> /dev/null
     sed -i -E 's|"stake"|"ustrd"|g' "${STATE}/${chain_name}/config/genesis.json"
-    # add VALidator account 
-    echo $vkey | $BASE_RUN keys add $VAL_ACCT --recover --keyring-backend=test --home "$STATE/$chain_name" > /dev/null
+    # add VALidator account
+    echo $vkey | $BASE_RUN keys add $val_acct --recover --keyring-backend=test --home "$STATE/$chain_name" > /dev/null
     # get validator address
-    VAL_ADDR=$($BASE_RUN keys show $VAL_ACCT --keyring-backend test -a --home "$STATE/$chain_name")
+    VAL_ADDR=$($BASE_RUN keys show $val_acct --keyring-backend test -a --home "$STATE/$chain_name")
     # add money for this validator account
+    # $BASE_RUN add-genesis-account ${VAL_ADDR} 500000000000ustrd --home "$STATE/$main_chain"
     $BASE_RUN add-genesis-account ${VAL_ADDR} 500000000000ustrd --home "$STATE/$chain_name"
     # actually set this account as a validator
-    yes | $BASE_RUN gentx val 1000000000ustrd --chain-id $chain_name --keyring-backend test --home "$STATE/$chain_name"
+    yes | $BASE_RUN gentx $val_acct 1000000000ustrd --chain-id $chain_name --keyring-backend test --home "$STATE/$chain_name"
     # this is just annoying, but we need to move the validator tx
     # cp "./${STATE}/${chain_name}/config/gentx/*.json" "./${STATE}/${chain_name}/config/gentx/"
     # now we process these txs 
     $BASE_RUN collect-gentxs --home "$STATE/$chain_name" 2> /dev/null
 done
 
+# make sure all Stride chains have the same genesis 
+for i in "${!STRIDE_CHAINS[@]}"; do
+    cp ./${STATE}/${main_chain}/config/genesis.json ./${STATE}/${STRIDE_CHAINS[i]}/config/genesis.json
+done
 # strided start --home state/STRIDE_1  # TESTING ONLY
 # next we build our docker images
-docker build --no-cache --pull --tag stridezone:stride -f Dockerfile.stride .  # builds from scratch
+# docker build --no-cache --pull --tag stridezone:stride -f Dockerfile.stride .  # builds from scratch
 # docker build --tag stridezone:stride -f Dockerfile.stride .  # uses cache to speed things up
 
 # finally we serve our docker images
