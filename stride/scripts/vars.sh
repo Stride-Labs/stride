@@ -3,21 +3,20 @@
 DEPENDENCIES="jq"
 
 # check and install dependencies
-echo -en "\nChecking dependencies... "
+echo "\nChecking dependencies... "
 for name in $DEPENDENCIES
 do
-    [[ $(type $name 2>/dev/null) ]] || { echo -en "\n    * $name is required to run this script;";deps=1; }
+    [[ $(type $name 2>/dev/null) ]] || { echo "\n    * $name is required to run this script;";deps=1; }
 done
-[[ $deps -ne 1 ]] && echo -e "OK\n" || { echo -e "\nInstall the missing dependencies and rerun this script...\n"; exit 1; }
+[[ $deps -ne 1 ]] && echo "OK\n" || { echo "\nInstall the missing dependencies and rerun this script...\n"; exit 1; }
 
 # define vars
 STATE=state
 STRIDE_CHAINS=(STRIDE_1 STRIDE_2 STRIDE_3)
-main_chain=${STRIDE_CHAINS[0]}
-
-ST1_RUN="docker-compose --ansi never run -T stride1 strided"
-ST2_RUN="docker-compose --ansi never run -T stride2 strided"
-ST3_RUN="docker-compose --ansi never run -T stride3 strided"
+STRIDE_DOCKER_NAMES=(stride1 stride2 stride3)
+MAIN_ID=0
+main_chain=${STRIDE_CHAINS[$MAIN_ID]}
+PORT_ID=26656  # 36564 
 
 VAL_ACCTS=(val1 val2 val3)
 
@@ -26,3 +25,9 @@ V2="timber vacant teach wedding disease fashion place merge poet produce promote
 V3="enjoy dignity rule multiply kitchen arrange flight rocket kingdom domain motion fire wage viable enough comic cry motor memory fancy dish sing border among"
 VKEYS=("$V1" "$V2" "$V3")
 BASE_RUN=strided
+
+ST_CMDS=()
+for chain_name in "${STRIDE_CHAINS[@]}"; do
+  ST_CMDS+=( "$BASE_RUN --home $STATE/$chain_name" )
+main_cmd=${ST_CMDS[$MAIN_ID]}
+done
