@@ -45,12 +45,10 @@ for i in "${!STRIDE_CHAINS[@]}"; do
     $BASE_RUN collect-gentxs --home "$STATE/$chain_name" 2> /dev/null
     # add peers in config.toml so that nodes can find each other by constructing a fully connected
     # graph of nodes
-    # sed -i -E 's|"stake"|"ustrd"|g' "${STATE}/${chain_name}/config/genesis.json"
     peers=""
     for j in "${!STRIDE_NODES[@]}"; do
         if [ $j -ne $i ]
         then
-            # peers+=(${STRIDE_NODES[j]})
             peers="${STRIDE_NODES[j]},${peers}"
         fi
     done
