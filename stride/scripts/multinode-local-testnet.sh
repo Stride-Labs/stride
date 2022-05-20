@@ -1,6 +1,8 @@
 #!/bin/bash
 rm -rf $HOME/.strided/
 
+pkill strided
+
 
 # make four stride directories
 mkdir $HOME/.strided
@@ -17,24 +19,24 @@ strided keys add validator1 --keyring-backend=test --home=$HOME/.strided/validat
 strided keys add validator2 --keyring-backend=test --home=$HOME/.strided/validator2
 strided keys add validator3 --keyring-backend=test --home=$HOME/.strided/validator3
 
-# change staking denom to uosmo
-cat $HOME/.strided/validator1/config/genesis.json | jq '.app_state["staking"]["params"]["bond_denom"]="uosmo"' > $HOME/.strided/validator1/config/tmp_genesis.json && mv $HOME/.strided/validator1/config/tmp_genesis.json $HOME/.strided/validator1/config/genesis.json
+# change staking denom to ustrd
+cat $HOME/.strided/validator1/config/genesis.json | jq '.app_state["staking"]["params"]["bond_denom"]="ustrd"' > $HOME/.strided/validator1/config/tmp_genesis.json && mv $HOME/.strided/validator1/config/tmp_genesis.json $HOME/.strided/validator1/config/genesis.json
 
 # create validator node with tokens to transfer to the three other nodes
-strided add-genesis-account $(strided keys show validator1 -a --keyring-backend=test --home=$HOME/.strided/validator1) 100000000000uosmo,100000000000stake --home=$HOME/.strided/validator1
-strided gentx validator1 500000000uosmo --keyring-backend=test --home=$HOME/.strided/validator1 --chain-id=testing
+strided add-genesis-account $(strided keys show validator1 -a --keyring-backend=test --home=$HOME/.strided/validator1) 100000000000ustrd,100000000000stake --home=$HOME/.strided/validator1
+strided gentx validator1 500000000ustrd --keyring-backend=test --home=$HOME/.strided/validator1 --chain-id=testing
 strided collect-gentxs --home=$HOME/.strided/validator1
 
 
 # update staking genesis
 cat $HOME/.strided/validator1/config/genesis.json | jq '.app_state["staking"]["params"]["unbonding_time"]="240s"' > $HOME/.strided/validator1/config/tmp_genesis.json && mv $HOME/.strided/validator1/config/tmp_genesis.json $HOME/.strided/validator1/config/genesis.json
 
-# update crisis variable to uosmo
-cat $HOME/.strided/validator1/config/genesis.json | jq '.app_state["crisis"]["constant_fee"]["denom"]="uosmo"' > $HOME/.strided/validator1/config/tmp_genesis.json && mv $HOME/.strided/validator1/config/tmp_genesis.json $HOME/.strided/validator1/config/genesis.json
+# update crisis variable to ustrd
+cat $HOME/.strided/validator1/config/genesis.json | jq '.app_state["crisis"]["constant_fee"]["denom"]="ustrd"' > $HOME/.strided/validator1/config/tmp_genesis.json && mv $HOME/.strided/validator1/config/tmp_genesis.json $HOME/.strided/validator1/config/genesis.json
 
 # udpate gov genesis
 cat $HOME/.strided/validator1/config/genesis.json | jq '.app_state["gov"]["voting_params"]["voting_period"]="60s"' > $HOME/.strided/validator1/config/tmp_genesis.json && mv $HOME/.strided/validator1/config/tmp_genesis.json $HOME/.strided/validator1/config/genesis.json
-cat $HOME/.strided/validator1/config/genesis.json | jq '.app_state["gov"]["deposit_params"]["min_deposit"][0]["denom"]="uosmo"' > $HOME/.strided/validator1/config/tmp_genesis.json && mv $HOME/.strided/validator1/config/tmp_genesis.json $HOME/.strided/validator1/config/genesis.json
+cat $HOME/.strided/validator1/config/genesis.json | jq '.app_state["gov"]["deposit_params"]["min_deposit"][0]["denom"]="ustrd"' > $HOME/.strided/validator1/config/tmp_genesis.json && mv $HOME/.strided/validator1/config/tmp_genesis.json $HOME/.strided/validator1/config/genesis.json
 
 # update epochs genesis
 cat $HOME/.strided/validator1/config/genesis.json | jq '.app_state["epochs"]["epochs"][1]["duration"]="60s"' > $HOME/.strided/validator1/config/tmp_genesis.json && mv $HOME/.strided/validator1/config/tmp_genesis.json $HOME/.strided/validator1/config/genesis.json
@@ -43,7 +45,7 @@ cat $HOME/.strided/validator1/config/genesis.json | jq '.app_state["epochs"]["ep
 cat $HOME/.strided/validator1/config/genesis.json | jq '.app_state["poolincentives"]["lockable_durations"][0]="120s"' > $HOME/.strided/validator1/config/tmp_genesis.json && mv $HOME/.strided/validator1/config/tmp_genesis.json $HOME/.strided/validator1/config/genesis.json
 cat $HOME/.strided/validator1/config/genesis.json | jq '.app_state["poolincentives"]["lockable_durations"][1]="180s"' > $HOME/.strided/validator1/config/tmp_genesis.json && mv $HOME/.strided/validator1/config/tmp_genesis.json $HOME/.strided/validator1/config/genesis.json
 cat $HOME/.strided/validator1/config/genesis.json | jq '.app_state["poolincentives"]["lockable_durations"][2]="240s"' > $HOME/.strided/validator1/config/tmp_genesis.json && mv $HOME/.strided/validator1/config/tmp_genesis.json $HOME/.strided/validator1/config/genesis.json
-cat $HOME/.strided/validator1/config/genesis.json | jq '.app_state["poolincentives"]["params"]["minted_denom"]="uosmo"' > $HOME/.strided/validator1/config/tmp_genesis.json && mv $HOME/.strided/validator1/config/tmp_genesis.json $HOME/.strided/validator1/config/genesis.json
+cat $HOME/.strided/validator1/config/genesis.json | jq '.app_state["poolincentives"]["params"]["minted_denom"]="ustrd"' > $HOME/.strided/validator1/config/tmp_genesis.json && mv $HOME/.strided/validator1/config/tmp_genesis.json $HOME/.strided/validator1/config/genesis.json
 
 # update incentives genesis
 cat $HOME/.strided/validator1/config/genesis.json | jq '.app_state["incentives"]["lockable_durations"][0]="1s"' > $HOME/.strided/validator1/config/tmp_genesis.json && mv $HOME/.strided/validator1/config/tmp_genesis.json $HOME/.strided/validator1/config/genesis.json
@@ -53,11 +55,11 @@ cat $HOME/.strided/validator1/config/genesis.json | jq '.app_state["incentives"]
 cat $HOME/.strided/validator1/config/genesis.json | jq '.app_state["incentives"]["params"]["distr_epoch_identifier"]="day"' > $HOME/.strided/validator1/config/tmp_genesis.json && mv $HOME/.strided/validator1/config/tmp_genesis.json $HOME/.strided/validator1/config/genesis.json
 
 # update mint genesis
-cat $HOME/.strided/validator1/config/genesis.json | jq '.app_state["mint"]["params"]["mint_denom"]="uosmo"' > $HOME/.strided/validator1/config/tmp_genesis.json && mv $HOME/.strided/validator1/config/tmp_genesis.json $HOME/.strided/validator1/config/genesis.json
+cat $HOME/.strided/validator1/config/genesis.json | jq '.app_state["mint"]["params"]["mint_denom"]="ustrd"' > $HOME/.strided/validator1/config/tmp_genesis.json && mv $HOME/.strided/validator1/config/tmp_genesis.json $HOME/.strided/validator1/config/genesis.json
 cat $HOME/.strided/validator1/config/genesis.json | jq '.app_state["mint"]["params"]["epoch_identifier"]="day"' > $HOME/.strided/validator1/config/tmp_genesis.json && mv $HOME/.strided/validator1/config/tmp_genesis.json $HOME/.strided/validator1/config/genesis.json
 
 # update gamm genesis
-cat $HOME/.strided/validator1/config/genesis.json | jq '.app_state["gamm"]["params"]["pool_creation_fee"][0]["denom"]="uosmo"' > $HOME/.strided/validator1/config/tmp_genesis.json && mv $HOME/.strided/validator1/config/tmp_genesis.json $HOME/.strided/validator1/config/genesis.json
+cat $HOME/.strided/validator1/config/genesis.json | jq '.app_state["gamm"]["params"]["pool_creation_fee"][0]["denom"]="ustrd"' > $HOME/.strided/validator1/config/tmp_genesis.json && mv $HOME/.strided/validator1/config/tmp_genesis.json $HOME/.strided/validator1/config/genesis.json
 
 
 # port key (validator1 uses default ports)
@@ -104,8 +106,10 @@ cp $HOME/.strided/validator1/config/genesis.json $HOME/.strided/validator3/confi
 
 
 # copy tendermint node id of validator1 to persistent peers of validator2-3
-sed -i -E "s|persistent_peers = \"\"|persistent_peers = \"$(strided tendermint show-node-id --home=$HOME/.strided/validator1)@$(curl -4 icanhazip.com):26656\"|g" $HOME/.strided/validator2/config/config.toml
-sed -i -E "s|persistent_peers = \"\"|persistent_peers = \"$(strided tendermint show-node-id --home=$HOME/.strided/validator1)@$(curl -4 icanhazip.com):26656\"|g" $HOME/.strided/validator3/config/config.toml
+# sed -i -E "s|persistent_peers = \"\"|persistent_peers = \"$(strided tendermint show-node-id --home=$HOME/.strided/validator1)@$(curl -4 icanhazip.com):26656\"|g" $HOME/.strided/validator2/config/config.toml
+# sed -i -E "s|persistent_peers = \"\"|persistent_peers = \"$(strided tendermint show-node-id --home=$HOME/.strided/validator1)@$(curl -4 icanhazip.com):26656\"|g" $HOME/.strided/validator3/config/config.toml
+sed -i -E "s|persistent_peers = \"\"|persistent_peers = \"$(strided tendermint show-node-id --home=$HOME/.strided/validator1)@127.0.0.1:26656\"|g" $HOME/.strided/validator2/config/config.toml
+sed -i -E "s|persistent_peers = \"\"|persistent_peers = \"$(strided tendermint show-node-id --home=$HOME/.strided/validator1)@127.0.0.1:26656\"|g" $HOME/.strided/validator3/config/config.toml
 
 
 # start all three validators
@@ -114,14 +118,14 @@ tmux new -s validator2 -d strided start --home=$HOME/.strided/validator2
 tmux new -s validator3 -d strided start --home=$HOME/.strided/validator3
 
 
-# send uosmo from first validator to second validator
+# send ustrd from first validator to second validator
 sleep 7
-strided tx bank send validator1 $(strided keys show validator2 -a --keyring-backend=test --home=$HOME/.strided/validator2) 500000000uosmo --keyring-backend=test --home=$HOME/.strided/validator1 --chain-id=testing --yes
+strided tx bank send validator1 $(strided keys show validator2 -a --keyring-backend=test --home=$HOME/.strided/validator2) 500000000ustrd --keyring-backend=test --home=$HOME/.strided/validator1 --chain-id=testing --yes
 sleep 7
-strided tx bank send validator1 $(strided keys show validator3 -a --keyring-backend=test --home=$HOME/.strided/validator3) 400000000uosmo --keyring-backend=test --home=$HOME/.strided/validator1 --chain-id=testing --yes
+strided tx bank send validator1 $(strided keys show validator3 -a --keyring-backend=test --home=$HOME/.strided/validator3) 400000000ustrd --keyring-backend=test --home=$HOME/.strided/validator1 --chain-id=testing --yes
 
 # create second validator
 sleep 7
-strided tx staking create-validator --amount=500000000uosmo --from=validator2 --pubkey=$(strided tendermint show-validator --home=$HOME/.strided/validator2) --moniker="validator2" --chain-id="testing" --commission-rate="0.1" --commission-max-rate="0.2" --commission-max-change-rate="0.05" --min-self-delegation="500000000" --keyring-backend=test --home=$HOME/.strided/validator2 --yes
+strided tx staking create-validator --amount=500000000ustrd --from=validator2 --pubkey=$(strided tendermint show-validator --home=$HOME/.strided/validator2) --moniker="validator2" --chain-id="testing" --commission-rate="0.1" --commission-max-rate="0.2" --commission-max-change-rate="0.05" --min-self-delegation="500000000" --keyring-backend=test --home=$HOME/.strided/validator2 --yes
 sleep 7
-strided tx staking create-validator --amount=400000000uosmo --from=validator3 --pubkey=$(strided tendermint show-validator --home=$HOME/.strided/validator3) --moniker="validator3" --chain-id="testing" --commission-rate="0.1" --commission-max-rate="0.2" --commission-max-change-rate="0.05" --min-self-delegation="400000000" --keyring-backend=test --home=$HOME/.strided/validator3 --yes
+strided tx staking create-validator --amount=400000000ustrd --from=validator3 --pubkey=$(strided tendermint show-validator --home=$HOME/.strided/validator3) --moniker="validator3" --chain-id="testing" --commission-rate="0.1" --commission-max-rate="0.2" --commission-max-change-rate="0.05" --min-self-delegation="400000000" --keyring-backend=test --home=$HOME/.strided/validator3 --yes
