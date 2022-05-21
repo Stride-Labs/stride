@@ -76,18 +76,18 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.gaia
-  # hermes:
-  #   image: stridezone/hermes:latest
-  #   hostname: hermes
-  #   # volumes:
-  #   #   - ./scripts/config/hermes.toml:/tmp/hermes.toml
-  #   #   - ./data/hermes:/hermes/.hermes
-  #   command:
-  #     - hermes
-  #     - -c
-  #     - /tmp/hermes.toml
-  #     - start
-  #   restart: always
-  #   build:
-  #     context: .
-  #     dockerfile: Dockerfile.hermes
+  hermes:
+    image: stridezone:hermes
+    hostname: stride
+    volumes:
+      - ./scripts/config/hermes.toml:/tmp/hermes.toml
+    #   - ./data/hermes:/hermes/.hermes
+    command:
+      - hermes
+      - -c
+      - /tmp/hermes.toml
+      - start
+    restart: always
+    build:
+      context: .
+      dockerfile: Dockerfile.hermes

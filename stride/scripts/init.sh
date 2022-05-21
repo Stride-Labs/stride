@@ -92,3 +92,14 @@ sh ${SCRIPT_DIR}/init_gaia.sh
 sleep 5
 docker-compose down
 docker-compose up -d stride1 stride2 stride3 gaia1 gaia2 gaia3
+echo "Chains created"
+sleep 10
+echo "Restoring keys"
+docker-compose run hermes hermes -c /tmp/hermes.toml keys restore --mnemonic "$RLY_MNEMONIC_1" test-1
+docker-compose run hermes hermes -c /tmp/hermes.toml keys restore --mnemonic "$RLY_MNEMONIC_2" test-2
+sleep 10
+echo "Creating transfer channel"
+docker-compose run hermes hermes -c /tmp/hermes.toml create channel --port-a transfer --port-b transfer $main_chain $main_gaia_chain
+echo "Tranfer channel created"
+# docker-compose up --force-recreate -d hermes
+docker-compose up -d hermes

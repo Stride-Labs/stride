@@ -49,6 +49,10 @@ GV2="social smooth replace total room drip donor science wheel source scare hamm
 GV3="spike expire grant chef cheese cave someone blue price juice crash field sell camera true wet card saddle oblige where inject process dismiss soft"
 GVKEYS=("$GV1" "$GV2" "$GV3")
 
+RLY_MNEMONIC_1="alter old invest friend relief slot swear pioneer syrup economy vendor tray focus hedgehog artist legend antenna hair almost donkey spice protect sustain increase"
+RLY_MNEMONIC_2="resemble accident lake amateur physical jewel taxi nut demand magnet person blanket trip entire awkward fiber usual current index limb lady lady depart train"
+
+
 GAIA_CMDS=()
 for docker_name in "${GAIA_DOCKER_NAMES[@]}"; do
   GAIA_CMDS+=( "$GAIA_RUN $docker_name gaiad --home=/gaia/.gaiad" )
