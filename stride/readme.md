@@ -54,3 +54,10 @@ curl https://get.starport.com/Stride-Labs/stride@latest! | sudo bash
 - [Starport docs](https://docs.starport.com)
 - [Cosmos SDK docs](https://docs.cosmos.network)
 - [Developer Chat](https://discord.gg/H6wGTY8sxw)
+
+## Docker
+
+* checkout TEST-35 (until we merge)
+* from `stride/stride` run `sh scripts/init.sh`
+* your first time using docker here, run `docker build --no-cache --pull --tag stridezone:stride -f Dockerfile.stride`
+* every time you change the code thereafter keep `docker build --tag stridezone:stride -f Dockerfile.stride .` uncommented in `scripts/init.sh`
