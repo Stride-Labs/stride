@@ -27,6 +27,7 @@ for i in ${!GAIA_CHAINS[@]}; do
     echo "\t$chain_name"
     $gaia_cmd init test --chain-id $chain_name --overwrite 2> /dev/null
     sed -i -E 's|"stake"|"uatom"|g' "${STATE}/${chain_name}/config/genesis.json"
+    sed -i -E 's|"full"|"validator"|g' "${STATE}/${chain_name}/config/config.toml"
     # add VALidator account
     echo $vkey | $gaia_cmd keys add $val_acct --recover --keyring-backend=test > /dev/null
     # get validator address
@@ -41,16 +42,11 @@ for i in ${!GAIA_CHAINS[@]}; do
     dock_name=${GAIA_DOCKER_NAMES[i]}
     node_id=$($gaia_cmd tendermint show-node-id)@$dock_name:$PORT_ID
     GAIA_NODES+=( $node_id )
-# gaiad --home /gaia/.gaiad keys show gval1 --keyring-backend test -a
-# gaiad --home /gaia/.gaiad gentx gval1 1000000000uatom --chain-id GAIA_1 --keyring-backend test
-# gaiad --home /gaia/.gaiad collect-gentxs
-# gaiad start --home /gaia/.gaiad
-# sed -i -E "s|minimum-gas-prices = \"\"|minimum-gas-prices = \"0uatom\"|g" "/gaia/.gaiad/config/app.toml"
 
-    # if [ $i -ne $MAIN_ID ]; then
-    #     $main_gaia_cmd add-genesis-account ${VAL_ADDR} 500000000000uatom
-     #    cp ${STATE}/${chain_name}/config/gentx/*.json ${STATE}/${main_gaia_chain}/config/gentx/
-    # fi
+    if [ $i -ne $MAIN_ID ]; then
+        $main_gaia_cmd add-genesis-account ${VAL_ADDR} 500000000000uatom
+        cp ${STATE}/${chain_name}/config/gentx/*.json ${STATE}/${main_gaia_chain}/config/gentx/
+    fi
 done
 
 $main_gaia_cmd collect-gentxs 2> /dev/null
@@ -68,7 +64,7 @@ for i in ${!GAIA_CHAINS[@]}; do
     done
     echo "${chain_name} peers are:"
     echo $peers
-    # sed -i -E "s|persistent-peers = \"\"|persistent-peers = \"$peers\"|g" "${STATE}/${chain_name}/config/config.toml"
+    sed -i -E "s|persistent-peers = \"\"|persistent-peers = \"$peers\"|g" "${STATE}/${chain_name}/config/config.toml"
     # use blind address (not loopback) to allow incoming connections from outside networks for local debugging
     sed -i -E "s|127.0.0.1|0.0.0.0|g" "${STATE}/${chain_name}/config/config.toml"
     sed -i -E "s|minimum-gas-prices = \"\"|minimum-gas-prices = \"0uatom\"|g" "${STATE}/${chain_name}/config/app.toml"
@@ -81,11 +77,3 @@ for i in "${!GAIA_CHAINS[@]}"; do
         cp ${STATE}/${main_gaia_chain}/config/genesis.json ${STATE}/${GAIA_CHAINS[i]}/config/genesis.json
     fi
 done
-
-
-# # finally we serve our docker images
-sleep 5
-# docker-compose down
-# docker-compose up -d gaia1 gaia2 gaia3
-
-
