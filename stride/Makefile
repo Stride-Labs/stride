@@ -283,3 +283,6 @@ test-docker-push: test-docker
 
 test:
 	./scripts/simple_test.sh
+
+init:
+	./scripts/init.sh

@@ -8,7 +8,7 @@
 # build
 stride/build/*
 stride/state/*
-# stride/scripts/state/*
+stride/scripts/state/*
 # Test binary, built with `go test -c`
 *.test
 

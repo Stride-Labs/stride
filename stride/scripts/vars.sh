@@ -32,5 +32,5 @@ BASE_RUN=strided
 ST_CMDS=()
 for chain_name in "${STRIDE_CHAINS[@]}"; do
   ST_CMDS+=( "$BASE_RUN --home $STATE/$chain_name" )
-main_cmd=${ST_CMDS[$MAIN_ID]}
 done
+main_cmd=${ST_CMDS[$MAIN_ID]}

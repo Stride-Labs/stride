@@ -6,7 +6,7 @@ SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 source ${SCRIPT_DIR}/vars.sh
 
 # cleanup any stale state
-rm -rf ./$STATE
+rm -rf $STATE
 docker-compose down
 
 # first, we need to create some saved state, so that we can copy to docker files
@@ -18,7 +18,6 @@ done
 for node_name in ${GAIA_NODES[@]}; do
     mkdir -p ./$STATE/$node_name
 done
-exit
 
 # fetch the stride node ids
 STRIDE_NODES=()
@@ -50,7 +49,7 @@ for i in ${!STRIDE_CHAINS[@]}; do
     if [ $i -ne $MAIN_ID ]
     then
         $main_cmd add-genesis-account ${VAL_ADDR} 500000000000ustrd
-        cp ./${STATE}/${chain_name}/config/gentx/*.json ./${STATE}/${main_chain}/config/gentx/
+        cp ${STATE}/${chain_name}/config/gentx/*.json ${STATE}/${main_chain}/config/gentx/
     fi
 done
 
@@ -77,7 +76,7 @@ done
 for i in "${!STRIDE_CHAINS[@]}"; do
     if [ $i -ne $MAIN_ID ]
     then
-        cp ./${STATE}/${main_chain}/config/genesis.json ./${STATE}/${STRIDE_CHAINS[i]}/config/genesis.json
+        cp ${STATE}/${main_chain}/config/genesis.json ${STATE}/${STRIDE_CHAINS[i]}/config/genesis.json
     fi
 done
 
@@ -90,4 +89,4 @@ done
 
 # finally we serve our docker images
 sleep 5
-docker-compose up -d stride1 stride2 stride3 gaia
+docker-compose up -d stride1 stride2 stride3
