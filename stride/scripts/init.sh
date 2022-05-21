@@ -6,7 +6,7 @@ SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 source ${SCRIPT_DIR}/vars.sh
 
 # cleanup any stale state
-rm -rf $STATE
+rm -rf ./$STATE
 docker-compose down
 
 # first, we need to create some saved state, so that we can copy to docker files
@@ -18,6 +18,7 @@ done
 for node_name in ${GAIA_NODES[@]}; do
     mkdir -p ./$STATE/$node_name
 done
+exit
 
 # fetch the stride node ids
 STRIDE_NODES=()
