@@ -45,10 +45,12 @@ services:
     hostname: stride
     volumes:
       - ./scripts/state/GAIA_1:/gaia/.gaiad
-    command:
-      - /bin/sh
-    stdin_open: true # docker run -i
-    tty: true        # docker run -t
+    ports:
+      - "26662:26657"
+    # command:
+    #   - /bin/sh
+    # stdin_open: true # docker run -i
+    # tty: true        # docker run -t
     build:
       context: .
       dockerfile: Dockerfile.gaia
@@ -58,6 +60,8 @@ services:
     hostname: stride
     volumes:
       - ./scripts/state/GAIA_2:/gaia/.gaiad
+    ports:
+      - "26659:26657"
     build:
       context: .
       dockerfile: Dockerfile.gaia
@@ -67,6 +71,8 @@ services:
     hostname: stride
     volumes:
       - ./scripts/state/GAIA_3:/gaia/.gaiad
+    ports:
+      - "26660:26657"
     build:
       context: .
       dockerfile: Dockerfile.gaia

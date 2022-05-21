@@ -18,76 +18,74 @@ done
 GAIA_NODES=()
 # then, we initialize our chains 
 echo 'Initializing chains...'
+
 for i in ${!GAIA_CHAINS[@]}; do
     chain_name=${GAIA_CHAINS[i]}
-    vkey=${VKEYS[i]}
-    val_acct=${VAL_ACCTS[i]}
+    vkey=${GVKEYS[i]}
+    val_acct=${GVAL_ACCTS[i]}
     gaia_cmd=${GAIA_CMDS[i]}
     echo "\t$chain_name"
-    echo $gaia_cmd
     $gaia_cmd init test --chain-id $chain_name --overwrite 2> /dev/null
+    sed -i -E 's|"stake"|"uatom"|g' "${STATE}/${chain_name}/config/genesis.json"
+    # add VALidator account
+    echo $vkey | $gaia_cmd keys add $val_acct --recover --keyring-backend=test > /dev/null
+    # get validator address
+    VAL_ADDR=$($gaia_cmd keys show $val_acct --keyring-backend test -a) > /dev/null
+    # add money for this validator account
+    $gaia_cmd add-genesis-account ${VAL_ADDR} 500000000000uatom
+    # actually set this account as a validator
+    yes | $gaia_cmd gentx $val_acct 1000000000uatom --chain-id $main_gaia_chain --keyring-backend test
+    # now we process these txs 
+    $gaia_cmd collect-gentxs 2> /dev/null
+    # now we grab the relevant node id
+    dock_name=${GAIA_DOCKER_NAMES[i]}
+    node_id=$($gaia_cmd tendermint show-node-id)@$dock_name:$PORT_ID
+    GAIA_NODES+=( $node_id )
+# gaiad --home /gaia/.gaiad keys show gval1 --keyring-backend test -a
+# gaiad --home /gaia/.gaiad gentx gval1 1000000000uatom --chain-id GAIA_1 --keyring-backend test
+# gaiad --home /gaia/.gaiad collect-gentxs
+# gaiad start --home /gaia/.gaiad
+# sed -i -E "s|minimum-gas-prices = \"\"|minimum-gas-prices = \"0uatom\"|g" "/gaia/.gaiad/config/app.toml"
+
+    # if [ $i -ne $MAIN_ID ]; then
+    #     $main_gaia_cmd add-genesis-account ${VAL_ADDR} 500000000000uatom
+     #    cp ${STATE}/${chain_name}/config/gentx/*.json ${STATE}/${main_gaia_chain}/config/gentx/
+    # fi
 done
-docker-compose --ansi never run -T gaia1 gaiad init test --chain-id GAIA_1 --overwrite
-docker-compose --ansi never exec -T gaia1 gaiad init test --chain-id GAIA_1 --overwrite
 
-#     sed -i -E 's|"stake"|"ustrd"|g' "${STATE}/${chain_name}/config/genesis.json"
-#     # add VALidator account
-#     echo $vkey | $st_cmd keys add $val_acct --recover --keyring-backend=test > /dev/null
-#     # get validator address
-#     VAL_ADDR=$($st_cmd keys show $val_acct --keyring-backend test -a)
-#     # add money for this validator account
-#     $st_cmd add-genesis-account ${VAL_ADDR} 500000000000ustrd
-#     # actually set this account as a validator
-#     yes | $st_cmd gentx $val_acct 1000000000ustrd --chain-id $main_chain --keyring-backend test
-#     # now we process these txs 
-#     $st_cmd collect-gentxs 2> /dev/null
-#     # now we grab the relevant node id
-#     dock_name=${STRIDE_DOCKER_NAMES[i]}
-#     node_id=$($st_cmd tendermint show-node-id)@$dock_name:$PORT_ID
-#     STRIDE_NODES+=( $node_id )
+$main_gaia_cmd collect-gentxs 2> /dev/null
 
-#     if [ $i -ne $MAIN_ID ]
-#     then
-#         $main_cmd add-genesis-account ${VAL_ADDR} 500000000000ustrd
-#         cp ./${STATE}/${chain_name}/config/gentx/*.json ./${STATE}/${main_chain}/config/gentx/
-#     fi
-# done
+# add peers in config.toml so that nodes can find each other by constructing a fully connected
+# graph of nodes
+for i in ${!GAIA_CHAINS[@]}; do
+    chain_name=${GAIA_CHAINS[i]}
+    peers=""
+    for j in "${!GAIA_CHAINS[@]}"; do
+        if [ $j -ne $i ]
+        then
+            peers="${GAIA_NODES[j]},${peers}"
+        fi
+    done
+    echo "${chain_name} peers are:"
+    echo $peers
+    # sed -i -E "s|persistent-peers = \"\"|persistent-peers = \"$peers\"|g" "${STATE}/${chain_name}/config/config.toml"
+    # use blind address (not loopback) to allow incoming connections from outside networks for local debugging
+    sed -i -E "s|127.0.0.1|0.0.0.0|g" "${STATE}/${chain_name}/config/config.toml"
+    sed -i -E "s|minimum-gas-prices = \"\"|minimum-gas-prices = \"0uatom\"|g" "${STATE}/${chain_name}/config/app.toml"
+done
 
-# $main_cmd collect-gentxs 2> /dev/null
-# # add peers in config.toml so that nodes can find each other by constructing a fully connected
-# # graph of nodes
-# for i in ${!STRIDE_CHAINS[@]}; do
-#     chain_name=${STRIDE_CHAINS[i]}
-#     peers=""
-#     for j in "${!STRIDE_NODES[@]}"; do
-#         if [ $j -ne $i ]
-#         then
-#             peers="${STRIDE_NODES[j]},${peers}"
-#         fi
-#     done
-#     echo 'peers are: '
-#     echo $peers
-#     sed -i -E "s|persistent_peers = \"\"|persistent_peers = \"$peers\"|g" "${STATE}/${chain_name}/config/config.toml"
-# done
+# make sure all Stride chains have the same genesis
+for i in "${!GAIA_CHAINS[@]}"; do
+    if [ $i -ne $MAIN_ID ]
+    then
+        cp ${STATE}/${main_gaia_chain}/config/genesis.json ${STATE}/${GAIA_CHAINS[i]}/config/genesis.json
+    fi
+done
 
-# # make sure all Stride chains have the same genesis
-# for i in "${!STRIDE_CHAINS[@]}"; do
-#     if [ $i -ne $MAIN_ID ]
-#     then
-#         cp ./${STATE}/${main_chain}/config/genesis.json ./${STATE}/${STRIDE_CHAINS[i]}/config/genesis.json
-#     fi
-# done
-
-# RUN sed -i -E "s|minimum-gas-prices = \"\"|minimum-gas-prices = \"0uatom\"|g" "${STATE}/GAIA_1/config/config.toml"
-
-# # strided start --home state/STRIDE_1  # TESTING ONLY
-
-# # next we build our docker images
-# # docker build --no-cache --pull --tag stridezone:stride -f Dockerfile.stride .  # builds from scratch
-# # docker build --tag stridezone:stride -f Dockerfile.stride .  # uses cache to speed things up
 
 # # finally we serve our docker images
-# sleep 5
-# docker-compose up -d stride1 stride2 stride3
+sleep 5
+# docker-compose down
+# docker-compose up -d gaia1 gaia2 gaia3
 
 
