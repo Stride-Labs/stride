@@ -1,5 +1,5 @@
-version: '3.8'
-services: 
+version: "3.8"
+services:
   stride1:
     # image: stridezone/stride:latest
     image: stridezone:stride
@@ -10,6 +10,8 @@ services:
     #   - /bin/sh
     # stdin_open: true # docker run -i
     # tty: true        # docker run -t
+    ports:
+      - "26651:26657"
     build:
       context: .
       dockerfile: Dockerfile.stride
@@ -19,6 +21,8 @@ services:
     hostname: stride
     volumes:
       - ./state/STRIDE_2:/stride/.strided
+    ports:
+      - "26654:26657"
     build:
       context: .
       dockerfile: Dockerfile.stride
@@ -28,6 +32,8 @@ services:
     hostname: stride
     volumes:
       - ./state/STRIDE_3:/stride/.strided
+    ports:
+      - "26657:26657"
     build:
       context: .
       dockerfile: Dockerfile.stride

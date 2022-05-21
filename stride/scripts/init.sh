@@ -67,9 +67,11 @@ for i in ${!STRIDE_CHAINS[@]}; do
             peers="${STRIDE_NODES[j]},${peers}"
         fi
     done
-    echo 'peers are: '
+    echo "${chain_name} peers are:"
     echo $peers
     sed -i -E "s|persistent_peers = \"\"|persistent_peers = \"$peers\"|g" "${STATE}/${chain_name}/config/config.toml"
+    # use blind address (not loopback) to allow incoming connections from outside networks for local debugging
+    sed -i -E "s|127.0.0.1|0.0.0.0|g" "${STATE}/${chain_name}/config/config.toml"
 done
 
 # make sure all Stride chains have the same genesis
