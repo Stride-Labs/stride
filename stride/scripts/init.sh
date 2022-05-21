@@ -84,8 +84,11 @@ for i in "${!STRIDE_CHAINS[@]}"; do
     fi
 done
 
+# init GAIA
+sh ${SCRIPT_DIR}/init_gaia.sh
 
 # strided start --home state/STRIDE_1  # TESTING ONLY
 # finally we serve our docker images
 sleep 5
-docker-compose up -d stride1 stride2 stride3
+docker-compose down
+docker-compose up -d stride1 stride2 stride3 gaia1 gaia2 gaia3
