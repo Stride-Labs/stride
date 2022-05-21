@@ -1,5 +1,7 @@
 #!/bin/bash
 
+SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+
 DEPENDENCIES="jq"
 
 # check and install dependencies
@@ -11,7 +13,7 @@ done
 [[ $deps -ne 1 ]] && echo "OK\n" || { echo "\nInstall the missing dependencies and rerun this script...\n"; exit 1; }
 
 # define vars
-STATE=state
+STATE=$SCRIPT_DIR/state
 STRIDE_CHAINS=(STRIDE_1 STRIDE_2 STRIDE_3)
 GAIA_NODES=(GAIA_1)
 STRIDE_DOCKER_NAMES=(stride1 stride2 stride3)

@@ -21,6 +21,9 @@ RUN adduser -S -h /gaia -D gaia -u 1000
 USER gaia
 
 RUN gaiad init test
+# set minimum-gas-prices in app.toml for gaia
+RUN sed -i -E "s|minimum-gas-prices = \"\"|minimum-gas-prices = \"0uatom\"|g" "${STATE}/GAIA_1/config/config.toml"
+
 CMD ["gaiad", "start", "--home", "gaia/.gaiad"]
 
 

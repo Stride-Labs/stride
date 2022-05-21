@@ -6,19 +6,13 @@ SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 source ${SCRIPT_DIR}/vars.sh
 
 # cleanup any stale state
-rm -rf ./$STATE
+rm -rf $STATE
 docker-compose down
 
 # first, we need to create some saved state, so that we can copy to docker files
 for chain_name in ${STRIDE_CHAINS[@]}; do
     mkdir -p ./$STATE/$chain_name
 done
-
-# we also need saved state for GAIA nodes
-for node_name in ${GAIA_NODES[@]}; do
-    mkdir -p ./$STATE/$node_name
-done
-exit
 
 # fetch the stride node ids
 STRIDE_NODES=()
@@ -66,11 +60,9 @@ for i in ${!STRIDE_CHAINS[@]}; do
             peers="${STRIDE_NODES[j]},${peers}"
         fi
     done
-    echo "${chain_name} peers are:"
+    echo 'peers are: '
     echo $peers
     sed -i -E "s|persistent_peers = \"\"|persistent_peers = \"$peers\"|g" "${STATE}/${chain_name}/config/config.toml"
-    # use blind address (not loopback) to allow incoming connections from outside networks for local debugging
-    sed -i -E "s|127.0.0.1|0.0.0.0|g" "${STATE}/${chain_name}/config/config.toml"
 done
 
 # make sure all Stride chains have the same genesis
@@ -81,7 +73,6 @@ for i in "${!STRIDE_CHAINS[@]}"; do
     fi
 done
 
-
 # strided start --home state/STRIDE_1  # TESTING ONLY
 
 # next we build our docker images
@@ -90,4 +81,6 @@ done
 
 # finally we serve our docker images
 sleep 5
-docker-compose up -d stride1 stride2 stride3 gaia
+docker-compose up -d stride1 stride2 stride3
+
+
