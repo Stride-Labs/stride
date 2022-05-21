@@ -15,7 +15,6 @@ done
 # define vars
 STATE=$SCRIPT_DIR/state
 STRIDE_CHAINS=(STRIDE_1 STRIDE_2 STRIDE_3)
-GAIA_NODES=(GAIA_1)
 STRIDE_DOCKER_NAMES=(stride1 stride2 stride3)
 MAIN_ID=0
 main_chain=${STRIDE_CHAINS[$MAIN_ID]}
@@ -34,3 +33,17 @@ for chain_name in "${STRIDE_CHAINS[@]}"; do
   ST_CMDS+=( "$BASE_RUN --home $STATE/$chain_name" )
 done
 main_cmd=${ST_CMDS[$MAIN_ID]}
+
+
+# define GAIA vars
+GAIA_CHAINS=(GAIA_1 GAIA_2 GAIA_3)
+GAIA_DOCKER_NAMES=(gaia1 gaia2 gaia3)
+main_gaia_chain=${GAIA_CHAINS[$MAIN_ID]}
+
+GAIA_RUN="docker-compose --ansi never run -T"
+
+GAIA_CMDS=()
+for docker_name in "${GAIA_DOCKER_NAMES[@]}"; do
+  GAIA_CMDS+=( "$GAIA_RUN $docker_name gaiad" )
+done
+main_gaia_cmd=${GAIA_CMDS[$MAIN_ID]}

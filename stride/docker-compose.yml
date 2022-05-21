@@ -38,12 +38,35 @@ services:
       context: .
       dockerfile: Dockerfile.stride
 
+  # now run Gaia nodes
   gaia1:
     # image: stridezone/stride:latest
     image: stridezone:gaia
     hostname: stride
     volumes:
-      - ./scripts/state/STRIDE_1:/stride/.strided
+      - ./scripts/state/GAIA_1:/gaia/.gaiad
+    command:
+      - /bin/sh
+    stdin_open: true # docker run -i
+    tty: true        # docker run -t
+    build:
+      context: .
+      dockerfile: Dockerfile.gaia
+  gaia2:
+    # image: stridezone/stride:latest
+    image: stridezone:gaia
+    hostname: stride
+    volumes:
+      - ./scripts/state/GAIA_2:/gaia/.gaiad
+    build:
+      context: .
+      dockerfile: Dockerfile.gaia
+  gaia3:
+    # image: stridezone/stride:latest
+    image: stridezone:gaia
+    hostname: stride
+    volumes:
+      - ./scripts/state/GAIA_3:/gaia/.gaiad
     build:
       context: .
       dockerfile: Dockerfile.gaia
