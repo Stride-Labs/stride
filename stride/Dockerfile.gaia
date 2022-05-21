@@ -19,11 +19,11 @@ COPY --from=gaiad-builder /go/bin/gaiad /usr/local/bin/
 RUN adduser -S -h /gaia -D gaia -u 1000
 USER gaia
 
-RUN gaiad init test
+RUN gaiad init test --home /gaia/.gaiad
 
 # set minimum-gas-prices in app.toml for gaia
 
-CMD ["gaiad", "start"]
+CMD ["gaiad", "start", "--home", "/gaia/.gaiad"]]
 
 
 # # Add to a distroless container
