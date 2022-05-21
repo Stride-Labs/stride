@@ -37,6 +37,20 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.stride
+  gaia:
+    image: gaiazone:gaia
+    hostname: gaia
+    volumes:
+      - ./state/GAIA:/gaia/.gaiad
+    # command:
+    #   - /bin/sh
+    # stdin_open: true # docker run -i
+    # tty: true        # docker run -t
+    # ports:
+    #   - "26651:26657"
+    build:
+      context: .
+      dockerfile: Dockerfile.gaia
   # hermes:
   #   image: stridezone/hermes:latest
   #   hostname: hermes
