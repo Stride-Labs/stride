@@ -11,12 +11,16 @@ docker-compose down
 
 # first, we need to create some saved state, so that we can copy to docker files
 for chain_name in ${STRIDE_CHAINS[@]}; do
-    mkdir -p ./$STATE/$chain_name
+    mkdir -p $STATE/$chain_name
 done
 
-# we also need saved state for GAIA nodes
-for node_name in ${GAIA_NODES[@]}; do
-    mkdir -p ./$STATE/$node_name
+# run through init args, if needed
+while getopts sdf flag; do
+    case "${flag}" in
+        s) ignite chain build ;;
+        d) sh $SCRIPT_DIR/docker_build.sh ;;
+        f) sh $SCRIPT_DIR/docker_build.sh f ;;
+    esac
 done
 
 # fetch the stride node ids
@@ -82,11 +86,6 @@ done
 
 
 # strided start --home state/STRIDE_1  # TESTING ONLY
-
-# next we build our docker images
-# docker build --no-cache --pull --tag stridezone:stride -f Dockerfile.stride .  # builds from scratch
-# docker build --tag stridezone:stride -f Dockerfile.stride .  # uses cache to speed things up
-
 # finally we serve our docker images
 sleep 5
 docker-compose up -d stride1 stride2 stride3
