@@ -13,6 +13,7 @@ done
 # define vars
 STATE=state
 STRIDE_CHAINS=(STRIDE_1 STRIDE_2 STRIDE_3)
+GAIA_NODES=(GAIA_1)
 STRIDE_DOCKER_NAMES=(stride1 stride2 stride3)
 MAIN_ID=0
 main_chain=${STRIDE_CHAINS[$MAIN_ID]}

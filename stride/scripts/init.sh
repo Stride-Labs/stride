@@ -14,6 +14,11 @@ for chain_name in ${STRIDE_CHAINS[@]}; do
     mkdir -p ./$STATE/$chain_name
 done
 
+# we also need saved state for GAIA nodes
+for node_name in ${GAIA_NODES[@]}; do
+    mkdir -p ./$STATE/$node_name
+done
+
 # fetch the stride node ids
 STRIDE_NODES=()
 # then, we initialize our chains 
@@ -81,6 +86,10 @@ for i in "${!STRIDE_CHAINS[@]}"; do
         cp ./${STATE}/${main_chain}/config/genesis.json ./${STATE}/${STRIDE_CHAINS[i]}/config/genesis.json
     fi
 done
+
+# set minimum-gas-prices in app.toml for gaia
+sed -i -E "s|minimum-gas-prices = \"\"|minimum-gas-prices = \"0uatom\"|g" "${STATE}/GAIA_1/config/config.toml"
+
 # strided start --home state/STRIDE_1  # TESTING ONLY
 # next we build our docker images
 # docker build --no-cache --pull --tag stridezone:stride -f Dockerfile.stride .  # builds from scratch
@@ -88,6 +97,6 @@ done
 
 # finally we serve our docker images
 sleep 5
-docker-compose up -d stride1 stride2 stride3
+docker-compose up -d stride1 stride2 stride3 gaia
 
 
