@@ -95,11 +95,21 @@ docker-compose up -d stride1 stride2 stride3 gaia1 gaia2 gaia3
 echo "Chains created"
 sleep 10
 echo "Restoring keys"
-docker-compose run hermes hermes -c /tmp/hermes.toml keys restore --mnemonic "$RLY_MNEMONIC_1" test-1
-docker-compose run hermes hermes -c /tmp/hermes.toml keys restore --mnemonic "$RLY_MNEMONIC_2" test-2
+HERMES_MAIN_CHAIN='test-1'
+HERMES_MAIN_GAIA_CHAIN='test-2'
+docker-compose run hermes hermes -c /tmp/hermes.toml keys restore --mnemonic "$RLY_MNEMONIC_1" $HERMES_MAIN_CHAIN
+docker-compose run hermes hermes -c /tmp/hermes.toml keys restore --mnemonic "$RLY_MNEMONIC_2" $HERMES_MAIN_GAIA_CHAIN
 sleep 10
 echo "Creating transfer channel"
-docker-compose run hermes hermes -c /tmp/hermes.toml create channel --port-a transfer --port-b transfer $main_chain $main_gaia_chain
-echo "Tranfer channel created"
-# docker-compose up --force-recreate -d hermes
-docker-compose up -d hermes
+# docker-compose run hermes hermes -c /tmp/hermes.toml create channel --port-a transfer --port-b transfer $main_chain $main_gaia_chain
+# this fixes the input device is not a TTY .. see https://github.com/docker/compose/issues/5696 # added -T flag, per https://docs.docker.com/compose/reference/run/ 
+# export COMPOSE_INTERACTIVE_NO_CLI=1
+
+# docker-compose run -T hermes hermes -c /tmp/hermes.toml keys list
+docker-compose up --force-recreate -d hermes
+docker-compose run -T hermes hermes -c /tmp/hermes.toml create connection $HERMES_MAIN_CHAIN $HERMES_MAIN_GAIA_CHAIN
+# docker-compose run -T hermes hermes -c /tmp/hermes.toml create channel $main_chain --chain-b $main_gaia_chain --port-a transfer --port-b transfer -o unordered --new-client-connection
+docker-compose run -T hermes hermes -c /tmp/hermes.toml create channel $HERMES_MAIN_CHAIN --connection-a connection-0 --port-a transfer --port-b transfer -o unordered
+docker-compose run -T hermes hermes -c /tmp/hermes.toml create channel --port-a transfer --port-b transfer $HERMES_MAIN_CHAIN connection-0
+# echo "Tranfer channel created"
+# docker-compose up -d hermes
