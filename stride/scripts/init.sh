@@ -140,3 +140,5 @@ echo "Tranfer channel created"
 # echo "Tranfer channel created"
 docker-compose up --force-recreate -d hermes
 # docker-compose up -d hermes
+# strided tx ibc-transfer transfer channel-0 1000ustrd stride1uk4ze0x4nvh4fk0xm4jdud58eqn4yxhrt52vv7 cosmos1pcag0cj4ttxg8l7pcg0q4ksuglswuuedcextl2 0 0 --home /stride/.strided --keyring-backend test --from val1
+# strided tx ibc-transfer transfer transfer channel-0 cosmos1pcag0cj4ttxg8l7pcg0q4ksuglswuuedcextl2 1000ustrd --home /stride/.strided --keyring-backend test --from val1 --chain-id STRIDE_1
