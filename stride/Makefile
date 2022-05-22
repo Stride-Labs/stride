@@ -9,6 +9,8 @@ DOCKER := $(shell which docker)
 BUILDDIR ?= $(CURDIR)/build
 TEST_DOCKER_REPO=Stride-Labs/stridednode
 
+build=all
+
 export GO111MODULE = on
 
 # process build tags
@@ -147,8 +149,8 @@ proto:
 	@echo "=========== Generate Complete ============"
 	@echo
 
-test:
-	@go test -v ./x/...
+# test:
+# 	@go test -v ./x/...
 
 docs:
 	@echo
@@ -282,7 +284,18 @@ test-docker-push: test-docker
 	docker-single-node
 
 test:
-	./scripts/simple_test.sh
+	sh ./scripts/simple_test.sh
 
 init:
-	./scripts/init.sh
+	@if [ ${build} == "all" ]; \
+		then \
+			sh scripts/init.sh -sd;\
+	elif [ ${build} == "nocache" ]; \
+		then \
+			sh scripts/init.sh -sf;\
+	elif [ ${build} == "none" ]; \
+		then \
+			sh scripts/init.sh;\
+	else\
+		echo "Init type ${build} not recognized.";\
+	fi

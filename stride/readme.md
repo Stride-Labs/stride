@@ -55,9 +55,31 @@ curl https://get.starport.com/Stride-Labs/stride@latest! | sudo bash
 - [Cosmos SDK docs](https://docs.cosmos.network)
 - [Developer Chat](https://discord.gg/H6wGTY8sxw)
 
-## Docker
+## Build
 
-* checkout TEST-35 (until we merge)
-* from `stride/stride` run `sh scripts/init.sh`
-* your first time using docker here, run `docker build --no-cache --pull --tag stridezone:stride -f Dockerfile.stride`
-* every time you change the code thereafter keep `docker build --tag stridezone:stride -f Dockerfile.stride .` uncommented in `scripts/init.sh`
+Please run `make init` to build and serve 3 Stride nodes, 3 Gaia nodes, and 1 Hermes relayer on docker images. 
+
+You can run `make init build=all` (the default option) to 
+1. Run `ignite chain build` to build the Stride binary
+2. Rebuild Stride, Gaia, and Hermes docker images, using cache when possible
+3. Spin up the 7 docker containers and start all processes
+
+Alternatively, you can run `make init build=all` to 
+1. Run `ignite chain build` to build the Stride binary
+2. Fully rebuild Stride, Gaia, and Hermes docker images, ignoring the cache
+3. Spin up the 7 docker containers and start all processes
+
+Or, if you just want to re-serve, run `make init build=none` to 
+1. Use existing Stride binary
+2. Use existing docker images 
+3. Spin up the 7 docker containers and start all processes
+
+## Build (Lower Level)
+
+Proceed with lower-level building at your own discretion. Only `make init` is well-supported. 
+
+You can run `sh scripts/init.sh` to achieve the same output as the above. The following flags are supported
+1. `-s` This will run `ignite chain build`
+2. `-d` This will re-build the docker images, using cache
+3. `-f` This will re-build the docker images, ignoring cache. 
+At the end, all 7 docker images will be served. 

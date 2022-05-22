@@ -2,7 +2,7 @@
 btype=cached
 while getopts f flag; do
     case "${flag}" in
-        f) btype=full
+        f) btype="full"
     esac
 done
 
