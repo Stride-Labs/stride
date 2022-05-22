@@ -5,6 +5,10 @@
 *.so
 *.dylib
 
+# build
+stride/build/*
+stride/state/*
+stride/scripts/state/*
 # Test binary, built with `go test -c`
 *.test
 
@@ -16,3 +20,6 @@
 
 # vscode 
 .vscode/*
+.DS_Store
+
+# 
