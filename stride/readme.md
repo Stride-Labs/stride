@@ -59,7 +59,14 @@ curl https://get.starport.com/Stride-Labs/stride@latest! | sudo bash
 
 Please run `make init` to build and serve 3 Stride nodes, 3 Gaia nodes, and 1 Hermes relayer on docker images. 
 
-You can run `make init build=all` (the default option) to 
+You can run `make init build=stride` (the default option) to 
+1. Run `ignite chain build` to build the Stride binary
+2. Rebuild Stride, using cache when possible
+3. Spin up the 7 docker containers and start all processes
+
+Alternatively, you can run `make init build=strideall` to re-build the docker image from scratch.
+
+If you want to re-build all images, you can run `make init build=base` to:
 1. Run `ignite chain build` to build the Stride binary
 2. Rebuild Stride, Gaia, and Hermes docker images, using cache when possible
 3. Spin up the 7 docker containers and start all processes
@@ -79,7 +86,10 @@ Or, if you just want to re-serve, run `make init build=none` to
 Proceed with lower-level building at your own discretion. Only `make init` is well-supported. 
 
 You can run `sh scripts/init.sh` to achieve the same output as the above. The following flags are supported
-1. `-s` This will run `ignite chain build`
-2. `-d` This will re-build the docker images, using cache
-3. `-f` This will re-build the docker images, ignoring cache. 
+1. `-b` This will run `ignite chain build`
+2. `-d` This will re-build all docker images, using cache
+3. `-f` This will re-build all docker images, ignoring cache. 
+4. `-s` This will re-build Stride's docker images, using cache. 
+5. `-a` This will re-build Stride's docker images, ignoring cache. 
+
 At the end, all 7 docker images will be served. 

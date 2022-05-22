@@ -9,7 +9,7 @@ DOCKER := $(shell which docker)
 BUILDDIR ?= $(CURDIR)/build
 TEST_DOCKER_REPO=Stride-Labs/stridednode
 
-build=all
+build=stride
 
 export GO111MODULE = on
 
@@ -287,15 +287,21 @@ test:
 	sh ./scripts/simple_test.sh
 
 init:
-	@if [ ${build} == "all" ]; \
+	@if [ ${build} == "base" ]; \
 		then \
-			sh scripts/init.sh -sd;\
-	elif [ ${build} == "nocache" ]; \
+			sh scripts/init.sh -bd;\
+	elif [ ${build} == "all" ]; \
 		then \
-			sh scripts/init.sh -sf;\
+			sh scripts/init.sh -bf;\
 	elif [ ${build} == "none" ]; \
 		then \
 			sh scripts/init.sh;\
+	elif [ ${build} == "stride" ]; \
+		then \
+			sh scripts/init.sh -b;\
+	elif [ ${build} == "strideall" ]; \
+		then \
+			sh scripts/init.sh - ;\
 	else\
 		echo "Init type ${build} not recognized.";\
 	fi
