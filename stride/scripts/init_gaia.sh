@@ -49,6 +49,12 @@ for i in ${!GAIA_CHAINS[@]}; do
     fi
 done
 
+Restore relayer account on gaia
+echo $RLY_MNEMONIC_2 | $main_gaia_cmd keys add rly2 --recover --keyring-backend=test > /dev/null
+RLY_ADDRESS_2=$($main_gaia_cmd keys show rly1 --keyring-backend test -a)
+# Give relayer account token balance
+$main_gaia_cmd add-genesis-account ${RLY_ADDRESS_2} 500000000000ustrd
+
 $main_gaia_cmd collect-gentxs 2> /dev/null
 
 # add peers in config.toml so that nodes can find each other by constructing a fully connected
@@ -64,7 +70,7 @@ for i in ${!GAIA_CHAINS[@]}; do
     done
     echo "${chain_name} peers are:"
     echo $peers
-    sed -i -E "s|persistent-peers = \"\"|persistent-peers = \"$peers\"|g" "${STATE}/${chain_name}/config/config.toml"
+    sed -i -E "s|persistent_peers = \"\"|persistent_peers = \"$peers\"|g" "${STATE}/${chain_name}/config/config.toml"
     # use blind address (not loopback) to allow incoming connections from outside networks for local debugging
     sed -i -E "s|127.0.0.1|0.0.0.0|g" "${STATE}/${chain_name}/config/config.toml"
     sed -i -E "s|minimum-gas-prices = \"\"|minimum-gas-prices = \"0uatom\"|g" "${STATE}/${chain_name}/config/app.toml"
