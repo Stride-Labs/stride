@@ -15,11 +15,13 @@ for chain_name in ${STRIDE_CHAINS[@]}; do
 done
 
 # run through init args, if needed
-while getopts sdf flag; do
+while getopts bdfsa flag; do
     case "${flag}" in
-        s) ignite chain build ;;
+        b) ignite chain build ;;
         d) sh $SCRIPT_DIR/docker_build.sh ;;
-        f) sh $SCRIPT_DIR/docker_build.sh f ;;
+        f) sh $SCRIPT_DIR/docker_build.sh -f ;;
+        s) sh $SCRIPT_DIR/docker_build.sh -s ;;
+        a) sh $SCRIPT_DIR/docker_build.sh -a ;;
     esac
 done
 
@@ -105,9 +107,6 @@ docker-compose run hermes hermes -c /tmp/hermes.toml keys restore --mnemonic "$R
 docker-compose run hermes hermes -c /tmp/hermes.toml keys restore --mnemonic "$RLY_MNEMONIC_2" $main_gaia_chain
 sleep 10
 echo "Creating transfer channel"
-# docker-compose run hermes hermes -c /tmp/hermes.toml create channel --port-a transfer --port-b transfer $main_chain $main_gaia_chain
-# this fixes the input device is not a TTY .. see https://github.com/docker/compose/issues/5696 # added -T flag, per https://docs.docker.com/compose/reference/run/ 
-# export COMPOSE_INTERACTIVE_NO_CLI=1
 
 echo "creating hermes identifiers"
 docker-compose run hermes hermes -c /tmp/hermes.toml tx raw create-client $main_chain $main_gaia_chain
@@ -115,12 +114,8 @@ docker-compose run hermes hermes -c /tmp/hermes.toml tx raw conn-init $main_chai
 docker-compose run hermes hermes -c /tmp/hermes.toml tx raw chan-open-init $main_chain $main_gaia_chain connection-0 transfer transfer
 
 echo "Creating connection $main_chain <> $main_gaia_chain"
-# docker-compose run -T hermes hermes -c /tmp/hermes.toml keys list
-# docker-compose up --force-recreate -d hermes
 docker-compose run -T hermes hermes -c /tmp/hermes.toml create connection $main_chain $main_gaia_chain
 echo "Connection created"
-# docker-compose run -T hermes hermes -c /tmp/hermes.toml create channel $main_chain --chain-b $main_gaia_chain --port-a transfer --port-b transfer -o unordered --new-client-connection
-# docker-compose run -T hermes hermes -c /tmp/hermes.toml create channel $HERMES_MAIN_CHAIN --connection-a connection-0 --port-a transfer --port-b transfer -o unordered
 echo "Creating transfer channel"
 docker-compose run -T hermes hermes -c /tmp/hermes.toml create channel --port-a transfer --port-b transfer $main_gaia_chain connection-0
 echo "Tranfer channel created"
@@ -131,13 +126,7 @@ echo "Tranfer channel created"
 # hermes -c /tmp/hermes.toml tx raw create-client STRIDE_1 GAIA_1
 # hermes tx raw create-client STRIDE_1 GAIA_1
 
-# sleep 10
-# echo "Creating transfer connection"
-# docker-compose run hermes hermes -c /tmp/hermes.toml create channel --port-a transfer --port-b transfer $main_chain $main_gaia_chain
-# sleep 10
-# echo "Creating transfer channel"
-# docker-compose run hermes hermes -c /tmp/hermes.toml create channel --port-a transfer --port-b transfer $main_chain $main_gaia_chain
-# echo "Tranfer channel created"
+docker-compose down hermes
 docker-compose up --force-recreate -d hermes
 # docker-compose up -d hermes
 # strided tx ibc-transfer transfer channel-0 1000ustrd stride1uk4ze0x4nvh4fk0xm4jdud58eqn4yxhrt52vv7 cosmos1pcag0cj4ttxg8l7pcg0q4ksuglswuuedcextl2 0 0 --home /stride/.strided --keyring-backend test --from val1
