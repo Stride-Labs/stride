@@ -57,7 +57,6 @@ func (im IBCModule) OnChanOpenInit(
 	return im.keeper.ClaimCapability(ctx, chanCap, host.ChannelCapabilityPath(portID, channelID))
 }
 
-
 // OnChanOpenTry implements the IBCModule interface
 func (im IBCModule) OnChanOpenTry(
 	ctx sdk.Context,
@@ -115,8 +114,6 @@ func (im IBCModule) OnChanOpenAck(
 	}
 	return nil
 }
-
-
 
 // OnChanOpenConfirm implements the IBCModule interface
 func (im IBCModule) OnChanOpenConfirm(

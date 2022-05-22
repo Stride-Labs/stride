@@ -1,2 +1,2 @@
 go mod tidy
-ignite chain serve --verbose
+ignite chain serve --reset-once --verbose

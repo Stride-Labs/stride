@@ -19,10 +19,10 @@ import (
 type (
 	Keeper struct {
 		// *cosmosibckeeper.Keeper
-		cdc        codec.BinaryCodec
-		storeKey   sdk.StoreKey
-		memKey     sdk.StoreKey
-		paramstore paramtypes.Subspace
+		cdc                 codec.BinaryCodec
+		storeKey            sdk.StoreKey
+		memKey              sdk.StoreKey
+		paramstore          paramtypes.Subspace
 		ICAControllerKeeper icacontrollerkeeper.Keeper
 		IBCKeeper           ibckeeper.Keeper
 		scopedKeeper        capabilitykeeper.ScopedKeeper
@@ -59,11 +59,11 @@ func NewKeeper(
 		// 	portKeeper,
 		// 	scopedKeeper,
 		// ),
-		cdc:        cdc,
-		storeKey:   storeKey,
-		memKey:     memKey,
-		paramstore: ps,
-		bankKeeper: bankKeeper,
+		cdc:                 cdc,
+		storeKey:            storeKey,
+		memKey:              memKey,
+		paramstore:          ps,
+		bankKeeper:          bankKeeper,
 		ICAControllerKeeper: icacontrollerkeeper,
 		IBCKeeper:           ibcKeeper,
 		scopedKeeper:        scopedKeeper,
