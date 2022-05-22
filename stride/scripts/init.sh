@@ -57,6 +57,12 @@ for i in ${!STRIDE_CHAINS[@]}; do
     fi
 done
 
+# Restore relayer account on stride
+echo $RLY_MNEMONIC_1 | $main_cmd keys add rly1 --recover --keyring-backend=test > /dev/null
+RLY_ADDRESS_1=$($main_cmd keys show rly1 --keyring-backend test -a)
+# Give relayer account token balance
+$main_cmd add-genesis-account ${RLY_ADDRESS_1} 500000000000ustrd
+
 $main_cmd collect-gentxs 2> /dev/null
 # add peers in config.toml so that nodes can find each other by constructing a fully connected
 # graph of nodes
@@ -95,11 +101,20 @@ docker-compose up -d stride1 stride2 stride3 gaia1 gaia2 gaia3
 echo "Chains created"
 sleep 10
 echo "Restoring keys"
-docker-compose run hermes hermes -c /tmp/hermes.toml keys restore --mnemonic "$RLY_MNEMONIC_1" test-1
-docker-compose run hermes hermes -c /tmp/hermes.toml keys restore --mnemonic "$RLY_MNEMONIC_2" test-2
-sleep 10
-echo "Creating transfer channel"
-docker-compose run hermes hermes -c /tmp/hermes.toml create channel --port-a transfer --port-b transfer $main_chain $main_gaia_chain
-echo "Tranfer channel created"
-# docker-compose up --force-recreate -d hermes
-docker-compose up -d hermes
+docker-compose run hermes hermes -c /tmp/hermes.toml keys restore --mnemonic "$RLY_MNEMONIC_1" $main_chain
+docker-compose run hermes hermes -c /tmp/hermes.toml keys restore --mnemonic "$RLY_MNEMONIC_2" $main_gaia_chain
+
+# test commands
+# docker-compose run hermes /bin/sh
+# hermes -c /tmp/hermes.toml tx raw create-client STRIDE_1 GAIA_1
+# hermes tx raw create-client STRIDE_1 GAIA_1
+
+# sleep 10
+# echo "Creating transfer connection"
+# docker-compose run hermes hermes -c /tmp/hermes.toml create channel --port-a transfer --port-b transfer $main_chain $main_gaia_chain
+# sleep 10
+# echo "Creating transfer channel"
+# docker-compose run hermes hermes -c /tmp/hermes.toml create channel --port-a transfer --port-b transfer $main_chain $main_gaia_chain
+# echo "Tranfer channel created"
+# # docker-compose up --force-recreate -d hermes
+# docker-compose up -d hermes
