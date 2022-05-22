@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package intertx;
+package stride.interchainquery;
 
 option go_package = "github.com/Stride-Labs/stride/x/interchainquery/types";
 
@@ -8,7 +8,7 @@ import "gogoproto/gogo.proto";
 import "google/protobuf/any.proto";
 
 // Msg defines the intertx Msg service.
-service Msg {
+service MsgService {
   // Register defines a rpc handler for MsgRegisterAccount
   rpc RegisterAccount(MsgRegisterAccount) returns (MsgRegisterAccountResponse);
   // SubmitTx defines a rpc handler for MsgSubmitTx
