@@ -26,7 +26,7 @@ host = '0.0.0.0'
 port = 3001
 
 [[chains]]
-id = 'test-1'
+id = 'STRIDE_1'
 rpc_addr = 'http://stride1:26657'
 grpc_addr = 'http://stride1:9090'
 websocket_addr = 'ws://stride1:26657/websocket'
@@ -47,7 +47,7 @@ trust_threshold = { numerator = '1', denominator = '3' }
 address_type = { derivation = 'cosmos' }
 
 [[chains]]
-id = 'test-2'
+id = 'GAIA_1'
 rpc_addr = 'http://gaia1:26657'
 grpc_addr = 'http://gaia1:9090'
 websocket_addr = 'ws://gaia1:26657/websocket'
