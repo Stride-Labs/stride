@@ -24,6 +24,7 @@ message Query {
   ];
 }
 
+
 message DataPoint {
   string id = 1;
   string remote_height = 2 [
@@ -42,4 +43,21 @@ message DataPoint {
 // GenesisState defines the epochs module's genesis state.
 message GenesisState {
   repeated Query queries = 1 [ (gogoproto.nullable) = false ];
+}
+
+// Query defines the gRPC querier service.
+service QueryService {
+  // QueryInterchainAccountFromAddress returns the interchain account for given owner address on a given connection pair
+  rpc InterchainAccountFromAddress(QueryServiceInterchainAccountFromAddressRequest) returns (QueryServiceInterchainAccountFromAddressResponse);
+}
+
+// QueryInterchainAccountFromAddressRequest is the request type for the Query/InterchainAccountAddress RPC
+message QueryServiceInterchainAccountFromAddressRequest {
+  string owner                      = 1;
+  string connection_id = 2 [(gogoproto.moretags) = "yaml:\"connection_id\""];
+}
+
+// QueryInterchainAccountFromAddressResponse the response type for the Query/InterchainAccountAddress RPC
+message QueryServiceInterchainAccountFromAddressResponse {
+  string interchain_account_address = 1 [(gogoproto.moretags) = "yaml:\"interchain_account_address\""];
 }
