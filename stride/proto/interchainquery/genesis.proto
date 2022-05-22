@@ -24,7 +24,6 @@ message Query {
   ];
 }
 
-
 message DataPoint {
   string id = 1;
   string remote_height = 2 [
