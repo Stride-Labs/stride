@@ -51,7 +51,7 @@ done
 
 # Restore relayer account on gaia
 echo $RLY_MNEMONIC_2 | $main_gaia_cmd keys add rly2 --recover --keyring-backend=test > /dev/null
-RLY_ADDRESS_2=$($main_gaia_cmd keys show rly1 --keyring-backend test -a)
+RLY_ADDRESS_2=$($main_gaia_cmd keys show rly2 --keyring-backend test -a)
 # Give relayer account token balance
 $main_gaia_cmd add-genesis-account ${RLY_ADDRESS_2} 500000000000ustrd
 

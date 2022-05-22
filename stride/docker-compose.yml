@@ -81,6 +81,8 @@ services:
     hostname: stride
     volumes:
       - ./scripts/config/hermes.toml:/tmp/hermes.toml
+      - ./scripts/state:/hermes/.hermes/keys
+      # - ./scripts:/tmp
     #   - ./data/hermes:/hermes/.hermes
     command:
       - hermes
