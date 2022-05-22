@@ -57,6 +57,12 @@ for i in ${!STRIDE_CHAINS[@]}; do
     fi
 done
 
+# Restore relayer account on stride
+echo $RLY_MNEMONIC_1 | $main_cmd keys add rly1 --recover --keyring-backend=test > /dev/null
+RLY_ADDRESS_1=$($main_cmd keys show rly1 --keyring-backend test -a)
+# Give relayer account token balance
+$main_cmd add-genesis-account ${RLY_ADDRESS_1} 500000000000ustrd
+
 $main_cmd collect-gentxs 2> /dev/null
 # add peers in config.toml so that nodes can find each other by constructing a fully connected
 # graph of nodes
@@ -97,8 +103,8 @@ sleep 10
 echo "Restoring keys"
 HERMES_MAIN_CHAIN='test-1'
 HERMES_MAIN_GAIA_CHAIN='test-2'
-docker-compose run hermes hermes -c /tmp/hermes.toml keys restore --mnemonic "$RLY_MNEMONIC_1" $HERMES_MAIN_CHAIN
-docker-compose run hermes hermes -c /tmp/hermes.toml keys restore --mnemonic "$RLY_MNEMONIC_2" $HERMES_MAIN_GAIA_CHAIN
+docker-compose run hermes hermes -c /tmp/hermes.toml keys restore --mnemonic "$RLY_MNEMONIC_1" $main_chain
+docker-compose run hermes hermes -c /tmp/hermes.toml keys restore --mnemonic "$RLY_MNEMONIC_2" $main_gaia_chain
 sleep 10
 echo "Creating transfer channel"
 # docker-compose run hermes hermes -c /tmp/hermes.toml create channel --port-a transfer --port-b transfer $main_chain $main_gaia_chain
@@ -112,4 +118,19 @@ docker-compose run -T hermes hermes -c /tmp/hermes.toml create connection $HERME
 docker-compose run -T hermes hermes -c /tmp/hermes.toml create channel $HERMES_MAIN_CHAIN --connection-a connection-0 --port-a transfer --port-b transfer -o unordered
 docker-compose run -T hermes hermes -c /tmp/hermes.toml create channel --port-a transfer --port-b transfer $HERMES_MAIN_CHAIN connection-0
 # echo "Tranfer channel created"
+
+
+# test commands
+# docker-compose run hermes /bin/sh
+# hermes -c /tmp/hermes.toml tx raw create-client STRIDE_1 GAIA_1
+# hermes tx raw create-client STRIDE_1 GAIA_1
+
+# sleep 10
+# echo "Creating transfer connection"
+# docker-compose run hermes hermes -c /tmp/hermes.toml create channel --port-a transfer --port-b transfer $main_chain $main_gaia_chain
+# sleep 10
+# echo "Creating transfer channel"
+# docker-compose run hermes hermes -c /tmp/hermes.toml create channel --port-a transfer --port-b transfer $main_chain $main_gaia_chain
+# echo "Tranfer channel created"
+# # docker-compose up --force-recreate -d hermes
 # docker-compose up -d hermes
