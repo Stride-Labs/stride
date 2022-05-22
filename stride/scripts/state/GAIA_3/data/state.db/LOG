@@ -1,0 +1,11 @@
+=============== May 22, 2022 (UTC) ===============
+18:34:38.016773 log@legend F·NumFile S·FileSize N·Entry C·BadEntry B·BadBlock Ke·KeyError D·DroppedEntry L·Level Q·SeqNum T·TimeElapsed
+18:34:38.078350 db@open opening
+18:34:38.097381 version@stat F·[] S·0B[] Sc·[]
+18:34:38.109910 db@janitor F·2 G·0
+18:34:38.114528 db@open done T·33.899417ms
+20:20:20.323470 memdb@flush N·4589 S·3MiB
+20:20:24.785120 memdb@flush created L0@3 N·4589 S·1018KiB "abc..y:1,v6":"val..999,v3991"
+20:20:24.788939 version@stat F·[1] S·1018KiB[1018KiB] Sc·[0.25]
+20:20:24.803592 memdb@flush committed F·1 T·4.476339127s
+20:20:24.817930 journal@remove removed @1
