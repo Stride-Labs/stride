@@ -3,10 +3,10 @@ package stakeibc_test
 import (
 	"testing"
 
-	keepertest "github.com/Stride-labs/stride/testutil/keeper"
-	"github.com/Stride-labs/stride/testutil/nullify"
-	"github.com/Stride-labs/stride/x/stakeibc"
-	"github.com/Stride-labs/stride/x/stakeibc/types"
+	keepertest "github.com/Stride-Labs/stride/testutil/keeper"
+	"github.com/Stride-Labs/stride/testutil/nullify"
+	"github.com/Stride-Labs/stride/x/stakeibc"
+	"github.com/Stride-Labs/stride/x/stakeibc/types"
 	"github.com/stretchr/testify/require"
 )
 

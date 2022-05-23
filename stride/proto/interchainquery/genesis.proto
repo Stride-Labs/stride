@@ -4,7 +4,7 @@ package stride.interchainquery;
 import "gogoproto/gogo.proto";
 import "cosmos_proto/cosmos.proto";
 
-option go_package = "github.com/Stride-labs/stride/x/interchainquery/types";
+option go_package = "github.com/Stride-Labs/stride/x/interchainquery/types";
 
 message Query {
   string id = 1;
@@ -12,15 +12,13 @@ message Query {
   string chain_id = 3;
   string query_type = 4;
   map<string, string> query_parameters = 5;
-  // TODO(TEST-15): Add this type annotation back after installing cosmos_proto   
-  // (cosmos_proto.scalar) = "cosmos.Int",
   string period = 6 [
+    (cosmos_proto.scalar) = "cosmos.Int",
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
     (gogoproto.nullable) = false
   ];
-  // TODO(TEST-15): Add this type annotation back after installing cosmos_proto   
-  // (cosmos_proto.scalar) = "cosmos.Int",
   string last_height = 7 [
+    (cosmos_proto.scalar) = "cosmos.Int",
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
     (gogoproto.nullable) = false
   ];
@@ -28,15 +26,13 @@ message Query {
 
 message DataPoint {
   string id = 1;
-  // TODO(TEST-15): Add this type annotation back after installing cosmos_proto   
-  // (cosmos_proto.scalar) = "cosmos.Int",
   string remote_height = 2 [
+    (cosmos_proto.scalar) = "cosmos.Int",
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
     (gogoproto.nullable) = false
   ];
-  // TODO(TEST-15): Add this type annotation back after installing cosmos_proto   
-  // (cosmos_proto.scalar) = "cosmos.Int",
   string local_height = 3 [
+    (cosmos_proto.scalar) = "cosmos.Int",
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
     (gogoproto.nullable) = false
   ];

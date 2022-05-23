@@ -3,8 +3,8 @@ package stakeibc
 import (
 	"fmt"
 
-	"github.com/Stride-labs/stride/x/stakeibc/keeper"
-	"github.com/Stride-labs/stride/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/x/stakeibc/keeper"
+	"github.com/Stride-Labs/stride/x/stakeibc/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )

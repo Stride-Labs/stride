@@ -3,8 +3,8 @@ package stakeibc
 import (
 	"fmt"
 
-	"github.com/Stride-labs/stride/x/stakeibc/keeper"
-	"github.com/Stride-labs/stride/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/x/stakeibc/keeper"
+	"github.com/Stride-Labs/stride/x/stakeibc/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
@@ -56,7 +56,6 @@ func (im IBCModule) OnChanOpenInit(
 	// ibc v3 https://github.com/cosmos/ibc/blob/f19c5d188d6de301d10a212406155cbb2ba2982f/spec/app/ics-027-interchain-accounts/README.md
 	return im.keeper.ClaimCapability(ctx, chanCap, host.ChannelCapabilityPath(portID, channelID))
 }
-
 
 // OnChanOpenTry implements the IBCModule interface
 func (im IBCModule) OnChanOpenTry(
@@ -115,8 +114,6 @@ func (im IBCModule) OnChanOpenAck(
 	}
 	return nil
 }
-
-
 
 // OnChanOpenConfirm implements the IBCModule interface
 func (im IBCModule) OnChanOpenConfirm(
