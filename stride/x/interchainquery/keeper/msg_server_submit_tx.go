@@ -10,7 +10,7 @@ import (
 func (k msgServer) SubmitTx(goCtx context.Context, msg *types.MsgSubmitTx) (*types.MsgSubmitTxResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	// TODO: Handling the message
+	// TODO(TEST-50) Handling the message
 	_ = ctx
 
 	return &types.MsgSubmitTxResponse{}, nil
