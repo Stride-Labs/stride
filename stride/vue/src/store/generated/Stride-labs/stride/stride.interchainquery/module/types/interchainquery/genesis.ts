@@ -1,5 +1,5 @@
 /* eslint-disable */
-import { Writer, Reader } from "protobufjs/minimal";
+import { Reader, Writer } from "protobufjs/minimal";
 
 export const protobufPackage = "stride.interchainquery";
 
@@ -28,6 +28,17 @@ export interface DataPoint {
 /** GenesisState defines the epochs module's genesis state. */
 export interface GenesisState {
   queries: Query[];
+}
+
+/** QueryInterchainAccountFromAddressRequest is the request type for the Query/InterchainAccountAddress RPC */
+export interface QueryServiceInterchainAccountFromAddressRequest {
+  owner: string;
+  connection_id: string;
+}
+
+/** QueryInterchainAccountFromAddressResponse the response type for the Query/InterchainAccountAddress RPC */
+export interface QueryServiceInterchainAccountFromAddressResponse {
+  interchain_account_address: string;
 }
 
 const baseQuery: object = {
@@ -479,6 +490,214 @@ export const GenesisState = {
     return message;
   },
 };
+
+const baseQueryServiceInterchainAccountFromAddressRequest: object = {
+  owner: "",
+  connection_id: "",
+};
+
+export const QueryServiceInterchainAccountFromAddressRequest = {
+  encode(
+    message: QueryServiceInterchainAccountFromAddressRequest,
+    writer: Writer = Writer.create()
+  ): Writer {
+    if (message.owner !== "") {
+      writer.uint32(10).string(message.owner);
+    }
+    if (message.connection_id !== "") {
+      writer.uint32(18).string(message.connection_id);
+    }
+    return writer;
+  },
+
+  decode(
+    input: Reader | Uint8Array,
+    length?: number
+  ): QueryServiceInterchainAccountFromAddressRequest {
+    const reader = input instanceof Uint8Array ? new Reader(input) : input;
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = {
+      ...baseQueryServiceInterchainAccountFromAddressRequest,
+    } as QueryServiceInterchainAccountFromAddressRequest;
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.owner = reader.string();
+          break;
+        case 2:
+          message.connection_id = reader.string();
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): QueryServiceInterchainAccountFromAddressRequest {
+    const message = {
+      ...baseQueryServiceInterchainAccountFromAddressRequest,
+    } as QueryServiceInterchainAccountFromAddressRequest;
+    if (object.owner !== undefined && object.owner !== null) {
+      message.owner = String(object.owner);
+    } else {
+      message.owner = "";
+    }
+    if (object.connection_id !== undefined && object.connection_id !== null) {
+      message.connection_id = String(object.connection_id);
+    } else {
+      message.connection_id = "";
+    }
+    return message;
+  },
+
+  toJSON(message: QueryServiceInterchainAccountFromAddressRequest): unknown {
+    const obj: any = {};
+    message.owner !== undefined && (obj.owner = message.owner);
+    message.connection_id !== undefined &&
+      (obj.connection_id = message.connection_id);
+    return obj;
+  },
+
+  fromPartial(
+    object: DeepPartial<QueryServiceInterchainAccountFromAddressRequest>
+  ): QueryServiceInterchainAccountFromAddressRequest {
+    const message = {
+      ...baseQueryServiceInterchainAccountFromAddressRequest,
+    } as QueryServiceInterchainAccountFromAddressRequest;
+    if (object.owner !== undefined && object.owner !== null) {
+      message.owner = object.owner;
+    } else {
+      message.owner = "";
+    }
+    if (object.connection_id !== undefined && object.connection_id !== null) {
+      message.connection_id = object.connection_id;
+    } else {
+      message.connection_id = "";
+    }
+    return message;
+  },
+};
+
+const baseQueryServiceInterchainAccountFromAddressResponse: object = {
+  interchain_account_address: "",
+};
+
+export const QueryServiceInterchainAccountFromAddressResponse = {
+  encode(
+    message: QueryServiceInterchainAccountFromAddressResponse,
+    writer: Writer = Writer.create()
+  ): Writer {
+    if (message.interchain_account_address !== "") {
+      writer.uint32(10).string(message.interchain_account_address);
+    }
+    return writer;
+  },
+
+  decode(
+    input: Reader | Uint8Array,
+    length?: number
+  ): QueryServiceInterchainAccountFromAddressResponse {
+    const reader = input instanceof Uint8Array ? new Reader(input) : input;
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = {
+      ...baseQueryServiceInterchainAccountFromAddressResponse,
+    } as QueryServiceInterchainAccountFromAddressResponse;
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.interchain_account_address = reader.string();
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): QueryServiceInterchainAccountFromAddressResponse {
+    const message = {
+      ...baseQueryServiceInterchainAccountFromAddressResponse,
+    } as QueryServiceInterchainAccountFromAddressResponse;
+    if (
+      object.interchain_account_address !== undefined &&
+      object.interchain_account_address !== null
+    ) {
+      message.interchain_account_address = String(
+        object.interchain_account_address
+      );
+    } else {
+      message.interchain_account_address = "";
+    }
+    return message;
+  },
+
+  toJSON(message: QueryServiceInterchainAccountFromAddressResponse): unknown {
+    const obj: any = {};
+    message.interchain_account_address !== undefined &&
+      (obj.interchain_account_address = message.interchain_account_address);
+    return obj;
+  },
+
+  fromPartial(
+    object: DeepPartial<QueryServiceInterchainAccountFromAddressResponse>
+  ): QueryServiceInterchainAccountFromAddressResponse {
+    const message = {
+      ...baseQueryServiceInterchainAccountFromAddressResponse,
+    } as QueryServiceInterchainAccountFromAddressResponse;
+    if (
+      object.interchain_account_address !== undefined &&
+      object.interchain_account_address !== null
+    ) {
+      message.interchain_account_address = object.interchain_account_address;
+    } else {
+      message.interchain_account_address = "";
+    }
+    return message;
+  },
+};
+
+/** Query defines the gRPC querier service. */
+export interface QueryService {
+  /** QueryInterchainAccountFromAddress returns the interchain account for given owner address on a given connection pair */
+  InterchainAccountFromAddress(
+    request: QueryServiceInterchainAccountFromAddressRequest
+  ): Promise<QueryServiceInterchainAccountFromAddressResponse>;
+}
+
+export class QueryServiceClientImpl implements QueryService {
+  private readonly rpc: Rpc;
+  constructor(rpc: Rpc) {
+    this.rpc = rpc;
+  }
+  InterchainAccountFromAddress(
+    request: QueryServiceInterchainAccountFromAddressRequest
+  ): Promise<QueryServiceInterchainAccountFromAddressResponse> {
+    const data = QueryServiceInterchainAccountFromAddressRequest.encode(
+      request
+    ).finish();
+    const promise = this.rpc.request(
+      "stride.interchainquery.QueryService",
+      "InterchainAccountFromAddress",
+      data
+    );
+    return promise.then((data) =>
+      QueryServiceInterchainAccountFromAddressResponse.decode(new Reader(data))
+    );
+  }
+}
+
+interface Rpc {
+  request(
+    service: string,
+    method: string,
+    data: Uint8Array
+  ): Promise<Uint8Array>;
+}
 
 declare var self: any | undefined;
 declare var window: any | undefined;

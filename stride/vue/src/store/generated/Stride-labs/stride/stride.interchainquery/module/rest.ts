@@ -9,6 +9,8 @@
  * ---------------------------------------------------------------
  */
 
+export type InterchainqueryMsgRegisterAccountResponse = object;
+
 /**
  * MsgSubmitQueryResponse represents a message type to fulfil a query request.
  */
@@ -29,6 +31,12 @@ export interface InterchainqueryMsgSubmitQueryResponse {
 type.
 */
 export type InterchainqueryMsgSubmitQueryResponseResponse = object;
+
+export type InterchainqueryMsgSubmitTxResponse = object;
+
+export interface InterchainqueryQueryServiceInterchainAccountFromAddressResponse {
+  interchain_account_address?: string;
+}
 
 export interface ProtobufAny {
   "@type"?: string;

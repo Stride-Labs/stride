@@ -28,13 +28,13 @@ func GetTxCmd() *cobra.Command {
 	}
 
 	cmd.AddCommand(
-		getSubmitTxCmd(),
+		CmdSubmitTx(),
 	)
 
 	return cmd
 }
 
-func getSubmitTxCmd() *cobra.Command {
+func CmdSubmitTx() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:  "submit [path/to/sdk_msg.json]",
 		Args: cobra.ExactArgs(1),
