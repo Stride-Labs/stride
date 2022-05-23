@@ -20,8 +20,8 @@ service Msg {
       body : "*"
     };
   };
+  rpc QueryBalance(MsgQueryBalance) returns (MsgQueryBalanceResponse);
   rpc SubmitTx(MsgSubmitTx) returns (MsgSubmitTxResponse);
-
 }
 
 // MsgSubmitQueryResponse represents a message type to fulfil a query request.
@@ -75,3 +75,15 @@ message MsgSubmitTx {
   string connection_id = 2 [(gogoproto.moretags) = "yaml:\"connection_id\""];
   google.protobuf.Any msg            = 3;
 }
+
+// MsgQueryBalance defines the payload for Msg/QueryBalance
+message MsgQueryBalance {
+  option (gogoproto.equal)           = false;
+  option (gogoproto.goproto_getters) = false;
+
+  string chain_id = 1 [ (gogoproto.moretags) = "yaml:\"chain_id\"" ];
+  string address = 2 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+  string denom                       = 3;
+}
+
+message MsgQueryBalanceResponse {}

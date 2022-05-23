@@ -57,3 +57,12 @@ func (k msgServer) SubmitQueryResponse(goCtx context.Context, msg *types.MsgSubm
 
 	return &types.MsgSubmitQueryResponseResponse{}, nil
 }
+
+func (k msgServer) QueryBalance(goCtx context.Context, msg *types.MsgQueryBalance) (*types.MsgQueryBalanceResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	// TODO(TEST-50) Handling the message
+	_ = ctx
+
+	return &types.MsgQueryBalanceResponse{}, nil
+}

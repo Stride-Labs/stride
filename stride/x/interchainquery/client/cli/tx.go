@@ -2,19 +2,14 @@ package cli
 
 import (
 	"fmt"
-	"io/ioutil"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
-	"github.com/cosmos/cosmos-sdk/codec"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	// "github.com/cosmos/interchain-accounts/x/inter-tx/types"
 	"github.com/Stride-Labs/stride/x/interchainquery/types"
-	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
 
 // GetTxCmd creates and returns the intertx tx command
@@ -28,52 +23,40 @@ func GetTxCmd() *cobra.Command {
 	}
 
 	cmd.AddCommand(
-		CmdSubmitTx(),
+		QueryBalanceCmd(),
 	)
 
 	return cmd
 }
 
-func CmdSubmitTx() *cobra.Command {
+func QueryBalanceCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:  "submit [path/to/sdk_msg.json] [query_command_on_host] []",
-		Args: cobra.ExactArgs(1),
+		Use:   "query-balance [chain_id] [address] [denom]",
+		Short: `Query the balance on a chain.`,
+		Long: `query a specified account's balance of a specified denomination on a specified chain
+		e.g. "cosmos cosmos1pcag0cj4ttxg8l7pcg0q4ksuglswuuedcextl2 uatom"`,
+		Example: `query-balance cosmos cosmos1pcag0cj4ttxg8l7pcg0q4ksuglswuuedcextl2 uatom`,
+		Args:    cobra.ExactArgs(3),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientTxContext(cmd)
 			if err != nil {
 				return err
 			}
-
-			cdc := codec.NewProtoCodec(clientCtx.InterfaceRegistry)
-
-			var txMsg sdk.Msg
-			if err := cdc.UnmarshalInterfaceJSON([]byte(args[0]), &txMsg); err != nil {
-
-				// check for file path if JSON input is not provided
-				contents, err := ioutil.ReadFile(args[0])
-				if err != nil {
-					return errors.Wrap(err, "neither JSON input nor path to .json file for sdk msg were provided")
-				}
-
-				if err := cdc.UnmarshalInterfaceJSON(contents, &txMsg); err != nil {
-					return errors.Wrap(err, "error unmarshalling sdk msg file")
-				}
-			}
+			chain_id := args[0]
+			address := args[1]
+			denom := args[2]
 
 			// TODO(TEST-50) create message based on parsed json
-			msg, err := types.NewMsgSubmitTx(txMsg, viper.GetString(FlagConnectionID), clientCtx.GetFromAddress().String())
-			if err != nil {
-				return err
-			}
-
+			// msg, err := types.NewMsgSubmitTx(txMsg, viper.GetString(FlagConnectionID), clientCtx.GetFromAddress().String())
+			msg := types.NewQueryBalanceSubmitTx(chain_id, address, denom)
 			if err := msg.ValidateBasic(); err != nil {
 				return err
 			}
-
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
 		},
 	}
 
+	// TODO what do these do? require a connection flag when submitting the command?
 	cmd.Flags().AddFlagSet(fsConnectionID)
 	_ = cmd.MarkFlagRequired(FlagConnectionID)
 
