@@ -9,11 +9,18 @@ const TypeMsgSubmitTx = "submit_tx"
 
 var _ sdk.Msg = &MsgSubmitTx{}
 
-func NewMsgSubmitTx(creator string, json_path string) *MsgSubmitTx {
-	return &MsgSubmitTx{
-		Creator:  creator,
-		JsonPath: json_path,
+// NewMsgSubmitTx creates and returns a new MsgSubmitTx instance
+func NewMsgSubmitTx(sdkMsg sdk.Msg, connectionID, owner string) (*MsgSubmitTx, error) {
+	any, err := PackTxMsgAny(sdkMsg)
+	if err != nil {
+		return nil, err
 	}
+
+	return &MsgSubmitTx{
+		ConnectionId: connectionID,
+		Owner:        owner,
+		Msg:          any,
+	}, nil
 }
 
 func (msg *MsgSubmitTx) Route() string {
@@ -25,7 +32,7 @@ func (msg *MsgSubmitTx) Type() string {
 }
 
 func (msg *MsgSubmitTx) GetSigners() []sdk.AccAddress {
-	creator, err := sdk.AccAddressFromBech32(msg.Creator)
+	creator, err := sdk.AccAddressFromBech32(msg.Owner)
 	if err != nil {
 		panic(err)
 	}
@@ -38,7 +45,7 @@ func (msg *MsgSubmitTx) GetSignBytes() []byte {
 }
 
 func (msg *MsgSubmitTx) ValidateBasic() error {
-	_, err := sdk.AccAddressFromBech32(msg.Creator)
+	_, err := sdk.AccAddressFromBech32(msg.Owner)
 	if err != nil {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid creator address (%s)", err)
 	}

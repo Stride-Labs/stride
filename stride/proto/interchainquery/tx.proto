@@ -4,6 +4,7 @@ package stride.interchainquery;
 import "gogoproto/gogo.proto";
 import "cosmos_proto/cosmos.proto";
 import "google/api/annotations.proto";
+import "google/protobuf/any.proto";
 
 option go_package = "github.com/Stride-Labs/stride/x/interchainquery/types";
 
@@ -65,7 +66,12 @@ message MsgRegisterAccountResponse {}
 // MsgSubmitTxResponse defines the response for Msg/SubmitTx
 message MsgSubmitTxResponse {}
 
+// MsgSubmitTx defines the payload for Msg/SubmitTx
 message MsgSubmitTx {
-  string creator = 1;
-  string jsonPath = 2;
+  option (gogoproto.equal)           = false;
+  option (gogoproto.goproto_getters) = false;
+
+  string owner                       = 1;
+  string connection_id = 2 [(gogoproto.moretags) = "yaml:\"connection_id\""];
+  google.protobuf.Any msg            = 3;
 }

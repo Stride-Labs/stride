@@ -11,7 +11,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	// "github.com/cosmos/interchain-accounts/x/inter-tx/types"
-	"github.com/Stride-Labs/stride/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/x/interchainquery/types"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -36,7 +36,7 @@ func GetTxCmd() *cobra.Command {
 
 func CmdSubmitTx() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:  "submit [path/to/sdk_msg.json]",
+		Use:  "submit [path/to/sdk_msg.json] [query_command_on_host] []",
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientTxContext(cmd)
@@ -60,6 +60,7 @@ func CmdSubmitTx() *cobra.Command {
 				}
 			}
 
+			// TODO(TEST-50) create message based on parsed json
 			msg, err := types.NewMsgSubmitTx(txMsg, viper.GetString(FlagConnectionID), clientCtx.GetFromAddress().String())
 			if err != nil {
 				return err

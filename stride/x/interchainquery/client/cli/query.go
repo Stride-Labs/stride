@@ -1,18 +1,21 @@
 package cli
 
-// "github.com/cosmos/interchain-accounts/x/inter-tx/types"
+import (
+	"github.com/Stride-Labs/stride/x/interchainquery/types"
+	"github.com/cosmos/cosmos-sdk/client"
+	"github.com/spf13/cobra"
+)
 
-// GetQueryCmd creates and returns the intertx query command
-// func GetQueryCmd() *cobra.Command {
-// 	cmd := &cobra.Command{
-// 		Use:                        types.ModuleName,
-// 		Short:                      "Querying commands for the inter-tx module",
-// 		DisableFlagParsing:         true,
-// 		SuggestionsMinimumDistance: 2,
-// 		RunE:                       client.ValidateCmd,
-// 	}
+// GetQueryCmd creates and returns the interchainquery query command
+func GetQueryCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:                        types.ModuleName,
+		Short:                      "Querying commands for the inter-tx module",
+		DisableFlagParsing:         true,
+		SuggestionsMinimumDistance: 2,
+		RunE:                       client.ValidateCmd,
+	}
 
-// 	cmd.AddCommand(getInterchainAccountCmd())
-
-// 	return cmd
-// }
+	// cmd.AddCommand(getInterchainAccountCmd())
+	return cmd
+}
