@@ -25,6 +25,8 @@ while getopts bdfsa flag; do
     esac
 done
 
+# Init Stride
+#############################################################################################################################
 # fetch the stride node ids
 STRIDE_NODES=()
 # then, we initialize our chains 
@@ -38,7 +40,7 @@ for i in ${!STRIDE_CHAINS[@]}; do
     $st_cmd init test --chain-id $chain_name --overwrite 2> /dev/null
     sed -i -E 's|"stake"|"ustrd"|g' "${STATE}/${chain_name}/config/genesis.json"
     # add VALidator account
-    echo $vkey | $st_cmd keys add $val_acct --recover --keyring-backend=test # > /dev/null
+    echo $vkey | $st_cmd keys add $val_acct --recover --keyring-backend=test > /dev/null
     # get validator address
     VAL_ADDR=$($st_cmd keys show $val_acct --keyring-backend test -a)
     # add money for this validator account
@@ -92,11 +94,47 @@ for i in "${!STRIDE_CHAINS[@]}"; do
     fi
 done
 
-# init GAIA
+# Init Gaia
+#############################################################################################################################
 sh ${SCRIPT_DIR}/init_gaia.sh
 
+# Accounts and exec commands
+#############################################################################################################################
+
+# Stride
+echo '\nStride addresses 1,2,3'
+STRIDE_ADDRESS_1=$($BASE_RUN keys show val1 --home $STATE/STRIDE_1 --keyring-backend test -a)
+STRIDE_ADDRESS_2=$($BASE_RUN keys show val2 --home $STATE/STRIDE_2 --keyring-backend test -a)
+STRIDE_ADDRESS_3=$($BASE_RUN keys show val3 --home $STATE/STRIDE_3 --keyring-backend test -a)
+echo "\t${STRIDE_ADDRESS_1}"
+echo "\t${STRIDE_ADDRESS_2}"
+echo "\t${STRIDE_ADDRESS_3}"
+
+# Gaia
+echo '\nGaia addresses 1,2,3'
+GAIA_ADDRESS_1=$($GAIA_RUN gaia1 gaiad keys show gval1 --keyring-backend test -a --home=/gaia/.gaiad)
+GAIA_ADDRESS_2=$($GAIA_RUN gaia2 gaiad keys show gval2 --keyring-backend test -a --home=/gaia/.gaiad)
+GAIA_ADDRESS_3=$($GAIA_RUN gaia3 gaiad keys show gval3 --keyring-backend test -a --home=/gaia/.gaiad)
+echo "\t${GAIA_ADDRESS_1}"
+echo "\t${GAIA_ADDRESS_2}"
+echo "\t${GAIA_ADDRESS_3}"
+
+# Relayers
+echo '\nRelay addresses 1,2'
+# NOTE: using $main_cmd and $main_gaia_cmd here ONLY works because they rly1 and rly2
+# keys are on stride1 and gaia1, respectively
+RLY_ADDRESS_1=$($main_cmd keys show rly1 --keyring-backend test -a)
+RLY_ADDRESS_2=$($main_gaia_cmd keys show rly2 --keyring-backend test -a)
+echo "\t$RLY_ADDRESS_1"
+echo "\t$RLY_ADDRESS_2"
+
+STR1_EXEC="docker-compose --ansi never exec -T stride1 strided"
+STR2_EXEC="docker-compose --ansi never exec -T stride2 strided"
+STR3_EXEC="docker-compose --ansi never exec -T stride3 strided"
+
+# Spin up docker containers
+#############################################################################################################################
 # strided start --home state/STRIDE_1  # TESTING ONLY
-# finally we serve our docker images
 sleep 5
 docker-compose down
 docker-compose up -d stride1 stride2 stride3 gaia1 gaia2 gaia3
@@ -109,25 +147,21 @@ sleep 10
 echo "Creating transfer channel"
 
 echo "creating hermes identifiers"
-docker-compose run hermes hermes -c /tmp/hermes.toml tx raw create-client $main_chain $main_gaia_chain
-docker-compose run hermes hermes -c /tmp/hermes.toml tx raw conn-init $main_chain $main_gaia_chain 07-tendermint-0 07-tendermint-0
-docker-compose run hermes hermes -c /tmp/hermes.toml tx raw chan-open-init $main_chain $main_gaia_chain connection-0 transfer transfer
+docker-compose run hermes hermes -c /tmp/hermes.toml tx raw create-client $main_chain $main_gaia_chain > /dev/null
+docker-compose run hermes hermes -c /tmp/hermes.toml tx raw conn-init $main_chain $main_gaia_chain 07-tendermint-0 07-tendermint-0 > /dev/null
+docker-compose run hermes hermes -c /tmp/hermes.toml tx raw chan-open-init $main_chain $main_gaia_chain connection-0 transfer transfer > /dev/null
 
 echo "Creating connection $main_chain <> $main_gaia_chain"
-docker-compose run -T hermes hermes -c /tmp/hermes.toml create connection $main_chain $main_gaia_chain
+docker-compose run -T hermes hermes -c /tmp/hermes.toml create connection $main_chain $main_gaia_chain > /dev/null
 echo "Connection created"
 echo "Creating transfer channel"
-docker-compose run -T hermes hermes -c /tmp/hermes.toml create channel --port-a transfer --port-b transfer $main_gaia_chain connection-0
+docker-compose run -T hermes hermes -c /tmp/hermes.toml create channel --port-a transfer --port-b transfer $main_gaia_chain connection-0 > /dev/null
 echo "Tranfer channel created"
 
-
-# test commands
-# docker-compose run hermes /bin/sh
-# hermes -c /tmp/hermes.toml tx raw create-client STRIDE_1 GAIA_1
-# hermes tx raw create-client STRIDE_1 GAIA_1
-
 docker-compose down hermes
+echo "Starting hermes relayer"
 docker-compose up --force-recreate -d hermes
-# docker-compose up -d hermes
-# strided tx ibc-transfer transfer channel-0 1000ustrd stride1uk4ze0x4nvh4fk0xm4jdud58eqn4yxhrt52vv7 cosmos1pcag0cj4ttxg8l7pcg0q4ksuglswuuedcextl2 0 0 --home /stride/.strided --keyring-backend test --from val1
-# strided tx ibc-transfer transfer transfer channel-0 cosmos1pcag0cj4ttxg8l7pcg0q4ksuglswuuedcextl2 1000ustrd --home /stride/.strided --keyring-backend test --from val1 --chain-id STRIDE_1
+
+# IBC token transfer tests
+#############################################################################################################################
+source ${SCRIPT_DIR}/ibc_token_transfer.sh
