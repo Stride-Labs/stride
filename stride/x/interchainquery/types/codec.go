@@ -21,7 +21,9 @@ func RegisterInterfaces(registry types.InterfaceRegistry) {
 	registry.RegisterImplementations((*sdk.Msg)(nil),
 		&MsgSubmitQueryResponse{},
 	)
-
+	registry.RegisterImplementations((*sdk.Msg)(nil),
+		&MsgSubmitTx{},
+	)
 	msgservice.RegisterMsgServiceDesc(registry, &_Msg_serviceDesc)
 }
 func init() {

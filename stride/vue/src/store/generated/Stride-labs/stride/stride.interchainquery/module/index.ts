@@ -4,10 +4,12 @@ import { StdFee } from "@cosmjs/launchpad";
 import { SigningStargateClient } from "@cosmjs/stargate";
 import { Registry, OfflineSigner, EncodeObject, DirectSecp256k1HdWallet } from "@cosmjs/proto-signing";
 import { Api } from "./rest";
-import { MsgSubmitQueryResponse } from "./types/interchainquery/messages";
+import { MsgSubmitTx } from "./types/interchainquery/tx";
+import { MsgSubmitQueryResponse } from "./types/interchainquery/tx";
 
 
 const types = [
+  ["/stride.interchainquery.MsgSubmitTx", MsgSubmitTx],
   ["/stride.interchainquery.MsgSubmitQueryResponse", MsgSubmitQueryResponse],
   
 ];
@@ -41,6 +43,7 @@ const txClient = async (wallet: OfflineSigner, { addr: addr }: TxClientOptions =
 
   return {
     signAndBroadcast: (msgs: EncodeObject[], { fee, memo }: SignAndBroadcastOptions = {fee: defaultFee, memo: ""}) => client.signAndBroadcast(address, msgs, fee,memo),
+    msgSubmitTx: (data: MsgSubmitTx): EncodeObject => ({ typeUrl: "/stride.interchainquery.MsgSubmitTx", value: MsgSubmitTx.fromPartial( data ) }),
     msgSubmitQueryResponse: (data: MsgSubmitQueryResponse): EncodeObject => ({ typeUrl: "/stride.interchainquery.MsgSubmitQueryResponse", value: MsgSubmitQueryResponse.fromPartial( data ) }),
     
   };
