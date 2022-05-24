@@ -8,8 +8,8 @@ import (
 
 	"github.com/Stride-Labs/stride/x/mint/types"
 
-	"github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/client/flags"
+	"github.com/Stride-Labs/cosmos-sdk/client"
+	"github.com/Stride-Labs/cosmos-sdk/client/flags"
 )
 
 // GetQueryCmd returns the cli query commands for the minting module.

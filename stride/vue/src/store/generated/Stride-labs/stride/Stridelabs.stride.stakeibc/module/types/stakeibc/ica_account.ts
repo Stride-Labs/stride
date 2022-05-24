@@ -4,14 +4,58 @@ import { Writer, Reader } from "protobufjs/minimal";
 
 export const protobufPackage = "Stridelabs.stride.stakeibc";
 
+export enum ICAAccountType {
+  DELEGATION = 0,
+  FEE = 1,
+  REWARDS = 2,
+  UNRECOGNIZED = -1,
+}
+
+export function iCAAccountTypeFromJSON(object: any): ICAAccountType {
+  switch (object) {
+    case 0:
+    case "DELEGATION":
+      return ICAAccountType.DELEGATION;
+    case 1:
+    case "FEE":
+      return ICAAccountType.FEE;
+    case 2:
+    case "REWARDS":
+      return ICAAccountType.REWARDS;
+    case -1:
+    case "UNRECOGNIZED":
+    default:
+      return ICAAccountType.UNRECOGNIZED;
+  }
+}
+
+export function iCAAccountTypeToJSON(object: ICAAccountType): string {
+  switch (object) {
+    case ICAAccountType.DELEGATION:
+      return "DELEGATION";
+    case ICAAccountType.FEE:
+      return "FEE";
+    case ICAAccountType.REWARDS:
+      return "REWARDS";
+    default:
+      return "UNKNOWN";
+  }
+}
+
 export interface ICAAccount {
   address: string;
   balance: number;
   delegatedBalance: number;
   delegations: Delegation[];
+  target: ICAAccountType;
 }
 
-const baseICAAccount: object = { address: "", balance: 0, delegatedBalance: 0 };
+const baseICAAccount: object = {
+  address: "",
+  balance: 0,
+  delegatedBalance: 0,
+  target: 0,
+};
 
 export const ICAAccount = {
   encode(message: ICAAccount, writer: Writer = Writer.create()): Writer {
@@ -26,6 +70,9 @@ export const ICAAccount = {
     }
     for (const v of message.delegations) {
       Delegation.encode(v!, writer.uint32(34).fork()).ldelim();
+    }
+    if (message.target !== 0) {
+      writer.uint32(40).int32(message.target);
     }
     return writer;
   },
@@ -49,6 +96,9 @@ export const ICAAccount = {
           break;
         case 4:
           message.delegations.push(Delegation.decode(reader, reader.uint32()));
+          break;
+        case 5:
+          message.target = reader.int32() as any;
           break;
         default:
           reader.skipType(tag & 7);
@@ -84,6 +134,11 @@ export const ICAAccount = {
         message.delegations.push(Delegation.fromJSON(e));
       }
     }
+    if (object.target !== undefined && object.target !== null) {
+      message.target = iCAAccountTypeFromJSON(object.target);
+    } else {
+      message.target = 0;
+    }
     return message;
   },
 
@@ -100,6 +155,8 @@ export const ICAAccount = {
     } else {
       obj.delegations = [];
     }
+    message.target !== undefined &&
+      (obj.target = iCAAccountTypeToJSON(message.target));
     return obj;
   },
 
@@ -128,6 +185,11 @@ export const ICAAccount = {
       for (const e of object.delegations) {
         message.delegations.push(Delegation.fromPartial(e));
       }
+    }
+    if (object.target !== undefined && object.target !== null) {
+      message.target = object.target;
+    } else {
+      message.target = 0;
     }
     return message;
   },

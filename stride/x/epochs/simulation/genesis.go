@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/cosmos/cosmos-sdk/types/module"
+	"github.com/Stride-Labs/cosmos-sdk/types/module"
 
 	"github.com/Stride-Labs/stride/x/epochs/types"
 )

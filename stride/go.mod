@@ -2,10 +2,13 @@ module github.com/Stride-Labs/stride
 
 go 1.16
 
+// TODO(TEST-XX): use github.com/Stride-Labs/cosmos-sdk v0.45.4 by default,
+// sed to github.com/Stride-Labs/cosmos-sdk v0.45.4-debug if a flag is passed
+// in make init (revert after build)
 require (
+	github.com/Stride-Labs/cosmos-sdk v0.45.4-debug-1
 	github.com/cosmos/cosmos-proto v1.0.0-alpha7
-	github.com/cosmos/cosmos-sdk v0.45.4
-	github.com/cosmos/ibc-go/v3 v3.0.0
+	github.com/Stride-Labs/ibc-go/v3 v3.0.0-debug-1
 	github.com/gogo/protobuf v1.3.3
 	github.com/golang/protobuf v1.5.2
 	github.com/google/go-cmp v0.5.8 // indirect

@@ -14,9 +14,9 @@ import (
 	"github.com/Stride-Labs/stride/app"
 	"github.com/Stride-Labs/stride/x/mint/client/cli"
 
-	"github.com/cosmos/cosmos-sdk/client/flags"
-	clitestutil "github.com/cosmos/cosmos-sdk/testutil/cli"
-	"github.com/cosmos/cosmos-sdk/testutil/network"
+	"github.com/Stride-Labs/cosmos-sdk/client/flags"
+	clitestutil "github.com/Stride-Labs/cosmos-sdk/testutil/cli"
+	"github.com/Stride-Labs/cosmos-sdk/testutil/network"
 )
 
 type IntegrationTestSuite struct {

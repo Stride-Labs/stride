@@ -6,15 +6,17 @@ import { ICAAccount } from "../stakeibc/ica_account";
 
 export const protobufPackage = "Stridelabs.stride.stakeibc";
 
-/** next id: 8 */
+/** next id: 9 */
 export interface HostZone {
   id: number;
   portId: string;
   channelId: string;
   validators: Validator[];
   blacklistedValidators: Validator[];
-  rewardsAccount: ICAAccount[];
-  feeAccount: ICAAccount[];
+  /** we could make these fields repeated for more granularity, if we want */
+  rewardsAccount: ICAAccount | undefined;
+  feeAccount: ICAAccount | undefined;
+  delegationAccount: ICAAccount | undefined;
 }
 
 const baseHostZone: object = { id: 0, portId: "", channelId: "" };
@@ -36,11 +38,20 @@ export const HostZone = {
     for (const v of message.blacklistedValidators) {
       Validator.encode(v!, writer.uint32(34).fork()).ldelim();
     }
-    for (const v of message.rewardsAccount) {
-      ICAAccount.encode(v!, writer.uint32(42).fork()).ldelim();
+    if (message.rewardsAccount !== undefined) {
+      ICAAccount.encode(
+        message.rewardsAccount,
+        writer.uint32(42).fork()
+      ).ldelim();
     }
-    for (const v of message.feeAccount) {
-      ICAAccount.encode(v!, writer.uint32(50).fork()).ldelim();
+    if (message.feeAccount !== undefined) {
+      ICAAccount.encode(message.feeAccount, writer.uint32(50).fork()).ldelim();
+    }
+    if (message.delegationAccount !== undefined) {
+      ICAAccount.encode(
+        message.delegationAccount,
+        writer.uint32(66).fork()
+      ).ldelim();
     }
     return writer;
   },
@@ -51,8 +62,6 @@ export const HostZone = {
     const message = { ...baseHostZone } as HostZone;
     message.validators = [];
     message.blacklistedValidators = [];
-    message.rewardsAccount = [];
-    message.feeAccount = [];
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
@@ -74,12 +83,16 @@ export const HostZone = {
           );
           break;
         case 5:
-          message.rewardsAccount.push(
-            ICAAccount.decode(reader, reader.uint32())
-          );
+          message.rewardsAccount = ICAAccount.decode(reader, reader.uint32());
           break;
         case 6:
-          message.feeAccount.push(ICAAccount.decode(reader, reader.uint32()));
+          message.feeAccount = ICAAccount.decode(reader, reader.uint32());
+          break;
+        case 8:
+          message.delegationAccount = ICAAccount.decode(
+            reader,
+            reader.uint32()
+          );
           break;
         default:
           reader.skipType(tag & 7);
@@ -93,8 +106,6 @@ export const HostZone = {
     const message = { ...baseHostZone } as HostZone;
     message.validators = [];
     message.blacklistedValidators = [];
-    message.rewardsAccount = [];
-    message.feeAccount = [];
     if (object.id !== undefined && object.id !== null) {
       message.id = Number(object.id);
     } else {
@@ -124,14 +135,22 @@ export const HostZone = {
       }
     }
     if (object.rewardsAccount !== undefined && object.rewardsAccount !== null) {
-      for (const e of object.rewardsAccount) {
-        message.rewardsAccount.push(ICAAccount.fromJSON(e));
-      }
+      message.rewardsAccount = ICAAccount.fromJSON(object.rewardsAccount);
+    } else {
+      message.rewardsAccount = undefined;
     }
     if (object.feeAccount !== undefined && object.feeAccount !== null) {
-      for (const e of object.feeAccount) {
-        message.feeAccount.push(ICAAccount.fromJSON(e));
-      }
+      message.feeAccount = ICAAccount.fromJSON(object.feeAccount);
+    } else {
+      message.feeAccount = undefined;
+    }
+    if (
+      object.delegationAccount !== undefined &&
+      object.delegationAccount !== null
+    ) {
+      message.delegationAccount = ICAAccount.fromJSON(object.delegationAccount);
+    } else {
+      message.delegationAccount = undefined;
     }
     return message;
   },
@@ -155,20 +174,18 @@ export const HostZone = {
     } else {
       obj.blacklistedValidators = [];
     }
-    if (message.rewardsAccount) {
-      obj.rewardsAccount = message.rewardsAccount.map((e) =>
-        e ? ICAAccount.toJSON(e) : undefined
-      );
-    } else {
-      obj.rewardsAccount = [];
-    }
-    if (message.feeAccount) {
-      obj.feeAccount = message.feeAccount.map((e) =>
-        e ? ICAAccount.toJSON(e) : undefined
-      );
-    } else {
-      obj.feeAccount = [];
-    }
+    message.rewardsAccount !== undefined &&
+      (obj.rewardsAccount = message.rewardsAccount
+        ? ICAAccount.toJSON(message.rewardsAccount)
+        : undefined);
+    message.feeAccount !== undefined &&
+      (obj.feeAccount = message.feeAccount
+        ? ICAAccount.toJSON(message.feeAccount)
+        : undefined);
+    message.delegationAccount !== undefined &&
+      (obj.delegationAccount = message.delegationAccount
+        ? ICAAccount.toJSON(message.delegationAccount)
+        : undefined);
     return obj;
   },
 
@@ -176,8 +193,6 @@ export const HostZone = {
     const message = { ...baseHostZone } as HostZone;
     message.validators = [];
     message.blacklistedValidators = [];
-    message.rewardsAccount = [];
-    message.feeAccount = [];
     if (object.id !== undefined && object.id !== null) {
       message.id = object.id;
     } else {
@@ -207,14 +222,24 @@ export const HostZone = {
       }
     }
     if (object.rewardsAccount !== undefined && object.rewardsAccount !== null) {
-      for (const e of object.rewardsAccount) {
-        message.rewardsAccount.push(ICAAccount.fromPartial(e));
-      }
+      message.rewardsAccount = ICAAccount.fromPartial(object.rewardsAccount);
+    } else {
+      message.rewardsAccount = undefined;
     }
     if (object.feeAccount !== undefined && object.feeAccount !== null) {
-      for (const e of object.feeAccount) {
-        message.feeAccount.push(ICAAccount.fromPartial(e));
-      }
+      message.feeAccount = ICAAccount.fromPartial(object.feeAccount);
+    } else {
+      message.feeAccount = undefined;
+    }
+    if (
+      object.delegationAccount !== undefined &&
+      object.delegationAccount !== null
+    ) {
+      message.delegationAccount = ICAAccount.fromPartial(
+        object.delegationAccount
+      );
+    } else {
+      message.delegationAccount = undefined;
     }
     return message;
   },

@@ -5,12 +5,12 @@ import (
 
 	"github.com/Stride-Labs/stride/x/stakeibc/keeper"
 	"github.com/Stride-Labs/stride/x/stakeibc/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
-	channeltypes "github.com/cosmos/ibc-go/v3/modules/core/04-channel/types"
-	host "github.com/cosmos/ibc-go/v3/modules/core/24-host"
-	ibcexported "github.com/cosmos/ibc-go/v3/modules/core/exported"
+	sdk "github.com/Stride-Labs/cosmos-sdk/types"
+	sdkerrors "github.com/Stride-Labs/cosmos-sdk/types/errors"
+	capabilitytypes "github.com/Stride-Labs/cosmos-sdk/x/capability/types"
+	channeltypes "github.com/Stride-Labs/ibc-go/v3/modules/core/04-channel/types"
+	host "github.com/Stride-Labs/ibc-go/v3/modules/core/24-host"
+	ibcexported "github.com/Stride-Labs/ibc-go/v3/modules/core/exported"
 )
 
 // IBCModule implements the ICS26 interface for interchain accounts controller chains
@@ -177,6 +177,7 @@ func (im IBCModule) OnAcknowledgementPacket(
 	acknowledgement []byte,
 	relayer sdk.AccAddress,
 ) error {
+	return nil
 	var ack channeltypes.Acknowledgement
 	if err := types.ModuleCdc.UnmarshalJSON(acknowledgement, &ack); err != nil {
 		return sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "cannot unmarshal packet acknowledgement: %v", err)
@@ -233,6 +234,7 @@ func (im IBCModule) OnTimeoutPacket(
 	modulePacket channeltypes.Packet,
 	relayer sdk.AccAddress,
 ) error {
+	return nil
 	var modulePacketData types.StakeibcPacketData
 	if err := modulePacketData.Unmarshal(modulePacket.GetData()); err != nil {
 		return sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "cannot unmarshal packet data: %s", err.Error())

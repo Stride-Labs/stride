@@ -162,6 +162,8 @@ github.com/Shopify/sarama v1.19.0/go.mod h1:FVkBWblsNy7DGZRfXLU0O9RCGt5g3g3yEuWX
 github.com/Shopify/toxiproxy v2.1.4+incompatible/go.mod h1:OXgGpZ6Cli1/URJOF1DMxUHB2q5Ap20/P/eIdh4G0pI=
 github.com/StackExchange/wmi v0.0.0-20180116203802-5d049714c4a6/go.mod h1:3eOhrUMpNV+6aFIbp5/iudMxNCF27Vw2OZgy4xEx0Fg=
 github.com/StackExchange/wmi v1.2.1/go.mod h1:rcmrprowKIVzvc+NUiLncP2uuArMWLCbu9SBzvHz7e8=
+github.com/Stride-Labs/cosmos-sdk v0.45.4-debug-1 h1:TiGW/9jHbtjSKZ6LKwWb5tW/CDoBNesAL/M9TG4eUI4=
+github.com/Stride-Labs/cosmos-sdk v0.45.4-debug-1/go.mod h1:NYVJ009cq8eVuoWWO+oG5pQPASTySZ5i5HifBe1RjRM=
 github.com/VictoriaMetrics/fastcache v1.5.7/go.mod h1:ptDBkNMQI4RtmVo8VS/XwRY6RoTu1dAWCbrk+6WsEM8=
 github.com/VividCortex/gohistogram v1.0.0 h1:6+hBz+qvs0JOrrNhhmR7lFxo5sINxBCGXrdtl/UvroE=
 github.com/VividCortex/gohistogram v1.0.0/go.mod h1:Pf5mBqqDxYaXu3hDrrU+w6nw50o/4+TcAqDqk/vUH7g=
@@ -488,8 +490,8 @@ github.com/cosmos/ibc-go v1.2.2/go.mod h1:XmYjsRFOs6Q9Cz+CSsX21icNoH27vQKb3squgn
 github.com/cosmos/ibc-go/v2 v2.0.2/go.mod h1:XUmW7wmubCRhIEAGtMGS+5IjiSSmcAwihoN/yPGd6Kk=
 github.com/cosmos/ibc-go/v2 v2.0.3 h1:kZ6SAj7hyxoixsLEUBx431bVGiBW22PCHwkWHafWhXs=
 github.com/cosmos/ibc-go/v2 v2.0.3/go.mod h1:XUmW7wmubCRhIEAGtMGS+5IjiSSmcAwihoN/yPGd6Kk=
-github.com/cosmos/ibc-go/v3 v3.0.0 h1:XUNplHVS51Q2gMnTFsFsH9QJ7flsovMamnltKbEgPQ4=
-github.com/cosmos/ibc-go/v3 v3.0.0/go.mod h1:Mb+1NXiPOLd+CPFlOC6BKeAUaxXlhuWenMmRiUiSmwY=
+github.com/Stride-Labs/ibc-go/v3 v3.0.0 h1:XUNplHVS51Q2gMnTFsFsH9QJ7flsovMamnltKbEgPQ4=
+github.com/Stride-Labs/ibc-go/v3 v3.0.0/go.mod h1:Mb+1NXiPOLd+CPFlOC6BKeAUaxXlhuWenMmRiUiSmwY=
 github.com/cosmos/ledger-cosmos-go v0.11.1 h1:9JIYsGnXP613pb2vPjFeMMjBI5lEDsEaF6oYorTy6J4=
 github.com/cosmos/ledger-cosmos-go v0.11.1/go.mod h1:J8//BsAGTo3OC/vDLjMRFLW6q0WAaXvHnVc7ZmE8iUY=
 github.com/cosmos/ledger-go v0.9.2 h1:Nnao/dLwaVTk1Q5U9THldpUMMXU94BOTWPddSmVB6pI=

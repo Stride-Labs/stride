@@ -6,7 +6,7 @@ package types
 import (
 	context "context"
 	fmt "fmt"
-	github_com_cosmos_cosmos_sdk_types "github.com/cosmos/cosmos-sdk/types"
+	github_com_cosmos_cosmos_sdk_types "github.com/Stride-Labs/cosmos-sdk/types"
 	_ "github.com/gogo/protobuf/gogoproto"
 	grpc1 "github.com/gogo/protobuf/grpc"
 	proto "github.com/gogo/protobuf/proto"
@@ -155,7 +155,7 @@ var xxx_messageInfo_QueryEpochProvisionsRequest proto.InternalMessageInfo
 // Query/EpochProvisions RPC method.
 type QueryEpochProvisionsResponse struct {
 	// epoch_provisions is the current minting per epoch provisions value.
-	EpochProvisions github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,1,opt,name=epoch_provisions,json=epochProvisions,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"epoch_provisions"`
+	EpochProvisions github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,1,opt,name=epoch_provisions,json=epochProvisions,proto3,customtype=github.com/Stride-Labs/cosmos-sdk/types.Dec" json:"epoch_provisions"`
 }
 
 func (m *QueryEpochProvisionsResponse) Reset()         { *m = QueryEpochProvisionsResponse{} }

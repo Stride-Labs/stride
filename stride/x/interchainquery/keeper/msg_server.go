@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/Stride-Labs/stride/x/interchainquery/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdk "github.com/Stride-Labs/cosmos-sdk/types"
 )
 
 type msgServer struct {

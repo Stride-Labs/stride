@@ -4,9 +4,9 @@ import (
 	"github.com/Stride-Labs/stride/x/mint/types"
 	"github.com/tendermint/tendermint/libs/log"
 
-	"github.com/cosmos/cosmos-sdk/codec"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
+	"github.com/Stride-Labs/cosmos-sdk/codec"
+	sdk "github.com/Stride-Labs/cosmos-sdk/types"
+	paramtypes "github.com/Stride-Labs/cosmos-sdk/x/params/types"
 )
 
 // Keeper of the mint store.

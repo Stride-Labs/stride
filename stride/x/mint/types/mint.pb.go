@@ -5,8 +5,8 @@ package types
 
 import (
 	fmt "fmt"
-	_ "github.com/cosmos/cosmos-sdk/codec/types"
-	github_com_cosmos_cosmos_sdk_types "github.com/cosmos/cosmos-sdk/types"
+	_ "github.com/Stride-Labs/cosmos-sdk/codec/types"
+	github_com_cosmos_cosmos_sdk_types "github.com/Stride-Labs/cosmos-sdk/types"
 	_ "github.com/gogo/protobuf/gogoproto"
 	proto "github.com/gogo/protobuf/proto"
 	_ "google.golang.org/protobuf/types/known/durationpb"
@@ -30,7 +30,7 @@ const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 // Minter represents the minting state.
 type Minter struct {
 	// current epoch provisions
-	EpochProvisions github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,1,opt,name=epoch_provisions,json=epochProvisions,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"epoch_provisions" yaml:"epoch_provisions"`
+	EpochProvisions github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,1,opt,name=epoch_provisions,json=epochProvisions,proto3,customtype=github.com/Stride-Labs/cosmos-sdk/types.Dec" json:"epoch_provisions" yaml:"epoch_provisions"`
 }
 
 func (m *Minter) Reset()         { *m = Minter{} }
@@ -69,16 +69,16 @@ var xxx_messageInfo_Minter proto.InternalMessageInfo
 type DistributionProportions struct {
 	// staking defines the proportion of the minted minted_denom that is to be
 	// allocated as staking rewards.
-	Staking github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,1,opt,name=staking,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"staking" yaml:"staking"`
+	Staking github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,1,opt,name=staking,proto3,customtype=github.com/Stride-Labs/cosmos-sdk/types.Dec" json:"staking" yaml:"staking"`
 	// pool_incentives defines the proportion of the minted minted_denom that is
 	// to be allocated as pool incentives.
-	PoolIncentives github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,2,opt,name=pool_incentives,json=poolIncentives,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"pool_incentives" yaml:"pool_incentives"`
+	PoolIncentives github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,2,opt,name=pool_incentives,json=poolIncentives,proto3,customtype=github.com/Stride-Labs/cosmos-sdk/types.Dec" json:"pool_incentives" yaml:"pool_incentives"`
 	// participation_rewards defines the proportion of the minted minted_denom that is
 	// to be allocated to participation rewards address.
-	ParticipationRewards github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,3,opt,name=participation_rewards,json=participationRewards,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"participation_rewards" yaml:"participation_rewards"`
+	ParticipationRewards github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,3,opt,name=participation_rewards,json=participationRewards,proto3,customtype=github.com/Stride-Labs/cosmos-sdk/types.Dec" json:"participation_rewards" yaml:"participation_rewards"`
 	// community_pool defines the proportion of the minted minted_denom that is
 	// to be allocated to the community pool.
-	CommunityPool github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,4,opt,name=community_pool,json=communityPool,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"community_pool" yaml:"community_pool"`
+	CommunityPool github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,4,opt,name=community_pool,json=communityPool,proto3,customtype=github.com/Stride-Labs/cosmos-sdk/types.Dec" json:"community_pool" yaml:"community_pool"`
 }
 
 func (m *DistributionProportions) Reset()         { *m = DistributionProportions{} }
@@ -119,13 +119,13 @@ type Params struct {
 	// type of coin to mint
 	MintDenom string `protobuf:"bytes,1,opt,name=mint_denom,json=mintDenom,proto3" json:"mint_denom,omitempty"`
 	// epoch provisions from the first epoch
-	GenesisEpochProvisions github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,2,opt,name=genesis_epoch_provisions,json=genesisEpochProvisions,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"genesis_epoch_provisions" yaml:"genesis_epoch_provisions"`
+	GenesisEpochProvisions github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,2,opt,name=genesis_epoch_provisions,json=genesisEpochProvisions,proto3,customtype=github.com/Stride-Labs/cosmos-sdk/types.Dec" json:"genesis_epoch_provisions" yaml:"genesis_epoch_provisions"`
 	// mint epoch identifier
 	EpochIdentifier string `protobuf:"bytes,3,opt,name=epoch_identifier,json=epochIdentifier,proto3" json:"epoch_identifier,omitempty" yaml:"epoch_identifier"`
 	// number of epochs take to reduce rewards
 	ReductionPeriodInEpochs int64 `protobuf:"varint,4,opt,name=reduction_period_in_epochs,json=reductionPeriodInEpochs,proto3" json:"reduction_period_in_epochs,omitempty" yaml:"reduction_period_in_epochs"`
 	// reduction multiplier to execute on each period
-	ReductionFactor github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,5,opt,name=reduction_factor,json=reductionFactor,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"reduction_factor" yaml:"reduction_factor"`
+	ReductionFactor github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,5,opt,name=reduction_factor,json=reductionFactor,proto3,customtype=github.com/Stride-Labs/cosmos-sdk/types.Dec" json:"reduction_factor" yaml:"reduction_factor"`
 	// distribution_proportions defines the proportion of the minted denom
 	DistributionProportions DistributionProportions `protobuf:"bytes,6,opt,name=distribution_proportions,json=distributionProportions,proto3" json:"distribution_proportions"`
 	// start epoch to distribute minting rewards

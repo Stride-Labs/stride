@@ -5,15 +5,15 @@ import (
 
 	"github.com/tendermint/tendermint/libs/log"
 
+	"github.com/Stride-Labs/cosmos-sdk/codec"
+	sdk "github.com/Stride-Labs/cosmos-sdk/types"
+	capabilitykeeper "github.com/Stride-Labs/cosmos-sdk/x/capability/keeper"
+	capabilitytypes "github.com/Stride-Labs/cosmos-sdk/x/capability/types"
 	"github.com/Stride-Labs/stride/x/stakeibc/types"
-	"github.com/cosmos/cosmos-sdk/codec"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	capabilitykeeper "github.com/cosmos/cosmos-sdk/x/capability/keeper"
-	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
 
-	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
-	icacontrollerkeeper "github.com/cosmos/ibc-go/v3/modules/apps/27-interchain-accounts/controller/keeper"
-	ibckeeper "github.com/cosmos/ibc-go/v3/modules/core/keeper"
+	paramtypes "github.com/Stride-Labs/cosmos-sdk/x/params/types"
+	icacontrollerkeeper "github.com/Stride-Labs/ibc-go/v3/modules/apps/27-interchain-accounts/controller/keeper"
+	ibckeeper "github.com/Stride-Labs/ibc-go/v3/modules/core/keeper"
 )
 
 type (

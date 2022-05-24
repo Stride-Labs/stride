@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/Stride-Labs/stride/testutil/sample"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	sdkerrors "github.com/Stride-Labs/cosmos-sdk/types/errors"
 	"github.com/stretchr/testify/require"
 )
 

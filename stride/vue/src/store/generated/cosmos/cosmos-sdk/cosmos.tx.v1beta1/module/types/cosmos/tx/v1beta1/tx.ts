@@ -92,7 +92,7 @@ export interface TxBody {
   /**
    * memo is any arbitrary note/comment to be added to the transaction.
    * WARNING: in clients, any publicly exposed text should not be called memo,
-   * but should be called `note` instead (see https://github.com/cosmos/cosmos-sdk/issues/9122).
+   * but should be called `note` instead (see https://github.com/Stride-Labs/cosmos-sdk/issues/9122).
    */
   memo: string;
   /**
@@ -658,9 +658,10 @@ export const TxBody = {
       obj.extension_options = [];
     }
     if (message.non_critical_extension_options) {
-      obj.non_critical_extension_options = message.non_critical_extension_options.map(
-        (e) => (e ? Any.toJSON(e) : undefined)
-      );
+      obj.non_critical_extension_options =
+        message.non_critical_extension_options.map((e) =>
+          e ? Any.toJSON(e) : undefined
+        );
     } else {
       obj.non_critical_extension_options = [];
     }

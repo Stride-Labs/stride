@@ -1,7 +1,7 @@
 package types
 
 import (
-	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
+	paramtypes "github.com/Stride-Labs/cosmos-sdk/x/params/types"
 	"gopkg.in/yaml.v2"
 )
 

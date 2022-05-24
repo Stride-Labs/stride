@@ -3,7 +3,7 @@ package keeper_test
 import (
 	"testing"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdk "github.com/Stride-Labs/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
 	keepertest "github.com/Stride-Labs/stride/testutil/keeper"

@@ -35,8 +35,9 @@ export interface StakeibcHostZone {
   channelId?: string;
   validators?: StakeibcValidator[];
   blacklistedValidators?: StakeibcValidator[];
-  rewardsAccount?: StakeibcICAAccount[];
-  feeAccount?: StakeibcICAAccount[];
+  rewardsAccount?: StakeibcICAAccount;
+  feeAccount?: StakeibcICAAccount;
+  delegationAccount?: StakeibcICAAccount;
 }
 
 export interface StakeibcICAAccount {
@@ -48,6 +49,13 @@ export interface StakeibcICAAccount {
   /** @format int32 */
   delegatedBalance?: number;
   delegations?: StakeibcDelegation[];
+  target?: StakeibcICAAccountType;
+}
+
+export enum StakeibcICAAccountType {
+  DELEGATION = "DELEGATION",
+  FEE = "FEE",
+  REWARDS = "REWARDS",
 }
 
 export interface StakeibcMinValidatorRequirements {
@@ -59,6 +67,8 @@ export interface StakeibcMinValidatorRequirements {
 }
 
 export type StakeibcMsgLiquidStakeResponse = object;
+
+export type StakeibcMsgRegisterAccountResponse = object;
 
 /**
  * Params defines the parameters for the module.
@@ -111,6 +121,10 @@ export interface StakeibcQueryGetMinValidatorRequirementsResponse {
 
 export interface StakeibcQueryGetValidatorResponse {
   Validator?: StakeibcValidator;
+}
+
+export interface StakeibcQueryInterchainAccountFromAddressResponse {
+  interchain_account_address?: string;
 }
 
 /**

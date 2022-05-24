@@ -4,7 +4,7 @@ import (
 	"github.com/Stride-Labs/stride/x/mint/keeper"
 	"github.com/Stride-Labs/stride/x/mint/types"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdk "github.com/Stride-Labs/cosmos-sdk/types"
 )
 
 // InitGenesis new mint genesis.

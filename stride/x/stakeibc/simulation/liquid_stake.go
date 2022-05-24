@@ -5,9 +5,9 @@ import (
 
 	"github.com/Stride-Labs/stride/x/stakeibc/keeper"
 	"github.com/Stride-Labs/stride/x/stakeibc/types"
-	"github.com/cosmos/cosmos-sdk/baseapp"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
+	"github.com/Stride-Labs/cosmos-sdk/baseapp"
+	sdk "github.com/Stride-Labs/cosmos-sdk/types"
+	simtypes "github.com/Stride-Labs/cosmos-sdk/types/simulation"
 )
 
 func SimulateMsgLiquidStake(

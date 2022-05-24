@@ -5,15 +5,15 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/Stride-labs/stride/x/stakeibc/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	"github.com/Stride-Labs/stride/x/stakeibc/types"
+	sdkerrors "github.com/Stride-Labs/cosmos-sdk/types/errors"
 
-	stakingTypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	stakingTypes "github.com/Stride-Labs/cosmos-sdk/x/staking/types"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	icatypes "github.com/cosmos/ibc-go/v3/modules/apps/27-interchain-accounts/types"
-	channeltypes "github.com/cosmos/ibc-go/v3/modules/core/04-channel/types"
-	host "github.com/cosmos/ibc-go/v3/modules/core/24-host"
+	sdk "github.com/Stride-Labs/cosmos-sdk/types"
+	icatypes "github.com/Stride-Labs/ibc-go/v3/modules/apps/27-interchain-accounts/types"
+	channeltypes "github.com/Stride-Labs/ibc-go/v3/modules/core/04-channel/types"
+	host "github.com/Stride-Labs/ibc-go/v3/modules/core/24-host"
 )
 
 // SubmitTx submits an ICA transaction
@@ -43,17 +43,19 @@ func (k Keeper) DelegateOnHost(goCtx context.Context, hostZone types.HostZone, a
 
 
 // RegisterAccount registers an ICA account on behalf of the stakeibc module
-// NOTE: this is not a standard message; only the stakeibc module can call this function
-func (k Keeper) RegisterAccount(goCtx context.Context, connectionId string, owner string) (*types.ICAAccount, error) {
+// NOTE: this is not a standard message; only the stakeibc module should call this function. However,
+// this is temporarily in the message server to facilitate easy testing and development.
+// TODO(TEST-53): Remove this pre-launch (no need for clients to create / interact with ICAs)
+func (k Keeper) RegisterAccount(goCtx context.Context, msg *types.MsgRegisterAccount) (*types.MsgRegisterAccountResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	if err := k.icaControllerKeeper.RegisterInterchainAccount(ctx, connectionId, owner); err != nil {
+	if err := k.icaControllerKeeper.RegisterInterchainAccount(ctx, msg.ConnectionId, msg.Owner); err != nil {
 		return nil, err
 	}
 	// construct and return the ICAAccount, so that it can be stored
 
 	// Return ICAAccount, err
-	return &types.ICAAccount{}, nil
+	return &types.MsgRegisterAccountResponse{}, nil
 }
 
 // SubmitTx submits an ICA transaction

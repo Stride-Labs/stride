@@ -1,8 +1,8 @@
 package types
 
 import (
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/x/auth/types"
+	sdk "github.com/Stride-Labs/cosmos-sdk/types"
+	"github.com/Stride-Labs/cosmos-sdk/x/auth/types"
 )
 
 // AccountKeeper defines the expected account keeper used for simulations (noalias)
@@ -13,7 +13,7 @@ type AccountKeeper interface {
 
 // BankKeeper defines the expected interface needed to retrieve account balances.
 type BankKeeper interface {
-	// BankKeeper interface: https://github.com/cosmos/cosmos-sdk/blob/main/x/bank/keeper/keeper.go
+	// BankKeeper interface: https://github.com/Stride-Labs/cosmos-sdk/blob/main/x/bank/keeper/keeper.go
 	SpendableCoins(ctx sdk.Context, addr sdk.AccAddress) sdk.Coins
 	// Methods imported from bank should be defined here
 	SendCoinsFromModuleToAccount(ctx sdk.Context, senderModule string, recipientAddr sdk.AccAddress, amt sdk.Coins) error

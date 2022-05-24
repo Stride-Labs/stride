@@ -1,8 +1,8 @@
 package sample
 
 import (
-	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/Stride-Labs/cosmos-sdk/crypto/keys/ed25519"
+	sdk "github.com/Stride-Labs/cosmos-sdk/types"
 )
 
 // AccAddress returns a sample account address

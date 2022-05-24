@@ -8,8 +8,8 @@ import (
 
 	"github.com/Stride-Labs/stride/x/mint/types"
 
-	"github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/types/rest"
+	"github.com/Stride-Labs/cosmos-sdk/client"
+	"github.com/Stride-Labs/cosmos-sdk/types/rest"
 )
 
 func registerQueryRoutes(clientCtx client.Context, r *mux.Router) {

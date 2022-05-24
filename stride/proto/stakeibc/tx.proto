@@ -4,12 +4,29 @@ package Stridelabs.stride.stakeibc;
 // this line is used by starport scaffolding # proto/tx/import
 
 option go_package = "github.com/Stride-Labs/stride/x/stakeibc/types";
+import "gogoproto/gogo.proto";
 
 // Msg defines the Msg service.
 service Msg {
       rpc LiquidStake(MsgLiquidStake) returns (MsgLiquidStakeResponse);
+      // TODO(TEST-53): Remove this pre-launch (no need for clients to create / interact with ICAs)
+      // Register defines a rpc handler for MsgRegisterAccount
+      rpc RegisterAccount(MsgRegisterAccount) returns (MsgRegisterAccountResponse);
 // this line is used by starport scaffolding # proto/tx/rpc
 }
+
+// TODO(TEST-53): Remove this pre-launch (no need for clients to create / interact with ICAs)
+// MsgRegisterAccount defines the payload for Msg/RegisterAccount
+message MsgRegisterAccount {
+  option (gogoproto.equal)           = false;
+  option (gogoproto.goproto_getters) = false;
+
+  string owner                      = 1;
+  string connection_id              = 2 [(gogoproto.moretags) = "yaml:\"connection_id\""];
+}
+// TODO(TEST-53): Remove this pre-launch (no need for clients to create / interact with ICAs)
+// MsgRegisterAccountResponse defines the response for Msg/RegisterAccount
+message MsgRegisterAccountResponse {}
 
 message MsgLiquidStake {
   string creator = 1;

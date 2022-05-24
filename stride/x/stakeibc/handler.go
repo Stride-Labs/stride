@@ -5,8 +5,8 @@ import (
 
 	"github.com/Stride-Labs/stride/x/stakeibc/keeper"
 	"github.com/Stride-Labs/stride/x/stakeibc/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	sdk "github.com/Stride-Labs/cosmos-sdk/types"
+	sdkerrors "github.com/Stride-Labs/cosmos-sdk/types/errors"
 )
 
 // NewHandler ...
@@ -19,6 +19,9 @@ func NewHandler(k keeper.Keeper) sdk.Handler {
 		switch msg := msg.(type) {
 		case *types.MsgLiquidStake:
 			res, err := msgServer.LiquidStake(sdk.WrapSDKContext(ctx), msg)
+			return sdk.WrapServiceResult(ctx, res, err)
+		case *types.MsgRegisterAccount:
+			res, err := msgServer.RegisterAccount(sdk.WrapSDKContext(ctx), msg)
 			return sdk.WrapServiceResult(ctx, res, err)
 			// this line is used by starport scaffolding # 1
 		default:

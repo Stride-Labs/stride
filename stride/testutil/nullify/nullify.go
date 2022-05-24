@@ -5,7 +5,7 @@ import (
 	"reflect"
 	"unsafe"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdk "github.com/Stride-Labs/cosmos-sdk/types"
 )
 
 var (

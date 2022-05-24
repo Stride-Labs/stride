@@ -4,7 +4,7 @@ PACKAGES_SIMTEST=$(shell go list ./... | grep '/simulation')
 VERSION := $(shell echo $(shell git describe --tags) | sed 's/^v//')
 COMMIT := $(shell git log -1 --format='%H')
 LEDGER_ENABLED ?= true
-SDK_PACK := $(shell go list -m github.com/cosmos/cosmos-sdk | sed  's/ /\@/g')
+SDK_PACK := $(shell go list -m github.com/Stride-Labs/cosmos-sdk | sed  's/ /\@/g')
 DOCKER := $(shell which docker)
 BUILDDIR ?= $(CURDIR)/build
 TEST_DOCKER_REPO=Stride-Labs/stridednode
@@ -28,7 +28,7 @@ ifeq ($(LEDGER_ENABLED),true)
   else
     UNAME_S = $(shell uname -s)
     ifeq ($(UNAME_S),OpenBSD)
-      $(warning OpenBSD detected, disabling ledger support (https://github.com/cosmos/cosmos-sdk/issues/1988))
+      $(warning OpenBSD detected, disabling ledger support (https://github.com/Stride-Labs/cosmos-sdk/issues/1988))
     else
       GCC = $(shell command -v gcc 2> /dev/null)
       ifeq ($(GCC),)
@@ -55,16 +55,16 @@ build_tags_comma_sep := $(subst $(whitespace),$(comma),$(build_tags))
 
 # process linker flags
 
-ldflags = -X github.com/cosmos/cosmos-sdk/version.Name=stride \
-		  -X github.com/cosmos/cosmos-sdk/version.AppName=strided \
-		  -X github.com/cosmos/cosmos-sdk/version.Version=$(VERSION) \
-		  -X github.com/cosmos/cosmos-sdk/version.Commit=$(COMMIT) \
-		  -X "github.com/cosmos/cosmos-sdk/version.BuildTags=$(build_tags_comma_sep)"
+ldflags = -X github.com/Stride-Labs/cosmos-sdk/version.Name=stride \
+		  -X github.com/Stride-Labs/cosmos-sdk/version.AppName=strided \
+		  -X github.com/Stride-Labs/cosmos-sdk/version.Version=$(VERSION) \
+		  -X github.com/Stride-Labs/cosmos-sdk/version.Commit=$(COMMIT) \
+		  -X "github.com/Stride-Labs/cosmos-sdk/version.BuildTags=$(build_tags_comma_sep)"
 
 ifeq (cleveldb,$(findstring cleveldb,$(STRIDE_BUILD_OPTIONS)))
-  ldflags += -X github.com/cosmos/cosmos-sdk/types.DBBackend=cleveldb
+  ldflags += -X github.com/Stride-Labs/cosmos-sdk/types.DBBackend=cleveldb
 else ifeq (rocksdb,$(findstring rocksdb,$(STRIDE_BUILD_OPTIONS)))
-  ldflags += -X github.com/cosmos/cosmos-sdk/types.DBBackend=rocksdb
+  ldflags += -X github.com/Stride-Labs/cosmos-sdk/types.DBBackend=rocksdb
 endif
 ifeq (,$(findstring nostrip,$(STRIDE_BUILD_OPTIONS)))
   ldflags += -w -s
@@ -242,7 +242,7 @@ lint:
 format:
 	find . -name '*.go' -type f -not -path "./vendor*" -not -path "*.git*" -not -path "./client/lcd/statik/statik.go" | xargs gofmt -w -s
 	find . -name '*.go' -type f -not -path "./vendor*" -not -path "*.git*" -not -path "./client/lcd/statik/statik.go" | xargs misspell -w
-	find . -name '*.go' -type f -not -path "./vendor*" -not -path "*.git*" -not -path "./client/lcd/statik/statik.go" | xargs goimports -w -local github.com/cosmos/cosmos-sdk
+	find . -name '*.go' -type f -not -path "./vendor*" -not -path "*.git*" -not -path "./client/lcd/statik/statik.go" | xargs goimports -w -local github.com/Stride-Labs/cosmos-sdk
 
 ###############################################################################
 ###                                Localnet                                 ###

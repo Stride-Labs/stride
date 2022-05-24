@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"math/rand"
 
-	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
+	simtypes "github.com/Stride-Labs/cosmos-sdk/types/simulation"
 
 	"github.com/gorilla/mux"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
@@ -12,11 +12,11 @@ import (
 
 	abci "github.com/tendermint/tendermint/abci/types"
 
-	"github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/codec"
-	cdctypes "github.com/cosmos/cosmos-sdk/codec/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/types/module"
+	"github.com/Stride-Labs/cosmos-sdk/client"
+	"github.com/Stride-Labs/cosmos-sdk/codec"
+	cdctypes "github.com/Stride-Labs/cosmos-sdk/codec/types"
+	sdk "github.com/Stride-Labs/cosmos-sdk/types"
+	"github.com/Stride-Labs/cosmos-sdk/types/module"
 
 	"github.com/Stride-Labs/stride/x/interchainquery/keeper"
 

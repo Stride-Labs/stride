@@ -3,8 +3,8 @@ package interchainquery
 import (
 	"fmt"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	sdk "github.com/Stride-Labs/cosmos-sdk/types"
+	sdkerrors "github.com/Stride-Labs/cosmos-sdk/types/errors"
 
 	"github.com/Stride-Labs/stride/x/interchainquery/keeper"
 	"github.com/Stride-Labs/stride/x/interchainquery/types"

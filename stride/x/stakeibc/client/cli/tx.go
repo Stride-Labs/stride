@@ -6,8 +6,8 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/cosmos/cosmos-sdk/client"
-	// "github.com/cosmos/cosmos-sdk/client/flags"
+	"github.com/Stride-Labs/cosmos-sdk/client"
+	// "github.com/Stride-Labs/cosmos-sdk/client/flags"
 	"github.com/Stride-Labs/stride/x/stakeibc/types"
 )
 
@@ -31,6 +31,8 @@ func GetTxCmd() *cobra.Command {
 	}
 
 	cmd.AddCommand(CmdLiquidStake())
+	// TODO(TEST-53): Remove this pre-launch (no need for clients to create / interact with ICAs)
+	cmd.AddCommand(CmdRegisterAccount())
 	// this line is used by starport scaffolding # 1
 
 	return cmd
