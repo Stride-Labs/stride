@@ -440,16 +440,10 @@ func NewStrideApp(
 	icaControllerIBCModule := icacontroller.NewIBCModule(app.ICAControllerKeeper, stakeibcIBCModule)
 	icaHostIBCModule := icahost.NewIBCModule(app.ICAHostKeeper)
 
-	epochsKeeper := *epochsmodulekeeper.NewKeeper(
-		appCodec,
-		keys[epochsmoduletypes.StoreKey],
-		// keys[epochsmoduletypes.MemStoreKey],
-		// app.GetSubspace(epochsmoduletypes.ModuleName),
-	)
+	epochsKeeper := epochsmodulekeeper.NewKeeper(appCodec, keys[epochsmoduletypes.StoreKey])
 	app.EpochsKeeper = *epochsKeeper.SetHooks(
 		epochsmoduletypes.NewMultiEpochHooks(
-		// TODO(TEST-18) insert epoch hooks receivers here
-		// TODO(TEST-18) add interchain staking hooks here.
+			app.StakeibcKeeper.Hooks(),
 		),
 	)
 	epochsModule := epochsmodule.NewAppModule(appCodec, app.EpochsKeeper)
@@ -507,6 +501,7 @@ func NewStrideApp(
 		interchainQueryModule,
 		icaModule,
 		// this line is used by starport scaffolding # stargate/app/appModule
+		epochsModule,
 	)
 
 	// During begin block slashing happens after distr.BeginBlocker so that

@@ -1,6 +1,7 @@
 import { txClient, queryClient, MissingWalletError , registry} from './module'
 
 import { Delegation } from "./module/types/stakeibc/delegation"
+import { DepositRecord } from "./module/types/stakeibc/deposit_record"
 import { HostZone } from "./module/types/stakeibc/host_zone"
 import { ICAAccount } from "./module/types/stakeibc/ica_account"
 import { MinValidatorRequirements } from "./module/types/stakeibc/min_validator_requirements"
@@ -10,7 +11,7 @@ import { Params } from "./module/types/stakeibc/params"
 import { Validator } from "./module/types/stakeibc/validator"
 
 
-export { Delegation, HostZone, ICAAccount, MinValidatorRequirements, StakeibcPacketData, NoData, Params, Validator };
+export { Delegation, DepositRecord, HostZone, ICAAccount, MinValidatorRequirements, StakeibcPacketData, NoData, Params, Validator };
 
 async function initTxClient(vuexGetters) {
 	return await txClient(vuexGetters['common/wallet/signer'], {
@@ -55,9 +56,12 @@ const getDefaultState = () => {
 				ICAAccount: {},
 				HostZone: {},
 				HostZoneAll: {},
+				DepositRecord: {},
+				DepositRecordAll: {},
 				
 				_Structure: {
 						Delegation: getStructure(Delegation.fromPartial({})),
+						DepositRecord: getStructure(DepositRecord.fromPartial({})),
 						HostZone: getStructure(HostZone.fromPartial({})),
 						ICAAccount: getStructure(ICAAccount.fromPartial({})),
 						MinValidatorRequirements: getStructure(MinValidatorRequirements.fromPartial({})),
@@ -134,6 +138,18 @@ export default {
 						(<any> params).query=null
 					}
 			return state.HostZoneAll[JSON.stringify(params)] ?? {}
+		},
+				getDepositRecord: (state) => (params = { params: {}}) => {
+					if (!(<any> params).query) {
+						(<any> params).query=null
+					}
+			return state.DepositRecord[JSON.stringify(params)] ?? {}
+		},
+				getDepositRecordAll: (state) => (params = { params: {}}) => {
+					if (!(<any> params).query) {
+						(<any> params).query=null
+					}
+			return state.DepositRecordAll[JSON.stringify(params)] ?? {}
 		},
 				
 		getTypeStructure: (state) => (type) => {
@@ -322,6 +338,54 @@ export default {
 				return getters['getHostZoneAll']( { params: {...key}, query}) ?? {}
 			} catch (e) {
 				throw new Error('QueryClient:QueryHostZoneAll API Node Unavailable. Could not perform query: ' + e.message)
+				
+			}
+		},
+		
+		
+		
+		
+		 		
+		
+		
+		async QueryDepositRecord({ commit, rootGetters, getters }, { options: { subscribe, all} = { subscribe:false, all:false}, params, query=null }) {
+			try {
+				const key = params ?? {};
+				const queryClient=await initQueryClient(rootGetters)
+				let value= (await queryClient.queryDepositRecord( key.id)).data
+				
+					
+				commit('QUERY', { query: 'DepositRecord', key: { params: {...key}, query}, value })
+				if (subscribe) commit('SUBSCRIBE', { action: 'QueryDepositRecord', payload: { options: { all }, params: {...key},query }})
+				return getters['getDepositRecord']( { params: {...key}, query}) ?? {}
+			} catch (e) {
+				throw new Error('QueryClient:QueryDepositRecord API Node Unavailable. Could not perform query: ' + e.message)
+				
+			}
+		},
+		
+		
+		
+		
+		 		
+		
+		
+		async QueryDepositRecordAll({ commit, rootGetters, getters }, { options: { subscribe, all} = { subscribe:false, all:false}, params, query=null }) {
+			try {
+				const key = params ?? {};
+				const queryClient=await initQueryClient(rootGetters)
+				let value= (await queryClient.queryDepositRecordAll(query)).data
+				
+					
+				while (all && (<any> value).pagination && (<any> value).pagination.next_key!=null) {
+					let next_values=(await queryClient.queryDepositRecordAll({...query, 'pagination.key':(<any> value).pagination.next_key})).data
+					value = mergeResults(value, next_values);
+				}
+				commit('QUERY', { query: 'DepositRecordAll', key: { params: {...key}, query}, value })
+				if (subscribe) commit('SUBSCRIBE', { action: 'QueryDepositRecordAll', payload: { options: { all }, params: {...key},query }})
+				return getters['getDepositRecordAll']( { params: {...key}, query}) ?? {}
+			} catch (e) {
+				throw new Error('QueryClient:QueryDepositRecordAll API Node Unavailable. Could not perform query: ' + e.message)
 				
 			}
 		},
