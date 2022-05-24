@@ -34,8 +34,8 @@ func QueryBalanceCmd() *cobra.Command {
 		Use:   "query-balance [chain_id] [address] [denom]",
 		Short: `Query the balance on a chain.`,
 		Long: `query a specified account's balance of a specified denomination on a specified chain
-		e.g. "cosmos cosmos1pcag0cj4ttxg8l7pcg0q4ksuglswuuedcextl2 uatom"`,
-		Example: `query-balance cosmos cosmos1pcag0cj4ttxg8l7pcg0q4ksuglswuuedcextl2 uatom`,
+		e.g. "GAIA_1 cosmos1pcag0cj4ttxg8l7pcg0q4ksuglswuuedcextl2 uatom"`,
+		Example: `query-balance GAIA_1 cosmos1pcag0cj4ttxg8l7pcg0q4ksuglswuuedcextl2 uatom`,
 		Args:    cobra.ExactArgs(3),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientTxContext(cmd)
@@ -45,10 +45,11 @@ func QueryBalanceCmd() *cobra.Command {
 			chain_id := args[0]
 			address := args[1]
 			denom := args[2]
+			caller := clientCtx.GetFromAddress().String()
 
 			// TODO(TEST-50) create message based on parsed json
 			// msg, err := types.NewMsgSubmitTx(txMsg, viper.GetString(FlagConnectionID), clientCtx.GetFromAddress().String())
-			msg := types.NewQueryBalanceSubmitTx(chain_id, address, denom)
+			msg := types.NewQueryBalanceSubmitTx(chain_id, address, denom, caller)
 			if err := msg.ValidateBasic(); err != nil {
 				return err
 			}

@@ -127,8 +127,8 @@ func PackTxMsgAny(sdkMsg sdk.Msg) (*codectypes.Any, error) {
 //----------------------------------------------------------------
 
 //nolint:interfacer
-func NewQueryBalanceSubmitTx(chain_id string, address string, denom string) *MsgQueryBalance {
-	return &MsgQueryBalance{ChainId: chain_id, Address: address, Denom: denom}
+func NewQueryBalanceSubmitTx(chain_id string, address string, denom string, from_address string) *MsgQueryBalance {
+	return &MsgQueryBalance{ChainId: chain_id, Address: address, Denom: denom, Caller: from_address}
 }
 
 // Route Implements Msg.
@@ -157,9 +157,9 @@ func (msg MsgQueryBalance) GetSignBytes() []byte {
 
 // GetSigners Implements Msg.
 func (msg MsgQueryBalance) GetSigners() []sdk.AccAddress {
-	// fromAddress, _ := sdk.AccAddressFromBech32(msg.FromAddress)
-	// return []sdk.AccAddress{fromAddress}
-	return []sdk.AccAddress{}
+	fromAddress, _ := sdk.AccAddressFromBech32(msg.Caller)
+	return []sdk.AccAddress{fromAddress}
+	// return []sdk.AccAddress{}
 }
 
 //----------------------------------------------------------------
