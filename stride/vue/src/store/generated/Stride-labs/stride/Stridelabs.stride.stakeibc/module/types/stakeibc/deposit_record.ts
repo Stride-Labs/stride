@@ -1,7 +1,6 @@
 /* eslint-disable */
 import * as Long from "long";
 import { util, configure, Writer, Reader } from "protobufjs/minimal";
-import { HostZone } from "../stakeibc/host_zone";
 
 export const protobufPackage = "Stridelabs.stride.stakeibc";
 
@@ -9,15 +8,52 @@ export interface DepositRecord {
   id: number;
   amount: number;
   denom: string;
-  hostZone: HostZone | undefined;
+  hostZoneId: number;
   sender: string;
   purpose: number;
+}
+
+export enum DepositRecord_Purpose {
+  RECEIPT = 0,
+  TRANSACTION = 1,
+  UNRECOGNIZED = -1,
+}
+
+export function depositRecord_PurposeFromJSON(
+  object: any
+): DepositRecord_Purpose {
+  switch (object) {
+    case 0:
+    case "RECEIPT":
+      return DepositRecord_Purpose.RECEIPT;
+    case 1:
+    case "TRANSACTION":
+      return DepositRecord_Purpose.TRANSACTION;
+    case -1:
+    case "UNRECOGNIZED":
+    default:
+      return DepositRecord_Purpose.UNRECOGNIZED;
+  }
+}
+
+export function depositRecord_PurposeToJSON(
+  object: DepositRecord_Purpose
+): string {
+  switch (object) {
+    case DepositRecord_Purpose.RECEIPT:
+      return "RECEIPT";
+    case DepositRecord_Purpose.TRANSACTION:
+      return "TRANSACTION";
+    default:
+      return "UNKNOWN";
+  }
 }
 
 const baseDepositRecord: object = {
   id: 0,
   amount: 0,
   denom: "",
+  hostZoneId: 0,
   sender: "",
   purpose: 0,
 };
@@ -33,8 +69,8 @@ export const DepositRecord = {
     if (message.denom !== "") {
       writer.uint32(26).string(message.denom);
     }
-    if (message.hostZone !== undefined) {
-      HostZone.encode(message.hostZone, writer.uint32(34).fork()).ldelim();
+    if (message.hostZoneId !== 0) {
+      writer.uint32(32).uint64(message.hostZoneId);
     }
     if (message.sender !== "") {
       writer.uint32(42).string(message.sender);
@@ -62,7 +98,7 @@ export const DepositRecord = {
           message.denom = reader.string();
           break;
         case 4:
-          message.hostZone = HostZone.decode(reader, reader.uint32());
+          message.hostZoneId = longToNumber(reader.uint64() as Long);
           break;
         case 5:
           message.sender = reader.string();
@@ -95,10 +131,10 @@ export const DepositRecord = {
     } else {
       message.denom = "";
     }
-    if (object.hostZone !== undefined && object.hostZone !== null) {
-      message.hostZone = HostZone.fromJSON(object.hostZone);
+    if (object.hostZoneId !== undefined && object.hostZoneId !== null) {
+      message.hostZoneId = Number(object.hostZoneId);
     } else {
-      message.hostZone = undefined;
+      message.hostZoneId = 0;
     }
     if (object.sender !== undefined && object.sender !== null) {
       message.sender = String(object.sender);
@@ -118,10 +154,7 @@ export const DepositRecord = {
     message.id !== undefined && (obj.id = message.id);
     message.amount !== undefined && (obj.amount = message.amount);
     message.denom !== undefined && (obj.denom = message.denom);
-    message.hostZone !== undefined &&
-      (obj.hostZone = message.hostZone
-        ? HostZone.toJSON(message.hostZone)
-        : undefined);
+    message.hostZoneId !== undefined && (obj.hostZoneId = message.hostZoneId);
     message.sender !== undefined && (obj.sender = message.sender);
     message.purpose !== undefined && (obj.purpose = message.purpose);
     return obj;
@@ -144,10 +177,10 @@ export const DepositRecord = {
     } else {
       message.denom = "";
     }
-    if (object.hostZone !== undefined && object.hostZone !== null) {
-      message.hostZone = HostZone.fromPartial(object.hostZone);
+    if (object.hostZoneId !== undefined && object.hostZoneId !== null) {
+      message.hostZoneId = object.hostZoneId;
     } else {
-      message.hostZone = undefined;
+      message.hostZoneId = 0;
     }
     if (object.sender !== undefined && object.sender !== null) {
       message.sender = object.sender;
