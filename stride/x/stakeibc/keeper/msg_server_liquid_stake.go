@@ -11,7 +11,7 @@ import (
 
 func (k msgServer) LiquidStake(goCtx context.Context, msg *types.MsgLiquidStake) (*types.MsgLiquidStakeResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
-	panic("TESTING")
+
 	// Init variables
 	// get the sender address
 	sender, err := sdk.AccAddressFromBech32(msg.Creator)
