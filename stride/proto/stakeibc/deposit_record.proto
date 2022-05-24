@@ -8,8 +8,13 @@ message DepositRecord {
   uint64 id = 1;
   int32 amount = 2; 
   string denom = 3; 
-  HostZone hostZone = 4; 
+  uint64 hostZoneId = 4; 
   string sender = 5; 
+  enum Purpose {
+    RECEIPT = 0;
+    TRANSACTION = 1;
+    
+  }
   int32 purpose = 6; 
   
 }

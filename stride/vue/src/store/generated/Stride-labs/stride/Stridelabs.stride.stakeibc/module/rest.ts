@@ -35,7 +35,9 @@ export interface StakeibcDepositRecord {
   /** @format int32 */
   amount?: number;
   denom?: string;
-  hostZone?: StakeibcHostZone;
+
+  /** @format uint64 */
+  hostZoneId?: string;
   sender?: string;
 
   /** @format int32 */
