@@ -84,6 +84,7 @@ message MsgQueryBalance {
   string chain_id = 1 [ (gogoproto.moretags) = "yaml:\"chain_id\"" ];
   string address = 2 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
   string denom                       = 3;
+  string caller                      = 4;
 }
 
 message MsgQueryBalanceResponse {}
