@@ -6,8 +6,8 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	sdk "github.com/Stride-Labs/cosmos-sdk/types"
-	icatypes "github.com/Stride-Labs/ibc-go/v3/modules/apps/27-interchain-accounts/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	icatypes "github.com/cosmos/ibc-go/v3/modules/apps/27-interchain-accounts/types"
 
 	"github.com/Stride-Labs/stride/x/stakeibc/types"
 )

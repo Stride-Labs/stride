@@ -2,7 +2,7 @@ package keeper
 
 import (
 	"github.com/Stride-Labs/stride/x/stakeibc/types"
-	sdk "github.com/Stride-Labs/cosmos-sdk/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // GetParams get all parameters as types.Params

@@ -1,7 +1,7 @@
 package interchainquery
 
 import (
-	sdk "github.com/Stride-Labs/cosmos-sdk/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/Stride-Labs/stride/x/interchainquery/keeper"
 	"github.com/Stride-Labs/stride/x/interchainquery/types"

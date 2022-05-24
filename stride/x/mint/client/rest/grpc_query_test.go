@@ -7,9 +7,9 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/Stride-Labs/cosmos-sdk/testutil"
-	sdk "github.com/Stride-Labs/cosmos-sdk/types"
-	grpctypes "github.com/Stride-Labs/cosmos-sdk/types/grpc"
+	"github.com/cosmos/cosmos-sdk/testutil"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	grpctypes "github.com/cosmos/cosmos-sdk/types/grpc"
 
 	"github.com/gogo/protobuf/proto"
 	"github.com/stretchr/testify/suite"
@@ -17,7 +17,7 @@ import (
 	"github.com/Stride-Labs/stride/app"
 	minttypes "github.com/Stride-Labs/stride/x/mint/types"
 
-	"github.com/Stride-Labs/cosmos-sdk/testutil/network"
+	"github.com/cosmos/cosmos-sdk/testutil/network"
 )
 
 type IntegrationTestSuite struct {

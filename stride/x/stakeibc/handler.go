@@ -5,8 +5,8 @@ import (
 
 	"github.com/Stride-Labs/stride/x/stakeibc/keeper"
 	"github.com/Stride-Labs/stride/x/stakeibc/types"
-	sdk "github.com/Stride-Labs/cosmos-sdk/types"
-	sdkerrors "github.com/Stride-Labs/cosmos-sdk/types/errors"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
 // NewHandler ...

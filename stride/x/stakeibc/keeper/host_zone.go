@@ -4,8 +4,8 @@ import (
 	"encoding/binary"
 
 	"github.com/Stride-Labs/stride/x/stakeibc/types"
-	"github.com/Stride-Labs/cosmos-sdk/store/prefix"
-	sdk "github.com/Stride-Labs/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/store/prefix"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // GetHostZoneCount get the total number of hostZone

@@ -3,14 +3,14 @@ package stakeibc
 import (
 	"fmt"
 
+	channeltypes "github.com/cosmos/ibc-go/v3/modules/core/04-channel/types"
+	host "github.com/cosmos/ibc-go/v3/modules/core/24-host"
+	ibcexported "github.com/cosmos/ibc-go/v3/modules/core/exported"
 	"github.com/Stride-Labs/stride/x/stakeibc/keeper"
 	"github.com/Stride-Labs/stride/x/stakeibc/types"
-	sdk "github.com/Stride-Labs/cosmos-sdk/types"
-	sdkerrors "github.com/Stride-Labs/cosmos-sdk/types/errors"
-	capabilitytypes "github.com/Stride-Labs/cosmos-sdk/x/capability/types"
-	channeltypes "github.com/Stride-Labs/ibc-go/v3/modules/core/04-channel/types"
-	host "github.com/Stride-Labs/ibc-go/v3/modules/core/24-host"
-	ibcexported "github.com/Stride-Labs/ibc-go/v3/modules/core/exported"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
 )
 
 // IBCModule implements the ICS26 interface for interchain accounts controller chains

@@ -6,7 +6,7 @@ package types
 import (
 	fmt "fmt"
 	_ "github.com/cosmos/cosmos-proto"
-	github_com_cosmos_cosmos_sdk_types "github.com/Stride-Labs/cosmos-sdk/types"
+	github_com_cosmos_cosmos_sdk_types "github.com/cosmos/cosmos-sdk/types"
 	_ "github.com/gogo/protobuf/gogoproto"
 	proto "github.com/gogo/protobuf/proto"
 	io "io"
@@ -31,8 +31,8 @@ type Query struct {
 	ChainId         string                                 `protobuf:"bytes,3,opt,name=chain_id,json=chainId,proto3" json:"chain_id,omitempty"`
 	QueryType       string                                 `protobuf:"bytes,4,opt,name=query_type,json=queryType,proto3" json:"query_type,omitempty"`
 	QueryParameters map[string]string                      `protobuf:"bytes,5,rep,name=query_parameters,json=queryParameters,proto3" json:"query_parameters,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
-	Period          github_com_cosmos_cosmos_sdk_types.Int `protobuf:"bytes,6,opt,name=period,proto3,customtype=github.com/Stride-Labs/cosmos-sdk/types.Int" json:"period"`
-	LastHeight      github_com_cosmos_cosmos_sdk_types.Int `protobuf:"bytes,7,opt,name=last_height,json=lastHeight,proto3,customtype=github.com/Stride-Labs/cosmos-sdk/types.Int" json:"last_height"`
+	Period          github_com_cosmos_cosmos_sdk_types.Int `protobuf:"bytes,6,opt,name=period,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Int" json:"period"`
+	LastHeight      github_com_cosmos_cosmos_sdk_types.Int `protobuf:"bytes,7,opt,name=last_height,json=lastHeight,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Int" json:"last_height"`
 }
 
 func (m *Query) Reset()         { *m = Query{} }
@@ -105,8 +105,8 @@ func (m *Query) GetQueryParameters() map[string]string {
 
 type DataPoint struct {
 	Id           string                                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	RemoteHeight github_com_cosmos_cosmos_sdk_types.Int `protobuf:"bytes,2,opt,name=remote_height,json=remoteHeight,proto3,customtype=github.com/Stride-Labs/cosmos-sdk/types.Int" json:"remote_height"`
-	LocalHeight  github_com_cosmos_cosmos_sdk_types.Int `protobuf:"bytes,3,opt,name=local_height,json=localHeight,proto3,customtype=github.com/Stride-Labs/cosmos-sdk/types.Int" json:"local_height"`
+	RemoteHeight github_com_cosmos_cosmos_sdk_types.Int `protobuf:"bytes,2,opt,name=remote_height,json=remoteHeight,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Int" json:"remote_height"`
+	LocalHeight  github_com_cosmos_cosmos_sdk_types.Int `protobuf:"bytes,3,opt,name=local_height,json=localHeight,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Int" json:"local_height"`
 	Value        []byte                                 `protobuf:"bytes,4,opt,name=value,proto3" json:"result,omitempty"`
 }
 

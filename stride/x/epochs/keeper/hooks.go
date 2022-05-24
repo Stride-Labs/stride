@@ -1,7 +1,7 @@
 package keeper
 
 import (
-	sdk "github.com/Stride-Labs/cosmos-sdk/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // AfterEpochEnd executes the indicated hook after epochs ends

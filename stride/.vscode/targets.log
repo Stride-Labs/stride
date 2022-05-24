@@ -49,7 +49,7 @@ whitespace := $(subst ,, )
 # environment
 _ = /usr/bin/make
 # makefile (from `Makefile', line 7)
-SDK_PACK := github.com/Stride-Labs/cosmos-sdk@v0.45.4
+SDK_PACK := github.com/cosmos/cosmos-sdk@v0.45.4
 # makefile (from `sims.mk', line 1)
 MAKEFILE_LIST :=  Makefile tools.mk sims.mk
 # makefile (from `Makefile', line 31)
@@ -67,7 +67,7 @@ BUILDDIR = $(CURDIR)/build
 # makefile (from `Makefile', line 173)
 containerProtoFmt = stride-proto-fmt-$(protoVer)
 # makefile (from `Makefile', line 71)
-ldflags := -X github.com/Stride-Labs/cosmos-sdk/version.Name=stride -X github.com/Stride-Labs/cosmos-sdk/version.AppName=strided -X github.com/Stride-Labs/cosmos-sdk/version.Version=0-13-g337247a -X github.com/Stride-Labs/cosmos-sdk/version.Commit=337247add58e48d9ba9f0450eeb0f0a5784ee61a -X "github.com/Stride-Labs/cosmos-sdk/version.BuildTags=netgo,ledger" -w -s
+ldflags := -X github.com/cosmos/cosmos-sdk/version.Name=stride -X github.com/cosmos/cosmos-sdk/version.AppName=strided -X github.com/cosmos/cosmos-sdk/version.Version=0-13-g337247a -X github.com/cosmos/cosmos-sdk/version.Commit=337247add58e48d9ba9f0450eeb0f0a5784ee61a -X "github.com/cosmos/cosmos-sdk/version.BuildTags=netgo,ledger" -w -s
 # environment
 __CFBundleIdentifier = com.microsoft.VSCode
 # environment
@@ -155,7 +155,7 @@ BINDIR = $(GOPATH)/bin
 # makefile (from `sims.mk', line 56)
 SIM_NUM_BLOCKS = 500
 # makefile (from `Makefile', line 76)
-BUILD_FLAGS := -tags "netgo ledger" -ldflags '-X github.com/Stride-Labs/cosmos-sdk/version.Name=stride -X github.com/Stride-Labs/cosmos-sdk/version.AppName=strided -X github.com/Stride-Labs/cosmos-sdk/version.Version=0-13-g337247a -X github.com/Stride-Labs/cosmos-sdk/version.Commit=337247add58e48d9ba9f0450eeb0f0a5784ee61a -X "github.com/Stride-Labs/cosmos-sdk/version.BuildTags=netgo,ledger" -w -s' -trimpath
+BUILD_FLAGS := -tags "netgo ledger" -ldflags '-X github.com/cosmos/cosmos-sdk/version.Name=stride -X github.com/cosmos/cosmos-sdk/version.AppName=strided -X github.com/cosmos/cosmos-sdk/version.Version=0-13-g337247a -X github.com/cosmos/cosmos-sdk/version.Commit=337247add58e48d9ba9f0450eeb0f0a5784ee61a -X "github.com/cosmos/cosmos-sdk/version.BuildTags=netgo,ledger" -w -s' -trimpath
 # default
 MAKE_VERSION := 3.81
 # environment
@@ -370,7 +370,7 @@ format:
 #  commands to execute (from `Makefile', line 241):
 	find . -name '*.go' -type f -not -path "./vendor*" -not -path "*.git*" -not -path "./client/lcd/statik/statik.go" | xargs gofmt -w -s
 	find . -name '*.go' -type f -not -path "./vendor*" -not -path "*.git*" -not -path "./client/lcd/statik/statik.go" | xargs misspell -w
-	find . -name '*.go' -type f -not -path "./vendor*" -not -path "*.git*" -not -path "./client/lcd/statik/statik.go" | xargs goimports -w -local github.com/Stride-Labs/cosmos-sdk
+	find . -name '*.go' -type f -not -path "./vendor*" -not -path "*.git*" -not -path "./client/lcd/statik/statik.go" | xargs goimports -w -local github.com/cosmos/cosmos-sdk
 	
 
 # Not a target:

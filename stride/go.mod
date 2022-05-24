@@ -2,19 +2,21 @@ module github.com/Stride-Labs/stride
 
 go 1.16
 
-// TODO(TEST-XX): use github.com/Stride-Labs/cosmos-sdk v0.45.4 by default,
-// sed to github.com/Stride-Labs/cosmos-sdk v0.45.4-debug if a flag is passed
+// TODO(TEST-XX): use github.com/cosmos/cosmos-sdk v0.45.4 by default,
+// sed to github.com/cosmos/cosmos-sdk v0.45.4-debug if a flag is passed
 // in make init (revert after build)
 require (
-	github.com/Stride-Labs/cosmos-sdk v0.45.4-debug-1
 	github.com/cosmos/cosmos-proto v1.0.0-alpha7
-	github.com/Stride-Labs/ibc-go/v3 v3.0.0-debug-1
+	github.com/cosmos/cosmos-sdk v0.45.4
+	github.com/cosmos/ibc-go/v3 v3.0.0
 	github.com/gogo/protobuf v1.3.3
 	github.com/golang/protobuf v1.5.2
 	github.com/google/go-cmp v0.5.8 // indirect
 	github.com/gorilla/mux v1.8.0
 	github.com/grpc-ecosystem/grpc-gateway v1.16.0
+	github.com/grpc-ecosystem/grpc-gateway/v2 v2.10.2 // indirect
 	github.com/ignite-hq/cli v0.21.0
+	github.com/regen-network/cosmos-proto v0.3.1 // indirect
 	github.com/spf13/cast v1.4.1
 	github.com/spf13/cobra v1.4.0
 	github.com/spf13/pflag v1.0.5
@@ -28,6 +30,8 @@ require (
 )
 
 replace (
+	// github.com/cosmos/ibc-go/v3 => github.com/Stride-Labs/ibc-go/v3 v3.0.0-debug-2
+	github.com/cosmos/cosmos-sdk => github.com/Stride-Labs/cosmos-sdk v0.45.4-debug-2
 	github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alpha.regen.1
 	github.com/ignite-hq/cli => github.com/ignite-hq/cli v0.21.0
 	github.com/keybase/go-keychain => github.com/99designs/go-keychain v0.0.0-20191008050251-8e49817e8af4

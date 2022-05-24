@@ -13,7 +13,7 @@ message Minter {
   // current epoch provisions
   string epoch_provisions = 1 [
     (gogoproto.moretags) = "yaml:\"epoch_provisions\"",
-    (gogoproto.customtype) = "github.com/Stride-Labs/cosmos-sdk/types.Dec",
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false
   ];
 }
@@ -22,28 +22,28 @@ message DistributionProportions {
   // staking defines the proportion of the minted minted_denom that is to be
   // allocated as staking rewards.
   string staking = 1 [
-    (gogoproto.customtype) = "github.com/Stride-Labs/cosmos-sdk/types.Dec",
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.moretags) = "yaml:\"staking\"",
     (gogoproto.nullable) = false
   ];
   // pool_incentives defines the proportion of the minted minted_denom that is
   // to be allocated as pool incentives.
   string pool_incentives = 2 [
-    (gogoproto.customtype) = "github.com/Stride-Labs/cosmos-sdk/types.Dec",
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.moretags) = "yaml:\"pool_incentives\"",
     (gogoproto.nullable) = false
   ];
   // participation_rewards defines the proportion of the minted minted_denom that is
   // to be allocated to participation rewards address.
   string participation_rewards = 3 [
-    (gogoproto.customtype) = "github.com/Stride-Labs/cosmos-sdk/types.Dec",
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.moretags) = "yaml:\"participation_rewards\"",
     (gogoproto.nullable) = false
   ];
   // community_pool defines the proportion of the minted minted_denom that is
   // to be allocated to the community pool.
   string community_pool = 4 [
-    (gogoproto.customtype) = "github.com/Stride-Labs/cosmos-sdk/types.Dec",
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.moretags) = "yaml:\"community_pool\"",
     (gogoproto.nullable) = false
   ];
@@ -58,7 +58,7 @@ message Params {
   // epoch provisions from the first epoch
   string genesis_epoch_provisions = 2 [
     (gogoproto.moretags) = "yaml:\"genesis_epoch_provisions\"",
-    (gogoproto.customtype) = "github.com/Stride-Labs/cosmos-sdk/types.Dec",
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false
   ];
   // mint epoch identifier
@@ -70,7 +70,7 @@ message Params {
   // reduction multiplier to execute on each period
   string reduction_factor = 5 [
     (gogoproto.moretags) = "yaml:\"reduction_factor\"",
-    (gogoproto.customtype) = "github.com/Stride-Labs/cosmos-sdk/types.Dec",
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false
   ];
   // distribution_proportions defines the proportion of the minted denom

@@ -1,11 +1,11 @@
 package app
 
 import (
-	"github.com/Stride-Labs/cosmos-sdk/client"
-	"github.com/Stride-Labs/cosmos-sdk/codec"
-	"github.com/Stride-Labs/cosmos-sdk/codec/types"
-	"github.com/Stride-Labs/cosmos-sdk/std"
-	"github.com/Stride-Labs/cosmos-sdk/x/auth/tx"
+	"github.com/cosmos/cosmos-sdk/client"
+	"github.com/cosmos/cosmos-sdk/codec"
+	"github.com/cosmos/cosmos-sdk/codec/types"
+	"github.com/cosmos/cosmos-sdk/std"
+	"github.com/cosmos/cosmos-sdk/x/auth/tx"
 )
 
 // TODO this file is heavily inspired by QS, we should see if any changes are needed

@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	epochstypes "github.com/Stride-Labs/stride/x/epochs/types"
-	sdk "github.com/Stride-Labs/cosmos-sdk/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochIdentifier string, epochNumber int64) {

@@ -4,8 +4,8 @@ import (
 	"os"
 
 	"github.com/Stride-Labs/stride/app"
-	svrcmd "github.com/Stride-Labs/cosmos-sdk/server/cmd"
-	sdk "github.com/Stride-Labs/cosmos-sdk/types"
+	svrcmd "github.com/cosmos/cosmos-sdk/server/cmd"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	cmdcfg "github.com/Stride-Labs/stride/cmd/strided/config"
 )

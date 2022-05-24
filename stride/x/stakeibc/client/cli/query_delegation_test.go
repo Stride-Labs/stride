@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"testing"
 
-	clitestutil "github.com/Stride-Labs/cosmos-sdk/testutil/cli"
+	clitestutil "github.com/cosmos/cosmos-sdk/testutil/cli"
 	"github.com/stretchr/testify/require"
 	tmcli "github.com/tendermint/tendermint/libs/cli"
 	"google.golang.org/grpc/status"

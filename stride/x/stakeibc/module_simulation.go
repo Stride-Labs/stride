@@ -6,12 +6,12 @@ import (
 	"github.com/Stride-Labs/stride/testutil/sample"
 	stakeibcsimulation "github.com/Stride-Labs/stride/x/stakeibc/simulation"
 	"github.com/Stride-Labs/stride/x/stakeibc/types"
-	"github.com/Stride-Labs/cosmos-sdk/baseapp"
-	simappparams "github.com/Stride-Labs/cosmos-sdk/simapp/params"
-	sdk "github.com/Stride-Labs/cosmos-sdk/types"
-	"github.com/Stride-Labs/cosmos-sdk/types/module"
-	simtypes "github.com/Stride-Labs/cosmos-sdk/types/simulation"
-	"github.com/Stride-Labs/cosmos-sdk/x/simulation"
+	"github.com/cosmos/cosmos-sdk/baseapp"
+	simappparams "github.com/cosmos/cosmos-sdk/simapp/params"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/types/module"
+	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
+	"github.com/cosmos/cosmos-sdk/x/simulation"
 )
 
 // avoid unused import issue

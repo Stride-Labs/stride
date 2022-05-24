@@ -3,8 +3,8 @@ package types // noalias
 import (
 	epochstypes "github.com/Stride-Labs/stride/x/epochs/types"
 
-	sdk "github.com/Stride-Labs/cosmos-sdk/types"
-	"github.com/Stride-Labs/cosmos-sdk/x/auth/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/x/auth/types"
 )
 
 // AccountKeeper defines the contract required for account APIs.
@@ -12,7 +12,7 @@ type AccountKeeper interface {
 	GetModuleAddress(name string) sdk.AccAddress
 	HasAccount(ctx sdk.Context, addr sdk.AccAddress) bool
 
-	// TODO remove with genesis 2-phases refactor https://github.com/Stride-Labs/cosmos-sdk/issues/2862
+	// TODO remove with genesis 2-phases refactor https://github.com/cosmos/cosmos-sdk/issues/2862
 	SetModuleAccount(sdk.Context, types.ModuleAccountI)
 	GetModuleAccount(ctx sdk.Context, moduleName string) types.ModuleAccountI
 }

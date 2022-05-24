@@ -1,7 +1,7 @@
 package types
 
 import (
-	sdk "github.com/Stride-Labs/cosmos-sdk/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // NewMinter returns a new Minter object with the given epoch
