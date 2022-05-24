@@ -10,10 +10,6 @@ export interface MsgSubmitQueryResponse {
   query_id: string;
   result: Uint8Array;
   height: number;
-  /**
-   * TODO(TEST-15): Add this type annotation back after installing cosmos_proto
-   * string from_address = 5 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
-   */
   from_address: string;
 }
 
