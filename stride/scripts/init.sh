@@ -17,7 +17,7 @@ done
 # run through init args, if needed
 while getopts bdfsa flag; do
     case "${flag}" in
-        # b) ignite chain build ;;
+        b) ignite chain build ;;
         d) sh $SCRIPT_DIR/docker_build.sh ;;
         f) sh $SCRIPT_DIR/docker_build.sh -f ;;
         s) sh $SCRIPT_DIR/docker_build.sh -s ;;

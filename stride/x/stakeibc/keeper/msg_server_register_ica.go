@@ -49,6 +49,14 @@ func (k Keeper) DelegateOnHost(goCtx context.Context, hostZone types.HostZone, a
 func (k Keeper) RegisterAccount(goCtx context.Context, msg *types.MsgRegisterAccount) (*types.MsgRegisterAccountResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
+	// return nil, sdkerrors.Wrapf(icatypes.ErrActiveChannelNotFound, "failed to retrieve active channel for port %s", k.icaControllerKeeper)
+
+	// if there is an active channel for this portID / connectionID return an error
+	// activeChannelID, found := k.icaControllerKeeper.GetOpenActiveChannel(ctx, msg.ConnectionId, msg.Owner)
+	// if found {
+	// 	return nil, sdkerrors.Wrapf(icatypes.ErrActiveChannelAlreadySet, "existing active channel %s for portID %s on connection %s for owner %s", activeChannelID, msg.PortID, connectionID, owner)
+	// }
+
 	if err := k.icaControllerKeeper.RegisterInterchainAccount(ctx, msg.ConnectionId, msg.Owner); err != nil {
 		return nil, err
 	}

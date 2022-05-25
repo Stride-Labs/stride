@@ -6,10 +6,11 @@ STRIDE_CHAIN_ID=STRIDE_1
 
 # Register an ICA on gaia from stride
 # --node tcp://localhost:16657
-strided tx stakeibc register-ica --from $STRIDE_ACCT_1 --connection-id connection-0 --chain-id $STRIDE_CHAIN /stride/.strided --keyring-backend test
+strided tx stakeibc register-ica connection-0 --from $STRIDE_ACCT_1 --chain-id $STRIDE_CHAIN_ID --home /stride/.strided --keyring-backend test
 
 # Query the address of the interchain account
-icad query intertx interchainaccounts connection-0 $DEMOWALLET_1 --home ./data/test-1 --node tcp://localhost:16657
+# --node tcp://localhost:16657
+strided query stakeibc interchainaccounts connection-0 $STRIDE_ACCT_1 --home /stride/.strided
 
 # Store the interchain account address by parsing the query result: cosmos1hd0f4u7zgptymmrn55h3hy20jv2u0ctdpq23cpe8m9pas8kzd87smtf8al
 export ICA_ADDR=$(icad query intertx interchainaccounts connection-0 $DEMOWALLET_1 --home ./data/test-1 --node tcp://localhost:16657 -o json | jq -r '.interchain_account_address') && echo $ICA_ADDR
@@ -26,3 +27,9 @@ icad query intertx interchainaccounts connection-0 $DEMOWALLET_1 --home ./data/t
 # Store the interchain account address by parsing the query result: cosmos1hd0f4u7zgptymmrn55h3hy20jv2u0ctdpq23cpe8m9pas8kzd87smtf8al
 export ICA_ADDR=$(icad query intertx interchainaccounts connection-0 $DEMOWALLET_1 --home ./data/test-1 --node tcp://localhost:16657 -o json | jq -r '.interchain_account_address') && echo $ICA_ADDR
 
+
+STRIDE_ACCT_1=stride1uk4ze0x4nvh4fk0xm4jdud58eqn4yxhrt52vv7
+STRIDE_CHAIN_ID=STRIDE_1
+strided tx stakeibc register-ica connection-0 --from $STRIDE_ACCT_1 --chain-id $STRIDE_CHAIN_ID --home /stride/.strided --keyring-backend test
+
+STRIDE_ACCT_1=stride1uk4ze0x4nvh4fk0xm4jdud58eqn4yxhrt52vv7 && STRIDE_CHAIN_ID=STRIDE_1 && strided tx stakeibc register-ica connection-0 --from $STRIDE_ACCT_1 --chain-id $STRIDE_CHAIN_ID --home /stride/.strided --keyring-backend test

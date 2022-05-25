@@ -3,14 +3,14 @@ package stakeibc
 import (
 	"fmt"
 
-	channeltypes "github.com/cosmos/ibc-go/v3/modules/core/04-channel/types"
-	host "github.com/cosmos/ibc-go/v3/modules/core/24-host"
-	ibcexported "github.com/cosmos/ibc-go/v3/modules/core/exported"
 	"github.com/Stride-Labs/stride/x/stakeibc/keeper"
 	"github.com/Stride-Labs/stride/x/stakeibc/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
+	channeltypes "github.com/cosmos/ibc-go/v3/modules/core/04-channel/types"
+	host "github.com/cosmos/ibc-go/v3/modules/core/24-host"
+	ibcexported "github.com/cosmos/ibc-go/v3/modules/core/exported"
 )
 
 // IBCModule implements the ICS26 interface for interchain accounts controller chains
@@ -54,7 +54,12 @@ func (im IBCModule) OnChanOpenInit(
 
 	// return nil
 	// ibc v3 https://github.com/cosmos/ibc/blob/f19c5d188d6de301d10a212406155cbb2ba2982f/spec/app/ics-027-interchain-accounts/README.md
-	return im.keeper.ClaimCapability(ctx, chanCap, host.ChannelCapabilityPath(portID, channelID))
+	// return im.keeper.ClaimCapability(ctx, chanCap, host.ChannelCapabilityPath(portID, channelID))
+	// the authentication module *must* claim the channel capability on OnChanOpenInit
+    if err := im.keeper.ClaimCapability(ctx, chanCap, host.ChannelCapabilityPath(portID, channelID)); err != nil {
+        return err
+    }
+	return nil
 }
 
 // OnChanOpenTry implements the IBCModule interface
@@ -69,7 +74,8 @@ func (im IBCModule) OnChanOpenTry(
 	counterpartyVersion string,
 ) (string, error) {
 	// ibc v3
-	return "", nil
+	panic("UNIMPLEMENTED")
+
 
 	// ibc v2 scaffolded code
 	// Require portID is the portID module is bound to
@@ -121,7 +127,8 @@ func (im IBCModule) OnChanOpenConfirm(
 	portID,
 	channelID string,
 ) error {
-	return nil
+	panic("UNIMPLEMENTED")
+
 }
 
 // OnChanCloseInit implements the IBCModule interface
@@ -130,6 +137,7 @@ func (im IBCModule) OnChanCloseInit(
 	portID,
 	channelID string,
 ) error {
+	panic("UNIMPLEMENTED")
 	// Disallow user-initiated channel closing for channels
 	return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "user cannot close channel")
 }
@@ -149,6 +157,7 @@ func (im IBCModule) OnRecvPacket(
 	modulePacket channeltypes.Packet,
 	relayer sdk.AccAddress,
 ) ibcexported.Acknowledgement {
+	panic("UNIMPLEMENTED")
 	var ack channeltypes.Acknowledgement
 
 	// this line is used by starport scaffolding # oracle/packet/module/recv
