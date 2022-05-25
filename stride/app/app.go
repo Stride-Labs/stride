@@ -51,7 +51,6 @@ import (
 	govkeeper "github.com/cosmos/cosmos-sdk/x/gov/keeper"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 
-	"github.com/Stride-Labs/stride/x/epochs"
 	"github.com/Stride-Labs/stride/x/mint"
 	mintkeeper "github.com/Stride-Labs/stride/x/mint/keeper"
 	minttypes "github.com/Stride-Labs/stride/x/mint/types"
@@ -116,7 +115,7 @@ import (
 )
 
 const (
-	AccountAddressPrefix = "cosmos"
+	AccountAddressPrefix = "stride"
 	Name                 = "stride"
 )
 
@@ -444,8 +443,6 @@ func NewStrideApp(
 	epochsKeeper := epochsmodulekeeper.NewKeeper(appCodec, keys[epochsmoduletypes.StoreKey])
 	app.EpochsKeeper = *epochsKeeper.SetHooks(
 		epochsmoduletypes.NewMultiEpochHooks(
-			// TODO(TEST-18) insert epoch hooks receivers here
-			// TODO(TEST-18) add interchain staking hooks here.
 			app.StakeibcKeeper.Hooks(),
 		),
 	)
@@ -504,7 +501,7 @@ func NewStrideApp(
 		interchainQueryModule,
 		icaModule,
 		// this line is used by starport scaffolding # stargate/app/appModule
-		epochs.NewAppModule(appCodec, app.EpochsKeeper),
+		epochsModule,
 	)
 
 	// During begin block slashing happens after distr.BeginBlocker so that

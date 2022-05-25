@@ -25,7 +25,6 @@ func IsIBCToken(denom string) bool {
 	return strings.HasPrefix(denom, "ibc/")
 }
 
-
 func (msg *MsgLiquidStake) Route() string {
 	return RouterKey
 }
