@@ -4,15 +4,15 @@ import { StdFee } from "@cosmjs/launchpad";
 import { SigningStargateClient } from "@cosmjs/stargate";
 import { Registry, OfflineSigner, EncodeObject, DirectSecp256k1HdWallet } from "@cosmjs/proto-signing";
 import { Api } from "./rest";
-import { MsgSubmitTx } from "./types/stakeibc/tx";
-import { MsgRegisterAccount } from "./types/stakeibc/tx";
 import { MsgLiquidStake } from "./types/stakeibc/tx";
+import { MsgRegisterAccount } from "./types/stakeibc/tx";
+import { MsgSubmitTx } from "./types/stakeibc/tx";
 
 
 const types = [
-  ["/Stridelabs.stride.stakeibc.MsgSubmitTx", MsgSubmitTx],
-  ["/Stridelabs.stride.stakeibc.MsgRegisterAccount", MsgRegisterAccount],
   ["/Stridelabs.stride.stakeibc.MsgLiquidStake", MsgLiquidStake],
+  ["/Stridelabs.stride.stakeibc.MsgRegisterAccount", MsgRegisterAccount],
+  ["/Stridelabs.stride.stakeibc.MsgSubmitTx", MsgSubmitTx],
   
 ];
 export const MissingWalletError = new Error("wallet is required");
@@ -45,9 +45,9 @@ const txClient = async (wallet: OfflineSigner, { addr: addr }: TxClientOptions =
 
   return {
     signAndBroadcast: (msgs: EncodeObject[], { fee, memo }: SignAndBroadcastOptions = {fee: defaultFee, memo: ""}) => client.signAndBroadcast(address, msgs, fee,memo),
-    msgSubmitTx: (data: MsgSubmitTx): EncodeObject => ({ typeUrl: "/Stridelabs.stride.stakeibc.MsgSubmitTx", value: MsgSubmitTx.fromPartial( data ) }),
-    msgRegisterAccount: (data: MsgRegisterAccount): EncodeObject => ({ typeUrl: "/Stridelabs.stride.stakeibc.MsgRegisterAccount", value: MsgRegisterAccount.fromPartial( data ) }),
     msgLiquidStake: (data: MsgLiquidStake): EncodeObject => ({ typeUrl: "/Stridelabs.stride.stakeibc.MsgLiquidStake", value: MsgLiquidStake.fromPartial( data ) }),
+    msgRegisterAccount: (data: MsgRegisterAccount): EncodeObject => ({ typeUrl: "/Stridelabs.stride.stakeibc.MsgRegisterAccount", value: MsgRegisterAccount.fromPartial( data ) }),
+    msgSubmitTx: (data: MsgSubmitTx): EncodeObject => ({ typeUrl: "/Stridelabs.stride.stakeibc.MsgSubmitTx", value: MsgSubmitTx.fromPartial( data ) }),
     
   };
 };
