@@ -28291,12 +28291,6 @@ paths:
                 format: int64
               from_address:
                 type: string
-                title: >-
-                  TODO(TEST-15): Add this type annotation back after installing
-                  cosmos_proto   
-
-                  string from_address = 5 [ (cosmos_proto.scalar) =
-                  "cosmos.AddressString" ];
             description: >-
               MsgSubmitQueryResponse represents a message type to fulfil a query
               request.
@@ -49828,12 +49822,6 @@ definitions:
         format: int64
       from_address:
         type: string
-        title: >-
-          TODO(TEST-15): Add this type annotation back after installing
-          cosmos_proto   
-
-          string from_address = 5 [ (cosmos_proto.scalar) =
-          "cosmos.AddressString" ];
     description: >-
       MsgSubmitQueryResponse represents a message type to fulfil a query
       request.
