@@ -47,9 +47,15 @@ func QueryBalanceCmd() *cobra.Command {
 			denom := args[2]
 			caller := clientCtx.GetFromAddress().String()
 
+			// TODO cleanup
+			if len(caller) < 1 {
+				return fmt.Errorf("Error: empty --from address.")
+			}
+			fmt.Println(caller)
+
 			// TODO(TEST-50) create message based on parsed json
 			// msg, err := types.NewMsgSubmitTx(txMsg, viper.GetString(FlagConnectionID), clientCtx.GetFromAddress().String())
-			msg := types.NewQueryBalanceSubmitTx(chain_id, address, denom, caller)
+			msg := types.NewQueryBalance(chain_id, address, denom, caller)
 			if err := msg.ValidateBasic(); err != nil {
 				return err
 			}
@@ -60,7 +66,6 @@ func QueryBalanceCmd() *cobra.Command {
 	// TODO what do these do? require a connection flag when submitting the command?
 	cmd.Flags().AddFlagSet(fsConnectionID)
 	_ = cmd.MarkFlagRequired(FlagConnectionID)
-
 	flags.AddTxFlagsToCmd(cmd)
 
 	return cmd
