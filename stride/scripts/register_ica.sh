@@ -34,9 +34,17 @@ strided tx stakeibc register-ica connection-0 --from $STRIDE_ACCT_1 --chain-id $
 strided q stakeibc interchainaccounts connection-0 $STRIDE_ACCT_1 --home ./stride/.strided
 # create ICA
 STRIDE_ACCT_1=stride1uk4ze0x4nvh4fk0xm4jdud58eqn4yxhrt52vv7 && STRIDE_CHAIN_ID=STRIDE_1 && strided tx stakeibc register-ica connection-0 --from $STRIDE_ACCT_1 --chain-id $STRIDE_CHAIN_ID --home /stride/.strided --keyring-backend test
+
+# query the ICA
+strided query stakeibc interchainaccounts connection-0 $STRIDE_ACCT_1 --home ./stride/.strided
+
+
 # add tokens on host
 COSMOS_ICA=cosmos1hjdmpf7r9yg0hcsyqk4qe06jc97zkte9pvvcfmzzyvjrdu5d0tfs825c98
-gaiad bank transfer gval1 $COSMOS_ICA 100uatom --keyring-backend test --home /gaia/.gaiad
+gaiad tx bank send gval1 $COSMOS_ICA 100uatom --keyring-backend test --home /gaia/.gaiad --chain-id GAIA_1
+
+# query balance
+gaiad q bank balances $COSMOS_ICA
 
 # gval2 validator
 VALIDATOR=cosmosvaloper19e7sugzt8zaamk2wyydzgmg9n3ysylg6na6k6e
@@ -50,4 +58,19 @@ strided tx stakeibc submit \
         "denom": "uatom",
         "amount": "1"
     }
-}' --connection-id connection-0 --from $STRIDE_ACCT_1 --chain-id test-1 --home ./stride/.strided --keyring-backend test -y
+}' --connection-id connection-0 --from $STRIDE_ACCT_1 --chain-id STRIDE_1 --home ./stride/.strided --keyring-backend test -y
+
+
+# ICA bank send
+strided tx stakeibc submit \
+'{
+    "@type":"/cosmos.bank.v1beta1.MsgSend",
+    "from_address":"cosmos1hjdmpf7r9yg0hcsyqk4qe06jc97zkte9pvvcfmzzyvjrdu5d0tfs825c98",
+    "to_address":"cosmos10h9stc5v6ntgeygf5xf945njqq5h32r53uquvw",
+    "amount": [
+        {
+            "denom": "stake",
+            "amount": "1000"
+        }
+    ]
+}' connection-0 --from $STRIDE_ACCT_1 --chain-id STRIDE_1 --home ./stride/.strided --keyring-backend test -y
