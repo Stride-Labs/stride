@@ -9,15 +9,7 @@ export interface Query {
   chain_id: string;
   query_type: string;
   query_parameters: { [key: string]: string };
-  /**
-   * TODO(TEST-15): Add this type annotation back after installing cosmos_proto
-   * (cosmos_proto.scalar) = "cosmos.Int",
-   */
   period: string;
-  /**
-   * TODO(TEST-15): Add this type annotation back after installing cosmos_proto
-   * (cosmos_proto.scalar) = "cosmos.Int",
-   */
   last_height: string;
 }
 
@@ -28,15 +20,7 @@ export interface Query_QueryParametersEntry {
 
 export interface DataPoint {
   id: string;
-  /**
-   * TODO(TEST-15): Add this type annotation back after installing cosmos_proto
-   * (cosmos_proto.scalar) = "cosmos.Int",
-   */
   remote_height: string;
-  /**
-   * TODO(TEST-15): Add this type annotation back after installing cosmos_proto
-   * (cosmos_proto.scalar) = "cosmos.Int",
-   */
   local_height: string;
   value: Uint8Array;
 }
