@@ -71,7 +71,8 @@ func (k msgServer) QueryBalance(goCtx context.Context, msg *types.MsgQueryBalanc
 	// TODO Check ChainId is supported by Stride, try using this approach https://github.com/ingenuity-build/quicksilver/blob/ea71f23c6ef09a57e601f4e544c4be9693f5ba81/x/interchainstaking/keeper/msg_server.go#L37
 
 	// Parse Address addr
-	_, err := sdk.AccAddressFromBech32(msg.Address)
+	// TODO should this be Address, not Caller? changed temporarily to suppress error
+	_, err := sdk.AccAddressFromBech32(msg.Caller)
 	if err != nil {
 		panic(err)
 	}
@@ -101,9 +102,14 @@ func (k msgServer) QueryBalance(goCtx context.Context, msg *types.MsgQueryBalanc
 
 	// TODO do we need to add a callback type for this to work?
 	// TODO
-	var cb = func(k Keeper, ctx sdk.Context, args []byte, query types.Query) error {
+	var cb Callback = func(k Keeper, ctx sdk.Context, args []byte, query types.Query) error {
+		k.Logger(ctx).Info("[TEMP] printing inside the querybalance callback")
 		return nil
 	}
+
+	// var cb Callback = func(k Keeper, ctx sdk.Context, args []byte, query types.Query) error {
+	// 	return k.SetAccountBalance(ctx, zone, query.QueryParameters["address"], args)
+	// }
 
 	k.Keeper.MakeRequest(
 		ctx,
@@ -114,7 +120,9 @@ func (k msgServer) QueryBalance(goCtx context.Context, msg *types.MsgQueryBalanc
 		// "cosmos.bank.v1beta1.Query/Balance",
 		"cosmos.bank.v1beta1.Query/AllBalances",
 		// pass in arguments to the query here
-		map[string]string{"address": msg.Address},
+		// map[string]string{"address": msg.Address},
+		// TODO revert from hardcode
+		map[string]string{"address": "cosmos1t2aqq3c6mt8fa6l5ady44manvhqf77sywjcldv"},
 		//TODO set this to something sensible
 		sdk.NewInt(25),
 		types.ModuleName,
