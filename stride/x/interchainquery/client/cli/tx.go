@@ -6,6 +6,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
+	"github.com/spf13/viper"
 
 	// "github.com/cosmos/interchain-accounts/x/inter-tx/types"
 	"github.com/Stride-Labs/stride/x/interchainquery/types"
@@ -55,7 +56,7 @@ func QueryBalanceCmd() *cobra.Command {
 
 			// TODO(TEST-50) create message based on parsed json
 			// msg, err := types.NewMsgSubmitTx(txMsg, viper.GetString(FlagConnectionID), clientCtx.GetFromAddress().String())
-			msg := types.NewQueryBalance(chain_id, address, denom, caller)
+			msg := types.NewQueryBalance(chain_id, address, denom, viper.GetString(FlagConnectionID), caller)
 			if err := msg.ValidateBasic(); err != nil {
 				return err
 			}
