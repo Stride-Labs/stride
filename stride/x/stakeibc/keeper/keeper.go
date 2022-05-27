@@ -23,8 +23,8 @@ type (
 		storeKey            sdk.StoreKey
 		memKey              sdk.StoreKey
 		paramstore          paramtypes.Subspace
-		ICAControllerKeeper icacontrollerkeeper.Keeper
-		IBCKeeper           ibckeeper.Keeper
+		icaControllerKeeper icacontrollerkeeper.Keeper
+		ibcKeeper           ibckeeper.Keeper
 		scopedKeeper        capabilitykeeper.ScopedKeeper
 
 		bankKeeper types.BankKeeper
@@ -64,8 +64,8 @@ func NewKeeper(
 		memKey:              memKey,
 		paramstore:          ps,
 		bankKeeper:          bankKeeper,
-		ICAControllerKeeper: icacontrollerkeeper,
-		IBCKeeper:           ibcKeeper,
+		icaControllerKeeper: icacontrollerkeeper,
+		ibcKeeper:           ibcKeeper,
 		scopedKeeper:        scopedKeeper,
 	}
 }
