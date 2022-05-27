@@ -127,8 +127,8 @@ func PackTxMsgAny(sdkMsg sdk.Msg) (*codectypes.Any, error) {
 //----------------------------------------------------------------
 
 //nolint:interfacer
-func NewQueryBalance(chain_id string, address string, denom string, from_address string) *MsgQueryBalance {
-	return &MsgQueryBalance{ChainId: chain_id, Address: address, Denom: denom, Caller: from_address}
+func NewQueryBalance(chain_id string, address string, denom string, connection_id string, from_address string) *MsgQueryBalance {
+	return &MsgQueryBalance{ChainId: chain_id, Address: address, Denom: denom, ConnectionId: connection_id, Caller: from_address}
 }
 
 // Route Implements Msg.
