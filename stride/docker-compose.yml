@@ -96,7 +96,7 @@ services:
   icq:
     image: stridezone:interchain-queries
     volumes:
-      - ./data/icq:/icq/.icq
+      - ./scripts/state/ICQ:/icq/.icq
     command:
       - ./interchain-queries 
       - run
