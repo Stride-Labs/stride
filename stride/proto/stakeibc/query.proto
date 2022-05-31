@@ -39,7 +39,7 @@ service Query {
 	}
 // Queries a HostZone by id.
 	rpc HostZone(QueryGetHostZoneRequest) returns (QueryGetHostZoneResponse) {
-		option (google.api.http).get = "/Stride-Labs/stride/stakeibc/host_zone/{id}";
+		option (google.api.http).get = "/Stride-Labs/stride/stakeibc/host_zone/{chain_id}";
 	}
 
 	// Queries a list of HostZone items.
@@ -104,7 +104,7 @@ message QueryGetICAAccountResponse {
 	ICAAccount ICAAccount = 1 [(gogoproto.nullable) = false];
 }
 message QueryGetHostZoneRequest {
-	uint64 id = 1;
+	string chain_id = 1;
 }
 
 message QueryGetHostZoneResponse {
