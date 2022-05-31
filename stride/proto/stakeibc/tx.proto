@@ -15,6 +15,8 @@ service Msg {
       rpc RegisterAccount(MsgRegisterAccount) returns (MsgRegisterAccountResponse);
       // TODO(TEST-53): Remove this pre-launch (no need for clients to create / interact with ICAs)
       rpc SubmitTx(MsgSubmitTx) returns (MsgSubmitTxResponse);
+      // TODO(TEST-53): Remove this pre-launch (no need for clients to create / interact with ICAs)
+      rpc RegisterHostZone(MsgRegisterHostZone) returns (MsgRegisterHostZoneResponse);
 // this line is used by starport scaffolding # proto/tx/rpc
 }
 
@@ -54,5 +56,21 @@ message MsgSubmitTx {
 // TODO(TEST-53): Remove this pre-launch (no need for clients to create / interact with ICAs)
 // MsgSubmitTxResponse defines the response for Msg/SubmitTx
 message MsgSubmitTxResponse {}
+
+message MsgRegisterHostZone{
+  option (gogoproto.equal) = false;
+  option (gogoproto.goproto_getters) = false;
+
+  string connection_id = 2 [ (gogoproto.moretags) = "yaml:\"connection_id\"" ];
+  string base_denom = 4 [ (gogoproto.moretags) = "yaml:\"base_denom\"" ];
+  string local_denom = 5 [ (gogoproto.moretags) = "yaml:\"local_denom\"" ];
+  string creator = 6;
+  // string account_prefix = 6[ (gogoproto.moretags) = "yaml:\"account_prefix\"" ];
+  // string from_address = 7 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+  // bool multi_send = 8;
+}
+
+// TODO(TEST-53): Remove this pre-launch (no need for clients to create / interact with ICAs)
+message MsgRegisterHostZoneResponse{}
 
 // this line is used by starport scaffolding # proto/tx/message
