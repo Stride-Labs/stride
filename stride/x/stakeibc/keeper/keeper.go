@@ -8,6 +8,7 @@ import (
 	"github.com/Stride-Labs/stride/x/stakeibc/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	bankKeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	capabilitykeeper "github.com/cosmos/cosmos-sdk/x/capability/keeper"
 	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
 
@@ -26,8 +27,7 @@ type (
 		icaControllerKeeper icacontrollerkeeper.Keeper
 		ibcKeeper           ibckeeper.Keeper
 		scopedKeeper        capabilitykeeper.ScopedKeeper
-
-		bankKeeper types.BankKeeper
+		bankKeeper 			bankKeeper.Keeper
 	}
 )
 
@@ -39,7 +39,7 @@ func NewKeeper(
 	// channelKeeper cosmosibckeeper.ChannelKeeper,
 	// portKeeper cosmosibckeeper.PortKeeper,
 	// scopedKeeper cosmosibckeeper.ScopedKeeper,
-	bankKeeper types.BankKeeper,
+	bankKeeper bankKeeper.Keeper,
 	icacontrollerkeeper icacontrollerkeeper.Keeper,
 	ibcKeeper ibckeeper.Keeper,
 	scopedKeeper capabilitykeeper.ScopedKeeper,
@@ -49,16 +49,16 @@ func NewKeeper(
 		ps = ps.WithKeyTable(types.ParamKeyTable())
 	}
 
+	// Scaffolding an ibc module using ignite creates a cosmosibckeeper.NewKeeper for the module,
+	// but this is not compatible with ibc-v3
+	// Keeper: cosmosibckeeper.NewKeeper(
+	// 	types.PortKey,
+	// 	storeKey,
+	// 	channelKeeper,
+	// 	portKeeper,
+	// 	scopedKeeper,
+	// ),
 	return Keeper{
-		// Scaffolding an ibc module using ignite creates a cosmosibckeeper.NewKeeper for the module,
-		// but this is not compatible with ibc-v3
-		// Keeper: cosmosibckeeper.NewKeeper(
-		// 	types.PortKey,
-		// 	storeKey,
-		// 	channelKeeper,
-		// 	portKeeper,
-		// 	scopedKeeper,
-		// ),
 		cdc:                 cdc,
 		storeKey:            storeKey,
 		memKey:              memKey,

@@ -29730,82 +29730,135 @@ paths:
                             type: integer
                             format: int32
                     rewardsAccount:
-                      type: array
-                      items:
-                        type: object
-                        properties:
-                          address:
-                            type: string
-                          balance:
-                            type: integer
-                            format: int32
-                          delegatedBalance:
-                            type: integer
-                            format: int32
-                          delegations:
-                            type: array
-                            items:
-                              type: object
-                              properties:
-                                delegateAcctAddress:
-                                  type: string
-                                validator:
-                                  type: object
-                                  properties:
-                                    name:
-                                      type: string
-                                    address:
-                                      type: string
-                                    status:
-                                      type: string
-                                    commissionRate:
-                                      type: integer
-                                      format: int32
-                                    delegationAmt:
-                                      type: integer
-                                      format: int32
-                                amt:
-                                  type: integer
-                                  format: int32
+                      type: object
+                      properties:
+                        address:
+                          type: string
+                        balance:
+                          type: integer
+                          format: int32
+                        delegatedBalance:
+                          type: integer
+                          format: int32
+                        delegations:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              delegateAcctAddress:
+                                type: string
+                              validator:
+                                type: object
+                                properties:
+                                  name:
+                                    type: string
+                                  address:
+                                    type: string
+                                  status:
+                                    type: string
+                                  commissionRate:
+                                    type: integer
+                                    format: int32
+                                  delegationAmt:
+                                    type: integer
+                                    format: int32
+                              amt:
+                                type: integer
+                                format: int32
+                        target:
+                          type: string
+                          enum:
+                            - DELEGATION
+                            - FEE
+                            - REWARDS
+                          default: DELEGATION
                     feeAccount:
-                      type: array
-                      items:
-                        type: object
-                        properties:
-                          address:
-                            type: string
-                          balance:
-                            type: integer
-                            format: int32
-                          delegatedBalance:
-                            type: integer
-                            format: int32
-                          delegations:
-                            type: array
-                            items:
-                              type: object
-                              properties:
-                                delegateAcctAddress:
-                                  type: string
-                                validator:
-                                  type: object
-                                  properties:
-                                    name:
-                                      type: string
-                                    address:
-                                      type: string
-                                    status:
-                                      type: string
-                                    commissionRate:
-                                      type: integer
-                                      format: int32
-                                    delegationAmt:
-                                      type: integer
-                                      format: int32
-                                amt:
-                                  type: integer
-                                  format: int32
-                  title: 'next id: 8'
+                      type: object
+                      properties:
+                        address:
+                          type: string
+                        balance:
+                          type: integer
+                          format: int32
+                        delegatedBalance:
+                          type: integer
+                          format: int32
+                        delegations:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              delegateAcctAddress:
+                                type: string
+                              validator:
+                                type: object
+                                properties:
+                                  name:
+                                    type: string
+                                  address:
+                                    type: string
+                                  status:
+                                    type: string
+                                  commissionRate:
+                                    type: integer
+                                    format: int32
+                                  delegationAmt:
+                                    type: integer
+                                    format: int32
+                              amt:
+                                type: integer
+                                format: int32
+                        target:
+                          type: string
+                          enum:
+                            - DELEGATION
+                            - FEE
+                            - REWARDS
+                          default: DELEGATION
+                    delegationAccount:
+                      type: object
+                      properties:
+                        address:
+                          type: string
+                        balance:
+                          type: integer
+                          format: int32
+                        delegatedBalance:
+                          type: integer
+                          format: int32
+                        delegations:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              delegateAcctAddress:
+                                type: string
+                              validator:
+                                type: object
+                                properties:
+                                  name:
+                                    type: string
+                                  address:
+                                    type: string
+                                  status:
+                                    type: string
+                                  commissionRate:
+                                    type: integer
+                                    format: int32
+                                  delegationAmt:
+                                    type: integer
+                                    format: int32
+                              amt:
+                                type: integer
+                                format: int32
+                        target:
+                          type: string
+                          enum:
+                            - DELEGATION
+                            - FEE
+                            - REWARDS
+                          default: DELEGATION
+                  title: 'next id: 9'
               pagination:
                 type: object
                 properties:
@@ -30129,82 +30182,135 @@ paths:
                           type: integer
                           format: int32
                   rewardsAccount:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        address:
-                          type: string
-                        balance:
-                          type: integer
-                          format: int32
-                        delegatedBalance:
-                          type: integer
-                          format: int32
-                        delegations:
-                          type: array
-                          items:
-                            type: object
-                            properties:
-                              delegateAcctAddress:
-                                type: string
-                              validator:
-                                type: object
-                                properties:
-                                  name:
-                                    type: string
-                                  address:
-                                    type: string
-                                  status:
-                                    type: string
-                                  commissionRate:
-                                    type: integer
-                                    format: int32
-                                  delegationAmt:
-                                    type: integer
-                                    format: int32
-                              amt:
-                                type: integer
-                                format: int32
+                    type: object
+                    properties:
+                      address:
+                        type: string
+                      balance:
+                        type: integer
+                        format: int32
+                      delegatedBalance:
+                        type: integer
+                        format: int32
+                      delegations:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            delegateAcctAddress:
+                              type: string
+                            validator:
+                              type: object
+                              properties:
+                                name:
+                                  type: string
+                                address:
+                                  type: string
+                                status:
+                                  type: string
+                                commissionRate:
+                                  type: integer
+                                  format: int32
+                                delegationAmt:
+                                  type: integer
+                                  format: int32
+                            amt:
+                              type: integer
+                              format: int32
+                      target:
+                        type: string
+                        enum:
+                          - DELEGATION
+                          - FEE
+                          - REWARDS
+                        default: DELEGATION
                   feeAccount:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        address:
-                          type: string
-                        balance:
-                          type: integer
-                          format: int32
-                        delegatedBalance:
-                          type: integer
-                          format: int32
-                        delegations:
-                          type: array
-                          items:
-                            type: object
-                            properties:
-                              delegateAcctAddress:
-                                type: string
-                              validator:
-                                type: object
-                                properties:
-                                  name:
-                                    type: string
-                                  address:
-                                    type: string
-                                  status:
-                                    type: string
-                                  commissionRate:
-                                    type: integer
-                                    format: int32
-                                  delegationAmt:
-                                    type: integer
-                                    format: int32
-                              amt:
-                                type: integer
-                                format: int32
-                title: 'next id: 8'
+                    type: object
+                    properties:
+                      address:
+                        type: string
+                      balance:
+                        type: integer
+                        format: int32
+                      delegatedBalance:
+                        type: integer
+                        format: int32
+                      delegations:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            delegateAcctAddress:
+                              type: string
+                            validator:
+                              type: object
+                              properties:
+                                name:
+                                  type: string
+                                address:
+                                  type: string
+                                status:
+                                  type: string
+                                commissionRate:
+                                  type: integer
+                                  format: int32
+                                delegationAmt:
+                                  type: integer
+                                  format: int32
+                            amt:
+                              type: integer
+                              format: int32
+                      target:
+                        type: string
+                        enum:
+                          - DELEGATION
+                          - FEE
+                          - REWARDS
+                        default: DELEGATION
+                  delegationAccount:
+                    type: object
+                    properties:
+                      address:
+                        type: string
+                      balance:
+                        type: integer
+                        format: int32
+                      delegatedBalance:
+                        type: integer
+                        format: int32
+                      delegations:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            delegateAcctAddress:
+                              type: string
+                            validator:
+                              type: object
+                              properties:
+                                name:
+                                  type: string
+                                address:
+                                  type: string
+                                status:
+                                  type: string
+                                commissionRate:
+                                  type: integer
+                                  format: int32
+                                delegationAmt:
+                                  type: integer
+                                  format: int32
+                            amt:
+                              type: integer
+                              format: int32
+                      target:
+                        type: string
+                        enum:
+                          - DELEGATION
+                          - FEE
+                          - REWARDS
+                        default: DELEGATION
+                title: 'next id: 9'
         default:
           description: An unexpected error response.
           schema:
@@ -30444,6 +30550,13 @@ paths:
                         amt:
                           type: integer
                           format: int32
+                  target:
+                    type: string
+                    enum:
+                      - DELEGATION
+                      - FEE
+                      - REWARDS
+                    default: DELEGATION
         default:
           description: An unexpected error response.
           schema:
@@ -51657,82 +51770,135 @@ definitions:
               type: integer
               format: int32
       rewardsAccount:
-        type: array
-        items:
-          type: object
-          properties:
-            address:
-              type: string
-            balance:
-              type: integer
-              format: int32
-            delegatedBalance:
-              type: integer
-              format: int32
-            delegations:
-              type: array
-              items:
-                type: object
-                properties:
-                  delegateAcctAddress:
-                    type: string
-                  validator:
-                    type: object
-                    properties:
-                      name:
-                        type: string
-                      address:
-                        type: string
-                      status:
-                        type: string
-                      commissionRate:
-                        type: integer
-                        format: int32
-                      delegationAmt:
-                        type: integer
-                        format: int32
-                  amt:
-                    type: integer
-                    format: int32
+        type: object
+        properties:
+          address:
+            type: string
+          balance:
+            type: integer
+            format: int32
+          delegatedBalance:
+            type: integer
+            format: int32
+          delegations:
+            type: array
+            items:
+              type: object
+              properties:
+                delegateAcctAddress:
+                  type: string
+                validator:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                    address:
+                      type: string
+                    status:
+                      type: string
+                    commissionRate:
+                      type: integer
+                      format: int32
+                    delegationAmt:
+                      type: integer
+                      format: int32
+                amt:
+                  type: integer
+                  format: int32
+          target:
+            type: string
+            enum:
+              - DELEGATION
+              - FEE
+              - REWARDS
+            default: DELEGATION
       feeAccount:
-        type: array
-        items:
-          type: object
-          properties:
-            address:
-              type: string
-            balance:
-              type: integer
-              format: int32
-            delegatedBalance:
-              type: integer
-              format: int32
-            delegations:
-              type: array
-              items:
-                type: object
-                properties:
-                  delegateAcctAddress:
-                    type: string
-                  validator:
-                    type: object
-                    properties:
-                      name:
-                        type: string
-                      address:
-                        type: string
-                      status:
-                        type: string
-                      commissionRate:
-                        type: integer
-                        format: int32
-                      delegationAmt:
-                        type: integer
-                        format: int32
-                  amt:
-                    type: integer
-                    format: int32
-    title: 'next id: 8'
+        type: object
+        properties:
+          address:
+            type: string
+          balance:
+            type: integer
+            format: int32
+          delegatedBalance:
+            type: integer
+            format: int32
+          delegations:
+            type: array
+            items:
+              type: object
+              properties:
+                delegateAcctAddress:
+                  type: string
+                validator:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                    address:
+                      type: string
+                    status:
+                      type: string
+                    commissionRate:
+                      type: integer
+                      format: int32
+                    delegationAmt:
+                      type: integer
+                      format: int32
+                amt:
+                  type: integer
+                  format: int32
+          target:
+            type: string
+            enum:
+              - DELEGATION
+              - FEE
+              - REWARDS
+            default: DELEGATION
+      delegationAccount:
+        type: object
+        properties:
+          address:
+            type: string
+          balance:
+            type: integer
+            format: int32
+          delegatedBalance:
+            type: integer
+            format: int32
+          delegations:
+            type: array
+            items:
+              type: object
+              properties:
+                delegateAcctAddress:
+                  type: string
+                validator:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                    address:
+                      type: string
+                    status:
+                      type: string
+                    commissionRate:
+                      type: integer
+                      format: int32
+                    delegationAmt:
+                      type: integer
+                      format: int32
+                amt:
+                  type: integer
+                  format: int32
+          target:
+            type: string
+            enum:
+              - DELEGATION
+              - FEE
+              - REWARDS
+            default: DELEGATION
+    title: 'next id: 9'
   Stridelabs.stride.stakeibc.ICAAccount:
     type: object
     properties:
@@ -51769,6 +51935,20 @@ definitions:
             amt:
               type: integer
               format: int32
+      target:
+        type: string
+        enum:
+          - DELEGATION
+          - FEE
+          - REWARDS
+        default: DELEGATION
+  Stridelabs.stride.stakeibc.ICAAccountType:
+    type: string
+    enum:
+      - DELEGATION
+      - FEE
+      - REWARDS
+    default: DELEGATION
   Stridelabs.stride.stakeibc.MinValidatorRequirements:
     type: object
     properties:
@@ -51918,82 +52098,135 @@ definitions:
                     type: integer
                     format: int32
             rewardsAccount:
-              type: array
-              items:
-                type: object
-                properties:
-                  address:
-                    type: string
-                  balance:
-                    type: integer
-                    format: int32
-                  delegatedBalance:
-                    type: integer
-                    format: int32
-                  delegations:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        delegateAcctAddress:
-                          type: string
-                        validator:
-                          type: object
-                          properties:
-                            name:
-                              type: string
-                            address:
-                              type: string
-                            status:
-                              type: string
-                            commissionRate:
-                              type: integer
-                              format: int32
-                            delegationAmt:
-                              type: integer
-                              format: int32
-                        amt:
-                          type: integer
-                          format: int32
+              type: object
+              properties:
+                address:
+                  type: string
+                balance:
+                  type: integer
+                  format: int32
+                delegatedBalance:
+                  type: integer
+                  format: int32
+                delegations:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      delegateAcctAddress:
+                        type: string
+                      validator:
+                        type: object
+                        properties:
+                          name:
+                            type: string
+                          address:
+                            type: string
+                          status:
+                            type: string
+                          commissionRate:
+                            type: integer
+                            format: int32
+                          delegationAmt:
+                            type: integer
+                            format: int32
+                      amt:
+                        type: integer
+                        format: int32
+                target:
+                  type: string
+                  enum:
+                    - DELEGATION
+                    - FEE
+                    - REWARDS
+                  default: DELEGATION
             feeAccount:
-              type: array
-              items:
-                type: object
-                properties:
-                  address:
-                    type: string
-                  balance:
-                    type: integer
-                    format: int32
-                  delegatedBalance:
-                    type: integer
-                    format: int32
-                  delegations:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        delegateAcctAddress:
-                          type: string
-                        validator:
-                          type: object
-                          properties:
-                            name:
-                              type: string
-                            address:
-                              type: string
-                            status:
-                              type: string
-                            commissionRate:
-                              type: integer
-                              format: int32
-                            delegationAmt:
-                              type: integer
-                              format: int32
-                        amt:
-                          type: integer
-                          format: int32
-          title: 'next id: 8'
+              type: object
+              properties:
+                address:
+                  type: string
+                balance:
+                  type: integer
+                  format: int32
+                delegatedBalance:
+                  type: integer
+                  format: int32
+                delegations:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      delegateAcctAddress:
+                        type: string
+                      validator:
+                        type: object
+                        properties:
+                          name:
+                            type: string
+                          address:
+                            type: string
+                          status:
+                            type: string
+                          commissionRate:
+                            type: integer
+                            format: int32
+                          delegationAmt:
+                            type: integer
+                            format: int32
+                      amt:
+                        type: integer
+                        format: int32
+                target:
+                  type: string
+                  enum:
+                    - DELEGATION
+                    - FEE
+                    - REWARDS
+                  default: DELEGATION
+            delegationAccount:
+              type: object
+              properties:
+                address:
+                  type: string
+                balance:
+                  type: integer
+                  format: int32
+                delegatedBalance:
+                  type: integer
+                  format: int32
+                delegations:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      delegateAcctAddress:
+                        type: string
+                      validator:
+                        type: object
+                        properties:
+                          name:
+                            type: string
+                          address:
+                            type: string
+                          status:
+                            type: string
+                          commissionRate:
+                            type: integer
+                            format: int32
+                          delegationAmt:
+                            type: integer
+                            format: int32
+                      amt:
+                        type: integer
+                        format: int32
+                target:
+                  type: string
+                  enum:
+                    - DELEGATION
+                    - FEE
+                    - REWARDS
+                  default: DELEGATION
+          title: 'next id: 9'
       pagination:
         type: object
         properties:
@@ -52115,82 +52348,135 @@ definitions:
                   type: integer
                   format: int32
           rewardsAccount:
-            type: array
-            items:
-              type: object
-              properties:
-                address:
-                  type: string
-                balance:
-                  type: integer
-                  format: int32
-                delegatedBalance:
-                  type: integer
-                  format: int32
-                delegations:
-                  type: array
-                  items:
-                    type: object
-                    properties:
-                      delegateAcctAddress:
-                        type: string
-                      validator:
-                        type: object
-                        properties:
-                          name:
-                            type: string
-                          address:
-                            type: string
-                          status:
-                            type: string
-                          commissionRate:
-                            type: integer
-                            format: int32
-                          delegationAmt:
-                            type: integer
-                            format: int32
-                      amt:
-                        type: integer
-                        format: int32
+            type: object
+            properties:
+              address:
+                type: string
+              balance:
+                type: integer
+                format: int32
+              delegatedBalance:
+                type: integer
+                format: int32
+              delegations:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    delegateAcctAddress:
+                      type: string
+                    validator:
+                      type: object
+                      properties:
+                        name:
+                          type: string
+                        address:
+                          type: string
+                        status:
+                          type: string
+                        commissionRate:
+                          type: integer
+                          format: int32
+                        delegationAmt:
+                          type: integer
+                          format: int32
+                    amt:
+                      type: integer
+                      format: int32
+              target:
+                type: string
+                enum:
+                  - DELEGATION
+                  - FEE
+                  - REWARDS
+                default: DELEGATION
           feeAccount:
-            type: array
-            items:
-              type: object
-              properties:
-                address:
-                  type: string
-                balance:
-                  type: integer
-                  format: int32
-                delegatedBalance:
-                  type: integer
-                  format: int32
-                delegations:
-                  type: array
-                  items:
-                    type: object
-                    properties:
-                      delegateAcctAddress:
-                        type: string
-                      validator:
-                        type: object
-                        properties:
-                          name:
-                            type: string
-                          address:
-                            type: string
-                          status:
-                            type: string
-                          commissionRate:
-                            type: integer
-                            format: int32
-                          delegationAmt:
-                            type: integer
-                            format: int32
-                      amt:
-                        type: integer
-                        format: int32
-        title: 'next id: 8'
+            type: object
+            properties:
+              address:
+                type: string
+              balance:
+                type: integer
+                format: int32
+              delegatedBalance:
+                type: integer
+                format: int32
+              delegations:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    delegateAcctAddress:
+                      type: string
+                    validator:
+                      type: object
+                      properties:
+                        name:
+                          type: string
+                        address:
+                          type: string
+                        status:
+                          type: string
+                        commissionRate:
+                          type: integer
+                          format: int32
+                        delegationAmt:
+                          type: integer
+                          format: int32
+                    amt:
+                      type: integer
+                      format: int32
+              target:
+                type: string
+                enum:
+                  - DELEGATION
+                  - FEE
+                  - REWARDS
+                default: DELEGATION
+          delegationAccount:
+            type: object
+            properties:
+              address:
+                type: string
+              balance:
+                type: integer
+                format: int32
+              delegatedBalance:
+                type: integer
+                format: int32
+              delegations:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    delegateAcctAddress:
+                      type: string
+                    validator:
+                      type: object
+                      properties:
+                        name:
+                          type: string
+                        address:
+                          type: string
+                        status:
+                          type: string
+                        commissionRate:
+                          type: integer
+                          format: int32
+                        delegationAmt:
+                          type: integer
+                          format: int32
+                    amt:
+                      type: integer
+                      format: int32
+              target:
+                type: string
+                enum:
+                  - DELEGATION
+                  - FEE
+                  - REWARDS
+                default: DELEGATION
+        title: 'next id: 9'
   Stridelabs.stride.stakeibc.QueryGetICAAccountResponse:
     type: object
     properties:
@@ -52230,6 +52516,13 @@ definitions:
                 amt:
                   type: integer
                   format: int32
+          target:
+            type: string
+            enum:
+              - DELEGATION
+              - FEE
+              - REWARDS
+            default: DELEGATION
   Stridelabs.stride.stakeibc.QueryGetMinValidatorRequirementsResponse:
     type: object
     properties:

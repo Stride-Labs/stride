@@ -8,6 +8,8 @@ import (
 	"github.com/Stride-Labs/stride/x/stakeibc/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
+	stakingTypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	icatypes "github.com/cosmos/ibc-go/v3/modules/apps/27-interchain-accounts/types"
 	channeltypes "github.com/cosmos/ibc-go/v3/modules/core/04-channel/types"
