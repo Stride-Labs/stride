@@ -58,3 +58,23 @@ for docker_name in "${GAIA_DOCKER_NAMES[@]}"; do
   GAIA_CMDS+=( "$GAIA_RUN $docker_name gaiad --home=/gaia/.gaiad" )
 done
 main_gaia_cmd=${GAIA_CMDS[$MAIN_ID]}
+
+
+#### ON STRIDE
+#### register the zone
+# strided tx stakeibc register-host-zone connection-0 uatom statom --chain-id STRIDE_1 --home /stride/.strided --keyring-backend test --from val1 --gas 500000
+#### get the delegation address
+# strided q ibc channel channels
+# strided q stakeibc list-host-zone
+
+#### ON GAIA
+#### set vars
+# gaiad keys list --home /gaia/.gaiad --keyring-backend test
+# VAL_KEY=cosmos1pcag0cj4ttxg8l7pcg0q4ksuglswuuedcextl2
+# DELEGATION_ADDR=cosmos10ltqave0ml70h9ynfsp6py2pv925xuzys7ypmffr8ud92sj09dzs6xtq8e
+#### transfer
+# gaiad tx bank send $VAL_KEY $DELEGATION_ADDR 100uatom --chain-id GAIA_1 --home /gaia/.gaiad --keyring-backend test
+#### check balances
+# gaiad q bank balances cosmos10ltqave0ml70h9ynfsp6py2pv925xuzys7ypmffr8ud92sj09dzs6xtq8e --home /gaia/.gaiad
+#### check staked balances
+# gaiad q delegations

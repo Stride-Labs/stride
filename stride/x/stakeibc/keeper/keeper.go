@@ -25,8 +25,8 @@ type (
 		storeKey            sdk.StoreKey
 		memKey              sdk.StoreKey
 		paramstore          paramtypes.Subspace
-		icaControllerKeeper icacontrollerkeeper.Keeper
-		ibcKeeper           ibckeeper.Keeper
+		ICAControllerKeeper icacontrollerkeeper.Keeper
+		IBCKeeper           ibckeeper.Keeper
 		scopedKeeper        capabilitykeeper.ScopedKeeper
 		bankKeeper 			bankKeeper.Keeper
 	}
@@ -65,8 +65,8 @@ func NewKeeper(
 		memKey:              memKey,
 		paramstore:          ps,
 		bankKeeper:          bankKeeper,
-		icaControllerKeeper: icacontrollerkeeper,
-		ibcKeeper:           ibcKeeper,
+		ICAControllerKeeper: icacontrollerkeeper,
+		IBCKeeper:           ibcKeeper,
 		scopedKeeper:        scopedKeeper,
 	}
 }
@@ -81,11 +81,11 @@ func (k *Keeper) ClaimCapability(ctx sdk.Context, cap *capabilitytypes.Capabilit
 }
 
 func (k Keeper) GetChainID(ctx sdk.Context, connectionID string) (string, error) {
-	conn, found := k.ibcKeeper.ConnectionKeeper.GetConnection(ctx, connectionID)
+	conn, found := k.IBCKeeper.ConnectionKeeper.GetConnection(ctx, connectionID)
 	if !found {
 		return "", fmt.Errorf("invalid connection id, \"%s\" not found", connectionID)
 	}
-	clientState, found := k.ibcKeeper.ClientKeeper.GetClientState(ctx, conn.ClientId)
+	clientState, found := k.IBCKeeper.ClientKeeper.GetClientState(ctx, conn.ClientId)
 	if !found {
 		return "", fmt.Errorf("client id \"%s\" not found for connection \"%s\"", conn.ClientId, connectionID)
 	}
@@ -97,8 +97,25 @@ func (k Keeper) GetChainID(ctx sdk.Context, connectionID string) (string, error)
 	return client.ChainId, nil
 }
 
+func (k Keeper) GetCounterpartyChainId(ctx sdk.Context, connectionID string) (string, error) {
+	conn, found := k.IBCKeeper.ConnectionKeeper.GetConnection(ctx, connectionID)
+	if !found {
+		return "", fmt.Errorf("invalid connection id, \"%s\" not found", connectionID)
+	}
+	counterPartyClientState, found := k.IBCKeeper.ClientKeeper.GetClientState(ctx, conn.Counterparty.ClientId)
+	if !found {
+		return "", fmt.Errorf("counterparty client id \"%s\" not found for connection \"%s\"", conn.Counterparty.ClientId, connectionID)
+	}
+	counterpartyClient, ok := counterPartyClientState.(*ibctmtypes.ClientState)
+	if !ok {
+		return "", fmt.Errorf("invalid client state for client \"%s\" on connection \"%s\"", conn.Counterparty.ClientId, connectionID)
+	}
+
+	return counterpartyClient.ChainId, nil
+}
+
 func (k Keeper) GetConnectionId(ctx sdk.Context, portId string) (string, error) {
-	icas := k.icaControllerKeeper.GetAllInterchainAccounts(ctx)
+	icas := k.ICAControllerKeeper.GetAllInterchainAccounts(ctx)
 	for _, ica := range icas {
 		if ica.PortId == portId {
 			return ica.ConnectionId, nil

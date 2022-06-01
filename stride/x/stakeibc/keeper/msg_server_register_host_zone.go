@@ -34,26 +34,25 @@ func (k Keeper) RegisterHostZone(goCtx context.Context, msg *types.MsgRegisterHo
 		LocalDenom: msg.LocalDenom,
 		BaseDenom: msg.BaseDenom,
 	}
-
 	// write the zone back to the store
 	k.SetHostZone(ctx, zone)
 
 	// generate delegate account
 	// NOTE: in the future, if we implement proxy governance, we'll need many more delegate accounts
-	delegateAccount := chainId + ".delegate"
-	if err := k.icaControllerKeeper.RegisterInterchainAccount(ctx, zone.ConnectionId, delegateAccount); err != nil {
+	delegateAccount := types.FormatICAAccountOwner(chainId, types.ICAAccountType_DELEGATION)
+	if err := k.ICAControllerKeeper.RegisterInterchainAccount(ctx, zone.ConnectionId, delegateAccount); err != nil {
 		return nil, err
 	}
 
 	// generate fee account
-	feeAccount := chainId + ".fee"
-	if err := k.icaControllerKeeper.RegisterInterchainAccount(ctx, zone.ConnectionId, feeAccount); err != nil {
+	feeAccount := types.FormatICAAccountOwner(chainId, types.ICAAccountType_FEE)
+	if err := k.ICAControllerKeeper.RegisterInterchainAccount(ctx, zone.ConnectionId, feeAccount); err != nil {
 		return nil, err
 	}
 
 	// generate withdrawal account
-	withdrawalAccount := chainId + ".withdrawal"
-	if err := k.icaControllerKeeper.RegisterInterchainAccount(ctx, zone.ConnectionId, withdrawalAccount); err != nil {
+	withdrawalAccount := types.FormatICAAccountOwner(chainId, types.ICAAccountType_WITHDRAWAL)
+	if err := k.ICAControllerKeeper.RegisterInterchainAccount(ctx, zone.ConnectionId, withdrawalAccount); err != nil {
 		return nil, err
 	}
 
