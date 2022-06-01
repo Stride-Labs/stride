@@ -9,6 +9,7 @@
 stride/build/*
 stride/state/*
 stride/scripts/state/*
+stride/vue/*
 # Test binary, built with `go test -c`
 *.test
 
