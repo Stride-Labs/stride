@@ -8,9 +8,10 @@ option go_package = "github.com/Stride-Labs/stride/x/stakeibc/types";
 enum ICAAccountType {
   DELEGATION = 0;
   FEE = 1;
-  REWARDS = 2;
+  WITHDRAWAL = 2;
 }
 
+// TODO(TEST-XX): Update these fields to be more useful (e.g. balances should be coins, maybe store port name directly)
 message ICAAccount {
   string address = 1; 
   int32 balance = 2; 

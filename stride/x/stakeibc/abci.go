@@ -14,10 +14,32 @@ func BeginBlocker(ctx sdk.Context, k keeper.Keeper, bk types.BankKeeper) {
 	defer telemetry.ModuleMeasureSince(types.ModuleName, time.Now(), telemetry.MetricKeyBeginBlocker)
 	
 	if ctx.BlockHeight()%int64(types.DelegateInterval) == 0 {
-		// Assume ICA is registered
-		// Should we call iterate registered zones here?
-		// If so, function called on each zone should:
-		// ICA stake the current unstaked balance on the HostZone
-	}
+		icaStake := func(index int64, zoneInfo types.HostZone) (stop bool) {
+			// Verify the delegation ICA is registered
+			delegationIca := zoneInfo.GetDelegationAccount()
+			if delegationIca.Address == "" {
+				k.Logger(ctx).Error("Zone %s is missing a delegation address!", zoneInfo.ChainId)
+				return true
+			}
 
+			// TODO(TEST-XX): Update this to take in a real process amount
+			processAmount := "1" + zoneInfo.BaseDenom
+			amt, err := sdk.ParseCoinNormalized(processAmount)
+			// Do we want to panic here? All unprocessed zones would also fail
+			if err != nil {
+				panic(err)
+			}
+			err = k.DelegateOnHost(ctx, zoneInfo, amt)
+			if err != nil {
+				k.Logger(ctx).Error("Did not stake %s on %s", processAmount, zoneInfo.ChainId)
+				return true
+			} else {
+				k.Logger(ctx).Info("Successfully staked %s on %s", processAmount, zoneInfo.ChainId)
+			}
+			return false
+		}
+
+		// Iterate the zones and apply icaStake
+		k.IterateHostZones(ctx, icaStake)
+	}
 }

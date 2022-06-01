@@ -2,8 +2,6 @@ package keeper
 
 import (
 	"context"
-	"fmt"
-	"time"
 
 	"github.com/Stride-Labs/stride/x/stakeibc/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -30,7 +28,7 @@ func (k Keeper) SubmitTx(goCtx context.Context, msg *types.MsgSubmitTx) (*types.
 		return nil, err
 	}
 
-	channelID, found := k.icaControllerKeeper.GetActiveChannelID(ctx, msg.ConnectionId, portID)
+	channelID, found := k.ICAControllerKeeper.GetActiveChannelID(ctx, msg.ConnectionId, portID)
 	if !found {
 		return nil, sdkerrors.Wrapf(icatypes.ErrActiveChannelNotFound, "failed to retrieve active channel for port %s", portID)
 	}
@@ -54,7 +52,7 @@ func (k Keeper) SubmitTx(goCtx context.Context, msg *types.MsgSubmitTx) (*types.
 	// it is the responsibility of the auth module developer to ensure an appropriate timeout timestamp
 	// timeoutTimestamp := time.Now().Add(time.Minute).UnixNano()
 	timeoutTimestamp := ^uint64(0) >> 1
-	_, err = k.icaControllerKeeper.SendTx(ctx, chanCap, msg.ConnectionId, portID, packetData, uint64(timeoutTimestamp))
+	_, err = k.ICAControllerKeeper.SendTx(ctx, chanCap, msg.ConnectionId, portID, packetData, uint64(timeoutTimestamp))
 	if err != nil {
 		return nil, err
 	}
@@ -64,47 +62,51 @@ func (k Keeper) SubmitTx(goCtx context.Context, msg *types.MsgSubmitTx) (*types.
 
 // SubmitTx submits an ICA transaction
 // NOTE: this is not a standard message; only the stakeibc module can call this function
-func (k Keeper) DelegateOnHost(goCtx context.Context, hostZone types.HostZone, amt sdk.Coin) error {
-	ctx := sdk.UnwrapSDKContext(goCtx)
+func (k Keeper) DelegateOnHost(ctx sdk.Context, hostZone types.HostZone, amt sdk.Coin) error {
 	_ = ctx
 	var msgs []sdk.Msg
-	// TODO(TEST-38): Do we need to map between ports and connections? If so we can push this down to SubmitTx
-	// I was under the impression there was a single connection for each pair of connected chains
-	// (for some reason quicksilver maps between the two, but interchain-account-demo does not - they pull it off of the msg)
-	// How will we get the proper connectionId here?
-	connectionId := "hardcoded-connection"
+	// the relevant ICA is the delegate account
+	owner := types.FormatICAAccountOwner(hostZone.ChainId, types.ICAAccountType_DELEGATION)
+	portID, err := icatypes.NewControllerPortID(owner)
+	if err != nil {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "%s has no associated portId", owner)
+	}
+	connectionId, err := k.GetConnectionId(ctx, portID)
+	if err != nil {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidChainID, "%s has no associated connection", portID)
+	}
 
 	// Fetch the relevant ICA
 	delegationIca := hostZone.GetDelegationAccount()
 
 	// Construct the transaction
 	// TODO(TEST-39): Implement validator selection
-	validator_address := "hardcoded-validator-address"
+	validator_address := "cosmosvaloper19e7sugzt8zaamk2wyydzgmg9n3ysylg6na6k6e"  // gval2
+	
+	// construct the msg
 	msgs = append(msgs, &stakingTypes.MsgDelegate{DelegatorAddress: delegationIca.GetAddress(), ValidatorAddress: validator_address, Amount: amt})
-	// Send the transaction through SubmitTxs
-	k.SubmitTxs(goCtx, connectionId, msgs, *delegationIca)
-
+	// Send the transaction through SubmitTx
+	err = k.SubmitTxs(ctx, connectionId, msgs, *delegationIca)
+	if err != nil {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "Failed to SubmitTxs for %s, %s, %s", connectionId, hostZone.ChainId, msgs)
+	}
 	return nil
 }
 
 // SubmitTx submits an ICA transaction
 // NOTE: this is not a standard message; only the stakeibc module can call this function
-func (k Keeper) SubmitTxs(goCtx context.Context, connectionId string, msgs []sdk.Msg, account types.ICAAccount) error {
-	ctx := sdk.UnwrapSDKContext(goCtx)
-
-	// Each ICA is associated with a port; we can dynamically reconstruct the port from the fields on ICA,
-	// e.g. icacontroller-atom-{module_address}-DELEGATION
-	// NOTE: ports are scoped to chains
-	// How can we fetch chainId here?
-	chainId := "hardcoded-chainId"
-	// Sanity check the output of account.GetTarget() (not sure if it prints an int or a stringified ICAAccountType)
-	owner := fmt.Sprintf("%s-%s-%s", account.GetAddress(), chainId, account.GetTarget().String())
+func (k Keeper) SubmitTxs(ctx sdk.Context, connectionId string, msgs []sdk.Msg, account types.ICAAccount) error {
+	chainId, err := k.GetChainID(ctx, connectionId)
+	if err != nil {
+		return err
+	}
+	owner := types.FormatICAAccountOwner(chainId, account.GetTarget())
 	portID, err := icatypes.NewControllerPortID(owner)
 	if err != nil {
 		return err
 	}
 
-	channelID, found := k.icaControllerKeeper.GetActiveChannelID(ctx, connectionId, portID)
+	channelID, found := k.ICAControllerKeeper.GetActiveChannelID(ctx, connectionId, portID)
 	if !found {
 		return sdkerrors.Wrapf(icatypes.ErrActiveChannelNotFound, "failed to retrieve active channel for port %s", portID)
 	}
@@ -127,8 +129,8 @@ func (k Keeper) SubmitTxs(goCtx context.Context, connectionId string, msgs []sdk
 	// timeoutTimestamp set to max value with the unsigned bit shifted to sastisfy hermes timestamp conversion
 	// it is the responsibility of the auth module developer to ensure an appropriate timeout timestamp
 	// TODO(TEST-37): Decide on timeout logic
-	timeoutTimestamp := time.Now().Add(time.Minute).UnixNano()
-	_, err = k.icaControllerKeeper.SendTx(ctx, chanCap, connectionId, portID, packetData, uint64(timeoutTimestamp))
+	timeoutTimestamp := ^uint64(0) >> 1
+	_, err = k.ICAControllerKeeper.SendTx(ctx, chanCap, connectionId, portID, packetData, uint64(timeoutTimestamp))
 	if err != nil {
 		return err
 	}

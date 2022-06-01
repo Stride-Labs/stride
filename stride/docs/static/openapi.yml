@@ -29767,8 +29767,12 @@ paths:
                           enum:
                             - DELEGATION
                             - FEE
-                            - REWARDS
+                            - WITHDRAWAL
                           default: DELEGATION
+                      title: >-
+                        TODO(TEST-XX): Update these fields to be more useful
+                        (e.g. balances should be coins, maybe store port name
+                        directly)
                     feeAccount:
                       type: object
                       properties:
@@ -29810,8 +29814,12 @@ paths:
                           enum:
                             - DELEGATION
                             - FEE
-                            - REWARDS
+                            - WITHDRAWAL
                           default: DELEGATION
+                      title: >-
+                        TODO(TEST-XX): Update these fields to be more useful
+                        (e.g. balances should be coins, maybe store port name
+                        directly)
                     delegationAccount:
                       type: object
                       properties:
@@ -29853,8 +29861,12 @@ paths:
                           enum:
                             - DELEGATION
                             - FEE
-                            - REWARDS
+                            - WITHDRAWAL
                           default: DELEGATION
+                      title: >-
+                        TODO(TEST-XX): Update these fields to be more useful
+                        (e.g. balances should be coins, maybe store port name
+                        directly)
                     LocalDenom:
                       type: string
                     BaseDenom:
@@ -30220,8 +30232,11 @@ paths:
                         enum:
                           - DELEGATION
                           - FEE
-                          - REWARDS
+                          - WITHDRAWAL
                         default: DELEGATION
+                    title: >-
+                      TODO(TEST-XX): Update these fields to be more useful (e.g.
+                      balances should be coins, maybe store port name directly)
                   feeAccount:
                     type: object
                     properties:
@@ -30263,8 +30278,11 @@ paths:
                         enum:
                           - DELEGATION
                           - FEE
-                          - REWARDS
+                          - WITHDRAWAL
                         default: DELEGATION
+                    title: >-
+                      TODO(TEST-XX): Update these fields to be more useful (e.g.
+                      balances should be coins, maybe store port name directly)
                   delegationAccount:
                     type: object
                     properties:
@@ -30306,8 +30324,11 @@ paths:
                         enum:
                           - DELEGATION
                           - FEE
-                          - REWARDS
+                          - WITHDRAWAL
                         default: DELEGATION
+                    title: >-
+                      TODO(TEST-XX): Update these fields to be more useful (e.g.
+                      balances should be coins, maybe store port name directly)
                   LocalDenom:
                     type: string
                   BaseDenom:
@@ -30556,8 +30577,11 @@ paths:
                     enum:
                       - DELEGATION
                       - FEE
-                      - REWARDS
+                      - WITHDRAWAL
                     default: DELEGATION
+                title: >-
+                  TODO(TEST-XX): Update these fields to be more useful (e.g.
+                  balances should be coins, maybe store port name directly)
         default:
           description: An unexpected error response.
           schema:
@@ -51808,8 +51832,11 @@ definitions:
             enum:
               - DELEGATION
               - FEE
-              - REWARDS
+              - WITHDRAWAL
             default: DELEGATION
+        title: >-
+          TODO(TEST-XX): Update these fields to be more useful (e.g. balances
+          should be coins, maybe store port name directly)
       feeAccount:
         type: object
         properties:
@@ -51851,8 +51878,11 @@ definitions:
             enum:
               - DELEGATION
               - FEE
-              - REWARDS
+              - WITHDRAWAL
             default: DELEGATION
+        title: >-
+          TODO(TEST-XX): Update these fields to be more useful (e.g. balances
+          should be coins, maybe store port name directly)
       delegationAccount:
         type: object
         properties:
@@ -51894,8 +51924,11 @@ definitions:
             enum:
               - DELEGATION
               - FEE
-              - REWARDS
+              - WITHDRAWAL
             default: DELEGATION
+        title: >-
+          TODO(TEST-XX): Update these fields to be more useful (e.g. balances
+          should be coins, maybe store port name directly)
       LocalDenom:
         type: string
       BaseDenom:
@@ -51942,14 +51975,17 @@ definitions:
         enum:
           - DELEGATION
           - FEE
-          - REWARDS
+          - WITHDRAWAL
         default: DELEGATION
+    title: >-
+      TODO(TEST-XX): Update these fields to be more useful (e.g. balances should
+      be coins, maybe store port name directly)
   Stridelabs.stride.stakeibc.ICAAccountType:
     type: string
     enum:
       - DELEGATION
       - FEE
-      - REWARDS
+      - WITHDRAWAL
     default: DELEGATION
   Stridelabs.stride.stakeibc.MinValidatorRequirements:
     type: object
@@ -52142,8 +52178,11 @@ definitions:
                   enum:
                     - DELEGATION
                     - FEE
-                    - REWARDS
+                    - WITHDRAWAL
                   default: DELEGATION
+              title: >-
+                TODO(TEST-XX): Update these fields to be more useful (e.g.
+                balances should be coins, maybe store port name directly)
             feeAccount:
               type: object
               properties:
@@ -52185,8 +52224,11 @@ definitions:
                   enum:
                     - DELEGATION
                     - FEE
-                    - REWARDS
+                    - WITHDRAWAL
                   default: DELEGATION
+              title: >-
+                TODO(TEST-XX): Update these fields to be more useful (e.g.
+                balances should be coins, maybe store port name directly)
             delegationAccount:
               type: object
               properties:
@@ -52228,8 +52270,11 @@ definitions:
                   enum:
                     - DELEGATION
                     - FEE
-                    - REWARDS
+                    - WITHDRAWAL
                   default: DELEGATION
+              title: >-
+                TODO(TEST-XX): Update these fields to be more useful (e.g.
+                balances should be coins, maybe store port name directly)
             LocalDenom:
               type: string
             BaseDenom:
@@ -52393,8 +52438,11 @@ definitions:
                 enum:
                   - DELEGATION
                   - FEE
-                  - REWARDS
+                  - WITHDRAWAL
                 default: DELEGATION
+            title: >-
+              TODO(TEST-XX): Update these fields to be more useful (e.g.
+              balances should be coins, maybe store port name directly)
           feeAccount:
             type: object
             properties:
@@ -52436,8 +52484,11 @@ definitions:
                 enum:
                   - DELEGATION
                   - FEE
-                  - REWARDS
+                  - WITHDRAWAL
                 default: DELEGATION
+            title: >-
+              TODO(TEST-XX): Update these fields to be more useful (e.g.
+              balances should be coins, maybe store port name directly)
           delegationAccount:
             type: object
             properties:
@@ -52479,8 +52530,11 @@ definitions:
                 enum:
                   - DELEGATION
                   - FEE
-                  - REWARDS
+                  - WITHDRAWAL
                 default: DELEGATION
+            title: >-
+              TODO(TEST-XX): Update these fields to be more useful (e.g.
+              balances should be coins, maybe store port name directly)
           LocalDenom:
             type: string
           BaseDenom:
@@ -52530,8 +52584,11 @@ definitions:
             enum:
               - DELEGATION
               - FEE
-              - REWARDS
+              - WITHDRAWAL
             default: DELEGATION
+        title: >-
+          TODO(TEST-XX): Update these fields to be more useful (e.g. balances
+          should be coins, maybe store port name directly)
   Stridelabs.stride.stakeibc.QueryGetMinValidatorRequirementsResponse:
     type: object
     properties:
