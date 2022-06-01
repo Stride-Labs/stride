@@ -41,7 +41,7 @@ func StakeibcKeeper(t testing.TB) (keeper.Keeper, sdk.Context) {
 		memStoreKey,
 		"StakeibcSubSpace",
 	)
-	IBCKeeper := ibckeeper.NewKeeper(
+	ibcKeeper := ibckeeper.NewKeeper(
 		appCodec,
 		storeKey,
 		ss,
@@ -64,7 +64,7 @@ func StakeibcKeeper(t testing.TB) (keeper.Keeper, sdk.Context) {
 		// IBCKeeper.ChannelKeeper,
 		// &IBCKeeper.PortKeeper,
 		// capabilityKeeper.ScopeToModule("StakeibcScopedKeeper"),
-		IBCKeeper,
+		ibcKeeper,
 	)
 
 	ctx := sdk.NewContext(stateStore, tmproto.Header{}, false, logger)
