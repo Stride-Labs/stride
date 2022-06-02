@@ -17,8 +17,14 @@ export interface GenesisState {
   hostZoneList: HostZone[];
   hostZoneCount: number;
   depositRecordList: DepositRecord[];
-  /** this line is used by starport scaffolding # genesis/proto/state */
   depositRecordCount: number;
+  /** stores a map from hostZoneDenom to hostZone */
+  denomToHostZone: { [key: string]: string };
+}
+
+export interface GenesisState_DenomToHostZoneEntry {
+  key: string;
+  value: string;
 }
 
 const baseGenesisState: object = {
@@ -50,6 +56,12 @@ export const GenesisState = {
     if (message.depositRecordCount !== 0) {
       writer.uint32(64).uint64(message.depositRecordCount);
     }
+    Object.entries(message.denomToHostZone).forEach(([key, value]) => {
+      GenesisState_DenomToHostZoneEntry.encode(
+        { key: key as any, value },
+        writer.uint32(74).fork()
+      ).ldelim();
+    });
     return writer;
   },
 
@@ -59,6 +71,7 @@ export const GenesisState = {
     const message = { ...baseGenesisState } as GenesisState;
     message.hostZoneList = [];
     message.depositRecordList = [];
+    message.denomToHostZone = {};
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
@@ -85,6 +98,15 @@ export const GenesisState = {
         case 8:
           message.depositRecordCount = longToNumber(reader.uint64() as Long);
           break;
+        case 9:
+          const entry9 = GenesisState_DenomToHostZoneEntry.decode(
+            reader,
+            reader.uint32()
+          );
+          if (entry9.value !== undefined) {
+            message.denomToHostZone[entry9.key] = entry9.value;
+          }
+          break;
         default:
           reader.skipType(tag & 7);
           break;
@@ -97,6 +119,7 @@ export const GenesisState = {
     const message = { ...baseGenesisState } as GenesisState;
     message.hostZoneList = [];
     message.depositRecordList = [];
+    message.denomToHostZone = {};
     if (object.params !== undefined && object.params !== null) {
       message.params = Params.fromJSON(object.params);
     } else {
@@ -138,6 +161,14 @@ export const GenesisState = {
     } else {
       message.depositRecordCount = 0;
     }
+    if (
+      object.denomToHostZone !== undefined &&
+      object.denomToHostZone !== null
+    ) {
+      Object.entries(object.denomToHostZone).forEach(([key, value]) => {
+        message.denomToHostZone[key] = String(value);
+      });
+    }
     return message;
   },
 
@@ -168,6 +199,12 @@ export const GenesisState = {
     }
     message.depositRecordCount !== undefined &&
       (obj.depositRecordCount = message.depositRecordCount);
+    obj.denomToHostZone = {};
+    if (message.denomToHostZone) {
+      Object.entries(message.denomToHostZone).forEach(([k, v]) => {
+        obj.denomToHostZone[k] = v;
+      });
+    }
     return obj;
   },
 
@@ -175,6 +212,7 @@ export const GenesisState = {
     const message = { ...baseGenesisState } as GenesisState;
     message.hostZoneList = [];
     message.depositRecordList = [];
+    message.denomToHostZone = {};
     if (object.params !== undefined && object.params !== null) {
       message.params = Params.fromPartial(object.params);
     } else {
@@ -215,6 +253,102 @@ export const GenesisState = {
       message.depositRecordCount = object.depositRecordCount;
     } else {
       message.depositRecordCount = 0;
+    }
+    if (
+      object.denomToHostZone !== undefined &&
+      object.denomToHostZone !== null
+    ) {
+      Object.entries(object.denomToHostZone).forEach(([key, value]) => {
+        if (value !== undefined) {
+          message.denomToHostZone[key] = String(value);
+        }
+      });
+    }
+    return message;
+  },
+};
+
+const baseGenesisState_DenomToHostZoneEntry: object = { key: "", value: "" };
+
+export const GenesisState_DenomToHostZoneEntry = {
+  encode(
+    message: GenesisState_DenomToHostZoneEntry,
+    writer: Writer = Writer.create()
+  ): Writer {
+    if (message.key !== "") {
+      writer.uint32(10).string(message.key);
+    }
+    if (message.value !== "") {
+      writer.uint32(18).string(message.value);
+    }
+    return writer;
+  },
+
+  decode(
+    input: Reader | Uint8Array,
+    length?: number
+  ): GenesisState_DenomToHostZoneEntry {
+    const reader = input instanceof Uint8Array ? new Reader(input) : input;
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = {
+      ...baseGenesisState_DenomToHostZoneEntry,
+    } as GenesisState_DenomToHostZoneEntry;
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.key = reader.string();
+          break;
+        case 2:
+          message.value = reader.string();
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): GenesisState_DenomToHostZoneEntry {
+    const message = {
+      ...baseGenesisState_DenomToHostZoneEntry,
+    } as GenesisState_DenomToHostZoneEntry;
+    if (object.key !== undefined && object.key !== null) {
+      message.key = String(object.key);
+    } else {
+      message.key = "";
+    }
+    if (object.value !== undefined && object.value !== null) {
+      message.value = String(object.value);
+    } else {
+      message.value = "";
+    }
+    return message;
+  },
+
+  toJSON(message: GenesisState_DenomToHostZoneEntry): unknown {
+    const obj: any = {};
+    message.key !== undefined && (obj.key = message.key);
+    message.value !== undefined && (obj.value = message.value);
+    return obj;
+  },
+
+  fromPartial(
+    object: DeepPartial<GenesisState_DenomToHostZoneEntry>
+  ): GenesisState_DenomToHostZoneEntry {
+    const message = {
+      ...baseGenesisState_DenomToHostZoneEntry,
+    } as GenesisState_DenomToHostZoneEntry;
+    if (object.key !== undefined && object.key !== null) {
+      message.key = object.key;
+    } else {
+      message.key = "";
+    }
+    if (object.value !== undefined && object.value !== null) {
+      message.value = object.value;
+    } else {
+      message.value = "";
     }
     return message;
   },

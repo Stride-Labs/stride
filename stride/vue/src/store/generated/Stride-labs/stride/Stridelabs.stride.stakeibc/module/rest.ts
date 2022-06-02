@@ -9,6 +9,11 @@
  * ---------------------------------------------------------------
  */
 
+export enum DepositRecordPurpose {
+  RECEIPT = "RECEIPT",
+  TRANSACTION = "TRANSACTION",
+}
+
 export interface ProtobufAny {
   "@type"?: string;
 }
@@ -39,9 +44,7 @@ export interface StakeibcDepositRecord {
   /** @format uint64 */
   hostZoneId?: string;
   sender?: string;
-
-  /** @format int32 */
-  purpose?: number;
+  purpose?: DepositRecordPurpose;
 }
 
 export interface StakeibcHostZone {
@@ -53,6 +56,7 @@ export interface StakeibcHostZone {
   blacklistedValidators?: StakeibcValidator[];
   rewardsAccount?: StakeibcICAAccount[];
   feeAccount?: StakeibcICAAccount[];
+  BaseDenom?: string;
 }
 
 export interface StakeibcICAAccount {

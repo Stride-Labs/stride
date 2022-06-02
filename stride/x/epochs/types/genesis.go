@@ -33,7 +33,7 @@ func DefaultGenesis() *GenesisState {
 		{ // TODO establish a good "stride_epoch" interval for us
 			Identifier:              "stride_epoch",
 			StartTime:               time.Time{},
-			Duration:                time.Second * 5,
+			Duration:                time.Minute * 5,
 			CurrentEpoch:            0,
 			CurrentEpochStartHeight: 0,
 			CurrentEpochStartTime:   time.Time{},

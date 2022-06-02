@@ -1,6 +1,3 @@
-[submodule "testing/bats"]
-	path = testing/bats
-	url = https://github.com/bats-core/bats-core.git
 [submodule "stride/scripts/tests/bats"]
 	path = stride/scripts/tests/bats
 	url = https://github.com/bats-core/bats-core.git
