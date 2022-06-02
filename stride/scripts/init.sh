@@ -61,6 +61,10 @@ for i in ${!STRIDE_CHAINS[@]}; do
     fi
 done
 
+# modify Stride epoch to be 3s
+main_config=$STATE/${main_chain}/config/genesis.json
+jq '.app_state.epochs.epochs[2].duration = $newVal' --arg newVal "3s" $main_config > json.tmp && mv json.tmp $main_config
+
 # Restore relayer account on stride
 echo $RLY_MNEMONIC_1 | $main_cmd keys add rly1 --recover --keyring-backend=test > /dev/null
 RLY_ADDRESS_1=$($main_cmd keys show rly1 --keyring-backend test -a)
@@ -98,40 +102,6 @@ done
 #############################################################################################################################
 sh ${SCRIPT_DIR}/init_gaia.sh
 
-# Accounts and exec commands
-#############################################################################################################################
-
-# Stride
-echo '\nStride addresses 1,2,3'
-STRIDE_ADDRESS_1=$($BASE_RUN keys show val1 --home $STATE/STRIDE_1 --keyring-backend test -a)
-STRIDE_ADDRESS_2=$($BASE_RUN keys show val2 --home $STATE/STRIDE_2 --keyring-backend test -a)
-STRIDE_ADDRESS_3=$($BASE_RUN keys show val3 --home $STATE/STRIDE_3 --keyring-backend test -a)
-echo "\t${STRIDE_ADDRESS_1}"
-echo "\t${STRIDE_ADDRESS_2}"
-echo "\t${STRIDE_ADDRESS_3}"
-
-# Gaia
-echo '\nGaia addresses 1,2,3'
-GAIA_ADDRESS_1=$($GAIA_RUN gaia1 gaiad keys show gval1 --keyring-backend test -a --home=/gaia/.gaiad)
-GAIA_ADDRESS_2=$($GAIA_RUN gaia2 gaiad keys show gval2 --keyring-backend test -a --home=/gaia/.gaiad)
-GAIA_ADDRESS_3=$($GAIA_RUN gaia3 gaiad keys show gval3 --keyring-backend test -a --home=/gaia/.gaiad)
-echo "\t${GAIA_ADDRESS_1}"
-echo "\t${GAIA_ADDRESS_2}"
-echo "\t${GAIA_ADDRESS_3}"
-
-# Relayers
-echo '\nRelay addresses 1,2'
-# NOTE: using $main_cmd and $main_gaia_cmd here ONLY works because they rly1 and rly2
-# keys are on stride1 and gaia1, respectively
-RLY_ADDRESS_1=$($main_cmd keys show rly1 --keyring-backend test -a)
-RLY_ADDRESS_2=$($main_gaia_cmd keys show rly2 --keyring-backend test -a)
-echo "\t$RLY_ADDRESS_1"
-echo "\t$RLY_ADDRESS_2"
-
-STR1_EXEC="docker-compose --ansi never exec -T stride1 strided"
-STR2_EXEC="docker-compose --ansi never exec -T stride2 strided"
-STR3_EXEC="docker-compose --ansi never exec -T stride3 strided"
-
 # Spin up docker containers
 #############################################################################################################################
 # strided start --home state/STRIDE_1  # TESTING ONLY
@@ -153,15 +123,24 @@ docker-compose run hermes hermes -c /tmp/hermes.toml tx raw chan-open-init $main
 
 echo "Creating connection $main_chain <> $main_gaia_chain"
 docker-compose run -T hermes hermes -c /tmp/hermes.toml create connection $main_chain $main_gaia_chain > /dev/null
+
+# exit 
+# docker-compose run -T hermes hermes -c /tmp/hermes.toml create connection GAIA_1 STRIDE_1 
+# docker-compose run -T hermes hermes -c /tmp/hermes.toml create channel --port-a transfer --port-b transfer GAIA_1 connection-0
+# exit 
+
 echo "Connection created"
 echo "Creating transfer channel"
 docker-compose run -T hermes hermes -c /tmp/hermes.toml create channel --port-a transfer --port-b transfer $main_gaia_chain connection-0 > /dev/null
 echo "Tranfer channel created"
 
-docker-compose down hermes
 echo "Starting hermes relayer"
 docker-compose up --force-recreate -d hermes
 
+# set up hermes connection from GAIA -> STRIDE
+docker-compose run hermes hermes -c /tmp/hermes.toml tx raw chan-open-init $main_gaia_chain $main_chain connection-0 transfer transfer > /dev/null
+
+
 # IBC token transfer tests
 #############################################################################################################################
-source ${SCRIPT_DIR}/ibc_token_transfer.sh
+# source ${SCRIPT_DIR}/tests/ibc_token_transfer.sh

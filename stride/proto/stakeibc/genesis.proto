@@ -20,5 +20,7 @@ message GenesisState {
   uint64 hostZoneCount = 6;
   repeated DepositRecord depositRecordList = 7 [(gogoproto.nullable) = false];
   uint64 depositRecordCount = 8;
+  // stores a map from hostZoneDenom to hostZone
+  map<string, string> denomToHostZone = 9;
   // this line is used by starport scaffolding # genesis/proto/state
 }

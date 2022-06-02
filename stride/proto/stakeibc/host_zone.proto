@@ -14,5 +14,6 @@ message HostZone {
   repeated Validator validators = 3;
   repeated Validator blacklistedValidators = 4;
   repeated ICAAccount rewardsAccount = 5;
-  repeated ICAAccount feeAccount = 6;  
+  repeated ICAAccount feeAccount = 6;
+  string BaseDenom = 9;
 }

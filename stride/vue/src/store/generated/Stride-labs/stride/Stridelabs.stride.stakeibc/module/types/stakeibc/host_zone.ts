@@ -15,9 +15,15 @@ export interface HostZone {
   blacklistedValidators: Validator[];
   rewardsAccount: ICAAccount[];
   feeAccount: ICAAccount[];
+  BaseDenom: string;
 }
 
-const baseHostZone: object = { id: 0, portId: "", channelId: "" };
+const baseHostZone: object = {
+  id: 0,
+  portId: "",
+  channelId: "",
+  BaseDenom: "",
+};
 
 export const HostZone = {
   encode(message: HostZone, writer: Writer = Writer.create()): Writer {
@@ -41,6 +47,9 @@ export const HostZone = {
     }
     for (const v of message.feeAccount) {
       ICAAccount.encode(v!, writer.uint32(50).fork()).ldelim();
+    }
+    if (message.BaseDenom !== "") {
+      writer.uint32(74).string(message.BaseDenom);
     }
     return writer;
   },
@@ -80,6 +89,9 @@ export const HostZone = {
           break;
         case 6:
           message.feeAccount.push(ICAAccount.decode(reader, reader.uint32()));
+          break;
+        case 9:
+          message.BaseDenom = reader.string();
           break;
         default:
           reader.skipType(tag & 7);
@@ -133,6 +145,11 @@ export const HostZone = {
         message.feeAccount.push(ICAAccount.fromJSON(e));
       }
     }
+    if (object.BaseDenom !== undefined && object.BaseDenom !== null) {
+      message.BaseDenom = String(object.BaseDenom);
+    } else {
+      message.BaseDenom = "";
+    }
     return message;
   },
 
@@ -169,6 +186,7 @@ export const HostZone = {
     } else {
       obj.feeAccount = [];
     }
+    message.BaseDenom !== undefined && (obj.BaseDenom = message.BaseDenom);
     return obj;
   },
 
@@ -215,6 +233,11 @@ export const HostZone = {
       for (const e of object.feeAccount) {
         message.feeAccount.push(ICAAccount.fromPartial(e));
       }
+    }
+    if (object.BaseDenom !== undefined && object.BaseDenom !== null) {
+      message.BaseDenom = object.BaseDenom;
+    } else {
+      message.BaseDenom = "";
     }
     return message;
   },

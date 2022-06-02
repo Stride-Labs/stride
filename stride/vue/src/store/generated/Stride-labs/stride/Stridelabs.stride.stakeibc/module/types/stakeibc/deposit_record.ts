@@ -6,11 +6,12 @@ export const protobufPackage = "Stridelabs.stride.stakeibc";
 
 export interface DepositRecord {
   id: number;
+  /** TODO do we care that amount is int32? should we change this to uint64? */
   amount: number;
   denom: string;
   hostZoneId: number;
   sender: string;
-  purpose: number;
+  purpose: DepositRecord_Purpose;
 }
 
 export enum DepositRecord_Purpose {
@@ -104,7 +105,7 @@ export const DepositRecord = {
           message.sender = reader.string();
           break;
         case 6:
-          message.purpose = reader.int32();
+          message.purpose = reader.int32() as any;
           break;
         default:
           reader.skipType(tag & 7);
@@ -142,7 +143,7 @@ export const DepositRecord = {
       message.sender = "";
     }
     if (object.purpose !== undefined && object.purpose !== null) {
-      message.purpose = Number(object.purpose);
+      message.purpose = depositRecord_PurposeFromJSON(object.purpose);
     } else {
       message.purpose = 0;
     }
@@ -156,7 +157,8 @@ export const DepositRecord = {
     message.denom !== undefined && (obj.denom = message.denom);
     message.hostZoneId !== undefined && (obj.hostZoneId = message.hostZoneId);
     message.sender !== undefined && (obj.sender = message.sender);
-    message.purpose !== undefined && (obj.purpose = message.purpose);
+    message.purpose !== undefined &&
+      (obj.purpose = depositRecord_PurposeToJSON(message.purpose));
     return obj;
   },
 

@@ -29006,6 +29006,9 @@ paths:
                     amount:
                       type: integer
                       format: int32
+                      title: >-
+                        TODO do we care that amount is int32? should we change
+                        this to uint64?
                     denom:
                       type: string
                     hostZoneId:
@@ -29014,8 +29017,11 @@ paths:
                     sender:
                       type: string
                     purpose:
-                      type: integer
-                      format: int32
+                      type: string
+                      enum:
+                        - RECEIPT
+                        - TRANSACTION
+                      default: RECEIPT
               pagination:
                 type: object
                 properties:
@@ -29136,6 +29142,9 @@ paths:
                   amount:
                     type: integer
                     format: int32
+                    title: >-
+                      TODO do we care that amount is int32? should we change
+                      this to uint64?
                   denom:
                     type: string
                   hostZoneId:
@@ -29144,8 +29153,11 @@ paths:
                   sender:
                     type: string
                   purpose:
-                    type: integer
-                    format: int32
+                    type: string
+                    enum:
+                      - RECEIPT
+                      - TRANSACTION
+                    default: RECEIPT
         default:
           description: An unexpected error response.
           schema:
@@ -29304,6 +29316,8 @@ paths:
                                 amt:
                                   type: integer
                                   format: int32
+                    BaseDenom:
+                      type: string
                   title: 'next id: 8'
               pagination:
                 type: object
@@ -29536,6 +29550,8 @@ paths:
                               amt:
                                 type: integer
                                 format: int32
+                  BaseDenom:
+                    type: string
                 title: 'next id: 8'
         default:
           description: An unexpected error response.
@@ -50099,6 +50115,7 @@ definitions:
       amount:
         type: integer
         format: int32
+        title: TODO do we care that amount is int32? should we change this to uint64?
       denom:
         type: string
       hostZoneId:
@@ -50107,8 +50124,17 @@ definitions:
       sender:
         type: string
       purpose:
-        type: integer
-        format: int32
+        type: string
+        enum:
+          - RECEIPT
+          - TRANSACTION
+        default: RECEIPT
+  Stridelabs.stride.stakeibc.DepositRecord.Purpose:
+    type: string
+    enum:
+      - RECEIPT
+      - TRANSACTION
+    default: RECEIPT
   Stridelabs.stride.stakeibc.HostZone:
     type: object
     properties:
@@ -50229,6 +50255,8 @@ definitions:
                   amt:
                     type: integer
                     format: int32
+      BaseDenom:
+        type: string
     title: 'next id: 8'
   Stridelabs.stride.stakeibc.ICAAccount:
     type: object
@@ -50316,6 +50344,9 @@ definitions:
             amount:
               type: integer
               format: int32
+              title: >-
+                TODO do we care that amount is int32? should we change this to
+                uint64?
             denom:
               type: string
             hostZoneId:
@@ -50324,8 +50355,11 @@ definitions:
             sender:
               type: string
             purpose:
-              type: integer
-              format: int32
+              type: string
+              enum:
+                - RECEIPT
+                - TRANSACTION
+              default: RECEIPT
       pagination:
         type: object
         properties:
@@ -50476,6 +50510,8 @@ definitions:
                         amt:
                           type: integer
                           format: int32
+            BaseDenom:
+              type: string
           title: 'next id: 8'
       pagination:
         type: object
@@ -50540,6 +50576,9 @@ definitions:
           amount:
             type: integer
             format: int32
+            title: >-
+              TODO do we care that amount is int32? should we change this to
+              uint64?
           denom:
             type: string
           hostZoneId:
@@ -50548,8 +50587,11 @@ definitions:
           sender:
             type: string
           purpose:
-            type: integer
-            format: int32
+            type: string
+            enum:
+              - RECEIPT
+              - TRANSACTION
+            default: RECEIPT
   Stridelabs.stride.stakeibc.QueryGetHostZoneResponse:
     type: object
     properties:
@@ -50673,6 +50715,8 @@ definitions:
                       amt:
                         type: integer
                         format: int32
+          BaseDenom:
+            type: string
         title: 'next id: 8'
   Stridelabs.stride.stakeibc.QueryGetICAAccountResponse:
     type: object
