@@ -298,10 +298,10 @@ init:
 			sh scripts/init.sh;\
 	elif [ ${build} == "stride" ]; \
 		then \
-			sh scripts/init.sh -b;\
+			sh scripts/init.sh -bs;\
 	elif [ ${build} == "strideall" ]; \
 		then \
-			sh scripts/init.sh - ;\
+			sh scripts/init.sh -ba ;\
 	else\
 		echo "Init type ${build} not recognized.";\
 	fi

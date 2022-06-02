@@ -31,6 +31,9 @@ func GetTxCmd() *cobra.Command {
 	}
 
 	cmd.AddCommand(CmdLiquidStake())
+	// TODO(TEST-53): Remove this pre-launch (no need for clients to create / interact with ICAs)
+	cmd.AddCommand(CmdRegisterAccount())
+	cmd.AddCommand(CmdSubmitTx())
 	// this line is used by starport scaffolding # 1
 
 	return cmd
