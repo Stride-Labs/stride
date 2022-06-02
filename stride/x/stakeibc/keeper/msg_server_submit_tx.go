@@ -60,8 +60,7 @@ func (k Keeper) SubmitTx(goCtx context.Context, msg *types.MsgSubmitTx) (*types.
 	return &types.MsgSubmitTxResponse{}, nil
 }
 
-// SubmitTx submits an ICA transaction
-// NOTE: this is not a standard message; only the stakeibc module can call this function
+
 func (k Keeper) DelegateOnHost(ctx sdk.Context, hostZone types.HostZone, amt sdk.Coin) error {
 	_ = ctx
 	var msgs []sdk.Msg
@@ -93,8 +92,7 @@ func (k Keeper) DelegateOnHost(ctx sdk.Context, hostZone types.HostZone, amt sdk
 	return nil
 }
 
-// SubmitTx submits an ICA transaction
-// NOTE: this is not a standard message; only the stakeibc module can call this function
+// SubmitTxs submits an ICA transaction containing multiple messages
 func (k Keeper) SubmitTxs(ctx sdk.Context, connectionId string, msgs []sdk.Msg, account types.ICAAccount) error {
 	chainId, err := k.GetChainID(ctx, connectionId)
 	if err != nil {

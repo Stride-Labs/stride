@@ -56,7 +56,7 @@ func (k Keeper) RegisterHostZone(goCtx context.Context, msg *types.MsgRegisterHo
 		return nil, err
 	}
 
-	// TODO(TEST-XX): Set validators on the host zone, either using ICQ + intents or a WL 
+	// TODO(TEST-39): TODO(TEST-42): Set validators on the host zone, either using ICQ + intents or a WL 
 
 	// emit events
 	ctx.EventManager().EmitEvents(sdk.Events{
