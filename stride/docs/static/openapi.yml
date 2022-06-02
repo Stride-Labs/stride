@@ -29684,6 +29684,43 @@ paths:
                   additionalProperties: {}
       tags:
         - Query
+  '/Stride-Labs/stride/stakeibc/module_address/{name}':
+    get:
+      summary: Queries a list of ModuleAddress items.
+      operationId: StridelabsStrideStakeibcModuleAddress
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              addr:
+                type: string
+        default:
+          description: An unexpected error response.
+          schema:
+            type: object
+            properties:
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    '@type':
+                      type: string
+                  additionalProperties: {}
+      parameters:
+        - name: name
+          in: path
+          required: true
+          type: string
+      tags:
+        - Query
   /Stride-Labs/stride/stakeibc/validator:
     get:
       summary: Queries a Validator by index.
@@ -50787,6 +50824,11 @@ definitions:
           delegationAmt:
             type: integer
             format: int32
+  Stridelabs.stride.stakeibc.QueryModuleAddressResponse:
+    type: object
+    properties:
+      addr:
+        type: string
   Stridelabs.stride.stakeibc.QueryParamsResponse:
     type: object
     properties:

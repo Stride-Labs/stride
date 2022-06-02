@@ -58,6 +58,7 @@ const getDefaultState = () => {
 				HostZoneAll: {},
 				DepositRecord: {},
 				DepositRecordAll: {},
+				ModuleAddress: {},
 				
 				_Structure: {
 						Delegation: getStructure(Delegation.fromPartial({})),
@@ -150,6 +151,12 @@ export default {
 						(<any> params).query=null
 					}
 			return state.DepositRecordAll[JSON.stringify(params)] ?? {}
+		},
+				getModuleAddress: (state) => (params = { params: {}}) => {
+					if (!(<any> params).query) {
+						(<any> params).query=null
+					}
+			return state.ModuleAddress[JSON.stringify(params)] ?? {}
 		},
 				
 		getTypeStructure: (state) => (type) => {
@@ -386,6 +393,28 @@ export default {
 				return getters['getDepositRecordAll']( { params: {...key}, query}) ?? {}
 			} catch (e) {
 				throw new Error('QueryClient:QueryDepositRecordAll API Node Unavailable. Could not perform query: ' + e.message)
+				
+			}
+		},
+		
+		
+		
+		
+		 		
+		
+		
+		async QueryModuleAddress({ commit, rootGetters, getters }, { options: { subscribe, all} = { subscribe:false, all:false}, params, query=null }) {
+			try {
+				const key = params ?? {};
+				const queryClient=await initQueryClient(rootGetters)
+				let value= (await queryClient.queryModuleAddress( key.name)).data
+				
+					
+				commit('QUERY', { query: 'ModuleAddress', key: { params: {...key}, query}, value })
+				if (subscribe) commit('SUBSCRIBE', { action: 'QueryModuleAddress', payload: { options: { all }, params: {...key},query }})
+				return getters['getModuleAddress']( { params: {...key}, query}) ?? {}
+			} catch (e) {
+				throw new Error('QueryClient:QueryModuleAddress API Node Unavailable. Could not perform query: ' + e.message)
 				
 			}
 		},

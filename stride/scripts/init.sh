@@ -10,14 +10,14 @@ rm -rf $STATE
 docker-compose down
 
 # first, we need to create some saved state, so that we can copy to docker files
-for chain_name in ${STRIDE_CHAINS[@]}; do
-    mkdir -p $STATE/$chain_name
+for node_name in ${STRIDE_DOCKER_NAMES[@]}; do
+    mkdir -p $STATE/$node_name
 done
 
 # run through init args, if needed
 while getopts bdfsa flag; do
     case "${flag}" in
-        b) ignite chain build ;;
+        b) ignite chain init ;;
         d) sh $SCRIPT_DIR/docker_build.sh ;;
         f) sh $SCRIPT_DIR/docker_build.sh -f ;;
         s) sh $SCRIPT_DIR/docker_build.sh -s ;;
@@ -33,12 +33,13 @@ STRIDE_NODES=()
 echo 'Initializing chains...'
 for i in ${!STRIDE_CHAINS[@]}; do
     chain_name=${STRIDE_CHAINS[i]}
+    node_name=${STRIDE_DOCKER_NAMES[i]}
     vkey=${VKEYS[i]}
     val_acct=${VAL_ACCTS[i]}
     st_cmd=${ST_CMDS[i]}
-    echo "\t$chain_name"
+    echo "\t$node_name"
     $st_cmd init test --chain-id $chain_name --overwrite 2> /dev/null
-    sed -i -E 's|"stake"|"ustrd"|g' "${STATE}/${chain_name}/config/genesis.json"
+    sed -i -E 's|"stake"|"ustrd"|g' "${STATE}/${node_name}/config/genesis.json"
     # add VALidator account
     echo $vkey | $st_cmd keys add $val_acct --recover --keyring-backend=test > /dev/null
     # get validator address
@@ -46,7 +47,7 @@ for i in ${!STRIDE_CHAINS[@]}; do
     # add money for this validator account
     $st_cmd add-genesis-account ${VAL_ADDR} 500000000000ustrd
     # actually set this account as a validator
-    yes | $st_cmd gentx $val_acct 1000000000ustrd --chain-id $main_chain --keyring-backend test
+    yes | $st_cmd gentx $val_acct 1000000000ustrd --chain-id $main_chain --keyring-backend test 2> /dev/null
     # now we process these txs 
     $st_cmd collect-gentxs 2> /dev/null
     # now we grab the relevant node id
@@ -57,12 +58,12 @@ for i in ${!STRIDE_CHAINS[@]}; do
     if [ $i -ne $MAIN_ID ]
     then
         $main_cmd add-genesis-account ${VAL_ADDR} 500000000000ustrd
-        cp ${STATE}/${chain_name}/config/gentx/*.json ${STATE}/${main_chain}/config/gentx/
+        cp ${STATE}/${node_name}/config/gentx/*.json ${STATE}/${main_node}/config/gentx/
     fi
 done
 
 # modify Stride epoch to be 3s
-main_config=$STATE/${main_chain}/config/genesis.json
+main_config=$STATE/${main_node}/config/genesis.json
 jq '.app_state.epochs.epochs[2].duration = $newVal' --arg newVal "3s" $main_config > json.tmp && mv json.tmp $main_config
 
 # Restore relayer account on stride
@@ -74,8 +75,8 @@ $main_cmd add-genesis-account ${RLY_ADDRESS_1} 500000000000ustrd
 $main_cmd collect-gentxs 2> /dev/null
 # add peers in config.toml so that nodes can find each other by constructing a fully connected
 # graph of nodes
-for i in ${!STRIDE_CHAINS[@]}; do
-    chain_name=${STRIDE_CHAINS[i]}
+for i in ${!STRIDE_DOCKER_NAMES[@]}; do
+    node_name=${STRIDE_DOCKER_NAMES[i]}
     peers=""
     for j in "${!STRIDE_NODES[@]}"; do
         if [ $j -ne $i ]
@@ -83,28 +84,25 @@ for i in ${!STRIDE_CHAINS[@]}; do
             peers="${STRIDE_NODES[j]},${peers}"
         fi
     done
-    echo "${chain_name} peers are:"
-    echo $peers
-    sed -i -E "s|persistent_peers = \"\"|persistent_peers = \"$peers\"|g" "${STATE}/${chain_name}/config/config.toml"
+    sed -i -E "s|persistent_peers = \"\"|persistent_peers = \"$peers\"|g" "${STATE}/${node_name}/config/config.toml"
     # use blind address (not loopback) to allow incoming connections from outside networks for local debugging
-    sed -i -E "s|127.0.0.1|0.0.0.0|g" "${STATE}/${chain_name}/config/config.toml"
+    sed -i -E "s|127.0.0.1|0.0.0.0|g" "${STATE}/${node_name}/config/config.toml"
 done
 
 # make sure all Stride chains have the same genesis
 for i in "${!STRIDE_CHAINS[@]}"; do
     if [ $i -ne $MAIN_ID ]
     then
-        cp ${STATE}/${main_chain}/config/genesis.json ${STATE}/${STRIDE_CHAINS[i]}/config/genesis.json
+        cp ${STATE}/${main_node}/config/genesis.json ${STATE}/${STRIDE_DOCKER_NAMES[i]}/config/genesis.json
     fi
 done
-
 # Init Gaia
 #############################################################################################################################
 sh ${SCRIPT_DIR}/init_gaia.sh
 
 # Spin up docker containers
 #############################################################################################################################
-# strided start --home state/STRIDE_1  # TESTING ONLY
+
 sleep 5
 docker-compose down
 docker-compose up -d stride1 stride2 stride3 gaia1 gaia2 gaia3
@@ -123,11 +121,6 @@ docker-compose run hermes hermes -c /tmp/hermes.toml tx raw chan-open-init $main
 
 echo "Creating connection $main_chain <> $main_gaia_chain"
 docker-compose run -T hermes hermes -c /tmp/hermes.toml create connection $main_chain $main_gaia_chain > /dev/null
-
-# exit 
-# docker-compose run -T hermes hermes -c /tmp/hermes.toml create connection GAIA_1 STRIDE_1 
-# docker-compose run -T hermes hermes -c /tmp/hermes.toml create channel --port-a transfer --port-b transfer GAIA_1 connection-0
-# exit 
 
 echo "Connection created"
 echo "Creating transfer channel"

@@ -416,6 +416,7 @@ func NewStrideApp(
 		app.GetSubspace(stakeibcmoduletypes.ModuleName),
 		// app.IBCKeeper.ChannelKeeper,
 		// &app.IBCKeeper.PortKeeper,
+		app.AccountKeeper,
 		app.BankKeeper,
 		app.ICAControllerKeeper,
 		*app.IBCKeeper,

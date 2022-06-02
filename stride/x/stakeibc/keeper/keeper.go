@@ -27,7 +27,8 @@ type (
 		IBCKeeper           ibckeeper.Keeper
 		scopedKeeper        capabilitykeeper.ScopedKeeper
 
-		bankKeeper types.BankKeeper
+		accountKeeper types.AccountKeeper
+		bankKeeper    types.BankKeeper
 	}
 )
 
@@ -39,6 +40,7 @@ func NewKeeper(
 	// channelKeeper cosmosibckeeper.ChannelKeeper,
 	// portKeeper cosmosibckeeper.PortKeeper,
 	// scopedKeeper cosmosibckeeper.ScopedKeeper,
+	accountKeeper types.AccountKeeper,
 	bankKeeper types.BankKeeper,
 	icacontrollerkeeper icacontrollerkeeper.Keeper,
 	ibcKeeper ibckeeper.Keeper,
@@ -63,6 +65,7 @@ func NewKeeper(
 		storeKey:            storeKey,
 		memKey:              memKey,
 		paramstore:          ps,
+		accountKeeper:       accountKeeper,
 		bankKeeper:          bankKeeper,
 		ICAControllerKeeper: icacontrollerkeeper,
 		IBCKeeper:           ibcKeeper,

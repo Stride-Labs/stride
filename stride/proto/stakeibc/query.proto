@@ -57,6 +57,11 @@ service Query {
 		option (google.api.http).get = "/Stride-Labs/stride/stakeibc/deposit_record";
 	}
 
+// Queries a list of ModuleAddress items.
+	rpc ModuleAddress(QueryModuleAddressRequest) returns (QueryModuleAddressResponse) {
+		option (google.api.http).get = "/Stride-Labs/stride/stakeibc/module_address/{name}";
+	}
+
 // this line is used by starport scaffolding # 2
 }
 
@@ -121,6 +126,14 @@ message QueryAllDepositRecordRequest {
 message QueryAllDepositRecordResponse {
 	repeated DepositRecord DepositRecord = 1 [(gogoproto.nullable) = false];
 	cosmos.base.query.v1beta1.PageResponse pagination = 2;
+}
+
+message QueryModuleAddressRequest {
+  string name = 1;
+}
+
+message QueryModuleAddressResponse {
+  string addr = 1;
 }
 
 // this line is used by starport scaffolding # 3
