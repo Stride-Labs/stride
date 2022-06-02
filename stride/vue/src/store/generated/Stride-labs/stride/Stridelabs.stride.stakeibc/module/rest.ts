@@ -152,6 +152,10 @@ export interface StakeibcQueryGetValidatorResponse {
   Validator?: StakeibcValidator;
 }
 
+export interface StakeibcQueryModuleAddressResponse {
+  addr?: string;
+}
+
 /**
  * QueryParamsResponse is response type for the Query/Params RPC method.
  */
@@ -554,6 +558,22 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
   queryMinValidatorRequirements = (params: RequestParams = {}) =>
     this.request<StakeibcQueryGetMinValidatorRequirementsResponse, RpcStatus>({
       path: `/Stride-Labs/stride/stakeibc/min_validator_requirements`,
+      method: "GET",
+      format: "json",
+      ...params,
+    });
+
+  /**
+   * No description
+   *
+   * @tags Query
+   * @name QueryModuleAddress
+   * @summary Queries a list of ModuleAddress items.
+   * @request GET:/Stride-Labs/stride/stakeibc/module_address/{name}
+   */
+  queryModuleAddress = (name: string, params: RequestParams = {}) =>
+    this.request<StakeibcQueryModuleAddressResponse, RpcStatus>({
+      path: `/Stride-Labs/stride/stakeibc/module_address/${name}`,
       method: "GET",
       format: "json",
       ...params,

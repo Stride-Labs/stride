@@ -47,8 +47,8 @@ setup() {
   str1_balance_atom=$($STR1_EXEC q bank balances $STRIDE_ADDRESS_1 --denom $IBCATOM | GETBAL)
   gaia1_balance_atom=$($GAIA1_EXEC q bank balances $GAIA_ADDRESS_1 --denom uatom | GETBAL)
   # do IBC transfer
-  $STR1_EXEC tx ibc-transfer transfer transfer channel-1 $GAIA_ADDRESS_1 1000ustrd --from val1 --chain-id STRIDE_1 -y --keyring-backend test
-  $GAIA1_EXEC tx ibc-transfer transfer transfer channel-1 $STRIDE_ADDRESS_1 1000uatom --from gval1 --chain-id GAIA_1 -y --keyring-backend test
+  $STR1_EXEC tx ibc-transfer transfer transfer channel-1 $GAIA_ADDRESS_1 1000ustrd --from val1 --chain-id STRIDE -y --keyring-backend test
+  $GAIA1_EXEC tx ibc-transfer transfer transfer channel-1 $STRIDE_ADDRESS_1 1000uatom --from gval1 --chain-id GAIA -y --keyring-backend test
   sleep 20
   # get new balances
   str1_balance_new=$($STR1_EXEC q bank balances $STRIDE_ADDRESS_1 --denom ustrd | GETBAL)
