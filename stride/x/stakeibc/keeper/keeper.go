@@ -50,15 +50,6 @@ func NewKeeper(
 		ps = ps.WithKeyTable(types.ParamKeyTable())
 	}
 
-	// Scaffolding an ibc module using ignite creates a cosmosibckeeper.NewKeeper for the module,
-	// but this is not compatible with ibc-v3
-	// Keeper: cosmosibckeeper.NewKeeper(
-	// 	types.PortKey,
-	// 	storeKey,
-	// 	channelKeeper,
-	// 	portKeeper,
-	// 	scopedKeeper,
-	// ),
 	return Keeper{
 		cdc:                 cdc,
 		storeKey:            storeKey,

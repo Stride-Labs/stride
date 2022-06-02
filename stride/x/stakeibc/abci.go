@@ -22,7 +22,7 @@ func BeginBlocker(ctx sdk.Context, k keeper.Keeper, bk types.BankKeeper) {
 				return true
 			}
 
-			// TODO(TEST-XX): Update this to take in a real process amount
+			// TODO(TEST-46): Query process amount (unstaked balance) on host zone using ICQ
 			processAmount := "1" + zoneInfo.BaseDenom
 			amt, err := sdk.ParseCoinNormalized(processAmount)
 			// Do we want to panic here? All unprocessed zones would also fail
