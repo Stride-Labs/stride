@@ -67,7 +67,7 @@ func (k Keeper) RegisterHostZone(goCtx context.Context, msg *types.MsgRegisterHo
 		sdk.NewEvent(
 			types.EventTypeRegisterZone,
 			sdk.NewAttribute(types.AttributeKeyConnectionId, msg.ConnectionId),
-			sdk.NewAttribute(types.AttributeKeyConnectionId, chainId),
+			sdk.NewAttribute(types.AttributeKeyRecipientChain, chainId),
 		),
 	})
 

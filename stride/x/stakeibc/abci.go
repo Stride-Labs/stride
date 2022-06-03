@@ -17,7 +17,7 @@ func BeginBlocker(ctx sdk.Context, k keeper.Keeper, bk types.BankKeeper) {
 		icaStake := func(index int64, zoneInfo types.HostZone) (stop bool) {
 			// Verify the delegation ICA is registered
 			delegationIca := zoneInfo.GetDelegationAccount()
-			if delegationIca.Address == "" {
+			if delegationIca == nil || delegationIca.Address == "" {
 				k.Logger(ctx).Error("Zone %s is missing a delegation address!", zoneInfo.ChainId)
 				return true
 			}

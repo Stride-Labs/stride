@@ -28,7 +28,7 @@ const (
 	MinValidatorRequirementsKey = "MinValidatorRequirements-value-"
 	ICAAccountKey               = "ICAAccount-value-"
 	// beginblocker intervals
-	DelegateInterval            = 10
+	DelegateInterval            = 2
 )
 
 var (

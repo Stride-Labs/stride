@@ -169,4 +169,4 @@ docker-compose up --force-recreate -d hermes
 
 # ICA staking test
 #############################################################################################################################
-# source ${SCRIPT_DIR}/ica_stake.sh
+source ${SCRIPT_DIR}/ica_stake.sh
