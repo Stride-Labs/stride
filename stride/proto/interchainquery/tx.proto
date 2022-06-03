@@ -86,6 +86,7 @@ message MsgQueryBalance {
   string denom                       = 3;
   string connection_id               = 4 [(gogoproto.moretags) = "yaml:\"connection_id\""];
   string caller   = 5 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+  int64 height = 6 [ (gogoproto.moretags) = "yaml:\"height\"" ];
 }
 
 message MsgQueryBalanceResponse {}

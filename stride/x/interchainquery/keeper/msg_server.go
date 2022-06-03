@@ -165,6 +165,7 @@ func (k msgServer) QueryBalance(goCtx context.Context, msg *types.MsgQueryBalanc
 			sdk.NewAttribute("query_id", GenerateQueryHash(ConnectionId, ChainId, query_type, bz)),
 			sdk.NewAttribute("type", query_type),
 			sdk.NewAttribute("request", hex.EncodeToString(bz)),
+			sdk.NewAttribute("height", "0"),
 		),
 	})
 
