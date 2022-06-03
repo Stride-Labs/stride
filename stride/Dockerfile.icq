@@ -1,11 +1,18 @@
 FROM golang:1.17-bullseye
 
-RUN apt update && apt install git
+# TODO uncomment update
+# RUN apt update
+RUN apt install git
+
+RUN apt-get update
+RUN apt-get install jq --yes
+
 WORKDIR /src/app
 # ENV GIT_SSH_COMMAND="ssh -i /src/app/test -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no"
 # RUN git config --global url."git@github.com:".insteadOf "https://github.com/" 
 # RUN go env -w GOPRIVATE=github.com/ingenuity-build/*
 ## TODO(security) switch this for a proper download without PAT 
+# TODO move token to gitignored file and echo it here
 RUN git clone https://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:x-oauth-basic@github.com/Stride-Labs/interchain-queries.git 
 RUN cp -r interchain-queries/* .
 RUN rm -rf interchain-queries
@@ -15,6 +22,8 @@ RUN go build
 RUN ln -s /src/app/interchain-queries /usr/local/bin
 RUN adduser --system --home /icq --disabled-password --disabled-login icq -U 1000
 USER icq
+# CMD ["interchain-queries", "run"]
+
 
 
 

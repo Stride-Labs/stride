@@ -1,0 +1,5 @@
+*.pb.go
+*.ts
+vue/*
+*.log
+.vscode

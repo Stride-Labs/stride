@@ -90,6 +90,8 @@ services:
       - /tmp/hermes.toml
       - start
     restart: always
+    ports:
+      - "3001:3001"
     build:
       context: .
       dockerfile: Dockerfile.hermes
@@ -98,8 +100,11 @@ services:
     volumes:
       - ./scripts/state/ICQ:/icq/.icq
     command:
-      - ./interchain-queries 
+      - interchain-queries 
       - run
+        # - /bin/sh
+      # - ./interchain-queries 
+      # - run
     restart: always
     build:
       context: .

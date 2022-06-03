@@ -6,7 +6,7 @@ const (
 	AttributeKeyConnectionId = "connection_id"
 	AttributeKeyType         = "type"
 	AttributeKeyParams       = "parameters"
-
-	AttributeValueCategory = ModuleName
-	AttributeValueQuery    = "query"
+	AttributeKeyRequest      = "request"
+	AttributeValueCategory   = ModuleName
+	AttributeValueQuery      = "query"
 )
