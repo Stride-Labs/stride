@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"context"
+	"encoding/hex"
 
 	"github.com/Stride-Labs/stride/x/interchainquery/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -28,7 +29,7 @@ func (k msgServer) SubmitQueryResponse(goCtx context.Context, msg *types.MsgSubm
 			if module.Has(msg.QueryId) {
 				err := module.Call(ctx, msg.QueryId, msg.Result, q)
 				if err != nil {
-					k.Logger(ctx).Error("Error in callback", "error", err, "msg", msg.QueryId, "result", msg.Result, "type", q.QueryType, "params", q.QueryParameters)
+					k.Logger(ctx).Error("Error in callback", "error", err, "msg", msg.QueryId, "result", msg.Result, "type", q.QueryType, "request", q.Request)
 					return nil, err
 				}
 			}
@@ -67,7 +68,6 @@ func (k msgServer) QueryBalance(goCtx context.Context, msg *types.MsgQueryBalanc
 	// parse input and do some check on that data, throw errors
 	// 		parse an input to the IBC packet we'd like to construct (note that input MsgQueryBalance looks like: {ChainId: chain_id, Address: address, Denom: denom, Caller: from_address})
 	// 		check (1) host chain is supported (2) address on target chain is valid (3) denom is valid (4) caller addr is valid
-
 	ChainId := msg.ChainId
 	// TODO Check ChainId is supported by Stride, try using this approach https://github.com/ingenuity-build/quicksilver/blob/ea71f23c6ef09a57e601f4e544c4be9693f5ba81/x/interchainstaking/keeper/msg_server.go#L37
 
@@ -129,6 +129,14 @@ func (k msgServer) QueryBalance(goCtx context.Context, msg *types.MsgQueryBalanc
 		return nil
 	}
 
+	query_type := "cosmos.bank.v1beta1.Query/AllBalances"
+
+	balanceQuery := banktypes.QueryAllBalancesRequest{Address: msg.Address}
+	bz, err := k.cdc.Marshal(&balanceQuery)
+	if err != nil {
+		return nil, err
+	}
+
 	k.Keeper.MakeRequest(
 		ctx,
 		ConnectionId,
@@ -136,9 +144,10 @@ func (k msgServer) QueryBalance(goCtx context.Context, msg *types.MsgQueryBalanc
 		// pass in the target chain module and event/message to query
 		// https://buf.build/cosmos/cosmos-sdk/docs/c03d23cee0a9488c835dee787f2deebb:cosmos.bank.v1beta1#cosmos.bank.v1beta1.Query.Balance
 		// "cosmos.bank.v1beta1.Query/Balance",
-		"cosmos.bank.v1beta1.Query/AllBalances",
+		query_type,
 		// pass in arguments to the query here
-		map[string]string{"address": msg.Address},
+		// map[string]string{"address": msg.Address},
+		bz,
 		//TODO set this window to something sensible
 		sdk.NewInt(25),
 		types.ModuleName,
@@ -151,7 +160,11 @@ func (k msgServer) QueryBalance(goCtx context.Context, msg *types.MsgQueryBalanc
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(
 			sdk.EventTypeMessage,
-			sdk.NewAttribute("balances", "TEST"),
+			sdk.NewAttribute("connection_id", ConnectionId),
+			sdk.NewAttribute("chain_id", ChainId),
+			sdk.NewAttribute("query_id", GenerateQueryHash(ConnectionId, ChainId, query_type, bz)),
+			sdk.NewAttribute("type", query_type),
+			sdk.NewAttribute("request", hex.EncodeToString(bz)),
 		),
 	})
 

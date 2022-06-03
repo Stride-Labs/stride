@@ -68,12 +68,12 @@ Alternatively, you can run `make init build=strideall` to re-build the docker im
 
 If you want to re-build all images, you can run `make init build=base` to:
 1. Run `ignite chain build` to build the Stride binary
-2. Rebuild Stride, Gaia, and Hermes docker images, using cache when possible
+2. Rebuild Stride, Gaia, Hermes, and ICQ docker images, using cache when possible
 3. Spin up the 7 docker containers and start all processes
 
 Alternatively, you can run `make init build=all` to 
 1. Run `ignite chain build` to build the Stride binary
-2. Fully rebuild Stride, Gaia, and Hermes docker images, ignoring the cache
+2. Fully rebuild Stride, Gaia, Hermes, and ICQ docker images, ignoring the cache
 3. Spin up the 7 docker containers and start all processes
 
 Or, if you just want to re-serve, run `make init build=none` to 
