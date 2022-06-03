@@ -13,6 +13,7 @@ import (
 
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	icacontrollerkeeper "github.com/cosmos/ibc-go/v3/modules/apps/27-interchain-accounts/controller/keeper"
+	ibctransferkeeper "github.com/cosmos/ibc-go/v3/modules/apps/transfer/keeper"
 	ibckeeper "github.com/cosmos/ibc-go/v3/modules/core/keeper"
 )
 
@@ -26,6 +27,7 @@ type (
 		ICAControllerKeeper icacontrollerkeeper.Keeper
 		IBCKeeper           ibckeeper.Keeper
 		scopedKeeper        capabilitykeeper.ScopedKeeper
+		transferKeeper      ibctransferkeeper.Keeper
 
 		accountKeeper types.AccountKeeper
 		bankKeeper    types.BankKeeper
@@ -45,6 +47,7 @@ func NewKeeper(
 	icacontrollerkeeper icacontrollerkeeper.Keeper,
 	ibcKeeper ibckeeper.Keeper,
 	scopedKeeper capabilitykeeper.ScopedKeeper,
+	transferKeeper ibctransferkeeper.Keeper,
 ) Keeper {
 	// set KeyTable if it has not already been set
 	if !ps.HasKeyTable() {
@@ -70,6 +73,7 @@ func NewKeeper(
 		ICAControllerKeeper: icacontrollerkeeper,
 		IBCKeeper:           ibcKeeper,
 		scopedKeeper:        scopedKeeper,
+		transferKeeper:      transferKeeper,
 	}
 }
 

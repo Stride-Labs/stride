@@ -112,7 +112,6 @@ echo "Restoring keys"
 docker-compose run hermes hermes -c /tmp/hermes.toml keys restore --mnemonic "$RLY_MNEMONIC_1" $main_chain
 docker-compose run hermes hermes -c /tmp/hermes.toml keys restore --mnemonic "$RLY_MNEMONIC_2" $main_gaia_chain
 sleep 10
-echo "Creating transfer channel"
 
 echo "creating hermes identifiers"
 docker-compose run hermes hermes -c /tmp/hermes.toml tx raw create-client $main_chain $main_gaia_chain > /dev/null
@@ -125,14 +124,14 @@ docker-compose run -T hermes hermes -c /tmp/hermes.toml create connection $main_
 echo "Connection created"
 echo "Creating transfer channel"
 docker-compose run -T hermes hermes -c /tmp/hermes.toml create channel --port-a transfer --port-b transfer $main_gaia_chain connection-0 > /dev/null
+
 echo "Tranfer channel created"
 
 echo "Starting hermes relayer"
 docker-compose up --force-recreate -d hermes
 
-# set up hermes connection from GAIA -> STRIDE
-docker-compose run hermes hermes -c /tmp/hermes.toml tx raw chan-open-init $main_gaia_chain $main_chain connection-0 transfer transfer > /dev/null
-
+# backwards connection, between GAIA and STRIDE
+# docker-compose run -T hermes hermes -c /tmp/hermes.toml tx raw chan-open-init $main_gaia_chain $main_chain connection-0 transfer transfer
 
 # IBC token transfer tests
 #############################################################################################################################
