@@ -29688,12 +29688,9 @@ paths:
                 items:
                   type: object
                   properties:
-                    id:
+                    chainId:
                       type: string
-                      format: uint64
-                    portId:
-                      type: string
-                    channelId:
+                    connectionId:
                       type: string
                     validators:
                       type: array
@@ -29729,83 +29726,152 @@ paths:
                           delegationAmt:
                             type: integer
                             format: int32
-                    rewardsAccount:
-                      type: array
-                      items:
-                        type: object
-                        properties:
-                          address:
-                            type: string
-                          balance:
-                            type: integer
-                            format: int32
-                          delegatedBalance:
-                            type: integer
-                            format: int32
-                          delegations:
-                            type: array
-                            items:
-                              type: object
-                              properties:
-                                delegateAcctAddress:
-                                  type: string
-                                validator:
-                                  type: object
-                                  properties:
-                                    name:
-                                      type: string
-                                    address:
-                                      type: string
-                                    status:
-                                      type: string
-                                    commissionRate:
-                                      type: integer
-                                      format: int32
-                                    delegationAmt:
-                                      type: integer
-                                      format: int32
-                                amt:
-                                  type: integer
-                                  format: int32
+                    withdrawalAccount:
+                      type: object
+                      properties:
+                        address:
+                          type: string
+                        balance:
+                          type: integer
+                          format: int32
+                        delegatedBalance:
+                          type: integer
+                          format: int32
+                        delegations:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              delegateAcctAddress:
+                                type: string
+                              validator:
+                                type: object
+                                properties:
+                                  name:
+                                    type: string
+                                  address:
+                                    type: string
+                                  status:
+                                    type: string
+                                  commissionRate:
+                                    type: integer
+                                    format: int32
+                                  delegationAmt:
+                                    type: integer
+                                    format: int32
+                              amt:
+                                type: integer
+                                format: int32
+                        target:
+                          type: string
+                          enum:
+                            - DELEGATION
+                            - FEE
+                            - WITHDRAWAL
+                          default: DELEGATION
+                      title: >-
+                        TODO(TEST-XX): Update these fields to be more useful
+                        (e.g. balances should be coins, maybe store port name
+                        directly)
                     feeAccount:
-                      type: array
-                      items:
-                        type: object
-                        properties:
-                          address:
-                            type: string
-                          balance:
-                            type: integer
-                            format: int32
-                          delegatedBalance:
-                            type: integer
-                            format: int32
-                          delegations:
-                            type: array
-                            items:
-                              type: object
-                              properties:
-                                delegateAcctAddress:
-                                  type: string
-                                validator:
-                                  type: object
-                                  properties:
-                                    name:
-                                      type: string
-                                    address:
-                                      type: string
-                                    status:
-                                      type: string
-                                    commissionRate:
-                                      type: integer
-                                      format: int32
-                                    delegationAmt:
-                                      type: integer
-                                      format: int32
-                                amt:
-                                  type: integer
-                                  format: int32
-                  title: 'next id: 8'
+                      type: object
+                      properties:
+                        address:
+                          type: string
+                        balance:
+                          type: integer
+                          format: int32
+                        delegatedBalance:
+                          type: integer
+                          format: int32
+                        delegations:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              delegateAcctAddress:
+                                type: string
+                              validator:
+                                type: object
+                                properties:
+                                  name:
+                                    type: string
+                                  address:
+                                    type: string
+                                  status:
+                                    type: string
+                                  commissionRate:
+                                    type: integer
+                                    format: int32
+                                  delegationAmt:
+                                    type: integer
+                                    format: int32
+                              amt:
+                                type: integer
+                                format: int32
+                        target:
+                          type: string
+                          enum:
+                            - DELEGATION
+                            - FEE
+                            - WITHDRAWAL
+                          default: DELEGATION
+                      title: >-
+                        TODO(TEST-XX): Update these fields to be more useful
+                        (e.g. balances should be coins, maybe store port name
+                        directly)
+                    delegationAccount:
+                      type: object
+                      properties:
+                        address:
+                          type: string
+                        balance:
+                          type: integer
+                          format: int32
+                        delegatedBalance:
+                          type: integer
+                          format: int32
+                        delegations:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              delegateAcctAddress:
+                                type: string
+                              validator:
+                                type: object
+                                properties:
+                                  name:
+                                    type: string
+                                  address:
+                                    type: string
+                                  status:
+                                    type: string
+                                  commissionRate:
+                                    type: integer
+                                    format: int32
+                                  delegationAmt:
+                                    type: integer
+                                    format: int32
+                              amt:
+                                type: integer
+                                format: int32
+                        target:
+                          type: string
+                          enum:
+                            - DELEGATION
+                            - FEE
+                            - WITHDRAWAL
+                          default: DELEGATION
+                      title: >-
+                        TODO(TEST-XX): Update these fields to be more useful
+                        (e.g. balances should be coins, maybe store port name
+                        directly)
+                    LocalDenom:
+                      type: string
+                    BaseDenom:
+                      type: string
+                  title: 'next id: 10'
               pagination:
                 type: object
                 properties:
@@ -30074,7 +30140,7 @@ paths:
           type: boolean
       tags:
         - Query
-  '/Stride-Labs/stride/stakeibc/host_zone/{id}':
+  '/Stride-Labs/stride/stakeibc/host_zone/{chain_id}':
     get:
       summary: Queries a HostZone by id.
       operationId: StridelabsStrideStakeibcHostZone
@@ -30087,12 +30153,9 @@ paths:
               HostZone:
                 type: object
                 properties:
-                  id:
+                  chainId:
                     type: string
-                    format: uint64
-                  portId:
-                    type: string
-                  channelId:
+                  connectionId:
                     type: string
                   validators:
                     type: array
@@ -30128,83 +30191,149 @@ paths:
                         delegationAmt:
                           type: integer
                           format: int32
-                  rewardsAccount:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        address:
-                          type: string
-                        balance:
-                          type: integer
-                          format: int32
-                        delegatedBalance:
-                          type: integer
-                          format: int32
-                        delegations:
-                          type: array
-                          items:
-                            type: object
-                            properties:
-                              delegateAcctAddress:
-                                type: string
-                              validator:
-                                type: object
-                                properties:
-                                  name:
-                                    type: string
-                                  address:
-                                    type: string
-                                  status:
-                                    type: string
-                                  commissionRate:
-                                    type: integer
-                                    format: int32
-                                  delegationAmt:
-                                    type: integer
-                                    format: int32
-                              amt:
-                                type: integer
-                                format: int32
+                  withdrawalAccount:
+                    type: object
+                    properties:
+                      address:
+                        type: string
+                      balance:
+                        type: integer
+                        format: int32
+                      delegatedBalance:
+                        type: integer
+                        format: int32
+                      delegations:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            delegateAcctAddress:
+                              type: string
+                            validator:
+                              type: object
+                              properties:
+                                name:
+                                  type: string
+                                address:
+                                  type: string
+                                status:
+                                  type: string
+                                commissionRate:
+                                  type: integer
+                                  format: int32
+                                delegationAmt:
+                                  type: integer
+                                  format: int32
+                            amt:
+                              type: integer
+                              format: int32
+                      target:
+                        type: string
+                        enum:
+                          - DELEGATION
+                          - FEE
+                          - WITHDRAWAL
+                        default: DELEGATION
+                    title: >-
+                      TODO(TEST-XX): Update these fields to be more useful (e.g.
+                      balances should be coins, maybe store port name directly)
                   feeAccount:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        address:
-                          type: string
-                        balance:
-                          type: integer
-                          format: int32
-                        delegatedBalance:
-                          type: integer
-                          format: int32
-                        delegations:
-                          type: array
-                          items:
-                            type: object
-                            properties:
-                              delegateAcctAddress:
-                                type: string
-                              validator:
-                                type: object
-                                properties:
-                                  name:
-                                    type: string
-                                  address:
-                                    type: string
-                                  status:
-                                    type: string
-                                  commissionRate:
-                                    type: integer
-                                    format: int32
-                                  delegationAmt:
-                                    type: integer
-                                    format: int32
-                              amt:
-                                type: integer
-                                format: int32
-                title: 'next id: 8'
+                    type: object
+                    properties:
+                      address:
+                        type: string
+                      balance:
+                        type: integer
+                        format: int32
+                      delegatedBalance:
+                        type: integer
+                        format: int32
+                      delegations:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            delegateAcctAddress:
+                              type: string
+                            validator:
+                              type: object
+                              properties:
+                                name:
+                                  type: string
+                                address:
+                                  type: string
+                                status:
+                                  type: string
+                                commissionRate:
+                                  type: integer
+                                  format: int32
+                                delegationAmt:
+                                  type: integer
+                                  format: int32
+                            amt:
+                              type: integer
+                              format: int32
+                      target:
+                        type: string
+                        enum:
+                          - DELEGATION
+                          - FEE
+                          - WITHDRAWAL
+                        default: DELEGATION
+                    title: >-
+                      TODO(TEST-XX): Update these fields to be more useful (e.g.
+                      balances should be coins, maybe store port name directly)
+                  delegationAccount:
+                    type: object
+                    properties:
+                      address:
+                        type: string
+                      balance:
+                        type: integer
+                        format: int32
+                      delegatedBalance:
+                        type: integer
+                        format: int32
+                      delegations:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            delegateAcctAddress:
+                              type: string
+                            validator:
+                              type: object
+                              properties:
+                                name:
+                                  type: string
+                                address:
+                                  type: string
+                                status:
+                                  type: string
+                                commissionRate:
+                                  type: integer
+                                  format: int32
+                                delegationAmt:
+                                  type: integer
+                                  format: int32
+                            amt:
+                              type: integer
+                              format: int32
+                      target:
+                        type: string
+                        enum:
+                          - DELEGATION
+                          - FEE
+                          - WITHDRAWAL
+                        default: DELEGATION
+                    title: >-
+                      TODO(TEST-XX): Update these fields to be more useful (e.g.
+                      balances should be coins, maybe store port name directly)
+                  LocalDenom:
+                    type: string
+                  BaseDenom:
+                    type: string
+                title: 'next id: 10'
         default:
           description: An unexpected error response.
           schema:
@@ -30391,11 +30520,10 @@ paths:
                           "value": "1.212s"
                         }
       parameters:
-        - name: id
+        - name: chain_id
           in: path
           required: true
           type: string
-          format: uint64
       tags:
         - Query
   /Stride-Labs/stride/stakeibc/ica_account:
@@ -30444,6 +30572,16 @@ paths:
                         amt:
                           type: integer
                           format: int32
+                  target:
+                    type: string
+                    enum:
+                      - DELEGATION
+                      - FEE
+                      - WITHDRAWAL
+                    default: DELEGATION
+                title: >-
+                  TODO(TEST-XX): Update these fields to be more useful (e.g.
+                  balances should be coins, maybe store port name directly)
         default:
           description: An unexpected error response.
           schema:
@@ -51615,12 +51753,9 @@ definitions:
   Stridelabs.stride.stakeibc.HostZone:
     type: object
     properties:
-      id:
+      chainId:
         type: string
-        format: uint64
-      portId:
-        type: string
-      channelId:
+      connectionId:
         type: string
       validators:
         type: array
@@ -51656,83 +51791,149 @@ definitions:
             delegationAmt:
               type: integer
               format: int32
-      rewardsAccount:
-        type: array
-        items:
-          type: object
-          properties:
-            address:
-              type: string
-            balance:
-              type: integer
-              format: int32
-            delegatedBalance:
-              type: integer
-              format: int32
-            delegations:
-              type: array
-              items:
-                type: object
-                properties:
-                  delegateAcctAddress:
-                    type: string
-                  validator:
-                    type: object
-                    properties:
-                      name:
-                        type: string
-                      address:
-                        type: string
-                      status:
-                        type: string
-                      commissionRate:
-                        type: integer
-                        format: int32
-                      delegationAmt:
-                        type: integer
-                        format: int32
-                  amt:
-                    type: integer
-                    format: int32
+      withdrawalAccount:
+        type: object
+        properties:
+          address:
+            type: string
+          balance:
+            type: integer
+            format: int32
+          delegatedBalance:
+            type: integer
+            format: int32
+          delegations:
+            type: array
+            items:
+              type: object
+              properties:
+                delegateAcctAddress:
+                  type: string
+                validator:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                    address:
+                      type: string
+                    status:
+                      type: string
+                    commissionRate:
+                      type: integer
+                      format: int32
+                    delegationAmt:
+                      type: integer
+                      format: int32
+                amt:
+                  type: integer
+                  format: int32
+          target:
+            type: string
+            enum:
+              - DELEGATION
+              - FEE
+              - WITHDRAWAL
+            default: DELEGATION
+        title: >-
+          TODO(TEST-XX): Update these fields to be more useful (e.g. balances
+          should be coins, maybe store port name directly)
       feeAccount:
-        type: array
-        items:
-          type: object
-          properties:
-            address:
-              type: string
-            balance:
-              type: integer
-              format: int32
-            delegatedBalance:
-              type: integer
-              format: int32
-            delegations:
-              type: array
-              items:
-                type: object
-                properties:
-                  delegateAcctAddress:
-                    type: string
-                  validator:
-                    type: object
-                    properties:
-                      name:
-                        type: string
-                      address:
-                        type: string
-                      status:
-                        type: string
-                      commissionRate:
-                        type: integer
-                        format: int32
-                      delegationAmt:
-                        type: integer
-                        format: int32
-                  amt:
-                    type: integer
-                    format: int32
-    title: 'next id: 8'
+        type: object
+        properties:
+          address:
+            type: string
+          balance:
+            type: integer
+            format: int32
+          delegatedBalance:
+            type: integer
+            format: int32
+          delegations:
+            type: array
+            items:
+              type: object
+              properties:
+                delegateAcctAddress:
+                  type: string
+                validator:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                    address:
+                      type: string
+                    status:
+                      type: string
+                    commissionRate:
+                      type: integer
+                      format: int32
+                    delegationAmt:
+                      type: integer
+                      format: int32
+                amt:
+                  type: integer
+                  format: int32
+          target:
+            type: string
+            enum:
+              - DELEGATION
+              - FEE
+              - WITHDRAWAL
+            default: DELEGATION
+        title: >-
+          TODO(TEST-XX): Update these fields to be more useful (e.g. balances
+          should be coins, maybe store port name directly)
+      delegationAccount:
+        type: object
+        properties:
+          address:
+            type: string
+          balance:
+            type: integer
+            format: int32
+          delegatedBalance:
+            type: integer
+            format: int32
+          delegations:
+            type: array
+            items:
+              type: object
+              properties:
+                delegateAcctAddress:
+                  type: string
+                validator:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                    address:
+                      type: string
+                    status:
+                      type: string
+                    commissionRate:
+                      type: integer
+                      format: int32
+                    delegationAmt:
+                      type: integer
+                      format: int32
+                amt:
+                  type: integer
+                  format: int32
+          target:
+            type: string
+            enum:
+              - DELEGATION
+              - FEE
+              - WITHDRAWAL
+            default: DELEGATION
+        title: >-
+          TODO(TEST-XX): Update these fields to be more useful (e.g. balances
+          should be coins, maybe store port name directly)
+      LocalDenom:
+        type: string
+      BaseDenom:
+        type: string
+    title: 'next id: 10'
   Stridelabs.stride.stakeibc.ICAAccount:
     type: object
     properties:
@@ -51769,6 +51970,23 @@ definitions:
             amt:
               type: integer
               format: int32
+      target:
+        type: string
+        enum:
+          - DELEGATION
+          - FEE
+          - WITHDRAWAL
+        default: DELEGATION
+    title: >-
+      TODO(TEST-XX): Update these fields to be more useful (e.g. balances should
+      be coins, maybe store port name directly)
+  Stridelabs.stride.stakeibc.ICAAccountType:
+    type: string
+    enum:
+      - DELEGATION
+      - FEE
+      - WITHDRAWAL
+    default: DELEGATION
   Stridelabs.stride.stakeibc.MinValidatorRequirements:
     type: object
     properties:
@@ -51787,6 +52005,11 @@ definitions:
       interact with ICAs)
 
       MsgRegisterAccountResponse defines the response for Msg/RegisterAccount
+  Stridelabs.stride.stakeibc.MsgRegisterHostZoneResponse:
+    type: object
+    title: >-
+      TODO(TEST-53): Remove this pre-launch (no need for clients to create /
+      interact with ICAs)
   Stridelabs.stride.stakeibc.MsgSubmitTxResponse:
     type: object
     title: >-
@@ -51876,12 +52099,9 @@ definitions:
         items:
           type: object
           properties:
-            id:
+            chainId:
               type: string
-              format: uint64
-            portId:
-              type: string
-            channelId:
+            connectionId:
               type: string
             validators:
               type: array
@@ -51917,83 +52137,149 @@ definitions:
                   delegationAmt:
                     type: integer
                     format: int32
-            rewardsAccount:
-              type: array
-              items:
-                type: object
-                properties:
-                  address:
-                    type: string
-                  balance:
-                    type: integer
-                    format: int32
-                  delegatedBalance:
-                    type: integer
-                    format: int32
-                  delegations:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        delegateAcctAddress:
-                          type: string
-                        validator:
-                          type: object
-                          properties:
-                            name:
-                              type: string
-                            address:
-                              type: string
-                            status:
-                              type: string
-                            commissionRate:
-                              type: integer
-                              format: int32
-                            delegationAmt:
-                              type: integer
-                              format: int32
-                        amt:
-                          type: integer
-                          format: int32
+            withdrawalAccount:
+              type: object
+              properties:
+                address:
+                  type: string
+                balance:
+                  type: integer
+                  format: int32
+                delegatedBalance:
+                  type: integer
+                  format: int32
+                delegations:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      delegateAcctAddress:
+                        type: string
+                      validator:
+                        type: object
+                        properties:
+                          name:
+                            type: string
+                          address:
+                            type: string
+                          status:
+                            type: string
+                          commissionRate:
+                            type: integer
+                            format: int32
+                          delegationAmt:
+                            type: integer
+                            format: int32
+                      amt:
+                        type: integer
+                        format: int32
+                target:
+                  type: string
+                  enum:
+                    - DELEGATION
+                    - FEE
+                    - WITHDRAWAL
+                  default: DELEGATION
+              title: >-
+                TODO(TEST-XX): Update these fields to be more useful (e.g.
+                balances should be coins, maybe store port name directly)
             feeAccount:
-              type: array
-              items:
-                type: object
-                properties:
-                  address:
-                    type: string
-                  balance:
-                    type: integer
-                    format: int32
-                  delegatedBalance:
-                    type: integer
-                    format: int32
-                  delegations:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        delegateAcctAddress:
-                          type: string
-                        validator:
-                          type: object
-                          properties:
-                            name:
-                              type: string
-                            address:
-                              type: string
-                            status:
-                              type: string
-                            commissionRate:
-                              type: integer
-                              format: int32
-                            delegationAmt:
-                              type: integer
-                              format: int32
-                        amt:
-                          type: integer
-                          format: int32
-          title: 'next id: 8'
+              type: object
+              properties:
+                address:
+                  type: string
+                balance:
+                  type: integer
+                  format: int32
+                delegatedBalance:
+                  type: integer
+                  format: int32
+                delegations:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      delegateAcctAddress:
+                        type: string
+                      validator:
+                        type: object
+                        properties:
+                          name:
+                            type: string
+                          address:
+                            type: string
+                          status:
+                            type: string
+                          commissionRate:
+                            type: integer
+                            format: int32
+                          delegationAmt:
+                            type: integer
+                            format: int32
+                      amt:
+                        type: integer
+                        format: int32
+                target:
+                  type: string
+                  enum:
+                    - DELEGATION
+                    - FEE
+                    - WITHDRAWAL
+                  default: DELEGATION
+              title: >-
+                TODO(TEST-XX): Update these fields to be more useful (e.g.
+                balances should be coins, maybe store port name directly)
+            delegationAccount:
+              type: object
+              properties:
+                address:
+                  type: string
+                balance:
+                  type: integer
+                  format: int32
+                delegatedBalance:
+                  type: integer
+                  format: int32
+                delegations:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      delegateAcctAddress:
+                        type: string
+                      validator:
+                        type: object
+                        properties:
+                          name:
+                            type: string
+                          address:
+                            type: string
+                          status:
+                            type: string
+                          commissionRate:
+                            type: integer
+                            format: int32
+                          delegationAmt:
+                            type: integer
+                            format: int32
+                      amt:
+                        type: integer
+                        format: int32
+                target:
+                  type: string
+                  enum:
+                    - DELEGATION
+                    - FEE
+                    - WITHDRAWAL
+                  default: DELEGATION
+              title: >-
+                TODO(TEST-XX): Update these fields to be more useful (e.g.
+                balances should be coins, maybe store port name directly)
+            LocalDenom:
+              type: string
+            BaseDenom:
+              type: string
+          title: 'next id: 10'
       pagination:
         type: object
         properties:
@@ -52073,12 +52359,9 @@ definitions:
       HostZone:
         type: object
         properties:
-          id:
+          chainId:
             type: string
-            format: uint64
-          portId:
-            type: string
-          channelId:
+          connectionId:
             type: string
           validators:
             type: array
@@ -52114,83 +52397,149 @@ definitions:
                 delegationAmt:
                   type: integer
                   format: int32
-          rewardsAccount:
-            type: array
-            items:
-              type: object
-              properties:
-                address:
-                  type: string
-                balance:
-                  type: integer
-                  format: int32
-                delegatedBalance:
-                  type: integer
-                  format: int32
-                delegations:
-                  type: array
-                  items:
-                    type: object
-                    properties:
-                      delegateAcctAddress:
-                        type: string
-                      validator:
-                        type: object
-                        properties:
-                          name:
-                            type: string
-                          address:
-                            type: string
-                          status:
-                            type: string
-                          commissionRate:
-                            type: integer
-                            format: int32
-                          delegationAmt:
-                            type: integer
-                            format: int32
-                      amt:
-                        type: integer
-                        format: int32
+          withdrawalAccount:
+            type: object
+            properties:
+              address:
+                type: string
+              balance:
+                type: integer
+                format: int32
+              delegatedBalance:
+                type: integer
+                format: int32
+              delegations:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    delegateAcctAddress:
+                      type: string
+                    validator:
+                      type: object
+                      properties:
+                        name:
+                          type: string
+                        address:
+                          type: string
+                        status:
+                          type: string
+                        commissionRate:
+                          type: integer
+                          format: int32
+                        delegationAmt:
+                          type: integer
+                          format: int32
+                    amt:
+                      type: integer
+                      format: int32
+              target:
+                type: string
+                enum:
+                  - DELEGATION
+                  - FEE
+                  - WITHDRAWAL
+                default: DELEGATION
+            title: >-
+              TODO(TEST-XX): Update these fields to be more useful (e.g.
+              balances should be coins, maybe store port name directly)
           feeAccount:
-            type: array
-            items:
-              type: object
-              properties:
-                address:
-                  type: string
-                balance:
-                  type: integer
-                  format: int32
-                delegatedBalance:
-                  type: integer
-                  format: int32
-                delegations:
-                  type: array
-                  items:
-                    type: object
-                    properties:
-                      delegateAcctAddress:
-                        type: string
-                      validator:
-                        type: object
-                        properties:
-                          name:
-                            type: string
-                          address:
-                            type: string
-                          status:
-                            type: string
-                          commissionRate:
-                            type: integer
-                            format: int32
-                          delegationAmt:
-                            type: integer
-                            format: int32
-                      amt:
-                        type: integer
-                        format: int32
-        title: 'next id: 8'
+            type: object
+            properties:
+              address:
+                type: string
+              balance:
+                type: integer
+                format: int32
+              delegatedBalance:
+                type: integer
+                format: int32
+              delegations:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    delegateAcctAddress:
+                      type: string
+                    validator:
+                      type: object
+                      properties:
+                        name:
+                          type: string
+                        address:
+                          type: string
+                        status:
+                          type: string
+                        commissionRate:
+                          type: integer
+                          format: int32
+                        delegationAmt:
+                          type: integer
+                          format: int32
+                    amt:
+                      type: integer
+                      format: int32
+              target:
+                type: string
+                enum:
+                  - DELEGATION
+                  - FEE
+                  - WITHDRAWAL
+                default: DELEGATION
+            title: >-
+              TODO(TEST-XX): Update these fields to be more useful (e.g.
+              balances should be coins, maybe store port name directly)
+          delegationAccount:
+            type: object
+            properties:
+              address:
+                type: string
+              balance:
+                type: integer
+                format: int32
+              delegatedBalance:
+                type: integer
+                format: int32
+              delegations:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    delegateAcctAddress:
+                      type: string
+                    validator:
+                      type: object
+                      properties:
+                        name:
+                          type: string
+                        address:
+                          type: string
+                        status:
+                          type: string
+                        commissionRate:
+                          type: integer
+                          format: int32
+                        delegationAmt:
+                          type: integer
+                          format: int32
+                    amt:
+                      type: integer
+                      format: int32
+              target:
+                type: string
+                enum:
+                  - DELEGATION
+                  - FEE
+                  - WITHDRAWAL
+                default: DELEGATION
+            title: >-
+              TODO(TEST-XX): Update these fields to be more useful (e.g.
+              balances should be coins, maybe store port name directly)
+          LocalDenom:
+            type: string
+          BaseDenom:
+            type: string
+        title: 'next id: 10'
   Stridelabs.stride.stakeibc.QueryGetICAAccountResponse:
     type: object
     properties:
@@ -52230,6 +52579,16 @@ definitions:
                 amt:
                   type: integer
                   format: int32
+          target:
+            type: string
+            enum:
+              - DELEGATION
+              - FEE
+              - WITHDRAWAL
+            default: DELEGATION
+        title: >-
+          TODO(TEST-XX): Update these fields to be more useful (e.g. balances
+          should be coins, maybe store port name directly)
   Stridelabs.stride.stakeibc.QueryGetMinValidatorRequirementsResponse:
     type: object
     properties:

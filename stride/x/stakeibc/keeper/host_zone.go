@@ -32,38 +32,17 @@ func (k Keeper) SetHostZoneCount(ctx sdk.Context, count uint64) {
 	store.Set(byteKey, bz)
 }
 
-// AppendHostZone appends a hostZone in the store with a new id and update the count
-func (k Keeper) AppendHostZone(
-	ctx sdk.Context,
-	hostZone types.HostZone,
-) uint64 {
-	// Create the hostZone
-	count := k.GetHostZoneCount(ctx)
-
-	// Set the ID of the appended value
-	hostZone.Id = count
-
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.HostZoneKey))
-	appendedValue := k.cdc.MustMarshal(&hostZone)
-	store.Set(GetHostZoneIDBytes(hostZone.Id), appendedValue)
-
-	// Update hostZone count
-	k.SetHostZoneCount(ctx, count+1)
-
-	return count
-}
-
 // SetHostZone set a specific hostZone in the store
 func (k Keeper) SetHostZone(ctx sdk.Context, hostZone types.HostZone) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.HostZoneKey))
 	b := k.cdc.MustMarshal(&hostZone)
-	store.Set(GetHostZoneIDBytes(hostZone.Id), b)
+	store.Set([]byte(hostZone.ChainId), b)
 }
 
 // GetHostZone returns a hostZone from its id
-func (k Keeper) GetHostZone(ctx sdk.Context, id uint64) (val types.HostZone, found bool) {
+func (k Keeper) GetHostZone(ctx sdk.Context, chain_id string) (val types.HostZone, found bool) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.HostZoneKey))
-	b := store.Get(GetHostZoneIDBytes(id))
+	b := store.Get([]byte(chain_id))
 	if b == nil {
 		return val, false
 	}
@@ -72,9 +51,9 @@ func (k Keeper) GetHostZone(ctx sdk.Context, id uint64) (val types.HostZone, fou
 }
 
 // RemoveHostZone removes a hostZone from the store
-func (k Keeper) RemoveHostZone(ctx sdk.Context, id uint64) {
+func (k Keeper) RemoveHostZone(ctx sdk.Context, chain_id string) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.HostZoneKey))
-	store.Delete(GetHostZoneIDBytes(id))
+	store.Delete([]byte(chain_id))
 }
 
 // GetAllHostZone returns all hostZone
@@ -93,14 +72,29 @@ func (k Keeper) GetAllHostZone(ctx sdk.Context) (list []types.HostZone) {
 	return
 }
 
-// GetHostZoneIDBytes returns the byte representation of the ID
-func GetHostZoneIDBytes(id uint64) []byte {
-	bz := make([]byte, 8)
-	binary.BigEndian.PutUint64(bz, id)
-	return bz
-}
-
 // GetHostZoneIDFromBytes returns ID in uint64 format from a byte array
 func GetHostZoneIDFromBytes(bz []byte) uint64 {
 	return binary.BigEndian.Uint64(bz)
+}
+
+// IterateHostZones iterates zones
+func (k Keeper) IterateHostZones(ctx sdk.Context, fn func(index int64, zoneInfo types.HostZone) (stop bool)) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.HostZoneKey))
+
+	iterator := sdk.KVStorePrefixIterator(store, nil)
+	defer iterator.Close()
+
+	i := int64(0)
+
+	for ; iterator.Valid(); iterator.Next() {
+		zone := types.HostZone{}
+		k.cdc.MustUnmarshal(iterator.Value(), &zone)
+
+		stop := fn(i, zone)
+
+		if stop {
+			break
+		}
+		i++
+	}
 }

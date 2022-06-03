@@ -9,3 +9,19 @@ const (
 	AttributeKeyAck        = "acknowledgement"
 	AttributeKeyAckError   = "error"
 )
+
+   
+const (
+	EventTypeRegisterZone      = "register_zone"
+	EventTypeRedemptionRequest = "request_redemption"
+	EventTypeLiquidStakeRequest = "liquid_stake"
+
+	AttributeKeyConnectionId     = "connection_id"
+	AttributeKeyRecipientChain   = "chain_id"
+	AttributeKeyRecipientAddress = "recipient"
+	AttributeKeyBurnAmount       = "burn_amount"
+	AttributeKeyRedeemAmount     = "redeem_amount"
+	AttributeKeySourceAddress    = "source"
+
+	AttributeValueCategory = ModuleName
+)
