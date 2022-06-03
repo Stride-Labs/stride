@@ -1,9 +1,13 @@
 package stakeibc
 
 import (
+	"fmt"
+
 	"github.com/Stride-Labs/stride/x/stakeibc/keeper"
+	"github.com/Stride-Labs/stride/x/stakeibc/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
+	icatypes "github.com/cosmos/ibc-go/v3/modules/apps/27-interchain-accounts/types"
 	channeltypes "github.com/cosmos/ibc-go/v3/modules/core/04-channel/types"
 	host "github.com/cosmos/ibc-go/v3/modules/core/24-host"
 	ibcexported "github.com/cosmos/ibc-go/v3/modules/core/exported"
@@ -52,6 +56,56 @@ func (im IBCModule) OnChanOpenAck(
 	// if counterpartyVersion != types.Version {
 	// 	return sdkerrors.Wrapf(types.ErrInvalidVersion, "invalid counterparty version: %s, expected %s", counterpartyVersion, types.Version)
 	// }
+	controllerConnectionId, err := im.keeper.GetConnectionId(ctx, portID)
+	if err != nil {
+		ctx.Logger().Error("Unable to get connection for port " + portID)
+	}
+	address, found := im.keeper.ICAControllerKeeper.GetInterchainAccountAddress(ctx, controllerConnectionId, portID)
+	if !found {
+		ctx.Logger().Error(fmt.Sprintf("Expected to find an address for %s/%s", controllerConnectionId, portID))
+		return nil
+	}
+	// get host chain id from connection
+	// fetch counterparty connection
+	hostChainId, err := im.keeper.GetCounterpartyChainId(ctx, controllerConnectionId)
+	if err != nil {
+		ctx.Logger().Error(
+			"Unable to obtain counterparty chain for given connection and port",
+			"ConnectionID", controllerConnectionId,
+			"PortID", portID,
+			"Error", err,
+		)
+		return nil
+	}
+	//  get zone info
+	zoneInfo, found := im.keeper.GetHostZone(ctx, hostChainId)
+	if !found {
+		ctx.Logger().Error(fmt.Sprintf("Expected to find zone info for %v", hostChainId))
+		return nil
+	}
+	ctx.Logger().Info("Found matching address", "chain", zoneInfo.ChainId, "address", address, "port", portID)
+
+	// addresses
+	withdrawalAddress, err := icatypes.NewControllerPortID(types.FormatICAAccountOwner(hostChainId, types.ICAAccountType_WITHDRAWAL))
+	feeAddress, err := icatypes.NewControllerPortID(types.FormatICAAccountOwner(hostChainId, types.ICAAccountType_FEE))
+	delegationAddress, err := icatypes.NewControllerPortID(types.FormatICAAccountOwner(hostChainId, types.ICAAccountType_DELEGATION))
+
+	// Set ICA account addresses
+	switch {
+	// withdrawal address
+	case portID == withdrawalAddress:
+		zoneInfo.WithdrawalAccount = &types.ICAAccount{Address: address, Balance: 0, DelegatedBalance: 0, Target: types.ICAAccountType_WITHDRAWAL}
+	// fee address
+	case portID == feeAddress:
+		zoneInfo.FeeAccount = &types.ICAAccount{Address: address, Balance: 0, DelegatedBalance: 0, Target: types.ICAAccountType_FEE}
+	// delegation address
+	case portID == delegationAddress:
+		zoneInfo.DelegationAccount = &types.ICAAccount{Address: address, Balance: 0, DelegatedBalance: 0, Target: types.ICAAccountType_DELEGATION}
+	default:
+		ctx.Logger().Error("Missing portId: ", portID)
+	}
+	
+	im.keeper.SetHostZone(ctx, zoneInfo)
 	return nil
 }
 
@@ -65,6 +119,7 @@ func (im IBCModule) OnAcknowledgementPacket(
 ) error {
 	return nil
 	// TODO(TEST-21): Implement OnAcknowledgementPacket logic
+	
 	// var ack channeltypes.Acknowledgement
 	// if err := types.ModuleCdc.UnmarshalJSON(acknowledgement, &ack); err != nil {
 	// 	return sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "cannot unmarshal packet acknowledgement: %v", err)

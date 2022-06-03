@@ -46,7 +46,7 @@ func (k Keeper) HostZone(c context.Context, req *types.QueryGetHostZoneRequest) 
 	}
 
 	ctx := sdk.UnwrapSDKContext(c)
-	hostZone, found := k.GetHostZone(ctx, req.Id)
+	hostZone, found := k.GetHostZone(ctx, req.ChainId)
 	if !found {
 		return nil, sdkerrors.ErrKeyNotFound
 	}
