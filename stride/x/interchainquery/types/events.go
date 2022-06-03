@@ -7,6 +7,7 @@ const (
 	AttributeKeyType         = "type"
 	AttributeKeyParams       = "parameters"
 	AttributeKeyRequest      = "request"
+	AttributeKeyHeight       = "height"
 	AttributeValueCategory   = ModuleName
 	AttributeValueQuery      = "query"
 )
