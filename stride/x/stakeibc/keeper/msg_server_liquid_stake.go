@@ -45,10 +45,7 @@ func (k msgServer) LiquidStake(goCtx context.Context, msg *types.MsgLiquidStake)
 	// NOTE: Should we add an additional check here? This is a pretty important line of code
 	// NOTE: If sender doesn't have enough coins, this panics (error is hard to interpret)
 	// check that hostZone is registered
-	// TODO REPLACE THIS HOST_ZONE LINE AFTER MERGING WITH AIDANS PR
-	// hostZone, hostZoneFound := k.GetHostZoneFromDenom(ctx, msg.Denom)
-	hostZoneId := uint64(0)
-	hostZoneFound := true
+	hostZone, hostZoneFound := k.GetHostZoneFromDenom(ctx, msg.Denom)
 	if !hostZoneFound {
 		k.Logger(ctx).Info("Host Zone not found for denom (%s)", msg.Denom)
 		return nil, sdkerrors.Wrapf(types.ErrInvalidHostZone, "Host Zone not found for denom (%s)", msg.Denom)
@@ -59,7 +56,7 @@ func (k msgServer) LiquidStake(goCtx context.Context, msg *types.MsgLiquidStake)
 		panic(sdkerror)
 	}
 	// create a deposit record of these tokens
-	depositRecord := types.NewDepositRecord(msg.Amount, msg.Denom, hostZoneId,
+	depositRecord := types.NewDepositRecord(msg.Amount, msg.Denom, hostZone.ChainId,
 		sender.String(), types.DepositRecord_RECEIPT)
 	k.AppendDepositRecord(ctx, *depositRecord)
 	// mint user `amount` of the corresponding stAsset

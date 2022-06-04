@@ -72,7 +72,7 @@ setup() {
   str1_balance_statom=$($STR1_EXEC q bank balances $STRIDE_ADDRESS_1 --denom $STATOM | GETBAL)
   # liquid stake
   $STR1_EXEC tx stakeibc liquid-stake 1000 $IBCATOM --keyring-backend test --from val1 -y
-  sleep 2
+  sleep 5
   # make sure IBCATOM went down 
   str1_balance_atom_new=$($STR1_EXEC q bank balances $STRIDE_ADDRESS_1 --denom $IBCATOM | GETBAL)
   str1_atom_diff=$(($str1_balance_atom - $str1_balance_atom_new))
@@ -89,3 +89,12 @@ setup() {
   module_atom=$($STR1_EXEC q bank balances $ibcaddr --denom $IBCATOM | GETBAL)
   assert_equal "$module_atom" '1000'
 }
+
+# add test to register host zone 
+@test "host zone successfully registered" {
+  run $STR1_EXEC q stakeibc show-host-zone GAIA
+  host_zone_info=$($STR1_EXEC q stakeibc get-host-zone  | awk '{print $NF}')
+  assert_line '  BaseDenom: ibc/C4CFF46FD6DE35CA4CF4CE031E643C8FDC9BA4B99AE598E9B0ED98FE3A2319F9'
+}
+
+# add test to see if assets are properly being staked on host zone

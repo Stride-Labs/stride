@@ -23,9 +23,18 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochIdentifier string, epochN
 				pstr := fmt.Sprintf("\tProcessing deposit {%d} {%s} {%d} {%s}", depositRecord.Id, depositRecord.Denom, depositRecord.Amount, depositRecord.Sender)
 				k.Logger(ctx).Info(pstr)
 				addr := k.accountKeeper.GetModuleAccount(ctx, types.ModuleName).GetAddress().String()
-				// TODO grab proper delegate address from HostZone, after merging with Aidan
-				// TODO grab proper port name and channel name
-				delegateAddress := "cosmos1pcag0cj4ttxg8l7pcg0q4ksuglswuuedcextl2"
+				hostZone, hostZoneFound := k.GetHostZone(ctx, depositRecord.HostZoneId)
+				if !hostZoneFound {
+					k.Logger(ctx).Error("Host zone not found for deposit record {%d}", depositRecord.Id)
+					continue
+				}
+				delegateAccount := hostZone.GetDelegationAccount()
+				if delegateAccount == nil || delegateAccount.Address == "" {
+					k.Logger(ctx).Error("Zone %s is missing a delegation address!", hostZone.ChainId)
+					continue
+				}
+				delegateAddress := delegateAccount.Address
+				// TODO TEST-59 grab proper port name and channel name
 				timeoutHeight := clienttypes.NewHeight(0, 500)
 				transferCoin := sdk.NewCoin(depositRecord.Denom, sdk.NewInt(int64(depositRecord.Amount)))
 				goCtx := sdk.WrapSDKContext(ctx)
@@ -40,6 +49,36 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochIdentifier string, epochN
 					k.RemoveDepositRecord(ctx, depositRecord.Id)
 				}
 			}
+		}
+		delegateInterval := int64(k.GetParam(ctx, types.KeyDelegateInterval))
+		if epochNumber%delegateInterval == 0 {
+			icaStake := func(index int64, zoneInfo types.HostZone) (stop bool) {
+				// Verify the delegation ICA is registered
+				delegationIca := zoneInfo.GetDelegationAccount()
+				if delegationIca == nil || delegationIca.Address == "" {
+					k.Logger(ctx).Error("Zone %s is missing a delegation address!", zoneInfo.ChainId)
+					return true
+				}
+
+				// TODO(TEST-46): Query process amount (unstaked balance) on host zone using ICQ
+				processAmount := "1" + zoneInfo.BaseDenom
+				amt, err := sdk.ParseCoinNormalized(processAmount)
+				// Do we want to panic here? All unprocessed zones would also fail
+				if err != nil {
+					panic(err)
+				}
+				err = k.DelegateOnHost(ctx, zoneInfo, amt)
+				if err != nil {
+					k.Logger(ctx).Error("Did not stake %s on %s", processAmount, zoneInfo.ChainId)
+					return true
+				} else {
+					k.Logger(ctx).Info("Successfully staked %s on %s", processAmount, zoneInfo.ChainId)
+				}
+				return false
+			}
+
+			// Iterate the zones and apply icaStake
+			k.IterateHostZones(ctx, icaStake)
 		}
 	}
 }

@@ -8,6 +8,7 @@ export const protobufPackage = "Stridelabs.stride.stakeibc";
 export interface Params {
   /** define epoch lengths, in stride_epochs */
   rewards_interval: number;
+  delegate_interval: number;
   deposit_interval: number;
   exchange_rate_interval: number;
   stride_commission: number;
@@ -15,6 +16,7 @@ export interface Params {
    * zone_com_address stores which addresses to
    * send the Stride commission too, as well as what portion
    * of the fee each address is entitled to
+   * TODO implement this
    */
   zone_com_address: { [key: string]: string };
 }
@@ -26,6 +28,7 @@ export interface Params_ZoneComAddressEntry {
 
 const baseParams: object = {
   rewards_interval: 0,
+  delegate_interval: 0,
   deposit_interval: 0,
   exchange_rate_interval: 0,
   stride_commission: 0,
@@ -35,6 +38,9 @@ export const Params = {
   encode(message: Params, writer: Writer = Writer.create()): Writer {
     if (message.rewards_interval !== 0) {
       writer.uint32(8).uint64(message.rewards_interval);
+    }
+    if (message.delegate_interval !== 0) {
+      writer.uint32(48).uint64(message.delegate_interval);
     }
     if (message.deposit_interval !== 0) {
       writer.uint32(16).uint64(message.deposit_interval);
@@ -64,6 +70,9 @@ export const Params = {
       switch (tag >>> 3) {
         case 1:
           message.rewards_interval = longToNumber(reader.uint64() as Long);
+          break;
+        case 6:
+          message.delegate_interval = longToNumber(reader.uint64() as Long);
           break;
         case 2:
           message.deposit_interval = longToNumber(reader.uint64() as Long);
@@ -105,6 +114,14 @@ export const Params = {
       message.rewards_interval = 0;
     }
     if (
+      object.delegate_interval !== undefined &&
+      object.delegate_interval !== null
+    ) {
+      message.delegate_interval = Number(object.delegate_interval);
+    } else {
+      message.delegate_interval = 0;
+    }
+    if (
       object.deposit_interval !== undefined &&
       object.deposit_interval !== null
     ) {
@@ -143,6 +160,8 @@ export const Params = {
     const obj: any = {};
     message.rewards_interval !== undefined &&
       (obj.rewards_interval = message.rewards_interval);
+    message.delegate_interval !== undefined &&
+      (obj.delegate_interval = message.delegate_interval);
     message.deposit_interval !== undefined &&
       (obj.deposit_interval = message.deposit_interval);
     message.exchange_rate_interval !== undefined &&
@@ -168,6 +187,14 @@ export const Params = {
       message.rewards_interval = object.rewards_interval;
     } else {
       message.rewards_interval = 0;
+    }
+    if (
+      object.delegate_interval !== undefined &&
+      object.delegate_interval !== null
+    ) {
+      message.delegate_interval = object.delegate_interval;
+    } else {
+      message.delegate_interval = 0;
     }
     if (
       object.deposit_interval !== undefined &&

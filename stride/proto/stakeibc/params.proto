@@ -12,6 +12,7 @@ message Params {
 
   // define epoch lengths, in stride_epochs
   uint64 rewards_interval = 1;
+  uint64 delegate_interval = 6;
   uint64 deposit_interval = 2;
   uint64 exchange_rate_interval = 3;
 
@@ -19,6 +20,7 @@ message Params {
   // zone_com_address stores which addresses to 
   // send the Stride commission too, as well as what portion
   // of the fee each address is entitled to
+  // TODO implement this 
   map<string, string> zone_com_address = 5;
 
 }

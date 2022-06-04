@@ -29180,7 +29180,6 @@ paths:
                       type: string
                     hostZoneId:
                       type: string
-                      format: uint64
                     sender:
                       type: string
                     purpose:
@@ -29483,7 +29482,6 @@ paths:
                     type: string
                   hostZoneId:
                     type: string
-                    format: uint64
                   sender:
                     type: string
                   purpose:
@@ -31421,6 +31419,9 @@ paths:
                     type: string
                     format: uint64
                     title: 'define epoch lengths, in stride_epochs'
+                  delegate_interval:
+                    type: string
+                    format: uint64
                   deposit_interval:
                     type: string
                     format: uint64
@@ -31438,6 +31439,7 @@ paths:
                       zone_com_address stores which addresses to 
                       send the Stride commission too, as well as what portion
                       of the fee each address is entitled to
+                      TODO implement this
             description: >-
               QueryParamsResponse is response type for the Query/Params RPC
               method.
@@ -51961,7 +51963,6 @@ definitions:
         type: string
       hostZoneId:
         type: string
-        format: uint64
       sender:
         type: string
       purpose:
@@ -52250,6 +52251,9 @@ definitions:
         type: string
         format: uint64
         title: 'define epoch lengths, in stride_epochs'
+      delegate_interval:
+        type: string
+        format: uint64
       deposit_interval:
         type: string
         format: uint64
@@ -52267,6 +52271,7 @@ definitions:
           zone_com_address stores which addresses to 
           send the Stride commission too, as well as what portion
           of the fee each address is entitled to
+          TODO implement this
     description: Params defines the parameters for the module.
   Stridelabs.stride.stakeibc.QueryAllDepositRecordResponse:
     type: object
@@ -52289,7 +52294,6 @@ definitions:
               type: string
             hostZoneId:
               type: string
-              format: uint64
             sender:
               type: string
             purpose:
@@ -52582,7 +52586,6 @@ definitions:
             type: string
           hostZoneId:
             type: string
-            format: uint64
           sender:
             type: string
           purpose:
@@ -52881,6 +52884,9 @@ definitions:
             type: string
             format: uint64
             title: 'define epoch lengths, in stride_epochs'
+          delegate_interval:
+            type: string
+            format: uint64
           deposit_interval:
             type: string
             format: uint64
@@ -52898,6 +52904,7 @@ definitions:
               zone_com_address stores which addresses to 
               send the Stride commission too, as well as what portion
               of the fee each address is entitled to
+              TODO implement this
     description: QueryParamsResponse is response type for the Query/Params RPC method.
   Stridelabs.stride.stakeibc.Validator:
     type: object
