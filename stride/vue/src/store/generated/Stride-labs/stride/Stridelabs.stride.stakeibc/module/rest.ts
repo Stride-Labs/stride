@@ -153,8 +153,6 @@ export interface StakeibcDepositRecord {
   /** @format int32 */
   amount?: number;
   denom?: string;
-
-  /** @format uint64 */
   hostZoneId?: string;
   sender?: string;
   purpose?: DepositRecordPurpose;
@@ -212,6 +210,9 @@ export type StakeibcMsgSubmitTxResponse = object;
 export interface StakeibcParams {
   /** @format uint64 */
   rewards_interval?: string;
+
+  /** @format uint64 */
+  delegate_interval?: string;
 
   /** @format uint64 */
   deposit_interval?: string;

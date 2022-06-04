@@ -8,5 +8,6 @@ ibcaddr=$($STR1_EXEC q stakeibc module-address stakeibc | awk '{print $NF}')
 module_atom=$($STR1_EXEC q bank balances $ibcaddr --denom $IBCATOM | GETBAL)
 echo $module_atom
 echo $ibcaddr
+echo $($STR1_EXEC q bank balances $ibcaddr --denom $IBCATOM)
 
 docker-compose --ansi never exec -T gaia1 gaiad --home /gaia/.gaiad q bank balances cosmos1pcag0cj4ttxg8l7pcg0q4ksuglswuuedcextl2

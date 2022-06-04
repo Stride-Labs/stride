@@ -130,14 +130,11 @@ echo "Tranfer channel created"
 echo "Starting hermes relayer"
 docker-compose up --force-recreate -d hermes
 
-# backwards connection, between GAIA and STRIDE
-# docker-compose run -T hermes hermes -c /tmp/hermes.toml tx raw chan-open-init $main_gaia_chain $main_chain connection-0 transfer transfer
-
-# IBC token transfer tests
-#############################################################################################################################
-# source ${SCRIPT_DIR}/ibc_token_transfer.sh
-
+# Register host zone
 # ICA staking test
+# first register host zone for ATOM chain
+IBCATOM='ibc/C4CFF46FD6DE35CA4CF4CE031E643C8FDC9BA4B99AE598E9B0ED98FE3A2319F9'
+docker-compose --ansi never exec -T $main_node strided tx stakeibc register-host-zone connection-0 $IBCATOM "st${IBCATOM}" --chain-id $main_chain --home /stride/.strided --keyring-backend test --from val1 --gas 500000 -y
 #############################################################################################################################
 # source ${SCRIPT_DIR}/ica_stake.sh
 

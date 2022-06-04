@@ -9,7 +9,7 @@ export interface DepositRecord {
   /** TODO do we care that amount is int32? should we change this to uint64? */
   amount: number;
   denom: string;
-  hostZoneId: number;
+  hostZoneId: string;
   sender: string;
   purpose: DepositRecord_Purpose;
 }
@@ -54,7 +54,7 @@ const baseDepositRecord: object = {
   id: 0,
   amount: 0,
   denom: "",
-  hostZoneId: 0,
+  hostZoneId: "",
   sender: "",
   purpose: 0,
 };
@@ -70,8 +70,8 @@ export const DepositRecord = {
     if (message.denom !== "") {
       writer.uint32(26).string(message.denom);
     }
-    if (message.hostZoneId !== 0) {
-      writer.uint32(32).uint64(message.hostZoneId);
+    if (message.hostZoneId !== "") {
+      writer.uint32(34).string(message.hostZoneId);
     }
     if (message.sender !== "") {
       writer.uint32(42).string(message.sender);
@@ -99,7 +99,7 @@ export const DepositRecord = {
           message.denom = reader.string();
           break;
         case 4:
-          message.hostZoneId = longToNumber(reader.uint64() as Long);
+          message.hostZoneId = reader.string();
           break;
         case 5:
           message.sender = reader.string();
@@ -133,9 +133,9 @@ export const DepositRecord = {
       message.denom = "";
     }
     if (object.hostZoneId !== undefined && object.hostZoneId !== null) {
-      message.hostZoneId = Number(object.hostZoneId);
+      message.hostZoneId = String(object.hostZoneId);
     } else {
-      message.hostZoneId = 0;
+      message.hostZoneId = "";
     }
     if (object.sender !== undefined && object.sender !== null) {
       message.sender = String(object.sender);
@@ -182,7 +182,7 @@ export const DepositRecord = {
     if (object.hostZoneId !== undefined && object.hostZoneId !== null) {
       message.hostZoneId = object.hostZoneId;
     } else {
-      message.hostZoneId = 0;
+      message.hostZoneId = "";
     }
     if (object.sender !== undefined && object.sender !== null) {
       message.sender = object.sender;
