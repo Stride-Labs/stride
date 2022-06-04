@@ -155,7 +155,7 @@ func (k msgServer) QueryBalance(goCtx context.Context, msg *types.MsgQueryBalanc
 	)
 	// TODO how do we display the result here (from the target chain)
 	// 		=> for now, just use ctx logging:
-	k.Logger(ctx).Info("ICQ submitted; output = ") //, outputFromICQ)
+	// k.Logger(ctx).Info("ICQ submitted; output = ", ) //, outputFromICQ)
 
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(

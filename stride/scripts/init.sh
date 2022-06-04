@@ -174,8 +174,8 @@ ICQ_RUN="docker-compose --ansi never run -T icq interchain-queries"
 ICQ_ADDRESS_STRIDE=$($ICQ_RUN keys add test-stride --chain stride-testnet | jq .address -r)
 ICQ_ADDRESS_GAIA=$($ICQ_RUN keys add test-gaia --chain $main_gaia_chain | jq .address -r)
 
-$STR1_EXEC tx bank send val1 $ICQ_ADDRESS_STRIDE 1000ustrd --chain-id $main_chain -y --keyring-backend=test
-$GAIA1_EXEC tx bank send gval1 $ICQ_ADDRESS_GAIA 1000uatom --chain-id $main_gaia_chain -y --keyring-backend=test
+$STR1_EXEC tx bank send $ICQ_ADDRESS_STRIDE 1000ustrd --from val1 --chain-id $main_chain -y --keyring-backend=test
+$GAIA1_EXEC tx bank send $ICQ_ADDRESS_GAIA 1000uatom --from gval1 --chain-id $main_gaia_chain -y --keyring-backend=test
 
 docker-compose up --force-recreate -d icq
 
