@@ -135,4 +135,11 @@ docker-compose up --force-recreate -d hermes
 
 # IBC token transfer tests
 #############################################################################################################################
-# source ${SCRIPT_DIR}/tests/ibc_token_transfer.sh
+# source ${SCRIPT_DIR}/ibc_token_transfer.sh
+
+# ICA staking test
+#############################################################################################################################
+# source ${SCRIPT_DIR}/ica_stake.sh
+
+sleep 10
+sh ${SCRIPT_DIR}/tests/run_all_tests.sh

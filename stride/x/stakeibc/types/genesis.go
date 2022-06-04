@@ -27,18 +27,6 @@ func (gs GenesisState) Validate() error {
 	if err := host.PortIdentifierValidator(gs.PortId); err != nil {
 		return err
 	}
-	// Check for duplicated ID in hostZone
-	hostZoneIdMap := make(map[uint64]bool)
-	hostZoneCount := gs.GetHostZoneCount()
-	for _, elem := range gs.HostZoneList {
-		if _, ok := hostZoneIdMap[elem.Id]; ok {
-			return fmt.Errorf("duplicated id for hostZone")
-		}
-		if elem.Id >= hostZoneCount {
-			return fmt.Errorf("hostZone id should be lower or equal than the last id")
-		}
-		hostZoneIdMap[elem.Id] = true
-	}
 	// Check for duplicated ID in depositRecord
 	depositRecordIdMap := make(map[uint64]bool)
 	depositRecordCount := gs.GetDepositRecordCount()

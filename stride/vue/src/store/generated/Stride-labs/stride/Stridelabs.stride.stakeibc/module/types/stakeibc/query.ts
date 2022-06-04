@@ -15,6 +15,17 @@ import { DepositRecord } from "../stakeibc/deposit_record";
 
 export const protobufPackage = "Stridelabs.stride.stakeibc";
 
+/** QueryInterchainAccountFromAddressRequest is the request type for the Query/InterchainAccountAddress RPC */
+export interface QueryInterchainAccountFromAddressRequest {
+  owner: string;
+  connection_id: string;
+}
+
+/** QueryInterchainAccountFromAddressResponse the response type for the Query/InterchainAccountAddress RPC */
+export interface QueryInterchainAccountFromAddressResponse {
+  interchain_account_address: string;
+}
+
 /** QueryParamsRequest is request type for the Query/Params RPC method. */
 export interface QueryParamsRequest {}
 
@@ -49,7 +60,7 @@ export interface QueryGetICAAccountResponse {
 }
 
 export interface QueryGetHostZoneRequest {
-  id: number;
+  chain_id: string;
 }
 
 export interface QueryGetHostZoneResponse {
@@ -89,6 +100,176 @@ export interface QueryModuleAddressRequest {
 export interface QueryModuleAddressResponse {
   addr: string;
 }
+
+const baseQueryInterchainAccountFromAddressRequest: object = {
+  owner: "",
+  connection_id: "",
+};
+
+export const QueryInterchainAccountFromAddressRequest = {
+  encode(
+    message: QueryInterchainAccountFromAddressRequest,
+    writer: Writer = Writer.create()
+  ): Writer {
+    if (message.owner !== "") {
+      writer.uint32(10).string(message.owner);
+    }
+    if (message.connection_id !== "") {
+      writer.uint32(18).string(message.connection_id);
+    }
+    return writer;
+  },
+
+  decode(
+    input: Reader | Uint8Array,
+    length?: number
+  ): QueryInterchainAccountFromAddressRequest {
+    const reader = input instanceof Uint8Array ? new Reader(input) : input;
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = {
+      ...baseQueryInterchainAccountFromAddressRequest,
+    } as QueryInterchainAccountFromAddressRequest;
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.owner = reader.string();
+          break;
+        case 2:
+          message.connection_id = reader.string();
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): QueryInterchainAccountFromAddressRequest {
+    const message = {
+      ...baseQueryInterchainAccountFromAddressRequest,
+    } as QueryInterchainAccountFromAddressRequest;
+    if (object.owner !== undefined && object.owner !== null) {
+      message.owner = String(object.owner);
+    } else {
+      message.owner = "";
+    }
+    if (object.connection_id !== undefined && object.connection_id !== null) {
+      message.connection_id = String(object.connection_id);
+    } else {
+      message.connection_id = "";
+    }
+    return message;
+  },
+
+  toJSON(message: QueryInterchainAccountFromAddressRequest): unknown {
+    const obj: any = {};
+    message.owner !== undefined && (obj.owner = message.owner);
+    message.connection_id !== undefined &&
+      (obj.connection_id = message.connection_id);
+    return obj;
+  },
+
+  fromPartial(
+    object: DeepPartial<QueryInterchainAccountFromAddressRequest>
+  ): QueryInterchainAccountFromAddressRequest {
+    const message = {
+      ...baseQueryInterchainAccountFromAddressRequest,
+    } as QueryInterchainAccountFromAddressRequest;
+    if (object.owner !== undefined && object.owner !== null) {
+      message.owner = object.owner;
+    } else {
+      message.owner = "";
+    }
+    if (object.connection_id !== undefined && object.connection_id !== null) {
+      message.connection_id = object.connection_id;
+    } else {
+      message.connection_id = "";
+    }
+    return message;
+  },
+};
+
+const baseQueryInterchainAccountFromAddressResponse: object = {
+  interchain_account_address: "",
+};
+
+export const QueryInterchainAccountFromAddressResponse = {
+  encode(
+    message: QueryInterchainAccountFromAddressResponse,
+    writer: Writer = Writer.create()
+  ): Writer {
+    if (message.interchain_account_address !== "") {
+      writer.uint32(10).string(message.interchain_account_address);
+    }
+    return writer;
+  },
+
+  decode(
+    input: Reader | Uint8Array,
+    length?: number
+  ): QueryInterchainAccountFromAddressResponse {
+    const reader = input instanceof Uint8Array ? new Reader(input) : input;
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = {
+      ...baseQueryInterchainAccountFromAddressResponse,
+    } as QueryInterchainAccountFromAddressResponse;
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.interchain_account_address = reader.string();
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): QueryInterchainAccountFromAddressResponse {
+    const message = {
+      ...baseQueryInterchainAccountFromAddressResponse,
+    } as QueryInterchainAccountFromAddressResponse;
+    if (
+      object.interchain_account_address !== undefined &&
+      object.interchain_account_address !== null
+    ) {
+      message.interchain_account_address = String(
+        object.interchain_account_address
+      );
+    } else {
+      message.interchain_account_address = "";
+    }
+    return message;
+  },
+
+  toJSON(message: QueryInterchainAccountFromAddressResponse): unknown {
+    const obj: any = {};
+    message.interchain_account_address !== undefined &&
+      (obj.interchain_account_address = message.interchain_account_address);
+    return obj;
+  },
+
+  fromPartial(
+    object: DeepPartial<QueryInterchainAccountFromAddressResponse>
+  ): QueryInterchainAccountFromAddressResponse {
+    const message = {
+      ...baseQueryInterchainAccountFromAddressResponse,
+    } as QueryInterchainAccountFromAddressResponse;
+    if (
+      object.interchain_account_address !== undefined &&
+      object.interchain_account_address !== null
+    ) {
+      message.interchain_account_address = object.interchain_account_address;
+    } else {
+      message.interchain_account_address = "";
+    }
+    return message;
+  },
+};
 
 const baseQueryParamsRequest: object = {};
 
@@ -699,15 +880,15 @@ export const QueryGetICAAccountResponse = {
   },
 };
 
-const baseQueryGetHostZoneRequest: object = { id: 0 };
+const baseQueryGetHostZoneRequest: object = { chain_id: "" };
 
 export const QueryGetHostZoneRequest = {
   encode(
     message: QueryGetHostZoneRequest,
     writer: Writer = Writer.create()
   ): Writer {
-    if (message.id !== 0) {
-      writer.uint32(8).uint64(message.id);
+    if (message.chain_id !== "") {
+      writer.uint32(10).string(message.chain_id);
     }
     return writer;
   },
@@ -722,7 +903,7 @@ export const QueryGetHostZoneRequest = {
       const tag = reader.uint32();
       switch (tag >>> 3) {
         case 1:
-          message.id = longToNumber(reader.uint64() as Long);
+          message.chain_id = reader.string();
           break;
         default:
           reader.skipType(tag & 7);
@@ -736,17 +917,17 @@ export const QueryGetHostZoneRequest = {
     const message = {
       ...baseQueryGetHostZoneRequest,
     } as QueryGetHostZoneRequest;
-    if (object.id !== undefined && object.id !== null) {
-      message.id = Number(object.id);
+    if (object.chain_id !== undefined && object.chain_id !== null) {
+      message.chain_id = String(object.chain_id);
     } else {
-      message.id = 0;
+      message.chain_id = "";
     }
     return message;
   },
 
   toJSON(message: QueryGetHostZoneRequest): unknown {
     const obj: any = {};
-    message.id !== undefined && (obj.id = message.id);
+    message.chain_id !== undefined && (obj.chain_id = message.chain_id);
     return obj;
   },
 
@@ -756,10 +937,10 @@ export const QueryGetHostZoneRequest = {
     const message = {
       ...baseQueryGetHostZoneRequest,
     } as QueryGetHostZoneRequest;
-    if (object.id !== undefined && object.id !== null) {
-      message.id = object.id;
+    if (object.chain_id !== undefined && object.chain_id !== null) {
+      message.chain_id = object.chain_id;
     } else {
-      message.id = 0;
+      message.chain_id = "";
     }
     return message;
   },
@@ -1502,6 +1683,10 @@ export interface Query {
   ModuleAddress(
     request: QueryModuleAddressRequest
   ): Promise<QueryModuleAddressResponse>;
+  /** QueryInterchainAccountFromAddress returns the interchain account for given owner address on a given connection pair */
+  InterchainAccountFromAddress(
+    request: QueryInterchainAccountFromAddressRequest
+  ): Promise<QueryInterchainAccountFromAddressResponse>;
 }
 
 export class QueryClientImpl implements Query {
@@ -1644,6 +1829,22 @@ export class QueryClientImpl implements Query {
     );
     return promise.then((data) =>
       QueryModuleAddressResponse.decode(new Reader(data))
+    );
+  }
+
+  InterchainAccountFromAddress(
+    request: QueryInterchainAccountFromAddressRequest
+  ): Promise<QueryInterchainAccountFromAddressResponse> {
+    const data = QueryInterchainAccountFromAddressRequest.encode(
+      request
+    ).finish();
+    const promise = this.rpc.request(
+      "Stridelabs.stride.stakeibc.Query",
+      "InterchainAccountFromAddress",
+      data
+    );
+    return promise.then((data) =>
+      QueryInterchainAccountFromAddressResponse.decode(new Reader(data))
     );
   }
 }
