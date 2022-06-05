@@ -51,9 +51,9 @@ import (
 	govkeeper "github.com/cosmos/cosmos-sdk/x/gov/keeper"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 
-	"github.com/Stride-Labs/stride/x/mint"
-	mintkeeper "github.com/Stride-Labs/stride/x/mint/keeper"
-	minttypes "github.com/Stride-Labs/stride/x/mint/types"
+	"github.com/Stride-Labs/stride/stride/x/mint"
+	mintkeeper "github.com/Stride-Labs/stride/stride/x/mint/keeper"
+	minttypes "github.com/Stride-Labs/stride/stride/x/mint/types"
 
 	"github.com/cosmos/cosmos-sdk/x/params"
 	paramsclient "github.com/cosmos/cosmos-sdk/x/params/client"
@@ -100,17 +100,17 @@ import (
 	// monitoringp "github.com/tendermint/spn/x/monitoringp"
 	// monitoringpkeeper "github.com/tendermint/spn/x/monitoringp/keeper"
 
-	epochsmodule "github.com/Stride-Labs/stride/x/epochs"
-	epochsmodulekeeper "github.com/Stride-Labs/stride/x/epochs/keeper"
-	epochsmoduletypes "github.com/Stride-Labs/stride/x/epochs/types"
+	epochsmodule "github.com/Stride-Labs/stride/stride/x/epochs"
+	epochsmodulekeeper "github.com/Stride-Labs/stride/stride/x/epochs/keeper"
+	epochsmoduletypes "github.com/Stride-Labs/stride/stride/x/epochs/types"
 
-	"github.com/Stride-Labs/stride/x/interchainquery"
-	interchainquerykeeper "github.com/Stride-Labs/stride/x/interchainquery/keeper"
-	interchainquerytypes "github.com/Stride-Labs/stride/x/interchainquery/types"
+	"github.com/Stride-Labs/stride/stride/x/interchainquery"
+	interchainquerykeeper "github.com/Stride-Labs/stride/stride/x/interchainquery/keeper"
+	interchainquerytypes "github.com/Stride-Labs/stride/stride/x/interchainquery/types"
 
-	stakeibcmodule "github.com/Stride-Labs/stride/x/stakeibc"
-	stakeibcmodulekeeper "github.com/Stride-Labs/stride/x/stakeibc/keeper"
-	stakeibcmoduletypes "github.com/Stride-Labs/stride/x/stakeibc/types"
+	stakeibcmodule "github.com/Stride-Labs/stride/stride/x/stakeibc"
+	stakeibcmodulekeeper "github.com/Stride-Labs/stride/stride/x/stakeibc/keeper"
+	stakeibcmoduletypes "github.com/Stride-Labs/stride/stride/x/stakeibc/types"
 	// this line is used by starport scaffolding # stargate/app/moduleImport
 )
 

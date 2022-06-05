@@ -13,7 +13,7 @@ import "stakeibc/host_zone.proto";
 import "stakeibc/deposit_record.proto";
 // this line is used by starport scaffolding # 1
 
-option go_package = "github.com/Stride-Labs/stride/x/stakeibc/types";
+option go_package = "github.com/Stride-Labs/stride/stride/x/stakeibc/types";
 
 // Query defines the gRPC querier service.
 service Query {

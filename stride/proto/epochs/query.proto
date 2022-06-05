@@ -6,7 +6,7 @@ import "google/api/annotations.proto";
 import "cosmos/base/query/v1beta1/pagination.proto";
 import "epochs/genesis.proto";
 
-option go_package = "github.com/Stride-Labs/stride/x/epochs/types";
+option go_package = "github.com/Stride-Labs/stride/stride/x/epochs/types";
 
 // Query defines the gRPC querier service.
 service Query {
@@ -42,7 +42,7 @@ message QueryCurrentEpochResponse { int64 current_epoch = 1; }
 // import "epochs/params.proto";
 // // this line is used by starport scaffolding # 1
 
-// option go_package = "github.com/Stride-Labs/stride/x/epochs/types";
+// option go_package = "github.com/Stride-Labs/stride/stride/x/epochs/types";
 
 // // Query defines the gRPC querier service.
 // service Query {

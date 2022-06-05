@@ -9,8 +9,8 @@ import (
 	"github.com/stretchr/testify/suite"
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 
-	"github.com/Stride-Labs/stride/app"
-	"github.com/Stride-Labs/stride/x/epochs/types"
+	"github.com/Stride-Labs/stride/stride/app"
+	"github.com/Stride-Labs/stride/stride/x/epochs/types"
 )
 
 type KeeperTestSuite struct {

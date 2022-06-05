@@ -3,11 +3,11 @@ package main
 import (
 	"os"
 
-	"github.com/Stride-Labs/stride/app"
+	"github.com/Stride-Labs/stride/stride/app"
 	svrcmd "github.com/cosmos/cosmos-sdk/server/cmd"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	cmdcfg "github.com/Stride-Labs/stride/cmd/strided/config"
+	cmdcfg "github.com/Stride-Labs/stride/stride/cmd/strided/config"
 )
 
 func main() {

@@ -3,8 +3,8 @@ package keeper
 import (
 	"testing"
 
-	"github.com/Stride-Labs/stride/x/stakeibc/keeper"
-	"github.com/Stride-Labs/stride/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/stride/x/stakeibc/keeper"
+	"github.com/Stride-Labs/stride/stride/x/stakeibc/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/store"

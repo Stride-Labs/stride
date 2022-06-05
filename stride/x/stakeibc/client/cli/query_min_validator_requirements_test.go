@@ -9,10 +9,10 @@ import (
 	tmcli "github.com/tendermint/tendermint/libs/cli"
 	"google.golang.org/grpc/status"
 
-	"github.com/Stride-Labs/stride/testutil/network"
-	"github.com/Stride-Labs/stride/testutil/nullify"
-	"github.com/Stride-Labs/stride/x/stakeibc/client/cli"
-	"github.com/Stride-Labs/stride/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/stride/testutil/network"
+	"github.com/Stride-Labs/stride/stride/testutil/nullify"
+	"github.com/Stride-Labs/stride/stride/x/stakeibc/client/cli"
+	"github.com/Stride-Labs/stride/stride/x/stakeibc/types"
 )
 
 func networkWithMinValidatorRequirementsObjects(t *testing.T) (*network.Network, types.MinValidatorRequirements) {

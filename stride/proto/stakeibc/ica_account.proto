@@ -3,7 +3,7 @@ package Stridelabs.stride.stakeibc;
 
 import "stakeibc/delegation.proto";
 
-option go_package = "github.com/Stride-Labs/stride/x/stakeibc/types";
+option go_package = "github.com/Stride-Labs/stride/stride/x/stakeibc/types";
 
 enum ICAAccountType {
   DELEGATION = 0;

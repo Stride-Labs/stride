@@ -3,9 +3,9 @@ package stakeibc
 import (
 	"math/rand"
 
-	"github.com/Stride-Labs/stride/testutil/sample"
-	stakeibcsimulation "github.com/Stride-Labs/stride/x/stakeibc/simulation"
-	"github.com/Stride-Labs/stride/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/stride/testutil/sample"
+	stakeibcsimulation "github.com/Stride-Labs/stride/stride/x/stakeibc/simulation"
+	"github.com/Stride-Labs/stride/stride/x/stakeibc/types"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	simappparams "github.com/cosmos/cosmos-sdk/simapp/params"
 	sdk "github.com/cosmos/cosmos-sdk/types"
