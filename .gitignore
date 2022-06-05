@@ -10,7 +10,10 @@
 ./state/*
 ./scripts/state/*
 ./vue/*
-./x/*/types/*.pb.*
+./x/epochs/types/*.pb.*
+./x/interchainquery/types/*.pb.*
+./x/mint/types/*.pb.*
+./x/stakeibc/types/*.pb.*
 # Test binary, built with `go test -c`
 *.test
 
