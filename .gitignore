@@ -6,14 +6,10 @@
 *.dylib
 
 # build
-./build/*
-./state/*
-./scripts/state/*
-./vue/*
-./x/epochs/types/*.pb.*
-./x/interchainquery/types/*.pb.*
-./x/mint/types/*.pb.*
-./x/stakeibc/types/*.pb.*
+build/*
+state/*
+scripts/state/*
+vue/*
 # Test binary, built with `go test -c`
 *.test
 
