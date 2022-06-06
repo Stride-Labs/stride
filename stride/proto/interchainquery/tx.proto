@@ -16,7 +16,8 @@ service Msg {
   rpc SubmitQueryResponse(MsgSubmitQueryResponse)
       returns (MsgSubmitQueryResponseResponse) {
     option (google.api.http) = {
-      post : "/interchainquery/tx/v1beta1/submitquery"
+      post : "/interchainquery/tx/submitquery"
+      // post : "/interchainquery/tx/v1beta1/submitquery"
       body : "*"
     };
   };
