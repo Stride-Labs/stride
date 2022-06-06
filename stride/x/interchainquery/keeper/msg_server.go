@@ -23,6 +23,15 @@ var _ types.MsgServer = msgServer{}
 
 func (k msgServer) SubmitQueryResponse(goCtx context.Context, msg *types.MsgSubmitQueryResponse) (*types.MsgSubmitQueryResponseResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	// TODO remove this, only checking the tx landed
+	ctx.EventManager().EmitEvents(sdk.Events{
+		sdk.NewEvent(
+			sdk.EventTypeMessage,
+			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
+		),
+	})
+
 	q, found := k.GetQuery(ctx, msg.QueryId)
 	if found {
 		for _, module := range k.callbacks {
