@@ -1,6 +1,7 @@
 /* eslint-disable */
 import { Reader, util, configure, Writer } from "protobufjs/minimal";
 import * as Long from "long";
+import { Any } from "../google/protobuf/any";
 
 export const protobufPackage = "stride.interchainquery";
 
@@ -31,10 +32,24 @@ export interface MsgRegisterAccountResponse {}
 /** MsgSubmitTxResponse defines the response for Msg/SubmitTx */
 export interface MsgSubmitTxResponse {}
 
+/** MsgSubmitTx defines the payload for Msg/SubmitTx */
 export interface MsgSubmitTx {
-  creator: string;
-  jsonPath: string;
+  owner: string;
+  connection_id: string;
+  msg: Any | undefined;
 }
+
+/** MsgQueryBalance defines the payload for Msg/QueryBalance */
+export interface MsgQueryBalance {
+  chain_id: string;
+  address: string;
+  denom: string;
+  connection_id: string;
+  caller: string;
+  height: number;
+}
+
+export interface MsgQueryBalanceResponse {}
 
 const baseMsgSubmitQueryResponse: object = {
   chain_id: "",
@@ -389,15 +404,18 @@ export const MsgSubmitTxResponse = {
   },
 };
 
-const baseMsgSubmitTx: object = { creator: "", jsonPath: "" };
+const baseMsgSubmitTx: object = { owner: "", connection_id: "" };
 
 export const MsgSubmitTx = {
   encode(message: MsgSubmitTx, writer: Writer = Writer.create()): Writer {
-    if (message.creator !== "") {
-      writer.uint32(10).string(message.creator);
+    if (message.owner !== "") {
+      writer.uint32(10).string(message.owner);
     }
-    if (message.jsonPath !== "") {
-      writer.uint32(18).string(message.jsonPath);
+    if (message.connection_id !== "") {
+      writer.uint32(18).string(message.connection_id);
+    }
+    if (message.msg !== undefined) {
+      Any.encode(message.msg, writer.uint32(26).fork()).ldelim();
     }
     return writer;
   },
@@ -410,10 +428,13 @@ export const MsgSubmitTx = {
       const tag = reader.uint32();
       switch (tag >>> 3) {
         case 1:
-          message.creator = reader.string();
+          message.owner = reader.string();
           break;
         case 2:
-          message.jsonPath = reader.string();
+          message.connection_id = reader.string();
+          break;
+        case 3:
+          message.msg = Any.decode(reader, reader.uint32());
           break;
         default:
           reader.skipType(tag & 7);
@@ -425,38 +446,245 @@ export const MsgSubmitTx = {
 
   fromJSON(object: any): MsgSubmitTx {
     const message = { ...baseMsgSubmitTx } as MsgSubmitTx;
-    if (object.creator !== undefined && object.creator !== null) {
-      message.creator = String(object.creator);
+    if (object.owner !== undefined && object.owner !== null) {
+      message.owner = String(object.owner);
     } else {
-      message.creator = "";
+      message.owner = "";
     }
-    if (object.jsonPath !== undefined && object.jsonPath !== null) {
-      message.jsonPath = String(object.jsonPath);
+    if (object.connection_id !== undefined && object.connection_id !== null) {
+      message.connection_id = String(object.connection_id);
     } else {
-      message.jsonPath = "";
+      message.connection_id = "";
+    }
+    if (object.msg !== undefined && object.msg !== null) {
+      message.msg = Any.fromJSON(object.msg);
+    } else {
+      message.msg = undefined;
     }
     return message;
   },
 
   toJSON(message: MsgSubmitTx): unknown {
     const obj: any = {};
-    message.creator !== undefined && (obj.creator = message.creator);
-    message.jsonPath !== undefined && (obj.jsonPath = message.jsonPath);
+    message.owner !== undefined && (obj.owner = message.owner);
+    message.connection_id !== undefined &&
+      (obj.connection_id = message.connection_id);
+    message.msg !== undefined &&
+      (obj.msg = message.msg ? Any.toJSON(message.msg) : undefined);
     return obj;
   },
 
   fromPartial(object: DeepPartial<MsgSubmitTx>): MsgSubmitTx {
     const message = { ...baseMsgSubmitTx } as MsgSubmitTx;
-    if (object.creator !== undefined && object.creator !== null) {
-      message.creator = object.creator;
+    if (object.owner !== undefined && object.owner !== null) {
+      message.owner = object.owner;
     } else {
-      message.creator = "";
+      message.owner = "";
     }
-    if (object.jsonPath !== undefined && object.jsonPath !== null) {
-      message.jsonPath = object.jsonPath;
+    if (object.connection_id !== undefined && object.connection_id !== null) {
+      message.connection_id = object.connection_id;
     } else {
-      message.jsonPath = "";
+      message.connection_id = "";
     }
+    if (object.msg !== undefined && object.msg !== null) {
+      message.msg = Any.fromPartial(object.msg);
+    } else {
+      message.msg = undefined;
+    }
+    return message;
+  },
+};
+
+const baseMsgQueryBalance: object = {
+  chain_id: "",
+  address: "",
+  denom: "",
+  connection_id: "",
+  caller: "",
+  height: 0,
+};
+
+export const MsgQueryBalance = {
+  encode(message: MsgQueryBalance, writer: Writer = Writer.create()): Writer {
+    if (message.chain_id !== "") {
+      writer.uint32(10).string(message.chain_id);
+    }
+    if (message.address !== "") {
+      writer.uint32(18).string(message.address);
+    }
+    if (message.denom !== "") {
+      writer.uint32(26).string(message.denom);
+    }
+    if (message.connection_id !== "") {
+      writer.uint32(34).string(message.connection_id);
+    }
+    if (message.caller !== "") {
+      writer.uint32(42).string(message.caller);
+    }
+    if (message.height !== 0) {
+      writer.uint32(48).int64(message.height);
+    }
+    return writer;
+  },
+
+  decode(input: Reader | Uint8Array, length?: number): MsgQueryBalance {
+    const reader = input instanceof Uint8Array ? new Reader(input) : input;
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = { ...baseMsgQueryBalance } as MsgQueryBalance;
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.chain_id = reader.string();
+          break;
+        case 2:
+          message.address = reader.string();
+          break;
+        case 3:
+          message.denom = reader.string();
+          break;
+        case 4:
+          message.connection_id = reader.string();
+          break;
+        case 5:
+          message.caller = reader.string();
+          break;
+        case 6:
+          message.height = longToNumber(reader.int64() as Long);
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): MsgQueryBalance {
+    const message = { ...baseMsgQueryBalance } as MsgQueryBalance;
+    if (object.chain_id !== undefined && object.chain_id !== null) {
+      message.chain_id = String(object.chain_id);
+    } else {
+      message.chain_id = "";
+    }
+    if (object.address !== undefined && object.address !== null) {
+      message.address = String(object.address);
+    } else {
+      message.address = "";
+    }
+    if (object.denom !== undefined && object.denom !== null) {
+      message.denom = String(object.denom);
+    } else {
+      message.denom = "";
+    }
+    if (object.connection_id !== undefined && object.connection_id !== null) {
+      message.connection_id = String(object.connection_id);
+    } else {
+      message.connection_id = "";
+    }
+    if (object.caller !== undefined && object.caller !== null) {
+      message.caller = String(object.caller);
+    } else {
+      message.caller = "";
+    }
+    if (object.height !== undefined && object.height !== null) {
+      message.height = Number(object.height);
+    } else {
+      message.height = 0;
+    }
+    return message;
+  },
+
+  toJSON(message: MsgQueryBalance): unknown {
+    const obj: any = {};
+    message.chain_id !== undefined && (obj.chain_id = message.chain_id);
+    message.address !== undefined && (obj.address = message.address);
+    message.denom !== undefined && (obj.denom = message.denom);
+    message.connection_id !== undefined &&
+      (obj.connection_id = message.connection_id);
+    message.caller !== undefined && (obj.caller = message.caller);
+    message.height !== undefined && (obj.height = message.height);
+    return obj;
+  },
+
+  fromPartial(object: DeepPartial<MsgQueryBalance>): MsgQueryBalance {
+    const message = { ...baseMsgQueryBalance } as MsgQueryBalance;
+    if (object.chain_id !== undefined && object.chain_id !== null) {
+      message.chain_id = object.chain_id;
+    } else {
+      message.chain_id = "";
+    }
+    if (object.address !== undefined && object.address !== null) {
+      message.address = object.address;
+    } else {
+      message.address = "";
+    }
+    if (object.denom !== undefined && object.denom !== null) {
+      message.denom = object.denom;
+    } else {
+      message.denom = "";
+    }
+    if (object.connection_id !== undefined && object.connection_id !== null) {
+      message.connection_id = object.connection_id;
+    } else {
+      message.connection_id = "";
+    }
+    if (object.caller !== undefined && object.caller !== null) {
+      message.caller = object.caller;
+    } else {
+      message.caller = "";
+    }
+    if (object.height !== undefined && object.height !== null) {
+      message.height = object.height;
+    } else {
+      message.height = 0;
+    }
+    return message;
+  },
+};
+
+const baseMsgQueryBalanceResponse: object = {};
+
+export const MsgQueryBalanceResponse = {
+  encode(_: MsgQueryBalanceResponse, writer: Writer = Writer.create()): Writer {
+    return writer;
+  },
+
+  decode(input: Reader | Uint8Array, length?: number): MsgQueryBalanceResponse {
+    const reader = input instanceof Uint8Array ? new Reader(input) : input;
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = {
+      ...baseMsgQueryBalanceResponse,
+    } as MsgQueryBalanceResponse;
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(_: any): MsgQueryBalanceResponse {
+    const message = {
+      ...baseMsgQueryBalanceResponse,
+    } as MsgQueryBalanceResponse;
+    return message;
+  },
+
+  toJSON(_: MsgQueryBalanceResponse): unknown {
+    const obj: any = {};
+    return obj;
+  },
+
+  fromPartial(
+    _: DeepPartial<MsgQueryBalanceResponse>
+  ): MsgQueryBalanceResponse {
+    const message = {
+      ...baseMsgQueryBalanceResponse,
+    } as MsgQueryBalanceResponse;
     return message;
   },
 };
@@ -467,6 +695,7 @@ export interface Msg {
   SubmitQueryResponse(
     request: MsgSubmitQueryResponse
   ): Promise<MsgSubmitQueryResponseResponse>;
+  QueryBalance(request: MsgQueryBalance): Promise<MsgQueryBalanceResponse>;
   SubmitTx(request: MsgSubmitTx): Promise<MsgSubmitTxResponse>;
 }
 
@@ -486,6 +715,18 @@ export class MsgClientImpl implements Msg {
     );
     return promise.then((data) =>
       MsgSubmitQueryResponseResponse.decode(new Reader(data))
+    );
+  }
+
+  QueryBalance(request: MsgQueryBalance): Promise<MsgQueryBalanceResponse> {
+    const data = MsgQueryBalance.encode(request).finish();
+    const promise = this.rpc.request(
+      "stride.interchainquery.Msg",
+      "QueryBalance",
+      data
+    );
+    return promise.then((data) =>
+      MsgQueryBalanceResponse.decode(new Reader(data))
     );
   }
 

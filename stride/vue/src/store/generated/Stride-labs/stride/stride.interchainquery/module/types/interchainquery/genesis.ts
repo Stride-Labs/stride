@@ -8,14 +8,9 @@ export interface Query {
   connection_id: string;
   chain_id: string;
   query_type: string;
-  query_parameters: { [key: string]: string };
+  request: Uint8Array;
   period: string;
   last_height: string;
-}
-
-export interface Query_QueryParametersEntry {
-  key: string;
-  value: string;
 }
 
 export interface DataPoint {
@@ -64,12 +59,9 @@ export const Query = {
     if (message.query_type !== "") {
       writer.uint32(34).string(message.query_type);
     }
-    Object.entries(message.query_parameters).forEach(([key, value]) => {
-      Query_QueryParametersEntry.encode(
-        { key: key as any, value },
-        writer.uint32(42).fork()
-      ).ldelim();
-    });
+    if (message.request.length !== 0) {
+      writer.uint32(42).bytes(message.request);
+    }
     if (message.period !== "") {
       writer.uint32(50).string(message.period);
     }
@@ -83,7 +75,6 @@ export const Query = {
     const reader = input instanceof Uint8Array ? new Reader(input) : input;
     let end = length === undefined ? reader.len : reader.pos + length;
     const message = { ...baseQuery } as Query;
-    message.query_parameters = {};
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
@@ -100,13 +91,7 @@ export const Query = {
           message.query_type = reader.string();
           break;
         case 5:
-          const entry5 = Query_QueryParametersEntry.decode(
-            reader,
-            reader.uint32()
-          );
-          if (entry5.value !== undefined) {
-            message.query_parameters[entry5.key] = entry5.value;
-          }
+          message.request = reader.bytes();
           break;
         case 6:
           message.period = reader.string();
@@ -124,7 +109,6 @@ export const Query = {
 
   fromJSON(object: any): Query {
     const message = { ...baseQuery } as Query;
-    message.query_parameters = {};
     if (object.id !== undefined && object.id !== null) {
       message.id = String(object.id);
     } else {
@@ -145,13 +129,8 @@ export const Query = {
     } else {
       message.query_type = "";
     }
-    if (
-      object.query_parameters !== undefined &&
-      object.query_parameters !== null
-    ) {
-      Object.entries(object.query_parameters).forEach(([key, value]) => {
-        message.query_parameters[key] = String(value);
-      });
+    if (object.request !== undefined && object.request !== null) {
+      message.request = bytesFromBase64(object.request);
     }
     if (object.period !== undefined && object.period !== null) {
       message.period = String(object.period);
@@ -173,12 +152,10 @@ export const Query = {
       (obj.connection_id = message.connection_id);
     message.chain_id !== undefined && (obj.chain_id = message.chain_id);
     message.query_type !== undefined && (obj.query_type = message.query_type);
-    obj.query_parameters = {};
-    if (message.query_parameters) {
-      Object.entries(message.query_parameters).forEach(([k, v]) => {
-        obj.query_parameters[k] = v;
-      });
-    }
+    message.request !== undefined &&
+      (obj.request = base64FromBytes(
+        message.request !== undefined ? message.request : new Uint8Array()
+      ));
     message.period !== undefined && (obj.period = message.period);
     message.last_height !== undefined &&
       (obj.last_height = message.last_height);
@@ -187,7 +164,6 @@ export const Query = {
 
   fromPartial(object: DeepPartial<Query>): Query {
     const message = { ...baseQuery } as Query;
-    message.query_parameters = {};
     if (object.id !== undefined && object.id !== null) {
       message.id = object.id;
     } else {
@@ -208,15 +184,10 @@ export const Query = {
     } else {
       message.query_type = "";
     }
-    if (
-      object.query_parameters !== undefined &&
-      object.query_parameters !== null
-    ) {
-      Object.entries(object.query_parameters).forEach(([key, value]) => {
-        if (value !== undefined) {
-          message.query_parameters[key] = String(value);
-        }
-      });
+    if (object.request !== undefined && object.request !== null) {
+      message.request = object.request;
+    } else {
+      message.request = new Uint8Array();
     }
     if (object.period !== undefined && object.period !== null) {
       message.period = object.period;
@@ -227,92 +198,6 @@ export const Query = {
       message.last_height = object.last_height;
     } else {
       message.last_height = "";
-    }
-    return message;
-  },
-};
-
-const baseQuery_QueryParametersEntry: object = { key: "", value: "" };
-
-export const Query_QueryParametersEntry = {
-  encode(
-    message: Query_QueryParametersEntry,
-    writer: Writer = Writer.create()
-  ): Writer {
-    if (message.key !== "") {
-      writer.uint32(10).string(message.key);
-    }
-    if (message.value !== "") {
-      writer.uint32(18).string(message.value);
-    }
-    return writer;
-  },
-
-  decode(
-    input: Reader | Uint8Array,
-    length?: number
-  ): Query_QueryParametersEntry {
-    const reader = input instanceof Uint8Array ? new Reader(input) : input;
-    let end = length === undefined ? reader.len : reader.pos + length;
-    const message = {
-      ...baseQuery_QueryParametersEntry,
-    } as Query_QueryParametersEntry;
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1:
-          message.key = reader.string();
-          break;
-        case 2:
-          message.value = reader.string();
-          break;
-        default:
-          reader.skipType(tag & 7);
-          break;
-      }
-    }
-    return message;
-  },
-
-  fromJSON(object: any): Query_QueryParametersEntry {
-    const message = {
-      ...baseQuery_QueryParametersEntry,
-    } as Query_QueryParametersEntry;
-    if (object.key !== undefined && object.key !== null) {
-      message.key = String(object.key);
-    } else {
-      message.key = "";
-    }
-    if (object.value !== undefined && object.value !== null) {
-      message.value = String(object.value);
-    } else {
-      message.value = "";
-    }
-    return message;
-  },
-
-  toJSON(message: Query_QueryParametersEntry): unknown {
-    const obj: any = {};
-    message.key !== undefined && (obj.key = message.key);
-    message.value !== undefined && (obj.value = message.value);
-    return obj;
-  },
-
-  fromPartial(
-    object: DeepPartial<Query_QueryParametersEntry>
-  ): Query_QueryParametersEntry {
-    const message = {
-      ...baseQuery_QueryParametersEntry,
-    } as Query_QueryParametersEntry;
-    if (object.key !== undefined && object.key !== null) {
-      message.key = object.key;
-    } else {
-      message.key = "";
-    }
-    if (object.value !== undefined && object.value !== null) {
-      message.value = object.value;
-    } else {
-      message.value = "";
     }
     return message;
   },

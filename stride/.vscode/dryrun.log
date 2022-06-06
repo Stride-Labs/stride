@@ -1,13 +1,10 @@
+make --dry-run --always-make --keep-going --print-directory
 make: Entering directory `/Users/rileyedmunds/stride/stride'
- 
-Makefile:285: warning: overriding commands for target `test'
-Makefile:151: warning: ignoring old commands for target `test'
-
 echo "Installing statik..."
 (cd /tmp && go get github.com/rakyll/statik@v0.1.6)
- 
 echo "Installing runsim..."
 (cd /tmp && go get github.com/cosmos/tools/cmd/runsim@v1.0.0)
+ 
 # Create dummy file to satisfy dependency and avoid
 # rebuilding when this Makefile target is hit twice
 # in a row.
