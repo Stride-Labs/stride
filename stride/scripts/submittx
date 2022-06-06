@@ -1,0 +1,10 @@
+strided tx interchain-queries submit \
+'{
+    "@type":"/cosmos.staking.v1beta1.MsgDelegate",
+    "delegator_address":"cosmos15ccshhmp0gsx29qpqq6g4zmltnnvgmyu9ueuadh9y2nc5zj0szls5gtddz",
+    "validator_address":"cosmosvaloper1qnk2n4nlkpw9xfqntladh74w6ujtulwnmxnh3k",
+    "amount": {
+        "denom": "stake",
+        "amount": "1000"
+    }
+}' --connection-id connection-0 --from $DEMOWALLET_1 --chain-id test-1 --home ./data/test-1 --node tcp://localhost:16657 --keyring-backend test -y

@@ -7,15 +7,12 @@ make all --print-data-base --no-builtin-variables --no-builtin-rules --question
 
 # This program built for i386-apple-darwin11.3.0
  
-Makefile:285: warning: overriding commands for target `test'
-Makefile:151: warning: ignoring old commands for target `test'
 
-
-# Make data base, printed on Fri May 20 08:37:10 2022
+# Make data base, printed on Sat Jun  4 16:38:44 2022
 
 # Variables
 
-# makefile (from `Makefile', line 47)
+# makefile (from `Makefile', line 49)
 build_tags := netgo ledger
 # automatic
 <D = $(patsubst %/,%,$(dir $<))
@@ -28,7 +25,6 @@ VSCODE_LOG_NATIVE = false
 # automatic
 ?D = $(patsubst %/,%,$(dir $?))
 # automatic
- 
 @D = $(patsubst %/,%,$(dir $@))
 # automatic
 @F = $(notdir $@)
@@ -44,49 +40,50 @@ GO := /usr/local/go/bin/go
 PROMPT_EOL_MARK = 
 # environment
 VSCODE_NLS_CONFIG = {"locale":"en-us","availableLanguages":{},"_languagePackSupport":true}
-# makefile (from `Makefile', line 50)
+# makefile (from `Makefile', line 52)
 whitespace := $(subst ,, )
 # environment
 _ = /usr/bin/make
 # makefile (from `Makefile', line 7)
-SDK_PACK := github.com/cosmos/cosmos-sdk@v0.45.4
+SDK_PACK := github.com/cosmos/cosmos-sdk@v0.45.4@=>@github.com/Stride-Labs/cosmos-sdk@v0.45.4-debug-2
 # makefile (from `sims.mk', line 1)
 MAKEFILE_LIST :=  Makefile tools.mk sims.mk
-# makefile (from `Makefile', line 31)
+# makefile (from `Makefile', line 33)
 GCC = $(shell command -v gcc 2> /dev/null)
-# makefile (from `Makefile', line 12)
+# makefile (from `Makefile', line 14)
+ 
 GO111MODULE = on
 # environment
 VSCODE_AMD_ENTRYPOINT = vs/workbench/api/node/extensionHostProcess
 # makefile (from `Makefile', line 4)
-VERSION := 0-13-g337247a
+VERSION := 0-80-g176c95f
 # environment
 VSCODE_VERBOSE_LOGGING = true
 # makefile (from `Makefile', line 9)
 BUILDDIR = $(CURDIR)/build
-# makefile (from `Makefile', line 173)
+# makefile (from `Makefile', line 175)
 containerProtoFmt = stride-proto-fmt-$(protoVer)
-# makefile (from `Makefile', line 71)
-ldflags := -X github.com/cosmos/cosmos-sdk/version.Name=stride -X github.com/cosmos/cosmos-sdk/version.AppName=strided -X github.com/cosmos/cosmos-sdk/version.Version=0-13-g337247a -X github.com/cosmos/cosmos-sdk/version.Commit=337247add58e48d9ba9f0450eeb0f0a5784ee61a -X "github.com/cosmos/cosmos-sdk/version.BuildTags=netgo,ledger" -w -s
+# makefile (from `Makefile', line 73)
+ldflags := -X github.com/cosmos/cosmos-sdk/version.Name=stride -X github.com/cosmos/cosmos-sdk/version.AppName=strided -X github.com/cosmos/cosmos-sdk/version.Version=0-80-g176c95f -X github.com/cosmos/cosmos-sdk/version.Commit=176c95f3da79c672a10eb60329fffc35b838a9fe -X "github.com/cosmos/cosmos-sdk/version.BuildTags=netgo,ledger" -w -s
 # environment
 __CFBundleIdentifier = com.microsoft.VSCode
 # environment
 INFOPATH = /opt/homebrew/share/info:
 # environment
-VSCODE_IPC_HOOK_EXTHOST = /var/folders/m5/12pnd05500n56z31y9rtmmsr0000gn/T/vscode-ipc-6ec25369-892d-4ace-94ef-3fea6c5dec1c.sock
+VSCODE_IPC_HOOK_EXTHOST = /var/folders/m5/12pnd05500n56z31y9rtmmsr0000gn/T/vscode-ipc-c2dccdc2-aeec-42ca-80d0-0157530c6f0c.sock
 # environment
 VSCODE_CWD = /
 # environment
 GOPROXY = https://proxy.golang.org,direct
 # environment
-PATH = /opt/homebrew/bin:/opt/homebrew/sbin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/go/bin
+PATH = /Users/rileyedmunds/.go/bin:/opt/homebrew/bin:/opt/homebrew/sbin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/go/bin:/Users/rileyedmunds/.cargo/bin
 # makefile (from `Makefile', line 10)
 TEST_DOCKER_REPO = Stride-Labs/stridednode
 # environment
 LSCOLORS = Gxfxcxdxbxegedabagacad
-# makefile (from `Makefile', line 170)
+# makefile (from `Makefile', line 172)
 protoVer = v0.2
-# makefile (from `Makefile', line 51)
+# makefile (from `Makefile', line 53)
 comma := ,
 # makefile (from `Makefile', line 8)
 DOCKER := /usr/local/bin/docker
@@ -99,16 +96,18 @@ VSCODE_LOG_STACK = false
 # environment
 ELECTRON_RUN_AS_NODE = 1
 # makefile (from `Makefile', line 5)
-COMMIT := 337247add58e48d9ba9f0450eeb0f0a5784ee61a
+COMMIT := 176c95f3da79c672a10eb60329fffc35b838a9fe
+# makefile (from `Makefile', line 12)
+build = stride
 # default
 .FEATURES := target-specific order-only second-expansion else-if archives jobserver check-symlink
 # environment
-SSH_AUTH_SOCK = /private/tmp/com.apple.launchd.AguKr7MM0z/Listeners
+SSH_AUTH_SOCK = /private/tmp/com.apple.launchd.cTktSV3W4c/Listeners
 # automatic
 %F = $(notdir $%)
-# makefile (from `Makefile', line 27)
+# makefile (from `Makefile', line 29)
 UNAME_S = $(shell uname -s)
-# makefile (from `Makefile', line 52)
+# makefile (from `Makefile', line 54)
 build_tags_comma_sep := netgo,ledger
 # environment
 VSCODE_PIPE_LOGGING = true
@@ -154,8 +153,8 @@ SHLVL = 1
 BINDIR = $(GOPATH)/bin
 # makefile (from `sims.mk', line 56)
 SIM_NUM_BLOCKS = 500
-# makefile (from `Makefile', line 76)
-BUILD_FLAGS := -tags "netgo ledger" -ldflags '-X github.com/cosmos/cosmos-sdk/version.Name=stride -X github.com/cosmos/cosmos-sdk/version.AppName=strided -X github.com/cosmos/cosmos-sdk/version.Version=0-13-g337247a -X github.com/cosmos/cosmos-sdk/version.Commit=337247add58e48d9ba9f0450eeb0f0a5784ee61a -X "github.com/cosmos/cosmos-sdk/version.BuildTags=netgo,ledger" -w -s' -trimpath
+# makefile (from `Makefile', line 78)
+BUILD_FLAGS := -tags "netgo ledger" -ldflags '-X github.com/cosmos/cosmos-sdk/version.Name=stride -X github.com/cosmos/cosmos-sdk/version.AppName=strided -X github.com/cosmos/cosmos-sdk/version.Version=0-80-g176c95f -X github.com/cosmos/cosmos-sdk/version.Commit=176c95f3da79c672a10eb60329fffc35b838a9fe -X "github.com/cosmos/cosmos-sdk/version.BuildTags=netgo,ledger" -w -s' -trimpath
 # default
 MAKE_VERSION := 3.81
 # environment
@@ -170,7 +169,7 @@ GITHUBDIR := /Users/rileyedmunds/.go"/"src"/"github.com
 FS := "/"
 # makefile (from `tools.mk', line 42)
 UNAME_M = $(shell uname -m)
-# makefile (from `Makefile', line 172)
+# makefile (from `Makefile', line 174)
 containerProtoGen = stride-proto-gen-$(protoVer)
 # environment
 LESS = -R
@@ -228,13 +227,13 @@ LC_ALL = C
 CONDA_CHANGEPS1 = no
 # makefile (from `sims.mk', line 7)
 SIMAPP = ./app
-# makefile (from `Makefile', line 171)
+# makefile (from `Makefile', line 173)
 protoImageName = tendermintdev/sdk-proto-gen:$(protoVer)
 # automatic
 ^F = $(notdir $^)
 # default
 SUFFIXES := 
-# makefile (from `Makefile', line 88)
+# makefile (from `Makefile', line 90)
 BUILD_TARGETS := build install
 # environment
 MAKELEVEL := 0
@@ -243,11 +242,11 @@ SIM_COMMIT = true
 # environment
 LANG = C
 # environment
-VSCODE_PID = 59672
+VSCODE_PID = 1725
 # makefile (from `tools.mk', line 31)
 mkfile_path := /Users/rileyedmunds/stride/stride/tools.mk
 # variable set hash-table stats:
-# Load=115/1024=11%, Rehash=0, Collisions=16/241=7%
+# Load=116/1024=11%, Rehash=0, Collisions=16/242=7%
 
 # Pattern-specific Variable Values
 
@@ -255,9 +254,9 @@ mkfile_path := /Users/rileyedmunds/stride/stride/tools.mk
 
 # Directories
 
-# . (device 16777234, inode 1212060): 23 files, no impossibilities.
+# . (device 16777232, inode 1212060): 30 files, no impossibilities.
 
-# 23 files, no impossibilities in 1 directories.
+# 30 files, no impossibilities in 1 directories.
 
 # Implicit Rules
 
@@ -276,19 +275,18 @@ build-linux: go.sum
 #  Implicit rule search has not been done.
 #  File does not exist.
 #  File has not been updated.
-#  commands to execute (from `Makefile', line 110):
+#  commands to execute (from `Makefile', line 112):
 	LEDGER_ENABLED=false GOOS=linux GOARCH=amd64 $(MAKE) build
 	
 
 go.sum: go.mod
- 
 #  Implicit rule search has not been done.
-#  Last modified 2022-05-20 08:36:15
+#  Last modified 2022-06-04 10:15:45
 #  File has been updated.
 #  Successfully updated.
 # variable set hash-table stats:
 # Load=0/32=0%, Rehash=0, Collisions=0/0=0%
-#  commands to execute (from `Makefile', line 121):
+#  commands to execute (from `Makefile', line 123):
 	@echo "--> Ensure dependencies have not been modified"
 	@go mod verify
 	
@@ -305,9 +303,10 @@ all: install lint test
 
 proto-gen:
 #  Implicit rule search has not been done.
+ 
 #  Modification time never checked.
 #  File has not been updated.
-#  commands to execute (from `Makefile', line 176):
+#  commands to execute (from `Makefile', line 178):
 	@echo "Generating Protobuf files"
 	@if docker ps -a --format '{{.Names}}' | grep -Eq "^${containerProtoGen}$$"; then docker start -a $(containerProtoGen); else docker run --name $(containerProtoGen) -v $(CURDIR):/workspace --workdir /workspace $(protoImageName) \
 	sh ./scripts/protocgen.sh; fi
@@ -323,7 +322,7 @@ go-mod-cache: go.sum
 #  Implicit rule search has not been done.
 #  File does not exist.
 #  File has not been updated.
-#  commands to execute (from `Makefile', line 117):
+#  commands to execute (from `Makefile', line 119):
 	@echo "--> Download go modules to local cache"
 	@go mod download
 	
@@ -332,7 +331,7 @@ distclean: clean
 #  Implicit rule search has not been done.
 #  Modification time never checked.
 #  File has not been updated.
-#  commands to execute (from `Makefile', line 133):
+#  commands to execute (from `Makefile', line 135):
 	rm -rf vendor/
 	
 
@@ -340,7 +339,7 @@ proto-format:
 #  Implicit rule search has not been done.
 #  Modification time never checked.
 #  File has not been updated.
-#  commands to execute (from `Makefile', line 181):
+#  commands to execute (from `Makefile', line 183):
 	@echo "Formatting Protobuf files"
 	@if docker ps -a --format '{{.Names}}' | grep -Eq "^${containerProtoFmt}$$"; then docker start -a $(containerProtoFmt); else docker run --name $(containerProtoFmt) -v $(CURDIR):/workspace --workdir /workspace tendermintdev/docker-build-proto \
 	find ./ -not -path "./third_party/*" -name "*.proto" -exec clang-format -i {} \; ; fi
@@ -367,7 +366,7 @@ format:
 #  Implicit rule search has not been done.
 #  File does not exist.
 #  File has not been updated.
-#  commands to execute (from `Makefile', line 241):
+#  commands to execute (from `Makefile', line 243):
 	find . -name '*.go' -type f -not -path "./vendor*" -not -path "*.git*" -not -path "./client/lcd/statik/statik.go" | xargs gofmt -w -s
 	find . -name '*.go' -type f -not -path "./vendor*" -not -path "*.git*" -not -path "./client/lcd/statik/statik.go" | xargs misspell -w
 	find . -name '*.go' -type f -not -path "./vendor*" -not -path "*.git*" -not -path "./client/lcd/statik/statik.go" | xargs goimports -w -local github.com/cosmos/cosmos-sdk
@@ -376,7 +375,7 @@ format:
 # Not a target:
 Makefile:
 #  Implicit rule search has been done.
-#  Last modified 2022-05-20 08:36:15
+#  Last modified 2022-05-26 10:36:49
 #  File has been updated.
 #  Successfully updated.
 # variable set hash-table stats:
@@ -410,7 +409,7 @@ proto:
 #  Implicit rule search has not been done.
 #  Modification time never checked.
 #  File has not been updated.
-#  commands to execute (from `Makefile', line 142):
+#  commands to execute (from `Makefile', line 144):
 	@echo
 	@echo "=========== Generate Message ============"
 	@echo
@@ -424,7 +423,7 @@ build-contract-tests-hooks:
 #  Implicit rule search has not been done.
 #  Modification time never checked.
 #  File has not been updated.
-#  commands to execute (from `Makefile', line 113):
+#  commands to execute (from `Makefile', line 115):
 	mkdir -p $(BUILDDIR)
 	go build -mod=readonly $(BUILD_FLAGS) -o $(BUILDDIR)/ ./cmd/contract_tests
 	
@@ -434,20 +433,20 @@ test: test-build
 #  Implicit rule search has not been done.
 #  File does not exist.
 #  File has not been updated.
-#  commands to execute (from `Makefile', line 285):
-	./scripts/simple_test.sh
+#  commands to execute (from `Makefile', line 287):
+	sh ./scripts/simple_test.sh
 	
 
-build: go.sum /Users/rileyedmunds/stride/stride/build
+build: go.sum /Users/rileyedmunds/stride/stride/build/
 #  Phony target (prerequisite of .PHONY).
 #  Implicit rule search has not been done.
 #  File does not exist.
 #  File has not been updated.
-# makefile (from `Makefile', line 90)
+# makefile (from `Makefile', line 92)
 # BUILD_ARGS = -o $(BUILDDIR)/
 # variable set hash-table stats:
 # Load=1/32=3%, Rehash=0, Collisions=0/1=0%
-#  commands to execute (from `Makefile', line 93):
+#  commands to execute (from `Makefile', line 95):
 	go $@ -mod=readonly $(BUILD_FLAGS) $(BUILD_ARGS) ./...
 	
 
@@ -461,7 +460,7 @@ benchmark:
 #  Implicit rule search has not been done.
 #  File does not exist.
 #  File has not been updated.
-#  commands to execute (from `Makefile', line 229):
+#  commands to execute (from `Makefile', line 231):
 	@go test -mod=readonly -bench=. ./...
 	
 
@@ -470,7 +469,7 @@ test-unit:
 #  Implicit rule search has not been done.
 #  File does not exist.
 #  File has not been updated.
-#  commands to execute (from `Makefile', line 220):
+#  commands to execute (from `Makefile', line 222):
 	@VERSION=$(VERSION) go test -mod=readonly -tags='ledger test_ledger_mock norace' ./...
 	
 
@@ -506,17 +505,17 @@ tools-stamp: statik runsim
 localnet-stop:
 #  Phony target (prerequisite of .PHONY).
 #  Implicit rule search has not been done.
- 
 #  File does not exist.
 #  File has not been updated.
-#  commands to execute (from `Makefile', line 261):
+#  commands to execute (from `Makefile', line 263):
 	docker-compose down
 	
 
 # Not a target:
 sims.mk:
+ 
 #  Implicit rule search has been done.
-#  Last modified 2022-05-20 08:36:15
+#  Last modified 2022-05-22 18:19:34
 #  File has been updated.
 #  Successfully updated.
 # variable set hash-table stats:
@@ -527,7 +526,7 @@ build-docker-stridednode:
 #  Implicit rule search has not been done.
 #  File does not exist.
 #  File has not been updated.
-#  commands to execute (from `Makefile', line 250):
+#  commands to execute (from `Makefile', line 252):
 	$(MAKE) -C contrib/localtestnet
 	
 
@@ -566,7 +565,7 @@ docker-single-node:
 # Not a target:
 go.mod:
 #  Implicit rule search has been done.
-#  Last modified 2022-05-20 08:36:15
+#  Last modified 2022-06-04 10:15:45
 #  File has been updated.
 #  Successfully updated.
 # variable set hash-table stats:
@@ -586,8 +585,17 @@ test-race:
 #  Implicit rule search has not been done.
 #  File does not exist.
 #  File has not been updated.
-#  commands to execute (from `Makefile', line 223):
+#  commands to execute (from `Makefile', line 225):
 	@VERSION=$(VERSION) go test -mod=readonly -race -tags='ledger test_ledger_mock' ./...
+	
+
+/Users/rileyedmunds/stride/stride/build/:
+#  Implicit rule search has not been done.
+#  Last modified 2022-05-22 18:19:33
+#  File has been updated.
+#  Successfully updated.
+#  commands to execute (from `Makefile', line 98):
+	mkdir -p $(BUILDDIR)/
 	
 
 # Not a target:
@@ -611,46 +619,17 @@ test-docker:
 #  Implicit rule search has not been done.
 #  Modification time never checked.
 #  File has not been updated.
-#  commands to execute (from `Makefile', line 267):
+#  commands to execute (from `Makefile', line 269):
 	@docker build -f contrib/Dockerfile.test -t ${TEST_DOCKER_REPO}:$(shell git rev-parse --short HEAD) .
 	@docker tag ${TEST_DOCKER_REPO}:$(shell git rev-parse --short HEAD) ${TEST_DOCKER_REPO}:$(shell git rev-parse --abbrev-ref HEAD | sed 's#/#_#g')
 	@docker tag ${TEST_DOCKER_REPO}:$(shell git rev-parse --short HEAD) ${TEST_DOCKER_REPO}:latest
 	
- 
 
 contract-tests:
 #  Phony target (prerequisite of .PHONY).
 #  Implicit rule search has not been done.
 #  File does not exist.
 #  File has not been updated.
-
-/Users/rileyedmunds/stride/stride/build:
-#  Implicit rule search has not been done.
-#  Implicit/static pattern stem: `'
-#  File does not exist.
-#  File has been updated.
-#  Needs to be updated (-q is set).
-# automatic
-# @ := /Users/rileyedmunds/stride/stride/build
-# automatic
-# % := 
-# automatic
-# * := 
-# automatic
-# + := 
-# automatic
-# | := 
-# automatic
-# < := 
-# automatic
-# ^ := 
-# automatic
-# ? := 
-# variable set hash-table stats:
-# Load=8/32=25%, Rehash=0, Collisions=2/12=17%
-#  commands to execute (from `Makefile', line 96):
-	mkdir -p $(BUILDDIR)/
-	
 
 statik: /Users/rileyedmunds/.go/bin/statik
 #  Phony target (prerequisite of .PHONY).
@@ -675,7 +654,7 @@ draw-deps:
 #  Implicit rule search has not been done.
 #  File does not exist.
 #  File has not been updated.
-#  commands to execute (from `Makefile', line 125):
+#  commands to execute (from `Makefile', line 127):
 	@# requires brew install graphviz or apt-get install graphviz
 	go get github.com/RobotsAndPencils/goviz
 	@goviz -i ./cmd/strided -d 2 | dot -Tpng -o dependency-graph.png
@@ -686,7 +665,7 @@ clean:
 #  Implicit rule search has not been done.
 #  File does not exist.
 #  File has not been updated.
-#  commands to execute (from `Makefile', line 130):
+#  commands to execute (from `Makefile', line 132):
 	rm -rf $(BUILDDIR)/ artifacts/
 	
 
@@ -694,7 +673,7 @@ build-reproducible: go.sum
 #  Implicit rule search has not been done.
 #  Modification time never checked.
 #  File has not been updated.
-#  commands to execute (from `Makefile', line 99):
+#  commands to execute (from `Makefile', line 101):
 	$(DOCKER) rm latest-build || true
 	$(DOCKER) run --volume=$(CURDIR):/sources:ro \
 	--env TARGET_PLATFORMS='linux/amd64 darwin/amd64 linux/arm64 windows/amd64' \
@@ -721,7 +700,7 @@ test-cover:
 #  Implicit rule search has not been done.
 #  File does not exist.
 #  File has not been updated.
-#  commands to execute (from `Makefile', line 226):
+#  commands to execute (from `Makefile', line 228):
 	@go test -mod=readonly -timeout 30m -coverprofile=coverage.txt -covermode=atomic -tags='ledger test_ledger_mock' ./...
 	
 
@@ -729,7 +708,8 @@ build-docs:
 #  Implicit rule search has not been done.
 #  Modification time never checked.
 #  File has not been updated.
-#  commands to execute (from `Makefile', line 190):
+#  commands to execute (from `Makefile', line 192):
+ 
 	@cd docs && \
 	while read p; do \
 	(git checkout $${p} && npm install && VUEPRESS_BASE="/$${p}/" npm run build) ; \
@@ -744,7 +724,7 @@ localnet-start: build-linux build-docker-stridednode
 #  Implicit rule search has not been done.
 #  File does not exist.
 #  File has not been updated.
-#  commands to execute (from `Makefile', line 254):
+#  commands to execute (from `Makefile', line 256):
 	@if ! [ -f $(BUILDDIR)/node0/strided/config/genesis.json ]; \
 	then docker run --rm -v $(BUILDDIR):/strided:Z stride-labs/stridednode testnet --v 4 -o . --starting-ip-address 192.168.10.2 --keyring-backend=test ; \
 	fi
@@ -761,7 +741,7 @@ docs:
 #  Implicit rule search has not been done.
 #  Modification time never checked.
 #  File has not been updated.
-#  commands to execute (from `Makefile', line 154):
+#  commands to execute (from `Makefile', line 156):
 	@echo
 	@echo "=========== Generate Message ============"
 	@echo
@@ -778,6 +758,31 @@ docs:
 	@echo
 	
 
+init:
+#  Implicit rule search has not been done.
+#  Modification time never checked.
+#  File has not been updated.
+#  commands to execute (from `Makefile', line 290):
+	@if [ ${build} == "base" ]; \
+	then \
+	sh scripts/init.sh -bd;\
+	elif [ ${build} == "all" ]; \
+	then \
+	sh scripts/init.sh -bf;\
+	elif [ ${build} == "none" ]; \
+	then \
+	sh scripts/init.sh;\
+	elif [ ${build} == "stride" ]; \
+	then \
+	sh scripts/init.sh -bs;\
+	elif [ ${build} == "strideall" ]; \
+	then \
+	sh scripts/init.sh -ba ;\
+	else\
+	echo "Init type ${build} not recognized.";\
+	fi
+	
+
 test-sim-after-import: runsim
 #  Phony target (prerequisite of .PHONY).
 #  Implicit rule search has not been done.
@@ -792,7 +797,7 @@ clean-localnet: localnet-stop
 #  Implicit rule search has not been done.
 #  Modification time never checked.
 #  File has not been updated.
-#  commands to execute (from `Makefile', line 264):
+#  commands to execute (from `Makefile', line 266):
 	rm -rf $(BUILDDIR)/node* $(BUILDDIR)/gentxs
 	
 
@@ -801,7 +806,7 @@ sync-docs:
 #  Implicit rule search has not been done.
 #  File does not exist.
 #  File has not been updated.
-#  commands to execute (from `Makefile', line 199):
+#  commands to execute (from `Makefile', line 201):
 	cd ~/output && \
 	echo "role_arn = ${DEPLOYMENT_ROLE_ARN}" >> /root/.aws/config ; \
 	echo "CI job = ${CIRCLE_BUILD_URL}" >> version.html ; \
@@ -813,7 +818,7 @@ test-docker-push: test-docker
 #  Implicit rule search has not been done.
 #  Modification time never checked.
 #  File has not been updated.
-#  commands to execute (from `Makefile', line 272):
+#  commands to execute (from `Makefile', line 274):
 	@docker push ${TEST_DOCKER_REPO}:$(shell git rev-parse --short HEAD)
 	@docker push ${TEST_DOCKER_REPO}:$(shell git rev-parse --abbrev-ref HEAD | sed 's#/#_#g')
 	@docker push ${TEST_DOCKER_REPO}:latest
@@ -829,7 +834,7 @@ lint:
 #  Implicit rule search has not been done.
 #  File does not exist.
 #  File has not been updated.
-#  commands to execute (from `Makefile', line 237):
+#  commands to execute (from `Makefile', line 239):
 	golangci-lint run --disable-all -E errcheck
 	find . -name '*.go' -type f -not -path "./vendor*" -not -path "*.git*" | xargs gofmt -d -s
 	
@@ -870,9 +875,10 @@ run-lcd-contract-tests:
 # Not a target:
 tools.mk:
 #  Implicit rule search has been done.
-#  Last modified 2022-05-20 08:36:15
+#  Last modified 2022-05-22 18:19:34
 #  File has been updated.
 #  Successfully updated.
+ 
 # variable set hash-table stats:
 # Load=0/32=0%, Rehash=0, Collisions=0/0=0%
 
@@ -881,7 +887,6 @@ test-sim-profile:
 #  Implicit rule search has not been done.
 #  File does not exist.
 #  File has not been updated.
- 
 #  commands to execute (from `sims.mk', line 66):
 	@echo "Running application benchmark for numBlocks=$(SIM_NUM_BLOCKS), blockSize=$(SIM_BLOCK_SIZE). This may take awhile!"
 	@go test -mod=readonly -benchmem -run=^$$ $(SIMAPP) -bench ^BenchmarkFullAppSimulation$$ \
@@ -903,20 +908,37 @@ test-sim-import-export: runsim
 	@$(BINDIR)/runsim -Jobs=4 -SimAppPkg=$(SIMAPP) -ExitOnFail 50 5 TestAppImportExport
 	
 
-install: go.sum /Users/rileyedmunds/stride/stride/build
+install: go.sum /Users/rileyedmunds/stride/stride/build/
 #  Phony target (prerequisite of .PHONY).
 #  Implicit rule search has not been done.
+#  Implicit/static pattern stem: `'
 #  File does not exist.
 #  File has been updated.
 #  Needs to be updated (-q is set).
+# automatic
+# @ := install
+# automatic
+# % := 
+# automatic
+# * := 
+# automatic
+# + := go.sum /Users/rileyedmunds/stride/stride/build/
+# automatic
+# | := 
+# automatic
+# < := go.sum
+# automatic
+# ^ := go.sum /Users/rileyedmunds/stride/stride/build/
+# automatic
+# ? := go.sum /Users/rileyedmunds/stride/stride/build/
 # variable set hash-table stats:
-# Load=0/32=0%, Rehash=0, Collisions=0/4=0%
-#  commands to execute (from `Makefile', line 93):
+# Load=8/32=25%, Rehash=0, Collisions=1/13=8%
+#  commands to execute (from `Makefile', line 95):
 	go $@ -mod=readonly $(BUILD_FLAGS) $(BUILD_ARGS) ./...
 	
 
 # files hash-table stats:
-# Load=67/1024=7%, Rehash=0, Collisions=7/163=4%
+# Load=68/1024=7%, Rehash=0, Collisions=7/163=4%
 # VPATH Search Paths
 
 # No `vpath' search paths.
@@ -928,6 +950,6 @@ install: go.sum /Users/rileyedmunds/stride/stride/build
 # strcache size: total = 4096 / max = 4096 / min = 4096 / avg = 4096
 # strcache free: total = 4070 / max = 4070 / min = 4070 / avg = 4070
 
-# Finished Make data base on Fri May 20 08:37:10 2022
+# Finished Make data base on Sat Jun  4 16:38:44 2022
 
  
