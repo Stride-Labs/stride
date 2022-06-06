@@ -118,5 +118,9 @@ func SubmitQueryResponse() *cobra.Command {
 		},
 	}
 
+	cmd.Flags().AddFlagSet(fsConnectionID)
+	_ = cmd.MarkFlagRequired(FlagConnectionID)
+	flags.AddTxFlagsToCmd(cmd)
+
 	return cmd
 }
