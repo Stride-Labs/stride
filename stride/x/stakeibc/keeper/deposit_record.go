@@ -104,8 +104,3 @@ func GetDepositRecordIDBytes(id uint64) []byte {
 func GetDepositRecordIDFromBytes(bz []byte) uint64 {
 	return binary.BigEndian.Uint64(bz)
 }
-
-// ProcessDepositRecord transfers tokens through IBC to delegate address
-func (k Keeper) ProcessDepositRecord(ctx sdk.Context, id uint64) {
-	k.Logger(ctx).Info("NEED TO IMPLEMENT DEPOSIT RECORD PROCESSING")
-}
