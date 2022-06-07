@@ -20,7 +20,7 @@ message HostZone {
   ICAAccount delegationAccount = 7;
   string LocalDenom = 8;
   string BaseDenom = 9;
-  // TODO(TEST-XX): Should we make this an array and store the last n redemption rates
+  // TODO(TEST-68): Should we make this an array and store the last n redemption rates
   // then calculate a TWARR?
   string LastRedemptionRate = 10 [
     (cosmos_proto.scalar) = "cosmos.Dec",

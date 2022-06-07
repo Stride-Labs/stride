@@ -8,6 +8,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	distributionTypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 	stakingTypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 )
 
@@ -29,7 +30,7 @@ func (k Keeper) RedeemStake(goCtx context.Context, msg *types.MsgRedeemStake) (*
 		return nil, err
 	}
 	delegationAccount := hostZone.GetDelegationAccount()
-	// withdrawAccount := hostZone.GetWithdrawalAccount()
+	withdrawAccount := hostZone.GetWithdrawalAccount()
 	connectionId := hostZone.GetConnectionId()
 	
 	// Safety checks
@@ -45,14 +46,14 @@ func (k Keeper) RedeemStake(goCtx context.Context, msg *types.MsgRedeemStake) (*
 	// TODO: REMOVE THIS, TESTING PURPOSES ONLY
 	// #################################################################
 	// Mint coins and send them to senders account
-	err = k.bankKeeper.MintCoins(ctx, types.ModuleName, sdk.NewCoins(inCoin))
-	if err != nil {
-		return nil, err
-	}
-	err = k.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, sender, sdk.NewCoins(inCoin))
-	if err != nil {
-		return nil, err
-	}
+	// err = k.bankKeeper.MintCoins(ctx, types.ModuleName, sdk.NewCoins(inCoin))
+	// if err != nil {
+	// 	return nil, err
+	// }
+	// err = k.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, sender, sdk.NewCoins(inCoin))
+	// if err != nil {
+	// 	return nil, err
+	// }
 	// #################################################################
 	// Creator owns at least "amount" stAssets
 	balance := k.bankKeeper.GetBalance(ctx, sender, msg.Denom)
@@ -69,7 +70,7 @@ func (k Keeper) RedeemStake(goCtx context.Context, msg *types.MsgRedeemStake) (*
 
 	// calculate the redemption rate
 	// when redeeming tokens, multiply stAssets by the exchange rate (allStakedAssets / allStAssets)
-	// TODO(TEST-XX): Update redemption_rate via ICQ
+	// TODO(TEST-7): Update redemption_rate via ICQ
 	var rate sdk.Dec
 	rate = hostZone.LastRedemptionRate
 	if hostZone.RedemptionRate.LT(rate) {
@@ -85,14 +86,14 @@ func (k Keeper) RedeemStake(goCtx context.Context, msg *types.MsgRedeemStake) (*
 	// Construct the transaction. Note, this transaction must be atomically executed.
 	var msgs []sdk.Msg
 	// 1. MsgSetWithdrawalAddress
-	// setWithdrawAddressUser := &distributionTypes.MsgSetWithdrawAddress{DelegatorAddress: delegationAccount.GetAddress(), WithdrawAddress: sender.String()}
-	// msgs = append(msgs, setWithdrawAddressUser)
+	setWithdrawAddressUser := &distributionTypes.MsgSetWithdrawAddress{DelegatorAddress: delegationAccount.GetAddress(), WithdrawAddress: sender.String()}
+	msgs = append(msgs, setWithdrawAddressUser)
 	// 2. MsgUndelegate
 	undelegateToUser := &stakingTypes.MsgUndelegate{DelegatorAddress: delegationAccount.GetAddress(), ValidatorAddress: validator_address, Amount: outCoin}
 	msgs = append(msgs, undelegateToUser)
 	// 3. MsgSetWithdrawalAddress
-	// setWithdrawAddressIca := &distributionTypes.MsgSetWithdrawAddress{DelegatorAddress: delegationAccount.GetAddress(), WithdrawAddress: withdrawAccount.GetAddress()}
-	// msgs = append(msgs, setWithdrawAddressIca)
+	setWithdrawAddressIca := &distributionTypes.MsgSetWithdrawAddress{DelegatorAddress: delegationAccount.GetAddress(), WithdrawAddress: withdrawAccount.GetAddress()}
+	msgs = append(msgs, setWithdrawAddressIca)
 	// Send the ICA transaction
 	k.SubmitTxs(ctx, connectionId, msgs, *delegationAccount)
 
