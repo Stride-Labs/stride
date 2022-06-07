@@ -23,16 +23,21 @@ func (k msgServer) LiquidStake(goCtx context.Context, msg *types.MsgLiquidStake)
 	// NOTE: int is an int32 or int64 (depending on machine type) so converting from int32 -> int
 	// is safe. The converse is not true.
 	coinString := strconv.Itoa(int(msg.Amount)) + msg.Denom
-	coins, err := sdk.ParseCoinsNormalized(coinString)
+	inCoin, err := sdk.ParseCoinNormalized(coinString)
 	if err != nil {
-		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidType, "failed to parse %s coins", coins)
+		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidType, "failed to parse %s inCoin", inCoin)
 	}
 
 	// Safety checks
 	// ensure Amount is non-negative, liquid staking 0 or less tokens is invalid
-	if msg.Amount < 1 {
+	if !inCoin.IsPositive() {
 		k.Logger(ctx).Info("amount must be non-negative")
 		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidCoins, "amount must be non-negative")
+	}
+	// Creator owns at least "amount" of inCoin
+	balance := k.bankKeeper.GetBalance(ctx, sender, msg.Denom)
+	if balance.IsLT(inCoin) {
+		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidCoins, "balance is lower than staking amount. staking amount: %s, balance %s: ", balance.Amount, msg.Amount)
 	}
 	// check that the token is an IBC token
 	isIbcToken := types.IsIBCToken(msg.Denom)
@@ -44,7 +49,7 @@ func (k msgServer) LiquidStake(goCtx context.Context, msg *types.MsgLiquidStake)
 	// deposit `amount` of `denom` token to the stakeibc module
 	// NOTE: Should we add an additional check here? This is a pretty important line of code
 	// NOTE: If sender doesn't have enough coins, this panics (error is hard to interpret)
-	sdkerror := k.bankKeeper.SendCoinsFromAccountToModule(ctx, sender, types.ModuleName, coins)
+	sdkerror := k.bankKeeper.SendCoinsFromAccountToModule(ctx, sender, types.ModuleName, sdk.NewCoins(inCoin))
 	if sdkerror != nil {
 		k.Logger(ctx).Error("failed to send tokens from Account to Module")
 		panic(sdkerror)

@@ -114,4 +114,3 @@ func (k Keeper) GetConnectionId(ctx sdk.Context, portId string) (string, error) 
 	}
 	return "", fmt.Errorf("portId %s has no associated connectionId", portId)
 }
-
