@@ -1,0 +1,21 @@
+syntax = "proto3";
+package Stridelabs.stride.stakeibc;
+
+import "stakeibc/delegation.proto";
+
+option go_package = "github.com/Stride-Labs/stride/x/stakeibc/types";
+
+enum ICAAccountType {
+  DELEGATION = 0;
+  FEE = 1;
+  WITHDRAWAL = 2;
+}
+
+// TODO(TEST-XX): Update these fields to be more useful (e.g. balances should be coins, maybe store port name directly)
+message ICAAccount {
+  string address = 1; 
+  int32 balance = 2; 
+  int32 delegatedBalance = 3; 
+  repeated Delegation delegations = 4;
+  ICAAccountType target = 5;
+}
