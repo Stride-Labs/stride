@@ -37,7 +37,7 @@ type HostZone struct {
 	DelegationAccount     *ICAAccount  `protobuf:"bytes,7,opt,name=delegationAccount,proto3" json:"delegationAccount,omitempty"`
 	LocalDenom            string       `protobuf:"bytes,8,opt,name=LocalDenom,proto3" json:"LocalDenom,omitempty"`
 	BaseDenom             string       `protobuf:"bytes,9,opt,name=BaseDenom,proto3" json:"BaseDenom,omitempty"`
-	// TODO(TEST-XX): Should we make this an array and store the last n redemption rates
+	// TODO(TEST-68): Should we make this an array and store the last n redemption rates
 	// then calculate a TWARR?
 	LastRedemptionRate github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,10,opt,name=LastRedemptionRate,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"LastRedemptionRate"`
 	RedemptionRate     github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,11,opt,name=RedemptionRate,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"RedemptionRate"`

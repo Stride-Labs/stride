@@ -21,6 +21,8 @@ import (
 // )
 
 // Implements core logic for OnAcknowledgementPacket
+// TODO(TEST-28): Add ack handling logic for various ICA calls
+// TODO(TEST-33): Scope out what to store on different acks (by function call, success/failure)
 func (k Keeper) HandleAcknowledgement(ctx sdk.Context, modulePacket channeltypes.Packet, acknowledgement []byte) error {
 	// ack := channeltypes.Acknowledgement_Result{}
 	// var eventType string
@@ -114,6 +116,7 @@ func (k Keeper) HandleAcknowledgement(ctx sdk.Context, modulePacket channeltypes
 	return nil
 }
 
+// TODO(TEST-28): Burn stAssets if RedeemStake succeeds
 func (k Keeper) HandleUndelegate(ctx sdk.Context, msg sdk.Msg) error {
 	// k.Logger(ctx).Info("Received MsgUndelegate acknowledgement")
 	// // first, type assertion. we should have stakingtypes.MsgDelegate
