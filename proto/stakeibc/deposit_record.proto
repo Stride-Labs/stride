@@ -1,0 +1,20 @@
+syntax = "proto3";
+package Stridelabs.stride.stakeibc;
+
+option go_package = "github.com/Stride-Labs/stride/x/stakeibc/types";
+import "stakeibc/host_zone.proto"; 
+
+message DepositRecord {
+  uint64 id = 1;
+	// TODO do we care that amount is int32? should we change this to uint64?
+  int32 amount = 2; 
+  string denom = 3; 
+  string hostZoneId = 4; 
+  string sender = 5; 
+  enum Purpose {
+    RECEIPT = 0;
+    TRANSACTION = 1;
+  }
+  Purpose purpose = 6; 
+  
+}
