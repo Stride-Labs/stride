@@ -9,7 +9,6 @@ import (
 
 // Default init params
 var (
-	// TODO FILL THESE OUT
 	// these are default intervals _in epochs_ NOT in blocks
 	DefaultDepositInterval      uint64 = 5
 	DefaultDelegateInterval     uint64 = 2
