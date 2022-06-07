@@ -6,10 +6,10 @@
 *.dylib
 
 # build
-stride/build/*
-stride/state/*
-stride/scripts/state/*
-stride/vue/*
+build/*
+state/*
+scripts/state/*
+vue/*
 # Test binary, built with `go test -c`
 *.test
 
