@@ -33,6 +33,11 @@ func (k Keeper) RegisterHostZone(goCtx context.Context, msg *types.MsgRegisterHo
 		ConnectionId: msg.ConnectionId,
 		LocalDenom: msg.LocalDenom,
 		BaseDenom: msg.BaseDenom,
+		// TODO(TEST-XX): Dynamically pull in RedemptionRate, LastRedemptionRate
+		// It should be fine to start with 1 here though, because nothing is staked
+		// when a zone is registered
+		RedemptionRate: sdk.NewDec(1),
+		LastRedemptionRate: sdk.NewDec(1),
 	}
 	// write the zone back to the store
 	k.SetHostZone(ctx, zone)

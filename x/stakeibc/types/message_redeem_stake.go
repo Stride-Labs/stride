@@ -52,7 +52,7 @@ func (msg *MsgRedeemStake) ValidateBasic() error {
 	if err != nil {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid creator address (%s)", err)
 	} else if !isStAsset {
-		return sdkerrors.Wrapf(ErrInvalidToken, "invalid token denom (%s)", msg.Denom)
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidCoins, "invalid token denom (requires stAsset) (%s)", msg.Denom)
 	}
 	return nil
 }
