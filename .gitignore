@@ -9,6 +9,7 @@
 build/*
 state/*
 scripts/state/*
+scripts/temp.sh
 vue/*
 # Test binary, built with `go test -c`
 *.test

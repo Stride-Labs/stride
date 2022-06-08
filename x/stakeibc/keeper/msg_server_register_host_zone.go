@@ -15,6 +15,14 @@ func (k Keeper) RegisterHostZone(goCtx context.Context, msg *types.MsgRegisterHo
 
 	_ = ctx
 
+	// hash := "C4CFF46FD6DE35CA4CF4CE031E643C8FDC9BA4B99AE598E9B0ED98FE3A2319F9"
+	// req := &ibctypes.QueryDenomTraceRequest{Hash: hash}
+	// denomTrace, err := k.transferKeeper.DenomTrace(goCtx, req)
+	// if err != nil {
+	// 	return nil, fmt.Errorf("unable to obtain chain from denom %s: %w", hash, err)
+	// }
+	// k.Logger(ctx).Info(fmt.Sprintf("DenomTrace: %s", denomTrace))
+
 	// Get chain id from connection
 	chainId, err := k.GetChainID(ctx, msg.ConnectionId)
 	if err != nil {
@@ -29,10 +37,10 @@ func (k Keeper) RegisterHostZone(goCtx context.Context, msg *types.MsgRegisterHo
 
 	// set the zone
 	zone := types.HostZone{
-		ChainId: chainId,
+		ChainId:      chainId,
 		ConnectionId: msg.ConnectionId,
-		LocalDenom: msg.LocalDenom,
-		BaseDenom: msg.BaseDenom,
+		LocalDenom:   msg.LocalDenom,
+		BaseDenom:    msg.BaseDenom,
 	}
 	// write the zone back to the store
 	k.SetHostZone(ctx, zone)
@@ -56,7 +64,7 @@ func (k Keeper) RegisterHostZone(goCtx context.Context, msg *types.MsgRegisterHo
 		return nil, err
 	}
 
-	// TODO(TEST-39): TODO(TEST-42): Set validators on the host zone, either using ICQ + intents or a WL 
+	// TODO(TEST-39): TODO(TEST-42): Set validators on the host zone, either using ICQ + intents or a WL
 
 	// emit events
 	ctx.EventManager().EmitEvents(sdk.Events{
