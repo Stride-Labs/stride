@@ -116,16 +116,13 @@ sleep 10
 echo "creating hermes identifiers"
 docker-compose run hermes hermes -c /tmp/hermes.toml tx raw create-client $main_chain $main_gaia_chain > /dev/null
 docker-compose run hermes hermes -c /tmp/hermes.toml tx raw conn-init $main_chain $main_gaia_chain 07-tendermint-0 07-tendermint-0 > /dev/null
-docker-compose run hermes hermes -c /tmp/hermes.toml tx raw chan-open-init $main_chain $main_gaia_chain connection-0 transfer transfer > /dev/null
 
 echo "Creating connection $main_chain <> $main_gaia_chain"
 docker-compose run -T hermes hermes -c /tmp/hermes.toml create connection $main_chain $main_gaia_chain > /dev/null
 
-echo "Connection created"
 echo "Creating transfer channel"
 docker-compose run -T hermes hermes -c /tmp/hermes.toml create channel --port-a transfer --port-b transfer $main_gaia_chain connection-0 > /dev/null
-
-echo "Tranfer channel created"
+# docker-compose run hermes hermes -c /tmp/hermes.toml tx raw chan-open-init $main_chain $main_gaia_chain connection-0 transfer transfer > /dev/null
 
 echo "Starting hermes relayer"
 docker-compose up --force-recreate -d hermes
@@ -134,10 +131,9 @@ docker-compose up --force-recreate -d hermes
 # ICA staking test
 # first register host zone for ATOM chain
 IBCATOM='ibc/C4CFF46FD6DE35CA4CF4CE031E643C8FDC9BA4B99AE598E9B0ED98FE3A2319F9'
-docker-compose --ansi never exec -T $main_node strided tx stakeibc register-host-zone connection-0 ATOM stATOM --chain-id $main_chain --home /stride/.strided --keyring-backend test --from val1 --gas 500000 -y
-exit
+docker-compose --ansi never exec -T $main_node strided tx stakeibc register-host-zone connection-0 uatom statom --chain-id $main_chain --home /stride/.strided --keyring-backend test --from val1 --gas 500000 -y
 #############################################################################################################################
 # source ${SCRIPT_DIR}/ica_stake.sh
-
+exit
 sleep 10
 sh ${SCRIPT_DIR}/tests/run_all_tests.sh
