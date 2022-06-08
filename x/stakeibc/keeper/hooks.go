@@ -35,11 +35,10 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochIdentifier string, epochN
 					continue
 				}
 				delegateAddress := delegateAccount.Address
-				// TODO TEST-59 grab proper port name and channel name
 				timeoutHeight := clienttypes.NewHeight(0, 500)
 				transferCoin := sdk.NewCoin(depositRecord.Denom, sdk.NewInt(int64(depositRecord.Amount)))
 				goCtx := sdk.WrapSDKContext(ctx)
-				msg := ibctypes.NewMsgTransfer("transfer", "channel-1", transferCoin, addr, delegateAddress, timeoutHeight, 0)
+				msg := ibctypes.NewMsgTransfer("transfer", hostZone.ChainId, transferCoin, addr, delegateAddress, timeoutHeight, 0)
 				_, err := k.transferKeeper.Transfer(goCtx, msg)
 				if err != nil {
 					pstr := fmt.Sprintf("\tERROR WITH DEPOSIT RECEIPT {%d}", depositRecord.Id)
