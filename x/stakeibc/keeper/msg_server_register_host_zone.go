@@ -15,14 +15,6 @@ func (k Keeper) RegisterHostZone(goCtx context.Context, msg *types.MsgRegisterHo
 
 	_ = ctx
 
-	// hash := "C4CFF46FD6DE35CA4CF4CE031E643C8FDC9BA4B99AE598E9B0ED98FE3A2319F9"
-	// req := &ibctypes.QueryDenomTraceRequest{Hash: hash}
-	// denomTrace, err := k.transferKeeper.DenomTrace(goCtx, req)
-	// if err != nil {
-	// 	return nil, fmt.Errorf("unable to obtain chain from denom %s: %w", hash, err)
-	// }
-	// k.Logger(ctx).Info(fmt.Sprintf("DenomTrace: %s", denomTrace))
-
 	// Get chain id from connection
 	chainId, err := k.GetChainID(ctx, msg.ConnectionId)
 	if err != nil {
@@ -41,6 +33,9 @@ func (k Keeper) RegisterHostZone(goCtx context.Context, msg *types.MsgRegisterHo
 		ConnectionId: msg.ConnectionId,
 		LocalDenom:   msg.LocalDenom,
 		BaseDenom:    msg.BaseDenom,
+		// DelegationAccount: &types.ICAAccount{Address: delegateAccount},
+		// FeeAccount:        &types.ICAAccount{Address: feeAccount},
+		// WithdrawalAccount: &types.ICAAccount{Address: withdrawalAccount},
 	}
 	// write the zone back to the store
 	k.SetHostZone(ctx, zone)

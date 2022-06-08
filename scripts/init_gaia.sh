@@ -80,10 +80,10 @@ done
 
 ## add the message types ICA should allow to the host chain
 ALLOW_MESSAGES='\"/cosmos.bank.v1beta1.MsgSend\", \"/cosmos.bank.v1beta1.MsgMultiSend\", \"/cosmos.staking.v1beta1.MsgDelegate\", \"/cosmos.staking.v1beta1.MsgRedeemTokensforShares\", \"/cosmos.staking.v1beta1.MsgTokenizeShares\", \"/cosmos.distribution.v1beta1.MsgWithdrawDelegatorReward\", \"/cosmos.distribution.v1beta1.MsgSetWithdrawAddress\", \"/ibc.applications.transfer.v1.MsgTransfer\"'
-sed -i -E "s|\"allow_messages\": \[\]|\"allow_messages\": \[${ALLOW_MESSAGES}\]|g" "${STATE}/${main_gaia_chain}/config/genesis.json"
+sed -i -E "s|\"allow_messages\": \[\]|\"allow_messages\": \[${ALLOW_MESSAGES}\]|g" "${STATE}/${main_gaia_node}/config/genesis.json"
 
 
-# make sure all Stride chains have the same genesis
+# make sure all Gaia chains have the same genesis
 for i in "${!GAIA_CHAINS[@]}"; do
     if [ $i -ne $MAIN_ID ]
     then

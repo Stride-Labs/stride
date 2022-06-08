@@ -2,10 +2,12 @@ package keeper
 
 import (
 	"encoding/binary"
+	"strings"
 
 	"github.com/Stride-Labs/stride/x/stakeibc/types"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	ibctypes "github.com/cosmos/ibc-go/v3/modules/apps/transfer/types"
 )
 
 // GetHostZoneCount get the total number of hostZone
@@ -50,22 +52,33 @@ func (k Keeper) GetHostZone(ctx sdk.Context, chain_id string) (val types.HostZon
 	return val, true
 }
 
-// GetHostZoneFromDenom returns a hostZone from the relevant coin denom
-
+// GetHostZoneFromDenom returns a hostZone from the relevant coin denom (denom is ibc/...)
 func (k Keeper) GetHostZoneFromDenom(ctx sdk.Context, denom string) (val types.HostZone, found bool) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.HostZoneKey))
 	iterator := sdk.KVStorePrefixIterator(store, []byte{})
+	var bval types.HostZone
 
 	defer iterator.Close()
+
+	// hash is the part of denom after ibc/
+	hash := strings.Join(strings.SplitN(denom, "ibc/", -1), "")
+	req := &ibctypes.QueryDenomTraceRequest{Hash: hash}
+	goCtx := sdk.WrapSDKContext(ctx)
+	denomTrace, err := k.transferKeeper.DenomTrace(goCtx, req)
+	if err != nil {
+		k.Logger(ctx).Error("unable to obtain chain from denom %s: %w", hash, err)
+		return bval, false
+	}
+	baseDenom := strings.ToUpper(denomTrace.DenomTrace.BaseDenom)
 
 	for ; iterator.Valid(); iterator.Next() {
 		var val types.HostZone
 		k.cdc.MustUnmarshal(iterator.Value(), &val)
-		if val.BaseDenom == denom {
+		if strings.ToUpper(val.BaseDenom) == baseDenom {
 			return val, true
 		}
 	}
-
+	k.Logger(ctx).Error("unable to obtain chain from BaseDenom %s: %w", baseDenom, err)
 	return val, false
 }
 
