@@ -72,3 +72,10 @@ docker-compose --ansi never exec -T gaia1 gaiad --home /gaia/.gaiad q bank balan
 }
 
 # add test to see if assets are properly being staked on host zone
+
+[submodule "scripts/tests/bats"]
+	url = https://github.com/bats-core/bats-core.git
+[submodule "scripts/tests/test_helper/bats-support"]
+	url = https://github.com/bats-core/bats-support.git
+[submodule "scripts/tests/test_helper/bats-assert"]
+	url = https://github.com/bats-core/bats-assert.git
