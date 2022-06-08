@@ -169,12 +169,14 @@ func (k msgServer) QueryBalance(goCtx context.Context, msg *types.MsgQueryBalanc
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(
 			sdk.EventTypeMessage,
-			sdk.NewAttribute("connection_id", ConnectionId),
-			sdk.NewAttribute("chain_id", ChainId),
-			sdk.NewAttribute("query_id", GenerateQueryHash(ConnectionId, ChainId, query_type, bz)),
-			sdk.NewAttribute("type", query_type),
-			sdk.NewAttribute("request", hex.EncodeToString(bz)),
-			sdk.NewAttribute("height", "0"),
+			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
+			sdk.NewAttribute(sdk.AttributeKeyAction, types.AttributeValueQuery),
+			sdk.NewAttribute(types.AttributeKeyQueryId, GenerateQueryHash(ConnectionId, ChainId, query_type, bz)),
+			sdk.NewAttribute(types.AttributeKeyChainId, ChainId),
+			sdk.NewAttribute(types.AttributeKeyConnectionId, ConnectionId),
+			sdk.NewAttribute(types.AttributeKeyType, query_type),
+			sdk.NewAttribute(types.AttributeKeyHeight, "0"),
+			sdk.NewAttribute(types.AttributeKeyRequest, hex.EncodeToString(bz)),
 		),
 	})
 
