@@ -112,7 +112,7 @@ func (k msgServer) QueryBalance(goCtx context.Context, msg *types.MsgQueryBalanc
 
 	// TODO do we need to add a callback type for this to work?
 	var cb Callback = func(k Keeper, ctx sdk.Context, args []byte, query types.Query) error {
-		panic(err)
+		// panic(err)
 
 		k.Logger(ctx).Info("[TEMP] printing inside the querybalance callback")
 		// return k.SetAccountBalance(ctx, zone, query.QueryParameters["address"],
