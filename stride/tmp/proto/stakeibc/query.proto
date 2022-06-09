@@ -1,0 +1,152 @@
+syntax = "proto3";
+package Stridelabs.stride.stakeibc;
+
+import "gogoproto/gogo.proto";
+import "google/api/annotations.proto";
+import "cosmos/base/query/v1beta1/pagination.proto";
+import "stakeibc/params.proto";
+import "stakeibc/validator.proto";
+import "stakeibc/delegation.proto";
+import "stakeibc/min_validator_requirements.proto";
+import "stakeibc/ica_account.proto";
+import "stakeibc/host_zone.proto";
+import "stakeibc/deposit_record.proto";
+// this line is used by starport scaffolding # 1
+
+option go_package = "github.com/Stride-Labs/stride/x/stakeibc/types";
+
+// Query defines the gRPC querier service.
+service Query {
+  // Parameters queries the parameters of the module.
+  rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
+    option (google.api.http).get = "/Stridelabs/stride/stakeibc/params";
+  }
+  // Queries a Validator by index.
+	rpc Validator(QueryGetValidatorRequest) returns (QueryGetValidatorResponse) {
+		option (google.api.http).get = "/Stride-Labs/stride/stakeibc/validator";
+	}
+// Queries a Delegation by index.
+	rpc Delegation(QueryGetDelegationRequest) returns (QueryGetDelegationResponse) {
+		option (google.api.http).get = "/Stride-Labs/stride/stakeibc/delegation";
+	}
+// Queries a MinValidatorRequirements by index.
+	rpc MinValidatorRequirements(QueryGetMinValidatorRequirementsRequest) returns (QueryGetMinValidatorRequirementsResponse) {
+		option (google.api.http).get = "/Stride-Labs/stride/stakeibc/min_validator_requirements";
+	}
+// Queries a ICAAccount by index.
+	rpc ICAAccount(QueryGetICAAccountRequest) returns (QueryGetICAAccountResponse) {
+		option (google.api.http).get = "/Stride-Labs/stride/stakeibc/ica_account";
+	}
+// Queries a HostZone by id.
+	rpc HostZone(QueryGetHostZoneRequest) returns (QueryGetHostZoneResponse) {
+		option (google.api.http).get = "/Stride-Labs/stride/stakeibc/host_zone/{chain_id}";
+	}
+
+	// Queries a list of HostZone items.
+	rpc HostZoneAll(QueryAllHostZoneRequest) returns (QueryAllHostZoneResponse) {
+		option (google.api.http).get = "/Stride-Labs/stride/stakeibc/host_zone";
+	}
+
+// Queries a DepositRecord by id.
+	rpc DepositRecord(QueryGetDepositRecordRequest) returns (QueryGetDepositRecordResponse) {
+		option (google.api.http).get = "/Stride-Labs/stride/stakeibc/deposit_record/{id}";
+	}
+
+	// Queries a list of DepositRecord items.
+	rpc DepositRecordAll(QueryAllDepositRecordRequest) returns (QueryAllDepositRecordResponse) {
+		option (google.api.http).get = "/Stride-Labs/stride/stakeibc/deposit_record";
+	}
+
+// Queries a list of ModuleAddress items.
+	rpc ModuleAddress(QueryModuleAddressRequest) returns (QueryModuleAddressResponse) {
+		option (google.api.http).get = "/Stride-Labs/stride/stakeibc/module_address/{name}";
+	}
+	// QueryInterchainAccountFromAddress returns the interchain account for given owner address on a given connection pair
+	rpc InterchainAccountFromAddress(QueryInterchainAccountFromAddressRequest) returns (QueryInterchainAccountFromAddressResponse);
+
+// this line is used by starport scaffolding # 2
+}
+
+// QueryInterchainAccountFromAddressRequest is the request type for the Query/InterchainAccountAddress RPC
+message QueryInterchainAccountFromAddressRequest {
+	string owner                      = 1;
+	string connection_id = 2 [(gogoproto.moretags) = "yaml:\"connection_id\""];
+}
+
+// QueryInterchainAccountFromAddressResponse the response type for the Query/InterchainAccountAddress RPC
+message QueryInterchainAccountFromAddressResponse {
+	string interchain_account_address = 1 [(gogoproto.moretags) = "yaml:\"interchain_account_address\""];
+}
+
+// QueryParamsRequest is request type for the Query/Params RPC method.
+message QueryParamsRequest {}
+
+// QueryParamsResponse is response type for the Query/Params RPC method.
+message QueryParamsResponse {
+  // params holds all the parameters of this module.
+  Params params = 1 [(gogoproto.nullable) = false];
+}
+
+message QueryGetValidatorRequest {}
+
+message QueryGetValidatorResponse {
+	Validator Validator = 1 [(gogoproto.nullable) = false];
+}
+message QueryGetDelegationRequest {}
+
+message QueryGetDelegationResponse {
+	Delegation Delegation = 1 [(gogoproto.nullable) = false];
+}
+message QueryGetMinValidatorRequirementsRequest {}
+
+message QueryGetMinValidatorRequirementsResponse {
+	MinValidatorRequirements MinValidatorRequirements = 1 [(gogoproto.nullable) = false];
+}
+message QueryGetICAAccountRequest {}
+
+message QueryGetICAAccountResponse {
+	ICAAccount ICAAccount = 1 [(gogoproto.nullable) = false];
+}
+message QueryGetHostZoneRequest {
+	string chain_id = 1;
+}
+
+message QueryGetHostZoneResponse {
+	HostZone HostZone = 1 [(gogoproto.nullable) = false];
+}
+
+message QueryAllHostZoneRequest {
+	cosmos.base.query.v1beta1.PageRequest pagination = 1;
+}
+
+message QueryAllHostZoneResponse {
+	repeated HostZone HostZone = 1 [(gogoproto.nullable) = false];
+	cosmos.base.query.v1beta1.PageResponse pagination = 2;
+}
+
+message QueryGetDepositRecordRequest {
+	uint64 id = 1;
+}
+
+message QueryGetDepositRecordResponse {
+	DepositRecord DepositRecord = 1 [(gogoproto.nullable) = false];
+}
+
+message QueryAllDepositRecordRequest {
+	cosmos.base.query.v1beta1.PageRequest pagination = 1;
+}
+
+message QueryAllDepositRecordResponse {
+	repeated DepositRecord DepositRecord = 1 [(gogoproto.nullable) = false];
+	cosmos.base.query.v1beta1.PageResponse pagination = 2;
+}
+
+message QueryModuleAddressRequest {
+  string name = 1;
+}
+
+message QueryModuleAddressResponse {
+  string addr = 1;
+}
+
+// this line is used by starport scaffolding # 3
