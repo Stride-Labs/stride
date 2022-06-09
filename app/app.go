@@ -411,6 +411,14 @@ func NewStrideApp(
 	// )
 	// monitoringModule := monitoringp.NewAppModule(appCodec, app.MonitoringKeeper)
 
+	// Note: must be above app.StakeibcKeeper
+	app.ICAControllerKeeper = icacontrollerkeeper.NewKeeper(
+		appCodec, keys[icacontrollertypes.StoreKey], app.GetSubspace(icacontrollertypes.SubModuleName),
+		app.IBCKeeper.ChannelKeeper, // may be replaced with middleware such as ics29 fee
+		app.IBCKeeper.ChannelKeeper, &app.IBCKeeper.PortKeeper,
+		scopedICAControllerKeeper, app.MsgServiceRouter(),
+	)
+
 	scopedStakeibcKeeper := app.CapabilityKeeper.ScopeToModule(stakeibcmoduletypes.ModuleName)
 	app.ScopedStakeibcKeeper = scopedStakeibcKeeper
 	app.StakeibcKeeper = stakeibcmodulekeeper.NewKeeper(
@@ -428,12 +436,6 @@ func NewStrideApp(
 	stakeibcModule := stakeibcmodule.NewAppModule(appCodec, app.StakeibcKeeper, app.AccountKeeper, app.BankKeeper)
 	stakeibcIBCModule := stakeibcmodule.NewIBCModule(app.StakeibcKeeper)
 
-	app.ICAControllerKeeper = icacontrollerkeeper.NewKeeper(
-		appCodec, keys[icacontrollertypes.StoreKey], app.GetSubspace(icacontrollertypes.SubModuleName),
-		app.IBCKeeper.ChannelKeeper, // may be replaced with middleware such as ics29 fee
-		app.IBCKeeper.ChannelKeeper, &app.IBCKeeper.PortKeeper,
-		scopedICAControllerKeeper, app.MsgServiceRouter(),
-	)
 	app.ICAHostKeeper = icahostkeeper.NewKeeper(
 		appCodec, keys[icahosttypes.StoreKey], app.GetSubspace(icahosttypes.SubModuleName),
 		app.IBCKeeper.ChannelKeeper, &app.IBCKeeper.PortKeeper,
@@ -444,16 +446,10 @@ func NewStrideApp(
 	icaControllerIBCModule := icacontroller.NewIBCModule(app.ICAControllerKeeper, stakeibcIBCModule)
 	icaHostIBCModule := icahost.NewIBCModule(app.ICAHostKeeper)
 
-	epochsKeeper := *epochsmodulekeeper.NewKeeper(
-		appCodec,
-		keys[epochsmoduletypes.StoreKey],
-		// keys[epochsmoduletypes.MemStoreKey],
-		// app.GetSubspace(epochsmoduletypes.ModuleName),
-	)
+	epochsKeeper := epochsmodulekeeper.NewKeeper(appCodec, keys[epochsmoduletypes.StoreKey])
 	app.EpochsKeeper = *epochsKeeper.SetHooks(
 		epochsmoduletypes.NewMultiEpochHooks(
-		// TODO(TEST-18) insert epoch hooks receivers here
-		// TODO(TEST-18) add interchain staking hooks here.
+			app.StakeibcKeeper.Hooks(),
 		),
 	)
 	epochsModule := epochsmodule.NewAppModule(appCodec, app.EpochsKeeper)
@@ -511,6 +507,7 @@ func NewStrideApp(
 		interchainQueryModule,
 		icaModule,
 		// this line is used by starport scaffolding # stargate/app/appModule
+		epochsModule,
 	)
 
 	// During begin block slashing happens after distr.BeginBlocker so that

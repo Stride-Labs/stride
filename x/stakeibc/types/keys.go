@@ -27,6 +27,8 @@ const (
 
 	MinValidatorRequirementsKey = "MinValidatorRequirements-value-"
 	ICAAccountKey               = "ICAAccount-value-"
+	// beginblocker intervals
+	DelegateInterval            = 2
 )
 
 var (
@@ -41,4 +43,9 @@ func KeyPrefix(p string) []byte {
 const (
 	HostZoneKey      = "HostZone-value-"
 	HostZoneCountKey = "HostZone-count-"
+)
+
+const (
+	DepositRecordKey      = "DepositRecord-value-"
+	DepositRecordCountKey = "DepositRecord-count-"
 )

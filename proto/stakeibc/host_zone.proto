@@ -6,13 +6,15 @@ import "stakeibc/ica_account.proto";
 
 option go_package = "github.com/Stride-Labs/stride/x/stakeibc/types";
 
-// next id: 8
+// next id: 10
 message HostZone {
-  uint64 id = 7;
-  string portId = 1; 
-  string channelId = 2; 
+  string chainId = 1;
+  string connectionId = 2;
   repeated Validator validators = 3;
   repeated Validator blacklistedValidators = 4;
-  repeated ICAAccount rewardsAccount = 5;
-  repeated ICAAccount feeAccount = 6;  
+  ICAAccount withdrawalAccount = 5;
+  ICAAccount feeAccount = 6; 
+  ICAAccount delegationAccount = 7;
+  string LocalDenom = 8;
+  string BaseDenom = 9;
 }

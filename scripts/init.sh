@@ -131,6 +131,7 @@ echo "\t$RLY_ADDRESS_2"
 STR1_EXEC="docker-compose --ansi never exec -T stride1 strided"
 STR2_EXEC="docker-compose --ansi never exec -T stride2 strided"
 STR3_EXEC="docker-compose --ansi never exec -T stride3 strided"
+GAIA1_EXEC="docker-compose --ansi never exec -T gaia1 gaiad"
 
 GAIA1_EXEC="docker-compose --ansi never exec -T gaia1 gaiad"
 GAIA2_EXEC="docker-compose --ansi never exec -T gaia2 gaiad"
@@ -191,8 +192,8 @@ docker-compose up --force-recreate -d icq
 echo "\n\n\nRun tests..."
 # IBC token transfer tests
 #############################################################################################################################
-source ${SCRIPT_DIR}/ibc_token_transfer.sh
+# source ${SCRIPT_DIR}/ibc_token_transfer.sh
 
-# ICQ tests
+# ICA staking test
 #############################################################################################################################
-# source ${SCRIPT_DIR}/test_icq.sh
+source ${SCRIPT_DIR}/ica_stake.sh
