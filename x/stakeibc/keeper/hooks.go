@@ -17,13 +17,13 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochIdentifier string, epochN
 		k.Logger(ctx).Info(fmt.Sprintf("Stride Epoch %d", epochNumber))
 		depositInterval := int64(k.GetParam(ctx, types.KeyDepositInterval))
 		if epochNumber%depositInterval == 0 {
-			// TODO move this function to the keeper
+			// TODO TEST-72 move this function to the keeper
 			k.Logger(ctx).Info("Triggering deposits")
 			depositRecords := k.GetAllDepositRecord(ctx)
+			addr := k.accountKeeper.GetModuleAccount(ctx, types.ModuleName).GetAddress().String()
 			for _, depositRecord := range depositRecords {
 				pstr := fmt.Sprintf("\tProcessing deposit {%d} {%s} {%d} {%s}", depositRecord.Id, depositRecord.Denom, depositRecord.Amount, depositRecord.Sender)
 				k.Logger(ctx).Info(pstr)
-				addr := k.accountKeeper.GetModuleAccount(ctx, types.ModuleName).GetAddress().String()
 				hostZone, hostZoneFound := k.GetHostZone(ctx, depositRecord.HostZoneId)
 				if !hostZoneFound {
 					k.Logger(ctx).Error("Host zone not found for deposit record {%d}", depositRecord.Id)
@@ -46,7 +46,7 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochIdentifier string, epochN
 					k.Logger(ctx).Info(pstr)
 					panic(err)
 				} else {
-					// TODO what should we do if this transfer fails
+					// TODO TEST-71 what should we do if this transfer fails
 					k.RemoveDepositRecord(ctx, depositRecord.Id)
 				}
 			}
