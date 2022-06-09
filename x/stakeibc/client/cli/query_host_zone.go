@@ -2,7 +2,6 @@ package cli
 
 import (
 	"context"
-	"strconv"
 
 	"github.com/Stride-Labs/stride/x/stakeibc/types"
 	"github.com/cosmos/cosmos-sdk/client"
@@ -45,7 +44,7 @@ func CmdListHostZone() *cobra.Command {
 
 func CmdShowHostZone() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "show-host-zone [id]",
+		Use:   "show-host-zone [chain-id]",
 		Short: "shows a HostZone",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -53,13 +52,10 @@ func CmdShowHostZone() *cobra.Command {
 
 			queryClient := types.NewQueryClient(clientCtx)
 
-			id, err := strconv.ParseUint(args[0], 10, 64)
-			if err != nil {
-				return err
-			}
+			chainId := args[0]
 
 			params := &types.QueryGetHostZoneRequest{
-				Id: id,
+				ChainId: chainId,
 			}
 
 			res, err := queryClient.HostZone(context.Background(), params)

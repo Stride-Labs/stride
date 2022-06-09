@@ -42,3 +42,8 @@ const (
 	HostZoneKey      = "HostZone-value-"
 	HostZoneCountKey = "HostZone-count-"
 )
+
+const (
+	DepositRecordKey      = "DepositRecord-value-"
+	DepositRecordCountKey = "DepositRecord-count-"
+)

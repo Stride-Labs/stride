@@ -28,6 +28,15 @@ func TestGenesis(t *testing.T) {
 			},
 		},
 		HostZoneCount: 2,
+		DepositRecordList: []types.DepositRecord{
+			{
+				Id: 0,
+			},
+			{
+				Id: 1,
+			},
+		},
+		DepositRecordCount: 2,
 		// this line is used by starport scaffolding # genesis/test/state
 	}
 
@@ -44,5 +53,7 @@ func TestGenesis(t *testing.T) {
 	require.Equal(t, genesisState.ICAAccount, got.ICAAccount)
 	require.ElementsMatch(t, genesisState.HostZoneList, got.HostZoneList)
 	require.Equal(t, genesisState.HostZoneCount, got.HostZoneCount)
+	require.ElementsMatch(t, genesisState.DepositRecordList, got.DepositRecordList)
+	require.Equal(t, genesisState.DepositRecordCount, got.DepositRecordCount)
 	// this line is used by starport scaffolding # genesis/test/assert
 }
