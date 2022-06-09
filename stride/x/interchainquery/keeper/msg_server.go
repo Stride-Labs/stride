@@ -122,12 +122,12 @@ func (k msgServer) QueryBalance(goCtx context.Context, msg *types.MsgQueryBalanc
 
 		queryResult := args
 		queryRes := banktypes.QueryAllBalancesResponse{}
-		err := k.cdc.UnmarshalJSON(queryResult, &queryRes)
+		err := k.cdc.Unmarshal(queryResult, &queryRes)
 		if err != nil {
 			k.Logger(ctx).Error("Unable to unmarshal balances info for zone", "err", err)
 			return err
 		}
-		k.Logger(ctx).Info("[TEMP] printing result from query-balances:", queryRes.Balances)
+		k.Logger(ctx).Info("[TEMP] printing result from query-balances:", queryRes.Balances.String())
 
 		ctx.EventManager().EmitEvents(sdk.Events{
 			sdk.NewEvent(
