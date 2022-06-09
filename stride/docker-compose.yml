@@ -102,9 +102,6 @@ services:
     command:
       - interchain-queries 
       - run
-        # - /bin/sh
-      # - ./interchain-queries 
-      # - run
     restart: always
     build:
       context: .

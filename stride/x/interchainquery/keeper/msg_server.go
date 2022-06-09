@@ -135,6 +135,22 @@ func (k msgServer) QueryBalance(goCtx context.Context, msg *types.MsgQueryBalanc
 				sdk.NewAttribute("balances", queryRes.Balances.String()),
 			),
 		})
+
+		// set stakeibc:ICAAccount:delegatedBalance
+		// oldICAA, found := stakeibckeeper.Keeper.GetICAAccount(ctx)
+		// if !found {
+		// 	k.Logger(ctx).Error("could not fetch ICAAccount for stakeIbc")
+		// }
+		// nTokens, err := strconv.ParseInt(strings.Replace(queryRes.Balances.String(), "uatom", "", 1), 10, 32)
+		// if err != nil {
+		// 	k.Logger(ctx).Error("could not cast QueryBalance result to uint32")
+		// }
+		// updatedICAAAccount := &stakeibctypes.ICAAccount{Address: oldICAA.Address,
+		// 												Balance: oldICAA.Balance,
+		// 												DelegatedBalance: int32(nTokens),
+		// 												Delegations: oldICAA.Delegations}
+		// stakeibckeeper.Keeper.SetICAAccount(ctx, updatedICAAAccount)
+
 		return nil
 	}
 
