@@ -142,47 +142,53 @@ GAIA3_EXEC="docker-compose --ansi never exec -T gaia3 gaiad"
 sleep 5
 docker-compose down
 docker-compose up -d stride1 stride2 stride3 gaia1 gaia2 gaia3
-echo "Chains created"
+echo "\nChains created"
 sleep 10
-echo "Restoring keys"
+echo "\nRestoring keys"
 docker-compose run hermes hermes -c /tmp/hermes.toml keys restore --mnemonic "$RLY_MNEMONIC_1" $main_chain
 docker-compose run hermes hermes -c /tmp/hermes.toml keys restore --mnemonic "$RLY_MNEMONIC_2" $main_gaia_chain
 sleep 10
-echo "Creating transfer channel"
+echo "\nCreating transfer channel"
 
-echo "creating hermes identifiers"
+echo "\nCreating hermes identifiers"
 docker-compose run hermes hermes -c /tmp/hermes.toml tx raw create-client $main_chain $main_gaia_chain > /dev/null
 docker-compose run hermes hermes -c /tmp/hermes.toml tx raw conn-init $main_chain $main_gaia_chain 07-tendermint-0 07-tendermint-0 > /dev/null
 docker-compose run hermes hermes -c /tmp/hermes.toml tx raw chan-open-init $main_chain $main_gaia_chain connection-0 transfer transfer > /dev/null
 
-echo "Creating connection $main_chain <> $main_gaia_chain"
+echo "\nCreating connection $main_chain <> $main_gaia_chain"
 docker-compose run -T hermes hermes -c /tmp/hermes.toml create connection $main_chain $main_gaia_chain > /dev/null
 echo "Connection created"
-echo "Creating transfer channel"
+echo "\nCreating transfer channel"
 docker-compose run -T hermes hermes -c /tmp/hermes.toml create channel --port-a transfer --port-b transfer $main_gaia_chain connection-0 > /dev/null
 echo "Tranfer channel created"
 
 docker-compose down hermes
-echo "Starting hermes relayer"
+echo "\nStarting hermes relayer"
 docker-compose up --force-recreate -d hermes
 
-echo "Launch interchain query relayer service"
+echo "\nBuild interchainquery relayer service (this takes ~120s...)"
 rm -rf ./icq/keys
+docker-compose build icq --no-cache
 ICQ_RUN="docker-compose --ansi never run -T icq interchain-queries"
 
+echo "\nAdd ICQ relayer addresses for Stride and Gaia:"
 ## TODO replace XXX-testnet in lens config with stride_1 and gaia_1 to match env vars here
-ICQ_ADDRESS_STRIDE=$(echo $ICQ_STRIDE_KEY | $ICQ_RUN keys restore test --chain stride-testnet | jq .address -r)
-ICQ_ADDRESS_GAIA=$(echo $ICQ_GAIA_KEY | $ICQ_RUN keys restore test --chain gaia-testnet | jq .address -r)
+$ICQ_RUN keys restore test "$ICQ_STRIDE_KEY" --chain stride-testnet
+$ICQ_RUN keys restore test "$ICQ_GAIA_KEY" --chain gaia-testnet
 
-echo "ICQ addresses for Stride and Gaia:"
+echo "\nICQ addresses for Stride and Gaia:"
+ICQ_ADDRESS_STRIDE="stride12vfkpj7lpqg0n4j68rr5kyffc6wu55dzrjw3fe"
 echo $ICQ_ADDRESS_STRIDE
+ICQ_ADDRESS_GAIA="cosmos12vfkpj7lpqg0n4j68rr5kyffc6wu55dzrjw3fe"
 echo $ICQ_ADDRESS_GAIA
 
-$STR1_EXEC tx bank send val1 $ICQ_ADDRESS_STRIDE 1000ustrd --chain-id $main_chain -y --keyring-backend=test
-$GAIA1_EXEC tx bank send gval1 $ICQ_ADDRESS_GAIA 1000uatom --chain-id $main_gaia_chain -y --keyring-backend=test
+$STR1_EXEC tx bank send val1 $ICQ_ADDRESS_STRIDE 500000ustrd --chain-id $main_chain -y --keyring-backend=test --home $STATE/STRIDE_1
+$GAIA1_EXEC tx bank send gval1 $ICQ_ADDRESS_GAIA 500000uatom --chain-id $main_gaia_chain -y --keyring-backend=test --home=/gaia/.gaiad
 
+echo "\nLaunch interchainquery relayer"
 docker-compose up --force-recreate -d icq
 
+echo "\n\n\nRun tests..."
 # IBC token transfer tests
 #############################################################################################################################
 source ${SCRIPT_DIR}/ibc_token_transfer.sh
