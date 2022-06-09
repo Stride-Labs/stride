@@ -33,9 +33,7 @@ func (k Keeper) RegisterHostZone(goCtx context.Context, msg *types.MsgRegisterHo
 		ConnectionId: msg.ConnectionId,
 		LocalDenom:   msg.LocalDenom,
 		BaseDenom:    msg.BaseDenom,
-		// DelegationAccount: &types.ICAAccount{Address: delegateAccount},
-		// FeeAccount:        &types.ICAAccount{Address: feeAccount},
-		// WithdrawalAccount: &types.ICAAccount{Address: withdrawalAccount},
+		ChannelId:    msg.ChannelId,
 	}
 	// write the zone back to the store
 	k.SetHostZone(ctx, zone)

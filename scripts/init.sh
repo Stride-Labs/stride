@@ -102,16 +102,13 @@ sh ${SCRIPT_DIR}/init_gaia.sh
 
 # Spin up docker containers
 #############################################################################################################################
-
-sleep 5
 docker-compose down
 docker-compose up -d stride1 stride2 stride3 gaia1 gaia2 gaia3
-echo "Chains created"
-sleep 10
+echo "Chains creating..."
+CSLEEP 10
 echo "Restoring keys"
 docker-compose run hermes hermes -c /tmp/hermes.toml keys restore --mnemonic "$RLY_MNEMONIC_1" $main_chain
 docker-compose run hermes hermes -c /tmp/hermes.toml keys restore --mnemonic "$RLY_MNEMONIC_2" $main_gaia_chain
-sleep 10
 
 echo "creating hermes identifiers"
 docker-compose run hermes hermes -c /tmp/hermes.toml tx raw create-client $main_chain $main_gaia_chain > /dev/null
@@ -126,14 +123,17 @@ docker-compose run -T hermes hermes -c /tmp/hermes.toml create channel --port-a 
 
 echo "Starting hermes relayer"
 docker-compose up --force-recreate -d hermes
+echo "Waiting for hermes to be ready..."
 
 # Register host zone
 # ICA staking test
 # first register host zone for ATOM chain
-IBCATOM='ibc/C4CFF46FD6DE35CA4CF4CE031E643C8FDC9BA4B99AE598E9B0ED98FE3A2319F9'
-docker-compose --ansi never exec -T $main_node strided tx stakeibc register-host-zone connection-0 uatom statom --chain-id $main_chain --home /stride/.strided --keyring-backend test --from val1 --gas 500000 -y
+CSLEEP 60
+docker-compose --ansi never exec -T $main_node strided tx stakeibc register-host-zone connection-0 uatom statom channel-0 --chain-id $main_chain --home /stride/.strided --keyring-backend test --from val1 --gas 500000 -y
+echo "Waiting for hermes to be ready..."
+CSLEEP 75
+
 #############################################################################################################################
 # source ${SCRIPT_DIR}/ica_stake.sh
-exit
-sleep 10
+
 sh ${SCRIPT_DIR}/tests/run_all_tests.sh
