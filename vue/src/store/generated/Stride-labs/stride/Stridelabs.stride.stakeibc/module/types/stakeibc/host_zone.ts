@@ -9,6 +9,7 @@ export const protobufPackage = "Stridelabs.stride.stakeibc";
 export interface HostZone {
   chainId: string;
   connectionId: string;
+  channelId: string;
   validators: Validator[];
   blacklistedValidators: Validator[];
   withdrawalAccount: ICAAccount | undefined;
@@ -21,6 +22,7 @@ export interface HostZone {
 const baseHostZone: object = {
   chainId: "",
   connectionId: "",
+  channelId: "",
   LocalDenom: "",
   BaseDenom: "",
 };
@@ -32,6 +34,9 @@ export const HostZone = {
     }
     if (message.connectionId !== "") {
       writer.uint32(18).string(message.connectionId);
+    }
+    if (message.channelId !== "") {
+      writer.uint32(82).string(message.channelId);
     }
     for (const v of message.validators) {
       Validator.encode(v!, writer.uint32(26).fork()).ldelim();
@@ -77,6 +82,9 @@ export const HostZone = {
           break;
         case 2:
           message.connectionId = reader.string();
+          break;
+        case 10:
+          message.channelId = reader.string();
           break;
         case 3:
           message.validators.push(Validator.decode(reader, reader.uint32()));
@@ -128,6 +136,11 @@ export const HostZone = {
       message.connectionId = String(object.connectionId);
     } else {
       message.connectionId = "";
+    }
+    if (object.channelId !== undefined && object.channelId !== null) {
+      message.channelId = String(object.channelId);
+    } else {
+      message.channelId = "";
     }
     if (object.validators !== undefined && object.validators !== null) {
       for (const e of object.validators) {
@@ -181,6 +194,7 @@ export const HostZone = {
     message.chainId !== undefined && (obj.chainId = message.chainId);
     message.connectionId !== undefined &&
       (obj.connectionId = message.connectionId);
+    message.channelId !== undefined && (obj.channelId = message.channelId);
     if (message.validators) {
       obj.validators = message.validators.map((e) =>
         e ? Validator.toJSON(e) : undefined
@@ -225,6 +239,11 @@ export const HostZone = {
       message.connectionId = object.connectionId;
     } else {
       message.connectionId = "";
+    }
+    if (object.channelId !== undefined && object.channelId !== null) {
+      message.channelId = object.channelId;
+    } else {
+      message.channelId = "";
     }
     if (object.validators !== undefined && object.validators !== null) {
       for (const e of object.validators) {

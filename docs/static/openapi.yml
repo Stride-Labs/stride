@@ -29702,6 +29702,8 @@ paths:
                       type: string
                     connectionId:
                       type: string
+                    channelId:
+                      type: string
                     validators:
                       type: array
                       items:
@@ -30166,6 +30168,8 @@ paths:
                   chainId:
                     type: string
                   connectionId:
+                    type: string
+                  channelId:
                     type: string
                   validators:
                     type: array
@@ -51984,6 +51988,8 @@ definitions:
         type: string
       connectionId:
         type: string
+      channelId:
+        type: string
       validators:
         type: array
         items:
@@ -52339,6 +52345,8 @@ definitions:
               type: string
             connectionId:
               type: string
+            channelId:
+              type: string
             validators:
               type: array
               items:
@@ -52603,6 +52611,8 @@ definitions:
           chainId:
             type: string
           connectionId:
+            type: string
+          channelId:
             type: string
           validators:
             type: array

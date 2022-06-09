@@ -161,6 +161,7 @@ export interface StakeibcDepositRecord {
 export interface StakeibcHostZone {
   chainId?: string;
   connectionId?: string;
+  channelId?: string;
   validators?: StakeibcValidator[];
   blacklistedValidators?: StakeibcValidator[];
   withdrawalAccount?: StakeibcICAAccount;
