@@ -1,0 +1,20 @@
+syntax = "proto3";
+package Stridelabs.stride.stakeibc;
+
+import "stakeibc/validator.proto";
+import "stakeibc/ica_account.proto";
+
+option go_package = "github.com/Stride-Labs/stride/x/stakeibc/types";
+
+// next id: 10
+message HostZone {
+  string chainId = 1;
+  string connectionId = 2;
+  repeated Validator validators = 3;
+  repeated Validator blacklistedValidators = 4;
+  ICAAccount withdrawalAccount = 5;
+  ICAAccount feeAccount = 6; 
+  ICAAccount delegationAccount = 7;
+  string LocalDenom = 8;
+  string BaseDenom = 9;
+}
