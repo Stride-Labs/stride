@@ -49,7 +49,7 @@ func (DepositRecord_Purpose) EnumDescriptor() ([]byte, []int) {
 
 type DepositRecord struct {
 	Id uint64 `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
-	// TODO do we care that amount is int32? should we change this to uint64?
+	// TODO TEST-70 do we care that amount is int32? should we change this to uint64?
 	Amount     int32                 `protobuf:"varint,2,opt,name=amount,proto3" json:"amount,omitempty"`
 	Denom      string                `protobuf:"bytes,3,opt,name=denom,proto3" json:"denom,omitempty"`
 	HostZoneId string                `protobuf:"bytes,4,opt,name=hostZoneId,proto3" json:"hostZoneId,omitempty"`
