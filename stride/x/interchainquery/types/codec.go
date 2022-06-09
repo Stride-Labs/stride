@@ -21,9 +21,7 @@ func RegisterInterfaces(registry types.InterfaceRegistry) {
 	registry.RegisterImplementations((*sdk.Msg)(nil),
 		&MsgSubmitQueryResponse{},
 	)
-	registry.RegisterImplementations((*sdk.Msg)(nil),
-		&MsgSubmitTx{},
-	)
+
 	registry.RegisterImplementations((*sdk.Msg)(nil),
 		&MsgQueryBalance{},
 	)
