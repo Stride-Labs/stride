@@ -424,10 +424,12 @@ func NewStrideApp(
 		app.GetSubspace(stakeibcmoduletypes.ModuleName),
 		// app.IBCKeeper.ChannelKeeper,
 		// &app.IBCKeeper.PortKeeper,
+		app.AccountKeeper,
 		app.BankKeeper,
 		app.ICAControllerKeeper,
 		*app.IBCKeeper,
 		scopedStakeibcKeeper,
+		app.TransferKeeper,
 	)
 	stakeibcModule := stakeibcmodule.NewAppModule(appCodec, app.StakeibcKeeper, app.AccountKeeper, app.BankKeeper)
 	stakeibcIBCModule := stakeibcmodule.NewIBCModule(app.StakeibcKeeper)
@@ -671,6 +673,11 @@ func (app *StrideApp) GetBaseApp() *baseapp.BaseApp { return app.BaseApp }
 // GetStakingKeeper implements the TestingApp interface.
 func (app *StrideApp) GetStakingKeeper() stakingkeeper.Keeper {
 	return app.StakingKeeper
+}
+
+// GetIBCKeeper implements the TestingApp interface.
+func (app *StrideApp) GetTransferKeeper() *ibctransferkeeper.Keeper {
+	return &app.TransferKeeper
 }
 
 // GetIBCKeeper implements the TestingApp interface.

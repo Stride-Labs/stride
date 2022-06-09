@@ -12,4 +12,5 @@ var (
 	ErrInvalidPacketTimeout = sdkerrors.Register(ModuleName, 1500, "invalid packet timeout")
 	ErrInvalidVersion       = sdkerrors.Register(ModuleName, 1501, "invalid version")
 	ErrInvalidToken         = sdkerrors.Register(ModuleName, 1502, "invalid token denom (denom is not IBC token)")
+	ErrInvalidHostZone      = sdkerrors.Register(ModuleName, 1503, "host zone not registered")
 )

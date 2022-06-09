@@ -4,7 +4,6 @@
 package types
 
 import (
-	encoding_binary "encoding/binary"
 	fmt "fmt"
 	_ "github.com/gogo/protobuf/gogoproto"
 	proto "github.com/gogo/protobuf/proto"
@@ -26,15 +25,17 @@ const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
 // Params defines the parameters for the module.
 type Params struct {
-	// define epoch lengths, in blocks
-	SweepingRewardsInterval  uint64  `protobuf:"varint,1,opt,name=sweeping_rewards_interval,json=sweepingRewardsInterval,proto3" json:"sweeping_rewards_interval,omitempty"`
-	InvestDepositsInterval   uint64  `protobuf:"varint,2,opt,name=invest_deposits_interval,json=investDepositsInterval,proto3" json:"invest_deposits_interval,omitempty"`
-	CalcExchangeRateInterval uint64  `protobuf:"varint,3,opt,name=calc_exchange_rate_interval,json=calcExchangeRateInterval,proto3" json:"calc_exchange_rate_interval,omitempty"`
-	StrideFee                float64 `protobuf:"fixed64,4,opt,name=stride_fee,json=strideFee,proto3" json:"stride_fee,omitempty"`
-	// fee_address_weights stores which addresses to
-	// send the Stride fee too, as well as what portion
+	// define epoch lengths, in stride_epochs
+	RewardsInterval      uint64 `protobuf:"varint,1,opt,name=rewards_interval,json=rewardsInterval,proto3" json:"rewards_interval,omitempty"`
+	DelegateInterval     uint64 `protobuf:"varint,6,opt,name=delegate_interval,json=delegateInterval,proto3" json:"delegate_interval,omitempty"`
+	DepositInterval      uint64 `protobuf:"varint,2,opt,name=deposit_interval,json=depositInterval,proto3" json:"deposit_interval,omitempty"`
+	ExchangeRateInterval uint64 `protobuf:"varint,3,opt,name=exchange_rate_interval,json=exchangeRateInterval,proto3" json:"exchange_rate_interval,omitempty"`
+	StrideCommission     uint64 `protobuf:"varint,4,opt,name=stride_commission,json=strideCommission,proto3" json:"stride_commission,omitempty"`
+	// zone_com_address stores which addresses to
+	// send the Stride commission too, as well as what portion
 	// of the fee each address is entitled to
-	ZoneFeeAddress map[string]string `protobuf:"bytes,5,rep,name=zone_fee_address,json=zoneFeeAddress,proto3" json:"zone_fee_address,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
+	// TODO implement this
+	ZoneComAddress map[string]string `protobuf:"bytes,5,rep,name=zone_com_address,json=zoneComAddress,proto3" json:"zone_com_address,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
 }
 
 func (m *Params) Reset()      { *m = Params{} }
@@ -69,75 +70,81 @@ func (m *Params) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_Params proto.InternalMessageInfo
 
-func (m *Params) GetSweepingRewardsInterval() uint64 {
+func (m *Params) GetRewardsInterval() uint64 {
 	if m != nil {
-		return m.SweepingRewardsInterval
+		return m.RewardsInterval
 	}
 	return 0
 }
 
-func (m *Params) GetInvestDepositsInterval() uint64 {
+func (m *Params) GetDelegateInterval() uint64 {
 	if m != nil {
-		return m.InvestDepositsInterval
+		return m.DelegateInterval
 	}
 	return 0
 }
 
-func (m *Params) GetCalcExchangeRateInterval() uint64 {
+func (m *Params) GetDepositInterval() uint64 {
 	if m != nil {
-		return m.CalcExchangeRateInterval
+		return m.DepositInterval
 	}
 	return 0
 }
 
-func (m *Params) GetStrideFee() float64 {
+func (m *Params) GetExchangeRateInterval() uint64 {
 	if m != nil {
-		return m.StrideFee
+		return m.ExchangeRateInterval
 	}
 	return 0
 }
 
-func (m *Params) GetZoneFeeAddress() map[string]string {
+func (m *Params) GetStrideCommission() uint64 {
 	if m != nil {
-		return m.ZoneFeeAddress
+		return m.StrideCommission
+	}
+	return 0
+}
+
+func (m *Params) GetZoneComAddress() map[string]string {
+	if m != nil {
+		return m.ZoneComAddress
 	}
 	return nil
 }
 
 func init() {
 	proto.RegisterType((*Params)(nil), "Stridelabs.stride.stakeibc.Params")
-	proto.RegisterMapType((map[string]string)(nil), "Stridelabs.stride.stakeibc.Params.ZoneFeeAddressEntry")
+	proto.RegisterMapType((map[string]string)(nil), "Stridelabs.stride.stakeibc.Params.ZoneComAddressEntry")
 }
 
 func init() { proto.RegisterFile("stakeibc/params.proto", fileDescriptor_41f5fe1d2f7ac763) }
 
 var fileDescriptor_41f5fe1d2f7ac763 = []byte{
-	// 387 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x74, 0x91, 0x4f, 0x8b, 0x13, 0x31,
-	0x18, 0xc6, 0x27, 0x3b, 0xdd, 0x85, 0x46, 0x90, 0x65, 0x5c, 0x75, 0x1c, 0x71, 0x2c, 0x9e, 0x7a,
-	0x31, 0x03, 0x0a, 0xb2, 0x14, 0x3c, 0xac, 0xb8, 0xa2, 0xe0, 0x41, 0xc6, 0x5b, 0x2f, 0x31, 0x93,
-	0x79, 0x9d, 0x86, 0x4e, 0x93, 0x21, 0x49, 0xff, 0x7e, 0x01, 0xaf, 0x1e, 0x3d, 0xfa, 0x71, 0x3c,
-	0xf6, 0xe8, 0x51, 0xda, 0x2f, 0x22, 0x93, 0xb4, 0xa3, 0x82, 0x7b, 0x7b, 0x93, 0xe7, 0xf9, 0x3d,
-	0xbc, 0x3c, 0x2f, 0xbe, 0x6b, 0x2c, 0x9b, 0x82, 0x28, 0x78, 0xd6, 0x30, 0xcd, 0x66, 0x86, 0x34,
-	0x5a, 0x59, 0x15, 0x25, 0x1f, 0xad, 0x16, 0x25, 0xd4, 0xac, 0x30, 0xc4, 0xb8, 0x91, 0x1c, 0x8d,
-	0xc9, 0x45, 0xa5, 0x2a, 0xe5, 0x6c, 0x59, 0x3b, 0x79, 0x22, 0x49, 0xba, 0x20, 0xc1, 0x19, 0x65,
-	0x9c, 0xab, 0xb9, 0xb4, 0x5e, 0x7b, 0xf2, 0x25, 0xc4, 0x67, 0x1f, 0x5c, 0x7c, 0x34, 0xc2, 0x0f,
-	0xcc, 0x12, 0xa0, 0x11, 0xb2, 0xa2, 0x1a, 0x96, 0x4c, 0x97, 0x86, 0x0a, 0x69, 0x41, 0x2f, 0x58,
-	0x1d, 0xa3, 0x01, 0x1a, 0xf6, 0xf2, 0xfb, 0x47, 0x43, 0xee, 0xf5, 0x77, 0x07, 0x39, 0xba, 0xc4,
-	0xb1, 0x90, 0x0b, 0x30, 0x96, 0x96, 0xd0, 0x28, 0x23, 0xec, 0x5f, 0xe8, 0x89, 0x43, 0xef, 0x79,
-	0xfd, 0xf5, 0x41, 0xee, 0xc8, 0x97, 0xf8, 0x21, 0x67, 0x35, 0xa7, 0xb0, 0xe2, 0x13, 0x26, 0x2b,
-	0xa0, 0x9a, 0x59, 0xf8, 0x03, 0x87, 0x0e, 0x8e, 0x5b, 0xcb, 0xf5, 0xc1, 0x91, 0x33, 0x0b, 0x1d,
-	0xfe, 0x08, 0x63, 0x5f, 0x02, 0xfd, 0x0c, 0x10, 0xf7, 0x06, 0x68, 0x88, 0xf2, 0xbe, 0xff, 0x79,
-	0x03, 0x10, 0x7d, 0xc2, 0xe7, 0x1b, 0x25, 0x9d, 0x48, 0x59, 0x59, 0x6a, 0x30, 0x26, 0x3e, 0x1d,
-	0x84, 0xc3, 0x5b, 0xcf, 0x5e, 0x90, 0x9b, 0x7b, 0x24, 0xbe, 0x11, 0x32, 0x56, 0xb2, 0x4d, 0xb9,
-	0xf2, 0xe0, 0xb5, 0xb4, 0x7a, 0x9d, 0xdf, 0xde, 0xfc, 0xf3, 0x99, 0x5c, 0xe1, 0x3b, 0xff, 0xb1,
-	0x45, 0xe7, 0x38, 0x9c, 0xc2, 0xda, 0xd5, 0xd6, 0xcf, 0xdb, 0x31, 0xba, 0xc0, 0xa7, 0x0b, 0x56,
-	0xcf, 0xc1, 0xf5, 0xd1, 0xcf, 0xfd, 0x63, 0x74, 0x72, 0x89, 0x46, 0xbd, 0x6f, 0xdf, 0x1f, 0x07,
-	0xaf, 0xde, 0xfe, 0xd8, 0xa5, 0x68, 0xbb, 0x4b, 0xd1, 0xaf, 0x5d, 0x8a, 0xbe, 0xee, 0xd3, 0x60,
-	0xbb, 0x4f, 0x83, 0x9f, 0xfb, 0x34, 0x18, 0x93, 0x4a, 0xd8, 0xc9, 0xbc, 0x20, 0x5c, 0xcd, 0x32,
-	0xbf, 0xf4, 0xd3, 0xf7, 0xac, 0x30, 0x99, 0xdf, 0x3a, 0x5b, 0x65, 0xdd, 0x7d, 0xed, 0xba, 0x01,
-	0x53, 0x9c, 0xb9, 0xd3, 0x3e, 0xff, 0x1d, 0x00, 0x00, 0xff, 0xff, 0x46, 0xf0, 0x78, 0x62, 0x41,
-	0x02, 0x00, 0x00,
+	// 379 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x74, 0x91, 0xc1, 0x4e, 0xea, 0x40,
+	0x18, 0x85, 0x5b, 0x0a, 0x24, 0xcc, 0x4d, 0xee, 0x2d, 0xbd, 0xdc, 0x1b, 0xd2, 0x45, 0x25, 0xae,
+	0x20, 0xc4, 0x69, 0xa2, 0xc6, 0x18, 0x76, 0x68, 0x4c, 0x34, 0x71, 0x61, 0xea, 0x8e, 0x4d, 0x9d,
+	0xb6, 0x93, 0x32, 0xa1, 0xed, 0x34, 0x33, 0x03, 0x02, 0x4f, 0xe1, 0x52, 0x77, 0x3e, 0x8e, 0x4b,
+	0x96, 0x2e, 0x0d, 0xbc, 0x88, 0x61, 0x06, 0x8a, 0x24, 0xba, 0xfb, 0x7b, 0xce, 0xf7, 0x9f, 0xfe,
+	0x39, 0x03, 0xfe, 0x71, 0x81, 0x46, 0x98, 0x04, 0xa1, 0x9b, 0x23, 0x86, 0x52, 0x0e, 0x73, 0x46,
+	0x05, 0xb5, 0xec, 0x7b, 0xc1, 0x48, 0x84, 0x13, 0x14, 0x70, 0xc8, 0xe5, 0x08, 0xb7, 0xa0, 0xdd,
+	0x88, 0x69, 0x4c, 0x25, 0xe6, 0xae, 0x27, 0xb5, 0x61, 0xdb, 0x45, 0x10, 0x09, 0x91, 0x8f, 0xc2,
+	0x90, 0x8e, 0x33, 0xa1, 0xbc, 0xc3, 0x17, 0x03, 0x54, 0xef, 0x64, 0xbc, 0xd5, 0x01, 0x26, 0xc3,
+	0x8f, 0x88, 0x45, 0xdc, 0x27, 0x99, 0xc0, 0x6c, 0x82, 0x92, 0xa6, 0xde, 0xd2, 0xdb, 0x65, 0xef,
+	0xcf, 0x46, 0xbf, 0xd9, 0xc8, 0x56, 0x17, 0xd4, 0x23, 0x9c, 0xe0, 0x18, 0x09, 0xbc, 0x63, 0xab,
+	0x92, 0x35, 0xb7, 0x46, 0x01, 0x77, 0x80, 0x19, 0xe1, 0x9c, 0x72, 0x22, 0x76, 0x6c, 0x49, 0xe5,
+	0x6e, 0xf4, 0x02, 0x3d, 0x05, 0xff, 0xf1, 0x34, 0x1c, 0xa2, 0x2c, 0xc6, 0x3e, 0xdb, 0x0b, 0x37,
+	0xe4, 0x42, 0x63, 0xeb, 0x7a, 0x5f, 0x7f, 0xd0, 0x05, 0x75, 0x55, 0x84, 0x1f, 0xd2, 0x34, 0x25,
+	0x9c, 0x13, 0x9a, 0x35, 0xcb, 0xea, 0x1a, 0x65, 0x5c, 0x16, 0xba, 0xf5, 0x00, 0xcc, 0x39, 0xcd,
+	0x24, 0xea, 0xa3, 0x28, 0x62, 0x98, 0xf3, 0x66, 0xa5, 0x65, 0xb4, 0x7f, 0x1d, 0x9f, 0xc1, 0x9f,
+	0x9b, 0x85, 0xaa, 0x23, 0x38, 0xa0, 0xd9, 0x3a, 0xac, 0xaf, 0x16, 0xaf, 0x32, 0xc1, 0x66, 0xde,
+	0xef, 0xf9, 0x9e, 0x68, 0xf7, 0xc1, 0xdf, 0x6f, 0x30, 0xcb, 0x04, 0xc6, 0x08, 0xcf, 0x64, 0xa3,
+	0x35, 0x6f, 0x3d, 0x5a, 0x0d, 0x50, 0x99, 0xa0, 0x64, 0x8c, 0x65, 0x1b, 0x35, 0x4f, 0x7d, 0xf4,
+	0x4a, 0xe7, 0x7a, 0xaf, 0xfc, 0xfc, 0x7a, 0xa0, 0x5d, 0x5c, 0xbf, 0x2d, 0x1d, 0x7d, 0xb1, 0x74,
+	0xf4, 0x8f, 0xa5, 0xa3, 0x3f, 0xad, 0x1c, 0x6d, 0xb1, 0x72, 0xb4, 0xf7, 0x95, 0xa3, 0x0d, 0x60,
+	0x4c, 0xc4, 0x70, 0x1c, 0xc0, 0x90, 0xa6, 0xae, 0x3a, 0xfa, 0xe8, 0x16, 0x05, 0xdc, 0x55, 0x57,
+	0xbb, 0x53, 0xb7, 0x78, 0x71, 0x31, 0xcb, 0x31, 0x0f, 0xaa, 0xf2, 0xb1, 0x4f, 0x3e, 0x03, 0x00,
+	0x00, 0xff, 0xff, 0x0e, 0xf4, 0x68, 0x36, 0x53, 0x02, 0x00, 0x00,
 }
 
 func (m *Params) Marshal() (dAtA []byte, err error) {
@@ -160,9 +167,14 @@ func (m *Params) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	_ = i
 	var l int
 	_ = l
-	if len(m.ZoneFeeAddress) > 0 {
-		for k := range m.ZoneFeeAddress {
-			v := m.ZoneFeeAddress[k]
+	if m.DelegateInterval != 0 {
+		i = encodeVarintParams(dAtA, i, uint64(m.DelegateInterval))
+		i--
+		dAtA[i] = 0x30
+	}
+	if len(m.ZoneComAddress) > 0 {
+		for k := range m.ZoneComAddress {
+			v := m.ZoneComAddress[k]
 			baseI := i
 			i -= len(v)
 			copy(dAtA[i:], v)
@@ -179,24 +191,23 @@ func (m *Params) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 			dAtA[i] = 0x2a
 		}
 	}
-	if m.StrideFee != 0 {
-		i -= 8
-		encoding_binary.LittleEndian.PutUint64(dAtA[i:], uint64(math.Float64bits(float64(m.StrideFee))))
+	if m.StrideCommission != 0 {
+		i = encodeVarintParams(dAtA, i, uint64(m.StrideCommission))
 		i--
-		dAtA[i] = 0x21
+		dAtA[i] = 0x20
 	}
-	if m.CalcExchangeRateInterval != 0 {
-		i = encodeVarintParams(dAtA, i, uint64(m.CalcExchangeRateInterval))
+	if m.ExchangeRateInterval != 0 {
+		i = encodeVarintParams(dAtA, i, uint64(m.ExchangeRateInterval))
 		i--
 		dAtA[i] = 0x18
 	}
-	if m.InvestDepositsInterval != 0 {
-		i = encodeVarintParams(dAtA, i, uint64(m.InvestDepositsInterval))
+	if m.DepositInterval != 0 {
+		i = encodeVarintParams(dAtA, i, uint64(m.DepositInterval))
 		i--
 		dAtA[i] = 0x10
 	}
-	if m.SweepingRewardsInterval != 0 {
-		i = encodeVarintParams(dAtA, i, uint64(m.SweepingRewardsInterval))
+	if m.RewardsInterval != 0 {
+		i = encodeVarintParams(dAtA, i, uint64(m.RewardsInterval))
 		i--
 		dAtA[i] = 0x8
 	}
@@ -220,25 +231,28 @@ func (m *Params) Size() (n int) {
 	}
 	var l int
 	_ = l
-	if m.SweepingRewardsInterval != 0 {
-		n += 1 + sovParams(uint64(m.SweepingRewardsInterval))
+	if m.RewardsInterval != 0 {
+		n += 1 + sovParams(uint64(m.RewardsInterval))
 	}
-	if m.InvestDepositsInterval != 0 {
-		n += 1 + sovParams(uint64(m.InvestDepositsInterval))
+	if m.DepositInterval != 0 {
+		n += 1 + sovParams(uint64(m.DepositInterval))
 	}
-	if m.CalcExchangeRateInterval != 0 {
-		n += 1 + sovParams(uint64(m.CalcExchangeRateInterval))
+	if m.ExchangeRateInterval != 0 {
+		n += 1 + sovParams(uint64(m.ExchangeRateInterval))
 	}
-	if m.StrideFee != 0 {
-		n += 9
+	if m.StrideCommission != 0 {
+		n += 1 + sovParams(uint64(m.StrideCommission))
 	}
-	if len(m.ZoneFeeAddress) > 0 {
-		for k, v := range m.ZoneFeeAddress {
+	if len(m.ZoneComAddress) > 0 {
+		for k, v := range m.ZoneComAddress {
 			_ = k
 			_ = v
 			mapEntrySize := 1 + len(k) + sovParams(uint64(len(k))) + 1 + len(v) + sovParams(uint64(len(v)))
 			n += mapEntrySize + 1 + sovParams(uint64(mapEntrySize))
 		}
+	}
+	if m.DelegateInterval != 0 {
+		n += 1 + sovParams(uint64(m.DelegateInterval))
 	}
 	return n
 }
@@ -280,9 +294,9 @@ func (m *Params) Unmarshal(dAtA []byte) error {
 		switch fieldNum {
 		case 1:
 			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field SweepingRewardsInterval", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field RewardsInterval", wireType)
 			}
-			m.SweepingRewardsInterval = 0
+			m.RewardsInterval = 0
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return ErrIntOverflowParams
@@ -292,16 +306,16 @@ func (m *Params) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				m.SweepingRewardsInterval |= uint64(b&0x7F) << shift
+				m.RewardsInterval |= uint64(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
 		case 2:
 			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field InvestDepositsInterval", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field DepositInterval", wireType)
 			}
-			m.InvestDepositsInterval = 0
+			m.DepositInterval = 0
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return ErrIntOverflowParams
@@ -311,16 +325,16 @@ func (m *Params) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				m.InvestDepositsInterval |= uint64(b&0x7F) << shift
+				m.DepositInterval |= uint64(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
 		case 3:
 			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field CalcExchangeRateInterval", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field ExchangeRateInterval", wireType)
 			}
-			m.CalcExchangeRateInterval = 0
+			m.ExchangeRateInterval = 0
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return ErrIntOverflowParams
@@ -330,25 +344,33 @@ func (m *Params) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				m.CalcExchangeRateInterval |= uint64(b&0x7F) << shift
+				m.ExchangeRateInterval |= uint64(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
 		case 4:
-			if wireType != 1 {
-				return fmt.Errorf("proto: wrong wireType = %d for field StrideFee", wireType)
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field StrideCommission", wireType)
 			}
-			var v uint64
-			if (iNdEx + 8) > l {
-				return io.ErrUnexpectedEOF
+			m.StrideCommission = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowParams
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.StrideCommission |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
 			}
-			v = uint64(encoding_binary.LittleEndian.Uint64(dAtA[iNdEx:]))
-			iNdEx += 8
-			m.StrideFee = float64(math.Float64frombits(v))
 		case 5:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field ZoneFeeAddress", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field ZoneComAddress", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -375,8 +397,8 @@ func (m *Params) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			if m.ZoneFeeAddress == nil {
-				m.ZoneFeeAddress = make(map[string]string)
+			if m.ZoneComAddress == nil {
+				m.ZoneComAddress = make(map[string]string)
 			}
 			var mapkey string
 			var mapvalue string
@@ -471,8 +493,27 @@ func (m *Params) Unmarshal(dAtA []byte) error {
 					iNdEx += skippy
 				}
 			}
-			m.ZoneFeeAddress[mapkey] = mapvalue
+			m.ZoneComAddress[mapkey] = mapvalue
 			iNdEx = postIndex
+		case 6:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field DelegateInterval", wireType)
+			}
+			m.DelegateInterval = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowParams
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.DelegateInterval |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
 		default:
 			iNdEx = preIndex
 			skippy, err := skipParams(dAtA[iNdEx:])
