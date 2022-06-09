@@ -33,7 +33,7 @@ type GenesisState struct {
 	HostZoneCount      uint64          `protobuf:"varint,6,opt,name=hostZoneCount,proto3" json:"hostZoneCount,omitempty"`
 	DepositRecordList  []DepositRecord `protobuf:"bytes,7,rep,name=depositRecordList,proto3" json:"depositRecordList"`
 	DepositRecordCount uint64          `protobuf:"varint,8,opt,name=depositRecordCount,proto3" json:"depositRecordCount,omitempty"`
-	// stores a map from hostZoneDenom to hostZone
+	// stores a map from hostZone base denom to hostZone
 	DenomToHostZone map[string]string `protobuf:"bytes,9,rep,name=denomToHostZone,proto3" json:"denomToHostZone,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
 }
 
