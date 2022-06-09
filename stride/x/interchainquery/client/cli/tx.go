@@ -54,10 +54,6 @@ func QueryBalanceCmd() *cobra.Command {
 			if len(caller) < 1 {
 				return fmt.Errorf("Error: empty --from address.")
 			}
-			fmt.Println(caller)
-
-			// TODO(TEST-50) create message based on parsed json
-			// msg, err := types.NewMsgSubmitTx(txMsg, viper.GetString(FlagConnectionID), clientCtx.GetFromAddress().String())
 			msg := types.NewQueryBalance(chain_id, address, denom, viper.GetString(FlagConnectionID), caller)
 			if err := msg.ValidateBasic(); err != nil {
 				return err
@@ -76,12 +72,6 @@ func QueryBalanceCmd() *cobra.Command {
 
 func SubmitQueryResponse() *cobra.Command {
 	cmd := &cobra.Command{
-		// "@type": "/stride.interchainquery.MsgSubmitQueryResponse",
-		// "chain_id": "GAIA_1",
-		// "query_id": "8e3451aea1ca8438f4ba9292a3add814d50d45d163ff28f859836cbb074584c0",
-		// "result": "ChUKBXVhdG9tEgw0OTkwMDAwMDAwMDASAhAB",
-		// "height": "40",
-		// "from_address": "stride1wlgadk2gndm96tvf0v6207jckqu8e2huyfhsp5"
 		Use:   "submitqueryresponse [chain_id] [query_id] [result] [height] [from_address]",
 		Short: `Submit Query Response.`,
 		Long: `
@@ -108,9 +98,7 @@ func SubmitQueryResponse() *cobra.Command {
 			fmt.Println(caller)
 
 			// TODO(TEST-50) create message based on parsed json
-			// msg, err := types.NewMsgSubmitTx(txMsg, viper.GetString(FlagConnectionID), clientCtx.GetFromAddress().String())
 			msg := types.NewMsgSubmitQueryResponse(chain_id, result, from_addr_sdk)
-			//  viper.GetString(FlagConnectionID), caller)
 			if err := msg.ValidateBasic(); err != nil {
 				return err
 			}
