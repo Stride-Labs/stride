@@ -12,8 +12,9 @@ const DefaultIndex uint64 = 1
 // DefaultGenesis returns the default Capability genesis state
 func DefaultGenesis() *GenesisState {
 	return &GenesisState{
-		ICAAccount:   nil,
-		HostZoneList: []HostZone{},
+		ICAAccount:        nil,
+		HostZoneList:      []HostZone{},
+		DepositRecordList: []DepositRecord{},
 		// this line is used by starport scaffolding # genesis/types/default
 		Params: DefaultParams(),
 		PortId: PortID,
@@ -26,17 +27,17 @@ func (gs GenesisState) Validate() error {
 	if err := host.PortIdentifierValidator(gs.PortId); err != nil {
 		return err
 	}
-	// Check for duplicated ID in hostZone
-	hostZoneIdMap := make(map[uint64]bool)
-	hostZoneCount := gs.GetHostZoneCount()
-	for _, elem := range gs.HostZoneList {
-		if _, ok := hostZoneIdMap[elem.Id]; ok {
-			return fmt.Errorf("duplicated id for hostZone")
+	// Check for duplicated ID in depositRecord
+	depositRecordIdMap := make(map[uint64]bool)
+	depositRecordCount := gs.GetDepositRecordCount()
+	for _, elem := range gs.DepositRecordList {
+		if _, ok := depositRecordIdMap[elem.Id]; ok {
+			return fmt.Errorf("duplicated id for depositRecord")
 		}
-		if elem.Id >= hostZoneCount {
-			return fmt.Errorf("hostZone id should be lower or equal than the last id")
+		if elem.Id >= depositRecordCount {
+			return fmt.Errorf("depositRecord id should be lower or equal than the last id")
 		}
-		hostZoneIdMap[elem.Id] = true
+		depositRecordIdMap[elem.Id] = true
 	}
 	// this line is used by starport scaffolding # genesis/types/validate
 

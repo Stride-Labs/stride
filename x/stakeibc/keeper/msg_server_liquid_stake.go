@@ -44,12 +44,21 @@ func (k msgServer) LiquidStake(goCtx context.Context, msg *types.MsgLiquidStake)
 	// deposit `amount` of `denom` token to the stakeibc module
 	// NOTE: Should we add an additional check here? This is a pretty important line of code
 	// NOTE: If sender doesn't have enough coins, this panics (error is hard to interpret)
+	// check that hostZone is registered
+	hostZone, hostZoneFound := k.GetHostZoneFromDenom(ctx, msg.Denom)
+	if !hostZoneFound {
+		k.Logger(ctx).Info("Host Zone not found for denom (%s)", msg.Denom)
+		return nil, sdkerrors.Wrapf(types.ErrInvalidHostZone, "Host Zone not found for denom (%s)", msg.Denom)
+	}
 	sdkerror := k.bankKeeper.SendCoinsFromAccountToModule(ctx, sender, types.ModuleName, coins)
 	if sdkerror != nil {
 		k.Logger(ctx).Error("failed to send tokens from Account to Module")
 		panic(sdkerror)
 	}
-
+	// create a deposit record of these tokens
+	depositRecord := types.NewDepositRecord(msg.Amount, msg.Denom, hostZone.ChainId,
+		sender.String(), types.DepositRecord_RECEIPT)
+	k.AppendDepositRecord(ctx, *depositRecord)
 	// mint user `amount` of the corresponding stAsset
 	// NOTE: We should ensure that denoms are unique - we don't want anyone spoofing denoms
 	err = k.MintStAsset(ctx, sender, msg.Amount, msg.Denom)
