@@ -3,27 +3,32 @@ package keeper
 import (
 	"fmt"
 
+	"github.com/Stride-Labs/stride/x/interchainquery/types"
+	stakeibckeeper "github.com/Stride-Labs/stride/x/stakeibc/keeper"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	"github.com/tendermint/tendermint/libs/log"
-
-	"github.com/Stride-Labs/stride/x/interchainquery/types"
 )
 
 // Keeper of this module maintains collections of registered zones.
 type Keeper struct {
-	cdc       codec.Codec
-	storeKey  sdk.StoreKey
-	callbacks map[string]types.QueryCallbacks
+	cdc            codec.Codec
+	storeKey       sdk.StoreKey
+	BankKeeper     bankkeeper.Keeper
+	StakeibcKeeper stakeibckeeper.Keeper
+	callbacks      map[string]types.QueryCallbacks
 }
 
 // NewKeeper returns a new instance of zones Keeper
-func NewKeeper(cdc codec.Codec, storeKey sdk.StoreKey) Keeper {
+func NewKeeper(cdc codec.Codec, storeKey sdk.StoreKey, bankKeeper bankkeeper.Keeper, stakeibcKeeper stakeibckeeper.Keeper) Keeper {
 	return Keeper{
-		cdc:       cdc,
-		storeKey:  storeKey,
-		callbacks: make(map[string]types.QueryCallbacks),
+		cdc:            cdc,
+		storeKey:       storeKey,
+		BankKeeper:     bankKeeper,
+		StakeibcKeeper: stakeibcKeeper,
+		callbacks:      make(map[string]types.QueryCallbacks),
 	}
 }
 

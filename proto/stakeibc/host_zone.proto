@@ -4,9 +4,13 @@ package Stridelabs.stride.stakeibc;
 import "stakeibc/validator.proto";
 import "stakeibc/ica_account.proto";
 
+import "gogoproto/gogo.proto";
+import "cosmos_proto/cosmos.proto";
+import "cosmos/base/v1beta1/coin.proto";
+
 option go_package = "github.com/Stride-Labs/stride/x/stakeibc/types";
 
-// next id: 10
+// next id: 12
 message HostZone {
   string chainId = 1;
   string connectionId = 2;
@@ -17,4 +21,16 @@ message HostZone {
   ICAAccount delegationAccount = 7;
   string LocalDenom = 8;
   string BaseDenom = 9;
+  // TODO(TEST-68): Should we make this an array and store the last n redemption rates
+  // then calculate a TWARR?
+  string LastRedemptionRate = 10 [
+    (cosmos_proto.scalar) = "cosmos.Dec",
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+  string RedemptionRate = 11 [
+    (cosmos_proto.scalar) = "cosmos.Dec",
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
 }

@@ -3,8 +3,10 @@ package keeper
 import (
 	"context"
 	"encoding/hex"
+	"fmt"
 
 	"github.com/Stride-Labs/stride/x/interchainquery/types"
+	stakeibctypes "github.com/Stride-Labs/stride/x/stakeibc/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 )
@@ -135,6 +137,7 @@ func (k msgServer) QueryBalance(goCtx context.Context, msg *types.MsgQueryBalanc
 			return err
 		}
 
+		// TODO get denom dynamically
 		delegatorSum := sdk.NewCoin("uatom", sdk.ZeroInt())
 		for _, delegation := range response.DelegationResponses {
 			delegatorSum = delegatorSum.Add(delegation.Balance)
@@ -143,10 +146,38 @@ func (k msgServer) QueryBalance(goCtx context.Context, msg *types.MsgQueryBalanc
 			}
 		}
 
+		// Set Redemption Rate Based On Delegation Balance vs stAsset Supply
+		// TODO change local denom
+		// get denom with `strided q stakeibc list-host-zone`, currently `stibc/C4CFF46FD6DE35CA4CF4CE031E643C8FDC9BA4B99AE598E9B0ED98FE3A2319F9`
+		stDenom := "stibc/C4CFF46FD6DE35CA4CF4CE031E643C8FDC9BA4B99AE598E9B0ED98FE3A2319F9"
+		stAssetSupply := k.BankKeeper.GetSupply(ctx, stDenom)
+		redemptionRate := delegatorSum.Amount.ToDec().Quo(stAssetSupply.Amount.ToDec())
+
+		// get zone
+		hz, found := k.StakeibcKeeper.GetHostZone(ctx, ChainId)
+		if found {
+			fmt.Errorf("invalid chain id, zone for \"%s\" already registered", ChainId)
+		}
+
+		// set the zone
+		zone := stakeibctypes.HostZone{
+			ChainId:      ChainId,
+			ConnectionId: msg.ConnectionId,
+			LocalDenom:   hz.LocalDenom,
+			BaseDenom:    hz.BaseDenom,
+			// Start exchange rate at 1 upon registration
+			RedemptionRate:     redemptionRate,
+			LastRedemptionRate: hz.RedemptionRate, // previous redemption rate
+		}
+		// write the zone back to the store
+		k.StakeibcKeeper.SetHostZone(ctx, zone)
+
 		ctx.EventManager().EmitEvents(sdk.Events{
 			sdk.NewEvent(
 				sdk.EventTypeMessage,
 				sdk.NewAttribute("totalDelegations", delegatorSum.String()),
+				sdk.NewAttribute("stAssetSupply", stAssetSupply.Amount.String()),
+				sdk.NewAttribute("redemptionRate", redemptionRate.String()),
 			),
 		})
 
