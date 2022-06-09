@@ -5,13 +5,14 @@ services:
     image: stridezone:stride
     hostname: stride
     volumes:
-      - ./scripts/state/STRIDE_1:/stride/.strided
+      - ./scripts/state/stride1:/stride/.strided
     # command:
     #   - /bin/sh
     # stdin_open: true # docker run -i
     # tty: true        # docker run -t
     ports:
-      - "26651:26657"
+      - "26655:26657"
+      - "26650:1317"
     build:
       context: .
       dockerfile: Dockerfile.stride
@@ -20,9 +21,10 @@ services:
     image: stridezone:stride
     hostname: stride
     volumes:
-      - ./scripts/state/STRIDE_2:/stride/.strided
+      - ./scripts/state/stride2:/stride/.strided
     ports:
-      - "26654:26657"
+      - "26656:26657"
+      - "26651:1317"
     build:
       context: .
       dockerfile: Dockerfile.stride
@@ -31,9 +33,10 @@ services:
     image: stridezone:stride
     hostname: stride
     volumes:
-      - ./scripts/state/STRIDE_3:/stride/.strided
+      - ./scripts/state/stride3:/stride/.strided
     ports:
       - "26657:26657"
+      - "1317:1317"
     build:
       context: .
       dockerfile: Dockerfile.stride
@@ -44,9 +47,10 @@ services:
     image: stridezone:gaia
     hostname: stride
     volumes:
-      - ./scripts/state/GAIA_1:/gaia/.gaiad
+      - ./scripts/state/gaia1:/gaia/.gaiad
     ports:
       - "26662:26657"
+      - "26661:1317"
     # command:
     #   - /bin/sh
     # stdin_open: true # docker run -i
@@ -59,7 +63,7 @@ services:
     image: stridezone:gaia
     hostname: stride
     volumes:
-      - ./scripts/state/GAIA_2:/gaia/.gaiad
+      - ./scripts/state/gaia2:/gaia/.gaiad
     ports:
       - "26659:26657"
     build:
@@ -70,7 +74,7 @@ services:
     image: stridezone:gaia
     hostname: stride
     volumes:
-      - ./scripts/state/GAIA_3:/gaia/.gaiad
+      - ./scripts/state/gaia3:/gaia/.gaiad
     ports:
       - "26660:26657"
     build:

@@ -50,6 +50,25 @@ func (k Keeper) GetHostZone(ctx sdk.Context, chain_id string) (val types.HostZon
 	return val, true
 }
 
+// GetHostZoneFromDenom returns a hostZone from the relevant coin denom
+
+func (k Keeper) GetHostZoneFromDenom(ctx sdk.Context, denom string) (val types.HostZone, found bool) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.HostZoneKey))
+	iterator := sdk.KVStorePrefixIterator(store, []byte{})
+
+	defer iterator.Close()
+
+	for ; iterator.Valid(); iterator.Next() {
+		var val types.HostZone
+		k.cdc.MustUnmarshal(iterator.Value(), &val)
+		if val.BaseDenom == denom {
+			return val, true
+		}
+	}
+
+	return val, false
+}
+
 // RemoveHostZone removes a hostZone from the store
 func (k Keeper) RemoveHostZone(ctx sdk.Context, chain_id string) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.HostZoneKey))

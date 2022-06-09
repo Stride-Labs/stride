@@ -6,15 +6,15 @@ import "stakeibc/host_zone.proto";
 
 message DepositRecord {
   uint64 id = 1;
+	// TODO TEST-70 do we care that amount is int32? should we change this to uint64?
   int32 amount = 2; 
   string denom = 3; 
-  uint64 hostZoneId = 4; 
+  string hostZoneId = 4; 
   string sender = 5; 
   enum Purpose {
     RECEIPT = 0;
     TRANSACTION = 1;
-    
   }
-  int32 purpose = 6; 
+  Purpose purpose = 6; 
   
 }
