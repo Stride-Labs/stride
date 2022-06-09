@@ -6,7 +6,7 @@ import (
 
 	"github.com/Stride-Labs/stride/x/interchainquery/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 )
 
 type msgServer struct {
@@ -120,19 +120,33 @@ func (k msgServer) QueryBalance(goCtx context.Context, msg *types.MsgQueryBalanc
 
 		// address := query.QueryParameters["address"]
 
-		queryResult := args
-		queryRes := banktypes.QueryAllBalancesResponse{}
-		err := k.cdc.Unmarshal(queryResult, &queryRes)
+		// queryResult := args
+		// queryRes := banktypes.QueryAllBalancesResponse{}
+		// err := k.cdc.Unmarshal(queryResult, &queryRes)
+		// if err != nil {
+		// 	k.Logger(ctx).Error("Unable to unmarshal balances info for zone", "err", err)
+		// 	return err
+		// }
+		// k.Logger(ctx).Info("[TEMP] printing result from query-balances:", queryRes.Balances.String())
+
+		var response stakingtypes.QueryDelegatorDelegationsResponse
+		err := k.cdc.Unmarshal(args, &response)
 		if err != nil {
-			k.Logger(ctx).Error("Unable to unmarshal balances info for zone", "err", err)
 			return err
 		}
-		k.Logger(ctx).Info("[TEMP] printing result from query-balances:", queryRes.Balances.String())
+
+		delegatorSum := sdk.NewCoin("uatom", sdk.ZeroInt())
+		for _, delegation := range response.DelegationResponses {
+			delegatorSum = delegatorSum.Add(delegation.Balance)
+			if err != nil {
+				return err
+			}
+		}
 
 		ctx.EventManager().EmitEvents(sdk.Events{
 			sdk.NewEvent(
 				sdk.EventTypeMessage,
-				sdk.NewAttribute("balances", queryRes.Balances.String()),
+				sdk.NewAttribute("totalDelegations", delegatorSum.String()),
 			),
 		})
 
@@ -154,10 +168,15 @@ func (k msgServer) QueryBalance(goCtx context.Context, msg *types.MsgQueryBalanc
 		return nil
 	}
 
-	query_type := "cosmos.bank.v1beta1.Query/AllBalances"
+	// query_type := "cosmos.bank.v1beta1.Query/AllBalances"
+	query_type := "cosmos.staking.v1beta1.Query/DelegatorDelegations"
 
-	balanceQuery := banktypes.QueryAllBalancesRequest{Address: msg.Address}
-	bz, err := k.cdc.Marshal(&balanceQuery)
+	// balanceQuery := banktypes.QueryAllBalancesRequest{Address: msg.Address}
+	// bz, err := k.cdc.Marshal(&balanceQuery)
+
+	delegationQuery := stakingtypes.QueryDelegatorDelegationsRequest{DelegatorAddr: msg.Address}
+	bz := k.cdc.MustMarshal(&delegationQuery)
+
 	if err != nil {
 		return nil, err
 	}

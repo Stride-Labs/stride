@@ -146,8 +146,8 @@ echo $ICQ_ADDRESS_STRIDE
 ICQ_ADDRESS_GAIA="cosmos12vfkpj7lpqg0n4j68rr5kyffc6wu55dzrjw3fe"
 echo $ICQ_ADDRESS_GAIA
 
-$STR1_EXEC tx bank send val1 $ICQ_ADDRESS_STRIDE 500000ustrd --chain-id $main_chain -y --keyring-backend=test --home $STATE/STRIDE_1
-$GAIA1_EXEC tx bank send gval1 $ICQ_ADDRESS_GAIA 500000uatom --chain-id $main_gaia_chain -y --keyring-backend=test --home=/gaia/.gaiad
+$STR1_EXEC tx bank send val1 $ICQ_ADDRESS_STRIDE 5000000ustrd --chain-id $main_chain -y --keyring-backend=test --home /stride/.strided
+$GAIA1_EXEC tx bank send gval1 $ICQ_ADDRESS_GAIA 5000000uatom --chain-id $main_gaia_chain -y --keyring-backend=test --home /gaia/.gaiad
 
 echo "\nLaunch interchainquery relayer"
 docker-compose up --force-recreate -d icq
