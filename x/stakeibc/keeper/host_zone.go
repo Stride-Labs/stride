@@ -7,6 +7,7 @@ import (
 	"github.com/Stride-Labs/stride/x/stakeibc/types"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	ibctypes "github.com/cosmos/ibc-go/v3/modules/apps/transfer/types"
 )
 
@@ -108,6 +109,22 @@ func (k Keeper) GetAllHostZone(ctx sdk.Context) (list []types.HostZone) {
 // GetHostZoneIDFromBytes returns ID in uint64 format from a byte array
 func GetHostZoneIDFromBytes(bz []byte) uint64 {
 	return binary.BigEndian.Uint64(bz)
+}
+
+// GetHostZoneFromLocalDenom returns a HostZone from a LocalDenom
+func (k Keeper) GetHostZoneFromLocalDenom(ctx sdk.Context, denom string) (*types.HostZone, error) {
+	var matchZone types.HostZone
+	k.IterateHostZones(ctx, func(index int64, zoneInfo types.HostZone) (stop bool) {
+		if zoneInfo.LocalDenom == denom {
+			matchZone = zoneInfo
+			return true
+		}
+		return false
+	})
+	if matchZone.ChainId != "" {
+		return &matchZone, nil
+	}
+	return nil, sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "No HostZone for %s found", denom)
 }
 
 // IterateHostZones iterates zones
