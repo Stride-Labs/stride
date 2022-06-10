@@ -12,8 +12,10 @@ import (
 
 var _ = strconv.Itoa(0)
 
+// TODO(TEST-78) rename from query-XXX => update-XXX
 func CmdQueryExchangerate() *cobra.Command {
 	cmd := &cobra.Command{
+		// TODO(TEST-77) camel case
 		Use:   "query-exchangerate [chain-id]",
 		Short: "Broadcast message query-exchangerate",
 		Args:  cobra.ExactArgs(1),
