@@ -15,4 +15,5 @@ RUN adduser -S -h /stride -D stride -u 1000
 USER stride
 
 RUN strided init test
-CMD ["strided", "start", "--home", "stride/.strided"]
+EXPOSE 1317
+CMD ["strided", "start", "--home", "/stride/.strided"]

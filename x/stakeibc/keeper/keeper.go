@@ -8,12 +8,13 @@ import (
 	"github.com/Stride-Labs/stride/x/stakeibc/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	bankKeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
+	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	capabilitykeeper "github.com/cosmos/cosmos-sdk/x/capability/keeper"
 	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
 
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	icacontrollerkeeper "github.com/cosmos/ibc-go/v3/modules/apps/27-interchain-accounts/controller/keeper"
+	ibctransferkeeper "github.com/cosmos/ibc-go/v3/modules/apps/transfer/keeper"
 	ibckeeper "github.com/cosmos/ibc-go/v3/modules/core/keeper"
 	ibctmtypes "github.com/cosmos/ibc-go/v3/modules/light-clients/07-tendermint/types"
 )
@@ -28,7 +29,10 @@ type (
 		ICAControllerKeeper icacontrollerkeeper.Keeper
 		IBCKeeper           ibckeeper.Keeper
 		scopedKeeper        capabilitykeeper.ScopedKeeper
-		bankKeeper 			bankKeeper.Keeper
+		transferKeeper      ibctransferkeeper.Keeper
+		bankKeeper    		bankkeeper.Keeper
+
+		accountKeeper types.AccountKeeper
 	}
 )
 
@@ -40,10 +44,12 @@ func NewKeeper(
 	// channelKeeper cosmosibckeeper.ChannelKeeper,
 	// portKeeper cosmosibckeeper.PortKeeper,
 	// scopedKeeper cosmosibckeeper.ScopedKeeper,
-	bankKeeper bankKeeper.Keeper,
+	accountKeeper types.AccountKeeper,
+	bankKeeper bankkeeper.Keeper,
 	icacontrollerkeeper icacontrollerkeeper.Keeper,
 	ibcKeeper ibckeeper.Keeper,
 	scopedKeeper capabilitykeeper.ScopedKeeper,
+	transferKeeper ibctransferkeeper.Keeper,
 ) Keeper {
 	// set KeyTable if it has not already been set
 	if !ps.HasKeyTable() {
@@ -55,10 +61,12 @@ func NewKeeper(
 		storeKey:            storeKey,
 		memKey:              memKey,
 		paramstore:          ps,
+		accountKeeper:       accountKeeper,
 		bankKeeper:          bankKeeper,
 		ICAControllerKeeper: icacontrollerkeeper,
 		IBCKeeper:           ibcKeeper,
 		scopedKeeper:        scopedKeeper,
+		transferKeeper:      transferKeeper,
 	}
 }
 
