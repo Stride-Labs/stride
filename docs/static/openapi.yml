@@ -51853,6 +51853,8 @@ definitions:
       the connection handshake.
   stride.interchainquery.MsgQueryBalanceResponse:
     type: object
+  stride.interchainquery.MsgQueryDelegatedbalanceResponse:
+    type: object
   stride.interchainquery.MsgQueryExchangerateResponse:
     type: object
   stride.interchainquery.MsgSubmitQueryResponse:
