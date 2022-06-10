@@ -84,8 +84,9 @@ func (k msgServer) QueryBalance(goCtx context.Context, msg *types.MsgQueryBalanc
 			return err
 		}
 
-		// TOD(TEST-85) get denom dynamically
-		delegatorSum := sdk.NewCoin("uatom", sdk.ZeroInt())
+		// Get denom dynamically
+		hz, _ := k.StakeibcKeeper.GetHostZone(ctx, ChainId)
+		delegatorSum := sdk.NewCoin(hz.HostDenom, sdk.ZeroInt())
 		for _, delegation := range response.DelegationResponses {
 			delegatorSum = delegatorSum.Add(delegation.Balance)
 			if err != nil {
@@ -94,10 +95,8 @@ func (k msgServer) QueryBalance(goCtx context.Context, msg *types.MsgQueryBalanc
 		}
 
 		// Set Redemption Rate Based On Delegation Balance vs stAsset Supply
-		// TODO change local denom
-		// get denom with `strided q stakeibc list-host-zone`, currently `stibc/C4CFF46FD6DE35CA4CF4CE031E643C8FDC9BA4B99AE598E9B0ED98FE3A2319F9`
-		stDenom := "stibc/C4CFF46FD6DE35CA4CF4CE031E643C8FDC9BA4B99AE598E9B0ED98FE3A2319F9"
-		stAssetSupply := k.BankKeeper.GetSupply(ctx, stDenom)
+		// Get IBC Denom
+		stAssetSupply := k.BankKeeper.GetSupply(ctx, hz.IBCDenom)
 		redemptionRate := delegatorSum.Amount.ToDec().Quo(stAssetSupply.Amount.ToDec())
 
 		// get zone
@@ -189,8 +188,9 @@ func (k msgServer) QueryExchangerate(goCtx context.Context, msg *types.MsgQueryE
 			return err
 		}
 
-		// TODO(TEST-85) set denom dynamically
-		delegatorSum := sdk.NewCoin("uatom", sdk.ZeroInt())
+		// Get denom dynamically
+		hz, _ := k.StakeibcKeeper.GetHostZone(ctx, ChainId)
+		delegatorSum := sdk.NewCoin(hz.HostDenom, sdk.ZeroInt())
 		for _, delegation := range response.DelegationResponses {
 			delegatorSum = delegatorSum.Add(delegation.Balance)
 			if err != nil {
@@ -199,10 +199,8 @@ func (k msgServer) QueryExchangerate(goCtx context.Context, msg *types.MsgQueryE
 		}
 
 		// Set Redemption Rate Based On Delegation Balance vs stAsset Supply
-		// TODO(TEST-85) set denom dynamically
-		// get denom with `strided q stakeibc list-host-zone`, currently `stibc/C4CFF46FD6DE35CA4CF4CE031E643C8FDC9BA4B99AE598E9B0ED98FE3A2319F9`
-		stDenom := "stibc/C4CFF46FD6DE35CA4CF4CE031E643C8FDC9BA4B99AE598E9B0ED98FE3A2319F9"
-		stAssetSupply := k.BankKeeper.GetSupply(ctx, stDenom)
+		// Get denom dynamically
+		stAssetSupply := k.BankKeeper.GetSupply(ctx, hz.IBCDenom)
 		redemptionRate := delegatorSum.Amount.ToDec().Quo(stAssetSupply.Amount.ToDec())
 
 		// update redemptionRate and LastRedemptionRate on hz
@@ -289,8 +287,10 @@ func (k msgServer) QueryDelegatedbalance(goCtx context.Context, msg *types.MsgQu
 			k.Logger(ctx).Error("Unable to unmarshal balances info for zone", "err", err)
 			return err
 		}
-		// TODO get denom dynamically
-		balance := int32(queryRes.Balances.AmountOf("uatom").Int64())
+
+		// Get denom dynamically
+		hz, _ := k.StakeibcKeeper.GetHostZone(ctx, ChainId)
+		balance := int32(queryRes.Balances.AmountOf(hz.HostDenom).Int64())
 
 		// Set delegation account balance to ICQ result
 		hz, found := k.StakeibcKeeper.GetHostZone(ctx, ChainId)
