@@ -9,11 +9,11 @@ import "cosmos/base/v1beta1/coin.proto";
 
 option go_package = "github.com/Stride-Labs/stride/x/stakeibc/types";
 
-// next id: 12
+// next id: 13
 message HostZone {
   string chainId = 1;
   string connectionId = 2;
-  string transferChannelId = 10;
+  string transferChannelId = 12;
   repeated Validator validators = 3;
   repeated Validator blacklistedValidators = 4;
   ICAAccount withdrawalAccount = 5;
