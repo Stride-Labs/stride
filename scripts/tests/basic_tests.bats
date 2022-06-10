@@ -97,4 +97,6 @@ setup() {
   assert_line '  BaseDenom: ibc/C4CFF46FD6DE35CA4CF4CE031E643C8FDC9BA4B99AE598E9B0ED98FE3A2319F9'
 }
 
+# TEST-74
 # add test to see if assets are properly being staked on host zone
+# add asset redemption test
