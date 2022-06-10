@@ -29886,13 +29886,13 @@ paths:
                     LastRedemptionRate:
                       type: string
                       title: >-
-                        TODO(TEST-XX): Should we make this an array and store
+                        TODO(TEST-68): Should we make this an array and store
                         the last n redemption rates
 
                         then calculate a TWARR?
                     RedemptionRate:
                       type: string
-                  title: 'next id: 12'
+                  title: 'next id: 13'
               pagination:
                 type: object
                 properties:
@@ -30359,13 +30359,13 @@ paths:
                   LastRedemptionRate:
                     type: string
                     title: >-
-                      TODO(TEST-XX): Should we make this an array and store the
+                      TODO(TEST-68): Should we make this an array and store the
                       last n redemption rates
 
                       then calculate a TWARR?
                   RedemptionRate:
                     type: string
-                title: 'next id: 12'
+                title: 'next id: 13'
         default:
           description: An unexpected error response.
           schema:
@@ -52189,13 +52189,13 @@ definitions:
       LastRedemptionRate:
         type: string
         title: >-
-          TODO(TEST-XX): Should we make this an array and store the last n
+          TODO(TEST-68): Should we make this an array and store the last n
           redemption rates
 
           then calculate a TWARR?
       RedemptionRate:
         type: string
-    title: 'next id: 12'
+    title: 'next id: 13'
   Stridelabs.stride.stakeibc.ICAAccount:
     type: object
     properties:
@@ -52557,13 +52557,13 @@ definitions:
             LastRedemptionRate:
               type: string
               title: >-
-                TODO(TEST-XX): Should we make this an array and store the last n
+                TODO(TEST-68): Should we make this an array and store the last n
                 redemption rates
 
                 then calculate a TWARR?
             RedemptionRate:
               type: string
-          title: 'next id: 12'
+          title: 'next id: 13'
       pagination:
         type: object
         properties:
@@ -52833,13 +52833,13 @@ definitions:
           LastRedemptionRate:
             type: string
             title: >-
-              TODO(TEST-XX): Should we make this an array and store the last n
+              TODO(TEST-68): Should we make this an array and store the last n
               redemption rates
 
               then calculate a TWARR?
           RedemptionRate:
             type: string
-        title: 'next id: 12'
+        title: 'next id: 13'
   Stridelabs.stride.stakeibc.QueryGetICAAccountResponse:
     type: object
     properties:
