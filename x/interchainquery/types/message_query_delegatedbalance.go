@@ -12,7 +12,7 @@ var _ sdk.Msg = &MsgQueryDelegatedbalance{}
 func NewMsgQueryDelegatedbalance(creator string, chainID string) *MsgQueryDelegatedbalance {
 	return &MsgQueryDelegatedbalance{
 		Creator: creator,
-		ChainID: chainID,
+		ChainId: chainID,
 	}
 }
 

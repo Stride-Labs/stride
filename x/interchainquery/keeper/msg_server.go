@@ -8,6 +8,7 @@ import (
 	"github.com/Stride-Labs/stride/x/interchainquery/types"
 	stakeibctypes "github.com/Stride-Labs/stride/x/stakeibc/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 )
 
@@ -356,4 +357,114 @@ func (k msgServer) QueryExchangerate(goCtx context.Context, msg *types.MsgQueryE
 
 	// return; usually a response object or nil
 	return &types.MsgQueryExchangerateResponse{}, nil
+}
+
+func (k msgServer) QueryDelegatedbalance(goCtx context.Context, msg *types.MsgQueryDelegatedbalance) (*types.MsgQueryDelegatedbalanceResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	ChainId := msg.ChainId
+	// TODO Check ChainId is supported by Stride, try using this approach https://github.com/ingenuity-build/quicksilver/blob/ea71f23c6ef09a57e601f4e544c4be9693f5ba81/x/interchainstaking/keeper/msg_server.go#L37
+
+	// Parse Address addr
+	// TODO should this be Address, not Caller? changed temporarily to suppress error
+	_, err := sdk.AccAddressFromBech32(msg.Creator)
+	if err != nil {
+		panic(err)
+	}
+
+	// get zone
+	hz, found := k.StakeibcKeeper.GetHostZone(ctx, ChainId)
+	if found {
+		fmt.Errorf("invalid chain id, zone for \"%s\" already registered", ChainId)
+	}
+	ConnectionId := hz.ConnectionId
+
+	var cb Callback = func(k Keeper, ctx sdk.Context, args []byte, query types.Query) error {
+		queryRes := banktypes.QueryAllBalancesResponse{}
+		err := k.cdc.Unmarshal(args, &queryRes)
+		if err != nil {
+			k.Logger(ctx).Error("Unable to unmarshal balances info for zone", "err", err)
+			return err
+		}
+		// TODO get denom dynamically
+		balance := int32(queryRes.Balances.AmountOf("uatom").Int64())
+
+		// Set delegation account balance to ICQ result
+		hz, found := k.StakeibcKeeper.GetHostZone(ctx, ChainId)
+		if found {
+			fmt.Errorf("invalid chain id, zone for \"%s\" already registered", ChainId)
+		}
+
+		da := hz.DelegationAccount
+		delegationAccount := stakeibctypes.ICAAccount{Address: da.Address,
+			Balance:          balance, // <== updated
+			DelegatedBalance: da.DelegatedBalance,
+			Delegations:      da.Delegations,
+			Target:           da.Target,
+		}
+
+		// set the zone
+		zone := stakeibctypes.HostZone{
+			ChainId:            hz.ChainId,
+			ConnectionId:       hz.ConnectionId,
+			LocalDenom:         hz.LocalDenom,
+			BaseDenom:          hz.BaseDenom,
+			DelegationAccount:  &delegationAccount, // <== updated
+			RedemptionRate:     hz.RedemptionRate,
+			LastRedemptionRate: hz.LastRedemptionRate,
+		}
+		// write the zone back to the store
+		k.StakeibcKeeper.SetHostZone(ctx, zone)
+
+		ctx.EventManager().EmitEvents(sdk.Events{
+			sdk.NewEvent(
+				sdk.EventTypeMessage,
+				sdk.NewAttribute("totalBalance", string(balance)),
+			),
+		})
+
+		return nil
+	}
+
+	// query_type := "cosmos.staking.v1beta1.Query/DelegatorDelegations"
+	// // TODO replace hardcoded addr with host zone's delegation account
+	// delegationQuery := stakingtypes.QueryDelegatorDelegationsRequest{DelegatorAddr: "cosmos1t2aqq3c6mt8fa6l5ady44manvhqf77sywjcldv"}
+	// bz := k.cdc.MustMarshal(&delegationQuery)
+	// if err != nil {
+	// 	return nil, err
+	// }
+
+	query_type := "cosmos.bank.v1beta1.Query/AllBalances"
+	// TODO replace hardcoded addr with host zone's delegation account
+	balanceQuery := banktypes.QueryAllBalancesRequest{Address: "cosmos1t2aqq3c6mt8fa6l5ady44manvhqf77sywjcldv"}
+	bz, err := k.cdc.Marshal(&balanceQuery)
+	if err != nil {
+		return nil, err
+	}
+
+	k.Keeper.MakeRequest(
+		ctx,
+		ConnectionId,
+		ChainId,
+		query_type,
+		bz,
+		sdk.NewInt(25),
+		types.ModuleName,
+		cb,
+	)
+
+	ctx.EventManager().EmitEvents(sdk.Events{
+		sdk.NewEvent(
+			sdk.EventTypeMessage,
+			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
+			sdk.NewAttribute(sdk.AttributeKeyAction, types.AttributeValueQuery),
+			sdk.NewAttribute(types.AttributeKeyQueryId, GenerateQueryHash(ConnectionId, ChainId, query_type, bz)),
+			sdk.NewAttribute(types.AttributeKeyChainId, ChainId),
+			sdk.NewAttribute(types.AttributeKeyConnectionId, ConnectionId),
+			sdk.NewAttribute(types.AttributeKeyType, query_type),
+			sdk.NewAttribute(types.AttributeKeyHeight, "0"),
+			sdk.NewAttribute(types.AttributeKeyRequest, hex.EncodeToString(bz)),
+		),
+	})
+
+	return &types.MsgQueryDelegatedbalanceResponse{}, nil
 }
