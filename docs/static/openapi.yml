@@ -29174,8 +29174,8 @@ paths:
                       type: integer
                       format: int32
                       title: >-
-                        TODO do we care that amount is int32? should we change
-                        this to uint64?
+                        TODO TEST-70 do we care that amount is int32? should we
+                        change this to uint64?
                     denom:
                       type: string
                     hostZoneId:
@@ -29476,8 +29476,8 @@ paths:
                     type: integer
                     format: int32
                     title: >-
-                      TODO do we care that amount is int32? should we change
-                      this to uint64?
+                      TODO TEST-70 do we care that amount is int32? should we
+                      change this to uint64?
                   denom:
                     type: string
                   hostZoneId:
@@ -29702,7 +29702,7 @@ paths:
                       type: string
                     connectionId:
                       type: string
-                    channelId:
+                    transferChannelId:
                       type: string
                     validators:
                       type: array
@@ -30169,7 +30169,7 @@ paths:
                     type: string
                   connectionId:
                     type: string
-                  channelId:
+                  transferChannelId:
                     type: string
                   validators:
                     type: array
@@ -51962,7 +51962,9 @@ definitions:
       amount:
         type: integer
         format: int32
-        title: TODO do we care that amount is int32? should we change this to uint64?
+        title: >-
+          TODO TEST-70 do we care that amount is int32? should we change this to
+          uint64?
       denom:
         type: string
       hostZoneId:
@@ -51988,7 +51990,7 @@ definitions:
         type: string
       connectionId:
         type: string
-      channelId:
+      transferChannelId:
         type: string
       validators:
         type: array
@@ -52294,8 +52296,8 @@ definitions:
               type: integer
               format: int32
               title: >-
-                TODO do we care that amount is int32? should we change this to
-                uint64?
+                TODO TEST-70 do we care that amount is int32? should we change
+                this to uint64?
             denom:
               type: string
             hostZoneId:
@@ -52345,7 +52347,7 @@ definitions:
               type: string
             connectionId:
               type: string
-            channelId:
+            transferChannelId:
               type: string
             validators:
               type: array
@@ -52588,8 +52590,8 @@ definitions:
             type: integer
             format: int32
             title: >-
-              TODO do we care that amount is int32? should we change this to
-              uint64?
+              TODO TEST-70 do we care that amount is int32? should we change
+              this to uint64?
           denom:
             type: string
           hostZoneId:
@@ -52612,7 +52614,7 @@ definitions:
             type: string
           connectionId:
             type: string
-          channelId:
+          transferChannelId:
             type: string
           validators:
             type: array

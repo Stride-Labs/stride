@@ -39,7 +39,7 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochIdentifier string, epochN
 				transferCoin := sdk.NewCoin(depositRecord.Denom, sdk.NewInt(int64(depositRecord.Amount)))
 				goCtx := sdk.WrapSDKContext(ctx)
 
-				msg := ibctypes.NewMsgTransfer("transfer", hostZone.ChannelId, transferCoin, addr, delegateAddress, timeoutHeight, 0)
+				msg := ibctypes.NewMsgTransfer("transfer", hostZone.TransferChannelId, transferCoin, addr, delegateAddress, timeoutHeight, 0)
 				_, err := k.transferKeeper.Transfer(goCtx, msg)
 				if err != nil {
 					pstr := fmt.Sprintf("\tERROR WITH DEPOSIT RECEIPT {%d}", depositRecord.Id)

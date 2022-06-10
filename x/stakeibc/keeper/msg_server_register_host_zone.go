@@ -29,11 +29,11 @@ func (k Keeper) RegisterHostZone(goCtx context.Context, msg *types.MsgRegisterHo
 
 	// set the zone
 	zone := types.HostZone{
-		ChainId:      chainId,
-		ConnectionId: msg.ConnectionId,
-		LocalDenom:   msg.LocalDenom,
-		BaseDenom:    msg.BaseDenom,
-		ChannelId:    msg.ChannelId,
+		ChainId:           chainId,
+		ConnectionId:      msg.ConnectionId,
+		LocalDenom:        msg.LocalDenom,
+		BaseDenom:         msg.BaseDenom,
+		TransferChannelId: msg.TransferChannelId,
 	}
 	// write the zone back to the store
 	k.SetHostZone(ctx, zone)

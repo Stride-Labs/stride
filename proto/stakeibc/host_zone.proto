@@ -10,7 +10,7 @@ option go_package = "github.com/Stride-Labs/stride/x/stakeibc/types";
 message HostZone {
   string chainId = 1;
   string connectionId = 2;
-  string channelId = 10;
+  string transferChannelId = 10;
   repeated Validator validators = 3;
   repeated Validator blacklistedValidators = 4;
   ICAAccount withdrawalAccount = 5;
