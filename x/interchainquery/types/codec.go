@@ -15,6 +15,7 @@ var (
 
 func RegisterLegacyAminoCodec(cdc *codec.LegacyAmino) {
 	cdc.RegisterConcrete(&MsgSubmitQueryResponse{}, "/stride.interchainquery.MsgSubmitQueryResponse", nil)
+	// this line is used by starport scaffolding # 2
 }
 
 func RegisterInterfaces(registry types.InterfaceRegistry) {
@@ -22,6 +23,7 @@ func RegisterInterfaces(registry types.InterfaceRegistry) {
 		&MsgSubmitQueryResponse{},
 		&MsgQueryBalance{},
 	)
+	// this line is used by starport scaffolding # 3
 
 	msgservice.RegisterMsgServiceDesc(registry, &_Msg_serviceDesc)
 }
