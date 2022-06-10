@@ -222,8 +222,8 @@ func (k msgServer) QueryExchangerate(goCtx context.Context, msg *types.MsgQueryE
 	}
 
 	query_type := "cosmos.staking.v1beta1.Query/DelegatorDelegations"
-	// TODO(TEST-86) get addr dynamically (delegationAddress)
-	delegationQuery := stakingtypes.QueryDelegatorDelegationsRequest{DelegatorAddr: "cosmos1t2aqq3c6mt8fa6l5ady44manvhqf77sywjcldv"}
+	// Get delegationAddress dynamically
+	delegationQuery := stakingtypes.QueryDelegatorDelegationsRequest{DelegatorAddr: hz.DelegationAccount.Address}
 	bz := k.cdc.MustMarshal(&delegationQuery)
 	if err != nil {
 		return nil, err
