@@ -249,3 +249,110 @@ func (k msgServer) QueryBalance(goCtx context.Context, msg *types.MsgQueryBalanc
 	// return; usually a response object or nil
 	return &types.MsgQueryBalanceResponse{}, nil
 }
+
+func (k msgServer) QueryExchangerate(goCtx context.Context, msg *types.MsgQueryExchangerate) (*types.MsgQueryExchangerateResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	ChainId := msg.ChainId
+	// TODO Check ChainId is supported by Stride, try using this approach https://github.com/ingenuity-build/quicksilver/blob/ea71f23c6ef09a57e601f4e544c4be9693f5ba81/x/interchainstaking/keeper/msg_server.go#L37
+
+	// Parse Address addr
+	// TODO should this be Address, not Caller? changed temporarily to suppress error
+	_, err := sdk.AccAddressFromBech32(msg.Creator)
+	if err != nil {
+		panic(err)
+	}
+
+	// get zone
+	hz, found := k.StakeibcKeeper.GetHostZone(ctx, ChainId)
+	if found {
+		fmt.Errorf("invalid chain id, zone for \"%s\" already registered", ChainId)
+	}
+	ConnectionId := hz.ConnectionId
+
+	var cb Callback = func(k Keeper, ctx sdk.Context, args []byte, query types.Query) error {
+		var response stakingtypes.QueryDelegatorDelegationsResponse
+		err := k.cdc.Unmarshal(args, &response)
+		if err != nil {
+			return err
+		}
+
+		// TODO get denom dynamically -- is it local or base denom?
+		delegatorSum := sdk.NewCoin("uatom", sdk.ZeroInt())
+		for _, delegation := range response.DelegationResponses {
+			delegatorSum = delegatorSum.Add(delegation.Balance)
+			if err != nil {
+				return err
+			}
+		}
+
+		// Set Redemption Rate Based On Delegation Balance vs stAsset Supply
+		// TODO change local denom
+		// get denom with `strided q stakeibc list-host-zone`, currently `stibc/C4CFF46FD6DE35CA4CF4CE031E643C8FDC9BA4B99AE598E9B0ED98FE3A2319F9`
+		stDenom := "stibc/C4CFF46FD6DE35CA4CF4CE031E643C8FDC9BA4B99AE598E9B0ED98FE3A2319F9"
+		stAssetSupply := k.BankKeeper.GetSupply(ctx, stDenom)
+		redemptionRate := delegatorSum.Amount.ToDec().Quo(stAssetSupply.Amount.ToDec())
+
+		// set the zone
+		zone := stakeibctypes.HostZone{
+			ChainId:      ChainId,
+			ConnectionId: hz.ConnectionId,
+			LocalDenom:   hz.LocalDenom,
+			BaseDenom:    hz.BaseDenom,
+			// Start exchange rate at 1 upon registration
+			RedemptionRate:     redemptionRate,
+			LastRedemptionRate: hz.RedemptionRate, // previous redemption rate
+		}
+		// write the zone back to the store
+		k.StakeibcKeeper.SetHostZone(ctx, zone)
+
+		ctx.EventManager().EmitEvents(sdk.Events{
+			sdk.NewEvent(
+				sdk.EventTypeMessage,
+				sdk.NewAttribute("totalDelegations", delegatorSum.String()),
+				sdk.NewAttribute("stAssetSupply", stAssetSupply.Amount.String()),
+				sdk.NewAttribute("redemptionRate", redemptionRate.String()),
+			),
+		})
+
+		return nil
+	}
+
+	query_type := "cosmos.staking.v1beta1.Query/DelegatorDelegations"
+	delegationQuery := stakingtypes.QueryDelegatorDelegationsRequest{DelegatorAddr: hz.DelegationAccount.Address}
+	bz := k.cdc.MustMarshal(&delegationQuery)
+	if err != nil {
+		return nil, err
+	}
+
+	// query_type := "cosmos.bank.v1beta1.Query/AllBalances"
+	// balanceQuery := banktypes.QueryAllBalancesRequest{Address: msg.Address}
+	// bz, err := k.cdc.Marshal(&balanceQuery)
+
+	k.Keeper.MakeRequest(
+		ctx,
+		ConnectionId,
+		ChainId,
+		query_type,
+		bz,
+		sdk.NewInt(25),
+		types.ModuleName,
+		cb,
+	)
+
+	ctx.EventManager().EmitEvents(sdk.Events{
+		sdk.NewEvent(
+			sdk.EventTypeMessage,
+			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
+			sdk.NewAttribute(sdk.AttributeKeyAction, types.AttributeValueQuery),
+			sdk.NewAttribute(types.AttributeKeyQueryId, GenerateQueryHash(ConnectionId, ChainId, query_type, bz)),
+			sdk.NewAttribute(types.AttributeKeyChainId, ChainId),
+			sdk.NewAttribute(types.AttributeKeyConnectionId, ConnectionId),
+			sdk.NewAttribute(types.AttributeKeyType, query_type),
+			sdk.NewAttribute(types.AttributeKeyHeight, "0"),
+			sdk.NewAttribute(types.AttributeKeyRequest, hex.EncodeToString(bz)),
+		),
+	})
+
+	// return; usually a response object or nil
+	return &types.MsgQueryExchangerateResponse{}, nil
+}

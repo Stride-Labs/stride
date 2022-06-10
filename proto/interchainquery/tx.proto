@@ -64,7 +64,7 @@ message MsgQueryBalanceResponse {}
 
 message MsgQueryExchangerate {
   string creator = 1;
-  string chainID = 2;
+  string chain_id = 2 [ (gogoproto.moretags) = "yaml:\"chain_id\"" ];
 }
 
 message MsgQueryExchangerateResponse {
