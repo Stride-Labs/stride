@@ -29,12 +29,13 @@ func (k Keeper) RegisterHostZone(goCtx context.Context, msg *types.MsgRegisterHo
 
 	// set the zone
 	zone := types.HostZone{
-		ChainId:      chainId,
-		ConnectionId: msg.ConnectionId,
-		IBCDenom: msg.IbcDenom,
-		HostDenom: msg.HostDenom,
+		ChainId:           chainId,
+		ConnectionId:      msg.ConnectionId,
+		IBCDenom:          msg.IbcDenom,
+		HostDenom:         msg.HostDenom,
+		TransferChannelId: msg.TransferChannelId,
 		// Start exchange rate at 1 upon registration
-		RedemptionRate: sdk.NewDec(1),
+		RedemptionRate:     sdk.NewDec(1),
 		LastRedemptionRate: sdk.NewDec(1),
 	}
 	// write the zone back to the store

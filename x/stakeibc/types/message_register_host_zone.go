@@ -9,12 +9,13 @@ const TypeMsgRegisterHostZone = "register_host_zone"
 
 var _ sdk.Msg = &MsgRegisterHostZone{}
 
-func NewMsgRegisterHostZone(creator string, connectionId string, hostDenom string, ibcDenom string) *MsgRegisterHostZone {
+func NewMsgRegisterHostZone(creator string, connectionId string, hostDenom string, ibcDenom string, transferChannelId string) *MsgRegisterHostZone {
 	return &MsgRegisterHostZone{
-		Creator:      creator,
-		ConnectionId: connectionId,
-		HostDenom:    hostDenom,
-		IbcDenom:   ibcDenom,
+		Creator:           creator,
+		ConnectionId:      connectionId,
+		HostDenom:         hostDenom,
+		IbcDenom:          ibcDenom,
+		TransferChannelId: transferChannelId,
 	}
 }
 

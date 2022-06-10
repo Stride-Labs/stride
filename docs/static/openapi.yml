@@ -29869,6 +29869,8 @@ paths:
                       type: string
                     connectionId:
                       type: string
+                    transferChannelId:
+                      type: string
                     validators:
                       type: array
                       items:
@@ -30059,7 +30061,7 @@ paths:
                         then calculate a TWARR?
                     RedemptionRate:
                       type: string
-                  title: 'next id: 12'
+                  title: 'next id: 13'
               pagination:
                 type: object
                 properties:
@@ -30345,6 +30347,8 @@ paths:
                     type: string
                   connectionId:
                     type: string
+                  transferChannelId:
+                    type: string
                   validators:
                     type: array
                     items:
@@ -30532,7 +30536,7 @@ paths:
                       then calculate a TWARR?
                   RedemptionRate:
                     type: string
-                title: 'next id: 12'
+                title: 'next id: 13'
         default:
           description: An unexpected error response.
           schema:
@@ -52181,6 +52185,8 @@ definitions:
         type: string
       connectionId:
         type: string
+      transferChannelId:
+        type: string
       validators:
         type: array
         items:
@@ -52368,7 +52374,7 @@ definitions:
           then calculate a TWARR?
       RedemptionRate:
         type: string
-    title: 'next id: 12'
+    title: 'next id: 13'
   Stridelabs.stride.stakeibc.ICAAccount:
     type: object
     properties:
@@ -52548,6 +52554,8 @@ definitions:
             chainId:
               type: string
             connectionId:
+              type: string
+            transferChannelId:
               type: string
             validators:
               type: array
@@ -52736,7 +52744,7 @@ definitions:
                 then calculate a TWARR?
             RedemptionRate:
               type: string
-          title: 'next id: 12'
+          title: 'next id: 13'
       pagination:
         type: object
         properties:
@@ -52824,6 +52832,8 @@ definitions:
           chainId:
             type: string
           connectionId:
+            type: string
+          transferChannelId:
             type: string
           validators:
             type: array
@@ -53012,7 +53022,7 @@ definitions:
               then calculate a TWARR?
           RedemptionRate:
             type: string
-        title: 'next id: 12'
+        title: 'next id: 13'
   Stridelabs.stride.stakeibc.QueryGetICAAccountResponse:
     type: object
     properties:
