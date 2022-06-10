@@ -12,13 +12,12 @@ import (
 
 var _ = strconv.Itoa(0)
 
-
 // TODO(TEST-53): Remove this pre-launch (no need for clients to create / interact with ICAs)
 func CmdRegisterHostZone() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:  "register-host-zone [connection-id] [base-denom] [local-denom]",
+		Use:   "register-host-zone [connection-id] [base-denom] [local-denom]",
 		Short: "Broadcast message register-host-zone",
-		Args: cobra.ExactArgs(3),
+		Args:  cobra.ExactArgs(3),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientTxContext(cmd)
 			if err != nil {

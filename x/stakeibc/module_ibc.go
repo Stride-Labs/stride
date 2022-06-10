@@ -39,8 +39,8 @@ func (im IBCModule) OnChanOpenInit(
 	// Note: The channel capability must be claimed by the authentication module in OnChanOpenInit otherwise the
 	// authentication module will not be able to send packets on the channel created for the associated interchain account.
 	if err := im.keeper.ClaimCapability(ctx, chanCap, host.ChannelCapabilityPath(portID, channelID)); err != nil {
-        return err
-    }
+		return err
+	}
 	return nil
 }
 
@@ -104,11 +104,10 @@ func (im IBCModule) OnChanOpenAck(
 	default:
 		ctx.Logger().Error("Missing portId: ", portID)
 	}
-	
+
 	im.keeper.SetHostZone(ctx, zoneInfo)
 	return nil
 }
-
 
 // OnAcknowledgementPacket implements the IBCModule interface
 func (im IBCModule) OnAcknowledgementPacket(
@@ -119,7 +118,7 @@ func (im IBCModule) OnAcknowledgementPacket(
 ) error {
 	return nil
 	// TODO(TEST-21): Implement OnAcknowledgementPacket logic
-	
+
 	// var ack channeltypes.Acknowledgement
 	// if err := types.ModuleCdc.UnmarshalJSON(acknowledgement, &ack); err != nil {
 	// 	return sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "cannot unmarshal packet acknowledgement: %v", err)
@@ -259,4 +258,3 @@ func (im IBCModule) OnRecvPacket(
 ) ibcexported.Acknowledgement {
 	panic("UNIMPLEMENTED")
 }
-
