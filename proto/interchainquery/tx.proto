@@ -60,3 +60,5 @@ message MsgQueryBalance {
 }
 
 message MsgQueryBalanceResponse {}
+
+// this line is used by starport scaffolding # proto/tx/message

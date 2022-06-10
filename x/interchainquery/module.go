@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"math/rand"
 
+	// this line is used by starport scaffolding # 1
+
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
 
 	"github.com/gorilla/mux"
@@ -83,6 +85,7 @@ func (AppModuleBasic) RegisterGRPCGatewayRoutes(clientCtx client.Context, mux *r
 	// if err != nil {
 	// 	panic(err)
 	// }
+	// this line is used by starport scaffolding # 2
 }
 
 // GetTxCmd returns the capability module's root tx command.
