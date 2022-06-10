@@ -22,6 +22,7 @@ service Msg {
     };
   };
   rpc QueryBalance(MsgQueryBalance) returns (MsgQueryBalanceResponse);
+  // this line is used by starport scaffolding # proto/tx/rpc
 }
 
 // MsgSubmitQueryResponse represents a message type to fulfil a query request.
