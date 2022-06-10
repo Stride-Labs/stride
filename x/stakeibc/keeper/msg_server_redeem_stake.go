@@ -43,18 +43,6 @@ func (k Keeper) RedeemStake(goCtx context.Context, msg *types.MsgRedeemStake) (*
 	if types.IsStAsset(msg.Denom) != true {
 		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidCoins, "denom is not a valid stAsset. found: %s", msg.Denom)
 	}
-	// TODO: REMOVE THIS, TESTING PURPOSES ONLY
-	// #################################################################
-	// Mint coins and send them to senders account
-	// err = k.bankKeeper.MintCoins(ctx, types.ModuleName, sdk.NewCoins(inCoin))
-	// if err != nil {
-	// 	return nil, err
-	// }
-	// err = k.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, sender, sdk.NewCoins(inCoin))
-	// if err != nil {
-	// 	return nil, err
-	// }
-	// #################################################################
 	// Creator owns at least "amount" stAssets
 	balance := k.bankKeeper.GetBalance(ctx, sender, msg.Denom)
 	if balance.IsLT(inCoin) {
