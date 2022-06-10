@@ -79,10 +79,10 @@ setup() {
   # liquid stake
   $STR1_EXEC tx stakeibc liquid-stake 1000 $IBCATOM --keyring-backend test --from val1 -y
   sleep 15
-  # make sure Module Acct received ATOM
-  mod_balance_atom_new=$($STR1_EXEC q bank balances $MODADDR --denom $IBCATOM | GETBAL)
-  mod_atom_diff=$(($mod_balance_atom_new - $mod_balance_atom))
-  assert_equal "$mod_atom_diff" '1000'
+  # make sure Module Acct received ATOM - remove if IBC transfer is automated
+  # mod_balance_atom_new=$($STR1_EXEC q bank balances $MODADDR --denom $IBCATOM | GETBAL)
+  # mod_atom_diff=$(($mod_balance_atom_new - $mod_balance_atom))
+  # assert_equal "$mod_atom_diff" '1000'
   # make sure IBCATOM went down 
   str1_balance_atom_new=$($STR1_EXEC q bank balances $STRIDE_ADDRESS_1 --denom $IBCATOM | GETBAL)
   str1_atom_diff=$(($str1_balance_atom - $str1_balance_atom_new))
@@ -117,3 +117,6 @@ setup() {
   assert_equal "$WORKED" "1"
 }
 
+# TEST-74
+# add test to see if assets are properly being staked on host zone
+# add asset redemption test

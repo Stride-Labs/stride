@@ -23,16 +23,21 @@ func (k msgServer) LiquidStake(goCtx context.Context, msg *types.MsgLiquidStake)
 	// NOTE: int is an int32 or int64 (depending on machine type) so converting from int32 -> int
 	// is safe. The converse is not true.
 	coinString := strconv.Itoa(int(msg.Amount)) + msg.Denom
-	coins, err := sdk.ParseCoinsNormalized(coinString)
+	inCoin, err := sdk.ParseCoinNormalized(coinString)
 	if err != nil {
-		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidType, "failed to parse %s coins", coins)
+		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidType, "failed to parse %s inCoin", inCoin)
 	}
 
 	// Safety checks
-	// ensure Amount is non-negative, liquid staking 0 or less tokens is invalid
-	if msg.Amount < 1 {
-		k.Logger(ctx).Info("amount must be non-negative")
-		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidCoins, "amount must be non-negative")
+	// ensure Amount is positive, liquid staking 0 or less tokens is invalid
+	if !inCoin.IsPositive() {
+		k.Logger(ctx).Info("amount must be positive")
+		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidCoins, "amount must be positive")
+	}
+	// Creator owns at least "amount" of inCoin
+	balance := k.bankKeeper.GetBalance(ctx, sender, msg.Denom)
+	if balance.IsLT(inCoin) {
+		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidCoins, "balance is lower than staking amount. staking amount: %s, balance %s: ", balance.Amount, msg.Amount)
 	}
 	// check that the token is an IBC token
 	isIbcToken := types.IsIBCToken(msg.Denom)
@@ -43,22 +48,18 @@ func (k msgServer) LiquidStake(goCtx context.Context, msg *types.MsgLiquidStake)
 
 	// deposit `amount` of `denom` token to the stakeibc module
 	// NOTE: Should we add an additional check here? This is a pretty important line of code
-	// NOTE: If sender doesn't have enough coins, this panics (error is hard to interpret)
+	// NOTE: If sender doesn't have enough inCoin, this panics (error is hard to interpret)
 	// check that hostZone is registered
 	hostZone, hostZoneFound := k.GetHostZoneFromDenom(ctx, msg.Denom)
 	if !hostZoneFound {
 		k.Logger(ctx).Info("Host Zone not found for denom (%s)", msg.Denom)
 		return nil, sdkerrors.Wrapf(types.ErrInvalidHostZone, "Host Zone not found for denom (%s)", msg.Denom)
 	}
-	sdkerror := k.bankKeeper.SendCoinsFromAccountToModule(ctx, sender, types.ModuleName, coins)
+	sdkerror := k.bankKeeper.SendCoinsFromAccountToModule(ctx, sender, types.ModuleName, sdk.NewCoins(inCoin))
 	if sdkerror != nil {
 		k.Logger(ctx).Error("failed to send tokens from Account to Module")
 		panic(sdkerror)
 	}
-	// create a deposit record of these tokens
-	depositRecord := types.NewDepositRecord(msg.Amount, msg.Denom, hostZone.ChainId,
-		sender.String(), types.DepositRecord_RECEIPT)
-	k.AppendDepositRecord(ctx, *depositRecord)
 	// mint user `amount` of the corresponding stAsset
 	// NOTE: We should ensure that denoms are unique - we don't want anyone spoofing denoms
 	err = k.MintStAsset(ctx, sender, msg.Amount, msg.Denom)
@@ -66,16 +67,20 @@ func (k msgServer) LiquidStake(goCtx context.Context, msg *types.MsgLiquidStake)
 		k.Logger(ctx).Info("failed to send tokens from Account to Module")
 		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidCoins, "failed to mint stAssets to user")
 	}
+	// create a deposit record of these tokens
+	depositRecord := types.NewDepositRecord(msg.Amount, msg.Denom, hostZone.ChainId,
+		sender.String(), types.DepositRecord_RECEIPT)
+	k.AppendDepositRecord(ctx, *depositRecord)
 
 	return &types.MsgLiquidStakeResponse{}, nil
 }
 
 func (k msgServer) MintStAsset(ctx sdk.Context, sender sdk.AccAddress, amount int32, denom string) error {
 	// repeat safety checks from LiquidStake in case MintStAsset is called from another site
-	// ensure Amount is non-negative, liquid staking 0 or less tokens is invalid
+	// ensure Amount is positive, liquid staking 0 or less tokens is invalid
 	if amount < 1 {
-		k.Logger(ctx).Info("Amount to mint must be non-negative")
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidCoins, "Amount to mint must be non-negative")
+		k.Logger(ctx).Info("Amount to mint must be positive")
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidCoins, "Amount to mint must be positive")
 	}
 	// check that the token is an IBC token
 	isIbcToken := types.IsIBCToken(denom)

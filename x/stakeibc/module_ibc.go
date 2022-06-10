@@ -1,6 +1,7 @@
 package stakeibc
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/Stride-Labs/stride/x/stakeibc/keeper"
@@ -117,57 +118,17 @@ func (im IBCModule) OnAcknowledgementPacket(
 	acknowledgement []byte,
 	relayer sdk.AccAddress,
 ) error {
-	return nil
 	// TODO(TEST-21): Implement OnAcknowledgementPacket logic
-	
-	// var ack channeltypes.Acknowledgement
-	// if err := types.ModuleCdc.UnmarshalJSON(acknowledgement, &ack); err != nil {
-	// 	return sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "cannot unmarshal packet acknowledgement: %v", err)
-	// }
+	// this line is used by starport scaffolding # oracle/packet/module/ack
+	connectionId, _, err := im.keeper.IBCKeeper.ChannelKeeper.GetChannelConnection(ctx, modulePacket.SourcePort, modulePacket.SourceChannel)
+	if err != nil {
+		err = fmt.Errorf("packet connection not found: %w", err)
+		ctx.Logger().Error(err.Error())
+		return err
+	}
+	ctx = ctx.WithContext(context.WithValue(ctx.Context(), "connectionId", connectionId))
 
-	// // this line is used by starport scaffolding # oracle/packet/module/ack
-
-	// var modulePacketData types.StakeibcPacketData
-	// if err := modulePacketData.Unmarshal(modulePacket.GetData()); err != nil {
-	// 	return sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "cannot unmarshal packet data: %s", err.Error())
-	// }
-
-	// var eventType string
-
-	// // Dispatch packet
-	// switch packet := modulePacketData.Packet.(type) {
-	// // this line is used by starport scaffolding # ibc/packet/module/ack
-	// default:
-	// 	errMsg := fmt.Sprintf("unrecognized %s packet type: %T", types.ModuleName, packet)
-	// 	return sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, errMsg)
-	// }
-
-	// ctx.EventManager().EmitEvent(
-	// 	sdk.NewEvent(
-	// 		eventType,
-	// 		sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
-	// 		sdk.NewAttribute(types.AttributeKeyAck, fmt.Sprintf("%v", ack)),
-	// 	),
-	// )
-
-	// switch resp := ack.Response.(type) {
-	// case *channeltypes.Acknowledgement_Result:
-	// 	ctx.EventManager().EmitEvent(
-	// 		sdk.NewEvent(
-	// 			eventType,
-	// 			sdk.NewAttribute(types.AttributeKeyAckSuccess, string(resp.Result)),
-	// 		),
-	// 	)
-	// case *channeltypes.Acknowledgement_Error:
-	// 	ctx.EventManager().EmitEvent(
-	// 		sdk.NewEvent(
-	// 			eventType,
-	// 			sdk.NewAttribute(types.AttributeKeyAckError, resp.Error),
-	// 		),
-	// 	)
-	// }
-
-	// return nil
+	return im.keeper.HandleAcknowledgement(ctx, modulePacket, acknowledgement)
 }
 
 // OnTimeoutPacket implements the IBCModule interface
@@ -215,9 +176,9 @@ func (im IBCModule) NegotiateAppVersion(
 	return proposedVersion, nil
 }
 
-// #############################################################################
-// 	Required functions to satisfy interface but not implemented for ICA
-// #############################################################################
+// ###################################################################################
+// 	Required functions to satisfy interface but not implemented for ICA auth modules
+// ###################################################################################
 
 // OnChanOpenTry implements the IBCModule interface
 func (im IBCModule) OnChanOpenTry(
