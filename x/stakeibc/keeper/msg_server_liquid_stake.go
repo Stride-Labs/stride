@@ -29,10 +29,10 @@ func (k msgServer) LiquidStake(goCtx context.Context, msg *types.MsgLiquidStake)
 	}
 
 	// Safety checks
-	// ensure Amount is non-negative, liquid staking 0 or less tokens is invalid
+	// ensure Amount is positive, liquid staking 0 or less tokens is invalid
 	if !inCoin.IsPositive() {
-		k.Logger(ctx).Info("amount must be non-negative")
-		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidCoins, "amount must be non-negative")
+		k.Logger(ctx).Info("amount must be positive")
+		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidCoins, "amount must be positive")
 	}
 	// Creator owns at least "amount" of inCoin
 	balance := k.bankKeeper.GetBalance(ctx, sender, msg.Denom)
@@ -68,10 +68,10 @@ func (k msgServer) LiquidStake(goCtx context.Context, msg *types.MsgLiquidStake)
 
 func (k msgServer) MintStAsset(ctx sdk.Context, sender sdk.AccAddress, amount int32, denom string) error {
 	// repeat safety checks from LiquidStake in case MintStAsset is called from another site
-	// ensure Amount is non-negative, liquid staking 0 or less tokens is invalid
+	// ensure Amount is positive, liquid staking 0 or less tokens is invalid
 	if amount < 1 {
-		k.Logger(ctx).Info("Amount to mint must be non-negative")
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidCoins, "Amount to mint must be non-negative")
+		k.Logger(ctx).Info("Amount to mint must be positive")
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidCoins, "Amount to mint must be positive")
 	}
 	// check that the token is an IBC token
 	isIbcToken := types.IsIBCToken(denom)
