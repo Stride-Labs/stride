@@ -51,9 +51,8 @@ func (k Keeper) GetHostZone(ctx sdk.Context, chain_id string) (val types.HostZon
 	return val, true
 }
 
-// GetHostZoneFromDenom returns a hostZone from the relevant coin denom
-
-func (k Keeper) GetHostZoneFromDenom(ctx sdk.Context, denom string) (val types.HostZone, found bool) {
+// GetHostZoneFromHostDenom returns a hostZone from the relevant coin denom
+func (k Keeper) GetHostZoneFromHostDenom(ctx sdk.Context, hostDenom string) (val types.HostZone, found bool) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.HostZoneKey))
 	iterator := sdk.KVStorePrefixIterator(store, []byte{})
 
@@ -62,7 +61,7 @@ func (k Keeper) GetHostZoneFromDenom(ctx sdk.Context, denom string) (val types.H
 	for ; iterator.Valid(); iterator.Next() {
 		var val types.HostZone
 		k.cdc.MustUnmarshal(iterator.Value(), &val)
-		if val.BaseDenom == denom {
+		if val.HostDenom == hostDenom {
 			return val, true
 		}
 	}
@@ -97,11 +96,11 @@ func GetHostZoneIDFromBytes(bz []byte) uint64 {
 	return binary.BigEndian.Uint64(bz)
 }
 
-// GetHostZoneFromLocalDenom returns a HostZone from a LocalDenom
-func (k Keeper) GetHostZoneFromLocalDenom(ctx sdk.Context, denom string) (*types.HostZone, error) {
+// GetHostZoneFromIBCDenom returns a HostZone from a IBCDenom
+func (k Keeper) GetHostZoneFromIBCDenom(ctx sdk.Context, denom string) (*types.HostZone, error) {
 	var matchZone types.HostZone
 	k.IterateHostZones(ctx, func(index int64, zoneInfo types.HostZone) (stop bool) {
-		if zoneInfo.LocalDenom == denom {
+		if zoneInfo.IBCDenom == denom {
 			matchZone = zoneInfo
 			return true
 		}

@@ -94,7 +94,7 @@ setup() {
 @test "host zone successfully registered" {
   run $STR1_EXEC q stakeibc show-host-zone GAIA
   host_zone_info=$($STR1_EXEC q stakeibc get-host-zone  | awk '{print $NF}')
-  assert_line '  BaseDenom: ibc/C4CFF46FD6DE35CA4CF4CE031E643C8FDC9BA4B99AE598E9B0ED98FE3A2319F9'
+  assert_line '  HostDenom: ibc/C4CFF46FD6DE35CA4CF4CE031E643C8FDC9BA4B99AE598E9B0ED98FE3A2319F9'
 }
 
 # TEST-74

@@ -30044,10 +30044,12 @@ paths:
                         TODO(TEST-XX): Update these fields to be more useful
                         (e.g. balances should be coins, maybe store port name
                         directly)
-                    LocalDenom:
+                    IBCDenom:
                       type: string
-                    BaseDenom:
+                      title: ibc denom on stride
+                    HostDenom:
                       type: string
+                      title: native denom on host zone
                     LastRedemptionRate:
                       type: string
                       title: >-
@@ -30515,10 +30517,12 @@ paths:
                     title: >-
                       TODO(TEST-XX): Update these fields to be more useful (e.g.
                       balances should be coins, maybe store port name directly)
-                  LocalDenom:
+                  IBCDenom:
                     type: string
-                  BaseDenom:
+                    title: ibc denom on stride
+                  HostDenom:
                     type: string
+                    title: native denom on host zone
                   LastRedemptionRate:
                     type: string
                     title: >-
@@ -52349,10 +52353,12 @@ definitions:
         title: >-
           TODO(TEST-XX): Update these fields to be more useful (e.g. balances
           should be coins, maybe store port name directly)
-      LocalDenom:
+      IBCDenom:
         type: string
-      BaseDenom:
+        title: ibc denom on stride
+      HostDenom:
         type: string
+        title: native denom on host zone
       LastRedemptionRate:
         type: string
         title: >-
@@ -52715,10 +52721,12 @@ definitions:
               title: >-
                 TODO(TEST-XX): Update these fields to be more useful (e.g.
                 balances should be coins, maybe store port name directly)
-            LocalDenom:
+            IBCDenom:
               type: string
-            BaseDenom:
+              title: ibc denom on stride
+            HostDenom:
               type: string
+              title: native denom on host zone
             LastRedemptionRate:
               type: string
               title: >-
@@ -52989,10 +52997,12 @@ definitions:
             title: >-
               TODO(TEST-XX): Update these fields to be more useful (e.g.
               balances should be coins, maybe store port name directly)
-          LocalDenom:
+          IBCDenom:
             type: string
-          BaseDenom:
+            title: ibc denom on stride
+          HostDenom:
             type: string
+            title: native denom on host zone
           LastRedemptionRate:
             type: string
             title: >-
