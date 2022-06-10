@@ -83,7 +83,7 @@ ALLOW_MESSAGES='\"/cosmos.bank.v1beta1.MsgSend\", \"/cosmos.bank.v1beta1.MsgMult
 sed -i -E "s|\"allow_messages\": \[\]|\"allow_messages\": \[${ALLOW_MESSAGES}\]|g" "${STATE}/${main_gaia_node}/config/genesis.json"
 
 
-# make sure all Stride chains have the same genesis
+# make sure all Gaia chains have the same genesis
 for i in "${!GAIA_CHAINS[@]}"; do
     if [ $i -ne $MAIN_ID ]
     then
