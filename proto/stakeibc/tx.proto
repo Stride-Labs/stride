@@ -24,6 +24,7 @@ service Msg {
 message MsgLiquidStake {
   string creator = 1;
   int32 amount = 2;
+  // TODO(TEST-86): Update Denom -> HostDenom
   string denom = 3;
 }
 
@@ -72,8 +73,8 @@ message MsgRegisterHostZone{
   option (gogoproto.goproto_getters) = false;
 
   string connection_id = 2 [ (gogoproto.moretags) = "yaml:\"connection_id\"" ];
-  string base_denom = 4 [ (gogoproto.moretags) = "yaml:\"base_denom\"" ];
-  string local_denom = 5 [ (gogoproto.moretags) = "yaml:\"local_denom\"" ];
+  string host_denom = 4 [ (gogoproto.moretags) = "yaml:\"host_denom\"" ];
+  string ibc_denom = 5 [ (gogoproto.moretags) = "yaml:\"ibc_denom\"" ];
   string creator = 6;
 }
 
