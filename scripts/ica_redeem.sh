@@ -42,3 +42,13 @@ $GAIA1_EXEC q bank balances cosmos10ltqave0ml70h9ynfsp6py2pv925xuzys7ypmffr8ud92
 
 # check that tokens were staked after 10 blocks
 $GAIA1_EXEC q staking delegations cosmos10ltqave0ml70h9ynfsp6py2pv925xuzys7ypmffr8ud92sj09dzs6xtq8e
+
+
+# redeem stAssets for native tokens
+STR1_EXEC tx stakeibc redeem-stake 1 statom \
+    --chain-id STRIDE_1 --home /stride/.strided --keyring-backend test \
+    --from val1 --gas 500000 -y
+
+# query unbonding delegations, should reflect 1uatom
+gaiad q staking unbonding-delegations $DELEGATION_ADDR
+
