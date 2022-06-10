@@ -6,7 +6,6 @@ import (
 	"fmt"
 
 	"github.com/Stride-Labs/stride/x/interchainquery/types"
-	stakeibctypes "github.com/Stride-Labs/stride/x/stakeibc/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
@@ -67,14 +66,10 @@ func (k msgServer) SubmitQueryResponse(goCtx context.Context, msg *types.MsgSubm
 func (k msgServer) QueryBalance(goCtx context.Context, msg *types.MsgQueryBalance) (*types.MsgQueryBalanceResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	// TODO(TEST-84) check:
-	//   -  host chain is supported
-	//   -  address on target chain is valid
-	//   -  denom is valid
-	//   -  caller addr is valid
+	// TODO(TEST-84) check host chain is supported
 	ChainId := msg.ChainId
 
-	// Parse Address addr; TODO(NOW) should this be Address, not Caller? changed temporarily to suppress error
+	// Parse caller Address
 	_, err := sdk.AccAddressFromBech32(msg.Caller)
 	if err != nil {
 		panic(err)
@@ -111,17 +106,11 @@ func (k msgServer) QueryBalance(goCtx context.Context, msg *types.MsgQueryBalanc
 			fmt.Errorf("invalid chain id, zone for \"%s\" already registered", ChainId)
 		}
 
-		// set the zone
-		zone := stakeibctypes.HostZone{
-			ChainId:            ChainId,
-			ConnectionId:       msg.ConnectionId,
-			LocalDenom:         hz.LocalDenom,
-			BaseDenom:          hz.BaseDenom,
-			RedemptionRate:     redemptionRate,
-			LastRedemptionRate: hz.RedemptionRate, // previous redemption rate
-		}
+		// update redemptionRate and LastRedemptionRate on hz
+		hz.LastRedemptionRate = hz.RedemptionRate
+		hz.RedemptionRate = redemptionRate
 		// write the zone back to the store
-		k.StakeibcKeeper.SetHostZone(ctx, zone)
+		k.StakeibcKeeper.SetHostZone(ctx, hz)
 
 		ctx.EventManager().EmitEvents(sdk.Events{
 			sdk.NewEvent(
@@ -176,11 +165,11 @@ func (k msgServer) QueryBalance(goCtx context.Context, msg *types.MsgQueryBalanc
 // TODO(TEST-78) rename from query-XXX => update-XXX
 func (k msgServer) QueryExchangerate(goCtx context.Context, msg *types.MsgQueryExchangerate) (*types.MsgQueryExchangerateResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
-	ChainId := msg.ChainId
-	// TODO Check ChainId is supported by Stride, try using this approach https://github.com/ingenuity-build/quicksilver/blob/ea71f23c6ef09a57e601f4e544c4be9693f5ba81/x/interchainstaking/keeper/msg_server.go#L37
 
-	// Parse Address addr
-	// TODO(NOW) should this be Address, not Caller? changed temporarily to suppress error
+	// TODO(TEST-84) check host chain is supported
+	ChainId := msg.ChainId
+
+	// Parse caller Address
 	_, err := sdk.AccAddressFromBech32(msg.Creator)
 	if err != nil {
 		panic(err)
@@ -216,17 +205,11 @@ func (k msgServer) QueryExchangerate(goCtx context.Context, msg *types.MsgQueryE
 		stAssetSupply := k.BankKeeper.GetSupply(ctx, stDenom)
 		redemptionRate := delegatorSum.Amount.ToDec().Quo(stAssetSupply.Amount.ToDec())
 
-		// set the zone
-		zone := stakeibctypes.HostZone{
-			ChainId:            ChainId,
-			ConnectionId:       hz.ConnectionId,
-			LocalDenom:         hz.LocalDenom,
-			BaseDenom:          hz.BaseDenom,
-			RedemptionRate:     redemptionRate,
-			LastRedemptionRate: hz.RedemptionRate, // previous redemption rate
-		}
+		// update redemptionRate and LastRedemptionRate on hz
+		hz.LastRedemptionRate = hz.RedemptionRate
+		hz.RedemptionRate = redemptionRate
 		// write the zone back to the store
-		k.StakeibcKeeper.SetHostZone(ctx, zone)
+		k.StakeibcKeeper.SetHostZone(ctx, hz)
 
 		ctx.EventManager().EmitEvents(sdk.Events{
 			sdk.NewEvent(
@@ -282,10 +265,11 @@ func (k msgServer) QueryExchangerate(goCtx context.Context, msg *types.MsgQueryE
 // TODO(TEST-78) rename from query-XXX => update-XXX
 func (k msgServer) QueryDelegatedbalance(goCtx context.Context, msg *types.MsgQueryDelegatedbalance) (*types.MsgQueryDelegatedbalanceResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	// TODO(TEST-84) check host chain is supported
 	ChainId := msg.ChainId
 
-	// Parse Address addr
-	// TODO(NOW) should this be Address, not Caller
+	// Parse caller Address
 	_, err := sdk.AccAddressFromBech32(msg.Creator)
 	if err != nil {
 		panic(err)
@@ -315,25 +299,9 @@ func (k msgServer) QueryDelegatedbalance(goCtx context.Context, msg *types.MsgQu
 		}
 
 		da := hz.DelegationAccount
-		delegationAccount := stakeibctypes.ICAAccount{Address: da.Address,
-			Balance:          balance, // <== updated
-			DelegatedBalance: da.DelegatedBalance,
-			Delegations:      da.Delegations,
-			Target:           da.Target,
-		}
-
-		// set the zone
-		zone := stakeibctypes.HostZone{
-			ChainId:            hz.ChainId,
-			ConnectionId:       hz.ConnectionId,
-			LocalDenom:         hz.LocalDenom,
-			BaseDenom:          hz.BaseDenom,
-			DelegationAccount:  &delegationAccount, // <== updated
-			RedemptionRate:     hz.RedemptionRate,
-			LastRedemptionRate: hz.LastRedemptionRate,
-		}
-		// write the zone back to the store
-		k.StakeibcKeeper.SetHostZone(ctx, zone)
+		da.Balance = balance
+		hz.DelegationAccount = da
+		k.StakeibcKeeper.SetHostZone(ctx, hz)
 
 		ctx.EventManager().EmitEvents(sdk.Events{
 			sdk.NewEvent(
