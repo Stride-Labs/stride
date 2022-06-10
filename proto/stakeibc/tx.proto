@@ -62,10 +62,11 @@ message MsgRegisterHostZone{
   option (gogoproto.goproto_getters) = false;
 
   string connection_id = 2 [ (gogoproto.moretags) = "yaml:\"connection_id\"" ];
+  // TODO TEST-87 change localDenom to stDenom
   string base_denom = 4 [ (gogoproto.moretags) = "yaml:\"base_denom\"" ];
   string local_denom = 5 [ (gogoproto.moretags) = "yaml:\"local_denom\"" ];
   string creator = 6;
-  string channel_id = 10 [ (gogoproto.moretags) = "yaml:\"channel_id\"" ];
+  string transfer_channel_id = 10 [ (gogoproto.moretags) = "yaml:\"transfer_channel_id\"" ];
 }
 
 // TODO(TEST-53): Remove this pre-launch (no need for clients to create / interact with ICAs)

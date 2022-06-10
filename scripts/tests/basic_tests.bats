@@ -60,9 +60,6 @@ setup() {
   # get all STRD balance diffs
   str1_diff=$(($str1_balance - $str1_balance_new))
   gaia1_diff=$(($gaia1_balance - $gaia1_balance_new))
-  echo "str1_balance: $str1_balance"
-  echo "str1_balance_new: $str1_balance_new"
-  echo "str1_diff: $str1_diff"
   assert_equal "$str1_diff" '1000'
   assert_equal "$gaia1_diff" '-1000'
   # get all ATOM balance diffs
@@ -81,7 +78,7 @@ setup() {
   str1_balance_statom=$($STR1_EXEC q bank balances $STRIDE_ADDRESS_1 --denom $STATOM | GETBAL)
   # liquid stake
   $STR1_EXEC tx stakeibc liquid-stake 1000 $IBCATOM --keyring-backend test --from val1 -y
-  sleep 10
+  sleep 15
   # make sure Module Acct received ATOM
   mod_balance_atom_new=$($STR1_EXEC q bank balances $MODADDR --denom $IBCATOM | GETBAL)
   mod_atom_diff=$(($mod_balance_atom_new - $mod_balance_atom))
@@ -110,9 +107,13 @@ setup() {
   # VAL_ADDR='cosmosvaloper19e7sugzt8zaamk2wyydzgmg9n3ysylg6na6k6e'
   # $GAIA1_EXEC q staking delegation cosmos19l6d3d7k2pel8epgcpxc9np6fsvjpaaa06nm65vagwxap0e4jezq05mmvu cosmosvaloper19e7sugzt8zaamk2wyydzgmg9n3ysylg6na6k6e
   #   amount: "240"
-  del_balance_atom=$($STR1_EXEC q bank balances $DELEGATE_ADDR --denom uatom | GETBAL)
-  sleep 10
-  del_balance_atom_new=$($STR1_EXEC q bank balances $DELEGATE_ADDR --denom uatom | GETBAL)
-  assert [ del_balance_atom -gt del_balance_atom_new ]
+  sleep 30
+  del_balance_atom=$($GAIA1_EXEC q bank balances $DELEGATE_ADDR --denom uatom | GETBAL)
+  $GAIA1_EXEC q bank balances $DELEGATE_ADDR
+  sleep 20
+  del_balance_atom_new=$($GAIA1_EXEC q bank balances $DELEGATE_ADDR --denom uatom | GETBAL)
+  $GAIA1_EXEC q bank balances $DELEGATE_ADDR
+  [ $del_balance_atom -gt $del_balance_atom_new ] && WORKED=0 || WORKED=1
+  assert_equal "$WORKED" "1"
 }
 

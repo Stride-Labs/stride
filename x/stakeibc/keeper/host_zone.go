@@ -62,6 +62,7 @@ func (k Keeper) GetHostZoneFromDenom(ctx sdk.Context, denom string) (val types.H
 
 	// hash is the part of denom after ibc/
 	hash := strings.Join(strings.SplitN(denom, "ibc/", -1), "")
+	// TODO TEST-67 Error Handling - Verify IBC transfer works properly when done with two hops
 	req := &ibctypes.QueryDenomTraceRequest{Hash: hash}
 	goCtx := sdk.WrapSDKContext(ctx)
 	denomTrace, err := k.transferKeeper.DenomTrace(goCtx, req)
