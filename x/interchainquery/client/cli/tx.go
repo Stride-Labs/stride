@@ -26,6 +26,7 @@ func GetTxCmd() *cobra.Command {
 
 	cmd.AddCommand(
 		QueryBalanceCmd(),
+		// TODO(TEST-53) remove cli access to ICQ queries pre-launch
 		SubmitQueryResponse(),
 	)
 	cmd.AddCommand(CmdQueryExchangerate())
@@ -75,6 +76,7 @@ func QueryBalanceCmd() *cobra.Command {
 
 func SubmitQueryResponse() *cobra.Command {
 	cmd := &cobra.Command{
+		// TODO(TEST-77) camel case
 		Use:   "submitqueryresponse [chain_id] [query_id] [result] [height] [from_address]",
 		Short: `Submit Query Response.`,
 		Long: `

@@ -11,7 +11,6 @@ const (
 )
 
 var (
-	// _ sdk.Msg = &MsgRegisterAccount{}
 	_ sdk.Msg = &MsgSubmitQueryResponse{}
 	_ sdk.Msg = &MsgQueryBalance{}
 )

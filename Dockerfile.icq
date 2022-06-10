@@ -1,6 +1,6 @@
 FROM golang:1.17-bullseye
 
-# TODO uncomment update
+# TODO uncomment update if installs are breaking below
 # RUN apt update
 RUN apt install git
 
@@ -9,24 +9,6 @@ RUN apt-get install jq --yes
 
 WORKDIR /src/app
 
-# TODO remove PAT | access private stride repo using the below personal access token, per https://www.digitalocean.com/community/tutorials/how-to-use-a-private-go-module-in-your-own-project
-# RUN export GOPRIVATE=github.com/Stride-Labs/stride
-# RUN go env -w GOPRIVATE=github.com/Stride-Labs/stride
-# ENV GOPRIVATE github.com/Stride-Labs/stride
-# RUN touch ~/.netrc
-# RUN echo $GOPRIVATE
-# RUN echo "machine github.com login riley-stride password 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" >> ~/.netrc
-# RUN cat ~/.netrc
-# RUN echo '[url "ssh://git@github.com/"]' >> ~/.gitconfig
-# RUN echo '	insteadOf = https://github.com/' >> ~/.gitconfig
-# RUN go get "github.com/Stride-Labs/stride"
-
-# ENV GIT_SSH_COMMAND="ssh -i /src/app/test -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no"
-# RUN git config --global url."git@github.com:".insteadOf "https://github.com/" 
-## TODO(security) switch this for a proper download without PAT 
-# TODO move token to gitignored file and echo it here
-# RUN git clone https://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:x-oauth-basic@github.com/Stride-Labs/interchain-queries.git 
-# RUN git clone https://github.com/Stride-Labs/interchain-queries.git 
 RUN git clone https://github.com/Stride-Labs/icq.git
 RUN cp -r icq/* .
 RUN rm -rf interchain-queries
@@ -36,12 +18,7 @@ RUN mkdir stride_ref
 RUN mkdir stride_ref/stride
 COPY . /src/app/stride_ref/stride
 WORKDIR /src/app/stride_ref/stride
-# RUN go mod download
 WORKDIR /src/app
-
-# RUN go get github.com/ingenuity-build/interchain-queries/cmd
-# RUN go get github.com/ingenuity-build/interchain-queries/pkg/runner
-
 RUN go get github.com/Stride-Labs/interchain-queries/cmd
 RUN go get github.com/Stride-Labs/interchain-queries/pkg/runner
 RUN go mod download
@@ -50,9 +27,6 @@ RUN go build
 RUN ln -s /src/app/interchain-queries /usr/local/bin
 RUN adduser --system --home /icq --disabled-password --disabled-login icq -U 1000
 USER icq
-
-# CMD ["interchain-queries", "run"]
-
 
 
 

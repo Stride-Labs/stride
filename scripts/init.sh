@@ -136,11 +136,12 @@ docker-compose build icq --no-cache
 ICQ_RUN="docker-compose --ansi never run -T icq interchain-queries"
 
 echo "\nAdd ICQ relayer addresses for Stride and Gaia:"
-## TODO replace XXX-testnet in lens config with stride_1 and gaia_1 to match env vars here
+# TODO(TEST-82) redefine stride-testnet in lens' config to $main_chain and gaia-testnet to $main-gaia-chain, then replace those below with $main_chain and $main_gaia_chain
 $ICQ_RUN keys restore test "$ICQ_STRIDE_KEY" --chain stride-testnet
 $ICQ_RUN keys restore test "$ICQ_GAIA_KEY" --chain gaia-testnet
 
 echo "\nICQ addresses for Stride and Gaia:"
+# TODO(TEST-83) pull these addresses dynamically using jq
 ICQ_ADDRESS_STRIDE="stride12vfkpj7lpqg0n4j68rr5kyffc6wu55dzqewda4"
 # echo $ICQ_ADDRESS_STRIDE
 ICQ_ADDRESS_GAIA="cosmos1g6qdx6kdhpf000afvvpte7hp0vnpzapuyxp8uf"

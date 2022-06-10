@@ -21,10 +21,6 @@ func (k Keeper) CallbackHandler() Callbacks {
 	return Callbacks{k, make(map[string]Callback)}
 }
 
-// // callback handler
-// func (c Callbacks) Call(id string, ctx sdk.Context, args proto.Message) error {
-// 	return c.callbacks[id](c.k, ctx, args)
-// }
 //callback handler
 func (c Callbacks) Call(ctx sdk.Context, id string, args []byte, query types.Query) error {
 	return c.callbacks[id](c.k, ctx, args, query)

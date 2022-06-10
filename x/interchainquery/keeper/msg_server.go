@@ -27,14 +27,6 @@ var _ types.MsgServer = msgServer{}
 func (k msgServer) SubmitQueryResponse(goCtx context.Context, msg *types.MsgSubmitQueryResponse) (*types.MsgSubmitQueryResponseResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	// TODO remove this, only checking the tx landed
-	ctx.EventManager().EmitEvents(sdk.Events{
-		sdk.NewEvent(
-			sdk.EventTypeMessage,
-			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
-		),
-	})
-
 	q, found := k.GetQuery(ctx, msg.QueryId)
 	if found {
 		for _, module := range k.callbacks {
@@ -72,65 +64,24 @@ func (k msgServer) SubmitQueryResponse(goCtx context.Context, msg *types.MsgSubm
 	return &types.MsgSubmitQueryResponseResponse{}, nil
 }
 
-// Example: "query-balance [chain_id] [address] [denom]"
-// TODO(TEST-50) Handling the message
 func (k msgServer) QueryBalance(goCtx context.Context, msg *types.MsgQueryBalance) (*types.MsgQueryBalanceResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	// parse input and do some check on that data, throw errors
-	// 		parse an input to the IBC packet we'd like to construct (note that input MsgQueryBalance looks like: {ChainId: chain_id, Address: address, Denom: denom, Caller: from_address})
-	// 		check (1) host chain is supported (2) address on target chain is valid (3) denom is valid (4) caller addr is valid
+	// TODO(TEST-84) check:
+	//   -  host chain is supported
+	//   -  address on target chain is valid
+	//   -  denom is valid
+	//   -  caller addr is valid
 	ChainId := msg.ChainId
-	// TODO Check ChainId is supported by Stride, try using this approach https://github.com/ingenuity-build/quicksilver/blob/ea71f23c6ef09a57e601f4e544c4be9693f5ba81/x/interchainstaking/keeper/msg_server.go#L37
 
-	// Parse Address addr
-	// TODO should this be Address, not Caller? changed temporarily to suppress error
+	// Parse Address addr; TODO(NOW) should this be Address, not Caller? changed temporarily to suppress error
 	_, err := sdk.AccAddressFromBech32(msg.Caller)
 	if err != nil {
 		panic(err)
 	}
-	//TODO Check Denom is valid denom (can you do this for ICS20s?)
-	// Denom := msg.Denom
-	// Parse Caller addr
-	// _, err := sdk.AccAddressFromBech32(msg.Caller)
-	// if err != nil {
-	// 	panic(err)
-	// }
 	ConnectionId := msg.ConnectionId
 
-	// perform some action e.g. send coins. this requires getting attrs and parsing inputs to get addrs, amts, etc. use a keeper to perform the action (e.g. bankKeeper).
-	//		(1) construct the ibc transaction (2) submit the ibc tx
-	//			target: target chain's bankKeeper module query
-	// Construct the packet
-
-	// func (k *Keeper) MakeRequest(
-	// 	ctx sdk.Context,
-	// 	connection_id string,
-	// 	chain_id string,
-	// 	query_type string,
-	// 	query_params map[string]string,
-	// 	period sdk.Int,
-	// 	module string,
-	// 	callback interface{})
-
-	// TODO do we need to add a callback type for this to work?
 	var cb Callback = func(k Keeper, ctx sdk.Context, args []byte, query types.Query) error {
-		// panic(err)
-
-		k.Logger(ctx).Info("[TEMP] printing inside the querybalance callback")
-		// return k.SetAccountBalance(ctx, zone, query.QueryParameters["address"],
-		//  args)
-
-		// address := query.QueryParameters["address"]
-
-		// queryResult := args
-		// queryRes := banktypes.QueryAllBalancesResponse{}
-		// err := k.cdc.Unmarshal(queryResult, &queryRes)
-		// if err != nil {
-		// 	k.Logger(ctx).Error("Unable to unmarshal balances info for zone", "err", err)
-		// 	return err
-		// }
-		// k.Logger(ctx).Info("[TEMP] printing result from query-balances:", queryRes.Balances.String())
 
 		var response stakingtypes.QueryDelegatorDelegationsResponse
 		err := k.cdc.Unmarshal(args, &response)
@@ -138,7 +89,7 @@ func (k msgServer) QueryBalance(goCtx context.Context, msg *types.MsgQueryBalanc
 			return err
 		}
 
-		// TODO get denom dynamically
+		// TOD(TEST-85) get denom dynamically
 		delegatorSum := sdk.NewCoin("uatom", sdk.ZeroInt())
 		for _, delegation := range response.DelegationResponses {
 			delegatorSum = delegatorSum.Add(delegation.Balance)
@@ -162,11 +113,10 @@ func (k msgServer) QueryBalance(goCtx context.Context, msg *types.MsgQueryBalanc
 
 		// set the zone
 		zone := stakeibctypes.HostZone{
-			ChainId:      ChainId,
-			ConnectionId: msg.ConnectionId,
-			LocalDenom:   hz.LocalDenom,
-			BaseDenom:    hz.BaseDenom,
-			// Start exchange rate at 1 upon registration
+			ChainId:            ChainId,
+			ConnectionId:       msg.ConnectionId,
+			LocalDenom:         hz.LocalDenom,
+			BaseDenom:          hz.BaseDenom,
 			RedemptionRate:     redemptionRate,
 			LastRedemptionRate: hz.RedemptionRate, // previous redemption rate
 		}
@@ -182,30 +132,10 @@ func (k msgServer) QueryBalance(goCtx context.Context, msg *types.MsgQueryBalanc
 			),
 		})
 
-		// set stakeibc:ICAAccount:delegatedBalance
-		// oldICAA, found := stakeibckeeper.Keeper.GetICAAccount(ctx)
-		// if !found {
-		// 	k.Logger(ctx).Error("could not fetch ICAAccount for stakeIbc")
-		// }
-		// nTokens, err := strconv.ParseInt(strings.Replace(queryRes.Balances.String(), "uatom", "", 1), 10, 32)
-		// if err != nil {
-		// 	k.Logger(ctx).Error("could not cast QueryBalance result to uint32")
-		// }
-		// updatedICAAAccount := &stakeibctypes.ICAAccount{Address: oldICAA.Address,
-		// 												Balance: oldICAA.Balance,
-		// 												DelegatedBalance: int32(nTokens),
-		// 												Delegations: oldICAA.Delegations}
-		// stakeibckeeper.Keeper.SetICAAccount(ctx, updatedICAAAccount)
-
 		return nil
 	}
 
-	// query_type := "cosmos.bank.v1beta1.Query/AllBalances"
 	query_type := "cosmos.staking.v1beta1.Query/DelegatorDelegations"
-
-	// balanceQuery := banktypes.QueryAllBalancesRequest{Address: msg.Address}
-	// bz, err := k.cdc.Marshal(&balanceQuery)
-
 	delegationQuery := stakingtypes.QueryDelegatorDelegationsRequest{DelegatorAddr: msg.Address}
 	bz := k.cdc.MustMarshal(&delegationQuery)
 
@@ -217,21 +147,13 @@ func (k msgServer) QueryBalance(goCtx context.Context, msg *types.MsgQueryBalanc
 		ctx,
 		ConnectionId,
 		ChainId,
-		// pass in the target chain module and event/message to query
-		// https://buf.build/cosmos/cosmos-sdk/docs/c03d23cee0a9488c835dee787f2deebb:cosmos.bank.v1beta1#cosmos.bank.v1beta1.Query.Balance
-		// "cosmos.bank.v1beta1.Query/Balance",
 		query_type,
-		// pass in arguments to the query here
-		// map[string]string{"address": msg.Address},
 		bz,
-		//TODO set this window to something sensible
+		// TODO(TEST-79) understand and use proper period
 		sdk.NewInt(25),
 		types.ModuleName,
 		cb,
 	)
-	// TODO how do we display the result here (from the target chain)
-	// 		=> for now, just use ctx logging:
-	// k.Logger(ctx).Info("ICQ submitted; output = ", ) //, outputFromICQ)
 
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(
@@ -251,13 +173,14 @@ func (k msgServer) QueryBalance(goCtx context.Context, msg *types.MsgQueryBalanc
 	return &types.MsgQueryBalanceResponse{}, nil
 }
 
+// TODO(TEST-78) rename from query-XXX => update-XXX
 func (k msgServer) QueryExchangerate(goCtx context.Context, msg *types.MsgQueryExchangerate) (*types.MsgQueryExchangerateResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	ChainId := msg.ChainId
 	// TODO Check ChainId is supported by Stride, try using this approach https://github.com/ingenuity-build/quicksilver/blob/ea71f23c6ef09a57e601f4e544c4be9693f5ba81/x/interchainstaking/keeper/msg_server.go#L37
 
 	// Parse Address addr
-	// TODO should this be Address, not Caller? changed temporarily to suppress error
+	// TODO(NOW) should this be Address, not Caller? changed temporarily to suppress error
 	_, err := sdk.AccAddressFromBech32(msg.Creator)
 	if err != nil {
 		panic(err)
@@ -277,7 +200,7 @@ func (k msgServer) QueryExchangerate(goCtx context.Context, msg *types.MsgQueryE
 			return err
 		}
 
-		// TODO get denom dynamically -- is it local or base denom?
+		// TODO(TEST-85) set denom dynamically
 		delegatorSum := sdk.NewCoin("uatom", sdk.ZeroInt())
 		for _, delegation := range response.DelegationResponses {
 			delegatorSum = delegatorSum.Add(delegation.Balance)
@@ -287,7 +210,7 @@ func (k msgServer) QueryExchangerate(goCtx context.Context, msg *types.MsgQueryE
 		}
 
 		// Set Redemption Rate Based On Delegation Balance vs stAsset Supply
-		// TODO change local denom
+		// TODO(TEST-85) set denom dynamically
 		// get denom with `strided q stakeibc list-host-zone`, currently `stibc/C4CFF46FD6DE35CA4CF4CE031E643C8FDC9BA4B99AE598E9B0ED98FE3A2319F9`
 		stDenom := "stibc/C4CFF46FD6DE35CA4CF4CE031E643C8FDC9BA4B99AE598E9B0ED98FE3A2319F9"
 		stAssetSupply := k.BankKeeper.GetSupply(ctx, stDenom)
@@ -295,11 +218,10 @@ func (k msgServer) QueryExchangerate(goCtx context.Context, msg *types.MsgQueryE
 
 		// set the zone
 		zone := stakeibctypes.HostZone{
-			ChainId:      ChainId,
-			ConnectionId: hz.ConnectionId,
-			LocalDenom:   hz.LocalDenom,
-			BaseDenom:    hz.BaseDenom,
-			// Start exchange rate at 1 upon registration
+			ChainId:            ChainId,
+			ConnectionId:       hz.ConnectionId,
+			LocalDenom:         hz.LocalDenom,
+			BaseDenom:          hz.BaseDenom,
 			RedemptionRate:     redemptionRate,
 			LastRedemptionRate: hz.RedemptionRate, // previous redemption rate
 		}
@@ -319,16 +241,12 @@ func (k msgServer) QueryExchangerate(goCtx context.Context, msg *types.MsgQueryE
 	}
 
 	query_type := "cosmos.staking.v1beta1.Query/DelegatorDelegations"
-	// TODO replace hardcoded addr with host zone's delegation account
+	// TODO(TEST-86) get addr dynamically (delegationAddress)
 	delegationQuery := stakingtypes.QueryDelegatorDelegationsRequest{DelegatorAddr: "cosmos1t2aqq3c6mt8fa6l5ady44manvhqf77sywjcldv"}
 	bz := k.cdc.MustMarshal(&delegationQuery)
 	if err != nil {
 		return nil, err
 	}
-
-	// query_type := "cosmos.bank.v1beta1.Query/AllBalances"
-	// balanceQuery := banktypes.QueryAllBalancesRequest{Address: msg.Address}
-	// bz, err := k.cdc.Marshal(&balanceQuery)
 
 	k.Keeper.MakeRequest(
 		ctx,
@@ -336,6 +254,7 @@ func (k msgServer) QueryExchangerate(goCtx context.Context, msg *types.MsgQueryE
 		ChainId,
 		query_type,
 		bz,
+		// TODO(TEST-79) understand and use proper period
 		sdk.NewInt(25),
 		types.ModuleName,
 		cb,
@@ -350,6 +269,7 @@ func (k msgServer) QueryExchangerate(goCtx context.Context, msg *types.MsgQueryE
 			sdk.NewAttribute(types.AttributeKeyChainId, ChainId),
 			sdk.NewAttribute(types.AttributeKeyConnectionId, ConnectionId),
 			sdk.NewAttribute(types.AttributeKeyType, query_type),
+			// TODO(TEST-79) understand height
 			sdk.NewAttribute(types.AttributeKeyHeight, "0"),
 			sdk.NewAttribute(types.AttributeKeyRequest, hex.EncodeToString(bz)),
 		),
@@ -359,13 +279,13 @@ func (k msgServer) QueryExchangerate(goCtx context.Context, msg *types.MsgQueryE
 	return &types.MsgQueryExchangerateResponse{}, nil
 }
 
+// TODO(TEST-78) rename from query-XXX => update-XXX
 func (k msgServer) QueryDelegatedbalance(goCtx context.Context, msg *types.MsgQueryDelegatedbalance) (*types.MsgQueryDelegatedbalanceResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	ChainId := msg.ChainId
-	// TODO Check ChainId is supported by Stride, try using this approach https://github.com/ingenuity-build/quicksilver/blob/ea71f23c6ef09a57e601f4e544c4be9693f5ba81/x/interchainstaking/keeper/msg_server.go#L37
 
 	// Parse Address addr
-	// TODO should this be Address, not Caller? changed temporarily to suppress error
+	// TODO(NOW) should this be Address, not Caller
 	_, err := sdk.AccAddressFromBech32(msg.Creator)
 	if err != nil {
 		panic(err)
@@ -425,16 +345,8 @@ func (k msgServer) QueryDelegatedbalance(goCtx context.Context, msg *types.MsgQu
 		return nil
 	}
 
-	// query_type := "cosmos.staking.v1beta1.Query/DelegatorDelegations"
-	// // TODO replace hardcoded addr with host zone's delegation account
-	// delegationQuery := stakingtypes.QueryDelegatorDelegationsRequest{DelegatorAddr: "cosmos1t2aqq3c6mt8fa6l5ady44manvhqf77sywjcldv"}
-	// bz := k.cdc.MustMarshal(&delegationQuery)
-	// if err != nil {
-	// 	return nil, err
-	// }
-
 	query_type := "cosmos.bank.v1beta1.Query/AllBalances"
-	// TODO replace hardcoded addr with host zone's delegation account
+	// TODO(NOW) replace hardcoded addr with host zone's delegation account
 	balanceQuery := banktypes.QueryAllBalancesRequest{Address: "cosmos1t2aqq3c6mt8fa6l5ady44manvhqf77sywjcldv"}
 	bz, err := k.cdc.Marshal(&balanceQuery)
 	if err != nil {
@@ -447,6 +359,7 @@ func (k msgServer) QueryDelegatedbalance(goCtx context.Context, msg *types.MsgQu
 		ChainId,
 		query_type,
 		bz,
+		// TODO(TEST-79) understand and use proper period
 		sdk.NewInt(25),
 		types.ModuleName,
 		cb,

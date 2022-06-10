@@ -24,11 +24,7 @@ func RegisterInterfaces(registry types.InterfaceRegistry) {
 	registry.RegisterImplementations((*sdk.Msg)(nil),
 		&MsgSubmitQueryResponse{},
 		&MsgQueryBalance{},
-	)
-	registry.RegisterImplementations((*sdk.Msg)(nil),
 		&MsgQueryExchangerate{},
-	)
-	registry.RegisterImplementations((*sdk.Msg)(nil),
 		&MsgQueryDelegatedbalance{},
 	)
 	// this line is used by starport scaffolding # 3

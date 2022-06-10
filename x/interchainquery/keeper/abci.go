@@ -31,7 +31,7 @@ func (k Keeper) EndBlocker(ctx sdk.Context) {
 				sdk.NewAttribute(types.AttributeKeyChainId, queryInfo.ChainId),
 				sdk.NewAttribute(types.AttributeKeyConnectionId, queryInfo.ConnectionId),
 				sdk.NewAttribute(types.AttributeKeyType, queryInfo.QueryType),
-				// TODO add height
+				// TODO(TEST-79) understand and use proper height
 				sdk.NewAttribute(types.AttributeKeyHeight, "0"),
 				sdk.NewAttribute(types.AttributeKeyRequest, hex.EncodeToString(queryInfo.Request)),
 			)

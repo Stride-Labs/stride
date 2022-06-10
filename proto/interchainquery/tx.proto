@@ -17,12 +17,11 @@ service Msg {
       returns (MsgSubmitQueryResponseResponse) {
     option (google.api.http) = {
       post : "/interchainquery/tx/submitquery"
-      // post : "/interchainquery/tx/v1beta1/submitquery"
       body : "*"
     };
   };
   rpc QueryBalance(MsgQueryBalance) returns (MsgQueryBalanceResponse);
-    rpc QueryExchangerate(MsgQueryExchangerate) returns (MsgQueryExchangerateResponse);
+  rpc QueryExchangerate(MsgQueryExchangerate) returns (MsgQueryExchangerateResponse);
   rpc QueryDelegatedbalance(MsgQueryDelegatedbalance) returns (MsgQueryDelegatedbalanceResponse);
 // this line is used by starport scaffolding # proto/tx/rpc
 }

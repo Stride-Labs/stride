@@ -16,6 +16,5 @@ func GetQueryCmd() *cobra.Command {
 		RunE:                       client.ValidateCmd,
 	}
 
-	// cmd.AddCommand(getInterchainAccountCmd())
 	return cmd
 }

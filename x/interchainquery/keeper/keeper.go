@@ -14,14 +14,16 @@ import (
 
 // Keeper of this module maintains collections of registered zones.
 type Keeper struct {
-	cdc            codec.Codec
-	storeKey       sdk.StoreKey
+	cdc      codec.Codec
+	storeKey sdk.StoreKey
+	// TODO(TEST-80) remove stakeibc and bankkeeper access once exchrage logic moves to stakeibc module
 	BankKeeper     bankkeeper.Keeper
 	StakeibcKeeper stakeibckeeper.Keeper
 	callbacks      map[string]types.QueryCallbacks
 }
 
 // NewKeeper returns a new instance of zones Keeper
+// TODO(TEST-80) remove stakeibc and bankkeeper access once exchrage logic moves to stakeibc module
 func NewKeeper(cdc codec.Codec, storeKey sdk.StoreKey, bankKeeper bankkeeper.Keeper, stakeibcKeeper stakeibckeeper.Keeper) Keeper {
 	return Keeper{
 		cdc:            cdc,

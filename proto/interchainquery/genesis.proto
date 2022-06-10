@@ -12,6 +12,7 @@ message Query {
   string chain_id = 3;
   string query_type = 4;
   bytes request = 8;
+  // TODO(TEST-66) add proofops
   map<string, string> query_parameters = 5;
   string period = 6 [
     (cosmos_proto.scalar) = "cosmos.Int",
@@ -47,17 +48,4 @@ message GenesisState {
 
 // Query defines the gRPC querier service.
 service QueryService {
-  // QueryInterchainAccountFromAddress returns the interchain account for given owner address on a given connection pair
-  rpc InterchainAccountFromAddress(QueryServiceInterchainAccountFromAddressRequest) returns (QueryServiceInterchainAccountFromAddressResponse);
-}
-
-// QueryInterchainAccountFromAddressRequest is the request type for the Query/InterchainAccountAddress RPC
-message QueryServiceInterchainAccountFromAddressRequest {
-  string owner                      = 1;
-  string connection_id = 2 [(gogoproto.moretags) = "yaml:\"connection_id\""];
-}
-
-// QueryInterchainAccountFromAddressResponse the response type for the Query/InterchainAccountAddress RPC
-message QueryServiceInterchainAccountFromAddressResponse {
-  string interchain_account_address = 1 [(gogoproto.moretags) = "yaml:\"interchain_account_address\""];
 }
