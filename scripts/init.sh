@@ -160,8 +160,6 @@ docker-compose up --force-recreate -d icq
 # first register host zone for ATOM chain
 IBCATOM='atom'
 docker-compose --ansi never exec -T $main_node strided tx stakeibc register-host-zone connection-0 $IBCATOM "st${IBCATOM}" --chain-id $main_chain --home /stride/.strided --keyring-backend test --from val1 --gas 500000 -y
-#############################################################################################################################
-# source ${SCRIPT_DIR}/ica_stake.sh
 
 sleep 10
 sh ${SCRIPT_DIR}/tests/run_all_tests.sh

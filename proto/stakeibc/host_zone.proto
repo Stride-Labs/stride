@@ -3,7 +3,6 @@ package Stridelabs.stride.stakeibc;
 
 import "stakeibc/validator.proto";
 import "stakeibc/ica_account.proto";
-
 import "gogoproto/gogo.proto";
 import "cosmos_proto/cosmos.proto";
 import "cosmos/base/v1beta1/coin.proto";

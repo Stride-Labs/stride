@@ -51880,14 +51880,6 @@ definitions:
     description: |-
       MsgSubmitQueryResponseResponse defines the MsgSubmitQueryResponse response
       type.
-  stride.interchainquery.QueryServiceInterchainAccountFromAddressResponse:
-    type: object
-    properties:
-      interchain_account_address:
-        type: string
-    title: >-
-      QueryInterchainAccountFromAddressResponse the response type for the
-      Query/InterchainAccountAddress RPC
   stride.mint.v1beta1.DistributionProportions:
     type: object
     properties:
@@ -52434,6 +52426,8 @@ definitions:
         type: integer
         format: int32
   Stridelabs.stride.stakeibc.MsgLiquidStakeResponse:
+    type: object
+  Stridelabs.stride.stakeibc.MsgRedeemStakeResponse:
     type: object
   Stridelabs.stride.stakeibc.MsgRegisterAccountResponse:
     type: object

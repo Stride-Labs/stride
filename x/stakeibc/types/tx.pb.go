@@ -125,6 +125,102 @@ func (m *MsgLiquidStakeResponse) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_MsgLiquidStakeResponse proto.InternalMessageInfo
 
+type MsgRedeemStake struct {
+	Creator string `protobuf:"bytes,1,opt,name=creator,proto3" json:"creator,omitempty"`
+	Amount  int32  `protobuf:"varint,2,opt,name=amount,proto3" json:"amount,omitempty"`
+	Denom   string `protobuf:"bytes,3,opt,name=denom,proto3" json:"denom,omitempty"`
+}
+
+func (m *MsgRedeemStake) Reset()         { *m = MsgRedeemStake{} }
+func (m *MsgRedeemStake) String() string { return proto.CompactTextString(m) }
+func (*MsgRedeemStake) ProtoMessage()    {}
+func (*MsgRedeemStake) Descriptor() ([]byte, []int) {
+	return fileDescriptor_e80cdc2de072d1f1, []int{2}
+}
+func (m *MsgRedeemStake) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *MsgRedeemStake) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_MsgRedeemStake.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *MsgRedeemStake) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgRedeemStake.Merge(m, src)
+}
+func (m *MsgRedeemStake) XXX_Size() int {
+	return m.Size()
+}
+func (m *MsgRedeemStake) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgRedeemStake.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MsgRedeemStake proto.InternalMessageInfo
+
+func (m *MsgRedeemStake) GetCreator() string {
+	if m != nil {
+		return m.Creator
+	}
+	return ""
+}
+
+func (m *MsgRedeemStake) GetAmount() int32 {
+	if m != nil {
+		return m.Amount
+	}
+	return 0
+}
+
+func (m *MsgRedeemStake) GetDenom() string {
+	if m != nil {
+		return m.Denom
+	}
+	return ""
+}
+
+type MsgRedeemStakeResponse struct {
+}
+
+func (m *MsgRedeemStakeResponse) Reset()         { *m = MsgRedeemStakeResponse{} }
+func (m *MsgRedeemStakeResponse) String() string { return proto.CompactTextString(m) }
+func (*MsgRedeemStakeResponse) ProtoMessage()    {}
+func (*MsgRedeemStakeResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_e80cdc2de072d1f1, []int{3}
+}
+func (m *MsgRedeemStakeResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *MsgRedeemStakeResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_MsgRedeemStakeResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *MsgRedeemStakeResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgRedeemStakeResponse.Merge(m, src)
+}
+func (m *MsgRedeemStakeResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *MsgRedeemStakeResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgRedeemStakeResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MsgRedeemStakeResponse proto.InternalMessageInfo
+
 // TODO(TEST-53): Remove this pre-launch (no need for clients to create / interact with ICAs)
 // MsgRegisterAccount defines the payload for Msg/RegisterAccount
 type MsgRegisterAccount struct {
@@ -136,7 +232,7 @@ func (m *MsgRegisterAccount) Reset()         { *m = MsgRegisterAccount{} }
 func (m *MsgRegisterAccount) String() string { return proto.CompactTextString(m) }
 func (*MsgRegisterAccount) ProtoMessage()    {}
 func (*MsgRegisterAccount) Descriptor() ([]byte, []int) {
-	return fileDescriptor_e80cdc2de072d1f1, []int{2}
+	return fileDescriptor_e80cdc2de072d1f1, []int{4}
 }
 func (m *MsgRegisterAccount) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -174,7 +270,7 @@ func (m *MsgRegisterAccountResponse) Reset()         { *m = MsgRegisterAccountRe
 func (m *MsgRegisterAccountResponse) String() string { return proto.CompactTextString(m) }
 func (*MsgRegisterAccountResponse) ProtoMessage()    {}
 func (*MsgRegisterAccountResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_e80cdc2de072d1f1, []int{3}
+	return fileDescriptor_e80cdc2de072d1f1, []int{5}
 }
 func (m *MsgRegisterAccountResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -215,7 +311,7 @@ func (m *MsgSubmitTx) Reset()         { *m = MsgSubmitTx{} }
 func (m *MsgSubmitTx) String() string { return proto.CompactTextString(m) }
 func (*MsgSubmitTx) ProtoMessage()    {}
 func (*MsgSubmitTx) Descriptor() ([]byte, []int) {
-	return fileDescriptor_e80cdc2de072d1f1, []int{4}
+	return fileDescriptor_e80cdc2de072d1f1, []int{6}
 }
 func (m *MsgSubmitTx) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -253,7 +349,7 @@ func (m *MsgSubmitTxResponse) Reset()         { *m = MsgSubmitTxResponse{} }
 func (m *MsgSubmitTxResponse) String() string { return proto.CompactTextString(m) }
 func (*MsgSubmitTxResponse) ProtoMessage()    {}
 func (*MsgSubmitTxResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_e80cdc2de072d1f1, []int{5}
+	return fileDescriptor_e80cdc2de072d1f1, []int{7}
 }
 func (m *MsgSubmitTxResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -293,7 +389,7 @@ func (m *MsgRegisterHostZone) Reset()         { *m = MsgRegisterHostZone{} }
 func (m *MsgRegisterHostZone) String() string { return proto.CompactTextString(m) }
 func (*MsgRegisterHostZone) ProtoMessage()    {}
 func (*MsgRegisterHostZone) Descriptor() ([]byte, []int) {
-	return fileDescriptor_e80cdc2de072d1f1, []int{6}
+	return fileDescriptor_e80cdc2de072d1f1, []int{8}
 }
 func (m *MsgRegisterHostZone) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -330,7 +426,7 @@ func (m *MsgRegisterHostZoneResponse) Reset()         { *m = MsgRegisterHostZone
 func (m *MsgRegisterHostZoneResponse) String() string { return proto.CompactTextString(m) }
 func (*MsgRegisterHostZoneResponse) ProtoMessage()    {}
 func (*MsgRegisterHostZoneResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_e80cdc2de072d1f1, []int{7}
+	return fileDescriptor_e80cdc2de072d1f1, []int{9}
 }
 func (m *MsgRegisterHostZoneResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -362,6 +458,8 @@ var xxx_messageInfo_MsgRegisterHostZoneResponse proto.InternalMessageInfo
 func init() {
 	proto.RegisterType((*MsgLiquidStake)(nil), "Stridelabs.stride.stakeibc.MsgLiquidStake")
 	proto.RegisterType((*MsgLiquidStakeResponse)(nil), "Stridelabs.stride.stakeibc.MsgLiquidStakeResponse")
+	proto.RegisterType((*MsgRedeemStake)(nil), "Stridelabs.stride.stakeibc.MsgRedeemStake")
+	proto.RegisterType((*MsgRedeemStakeResponse)(nil), "Stridelabs.stride.stakeibc.MsgRedeemStakeResponse")
 	proto.RegisterType((*MsgRegisterAccount)(nil), "Stridelabs.stride.stakeibc.MsgRegisterAccount")
 	proto.RegisterType((*MsgRegisterAccountResponse)(nil), "Stridelabs.stride.stakeibc.MsgRegisterAccountResponse")
 	proto.RegisterType((*MsgSubmitTx)(nil), "Stridelabs.stride.stakeibc.MsgSubmitTx")
@@ -373,42 +471,43 @@ func init() {
 func init() { proto.RegisterFile("stakeibc/tx.proto", fileDescriptor_e80cdc2de072d1f1) }
 
 var fileDescriptor_e80cdc2de072d1f1 = []byte{
-	// 547 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xb4, 0x54, 0xcd, 0x6e, 0x13, 0x3d,
-	0x14, 0xcd, 0x7c, 0xf9, 0x12, 0x9a, 0x1b, 0xfe, 0x6a, 0xd2, 0x68, 0x18, 0x60, 0x52, 0xcd, 0x02,
-	0x2a, 0x24, 0x3c, 0x52, 0x40, 0x54, 0xaa, 0xc4, 0xa2, 0x15, 0x8b, 0x22, 0x35, 0x9b, 0x09, 0x0b,
-	0xd4, 0x4d, 0x35, 0x3f, 0xc6, 0x8c, 0xc8, 0xd8, 0x21, 0x76, 0x44, 0x22, 0xf1, 0x00, 0x2c, 0x59,
-	0xf0, 0x00, 0x7d, 0x1c, 0x96, 0x95, 0xd8, 0xb0, 0x8a, 0x50, 0xb2, 0x80, 0x75, 0x9e, 0x00, 0xc5,
-	0xae, 0x93, 0x49, 0x0b, 0x6a, 0x2a, 0xc4, 0xce, 0x67, 0xee, 0x39, 0xf7, 0x1e, 0xdb, 0xc7, 0x03,
-	0xeb, 0x42, 0x86, 0x6f, 0x49, 0x1a, 0xc5, 0xbe, 0x1c, 0xe0, 0x6e, 0x8f, 0x4b, 0x8e, 0x9c, 0xb6,
-	0xec, 0xa5, 0x09, 0xe9, 0x84, 0x91, 0xc0, 0x42, 0x2d, 0xb1, 0x21, 0x39, 0x35, 0xca, 0x29, 0x57,
-	0x34, 0x7f, 0xb6, 0xd2, 0x0a, 0xe7, 0x36, 0xe5, 0x9c, 0x76, 0x88, 0xaf, 0x50, 0xd4, 0x7f, 0xed,
-	0x87, 0x6c, 0xa8, 0x4b, 0xde, 0x2b, 0xb8, 0xde, 0x12, 0xf4, 0x20, 0x7d, 0xd7, 0x4f, 0x93, 0xf6,
-	0xac, 0x0b, 0xb2, 0xe1, 0x4a, 0xdc, 0x23, 0xa1, 0xe4, 0x3d, 0xdb, 0xda, 0xb4, 0xb6, 0x2a, 0x81,
-	0x81, 0xa8, 0x0e, 0xe5, 0x30, 0xe3, 0x7d, 0x26, 0xed, 0xff, 0x36, 0xad, 0xad, 0x52, 0x70, 0x8a,
-	0x50, 0x0d, 0x4a, 0x09, 0x61, 0x3c, 0xb3, 0x8b, 0x8a, 0xaf, 0x81, 0x67, 0x43, 0x7d, 0xb9, 0x73,
-	0x40, 0x44, 0x97, 0x33, 0x41, 0x3c, 0x01, 0xa8, 0x25, 0x68, 0x40, 0x68, 0x2a, 0x24, 0xe9, 0xed,
-	0xc6, 0xb1, 0xe9, 0xc2, 0xdf, 0x33, 0x62, 0xa6, 0x6a, 0x80, 0x9e, 0xc1, 0xb5, 0x98, 0x33, 0x46,
-	0x62, 0x99, 0x72, 0x76, 0x94, 0x26, 0x6a, 0x74, 0x65, 0xcf, 0x9e, 0x8e, 0x1a, 0xb5, 0x61, 0x98,
-	0x75, 0x76, 0xbc, 0xa5, 0xb2, 0x17, 0x5c, 0x5d, 0xe0, 0x17, 0xc9, 0xce, 0xda, 0xc7, 0xe3, 0x46,
-	0xe1, 0xe7, 0x71, 0xa3, 0xe0, 0xdd, 0x05, 0xe7, 0xfc, 0xd0, 0xb9, 0xa5, 0xcf, 0x16, 0x54, 0x5b,
-	0x82, 0xb6, 0xfb, 0x51, 0x96, 0xca, 0x97, 0x83, 0x7f, 0x62, 0x06, 0xdd, 0x87, 0x62, 0x26, 0xa8,
-	0x3a, 0xa5, 0x6a, 0xb3, 0x86, 0xf5, 0xa5, 0x60, 0x73, 0x29, 0x78, 0x97, 0x0d, 0x83, 0x19, 0x21,
-	0x67, 0x7a, 0x03, 0x6e, 0xe5, 0x5c, 0xcd, 0xdd, 0xfe, 0xb0, 0xd4, 0x77, 0xb3, 0x99, 0x7d, 0x2e,
-	0xe4, 0x21, 0x67, 0xe4, 0x6f, 0xfd, 0x3d, 0x01, 0x88, 0x42, 0x41, 0x8e, 0xf4, 0x65, 0xfe, 0xaf,
-	0xb4, 0x1b, 0xd3, 0x51, 0x63, 0x5d, 0x6b, 0x17, 0x35, 0x2f, 0xa8, 0xcc, 0xc0, 0xf3, 0xd9, 0x1a,
-	0x6d, 0x43, 0xb5, 0xc3, 0xe3, 0xb0, 0x73, 0x2a, 0x2b, 0x29, 0x59, 0x7d, 0x3a, 0x6a, 0x20, 0x2d,
-	0xcb, 0x15, 0xbd, 0x00, 0x14, 0xd2, 0xc2, 0x5c, 0xd0, 0xca, 0x4b, 0x41, 0xcb, 0x1d, 0xc0, 0x3d,
-	0xb8, 0xf3, 0x9b, 0x8d, 0x9a, 0x83, 0x68, 0x7e, 0x2d, 0x42, 0xb1, 0x25, 0x28, 0xca, 0xa0, 0x9a,
-	0x8f, 0xf0, 0x43, 0xfc, 0xe7, 0x27, 0x82, 0x97, 0x43, 0xe9, 0x34, 0x57, 0xe7, 0x9a, 0xb1, 0x68,
-	0x08, 0x37, 0xce, 0xa6, 0x17, 0x5f, 0xd0, 0xe6, 0x0c, 0xdf, 0x79, 0x7a, 0x39, 0xfe, 0x7c, 0x74,
-	0x02, 0x6b, 0xf3, 0x90, 0x3e, 0xb8, 0xa0, 0x87, 0x21, 0x3a, 0xfe, 0x8a, 0xc4, 0xf9, 0x94, 0x0f,
-	0x70, 0xf3, 0x5c, 0xb8, 0xfc, 0x15, 0x1d, 0x1b, 0x81, 0xb3, 0x7d, 0x49, 0x81, 0x99, 0xbe, 0xb7,
-	0xff, 0x65, 0xec, 0x5a, 0x27, 0x63, 0xd7, 0xfa, 0x3e, 0x76, 0xad, 0x4f, 0x13, 0xb7, 0x70, 0x32,
-	0x71, 0x0b, 0xdf, 0x26, 0x6e, 0xe1, 0x10, 0xd3, 0x54, 0xbe, 0xe9, 0x47, 0x38, 0xe6, 0x99, 0xaf,
-	0x9b, 0x3f, 0x3a, 0x08, 0x23, 0xe1, 0xeb, 0xee, 0xfe, 0xc0, 0x5f, 0xfc, 0x2d, 0x87, 0x5d, 0x22,
-	0xa2, 0xb2, 0x7a, 0x5c, 0x8f, 0x7f, 0x05, 0x00, 0x00, 0xff, 0xff, 0xf2, 0x89, 0x0d, 0x9e, 0x46,
-	0x05, 0x00, 0x00,
+	// 568 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xb4, 0x55, 0x3f, 0x6f, 0xd3, 0x40,
+	0x14, 0x8f, 0x49, 0x13, 0x9a, 0x17, 0xfe, 0xf5, 0x48, 0x23, 0x63, 0xc0, 0xa9, 0x3c, 0x40, 0x85,
+	0xc4, 0x59, 0x0a, 0x88, 0x4a, 0x95, 0x18, 0x5a, 0x31, 0x14, 0xa9, 0x59, 0x1c, 0x06, 0xd4, 0xa5,
+	0xf2, 0x9f, 0xc3, 0x58, 0xc4, 0xbe, 0x90, 0xbb, 0x88, 0x44, 0xe2, 0x03, 0x30, 0x32, 0xf0, 0x01,
+	0xfa, 0x59, 0x98, 0x18, 0x3b, 0x32, 0x45, 0x28, 0x19, 0x60, 0xce, 0x27, 0x40, 0xbe, 0xcb, 0x39,
+	0x0e, 0x2d, 0x4a, 0xaa, 0xaa, 0xdb, 0xbd, 0xbc, 0xdf, 0x9f, 0x77, 0x97, 0xf7, 0x93, 0x61, 0x83,
+	0x71, 0xf7, 0x03, 0x89, 0x3c, 0xdf, 0xe6, 0x03, 0xdc, 0xed, 0x51, 0x4e, 0x91, 0xd1, 0xe6, 0xbd,
+	0x28, 0x20, 0x1d, 0xd7, 0x63, 0x98, 0x89, 0x23, 0x56, 0x20, 0xa3, 0x16, 0xd2, 0x90, 0x0a, 0x98,
+	0x9d, 0x9e, 0x24, 0xc3, 0xb8, 0x17, 0x52, 0x1a, 0x76, 0x88, 0x2d, 0x2a, 0xaf, 0xff, 0xce, 0x76,
+	0x93, 0xa1, 0x6c, 0x59, 0x6f, 0xe1, 0x56, 0x8b, 0x85, 0x87, 0xd1, 0xc7, 0x7e, 0x14, 0xb4, 0x53,
+	0x15, 0xa4, 0xc3, 0x75, 0xbf, 0x47, 0x5c, 0x4e, 0x7b, 0xba, 0xb6, 0xa5, 0x6d, 0x57, 0x1c, 0x55,
+	0xa2, 0x3a, 0x94, 0xdd, 0x98, 0xf6, 0x13, 0xae, 0x5f, 0xdb, 0xd2, 0xb6, 0x4b, 0xce, 0xac, 0x42,
+	0x35, 0x28, 0x05, 0x24, 0xa1, 0xb1, 0x5e, 0x14, 0x78, 0x59, 0x58, 0x3a, 0xd4, 0x17, 0x95, 0x1d,
+	0xc2, 0xba, 0x34, 0x61, 0x64, 0xe6, 0xe9, 0x90, 0x80, 0x90, 0xf8, 0x2a, 0x3c, 0x73, 0xca, 0x99,
+	0x27, 0x03, 0x24, 0x3a, 0x61, 0xc4, 0x38, 0xe9, 0xed, 0xf9, 0xbe, 0x52, 0xa1, 0x9f, 0x12, 0xa2,
+	0x5c, 0x65, 0x81, 0x5e, 0xc2, 0x4d, 0x9f, 0x26, 0x09, 0xf1, 0x79, 0x44, 0x93, 0xe3, 0x28, 0x10,
+	0xd6, 0x95, 0x7d, 0x7d, 0x3a, 0x6a, 0xd4, 0x86, 0x6e, 0xdc, 0xd9, 0xb5, 0x16, 0xda, 0x96, 0x73,
+	0x63, 0x5e, 0xbf, 0x0e, 0x76, 0xd7, 0xbf, 0x9c, 0x34, 0x0a, 0x7f, 0x4e, 0x1a, 0x05, 0xeb, 0x01,
+	0x18, 0x67, 0x4d, 0xb3, 0x91, 0xbe, 0x69, 0x50, 0x6d, 0xb1, 0xb0, 0xdd, 0xf7, 0xe2, 0x88, 0xbf,
+	0x19, 0x5c, 0xc9, 0x30, 0xe8, 0x11, 0x14, 0x63, 0x16, 0x8a, 0x57, 0xaa, 0x36, 0x6b, 0x58, 0x2e,
+	0x02, 0x56, 0x8b, 0x80, 0xf7, 0x92, 0xa1, 0x93, 0x02, 0x72, 0x43, 0x6f, 0xc2, 0xdd, 0xdc, 0x54,
+	0xd9, 0xb4, 0xbf, 0x35, 0xf1, 0xbb, 0xba, 0xcc, 0x01, 0x65, 0xfc, 0x88, 0x26, 0xe4, 0xb2, 0xf3,
+	0x3d, 0x07, 0xf0, 0x5c, 0x46, 0x8e, 0xe5, 0x9f, 0xb9, 0x26, 0xb8, 0x9b, 0xd3, 0x51, 0x63, 0x43,
+	0x72, 0xe7, 0x3d, 0xcb, 0xa9, 0xa4, 0xc5, 0xab, 0xf4, 0x8c, 0x76, 0xa0, 0xda, 0xa1, 0xbe, 0xdb,
+	0x99, 0xd1, 0x4a, 0x82, 0x56, 0x9f, 0x8e, 0x1a, 0x48, 0xd2, 0x72, 0x4d, 0xcb, 0x01, 0x51, 0x49,
+	0x62, 0x6e, 0xd1, 0xca, 0x0b, 0x8b, 0x96, 0x7b, 0x80, 0x87, 0x70, 0xff, 0x9c, 0x8b, 0xaa, 0x87,
+	0x68, 0x7e, 0x5f, 0x83, 0x62, 0x8b, 0x85, 0x28, 0x86, 0x6a, 0x3e, 0x36, 0x4f, 0xf0, 0xff, 0x63,
+	0x89, 0x17, 0x83, 0x60, 0x34, 0x57, 0xc7, 0x2a, 0xdb, 0xd4, 0x2e, 0x9f, 0x98, 0x65, 0x76, 0x39,
+	0xec, 0x52, 0xbb, 0x73, 0xf2, 0x82, 0x86, 0x70, 0xfb, 0xdf, 0xb0, 0xe0, 0xa5, 0x32, 0x0b, 0x78,
+	0xe3, 0xc5, 0xc5, 0xf0, 0x99, 0x75, 0x00, 0xeb, 0x59, 0x26, 0x1e, 0x2f, 0xd1, 0x50, 0x40, 0xc3,
+	0x5e, 0x11, 0x98, 0xb9, 0x7c, 0x86, 0x3b, 0x67, 0x76, 0xd9, 0x5e, 0x71, 0x62, 0x45, 0x30, 0x76,
+	0x2e, 0x48, 0x50, 0xee, 0xfb, 0x07, 0x3f, 0xc6, 0xa6, 0x76, 0x3a, 0x36, 0xb5, 0x5f, 0x63, 0x53,
+	0xfb, 0x3a, 0x31, 0x0b, 0xa7, 0x13, 0xb3, 0xf0, 0x73, 0x62, 0x16, 0x8e, 0x70, 0x18, 0xf1, 0xf7,
+	0x7d, 0x0f, 0xfb, 0x34, 0xb6, 0xa5, 0xf8, 0xd3, 0x43, 0xd7, 0x63, 0xb6, 0x54, 0xb7, 0x07, 0xf6,
+	0xfc, 0x83, 0x30, 0xec, 0x12, 0xe6, 0x95, 0x45, 0x96, 0x9f, 0xfd, 0x0d, 0x00, 0x00, 0xff, 0xff,
+	0xa2, 0xbc, 0xa4, 0x31, 0x29, 0x06, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -424,6 +523,7 @@ const _ = grpc.SupportPackageIsVersion4
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
 type MsgClient interface {
 	LiquidStake(ctx context.Context, in *MsgLiquidStake, opts ...grpc.CallOption) (*MsgLiquidStakeResponse, error)
+	RedeemStake(ctx context.Context, in *MsgRedeemStake, opts ...grpc.CallOption) (*MsgRedeemStakeResponse, error)
 	// TODO(TEST-53): Remove this pre-launch (no need for clients to create / interact with ICAs)
 	// Register defines a rpc handler for MsgRegisterAccount
 	RegisterAccount(ctx context.Context, in *MsgRegisterAccount, opts ...grpc.CallOption) (*MsgRegisterAccountResponse, error)
@@ -444,6 +544,15 @@ func NewMsgClient(cc grpc1.ClientConn) MsgClient {
 func (c *msgClient) LiquidStake(ctx context.Context, in *MsgLiquidStake, opts ...grpc.CallOption) (*MsgLiquidStakeResponse, error) {
 	out := new(MsgLiquidStakeResponse)
 	err := c.cc.Invoke(ctx, "/Stridelabs.stride.stakeibc.Msg/LiquidStake", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *msgClient) RedeemStake(ctx context.Context, in *MsgRedeemStake, opts ...grpc.CallOption) (*MsgRedeemStakeResponse, error) {
+	out := new(MsgRedeemStakeResponse)
+	err := c.cc.Invoke(ctx, "/Stridelabs.stride.stakeibc.Msg/RedeemStake", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -480,6 +589,7 @@ func (c *msgClient) RegisterHostZone(ctx context.Context, in *MsgRegisterHostZon
 // MsgServer is the server API for Msg service.
 type MsgServer interface {
 	LiquidStake(context.Context, *MsgLiquidStake) (*MsgLiquidStakeResponse, error)
+	RedeemStake(context.Context, *MsgRedeemStake) (*MsgRedeemStakeResponse, error)
 	// TODO(TEST-53): Remove this pre-launch (no need for clients to create / interact with ICAs)
 	// Register defines a rpc handler for MsgRegisterAccount
 	RegisterAccount(context.Context, *MsgRegisterAccount) (*MsgRegisterAccountResponse, error)
@@ -495,6 +605,9 @@ type UnimplementedMsgServer struct {
 
 func (*UnimplementedMsgServer) LiquidStake(ctx context.Context, req *MsgLiquidStake) (*MsgLiquidStakeResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method LiquidStake not implemented")
+}
+func (*UnimplementedMsgServer) RedeemStake(ctx context.Context, req *MsgRedeemStake) (*MsgRedeemStakeResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RedeemStake not implemented")
 }
 func (*UnimplementedMsgServer) RegisterAccount(ctx context.Context, req *MsgRegisterAccount) (*MsgRegisterAccountResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RegisterAccount not implemented")
@@ -524,6 +637,24 @@ func _Msg_LiquidStake_Handler(srv interface{}, ctx context.Context, dec func(int
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(MsgServer).LiquidStake(ctx, req.(*MsgLiquidStake))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Msg_RedeemStake_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MsgRedeemStake)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MsgServer).RedeemStake(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/Stridelabs.stride.stakeibc.Msg/RedeemStake",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MsgServer).RedeemStake(ctx, req.(*MsgRedeemStake))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -589,6 +720,10 @@ var _Msg_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "LiquidStake",
 			Handler:    _Msg_LiquidStake_Handler,
+		},
+		{
+			MethodName: "RedeemStake",
+			Handler:    _Msg_RedeemStake_Handler,
 		},
 		{
 			MethodName: "RegisterAccount",
@@ -665,6 +800,71 @@ func (m *MsgLiquidStakeResponse) MarshalTo(dAtA []byte) (int, error) {
 }
 
 func (m *MsgLiquidStakeResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	return len(dAtA) - i, nil
+}
+
+func (m *MsgRedeemStake) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *MsgRedeemStake) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *MsgRedeemStake) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.Denom) > 0 {
+		i -= len(m.Denom)
+		copy(dAtA[i:], m.Denom)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.Denom)))
+		i--
+		dAtA[i] = 0x1a
+	}
+	if m.Amount != 0 {
+		i = encodeVarintTx(dAtA, i, uint64(m.Amount))
+		i--
+		dAtA[i] = 0x10
+	}
+	if len(m.Creator) > 0 {
+		i -= len(m.Creator)
+		copy(dAtA[i:], m.Creator)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.Creator)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *MsgRedeemStakeResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *MsgRedeemStakeResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *MsgRedeemStakeResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
@@ -910,6 +1110,35 @@ func (m *MsgLiquidStake) Size() (n int) {
 }
 
 func (m *MsgLiquidStakeResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	return n
+}
+
+func (m *MsgRedeemStake) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.Creator)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
+	if m.Amount != 0 {
+		n += 1 + sovTx(uint64(m.Amount))
+	}
+	l = len(m.Denom)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
+	return n
+}
+
+func (m *MsgRedeemStakeResponse) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -1174,6 +1403,189 @@ func (m *MsgLiquidStakeResponse) Unmarshal(dAtA []byte) error {
 		}
 		if fieldNum <= 0 {
 			return fmt.Errorf("proto: MsgLiquidStakeResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		default:
+			iNdEx = preIndex
+			skippy, err := skipTx(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthTx
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *MsgRedeemStake) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowTx
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: MsgRedeemStake: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: MsgRedeemStake: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Creator", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Creator = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Amount", wireType)
+			}
+			m.Amount = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.Amount |= int32(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Denom", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Denom = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipTx(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthTx
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *MsgRedeemStakeResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowTx
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: MsgRedeemStakeResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: MsgRedeemStakeResponse: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		default:
