@@ -36,4 +36,3 @@ func NewHandler(k keeper.Keeper) sdk.Handler {
 		}
 	}
 }
-

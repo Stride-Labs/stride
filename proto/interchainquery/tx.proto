@@ -22,7 +22,8 @@ service Msg {
     };
   };
   rpc QueryBalance(MsgQueryBalance) returns (MsgQueryBalanceResponse);
-  // this line is used by starport scaffolding # proto/tx/rpc
+    rpc QueryExchangerate(MsgQueryExchangerate) returns (MsgQueryExchangerateResponse);
+// this line is used by starport scaffolding # proto/tx/rpc
 }
 
 // MsgSubmitQueryResponse represents a message type to fulfil a query request.
@@ -60,5 +61,13 @@ message MsgQueryBalance {
 }
 
 message MsgQueryBalanceResponse {}
+
+message MsgQueryExchangerate {
+  string creator = 1;
+  string chainID = 2;
+}
+
+message MsgQueryExchangerateResponse {
+}
 
 // this line is used by starport scaffolding # proto/tx/message

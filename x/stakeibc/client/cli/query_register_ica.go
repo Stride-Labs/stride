@@ -7,7 +7,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-
 func CmdShowInterchainAccount() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:  "interchainaccounts [connection-id] [owner-account]",

@@ -28,6 +28,7 @@ func GetTxCmd() *cobra.Command {
 		QueryBalanceCmd(),
 		SubmitQueryResponse(),
 	)
+	cmd.AddCommand(CmdQueryExchangerate())
 	// this line is used by starport scaffolding # 1
 
 	return cmd
