@@ -29,12 +29,13 @@ func (k Keeper) RegisterHostZone(goCtx context.Context, msg *types.MsgRegisterHo
 
 	// set the zone
 	zone := types.HostZone{
-		ChainId: chainId,
-		ConnectionId: msg.ConnectionId,
-		LocalDenom: msg.LocalDenom,
-		BaseDenom: msg.BaseDenom,
+		ChainId:           chainId,
+		ConnectionId:      msg.ConnectionId,
+		LocalDenom:        msg.LocalDenom,
+		BaseDenom:         msg.BaseDenom,
+		TransferChannelId: msg.TransferChannelId,
 		// Start exchange rate at 1 upon registration
-		RedemptionRate: sdk.NewDec(1),
+		RedemptionRate:     sdk.NewDec(1),
 		LastRedemptionRate: sdk.NewDec(1),
 	}
 	// write the zone back to the store
@@ -59,7 +60,7 @@ func (k Keeper) RegisterHostZone(goCtx context.Context, msg *types.MsgRegisterHo
 		return nil, err
 	}
 
-	// TODO(TEST-39): TODO(TEST-42): Set validators on the host zone, either using ICQ + intents or a WL 
+	// TODO(TEST-39): TODO(TEST-42): Set validators on the host zone, either using ICQ + intents or a WL
 
 	// emit events
 	ctx.EventManager().EmitEvents(sdk.Events{

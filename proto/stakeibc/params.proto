@@ -2,7 +2,6 @@ syntax = "proto3";
 package Stridelabs.stride.stakeibc;
 
 import "gogoproto/gogo.proto";
-import "stakeibc/ica_account.proto";
 
 option go_package = "github.com/Stride-Labs/stride/x/stakeibc/types";
 

@@ -60,3 +60,10 @@ for docker_name in "${GAIA_DOCKER_NAMES[@]}"; do
   GAIA_CMDS+=( "$GAIA_RUN $docker_name gaiad --home=/gaia/.gaiad" )
 done
 main_gaia_cmd=${GAIA_CMDS[$MAIN_ID]}
+
+CSLEEP() {
+  for i in $(seq $1); do
+    sleep 1
+    printf "\r\t$(($1 - $i))s left..."
+  done
+}
