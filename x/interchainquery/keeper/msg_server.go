@@ -290,7 +290,7 @@ func (k msgServer) QueryDelegatedbalance(goCtx context.Context, msg *types.MsgQu
 
 		// Get denom dynamically
 		hz, _ := k.StakeibcKeeper.GetHostZone(ctx, ChainId)
-		balance := int32(queryRes.Balances.AmountOf(hz.HostDenom).Int64())
+		balance := queryRes.Balances.AmountOf(hz.HostDenom)
 
 		// Set delegation account balance to ICQ result
 		hz, found := k.StakeibcKeeper.GetHostZone(ctx, ChainId)
@@ -299,14 +299,14 @@ func (k msgServer) QueryDelegatedbalance(goCtx context.Context, msg *types.MsgQu
 		}
 
 		da := hz.DelegationAccount
-		da.Balance = balance
+		da.Balance = int32(balance.Int64())
 		hz.DelegationAccount = da
 		k.StakeibcKeeper.SetHostZone(ctx, hz)
 
 		ctx.EventManager().EmitEvents(sdk.Events{
 			sdk.NewEvent(
 				sdk.EventTypeMessage,
-				sdk.NewAttribute("totalBalance", string(balance)),
+				sdk.NewAttribute("totalBalance", balance.String()),
 			),
 		})
 
@@ -314,8 +314,7 @@ func (k msgServer) QueryDelegatedbalance(goCtx context.Context, msg *types.MsgQu
 	}
 
 	query_type := "cosmos.bank.v1beta1.Query/AllBalances"
-	// TODO(NOW) replace hardcoded addr with host zone's delegation account
-	balanceQuery := banktypes.QueryAllBalancesRequest{Address: "cosmos1t2aqq3c6mt8fa6l5ady44manvhqf77sywjcldv"}
+	balanceQuery := banktypes.QueryAllBalancesRequest{Address: hz.GetDelegationAccount().Address}
 	bz, err := k.cdc.Marshal(&balanceQuery)
 	if err != nil {
 		return nil, err
