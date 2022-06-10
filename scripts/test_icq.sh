@@ -3,7 +3,7 @@
 # TODO(TEST-80) migrate tests to bats 
 
 STR1_EXEC="docker-compose --ansi never exec -T stride1 strided --home /stride/.strided --chain-id STRIDE"
-GAIA1_EXEC="docker-compose --ansi never exec -T gaia1 gaiad --home /gaia/.gaiad --chain-id GAIA""
+GAIA1_EXEC="docker-compose --ansi never exec -T gaia1 gaiad --home /gaia/.gaiad --chain-id GAIA"
 ICQ_EXEC="docker-compose --ansi never exec -T icq interchain-queries"
 
 # Set up: fund account on Stride
