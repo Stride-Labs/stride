@@ -12,7 +12,7 @@ var _ sdk.Msg = &MsgQueryExchangerate{}
 func NewMsgQueryExchangerate(creator string, chainID string) *MsgQueryExchangerate {
 	return &MsgQueryExchangerate{
 		Creator: creator,
-		ChainID: chainID,
+		ChainId: chainID,
 	}
 }
 
