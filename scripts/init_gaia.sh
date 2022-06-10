@@ -90,5 +90,3 @@ for i in "${!GAIA_CHAINS[@]}"; do
         cp ${STATE}/${main_gaia_node}/config/genesis.json ${STATE}/${GAIA_DOCKER_NAMES[i]}/config/genesis.json
     fi
 done
-
-# docker compose up -d gaia1 gaia2 gaia3
