@@ -114,7 +114,7 @@ func (k Keeper) ReinvestRewards(ctx sdk.Context, hostZone types.HostZone) error 
 	SubmitTxs := k.SubmitTxs
 	GetParam := k.GetParam
 	cdc := k.cdc
-	
+
 	var cb icqkeeper.Callback = func(k icqkeeper.Keeper, ctx sdk.Context, args []byte, query icqtypes.Query) error {
 		var msgs []sdk.Msg
 		queryRes := bankTypes.QueryAllBalancesResponse{}
@@ -133,7 +133,6 @@ func (k Keeper) ReinvestRewards(ctx sdk.Context, hostZone types.HostZone) error 
 		strideCoin := sdk.NewCoin(hostZone.HostDenom, strideAmount.TruncateInt())
 		reinvestCoin := sdk.NewCoin(hostZone.HostDenom, reinvestAmount.TruncateInt())
 
-		
 		// transfer balances from the withdraw address to the delegation account
 		sendBalanceToDelegationAccount := &bankTypes.MsgSend{FromAddress: withdrawAccount.GetAddress(), ToAddress: delegationAccount.GetAddress(), Amount: sdk.NewCoins(strideCoin)}
 		msgs = append(msgs, sendBalanceToDelegationAccount)
@@ -141,7 +140,7 @@ func (k Keeper) ReinvestRewards(ctx sdk.Context, hostZone types.HostZone) error 
 		strideCommmissionAccount := "stride12vfkpj7lpqg0n4j68rr5kyffc6wu55dzqewda4"
 		sendBalanceToStrideAccount := &bankTypes.MsgSend{FromAddress: withdrawAccount.GetAddress(), ToAddress: strideCommmissionAccount, Amount: sdk.NewCoins(reinvestCoin)}
 		msgs = append(msgs, sendBalanceToStrideAccount)
-		
+
 		// Send the transaction through SubmitTx
 		err = SubmitTxs(ctx, connectionId, msgs, *withdrawAccount)
 		if err != nil {
@@ -163,7 +162,6 @@ func (k Keeper) ReinvestRewards(ctx sdk.Context, hostZone types.HostZone) error 
 	k.InterchainQueryKeeper.QueryBalances(ctx, hostZone, cb, delegationAccount.Address)
 	return nil
 }
-
 
 // SubmitTxs submits an ICA transaction containing multiple messages
 func (k Keeper) SubmitTxs(ctx sdk.Context, connectionId string, msgs []sdk.Msg, account types.ICAAccount) error {

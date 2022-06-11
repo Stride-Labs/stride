@@ -5,6 +5,9 @@
 *.so
 *.dylib
 
+# auto-generated go files
+*.pb.go
+
 # build
 build/*
 state/*

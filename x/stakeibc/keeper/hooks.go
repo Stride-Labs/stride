@@ -51,35 +51,11 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochIdentifier string, epochN
 				}
 			}
 		}
-		delegateInterval := int64(k.GetParam(ctx, types.KeyDelegateInterval))
+		//delegateInterval := int64(k.GetParam(ctx, types.KeyDelegateInterval))
+		delegateInterval := int64(1)
 		if epochNumber%delegateInterval == 0 {
-			icaStake := func(index int64, zoneInfo types.HostZone) (stop bool) {
-				// Verify the delegation ICA is registered
-				delegationIca := zoneInfo.GetDelegationAccount()
-				if delegationIca == nil || delegationIca.Address == "" {
-					k.Logger(ctx).Error("Zone %s is missing a delegation address!", zoneInfo.ChainId)
-					return true
-				}
-
-				// TODO(TEST-46): Query process amount (unstaked balance) on host zone using ICQ
-				processAmount := "1" + zoneInfo.HostDenom
-				amt, err := sdk.ParseCoinNormalized(processAmount)
-				// Do we want to panic here? All unprocessed zones would also fail
-				if err != nil {
-					panic(err)
-				}
-				err = k.DelegateOnHost(ctx, zoneInfo, amt)
-				if err != nil {
-					k.Logger(ctx).Error("Did not stake %s on %s", processAmount, zoneInfo.ChainId)
-					return true
-				} else {
-					k.Logger(ctx).Info("Successfully staked %s on %s", processAmount, zoneInfo.ChainId)
-				}
-				return false
-			}
-
-			// Iterate the zones and apply icaStake
-			k.IterateHostZones(ctx, icaStake)
+			k.Logger(ctx).Info("KICK OFF DELEGATION")
+			k.ProcessDelegationStaking(ctx)
 		}
 		// process withdrawals
 		// TODO(TEST-88): restructure this to be more efficient, we should only have to loop

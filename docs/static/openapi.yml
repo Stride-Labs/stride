@@ -31633,6 +31633,12 @@ paths:
                       send the Stride commission too, as well as what portion
                       of the fee each address is entitled to
                       TODO implement this
+                  reinvest_interval:
+                    type: string
+                    format: uint64
+                title: |-
+                  Params defines the parameters for the module.
+                  next id: 8
             description: >-
               QueryParamsResponse is response type for the Query/Params RPC
               method.
@@ -51859,12 +51865,6 @@ definitions:
     description: |-
       Version defines the versioning scheme used to negotiate the IBC verison in
       the connection handshake.
-  stride.interchainquery.MsgQueryBalanceResponse:
-    type: object
-  stride.interchainquery.MsgQueryDelegatedbalanceResponse:
-    type: object
-  stride.interchainquery.MsgQueryExchangerateResponse:
-    type: object
   stride.interchainquery.MsgSubmitQueryResponse:
     type: object
     properties:
@@ -52488,7 +52488,12 @@ definitions:
           send the Stride commission too, as well as what portion
           of the fee each address is entitled to
           TODO implement this
-    description: Params defines the parameters for the module.
+      reinvest_interval:
+        type: string
+        format: uint64
+    title: |-
+      Params defines the parameters for the module.
+      next id: 8
   Stridelabs.stride.stakeibc.QueryAllDepositRecordResponse:
     type: object
     properties:
@@ -53147,6 +53152,12 @@ definitions:
               send the Stride commission too, as well as what portion
               of the fee each address is entitled to
               TODO implement this
+          reinvest_interval:
+            type: string
+            format: uint64
+        title: |-
+          Params defines the parameters for the module.
+          next id: 8
     description: QueryParamsResponse is response type for the Query/Params RPC method.
   Stridelabs.stride.stakeibc.Validator:
     type: object

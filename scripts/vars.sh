@@ -70,3 +70,6 @@ CSLEEP() {
     printf "\r\t$(($1 - $i))s left..."
   done
 }
+
+# ICQ
+ICQ_RUN="docker-compose --ansi never run -T icq interchain-queries"
