@@ -62,19 +62,14 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochIdentifier string, epochN
 				}
 
 				// TODO(TEST-46): Query process amount (unstaked balance) on host zone using ICQ
-				processAmount := "1" + zoneInfo.HostDenom
-				amt, err := sdk.ParseCoinNormalized(processAmount)
-				// Do we want to panic here? All unprocessed zones would also fail
+				err := k.QueryAndSweepUndelegatedBalance(ctx, zoneInfo)
 				if err != nil {
-					panic(err)
-				}
-				err = k.DelegateOnHost(ctx, zoneInfo, amt)
-				if err != nil {
-					k.Logger(ctx).Error("Did not stake %s on %s", processAmount, zoneInfo.ChainId)
+					k.Logger(ctx).Error("Could not sweep undelegated balance on %s", zoneInfo.ChainId)
 					return true
 				} else {
-					k.Logger(ctx).Info("Successfully staked %s on %s", processAmount, zoneInfo.ChainId)
+					k.Logger(ctx).Info("Successfully swept undelegated balance on %s", zoneInfo.ChainId)
 				}
+
 				return false
 			}
 

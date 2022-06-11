@@ -256,6 +256,65 @@ func (k Keeper) UpdateUndelegatedBalance(ctx sdk.Context, hostZone types.HostZon
 	return nil
 }
 
+// icq to read host delegation account undelegated balance => update hostZone.delegationAccount.Balance => sweep those balances to delegations
+func (k Keeper) QueryAndSweepUndelegatedBalance(ctx sdk.Context, hostZone types.HostZone) error {
+	_ = ctx
+	// Fetch the relevant ICA
+	delegationAccount := hostZone.GetDelegationAccount()
+
+	var cb icqkeeper.Callback = func(icqk icqkeeper.Keeper, ctx sdk.Context, args []byte, query icqtypes.Query) error {
+
+		queryRes := bankTypes.QueryAllBalancesResponse{}
+		err := k.cdc.Unmarshal(args, &queryRes)
+		if err != nil {
+			k.Logger(ctx).Error("Unable to unmarshal balances info for zone", "err", err)
+			return err
+		}
+
+		// Get denom dynamically
+		hz := hostZone
+		balance := queryRes.Balances.AmountOf(hz.HostDenom)
+
+		// Set delegation account balance to ICQ result
+		hz, found := k.GetHostZone(ctx, hostZone.ChainId)
+		if found {
+			k.Logger(ctx).Error("invalid chain id, zone for \"%s\" already registered", hostZone.ChainId)
+		}
+
+		da := hz.DelegationAccount
+		da.Balance = int32(balance.Int64())
+		hz.DelegationAccount = da
+		k.SetHostZone(ctx, hz)
+
+		processAmount := balance.String() + hz.HostDenom
+		amt, err := sdk.ParseCoinNormalized(processAmount)
+		// Do we want to panic here? All unprocessed zones would also fail
+		if err != nil {
+			panic(err)
+		}
+		err = k.DelegateOnHost(ctx, hz, amt)
+		if err != nil {
+			k.Logger(ctx).Error("Did not stake %s on %s", processAmount, hz.ChainId)
+			return nil
+		} else {
+			k.Logger(ctx).Info("Successfully staked %s on %s", processAmount, hz.ChainId)
+		}
+
+		ctx.EventManager().EmitEvents(sdk.Events{
+			sdk.NewEvent(
+				sdk.EventTypeMessage,
+				sdk.NewAttribute("totalUndelegatedBalance", balance.String()),
+			),
+		})
+
+		return nil
+	}
+	// 1. query delegation account undelegated balances using icq
+	// 2. write the result to hostZone.delegationAccount.Balance
+	k.InterchainQueryKeeper.QueryBalances(ctx, hostZone, cb, delegationAccount.Address)
+	return nil
+}
+
 // SubmitTxs submits an ICA transaction containing multiple messages
 func (k Keeper) SubmitTxs(ctx sdk.Context, connectionId string, msgs []sdk.Msg, account types.ICAAccount) error {
 	chainId, err := k.GetChainID(ctx, connectionId)
