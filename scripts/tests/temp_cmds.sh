@@ -9,7 +9,7 @@ docker-compose --ansi never exec -T gaia1 gaiad tx ibc-transfer transfer transfe
 docker-compose --ansi never exec -T stride1 strided q bank balances stride1uk4ze0x4nvh4fk0xm4jdud58eqn4yxhrt52vv7
 
 # host zones
-docker-compose --ansi never exec -T stride1 strided tx stakeibc register-host-zone connection-0 uatom ibc/C4CFF46FD6DE35CA4CF4CE031E643C8FDC9BA4B99AE598E9B0ED98FE3A2319F9 --chain-id STRIDE --home /stride/.strided --keyring-backend test --from val1 --gas 500000 -y
+docker-compose --ansi never exec -T stride1 strided tx stakeibc register-host-zone connection-0 uatom ibc/C4CFF46FD6DE35CA4CF4CE031E643C8FDC9BA4B99AE598E9B0ED98FE3A2319F9 channel-0 --chain-id STRIDE --home /stride/.strided --keyring-backend test --from val1 --gas 500000 -y
 docker-compose --ansi never exec -T stride1 strided q stakeibc list-host-zone
 
 docker-compose --ansi never exec -T stride1 strided tx ibc-transfer transfer transfer channel-1 cosmos1t2aqq3c6mt8fa6l5ady44manvhqf77sywjcldv 1000ibc/9117A26BA81E29FA4F78F57DC2BD90CD3D26848101BA880445F119B22A1E254E --from val1 --chain-id STRIDE -y --keyring-backend test --home /stride/.strided/
@@ -48,11 +48,10 @@ strided q bank balances stride1uk4ze0x4nvh4fk0xm4jdud58eqn4yxhrt52vv7
 # strided tx bank send val1 stride12vfkpj7lpqg0n4j68rr5kyffc6wu55dzqewda4 2500000ustrd --home /stride/.strided
 #  --keyring-backend test --chain-id STRIDE -y
 
-strided q bank balances stride1uk4ze0x4nvh4fk0xm4jdud58eqn4yxhrt52vv7
 
 #register gaia as host zone
-strided tx stakeibc register-host-zone connection-0  uatom 'ibc/C4CFF46FD6DE35CA4CF4CE031E643C8FDC9BA4B99AE598E9B0ED98FE3A2319F9' --chain-id STRIDE --home /stride/.strided --keyring-backend test --from val1 --gas 500000 -y
-strided q stakeibc list-host-zone
+# strided tx stakeibc register-host-zone connection-0  uatom 'ibc/C4CFF46FD6DE35CA4CF4CE031E643C8FDC9BA4B99AE598E9B0ED98FE3A2319F9'channel-0  --chain-id STRIDE --home /stride/.strided --keyring-backend test --from val1 --gas 500000 -y
+# strided q stakeibc list-host-zone
 
 # liquid stake atoms from stride
 strided tx stakeibc liquid-stake 1000 uatom --keyring-backend test --from val1 -y --home /stride/.strided --chain-id STRIDE
