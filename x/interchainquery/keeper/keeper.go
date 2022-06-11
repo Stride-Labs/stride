@@ -9,6 +9,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/tendermint/tendermint/libs/log"
 )
@@ -96,12 +97,18 @@ func (k *Keeper) MakeRequest(ctx sdk.Context, connection_id string, chain_id str
 	}
 }
 
-func (k Keeper) QueryBalances(ctx sdk.Context, zone stakeibctypes.HostZone, cb Callback) error {
+func (k Keeper) QueryBalances(ctx sdk.Context, zone stakeibctypes.HostZone, cb Callback, address string) error {
 	connectionId := zone.ConnectionId
 	chainId := zone.ChainId
 
+	// Validate address
+	_, err := sdk.AccAddressFromBech32(address)
+	if err != nil {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "address %s is invalid", address)
+	}
+
 	query_type := "cosmos.bank.v1beta1.Query/AllBalances"
-	balanceQuery := banktypes.QueryAllBalancesRequest{Address: zone.GetDelegationAccount().Address}
+	balanceQuery := banktypes.QueryAllBalancesRequest{Address: address}
 	bz, err := k.cdc.Marshal(&balanceQuery)
 	if err != nil {
 		return err

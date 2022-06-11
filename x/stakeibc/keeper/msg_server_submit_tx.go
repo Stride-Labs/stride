@@ -160,7 +160,7 @@ func (k Keeper) ReinvestRewards(ctx sdk.Context, hostZone types.HostZone) error 
 	// 1. query withdraw account balances using icq
 	// 2. transfer withdraw account balances to the delegation account in the cb
 	// 3. TODO: in the ICA ack upon transfer, reinvest those rewards and withdraw rewards
-	k.InterchainQueryKeeper.QueryBalances(ctx, hostZone, cb)
+	k.InterchainQueryKeeper.QueryBalances(ctx, hostZone, cb, delegationAccount.Address)
 	return nil
 }
 
