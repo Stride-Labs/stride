@@ -12,8 +12,27 @@ import (
 
 // NewHandler returns a handler for interchainquery module messages
 func NewHandler(k keeper.Keeper) sdk.Handler {
-	return func(_ sdk.Context, msg sdk.Msg) (*sdk.Result, error) {
-		errMsg := fmt.Sprintf("unrecognized %s message type: %T", types.ModuleName, msg)
-		return nil, sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, errMsg)
+	msgServer := keeper.NewMsgServerImpl(k)
+
+	return func(ctx sdk.Context, msg sdk.Msg) (*sdk.Result, error) {
+		ctx = ctx.WithEventManager(sdk.NewEventManager())
+		switch msg := msg.(type) {
+		case *types.MsgQueryBalance:
+			res, err := msgServer.QueryBalance(sdk.WrapSDKContext(ctx), msg)
+			return sdk.WrapServiceResult(ctx, res, err)
+		case *types.MsgSubmitQueryResponse:
+			res, err := msgServer.SubmitQueryResponse(sdk.WrapSDKContext(ctx), msg)
+			return sdk.WrapServiceResult(ctx, res, err)
+		case *types.MsgQueryExchangerate:
+			res, err := msgServer.QueryExchangerate(sdk.WrapSDKContext(ctx), msg)
+			return sdk.WrapServiceResult(ctx, res, err)
+		case *types.MsgQueryDelegatedbalance:
+			res, err := msgServer.QueryDelegatedbalance(sdk.WrapSDKContext(ctx), msg)
+			return sdk.WrapServiceResult(ctx, res, err)
+			// this line is used by starport scaffolding # 1
+		default:
+			errMsg := fmt.Sprintf("unrecognized %s message type: %T", types.ModuleName, msg)
+			return nil, sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, errMsg)
+		}
 	}
 }

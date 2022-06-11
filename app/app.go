@@ -451,10 +451,9 @@ func NewStrideApp(
 		),
 	)
 	epochsModule := epochsmodule.NewAppModule(appCodec, app.EpochsKeeper)
-	app.InterchainqueryKeeper = interchainquerykeeper.NewKeeper(appCodec, keys[interchainquerytypes.StoreKey])
+	app.InterchainqueryKeeper = interchainquerykeeper.NewKeeper(appCodec, keys[interchainquerytypes.StoreKey], app.BankKeeper, app.StakeibcKeeper)
 	interchainQueryModule := interchainquery.NewAppModule(appCodec, app.InterchainqueryKeeper)
-	// TODO(TEST-16): Enable ICQ callbacks
-	// app.InterchainqueryKeeper.SetCallbackHandler(stakeibcmoduletypes.ModuleName, app.StakeibcKeeper.CallbackHandler())
+	app.InterchainqueryKeeper.SetCallbackHandler(interchainquerytypes.ModuleName, app.InterchainqueryKeeper.CallbackHandler())
 
 	// this line is used by starport scaffolding # stargate/app/keeperDefinition
 

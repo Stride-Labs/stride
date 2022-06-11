@@ -25,8 +25,8 @@ const (
 const (
 	// DisplayDenom defines the denomination displayed to users in client applications.
 	DisplayDenom = "Stride"
-	// BaseDenom defines to the default denomination used in Quicksilver (staking, EVN, governance, etc)
-	BaseDenom = "strd"
+	// StrideDenom defines to the default denomination used in Stride (staking, EVN, governance, etc)
+	StrideDenom = "strd"
 )
 
 // SetBech32Prefixes sets the global prefixes to be used when serializing addresses and public keys to Bech32 strings.
@@ -48,7 +48,7 @@ func RegisterDenoms() {
 		panic(err)
 	}
 
-	if err := sdk.RegisterDenom(BaseDenom, sdk.NewDecWithPrec(1, 6)); err != nil {
+	if err := sdk.RegisterDenom(StrideDenom, sdk.NewDecWithPrec(1, 6)); err != nil {
 		panic(err)
 	}
 }

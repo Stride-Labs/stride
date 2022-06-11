@@ -1,7 +1,7 @@
 package keeper
 
 import (
-	"fmt"
+	"encoding/hex"
 	"time"
 
 	"github.com/cosmos/cosmos-sdk/telemetry"
@@ -31,11 +31,10 @@ func (k Keeper) EndBlocker(ctx sdk.Context) {
 				sdk.NewAttribute(types.AttributeKeyChainId, queryInfo.ChainId),
 				sdk.NewAttribute(types.AttributeKeyConnectionId, queryInfo.ConnectionId),
 				sdk.NewAttribute(types.AttributeKeyType, queryInfo.QueryType),
+				// TODO(TEST-79) understand and use proper height
+				sdk.NewAttribute(types.AttributeKeyHeight, "0"),
+				sdk.NewAttribute(types.AttributeKeyRequest, hex.EncodeToString(queryInfo.Request)),
 			)
-
-			for key, val := range queryInfo.GetQueryParameters() {
-				event = event.AppendAttributes(sdk.NewAttribute(types.AttributeKeyParams, fmt.Sprintf("%s:%s:%s", queryInfo.Id, key, val)))
-			}
 
 			events = append(events, event)
 			queryInfo.LastHeight = sdk.NewInt(ctx.BlockHeight())

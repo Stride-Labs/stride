@@ -60,7 +60,6 @@ func (k Keeper) SubmitTx(goCtx context.Context, msg *types.MsgSubmitTx) (*types.
 	return &types.MsgSubmitTxResponse{}, nil
 }
 
-
 func (k Keeper) DelegateOnHost(ctx sdk.Context, hostZone types.HostZone, amt sdk.Coin) error {
 	_ = ctx
 	var msgs []sdk.Msg
@@ -80,8 +79,8 @@ func (k Keeper) DelegateOnHost(ctx sdk.Context, hostZone types.HostZone, amt sdk
 
 	// Construct the transaction
 	// TODO(TEST-39): Implement validator selection
-	validator_address := "cosmosvaloper19e7sugzt8zaamk2wyydzgmg9n3ysylg6na6k6e"  // gval2
-	
+	validator_address := "cosmosvaloper19e7sugzt8zaamk2wyydzgmg9n3ysylg6na6k6e" // gval2
+
 	// construct the msg
 	msgs = append(msgs, &stakingTypes.MsgDelegate{DelegatorAddress: delegationIca.GetAddress(), ValidatorAddress: validator_address, Amount: amt})
 	// Send the transaction through SubmitTx
@@ -135,7 +134,3 @@ func (k Keeper) SubmitTxs(ctx sdk.Context, connectionId string, msgs []sdk.Msg, 
 
 	return nil
 }
-
-
-
-

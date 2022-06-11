@@ -11,8 +11,8 @@ var _ sdk.Msg = &MsgRegisterAccount{}
 
 func NewMsgRegisterAccount(owner string, connection_id string) *MsgRegisterAccount {
 	return &MsgRegisterAccount{
-		Owner: owner,
-		ConnectionId:  connection_id,
+		Owner:        owner,
+		ConnectionId: connection_id,
 	}
 }
 

@@ -19,8 +19,10 @@ message HostZone {
   ICAAccount withdrawalAccount = 5;
   ICAAccount feeAccount = 6; 
   ICAAccount delegationAccount = 7;
-  string LocalDenom = 8;
-  string BaseDenom = 9;
+  // ibc denom on stride
+  string IBCDenom = 8;
+  // native denom on host zone
+  string HostDenom = 9;
   // TODO(TEST-68): Should we make this an array and store the last n redemption rates
   // then calculate a TWARR?
   string LastRedemptionRate = 10 [

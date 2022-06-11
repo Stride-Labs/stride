@@ -40,8 +40,8 @@ func (im IBCModule) OnChanOpenInit(
 	// Note: The channel capability must be claimed by the authentication module in OnChanOpenInit otherwise the
 	// authentication module will not be able to send packets on the channel created for the associated interchain account.
 	if err := im.keeper.ClaimCapability(ctx, chanCap, host.ChannelCapabilityPath(portID, channelID)); err != nil {
-        return err
-    }
+		return err
+	}
 	return nil
 }
 
@@ -105,11 +105,10 @@ func (im IBCModule) OnChanOpenAck(
 	default:
 		ctx.Logger().Error("Missing portId: ", portID)
 	}
-	
+
 	im.keeper.SetHostZone(ctx, zoneInfo)
 	return nil
 }
-
 
 // OnAcknowledgementPacket implements the IBCModule interface
 func (im IBCModule) OnAcknowledgementPacket(
@@ -119,7 +118,6 @@ func (im IBCModule) OnAcknowledgementPacket(
 	relayer sdk.AccAddress,
 ) error {
 	// TODO(TEST-21): Implement OnAcknowledgementPacket logic
-	// this line is used by starport scaffolding # oracle/packet/module/ack
 	connectionId, _, err := im.keeper.IBCKeeper.ChannelKeeper.GetChannelConnection(ctx, modulePacket.SourcePort, modulePacket.SourceChannel)
 	if err != nil {
 		err = fmt.Errorf("packet connection not found: %w", err)
@@ -220,4 +218,3 @@ func (im IBCModule) OnRecvPacket(
 ) ibcexported.Acknowledgement {
 	panic("UNIMPLEMENTED")
 }
-

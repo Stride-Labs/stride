@@ -8,7 +8,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	ibctypes "github.com/cosmos/ibc-go/v3/modules/apps/transfer/types"
 )
 
 // GetHostZoneCount get the total number of hostZone
@@ -57,30 +56,30 @@ func (k Keeper) GetHostZone(ctx sdk.Context, chain_id string) (val types.HostZon
 func (k Keeper) GetHostZoneFromDenom(ctx sdk.Context, denom string) (val types.HostZone, found bool) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.HostZoneKey))
 	iterator := sdk.KVStorePrefixIterator(store, []byte{})
-	var bval types.HostZone
+	// var bval types.HostZone
 
 	defer iterator.Close()
 
-	// hash is the part of denom after ibc/
-	hash := strings.Join(strings.SplitN(denom, "ibc/", -1), "")
-	// TODO TEST-67 Error Handling - Verify IBC transfer works properly when done with two hops
-	req := &ibctypes.QueryDenomTraceRequest{Hash: hash}
-	goCtx := sdk.WrapSDKContext(ctx)
-	denomTrace, err := k.transferKeeper.DenomTrace(goCtx, req)
-	if err != nil {
-		k.Logger(ctx).Error("unable to obtain chain from denom %s: %w", hash, err)
-		return bval, false
-	}
-	baseDenom := strings.ToUpper(denomTrace.DenomTrace.BaseDenom)
+	// // hash is the part of denom after ibc/
+	// hash := strings.Join(strings.SplitN(denom, "ibc/", -1), "")
+	// // TODO TEST-67 Error Handling - Verify IBC transfer works properly when done with two hops
+	// req := &ibctypes.QueryDenomTraceRequest{Hash: hash}
+	// goCtx := sdk.WrapSDKContext(ctx)
+	// denomTrace, err := k.transferKeeper.DenomTrace(goCtx, req)
+	// if err != nil {
+	// 	k.Logger(ctx).Error("unable to obtain chain from denom %s: %w", hash, err)
+	// 	return bval, false
+	// }
+	baseDenom := strings.ToUpper(denom) //denomTrace.DenomTrace.BaseDenom)
 
 	for ; iterator.Valid(); iterator.Next() {
 		var val types.HostZone
 		k.cdc.MustUnmarshal(iterator.Value(), &val)
-		if strings.ToUpper(val.BaseDenom) == baseDenom {
+		if strings.ToUpper(val.HostDenom) == baseDenom {
 			return val, true
 		}
 	}
-	k.Logger(ctx).Error("unable to obtain chain from BaseDenom %s: %w", baseDenom, err)
+	// k.Logger(ctx).Error("unable to obtain chain from BaseDenom %s: %w", baseDenom, err)
 	return val, false
 }
 
@@ -111,11 +110,11 @@ func GetHostZoneIDFromBytes(bz []byte) uint64 {
 	return binary.BigEndian.Uint64(bz)
 }
 
-// GetHostZoneFromLocalDenom returns a HostZone from a LocalDenom
-func (k Keeper) GetHostZoneFromLocalDenom(ctx sdk.Context, denom string) (*types.HostZone, error) {
+// GetHostZoneFromIBCDenom returns a HostZone from a IBCDenom
+func (k Keeper) GetHostZoneFromIBCDenom(ctx sdk.Context, denom string) (*types.HostZone, error) {
 	var matchZone types.HostZone
 	k.IterateHostZones(ctx, func(index int64, zoneInfo types.HostZone) (stop bool) {
-		if zoneInfo.LocalDenom == denom {
+		if zoneInfo.IBCDenom == denom {
 			matchZone = zoneInfo
 			return true
 		}

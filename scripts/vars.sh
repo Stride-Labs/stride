@@ -61,6 +61,9 @@ for docker_name in "${GAIA_DOCKER_NAMES[@]}"; do
 done
 main_gaia_cmd=${GAIA_CMDS[$MAIN_ID]}
 
+ICQ_STRIDE_KEY="helmet say goat special plug umbrella finger night flip axis resource tuna trigger angry shove essay point laundry horror eager forget depend siren alarm"
+ICQ_GAIA_KEY="capable later bamboo snow drive afraid cheese practice latin brush hand true visa drama mystery bird client nature jealous guess tank marriage volume fantasy"
+
 CSLEEP() {
   for i in $(seq $1); do
     sleep 1

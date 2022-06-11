@@ -1,0 +1,81 @@
+syntax = "proto3";
+package stride.interchainquery;
+
+import "gogoproto/gogo.proto";
+import "cosmos_proto/cosmos.proto";
+import "google/api/annotations.proto";
+import "google/protobuf/any.proto";
+
+option go_package = "github.com/Stride-Labs/stride/x/interchainquery/types";
+
+
+
+// Msg defines the interchainquery Msg service.
+service Msg {
+  // SubmitQueryResponse defines a method for submit query responses.
+  rpc SubmitQueryResponse(MsgSubmitQueryResponse)
+      returns (MsgSubmitQueryResponseResponse) {
+    option (google.api.http) = {
+      post : "/interchainquery/tx/submitquery"
+      body : "*"
+    };
+  };
+  rpc QueryBalance(MsgQueryBalance) returns (MsgQueryBalanceResponse);
+  rpc QueryExchangerate(MsgQueryExchangerate) returns (MsgQueryExchangerateResponse);
+  rpc QueryDelegatedbalance(MsgQueryDelegatedbalance) returns (MsgQueryDelegatedbalanceResponse);
+// this line is used by starport scaffolding # proto/tx/rpc
+}
+
+// MsgSubmitQueryResponse represents a message type to fulfil a query request.
+message MsgSubmitQueryResponse {
+  option (gogoproto.equal) = false;
+  option (gogoproto.goproto_getters) = false;
+  option (gogoproto.goproto_stringer) = true;
+
+  string chain_id = 1 [ (gogoproto.moretags) = "yaml:\"chain_id\"" ];
+  string query_id = 2 [ (gogoproto.moretags) = "yaml:\"query_id\"" ];
+  bytes result = 3 [ (gogoproto.moretags) = "yaml:\"result\"" ];
+  int64 height = 4 [ (gogoproto.moretags) = "yaml:\"height\"" ];
+  string from_address = 5 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+}
+
+// MsgSubmitQueryResponseResponse defines the MsgSubmitQueryResponse response
+// type.
+message MsgSubmitQueryResponseResponse {}
+
+// Msg defines the intertx Msg service.
+service MsgService {
+}
+
+// MsgQueryBalance defines the payload for Msg/QueryBalance
+message MsgQueryBalance {
+  option (gogoproto.equal)           = false;
+  option (gogoproto.goproto_getters) = false;
+
+  string chain_id = 1 [ (gogoproto.moretags) = "yaml:\"chain_id\"" ];
+  string address  = 2 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+  string denom                       = 3;
+  string connection_id               = 4 [(gogoproto.moretags) = "yaml:\"connection_id\""];
+  string caller   = 5 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+  int64 height = 6 [ (gogoproto.moretags) = "yaml:\"height\"" ];
+}
+
+message MsgQueryBalanceResponse {}
+
+message MsgQueryExchangerate {
+  string creator = 1;
+  string chain_id = 2 [ (gogoproto.moretags) = "yaml:\"chain_id\"" ];
+}
+
+message MsgQueryExchangerateResponse {
+}
+
+message MsgQueryDelegatedbalance {
+  string creator = 1;
+  string chain_id = 2 [ (gogoproto.moretags) = "yaml:\"chain_id\"" ];
+}
+
+message MsgQueryDelegatedbalanceResponse {
+}
+
+// this line is used by starport scaffolding # proto/tx/message

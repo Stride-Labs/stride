@@ -25,7 +25,7 @@ func (k Keeper) RedeemStake(goCtx context.Context, msg *types.MsgRedeemStake) (*
 	if err != nil {
 		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidCoins, "could not parse inCoin: %s", coinString)
 	}
-	hostZone, err := k.GetHostZoneFromLocalDenom(ctx, msg.Denom)
+	hostZone, err := k.GetHostZoneFromIBCDenom(ctx, msg.Denom)
 	if err != nil {
 		return nil, err
 	}
@@ -65,7 +65,7 @@ func (k Keeper) RedeemStake(goCtx context.Context, msg *types.MsgRedeemStake) (*
 		rate = hostZone.RedemptionRate
 	}
 	native_tokens := inCoin.Amount.ToDec().Mul(rate).TruncateInt()
-	outCoin := sdk.NewCoin(hostZone.BaseDenom, native_tokens)
+	outCoin := sdk.NewCoin(hostZone.HostDenom, native_tokens)
 
 	// Select validators for unbonding
 	// TODO(TEST-39): Implement validator selection
