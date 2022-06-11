@@ -6,6 +6,7 @@ import "gogoproto/gogo.proto";
 option go_package = "github.com/Stride-Labs/stride/x/stakeibc/types";
 
 // Params defines the parameters for the module.
+// next id: 8
 message Params {
   option (gogoproto.goproto_stringer) = false;
 
@@ -21,6 +22,7 @@ message Params {
   // of the fee each address is entitled to
   // TODO implement this 
   map<string, string> zone_com_address = 5;
+  uint64 reinvest_interval = 7;
 
 }
 

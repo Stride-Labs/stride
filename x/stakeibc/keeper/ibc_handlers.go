@@ -102,6 +102,19 @@ func (k Keeper) HandleAcknowledgement(ctx sdk.Context, modulePacket channeltypes
 	// 	case "/ibc.applications.transfer.v1.MsgTransfer":
 	// 		// TODO: Implement!
 	// 		continue
+	// 	case "cosmos.bank.v1beta1.MsgSend":
+	// 		// Construct the transaction
+	// 		// TODO(TEST-39): Implement validator selection
+	// 		// validator_address := "cosmosvaloper19e7sugzt8zaamk2wyydzgmg9n3ysylg6na6k6e" // gval2
+	// 		// Implement!
+	//		// WITHDRAW REWARDS
+	// 		// // set withdraw address to WithdrawAccount
+	// 		// setWithdrawAddress := &distributionTypes.MsgSetWithdrawAddress{DelegatorAddress: delegationAccount.GetAddress(), WithdrawAddress: withdrawAccount.GetAddress()}
+	// 		// msgs = append(msgs, setWithdrawAddress)
+	// 		// // withdraw
+	// 		// msgWithdraw := &distributionTypes.MsgWithdrawDelegatorReward{DelegatorAddress: delegationAccount.GetAddress(), ValidatorAddress: validator_address}
+	// 		// msgs = append(msgs, msgWithdraw)
+	//		// STAKE REWARDS
 	// 	default:
 	// 		k.Logger(ctx).Error("Unhandled acknowledgement packet", "type", msgData.MsgType)
 	// 	}

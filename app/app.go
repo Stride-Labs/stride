@@ -415,6 +415,10 @@ func NewStrideApp(
 		scopedICAControllerKeeper, app.MsgServiceRouter(),
 	)
 
+	app.InterchainqueryKeeper = interchainquerykeeper.NewKeeper(appCodec, keys[interchainquerytypes.StoreKey])
+	interchainQueryModule := interchainquery.NewAppModule(appCodec, app.InterchainqueryKeeper)
+	app.InterchainqueryKeeper.SetCallbackHandler(interchainquerytypes.ModuleName, app.InterchainqueryKeeper.CallbackHandler())
+
 	scopedStakeibcKeeper := app.CapabilityKeeper.ScopeToModule(stakeibcmoduletypes.ModuleName)
 	app.ScopedStakeibcKeeper = scopedStakeibcKeeper
 	app.StakeibcKeeper = stakeibcmodulekeeper.NewKeeper(
@@ -430,6 +434,7 @@ func NewStrideApp(
 		*app.IBCKeeper,
 		scopedStakeibcKeeper,
 		app.TransferKeeper,
+		app.InterchainqueryKeeper,
 	)
 	stakeibcModule := stakeibcmodule.NewAppModule(appCodec, app.StakeibcKeeper, app.AccountKeeper, app.BankKeeper)
 	stakeibcIBCModule := stakeibcmodule.NewIBCModule(app.StakeibcKeeper)
@@ -451,9 +456,7 @@ func NewStrideApp(
 		),
 	)
 	epochsModule := epochsmodule.NewAppModule(appCodec, app.EpochsKeeper)
-	app.InterchainqueryKeeper = interchainquerykeeper.NewKeeper(appCodec, keys[interchainquerytypes.StoreKey], app.BankKeeper, app.StakeibcKeeper)
-	interchainQueryModule := interchainquery.NewAppModule(appCodec, app.InterchainqueryKeeper)
-	app.InterchainqueryKeeper.SetCallbackHandler(interchainquerytypes.ModuleName, app.InterchainqueryKeeper.CallbackHandler())
+	
 
 	// this line is used by starport scaffolding # stargate/app/keeperDefinition
 
