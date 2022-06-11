@@ -16,13 +16,12 @@ import (
 
 var _ = strconv.Itoa(0)
 
-
 // TODO(TEST-53): Remove this pre-launch (no need for clients to create / interact with ICAs)
 func CmdSubmitTx() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:  "submit [path/to/sdk_msg.json] [connection-id]",
+		Use:   "submit [path/to/sdk_msg.json] [connection-id]",
 		Short: "Broadcast message submit-tx",
-		Args: cobra.ExactArgs(2),
+		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientTxContext(cmd)
 			if err != nil {

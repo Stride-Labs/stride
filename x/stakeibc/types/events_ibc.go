@@ -10,10 +10,9 @@ const (
 	AttributeKeyAckError   = "error"
 )
 
-   
 const (
-	EventTypeRegisterZone      = "register_zone"
-	EventTypeRedemptionRequest = "request_redemption"
+	EventTypeRegisterZone       = "register_zone"
+	EventTypeRedemptionRequest  = "request_redemption"
 	EventTypeLiquidStakeRequest = "liquid_stake"
 
 	AttributeKeyConnectionId     = "connection_id"

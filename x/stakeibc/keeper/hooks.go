@@ -36,7 +36,7 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochIdentifier string, epochN
 				}
 				delegateAddress := delegateAccount.Address
 				timeoutHeight := clienttypes.NewHeight(0, 500)
-				transferCoin := sdk.NewCoin(depositRecord.Denom, sdk.NewInt(int64(depositRecord.Amount)))
+				transferCoin := sdk.NewCoin(hostZone.GetIBCDenom(), sdk.NewInt(int64(depositRecord.Amount)))
 				goCtx := sdk.WrapSDKContext(ctx)
 
 				msg := ibctypes.NewMsgTransfer("transfer", hostZone.TransferChannelId, transferCoin, addr, delegateAddress, timeoutHeight, 0)
@@ -62,7 +62,7 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochIdentifier string, epochN
 				}
 
 				// TODO(TEST-46): Query process amount (unstaked balance) on host zone using ICQ
-				processAmount := "1" + zoneInfo.BaseDenom
+				processAmount := "1" + zoneInfo.HostDenom
 				amt, err := sdk.ParseCoinNormalized(processAmount)
 				// Do we want to panic here? All unprocessed zones would also fail
 				if err != nil {

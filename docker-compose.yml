@@ -99,3 +99,14 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.hermes
+  icq:
+    image: stridezone:interchain-queries
+    volumes:
+      - ./scripts/state/ICQ:/icq/.icq
+    command:
+      - interchain-queries
+      - run
+    restart: always
+    build:
+      context: .
+      dockerfile: Dockerfile.icq
