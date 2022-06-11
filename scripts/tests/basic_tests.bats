@@ -120,3 +120,19 @@ setup() {
 # TEST-74
 # add test to see if assets are properly being staked on host zone
 # add asset redemption test
+
+@test "icq: exchange rate and delegated balance queries" {
+  # Test: query exchange rate
+  $STR1_EXEC tx interchainquery query-exchangerate GAIA --keyring-backend test -y --from val1
+  sleep 15
+  run $STR1_EXEC q txs --events message.action=/stride.interchainquery.MsgSubmitQueryResponse --limit=1
+  assert_line --partial 'key: redemptionRate'
+
+  # Test query delegated balance
+  $STR1_EXEC tx interchainquery query-delegatedbalance GAIA --keyring-backend test -y --from val1
+  sleep 15
+  run $STR1_EXEC q txs --events message.action=/stride.interchainquery.MsgSubmitQueryResponse --limit=1
+  assert_line --partial 'key: totalDelegations'
+}
+
+

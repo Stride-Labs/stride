@@ -50,7 +50,7 @@ strided q bank balances stride1uk4ze0x4nvh4fk0xm4jdud58eqn4yxhrt52vv7
 
 
 #register gaia as host zone
-# strided tx stakeibc register-host-zone connection-0  uatom 'ibc/C4CFF46FD6DE35CA4CF4CE031E643C8FDC9BA4B99AE598E9B0ED98FE3A2319F9'channel-0  --chain-id STRIDE --home /stride/.strided --keyring-backend test --from val1 --gas 500000 -y
+# strided tx stakeibc register-host-zone connection-0  uatom 'ibc/C4CFF46FD6DE35CA4CF4CE031E643C8FDC9BA4B99AE598E9B0ED98FE3A2319F9' channel-0  --chain-id STRIDE --home /stride/.strided --keyring-backend test --from val1 --gas 500000 -y
 # strided q stakeibc list-host-zone
 
 # liquid stake atoms from stride
