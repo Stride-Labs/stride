@@ -20,7 +20,8 @@ Opening a PR will automatically create Summary and Test plan fields in the PR de
 **Summary**
 Updating some code.
 **Test plan**
-yolo, we're in testnet
+To run the full test suite, run `make init`, then `sh scripts/tests/run_all_tests.sh`.
+If bats testing subdirectories are not populated, run `git submodule update --init`.
 
 ## What is Stride?
 

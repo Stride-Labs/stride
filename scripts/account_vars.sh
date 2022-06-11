@@ -12,9 +12,9 @@ STRIDE_ADDRESS_2=$($BASE_RUN keys show val2 --home $STATE/stride2 --keyring-back
 STRIDE_ADDRESS_3=$($BASE_RUN keys show val3 --home $STATE/stride3 --keyring-backend test -a)
 
 # Gaia
-GAIA1_EXEC="docker-compose --ansi never exec -T gaia1 gaiad --home /gaia/.gaiad --chain-id GAIA"
-GAIA2_EXEC="docker-compose --ansi never exec -T gaia2 gaiad --home /gaia/.gaiad --chain-id GAIA"
-GAIA3_EXEC="docker-compose --ansi never exec -T gaia3 gaiad --home /gaia/.gaiad --chain-id GAIA"
+GAIA1_EXEC="docker-compose --ansi never exec -T gaia1 gaiad --home /gaia/.gaiad"
+GAIA2_EXEC="docker-compose --ansi never exec -T gaia2 gaiad --home /gaia/.gaiad"
+GAIA3_EXEC="docker-compose --ansi never exec -T gaia3 gaiad --home /gaia/.gaiad"
 GAIA_ADDRESS_1=$($GAIA1_EXEC keys show gval1 --keyring-backend test -a --home=/gaia/.gaiad)
 GAIA_ADDRESS_2=$($GAIA2_EXEC keys show gval2 --keyring-backend test -a --home=/gaia/.gaiad)
 GAIA_ADDRESS_3=$($GAIA3_EXEC keys show gval3 --keyring-backend test -a --home=/gaia/.gaiad)

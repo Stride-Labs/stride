@@ -11,7 +11,7 @@ setup_file() {
   IBCSTRD='ibc/FF6C2E86490C1C4FBBD24F55032831D2415B9D7882F85C3CC9C2401D79362BEA'
   IBCATOM='ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2'
   DELEGATE_ADDR='cosmos19l6d3d7k2pel8epgcpxc9np6fsvjpaaa06nm65vagwxap0e4jezq05mmvu'
-  STATOM="st${IBCATOM}"
+  STATOM="stuatom"
   GETBAL() {
     head -n 1 | grep -o -E '[0-9]+'
   }
@@ -49,8 +49,8 @@ setup() {
   str1_balance_atom=$($STR1_EXEC q bank balances $STRIDE_ADDRESS_1 --denom $IBCATOM | GETBAL)
   gaia1_balance_atom=$($GAIA1_EXEC q bank balances $GAIA_ADDRESS_1 --denom uatom | GETBAL)
   # do IBC transfer
-  $STR1_EXEC tx ibc-transfer transfer transfer channel-0 $GAIA_ADDRESS_1 1000ustrd --from val1 --chain-id STRIDE -y --keyring-backend test
-  $GAIA1_EXEC tx ibc-transfer transfer transfer channel-0 $STRIDE_ADDRESS_1 1000uatom --from gval1 --chain-id GAIA -y --keyring-backend test
+  $STR1_EXEC tx ibc-transfer transfer transfer channel-0 $GAIA_ADDRESS_1 10000ustrd --from val1 --chain-id STRIDE -y --keyring-backend test
+  $GAIA1_EXEC tx ibc-transfer transfer transfer channel-0 $STRIDE_ADDRESS_1 10000uatom --from gval1 --chain-id GAIA -y --keyring-backend test
   sleep 20
   # get new balances
   str1_balance_new=$($STR1_EXEC q bank balances $STRIDE_ADDRESS_1 --denom ustrd | GETBAL)
@@ -60,13 +60,13 @@ setup() {
   # get all STRD balance diffs
   str1_diff=$(($str1_balance - $str1_balance_new))
   gaia1_diff=$(($gaia1_balance - $gaia1_balance_new))
-  assert_equal "$str1_diff" '1000'
-  assert_equal "$gaia1_diff" '-1000'
+  assert_equal "$str1_diff" '10000'
+  assert_equal "$gaia1_diff" '-10000'
   # get all ATOM balance diffs
   str1_diff=$(($str1_balance_atom - $str1_balance_atom_new))
   gaia1_diff=$(($gaia1_balance_atom - $gaia1_balance_atom_new))
-  assert_equal "$str1_diff" '-1000'
-  assert_equal "$gaia1_diff" '1000'
+  assert_equal "$str1_diff" '-10000'
+  assert_equal "$gaia1_diff" '10000'
 }
 
 @test "liquid stake mints stATOM" {
@@ -77,7 +77,7 @@ setup() {
   str1_balance_atom=$($STR1_EXEC q bank balances $STRIDE_ADDRESS_1 --denom $IBCATOM | GETBAL)
   str1_balance_statom=$($STR1_EXEC q bank balances $STRIDE_ADDRESS_1 --denom $STATOM | GETBAL)
   # liquid stake
-  $STR1_EXEC tx stakeibc liquid-stake 1000 $IBCATOM --keyring-backend test --from val1 -y
+  $STR1_EXEC tx stakeibc liquid-stake 1000 uatom --keyring-backend test --from val1 -y
   sleep 15
   # make sure Module Acct received ATOM - remove if IBC transfer is automated
   # mod_balance_atom_new=$($STR1_EXEC q bank balances $MODADDR --denom $IBCATOM | GETBAL)
@@ -90,15 +90,16 @@ setup() {
   # make sure STATOM went up
   str1_balance_statom_new=$($STR1_EXEC q bank balances $STRIDE_ADDRESS_1 --denom $STATOM | GETBAL)
   str1_statom_diff=$(($str1_balance_statom_new-$str1_balance_statom))
-  assert_equal "$str1_statom_diff" '1000'
+  assert_equal "$str1_statom_diff" "1000"
 }
 
 # add test to register host zone 
 @test "host zone successfully registered" {
   run $STR1_EXEC q stakeibc show-host-zone GAIA
-  assert_line '  BaseDenom: uatom'
+  assert_line '  HostDenom: uatom'
   assert_line '  chainId: GAIA'
-  assert_line '  address: cosmos19l6d3d7k2pel8epgcpxc9np6fsvjpaaa06nm65vagwxap0e4jezq05mmvu'
+  assert_line '  delegationAccount:'
+  assert_line '    address: cosmos19l6d3d7k2pel8epgcpxc9np6fsvjpaaa06nm65vagwxap0e4jezq05mmvu'
 }
 
 # add test to see if assets are properly being staked on host zone
@@ -107,10 +108,9 @@ setup() {
   # VAL_ADDR='cosmosvaloper19e7sugzt8zaamk2wyydzgmg9n3ysylg6na6k6e'
   # $GAIA1_EXEC q staking delegation cosmos19l6d3d7k2pel8epgcpxc9np6fsvjpaaa06nm65vagwxap0e4jezq05mmvu cosmosvaloper19e7sugzt8zaamk2wyydzgmg9n3ysylg6na6k6e
   #   amount: "240"
-  sleep 30
   del_balance_atom=$($GAIA1_EXEC q bank balances $DELEGATE_ADDR --denom uatom | GETBAL)
   $GAIA1_EXEC q bank balances $DELEGATE_ADDR
-  sleep 20
+  sleep 30
   del_balance_atom_new=$($GAIA1_EXEC q bank balances $DELEGATE_ADDR --denom uatom | GETBAL)
   $GAIA1_EXEC q bank balances $DELEGATE_ADDR
   [ $del_balance_atom -gt $del_balance_atom_new ] && WORKED=0 || WORKED=1
