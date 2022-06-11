@@ -6,6 +6,9 @@ import (
 	"github.com/Stride-Labs/stride/x/stakeibc/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
+	icqkeeper "github.com/Stride-Labs/stride/x/interchainquery/keeper"
+	icqtypes "github.com/Stride-Labs/stride/x/interchainquery/types"
+	bankTypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	stakingTypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -90,6 +93,77 @@ func (k Keeper) DelegateOnHost(ctx sdk.Context, hostZone types.HostZone, amt sdk
 	}
 	return nil
 }
+
+func (k Keeper) ReinvestRewards(ctx sdk.Context, hostZone types.HostZone) error {
+	_ = ctx
+	// the relevant ICA is the delegate account
+	owner := types.FormatICAAccountOwner(hostZone.ChainId, types.ICAAccountType_DELEGATION)
+	portID, err := icatypes.NewControllerPortID(owner)
+	if err != nil {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "%s has no associated portId", owner)
+	}
+	connectionId, err := k.GetConnectionId(ctx, portID)
+	if err != nil {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidChainID, "%s has no associated connection", portID)
+	}
+
+	// Fetch the relevant ICA
+	delegationAccount := hostZone.GetDelegationAccount()
+	withdrawAccount := hostZone.GetWithdrawalAccount()
+
+	SubmitTxs := k.SubmitTxs
+	GetParam := k.GetParam
+	cdc := k.cdc
+	
+	var cb icqkeeper.Callback = func(k icqkeeper.Keeper, ctx sdk.Context, args []byte, query icqtypes.Query) error {
+		var msgs []sdk.Msg
+		queryRes := bankTypes.QueryAllBalancesResponse{}
+		err := cdc.Unmarshal(args, &queryRes)
+		if err != nil {
+			k.Logger(ctx).Error("Unable to unmarshal balances info for zone", "err", err)
+			return err
+		}
+		// Get denom dynamically
+		balance := queryRes.Balances.AmountOf(hostZone.HostDenom)
+		balanceDec := sdk.NewDec(balance.Int64())
+		commission := sdk.NewDec(int64(GetParam(ctx, types.KeyStrideCommission)))
+		// Dec type has 18 decimals and the same precision as Coin types
+		strideAmount := balanceDec.Mul(commission)
+		reinvestAmount := balanceDec.Sub(strideAmount)
+		strideCoin := sdk.NewCoin(hostZone.HostDenom, strideAmount.TruncateInt())
+		reinvestCoin := sdk.NewCoin(hostZone.HostDenom, reinvestAmount.TruncateInt())
+
+		
+		// transfer balances from the withdraw address to the delegation account
+		sendBalanceToDelegationAccount := &bankTypes.MsgSend{FromAddress: withdrawAccount.GetAddress(), ToAddress: delegationAccount.GetAddress(), Amount: sdk.NewCoins(strideCoin)}
+		msgs = append(msgs, sendBalanceToDelegationAccount)
+		// TODO: get the stride commission addresses (potentially split this up into multiple messages)
+		strideCommmissionAccount := "stride12vfkpj7lpqg0n4j68rr5kyffc6wu55dzqewda4"
+		sendBalanceToStrideAccount := &bankTypes.MsgSend{FromAddress: withdrawAccount.GetAddress(), ToAddress: strideCommmissionAccount, Amount: sdk.NewCoins(reinvestCoin)}
+		msgs = append(msgs, sendBalanceToStrideAccount)
+		
+		// Send the transaction through SubmitTx
+		err = SubmitTxs(ctx, connectionId, msgs, *withdrawAccount)
+		if err != nil {
+			return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "Failed to SubmitTxs for %s, %s, %s", connectionId, hostZone.ChainId, msgs)
+		}
+
+		ctx.EventManager().EmitEvents(sdk.Events{
+			sdk.NewEvent(
+				sdk.EventTypeMessage,
+				sdk.NewAttribute("totalBalance", balance.String()),
+			),
+		})
+
+		return nil
+	}
+	// 1. query withdraw account balances using icq
+	// 2. transfer withdraw account balances to the delegation account in the cb
+	// 3. TODO: in the ICA ack upon transfer, reinvest those rewards and withdraw rewards
+	k.InterchainQueryKeeper.QueryBalances(ctx, hostZone, cb, delegationAccount.Address)
+	return nil
+}
+
 
 // SubmitTxs submits an ICA transaction containing multiple messages
 func (k Keeper) SubmitTxs(ctx sdk.Context, connectionId string, msgs []sdk.Msg, account types.ICAAccount) error {
