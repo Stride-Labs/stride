@@ -133,10 +133,13 @@ func (k Keeper) ReinvestRewards(ctx sdk.Context, hostZone types.HostZone) error 
 		strideCoin := sdk.NewCoin(hostZone.HostDenom, strideAmount.TruncateInt())
 		reinvestCoin := sdk.NewCoin(hostZone.HostDenom, reinvestAmount.TruncateInt())
 
+		
 		// transfer balances from the withdraw address to the delegation account
 		sendBalanceToDelegationAccount := &bankTypes.MsgSend{FromAddress: withdrawAccount.GetAddress(), ToAddress: delegationAccount.GetAddress(), Amount: sdk.NewCoins(strideCoin)}
 		msgs = append(msgs, sendBalanceToDelegationAccount)
-		sendBalanceToStrideAccount := &bankTypes.MsgSend{FromAddress: withdrawAccount.GetAddress(), ToAddress: delegationAccount.GetAddress(), Amount: sdk.NewCoins(reinvestCoin)}
+		// TODO: get the stride commission addresses (potentially split this up into multiple messages)
+		strideCommmissionAccount := "stride12vfkpj7lpqg0n4j68rr5kyffc6wu55dzqewda4"
+		sendBalanceToStrideAccount := &bankTypes.MsgSend{FromAddress: withdrawAccount.GetAddress(), ToAddress: strideCommmissionAccount, Amount: sdk.NewCoins(reinvestCoin)}
 		msgs = append(msgs, sendBalanceToStrideAccount)
 		
 		// Send the transaction through SubmitTx
@@ -156,7 +159,7 @@ func (k Keeper) ReinvestRewards(ctx sdk.Context, hostZone types.HostZone) error 
 	}
 	// 1. query withdraw account balances using icq
 	// 2. transfer withdraw account balances to the delegation account in the cb
-	// 3. TODO: in the ICA ack upon transfer, reinvest those rewards
+	// 3. TODO: in the ICA ack upon transfer, reinvest those rewards and withdraw rewards
 	k.InterchainQueryKeeper.QueryBalances(ctx, hostZone, cb)
 	return nil
 }
