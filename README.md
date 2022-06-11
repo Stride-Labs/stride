@@ -20,8 +20,8 @@ Opening a PR will automatically create Summary and Test plan fields in the PR de
 **Summary**
 Updating some code.
 **Test plan**
-To run the full test suite, run `make init`, then `sh scripts/tests/run_all_tests.sh`.
-If bats testing subdirectories are not populated, run `git submodule update --init`.
+Add test plan here.
+
 
 ## What is Stride?
 
@@ -118,3 +118,9 @@ You can run `sh scripts/init.sh` to achieve the same output as the above. The fo
 5. `-a` This will re-build Stride's docker images, ignoring cache. 
 
 At the end, all 7 docker images will be served. 
+
+## Testing
+
+To run the full test suite, run `make init`, then `sh scripts/tests/run_all_tests.sh`.
+
+If bats testing subdirectories are not populated, run `git submodule update --init`.
