@@ -16,17 +16,17 @@ import (
 
 // Keeper of this module maintains collections of registered zones.
 type Keeper struct {
-	cdc      codec.Codec
-	storeKey sdk.StoreKey
-	callbacks      map[string]types.QueryCallbacks
+	cdc       codec.Codec
+	storeKey  sdk.StoreKey
+	callbacks map[string]types.QueryCallbacks
 }
 
 // NewKeeper returns a new instance of zones Keeper
 func NewKeeper(cdc codec.Codec, storeKey sdk.StoreKey) Keeper {
 	return Keeper{
-		cdc:            cdc,
-		storeKey:       storeKey,
-		callbacks:      make(map[string]types.QueryCallbacks),
+		cdc:       cdc,
+		storeKey:  storeKey,
+		callbacks: make(map[string]types.QueryCallbacks),
 	}
 }
 

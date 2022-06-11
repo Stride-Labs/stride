@@ -93,6 +93,11 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochIdentifier string, epochN
 					k.Logger(ctx).Error("Zone %s is missing a delegation address!", zoneInfo.ChainId)
 					return true
 				}
+				withdrawalIca := zoneInfo.GetWithdrawalAccount()
+				if withdrawalIca == nil || withdrawalIca.Address == "" {
+					k.Logger(ctx).Error("Zone %s is missing a withdrawal address!", zoneInfo.ChainId)
+					return true
+				}
 				err := k.ReinvestRewards(ctx, zoneInfo)
 				if err != nil {
 					k.Logger(ctx).Error("Did not withdraw rewards on %s", zoneInfo.ChainId)
