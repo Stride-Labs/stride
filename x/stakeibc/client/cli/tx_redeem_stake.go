@@ -15,9 +15,9 @@ var _ = strconv.Itoa(0)
 
 func CmdRedeemStake() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "redeem-stake [amount] [denom]",
+		Use:   "redeem-stake [amount] [denom] [receiver]",
 		Short: "Broadcast message redeem-stake",
-		Args:  cobra.ExactArgs(2),
+		Args:  cobra.ExactArgs(3),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			argAmount, err := cast.ToInt64E(args[0])
 			if err != nil {
@@ -30,10 +30,13 @@ func CmdRedeemStake() *cobra.Command {
 				return err
 			}
 
+			argReceiver := args[2]
+
 			msg := types.NewMsgRedeemStake(
 				clientCtx.GetFromAddress().String(),
 				argAmount,
 				argDenom,
+				argReceiver,
 			)
 			if err := msg.ValidateBasic(); err != nil {
 				return err

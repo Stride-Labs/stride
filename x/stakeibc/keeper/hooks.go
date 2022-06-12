@@ -35,7 +35,9 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochIdentifier string, epochN
 					continue
 				}
 				delegateAddress := delegateAccount.Address
-				timeoutHeight := clienttypes.NewHeight(0, 500)
+				// TODO(TEST-89): Set NewHeight relative to the most recent known gaia height (based on the LC)
+				// TODO(TEST-90): why do we have two gaia LCs?
+				timeoutHeight := clienttypes.NewHeight(0, 10000)
 				transferCoin := sdk.NewCoin(hostZone.GetIBCDenom(), sdk.NewInt(int64(depositRecord.Amount)))
 				goCtx := sdk.WrapSDKContext(ctx)
 
@@ -65,6 +67,11 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochIdentifier string, epochN
 		// 		delegationIca := zoneInfo.GetDelegationAccount()
 		// 		if delegationIca == nil || delegationIca.Address == "" {
 		// 			k.Logger(ctx).Error("Zone %s is missing a delegation address!", zoneInfo.ChainId)
+		// 			return true
+		// 		}
+		// 		withdrawIca := zoneInfo.GetWithdrawalAccount()
+		// 		if withdrawIca == nil || withdrawIca.Address == "" {
+		// 			k.Logger(ctx).Error("Zone %s is missing a withdrawal address!", zoneInfo.ChainId)
 		// 			return true
 		// 		}
 		// 		err := k.ReinvestRewards(ctx, zoneInfo)

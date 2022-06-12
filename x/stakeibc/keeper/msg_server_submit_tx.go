@@ -134,11 +134,11 @@ func (k Keeper) ReinvestRewards(ctx sdk.Context, hostZone types.HostZone) error 
 		reinvestCoin := sdk.NewCoin(hostZone.HostDenom, reinvestAmount.TruncateInt())
 
 		// transfer balances from the withdraw address to the delegation account
-		sendBalanceToDelegationAccount := &bankTypes.MsgSend{FromAddress: withdrawAccount.GetAddress(), ToAddress: delegationAccount.GetAddress(), Amount: sdk.NewCoins(strideCoin)}
+		sendBalanceToDelegationAccount := &bankTypes.MsgSend{FromAddress: withdrawAccount.GetAddress(), ToAddress: delegationAccount.GetAddress(), Amount: sdk.NewCoins(reinvestCoin)}
 		msgs = append(msgs, sendBalanceToDelegationAccount)
 		// TODO: get the stride commission addresses (potentially split this up into multiple messages)
-		strideCommmissionAccount := "stride12vfkpj7lpqg0n4j68rr5kyffc6wu55dzqewda4"
-		sendBalanceToStrideAccount := &bankTypes.MsgSend{FromAddress: withdrawAccount.GetAddress(), ToAddress: strideCommmissionAccount, Amount: sdk.NewCoins(reinvestCoin)}
+		strideCommmissionAccount := "cosmos12vfkpj7lpqg0n4j68rr5kyffc6wu55dzqewda4"
+		sendBalanceToStrideAccount := &bankTypes.MsgSend{FromAddress: withdrawAccount.GetAddress(), ToAddress: strideCommmissionAccount, Amount: sdk.NewCoins(strideCoin)}
 		msgs = append(msgs, sendBalanceToStrideAccount)
 
 		// Send the transaction through SubmitTx
@@ -150,7 +150,9 @@ func (k Keeper) ReinvestRewards(ctx sdk.Context, hostZone types.HostZone) error 
 		ctx.EventManager().EmitEvents(sdk.Events{
 			sdk.NewEvent(
 				sdk.EventTypeMessage,
-				sdk.NewAttribute("totalBalance", balance.String()),
+				sdk.NewAttribute("WithdrawalAccountBalance", balance.String()),
+				sdk.NewAttribute("ReinvestedPortion", reinvestCoin.String()),
+				sdk.NewAttribute("StrideCommission", strideCoin.String()),
 			),
 		})
 
@@ -159,7 +161,7 @@ func (k Keeper) ReinvestRewards(ctx sdk.Context, hostZone types.HostZone) error 
 	// 1. query withdraw account balances using icq
 	// 2. transfer withdraw account balances to the delegation account in the cb
 	// 3. TODO: in the ICA ack upon transfer, reinvest those rewards and withdraw rewards
-	k.InterchainQueryKeeper.QueryBalances(ctx, hostZone, cb, delegationAccount.Address)
+	k.InterchainQueryKeeper.QueryBalances(ctx, hostZone, cb, withdrawAccount.Address)
 	return nil
 }
 
