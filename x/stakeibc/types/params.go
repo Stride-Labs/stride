@@ -11,7 +11,7 @@ import (
 var (
 	// these are default intervals _in epochs_ NOT in blocks
 	DefaultDepositInterval      uint64 = 5
-	DefaultDelegateInterval     uint64 = 2
+	DefaultDelegateInterval     uint64 = 5
 	DefaultReinvestInterval     uint64 = 2
 	DefaultRewardsInterval      uint64 = 5
 	DefaultExchangeRateInterval uint64 = 2

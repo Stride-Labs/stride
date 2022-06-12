@@ -110,3 +110,9 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.icq
+    # logging:
+    #   driver: "local"
+    #   options:
+    #     max-size: 10m
+    #     max-file: "3"
+    #     env: "os"

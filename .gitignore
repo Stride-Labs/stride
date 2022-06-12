@@ -6,13 +6,13 @@
 *.dylib
 
 # auto-generated go files
-*.pb.go
+
 
 # build
 build/*
 state/*
 scripts/state/*
-scripts/*.log
+scripts/logs/*.log
 scripts/temp.sh
 vue/*
 # Test binary, built with `go test -c`

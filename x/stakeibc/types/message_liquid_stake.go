@@ -11,7 +11,7 @@ const TypeMsgLiquidStake = "liquid_stake"
 
 var _ sdk.Msg = &MsgLiquidStake{}
 
-func NewMsgLiquidStake(creator string, amount int32, denom string) *MsgLiquidStake {
+func NewMsgLiquidStake(creator string, amount int64, denom string) *MsgLiquidStake {
 	return &MsgLiquidStake{
 		Creator: creator,
 		Amount:  amount,
