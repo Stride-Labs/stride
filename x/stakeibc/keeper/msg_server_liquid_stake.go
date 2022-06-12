@@ -31,7 +31,6 @@ func (k msgServer) LiquidStake(goCtx context.Context, msg *types.MsgLiquidStake)
 		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "address invalid")
 	}
 	// get the coins to send, they need to be in the format {amount}{denom}
-	// NOTE: int is an int32 or int64 (depending on machine type) so converting from int32 -> int
 	// is safe. The converse is not true.
 	ibcDenom := hostZone.GetIBCDenom()
 	coinString := strconv.Itoa(int(msg.Amount)) + ibcDenom
@@ -78,7 +77,7 @@ func (k msgServer) LiquidStake(goCtx context.Context, msg *types.MsgLiquidStake)
 	return &types.MsgLiquidStakeResponse{}, nil
 }
 
-func (k msgServer) MintStAsset(ctx sdk.Context, sender sdk.AccAddress, amount int32, denom string) error {
+func (k msgServer) MintStAsset(ctx sdk.Context, sender sdk.AccAddress, amount int64, denom string) error {
 	// repeat safety checks from LiquidStake in case MintStAsset is called from another site
 	// ensure Amount is positive, liquid staking 0 or less tokens is invalid
 	if amount < 1 {

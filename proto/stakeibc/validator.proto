@@ -8,5 +8,5 @@ message Validator {
   string address = 2; 
   string status = 3;
   int32 commissionRate = 4; 
-  int32 delegationAmt = 5; 
+  int64 delegationAmt = 5; 
 }

@@ -15,8 +15,8 @@ enum ICAAccountType {
 // TODO(TEST-XX): Update these fields to be more useful (e.g. balances should be coins, maybe store port name directly)
 message ICAAccount {
   string address = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ]; 
-  int32 balance = 2; 
-  int32 delegatedBalance = 3; 
+  int64 balance = 2; 
+  int64 delegatedBalance = 3; 
   repeated Delegation delegations = 4;
   ICAAccountType target = 5;
 }

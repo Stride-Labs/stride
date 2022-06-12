@@ -51,36 +51,35 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochIdentifier string, epochN
 				}
 			}
 		}
-		// delegateInterval := int64(k.GetParam(ctx, types.KeyDelegateInterval))
-		delegateInterval := int64(10)
+		delegateInterval := int64(k.GetParam(ctx, types.KeyDelegateInterval))
 		if epochNumber%delegateInterval == 0 {
 			k.ProcessDelegationStaking(ctx)
 		}
 		// process withdrawals
 		// TODO(TEST-88): restructure this to be more efficient, we should only have to loop
 		// over host zones once
-		reinvestInterval := int64(k.GetParam(ctx, types.KeyReinvestInterval))
-		if epochNumber%reinvestInterval == 0 {
-			icaReinvest := func(index int64, zoneInfo types.HostZone) (stop bool) {
-				// Verify the delegation ICA is registered
-				delegationIca := zoneInfo.GetDelegationAccount()
-				if delegationIca == nil || delegationIca.Address == "" {
-					k.Logger(ctx).Error("Zone %s is missing a delegation address!", zoneInfo.ChainId)
-					return true
-				}
-				err := k.ReinvestRewards(ctx, zoneInfo)
-				if err != nil {
-					k.Logger(ctx).Error("Did not withdraw rewards on %s", zoneInfo.ChainId)
-					return true
-				} else {
-					k.Logger(ctx).Info(fmt.Sprintf("Successfully withdrew rewards on %s", zoneInfo.ChainId))
-				}
-				return false
-			}
+		// reinvestInterval := int64(k.GetParam(ctx, types.KeyReinvestInterval))
+		// if epochNumber%reinvestInterval == 0 {
+		// 	icaReinvest := func(index int64, zoneInfo types.HostZone) (stop bool) {
+		// 		// Verify the delegation ICA is registered
+		// 		delegationIca := zoneInfo.GetDelegationAccount()
+		// 		if delegationIca == nil || delegationIca.Address == "" {
+		// 			k.Logger(ctx).Error("Zone %s is missing a delegation address!", zoneInfo.ChainId)
+		// 			return true
+		// 		}
+		// 		err := k.ReinvestRewards(ctx, zoneInfo)
+		// 		if err != nil {
+		// 			k.Logger(ctx).Error("Did not withdraw rewards on %s", zoneInfo.ChainId)
+		// 			return true
+		// 		} else {
+		// 			k.Logger(ctx).Info(fmt.Sprintf("Successfully withdrew rewards on %s", zoneInfo.ChainId))
+		// 		}
+		// 		return false
+		// 	}
 
-			// Iterate the zones and apply icaReinvest
-			k.IterateHostZones(ctx, icaReinvest)
-		}
+		// 	// Iterate the zones and apply icaReinvest
+		// 	k.IterateHostZones(ctx, icaReinvest)
+		// }
 	}
 }
 
