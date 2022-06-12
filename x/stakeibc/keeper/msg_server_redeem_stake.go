@@ -25,7 +25,11 @@ func (k Keeper) RedeemStake(goCtx context.Context, msg *types.MsgRedeemStake) (*
 	if err != nil {
 		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidCoins, "could not parse inCoin: %s", coinString)
 	}
-	hostZone, err := k.GetHostZoneFromIBCDenom(ctx, msg.Denom)
+	// remove st prefix to get the base denom
+	baseDenom := msg.Denom[2:]
+	logger := k.Logger(ctx)
+	logger.Info("DOGE baseDenom: ", baseDenom)
+	hostZone, err := k.GetHostZoneFromHostDenom(ctx, baseDenom)
 	if err != nil {
 		return nil, err
 	}
@@ -74,7 +78,12 @@ func (k Keeper) RedeemStake(goCtx context.Context, msg *types.MsgRedeemStake) (*
 	// Construct the transaction. Note, this transaction must be atomically executed.
 	var msgs []sdk.Msg
 	// 1. MsgSetWithdrawalAddress
-	setWithdrawAddressUser := &distributionTypes.MsgSetWithdrawAddress{DelegatorAddress: delegationAccount.GetAddress(), WithdrawAddress: sender.String()}
+	// TODO(TEST-90): fix this hack
+	// stride1uk4ze0x4nvh4fk0xm4jdud58eqn4yxhrt52vv7
+	// cosmos1uk4ze0x4nvh4fk0xm4jdud58eqn4yxhrgl2scj
+	// strided q bank balances stride1uk4ze0x4nvh4fk0xm4jdud58eqn4yxhrt52vv7
+	// strided tx stakeibc redeem-stake 1000 stuatom cosmos1uk4ze0x4nvh4fk0xm4jdud58eqn4yxhrgl2scj --from val1 --chain-id STRIDE --keyring-backend test --home /stride/.strided
+	setWithdrawAddressUser := &distributionTypes.MsgSetWithdrawAddress{DelegatorAddress: delegationAccount.GetAddress(), WithdrawAddress: msg.Receiver}
 	msgs = append(msgs, setWithdrawAddressUser)
 	// 2. MsgUndelegate
 	undelegateToUser := &stakingTypes.MsgUndelegate{DelegatorAddress: delegationAccount.GetAddress(), ValidatorAddress: validator_address, Amount: outCoin}

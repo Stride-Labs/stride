@@ -19,10 +19,10 @@ func (k msgServer) LiquidStake(goCtx context.Context, msg *types.MsgLiquidStake)
 	// check that hostZone is registered
 	// strided tx stakeibc liquid-stake 100 uatom
 	hostDenom := msg.Denom
-	hostZone, hostZoneFound := k.GetHostZoneFromDenom(ctx, msg.Denom)
-	if !hostZoneFound {
+	hostZone, err := k.GetHostZoneFromHostDenom(ctx, msg.Denom)
+	if err != nil {
 		k.Logger(ctx).Info("Host Zone not found for denom (%s)", hostDenom)
-		return nil, sdkerrors.Wrapf(types.ErrInvalidHostZone, "Host Zone not found for denom (%s)", hostDenom)
+		return nil, err
 	}
 	// get the sender address
 	sender, err := sdk.AccAddressFromBech32(msg.Creator)
