@@ -51,10 +51,9 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochIdentifier string, epochN
 				}
 			}
 		}
-		//delegateInterval := int64(k.GetParam(ctx, types.KeyDelegateInterval))
-		delegateInterval := int64(1)
+		// delegateInterval := int64(k.GetParam(ctx, types.KeyDelegateInterval))
+		delegateInterval := int64(10)
 		if epochNumber%delegateInterval == 0 {
-			k.Logger(ctx).Info("KICK OFF DELEGATION")
 			k.ProcessDelegationStaking(ctx)
 		}
 		// process withdrawals
@@ -74,7 +73,7 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochIdentifier string, epochN
 					k.Logger(ctx).Error("Did not withdraw rewards on %s", zoneInfo.ChainId)
 					return true
 				} else {
-					k.Logger(ctx).Info("Successfully withdrew rewards on %s", zoneInfo.ChainId)
+					k.Logger(ctx).Info(fmt.Sprintf("Successfully withdrew rewards on %s", zoneInfo.ChainId))
 				}
 				return false
 			}

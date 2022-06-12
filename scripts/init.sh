@@ -134,7 +134,7 @@ sh ${SCRIPT_DIR}/init_icq.sh
 # first register host zone for ATOM chain
 ATOM='uatom'
 IBCATOM='ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2'
-CSLEEP 10
+CSLEEP 60
 docker-compose --ansi never exec -T $main_node strided tx stakeibc register-host-zone connection-0 $ATOM $IBCATOM channel-0 --chain-id $main_chain --home /stride/.strided --keyring-backend test --from val1 --gas 500000 -y
-CSLEEP 30
+CSLEEP 50
 # sh ${SCRIPT_DIR}/tests/run_all_tests.sh
