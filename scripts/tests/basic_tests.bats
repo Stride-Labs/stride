@@ -109,11 +109,9 @@ setup() {
   # $GAIA1_EXEC q staking delegation cosmos19l6d3d7k2pel8epgcpxc9np6fsvjpaaa06nm65vagwxap0e4jezq05mmvu cosmosvaloper19e7sugzt8zaamk2wyydzgmg9n3ysylg6na6k6e
   #   amount: "240"
   del_balance_atom=$($GAIA1_EXEC q bank balances $DELEGATE_ADDR --denom uatom | GETBAL)
-  $GAIA1_EXEC q bank balances $DELEGATE_ADDR
   sleep 30
   del_balance_atom_new=$($GAIA1_EXEC q bank balances $DELEGATE_ADDR --denom uatom | GETBAL)
-  $GAIA1_EXEC q bank balances $DELEGATE_ADDR
-  [ $del_balance_atom -gt $del_balance_atom_new ] && WORKED=0 || WORKED=1
+  [ $del_balance_atom -gt $del_balance_atom_new ] && WORKED=1 || WORKED=0
   assert_equal "$WORKED" "1"
 }
 

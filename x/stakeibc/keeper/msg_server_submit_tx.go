@@ -126,7 +126,7 @@ func (k Keeper) ReinvestRewards(ctx sdk.Context, hostZone types.HostZone) error 
 		// Get denom dynamically
 		balance := queryRes.Balances.AmountOf(hostZone.HostDenom)
 		balanceDec := sdk.NewDec(balance.Int64())
-		commission := sdk.NewDec(int64(GetParam(ctx, types.KeyStrideCommission)))
+		commission := sdk.NewDec(int64(GetParam(ctx, types.KeyStrideCommission))).Quo(sdk.NewDec(100))
 		// Dec type has 18 decimals and the same precision as Coin types
 		strideAmount := balanceDec.Mul(commission)
 		reinvestAmount := balanceDec.Sub(strideAmount)

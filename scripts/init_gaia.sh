@@ -34,7 +34,7 @@ for i in ${!GAIA_CHAINS[@]}; do
     # get validator address
     VAL_ADDR=$($gaia_cmd keys show $val_acct --keyring-backend test -a) > /dev/null
     # add money for this validator account
-    $gaia_cmd add-genesis-account ${VAL_ADDR} 500000000000uatom
+    $gaia_cmd add-genesis-account ${VAL_ADDR} 500000000000000uatom
     # actually set this account as a validator
     yes | $gaia_cmd gentx $val_acct 1000000000uatom --chain-id $main_gaia_chain --keyring-backend test 2> /dev/null
     # now we process these txs 
@@ -45,7 +45,7 @@ for i in ${!GAIA_CHAINS[@]}; do
     GAIA_NODES+=( $node_id )
 
     if [ $i -ne $MAIN_ID ]; then
-        $main_gaia_cmd add-genesis-account ${VAL_ADDR} 500000000000uatom
+        $main_gaia_cmd add-genesis-account ${VAL_ADDR} 50000000000000uatom
         cp ${STATE}/${node_name}/config/gentx/*.json ${STATE}/${main_gaia_node}/config/gentx/
     fi
 done
@@ -54,7 +54,7 @@ done
 echo $RLY_MNEMONIC_2 | $main_gaia_cmd keys add rly2 --recover --keyring-backend=test > /dev/null
 RLY_ADDRESS_2=$($main_gaia_cmd keys show rly2 --keyring-backend test -a)
 # Give relayer account token balance
-$main_gaia_cmd add-genesis-account ${RLY_ADDRESS_2} 500000000000ustrd
+$main_gaia_cmd add-genesis-account ${RLY_ADDRESS_2} 5000000000000ustrd
 
 $main_gaia_cmd collect-gentxs 2> /dev/null
 

@@ -12,6 +12,7 @@
 build/*
 state/*
 scripts/state/*
+scripts/*.log
 scripts/temp.sh
 vue/*
 # Test binary, built with `go test -c`
