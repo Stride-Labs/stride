@@ -9,7 +9,9 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/tendermint/tendermint/libs/log"
 )
 
@@ -132,5 +134,52 @@ func (k Keeper) QueryBalances(ctx sdk.Context, zone stakeibctypes.HostZone, cb C
 			sdk.NewAttribute(types.AttributeKeyRequest, hex.EncodeToString(bz)),
 		),
 	})
+	return nil
+}
+
+func (k Keeper) QueryDelegatorDelegations(ctx sdk.Context, zone stakeibctypes.HostZone, cb Callback, address string) error {
+	connectionId := zone.ConnectionId
+	chainId := zone.ChainId
+
+	// Validate address
+	_, err := sdk.AccAddressFromBech32(address)
+	if err != nil {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "address %s is invalid", address)
+	}
+
+	query_type := "cosmos.staking.v1beta1.Query/DelegatorDelegations"
+	// Get delegationAddress dynamically
+	delegationQuery := stakingtypes.QueryDelegatorDelegationsRequest{DelegatorAddr: address}
+	bz := k.cdc.MustMarshal(&delegationQuery)
+	if err != nil {
+		sdkerrors.Wrap(err, "could not unmarshal QueryDelegatorDelegationsRequest")
+	}
+
+	k.MakeRequest(
+		ctx,
+		connectionId,
+		chainId,
+		query_type,
+		bz,
+		// TODO(TEST-79) understand and use proper period
+		sdk.NewInt(25),
+		types.ModuleName,
+		cb,
+	)
+
+	ctx.EventManager().EmitEvents(sdk.Events{
+		sdk.NewEvent(
+			sdk.EventTypeMessage,
+			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
+			sdk.NewAttribute(sdk.AttributeKeyAction, types.AttributeValueQuery),
+			sdk.NewAttribute(types.AttributeKeyQueryId, GenerateQueryHash(connectionId, chainId, query_type, bz)),
+			sdk.NewAttribute(types.AttributeKeyChainId, chainId),
+			sdk.NewAttribute(types.AttributeKeyConnectionId, connectionId),
+			sdk.NewAttribute(types.AttributeKeyType, query_type),
+			sdk.NewAttribute(types.AttributeKeyHeight, "0"),
+			sdk.NewAttribute(types.AttributeKeyRequest, hex.EncodeToString(bz)),
+		),
+	})
+
 	return nil
 }
