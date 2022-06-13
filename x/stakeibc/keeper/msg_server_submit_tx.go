@@ -166,6 +166,7 @@ func (k Keeper) ReinvestRewards(ctx sdk.Context, hostZone types.HostZone) error 
 }
 
 // icq to read host delegated balance => update hostZone.delegationAccount.DelegatedBalance
+// TODO(TEST-97) add safety logic to query at specific block height (same as query height for delegated balances)
 func (k Keeper) UpdateDelegatedBalance(ctx sdk.Context, hostZone types.HostZone) error {
 	_ = ctx
 	// Fetch the relevant ICA
@@ -212,6 +213,7 @@ func (k Keeper) UpdateDelegatedBalance(ctx sdk.Context, hostZone types.HostZone)
 }
 
 // icq to read host delegation account undeleted balance => update hostZone.delegationAccount.Balance
+// TODO(TEST-97) add safety logic to query at specific block height (same as query height for delegated balances)
 func (k Keeper) UpdateUndelegatedBalance(ctx sdk.Context, hostZone types.HostZone) error {
 	_ = ctx
 	// Fetch the relevant ICA
@@ -253,6 +255,38 @@ func (k Keeper) UpdateUndelegatedBalance(ctx sdk.Context, hostZone types.HostZon
 	// 1. query delegation account undelegated balances using icq
 	// 2. write the result to hostZone.delegationAccount.Balance
 	k.InterchainQueryKeeper.QueryBalances(ctx, hostZone, cb, delegationAccount.Address)
+	return nil
+}
+
+// Update the redemption rate using values of delegatedBalances, balances and stAsset supply
+// TODO(TEST-97) add safety logic that checks balance, delegatedBalance and stAsset supply's block_height_updated are all equal
+func (k Keeper) UpdateExchangeRate(ctx sdk.Context, hostZone types.HostZone) error {
+	_ = ctx
+
+	// Assets: native asset balances on delegation account + staked
+	delegatedBalance := hostZone.GetDelegationAccount().DelegatedBalance
+	unDelegatedBalance := hostZone.GetDelegationAccount().Balance
+	assetBalance := delegatedBalance + unDelegatedBalance
+
+	// Claims: stAsset supply
+	stAssetSupply := k.bankKeeper.GetSupply(ctx, hostZone.IBCDenom)
+
+	// ExchRate = Assets / Claims
+	redemptionRate := sdk.NewDec(assetBalance).Quo(stAssetSupply.Amount.ToDec())
+
+	// Write ExchRate to state
+	hostZone.LastRedemptionRate = hostZone.RedemptionRate
+	hostZone.RedemptionRate = redemptionRate
+	k.SetHostZone(ctx, hostZone)
+
+	ctx.EventManager().EmitEvents(sdk.Events{
+		sdk.NewEvent(
+			sdk.EventTypeMessage,
+			sdk.NewAttribute("lastRedemptionRate", redemptionRate.String()),
+			sdk.NewAttribute("newRedemptionRate", hostZone.LastRedemptionRate.String()),
+		),
+	})
+
 	return nil
 }
 
