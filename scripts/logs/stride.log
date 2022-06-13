@@ -1,0 +1,727 @@
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m starting node with ABCI Tendermint in-process
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m Starting multiAppConn service [36mimpl=[0mmultiAppConn [36mmodule=[0mproxy
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m Starting localClient service [36mconnection=[0mquery [36mimpl=[0mlocalClient [36mmodule=[0mabci-client
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m Starting localClient service [36mconnection=[0msnapshot [36mimpl=[0mlocalClient [36mmodule=[0mabci-client
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m Starting localClient service [36mconnection=[0mmempool [36mimpl=[0mlocalClient [36mmodule=[0mabci-client
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m Starting localClient service [36mconnection=[0mconsensus [36mimpl=[0mlocalClient [36mmodule=[0mabci-client
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m Starting EventBus service [36mimpl=[0mEventBus [36mmodule=[0mevents
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m Starting PubSub service [36mimpl=[0mPubSub [36mmodule=[0mpubsub
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m Starting IndexerService service [36mimpl=[0mIndexerService [36mmodule=[0mtxindex
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m ABCI Handshake App Info [36mhash=[0m [36mheight=[0m0 [36mmodule=[0mconsensus [36mprotocol-version=[0m0 [36msoftware-version=[0m0.0.5-128-gb1a6a38
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m ABCI Replay Blocks [36mappHeight=[0m0 [36mmodule=[0mconsensus [36mstateHeight=[0m0 [36mstoreHeight=[0m0
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m asserting crisis invariants [36minv=[0m0/11 [36mmodule=[0mx/crisis [36mname=[0mdistribution/nonnegative-outstanding
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m asserting crisis invariants [36minv=[0m1/11 [36mmodule=[0mx/crisis [36mname=[0mdistribution/can-withdraw
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m asserting crisis invariants [36minv=[0m2/11 [36mmodule=[0mx/crisis [36mname=[0mdistribution/reference-count
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m asserting crisis invariants [36minv=[0m3/11 [36mmodule=[0mx/crisis [36mname=[0mdistribution/module-account
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m asserting crisis invariants [36minv=[0m4/11 [36mmodule=[0mx/crisis [36mname=[0mstaking/module-accounts
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m asserting crisis invariants [36minv=[0m5/11 [36mmodule=[0mx/crisis [36mname=[0mstaking/nonnegative-power
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m asserting crisis invariants [36minv=[0m6/11 [36mmodule=[0mx/crisis [36mname=[0mstaking/positive-delegation
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m asserting crisis invariants [36minv=[0m7/11 [36mmodule=[0mx/crisis [36mname=[0mstaking/delegator-shares
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m asserting crisis invariants [36minv=[0m8/11 [36mmodule=[0mx/crisis [36mname=[0mgov/module-account
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m asserting crisis invariants [36minv=[0m9/11 [36mmodule=[0mx/crisis [36mname=[0mbank/nonnegative-outstanding
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m asserting crisis invariants [36minv=[0m10/11 [36mmodule=[0mx/crisis [36mname=[0mbank/total-supply
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m asserted all invariants [36mduration=[0m8.528833 [36mheight=[0m0 [36mmodule=[0mx/crisis
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m created new capability [36mmodule=[0mibc [36mname=[0mports/transfer
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m port binded [36mmodule=[0mx/ibc/port [36mport=[0mtransfer
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m claimed capability [36mcapability=[0m1 [36mmodule=[0mtransfer [36mname=[0mports/transfer
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m created new capability [36mmodule=[0mibc [36mname=[0mports/icahost
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m port binded [36mmodule=[0mx/ibc/port [36mport=[0micahost
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m claimed capability [36mcapability=[0m2 [36mmodule=[0micahost [36mname=[0mports/icahost
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m Completed ABCI Handshake - Tendermint and App are synced [36mappHash=[0m [36mappHeight=[0m0 [36mmodule=[0mconsensus
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m Version info [36mblock=[0m11 [36mp2p=[0m8 [36mtendermint_version=[0m0.34.19
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m This node is a validator [36maddr=[0m6F7099EADF97A014020E13913A1EF82374323A90 [36mmodule=[0mconsensus [36mpubKey=[0mK9LJUxsmIS2SuJcPSoyqWhgxHjkpaiBu8A69z8e5hDQ=
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m P2P Node ID [36mID=[0m24246505ab83cc3e87ad07bf3086f7243b1fe1fa [36mfile=[0m/stride/.strided/config/node_key.json [36mmodule=[0mp2p
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m Adding persistent peers [36maddrs=[0m["d4a255fc79dc59523cf37bdec1f290f10cb4fa3a@stride3:26656","987c5243014d2237fb22ecc9863aaf7128fa0bc1@stride2:26656"] [36mmodule=[0mp2p
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m Adding unconditional peer ids [36mids=[0m[] [36mmodule=[0mp2p
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m Add our address to book [36maddr=[0m{"id":"24246505ab83cc3e87ad07bf3086f7243b1fe1fa","ip":"0.0.0.0","port":26656} [36mbook=[0m/stride/.strided/config/addrbook.json [36mmodule=[0mp2p
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m Starting Node service [36mimpl=[0mNode
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m Starting pprof server [36mladdr=[0mlocalhost:6060
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m Starting P2P Switch service [36mimpl=[0m"P2P Switch" [36mmodule=[0mp2p
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m Starting Consensus service [36mimpl=[0mConsensusReactor [36mmodule=[0mconsensus
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m Reactor  [36mmodule=[0mconsensus [36mwaitSync=[0mtrue
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m Starting Evidence service [36mimpl=[0mEvidence [36mmodule=[0mevidence
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m Starting StateSync service [36mimpl=[0mStateSync [36mmodule=[0mstatesync
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m Starting PEX service [36mimpl=[0mPEX [36mmodule=[0mpex
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m Starting AddrBook service [36mbook=[0m/stride/.strided/config/addrbook.json [36mimpl=[0mAddrBook [36mmodule=[0mp2p
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m Starting RPC HTTP server on [::]:26657 [36mmodule=[0mrpc-server
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m Starting Mempool service [36mimpl=[0mMempool [36mmodule=[0mmempool
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m Starting BlockchainReactor service [36mimpl=[0mBlockchainReactor [36mmodule=[0mblockchain
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m Starting BlockPool service [36mimpl=[0mBlockPool [36mmodule=[0mblockchain
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m Ensure peers [36mmodule=[0mpex [36mnumDialing=[0m0 [36mnumInPeers=[0m0 [36mnumOutPeers=[0m0 [36mnumToDial=[0m10
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m No addresses to dial. Falling back to seeds [36mmodule=[0mpex
+stride-stride1-1  | [90m9:55PM[0m [1m[31mERR[0m[0m Can't add peer's address to addrbook [36merr=[0m"Cannot add non-routable address d4a255fc79dc59523cf37bdec1f290f10cb4fa3a@192.168.128.4:26656" [36mmodule=[0mp2p
+stride-stride1-1  | [90m9:55PM[0m [1m[31mERR[0m[0m Can't add peer's address to addrbook [36merr=[0m"Cannot add non-routable address 987c5243014d2237fb22ecc9863aaf7128fa0bc1@192.168.128.7:26656" [36mmodule=[0mp2p
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m Saving AddrBook to file [36mbook=[0m/stride/.strided/config/addrbook.json [36mmodule=[0mp2p [36msize=[0m0
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m Starting RPC HTTP server on [::]:1317 [36mmodule=[0mapi-server
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m Dialing peer [36maddress=[0m{"id":"987c5243014d2237fb22ecc9863aaf7128fa0bc1","ip":"192.168.128.7","port":26656} [36mmodule=[0mp2p
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m Starting Peer service [36mimpl=[0m"Peer{MConn{192.168.128.7:26656} 987c5243014d2237fb22ecc9863aaf7128fa0bc1 out}" [36mmodule=[0mp2p [36mpeer=[0m{"id":"987c5243014d2237fb22ecc9863aaf7128fa0bc1","ip":"192.168.128.7","port":26656}
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m Starting MConnection service [36mimpl=[0mMConn{192.168.128.7:26656} [36mmodule=[0mp2p [36mpeer=[0m{"id":"987c5243014d2237fb22ecc9863aaf7128fa0bc1","ip":"192.168.128.7","port":26656}
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m Added peer [36mmodule=[0mp2p [36mpeer=[0m{"Data":{},"Logger":{}}
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m Time to switch to consensus reactor! [36mheight=[0m1 [36mmodule=[0mblockchain
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m Stopping BlockPool service [36mimpl=[0m{"Logger":{}} [36mmodule=[0mblockchain
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m SwitchToConsensus [36mmodule=[0mconsensus
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m Starting State service [36mimpl=[0mConsensusState [36mmodule=[0mconsensus
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m Starting baseWAL service [36mimpl=[0mbaseWAL [36mmodule=[0mconsensus [36mwal=[0m/stride/.strided/data/cs.wal/wal
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m Starting Group service [36mimpl=[0mGroup [36mmodule=[0mconsensus [36mwal=[0m/stride/.strided/data/cs.wal/wal
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m Starting TimeoutTicker service [36mimpl=[0mTimeoutTicker [36mmodule=[0mconsensus
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m Searching for height [36mheight=[0m1 [36mmax=[0m0 [36mmin=[0m0 [36mmodule=[0mconsensus [36mwal=[0m/stride/.strided/data/cs.wal/wal
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m Searching for height [36mheight=[0m0 [36mmax=[0m0 [36mmin=[0m0 [36mmodule=[0mconsensus [36mwal=[0m/stride/.strided/data/cs.wal/wal
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m Found [36mheight=[0m0 [36mindex=[0m0 [36mmodule=[0mconsensus [36mwal=[0m/stride/.strided/data/cs.wal/wal
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m Catchup by replaying consensus messages [36mheight=[0m1 [36mmodule=[0mconsensus
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m Replay: Done [36mmodule=[0mconsensus
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m Dialing peer [36maddress=[0m{"id":"d4a255fc79dc59523cf37bdec1f290f10cb4fa3a","ip":"192.168.128.4","port":26656} [36mmodule=[0mp2p
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m Starting Peer service [36mimpl=[0m"Peer{MConn{192.168.128.4:26656} d4a255fc79dc59523cf37bdec1f290f10cb4fa3a out}" [36mmodule=[0mp2p [36mpeer=[0m{"id":"d4a255fc79dc59523cf37bdec1f290f10cb4fa3a","ip":"192.168.128.4","port":26656}
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m Starting MConnection service [36mimpl=[0mMConn{192.168.128.4:26656} [36mmodule=[0mp2p [36mpeer=[0m{"id":"d4a255fc79dc59523cf37bdec1f290f10cb4fa3a","ip":"192.168.128.4","port":26656}
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m Added peer [36mmodule=[0mp2p [36mpeer=[0m{"Data":{},"Logger":{}}
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m Timed out [36mdur=[0m3906.428833 [36mheight=[0m1 [36mmodule=[0mconsensus [36mround=[0m0 [36mstep=[0m1
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m received proposal [36mmodule=[0mconsensus [36mproposal=[0m{"Type":32,"block_id":{"hash":"569282B7854E36B55CCD7540564507851AF2A6E90FC4741DD478FAAE7B1DDE4C","parts":{"hash":"0233E6EC82CF680F14F981AA504A5D911E3BD5AF1E99EF918B8D729D6C184786","total":1}},"height":1,"pol_round":-1,"round":0,"signature":"2SPZlAoJ6wgZh3wAyBrBvBmTQiNvufraPfUwFvPFrVtC705/OoLTzQsj7fRPMlljLGJOt4mDKrFg9NPvURP1CA==","timestamp":"2022-06-12T21:55:24.871948425Z"}
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m received complete proposal block [36mhash=[0m569282B7854E36B55CCD7540564507851AF2A6E90FC4741DD478FAAE7B1DDE4C [36mheight=[0m1 [36mmodule=[0mconsensus
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m finalizing commit of block [36mhash=[0m569282B7854E36B55CCD7540564507851AF2A6E90FC4741DD478FAAE7B1DDE4C [36mheight=[0m1 [36mmodule=[0mconsensus [36mnum_txs=[0m0 [36mroot=[0mE3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m starting epoch [36midentifier=[0mday [36mmodule=[0mx/epochs
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m Handling epoch start day 1 [36mmodule=[0mx/stakeibc
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m starting epoch [36midentifier=[0mstride_epoch [36mmodule=[0mx/epochs
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m Handling epoch start stride_epoch 1 [36mmodule=[0mx/stakeibc
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m Stride Epoch 1 [36mmodule=[0mx/stakeibc
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m starting epoch [36midentifier=[0mweek [36mmodule=[0mx/epochs
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m Handling epoch start week 1 [36mmodule=[0mx/stakeibc
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m executed block [36mheight=[0m1 [36mmodule=[0mstate [36mnum_invalid_txs=[0m0 [36mnum_valid_txs=[0m0
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m commit synced [36mcommit=[0m436F6D6D697449447B5B323033203137342033342031333220353620323239203230342037332031353420333720333320343620383920373420393020323239203536203335203231302036342032343820343620323120333120313132203938203136203435203334203420313033203232335D3A317D
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m committed state [36mapp_hash=[0mCBAE228438E5CC499A25212E594A5AE53823D240F82E151F7062102D220467DF [36mheight=[0m1 [36mmodule=[0mstate [36mnum_txs=[0m0
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m indexed block [36mheight=[0m1 [36mmodule=[0mtxindex
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m Timed out [36mdur=[0m4218.139374 [36mheight=[0m2 [36mmodule=[0mconsensus [36mround=[0m0 [36mstep=[0m1
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m received proposal [36mmodule=[0mconsensus [36mproposal=[0m{"Type":32,"block_id":{"hash":"C371E70A96F02C55C31F0F98B7A3D9B5C75DB1ADCF634D79EA4A74BF6FD66013","parts":{"hash":"27BE594DBEDC6380CBA10BB37D7009E5DAC2698AF620678FE2E1AB81303E65CD","total":1}},"height":2,"pol_round":-1,"round":0,"signature":"Rd6XTveyd37hRRp7Ai63TDlLhnhwGVAjggnPfIe0Q4Dnn9BV6LCD8dRX2EiArwOqtPRAIIkmqKPpavFoKj0nAg==","timestamp":"2022-06-12T21:55:30.182898928Z"}
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m received complete proposal block [36mhash=[0mC371E70A96F02C55C31F0F98B7A3D9B5C75DB1ADCF634D79EA4A74BF6FD66013 [36mheight=[0m2 [36mmodule=[0mconsensus
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m finalizing commit of block [36mhash=[0mC371E70A96F02C55C31F0F98B7A3D9B5C75DB1ADCF634D79EA4A74BF6FD66013 [36mheight=[0m2 [36mmodule=[0mconsensus [36mnum_txs=[0m0 [36mroot=[0mCBAE228438E5CC499A25212E594A5AE53823D240F82E151F7062102D220467DF
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m ending epoch [36midentifier=[0mstride_epoch [36mmodule=[0mx/epochs
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m Handling epoch end stride_epoch 2 [36mmodule=[0mx/stakeibc
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m Handling epoch start stride_epoch 2 [36mmodule=[0mx/stakeibc
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m Stride Epoch 2 [36mmodule=[0mx/stakeibc
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m executed block [36mheight=[0m2 [36mmodule=[0mstate [36mnum_invalid_txs=[0m0 [36mnum_valid_txs=[0m0
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m commit synced [36mcommit=[0m436F6D6D697449447B5B31323220313137203133372031363320383820313838203134332032313520383420323535203134382038392036302031353320313532203330203438203133362031313220393120323237203133302031333020313533203933203133392036392031383120313734203230352032203135345D3A327D
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m committed state [36mapp_hash=[0m7A7589A358BC8FD754FF94593C99981E3088705BE38282995D8B45B5AECD029A [36mheight=[0m2 [36mmodule=[0mstate [36mnum_txs=[0m0
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m indexed block [36mheight=[0m2 [36mmodule=[0mtxindex
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m Timed out [36mdur=[0m4807.050209 [36mheight=[0m3 [36mmodule=[0mconsensus [36mround=[0m0 [36mstep=[0m1
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m client created at height [36mclient-id=[0m07-tendermint-0 [36mheight=[0m0-2 [36mmodule=[0mx/ibc/client
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m client created at height [36mclient-id=[0m07-tendermint-0 [36mheight=[0m0-2 [36mmodule=[0mx/ibc/client
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m received proposal [36mmodule=[0mconsensus [36mproposal=[0m{"Type":32,"block_id":{"hash":"91B76BC1620B0D9ED0E66AB8325C3BA266619A42778B2FDB39F49DBD20955480","parts":{"hash":"7FB8065A1C926FEB0040E634B34E837BB05E3251412E2F863D1DCC743D7B3EDC","total":1}},"height":3,"pol_round":-1,"round":0,"signature":"hm4qHawDdROx276+CRPBv1a5S2p/ozBF0pHt87p20Fjm/7ic5KF/EQ6tqBy6lPwwu35/7u+QiRh5xWXPZ6VtCQ==","timestamp":"2022-06-12T21:55:35.738663597Z"}
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m received complete proposal block [36mhash=[0m91B76BC1620B0D9ED0E66AB8325C3BA266619A42778B2FDB39F49DBD20955480 [36mheight=[0m3 [36mmodule=[0mconsensus
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m finalizing commit of block [36mhash=[0m91B76BC1620B0D9ED0E66AB8325C3BA266619A42778B2FDB39F49DBD20955480 [36mheight=[0m3 [36mmodule=[0mconsensus [36mnum_txs=[0m0 [36mroot=[0m7A7589A358BC8FD754FF94593C99981E3088705BE38282995D8B45B5AECD029A
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m ending epoch [36midentifier=[0mstride_epoch [36mmodule=[0mx/epochs
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m Handling epoch end stride_epoch 3 [36mmodule=[0mx/stakeibc
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m Handling epoch start stride_epoch 3 [36mmodule=[0mx/stakeibc
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m Stride Epoch 3 [36mmodule=[0mx/stakeibc
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m executed block [36mheight=[0m3 [36mmodule=[0mstate [36mnum_invalid_txs=[0m0 [36mnum_valid_txs=[0m0
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m commit synced [36mcommit=[0m436F6D6D697449447B5B34322031313720323820373220313236203235352031373020323531203136322031322032303020313331203235332031313820353520343120313235203139302032323520323036203135312034312031343020313437203139362033352032322033312031373420323336203232332033375D3A337D
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m committed state [36mapp_hash=[0m2A751C487EFFAAFBA20CC883FD7637297DBEE1CE97298C93C423161FAEECDF25 [36mheight=[0m3 [36mmodule=[0mstate [36mnum_txs=[0m0
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m indexed block [36mheight=[0m3 [36mmodule=[0mtxindex
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m Timed out [36mdur=[0m4933.497542 [36mheight=[0m4 [36mmodule=[0mconsensus [36mround=[0m0 [36mstep=[0m1
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m received proposal [36mmodule=[0mconsensus [36mproposal=[0m{"Type":32,"block_id":{"hash":"03F7B696F451D0A64CBF58D46C255934B4D3D5BD898D518967C4CCA69B135D9E","parts":{"hash":"A966F25899C7A01EDE11E44E8C7B79C8DC9D15BA79D5091B9E86CB5B9C8DDF75","total":1}},"height":4,"pol_round":-1,"round":0,"signature":"EYbtuyygcoNZohn9nCWmiFWp2l5RVVrZiBU4Xj3uDrsI5qAhef2P0hyDedu56/7crExaQkydsNGapOySvycZAw==","timestamp":"2022-06-12T21:55:41.224206919Z"}
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m received complete proposal block [36mhash=[0m03F7B696F451D0A64CBF58D46C255934B4D3D5BD898D518967C4CCA69B135D9E [36mheight=[0m4 [36mmodule=[0mconsensus
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m finalizing commit of block [36mhash=[0m03F7B696F451D0A64CBF58D46C255934B4D3D5BD898D518967C4CCA69B135D9E [36mheight=[0m4 [36mmodule=[0mconsensus [36mnum_txs=[0m1 [36mroot=[0m2A751C487EFFAAFBA20CC883FD7637297DBEE1CE97298C93C423161FAEECDF25
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m ending epoch [36midentifier=[0mstride_epoch [36mmodule=[0mx/epochs
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m Handling epoch end stride_epoch 4 [36mmodule=[0mx/stakeibc
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m Handling epoch start stride_epoch 4 [36mmodule=[0mx/stakeibc
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m Stride Epoch 4 [36mmodule=[0mx/stakeibc
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m client created at height [36mclient-id=[0m07-tendermint-0 [36mheight=[0m0-2 [36mmodule=[0mx/ibc/client
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m client created at height [36mclient-id=[0m07-tendermint-0 [36mheight=[0m0-2 [36mmodule=[0mx/ibc/client
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m executed block [36mheight=[0m4 [36mmodule=[0mstate [36mnum_invalid_txs=[0m0 [36mnum_valid_txs=[0m1
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m commit synced [36mcommit=[0m436F6D6D697449447B5B32343420373920363920313739203437203131203438203933203433203120393620313020313330203134332037372032333920313135203920313533203130322031313920393720313520313339203230382031343720313834203137352031383120363620313731203134325D3A347D
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m committed state [36mapp_hash=[0mF44F45B32F0B305D2B01600A828F4DEF7309996677610F8BD093B8AFB542AB8E [36mheight=[0m4 [36mmodule=[0mstate [36mnum_txs=[0m1
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m indexed block [36mheight=[0m4 [36mmodule=[0mtxindex
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m connection state updated [36mconnection-id=[0mconnection-0 [36mmodule=[0mx/ibc/connection [36mnew-state=[0mINIT [36mprevious-state=[0mNONE
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m Timed out [36mdur=[0m3832.078291 [36mheight=[0m5 [36mmodule=[0mconsensus [36mround=[0m0 [36mstep=[0m1
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m received proposal [36mmodule=[0mconsensus [36mproposal=[0m{"Type":32,"block_id":{"hash":"08F1DE07B4A0E7D29FE56100C781AEE204C9C4E7A18DEE3FD70378C52F00B811","parts":{"hash":"D7F59CB43F761B4A3940CEAF689625C083B5D87EAF451D6BA37D19573FC66890","total":1}},"height":5,"pol_round":-1,"round":0,"signature":"yB2gj4Hc7CBYdNiUaheTLCN1JZmPlejg3aOH7UaG3fMbfti1Hht+nrNTBPgAu+thymbXUtcXtHX9kCvuUfH3DA==","timestamp":"2022-06-12T21:55:46.773671505Z"}
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m received complete proposal block [36mhash=[0m08F1DE07B4A0E7D29FE56100C781AEE204C9C4E7A18DEE3FD70378C52F00B811 [36mheight=[0m5 [36mmodule=[0mconsensus
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m finalizing commit of block [36mhash=[0m08F1DE07B4A0E7D29FE56100C781AEE204C9C4E7A18DEE3FD70378C52F00B811 [36mheight=[0m5 [36mmodule=[0mconsensus [36mnum_txs=[0m1 [36mroot=[0mF44F45B32F0B305D2B01600A828F4DEF7309996677610F8BD093B8AFB542AB8E
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m ending epoch [36midentifier=[0mstride_epoch [36mmodule=[0mx/epochs
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m Handling epoch end stride_epoch 5 [36mmodule=[0mx/stakeibc
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m Handling epoch start stride_epoch 5 [36mmodule=[0mx/stakeibc
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m Stride Epoch 5 [36mmodule=[0mx/stakeibc
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m Triggering deposits [36mmodule=[0mx/stakeibc
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m connection state updated [36mconnection-id=[0mconnection-0 [36mmodule=[0mx/ibc/connection [36mnew-state=[0mINIT [36mprevious-state=[0mNONE
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m executed block [36mheight=[0m5 [36mmodule=[0mstate [36mnum_invalid_txs=[0m0 [36mnum_valid_txs=[0m1
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m commit synced [36mcommit=[0m436F6D6D697449447B5B3632203137342033362032372035372032323120333920342036372032313620313430203234302033312031333220313937203130392032333320363520333920313620393520323020323437203130302038382032343120333220323135203936203434203839203235315D3A357D
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m committed state [36mapp_hash=[0m3EAE241B39DD270443D88CF01F84C56DE94127105F14F76458F120D7602C59FB [36mheight=[0m5 [36mmodule=[0mstate [36mnum_txs=[0m1
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m indexed block [36mheight=[0m5 [36mmodule=[0mtxindex
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m Ensure peers [36mmodule=[0mpex [36mnumDialing=[0m0 [36mnumInPeers=[0m0 [36mnumOutPeers=[0m2 [36mnumToDial=[0m8
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m We need more addresses. Sending pexRequest to random peer [36mmodule=[0mpex [36mpeer=[0m{"Data":{},"Logger":{}}
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m No addresses to dial. Falling back to seeds [36mmodule=[0mpex
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m client created at height [36mclient-id=[0m07-tendermint-1 [36mheight=[0m0-5 [36mmodule=[0mx/ibc/client
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m client created at height [36mclient-id=[0m07-tendermint-1 [36mheight=[0m0-5 [36mmodule=[0mx/ibc/client
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m Timed out [36mdur=[0m4923.096583 [36mheight=[0m6 [36mmodule=[0mconsensus [36mround=[0m0 [36mstep=[0m1
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m received proposal [36mmodule=[0mconsensus [36mproposal=[0m{"Type":32,"block_id":{"hash":"B1FB508B9A07AF29C63E90B0A2DF404D5DBBD5E70143457E8AA54ED597FAF9D5","parts":{"hash":"B44B61085B230483E87328B28C6393CBB759A04F832B96CEC04DFE7A96A4E7CD","total":1}},"height":6,"pol_round":-1,"round":0,"signature":"jDWU0Zc88MLMZqkwhxoGMYhwYuwkd6HSXvjHLQrfvgP80LpfCN9FttpXfTegwvzh2pxjE1QBlJyPK4dA1deRCw==","timestamp":"2022-06-12T21:55:52.325974924Z"}
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m received complete proposal block [36mhash=[0mB1FB508B9A07AF29C63E90B0A2DF404D5DBBD5E70143457E8AA54ED597FAF9D5 [36mheight=[0m6 [36mmodule=[0mconsensus
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m finalizing commit of block [36mhash=[0mB1FB508B9A07AF29C63E90B0A2DF404D5DBBD5E70143457E8AA54ED597FAF9D5 [36mheight=[0m6 [36mmodule=[0mconsensus [36mnum_txs=[0m1 [36mroot=[0m3EAE241B39DD270443D88CF01F84C56DE94127105F14F76458F120D7602C59FB
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m ending epoch [36midentifier=[0mstride_epoch [36mmodule=[0mx/epochs
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m Handling epoch end stride_epoch 6 [36mmodule=[0mx/stakeibc
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m Handling epoch start stride_epoch 6 [36mmodule=[0mx/stakeibc
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m Stride Epoch 6 [36mmodule=[0mx/stakeibc
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m client created at height [36mclient-id=[0m07-tendermint-1 [36mheight=[0m0-5 [36mmodule=[0mx/ibc/client
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m client created at height [36mclient-id=[0m07-tendermint-1 [36mheight=[0m0-5 [36mmodule=[0mx/ibc/client
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m executed block [36mheight=[0m6 [36mmodule=[0mstate [36mnum_invalid_txs=[0m0 [36mnum_valid_txs=[0m1
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m commit synced [36mcommit=[0m436F6D6D697449447B5B36392031303420342031333920333620323034203130392031313620313031203434203536203233302031363620313736203230312031313320323234203136332032372031323920342031373920313432203234322032313520313920323439203837203235332031303420313339203130325D3A367D
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m committed state [36mapp_hash=[0m4568048B24CC6D74652C38E6A6B0C971E0A31B8104B38EF2D713F957FD688B66 [36mheight=[0m6 [36mmodule=[0mstate [36mnum_txs=[0m1
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m indexed block [36mheight=[0m6 [36mmodule=[0mtxindex
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m Timed out [36mdur=[0m4862.802833 [36mheight=[0m7 [36mmodule=[0mconsensus [36mround=[0m0 [36mstep=[0m1
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m received proposal [36mmodule=[0mconsensus [36mproposal=[0m{"Type":32,"block_id":{"hash":"B60A86DCD57A6AD26E53C2B5AC44DFD4BCDF6C0077CA3355970C442E55A8DBA9","parts":{"hash":"24AF46D3B7DBE2FC995AEF7E6272246ECD32F0A835E1BFB9B62091DDF29893A3","total":1}},"height":7,"pol_round":-1,"round":0,"signature":"64k0SQG7lQDK0FW2SZowvGphp9nDMv2Mn3DiexN0Ri2SEp54HHWOvV+ct3F1m+sYRPWH9DFESizBSXHVQAk2AQ==","timestamp":"2022-06-12T21:55:57.737703968Z"}
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m received complete proposal block [36mhash=[0mB60A86DCD57A6AD26E53C2B5AC44DFD4BCDF6C0077CA3355970C442E55A8DBA9 [36mheight=[0m7 [36mmodule=[0mconsensus
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m finalizing commit of block [36mhash=[0mB60A86DCD57A6AD26E53C2B5AC44DFD4BCDF6C0077CA3355970C442E55A8DBA9 [36mheight=[0m7 [36mmodule=[0mconsensus [36mnum_txs=[0m0 [36mroot=[0m4568048B24CC6D74652C38E6A6B0C971E0A31B8104B38EF2D713F957FD688B66
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m ending epoch [36midentifier=[0mstride_epoch [36mmodule=[0mx/epochs
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m Handling epoch end stride_epoch 7 [36mmodule=[0mx/stakeibc
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m Handling epoch start stride_epoch 7 [36mmodule=[0mx/stakeibc
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m Stride Epoch 7 [36mmodule=[0mx/stakeibc
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m executed block [36mheight=[0m7 [36mmodule=[0mstate [36mnum_invalid_txs=[0m0 [36mnum_valid_txs=[0m0
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m commit synced [36mcommit=[0m436F6D6D697449447B5B313539203136322031343520323138203131342034382031393920323435203232382035392033372035382038352037312031393620323020313438203136302036392031333120373620323138203233312031392031393020313936203231352031393920343320323320313939203136385D3A377D
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m committed state [36mapp_hash=[0m9FA291DA7230C7F5E43B253A5547C41494A045834CDAE713BEC4D7C72B17C7A8 [36mheight=[0m7 [36mmodule=[0mstate [36mnum_txs=[0m0
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m indexed block [36mheight=[0m7 [36mmodule=[0mtxindex
+stride-stride1-1  | [90m9:55PM[0m [32mINF[0m connection state updated [36mconnection-id=[0mconnection-1 [36mmodule=[0mx/ibc/connection [36mnew-state=[0mINIT [36mprevious-state=[0mNONE
+stride-stride1-1  | [90m9:56PM[0m [32mINF[0m Timed out [36mdur=[0m4873.06025 [36mheight=[0m8 [36mmodule=[0mconsensus [36mround=[0m0 [36mstep=[0m1
+stride-stride1-1  | [90m9:56PM[0m [32mINF[0m received proposal [36mmodule=[0mconsensus [36mproposal=[0m{"Type":32,"block_id":{"hash":"E9D9B77C94BD7F7E801D775D312DA6F4D153333AC52EE7CACD79689801A4CE39","parts":{"hash":"73634A33BF89F82D9FAB6651363F1A3E900E16F3727303FBA0D8486B2BA21144","total":1}},"height":8,"pol_round":-1,"round":0,"signature":"YMhP89hdOyzT8I5XruHlEpIhB7mHXt9zpeTWwIf9vl7L27tqWNZWoltyJB/AcZDTzkv2Jt5H3Pu0vwCwRjSICA==","timestamp":"2022-06-12T21:56:03.114121137Z"}
+stride-stride1-1  | [90m9:56PM[0m [32mINF[0m received complete proposal block [36mhash=[0mE9D9B77C94BD7F7E801D775D312DA6F4D153333AC52EE7CACD79689801A4CE39 [36mheight=[0m8 [36mmodule=[0mconsensus
+stride-stride1-1  | [90m9:56PM[0m [32mINF[0m finalizing commit of block [36mhash=[0mE9D9B77C94BD7F7E801D775D312DA6F4D153333AC52EE7CACD79689801A4CE39 [36mheight=[0m8 [36mmodule=[0mconsensus [36mnum_txs=[0m1 [36mroot=[0m9FA291DA7230C7F5E43B253A5547C41494A045834CDAE713BEC4D7C72B17C7A8
+stride-stride1-1  | [90m9:56PM[0m [32mINF[0m ending epoch [36midentifier=[0mstride_epoch [36mmodule=[0mx/epochs
+stride-stride1-1  | [90m9:56PM[0m [32mINF[0m Handling epoch end stride_epoch 8 [36mmodule=[0mx/stakeibc
+stride-stride1-1  | [90m9:56PM[0m [32mINF[0m Handling epoch start stride_epoch 8 [36mmodule=[0mx/stakeibc
+stride-stride1-1  | [90m9:56PM[0m [32mINF[0m Stride Epoch 8 [36mmodule=[0mx/stakeibc
+stride-stride1-1  | [90m9:56PM[0m [32mINF[0m connection state updated [36mconnection-id=[0mconnection-1 [36mmodule=[0mx/ibc/connection [36mnew-state=[0mINIT [36mprevious-state=[0mNONE
+stride-stride1-1  | [90m9:56PM[0m [32mINF[0m executed block [36mheight=[0m8 [36mmodule=[0mstate [36mnum_invalid_txs=[0m0 [36mnum_valid_txs=[0m1
+stride-stride1-1  | [90m9:56PM[0m [32mINF[0m commit synced [36mcommit=[0m436F6D6D697449447B5B3137352039203437203132312031333320313132203131372031313920313938203238203133342031373220323436203830203831203131392031323020313838203330203234392039352034342031353120323036203320313736203134362031313920313520313232203231203133335D3A387D
+stride-stride1-1  | [90m9:56PM[0m [32mINF[0m committed state [36mapp_hash=[0mAF092F7985707577C61C86ACF650517778BC1EF95F2C97CE03B092770F7A1585 [36mheight=[0m8 [36mmodule=[0mstate [36mnum_txs=[0m1
+stride-stride1-1  | [90m9:56PM[0m [32mINF[0m indexed block [36mheight=[0m8 [36mmodule=[0mtxindex
+stride-stride1-1  | [90m9:56PM[0m [32mINF[0m client state updated [36mclient-id=[0m07-tendermint-1 [36mheight=[0m0-7 [36mmodule=[0mx/ibc/client
+stride-stride1-1  | [90m9:56PM[0m [32mINF[0m Timed out [36mdur=[0m4913.797458 [36mheight=[0m9 [36mmodule=[0mconsensus [36mround=[0m0 [36mstep=[0m1
+stride-stride1-1  | [90m9:56PM[0m [32mINF[0m received proposal [36mmodule=[0mconsensus [36mproposal=[0m{"Type":32,"block_id":{"hash":"6356D13A8736BC50BE1A893A3D93C7F178529ADAE800A4C4DB5703D99F57BB40","parts":{"hash":"DDE3A28BD24AAD04C90F8C183238C4DDC7386D96ADE590E4141A08F61AF7F85D","total":1}},"height":9,"pol_round":-1,"round":0,"signature":"ci7DCEePp0nDltKzt206K6MgNIFyOIIFtKdEYJoOLdciNLrhStjGpuY1uWPTx4HM5D20gS9z3R4LkrVkISljAw==","timestamp":"2022-06-12T21:56:08.589546876Z"}
+stride-stride1-1  | [90m9:56PM[0m [32mINF[0m received complete proposal block [36mhash=[0m6356D13A8736BC50BE1A893A3D93C7F178529ADAE800A4C4DB5703D99F57BB40 [36mheight=[0m9 [36mmodule=[0mconsensus
+stride-stride1-1  | [90m9:56PM[0m [32mINF[0m finalizing commit of block [36mhash=[0m6356D13A8736BC50BE1A893A3D93C7F178529ADAE800A4C4DB5703D99F57BB40 [36mheight=[0m9 [36mmodule=[0mconsensus [36mnum_txs=[0m1 [36mroot=[0mAF092F7985707577C61C86ACF650517778BC1EF95F2C97CE03B092770F7A1585
+stride-stride1-1  | [90m9:56PM[0m [32mINF[0m ending epoch [36midentifier=[0mstride_epoch [36mmodule=[0mx/epochs
+stride-stride1-1  | [90m9:56PM[0m [32mINF[0m Handling epoch end stride_epoch 9 [36mmodule=[0mx/stakeibc
+stride-stride1-1  | [90m9:56PM[0m [32mINF[0m Handling epoch start stride_epoch 9 [36mmodule=[0mx/stakeibc
+stride-stride1-1  | [90m9:56PM[0m [32mINF[0m Stride Epoch 9 [36mmodule=[0mx/stakeibc
+stride-stride1-1  | [90m9:56PM[0m [32mINF[0m client state updated [36mclient-id=[0m07-tendermint-1 [36mheight=[0m0-7 [36mmodule=[0mx/ibc/client
+stride-stride1-1  | [90m9:56PM[0m [32mINF[0m executed block [36mheight=[0m9 [36mmodule=[0mstate [36mnum_invalid_txs=[0m0 [36mnum_valid_txs=[0m1
+stride-stride1-1  | [90m9:56PM[0m [32mINF[0m commit synced [36mcommit=[0m436F6D6D697449447B5B343020323435203138352038203920313139203137382032303220302032322031313820323534203134332036352032323520313536203939203239203436203838203830203431203139302032323720313520323620313837203432203135352031333420323533203135375D3A397D
+stride-stride1-1  | [90m9:56PM[0m [32mINF[0m committed state [36mapp_hash=[0m28F5B9080977B2CA001676FE8F41E19C631D2E585029BEE30F1ABB2A9B86FD9D [36mheight=[0m9 [36mmodule=[0mstate [36mnum_txs=[0m1
+stride-stride1-1  | [90m9:56PM[0m [32mINF[0m indexed block [36mheight=[0m9 [36mmodule=[0mtxindex
+stride-stride1-1  | [90m9:56PM[0m [32mINF[0m Timed out [36mdur=[0m4303.382917 [36mheight=[0m10 [36mmodule=[0mconsensus [36mround=[0m0 [36mstep=[0m1
+stride-stride1-1  | [90m9:56PM[0m [32mINF[0m received proposal [36mmodule=[0mconsensus [36mproposal=[0m{"Type":32,"block_id":{"hash":"35D287BE2BF72B73EE615EE6710D50221A2C2C102DE795AE56E7497367A67934","parts":{"hash":"4A018FDA9F66A6040BC3A4FA7F69DDDD280065EE61A251EB76BED67B83A352C9","total":1}},"height":10,"pol_round":-1,"round":0,"signature":"VHYHomI0OcUwsZQ8dHquN8dbPTZP2PV/7bdKZdXhDRN17rFcJRkx52Iy67oXCKrFHmzjg/D9aOwed6QGXP7YAQ==","timestamp":"2022-06-12T21:56:14.003927587Z"}
+stride-stride1-1  | [90m9:56PM[0m [32mINF[0m received complete proposal block [36mhash=[0m35D287BE2BF72B73EE615EE6710D50221A2C2C102DE795AE56E7497367A67934 [36mheight=[0m10 [36mmodule=[0mconsensus
+stride-stride1-1  | [90m9:56PM[0m [32mINF[0m finalizing commit of block [36mhash=[0m35D287BE2BF72B73EE615EE6710D50221A2C2C102DE795AE56E7497367A67934 [36mheight=[0m10 [36mmodule=[0mconsensus [36mnum_txs=[0m0 [36mroot=[0m28F5B9080977B2CA001676FE8F41E19C631D2E585029BEE30F1ABB2A9B86FD9D
+stride-stride1-1  | [90m9:56PM[0m [32mINF[0m ending epoch [36midentifier=[0mstride_epoch [36mmodule=[0mx/epochs
+stride-stride1-1  | [90m9:56PM[0m [32mINF[0m Handling epoch end stride_epoch 10 [36mmodule=[0mx/stakeibc
+stride-stride1-1  | [90m9:56PM[0m [32mINF[0m Handling epoch start stride_epoch 10 [36mmodule=[0mx/stakeibc
+stride-stride1-1  | [90m9:56PM[0m [32mINF[0m Stride Epoch 10 [36mmodule=[0mx/stakeibc
+stride-stride1-1  | [90m9:56PM[0m [32mINF[0m Triggering deposits [36mmodule=[0mx/stakeibc
+stride-stride1-1  | [90m9:56PM[0m [32mINF[0m executed block [36mheight=[0m10 [36mmodule=[0mstate [36mnum_invalid_txs=[0m0 [36mnum_valid_txs=[0m0
+stride-stride1-1  | [90m9:56PM[0m [32mINF[0m commit synced [36mcommit=[0m436F6D6D697449447B5B313633203631203135332031303020313137203130392034322031343120313931203135312033302032303120313331203233362032303320353920323135203232342033352032343820313431203130322031393720373420323130203234362031332034352031313820313931203233203234345D3A417D
+stride-stride1-1  | [90m9:56PM[0m [32mINF[0m committed state [36mapp_hash=[0mA33D9964756D2A8DBF971EC983ECCB3BD7E023F88D66C54AD2F60D2D76BF17F4 [36mheight=[0m10 [36mmodule=[0mstate [36mnum_txs=[0m0
+stride-stride1-1  | [90m9:56PM[0m [32mINF[0m indexed block [36mheight=[0m10 [36mmodule=[0mtxindex
+stride-stride1-1  | [90m9:56PM[0m [32mINF[0m Timed out [36mdur=[0m4909.716625 [36mheight=[0m11 [36mmodule=[0mconsensus [36mround=[0m0 [36mstep=[0m1
+stride-stride1-1  | [90m9:56PM[0m [32mINF[0m received proposal [36mmodule=[0mconsensus [36mproposal=[0m{"Type":32,"block_id":{"hash":"3E22F58B247F857C27D10B78BD959593A552490795F5759247EB3BF6627470AE","parts":{"hash":"C7B46E4ECD8BCBE8595D81BD9A2AAB4EF0E9FF5AED2FC89CB019E09F7C0DC67B","total":1}},"height":11,"pol_round":-1,"round":0,"signature":"obmz0td6b82+opFHM4sSeH2ZY4Qvfj4vVECaeu2w4rLvIqGqVgf2X4zHHC5wy1fOhAqvIikxM4L+9UD2KKviAg==","timestamp":"2022-06-12T21:56:19.452818048Z"}
+stride-stride1-1  | [90m9:56PM[0m [32mINF[0m received complete proposal block [36mhash=[0m3E22F58B247F857C27D10B78BD959593A552490795F5759247EB3BF6627470AE [36mheight=[0m11 [36mmodule=[0mconsensus
+stride-stride1-1  | [90m9:56PM[0m [32mINF[0m finalizing commit of block [36mhash=[0m3E22F58B247F857C27D10B78BD959593A552490795F5759247EB3BF6627470AE [36mheight=[0m11 [36mmodule=[0mconsensus [36mnum_txs=[0m0 [36mroot=[0mA33D9964756D2A8DBF971EC983ECCB3BD7E023F88D66C54AD2F60D2D76BF17F4
+stride-stride1-1  | [90m9:56PM[0m [32mINF[0m Ensure peers [36mmodule=[0mpex [36mnumDialing=[0m0 [36mnumInPeers=[0m0 [36mnumOutPeers=[0m2 [36mnumToDial=[0m8
+stride-stride1-1  | [90m9:56PM[0m [32mINF[0m We need more addresses. Sending pexRequest to random peer [36mmodule=[0mpex [36mpeer=[0m{"Data":{},"Logger":{}}
+stride-stride1-1  | [90m9:56PM[0m [32mINF[0m No addresses to dial. Falling back to seeds [36mmodule=[0mpex
+stride-stride1-1  | [90m9:56PM[0m [32mINF[0m ending epoch [36midentifier=[0mstride_epoch [36mmodule=[0mx/epochs
+stride-stride1-1  | [90m9:56PM[0m [32mINF[0m Handling epoch end stride_epoch 11 [36mmodule=[0mx/stakeibc
+stride-stride1-1  | [90m9:56PM[0m [32mINF[0m Handling epoch start stride_epoch 11 [36mmodule=[0mx/stakeibc
+stride-stride1-1  | [90m9:56PM[0m [32mINF[0m Stride Epoch 11 [36mmodule=[0mx/stakeibc
+stride-stride1-1  | [90m9:56PM[0m [32mINF[0m executed block [36mheight=[0m11 [36mmodule=[0mstate [36mnum_invalid_txs=[0m0 [36mnum_valid_txs=[0m0
+stride-stride1-1  | [90m9:56PM[0m [32mINF[0m commit synced [36mcommit=[0m436F6D6D697449447B5B383620363920313136203230372032343420323030203230372033302032333320393820323438203138382032303120323139203138312039362032303420313235203131312032333920323039203730203233203838203232342031343720313639203132312031343420323032203939203234365D3A427D
+stride-stride1-1  | [90m9:56PM[0m [32mINF[0m committed state [36mapp_hash=[0m564574CFF4C8CF1EE962F8BCC9DBB560CC7D6FEFD1461758E093A97990CA63F6 [36mheight=[0m11 [36mmodule=[0mstate [36mnum_txs=[0m0
+stride-stride1-1  | [90m9:56PM[0m [32mINF[0m indexed block [36mheight=[0m11 [36mmodule=[0mtxindex
+stride-stride1-1  | [90m9:56PM[0m [32mINF[0m Timed out [36mdur=[0m4859.145875 [36mheight=[0m12 [36mmodule=[0mconsensus [36mround=[0m0 [36mstep=[0m1
+stride-stride1-1  | [90m9:56PM[0m [32mINF[0m received proposal [36mmodule=[0mconsensus [36mproposal=[0m{"Type":32,"block_id":{"hash":"5900334C099022A198DE1480DFFDAB05ABFF60A62E9968DEE34011C22C239BA1","parts":{"hash":"5A8534E7AFD9F0B20B1B63DDD60DCFA9761F19EE5971E8E5CB2AC0E2931D3356","total":1}},"height":12,"pol_round":-1,"round":0,"signature":"vCCgj2TUDxJBnF0Y1abKHnJLQtQh7Cb5CWUVaM7FEoFxmDx9fGsH3DKU1R/tpikNxkjOwYHdB52YkkU3+aa/DQ==","timestamp":"2022-06-12T21:56:25.073856009Z"}
+stride-stride1-1  | [90m9:56PM[0m [32mINF[0m received complete proposal block [36mhash=[0m5900334C099022A198DE1480DFFDAB05ABFF60A62E9968DEE34011C22C239BA1 [36mheight=[0m12 [36mmodule=[0mconsensus
+stride-stride1-1  | [90m9:56PM[0m [32mINF[0m finalizing commit of block [36mhash=[0m5900334C099022A198DE1480DFFDAB05ABFF60A62E9968DEE34011C22C239BA1 [36mheight=[0m12 [36mmodule=[0mconsensus [36mnum_txs=[0m0 [36mroot=[0m564574CFF4C8CF1EE962F8BCC9DBB560CC7D6FEFD1461758E093A97990CA63F6
+stride-stride1-1  | [90m9:56PM[0m [32mINF[0m ending epoch [36midentifier=[0mstride_epoch [36mmodule=[0mx/epochs
+stride-stride1-1  | [90m9:56PM[0m [32mINF[0m Handling epoch end stride_epoch 12 [36mmodule=[0mx/stakeibc
+stride-stride1-1  | [90m9:56PM[0m [32mINF[0m Handling epoch start stride_epoch 12 [36mmodule=[0mx/stakeibc
+stride-stride1-1  | [90m9:56PM[0m [32mINF[0m Stride Epoch 12 [36mmodule=[0mx/stakeibc
+stride-stride1-1  | [90m9:56PM[0m [32mINF[0m executed block [36mheight=[0m12 [36mmodule=[0mstate [36mnum_invalid_txs=[0m0 [36mnum_valid_txs=[0m0
+stride-stride1-1  | [90m9:56PM[0m [32mINF[0m commit synced [36mcommit=[0m436F6D6D697449447B5B34392038362031363720373020343520313934203131332031343120323030203138362032303420323330203438203239203233382031313620373920332031303620333220313539203136342032332033382031343220313920313535203233342031383620353320313835203133355D3A437D
+stride-stride1-1  | [90m9:56PM[0m [32mINF[0m committed state [36mapp_hash=[0m3156A7462DC2718DC8BACCE6301DEE744F036A209FA417268E139BEABA35B987 [36mheight=[0m12 [36mmodule=[0mstate [36mnum_txs=[0m0
+stride-stride1-1  | [90m9:56PM[0m [32mINF[0m indexed block [36mheight=[0m12 [36mmodule=[0mtxindex
+stride-stride1-1  | [90m9:56PM[0m [32mINF[0m client state updated [36mclient-id=[0m07-tendermint-1 [36mheight=[0m0-12 [36mmodule=[0mx/ibc/client
+stride-stride1-1  | [90m9:56PM[0m [32mINF[0m connection state updated [36mconnection-id=[0mconnection-1 [36mmodule=[0mx/ibc/connection [36mnew-state=[0mOPEN [36mprevious-state=[0mSTATE_INIT
+stride-stride1-1  | [90m9:56PM[0m [32mINF[0m Timed out [36mdur=[0m4871.030833 [36mheight=[0m13 [36mmodule=[0mconsensus [36mround=[0m0 [36mstep=[0m1
+stride-stride1-1  | [90m9:56PM[0m [32mINF[0m received proposal [36mmodule=[0mconsensus [36mproposal=[0m{"Type":32,"block_id":{"hash":"8B495BA19153441D3B13B2F801996DE748BAAB03B11ADCA554BB4BF849A5D808","parts":{"hash":"8641E18800C99CDB13E5A5D720E83412EF199997994D802113BBD01D108FECB4","total":1}},"height":13,"pol_round":-1,"round":0,"signature":"gBJg46JuAw+ummLj4HoJywsn1NC07CdSIvayA0ba/dlAh+ez3K4cYiPuPsnAHc7eu4u6Pyz6qsYLwrXumiOtBA==","timestamp":"2022-06-12T21:56:30.870498178Z"}
+stride-stride1-1  | [90m9:56PM[0m [32mINF[0m received complete proposal block [36mhash=[0m8B495BA19153441D3B13B2F801996DE748BAAB03B11ADCA554BB4BF849A5D808 [36mheight=[0m13 [36mmodule=[0mconsensus
+stride-stride1-1  | [90m9:56PM[0m [32mINF[0m finalizing commit of block [36mhash=[0m8B495BA19153441D3B13B2F801996DE748BAAB03B11ADCA554BB4BF849A5D808 [36mheight=[0m13 [36mmodule=[0mconsensus [36mnum_txs=[0m1 [36mroot=[0m3156A7462DC2718DC8BACCE6301DEE744F036A209FA417268E139BEABA35B987
+stride-stride1-1  | [90m9:56PM[0m [32mINF[0m ending epoch [36midentifier=[0mstride_epoch [36mmodule=[0mx/epochs
+stride-stride1-1  | [90m9:56PM[0m [32mINF[0m Handling epoch end stride_epoch 13 [36mmodule=[0mx/stakeibc
+stride-stride1-1  | [90m9:56PM[0m [32mINF[0m Handling epoch start stride_epoch 13 [36mmodule=[0mx/stakeibc
+stride-stride1-1  | [90m9:56PM[0m [32mINF[0m Stride Epoch 13 [36mmodule=[0mx/stakeibc
+stride-stride1-1  | [90m9:56PM[0m [32mINF[0m client state updated [36mclient-id=[0m07-tendermint-1 [36mheight=[0m0-12 [36mmodule=[0mx/ibc/client
+stride-stride1-1  | [90m9:56PM[0m [32mINF[0m connection state updated [36mconnection-id=[0mconnection-1 [36mmodule=[0mx/ibc/connection [36mnew-state=[0mOPEN [36mprevious-state=[0mSTATE_INIT
+stride-stride1-1  | [90m9:56PM[0m [32mINF[0m executed block [36mheight=[0m13 [36mmodule=[0mstate [36mnum_invalid_txs=[0m0 [36mnum_valid_txs=[0m1
+stride-stride1-1  | [90m9:56PM[0m [32mINF[0m commit synced [36mcommit=[0m436F6D6D697449447B5B3233342031343320393420323132203133362031383620313930203139342037322031353720362031353520383820313437203131322035203138392032313120313839203734203130392031363420383320383420313935203137342038372038302032313820323130203139312039355D3A447D
+stride-stride1-1  | [90m9:56PM[0m [32mINF[0m committed state [36mapp_hash=[0mEA8F5ED488BABEC2489D069B58937005BDD3BD4A6DA45354C3AE5750DAD2BF5F [36mheight=[0m13 [36mmodule=[0mstate [36mnum_txs=[0m1
+stride-stride1-1  | [90m9:56PM[0m [32mINF[0m indexed block [36mheight=[0m13 [36mmodule=[0mtxindex
+stride-stride1-1  | [90m9:56PM[0m [32mINF[0m Timed out [36mdur=[0m4921.781542 [36mheight=[0m14 [36mmodule=[0mconsensus [36mround=[0m0 [36mstep=[0m1
+stride-stride1-1  | [90m9:56PM[0m [32mINF[0m received proposal [36mmodule=[0mconsensus [36mproposal=[0m{"Type":32,"block_id":{"hash":"5C51A7BF6AB1F76DE01E92169B364D50FEBD73A32C9C601C232BBC693F6E3A56","parts":{"hash":"4E949A1DC6A9B4836AC49EB3A82ACAB2BB382BCEDE62A7E693D96DCB6A0B941E","total":1}},"height":14,"pol_round":-1,"round":0,"signature":"8hpxPF6Bk8nf7jVh7PPs8Ay70TuAKsqyJvI6pryWbVRkIZ8VuwznxsEVuAWWqE+MbnZqokovebrz+ik0akm1Dg==","timestamp":"2022-06-12T21:56:36.303040833Z"}
+stride-stride1-1  | [90m9:56PM[0m [32mINF[0m received complete proposal block [36mhash=[0m5C51A7BF6AB1F76DE01E92169B364D50FEBD73A32C9C601C232BBC693F6E3A56 [36mheight=[0m14 [36mmodule=[0mconsensus
+stride-stride1-1  | [90m9:56PM[0m [32mINF[0m finalizing commit of block [36mhash=[0m5C51A7BF6AB1F76DE01E92169B364D50FEBD73A32C9C601C232BBC693F6E3A56 [36mheight=[0m14 [36mmodule=[0mconsensus [36mnum_txs=[0m0 [36mroot=[0mEA8F5ED488BABEC2489D069B58937005BDD3BD4A6DA45354C3AE5750DAD2BF5F
+stride-stride1-1  | [90m9:56PM[0m [32mINF[0m ending epoch [36midentifier=[0mstride_epoch [36mmodule=[0mx/epochs
+stride-stride1-1  | [90m9:56PM[0m [32mINF[0m Handling epoch end stride_epoch 14 [36mmodule=[0mx/stakeibc
+stride-stride1-1  | [90m9:56PM[0m [32mINF[0m Handling epoch start stride_epoch 14 [36mmodule=[0mx/stakeibc
+stride-stride1-1  | [90m9:56PM[0m [32mINF[0m Stride Epoch 14 [36mmodule=[0mx/stakeibc
+stride-stride1-1  | [90m9:56PM[0m [32mINF[0m executed block [36mheight=[0m14 [36mmodule=[0mstate [36mnum_invalid_txs=[0m0 [36mnum_valid_txs=[0m0
+stride-stride1-1  | [90m9:56PM[0m [32mINF[0m commit synced [36mcommit=[0m436F6D6D697449447B5B313031203230382031303120313033203235312032323620313635203320313837203239203834203434203934203135382032333920313135203134332031333520313039203434203536203132372036322031373320323038203234322031373520313531203836203534203133312036375D3A457D
+stride-stride1-1  | [90m9:56PM[0m [32mINF[0m committed state [36mapp_hash=[0m65D06567FBE2A503BB1D542C5E9EEF738F876D2C387F3EADD0F2AF9756368343 [36mheight=[0m14 [36mmodule=[0mstate [36mnum_txs=[0m0
+stride-stride1-1  | [90m9:56PM[0m [32mINF[0m indexed block [36mheight=[0m14 [36mmodule=[0mtxindex
+stride-stride1-1  | [90m9:56PM[0m [32mINF[0m Timed out [36mdur=[0m4920.986 [36mheight=[0m15 [36mmodule=[0mconsensus [36mround=[0m0 [36mstep=[0m1
+stride-stride1-1  | [90m9:56PM[0m [32mINF[0m received proposal [36mmodule=[0mconsensus [36mproposal=[0m{"Type":32,"block_id":{"hash":"FC0282ECEF251FCF45C7973070E75203656FC643AE4CF05C2144AB8B03097D19","parts":{"hash":"FFEE839E6FE069930CD952DDC833C696FA91EEE6426E6ADA320035D7BCAED308","total":1}},"height":15,"pol_round":-1,"round":0,"signature":"RdjgM798w5bGvlh+77VLVHlNySB5GQVc0aLukzRCTKT+TRY08qLQjWFZ8uS3cdiono3OWVOo9l53Iv8kQlb9DA==","timestamp":"2022-06-12T21:56:41.740974294Z"}
+stride-stride1-1  | [90m9:56PM[0m [32mINF[0m received complete proposal block [36mhash=[0mFC0282ECEF251FCF45C7973070E75203656FC643AE4CF05C2144AB8B03097D19 [36mheight=[0m15 [36mmodule=[0mconsensus
+stride-stride1-1  | [90m9:56PM[0m [32mINF[0m finalizing commit of block [36mhash=[0mFC0282ECEF251FCF45C7973070E75203656FC643AE4CF05C2144AB8B03097D19 [36mheight=[0m15 [36mmodule=[0mconsensus [36mnum_txs=[0m0 [36mroot=[0m65D06567FBE2A503BB1D542C5E9EEF738F876D2C387F3EADD0F2AF9756368343
+stride-stride1-1  | [90m9:56PM[0m [32mINF[0m ending epoch [36midentifier=[0mstride_epoch [36mmodule=[0mx/epochs
+stride-stride1-1  | [90m9:56PM[0m [32mINF[0m Handling epoch end stride_epoch 15 [36mmodule=[0mx/stakeibc
+stride-stride1-1  | [90m9:56PM[0m [32mINF[0m Handling epoch start stride_epoch 15 [36mmodule=[0mx/stakeibc
+stride-stride1-1  | [90m9:56PM[0m [32mINF[0m Stride Epoch 15 [36mmodule=[0mx/stakeibc
+stride-stride1-1  | [90m9:56PM[0m [32mINF[0m Triggering deposits [36mmodule=[0mx/stakeibc
+stride-stride1-1  | [90m9:56PM[0m [32mINF[0m executed block [36mheight=[0m15 [36mmodule=[0mstate [36mnum_invalid_txs=[0m0 [36mnum_valid_txs=[0m0
+stride-stride1-1  | [90m9:56PM[0m [32mINF[0m commit synced [36mcommit=[0m436F6D6D697449447B5B3832203139203737203138332032343820323036203131203230392037332039362032323620363420313637203134203134203230332032343020313338203133352033203434203234342031333220323038203534203139342032353120323039203139362031323520313133203139375D3A467D
+stride-stride1-1  | [90m9:56PM[0m [32mINF[0m committed state [36mapp_hash=[0m52134DB7F8CE0BD14960E240A70E0ECBF08A87032CF484D036C2FBD1C47D71C5 [36mheight=[0m15 [36mmodule=[0mstate [36mnum_txs=[0m0
+stride-stride1-1  | [90m9:56PM[0m [32mINF[0m indexed block [36mheight=[0m15 [36mmodule=[0mtxindex
+stride-stride1-1  | [90m9:56PM[0m [32mINF[0m Timed out [36mdur=[0m4885.185375 [36mheight=[0m16 [36mmodule=[0mconsensus [36mround=[0m0 [36mstep=[0m1
+stride-stride1-1  | [90m9:56PM[0m [32mINF[0m received proposal [36mmodule=[0mconsensus [36mproposal=[0m{"Type":32,"block_id":{"hash":"1648601A3B4474188C5A6EDC711FDC69B7C4069D98A299EF55ECA616FE7F064B","parts":{"hash":"6AB6BED2DF4B73A2AD54F8CFB8BC5187254B4A0AF61AAB994FC155DE2BAB9135","total":1}},"height":16,"pol_round":-1,"round":0,"signature":"cxBG3UXy4r3s+rHlUdNEx0V+nLJ2kBZ+lr/xMjB8rkEruWB+dAQPMjrU7b3sv9Wc1zqAv/8QllCZRGYFBglSBw==","timestamp":"2022-06-12T21:56:47.229437463Z"}
+stride-stride1-1  | [90m9:56PM[0m [32mINF[0m received complete proposal block [36mhash=[0m1648601A3B4474188C5A6EDC711FDC69B7C4069D98A299EF55ECA616FE7F064B [36mheight=[0m16 [36mmodule=[0mconsensus
+stride-stride1-1  | [90m9:56PM[0m [32mINF[0m finalizing commit of block [36mhash=[0m1648601A3B4474188C5A6EDC711FDC69B7C4069D98A299EF55ECA616FE7F064B [36mheight=[0m16 [36mmodule=[0mconsensus [36mnum_txs=[0m0 [36mroot=[0m52134DB7F8CE0BD14960E240A70E0ECBF08A87032CF484D036C2FBD1C47D71C5
+stride-stride1-1  | [90m9:56PM[0m [32mINF[0m ending epoch [36midentifier=[0mstride_epoch [36mmodule=[0mx/epochs
+stride-stride1-1  | [90m9:56PM[0m [32mINF[0m Handling epoch end stride_epoch 16 [36mmodule=[0mx/stakeibc
+stride-stride1-1  | [90m9:56PM[0m [32mINF[0m Handling epoch start stride_epoch 16 [36mmodule=[0mx/stakeibc
+stride-stride1-1  | [90m9:56PM[0m [32mINF[0m Stride Epoch 16 [36mmodule=[0mx/stakeibc
+stride-stride1-1  | [90m9:56PM[0m [32mINF[0m executed block [36mheight=[0m16 [36mmodule=[0mstate [36mnum_invalid_txs=[0m0 [36mnum_valid_txs=[0m0
+stride-stride1-1  | [90m9:56PM[0m [32mINF[0m commit synced [36mcommit=[0m436F6D6D697449447B5B3139312032313320313930203132332032323620393320313239203135372037302031382039332031333920313932203136312031363520343920313934203234362031392031373020323036203233312033302031333820313531203131352037382033352032323220313939203133302039315D3A31307D
+stride-stride1-1  | [90m9:56PM[0m [32mINF[0m committed state [36mapp_hash=[0mBFD5BE7BE25D819D46125D8BC0A1A531C2F613AACEE71E8A97734E23DEC7825B [36mheight=[0m16 [36mmodule=[0mstate [36mnum_txs=[0m0
+stride-stride1-1  | [90m9:56PM[0m [32mINF[0m indexed block [36mheight=[0m16 [36mmodule=[0mtxindex
+stride-stride1-1  | [90m9:56PM[0m [32mINF[0m client state updated [36mclient-id=[0m07-tendermint-1 [36mheight=[0m0-16 [36mmodule=[0mx/ibc/client
+stride-stride1-1  | [90m9:56PM[0m [32mINF[0m created new capability [36mmodule=[0mibc [36mname=[0mcapabilities/ports/transfer/channels/channel-0
+stride-stride1-1  | [90m9:56PM[0m [32mINF[0m claimed capability [36mcapability=[0m3 [36mmodule=[0mtransfer [36mname=[0mcapabilities/ports/transfer/channels/channel-0
+stride-stride1-1  | [90m9:56PM[0m [32mINF[0m channel state updated [36mchannel-id=[0mchannel-0 [36mmodule=[0mx/ibc/channel [36mnew-state=[0mTRYOPEN [36mport-id=[0mtransfer [36mprevious-state=[0mSTATE_UNINITIALIZED_UNSPECIFIED
+stride-stride1-1  | [90m9:56PM[0m [32mINF[0m Ensure peers [36mmodule=[0mpex [36mnumDialing=[0m0 [36mnumInPeers=[0m0 [36mnumOutPeers=[0m2 [36mnumToDial=[0m8
+stride-stride1-1  | [90m9:56PM[0m [32mINF[0m We need more addresses. Sending pexRequest to random peer [36mmodule=[0mpex [36mpeer=[0m{"Data":{},"Logger":{}}
+stride-stride1-1  | [90m9:56PM[0m [32mINF[0m No addresses to dial. Falling back to seeds [36mmodule=[0mpex
+stride-stride1-1  | [90m9:56PM[0m [32mINF[0m Timed out [36mdur=[0m4893.070708 [36mheight=[0m17 [36mmodule=[0mconsensus [36mround=[0m0 [36mstep=[0m1
+stride-stride1-1  | [90m9:56PM[0m [32mINF[0m received proposal [36mmodule=[0mconsensus [36mproposal=[0m{"Type":32,"block_id":{"hash":"8AC378EE3191476F81C160368C1BE311413DE35DC6BA93F6DF381DD200C6D46A","parts":{"hash":"FA2BA8A3CEC0A040B2A4BCA5A24C4A8B38B39F28387BDD253A87B5708D27A5F0","total":1}},"height":17,"pol_round":-1,"round":0,"signature":"i8IDAIBmIg3e97uDjWdMpbjGtzHbXvlegmt47YngFVJ3VsHhFonBjZ7+SxRL8pyWIexDLqiytPStVg+FK7S3Bg==","timestamp":"2022-06-12T21:56:52.702912799Z"}
+stride-stride1-1  | [90m9:56PM[0m [32mINF[0m received complete proposal block [36mhash=[0m8AC378EE3191476F81C160368C1BE311413DE35DC6BA93F6DF381DD200C6D46A [36mheight=[0m17 [36mmodule=[0mconsensus
+stride-stride1-1  | [90m9:56PM[0m [32mINF[0m finalizing commit of block [36mhash=[0m8AC378EE3191476F81C160368C1BE311413DE35DC6BA93F6DF381DD200C6D46A [36mheight=[0m17 [36mmodule=[0mconsensus [36mnum_txs=[0m1 [36mroot=[0mBFD5BE7BE25D819D46125D8BC0A1A531C2F613AACEE71E8A97734E23DEC7825B
+stride-stride1-1  | [90m9:56PM[0m [32mINF[0m ending epoch [36midentifier=[0mstride_epoch [36mmodule=[0mx/epochs
+stride-stride1-1  | [90m9:56PM[0m [32mINF[0m Handling epoch end stride_epoch 17 [36mmodule=[0mx/stakeibc
+stride-stride1-1  | [90m9:56PM[0m [32mINF[0m Handling epoch start stride_epoch 17 [36mmodule=[0mx/stakeibc
+stride-stride1-1  | [90m9:56PM[0m [32mINF[0m Stride Epoch 17 [36mmodule=[0mx/stakeibc
+stride-stride1-1  | [90m9:56PM[0m [32mINF[0m client state updated [36mclient-id=[0m07-tendermint-1 [36mheight=[0m0-16 [36mmodule=[0mx/ibc/client
+stride-stride1-1  | [90m9:56PM[0m [32mINF[0m created new capability [36mmodule=[0mibc [36mname=[0mcapabilities/ports/transfer/channels/channel-0
+stride-stride1-1  | [90m9:56PM[0m [32mINF[0m claimed capability [36mcapability=[0m3 [36mmodule=[0mtransfer [36mname=[0mcapabilities/ports/transfer/channels/channel-0
+stride-stride1-1  | [90m9:56PM[0m [32mINF[0m channel state updated [36mchannel-id=[0mchannel-0 [36mmodule=[0mx/ibc/channel [36mnew-state=[0mTRYOPEN [36mport-id=[0mtransfer [36mprevious-state=[0mSTATE_UNINITIALIZED_UNSPECIFIED
+stride-stride1-1  | [90m9:56PM[0m [32mINF[0m executed block [36mheight=[0m17 [36mmodule=[0mstate [36mnum_invalid_txs=[0m0 [36mnum_valid_txs=[0m1
+stride-stride1-1  | [90m9:56PM[0m [32mINF[0m commit synced [36mcommit=[0m436F6D6D697449447B5B372031333720323237203132392031313120343720362031393620313036203133392031393620323920323438203139362035392032313120373720393520322031373520353220313835203132352037302031363420313734203235352031383120363120323434203138322039365D3A31317D
+stride-stride1-1  | [90m9:56PM[0m [32mINF[0m committed state [36mapp_hash=[0m0789E3816F2F06C46A8BC41DF8C43BD34D5F02AF34B97D46A4AEFFB53DF4B660 [36mheight=[0m17 [36mmodule=[0mstate [36mnum_txs=[0m1
+stride-stride1-1  | [90m9:56PM[0m [32mINF[0m indexed block [36mheight=[0m17 [36mmodule=[0mtxindex
+stride-stride1-1  | [90m9:56PM[0m [32mINF[0m Timed out [36mdur=[0m4852.687875 [36mheight=[0m18 [36mmodule=[0mconsensus [36mround=[0m0 [36mstep=[0m1
+stride-stride1-1  | [90m9:56PM[0m [32mINF[0m received proposal [36mmodule=[0mconsensus [36mproposal=[0m{"Type":32,"block_id":{"hash":"7EF07F9C864959AEFC0F7DA08A67A5D62FD19A7180CBB2CC7F31770FFF4BF06F","parts":{"hash":"5047341CA4AA4FC4A8CC984203AA0FCB0AAC73D6AD010E6C76AD389EE17E871E","total":1}},"height":18,"pol_round":-1,"round":0,"signature":"Ejd6aTkREI0ls5lEz3ainQFOjUgYKu6Z8qpYQ3IY8RFjusQKljpz/ZyA8KXubtYeU0947xCYYwkp3ARe2PaNDQ==","timestamp":"2022-06-12T21:56:58.245369302Z"}
+stride-stride1-1  | [90m9:56PM[0m [32mINF[0m received complete proposal block [36mhash=[0m7EF07F9C864959AEFC0F7DA08A67A5D62FD19A7180CBB2CC7F31770FFF4BF06F [36mheight=[0m18 [36mmodule=[0mconsensus
+stride-stride1-1  | [90m9:56PM[0m [32mINF[0m finalizing commit of block [36mhash=[0m7EF07F9C864959AEFC0F7DA08A67A5D62FD19A7180CBB2CC7F31770FFF4BF06F [36mheight=[0m18 [36mmodule=[0mconsensus [36mnum_txs=[0m0 [36mroot=[0m0789E3816F2F06C46A8BC41DF8C43BD34D5F02AF34B97D46A4AEFFB53DF4B660
+stride-stride1-1  | [90m9:56PM[0m [32mINF[0m ending epoch [36midentifier=[0mstride_epoch [36mmodule=[0mx/epochs
+stride-stride1-1  | [90m9:56PM[0m [32mINF[0m Handling epoch end stride_epoch 18 [36mmodule=[0mx/stakeibc
+stride-stride1-1  | [90m9:56PM[0m [32mINF[0m Handling epoch start stride_epoch 18 [36mmodule=[0mx/stakeibc
+stride-stride1-1  | [90m9:56PM[0m [32mINF[0m Stride Epoch 18 [36mmodule=[0mx/stakeibc
+stride-stride1-1  | [90m9:56PM[0m [32mINF[0m executed block [36mheight=[0m18 [36mmodule=[0mstate [36mnum_invalid_txs=[0m0 [36mnum_valid_txs=[0m0
+stride-stride1-1  | [90m9:56PM[0m [32mINF[0m commit synced [36mcommit=[0m436F6D6D697449447B5B36322031373620313630203133362031303020313737203136382031352031343620313939203134203131342033203132372031303920313538203235312037302033352031393720323039203132372032323520313020313134203233352038342036392031343420313630203137322034305D3A31327D
+stride-stride1-1  | [90m9:56PM[0m [32mINF[0m committed state [36mapp_hash=[0m3EB0A08864B1A80F92C70E72037F6D9EFB4623C5D17FE10A72EB544590A0AC28 [36mheight=[0m18 [36mmodule=[0mstate [36mnum_txs=[0m0
+stride-stride1-1  | [90m9:56PM[0m [32mINF[0m indexed block [36mheight=[0m18 [36mmodule=[0mtxindex
+stride-stride1-1  | [90m9:57PM[0m [32mINF[0m Timed out [36mdur=[0m4894.370709 [36mheight=[0m19 [36mmodule=[0mconsensus [36mround=[0m0 [36mstep=[0m1
+stride-stride1-1  | [90m9:57PM[0m [32mINF[0m received proposal [36mmodule=[0mconsensus [36mproposal=[0m{"Type":32,"block_id":{"hash":"9D1788F6652253906FDF77DB5AA175F5D63006BB2CC86359F2951DB6B3C37B69","parts":{"hash":"9A1003A7CA3D1D7408C487DCD107BB7D07DED80A87EADBAEF6EE8F9C444ADC56","total":1}},"height":19,"pol_round":-1,"round":0,"signature":"y0j5VH6uVFWKSlS9bnmRQFYdhxFphaImEGCH0SaxWuT1uzsyX75uHEeoH5ssP4AQ+ZKslCiIoFM1rw9W+EJ/Cw==","timestamp":"2022-06-12T21:57:03.903980471Z"}
+stride-stride1-1  | [90m9:57PM[0m [32mINF[0m received complete proposal block [36mhash=[0m9D1788F6652253906FDF77DB5AA175F5D63006BB2CC86359F2951DB6B3C37B69 [36mheight=[0m19 [36mmodule=[0mconsensus
+stride-stride1-1  | [90m9:57PM[0m [32mINF[0m finalizing commit of block [36mhash=[0m9D1788F6652253906FDF77DB5AA175F5D63006BB2CC86359F2951DB6B3C37B69 [36mheight=[0m19 [36mmodule=[0mconsensus [36mnum_txs=[0m0 [36mroot=[0m3EB0A08864B1A80F92C70E72037F6D9EFB4623C5D17FE10A72EB544590A0AC28
+stride-stride1-1  | [90m9:57PM[0m [32mINF[0m ending epoch [36midentifier=[0mstride_epoch [36mmodule=[0mx/epochs
+stride-stride1-1  | [90m9:57PM[0m [32mINF[0m Handling epoch end stride_epoch 19 [36mmodule=[0mx/stakeibc
+stride-stride1-1  | [90m9:57PM[0m [32mINF[0m Handling epoch start stride_epoch 19 [36mmodule=[0mx/stakeibc
+stride-stride1-1  | [90m9:57PM[0m [32mINF[0m Stride Epoch 19 [36mmodule=[0mx/stakeibc
+stride-stride1-1  | [90m9:57PM[0m [32mINF[0m executed block [36mheight=[0m19 [36mmodule=[0mstate [36mnum_invalid_txs=[0m0 [36mnum_valid_txs=[0m0
+stride-stride1-1  | [90m9:57PM[0m [32mINF[0m commit synced [36mcommit=[0m436F6D6D697449447B5B3332203135372031393520313135203133372035372036302031323920323232203230322031383020383220313238203131362032333220313133203130312031353120353620353120313032203233322031303020393620313530203636203139302038312032313820323532203339203132335D3A31337D
+stride-stride1-1  | [90m9:57PM[0m [32mINF[0m committed state [36mapp_hash=[0m209DC37389393C81DECAB4528074E8716597383366E864609642BE51DAFC277B [36mheight=[0m19 [36mmodule=[0mstate [36mnum_txs=[0m0
+stride-stride1-1  | [90m9:57PM[0m [32mINF[0m indexed block [36mheight=[0m19 [36mmodule=[0mtxindex
+stride-stride1-1  | [90m9:57PM[0m [32mINF[0m Timed out [36mdur=[0m4800.427041 [36mheight=[0m20 [36mmodule=[0mconsensus [36mround=[0m0 [36mstep=[0m1
+stride-stride1-1  | [90m9:57PM[0m [32mINF[0m received proposal [36mmodule=[0mconsensus [36mproposal=[0m{"Type":32,"block_id":{"hash":"4F2B1AF37627D5D1F5650E2DE43A76D8D37E015CFAC458D77444779AE4694753","parts":{"hash":"ED565AA72F8453288DEFA050B76B02865605E3FAF982A772B9AFE5A935E51126","total":1}},"height":20,"pol_round":-1,"round":0,"signature":"kd9XUDQh0tak5fWYQEZMfpGjzbvTfUElenKFsDXvqQjgkQ3SM9LOnRKXCg3I8194DoYItPWOZhz1WlH1pZh9DA==","timestamp":"2022-06-12T21:57:09.396837584Z"}
+stride-stride1-1  | [90m9:57PM[0m [32mINF[0m received complete proposal block [36mhash=[0m4F2B1AF37627D5D1F5650E2DE43A76D8D37E015CFAC458D77444779AE4694753 [36mheight=[0m20 [36mmodule=[0mconsensus
+stride-stride1-1  | [90m9:57PM[0m [32mINF[0m finalizing commit of block [36mhash=[0m4F2B1AF37627D5D1F5650E2DE43A76D8D37E015CFAC458D77444779AE4694753 [36mheight=[0m20 [36mmodule=[0mconsensus [36mnum_txs=[0m0 [36mroot=[0m209DC37389393C81DECAB4528074E8716597383366E864609642BE51DAFC277B
+stride-stride1-1  | [90m9:57PM[0m [32mINF[0m ending epoch [36midentifier=[0mstride_epoch [36mmodule=[0mx/epochs
+stride-stride1-1  | [90m9:57PM[0m [32mINF[0m Handling epoch end stride_epoch 20 [36mmodule=[0mx/stakeibc
+stride-stride1-1  | [90m9:57PM[0m [32mINF[0m Handling epoch start stride_epoch 20 [36mmodule=[0mx/stakeibc
+stride-stride1-1  | [90m9:57PM[0m [32mINF[0m Stride Epoch 20 [36mmodule=[0mx/stakeibc
+stride-stride1-1  | [90m9:57PM[0m [32mINF[0m Triggering deposits [36mmodule=[0mx/stakeibc
+stride-stride1-1  | [90m9:57PM[0m [32mINF[0m executed block [36mheight=[0m20 [36mmodule=[0mstate [36mnum_invalid_txs=[0m0 [36mnum_valid_txs=[0m0
+stride-stride1-1  | [90m9:57PM[0m [32mINF[0m commit synced [36mcommit=[0m436F6D6D697449447B5B35312031353620353820323133203231352031343820323431203734203137322032333020323137203434203231302032342032343820313237203130203239203234342032333920313538203139362032313920313935203133332032353220393920323137203137372031373520313433203134375D3A31347D
+stride-stride1-1  | [90m9:57PM[0m [32mINF[0m committed state [36mapp_hash=[0m339C3AD5D794F14AACE6D92CD218F87F0A1DF4EF9EC4DBC385FC63D9B1AF8F93 [36mheight=[0m20 [36mmodule=[0mstate [36mnum_txs=[0m0
+stride-stride1-1  | [90m9:57PM[0m [32mINF[0m indexed block [36mheight=[0m20 [36mmodule=[0mtxindex
+stride-stride1-1  | [90m9:57PM[0m [32mINF[0m client state updated [36mclient-id=[0m07-tendermint-1 [36mheight=[0m0-20 [36mmodule=[0mx/ibc/client
+stride-stride1-1  | [90m9:57PM[0m [32mINF[0m channel state updated [36mchannel-id=[0mchannel-0 [36mmodule=[0mx/ibc/channel [36mnew-state=[0mOPEN [36mport-id=[0mtransfer [36mprevious-state=[0mTRYOPEN
+stride-stride1-1  | [90m9:57PM[0m [32mINF[0m Timed out [36mdur=[0m4931.450833 [36mheight=[0m21 [36mmodule=[0mconsensus [36mround=[0m0 [36mstep=[0m1
+stride-stride1-1  | [90m9:57PM[0m [32mINF[0m received proposal [36mmodule=[0mconsensus [36mproposal=[0m{"Type":32,"block_id":{"hash":"060AA537B20EF168BB881C0E9FBECC6937356D995321EB510988387B5E9AFCF2","parts":{"hash":"A6007DD00E6CA6761328AA9620CDFDB98EBF8FABED1268C437D9FF85173CDD7E","total":1}},"height":21,"pol_round":-1,"round":0,"signature":"MnLJ1DULksjaNGVs7GriV4e+VrieKjnr1+meQ14+M4gCwuWWQqSIrGu5Mt+iu51BMVLjHVUT72q2Ch/W1jfTBA==","timestamp":"2022-06-12T21:57:14.767600004Z"}
+stride-stride1-1  | [90m9:57PM[0m [32mINF[0m received complete proposal block [36mhash=[0m060AA537B20EF168BB881C0E9FBECC6937356D995321EB510988387B5E9AFCF2 [36mheight=[0m21 [36mmodule=[0mconsensus
+stride-stride1-1  | [90m9:57PM[0m [32mINF[0m finalizing commit of block [36mhash=[0m060AA537B20EF168BB881C0E9FBECC6937356D995321EB510988387B5E9AFCF2 [36mheight=[0m21 [36mmodule=[0mconsensus [36mnum_txs=[0m1 [36mroot=[0m339C3AD5D794F14AACE6D92CD218F87F0A1DF4EF9EC4DBC385FC63D9B1AF8F93
+stride-stride1-1  | [90m9:57PM[0m [32mINF[0m ending epoch [36midentifier=[0mstride_epoch [36mmodule=[0mx/epochs
+stride-stride1-1  | [90m9:57PM[0m [32mINF[0m Handling epoch end stride_epoch 21 [36mmodule=[0mx/stakeibc
+stride-stride1-1  | [90m9:57PM[0m [32mINF[0m Handling epoch start stride_epoch 21 [36mmodule=[0mx/stakeibc
+stride-stride1-1  | [90m9:57PM[0m [32mINF[0m Stride Epoch 21 [36mmodule=[0mx/stakeibc
+stride-stride1-1  | [90m9:57PM[0m [32mINF[0m client state updated [36mclient-id=[0m07-tendermint-1 [36mheight=[0m0-20 [36mmodule=[0mx/ibc/client
+stride-stride1-1  | [90m9:57PM[0m [32mINF[0m channel state updated [36mchannel-id=[0mchannel-0 [36mmodule=[0mx/ibc/channel [36mnew-state=[0mOPEN [36mport-id=[0mtransfer [36mprevious-state=[0mTRYOPEN
+stride-stride1-1  | [90m9:57PM[0m [32mINF[0m executed block [36mheight=[0m21 [36mmodule=[0mstate [36mnum_invalid_txs=[0m0 [36mnum_valid_txs=[0m1
+stride-stride1-1  | [90m9:57PM[0m [32mINF[0m commit synced [36mcommit=[0m436F6D6D697449447B5B31313720363720343120323230203235302036362031383420313320313836203231332032352031373420313031203932203134302032303220373820313534203531203139332032333420323033203130372031343620373320313933203131302031373820313536203232312031333420305D3A31357D
+stride-stride1-1  | [90m9:57PM[0m [32mINF[0m committed state [36mapp_hash=[0m754329DCFA42B80DBAD519AE655C8CCA4E9A33C1EACB6B9249C16EB29CDD8600 [36mheight=[0m21 [36mmodule=[0mstate [36mnum_txs=[0m1
+stride-stride1-1  | [90m9:57PM[0m [32mINF[0m indexed block [36mheight=[0m21 [36mmodule=[0mtxindex
+stride-stride1-1  | [90m9:57PM[0m [32mINF[0m Saving AddrBook to file [36mbook=[0m/stride/.strided/config/addrbook.json [36mmodule=[0mp2p [36msize=[0m0
+stride-stride1-1  | [90m9:57PM[0m [32mINF[0m Ensure peers [36mmodule=[0mpex [36mnumDialing=[0m0 [36mnumInPeers=[0m0 [36mnumOutPeers=[0m2 [36mnumToDial=[0m8
+stride-stride1-1  | [90m9:57PM[0m [32mINF[0m We need more addresses. Sending pexRequest to random peer [36mmodule=[0mpex [36mpeer=[0m{"Data":{},"Logger":{}}
+stride-stride1-1  | [90m9:57PM[0m [32mINF[0m No addresses to dial. Falling back to seeds [36mmodule=[0mpex
+stride-stride1-1  | [90m9:57PM[0m [32mINF[0m Timed out [36mdur=[0m4778.888291 [36mheight=[0m22 [36mmodule=[0mconsensus [36mround=[0m0 [36mstep=[0m1
+stride-stride1-1  | [90m9:57PM[0m [32mINF[0m received proposal [36mmodule=[0mconsensus [36mproposal=[0m{"Type":32,"block_id":{"hash":"15992A6E2F5354A35B34CE40C312D6919EFB3E75F1450266345D585E1F8AF801","parts":{"hash":"35622CCA985A6EECBF6278F7FC4FD1AE8F05F397B0D699342FAF39BEC0CF2D6A","total":1}},"height":22,"pol_round":-1,"round":0,"signature":"x6KrEENBHZ5Cqfl0eBURkX10UE4At3WsOcuzJKRYoMnA4n8DLAUX/GmiWbZjwkQibgZlyviNz+AtFoVuPVADBA==","timestamp":"2022-06-12T21:57:21.005799548Z"}
+stride-stride1-1  | [90m9:57PM[0m [32mINF[0m received complete proposal block [36mhash=[0m15992A6E2F5354A35B34CE40C312D6919EFB3E75F1450266345D585E1F8AF801 [36mheight=[0m22 [36mmodule=[0mconsensus
+stride-stride1-1  | [90m9:57PM[0m [32mINF[0m finalizing commit of block [36mhash=[0m15992A6E2F5354A35B34CE40C312D6919EFB3E75F1450266345D585E1F8AF801 [36mheight=[0m22 [36mmodule=[0mconsensus [36mnum_txs=[0m0 [36mroot=[0m754329DCFA42B80DBAD519AE655C8CCA4E9A33C1EACB6B9249C16EB29CDD8600
+stride-stride1-1  | [90m9:57PM[0m [32mINF[0m New websocket connection [36mmodule=[0mrpc-server [36mprotocol=[0mwebsocket [36mremote=[0m192.168.128.8:37870
+stride-stride1-1  | [90m9:57PM[0m [32mINF[0m Starting wsConnection service [36mimpl=[0mwsConnection [36mmodule=[0mrpc-server [36mprotocol=[0mwebsocket [36mremote=[0m{"IP":"192.168.128.8","Port":37870,"Zone":""}
+stride-stride1-1  | [90m9:57PM[0m [32mINF[0m Subscribe to query [36mmodule=[0mrpc [36mquery=[0m"tm.event = 'NewBlock'" [36mremote=[0m192.168.128.8:37870
+stride-stride1-1  | [90m9:57PM[0m [32mINF[0m WSJSONRPC [36mmethod=[0msubscribe [36mmodule=[0mrpc-server [36mprotocol=[0mwebsocket [36mremote=[0m{"IP":"192.168.128.8","Port":37870,"Zone":""}
+stride-stride1-1  | [90m9:57PM[0m [32mINF[0m Subscribe to query [36mmodule=[0mrpc [36mquery=[0m"message.module = 'ibc_client'" [36mremote=[0m192.168.128.8:37870
+stride-stride1-1  | [90m9:57PM[0m [32mINF[0m WSJSONRPC [36mmethod=[0msubscribe [36mmodule=[0mrpc-server [36mprotocol=[0mwebsocket [36mremote=[0m{"IP":"192.168.128.8","Port":37870,"Zone":""}
+stride-stride1-1  | [90m9:57PM[0m [32mINF[0m Subscribe to query [36mmodule=[0mrpc [36mquery=[0m"message.module = 'ibc_connection'" [36mremote=[0m192.168.128.8:37870
+stride-stride1-1  | [90m9:57PM[0m [32mINF[0m WSJSONRPC [36mmethod=[0msubscribe [36mmodule=[0mrpc-server [36mprotocol=[0mwebsocket [36mremote=[0m{"IP":"192.168.128.8","Port":37870,"Zone":""}
+stride-stride1-1  | [90m9:57PM[0m [32mINF[0m Subscribe to query [36mmodule=[0mrpc [36mquery=[0m"message.module = 'ibc_channel'" [36mremote=[0m192.168.128.8:37870
+stride-stride1-1  | [90m9:57PM[0m [32mINF[0m WSJSONRPC [36mmethod=[0msubscribe [36mmodule=[0mrpc-server [36mprotocol=[0mwebsocket [36mremote=[0m{"IP":"192.168.128.8","Port":37870,"Zone":""}
+stride-stride1-1  | [90m9:57PM[0m [32mINF[0m ending epoch [36midentifier=[0mstride_epoch [36mmodule=[0mx/epochs
+stride-stride1-1  | [90m9:57PM[0m [32mINF[0m Handling epoch end stride_epoch 22 [36mmodule=[0mx/stakeibc
+stride-stride1-1  | [90m9:57PM[0m [32mINF[0m Handling epoch start stride_epoch 22 [36mmodule=[0mx/stakeibc
+stride-stride1-1  | [90m9:57PM[0m [32mINF[0m Stride Epoch 22 [36mmodule=[0mx/stakeibc
+stride-stride1-1  | [90m9:57PM[0m [32mINF[0m executed block [36mheight=[0m22 [36mmodule=[0mstate [36mnum_invalid_txs=[0m0 [36mnum_valid_txs=[0m0
+stride-stride1-1  | [90m9:57PM[0m [32mINF[0m commit synced [36mcommit=[0m436F6D6D697449447B5B31313620353520362036332032303020313237203136302037372031313120333620363820383720313634203235302031393520383820313920313339203339203130382031333420313120313037203130362032333920313020323438203138362031373020313320323130203136345D3A31367D
+stride-stride1-1  | [90m9:57PM[0m [32mINF[0m committed state [36mapp_hash=[0m7437063FC87FA04D6F244457A4FAC358138B276C860B6B6AEF0AF8BAAA0DD2A4 [36mheight=[0m22 [36mmodule=[0mstate [36mnum_txs=[0m0
+stride-stride1-1  | [90m9:57PM[0m [32mINF[0m indexed block [36mheight=[0m22 [36mmodule=[0mtxindex
+stride-stride1-1  | [90m9:57PM[0m [32mINF[0m Timed out [36mdur=[0m4260.410792 [36mheight=[0m23 [36mmodule=[0mconsensus [36mround=[0m0 [36mstep=[0m1
+stride-stride1-1  | [90m9:57PM[0m [32mINF[0m received proposal [36mmodule=[0mconsensus [36mproposal=[0m{"Type":32,"block_id":{"hash":"2A04E81640044C46C2E6BD0BCD40811809C302C455559069A90B47252FDB5BF1","parts":{"hash":"4B3C88B8022F9BE4C2506D1DA67F4F033CBDA4FBD8B0F7D0FD26066FBAAEC43D","total":1}},"height":23,"pol_round":-1,"round":0,"signature":"jBEOsBMAjWaQDeibXTdXhcQ2qlWx2TWFlTUXxb7s9S7E4CybYFf840/NxghU3s24RH2692jUqSTyySuJRwORBA==","timestamp":"2022-06-12T21:57:26.654422301Z"}
+stride-stride1-1  | [90m9:57PM[0m [32mINF[0m received complete proposal block [36mhash=[0m2A04E81640044C46C2E6BD0BCD40811809C302C455559069A90B47252FDB5BF1 [36mheight=[0m23 [36mmodule=[0mconsensus
+stride-stride1-1  | [90m9:57PM[0m [32mINF[0m finalizing commit of block [36mhash=[0m2A04E81640044C46C2E6BD0BCD40811809C302C455559069A90B47252FDB5BF1 [36mheight=[0m23 [36mmodule=[0mconsensus [36mnum_txs=[0m0 [36mroot=[0m7437063FC87FA04D6F244457A4FAC358138B276C860B6B6AEF0AF8BAAA0DD2A4
+stride-stride1-1  | [90m9:57PM[0m [32mINF[0m ending epoch [36midentifier=[0mstride_epoch [36mmodule=[0mx/epochs
+stride-stride1-1  | [90m9:57PM[0m [32mINF[0m Handling epoch end stride_epoch 23 [36mmodule=[0mx/stakeibc
+stride-stride1-1  | [90m9:57PM[0m [32mINF[0m Handling epoch start stride_epoch 23 [36mmodule=[0mx/stakeibc
+stride-stride1-1  | [90m9:57PM[0m [32mINF[0m Stride Epoch 23 [36mmodule=[0mx/stakeibc
+stride-stride1-1  | [90m9:57PM[0m [32mINF[0m executed block [36mheight=[0m23 [36mmodule=[0mstate [36mnum_invalid_txs=[0m0 [36mnum_valid_txs=[0m0
+stride-stride1-1  | [90m9:57PM[0m [32mINF[0m commit synced [36mcommit=[0m436F6D6D697449447B5B323338203537203130362035342033342032313620313039203735203230332034352031303920313739203130392036342037382031353320323333203230382032323720313135203434203830203134392033372032333820323534203533203232203136332032313020313731203130335D3A31377D
+stride-stride1-1  | [90m9:57PM[0m [32mINF[0m committed state [36mapp_hash=[0mEE396A3622D86D4BCB2D6DB36D404E99E9D0E3732C509525EEFE3516A3D2AB67 [36mheight=[0m23 [36mmodule=[0mstate [36mnum_txs=[0m0
+stride-stride1-1  | [90m9:57PM[0m [32mINF[0m indexed block [36mheight=[0m23 [36mmodule=[0mtxindex
+stride-stride1-1  | [90m9:57PM[0m [32mINF[0m Timed out [36mdur=[0m4675.206916 [36mheight=[0m24 [36mmodule=[0mconsensus [36mround=[0m0 [36mstep=[0m1
+stride-stride1-1  | [90m9:57PM[0m [32mINF[0m received proposal [36mmodule=[0mconsensus [36mproposal=[0m{"Type":32,"block_id":{"hash":"A1D12BCC86231E58AF37D8C74437ADD5594D9D05C85333F6B91D644CDEA92B3D","parts":{"hash":"7AC941F70A7092BC3EACB8B5F96256BE26543766C1BBF3D15F83BEC65BBD75BB","total":1}},"height":24,"pol_round":-1,"round":0,"signature":"r3D+XxJkdxcnMSVZZYzDT6FHs2M2ceDiqJTdZSf5bfcd7qc0KBSpmAE/jwSvoKtuzgj9GFWM+7yBO39hRbpeDA==","timestamp":"2022-06-12T21:57:32.10027497Z"}
+stride-stride1-1  | [90m9:57PM[0m [32mINF[0m received complete proposal block [36mhash=[0mA1D12BCC86231E58AF37D8C74437ADD5594D9D05C85333F6B91D644CDEA92B3D [36mheight=[0m24 [36mmodule=[0mconsensus
+stride-stride1-1  | [90m9:57PM[0m [32mINF[0m finalizing commit of block [36mhash=[0mA1D12BCC86231E58AF37D8C74437ADD5594D9D05C85333F6B91D644CDEA92B3D [36mheight=[0m24 [36mmodule=[0mconsensus [36mnum_txs=[0m0 [36mroot=[0mEE396A3622D86D4BCB2D6DB36D404E99E9D0E3732C509525EEFE3516A3D2AB67
+stride-stride1-1  | [90m9:57PM[0m [32mINF[0m ending epoch [36midentifier=[0mstride_epoch [36mmodule=[0mx/epochs
+stride-stride1-1  | [90m9:57PM[0m [32mINF[0m Handling epoch end stride_epoch 24 [36mmodule=[0mx/stakeibc
+stride-stride1-1  | [90m9:57PM[0m [32mINF[0m Handling epoch start stride_epoch 24 [36mmodule=[0mx/stakeibc
+stride-stride1-1  | [90m9:57PM[0m [32mINF[0m Stride Epoch 24 [36mmodule=[0mx/stakeibc
+stride-stride1-1  | [90m9:57PM[0m [32mINF[0m executed block [36mheight=[0m24 [36mmodule=[0mstate [36mnum_invalid_txs=[0m0 [36mnum_valid_txs=[0m0
+stride-stride1-1  | [90m9:57PM[0m [32mINF[0m commit synced [36mcommit=[0m436F6D6D697449447B5B323535203235332031313320313735203139342031353620333020313737203438203133352031353920363920313439203130362039203434203320313337203434203138332036302031373520323533203234362031392031323920313336203136302031373520343220313832203232365D3A31387D
+stride-stride1-1  | [90m9:57PM[0m [32mINF[0m committed state [36mapp_hash=[0mFFFD71AFC29C1EB130879F45956A092C03892CB73CAFFDF6138188A0AF2AB6E2 [36mheight=[0m24 [36mmodule=[0mstate [36mnum_txs=[0m0
+stride-stride1-1  | [90m9:57PM[0m [32mINF[0m indexed block [36mheight=[0m24 [36mmodule=[0mtxindex
+stride-stride1-1  | [90m9:57PM[0m [32mINF[0m New websocket connection [36mmodule=[0mrpc-server [36mprotocol=[0mwebsocket [36mremote=[0m192.168.128.9:57584
+stride-stride1-1  | [90m9:57PM[0m [32mINF[0m Starting wsConnection service [36mimpl=[0mwsConnection [36mmodule=[0mrpc-server [36mprotocol=[0mwebsocket [36mremote=[0m{"IP":"192.168.128.9","Port":57584,"Zone":""}
+stride-stride1-1  | [90m9:57PM[0m [32mINF[0m Subscribe to query [36mmodule=[0mrpc [36mquery=[0mmessage.module='interchainquery' [36mremote=[0m192.168.128.9:57584
+stride-stride1-1  | [90m9:57PM[0m [32mINF[0m WSJSONRPC [36mmethod=[0msubscribe [36mmodule=[0mrpc-server [36mprotocol=[0mwebsocket [36mremote=[0m{"IP":"192.168.128.9","Port":57584,"Zone":""}
+stride-stride1-1  | [90m9:57PM[0m [32mINF[0m Timed out [36mdur=[0m4817.298167 [36mheight=[0m25 [36mmodule=[0mconsensus [36mround=[0m0 [36mstep=[0m1
+stride-stride1-1  | [90m9:57PM[0m [32mINF[0m received proposal [36mmodule=[0mconsensus [36mproposal=[0m{"Type":32,"block_id":{"hash":"7331A01AC8DEED3717F7A98955ADAE959DD71C4298644F6DFBF65907BA704244","parts":{"hash":"3305312B3F1971D885EBBB5FDC6823A2287975FDC8D0099C014A11683462AEC6","total":1}},"height":25,"pol_round":-1,"round":0,"signature":"80Y7Yv1RiUlgvYO/tsMIdKD+PibSaoBas+kl+tyxYg6Rt/pNTXS5a+rYzSb4zAiHhS00u2gnVttFuVRU7Ni1Cg==","timestamp":"2022-06-12T21:57:37.562147459Z"}
+stride-stride1-1  | [90m9:57PM[0m [32mINF[0m received complete proposal block [36mhash=[0m7331A01AC8DEED3717F7A98955ADAE959DD71C4298644F6DFBF65907BA704244 [36mheight=[0m25 [36mmodule=[0mconsensus
+stride-stride1-1  | [90m9:57PM[0m [32mINF[0m finalizing commit of block [36mhash=[0m7331A01AC8DEED3717F7A98955ADAE959DD71C4298644F6DFBF65907BA704244 [36mheight=[0m25 [36mmodule=[0mconsensus [36mnum_txs=[0m1 [36mroot=[0mFFFD71AFC29C1EB130879F45956A092C03892CB73CAFFDF6138188A0AF2AB6E2
+stride-stride1-1  | [90m9:57PM[0m [32mINF[0m ending epoch [36midentifier=[0mstride_epoch [36mmodule=[0mx/epochs
+stride-stride1-1  | [90m9:57PM[0m [32mINF[0m Handling epoch end stride_epoch 25 [36mmodule=[0mx/stakeibc
+stride-stride1-1  | [90m9:57PM[0m [32mINF[0m Handling epoch start stride_epoch 25 [36mmodule=[0mx/stakeibc
+stride-stride1-1  | [90m9:57PM[0m [32mINF[0m Stride Epoch 25 [36mmodule=[0mx/stakeibc
+stride-stride1-1  | [90m9:57PM[0m [32mINF[0m Triggering deposits [36mmodule=[0mx/stakeibc
+stride-stride1-1  | [90m9:57PM[0m [32mINF[0m executed block [36mheight=[0m25 [36mmodule=[0mstate [36mnum_invalid_txs=[0m0 [36mnum_valid_txs=[0m1
+stride-stride1-1  | [90m9:57PM[0m [32mINF[0m commit synced [36mcommit=[0m436F6D6D697449447B5B32353120313634203134362032332031343920313231203235352032332031323620313237203139392031333020393520333520353920353120313437203134392032313420373920343320313539203133372031302036312032362032343420313238203233332031303620313135203135395D3A31397D
+stride-stride1-1  | [90m9:57PM[0m [32mINF[0m committed state [36mapp_hash=[0mFBA492179579FF177E7FC7825F233B339395D64F2B9F890A3D1AF480E96A739F [36mheight=[0m25 [36mmodule=[0mstate [36mnum_txs=[0m1
+stride-stride1-1  | [90m9:57PM[0m [32mINF[0m indexed block [36mheight=[0m25 [36mmodule=[0mtxindex
+stride-stride1-1  | [90m9:57PM[0m [32mINF[0m client state updated [36mclient-id=[0m07-tendermint-1 [36mheight=[0m0-25 [36mmodule=[0mx/ibc/client
+stride-stride1-1  | [90m9:57PM[0m [32mINF[0m Timed out [36mdur=[0m4878.315167 [36mheight=[0m26 [36mmodule=[0mconsensus [36mround=[0m0 [36mstep=[0m1
+stride-stride1-1  | [90m9:57PM[0m [32mINF[0m received proposal [36mmodule=[0mconsensus [36mproposal=[0m{"Type":32,"block_id":{"hash":"CD2AAFF4E1C4ACDF5A2DA2565F19E40CBCEFB80773F9571B73C28414C501C831","parts":{"hash":"6B3D64A3A27EFFF29CD45271905ACF99122F2F26393FEA84C4D96ECFF80E1BEB","total":1}},"height":26,"pol_round":-1,"round":0,"signature":"Lsw9nc9AbVx/MUkN6TEcv1n/i8GotkRoo9W/lOmNFg1DUbKmi0FXfYjBtCMz0UWaooMlpbc0lqeKj+kED526Ag==","timestamp":"2022-06-12T21:57:42.922966544Z"}
+stride-stride1-1  | [90m9:57PM[0m [32mINF[0m received complete proposal block [36mhash=[0mCD2AAFF4E1C4ACDF5A2DA2565F19E40CBCEFB80773F9571B73C28414C501C831 [36mheight=[0m26 [36mmodule=[0mconsensus
+stride-stride1-1  | [90m9:57PM[0m [32mINF[0m finalizing commit of block [36mhash=[0mCD2AAFF4E1C4ACDF5A2DA2565F19E40CBCEFB80773F9571B73C28414C501C831 [36mheight=[0m26 [36mmodule=[0mconsensus [36mnum_txs=[0m1 [36mroot=[0mFBA492179579FF177E7FC7825F233B339395D64F2B9F890A3D1AF480E96A739F
+stride-stride1-1  | [90m9:57PM[0m [32mINF[0m ending epoch [36midentifier=[0mstride_epoch [36mmodule=[0mx/epochs
+stride-stride1-1  | [90m9:57PM[0m [32mINF[0m Handling epoch end stride_epoch 26 [36mmodule=[0mx/stakeibc
+stride-stride1-1  | [90m9:57PM[0m [32mINF[0m Handling epoch start stride_epoch 26 [36mmodule=[0mx/stakeibc
+stride-stride1-1  | [90m9:57PM[0m [32mINF[0m Stride Epoch 26 [36mmodule=[0mx/stakeibc
+stride-stride1-1  | [90m9:57PM[0m [32mINF[0m client state updated [36mclient-id=[0m07-tendermint-1 [36mheight=[0m0-25 [36mmodule=[0mx/ibc/client
+stride-stride1-1  | [90m9:57PM[0m [32mINF[0m executed block [36mheight=[0m26 [36mmodule=[0mstate [36mnum_invalid_txs=[0m0 [36mnum_valid_txs=[0m1
+stride-stride1-1  | [90m9:57PM[0m [32mINF[0m commit synced [36mcommit=[0m436F6D6D697449447B5B313230203836203230203839203835203131322031313620363020323133203130203136322032313120323020353620383620373620323232203130382032343820313134203135203138203534203735203232392031323720323239203137322032313120333720323135203132305D3A31417D
+stride-stride1-1  | [90m9:57PM[0m [32mINF[0m committed state [36mapp_hash=[0m785614595570743CD50AA2D31438564CDE6CF8720F12364BE57FE5ACD325D778 [36mheight=[0m26 [36mmodule=[0mstate [36mnum_txs=[0m1
+stride-stride1-1  | [90m9:57PM[0m [32mINF[0m indexed block [36mheight=[0m26 [36mmodule=[0mtxindex
+stride-stride1-1  | [90m9:57PM[0m [32mINF[0m Timed out [36mdur=[0m4921.241916 [36mheight=[0m27 [36mmodule=[0mconsensus [36mround=[0m0 [36mstep=[0m1
+stride-stride1-1  | [90m9:57PM[0m [32mINF[0m received proposal [36mmodule=[0mconsensus [36mproposal=[0m{"Type":32,"block_id":{"hash":"4057E706874AD7853645FCDD06858F96B97218465B04A4A3F6B2CC8D4DB74F00","parts":{"hash":"5BBC1F7C417D866AA99FFA10AD83849FEF1D2BBDB24C06E4252590C00265CCDC","total":1}},"height":27,"pol_round":-1,"round":0,"signature":"b+O97CYb2RPFJ4BKsDbrSmfMZgz2M82Z0sdBejd+4gChWUElE0tsbB2cRFlDG9/kaGRFEVQxi0ywOv7xJwezCQ==","timestamp":"2022-06-12T21:57:48.273319172Z"}
+stride-stride1-1  | [90m9:57PM[0m [32mINF[0m received complete proposal block [36mhash=[0m4057E706874AD7853645FCDD06858F96B97218465B04A4A3F6B2CC8D4DB74F00 [36mheight=[0m27 [36mmodule=[0mconsensus
+stride-stride1-1  | [90m9:57PM[0m [32mINF[0m finalizing commit of block [36mhash=[0m4057E706874AD7853645FCDD06858F96B97218465B04A4A3F6B2CC8D4DB74F00 [36mheight=[0m27 [36mmodule=[0mconsensus [36mnum_txs=[0m0 [36mroot=[0m785614595570743CD50AA2D31438564CDE6CF8720F12364BE57FE5ACD325D778
+stride-stride1-1  | [90m9:57PM[0m [32mINF[0m ending epoch [36midentifier=[0mstride_epoch [36mmodule=[0mx/epochs
+stride-stride1-1  | [90m9:57PM[0m [32mINF[0m Handling epoch end stride_epoch 27 [36mmodule=[0mx/stakeibc
+stride-stride1-1  | [90m9:57PM[0m [32mINF[0m Handling epoch start stride_epoch 27 [36mmodule=[0mx/stakeibc
+stride-stride1-1  | [90m9:57PM[0m [32mINF[0m Stride Epoch 27 [36mmodule=[0mx/stakeibc
+stride-stride1-1  | [90m9:57PM[0m [32mINF[0m executed block [36mheight=[0m27 [36mmodule=[0mstate [36mnum_invalid_txs=[0m0 [36mnum_valid_txs=[0m0
+stride-stride1-1  | [90m9:57PM[0m [32mINF[0m commit synced [36mcommit=[0m436F6D6D697449447B5B313832203636203131392032303220323436203938203134312032353020363320363520323820313936203130362032353120313220313231203833203536203138382031323020313631203135203237203139372034302032342031322031363920313620353920323138203133305D3A31427D
+stride-stride1-1  | [90m9:57PM[0m [32mINF[0m committed state [36mapp_hash=[0mB64277CAF6628DFA3F411CC46AFB0C795338BC78A10F1BC528180CA9103BDA82 [36mheight=[0m27 [36mmodule=[0mstate [36mnum_txs=[0m0
+stride-stride1-1  | [90m9:57PM[0m [32mINF[0m indexed block [36mheight=[0m27 [36mmodule=[0mtxindex
+stride-stride1-1  | [90m9:57PM[0m [32mINF[0m Ensure peers [36mmodule=[0mpex [36mnumDialing=[0m0 [36mnumInPeers=[0m0 [36mnumOutPeers=[0m2 [36mnumToDial=[0m8
+stride-stride1-1  | [90m9:57PM[0m [32mINF[0m We need more addresses. Sending pexRequest to random peer [36mmodule=[0mpex [36mpeer=[0m{"Data":{},"Logger":{}}
+stride-stride1-1  | [90m9:57PM[0m [32mINF[0m No addresses to dial. Falling back to seeds [36mmodule=[0mpex
+stride-stride1-1  | [90m9:57PM[0m [32mINF[0m Timed out [36mdur=[0m4923.106834 [36mheight=[0m28 [36mmodule=[0mconsensus [36mround=[0m0 [36mstep=[0m1
+stride-stride1-1  | [90m9:57PM[0m [32mINF[0m received proposal [36mmodule=[0mconsensus [36mproposal=[0m{"Type":32,"block_id":{"hash":"95063D1E1A9E969B3FBC5EBCFEE886F6957252494B5FD432ADD9E6439C7E0933","parts":{"hash":"E2F76E86768C1E74C6C27CB9126810033743CC212801E889E67C32C3323F20F9","total":1}},"height":28,"pol_round":-1,"round":0,"signature":"rmvhy4+CNBSxuTz86qf5sBNxx4Ka2vW6ML+A4jpmlOnK1GyI4ixtvXWL8sqYd/4mVbQvJp20sURVwt4KCKXhAw==","timestamp":"2022-06-12T21:57:53.707796716Z"}
+stride-stride1-1  | [90m9:57PM[0m [32mINF[0m received complete proposal block [36mhash=[0m95063D1E1A9E969B3FBC5EBCFEE886F6957252494B5FD432ADD9E6439C7E0933 [36mheight=[0m28 [36mmodule=[0mconsensus
+stride-stride1-1  | [90m9:57PM[0m [32mINF[0m finalizing commit of block [36mhash=[0m95063D1E1A9E969B3FBC5EBCFEE886F6957252494B5FD432ADD9E6439C7E0933 [36mheight=[0m28 [36mmodule=[0mconsensus [36mnum_txs=[0m0 [36mroot=[0mB64277CAF6628DFA3F411CC46AFB0C795338BC78A10F1BC528180CA9103BDA82
+stride-stride1-1  | [90m9:57PM[0m [32mINF[0m ending epoch [36midentifier=[0mstride_epoch [36mmodule=[0mx/epochs
+stride-stride1-1  | [90m9:57PM[0m [32mINF[0m Handling epoch end stride_epoch 28 [36mmodule=[0mx/stakeibc
+stride-stride1-1  | [90m9:57PM[0m [32mINF[0m Handling epoch start stride_epoch 28 [36mmodule=[0mx/stakeibc
+stride-stride1-1  | [90m9:57PM[0m [32mINF[0m Stride Epoch 28 [36mmodule=[0mx/stakeibc
+stride-stride1-1  | [90m9:57PM[0m [32mINF[0m executed block [36mheight=[0m28 [36mmodule=[0mstate [36mnum_invalid_txs=[0m0 [36mnum_valid_txs=[0m0
+stride-stride1-1  | [90m9:57PM[0m [32mINF[0m commit synced [36mcommit=[0m436F6D6D697449447B5B3338203933203132372031352036302032203230362032313620393420393420373820343120313832203431203230382033312035312034392031333620313037203020313835203734203234342032333020313831203135342032343520313735203539203136332033345D3A31437D
+stride-stride1-1  | [90m9:57PM[0m [32mINF[0m committed state [36mapp_hash=[0m265D7F0F3C02CED85E5E4E29B629D01F3331886B00B94AF4E6B59AF5AF3BA322 [36mheight=[0m28 [36mmodule=[0mstate [36mnum_txs=[0m0
+stride-stride1-1  | [90m9:57PM[0m [32mINF[0m indexed block [36mheight=[0m28 [36mmodule=[0mtxindex
+stride-stride1-1  | [90m9:57PM[0m [32mINF[0m Timed out [36mdur=[0m4911.376917 [36mheight=[0m29 [36mmodule=[0mconsensus [36mround=[0m0 [36mstep=[0m1
+stride-stride1-1  | [90m9:57PM[0m [32mINF[0m received proposal [36mmodule=[0mconsensus [36mproposal=[0m{"Type":32,"block_id":{"hash":"CF563897CAAE04C4194A950427FCCCD9FA1106BA2BA4500ACD9F2CA682C0212A","parts":{"hash":"7F428BBA8B7F3F6C5819BC00BE0D1A3C1520E770F1E8D6E60E1F9B542FD9503F","total":1}},"height":29,"pol_round":-1,"round":0,"signature":"PcSJXTfvZs2vmycqou/EXWMUIpRQiyIpR+10e90aNXp1aoqJC3dImFvrtg14nn6aGHj8oVhmLQ+yj7csxvYlAA==","timestamp":"2022-06-12T21:57:59.146449052Z"}
+stride-stride1-1  | [90m9:57PM[0m [32mINF[0m received complete proposal block [36mhash=[0mCF563897CAAE04C4194A950427FCCCD9FA1106BA2BA4500ACD9F2CA682C0212A [36mheight=[0m29 [36mmodule=[0mconsensus
+stride-stride1-1  | [90m9:57PM[0m [32mINF[0m finalizing commit of block [36mhash=[0mCF563897CAAE04C4194A950427FCCCD9FA1106BA2BA4500ACD9F2CA682C0212A [36mheight=[0m29 [36mmodule=[0mconsensus [36mnum_txs=[0m0 [36mroot=[0m265D7F0F3C02CED85E5E4E29B629D01F3331886B00B94AF4E6B59AF5AF3BA322
+stride-stride1-1  | [90m9:57PM[0m [32mINF[0m ending epoch [36midentifier=[0mstride_epoch [36mmodule=[0mx/epochs
+stride-stride1-1  | [90m9:57PM[0m [32mINF[0m Handling epoch end stride_epoch 29 [36mmodule=[0mx/stakeibc
+stride-stride1-1  | [90m9:57PM[0m [32mINF[0m Handling epoch start stride_epoch 29 [36mmodule=[0mx/stakeibc
+stride-stride1-1  | [90m9:57PM[0m [32mINF[0m Stride Epoch 29 [36mmodule=[0mx/stakeibc
+stride-stride1-1  | [90m9:57PM[0m [32mINF[0m executed block [36mheight=[0m29 [36mmodule=[0mstate [36mnum_invalid_txs=[0m0 [36mnum_valid_txs=[0m0
+stride-stride1-1  | [90m9:57PM[0m [32mINF[0m commit synced [36mcommit=[0m436F6D6D697449447B5B3331203139312032333720313033203733203130392032343020302031352033302032303520323034203234203134352031343620323120313531203138352031303120333620323534203234312031363620323332203136332039392031363420313237203431203439203135312032375D3A31447D
+stride-stride1-1  | [90m9:57PM[0m [32mINF[0m committed state [36mapp_hash=[0m1FBFED67496DF0000F1ECDCC1891921597B96524FEF1A6E8A363A47F2931971B [36mheight=[0m29 [36mmodule=[0mstate [36mnum_txs=[0m0
+stride-stride1-1  | [90m9:57PM[0m [32mINF[0m indexed block [36mheight=[0m29 [36mmodule=[0mtxindex
+stride-stride1-1  | [90m9:58PM[0m [32mINF[0m Timed out [36mdur=[0m4930.414792 [36mheight=[0m30 [36mmodule=[0mconsensus [36mround=[0m0 [36mstep=[0m1
+stride-stride1-1  | [90m9:58PM[0m [32mINF[0m received proposal [36mmodule=[0mconsensus [36mproposal=[0m{"Type":32,"block_id":{"hash":"665598EAA48E0A416B98B549102DB0FF01CA3495757E6FFC5844AF8E10BFD927","parts":{"hash":"47A083EFCBF45DB0335FC4C5DDF7B3D70EDDEB4692C2AB545F371DFAA8613EDC","total":1}},"height":30,"pol_round":-1,"round":0,"signature":"VzY5GBBKB+HG+9pkpNArCLbvXhJ6TPCoQ3AY02NOkQl3sLzDP9Mbb3N3C89wRkLhOVsNgbB7aulW7jTySzcuBQ==","timestamp":"2022-06-12T21:58:04.589830888Z"}
+stride-stride1-1  | [90m9:58PM[0m [32mINF[0m received complete proposal block [36mhash=[0m665598EAA48E0A416B98B549102DB0FF01CA3495757E6FFC5844AF8E10BFD927 [36mheight=[0m30 [36mmodule=[0mconsensus
+stride-stride1-1  | [90m9:58PM[0m [32mINF[0m finalizing commit of block [36mhash=[0m665598EAA48E0A416B98B549102DB0FF01CA3495757E6FFC5844AF8E10BFD927 [36mheight=[0m30 [36mmodule=[0mconsensus [36mnum_txs=[0m0 [36mroot=[0m1FBFED67496DF0000F1ECDCC1891921597B96524FEF1A6E8A363A47F2931971B
+stride-stride1-1  | [90m9:58PM[0m [32mINF[0m ending epoch [36midentifier=[0mstride_epoch [36mmodule=[0mx/epochs
+stride-stride1-1  | [90m9:58PM[0m [32mINF[0m Handling epoch end stride_epoch 30 [36mmodule=[0mx/stakeibc
+stride-stride1-1  | [90m9:58PM[0m [32mINF[0m Handling epoch start stride_epoch 30 [36mmodule=[0mx/stakeibc
+stride-stride1-1  | [90m9:58PM[0m [32mINF[0m Stride Epoch 30 [36mmodule=[0mx/stakeibc
+stride-stride1-1  | [90m9:58PM[0m [32mINF[0m Triggering deposits [36mmodule=[0mx/stakeibc
+stride-stride1-1  | [90m9:58PM[0m [32mINF[0m executed block [36mheight=[0m30 [36mmodule=[0mstate [36mnum_invalid_txs=[0m0 [36mnum_valid_txs=[0m0
+stride-stride1-1  | [90m9:58PM[0m [32mINF[0m commit synced [36mcommit=[0m436F6D6D697449447B5B353220343520313332203937203139382031383920323530203936203631203132302032343520313036203234203236203831203138332031343120333720313739203132312032323420313420393920383920323432203130302034382032353020323534203430203134372039345D3A31457D
+stride-stride1-1  | [90m9:58PM[0m [32mINF[0m committed state [36mapp_hash=[0m342D8461C6BDFA603D78F56A181A51B78D25B379E00E6359F26430FAFE28935E [36mheight=[0m30 [36mmodule=[0mstate [36mnum_txs=[0m0
+stride-stride1-1  | [90m9:58PM[0m [32mINF[0m indexed block [36mheight=[0m30 [36mmodule=[0mtxindex
+stride-stride1-1  | [90m9:58PM[0m [32mINF[0m client state updated [36mclient-id=[0m07-tendermint-1 [36mheight=[0m0-30 [36mmodule=[0mx/ibc/client
+stride-stride1-1  | [90m9:58PM[0m [32mINF[0m Timed out [36mdur=[0m4949.511166 [36mheight=[0m31 [36mmodule=[0mconsensus [36mround=[0m0 [36mstep=[0m1
+stride-stride1-1  | [90m9:58PM[0m [32mINF[0m received proposal [36mmodule=[0mconsensus [36mproposal=[0m{"Type":32,"block_id":{"hash":"94FEB967E2C9FA64C68DCAAE18BE5FB00CEC215C0E6DCE27CC76AEF31A48CDB2","parts":{"hash":"4264B4AE5FF62DEB2D1425E757CF5BC19C8F49FD3F7093FDA6615018FC36EC72","total":1}},"height":31,"pol_round":-1,"round":0,"signature":"EMpejUYFiZVtRzJeUZM0x+b85NrS0qBCNag/wcJt++mxE9nywrVyDQOsuq1u2vs4rrxXn9vTSwhxXOJySXwPBA==","timestamp":"2022-06-12T21:58:10.000021335Z"}
+stride-stride1-1  | [90m9:58PM[0m [32mINF[0m received complete proposal block [36mhash=[0m94FEB967E2C9FA64C68DCAAE18BE5FB00CEC215C0E6DCE27CC76AEF31A48CDB2 [36mheight=[0m31 [36mmodule=[0mconsensus
+stride-stride1-1  | [90m9:58PM[0m [32mINF[0m finalizing commit of block [36mhash=[0m94FEB967E2C9FA64C68DCAAE18BE5FB00CEC215C0E6DCE27CC76AEF31A48CDB2 [36mheight=[0m31 [36mmodule=[0mconsensus [36mnum_txs=[0m1 [36mroot=[0m342D8461C6BDFA603D78F56A181A51B78D25B379E00E6359F26430FAFE28935E
+stride-stride1-1  | [90m9:58PM[0m [32mINF[0m ending epoch [36midentifier=[0mstride_epoch [36mmodule=[0mx/epochs
+stride-stride1-1  | [90m9:58PM[0m [32mINF[0m Handling epoch end stride_epoch 31 [36mmodule=[0mx/stakeibc
+stride-stride1-1  | [90m9:58PM[0m [32mINF[0m Handling epoch start stride_epoch 31 [36mmodule=[0mx/stakeibc
+stride-stride1-1  | [90m9:58PM[0m [32mINF[0m Stride Epoch 31 [36mmodule=[0mx/stakeibc
+stride-stride1-1  | [90m9:58PM[0m [32mINF[0m client state updated [36mclient-id=[0m07-tendermint-1 [36mheight=[0m0-30 [36mmodule=[0mx/ibc/client
+stride-stride1-1  | [90m9:58PM[0m [32mINF[0m executed block [36mheight=[0m31 [36mmodule=[0mstate [36mnum_invalid_txs=[0m0 [36mnum_valid_txs=[0m1
+stride-stride1-1  | [90m9:58PM[0m [32mINF[0m commit synced [36mcommit=[0m436F6D6D697449447B5B3830203234312037302032353320313638203130362036392036372031353320313132203138312032343120373120313033203430203020383820343020323431203233352031353020313636203930203136352038322031382034372031373820313220323036203130302039395D3A31467D
+stride-stride1-1  | [90m9:58PM[0m [32mINF[0m committed state [36mapp_hash=[0m50F146FDA86A45439970B5F1476728005828F1EB96A65AA552122FB20CCE6463 [36mheight=[0m31 [36mmodule=[0mstate [36mnum_txs=[0m1
+stride-stride1-1  | [90m9:58PM[0m [32mINF[0m indexed block [36mheight=[0m31 [36mmodule=[0mtxindex
+stride-stride1-1  | [90m9:58PM[0m [32mINF[0m Timed out [36mdur=[0m4951.308667 [36mheight=[0m32 [36mmodule=[0mconsensus [36mround=[0m0 [36mstep=[0m1
+stride-stride1-1  | [90m9:58PM[0m [32mINF[0m received proposal [36mmodule=[0mconsensus [36mproposal=[0m{"Type":32,"block_id":{"hash":"7A06B00C077633120551801EC2A2BB083AE681AFA382853BC8E9982B1593A4EA","parts":{"hash":"CA33C2C4EF1E8AE9414A4724AD42A28608EF087F289D8E3181E89A360A1EE932","total":1}},"height":32,"pol_round":-1,"round":0,"signature":"b2+iR8misXBlO7yWsYj8WbpeogVyYYzUKUB3Hq9oIcF5pj92D89EKM8TLg41WzGwRHQ9eMoFZxK9XPtcq0kEBw==","timestamp":"2022-06-12T21:58:15.359150087Z"}
+stride-stride1-1  | [90m9:58PM[0m [32mINF[0m received complete proposal block [36mhash=[0m7A06B00C077633120551801EC2A2BB083AE681AFA382853BC8E9982B1593A4EA [36mheight=[0m32 [36mmodule=[0mconsensus
+stride-stride1-1  | [90m9:58PM[0m [32mINF[0m finalizing commit of block [36mhash=[0m7A06B00C077633120551801EC2A2BB083AE681AFA382853BC8E9982B1593A4EA [36mheight=[0m32 [36mmodule=[0mconsensus [36mnum_txs=[0m0 [36mroot=[0m50F146FDA86A45439970B5F1476728005828F1EB96A65AA552122FB20CCE6463
+stride-stride1-1  | [90m9:58PM[0m [32mINF[0m ending epoch [36midentifier=[0mstride_epoch [36mmodule=[0mx/epochs
+stride-stride1-1  | [90m9:58PM[0m [32mINF[0m Handling epoch end stride_epoch 32 [36mmodule=[0mx/stakeibc
+stride-stride1-1  | [90m9:58PM[0m [32mINF[0m Handling epoch start stride_epoch 32 [36mmodule=[0mx/stakeibc
+stride-stride1-1  | [90m9:58PM[0m [32mINF[0m Stride Epoch 32 [36mmodule=[0mx/stakeibc
+stride-stride1-1  | [90m9:58PM[0m [32mINF[0m executed block [36mheight=[0m32 [36mmodule=[0mstate [36mnum_invalid_txs=[0m0 [36mnum_valid_txs=[0m0
+stride-stride1-1  | [90m9:58PM[0m [32mINF[0m commit synced [36mcommit=[0m436F6D6D697449447B5B3234352038312031323520323533203132302034302036203230392035332031353020353420353820313831203334203834203231312037322038342031373320313031203230372031393020313231203132332031313620333420313230203332203138342037312032323420395D3A32307D
+stride-stride1-1  | [90m9:58PM[0m [32mINF[0m committed state [36mapp_hash=[0mF5517DFD782806D13596363AB52254D34854AD65CFBE797B74227820B847E009 [36mheight=[0m32 [36mmodule=[0mstate [36mnum_txs=[0m0
+stride-stride1-1  | [90m9:58PM[0m [32mINF[0m indexed block [36mheight=[0m32 [36mmodule=[0mtxindex
+stride-stride1-1  | [90m9:58PM[0m [32mINF[0m Ensure peers [36mmodule=[0mpex [36mnumDialing=[0m0 [36mnumInPeers=[0m0 [36mnumOutPeers=[0m2 [36mnumToDial=[0m8
+stride-stride1-1  | [90m9:58PM[0m [32mINF[0m We need more addresses. Sending pexRequest to random peer [36mmodule=[0mpex [36mpeer=[0m{"Data":{},"Logger":{}}
+stride-stride1-1  | [90m9:58PM[0m [32mINF[0m No addresses to dial. Falling back to seeds [36mmodule=[0mpex
+stride-stride1-1  | [90m9:58PM[0m [32mINF[0m Timed out [36mdur=[0m4923.462833 [36mheight=[0m33 [36mmodule=[0mconsensus [36mround=[0m0 [36mstep=[0m1
+stride-stride1-1  | [90m9:58PM[0m [32mINF[0m received proposal [36mmodule=[0mconsensus [36mproposal=[0m{"Type":32,"block_id":{"hash":"146106DA9FCB592FA240C902805532BC2C48B0DD5CD913C9AA6B2F4A5C83544E","parts":{"hash":"877389DAAD8311AA0E97F55D03DDF6694B01DF7D461FF08365DF5EA8E892CCF6","total":1}},"height":33,"pol_round":-1,"round":0,"signature":"u9WafTw5HADRCEGe4iBWr4sOBe7dYFCxttKNtefHrqv7fYW/paR5vN/jCsrrCMnLPQzF70ECJH3kPtNZmgNaDw==","timestamp":"2022-06-12T21:58:20.711193006Z"}
+stride-stride1-1  | [90m9:58PM[0m [32mINF[0m received complete proposal block [36mhash=[0m146106DA9FCB592FA240C902805532BC2C48B0DD5CD913C9AA6B2F4A5C83544E [36mheight=[0m33 [36mmodule=[0mconsensus
+stride-stride1-1  | [90m9:58PM[0m [32mINF[0m finalizing commit of block [36mhash=[0m146106DA9FCB592FA240C902805532BC2C48B0DD5CD913C9AA6B2F4A5C83544E [36mheight=[0m33 [36mmodule=[0mconsensus [36mnum_txs=[0m0 [36mroot=[0mF5517DFD782806D13596363AB52254D34854AD65CFBE797B74227820B847E009
+stride-stride1-1  | [90m9:58PM[0m [32mINF[0m ending epoch [36midentifier=[0mstride_epoch [36mmodule=[0mx/epochs
+stride-stride1-1  | [90m9:58PM[0m [32mINF[0m Handling epoch end stride_epoch 33 [36mmodule=[0mx/stakeibc
+stride-stride1-1  | [90m9:58PM[0m [32mINF[0m Handling epoch start stride_epoch 33 [36mmodule=[0mx/stakeibc
+stride-stride1-1  | [90m9:58PM[0m [32mINF[0m Stride Epoch 33 [36mmodule=[0mx/stakeibc
+stride-stride1-1  | [90m9:58PM[0m [32mINF[0m executed block [36mheight=[0m33 [36mmodule=[0mstate [36mnum_invalid_txs=[0m0 [36mnum_valid_txs=[0m0
+stride-stride1-1  | [90m9:58PM[0m [32mINF[0m commit synced [36mcommit=[0m436F6D6D697449447B5B3133332032343820323231203336203137392037372032323920323434203234312032333020313836203130362031323020313237203136332031333520353320313537203136392033322031383220313033203137382039342032333520313436203136352031323020313120332032322031315D3A32317D
+stride-stride1-1  | [90m9:58PM[0m [32mINF[0m committed state [36mapp_hash=[0m85F8DD24B34DE5F4F1E6BA6A787FA387359DA920B667B25EEB92A5780B03160B [36mheight=[0m33 [36mmodule=[0mstate [36mnum_txs=[0m0
+stride-stride1-1  | [90m9:58PM[0m [32mINF[0m indexed block [36mheight=[0m33 [36mmodule=[0mtxindex
+stride-stride1-1  | [90m9:58PM[0m [32mINF[0m Timed out [36mdur=[0m4926.371542 [36mheight=[0m34 [36mmodule=[0mconsensus [36mround=[0m0 [36mstep=[0m1
+stride-stride1-1  | [90m9:58PM[0m [32mINF[0m received proposal [36mmodule=[0mconsensus [36mproposal=[0m{"Type":32,"block_id":{"hash":"AC3C6FEA5C29DB60B05760612D21B68761D10295A7402AD74CDC63C1238AEEE8","parts":{"hash":"A3E8FCB47A713832854437D27E06463520FA3AF3C524AF1C40FFF4AC86734E19","total":1}},"height":34,"pol_round":-1,"round":0,"signature":"gdM/u5smpcrz1sOmGfdjowy7PNXWLuZfU8GkjEIOGsGeMION1Cbji41sxpjDPHcf0glcIey4RtSB8+w5eXJPAg==","timestamp":"2022-06-12T21:58:26.159651426Z"}
+stride-stride1-1  | [90m9:58PM[0m [32mINF[0m received complete proposal block [36mhash=[0mAC3C6FEA5C29DB60B05760612D21B68761D10295A7402AD74CDC63C1238AEEE8 [36mheight=[0m34 [36mmodule=[0mconsensus
+stride-stride1-1  | [90m9:58PM[0m [32mINF[0m finalizing commit of block [36mhash=[0mAC3C6FEA5C29DB60B05760612D21B68761D10295A7402AD74CDC63C1238AEEE8 [36mheight=[0m34 [36mmodule=[0mconsensus [36mnum_txs=[0m0 [36mroot=[0m85F8DD24B34DE5F4F1E6BA6A787FA387359DA920B667B25EEB92A5780B03160B
+stride-stride1-1  | [90m9:58PM[0m [32mINF[0m ending epoch [36midentifier=[0mstride_epoch [36mmodule=[0mx/epochs
+stride-stride1-1  | [90m9:58PM[0m [32mINF[0m Handling epoch end stride_epoch 34 [36mmodule=[0mx/stakeibc
+stride-stride1-1  | [90m9:58PM[0m [32mINF[0m Handling epoch start stride_epoch 34 [36mmodule=[0mx/stakeibc
+stride-stride1-1  | [90m9:58PM[0m [32mINF[0m Stride Epoch 34 [36mmodule=[0mx/stakeibc
+stride-stride1-1  | [90m9:58PM[0m [32mINF[0m executed block [36mheight=[0m34 [36mmodule=[0mstate [36mnum_invalid_txs=[0m0 [36mnum_valid_txs=[0m0
+stride-stride1-1  | [90m9:58PM[0m [32mINF[0m commit synced [36mcommit=[0m436F6D6D697449447B5B313731203130203920313020313630203438203731203439203136312031303420323334203020323339203135312031313120343720323430203232392032323520362031393820393520323431203931203239203237203539203132352031333420313834203230352038365D3A32327D
+stride-stride1-1  | [90m9:58PM[0m [32mINF[0m committed state [36mapp_hash=[0mAB0A090AA0304731A168EA00EF976F2FF0E5E106C65FF15B1D1B3B7D86B8CD56 [36mheight=[0m34 [36mmodule=[0mstate [36mnum_txs=[0m0
+stride-stride1-1  | [90m9:58PM[0m [32mINF[0m indexed block [36mheight=[0m34 [36mmodule=[0mtxindex
+stride-stride1-1  | [90m9:58PM[0m [32mINF[0m Timed out [36mdur=[0m4932.494375 [36mheight=[0m35 [36mmodule=[0mconsensus [36mround=[0m0 [36mstep=[0m1
+stride-stride1-1  | [90m9:58PM[0m [32mINF[0m received proposal [36mmodule=[0mconsensus [36mproposal=[0m{"Type":32,"block_id":{"hash":"04C7C1717EC2C236247211BE8949B10D8F81294889CFD39DA6EE207A43983D0F","parts":{"hash":"8DABB79098B0D289FB9A8648065BF504A1C52908FF563FE26B25DA9A7AD9DFCF","total":1}},"height":35,"pol_round":-1,"round":0,"signature":"T8ty0fsvcS+6tzp5/XVIj9EjhRDc7S+iGWfok1bt8yg5O/c34wI7E9OBRmUWqP5NEdLVZ/IdOnp9HLdkinNfDA==","timestamp":"2022-06-12T21:58:31.628025928Z"}
+stride-stride1-1  | [90m9:58PM[0m [32mINF[0m received complete proposal block [36mhash=[0m04C7C1717EC2C236247211BE8949B10D8F81294889CFD39DA6EE207A43983D0F [36mheight=[0m35 [36mmodule=[0mconsensus
+stride-stride1-1  | [90m9:58PM[0m [32mINF[0m finalizing commit of block [36mhash=[0m04C7C1717EC2C236247211BE8949B10D8F81294889CFD39DA6EE207A43983D0F [36mheight=[0m35 [36mmodule=[0mconsensus [36mnum_txs=[0m0 [36mroot=[0mAB0A090AA0304731A168EA00EF976F2FF0E5E106C65FF15B1D1B3B7D86B8CD56
+stride-stride1-1  | [90m9:58PM[0m [32mINF[0m ending epoch [36midentifier=[0mstride_epoch [36mmodule=[0mx/epochs
+stride-stride1-1  | [90m9:58PM[0m [32mINF[0m Handling epoch end stride_epoch 35 [36mmodule=[0mx/stakeibc
+stride-stride1-1  | [90m9:58PM[0m [32mINF[0m Handling epoch start stride_epoch 35 [36mmodule=[0mx/stakeibc
+stride-stride1-1  | [90m9:58PM[0m [32mINF[0m Stride Epoch 35 [36mmodule=[0mx/stakeibc
+stride-stride1-1  | [90m9:58PM[0m [32mINF[0m Triggering deposits [36mmodule=[0mx/stakeibc
+stride-stride1-1  | [90m9:58PM[0m [32mINF[0m executed block [36mheight=[0m35 [36mmodule=[0mstate [36mnum_invalid_txs=[0m0 [36mnum_valid_txs=[0m0
+stride-stride1-1  | [90m9:58PM[0m [32mINF[0m commit synced [36mcommit=[0m436F6D6D697449447B5B31323420313420313337203538203132342037332032313520313335203133302032303220313031203136203230302031303820313532203230312034372032203337203131342031333520313934203232392031323520313037203230312034203131392031343220313320313939203135355D3A32337D
+stride-stride1-1  | [90m9:58PM[0m [32mINF[0m committed state [36mapp_hash=[0m7C0E893A7C49D78782CA6510C86C98C92F02257287C2E57D6BC904778E0DC79B [36mheight=[0m35 [36mmodule=[0mstate [36mnum_txs=[0m0
+stride-stride1-1  | [90m9:58PM[0m [32mINF[0m indexed block [36mheight=[0m35 [36mmodule=[0mtxindex
+stride-stride1-1  | [90m9:58PM[0m [32mINF[0m Timed out [36mdur=[0m4925.206291 [36mheight=[0m36 [36mmodule=[0mconsensus [36mround=[0m0 [36mstep=[0m1
+stride-stride1-1  | [90m9:58PM[0m [32mINF[0m received proposal [36mmodule=[0mconsensus [36mproposal=[0m{"Type":32,"block_id":{"hash":"5F83DA8457074773EA5B96A5B008D7ECD668613D78669FB00D59700239217FFD","parts":{"hash":"0B72D8096B5DAB515008C9D07AB14488237F1F1525C70EF79BEA81D69B46C35A","total":1}},"height":36,"pol_round":-1,"round":0,"signature":"BZWZ7TCiJR0LUp2hDT1bHKx/MQyopdVl81fb/m4l8EWwSCf8c0VfYVjfocnk3Iu/X/w/LwE8AMX+2TL86mR3CA==","timestamp":"2022-06-12T21:58:36.986303542Z"}
+stride-stride1-1  | [90m9:58PM[0m [32mINF[0m received complete proposal block [36mhash=[0m5F83DA8457074773EA5B96A5B008D7ECD668613D78669FB00D59700239217FFD [36mheight=[0m36 [36mmodule=[0mconsensus
+stride-stride1-1  | [90m9:58PM[0m [32mINF[0m finalizing commit of block [36mhash=[0m5F83DA8457074773EA5B96A5B008D7ECD668613D78669FB00D59700239217FFD [36mheight=[0m36 [36mmodule=[0mconsensus [36mnum_txs=[0m1 [36mroot=[0m7C0E893A7C49D78782CA6510C86C98C92F02257287C2E57D6BC904778E0DC79B
+stride-stride1-1  | [90m9:58PM[0m [32mINF[0m ending epoch [36midentifier=[0mstride_epoch [36mmodule=[0mx/epochs
+stride-stride1-1  | [90m9:58PM[0m [32mINF[0m Handling epoch end stride_epoch 36 [36mmodule=[0mx/stakeibc
+stride-stride1-1  | [90m9:58PM[0m [32mINF[0m Handling epoch start stride_epoch 36 [36mmodule=[0mx/stakeibc
+stride-stride1-1  | [90m9:58PM[0m [32mINF[0m Stride Epoch 36 [36mmodule=[0mx/stakeibc
+stride-stride1-1  | [90m9:58PM[0m [32mINF[0m created new capability [36mmodule=[0mibc [36mname=[0mports/icacontroller-GAIA.DELEGATION
+stride-stride1-1  | [90m9:58PM[0m [32mINF[0m port binded [36mmodule=[0mx/ibc/port [36mport=[0micacontroller-GAIA.DELEGATION
+stride-stride1-1  | [90m9:58PM[0m [32mINF[0m claimed capability [36mcapability=[0m4 [36mmodule=[0micacontroller [36mname=[0mports/icacontroller-GAIA.DELEGATION
+stride-stride1-1  | [90m9:58PM[0m [32mINF[0m created new capability [36mmodule=[0mibc [36mname=[0mcapabilities/ports/icacontroller-GAIA.DELEGATION/channels/channel-1
+stride-stride1-1  | [90m9:58PM[0m [32mINF[0m claimed capability [36mcapability=[0m5 [36mmodule=[0mstakeibc [36mname=[0mcapabilities/ports/icacontroller-GAIA.DELEGATION/channels/channel-1
+stride-stride1-1  | [90m9:58PM[0m [32mINF[0m channel state updated [36mchannel-id=[0mchannel-1 [36mmodule=[0mx/ibc/channel [36mnew-state=[0mINIT [36mport-id=[0micacontroller-GAIA.DELEGATION [36mprevious-state=[0mNONE
+stride-stride1-1  | [90m9:58PM[0m [32mINF[0m created new capability [36mmodule=[0mibc [36mname=[0mports/icacontroller-GAIA.FEE
+stride-stride1-1  | [90m9:58PM[0m [32mINF[0m port binded [36mmodule=[0mx/ibc/port [36mport=[0micacontroller-GAIA.FEE
+stride-stride1-1  | [90m9:58PM[0m [32mINF[0m claimed capability [36mcapability=[0m6 [36mmodule=[0micacontroller [36mname=[0mports/icacontroller-GAIA.FEE
+stride-stride1-1  | [90m9:58PM[0m [32mINF[0m created new capability [36mmodule=[0mibc [36mname=[0mcapabilities/ports/icacontroller-GAIA.FEE/channels/channel-2
+stride-stride1-1  | [90m9:58PM[0m [32mINF[0m claimed capability [36mcapability=[0m7 [36mmodule=[0mstakeibc [36mname=[0mcapabilities/ports/icacontroller-GAIA.FEE/channels/channel-2
+stride-stride1-1  | [90m9:58PM[0m [32mINF[0m channel state updated [36mchannel-id=[0mchannel-2 [36mmodule=[0mx/ibc/channel [36mnew-state=[0mINIT [36mport-id=[0micacontroller-GAIA.FEE [36mprevious-state=[0mNONE
+stride-stride1-1  | [90m9:58PM[0m [32mINF[0m created new capability [36mmodule=[0mibc [36mname=[0mports/icacontroller-GAIA.WITHDRAWAL
+stride-stride1-1  | [90m9:58PM[0m [32mINF[0m port binded [36mmodule=[0mx/ibc/port [36mport=[0micacontroller-GAIA.WITHDRAWAL
+stride-stride1-1  | [90m9:58PM[0m [32mINF[0m claimed capability [36mcapability=[0m8 [36mmodule=[0micacontroller [36mname=[0mports/icacontroller-GAIA.WITHDRAWAL
+stride-stride1-1  | [90m9:58PM[0m [32mINF[0m created new capability [36mmodule=[0mibc [36mname=[0mcapabilities/ports/icacontroller-GAIA.WITHDRAWAL/channels/channel-3
+stride-stride1-1  | [90m9:58PM[0m [32mINF[0m claimed capability [36mcapability=[0m9 [36mmodule=[0mstakeibc [36mname=[0mcapabilities/ports/icacontroller-GAIA.WITHDRAWAL/channels/channel-3
+stride-stride1-1  | [90m9:58PM[0m [32mINF[0m channel state updated [36mchannel-id=[0mchannel-3 [36mmodule=[0mx/ibc/channel [36mnew-state=[0mINIT [36mport-id=[0micacontroller-GAIA.WITHDRAWAL [36mprevious-state=[0mNONE
+stride-stride1-1  | [90m9:58PM[0m [32mINF[0m executed block [36mheight=[0m36 [36mmodule=[0mstate [36mnum_invalid_txs=[0m0 [36mnum_valid_txs=[0m1
+stride-stride1-1  | [90m9:58PM[0m [32mINF[0m commit synced [36mcommit=[0m436F6D6D697449447B5B313235203233352032303220313632203639203135332032353420383420313230203130322032353320323230203138392030203134372032313020333120313120313336203136362031303620313838203134362036332037342032323720313335203230302031323420363120313236203135345D3A32347D
+stride-stride1-1  | [90m9:58PM[0m [32mINF[0m committed state [36mapp_hash=[0m7DEBCAA24599FE547866FDDCBD0093D21F0B88A66ABC923F4AE387C87C3D7E9A [36mheight=[0m36 [36mmodule=[0mstate [36mnum_txs=[0m1
+stride-stride1-1  | [90m9:58PM[0m [32mINF[0m indexed block [36mheight=[0m36 [36mmodule=[0mtxindex
+stride-stride1-1  | [90m9:58PM[0m [32mINF[0m client state updated [36mclient-id=[0m07-tendermint-1 [36mheight=[0m0-35 [36mmodule=[0mx/ibc/client
+stride-stride1-1  | [90m9:58PM[0m [32mINF[0m Timed out [36mdur=[0m4922.286125 [36mheight=[0m37 [36mmodule=[0mconsensus [36mround=[0m0 [36mstep=[0m1
+stride-stride1-1  | [90m9:58PM[0m [32mINF[0m received proposal [36mmodule=[0mconsensus [36mproposal=[0m{"Type":32,"block_id":{"hash":"A8B5F18DBE0D17F6D617C57DABC2EDD878EB6C0DFA7508AB0FAD4B9B38660D49","parts":{"hash":"61A03CD42E6F42B8E6C66DD70C5D1736049A18EEFE2216148400BCD71A5A01DD","total":1}},"height":37,"pol_round":-1,"round":0,"signature":"w1iRMHtn/JOVvqu0KP08hGjz3X52I8GDLOYPXE78B/7PgL/kMLAZh/eZL52wu5pxzaeRL3GGOTBERXlQrGQpAQ==","timestamp":"2022-06-12T21:58:42.393046961Z"}
+stride-stride1-1  | [90m9:58PM[0m [32mINF[0m received complete proposal block [36mhash=[0mA8B5F18DBE0D17F6D617C57DABC2EDD878EB6C0DFA7508AB0FAD4B9B38660D49 [36mheight=[0m37 [36mmodule=[0mconsensus
+stride-stride1-1  | [90m9:58PM[0m [32mINF[0m finalizing commit of block [36mhash=[0mA8B5F18DBE0D17F6D617C57DABC2EDD878EB6C0DFA7508AB0FAD4B9B38660D49 [36mheight=[0m37 [36mmodule=[0mconsensus [36mnum_txs=[0m1 [36mroot=[0m7DEBCAA24599FE547866FDDCBD0093D21F0B88A66ABC923F4AE387C87C3D7E9A
+stride-stride1-1  | [90m9:58PM[0m [32mINF[0m ending epoch [36midentifier=[0mstride_epoch [36mmodule=[0mx/epochs
+stride-stride1-1  | [90m9:58PM[0m [32mINF[0m Handling epoch end stride_epoch 37 [36mmodule=[0mx/stakeibc
+stride-stride1-1  | [90m9:58PM[0m [32mINF[0m Handling epoch start stride_epoch 37 [36mmodule=[0mx/stakeibc
+stride-stride1-1  | [90m9:58PM[0m [32mINF[0m Stride Epoch 37 [36mmodule=[0mx/stakeibc
+stride-stride1-1  | [90m9:58PM[0m [32mINF[0m client state updated [36mclient-id=[0m07-tendermint-1 [36mheight=[0m0-35 [36mmodule=[0mx/ibc/client
+stride-stride1-1  | [90m9:58PM[0m [32mINF[0m executed block [36mheight=[0m37 [36mmodule=[0mstate [36mnum_invalid_txs=[0m0 [36mnum_valid_txs=[0m1
+stride-stride1-1  | [90m9:58PM[0m [32mINF[0m commit synced [36mcommit=[0m436F6D6D697449447B5B333920323231203734203836203139322032323120313033203435203631203130332031363720373720313233203231342032303920323231203235342032353320313932203135332031313620313334203233322031383920323132203135382033203232352031323020313039203134392036385D3A32357D
+stride-stride1-1  | [90m9:58PM[0m [32mINF[0m committed state [36mapp_hash=[0m27DD4A56C0DD672D3D67A74D7BD6D1DDFEFDC0997486E8BDD49E03E1786D9544 [36mheight=[0m37 [36mmodule=[0mstate [36mnum_txs=[0m1
+stride-stride1-1  | [90m9:58PM[0m [32mINF[0m indexed block [36mheight=[0m37 [36mmodule=[0mtxindex
+stride-stride1-1  | [90m9:58PM[0m [32mINF[0m Timed out [36mdur=[0m4937.081417 [36mheight=[0m38 [36mmodule=[0mconsensus [36mround=[0m0 [36mstep=[0m1
+stride-stride1-1  | [90m9:58PM[0m [32mINF[0m received proposal [36mmodule=[0mconsensus [36mproposal=[0m{"Type":32,"block_id":{"hash":"3D6B4F866B5646335D017909D189ECB0C4AC83775ED807B3FB4C2498A83F02C0","parts":{"hash":"93C5C394493A685F195316371EE4DB4D1301BD869F1195AEE237B22AEF87EB43","total":1}},"height":38,"pol_round":-1,"round":0,"signature":"xg/PqpOPKVbHSldHnyjK3WKQhNH9VfQc9NqU3FqkguGA/GNXir4ZVq7MwnfTRb6NNdANwjuVA0XlYWQyH1lSAQ==","timestamp":"2022-06-12T21:58:47.92110913Z"}
+stride-stride1-1  | [90m9:58PM[0m [32mINF[0m received complete proposal block [36mhash=[0m3D6B4F866B5646335D017909D189ECB0C4AC83775ED807B3FB4C2498A83F02C0 [36mheight=[0m38 [36mmodule=[0mconsensus
+stride-stride1-1  | [90m9:58PM[0m [32mINF[0m finalizing commit of block [36mhash=[0m3D6B4F866B5646335D017909D189ECB0C4AC83775ED807B3FB4C2498A83F02C0 [36mheight=[0m38 [36mmodule=[0mconsensus [36mnum_txs=[0m0 [36mroot=[0m27DD4A56C0DD672D3D67A74D7BD6D1DDFEFDC0997486E8BDD49E03E1786D9544
+stride-stride1-1  | [90m9:58PM[0m [32mINF[0m ending epoch [36midentifier=[0mstride_epoch [36mmodule=[0mx/epochs
+stride-stride1-1  | [90m9:58PM[0m [32mINF[0m Handling epoch end stride_epoch 38 [36mmodule=[0mx/stakeibc
+stride-stride1-1  | [90m9:58PM[0m [32mINF[0m Handling epoch start stride_epoch 38 [36mmodule=[0mx/stakeibc
+stride-stride1-1  | [90m9:58PM[0m [32mINF[0m Stride Epoch 38 [36mmodule=[0mx/stakeibc
+stride-stride1-1  | [90m9:58PM[0m [32mINF[0m executed block [36mheight=[0m38 [36mmodule=[0mstate [36mnum_invalid_txs=[0m0 [36mnum_valid_txs=[0m0
+stride-stride1-1  | [90m9:58PM[0m [32mINF[0m commit synced [36mcommit=[0m436F6D6D697449447B5B3634203232382036332035342036372031303820313931203537203138362034312032343420363120313931203233312031363520313938203131302032303420373620383620353620313430203131322032333520323239203133382031393520323336203137382031303820313134203131385D3A32367D
+stride-stride1-1  | [90m9:58PM[0m [32mINF[0m committed state [36mapp_hash=[0m40E43F36436CBF39BA29F43DBFE7A5C66ECC4C56388C70EBE58AC3ECB26C7276 [36mheight=[0m38 [36mmodule=[0mstate [36mnum_txs=[0m0
+stride-stride1-1  | [90m9:58PM[0m [32mINF[0m indexed block [36mheight=[0m38 [36mmodule=[0mtxindex
+stride-stride1-1  | [90m9:58PM[0m [32mINF[0m Ensure peers [36mmodule=[0mpex [36mnumDialing=[0m0 [36mnumInPeers=[0m0 [36mnumOutPeers=[0m2 [36mnumToDial=[0m8
+stride-stride1-1  | [90m9:58PM[0m [32mINF[0m We need more addresses. Sending pexRequest to random peer [36mmodule=[0mpex [36mpeer=[0m{"Data":{},"Logger":{}}
+stride-stride1-1  | [90m9:58PM[0m [32mINF[0m No addresses to dial. Falling back to seeds [36mmodule=[0mpex
+stride-stride1-1  | [90m9:58PM[0m [32mINF[0m Timed out [36mdur=[0m4937.996167 [36mheight=[0m39 [36mmodule=[0mconsensus [36mround=[0m0 [36mstep=[0m1
+stride-stride1-1  | [90m9:58PM[0m [32mINF[0m received proposal [36mmodule=[0mconsensus [36mproposal=[0m{"Type":32,"block_id":{"hash":"3D09032065DE58E616A0FF101AF8BE675A08197893E2F59D5CDC04691540B4C7","parts":{"hash":"A028FB3858129629CA9589E89969F6E243E94869C793B767B3A20587CB9A7ED6","total":1}},"height":39,"pol_round":-1,"round":0,"signature":"9GHm4ZK+/JBqlLd44jB6OnDBagaZpaiVgxvA6sV/RAIKH4FslYB0lLIx36A6q97ER+mPtLdXrh3xhbo0l+L7Ag==","timestamp":"2022-06-12T21:58:53.400817758Z"}
+stride-stride1-1  | [90m9:58PM[0m [32mINF[0m received complete proposal block [36mhash=[0m3D09032065DE58E616A0FF101AF8BE675A08197893E2F59D5CDC04691540B4C7 [36mheight=[0m39 [36mmodule=[0mconsensus
+stride-stride1-1  | [90m9:58PM[0m [32mINF[0m finalizing commit of block [36mhash=[0m3D09032065DE58E616A0FF101AF8BE675A08197893E2F59D5CDC04691540B4C7 [36mheight=[0m39 [36mmodule=[0mconsensus [36mnum_txs=[0m0 [36mroot=[0m40E43F36436CBF39BA29F43DBFE7A5C66ECC4C56388C70EBE58AC3ECB26C7276
+stride-stride1-1  | [90m9:58PM[0m [32mINF[0m ending epoch [36midentifier=[0mstride_epoch [36mmodule=[0mx/epochs
+stride-stride1-1  | [90m9:58PM[0m [32mINF[0m Handling epoch end stride_epoch 39 [36mmodule=[0mx/stakeibc
+stride-stride1-1  | [90m9:58PM[0m [32mINF[0m Handling epoch start stride_epoch 39 [36mmodule=[0mx/stakeibc
+stride-stride1-1  | [90m9:58PM[0m [32mINF[0m Stride Epoch 39 [36mmodule=[0mx/stakeibc
+stride-stride1-1  | [90m9:58PM[0m [32mINF[0m executed block [36mheight=[0m39 [36mmodule=[0mstate [36mnum_invalid_txs=[0m0 [36mnum_valid_txs=[0m0
+stride-stride1-1  | [90m9:58PM[0m [32mINF[0m commit synced [36mcommit=[0m436F6D6D697449447B5B323032203132332032343420362031303020322037372031313520323130203232352038392032343120313131203137203234392031353620373220313838203234203130382032343420313635203234362036322031383320323031203134392032323420313531203931203138392035375D3A32377D
+stride-stride1-1  | [90m9:58PM[0m [32mINF[0m committed state [36mapp_hash=[0mCA7BF40664024D73D2E159F16F11F99C48BC186CF4A5F63EB7C995E0975BBD39 [36mheight=[0m39 [36mmodule=[0mstate [36mnum_txs=[0m0
+stride-stride1-1  | [90m9:58PM[0m [32mINF[0m indexed block [36mheight=[0m39 [36mmodule=[0mtxindex
+stride-stride1-1  | [90m9:58PM[0m [32mINF[0m Timed out [36mdur=[0m4936.102291 [36mheight=[0m40 [36mmodule=[0mconsensus [36mround=[0m0 [36mstep=[0m1
+stride-stride1-1  | [90m9:58PM[0m [32mINF[0m received proposal [36mmodule=[0mconsensus [36mproposal=[0m{"Type":32,"block_id":{"hash":"4652F183144E75B2B9B25FD286ECA5C174CD3FCA0A7C495B9192ED6B0CCD336B","parts":{"hash":"2EB545200710D87F26B4097900BB5E5D8C6CE30655234CD93B5F5D36FD23EFFE","total":1}},"height":40,"pol_round":-1,"round":0,"signature":"hcMOjPwhLLOKVSVXMZr+ljff1RUq41s2YGv9rlqqlvLqYE4b2jVb/mMrfFwCCMDlnwo3xLnDsQfrGrYLTxc/Cw==","timestamp":"2022-06-12T21:58:58.824717135Z"}
+stride-stride1-1  | [90m9:58PM[0m [32mINF[0m received complete proposal block [36mhash=[0m4652F183144E75B2B9B25FD286ECA5C174CD3FCA0A7C495B9192ED6B0CCD336B [36mheight=[0m40 [36mmodule=[0mconsensus
+stride-stride1-1  | [90m9:58PM[0m [32mINF[0m finalizing commit of block [36mhash=[0m4652F183144E75B2B9B25FD286ECA5C174CD3FCA0A7C495B9192ED6B0CCD336B [36mheight=[0m40 [36mmodule=[0mconsensus [36mnum_txs=[0m0 [36mroot=[0mCA7BF40664024D73D2E159F16F11F99C48BC186CF4A5F63EB7C995E0975BBD39
+stride-stride1-1  | [90m9:58PM[0m [32mINF[0m ending epoch [36midentifier=[0mstride_epoch [36mmodule=[0mx/epochs
+stride-stride1-1  | [90m9:58PM[0m [32mINF[0m Handling epoch end stride_epoch 40 [36mmodule=[0mx/stakeibc
+stride-stride1-1  | [90m9:58PM[0m [32mINF[0m Handling epoch start stride_epoch 40 [36mmodule=[0mx/stakeibc
+stride-stride1-1  | [90m9:58PM[0m [32mINF[0m Stride Epoch 40 [36mmodule=[0mx/stakeibc
+stride-stride1-1  | [90m9:58PM[0m [32mINF[0m Triggering deposits [36mmodule=[0mx/stakeibc
+stride-stride1-1  | [90m9:58PM[0m [32mINF[0m 	Processing delegation GAIA [36mmodule=[0mx/stakeibc
+stride-stride1-1  | [90m9:58PM[0m [1m[31mERR[0m[0m Zone %s is missing a delegation address! [36mmodule=[0mx/stakeibc
+stride-stride1-1  | [90m9:58PM[0m [32mINF[0m executed block [36mheight=[0m40 [36mmodule=[0mstate [36mnum_invalid_txs=[0m0 [36mnum_valid_txs=[0m0
+stride-stride1-1  | [90m9:58PM[0m [32mINF[0m commit synced [36mcommit=[0m436F6D6D697449447B5B3139203233342032333520313839203438203138342031353020313739203235302034322039342031383720363920333020313138203233342032323320313120323230203233382031343120393220323220313330203137302038362032353120313230203138352032382039302032335D3A32387D
+stride-stride1-1  | [90m9:58PM[0m [32mINF[0m committed state [36mapp_hash=[0m13EAEBBD30B896B3FA2A5EBB451E76EADF0BDCEE8D5C1682AA56FB78B91C5A17 [36mheight=[0m40 [36mmodule=[0mstate [36mnum_txs=[0m0
+stride-stride1-1  | [90m9:58PM[0m [32mINF[0m indexed block [36mheight=[0m40 [36mmodule=[0mtxindex
+stride-stride1-1  | [90m9:59PM[0m [32mINF[0m Timed out [36mdur=[0m4954.073416 [36mheight=[0m41 [36mmodule=[0mconsensus [36mround=[0m0 [36mstep=[0m1
+stride-stride1-1  | [90m9:59PM[0m [32mINF[0m received proposal [36mmodule=[0mconsensus [36mproposal=[0m{"Type":32,"block_id":{"hash":"C563FFB060EDE9CD19152E693B97735E169B6DB7D43F98239113A81D7000949A","parts":{"hash":"AF39B65BEF65854743AACC08FCACA6D12776C82E0A5D64FABCEFF617B58B7F8B","total":1}},"height":41,"pol_round":-1,"round":0,"signature":"0IIfkY6+2SKvOs8je7FxgQjEZ/lJIq77j1VIhBrAXnyl9fIDVpK/HcDDymu2Rlgi23OXfGROOKjx9/GecrBSAw==","timestamp":"2022-06-12T21:59:04.34307543Z"}
+stride-stride1-1  | [90m9:59PM[0m [32mINF[0m received complete proposal block [36mhash=[0mC563FFB060EDE9CD19152E693B97735E169B6DB7D43F98239113A81D7000949A [36mheight=[0m41 [36mmodule=[0mconsensus
+stride-stride1-1  | [90m9:59PM[0m [32mINF[0m finalizing commit of block [36mhash=[0mC563FFB060EDE9CD19152E693B97735E169B6DB7D43F98239113A81D7000949A [36mheight=[0m41 [36mmodule=[0mconsensus [36mnum_txs=[0m0 [36mroot=[0m13EAEBBD30B896B3FA2A5EBB451E76EADF0BDCEE8D5C1682AA56FB78B91C5A17
+stride-stride1-1  | [90m9:59PM[0m [32mINF[0m ending epoch [36midentifier=[0mstride_epoch [36mmodule=[0mx/epochs
+stride-stride1-1  | [90m9:59PM[0m [32mINF[0m Handling epoch end stride_epoch 41 [36mmodule=[0mx/stakeibc
+stride-stride1-1  | [90m9:59PM[0m [32mINF[0m Handling epoch start stride_epoch 41 [36mmodule=[0mx/stakeibc
+stride-stride1-1  | [90m9:59PM[0m [32mINF[0m Stride Epoch 41 [36mmodule=[0mx/stakeibc
+stride-stride1-1  | [90m9:59PM[0m [32mINF[0m executed block [36mheight=[0m41 [36mmodule=[0mstate [36mnum_invalid_txs=[0m0 [36mnum_valid_txs=[0m0
+stride-stride1-1  | [90m9:59PM[0m [32mINF[0m commit synced [36mcommit=[0m436F6D6D697449447B5B31343620353320313831203132382032333620313033203234392032323920313936203231372035203134362034322038332032333120323620372032343020323532203139352032343620313432203132302031303920313737203137392035352032392032323620393820313233203135355D3A32397D
+stride-stride1-1  | [90m9:59PM[0m [32mINF[0m committed state [36mapp_hash=[0m9235B580EC67F9E5C4D905922A53E71A07F0FCC3F68E786DB1B3371DE2627B9B [36mheight=[0m41 [36mmodule=[0mstate [36mnum_txs=[0m0
+stride-stride1-1  | [90m9:59PM[0m [32mINF[0m indexed block [36mheight=[0m41 [36mmodule=[0mtxindex
+stride-stride1-1  | [90m9:59PM[0m [32mINF[0m client state updated [36mclient-id=[0m07-tendermint-1 [36mheight=[0m0-40 [36mmodule=[0mx/ibc/client
+stride-stride1-1  | [90m9:59PM[0m [32mINF[0m Timed out [36mdur=[0m4947.391 [36mheight=[0m42 [36mmodule=[0mconsensus [36mround=[0m0 [36mstep=[0m1
+stride-stride1-1  | [90m9:59PM[0m [32mINF[0m received proposal [36mmodule=[0mconsensus [36mproposal=[0m{"Type":32,"block_id":{"hash":"4E45ECA7825C464D34C15CD7FD18755BB116056D028055923214F5D83AF6ACA4","parts":{"hash":"9A948B71FEC8A9147F77B25DB9A9193DD86721CFC8DB5E4EE1F3CD8A2CEF1509","total":1}},"height":42,"pol_round":-1,"round":0,"signature":"f8h4fPWdxX3pOFrPOxG7DdpZxi+MfzfA+g5IaI8eZ9qrliBhC9DGL+uwRf35zBUgNxy7ti0xeh7lTaVmCITJBQ==","timestamp":"2022-06-12T21:59:09.661797293Z"}
+stride-stride1-1  | [90m9:59PM[0m [32mINF[0m received complete proposal block [36mhash=[0m4E45ECA7825C464D34C15CD7FD18755BB116056D028055923214F5D83AF6ACA4 [36mheight=[0m42 [36mmodule=[0mconsensus
+stride-stride1-1  | [90m9:59PM[0m [32mINF[0m finalizing commit of block [36mhash=[0m4E45ECA7825C464D34C15CD7FD18755BB116056D028055923214F5D83AF6ACA4 [36mheight=[0m42 [36mmodule=[0mconsensus [36mnum_txs=[0m1 [36mroot=[0m9235B580EC67F9E5C4D905922A53E71A07F0FCC3F68E786DB1B3371DE2627B9B
+stride-stride1-1  | [90m9:59PM[0m [32mINF[0m ending epoch [36midentifier=[0mstride_epoch [36mmodule=[0mx/epochs
+stride-stride1-1  | [90m9:59PM[0m [32mINF[0m Handling epoch end stride_epoch 42 [36mmodule=[0mx/stakeibc
+stride-stride1-1  | [90m9:59PM[0m [32mINF[0m Handling epoch start stride_epoch 42 [36mmodule=[0mx/stakeibc
+stride-stride1-1  | [90m9:59PM[0m [32mINF[0m Stride Epoch 42 [36mmodule=[0mx/stakeibc
+stride-stride1-1  | [90m9:59PM[0m [32mINF[0m client state updated [36mclient-id=[0m07-tendermint-1 [36mheight=[0m0-40 [36mmodule=[0mx/ibc/client
+stride-stride1-1  | [90m9:59PM[0m [32mINF[0m executed block [36mheight=[0m42 [36mmodule=[0mstate [36mnum_invalid_txs=[0m0 [36mnum_valid_txs=[0m1
+stride-stride1-1  | [90m9:59PM[0m [32mINF[0m commit synced [36mcommit=[0m436F6D6D697449447B5B323132203638203139392039392032342032303220312031303720313433203135372031313620313536203120313339203131362031333320333020393920393820393720313833203230352039362034352031333920353220313138203833203132322037203833203136385D3A32417D
+stride-stride1-1  | [90m9:59PM[0m [32mINF[0m committed state [36mapp_hash=[0mD444C76318CA016B8F9D749C018B74851E636261B7CD602D8B3476537A0753A8 [36mheight=[0m42 [36mmodule=[0mstate [36mnum_txs=[0m1
+stride-stride1-1  | [90m9:59PM[0m [32mINF[0m indexed block [36mheight=[0m42 [36mmodule=[0mtxindex
+stride-stride1-1  | [90m9:59PM[0m [32mINF[0m Timed out [36mdur=[0m4946.793708 [36mheight=[0m43 [36mmodule=[0mconsensus [36mround=[0m0 [36mstep=[0m1
+stride-stride1-1  | [90m9:59PM[0m [32mINF[0m received proposal [36mmodule=[0mconsensus [36mproposal=[0m{"Type":32,"block_id":{"hash":"5992B6103EFAC2F2A1DDD62B2CA6EF1C4518148615BB45D74EF7CE2E08F45AD6","parts":{"hash":"33D73A6889D99D0A8D849DFEB0039DC8685259C2CB38691840077CBC7AE05A19","total":1}},"height":43,"pol_round":-1,"round":0,"signature":"8Iff1LkBZonqyLJshpSM8fLxAGZZtrDGCX2/OT5Sxi7KBOemzxTh8V9TARmvOLDJ/vsm1TGYwMGQJ4lJDMfNBw==","timestamp":"2022-06-12T21:59:15.06641292Z"}
+stride-stride1-1  | [90m9:59PM[0m [32mINF[0m received complete proposal block [36mhash=[0m5992B6103EFAC2F2A1DDD62B2CA6EF1C4518148615BB45D74EF7CE2E08F45AD6 [36mheight=[0m43 [36mmodule=[0mconsensus
+stride-stride1-1  | [90m9:59PM[0m [32mINF[0m finalizing commit of block [36mhash=[0m5992B6103EFAC2F2A1DDD62B2CA6EF1C4518148615BB45D74EF7CE2E08F45AD6 [36mheight=[0m43 [36mmodule=[0mconsensus [36mnum_txs=[0m0 [36mroot=[0mD444C76318CA016B8F9D749C018B74851E636261B7CD602D8B3476537A0753A8
+stride-stride1-1  | [90m9:59PM[0m [32mINF[0m ending epoch [36midentifier=[0mstride_epoch [36mmodule=[0mx/epochs
+stride-stride1-1  | [90m9:59PM[0m [32mINF[0m Handling epoch end stride_epoch 43 [36mmodule=[0mx/stakeibc
+stride-stride1-1  | [90m9:59PM[0m [32mINF[0m Handling epoch start stride_epoch 43 [36mmodule=[0mx/stakeibc
+stride-stride1-1  | [90m9:59PM[0m [32mINF[0m Stride Epoch 43 [36mmodule=[0mx/stakeibc
+stride-stride1-1  | [90m9:59PM[0m [32mINF[0m executed block [36mheight=[0m43 [36mmodule=[0mstate [36mnum_invalid_txs=[0m0 [36mnum_valid_txs=[0m0
+stride-stride1-1  | [90m9:59PM[0m [32mINF[0m commit synced [36mcommit=[0m436F6D6D697449447B5B3139302035332032353220353520313937203134372037302031333320323534203234312031323520323133203139372031363920313238203130312031383020323531203235352032353120393920313937203138342031393120373020313334203520313735203133392032343020323131203139315D3A32427D
+stride-stride1-1  | [90m9:59PM[0m [32mINF[0m committed state [36mapp_hash=[0mBE35FC37C5934685FEF17DD5C5A98065B4FBFFFB63C5B8BF468605AF8BF0D3BF [36mheight=[0m43 [36mmodule=[0mstate [36mnum_txs=[0m0
+stride-stride1-1  | [90m9:59PM[0m [32mINF[0m indexed block [36mheight=[0m43 [36mmodule=[0mtxindex
+stride-stride1-1  | [90m9:59PM[0m [32mINF[0m Saving AddrBook to file [36mbook=[0m/stride/.strided/config/addrbook.json [36mmodule=[0mp2p [36msize=[0m0
+stride-stride1-1  | [90m9:59PM[0m [32mINF[0m Ensure peers [36mmodule=[0mpex [36mnumDialing=[0m0 [36mnumInPeers=[0m0 [36mnumOutPeers=[0m2 [36mnumToDial=[0m8
+stride-stride1-1  | [90m9:59PM[0m [32mINF[0m We need more addresses. Sending pexRequest to random peer [36mmodule=[0mpex [36mpeer=[0m{"Data":{},"Logger":{}}
+stride-stride1-1  | [90m9:59PM[0m [32mINF[0m No addresses to dial. Falling back to seeds [36mmodule=[0mpex
+stride-stride1-1  | [90m9:59PM[0m [32mINF[0m Timed out [36mdur=[0m4962.061625 [36mheight=[0m44 [36mmodule=[0mconsensus [36mround=[0m0 [36mstep=[0m1
+stride-stride1-1  | [90m9:59PM[0m [32mINF[0m received proposal [36mmodule=[0mconsensus [36mproposal=[0m{"Type":32,"block_id":{"hash":"8330D371C33BF1526C77B70E2B28086AD1CAAE04C91E1842DBE4E11BD89275C0","parts":{"hash":"A4660051FFC4A8193971C242E40257EC432EEF6C81AF36F0ADBB17C6F3A4C6A3","total":1}},"height":44,"pol_round":-1,"round":0,"signature":"RruTc27tp6cc93fxIBAQsMaoz4gIDCv8Y2kv4bspc0FDYREGhaLcDa2yJp+FWjTmShriP7ZlEBKsbJha9LMuCQ==","timestamp":"2022-06-12T21:59:20.405050465Z"}
+stride-stride1-1  | [90m9:59PM[0m [32mINF[0m received complete proposal block [36mhash=[0m8330D371C33BF1526C77B70E2B28086AD1CAAE04C91E1842DBE4E11BD89275C0 [36mheight=[0m44 [36mmodule=[0mconsensus
+stride-stride1-1  | [90m9:59PM[0m [32mINF[0m finalizing commit of block [36mhash=[0m8330D371C33BF1526C77B70E2B28086AD1CAAE04C91E1842DBE4E11BD89275C0 [36mheight=[0m44 [36mmodule=[0mconsensus [36mnum_txs=[0m0 [36mroot=[0mBE35FC37C5934685FEF17DD5C5A98065B4FBFFFB63C5B8BF468605AF8BF0D3BF
+stride-stride1-1  | [90m9:59PM[0m [32mINF[0m ending epoch [36midentifier=[0mstride_epoch [36mmodule=[0mx/epochs
+stride-stride1-1  | [90m9:59PM[0m [32mINF[0m Handling epoch end stride_epoch 44 [36mmodule=[0mx/stakeibc
+stride-stride1-1  | [90m9:59PM[0m [32mINF[0m Handling epoch start stride_epoch 44 [36mmodule=[0mx/stakeibc
+stride-stride1-1  | [90m9:59PM[0m [32mINF[0m Stride Epoch 44 [36mmodule=[0mx/stakeibc
+stride-stride1-1  | [90m9:59PM[0m [32mINF[0m executed block [36mheight=[0m44 [36mmodule=[0mstate [36mnum_invalid_txs=[0m0 [36mnum_valid_txs=[0m0
+stride-stride1-1  | [90m9:59PM[0m [32mINF[0m commit synced [36mcommit=[0m436F6D6D697449447B5B323530203239203234392032343420323720323332203138362031373220353820313732203932203131382034342031353920373620392036352031383720323320323430203135362032343020353920313635203237203138342032343020313833203138342030203235342035375D3A32437D
+stride-stride1-1  | [90m9:59PM[0m [32mINF[0m committed state [36mapp_hash=[0mFA1DF9F41BE8BAAC3AAC5C762C9F4C0941BB17F09CF03BA51BB8F0B7B800FE39 [36mheight=[0m44 [36mmodule=[0mstate [36mnum_txs=[0m0
+stride-stride1-1  | [90m9:59PM[0m [32mINF[0m indexed block [36mheight=[0m44 [36mmodule=[0mtxindex
+stride-stride1-1  | [90m9:59PM[0m [32mINF[0m Timed out [36mdur=[0m4931.722208 [36mheight=[0m45 [36mmodule=[0mconsensus [36mround=[0m0 [36mstep=[0m1
+stride-stride1-1  | [90m9:59PM[0m [32mINF[0m received proposal [36mmodule=[0mconsensus [36mproposal=[0m{"Type":32,"block_id":{"hash":"98FBB1AD3A1C3AB9DF6CE5E24C8F4EA24254E5217FDAA774129A4192D39381F2","parts":{"hash":"8B0E1A2A97B6B3F474245662E6D50B1E10CDA7212DCB0E62C2DAC582ABDBE6F1","total":1}},"height":45,"pol_round":-1,"round":0,"signature":"SSrPLS6nctpR7XlSlLjVCeAEA2D47djz+ckWNFobYQImA/pJbPfpnww4Bz4w2VJQalPLxTzwDKDHzeOrqN1SCg==","timestamp":"2022-06-12T21:59:25.820688509Z"}
+stride-stride1-1  | [90m9:59PM[0m [32mINF[0m received complete proposal block [36mhash=[0m98FBB1AD3A1C3AB9DF6CE5E24C8F4EA24254E5217FDAA774129A4192D39381F2 [36mheight=[0m45 [36mmodule=[0mconsensus
+stride-stride1-1  | [90m9:59PM[0m [32mINF[0m finalizing commit of block [36mhash=[0m98FBB1AD3A1C3AB9DF6CE5E24C8F4EA24254E5217FDAA774129A4192D39381F2 [36mheight=[0m45 [36mmodule=[0mconsensus [36mnum_txs=[0m0 [36mroot=[0mFA1DF9F41BE8BAAC3AAC5C762C9F4C0941BB17F09CF03BA51BB8F0B7B800FE39
+stride-stride1-1  | [90m9:59PM[0m [32mINF[0m ending epoch [36midentifier=[0mstride_epoch [36mmodule=[0mx/epochs
+stride-stride1-1  | [90m9:59PM[0m [32mINF[0m Handling epoch end stride_epoch 45 [36mmodule=[0mx/stakeibc
+stride-stride1-1  | [90m9:59PM[0m [32mINF[0m Handling epoch start stride_epoch 45 [36mmodule=[0mx/stakeibc
+stride-stride1-1  | [90m9:59PM[0m [32mINF[0m Stride Epoch 45 [36mmodule=[0mx/stakeibc
+stride-stride1-1  | [90m9:59PM[0m [32mINF[0m Triggering deposits [36mmodule=[0mx/stakeibc
+stride-stride1-1  | [90m9:59PM[0m [32mINF[0m 	Processing delegation GAIA [36mmodule=[0mx/stakeibc
+stride-stride1-1  | [90m9:59PM[0m [1m[31mERR[0m[0m Zone %s is missing a delegation address! [36mmodule=[0mx/stakeibc
+stride-stride1-1  | [90m9:59PM[0m [32mINF[0m executed block [36mheight=[0m45 [36mmodule=[0mstate [36mnum_invalid_txs=[0m0 [36mnum_valid_txs=[0m0
+stride-stride1-1  | [90m9:59PM[0m [32mINF[0m commit synced [36mcommit=[0m436F6D6D697449447B5B363820373720323431203336203232322038332032203137362037322031383520313734203130302031333220343520343820323238203136302031353120393920323134203131342031363720313237203138362032352031323220393920353020363120313634203236203132375D3A32447D
+stride-stride1-1  | [90m9:59PM[0m [32mINF[0m committed state [36mapp_hash=[0m444DF124DE5302B048B9AE64842D30E4A09763D672A77FBA197A63323DA41A7F [36mheight=[0m45 [36mmodule=[0mstate [36mnum_txs=[0m0
+stride-stride1-1  | [90m9:59PM[0m [32mINF[0m indexed block [36mheight=[0m45 [36mmodule=[0mtxindex

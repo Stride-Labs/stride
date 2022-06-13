@@ -1,0 +1,79 @@
+stride-hermes-1  | 2022-06-12T21:57:19.911344Z  INFO ThreadId(01) telemetry service running, exposing metrics at http://127.0.0.1:3001/metrics
+stride-hermes-1  | 2022-06-12T21:57:19.933480Z  INFO ThreadId(01) starting REST API server listening at http://0.0.0.0:3000
+stride-hermes-1  | 2022-06-12T21:57:20.314385Z  INFO ThreadId(01) [STRIDE] chain is healthy
+stride-hermes-1  | 2022-06-12T21:57:20.533768Z  INFO ThreadId(01) [GAIA] chain is healthy
+stride-hermes-1  | 2022-06-12T21:57:20.550449Z  INFO ThreadId(01) scan.chain{chain=STRIDE}: scanning chain...
+stride-hermes-1  | 2022-06-12T21:57:20.558942Z  INFO ThreadId(01) scan.chain{chain=STRIDE}: scanning chain for all clients, connections and channels
+stride-hermes-1  | 2022-06-12T21:57:20.559035Z  INFO ThreadId(01) scan.chain{chain=STRIDE}: scanning all clients...
+stride-hermes-1  | 2022-06-12T21:57:20.622710Z  INFO ThreadId(01) scan.chain{chain=STRIDE}:scan.client{client=07-tendermint-0}: scanning client...
+stride-hermes-1  | 2022-06-12T21:57:20.714610Z  INFO ThreadId(01) scan.chain{chain=STRIDE}:scan.client{client=07-tendermint-0}:scan.connection{connection=connection-0}: scanning connection...
+stride-hermes-1  | 2022-06-12T21:57:20.753130Z  WARN ThreadId(01) scan.chain{chain=STRIDE}:scan.client{client=07-tendermint-0}:scan.connection{connection=connection-0}: connection is not open, skipping scan of channels over this connection
+stride-hermes-1  | 2022-06-12T21:57:20.754834Z  INFO ThreadId(01) scan.chain{chain=STRIDE}:scan.client{client=07-tendermint-1}: scanning client...
+stride-hermes-1  | 2022-06-12T21:57:20.774978Z  INFO ThreadId(01) scan.chain{chain=STRIDE}:scan.client{client=07-tendermint-1}:scan.connection{connection=connection-1}: scanning connection...
+stride-hermes-1  | 2022-06-12T21:57:20.881883Z  INFO ThreadId(01) scan.chain{chain=GAIA}: scanning chain...
+stride-hermes-1  | 2022-06-12T21:57:20.881958Z  INFO ThreadId(01) scan.chain{chain=GAIA}: scanning chain for all clients, connections and channels
+stride-hermes-1  | 2022-06-12T21:57:20.881966Z  INFO ThreadId(01) scan.chain{chain=GAIA}: scanning all clients...
+stride-hermes-1  | 2022-06-12T21:57:20.934651Z  INFO ThreadId(01) scan.chain{chain=GAIA}:scan.client{client=07-tendermint-0}: scanning client...
+stride-hermes-1  | 2022-06-12T21:57:20.945501Z  INFO ThreadId(01) scan.chain{chain=GAIA}:scan.client{client=07-tendermint-0}:scan.connection{connection=connection-0}: scanning connection...
+stride-hermes-1  | 2022-06-12T21:57:21.017420Z  INFO ThreadId(01) Scanned chains:
+stride-hermes-1  | 2022-06-12T21:57:21.021561Z  INFO ThreadId(01) # Chain: STRIDE
+stride-hermes-1  |   - Client: 07-tendermint-0
+stride-hermes-1  |     * Connection: connection-0
+stride-hermes-1  |       | State: INIT
+stride-hermes-1  |       | Counterparty state: <none>
+stride-hermes-1  |   - Client: 07-tendermint-1
+stride-hermes-1  |     * Connection: connection-1
+stride-hermes-1  |       | State: OPEN
+stride-hermes-1  |       | Counterparty state: OPEN
+stride-hermes-1  |       + Channel: channel-0
+stride-hermes-1  |         | Port: transfer
+stride-hermes-1  |         | State: OPEN
+stride-hermes-1  |         | Counterparty: channel-0
+stride-hermes-1  | # Chain: GAIA
+stride-hermes-1  |   - Client: 07-tendermint-0
+stride-hermes-1  |     * Connection: connection-0
+stride-hermes-1  |       | State: OPEN
+stride-hermes-1  |       | Counterparty state: OPEN
+stride-hermes-1  |       + Channel: channel-0
+stride-hermes-1  |         | Port: transfer
+stride-hermes-1  |         | State: OPEN
+stride-hermes-1  |         | Counterparty: channel-0
+stride-hermes-1  | 
+stride-hermes-1  | 2022-06-12T21:57:21.031509Z  INFO ThreadId(01) connection connection-0 on chain STRIDE is: Init, state on dest. chain (GAIA) is: Uninitialized
+stride-hermes-1  | 2022-06-12T21:57:21.034548Z  INFO ThreadId(01) spawning Connection worker: connection::connection-0:STRIDE->GAIA
+stride-hermes-1  | 2022-06-12T21:57:21.034616Z  INFO ThreadId(01) done spawning workers for connection connection-0 on chain STRIDE
+stride-hermes-1  | 2022-06-12T21:57:21.034698Z  INFO ThreadId(01) connection connection-1 on chain STRIDE is: Open, state on dest. chain (GAIA) is: Open
+stride-hermes-1  | 2022-06-12T21:57:21.034834Z  INFO ThreadId(01) connection connection-1 on chain STRIDE is already open, not spawning Connection worker
+stride-hermes-1  | 2022-06-12T21:57:21.034866Z  INFO ThreadId(01) no workers were spawn for connection connection-1 on chain STRIDE
+stride-hermes-1  | 2022-06-12T21:57:21.035740Z  INFO ThreadId(01) channel channel-0 on chain STRIDE is: OPEN; state on dest. chain (GAIA) is: OPEN
+stride-hermes-1  | 2022-06-12T21:57:21.069560Z  INFO ThreadId(01) spawned Client worker: client::GAIA->STRIDE:07-tendermint-1
+stride-hermes-1  | 2022-06-12T21:57:21.243710Z  INFO ThreadId(01) done spawning workers for chain STRIDE and channel channel-0
+stride-hermes-1  | 2022-06-12T21:57:21.244117Z  INFO ThreadId(01) connection connection-0 on chain GAIA is: Open, state on dest. chain (STRIDE) is: Open
+stride-hermes-1  | 2022-06-12T21:57:21.244134Z  INFO ThreadId(01) connection connection-0 on chain GAIA is already open, not spawning Connection worker
+stride-hermes-1  | 2022-06-12T21:57:21.244138Z  INFO ThreadId(01) no workers were spawn for connection connection-0 on chain GAIA
+stride-hermes-1  | 2022-06-12T21:57:21.244141Z  INFO ThreadId(01) channel channel-0 on chain GAIA is: OPEN; state on dest. chain (STRIDE) is: OPEN
+stride-hermes-1  | 2022-06-12T21:57:21.249426Z  INFO ThreadId(01) spawned Client worker: client::STRIDE->GAIA:07-tendermint-0
+stride-hermes-1  | 2022-06-12T21:57:21.416285Z  INFO ThreadId(01) done spawning workers for chain GAIA and channel channel-0
+stride-hermes-1  | 2022-06-12T21:57:22.228595Z  INFO ThreadId(01) Hermes has started
+stride-hermes-1  | 2022-06-12T21:57:22.547827Z  WARN ThreadId(29) DetectMisbehaviorWorker{client=07-tendermint-0 src_chain=STRIDE dst_chain=GAIA}: [STRIDE -> GAIA:07-tendermint-0] misbehaviour checking result: error raised while checking for misbehaviour evidence: failed to check misbehaviour for 07-tendermint-0 at consensus height 0-14: light client error for RPC address STRIDE: trusted state outside of trusting period
+stride-hermes-1  | 2022-06-12T21:57:22.549137Z  WARN ThreadId(27) DetectMisbehaviorWorker{client=07-tendermint-1 src_chain=GAIA dst_chain=STRIDE}: [GAIA -> STRIDE:07-tendermint-1] misbehaviour checking result: error raised while checking for misbehaviour evidence: failed to check misbehaviour for 07-tendermint-1 at consensus height 0-16: light client error for RPC address GAIA: trusted state outside of trusting period
+stride-hermes-1  | 2022-06-12T21:57:27.930809Z ERROR ThreadId(25) connection{connection=connection::connection-0:STRIDE->GAIA}: failed to establish connection handshake on frozen client: failed during an operation on client '07-tendermint-0' hosted by chain 'STRIDE': client 07-tendermint-0 on chain id STRIDE is expired or frozen: expired: time elapsed since last client update: Some(122.702044418s)
+stride-hermes-1  | 2022-06-12T21:57:27.936244Z ERROR ThreadId(25) connection{connection=connection::connection-0:STRIDE->GAIA}: task aborting after encountering fatal error: worker failed after 1 retries
+stride-hermes-1  | 2022-06-12T21:57:30.483252Z  INFO ThreadId(28) refresh{client=07-tendermint-0 src_chain=STRIDE dst_chain=GAIA}: [STRIDE -> GAIA:07-tendermint-0] client requires refresh
+stride-hermes-1  | 2022-06-12T21:57:30.759695Z  INFO ThreadId(24) wait_for_block_commits: waiting for commit of tx hashes(s) 08B860931CA53BB6255617DF9939976441FDD7B5BCC49054945FA3E1BB86EA1C id=GAIA
+stride-hermes-1  | 2022-06-12T21:57:41.786296Z  INFO ThreadId(26) refresh{client=07-tendermint-1 src_chain=GAIA dst_chain=STRIDE}: [GAIA -> STRIDE:07-tendermint-1] client requires refresh
+stride-hermes-1  | 2022-06-12T21:57:41.839105Z  INFO ThreadId(23) wait_for_block_commits: waiting for commit of tx hashes(s) EB7215A530A45CC2CA23792F9CDB364E9AFD11534BF2AC9D2ECE2C45F6ED604D id=STRIDE
+stride-hermes-1  | 2022-06-12T21:57:58.701018Z  INFO ThreadId(28) refresh{client=07-tendermint-0 src_chain=STRIDE dst_chain=GAIA}: [STRIDE -> GAIA:07-tendermint-0] client requires refresh
+stride-hermes-1  | 2022-06-12T21:57:58.755606Z  INFO ThreadId(24) wait_for_block_commits: waiting for commit of tx hashes(s) FCDE67FA2C72C4D5E419E977A0EC00D43520436647A106CC88341A407699BB6B id=GAIA
+stride-hermes-1  | 2022-06-12T21:58:09.772153Z  INFO ThreadId(26) refresh{client=07-tendermint-1 src_chain=GAIA dst_chain=STRIDE}: [GAIA -> STRIDE:07-tendermint-1] client requires refresh
+stride-hermes-1  | 2022-06-12T21:58:09.810304Z  INFO ThreadId(23) wait_for_block_commits: waiting for commit of tx hashes(s) 6E0B1635C1E9F550A93D656412A17254F61BA5E0F636B6193AE75EFA4B9282D2 id=STRIDE
+stride-hermes-1  | 2022-06-12T21:58:25.632023Z  INFO ThreadId(28) refresh{client=07-tendermint-0 src_chain=STRIDE dst_chain=GAIA}: [STRIDE -> GAIA:07-tendermint-0] client requires refresh
+stride-hermes-1  | 2022-06-12T21:58:25.676451Z  INFO ThreadId(24) wait_for_block_commits: waiting for commit of tx hashes(s) 09878ABA1CE7774DF1002825AC3F042195E920AFAF8A13154BC14F89E825148E id=GAIA
+stride-hermes-1  | 2022-06-12T21:58:37.501098Z  INFO ThreadId(26) refresh{client=07-tendermint-1 src_chain=GAIA dst_chain=STRIDE}: [GAIA -> STRIDE:07-tendermint-1] client requires refresh
+stride-hermes-1  | 2022-06-12T21:58:37.545016Z  INFO ThreadId(23) wait_for_block_commits: waiting for commit of tx hashes(s) 8D406B9A20A59E941782C7481D7AC6989BAF9B4713E8FA00F0BCBCD427F6C2DA id=STRIDE
+stride-hermes-1  | 2022-06-12T21:58:52.870149Z  INFO ThreadId(28) refresh{client=07-tendermint-0 src_chain=STRIDE dst_chain=GAIA}: [STRIDE -> GAIA:07-tendermint-0] client requires refresh
+stride-hermes-1  | 2022-06-12T21:58:52.907262Z  INFO ThreadId(24) wait_for_block_commits: waiting for commit of tx hashes(s) B2D5CC12D2336A05DB7BDCEE3DB4230AE1F8071D62A753DA9FE69AD85911FFA8 id=GAIA
+stride-hermes-1  | 2022-06-12T21:59:05.042820Z  INFO ThreadId(26) refresh{client=07-tendermint-1 src_chain=GAIA dst_chain=STRIDE}: [GAIA -> STRIDE:07-tendermint-1] client requires refresh
+stride-hermes-1  | 2022-06-12T21:59:05.081544Z  INFO ThreadId(23) wait_for_block_commits: waiting for commit of tx hashes(s) 9935CC8357EF1AD89535F86D8E4C4522D86F9BDBE11AC67AAAFE6B051AC6BEFE id=STRIDE
+stride-hermes-1  | 2022-06-12T21:59:20.215661Z  INFO ThreadId(28) refresh{client=07-tendermint-0 src_chain=STRIDE dst_chain=GAIA}: [STRIDE -> GAIA:07-tendermint-0] client requires refresh
+stride-hermes-1  | 2022-06-12T21:59:20.272610Z  INFO ThreadId(24) wait_for_block_commits: waiting for commit of tx hashes(s) 7E25D555A9008EDC8ACC77071E21A59FCD9EE4D3CC5EE9FBFDA4983D03445041 id=GAIA
