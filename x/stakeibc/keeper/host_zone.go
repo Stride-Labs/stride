@@ -56,13 +56,13 @@ func (k Keeper) GetHostZone(ctx sdk.Context, chain_id string) (val types.HostZon
 func (k Keeper) GetHostZoneFromHostDenom(ctx sdk.Context, denom string) (*types.HostZone, error) {
 	var matchZone types.HostZone
 	inDenom := strings.ToUpper(denom)
-	k.IterateHostZones(ctx, func(index int64, zoneInfo types.HostZone) (stop bool) {
+	k.IterateHostZones(ctx, func(ctx sdk.Context, index int64, zoneInfo types.HostZone) error {
 		zoneDenom := strings.ToUpper(zoneInfo.HostDenom)
 		if zoneDenom == inDenom {
 			matchZone = zoneInfo
-			return true
+			return nil
 		}
-		return false
+		return nil
 	})
 	if matchZone.ChainId != "" {
 		return &matchZone, nil
@@ -100,12 +100,12 @@ func GetHostZoneIDFromBytes(bz []byte) uint64 {
 // GetHostZoneFromIBCDenom returns a HostZone from a IBCDenom
 func (k Keeper) GetHostZoneFromIBCDenom(ctx sdk.Context, denom string) (*types.HostZone, error) {
 	var matchZone types.HostZone
-	k.IterateHostZones(ctx, func(index int64, zoneInfo types.HostZone) (stop bool) {
+	k.IterateHostZones(ctx, func(ctx sdk.Context, index int64, zoneInfo types.HostZone) error {
 		if zoneInfo.IBCDenom == denom {
 			matchZone = zoneInfo
-			return true
+			return nil
 		}
-		return false
+		return nil
 	})
 	if matchZone.ChainId != "" {
 		return &matchZone, nil
@@ -114,7 +114,7 @@ func (k Keeper) GetHostZoneFromIBCDenom(ctx sdk.Context, denom string) (*types.H
 }
 
 // IterateHostZones iterates zones
-func (k Keeper) IterateHostZones(ctx sdk.Context, fn func(index int64, zoneInfo types.HostZone) (stop bool)) {
+func (k Keeper) IterateHostZones(ctx sdk.Context, fn func(ctx sdk.Context, index int64, zoneInfo types.HostZone) error) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.HostZoneKey))
 
 	iterator := sdk.KVStorePrefixIterator(store, nil)
@@ -126,9 +126,9 @@ func (k Keeper) IterateHostZones(ctx sdk.Context, fn func(index int64, zoneInfo 
 		zone := types.HostZone{}
 		k.cdc.MustUnmarshal(iterator.Value(), &zone)
 
-		stop := fn(i, zone)
+		error := fn(ctx, i, zone)
 
-		if stop {
+		if error != nil {
 			break
 		}
 		i++

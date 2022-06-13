@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"errors"
 	"fmt"
 
 	icqkeeper "github.com/Stride-Labs/stride/x/interchainquery/keeper"
@@ -40,13 +41,13 @@ func (k Keeper) RemoveDelegation(ctx sdk.Context) {
 
 // ProcessDelegationStaking goes through each HostZone and stakes the delegation
 func (k Keeper) ProcessDelegationStaking(ctx sdk.Context) {
-	icaStake := func(index int64, zoneInfo types.HostZone) (stop bool) {
+	icaStake := func(ctx sdk.Context, index int64, zoneInfo types.HostZone) error {
 		// Verify the delegation ICA is registered
 		k.Logger(ctx).Info(fmt.Sprintf("\tProcessing delegation %s", zoneInfo.ChainId))
 		delegationIca := zoneInfo.GetDelegationAccount()
 		if delegationIca == nil || delegationIca.Address == "" {
 			k.Logger(ctx).Error("Zone %s is missing a delegation address!", zoneInfo.ChainId)
-			return false
+			return errors.New("Zone is missing a delegation address!")
 		}
 		cdc := k.cdc
 		DelegateOnHost := k.DelegateOnHost
@@ -89,7 +90,7 @@ func (k Keeper) ProcessDelegationStaking(ctx sdk.Context) {
 		}
 		k.Logger(ctx).Info(fmt.Sprintf("\tQuerying balance for %s", zoneInfo.ChainId))
 		k.InterchainQueryKeeper.QueryBalances(ctx, zoneInfo, queryBalanceCB, delegationIca.Address)
-		return false
+		return nil
 	}
 
 	// Iterate the zones and apply icaStake

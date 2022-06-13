@@ -167,7 +167,7 @@ func (k Keeper) ReinvestRewards(ctx sdk.Context, hostZone types.HostZone) error 
 
 // icq to read host delegated balance => update hostZone.delegationAccount.DelegatedBalance
 // TODO(TEST-97) add safety logic to query at specific block height (same as query height for delegated balances)
-func (k Keeper) UpdateDelegatedBalance(ctx sdk.Context, hostZone types.HostZone) error {
+func (k Keeper) UpdateDelegatedBalance(ctx sdk.Context, index int64, hostZone types.HostZone) error {
 	_ = ctx
 	// Fetch the relevant ICA
 	delegationAccount := hostZone.GetDelegationAccount()
@@ -214,7 +214,7 @@ func (k Keeper) UpdateDelegatedBalance(ctx sdk.Context, hostZone types.HostZone)
 
 // icq to read host delegation account undeleted balance => update hostZone.delegationAccount.Balance
 // TODO(TEST-97) add safety logic to query at specific block height (same as query height for delegated balances)
-func (k Keeper) UpdateUndelegatedBalance(ctx sdk.Context, hostZone types.HostZone) error {
+func (k Keeper) UpdateUndelegatedBalance(ctx sdk.Context, index int64, hostZone types.HostZone) error {
 	_ = ctx
 	// Fetch the relevant ICA
 	delegationAccount := hostZone.GetDelegationAccount()
@@ -260,7 +260,7 @@ func (k Keeper) UpdateUndelegatedBalance(ctx sdk.Context, hostZone types.HostZon
 
 // Update the redemption rate using values of delegatedBalances, balances and stAsset supply
 // TODO(TEST-97) add safety logic that checks balance, delegatedBalance and stAsset supply's block_height_updated are all equal
-func (k Keeper) UpdateExchangeRate(ctx sdk.Context, hostZone types.HostZone) error {
+func (k Keeper) UpdateExchangeRate(ctx sdk.Context, index int64, hostZone types.HostZone) error {
 	_ = ctx
 
 	// Assets: native asset balances on delegation account + staked
