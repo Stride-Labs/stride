@@ -2,6 +2,8 @@ package keeper
 
 import (
 	"context"
+	"errors"
+	"strconv"
 
 	"github.com/Stride-Labs/stride/x/stakeibc/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -271,21 +273,33 @@ func (k Keeper) UpdateExchangeRate(ctx sdk.Context, index int64, hostZone types.
 	// Claims: stAsset supply
 	stAssetSupply := k.bankKeeper.GetSupply(ctx, hostZone.IBCDenom)
 
-	// ExchRate = Assets / Claims
-	redemptionRate := sdk.NewDec(assetBalance).Quo(stAssetSupply.Amount.ToDec())
+	// Sanity & safety check: if either num or denom are 0, do NOT update the exchange rate
+	if assetBalance == int64(0) || stAssetSupply.Amount.Int64() == int64(0) {
+		ctx.EventManager().EmitEvents(sdk.Events{
+			sdk.NewEvent(
+				sdk.EventTypeMessage,
+				sdk.NewAttribute("delegatedBalance", strconv.FormatInt(delegatedBalance, 10)),
+				sdk.NewAttribute("unDelegatedBalance", strconv.FormatInt(unDelegatedBalance, 10)),
+				sdk.NewAttribute("stAssetBalance", stAssetSupply.String()),
+			),
+		})
+		return errors.New("Exchange rate calculation error: ")
+	} else {
+		// ExchRate = Assets / Claims
+		redemptionRate := sdk.NewDec(assetBalance).Quo(stAssetSupply.Amount.ToDec())
+		// Write ExchRate to state
+		hostZone.LastRedemptionRate = hostZone.RedemptionRate
+		hostZone.RedemptionRate = redemptionRate
+		k.SetHostZone(ctx, hostZone)
 
-	// Write ExchRate to state
-	hostZone.LastRedemptionRate = hostZone.RedemptionRate
-	hostZone.RedemptionRate = redemptionRate
-	k.SetHostZone(ctx, hostZone)
-
-	ctx.EventManager().EmitEvents(sdk.Events{
-		sdk.NewEvent(
-			sdk.EventTypeMessage,
-			sdk.NewAttribute("lastRedemptionRate", redemptionRate.String()),
-			sdk.NewAttribute("newRedemptionRate", hostZone.LastRedemptionRate.String()),
-		),
-	})
+		ctx.EventManager().EmitEvents(sdk.Events{
+			sdk.NewEvent(
+				sdk.EventTypeMessage,
+				sdk.NewAttribute("lastRedemptionRate", redemptionRate.String()),
+				sdk.NewAttribute("newRedemptionRate", hostZone.LastRedemptionRate.String()),
+			),
+		})
+	}
 
 	return nil
 }
