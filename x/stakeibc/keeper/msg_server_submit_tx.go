@@ -165,6 +165,97 @@ func (k Keeper) ReinvestRewards(ctx sdk.Context, hostZone types.HostZone) error 
 	return nil
 }
 
+// icq to read host delegated balance => update hostZone.delegationAccount.DelegatedBalance
+func (k Keeper) UpdateDelegatedBalance(ctx sdk.Context, hostZone types.HostZone) error {
+	_ = ctx
+	// Fetch the relevant ICA
+	delegationAccount := hostZone.GetDelegationAccount()
+
+	var cb icqkeeper.Callback = func(icqk icqkeeper.Keeper, ctx sdk.Context, args []byte, query icqtypes.Query) error {
+
+		var response stakingTypes.QueryDelegatorDelegationsResponse
+		err := k.cdc.Unmarshal(args, &response)
+		if err != nil {
+			return err
+		}
+
+		// Get denom dynamically
+		hz := hostZone
+		delegatorSum := sdk.NewCoin(hz.HostDenom, sdk.ZeroInt())
+		for _, delegation := range response.DelegationResponses {
+			delegatorSum = delegatorSum.Add(delegation.Balance)
+			if err != nil {
+				return err
+			}
+		}
+
+		// Set delegation account balance to ICQ result
+		da := hz.DelegationAccount
+		da.Balance = delegatorSum.Amount.Int64()
+		hz.DelegationAccount = da
+		Keeper.SetHostZone(k, ctx, hz)
+
+		ctx.EventManager().EmitEvents(sdk.Events{
+			sdk.NewEvent(
+				sdk.EventTypeMessage,
+				sdk.NewAttribute("totalDelegatedBalance", delegatorSum.Amount.String()),
+			),
+		})
+
+		return nil
+	}
+	// 1. query delegation account delegated balances using icq
+	// 2. sum up the resulting delegations (across validators)
+	// 2. write the result to hostZone.delegationAccount.delegatedBalance
+	k.InterchainQueryKeeper.QueryDelegatorDelegations(ctx, hostZone, cb, delegationAccount.Address)
+	return nil
+}
+
+// icq to read host delegation account undeleted balance => update hostZone.delegationAccount.Balance
+func (k Keeper) UpdateUndelegatedBalance(ctx sdk.Context, hostZone types.HostZone) error {
+	_ = ctx
+	// Fetch the relevant ICA
+	delegationAccount := hostZone.GetDelegationAccount()
+
+	var cb icqkeeper.Callback = func(icqk icqkeeper.Keeper, ctx sdk.Context, args []byte, query icqtypes.Query) error {
+
+		queryRes := bankTypes.QueryAllBalancesResponse{}
+		err := k.cdc.Unmarshal(args, &queryRes)
+		if err != nil {
+			k.Logger(ctx).Error("Unable to unmarshal balances info for zone", "err", err)
+			return err
+		}
+
+		// Get denom dynamically
+		hz := hostZone
+		balance := queryRes.Balances.AmountOf(hz.HostDenom)
+
+		// Set delegation account balance to ICQ result
+		hz, found := k.GetHostZone(ctx, hostZone.ChainId)
+		if found {
+			k.Logger(ctx).Error("invalid chain id, zone for \"%s\" already registered", hostZone.ChainId)
+		}
+
+		da := hz.DelegationAccount
+		da.Balance = balance.Int64()
+		hz.DelegationAccount = da
+		k.SetHostZone(ctx, hz)
+
+		ctx.EventManager().EmitEvents(sdk.Events{
+			sdk.NewEvent(
+				sdk.EventTypeMessage,
+				sdk.NewAttribute("totalUndelegatedBalance", balance.String()),
+			),
+		})
+
+		return nil
+	}
+	// 1. query delegation account undelegated balances using icq
+	// 2. write the result to hostZone.delegationAccount.Balance
+	k.InterchainQueryKeeper.QueryBalances(ctx, hostZone, cb, delegationAccount.Address)
+	return nil
+}
+
 // SubmitTxs submits an ICA transaction containing multiple messages
 func (k Keeper) SubmitTxs(ctx sdk.Context, connectionId string, msgs []sdk.Msg, account types.ICAAccount) error {
 	chainId, err := k.GetChainID(ctx, connectionId)
