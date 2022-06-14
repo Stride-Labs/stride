@@ -1,7 +1,6 @@
 # Stride Node Setup
 
-This folder goes from an existing Stride image and will construct 
-images specifically for Stride nodes.
+This folder goes from an existing Stride image (from `make init`) and will construct 4 properly formatted docker images to seed the Stride testnet (3 validators, 1 seed). These images get launched on GCP through Terraform.
 
 ## High Level Path
 
