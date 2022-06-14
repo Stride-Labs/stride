@@ -4,10 +4,11 @@ RUN apk add --update git
 
 # --branch v7.0.0
 WORKDIR /src/app/
-RUN git clone https://github.com/Stride-Labs/gaia --branch v7.0.2-stride-10m
+RUN git clone https://github.com/Stride-Labs/gaia --branch v7.0.2
 WORKDIR gaia
 # COPY go.mod go.sum* ./
-# RUN go mod download
+RUN go mod tidy
+RUN go mod download
 # COPY --from=gaiad-builder . .
 ENV PACKAGES curl make git libc-dev bash gcc linux-headers eudev-dev python3
 RUN apk add --no-cache $PACKAGES
