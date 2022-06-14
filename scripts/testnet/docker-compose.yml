@@ -1,0 +1,37 @@
+version: "3.8"
+services:
+  strideTestNode1:
+    image: stridelabs/internal:droplet_node1
+    hostname: stride
+    volumes:
+      - ./scripts/testnet/state/strideTestNode1:/stride/.strided
+    build:
+      context: .
+      dockerfile: dockerfiles/Dockerfile.node1
+  strideTestNode2:
+    # image: stridezone/stride:latest
+    image: stridelabs/internal:droplet_node2
+    hostname: stride
+    volumes:
+      - ./scripts/testnet/state/strideTestNode2:/stride/.strided
+    build:
+      context: .
+      dockerfile: dockerfiles/Dockerfile.node2
+  strideTestNode3:
+    # image: stridezone/stride:latest
+    image: stridelabs/internal:droplet_node3
+    hostname: stride
+    volumes:
+      - ./scripts/testnet/state/strideTestNode3:/stride/.strided
+    build:
+      context: .
+      dockerfile: dockerfiles/Dockerfile.node3
+  strideTestSeed:
+    # image: stridezone/stride:latest
+    image: stridelabs/internal:droplet_seed
+    hostname: stride
+    volumes:
+      - ./scripts/testnet/state/strideTestSeed:/stride/.strided
+    build:
+      context: .
+      dockerfile: dockerfiles/Dockerfile.seed
