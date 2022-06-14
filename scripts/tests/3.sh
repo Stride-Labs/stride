@@ -19,13 +19,13 @@ GETSTAKE() {
 # $GAIA1_EXEC q distribution rewards $GAIA_WITHDRAWAL
 
 # echo "-----------------------------"
-
-$GAIA1_EXEC q bank balances $GAIA_DELEGATE
-echo "-----------------------------"
-# $GAIA1_EXEC q staking delegation $GAIA_DELEGATE $GAIA_DELEGATE_VAL | GETSTAKE
-$GAIA1_EXEC q distribution rewards $GAIA_DELEGATE
-echo "-----------------------------"
-$GAIA1_EXEC q staking delegations $GAIA_DELEGATE # $GAIA_DELEGATE_VAL #| GETSTAKE
+$STR1_EXEC strided q stakeibc list-host-zone
+# $GAIA1_EXEC q bank balances $GAIA_DELEGATE
+# echo "-----------------------------"
+# # $GAIA1_EXEC q staking delegation $GAIA_DELEGATE $GAIA_DELEGATE_VAL | GETSTAKE
+# $GAIA1_EXEC q distribution rewards $GAIA_DELEGATE
+# echo "-----------------------------"
+# $GAIA1_EXEC q staking delegations $GAIA_DELEGATE # $GAIA_DELEGATE_VAL #| GETSTAKE
 # $GAIA1_EXEC q staking delegation $GAIA_DELEGATE $GAIA_DELEGATE_VAL | GETSTAKE
 
 # $GAIA1_EXEC q bank balances $GAIA_DELEGATE
