@@ -1,0 +1,5 @@
+FROM stridezone:stride as stride
+
+ADD state/strideTestNode1/ /stride/.strided
+
+CMD ["strided", "start", "--home", "/stride/.strided"]
