@@ -1,36 +1,36 @@
 
 - name: val1
   type: local
-  address: stride1gdgw9mepapjwslswwml4ru6fj8vynyzq0eq62x
-  pubkey: '{"@type":"/cosmos.crypto.secp256k1.PubKey","key":"Ag1OLrpBNvH6hWcQ4nh0Nhj7bf/7DuGw4uvkriTtNryH"}'
+  address: stride1t6hq7qdwunfr2z6utkp5j3pgmrcna0w02uxvh6
+  pubkey: '{"@type":"/cosmos.crypto.secp256k1.PubKey","key":"AunhnbwVfeixDAuWQ7eUIFB+8fpmkrRLDlstAa++DIIT"}'
   mnemonic: ""
 
 
 **Important** write this mnemonic phrase in a safe place.
 It is the only way to recover your account if you ever forget your password.
 
-liar height field predict stem season garlic carry foot reduce control nice immense try security inherit join erosion donate mule kite uniform violin replace
+vintage jungle correct social achieve alien loud steak cereal twist build process magic column wild give rug eye donor share head art keep engage
 
 - name: val2
   type: local
-  address: stride1wsawqzekcvdnjzjawnxkysw6jxpc9x7zg9mgzk
-  pubkey: '{"@type":"/cosmos.crypto.secp256k1.PubKey","key":"A2rp4pggAcIYfpSBYgC2Q8yaoXGw5ibjZK5TxecimuQ+"}'
+  address: stride1c9239xey476cpy9umqw7ln6wvenf65ewtffu7m
+  pubkey: '{"@type":"/cosmos.crypto.secp256k1.PubKey","key":"A1/6xcSvizYtrHxCwshukJhtaKSpvz6qkLspVfGInK6C"}'
   mnemonic: ""
 
 
 **Important** write this mnemonic phrase in a safe place.
 It is the only way to recover your account if you ever forget your password.
 
-whisper trim embrace roast fat kiss warfare assume rich magnet subject add feel apart idea broom scout please color pencil delay impact impact soup
+oval nice high season lounge hidden twin faculty crush sound any hurt student eyebrow lend license raw air glide screen dad frost wisdom great
 
 - name: val3
   type: local
-  address: stride1c57qhcjp4pd2sprj8rndnk24v04tr69yzwg6t4
-  pubkey: '{"@type":"/cosmos.crypto.secp256k1.PubKey","key":"A94exy1X36oP3Mye6HQucJ2tfVS+3u48rDceu55DAD6q"}'
+  address: stride14fppvgjxpty08jq3mrywtjrux5fvz6gegxetx6
+  pubkey: '{"@type":"/cosmos.crypto.secp256k1.PubKey","key":"A5EJc4hbc9i2zLRfpH0SEfNA4yjhgqZ5qg6E07Xz5OV6"}'
   mnemonic: ""
 
 
 **Important** write this mnemonic phrase in a safe place.
 It is the only way to recover your account if you ever forget your password.
 
-reject excess lazy clutch crop primary alpha dad guess apple gift page effort abstract cement judge balance donkey they run olympic link airport swallow
+shrug source hint repair minor metal must royal iron whale forget chimney minute doctor stage tomato forget icon pepper claim report boost impulse name
