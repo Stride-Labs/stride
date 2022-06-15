@@ -40,7 +40,7 @@ resource "google_compute_address" "seed" {
 resource "google_compute_instance" "droplet-node1" {
   name         = "droplet-node1"
   machine_type = "e2-standard-4"
-  zone         = "us-central1-b"
+  zone         = "us-central1-a"
   tags         = ["ssh"]
   allow_stopping_for_update = true
 
