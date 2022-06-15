@@ -9,8 +9,6 @@ mkdir $STATE
 touch $STATE/keys.txt
 docker compose down
 
-make build
-
 for node_name in ${STRIDE_DOCKER_NAMES[@]}; do
     mkdir -p $STATE/$node_name
 done
@@ -26,13 +24,7 @@ for i in ${!STRIDE_DOCKER_NAMES[@]}; do
     moniker=${STRIDE_MONIKERS[i]}
     val_acct=${VAL_ACCTS[i]}
     st_cmd=${ST_CMDS[i]}
-    $st_cmd init $moniker --chain-id $STRIDE_CHAIN --overwrite #2> /dev/null
-    echo "================================================="
-    pwd
-    ls
-    ls ${STATE}/${node_name}
-    echo "================================================="
-    
+    $st_cmd init $moniker --chain-id $STRIDE_CHAIN --overwrite 2> /dev/null
     sed -i -E 's|"stake"|"ustrd"|g' "${STATE}/${node_name}/config/genesis.json"
     if [ $i -ne $SEED_ID ]
     then
@@ -43,7 +35,7 @@ for i in ${!STRIDE_DOCKER_NAMES[@]}; do
         # add money for this validator account
         $st_cmd add-genesis-account ${VAL_ADDR} $VAL_TOKENS
         # actually set this account as a validator
-        yes | $st_cmd gentx $val_acct $STAKE_TOKENS --chain-id $STRIDE_CHAIN --keyring-backend test 2> /dev/null
+        $st_cmd gentx $val_acct $STAKE_TOKENS --chain-id $STRIDE_CHAIN --keyring-backend test 2> /dev/null
     fi
     # now we grab the relevant node id
     end_name=${STRIDE_ENDPOINTS[i]}

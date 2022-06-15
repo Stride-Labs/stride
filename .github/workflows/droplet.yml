@@ -33,29 +33,32 @@ jobs:
         run: |
           gcloud auth configure-docker
 
-      - name: Create Stride Base Image
-        uses: docker/build-push-action@v3
-        with:
-          context: "{{defaultContext}}"
-          file: "Dockerfile.stride"
-          load: true
-          platforms: linux/amd64
-          tags: stridezone:stride
+      # - name: Create Stride Base Image
+      #   uses: docker/build-push-action@v3
+      #   with:
+      #     context: "{{defaultContext}}"
+      #     file: "Dockerfile.stride"
+      #     load: true
+      #     platforms: linux/amd64
+      #     tags: stridezone:stride
+
+      - name: Build Stride
+        run: make build
 
       - name: Initialize Stride State
         shell: bash
         run: ./scripts/testnet/setup_testnet_state.sh
 
-      # - name: Construct Test Images
-      #   uses: docker/build-push-action@v3
-      #   with:
-      #     context: "{{defaultContext}}"
-      #     file: "scripts/testnet/dockerfiles/Dockerfile.node1"
-      #     push: true
-      #     platforms: linux/amd64
-      #     tags: |
-      #       stridelabs/internal:test-droplet-sp
-      #       gcr.io/stride-nodes/testnet:test-droplet-sp
+      - name: Construct Test Images
+        uses: docker/build-push-action@v3
+        with:
+          context: "{{defaultContext}}"
+          file: "scripts/testnet/dockerfiles/Dockerfile.node1"
+          push: true
+          platforms: linux/amd64
+          tags: |
+            stridelabs/internal:test-droplet-sp
+            gcr.io/stride-nodes/testnet:test-droplet-sp
       # -
       #   name: Construct Node1 Images
       #   uses: docker/build-push-action@v3
