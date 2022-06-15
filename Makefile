@@ -92,9 +92,11 @@ BUILD_TARGETS := build install
 build: BUILD_ARGS=-o $(BUILDDIR)/
 
 $(BUILD_TARGETS): go.sum $(BUILDDIR)/
+	echo "===============================Step B========================="
 	go $@ -mod=readonly $(BUILD_FLAGS) $(BUILD_ARGS) ./...
 
 $(BUILDDIR)/:
+	echo "===============================Step A========================="
 	mkdir -p $(BUILDDIR)/
 
 build-reproducible: go.sum
@@ -112,14 +114,17 @@ build-linux: go.sum
 	LEDGER_ENABLED=false GOOS=linux GOARCH=amd64 $(MAKE) build
 
 build-contract-tests-hooks:
+	echo "===============================Step C========================="
 	mkdir -p $(BUILDDIR)
 	go build -mod=readonly $(BUILD_FLAGS) -o $(BUILDDIR)/ ./cmd/contract_tests
 
 go-mod-cache: go.sum
+	echo "===============================Step D========================="
 	@echo "--> Download go modules to local cache"
 	@go mod download
 
 go.sum: go.mod
+	echo "===============================Step E========================="
 	@echo "--> Ensure dependencies have not been modified"
 	@go mod verify
 
