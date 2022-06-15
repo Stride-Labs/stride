@@ -142,6 +142,8 @@ func (k Keeper) ReinvestRewards(ctx sdk.Context, hostZone types.HostZone) error 
 		msgs = append(msgs, sendBalanceToStrideAccount)
 
 		// Send the transaction through SubmitTx
+		// TODO(TEST-5): Add a record with STATUS PENDING
+		// TODO(TEST-5): In the ack, update the record to STATUS STAKE
 		err = SubmitTxs(ctx, connectionId, msgs, *withdrawAccount)
 		if err != nil {
 			return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "Failed to SubmitTxs for %s, %s, %s", connectionId, hostZone.ChainId, msgs)
