@@ -20,8 +20,6 @@ EXPOSE 1317
 
 COPY --chown=stride scripts/testnet/state/strideTestNode1/ /stride/.strided/ 
 
-VOLUME ["/stride"]
-
 ENTRYPOINT ["strided"]
 
 CMD ["start", "--home", "/stride/.strided"]
