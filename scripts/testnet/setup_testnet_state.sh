@@ -9,6 +9,8 @@ mkdir $STATE
 touch $STATE/keys.txt
 docker compose down
 
+make build
+
 for node_name in ${STRIDE_DOCKER_NAMES[@]}; do
     mkdir -p $STATE/$node_name
 done
