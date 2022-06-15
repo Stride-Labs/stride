@@ -1,8 +1,5 @@
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
-echo "================================DIRECTORY====================================="
-echo $SCRIPT_DIR
-
 STATE=$SCRIPT_DIR/state
 STRIDE_CHAIN=droplet
 STRIDE_DOCKER_NAMES=(strideTestNode1 strideTestNode2 strideTestNode3 strideTestSeed)
@@ -20,11 +17,11 @@ main_node=${STRIDE_DOCKER_NAMES[$MAIN_ID]}
 seed_node=${STRIDE_DOCKER_NAMES[$SEED_ID]}
 PORT_ID=26656
 
-BASE_RUN="docker run --rm"
+BASE_RUN=build/strided
 
 ST_CMDS=()
 for docker_name in "${STRIDE_DOCKER_NAMES[@]}"; do
-  ST_CMDS+=( "$BASE_RUN -v $STATE/$docker_name:/stride/.strided:Z stridezone:stride strided --home=/stride/.strided" )
+  ST_CMDS+=( "$BASE_RUN --home /stride/.strided" )
 done
 main_cmd=${ST_CMDS[$MAIN_ID]}
 
