@@ -75,5 +75,9 @@ for i in "${!STRIDE_CHAINS[@]}"; do
     fi
 done
 
-docker compose build strideTestNode1 strideTestNode2 strideTestNode3 strideTestSeed
-docker compose push strideTestNode1 strideTestNode2 strideTestNode3 strideTestSeed
+export DOCKER_BUILDKIT=0
+export DOCKER_DEFAULT_PLATFORM=linux/amd64
+# docker buildx build --platform linux/amd64 -t stridelabs/internal:droplet_node1 -f dockerfiles/Dockerfile.node1 .
+
+# docker compose build strideTestNode1 strideTestNode2 strideTestNode3 strideTestSeed
+# docker compose push strideTestNode1 strideTestNode2 strideTestNode3 strideTestSeed

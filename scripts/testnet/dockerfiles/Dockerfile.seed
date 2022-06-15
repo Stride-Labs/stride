@@ -1,5 +1,7 @@
 FROM stridezone:stride as stride
 
-ADD state/strideTestSeed/ /stride/.strided
+COPY --chown=stride state/strideTestSeed/ /stride/.strided/ 
 
-CMD ["strided", "start", "--home", "/stride/.strided"]
+ENTRYPOINT ["strided"]
+
+CMD ["start", "--home", "/stride/.strided"]
