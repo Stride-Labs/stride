@@ -38,7 +38,7 @@ resource "google_compute_address" "seed" {
 resource "google_compute_instance" "droplet-node1" {
   name         = "droplet-node1"
   machine_type = "e2-standard-4"
-  zone         = "us-central1-b"
+  zone         = "us-central1-a"
   tags         = ["ssh"]
   allow_stopping_for_update = true
 
@@ -72,7 +72,7 @@ resource "google_compute_instance" "droplet-node1" {
 resource "google_compute_instance" "droplet-node2" {
   name         = "droplet-node2"
   machine_type = "e2-standard-4"
-  zone         = "europe-west6-b"
+  zone         = "europe-west6-a"
   tags         = ["ssh"]
   allow_stopping_for_update = true
 
@@ -106,7 +106,7 @@ resource "google_compute_instance" "droplet-node2" {
 resource "google_compute_instance" "droplet-node3" {
   name         = "droplet-node3"
   machine_type = "e2-standard-4"
-  zone         = "us-east4-b"
+  zone         = "us-east4-a"
   tags         = ["ssh"]
   allow_stopping_for_update = true
 
@@ -140,7 +140,7 @@ resource "google_compute_instance" "droplet-node3" {
 resource "google_compute_instance" "droplet-seed" {
   name         = "droplet-seed"
   machine_type = "e2-standard-4"
-  zone         = "us-west1-b"
+  zone         = "us-west1-a"
   tags         = ["ssh"]
   allow_stopping_for_update = true
 
