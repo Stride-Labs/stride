@@ -56,7 +56,7 @@ jobs:
         run: ls ./scripts/testnet/state
 
       - name: LS Node
-        run: ls ./scripts/testnet/strideTestNode1
+        run: ls ./scripts/testnet/state/strideTestNode1
 
       - name: Construct Test Images
         uses: docker/build-push-action@v3
