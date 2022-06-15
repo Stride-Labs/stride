@@ -24,7 +24,7 @@ BASE_RUN="docker run --rm"
 
 ST_CMDS=()
 for docker_name in "${STRIDE_DOCKER_NAMES[@]}"; do
-  ST_CMDS+=( "$BASE_RUN -v $STATE/$docker_name:/stride/.strided stridezone:stride strided --home=/stride/.strided" )
+  ST_CMDS+=( "$BASE_RUN -v $STATE/$docker_name:/stride/.strided:Z stridezone:stride strided --home=/stride/.strided" )
 done
 main_cmd=${ST_CMDS[$MAIN_ID]}
 
