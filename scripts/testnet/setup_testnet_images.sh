@@ -80,6 +80,9 @@ export DOCKER_DEFAULT_PLATFORM=linux/amd64
 
 docker tag stridezone:stride stridelabs/internal:droplet_base 
 docker push stridelabs/internal:droplet_base 
+
+docker pull stridelabs/internal:droplet_node1
+
 # docker buildx build --platform linux/amd64 -t stridelabs/internal:droplet_node1 -f dockerfiles/Dockerfile.node1 .
 
 # docker compose build strideTestNode1 strideTestNode2 strideTestNode3 strideTestSeed
