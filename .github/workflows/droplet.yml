@@ -39,8 +39,10 @@ jobs:
           file: "scripts/testnet/dockerfiles/Dockerfile.node1"
           push: true
           platforms: linux/amd64
-          tags: stridelabs/internal:droplet_node1 gcr.io/stride-nodes/testnet:droplet_node1
-      -
-        name: Publish to GCP
-        run: |
-          docker push gcr.io/stride-nodes/testnet:droplet_node1
+          tags: |
+            stridelabs/internal:droplet_node1 
+            gcr.io/stride-nodes/testnet:droplet_node1
+      # -
+      #   name: Publish to GCP
+      #   run: |
+      #     docker push gcr.io/stride-nodes/testnet:droplet_node1
