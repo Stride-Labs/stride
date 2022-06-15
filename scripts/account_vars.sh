@@ -20,10 +20,10 @@ GAIA_ADDRESS_2=$($GAIA2_EXEC keys show gval2 --keyring-backend test -a --home=/g
 GAIA_ADDRESS_3=$($GAIA3_EXEC keys show gval3 --keyring-backend test -a --home=/gaia/.gaiad)
 
 # Relayers
-# NOTE: using $main_cmd and $main_gaia_cmd here ONLY works because they rly1 and rly2
+# NOTE: using $STRIDE_MAIN_CMD and $GAIA_MAIN_CMD here ONLY works because they rly1 and rly2
 # keys are on stride1 and gaia1, respectively
-RLY_ADDRESS_1=$($main_cmd keys show rly1 --keyring-backend test -a)
-RLY_ADDRESS_2=$($main_gaia_cmd keys show rly2 --keyring-backend test -a)
+RLY_ADDRESS_1=$($STRIDE_MAIN_CMD keys show rly1 --keyring-backend test -a)
+RLY_ADDRESS_2=$($GAIA_MAIN_CMD keys show rly2 --keyring-backend test -a)
 
 STR1_EXEC="docker-compose --ansi never exec -T stride1 strided --home /stride/.strided --chain-id STRIDE"
 STR2_EXEC="docker-compose --ansi never exec -T stride2 strided --home /stride/.strided --chain-id STRIDE"
