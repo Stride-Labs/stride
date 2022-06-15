@@ -33,4 +33,4 @@ jobs:
           context: "{{defaultContext}}:scripts/testnet/"
           file: "dockerfiles/Dockerfile.node1"
           push: true
-          tags: droplet_node1
+          tags: stridelabs/internal:droplet_node1
