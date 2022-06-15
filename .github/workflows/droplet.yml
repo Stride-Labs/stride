@@ -31,7 +31,7 @@ jobs:
           tags: stridelabs/internal:droplet_node1
       - 
         name: Setup gcloud CLI
-        uses: GoogleCloudPlatform/github-actions/setup-gcloud@master
+        uses: google-github-actions/setup-gcloud@v0'
         with:
           version: '270.0.0'
           service_account_key: ${{ secrets.GCP_KEY }} 
