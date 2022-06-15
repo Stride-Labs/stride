@@ -31,7 +31,7 @@ jobs:
         uses: docker/build-push-action@v3
         with:
           context: "{{defaultContext}}"
-          file: "dockerfiles/Dockerfile.node1"
+          file: "scripts/testnet/dockerfiles/Dockerfile.node1"
           push: true
           platforms: linux/amd64
           tags: stridelabs/internal:droplet_node1
