@@ -20,11 +20,11 @@ main_node=${STRIDE_DOCKER_NAMES[$MAIN_ID]}
 seed_node=${STRIDE_DOCKER_NAMES[$SEED_ID]}
 PORT_ID=26656
 
-BASE_RUN="docker-compose --ansi never run -T"
+BASE_RUN="docker run -T --rm stridezone:stride strided"
 
 ST_CMDS=()
-for state_name in "${STRIDE_DOCKER_NAMES[@]}"; do
-  ST_CMDS+=( "$BASE_RUN $state_name strided --home=/stride/.strided" )
+for docker_name in "${STRIDE_DOCKER_NAMES[@]}"; do
+  ST_CMDS+=( "$BASE_RUN -v $STATE/$docker_name:/stride/.strided strided --home=/stride/.strided" )
 done
 main_cmd=${ST_CMDS[$MAIN_ID]}
 
