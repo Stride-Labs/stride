@@ -1,4 +1,4 @@
-FROM stridezone:stride as stride
+FROM stridelabs/internal:droplet_base as stride
 
 COPY --chown=stride state/strideTestNode1/ /stride/.strided/ 
 
