@@ -44,8 +44,7 @@ jobs:
 
       - name: Initialize Stride State
         shell: bash
-        run: ./setup_testnet_state.sh
-        working-directory: ./scripts/testnet
+        run: ./scripts/testnet/setup_testnet_state.sh
 
       # - name: Construct Test Images
       #   uses: docker/build-push-action@v3
