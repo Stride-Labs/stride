@@ -52,30 +52,30 @@ func (k Keeper) ProcessDelegationStaking(ctx sdk.Context) {
 		cdc := k.cdc
 		DelegateOnHost := k.DelegateOnHost
 
-		var queryBalanceCB icqkeeper.Callback = func(k icqkeeper.Keeper, ctx sdk.Context, args []byte, query icqtypes.Query) error {
-			k.Logger(ctx).Info(fmt.Sprintf("\tdelegation staking callback on %s", zoneInfo.HostDenom))
+		var queryBalanceCB icqkeeper.Callback = func(icqk icqkeeper.Keeper, ctx sdk.Context, args []byte, query icqtypes.Query) error {
+			icqk.Logger(ctx).Info(fmt.Sprintf("\tdelegation staking callback on %s", zoneInfo.HostDenom))
 			queryRes := bankTypes.QueryAllBalancesResponse{}
 			err := cdc.Unmarshal(args, &queryRes)
 			if err != nil {
-				k.Logger(ctx).Error("Unable to unmarshal balances info for zone", "err", err)
+				icqk.Logger(ctx).Error("Unable to unmarshal balances info for zone", "err", err)
 				return err
 			}
 			// Get denom dynamically
 			balance := queryRes.Balances.AmountOf(zoneInfo.HostDenom)
-			k.Logger(ctx).Info(fmt.Sprintf("\tBalance on %s is %s", zoneInfo.HostDenom, balance.String()))
+			icqk.Logger(ctx).Info(fmt.Sprintf("\tBalance on %s is %s", zoneInfo.HostDenom, balance.String()))
 
 			processAmount := balance.String() + zoneInfo.HostDenom
 			amt, err := sdk.ParseCoinNormalized(processAmount)
 			if err != nil {
-				k.Logger(ctx).Error(fmt.Sprintf("Could not process coin %s: %s", zoneInfo.HostDenom, err))
+				icqk.Logger(ctx).Error(fmt.Sprintf("Could not process coin %s: %s", zoneInfo.HostDenom, err))
 				return err
 			}
 			err = DelegateOnHost(ctx, zoneInfo, amt)
 			if err != nil {
-				k.Logger(ctx).Error(fmt.Sprintf("Did not stake %s on %s", processAmount, zoneInfo.ChainId))
+				icqk.Logger(ctx).Error(fmt.Sprintf("Did not stake %s on %s", processAmount, zoneInfo.ChainId))
 				return sdkerrors.Wrapf(types.ErrInvalidHostZone, "Couldn't stake %s on %s", processAmount, zoneInfo.ChainId)
 			} else {
-				k.Logger(ctx).Info(fmt.Sprintf("Successfully staked %s on %s", processAmount, zoneInfo.ChainId))
+				icqk.Logger(ctx).Info(fmt.Sprintf("Successfully staked %s on %s", processAmount, zoneInfo.ChainId))
 			}
 
 			ctx.EventManager().EmitEvents(sdk.Events{
@@ -85,6 +85,23 @@ func (k Keeper) ProcessDelegationStaking(ctx sdk.Context) {
 					sdk.NewAttribute("newAmountStaked", balance.String()),
 				),
 			})
+
+			// --- Update Undelegated Balance ---
+			hz := zoneInfo
+
+			da := hz.DelegationAccount
+			da.Balance = balance.Int64()
+			hz.DelegationAccount = da
+			k.SetHostZone(ctx, hz)
+
+			ctx.EventManager().EmitEvents(sdk.Events{
+				sdk.NewEvent(
+					sdk.EventTypeMessage,
+					// sdk.NewAttribute("totalUndelegatedBalance", balance.String()),
+					sdk.NewAttribute("totalUndelegatedBalance", balance.String()),
+				),
+			})
+			// ---------------------------------
 
 			return nil
 		}

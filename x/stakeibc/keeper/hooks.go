@@ -37,7 +37,7 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochIdentifier string, epochN
 				delegateAddress := delegateAccount.Address
 				// TODO(TEST-89): Set NewHeight relative to the most recent known gaia height (based on the LC)
 				// TODO(TEST-90): why do we have two gaia LCs?
-				timeoutHeight := clienttypes.NewHeight(0, 10000)
+				timeoutHeight := clienttypes.NewHeight(0, 1000000000000)
 				transferCoin := sdk.NewCoin(hostZone.GetIBCDenom(), sdk.NewInt(int64(depositRecord.Amount)))
 				goCtx := sdk.WrapSDKContext(ctx)
 
@@ -57,14 +57,14 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochIdentifier string, epochN
 		if epochNumber%delegateInterval == 0 {
 			k.ProcessDelegationStaking(ctx)
 		}
-		exchangeRateInterval := int64(k.GetParam(ctx, types.KeyExchangeRateInterval))
-		if epochNumber%exchangeRateInterval == 0 {
-			// TODO(TEST-98) Decide on sequencing / interval for exch rate updates; what are the edge cases?
-			k.IterateHostZones(ctx, k.UpdateDelegatedBalance)
-			k.IterateHostZones(ctx, k.UpdateUndelegatedBalance)
-			// TODO(TEST-97) update only when balances, delegatedBalances and stAsset supply are results from the same block
-			k.IterateHostZones(ctx, k.UpdateExchangeRate)
-		}
+		// exchangeRateInterval := int64(k.GetParam(ctx, types.KeyExchangeRateInterval))
+		// if epochNumber%exchangeRateInterval == 0 && (epochNumber > 175) {
+		// TODO(TEST-98) Decide on sequencing / interval for exch rate updates; what are the edge cases?
+		// k.IterateHostZones(ctx, k.UpdateDelegatedBalance)
+		// k.IterateHostZones(ctx, k.UpdateUndelegatedBalance)
+		// TODO(TEST-97) update only when balances, delegatedBalances and stAsset supply are results from the same block
+		// k.IterateHostZones(ctx, k.UpdateExchangeRate)
+		// }
 
 		// process withdrawals
 		// TODO(TEST-88): restructure this to be more efficient, we should only have to loop
