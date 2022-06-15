@@ -21,7 +21,7 @@ BASE_RUN=build/strided
 
 ST_CMDS=()
 for docker_name in "${STRIDE_DOCKER_NAMES[@]}"; do
-  ST_CMDS+=( "$BASE_RUN --home /stride/.strided" )
+  ST_CMDS+=( "$BASE_RUN --home ${STATE}/$docker_name" )
 done
 main_cmd=${ST_CMDS[$MAIN_ID]}
 
