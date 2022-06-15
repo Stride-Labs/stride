@@ -18,8 +18,6 @@ USER stride
 RUN strided init test
 EXPOSE 1317
 
-# new stuff
-
 COPY --chown=stride scripts/testnet/state/strideTestNode1/ /stride/.strided/ 
 
 ENTRYPOINT ["strided"]
