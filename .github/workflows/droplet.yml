@@ -35,9 +35,9 @@ jobs:
         with:
           version: '270.0.0'
           service_account_key: ${{ secrets.GCP_KEY }} 
-        run: gcloud auth configure-docker
       - 
         name: Publish to GCP
         run: |
+          gcloud auth configure-docker
           docker tag stridelabs/internal:droplet_node1 gcr.io/stride-nodes/testnet:droplet_node1
           docker push gcr.io/stride-nodes/testnet:droplet_node1
