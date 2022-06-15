@@ -32,7 +32,7 @@ jobs:
         run: |
           gcloud auth configure-docker
       -
-        name: Build and push to docker
+        name: Construct Node1 Images
         uses: docker/build-push-action@v3
         with:
           context: "{{defaultContext}}"
@@ -42,6 +42,39 @@ jobs:
           tags: |
             stridelabs/internal:droplet_node1 
             gcr.io/stride-nodes/testnet:droplet_node1
+      -
+        name: Construct Node2 Images
+        uses: docker/build-push-action@v3
+        with:
+          context: "{{defaultContext}}"
+          file: "scripts/testnet/dockerfiles/Dockerfile.node2"
+          push: true
+          platforms: linux/amd64
+          tags: |
+            stridelabs/internal:droplet_node2 
+            gcr.io/stride-nodes/testnet:droplet_node2
+      -
+        name: Construct Node3 Images
+        uses: docker/build-push-action@v3
+        with:
+          context: "{{defaultContext}}"
+          file: "scripts/testnet/dockerfiles/Dockerfile.node3"
+          push: true
+          platforms: linux/amd64
+          tags: |
+            stridelabs/internal:droplet_node3 
+            gcr.io/stride-nodes/testnet:droplet_node3
+      -
+        name: Construct Seed Images
+        uses: docker/build-push-action@v3
+        with:
+          context: "{{defaultContext}}"
+          file: "scripts/testnet/dockerfiles/Dockerfile.seed"
+          push: true
+          platforms: linux/amd64
+          tags: |
+            stridelabs/internal:droplet_seed 
+            gcr.io/stride-nodes/testnet:droplet_seed
       # -
       #   name: Publish to GCP
       #   run: |
