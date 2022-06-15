@@ -3,14 +3,6 @@ SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 # import dependencies
 source ${SCRIPT_DIR}/testnet_vars.sh
 
-# run through init args, if needed
-while getopts bd flag; do
-    case "${flag}" in
-        b) ignite chain init ;;
-        d) sh $SCRIPT_DIR/../docker_build.sh -s ;;
-    esac
-done
-
 echo "Cleaning state"
 rm -rf $STATE
 mkdir $STATE
