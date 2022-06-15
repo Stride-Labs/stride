@@ -1,5 +1,8 @@
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
+echo "================================DIRECTORY====================================="
+echo $SCRIPT_DIR
+
 STATE=$SCRIPT_DIR/state
 STRIDE_CHAIN=droplet
 STRIDE_DOCKER_NAMES=(strideTestNode1 strideTestNode2 strideTestNode3 strideTestSeed)

@@ -42,6 +42,11 @@ jobs:
           platforms: linux/amd64
           tags: stridezone:stride
 
+      - name: Initialize Stride State
+        shell: bash
+        run: setup_testnet_state.sh
+        working-directory: scripts/testnet
+
       # - name: Construct Test Images
       #   uses: docker/build-push-action@v3
       #   with:
