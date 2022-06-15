@@ -8,8 +8,6 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	distributionTypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
-	stakingTypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 )
 
 func (k Keeper) RedeemStake(goCtx context.Context, msg *types.MsgRedeemStake) (*types.MsgRedeemStakeResponse, error) {
@@ -34,7 +32,6 @@ func (k Keeper) RedeemStake(goCtx context.Context, msg *types.MsgRedeemStake) (*
 		return nil, err
 	}
 	delegationAccount := hostZone.GetDelegationAccount()
-	withdrawAccount := hostZone.GetWithdrawalAccount()
 	connectionId := hostZone.GetConnectionId()
 	
 	// Safety checks
@@ -70,27 +67,19 @@ func (k Keeper) RedeemStake(goCtx context.Context, msg *types.MsgRedeemStake) (*
 	}
 	native_tokens := inCoin.Amount.ToDec().Mul(rate).TruncateInt()
 	outCoin := sdk.NewCoin(hostZone.HostDenom, native_tokens)
+	_ = outCoin
 
 	// Select validators for unbonding
 	// TODO(TEST-39): Implement validator selection
 	validator_address := "cosmosvaloper19e7sugzt8zaamk2wyydzgmg9n3ysylg6na6k6e"  // gval2
+	_ = validator_address
 
 	// Construct the transaction. Note, this transaction must be atomically executed.
+	// TODO(TEST-5): Add messages to redeem stake
 	var msgs []sdk.Msg
-	// 1. MsgSetWithdrawalAddress
-	// TODO(TEST-90): fix this hack
-	// stride1uk4ze0x4nvh4fk0xm4jdud58eqn4yxhrt52vv7
-	// cosmos1uk4ze0x4nvh4fk0xm4jdud58eqn4yxhrgl2scj
-	// strided q bank balances stride1uk4ze0x4nvh4fk0xm4jdud58eqn4yxhrt52vv7
-	// strided tx stakeibc redeem-stake 1000 stuatom cosmos1uk4ze0x4nvh4fk0xm4jdud58eqn4yxhrgl2scj --from val1 --chain-id STRIDE --keyring-backend test --home /stride/.strided
-	setWithdrawAddressUser := &distributionTypes.MsgSetWithdrawAddress{DelegatorAddress: delegationAccount.GetAddress(), WithdrawAddress: msg.Receiver}
-	msgs = append(msgs, setWithdrawAddressUser)
-	// 2. MsgUndelegate
-	undelegateToUser := &stakingTypes.MsgUndelegate{DelegatorAddress: delegationAccount.GetAddress(), ValidatorAddress: validator_address, Amount: outCoin}
-	msgs = append(msgs, undelegateToUser)
-	// 3. MsgSetWithdrawalAddress
-	setWithdrawAddressIca := &distributionTypes.MsgSetWithdrawAddress{DelegatorAddress: delegationAccount.GetAddress(), WithdrawAddress: withdrawAccount.GetAddress()}
-	msgs = append(msgs, setWithdrawAddressIca)
+	// TODO(TEST-5)
+	// Implement record keeping logic!
+	
 	// Send the ICA transaction
 	k.SubmitTxs(ctx, connectionId, msgs, *delegationAccount)
 
