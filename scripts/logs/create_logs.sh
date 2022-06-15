@@ -8,3 +8,8 @@ docker compose logs stride1 >> $SCRIPT_DIR/stride.log
 docker compose logs gaia1 >> $SCRIPT_DIR/gaia.log
 docker compose logs icq >> $SCRIPT_DIR/icq.log
 docker compose logs hermes >> $SCRIPT_DIR/hermes.log
+
+# transactions logs
+SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+$STR1_EXEC strided q txs --events message.module=interchainquery --limit=100000 > $SCRIPT_DIR/MsgSubmitQueryResponse.log
+$STR1_EXEC strided q txs --events message.module=stakeibc --limit=100000 > $SCRIPT_DIR/stakeibc.log
