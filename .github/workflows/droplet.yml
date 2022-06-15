@@ -61,7 +61,7 @@ jobs:
       - name: Construct Test Images
         uses: docker/build-push-action@v3
         with:
-          context: "{{defaultContext}}"
+          context: "./"
           file: "scripts/testnet/dockerfiles/Dockerfile.node1"
           push: true
           platforms: linux/amd64
