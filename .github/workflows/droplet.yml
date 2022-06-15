@@ -7,7 +7,8 @@ jobs:
   build-droplet-docker:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout
+        uses: actions/checkout@v3
 
       # - name: Set up QEMU
       #   uses: docker/setup-qemu-action@v2
@@ -49,19 +50,10 @@ jobs:
         shell: bash
         run: ./scripts/testnet/setup_testnet_state.sh
 
-      - name: LS Testnet
-        run: ls ./scripts/testnet
-
-      - name: LS State
-        run: ls ./scripts/testnet/state
-
-      - name: LS Node
-        run: ls ./scripts/testnet/state/strideTestNode1
-
       - name: Construct Test Images
         uses: docker/build-push-action@v3
         with:
-          context: "./"
+          context: .
           file: "scripts/testnet/dockerfiles/Dockerfile.node1"
           push: true
           platforms: linux/amd64
