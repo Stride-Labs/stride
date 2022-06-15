@@ -21,13 +21,7 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
       -
-        name: PWD
-        run: pwd
-      -
-        name: LS
-        run: ls
-      -
-        name: Build and push
+        name: Build and push to docker
         uses: docker/build-push-action@v3
         with:
           context: "{{defaultContext}}"
@@ -35,3 +29,15 @@ jobs:
           push: true
           platforms: linux/amd64
           tags: stridelabs/internal:droplet_node1
+      - 
+        name: Setup gcloud CLI
+        uses: GoogleCloudPlatform/github-actions/setup-gcloud@master
+        with:
+          version: '270.0.0'
+          service_account_key: ${{ secrets.GCP_KEY }} 
+        run: gcloud auth configure-docker
+      - 
+        name: Publish to GCP
+        run: |
+          docker tag stridelabs/internal:droplet_node1 gcr.io/stride-nodes/testnet:droplet_node1
+          docker push gcr.io/stride-nodes/testnet:droplet_node1

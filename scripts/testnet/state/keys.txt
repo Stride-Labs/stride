@@ -1,48 +1,36 @@
 
 - name: val1
   type: local
-  address: stride1exklmyz8x883ugas9txvvevyx4f0dnta2dqt3p
-  pubkey: '{"@type":"/cosmos.crypto.secp256k1.PubKey","key":"AsO+gXU4G8O0vih+ihEI8XH6MvhCxnjQoF3f8FfbQx4s"}'
+  address: stride1gdgw9mepapjwslswwml4ru6fj8vynyzq0eq62x
+  pubkey: '{"@type":"/cosmos.crypto.secp256k1.PubKey","key":"Ag1OLrpBNvH6hWcQ4nh0Nhj7bf/7DuGw4uvkriTtNryH"}'
   mnemonic: ""
 
 
 **Important** write this mnemonic phrase in a safe place.
 It is the only way to recover your account if you ever forget your password.
 
-drastic stamp stone enjoy lake oak orphan spray drama trash police kiwi tonight fame turkey record bounce exist can chunk action artwork agent impulse
+liar height field predict stem season garlic carry foot reduce control nice immense try security inherit join erosion donate mule kite uniform violin replace
 
 - name: val2
   type: local
-  address: stride1hqn5r835ktw2nlxmyxp2pqklhjcakc8jke8ygm
-  pubkey: '{"@type":"/cosmos.crypto.secp256k1.PubKey","key":"Atz6gCSXn6jMoEaZ+24JBHW70BkcXcGBv8uzdmAxQxuk"}'
+  address: stride1wsawqzekcvdnjzjawnxkysw6jxpc9x7zg9mgzk
+  pubkey: '{"@type":"/cosmos.crypto.secp256k1.PubKey","key":"A2rp4pggAcIYfpSBYgC2Q8yaoXGw5ibjZK5TxecimuQ+"}'
   mnemonic: ""
 
 
 **Important** write this mnemonic phrase in a safe place.
 It is the only way to recover your account if you ever forget your password.
 
-lobster dove keep mistake indicate buzz olympic direct tissue will share file step appear before turkey outside diesel guide ignore crunch father fee reward
+whisper trim embrace roast fat kiss warfare assume rich magnet subject add feel apart idea broom scout please color pencil delay impact impact soup
 
 - name: val3
   type: local
-  address: stride1adhd5w76cmjtejt06zs2k0qav4nnhe5xgr8a9y
-  pubkey: '{"@type":"/cosmos.crypto.secp256k1.PubKey","key":"AyJLRAbaaKV2MS63+RLJHBmgHaLGDm45Ku+cCT9DD6c+"}'
+  address: stride1c57qhcjp4pd2sprj8rndnk24v04tr69yzwg6t4
+  pubkey: '{"@type":"/cosmos.crypto.secp256k1.PubKey","key":"A94exy1X36oP3Mye6HQucJ2tfVS+3u48rDceu55DAD6q"}'
   mnemonic: ""
 
 
 **Important** write this mnemonic phrase in a safe place.
 It is the only way to recover your account if you ever forget your password.
 
-piano deputy fog huge grit mother exhibit armor panther spider style exotic agent track alone canoe train vault rebel wide such space smooth depart
-
-- name: valseed
-  type: local
-  address: stride1ylnzzfgx7vgvptlge7a6qq52faa757h3rw7698
-  pubkey: '{"@type":"/cosmos.crypto.secp256k1.PubKey","key":"AuGVZOHntR3O2D45TWUIotTAQmv1JH1/91i/OkddF7DR"}'
-  mnemonic: ""
-
-
-**Important** write this mnemonic phrase in a safe place.
-It is the only way to recover your account if you ever forget your password.
-
-unusual muscle giraffe govern bottom mixed include ancient void sample rib design size copper kick foot drift notice piece trip general stairs ride receive
+reject excess lazy clutch crop primary alpha dad guess apple gift page effort abstract cement judge balance donkey they run olympic link airport swallow
