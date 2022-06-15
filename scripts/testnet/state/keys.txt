@@ -1,0 +1,48 @@
+
+- name: val1
+  type: local
+  address: stride1exklmyz8x883ugas9txvvevyx4f0dnta2dqt3p
+  pubkey: '{"@type":"/cosmos.crypto.secp256k1.PubKey","key":"AsO+gXU4G8O0vih+ihEI8XH6MvhCxnjQoF3f8FfbQx4s"}'
+  mnemonic: ""
+
+
+**Important** write this mnemonic phrase in a safe place.
+It is the only way to recover your account if you ever forget your password.
+
+drastic stamp stone enjoy lake oak orphan spray drama trash police kiwi tonight fame turkey record bounce exist can chunk action artwork agent impulse
+
+- name: val2
+  type: local
+  address: stride1hqn5r835ktw2nlxmyxp2pqklhjcakc8jke8ygm
+  pubkey: '{"@type":"/cosmos.crypto.secp256k1.PubKey","key":"Atz6gCSXn6jMoEaZ+24JBHW70BkcXcGBv8uzdmAxQxuk"}'
+  mnemonic: ""
+
+
+**Important** write this mnemonic phrase in a safe place.
+It is the only way to recover your account if you ever forget your password.
+
+lobster dove keep mistake indicate buzz olympic direct tissue will share file step appear before turkey outside diesel guide ignore crunch father fee reward
+
+- name: val3
+  type: local
+  address: stride1adhd5w76cmjtejt06zs2k0qav4nnhe5xgr8a9y
+  pubkey: '{"@type":"/cosmos.crypto.secp256k1.PubKey","key":"AyJLRAbaaKV2MS63+RLJHBmgHaLGDm45Ku+cCT9DD6c+"}'
+  mnemonic: ""
+
+
+**Important** write this mnemonic phrase in a safe place.
+It is the only way to recover your account if you ever forget your password.
+
+piano deputy fog huge grit mother exhibit armor panther spider style exotic agent track alone canoe train vault rebel wide such space smooth depart
+
+- name: valseed
+  type: local
+  address: stride1ylnzzfgx7vgvptlge7a6qq52faa757h3rw7698
+  pubkey: '{"@type":"/cosmos.crypto.secp256k1.PubKey","key":"AuGVZOHntR3O2D45TWUIotTAQmv1JH1/91i/OkddF7DR"}'
+  mnemonic: ""
+
+
+**Important** write this mnemonic phrase in a safe place.
+It is the only way to recover your account if you ever forget your password.
+
+unusual muscle giraffe govern bottom mixed include ancient void sample rib design size copper kick foot drift notice piece trip general stairs ride receive
