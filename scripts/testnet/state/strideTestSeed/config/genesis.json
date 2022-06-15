@@ -1,5 +1,5 @@
 {
-  "genesis_time": "2022-06-14T23:28:19.298364Z",
+  "genesis_time": "2022-06-15T02:35:45.261981Z",
   "chain_id": "droplet",
   "initial_height": "1",
   "consensus_params": {
@@ -30,32 +30,14 @@
         "sig_verify_cost_ed25519": "590",
         "sig_verify_cost_secp256k1": "1000"
       },
-      "accounts": [
-        {
-          "@type": "/cosmos.auth.v1beta1.BaseAccount",
-          "address": "stride1ylnzzfgx7vgvptlge7a6qq52faa757h3rw7698",
-          "pub_key": null,
-          "account_number": "0",
-          "sequence": "0"
-        }
-      ]
+      "accounts": []
     },
     "bank": {
       "params": {
         "send_enabled": [],
         "default_send_enabled": true
       },
-      "balances": [
-        {
-          "address": "stride1ylnzzfgx7vgvptlge7a6qq52faa757h3rw7698",
-          "coins": [
-            {
-              "denom": "ustrd",
-              "amount": "500000000"
-            }
-          ]
-        }
-      ],
+      "balances": [],
       "supply": [],
       "denom_metadata": []
     },

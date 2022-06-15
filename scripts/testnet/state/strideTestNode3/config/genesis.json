@@ -1,5 +1,5 @@
 {
-  "genesis_time": "2022-06-14T23:28:18.019884Z",
+  "genesis_time": "2022-06-15T02:35:44.036693Z",
   "chain_id": "droplet",
   "initial_height": "1",
   "consensus_params": {
@@ -33,7 +33,7 @@
       "accounts": [
         {
           "@type": "/cosmos.auth.v1beta1.BaseAccount",
-          "address": "stride1adhd5w76cmjtejt06zs2k0qav4nnhe5xgr8a9y",
+          "address": "stride1c57qhcjp4pd2sprj8rndnk24v04tr69yzwg6t4",
           "pub_key": null,
           "account_number": "0",
           "sequence": "0"
@@ -47,7 +47,7 @@
       },
       "balances": [
         {
-          "address": "stride1adhd5w76cmjtejt06zs2k0qav4nnhe5xgr8a9y",
+          "address": "stride1c57qhcjp4pd2sprj8rndnk24v04tr69yzwg6t4",
           "coins": [
             {
               "denom": "ustrd",
