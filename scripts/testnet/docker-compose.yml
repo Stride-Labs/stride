@@ -3,6 +3,7 @@ services:
   strideTestNode1:
     image: stridelabs/internal:droplet_node1
     hostname: stride
+    platform: linux/amd64
     volumes:
       - ./scripts/testnet/state/strideTestNode1:/stride/.strided
     build:
@@ -12,6 +13,7 @@ services:
     # image: stridezone/stride:latest
     image: stridelabs/internal:droplet_node2
     hostname: stride
+    platform: linux/amd64
     volumes:
       - ./scripts/testnet/state/strideTestNode2:/stride/.strided
     build:
@@ -21,6 +23,7 @@ services:
     # image: stridezone/stride:latest
     image: stridelabs/internal:droplet_node3
     hostname: stride
+    platform: linux/amd64
     volumes:
       - ./scripts/testnet/state/strideTestNode3:/stride/.strided
     build:
@@ -30,6 +33,7 @@ services:
     # image: stridezone/stride:latest
     image: stridelabs/internal:droplet_seed
     hostname: stride
+    platform: linux/amd64
     volumes:
       - ./scripts/testnet/state/strideTestSeed:/stride/.strided
     build:
