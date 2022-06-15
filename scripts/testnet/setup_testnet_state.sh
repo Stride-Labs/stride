@@ -75,20 +75,9 @@ for i in ${!STRIDE_DOCKER_NAMES[@]}; do
 done
 
 # make sure all Stride chains have the same genesis
-for i in "${!STRIDE_CHAINS[@]}"; do
+for i in "${!STRIDE_DOCKER_NAMES[@]}"; do
     if [ $i -ne $MAIN_ID ]
     then
         cp ${STATE}/${main_node}/config/genesis.json ${STATE}/${STRIDE_DOCKER_NAMES[i]}/config/genesis.json
     fi
 done
-
-
-# docker tag stridezone:stride stridelabs/internal:droplet_base 
-# docker push stridelabs/internal:droplet_base 
-
-# docker pull stridelabs/internal:droplet_node1
-
-# docker buildx build --platform linux/amd64 -t stridelabs/internal:droplet_node1 -f dockerfiles/Dockerfile.node1 .
-
-# docker compose build strideTestNode1 strideTestNode2 strideTestNode3 strideTestSeed
-# docker compose push strideTestNode1 strideTestNode2 strideTestNode3 strideTestSeed

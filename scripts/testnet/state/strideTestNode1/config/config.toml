@@ -212,7 +212,7 @@ external_address = ""
 seeds = ""
 
 # Comma separated list of nodes to keep persistent connections to
-persistent_peers = "8fba17d7af4dcbfb179533c45191261d9c27f109@stride_3.droplet.stridelabs.co:26656,c117d5d5d6ee7bc656b63dcb47b531b25942445c@stride_2.droplet.stridelabs.co:26656,"
+persistent_peers = "d60939ef3675b508f22ac9c4803c5b9cea60e71a@stride_3.droplet.stridelabs.co:26656,632cfb129f8f9e49ffba0ad42e3ad03ee7380f07@stride_2.droplet.stridelabs.co:26656,"
 
 # UPNP port forwarding
 upnp = false
