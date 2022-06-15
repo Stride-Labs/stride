@@ -34,18 +34,24 @@ jobs:
           gcloud auth configure-docker
 
       - name: Create Stride Base Image
-        run: docker build --tag stridezone:stride -f Dockerfile.stride .
-
-      - name: Construct Test Images
         uses: docker/build-push-action@v3
         with:
           context: "{{defaultContext}}"
-          file: "scripts/testnet/dockerfiles/Dockerfile.node1"
-          push: true
+          file: "Dockerfile.stride"
+          load: true
           platforms: linux/amd64
-          tags: |
-            stridelabs/internal:test-droplet-sp
-            gcr.io/stride-nodes/testnet:test-droplet-sp
+          tags: stridezone:stride
+
+      # - name: Construct Test Images
+      #   uses: docker/build-push-action@v3
+      #   with:
+      #     context: "{{defaultContext}}"
+      #     file: "scripts/testnet/dockerfiles/Dockerfile.node1"
+      #     push: true
+      #     platforms: linux/amd64
+      #     tags: |
+      #       stridelabs/internal:test-droplet-sp
+      #       gcr.io/stride-nodes/testnet:test-droplet-sp
       # -
       #   name: Construct Node1 Images
       #   uses: docker/build-push-action@v3
