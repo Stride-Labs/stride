@@ -49,6 +49,15 @@ jobs:
         shell: bash
         run: ./scripts/testnet/setup_testnet_state.sh
 
+      - name: LS Testnet
+        run: ls ./scripts/testnet
+
+      - name: LS State
+        run: ls ./scripts/testnet/state
+
+      - name: LS Node
+        run: ls ./scripts/testnet/strideTestNode1
+
       - name: Construct Test Images
         uses: docker/build-push-action@v3
         with:
