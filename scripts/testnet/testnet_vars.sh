@@ -20,7 +20,7 @@ main_node=${STRIDE_DOCKER_NAMES[$MAIN_ID]}
 seed_node=${STRIDE_DOCKER_NAMES[$SEED_ID]}
 PORT_ID=26656
 
-BASE_RUN="docker run --rm stridezone:stride strided"
+BASE_RUN="docker run --rm stridezone:stride"
 
 ST_CMDS=()
 for docker_name in "${STRIDE_DOCKER_NAMES[@]}"; do
