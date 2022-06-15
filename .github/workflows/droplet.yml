@@ -21,10 +21,16 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
       -
+        name: PWD
+        run: pwd
+      -
+        name: LS
+        run: ls
+      -
         name: Build and push
         uses: docker/build-push-action@v3
         with:
-          context: "{{defaultContext}}:scripts/testnet/dockerfiles"
-          file: "Dockerfile.node1"
+          context: "{{defaultContext}}:scripts/testnet/"
+          file: "dockerfiles/Dockerfile.node1"
           push: true
           tags: droplet_node1
