@@ -20,7 +20,7 @@ for i in ${!STRIDE_DOCKER_NAMES[@]}; do
     moniker=${STRIDE_MONIKERS[i]}
     val_acct=${VAL_ACCTS[i]}
     st_cmd=${ST_CMDS[i]}
-    $st_cmd init $moniker --chain-id $STRIDE_CHAIN --overwrite 2> /dev/null
+    $st_cmd init $moniker --chain-id $STRIDE_CHAIN --overwrite #2> /dev/null
     echo "================================================="
     pwd
     ls
