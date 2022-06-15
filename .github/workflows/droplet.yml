@@ -30,7 +30,7 @@ jobs:
         name: Build and push
         uses: docker/build-push-action@v3
         with:
-          context: "{{defaultContext}}:scripts/testnet/"
+          context: "{{defaultContext}}"
           file: "dockerfiles/Dockerfile.node1"
           push: true
           platforms: linux/amd64
