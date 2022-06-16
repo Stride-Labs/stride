@@ -290,8 +290,7 @@ func (k Keeper) ProcessUpdateDelegatedBalance(ctx sdk.Context) {
 			}
 
 			// Add up delegations across validators
-			hz := zoneInfo
-			delegatorSum := sdk.NewCoin(hz.HostDenom, sdk.ZeroInt())
+			delegatorSum := sdk.NewCoin(zoneInfo.HostDenom, sdk.ZeroInt())
 			for _, delegation := range response.DelegationResponses {
 				delegatorSum = delegatorSum.Add(delegation.Balance)
 				if err != nil {
@@ -299,6 +298,7 @@ func (k Keeper) ProcessUpdateDelegatedBalance(ctx sdk.Context) {
 				}
 			}
 			// --- Update Undelegated Balance ---
+			hz, _ := k.GetHostZone(ctx, zoneInfo.ChainId)
 			da := hz.DelegationAccount
 			da.DelegatedBalance = delegatorSum.Amount.Int64()
 			hz.DelegationAccount = da
@@ -326,46 +326,50 @@ func (k Keeper) ProcessUpdateDelegatedBalance(ctx sdk.Context) {
 
 // Update the redemption rate using values of delegatedBalances, balances and stAsset supply
 // TODO(TEST-97) add safety logic that checks balance, delegatedBalance and stAsset supply's block_height_updated are all equal
-func (k Keeper) UpdateExchangeRate(ctx sdk.Context, index int64, hostZone types.HostZone) error {
-	_ = ctx
+func (k Keeper) ProcessUpdateExchangeRate(ctx sdk.Context) {
 
-	// Assets: native asset balances on delegation account + staked
-	delegatedBalance := hostZone.GetDelegationAccount().DelegatedBalance
-	unDelegatedBalance := hostZone.GetDelegationAccount().Balance
-	assetBalance := delegatedBalance + unDelegatedBalance
+	updateExchRate := func(ctx sdk.Context, index int64, zoneInfo types.HostZone) error {
+		k.Logger(ctx).Info(fmt.Sprintf("\tProcessing exchangeRate for %s", zoneInfo.ChainId))
+		// Assets: native asset balances on delegation account + staked
+		delegatedBalance := zoneInfo.GetDelegationAccount().DelegatedBalance
+		unDelegatedBalance := zoneInfo.GetDelegationAccount().Balance
+		assetBalance := delegatedBalance + unDelegatedBalance
 
-	// Claims: stAsset supply
-	stAssetSupply := k.bankKeeper.GetSupply(ctx, hostZone.IBCDenom)
+		// Claims: stAsset supply
+		stAssetSupply := k.bankKeeper.GetSupply(ctx, "st"+zoneInfo.HostDenom)
 
-	// Sanity & safety check: if either num or denom are 0, do NOT update the exchange rate
-	if assetBalance == int64(0) || stAssetSupply.Amount.Int64() == int64(0) {
-		ctx.EventManager().EmitEvents(sdk.Events{
-			sdk.NewEvent(
-				sdk.EventTypeMessage,
-				sdk.NewAttribute("delegatedBalance", strconv.FormatInt(delegatedBalance, 10)),
-				sdk.NewAttribute("unDelegatedBalance", strconv.FormatInt(unDelegatedBalance, 10)),
-				sdk.NewAttribute("stAssetBalance", stAssetSupply.String()),
-			),
-		})
-		return errors.New("Exchange rate calculation error: ")
-	} else {
-		// ExchRate = Assets / Claims
-		redemptionRate := sdk.NewDec(assetBalance).Quo(stAssetSupply.Amount.ToDec())
-		// Write ExchRate to state
-		hostZone.LastRedemptionRate = hostZone.RedemptionRate
-		hostZone.RedemptionRate = redemptionRate
-		k.SetHostZone(ctx, hostZone)
+		// Sanity & safety check: if either num or denom are 0, do NOT update the exchange rate
+		if assetBalance == int64(0) || stAssetSupply.Amount.Int64() == int64(0) {
+			ctx.EventManager().EmitEvents(sdk.Events{
+				sdk.NewEvent(
+					sdk.EventTypeMessage,
+					sdk.NewAttribute("delegatedBalance", strconv.FormatInt(delegatedBalance, 10)),
+					sdk.NewAttribute("unDelegatedBalance", strconv.FormatInt(unDelegatedBalance, 10)),
+					sdk.NewAttribute("stAssetBalance", stAssetSupply.String()),
+				),
+			})
+			return errors.New("Exchange rate calculation error: ")
+		} else {
+			// ExchRate = Assets / Claims
+			redemptionRate := sdk.NewDec(assetBalance).Quo(stAssetSupply.Amount.ToDec())
+			// Write ExchRate to state
+			hz, _ := k.GetHostZone(ctx, zoneInfo.ChainId)
+			hz.LastRedemptionRate = hz.RedemptionRate
+			hz.RedemptionRate = redemptionRate
+			k.SetHostZone(ctx, hz)
 
-		ctx.EventManager().EmitEvents(sdk.Events{
-			sdk.NewEvent(
-				sdk.EventTypeMessage,
-				sdk.NewAttribute("lastRedemptionRate", redemptionRate.String()),
-				sdk.NewAttribute("newRedemptionRate", hostZone.LastRedemptionRate.String()),
-			),
-		})
+			ctx.EventManager().EmitEvents(sdk.Events{
+				sdk.NewEvent(
+					sdk.EventTypeMessage,
+					sdk.NewAttribute("lastRedemptionRate", redemptionRate.String()),
+					sdk.NewAttribute("newRedemptionRate", hz.LastRedemptionRate.String()),
+				),
+			})
+		}
+		return nil
 	}
 
-	return nil
+	k.IterateHostZones(ctx, updateExchRate)
 }
 
 // SubmitTxs submits an ICA transaction containing multiple messages

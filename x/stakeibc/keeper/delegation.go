@@ -87,8 +87,7 @@ func (k Keeper) ProcessDelegationStaking(ctx sdk.Context) {
 			})
 
 			// --- Update Undelegated Balance ---
-			hz := zoneInfo
-
+			hz, _ := k.GetHostZone(ctx, zoneInfo.ChainId)
 			da := hz.DelegationAccount
 			da.Balance = balance.Int64()
 			hz.DelegationAccount = da

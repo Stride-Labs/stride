@@ -58,46 +58,15 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochIdentifier string, epochN
 			k.ProcessDelegationStaking(ctx)
 		}
 		exchangeRateInterval := int64(k.GetParam(ctx, types.KeyExchangeRateInterval))
-		if epochNumber%exchangeRateInterval == 0 {
-			// TODO(TEST-98) Decide on sequencing / interval for exch rate updates; what are the edge cases?
-			// k.IterateHostZones(ctx, k.UpdateDelegatedBalance)
-			// k.IterateHostZones(ctx, k.UpdateUndelegatedBalance)
-			k.ProcessUpdateDelegatedBalance(ctx)
-			// k.ProcessUpdateUndelegatedBalance(ctx)
+		if epochNumber%exchangeRateInterval == 3 { // allow a few blocks from UpdateUndelegatedBal to avoid conflicts
 			// TODO(TEST-97) update only when balances, delegatedBalances and stAsset supply are results from the same block
-			// k.IterateHostZones(ctx, k.UpdateExchangeRate)
+			k.ProcessUpdateDelegatedBalance(ctx)
+		}
+		if epochNumber%exchangeRateInterval == 6 && (epochNumber > 100) { // allow a few blocks from UpdateDelegatedBal to avoid conflicts & wait until chain has registered zones to calc exch rate
+			// TODO(TEST-97) update only when balances, delegatedBalances and stAsset supply are results from the same block
+			k.ProcessUpdateExchangeRate(ctx)
 		}
 
-		// process withdrawals
-		// TODO(TEST-88): restructure this to be more efficient, we should only have to loop
-		// over host zones once
-		// reinvestInterval := int64(k.GetParam(ctx, types.KeyReinvestInterval))
-		// if epochNumber%reinvestInterval == 0 {
-		// 	icaReinvest := func(index int64, zoneInfo types.HostZone) (stop bool) {
-		// 		// Verify the delegation ICA is registered
-		// 		delegationIca := zoneInfo.GetDelegationAccount()
-		// 		if delegationIca == nil || delegationIca.Address == "" {
-		// 			k.Logger(ctx).Error("Zone %s is missing a delegation address!", zoneInfo.ChainId)
-		// 			return true
-		// 		}
-		// 		withdrawIca := zoneInfo.GetWithdrawalAccount()
-		// 		if withdrawIca == nil || withdrawIca.Address == "" {
-		// 			k.Logger(ctx).Error("Zone %s is missing a withdrawal address!", zoneInfo.ChainId)
-		// 			return true
-		// 		}
-		// 		err := k.ReinvestRewards(ctx, zoneInfo)
-		// 		if err != nil {
-		// 			k.Logger(ctx).Error("Did not withdraw rewards on %s", zoneInfo.ChainId)
-		// 			return true
-		// 		} else {
-		// 			k.Logger(ctx).Info(fmt.Sprintf("Successfully withdrew rewards on %s", zoneInfo.ChainId))
-		// 		}
-		// 		return false
-		// 	}
-
-		// 	// Iterate the zones and apply icaReinvest
-		// 	k.IterateHostZones(ctx, icaReinvest)
-		// }
 	}
 }
 
