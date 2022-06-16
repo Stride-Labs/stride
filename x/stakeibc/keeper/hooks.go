@@ -62,7 +62,8 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochIdentifier string, epochN
 			// TODO(TEST-98) Decide on sequencing / interval for exch rate updates; what are the edge cases?
 			// k.IterateHostZones(ctx, k.UpdateDelegatedBalance)
 			// k.IterateHostZones(ctx, k.UpdateUndelegatedBalance)
-			k.ProcessUpdateUndelegatedBalance(ctx)
+			k.ProcessUpdateDelegatedBalance(ctx)
+			// k.ProcessUpdateUndelegatedBalance(ctx)
 			// TODO(TEST-97) update only when balances, delegatedBalances and stAsset supply are results from the same block
 			// k.IterateHostZones(ctx, k.UpdateExchangeRate)
 		}
