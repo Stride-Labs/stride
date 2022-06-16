@@ -57,14 +57,15 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochIdentifier string, epochN
 		if epochNumber%delegateInterval == 0 {
 			k.ProcessDelegationStaking(ctx)
 		}
-		// exchangeRateInterval := int64(k.GetParam(ctx, types.KeyExchangeRateInterval))
-		// if epochNumber%exchangeRateInterval == 0 && (epochNumber > 175) {
-		// TODO(TEST-98) Decide on sequencing / interval for exch rate updates; what are the edge cases?
-		// k.IterateHostZones(ctx, k.UpdateDelegatedBalance)
-		// k.IterateHostZones(ctx, k.UpdateUndelegatedBalance)
-		// TODO(TEST-97) update only when balances, delegatedBalances and stAsset supply are results from the same block
-		// k.IterateHostZones(ctx, k.UpdateExchangeRate)
-		// }
+		exchangeRateInterval := int64(k.GetParam(ctx, types.KeyExchangeRateInterval))
+		if epochNumber%exchangeRateInterval == 0 {
+			// TODO(TEST-98) Decide on sequencing / interval for exch rate updates; what are the edge cases?
+			// k.IterateHostZones(ctx, k.UpdateDelegatedBalance)
+			// k.IterateHostZones(ctx, k.UpdateUndelegatedBalance)
+			k.ProcessUpdateUndelegatedBalance(ctx)
+			// TODO(TEST-97) update only when balances, delegatedBalances and stAsset supply are results from the same block
+			// k.IterateHostZones(ctx, k.UpdateExchangeRate)
+		}
 
 		// process withdrawals
 		// TODO(TEST-88): restructure this to be more efficient, we should only have to loop
