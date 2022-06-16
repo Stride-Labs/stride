@@ -2,7 +2,7 @@ SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
 # import dependencies
 source ${SCRIPT_DIR}/testnet_vars.sh $1
-exit 1
+
 # run through init args, if needed
 while getopts b flag; do
     case "${flag}" in
@@ -14,12 +14,12 @@ echo "Cleaning state"
 rm -rf $STATE
 mkdir $STATE
 touch $STATE/keys.txt
-docker compose down
 
 # Init Stride
 #############################################################################################################################
 # fetch the stride node ids
 STRIDE_NODES=()
+SEED_NODE_ID=""
 # then, we initialize our chains 
 echo 'Initializing chains...'
 for i in ${!STRIDE_DOCKER_NAMES[@]}; do
@@ -29,6 +29,9 @@ for i in ${!STRIDE_DOCKER_NAMES[@]}; do
     st_cmd=${ST_CMDS[i]}
     $st_cmd init $moniker --chain-id $STRIDE_CHAIN --overwrite 2> /dev/null
     sed -i -E 's|"stake"|"ustrd"|g' "${STATE}/${node_name}/config/genesis.json"
+    # now we grab the relevant node id
+    end_name=${STRIDE_ENDPOINTS[i]}
+    node_id=$($st_cmd tendermint show-node-id)@$end_name:$PORT_ID
     if [ $i -ne $SEED_ID ]
     then
         # add VALidator account
@@ -39,11 +42,12 @@ for i in ${!STRIDE_DOCKER_NAMES[@]}; do
         $st_cmd add-genesis-account ${VAL_ADDR} $VAL_TOKENS
         # actually set this account as a validator
         yes | $st_cmd gentx $val_acct $STAKE_TOKENS --chain-id $STRIDE_CHAIN --keyring-backend test 2> /dev/null
+    else
+        SEED_NODE_ID=$node_id
     fi
-    # now we grab the relevant node id
-    end_name=${STRIDE_ENDPOINTS[i]}
-    node_id=$($st_cmd tendermint show-node-id)@$end_name:$PORT_ID
+   
     echo $node_id
+    echo "$node_name id: $node_id" >> $STATE/keys.txt
     STRIDE_NODES+=( $node_id )
     if [ $i -ne $MAIN_ID ] && [ $i -ne $SEED_ID ]
     then
@@ -70,6 +74,7 @@ for i in ${!STRIDE_DOCKER_NAMES[@]}; do
             peers="${STRIDE_NODES[j]},${peers}"
         fi
     done
+    sed -i -E "s|seeds = .*|seeds = \"$SEED_NODE_ID\"|g" "${STATE}/${node_name}/config/config.toml"
     sed -i -E "s|persistent_peers = .*|persistent_peers = \"$peers\"|g" "${STATE}/${node_name}/config/config.toml"
     sed -i -E "s|cors_allowed_origins = \[\]|cors_allowed_origins = [\"\*\"]|g" "${STATE}/${node_name}/config/config.toml"
     sed -i -E "s|127.0.0.1|0.0.0.0|g" "${STATE}/${node_name}/config/config.toml"

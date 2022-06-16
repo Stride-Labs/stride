@@ -1,0 +1,40 @@
+
+- name: val1
+  type: local
+  address: stride1qkktm6m82euvzfyuq697kwk9djnf8s263dvvsk
+  pubkey: '{"@type":"/cosmos.crypto.secp256k1.PubKey","key":"Aw4FI+JZ1CBtFiu37pSfb/geyzcj9UerPZbM640S51of"}'
+  mnemonic: ""
+
+
+**Important** write this mnemonic phrase in a safe place.
+It is the only way to recover your account if you ever forget your password.
+
+rabbit popular canvas cover develop latin six motion frequent jazz reunion okay when relax scout color pigeon mother quiz liberty scene have fashion wait
+strideTestNode1 id: 1b136e9cbf08ded561df8eea16e9a0010e7b100a@stride_1.tub.stridelabs.co:26656
+
+- name: val2
+  type: local
+  address: stride143apum75fa4ecllc5k8c8wagp3uggs4kda5cnm
+  pubkey: '{"@type":"/cosmos.crypto.secp256k1.PubKey","key":"A9tyDlkQVKz94dATuduQJ5pM2tgV5bXt5UWjBWFBEJz4"}'
+  mnemonic: ""
+
+
+**Important** write this mnemonic phrase in a safe place.
+It is the only way to recover your account if you ever forget your password.
+
+broccoli another bleak swift initial layer initial impulse blur divide cherry wrap episode warrior hair answer armed frown carbon present layer apology correct sphere
+strideTestNode2 id: 2f12cef75de85a3a1965feb526af725413b1a931@stride_2.tub.stridelabs.co:26656
+
+- name: val3
+  type: local
+  address: stride188a0fcgfvw6gzs05620m2vfy4nergnl5u33aw2
+  pubkey: '{"@type":"/cosmos.crypto.secp256k1.PubKey","key":"A1GkHr5iksSV9zWTyKWeQFol2b527GNik7fQyrfa2g6V"}'
+  mnemonic: ""
+
+
+**Important** write this mnemonic phrase in a safe place.
+It is the only way to recover your account if you ever forget your password.
+
+letter situate broom misery omit gentle wave eagle roof drastic eight execute worth shine circle industry young heavy attack collect bachelor swim myself ice
+strideTestNode3 id: 8fd49dc20ac8713090157741ebe2134e0c79a124@stride_3.tub.stridelabs.co:26656
+strideTestSeed id: 79e2af44df1af87518c9521e3032415b665d5d94@seed.tub.stridelabs.co:26656

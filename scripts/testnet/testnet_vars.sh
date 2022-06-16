@@ -6,22 +6,14 @@ then
     exit 1
 fi
 
-source $SCRIPT_DIR/$1/vars.sh
+echo "Setting up chain $1"
 
-if [ -z "${STRIDE_CHAIN}" ]
-then
-    echo "STRIDE_CHAIN not defined. Did you pass in your desired testnet? E.g. \"sh setup_testnet_state.sh droplet\""
-    exit 1
-fi
-
-echo "Setting up chain $STRIDE_CHAIN"
-
-STRIDE_CHAIN=droplet
+STRIDE_CHAIN=$1
 STATE=$SCRIPT_DIR/$STRIDE_CHAIN/state
 STRIDE_DOCKER_NAMES=(strideTestNode1 strideTestNode2 strideTestNode3 strideTestSeed)
 STRIDE_PEER_NAMES=(strideTestNode1 strideTestNode2 strideTestNode3)
 STRIDE_MONIKERS=(STRIDE_1 STRIDE_2 STRIDE_3 STRIDE_SEED)
-STRIDE_ENDPOINTS=(stride_1.droplet.stridelabs.co stride_2.droplet.stridelabs.co stride_3.droplet.stridelabs.co seed.droplet.stridelabs.co)
+STRIDE_ENDPOINTS=(stride_1.$STRIDE_CHAIN.stridelabs.co stride_2.$STRIDE_CHAIN.stridelabs.co stride_3.$STRIDE_CHAIN.stridelabs.co seed.$STRIDE_CHAIN.stridelabs.co)
 
 VAL_TOKENS=500000000ustrd
 STAKE_TOKENS=300000000ustrd
