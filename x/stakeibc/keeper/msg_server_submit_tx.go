@@ -3,6 +3,7 @@ package keeper
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strconv"
 
 	"github.com/Stride-Labs/stride/x/stakeibc/types"
@@ -170,7 +171,6 @@ func (k Keeper) ReinvestRewards(ctx sdk.Context, hostZone types.HostZone) error 
 // icq to read host delegated balance => update hostZone.delegationAccount.DelegatedBalance
 // TODO(TEST-97) add safety logic to query at specific block height (same as query height for delegated balances)
 func (k Keeper) UpdateDelegatedBalance(ctx sdk.Context, index int64, hostZone types.HostZone) error {
-	_ = ctx
 	// Fetch the relevant ICA
 	delegationAccount := hostZone.GetDelegationAccount()
 
@@ -194,9 +194,9 @@ func (k Keeper) UpdateDelegatedBalance(ctx sdk.Context, index int64, hostZone ty
 
 		// Set delegation account balance to ICQ result
 		da := hz.DelegationAccount
-		da.Balance = delegatorSum.Amount.Int64()
+		da.DelegatedBalance = delegatorSum.Amount.Int64()
 		hz.DelegationAccount = da
-		Keeper.SetHostZone(k, ctx, hz)
+		k.SetHostZone(ctx, hz)
 
 		ctx.EventManager().EmitEvents(sdk.Events{
 			sdk.NewEvent(
@@ -216,48 +216,55 @@ func (k Keeper) UpdateDelegatedBalance(ctx sdk.Context, index int64, hostZone ty
 
 // icq to read host delegation account undeleted balance => update hostZone.delegationAccount.Balance
 // TODO(TEST-97) add safety logic to query at specific block height (same as query height for delegated balances)
-func (k Keeper) UpdateUndelegatedBalance(ctx sdk.Context, index int64, hostZone types.HostZone) error {
-	_ = ctx
-	// Fetch the relevant ICA
-	delegationAccount := hostZone.GetDelegationAccount()
-
-	var cb icqkeeper.Callback = func(icqk icqkeeper.Keeper, ctx sdk.Context, args []byte, query icqtypes.Query) error {
-
-		queryRes := bankTypes.QueryAllBalancesResponse{}
-		err := k.cdc.Unmarshal(args, &queryRes)
-		if err != nil {
-			k.Logger(ctx).Error("Unable to unmarshal balances info for zone", "err", err)
-			return err
+func (k Keeper) ProcessUpdateUndelegatedBalance(ctx sdk.Context) {
+	updateUndelegatedBal := func(ctx sdk.Context, index int64, zoneInfo types.HostZone) error {
+		// Verify the delegation ICA is registered
+		k.Logger(ctx).Info(fmt.Sprintf("\tProcessing delegation %s", zoneInfo.ChainId))
+		delegationIca := zoneInfo.GetDelegationAccount()
+		if delegationIca == nil || delegationIca.Address == "" {
+			k.Logger(ctx).Error("Zone %s is missing a delegation address!", zoneInfo.ChainId)
+			return errors.New("Zone is missing a delegation address!")
 		}
+		cdc := k.cdc
 
-		// Get denom dynamically
-		hz := hostZone
-		balance := queryRes.Balances.AmountOf(hz.HostDenom)
+		var queryBalanceCB icqkeeper.Callback = func(icqk icqkeeper.Keeper, ctx sdk.Context, args []byte, query icqtypes.Query) error {
+			icqk.Logger(ctx).Info(fmt.Sprintf("\tdelegation undelegatedbalance callback on %s", zoneInfo.HostDenom))
+			queryRes := bankTypes.QueryAllBalancesResponse{}
+			err := cdc.Unmarshal(args, &queryRes)
+			if err != nil {
+				icqk.Logger(ctx).Error("Unable to unmarshal balances info for zone", "err", err)
+				return err
+			}
+			// Get denom dynamically
+			balance := queryRes.Balances.AmountOf(zoneInfo.HostDenom)
+			icqk.Logger(ctx).Info(fmt.Sprintf("\tBalance on %s is %s", zoneInfo.HostDenom, balance.String()))
 
-		// Set delegation account balance to ICQ result
-		hz, found := k.GetHostZone(ctx, hostZone.ChainId)
-		if found {
-			k.Logger(ctx).Error("invalid chain id, zone for \"%s\" already registered", hostZone.ChainId)
+			// --- Update Undelegated Balance ---
+			hz := zoneInfo
+
+			da := hz.DelegationAccount
+			da.Balance = balance.Int64()
+			hz.DelegationAccount = da
+			k.SetHostZone(ctx, hz)
+
+			ctx.EventManager().EmitEvents(sdk.Events{
+				sdk.NewEvent(
+					sdk.EventTypeMessage,
+					sdk.NewAttribute("hostZone", zoneInfo.ChainId),
+					sdk.NewAttribute("totalUndelegatedBalance", balance.String()),
+				),
+			})
+			// ---------------------------------
+
+			return nil
 		}
-
-		da := hz.DelegationAccount
-		da.Balance = balance.Int64()
-		hz.DelegationAccount = da
-		k.SetHostZone(ctx, hz)
-
-		ctx.EventManager().EmitEvents(sdk.Events{
-			sdk.NewEvent(
-				sdk.EventTypeMessage,
-				sdk.NewAttribute("totalUndelegatedBalance", balance.String()),
-			),
-		})
-
+		k.Logger(ctx).Info(fmt.Sprintf("\tQuerying balance for %s", zoneInfo.ChainId))
+		k.InterchainQueryKeeper.QueryBalances(ctx, zoneInfo, queryBalanceCB, delegationIca.Address)
 		return nil
 	}
-	// 1. query delegation account undelegated balances using icq
-	// 2. write the result to hostZone.delegationAccount.Balance
-	k.InterchainQueryKeeper.QueryBalances(ctx, hostZone, cb, delegationAccount.Address)
-	return nil
+
+	// Iterate the zones and apply icaStake
+	k.IterateHostZones(ctx, updateUndelegatedBal)
 }
 
 // Update the redemption rate using values of delegatedBalances, balances and stAsset supply

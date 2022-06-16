@@ -9,7 +9,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/tendermint/tendermint/libs/log"
@@ -141,19 +140,10 @@ func (k Keeper) QueryDelegatorDelegations(ctx sdk.Context, zone stakeibctypes.Ho
 	connectionId := zone.ConnectionId
 	chainId := zone.ChainId
 
-	// Validate address
-	_, err := sdk.AccAddressFromBech32(address)
-	if err != nil {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "address %s is invalid", address)
-	}
-
 	query_type := "cosmos.staking.v1beta1.Query/DelegatorDelegations"
 	// Get delegationAddress dynamically
 	delegationQuery := stakingtypes.QueryDelegatorDelegationsRequest{DelegatorAddr: address}
 	bz := k.cdc.MustMarshal(&delegationQuery)
-	if err != nil {
-		sdkerrors.Wrap(err, "could not unmarshal QueryDelegatorDelegationsRequest")
-	}
 
 	k.MakeRequest(
 		ctx,
