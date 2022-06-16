@@ -1,5 +1,6 @@
 #!/bin/bash
 
+set -eu 
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
 # import dependencies
@@ -19,6 +20,7 @@ while getopts sghi flag; do
     esac
 done
 
+# TODO(TEST-117) Modularize/generalize chain init scripts 
 # Initialize the state for stride/gaia and relayers
 ignite chain init
 sh ${SCRIPT_DIR}/init_stride.sh
@@ -28,6 +30,7 @@ sh ${SCRIPT_DIR}/init_relayers.sh
 # Register host zone
 # ICA staking test
 # first register host zone for ATOM chain
+# TODO(TEST-118) Improve integration test timing
 ATOM='uatom'
 IBCATOM='ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2'
 CSLEEP 45

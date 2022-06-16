@@ -1,18 +1,20 @@
 #!/bin/bash
 
+set -eu
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
 DEPENDENCIES="jq"
 
 # check and install dependencies
 echo "\nChecking dependencies... "
+deps=0
 for name in $DEPENDENCIES
 do
     [[ $(type $name 2>/dev/null) ]] || { echo "\n    * $name is required to run this script;";deps=1; }
 done
 [[ $deps -ne 1 ]] && echo "OK\n" || { echo "\nInstall the missing dependencies and rerun this script...\n"; exit 1; }
 
-# define vars
+# define STRIDE vars
 STATE=$SCRIPT_DIR/state
 PORT_ID=26656  # 36564 
 MAIN_ID=0
@@ -65,6 +67,7 @@ GAIA1_EXEC="$gaia_exec ${GAIA_NODE_NAMES[0]} gaiad --home /gaia/.gaiad"
 GAIA2_EXEC="$gaia_exec ${GAIA_NODE_NAMES[1]} gaiad --home /gaia/.gaiad"
 GAIA3_EXEC="$gaia_exec ${GAIA_NODE_NAMES[2]} gaiad --home /gaia/.gaiad"
 
+# define relayer vars
 RLY_MNEMONIC_1="alter old invest friend relief slot swear pioneer syrup economy vendor tray focus hedgehog artist legend antenna hair almost donkey spice protect sustain increase"
 RLY_MNEMONIC_2="resemble accident lake amateur physical jewel taxi nut demand magnet person blanket trip entire awkward fiber usual current index limb lady lady depart train"
 
