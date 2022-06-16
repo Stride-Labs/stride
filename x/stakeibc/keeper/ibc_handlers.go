@@ -78,7 +78,7 @@ func (k Keeper) HandleAcknowledgement(ctx sdk.Context, modulePacket channeltypes
 	// 	switch msgData.MsgType {
 	// 	// staking to validators
 	// 	case "/cosmos.staking.v1beta1.MsgDelegate":
-	// 		// TODO: Implement!
+	// 		// TODO: Implement! - Handle staking by DELETING deposit records
 	// 		continue
 	// 	// unstake
 	// 	case "/cosmos.staking.v1beta1.MsgUndelegate":
@@ -98,7 +98,7 @@ func (k Keeper) HandleAcknowledgement(ctx sdk.Context, modulePacket channeltypes
 	// 	case "/cosmos.distribution.v1beta1.MsgWithdrawDelegatorReward":
 	// 		// TODO: Implement!
 	// 		continue
-	// 	// IBC transfer
+	// 	// IBC transfer - update the DepositRecord status!
 	// 	case "/ibc.applications.transfer.v1.MsgTransfer":
 	// 		// TODO: Implement!
 	// 		continue
