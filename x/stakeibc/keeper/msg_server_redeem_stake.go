@@ -18,16 +18,14 @@ func (k Keeper) RedeemStake(goCtx context.Context, msg *types.MsgRedeemStake) (*
 	if err != nil {
 		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "address is invalid: %s", msg.Creator)
 	}
-	coinString := strconv.Itoa(int(msg.Amount)) + msg.Denom
+	coinString := strconv.Itoa(int(msg.Amount)) + msg.StAssetDenom
 	inCoin, err := sdk.ParseCoinNormalized(coinString)
 	if err != nil {
 		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidCoins, "could not parse inCoin: %s", coinString)
 	}
 	// remove st prefix to get the base denom
-	baseDenom := msg.Denom[2:]
-	logger := k.Logger(ctx)
-	logger.Info("DOGE baseDenom: ", baseDenom)
-	hostZone, err := k.GetHostZoneFromHostDenom(ctx, baseDenom)
+	hostZoneDenom := types.HostZoneDenomFromStAssetDenom(msg.StAssetDenom)
+	hostZone, err := k.GetHostZoneFromHostDenom(ctx, hostZoneDenom)
 	if err != nil {
 		return nil, err
 	}
@@ -39,13 +37,13 @@ func (k Keeper) RedeemStake(goCtx context.Context, msg *types.MsgRedeemStake) (*
 	if !inCoin.IsPositive() {
 		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidCoins, "amount must be greater than 0. found: %s", msg.Amount)
 	}
-	// Denom is valid
+	// StAssetDenom is valid
 	// Should we register stAssets somewhere and add an additional check here?
-	if types.IsStAsset(msg.Denom) != true {
-		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidCoins, "denom is not a valid stAsset. found: %s", msg.Denom)
+	if types.IsStAsset(msg.StAssetDenom) != true {
+		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidCoins, "denom is not a valid stAsset. found: %s", msg.StAssetDenom)
 	}
 	// Creator owns at least "amount" stAssets
-	balance := k.bankKeeper.GetBalance(ctx, sender, msg.Denom)
+	balance := k.bankKeeper.GetBalance(ctx, sender, msg.StAssetDenom)
 	if balance.IsLT(inCoin) {
 		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidCoins, "balance is lower than redemption amount. redemption amount: %s, balance %s: ", msg.Amount, balance.Amount)
 	}
