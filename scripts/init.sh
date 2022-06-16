@@ -123,22 +123,21 @@ docker-compose run -T hermes hermes -c /tmp/hermes.toml create channel --port-a 
 
 echo "Starting hermes relayer"
 docker-compose up --force-recreate -d hermes
-CSLEEP 180
 echo "Waiting for hermes to be ready..."
+CSLEEP 180
+
+echo "Registering host zones..."
+# first register host zone for ATOM chain
+ATOM='uatom'
+IBCATOM='ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2'
+docker-compose --ansi never exec -T $main_node strided tx stakeibc register-host-zone connection-0 $ATOM $IBCATOM channel-0 --chain-id $main_chain --home /stride/.strided --keyring-backend test --from val1 --gas 500000 -y
+CSLEEP 180
+echo "Registered host zones:"
+docker-compose --ansi never exec -T $main_node strided q stakeibc list-host-zone
 
 echo "\nBuild interchainquery relayer service (this takes ~120s...)"
 rm -rf ./icq/keys
 sh ${SCRIPT_DIR}/init_icq.sh
 
-# Register host zone
-# ICA staking test
-# first register host zone for ATOM chain
-ATOM='uatom'
-IBCATOM='ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2'
-CSLEEP 300
-docker-compose --ansi never exec -T $main_node strided tx stakeibc register-host-zone connection-0 $ATOM $IBCATOM channel-0 --chain-id $main_chain --home /stride/.strided --keyring-backend test --from val1 --gas 500000 -y
-CSLEEP 180
-echo "Registered host zones:"
-docker-compose --ansi never exec -T $main_node strided q stakeibc list-host-zone
 # sh ${SCRIPT_DIR}/tests/run_all_tests.sh
 sh ${SCRIPT_DIR}/logs/create_logs.sh
