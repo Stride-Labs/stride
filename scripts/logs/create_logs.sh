@@ -34,7 +34,12 @@ GAIA_WITHDRAWAL="cosmos1lcnmjwjy2lnqged5pnrc0cstz0r88rttunla4zxv84mee30g2q3q48fm
 STRIDE_ADDRESS="stride1uk4ze0x4nvh4fk0xm4jdud58eqn4yxhrt52vv7"
 
 rm $SCRIPT_DIR/accounts.log
-echo "BALANCES STRIDE" > $SCRIPT_DIR/accounts.log
+N_VALIDATORS_STRIDE=$($STR1_EXEC strided q tendermint-validator-set | grep -o address | wc -l | tr -dc '0-9')
+N_VALIDATORS_GAIA=$($GAIA1_EXEC q tendermint-validator-set | grep -o address | wc -l | tr -dc '0-9')
+echo "STRIDE @ $($STR1_EXEC strided q  tendermint-validator-set | head -n 1 | tr -dc '0-9') | $N_VALIDATORS_STRIDE VALS" > $SCRIPT_DIR/accounts.log
+echo "GAIA   @ $($GAIA1_EXEC q tendermint-validator-set | head -n 1 | tr -dc '0-9') | $N_VALIDATORS_GAIA VALS" >> $SCRIPT_DIR/accounts.log
+
+echo "\nBALANCES STRIDE" >> $SCRIPT_DIR/accounts.log
 $STR1_EXEC strided q bank balances $STRIDE_ADDRESS >> $SCRIPT_DIR/accounts.log
 echo "\nBALANCES GAIA" >> $SCRIPT_DIR/accounts.log
 $GAIA1_EXEC q bank balances $GAIA_DELEGATE >> $SCRIPT_DIR/accounts.log
