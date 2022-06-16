@@ -22,6 +22,8 @@ EXPOSE 1317
 
 # new stuff
 
+RUN echo $network_name
+
 COPY --chown=stride scripts/testnet/$network_name/state/strideTestNode1/ /stride/.strided/ 
 
 ENTRYPOINT ["strided"]
