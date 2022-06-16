@@ -27,13 +27,18 @@ STRIDE_MNEMONIC_2="timber vacant teach wedding disease fashion place merge poet 
 STRIDE_MNEMONIC_3="enjoy dignity rule multiply kitchen arrange flight rocket kingdom domain motion fire wage viable enough comic cry motor memory fancy dish sing border among"
 STRIDE_VAL_KEYS=("$STRIDE_MNEMONIC_1" "$STRIDE_MNEMONIC_2" "$STRIDE_MNEMONIC_3")
 
-BASE_RUN=strided
+stride_run=strided
+stride_exec="docker-compose --ansi never exec -T"
 
-STRIDE_CMDS=()
+STRIDE_RUN_CMDS=()
 for node_name in "${STRIDE_NODE_NAMES[@]}"; do
-  STRIDE_CMDS+=( "$BASE_RUN --home $STATE/$node_name" )
+  STRIDE_RUN_CMDS+=( "$stride_run --home $STATE/$node_name" )
 done
-STRIDE_MAIN_CMD=${STRIDE_CMDS[$MAIN_ID]}
+STRIDE_MAIN_CMD=${STRIDE_RUN_CMDS[$MAIN_ID]}
+
+STRIDE1_EXEC="$stride_exec ${STRIDE_NODE_NAMES[0]} strided --home /stride/.strided --chain-id $STRIDE_CHAIN"
+STRIDE2_EXEC="$stride_exec ${STRIDE_NODE_NAMES[1]} strided --home /stride/.strided --chain-id $STRIDE_CHAIN"
+STRIDE3_EXEC="$stride_exec ${STRIDE_NODE_NAMES[2]} strided --home /stride/.strided --chain-id $STRIDE_CHAIN"
 
 
 # define GAIA vars
@@ -47,14 +52,18 @@ GAIA_MNEMONIC_2="social smooth replace total room drip donor science wheel sourc
 GAIA_MNEMONIC_3="spike expire grant chef cheese cave someone blue price juice crash field sell camera true wet card saddle oblige where inject process dismiss soft"
 GAIA_VAL_KEYS=("$GAIA_MNEMONIC_1" "$GAIA_MNEMONIC_2" "$GAIA_MNEMONIC_3")
 
-GAIA_RUN="docker-compose --ansi never run --rm -T"
+gaia_run="docker-compose --ansi never run --rm -T"
+gaia_exec="docker-compose --ansi never exec -T"
 
-GAIA_CMDS=()
+GAIA_RUN_CMDS=()
 for node_name in "${GAIA_NODE_NAMES[@]}"; do
-  GAIA_CMDS+=( "$GAIA_RUN $node_name gaiad --home=/gaia/.gaiad" )
+  GAIA_RUN_CMDS+=( "$gaia_run $node_name gaiad --home=/gaia/.gaiad" )
 done
-GAIA_MAIN_CMD=${GAIA_CMDS[$MAIN_ID]}
+GAIA_MAIN_CMD=${GAIA_RUN_CMDS[$MAIN_ID]}
 
+GAIA1_EXEC="$gaia_exec ${GAIA_NODE_NAMES[0]} gaiad --home /gaia/.gaiad"
+GAIA2_EXEC="$gaia_exec ${GAIA_NODE_NAMES[1]} gaiad --home /gaia/.gaiad"
+GAIA3_EXEC="$gaia_exec ${GAIA_NODE_NAMES[2]} gaiad --home /gaia/.gaiad"
 
 RLY_MNEMONIC_1="alter old invest friend relief slot swear pioneer syrup economy vendor tray focus hedgehog artist legend antenna hair almost donkey spice protect sustain increase"
 RLY_MNEMONIC_2="resemble accident lake amateur physical jewel taxi nut demand magnet person blanket trip entire awkward fiber usual current index limb lady lady depart train"

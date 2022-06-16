@@ -18,7 +18,7 @@ for i in ${!STRIDE_NODE_NAMES[@]}; do
     node_name=${STRIDE_NODE_NAMES[i]}
     vkey=${STRIDE_VAL_KEYS[i]}
     val_acct=${STRIDE_VAL_ACCTS[i]}
-    st_cmd=${STRIDE_CMDS[i]}
+    st_cmd=${STRIDE_RUN_CMDS[i]}
     echo "\t$node_name"
     $st_cmd init test --chain-id $STRIDE_CHAIN --overwrite 2> /dev/null
     sed -i -E 's|"stake"|"ustrd"|g' "${STATE}/${node_name}/config/genesis.json"

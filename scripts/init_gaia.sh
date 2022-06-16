@@ -19,7 +19,7 @@ for i in ${!GAIA_NODE_NAMES[@]}; do
     node_name=${GAIA_NODE_NAMES[i]}
     vkey=${GAIA_VAL_KEYS[i]}
     val_acct=${GAIA_VAL_ACCTS[i]}
-    gaia_cmd=${GAIA_CMDS[i]}
+    gaia_cmd=${GAIA_RUN_CMDS[i]}
     echo "\t$node_name"
     $gaia_cmd init test --chain-id $GAIA_CHAIN --overwrite 2> /dev/null
     sed -i -E 's|"stake"|"uatom"|g' "${STATE}/${node_name}/config/genesis.json"
