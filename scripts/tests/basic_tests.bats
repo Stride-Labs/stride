@@ -8,6 +8,7 @@ setup_file() {
   # set allows us to export all variables in account_vars
   set -a
   source scripts/account_vars.sh
+  STRIDE_ADDR="stride1uk4ze0x4nvh4fk0xm4jdud58eqn4yxhrt52vv7"
   IBCSTRD='ibc/FF6C2E86490C1C4FBBD24F55032831D2415B9D7882F85C3CC9C2401D79362BEA'
   IBCATOM='ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2'
   DELEGATE_ADDR='cosmos19l6d3d7k2pel8epgcpxc9np6fsvjpaaa06nm65vagwxap0e4jezq05mmvu'
@@ -139,4 +140,14 @@ setup() {
 #  assert_line --partial 'key: totalDelegations'
 #}
 
+@test "exchange rate" {
+ # Test: liquid stake
+ # TODO(VISHAL) write a proper test here
+RR=$($STR1_EXEC q stakeibc list-host-zone | grep -Fiw 'RedemptionRate' | grep -Eo '[+-]?[0-9]+([.][0-9]+)?')
+UDBAL=$($GAIA1_EXEC q bank balances $DELEGATE_ADDR | grep -Fiw 'amount:' | tr -dc '0-9')
+DBAL=$($GAIA1_EXEC q staking delegations $DELEGATE_ADDR | grep -Fiw 'amount:' | grep -Eo '[+-]?[0-9]+([.][0-9]+)?')
+STSUPPLY=$($STR1_EXEC q bank balances $STRIDE_ADDR | grep -Fiw 'stuatom' -B 1 | tr -dc '0-9')
+BAL=$(( $UDBAL + $DBAL ))
+echo $BAL"="$STSUPPLY"*"$RR
+}
 
