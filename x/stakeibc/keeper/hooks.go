@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"fmt"
+	"strconv"
 
 	epochstypes "github.com/Stride-Labs/stride/x/epochs/types"
 	"github.com/Stride-Labs/stride/x/stakeibc/types"
@@ -16,6 +17,7 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochIdentifier string, epochN
 	if epochIdentifier == "stride_epoch" {
 		k.Logger(ctx).Info(fmt.Sprintf("Stride Epoch %d", epochNumber))
 		depositInterval := int64(k.GetParam(ctx, types.KeyDepositInterval))
+		// NOTE: delegateInterval was collapsed into deposit interval - is this ok?
 		if epochNumber%depositInterval == 0 {
 			// track the current deposit epoch number in stakeibc
 			if epochNumber < 0 {
@@ -58,27 +60,52 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochIdentifier string, epochN
 						continue
 					}
 					delegateAddress := delegateAccount.Address
+					// PROCESS TRANSFERS
 					// TODO(TEST-89): Set NewHeight relative to the most recent known gaia height (based on the LC)
 					// TODO(TEST-90): why do we have two gaia LCs?
-					timeoutHeight := clienttypes.NewHeight(0, 1000000)
-					transferCoin := sdk.NewCoin(hostZone.GetIBCDenom(), sdk.NewInt(int64(depositRecord.Amount)))
-					goCtx := sdk.WrapSDKContext(ctx)
-	
-					msg := ibctypes.NewMsgTransfer("transfer", hostZone.TransferChannelId, transferCoin, addr, delegateAddress, timeoutHeight, 0)
-					_, err := k.transferKeeper.Transfer(goCtx, msg)
-					if err != nil {
-						pstr := fmt.Sprintf("\tERROR WITH DEPOSIT RECEIPT {%d}", depositRecord.Id)
-						k.Logger(ctx).Info(pstr)
-						panic(err)
+					if depositRecord.Status == types.DepositRecord_TRANSFER {
+						timeoutHeight := clienttypes.NewHeight(0, 1000000)
+						transferCoin := sdk.NewCoin(hostZone.GetIBCDenom(), sdk.NewInt(int64(depositRecord.Amount)))
+						goCtx := sdk.WrapSDKContext(ctx)
+		
+						msg := ibctypes.NewMsgTransfer("transfer", hostZone.TransferChannelId, transferCoin, addr, delegateAddress, timeoutHeight, 0)
+						_, err := k.transferKeeper.Transfer(goCtx, msg)
+						if err != nil {
+							pstr := fmt.Sprintf("\tERROR WITH DEPOSIT RECEIPT {%d}", depositRecord.Id)
+							k.Logger(ctx).Info(pstr)
+							panic(err)
+						}
+					// PROCESS STAKING
+					// TODO: put this in a function in delegation.go!
+					// in general, put this logic in functions
+					} else if depositRecord.Status == types.DepositRecord_STAKE {
+						k.Logger(ctx).Info(fmt.Sprintf("\tdelegation staking callback on %s", hostZone.HostDenom))
+						processAmount := strconv.FormatInt(depositRecord.Amount, 10) + hostZone.HostDenom
+						amt, err := sdk.ParseCoinNormalized(processAmount)
+						if err != nil {
+							k.Logger(ctx).Error(fmt.Sprintf("Could not process coin %s: %s", hostZone.HostDenom, err))
+							return
+						}
+						err = k.DelegateOnHost(ctx, hostZone, amt)
+						if err != nil {
+							k.Logger(ctx).Error(fmt.Sprintf("Did not stake %s on %s", processAmount, hostZone.ChainId))
+							return
+						} else {
+							k.Logger(ctx).Info(fmt.Sprintf("Successfully staked %s on %s", processAmount, hostZone.ChainId))
+						}
+
+						ctx.EventManager().EmitEvents(sdk.Events{
+							sdk.NewEvent(
+								sdk.EventTypeMessage,
+								sdk.NewAttribute("hostZone", hostZone.ChainId),
+								sdk.NewAttribute("newAmountStaked", strconv.FormatInt(depositRecord.Amount, 10)),
+							),
+						})
 					}
 				}
 			}
 		}
 
-		delegateInterval := int64(k.GetParam(ctx, types.KeyDelegateInterval))
-		if epochNumber%delegateInterval == 0 {
-			k.ProcessDelegationStaking(ctx)
-		}
 		// process withdrawals
 		// TODO(TEST-88): restructure this to be more efficient, we should only have to loop
 		// over host zones once
