@@ -39,7 +39,7 @@ jobs:
         uses: docker/build-push-action@v3
         with:
           context: "{{defaultContext}}"
-          file: "scripts/testnet/${{ github.event.inputs.network_name }}/dockerfiles/Dockerfile.node1"
+          file: "scripts/testnet/dockerfiles/Dockerfile.node1"
           push: true
           platforms: linux/amd64
           build-args: network_name=${{ github.event.inputs.network_name }}
@@ -51,7 +51,7 @@ jobs:
         uses: docker/build-push-action@v3
         with:
           context: "{{defaultContext}}"
-          file: "scripts/testnet/${{ github.event.inputs.network_name }}/dockerfiles/Dockerfile.node2"
+          file: "scripts/testnet/dockerfiles/Dockerfile.node2"
           push: true
           platforms: linux/amd64
           build-args: network_name=${{ github.event.inputs.network_name }}
@@ -63,7 +63,7 @@ jobs:
         uses: docker/build-push-action@v3
         with:
           context: "{{defaultContext}}"
-          file: "scripts/testnet/${{ github.event.inputs.network_name }}/dockerfiles/Dockerfile.node3"
+          file: "scripts/testnet/dockerfiles/Dockerfile.node3"
           push: true
           platforms: linux/amd64
           build-args: network_name=${{ github.event.inputs.network_name }}
@@ -75,7 +75,7 @@ jobs:
         uses: docker/build-push-action@v3
         with:
           context: "{{defaultContext}}"
-          file: "scripts/testnet/${{ github.event.inputs.network_name }}/dockerfiles/Dockerfile.seed"
+          file: "scripts/testnet/dockerfiles/Dockerfile.seed"
           push: true
           platforms: linux/amd64
           build-args: network_name=${{ github.event.inputs.network_name }}
