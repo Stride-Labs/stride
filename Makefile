@@ -288,3 +288,6 @@ test:
 
 init:
 	sh scripts/init_main.sh -${build}
+
+logs: 
+	sh scripts/logs/create_logs.sh 
