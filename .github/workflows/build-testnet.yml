@@ -1,3 +1,5 @@
+name: Build Testnet
+
 on:
   workflow_dispatch:
     inputs:
