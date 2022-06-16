@@ -49,18 +49,18 @@ setup() {
 
 @test "ibc transfer updates all balances" {
   # get initial balances
-  str1_balance=$($STR1_EXEC q bank balances $STRIDE_ADDRESS_1 --denom ustrd | GETBAL)
+  str1_balance=$($STRIDE1_EXEC q bank balances $STRIDE_ADDRESS_1 --denom ustrd | GETBAL)
   gaia1_balance=$($GAIA1_EXEC q bank balances $GAIA_ADDRESS_1 --denom $IBCSTRD | GETBAL)
-  str1_balance_atom=$($STR1_EXEC q bank balances $STRIDE_ADDRESS_1 --denom $IBCATOM | GETBAL)
+  str1_balance_atom=$($STRIDE1_EXEC q bank balances $STRIDE_ADDRESS_1 --denom $IBCATOM | GETBAL)
   gaia1_balance_atom=$($GAIA1_EXEC q bank balances $GAIA_ADDRESS_1 --denom uatom | GETBAL)
   # do IBC transfer
-  $STR1_EXEC tx ibc-transfer transfer transfer channel-0 $GAIA_ADDRESS_1 10000ustrd --from val1 --chain-id STRIDE -y --keyring-backend test
+  $STRIDE1_EXEC tx ibc-transfer transfer transfer channel-0 $GAIA_ADDRESS_1 10000ustrd --from val1 --chain-id STRIDE -y --keyring-backend test
   $GAIA1_EXEC tx ibc-transfer transfer transfer channel-0 $STRIDE_ADDRESS_1 10000uatom --from gval1 --chain-id GAIA -y --keyring-backend test
   sleep 20
   # get new balances
-  str1_balance_new=$($STR1_EXEC q bank balances $STRIDE_ADDRESS_1 --denom ustrd | GETBAL)
+  str1_balance_new=$($STRIDE1_EXEC q bank balances $STRIDE_ADDRESS_1 --denom ustrd | GETBAL)
   gaia1_balance_new=$($GAIA1_EXEC q bank balances $GAIA_ADDRESS_1 --denom $IBCSTRD | GETBAL)
-  str1_balance_atom_new=$($STR1_EXEC q bank balances $STRIDE_ADDRESS_1 --denom $IBCATOM | GETBAL)
+  str1_balance_atom_new=$($STRIDE1_EXEC q bank balances $STRIDE_ADDRESS_1 --denom $IBCATOM | GETBAL)
   gaia1_balance_atom_new=$($GAIA1_EXEC q bank balances $GAIA_ADDRESS_1 --denom uatom | GETBAL)
   # get all STRD balance diffs
   str1_diff=$(($str1_balance - $str1_balance_new))
@@ -76,31 +76,31 @@ setup() {
 
 @test "liquid stake mints stATOM" {
   # get module address 
-  MODADDR=$($STR1_EXEC q stakeibc module-address stakeibc | awk '{print $NF}') 
+  MODADDR=$($STRIDE1_EXEC q stakeibc module-address stakeibc | awk '{print $NF}') 
   # get initial balances
-  mod_balance_atom=$($STR1_EXEC q bank balances $MODADDR --denom $IBCATOM | GETBAL)
-  str1_balance_atom=$($STR1_EXEC q bank balances $STRIDE_ADDRESS_1 --denom $IBCATOM | GETBAL)
-  str1_balance_statom=$($STR1_EXEC q bank balances $STRIDE_ADDRESS_1 --denom $STATOM | GETBAL)
+  mod_balance_atom=$($STRIDE1_EXEC q bank balances $MODADDR --denom $IBCATOM | GETBAL)
+  str1_balance_atom=$($STRIDE1_EXEC q bank balances $STRIDE_ADDRESS_1 --denom $IBCATOM | GETBAL)
+  str1_balance_statom=$($STRIDE1_EXEC q bank balances $STRIDE_ADDRESS_1 --denom $STATOM | GETBAL)
   # liquid stake
-  $STR1_EXEC tx stakeibc liquid-stake 1000 uatom --keyring-backend test --from val1 -y
+  $STRIDE1_EXEC tx stakeibc liquid-stake 1000 uatom --keyring-backend test --from val1 -y
   sleep 15
   # make sure Module Acct received ATOM - remove if IBC transfer is automated
-  # mod_balance_atom_new=$($STR1_EXEC q bank balances $MODADDR --denom $IBCATOM | GETBAL)
+  # mod_balance_atom_new=$($STRIDE1_EXEC q bank balances $MODADDR --denom $IBCATOM | GETBAL)
   # mod_atom_diff=$(($mod_balance_atom_new - $mod_balance_atom))
   # assert_equal "$mod_atom_diff" '1000'
   # make sure IBCATOM went down 
-  str1_balance_atom_new=$($STR1_EXEC q bank balances $STRIDE_ADDRESS_1 --denom $IBCATOM | GETBAL)
+  str1_balance_atom_new=$($STRIDE1_EXEC q bank balances $STRIDE_ADDRESS_1 --denom $IBCATOM | GETBAL)
   str1_atom_diff=$(($str1_balance_atom - $str1_balance_atom_new))
   assert_equal "$str1_atom_diff" '1000'
   # make sure STATOM went up
-  str1_balance_statom_new=$($STR1_EXEC q bank balances $STRIDE_ADDRESS_1 --denom $STATOM | GETBAL)
+  str1_balance_statom_new=$($STRIDE1_EXEC q bank balances $STRIDE_ADDRESS_1 --denom $STATOM | GETBAL)
   str1_statom_diff=$(($str1_balance_statom_new-$str1_balance_statom))
   assert_equal "$str1_statom_diff" "1000"
 }
 
 # add test to register host zone 
 @test "host zone successfully registered" {
-  run $STR1_EXEC q stakeibc show-host-zone GAIA
+  run $STRIDE1_EXEC q stakeibc show-host-zone GAIA
   assert_line '  HostDenom: uatom'
   assert_line '  chainId: GAIA'
   assert_line '  delegationAccount:'
@@ -125,18 +125,18 @@ setup() {
 # add test to see if assets are properly being staked on host zone
 # add asset redemption test
 
-#@test "icq: exchange rate and delegated balance queries" {
-#  # Test: query exchange rate
-#  $STR1_EXEC tx interchainquery query-exchangerate GAIA --keyring-backend test -y --from val1
-#  sleep 15
-#  run $STR1_EXEC q txs --events message.action=/stride.interchainquery.MsgSubmitQueryResponse --limit=1
-#  assert_line --partial 'key: redemptionRate'
-#
-#  # Test query delegated balance
-#  $STR1_EXEC tx interchainquery query-delegatedbalance GAIA --keyring-backend test -y --from val1
-#  sleep 15
-#  run $STR1_EXEC q txs --events message.action=/stride.interchainquery.MsgSubmitQueryResponse --limit=1
-#  assert_line --partial 'key: totalDelegations'
-#}
+@test "icq: exchange rate and delegated balance queries" {
+  # Test: query exchange rate
+  $STRIDE1_EXEC tx interchainquery query-exchangerate GAIA --keyring-backend test -y --from val1
+  sleep 15
+  run $STRIDE1_EXEC q txs --events message.action=/stride.interchainquery.MsgSubmitQueryResponse --limit=1
+  assert_line --partial 'key: redemptionRate'
+
+  # Test query delegated balance
+  $STRIDE1_EXEC tx interchainquery query-delegatedbalance GAIA --keyring-backend test -y --from val1
+  sleep 15
+  run $STRIDE1_EXEC q txs --events message.action=/stride.interchainquery.MsgSubmitQueryResponse --limit=1
+  assert_line --partial 'key: totalDelegations'
+}
 
 

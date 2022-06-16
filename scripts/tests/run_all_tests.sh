@@ -3,7 +3,7 @@ BASE_SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && p
 
 $BASE_SCRIPT_DIR/bats/bin/bats $BASE_SCRIPT_DIR/basic_tests.bats
 
-# echo $STR1_EXEC
+# echo $STRIDE1_EXEC
 # echo $GAIA_ADDRESS_1
 # docker-compose run hermes hermes -c /tmp/hermes.toml tx raw create-client STRIDE GAIA
 # docker-compose run -T hermes hermes -c /tmp/hermes.toml create channel --port-a transfer --port-b transfer GAIA connection-0 
