@@ -14,6 +14,7 @@ import (
 
 func (k Keeper) RedeemStake(goCtx context.Context, msg *types.MsgRedeemStake) (*types.MsgRedeemStakeResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
+	return &types.MsgRedeemStakeResponse{}, nil
 
 	// vars
 	sender, err := sdk.AccAddressFromBech32(msg.Creator)

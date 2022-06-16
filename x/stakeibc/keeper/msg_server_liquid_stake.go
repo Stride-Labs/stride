@@ -11,6 +11,7 @@ import (
 
 func (k msgServer) LiquidStake(goCtx context.Context, msg *types.MsgLiquidStake) (*types.MsgLiquidStakeResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
+	return &types.MsgLiquidStakeResponse{}, nil
 
 	// Init variables
 	// deposit `amount` of `denom` token to the stakeibc module
