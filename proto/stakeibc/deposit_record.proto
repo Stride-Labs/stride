@@ -5,7 +5,7 @@ option go_package = "github.com/Stride-Labs/stride/x/stakeibc/types";
 
 message DepositRecord {
   uint64 id = 1;
-  int64 amount = 2; 
+  int64 amount = 2;
   string denom = 3;
   string hostZoneId = 4; 
   enum Status {
@@ -14,7 +14,8 @@ message DepositRecord {
     // pending staking on delegate account
     STAKE = 1;
   }
-  Status status = 6; 
+  Status status = 6;
+  uint64 epochNumber = 7;
 
   reserved 5;
 }

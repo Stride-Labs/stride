@@ -53,16 +53,16 @@ unbondings in less than 21 days
   - Add next status types
       - transfer: the balance is ready to be transferred to the host zone
       - stake: the balance is ready to be staked
-[] 1 Aggregate into a single deposit record / successful epoch / chain
-      - add current epoch data type
-      - In the stakeibc hook
-        - create a DepositRecord, keyed by epoch in stakeibc hook
-        - process DepositRecords from previous epochs
-      - Update the deposit record in liquid stake (fetch the epoch id with the epochs keeper and stride epoch)
-      - Update the DepositRecord in ack
-        - If previous status was TRANSFER, update status to STAKE
-        - If previous status was STAKE, delete the 
-        - It should be easy to differentiate between these based on the ICA call issued
+[X] 1 Aggregate into a single deposit record / successful epoch / chain
+      [X] add current epoch data type, update in begin hook
+      [X] In the stakeibc hook
+        [X] create a DepositRecord, keyed by epoch_number:chain_id in stakeibc hook
+        [X] process DepositRecords from previous epochs
+      [X] Update the deposit record in liquid stake (fetch the epoch id with the epochs keeper and stride epoch)
+      [] Update the DepositRecord in ack
+        [] If previous status was TRANSFER, update status to STAKE
+        [] If previous status was STAKE, delete the record
+        [] It should be easy to differentiate between these based on the ICA call issued
 
 >>> EPOCH START
 ----------
