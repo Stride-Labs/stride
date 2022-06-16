@@ -5,8 +5,6 @@ SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 # import dependencies
 source ${SCRIPT_DIR}/vars.sh
 
-docker compose down
-
 # first, we need to create some saved state, so that we can copy to docker files
 for node_name in ${STRIDE_NODE_NAMES[@]}; do
     mkdir -p $STATE/$node_name

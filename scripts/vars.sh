@@ -50,7 +50,7 @@ GAIA_VAL_KEYS=("$GAIA_MNEMONIC_1" "$GAIA_MNEMONIC_2" "$GAIA_MNEMONIC_3")
 RLY_MNEMONIC_1="alter old invest friend relief slot swear pioneer syrup economy vendor tray focus hedgehog artist legend antenna hair almost donkey spice protect sustain increase"
 RLY_MNEMONIC_2="resemble accident lake amateur physical jewel taxi nut demand magnet person blanket trip entire awkward fiber usual current index limb lady lady depart train"
 
-GAIA_RUN="docker-compose --ansi never run -T"
+GAIA_RUN="docker-compose --ansi never run --rm -T"
 
 GAIA_CMDS=()
 for node_name in "${GAIA_NODE_NAMES[@]}"; do
