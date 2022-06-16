@@ -5,10 +5,14 @@
 *.so
 *.dylib
 
+# auto-generated go files
+
+
 # build
 build/*
 state/*
 scripts/state/*
+scripts/logs/*.log
 scripts/temp.sh
 vue/*
 # Test binary, built with `go test -c`

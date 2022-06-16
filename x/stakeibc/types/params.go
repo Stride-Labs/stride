@@ -11,7 +11,8 @@ import (
 var (
 	// these are default intervals _in epochs_ NOT in blocks
 	DefaultDepositInterval      uint64 = 5
-	DefaultDelegateInterval     uint64 = 2
+	DefaultDelegateInterval     uint64 = 5
+	DefaultReinvestInterval     uint64 = 2
 	DefaultRewardsInterval      uint64 = 5
 	DefaultExchangeRateInterval uint64 = 2
 	// you apparantly cannot safely encode floats, so we make commission * 100
@@ -20,6 +21,7 @@ var (
 	// KeyDepositInterval is store's key for the DepositInterval option
 	KeyDepositInterval      = []byte("DepositInterval")
 	KeyDelegateInterval     = []byte("DelegateInterval")
+	KeyReinvestInterval     = []byte("ReinvestInterval")
 	KeyRewardsInterval      = []byte("RewardsInterval")
 	KeyExchangeRateInterval = []byte("ExchangeRateInterval")
 	KeyStrideCommission     = []byte("StrideCommission")
@@ -39,6 +41,7 @@ func NewParams(
 	rewards_interval uint64,
 	exchange_rate_interval uint64,
 	stride_commission uint64,
+	withdraw_interval uint64,
 ) Params {
 	return Params{
 		DepositInterval:      deposit_interval,
@@ -46,6 +49,7 @@ func NewParams(
 		RewardsInterval:      rewards_interval,
 		ExchangeRateInterval: exchange_rate_interval,
 		StrideCommission:     stride_commission,
+		ReinvestInterval:     withdraw_interval,
 	}
 }
 
@@ -57,6 +61,7 @@ func DefaultParams() Params {
 		DefaultRewardsInterval,
 		DefaultExchangeRateInterval,
 		DefaultStrideCommission,
+		DefaultReinvestInterval,
 	)
 }
 
@@ -68,6 +73,7 @@ func (p *Params) ParamSetPairs() paramtypes.ParamSetPairs {
 		paramtypes.NewParamSetPair(KeyRewardsInterval, &p.RewardsInterval, isPositive),
 		paramtypes.NewParamSetPair(KeyExchangeRateInterval, &p.ExchangeRateInterval, isPositive),
 		paramtypes.NewParamSetPair(KeyStrideCommission, &p.StrideCommission, isCommission),
+		paramtypes.NewParamSetPair(KeyReinvestInterval, &p.ReinvestInterval, isPositive),
 	}
 }
 

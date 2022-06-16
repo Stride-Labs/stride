@@ -13,28 +13,30 @@ import (
 
 var _ = strconv.Itoa(0)
 
-
 func CmdRedeemStake() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:  "redeem-stake [amount] [denom]",
+		Use:   "redeem-stake [amount] [stAssetDenom] [receiver]",
 		Short: "Broadcast message redeem-stake",
-		Args: cobra.ExactArgs(2),
+		Args:  cobra.ExactArgs(3),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			argAmount, err := cast.ToInt32E(args[0])
+			argAmount, err := cast.ToInt64E(args[0])
 			if err != nil {
 				return err
 			}
-			argDenom := args[1]
+			argStAssetDenom := args[1]
 
 			clientCtx, err := client.GetClientTxContext(cmd)
 			if err != nil {
 				return err
 			}
 
+			argReceiver := args[2]
+
 			msg := types.NewMsgRedeemStake(
 				clientCtx.GetFromAddress().String(),
 				argAmount,
-				argDenom,
+				argStAssetDenom,
+				argReceiver,
 			)
 			if err := msg.ValidateBasic(); err != nil {
 				return err

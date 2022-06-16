@@ -11,10 +11,15 @@ setup_file() {
   IBCSTRD='ibc/FF6C2E86490C1C4FBBD24F55032831D2415B9D7882F85C3CC9C2401D79362BEA'
   IBCATOM='ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2'
   DELEGATE_ADDR='cosmos19l6d3d7k2pel8epgcpxc9np6fsvjpaaa06nm65vagwxap0e4jezq05mmvu'
+  GAIA_DELEGATE_VAL='cosmosvaloper19e7sugzt8zaamk2wyydzgmg9n3ysylg6na6k6e'
   STATOM="stuatom"
   GETBAL() {
     head -n 1 | grep -o -E '[0-9]+'
   }
+  GETSTAKE() {
+    tail -n 2 | head -n 1 | grep -o -E '[0-9]+' | head -n 1
+  }
+  INIT_STAKE=$($GAIA1_EXEC q staking delegation $DELEGATE_ADDR $GAIA_DELEGATE_VAL | GETSTAKE)
   set +a
 }
 
@@ -108,31 +113,30 @@ setup() {
   # VAL_ADDR='cosmosvaloper19e7sugzt8zaamk2wyydzgmg9n3ysylg6na6k6e'
   # $GAIA1_EXEC q staking delegation cosmos19l6d3d7k2pel8epgcpxc9np6fsvjpaaa06nm65vagwxap0e4jezq05mmvu cosmosvaloper19e7sugzt8zaamk2wyydzgmg9n3ysylg6na6k6e
   #   amount: "240"
-  del_balance_atom=$($GAIA1_EXEC q bank balances $DELEGATE_ADDR --denom uatom | GETBAL)
-  $GAIA1_EXEC q bank balances $DELEGATE_ADDR
-  sleep 30
-  del_balance_atom_new=$($GAIA1_EXEC q bank balances $DELEGATE_ADDR --denom uatom | GETBAL)
-  $GAIA1_EXEC q bank balances $DELEGATE_ADDR
-  [ $del_balance_atom -gt $del_balance_atom_new ] && WORKED=0 || WORKED=1
-  assert_equal "$WORKED" "1"
+  sleep 60
+  NEW_STAKE=$($GAIA1_EXEC q staking delegation $DELEGATE_ADDR $GAIA_DELEGATE_VAL | GETSTAKE)
+  stake_diff=$(($NEW_STAKE - $INIT_STAKE))
+  assert_equal "$stake_diff" "1000"
+
+  # [ $del_balance_atom -gt $del_balance_atom_new ] && WORKED=1 || WORKED=0
 }
 
 # TEST-74
 # add test to see if assets are properly being staked on host zone
 # add asset redemption test
 
-@test "icq: exchange rate and delegated balance queries" {
-  # Test: query exchange rate
-  $STR1_EXEC tx interchainquery query-exchangerate GAIA --keyring-backend test -y --from val1
-  sleep 15
-  run $STR1_EXEC q txs --events message.action=/stride.interchainquery.MsgSubmitQueryResponse --limit=1
-  assert_line --partial 'key: redemptionRate'
-
-  # Test query delegated balance
-  $STR1_EXEC tx interchainquery query-delegatedbalance GAIA --keyring-backend test -y --from val1
-  sleep 15
-  run $STR1_EXEC q txs --events message.action=/stride.interchainquery.MsgSubmitQueryResponse --limit=1
-  assert_line --partial 'key: totalDelegations'
-}
+#@test "icq: exchange rate and delegated balance queries" {
+#  # Test: query exchange rate
+#  $STR1_EXEC tx interchainquery query-exchangerate GAIA --keyring-backend test -y --from val1
+#  sleep 15
+#  run $STR1_EXEC q txs --events message.action=/stride.interchainquery.MsgSubmitQueryResponse --limit=1
+#  assert_line --partial 'key: redemptionRate'
+#
+#  # Test query delegated balance
+#  $STR1_EXEC tx interchainquery query-delegatedbalance GAIA --keyring-backend test -y --from val1
+#  sleep 15
+#  run $STR1_EXEC q txs --events message.action=/stride.interchainquery.MsgSubmitQueryResponse --limit=1
+#  assert_line --partial 'key: totalDelegations'
+#}
 
 

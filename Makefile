@@ -302,6 +302,9 @@ init:
 	elif [ ${build} == "strideall" ]; \
 		then \
 			sh scripts/init.sh -ba ;\
+	elif [ ${build} == "logs" ]; \
+		then \
+			sh scripts/logs/create_logs.sh -ba ;\
 	else\
 		echo "Init type ${build} not recognized.";\
 	fi
