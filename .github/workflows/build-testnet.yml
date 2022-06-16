@@ -42,6 +42,7 @@ jobs:
           file: "scripts/testnet/${{ github.event.inputs.message }}/dockerfiles/Dockerfile.node1"
           push: true
           platforms: linux/amd64
+          build-args: network_name=${{ github.event.inputs.message }}
           tags: |
             stridelabs/internal:${{ github.event.inputs.message }}_node1 
             gcr.io/stride-nodes/testnet:${{ github.event.inputs.message }}_node1
@@ -53,6 +54,7 @@ jobs:
           file: "scripts/testnet/${{ github.event.inputs.message }}/dockerfiles/Dockerfile.node2"
           push: true
           platforms: linux/amd64
+          build-args: network_name=${{ github.event.inputs.message }}
           tags: |
             stridelabs/internal:${{ github.event.inputs.message }}_node2 
             gcr.io/stride-nodes/testnet:${{ github.event.inputs.message }}_node2
@@ -64,6 +66,7 @@ jobs:
           file: "scripts/testnet/${{ github.event.inputs.message }}/dockerfiles/Dockerfile.node3"
           push: true
           platforms: linux/amd64
+          build-args: network_name=${{ github.event.inputs.message }}
           tags: |
             stridelabs/internal:${{ github.event.inputs.message }}_node3 
             gcr.io/stride-nodes/testnet:${{ github.event.inputs.message }}_node3
@@ -75,6 +78,7 @@ jobs:
           file: "scripts/testnet/${{ github.event.inputs.message }}/dockerfiles/Dockerfile.seed"
           push: true
           platforms: linux/amd64
+          build-args: network_name=${{ github.event.inputs.message }}
           tags: |
             stridelabs/internal:${{ github.event.inputs.message }}_seed
             gcr.io/stride-nodes/testnet:${{ github.event.inputs.message }}_seed
