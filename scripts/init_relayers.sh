@@ -1,5 +1,6 @@
 #!/bin/bash
 
+set -eu 
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
 # import dependencies
@@ -35,9 +36,7 @@ $ICQ_RUN keys restore test "$ICQ_GAIA_KEY" --chain gaia-testnet
 echo "\nICQ addresses for Stride and Gaia:"
 # TODO(TEST-83) pull these addresses dynamically using jq
 ICQ_ADDRESS_STRIDE="stride12vfkpj7lpqg0n4j68rr5kyffc6wu55dzqewda4"
-# echo $ICQ_ADDRESS_STRIDE
 ICQ_ADDRESS_GAIA="cosmos1g6qdx6kdhpf000afvvpte7hp0vnpzapuyxp8uf"
-# echo $ICQ_ADDRESS_GAIA
 
 $STRIDE1_EXEC tx bank send val1 $ICQ_ADDRESS_STRIDE 5000000ustrd --chain-id $STRIDE_CHAIN -y --keyring-backend test --home /stride/.strided
 $GAIA1_EXEC tx bank send gval1 $ICQ_ADDRESS_GAIA 5000000uatom --chain-id $GAIA_CHAIN -y --keyring-backend test --home /gaia/.gaiad
