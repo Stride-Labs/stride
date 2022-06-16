@@ -168,52 +168,6 @@ func (k Keeper) ReinvestRewards(ctx sdk.Context, hostZone types.HostZone) error 
 	return nil
 }
 
-// icq to read host delegated balance => update hostZone.delegationAccount.DelegatedBalance
-// TODO(TEST-97) add safety logic to query at specific block height (same as query height for delegated balances)
-func (k Keeper) UpdateDelegatedBalance(ctx sdk.Context, index int64, hostZone types.HostZone) error {
-	// Fetch the relevant ICA
-	delegationAccount := hostZone.GetDelegationAccount()
-
-	var cb icqkeeper.Callback = func(icqk icqkeeper.Keeper, ctx sdk.Context, args []byte, query icqtypes.Query) error {
-
-		var response stakingTypes.QueryDelegatorDelegationsResponse
-		err := k.cdc.Unmarshal(args, &response)
-		if err != nil {
-			return err
-		}
-
-		// Get denom dynamically
-		hz := hostZone
-		delegatorSum := sdk.NewCoin(hz.HostDenom, sdk.ZeroInt())
-		for _, delegation := range response.DelegationResponses {
-			delegatorSum = delegatorSum.Add(delegation.Balance)
-			if err != nil {
-				return err
-			}
-		}
-
-		// Set delegation account balance to ICQ result
-		da := hz.DelegationAccount
-		da.DelegatedBalance = delegatorSum.Amount.Int64()
-		hz.DelegationAccount = da
-		k.SetHostZone(ctx, hz)
-
-		ctx.EventManager().EmitEvents(sdk.Events{
-			sdk.NewEvent(
-				sdk.EventTypeMessage,
-				sdk.NewAttribute("totalDelegatedBalance", delegatorSum.Amount.String()),
-			),
-		})
-
-		return nil
-	}
-	// 1. query delegation account delegated balances using icq
-	// 2. sum up the resulting delegations (across validators)
-	// 2. write the result to hostZone.delegationAccount.delegatedBalance
-	k.InterchainQueryKeeper.QueryDelegatorDelegations(ctx, hostZone, cb, delegationAccount.Address)
-	return nil
-}
-
 // icq to read host delegation account undeleted balance => update hostZone.delegationAccount.Balance
 // TODO(TEST-97) add safety logic to query at specific block height (same as query height for delegated balances)
 func (k Keeper) ProcessUpdateUndelegatedBalance(ctx sdk.Context) {
@@ -300,6 +254,7 @@ func (k Keeper) ProcessUpdateDelegatedBalance(ctx sdk.Context) {
 			// --- Update Undelegated Balance ---
 			hz, _ := k.GetHostZone(ctx, zoneInfo.ChainId)
 			da := hz.DelegationAccount
+			// TODO() make HostZone.DelegationAccount.Balance a Cosmos.Dec type (rather than int)
 			da.DelegatedBalance = delegatorSum.Amount.Int64()
 			hz.DelegationAccount = da
 			k.SetHostZone(ctx, hz)
@@ -328,7 +283,7 @@ func (k Keeper) ProcessUpdateDelegatedBalance(ctx sdk.Context) {
 // TODO(TEST-97) add safety logic that checks balance, delegatedBalance and stAsset supply's block_height_updated are all equal
 func (k Keeper) ProcessUpdateExchangeRate(ctx sdk.Context) {
 
-	updateExchRate := func(ctx sdk.Context, index int64, zoneInfo types.HostZone) error {
+	updateRedemptionRate := func(ctx sdk.Context, index int64, zoneInfo types.HostZone) error {
 		k.Logger(ctx).Info(fmt.Sprintf("\tProcessing exchangeRate for %s", zoneInfo.ChainId))
 		// Assets: native asset balances on delegation account + staked
 		delegatedBalance := zoneInfo.GetDelegationAccount().DelegatedBalance
@@ -350,9 +305,9 @@ func (k Keeper) ProcessUpdateExchangeRate(ctx sdk.Context) {
 			})
 			return errors.New("Exchange rate calculation error: ")
 		} else {
-			// ExchRate = Assets / Claims
+			// RedemptionRate = Assets / Claims
 			redemptionRate := sdk.NewDec(assetBalance).Quo(stAssetSupply.Amount.ToDec())
-			// Write ExchRate to state
+			// Write RedemptionRate to state
 			hz, _ := k.GetHostZone(ctx, zoneInfo.ChainId)
 			hz.LastRedemptionRate = hz.RedemptionRate
 			hz.RedemptionRate = redemptionRate
@@ -369,7 +324,7 @@ func (k Keeper) ProcessUpdateExchangeRate(ctx sdk.Context) {
 		return nil
 	}
 
-	k.IterateHostZones(ctx, updateExchRate)
+	k.IterateHostZones(ctx, updateRedemptionRate)
 }
 
 // SubmitTxs submits an ICA transaction containing multiple messages
