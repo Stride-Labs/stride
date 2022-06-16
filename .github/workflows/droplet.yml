@@ -1,8 +1,9 @@
-
 on:
-  push:
-    branches:
-      - launch-net
+  workflow_dispatch:
+    inputs:
+      network_name:
+        description: Testnet that you want to launch (e.g. droplet)
+        required: true
 
 jobs:
   build-droplet-docker:
@@ -36,46 +37,42 @@ jobs:
         uses: docker/build-push-action@v3
         with:
           context: "{{defaultContext}}"
-          file: "scripts/testnet/dockerfiles/Dockerfile.node1"
+          file: "scripts/testnet/${{ github.event.inputs.message }}/dockerfiles/Dockerfile.node1"
           push: true
           platforms: linux/amd64
           tags: |
-            stridelabs/internal:droplet_node1 
-            gcr.io/stride-nodes/testnet:droplet_node1
+            stridelabs/internal:${{ github.event.inputs.message }}_node1 
+            gcr.io/stride-nodes/testnet:${{ github.event.inputs.message }}_node1
       -
         name: Construct Node2 Images
         uses: docker/build-push-action@v3
         with:
           context: "{{defaultContext}}"
-          file: "scripts/testnet/dockerfiles/Dockerfile.node2"
+          file: "scripts/testnet/${{ github.event.inputs.message }}/dockerfiles/Dockerfile.node2"
           push: true
           platforms: linux/amd64
           tags: |
-            stridelabs/internal:droplet_node2 
-            gcr.io/stride-nodes/testnet:droplet_node2
+            stridelabs/internal:${{ github.event.inputs.message }}_node2 
+            gcr.io/stride-nodes/testnet:${{ github.event.inputs.message }}_node2
       -
         name: Construct Node3 Images
         uses: docker/build-push-action@v3
         with:
           context: "{{defaultContext}}"
-          file: "scripts/testnet/dockerfiles/Dockerfile.node3"
+          file: "scripts/testnet/${{ github.event.inputs.message }}/dockerfiles/Dockerfile.node3"
           push: true
           platforms: linux/amd64
           tags: |
-            stridelabs/internal:droplet_node3 
-            gcr.io/stride-nodes/testnet:droplet_node3
+            stridelabs/internal:${{ github.event.inputs.message }}_node3 
+            gcr.io/stride-nodes/testnet:${{ github.event.inputs.message }}_node3
       -
-        name: Construct Seed Images
+        name: Construct Node1 Images
         uses: docker/build-push-action@v3
         with:
           context: "{{defaultContext}}"
-          file: "scripts/testnet/dockerfiles/Dockerfile.seed"
+          file: "scripts/testnet/${{ github.event.inputs.message }}/dockerfiles/Dockerfile.seed"
           push: true
           platforms: linux/amd64
           tags: |
-            stridelabs/internal:droplet_seed 
-            gcr.io/stride-nodes/testnet:droplet_seed
-      # -
-      #   name: Publish to GCP
-      #   run: |
-      #     docker push gcr.io/stride-nodes/testnet:droplet_node1
+            stridelabs/internal:${{ github.event.inputs.message }}_seed
+            gcr.io/stride-nodes/testnet:${{ github.event.inputs.message }}_seed
