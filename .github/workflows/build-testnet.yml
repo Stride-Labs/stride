@@ -93,3 +93,14 @@ jobs:
           tags: |
             stridelabs/internal:${{ github.event.inputs.network_name }}_gaia
             gcr.io/stride-nodes/testnet:${{ github.event.inputs.network_name }}_gaia
+      -
+        name: Construct Hermes Image
+        uses: docker/build-push-action@v3
+        with:
+          context: "{{defaultContext}}"
+          file: "Dockerfile.hermes"
+          push: true
+          platforms: linux/amd64
+          tags: |
+            stridelabs/internal:${{ github.event.inputs.network_name }}_hermes
+            gcr.io/stride-nodes/testnet:${{ github.event.inputs.network_name }}_hermes
