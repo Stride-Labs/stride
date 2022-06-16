@@ -47,9 +47,6 @@ GAIA_MNEMONIC_2="social smooth replace total room drip donor science wheel sourc
 GAIA_MNEMONIC_3="spike expire grant chef cheese cave someone blue price juice crash field sell camera true wet card saddle oblige where inject process dismiss soft"
 GAIA_VAL_KEYS=("$GAIA_MNEMONIC_1" "$GAIA_MNEMONIC_2" "$GAIA_MNEMONIC_3")
 
-RLY_MNEMONIC_1="alter old invest friend relief slot swear pioneer syrup economy vendor tray focus hedgehog artist legend antenna hair almost donkey spice protect sustain increase"
-RLY_MNEMONIC_2="resemble accident lake amateur physical jewel taxi nut demand magnet person blanket trip entire awkward fiber usual current index limb lady lady depart train"
-
 GAIA_RUN="docker-compose --ansi never run --rm -T"
 
 GAIA_CMDS=()
@@ -58,8 +55,15 @@ for node_name in "${GAIA_NODE_NAMES[@]}"; do
 done
 GAIA_MAIN_CMD=${GAIA_CMDS[$MAIN_ID]}
 
+
+RLY_MNEMONIC_1="alter old invest friend relief slot swear pioneer syrup economy vendor tray focus hedgehog artist legend antenna hair almost donkey spice protect sustain increase"
+RLY_MNEMONIC_2="resemble accident lake amateur physical jewel taxi nut demand magnet person blanket trip entire awkward fiber usual current index limb lady lady depart train"
+
+ICQ_RUN="docker-compose --ansi never run --rm -T icq interchain-queries"
+
 ICQ_STRIDE_KEY="helmet say goat special plug umbrella finger night flip axis resource tuna trigger angry shove essay point laundry horror eager forget depend siren alarm"
 ICQ_GAIA_KEY="capable later bamboo snow drive afraid cheese practice latin brush hand true visa drama mystery bird client nature jealous guess tank marriage volume fantasy"
+
 
 CSLEEP() {
   for i in $(seq $1); do
