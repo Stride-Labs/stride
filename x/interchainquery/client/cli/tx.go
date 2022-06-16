@@ -24,7 +24,6 @@ func GetTxCmd() *cobra.Command {
 	}
 
 	cmd.AddCommand(
-		//QueryBalanceCmd(),
 		// TODO(TEST-53) remove cli access to ICQ queries pre-launch
 		SubmitQueryResponse(),
 	)

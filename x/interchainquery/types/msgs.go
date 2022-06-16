@@ -7,12 +7,10 @@ import (
 // interchainquery message types
 const (
 	TypeMsgSubmitQueryResponse = "submitqueryresponse"
-	TypeMsgQueryBalance        = "querybalance"
 )
 
 var (
 	_ sdk.Msg = &MsgSubmitQueryResponse{}
-	//_ sdk.Msg = &MsgQueryBalance{}
 )
 
 // NewMsgSubmitQueryResponse - construct a msg to fulfil query request.
