@@ -15,7 +15,7 @@ while getopts sghi flag; do
         s) docker build --tag stridezone:stride -f Dockerfile.stride . ;;
         g) docker build --tag stridezone:gaia -f Dockerfile.gaia . ;;
         h) docker build --tag stridezone:hermes -f Dockerfile.hermes . ;;
-        i) echo "placeholder" ;;
+        i) docker build --tag stridezone:interchain-queries -f Dockerfile.icq . ;;
     esac
 done
 
@@ -30,7 +30,7 @@ sh ${SCRIPT_DIR}/init_relayers.sh
 # first register host zone for ATOM chain
 ATOM='uatom'
 IBCATOM='ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2'
-CSLEEP 10
+CSLEEP 45
 docker-compose --ansi never exec -T $STRIDE_MAIN_NODE strided tx stakeibc register-host-zone connection-0 $ATOM $IBCATOM channel-0 --chain-id $STRIDE_CHAIN --home /stride/.strided --keyring-backend test --from val1 --gas 500000 -y
 CSLEEP 30
 sh ${SCRIPT_DIR}/tests/run_all_tests.sh

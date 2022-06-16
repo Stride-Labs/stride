@@ -6,6 +6,7 @@ SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 source ${SCRIPT_DIR}/vars.sh
 
 docker-compose up -d stride1 stride2 stride3 gaia1 gaia2 gaia3
+
 echo "Chains creating..."
 CSLEEP 10
 echo "Restoring keys"
@@ -25,12 +26,6 @@ docker-compose run --rm -T hermes hermes -c /tmp/hermes.toml create channel --po
 
 echo "Starting hermes relayer"
 docker-compose up --force-recreate -d hermes
-echo "Waiting for hermes to be ready..."
-
-echo "\nBuild interchainquery relayer service (this takes ~120s...)"
-rm -rf ./icq/keys
-docker-compose build icq --no-cache
-ICQ_RUN="docker-compose --ansi never run --rm -T icq interchain-queries"
 
 echo "\nAdd ICQ relayer addresses for Stride and Gaia:"
 # TODO(TEST-82) redefine stride-testnet in lens' config to $STRIDE_CHAIN and gaia-testnet to $main-gaia-chain, then replace those below with $STRIDE_CHAIN and $GAIA_CHAIN
