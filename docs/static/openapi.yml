@@ -29127,11 +29127,11 @@ paths:
                         type: integer
                         format: int32
                       delegationAmt:
-                        type: integer
-                        format: int32
+                        type: string
+                        format: int64
                   amt:
-                    type: integer
-                    format: int32
+                    type: string
+                    format: int64
         default:
           description: An unexpected error response.
           schema:
@@ -29338,11 +29338,8 @@ paths:
                       type: string
                       format: uint64
                     amount:
-                      type: integer
-                      format: int32
-                      title: >-
-                        TODO TEST-70 do we care that amount is int32? should we
-                        change this to uint64?
+                      type: string
+                      format: int64
                     denom:
                       type: string
                     hostZoneId:
@@ -29640,11 +29637,8 @@ paths:
                     type: string
                     format: uint64
                   amount:
-                    type: integer
-                    format: int32
-                    title: >-
-                      TODO TEST-70 do we care that amount is int32? should we
-                      change this to uint64?
+                    type: string
+                    format: int64
                   denom:
                     type: string
                   hostZoneId:
@@ -29886,8 +29880,8 @@ paths:
                             type: integer
                             format: int32
                           delegationAmt:
-                            type: integer
-                            format: int32
+                            type: string
+                            format: int64
                     blacklistedValidators:
                       type: array
                       items:
@@ -29903,19 +29897,19 @@ paths:
                             type: integer
                             format: int32
                           delegationAmt:
-                            type: integer
-                            format: int32
+                            type: string
+                            format: int64
                     withdrawalAccount:
                       type: object
                       properties:
                         address:
                           type: string
                         balance:
-                          type: integer
-                          format: int32
+                          type: string
+                          format: int64
                         delegatedBalance:
-                          type: integer
-                          format: int32
+                          type: string
+                          format: int64
                         delegations:
                           type: array
                           items:
@@ -29936,11 +29930,11 @@ paths:
                                     type: integer
                                     format: int32
                                   delegationAmt:
-                                    type: integer
-                                    format: int32
+                                    type: string
+                                    format: int64
                               amt:
-                                type: integer
-                                format: int32
+                                type: string
+                                format: int64
                         target:
                           type: string
                           enum:
@@ -29958,11 +29952,11 @@ paths:
                         address:
                           type: string
                         balance:
-                          type: integer
-                          format: int32
+                          type: string
+                          format: int64
                         delegatedBalance:
-                          type: integer
-                          format: int32
+                          type: string
+                          format: int64
                         delegations:
                           type: array
                           items:
@@ -29983,11 +29977,11 @@ paths:
                                     type: integer
                                     format: int32
                                   delegationAmt:
-                                    type: integer
-                                    format: int32
+                                    type: string
+                                    format: int64
                               amt:
-                                type: integer
-                                format: int32
+                                type: string
+                                format: int64
                         target:
                           type: string
                           enum:
@@ -30005,11 +29999,11 @@ paths:
                         address:
                           type: string
                         balance:
-                          type: integer
-                          format: int32
+                          type: string
+                          format: int64
                         delegatedBalance:
-                          type: integer
-                          format: int32
+                          type: string
+                          format: int64
                         delegations:
                           type: array
                           items:
@@ -30030,11 +30024,11 @@ paths:
                                     type: integer
                                     format: int32
                                   delegationAmt:
-                                    type: integer
-                                    format: int32
+                                    type: string
+                                    format: int64
                               amt:
-                                type: integer
-                                format: int32
+                                type: string
+                                format: int64
                         target:
                           type: string
                           enum:
@@ -30364,8 +30358,8 @@ paths:
                           type: integer
                           format: int32
                         delegationAmt:
-                          type: integer
-                          format: int32
+                          type: string
+                          format: int64
                   blacklistedValidators:
                     type: array
                     items:
@@ -30381,19 +30375,19 @@ paths:
                           type: integer
                           format: int32
                         delegationAmt:
-                          type: integer
-                          format: int32
+                          type: string
+                          format: int64
                   withdrawalAccount:
                     type: object
                     properties:
                       address:
                         type: string
                       balance:
-                        type: integer
-                        format: int32
+                        type: string
+                        format: int64
                       delegatedBalance:
-                        type: integer
-                        format: int32
+                        type: string
+                        format: int64
                       delegations:
                         type: array
                         items:
@@ -30414,11 +30408,11 @@ paths:
                                   type: integer
                                   format: int32
                                 delegationAmt:
-                                  type: integer
-                                  format: int32
+                                  type: string
+                                  format: int64
                             amt:
-                              type: integer
-                              format: int32
+                              type: string
+                              format: int64
                       target:
                         type: string
                         enum:
@@ -30435,11 +30429,11 @@ paths:
                       address:
                         type: string
                       balance:
-                        type: integer
-                        format: int32
+                        type: string
+                        format: int64
                       delegatedBalance:
-                        type: integer
-                        format: int32
+                        type: string
+                        format: int64
                       delegations:
                         type: array
                         items:
@@ -30460,11 +30454,11 @@ paths:
                                   type: integer
                                   format: int32
                                 delegationAmt:
-                                  type: integer
-                                  format: int32
+                                  type: string
+                                  format: int64
                             amt:
-                              type: integer
-                              format: int32
+                              type: string
+                              format: int64
                       target:
                         type: string
                         enum:
@@ -30481,11 +30475,11 @@ paths:
                       address:
                         type: string
                       balance:
-                        type: integer
-                        format: int32
+                        type: string
+                        format: int64
                       delegatedBalance:
-                        type: integer
-                        format: int32
+                        type: string
+                        format: int64
                       delegations:
                         type: array
                         items:
@@ -30506,11 +30500,11 @@ paths:
                                   type: integer
                                   format: int32
                                 delegationAmt:
-                                  type: integer
-                                  format: int32
+                                  type: string
+                                  format: int64
                             amt:
-                              type: integer
-                              format: int32
+                              type: string
+                              format: int64
                       target:
                         type: string
                         enum:
@@ -30745,11 +30739,11 @@ paths:
                   address:
                     type: string
                   balance:
-                    type: integer
-                    format: int32
+                    type: string
+                    format: int64
                   delegatedBalance:
-                    type: integer
-                    format: int32
+                    type: string
+                    format: int64
                   delegations:
                     type: array
                     items:
@@ -30770,11 +30764,11 @@ paths:
                               type: integer
                               format: int32
                             delegationAmt:
-                              type: integer
-                              format: int32
+                              type: string
+                              format: int64
                         amt:
-                          type: integer
-                          format: int32
+                          type: string
+                          format: int64
                   target:
                     type: string
                     enum:
@@ -31405,8 +31399,8 @@ paths:
                     type: integer
                     format: int32
                   delegationAmt:
-                    type: integer
-                    format: int32
+                    type: string
+                    format: int64
         default:
           description: An unexpected error response.
           schema:
@@ -31633,6 +31627,12 @@ paths:
                       send the Stride commission too, as well as what portion
                       of the fee each address is entitled to
                       TODO implement this
+                  reinvest_interval:
+                    type: string
+                    format: uint64
+                title: |-
+                  Params defines the parameters for the module.
+                  next id: 8
             description: >-
               QueryParamsResponse is response type for the Query/Params RPC
               method.
@@ -51859,12 +51859,6 @@ definitions:
     description: |-
       Version defines the versioning scheme used to negotiate the IBC verison in
       the connection handshake.
-  stride.interchainquery.MsgQueryBalanceResponse:
-    type: object
-  stride.interchainquery.MsgQueryDelegatedbalanceResponse:
-    type: object
-  stride.interchainquery.MsgQueryExchangerateResponse:
-    type: object
   stride.interchainquery.MsgSubmitQueryResponse:
     type: object
     properties:
@@ -52143,11 +52137,11 @@ definitions:
             type: integer
             format: int32
           delegationAmt:
-            type: integer
-            format: int32
+            type: string
+            format: int64
       amt:
-        type: integer
-        format: int32
+        type: string
+        format: int64
   Stridelabs.stride.stakeibc.DepositRecord:
     type: object
     properties:
@@ -52155,11 +52149,8 @@ definitions:
         type: string
         format: uint64
       amount:
-        type: integer
-        format: int32
-        title: >-
-          TODO TEST-70 do we care that amount is int32? should we change this to
-          uint64?
+        type: string
+        format: int64
       denom:
         type: string
       hostZoneId:
@@ -52202,8 +52193,8 @@ definitions:
               type: integer
               format: int32
             delegationAmt:
-              type: integer
-              format: int32
+              type: string
+              format: int64
       blacklistedValidators:
         type: array
         items:
@@ -52219,19 +52210,19 @@ definitions:
               type: integer
               format: int32
             delegationAmt:
-              type: integer
-              format: int32
+              type: string
+              format: int64
       withdrawalAccount:
         type: object
         properties:
           address:
             type: string
           balance:
-            type: integer
-            format: int32
+            type: string
+            format: int64
           delegatedBalance:
-            type: integer
-            format: int32
+            type: string
+            format: int64
           delegations:
             type: array
             items:
@@ -52252,11 +52243,11 @@ definitions:
                       type: integer
                       format: int32
                     delegationAmt:
-                      type: integer
-                      format: int32
+                      type: string
+                      format: int64
                 amt:
-                  type: integer
-                  format: int32
+                  type: string
+                  format: int64
           target:
             type: string
             enum:
@@ -52273,11 +52264,11 @@ definitions:
           address:
             type: string
           balance:
-            type: integer
-            format: int32
+            type: string
+            format: int64
           delegatedBalance:
-            type: integer
-            format: int32
+            type: string
+            format: int64
           delegations:
             type: array
             items:
@@ -52298,11 +52289,11 @@ definitions:
                       type: integer
                       format: int32
                     delegationAmt:
-                      type: integer
-                      format: int32
+                      type: string
+                      format: int64
                 amt:
-                  type: integer
-                  format: int32
+                  type: string
+                  format: int64
           target:
             type: string
             enum:
@@ -52319,11 +52310,11 @@ definitions:
           address:
             type: string
           balance:
-            type: integer
-            format: int32
+            type: string
+            format: int64
           delegatedBalance:
-            type: integer
-            format: int32
+            type: string
+            format: int64
           delegations:
             type: array
             items:
@@ -52344,11 +52335,11 @@ definitions:
                       type: integer
                       format: int32
                     delegationAmt:
-                      type: integer
-                      format: int32
+                      type: string
+                      format: int64
                 amt:
-                  type: integer
-                  format: int32
+                  type: string
+                  format: int64
           target:
             type: string
             enum:
@@ -52381,11 +52372,11 @@ definitions:
       address:
         type: string
       balance:
-        type: integer
-        format: int32
+        type: string
+        format: int64
       delegatedBalance:
-        type: integer
-        format: int32
+        type: string
+        format: int64
       delegations:
         type: array
         items:
@@ -52406,11 +52397,11 @@ definitions:
                   type: integer
                   format: int32
                 delegationAmt:
-                  type: integer
-                  format: int32
+                  type: string
+                  format: int64
             amt:
-              type: integer
-              format: int32
+              type: string
+              format: int64
       target:
         type: string
         enum:
@@ -52488,7 +52479,12 @@ definitions:
           send the Stride commission too, as well as what portion
           of the fee each address is entitled to
           TODO implement this
-    description: Params defines the parameters for the module.
+      reinvest_interval:
+        type: string
+        format: uint64
+    title: |-
+      Params defines the parameters for the module.
+      next id: 8
   Stridelabs.stride.stakeibc.QueryAllDepositRecordResponse:
     type: object
     properties:
@@ -52501,11 +52497,8 @@ definitions:
               type: string
               format: uint64
             amount:
-              type: integer
-              format: int32
-              title: >-
-                TODO TEST-70 do we care that amount is int32? should we change
-                this to uint64?
+              type: string
+              format: int64
             denom:
               type: string
             hostZoneId:
@@ -52572,8 +52565,8 @@ definitions:
                     type: integer
                     format: int32
                   delegationAmt:
-                    type: integer
-                    format: int32
+                    type: string
+                    format: int64
             blacklistedValidators:
               type: array
               items:
@@ -52589,19 +52582,19 @@ definitions:
                     type: integer
                     format: int32
                   delegationAmt:
-                    type: integer
-                    format: int32
+                    type: string
+                    format: int64
             withdrawalAccount:
               type: object
               properties:
                 address:
                   type: string
                 balance:
-                  type: integer
-                  format: int32
+                  type: string
+                  format: int64
                 delegatedBalance:
-                  type: integer
-                  format: int32
+                  type: string
+                  format: int64
                 delegations:
                   type: array
                   items:
@@ -52622,11 +52615,11 @@ definitions:
                             type: integer
                             format: int32
                           delegationAmt:
-                            type: integer
-                            format: int32
+                            type: string
+                            format: int64
                       amt:
-                        type: integer
-                        format: int32
+                        type: string
+                        format: int64
                 target:
                   type: string
                   enum:
@@ -52643,11 +52636,11 @@ definitions:
                 address:
                   type: string
                 balance:
-                  type: integer
-                  format: int32
+                  type: string
+                  format: int64
                 delegatedBalance:
-                  type: integer
-                  format: int32
+                  type: string
+                  format: int64
                 delegations:
                   type: array
                   items:
@@ -52668,11 +52661,11 @@ definitions:
                             type: integer
                             format: int32
                           delegationAmt:
-                            type: integer
-                            format: int32
+                            type: string
+                            format: int64
                       amt:
-                        type: integer
-                        format: int32
+                        type: string
+                        format: int64
                 target:
                   type: string
                   enum:
@@ -52689,11 +52682,11 @@ definitions:
                 address:
                   type: string
                 balance:
-                  type: integer
-                  format: int32
+                  type: string
+                  format: int64
                 delegatedBalance:
-                  type: integer
-                  format: int32
+                  type: string
+                  format: int64
                 delegations:
                   type: array
                   items:
@@ -52714,11 +52707,11 @@ definitions:
                             type: integer
                             format: int32
                           delegationAmt:
-                            type: integer
-                            format: int32
+                            type: string
+                            format: int64
                       amt:
-                        type: integer
-                        format: int32
+                        type: string
+                        format: int64
                 target:
                   type: string
                   enum:
@@ -52791,11 +52784,11 @@ definitions:
                 type: integer
                 format: int32
               delegationAmt:
-                type: integer
-                format: int32
+                type: string
+                format: int64
           amt:
-            type: integer
-            format: int32
+            type: string
+            format: int64
   Stridelabs.stride.stakeibc.QueryGetDepositRecordResponse:
     type: object
     properties:
@@ -52806,11 +52799,8 @@ definitions:
             type: string
             format: uint64
           amount:
-            type: integer
-            format: int32
-            title: >-
-              TODO TEST-70 do we care that amount is int32? should we change
-              this to uint64?
+            type: string
+            format: int64
           denom:
             type: string
           hostZoneId:
@@ -52850,8 +52840,8 @@ definitions:
                   type: integer
                   format: int32
                 delegationAmt:
-                  type: integer
-                  format: int32
+                  type: string
+                  format: int64
           blacklistedValidators:
             type: array
             items:
@@ -52867,19 +52857,19 @@ definitions:
                   type: integer
                   format: int32
                 delegationAmt:
-                  type: integer
-                  format: int32
+                  type: string
+                  format: int64
           withdrawalAccount:
             type: object
             properties:
               address:
                 type: string
               balance:
-                type: integer
-                format: int32
+                type: string
+                format: int64
               delegatedBalance:
-                type: integer
-                format: int32
+                type: string
+                format: int64
               delegations:
                 type: array
                 items:
@@ -52900,11 +52890,11 @@ definitions:
                           type: integer
                           format: int32
                         delegationAmt:
-                          type: integer
-                          format: int32
+                          type: string
+                          format: int64
                     amt:
-                      type: integer
-                      format: int32
+                      type: string
+                      format: int64
               target:
                 type: string
                 enum:
@@ -52921,11 +52911,11 @@ definitions:
               address:
                 type: string
               balance:
-                type: integer
-                format: int32
+                type: string
+                format: int64
               delegatedBalance:
-                type: integer
-                format: int32
+                type: string
+                format: int64
               delegations:
                 type: array
                 items:
@@ -52946,11 +52936,11 @@ definitions:
                           type: integer
                           format: int32
                         delegationAmt:
-                          type: integer
-                          format: int32
+                          type: string
+                          format: int64
                     amt:
-                      type: integer
-                      format: int32
+                      type: string
+                      format: int64
               target:
                 type: string
                 enum:
@@ -52967,11 +52957,11 @@ definitions:
               address:
                 type: string
               balance:
-                type: integer
-                format: int32
+                type: string
+                format: int64
               delegatedBalance:
-                type: integer
-                format: int32
+                type: string
+                format: int64
               delegations:
                 type: array
                 items:
@@ -52992,11 +52982,11 @@ definitions:
                           type: integer
                           format: int32
                         delegationAmt:
-                          type: integer
-                          format: int32
+                          type: string
+                          format: int64
                     amt:
-                      type: integer
-                      format: int32
+                      type: string
+                      format: int64
               target:
                 type: string
                 enum:
@@ -53032,11 +53022,11 @@ definitions:
           address:
             type: string
           balance:
-            type: integer
-            format: int32
+            type: string
+            format: int64
           delegatedBalance:
-            type: integer
-            format: int32
+            type: string
+            format: int64
           delegations:
             type: array
             items:
@@ -53057,11 +53047,11 @@ definitions:
                       type: integer
                       format: int32
                     delegationAmt:
-                      type: integer
-                      format: int32
+                      type: string
+                      format: int64
                 amt:
-                  type: integer
-                  format: int32
+                  type: string
+                  format: int64
           target:
             type: string
             enum:
@@ -53100,8 +53090,8 @@ definitions:
             type: integer
             format: int32
           delegationAmt:
-            type: integer
-            format: int32
+            type: string
+            format: int64
   Stridelabs.stride.stakeibc.QueryInterchainAccountFromAddressResponse:
     type: object
     properties:
@@ -53147,6 +53137,12 @@ definitions:
               send the Stride commission too, as well as what portion
               of the fee each address is entitled to
               TODO implement this
+          reinvest_interval:
+            type: string
+            format: uint64
+        title: |-
+          Params defines the parameters for the module.
+          next id: 8
     description: QueryParamsResponse is response type for the Query/Params RPC method.
   Stridelabs.stride.stakeibc.Validator:
     type: object
@@ -53161,5 +53157,5 @@ definitions:
         type: integer
         format: int32
       delegationAmt:
-        type: integer
-        format: int32
+        type: string
+        format: int64

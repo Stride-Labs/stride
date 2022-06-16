@@ -127,35 +127,15 @@ echo "Waiting for hermes to be ready..."
 
 echo "\nBuild interchainquery relayer service (this takes ~120s...)"
 rm -rf ./icq/keys
-docker-compose build icq --no-cache
-ICQ_RUN="docker-compose --ansi never run -T icq interchain-queries"
-
-echo "\nAdd ICQ relayer addresses for Stride and Gaia:"
-# TODO(TEST-82) redefine stride-testnet in lens' config to $main_chain and gaia-testnet to $main-gaia-chain, then replace those below with $main_chain and $main_gaia_chain
-$ICQ_RUN keys restore test "$ICQ_STRIDE_KEY" --chain stride-testnet
-$ICQ_RUN keys restore test "$ICQ_GAIA_KEY" --chain gaia-testnet
-
-echo "\nICQ addresses for Stride and Gaia:"
-# TODO(TEST-83) pull these addresses dynamically using jq
-ICQ_ADDRESS_STRIDE="stride12vfkpj7lpqg0n4j68rr5kyffc6wu55dzqewda4"
-# echo $ICQ_ADDRESS_STRIDE
-ICQ_ADDRESS_GAIA="cosmos1g6qdx6kdhpf000afvvpte7hp0vnpzapuyxp8uf"
-# echo $ICQ_ADDRESS_GAIA
-
-STR1_EXEC="docker-compose --ansi never exec -T stride1 strided --home /stride/.strided --chain-id STRIDE"
-$STR1_EXEC tx bank send val1 $ICQ_ADDRESS_STRIDE 5000000ustrd --chain-id $main_chain -y --keyring-backend test --home /stride/.strided
-GAIA1_EXEC="docker-compose --ansi never exec -T gaia1 gaiad --home /gaia/.gaiad"
-$GAIA1_EXEC tx bank send gval1 $ICQ_ADDRESS_GAIA 5000000uatom --chain-id $main_gaia_chain -y --keyring-backend test --home /gaia/.gaiad
-
-echo "\nLaunch interchainquery relayer"
-docker-compose up --force-recreate -d icq
+sh ${SCRIPT_DIR}/init_icq.sh
 
 # Register host zone
 # ICA staking test
 # first register host zone for ATOM chain
 ATOM='uatom'
 IBCATOM='ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2'
-CSLEEP 10
+CSLEEP 60
 docker-compose --ansi never exec -T $main_node strided tx stakeibc register-host-zone connection-0 $ATOM $IBCATOM channel-0 --chain-id $main_chain --home /stride/.strided --keyring-backend test --from val1 --gas 500000 -y
-CSLEEP 30
-sh ${SCRIPT_DIR}/tests/run_all_tests.sh
+CSLEEP 50
+# sh ${SCRIPT_DIR}/tests/run_all_tests.sh
+sh ${SCRIPT_DIR}/logs/create_logs.sh

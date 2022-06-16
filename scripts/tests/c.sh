@@ -8,22 +8,17 @@ STRIDE_ADDRESS_1='stride1uk4ze0x4nvh4fk0xm4jdud58eqn4yxhrt52vv7'
 GAIA_ADDRESS_1='cosmos1pcag0cj4ttxg8l7pcg0q4ksuglswuuedcextl2'
 GAIA_DELEGATE='cosmos19l6d3d7k2pel8epgcpxc9np6fsvjpaaa06nm65vagwxap0e4jezq05mmvu'
 
-# $STR1_EXEC q stakeibc list-host-zone
+$STR1_EXEC q stakeibc list-host-zone
+
+# docker-compose --ansi never exec -T stride1 strided tx stakeibc register-host-zone connection-0 uatom $IBCATOM channel-0 --chain-id STRIDE --home /stride/.strided --keyring-backend test --from val1 --gas 500000 -y
+
+
+exit 
+
 # MODULE_ADDR=$($STR1_EXEC q stakeibc module-address stakeibc | awk '{print $NF}') 
 # echo $MODULE_ADDR
-del_balance_atom=$($GAIA1_EXEC q bank balances $GAIA_DELEGATE --denom uatom | GETBAL)
-echo $del_balance_atom
-sleep 10
-del_balance_atom_new=$($GAIA1_EXEC q bank balances $GAIA_DELEGATE --denom uatom | GETBAL)
-echo $del_balance_atom_new
-[ $del_balance_atom -gt $del_balance_atom_new ] && BOOL=0 || BOOL=1
-echo $BOOL
-z=$((del_balance_atom_new - del_balance_atom))
-echo $z
-y=$z>0
-echo $y
-
-
+#$GAIA1_EXEC q bank balances $GAIA_DELEGATE 
+$GAIA1_EXEC q staking delegations $GAIA_DELEGATE
 # $GAIA1_EXEC q staking delegation cosmos19l6d3d7k2pel8epgcpxc9np6fsvjpaaa06nm65vagwxap0e4jezq05mmvu cosmosvaloper19e7sugzt8zaamk2wyydzgmg9n3ysylg6na6k6e
 
 exit 

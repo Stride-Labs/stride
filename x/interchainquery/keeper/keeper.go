@@ -1,36 +1,31 @@
 package keeper
 
 import (
+	"encoding/hex"
 	"fmt"
 
 	"github.com/Stride-Labs/stride/x/interchainquery/types"
-	stakeibckeeper "github.com/Stride-Labs/stride/x/stakeibc/keeper"
+	stakeibctypes "github.com/Stride-Labs/stride/x/stakeibc/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/tendermint/tendermint/libs/log"
 )
 
 // Keeper of this module maintains collections of registered zones.
 type Keeper struct {
-	cdc      codec.Codec
-	storeKey sdk.StoreKey
-	// TODO(TEST-80) remove stakeibc and bankkeeper access once exchrage logic moves to stakeibc module
-	BankKeeper     bankkeeper.Keeper
-	StakeibcKeeper stakeibckeeper.Keeper
-	callbacks      map[string]types.QueryCallbacks
+	cdc       codec.Codec
+	storeKey  sdk.StoreKey
+	callbacks map[string]types.QueryCallbacks
 }
 
 // NewKeeper returns a new instance of zones Keeper
-// TODO(TEST-80) remove stakeibc and bankkeeper access once exchrage logic moves to stakeibc module
-func NewKeeper(cdc codec.Codec, storeKey sdk.StoreKey, bankKeeper bankkeeper.Keeper, stakeibcKeeper stakeibckeeper.Keeper) Keeper {
+func NewKeeper(cdc codec.Codec, storeKey sdk.StoreKey) Keeper {
 	return Keeper{
-		cdc:            cdc,
-		storeKey:       storeKey,
-		BankKeeper:     bankKeeper,
-		StakeibcKeeper: stakeibcKeeper,
-		callbacks:      make(map[string]types.QueryCallbacks),
+		cdc:       cdc,
+		storeKey:  storeKey,
+		callbacks: make(map[string]types.QueryCallbacks),
 	}
 }
 
@@ -99,4 +94,43 @@ func (k *Keeper) MakeRequest(ctx sdk.Context, connection_id string, chain_id str
 		newQuery := k.NewQuery(ctx, connection_id, chain_id, query_type, request, period)
 		k.SetQuery(ctx, *newQuery)
 	}
+}
+
+func (k Keeper) QueryBalances(ctx sdk.Context, zone stakeibctypes.HostZone, cb Callback, address string) error {
+	connectionId := zone.ConnectionId
+	chainId := zone.ChainId
+	// Validate address
+	query_type := "cosmos.bank.v1beta1.Query/AllBalances"
+	balanceQuery := banktypes.QueryAllBalancesRequest{Address: address}
+	k.Logger(ctx).Info(fmt.Sprintf("\tabout to query %s", address))
+	bz, err := k.cdc.Marshal(&balanceQuery)
+	if err != nil {
+		k.Logger(ctx).Error(fmt.Sprintf("failed to marshal query %s %s", address, err.Error()))
+		return err
+	}
+	k.MakeRequest(
+		ctx,
+		connectionId,
+		chainId,
+		query_type,
+		bz,
+		// TODO(TEST-79) understand and use proper period
+		sdk.NewInt(25),
+		types.ModuleName,
+		cb,
+	)
+	ctx.EventManager().EmitEvents(sdk.Events{
+		sdk.NewEvent(
+			sdk.EventTypeMessage,
+			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
+			sdk.NewAttribute(sdk.AttributeKeyAction, types.AttributeValueQuery),
+			sdk.NewAttribute(types.AttributeKeyQueryId, GenerateQueryHash(connectionId, chainId, query_type, bz)),
+			sdk.NewAttribute(types.AttributeKeyChainId, chainId),
+			sdk.NewAttribute(types.AttributeKeyConnectionId, connectionId),
+			sdk.NewAttribute(types.AttributeKeyType, query_type),
+			sdk.NewAttribute(types.AttributeKeyHeight, "0"),
+			sdk.NewAttribute(types.AttributeKeyRequest, hex.EncodeToString(bz)),
+		),
+	})
+	return nil
 }

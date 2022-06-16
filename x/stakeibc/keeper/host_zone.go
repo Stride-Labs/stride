@@ -52,35 +52,22 @@ func (k Keeper) GetHostZone(ctx sdk.Context, chain_id string) (val types.HostZon
 	return val, true
 }
 
-// GetHostZoneFromDenom returns a hostZone from the relevant coin denom (denom is ibc/...)
-func (k Keeper) GetHostZoneFromDenom(ctx sdk.Context, denom string) (val types.HostZone, found bool) {
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.HostZoneKey))
-	iterator := sdk.KVStorePrefixIterator(store, []byte{})
-	// var bval types.HostZone
-
-	defer iterator.Close()
-
-	// // hash is the part of denom after ibc/
-	// hash := strings.Join(strings.SplitN(denom, "ibc/", -1), "")
-	// // TODO TEST-67 Error Handling - Verify IBC transfer works properly when done with two hops
-	// req := &ibctypes.QueryDenomTraceRequest{Hash: hash}
-	// goCtx := sdk.WrapSDKContext(ctx)
-	// denomTrace, err := k.transferKeeper.DenomTrace(goCtx, req)
-	// if err != nil {
-	// 	k.Logger(ctx).Error("unable to obtain chain from denom %s: %w", hash, err)
-	// 	return bval, false
-	// }
-	baseDenom := strings.ToUpper(denom) //denomTrace.DenomTrace.BaseDenom)
-
-	for ; iterator.Valid(); iterator.Next() {
-		var val types.HostZone
-		k.cdc.MustUnmarshal(iterator.Value(), &val)
-		if strings.ToUpper(val.HostDenom) == baseDenom {
-			return val, true
+// GetHostZoneFromHostDenom returns a HostZone from a HostDenom
+func (k Keeper) GetHostZoneFromHostDenom(ctx sdk.Context, denom string) (*types.HostZone, error) {
+	var matchZone types.HostZone
+	inDenom := strings.ToUpper(denom)
+	k.IterateHostZones(ctx, func(index int64, zoneInfo types.HostZone) (stop bool) {
+		zoneDenom := strings.ToUpper(zoneInfo.HostDenom)
+		if zoneDenom == inDenom {
+			matchZone = zoneInfo
+			return true
 		}
+		return false
+	})
+	if matchZone.ChainId != "" {
+		return &matchZone, nil
 	}
-	// k.Logger(ctx).Error("unable to obtain chain from BaseDenom %s: %w", baseDenom, err)
-	return val, false
+	return nil, sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "No HostZone for %s found", denom)
 }
 
 // RemoveHostZone removes a hostZone from the store

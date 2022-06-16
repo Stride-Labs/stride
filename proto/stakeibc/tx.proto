@@ -23,9 +23,9 @@ service Msg {
 
 message MsgLiquidStake {
   string creator = 1;
-  int32 amount = 2;
+  int64 amount = 2;
   // TODO(TEST-86): Update Denom -> HostDenom
-  string denom = 3;
+  string host_denom = 3;
 }
 
 message MsgLiquidStakeResponse {
@@ -33,8 +33,9 @@ message MsgLiquidStakeResponse {
 
 message MsgRedeemStake {
   string creator = 1;
-  int32 amount = 2;
-  string denom = 3;
+  int64 amount = 2;
+  string st_asset_denom = 3;
+  string receiver = 4;
 }
 
 message MsgRedeemStakeResponse {

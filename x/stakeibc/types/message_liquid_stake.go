@@ -11,11 +11,11 @@ const TypeMsgLiquidStake = "liquid_stake"
 
 var _ sdk.Msg = &MsgLiquidStake{}
 
-func NewMsgLiquidStake(creator string, amount int32, denom string) *MsgLiquidStake {
+func NewMsgLiquidStake(creator string, amount int64, hostDenom string) *MsgLiquidStake {
 	return &MsgLiquidStake{
 		Creator: creator,
 		Amount:  amount,
-		Denom:   denom,
+		HostDenom:   hostDenom,
 	}
 }
 
@@ -23,6 +23,14 @@ func NewMsgLiquidStake(creator string, amount int32, denom string) *MsgLiquidSta
 // Each IBC token starts with an ibc/ denom, the check is rather simple
 func IsIBCToken(denom string) bool {
 	return strings.HasPrefix(denom, "ibc/")
+}
+
+func StAssetDenomFromHostZoneDenom(hostZoneDenom string) string {
+	return "st" + hostZoneDenom
+}
+
+func HostZoneDenomFromStAssetDenom(stAssetDenom string) string {
+	return stAssetDenom[2:]
 }
 
 func (msg *MsgLiquidStake) Route() string {

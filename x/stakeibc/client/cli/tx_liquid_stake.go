@@ -15,15 +15,15 @@ var _ = strconv.Itoa(0)
 
 func CmdLiquidStake() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "liquid-stake [amount] [denom]",
+		Use:   "liquid-stake [amount] [hostDenom]",
 		Short: "Broadcast message liquid-stake",
 		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
-			argAmount, err := cast.ToInt32E(args[0])
+			argAmount, err := cast.ToInt64E(args[0])
 			if err != nil {
 				return err
 			}
-			argDenom := args[1]
+			argHostDenom := args[1]
 
 			clientCtx, err := client.GetClientTxContext(cmd)
 			if err != nil {
@@ -33,7 +33,7 @@ func CmdLiquidStake() *cobra.Command {
 			msg := types.NewMsgLiquidStake(
 				clientCtx.GetFromAddress().String(),
 				argAmount,
-				argDenom,
+				argHostDenom,
 			)
 			if err := msg.ValidateBasic(); err != nil {
 				return err

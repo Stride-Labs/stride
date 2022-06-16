@@ -35,7 +35,9 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochIdentifier string, epochN
 					continue
 				}
 				delegateAddress := delegateAccount.Address
-				timeoutHeight := clienttypes.NewHeight(0, 500)
+				// TODO(TEST-89): Set NewHeight relative to the most recent known gaia height (based on the LC)
+				// TODO(TEST-90): why do we have two gaia LCs?
+				timeoutHeight := clienttypes.NewHeight(0, 1000000)
 				transferCoin := sdk.NewCoin(hostZone.GetIBCDenom(), sdk.NewInt(int64(depositRecord.Amount)))
 				goCtx := sdk.WrapSDKContext(ctx)
 
@@ -53,33 +55,37 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochIdentifier string, epochN
 		}
 		delegateInterval := int64(k.GetParam(ctx, types.KeyDelegateInterval))
 		if epochNumber%delegateInterval == 0 {
-			icaStake := func(index int64, zoneInfo types.HostZone) (stop bool) {
+			k.ProcessDelegationStaking(ctx)
+		}
+		// process withdrawals
+		// TODO(TEST-88): restructure this to be more efficient, we should only have to loop
+		// over host zones once
+		reinvestInterval := int64(k.GetParam(ctx, types.KeyReinvestInterval))
+		if epochNumber%reinvestInterval == 0 {
+			icaReinvest := func(index int64, zoneInfo types.HostZone) (stop bool) {
 				// Verify the delegation ICA is registered
 				delegationIca := zoneInfo.GetDelegationAccount()
 				if delegationIca == nil || delegationIca.Address == "" {
 					k.Logger(ctx).Error("Zone %s is missing a delegation address!", zoneInfo.ChainId)
 					return true
 				}
-
-				// TODO(TEST-46): Query process amount (unstaked balance) on host zone using ICQ
-				processAmount := "1" + zoneInfo.HostDenom
-				amt, err := sdk.ParseCoinNormalized(processAmount)
-				// Do we want to panic here? All unprocessed zones would also fail
-				if err != nil {
-					panic(err)
-				}
-				err = k.DelegateOnHost(ctx, zoneInfo, amt)
-				if err != nil {
-					k.Logger(ctx).Error("Did not stake %s on %s", processAmount, zoneInfo.ChainId)
+				withdrawIca := zoneInfo.GetWithdrawalAccount()
+				if withdrawIca == nil || withdrawIca.Address == "" {
+					k.Logger(ctx).Error("Zone %s is missing a withdrawal address!", zoneInfo.ChainId)
 					return true
-				} else {
-					k.Logger(ctx).Info("Successfully staked %s on %s", processAmount, zoneInfo.ChainId)
 				}
+				// err := k.ReinvestRewards(ctx, zoneInfo)
+				// if err != nil {
+				// 	k.Logger(ctx).Error("Did not withdraw rewards on %s", zoneInfo.ChainId)
+				// 	return true
+				// } else {
+				// 	k.Logger(ctx).Info(fmt.Sprintf("Successfully withdrew rewards on %s", zoneInfo.ChainId))
+				// }
 				return false
 			}
 
-			// Iterate the zones and apply icaStake
-			k.IterateHostZones(ctx, icaStake)
+			// Iterate the zones and apply icaReinvest
+			k.IterateHostZones(ctx, icaReinvest)
 		}
 	}
 }
