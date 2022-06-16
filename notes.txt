@@ -60,9 +60,13 @@ unbondings in less than 21 days
         [X] process DepositRecords from previous epochs
       [X] Update the deposit record in liquid stake (fetch the epoch id with the epochs keeper and stride epoch)
       [] Update the DepositRecord in ack
+        [X] Add TODO in OnAcknowledgementPacket
         [] If previous status was TRANSFER, update status to STAKE
         [] If previous status was STAKE, delete the record
-        [] It should be easy to differentiate between these based on the ICA call issued
+[] 2 Cleanup
+  [] hooks.go should reference modular functions
+  [] clean up dangling todos
+
 
 >>> EPOCH START
 ----------
