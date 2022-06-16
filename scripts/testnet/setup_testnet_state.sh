@@ -1,13 +1,12 @@
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
 # import dependencies
-source ${SCRIPT_DIR}/testnet_vars.sh
-
+source ${SCRIPT_DIR}/testnet_vars.sh $1
+exit 1
 # run through init args, if needed
-while getopts bd flag; do
+while getopts b flag; do
     case "${flag}" in
         b) ignite chain init ;;
-        d) sh $SCRIPT_DIR/../docker_build.sh -s ;;
     esac
 done
 
@@ -33,7 +32,7 @@ for i in ${!STRIDE_DOCKER_NAMES[@]}; do
     if [ $i -ne $SEED_ID ]
     then
         # add VALidator account
-        echo $vkey | $st_cmd keys add $val_acct --keyring-backend=test >> $STATE/keys.txt 2>&1
+        $st_cmd keys add $val_acct --keyring-backend=test >> $STATE/keys.txt 2>&1
         # get validator address
         VAL_ADDR=$($st_cmd keys show $val_acct --keyring-backend test -a)
         # add money for this validator account

@@ -1,0 +1,36 @@
+
+- name: val1
+  type: local
+  address: stride1rrdd4l07qncf0h0tswjkvnrr2yamz54w3mvjg0
+  pubkey: '{"@type":"/cosmos.crypto.secp256k1.PubKey","key":"A6tCCC0jdmBZAEYR4wX/UU6uEWnoM2AnKgl6sh0C0oii"}'
+  mnemonic: ""
+
+
+**Important** write this mnemonic phrase in a safe place.
+It is the only way to recover your account if you ever forget your password.
+
+cross bounce rally welcome dice exotic retreat mother exercise uphold guide game ship quantum reveal fall wolf sight agree gloom once trouble cable actress
+
+- name: val2
+  type: local
+  address: stride1evswcdvcmcdu8y9p697ucsas7se7zadn7xrzz8
+  pubkey: '{"@type":"/cosmos.crypto.secp256k1.PubKey","key":"AzZOa5O//8dwyTegKfCr9/qTWVVtxLxi23alUWgf7Qta"}'
+  mnemonic: ""
+
+
+**Important** write this mnemonic phrase in a safe place.
+It is the only way to recover your account if you ever forget your password.
+
+cotton hero electric extra mushroom vendor people slice whale like arctic luxury stick kiss oval orphan latin spray actress toddler blast leg omit salt
+
+- name: val3
+  type: local
+  address: stride12cpwcu0n9pfhd24kh45dn947wfnrz7l9uxtxmj
+  pubkey: '{"@type":"/cosmos.crypto.secp256k1.PubKey","key":"At54hL+iYZ0QrBBMQp5hwJG3anD15qWFXy60HV9svY0f"}'
+  mnemonic: ""
+
+
+**Important** write this mnemonic phrase in a safe place.
+It is the only way to recover your account if you ever forget your password.
+
+favorite hurdle impose family spin please order run caught live economy you venue fine canyon galaxy inflict method unveil child youth ketchup copper north

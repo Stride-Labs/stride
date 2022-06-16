@@ -1,7 +1,23 @@
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
-STATE=$SCRIPT_DIR/state
+if [ -z "$1" ]
+then
+    echo "Error, you must pass testnet name in. E.g. \"sh setup_testnet_state.sh droplet\""
+    exit 1
+fi
+
+source $SCRIPT_DIR/$1/vars.sh
+
+if [ -z "${STRIDE_CHAIN}" ]
+then
+    echo "STRIDE_CHAIN not defined. Did you pass in your desired testnet? E.g. \"sh setup_testnet_state.sh droplet\""
+    exit 1
+fi
+
+echo "Setting up chain $STRIDE_CHAIN"
+
 STRIDE_CHAIN=droplet
+STATE=$SCRIPT_DIR/$STRIDE_CHAIN/state
 STRIDE_DOCKER_NAMES=(strideTestNode1 strideTestNode2 strideTestNode3 strideTestSeed)
 STRIDE_PEER_NAMES=(strideTestNode1 strideTestNode2 strideTestNode3)
 STRIDE_MONIKERS=(STRIDE_1 STRIDE_2 STRIDE_3 STRIDE_SEED)
@@ -24,9 +40,3 @@ for state_name in "${STRIDE_DOCKER_NAMES[@]}"; do
   ST_CMDS+=( "$BASE_RUN --home $STATE/$state_name" )
 done
 main_cmd=${ST_CMDS[$MAIN_ID]}
-
-#   zone         = "us-central1-b"
-# us-west1-a 
-# us-east4-b
-# us-central1-a
-# e2-standard-4
