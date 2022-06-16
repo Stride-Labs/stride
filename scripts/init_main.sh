@@ -6,21 +6,21 @@ SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 source ${SCRIPT_DIR}/vars.sh
 
 # cleanup any stale state
-rm -rf $STATE
+rm -rf $STATE ./icq/keys
 docker-compose down
 
-# run through init args, if needed
-while getopts bdfsa flag; do
+# build docker images
+while getopts sghi flag; do
     case "${flag}" in
-        b) ignite chain init ;;
-        d) sh $SCRIPT_DIR/docker_build.sh ;;
-        f) sh $SCRIPT_DIR/docker_build.sh -f ;;
-        s) sh $SCRIPT_DIR/docker_build.sh -s ;;
-        a) sh $SCRIPT_DIR/docker_build.sh -a ;;
+        s) docker build --tag stridezone:stride -f Dockerfile.stride . ;;
+        g) docker build --tag stridezone:gaia -f Dockerfile.gaia . ;;
+        h) docker build --tag stridezone:hermes -f Dockerfile.hermes . ;;
+        i) echo "placeholder" ;;
     esac
 done
 
 # Initialize the state for stride/gaia and relayers
+ignite chain init
 sh ${SCRIPT_DIR}/init_stride.sh
 sh ${SCRIPT_DIR}/init_gaia.sh
 sh ${SCRIPT_DIR}/init_relayers.sh
