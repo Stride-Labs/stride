@@ -29344,14 +29344,15 @@ paths:
                       type: string
                     hostZoneId:
                       type: string
-                    sender:
-                      type: string
-                    purpose:
+                    status:
                       type: string
                       enum:
-                        - RECEIPT
-                        - TRANSACTION
-                      default: RECEIPT
+                        - TRANSFER
+                        - STAKE
+                      default: TRANSFER
+                      title: |-
+                        - TRANSFER: pending transfer to delegate account
+                         - STAKE: pending staking on delegate account
               pagination:
                 type: object
                 properties:
@@ -29643,14 +29644,15 @@ paths:
                     type: string
                   hostZoneId:
                     type: string
-                  sender:
-                    type: string
-                  purpose:
+                  status:
                     type: string
                     enum:
-                      - RECEIPT
-                      - TRANSACTION
-                    default: RECEIPT
+                      - TRANSFER
+                      - STAKE
+                    default: TRANSFER
+                    title: |-
+                      - TRANSFER: pending transfer to delegate account
+                       - STAKE: pending staking on delegate account
         default:
           description: An unexpected error response.
           schema:
@@ -52155,20 +52157,24 @@ definitions:
         type: string
       hostZoneId:
         type: string
-      sender:
-        type: string
-      purpose:
+      status:
         type: string
         enum:
-          - RECEIPT
-          - TRANSACTION
-        default: RECEIPT
-  Stridelabs.stride.stakeibc.DepositRecord.Purpose:
+          - TRANSFER
+          - STAKE
+        default: TRANSFER
+        title: |-
+          - TRANSFER: pending transfer to delegate account
+           - STAKE: pending staking on delegate account
+  Stridelabs.stride.stakeibc.DepositRecord.Status:
     type: string
     enum:
-      - RECEIPT
-      - TRANSACTION
-    default: RECEIPT
+      - TRANSFER
+      - STAKE
+    default: TRANSFER
+    title: |-
+      - TRANSFER: pending transfer to delegate account
+       - STAKE: pending staking on delegate account
   Stridelabs.stride.stakeibc.HostZone:
     type: object
     properties:
@@ -52503,14 +52509,15 @@ definitions:
               type: string
             hostZoneId:
               type: string
-            sender:
-              type: string
-            purpose:
+            status:
               type: string
               enum:
-                - RECEIPT
-                - TRANSACTION
-              default: RECEIPT
+                - TRANSFER
+                - STAKE
+              default: TRANSFER
+              title: |-
+                - TRANSFER: pending transfer to delegate account
+                 - STAKE: pending staking on delegate account
       pagination:
         type: object
         properties:
@@ -52805,14 +52812,15 @@ definitions:
             type: string
           hostZoneId:
             type: string
-          sender:
-            type: string
-          purpose:
+          status:
             type: string
             enum:
-              - RECEIPT
-              - TRANSACTION
-            default: RECEIPT
+              - TRANSFER
+              - STAKE
+            default: TRANSFER
+            title: |-
+              - TRANSFER: pending transfer to delegate account
+               - STAKE: pending staking on delegate account
   Stridelabs.stride.stakeibc.QueryGetHostZoneResponse:
     type: object
     properties:

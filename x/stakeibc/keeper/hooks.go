@@ -22,7 +22,7 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochIdentifier string, epochN
 			depositRecords := k.GetAllDepositRecord(ctx)
 			addr := k.accountKeeper.GetModuleAccount(ctx, types.ModuleName).GetAddress().String()
 			for _, depositRecord := range depositRecords {
-				pstr := fmt.Sprintf("\tProcessing deposit {%d} {%s} {%d} {%s}", depositRecord.Id, depositRecord.Denom, depositRecord.Amount, depositRecord.Sender)
+				pstr := fmt.Sprintf("\tProcessing deposit {%d} {%s} {%d} {%s}", depositRecord.Id, depositRecord.Denom, depositRecord.Amount)
 				k.Logger(ctx).Info(pstr)
 				hostZone, hostZoneFound := k.GetHostZone(ctx, depositRecord.HostZoneId)
 				if !hostZoneFound {

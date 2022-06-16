@@ -68,9 +68,9 @@ func (k msgServer) LiquidStake(goCtx context.Context, msg *types.MsgLiquidStake)
 		k.Logger(ctx).Info("failed to send tokens from Account to Module")
 		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidCoins, "failed to mint stAssets to user")
 	}
-	// create a deposit record of these tokens
-	depositRecord := types.NewDepositRecord(msg.Amount, msg.HostDenom, hostZone.ChainId,
-		sender.String(), types.DepositRecord_RECEIPT)
+	// create a deposit record of these tokens (pending transfer)
+	// TODO: increment amount on deposit record, add creation to end of epoch 
+	depositRecord := types.NewDepositRecord(msg.Amount, msg.HostDenom, hostZone.ChainId, types.DepositRecord_TRANSFER)
 	k.AppendDepositRecord(ctx, *depositRecord)
 
 	return &types.MsgLiquidStakeResponse{}, nil
