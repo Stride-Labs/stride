@@ -289,22 +289,19 @@ test:
 init:
 	@if [ ${build} == "base" ]; \
 		then \
-			sh scripts/init.sh -bd;\
+			sh scripts/init_main.sh -bd;\
 	elif [ ${build} == "all" ]; \
 		then \
-			sh scripts/init.sh -bf;\
+			sh scripts/init_main.sh -bf;\
 	elif [ ${build} == "none" ]; \
 		then \
-			sh scripts/init.sh;\
+			sh scripts/init_main.sh;\
 	elif [ ${build} == "stride" ]; \
 		then \
-			sh scripts/init.sh -bs;\
+			sh scripts/init_main.sh -bs;\
 	elif [ ${build} == "strideall" ]; \
 		then \
-			sh scripts/init.sh -ba ;\
-	elif [ ${build} == "logs" ]; \
-		then \
-			sh scripts/logs/create_logs.sh -ba ;\
+			sh scripts/init_main.sh -ba ;\
 	else\
 		echo "Init type ${build} not recognized.";\
 	fi
