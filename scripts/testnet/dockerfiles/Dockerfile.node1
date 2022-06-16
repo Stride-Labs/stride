@@ -1,6 +1,7 @@
 FROM golang:1.17-alpine3.15 AS golang
 
 ARG network_name
+ENV STRIDE_NETWORK=${network_name}
 
 WORKDIR /src/app/
 COPY go.mod go.sum* ./
@@ -22,9 +23,9 @@ EXPOSE 1317
 
 # new stuff
 
-RUN echo $network_name
+RUN echo $STRIDE_NETWORK
 
-COPY --chown=stride scripts/testnet/$network_name/state/strideTestNode1/ /stride/.strided/ 
+COPY --chown=stride scripts/testnet/$STRIDE_NETWORK/state/strideTestNode1/ /stride/.strided/ 
 
 ENTRYPOINT ["strided"]
 
