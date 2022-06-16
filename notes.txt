@@ -31,10 +31,10 @@ unbondings in less than 21 days
 *******************************************************************
 
 # SECTION 1
-# 0 Update DepositRecord type
+[X] 0 Update DepositRecord type
   UPDATE DEPOSIT RECORD
   message DepositRecord {
-    uint64 id = 1; // epoch_num:chain_id
+    uint64 id = 1; // just an int - should work?
     int64 amount = 2; // total amount
     string denom = 3; // tokens
     string hostZoneId = 4; // can remove - fetch with denom
@@ -51,11 +51,18 @@ unbondings in less than 21 days
     Status status = 5; 
   }
   - Add next status types
-      - transfer: the balance must be transferred to the host zone
-      - stake: the balance must be staked
-# 1 Aggregate into a single deposit record / successful epoch / chain
-# 2 Update DepositRecord type
-# 3 Update Epoch processing code
+      - transfer: the balance is ready to be transferred to the host zone
+      - stake: the balance is ready to be staked
+[] 1 Aggregate into a single deposit record / successful epoch / chain
+      - add current epoch data type
+      - In the stakeibc hook
+        - create a DepositRecord, keyed by epoch in stakeibc hook
+        - process DepositRecords from previous epochs
+      - Update the deposit record in liquid stake (fetch the epoch id with the epochs keeper and stride epoch)
+      - Update the DepositRecord in ack
+        - If previous status was TRANSFER, update status to STAKE
+        - If previous status was STAKE, delete the 
+        - It should be easy to differentiate between these based on the ICA call issued
 
 >>> EPOCH START
 ----------
@@ -94,11 +101,11 @@ for record in depositRecords:
 *******************************************************************
 
 # SECTION 2
-# 0 Set withdrawal address of delegation account to withdrawal account in host zone
+[] 0 Set withdrawal address of delegation account to withdrawal account in host zone
     registration ack
-# 1 Update DepositRecord to handle rewards types
-# 2 Update epoch end to process all records for each host zone
-# 3 Add new records for rewards that accrued in the previous epoch
+[] 1 Update DepositRecord to handle rewards types
+[] 2 Update epoch end to process all records for each host zone
+[] 3 Add new records for rewards that accrued in the previous epoch
 
 >>> EPOCH START
 ----------
@@ -162,12 +169,12 @@ NEXT EPOCH START
 
 
 # SECTION 3
-# 0 Add UnbondingRecord type
-# 1 Add RedeemStake logic outlined below
-# 2 Update Epoch end to
-  # a. PROCESS RECORDS - ENQUEUE
-  # b. CACHE MOST RECENT BLOCK HEIGHT FOR HOST ZONE
-  # c. PROCESS RECORDS - SEND BACK TO USERS
+[] 0 Add UnbondingRecord type
+[] 1 Add RedeemStake logic outlined below
+[] 2 Update Epoch end to
+  [] a. PROCESS RECORDS - ENQUEUE
+  [] b. CACHE MOST RECENT BLOCK HEIGHT FOR HOST ZONE
+  [] c. PROCESS RECORDS - SEND BACK TO USERS
 
 
 >>> EPOCH START
