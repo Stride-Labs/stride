@@ -42,7 +42,7 @@ jobs:
           file: "scripts/testnet/dockerfiles/Dockerfile.node1"
           push: true
           platforms: linux/amd64
-          build-args: network_name=${{ github.event.inputs.network_name }}
+          build-args: network_name=tub
           tags: |
             stridelabs/internal:${{ github.event.inputs.network_name }}_node1 
             gcr.io/stride-nodes/testnet:${{ github.event.inputs.network_name }}_node1
