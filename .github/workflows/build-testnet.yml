@@ -35,19 +35,19 @@ jobs:
         run: |
           gcloud auth configure-docker
       -
-        name: Construct Node1 Images
+        name: Construct Node1 Image
         uses: docker/build-push-action@v3
         with:
           context: "{{defaultContext}}"
           file: "scripts/testnet/dockerfiles/Dockerfile.node1"
           push: true
           platforms: linux/amd64
-          build-args: network_name=tub
+          build-args: network_name=${{ github.event.inputs.network_name }}
           tags: |
             stridelabs/internal:${{ github.event.inputs.network_name }}_node1 
             gcr.io/stride-nodes/testnet:${{ github.event.inputs.network_name }}_node1
       -
-        name: Construct Node2 Images
+        name: Construct Node2 Image
         uses: docker/build-push-action@v3
         with:
           context: "{{defaultContext}}"
@@ -59,7 +59,7 @@ jobs:
             stridelabs/internal:${{ github.event.inputs.network_name }}_node2 
             gcr.io/stride-nodes/testnet:${{ github.event.inputs.network_name }}_node2
       -
-        name: Construct Node3 Images
+        name: Construct Node3 Image
         uses: docker/build-push-action@v3
         with:
           context: "{{defaultContext}}"
@@ -71,7 +71,7 @@ jobs:
             stridelabs/internal:${{ github.event.inputs.network_name }}_node3 
             gcr.io/stride-nodes/testnet:${{ github.event.inputs.network_name }}_node3
       -
-        name: Construct Node1 Images
+        name: Construct Seed Image
         uses: docker/build-push-action@v3
         with:
           context: "{{defaultContext}}"
@@ -82,3 +82,14 @@ jobs:
           tags: |
             stridelabs/internal:${{ github.event.inputs.network_name }}_seed
             gcr.io/stride-nodes/testnet:${{ github.event.inputs.network_name }}_seed
+      -
+        name: Construct Gaia Image
+        uses: docker/build-push-action@v3
+        with:
+          context: "{{defaultContext}}"
+          file: "Dockerfile.gaia"
+          push: true
+          platforms: linux/amd64
+          tags: |
+            stridelabs/internal:${{ github.event.inputs.network_name }}_gaia
+            gcr.io/stride-nodes/testnet:${{ github.event.inputs.network_name }}_gaia
