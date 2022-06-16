@@ -1,0 +1,11 @@
+syntax = "proto3";
+package Stridelabs.stride.stakeibc;
+
+option go_package = "github.com/Stride-Labs/stride/x/stakeibc/types";
+
+message EpochTracker {
+  string epochIdentifier = 1; 
+  uint64 epochNumber = 2;
+  
+}
+

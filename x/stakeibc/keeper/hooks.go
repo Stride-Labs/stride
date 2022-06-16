@@ -17,42 +17,64 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochIdentifier string, epochN
 		k.Logger(ctx).Info(fmt.Sprintf("Stride Epoch %d", epochNumber))
 		depositInterval := int64(k.GetParam(ctx, types.KeyDepositInterval))
 		if epochNumber%depositInterval == 0 {
+			// track the current deposit epoch number in stakeibc
+			if epochNumber < 0 {
+				panic("epochs must be positive")
+			}
+			epochTracker := types.EpochTracker{
+				EpochIdentifier: epochIdentifier,
+				EpochNumber: uint64(epochNumber),
+			}
+			// deposit records *must* exist for this epoch
+			k.SetEpochTracker(ctx, epochTracker)
 			// TODO TEST-72 move this function to the keeper
 			k.Logger(ctx).Info("Triggering deposits")
+
+			// Create one new deposit record / host zone for the next epoch
+			createDepositRecords := func(index int64, zoneInfo types.HostZone) (stop bool) {
+				// create a deposit record / host zone
+				depositRecord := types.NewDepositRecord(0, zoneInfo.HostDenom, zoneInfo.ChainId, types.DepositRecord_TRANSFER, uint64(epochNumber))
+				k.AppendDepositRecord(ctx, *depositRecord)
+				return false
+			}
+			// Iterate the zones and apply icaReinvest
+			k.IterateHostZones(ctx, createDepositRecords)
+
+			// process previous deposit records
 			depositRecords := k.GetAllDepositRecord(ctx)
 			addr := k.accountKeeper.GetModuleAccount(ctx, types.ModuleName).GetAddress().String()
 			for _, depositRecord := range depositRecords {
-				pstr := fmt.Sprintf("\tProcessing deposit {%d} {%s} {%d} {%s}", depositRecord.Id, depositRecord.Denom, depositRecord.Amount)
-				k.Logger(ctx).Info(pstr)
-				hostZone, hostZoneFound := k.GetHostZone(ctx, depositRecord.HostZoneId)
-				if !hostZoneFound {
-					k.Logger(ctx).Error("Host zone not found for deposit record {%d}", depositRecord.Id)
-					continue
-				}
-				delegateAccount := hostZone.GetDelegationAccount()
-				if delegateAccount == nil || delegateAccount.Address == "" {
-					k.Logger(ctx).Error("Zone %s is missing a delegation address!", hostZone.ChainId)
-					continue
-				}
-				delegateAddress := delegateAccount.Address
-				// TODO(TEST-89): Set NewHeight relative to the most recent known gaia height (based on the LC)
-				// TODO(TEST-90): why do we have two gaia LCs?
-				timeoutHeight := clienttypes.NewHeight(0, 1000000)
-				transferCoin := sdk.NewCoin(hostZone.GetIBCDenom(), sdk.NewInt(int64(depositRecord.Amount)))
-				goCtx := sdk.WrapSDKContext(ctx)
-
-				msg := ibctypes.NewMsgTransfer("transfer", hostZone.TransferChannelId, transferCoin, addr, delegateAddress, timeoutHeight, 0)
-				_, err := k.transferKeeper.Transfer(goCtx, msg)
-				if err != nil {
-					pstr := fmt.Sprintf("\tERROR WITH DEPOSIT RECEIPT {%d}", depositRecord.Id)
+				if depositRecord.EpochNumber < uint64(epochNumber) {
+					pstr := fmt.Sprintf("\tProcessing deposit {%d} {%s} {%d} {%s}", depositRecord.Id, depositRecord.Denom, depositRecord.Amount)
 					k.Logger(ctx).Info(pstr)
-					panic(err)
-				} else {
-					// TODO TEST-71 what should we do if this transfer fails
-					k.RemoveDepositRecord(ctx, depositRecord.Id)
+					hostZone, hostZoneFound := k.GetHostZone(ctx, depositRecord.HostZoneId)
+					if !hostZoneFound {
+						k.Logger(ctx).Error("Host zone not found for deposit record {%d}", depositRecord.Id)
+						continue
+					}
+					delegateAccount := hostZone.GetDelegationAccount()
+					if delegateAccount == nil || delegateAccount.Address == "" {
+						k.Logger(ctx).Error("Zone %s is missing a delegation address!", hostZone.ChainId)
+						continue
+					}
+					delegateAddress := delegateAccount.Address
+					// TODO(TEST-89): Set NewHeight relative to the most recent known gaia height (based on the LC)
+					// TODO(TEST-90): why do we have two gaia LCs?
+					timeoutHeight := clienttypes.NewHeight(0, 1000000)
+					transferCoin := sdk.NewCoin(hostZone.GetIBCDenom(), sdk.NewInt(int64(depositRecord.Amount)))
+					goCtx := sdk.WrapSDKContext(ctx)
+	
+					msg := ibctypes.NewMsgTransfer("transfer", hostZone.TransferChannelId, transferCoin, addr, delegateAddress, timeoutHeight, 0)
+					_, err := k.transferKeeper.Transfer(goCtx, msg)
+					if err != nil {
+						pstr := fmt.Sprintf("\tERROR WITH DEPOSIT RECEIPT {%d}", depositRecord.Id)
+						k.Logger(ctx).Info(pstr)
+						panic(err)
+					}
 				}
 			}
 		}
+
 		delegateInterval := int64(k.GetParam(ctx, types.KeyDelegateInterval))
 		if epochNumber%delegateInterval == 0 {
 			k.ProcessDelegationStaking(ctx)
