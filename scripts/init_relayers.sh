@@ -5,24 +5,22 @@ SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 # import dependencies
 source ${SCRIPT_DIR}/vars.sh
 
-docker compose down
-
 docker-compose up -d stride1 stride2 stride3 gaia1 gaia2 gaia3
 echo "Chains creating..."
 CSLEEP 10
 echo "Restoring keys"
-docker-compose run hermes hermes -c /tmp/hermes.toml keys restore --mnemonic "$RLY_MNEMONIC_1" $STRIDE_CHAIN
-docker-compose run hermes hermes -c /tmp/hermes.toml keys restore --mnemonic "$RLY_MNEMONIC_2" $GAIA_CHAIN
+docker-compose run --rm hermes hermes -c /tmp/hermes.toml keys restore --mnemonic "$RLY_MNEMONIC_1" $STRIDE_CHAIN
+docker-compose run --rm hermes hermes -c /tmp/hermes.toml keys restore --mnemonic "$RLY_MNEMONIC_2" $GAIA_CHAIN
 
 echo "creating hermes identifiers"
-docker-compose run hermes hermes -c /tmp/hermes.toml tx raw create-client $STRIDE_CHAIN $GAIA_CHAIN > /dev/null
-docker-compose run hermes hermes -c /tmp/hermes.toml tx raw conn-init $STRIDE_CHAIN $GAIA_CHAIN 07-tendermint-0 07-tendermint-0 > /dev/null
+docker-compose run --rm hermes hermes -c /tmp/hermes.toml tx raw create-client $STRIDE_CHAIN $GAIA_CHAIN > /dev/null
+docker-compose run --rm hermes hermes -c /tmp/hermes.toml tx raw conn-init $STRIDE_CHAIN $GAIA_CHAIN 07-tendermint-0 07-tendermint-0 > /dev/null
 
 echo "Creating connection $STRIDE_CHAIN <> $GAIA_CHAIN"
-docker-compose run -T hermes hermes -c /tmp/hermes.toml create connection $STRIDE_CHAIN $GAIA_CHAIN > /dev/null
+docker-compose run --rm -T hermes hermes -c /tmp/hermes.toml create connection $STRIDE_CHAIN $GAIA_CHAIN > /dev/null
 
 echo "Creating transfer channel"
-docker-compose run -T hermes hermes -c /tmp/hermes.toml create channel --port-a transfer --port-b transfer $GAIA_CHAIN connection-0 > /dev/null
+docker-compose run --rm -T hermes hermes -c /tmp/hermes.toml create channel --port-a transfer --port-b transfer $GAIA_CHAIN connection-0 > /dev/null
 # docker-compose run hermes hermes -c /tmp/hermes.toml tx raw chan-open-init $STRIDE_CHAIN $GAIA_CHAIN connection-0 transfer transfer > /dev/null
 
 echo "Starting hermes relayer"
@@ -32,7 +30,7 @@ echo "Waiting for hermes to be ready..."
 echo "\nBuild interchainquery relayer service (this takes ~120s...)"
 rm -rf ./icq/keys
 docker-compose build icq --no-cache
-ICQ_RUN="docker-compose --ansi never run -T icq interchain-queries"
+ICQ_RUN="docker-compose --ansi never run --rm -T icq interchain-queries"
 
 echo "\nAdd ICQ relayer addresses for Stride and Gaia:"
 # TODO(TEST-82) redefine stride-testnet in lens' config to $STRIDE_CHAIN and gaia-testnet to $main-gaia-chain, then replace those below with $STRIDE_CHAIN and $GAIA_CHAIN
