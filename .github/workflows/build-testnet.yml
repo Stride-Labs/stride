@@ -8,7 +8,7 @@ on:
         required: true
 
 jobs:
-  build-droplet-docker:
+  build-testnet-docker:
     runs-on: ubuntu-latest
     steps:
       -
@@ -87,7 +87,7 @@ jobs:
         uses: docker/build-push-action@v3
         with:
           context: "{{defaultContext}}"
-          file: "Dockerfile.gaia"
+          file: "scripts/testnet/dockerfiles/Dockerfile.gaia"
           push: true
           platforms: linux/amd64
           build-args: network_name=${{ github.event.inputs.network_name }}
