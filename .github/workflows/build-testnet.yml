@@ -98,7 +98,7 @@ jobs:
         uses: docker/build-push-action@v3
         with:
           context: "{{defaultContext}}"
-          file: "Dockerfile.hermes"
+          file: "scripts/testnet/dockerfiles/Dockerfile.hermes"
           push: true
           platforms: linux/amd64
           tags: |
