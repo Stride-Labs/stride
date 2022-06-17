@@ -18,3 +18,6 @@ touch $STATE/keys.txt
 source ${SCRIPT_DIR}/setup_stride_state.sh
 source ${SCRIPT_DIR}/setup_gaia_state.sh $STRIDE_CHAIN
 source ${SCRIPT_DIR}/setup_hermes_state.sh $STRIDE_CHAIN
+
+sed -i -E "s|droplet|$STRIDE_CHAIN|g" $SCRIPT_DIR/$STRIDE_CHAIN/$STRIDE_CHAIN.tf
+rm $SCRIPT_DIR/$STRIDE_CHAIN/$STRIDE_CHAIN.tf-E
