@@ -183,20 +183,31 @@ variable "chain_name" {
   type    = string
   default = "stride"
 }
-resource "google_compute_address" "node-address" {
-  name   = "${var.chain_name}-node1"
-  region = regions[0]
+
+module "gce-container" {
+  source  = "terraform-google-modules/container-vm/google"
+  version = "~> 2.0"
+  container = {
+    image = "gcr.io/stride-nodes/${var.deployment_name}:${var.chain_name}-node1"
+  }
+  restart_policy = "Always"
 }
-resource "google_compute_instance" "test-nodes" {
+
+
+# resource "google_compute_address" "test-node1" {
+#   name   = "${var.chain_name}-node1"
+#   region = var.regions[0]
+# }
+resource "google_compute_instance" "stride-nodes" {
   name                      = "${var.chain_name}-node1"
   machine_type              = "e2-standard-4"
-  zone                      = regions[0]
+  zone                      = "${var.regions[0]}-a"
   tags                      = ["ssh"]
   allow_stopping_for_update = true
 
   metadata = {
     enable-oslogin            = "TRUE"
-    gce-container-declaration = "spec:\n  containers:\n    - name: node\n      image: 'gcr.io/stride-nodes/${var.deployment_name}:${var.chain_name}-node1'\n      stdin: false\n      tty: false\n  restartPolicy: Always\n"
+    gce-container-declaration = "spec:\n  containers:\n    - name: node\n      image: 'gcr.io/stride-nodes/testnet:stride-node1'\n      stdin: false\n      tty: false\n  restartPolicy: Always\n"
   }
   boot_disk {
     initialize_params {
@@ -207,7 +218,7 @@ resource "google_compute_instance" "test-nodes" {
   network_interface {
     network = "default"
     access_config {
-      nat_ip = google_compute_address.test-node1.address
+      # nat_ip = google_compute_address.test-node1.address
     }
   }
 
