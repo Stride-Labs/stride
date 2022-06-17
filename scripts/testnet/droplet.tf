@@ -184,7 +184,7 @@ variable "chain_name" {
   default = "stride"
 }
 
-module "gce-container" {
+module "stride-node1-container" {
   source  = "terraform-google-modules/container-vm/google"
   version = "~> 2.0"
   container = {
@@ -207,7 +207,7 @@ resource "google_compute_instance" "stride-nodes" {
 
   metadata = {
     enable-oslogin            = "TRUE"
-    gce-container-declaration = "spec:\n  containers:\n    - name: node\n      image: 'gcr.io/stride-nodes/testnet:stride-node1'\n      stdin: false\n      tty: false\n  restartPolicy: Always\n"
+    gce-container-declaration = module.stride-node1-container.metadata_value
   }
   boot_disk {
     initialize_params {

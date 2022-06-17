@@ -27,4 +27,4 @@ vue/*
 # vscode 
 .vscode/*
 .DS_Store
-
+.terraform
