@@ -38,8 +38,7 @@ jobs:
 
       - name: Show
         with:
-          node_name: ${{ matrix.node_names }}
-          run: echo "======================${node_name}================================="
+          run: echo "======================${{ matrix.node_names }}================================="
 
       # - name: Login to DockerHub
       #   uses: docker/login-action@v2
