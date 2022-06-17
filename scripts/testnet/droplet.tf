@@ -172,16 +172,16 @@ resource "google_compute_instance" "droplet-seed" {
 
 
 variable "regions" {
-  type    = "list(string)"
+  type    = list(string)
   default = ["us-central1"]
 }
-variable "network_name" {
+variable "deployment_name" {
   type    = string
   default = "testnet"
 }
 variable "chain_name" {
   type    = string
-  default = "test"
+  default = "stride"
 }
 resource "google_compute_address" "node-address" {
   name   = "${var.chain_name}-node1"
@@ -196,7 +196,7 @@ resource "google_compute_instance" "test-nodes" {
 
   metadata = {
     enable-oslogin            = "TRUE"
-    gce-container-declaration = "spec:\n  containers:\n    - name: node\n      image: 'gcr.io/stride-nodes/${network_name}:test-${chain_name}-node1'\n      stdin: false\n      tty: false\n  restartPolicy: Always\n"
+    gce-container-declaration = "spec:\n  containers:\n    - name: node\n      image: 'gcr.io/stride-nodes/${var.deployment_name}:${var.chain_name}-node1'\n      stdin: false\n      tty: false\n  restartPolicy: Always\n"
   }
   boot_disk {
     initialize_params {
