@@ -48,7 +48,7 @@ jobs:
         with:
           context: .
           file: "scripts/testnet/dockerfiles/Dockerfile.stride"
-          build_arg: deployment_name=testnet,node_name=stride-seed
+          build-args: deployment_name=testnet,node_name=stride-seed
           push: true
           platforms: linux/amd64
           tags: |
