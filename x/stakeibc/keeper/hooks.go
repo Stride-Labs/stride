@@ -53,8 +53,27 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochIdentifier string, epochN
 				}
 			}
 		}
+
+		// get light client's latest height
+		connectionID := "connection-0"
+		conn, found := k.IBCKeeper.ConnectionKeeper.GetConnection(ctx, connectionID)
+		if !found {
+			k.Logger(ctx).Info(fmt.Sprintf("invalid connection id, \"%s\" not found", connectionID))
+		}
+		clientState, found := k.IBCKeeper.ClientKeeper.GetClientState(ctx, conn.ClientId)
+		if !found {
+			k.Logger(ctx).Info(fmt.Sprintf("client id \"%s\" not found for connection \"%s\"", conn.ClientId, connectionID))
+		} else {
+			// TODO(TEST-119) get stAsset supply at SAME time as gaia height
+			latestHeightGaia := clientState.GetLatestHeight()
+			latestHeightStride := ctx.BlockHeight()
+			k.Logger(ctx).Info(fmt.Sprintf("Latest GAIA height (from connection-0 LC): %d", latestHeightGaia.GetRevisionHeight()))
+			k.Logger(ctx).Info(fmt.Sprintf("Latest STRIDE height (from ctx): %d", latestHeightStride))
+		}
+
 		delegateInterval := int64(k.GetParam(ctx, types.KeyDelegateInterval))
 		if epochNumber%delegateInterval == 0 {
+			// get Gaia LC height
 			k.ProcessDelegationStaking(ctx)
 		}
 		exchangeRateInterval := int64(k.GetParam(ctx, types.KeyExchangeRateInterval))
