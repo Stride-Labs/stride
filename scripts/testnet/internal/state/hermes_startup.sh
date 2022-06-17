@@ -1,3 +1,4 @@
+#!/bin/bash
 
 echo "Restoring Hermes Accounts"
 hermes -c /tmp/hermes.toml keys restore --mnemonic "brass identify file ability snack entry ahead motion hedgehog topic clock edge salt stand alone drop vote final outer brown nerve sadness host brick" internal
