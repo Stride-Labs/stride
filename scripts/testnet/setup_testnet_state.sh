@@ -27,6 +27,7 @@ SEED_ID=0
 MAIN_ID=1 # Node responsible for genesis
 MAIN_NODE_NAME=""
 MAIN_NODE_CMD=""
+NODE_NAMES=()
 echo 'Initializing state for each node in the chain...'
 for (( i=0; i <= $NUM_NODES; i++ )); do
     # Seed nodes will be of the form: "stride-seed"
@@ -36,6 +37,7 @@ for (( i=0; i <= $NUM_NODES; i++ )); do
     else 
         node_name="${NETWORK_NAME}-node${i}"
     fi
+    NODE_NAMES+=( "$node_name" )
 
     # Moniker is of the form: STRIDE_1
     moniker=$(printf "${NETWORK_NAME}_${i}" | awk '{ print toupper($0) }')
@@ -65,7 +67,7 @@ for (( i=0; i <= $NUM_NODES; i++ )); do
         SEED_NODE_ID=$node_id
     else
         # add this node's id to the list of peer nodes that will be used by the seed node
-        PEER_NODE_IDS="${node_id},${PEER_NODE_IDS}" 
+        PEER_NODE_IDS="${PEER_NODE_IDS},${node_id}" 
         # add validator account
         val_acct="${VAL_PREFIX}${i}"
         $st_cmd keys add $val_acct --keyring-backend=test >> $STATE/keys.txt 2>&1
@@ -89,10 +91,12 @@ $MAIN_NODE_CMD collect-gentxs 2> /dev/null
 sed -i -E "s|persistent_peers = .*|persistent_peers = \"$PEER_NODE_IDS\"|g" "${STATE}/${NETWORK_NAME}-seed/config/config.toml"
 
 # copy the main node's genesis to the other nodes to ensure all nodes have the same genesis
-for (( i=1; i <= $NUM_NODES; i++ )); do
+for (( i=0; i <= $NUM_NODES; i++ )); do
     # set the seed node as the only peer for each validator 
-    node_name="${NETWORK_NAME}-node${i}"
-    sed -i -E "s|persistent_peers = .*|persistent_peers = \"$SEED_NODE_ID\"|g" "${STATE}/${node_name}/config/config.toml"
+    node_name="${NODE_NAMES[i]}"
+    if [ $i -ne $SEED_ID ]; then
+        sed -i -E "s|seeds = .*|seeds = \"$SEED_NODE_ID\"|g" "${STATE}/${node_name}/config/config.toml"
+    fi
     if [ $i -ne $MAIN_ID ]; then
         cp ${STATE}/${MAIN_NODE_NAME}/config/genesis.json ${STATE}/${node_name}/config/genesis.json
     fi
