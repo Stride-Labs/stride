@@ -34,7 +34,6 @@ resource "google_compute_address" "seed" {
   name   = "seed"
   region = "us-west1"
 }
-
 resource "google_compute_instance" "droplet-node1" {
   name                      = "droplet-node1"
   machine_type              = "e2-standard-4"
@@ -171,38 +170,55 @@ resource "google_compute_instance" "droplet-seed" {
   }
 }
 
-# resource "google_compute_instance" "test-droplet-sp" {
-#   name                      = "test-droplet-sp"
-#   machine_type              = "e2-standard-4"
-#   zone                      = "us-central1-a"
-#   tags                      = ["ssh"]
-#   allow_stopping_for_update = true
 
-#   metadata = {
-#     enable-oslogin            = "TRUE"
-#     gce-container-declaration = "spec:\n  containers:\n    - name: node\n      image: 'gcr.io/stride-nodes/testnet:droplet_node1'\n      stdin: false\n      tty: false\n  restartPolicy: Always\n"
-#   }
-#   boot_disk {
-#     initialize_params {
-#       image = "cos-cloud/cos-97-lts"
-#     }
-#   }
+variable "regions" {
+  type    = "list(string)"
+  default = ["us-central1"]
+}
+variable "network_name" {
+  type    = string
+  default = "testnet"
+}
+variable "chain_name" {
+  type    = string
+  default = "test"
+}
+resource "google_compute_address" "node-address" {
+  name   = "${var.chain_name}-node1"
+  region = regions[0]
+}
+resource "google_compute_instance" "test-nodes" {
+  name                      = "${var.chain_name}-node1"
+  machine_type              = "e2-standard-4"
+  zone                      = regions[0]
+  tags                      = ["ssh"]
+  allow_stopping_for_update = true
 
-#   network_interface {
-#     network = "default"
-#     access_config {
-#       nat_ip = google_compute_address.node1.address
-#     }
-#   }
+  metadata = {
+    enable-oslogin            = "TRUE"
+    gce-container-declaration = "spec:\n  containers:\n    - name: node\n      image: 'gcr.io/stride-nodes/${network_name}:test-${chain_name}-node1'\n      stdin: false\n      tty: false\n  restartPolicy: Always\n"
+  }
+  boot_disk {
+    initialize_params {
+      image = "cos-cloud/cos-97-lts"
+    }
+  }
 
-#   service_account {
-#     scopes = [
-#       "https://www.googleapis.com/auth/devstorage.read_only",
-#       "https://www.googleapis.com/auth/logging.write",
-#       "https://www.googleapis.com/auth/monitoring.write",
-#       "https://www.googleapis.com/auth/servicecontrol",
-#       "https://www.googleapis.com/auth/service.management.readonly",
-#       "https://www.googleapis.com/auth/trace.append"
-#     ]
-#   }
-# }
+  network_interface {
+    network = "default"
+    access_config {
+      nat_ip = google_compute_address.test-node1.address
+    }
+  }
+
+  service_account {
+    scopes = [
+      "https://www.googleapis.com/auth/devstorage.read_only",
+      "https://www.googleapis.com/auth/logging.write",
+      "https://www.googleapis.com/auth/monitoring.write",
+      "https://www.googleapis.com/auth/servicecontrol",
+      "https://www.googleapis.com/auth/service.management.readonly",
+      "https://www.googleapis.com/auth/trace.append"
+    ]
+  }
+}

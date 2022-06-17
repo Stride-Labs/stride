@@ -10,9 +10,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
 
-      # - name: Set up QEMU
-      #   uses: docker/setup-qemu-action@v2
-
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
 
@@ -34,32 +31,24 @@ jobs:
         run: |
           gcloud auth configure-docker
 
-      # - name: Create Stride Base Image
-      #   uses: docker/build-push-action@v3
-      #   with:
-      #     context: "{{defaultContext}}"
-      #     file: "Dockerfile.stride"
-      #     load: true
-      #     platforms: linux/amd64
-      #     tags: stridezone:stride
-
       - name: Build Stride
         run: make build
 
       - name: Initialize Stride State
         shell: bash
-        run: ./scripts/testnet/setup_testnet_state.sh
+        run: ./scripts/testnet/setup_testnet_state.sh testnet stride 1
 
-      - name: Construct Test Images
+      - name: Build Stride Node Images
         uses: docker/build-push-action@v3
         with:
           context: .
-          file: "scripts/testnet/dockerfiles/Dockerfile.node1"
+          file: "scripts/testnet/dockerfiles/Dockerfile.stride"
+          build_args: network_name=testnet,chain_name=stride,node_name=test-node1
           push: true
           platforms: linux/amd64
           tags: |
-            stridelabs/internal:test-droplet-sp
-            gcr.io/stride-nodes/testnet:test-droplet-sp
+            stridelabs/internal:test-node1
+            gcr.io/stride-nodes/testnet:test-node1
       # -
       #   name: Construct Node1 Images
       #   uses: docker/build-push-action@v3

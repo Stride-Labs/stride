@@ -10,7 +10,7 @@ STRIDE_ENDPOINTS=(stride_1.droplet.stridelabs.co stride_2.droplet.stridelabs.co 
 VAL_TOKENS=500000000ustrd
 STAKE_TOKENS=300000000ustrd
 
-VAL_ACCTS=(val1 val2 val3 valseed)
+VAL_PREFIX=val
 SEED_ID=3
 MAIN_ID=0
 main_node=${STRIDE_DOCKER_NAMES[$MAIN_ID]}
