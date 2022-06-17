@@ -3,6 +3,11 @@ on:
     branches:
       - launch-net-actions
 
+env:
+  deployment_name: testnet
+  chain_name: stride
+  num_nodes: 2
+
 jobs:
   build-droplet-docker:
     runs-on: ubuntu-latest
@@ -36,19 +41,31 @@ jobs:
 
       - name: Initialize Stride State
         shell: bash
-        run: ./scripts/testnet/setup_testnet_state.sh testnet stride 1
+        run: ./scripts/testnet/setup_testnet_state.sh ${deployment_name} ${chain_name} ${num_nodes}
 
-      - name: Build Stride Node Images
+      - name: Build Stride Seed Node Image
         uses: docker/build-push-action@v3
         with:
           context: .
           file: "scripts/testnet/dockerfiles/Dockerfile.stride"
-          build_args: network_name=testnet,chain_name=stride,node_name=test-node1
+          build_args: deployment_name=testnet,node_name=stride-seed
           push: true
           platforms: linux/amd64
           tags: |
-            stridelabs/internal:test-node1
-            gcr.io/stride-nodes/testnet:test-node1
+            stridelabs/internal:stride-seed
+            gcr.io/stride-nodes/testnet:stride-seed
+
+      # - name: Build Stride Node Images
+      #   uses: docker/build-push-action@v3
+      #   with:
+      #     context: .
+      #     file: "scripts/testnet/dockerfiles/Dockerfile.stride"
+      #     build_args: deployment_name=testnet,node_name=stride-node1
+      #     push: true
+      #     platforms: linux/amd64
+      #     tags: |
+      #       stridelabs/internal:stride-node1
+      #       gcr.io/stride-nodes/testnet:stride-node1
       # -
       #   name: Construct Node1 Images
       #   uses: docker/build-push-action@v3
