@@ -1,8 +1,5 @@
 FROM golang:1.17-alpine3.15 AS golang
 
-ARG deployment_name
-ARG node_name
-
 WORKDIR /src/app/
 COPY go.mod go.sum* ./
 RUN go mod download
@@ -27,6 +24,4 @@ EXPOSE 1317
 
 COPY --chown=stride "./scripts/$deployment_name/state/$node_name/" /stride/.strided/ 
 
-ENTRYPOINT ["strided"]
-
-CMD ["start", "--home", "/stride/.strided"]
+CMD ["strided", "start", "--home", "/stride/.strided"]

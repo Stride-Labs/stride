@@ -9,8 +9,26 @@ env:
   num_nodes: 2
 
 jobs:
-  build-node-images:
+  node_names:
     runs-on: ubuntu-latest
+    steps:
+      - id: matrix
+        run: |
+          node_names="[\"${chain_name}-seed\""
+          for (( i=1; i <= $num_nodes; i++ )); do
+            node_names+=", \"${chain_name}-node${i}\""
+          done
+          node_names+="]"
+          echo "::set-output name=node_names::[${node_names}]"
+    outputs:
+      matrix: ${{ steps.matrix.outputs.node_names }}
+
+  build-node-images:
+    needs: node_names
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        value: ${{fromJson(needs.node_names.outputs.matrix)}}
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -43,31 +61,33 @@ jobs:
         shell: bash
         run: ./scripts/testnet/setup_testnet_state.sh ${deployment_name} ${chain_name} ${num_nodes}
 
-      - name: Build Stride Seed Node Image
+      # - name: Build Stride Seed Node Image
+      #   uses: docker/build-push-action@v3
+      #   with:
+      #     context: .
+      #     file: "scripts/testnet/dockerfiles/Dockerfile.stride"
+      #     build-args: |
+      #       deployment_name=testnet
+      #       node_name=stride-seed
+      #     push: true
+      #     platforms: linux/amd64
+      #     tags: |
+      #       stridelabs/internal:stride-seed
+      #       gcr.io/stride-nodes/testnet:stride-seed
+
+      - name: Build Stride Node Images
         uses: docker/build-push-action@v3
         with:
           context: .
           file: "scripts/testnet/dockerfiles/Dockerfile.stride"
           build-args: |
             deployment_name=testnet
-            node_name=stride-seed
+            node_name=${{ matrix.node_name }}
           push: true
           platforms: linux/amd64
           tags: |
-            stridelabs/internal:stride-seed
-            gcr.io/stride-nodes/testnet:stride-seed
-
-      # - name: Build Stride Node Images
-      #   uses: docker/build-push-action@v3
-      #   with:
-      #     context: .
-      #     file: "scripts/testnet/dockerfiles/Dockerfile.stride"
-      #     build_args: deployment_name=testnet,node_name=stride-node1
-      #     push: true
-      #     platforms: linux/amd64
-      #     tags: |
-      #       stridelabs/internal:stride-node1
-      #       gcr.io/stride-nodes/testnet:stride-node1
+            stridelabs/internal:stride-node1
+            gcr.io/stride-nodes/testnet:stride-node1
       # -
       #   name: Construct Node1 Images
       #   uses: docker/build-push-action@v3
