@@ -188,13 +188,13 @@ locals {
   node_names = tolist(["${var.chain_name}-seed", "${var.chain_name}-node1"])
 }
 
-module "node-container" {
+module "node-containers" {
   source  = "terraform-google-modules/container-vm/google"
   version = "~> 2.0"
 
-  count = 1
+  count = length(local.node_names)
   container = {
-    image = "gcr.io/stride-nodes/${var.deployment_name}:${local.node_names[1]}"
+    image = "gcr.io/stride-nodes/${var.deployment_name}:${local.node_names[count.index]}"
   }
   restart_policy = "Always"
 }
@@ -205,15 +205,16 @@ module "node-container" {
 #   region = var.regions[0]
 # }
 resource "google_compute_instance" "stride-nodes" {
-  name                      = "${var.chain_name}-node1"
+  count                     = length(local.node_names)
+  name                      = local.node_names[count.index]
   machine_type              = "e2-standard-4"
-  zone                      = "${var.regions[0]}-a"
+  zone                      = "${element(var.regions, count.index)}-a"
   tags                      = ["ssh"]
   allow_stopping_for_update = true
 
   metadata = {
     enable-oslogin            = "TRUE"
-    gce-container-declaration = module.node-container[0].metadata_value
+    gce-container-declaration = module.node-containers[count.index].metadata_value
   }
   boot_disk {
     initialize_params {
