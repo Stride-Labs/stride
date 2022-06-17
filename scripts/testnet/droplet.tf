@@ -184,11 +184,17 @@ variable "chain_name" {
   default = "stride"
 }
 
-module "stride-node1-container" {
+locals {
+  node_names = tolist(["${var.chain_name}-seed", "${var.chain_name}-node1"])
+}
+
+module "node-container" {
   source  = "terraform-google-modules/container-vm/google"
   version = "~> 2.0"
+
+  count = 1
   container = {
-    image = "gcr.io/stride-nodes/${var.deployment_name}:${var.chain_name}-node1"
+    image = "gcr.io/stride-nodes/${var.deployment_name}:${local.node_names[1]}"
   }
   restart_policy = "Always"
 }
@@ -207,7 +213,7 @@ resource "google_compute_instance" "stride-nodes" {
 
   metadata = {
     enable-oslogin            = "TRUE"
-    gce-container-declaration = module.stride-node1-container.metadata_value
+    gce-container-declaration = module.node-container[0].metadata_value
   }
   boot_disk {
     initialize_params {
