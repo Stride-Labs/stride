@@ -9,7 +9,7 @@ env:
   num_nodes: 2
 
 jobs:
-  build-droplet-docker:
+  build-node-images:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -48,7 +48,7 @@ jobs:
         with:
           context: .
           file: "scripts/testnet/dockerfiles/Dockerfile.stride"
-          build_args: deployment_name=testnet,node_name=stride-seed
+          build_arg: deployment_name=testnet,node_name=stride-seed
           push: true
           platforms: linux/amd64
           tags: |
