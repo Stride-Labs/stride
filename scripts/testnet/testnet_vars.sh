@@ -32,3 +32,21 @@ for state_name in "${STRIDE_DOCKER_NAMES[@]}"; do
   ST_CMDS+=( "$BASE_RUN --home $STATE/$state_name" )
 done
 main_cmd=${ST_CMDS[$MAIN_ID]}
+
+GAIA_FOLDER="${STATE}/gaia"
+GAIA_CMD="docker run -v ${STATE}/gaia:/gaia/.gaiad gcr.io/stride-nodes/testnet:tub_gaia gaiad --home /gaia/.gaiad"
+
+GAIA_TOKENS=500000000uatom
+GAIA_STAKE_TOKENS=300000000uatom
+GAIA_ENDPOINT=gaia.$STRIDE_CHAIN.stridelabs.co
+GAIA_CHAIN="GAIA_${STRIDE_CHAIN}"
+
+HERMES_CMD="docker run -v ${STATE}/hermes.toml:/tmp/hermes.toml gcr.io/stride-nodes/testnet:tub_hermes hermes -c /tmp/hermes.toml"
+
+GETKEY() {
+  grep -i -A 10 "\- name: $1" "$STATE/keys.txt" | tail -n 1
+}
+
+GETRLY2() {
+  cat internal/state/keys.txt | tail -1
+}

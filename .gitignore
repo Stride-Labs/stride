@@ -10,6 +10,7 @@ scripts/testnet/state/keys.txt
 build/*
 state/*
 scripts/state/*
+scripts/testnet/*/state/keys.txt
 scripts/testnet/state/*
 
 scripts/logs/*.log
