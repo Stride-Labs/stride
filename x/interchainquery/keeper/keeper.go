@@ -120,6 +120,9 @@ func (k Keeper) QueryBalances(ctx sdk.Context, zone stakeibctypes.HostZone, cb C
 		types.ModuleName,
 		cb,
 	)
+
+	// TODO(TEST-119) get gaia LC height, pass to height
+
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(
 			sdk.EventTypeMessage,
@@ -129,7 +132,8 @@ func (k Keeper) QueryBalances(ctx sdk.Context, zone stakeibctypes.HostZone, cb C
 			sdk.NewAttribute(types.AttributeKeyChainId, chainId),
 			sdk.NewAttribute(types.AttributeKeyConnectionId, connectionId),
 			sdk.NewAttribute(types.AttributeKeyType, query_type),
-			sdk.NewAttribute(types.AttributeKeyHeight, "0"),
+			// TODO(TEST-119) set height based on gaia LC height
+			sdk.NewAttribute(types.AttributeKeyHeight, "1"),
 			sdk.NewAttribute(types.AttributeKeyRequest, hex.EncodeToString(bz)),
 		),
 	})
