@@ -249,20 +249,20 @@ resource "google_compute_instance" "stride-nodes" {
   }
 }
 
-# resource "google_dns_managed_zone" "stridelabs" {
-#   name     = "stridelabs"
-#   dns_name = "stridelabs.co."
-# }
-# resource "google_dns_record_set" "addresses" {
-#   count = length(local.node_names)
-#   name  = "${local.node_names[count.index]}.${var.deployment_name}.${google_dns_managed_zone.stridelabs.dns_name}"
-#   type  = "A"
-#   ttl   = 300
+resource "google_dns_managed_zone" "stridelabs" {
+  name     = "${var.deployment_name}-stridelabs"
+  dns_name = "${var.deployment_name}.stridelabs.co."
+}
+resource "google_dns_record_set" "addresses" {
+  count = length(local.node_names)
+  name  = "${local.node_names[count.index]}.${google_dns_managed_zone.stridelabs.dns_name}"
+  type  = "A"
+  ttl   = 300
 
-#   managed_zone = google_dns_managed_zone.stridelabs.name
+  managed_zone = google_dns_managed_zone.stridelabs.name
 
-#   rrdatas = [google_compute_instance.stride-nodes[count.index].network_interface[0].access_config[0].nat_ip]
-# }
+  rrdatas = [google_compute_instance.stride-nodes[count.index].network_interface[0].access_config[0].nat_ip]
+}
 
 resource "google_compute_firewall" "tendermint-firewall" {
   name    = "tendermint-firewall"
