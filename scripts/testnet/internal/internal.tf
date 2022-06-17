@@ -13,7 +13,7 @@ provider "google" {
 
   project = "stride-nodes"
   region  = "us-central1"
-  zone    = "us-central1-b"
+  zone    = "us-central1-a"
 }
 
 data "google_compute_default_service_account" "default" {
@@ -46,7 +46,7 @@ resource "google_compute_address" "hermes-internal" {
 resource "google_compute_instance" "internal-node1" {
   name         = "internal-node1"
   machine_type = "e2-standard-2"
-  zone         = "us-central1-b"
+  zone         = "us-central1-a"
   tags         = ["ssh"]
   allow_stopping_for_update = true
 
@@ -80,7 +80,7 @@ resource "google_compute_instance" "internal-node1" {
 resource "google_compute_instance" "internal-node2" {
   name         = "internal-node2"
   machine_type = "e2-standard-2"
-  zone         = "europe-west6-b"
+  zone         = "europe-west6-a"
   tags         = ["ssh"]
   allow_stopping_for_update = true
 
@@ -114,7 +114,7 @@ resource "google_compute_instance" "internal-node2" {
 resource "google_compute_instance" "internal-node3" {
   name         = "internal-node3"
   machine_type = "e2-standard-2"
-  zone         = "us-east4-b"
+  zone         = "us-east4-a"
   tags         = ["ssh"]
   allow_stopping_for_update = true
 
@@ -148,7 +148,7 @@ resource "google_compute_instance" "internal-node3" {
 resource "google_compute_instance" "internal-seed" {
   name         = "internal-seed"
   machine_type = "e2-standard-2"
-  zone         = "us-west1-b"
+  zone         = "us-west1-a"
   tags         = ["ssh"]
   allow_stopping_for_update = true
 
@@ -183,7 +183,7 @@ resource "google_compute_instance" "internal-seed" {
 resource "google_compute_instance" "internal-gaia" {
   name         = "internal-gaia"
   machine_type = "e2-standard-2"
-  zone         = "us-west1-b"
+  zone         = "us-west1-a"
   tags         = ["ssh"]
   allow_stopping_for_update = true
 
@@ -217,7 +217,7 @@ resource "google_compute_instance" "internal-gaia" {
 resource "google_compute_instance" "internal-hermes" {
   name         = "internal-hermes"
   machine_type = "e2-standard-2"
-  zone         = "us-west1-b"
+  zone         = "us-west1-a"
   tags         = ["ssh"]
   allow_stopping_for_update = true
 

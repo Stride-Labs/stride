@@ -1,3 +1,4 @@
+#!/bin/bash
 
 echo "Restoring Hermes Accounts"
 hermes -c /tmp/hermes.toml keys restore --mnemonic "RLY_1_KEY" STRIDE_CHAIN
