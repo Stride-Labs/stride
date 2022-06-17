@@ -67,7 +67,7 @@ for (( i=0; i <= $NUM_NODES; i++ )); do
         SEED_NODE_ID=$node_id
     else
         # add this node's id to the list of peer nodes that will be used by the seed node
-        PEER_NODE_IDS="${PEER_NODE_IDS},${node_id}" 
+        PEER_NODE_IDS="${node_id},${PEER_NODE_IDS}" 
         # add validator account
         val_acct="${VAL_PREFIX}${i}"
         $st_cmd keys add $val_acct --keyring-backend=test >> $STATE/keys.txt 2>&1
@@ -96,6 +96,7 @@ for (( i=0; i <= $NUM_NODES; i++ )); do
     node_name="${NODE_NAMES[i]}"
     if [ $i -ne $SEED_ID ]; then
         sed -i -E "s|seeds = .*|seeds = \"$SEED_NODE_ID\"|g" "${STATE}/${node_name}/config/config.toml"
+        sed -i -E "s|persistent_peers = .*|persistent_peers = \"\"|g" "${STATE}/${node_name}/config/config.toml"
     fi
     if [ $i -ne $MAIN_ID ]; then
         cp ${STATE}/${MAIN_NODE_NAME}/config/genesis.json ${STATE}/${node_name}/config/genesis.json

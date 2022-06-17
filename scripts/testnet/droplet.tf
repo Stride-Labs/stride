@@ -184,8 +184,16 @@ variable "chain_name" {
   default = "stride"
 }
 
+variable "num_val_nodes" {
+  type    = number
+  default = 2
+}
+
 locals {
-  node_names = tolist(["${var.chain_name}-seed", "${var.chain_name}-node1"])
+  node_names = [
+    for i in range(var.num_val_nodes + 1) :
+    i == 0 ? "${var.chain_name}-seed" : "${var.chain_name}-node${i}"
+  ]
 }
 
 module "node-containers" {
@@ -199,11 +207,11 @@ module "node-containers" {
   restart_policy = "Always"
 }
 
-
-# resource "google_compute_address" "test-node1" {
-#   name   = "${var.chain_name}-node1"
-#   region = var.regions[0]
-# }
+resource "google_compute_address" "node-addresses" {
+  count  = length(local.node_names)
+  name   = local.node_names[count.index]
+  region = var.regions[0]
+}
 resource "google_compute_instance" "stride-nodes" {
   count                     = length(local.node_names)
   name                      = local.node_names[count.index]
@@ -225,7 +233,7 @@ resource "google_compute_instance" "stride-nodes" {
   network_interface {
     network = "default"
     access_config {
-      # nat_ip = google_compute_address.test-node1.address
+      nat_ip = google_compute_address.node-addresses[count.index].address
     }
   }
 
@@ -239,4 +247,30 @@ resource "google_compute_instance" "stride-nodes" {
       "https://www.googleapis.com/auth/trace.append"
     ]
   }
+}
+
+# resource "google_dns_managed_zone" "stridelabs" {
+#   name     = "stridelabs"
+#   dns_name = "stridelabs.co."
+# }
+# resource "google_dns_record_set" "addresses" {
+#   count = length(local.node_names)
+#   name  = "${local.node_names[count.index]}.${var.deployment_name}.${google_dns_managed_zone.stridelabs.dns_name}"
+#   type  = "A"
+#   ttl   = 300
+
+#   managed_zone = google_dns_managed_zone.stridelabs.name
+
+#   rrdatas = [google_compute_instance.stride-nodes[count.index].network_interface[0].access_config[0].nat_ip]
+# }
+
+resource "google_compute_firewall" "tendermint-firewall" {
+  name    = "tendermint-firewall"
+  network = "default"
+  allow {
+    protocol = "tcp"
+    ports    = ["26656"]
+  }
+
+  source_tags = ["tendermint"]
 }
