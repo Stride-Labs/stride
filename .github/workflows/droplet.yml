@@ -9,33 +9,26 @@ env:
   num_nodes: 2
 
 jobs:
-  # node_names:
-  #   runs-on: ubuntu-latest
-
-  # steps:
-  #   - id: matrix
-  #     run: |
-  #       node_names="[\"${chain_name}-seed\""
-  #       for (( i=1; i <= $num_nodes; i++ )); do
-  #         node_names+=", \"${chain_name}-node${i}\""
-  #       done
-  #       node_names+="]"
-  #       echo "::set-output name=node_names::[${node_names}]"
-  # outputs:
-  #   matrix: ${{ steps.matrix.outputs.node_names }}
+  node_names:
+    runs-on: ubuntu-latest
+    steps:
+      - id: matrix
+        run: |
+          node_names="[\"${chain_name}-seed\""
+          for (( i=1; i <= $num_nodes; i++ )); do
+            node_names+=", \"${chain_name}-node${i}\""
+          done
+          node_names+="]"
+          echo "::set-output name=node_names::[${node_names}]"
+    outputs:
+      matrix: ${{ steps.matrix.outputs.node_names }}
 
   build-node-images:
-    # needs: node_names
+    needs: node_names
     runs-on: ubuntu-latest
-    # strategy:
-    #   matrix:
-    #     value: ${{fromJson(needs.node_names.outputs.matrix)}}
     strategy:
       matrix:
-        node_names:
-          - stride-seed
-          - stride-node1
-          - stride-node2
+        node_names: ${{fromJson(needs.node_names.outputs.matrix)}}
     steps:
       - name: Checkout
         uses: actions/checkout@v3
