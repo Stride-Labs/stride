@@ -25,7 +25,7 @@ jobs:
   #   matrix: ${{ steps.matrix.outputs.node_names }}
 
   build-node-images:
-    needs: node_names
+    # needs: node_names
     runs-on: ubuntu-latest
     # strategy:
     #   matrix:
