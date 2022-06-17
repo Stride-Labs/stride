@@ -14,7 +14,7 @@ done
 # fetch the stride node ids
 GAIA_NODE_IDS=()
 # then, we initialize our chains 
-echo 'Initializing chains...'
+echo 'Initializing gaia chain...'
 
 for i in ${!GAIA_NODE_NAMES[@]}; do
     node_name=${GAIA_NODE_NAMES[i]}
@@ -85,3 +85,6 @@ for i in "${!GAIA_NODE_NAMES[@]}"; do
         cp ${STATE}/${GAIA_MAIN_NODE}/config/genesis.json ${STATE}/${GAIA_NODE_NAMES[i]}/config/genesis.json
     fi
 done
+
+echo "Creating gaia chain"
+docker-compose up -d gaia1 gaia2 gaia3

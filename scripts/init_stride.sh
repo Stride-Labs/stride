@@ -14,7 +14,7 @@ done
 # fetch the stride node ids
 STRIDE_NODE_IDS=()
 # then, we initialize our chains 
-echo 'Initializing chains...'
+echo 'Initializing stride chain...'
 for i in ${!STRIDE_NODE_NAMES[@]}; do
     node_name=${STRIDE_NODE_NAMES[i]}
     vkey=${STRIDE_VAL_KEYS[i]}
@@ -78,3 +78,6 @@ for i in "${!STRIDE_NODE_NAMES[@]}"; do
         cp ${STATE}/${STRIDE_MAIN_NODE}/config/genesis.json ${STATE}/${STRIDE_NODE_NAMES[i]}/config/genesis.json
     fi
 done
+
+echo "Creating stride chain"
+docker-compose up -d stride1 stride2 stride3 
