@@ -56,7 +56,7 @@ unbondings in less than 21 days
 [X] 1 Aggregate into a single deposit record / successful epoch / chain
       [X] add current epoch data type, update in begin hook
       [X] In the stakeibc hook
-        [X] create a DepositRecord, keyed by epoch_number:chain_id in stakeibc hook
+        [X] create a DepositRecord, keyed by id
         [X] process DepositRecords from previous epochs
       [X] Update the deposit record in liquid stake (fetch the epoch id with the epochs keeper and stride epoch)
       [] Update the DepositRecord in ack
@@ -64,7 +64,7 @@ unbondings in less than 21 days
         [] If previous status was TRANSFER, update status to STAKE
         [] If previous status was STAKE, delete the record
 [] 2 Cleanup
-  [] hooks.go should reference modular functions
+  [X] hooks.go should reference modular functions
   [] clean up dangling todos
 
 
@@ -107,7 +107,8 @@ for record in depositRecords:
 # SECTION 2
 [] 0 Set withdrawal address of delegation account to withdrawal account in host zone
     registration ack
-[] 1 Update DepositRecord to handle rewards types
+[] 1 Update DepositRecord to handle rewards types (actually don't need this! just create a new deposit record
+      with status == STAKE once the rewards are transferred to the delegation account)
 [] 2 Update epoch end to process all records for each host zone
 [] 3 Add new records for rewards that accrued in the previous epoch
 
