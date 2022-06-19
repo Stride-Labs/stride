@@ -6,7 +6,7 @@ on:
 env:
   deployment_name: testnet
   chain_name: stride
-  num_nodes: 2
+  num_nodes: 3
 
 jobs:
   node_names:
@@ -14,7 +14,7 @@ jobs:
     steps:
       - id: matrix
         run: |
-          node_names="[\"${chain_name}-seed\""
+          node_names="["
           for (( i=1; i <= $num_nodes; i++ )); do
             node_names+=", \"${chain_name}-node${i}\""
           done
@@ -29,9 +29,9 @@ jobs:
     strategy:
       matrix:
         node_names:
-          - stride-seed
           - stride-node1
           - stride-node2
+          - stride-node3
         # node_names: ${{fromJson(needs.node_names.outputs.matrix)}}
     steps:
       - name: Checkout
