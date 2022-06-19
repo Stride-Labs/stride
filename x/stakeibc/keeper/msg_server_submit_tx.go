@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strconv"
 
 	"github.com/Stride-Labs/stride/x/stakeibc/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -211,6 +212,28 @@ func (k Keeper) ProcessUpdateUndelegatedBalance(ctx sdk.Context, height int64) {
 						sdk.NewAttribute("totalUndelegatedBalance", balance.String()),
 					),
 				})
+				// Calc redemption rate
+				// 1. check equality of latest UB and DB update heights
+				if hz.DelegationAccount.HeightLastQueriedDelegatedBalance == da.HeightLastQueriedUndelegatedBalance {
+					// 2. check to make sure we have a corresponding ControllerBalance
+					cb, found := k.GetControllerBalances(ctx, strconv.FormatInt(hz.DelegationAccount.HeightLastQueriedDelegatedBalance, 10))
+					if found {
+						// 2.5 abort if stSupply is 0 at this host height
+						if cb.Stsupply > 0 {
+							redemptionRate := (sdk.NewDec(da.HeightLastQueriedUndelegatedBalance).Add(sdk.NewDec(hz.DelegationAccount.DelegatedBalance)).Add(sdk.NewDec(cb.Moduleacctbalance))).Quo(sdk.NewDec(cb.Stsupply))
+							hz.LastRedemptionRate = hz.RedemptionRate
+							hz.RedemptionRate = redemptionRate
+							k.SetHostZone(ctx, hz)
+							k.Logger(ctx).Info(fmt.Sprintf("Set Redemptions Rate at H=%d to RR=%d", hz.DelegationAccount.HeightLastQueriedDelegatedBalance, redemptionRate))
+						} else {
+							k.Logger(ctx).Info(fmt.Sprintf("Did NOT set redemption rate at H=%d because stAsset supply was 0", hz.DelegationAccount.HeightLastQueriedDelegatedBalance))
+						}
+					} else {
+						k.Logger(ctx).Info(fmt.Sprintf("Did NOT set redemption rate at H=%d because no controller balances", hz.DelegationAccount.HeightLastQueriedDelegatedBalance))
+					}
+				}
+				k.Logger(ctx).Info(fmt.Sprintf("Did NOT set redemption rate at H=%d because last UB and DB update heights didn't match.", hz.DelegationAccount.HeightLastQueriedDelegatedBalance))
+
 			} else {
 				k.Logger(ctx).Info(fmt.Sprintf("Opted to NOT set HeightLastQueriedUndelegatedBalance because query height %d is less than last update's height %d.", h, da.HeightLastQueriedUndelegatedBalance))
 			}
