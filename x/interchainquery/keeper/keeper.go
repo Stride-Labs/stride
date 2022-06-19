@@ -3,6 +3,7 @@ package keeper
 import (
 	"encoding/hex"
 	"fmt"
+	"strconv"
 
 	"github.com/Stride-Labs/stride/x/interchainquery/types"
 	stakeibctypes "github.com/Stride-Labs/stride/x/stakeibc/types"
@@ -64,46 +65,47 @@ func (k *Keeper) GetDatapointForId(ctx sdk.Context, id string) (types.DataPoint,
 	return mapping, nil
 }
 
-func (k *Keeper) GetDatapoint(ctx sdk.Context, connection_id string, chain_id string, query_type string, request []byte) (types.DataPoint, error) {
-	id := GenerateQueryHash(connection_id, chain_id, query_type, request)
+func (k *Keeper) GetDatapoint(ctx sdk.Context, connection_id string, chain_id string, query_type string, request []byte, height int64) (types.DataPoint, error) {
+	id := GenerateQueryHash(connection_id, chain_id, query_type, request, strconv.FormatInt(height, 10))
 	return k.GetDatapointForId(ctx, id)
 }
 
-func (k *Keeper) GetDatapointOrRequest(ctx sdk.Context, connection_id string, chain_id string, query_type string, request []byte, max_age int64) (types.DataPoint, error) {
-	val, err := k.GetDatapoint(ctx, connection_id, chain_id, query_type, request)
+func (k *Keeper) GetDatapointOrRequest(ctx sdk.Context, connection_id string, chain_id string, query_type string, request []byte, max_age int64, height int64) (types.DataPoint, error) {
+	val, err := k.GetDatapoint(ctx, connection_id, chain_id, query_type, request, height)
 	if err != nil {
 		// no datapoint
-		k.MakeRequest(ctx, connection_id, chain_id, query_type, request, sdk.NewInt(-1), "", nil)
+		k.MakeRequest(ctx, connection_id, chain_id, query_type, request, sdk.NewInt(-1), strconv.FormatInt(height, 10), "", nil)
 		return types.DataPoint{}, fmt.Errorf("no data; query submitted")
 	}
 
 	if val.LocalHeight.LT(sdk.NewInt(ctx.BlockHeight() - max_age)) { // this is somewhat arbitrary; TODO: make this better
-		k.MakeRequest(ctx, connection_id, chain_id, query_type, request, sdk.NewInt(-1), "", nil)
+		k.MakeRequest(ctx, connection_id, chain_id, query_type, request, sdk.NewInt(-1), strconv.FormatInt(height, 10), "", nil)
 		return types.DataPoint{}, fmt.Errorf("stale data; query submitted")
 	}
 	// check ttl
 	return val, nil
 }
 
-func (k *Keeper) MakeRequest(ctx sdk.Context, connection_id string, chain_id string, query_type string, request []byte, period sdk.Int, module string, callback interface{}) {
-	key := GenerateQueryHash(connection_id, chain_id, query_type, request)
+func (k *Keeper) MakeRequest(ctx sdk.Context, connection_id string, chain_id string, query_type string, request []byte, period sdk.Int, height string, module string, callback interface{}) {
+	key := GenerateQueryHash(connection_id, chain_id, query_type, request, height)
 	_, found := k.GetQuery(ctx, key)
 	if !found {
 		if module != "" {
 			k.callbacks[module].AddCallback(key, callback)
 		}
-		newQuery := k.NewQuery(ctx, connection_id, chain_id, query_type, request, period)
+		newQuery := k.NewQuery(ctx, connection_id, chain_id, query_type, request, period, height)
 		k.SetQuery(ctx, *newQuery)
 	}
 }
 
-func (k Keeper) QueryBalances(ctx sdk.Context, zone stakeibctypes.HostZone, cb Callback, address string) error {
+func (k Keeper) QueryBalances(ctx sdk.Context, zone stakeibctypes.HostZone, cb Callback, address string, height int64) error {
+	// note: height=0 queries at latest block header, NOT at height 0
 	connectionId := zone.ConnectionId
 	chainId := zone.ChainId
 	// Validate address
 	query_type := "cosmos.bank.v1beta1.Query/AllBalances"
 	balanceQuery := banktypes.QueryAllBalancesRequest{Address: address}
-	k.Logger(ctx).Info(fmt.Sprintf("\tabout to query %s", address))
+	k.Logger(ctx).Info(fmt.Sprintf("\tabout to QueryBalances %s at height %d", address, height))
 	bz, err := k.cdc.Marshal(&balanceQuery)
 	if err != nil {
 		k.Logger(ctx).Error(fmt.Sprintf("failed to marshal query %s %s", address, err.Error()))
@@ -117,6 +119,7 @@ func (k Keeper) QueryBalances(ctx sdk.Context, zone stakeibctypes.HostZone, cb C
 		bz,
 		// TODO(TEST-79) understand and use proper period
 		sdk.NewInt(25),
+		strconv.FormatInt(height, 10),
 		types.ModuleName,
 		cb,
 	)
@@ -128,25 +131,26 @@ func (k Keeper) QueryBalances(ctx sdk.Context, zone stakeibctypes.HostZone, cb C
 			sdk.EventTypeMessage,
 			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
 			sdk.NewAttribute(sdk.AttributeKeyAction, types.AttributeValueQuery),
-			sdk.NewAttribute(types.AttributeKeyQueryId, GenerateQueryHash(connectionId, chainId, query_type, bz)),
+			sdk.NewAttribute(types.AttributeKeyQueryId, GenerateQueryHash(connectionId, chainId, query_type, bz, strconv.FormatInt(height, 10))),
 			sdk.NewAttribute(types.AttributeKeyChainId, chainId),
 			sdk.NewAttribute(types.AttributeKeyConnectionId, connectionId),
 			sdk.NewAttribute(types.AttributeKeyType, query_type),
 			// TODO(TEST-119) set height based on gaia LC height
-			sdk.NewAttribute(types.AttributeKeyHeight, "1"),
+			sdk.NewAttribute(types.AttributeKeyHeight, strconv.FormatInt(height, 10)),
 			sdk.NewAttribute(types.AttributeKeyRequest, hex.EncodeToString(bz)),
 		),
 	})
 	return nil
 }
 
-func (k Keeper) QueryDelegatorDelegations(ctx sdk.Context, zone stakeibctypes.HostZone, cb Callback, address string) error {
+func (k Keeper) QueryDelegatorDelegations(ctx sdk.Context, zone stakeibctypes.HostZone, cb Callback, address string, height int64) error {
 	connectionId := zone.ConnectionId
 	chainId := zone.ChainId
 
 	query_type := "cosmos.staking.v1beta1.Query/DelegatorDelegations"
 	// Get delegationAddress dynamically
 	delegationQuery := stakingtypes.QueryDelegatorDelegationsRequest{DelegatorAddr: address}
+	k.Logger(ctx).Info(fmt.Sprintf("\tabout to QueryDelegatorDelegations %s at height %d", address, height))
 	bz := k.cdc.MustMarshal(&delegationQuery)
 
 	k.MakeRequest(
@@ -157,6 +161,7 @@ func (k Keeper) QueryDelegatorDelegations(ctx sdk.Context, zone stakeibctypes.Ho
 		bz,
 		// TODO(TEST-79) understand and use proper period
 		sdk.NewInt(25),
+		strconv.FormatInt(height, 10),
 		types.ModuleName,
 		cb,
 	)
@@ -166,11 +171,11 @@ func (k Keeper) QueryDelegatorDelegations(ctx sdk.Context, zone stakeibctypes.Ho
 			sdk.EventTypeMessage,
 			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
 			sdk.NewAttribute(sdk.AttributeKeyAction, types.AttributeValueQuery),
-			sdk.NewAttribute(types.AttributeKeyQueryId, GenerateQueryHash(connectionId, chainId, query_type, bz)),
+			sdk.NewAttribute(types.AttributeKeyQueryId, GenerateQueryHash(connectionId, chainId, query_type, bz, strconv.FormatInt(height, 10))),
 			sdk.NewAttribute(types.AttributeKeyChainId, chainId),
 			sdk.NewAttribute(types.AttributeKeyConnectionId, connectionId),
 			sdk.NewAttribute(types.AttributeKeyType, query_type),
-			sdk.NewAttribute(types.AttributeKeyHeight, "0"),
+			sdk.NewAttribute(types.AttributeKeyHeight, strconv.FormatInt(height, 10)),
 			sdk.NewAttribute(types.AttributeKeyRequest, hex.EncodeToString(bz)),
 		),
 	})

@@ -14,8 +14,8 @@ var (
 	DefaultDelegateInterval     uint64 = 5
 	DefaultReinvestInterval     uint64 = 2
 	DefaultRewardsInterval      uint64 = 5
-	DefaultExchangeRateInterval uint64 = 9
-	// you apparantly cannot safely encode floats, so we make commission * 100
+	DefaultExchangeRateInterval uint64 = 2
+	// you apparantly cannot safely encode floats, so we make commission / 100
 	DefaultStrideCommission uint64 = 10
 
 	// KeyDepositInterval is store's key for the DepositInterval option

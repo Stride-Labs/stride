@@ -9,7 +9,8 @@ RUN apt-get install jq --yes
 
 WORKDIR /src/app
 
-RUN git clone https://github.com/Stride-Labs/icq.git
+# commit: https://github.com/Stride-Labs/icq/commit/da5e2b3185d86613a32dac8726a9145a9e1797e8
+RUN git clone https://github.com/Stride-Labs/icq.git 
 RUN cp -r icq/* .
 RUN rm -rf interchain-queries
 

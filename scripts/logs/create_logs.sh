@@ -27,8 +27,11 @@ echo "GAIA   @ $($GAIA1_EXEC q tendermint-validator-set | head -n 1 | tr -dc '0-
 
 echo "\nBALANCES STRIDE" >> $SCRIPT_DIR/$TMP/accounts.log
 $STR1_EXEC strided q bank balances $STRIDE_ADDRESS >> $SCRIPT_DIR/$TMP/accounts.log
+echo "\nBALANCES GAIA" >> $SCRIPT_DIR/$TMP/accounts.log
 $GAIA1_EXEC q bank balances $GAIA_DELEGATE >> $SCRIPT_DIR/$TMP/accounts.log
+echo "\nDELEGATIONS GAIA" >> $SCRIPT_DIR/$TMP/accounts.log
 $GAIA1_EXEC q staking delegations $GAIA_DELEGATE >> $SCRIPT_DIR/$TMP/accounts.log
+echo "\nLIST-HOST-ZONES STRIDE" >> $SCRIPT_DIR/$TMP/accounts.log
 $STR1_EXEC strided q stakeibc list-host-zone >> $SCRIPT_DIR/$TMP/accounts.log
 
 mv $SCRIPT_DIR/$TMP/*.log $SCRIPT_DIR
