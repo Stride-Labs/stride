@@ -38,7 +38,7 @@ message HostZone {
 }
 
 message ControllerBalances {
-  int64 index = 1; 
+  string index = 1; 
   int64 height = 2; 
   string stsupply = 3 [
     (cosmos_proto.scalar) = "cosmos.Dec",

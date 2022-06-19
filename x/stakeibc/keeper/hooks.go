@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"fmt"
+	"strconv"
 
 	epochstypes "github.com/Stride-Labs/stride/x/epochs/types"
 	"github.com/Stride-Labs/stride/x/stakeibc/types"
@@ -81,8 +82,23 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochIdentifier string, epochN
 				// TODO(TEST-119) get stAsset supply at SAME time as gaia height
 				// TODO(TEST-112) check on safety of castng uint64 to int64
 				latestHeightGaia = int64(clientState.GetLatestHeight().GetRevisionHeight())
-				// set query height var in store for access within callbacks (to avoid issues with passing in height by value)
-				// TODO(now) cleanup
+
+				// TODO(119) generalize to host_zones
+				// SET STASSETSUPPLY
+				hz, _ := k.GetHostZone(ctx, "GAIA")
+				currStSupply := k.bankKeeper.GetSupply(ctx, "st"+hz.HostDenom)
+				// GET MODULE ACCT BALANCE
+				addr := k.accountKeeper.GetModuleAccount(ctx, types.ModuleName).GetAddress()
+				modAcctBal := k.bankKeeper.GetBalance(ctx, addr, hz.IBCDenom)
+
+				ControllerBalancesRecord := types.ControllerBalances{
+					Index:             strconv.FormatInt(latestHeightGaia, 10),
+					Height:            latestHeightGaia,
+					Stsupply:          sdk.Dec(currStSupply.Amount),
+					Moduleacctbalance: sdk.Dec(modAcctBal.Amount),
+				}
+				k.SetControllerBalances(ctx, ControllerBalancesRecord)
+				k.Logger(ctx).Info(fmt.Sprintf("Set ControllerBalances at H=%d to stSupply=%d, moduleAcctBalances=%d", latestHeightGaia, currStSupply.Amount.Int64(), modAcctBal.Amount.Int64()))
 
 				// TODO(TEST-97) update only when balances, delegatedBalances and stAsset supply are results from the same block
 				k.ProcessUpdateBalances(ctx, latestHeightGaia)
