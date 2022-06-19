@@ -61,6 +61,7 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochIdentifier string, epochN
 			k.ProcessDelegationStaking(ctx)
 		}
 
+		//TODO(TEST-112) make sure to update host LCs here!
 		exchangeRateInterval := int64(k.GetParam(ctx, types.KeyExchangeRateInterval))
 		if epochNumber%exchangeRateInterval == 0 { // allow a few blocks from UpdateUndelegatedBal to avoid conflicts
 			// GET LATEST HEIGHT
@@ -80,15 +81,10 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochIdentifier string, epochN
 				// TODO(TEST-119) get stAsset supply at SAME time as gaia height
 				// TODO(TEST-112) check on safety of castng uint64 to int64
 				latestHeightGaia = int64(clientState.GetLatestHeight().GetRevisionHeight())
-				latestHeightStride := ctx.BlockHeight()
 				// set query height var in store for access within callbacks (to avoid issues with passing in height by value)
 				// TODO(now) cleanup
-				k.Logger(ctx).Info(fmt.Sprintf("Latest GAIA height (from connection-0 LC): %d", latestHeightGaia))
-				k.Logger(ctx).Info(fmt.Sprintf("Latest STRIDE height (from ctx): %d", latestHeightStride))
 
 				// TODO(TEST-97) update only when balances, delegatedBalances and stAsset supply are results from the same block
-				k.Logger(ctx).Info(fmt.Sprintf("Latest STRIDE height (from ctx): %d", latestHeightStride))
-				k.Logger(ctx).Info(fmt.Sprintf("      at epoch: %d", epochNumber))
 				k.ProcessUpdateBalances(ctx, latestHeightGaia)
 			}
 		}

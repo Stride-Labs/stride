@@ -45,7 +45,15 @@ func TestGenesisState_Validate(t *testing.T) {
 					},
 				},
 				DepositRecordCount: 2,
-				// this line is used by starport scaffolding # types/genesis/validField
+				ControllerBalancesList: []types.ControllerBalances{
+	{
+		Index: "0",
+},
+	{
+		Index: "1",
+},
+},
+// this line is used by starport scaffolding # types/genesis/validField
 			},
 			valid: true,
 		},
@@ -101,7 +109,21 @@ func TestGenesisState_Validate(t *testing.T) {
 			},
 			valid: false,
 		},
-		// this line is used by starport scaffolding # types/genesis/testcase
+		{
+	desc:     "duplicated controllerBalances",
+	genState: &types.GenesisState{
+		ControllerBalancesList: []types.ControllerBalances{
+			{
+				Index: "0",
+},
+			{
+				Index: "0",
+},
+		},
+	},
+	valid:    false,
+},
+// this line is used by starport scaffolding # types/genesis/testcase
 	} {
 		t.Run(tc.desc, func(t *testing.T) {
 			err := tc.genState.Validate()
