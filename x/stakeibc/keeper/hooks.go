@@ -62,7 +62,6 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochIdentifier string, epochN
 			k.ProcessDelegationStaking(ctx)
 		}
 
-		//TODO(TEST-112) make sure to update host LCs here!
 		exchangeRateInterval := int64(k.GetParam(ctx, types.KeyExchangeRateInterval))
 		if epochNumber%exchangeRateInterval == 0 && (epochNumber > 100) { // allow a few blocks from UpdateUndelegatedBal to avoid conflicts
 			// GET LATEST HEIGHT
@@ -74,6 +73,7 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochIdentifier string, epochN
 			if !found {
 				k.Logger(ctx).Info(fmt.Sprintf("invalid connection id, \"%s\" not found", connectionID))
 			}
+			//TODO(TEST-112) make sure to update host LCs here!
 			clientState, found := k.IBCKeeper.ClientKeeper.GetClientState(ctx, conn.ClientId)
 			if !found {
 				k.Logger(ctx).Info(fmt.Sprintf("client id \"%s\" not found for connection \"%s\"", conn.ClientId, connectionID))
