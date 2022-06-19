@@ -64,7 +64,7 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochIdentifier string, epochN
 
 		//TODO(TEST-112) make sure to update host LCs here!
 		exchangeRateInterval := int64(k.GetParam(ctx, types.KeyExchangeRateInterval))
-		if epochNumber%exchangeRateInterval == 0 { // allow a few blocks from UpdateUndelegatedBal to avoid conflicts
+		if epochNumber%exchangeRateInterval == 0 && (epochNumber > 100) { // allow a few blocks from UpdateUndelegatedBal to avoid conflicts
 			// GET LATEST HEIGHT
 			// TODO(NOW) wrap this into a function
 			var latestHeightGaia int64 // defaults to 0
@@ -94,8 +94,8 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochIdentifier string, epochN
 				ControllerBalancesRecord := types.ControllerBalances{
 					Index:             strconv.FormatInt(latestHeightGaia, 10),
 					Height:            latestHeightGaia,
-					Stsupply:          sdk.Dec(currStSupply.Amount),
-					Moduleacctbalance: sdk.Dec(modAcctBal.Amount),
+					Stsupply:          currStSupply.Amount.Int64(),
+					Moduleacctbalance: modAcctBal.Amount.Int64(),
 				}
 				k.SetControllerBalances(ctx, ControllerBalancesRecord)
 				k.Logger(ctx).Info(fmt.Sprintf("Set ControllerBalances at H=%d to stSupply=%d, moduleAcctBalances=%d", latestHeightGaia, currStSupply.Amount.Int64(), modAcctBal.Amount.Int64()))
@@ -103,16 +103,30 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochIdentifier string, epochN
 				// TODO(TEST-97) update only when balances, delegatedBalances and stAsset supply are results from the same block
 				k.ProcessUpdateBalances(ctx, latestHeightGaia)
 			}
+
+			// Calc redemption rate
+			// 1. check equality of latest UB and DB update heights
+			hz, _ := k.GetHostZone(ctx, "GAIA")
+			if hz.DelegationAccount.HeightLastQueriedDelegatedBalance == hz.DelegationAccount.HeightLastQueriedUndelegatedBalance {
+				// 2. check to make sure we have a corresponding ControllerBalance
+				cb, found := k.GetControllerBalances(ctx, strconv.FormatInt(hz.DelegationAccount.HeightLastQueriedDelegatedBalance, 10))
+				if found {
+					// 2.5 abort if stSupply is 0 at this host height
+					if cb.Stsupply > 0 {
+						redemptionRate := (sdk.NewDec(hz.DelegationAccount.Balance).Add(sdk.NewDec(hz.DelegationAccount.DelegatedBalance)).Add(sdk.NewDec(cb.Moduleacctbalance))).Quo(sdk.NewDec(cb.Stsupply))
+						hz.LastRedemptionRate = hz.RedemptionRate
+						hz.RedemptionRate = redemptionRate
+						k.SetHostZone(ctx, hz)
+						k.Logger(ctx).Info(fmt.Sprintf("Set Redemptions Rate at H=%d to RR=%d", hz.DelegationAccount.HeightLastQueriedDelegatedBalance, redemptionRate))
+					} else {
+						k.Logger(ctx).Info(fmt.Sprintf("Did NOT set redemption rate at H=%d because stAsset supply was 0", hz.DelegationAccount.HeightLastQueriedDelegatedBalance))
+					}
+				} else {
+					k.Logger(ctx).Info(fmt.Sprintf("Did NOT set redemption rate at H=%d because no controller balances", hz.DelegationAccount.HeightLastQueriedDelegatedBalance))
+				}
+			}
+			k.Logger(ctx).Info(fmt.Sprintf("Did NOT set redemption rate at H=%d because last UB and DB update heights didn't match.", hz.DelegationAccount.HeightLastQueriedDelegatedBalance))
 		}
-
-		// if epochNumber%exchangeRateInterval == 4 { // allow a few blocks from UpdateUndelegatedBal to avoid conflicts
-		// 	// TODO(TEST-97) update only when balances, delegatedBalances and stAsset supply are results from the same block
-		// }
-		// if epochNumber%exchangeRateInterval == 8 && (epochNumber > 100) { // allow a few blocks from UpdateDelegatedBal to avoid conflicts & wait until chain has registered zones to calc exch rate
-		// 	// TODO(TEST-97) update only when balances, delegatedBalances and stAsset supply are results from the same block
-		// 	k.ProcessUpdateExchangeRate(ctx)
-		// }
-
 	}
 }
 

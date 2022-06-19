@@ -40,15 +40,7 @@ message HostZone {
 message ControllerBalances {
   string index = 1; 
   int64 height = 2; 
-  string stsupply = 3 [
-    (cosmos_proto.scalar) = "cosmos.Dec",
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
-    (gogoproto.nullable) = false
-  ];
-  string moduleacctbalance = 4 [
-    (cosmos_proto.scalar) = "cosmos.Dec",
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
-    (gogoproto.nullable) = false
-  ];
+  int64 stsupply = 3;
+  int64 moduleacctbalance = 4;
 }
 
