@@ -77,9 +77,10 @@ $MAIN_NODE_CMD collect-gentxs 2> /dev/null
 sed -i -E "s|persistent_peers = .*|persistent_peers = \"\"|g" "${STATE}/${MAIN_NODE_NAME}/config/config.toml"
 
 # for all peer nodes....
-for (( i=$MAIN_ID + 1; i <= $NUM_NODES; i++ )); do
+for (( i=2; i <= $NUM_NODES; i++ )); do
+    node_name="${NETWORK_NAME}-node${i}"
     # add the main node as a persistent peer
-    sed -i -E "s|persistent_peers = .*|persistent_peers = \"${MAIN_NODE_ID}\"|g" "${STATE}/${NETWORK_NAME}-node${i}/config/config.toml"
+    sed -i -E "s|persistent_peers = .*|persistent_peers = \"${MAIN_NODE_ID}\"|g" "${STATE}/${node_name}/config/config.toml"
     # copy the main node's genesis to the peer nodes to ensure they all have the same genesis
     cp ${STATE}/${MAIN_NODE_NAME}/config/genesis.json ${STATE}/${node_name}/config/genesis.json
 done

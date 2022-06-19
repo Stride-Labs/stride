@@ -191,8 +191,7 @@ variable "num_val_nodes" {
 
 locals {
   node_names = [
-    for i in range(var.num_val_nodes + 1) :
-    i == 0 ? "${var.chain_name}-seed" : "${var.chain_name}-node${i}"
+    for i in range(var.num_val_nodes + 1) : "${var.chain_name}-node${i}"
   ]
 }
 
