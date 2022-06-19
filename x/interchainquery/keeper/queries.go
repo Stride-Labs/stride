@@ -10,14 +10,14 @@ import (
 	"github.com/Stride-Labs/stride/x/interchainquery/types"
 )
 
-func GenerateQueryHash(connection_id string, chain_id string, query_type string, request []byte) string {
-	return fmt.Sprintf("%x", crypto.Sha256(append([]byte(connection_id+chain_id+query_type), request...)))
+func GenerateQueryHash(connection_id string, chain_id string, query_type string, request []byte, height string) string {
+	return fmt.Sprintf("%x", crypto.Sha256(append([]byte(connection_id+chain_id+query_type+height), request...)))
 }
 
 // ----------------------------------------------------------------
 
-func (k Keeper) NewQuery(ctx sdk.Context, connection_id string, chain_id string, query_type string, request []byte, period sdk.Int) *types.Query {
-	return &types.Query{Id: GenerateQueryHash(connection_id, chain_id, query_type, request), ConnectionId: connection_id, ChainId: chain_id, QueryType: query_type, Request: request, Period: period, LastHeight: sdk.ZeroInt()}
+func (k Keeper) NewQuery(ctx sdk.Context, connection_id string, chain_id string, query_type string, request []byte, period sdk.Int, height string) *types.Query {
+	return &types.Query{Id: GenerateQueryHash(connection_id, chain_id, query_type, request, height), ConnectionId: connection_id, ChainId: chain_id, QueryType: query_type, Request: request, Period: period, LastHeight: sdk.ZeroInt()}
 }
 
 // GetQuery returns query

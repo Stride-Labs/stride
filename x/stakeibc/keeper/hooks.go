@@ -54,37 +54,52 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochIdentifier string, epochN
 			}
 		}
 
-		// get light client's latest height
-		connectionID := "connection-0"
-		conn, found := k.IBCKeeper.ConnectionKeeper.GetConnection(ctx, connectionID)
-		if !found {
-			k.Logger(ctx).Info(fmt.Sprintf("invalid connection id, \"%s\" not found", connectionID))
-		}
-		clientState, found := k.IBCKeeper.ClientKeeper.GetClientState(ctx, conn.ClientId)
-		if !found {
-			k.Logger(ctx).Info(fmt.Sprintf("client id \"%s\" not found for connection \"%s\"", conn.ClientId, connectionID))
-		} else {
-			// TODO(TEST-119) get stAsset supply at SAME time as gaia height
-			latestHeightGaia := clientState.GetLatestHeight()
-			latestHeightStride := ctx.BlockHeight()
-			k.Logger(ctx).Info(fmt.Sprintf("Latest GAIA height (from connection-0 LC): %d", latestHeightGaia.GetRevisionHeight()))
-			k.Logger(ctx).Info(fmt.Sprintf("Latest STRIDE height (from ctx): %d", latestHeightStride))
-		}
-
+		// DELEGATE FROM DELEGATION ACCOUNT
 		delegateInterval := int64(k.GetParam(ctx, types.KeyDelegateInterval))
 		if epochNumber%delegateInterval == 0 {
 			// get Gaia LC height
 			k.ProcessDelegationStaking(ctx)
 		}
+
 		exchangeRateInterval := int64(k.GetParam(ctx, types.KeyExchangeRateInterval))
-		if epochNumber%exchangeRateInterval == 3 { // allow a few blocks from UpdateUndelegatedBal to avoid conflicts
-			// TODO(TEST-97) update only when balances, delegatedBalances and stAsset supply are results from the same block
-			k.ProcessUpdateDelegatedBalance(ctx)
+		if epochNumber%exchangeRateInterval == 0 { // allow a few blocks from UpdateUndelegatedBal to avoid conflicts
+			// GET LATEST HEIGHT
+			// TODO(NOW) wrap this into a function
+			var latestHeightGaia int64 // defaults to 0
+			// get light client's latest height
+			connectionID := "connection-0"
+			conn, found := k.IBCKeeper.ConnectionKeeper.GetConnection(ctx, connectionID)
+			if !found {
+				k.Logger(ctx).Info(fmt.Sprintf("invalid connection id, \"%s\" not found", connectionID))
+			}
+			clientState, found := k.IBCKeeper.ClientKeeper.GetClientState(ctx, conn.ClientId)
+			if !found {
+				k.Logger(ctx).Info(fmt.Sprintf("client id \"%s\" not found for connection \"%s\"", conn.ClientId, connectionID))
+				// latestHeightGaia = 0
+			} else {
+				// TODO(TEST-119) get stAsset supply at SAME time as gaia height
+				// TODO(TEST-112) check on safety of castng uint64 to int64
+				latestHeightGaia = int64(clientState.GetLatestHeight().GetRevisionHeight())
+				latestHeightStride := ctx.BlockHeight()
+				// set query height var in store for access within callbacks (to avoid issues with passing in height by value)
+				// TODO(now) cleanup
+				k.Logger(ctx).Info(fmt.Sprintf("Latest GAIA height (from connection-0 LC): %d", latestHeightGaia))
+				k.Logger(ctx).Info(fmt.Sprintf("Latest STRIDE height (from ctx): %d", latestHeightStride))
+
+				// TODO(TEST-97) update only when balances, delegatedBalances and stAsset supply are results from the same block
+				k.Logger(ctx).Info(fmt.Sprintf("Latest STRIDE height (from ctx): %d", latestHeightStride))
+				k.Logger(ctx).Info(fmt.Sprintf("      at epoch: %d", epochNumber))
+				k.ProcessUpdateBalances(ctx, latestHeightGaia)
+			}
 		}
-		if epochNumber%exchangeRateInterval == 6 && (epochNumber > 100) { // allow a few blocks from UpdateDelegatedBal to avoid conflicts & wait until chain has registered zones to calc exch rate
-			// TODO(TEST-97) update only when balances, delegatedBalances and stAsset supply are results from the same block
-			k.ProcessUpdateExchangeRate(ctx)
-		}
+
+		// if epochNumber%exchangeRateInterval == 4 { // allow a few blocks from UpdateUndelegatedBal to avoid conflicts
+		// 	// TODO(TEST-97) update only when balances, delegatedBalances and stAsset supply are results from the same block
+		// }
+		// if epochNumber%exchangeRateInterval == 8 && (epochNumber > 100) { // allow a few blocks from UpdateDelegatedBal to avoid conflicts & wait until chain has registered zones to calc exch rate
+		// 	// TODO(TEST-97) update only when balances, delegatedBalances and stAsset supply are results from the same block
+		// 	k.ProcessUpdateExchangeRate(ctx)
+		// }
 
 	}
 }

@@ -19,4 +19,6 @@ message ICAAccount {
   int64 delegatedBalance = 3; 
   repeated Delegation delegations = 4;
   ICAAccountType target = 5;
+  int64 heightLastQueriedDelegatedBalance = 6;
+  int64 heightLastQueriedUndelegatedBalance = 7;
 }

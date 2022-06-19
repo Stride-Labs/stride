@@ -8,7 +8,7 @@ import (
 // ___________________________________________________________________________________________________
 
 // Callbacks wrapper struct for interchainstaking keeper
-type Callback func(Keeper, sdk.Context, []byte, types.Query) error
+type Callback func(Keeper, sdk.Context, []byte, types.Query, int64) error
 
 type Callbacks struct {
 	k         Keeper
@@ -22,8 +22,8 @@ func (k Keeper) CallbackHandler() Callbacks {
 }
 
 //callback handler
-func (c Callbacks) Call(ctx sdk.Context, id string, args []byte, query types.Query) error {
-	return c.callbacks[id](c.k, ctx, args, query)
+func (c Callbacks) Call(ctx sdk.Context, id string, args []byte, query types.Query, height int64) error {
+	return c.callbacks[id](c.k, ctx, args, query, height)
 }
 
 func (c Callbacks) Has(id string) bool {

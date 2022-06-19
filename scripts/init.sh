@@ -131,7 +131,7 @@ echo "Registering host zones..."
 ATOM='uatom'
 IBCATOM='ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2'
 docker-compose --ansi never exec -T $main_node strided tx stakeibc register-host-zone connection-0 $ATOM $IBCATOM channel-0 --chain-id $main_chain --home /stride/.strided --keyring-backend test --from val1 --gas 500000 -y
-CSLEEP 180
+CSLEEP 90
 echo "Registered host zones:"
 docker-compose --ansi never exec -T $main_node strided q stakeibc list-host-zone
 

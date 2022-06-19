@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"strconv"
 
 	"github.com/Stride-Labs/stride/x/stakeibc/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -118,7 +117,7 @@ func (k Keeper) ReinvestRewards(ctx sdk.Context, hostZone types.HostZone) error 
 	GetParam := k.GetParam
 	cdc := k.cdc
 
-	var cb icqkeeper.Callback = func(k icqkeeper.Keeper, ctx sdk.Context, args []byte, query icqtypes.Query) error {
+	var cb icqkeeper.Callback = func(k icqkeeper.Keeper, ctx sdk.Context, args []byte, query icqtypes.Query, h int64) error {
 		var msgs []sdk.Msg
 		queryRes := bankTypes.QueryAllBalancesResponse{}
 		err := cdc.Unmarshal(args, &queryRes)
@@ -164,13 +163,13 @@ func (k Keeper) ReinvestRewards(ctx sdk.Context, hostZone types.HostZone) error 
 	// 1. query withdraw account balances using icq
 	// 2. transfer withdraw account balances to the delegation account in the cb
 	// 3. TODO: in the ICA ack upon transfer, reinvest those rewards and withdraw rewards
-	k.InterchainQueryKeeper.QueryBalances(ctx, hostZone, cb, withdrawAccount.Address)
+	k.InterchainQueryKeeper.QueryBalances(ctx, hostZone, cb, withdrawAccount.Address, 0)
 	return nil
 }
 
 // icq to read host delegation account undeleted balance => update hostZone.delegationAccount.Balance
 // TODO(TEST-97) add safety logic to query at specific block height (same as query height for delegated balances)
-func (k Keeper) ProcessUpdateUndelegatedBalance(ctx sdk.Context) {
+func (k Keeper) ProcessUpdateUndelegatedBalance(ctx sdk.Context, height int64) {
 	updateUndelegatedBal := func(ctx sdk.Context, index int64, zoneInfo types.HostZone) error {
 		// Verify the delegation ICA is registered
 		k.Logger(ctx).Info(fmt.Sprintf("\tProcessing delegation %s", zoneInfo.ChainId))
@@ -181,39 +180,46 @@ func (k Keeper) ProcessUpdateUndelegatedBalance(ctx sdk.Context) {
 		}
 		cdc := k.cdc
 
-		var queryBalanceCB icqkeeper.Callback = func(icqk icqkeeper.Keeper, ctx sdk.Context, args []byte, query icqtypes.Query) error {
-			icqk.Logger(ctx).Info(fmt.Sprintf("\tdelegation undelegatedbalance callback on %s", zoneInfo.HostDenom))
+		var queryUndelegatedBalanceCB icqkeeper.Callback = func(icqk icqkeeper.Keeper, ctx sdk.Context, args []byte, query icqtypes.Query, h int64) error {
+			k.Logger(ctx).Info(fmt.Sprintf("\tdelegation undelegatedbalance callback on %s", zoneInfo.HostDenom))
 			queryRes := bankTypes.QueryAllBalancesResponse{}
 			err := cdc.Unmarshal(args, &queryRes)
 			if err != nil {
-				icqk.Logger(ctx).Error("Unable to unmarshal balances info for zone", "err", err)
+				k.Logger(ctx).Error("Unable to unmarshal balances info for zone", "err", err)
 				return err
 			}
 			// Get denom dynamically
 			balance := queryRes.Balances.AmountOf(zoneInfo.HostDenom)
-			icqk.Logger(ctx).Info(fmt.Sprintf("\tBalance on %s is %s", zoneInfo.HostDenom, balance.String()))
+			k.Logger(ctx).Info(fmt.Sprintf("\tBalance on %s is %s", zoneInfo.HostDenom, balance.String()))
 
 			// --- Update Undelegated Balance ---
 			hz := zoneInfo
 
 			da := hz.DelegationAccount
 			da.Balance = balance.Int64()
-			hz.DelegationAccount = da
-			k.SetHostZone(ctx, hz)
-
-			ctx.EventManager().EmitEvents(sdk.Events{
-				sdk.NewEvent(
-					sdk.EventTypeMessage,
-					sdk.NewAttribute("hostZone", zoneInfo.ChainId),
-					sdk.NewAttribute("totalUndelegatedBalance", balance.String()),
-				),
-			})
+			// only update height if this is the most updated query (ICQ msgresponses are not always FIFO)
+			if h >= da.HeightLastQueriedUndelegatedBalance {
+				da.HeightLastQueriedUndelegatedBalance = h
+				hz.DelegationAccount = da
+				k.SetHostZone(ctx, hz)
+				k.Logger(ctx).Info(fmt.Sprintf("Just set UndelegatedBalance to: %d", da.DelegatedBalance))
+				k.Logger(ctx).Info(fmt.Sprintf("Just set HeightLastQueriedUndelegatedBalance to: %d", h))
+				ctx.EventManager().EmitEvents(sdk.Events{
+					sdk.NewEvent(
+						sdk.EventTypeMessage,
+						sdk.NewAttribute("hostZone", zoneInfo.ChainId),
+						sdk.NewAttribute("totalUndelegatedBalance", balance.String()),
+					),
+				})
+			} else {
+				k.Logger(ctx).Info(fmt.Sprintf("Opted to NOT set HeightLastQueriedUndelegatedBalance because query height %d is less than last update's height %d.", h, da.HeightLastQueriedUndelegatedBalance))
+			}
 			// ---------------------------------
 
 			return nil
 		}
-		k.Logger(ctx).Info(fmt.Sprintf("\tQuerying balance for %s", zoneInfo.ChainId))
-		k.InterchainQueryKeeper.QueryBalances(ctx, zoneInfo, queryBalanceCB, delegationIca.Address)
+		k.Logger(ctx).Info(fmt.Sprintf("\tQuerying UndelegatedBalance for %s at %d height", zoneInfo.ChainId, height))
+		k.InterchainQueryKeeper.QueryBalances(ctx, zoneInfo, queryUndelegatedBalanceCB, delegationIca.Address, height)
 		return nil
 	}
 
@@ -221,9 +227,78 @@ func (k Keeper) ProcessUpdateUndelegatedBalance(ctx sdk.Context) {
 	k.IterateHostZones(ctx, updateUndelegatedBal)
 }
 
+func (k Keeper) ProcessUpdateBalances(ctx sdk.Context, height int64) {
+	// TODO(now) ; rm this after debug; should never call at 0!
+	if height == 0 {
+		return
+	}
+	updateBalances := func(ctx sdk.Context, index int64, zoneInfo types.HostZone) error {
+		k.Logger(ctx).Info(fmt.Sprintf("\tUpdating balances on %s", zoneInfo.ChainId))
+
+		delegationIca := zoneInfo.GetDelegationAccount()
+		if delegationIca == nil || delegationIca.Address == "" {
+			k.Logger(ctx).Error("Zone %s is missing a delegation address!", zoneInfo.ChainId)
+			return errors.New("Zone is missing a delegation address!")
+		}
+		var queryDBCBDaisyChain icqkeeper.Callback = func(icqk icqkeeper.Keeper, ctx sdk.Context, args []byte, query icqtypes.Query, h int64) error {
+			k.Logger(ctx).Info(fmt.Sprintf("\tdelegation DelegatedBalance callback on %s", zoneInfo.HostDenom))
+			var response stakingTypes.QueryDelegatorDelegationsResponse
+			err := k.cdc.Unmarshal(args, &response)
+			if err != nil {
+				k.Logger(ctx).Error("Unable to unmarshal balances info for zone", "err", err)
+				return err
+			}
+
+			// Add up delegations across validators
+			delegatorSum := sdk.NewCoin(zoneInfo.HostDenom, sdk.ZeroInt())
+			for _, delegation := range response.DelegationResponses {
+				delegatorSum = delegatorSum.Add(delegation.Balance)
+				if err != nil {
+					return err
+				}
+			}
+			// --- Update Undelegated Balance ---
+			hz, _ := k.GetHostZone(ctx, zoneInfo.ChainId)
+			da := hz.DelegationAccount
+			// TODO() make HostZone.DelegationAccount.Balance a Cosmos.Dec type (rather than int)
+			// only update height if this is the most updated query (ICQ msgresponses are not always FIFO)
+			if h >= da.HeightLastQueriedDelegatedBalance {
+				da.HeightLastQueriedDelegatedBalance = h
+				da.DelegatedBalance = delegatorSum.Amount.Int64()
+				hz.DelegationAccount = da
+				k.SetHostZone(ctx, hz)
+				k.Logger(ctx).Info(fmt.Sprintf("Just set DelegatedBalance to: %d", da.DelegatedBalance))
+
+				ctx.EventManager().EmitEvents(sdk.Events{
+					sdk.NewEvent(
+						sdk.EventTypeMessage,
+						sdk.NewAttribute("hostZone", zoneInfo.ChainId),
+						sdk.NewAttribute("totalDelegatedBalance", delegatorSum.Amount.String()),
+					),
+				})
+
+				// Daisy chain!
+				k.Logger(ctx).Info(fmt.Sprintf("\tSecond step in our daisy chain update! Now, querying undelegatedBalanaces for %s at %d height", zoneInfo.ChainId, h))
+				k.ProcessUpdateUndelegatedBalance(ctx, h)
+				return nil
+			} else {
+				// height is below last updated height, so stop here!
+				k.Logger(ctx).Info(fmt.Sprintf("Opted to NOT set HeightLastQueriedDelegatedBalance; query height %d is less than last update's height %d.", h, da.HeightLastQueriedDelegatedBalance))
+				return nil
+			}
+		}
+		k.Logger(ctx).Info(fmt.Sprintf("\tStarting our daisy chain update! First, querying delegatedBalanaces for %s at %d height", zoneInfo.ChainId, height))
+		k.InterchainQueryKeeper.QueryDelegatorDelegations(ctx, zoneInfo, queryDBCBDaisyChain, delegationIca.Address, height)
+		return nil
+	}
+
+	// Iterate the zones and apply updateDelegatedBal
+	k.IterateHostZones(ctx, updateBalances)
+}
+
 // icq to read host delegated balance => update hostZone.delegationAccount.DelegatedBalance
 // TODO(TEST-97) add safety logic to query at specific block height (same as query height for delegated balances)
-func (k Keeper) ProcessUpdateDelegatedBalance(ctx sdk.Context) {
+func (k Keeper) ProcessUpdateDelegatedBalance(ctx sdk.Context, height int64) {
 	updateDelegatedBal := func(ctx sdk.Context, index int64, zoneInfo types.HostZone) error {
 		// Verify the delegation ICA is registered
 		k.Logger(ctx).Info(fmt.Sprintf("\tUpdating delegated balances on %s", zoneInfo.ChainId))
@@ -234,8 +309,8 @@ func (k Keeper) ProcessUpdateDelegatedBalance(ctx sdk.Context) {
 		}
 		cdc := k.cdc
 
-		var queryDelegatedBalanceCB icqkeeper.Callback = func(icqk icqkeeper.Keeper, ctx sdk.Context, args []byte, query icqtypes.Query) error {
-			icqk.Logger(ctx).Info(fmt.Sprintf("\tdelegation DelegatedBalance callback on %s", zoneInfo.HostDenom))
+		var queryDelegatedBalanceCB icqkeeper.Callback = func(icqk icqkeeper.Keeper, ctx sdk.Context, args []byte, query icqtypes.Query, h int64) error {
+			k.Logger(ctx).Info(fmt.Sprintf("\tdelegation DelegatedBalance callback on %s", zoneInfo.HostDenom))
 			var response stakingTypes.QueryDelegatorDelegationsResponse
 			err := cdc.Unmarshal(args, &response)
 			if err != nil {
@@ -255,9 +330,12 @@ func (k Keeper) ProcessUpdateDelegatedBalance(ctx sdk.Context) {
 			hz, _ := k.GetHostZone(ctx, zoneInfo.ChainId)
 			da := hz.DelegationAccount
 			// TODO() make HostZone.DelegationAccount.Balance a Cosmos.Dec type (rather than int)
+			da.HeightLastQueriedDelegatedBalance = h
 			da.DelegatedBalance = delegatorSum.Amount.Int64()
 			hz.DelegationAccount = da
 			k.SetHostZone(ctx, hz)
+			k.Logger(ctx).Info(fmt.Sprintf("Just set DelegatedBalance to: %d", da.DelegatedBalance))
+			k.Logger(ctx).Info(fmt.Sprintf("Just set HeightLastQueriedDelegatedBalance to: %d", h))
 
 			ctx.EventManager().EmitEvents(sdk.Events{
 				sdk.NewEvent(
@@ -270,8 +348,8 @@ func (k Keeper) ProcessUpdateDelegatedBalance(ctx sdk.Context) {
 
 			return nil
 		}
-		k.Logger(ctx).Info(fmt.Sprintf("\tQuerying delegatedBalance for %s", zoneInfo.ChainId))
-		k.InterchainQueryKeeper.QueryDelegatorDelegations(ctx, zoneInfo, queryDelegatedBalanceCB, delegationIca.Address)
+		k.Logger(ctx).Info(fmt.Sprintf("\tQuerying delegatedBalance for %s at %d height", zoneInfo.ChainId, height))
+		k.InterchainQueryKeeper.QueryDelegatorDelegations(ctx, zoneInfo, queryDelegatedBalanceCB, delegationIca.Address, height)
 		return nil
 	}
 
@@ -283,48 +361,53 @@ func (k Keeper) ProcessUpdateDelegatedBalance(ctx sdk.Context) {
 // TODO(TEST-97) add safety logic that checks balance, delegatedBalance and stAsset supply's block_height_updated are all equal
 func (k Keeper) ProcessUpdateExchangeRate(ctx sdk.Context) {
 
-	updateRedemptionRate := func(ctx sdk.Context, index int64, zoneInfo types.HostZone) error {
-		k.Logger(ctx).Info(fmt.Sprintf("\tProcessing exchangeRate for %s", zoneInfo.ChainId))
-		// Assets: native asset balances on delegation account + staked
-		delegatedBalance := zoneInfo.GetDelegationAccount().DelegatedBalance
-		unDelegatedBalance := zoneInfo.GetDelegationAccount().Balance
-		assetBalance := delegatedBalance + unDelegatedBalance
+	// updateRedemptionRate := func(ctx sdk.Context, index int64, zoneInfo types.HostZone) error {
+	// 	k.Logger(ctx).Info(fmt.Sprintf("\tProcessing exchangeRate for %s", zoneInfo.ChainId))
+	// 	// Assets: native asset balances on delegation account + staked
+	// 	da := zoneInfo.GetDelegationAccount()
+	// 	if da.HeightLastQueriedDelegatedBalance != da.HeightLastQueriedUndelegatedBalance {
+	// 		k.Logger(ctx).Info(fmt.Sprintf("\tHost Zone %s's balance update heights don't match! Skipping exchange rate update at Stride block %s | DB updated at H=%s, UB updated at H=%s.", zoneInfo.ChainId, ctx.BlockHeight(), strconv.Itoa(da.HeightLastQueriedDelegatedBalance), strconv.Itoa(da.HeightLastQueriedUndelegatedBalance)))
+	// 		return errors.New("Exchange rate calculation error: block heights don't match.")
+	// 		assetBalance := da.Balance + da.DelegatedBalance
 
-		// Claims: stAsset supply
-		stAssetSupply := k.bankKeeper.GetSupply(ctx, "st"+zoneInfo.HostDenom)
+	// 	}
 
-		// Sanity & safety check: if either num or denom are 0, do NOT update the exchange rate
-		if assetBalance == int64(0) || stAssetSupply.Amount.Int64() == int64(0) {
-			ctx.EventManager().EmitEvents(sdk.Events{
-				sdk.NewEvent(
-					sdk.EventTypeMessage,
-					sdk.NewAttribute("delegatedBalance", strconv.FormatInt(delegatedBalance, 10)),
-					sdk.NewAttribute("unDelegatedBalance", strconv.FormatInt(unDelegatedBalance, 10)),
-					sdk.NewAttribute("stAssetBalance", stAssetSupply.String()),
-				),
-			})
-			return errors.New("Exchange rate calculation error: ")
-		} else {
-			// RedemptionRate = Assets / Claims
-			redemptionRate := sdk.NewDec(assetBalance).Quo(stAssetSupply.Amount.ToDec())
-			// Write RedemptionRate to state
-			hz, _ := k.GetHostZone(ctx, zoneInfo.ChainId)
-			hz.LastRedemptionRate = hz.RedemptionRate
-			hz.RedemptionRate = redemptionRate
-			k.SetHostZone(ctx, hz)
+	// 	// Claims: stAsset supply
+	// 	// TODO(NOW) move stAsset query to epochs!
+	// 	stAssetSupply := k.bankKeeper.GetSupply(ctx, "st"+zoneInfo.HostDenom)
 
-			ctx.EventManager().EmitEvents(sdk.Events{
-				sdk.NewEvent(
-					sdk.EventTypeMessage,
-					sdk.NewAttribute("lastRedemptionRate", redemptionRate.String()),
-					sdk.NewAttribute("newRedemptionRate", hz.LastRedemptionRate.String()),
-				),
-			})
-		}
-		return nil
-	}
+	// 	// Sanity & safety check: if either num or denom are 0, do NOT update the exchange rate
+	// 	if assetBalance == int64(0) || stAssetSupply.Amount.Int64() == int64(0) {
+	// 		ctx.EventManager().EmitEvents(sdk.Events{
+	// 			sdk.NewEvent(
+	// 				sdk.EventTypeMessage,
+	// 				sdk.NewAttribute("delegatedBalance", strconv.FormatInt(delegatedBalance, 10)),
+	// 				sdk.NewAttribute("unDelegatedBalance", strconv.FormatInt(unDelegatedBalance, 10)),
+	// 				sdk.NewAttribute("stAssetBalance", stAssetSupply.String()),
+	// 			),
+	// 		})
+	// 		return errors.New("Exchange rate calculation error: ")
+	// 	} else {
+	// 		// RedemptionRate = Assets / Claims
+	// 		redemptionRate := sdk.NewDec(assetBalance).Quo(stAssetSupply.Amount.ToDec())
+	// 		// Write RedemptionRate to state
+	// 		hz, _ := k.GetHostZone(ctx, zoneInfo.ChainId)
+	// 		hz.LastRedemptionRate = hz.RedemptionRate
+	// 		hz.RedemptionRate = redemptionRate
+	// 		k.SetHostZone(ctx, hz)
 
-	k.IterateHostZones(ctx, updateRedemptionRate)
+	// 		ctx.EventManager().EmitEvents(sdk.Events{
+	// 			sdk.NewEvent(
+	// 				sdk.EventTypeMessage,
+	// 				sdk.NewAttribute("lastRedemptionRate", redemptionRate.String()),
+	// 				sdk.NewAttribute("newRedemptionRate", hz.LastRedemptionRate.String()),
+	// 			),
+	// 		})
+	// 	}
+	// 	return nil
+	// }
+
+	// k.IterateHostZones(ctx, updateRedemptionRate)
 }
 
 // SubmitTxs submits an ICA transaction containing multiple messages
