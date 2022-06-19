@@ -15,7 +15,8 @@ func DefaultGenesis() *GenesisState {
 		ICAAccount:        nil,
 		HostZoneList:      []HostZone{},
 		DepositRecordList: []DepositRecord{},
-		// this line is used by starport scaffolding # genesis/types/default
+		ControllerBalancesList: []ControllerBalances{},
+// this line is used by starport scaffolding # genesis/types/default
 		Params: DefaultParams(),
 		PortId: PortID,
 	}
@@ -39,7 +40,17 @@ func (gs GenesisState) Validate() error {
 		}
 		depositRecordIdMap[elem.Id] = true
 	}
-	// this line is used by starport scaffolding # genesis/types/validate
+	// Check for duplicated index in controllerBalances
+controllerBalancesIndexMap := make(map[string]struct{})
+
+for _, elem := range gs.ControllerBalancesList {
+	index := string(ControllerBalancesKey(elem.Index))
+	if _, ok := controllerBalancesIndexMap[index]; ok {
+		return fmt.Errorf("duplicated index for controllerBalances")
+	}
+	controllerBalancesIndexMap[index] = struct{}{}
+}
+// this line is used by starport scaffolding # genesis/types/validate
 
 	return gs.Params.Validate()
 }

@@ -37,7 +37,15 @@ func TestGenesis(t *testing.T) {
 			},
 		},
 		DepositRecordCount: 2,
-		// this line is used by starport scaffolding # genesis/test/state
+		ControllerBalancesList: []types.ControllerBalances{
+		{
+			Index: "0",
+},
+		{
+			Index: "1",
+},
+	},
+	// this line is used by starport scaffolding # genesis/test/state
 	}
 
 	k, ctx := keepertest.StakeibcKeeper(t)
@@ -55,5 +63,6 @@ func TestGenesis(t *testing.T) {
 	require.Equal(t, genesisState.HostZoneCount, got.HostZoneCount)
 	require.ElementsMatch(t, genesisState.DepositRecordList, got.DepositRecordList)
 	require.Equal(t, genesisState.DepositRecordCount, got.DepositRecordCount)
-	// this line is used by starport scaffolding # genesis/test/assert
+	require.ElementsMatch(t, genesisState.ControllerBalancesList, got.ControllerBalancesList)
+// this line is used by starport scaffolding # genesis/test/assert
 }
