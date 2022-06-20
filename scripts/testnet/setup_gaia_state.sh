@@ -34,7 +34,11 @@ RLY_ADDRESS_2=$($GAIA_CMD keys show rly2 --keyring-backend test -a)
 
 # Give relayer account token balance
 $GAIA_CMD add-genesis-account ${RLY_ADDRESS_2} $GAIA_TOKENS
+
+# Give icq account token balance
+$GAIA_CMD add-genesis-account ${ICQ_ADDRESS_GAIA} $VAL_TOKENS
 $GAIA_CMD collect-gentxs 2> /dev/null
+
 
 # add small changes to config.toml
 # use blind address (not loopback) to allow incoming connections from outside networks for local debugging
