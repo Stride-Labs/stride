@@ -217,7 +217,7 @@ resource "google_compute_instance" "internal-gaia" {
 resource "google_compute_instance" "internal-hermes" {
   name         = "internal-hermes"
   machine_type = "e2-standard-2"
-  zone         = "us-west1-a"
+  zone         = "us-west1-c"
   tags         = ["ssh"]
   allow_stopping_for_update = true
 
