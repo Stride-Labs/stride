@@ -291,3 +291,37 @@ init:
 
 logs: 
 	sh scripts/logs/create_logs.sh 
+
+
+update:
+	git submodule update --init
+	ignite generate proto-go
+
+local-install: stride-local-install gaia-local-install hermes-local-install icq-local-install
+
+stride-local-install: 
+	go get github.com/improbable-eng/grpc-web/go/grpcweb@v0.15.0
+	go mod download
+
+gaia-local-install:
+	cd deps/gaia; \
+	go mod download
+
+hermes-local-install:
+	cd deps/hermes; \
+	cargo build --release
+
+icq-local-install:
+	cd deps/icq; \
+	go get github.com/Stride-Labs/interchain-queries/cmd; \
+	go get github.com/Stride-Labs/interchain-queries/pkg/runner; \
+	go mod download
+
+local-build: stride-local-build icq-local-build
+
+stride-local-build: 
+	go build ./...
+
+icq-local-build:
+	cd deps/icq; \
+	go build ./...
