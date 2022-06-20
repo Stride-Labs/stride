@@ -41,7 +41,7 @@ GAIA_STAKE_TOKENS=300000000uatom
 GAIA_ENDPOINT=gaia.$STRIDE_CHAIN.stridelabs.co
 GAIA_CHAIN="GAIA_${STRIDE_CHAIN}"
 
-HERMES_CMD="docker run -v ${STATE}/hermes.toml:/tmp/hermes.toml gcr.io/stride-nodes/testnet:tub_hermes hermes -c /tmp/hermes.toml"
+HERMES_CMD="docker run -v ${STATE}/hermes.toml:/tmp/hermes.toml -v ${STATE}:/hermes/.hermes/keys gcr.io/stride-nodes/testnet:tub_hermes hermes -c /tmp/hermes.toml"
 
 GETKEY() {
   grep -i -A 10 "\- name: $1" "$STATE/keys.txt" | tail -n 1

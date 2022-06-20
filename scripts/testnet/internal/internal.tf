@@ -223,7 +223,7 @@ resource "google_compute_instance" "internal-hermes" {
 
   metadata = {
     enable-oslogin = "TRUE"
-    gce-container-declaration = "spec:\n  containers:\n    - name: node\n      image: 'gcr.io/stride-nodes/testnet:internal_hermes'\n      stdin: false\n      tty: false\n  restartPolicy: Always\n"
+    gce-container-declaration = "spec:\n  containers:\n    - name: node\n      image: 'gcr.io/stride-nodes/testnet:internal_hermes'\n      stdin: false\n      tty: false\n  restartPolicy: Never\n"
   }
   boot_disk {
     initialize_params {
