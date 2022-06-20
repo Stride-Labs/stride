@@ -8,8 +8,9 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	ibctransfertypes "github.com/cosmos/ibc-go/v3/modules/apps/transfer/types"
 	channeltypes "github.com/cosmos/ibc-go/v3/modules/core/04-channel/types"
-	"google.golang.org/protobuf/proto"
+	"github.com/golang/protobuf/proto"
 
 	icatypes "github.com/cosmos/ibc-go/v3/modules/apps/27-interchain-accounts/types"
 )
@@ -55,7 +56,7 @@ func (k Keeper) HandleAcknowledgement(ctx sdk.Context, modulePacket channeltypes
 	}
 
 	var packetData icatypes.InterchainAccountPacketData
-	err = icatypes.ModuleCdc.UnmarshalJSON(packet.GetData(), &packetData)
+	err = icatypes.ModuleCdc.UnmarshalJSON(modulePacket.GetData(), &packetData)
 	if err != nil {
 		k.Logger(ctx).Error("unable to unmarshal acknowledgement packet data", "error", err, "data", packetData)
 		return sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "cannot unmarshal packet data: %s", err.Error())
@@ -94,7 +95,16 @@ func (k Keeper) HandleAcknowledgement(ctx sdk.Context, modulePacket channeltypes
 			continue
 		// IBC transfer - update the DepositRecord status!
 		case "/ibc.applications.transfer.v1.MsgTransfer":
-			// TODO: Implement!
+			response := ibctransfertypes.MsgTransferResponse{}
+			err := proto.Unmarshal(msgData.Data, &response)
+			if err != nil {
+				k.Logger(ctx).Error("unable to unmarshal MsgTransfer response", "error", err)
+				return err
+			}
+			k.Logger(ctx).Debug("MsgTranfer acknowledgement received")
+			if err := k.HandleIBCTransfer(ctx, src); err != nil {
+				return err
+			}
 			continue
 		case "cosmos.bank.v1beta1.MsgSend":
 			// Construct the transaction
@@ -124,11 +134,47 @@ func (k Keeper) HandleAcknowledgement(ctx sdk.Context, modulePacket channeltypes
 	return nil
 }
 
+func (k Keeper) HandleIBCTransfer(ctx sdk.Context, msg sdk.Msg) error {
+	k.Logger(ctx).Info("Received IbcTransfer acknowledgement")
+	// first, type assertion. we should have ibctransfertypes.MsgTransfer
+	ibcTransferMsg, ok := msg.(*ibctransfertypes.MsgTransfer)
+	if !ok {
+		k.Logger(ctx).Error("unable to cast source message to MsgTransfer")
+		return fmt.Errorf("unable to cast source message to MsgTransfer")
+	}
+
+	// TODO: uppercase account keeper in stakeibc keeper and make this call
+	// check if destination is interchainstaking module account
+	// if sMsg.Receiver != k.AccountKeeper.GetModuleAddress(types.ModuleName).String() {
+	// 	k.Logger(ctx).Error("msgTransfer to unknown account!")
+	// 	return nil
+	// }
+
+
+	
+	// fetch the deposit record based on the amount
+	// NOTE: there must be a better way to do this, in it's current form it feels somewhat unsafe
+	// we could add some "dust" to each transfer / deposit record to make this less susceptible to attacks
+	// but it's a hack
+	record, found := k.GetTransferDepositRecordByAmount(ctx, ibcTransferMsg.Token.Amount.Int64())
+	if !found {
+		k.Logger(ctx).Error("No record found for %s", ibcTransferMsg.Token.Amount)
+		return fmt.Errorf("No record found for %s", ibcTransferMsg.Token.Amount)
+	}
+	// update the record
+	record.Status = types.DepositRecord_STAKE
+	k.SetDepositRecord(ctx, *record)
+	// set the deposit record state to STAKE
+
+	return nil
+}
+
 // TODO(TEST-28): Burn stAssets if RedeemStake succeeds
 func (k Keeper) HandleUndelegate(ctx sdk.Context, msg sdk.Msg) error {
 	k.Logger(ctx).Info("Received MsgUndelegate acknowledgement")
 	// first, type assertion. we should have stakingtypes.MsgDelegate
 	undelegateMsg, ok := msg.(*stakingtypes.MsgUndelegate)
+	_ = undelegateMsg
 	if !ok {
 		k.Logger(ctx).Error("unable to cast source message to MsgUndelegate")
 		return fmt.Errorf("unable to cast source message to MsgUndelegate")

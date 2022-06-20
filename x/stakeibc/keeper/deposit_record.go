@@ -114,3 +114,13 @@ func (k Keeper) GetDepositRecordByEpochAndChain(ctx sdk.Context, epochNumber uin
 	} 
 	return nil, false
 }
+
+func (k Keeper) GetTransferDepositRecordByAmount(ctx sdk.Context, amount int64)  (val *types.DepositRecord, found bool) {
+	records := k.GetAllDepositRecord(ctx)
+	for _, depositRecord := range records {
+		if depositRecord.Amount == amount && depositRecord.Status == types.DepositRecord_TRANSFER {
+			return &depositRecord, true
+		} 
+	} 
+	return nil, false
+}

@@ -4,7 +4,7 @@ import (
 	"context"
 	"strconv"
 
-	epochtypes "github.com/Stride-Labs/stride/x/epoch/types"
+	epochtypes "github.com/Stride-Labs/stride/x/epochs/types"
 	"github.com/Stride-Labs/stride/x/stakeibc/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
