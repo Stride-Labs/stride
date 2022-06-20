@@ -118,6 +118,7 @@ func (im IBCModule) OnAcknowledgementPacket(
 	relayer sdk.AccAddress,
 ) error {
 	// TODO(TEST-21): Implement OnAcknowledgementPacket logic
+	panic("DOGE")
 	connectionId, _, err := im.keeper.IBCKeeper.ChannelKeeper.GetChannelConnection(ctx, modulePacket.SourcePort, modulePacket.SourceChannel)
 	if err != nil {
 		err = fmt.Errorf("packet connection not found: %w", err)
@@ -125,7 +126,7 @@ func (im IBCModule) OnAcknowledgementPacket(
 		return err
 	}
 	ctx = ctx.WithContext(context.WithValue(ctx.Context(), "connectionId", connectionId))
-
+	im.keeper.Logger(ctx).Info("HANDLING ACK")
 	return im.keeper.HandleAcknowledgement(ctx, modulePacket, acknowledgement)
 }
 

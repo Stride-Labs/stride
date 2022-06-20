@@ -26,6 +26,7 @@ import (
 // 		sdk.NewAttribute("newAmountStaked", balance.String()),
 // 	),
 // })
+// TODO: update OnAcknowledgementPacket
 
 func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochIdentifier string, epochNumber int64) {
 	// every epoch
@@ -76,10 +77,11 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochIdentifier string, epochN
 		}
 
 		// TODO(TEST-88): Close this ticket
-		reinvestInterval := int64(k.GetParam(ctx, types.KeyReinvestInterval))
-		if epochNumber%reinvestInterval == 0 {
-			k.ProcessRewardsInterval(ctx)
-		}
+		// UNCOMMENT
+		// reinvestInterval := int64(k.GetParam(ctx, types.KeyReinvestInterval))
+		// if epochNumber%reinvestInterval == 0 {
+		// 	k.ProcessRewardsInterval(ctx)
+		// }
 	}
 }
 
@@ -128,18 +130,21 @@ func (k Keeper) StakeExistingDepositsOnHostZones(ctx sdk.Context, epochNumber in
 	})
 	for _, depositRecord := range stakeDepositRecords {
 		if depositRecord.EpochNumber < uint64(epochNumber) {
-			pstr := fmt.Sprintf("\tProcessing deposit {%d} {%s} {%d} {%s}", depositRecord.Id, depositRecord.Denom, depositRecord.Amount)
+			pstr := fmt.Sprintf("\t[STAKE] Processing deposit {%d} {%s} {%d}", depositRecord.Id, depositRecord.Denom, depositRecord.Amount)
 			k.Logger(ctx).Info(pstr)
+			k.Logger(ctx).Info("0")
 			hostZone, hostZoneFound := k.GetHostZone(ctx, depositRecord.HostZoneId)
+			k.Logger(ctx).Info("1")
 			if !hostZoneFound {
-				k.Logger(ctx).Error("Host zone not found for deposit record {%d}", depositRecord.Id)
+				k.Logger(ctx).Error("[STAKE] Host zone not found for deposit record {%d}", depositRecord.Id)
 				continue
 			}
 			delegateAccount := hostZone.GetDelegationAccount()
 			if delegateAccount == nil || delegateAccount.Address == "" {
-				k.Logger(ctx).Error("Zone %s is missing a delegation address!", hostZone.ChainId)
+				k.Logger(ctx).Error("[STAKE] Zone %s is missing a delegation address!", hostZone.ChainId)
 				continue
 			}
+			k.Logger(ctx).Info("2")
 			k.Logger(ctx).Info(fmt.Sprintf("\tdelegation staking on %s", hostZone.HostDenom))
 			processAmount := utils.Int64ToCoinString(depositRecord.Amount, hostZone.HostDenom)
 			amt, err := sdk.ParseCoinNormalized(processAmount)
@@ -147,6 +152,7 @@ func (k Keeper) StakeExistingDepositsOnHostZones(ctx sdk.Context, epochNumber in
 				k.Logger(ctx).Error(fmt.Sprintf("Could not process coin %s: %s", hostZone.HostDenom, err))
 				return
 			}
+			k.Logger(ctx).Info("3")
 			err = k.DelegateOnHost(ctx, hostZone, amt)
 			if err != nil {
 				k.Logger(ctx).Error(fmt.Sprintf("Did not stake %s on %s", processAmount, hostZone.ChainId))
@@ -270,18 +276,27 @@ func (k Keeper) TransferExistingDepositsToHostZones(ctx sdk.Context, epochNumber
 		return record.Status == types.DepositRecord_TRANSFER
 	})
 	addr := k.accountKeeper.GetModuleAccount(ctx, types.ModuleName).GetAddress().String()
+	var emptyRecords []uint64
 	for _, depositRecord := range transferDepositRecords {
 		if depositRecord.EpochNumber < uint64(epochNumber) {
-			pstr := fmt.Sprintf("\tProcessing deposit {%d} {%s} {%d} {%s}", depositRecord.Id, depositRecord.Denom, depositRecord.Amount)
+			pstr := fmt.Sprintf("\t[TRANSFER] Processing deposits {%d} {%s} {%d}", depositRecord.Id, depositRecord.Denom, depositRecord.Amount)
 			k.Logger(ctx).Info(pstr)
+
+			// skip empty records
+			if depositRecord.Amount <= 0 {
+				k.Logger(ctx).Info("[TRANSFER] Empty deposit record! Skipping")
+				emptyRecords = append(emptyRecords, depositRecord.Id)
+				continue
+			}
+
 			hostZone, hostZoneFound := k.GetHostZone(ctx, depositRecord.HostZoneId)
 			if !hostZoneFound {
-				k.Logger(ctx).Error("Host zone not found for deposit record {%d}", depositRecord.Id)
+				k.Logger(ctx).Error("[TRANSFER] Host zone not found for deposit record {%d}", depositRecord.Id)
 				continue
 			}
 			delegateAccount := hostZone.GetDelegationAccount()
 			if delegateAccount == nil || delegateAccount.Address == "" {
-				k.Logger(ctx).Error("Zone %s is missing a delegation address!", hostZone.ChainId)
+				k.Logger(ctx).Error("[TRANSFER] Zone %s is missing a delegation address!", hostZone.ChainId)
 				continue
 			}
 			delegateAddress := delegateAccount.Address
@@ -294,10 +309,14 @@ func (k Keeper) TransferExistingDepositsToHostZones(ctx sdk.Context, epochNumber
 			msg := ibctypes.NewMsgTransfer("transfer", hostZone.TransferChannelId, transferCoin, addr, delegateAddress, timeoutHeight, 0)
 			_, err := k.transferKeeper.Transfer(goCtx, msg)
 			if err != nil {
-				pstr := fmt.Sprintf("\tERROR WITH DEPOSIT RECEIPT {%d}", depositRecord.Id)
+				pstr := fmt.Sprintf("\t[TRANSFER] ERROR WITH DEPOSIT RECEIPT {%d}", depositRecord.Id)
 				k.Logger(ctx).Info(pstr)
 				return
 			}
 		}
+	}
+	// clear empty records
+	for _, recordId := range emptyRecords {
+		k.RemoveDepositRecord(ctx, recordId)
 	}
 }
