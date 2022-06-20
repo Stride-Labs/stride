@@ -22,3 +22,5 @@ sleep 15
 
 echo "Creating transfer channel"
 hermes -c /tmp/hermes.toml create channel --port-a transfer --port-b transfer GAIA_CHAIN connection-0 
+
+wait
