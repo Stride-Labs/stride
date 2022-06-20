@@ -1,8 +1,12 @@
 #!/bin/bash
 
+sleep 120
+
 echo "Restoring Hermes Accounts"
 hermes -c /tmp/hermes.toml keys restore --mnemonic "RLY_1_KEY" STRIDE_CHAIN
 hermes -c /tmp/hermes.toml keys restore --mnemonic "RLY_2_KEY" GAIA_CHAIN
+
+hermes -c /tmp/hermes.toml start &
 
 echo "Creating hermes identifiers"
 hermes -c /tmp/hermes.toml tx raw create-client STRIDE_CHAIN GAIA_CHAIN

@@ -1,12 +1,12 @@
 #!/bin/bash
 
+sleep 120
+
 echo "Restoring Hermes Accounts"
-hermes -c /tmp/hermes.toml keys restore --mnemonic "brass identify file ability snack entry ahead motion hedgehog topic clock edge salt stand alone drop vote final outer brown nerve sadness host brick" internal
-hermes -c /tmp/hermes.toml keys restore --mnemonic "cube page approve source empty grape chicken praise scare minor engine jaguar opera install arrive real supply neck file fever turkey volume spike infant" GAIA_internal
+hermes -c /tmp/hermes.toml keys restore --mnemonic "metal true farm crucial april accuse social slice clarify tourist magnet error depend arm bright rail idle leopard hair patrol now fossil core theme" internal
+hermes -c /tmp/hermes.toml keys restore --mnemonic "scorpion promote supreme try legend must foil cannon laundry cattle whale tip leopard target fiber festival ball athlete thing fatal sing world dash quarter" GAIA_internal
 
 hermes -c /tmp/hermes.toml start &
-
-sleep 60
 
 echo "Creating hermes identifiers"
 hermes -c /tmp/hermes.toml tx raw create-client internal GAIA_internal

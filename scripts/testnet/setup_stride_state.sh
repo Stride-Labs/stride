@@ -64,7 +64,7 @@ for i in ${!STRIDE_DOCKER_NAMES[@]}; do
             peers="${STRIDE_NODES[j]},${peers}"
         fi
     done
-    sed -i -E "s|seeds = .*|seeds = \"$SEED_NODE_ID\"|g" "${STATE}/${node_name}/config/config.toml"
+    # sed -i -E "s|seeds = .*|seeds = \"$SEED_NODE_ID\"|g" "${STATE}/${node_name}/config/config.toml"
     sed -i -E "s|persistent_peers = .*|persistent_peers = \"$peers\"|g" "${STATE}/${node_name}/config/config.toml"
     sed -i -E "s|cors_allowed_origins = \[\]|cors_allowed_origins = [\"\*\"]|g" "${STATE}/${node_name}/config/config.toml"
     sed -i -E "s|127.0.0.1|0.0.0.0|g" "${STATE}/${node_name}/config/config.toml"

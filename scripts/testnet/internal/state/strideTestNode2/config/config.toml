@@ -209,10 +209,10 @@ laddr = "tcp://0.0.0.0:26656"
 external_address = ""
 
 # Comma separated list of seed nodes to connect to
-seeds = "ea799c510a697ecafd4940eb3d01b70d5c44c976@seed.internal.stridelabs.co:26656"
+seeds = ""
 
 # Comma separated list of nodes to keep persistent connections to
-persistent_peers = "bb29633e9af2731b47608192c0a7aabf85269bc2@stride_3.internal.stridelabs.co:26656,f4b766c758278138023c6c7f8fc330d7b052b4dd@stride_1.internal.stridelabs.co:26656,"
+persistent_peers = "a955d28b536111f23b32221df42273cc2ed52b6c@stride_3.internal.stridelabs.co:26656,711fb99468cfab1b914729c8dbde66ab5ecc2beb@stride_1.internal.stridelabs.co:26656,"
 
 # UPNP port forwarding
 upnp = false
