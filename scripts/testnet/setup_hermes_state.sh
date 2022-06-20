@@ -12,7 +12,6 @@ sed -i -E "s|STRIDE_CHAIN|$STRIDE_CHAIN|g" $HERMES_FILE
 sed -i -E "s|STRIDE_ADDR|$STRIDE_ENDPOINTS|g" $HERMES_FILE
 sed -i -E "s|GAIA_CHAIN|$GAIA_CHAIN|g" $HERMES_FILE
 sed -i -E "s|GAIA_ADDR|$GAIA_ENDPOINT|g" $HERMES_FILE
-sed -i -E "s|trusting_period = \'150s\'|trusting_period = \'14days\'|g" $HERMES_FILE
 
 RLY_1_KEY=$(GETKEY rly1)
 RLY_2_KEY=$(GETRLY2)
