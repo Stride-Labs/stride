@@ -3,6 +3,7 @@ module github.com/Stride-Labs/stride
 go 1.16
 
 require (
+	github.com/Stride-Labs/interchain-queries v0.0.0-20220608170312-af4854620c5b // indirect
 	github.com/cosmos/cosmos-proto v1.0.0-alpha7
 	github.com/cosmos/cosmos-sdk v0.45.4
 	github.com/cosmos/ibc-go/v3 v3.0.0
@@ -12,6 +13,7 @@ require (
 	github.com/gorilla/mux v1.8.0
 	github.com/grpc-ecosystem/grpc-gateway v1.16.0
 	github.com/ignite-hq/cli v0.21.0
+	github.com/improbable-eng/grpc-web v0.15.0 // indirect
 	github.com/jhump/protoreflect v1.12.0 // indirect
 	github.com/pkg/errors v0.9.1
 	github.com/spf13/cast v1.4.1
