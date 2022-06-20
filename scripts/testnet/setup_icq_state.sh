@@ -5,7 +5,7 @@ echo '\n\nInitializing Hermes...'
 # import dependencies
 source ${SCRIPT_DIR}/testnet_vars.sh $1
 
-ICQ_DIR = ${STATE}/icq
+ICQ_DIR=${STATE}/icq
 mkdir $ICQ_DIR
 
 RLY_1_KEY=$(GETKEY rly1)
