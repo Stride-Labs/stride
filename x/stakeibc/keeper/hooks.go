@@ -296,7 +296,7 @@ func (k Keeper) TransferExistingDepositsToHostZones(ctx sdk.Context, epochNumber
 			if err != nil {
 				pstr := fmt.Sprintf("\tERROR WITH DEPOSIT RECEIPT {%d}", depositRecord.Id)
 				k.Logger(ctx).Info(pstr)
-				panic(err)
+				return
 			}
 		}
 	}
