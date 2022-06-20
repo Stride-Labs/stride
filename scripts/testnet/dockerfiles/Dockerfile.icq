@@ -32,7 +32,7 @@ RUN adduser --system --home /icq --disabled-password --disabled-login icq -U 100
 USER icq
 
 COPY --chown=icq "scripts/testnet/${network_name}/state/icq_startup.sh" /icq/icq_startup.sh
-COPY --chown=icq "scripts/testnet/${network_name}/state/icq" /icq/.icq
+# COPY --chown=icq "scripts/testnet/${network_name}/state/icq" /icq/.icq
 
 RUN ["chmod", "+x", "/icq/icq_startup.sh"]
 ENTRYPOINT ["/icq/icq_startup.sh"]
