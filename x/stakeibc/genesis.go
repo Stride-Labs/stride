@@ -29,10 +29,10 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) 
 	// Set depositRecord count
 	k.SetDepositRecordCount(ctx, genState.DepositRecordCount)
 	// Set all the epochTracker
-for _, elem := range genState.EpochTrackerList {
-	k.SetEpochTracker(ctx, elem)
-}
-// this line is used by starport scaffolding # genesis/module/init
+	for _, elem := range genState.EpochTrackerList {
+		k.SetEpochTracker(ctx, elem)
+	}
+	// this line is used by starport scaffolding # genesis/module/init
 	// TODO(TEST-22): Set ports
 	// k.SetPort(ctx, genState.PortId)
 	// // Only try to bind to port if it is not already bound, since we may already own
