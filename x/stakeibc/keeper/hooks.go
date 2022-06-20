@@ -74,6 +74,7 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochIdentifier string, epochN
 				// TODO(119) generalize to host_zones
 				// SET STASSETSUPPLY
 				hz, _ := k.GetHostZone(ctx, "GAIA")
+				//TODO(TEST-119) replace below with StAssetDenomFromHostZoneDenom() at merge
 				currStSupply := k.bankKeeper.GetSupply(ctx, "st"+hz.HostDenom)
 				// GET MODULE ACCT BALANCE
 				addr := k.accountKeeper.GetModuleAccount(ctx, types.ModuleName).GetAddress()
@@ -89,7 +90,7 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochIdentifier string, epochN
 				k.Logger(ctx).Info(fmt.Sprintf("Set ControllerBalances at H=%d to stSupply=%d, moduleAcctBalances=%d", latestHeightGaia, currStSupply.Amount.Int64(), modAcctBal.Amount.Int64()))
 
 				// TODO(TEST-97) update only when balances, delegatedBalances and stAsset supply are results from the same block
-				k.ProcessUpdateBalances(ctx, latestHeightGaia)
+				k.UpdateRedemptionRatePart1(ctx, latestHeightGaia)
 			}
 		}
 	}
