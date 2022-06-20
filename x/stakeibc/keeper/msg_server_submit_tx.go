@@ -197,7 +197,7 @@ func (k Keeper) ProcessUpdateUndelegatedBalance(ctx sdk.Context, height int64) {
 			hz := zoneInfo
 
 			da := hz.DelegationAccount
-			da.Balance = balance.Int64()
+			da.UndelegatedBalance = balance.Int64()
 			// only update height if this is the most updated query (ICQ msgresponses are not always FIFO)
 			if h >= da.HeightLastQueriedUndelegatedBalance {
 				da.HeightLastQueriedUndelegatedBalance = h
@@ -220,7 +220,7 @@ func (k Keeper) ProcessUpdateUndelegatedBalance(ctx sdk.Context, height int64) {
 					if found {
 						// 2.5 abort if stSupply is 0 at this host height
 						if cb.Stsupply > 0 {
-							redemptionRate := (sdk.NewDec(da.HeightLastQueriedUndelegatedBalance).Add(sdk.NewDec(hz.DelegationAccount.DelegatedBalance)).Add(sdk.NewDec(cb.Moduleacctbalance))).Quo(sdk.NewDec(cb.Stsupply))
+							redemptionRate := (sdk.NewDec(balance.Int64()).Add(sdk.NewDec(hz.DelegationAccount.DelegatedBalance)).Add(sdk.NewDec(cb.Moduleacctbalance))).Quo(sdk.NewDec(cb.Stsupply))
 							hz.LastRedemptionRate = hz.RedemptionRate
 							hz.RedemptionRate = redemptionRate
 							k.SetHostZone(ctx, hz)
@@ -475,4 +475,25 @@ func (k Keeper) SubmitTxs(ctx sdk.Context, connectionId string, msgs []sdk.Msg, 
 	}
 
 	return nil
+}
+
+func (k Keeper) GetLightClientHeightSafely(ctx sdk.Context, connectionID string) (int64, bool) {
+
+	var latestHeightGaia int64 // defaults to 0
+	// get light client's latest height
+	conn, found := k.IBCKeeper.ConnectionKeeper.GetConnection(ctx, connectionID)
+	if !found {
+		k.Logger(ctx).Info(fmt.Sprintf("invalid connection id, \"%s\" not found", connectionID))
+	}
+	//TODO(TEST-112) make sure to update host LCs here!
+	clientState, found := k.IBCKeeper.ClientKeeper.GetClientState(ctx, conn.ClientId)
+	if !found {
+		k.Logger(ctx).Info(fmt.Sprintf("client id \"%s\" not found for connection \"%s\"", conn.ClientId, connectionID))
+		return 0, false
+	} else {
+		// TODO(TEST-119) get stAsset supply at SAME time as gaia height
+		// TODO(TEST-112) check on safety of castng uint64 to int64
+		latestHeightGaia = int64(clientState.GetLatestHeight().GetRevisionHeight())
+		return latestHeightGaia, true
+	}
 }

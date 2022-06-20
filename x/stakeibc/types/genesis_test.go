@@ -23,9 +23,9 @@ func TestGenesisState_Validate(t *testing.T) {
 			genState: &types.GenesisState{
 				PortId: types.PortID,
 				ICAAccount: &types.ICAAccount{
-					Address:          "79",
-					Balance:          2,
-					DelegatedBalance: 8,
+					Address:            "79",
+					UndelegatedBalance: 2,
+					DelegatedBalance:   8,
 				},
 				HostZoneList: []types.HostZone{
 					{
@@ -46,14 +46,14 @@ func TestGenesisState_Validate(t *testing.T) {
 				},
 				DepositRecordCount: 2,
 				ControllerBalancesList: []types.ControllerBalances{
-	{
-		Index: "0",
-},
-	{
-		Index: "1",
-},
-},
-// this line is used by starport scaffolding # types/genesis/validField
+					{
+						Index: "0",
+					},
+					{
+						Index: "1",
+					},
+				},
+				// this line is used by starport scaffolding # types/genesis/validField
 			},
 			valid: true,
 		},
@@ -110,20 +110,20 @@ func TestGenesisState_Validate(t *testing.T) {
 			valid: false,
 		},
 		{
-	desc:     "duplicated controllerBalances",
-	genState: &types.GenesisState{
-		ControllerBalancesList: []types.ControllerBalances{
-			{
-				Index: "0",
-},
-			{
-				Index: "0",
-},
+			desc: "duplicated controllerBalances",
+			genState: &types.GenesisState{
+				ControllerBalancesList: []types.ControllerBalances{
+					{
+						Index: "0",
+					},
+					{
+						Index: "0",
+					},
+				},
+			},
+			valid: false,
 		},
-	},
-	valid:    false,
-},
-// this line is used by starport scaffolding # types/genesis/testcase
+		// this line is used by starport scaffolding # types/genesis/testcase
 	} {
 		t.Run(tc.desc, func(t *testing.T) {
 			err := tc.genState.Validate()
