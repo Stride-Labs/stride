@@ -43,6 +43,11 @@ resource "google_compute_address" "hermes-internal" {
   region = "us-west1"
 }
 
+resource "google_compute_address" "icq-internal" {
+  name   = "icq-internal"
+  region = "us-west1"
+}
+
 resource "google_compute_instance" "internal-node1" {
   name         = "internal-node1"
   machine_type = "e2-standard-2"
@@ -231,10 +236,27 @@ resource "google_compute_instance" "internal-hermes" {
     }
   }
 
+  resource "google_compute_instance" "internal-icq" {
+  name         = "internal-icq"
+  machine_type = "e2-standard-2"
+  zone         = "us-west1-c"
+  tags         = ["ssh"]
+  allow_stopping_for_update = true
+
+  metadata = {
+    enable-oslogin = "TRUE"
+    gce-container-declaration = "spec:\n  containers:\n    - name: node\n      image: 'gcr.io/stride-nodes/testnet:internal_icq'\n      stdin: false\n      tty: false\n  restartPolicy: Always\n"
+  }
+  boot_disk {
+    initialize_params {
+      image = "cos-cloud/cos-97-lts"
+    }
+  }
+
   network_interface {
     network = "default"
     access_config {
-      nat_ip = google_compute_address.hermes-internal.address
+      nat_ip = google_compute_address.icq-internal.address
     }
   }
 

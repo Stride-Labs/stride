@@ -47,6 +47,9 @@ RLY_ADDRESS_1=$($main_cmd keys show rly1 --keyring-backend test -a)
 # Give relayer account token balance
 $main_cmd add-genesis-account ${RLY_ADDRESS_1} $VAL_TOKENS
 
+# Give icq account token balance
+$main_cmd add-genesis-account ${ICQ_ADDRESS_STRIDE} $VAL_TOKENS
+
 # # now we process gentx txs 
 $main_cmd collect-gentxs 2> /dev/null
 
