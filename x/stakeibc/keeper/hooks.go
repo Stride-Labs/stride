@@ -64,25 +64,13 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochIdentifier string, epochN
 
 		exchangeRateInterval := int64(k.GetParam(ctx, types.KeyExchangeRateInterval))
 		if epochNumber%exchangeRateInterval == 0 && (epochNumber > 100) { // allow a few blocks from UpdateUndelegatedBal to avoid conflicts
-			// GET LATEST HEIGHT
-			// TODO(NOW) wrap this into a function
-			var latestHeightGaia int64 // defaults to 0
-			// get light client's latest height
+			// TODO(NOW) parameterize connection by hostZone
+			// TODO(NOW) update LC before getting latest height
 			connectionID := "connection-0"
-			conn, found := k.IBCKeeper.ConnectionKeeper.GetConnection(ctx, connectionID)
+			latestHeightGaia, found := k.GetLightClientHeightSafely(ctx, connectionID)
 			if !found {
-				k.Logger(ctx).Info(fmt.Sprintf("invalid connection id, \"%s\" not found", connectionID))
-			}
-			//TODO(TEST-112) make sure to update host LCs here!
-			clientState, found := k.IBCKeeper.ClientKeeper.GetClientState(ctx, conn.ClientId)
-			if !found {
-				k.Logger(ctx).Info(fmt.Sprintf("client id \"%s\" not found for connection \"%s\"", conn.ClientId, connectionID))
-				// latestHeightGaia = 0
+				k.Logger(ctx).Error("client id not found for connection \"%s\"", connectionID)
 			} else {
-				// TODO(TEST-119) get stAsset supply at SAME time as gaia height
-				// TODO(TEST-112) check on safety of castng uint64 to int64
-				latestHeightGaia = int64(clientState.GetLatestHeight().GetRevisionHeight())
-
 				// TODO(119) generalize to host_zones
 				// SET STASSETSUPPLY
 				hz, _ := k.GetHostZone(ctx, "GAIA")
