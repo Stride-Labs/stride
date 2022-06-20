@@ -15,22 +15,18 @@ import (
 	"github.com/Stride-Labs/stride/testutil/network"
 	"github.com/Stride-Labs/stride/testutil/nullify"
 	"github.com/Stride-Labs/stride/x/stakeibc/client/cli"
-    "github.com/Stride-Labs/stride/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/x/stakeibc/types"
 )
-
-// Prevent strconv unused error
-var _ = strconv.IntSize
 
 func networkWithControllerBalancesObjects(t *testing.T, n int) (*network.Network, []types.ControllerBalances) {
 	t.Helper()
 	cfg := network.DefaultConfig()
 	state := types.GenesisState{}
-    require.NoError(t, cfg.Codec.UnmarshalJSON(cfg.GenesisState[types.ModuleName], &state))
+	require.NoError(t, cfg.Codec.UnmarshalJSON(cfg.GenesisState[types.ModuleName], &state))
 
 	for i := 0; i < n; i++ {
 		controllerBalances := types.ControllerBalances{
 			Index: strconv.Itoa(i),
-			
 		}
 		nullify.Fill(&controllerBalances)
 		state.ControllerBalancesList = append(state.ControllerBalancesList, controllerBalances)
@@ -49,24 +45,24 @@ func TestShowControllerBalances(t *testing.T) {
 		fmt.Sprintf("--%s=json", tmcli.OutputFlag),
 	}
 	for _, tc := range []struct {
-		desc string
+		desc    string
 		idIndex string
-        
+
 		args []string
 		err  error
 		obj  types.ControllerBalances
 	}{
 		{
-			desc: "found",
+			desc:    "found",
 			idIndex: objs[0].Index,
-            
+
 			args: common,
 			obj:  objs[0],
 		},
 		{
-			desc: "not found",
+			desc:    "not found",
 			idIndex: strconv.Itoa(100000),
-            
+
 			args: common,
 			err:  status.Error(codes.NotFound, "not found"),
 		},
@@ -74,8 +70,7 @@ func TestShowControllerBalances(t *testing.T) {
 		tc := tc
 		t.Run(tc.desc, func(t *testing.T) {
 			args := []string{
-			    tc.idIndex,
-                
+				tc.idIndex,
 			}
 			args = append(args, tc.args...)
 			out, err := clitestutil.ExecTestCLICmd(ctx, cli.CmdShowControllerBalances(), args)
@@ -126,9 +121,9 @@ func TestListControllerBalances(t *testing.T) {
 			require.NoError(t, net.Config.Codec.UnmarshalJSON(out.Bytes(), &resp))
 			require.LessOrEqual(t, len(resp.ControllerBalances), step)
 			require.Subset(t,
-            	nullify.Fill(objs),
-            	nullify.Fill(resp.ControllerBalances),
-            )
+				nullify.Fill(objs),
+				nullify.Fill(resp.ControllerBalances),
+			)
 		}
 	})
 	t.Run("ByKey", func(t *testing.T) {
@@ -142,9 +137,9 @@ func TestListControllerBalances(t *testing.T) {
 			require.NoError(t, net.Config.Codec.UnmarshalJSON(out.Bytes(), &resp))
 			require.LessOrEqual(t, len(resp.ControllerBalances), step)
 			require.Subset(t,
-            	nullify.Fill(objs),
-            	nullify.Fill(resp.ControllerBalances),
-            )
+				nullify.Fill(objs),
+				nullify.Fill(resp.ControllerBalances),
+			)
 			next = resp.Pagination.NextKey
 		}
 	})

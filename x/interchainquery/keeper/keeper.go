@@ -150,7 +150,8 @@ func (k Keeper) QueryDelegatorDelegations(ctx sdk.Context, zone stakeibctypes.Ho
 	query_type := "cosmos.staking.v1beta1.Query/DelegatorDelegations"
 	// Get delegationAddress dynamically
 	delegationQuery := stakingtypes.QueryDelegatorDelegationsRequest{DelegatorAddr: address}
-	k.Logger(ctx).Info(fmt.Sprintf("\tabout to QueryDelegatorDelegations %s at height %d", address, height))
+	heightStr := strconv.FormatInt(height, 10)
+	k.Logger(ctx).Info(fmt.Sprintf("\tabout to QueryDelegatorDelegations %s at height %s", address, heightStr))
 	bz := k.cdc.MustMarshal(&delegationQuery)
 
 	k.MakeRequest(
@@ -161,7 +162,7 @@ func (k Keeper) QueryDelegatorDelegations(ctx sdk.Context, zone stakeibctypes.Ho
 		bz,
 		// TODO(TEST-79) understand and use proper period
 		sdk.NewInt(25),
-		strconv.FormatInt(height, 10),
+		heightStr,
 		types.ModuleName,
 		cb,
 	)
@@ -175,7 +176,7 @@ func (k Keeper) QueryDelegatorDelegations(ctx sdk.Context, zone stakeibctypes.Ho
 			sdk.NewAttribute(types.AttributeKeyChainId, chainId),
 			sdk.NewAttribute(types.AttributeKeyConnectionId, connectionId),
 			sdk.NewAttribute(types.AttributeKeyType, query_type),
-			sdk.NewAttribute(types.AttributeKeyHeight, strconv.FormatInt(height, 10)),
+			sdk.NewAttribute(types.AttributeKeyHeight, heightStr),
 			sdk.NewAttribute(types.AttributeKeyRequest, hex.EncodeToString(bz)),
 		),
 	})

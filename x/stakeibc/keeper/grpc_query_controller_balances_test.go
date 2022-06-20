@@ -1,7 +1,7 @@
 package keeper_test
 
 import (
-    "strconv"
+	"strconv"
 	"testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -10,13 +10,10 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/Stride-Labs/stride/x/stakeibc/types"
-	"github.com/Stride-Labs/stride/testutil/nullify"
 	keepertest "github.com/Stride-Labs/stride/testutil/keeper"
+	"github.com/Stride-Labs/stride/testutil/nullify"
+	"github.com/Stride-Labs/stride/x/stakeibc/types"
 )
-
-// Prevent strconv unused error
-var _ = strconv.IntSize
 
 func TestControllerBalancesQuerySingle(t *testing.T) {
 	keeper, ctx := keepertest.StakeibcKeeper(t)
@@ -29,28 +26,25 @@ func TestControllerBalancesQuerySingle(t *testing.T) {
 		err      error
 	}{
 		{
-			desc:     "First",
-			request:  &types.QueryGetControllerBalancesRequest{
-			    Index: msgs[0].Index,
-                
+			desc: "First",
+			request: &types.QueryGetControllerBalancesRequest{
+				Index: msgs[0].Index,
 			},
 			response: &types.QueryGetControllerBalancesResponse{ControllerBalances: msgs[0]},
 		},
 		{
-			desc:     "Second",
-			request:  &types.QueryGetControllerBalancesRequest{
-			    Index: msgs[1].Index,
-                
+			desc: "Second",
+			request: &types.QueryGetControllerBalancesRequest{
+				Index: msgs[1].Index,
 			},
 			response: &types.QueryGetControllerBalancesResponse{ControllerBalances: msgs[1]},
 		},
 		{
-			desc:    "KeyNotFound",
+			desc: "KeyNotFound",
 			request: &types.QueryGetControllerBalancesRequest{
-			    Index:strconv.Itoa(100000),
-                
+				Index: strconv.Itoa(100000),
 			},
-			err:     status.Error(codes.NotFound, "not found"),
+			err: status.Error(codes.NotFound, "not found"),
 		},
 		{
 			desc: "InvalidRequest",
@@ -94,9 +88,9 @@ func TestControllerBalancesQueryPaginated(t *testing.T) {
 			require.NoError(t, err)
 			require.LessOrEqual(t, len(resp.ControllerBalances), step)
 			require.Subset(t,
-            	nullify.Fill(msgs),
-            	nullify.Fill(resp.ControllerBalances),
-            )
+				nullify.Fill(msgs),
+				nullify.Fill(resp.ControllerBalances),
+			)
 		}
 	})
 	t.Run("ByKey", func(t *testing.T) {
@@ -107,9 +101,9 @@ func TestControllerBalancesQueryPaginated(t *testing.T) {
 			require.NoError(t, err)
 			require.LessOrEqual(t, len(resp.ControllerBalances), step)
 			require.Subset(t,
-            	nullify.Fill(msgs),
-            	nullify.Fill(resp.ControllerBalances),
-            )
+				nullify.Fill(msgs),
+				nullify.Fill(resp.ControllerBalances),
+			)
 			next = resp.Pagination.NextKey
 		}
 	})
