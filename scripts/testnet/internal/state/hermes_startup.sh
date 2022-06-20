@@ -3,8 +3,8 @@
 sleep 120
 
 echo "Restoring Hermes Accounts"
-hermes -c /tmp/hermes.toml keys restore --mnemonic "share woman nominee cloud film memory pull funny base card student yard phone forget easily breeze unaware six rose meadow harbor sausage order orient" internal
-hermes -c /tmp/hermes.toml keys restore --mnemonic "void quality prevent ketchup mesh hidden faith bird lonely limb album assist indicate lens loop regular pitch clump coach almost mango useless strong peasant" GAIA_internal
+hermes -c /tmp/hermes.toml keys restore --mnemonic "kid drift stool kangaroo kid force usual art fringe aerobic fun avoid honey ten since math conduct town sting onion catalog account junk dinner" internal
+hermes -c /tmp/hermes.toml keys restore --mnemonic "differ elite buzz carpet true awful win confirm august bird enjoy ready core jar logic radar disorder six trouble excuse filter trim turtle attitude" GAIA_internal
 
 hermes -c /tmp/hermes.toml start &
 sleep 30

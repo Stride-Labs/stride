@@ -31,11 +31,11 @@ RUN ln -s /src/app/interchain-queries /usr/local/bin
 RUN adduser --system --home /icq --disabled-password --disabled-login icq -U 1000
 USER icq
 
-# COPY --chown=icq "scripts/testnet/${network_name}/state/icq_startup.sh" /icq/icq_startup.sh
-# COPY --chown=icq "scripts/testnet/${network_name}/state/ICQ" /icq/.icq
+COPY --chown=icq "scripts/testnet/${network_name}/state/icq_startup.sh" /icq/icq_startup.sh
+COPY --chown=icq "scripts/testnet/${network_name}/state/icq" /icq/.icq
 
-# RUN ["chmod", "+x", "/icq/icq_startup.sh"]
-# ENTRYPOINT ["/icq/icq_startup.sh"]
+RUN ["chmod", "+x", "/icq/icq_startup.sh"]
+ENTRYPOINT ["/icq/icq_startup.sh"]
 
 
 

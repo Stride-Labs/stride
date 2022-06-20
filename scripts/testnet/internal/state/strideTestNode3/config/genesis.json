@@ -1,5 +1,5 @@
 {
-  "genesis_time": "2022-06-20T19:14:25.077315Z",
+  "genesis_time": "2022-06-20T19:36:22.018859Z",
   "chain_id": "internal",
   "initial_height": "1",
   "consensus_params": {
@@ -33,28 +33,28 @@
       "accounts": [
         {
           "@type": "/cosmos.auth.v1beta1.BaseAccount",
-          "address": "stride12pkarque6846505wgtw5n6f6ugfnx9ks3697v3",
+          "address": "stride1nva576qa36w0fdeuy9sajrpe0x6cxmgjwlk8y9",
           "pub_key": null,
           "account_number": "0",
           "sequence": "0"
         },
         {
           "@type": "/cosmos.auth.v1beta1.BaseAccount",
-          "address": "stride1yw3espun8ukqz86rxwcsypvu74zlrg6x3xpkqw",
+          "address": "stride13tqfwgd03q80c6xzyaum286z6pu0raprevjxgd",
           "pub_key": null,
           "account_number": "0",
           "sequence": "0"
         },
         {
           "@type": "/cosmos.auth.v1beta1.BaseAccount",
-          "address": "stride1sv0hfrcyydqz5rz3n35ngz00mjpsn585yyj6q8",
+          "address": "stride1d4jnrxqdjus9tucrjdretnv5dk78jc9hrdg0zq",
           "pub_key": null,
           "account_number": "0",
           "sequence": "0"
         },
         {
           "@type": "/cosmos.auth.v1beta1.BaseAccount",
-          "address": "stride1qpq5knafu8qu2dz0j0826eqg9dg9kwv6se3pfk",
+          "address": "stride1s4e9f4w0gzf6tjnvyhk7u9xv58gdp3rftq09zs",
           "pub_key": null,
           "account_number": "0",
           "sequence": "0"
@@ -75,33 +75,6 @@
       },
       "balances": [
         {
-          "address": "stride1qpq5knafu8qu2dz0j0826eqg9dg9kwv6se3pfk",
-          "coins": [
-            {
-              "denom": "ustrd",
-              "amount": "500000000"
-            }
-          ]
-        },
-        {
-          "address": "stride1yw3espun8ukqz86rxwcsypvu74zlrg6x3xpkqw",
-          "coins": [
-            {
-              "denom": "ustrd",
-              "amount": "500000000"
-            }
-          ]
-        },
-        {
-          "address": "stride12pkarque6846505wgtw5n6f6ugfnx9ks3697v3",
-          "coins": [
-            {
-              "denom": "ustrd",
-              "amount": "500000000"
-            }
-          ]
-        },
-        {
           "address": "stride12vfkpj7lpqg0n4j68rr5kyffc6wu55dzqewda4",
           "coins": [
             {
@@ -111,7 +84,34 @@
           ]
         },
         {
-          "address": "stride1sv0hfrcyydqz5rz3n35ngz00mjpsn585yyj6q8",
+          "address": "stride1d4jnrxqdjus9tucrjdretnv5dk78jc9hrdg0zq",
+          "coins": [
+            {
+              "denom": "ustrd",
+              "amount": "500000000"
+            }
+          ]
+        },
+        {
+          "address": "stride1s4e9f4w0gzf6tjnvyhk7u9xv58gdp3rftq09zs",
+          "coins": [
+            {
+              "denom": "ustrd",
+              "amount": "500000000"
+            }
+          ]
+        },
+        {
+          "address": "stride13tqfwgd03q80c6xzyaum286z6pu0raprevjxgd",
+          "coins": [
+            {
+              "denom": "ustrd",
+              "amount": "500000000"
+            }
+          ]
+        },
+        {
+          "address": "stride1nva576qa36w0fdeuy9sajrpe0x6cxmgjwlk8y9",
           "coins": [
             {
               "denom": "ustrd",
@@ -209,11 +209,11 @@
                   "max_change_rate": "0.010000000000000000"
                 },
                 "min_self_delegation": "1",
-                "delegator_address": "stride1yw3espun8ukqz86rxwcsypvu74zlrg6x3xpkqw",
-                "validator_address": "stridevaloper1yw3espun8ukqz86rxwcsypvu74zlrg6xjn92vt",
+                "delegator_address": "stride13tqfwgd03q80c6xzyaum286z6pu0raprevjxgd",
+                "validator_address": "stridevaloper13tqfwgd03q80c6xzyaum286z6pu0rapr6ek6yg",
                 "pubkey": {
                   "@type": "/cosmos.crypto.ed25519.PubKey",
-                  "key": "P0XWot9uBOJ53J2XcUmzre/guVpKCgaj/4S9wX6hnRo="
+                  "key": "zXj1TnqmZBl2RZhfoLCmA7/NW7edgektzTUBUDexn5M="
                 },
                 "value": {
                   "denom": "ustrd",
@@ -221,7 +221,7 @@
                 }
               }
             ],
-            "memo": "095ad1be8d692478bc81567c8346ecd33eac783a@192.168.86.55:26656",
+            "memo": "16440f5e2e90ebcfbfab9d622c75b57da5b8ffd7@192.168.86.55:26656",
             "timeout_height": "0",
             "extension_options": [],
             "non_critical_extension_options": []
@@ -231,7 +231,7 @@
               {
                 "public_key": {
                   "@type": "/cosmos.crypto.secp256k1.PubKey",
-                  "key": "Apn/EBnY1DPp7LCJReFsXvdV02TyVW/ly3fNZhZxqt5s"
+                  "key": "Ak8Z44stGRbwBbtB3LnhdJRQkt9qYdllrY4Gw5EmXNvQ"
                 },
                 "mode_info": {
                   "single": {
@@ -249,68 +249,7 @@
             }
           },
           "signatures": [
-            "sVaK/F3N1fYKltuEfbKLTv9iTKMwvM8GSDE72IQZdDwveHfoGMV3Sdmw/cJx95G+r1c1j4S96uNVH4v49REOuw=="
-          ]
-        },
-        {
-          "body": {
-            "messages": [
-              {
-                "@type": "/cosmos.staking.v1beta1.MsgCreateValidator",
-                "description": {
-                  "moniker": "STRIDE_3",
-                  "identity": "",
-                  "website": "",
-                  "security_contact": "",
-                  "details": ""
-                },
-                "commission": {
-                  "rate": "0.100000000000000000",
-                  "max_rate": "0.200000000000000000",
-                  "max_change_rate": "0.010000000000000000"
-                },
-                "min_self_delegation": "1",
-                "delegator_address": "stride1sv0hfrcyydqz5rz3n35ngz00mjpsn585yyj6q8",
-                "validator_address": "stridevaloper1sv0hfrcyydqz5rz3n35ngz00mjpsn58583kxvz",
-                "pubkey": {
-                  "@type": "/cosmos.crypto.ed25519.PubKey",
-                  "key": "MbmQvfM+sTJKtJ5aqm/MWZFydLJAnkrOtc2vYVGGP0U="
-                },
-                "value": {
-                  "denom": "ustrd",
-                  "amount": "300000000"
-                }
-              }
-            ],
-            "memo": "907ceef13b0acf9127326163cf59eeb5e6e710f0@192.168.86.55:26656",
-            "timeout_height": "0",
-            "extension_options": [],
-            "non_critical_extension_options": []
-          },
-          "auth_info": {
-            "signer_infos": [
-              {
-                "public_key": {
-                  "@type": "/cosmos.crypto.secp256k1.PubKey",
-                  "key": "A1eoqO2MFdSQVQXuI9nAIizkqHJWX7L+jj6aLG1Ko4mr"
-                },
-                "mode_info": {
-                  "single": {
-                    "mode": "SIGN_MODE_DIRECT"
-                  }
-                },
-                "sequence": "0"
-              }
-            ],
-            "fee": {
-              "amount": [],
-              "gas_limit": "200000",
-              "payer": "",
-              "granter": ""
-            }
-          },
-          "signatures": [
-            "ri/xOETAR8Mfbaj3CnXzXLODDeL6wXnEXa3WKtx97RxZow8LP95CZ8Ely+yo2OIonVLY28O64eMUp58EdI8mYg=="
+            "s9fARfgdryTWF/kewFGeAP59fxcEsMhJx4RD18iGvXMDzThzBnUEB3zwiTdD65DwAZhgrq9DBBDK3QbnMluV1Q=="
           ]
         },
         {
@@ -331,11 +270,11 @@
                   "max_change_rate": "0.010000000000000000"
                 },
                 "min_self_delegation": "1",
-                "delegator_address": "stride12pkarque6846505wgtw5n6f6ugfnx9ks3697v3",
-                "validator_address": "stridevaloper12pkarque6846505wgtw5n6f6ugfnx9ksj0pzq5",
+                "delegator_address": "stride1nva576qa36w0fdeuy9sajrpe0x6cxmgjwlk8y9",
+                "validator_address": "stridevaloper1nva576qa36w0fdeuy9sajrpe0x6cxmgjd2jmgq",
                 "pubkey": {
                   "@type": "/cosmos.crypto.ed25519.PubKey",
-                  "key": "I7utTdt+qApkpG5bppO/1Uysv+FINoZBw8evjibOVus="
+                  "key": "4hPuom8DJO+ESUfRfdm5SWD1qxTyDmHAPD1vbPh5gIQ="
                 },
                 "value": {
                   "denom": "ustrd",
@@ -343,7 +282,7 @@
                 }
               }
             ],
-            "memo": "fff31ca941cb35666f7691f9d363747fa328053d@192.168.86.55:26656",
+            "memo": "5e1dfffb99b253f168bc60dbbd7937da51d8cb07@192.168.86.55:26656",
             "timeout_height": "0",
             "extension_options": [],
             "non_critical_extension_options": []
@@ -353,7 +292,7 @@
               {
                 "public_key": {
                   "@type": "/cosmos.crypto.secp256k1.PubKey",
-                  "key": "A78c4NiWjQvUEMfQXDXThyhEzhVLPZU5cHt4ySR/nxbp"
+                  "key": "AtxvedPKKDcszgZyTeTuQr3vXy79pH0UrYYJwbRUtksZ"
                 },
                 "mode_info": {
                   "single": {
@@ -371,7 +310,68 @@
             }
           },
           "signatures": [
-            "7gswiM4A3To1H4J9ErLS0fIJXjN9CPIVR8x8xWIv/wNxHk2AaLZYpYuUYc0L3n3PPjs5qsgfHI7mjZioQ1itUQ=="
+            "CngqmzOtj/xUg5TGlvRacAaXh8gfim+7FS+jP2Y/tv5YKziIHxGrX//ko4+aQkBlWtsZHzCuBBFUPvHjDFGn3w=="
+          ]
+        },
+        {
+          "body": {
+            "messages": [
+              {
+                "@type": "/cosmos.staking.v1beta1.MsgCreateValidator",
+                "description": {
+                  "moniker": "STRIDE_3",
+                  "identity": "",
+                  "website": "",
+                  "security_contact": "",
+                  "details": ""
+                },
+                "commission": {
+                  "rate": "0.100000000000000000",
+                  "max_rate": "0.200000000000000000",
+                  "max_change_rate": "0.010000000000000000"
+                },
+                "min_self_delegation": "1",
+                "delegator_address": "stride1d4jnrxqdjus9tucrjdretnv5dk78jc9hrdg0zq",
+                "validator_address": "stridevaloper1d4jnrxqdjus9tucrjdretnv5dk78jc9hqcvnw9",
+                "pubkey": {
+                  "@type": "/cosmos.crypto.ed25519.PubKey",
+                  "key": "GIoGfP6gtw5Jzg15A/TXQcdnxv/V3NxD3kggylvhIuE="
+                },
+                "value": {
+                  "denom": "ustrd",
+                  "amount": "300000000"
+                }
+              }
+            ],
+            "memo": "d122552c30d1024e726ca47f9b47e212ed3345cf@192.168.86.55:26656",
+            "timeout_height": "0",
+            "extension_options": [],
+            "non_critical_extension_options": []
+          },
+          "auth_info": {
+            "signer_infos": [
+              {
+                "public_key": {
+                  "@type": "/cosmos.crypto.secp256k1.PubKey",
+                  "key": "A5DexFSHFetaL59E9SU0EOeo2y+4r43n0cCClCZovhNF"
+                },
+                "mode_info": {
+                  "single": {
+                    "mode": "SIGN_MODE_DIRECT"
+                  }
+                },
+                "sequence": "0"
+              }
+            ],
+            "fee": {
+              "amount": [],
+              "gas_limit": "200000",
+              "payer": "",
+              "granter": ""
+            }
+          },
+          "signatures": [
+            "zc6vwQlcEGp91uDt/m5+seQpZnQ/6TgLjF1hS6fIGZAgclzRu7BNgwpVIqx5hELhG2qlQ42MDm0fjL/aMTgIHw=="
           ]
         }
       ]
