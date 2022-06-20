@@ -39,7 +39,8 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochIdentifier string, epochN
 		// Imagine it will be slightly cleaner to track state by epoch, rather than
 		// by DepositInterval
 		if epochNumber < 0 {
-			panic("epochs must be positive")
+			k.Logger(ctx).Error(fmt.Sprintf("Stride Epoch %d negative", epochNumber))
+			return
 		}
 		epochTracker := types.EpochTracker{
 			EpochIdentifier: epochIdentifier,
