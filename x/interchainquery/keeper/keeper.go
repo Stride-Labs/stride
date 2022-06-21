@@ -13,6 +13,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/bech32"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	ibckeeper "github.com/cosmos/ibc-go/v3/modules/core/keeper"
 	"github.com/tendermint/tendermint/libs/log"
 )
 
@@ -21,14 +22,16 @@ type Keeper struct {
 	cdc       codec.Codec
 	storeKey  sdk.StoreKey
 	callbacks map[string]types.QueryCallbacks
+	IBCKeeper *ibckeeper.Keeper
 }
 
 // NewKeeper returns a new instance of zones Keeper
-func NewKeeper(cdc codec.Codec, storeKey sdk.StoreKey) Keeper {
+func NewKeeper(cdc codec.Codec, storeKey sdk.StoreKey, ibckeeper *ibckeeper.Keeper) Keeper {
 	return Keeper{
 		cdc:       cdc,
 		storeKey:  storeKey,
 		callbacks: make(map[string]types.QueryCallbacks),
+		IBCKeeper: ibckeeper,
 	}
 }
 

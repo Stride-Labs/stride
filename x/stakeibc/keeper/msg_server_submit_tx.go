@@ -304,7 +304,6 @@ func (k Keeper) UpdateRedemptionRatePart2(ctx sdk.Context, hostZone types.HostZo
 			// return SetAccountBalanceForDenom(k, ctx, zone, address, coin)
 			return nil
 		}
-		return nil
 
 		// k.Logger(ctx).Info(fmt.Sprintf("\tQuerying UndelegatedBalance for %s at %d height", zoneInfo.ChainId, height))
 		// k.InterchainQueryKeeper.QueryHostZone(ctx, zoneInfo, redemptionRateUndelegatedBalanceCallback, "cosmos.bank.v1beta1.Query/AllBalances", delegationIca.Address, height)
