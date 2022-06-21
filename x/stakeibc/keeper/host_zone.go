@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"encoding/binary"
+	"fmt"
 	"strings"
 
 	"github.com/Stride-Labs/stride/x/stakeibc/types"
@@ -90,6 +91,31 @@ func (k Keeper) GetAllHostZone(ctx sdk.Context) (list []types.HostZone) {
 	}
 
 	return
+}
+
+func (k Keeper) AddValidatorToHostZone(ctx sdk.Context, chainId string, val types.Validator) (success bool) {
+	hostZone, found := k.GetHostZone(ctx, chainId)
+	if !found {
+		k.Logger(ctx).Error(fmt.Sprintf("HostZone not found %s", chainId))
+		return false
+	}
+	hostZone.Validators = append(hostZone.Validators, &val)
+	return true
+}
+
+func (k Keeper) RemoveValidatorFromHostZone(ctx sdk.Context, chainId string, i int) (success bool) {
+	hostZone, found := k.GetHostZone(ctx, chainId)
+	if !found {
+		k.Logger(ctx).Error(fmt.Sprintf("HostZone not found %s", chainId))
+		return false
+	}
+	if i >= len(hostZone.Validators) {
+		k.Logger(ctx).Error(fmt.Sprintf("Validator index out of bounds %d on Host Zone %s", i, chainId))
+		return false
+	}
+	val_list := hostZone.Validators
+	hostZone.Validators = append(val_list[:i], val_list[i+1:]...)
+	return true
 }
 
 // GetHostZoneIDFromBytes returns ID in uint64 format from a byte array
