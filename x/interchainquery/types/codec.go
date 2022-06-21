@@ -14,7 +14,7 @@ var (
 )
 
 func RegisterLegacyAminoCodec(cdc *codec.LegacyAmino) {
-	cdc.RegisterConcrete(&MsgSubmitQueryResponse{}, "/quicksilver.interchainquery.v1.MsgSubmitQueryResponse", nil)
+	cdc.RegisterConcrete(&MsgSubmitQueryResponse{}, "/stride.interchainquery.v1.MsgSubmitQueryResponse", nil)
 }
 
 func RegisterInterfaces(registry types.InterfaceRegistry) {
