@@ -10,9 +10,6 @@
 [submodule "deps/hermes"]
 	path = deps/hermes
 	url = git@github.com:informalsystems/ibc-rs.git
-[submodule "deps/icq"]
-	path = deps/icq
-	url = git@github.com:Stride-Labs/icq.git
 [submodule "deps/gaia"]
 	path = deps/gaia
 	url = git@github.com:Stride-Labs/gaia.git
