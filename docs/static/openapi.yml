@@ -29124,8 +29124,8 @@ paths:
                       status:
                         type: string
                       commissionRate:
-                        type: integer
-                        format: int32
+                        type: string
+                        format: int64
                       delegationAmt:
                         type: string
                         format: int64
@@ -29877,8 +29877,8 @@ paths:
                           status:
                             type: string
                           commissionRate:
-                            type: integer
-                            format: int32
+                            type: string
+                            format: int64
                           delegationAmt:
                             type: string
                             format: int64
@@ -29894,8 +29894,8 @@ paths:
                           status:
                             type: string
                           commissionRate:
-                            type: integer
-                            format: int32
+                            type: string
+                            format: int64
                           delegationAmt:
                             type: string
                             format: int64
@@ -29927,8 +29927,8 @@ paths:
                                   status:
                                     type: string
                                   commissionRate:
-                                    type: integer
-                                    format: int32
+                                    type: string
+                                    format: int64
                                   delegationAmt:
                                     type: string
                                     format: int64
@@ -29974,8 +29974,8 @@ paths:
                                   status:
                                     type: string
                                   commissionRate:
-                                    type: integer
-                                    format: int32
+                                    type: string
+                                    format: int64
                                   delegationAmt:
                                     type: string
                                     format: int64
@@ -30021,8 +30021,8 @@ paths:
                                   status:
                                     type: string
                                   commissionRate:
-                                    type: integer
-                                    format: int32
+                                    type: string
+                                    format: int64
                                   delegationAmt:
                                     type: string
                                     format: int64
@@ -30355,8 +30355,8 @@ paths:
                         status:
                           type: string
                         commissionRate:
-                          type: integer
-                          format: int32
+                          type: string
+                          format: int64
                         delegationAmt:
                           type: string
                           format: int64
@@ -30372,8 +30372,8 @@ paths:
                         status:
                           type: string
                         commissionRate:
-                          type: integer
-                          format: int32
+                          type: string
+                          format: int64
                         delegationAmt:
                           type: string
                           format: int64
@@ -30405,8 +30405,8 @@ paths:
                                 status:
                                   type: string
                                 commissionRate:
-                                  type: integer
-                                  format: int32
+                                  type: string
+                                  format: int64
                                 delegationAmt:
                                   type: string
                                   format: int64
@@ -30451,8 +30451,8 @@ paths:
                                 status:
                                   type: string
                                 commissionRate:
-                                  type: integer
-                                  format: int32
+                                  type: string
+                                  format: int64
                                 delegationAmt:
                                   type: string
                                   format: int64
@@ -30497,8 +30497,8 @@ paths:
                                 status:
                                   type: string
                                 commissionRate:
-                                  type: integer
-                                  format: int32
+                                  type: string
+                                  format: int64
                                 delegationAmt:
                                   type: string
                                   format: int64
@@ -30761,8 +30761,8 @@ paths:
                             status:
                               type: string
                             commissionRate:
-                              type: integer
-                              format: int32
+                              type: string
+                              format: int64
                             delegationAmt:
                               type: string
                               format: int64
@@ -31396,8 +31396,8 @@ paths:
                   status:
                     type: string
                   commissionRate:
-                    type: integer
-                    format: int32
+                    type: string
+                    format: int64
                   delegationAmt:
                     type: string
                     format: int64
@@ -52150,8 +52150,8 @@ definitions:
           status:
             type: string
           commissionRate:
-            type: integer
-            format: int32
+            type: string
+            format: int64
           delegationAmt:
             type: string
             format: int64
@@ -52206,8 +52206,8 @@ definitions:
             status:
               type: string
             commissionRate:
-              type: integer
-              format: int32
+              type: string
+              format: int64
             delegationAmt:
               type: string
               format: int64
@@ -52223,8 +52223,8 @@ definitions:
             status:
               type: string
             commissionRate:
-              type: integer
-              format: int32
+              type: string
+              format: int64
             delegationAmt:
               type: string
               format: int64
@@ -52256,8 +52256,8 @@ definitions:
                     status:
                       type: string
                     commissionRate:
-                      type: integer
-                      format: int32
+                      type: string
+                      format: int64
                     delegationAmt:
                       type: string
                       format: int64
@@ -52302,8 +52302,8 @@ definitions:
                     status:
                       type: string
                     commissionRate:
-                      type: integer
-                      format: int32
+                      type: string
+                      format: int64
                     delegationAmt:
                       type: string
                       format: int64
@@ -52348,8 +52348,8 @@ definitions:
                     status:
                       type: string
                     commissionRate:
-                      type: integer
-                      format: int32
+                      type: string
+                      format: int64
                     delegationAmt:
                       type: string
                       format: int64
@@ -52410,8 +52410,8 @@ definitions:
                 status:
                   type: string
                 commissionRate:
-                  type: integer
-                  format: int32
+                  type: string
+                  format: int64
                 delegationAmt:
                   type: string
                   format: int64
@@ -52444,6 +52444,8 @@ definitions:
       uptime:
         type: integer
         format: int32
+  Stridelabs.stride.stakeibc.MsgAddValidatorResponse:
+    type: object
   Stridelabs.stride.stakeibc.MsgLiquidStakeResponse:
     type: object
   Stridelabs.stride.stakeibc.MsgRebalanceValidatorsResponse:
@@ -52594,8 +52596,8 @@ definitions:
                   status:
                     type: string
                   commissionRate:
-                    type: integer
-                    format: int32
+                    type: string
+                    format: int64
                   delegationAmt:
                     type: string
                     format: int64
@@ -52611,8 +52613,8 @@ definitions:
                   status:
                     type: string
                   commissionRate:
-                    type: integer
-                    format: int32
+                    type: string
+                    format: int64
                   delegationAmt:
                     type: string
                     format: int64
@@ -52644,8 +52646,8 @@ definitions:
                           status:
                             type: string
                           commissionRate:
-                            type: integer
-                            format: int32
+                            type: string
+                            format: int64
                           delegationAmt:
                             type: string
                             format: int64
@@ -52690,8 +52692,8 @@ definitions:
                           status:
                             type: string
                           commissionRate:
-                            type: integer
-                            format: int32
+                            type: string
+                            format: int64
                           delegationAmt:
                             type: string
                             format: int64
@@ -52736,8 +52738,8 @@ definitions:
                           status:
                             type: string
                           commissionRate:
-                            type: integer
-                            format: int32
+                            type: string
+                            format: int64
                           delegationAmt:
                             type: string
                             format: int64
@@ -52813,8 +52815,8 @@ definitions:
               status:
                 type: string
               commissionRate:
-                type: integer
-                format: int32
+                type: string
+                format: int64
               delegationAmt:
                 type: string
                 format: int64
@@ -52869,8 +52871,8 @@ definitions:
                 status:
                   type: string
                 commissionRate:
-                  type: integer
-                  format: int32
+                  type: string
+                  format: int64
                 delegationAmt:
                   type: string
                   format: int64
@@ -52886,8 +52888,8 @@ definitions:
                 status:
                   type: string
                 commissionRate:
-                  type: integer
-                  format: int32
+                  type: string
+                  format: int64
                 delegationAmt:
                   type: string
                   format: int64
@@ -52919,8 +52921,8 @@ definitions:
                         status:
                           type: string
                         commissionRate:
-                          type: integer
-                          format: int32
+                          type: string
+                          format: int64
                         delegationAmt:
                           type: string
                           format: int64
@@ -52965,8 +52967,8 @@ definitions:
                         status:
                           type: string
                         commissionRate:
-                          type: integer
-                          format: int32
+                          type: string
+                          format: int64
                         delegationAmt:
                           type: string
                           format: int64
@@ -53011,8 +53013,8 @@ definitions:
                         status:
                           type: string
                         commissionRate:
-                          type: integer
-                          format: int32
+                          type: string
+                          format: int64
                         delegationAmt:
                           type: string
                           format: int64
@@ -53076,8 +53078,8 @@ definitions:
                     status:
                       type: string
                     commissionRate:
-                      type: integer
-                      format: int32
+                      type: string
+                      format: int64
                     delegationAmt:
                       type: string
                       format: int64
@@ -53119,8 +53121,8 @@ definitions:
           status:
             type: string
           commissionRate:
-            type: integer
-            format: int32
+            type: string
+            format: int64
           delegationAmt:
             type: string
             format: int64
@@ -53200,8 +53202,8 @@ definitions:
       status:
         type: string
       commissionRate:
-        type: integer
-        format: int32
+        type: string
+        format: int64
       delegationAmt:
         type: string
         format: int64
