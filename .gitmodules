@@ -14,6 +14,3 @@
 	path = deps/gaia
 	url = git@github.com:Stride-Labs/gaia.git
 	branch = v7.0.2-stride-second-attempt
-[submodule "deps/icq"]
-	path = deps/icq
-	url = git@github.com:Stride-Labs/icq.git
