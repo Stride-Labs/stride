@@ -7,11 +7,11 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/Stride-Labs/stride/x/interchainquery/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	clienttypes "github.com/cosmos/ibc-go/v3/modules/core/02-client/types"
 	commitmenttypes "github.com/cosmos/ibc-go/v3/modules/core/23-commitment/types"
 	tmclienttypes "github.com/cosmos/ibc-go/v3/modules/light-clients/07-tendermint/types"
+	"github.com/ingenuity-build/quicksilver/x/interchainquery/types"
 )
 
 type msgServer struct {
@@ -25,46 +25,6 @@ func NewMsgServerImpl(keeper Keeper) types.MsgServer {
 }
 
 var _ types.MsgServer = msgServer{}
-
-func (k msgServer) SubmitQueryResponse2(goCtx context.Context, msg *types.MsgSubmitQueryResponse) (*types.MsgSubmitQueryResponseResponse, error) {
-	ctx := sdk.UnwrapSDKContext(goCtx)
-
-	q, found := k.GetQuery(ctx, msg.QueryId)
-	if found {
-		for _, module := range k.callbacks {
-			if module.Has(msg.QueryId) {
-				err := module.Call(ctx, msg.QueryId, msg.Result, q, msg.Height)
-				if err != nil {
-					k.Logger(ctx).Error("Error in callback", "error", err, "msg", msg.QueryId, "result", msg.Result, "type", q.QueryType, "request", q.Request)
-					return nil, err
-				}
-			}
-		}
-		//q.LastHeight = sdk.NewInt(ctx.BlockHeight())
-
-		if err := k.SetDatapointForId(ctx, msg.QueryId, msg.Result, sdk.NewInt(msg.Height)); err != nil {
-			return nil, err
-		}
-
-		if q.Period.IsNegative() {
-			k.DeleteQuery(ctx, msg.QueryId)
-		} else {
-			k.SetQuery(ctx, q)
-		}
-
-	} else {
-		return &types.MsgSubmitQueryResponseResponse{}, nil // technically this is an error, but will cause the entire tx to fail if we have one 'bad' message, so we can just no-op here.
-	}
-
-	ctx.EventManager().EmitEvents(sdk.Events{
-		sdk.NewEvent(
-			sdk.EventTypeMessage,
-			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
-		),
-	})
-
-	return &types.MsgSubmitQueryResponseResponse{}, nil
-}
 
 func (k msgServer) SubmitQueryResponse(goCtx context.Context, msg *types.MsgSubmitQueryResponse) (*types.MsgSubmitQueryResponseResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
@@ -128,41 +88,29 @@ func (k msgServer) SubmitQueryResponse(goCtx context.Context, msg *types.MsgSubm
 
 		sort.Strings(keys)
 
-		// for _, key := range keys {
-		// 	module := k.callbacks[key]
-		// 	if module.Has(q.CallbackId) {
-		// 		err := module.Call(ctx, q.CallbackId, msg.Result, q)
-		// 		if err != nil {
-		// 			// handle edge case; callback has resent the same query!
-		// 			// set noDelete to true and short circuit error handling!
-		// 			if err == types.ErrSucceededNoDelete {
-		// 				noDelete = true
-		// 			} else {
-		// 				k.Logger(ctx).Error("error in callback", "error", err, "msg", msg.QueryId, "result", msg.Result, "type", q.QueryType, "params", q.Request)
-		// 				return nil, err
-		// 			}
-		// 		}
-		// 	}
-		// }
-		q, found := k.GetQuery(ctx, msg.QueryId)
-		if found {
-			for _, module := range k.callbacks {
-				if module.Has(msg.QueryId) {
-					err := module.Call(ctx, msg.QueryId, msg.Result, q, msg.Height)
-					if err != nil {
-						k.Logger(ctx).Error("Error in callback", "error", err, "msg", msg.QueryId, "result", msg.Result, "type", q.QueryType, "request", q.Request)
+		for _, key := range keys {
+			module := k.callbacks[key]
+			if module.Has(q.CallbackId) {
+				err := module.Call(ctx, q.CallbackId, msg.Result, q)
+				if err != nil {
+					// handle edge case; callback has resent the same query!
+					// set noDelete to true and short circuit error handling!
+					if err == types.ErrSucceededNoDelete {
+						noDelete = true
+					} else {
+						k.Logger(ctx).Error("error in callback", "error", err, "msg", msg.QueryId, "result", msg.Result, "type", q.QueryType, "params", q.Request)
 						return nil, err
 					}
 				}
 			}
 		}
 
-		// if q.Ttl > 0 {
-		// 	// don't store if ttl is 0
-		// 	if err := k.SetDatapointForId(ctx, msg.QueryId, msg.Result, sdk.NewInt(msg.Height)); err != nil {
-		// 		return nil, err
-		// 	}
-		// }
+		if q.Ttl > 0 {
+			// don't store if ttl is 0
+			if err := k.SetDatapointForId(ctx, msg.QueryId, msg.Result, sdk.NewInt(msg.Height)); err != nil {
+				return nil, err
+			}
+		}
 
 		if q.Period.IsNegative() {
 			if !noDelete {

@@ -14,20 +14,13 @@ var (
 )
 
 func RegisterLegacyAminoCodec(cdc *codec.LegacyAmino) {
-	cdc.RegisterConcrete(&MsgSubmitQueryResponse{}, "/stride.interchainquery.MsgSubmitQueryResponse", nil)
-	//cdc.RegisterConcrete(&MsgQueryExchangerate{}, "interchainquery/QueryExchangerate", nil)
-	//cdc.RegisterConcrete(&MsgQueryDelegatedbalance{}, "interchainquery/QueryDelegatedbalance", nil)
-	// this line is used by starport scaffolding # 2
+	cdc.RegisterConcrete(&MsgSubmitQueryResponse{}, "/quicksilver.interchainquery.v1.MsgSubmitQueryResponse", nil)
 }
 
 func RegisterInterfaces(registry types.InterfaceRegistry) {
 	registry.RegisterImplementations((*sdk.Msg)(nil),
 		&MsgSubmitQueryResponse{},
-		//&MsgQueryBalance{},
-		//&MsgQueryExchangerate{},
-		//&MsgQueryDelegatedbalance{},
 	)
-	// this line is used by starport scaffolding # 3
 
 	msgservice.RegisterMsgServiceDesc(registry, &_Msg_serviceDesc)
 }
