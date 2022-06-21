@@ -316,20 +316,20 @@ icq-local-install:
 
 local-build: stride-local-build icq-local-build
 
-stride-local-build: 
+stride-local-build: $(BUILDDIR)
 	go build -mod=readonly -trimpath -o $(BUILDDIR) ./...
 
-gaia-local-build: 
+gaia-local-build: $(BUILDDIR)
 	cd deps/gaia; \
 	go build -mod=readonly -trimpath -o $(BUILDDIR) ./...
 
-hermes-local-build:
+hermes-local-build: $(BUILDDIR)
 	cd deps/hermes; \
 	cargo build --release --target-dir $(BUILDDIR)/hermes
 
-icq-local-build:
+icq-local-build: $(BUILDDIR)
 	cd deps/icq; \
-	go build -mod=readonly -trimpath -o $(BUILDDIR) ./...
+	go build -mod=readonly -trimpath -o $(BUILDDIR) ./... 2>&1 | grep -v deprecated
 
 local-init:
 	sh scripts/local/init_main.sh 
@@ -341,4 +341,10 @@ start-gaia:
 	sh scripts/local/start_gaia.sh
 
 stop:
-	cat scripts/local/pids.txt | xargs kill -9 $1; rm scripts/local/pids.txt
+	killall gaiad strided hermes
+
+start-hermes:
+	sh scripts/local/init_hermes.sh
+
+list:
+	ps | grep make

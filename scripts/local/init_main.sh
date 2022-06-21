@@ -9,7 +9,6 @@ source ${SCRIPT_DIR}/vars.sh
 # cleanup any stale state
 rm -rf $STATE ./icq/keys
 
-# TODO(TEST-117) Modularize/generalize chain init scripts 
 # Initialize the state for stride/gaia and relayers
 # ignite chain init
 sh ${SCRIPT_DIR}/init_stride.sh
