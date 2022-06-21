@@ -10,6 +10,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/types/bech32"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/tendermint/tendermint/libs/log"
@@ -101,8 +102,6 @@ func (k *Keeper) MakeRequest(ctx sdk.Context, connection_id string, chain_id str
 func (k Keeper) QueryHostZone(ctx sdk.Context, zone stakeibctypes.HostZone, cb Callback, query_type string, address string, height int64) error {
 
 	// note: height=0 queries at latest block header, NOT at height 0
-	connectionId := zone.ConnectionId
-	chainId := zone.ChainId
 	heightStr := strconv.FormatInt(height, 10)
 
 	// populate query based on query type
@@ -118,8 +117,8 @@ func (k Keeper) QueryHostZone(ctx sdk.Context, zone stakeibctypes.HostZone, cb C
 
 	k.MakeRequest(
 		ctx,
-		connectionId,
-		chainId,
+		zone.ConnectionId,
+		zone.ChainId,
 		query_type,
 		bz,
 		// TODO(TEST-79) understand and use proper period
@@ -136,9 +135,59 @@ func (k Keeper) QueryHostZone(ctx sdk.Context, zone stakeibctypes.HostZone, cb C
 			sdk.EventTypeMessage,
 			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
 			sdk.NewAttribute(sdk.AttributeKeyAction, types.AttributeValueQuery),
-			sdk.NewAttribute(types.AttributeKeyQueryId, GenerateQueryHash(connectionId, chainId, query_type, bz, heightStr)),
-			sdk.NewAttribute(types.AttributeKeyChainId, chainId),
-			sdk.NewAttribute(types.AttributeKeyConnectionId, connectionId),
+			sdk.NewAttribute(types.AttributeKeyQueryId, GenerateQueryHash(zone.ConnectionId, zone.ChainId, query_type, bz, heightStr)),
+			sdk.NewAttribute(types.AttributeKeyChainId, zone.ChainId),
+			sdk.NewAttribute(types.AttributeKeyConnectionId, zone.ConnectionId),
+			sdk.NewAttribute(types.AttributeKeyType, query_type),
+			// TODO(TEST-119) set height based on gaia LC height
+			sdk.NewAttribute(types.AttributeKeyHeight, heightStr),
+			sdk.NewAttribute(types.AttributeKeyRequest, hex.EncodeToString(bz)),
+		),
+	})
+	return nil
+}
+
+func (k Keeper) QueryHostZoneWithProof(ctx sdk.Context, zone stakeibctypes.HostZone, cb Callback, query_type string, address string, height int64) error {
+
+	// note: height=0 queries at latest block header, NOT at height 0
+	heightStr := strconv.FormatInt(height, 10)
+
+	_, addr, _ := bech32.DecodeAndConvert(address)
+	data := banktypes.CreateAccountBalancesPrefix(addr)
+	// populate query based on query type
+	var bz []byte
+	if query_type == "store/bank/key" {
+		bz = append(data, []byte(zone.HostDenom)...) // TODO(TEST-119) what should this be?
+	}
+	// TODO(TEST-119) handle staking case!
+	// } else if query_type == "store/staking/key" {
+	// 	data := stakingtypes.GetDelegationKey(delAddr, valAddr) // TODO(TEST-119) what should this be?
+	// }
+	k.Logger(ctx).Info(fmt.Sprintf("\tabout to %s to %s at height %s", query_type, address, heightStr))
+
+	k.MakeRequest(
+		ctx,
+		zone.ConnectionId,
+		zone.ChainId,
+		query_type,
+		bz,
+		// TODO(TEST-79) understand and use proper period
+		sdk.NewInt(100000),
+		strconv.FormatInt(height, 10),
+		types.ModuleName,
+		cb,
+	)
+
+	// TODO(TEST-119) get gaia LC height, pass to height
+
+	ctx.EventManager().EmitEvents(sdk.Events{
+		sdk.NewEvent(
+			sdk.EventTypeMessage,
+			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
+			sdk.NewAttribute(sdk.AttributeKeyAction, types.AttributeValueQuery),
+			sdk.NewAttribute(types.AttributeKeyQueryId, GenerateQueryHash(zone.ConnectionId, zone.ChainId, query_type, bz, heightStr)),
+			sdk.NewAttribute(types.AttributeKeyChainId, zone.ChainId),
+			sdk.NewAttribute(types.AttributeKeyConnectionId, zone.ConnectionId),
 			sdk.NewAttribute(types.AttributeKeyType, query_type),
 			// TODO(TEST-119) set height based on gaia LC height
 			sdk.NewAttribute(types.AttributeKeyHeight, heightStr),

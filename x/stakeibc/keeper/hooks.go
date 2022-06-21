@@ -2,7 +2,6 @@ package keeper
 
 import (
 	"fmt"
-	"strconv"
 
 	epochstypes "github.com/Stride-Labs/stride/x/epochs/types"
 	"github.com/Stride-Labs/stride/x/stakeibc/types"
@@ -63,33 +62,18 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochIdentifier string, epochN
 
 		exchangeRateInterval := int64(k.GetParam(ctx, types.KeyExchangeRateInterval))
 		if epochNumber%exchangeRateInterval == 0 && (epochNumber > 50) { // allow a few blocks from UpdateUndelegatedBal to avoid conflicts
-			// TODO(NOW) parameterize connection by hostZone
-			// TODO(NOW) update LC before getting latest height
-			connectionID := "connection-0"
-			latestHeightHostZone, found := k.GetLightClientHeightSafely(ctx, connectionID)
-			if !found {
-				k.Logger(ctx).Error("client id not found for connection \"%s\"", connectionID)
-			} else {
-				// TODO(119) generalize to host_zones
-				// SET STASSETSUPPLY
-				hz, _ := k.GetHostZone(ctx, "GAIA")
-				//TODO(TEST-119) replace below with StAssetDenomFromHostZoneDenom() at merge
-				currStSupply := k.bankKeeper.GetSupply(ctx, "st"+hz.HostDenom)
-				// GET MODULE ACCT BALANCE
-				addr := k.accountKeeper.GetModuleAccount(ctx, types.ModuleName).GetAddress()
-				modAcctBal := k.bankKeeper.GetBalance(ctx, addr, hz.IBCDenom)
-
-				ControllerBalancesRecord := types.ControllerBalances{
-					Index:             strconv.FormatInt(latestHeightHostZone, 10),
-					Height:            latestHeightHostZone,
-					Stsupply:          currStSupply.Amount.Int64(),
-					Moduleacctbalance: modAcctBal.Amount.Int64(),
+			for _, hz := range k.GetAllHostZone(ctx) {
+				// TODO(NOW) update LC before getting latest height
+				latestHeightHostZone, found := k.GetLightClientHeightSafely(ctx, hz.ConnectionId)
+				if !found {
+					k.Logger(ctx).Error("client id not found for hz %s, connection \"%s\"", hz.ChainId, hz.ConnectionId)
+					continue
+				} else {
+					// store stAsset and module account balances; TODO(TEST-119) replace below with StAssetDenomFromHostZoneDenom() at merge
+					k.RecordAndSaveControllerBalances(ctx, hz, latestHeightHostZone)
+					// TODO(TEST-97) update only when balances, delegatedBalances and stAsset supply are results from the same block
+					k.UpdateRedemptionRatePart1(ctx, hz, latestHeightHostZone)
 				}
-				k.SetControllerBalances(ctx, ControllerBalancesRecord)
-				k.Logger(ctx).Info(fmt.Sprintf("Set ControllerBalances at H=%d to stSupply=%d, moduleAcctBalances=%d", latestHeightHostZone, currStSupply.Amount.Int64(), modAcctBal.Amount.Int64()))
-
-				// TODO(TEST-97) update only when balances, delegatedBalances and stAsset supply are results from the same block
-				k.UpdateRedemptionRatePart1(ctx, latestHeightHostZone)
 			}
 		}
 	}
