@@ -7,6 +7,6 @@ message Validator {
   string name = 1; 
   string address = 2; 
   string status = 3;
-  int32 commissionRate = 4; 
+  int64 commissionRate = 4; 
   int64 delegationAmt = 5; 
 }
