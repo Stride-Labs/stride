@@ -340,6 +340,12 @@ start-stride:
 start-gaia:
 	sh scripts/local/start_gaia.sh
 
+start:
+	sh scripts/local/start.sh
+
+start-cached:
+	sh scripts/local/start.sh true
+
 stop:
 	killall gaiad strided hermes
 
