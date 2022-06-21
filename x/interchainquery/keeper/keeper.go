@@ -98,19 +98,24 @@ func (k *Keeper) MakeRequest(ctx sdk.Context, connection_id string, chain_id str
 	}
 }
 
-func (k Keeper) QueryBalances(ctx sdk.Context, zone stakeibctypes.HostZone, cb Callback, address string, height int64) error {
+func (k Keeper) QueryHostZone(ctx sdk.Context, zone stakeibctypes.HostZone, cb Callback, query_type string, address string, height int64) error {
+
 	// note: height=0 queries at latest block header, NOT at height 0
 	connectionId := zone.ConnectionId
 	chainId := zone.ChainId
-	// Validate address
-	query_type := "cosmos.bank.v1beta1.Query/AllBalances"
-	balanceQuery := banktypes.QueryAllBalancesRequest{Address: address}
-	k.Logger(ctx).Info(fmt.Sprintf("\tabout to QueryBalances %s at height %d", address, height))
-	bz, err := k.cdc.Marshal(&balanceQuery)
-	if err != nil {
-		k.Logger(ctx).Error(fmt.Sprintf("failed to marshal query %s %s", address, err.Error()))
-		return err
+	heightStr := strconv.FormatInt(height, 10)
+
+	// populate query based on query type
+	var bz []byte
+	if query_type == "cosmos.bank.v1beta1.Query/AllBalances" {
+		query := banktypes.QueryAllBalancesRequest{Address: address}
+		bz = k.cdc.MustMarshal(&query)
+	} else if query_type == "cosmos.staking.v1beta1.Query/DelegatorDelegations" {
+		query := stakingtypes.QueryDelegatorDelegationsRequest{DelegatorAddr: address}
+		bz = k.cdc.MustMarshal(&query)
 	}
+	k.Logger(ctx).Info(fmt.Sprintf("\tabout to %s to %s at height %s", query_type, address, heightStr))
+
 	k.MakeRequest(
 		ctx,
 		connectionId,
@@ -118,7 +123,7 @@ func (k Keeper) QueryBalances(ctx sdk.Context, zone stakeibctypes.HostZone, cb C
 		query_type,
 		bz,
 		// TODO(TEST-79) understand and use proper period
-		sdk.NewInt(25),
+		sdk.NewInt(100000),
 		strconv.FormatInt(height, 10),
 		types.ModuleName,
 		cb,
@@ -131,55 +136,14 @@ func (k Keeper) QueryBalances(ctx sdk.Context, zone stakeibctypes.HostZone, cb C
 			sdk.EventTypeMessage,
 			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
 			sdk.NewAttribute(sdk.AttributeKeyAction, types.AttributeValueQuery),
-			sdk.NewAttribute(types.AttributeKeyQueryId, GenerateQueryHash(connectionId, chainId, query_type, bz, strconv.FormatInt(height, 10))),
+			sdk.NewAttribute(types.AttributeKeyQueryId, GenerateQueryHash(connectionId, chainId, query_type, bz, heightStr)),
 			sdk.NewAttribute(types.AttributeKeyChainId, chainId),
 			sdk.NewAttribute(types.AttributeKeyConnectionId, connectionId),
 			sdk.NewAttribute(types.AttributeKeyType, query_type),
 			// TODO(TEST-119) set height based on gaia LC height
-			sdk.NewAttribute(types.AttributeKeyHeight, strconv.FormatInt(height, 10)),
-			sdk.NewAttribute(types.AttributeKeyRequest, hex.EncodeToString(bz)),
-		),
-	})
-	return nil
-}
-
-func (k Keeper) QueryDelegatorDelegations(ctx sdk.Context, zone stakeibctypes.HostZone, cb Callback, address string, height int64) error {
-	connectionId := zone.ConnectionId
-	chainId := zone.ChainId
-
-	query_type := "cosmos.staking.v1beta1.Query/DelegatorDelegations"
-	// Get delegationAddress dynamically
-	delegationQuery := stakingtypes.QueryDelegatorDelegationsRequest{DelegatorAddr: address}
-	heightStr := strconv.FormatInt(height, 10)
-	k.Logger(ctx).Info(fmt.Sprintf("\tabout to QueryDelegatorDelegations %s at height %s", address, heightStr))
-	bz := k.cdc.MustMarshal(&delegationQuery)
-
-	k.MakeRequest(
-		ctx,
-		connectionId,
-		chainId,
-		query_type,
-		bz,
-		// TODO(TEST-79) understand and use proper period
-		sdk.NewInt(25),
-		heightStr,
-		types.ModuleName,
-		cb,
-	)
-
-	ctx.EventManager().EmitEvents(sdk.Events{
-		sdk.NewEvent(
-			sdk.EventTypeMessage,
-			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
-			sdk.NewAttribute(sdk.AttributeKeyAction, types.AttributeValueQuery),
-			sdk.NewAttribute(types.AttributeKeyQueryId, GenerateQueryHash(connectionId, chainId, query_type, bz, strconv.FormatInt(height, 10))),
-			sdk.NewAttribute(types.AttributeKeyChainId, chainId),
-			sdk.NewAttribute(types.AttributeKeyConnectionId, connectionId),
-			sdk.NewAttribute(types.AttributeKeyType, query_type),
 			sdk.NewAttribute(types.AttributeKeyHeight, heightStr),
 			sdk.NewAttribute(types.AttributeKeyRequest, hex.EncodeToString(bz)),
 		),
 	})
-
 	return nil
 }
