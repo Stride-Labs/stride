@@ -18,6 +18,7 @@ service Msg {
       rpc SubmitTx(MsgSubmitTx) returns (MsgSubmitTxResponse);
       // TODO(TEST-53): Remove this pre-launch (no need for clients to create / interact with ICAs)
       rpc RegisterHostZone(MsgRegisterHostZone) returns (MsgRegisterHostZoneResponse);
+  rpc RebalanceValidators(MsgRebalanceValidators) returns (MsgRebalanceValidatorsResponse);
 // this line is used by starport scaffolding # proto/tx/rpc
 }
 
@@ -82,5 +83,13 @@ message MsgRegisterHostZone{
 
 // TODO(TEST-53): Remove this pre-launch (no need for clients to create / interact with ICAs)
 message MsgRegisterHostZoneResponse{}
+
+message MsgRebalanceValidators {
+  string creator = 1;
+  string hostZone = 2;
+}
+
+message MsgRebalanceValidatorsResponse {
+}
 
 // this line is used by starport scaffolding # proto/tx/message
