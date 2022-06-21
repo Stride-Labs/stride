@@ -32,6 +32,8 @@ GAIA_VAL_ACCT=gval1
 GAIA_VAL_KEY="move next relief spatial resemble onion exhibit fitness major toss where square wrong exact infant skate dragon shift region over you gospel absorb double"
 GAIA_CMD="build/gaiad --home $STATE/gaia"
 
+HERMES_CMD="build/hermes/release/hermes -c $SCRIPT_DIR/hermes/config.toml"
+
 # define relayer vars
 RLY_NAME_1=rly1
 RLY_NAME_2=rly2
