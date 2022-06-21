@@ -11,6 +11,7 @@
 # build
 build/*
 state/*
+.state.backup
 scripts/state/*
 scripts/logs/*.log
 scripts/local/state
