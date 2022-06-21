@@ -171,7 +171,7 @@ timeout_broadcast_tx_commit = "10s"
 
 # Maximum size of request body, in bytes
 max_body_bytes = 1000000
-
+docker save gcr.io/stride-nodes/testnet:internal_hermes > internal_hermes.tar
 # Maximum size of request header, in bytes
 max_header_bytes = 1048576
 
