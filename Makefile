@@ -307,21 +307,38 @@ gaia-local-install:
 	cd deps/gaia; \
 	go mod download
 
-hermes-local-install:
-	cd deps/hermes; \
-	cargo build --release
-
 icq-local-install:
 	cd deps/icq; \
 	go get github.com/Stride-Labs/interchain-queries/cmd; \
 	go get github.com/Stride-Labs/interchain-queries/pkg/runner; \
 	go mod download
 
+
 local-build: stride-local-build icq-local-build
 
 stride-local-build: 
-	go build ./...
+	go build -mod=readonly -trimpath -o $(BUILDDIR) ./...
+
+gaia-local-build: 
+	cd deps/gaia; \
+	go build -mod=readonly -trimpath -o $(BUILDDIR) ./...
+
+hermes-local-build:
+	cd deps/hermes; \
+	cargo build --release --target-dir $(BUILDDIR)/hermes
 
 icq-local-build:
 	cd deps/icq; \
-	go build ./...
+	go build -mod=readonly -trimpath -o $(BUILDDIR) ./...
+
+local-init:
+	sh scripts/local/init_main.sh 
+
+start-stride:
+	sh scripts/local/start_stride.sh
+
+start-gaia:
+	sh scripts/local/start_gaia.sh
+
+stop:
+	cat scripts/local/pids.txt | xargs kill -9 $1; rm scripts/local/pids.txt
