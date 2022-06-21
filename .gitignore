@@ -12,6 +12,7 @@
 build/*
 state/*
 scripts/state/*
+scripts/testnet/*/state/keys.txt
 scripts/logs/*.log
 scripts/temp.sh
 vue/*

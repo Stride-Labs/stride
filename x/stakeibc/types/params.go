@@ -16,15 +16,17 @@ var (
 	DefaultRewardsInterval      uint64 = 5
 	DefaultExchangeRateInterval uint64 = 2
 	// you apparantly cannot safely encode floats, so we make commission * 100
-	DefaultStrideCommission uint64 = 10
+	DefaultStrideCommission         uint64                       = 10
+	DefaultHostZoneValidatorWeights map[string]*ValidatorWeights = map[string]*ValidatorWeights{}
 
 	// KeyDepositInterval is store's key for the DepositInterval option
-	KeyDepositInterval      = []byte("DepositInterval")
-	KeyDelegateInterval     = []byte("DelegateInterval")
-	KeyReinvestInterval     = []byte("ReinvestInterval")
-	KeyRewardsInterval      = []byte("RewardsInterval")
-	KeyExchangeRateInterval = []byte("ExchangeRateInterval")
-	KeyStrideCommission     = []byte("StrideCommission")
+	KeyDepositInterval          = []byte("DepositInterval")
+	KeyDelegateInterval         = []byte("DelegateInterval")
+	KeyReinvestInterval         = []byte("ReinvestInterval")
+	KeyRewardsInterval          = []byte("RewardsInterval")
+	KeyExchangeRateInterval     = []byte("ExchangeRateInterval")
+	KeyStrideCommission         = []byte("StrideCommission")
+	KeyHostZoneValidatorWeights = []byte("HostZoneValidatorWeights")
 )
 
 var _ paramtypes.ParamSet = (*Params)(nil)
@@ -42,14 +44,16 @@ func NewParams(
 	exchange_rate_interval uint64,
 	stride_commission uint64,
 	withdraw_interval uint64,
+	hostzone_val_weights map[string]*ValidatorWeights,
 ) Params {
 	return Params{
-		DepositInterval:      deposit_interval,
-		DelegateInterval:     delegate_interval,
-		RewardsInterval:      rewards_interval,
-		ExchangeRateInterval: exchange_rate_interval,
-		StrideCommission:     stride_commission,
-		ReinvestInterval:     withdraw_interval,
+		DepositInterval:          deposit_interval,
+		DelegateInterval:         delegate_interval,
+		RewardsInterval:          rewards_interval,
+		ExchangeRateInterval:     exchange_rate_interval,
+		StrideCommission:         stride_commission,
+		ReinvestInterval:         withdraw_interval,
+		HostZoneValidatorWeights: hostzone_val_weights,
 	}
 }
 
@@ -62,6 +66,7 @@ func DefaultParams() Params {
 		DefaultExchangeRateInterval,
 		DefaultStrideCommission,
 		DefaultReinvestInterval,
+		DefaultHostZoneValidatorWeights,
 	)
 }
 
@@ -74,7 +79,16 @@ func (p *Params) ParamSetPairs() paramtypes.ParamSetPairs {
 		paramtypes.NewParamSetPair(KeyExchangeRateInterval, &p.ExchangeRateInterval, isPositive),
 		paramtypes.NewParamSetPair(KeyStrideCommission, &p.StrideCommission, isCommission),
 		paramtypes.NewParamSetPair(KeyReinvestInterval, &p.ReinvestInterval, isPositive),
+		paramtypes.NewParamSetPair(KeyHostZoneValidatorWeights, &p.HostZoneValidatorWeights, isValidWeights),
 	}
+}
+
+func isValidWeights(i interface{}) error {
+	_, ok := i.(map[string]*ValidatorWeights)
+	if !ok {
+		return fmt.Errorf("parameter not accepted: %T", i)
+	}
+	return nil
 }
 
 func isPositive(i interface{}) error {
