@@ -13,6 +13,7 @@ func RegisterCodec(cdc *codec.LegacyAmino) {
 	cdc.RegisterConcrete(&MsgSubmitTx{}, "stakeibc/SubmitTx", nil)
 	cdc.RegisterConcrete(&MsgRegisterHostZone{}, "stakeibc/RegisterHostZone", nil)
 	cdc.RegisterConcrete(&MsgRedeemStake{}, "stakeibc/RedeemStake", nil)
+	cdc.RegisterConcrete(&MsgRebalanceValidators{}, "stakeibc/RebalanceValidators", nil)
 	// this line is used by starport scaffolding # 2
 }
 
@@ -23,6 +24,9 @@ func RegisterInterfaces(registry cdctypes.InterfaceRegistry) {
 		&MsgSubmitTx{},
 		&MsgRegisterHostZone{},
 		&MsgRedeemStake{},
+	)
+	registry.RegisterImplementations((*sdk.Msg)(nil),
+		&MsgRebalanceValidators{},
 	)
 	// this line is used by starport scaffolding # 3
 

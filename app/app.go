@@ -456,7 +456,6 @@ func NewStrideApp(
 		),
 	)
 	epochsModule := epochsmodule.NewAppModule(appCodec, app.EpochsKeeper)
-	
 
 	// this line is used by starport scaffolding # stargate/app/keeperDefinition
 

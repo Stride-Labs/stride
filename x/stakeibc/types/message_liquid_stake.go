@@ -13,9 +13,9 @@ var _ sdk.Msg = &MsgLiquidStake{}
 
 func NewMsgLiquidStake(creator string, amount int64, hostDenom string) *MsgLiquidStake {
 	return &MsgLiquidStake{
-		Creator: creator,
-		Amount:  amount,
-		HostDenom:   hostDenom,
+		Creator:   creator,
+		Amount:    amount,
+		HostDenom: hostDenom,
 	}
 }
 

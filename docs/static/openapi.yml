@@ -52446,6 +52446,8 @@ definitions:
         format: int32
   Stridelabs.stride.stakeibc.MsgLiquidStakeResponse:
     type: object
+  Stridelabs.stride.stakeibc.MsgRebalanceValidatorsResponse:
+    type: object
   Stridelabs.stride.stakeibc.MsgRedeemStakeResponse:
     type: object
   Stridelabs.stride.stakeibc.MsgRegisterAccountResponse:
