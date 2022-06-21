@@ -218,48 +218,48 @@ func (k Keeper) UpdateRedemptionRatePart2(ctx sdk.Context, hostZone types.HostZo
 		// // 	// --- Update Undelegated Balance ---
 		// // 	hz := zoneInfo
 
-		// // 	da := hz.DelegationAccount
-		// // 	da.UndelegatedBalance = balance.Int64()
-		// // 	// only update height if this is the most updated query (ICQ msgresponses are not always FIFO)
-		// // 	if h >= da.HeightLastQueriedUndelegatedBalance {
-		// // 		da.HeightLastQueriedUndelegatedBalance = h
-		// // 		hz.DelegationAccount = da
-		// // 		k.SetHostZone(ctx, hz)
-		// // 		k.Logger(ctx).Info(fmt.Sprintf("Just set UndelegatedBalance to: %d", da.DelegatedBalance))
-		// // 		k.Logger(ctx).Info(fmt.Sprintf("Just set HeightLastQueriedUndelegatedBalance to: %d", h))
-		// // 		ctx.EventManager().EmitEvents(sdk.Events{
-		// // 			sdk.NewEvent(
-		// // 				sdk.EventTypeMessage,
-		// // 				sdk.NewAttribute("hostZone", zoneInfo.ChainId),
-		// // 				sdk.NewAttribute("totalUndelegatedBalance", balance.String()),
-		// // 			),
-		// // 		})
-		// // 		// Calc redemption rate
-		// // 		// 1. check equality of latest UB and DB update heights
-		// // 		if hz.DelegationAccount.HeightLastQueriedDelegatedBalance == da.HeightLastQueriedUndelegatedBalance {
-		// // 			// 2. check to make sure we have a corresponding ControllerBalance
-		// // 			cb, found := k.GetControllerBalances(ctx, strconv.FormatInt(hz.DelegationAccount.HeightLastQueriedDelegatedBalance, 10))
-		// // 			if found {
-		// // 				// 2.5 abort if stSupply is 0 at this host height
-		// // 				if cb.Stsupply > 0 {
-		// // 					redemptionRate := (sdk.NewDec(balance.Int64()).Add(sdk.NewDec(hz.DelegationAccount.DelegatedBalance)).Add(sdk.NewDec(cb.Moduleacctbalance))).Quo(sdk.NewDec(cb.Stsupply))
-		// // 					hz.LastRedemptionRate = hz.RedemptionRate
-		// // 					hz.RedemptionRate = redemptionRate
-		// // 					k.SetHostZone(ctx, hz)
-		// // 					k.Logger(ctx).Info(fmt.Sprintf("Set Redemptions Rate at H=%d to RR=%d", hz.DelegationAccount.HeightLastQueriedDelegatedBalance, redemptionRate))
-		// // 				} else {
-		// // 					k.Logger(ctx).Info(fmt.Sprintf("Did NOT set redemption rate at H=%d because stAsset supply was 0", hz.DelegationAccount.HeightLastQueriedDelegatedBalance))
-		// // 				}
-		// // 			} else {
-		// // 				k.Logger(ctx).Info(fmt.Sprintf("Did NOT set redemption rate at H=%d because no controller balances", hz.DelegationAccount.HeightLastQueriedDelegatedBalance))
-		// // 			}
-		// // 		}
-		// // 		k.Logger(ctx).Info(fmt.Sprintf("Did NOT set redemption rate at H=%d because last UB and DB update heights didn't match.", hz.DelegationAccount.HeightLastQueriedDelegatedBalance))
+		// da := hz.DelegationAccount
+		// da.UndelegatedBalance = balance.Int64()
+		// // only update height if this is the most updated query (ICQ msgresponses are not always FIFO)
+		// if h >= da.HeightLastQueriedUndelegatedBalance {
+		// 	da.HeightLastQueriedUndelegatedBalance = h
+		// 	hz.DelegationAccount = da
+		// 	k.SetHostZone(ctx, hz)
+		// 	k.Logger(ctx).Info(fmt.Sprintf("Just set UndelegatedBalance to: %d", da.DelegatedBalance))
+		// 	k.Logger(ctx).Info(fmt.Sprintf("Just set HeightLastQueriedUndelegatedBalance to: %d", h))
+		// 	ctx.EventManager().EmitEvents(sdk.Events{
+		// 		sdk.NewEvent(
+		// 			sdk.EventTypeMessage,
+		// 			sdk.NewAttribute("hostZone", zoneInfo.ChainId),
+		// 			sdk.NewAttribute("totalUndelegatedBalance", balance.String()),
+		// 		),
+		// 	})
+		// 	// Calc redemption rate
+		// 	// 1. check equality of latest UB and DB update heights
+		// 	if hz.DelegationAccount.HeightLastQueriedDelegatedBalance == da.HeightLastQueriedUndelegatedBalance {
+		// 		// 2. check to make sure we have a corresponding ControllerBalance
+		// 		cb, found := k.GetControllerBalances(ctx, strconv.FormatInt(hz.DelegationAccount.HeightLastQueriedDelegatedBalance, 10))
+		// 		if found {
+		// 			// 2.5 abort if stSupply is 0 at this host height
+		// 			if cb.Stsupply > 0 {
+		// 				redemptionRate := (sdk.NewDec(balance.Int64()).Add(sdk.NewDec(hz.DelegationAccount.DelegatedBalance)).Add(sdk.NewDec(cb.Moduleacctbalance))).Quo(sdk.NewDec(cb.Stsupply))
+		// 				hz.LastRedemptionRate = hz.RedemptionRate
+		// 				hz.RedemptionRate = redemptionRate
+		// 				k.SetHostZone(ctx, hz)
+		// 				k.Logger(ctx).Info(fmt.Sprintf("Set Redemptions Rate at H=%d to RR=%d", hz.DelegationAccount.HeightLastQueriedDelegatedBalance, redemptionRate))
+		// 			} else {
+		// 				k.Logger(ctx).Info(fmt.Sprintf("Did NOT set redemption rate at H=%d because stAsset supply was 0", hz.DelegationAccount.HeightLastQueriedDelegatedBalance))
+		// 			}
+		// 		} else {
+		// 			k.Logger(ctx).Info(fmt.Sprintf("Did NOT set redemption rate at H=%d because no controller balances", hz.DelegationAccount.HeightLastQueriedDelegatedBalance))
+		// 		}
+		// 	}
+		// 	k.Logger(ctx).Info(fmt.Sprintf("Did NOT set redemption rate at H=%d because last UB and DB update heights didn't match.", hz.DelegationAccount.HeightLastQueriedDelegatedBalance))
 
-		// // 	} else {
-		// // 		k.Logger(ctx).Info(fmt.Sprintf("Opted to NOT set HeightLastQueriedUndelegatedBalance because query height %d is less than last update's height %d.", h, da.HeightLastQueriedUndelegatedBalance))
-		// // 	}
-		// // 	// ---------------------------------
+		// } else {
+		// 	k.Logger(ctx).Info(fmt.Sprintf("Opted to NOT set HeightLastQueriedUndelegatedBalance because query height %d is less than last update's height %d.", h, da.HeightLastQueriedUndelegatedBalance))
+		// }
+		// ---------------------------------
 
 		// 	return nil
 		// }
@@ -302,6 +302,54 @@ func (k Keeper) UpdateRedemptionRatePart2(ctx sdk.Context, hostZone types.HostZo
 			}
 			k.Logger(ctx).Info(fmt.Sprintf("\tReceived proven response balance of %s addr %s is %s", zoneInfo.ChainId, address, coin.Amount.String()))
 			// return SetAccountBalanceForDenom(k, ctx, zone, address, coin)
+			// // 	balance := queryRes.Balances.AmountOf(zoneInfo.HostDenom)
+			k.Logger(ctx).Info(fmt.Sprintf("\tBalance on %s is %s", zoneInfo.HostDenom, balance.String()))
+
+			// --- Update Undelegated Balance ---
+			hz := zoneInfo
+
+			da := hz.DelegationAccount
+			da.UndelegatedBalance = coin.Amount.Int64()
+			// only update height if this is the most updated query (ICQ msgresponses are not always FIFO)
+			if h >= da.HeightLastQueriedUndelegatedBalance {
+				da.HeightLastQueriedUndelegatedBalance = h
+				hz.DelegationAccount = da
+				k.SetHostZone(ctx, hz)
+				k.Logger(ctx).Info(fmt.Sprintf("Just set UndelegatedBalance to: %d", da.DelegatedBalance))
+				k.Logger(ctx).Info(fmt.Sprintf("Just set HeightLastQueriedUndelegatedBalance to: %d", h))
+				ctx.EventManager().EmitEvents(sdk.Events{
+					sdk.NewEvent(
+						sdk.EventTypeMessage,
+						sdk.NewAttribute("hostZone", zoneInfo.ChainId),
+						sdk.NewAttribute("totalUndelegatedBalance", coin.Amount.String()),
+					),
+				})
+
+				// Calc redemption rate
+				// 1. check equality of latest UB and DB update heights
+				if hz.DelegationAccount.HeightLastQueriedDelegatedBalance == da.HeightLastQueriedUndelegatedBalance {
+					// 2. check to make sure we have a corresponding ControllerBalance
+					cb, found := k.GetControllerBalances(ctx, strconv.FormatInt(hz.DelegationAccount.HeightLastQueriedDelegatedBalance, 10))
+					if found {
+						// 2.5 abort if stSupply is 0 at this host height
+						if cb.Stsupply > 0 {
+							redemptionRate := (sdk.NewDec(coin.Amount.Int64()).Add(sdk.NewDec(hz.DelegationAccount.DelegatedBalance)).Add(sdk.NewDec(cb.Moduleacctbalance))).Quo(sdk.NewDec(cb.Stsupply))
+							hz.LastRedemptionRate = hz.RedemptionRate
+							hz.RedemptionRate = redemptionRate
+							k.SetHostZone(ctx, hz)
+							k.Logger(ctx).Info(fmt.Sprintf("Set Redemptions Rate at H=%d to RR=%d", hz.DelegationAccount.HeightLastQueriedDelegatedBalance, redemptionRate))
+						} else {
+							k.Logger(ctx).Info(fmt.Sprintf("Did NOT set redemption rate at H=%d because stAsset supply was 0", hz.DelegationAccount.HeightLastQueriedDelegatedBalance))
+						}
+					} else {
+						k.Logger(ctx).Info(fmt.Sprintf("Did NOT set redemption rate at H=%d because no controller balances", hz.DelegationAccount.HeightLastQueriedDelegatedBalance))
+					}
+				}
+				k.Logger(ctx).Info(fmt.Sprintf("Did NOT set redemption rate at H=%d because last UB and DB update heights didn't match.", hz.DelegationAccount.HeightLastQueriedDelegatedBalance))
+
+			} else {
+				k.Logger(ctx).Info(fmt.Sprintf("Opted to NOT set HeightLastQueriedUndelegatedBalance because query height %d is less than last update's height %d.", h, da.HeightLastQueriedUndelegatedBalance))
+			}
 			return nil
 		}
 
