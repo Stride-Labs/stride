@@ -70,9 +70,10 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochIdentifier string, epochN
 					continue
 				} else {
 					// store stAsset and module account balances; TODO(TEST-119) replace below with StAssetDenomFromHostZoneDenom() at merge
-					k.RecordAndSaveControllerBalances(ctx, hz, latestHeightHostZone)
+					// k.RecordAndSaveControllerBalances(ctx, hz, latestHeightHostZone)
 					// TODO(TEST-97) update only when balances, delegatedBalances and stAsset supply are results from the same block
-					k.UpdateRedemptionRatePart1(ctx, hz, latestHeightHostZone)
+					// k.UpdateRedemptionRatePart1(ctx, hz, latestHeightHostZone)
+					k.UpdateUB(ctx, hz, latestHeightHostZone)
 				}
 			}
 		}
