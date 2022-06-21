@@ -483,7 +483,7 @@ func (k Keeper) UpdateUB(ctx sdk.Context, zoneInfo types.HostZone, height int64)
 	}
 	k.Logger(ctx).Info(fmt.Sprintf("\tStarting our daisy chain update! First, querying delegatedBalanaces for %s at %d height", zoneInfo.ChainId, height))
 
-	_, addr, _ := bech32.DecodeAndConvert(delegationIca.Address)
+	_, addr, _ := bech32.DecodeAndConvert(delegationIca.GetAddress())
 	data := bankTypes.CreateAccountBalancesPrefix(addr)
 	key := "store/bank/key"
 	k.Logger(ctx).Info("Querying for value", "key", key, "denom", zoneInfo.HostDenom) // debug?

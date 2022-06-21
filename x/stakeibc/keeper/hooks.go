@@ -61,7 +61,7 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochIdentifier string, epochN
 		}
 
 		exchangeRateInterval := int64(k.GetParam(ctx, types.KeyExchangeRateInterval))
-		if epochNumber%exchangeRateInterval == 0 && (epochNumber > 50) { // allow a few blocks from UpdateUndelegatedBal to avoid conflicts
+		if epochNumber%exchangeRateInterval == 0 && (epochNumber > 100) { // allow a few blocks from UpdateUndelegatedBal to avoid conflicts
 			for _, hz := range k.GetAllHostZone(ctx) {
 				// TODO(NOW) update LC before getting latest height
 				latestHeightHostZone, found := k.GetLightClientHeightSafely(ctx, hz.ConnectionId)
