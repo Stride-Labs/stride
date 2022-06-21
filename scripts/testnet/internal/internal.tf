@@ -236,7 +236,24 @@ resource "google_compute_instance" "internal-hermes" {
     }
   }
 
-  resource "google_compute_instance" "internal-icq" {
+  network_interface {
+    network = "default"
+    access_config {
+      nat_ip = google_compute_address.hermes-internal.address
+    }
+  }
+
+  service_account {
+    scopes = [ "https://www.googleapis.com/auth/devstorage.read_only",
+        "https://www.googleapis.com/auth/logging.write",
+        "https://www.googleapis.com/auth/monitoring.write",
+        "https://www.googleapis.com/auth/servicecontrol",
+        "https://www.googleapis.com/auth/service.management.readonly",
+        "https://www.googleapis.com/auth/trace.append"]
+  }
+}
+
+resource "google_compute_instance" "internal-icq" {
   name         = "internal-icq"
   machine_type = "e2-standard-2"
   zone         = "us-west1-c"
@@ -245,14 +262,14 @@ resource "google_compute_instance" "internal-hermes" {
 
   metadata = {
     enable-oslogin = "TRUE"
-    gce-container-declaration = "spec:\n  containers:\n    - name: node\n      image: 'gcr.io/stride-nodes/testnet:internal_icq'\n      stdin: false\n      tty: false\n  restartPolicy: Always\n"
+    gce-container-declaration = "spec:\n  containers:\n    - name: node\n      image: 'gcr.io/stride-nodes/testnet:internal_icq'\n      stdin: false\n      tty: false\n  restartPolicy: Never\n"
   }
   boot_disk {
     initialize_params {
       image = "cos-cloud/cos-97-lts"
     }
   }
-
+  
   network_interface {
     network = "default"
     access_config {
