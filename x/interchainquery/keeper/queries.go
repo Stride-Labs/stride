@@ -7,17 +7,17 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/tendermint/tendermint/crypto"
 
-	"github.com/Stride-Labs/stride/x/interchainquery/types"
+	"github.com/ingenuity-build/quicksilver/x/interchainquery/types"
 )
 
-func GenerateQueryHash(connection_id string, chain_id string, query_type string, request []byte, height string) string {
-	return fmt.Sprintf("%x", crypto.Sha256(append([]byte(connection_id+chain_id+query_type+height), request...)))
+func GenerateQueryHash(connection_id string, chain_id string, query_type string, request []byte, module string) string {
+	return fmt.Sprintf("%x", crypto.Sha256(append([]byte(module+connection_id+chain_id+query_type), request...)))
 }
 
 // ----------------------------------------------------------------
 
-func (k Keeper) NewQuery(ctx sdk.Context, connection_id string, chain_id string, query_type string, request []byte, period sdk.Int, height string) *types.Query {
-	return &types.Query{Id: GenerateQueryHash(connection_id, chain_id, query_type, request, height), ConnectionId: connection_id, ChainId: chain_id, QueryType: query_type, Request: request, Period: period, LastHeight: sdk.ZeroInt()}
+func (k Keeper) NewQuery(ctx sdk.Context, module string, connection_id string, chain_id string, query_type string, request []byte, period sdk.Int, callback_id string, ttl uint64) *types.Query {
+	return &types.Query{Id: GenerateQueryHash(connection_id, chain_id, query_type, request, module), ConnectionId: connection_id, ChainId: chain_id, QueryType: query_type, Request: request, Period: period, LastHeight: sdk.ZeroInt(), CallbackId: callback_id, Ttl: ttl}
 }
 
 // GetQuery returns query
@@ -36,7 +36,6 @@ func (k Keeper) GetQuery(ctx sdk.Context, id string) (types.Query, bool) {
 func (k Keeper) SetQuery(ctx sdk.Context, query types.Query) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefixQuery)
 	bz := k.cdc.MustMarshal(&query)
-	k.Logger(ctx).Info("Created/updated query", "ID", query.Id)
 	store.Set([]byte(query.Id), bz)
 }
 
@@ -46,7 +45,7 @@ func (k Keeper) DeleteQuery(ctx sdk.Context, id string) {
 	store.Delete([]byte(id))
 }
 
-// IterateQueries iterate through querys
+// IterateQueries iterate through queries
 func (k Keeper) IterateQueries(ctx sdk.Context, fn func(index int64, queryInfo types.Query) (stop bool)) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefixQuery)
 	iterator := sdk.KVStorePrefixIterator(store, nil)
@@ -67,10 +66,10 @@ func (k Keeper) IterateQueries(ctx sdk.Context, fn func(index int64, queryInfo t
 
 // AllQueries returns every queryInfo in the store
 func (k Keeper) AllQueries(ctx sdk.Context) []types.Query {
-	querys := []types.Query{}
+	queries := []types.Query{}
 	k.IterateQueries(ctx, func(_ int64, queryInfo types.Query) (stop bool) {
-		querys = append(querys, queryInfo)
+		queries = append(queries, queryInfo)
 		return false
 	})
-	return querys
+	return queries
 }

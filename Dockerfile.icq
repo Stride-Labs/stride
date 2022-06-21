@@ -20,9 +20,9 @@ RUN mkdir stride_ref/stride
 COPY . /src/app/stride_ref/stride
 WORKDIR /src/app/stride_ref/stride
 WORKDIR /src/app
-RUN go get github.com/Stride-Labs/interchain-queries/cmd
-RUN go get github.com/Stride-Labs/interchain-queries/pkg/runner
-RUN go mod download
+# RUN go get github.com/Stride-Labs/icq/cmd
+# RUN go get github.com/Stride-Labs/icq/pkg/runner
+# RUN go mod download
 RUN go build
 
 RUN ln -s /src/app/interchain-queries /usr/local/bin
