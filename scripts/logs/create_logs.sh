@@ -32,7 +32,9 @@ $GAIA1_EXEC q bank balances $GAIA_DELEGATE >> $SCRIPT_DIR/$TMP/accounts.log
 echo "\nDELEGATIONS GAIA" >> $SCRIPT_DIR/$TMP/accounts.log
 $GAIA1_EXEC q staking delegations $GAIA_DELEGATE >> $SCRIPT_DIR/$TMP/accounts.log
 echo "\nLIST-HOST-ZONES STRIDE" >> $SCRIPT_DIR/$TMP/accounts.log
-$STR1_EXEC strided q stakeibc list-host-zone >> $SCRIPT_DIR/$TMP/accounts.log
+$STR1_EXEC strided q stakeibc list-host-zone | head -n 16 >> $SCRIPT_DIR/$TMP/accounts.log
+echo "\nLIST-CONTROLLER-BALANCES" >> $SCRIPT_DIR/$TMP/accounts.log
+$STR1_EXEC strided q stakeibc list-controller-balances >> $SCRIPT_DIR/$TMP/accounts.log
 
 mv $SCRIPT_DIR/$TMP/*.log $SCRIPT_DIR
 

@@ -58,16 +58,15 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochIdentifier string, epochN
 		// DELEGATE FROM DELEGATION ACCOUNT
 		delegateInterval := int64(k.GetParam(ctx, types.KeyDelegateInterval))
 		if epochNumber%delegateInterval == 0 {
-			// get Gaia LC height
 			k.ProcessDelegationStaking(ctx)
 		}
 
 		exchangeRateInterval := int64(k.GetParam(ctx, types.KeyExchangeRateInterval))
-		if epochNumber%exchangeRateInterval == 0 && (epochNumber > 100) { // allow a few blocks from UpdateUndelegatedBal to avoid conflicts
+		if epochNumber%exchangeRateInterval == 0 && (epochNumber > 50) { // allow a few blocks from UpdateUndelegatedBal to avoid conflicts
 			// TODO(NOW) parameterize connection by hostZone
 			// TODO(NOW) update LC before getting latest height
 			connectionID := "connection-0"
-			latestHeightGaia, found := k.GetLightClientHeightSafely(ctx, connectionID)
+			latestHeightHostZone, found := k.GetLightClientHeightSafely(ctx, connectionID)
 			if !found {
 				k.Logger(ctx).Error("client id not found for connection \"%s\"", connectionID)
 			} else {
@@ -81,16 +80,16 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochIdentifier string, epochN
 				modAcctBal := k.bankKeeper.GetBalance(ctx, addr, hz.IBCDenom)
 
 				ControllerBalancesRecord := types.ControllerBalances{
-					Index:             strconv.FormatInt(latestHeightGaia, 10),
-					Height:            latestHeightGaia,
+					Index:             strconv.FormatInt(latestHeightHostZone, 10),
+					Height:            latestHeightHostZone,
 					Stsupply:          currStSupply.Amount.Int64(),
 					Moduleacctbalance: modAcctBal.Amount.Int64(),
 				}
 				k.SetControllerBalances(ctx, ControllerBalancesRecord)
-				k.Logger(ctx).Info(fmt.Sprintf("Set ControllerBalances at H=%d to stSupply=%d, moduleAcctBalances=%d", latestHeightGaia, currStSupply.Amount.Int64(), modAcctBal.Amount.Int64()))
+				k.Logger(ctx).Info(fmt.Sprintf("Set ControllerBalances at H=%d to stSupply=%d, moduleAcctBalances=%d", latestHeightHostZone, currStSupply.Amount.Int64(), modAcctBal.Amount.Int64()))
 
 				// TODO(TEST-97) update only when balances, delegatedBalances and stAsset supply are results from the same block
-				k.UpdateRedemptionRatePart1(ctx, latestHeightGaia)
+				k.UpdateRedemptionRatePart1(ctx, latestHeightHostZone)
 			}
 		}
 	}

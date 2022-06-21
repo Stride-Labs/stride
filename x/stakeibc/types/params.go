@@ -10,11 +10,11 @@ import (
 // Default init params
 var (
 	// these are default intervals _in epochs_ NOT in blocks
-	DefaultDepositInterval      uint64 = 5
-	DefaultDelegateInterval     uint64 = 5
-	DefaultReinvestInterval     uint64 = 2
-	DefaultRewardsInterval      uint64 = 5
-	DefaultExchangeRateInterval uint64 = 2
+	DefaultDepositInterval      uint64 = 30
+	DefaultDelegateInterval     uint64 = 30
+	DefaultReinvestInterval     uint64 = 30
+	DefaultRewardsInterval      uint64 = 30
+	DefaultExchangeRateInterval uint64 = 30
 	// you apparantly cannot safely encode floats, so we make commission / 100
 	DefaultStrideCommission uint64 = 10
 

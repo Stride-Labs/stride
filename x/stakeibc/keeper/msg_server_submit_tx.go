@@ -164,7 +164,8 @@ func (k Keeper) ReinvestRewards(ctx sdk.Context, hostZone types.HostZone) error 
 	// 1. query withdraw account balances using icq
 	// 2. transfer withdraw account balances to the delegation account in the cb
 	// 3. TODO: in the ICA ack upon transfer, reinvest those rewards and withdraw rewards
-	k.InterchainQueryKeeper.QueryBalances(ctx, hostZone, cb, withdrawAccount.Address, 0)
+	k.Logger(ctx).Info(fmt.Sprintf("\tQuerying UndelegatedBalance for %s to ReinvestRewards", hostZone.ChainId))
+	k.InterchainQueryKeeper.QueryHostZone(ctx, hostZone, cb, "cosmos.bank.v1beta1.Query/AllBalances", withdrawAccount.Address, 0)
 	return nil
 }
 
@@ -181,7 +182,7 @@ func (k Keeper) UpdateRedemptionRatePart2(ctx sdk.Context, height int64) {
 		}
 		cdc := k.cdc
 
-		var queryUndelegatedBalanceCB icqkeeper.Callback = func(icqk icqkeeper.Keeper, ctx sdk.Context, args []byte, query icqtypes.Query, h int64) error {
+		var redemptionRateUndelegatedBalanceCallback icqkeeper.Callback = func(icqk icqkeeper.Keeper, ctx sdk.Context, args []byte, query icqtypes.Query, h int64) error {
 			k.Logger(ctx).Info(fmt.Sprintf("\tdelegation undelegatedbalance callback on %s", zoneInfo.HostDenom))
 			queryRes := bankTypes.QueryAllBalancesResponse{}
 			err := cdc.Unmarshal(args, &queryRes)
@@ -242,7 +243,8 @@ func (k Keeper) UpdateRedemptionRatePart2(ctx sdk.Context, height int64) {
 			return nil
 		}
 		k.Logger(ctx).Info(fmt.Sprintf("\tQuerying UndelegatedBalance for %s at %d height", zoneInfo.ChainId, height))
-		k.InterchainQueryKeeper.QueryBalances(ctx, zoneInfo, queryUndelegatedBalanceCB, delegationIca.Address, height)
+		k.InterchainQueryKeeper.QueryHostZone(ctx, zoneInfo, redemptionRateUndelegatedBalanceCallback, "cosmos.bank.v1beta1.Query/AllBalances", delegationIca.Address, height)
+
 		return nil
 	}
 
@@ -312,7 +314,7 @@ func (k Keeper) UpdateRedemptionRatePart1(ctx sdk.Context, height int64) {
 			}
 		}
 		k.Logger(ctx).Info(fmt.Sprintf("\tStarting our daisy chain update! First, querying delegatedBalanaces for %s at %d height", zoneInfo.ChainId, height))
-		k.InterchainQueryKeeper.QueryDelegatorDelegations(ctx, zoneInfo, redemptionRateDelegatedBalanceCallback, delegationIca.Address, height)
+		k.InterchainQueryKeeper.QueryHostZone(ctx, zoneInfo, redemptionRateDelegatedBalanceCallback, "cosmos.staking.v1beta1.Query/DelegatorDelegations", delegationIca.Address, height)
 		return nil
 	}
 
@@ -366,7 +368,7 @@ func (k Keeper) SubmitTxs(ctx sdk.Context, connectionId string, msgs []sdk.Msg, 
 
 func (k Keeper) GetLightClientHeightSafely(ctx sdk.Context, connectionID string) (int64, bool) {
 
-	var latestHeightGaia int64 // defaults to 0
+	var latestHeightHostZone int64 // defaults to 0
 	// get light client's latest height
 	conn, found := k.IBCKeeper.ConnectionKeeper.GetConnection(ctx, connectionID)
 	if !found {
@@ -378,9 +380,9 @@ func (k Keeper) GetLightClientHeightSafely(ctx sdk.Context, connectionID string)
 		k.Logger(ctx).Info(fmt.Sprintf("client id \"%s\" not found for connection \"%s\"", conn.ClientId, connectionID))
 		return 0, false
 	} else {
-		// TODO(TEST-119) get stAsset supply at SAME time as gaia height
+		// TODO(TEST-119) get stAsset supply at SAME time as hostZone height
 		// TODO(TEST-112) check on safety of castng uint64 to int64
-		latestHeightGaia = int64(clientState.GetLatestHeight().GetRevisionHeight())
-		return latestHeightGaia, true
+		latestHeightHostZone = int64(clientState.GetLatestHeight().GetRevisionHeight())
+		return latestHeightHostZone, true
 	}
 }
