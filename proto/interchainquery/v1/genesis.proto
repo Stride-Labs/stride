@@ -1,10 +1,10 @@
 syntax = "proto3";
-package quicksilver.interchainquery.v1;
+package stride.interchainquery.v1;
 
 import "gogoproto/gogo.proto";
 import "cosmos_proto/cosmos.proto";
 
-option go_package = "github.com/ingenuity-build/quicksilver/x/interchainquery/types";
+option go_package = "github.com/Stride-Labs/stride/x/interchainquery/types";
 
 message Query {
   string id = 1;
