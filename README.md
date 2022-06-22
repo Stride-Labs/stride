@@ -83,42 +83,49 @@ curl https://get.starport.com/Stride-Labs/stride@latest! | sudo bash
 ## Build
 
 Please run `make init` to build and serve 3 Stride nodes, 3 Gaia nodes, and 1 Hermes relayer on docker images. 
+* `ignite chain build` is run by default each time
+* You can optionally pass build arguments to specify which docker images to rebuild
+Optional Build Arguments:
+1. `s` This will re-build the Stride image (default)
+2. `g` This will re-build the Gaia image
+3. `h` This will re-build the Hermes image
+4. `i` This will re-build the ICQ image
 
-You can run `make init build=stride` (the default option) to 
+Example:  `make init build=si` will 
 1. Run `ignite chain build` to build the Stride binary
-2. Rebuild Stride, using cache when possible
+2. Rebuild the Stride and ICQ docker images
 3. Spin up the 7 docker containers and start all processes
 
-Alternatively, you can run `make init build=strideall` to re-build the docker image from scratch.
-
-If you want to re-build all images, you can run `make init build=base` to:
-1. Run `ignite chain build` to build the Stride binary
-2. Rebuild Stride, Gaia, Hermes and ICQ docker images, using cache when possible
-3. Spin up the 7 docker containers and start all processes
-
-Alternatively, you can run `make init build=all` to 
-1. Run `ignite chain build` to build the Stride binary
-2. Fully rebuild Stride, Gaia, Hermes and ICQ docker images, ignoring the cache
-3. Spin up the 7 docker containers and start all processes
-
-Or, if you just want to re-serve, run `make init build=none` to 
+Or, if you just want to re-serve, run `make init build=` to 
 1. Use existing Stride binary
 2. Use existing docker images 
 3. Spin up the 7 docker containers and start all processes
 
-## Build (Lower Level)
+## Local Development
+Install the required git submodule dependencies (gaia, hermes, icq)
+```
+git submodule update --init
+```
+Install each module's corresponding dependencies
+```
+make local-install
 
-Proceed with lower-level building at your own discretion. Only `make init` is well-supported. 
+# Or to install to a specific module
+make stride-local-install
+make gaia-local-install
+make icq-local-install
+```
+Build executables and initialize the state with `make local-init`
+* You can optionally pass build arguments to specify which binarys images to rebuild
+1. `s` This will re-build the Stride binary (default)
+2. `g` This will re-build the Gaia binary
+3. `h` This will re-build the Hermes binary
+4. `i` This will re-build the ICQ binary
 
-You can run `sh scripts/init.sh` to achieve the same output as the above. The following flags are supported
-1. `-b` This will run `ignite chain build`
-2. `-d` This will re-build all docker images, using cache
-3. `-f` This will re-build all docker images, ignoring cache. 
-4. `-s` This will re-build Stride's docker images, using cache. 
-5. `-a` This will re-build Stride's docker images, ignoring cache. 
-
-At the end, all 7 docker images will be served. 
-
+Example:  `make local-init build=si` will 
+1. Build the Stride and Gaia binarys
+2. Spin up a local Stride and Gaia node
+3. Spin up a local Hermes and ICQ relayer
 ## Testing
 
 To run the full test suite, run `make init`, then `sh scripts/tests/run_all_tests.sh`.

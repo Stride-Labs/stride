@@ -14,6 +14,7 @@ STRIDE_LOGS=$SCRIPT_DIR/logs/stride.log
 GAIA_STATE=$SCRIPT_DIR/state/gaia
 GAIA_LOGS=$SCRIPT_DIR/logs/gaia.log
 HERMES_LOGS=$SCRIPT_DIR/logs/hermes.log
+ICQ_LOGS=$SCRIPT_DIR/logs/icq.log
 
 if [ "$cache" == "true" ]; then
     echo "Restoring from cache..."
@@ -47,5 +48,18 @@ nohup $HERMES_CMD start >> $HERMES_LOGS 2>&1 &
 ( tail -f -n0 $HERMES_LOGS & ) | grep -q "Hermes has started"
 echo "Done"
 
+printf '%s' "Starting ICQ...               "
+nohup $ICQ_CMD run --local > $ICQ_LOGS 2>&1 &
+echo "Done"
+
 echo "Network is ready for transactions."
 cp -r $SCRIPT_DIR/state $SCRIPT_DIR/.state.backup
+
+echo "Creating host zone..."
+ATOM='uatom'
+IBCATOM='ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2'
+$STRIDE_CMD tx stakeibc register-host-zone \
+    connection-0 $ATOM $IBCATOM channel-0 \
+    --chain-id $STRIDE_CHAIN --home $STATE/stride \
+    --keyring-backend test --from $STRIDE_VAL_ACCT --gas 500000 -y
+

@@ -293,10 +293,6 @@ logs:
 	sh scripts/logs/create_logs.sh 
 
 
-update:
-	git submodule update --init
-	ignite generate proto-go
-
 local-install: stride-local-install gaia-local-install hermes-local-install icq-local-install
 
 stride-local-install: 
@@ -308,49 +304,18 @@ gaia-local-install:
 	go mod download
 
 icq-local-install:
-	cd deps/icq; \
-	go get github.com/Stride-Labs/interchain-queries/cmd; \
-	go get github.com/Stride-Labs/interchain-queries/pkg/runner; \
+	cd deps/interchain-queries; \
 	go mod download
 
 
-local-build: stride-local-build icq-local-build
-
-stride-local-build: $(BUILDDIR)
-	go build -mod=readonly -trimpath -o $(BUILDDIR) ./...
-
-gaia-local-build: $(BUILDDIR)
-	cd deps/gaia; \
-	go build -mod=readonly -trimpath -o $(BUILDDIR) ./...
-
-hermes-local-build: $(BUILDDIR)
-	cd deps/hermes; \
-	cargo build --release --target-dir $(BUILDDIR)/hermes
-
-icq-local-build: $(BUILDDIR)
-	cd deps/icq; \
-	go build -mod=readonly -trimpath -o $(BUILDDIR) ./... 2>&1 | grep -v deprecated
-
 local-init:
-	sh scripts/local/init_main.sh 
-
-start-stride:
-	sh scripts/local/start_stride.sh
-
-start-gaia:
-	sh scripts/local/start_gaia.sh
+	sh scripts/local/init_main.sh -${build} ${BUILDDIR}
 
 start:
-	sh scripts/local/start.sh
+	sh scripts/local/start_network.sh
 
 start-cached:
-	sh scripts/local/start.sh true
+	sh scripts/local/start_network.sh true 
 
 stop:
-	killall gaiad strided hermes
-
-start-hermes:
-	sh scripts/local/init_hermes.sh
-
-list:
-	ps | grep make
+	killall gaiad strided hermes interchain-queries
