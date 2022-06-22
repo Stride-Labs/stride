@@ -98,7 +98,8 @@ message MsgAddValidator {
   string hostZone = 2;
   string name = 3;
   string address = 4;
-  int32 commission = 5;
+  uint64 commission = 5;
+  uint64 weight = 6;
 }
 
 message MsgAddValidatorResponse {

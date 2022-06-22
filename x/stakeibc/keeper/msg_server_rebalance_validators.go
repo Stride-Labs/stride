@@ -7,6 +7,7 @@ import (
 
 	"github.com/Stride-Labs/stride/x/stakeibc/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	stakingTypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 )
 
@@ -26,7 +27,11 @@ func (k msgServer) RebalanceValidators(goCtx context.Context, msg *types.MsgReba
 		return nil, types.ErrInvalidHostZone
 	}
 
-	validatorDeltas := k.GetValidatorAmtDifferences(ctx, hostZone)
+	validatorDeltas, err := k.GetValidatorAmtDifferences(ctx, hostZone)
+	if err != nil {
+		k.Logger(ctx).Info(fmt.Sprintf("Error getting validator deltas for Host Zone %s: %s", hostZone.ChainId, err))
+		return nil, err
+	}
 
 	// we convert the above map into a list of tuples
 	type valPair struct {
@@ -84,10 +89,11 @@ func (k msgServer) RebalanceValidators(goCtx context.Context, msg *types.MsgReba
 		}
 	}
 
-	// err = k.SubmitTxs(ctx, connectionId, msgs, *delegationIca)
-	// if err != nil {
-	// 	return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "Failed to SubmitTxs for %s, %s, %s", connectionId, hostZone.ChainId, msgs)
-	// }
+	connectionId := hostZone.GetConnectionId()
+	err = k.SubmitTxs(ctx, connectionId, msgs, *hostZone.DelegationAccount)
+	if err != nil {
+		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "Failed to SubmitTxs for %s, %s, %s", connectionId, hostZone.ChainId, msgs)
+	}
 
 	return &types.MsgRebalanceValidatorsResponse{}, nil
 }

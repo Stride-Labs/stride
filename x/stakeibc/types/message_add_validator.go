@@ -9,13 +9,14 @@ const TypeMsgAddValidator = "add_validator"
 
 var _ sdk.Msg = &MsgAddValidator{}
 
-func NewMsgAddValidator(creator string, hostZone string, name string, address string, commission int32) *MsgAddValidator {
+func NewMsgAddValidator(creator string, hostZone string, name string, address string, commission uint64, weight uint64) *MsgAddValidator {
 	return &MsgAddValidator{
 		Creator:    creator,
 		HostZone:   hostZone,
 		Name:       name,
 		Address:    address,
 		Commission: commission,
+		Weight:     weight,
 	}
 }
 

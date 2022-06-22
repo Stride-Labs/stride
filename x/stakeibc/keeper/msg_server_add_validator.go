@@ -9,6 +9,7 @@ import (
 )
 
 func (k msgServer) AddValidator(goCtx context.Context, msg *types.MsgAddValidator) (*types.MsgAddValidatorResponse, error) {
+	// TODO restrict this to governance module. add gov module whitelist hooks more broadly
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	hostZone, host_zone_found := k.GetHostZone(ctx, msg.HostZone)
@@ -32,8 +33,9 @@ func (k msgServer) AddValidator(goCtx context.Context, msg *types.MsgAddValidato
 		Name:           msg.Name,
 		Address:        msg.Address,
 		Status:         "active",
-		CommissionRate: int64(msg.Commission),
+		CommissionRate: msg.Commission,
 		DelegationAmt:  0,
+		Weight:         msg.Weight,
 	})
 
 	return &types.MsgAddValidatorResponse{}, nil

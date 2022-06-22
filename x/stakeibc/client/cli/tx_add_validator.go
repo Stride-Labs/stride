@@ -15,14 +15,15 @@ var _ = strconv.Itoa(0)
 
 func CmdAddValidator() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "add-validator [host-zone] [name] [address] [commission]",
+		Use:   "add-validator [host-zone] [name] [address] [commission] [weight]",
 		Short: "Broadcast message add-validator",
 		Args:  cobra.ExactArgs(4),
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
 			argHostZone := args[0]
 			argName := args[1]
 			argAddress := args[2]
-			argCommission, err := cast.ToInt32E(args[3])
+			argCommission, err := cast.ToUint64E(args[3])
+			argWeight, err := cast.ToUint64E(args[4])
 			if err != nil {
 				return err
 			}
@@ -38,6 +39,7 @@ func CmdAddValidator() *cobra.Command {
 				argName,
 				argAddress,
 				argCommission,
+				argWeight,
 			)
 			if err := msg.ValidateBasic(); err != nil {
 				return err
