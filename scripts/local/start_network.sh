@@ -53,7 +53,7 @@ fi
 # Start hermes in the background and pause until the log message shows that it is up and running
 printf '%s' "Starting Hermes...            "
 nohup $HERMES_CMD start >> $HERMES_LOGS 2>&1 &
-( tail -f -n0 $HERMES_LOGS & ) | grep -q "Hermes has started"
+( tail -f -n0 $HERMES_LOGS & ) | grep -q -E "STRIDE->GAIA}: connection handshake step completed with events: OpenConfirmConnection"
 echo "Done"
 
 # Start ICQ in the background
@@ -62,7 +62,7 @@ nohup $ICQ_CMD run --local > $ICQ_LOGS 2>&1 &
 echo "Done"
 
 # Create a copy of the state that can be used for the "cache" option
-echo "Network is ready for transactions."
+echo "Network is ready for transactions.\n"
 cp -r $SCRIPT_DIR/state $SCRIPT_DIR/.state.backup
 
 # Submit a transaction on stride to register the gaia host zone
