@@ -14,5 +14,6 @@ var (
 	ErrInvalidToken           = sdkerrors.Register(ModuleName, 1502, "invalid token denom (denom is not IBC token)")
 	ErrInvalidHostZone        = sdkerrors.Register(ModuleName, 1503, "host zone not registered")
 	ErrICAStake               = sdkerrors.Register(ModuleName, 1504, "ICA stake failed")
-	ErrValidatorAlreadyExists = sdkerrors.Register(ModuleName, 1503, "validator already exists")
+	ErrValidatorAlreadyExists = sdkerrors.Register(ModuleName, 1505, "validator already exists")
+	ErrNoValidatorWeights     = sdkerrors.Register(ModuleName, 1506, "no non-zero validator weights")
 )

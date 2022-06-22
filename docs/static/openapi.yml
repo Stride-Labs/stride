@@ -29125,10 +29125,13 @@ paths:
                         type: string
                       commissionRate:
                         type: string
-                        format: int64
+                        format: uint64
                       delegationAmt:
                         type: string
-                        format: int64
+                        format: uint64
+                      weight:
+                        type: string
+                        format: uint64
                   amt:
                     type: string
                     format: int64
@@ -29878,10 +29881,13 @@ paths:
                             type: string
                           commissionRate:
                             type: string
-                            format: int64
+                            format: uint64
                           delegationAmt:
                             type: string
-                            format: int64
+                            format: uint64
+                          weight:
+                            type: string
+                            format: uint64
                     blacklistedValidators:
                       type: array
                       items:
@@ -29895,10 +29901,13 @@ paths:
                             type: string
                           commissionRate:
                             type: string
-                            format: int64
+                            format: uint64
                           delegationAmt:
                             type: string
-                            format: int64
+                            format: uint64
+                          weight:
+                            type: string
+                            format: uint64
                     withdrawalAccount:
                       type: object
                       properties:
@@ -29928,10 +29937,13 @@ paths:
                                     type: string
                                   commissionRate:
                                     type: string
-                                    format: int64
+                                    format: uint64
                                   delegationAmt:
                                     type: string
-                                    format: int64
+                                    format: uint64
+                                  weight:
+                                    type: string
+                                    format: uint64
                               amt:
                                 type: string
                                 format: int64
@@ -29975,10 +29987,13 @@ paths:
                                     type: string
                                   commissionRate:
                                     type: string
-                                    format: int64
+                                    format: uint64
                                   delegationAmt:
                                     type: string
-                                    format: int64
+                                    format: uint64
+                                  weight:
+                                    type: string
+                                    format: uint64
                               amt:
                                 type: string
                                 format: int64
@@ -30022,10 +30037,13 @@ paths:
                                     type: string
                                   commissionRate:
                                     type: string
-                                    format: int64
+                                    format: uint64
                                   delegationAmt:
                                     type: string
-                                    format: int64
+                                    format: uint64
+                                  weight:
+                                    type: string
+                                    format: uint64
                               amt:
                                 type: string
                                 format: int64
@@ -30356,10 +30374,13 @@ paths:
                           type: string
                         commissionRate:
                           type: string
-                          format: int64
+                          format: uint64
                         delegationAmt:
                           type: string
-                          format: int64
+                          format: uint64
+                        weight:
+                          type: string
+                          format: uint64
                   blacklistedValidators:
                     type: array
                     items:
@@ -30373,10 +30394,13 @@ paths:
                           type: string
                         commissionRate:
                           type: string
-                          format: int64
+                          format: uint64
                         delegationAmt:
                           type: string
-                          format: int64
+                          format: uint64
+                        weight:
+                          type: string
+                          format: uint64
                   withdrawalAccount:
                     type: object
                     properties:
@@ -30406,10 +30430,13 @@ paths:
                                   type: string
                                 commissionRate:
                                   type: string
-                                  format: int64
+                                  format: uint64
                                 delegationAmt:
                                   type: string
-                                  format: int64
+                                  format: uint64
+                                weight:
+                                  type: string
+                                  format: uint64
                             amt:
                               type: string
                               format: int64
@@ -30452,10 +30479,13 @@ paths:
                                   type: string
                                 commissionRate:
                                   type: string
-                                  format: int64
+                                  format: uint64
                                 delegationAmt:
                                   type: string
-                                  format: int64
+                                  format: uint64
+                                weight:
+                                  type: string
+                                  format: uint64
                             amt:
                               type: string
                               format: int64
@@ -30498,10 +30528,13 @@ paths:
                                   type: string
                                 commissionRate:
                                   type: string
-                                  format: int64
+                                  format: uint64
                                 delegationAmt:
                                   type: string
-                                  format: int64
+                                  format: uint64
+                                weight:
+                                  type: string
+                                  format: uint64
                             amt:
                               type: string
                               format: int64
@@ -30762,10 +30795,13 @@ paths:
                               type: string
                             commissionRate:
                               type: string
-                              format: int64
+                              format: uint64
                             delegationAmt:
                               type: string
-                              format: int64
+                              format: uint64
+                            weight:
+                              type: string
+                              format: uint64
                         amt:
                           type: string
                           format: int64
@@ -31397,10 +31433,13 @@ paths:
                     type: string
                   commissionRate:
                     type: string
-                    format: int64
+                    format: uint64
                   delegationAmt:
                     type: string
-                    format: int64
+                    format: uint64
+                  weight:
+                    type: string
+                    format: uint64
         default:
           description: An unexpected error response.
           schema:
@@ -31630,22 +31669,6 @@ paths:
                   reinvest_interval:
                     type: string
                     format: uint64
-                  host_zone_validator_weights:
-                    type: object
-                    additionalProperties:
-                      type: object
-                      properties:
-                        validator_weights:
-                          type: object
-                          additionalProperties:
-                            type: string
-                            format: int64
-                      title: >-
-                        This stores a map from "validator address" -> "target
-                        weight" "
-                    title: >-
-                      validator_weights is a map from "hostZone chainId" ->
-                      "ValidatorWeights" (defined below)
                 title: |-
                   Params defines the parameters for the module.
                   next id: 8
@@ -52151,10 +52174,13 @@ definitions:
             type: string
           commissionRate:
             type: string
-            format: int64
+            format: uint64
           delegationAmt:
             type: string
-            format: int64
+            format: uint64
+          weight:
+            type: string
+            format: uint64
       amt:
         type: string
         format: int64
@@ -52207,10 +52233,13 @@ definitions:
               type: string
             commissionRate:
               type: string
-              format: int64
+              format: uint64
             delegationAmt:
               type: string
-              format: int64
+              format: uint64
+            weight:
+              type: string
+              format: uint64
       blacklistedValidators:
         type: array
         items:
@@ -52224,10 +52253,13 @@ definitions:
               type: string
             commissionRate:
               type: string
-              format: int64
+              format: uint64
             delegationAmt:
               type: string
-              format: int64
+              format: uint64
+            weight:
+              type: string
+              format: uint64
       withdrawalAccount:
         type: object
         properties:
@@ -52257,10 +52289,13 @@ definitions:
                       type: string
                     commissionRate:
                       type: string
-                      format: int64
+                      format: uint64
                     delegationAmt:
                       type: string
-                      format: int64
+                      format: uint64
+                    weight:
+                      type: string
+                      format: uint64
                 amt:
                   type: string
                   format: int64
@@ -52303,10 +52338,13 @@ definitions:
                       type: string
                     commissionRate:
                       type: string
-                      format: int64
+                      format: uint64
                     delegationAmt:
                       type: string
-                      format: int64
+                      format: uint64
+                    weight:
+                      type: string
+                      format: uint64
                 amt:
                   type: string
                   format: int64
@@ -52349,10 +52387,13 @@ definitions:
                       type: string
                     commissionRate:
                       type: string
-                      format: int64
+                      format: uint64
                     delegationAmt:
                       type: string
-                      format: int64
+                      format: uint64
+                    weight:
+                      type: string
+                      format: uint64
                 amt:
                   type: string
                   format: int64
@@ -52411,10 +52452,13 @@ definitions:
                   type: string
                 commissionRate:
                   type: string
-                  format: int64
+                  format: uint64
                 delegationAmt:
                   type: string
-                  format: int64
+                  format: uint64
+                weight:
+                  type: string
+                  format: uint64
             amt:
               type: string
               format: int64
@@ -52502,20 +52546,6 @@ definitions:
       reinvest_interval:
         type: string
         format: uint64
-      host_zone_validator_weights:
-        type: object
-        additionalProperties:
-          type: object
-          properties:
-            validator_weights:
-              type: object
-              additionalProperties:
-                type: string
-                format: int64
-          title: This stores a map from "validator address" -> "target weight" "
-        title: >-
-          validator_weights is a map from "hostZone chainId" ->
-          "ValidatorWeights" (defined below)
     title: |-
       Params defines the parameters for the module.
       next id: 8
@@ -52597,10 +52627,13 @@ definitions:
                     type: string
                   commissionRate:
                     type: string
-                    format: int64
+                    format: uint64
                   delegationAmt:
                     type: string
-                    format: int64
+                    format: uint64
+                  weight:
+                    type: string
+                    format: uint64
             blacklistedValidators:
               type: array
               items:
@@ -52614,10 +52647,13 @@ definitions:
                     type: string
                   commissionRate:
                     type: string
-                    format: int64
+                    format: uint64
                   delegationAmt:
                     type: string
-                    format: int64
+                    format: uint64
+                  weight:
+                    type: string
+                    format: uint64
             withdrawalAccount:
               type: object
               properties:
@@ -52647,10 +52683,13 @@ definitions:
                             type: string
                           commissionRate:
                             type: string
-                            format: int64
+                            format: uint64
                           delegationAmt:
                             type: string
-                            format: int64
+                            format: uint64
+                          weight:
+                            type: string
+                            format: uint64
                       amt:
                         type: string
                         format: int64
@@ -52693,10 +52732,13 @@ definitions:
                             type: string
                           commissionRate:
                             type: string
-                            format: int64
+                            format: uint64
                           delegationAmt:
                             type: string
-                            format: int64
+                            format: uint64
+                          weight:
+                            type: string
+                            format: uint64
                       amt:
                         type: string
                         format: int64
@@ -52739,10 +52781,13 @@ definitions:
                             type: string
                           commissionRate:
                             type: string
-                            format: int64
+                            format: uint64
                           delegationAmt:
                             type: string
-                            format: int64
+                            format: uint64
+                          weight:
+                            type: string
+                            format: uint64
                       amt:
                         type: string
                         format: int64
@@ -52816,10 +52861,13 @@ definitions:
                 type: string
               commissionRate:
                 type: string
-                format: int64
+                format: uint64
               delegationAmt:
                 type: string
-                format: int64
+                format: uint64
+              weight:
+                type: string
+                format: uint64
           amt:
             type: string
             format: int64
@@ -52872,10 +52920,13 @@ definitions:
                   type: string
                 commissionRate:
                   type: string
-                  format: int64
+                  format: uint64
                 delegationAmt:
                   type: string
-                  format: int64
+                  format: uint64
+                weight:
+                  type: string
+                  format: uint64
           blacklistedValidators:
             type: array
             items:
@@ -52889,10 +52940,13 @@ definitions:
                   type: string
                 commissionRate:
                   type: string
-                  format: int64
+                  format: uint64
                 delegationAmt:
                   type: string
-                  format: int64
+                  format: uint64
+                weight:
+                  type: string
+                  format: uint64
           withdrawalAccount:
             type: object
             properties:
@@ -52922,10 +52976,13 @@ definitions:
                           type: string
                         commissionRate:
                           type: string
-                          format: int64
+                          format: uint64
                         delegationAmt:
                           type: string
-                          format: int64
+                          format: uint64
+                        weight:
+                          type: string
+                          format: uint64
                     amt:
                       type: string
                       format: int64
@@ -52968,10 +53025,13 @@ definitions:
                           type: string
                         commissionRate:
                           type: string
-                          format: int64
+                          format: uint64
                         delegationAmt:
                           type: string
-                          format: int64
+                          format: uint64
+                        weight:
+                          type: string
+                          format: uint64
                     amt:
                       type: string
                       format: int64
@@ -53014,10 +53074,13 @@ definitions:
                           type: string
                         commissionRate:
                           type: string
-                          format: int64
+                          format: uint64
                         delegationAmt:
                           type: string
-                          format: int64
+                          format: uint64
+                        weight:
+                          type: string
+                          format: uint64
                     amt:
                       type: string
                       format: int64
@@ -53079,10 +53142,13 @@ definitions:
                       type: string
                     commissionRate:
                       type: string
-                      format: int64
+                      format: uint64
                     delegationAmt:
                       type: string
-                      format: int64
+                      format: uint64
+                    weight:
+                      type: string
+                      format: uint64
                 amt:
                   type: string
                   format: int64
@@ -53122,10 +53188,13 @@ definitions:
             type: string
           commissionRate:
             type: string
-            format: int64
+            format: uint64
           delegationAmt:
             type: string
-            format: int64
+            format: uint64
+          weight:
+            type: string
+            format: uint64
   Stridelabs.stride.stakeibc.QueryInterchainAccountFromAddressResponse:
     type: object
     properties:
@@ -53174,20 +53243,6 @@ definitions:
           reinvest_interval:
             type: string
             format: uint64
-          host_zone_validator_weights:
-            type: object
-            additionalProperties:
-              type: object
-              properties:
-                validator_weights:
-                  type: object
-                  additionalProperties:
-                    type: string
-                    format: int64
-              title: This stores a map from "validator address" -> "target weight" "
-            title: >-
-              validator_weights is a map from "hostZone chainId" ->
-              "ValidatorWeights" (defined below)
         title: |-
           Params defines the parameters for the module.
           next id: 8
@@ -53203,16 +53258,10 @@ definitions:
         type: string
       commissionRate:
         type: string
-        format: int64
+        format: uint64
       delegationAmt:
         type: string
-        format: int64
-  Stridelabs.stride.stakeibc.ValidatorWeights:
-    type: object
-    properties:
-      validator_weights:
-        type: object
-        additionalProperties:
-          type: string
-          format: int64
-    title: This stores a map from "validator address" -> "target weight" "
+        format: uint64
+      weight:
+        type: string
+        format: uint64

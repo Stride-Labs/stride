@@ -1,45 +1,52 @@
 package keeper
 
 import (
+	"fmt"
+
 	"github.com/Stride-Labs/stride/x/stakeibc/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-func (k Keeper) GetValidatorAmtDifferences(ctx sdk.Context, hostZone types.HostZone) map[string]int64 {
+func (k Keeper) GetValidatorAmtDifferences(ctx sdk.Context, hostZone types.HostZone) (map[string]int64, error) {
 	/*
 		This function returns a map from Validator Address to how many extra tokens
 		need to be given to that validator (posit)
 	*/
 	validators := hostZone.GetValidators()
 	scaled_weights := make(map[string]int64)
-	target_weights := k.GetTargetValAmtsForHostZone(ctx, hostZone)
+	target_weights, err := k.GetTargetValAmtsForHostZone(ctx, hostZone)
+	if err != nil {
+		k.Logger(ctx).Error(fmt.Sprintf("Error getting target weights for host zone %s", hostZone.ChainId))
+		return nil, err
+	}
 	for _, validator := range validators {
-		scaled_weights[validator.Address] = target_weights[validator.Address] - validator.DelegationAmt
+		scaled_weights[validator.Address] = int64(target_weights[validator.Address]) - int64(validator.DelegationAmt)
 	}
-	return scaled_weights
+	return scaled_weights, nil
 }
 
-func (k Keeper) GetTargetValAmtsForHostZone(ctx sdk.Context, hostZone types.HostZone) map[string]int64 {
-	var out map[string]types.ValidatorWeights
-	k.paramstore.Get(ctx, types.KeyHostZoneValidatorWeights, &out)
-	valWeights := out[hostZone.ChainId]
-	totalWeight := int64(0)
-	totalDelegatedWeight := k.GetTotalValidatorWeight()
-	for _, weight := range valWeights.ValidatorWeights {
-		totalWeight += weight
+func (k Keeper) GetTargetValAmtsForHostZone(ctx sdk.Context, hostZone types.HostZone) (map[string]uint64, error) {
+	totalDelegated := k.GetTotalValidatorDelegations(ctx, hostZone)
+	// grab total weight of all validators
+	totalWeight := uint64(0)
+	for _, validator := range hostZone.Validators {
+		totalWeight += validator.Weight
 	}
-	var targetWeight map[string]int64
-	for valAddr, weight := range valWeights.ValidatorWeights {
-		targetWeight[valAddr] = int64(float64(weight*totalDelegatedWeight) / float64(totalWeight))
+	if totalWeight == 0 {
+		k.Logger(ctx).Error(fmt.Sprintf("Total weight is 0 for host zone %s", hostZone.ChainId))
+		return nil, types.ErrNoValidatorWeights
 	}
-	return targetWeight
+	var targetWeight map[string]uint64
+	for _, validator := range hostZone.Validators {
+		targetWeight[validator.Address] = uint64(float64(validator.Weight*totalDelegated) / float64(totalWeight))
+	}
+	return targetWeight, nil
 }
 
-func (k Keeper) GetTotalValidatorWeight(ctx sdk.Context, hostZone types.HostZone) int64 {
+func (k Keeper) GetTotalValidatorDelegations(ctx sdk.Context, hostZone types.HostZone) uint64 {
 	validators := hostZone.GetValidators()
-	total_weight := int64(0)
+	total_weight := uint64(0)
 	for _, validator := range validators {
-		// QUESTION do we need to do some error handling here if delegaitonAmt is missing?
 		total_weight += validator.DelegationAmt
 	}
 	return total_weight

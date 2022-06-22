@@ -23,11 +23,4 @@ message Params {
   // TODO implement this 
   map<string, string> zone_com_address = 5;
   uint64 reinvest_interval = 7;
-  // validator_weights is a map from "hostZone chainId" -> "ValidatorWeights" (defined below)
-  map<string, ValidatorWeights> host_zone_validator_weights = 8;
-}
-
-// This stores a map from "validator address" -> "target weight" "
-message ValidatorWeights {
-  map<string, int64> validator_weights = 1;
 }
