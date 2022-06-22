@@ -52490,6 +52490,8 @@ definitions:
         format: int32
   Stridelabs.stride.stakeibc.MsgAddValidatorResponse:
     type: object
+  Stridelabs.stride.stakeibc.MsgChangeValidatorWeightResponse:
+    type: object
   Stridelabs.stride.stakeibc.MsgLiquidStakeResponse:
     type: object
   Stridelabs.stride.stakeibc.MsgRebalanceValidatorsResponse:
