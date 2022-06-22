@@ -5,6 +5,9 @@ SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
 STATE=$SCRIPT_DIR/state
 
+ATOM='uatom'
+IBCATOM='ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2'
+
 # define STRIDE vars
 STRIDE_PORT_ID=26657  # 36564 
 STRIDE_CHAIN=STRIDE
@@ -36,3 +39,9 @@ ICQ_GAIA_ACCT=icq2
 ICQ_STRIDE_MNEMONIC="helmet say goat special plug umbrella finger night flip axis resource tuna trigger angry shove essay point laundry horror eager forget depend siren alarm"
 ICQ_GAIA_MNEMONIC="capable later bamboo snow drive afraid cheese practice latin brush hand true visa drama mystery bird client nature jealous guess tank marriage volume fantasy"
 
+CSLEEP() {
+  for i in $(seq $1); do
+    sleep 1
+    printf "\r\t$(($1 - $i))s left..."
+  done
+}

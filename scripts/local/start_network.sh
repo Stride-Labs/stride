@@ -40,7 +40,7 @@ if [ "$cache" != "true" ]; then
     #  1)  "Creating transfer channel" is printed (indicating the connection has been created)
     #  2)  "Message ChanOpenInit" is printed (indicating the channnel has been created)
     printf '%s' "Creating Hermes Connection... "
-    bash $SCRIPT_DIR/init_channel.sh > tr -d '\000' > $HERMES_LOGS 2>&1 &
+    bash $SCRIPT_DIR/init_channel.sh > $HERMES_LOGS 2>&1 &
     ( tail -f -n0 $HERMES_LOGS & ) | grep -q "Creating transfer channel"
     echo "Done"
 
@@ -67,8 +67,6 @@ cp -r $SCRIPT_DIR/state $SCRIPT_DIR/.state.backup
 
 # Submit a transaction on stride to register the gaia host zone
 echo "Creating host zone..."
-ATOM='uatom'
-IBCATOM='ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2'
 $STRIDE_CMD tx stakeibc register-host-zone \
     connection-0 $ATOM $IBCATOM channel-0 \
     --chain-id $STRIDE_CHAIN --home $STATE/stride \
