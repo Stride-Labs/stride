@@ -21,6 +21,7 @@ service Msg {
   rpc RebalanceValidators(MsgRebalanceValidators) returns (MsgRebalanceValidatorsResponse);
   rpc AddValidator(MsgAddValidator) returns (MsgAddValidatorResponse);
   rpc ChangeValidatorWeight(MsgChangeValidatorWeight) returns (MsgChangeValidatorWeightResponse);
+  rpc DeleteValidator(MsgDeleteValidator) returns (MsgDeleteValidatorResponse);
 // this line is used by starport scaffolding # proto/tx/rpc
 }
 
@@ -114,6 +115,15 @@ message MsgChangeValidatorWeight {
 }
 
 message MsgChangeValidatorWeightResponse {
+}
+
+message MsgDeleteValidator {
+  string creator = 1;
+  string hostZone = 2;
+  string name = 3;
+}
+
+message MsgDeleteValidatorResponse {
 }
 
 // this line is used by starport scaffolding # proto/tx/message

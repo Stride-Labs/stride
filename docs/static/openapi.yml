@@ -52492,6 +52492,8 @@ definitions:
     type: object
   Stridelabs.stride.stakeibc.MsgChangeValidatorWeightResponse:
     type: object
+  Stridelabs.stride.stakeibc.MsgDeleteValidatorResponse:
+    type: object
   Stridelabs.stride.stakeibc.MsgLiquidStakeResponse:
     type: object
   Stridelabs.stride.stakeibc.MsgRebalanceValidatorsResponse:
