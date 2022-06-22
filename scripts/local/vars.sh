@@ -36,10 +36,3 @@ ICQ_GAIA_ACCT=icq2
 ICQ_STRIDE_MNEMONIC="helmet say goat special plug umbrella finger night flip axis resource tuna trigger angry shove essay point laundry horror eager forget depend siren alarm"
 ICQ_GAIA_MNEMONIC="capable later bamboo snow drive afraid cheese practice latin brush hand true visa drama mystery bird client nature jealous guess tank marriage volume fantasy"
 
-
-CSLEEP() {
-  for i in $(seq $1); do
-    sleep 1
-    printf "\r\t$(($1 - $i))s left..."
-  done
-}
