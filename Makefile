@@ -293,29 +293,29 @@ logs:
 	sh scripts/logs/create_logs.sh 
 
 
-local-install: stride-local-install gaia-local-install hermes-local-install icq-local-install
+local-install: stride-local-install gaia-local-install icq-local-install
 
 stride-local-install: 
 	go get github.com/improbable-eng/grpc-web/go/grpcweb@v0.15.0
-	go mod download
+	go mod tidy
 
 gaia-local-install:
 	cd deps/gaia; \
-	go mod download
+	go mod tidy
 
 icq-local-install:
 	cd deps/interchain-queries; \
-	go mod download
+	go mod tidy
 
 
 local-init:
-	sh scripts/local/init_main.sh -${build} ${BUILDDIR}
+	sh scripts-local/init_main.sh -${build} ${BUILDDIR}
 
 start:
-	sh scripts/local/start_network.sh
+	sh scripts-local/start_network.sh
 
 start-cached:
-	sh scripts/local/start_network.sh true 
+	sh scripts-local/start_network.sh true 
 
 stop:
 	killall gaiad strided hermes interchain-queries
