@@ -184,14 +184,14 @@ variable "chain_name" {
   default = "stride"
 }
 
-variable "num_val_nodes" {
+variable "num_nodes" {
   type    = number
-  default = 2
+  default = 3
 }
 
 locals {
   node_names = [
-    for i in range(var.num_val_nodes + 1) : "${var.chain_name}-node${i}"
+    for i in range(1, var.num_nodes + 1) : "${var.chain_name}-node${i}"
   ]
 }
 
@@ -248,17 +248,40 @@ resource "google_compute_instance" "stride-nodes" {
   }
 }
 
-resource "google_dns_managed_zone" "stridelabs" {
-  name     = "${var.deployment_name}-stridelabs"
-  dns_name = "${var.deployment_name}.stridelabs.co."
+resource "google_dns_managed_zone" "deployment-stridenet-zone" {
+  name     = "${var.deployment_name}-stridenet"
+  dns_name = "${var.deployment_name}.stridenet.co."
 }
+resource "google_dns_record_set" "parent-stridenet-name-service" {
+  name = google_dns_managed_zone.deployment-stridenet-zone.dns_name
+  type = "NS"
+  ttl  = 300
+
+  managed_zone = "stridenet"
+
+  rrdatas = [
+    "ns-cloud-a1.googledomains.com.", "ns-cloud-a2.googledomains.com.", "ns-cloud-a3.googledomains.com.", "ns-cloud-a4.googledomains.com."
+  ]
+}
+resource "google_dns_record_set" "deployment-stridenet-name-service" {
+  name = google_dns_managed_zone.deployment-stridenet-zone.dns_name
+  type = "NS"
+  ttl  = 300
+
+  managed_zone = google_dns_managed_zone.deployment-stridenet-zone.name
+
+  rrdatas = [
+    "ns-cloud-a1.googledomains.com.", "ns-cloud-a2.googledomains.com.", "ns-cloud-a3.googledomains.com.", "ns-cloud-a4.googledomains.com."
+  ]
+}
+
 resource "google_dns_record_set" "addresses" {
   count = length(local.node_names)
-  name  = "${local.node_names[count.index]}.${google_dns_managed_zone.stridelabs.dns_name}"
+  name  = "${local.node_names[count.index]}.${google_dns_managed_zone.deployment-stridenet-zone.dns_name}"
   type  = "A"
   ttl   = 300
 
-  managed_zone = google_dns_managed_zone.stridelabs.name
+  managed_zone = google_dns_managed_zone.deployment-stridenet-zone.name
 
   rrdatas = [google_compute_instance.stride-nodes[count.index].network_interface[0].access_config[0].nat_ip]
 }
