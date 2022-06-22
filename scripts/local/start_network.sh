@@ -16,6 +16,9 @@ GAIA_LOGS=$SCRIPT_DIR/logs/gaia.log
 HERMES_LOGS=$SCRIPT_DIR/logs/hermes.log
 ICQ_LOGS=$SCRIPT_DIR/logs/icq.log
 
+# Clear logs
+rm -rf $SCRIPT_DIR/logs/*.log
+
 if [ "$cache" == "true" ]; then
     echo "Restoring from cache..."
     rm -rf $SCRIPT_DIR/state 
@@ -45,10 +48,6 @@ if [ "$cache" != "true" ]; then
     # contiuation of logs from above command
     ( tail -f -n0 $HERMES_LOGS & ) | grep -q "Message ChanOpenInit"
     echo "Done"
-else 
-    # If we're running in cache mode - recreate the log hermes file 
-    # (since the next operation is an append)
-    echo "" > $HERMES_LOGS
 fi
 
 # Start hermes in the background and pause until the log message shows that it is up and running
