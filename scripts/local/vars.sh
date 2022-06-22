@@ -29,7 +29,7 @@ HERMES_GAIA_ACCT=rly2
 HERMES_STRIDE_MNEMONIC="alter old invest friend relief slot swear pioneer syrup economy vendor tray focus hedgehog artist legend antenna hair almost donkey spice protect sustain increase"
 HERMES_GAIA_MNEMONIC="resemble accident lake amateur physical jewel taxi nut demand magnet person blanket trip entire awkward fiber usual current index limb lady lady depart train"
 
-ICQ_RUN="build/interchain-queries"
+ICQ_CMD="build/interchain-queries --home $STATE/icq"
 
 ICQ_STRIDE_ACCT=icq1
 ICQ_GAIA_ACCT=icq2
