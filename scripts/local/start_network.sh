@@ -19,6 +19,7 @@ ICQ_LOGS=$SCRIPT_DIR/logs/icq.log
 # Clear logs
 rm -rf $SCRIPT_DIR/logs/*.log
 
+# TODO (TEST-122) Fix "caching" option in local mode
 if [ "$cache" == "true" ]; then
     echo "Restoring from cache..."
     rm -rf $SCRIPT_DIR/state 
@@ -65,10 +66,11 @@ echo "Done"
 echo "Network is ready for transactions.\n"
 cp -r $SCRIPT_DIR/state $SCRIPT_DIR/.state.backup
 
-# Submit a transaction on stride to register the gaia host zone
-echo "Creating host zone..."
-$STRIDE_CMD tx stakeibc register-host-zone \
-    connection-0 $ATOM $IBCATOM channel-0 \
-    --chain-id $STRIDE_CHAIN --home $STATE/stride \
-    --keyring-backend test --from $STRIDE_VAL_ACCT --gas 500000 -y
-
+if [ "$cache" != "true" ]; then
+    # Submit a transaction on stride to register the gaia host zone
+    echo "Creating host zone..."
+    $STRIDE_CMD tx stakeibc register-host-zone \
+        connection-0 $ATOM $IBCATOM channel-0 \
+        --chain-id $STRIDE_CHAIN --home $STATE/stride \
+        --keyring-backend test --from $STRIDE_VAL_ACCT --gas 500000 -y
+fi
