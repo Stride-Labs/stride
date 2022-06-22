@@ -29,7 +29,7 @@ func (k msgServer) AddValidator(goCtx context.Context, msg *types.MsgAddValidato
 		}
 	}
 	// add the validator
-	validators = append(validators, &types.Validator{
+	hostZone.Validators = append(validators, &types.Validator{
 		Name:           msg.Name,
 		Address:        msg.Address,
 		Status:         "active",

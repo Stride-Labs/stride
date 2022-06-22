@@ -36,6 +36,10 @@ const (
 	// TODO: Determine the simulation weight value
 	defaultWeightMsgAddValidator int = 100
 
+	opWeightMsgChangeValidatorWeight = "op_weight_msg_change_validator_weight"
+	// TODO: Determine the simulation weight value
+	defaultWeightMsgChangeValidatorWeight int = 100
+
 	// this line is used by starport scaffolding # simapp/module/const
 )
 
@@ -102,6 +106,17 @@ func (am AppModule) WeightedOperations(simState module.SimulationState) []simtyp
 	operations = append(operations, simulation.NewWeightedOperation(
 		weightMsgAddValidator,
 		stakeibcsimulation.SimulateMsgAddValidator(am.accountKeeper, am.bankKeeper, am.keeper),
+	))
+
+	var weightMsgChangeValidatorWeight int
+	simState.AppParams.GetOrGenerate(simState.Cdc, opWeightMsgChangeValidatorWeight, &weightMsgChangeValidatorWeight, nil,
+		func(_ *rand.Rand) {
+			weightMsgChangeValidatorWeight = defaultWeightMsgChangeValidatorWeight
+		},
+	)
+	operations = append(operations, simulation.NewWeightedOperation(
+		weightMsgChangeValidatorWeight,
+		stakeibcsimulation.SimulateMsgChangeValidatorWeight(am.accountKeeper, am.bankKeeper, am.keeper),
 	))
 
 	// this line is used by starport scaffolding # simapp/module/operation

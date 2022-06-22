@@ -20,6 +20,7 @@ service Msg {
       rpc RegisterHostZone(MsgRegisterHostZone) returns (MsgRegisterHostZoneResponse);
   rpc RebalanceValidators(MsgRebalanceValidators) returns (MsgRebalanceValidatorsResponse);
   rpc AddValidator(MsgAddValidator) returns (MsgAddValidatorResponse);
+  rpc ChangeValidatorWeight(MsgChangeValidatorWeight) returns (MsgChangeValidatorWeightResponse);
 // this line is used by starport scaffolding # proto/tx/rpc
 }
 
@@ -103,6 +104,16 @@ message MsgAddValidator {
 }
 
 message MsgAddValidatorResponse {
+}
+
+message MsgChangeValidatorWeight {
+  string creator = 1;
+  string hostZone = 2;
+  string name = 3;
+  uint64 weight = 4;
+}
+
+message MsgChangeValidatorWeightResponse {
 }
 
 // this line is used by starport scaffolding # proto/tx/message

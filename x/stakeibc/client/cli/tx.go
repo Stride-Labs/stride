@@ -38,6 +38,7 @@ func GetTxCmd() *cobra.Command {
 	cmd.AddCommand(CmdRedeemStake())
 	cmd.AddCommand(CmdRebalanceValidators())
 	cmd.AddCommand(CmdAddValidator())
+	cmd.AddCommand(CmdChangeValidatorWeight())
 	// this line is used by starport scaffolding # 1
 
 	return cmd
