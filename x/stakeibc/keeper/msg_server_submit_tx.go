@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/Stride-Labs/stride/x/stakeibc/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -81,12 +82,23 @@ func (k Keeper) DelegateOnHost(ctx sdk.Context, hostZone types.HostZone, amt sdk
 	delegationIca := hostZone.GetDelegationAccount()
 
 	// Construct the transaction
-	// TODO(TEST-39): Implement validator selection
-	validator_address := "cosmosvaloper19e7sugzt8zaamk2wyydzgmg9n3ysylg6na6k6e" // gval2
+	// validator_address := "cosmosvaloper19e7sugzt8zaamk2wyydzgmg9n3ysylg6na6k6e" // gval2
+	targetDelegatedAmts, err := k.GetTargetValAmtsForHostZone(ctx, hostZone, amt.Amount.Uint64())
+	if err != nil {
+		k.Logger(ctx).Error(fmt.Sprintf("Error getting target delegation amounts for host zone %s", hostZone.ChainId))
+		return err
+	}
+	for _, validator := range hostZone.GetValidators() {
+		relAmt := sdk.NewCoin(amt.Denom, sdk.NewIntFromUint64(targetDelegatedAmts[validator.Address]))
+		msgs = append(msgs, &stakingTypes.MsgDelegate{
+			DelegatorAddress: delegationIca.GetAddress(),
+			ValidatorAddress: validator.GetAddress(),
+			Amount:           relAmt})
 
+	}
 	// construct the msg
-	msgs = append(msgs, &stakingTypes.MsgDelegate{DelegatorAddress: delegationIca.GetAddress(), ValidatorAddress: validator_address, Amount: amt})
 	// Send the transaction through SubmitTx
+	// QUESTION is there any error handling we should do here?
 	err = k.SubmitTxs(ctx, connectionId, msgs, *delegationIca)
 	if err != nil {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "Failed to SubmitTxs for %s, %s, %s", connectionId, hostZone.ChainId, msgs)

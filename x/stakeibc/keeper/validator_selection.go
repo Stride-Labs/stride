@@ -14,7 +14,8 @@ func (k Keeper) GetValidatorAmtDifferences(ctx sdk.Context, hostZone types.HostZ
 	*/
 	validators := hostZone.GetValidators()
 	scaled_weights := make(map[string]int64)
-	target_weights, err := k.GetTargetValAmtsForHostZone(ctx, hostZone)
+	totalWeight := k.GetTotalValidatorWeight(ctx, hostZone)
+	target_weights, err := k.GetTargetValAmtsForHostZone(ctx, hostZone, totalWeight)
 	if err != nil {
 		k.Logger(ctx).Error(fmt.Sprintf("Error getting target weights for host zone %s", hostZone.ChainId))
 		return nil, err
@@ -25,20 +26,27 @@ func (k Keeper) GetValidatorAmtDifferences(ctx sdk.Context, hostZone types.HostZ
 	return scaled_weights, nil
 }
 
-func (k Keeper) GetTargetValAmtsForHostZone(ctx sdk.Context, hostZone types.HostZone) (map[string]uint64, error) {
-	totalDelegated := k.GetTotalValidatorDelegations(ctx, hostZone)
-	// grab total weight of all validators
-	totalWeight := uint64(0)
-	for _, validator := range hostZone.Validators {
-		totalWeight += validator.Weight
-	}
-	if totalWeight == 0 {
-		k.Logger(ctx).Error(fmt.Sprintf("Total weight is 0 for host zone %s", hostZone.ChainId))
+func (k Keeper) GetTargetValAmtsForHostZone(ctx sdk.Context, hostZone types.HostZone, finalDelegation uint64) (map[string]uint64, error) {
+	// This will get the target validator delegation for the given hostZone
+	// such that the total validator delegation is equal to the finalDelegation
+	// output key is ADDRESS not NAME
+	totalWeight := k.GetTotalValidatorWeight(ctx, hostZone)
+	if finalDelegation == 0 {
+		k.Logger(ctx).Error(fmt.Sprintf("Cannot calculate target delegation if final amount is 0 %s", hostZone.ChainId))
 		return nil, types.ErrNoValidatorWeights
 	}
 	var targetWeight map[string]uint64
-	for _, validator := range hostZone.Validators {
-		targetWeight[validator.Address] = uint64(float64(validator.Weight*totalDelegated) / float64(totalWeight))
+	allocatedAmt := uint64(0)
+	for i, validator := range hostZone.Validators {
+		if i == len(hostZone.Validators)-1 {
+			// for the last element, we need to make sure that the allocatedAmt is equal to the finalDelegation
+			targetWeight[validator.Address] = finalDelegation - allocatedAmt
+		} else {
+			delegateAmt := uint64(float64(validator.Weight*finalDelegation) / float64(totalWeight))
+			allocatedAmt += delegateAmt
+			targetWeight[validator.Address] = delegateAmt
+		}
+
 	}
 	return targetWeight, nil
 }
@@ -48,6 +56,15 @@ func (k Keeper) GetTotalValidatorDelegations(ctx sdk.Context, hostZone types.Hos
 	total_weight := uint64(0)
 	for _, validator := range validators {
 		total_weight += validator.DelegationAmt
+	}
+	return total_weight
+}
+
+func (k Keeper) GetTotalValidatorWeight(ctx sdk.Context, hostZone types.HostZone) uint64 {
+	validators := hostZone.GetValidators()
+	total_weight := uint64(0)
+	for _, validator := range validators {
+		total_weight += validator.Weight
 	}
 	return total_weight
 }
