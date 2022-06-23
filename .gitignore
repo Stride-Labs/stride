@@ -11,9 +11,12 @@
 # build
 build/*
 state/*
+.state.backup
 scripts/state/*
 scripts/logs/*.log
 scripts/logs/*/*.log
+scripts-local/state
+scripts-local/logs
 scripts/temp.sh
 vue/*
 # Test binary, built with `go test -c`
@@ -28,4 +31,3 @@ vue/*
 # vscode 
 .vscode/*
 .DS_Store
-

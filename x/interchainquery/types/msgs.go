@@ -9,7 +9,9 @@ const (
 	TypeMsgSubmitQueryResponse = "submitqueryresponse"
 )
 
-var _ sdk.Msg = &MsgSubmitQueryResponse{}
+var (
+	_ sdk.Msg = &MsgSubmitQueryResponse{}
+)
 
 // NewMsgSubmitQueryResponse - construct a msg to fulfil query request.
 //nolint:interfacer

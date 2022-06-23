@@ -12,7 +12,7 @@ GETSTAKE() {
     tail -n 2 | head -n 1 | grep -o -E '[0-9]+' | head -n 1
   }
 
-# $STR1_EXEC q bank balances $STRIDE_ADDRESS_1
+# $STRIDE1_EXEC q bank balances $STRIDE_ADDRESS_1
 
 # $GAIA1_EXEC q bank balances $GAIA_WITHDRAWAL
 # $GAIA1_EXEC q staking delegations $GAIA_WITHDRAWAL

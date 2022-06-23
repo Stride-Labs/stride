@@ -8,8 +8,6 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	distributionTypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
-	stakingTypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 )
 
 func (k Keeper) RedeemStake(goCtx context.Context, msg *types.MsgRedeemStake) (*types.MsgRedeemStakeResponse, error) {
@@ -20,21 +18,18 @@ func (k Keeper) RedeemStake(goCtx context.Context, msg *types.MsgRedeemStake) (*
 	if err != nil {
 		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "address is invalid: %s", msg.Creator)
 	}
-	coinString := strconv.Itoa(int(msg.Amount)) + msg.Denom
+	coinString := strconv.Itoa(int(msg.Amount)) + msg.StAssetDenom
 	inCoin, err := sdk.ParseCoinNormalized(coinString)
 	if err != nil {
 		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidCoins, "could not parse inCoin: %s", coinString)
 	}
 	// remove st prefix to get the base denom
-	baseDenom := msg.Denom[2:]
-	logger := k.Logger(ctx)
-	logger.Info("DOGE baseDenom: ", baseDenom)
-	hostZone, err := k.GetHostZoneFromHostDenom(ctx, baseDenom)
+	hostZoneDenom := types.HostZoneDenomFromStAssetDenom(msg.StAssetDenom)
+	hostZone, err := k.GetHostZoneFromHostDenom(ctx, hostZoneDenom)
 	if err != nil {
 		return nil, err
 	}
 	delegationAccount := hostZone.GetDelegationAccount()
-	withdrawAccount := hostZone.GetWithdrawalAccount()
 	connectionId := hostZone.GetConnectionId()
 	
 	// Safety checks
@@ -42,13 +37,13 @@ func (k Keeper) RedeemStake(goCtx context.Context, msg *types.MsgRedeemStake) (*
 	if !inCoin.IsPositive() {
 		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidCoins, "amount must be greater than 0. found: %s", msg.Amount)
 	}
-	// Denom is valid
+	// StAssetDenom is valid
 	// Should we register stAssets somewhere and add an additional check here?
-	if types.IsStAsset(msg.Denom) != true {
-		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidCoins, "denom is not a valid stAsset. found: %s", msg.Denom)
+	if types.IsStAsset(msg.StAssetDenom) != true {
+		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidCoins, "denom is not a valid stAsset. found: %s", msg.StAssetDenom)
 	}
 	// Creator owns at least "amount" stAssets
-	balance := k.bankKeeper.GetBalance(ctx, sender, msg.Denom)
+	balance := k.bankKeeper.GetBalance(ctx, sender, msg.StAssetDenom)
 	if balance.IsLT(inCoin) {
 		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidCoins, "balance is lower than redemption amount. redemption amount: %s, balance %s: ", msg.Amount, balance.Amount)
 	}
@@ -70,27 +65,19 @@ func (k Keeper) RedeemStake(goCtx context.Context, msg *types.MsgRedeemStake) (*
 	}
 	native_tokens := inCoin.Amount.ToDec().Mul(rate).TruncateInt()
 	outCoin := sdk.NewCoin(hostZone.HostDenom, native_tokens)
+	_ = outCoin
 
 	// Select validators for unbonding
 	// TODO(TEST-39): Implement validator selection
 	validator_address := "cosmosvaloper19e7sugzt8zaamk2wyydzgmg9n3ysylg6na6k6e"  // gval2
+	_ = validator_address
 
 	// Construct the transaction. Note, this transaction must be atomically executed.
+	// TODO(TEST-5): Add messages to redeem stake
 	var msgs []sdk.Msg
-	// 1. MsgSetWithdrawalAddress
-	// TODO(TEST-90): fix this hack
-	// stride1uk4ze0x4nvh4fk0xm4jdud58eqn4yxhrt52vv7
-	// cosmos1uk4ze0x4nvh4fk0xm4jdud58eqn4yxhrgl2scj
-	// strided q bank balances stride1uk4ze0x4nvh4fk0xm4jdud58eqn4yxhrt52vv7
-	// strided tx stakeibc redeem-stake 1000 stuatom cosmos1uk4ze0x4nvh4fk0xm4jdud58eqn4yxhrgl2scj --from val1 --chain-id STRIDE --keyring-backend test --home /stride/.strided
-	setWithdrawAddressUser := &distributionTypes.MsgSetWithdrawAddress{DelegatorAddress: delegationAccount.GetAddress(), WithdrawAddress: msg.Receiver}
-	msgs = append(msgs, setWithdrawAddressUser)
-	// 2. MsgUndelegate
-	undelegateToUser := &stakingTypes.MsgUndelegate{DelegatorAddress: delegationAccount.GetAddress(), ValidatorAddress: validator_address, Amount: outCoin}
-	msgs = append(msgs, undelegateToUser)
-	// 3. MsgSetWithdrawalAddress
-	setWithdrawAddressIca := &distributionTypes.MsgSetWithdrawAddress{DelegatorAddress: delegationAccount.GetAddress(), WithdrawAddress: withdrawAccount.GetAddress()}
-	msgs = append(msgs, setWithdrawAddressIca)
+	// TODO(TEST-5)
+	// Implement record keeping logic!
+	
 	// Send the ICA transaction
 	k.SubmitTxs(ctx, connectionId, msgs, *delegationAccount)
 
