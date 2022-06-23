@@ -24,7 +24,7 @@ jobs:
       matrix: ${{ steps.matrix.outputs.node_names }}
 
   initialize-state:
-    # needs: node_names
+    needs: node_names
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -38,13 +38,14 @@ jobs:
         run: ./scripts/testnet/setup_testnet_state.sh ${deployment_name} ${chain_name} ${num_nodes}
 
       - name: Persist State Files
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: state
           path: ./scripts
+          retention-days: 1
 
   build-docker-images:
-    needs: node_names
+    needs: initialize-state
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -61,7 +62,7 @@ jobs:
         uses: docker/setup-buildx-action@v2
 
       - name: Restore State Files
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v3
         with:
           name: state
 
