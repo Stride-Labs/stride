@@ -18,15 +18,16 @@ jobs:
           echo "::set-output name=node-names::${node_names}"
     outputs:
       node-names: ${{ steps.set-output.outputs.node-names }}
+
   build:
     needs: get-node-names
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        value: ${{ fromJson(needs.get-node-names.outputs.node-names) }}
+        node-name: ${{ fromJson(needs.get-node-names.outputs.node-names) }}
     steps:
       - run: |
-          echo "${{ matrix.value }}"
+          echo "${{ matrix.node-name }}"
 
   # node-names:
   #   runs-on: ubuntu-latest
