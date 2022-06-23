@@ -26,10 +26,10 @@ jobs:
     needs: create-data
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/download-artifact@v3
-        with:
-          name: test-files
-          path: ./data
+      # - uses: actions/download-artifact@v3
+      #   with:
+      #     name: test-files
+      #     path: ./data
       - run: pwd
       - run: ls -la
       - run: ls -la data
