@@ -1,18 +1,227 @@
 package records
 
 import (
-	"fmt"
-
-	"github.com/Stride-Labs/stride/x/records/types"
+	"github.com/Stride-Labs/stride/x/records/keeper"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
-	channeltypes "github.com/cosmos/ibc-go/v2/modules/core/04-channel/types"
-	porttypes "github.com/cosmos/ibc-go/v2/modules/core/05-port/types"
-	host "github.com/cosmos/ibc-go/v2/modules/core/24-host"
-	ibcexported "github.com/cosmos/ibc-go/v2/modules/core/exported"
+	channeltypes "github.com/cosmos/ibc-go/v3/modules/core/04-channel/types"
+	porttypes "github.com/cosmos/ibc-go/v3/modules/core/05-port/types"
+	host "github.com/cosmos/ibc-go/v3/modules/core/24-host"
+	ibcexported "github.com/cosmos/ibc-go/v3/modules/core/exported"
 )
 
+// IBC MODULE IMPLEMENTATION
+// IBCModule implements the ICS26 interface for transfer given the transfer keeper.
+type IBCModule struct {
+	keeper keeper.Keeper
+	app porttypes.IBCModule 
+}
+
+// NewIBCModule creates a new IBCModule given the keeper
+func NewIBCModule(k keeper.Keeper,  app porttypes.IBCModule) IBCModule {
+	return IBCModule{
+		keeper: k,
+		app:   app,
+	}
+}
+
+// OnChanOpenInit implements the IBCModule interface
+func (im IBCModule) OnChanOpenInit(
+	ctx sdk.Context,
+	order channeltypes.Order,
+	connectionHops []string,
+	portID string,
+	channelID string,
+	channelCap *capabilitytypes.Capability,
+	counterparty channeltypes.Counterparty,
+	version string,
+) error {
+	// Note: The channel capability must be claimed by the authentication module in OnChanOpenInit otherwise the
+	// authentication module will not be able to send packets on the channel created for the associated interchain account.
+	// NOTE: unsure if we have to claim this here! CHECK ME
+	if err := im.keeper.ClaimCapability(ctx, channelCap, host.ChannelCapabilityPath(portID, channelID)); err != nil {
+		return err
+	}
+	_, appVersion := channeltypes.SplitChannelVersion(version)
+    // doCustomLogic()
+    im.app.OnChanOpenInit(
+        ctx,
+        order,
+        connectionHops,
+        portID,
+        channelID,
+        channelCap,
+        counterparty,
+        appVersion, // note we only pass app version here
+    )
+	return nil
+}
+
+// OnChanOpenTry implements the IBCModule interface.
+func (im IBCModule) OnChanOpenTry(
+	ctx sdk.Context,
+	order channeltypes.Order,
+	connectionHops []string,
+	portID,
+	channelID string,
+	chanCap *capabilitytypes.Capability,
+	counterparty channeltypes.Counterparty,
+	counterpartyVersion string,
+) (string, error) {
+	// doCustomLogic()
+    // core/04-channel/types contains a helper function to split middleware and underlying app version
+    _, cpAppVersion := channeltypes.SplitChannelVersion(counterpartyVersion)
+
+    // call the underlying applications OnChanOpenTry callback
+    version, err := im.app.OnChanOpenTry(
+		ctx,
+        order,
+        connectionHops,
+        portID,
+        channelID,
+        chanCap,
+        counterparty,
+        cpAppVersion, // note we only pass counterparty app version here
+    )
+    if err != nil {
+		return "", err
+    }
+	_ = version
+	return "ics20-1", nil
+}
+
+// OnChanOpenAck implements the IBCModule interface
+func (im IBCModule) OnChanOpenAck(
+	ctx sdk.Context,
+	portID,
+	channelID string,
+	counterpartyChannelId string, // counterpartyChannelId
+	counterpartyVersion string,
+) error {
+	// core/04-channel/types contains a helper function to split middleware and underlying app version
+    // _, _ := channeltypes.SplitChannelVersion(counterpartyVersion)
+    // doCustomLogic()      
+    // call the underlying applications OnChanOpenTry callback
+    im.app.OnChanOpenAck(ctx, portID, channelID, counterpartyChannelId, counterpartyVersion)
+	return nil
+}
+
+// OnChanOpenConfirm implements the IBCModule interface
+func (im IBCModule) OnChanOpenConfirm(
+	ctx sdk.Context,
+	portID,
+	channelID string,
+) error {
+	// doCustomLogic()
+    im.app.OnChanOpenConfirm(ctx, portID, channelID)
+	return nil
+}
+
+// OnChanCloseInit implements the IBCModule interface
+func (im IBCModule) OnChanCloseInit(
+	ctx sdk.Context,
+	portID,
+	channelID string,
+) error {
+	// doCustomLogic()
+    im.app.OnChanCloseInit(ctx, portID, channelID)
+	return nil
+}
+
+// OnChanCloseConfirm implements the IBCModule interface
+func (im IBCModule) OnChanCloseConfirm(
+	ctx sdk.Context,
+	portID,
+	channelID string,
+) error {
+	// doCustomLogic()
+    im.app.OnChanCloseConfirm(ctx, portID, channelID)
+	return nil
+}
+
+// OnRecvPacket implements the IBCModule interface. A successful acknowledgement
+// is returned if the packet data is successfully decoded and the receive application
+// logic returns without error.
+func (im IBCModule) OnRecvPacket(
+	ctx sdk.Context,
+	packet channeltypes.Packet,
+	relayer sdk.AccAddress,
+) ibcexported.Acknowledgement {
+	wrapperAck := channeltypes.NewResultAcknowledgement([]byte{byte(1)})
+	_ = wrapperAck
+	// NOTE: acknowledgement will be written synchronously during IBC handler execution.
+	// doCustomLogic(packet)
+    transferAck := im.app.OnRecvPacket(ctx, packet, relayer)
+	_ = transferAck
+
+    // doCustomLogic(transferAck) // middleware may modify outgoing ack
+	return wrapperAck
+}
+
+// OnAcknowledgementPacket implements the IBCModule interface
+func (im IBCModule) OnAcknowledgementPacket(
+	ctx sdk.Context,
+	packet channeltypes.Packet,
+	acknowledgement []byte,
+	relayer sdk.AccAddress,
+) error {
+	// doCustomLogic(packet, ack)
+	// Store a deposit record here!
+	ctx.Logger().Error("This is working!")
+    im.app.OnAcknowledgementPacket(ctx, packet, acknowledgement, relayer)
+	return nil
+}
+
+// OnTimeoutPacket implements the IBCModule interface
+func (im IBCModule) OnTimeoutPacket(
+	ctx sdk.Context,
+	packet channeltypes.Packet,
+	relayer sdk.AccAddress,
+) error {
+	// doCustomLogic(packet)
+
+    im.app.OnTimeoutPacket(ctx, packet, relayer)
+	return nil
+}
+
+
+// This is implemented by ICS4 and all middleware that are wrapping base application.
+// The base application will call `sendPacket` or `writeAcknowledgement` of the middleware directly above them
+// which will call the next middleware until it reaches the core IBC handler.
+// type ICS4Wrapper interface {
+//     SendPacket(ctx sdk.Context, chanCap *capabilitytypes.Capability, packet exported.Packet) error
+//     WriteAcknowledgement(ctx sdk.Context, chanCap *capabilitytypes.Capability, packet exported.Packet, ack []byte) error
+//     GetAppVersion(ctx sdk.Context, portID, channelID string) (string, bool) 
+// }
+// SendPacket implements the ICS4 Wrapper interface
+func (im IBCModule) SendPacket(
+	ctx sdk.Context,
+	chanCap *capabilitytypes.Capability,
+	packet ibcexported.PacketI,
+) error {
+	// panic("SendPacket not supported for ICA controller module. Please use SendTx")
+	return nil
+}
+
+// WriteAcknowledgement implements the ICS4 Wrapper interface
+func (im IBCModule) WriteAcknowledgement(
+	ctx sdk.Context,
+	chanCap *capabilitytypes.Capability,
+	packet ibcexported.PacketI,
+	ack ibcexported.Acknowledgement,
+) error {
+	return nil
+	// panic("WriteAcknowledgement not supported for ICA controller module")
+}
+
+// GetAppVersion returns the interchain accounts metadata.
+func (im IBCModule) GetAppVersion(ctx sdk.Context, portID, channelID string) (string, bool) {
+	return "ics20-1", true // im.keeper.GetAppVersion(ctx, portID, channelID)
+}
+
+
+// APP MODULE IMPLEMENTATION
 // OnChanOpenInit implements the IBCModule interface
 func (am AppModule) OnChanOpenInit(
 	ctx sdk.Context,
@@ -24,23 +233,7 @@ func (am AppModule) OnChanOpenInit(
 	counterparty channeltypes.Counterparty,
 	version string,
 ) error {
-
-	// Require portID is the portID module is bound to
-	boundPort := am.keeper.GetPort(ctx)
-	if boundPort != portID {
-		return sdkerrors.Wrapf(porttypes.ErrInvalidPort, "invalid port: %s, expected %s", portID, boundPort)
-	}
-
-	if version != types.Version {
-		return sdkerrors.Wrapf(types.ErrInvalidVersion, "got %s, expected %s", version, types.Version)
-	}
-
-	// Claim channel capability passed back by IBC module
-	if err := am.keeper.ClaimCapability(ctx, chanCap, host.ChannelCapabilityPath(portID, channelID)); err != nil {
-		return err
-	}
-
-	return nil
+	return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "UNIMPLEMENTED")
 }
 
 // OnChanOpenTry implements the IBCModule interface
@@ -55,33 +248,7 @@ func (am AppModule) OnChanOpenTry(
 	version,
 	counterpartyVersion string,
 ) error {
-
-	// Require portID is the portID module is bound to
-	boundPort := am.keeper.GetPort(ctx)
-	if boundPort != portID {
-		return sdkerrors.Wrapf(porttypes.ErrInvalidPort, "invalid port: %s, expected %s", portID, boundPort)
-	}
-
-	if version != types.Version {
-		return sdkerrors.Wrapf(types.ErrInvalidVersion, "got: %s, expected %s", version, types.Version)
-	}
-
-	if counterpartyVersion != types.Version {
-		return sdkerrors.Wrapf(types.ErrInvalidVersion, "invalid counterparty version: got: %s, expected %s", counterpartyVersion, types.Version)
-	}
-
-	// Module may have already claimed capability in OnChanOpenInit in the case of crossing hellos
-	// (ie chainA and chainB both call ChanOpenInit before one of them calls ChanOpenTry)
-	// If module can already authenticate the capability then module already owns it so we don't need to claim
-	// Otherwise, module does not have channel capability and we must claim it from IBC
-	if !am.keeper.AuthenticateCapability(ctx, chanCap, host.ChannelCapabilityPath(portID, channelID)) {
-		// Only claim channel capability passed back by IBC module if we do not already own it
-		if err := am.keeper.ClaimCapability(ctx, chanCap, host.ChannelCapabilityPath(portID, channelID)); err != nil {
-			return err
-		}
-	}
-
-	return nil
+	return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "UNIMPLEMENTED")
 }
 
 // OnChanOpenAck implements the IBCModule interface
@@ -91,10 +258,7 @@ func (am AppModule) OnChanOpenAck(
 	channelID string,
 	counterpartyVersion string,
 ) error {
-	if counterpartyVersion != types.Version {
-		return sdkerrors.Wrapf(types.ErrInvalidVersion, "invalid counterparty version: %s, expected %s", counterpartyVersion, types.Version)
-	}
-	return nil
+	return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "UNIMPLEMENTED")
 }
 
 // OnChanOpenConfirm implements the IBCModule interface
@@ -103,7 +267,7 @@ func (am AppModule) OnChanOpenConfirm(
 	portID,
 	channelID string,
 ) error {
-	return nil
+	return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "UNIMPLEMENTED")
 }
 
 // OnChanCloseInit implements the IBCModule interface
@@ -122,7 +286,7 @@ func (am AppModule) OnChanCloseConfirm(
 	portID,
 	channelID string,
 ) error {
-	return nil
+	return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "UNIMPLEMENTED")
 }
 
 // OnRecvPacket implements the IBCModule interface
@@ -131,25 +295,8 @@ func (am AppModule) OnRecvPacket(
 	modulePacket channeltypes.Packet,
 	relayer sdk.AccAddress,
 ) ibcexported.Acknowledgement {
-	var ack channeltypes.Acknowledgement
-
-	// this line is used by starport scaffolding # oracle/packet/module/recv
-
-	var modulePacketData types.RecordsPacketData
-	if err := modulePacketData.Unmarshal(modulePacket.GetData()); err != nil {
-		return channeltypes.NewErrorAcknowledgement(sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "cannot unmarshal packet data: %s", err.Error()).Error())
-	}
-
-	// Dispatch packet
-	switch packet := modulePacketData.Packet.(type) {
-	// this line is used by starport scaffolding # ibc/packet/module/recv
-	default:
-		errMsg := fmt.Sprintf("unrecognized %s packet type: %T", types.ModuleName, packet)
-		return channeltypes.NewErrorAcknowledgement(errMsg)
-	}
-
 	// NOTE: acknowledgement will be written synchronously during IBC handler execution.
-	return ack
+	return nil
 }
 
 // OnAcknowledgementPacket implements the IBCModule interface
@@ -159,54 +306,7 @@ func (am AppModule) OnAcknowledgementPacket(
 	acknowledgement []byte,
 	relayer sdk.AccAddress,
 ) error {
-	var ack channeltypes.Acknowledgement
-	if err := types.ModuleCdc.UnmarshalJSON(acknowledgement, &ack); err != nil {
-		return sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "cannot unmarshal packet acknowledgement: %v", err)
-	}
-
-	// this line is used by starport scaffolding # oracle/packet/module/ack
-
-	var modulePacketData types.RecordsPacketData
-	if err := modulePacketData.Unmarshal(modulePacket.GetData()); err != nil {
-		return sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "cannot unmarshal packet data: %s", err.Error())
-	}
-
-	var eventType string
-
-	// Dispatch packet
-	switch packet := modulePacketData.Packet.(type) {
-	// this line is used by starport scaffolding # ibc/packet/module/ack
-	default:
-		errMsg := fmt.Sprintf("unrecognized %s packet type: %T", types.ModuleName, packet)
-		return sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, errMsg)
-	}
-
-	ctx.EventManager().EmitEvent(
-		sdk.NewEvent(
-			eventType,
-			sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
-			sdk.NewAttribute(types.AttributeKeyAck, fmt.Sprintf("%v", ack)),
-		),
-	)
-
-	switch resp := ack.Response.(type) {
-	case *channeltypes.Acknowledgement_Result:
-		ctx.EventManager().EmitEvent(
-			sdk.NewEvent(
-				eventType,
-				sdk.NewAttribute(types.AttributeKeyAckSuccess, string(resp.Result)),
-			),
-		)
-	case *channeltypes.Acknowledgement_Error:
-		ctx.EventManager().EmitEvent(
-			sdk.NewEvent(
-				eventType,
-				sdk.NewAttribute(types.AttributeKeyAckError, resp.Error),
-			),
-		)
-	}
-
-	return nil
+	return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "UNIMPLEMENTED")
 }
 
 // OnTimeoutPacket implements the IBCModule interface
@@ -215,19 +315,6 @@ func (am AppModule) OnTimeoutPacket(
 	modulePacket channeltypes.Packet,
 	relayer sdk.AccAddress,
 ) error {
-	var modulePacketData types.RecordsPacketData
-	if err := modulePacketData.Unmarshal(modulePacket.GetData()); err != nil {
-		return sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "cannot unmarshal packet data: %s", err.Error())
-	}
-
-	// Dispatch packet
-	switch packet := modulePacketData.Packet.(type) {
-	// this line is used by starport scaffolding # ibc/packet/module/timeout
-	default:
-		errMsg := fmt.Sprintf("unrecognized %s packet type: %T", types.ModuleName, packet)
-		return sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, errMsg)
-	}
-
 	return nil
 }
 
@@ -240,4 +327,5 @@ func (am AppModule) NegotiateAppVersion(
 	proposedVersion string,
 ) (version string, err error) {
 	return proposedVersion, nil
+	// return "ics20-1", nil
 }
