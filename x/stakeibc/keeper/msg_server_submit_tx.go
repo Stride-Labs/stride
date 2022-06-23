@@ -496,7 +496,8 @@ func (k Keeper) UpdateUB(ctx sdk.Context, zoneInfo types.HostZone, height int64)
 		sdk.NewInt(-1),
 		types.ModuleName,
 		"accountbalance",
-		0,
+		0,      //ttl
+		height, //height
 	)
 
 	// TODO(TEST-120) add support for heights

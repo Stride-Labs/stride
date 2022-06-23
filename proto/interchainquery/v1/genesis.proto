@@ -24,6 +24,7 @@ message Query {
   ];
   string callback_id = 8;
   uint64 ttl = 9;
+  int64 height = 10;
 }
 
 message DataPoint {
