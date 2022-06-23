@@ -9,24 +9,24 @@ env:
   num_nodes: 3
 
 jobs:
-  setup:
+  get-node-names:
     runs-on: ubuntu-latest
     steps:
       - id: matrix
         run: |
-          arr="[\"a\", \"b\", \"c\"]"
-          echo "::set-output name=value::${arr}"
+          node_names="[\"a\", \"b\", \"c\"]"
+          echo "::set-output name=node_names::${node_names}"
     outputs:
-      matrix: ${{ steps.matrix.outputs.value }}
+      matrix: ${{ steps.matrix.outputs.node_names }}
   build:
-    needs: [setup]
+    needs: get-node-names
     runs-on: ubuntu-latest
     strategy:
       matrix:
         value: ${{ fromJson(needs.setup.outputs.matrix) }}
     steps:
       - run: |
-          echo "${{ matrix.value }}"
+          echo "${{ matrix.node_names }}"
 
   # node-names:
   #   runs-on: ubuntu-latest
