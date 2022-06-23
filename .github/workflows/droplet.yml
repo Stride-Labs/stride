@@ -12,18 +12,18 @@ jobs:
   get-node-names:
     runs-on: ubuntu-latest
     steps:
-      - id: matrix
+      - id: set-output
         run: |
-          node_names="[\"a\", \"b\", \"c\"]"
-          echo "::set-output name=node_names::${node_names}"
+          node-names="[\"a\", \"b\", \"c\"]"
+          echo "::set-output name=node-names::${node-names}"
     outputs:
-      matrix: ${{ steps.matrix.outputs.node_names }}
+      node-names: ${{ steps.set-output.outputs.node-names }}
   build:
     needs: get-node-names
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        value: ${{ fromJson(needs.get-node-names.outputs.matrix) }}
+        value: ${{ fromJson(needs.get-node-names.outputs.node-names) }}
     steps:
       - run: |
           echo "${{ matrix.value }}"
