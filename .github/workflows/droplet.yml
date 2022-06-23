@@ -23,13 +23,13 @@ jobs:
           retention-days: 1
 
   pull-data:
+    needs: create-data
     runs-on: ubuntu-latest
     steps:
       - uses: actions/download-artifact@v3
         with:
           name: test-files
           path: ./data
-          retention-days: 1
       - run: pwd
       - run: ls -la
       - run: ls -la data
