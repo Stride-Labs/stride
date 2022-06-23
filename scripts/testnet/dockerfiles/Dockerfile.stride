@@ -22,6 +22,6 @@ USER stride
 RUN strided init test
 EXPOSE 1317
 
-COPY --chown=stride "./scripts/$deployment_name/state/$node_name/" /stride/.strided/ 
+COPY --chown=stride "./state/$node_name/" /stride/.strided/ 
 
 CMD ["strided", "start", "--home", "/stride/.strided"]
