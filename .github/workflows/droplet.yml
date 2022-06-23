@@ -14,8 +14,11 @@ jobs:
     steps:
       - id: set-output
         run: |
-          node_names="[\"a\", \"b\", \"c\", ]"
-          echo "::set-output name=node-names::${node_names}"
+          node_names=""
+          for (( i=1; i <= $num_nodes; i++ )); do
+            node_names+="\"${network_name}-node${i}\","
+          done
+          echo "::set-output name=node-names::[${node_names}]"
     outputs:
       node-names: ${{ steps.set-output.outputs.node-names }}
 
