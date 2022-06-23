@@ -14,7 +14,7 @@ jobs:
     steps:
       - id: set-output
         run: |
-          node_names="[\"a\", \"b\", \"c\"]"
+          node_names="[\"a\", \"b\", \"c\", ]"
           echo "::set-output name=node-names::${node_names}"
     outputs:
       node-names: ${{ steps.set-output.outputs.node-names }}
