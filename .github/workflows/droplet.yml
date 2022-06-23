@@ -14,7 +14,8 @@ jobs:
     steps:
       - id: matrix
         run: |
-          echo "::set-output name=value::[\"a\", \"b\", \"c\"]"
+          arr="[\"a\", \"b\", \"c\"]"
+          echo "::set-output name=value::${arr}"
     outputs:
       matrix: ${{ steps.matrix.outputs.value }}
   build:
