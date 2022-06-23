@@ -16,10 +16,11 @@ jobs:
       - run: pwd
       - run: ls -la
       - run: ls -la ./the/path/to/data
-      - uses: actions/cache@v3
+      - uses: actions/upload-artifact@v3
         with:
-          key: test-files-cache
+          name: test-files
           path: ./the/path/to/data
+          retention-days: 1
 
   pull-data:
     needs: create-data
