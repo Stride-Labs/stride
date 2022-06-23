@@ -23,7 +23,27 @@ jobs:
     outputs:
       matrix: ${{ steps.matrix.outputs.node_names }}
 
-  build-node-images:
+  initialize-state:
+    # needs: node_names
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Build Stride
+        run: make build
+
+      - name: Initialize Stride State
+        shell: bash
+        run: ./scripts/testnet/setup_testnet_state.sh ${deployment_name} ${chain_name} ${num_nodes}
+
+      - name: Persist State Files
+        uses: actions/upload-artifact@v2
+        with:
+          name: state
+          path: ./scripts
+
+  build-docker-images:
     needs: node_names
     runs-on: ubuntu-latest
     strategy:
@@ -40,8 +60,16 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
 
-      - name: Show
-        run: echo "======================${{ matrix.node_names }}================================="
+      - name: Restore State Files
+        uses: actions/download-artifact@v2
+        with:
+          name: state
+
+      - name: LS 1
+        run: pwd
+
+      - name: LS 1
+        run: ls -la
 
       - name: Login to DockerHub
         uses: docker/login-action@v2
@@ -61,27 +89,6 @@ jobs:
         run: |
           gcloud auth configure-docker
 
-      - name: Build Stride
-        run: make build
-
-      - name: Initialize Stride State
-        shell: bash
-        run: ./scripts/testnet/setup_testnet_state.sh ${deployment_name} ${chain_name} ${num_nodes}
-
-      # - name: Build Stride Seed Node Image
-      #   uses: docker/build-push-action@v3
-      #   with:
-      #     context: .
-      #     file: "scripts/testnet/dockerfiles/Dockerfile.stride"
-      #     build-args: |
-      #       deployment_name=testnet
-      #       node_name=stride-seed
-      #     push: true
-      #     platforms: linux/amd64
-      #     tags: |
-      #       stridelabs/internal:stride-seed
-      #       gcr.io/stride-nodes/testnet:stride-seed
-
       - name: Build Stride Node Images
         uses: docker/build-push-action@v3
         with:
@@ -95,51 +102,3 @@ jobs:
           tags: |
             stridelabs/internal:${{ matrix.node_names }}
             gcr.io/stride-nodes/testnet:${{ matrix.node_names }}
-      # -
-      #   name: Construct Node1 Images
-      #   uses: docker/build-push-action@v3
-      #   with:
-      #     context: "{{defaultContext}}"
-      #     file: "scripts/testnet/dockerfiles/Dockerfile.node1"
-      #     push: true
-      #     platforms: linux/amd64
-      #     tags: |
-      #       stridelabs/internal:droplet_node1
-      #       gcr.io/stride-nodes/testnet:droplet_node1
-      # -
-      #   name: Construct Node2 Images
-      #   uses: docker/build-push-action@v3
-      #   with:
-      #     context: "{{defaultContext}}"
-      #     file: "scripts/testnet/dockerfiles/Dockerfile.node2"
-      #     push: true
-      #     platforms: linux/amd64
-      #     tags: |
-      #       stridelabs/internal:droplet_node2
-      #       gcr.io/stride-nodes/testnet:droplet_node2
-      # -
-      #   name: Construct Node3 Images
-      #   uses: docker/build-push-action@v3
-      #   with:
-      #     context: "{{defaultContext}}"
-      #     file: "scripts/testnet/dockerfiles/Dockerfile.node3"
-      #     push: true
-      #     platforms: linux/amd64
-      #     tags: |
-      #       stridelabs/internal:droplet_node3
-      #       gcr.io/stride-nodes/testnet:droplet_node3
-      # -
-      #   name: Construct Seed Images
-      #   uses: docker/build-push-action@v3
-      #   with:
-      #     context: "{{defaultContext}}"
-      #     file: "scripts/testnet/dockerfiles/Dockerfile.seed"
-      #     push: true
-      #     platforms: linux/amd64
-      #     tags: |
-      #       stridelabs/internal:droplet_seed
-      #       gcr.io/stride-nodes/testnet:droplet_seed
-      # -
-      #   name: Publish to GCP
-      #   run: |
-      #     docker push gcr.io/stride-nodes/testnet:droplet_node1
