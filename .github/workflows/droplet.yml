@@ -9,27 +9,52 @@ env:
   num_nodes: 3
 
 jobs:
+  # create-data:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - run: mkdir -p data && echo "aaa" > data/a.txt && echo "bbb" > data/b.txt
+  #     - run: pwd
+  #     - run: ls -la
+  #     - run: ls -la data
+  #     - uses: actions/upload-artifact@v3
+  #       with:
+  #         name: test-files
+  #         path: ./data
+  #         retention-days: 1
+
+  # pull-data:
+  #   needs: create-data
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/download-artifact@v3
+  #       with:
+  #         name: test-files
+  #         path: ./data
+  #     - run: pwd
+  #     - run: ls -la
+  #     - run: ls -la data
+
   create-data:
     runs-on: ubuntu-latest
     steps:
-      - run: mkdir -p data && echo "aaa" > data/a.txt && echo "bbb" > data/b.txt
+      - run: mkdir -p the/path/to/data && echo "aaa" > the/path/to/data/a.txt && echo "bbb" > the/path/to/data/b.txt
       - run: pwd
       - run: ls -la
       - run: ls -la data
       - uses: actions/upload-artifact@v3
         with:
           name: test-files
-          path: ./data
+          path: ./the/path/to/data
           retention-days: 1
 
   pull-data:
     needs: create-data
     runs-on: ubuntu-latest
     steps:
-      # - uses: actions/download-artifact@v3
-      #   with:
-      #     name: test-files
-      #     path: ./data
+      - uses: actions/download-artifact@v3
+        with:
+          name: test-files
+          path: ./data
       - run: pwd
       - run: ls -la
       - run: ls -la data
