@@ -85,9 +85,9 @@ jobs:
           context: .
           file: "scripts/testnet/dockerfiles/Dockerfile.stride"
           build-args: |
-            node_name=${{ matrix.node_name }}
+            node_name=${{ matrix.node-name }}
           push: true
           platforms: linux/amd64
           tags: |
-            stridelabs/internal:${{ matrix.node_name }}
-            gcr.io/stride-nodes/testnet:${{ matrix.node_name }}
+            stridelabs/internal:${{ matrix.node-name }}
+            gcr.io/stride-nodes/testnet:${{ matrix.node-name }}
