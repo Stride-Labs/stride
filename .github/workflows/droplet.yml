@@ -15,9 +15,9 @@ jobs:
       - id: matrix
         run: |
           node_names="[\"a\", \"b\", \"c\"]"
-          echo "::set-output name=value::${node_names}"
+          echo "::set-output name=node_names::${node_names}"
     outputs:
-      matrix: ${{ steps.matrix.outputs.value }}
+      matrix: ${{ steps.matrix.outputs.node_names }}
   build:
     needs: get-node-names
     runs-on: ubuntu-latest
