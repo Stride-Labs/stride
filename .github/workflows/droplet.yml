@@ -41,7 +41,7 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: state
-          path: ./scripts
+          path: ./scripts/${deployment_name}/state
           retention-days: 1
 
   build-docker-images:
@@ -71,6 +71,12 @@ jobs:
 
       - name: LS 1
         run: ls -la
+
+      - name: LS 1
+        run: ls -la scripts/testnet
+
+      - name: LS 1
+        run: ls -la state
 
       - name: Login to DockerHub
         uses: docker/login-action@v2
