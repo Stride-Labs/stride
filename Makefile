@@ -9,7 +9,7 @@ DOCKER := $(shell which docker)
 BUILDDIR ?= $(CURDIR)/build
 TEST_DOCKER_REPO=Stride-Labs/stridednode
 
-build=stride
+build=s
 
 export GO111MODULE = on
 
@@ -287,24 +287,35 @@ test:
 	sh ./scripts/simple_test.sh
 
 init:
-	@if [ ${build} == "base" ]; \
-		then \
-			sh scripts/init.sh -bd;\
-	elif [ ${build} == "all" ]; \
-		then \
-			sh scripts/init.sh -bf;\
-	elif [ ${build} == "none" ]; \
-		then \
-			sh scripts/init.sh;\
-	elif [ ${build} == "stride" ]; \
-		then \
-			sh scripts/init.sh -bs;\
-	elif [ ${build} == "strideall" ]; \
-		then \
-			sh scripts/init.sh -ba ;\
-	elif [ ${build} == "logs" ]; \
-		then \
-			sh scripts/logs/create_logs.sh -ba ;\
-	else\
-		echo "Init type ${build} not recognized.";\
-	fi
+	sh scripts/init_main.sh -${build}
+
+logs: 
+	sh scripts/logs/create_logs.sh 
+
+
+local-install: stride-local-install gaia-local-install icq-local-install
+
+stride-local-install: 
+	go get github.com/improbable-eng/grpc-web/go/grpcweb@v0.15.0
+	go mod tidy
+
+gaia-local-install:
+	cd deps/gaia; \
+	go mod tidy
+
+icq-local-install:
+	cd deps/interchain-queries; \
+	go mod tidy
+
+
+local-init:
+	sh scripts-local/init_main.sh -${build} ${BUILDDIR}
+
+start:
+	sh scripts-local/start_network.sh
+
+start-cached:
+	sh scripts-local/start_network.sh true 
+
+stop:
+	killall gaiad strided hermes interchain-queries

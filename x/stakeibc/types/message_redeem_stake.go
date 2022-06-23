@@ -11,11 +11,11 @@ const TypeMsgRedeemStake = "redeem_stake"
 
 var _ sdk.Msg = &MsgRedeemStake{}
 
-func NewMsgRedeemStake(creator string, amount int64, denom string, receiver string) *MsgRedeemStake {
+func NewMsgRedeemStake(creator string, amount int64, stAssetDenom string, receiver string) *MsgRedeemStake {
 	return &MsgRedeemStake{
 		Creator: creator,
 		Amount:  amount,
-		Denom:   denom,
+		StAssetDenom:   stAssetDenom,
 		Receiver: receiver,
 	}
 }
@@ -49,11 +49,11 @@ func (msg *MsgRedeemStake) GetSignBytes() []byte {
 
 func (msg *MsgRedeemStake) ValidateBasic() error {
 	_, err := sdk.AccAddressFromBech32(msg.Creator)
-	isStAsset := IsStAsset(msg.Denom)
+	isStAsset := IsStAsset(msg.StAssetDenom)
 	if err != nil {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid creator address (%s)", err)
 	} else if !isStAsset {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidCoins, "invalid token denom (requires stAsset) (%s)", msg.Denom)
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidCoins, "invalid token denom (requires stAsset) (%s)", msg.StAssetDenom)
 	}
 	return nil
 }

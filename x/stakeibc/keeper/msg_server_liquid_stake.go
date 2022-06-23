@@ -18,10 +18,9 @@ func (k msgServer) LiquidStake(goCtx context.Context, msg *types.MsgLiquidStake)
 	// NOTE: If sender doesn't have enough inCoin, this panics (error is hard to interpret)
 	// check that hostZone is registered
 	// strided tx stakeibc liquid-stake 100 uatom
-	hostDenom := msg.Denom
-	hostZone, err := k.GetHostZoneFromHostDenom(ctx, msg.Denom)
+	hostZone, err := k.GetHostZoneFromHostDenom(ctx, msg.HostDenom)
 	if err != nil {
-		k.Logger(ctx).Info("Host Zone not found for denom (%s)", hostDenom)
+		k.Logger(ctx).Info("Host Zone not found for denom (%s)", msg.HostDenom)
 		return nil, err
 	}
 	// get the sender address
@@ -64,13 +63,13 @@ func (k msgServer) LiquidStake(goCtx context.Context, msg *types.MsgLiquidStake)
 	}
 	// mint user `amount` of the corresponding stAsset
 	// NOTE: We should ensure that denoms are unique - we don't want anyone spoofing denoms
-	err = k.MintStAsset(ctx, sender, msg.Amount, hostDenom)
+	err = k.MintStAsset(ctx, sender, msg.Amount, msg.HostDenom)
 	if err != nil {
 		k.Logger(ctx).Info("failed to send tokens from Account to Module")
 		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidCoins, "failed to mint stAssets to user")
 	}
 	// create a deposit record of these tokens
-	depositRecord := types.NewDepositRecord(msg.Amount, hostDenom, hostZone.ChainId,
+	depositRecord := types.NewDepositRecord(msg.Amount, msg.HostDenom, hostZone.ChainId,
 		sender.String(), types.DepositRecord_RECEIPT)
 	k.AppendDepositRecord(ctx, *depositRecord)
 
@@ -85,12 +84,7 @@ func (k msgServer) MintStAsset(ctx sdk.Context, sender sdk.AccAddress, amount in
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidCoins, "Amount to mint must be positive")
 	}
 
-	// NOTE: should we pass in a zone to this function and pull the stAssetDenom off of that object?
-	// get the asset type to transfer
-	// TODO(TEST-23): store denoms on HostZone
-	prefix := "st"
-	// get the denom of the st asset type to transfer
-	stAssetDenom := prefix + denom
+	stAssetDenom := types.StAssetDenomFromHostZoneDenom(denom)
 
 	// TODO(TEST-7): Add an exchange rate here! What object should we store the exchange rate on?
 	// How can we ensure that the exchange rate is not manipulated?
