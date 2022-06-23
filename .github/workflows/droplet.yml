@@ -17,13 +17,13 @@ jobs:
           node_names="[\"a\", \"b\", \"c\"]"
           echo "::set-output name=node_names::${node_names}"
     outputs:
-      matrix: ${{ steps.matrix.outputs.node_names }}
+      node-names: ${{ steps.matrix.outputs.node_names }}
   build:
     needs: get-node-names
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        value: ${{ fromJson(needs.setup.outputs.matrix) }}
+        value: ${{ fromJson(needs.get-node-names.outputs.node-names) }}
     steps:
       - run: |
           echo "${{ matrix.node_names }}"
