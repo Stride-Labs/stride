@@ -11,21 +11,22 @@ env:
 jobs:
   setup:
     runs-on: ubuntu-latest
-    outputs:
-      matrix: ${{ steps.matrix.outputs.value }}
     steps:
       - id: matrix
         run: |
-          echo '::set-output name=value::[\"a\", \"b\", \"c\"]'
+          echo "::set-output name=value::[\"a\", \"b\", \"c\"]"
+    outputs:
+      matrix: ${{ steps.matrix.outputs.value }}
   build:
     needs: [setup]
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        value: ${{fromJson(needs.setup.outputs.matrix)}}
+        value: ${{ fromJson(needs.setup.outputs.matrix) }}
     steps:
       - run: |
           echo "${{ matrix.value }}"
+
   # node-names:
   #   runs-on: ubuntu-latest
   #   steps:
