@@ -1,12 +1,13 @@
 on:
-  push:
-    branches:
-      - launch-net-actions
+  workflow_dispatch:
+    inputs:
+      deployment_name:
+        description: Testnet that you want to launch (e.g. droplet)
+        required: true
 
 env:
-  deployment_name: testnet
   network_name: stride
-  num_nodes: 3
+  num_stride_nodes: 3
 
 jobs:
   get-node-names:
@@ -15,12 +16,22 @@ jobs:
       - id: set-output
         run: |
           node_names_array=""
-          for (( i=1; i <= $num_nodes; i++ )); do
+          for (( i=1; i <= $num_stride_nodes; i++ )); do
             node_names_array+="\"${network_name}-node${i}\","
           done
           echo "::set-output name=node-names::[${node_names_array}]"
     outputs:
       node-names: ${{ steps.set-output.outputs.node-names }}
+
+  build-modules:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Build Stride
+        run: make build
+      # build other stuff
 
   initialize-state:
     runs-on: ubuntu-latest
@@ -33,7 +44,7 @@ jobs:
 
       - name: Initialize Stride State
         shell: bash
-        run: ./scripts/testnet/setup_testnet_state.sh ${deployment_name} ${network_name} ${num_nodes}
+        run: ./scripts/testnet/setup_testnet_state.sh ${deployment_name} ${num_stride_nodes}
 
       - name: Persist State Files
         uses: actions/upload-artifact@v3
@@ -42,7 +53,7 @@ jobs:
           path: ./scripts/testnet/state
           retention-days: 1
 
-  build-docker-images:
+  build-stride-images:
     needs: [get-node-names, initialize-state]
     runs-on: ubuntu-latest
     strategy:
@@ -89,5 +100,45 @@ jobs:
           push: true
           platforms: linux/amd64
           tags: |
-            stridelabs/internal:${{ matrix.node-name }}
-            gcr.io/stride-nodes/testnet:${{ matrix.node-name }}
+            stridelabs/nodes-${{ github.event.inputs.deployment_name }}:${{ matrix.node-name }}
+            gcr.io/stride-nodes/${{ github.event.inputs.deployment_name }}:${{ matrix.node-name }}
+
+  build-dep-images:
+    needs: [initialize-state]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Construct Gaia Image
+        uses: docker/build-push-action@v3
+        with:
+          context: "{{defaultContext}}"
+          file: "scripts/testnet/dockerfiles/Dockerfile.gaia"
+          push: true
+          platforms: linux/amd64
+          build-args: deployment_name=${{ github.event.inputs.deployment_name }}
+          tags: |
+            stridelabs/nodes-${{ github.event.inputs.deployment_name }}:gaia
+            gcr.io/stride-nodes/${{ github.event.inputs.deployment_name }}:gaia
+
+      - name: Construct Hermes Image
+        uses: docker/build-push-action@v3
+        with:
+          context: "{{defaultContext}}"
+          file: "scripts/testnet/dockerfiles/Dockerfile.hermes"
+          push: true
+          platforms: linux/amd64
+          build-args: deployment_name=${{ github.event.inputs.deployment_name }}
+          tags: |
+            stridelabs/nodes-${{ github.event.inputs.deployment_name }}:hermes
+            gcr.io/stride-nodes/${{ github.event.inputs.deployment_name }}:hermes
+
+      - name: Construct ICQ Image
+        uses: docker/build-push-action@v3
+        with:
+          context: "{{defaultContext}}"
+          file: "scripts/testnet/dockerfiles/Dockerfile.icq"
+          push: true
+          platforms: linux/amd64
+          build-args: deployment_name=${{ github.event.inputs.deployment_name }}
+          tags: |
+            stridelabs/nodes-${{ github.event.inputs.deployment_name }}:icq
+            gcr.io/stride-nodes/${{ github.event.inputs.deployment_name }}:icq

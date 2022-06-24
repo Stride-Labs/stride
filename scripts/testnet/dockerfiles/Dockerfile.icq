@@ -7,13 +7,13 @@ ARG network_name
 # RUN apt update
 RUN apt install git
 
-RUN apt-get update
-RUN apt-get install jq --yes
+RUN apt-get update \
+    && apt-get install -y jq iputils-ping
 
 WORKDIR /src/app
 
-RUN git clone https://github.com/Stride-Labs/icq.git
-RUN cp -r icq/* .
+RUN git clone https://github.com/Stride-Labs/interchain-queries.git
+RUN cp -r interchain-queries/* .
 RUN rm -rf interchain-queries
 
 # copy over stride module and install it
@@ -22,8 +22,6 @@ RUN mkdir stride_ref/stride
 COPY . /src/app/stride_ref/stride
 WORKDIR /src/app/stride_ref/stride
 WORKDIR /src/app
-RUN go get github.com/Stride-Labs/interchain-queries/cmd
-RUN go get github.com/Stride-Labs/interchain-queries/pkg/runner
 RUN go mod download
 RUN go build
 
@@ -31,11 +29,11 @@ RUN ln -s /src/app/interchain-queries /usr/local/bin
 RUN adduser --system --home /icq --disabled-password --disabled-login icq -U 1000
 USER icq
 
-COPY --chown=icq "scripts/testnet/${network_name}/state/icq_startup.sh" /icq/icq_startup.sh
-# COPY --chown=icq "scripts/testnet/${network_name}/state/icq" /icq/.icq
+COPY --chown=icq "./state/icq_startup.sh" /icq/icq_startup.sh
+COPY --chown=icq "./state/icq_config.yaml" /icq/.icq/config.yaml
 
 RUN ["chmod", "+x", "/icq/icq_startup.sh"]
-ENTRYPOINT ["/icq/icq_startup.sh"]
+CMD ["/icq/icq_startup.sh"]
 
 
 

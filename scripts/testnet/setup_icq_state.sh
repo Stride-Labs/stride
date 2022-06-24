@@ -1,21 +1,20 @@
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
-echo '\n\nInitializing Hermes...'
+echo 'Initializing ICQ...'
 
-# import dependencies
-source ${SCRIPT_DIR}/testnet_vars.sh $1
-
-ICQ_DIR=${STATE}/icq
-mkdir $ICQ_DIR
-
-RLY_1_KEY=$(GETKEY rly1)
-RLY_2_KEY=$(GETRLY2)
+ICQ_STRIDE_MNEMONIC=$(GET_MNEMONIC $ICQ_STRIDE_ACCT)
+ICQ_GAIA_MNEMONIC=$(GET_MNEMONIC $ICQ_GAIA_ACCT)
 
 ICQ_STARTUP_FILE="${STATE}/icq_startup.sh"
-cp ${SCRIPT_DIR}/icq_startup_base.sh $ICQ_STARTUP_FILE
-sed -i -E "s|STRIDE_CHAIN|$STRIDE_CHAIN|g" $ICQ_STARTUP_FILE
-sed -i -E "s|GAIA_CHAIN|$GAIA_CHAIN|g" $ICQ_STARTUP_FILE
-sed -i -E "s|ICQ_STRIDE_KEY|$RLY_1_KEY|g" $ICQ_STARTUP_FILE
-sed -i -E "s|ICQ_GAIA_KEY|$RLY_2_KEY|g" $ICQ_STARTUP_FILE
+cp ${SCRIPT_DIR}/icq_startup_template.sh $ICQ_STARTUP_FILE
+sed -i -E "s|STRIDE_ENDPOINT|$STRIDE_MAIN_ENDPOINT|g" $ICQ_STARTUP_FILE
+sed -i -E "s|ICQ_STRIDE_MNEMONIC|$ICQ_STRIDE_MNEMONIC|g" $ICQ_STARTUP_FILE
+sed -i -E "s|ICQ_GAIA_MNEMONIC|$ICQ_GAIA_MNEMONIC|g" $ICQ_STARTUP_FILE
+
+ICQ_CONFIG_FILE="${STATE}/icq_config.yaml"
+cp ${SCRIPT_DIR}/icq_config_template.yaml $ICQ_CONFIG_FILE
+sed -i -E "s|STRIDE_ENDPOINT|$STRIDE_MAIN_ENDPOINT|g" $ICQ_CONFIG_FILE
+sed -i -E "s|GAIA_ENDPOINT|$GAIA_MAIN_ENDPOINT|g" $ICQ_CONFIG_FILE
 
 rm "${ICQ_STARTUP_FILE}-e"
+rm "${ICQ_CONFIG_FILE}-e"
