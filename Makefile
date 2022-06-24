@@ -325,4 +325,5 @@ local-init: local-build
 	@sh scripts-local/start_network.sh ${cache}
 
 stop:
-	killall gaiad strided hermes interchain-queries
+	@killall gaiad strided hermes interchain-queries
+	@pkill -f "/bin/bash.*create_logs.sh"

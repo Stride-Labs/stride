@@ -18,7 +18,7 @@ ICQ_LOGS=$SCRIPT_DIR/logs/icq.log
 
 # Stop processes and clear state and logs
 make stop 2>/dev/null ||
-rm -rf $SCRIPT_DIR/state  $SCRIPT_DIR/logs/*.log
+rm -rf $SCRIPT_DIR/state  $SCRIPT_DIR/logs/*.log $SCRIPT_DIR/logs/temp
 
 # Recreate each log file
 for log in $STRIDE_LOGS $GAIA_LOGS $HERMES_LOGS $ICQ_LOGS; do
@@ -93,3 +93,6 @@ if [ "$CACHE" != "true" ]; then
         --chain-id $STRIDE_CHAIN --home $STATE/stride \
         --keyring-backend test --from $STRIDE_VAL_ACCT --gas 500000 -y
 fi
+
+# Add more detailed log files
+$SCRIPT_DIR/create_logs.sh &
