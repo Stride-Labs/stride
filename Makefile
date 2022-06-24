@@ -10,6 +10,7 @@ BUILDDIR ?= $(CURDIR)/build
 TEST_DOCKER_REPO=Stride-Labs/stridednode
 
 build=s
+cache=false
 
 export GO111MODULE = on
 
@@ -291,3 +292,28 @@ init:
 
 logs: 
 	sh scripts/logs/create_logs.sh 
+
+
+local-install: stride-local-install gaia-local-install icq-local-install
+
+stride-local-install: 
+	go get github.com/improbable-eng/grpc-web/go/grpcweb@v0.15.0
+	go mod tidy
+
+gaia-local-install:
+	cd deps/gaia; \
+	go mod tidy
+
+icq-local-install:
+	cd deps/interchain-queries; \
+	go mod tidy
+
+
+local-init:
+	sh scripts-local/init_main.sh -${build} ${BUILDDIR} ${cache}
+
+start:
+	sh scripts-local/start_network.sh ${cache}
+
+stop:
+	killall gaiad strided hermes interchain-queries
