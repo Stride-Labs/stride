@@ -16,6 +16,7 @@ echo 'Initializing gaia state...'
 $GAIA_CMD init test --chain-id $GAIA_CHAIN --overwrite 2> /dev/null
 sed -i -E 's|"stake"|"uatom"|g' "${STATE}/${GAIA_NODE_NAME}/config/genesis.json"
 sed -i -E 's|"full"|"validator"|g' "${STATE}/${GAIA_NODE_NAME}/config/config.toml"
+sed -i -E "s|timeout_commit = \"5s\"|timeout_commit = \"${BLOCK_TIME}\"|g" "${STATE}/${GAIA_NODE_NAME}/config/config.toml"
 
 # add validator account
 echo $GAIA_VAL_MNEMONIC | $GAIA_CMD keys add $GAIA_VAL_ACCT --recover --keyring-backend=test 

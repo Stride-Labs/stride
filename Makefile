@@ -246,7 +246,7 @@ format:
 	find . -name '*.go' -type f -not -path "./vendor*" -not -path "*.git*" -not -path "./client/lcd/statik/statik.go" | xargs goimports -w -local github.com/cosmos/cosmos-sdk
 
 ###############################################################################
-###                                Localnet                                 ###
+###                                DockerNet                                ###
 ###############################################################################
 
 build-docker-stridednode:
@@ -294,26 +294,35 @@ logs:
 	sh scripts/logs/create_logs.sh 
 
 
-local-install: stride-local-install gaia-local-install icq-local-install
+###############################################################################
+###                                LocalNet                                 ###
+###############################################################################
+
+local-dependencies:
+	sh scripts-local/check_dependencies.sh
+
+local-install: local-dependencies stride-local-install gaia-local-install icq-local-install
 
 stride-local-install: 
+	@echo "\nInstalling Stride"
 	go get github.com/improbable-eng/grpc-web/go/grpcweb@v0.15.0
 	go mod tidy
 
 gaia-local-install:
+	@echo "\nInstalling Gaia"
 	cd deps/gaia; \
 	go mod tidy
 
 icq-local-install:
+	@echo "\nInstalling ICQ"
 	cd deps/interchain-queries; \
 	go mod tidy
 
+local-build: 
+	@sh scripts-local/build.sh -${build} ${BUILDDIR}
 
-local-init:
-	sh scripts-local/init_main.sh -${build} ${BUILDDIR} ${cache}
-
-start:
-	sh scripts-local/start_network.sh ${cache}
+local-init: local-build
+	@sh scripts-local/start_network.sh ${cache}
 
 stop:
 	killall gaiad strided hermes interchain-queries
