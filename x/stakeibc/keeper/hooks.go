@@ -60,8 +60,8 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochIdentifier string, epochN
 			k.ProcessDelegationStaking(ctx)
 		}
 
-		exchangeRateInterval := int64(k.GetParam(ctx, types.KeyExchangeRateInterval))
-		if epochNumber%exchangeRateInterval == 0 && (epochNumber > 40) { // allow a few blocks from UpdateUndelegatedBal to avoid conflicts
+		reinvestInterval := int64(k.GetParam(ctx, types.KeyReinvestInterval))
+		if epochNumber%reinvestInterval == 0 && (epochNumber > 50) { // allow a few blocks from UpdateUndelegatedBal to avoid conflicts
 			for _, hz := range k.GetAllHostZone(ctx) {
 				k.UpdateWithdrawalBalance(ctx, hz)
 			}

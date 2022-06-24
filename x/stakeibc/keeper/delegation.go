@@ -47,7 +47,8 @@ func (k Keeper) ProcessDelegationStaking(ctx sdk.Context) {
 			k.Logger(ctx).Error("Zone %s is missing a delegation address!", zoneInfo.ChainId)
 			return errors.New("Zone is missing a delegation address!")
 		}
-		balance := zoneInfo.DelegationAccount.UndelegatedBalance
+		// TODO(TEST-123) sum up deposit records here!
+		balance := int64(0)
 		processAmount := strconv.FormatInt(balance, 10) + zoneInfo.HostDenom
 		amt, err := sdk.ParseCoinNormalized(processAmount)
 		if err != nil {
