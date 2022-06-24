@@ -63,6 +63,5 @@ func TestGenesis(t *testing.T) {
 	require.Equal(t, genesisState.HostZoneCount, got.HostZoneCount)
 	require.ElementsMatch(t, genesisState.DepositRecordList, got.DepositRecordList)
 	require.Equal(t, genesisState.DepositRecordCount, got.DepositRecordCount)
-	require.ElementsMatch(t, genesisState.ControllerBalancesList, got.ControllerBalancesList)
 	// this line is used by starport scaffolding # genesis/test/assert
 }

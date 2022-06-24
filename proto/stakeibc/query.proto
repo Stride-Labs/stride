@@ -64,16 +64,6 @@ service Query {
 	// QueryInterchainAccountFromAddress returns the interchain account for given owner address on a given connection pair
 	rpc InterchainAccountFromAddress(QueryInterchainAccountFromAddressRequest) returns (QueryInterchainAccountFromAddressResponse);
 
-// Queries a ControllerBalances by index.
-	rpc ControllerBalances(QueryGetControllerBalancesRequest) returns (QueryGetControllerBalancesResponse) {
-		option (google.api.http).get = "/Stride-Labs/stride/stakeibc/controller_balances/{index}";
-	}
-
-	// Queries a list of ControllerBalances items.
-	rpc ControllerBalancesAll(QueryAllControllerBalancesRequest) returns (QueryAllControllerBalancesResponse) {
-		option (google.api.http).get = "/Stride-Labs/stride/stakeibc/controller_balances";
-	}
-
 // this line is used by starport scaffolding # 2
 }
 
@@ -159,22 +149,5 @@ message QueryModuleAddressResponse {
   string addr = 1;
 }
 
-message QueryGetControllerBalancesRequest {
-	  string index = 1;
-
-}
-
-message QueryGetControllerBalancesResponse {
-	ControllerBalances controllerBalances = 1 [(gogoproto.nullable) = false];
-}
-
-message QueryAllControllerBalancesRequest {
-	cosmos.base.query.v1beta1.PageRequest pagination = 1;
-}
-
-message QueryAllControllerBalancesResponse {
-	repeated ControllerBalances controllerBalances = 1 [(gogoproto.nullable) = false];
-	cosmos.base.query.v1beta1.PageResponse pagination = 2;
-}
 
 // this line is used by starport scaffolding # 3

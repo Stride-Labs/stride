@@ -22,6 +22,5 @@ message GenesisState {
   uint64 depositRecordCount = 8;
   // stores a map from hostZone base denom to hostZone
   map<string, string> denomToHostZone = 9;
-  repeated ControllerBalances controllerBalancesList = 10 [(gogoproto.nullable) = false];
   // this line is used by starport scaffolding # genesis/proto/state
 }
