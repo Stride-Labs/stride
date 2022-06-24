@@ -21,4 +21,5 @@ message ICAAccount {
   ICAAccountType target = 5;
   int64 heightLastQueriedDelegatedBalance = 6;
   int64 heightLastQueriedUndelegatedBalance = 7;
+  int64 withdrawalBalance = 8;
 }
