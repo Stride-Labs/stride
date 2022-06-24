@@ -61,20 +61,9 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochIdentifier string, epochN
 		}
 
 		exchangeRateInterval := int64(k.GetParam(ctx, types.KeyExchangeRateInterval))
-		if epochNumber%exchangeRateInterval == 0 && (epochNumber > 125) { // allow a few blocks from UpdateUndelegatedBal to avoid conflicts
+		if epochNumber%exchangeRateInterval == 0 && (epochNumber > 40) { // allow a few blocks from UpdateUndelegatedBal to avoid conflicts
 			for _, hz := range k.GetAllHostZone(ctx) {
-				// TODO(NOW) update LC before getting latest height
-				latestHeightHostZone, found := k.GetLightClientHeightSafely(ctx, hz.ConnectionId)
-				if !found {
-					k.Logger(ctx).Error("client id not found for hz %s, connection \"%s\"", hz.ChainId, hz.ConnectionId)
-					continue
-				} else {
-					// store stAsset and module account balances; TODO(TEST-119) replace below with StAssetDenomFromHostZoneDenom() at merge
-					// k.RecordAndSaveControllerBalances(ctx, hz, latestHeightHostZone)
-					// TODO(TEST-97) update only when balances, delegatedBalances and stAsset supply are results from the same block
-					// k.UpdateRedemptionRatePart1(ctx, hz, latestHeightHostZone)
-					k.UpdateUB(ctx, hz, latestHeightHostZone)
-				}
+				k.UpdateWithdrawalBalance(ctx, hz)
 			}
 		}
 	}
