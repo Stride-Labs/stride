@@ -1,13 +1,25 @@
-ARG network_name
+FROM rust:1.58-slim as rust
 
-FROM gcr.io/stride-nodes/testnet:tub_hermes AS hermesbase
+RUN apt update && apt install git -y
 
-ARG network_name
+WORKDIR /app/src
 
+RUN git clone https://github.com/informalsystems/ibc-rs --branch v0.15.0
 
+WORKDIR ibc-rs
 
-COPY --chown=hermes "scripts/testnet/${network_name}/state/hermes.toml" /tmp/hermes.toml
-COPY --chown=hermes "scripts/testnet/${network_name}/state/hermes_startup.sh" /hermes/hermes_startup.sh
+RUN cargo build --release
+
+FROM debian:bullseye-slim
+
+COPY --from=rust /app/src/ibc-rs/target/release/hermes /usr/local/bin/hermes
+RUN apt-get update \
+    && apt-get install -y iputils-ping \
+    && adduser --system --home /hermes --disabled-password --disabled-login hermes -u 1000
+USER hermes
+
+COPY --chown=hermes "./state/hermes_config.toml" /hermes/.hermes/config.toml
+COPY --chown=hermes "./state/hermes_startup.sh" /hermes/hermes_startup.sh
 
 RUN ["chmod", "+x", "/hermes/hermes_startup.sh"]
-ENTRYPOINT ["/hermes/hermes_startup.sh"]
+CMD ["/hermes/hermes_startup.sh"]
