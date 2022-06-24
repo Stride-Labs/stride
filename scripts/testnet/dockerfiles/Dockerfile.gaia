@@ -1,0 +1,7 @@
+ARG network_name
+
+FROM gcr.io/stride-nodes/testnet:tub_gaia AS gaiabase
+
+ARG network_name
+
+COPY --chown=gaia "scripts/testnet/${network_name}/state/gaia/" /gaia/.gaiad/ 

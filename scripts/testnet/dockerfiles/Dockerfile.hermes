@@ -1,0 +1,13 @@
+ARG network_name
+
+FROM gcr.io/stride-nodes/testnet:tub_hermes AS hermesbase
+
+ARG network_name
+
+
+
+COPY --chown=hermes "scripts/testnet/${network_name}/state/hermes.toml" /tmp/hermes.toml
+COPY --chown=hermes "scripts/testnet/${network_name}/state/hermes_startup.sh" /hermes/hermes_startup.sh
+
+RUN ["chmod", "+x", "/hermes/hermes_startup.sh"]
+ENTRYPOINT ["/hermes/hermes_startup.sh"]
