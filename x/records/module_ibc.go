@@ -7,7 +7,8 @@ import (
 	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
 	channeltypes "github.com/cosmos/ibc-go/v3/modules/core/04-channel/types"
 	porttypes "github.com/cosmos/ibc-go/v3/modules/core/05-port/types"
-	host "github.com/cosmos/ibc-go/v3/modules/core/24-host"
+
+	// host "github.com/cosmos/ibc-go/v3/modules/core/24-host"
 	ibcexported "github.com/cosmos/ibc-go/v3/modules/core/exported"
 )
 
@@ -40,9 +41,9 @@ func (im IBCModule) OnChanOpenInit(
 	// Note: The channel capability must be claimed by the authentication module in OnChanOpenInit otherwise the
 	// authentication module will not be able to send packets on the channel created for the associated interchain account.
 	// NOTE: unsure if we have to claim this here! CHECK ME
-	if err := im.keeper.ClaimCapability(ctx, channelCap, host.ChannelCapabilityPath(portID, channelID)); err != nil {
-		return err
-	}
+	// if err := im.keeper.ClaimCapability(ctx, channelCap, host.ChannelCapabilityPath(portID, channelID)); err != nil {
+	// 	return err
+	// }
 	_, appVersion := channeltypes.SplitChannelVersion(version)
     // doCustomLogic()
     im.app.OnChanOpenInit(
@@ -87,8 +88,10 @@ func (im IBCModule) OnChanOpenTry(
     if err != nil {
 		return "", err
     }
+	ctx.Logger().Error("version %s: ", version)
+	ctx.Logger().Error("cpAppVersion %s: ", cpAppVersion)
 	_ = version
-	return "ics20-1", nil
+	return version, nil
 }
 
 // OnChanOpenAck implements the IBCModule interface
@@ -168,7 +171,7 @@ func (im IBCModule) OnAcknowledgementPacket(
 ) error {
 	// doCustomLogic(packet, ack)
 	// Store a deposit record here!
-	ctx.Logger().Error("This is working!")
+	ctx.Logger().Error("This is where we're going to add DepositRecords!")
     im.app.OnAcknowledgementPacket(ctx, packet, acknowledgement, relayer)
 	return nil
 }
@@ -180,7 +183,6 @@ func (im IBCModule) OnTimeoutPacket(
 	relayer sdk.AccAddress,
 ) error {
 	// doCustomLogic(packet)
-
     im.app.OnTimeoutPacket(ctx, packet, relayer)
 	return nil
 }
@@ -189,18 +191,12 @@ func (im IBCModule) OnTimeoutPacket(
 // This is implemented by ICS4 and all middleware that are wrapping base application.
 // The base application will call `sendPacket` or `writeAcknowledgement` of the middleware directly above them
 // which will call the next middleware until it reaches the core IBC handler.
-// type ICS4Wrapper interface {
-//     SendPacket(ctx sdk.Context, chanCap *capabilitytypes.Capability, packet exported.Packet) error
-//     WriteAcknowledgement(ctx sdk.Context, chanCap *capabilitytypes.Capability, packet exported.Packet, ack []byte) error
-//     GetAppVersion(ctx sdk.Context, portID, channelID string) (string, bool) 
-// }
 // SendPacket implements the ICS4 Wrapper interface
 func (im IBCModule) SendPacket(
 	ctx sdk.Context,
 	chanCap *capabilitytypes.Capability,
 	packet ibcexported.PacketI,
 ) error {
-	// panic("SendPacket not supported for ICA controller module. Please use SendTx")
 	return nil
 }
 
@@ -212,7 +208,6 @@ func (im IBCModule) WriteAcknowledgement(
 	ack ibcexported.Acknowledgement,
 ) error {
 	return nil
-	// panic("WriteAcknowledgement not supported for ICA controller module")
 }
 
 // GetAppVersion returns the interchain accounts metadata.
@@ -327,5 +322,4 @@ func (am AppModule) NegotiateAppVersion(
 	proposedVersion string,
 ) (version string, err error) {
 	return proposedVersion, nil
-	// return "ics20-1", nil
 }
