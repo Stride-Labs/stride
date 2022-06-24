@@ -10,6 +10,7 @@ BUILDDIR ?= $(CURDIR)/build
 TEST_DOCKER_REPO=Stride-Labs/stridednode
 
 build=s
+cache=false
 
 export GO111MODULE = on
 
@@ -309,13 +310,10 @@ icq-local-install:
 
 
 local-init:
-	sh scripts-local/init_main.sh -${build} ${BUILDDIR}
+	sh scripts-local/init_main.sh -${build} ${BUILDDIR} ${cache}
 
 start:
-	sh scripts-local/start_network.sh
-
-start-cached:
-	sh scripts-local/start_network.sh true 
+	sh scripts-local/start_network.sh ${cache}
 
 stop:
 	killall gaiad strided hermes interchain-queries
