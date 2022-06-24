@@ -7,6 +7,7 @@ import (
 	"github.com/Stride-Labs/stride/x/interchainquery/types"
 	icqtypes "github.com/Stride-Labs/stride/x/interchainquery/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 )
 
@@ -94,6 +95,7 @@ func WithdrawalBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query icq
 		coin = sdk.NewCoin(denom, sdk.ZeroInt())
 	}
 
+	// Set withdrawal balance as attribute on HostZone's withdrawal ICA account
 	wa := zone.WithdrawalAccount
 	wa.WithdrawalBalance = coin.Amount.Int64()
 	zone.WithdrawalAccount = wa
@@ -107,5 +109,48 @@ func WithdrawalBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query icq
 			sdk.NewAttribute("totalWithdrawalBalance", coin.Amount.String()),
 		),
 	})
+
+	// Sweep the withdrawal account balance, to the feeAccount and the delegationAccount
+	//    - TODO(TEST-123) In the ICA bank send ack, create a deposit record for the swept amount that's in delegationAccount
+	k.Logger(ctx).Info(fmt.Sprintf("ICA Bank Sending %d%s from withdrawalAddr to delegationAddr.", coin.Amount.Int64(), coin.Denom))
+
+	withdrawalAccount := zone.GetWithdrawalAccount()
+	delegationAccount := zone.GetDelegationAccount()
+	feeAccount := zone.GetFeeAccount()
+
+	params := k.GetParams(ctx)
+	strideCommission := sdk.NewDec(int64(params.GetStrideCommission())).Quo(sdk.NewDec(100)) // convert to decimal
+	withdrawalBalance := sdk.NewDec(coin.Amount.Int64())
+	// TODO(TEST-112) don't perform unsafe uint64 to int64 conversion
+	strideClaim := strideCommission.Mul(withdrawalBalance)
+	strideClaimFloored := strideClaim.TruncateInt()
+
+	reinvestAmount := (sdk.NewDec(1).Sub(strideCommission)).Mul(withdrawalBalance)
+	reinvestAmountCeil := reinvestAmount.Ceil().TruncateInt()
+
+	// TODO(TEST-112) safety check, balances should add to original amount
+	if (strideClaimFloored.Int64() + reinvestAmountCeil.Int64()) != coin.Amount.Int64() {
+		ctx.Logger().Error(fmt.Sprintf("Error with withdraw logic: %d, Fee portion: %d, reinvestPortion %d", coin.Amount.Int64(), strideClaimFloored.Int64(), reinvestAmountCeil.Int64()))
+		panic("Failed to subdivide rewards to feeAccount and delegationAccount")
+	}
+	ctx.Logger().Info(fmt.Sprintf("MOOSE Total: %d, Fee portion: %d, reinvestPortion %d", coin.Amount.Int64(), strideClaimFloored.Int64(), reinvestAmountCeil.Int64()))
+	strideCoin := sdk.NewCoin(coin.Denom, strideClaimFloored)
+	reinvestCoin := sdk.NewCoin(coin.Denom, reinvestAmountCeil)
+
+	var msgs []sdk.Msg
+	// construct the msg
+	msgs = append(msgs, &banktypes.MsgSend{FromAddress: withdrawalAccount.GetAddress(),
+		ToAddress: feeAccount.GetAddress(), Amount: sdk.NewCoins(strideCoin)})
+	msgs = append(msgs, &banktypes.MsgSend{FromAddress: withdrawalAccount.GetAddress(),
+		ToAddress: delegationAccount.GetAddress(), Amount: sdk.NewCoins(reinvestCoin)})
+	ctx.Logger().Info(fmt.Sprintf("MOOSE msg: %v", &banktypes.MsgSend{FromAddress: withdrawalAccount.GetAddress(),
+		ToAddress: feeAccount.GetAddress(), Amount: sdk.NewCoins(coin)}))
+	ctx.Logger().Info(fmt.Sprintf("MOOSE msgs: %v", msgs))
+	// Send the transaction through SubmitTx
+	err = k.SubmitTxs(ctx, zone.ConnectionId, msgs, *withdrawalAccount)
+	if err != nil {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "Failed to SubmitTxs for %s, %s, %s", zone.ConnectionId, zone.ChainId, msgs)
+	}
+
 	return nil
 }
