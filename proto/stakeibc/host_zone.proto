@@ -37,10 +37,3 @@ message HostZone {
   ];
 }
 
-message ControllerBalances {
-  string index = 1; 
-  int64 height = 2; 
-  int64 stsupply = 3;
-  int64 moduleacctbalance = 4;
-}
-
