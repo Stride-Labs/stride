@@ -188,8 +188,8 @@ jobs:
           platforms: linux/amd64
           build-args: deployment_name=${deployment_name}
           tags: |
-            stridelabs/nodes-${deployment_name}:gaia
-            gcr.io/stride-nodes/${deployment_name}:gaia
+            stridelabs/nodes-${{ deployment_name }}:gaia
+            gcr.io/stride-nodes/${{ deployment_name }}:gaia
 
   build-hermes-image:
     needs: [initialize-state]
@@ -234,8 +234,8 @@ jobs:
           platforms: linux/amd64
           build-args: deployment_name=${deployment_name}
           tags: |
-            stridelabs/nodes-${deployment_name}:hermes
-            gcr.io/stride-nodes/${deployment_name}:hermes
+            stridelabs/nodes-${{ deployment_name }}:hermes
+            gcr.io/stride-nodes/${{ deployment_name }}:hermes
 
   build-icq-image:
     needs: [initialize-state]
@@ -278,7 +278,7 @@ jobs:
           file: "scripts/testnet/dockerfiles/Dockerfile.icq"
           push: true
           platforms: linux/amd64
-          build-args: deployment_name=${deployment_name}
+          build-args: deployment_name=${{ deployment_name }}
           tags: |
-            stridelabs/nodes-${deployment_name}:icq
-            gcr.io/stride-nodes/${deployment_name}:icq
+            stridelabs/nodes-${{ deployment_name }}:icq
+            gcr.io/stride-nodes/${{ deployment_name }}:icq
