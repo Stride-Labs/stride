@@ -10,7 +10,6 @@ import "stakeibc/delegation.proto";
 import "stakeibc/min_validator_requirements.proto";
 import "stakeibc/ica_account.proto";
 import "stakeibc/host_zone.proto";
-import "stakeibc/deposit_record.proto";
 // this line is used by starport scaffolding # 1
 
 option go_package = "github.com/Stride-Labs/stride/x/stakeibc/types";
