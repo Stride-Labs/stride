@@ -26,6 +26,11 @@ func NewIBCModule(k keeper.Keeper) IBCModule {
 	}
 }
 
+
+func (im IBCModule) Hooks() keeper.Hooks {
+	return im.keeper.Hooks()
+}
+
 // OnChanOpenInit implements the IBCModule interface
 func (im IBCModule) OnChanOpenInit(
 	ctx sdk.Context,
@@ -118,7 +123,6 @@ func (im IBCModule) OnAcknowledgementPacket(
 	relayer sdk.AccAddress,
 ) error {
 	// TODO(TEST-21): Implement OnAcknowledgementPacket logic
-	panic("DOGE")
 	connectionId, _, err := im.keeper.IBCKeeper.ChannelKeeper.GetChannelConnection(ctx, modulePacket.SourcePort, modulePacket.SourceChannel)
 	if err != nil {
 		err = fmt.Errorf("packet connection not found: %w", err)

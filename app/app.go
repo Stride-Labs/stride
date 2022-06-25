@@ -462,6 +462,7 @@ func NewStrideApp(
 
 	// Create static IBC router, add transfer route, then set and seal it
 	ibcRouter := ibcporttypes.NewRouter()
+	ibcRouter.AddRoute(stakeibcmoduletypes.ModuleName, transferIBCModule)
 	ibcRouter.AddRoute(ibctransfertypes.ModuleName, transferIBCModule)
 	// Unclear whether this can be included in ibc-v3?
 	// ibcRouter.AddRoute(monitoringptypes.ModuleName, monitoringModule)
@@ -507,7 +508,6 @@ func NewStrideApp(
 		interchainQueryModule,
 		icaModule,
 		// this line is used by starport scaffolding # stargate/app/appModule
-		epochsModule,
 	)
 
 	// During begin block slashing happens after distr.BeginBlocker so that

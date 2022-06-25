@@ -32136,9 +32136,12 @@ paths:
                   reinvest_interval:
                     type: string
                     format: uint64
+                  block_based_epoch_interval:
+                    type: string
+                    format: uint64
                 title: |-
                   Params defines the parameters for the module.
-                  next id: 8
+                  next id: 9
             description: >-
               QueryParamsResponse is response type for the Query/Params RPC
               method.
@@ -53003,9 +53006,12 @@ definitions:
       reinvest_interval:
         type: string
         format: uint64
+      block_based_epoch_interval:
+        type: string
+        format: uint64
     title: |-
       Params defines the parameters for the module.
-      next id: 8
+      next id: 9
   Stridelabs.stride.stakeibc.QueryAllDepositRecordResponse:
     type: object
     properties:
@@ -53718,9 +53724,12 @@ definitions:
           reinvest_interval:
             type: string
             format: uint64
+          block_based_epoch_interval:
+            type: string
+            format: uint64
         title: |-
           Params defines the parameters for the module.
-          next id: 8
+          next id: 9
     description: QueryParamsResponse is response type for the Query/Params RPC method.
   Stridelabs.stride.stakeibc.Validator:
     type: object

@@ -95,6 +95,7 @@ func (k Keeper) HandleAcknowledgement(ctx sdk.Context, modulePacket channeltypes
 			continue
 		// IBC transfer - update the DepositRecord status!
 		case "/ibc.applications.transfer.v1.MsgTransfer":
+			k.Logger(ctx).Debug("DOGE")
 			response := ibctransfertypes.MsgTransferResponse{}
 			err := proto.Unmarshal(msgData.Data, &response)
 			if err != nil {
