@@ -95,7 +95,7 @@ jobs:
           path: ./scripts/testnet/state
           retention-days: 1
 
-  build-docker-images:
+  build-stride-images:
     needs: [get-node-names, initialize-state]
     runs-on: ubuntu-latest
     strategy:
