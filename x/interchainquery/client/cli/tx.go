@@ -24,54 +24,13 @@ func GetTxCmd() *cobra.Command {
 	}
 
 	cmd.AddCommand(
-		//QueryBalanceCmd(),
 		// TODO(TEST-53) remove cli access to ICQ queries pre-launch
 		SubmitQueryResponse(),
 	)
-	//cmd.AddCommand(CmdQueryExchangerate())
-	//cmd.AddCommand(CmdQueryDelegatedbalance())
 	// this line is used by starport scaffolding # 1
 
 	return cmd
 }
-
-// func QueryBalanceCmd() *cobra.Command {
-// 	cmd := &cobra.Command{
-// 		Use:   "query-balance [chain_id] [address] [denom]",
-// 		Short: `Query the balance on a chain.`,
-// 		Long: `query a specified account's balance of a specified denomination on a specified chain
-// 		e.g. "GAIA_1 cosmos1pcag0cj4ttxg8l7pcg0q4ksuglswuuedcextl2 uatom"`,
-// 		Example: `query-balance GAIA_1 cosmos1pcag0cj4ttxg8l7pcg0q4ksuglswuuedcextl2 uatom`,
-// 		Args:    cobra.ExactArgs(3),
-// 		RunE: func(cmd *cobra.Command, args []string) error {
-// 			clientCtx, err := client.GetClientTxContext(cmd)
-// 			if err != nil {
-// 				return err
-// 			}
-// 			chain_id := args[0]
-// 			address := args[1]
-// 			denom := args[2]
-// 			caller := clientCtx.GetFromAddress().String()
-
-// 			// TODO cleanup
-// 			if len(caller) < 1 {
-// 				return fmt.Errorf("Error: empty --from address.")
-// 			}
-// 			msg := types.NewQueryBalance(chain_id, address, denom, viper.GetString(FlagConnectionID), caller)
-// 			if err := msg.ValidateBasic(); err != nil {
-// 				return err
-// 			}
-// 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
-// 		},
-// 	}
-
-// 	// TODO what do these do? require a connection flag when submitting the command?
-// 	cmd.Flags().AddFlagSet(fsConnectionID)
-// 	_ = cmd.MarkFlagRequired(FlagConnectionID)
-// 	flags.AddTxFlagsToCmd(cmd)
-
-// 	return cmd
-// }
 
 func SubmitQueryResponse() *cobra.Command {
 	cmd := &cobra.Command{

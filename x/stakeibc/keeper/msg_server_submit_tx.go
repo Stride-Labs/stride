@@ -111,14 +111,10 @@ func (k Keeper) ReinvestRewards(ctx sdk.Context, hostZone types.HostZone) error 
 	delegationAccount := hostZone.GetDelegationAccount()
 	withdrawAccount := hostZone.GetWithdrawalAccount()
 
-	SubmitTxs := k.SubmitTxs
-	GetParam := k.GetParam
-	cdc := k.cdc
-
-	var cb icqkeeper.Callback = func(k icqkeeper.Keeper, ctx sdk.Context, args []byte, query icqtypes.Query) error {
+	var cb icqkeeper.Callback = func(icqk icqkeeper.Keeper, ctx sdk.Context, args []byte, query icqtypes.Query) error {
 		var msgs []sdk.Msg
 		queryRes := bankTypes.QueryAllBalancesResponse{}
-		err := cdc.Unmarshal(args, &queryRes)
+		err := k.cdc.Unmarshal(args, &queryRes)
 		if err != nil {
 			k.Logger(ctx).Error("Unable to unmarshal balances info for zone", "err", err)
 			return err
@@ -126,7 +122,7 @@ func (k Keeper) ReinvestRewards(ctx sdk.Context, hostZone types.HostZone) error 
 		// Get denom dynamically
 		balance := queryRes.Balances.AmountOf(hostZone.HostDenom)
 		balanceDec := sdk.NewDec(balance.Int64())
-		commission := sdk.NewDec(int64(GetParam(ctx, types.KeyStrideCommission))).Quo(sdk.NewDec(100))
+		commission := sdk.NewDec(int64(k.GetParam(ctx, types.KeyStrideCommission))).Quo(sdk.NewDec(100))
 		// Dec type has 18 decimals and the same precision as Coin types
 		strideAmount := balanceDec.Mul(commission)
 		reinvestAmount := balanceDec.Sub(strideAmount)
@@ -136,13 +132,15 @@ func (k Keeper) ReinvestRewards(ctx sdk.Context, hostZone types.HostZone) error 
 		// transfer balances from the withdraw address to the delegation account
 		sendBalanceToDelegationAccount := &bankTypes.MsgSend{FromAddress: withdrawAccount.GetAddress(), ToAddress: delegationAccount.GetAddress(), Amount: sdk.NewCoins(reinvestCoin)}
 		msgs = append(msgs, sendBalanceToDelegationAccount)
-		// TODO: get the stride commission addresses (potentially split this up into multiple messages)
+		// TODO: [TEST-115] get the stride commission addresses (potentially split this up into multiple messages)
 		strideCommmissionAccount := "cosmos12vfkpj7lpqg0n4j68rr5kyffc6wu55dzqewda4"
 		sendBalanceToStrideAccount := &bankTypes.MsgSend{FromAddress: withdrawAccount.GetAddress(), ToAddress: strideCommmissionAccount, Amount: sdk.NewCoins(strideCoin)}
 		msgs = append(msgs, sendBalanceToStrideAccount)
 
 		// Send the transaction through SubmitTx
-		err = SubmitTxs(ctx, connectionId, msgs, *withdrawAccount)
+		// TODO(TEST-5): Add a record with STATUS PENDING
+		// TODO(TEST-5): In the ack, update the record to STATUS STAKE
+		err = k.SubmitTxs(ctx, connectionId, msgs, *withdrawAccount)
 		if err != nil {
 			return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "Failed to SubmitTxs for %s, %s, %s", connectionId, hostZone.ChainId, msgs)
 		}

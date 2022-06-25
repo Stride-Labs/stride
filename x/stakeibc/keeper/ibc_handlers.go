@@ -108,6 +108,7 @@ func (k Keeper) HandleAcknowledgement(ctx sdk.Context, modulePacket channeltypes
 	// 		// validator_address := "cosmosvaloper19e7sugzt8zaamk2wyydzgmg9n3ysylg6na6k6e" // gval2
 	// 		// Implement!
 	//		// WITHDRAW REWARDS
+	// 		// TODO(TEST-5): Update rewards records to STATUS STAKE
 	// 		// // set withdraw address to WithdrawAccount
 	// 		// setWithdrawAddress := &distributionTypes.MsgSetWithdrawAddress{DelegatorAddress: delegationAccount.GetAddress(), WithdrawAddress: withdrawAccount.GetAddress()}
 	// 		// msgs = append(msgs, setWithdrawAddress)
