@@ -9,6 +9,7 @@ on:
       - launch-net-actions
 
 env:
+  deployment_name: testnet
   network_name: stride
   num_stride_nodes: 3
 
