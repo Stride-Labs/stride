@@ -51,8 +51,9 @@ jobs:
       - name: Build Gaia
         run: |
           git clone https://github.com/Stride-Labs/gaia --branch v7.0.2-stride-second-attempt-5
+          mkdir build
           cd gaia
-          go build -mod=readonly -trimpath -o ./build ./...
+          go build -mod=readonly -trimpath -o ../build ./...
 
       - name: Store Gaia Executable
         uses: actions/upload-artifact@v3
