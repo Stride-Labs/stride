@@ -225,15 +225,12 @@ jobs:
           gcloud auth configure-docker
 
       - name: Construct Hermes Image
-        uses: docker/build-push-action@v3
-        with:
-          context: "{{defaultContext}}"
-          file: "scripts/testnet/dockerfiles/Dockerfile.hermes"
-          push: true
-          platforms: linux/amd64
-          tags: |
-            stridelabs/nodes-${{ env.deployment_name }}:hermes
-            gcr.io/stride-nodes/${{ env.deployment_name }}:hermes
+        shell: bash
+        run: |
+          docker build -t stridelabs/nodes-${{ env.deployment_name }}:hermes -f scripts/testnet/dockerfiles/Dockerfile.hermes .
+          docker push stridelabs/nodes-${{ env.deployment_name }}:hermes
+          docker tag stridelabs/nodes-${{ env.deployment_name }}:hermes gcr.io/stride-nodes/${{ env.deployment_name }}:hermes
+          docker push gcr.io/stride-nodes/${{ env.deployment_name }}:hermes
 
   build-icq-image:
     needs: [initialize-state]
