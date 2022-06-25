@@ -37,5 +37,5 @@ while true; do
     $STRIDE_CMD q records list-deposit-record  >> $TEMP_LOGS_DIR/accounts.log
     
     mv $TEMP_LOGS_DIR/*.log $LOGS_DIR
-    sleep 5
+    sleep 3
 done
