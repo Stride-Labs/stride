@@ -14,58 +14,58 @@ env:
   num_stride_nodes: 3
 
 jobs:
-  # get-node-names:
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - id: set-output
-  #       run: |
-  #         node_names_array=""
-  #         for (( i=1; i <= $num_stride_nodes; i++ )); do
-  #           node_names_array+="\"${network_name}-node${i}\","
-  #         done
-  #         echo "::set-output name=node-names::[${node_names_array}]"
-  #   outputs:
-  #     node-names: ${{ steps.set-output.outputs.node-names }}
+  get-node-names:
+    runs-on: ubuntu-latest
+    steps:
+      - id: set-output
+        run: |
+          node_names_array=""
+          for (( i=1; i <= $num_stride_nodes; i++ )); do
+            node_names_array+="\"${network_name}-node${i}\","
+          done
+          echo "::set-output name=node-names::[${node_names_array}]"
+    outputs:
+      node-names: ${{ steps.set-output.outputs.node-names }}
 
-  # build-stride:
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - name: Checkout
-  #       uses: actions/checkout@v3
+  build-stride:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
 
-  #     - name: Build Stride
-  #       run: make build
+      - name: Build Stride
+        run: make build
 
-  #     - name: Store Stride Executable
-  #       uses: actions/upload-artifact@v3
-  #       with:
-  #         name: strided
-  #         path: ./build/strided
-  #         retention-days: 1
+      - name: Store Stride Executable
+        uses: actions/upload-artifact@v3
+        with:
+          name: strided
+          path: ./build/strided
+          retention-days: 1
 
-  # build-gaia:
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - name: Checkout Stride
-  #       uses: actions/checkout@v3
+  build-gaia:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Stride
+        uses: actions/checkout@v3
 
-  #     - name: Build Gaia
-  #       run: |
-  #         git clone https://github.com/Stride-Labs/gaia --branch v7.0.2-stride-second-attempt-5
-  #         mkdir build
-  #         cd gaia
-  #         go build -mod=readonly -trimpath -o ../build ./...
+      - name: Build Gaia
+        run: |
+          git clone https://github.com/Stride-Labs/gaia --branch v7.0.2-stride-second-attempt-5
+          mkdir build
+          cd gaia
+          go build -mod=readonly -trimpath -o ../build ./...
 
-  #     - name: Store Gaia Executable
-  #       uses: actions/upload-artifact@v3
-  #       with:
-  #         name: gaiad
-  #         path: ./build/gaiad
-  #         retention-days: 1
+      - name: Store Gaia Executable
+        uses: actions/upload-artifact@v3
+        with:
+          name: gaiad
+          path: ./build/gaiad
+          retention-days: 1
 
   initialize-state:
     runs-on: ubuntu-latest
-    # needs: [build-stride, build-gaia]
+    needs: [build-stride, build-gaia]
     steps:
       - name: Checkout
         uses: actions/checkout@v3
