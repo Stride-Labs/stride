@@ -18,8 +18,6 @@ message GenesisState {
   ICAAccount iCAAccount = 4;
   repeated HostZone hostZoneList = 5 [(gogoproto.nullable) = false];
   uint64 hostZoneCount = 6;
-  repeated DepositRecord depositRecordList = 7 [(gogoproto.nullable) = false];
-  uint64 depositRecordCount = 8;
   // stores a map from hostZone base denom to hostZone
   map<string, string> denomToHostZone = 9;
   // this line is used by starport scaffolding # genesis/proto/state

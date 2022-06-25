@@ -18,6 +18,8 @@ import (
 	ibctransferkeeper "github.com/cosmos/ibc-go/v3/modules/apps/transfer/keeper"
 	ibckeeper "github.com/cosmos/ibc-go/v3/modules/core/keeper"
 	ibctmtypes "github.com/cosmos/ibc-go/v3/modules/light-clients/07-tendermint/types"
+
+	recordsmodulekeeper "github.com/Stride-Labs/stride/x/records/keeper"
 )
 
 type (
@@ -33,6 +35,7 @@ type (
 		transferKeeper        ibctransferkeeper.Keeper
 		bankKeeper            bankkeeper.Keeper
 		InterchainQueryKeeper icqkeeper.Keeper
+		RecordsKeeper         recordsmodulekeeper.Keeper
 
 		accountKeeper types.AccountKeeper
 	}
@@ -53,6 +56,7 @@ func NewKeeper(
 	scopedKeeper capabilitykeeper.ScopedKeeper,
 	transferKeeper ibctransferkeeper.Keeper,
 	interchainQueryKeeper icqkeeper.Keeper,
+	RecordsKeeper recordsmodulekeeper.Keeper,
 ) Keeper {
 	// set KeyTable if it has not already been set
 	if !ps.HasKeyTable() {
@@ -71,6 +75,7 @@ func NewKeeper(
 		scopedKeeper:          scopedKeeper,
 		transferKeeper:        transferKeeper,
 		InterchainQueryKeeper: interchainQueryKeeper,
+		RecordsKeeper:         RecordsKeeper,
 	}
 }
 
