@@ -7,3 +7,13 @@
 [submodule "scripts/tests/test_helper/bats-assert"]
 	path = scripts/tests/test_helper/bats-assert
 	url = https://github.com/bats-core/bats-assert.git
+[submodule "deps/hermes"]
+	path = deps/hermes
+	url = git@github.com:informalsystems/ibc-rs.git
+[submodule "deps/gaia"]
+	path = deps/gaia
+	url = git@github.com:Stride-Labs/gaia.git
+	branch = v7.0.2-stride-second-attempt
+[submodule "deps/interchain-queries"]
+	path = deps/interchain-queries
+	url = git@github.com:Stride-Labs/interchain-queries.git
