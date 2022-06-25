@@ -74,13 +74,13 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: strided
-          path: ./build/strided
+          path: ./build
 
       - name: Download Gaiad
         uses: actions/download-artifact@v3
         with:
           name: gaiad
-          path: ./build/gaiad
+          path: ./build
 
       - name: Bash
         shell: bash
