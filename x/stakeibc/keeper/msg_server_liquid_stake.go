@@ -4,6 +4,7 @@ import (
 	"context"
 	"strconv"
 
+	recordtypes "github.com/Stride-Labs/stride/x/records/types"
 	"github.com/Stride-Labs/stride/x/stakeibc/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -68,10 +69,11 @@ func (k msgServer) LiquidStake(goCtx context.Context, msg *types.MsgLiquidStake)
 		k.Logger(ctx).Info("failed to send tokens from Account to Module")
 		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidCoins, "failed to mint stAssets to user")
 	}
-	// create a deposit record of these tokens
-	depositRecord := types.NewDepositRecord(msg.Amount, msg.HostDenom, hostZone.ChainId,
-		sender.String(), types.DepositRecord_RECEIPT)
-	k.AppendDepositRecord(ctx, *depositRecord)
+
+	// // create a deposit record of these tokens
+	depositRecord := recordtypes.NewDepositRecord(msg.Amount, msg.HostDenom, hostZone.ChainId,
+		sender.String(), recordtypes.DepositRecord_RECEIPT)
+	k.RecordsKeeper.AppendDepositRecord(ctx, *depositRecord)
 
 	return &types.MsgLiquidStakeResponse{}, nil
 }
