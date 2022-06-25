@@ -14,4 +14,5 @@ echo "Restoring ICQ Accounts"
 echo "ICQ_STRIDE_MNEMONIC" | interchain-queries --home /icq keys restore icq1 --chain STRIDE
 echo "ICQ_GAIA_MNEMONIC" | interchain-queries --home /icq keys restore icq2 --chain GAIA
 
+echo "Starting ICQ..."
 interchain-queries run

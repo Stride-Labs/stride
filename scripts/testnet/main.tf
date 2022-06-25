@@ -26,20 +26,23 @@ variable "deployment_name" {
   type    = string
   default = "testnet"
 }
-variable "network_name" {
-  type    = string
-  default = "stride"
-}
-
-variable "num_nodes" {
+variable "num_stride_nodes" {
   type    = number
   default = 3
 }
 
 locals {
-  node_names = [
-    for i in range(1, var.num_nodes + 1) : "${var.network_name}-node${i}"
+  stride_node_names = [
+    for i in range(1, var.num_stride_nodes + 1) : "stride-node${i}"
   ]
+}
+
+locals {
+  dependency_node_names = ["gaia", "hermes", "icq"]
+}
+
+locals {
+  node_names = concat(local.stride_node_names, local.dependency_node_names)
 }
 
 module "images" {
@@ -55,13 +58,13 @@ module "images" {
 
 resource "google_compute_address" "internal-addresses" {
   count  = length(local.node_names)
-  name   = local.node_names[count.index]
+  name   = "${var.deployment_name}-${local.node_names[count.index]}"
   region = element(var.regions, count.index)
 }
 
 resource "google_compute_instance" "nodes" {
   count                     = length(local.node_names)
-  name                      = local.node_names[count.index]
+  name                      = "${var.deployment_name}-${local.node_names[count.index]}"
   machine_type              = "e2-standard-4"
   zone                      = "${element(var.regions, count.index)}-a"
   tags                      = ["ssh"]
@@ -125,6 +128,10 @@ resource "google_dns_record_set" "stridenet-sub-zone-name-service" {
 
   rrdatas = [
     "ns-cloud-a1.googledomains.com. cloud-dns-hostmaster.google.com. 1 21600 3600 259200 300"
+  ]
+
+  depends_on = [
+    google_dns_managed_zone.stridenet-network-sub-zone
   ]
 }
 
