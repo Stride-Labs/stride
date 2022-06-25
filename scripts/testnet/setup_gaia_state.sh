@@ -9,7 +9,7 @@ NODE_NAME=gaia
 VAL_TOKENS=500000000uatom
 STAKE_TOKENS=300000000uatom
 VAL_ACCT=gval1
-ENDPOINT=GAIA_MAIN_ENDPOINT
+ENDPOINT=$GAIA_MAIN_ENDPOINT
 
 echo "Initializing gaia..."
 $GAIA_CMD init test --chain-id $CHAIN_NAME --overwrite 2> /dev/null
