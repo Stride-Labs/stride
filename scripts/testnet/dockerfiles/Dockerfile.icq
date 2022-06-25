@@ -22,7 +22,8 @@ FROM alpine:3.15
 
 COPY --from=icq-builder /src/app/interchain-queries /usr/local/bin/
 
-RUN adduser -S -h /icq -D icq -u 1000 
+RUN apk add --update iputils \
+    && adduser -S -h /icq -D icq -u 1000 
 USER icq
 
 COPY --chown=1000 "./state/icq_startup.sh" /icq/icq_startup.sh
