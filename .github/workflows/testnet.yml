@@ -50,7 +50,7 @@ jobs:
 
       - name: Build Gaia
         run: |
-          run git clone https://github.com/Stride-Labs/gaia --branch v7.0.2-stride-second-attempt-5
+          git clone https://github.com/Stride-Labs/gaia --branch v7.0.2-stride-second-attempt-5
           cd gaia
           go build -mod=readonly -trimpath -o $BUILDDIR ./...
 
