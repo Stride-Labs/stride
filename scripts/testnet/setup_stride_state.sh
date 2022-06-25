@@ -25,7 +25,7 @@ for (( i=1; i <= $NUM_NODES; i++ )); do
     # Create a state directory for the current node and initialize the chain
     mkdir -p $STATE/$node_name
     st_cmd="$STRIDE_CMD --home ${STATE}/$node_name"
-    $st_cmd init $moniker --chain-id $CHAIN_NAME --overwrite #2> /dev/null
+    $st_cmd init $moniker --chain-id $CHAIN_NAME --overwrite 2> /dev/null
 
     # Update node networking configuration 
     sed -i -E "s|cors_allowed_origins = \[\]|cors_allowed_origins = [\"\*\"]|g" "${STATE}/${node_name}/config/config.toml"
