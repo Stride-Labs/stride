@@ -82,19 +82,11 @@ jobs:
           name: gaiad
           path: ./build
 
-      - name: Bash
-        shell: bash
-        run: |
-          pwd
-          ls -la 
-          ls -la ./build
-          ls -la ./scripts/testnet/
-          ls -la ./build/strided
-          ls -la ./build/gaiad
-
       - name: Initialize State
         shell: bash
-        run: ./scripts/testnet/setup_testnet_state.sh ${deployment_name} ${num_stride_nodes}
+        run: |
+          chmod +x -R ./build
+          ./scripts/testnet/setup_testnet_state.sh ${deployment_name} ${num_stride_nodes}
 
       - name: Persist State Files
         uses: actions/upload-artifact@v3
