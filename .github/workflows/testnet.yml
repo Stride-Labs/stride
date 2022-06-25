@@ -1,8 +1,8 @@
 on:
   workflow_dispatch:
-    push:
-      branches:
-        - launch-net-actions
+  push:
+    branches:
+      - launch-net-actions
     # inputs:
     #   deployment_name:
     #     description: Testnet that you want to launch (e.g. droplet)
