@@ -29,8 +29,8 @@ RUN ln -s /src/app/interchain-queries /usr/local/bin
 RUN adduser --system --home /icq --disabled-password --disabled-login icq -U 1000
 USER icq
 
-COPY --chown=icq "./state/icq_startup.sh" /icq/icq_startup.sh
-COPY --chown=icq "./state/icq_config.yaml" /icq/.icq/config.yaml
+COPY --chown=1000 "./state/icq_startup.sh" /icq/icq_startup.sh
+COPY --chown=1000 "./state/icq_config.yaml" /icq/.icq/config.yaml
 
 RUN ["chmod", "+x", "/icq/icq_startup.sh"]
 CMD ["/icq/icq_startup.sh"]
