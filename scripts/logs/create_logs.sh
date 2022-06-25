@@ -13,6 +13,7 @@ SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 $STR1_EXEC strided q txs --events message.module=interchainquery --limit=100000 > $SCRIPT_DIR/$TMP/interchainquery.log
 $STR1_EXEC strided q txs --events message.module=stakeibc --limit=100000 > $SCRIPT_DIR/$TMP/stakeibc.log
 
+# build/gaiad --home scripts-local/state/gaia tx ibc-transfer transfer transfer channel-0 $(build/strided --home scripts-local/state/stride keys show val1 --keyring-backend test -a) 100000uatom --from gval1 --chain-id GAIA --keyring-backend test
 
 # accounts
 GAIA1_EXEC="docker-compose --ansi never exec -T gaia1 gaiad --home /gaia/.gaiad"
@@ -32,7 +33,7 @@ $GAIA1_EXEC q bank balances $GAIA_DELEGATE >> $SCRIPT_DIR/$TMP/accounts.log
 echo "\nDELEGATIONS GAIA" >> $SCRIPT_DIR/$TMP/accounts.log
 $GAIA1_EXEC q staking delegations $GAIA_DELEGATE >> $SCRIPT_DIR/$TMP/accounts.log
 echo "\nLIST-HOST-ZONES STRIDE" >> $SCRIPT_DIR/$TMP/accounts.log
-$STR1_EXEC strided q stakeibc list-host-zone | head -n 16 >> $SCRIPT_DIR/$TMP/accounts.log
+$STR1_EXEC strided q stakeibc list-host-zone | head -n 50 >> $SCRIPT_DIR/$TMP/accounts.log
 echo "\nLIST-CONTROLLER-BALANCES" >> $SCRIPT_DIR/$TMP/accounts.log
 $STR1_EXEC strided q stakeibc list-controller-balances >> $SCRIPT_DIR/$TMP/accounts.log
 

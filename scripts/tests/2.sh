@@ -1,14 +1,8 @@
 ### LIQ STAKE + EXCH RATE TEST
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
-# import dependencies
-source ${SCRIPT_DIR}/../account_vars.sh
+GAIA1_EXEC="build/gaiad --home scripts-local/state/gaia"
+STR1_EXEC="build/strided --home scripts-local/state/stride"
+SCRIPT_DIR="./scripts-local/logs/"
+STRIDE_ADDRESS="stride1uk4ze0x4nvh4fk0xm4jdud58eqn4yxhrt52vv7"
 
-# $STRIDE1_EXEC tx stakeibc liquid-stake 500000000000 uatom --keyring-backend test --from val1 -y
-$STRIDE1_EXEC tx stakeibc liquid-stake 1000 uatom --keyring-backend test --from val1 -y
-
-# docker-compose --ansi never exec -T stride1 strided --home /stride/.strided --chain-id STRIDE tx stakeibc liquid-stake 1000 uatom --keyring-backend test --from val1 -y
-
-# 5000000000000 <- IBC'd over
-# 4998216206336 <- How much is there now 
-# 1783793664 <- how much stATOM got minted
-# 500000000000 <- how much stATOM we wanted to mint
+$STR1_EXEC tx stakeibc liquid-stake 1000 uatom --keyring-backend test --from val1 -y --chain-id STRIDE
