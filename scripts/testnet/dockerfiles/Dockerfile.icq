@@ -1,7 +1,7 @@
 FROM golang:1.17-alpine3.15 AS icq-builder
 
 # RUN apt update
-RUN apk add --update git 
+RUN apk add --update git iputils
 
 WORKDIR /src/app
 
