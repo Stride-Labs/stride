@@ -1,0 +1,15 @@
+syntax = "proto3";
+package Stridelabs.stride.records;
+
+option go_package = "github.com/Stride-Labs/stride/x/records/types";
+
+message UserRedemptionRecord {
+  string id = 1;  // takes the form {chainId}.{EpochNumber}.{sender}
+  string sender = 2 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+  string receiver = 3 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+  int64 amount = 4; 
+  string denom = 5;
+  string hostZoneId = 6;
+  int64 epochNumber = 7;
+  bool isClaimable = 8;
+}

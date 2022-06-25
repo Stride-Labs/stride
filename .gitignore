@@ -5,6 +5,8 @@
 *.so
 *.dylib
 
+# Stride files
+launch.sh
 # auto-generated go files
 
 
@@ -17,6 +19,9 @@ scripts/logs/*.log
 scripts-local/state
 scripts-local/logs
 scripts/temp.sh
+scripts/testnet/*/state/keys.txt
+scripts/tests/validator_selection
+scripts/tests/local_tests.bats
 vue/*
 # Test binary, built with `go test -c`
 *.test
