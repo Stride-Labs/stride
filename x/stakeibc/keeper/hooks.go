@@ -49,6 +49,7 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochIdentifier string, epochN
 					panic(err)
 				} else {
 					// TODO TEST-71 what should we do if this transfer fails
+					// TODO(TEST-121) should this only be removed if the transfer succeeds?
 					k.RecordsKeeper.RemoveDepositRecord(ctx, depositRecord.Id)
 				}
 			}
