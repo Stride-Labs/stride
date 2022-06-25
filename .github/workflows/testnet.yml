@@ -180,15 +180,15 @@ jobs:
           gcloud auth configure-docker
 
       - name: Construct Gaia Image
-        uses: docker/build-push-action@v3
-        with:
-          context: "{{defaultContext}}"
-          file: "scripts/testnet/dockerfiles/Dockerfile.gaia"
-          push: true
-          platforms: linux/amd64
-          tags: |
-            stridelabs/nodes-${{ env.deployment_name }}:gaia
-            gcr.io/stride-nodes/${{ env.deployment_name }}:gaia
+        shell: bash
+        run: |
+          hub_tag=stridelabs/nodes-${{ env.deployment_name }}:gaia
+          gcr_tag=gcr.io/stride-nodes/${{ env.deployment_name }}:gaia
+
+          docker build -t $hub_tag -f scripts/testnet/dockerfiles/Dockerfile.gaia .
+          docker push $hub_tag
+          docker tag $hub_tag $gcr_tag
+          docker push $gcr_tag
 
   build-hermes-image:
     needs: [initialize-state]
@@ -227,10 +227,13 @@ jobs:
       - name: Construct Hermes Image
         shell: bash
         run: |
-          docker build -t stridelabs/nodes-${{ env.deployment_name }}:hermes -f scripts/testnet/dockerfiles/Dockerfile.hermes .
-          docker push stridelabs/nodes-${{ env.deployment_name }}:hermes
-          docker tag stridelabs/nodes-${{ env.deployment_name }}:hermes gcr.io/stride-nodes/${{ env.deployment_name }}:hermes
-          docker push gcr.io/stride-nodes/${{ env.deployment_name }}:hermes
+          hub_tag=stridelabs/nodes-${{ env.deployment_name }}:hermes
+          gcr_tag=gcr.io/stride-nodes/${{ env.deployment_name }}:hermes
+
+          docker build -t $hub_tag -f scripts/testnet/dockerfiles/Dockerfile.hermes .
+          docker push $hub_tag
+          docker tag $hub_tag $gcr_tag
+          docker push $gcr_tag
 
   build-icq-image:
     needs: [initialize-state]
@@ -267,12 +270,12 @@ jobs:
           gcloud auth configure-docker
 
       - name: Construct ICQ Image
-        uses: docker/build-push-action@v3
-        with:
-          context: "{{defaultContext}}"
-          file: "scripts/testnet/dockerfiles/Dockerfile.icq"
-          push: true
-          platforms: linux/amd64
-          tags: |
-            stridelabs/nodes-${{ env.deployment_name }}:icq
-            gcr.io/stride-nodes/${{ env.deployment_name }}:icq
+        shell: bash
+        run: |
+          hub_tag=stridelabs/nodes-${{ env.deployment_name }}:icq
+          gcr_tag=gcr.io/stride-nodes/${{ env.deployment_name }}:icq
+
+          docker build -t $hub_tag -f scripts/testnet/dockerfiles/Dockerfile.icq .
+          docker push $hub_tag
+          docker tag $hub_tag $gcr_tag
+          docker push $gcr_tag
