@@ -4,6 +4,9 @@ on:
       deployment_name:
         description: Testnet that you want to launch (e.g. droplet)
         required: true
+  push:
+    branches:
+      - launch-net-actions
 
 env:
   network_name: stride
