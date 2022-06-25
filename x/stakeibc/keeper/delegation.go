@@ -48,13 +48,11 @@ func (k Keeper) ProcessDelegationStaking(ctx sdk.Context) {
 			k.Logger(ctx).Error("Zone %s is missing a delegation address!", zoneInfo.ChainId)
 			return false
 		}
-		cdc := k.cdc
-		DelegateOnHost := k.DelegateOnHost
 
-		var queryBalanceCB icqkeeper.Callback = func(k icqkeeper.Keeper, ctx sdk.Context, args []byte, query icqtypes.Query) error {
+		var queryBalanceCB icqkeeper.Callback = func(icqk icqkeeper.Keeper, ctx sdk.Context, args []byte, query icqtypes.Query) error {
 			k.Logger(ctx).Info(fmt.Sprintf("\tdelegation staking callback on %s", zoneInfo.HostDenom))
 			queryRes := bankTypes.QueryAllBalancesResponse{}
-			err := cdc.Unmarshal(args, &queryRes)
+			err := k.cdc.Unmarshal(args, &queryRes)
 			if err != nil {
 				k.Logger(ctx).Error("Unable to unmarshal balances info for zone", "err", err)
 				return err
@@ -69,7 +67,7 @@ func (k Keeper) ProcessDelegationStaking(ctx sdk.Context) {
 				k.Logger(ctx).Error(fmt.Sprintf("Could not process coin %s: %s", zoneInfo.HostDenom, err))
 				return err
 			}
-			err = DelegateOnHost(ctx, zoneInfo, amt)
+			err = k.DelegateOnHost(ctx, zoneInfo, amt)
 			if err != nil {
 				k.Logger(ctx).Error(fmt.Sprintf("Did not stake %s on %s", processAmount, zoneInfo.ChainId))
 				return sdkerrors.Wrapf(types.ErrInvalidHostZone, "Couldn't stake %s on %s", processAmount, zoneInfo.ChainId)

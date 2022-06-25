@@ -1,7 +1,7 @@
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
 # clean up logs
-rm $SCRIPT_DIR/*.log
+rm -f $SCRIPT_DIR/*.log
 
 docker compose logs >> $SCRIPT_DIR/all.log
 docker compose logs stride1 >> $SCRIPT_DIR/stride.log

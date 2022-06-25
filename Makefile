@@ -9,7 +9,8 @@ DOCKER := $(shell which docker)
 BUILDDIR ?= $(CURDIR)/build
 TEST_DOCKER_REPO=Stride-Labs/stridednode
 
-build=stride
+build=s
+cache=false
 
 export GO111MODULE = on
 
@@ -245,7 +246,7 @@ format:
 	find . -name '*.go' -type f -not -path "./vendor*" -not -path "*.git*" -not -path "./client/lcd/statik/statik.go" | xargs goimports -w -local github.com/cosmos/cosmos-sdk
 
 ###############################################################################
-###                                Localnet                                 ###
+###                                DockerNet                                ###
 ###############################################################################
 
 build-docker-stridednode:
@@ -287,24 +288,42 @@ test:
 	sh ./scripts/simple_test.sh
 
 init:
-	@if [ ${build} == "base" ]; \
-		then \
-			sh scripts/init.sh -bd;\
-	elif [ ${build} == "all" ]; \
-		then \
-			sh scripts/init.sh -bf;\
-	elif [ ${build} == "none" ]; \
-		then \
-			sh scripts/init.sh;\
-	elif [ ${build} == "stride" ]; \
-		then \
-			sh scripts/init.sh -bs;\
-	elif [ ${build} == "strideall" ]; \
-		then \
-			sh scripts/init.sh -ba ;\
-	elif [ ${build} == "logs" ]; \
-		then \
-			sh scripts/logs/create_logs.sh -ba ;\
-	else\
-		echo "Init type ${build} not recognized.";\
-	fi
+	sh scripts/init_main.sh -${build}
+
+logs: 
+	sh scripts/logs/create_logs.sh 
+
+
+###############################################################################
+###                                LocalNet                                 ###
+###############################################################################
+
+local-dependencies:
+	sh scripts-local/check_dependencies.sh
+
+local-install: local-dependencies stride-local-install gaia-local-install icq-local-install
+
+stride-local-install: 
+	@echo "\nInstalling Stride"
+	go get github.com/improbable-eng/grpc-web/go/grpcweb@v0.15.0
+	go mod tidy
+
+gaia-local-install:
+	@echo "\nInstalling Gaia"
+	cd deps/gaia; \
+	go mod tidy
+
+icq-local-install:
+	@echo "\nInstalling ICQ"
+	cd deps/interchain-queries; \
+	go mod tidy
+
+local-build: 
+	@sh scripts-local/build.sh -${build} ${BUILDDIR}
+
+local-init: local-build
+	@sh scripts-local/start_network.sh ${cache}
+
+stop:
+	@killall gaiad strided hermes interchain-queries
+	@pkill -f "/bin/bash.*create_logs.sh"

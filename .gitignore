@@ -9,12 +9,15 @@ scripts/testnet/state/keys.txt
 # build
 build/*
 state/*
+.state.backup
 scripts/state/*
 scripts/testnet/*/state/keys.txt
 scripts/testnet/state/*
 scripts/testnet/certs/*
 
 scripts/logs/*.log
+scripts-local/state
+scripts-local/logs
 scripts/temp.sh
 vue/*
 # Test binary, built with `go test -c`
