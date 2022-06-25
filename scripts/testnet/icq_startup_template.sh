@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 while true; do
     ping -c 1 STRIDE_ENDPOINT
