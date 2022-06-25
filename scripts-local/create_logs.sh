@@ -25,15 +25,15 @@ while true; do
     echo "STRIDE @ $($STRIDE_CMD q tendermint-validator-set | head -n 1 | tr -dc '0-9') | $N_VALIDATORS_STRIDE VALS" >$TEMP_LOGS_DIR/accounts.log
     echo "GAIA   @ $($GAIA_CMD q tendermint-validator-set | head -n 1 | tr -dc '0-9') | $N_VALIDATORS_GAIA VALS" >>$TEMP_LOGS_DIR/accounts.log
 
-    printf '\n%s' "BALANCES STRIDE" >>$TEMP_LOGS_DIR/accounts.log
+    printf '\n%s\n' "BALANCES STRIDE" >>$TEMP_LOGS_DIR/accounts.log
     $STRIDE_CMD q bank balances $STRIDE_ADDRESS >>$TEMP_LOGS_DIR/accounts.log
-    printf '\n%s' "BALANCES GAIA" >>$TEMP_LOGS_DIR/accounts.log
+    printf '\n%s\n' "BALANCES GAIA" >>$TEMP_LOGS_DIR/accounts.log
     $GAIA_CMD q bank balances $GAIA_DELEGATE >>$TEMP_LOGS_DIR/accounts.log
-    printf '\n%s' "DELEGATIONS GAIA" >>$TEMP_LOGS_DIR/accounts.log
+    printf '\n%s\n' "DELEGATIONS GAIA" >>$TEMP_LOGS_DIR/accounts.log
     $GAIA_CMD q staking delegations $GAIA_DELEGATE >>$TEMP_LOGS_DIR/accounts.log
-    printf '\n%s' "LIST-HOST-ZONES STRIDE" >>$TEMP_LOGS_DIR/accounts.log
+    printf '\n%s\n' "LIST-HOST-ZONES STRIDE" >>$TEMP_LOGS_DIR/accounts.log
     $STRIDE_CMD q stakeibc list-host-zone | head -n 16 >>$TEMP_LOGS_DIR/accounts.log
-    printf '\n%s' "LIST-CONTROLLER-BALANCES" >>$TEMP_LOGS_DIR/accounts.log
+    printf '\n%s\n' "LIST-CONTROLLER-BALANCES" >>$TEMP_LOGS_DIR/accounts.log
     # $STRIDE_CMD q stakeibc list-controller-balances >> $TEMP_LOGS_DIR/accounts.log
 
     mv $TEMP_LOGS_DIR/*.log $LOGS_DIR
