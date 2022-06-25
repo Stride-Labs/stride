@@ -70,10 +70,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
 
-      - name: Initialize State
-        shell: bash
-        run: ./scripts/testnet/setup_testnet_state.sh ${deployment_name} ${num_stride_nodes}
-
       - name: Download Strided
         uses: actions/download-artifact@v3
         with:
@@ -85,6 +81,10 @@ jobs:
         with:
           name: gaiad
           path: ./build/gaiad
+
+      - name: Initialize State
+        shell: bash
+        run: ./scripts/testnet/setup_testnet_state.sh ${deployment_name} ${num_stride_nodes}
 
       - name: Persist State Files
         uses: actions/upload-artifact@v3
