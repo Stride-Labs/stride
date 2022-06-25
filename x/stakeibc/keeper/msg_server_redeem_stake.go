@@ -31,7 +31,7 @@ func (k Keeper) RedeemStake(goCtx context.Context, msg *types.MsgRedeemStake) (*
 	}
 	delegationAccount := hostZone.GetDelegationAccount()
 	connectionId := hostZone.GetConnectionId()
-	
+
 	// Safety checks
 	// Redemption amount must be positive
 	if !inCoin.IsPositive() {
@@ -69,7 +69,7 @@ func (k Keeper) RedeemStake(goCtx context.Context, msg *types.MsgRedeemStake) (*
 
 	// Select validators for unbonding
 	// TODO(TEST-39): Implement validator selection
-	validator_address := "cosmosvaloper19e7sugzt8zaamk2wyydzgmg9n3ysylg6na6k6e"  // gval2
+	validator_address := "cosmosvaloper19e7sugzt8zaamk2wyydzgmg9n3ysylg6na6k6e" // gval2
 	_ = validator_address
 
 	// Construct the transaction. Note, this transaction must be atomically executed.
@@ -77,7 +77,7 @@ func (k Keeper) RedeemStake(goCtx context.Context, msg *types.MsgRedeemStake) (*
 	var msgs []sdk.Msg
 	// TODO(TEST-5)
 	// Implement record keeping logic!
-	
+
 	// Send the ICA transaction
 	k.SubmitTxs(ctx, connectionId, msgs, *delegationAccount)
 
