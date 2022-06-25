@@ -13,10 +13,10 @@ var _ sdk.Msg = &MsgRedeemStake{}
 
 func NewMsgRedeemStake(creator string, amount int64, stAssetDenom string, receiver string) *MsgRedeemStake {
 	return &MsgRedeemStake{
-		Creator: creator,
-		Amount:  amount,
-		StAssetDenom:   stAssetDenom,
-		Receiver: receiver,
+		Creator:      creator,
+		Amount:       amount,
+		StAssetDenom: stAssetDenom,
+		Receiver:     receiver,
 	}
 }
 
