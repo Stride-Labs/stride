@@ -6,7 +6,7 @@ WORKDIR /app/src
 
 RUN git clone https://github.com/informalsystems/ibc-rs --branch v0.15.0
 
-WORKDIR ibc-rs
+WORKDIR /app/src/ibc-rs
 
 RUN cargo build --release
 
