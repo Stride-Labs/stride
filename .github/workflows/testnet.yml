@@ -139,8 +139,8 @@ jobs:
           push: true
           platforms: linux/amd64
           tags: |
-            stridelabs/nodes-${{ github.event.inputs.deployment_name }}:${{ matrix.node-name }}
-            gcr.io/stride-nodes/${{ github.event.inputs.deployment_name }}:${{ matrix.node-name }}
+            stridelabs/nodes-${{ env.deployment_name }}:${{ matrix.node-name }}
+            gcr.io/stride-nodes/${{ env.deployment_name }}:${{ matrix.node-name }}
 
   build-gaia-image:
     needs: [initialize-state]
@@ -183,10 +183,9 @@ jobs:
           file: "scripts/testnet/dockerfiles/Dockerfile.gaia"
           push: true
           platforms: linux/amd64
-          build-args: deployment_name=${{ github.event.inputs.deployment_name }}
           tags: |
-            stridelabs/nodes-${{ github.event.inputs.deployment_name }}:gaia
-            gcr.io/stride-nodes/${{ github.event.inputs.deployment_name }}:gaia
+            stridelabs/nodes-${{ env.deployment_name }}:gaia
+            gcr.io/stride-nodes/${{ env.deployment_name }}:gaia
 
   build-hermes-image:
     needs: [initialize-state]
@@ -229,10 +228,9 @@ jobs:
           file: "scripts/testnet/dockerfiles/Dockerfile.hermes"
           push: true
           platforms: linux/amd64
-          build-args: deployment_name=${{ github.event.inputs.deployment_name }}
           tags: |
-            stridelabs/nodes-${{ github.event.inputs.deployment_name }}:hermes
-            gcr.io/stride-nodes/${{ github.event.inputs.deployment_name }}:hermes
+            stridelabs/nodes-${{ env.deployment_name }}:hermes
+            gcr.io/stride-nodes/${{ env.deployment_name }}:hermes
 
   build-icq-image:
     needs: [initialize-state]
@@ -275,7 +273,6 @@ jobs:
           file: "scripts/testnet/dockerfiles/Dockerfile.icq"
           push: true
           platforms: linux/amd64
-          build-args: deployment_name=${{ github.event.inputs.deployment_name }}
           tags: |
-            stridelabs/nodes-${{ github.event.inputs.deployment_name }}:icq
-            gcr.io/stride-nodes/${{ github.event.inputs.deployment_name }}:icq
+            stridelabs/nodes-${{ env.deployment_name }}:icq
+            gcr.io/stride-nodes/${{ env.deployment_name }}:icq
