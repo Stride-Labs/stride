@@ -19,10 +19,10 @@ COPY --from=gaiad-builder /go/bin/gaiad /usr/local/bin/
 RUN adduser -S -h /gaia -D gaia -u 1000 
 USER gaia
 
-RUN gaiad init test --home /gaia/.gaiad
+RUN gaiad init test
 
-COPY --chown=1000 "./state/gaia/" /gaia/.gaiad/ 
+COPY --chown=1000 "./state/gaia/" /gaia/.gaia/ 
 
 EXPOSE 26656 26657 1317 9090
-CMD ["gaiad", "start", "--home", "/gaia/.gaiad"]
+CMD ["gaiad", "start"]
 
