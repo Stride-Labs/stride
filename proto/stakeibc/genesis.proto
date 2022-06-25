@@ -5,7 +5,6 @@ import "gogoproto/gogo.proto";
 import "stakeibc/params.proto";
 import "stakeibc/ica_account.proto";
 import "stakeibc/host_zone.proto";
-import "stakeibc/deposit_record.proto";
 // this line is used by starport scaffolding # genesis/proto/import
 
 option go_package = "github.com/Stride-Labs/stride/x/stakeibc/types";

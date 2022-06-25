@@ -15,17 +15,16 @@ func TestGenesis(t *testing.T) {
 		Params: types.DefaultParams(),
 		PortId: types.PortID,
 		// this line is used by starport scaffolding # genesis/test/state
-[		DepositRecordList: []types.DepositRecord{
-		{
-			Id: 0,
+		DepositRecordList: []types.DepositRecord{
+			{
+				Id: 0,
+			},
+			{
+				Id: 1,
+			},
 		},
-		{
-			Id: 1,
-		},
-	},
-	DepositRecordCount: 2,]
+		DepositRecordCount: 2,
 	}
-
 	k, ctx := keepertest.RecordsKeeper(t)
 	records.InitGenesis(ctx, *k, genesisState)
 	got := records.ExportGenesis(ctx, *k)
