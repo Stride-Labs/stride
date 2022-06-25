@@ -36,15 +36,6 @@ func TestGenesisState_Validate(t *testing.T) {
 					},
 				},
 				HostZoneCount: 2,
-				DepositRecordList: []types.DepositRecord{
-					{
-						Id: 0,
-					},
-					{
-						Id: 1,
-					},
-				},
-				DepositRecordCount: 2,
 				// this line is used by starport scaffolding # types/genesis/validField
 			},
 			valid: true,
@@ -75,32 +66,7 @@ func TestGenesisState_Validate(t *testing.T) {
 			},
 			valid: false,
 		},
-		{
-			desc: "duplicated depositRecord",
-			genState: &types.GenesisState{
-				DepositRecordList: []types.DepositRecord{
-					{
-						Id: 0,
-					},
-					{
-						Id: 0,
-					},
-				},
-			},
-			valid: false,
-		},
-		{
-			desc: "invalid depositRecord count",
-			genState: &types.GenesisState{
-				DepositRecordList: []types.DepositRecord{
-					{
-						Id: 1,
-					},
-				},
-				DepositRecordCount: 0,
-			},
-			valid: false,
-		},
+
 		// this line is used by starport scaffolding # types/genesis/testcase
 	} {
 		t.Run(tc.desc, func(t *testing.T) {

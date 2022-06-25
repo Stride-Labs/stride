@@ -25,6 +25,34 @@ message QueryParamsRequest {}
 message QueryParamsResponse {
   // params holds all the parameters of this module.
   Params params = 1 [(gogoproto.nullable) = false];
+
+// Queries a DepositRecord by id.
+	rpc DepositRecord(QueryGetDepositRecordRequest) returns (QueryGetDepositRecordResponse) {
+		option (google.api.http).get = "/Stride-Labs/stride/stakeibc/deposit_record/{id}";
+	}
+
+	// Queries a list of DepositRecord items.
+	rpc DepositRecordAll(QueryAllDepositRecordRequest) returns (QueryAllDepositRecordResponse) {
+		option (google.api.http).get = "/Stride-Labs/stride/stakeibc/deposit_record";
+	}
+
+}
+
+message QueryGetDepositRecordRequest {
+	uint64 id = 1;
+}
+
+message QueryGetDepositRecordResponse {
+	DepositRecord DepositRecord = 1 [(gogoproto.nullable) = false];
+}
+
+message QueryAllDepositRecordRequest {
+	cosmos.base.query.v1beta1.PageRequest pagination = 1;
+}
+
+message QueryAllDepositRecordResponse {
+	repeated DepositRecord DepositRecord = 1 [(gogoproto.nullable) = false];
+	cosmos.base.query.v1beta1.PageResponse pagination = 2;
 }
 
 // this line is used by starport scaffolding # 3
