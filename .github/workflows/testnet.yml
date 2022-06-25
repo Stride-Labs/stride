@@ -89,6 +89,8 @@ jobs:
           ls -la 
           ls -la ./build
           ls -la ./scripts/testnet/
+          ls -la ./build/strided
+          ls -la ./build/gaiad
 
       - name: Initialize State
         shell: bash
