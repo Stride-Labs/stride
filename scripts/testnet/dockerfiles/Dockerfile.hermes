@@ -18,8 +18,8 @@ RUN apt-get update \
     && adduser --system --home /hermes --disabled-password --disabled-login hermes -u 1000
 USER hermes
 
-COPY --chown=hermes "./state/hermes_config.toml" /hermes/.hermes/config.toml
-COPY --chown=hermes "./state/hermes_startup.sh" /hermes/hermes_startup.sh
+COPY --chown=1000 "./state/hermes_config.toml" /hermes/.hermes/config.toml
+COPY --chown=1000 "./state/hermes_startup.sh" /hermes/hermes_startup.sh
 
 RUN ["chmod", "+x", "/hermes/hermes_startup.sh"]
 CMD ["/hermes/hermes_startup.sh"]
