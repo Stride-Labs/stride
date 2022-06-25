@@ -1,5 +1,5 @@
 syntax = "proto3";
-package stride.records;
+package Stridelabs.stride.records;
 
 import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";

@@ -16,7 +16,7 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochIdentifier string, epochN
 	if epochIdentifier == "stride_epoch" {
 		k.Logger(ctx).Info(fmt.Sprintf("Stride Epoch %d", epochNumber))
 		depositInterval := int64(k.GetParam(ctx, types.KeyDepositInterval))
-		if epochNumber%depositInterval == 0 {
+		if epochNumber%depositInterval == 0 && k.RecordsKeeper.GetDepositRecordCount(ctx) > 0 {
 			// TODO TEST-72 move this function to the keeper
 			k.Logger(ctx).Info("Triggering deposits")
 			depositRecords := k.RecordsKeeper.GetAllDepositRecord(ctx)
