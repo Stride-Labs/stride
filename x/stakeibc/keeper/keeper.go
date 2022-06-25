@@ -30,7 +30,7 @@ type (
 		ICAControllerKeeper icacontrollerkeeper.Keeper
 		IBCKeeper           ibckeeper.Keeper
 		scopedKeeper        capabilitykeeper.ScopedKeeper
-		transferKeeper      ibctransferkeeper.Keeper
+		TransferKeeper      ibctransferkeeper.Keeper
 		bankKeeper    		bankkeeper.Keeper
 		InterchainQueryKeeper	icqkeeper.Keeper
 
@@ -51,7 +51,7 @@ func NewKeeper(
 	icacontrollerkeeper icacontrollerkeeper.Keeper,
 	ibcKeeper ibckeeper.Keeper,
 	scopedKeeper capabilitykeeper.ScopedKeeper,
-	transferKeeper ibctransferkeeper.Keeper,
+	TransferKeeper ibctransferkeeper.Keeper,
 	interchainQueryKeeper icqkeeper.Keeper,
 ) Keeper {
 	// set KeyTable if it has not already been set
@@ -69,7 +69,7 @@ func NewKeeper(
 		ICAControllerKeeper: icacontrollerkeeper,
 		IBCKeeper:           ibcKeeper,
 		scopedKeeper:        scopedKeeper,
-		transferKeeper:      transferKeeper,
+		TransferKeeper:      TransferKeeper,
 		InterchainQueryKeeper: interchainQueryKeeper,
 	}
 }
