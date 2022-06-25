@@ -3,10 +3,10 @@ on:
     push:
       branches:
         - launch-net-actions
-    inputs:
-      deployment_name:
-        description: Testnet that you want to launch (e.g. droplet)
-        required: true
+    # inputs:
+    #   deployment_name:
+    #     description: Testnet that you want to launch (e.g. droplet)
+    #     required: true
 
 env:
   deployment_name: testnet
