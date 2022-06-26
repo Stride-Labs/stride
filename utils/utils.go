@@ -3,10 +3,10 @@ package utils
 import (
 	"strconv"
 
-	stakeibctypes "github.com/Stride-Labs/stride/x/stakeibc/types"
+	recordstypes "github.com/Stride-Labs/stride/x/records/types"
 )
 
-func FilterDepositRecords(arr []stakeibctypes.DepositRecord, condition func(stakeibctypes.DepositRecord) bool) (ret []stakeibctypes.DepositRecord) {
+func FilterDepositRecords(arr []recordstypes.DepositRecord, condition func(recordstypes.DepositRecord) bool) (ret []recordstypes.DepositRecord) {
 	for _, elem := range arr {
 		if condition(elem) {
 			ret = append(ret, elem)

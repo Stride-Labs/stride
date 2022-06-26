@@ -1,7 +1,7 @@
 package types
 
 import (
-	"fmt"
+	fmt "fmt"
 
 	host "github.com/cosmos/ibc-go/v3/modules/core/24-host"
 )
@@ -12,11 +12,9 @@ const DefaultIndex uint64 = 1
 // DefaultGenesis returns the default Capability genesis state
 func DefaultGenesis() *GenesisState {
 	return &GenesisState{
-		ICAAccount:        nil,
-		HostZoneList:      []HostZone{},
-		DepositRecordList: []DepositRecord{},
-		EpochTrackerList: []EpochTracker{},
-// this line is used by starport scaffolding # genesis/types/default
+		ICAAccount:   nil,
+		HostZoneList: []HostZone{},
+		// this line is used by starport scaffolding # genesis/types/default
 		Params: DefaultParams(),
 		PortId: PortID,
 	}
@@ -28,29 +26,17 @@ func (gs GenesisState) Validate() error {
 	if err := host.PortIdentifierValidator(gs.PortId); err != nil {
 		return err
 	}
-	// Check for duplicated ID in depositRecord
-	depositRecordIdMap := make(map[uint64]bool)
-	depositRecordCount := gs.GetDepositRecordCount()
-	for _, elem := range gs.DepositRecordList {
-		if _, ok := depositRecordIdMap[elem.Id]; ok {
-			return fmt.Errorf("duplicated id for depositRecord")
-		}
-		if elem.Id >= depositRecordCount {
-			return fmt.Errorf("depositRecord id should be lower or equal than the last id")
-		}
-		depositRecordIdMap[elem.Id] = true
-	}
 	// Check for duplicated index in epochTracker
-epochTrackerIndexMap := make(map[string]struct{})
+	epochTrackerIndexMap := make(map[string]struct{})
 
-for _, elem := range gs.EpochTrackerList {
-	index := string(EpochTrackerKey(elem.EpochIdentifier))
-	if _, ok := epochTrackerIndexMap[index]; ok {
-		return fmt.Errorf("duplicated index for epochTracker")
+	for _, elem := range gs.EpochTrackerList {
+		index := string(EpochTrackerKey(elem.EpochIdentifier))
+		if _, ok := epochTrackerIndexMap[index]; ok {
+			return fmt.Errorf("duplicated index for epochTracker")
+		}
+		epochTrackerIndexMap[index] = struct{}{}
 	}
-	epochTrackerIndexMap[index] = struct{}{}
-}
-// this line is used by starport scaffolding # genesis/types/validate
+	// this line is used by starport scaffolding # genesis/types/validate
 
 	return gs.Params.Validate()
 }

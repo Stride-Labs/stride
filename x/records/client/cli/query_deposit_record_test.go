@@ -13,8 +13,8 @@ import (
 
 	"github.com/Stride-Labs/stride/testutil/network"
 	"github.com/Stride-Labs/stride/testutil/nullify"
-	"github.com/Stride-Labs/stride/x/stakeibc/client/cli"
-	"github.com/Stride-Labs/stride/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/x/records/client/cli"
+	"github.com/Stride-Labs/stride/x/records/types"
 )
 
 func networkWithDepositRecordObjects(t *testing.T, n int) (*network.Network, []types.DepositRecord) {
