@@ -58,7 +58,6 @@ func NewKeeper(
 	transferKeeper ibctransferkeeper.Keeper,
 	interchainQueryKeeper icqkeeper.Keeper,
 	recordsKeeper recordskeeper.Keeper,
-	epochsKeeper epochskeeper.Keeper,
 ) Keeper {
 	// set KeyTable if it has not already been set
 	if !ps.HasKeyTable() {
@@ -78,7 +77,6 @@ func NewKeeper(
 		transferKeeper:        transferKeeper,
 		InterchainQueryKeeper: interchainQueryKeeper,
 		recordsKeeper:         recordsKeeper,
-		epochsKeeper:          epochsKeeper,
 	}
 }
 

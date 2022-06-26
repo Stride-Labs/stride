@@ -68,34 +68,77 @@ func (k Keeper) SendHostZoneUnbondings(ctx sdk.Context, hostZone types.HostZone)
 	for _, unbonding := range *allHostZoneUnbondings {
 		unbonding.UnbondingSent = true
 	}
+
+	ctx.EventManager().EmitEvents(sdk.Events{
+		sdk.NewEvent(
+			sdk.EventTypeMessage,
+			sdk.NewAttribute("hostZone", hostZone.ChainId),
+			sdk.NewAttribute("newAmountUnbonding", stakeAmt.String()),
+		),
+	})
 	return true
 }
 
 func (k Keeper) ProcessAllEpochUnbondings(ctx sdk.Context, dayNumber uint64) bool {
 	// this function goes through each host zone, and if it's the right time to
 	// initiate an unbonding, it goes and tries to unbond all outstanding records
-	for i, hostZone := range k.GetAllHostZone(ctx) {
-		k.Logger(ctx).Info(fmt.Sprintf("Processing epoch unbondings for host zone %d", i))
-		// we only send the ICA call if this hostZone is supposed to be triggered
-		if dayNumber%hostZone.UnbondingFrequency == 0 {
-			k.Logger(ctx).Info(fmt.Sprintf("Sending unbondings for host zone %s", hostZone.ChainId))
-			k.SendHostZoneUnbondings(ctx, hostZone)
-		}
-	}
-	return true
-}
+	// 	for i, hostZone := range k.GetAllHostZone(ctx) {
+	// 		k.Logger(ctx).Info(fmt.Sprintf("Processing epoch unbondings for host zone %d", i))
+	// 		// we only send the ICA call if this hostZone is supposed to be triggered
+	// 		if dayNumber%hostZone.UnbondingFrequency == 0 {
+	// 			k.Logger(ctx).Info(fmt.Sprintf("Sending unbondings for host zone %s", hostZone.ChainId))
+	// 			k.SendHostZoneUnbondings(ctx, hostZone)
+	// 		}
+	// 	}
+	// 	return true
+	// }
 
-func (k Keeper) VerifyAllUnbondings(ctx sdk.Context, dayNumber uint64) bool {
-	// this function goes through each host zone, and sees if any
-	// tokens have been unbonded and are ready to sweep. If so, it
-	// processes them
-	for i, hostZone := range k.GetAllHostZone(ctx) {
-		k.Logger(ctx).Info(fmt.Sprintf("Processing epoch unbondings for host zone %d", i))
-		// we only send the ICA call if this hostZone is supposed to be triggered
-		if dayNumber%hostZone.UnbondingFrequency == 0 {
-			k.Logger(ctx).Info(fmt.Sprintf("Sending unbondings for host zone %s", hostZone.ChainId))
-			k.SendHostZoneUnbondings(ctx, hostZone)
-		}
-	}
+	// func (k Keeper) VerifyAllUnbondings(ctx sdk.Context) bool {
+	// 	// this function goes through each host zone, and sees if any
+	// 	// tokens have been unbonded and are ready to sweep. If so, it
+	// 	// processes them
+	// 	for i, hostZone := range k.GetAllHostZone(ctx) {
+	// 		k.Logger(ctx).Info(fmt.Sprintf("Processing epoch unbondings for host zone %d", i))
+	// 		var queryBalanceCB icqkeeper.Callback = func(icqk icqkeeper.Keeper, ctx sdk.Context, args []byte, query icqtypes.Query) error {
+	// 			k.Logger(ctx).Info(fmt.Sprintf("\tdelegation staking callback on %s", zoneInfo.HostDenom))
+	// 			queryRes := bankTypes.QueryAllBalancesResponse{}
+	// 			err := k.cdc.Unmarshal(args, &queryRes)
+	// 			if err != nil {
+	// 				k.Logger(ctx).Error("Unable to unmarshal balances info for zone", "err", err)
+	// 				return err
+	// 			}
+	// 			// Get denom dynamically
+	// 			balance := queryRes.Balances.AmountOf(zoneInfo.HostDenom)
+	// 			k.Logger(ctx).Info(fmt.Sprintf("\tBalance on %s is %s", zoneInfo.HostDenom, balance.String()))
+
+	// 			processAmount := balance.String() + zoneInfo.HostDenom
+	// 			amt, err := sdk.ParseCoinNormalized(processAmount)
+	// 			if err != nil {
+	// 				k.Logger(ctx).Error(fmt.Sprintf("Could not process coin %s: %s", zoneInfo.HostDenom, err))
+	// 				return err
+	// 			}
+	// 			err = k.DelegateOnHost(ctx, zoneInfo, amt)
+	// 			if err != nil {
+	// 				k.Logger(ctx).Error(fmt.Sprintf("Did not stake %s on %s", processAmount, zoneInfo.ChainId))
+	// 				return sdkerrors.Wrapf(types.ErrInvalidHostZone, "Couldn't stake %s on %s", processAmount, zoneInfo.ChainId)
+	// 			} else {
+	// 				k.Logger(ctx).Info(fmt.Sprintf("Successfully staked %s on %s", processAmount, zoneInfo.ChainId))
+	// 			}
+
+	// 			ctx.EventManager().EmitEvents(sdk.Events{
+	// 				sdk.NewEvent(
+	// 					sdk.EventTypeMessage,
+	// 					sdk.NewAttribute("hostZone", zoneInfo.ChainId),
+	// 					sdk.NewAttribute("newAmountStaked", balance.String()),
+	// 				),
+	// 			})
+
+	// 			return nil
+	// 		}
+	// 		k.Logger(ctx).Info(fmt.Sprintf("\tQuerying balance for %s", zoneInfo.ChainId))
+	// 		k.InterchainQueryKeeper.
+	// 		k.InterchainQueryKeeper.QueryBalances(ctx, zoneInfo, queryBalanceCB, delegationIca.Address)
+	// 		return false
+	// 	}
 	return true
 }

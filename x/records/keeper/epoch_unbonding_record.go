@@ -73,7 +73,7 @@ func (k Keeper) GetEpochUnbondingRecord(ctx sdk.Context, id uint64) (val types.E
 
 // GetEpochUnbondingRecordByEpoch returns a epochUnbondingRecord from its epochNumber
 func (k Keeper) GetEpochUnbondingRecordByEpoch(ctx sdk.Context, epochNumber int64) (val types.EpochUnbondingRecord, found bool) {
-	for i, epochUnbondingRecord := range k.GetAllEpochUnbondingRecord(ctx) {
+	for _, epochUnbondingRecord := range k.GetAllEpochUnbondingRecord(ctx) {
 		if epochUnbondingRecord.EpochNumber == epochNumber {
 			return epochUnbondingRecord, true
 		}

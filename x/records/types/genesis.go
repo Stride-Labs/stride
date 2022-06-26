@@ -2,6 +2,7 @@ package types
 
 import (
 	"fmt"
+
 	host "github.com/cosmos/ibc-go/v3/modules/core/24-host"
 )
 
@@ -26,14 +27,10 @@ func (gs GenesisState) Validate() error {
 		return err
 	}
 	// Check for duplicated ID in userRedemptionRecord
-	userRedemptionRecordIdMap := make(map[uint64]bool)
-	userRedemptionRecordCount := gs.GetUserRedemptionRecordCount()
+	userRedemptionRecordIdMap := make(map[string]bool)
 	for _, elem := range gs.UserRedemptionRecordList {
 		if _, ok := userRedemptionRecordIdMap[elem.Id]; ok {
 			return fmt.Errorf("duplicated id for userRedemptionRecord")
-		}
-		if elem.Id >= userRedemptionRecordCount {
-			return fmt.Errorf("userRedemptionRecord id should be lower or equal than the last id")
 		}
 		userRedemptionRecordIdMap[elem.Id] = true
 	}
