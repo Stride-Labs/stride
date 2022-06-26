@@ -40,6 +40,10 @@ const (
 	// TODO: Determine the simulation weight value
 	defaultWeightMsgDeleteEpochTracker int = 100
 
+	opWeightMsgClaimUndelegatedTokens = "op_weight_msg_claim_undelegated_tokens"
+	// TODO: Determine the simulation weight value
+	defaultWeightMsgClaimUndelegatedTokens int = 100
+
 	// this line is used by starport scaffolding # simapp/module/const
 )
 
@@ -86,6 +90,17 @@ func (am AppModule) WeightedOperations(simState module.SimulationState) []simtyp
 		weightMsgLiquidStake,
 		stakeibcsimulation.SimulateMsgLiquidStake(am.accountKeeper, am.bankKeeper, am.keeper),
 	))
+	var weightMsgClaimUndelegatedTokens int
+	simState.AppParams.GetOrGenerate(simState.Cdc, opWeightMsgClaimUndelegatedTokens, &weightMsgClaimUndelegatedTokens, nil,
+		func(_ *rand.Rand) {
+			weightMsgClaimUndelegatedTokens = defaultWeightMsgClaimUndelegatedTokens
+		},
+	)
+	operations = append(operations, simulation.NewWeightedOperation(
+		weightMsgClaimUndelegatedTokens,
+		stakeibcsimulation.SimulateMsgClaimUndelegatedTokens(am.accountKeeper, am.bankKeeper, am.keeper),
+	))
+
 	// this line is used by starport scaffolding # simapp/module/operation
 
 	return operations

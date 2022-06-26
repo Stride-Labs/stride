@@ -37,7 +37,7 @@ func GetQueryCmd(queryRoute string) *cobra.Command {
 	cmd.AddCommand(CmdShowInterchainAccount())
 	cmd.AddCommand(CmdListEpochTracker())
 	cmd.AddCommand(CmdShowEpochTracker())
-// this line is used by starport scaffolding # 1
+	// this line is used by starport scaffolding # 1
 
 	return cmd
 }

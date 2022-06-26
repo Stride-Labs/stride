@@ -5,19 +5,19 @@ import "encoding/binary"
 var _ binary.ByteOrder
 
 const (
-    // EpochTrackerKeyPrefix is the prefix to retrieve all EpochTracker
+	// EpochTrackerKeyPrefix is the prefix to retrieve all EpochTracker
 	EpochTrackerKeyPrefix = "EpochTracker/value/"
 )
 
 // EpochTrackerKey returns the store key to retrieve a EpochTracker from the index fields
 func EpochTrackerKey(
-index string,
+	index string,
 ) []byte {
 	var key []byte
-    
-    indexBytes := []byte(index)
-    key = append(key, indexBytes...)
-    key = append(key, []byte("/")...)
-    
+
+	indexBytes := []byte(index)
+	key = append(key, indexBytes...)
+	key = append(key, []byte("/")...)
+
 	return key
 }

@@ -38,14 +38,14 @@ func TestGenesis(t *testing.T) {
 		},
 		DepositRecordCount: 2,
 		EpochTrackerList: []types.EpochTracker{
-		{
-			Index: "0",
-},
-		{
-			Index: "1",
-},
-	},
-	// this line is used by starport scaffolding # genesis/test/state
+			{
+				Index: "0",
+			},
+			{
+				Index: "1",
+			},
+		},
+		// this line is used by starport scaffolding # genesis/test/state
 	}
 
 	k, ctx := keepertest.StakeibcKeeper(t)
@@ -64,5 +64,5 @@ func TestGenesis(t *testing.T) {
 	require.ElementsMatch(t, genesisState.DepositRecordList, got.DepositRecordList)
 	require.Equal(t, genesisState.DepositRecordCount, got.DepositRecordCount)
 	require.ElementsMatch(t, genesisState.EpochTrackerList, got.EpochTrackerList)
-// this line is used by starport scaffolding # genesis/test/assert
+	// this line is used by starport scaffolding # genesis/test/assert
 }

@@ -36,6 +36,7 @@ func GetTxCmd() *cobra.Command {
 	cmd.AddCommand(CmdSubmitTx())
 	cmd.AddCommand(CmdRegisterHostZone())
 	cmd.AddCommand(CmdRedeemStake())
+	cmd.AddCommand(CmdClaimUndelegatedTokens())
 	// this line is used by starport scaffolding # 1
 
 	return cmd

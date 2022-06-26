@@ -4,10 +4,10 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/Stride-Labs/stride/x/stakeibc/keeper"
-	"github.com/Stride-Labs/stride/x/stakeibc/types"
 	keepertest "github.com/Stride-Labs/stride/testutil/keeper"
 	"github.com/Stride-Labs/stride/testutil/nullify"
+	"github.com/Stride-Labs/stride/x/stakeibc/keeper"
+	"github.com/Stride-Labs/stride/x/stakeibc/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 )
@@ -19,7 +19,7 @@ func createNEpochTracker(keeper *keeper.Keeper, ctx sdk.Context, n int) []types.
 	items := make([]types.EpochTracker, n)
 	for i := range items {
 		items[i].Index = strconv.Itoa(i)
-        
+
 		keeper.SetEpochTracker(ctx, items[i])
 	}
 	return items
@@ -30,8 +30,7 @@ func TestEpochTrackerGet(t *testing.T) {
 	items := createNEpochTracker(keeper, ctx, 10)
 	for _, item := range items {
 		rst, found := keeper.GetEpochTracker(ctx,
-		    item.Index,
-            
+			item.Index,
 		)
 		require.True(t, found)
 		require.Equal(t,
@@ -45,12 +44,10 @@ func TestEpochTrackerRemove(t *testing.T) {
 	items := createNEpochTracker(keeper, ctx, 10)
 	for _, item := range items {
 		keeper.RemoveEpochTracker(ctx,
-		    item.Index,
-            
+			item.Index,
 		)
 		_, found := keeper.GetEpochTracker(ctx,
-		    item.Index,
-            
+			item.Index,
 		)
 		require.False(t, found)
 	}
