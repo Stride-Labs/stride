@@ -1,7 +1,7 @@
 package keeper_test
 
 import (
-    "strconv"
+	"strconv"
 	"testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -10,9 +10,9 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/Stride-Labs/stride/x/stakeibc/types"
-	"github.com/Stride-Labs/stride/testutil/nullify"
 	keepertest "github.com/Stride-Labs/stride/testutil/keeper"
+	"github.com/Stride-Labs/stride/testutil/nullify"
+	"github.com/Stride-Labs/stride/x/stakeibc/types"
 )
 
 // Prevent strconv unused error
@@ -29,28 +29,25 @@ func TestEpochTrackerQuerySingle(t *testing.T) {
 		err      error
 	}{
 		{
-			desc:     "First",
-			request:  &types.QueryGetEpochTrackerRequest{
-			    Index: msgs[0].Index,
-                
+			desc: "First",
+			request: &types.QueryGetEpochTrackerRequest{
+				Index: msgs[0].Index,
 			},
 			response: &types.QueryGetEpochTrackerResponse{EpochTracker: msgs[0]},
 		},
 		{
-			desc:     "Second",
-			request:  &types.QueryGetEpochTrackerRequest{
-			    Index: msgs[1].Index,
-                
+			desc: "Second",
+			request: &types.QueryGetEpochTrackerRequest{
+				Index: msgs[1].Index,
 			},
 			response: &types.QueryGetEpochTrackerResponse{EpochTracker: msgs[1]},
 		},
 		{
-			desc:    "KeyNotFound",
+			desc: "KeyNotFound",
 			request: &types.QueryGetEpochTrackerRequest{
-			    Index:strconv.Itoa(100000),
-                
+				Index: strconv.Itoa(100000),
 			},
-			err:     status.Error(codes.NotFound, "not found"),
+			err: status.Error(codes.NotFound, "not found"),
 		},
 		{
 			desc: "InvalidRequest",
@@ -94,9 +91,9 @@ func TestEpochTrackerQueryPaginated(t *testing.T) {
 			require.NoError(t, err)
 			require.LessOrEqual(t, len(resp.EpochTracker), step)
 			require.Subset(t,
-            	nullify.Fill(msgs),
-            	nullify.Fill(resp.EpochTracker),
-            )
+				nullify.Fill(msgs),
+				nullify.Fill(resp.EpochTracker),
+			)
 		}
 	})
 	t.Run("ByKey", func(t *testing.T) {
@@ -107,9 +104,9 @@ func TestEpochTrackerQueryPaginated(t *testing.T) {
 			require.NoError(t, err)
 			require.LessOrEqual(t, len(resp.EpochTracker), step)
 			require.Subset(t,
-            	nullify.Fill(msgs),
-            	nullify.Fill(resp.EpochTracker),
-            )
+				nullify.Fill(msgs),
+				nullify.Fill(resp.EpochTracker),
+			)
 			next = resp.Pagination.NextKey
 		}
 	})
