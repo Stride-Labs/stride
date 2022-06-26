@@ -38,5 +38,5 @@ message HostZone {
   ];
   // stores how many days we should wait before issuing unbondings
   uint64 unbondingFrequency = 14;
-  []*userRedemptionRecord claimableRecords = 15;
+  repeated string claimableRecordIds = 15;
 }
