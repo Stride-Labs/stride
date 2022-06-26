@@ -51,8 +51,6 @@ func (k Keeper) HandleAcknowledgement(ctx sdk.Context, modulePacket channeltypes
 	// 	return err
 	// }
 
-	
-
 	// txMsgData := &sdk.TxMsgData{}
 	// err = proto.Unmarshal(ack.Result, txMsgData)
 	// if err != nil {

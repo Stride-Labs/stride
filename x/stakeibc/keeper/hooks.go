@@ -16,10 +16,10 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochIdentifier string, epochN
 	if epochIdentifier == "stride_epoch" {
 		k.Logger(ctx).Info(fmt.Sprintf("Stride Epoch %d", epochNumber))
 		depositInterval := int64(k.GetParam(ctx, types.KeyDepositInterval))
-		if epochNumber%depositInterval == 0 {
+		if epochNumber%depositInterval == 0 && k.RecordsKeeper.GetDepositRecordCount(ctx) > 0 {
 			// TODO TEST-72 move this function to the keeper
 			k.Logger(ctx).Info("Triggering deposits")
-			depositRecords := k.GetAllDepositRecord(ctx)
+			depositRecords := k.RecordsKeeper.GetAllDepositRecord(ctx)
 			addr := k.accountKeeper.GetModuleAccount(ctx, types.ModuleName).GetAddress().String()
 			for _, depositRecord := range depositRecords {
 				pstr := fmt.Sprintf("\tProcessing deposit {%d} {%s} {%d} {%s}", depositRecord.Id, depositRecord.Denom, depositRecord.Amount, depositRecord.Sender)
@@ -49,7 +49,8 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochIdentifier string, epochN
 					panic(err)
 				} else {
 					// TODO TEST-71 what should we do if this transfer fails
-					k.RemoveDepositRecord(ctx, depositRecord.Id)
+					// TODO(TEST-121) should this only be removed if the transfer succeeds?
+					k.RecordsKeeper.RemoveDepositRecord(ctx, depositRecord.Id)
 				}
 			}
 		}
