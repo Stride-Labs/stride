@@ -19,6 +19,7 @@ message HostZone {
   ICAAccount withdrawalAccount = 5;
   ICAAccount feeAccount = 6; 
   ICAAccount delegationAccount = 7;
+  ICAAccount redemptionAccount = 13;
   // ibc denom on stride
   string IBCDenom = 8;
   // native denom on host zone
@@ -35,4 +36,6 @@ message HostZone {
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false
   ];
+  // stores how many days we should wait before issuing unbondings
+  uint64 unbondingFrequency = 14;
 }

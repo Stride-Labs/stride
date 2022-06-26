@@ -145,7 +145,7 @@ proto:
 	@echo
 	@echo "=========== Generate Message ============"
 	@echo
-	./scripts/protocgen.sh
+	@ignite generate proto-go
 	@echo
 	@echo "=========== Generate Complete ============"
 	@echo

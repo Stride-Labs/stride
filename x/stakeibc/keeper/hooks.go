@@ -13,9 +13,15 @@ import (
 func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochIdentifier string, epochNumber int64) {
 	// every epoch
 	k.Logger(ctx).Info(fmt.Sprintf("Handling epoch start %s %d", epochIdentifier, epochNumber))
+	if epochIdentifier == "day" {
+		k.Logger(ctx).Info(fmt.Sprintf("Day %d Beginning", epochNumber))
+		// first we create an empty unbonding record for this epoch
+		k.CreateEpochUnbondings(ctx, epochNumber)
+		// then we check previous epochs to see if unbondings finished
+		k.VerifyAllUnbondings(ctx)
+	}
 	if epochIdentifier == "stride_epoch" {
-		k.Logger(ctx).Info(fmt.Sprintf("Stride Epoch %d", epochNumber))
-		k.CreateEpochUndelegations(ctx, epochNumber)
+		k.Logger(ctx).Info(fmt.Sprintf("Stride Epoch %d Beginning", epochNumber))
 		depositInterval := int64(k.GetParam(ctx, types.KeyDepositInterval))
 		if epochNumber%depositInterval == 0 {
 			// TODO TEST-72 move this function to the keeper
@@ -94,7 +100,13 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochIdentifier string, epochN
 func (k Keeper) AfterEpochEnd(ctx sdk.Context, epochIdentifier string, epochNumber int64) {
 	// every epoch
 	k.Logger(ctx).Info(fmt.Sprintf("Handling epoch end %s %d", epochIdentifier, epochNumber))
-
+	if epochIdentifier == "day" {
+		k.Logger(ctx).Info(fmt.Sprintf("Day %d Ending", epochNumber))
+		success := k.ProcessAllEpochUnbondings(ctx, uint64(epochNumber))
+		if !success {
+			k.Logger(ctx).Error("Failed to process daily unbondings %d", epochNumber)
+		}
+	}
 }
 
 // Hooks wrapper struct for incentives keeper

@@ -71,6 +71,28 @@ func (k Keeper) GetEpochUnbondingRecord(ctx sdk.Context, id uint64) (val types.E
 	return val, true
 }
 
+// GetEpochUnbondingRecordByEpoch returns a epochUnbondingRecord from its epochNumber
+func (k Keeper) GetEpochUnbondingRecordByEpoch(ctx sdk.Context, epochNumber int64) (val types.EpochUnbondingRecord, found bool) {
+	for i, epochUnbondingRecord := range k.GetAllEpochUnbondingRecord(ctx) {
+		if epochUnbondingRecord.EpochNumber == epochNumber {
+			return epochUnbondingRecord, true
+		}
+	}
+	return types.EpochUnbondingRecord{}, false
+}
+
+// GetEpochUnbondingRecordByEpoch returns a epochUnbondingRecord from its epochNumber
+func (k Keeper) GetLatestEpochUnbondingRecord(ctx sdk.Context) (val types.EpochUnbondingRecord, found bool) {
+	// then add undelegation amount to epoch unbonding records
+	currentUnbondingRecord := k.GetEpochUnbondingRecordCount(ctx) - 1
+	epochUnbondingRecord, found := k.GetEpochUnbondingRecord(ctx, currentUnbondingRecord)
+	if !found {
+		k.Logger(ctx).Error("Error getting latest unbonding record")
+		return types.EpochUnbondingRecord{}, false
+	}
+	return epochUnbondingRecord, true
+}
+
 // RemoveEpochUnbondingRecord removes a epochUnbondingRecord from the store
 func (k Keeper) RemoveEpochUnbondingRecord(ctx sdk.Context, id uint64) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.EpochUnbondingRecordKey))
@@ -103,4 +125,27 @@ func GetEpochUnbondingRecordIDBytes(id uint64) []byte {
 // GetEpochUnbondingRecordIDFromBytes returns ID in uint64 format from a byte array
 func GetEpochUnbondingRecordIDFromBytes(bz []byte) uint64 {
 	return binary.BigEndian.Uint64(bz)
+}
+
+// IterateHostZones iterates zones
+func (k Keeper) IterateEpochUnbondingRecords(ctx sdk.Context,
+	fn func(index int64, epochUnbondingRecords types.EpochUnbondingRecord) (stop bool)) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.UserRedemptionRecordKey))
+
+	iterator := sdk.KVStorePrefixIterator(store, nil)
+	defer iterator.Close()
+
+	i := int64(0)
+
+	for ; iterator.Valid(); iterator.Next() {
+		epochUnbondRecord := types.EpochUnbondingRecord{}
+		k.cdc.MustUnmarshal(iterator.Value(), &epochUnbondRecord)
+
+		stop := fn(i, epochUnbondRecord)
+
+		if stop {
+			break
+		}
+		i++
+	}
 }

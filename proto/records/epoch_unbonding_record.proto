@@ -11,7 +11,8 @@ message EpochUnbondingRecord {
     uint64 amount = 1;
     string denom = 2;
     string hostZoneId = 3;
+    bool   unbondingSent = 4;
   }
 
-  repeated hostZoneUnbonding hostZoneUnbondings = 3;
+  map<string, hostZoneUnbonding> hostZoneUnbondings = 3;
 }

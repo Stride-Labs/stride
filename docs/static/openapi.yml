@@ -30359,6 +30359,7 @@ paths:
                             - DELEGATION
                             - FEE
                             - WITHDRAWAL
+                            - REDEMPTION
                           default: DELEGATION
                       title: >-
                         TODO(TEST-XX): Update these fields to be more useful
@@ -30406,6 +30407,7 @@ paths:
                             - DELEGATION
                             - FEE
                             - WITHDRAWAL
+                            - REDEMPTION
                           default: DELEGATION
                       title: >-
                         TODO(TEST-XX): Update these fields to be more useful
@@ -30453,6 +30455,55 @@ paths:
                             - DELEGATION
                             - FEE
                             - WITHDRAWAL
+                            - REDEMPTION
+                          default: DELEGATION
+                      title: >-
+                        TODO(TEST-XX): Update these fields to be more useful
+                        (e.g. balances should be coins, maybe store port name
+                        directly)
+                    redemptionAccount:
+                      type: object
+                      properties:
+                        address:
+                          type: string
+                        balance:
+                          type: string
+                          format: int64
+                        delegatedBalance:
+                          type: string
+                          format: int64
+                        delegations:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              delegateAcctAddress:
+                                type: string
+                              validator:
+                                type: object
+                                properties:
+                                  name:
+                                    type: string
+                                  address:
+                                    type: string
+                                  status:
+                                    type: string
+                                  commissionRate:
+                                    type: integer
+                                    format: int32
+                                  delegationAmt:
+                                    type: string
+                                    format: int64
+                              amt:
+                                type: string
+                                format: int64
+                        target:
+                          type: string
+                          enum:
+                            - DELEGATION
+                            - FEE
+                            - WITHDRAWAL
+                            - REDEMPTION
                           default: DELEGATION
                       title: >-
                         TODO(TEST-XX): Update these fields to be more useful
@@ -30837,6 +30888,7 @@ paths:
                           - DELEGATION
                           - FEE
                           - WITHDRAWAL
+                          - REDEMPTION
                         default: DELEGATION
                     title: >-
                       TODO(TEST-XX): Update these fields to be more useful (e.g.
@@ -30883,6 +30935,7 @@ paths:
                           - DELEGATION
                           - FEE
                           - WITHDRAWAL
+                          - REDEMPTION
                         default: DELEGATION
                     title: >-
                       TODO(TEST-XX): Update these fields to be more useful (e.g.
@@ -30929,6 +30982,54 @@ paths:
                           - DELEGATION
                           - FEE
                           - WITHDRAWAL
+                          - REDEMPTION
+                        default: DELEGATION
+                    title: >-
+                      TODO(TEST-XX): Update these fields to be more useful (e.g.
+                      balances should be coins, maybe store port name directly)
+                  redemptionAccount:
+                    type: object
+                    properties:
+                      address:
+                        type: string
+                      balance:
+                        type: string
+                        format: int64
+                      delegatedBalance:
+                        type: string
+                        format: int64
+                      delegations:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            delegateAcctAddress:
+                              type: string
+                            validator:
+                              type: object
+                              properties:
+                                name:
+                                  type: string
+                                address:
+                                  type: string
+                                status:
+                                  type: string
+                                commissionRate:
+                                  type: integer
+                                  format: int32
+                                delegationAmt:
+                                  type: string
+                                  format: int64
+                            amt:
+                              type: string
+                              format: int64
+                      target:
+                        type: string
+                        enum:
+                          - DELEGATION
+                          - FEE
+                          - WITHDRAWAL
+                          - REDEMPTION
                         default: DELEGATION
                     title: >-
                       TODO(TEST-XX): Update these fields to be more useful (e.g.
@@ -31193,6 +31294,7 @@ paths:
                       - DELEGATION
                       - FEE
                       - WITHDRAWAL
+                      - REDEMPTION
                     default: DELEGATION
                 title: >-
                   TODO(TEST-XX): Update these fields to be more useful (e.g.
@@ -52884,6 +52986,7 @@ definitions:
               - DELEGATION
               - FEE
               - WITHDRAWAL
+              - REDEMPTION
             default: DELEGATION
         title: >-
           TODO(TEST-XX): Update these fields to be more useful (e.g. balances
@@ -52930,6 +53033,7 @@ definitions:
               - DELEGATION
               - FEE
               - WITHDRAWAL
+              - REDEMPTION
             default: DELEGATION
         title: >-
           TODO(TEST-XX): Update these fields to be more useful (e.g. balances
@@ -52976,6 +53080,54 @@ definitions:
               - DELEGATION
               - FEE
               - WITHDRAWAL
+              - REDEMPTION
+            default: DELEGATION
+        title: >-
+          TODO(TEST-XX): Update these fields to be more useful (e.g. balances
+          should be coins, maybe store port name directly)
+      redemptionAccount:
+        type: object
+        properties:
+          address:
+            type: string
+          balance:
+            type: string
+            format: int64
+          delegatedBalance:
+            type: string
+            format: int64
+          delegations:
+            type: array
+            items:
+              type: object
+              properties:
+                delegateAcctAddress:
+                  type: string
+                validator:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                    address:
+                      type: string
+                    status:
+                      type: string
+                    commissionRate:
+                      type: integer
+                      format: int32
+                    delegationAmt:
+                      type: string
+                      format: int64
+                amt:
+                  type: string
+                  format: int64
+          target:
+            type: string
+            enum:
+              - DELEGATION
+              - FEE
+              - WITHDRAWAL
+              - REDEMPTION
             default: DELEGATION
         title: >-
           TODO(TEST-XX): Update these fields to be more useful (e.g. balances
@@ -53038,6 +53190,7 @@ definitions:
           - DELEGATION
           - FEE
           - WITHDRAWAL
+          - REDEMPTION
         default: DELEGATION
     title: >-
       TODO(TEST-XX): Update these fields to be more useful (e.g. balances should
@@ -53048,6 +53201,7 @@ definitions:
       - DELEGATION
       - FEE
       - WITHDRAWAL
+      - REDEMPTION
     default: DELEGATION
   Stridelabs.stride.stakeibc.MinValidatorRequirements:
     type: object
@@ -53256,6 +53410,7 @@ definitions:
                     - DELEGATION
                     - FEE
                     - WITHDRAWAL
+                    - REDEMPTION
                   default: DELEGATION
               title: >-
                 TODO(TEST-XX): Update these fields to be more useful (e.g.
@@ -53302,6 +53457,7 @@ definitions:
                     - DELEGATION
                     - FEE
                     - WITHDRAWAL
+                    - REDEMPTION
                   default: DELEGATION
               title: >-
                 TODO(TEST-XX): Update these fields to be more useful (e.g.
@@ -53348,6 +53504,54 @@ definitions:
                     - DELEGATION
                     - FEE
                     - WITHDRAWAL
+                    - REDEMPTION
+                  default: DELEGATION
+              title: >-
+                TODO(TEST-XX): Update these fields to be more useful (e.g.
+                balances should be coins, maybe store port name directly)
+            redemptionAccount:
+              type: object
+              properties:
+                address:
+                  type: string
+                balance:
+                  type: string
+                  format: int64
+                delegatedBalance:
+                  type: string
+                  format: int64
+                delegations:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      delegateAcctAddress:
+                        type: string
+                      validator:
+                        type: object
+                        properties:
+                          name:
+                            type: string
+                          address:
+                            type: string
+                          status:
+                            type: string
+                          commissionRate:
+                            type: integer
+                            format: int32
+                          delegationAmt:
+                            type: string
+                            format: int64
+                      amt:
+                        type: string
+                        format: int64
+                target:
+                  type: string
+                  enum:
+                    - DELEGATION
+                    - FEE
+                    - WITHDRAWAL
+                    - REDEMPTION
                   default: DELEGATION
               title: >-
                 TODO(TEST-XX): Update these fields to be more useful (e.g.
@@ -53531,6 +53735,7 @@ definitions:
                   - DELEGATION
                   - FEE
                   - WITHDRAWAL
+                  - REDEMPTION
                 default: DELEGATION
             title: >-
               TODO(TEST-XX): Update these fields to be more useful (e.g.
@@ -53577,6 +53782,7 @@ definitions:
                   - DELEGATION
                   - FEE
                   - WITHDRAWAL
+                  - REDEMPTION
                 default: DELEGATION
             title: >-
               TODO(TEST-XX): Update these fields to be more useful (e.g.
@@ -53623,6 +53829,54 @@ definitions:
                   - DELEGATION
                   - FEE
                   - WITHDRAWAL
+                  - REDEMPTION
+                default: DELEGATION
+            title: >-
+              TODO(TEST-XX): Update these fields to be more useful (e.g.
+              balances should be coins, maybe store port name directly)
+          redemptionAccount:
+            type: object
+            properties:
+              address:
+                type: string
+              balance:
+                type: string
+                format: int64
+              delegatedBalance:
+                type: string
+                format: int64
+              delegations:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    delegateAcctAddress:
+                      type: string
+                    validator:
+                      type: object
+                      properties:
+                        name:
+                          type: string
+                        address:
+                          type: string
+                        status:
+                          type: string
+                        commissionRate:
+                          type: integer
+                          format: int32
+                        delegationAmt:
+                          type: string
+                          format: int64
+                    amt:
+                      type: string
+                      format: int64
+              target:
+                type: string
+                enum:
+                  - DELEGATION
+                  - FEE
+                  - WITHDRAWAL
+                  - REDEMPTION
                 default: DELEGATION
             title: >-
               TODO(TEST-XX): Update these fields to be more useful (e.g.
@@ -53688,6 +53942,7 @@ definitions:
               - DELEGATION
               - FEE
               - WITHDRAWAL
+              - REDEMPTION
             default: DELEGATION
         title: >-
           TODO(TEST-XX): Update these fields to be more useful (e.g. balances

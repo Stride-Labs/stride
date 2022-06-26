@@ -15,7 +15,7 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) 
 	}
 
 	// Set userRedemptionRecord count
-	k.SetUserRedemptionRecordCount(ctx, genState.UserRedemptionRecordCount)
+	// k.SetUserRedemptionRecordCount(ctx, genState.UserRedemptionRecordCount)
 	// Set all the epochUnbondingRecord
 	for _, elem := range genState.EpochUnbondingRecordList {
 		k.SetEpochUnbondingRecord(ctx, elem)
@@ -33,7 +33,7 @@ func ExportGenesis(ctx sdk.Context, k keeper.Keeper) *types.GenesisState {
 	genesis.Params = k.GetParams(ctx)
 
 	genesis.UserRedemptionRecordList = k.GetAllUserRedemptionRecord(ctx)
-	genesis.UserRedemptionRecordCount = k.GetUserRedemptionRecordCount(ctx)
+	// genesis.UserRedemptionRecordCount = k.GetUserRedemptionRecordCount(ctx)
 	genesis.EpochUnbondingRecordList = k.GetAllEpochUnbondingRecord(ctx)
 	genesis.EpochUnbondingRecordCount = k.GetEpochUnbondingRecordCount(ctx)
 	// this line is used by starport scaffolding # genesis/module/export
