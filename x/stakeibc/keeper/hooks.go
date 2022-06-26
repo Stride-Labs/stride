@@ -118,8 +118,15 @@ func (k Keeper) CreateDepositRecordsForEpoch(ctx sdk.Context, epochNumber int64)
 	// Create one new deposit record / host zone for the next epoch
 	createDepositRecords := func(index int64, zoneInfo types.HostZone) (stop bool) {
 		// create a deposit record / host zone
-		depositRecord := recordstypes.NewDepositRecord(0, zoneInfo.HostDenom, zoneInfo.ChainId, recordstypes.DepositRecord_TRANSFER, uint64(epochNumber))
-		k.RecordsKeeper.AppendDepositRecord(ctx, *depositRecord)
+		depositRecord := recordstypes.DepositRecord{
+			Id:         0,
+			Amount:     0,
+			Denom:      zoneInfo.HostDenom,
+			HostZoneId: zoneInfo.ChainId,
+			Status:    recordstypes.DepositRecord_TRANSFER,
+			EpochNumber: uint64(epochNumber),
+		}
+		k.RecordsKeeper.AppendDepositRecord(ctx, depositRecord)
 		return false
 	}
 	// Iterate the zones and apply icaReinvest

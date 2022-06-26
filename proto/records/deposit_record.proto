@@ -14,8 +14,13 @@ message DepositRecord {
     // pending staking on delegate account
     STAKE = 1;
   }
+  enum Source {
+    STRIDE = 0;
+    WITHDRAWAL_ICA = 1;
+  }
   Status status = 6;
   uint64 epochNumber = 7;
+  Source source = 8;
 
   reserved 5;
 }
