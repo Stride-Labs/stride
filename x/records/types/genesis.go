@@ -1,6 +1,8 @@
 package types
 
 import (
+	fmt "fmt"
+
 	host "github.com/cosmos/ibc-go/v3/modules/core/24-host"
 	// this line is used by starport scaffolding # genesis/types/import
 )
@@ -11,7 +13,8 @@ const DefaultIndex uint64 = 1
 // DefaultGenesis returns the default Capability genesis state
 func DefaultGenesis() *GenesisState {
 	return &GenesisState{
-		PortId: PortID,
+		PortId:            PortID,
+		DepositRecordList: []DepositRecord{},
 		// this line is used by starport scaffolding # genesis/types/default
 		Params: DefaultParams(),
 	}
@@ -23,6 +26,19 @@ func (gs GenesisState) Validate() error {
 	if err := host.PortIdentifierValidator(gs.PortId); err != nil {
 		return err
 	}
+	// Check for duplicated ID in depositRecord
+	depositRecordIdMap := make(map[uint64]bool)
+	depositRecordCount := gs.GetDepositRecordCount()
+	for _, elem := range gs.DepositRecordList {
+		if _, ok := depositRecordIdMap[elem.Id]; ok {
+			return fmt.Errorf("duplicated id for depositRecord")
+		}
+		if elem.Id >= depositRecordCount {
+			return fmt.Errorf("depositRecord id should be lower or equal than the last id")
+		}
+		depositRecordIdMap[elem.Id] = true
+	}
+
 	// this line is used by starport scaffolding # genesis/types/validate
 
 	return gs.Params.Validate()

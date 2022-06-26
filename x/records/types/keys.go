@@ -31,3 +31,8 @@ var (
 func KeyPrefix(p string) []byte {
 	return []byte(p)
 }
+
+const (
+	DepositRecordKey      = "DepositRecord-value-"
+	DepositRecordCountKey = "DepositRecord-count-"
+)

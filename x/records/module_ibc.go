@@ -9,6 +9,7 @@ import (
 	porttypes "github.com/cosmos/ibc-go/v3/modules/core/05-port/types"
 
 	// host "github.com/cosmos/ibc-go/v3/modules/core/24-host"
+
 	ibcexported "github.com/cosmos/ibc-go/v3/modules/core/exported"
 )
 
@@ -16,14 +17,14 @@ import (
 // IBCModule implements the ICS26 interface for transfer given the transfer keeper.
 type IBCModule struct {
 	keeper keeper.Keeper
-	app porttypes.IBCModule 
+	app    porttypes.IBCModule
 }
 
 // NewIBCModule creates a new IBCModule given the keeper
-func NewIBCModule(k keeper.Keeper,  app porttypes.IBCModule) IBCModule {
+func NewIBCModule(k keeper.Keeper, app porttypes.IBCModule) IBCModule {
 	return IBCModule{
 		keeper: k,
-		app:   app,
+		app:    app,
 	}
 }
 
@@ -45,17 +46,17 @@ func (im IBCModule) OnChanOpenInit(
 	// 	return err
 	// }
 	_, appVersion := channeltypes.SplitChannelVersion(version)
-    // doCustomLogic()
-    im.app.OnChanOpenInit(
-        ctx,
-        order,
-        connectionHops,
-        portID,
-        channelID,
-        channelCap,
-        counterparty,
-        appVersion, // note we only pass app version here
-    )
+	// doCustomLogic()
+	im.app.OnChanOpenInit(
+		ctx,
+		order,
+		connectionHops,
+		portID,
+		channelID,
+		channelCap,
+		counterparty,
+		appVersion, // note we only pass app version here
+	)
 	return nil
 }
 
@@ -71,23 +72,23 @@ func (im IBCModule) OnChanOpenTry(
 	counterpartyVersion string,
 ) (string, error) {
 	// doCustomLogic()
-    // core/04-channel/types contains a helper function to split middleware and underlying app version
-    _, cpAppVersion := channeltypes.SplitChannelVersion(counterpartyVersion)
+	// core/04-channel/types contains a helper function to split middleware and underlying app version
+	_, cpAppVersion := channeltypes.SplitChannelVersion(counterpartyVersion)
 
-    // call the underlying applications OnChanOpenTry callback
-    version, err := im.app.OnChanOpenTry(
+	// call the underlying applications OnChanOpenTry callback
+	version, err := im.app.OnChanOpenTry(
 		ctx,
-        order,
-        connectionHops,
-        portID,
-        channelID,
-        chanCap,
-        counterparty,
-        cpAppVersion, // note we only pass counterparty app version here
-    )
-    if err != nil {
+		order,
+		connectionHops,
+		portID,
+		channelID,
+		chanCap,
+		counterparty,
+		cpAppVersion, // note we only pass counterparty app version here
+	)
+	if err != nil {
 		return "", err
-    }
+	}
 	ctx.Logger().Error("version %s: ", version)
 	ctx.Logger().Error("cpAppVersion %s: ", cpAppVersion)
 	_ = version
@@ -103,10 +104,10 @@ func (im IBCModule) OnChanOpenAck(
 	counterpartyVersion string,
 ) error {
 	// core/04-channel/types contains a helper function to split middleware and underlying app version
-    // _, _ := channeltypes.SplitChannelVersion(counterpartyVersion)
-    // doCustomLogic()      
-    // call the underlying applications OnChanOpenTry callback
-    im.app.OnChanOpenAck(ctx, portID, channelID, counterpartyChannelId, counterpartyVersion)
+	// _, _ := channeltypes.SplitChannelVersion(counterpartyVersion)
+	// doCustomLogic()
+	// call the underlying applications OnChanOpenTry callback
+	im.app.OnChanOpenAck(ctx, portID, channelID, counterpartyChannelId, counterpartyVersion)
 	return nil
 }
 
@@ -117,7 +118,7 @@ func (im IBCModule) OnChanOpenConfirm(
 	channelID string,
 ) error {
 	// doCustomLogic()
-    im.app.OnChanOpenConfirm(ctx, portID, channelID)
+	im.app.OnChanOpenConfirm(ctx, portID, channelID)
 	return nil
 }
 
@@ -128,7 +129,7 @@ func (im IBCModule) OnChanCloseInit(
 	channelID string,
 ) error {
 	// doCustomLogic()
-    im.app.OnChanCloseInit(ctx, portID, channelID)
+	im.app.OnChanCloseInit(ctx, portID, channelID)
 	return nil
 }
 
@@ -139,7 +140,7 @@ func (im IBCModule) OnChanCloseConfirm(
 	channelID string,
 ) error {
 	// doCustomLogic()
-    im.app.OnChanCloseConfirm(ctx, portID, channelID)
+	im.app.OnChanCloseConfirm(ctx, portID, channelID)
 	return nil
 }
 
@@ -155,10 +156,10 @@ func (im IBCModule) OnRecvPacket(
 	_ = wrapperAck
 	// NOTE: acknowledgement will be written synchronously during IBC handler execution.
 	// doCustomLogic(packet)
-    transferAck := im.app.OnRecvPacket(ctx, packet, relayer)
+	transferAck := im.app.OnRecvPacket(ctx, packet, relayer)
 	_ = transferAck
 
-    // doCustomLogic(transferAck) // middleware may modify outgoing ack
+	// doCustomLogic(transferAck) // middleware may modify outgoing ack
 	return wrapperAck
 }
 
@@ -171,8 +172,37 @@ func (im IBCModule) OnAcknowledgementPacket(
 ) error {
 	// doCustomLogic(packet, ack)
 	// Store a deposit record here!
-	ctx.Logger().Error("This is where we're going to add DepositRecords!")
-    im.app.OnAcknowledgementPacket(ctx, packet, acknowledgement, relayer)
+	// // create a deposit record of these tokens
+	// fmt.Println("packet returned from MsgTransfer: ", 	packet.)
+
+	// // packet returned from MsgTransfer: {1 transfer channel-0 transfer channel-0
+	// // [123 34 97 109 111 117 110 116 34 58 34 49 48 48 48 34 44 34 100 101 110 111 109 34 58 34 116 114 97 110 115 102 101 114 47 99 104 97 110 110 101 108 45 48 47 117 97 116 111 109 34 44 34 114 101 99 101 105 118 101 114 34 58 34 99 111 115 109 111 115 49 57 108 54 100 51 100 55 107 50 112 101 108 56 101 112 103 99 112 120 99 57 110 112 54 102 115 118 106 112 97 97 97 48 54 110 109 54 53 118 97 103 119 120 97 112 48 101 52 106 101 122 113 48 53 109 109 118 117 34 44 34 115 101 110 100 101 114 34 58 34 115 116 114 105 100 101 49 109 118 100 113 52 110 108 117 112 108 51 57 50 52 51 113 106 122 55 115 100 115 53 101 122 51 114 108 57 109 110 120 50 53 51 108 122 97 34 125] 0-1000000 0} 4:09PM ERR This is where we're going to add DepositRecords!
+
+	// // var packetData icatypes.InterchainAccountPacketData
+	// var packetData ibctransfertypes.MsgTransferReponse
+	// // err := icatypes.ModuleCdc.UnmarshalJSON(packet.GetData(), &packetData)
+	// err := ibctransfertypes.ModuleCdc.UnmarshalJSON(packet.GetData(), &packetData)
+	// if err != nil {
+	// 	fmt.Println("unable to unmarshal acknowledgement packet data", "error", err, "data", packetData)
+	// 	return sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "cannot unmarshal packet data: %s", err.Error())
+	// }
+
+	// // msgs, err := icatypes.DeserializeCosmosTx(, packetData.Data)
+	// // if err != nil {
+	// // 	fmt.Println("unable to decode messages", "err", err)
+	// // 	return err
+	// // }
+	// // fmt.Println("Decoded msgs: ", msgs)
+
+	// // depositRecord := recordtypes.NewDepositRecord(msg.Amount, msg.HostDenom, hostZone.ChainId,
+	// // 	sender.String(), recordtypes.DepositRecord_RECEIPT)
+	// // k.RecordsKeeper.AppendDepositRecord(ctx, *depositRecord)
+
+	// depositRecord := recordtypes.NewDepositRecord(1, "uatom", "GAIA", "cosmosXXXXXXXX", recordtypes.DepositRecord_RECEIPT)
+	// im.keeper.AppendDepositRecord(ctx, *depositRecord)
+
+	// ctx.Logger().Error("This is where we're going to add DepositRecords!")
+	// im.app.OnAcknowledgementPacket(ctx, packet, acknowledgement, relayer)
 	return nil
 }
 
@@ -183,10 +213,9 @@ func (im IBCModule) OnTimeoutPacket(
 	relayer sdk.AccAddress,
 ) error {
 	// doCustomLogic(packet)
-    im.app.OnTimeoutPacket(ctx, packet, relayer)
+	im.app.OnTimeoutPacket(ctx, packet, relayer)
 	return nil
 }
-
 
 // This is implemented by ICS4 and all middleware that are wrapping base application.
 // The base application will call `sendPacket` or `writeAcknowledgement` of the middleware directly above them
@@ -214,7 +243,6 @@ func (im IBCModule) WriteAcknowledgement(
 func (im IBCModule) GetAppVersion(ctx sdk.Context, portID, channelID string) (string, bool) {
 	return "ics20-1", true // im.keeper.GetAppVersion(ctx, portID, channelID)
 }
-
 
 // APP MODULE IMPLEMENTATION
 // OnChanOpenInit implements the IBCModule interface
