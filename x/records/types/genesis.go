@@ -13,6 +13,7 @@ func DefaultGenesis() *GenesisState {
 	return &GenesisState{
 		PortId:                   PortID,
 		UserRedemptionRecordList: []UserRedemptionRecord{},
+		EpochUnbondingRecordList: []EpochUnbondingRecord{},
 		// this line is used by starport scaffolding # genesis/types/default
 		Params: DefaultParams(),
 	}
@@ -35,6 +36,18 @@ func (gs GenesisState) Validate() error {
 			return fmt.Errorf("userRedemptionRecord id should be lower or equal than the last id")
 		}
 		userRedemptionRecordIdMap[elem.Id] = true
+	}
+	// Check for duplicated ID in epochUnbondingRecord
+	epochUnbondingRecordIdMap := make(map[uint64]bool)
+	epochUnbondingRecordCount := gs.GetEpochUnbondingRecordCount()
+	for _, elem := range gs.EpochUnbondingRecordList {
+		if _, ok := epochUnbondingRecordIdMap[elem.Id]; ok {
+			return fmt.Errorf("duplicated id for epochUnbondingRecord")
+		}
+		if elem.Id >= epochUnbondingRecordCount {
+			return fmt.Errorf("epochUnbondingRecord id should be lower or equal than the last id")
+		}
+		epochUnbondingRecordIdMap[elem.Id] = true
 	}
 	// this line is used by starport scaffolding # genesis/types/validate
 

@@ -297,6 +297,190 @@ func (m *QueryAllUserRedemptionRecordResponse) GetPagination() *query.PageRespon
 	return nil
 }
 
+type QueryGetEpochUnbondingRecordRequest struct {
+	Id uint64 `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+}
+
+func (m *QueryGetEpochUnbondingRecordRequest) Reset()         { *m = QueryGetEpochUnbondingRecordRequest{} }
+func (m *QueryGetEpochUnbondingRecordRequest) String() string { return proto.CompactTextString(m) }
+func (*QueryGetEpochUnbondingRecordRequest) ProtoMessage()    {}
+func (*QueryGetEpochUnbondingRecordRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_f871b183106cf451, []int{6}
+}
+func (m *QueryGetEpochUnbondingRecordRequest) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *QueryGetEpochUnbondingRecordRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_QueryGetEpochUnbondingRecordRequest.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *QueryGetEpochUnbondingRecordRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryGetEpochUnbondingRecordRequest.Merge(m, src)
+}
+func (m *QueryGetEpochUnbondingRecordRequest) XXX_Size() int {
+	return m.Size()
+}
+func (m *QueryGetEpochUnbondingRecordRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryGetEpochUnbondingRecordRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_QueryGetEpochUnbondingRecordRequest proto.InternalMessageInfo
+
+func (m *QueryGetEpochUnbondingRecordRequest) GetId() uint64 {
+	if m != nil {
+		return m.Id
+	}
+	return 0
+}
+
+type QueryGetEpochUnbondingRecordResponse struct {
+	EpochUnbondingRecord EpochUnbondingRecord `protobuf:"bytes,1,opt,name=EpochUnbondingRecord,proto3" json:"EpochUnbondingRecord"`
+}
+
+func (m *QueryGetEpochUnbondingRecordResponse) Reset()         { *m = QueryGetEpochUnbondingRecordResponse{} }
+func (m *QueryGetEpochUnbondingRecordResponse) String() string { return proto.CompactTextString(m) }
+func (*QueryGetEpochUnbondingRecordResponse) ProtoMessage()    {}
+func (*QueryGetEpochUnbondingRecordResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_f871b183106cf451, []int{7}
+}
+func (m *QueryGetEpochUnbondingRecordResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *QueryGetEpochUnbondingRecordResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_QueryGetEpochUnbondingRecordResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *QueryGetEpochUnbondingRecordResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryGetEpochUnbondingRecordResponse.Merge(m, src)
+}
+func (m *QueryGetEpochUnbondingRecordResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *QueryGetEpochUnbondingRecordResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryGetEpochUnbondingRecordResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_QueryGetEpochUnbondingRecordResponse proto.InternalMessageInfo
+
+func (m *QueryGetEpochUnbondingRecordResponse) GetEpochUnbondingRecord() EpochUnbondingRecord {
+	if m != nil {
+		return m.EpochUnbondingRecord
+	}
+	return EpochUnbondingRecord{}
+}
+
+type QueryAllEpochUnbondingRecordRequest struct {
+	Pagination *query.PageRequest `protobuf:"bytes,1,opt,name=pagination,proto3" json:"pagination,omitempty"`
+}
+
+func (m *QueryAllEpochUnbondingRecordRequest) Reset()         { *m = QueryAllEpochUnbondingRecordRequest{} }
+func (m *QueryAllEpochUnbondingRecordRequest) String() string { return proto.CompactTextString(m) }
+func (*QueryAllEpochUnbondingRecordRequest) ProtoMessage()    {}
+func (*QueryAllEpochUnbondingRecordRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_f871b183106cf451, []int{8}
+}
+func (m *QueryAllEpochUnbondingRecordRequest) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *QueryAllEpochUnbondingRecordRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_QueryAllEpochUnbondingRecordRequest.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *QueryAllEpochUnbondingRecordRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryAllEpochUnbondingRecordRequest.Merge(m, src)
+}
+func (m *QueryAllEpochUnbondingRecordRequest) XXX_Size() int {
+	return m.Size()
+}
+func (m *QueryAllEpochUnbondingRecordRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryAllEpochUnbondingRecordRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_QueryAllEpochUnbondingRecordRequest proto.InternalMessageInfo
+
+func (m *QueryAllEpochUnbondingRecordRequest) GetPagination() *query.PageRequest {
+	if m != nil {
+		return m.Pagination
+	}
+	return nil
+}
+
+type QueryAllEpochUnbondingRecordResponse struct {
+	EpochUnbondingRecord []EpochUnbondingRecord `protobuf:"bytes,1,rep,name=EpochUnbondingRecord,proto3" json:"EpochUnbondingRecord"`
+	Pagination           *query.PageResponse    `protobuf:"bytes,2,opt,name=pagination,proto3" json:"pagination,omitempty"`
+}
+
+func (m *QueryAllEpochUnbondingRecordResponse) Reset()         { *m = QueryAllEpochUnbondingRecordResponse{} }
+func (m *QueryAllEpochUnbondingRecordResponse) String() string { return proto.CompactTextString(m) }
+func (*QueryAllEpochUnbondingRecordResponse) ProtoMessage()    {}
+func (*QueryAllEpochUnbondingRecordResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_f871b183106cf451, []int{9}
+}
+func (m *QueryAllEpochUnbondingRecordResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *QueryAllEpochUnbondingRecordResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_QueryAllEpochUnbondingRecordResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *QueryAllEpochUnbondingRecordResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryAllEpochUnbondingRecordResponse.Merge(m, src)
+}
+func (m *QueryAllEpochUnbondingRecordResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *QueryAllEpochUnbondingRecordResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryAllEpochUnbondingRecordResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_QueryAllEpochUnbondingRecordResponse proto.InternalMessageInfo
+
+func (m *QueryAllEpochUnbondingRecordResponse) GetEpochUnbondingRecord() []EpochUnbondingRecord {
+	if m != nil {
+		return m.EpochUnbondingRecord
+	}
+	return nil
+}
+
+func (m *QueryAllEpochUnbondingRecordResponse) GetPagination() *query.PageResponse {
+	if m != nil {
+		return m.Pagination
+	}
+	return nil
+}
+
 func init() {
 	proto.RegisterType((*QueryParamsRequest)(nil), "StrideLabs.stride.records.QueryParamsRequest")
 	proto.RegisterType((*QueryParamsResponse)(nil), "StrideLabs.stride.records.QueryParamsResponse")
@@ -304,45 +488,55 @@ func init() {
 	proto.RegisterType((*QueryGetUserRedemptionRecordResponse)(nil), "StrideLabs.stride.records.QueryGetUserRedemptionRecordResponse")
 	proto.RegisterType((*QueryAllUserRedemptionRecordRequest)(nil), "StrideLabs.stride.records.QueryAllUserRedemptionRecordRequest")
 	proto.RegisterType((*QueryAllUserRedemptionRecordResponse)(nil), "StrideLabs.stride.records.QueryAllUserRedemptionRecordResponse")
+	proto.RegisterType((*QueryGetEpochUnbondingRecordRequest)(nil), "StrideLabs.stride.records.QueryGetEpochUnbondingRecordRequest")
+	proto.RegisterType((*QueryGetEpochUnbondingRecordResponse)(nil), "StrideLabs.stride.records.QueryGetEpochUnbondingRecordResponse")
+	proto.RegisterType((*QueryAllEpochUnbondingRecordRequest)(nil), "StrideLabs.stride.records.QueryAllEpochUnbondingRecordRequest")
+	proto.RegisterType((*QueryAllEpochUnbondingRecordResponse)(nil), "StrideLabs.stride.records.QueryAllEpochUnbondingRecordResponse")
 }
 
 func init() { proto.RegisterFile("records/query.proto", fileDescriptor_f871b183106cf451) }
 
 var fileDescriptor_f871b183106cf451 = []byte{
-	// 516 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xac, 0x94, 0x4f, 0x8b, 0x13, 0x31,
-	0x18, 0xc6, 0x9b, 0x5a, 0x7b, 0x88, 0xe0, 0x21, 0x5b, 0x50, 0x8b, 0x8c, 0xee, 0xec, 0xe2, 0x3f,
-	0x68, 0xc2, 0x56, 0x45, 0xf4, 0x60, 0xd9, 0x3d, 0xd8, 0x8b, 0x87, 0x75, 0x44, 0x0f, 0x5e, 0x96,
-	0x4c, 0x27, 0x8c, 0x81, 0x99, 0xc9, 0x6c, 0x92, 0x8a, 0x8b, 0x78, 0xf1, 0x13, 0xf8, 0xe7, 0x4b,
-	0xed, 0xb1, 0x20, 0xc8, 0xe2, 0x41, 0xa4, 0xf5, 0x83, 0x48, 0x93, 0x74, 0x77, 0x8b, 0xe9, 0x8c,
-	0xca, 0xde, 0x86, 0xcc, 0xfb, 0xbc, 0xcf, 0xf3, 0xcb, 0xfb, 0xce, 0xc0, 0x35, 0xc9, 0x46, 0x42,
-	0x26, 0x8a, 0xec, 0x8f, 0x99, 0x3c, 0xc0, 0xa5, 0x14, 0x5a, 0xa0, 0x2b, 0xcf, 0xb5, 0xe4, 0x09,
-	0x7b, 0x4a, 0x63, 0x85, 0x95, 0x79, 0xc4, 0xae, 0xac, 0xdb, 0x49, 0x45, 0x2a, 0x4c, 0x15, 0x99,
-	0x3f, 0x59, 0x41, 0xf7, 0x6a, 0x2a, 0x44, 0x9a, 0x31, 0x42, 0x4b, 0x4e, 0x68, 0x51, 0x08, 0x4d,
-	0x35, 0x17, 0x85, 0x72, 0x6f, 0xef, 0x8c, 0x84, 0xca, 0x85, 0x22, 0x31, 0x55, 0xcc, 0xfa, 0x90,
-	0x37, 0x5b, 0x31, 0xd3, 0x74, 0x8b, 0x94, 0x34, 0xe5, 0x85, 0x29, 0x76, 0xb5, 0x9d, 0x45, 0x9e,
-	0x92, 0x4a, 0x9a, 0x2f, 0x3a, 0x6c, 0x2e, 0x4e, 0xc7, 0x8a, 0xc9, 0x3d, 0xc9, 0x12, 0x96, 0x97,
-	0x73, 0xd1, 0x9e, 0x3d, 0xb7, 0x55, 0x61, 0x07, 0xa2, 0x67, 0xf3, 0xee, 0xbb, 0x46, 0x1a, 0xb1,
-	0xfd, 0x31, 0x53, 0x3a, 0x7c, 0x09, 0xd7, 0x96, 0x4e, 0x55, 0x29, 0x0a, 0xc5, 0xd0, 0x00, 0xb6,
-	0xad, 0xc5, 0x65, 0x70, 0x1d, 0xdc, 0xba, 0xd0, 0x5f, 0xc7, 0x2b, 0xa1, 0xb1, 0x95, 0xee, 0xb4,
-	0x0e, 0x7f, 0x5c, 0x6b, 0x44, 0x4e, 0x16, 0xde, 0x87, 0x1b, 0xa6, 0xef, 0x90, 0xe9, 0x17, 0x8a,
-	0xc9, 0xe8, 0x38, 0x54, 0x64, 0x54, 0xce, 0x1e, 0x5d, 0x84, 0x4d, 0x9e, 0x18, 0x8f, 0x56, 0xd4,
-	0xe4, 0x49, 0xf8, 0x09, 0xc0, 0xcd, 0x6a, 0x9d, 0x0b, 0xc8, 0x61, 0xc7, 0xf7, 0xde, 0xc5, 0x25,
-	0x15, 0x71, 0x7d, 0x32, 0x17, 0xde, 0xdb, 0x32, 0xcc, 0x1d, 0xca, 0x76, 0x96, 0x55, 0xa1, 0x3c,
-	0x81, 0xf0, 0x64, 0x5e, 0x2e, 0xc7, 0x0d, 0x6c, 0x87, 0x8b, 0xe7, 0xc3, 0xc5, 0x76, 0x89, 0xdc,
-	0x70, 0xf1, 0x2e, 0x4d, 0x99, 0xd3, 0x46, 0xa7, 0x94, 0xe1, 0xf7, 0xc5, 0x15, 0xac, 0xf4, 0xab,
-	0xbd, 0x82, 0x73, 0x67, 0x7c, 0x05, 0x68, 0xb8, 0xc4, 0xd6, 0x34, 0x6c, 0x37, 0x6b, 0xd9, 0x6c,
-	0xce, 0xd3, 0x70, 0xfd, 0x49, 0x0b, 0x9e, 0x37, 0x70, 0xe8, 0x33, 0x80, 0x6d, 0xbb, 0x39, 0xa8,
-	0x57, 0x11, 0xf5, 0xcf, 0x95, 0xed, 0xe2, 0xbf, 0x2d, 0xb7, 0xfe, 0xe1, 0xed, 0x0f, 0x5f, 0x7f,
-	0x7d, 0x69, 0x6e, 0xa0, 0x75, 0x72, 0xa2, 0x23, 0x56, 0x47, 0x96, 0xbf, 0x27, 0x74, 0x04, 0xfc,
-	0x77, 0x8a, 0x1e, 0xd7, 0x79, 0x56, 0xef, 0x79, 0x77, 0xf0, 0xdf, 0x7a, 0x07, 0x31, 0x30, 0x10,
-	0x0f, 0xd1, 0x03, 0x07, 0xd1, 0xf3, 0x51, 0xf8, 0xbf, 0x7f, 0xf2, 0x8e, 0x27, 0xef, 0xd1, 0x37,
-	0x00, 0x2f, 0xf9, 0x1c, 0xb6, 0xb3, 0xac, 0x9e, 0xae, 0x7a, 0xf5, 0xeb, 0xe9, 0x6a, 0x56, 0x39,
-	0x7c, 0x64, 0xe8, 0xee, 0xa1, 0xfe, 0xbf, 0xd3, 0xed, 0x0c, 0x0f, 0xa7, 0x01, 0x98, 0x4c, 0x03,
-	0xf0, 0x73, 0x1a, 0x80, 0x8f, 0xb3, 0xa0, 0x31, 0x99, 0x05, 0x8d, 0xa3, 0x59, 0xd0, 0x78, 0xd5,
-	0x4b, 0xb9, 0x7e, 0x3d, 0x8e, 0xf1, 0x48, 0xe4, 0xbe, 0xbe, 0x6f, 0x8f, 0x3b, 0xeb, 0x83, 0x92,
-	0xa9, 0xb8, 0x6d, 0xfe, 0x93, 0x77, 0x7f, 0x07, 0x00, 0x00, 0xff, 0xff, 0xa6, 0x9c, 0x3c, 0xe0,
-	0xf5, 0x05, 0x00, 0x00,
+	// 616 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xb4, 0x56, 0xcf, 0x6b, 0x13, 0x41,
+	0x14, 0xce, 0xa6, 0x35, 0xc8, 0x08, 0x1e, 0xa6, 0x01, 0x35, 0xc8, 0x6a, 0xb7, 0xc5, 0x5f, 0x90,
+	0x19, 0x1a, 0x15, 0xd1, 0x83, 0xa1, 0x05, 0xcd, 0xc5, 0x43, 0x5d, 0xa9, 0x07, 0x2f, 0x61, 0x36,
+	0x3b, 0x6c, 0x07, 0x92, 0x9d, 0xed, 0xce, 0x46, 0x2c, 0xe2, 0x45, 0xfc, 0x03, 0xfc, 0xf1, 0x4f,
+	0xf5, 0x58, 0x10, 0xa4, 0x78, 0x10, 0x49, 0xfc, 0x43, 0x64, 0x67, 0x66, 0x9b, 0xac, 0x4e, 0x77,
+	0xd7, 0x9a, 0xde, 0xc2, 0xcc, 0xfb, 0xde, 0xfb, 0xbe, 0xf7, 0xbe, 0x79, 0x1b, 0xb0, 0x12, 0xd3,
+	0x01, 0x8f, 0x7d, 0x81, 0xf7, 0xc6, 0x34, 0xde, 0x47, 0x51, 0xcc, 0x13, 0x0e, 0xaf, 0xbc, 0x48,
+	0x62, 0xe6, 0xd3, 0x67, 0xc4, 0x13, 0x48, 0xc8, 0x9f, 0x48, 0x87, 0xb5, 0x9a, 0x01, 0x0f, 0xb8,
+	0x8c, 0xc2, 0xe9, 0x2f, 0x05, 0x68, 0x5d, 0x0d, 0x38, 0x0f, 0x86, 0x14, 0x93, 0x88, 0x61, 0x12,
+	0x86, 0x3c, 0x21, 0x09, 0xe3, 0xa1, 0xd0, 0xb7, 0x77, 0x06, 0x5c, 0x8c, 0xb8, 0xc0, 0x1e, 0x11,
+	0x54, 0xd5, 0xc1, 0xaf, 0x37, 0x3c, 0x9a, 0x90, 0x0d, 0x1c, 0x91, 0x80, 0x85, 0x32, 0x58, 0xc7,
+	0x36, 0x33, 0x3e, 0x11, 0x89, 0xc9, 0x28, 0xcb, 0xb0, 0x9e, 0x9d, 0x8e, 0x05, 0x8d, 0xfb, 0x31,
+	0xf5, 0xe9, 0x28, 0x4a, 0x41, 0x7d, 0x75, 0xfe, 0x67, 0x14, 0x8d, 0xf8, 0x60, 0xb7, 0x3f, 0x0e,
+	0x3d, 0x1e, 0xfa, 0x2c, 0x0c, 0x72, 0x51, 0x4e, 0x13, 0xc0, 0xe7, 0x29, 0x87, 0x6d, 0x59, 0xc0,
+	0xa5, 0x7b, 0x63, 0x2a, 0x12, 0xe7, 0x25, 0x58, 0xc9, 0x9d, 0x8a, 0x88, 0x87, 0x82, 0xc2, 0x2e,
+	0x68, 0x28, 0x22, 0x97, 0xad, 0xeb, 0xd6, 0xad, 0x0b, 0x9d, 0x55, 0x74, 0x62, 0x6b, 0x90, 0x82,
+	0x6e, 0x2d, 0x1f, 0xfc, 0xb8, 0x56, 0x73, 0x35, 0xcc, 0xb9, 0x0f, 0xd6, 0x64, 0xde, 0x1e, 0x4d,
+	0x76, 0x04, 0x8d, 0xdd, 0x63, 0xea, 0xae, 0x44, 0xe9, 0xf2, 0xf0, 0x22, 0xa8, 0x33, 0x5f, 0xd6,
+	0x58, 0x76, 0xeb, 0xcc, 0x77, 0x3e, 0x59, 0x60, 0xbd, 0x18, 0xa7, 0x09, 0x32, 0xd0, 0x34, 0xdd,
+	0x6b, 0xba, 0xb8, 0x80, 0xae, 0x09, 0xa6, 0xc9, 0x1b, 0x53, 0x3a, 0x23, 0x2d, 0x65, 0x73, 0x38,
+	0x2c, 0x92, 0xf2, 0x14, 0x80, 0xd9, 0x54, 0x35, 0x8f, 0x1b, 0x48, 0x59, 0x00, 0xa5, 0x16, 0x40,
+	0xca, 0x6a, 0xda, 0x02, 0x68, 0x9b, 0x04, 0x54, 0x63, 0xdd, 0x39, 0xa4, 0xf3, 0x3d, 0x6b, 0xc1,
+	0x89, 0xf5, 0x4a, 0x5b, 0xb0, 0xb4, 0xe0, 0x16, 0xc0, 0x5e, 0x4e, 0x5b, 0x5d, 0x6a, 0xbb, 0x59,
+	0xaa, 0x4d, 0xf1, 0xcc, 0x89, 0x9b, 0xb3, 0xc5, 0x93, 0xd4, 0xac, 0x3b, 0x99, 0x57, 0xab, 0xdb,
+	0xc2, 0x8c, 0x9b, 0xf5, 0xc4, 0x74, 0x5f, 0xc1, 0x16, 0x26, 0x58, 0xd6, 0x13, 0xd3, 0xdd, 0xbc,
+	0x2d, 0x8a, 0xa4, 0x9c, 0x85, 0x2d, 0x4e, 0xd9, 0x82, 0xa5, 0x05, 0xb7, 0x60, 0x61, 0xb6, 0xe8,
+	0x7c, 0x38, 0x0f, 0xce, 0x49, 0x71, 0xf0, 0xb3, 0x05, 0x1a, 0x6a, 0xa1, 0xc0, 0x76, 0x01, 0xd5,
+	0xbf, 0x37, 0x59, 0x0b, 0x55, 0x0d, 0x57, 0xf5, 0x9d, 0xdb, 0xef, 0xbf, 0xfe, 0xfa, 0x52, 0x5f,
+	0x83, 0xab, 0x78, 0x86, 0xc3, 0x0a, 0x87, 0xf3, 0xcb, 0x18, 0x1e, 0x59, 0xe6, 0xa7, 0x06, 0x1f,
+	0x97, 0xd5, 0x2c, 0x5e, 0x7f, 0xad, 0xee, 0xa9, 0xf1, 0x5a, 0x44, 0x57, 0x8a, 0x78, 0x08, 0x1f,
+	0x68, 0x11, 0x6d, 0x93, 0x0a, 0xf3, 0xc7, 0x03, 0xbf, 0x65, 0xfe, 0x3b, 0xf8, 0xcd, 0x02, 0x97,
+	0x4c, 0x15, 0x36, 0x87, 0xc3, 0x72, 0x75, 0xc5, 0x1b, 0xb1, 0x5c, 0x5d, 0xc9, 0x86, 0x73, 0x1e,
+	0x49, 0x75, 0xf7, 0x60, 0xe7, 0xdf, 0xd5, 0xc9, 0x99, 0x19, 0x4d, 0x5b, 0x65, 0x66, 0x05, 0x0f,
+	0xba, 0xd2, 0xcc, 0x8a, 0x1e, 0x68, 0xb5, 0x99, 0x99, 0x3f, 0xe5, 0xb3, 0x99, 0x99, 0x2a, 0x54,
+	0x9d, 0xd9, 0x7f, 0xa9, 0x2b, 0x59, 0x3f, 0xd5, 0x66, 0x66, 0x56, 0xb7, 0xd5, 0x3b, 0x98, 0xd8,
+	0xd6, 0xe1, 0xc4, 0xb6, 0x7e, 0x4e, 0x6c, 0xeb, 0xe3, 0xd4, 0xae, 0x1d, 0x4e, 0xed, 0xda, 0xd1,
+	0xd4, 0xae, 0xbd, 0x6a, 0x07, 0x2c, 0xd9, 0x1d, 0x7b, 0x68, 0xc0, 0x47, 0xa6, 0xbc, 0x6f, 0x8e,
+	0x33, 0x27, 0xfb, 0x11, 0x15, 0x5e, 0x43, 0xfe, 0xe5, 0xb9, 0xfb, 0x3b, 0x00, 0x00, 0xff, 0xff,
+	0x0c, 0x91, 0x1f, 0xe1, 0xe6, 0x09, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -363,6 +557,10 @@ type QueryClient interface {
 	UserRedemptionRecord(ctx context.Context, in *QueryGetUserRedemptionRecordRequest, opts ...grpc.CallOption) (*QueryGetUserRedemptionRecordResponse, error)
 	// Queries a list of UserRedemptionRecord items.
 	UserRedemptionRecordAll(ctx context.Context, in *QueryAllUserRedemptionRecordRequest, opts ...grpc.CallOption) (*QueryAllUserRedemptionRecordResponse, error)
+	// Queries a EpochUnbondingRecord by id.
+	EpochUnbondingRecord(ctx context.Context, in *QueryGetEpochUnbondingRecordRequest, opts ...grpc.CallOption) (*QueryGetEpochUnbondingRecordResponse, error)
+	// Queries a list of EpochUnbondingRecord items.
+	EpochUnbondingRecordAll(ctx context.Context, in *QueryAllEpochUnbondingRecordRequest, opts ...grpc.CallOption) (*QueryAllEpochUnbondingRecordResponse, error)
 }
 
 type queryClient struct {
@@ -400,6 +598,24 @@ func (c *queryClient) UserRedemptionRecordAll(ctx context.Context, in *QueryAllU
 	return out, nil
 }
 
+func (c *queryClient) EpochUnbondingRecord(ctx context.Context, in *QueryGetEpochUnbondingRecordRequest, opts ...grpc.CallOption) (*QueryGetEpochUnbondingRecordResponse, error) {
+	out := new(QueryGetEpochUnbondingRecordResponse)
+	err := c.cc.Invoke(ctx, "/StrideLabs.stride.records.Query/EpochUnbondingRecord", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *queryClient) EpochUnbondingRecordAll(ctx context.Context, in *QueryAllEpochUnbondingRecordRequest, opts ...grpc.CallOption) (*QueryAllEpochUnbondingRecordResponse, error) {
+	out := new(QueryAllEpochUnbondingRecordResponse)
+	err := c.cc.Invoke(ctx, "/StrideLabs.stride.records.Query/EpochUnbondingRecordAll", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // QueryServer is the server API for Query service.
 type QueryServer interface {
 	// Parameters queries the parameters of the module.
@@ -408,6 +624,10 @@ type QueryServer interface {
 	UserRedemptionRecord(context.Context, *QueryGetUserRedemptionRecordRequest) (*QueryGetUserRedemptionRecordResponse, error)
 	// Queries a list of UserRedemptionRecord items.
 	UserRedemptionRecordAll(context.Context, *QueryAllUserRedemptionRecordRequest) (*QueryAllUserRedemptionRecordResponse, error)
+	// Queries a EpochUnbondingRecord by id.
+	EpochUnbondingRecord(context.Context, *QueryGetEpochUnbondingRecordRequest) (*QueryGetEpochUnbondingRecordResponse, error)
+	// Queries a list of EpochUnbondingRecord items.
+	EpochUnbondingRecordAll(context.Context, *QueryAllEpochUnbondingRecordRequest) (*QueryAllEpochUnbondingRecordResponse, error)
 }
 
 // UnimplementedQueryServer can be embedded to have forward compatible implementations.
@@ -422,6 +642,12 @@ func (*UnimplementedQueryServer) UserRedemptionRecord(ctx context.Context, req *
 }
 func (*UnimplementedQueryServer) UserRedemptionRecordAll(ctx context.Context, req *QueryAllUserRedemptionRecordRequest) (*QueryAllUserRedemptionRecordResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UserRedemptionRecordAll not implemented")
+}
+func (*UnimplementedQueryServer) EpochUnbondingRecord(ctx context.Context, req *QueryGetEpochUnbondingRecordRequest) (*QueryGetEpochUnbondingRecordResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method EpochUnbondingRecord not implemented")
+}
+func (*UnimplementedQueryServer) EpochUnbondingRecordAll(ctx context.Context, req *QueryAllEpochUnbondingRecordRequest) (*QueryAllEpochUnbondingRecordResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method EpochUnbondingRecordAll not implemented")
 }
 
 func RegisterQueryServer(s grpc1.Server, srv QueryServer) {
@@ -482,6 +708,42 @@ func _Query_UserRedemptionRecordAll_Handler(srv interface{}, ctx context.Context
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Query_EpochUnbondingRecord_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryGetEpochUnbondingRecordRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(QueryServer).EpochUnbondingRecord(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/StrideLabs.stride.records.Query/EpochUnbondingRecord",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(QueryServer).EpochUnbondingRecord(ctx, req.(*QueryGetEpochUnbondingRecordRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Query_EpochUnbondingRecordAll_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryAllEpochUnbondingRecordRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(QueryServer).EpochUnbondingRecordAll(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/StrideLabs.stride.records.Query/EpochUnbondingRecordAll",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(QueryServer).EpochUnbondingRecordAll(ctx, req.(*QueryAllEpochUnbondingRecordRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 var _Query_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "StrideLabs.stride.records.Query",
 	HandlerType: (*QueryServer)(nil),
@@ -497,6 +759,14 @@ var _Query_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "UserRedemptionRecordAll",
 			Handler:    _Query_UserRedemptionRecordAll_Handler,
+		},
+		{
+			MethodName: "EpochUnbondingRecord",
+			Handler:    _Query_EpochUnbondingRecord_Handler,
+		},
+		{
+			MethodName: "EpochUnbondingRecordAll",
+			Handler:    _Query_EpochUnbondingRecordAll_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
@@ -704,6 +974,151 @@ func (m *QueryAllUserRedemptionRecordResponse) MarshalToSizedBuffer(dAtA []byte)
 	return len(dAtA) - i, nil
 }
 
+func (m *QueryGetEpochUnbondingRecordRequest) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *QueryGetEpochUnbondingRecordRequest) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *QueryGetEpochUnbondingRecordRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.Id != 0 {
+		i = encodeVarintQuery(dAtA, i, uint64(m.Id))
+		i--
+		dAtA[i] = 0x8
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *QueryGetEpochUnbondingRecordResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *QueryGetEpochUnbondingRecordResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *QueryGetEpochUnbondingRecordResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	{
+		size, err := m.EpochUnbondingRecord.MarshalToSizedBuffer(dAtA[:i])
+		if err != nil {
+			return 0, err
+		}
+		i -= size
+		i = encodeVarintQuery(dAtA, i, uint64(size))
+	}
+	i--
+	dAtA[i] = 0xa
+	return len(dAtA) - i, nil
+}
+
+func (m *QueryAllEpochUnbondingRecordRequest) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *QueryAllEpochUnbondingRecordRequest) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *QueryAllEpochUnbondingRecordRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.Pagination != nil {
+		{
+			size, err := m.Pagination.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintQuery(dAtA, i, uint64(size))
+		}
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *QueryAllEpochUnbondingRecordResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *QueryAllEpochUnbondingRecordResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *QueryAllEpochUnbondingRecordResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.Pagination != nil {
+		{
+			size, err := m.Pagination.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintQuery(dAtA, i, uint64(size))
+		}
+		i--
+		dAtA[i] = 0x12
+	}
+	if len(m.EpochUnbondingRecord) > 0 {
+		for iNdEx := len(m.EpochUnbondingRecord) - 1; iNdEx >= 0; iNdEx-- {
+			{
+				size, err := m.EpochUnbondingRecord[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				if err != nil {
+					return 0, err
+				}
+				i -= size
+				i = encodeVarintQuery(dAtA, i, uint64(size))
+			}
+			i--
+			dAtA[i] = 0xa
+		}
+	}
+	return len(dAtA) - i, nil
+}
+
 func encodeVarintQuery(dAtA []byte, offset int, v uint64) int {
 	offset -= sovQuery(v)
 	base := offset
@@ -779,6 +1194,61 @@ func (m *QueryAllUserRedemptionRecordResponse) Size() (n int) {
 	_ = l
 	if len(m.UserRedemptionRecord) > 0 {
 		for _, e := range m.UserRedemptionRecord {
+			l = e.Size()
+			n += 1 + l + sovQuery(uint64(l))
+		}
+	}
+	if m.Pagination != nil {
+		l = m.Pagination.Size()
+		n += 1 + l + sovQuery(uint64(l))
+	}
+	return n
+}
+
+func (m *QueryGetEpochUnbondingRecordRequest) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.Id != 0 {
+		n += 1 + sovQuery(uint64(m.Id))
+	}
+	return n
+}
+
+func (m *QueryGetEpochUnbondingRecordResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = m.EpochUnbondingRecord.Size()
+	n += 1 + l + sovQuery(uint64(l))
+	return n
+}
+
+func (m *QueryAllEpochUnbondingRecordRequest) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.Pagination != nil {
+		l = m.Pagination.Size()
+		n += 1 + l + sovQuery(uint64(l))
+	}
+	return n
+}
+
+func (m *QueryAllEpochUnbondingRecordResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if len(m.EpochUnbondingRecord) > 0 {
+		for _, e := range m.EpochUnbondingRecord {
 			l = e.Size()
 			n += 1 + l + sovQuery(uint64(l))
 		}
@@ -1227,6 +1697,364 @@ func (m *QueryAllUserRedemptionRecordResponse) Unmarshal(dAtA []byte) error {
 			}
 			m.UserRedemptionRecord = append(m.UserRedemptionRecord, UserRedemptionRecord{})
 			if err := m.UserRedemptionRecord[len(m.UserRedemptionRecord)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Pagination", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.Pagination == nil {
+				m.Pagination = &query.PageResponse{}
+			}
+			if err := m.Pagination.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipQuery(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *QueryGetEpochUnbondingRecordRequest) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowQuery
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: QueryGetEpochUnbondingRecordRequest: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: QueryGetEpochUnbondingRecordRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Id", wireType)
+			}
+			m.Id = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.Id |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		default:
+			iNdEx = preIndex
+			skippy, err := skipQuery(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *QueryGetEpochUnbondingRecordResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowQuery
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: QueryGetEpochUnbondingRecordResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: QueryGetEpochUnbondingRecordResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field EpochUnbondingRecord", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if err := m.EpochUnbondingRecord.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipQuery(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *QueryAllEpochUnbondingRecordRequest) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowQuery
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: QueryAllEpochUnbondingRecordRequest: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: QueryAllEpochUnbondingRecordRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Pagination", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.Pagination == nil {
+				m.Pagination = &query.PageRequest{}
+			}
+			if err := m.Pagination.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipQuery(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *QueryAllEpochUnbondingRecordResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowQuery
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: QueryAllEpochUnbondingRecordResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: QueryAllEpochUnbondingRecordResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field EpochUnbondingRecord", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.EpochUnbondingRecord = append(m.EpochUnbondingRecord, EpochUnbondingRecord{})
+			if err := m.EpochUnbondingRecord[len(m.EpochUnbondingRecord)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex

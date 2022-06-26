@@ -36,3 +36,8 @@ const (
 	UserRedemptionRecordKey      = "UserRedemptionRecord-value-"
 	UserRedemptionRecordCountKey = "UserRedemptionRecord-count-"
 )
+
+const (
+	EpochUnbondingRecordKey      = "EpochUnbondingRecord-value-"
+	EpochUnbondingRecordCountKey = "EpochUnbondingRecord-count-"
+)
