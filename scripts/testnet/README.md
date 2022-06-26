@@ -1,22 +1,36 @@
 # Stride Node Setup
 
-This folder goes from an existing Stride image (from `make init`) and will construct 4 properly formatted docker images to seed the Stride testnet (3 validators, 1 seed). These images get launched on GCP through Terraform.
+This folder contains the scripts necessary to launch a testnet on GCP. The main execution is handled by github actions, which builds the docker images for Stride, Gaia, Hermes and ICQ. Once the images are built, the network can be stood up with terraform (through `terraform apply`)
 
-## High Level Path
-
-High level, we need to accomplish
-1. We set up the right backend state for the 3 validators and 1 seed node. Do this by `sh setup_testnet_state.sh`
-2. We commit and push to GitHub to kick off image builds for all 4 nodes. This MUST occur after building backend state.
-4. GitHub Actions will automatically upload the finished images to GCP Container Registry and Docker Hub.
-5. User must Spin up GCP images using those images, kick them off (through `terraform apply`)
-
+## Spinning Up
+* Set the deployment name (`deployment_name`) and number of desired stride validator nodes (`num_stride_nodes`) in the github actions workflow (`testnet.yml`) and the terraform script (`main.tf`)
+* The workflow must be triggered manually and it will:
+    1. Compile Stride and Gaia Binaries
+    2. Initialize Stride and Gaia state
+    3. Create startup scripts for Hermes and ICQ
+    4. Build Docker images for Stride, Gaia, Hermes and ICQ
+* Once the images are built, all the resources can be deployed by running `terraform apply`. It will stand up:
+    1. Stride, Gaia, Hermes, and ICQ Nodes
+    2. Static Internal IP Addresses
+    3. A DNS managed zone of the form `{deployment_name}.stridenet.co` (named `{deployment_name}-stridenet`)
+    4. Endpoints for each node (e.g. `stride-node1.{deployment_name}.stridenet.co`)
+    5. A DNS Name Service (NS) Record for `{deployment_name}.stridenet.co` in the `stridenet` managed zone
+    6. A SOA Record and NS Record in the `{deployment_name}.stridenet.co` managed zone
+        * The reason for this is to keep the name servers consistent 
+* The DNS setup is hit or miss and sometimes requires manual intervention. 
+    * If it works properly, you should be able to successfully ping the endpoint (`ping stride-node1.{deployment_name}.stridenet.co`)
+    * If that doesn't work, go to the Cloud DNS section and do the following:
+        * Click on the managed zone that was created (named `{deployment_name}-stridenet`)
+        * Click the edit button on the Type NS Record. There should be a warning message at the bottom that says the name servers might not have been configured properly, and there will be an option to restore them to defaults. Click this option.
+        * Identify the letter ("a" through "e") that indicates the grouping of name servers (e.g. ns-cloud-e1.googledomains.com. => "e")
+        * Then make all name servers consistent by replacing the "a" in each name server with this new letter (e.g. ns-cloud-a1.googledomains.com. should be changed to ns-cloud-e1.googledomains.com.). This should be done for:
+            * The Type SOA record named `{deployment_name}.stridenet.co` in the `{deployment_name}-stridenet` managed zone
+            * The Type NS Record named `{deployment_name}.stridenet.co` in the `stridenet` managed zone
+## Shutting Down
+* Terraform has trouble removing the DNS resources. To get around this, first manually delete the managed zone that was created (named `{deployment_name}-stridenet`) by deleting all records sets in the zone and then deleting the zone itself.
+* Then run `terraform destroy` to remove the remaing resources
 ## Pending TODO
+1. Create base images for each service that contains just the executable. That way, the image building step will simply have to copy the new state files in.
+2. Link the terraform step in Github Actions so that it creates our nodes on push 
 
-Right now, this approach relies on the full state being pushed up to GitHub (so that GitHub actions can copy it over to the requisite image).
 
-We should migrate to a solution where this isn't the case. Maybe: 
-1. Github Actions creates a Stride "base image" on push to `main`.
-2. In `setup_testnet_state.sh` we create new images with the additional state added.
-3. Github Actions creates our 4 node images on push to `main-droplet`
-
-We could also make step (2) above fully work on Github actions, so the full deployment pipeline happens automatically.
