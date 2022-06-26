@@ -1,7 +1,5 @@
 #!/bin/bash
 
-set -eu 
-
 while true; do
     ping -c 1 STRIDE_ENDPOINT
     if [ "$?" == "0" ]; then 
