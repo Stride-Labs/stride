@@ -3,6 +3,7 @@ package StrideLabs.stride.records;
 
 import "gogoproto/gogo.proto";
 import "records/params.proto";
+import "records/user_redemption_record.proto";
 // this line is used by starport scaffolding # genesis/proto/import
 
 option go_package = "github.com/Stride-Labs/stride/x/records/types";
@@ -11,5 +12,7 @@ option go_package = "github.com/Stride-Labs/stride/x/records/types";
 message GenesisState {
   Params params = 1 [(gogoproto.nullable) = false];
   string port_id = 2;
+  repeated UserRedemptionRecord userRedemptionRecordList = 3 [(gogoproto.nullable) = false];
+  uint64 userRedemptionRecordCount = 4;
   // this line is used by starport scaffolding # genesis/proto/state
 }
