@@ -4,12 +4,10 @@ import (
 	"encoding/json"
 	"fmt"
 
-	recordstypes "github.com/Stride-Labs/stride/x/records/types"
 	"github.com/Stride-Labs/stride/x/stakeibc/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	ibctransfertypes "github.com/cosmos/ibc-go/v3/modules/apps/transfer/types"
 	channeltypes "github.com/cosmos/ibc-go/v3/modules/core/04-channel/types"
 	"github.com/golang/protobuf/proto"
 
@@ -74,14 +72,24 @@ func (k Keeper) HandleAcknowledgement(ctx sdk.Context, modulePacket channeltypes
 		switch msgData.MsgType {
 		// staking to validators
 		case "/cosmos.staking.v1beta1.MsgDelegate":
-			// TODO: Implement! - Handle staking by DELETING deposit records
+			response := stakingtypes.MsgDelegateResponse{}
+			err := proto.Unmarshal(msgData.Data, &response)
+			if err != nil {
+				k.Logger(ctx).Error("unable to unmarshal MsgDelegate response", "error", err)
+				return err
+			}
+			k.Logger(ctx).Info("Delegated", "response", response)
+			// we should update delegation records here.
+			if err := k.HandleDelegate(ctx, src); err != nil {
+				return err
+			}
 			continue
 		// unstake
 		case "/cosmos.staking.v1beta1.MsgUndelegate":
 			response := stakingtypes.MsgUndelegateResponse{}
 			err := proto.Unmarshal(msgData.Data, &response)
 			if err != nil {
-				k.Logger(ctx).Error("Unable to unmarshal MsgDelegate response", "error", err)
+				k.Logger(ctx).Error("Unable to unmarshal MsgUndelegate response", "error", err)
 				return err
 			}
 			k.Logger(ctx).Debug("Delegated", "response", response)
@@ -93,20 +101,6 @@ func (k Keeper) HandleAcknowledgement(ctx sdk.Context, modulePacket channeltypes
 		// withdrawing rewards ()
 		case "/cosmos.distribution.v1beta1.MsgWithdrawDelegatorReward":
 			// TODO: Implement!
-			continue
-		// IBC transfer - update the DepositRecord status!
-		case "/ibc.applications.transfer.v1.MsgTransfer":
-			k.Logger(ctx).Debug("DOGE")
-			response := ibctransfertypes.MsgTransferResponse{}
-			err := proto.Unmarshal(msgData.Data, &response)
-			if err != nil {
-				k.Logger(ctx).Error("unable to unmarshal MsgTransfer response", "error", err)
-				return err
-			}
-			k.Logger(ctx).Debug("MsgTranfer acknowledgement received")
-			if err := k.HandleIBCTransfer(ctx, src); err != nil {
-				return err
-			}
 			continue
 		case "cosmos.bank.v1beta1.MsgSend":
 			// Construct the transaction
@@ -136,40 +130,31 @@ func (k Keeper) HandleAcknowledgement(ctx sdk.Context, modulePacket channeltypes
 	return nil
 }
 
-func (k Keeper) HandleIBCTransfer(ctx sdk.Context, msg sdk.Msg) error {
-	k.Logger(ctx).Info("Received IbcTransfer acknowledgement")
-	// first, type assertion. we should have ibctransfertypes.MsgTransfer
-	ibcTransferMsg, ok := msg.(*ibctransfertypes.MsgTransfer)
+
+func (k *Keeper) HandleDelegate(ctx sdk.Context, msg sdk.Msg) error {
+	k.Logger(ctx).Info("Received MsgDelegate acknowledgement")
+	// first, type assertion. we should have stakingtypes.MsgDelegate
+	delegateMsg, ok := msg.(*stakingtypes.MsgDelegate)
 	if !ok {
-		k.Logger(ctx).Error("unable to cast source message to MsgTransfer")
-		return fmt.Errorf("unable to cast source message to MsgTransfer")
+		k.Logger(ctx).Error("unable to cast source message to MsgDelegate")
+		return fmt.Errorf("unable to cast source message to MsgDelegate")
+	}
+	// CHECK ZONE
+	hostZoneDenom := delegateMsg.Amount.Denom
+	amount := delegateMsg.Amount.Amount.Int64()
+	zone, err := k.GetHostZoneFromHostDenom(ctx, hostZoneDenom)
+	if err != nil {
+		return err
+	}
+	record, found := k.RecordsKeeper.GetStakeDepositRecordByAmount(ctx, amount, zone.ChainId)
+	if found != true {
+		return sdkerrors.Wrapf(sdkerrors.ErrNotFound, "No deposit record found for zone: %s, amount: %s", zone.ChainId, amount)
 	}
 
-	// TODO: uppercase account keeper in stakeibc keeper and make this call
-	// check if destination is interchainstaking module account
-	// if sMsg.Receiver != k.AccountKeeper.GetModuleAddress(types.ModuleName).String() {
-	// 	k.Logger(ctx).Error("msgTransfer to unknown account!")
-	// 	return nil
-	// }
-
-
-	
-	// fetch the deposit record based on the amount
-	// NOTE: there must be a better way to do this, in it's current form it feels somewhat unsafe
-	// we could add some "dust" to each transfer / deposit record to make this less susceptible to attacks
-	// but it's a hack
-	record, found := k.RecordsKeeper.GetTransferDepositRecordByAmount(ctx, ibcTransferMsg.Token.Amount.Int64())
-	if !found {
-		k.Logger(ctx).Error("No record found for %s", ibcTransferMsg.Token.Amount)
-		return fmt.Errorf("No record found for %s", ibcTransferMsg.Token.Amount)
-	}
-	// update the record
-	record.Status = recordstypes.DepositRecord_STAKE
-	k.RecordsKeeper.SetDepositRecord(ctx, *record)
-	// set the deposit record state to STAKE
-
+	k.RecordsKeeper.RemoveDepositRecord(ctx, record.Id)
 	return nil
 }
+
 
 // TODO(TEST-28): Burn stAssets if RedeemStake succeeds
 func (k Keeper) HandleUndelegate(ctx sdk.Context, msg sdk.Msg) error {
