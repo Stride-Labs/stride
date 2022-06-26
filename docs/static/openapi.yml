@@ -28463,6 +28463,42 @@ paths:
               request.
       tags:
         - Msg
+  /StrideLabs/stride/records/params:
+    get:
+      summary: Parameters queries the parameters of the module.
+      operationId: StrideLabsStrideRecordsParams
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              params:
+                description: params holds all the parameters of this module.
+                type: object
+            description: >-
+              QueryParamsResponse is response type for the Query/Params RPC
+              method.
+        default:
+          description: An unexpected error response.
+          schema:
+            type: object
+            properties:
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    '@type':
+                      type: string
+                  additionalProperties: {}
+      tags:
+        - Query
   /mint/v1beta1/epoch_provisions:
     get:
       summary: EpochProvisions current minting epoch provisions value.
@@ -52391,6 +52427,16 @@ definitions:
     description: |-
       MsgSubmitQueryResponseResponse defines the MsgSubmitQueryResponse response
       type.
+  StrideLabs.stride.records.Params:
+    type: object
+    description: Params defines the parameters for the module.
+  StrideLabs.stride.records.QueryParamsResponse:
+    type: object
+    properties:
+      params:
+        description: params holds all the parameters of this module.
+        type: object
+    description: QueryParamsResponse is response type for the Query/Params RPC method.
   stride.mint.v1beta1.DistributionProportions:
     type: object
     properties:
