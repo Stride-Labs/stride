@@ -2,7 +2,7 @@
 
 echo "Register zone"
 # setup logic on controller zone
-$STR1_EXEC tx stakeibc register-host-zone \
+$STRIDE1_EXEC tx stakeibc register-host-zone \
     connection-0 uatom ibc/C4CFF46FD6DE35CA4CF4CE031E643C8FDC9BA4B99AE598E9B0ED98FE3A2319F9 channel-0 --chain-id \
     STRIDE --home /stride/.strided --keyring-backend test \
     --from val1 --gas 500000 -y
@@ -12,7 +12,7 @@ sleep 30
 
 echo "Host zones"
 # store the delegate account
-$STR1_EXEC q stakeibc list-host-zone
+$STRIDE1_EXEC q stakeibc list-host-zone
 
 # host zone accounts
 # gaiad keys list --home /gaia/.gaiad --keyring-backend test
@@ -45,7 +45,7 @@ $GAIA1_EXEC q staking delegations cosmos10ltqave0ml70h9ynfsp6py2pv925xuzys7ypmff
 
 
 # redeem stAssets for native tokens
-STR1_EXEC tx stakeibc redeem-stake 1 statom \
+$STRIDE1_EXEC tx stakeibc redeem-stake 1 statom \
     --chain-id STRIDE_1 --home /stride/.strided --keyring-backend test \
     --from val1 --gas 500000 -y
 

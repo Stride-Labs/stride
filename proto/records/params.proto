@@ -1,0 +1,12 @@
+syntax = "proto3";
+package StrideLabs.stride.records;
+
+import "gogoproto/gogo.proto";
+
+option go_package = "github.com/Stride-Labs/stride/x/records/types";
+
+// Params defines the parameters for the module.
+message Params {
+  option (gogoproto.goproto_stringer) = false;
+  
+}
