@@ -15,6 +15,7 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochIdentifier string, epochN
 	k.Logger(ctx).Info(fmt.Sprintf("Handling epoch start %s %d", epochIdentifier, epochNumber))
 	if epochIdentifier == "stride_epoch" {
 		k.Logger(ctx).Info(fmt.Sprintf("Stride Epoch %d", epochNumber))
+		k.CreateEpochUndelegations(ctx, epochNumber)
 		depositInterval := int64(k.GetParam(ctx, types.KeyDepositInterval))
 		if epochNumber%depositInterval == 0 {
 			// TODO TEST-72 move this function to the keeper
