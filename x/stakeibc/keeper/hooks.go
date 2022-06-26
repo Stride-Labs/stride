@@ -21,8 +21,12 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochIdentifier string, epochN
 		k.Logger(ctx).Info(fmt.Sprintf("Day %d Beginning", epochNumber))
 		// first we create an empty unbonding record for this epoch
 		k.CreateEpochUnbondings(ctx, epochNumber)
-		// then we check previous epochs to see if unbondings finished
-		k.ProcessAllEpochUnbondings(ctx)
+		// then we initiate unbondings from any hostZone where it's appropriate
+		k.InitiateAllHostZoneUnbondings(ctx, uint64(epochNumber))
+		// then we check previous epochs to see if unbondings finished, and sweep if so
+		k.SweepAllUnbondedTokens(ctx)
+		// lastly we cleanup any records that are no longer needed
+		k.CleanupEpochUnbondingRecords(ctx)
 	}
 	if epochIdentifier == "stride_epoch" {
 		k.Logger(ctx).Info(fmt.Sprintf("Stride Epoch %d Beginning", epochNumber))

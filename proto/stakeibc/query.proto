@@ -26,19 +26,19 @@ service Query {
 	rpc Validator(QueryGetValidatorRequest) returns (QueryGetValidatorResponse) {
 		option (google.api.http).get = "/Stride-Labs/stride/stakeibc/validator";
 	}
-// Queries a Delegation by index.
+	// Queries a Delegation by index.
 	rpc Delegation(QueryGetDelegationRequest) returns (QueryGetDelegationResponse) {
 		option (google.api.http).get = "/Stride-Labs/stride/stakeibc/delegation";
 	}
-// Queries a MinValidatorRequirements by index.
+	// Queries a MinValidatorRequirements by index.
 	rpc MinValidatorRequirements(QueryGetMinValidatorRequirementsRequest) returns (QueryGetMinValidatorRequirementsResponse) {
 		option (google.api.http).get = "/Stride-Labs/stride/stakeibc/min_validator_requirements";
 	}
-// Queries a ICAAccount by index.
+	// Queries a ICAAccount by index.
 	rpc ICAAccount(QueryGetICAAccountRequest) returns (QueryGetICAAccountResponse) {
 		option (google.api.http).get = "/Stride-Labs/stride/stakeibc/ica_account";
 	}
-// Queries a HostZone by id.
+	// Queries a HostZone by id.
 	rpc HostZone(QueryGetHostZoneRequest) returns (QueryGetHostZoneResponse) {
 		option (google.api.http).get = "/Stride-Labs/stride/stakeibc/host_zone/{chain_id}";
 	}
@@ -48,7 +48,7 @@ service Query {
 		option (google.api.http).get = "/Stride-Labs/stride/stakeibc/host_zone";
 	}
 
-// Queries a DepositRecord by id.
+	// Queries a DepositRecord by id.
 	rpc DepositRecord(QueryGetDepositRecordRequest) returns (QueryGetDepositRecordResponse) {
 		option (google.api.http).get = "/Stride-Labs/stride/stakeibc/deposit_record/{id}";
 	}
@@ -58,14 +58,14 @@ service Query {
 		option (google.api.http).get = "/Stride-Labs/stride/stakeibc/deposit_record";
 	}
 
-// Queries a list of ModuleAddress items.
+	// Queries a list of ModuleAddress items.
 	rpc ModuleAddress(QueryModuleAddressRequest) returns (QueryModuleAddressResponse) {
 		option (google.api.http).get = "/Stride-Labs/stride/stakeibc/module_address/{name}";
 	}
 	// QueryInterchainAccountFromAddress returns the interchain account for given owner address on a given connection pair
 	rpc InterchainAccountFromAddress(QueryInterchainAccountFromAddressRequest) returns (QueryInterchainAccountFromAddressResponse);
 
-// Queries a EpochTracker by index.
+	// Queries a EpochTracker by index.
 	rpc EpochTracker(QueryGetEpochTrackerRequest) returns (QueryGetEpochTrackerResponse) {
 		option (google.api.http).get = "/Stride-Labs/stride/stakeibc/epoch_tracker/{index}";
 	}
@@ -108,6 +108,7 @@ message QueryGetDelegationRequest {}
 message QueryGetDelegationResponse {
 	Delegation Delegation = 1 [(gogoproto.nullable) = false];
 }
+
 message QueryGetMinValidatorRequirementsRequest {}
 
 message QueryGetMinValidatorRequirementsResponse {

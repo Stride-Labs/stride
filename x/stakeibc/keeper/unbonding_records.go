@@ -81,7 +81,7 @@ func (k Keeper) SendHostZoneUnbondings(ctx sdk.Context, hostZone types.HostZone)
 	return true
 }
 
-func (k Keeper) ProcessAllEpochUnbondings(ctx sdk.Context, dayNumber uint64) bool {
+func (k Keeper) InitiateAllHostZoneUnbondings(ctx sdk.Context, dayNumber uint64) bool {
 	// this function goes through each host zone, and if it's the right time to
 	// initiate an unbonding, it goes and tries to unbond all outstanding records
 	for i, hostZone := range k.GetAllHostZone(ctx) {
@@ -95,7 +95,19 @@ func (k Keeper) ProcessAllEpochUnbondings(ctx sdk.Context, dayNumber uint64) boo
 	return true
 }
 
-func (k Keeper) VerifyAllUnbondings(ctx sdk.Context) bool {
+func (k Keeper) CleanupEpochUnbondingRecords(ctx sdk.Context) bool {
+	// this function goes through each EpochUnbondingRecord
+	// if any of them don't have any hostZones, then it deletes the record
+	for i, epochUnbondingRecord := range k.recordsKeeper.GetAllEpochUnbondingRecord(ctx) {
+		k.Logger(ctx).Info(fmt.Sprintf("Processing epoch unbondings for host zone %d", i))
+		if len(epochUnbondingRecord.HostZoneUnbondings) == 0 {
+			k.recordsKeeper.RemoveEpochUnbondingRecord(ctx, epochUnbondingRecord.GetId())
+		}
+	}
+	return true
+}
+
+func (k Keeper) SweepAllUnbondedTokens(ctx sdk.Context) bool {
 	// this function goes through each host zone, and sees if any tokens
 	// have been unbonded and are ready to sweep. If so, it processes them
 	for _, hostZone := range k.GetAllHostZone(ctx) {

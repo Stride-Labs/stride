@@ -134,3 +134,11 @@ func (k Keeper) IterateHostZones(ctx sdk.Context, fn func(index int64, zoneInfo 
 		i++
 	}
 }
+
+// GetHostZoneFromIBCDenom returns a HostZone from a IBCDenom
+func (k Keeper) GetRedemptionAccount(ctx sdk.Context, hostZone types.HostZone) (*types.ICAAccount, bool) {
+	if hostZone.RedemptionAccount == nil {
+		return nil, false
+	}
+	return hostZone.RedemptionAccount, true
+}
