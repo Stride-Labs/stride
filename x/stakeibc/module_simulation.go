@@ -28,6 +28,18 @@ const (
 	// TODO: Determine the simulation weight value
 	defaultWeightMsgLiquidStake int = 100
 
+	opWeightMsgCreateEpochTracker = "op_weight_msg_epoch_tracker"
+	// TODO: Determine the simulation weight value
+	defaultWeightMsgCreateEpochTracker int = 100
+
+	opWeightMsgUpdateEpochTracker = "op_weight_msg_epoch_tracker"
+	// TODO: Determine the simulation weight value
+	defaultWeightMsgUpdateEpochTracker int = 100
+
+	opWeightMsgDeleteEpochTracker = "op_weight_msg_epoch_tracker"
+	// TODO: Determine the simulation weight value
+	defaultWeightMsgDeleteEpochTracker int = 100
+
 	// this line is used by starport scaffolding # simapp/module/const
 )
 
@@ -38,10 +50,11 @@ func (AppModule) GenerateGenesisState(simState *module.SimulationState) {
 		accs[i] = acc.Address.String()
 	}
 	stakeibcGenesis := types.GenesisState{
-		Params: types.DefaultParams(),
-		PortId: types.PortID,
-		// this line is used by starport scaffolding # simapp/module/genesisState
+		Params:           types.DefaultParams(),
+		PortId:           types.PortID,
+		EpochTrackerList: []types.EpochTracker{},
 	}
+	// this line is used by starport scaffolding # simapp/module/genesisState
 	simState.GenState[types.ModuleName] = simState.Cdc.MustMarshalJSON(&stakeibcGenesis)
 }
 
@@ -73,7 +86,6 @@ func (am AppModule) WeightedOperations(simState module.SimulationState) []simtyp
 		weightMsgLiquidStake,
 		stakeibcsimulation.SimulateMsgLiquidStake(am.accountKeeper, am.bankKeeper, am.keeper),
 	))
-
 	// this line is used by starport scaffolding # simapp/module/operation
 
 	return operations

@@ -17,7 +17,7 @@ func CmdRegisterHostZone() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "register-host-zone [connection-id] [host-denom] [ibc-denom] [channel-id] [unbonding-frequency]",
 		Short: "Broadcast message register-host-zone",
-		Args:  cobra.ExactArgs(4),
+		Args:  cobra.ExactArgs(5),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientTxContext(cmd)
 			if err != nil {

@@ -6,6 +6,7 @@ import "stakeibc/params.proto";
 import "stakeibc/ica_account.proto";
 import "stakeibc/host_zone.proto";
 import "stakeibc/deposit_record.proto";
+import "stakeibc/epoch_tracker.proto";
 // this line is used by starport scaffolding # genesis/proto/import
 
 option go_package = "github.com/Stride-Labs/stride/x/stakeibc/types";
@@ -22,5 +23,6 @@ message GenesisState {
   uint64 depositRecordCount = 8;
   // stores a map from hostZone base denom to hostZone
   map<string, string> denomToHostZone = 9;
+  repeated EpochTracker epochTrackerList = 10 [(gogoproto.nullable) = false];
   // this line is used by starport scaffolding # genesis/proto/state
 }
