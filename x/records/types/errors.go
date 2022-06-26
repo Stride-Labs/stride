@@ -8,8 +8,9 @@ import (
 
 // x/records module sentinel errors
 var (
-	ErrSample                  = sdkerrors.Register(ModuleName, 1100, "sample error")
-	ErrInvalidPacketTimeout    = sdkerrors.Register(ModuleName, 1500, "invalid packet timeout")
-	ErrInvalidVersion          = sdkerrors.Register(ModuleName, 1501, "invalid version")
-	ErrRedemptionAlreadyExists = sdkerrors.Register(ModuleName, 1502, "redemption record already exists")
+	ErrSample                       = sdkerrors.Register(ModuleName, 1100, "sample error")
+	ErrInvalidPacketTimeout         = sdkerrors.Register(ModuleName, 1500, "invalid packet timeout")
+	ErrInvalidVersion               = sdkerrors.Register(ModuleName, 1501, "invalid version")
+	ErrRedemptionAlreadyExists      = sdkerrors.Register(ModuleName, 1502, "redemption record already exists")
+	ErrEpochUnbondingRecordNotFound = sdkerrors.Register(ModuleName, 1503, "epoch unbonding record not found")
 )

@@ -5,9 +5,13 @@ option go_package = "github.com/Stride-Labs/stride/x/records/types";
 
 message EpochUnbondingRecord {
   uint64 id = 1;
-  int32 epochNumber = 2; 
-  uint64 amount = 3; 
-  string denom = 4; 
-  string hostZoneId = 5; 
-  
+  int64 epochNumber = 2;
+
+  message hostZoneUnbonding {
+    uint64 amount = 1;
+    string denom = 2;
+    string hostZoneId = 3;
+  }
+
+  repeated hostZoneUnbonding hostZoneUnbondings = 3;
 }

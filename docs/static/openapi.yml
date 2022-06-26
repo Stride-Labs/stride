@@ -28482,15 +28482,20 @@ paths:
                       type: string
                       format: uint64
                     epochNumber:
-                      type: integer
-                      format: int32
-                    amount:
                       type: string
-                      format: uint64
-                    denom:
-                      type: string
-                    hostZoneId:
-                      type: string
+                      format: int64
+                    hostZoneUnbondings:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          amount:
+                            type: string
+                            format: uint64
+                          denom:
+                            type: string
+                          hostZoneId:
+                            type: string
               pagination:
                 type: object
                 properties:
@@ -28609,15 +28614,20 @@ paths:
                     type: string
                     format: uint64
                   epochNumber:
-                    type: integer
-                    format: int32
-                  amount:
                     type: string
-                    format: uint64
-                  denom:
-                    type: string
-                  hostZoneId:
-                    type: string
+                    format: int64
+                  hostZoneUnbondings:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        amount:
+                          type: string
+                          format: uint64
+                        denom:
+                          type: string
+                        hostZoneId:
+                          type: string
         default:
           description: An unexpected error response.
           schema:
@@ -52297,8 +52307,23 @@ definitions:
         type: string
         format: uint64
       epochNumber:
-        type: integer
-        format: int32
+        type: string
+        format: int64
+      hostZoneUnbondings:
+        type: array
+        items:
+          type: object
+          properties:
+            amount:
+              type: string
+              format: uint64
+            denom:
+              type: string
+            hostZoneId:
+              type: string
+  StrideLabs.stride.records.EpochUnbondingRecord.hostZoneUnbonding:
+    type: object
+    properties:
       amount:
         type: string
         format: uint64
@@ -52321,15 +52346,20 @@ definitions:
               type: string
               format: uint64
             epochNumber:
-              type: integer
-              format: int32
-            amount:
               type: string
-              format: uint64
-            denom:
-              type: string
-            hostZoneId:
-              type: string
+              format: int64
+            hostZoneUnbondings:
+              type: array
+              items:
+                type: object
+                properties:
+                  amount:
+                    type: string
+                    format: uint64
+                  denom:
+                    type: string
+                  hostZoneId:
+                    type: string
       pagination:
         type: object
         properties:
@@ -52416,15 +52446,20 @@ definitions:
             type: string
             format: uint64
           epochNumber:
-            type: integer
-            format: int32
-          amount:
             type: string
-            format: uint64
-          denom:
-            type: string
-          hostZoneId:
-            type: string
+            format: int64
+          hostZoneUnbondings:
+            type: array
+            items:
+              type: object
+              properties:
+                amount:
+                  type: string
+                  format: uint64
+                denom:
+                  type: string
+                hostZoneId:
+                  type: string
   StrideLabs.stride.records.QueryGetUserRedemptionRecordResponse:
     type: object
     properties:
