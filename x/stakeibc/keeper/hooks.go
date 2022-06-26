@@ -13,6 +13,10 @@ import (
 func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochIdentifier string, epochNumber int64) {
 	// every epoch
 	k.Logger(ctx).Info(fmt.Sprintf("Handling epoch start %s %d", epochIdentifier, epochNumber))
+	k.SetEpochTracker(ctx, types.EpochTracker{
+		EpochIdentifier: epochIdentifier,
+		EpochNumber:     epochNumber,
+	})
 	if epochIdentifier == "day" {
 		k.Logger(ctx).Info(fmt.Sprintf("Day %d Beginning", epochNumber))
 		// first we create an empty unbonding record for this epoch

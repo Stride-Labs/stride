@@ -15,6 +15,7 @@ func DefaultGenesis() *GenesisState {
 		ICAAccount:        nil,
 		HostZoneList:      []HostZone{},
 		DepositRecordList: []DepositRecord{},
+		EpochTrackerList:  []EpochTracker{},
 		// this line is used by starport scaffolding # genesis/types/default
 		Params: DefaultParams(),
 		PortId: PortID,
@@ -38,6 +39,16 @@ func (gs GenesisState) Validate() error {
 			return fmt.Errorf("depositRecord id should be lower or equal than the last id")
 		}
 		depositRecordIdMap[elem.Id] = true
+	}
+	// Check for duplicated index in epochTracker
+	epochTrackerIndexMap := make(map[string]struct{})
+
+	for _, elem := range gs.EpochTrackerList {
+		index := string(EpochTrackerKey(elem.EpochIdentifier))
+		if _, ok := epochTrackerIndexMap[index]; ok {
+			return fmt.Errorf("duplicated index for epochTracker")
+		}
+		epochTrackerIndexMap[index] = struct{}{}
 	}
 	// this line is used by starport scaffolding # genesis/types/validate
 
