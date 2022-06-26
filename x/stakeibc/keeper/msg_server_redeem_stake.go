@@ -45,9 +45,6 @@ func (k Keeper) RedeemStake(goCtx context.Context, msg *types.MsgRedeemStake) (*
 	if balance.IsLT(inCoin) {
 		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidCoins, "balance is lower than redemption amount. redemption amount: %s, balance %s: ", msg.Amount, balance.Amount)
 	}
-	// get relevant delegation account
-	delegationAccount := hostZone.GetDelegationAccount()
-	connectionId := hostZone.GetConnectionId()
 	// calculate the redemption rate
 	// when redeeming tokens, multiply stAssets by the exchange rate (allStakedAssets / allStAssets)
 	// TODO(TEST-7): Update redemption_rate via ICQ
@@ -69,7 +66,7 @@ func (k Keeper) RedeemStake(goCtx context.Context, msg *types.MsgRedeemStake) (*
 	recordsKeeper := k.recordsKeeper
 	// TODO I thought we had parameterized stride_epoch? if so, change this to parameter
 	// first construct a user redemption record
-	epochInfo, found := k.epochsKeeper.GetEpochInfo(ctx, "stride_epoch")
+	epochInfo, found := k.epochsKeeper.GetEpochInfo(ctx, "day")
 	currentEpoch := epochInfo.CurrentEpoch
 	senderAddr := sender.String()
 	if !found {
@@ -91,19 +88,17 @@ func (k Keeper) RedeemStake(goCtx context.Context, msg *types.MsgRedeemStake) (*
 		return nil, sdkerrors.Wrapf(recordstypes.ErrRedemptionAlreadyExists, "user already redeemed this epoch: %s", redemptionId)
 	}
 	// then add undelegation amount to epoch unbonding records
-	currentUnbondingRecord := recordsKeeper.GetEpochUnbondingRecordCount(ctx) - 1
-	epochUnbondingRecord, found := recordsKeeper.GetEpochUnbondingRecord(ctx, currentUnbondingRecord)
+	epochUnbondingRecord, found := recordsKeeper.GetLatestEpochUnbondingRecord(ctx)
 	if !found {
-		return nil, sdkerrors.Wrapf(recordstypes.ErrEpochUnbondingRecordNotFound, "epoch unbonding record not found: %d", currentUnbondingRecord)
+		k.Logger(ctx).Error("latest epoch unbonding record not found")
+		return nil, sdkerrors.Wrapf(recordstypes.ErrEpochUnbondingRecordNotFound, "latest epoch unbonding record not found")
 	}
 	// get relevant host zone on this epoch unbonding record
-	for i, hostZoneRecord := range epochUnbondingRecord.HostZoneUnbondings {
-		if hostZoneRecord.HostZoneId == hostZone.ChainId {
-			// add the amount to the epoch unbonding record
-			epochUnbondingRecord.HostZoneUnbondings[i].Amount += inCoin.Amount.Uint64()
-			break
-		}
+	hostZoneUnbonding, found := epochUnbondingRecord.HostZoneUnbondings[hostZone.ChainId]
+	if !found {
+		return nil, sdkerrors.Wrapf(types.ErrInvalidHostZone, "host zone not found in unbondings: %s", hostZone.ChainId)
 	}
+	hostZoneUnbonding.Amount += inCoin.Amount.Uint64()
 
 	// Escrow user's balance
 	err = k.bankKeeper.SendCoinsFromAccountToModule(ctx, sender, types.ModuleName, sdk.NewCoins(inCoin))
@@ -113,12 +108,5 @@ func (k Keeper) RedeemStake(goCtx context.Context, msg *types.MsgRedeemStake) (*
 	}
 	// Actually set the records, we wait until now to prevent any errors
 	recordsKeeper.SetUserRedemptionRecord(ctx, userRedemptionRecord)
-
-	// Construct the transaction. Note, this transaction must be atomically executed.
-	var msgs []sdk.Msg
-	//msgs = append(msgs, types.NewMsgRedeemStake(sender, connectionId, outCoin))
-	// Send the ICA transaction
-	k.SubmitTxs(ctx, connectionId, msgs, *delegationAccount)
-
 	return &types.MsgRedeemStakeResponse{}, nil
 }

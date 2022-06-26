@@ -93,6 +93,7 @@ func (im IBCModule) OnChanOpenAck(
 	withdrawalAddress, err := icatypes.NewControllerPortID(types.FormatICAAccountOwner(hostChainId, types.ICAAccountType_WITHDRAWAL))
 	feeAddress, err := icatypes.NewControllerPortID(types.FormatICAAccountOwner(hostChainId, types.ICAAccountType_FEE))
 	delegationAddress, err := icatypes.NewControllerPortID(types.FormatICAAccountOwner(hostChainId, types.ICAAccountType_DELEGATION))
+	redemptionAddress, err := icatypes.NewControllerPortID(types.FormatICAAccountOwner(hostChainId, types.ICAAccountType_REDEMPTION))
 
 	// Set ICA account addresses
 	switch {
@@ -105,6 +106,8 @@ func (im IBCModule) OnChanOpenAck(
 	// delegation address
 	case portID == delegationAddress:
 		zoneInfo.DelegationAccount = &types.ICAAccount{Address: address, Balance: 0, DelegatedBalance: 0, Target: types.ICAAccountType_DELEGATION}
+	case portID == redemptionAddress:
+		zoneInfo.RedemptionAccount = &types.ICAAccount{Address: address, Balance: 0, DelegatedBalance: 0, Target: types.ICAAccountType_REDEMPTION}
 	default:
 		ctx.Logger().Error("Missing portId: ", portID)
 	}
