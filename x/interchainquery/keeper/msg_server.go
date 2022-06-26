@@ -38,23 +38,6 @@ func (k msgServer) SubmitQueryResponse(goCtx context.Context, msg *types.MsgSubm
 			}
 			connection, _ := k.IBCKeeper.ConnectionKeeper.GetConnection(ctx, q.ConnectionId)
 
-			///
-			var latestHeightHostZone int64 // defaults to 0
-			// get light client's latest height
-			//TODO(TEST-112) make sure to update host LCs here!
-			clientState1, found := k.IBCKeeper.ClientKeeper.GetClientState(ctx, connection.ClientId)
-			if !found {
-				k.Logger(ctx).Info(fmt.Sprintf("client id \"%s\" not found for connection \"%s\"", connection.ClientId, "connection-0"))
-			} else {
-				// TODO(TEST-119) get stAsset supply at SAME time as hostZone height
-				// TODO(TEST-112) check on safety of castng uint64 to int64
-				latestHeightHostZone = int64(clientState1.GetLatestHeight().GetRevisionHeight())
-				k.Logger(ctx).Info(fmt.Sprintf("LC LATEST HEIGHT : %d", latestHeightHostZone))
-			}
-			///
-			k.Logger(ctx).Info(fmt.Sprintf("LC LATEST HEIGHT : %d", latestHeightHostZone))
-			k.Logger(ctx).Info(fmt.Sprintf("MSG HEIGHT : %d", uint64(msg.Height)))
-
 			height := clienttypes.NewHeight(clienttypes.ParseChainID(q.ChainId), uint64(msg.Height)+1)
 			consensusState, found := k.IBCKeeper.ClientKeeper.GetClientConsensusState(ctx, connection.ClientId, height)
 
