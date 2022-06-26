@@ -22,4 +22,4 @@ COPY --chown=1000 "./state/hermes_config.toml" /hermes/.hermes/config.toml
 COPY --chown=1000 "./state/hermes_startup.sh" /hermes/hermes_startup.sh
 
 RUN ["chmod", "+x", "/hermes/hermes_startup.sh"]
-CMD ["/hermes/hermes_startup.sh"]
+CMD ["bash", "/hermes/hermes_startup.sh"]
