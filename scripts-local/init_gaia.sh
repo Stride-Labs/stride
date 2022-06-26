@@ -16,6 +16,9 @@ echo 'Initializing gaia state...'
 $GAIA_CMD init test --chain-id $GAIA_CHAIN --overwrite 2> /dev/null
 sed -i -E 's|"stake"|"uatom"|g' "${STATE}/${GAIA_NODE_NAME}/config/genesis.json"
 sed -i -E 's|"full"|"validator"|g' "${STATE}/${GAIA_NODE_NAME}/config/config.toml"
+sed -i -E "s|timeout_commit = \"5s\"|timeout_commit = \"${BLOCK_TIME}\"|g" "${STATE}/${GAIA_NODE_NAME}/config/config.toml"
+sed -i -E 's|enable = false|enable = true|g'  "${STATE}/${GAIA_NODE_NAME}/config/app.toml"
+sed -i -E 's|unsafe-cors = false|unsafe-cors = true|g' "${STATE}/${GAIA_NODE_NAME}/config/app.toml"
 
 # add validator account
 echo $GAIA_VAL_MNEMONIC | $GAIA_CMD keys add $GAIA_VAL_ACCT --recover --keyring-backend=test 
@@ -46,6 +49,7 @@ ALLOW_MESSAGES='\"/cosmos.bank.v1beta1.MsgSend\", \"/cosmos.bank.v1beta1.MsgMult
 sed -i -E "s|\"allow_messages\": \[\]|\"allow_messages\": \[${ALLOW_MESSAGES}\]|g" "${STATE}/${GAIA_NODE_NAME}/config/genesis.json"
 
 # Update ports so they don't conflict with the stride chain
+sed -i -E "s|1317|1307|g" "${STATE}/${GAIA_NODE_NAME}/config/app.toml"
 sed -i -E "s|9090|9080|g" "${STATE}/${GAIA_NODE_NAME}/config/app.toml"
 sed -i -E "s|9091|9081|g" "${STATE}/${GAIA_NODE_NAME}/config/app.toml"
 sed -i -E "s|26657|26557|g" "${STATE}/${GAIA_NODE_NAME}/config/client.toml"
