@@ -22,7 +22,7 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochIdentifier string, epochN
 		// first we create an empty unbonding record for this epoch
 		k.CreateEpochUnbondings(ctx, epochNumber)
 		// then we check previous epochs to see if unbondings finished
-		// k.VerifyAllUnbondings(ctx)
+		k.ProcessAllEpochUnbondings(ctx)
 	}
 	if epochIdentifier == "stride_epoch" {
 		k.Logger(ctx).Info(fmt.Sprintf("Stride Epoch %d Beginning", epochNumber))

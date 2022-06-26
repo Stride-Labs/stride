@@ -3,10 +3,12 @@ package keeper
 import (
 	"fmt"
 
+	icqkeeper "github.com/Stride-Labs/stride/x/interchainquery/keeper"
+	icqtypes "github.com/Stride-Labs/stride/x/interchainquery/types"
 	recordstypes "github.com/Stride-Labs/stride/x/records/types"
 	"github.com/Stride-Labs/stride/x/stakeibc/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	stakingTypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 )
 
 func (k Keeper) CreateEpochUnbondings(ctx sdk.Context, epochNumber int64) bool {
@@ -52,7 +54,7 @@ func (k Keeper) SendHostZoneUnbondings(ctx sdk.Context, hostZone types.HostZone)
 	validator_address := "cosmosvaloper19e7sugzt8zaamk2wyydzgmg9n3ysylg6na6k6e" // gval2
 	stakeAmt := sdk.NewInt64Coin(hostZone.HostDenom, int64(totalAmtToUnbond))
 
-	msgs = append(msgs, &stakingTypes.MsgUndelegate{
+	msgs = append(msgs, &stakingtypes.MsgUndelegate{
 		DelegatorAddress: delegationAccount.GetAddress(),
 		ValidatorAddress: validator_address,
 		Amount:           stakeAmt,
@@ -82,63 +84,54 @@ func (k Keeper) SendHostZoneUnbondings(ctx sdk.Context, hostZone types.HostZone)
 func (k Keeper) ProcessAllEpochUnbondings(ctx sdk.Context, dayNumber uint64) bool {
 	// this function goes through each host zone, and if it's the right time to
 	// initiate an unbonding, it goes and tries to unbond all outstanding records
-	// 	for i, hostZone := range k.GetAllHostZone(ctx) {
-	// 		k.Logger(ctx).Info(fmt.Sprintf("Processing epoch unbondings for host zone %d", i))
-	// 		// we only send the ICA call if this hostZone is supposed to be triggered
-	// 		if dayNumber%hostZone.UnbondingFrequency == 0 {
-	// 			k.Logger(ctx).Info(fmt.Sprintf("Sending unbondings for host zone %s", hostZone.ChainId))
-	// 			k.SendHostZoneUnbondings(ctx, hostZone)
-	// 		}
-	// 	}
-	// 	return true
-	// }
+	for i, hostZone := range k.GetAllHostZone(ctx) {
+		k.Logger(ctx).Info(fmt.Sprintf("Processing epoch unbondings for host zone %d", i))
+		// we only send the ICA call if this hostZone is supposed to be triggered
+		if dayNumber%hostZone.UnbondingFrequency == 0 {
+			k.Logger(ctx).Info(fmt.Sprintf("Sending unbondings for host zone %s", hostZone.ChainId))
+			k.SendHostZoneUnbondings(ctx, hostZone)
+		}
+	}
+	return true
+}
 
-	// func (k Keeper) VerifyAllUnbondings(ctx sdk.Context) bool {
-	// 	// this function goes through each host zone, and sees if any
-	// 	// tokens have been unbonded and are ready to sweep. If so, it
-	// 	// processes them
-	// 	for i, hostZone := range k.GetAllHostZone(ctx) {
-	// 		k.Logger(ctx).Info(fmt.Sprintf("Processing epoch unbondings for host zone %d", i))
-	// 		var queryBalanceCB icqkeeper.Callback = func(icqk icqkeeper.Keeper, ctx sdk.Context, args []byte, query icqtypes.Query) error {
-	// 			k.Logger(ctx).Info(fmt.Sprintf("\tdelegation staking callback on %s", zoneInfo.HostDenom))
-	// 			queryRes := bankTypes.QueryAllBalancesResponse{}
-	// 			err := k.cdc.Unmarshal(args, &queryRes)
-	// 			if err != nil {
-	// 				k.Logger(ctx).Error("Unable to unmarshal balances info for zone", "err", err)
-	// 				return err
-	// 			}
-	// 			// Get denom dynamically
-	// 			balance := queryRes.Balances.AmountOf(zoneInfo.HostDenom)
-	// 			k.Logger(ctx).Info(fmt.Sprintf("\tBalance on %s is %s", zoneInfo.HostDenom, balance.String()))
+func (k Keeper) VerifyAllUnbondings(ctx sdk.Context) bool {
+	// this function goes through each host zone, and sees if any tokens
+	// have been unbonded and are ready to sweep. If so, it processes them
+	for _, hostZone := range k.GetAllHostZone(ctx) {
+		var queryBalanceCB icqkeeper.Callback = func(icqk icqkeeper.Keeper, ctx sdk.Context, args []byte, query icqtypes.Query) error {
+			k.Logger(ctx).Info(fmt.Sprintf("\tunbonding query callback on %s", hostZone.ChainId))
+			queryRes := stakingtypes.QueryDelegatorUnbondingDelegationsResponse{}
+			err := k.cdc.Unmarshal(args, &queryRes)
+			if err != nil {
+				k.Logger(ctx).Error("Unable to unmarshal balances info for zone", "err", err)
+				return err
+			}
+			for _, unbondingResponse := range queryRes.UnbondingResponses {
+				// delegatorAddr := unbondingResponse.DelegatorAddress
+				validatorAddr := unbondingResponse.ValidatorAddress
+				unbondingEntries := unbondingResponse.Entries
+				for _, unbondingEntry := range unbondingEntries {
+					/*
+						unbondingEntry has CreationHeight, CompletionTime, InitialBalance, Balance
+					*/
+					balance := unbondingEntry.Balance
+					if !balance.IsZero() {
+						// this entry is unbonded!
+						k.Logger(ctx).Info(fmt.Sprintf("\t%s Tokens on %s Zone with validator %s are unbonded", balance.String(), hostZone.ChainId, validatorAddr))
+					}
+				}
+			}
 
-	// 			processAmount := balance.String() + zoneInfo.HostDenom
-	// 			amt, err := sdk.ParseCoinNormalized(processAmount)
-	// 			if err != nil {
-	// 				k.Logger(ctx).Error(fmt.Sprintf("Could not process coin %s: %s", zoneInfo.HostDenom, err))
-	// 				return err
-	// 			}
-	// 			err = k.DelegateOnHost(ctx, zoneInfo, amt)
-	// 			if err != nil {
-	// 				k.Logger(ctx).Error(fmt.Sprintf("Did not stake %s on %s", processAmount, zoneInfo.ChainId))
-	// 				return sdkerrors.Wrapf(types.ErrInvalidHostZone, "Couldn't stake %s on %s", processAmount, zoneInfo.ChainId)
-	// 			} else {
-	// 				k.Logger(ctx).Info(fmt.Sprintf("Successfully staked %s on %s", processAmount, zoneInfo.ChainId))
-	// 			}
+			/*
+				TODO Handle logic here for how to unbond tokens
+			*/
 
-	// 			ctx.EventManager().EmitEvents(sdk.Events{
-	// 				sdk.NewEvent(
-	// 					sdk.EventTypeMessage,
-	// 					sdk.NewAttribute("hostZone", zoneInfo.ChainId),
-	// 					sdk.NewAttribute("newAmountStaked", balance.String()),
-	// 				),
-	// 			})
-
-	// 			return nil
-	// 		}
-	// 		k.Logger(ctx).Info(fmt.Sprintf("\tQuerying balance for %s", zoneInfo.ChainId))
-	// 		k.InterchainQueryKeeper.
-	// 		k.InterchainQueryKeeper.QueryBalances(ctx, zoneInfo, queryBalanceCB, delegationIca.Address)
-	// 		return false
-	// 	}
+			return nil
+		}
+		k.Logger(ctx).Info(fmt.Sprintf("Checking if any unbondings occurred on host zone %s", hostZone.ChainId))
+		delegationIca := hostZone.GetDelegationAccount()
+		k.InterchainQueryKeeper.QueryUnbondingDelegation(ctx, hostZone, queryBalanceCB, delegationIca.Address)
+	}
 	return true
 }
