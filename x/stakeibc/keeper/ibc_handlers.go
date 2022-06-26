@@ -4,9 +4,12 @@ import (
 	"encoding/json"
 	"fmt"
 
+	epochtypes "github.com/Stride-Labs/stride/x/epochs/types"
+	recordstypes "github.com/Stride-Labs/stride/x/records/types"
 	"github.com/Stride-Labs/stride/x/stakeibc/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	channeltypes "github.com/cosmos/ibc-go/v3/modules/core/04-channel/types"
 	"github.com/golang/protobuf/proto"
@@ -100,22 +103,24 @@ func (k Keeper) HandleAcknowledgement(ctx sdk.Context, modulePacket channeltypes
 			continue
 		// withdrawing rewards ()
 		case "/cosmos.distribution.v1beta1.MsgWithdrawDelegatorReward":
-			// TODO: Implement!
+			// TODO: Implement! (lo pri)
 			continue
 		case "cosmos.bank.v1beta1.MsgSend":
-			// Construct the transaction
-			// TODO(TEST-39): Implement validator selection
-			// validator_address := "cosmosvaloper19e7sugzt8zaamk2wyydzgmg9n3ysylg6na6k6e" // gval2
-			// Implement!
-			// WITHDRAW REWARDS
-			// TODO(TEST-5): Update rewards records to STATUS STAKE
-			// // set withdraw address to WithdrawAccount
-			// setWithdrawAddress := &distributionTypes.MsgSetWithdrawAddress{DelegatorAddress: delegationAccount.GetAddress(), WithdrawAddress: withdrawAccount.GetAddress()}
-			// msgs = append(msgs, setWithdrawAddress)
-			// // withdraw
-			// msgWithdraw := &distributionTypes.MsgWithdrawDelegatorReward{DelegatorAddress: delegationAccount.GetAddress(), ValidatorAddress: validator_address}
-			// msgs = append(msgs, msgWithdraw)
-			// STAKE REWARDS
+			response := banktypes.MsgSendResponse{}
+			err := proto.Unmarshal(msgData.Data, &response)
+			if err != nil {
+				k.Logger(ctx).Error("unable to unmarshal MsgSend response", "error", err)
+				return err
+			}
+			k.Logger(ctx).Info("Sent", "response", response)
+
+			// we should update delegation records here.
+			if err := k.HandleSend(ctx, src); err != nil {
+				return err
+			}
+			continue
+
+
 		default:
 			k.Logger(ctx).Error("Unhandled acknowledgement packet", "type", msgData.MsgType)
 		}
@@ -127,6 +132,57 @@ func (k Keeper) HandleAcknowledgement(ctx sdk.Context, modulePacket channeltypes
 			sdk.NewAttribute(types.AttributeKeyAckSuccess, string(ack.Result)),
 		),
 	)
+	return nil
+}
+
+
+func (k *Keeper) HandleSend(ctx sdk.Context, msg sdk.Msg) error {
+	k.Logger(ctx).Info("Received MsgSend acknowledgement")
+	// first, type assertion. we should have banktypes.MsgSend
+	sendMsg, ok := msg.(*banktypes.MsgSend)
+	if !ok {
+		k.Logger(ctx).Error("unable to cast source message to MsgSend")
+		return fmt.Errorf("unable to cast source message to MsgSend")
+	}
+	// TODO: CHECK THIS LOGIC
+	coin := sendMsg.Amount[0]
+	// Pull host zone
+	hostZoneDenom := coin.Denom
+	amount := coin.Amount.Int64()
+	zone, err := k.GetHostZoneFromHostDenom(ctx, hostZoneDenom)
+	if err != nil {
+		return err
+	}
+
+	// Check to and from addresses
+	withdrawalAddress := zone.GetWithdrawalAccount().GetAddress()
+	delegationAddress := zone.GetDelegationAccount().GetAddress()
+
+	// Only process bank sends that reinvest user rewards
+	if sendMsg.FromAddress == withdrawalAddress && sendMsg.ToAddress == delegationAddress {
+		// fetch epoch
+		strideEpochTracker, found := k.GetEpochTracker(ctx, epochtypes.STRIDE_EPOCH)
+		if !found {
+			k.Logger(ctx).Info("failed to find epoch")
+			return sdkerrors.Wrapf(types.ErrInvalidLengthEpochTracker, "no number for epoch (%s)", epochtypes.STRIDE_EPOCH)
+		}
+		epochNumber := strideEpochTracker.EpochNumber
+		// create a new record so that rewards are reinvested
+		record := recordstypes.DepositRecord{
+			Id:         0,
+			Amount:     amount,
+			Denom:      hostZoneDenom,
+			HostZoneId: zone.ChainId,
+			Status:    recordstypes.DepositRecord_STAKE,
+			Source: recordstypes.DepositRecord_WITHDRAWAL_ICA,
+			EpochNumber: uint64(epochNumber),
+		}
+		k.RecordsKeeper.AppendDepositRecord(ctx, record)	
+	} else {
+		return nil
+	}
+
+
 	return nil
 }
 
