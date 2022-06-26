@@ -23,6 +23,15 @@ func TestGenesis(t *testing.T) {
 			},
 		},
 		UserRedemptionRecordCount: 2,
+		EpochUnbondingRecordList: []types.EpochUnbondingRecord{
+			{
+				Id: 0,
+			},
+			{
+				Id: 1,
+			},
+		},
+		EpochUnbondingRecordCount: 2,
 		// this line is used by starport scaffolding # genesis/test/state
 	}
 
@@ -38,5 +47,7 @@ func TestGenesis(t *testing.T) {
 
 	require.ElementsMatch(t, genesisState.UserRedemptionRecordList, got.UserRedemptionRecordList)
 	require.Equal(t, genesisState.UserRedemptionRecordCount, got.UserRedemptionRecordCount)
+	require.ElementsMatch(t, genesisState.EpochUnbondingRecordList, got.EpochUnbondingRecordList)
+	require.Equal(t, genesisState.EpochUnbondingRecordCount, got.EpochUnbondingRecordCount)
 	// this line is used by starport scaffolding # genesis/test/assert
 }

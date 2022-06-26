@@ -31,6 +31,15 @@ func TestGenesisState_Validate(t *testing.T) {
 					},
 				},
 				UserRedemptionRecordCount: 2,
+				EpochUnbondingRecordList: []types.EpochUnbondingRecord{
+					{
+						Id: 0,
+					},
+					{
+						Id: 1,
+					},
+				},
+				EpochUnbondingRecordCount: 2,
 				// this line is used by starport scaffolding # types/genesis/validField
 			},
 			valid: true,
@@ -58,6 +67,32 @@ func TestGenesisState_Validate(t *testing.T) {
 					},
 				},
 				UserRedemptionRecordCount: 0,
+			},
+			valid: false,
+		},
+		{
+			desc: "duplicated epochUnbondingRecord",
+			genState: &types.GenesisState{
+				EpochUnbondingRecordList: []types.EpochUnbondingRecord{
+					{
+						Id: 0,
+					},
+					{
+						Id: 0,
+					},
+				},
+			},
+			valid: false,
+		},
+		{
+			desc: "invalid epochUnbondingRecord count",
+			genState: &types.GenesisState{
+				EpochUnbondingRecordList: []types.EpochUnbondingRecord{
+					{
+						Id: 1,
+					},
+				},
+				EpochUnbondingRecordCount: 0,
 			},
 			valid: false,
 		},

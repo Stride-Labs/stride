@@ -6,6 +6,7 @@ import "google/api/annotations.proto";
 import "cosmos/base/query/v1beta1/pagination.proto";
 import "records/params.proto";
 import "records/user_redemption_record.proto";
+import "records/epoch_unbonding_record.proto";
 // this line is used by starport scaffolding # 1
 
 option go_package = "github.com/Stride-Labs/stride/x/records/types";
@@ -24,6 +25,16 @@ service Query {
 	// Queries a list of UserRedemptionRecord items.
 	rpc UserRedemptionRecordAll(QueryAllUserRedemptionRecordRequest) returns (QueryAllUserRedemptionRecordResponse) {
 		option (google.api.http).get = "/Stride-Labs/stride/records/user_redemption_record";
+	}
+
+// Queries a EpochUnbondingRecord by id.
+	rpc EpochUnbondingRecord(QueryGetEpochUnbondingRecordRequest) returns (QueryGetEpochUnbondingRecordResponse) {
+		option (google.api.http).get = "/Stride-Labs/stride/records/epoch_unbonding_record/{id}";
+	}
+
+	// Queries a list of EpochUnbondingRecord items.
+	rpc EpochUnbondingRecordAll(QueryAllEpochUnbondingRecordRequest) returns (QueryAllEpochUnbondingRecordResponse) {
+		option (google.api.http).get = "/Stride-Labs/stride/records/epoch_unbonding_record";
 	}
 
 // this line is used by starport scaffolding # 2
@@ -52,6 +63,23 @@ message QueryAllUserRedemptionRecordRequest {
 
 message QueryAllUserRedemptionRecordResponse {
 	repeated UserRedemptionRecord UserRedemptionRecord = 1 [(gogoproto.nullable) = false];
+	cosmos.base.query.v1beta1.PageResponse pagination = 2;
+}
+
+message QueryGetEpochUnbondingRecordRequest {
+	uint64 id = 1;
+}
+
+message QueryGetEpochUnbondingRecordResponse {
+	EpochUnbondingRecord EpochUnbondingRecord = 1 [(gogoproto.nullable) = false];
+}
+
+message QueryAllEpochUnbondingRecordRequest {
+	cosmos.base.query.v1beta1.PageRequest pagination = 1;
+}
+
+message QueryAllEpochUnbondingRecordResponse {
+	repeated EpochUnbondingRecord EpochUnbondingRecord = 1 [(gogoproto.nullable) = false];
 	cosmos.base.query.v1beta1.PageResponse pagination = 2;
 }
 
