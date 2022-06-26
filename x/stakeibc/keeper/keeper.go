@@ -5,6 +5,7 @@ import (
 
 	"github.com/tendermint/tendermint/libs/log"
 
+	epochskeeper "github.com/Stride-Labs/stride/x/epochs/keeper"
 	icqkeeper "github.com/Stride-Labs/stride/x/interchainquery/keeper"
 	recordskeeper "github.com/Stride-Labs/stride/x/records/keeper"
 	"github.com/Stride-Labs/stride/x/stakeibc/types"
@@ -35,6 +36,7 @@ type (
 		bankKeeper            bankkeeper.Keeper
 		InterchainQueryKeeper icqkeeper.Keeper
 		recordsKeeper         recordskeeper.Keeper
+		epochsKeeper          epochskeeper.Keeper
 
 		accountKeeper types.AccountKeeper
 	}
@@ -56,6 +58,7 @@ func NewKeeper(
 	transferKeeper ibctransferkeeper.Keeper,
 	interchainQueryKeeper icqkeeper.Keeper,
 	recordsKeeper recordskeeper.Keeper,
+	epochsKeeper epochskeeper.Keeper,
 ) Keeper {
 	// set KeyTable if it has not already been set
 	if !ps.HasKeyTable() {
@@ -75,6 +78,7 @@ func NewKeeper(
 		transferKeeper:        transferKeeper,
 		InterchainQueryKeeper: interchainQueryKeeper,
 		recordsKeeper:         recordsKeeper,
+		epochsKeeper:          epochsKeeper,
 	}
 }
 

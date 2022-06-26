@@ -28480,7 +28480,6 @@ paths:
                   properties:
                     id:
                       type: string
-                      format: uint64
                     sender:
                       type: string
                     receiver:
@@ -28493,8 +28492,8 @@ paths:
                     hostZoneId:
                       type: string
                     epochNumber:
-                      type: integer
-                      format: int32
+                      type: string
+                      format: int64
                     isClaimable:
                       type: boolean
               pagination:
@@ -28613,7 +28612,6 @@ paths:
                 properties:
                   id:
                     type: string
-                    format: uint64
                   sender:
                     type: string
                   receiver:
@@ -28626,8 +28624,8 @@ paths:
                   hostZoneId:
                     type: string
                   epochNumber:
-                    type: integer
-                    format: int32
+                    type: string
+                    format: int64
                   isClaimable:
                     type: boolean
         default:
@@ -52124,7 +52122,6 @@ definitions:
           properties:
             id:
               type: string
-              format: uint64
             sender:
               type: string
             receiver:
@@ -52137,8 +52134,8 @@ definitions:
             hostZoneId:
               type: string
             epochNumber:
-              type: integer
-              format: int32
+              type: string
+              format: int64
             isClaimable:
               type: boolean
       pagination:
@@ -52174,7 +52171,6 @@ definitions:
         properties:
           id:
             type: string
-            format: uint64
           sender:
             type: string
           receiver:
@@ -52187,8 +52183,8 @@ definitions:
           hostZoneId:
             type: string
           epochNumber:
-            type: integer
-            format: int32
+            type: string
+            format: int64
           isClaimable:
             type: boolean
   StrideLabs.stride.records.QueryParamsResponse:
@@ -52203,7 +52199,6 @@ definitions:
     properties:
       id:
         type: string
-        format: uint64
       sender:
         type: string
       receiver:
@@ -52216,8 +52211,8 @@ definitions:
       hostZoneId:
         type: string
       epochNumber:
-        type: integer
-        format: int32
+        type: string
+        format: int64
       isClaimable:
         type: boolean
   stride.mint.v1beta1.DistributionProportions:

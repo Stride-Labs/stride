@@ -2,8 +2,10 @@ package keeper
 
 import (
 	"context"
+	"fmt"
 	"strconv"
 
+	recordstypes "github.com/Stride-Labs/stride/x/records/types"
 	"github.com/Stride-Labs/stride/x/stakeibc/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -17,6 +19,10 @@ func (k Keeper) RedeemStake(goCtx context.Context, msg *types.MsgRedeemStake) (*
 	sender, err := sdk.AccAddressFromBech32(msg.Creator)
 	if err != nil {
 		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "address is invalid: %s", msg.Creator)
+	}
+	receiver, err := sdk.AccAddressFromBech32(msg.Receiver)
+	if err != nil {
+		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "receiver address is invalid: %s", msg.Receiver)
 	}
 	// we get stAsset from the host zone
 	// first make sure host zone is valid
@@ -44,13 +50,6 @@ func (k Keeper) RedeemStake(goCtx context.Context, msg *types.MsgRedeemStake) (*
 		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidCoins, "balance is lower than redemption amount. redemption amount: %s, balance %s: ", msg.Amount, balance.Amount)
 	}
 
-	// Escrow user's balance
-	err = k.bankKeeper.SendCoinsFromAccountToModule(ctx, sender, types.ModuleName, sdk.NewCoins(inCoin))
-	if err != nil {
-		k.Logger(ctx).Info("Failed to send sdk.NewCoins(inCoins) from account to module")
-		panic(err)
-	}
-
 	// calculate the redemption rate
 	// when redeeming tokens, multiply stAssets by the exchange rate (allStakedAssets / allStAssets)
 	// TODO(TEST-7): Update redemption_rate via ICQ
@@ -68,12 +67,42 @@ func (k Keeper) RedeemStake(goCtx context.Context, msg *types.MsgRedeemStake) (*
 	validator_address := "cosmosvaloper19e7sugzt8zaamk2wyydzgmg9n3ysylg6na6k6e" // gval2
 	_ = validator_address
 
+	// Implement record keeping logic!
+	recordsKeeper := k.recordsKeeper
+	// TODO I thought we had parameterized stride_epoch? if so, change this to parameter
+	epochInfo, found := k.epochsKeeper.GetEpochInfo(ctx, "stride_epoch")
+	currentEpoch := epochInfo.CurrentEpoch
+	senderAddr := sender.String()
+	if !found {
+		return nil, sdkerrors.Wrapf(types.ErrEpochNotFound, "epoch not found: %s", "stride_epoch")
+	}
+	redemptionId := fmt.Sprintf("%s.%d.%s", hostZone.ChainId, currentEpoch, senderAddr) // {chain_id}.{epoch}.{sender}
+	userRedemptionRecord := recordstypes.UserRedemptionRecord{
+		Id:          redemptionId,
+		Sender:      senderAddr,
+		Receiver:    receiver.String(),
+		Amount:      inCoin.Amount.Uint64(),
+		Denom:       hostZone.HostDenom,
+		HostZoneId:  hostZone.ChainId,
+		EpochNumber: currentEpoch,
+		IsClaimable: false,
+	}
+	_, found = recordsKeeper.GetUserRedemptionRecord(ctx, redemptionId)
+	if found {
+		return nil, sdkerrors.Wrapf(recordstypes.ErrRedemptionAlreadyExists, "user already redeemed this epoch: %s", redemptionId)
+	}
+	recordsKeeper.SetUserRedemptionRecord(ctx, userRedemptionRecord)
+
+	// Escrow user's balance
+	err = k.bankKeeper.SendCoinsFromAccountToModule(ctx, sender, types.ModuleName, sdk.NewCoins(inCoin))
+	if err != nil {
+		k.Logger(ctx).Info("Failed to send sdk.NewCoins(inCoins) from account to module")
+		panic(err)
+	}
+
 	// Construct the transaction. Note, this transaction must be atomically executed.
 	var msgs []sdk.Msg
 	//msgs = append(msgs, types.NewMsgRedeemStake(sender, connectionId, outCoin))
-	// Implement record keeping logic!
-	// recordsKeeper := k.recordsKeeper
-
 	// Send the ICA transaction
 	k.SubmitTxs(ctx, connectionId, msgs, *delegationAccount)
 
