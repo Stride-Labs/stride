@@ -442,7 +442,6 @@ func NewStrideApp(
 
 	app.InterchainqueryKeeper = interchainquerykeeper.NewKeeper(appCodec, keys[interchainquerytypes.StoreKey], app.IBCKeeper)
 	interchainQueryModule := interchainquery.NewAppModule(appCodec, app.InterchainqueryKeeper)
-	// app.InterchainqueryKeeper.SetCallbackHandler(interchainquerytypes.ModuleName, app.InterchainqueryKeeper.CallbackHandler())
 
 	scopedStakeibcKeeper := app.CapabilityKeeper.ScopeToModule(stakeibcmoduletypes.ModuleName)
 	app.ScopedStakeibcKeeper = scopedStakeibcKeeper

@@ -36,4 +36,3 @@ message HostZone {
     (gogoproto.nullable) = false
   ];
 }
-
