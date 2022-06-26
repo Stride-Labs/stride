@@ -134,9 +134,7 @@ func (k Keeper) StakeExistingDepositsOnHostZones(ctx sdk.Context, epochNumber in
 		if depositRecord.EpochNumber < uint64(epochNumber) {
 			pstr := fmt.Sprintf("\t[STAKE] Processing deposit {%d} {%s} {%d}", depositRecord.Id, depositRecord.Denom, depositRecord.Amount)
 			k.Logger(ctx).Info(pstr)
-			k.Logger(ctx).Info("0")
 			hostZone, hostZoneFound := k.GetHostZone(ctx, depositRecord.HostZoneId)
-			k.Logger(ctx).Info("1")
 			if !hostZoneFound {
 				k.Logger(ctx).Error("[STAKE] Host zone not found for deposit record {%d}", depositRecord.Id)
 				continue
@@ -146,7 +144,6 @@ func (k Keeper) StakeExistingDepositsOnHostZones(ctx sdk.Context, epochNumber in
 				k.Logger(ctx).Error("[STAKE] Zone %s is missing a delegation address!", hostZone.ChainId)
 				continue
 			}
-			k.Logger(ctx).Info("2")
 			k.Logger(ctx).Info(fmt.Sprintf("\tdelegation staking on %s", hostZone.HostDenom))
 			processAmount := utils.Int64ToCoinString(depositRecord.Amount, hostZone.HostDenom)
 			amt, err := sdk.ParseCoinNormalized(processAmount)
@@ -154,7 +151,6 @@ func (k Keeper) StakeExistingDepositsOnHostZones(ctx sdk.Context, epochNumber in
 				k.Logger(ctx).Error(fmt.Sprintf("Could not process coin %s: %s", hostZone.HostDenom, err))
 				return
 			}
-			k.Logger(ctx).Info("3")
 			err = k.DelegateOnHost(ctx, hostZone, amt)
 			if err != nil {
 				k.Logger(ctx).Error(fmt.Sprintf("Did not stake %s on %s", processAmount, hostZone.ChainId))

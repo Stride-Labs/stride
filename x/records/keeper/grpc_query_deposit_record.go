@@ -25,7 +25,7 @@ func (k Keeper) DepositRecordAll(c context.Context, req *types.QueryAllDepositRe
 
 	pageRes, err := query.Paginate(depositRecordStore, req.Pagination, func(key []byte, value []byte) error {
 		var depositRecord types.DepositRecord
-		if err := k.cdc.Unmarshal(value, &depositRecord); err != nil {
+		if err := k.Cdc.Unmarshal(value, &depositRecord); err != nil {
 			return err
 		}
 
