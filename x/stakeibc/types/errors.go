@@ -14,4 +14,5 @@ var (
 	ErrInvalidToken         = sdkerrors.Register(ModuleName, 1502, "invalid token denom (denom is not IBC token)")
 	ErrInvalidHostZone      = sdkerrors.Register(ModuleName, 1503, "host zone not registered")
 	ErrICAStake             = sdkerrors.Register(ModuleName, 1504, "ICA stake failed")
+	ErrEpochNotFound        = sdkerrors.Register(ModuleName, 1505, "epoch not found")
 )

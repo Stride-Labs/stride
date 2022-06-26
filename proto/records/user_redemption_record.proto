@@ -4,13 +4,13 @@ package StrideLabs.stride.records;
 option go_package = "github.com/Stride-Labs/stride/x/records/types";
 
 message UserRedemptionRecord {
-  uint64 id = 1;
+  string id = 1; // {chain_id}.{epoch}.{sender}
   string sender = 2; 
   string receiver = 3; 
   uint64 amount = 4; 
   string denom = 5; 
   string hostZoneId = 6; 
-  int32 epochNumber = 7; 
+  int64 epochNumber = 7; 
   bool isClaimable = 8; 
   
 }
