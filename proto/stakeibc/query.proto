@@ -121,5 +121,4 @@ message QueryModuleAddressResponse {
   string addr = 1;
 }
 
-
 // this line is used by starport scaffolding # 3
