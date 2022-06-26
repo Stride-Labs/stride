@@ -101,7 +101,6 @@ func WithdrawalBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query icq
 	zone.WithdrawalAccount = wa
 	k.SetHostZone(ctx, zone)
 	k.Logger(ctx).Info(fmt.Sprintf("Just set WithdrawalBalance to: %d", wa.WithdrawalBalance))
-	// k.Logger(ctx).Info(fmt.Sprintf("Just set HeightLastQueriedUndelegatedBalance to: %d", h))
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(
 			sdk.EventTypeMessage,
@@ -116,7 +115,8 @@ func WithdrawalBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query icq
 
 	withdrawalAccount := zone.GetWithdrawalAccount()
 	delegationAccount := zone.GetDelegationAccount()
-	feeAccount := zone.GetFeeAccount()
+	// TODO(TEST-112) set the stride revenue address in a config file
+	REV_ACCT := "cosmos1wdplq6qjh2xruc7qqagma9ya665q6qhcwju3ng"
 
 	params := k.GetParams(ctx)
 	strideCommission := sdk.NewDec(int64(params.GetStrideCommission())).Quo(sdk.NewDec(100)) // convert to decimal
@@ -133,19 +133,18 @@ func WithdrawalBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query icq
 		ctx.Logger().Error(fmt.Sprintf("Error with withdraw logic: %d, Fee portion: %d, reinvestPortion %d", coin.Amount.Int64(), strideClaimFloored.Int64(), reinvestAmountCeil.Int64()))
 		panic("Failed to subdivide rewards to feeAccount and delegationAccount")
 	}
-	ctx.Logger().Info(fmt.Sprintf("MOOSE Total: %d, Fee portion: %d, reinvestPortion %d", coin.Amount.Int64(), strideClaimFloored.Int64(), reinvestAmountCeil.Int64()))
 	strideCoin := sdk.NewCoin(coin.Denom, strideClaimFloored)
 	reinvestCoin := sdk.NewCoin(coin.Denom, reinvestAmountCeil)
 
 	var msgs []sdk.Msg
 	// construct the msg
 	msgs = append(msgs, &banktypes.MsgSend{FromAddress: withdrawalAccount.GetAddress(),
-		ToAddress: feeAccount.GetAddress(), Amount: sdk.NewCoins(strideCoin)})
+		ToAddress: REV_ACCT, Amount: sdk.NewCoins(strideCoin)})
 	msgs = append(msgs, &banktypes.MsgSend{FromAddress: withdrawalAccount.GetAddress(),
 		ToAddress: delegationAccount.GetAddress(), Amount: sdk.NewCoins(reinvestCoin)})
-	ctx.Logger().Info(fmt.Sprintf("MOOSE msg: %v", &banktypes.MsgSend{FromAddress: withdrawalAccount.GetAddress(),
-		ToAddress: feeAccount.GetAddress(), Amount: sdk.NewCoins(coin)}))
-	ctx.Logger().Info(fmt.Sprintf("MOOSE msgs: %v", msgs))
+
+	ctx.Logger().Info(fmt.Sprintf("Submitting withdrawal sweep messages for: %v", msgs))
+
 	// Send the transaction through SubmitTx
 	err = k.SubmitTxs(ctx, zone.ConnectionId, msgs, *withdrawalAccount)
 	if err != nil {
