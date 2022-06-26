@@ -21,13 +21,6 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) 
 
 	// Set hostZone count
 	k.SetHostZoneCount(ctx, genState.HostZoneCount)
-	// Set all the depositRecord
-	for _, elem := range genState.DepositRecordList {
-		k.SetDepositRecord(ctx, elem)
-	}
-
-	// Set depositRecord count
-	k.SetDepositRecordCount(ctx, genState.DepositRecordCount)
 	// this line is used by starport scaffolding # genesis/module/init
 	// TODO(TEST-22): Set ports
 	// k.SetPort(ctx, genState.PortId)
@@ -58,8 +51,6 @@ func ExportGenesis(ctx sdk.Context, k keeper.Keeper) *types.GenesisState {
 	}
 	genesis.HostZoneList = k.GetAllHostZone(ctx)
 	genesis.HostZoneCount = k.GetHostZoneCount(ctx)
-	genesis.DepositRecordList = k.GetAllDepositRecord(ctx)
-	genesis.DepositRecordCount = k.GetDepositRecordCount(ctx)
 	// this line is used by starport scaffolding # genesis/module/export
 
 	return genesis

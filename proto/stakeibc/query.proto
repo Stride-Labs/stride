@@ -10,7 +10,6 @@ import "stakeibc/delegation.proto";
 import "stakeibc/min_validator_requirements.proto";
 import "stakeibc/ica_account.proto";
 import "stakeibc/host_zone.proto";
-import "stakeibc/deposit_record.proto";
 // this line is used by starport scaffolding # 1
 
 option go_package = "github.com/Stride-Labs/stride/x/stakeibc/types";
@@ -45,16 +44,6 @@ service Query {
 	// Queries a list of HostZone items.
 	rpc HostZoneAll(QueryAllHostZoneRequest) returns (QueryAllHostZoneResponse) {
 		option (google.api.http).get = "/Stride-Labs/stride/stakeibc/host_zone";
-	}
-
-// Queries a DepositRecord by id.
-	rpc DepositRecord(QueryGetDepositRecordRequest) returns (QueryGetDepositRecordResponse) {
-		option (google.api.http).get = "/Stride-Labs/stride/stakeibc/deposit_record/{id}";
-	}
-
-	// Queries a list of DepositRecord items.
-	rpc DepositRecordAll(QueryAllDepositRecordRequest) returns (QueryAllDepositRecordResponse) {
-		option (google.api.http).get = "/Stride-Labs/stride/stakeibc/deposit_record";
 	}
 
 // Queries a list of ModuleAddress items.
@@ -121,23 +110,6 @@ message QueryAllHostZoneRequest {
 
 message QueryAllHostZoneResponse {
 	repeated HostZone HostZone = 1 [(gogoproto.nullable) = false];
-	cosmos.base.query.v1beta1.PageResponse pagination = 2;
-}
-
-message QueryGetDepositRecordRequest {
-	uint64 id = 1;
-}
-
-message QueryGetDepositRecordResponse {
-	DepositRecord DepositRecord = 1 [(gogoproto.nullable) = false];
-}
-
-message QueryAllDepositRecordRequest {
-	cosmos.base.query.v1beta1.PageRequest pagination = 1;
-}
-
-message QueryAllDepositRecordResponse {
-	repeated DepositRecord DepositRecord = 1 [(gogoproto.nullable) = false];
 	cosmos.base.query.v1beta1.PageResponse pagination = 2;
 }
 
