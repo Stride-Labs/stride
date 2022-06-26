@@ -76,13 +76,13 @@ func (k msgServer) LiquidStake(goCtx context.Context, msg *types.MsgLiquidStake)
 		return nil, sdkerrors.Wrapf(types.ErrInvalidLengthEpochTracker, "no number for epoch (%s)", epochtypes.STRIDE_EPOCH)
 	}
 	// Does this use too much gas?
-	depositRecord, found := k.GetDepositRecordByEpochAndChain(ctx, strideEpochTracker.EpochNumber, hostZone.ChainId)
+	depositRecord, found := k.RecordsKeeper.GetDepositRecordByEpochAndChain(ctx, strideEpochTracker.EpochNumber, hostZone.ChainId)
 	if !found {
 		k.Logger(ctx).Info("failed to find deposit record")
 		return nil, sdkerrors.Wrapf(types.ErrInvalidLengthEpochTracker, "no deposit record (%s)", strideEpochTracker.EpochNumber)
 	}
 	depositRecord.Amount += msg.Amount
-	k.SetDepositRecord(ctx, *depositRecord)
+	k.RecordsKeeper.SetDepositRecord(ctx, *depositRecord)
 
 	// Reference on how to create a deposit record using the recordsKeeper
 	// // // create a deposit record of these tokens

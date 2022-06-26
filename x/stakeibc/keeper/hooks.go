@@ -8,6 +8,7 @@ import (
 	epochstypes "github.com/Stride-Labs/stride/x/epochs/types"
 	icqkeeper "github.com/Stride-Labs/stride/x/interchainquery/keeper"
 	icqtypes "github.com/Stride-Labs/stride/x/interchainquery/types"
+	recordtypes "github.com/Stride-Labs/stride/x/records/types"
 	"github.com/Stride-Labs/stride/x/stakeibc/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -114,17 +115,17 @@ func (k Keeper) CreateDepositRecordsForEpoch(ctx sdk.Context, epochNumber int64)
 	// Create one new deposit record / host zone for the next epoch
 	createDepositRecords := func(index int64, zoneInfo types.HostZone) (stop bool) {
 		// create a deposit record / host zone
-		depositRecord := types.NewDepositRecord(0, zoneInfo.HostDenom, zoneInfo.ChainId, types.DepositRecord_TRANSFER, uint64(epochNumber))
-		k.AppendDepositRecord(ctx, *depositRecord)
+		depositRecord := recordtypes.NewDepositRecord(0, zoneInfo.HostDenom, zoneInfo.ChainId, recordtypes.DepositRecord_TRANSFER, uint64(epochNumber))
+		k.RecordsKeeper.AppendDepositRecord(ctx, *depositRecord)
 		return false
 	}
 	// Iterate the zones and apply icaReinvest
 	k.IterateHostZones(ctx, createDepositRecords)
 }
 
-func (k Keeper) StakeExistingDepositsOnHostZones(ctx sdk.Context, epochNumber int64, depositRecords []types.DepositRecord) {
-	stakeDepositRecords := utils.FilterDepositRecords(depositRecords, func(record types.DepositRecord) (condition bool) {
-		return record.Status == types.DepositRecord_STAKE
+func (k Keeper) StakeExistingDepositsOnHostZones(ctx sdk.Context, epochNumber int64, depositRecords []recordtypes.DepositRecord) {
+	stakeDepositRecords := utils.FilterDepositRecords(depositRecords, func(record recordtypes.DepositRecord) (condition bool) {
+		return record.Status == recordtypes.DepositRecord_STAKE
 	})
 	for _, depositRecord := range stakeDepositRecords {
 		if depositRecord.EpochNumber < uint64(epochNumber) {
@@ -265,9 +266,9 @@ func (k Keeper) ReinvestRewards(ctx sdk.Context, hostZone types.HostZone) error 
 	return nil
 }
 
-func (k Keeper) TransferExistingDepositsToHostZones(ctx sdk.Context, epochNumber int64, depositRecords []types.DepositRecord) {
-	transferDepositRecords := utils.FilterDepositRecords(depositRecords, func(record types.DepositRecord) (condition bool) {
-		return record.Status == types.DepositRecord_TRANSFER
+func (k Keeper) TransferExistingDepositsToHostZones(ctx sdk.Context, epochNumber int64, depositRecords []recordtypes.DepositRecord) {
+	transferDepositRecords := utils.FilterDepositRecords(depositRecords, func(record recordtypes.DepositRecord) (condition bool) {
+		return record.Status == recordtypes.DepositRecord_TRANSFER
 	})
 	addr := k.accountKeeper.GetModuleAccount(ctx, types.ModuleName).GetAddress().String()
 	for _, depositRecord := range transferDepositRecords {

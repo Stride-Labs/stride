@@ -46,7 +46,7 @@ func TestDepositRecordQuerySingle(t *testing.T) {
 		},
 	} {
 		t.Run(tc.desc, func(t *testing.T) {
-			response, err := keeper.DepositRecord(wctx, tc.request)
+			response, err := keeper.RecordsKeeper.DepositRecord(wctx, tc.request)
 			if tc.err != nil {
 				require.ErrorIs(t, err, tc.err)
 			} else {
@@ -78,7 +78,7 @@ func TestDepositRecordQueryPaginated(t *testing.T) {
 	t.Run("ByOffset", func(t *testing.T) {
 		step := 2
 		for i := 0; i < len(msgs); i += step {
-			resp, err := keeper.DepositRecordAll(wctx, request(nil, uint64(i), uint64(step), false))
+			resp, err := keeper.RecordsKeeper.DepositRecordAll(wctx, request(nil, uint64(i), uint64(step), false))
 			require.NoError(t, err)
 			require.LessOrEqual(t, len(resp.DepositRecord), step)
 			require.Subset(t,
@@ -91,7 +91,7 @@ func TestDepositRecordQueryPaginated(t *testing.T) {
 		step := 2
 		var next []byte
 		for i := 0; i < len(msgs); i += step {
-			resp, err := keeper.DepositRecordAll(wctx, request(next, 0, uint64(step), false))
+			resp, err := keeper.RecordsKeeper.DepositRecordAll(wctx, request(next, 0, uint64(step), false))
 			require.NoError(t, err)
 			require.LessOrEqual(t, len(resp.DepositRecord), step)
 			require.Subset(t,
@@ -102,7 +102,7 @@ func TestDepositRecordQueryPaginated(t *testing.T) {
 		}
 	})
 	t.Run("Total", func(t *testing.T) {
-		resp, err := keeper.DepositRecordAll(wctx, request(nil, 0, 0, true))
+		resp, err := keeper.RecordsKeeper.DepositRecordAll(wctx, request(nil, 0, 0, true))
 		require.NoError(t, err)
 		require.Equal(t, len(msgs), int(resp.Pagination.Total))
 		require.ElementsMatch(t,
@@ -111,7 +111,7 @@ func TestDepositRecordQueryPaginated(t *testing.T) {
 		)
 	})
 	t.Run("InvalidRequest", func(t *testing.T) {
-		_, err := keeper.DepositRecordAll(wctx, nil)
+		_, err := keeper.RecordsKeeper.DepositRecordAll(wctx, nil)
 		require.ErrorIs(t, err, status.Error(codes.InvalidArgument, "invalid request"))
 	})
 }
