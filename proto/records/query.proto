@@ -5,6 +5,7 @@ import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
 import "cosmos/base/query/v1beta1/pagination.proto";
 import "records/params.proto";
+import "records/user_redemption_record.proto";
 // this line is used by starport scaffolding # 1
 
 option go_package = "github.com/Stride-Labs/stride/x/records/types";
@@ -15,7 +16,17 @@ service Query {
   rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
     option (google.api.http).get = "/StrideLabs/stride/records/params";
   }
-  // this line is used by starport scaffolding # 2
+  // Queries a UserRedemptionRecord by id.
+	rpc UserRedemptionRecord(QueryGetUserRedemptionRecordRequest) returns (QueryGetUserRedemptionRecordResponse) {
+		option (google.api.http).get = "/Stride-Labs/stride/records/user_redemption_record/{id}";
+	}
+
+	// Queries a list of UserRedemptionRecord items.
+	rpc UserRedemptionRecordAll(QueryAllUserRedemptionRecordRequest) returns (QueryAllUserRedemptionRecordResponse) {
+		option (google.api.http).get = "/Stride-Labs/stride/records/user_redemption_record";
+	}
+
+// this line is used by starport scaffolding # 2
 }
 
 // QueryParamsRequest is request type for the Query/Params RPC method.
@@ -25,6 +36,23 @@ message QueryParamsRequest {}
 message QueryParamsResponse {
   // params holds all the parameters of this module.
   Params params = 1 [(gogoproto.nullable) = false];
+}
+
+message QueryGetUserRedemptionRecordRequest {
+	uint64 id = 1;
+}
+
+message QueryGetUserRedemptionRecordResponse {
+	UserRedemptionRecord UserRedemptionRecord = 1 [(gogoproto.nullable) = false];
+}
+
+message QueryAllUserRedemptionRecordRequest {
+	cosmos.base.query.v1beta1.PageRequest pagination = 1;
+}
+
+message QueryAllUserRedemptionRecordResponse {
+	repeated UserRedemptionRecord UserRedemptionRecord = 1 [(gogoproto.nullable) = false];
+	cosmos.base.query.v1beta1.PageResponse pagination = 2;
 }
 
 // this line is used by starport scaffolding # 3
