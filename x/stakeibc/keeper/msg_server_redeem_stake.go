@@ -18,17 +18,18 @@ func (k Keeper) RedeemStake(goCtx context.Context, msg *types.MsgRedeemStake) (*
 	if err != nil {
 		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "address is invalid: %s", msg.Creator)
 	}
-	coinString := strconv.Itoa(int(msg.Amount)) + msg.StAssetDenom
+	// we get stAsset from the host zone
+	// first make sure host zone is valid
+	hostZone, found := k.GetHostZone(ctx, msg.HostZone)
+	if !found {
+		return nil, sdkerrors.Wrapf(types.ErrInvalidHostZone, "host zone is invalid: %s", msg.HostZone)
+	}
+	coinString := strconv.Itoa(int(msg.Amount)) + "st" + hostZone.IBCDenom
 	inCoin, err := sdk.ParseCoinNormalized(coinString)
 	if err != nil {
 		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidCoins, "could not parse inCoin: %s", coinString)
 	}
 	// remove st prefix to get the base denom
-	hostZoneDenom := types.HostZoneDenomFromStAssetDenom(msg.StAssetDenom)
-	hostZone, err := k.GetHostZoneFromHostDenom(ctx, hostZoneDenom)
-	if err != nil {
-		return nil, err
-	}
 	delegationAccount := hostZone.GetDelegationAccount()
 	connectionId := hostZone.GetConnectionId()
 
@@ -37,13 +38,8 @@ func (k Keeper) RedeemStake(goCtx context.Context, msg *types.MsgRedeemStake) (*
 	if !inCoin.IsPositive() {
 		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidCoins, "amount must be greater than 0. found: %s", msg.Amount)
 	}
-	// StAssetDenom is valid
-	// Should we register stAssets somewhere and add an additional check here?
-	if types.IsStAsset(msg.StAssetDenom) != true {
-		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidCoins, "denom is not a valid stAsset. found: %s", msg.StAssetDenom)
-	}
 	// Creator owns at least "amount" stAssets
-	balance := k.bankKeeper.GetBalance(ctx, sender, msg.StAssetDenom)
+	balance := k.bankKeeper.GetBalance(ctx, sender, hostZone.IBCDenom)
 	if balance.IsLT(inCoin) {
 		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidCoins, "balance is lower than redemption amount. redemption amount: %s, balance %s: ", msg.Amount, balance.Amount)
 	}
@@ -60,23 +56,23 @@ func (k Keeper) RedeemStake(goCtx context.Context, msg *types.MsgRedeemStake) (*
 	// TODO(TEST-7): Update redemption_rate via ICQ
 	var rate sdk.Dec
 	rate = hostZone.LastRedemptionRate
+	// QUESTION: should we give the lower of the two rates here?
 	if hostZone.RedemptionRate.LT(rate) {
 		rate = hostZone.RedemptionRate
 	}
 	native_tokens := inCoin.Amount.ToDec().Mul(rate).TruncateInt()
 	outCoin := sdk.NewCoin(hostZone.HostDenom, native_tokens)
 	_ = outCoin
-
 	// Select validators for unbonding
 	// TODO(TEST-39): Implement validator selection
 	validator_address := "cosmosvaloper19e7sugzt8zaamk2wyydzgmg9n3ysylg6na6k6e" // gval2
 	_ = validator_address
 
 	// Construct the transaction. Note, this transaction must be atomically executed.
-	// TODO(TEST-5): Add messages to redeem stake
 	var msgs []sdk.Msg
-	// TODO(TEST-5)
+	//msgs = append(msgs, types.NewMsgRedeemStake(sender, connectionId, outCoin))
 	// Implement record keeping logic!
+	// recordsKeeper := k.recordsKeeper
 
 	// Send the ICA transaction
 	k.SubmitTxs(ctx, connectionId, msgs, *delegationAccount)
