@@ -72,7 +72,7 @@ func (k Keeper) HandleAcknowledgement(ctx sdk.Context, modulePacket channeltypes
 	// }
 
 	// for msgIndex, msgData := range txMsgData.Data {
-	// 	src := msgs[msgIndex]
+	// src := msgs[msgIndex]
 	// 	switch msgData.MsgType {
 	// 	// staking to validators
 	// 	case "/cosmos.staking.v1beta1.MsgDelegate":
