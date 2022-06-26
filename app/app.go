@@ -441,15 +441,6 @@ func NewStrideApp(
 	// recordsStack contains records -> transfer
 	recordsStack := recordsmodule.NewIBCModule(app.RecordsKeeper, transferIBCModule)
 
-	epochsKeeper := epochsmodulekeeper.NewKeeper(appCodec, keys[epochsmoduletypes.StoreKey])
-	app.EpochsKeeper = *epochsKeeper.SetHooks(
-		epochsmoduletypes.NewMultiEpochHooks(
-			app.StakeibcKeeper.Hooks(),
-		),
-	)
-	epochsModule := epochsmodule.NewAppModule(appCodec, app.EpochsKeeper)
-	// this line is used by starport scaffolding # stargate/app/keeperDefinition
-
 	scopedStakeibcKeeper := app.CapabilityKeeper.ScopeToModule(stakeibcmoduletypes.ModuleName)
 	app.ScopedStakeibcKeeper = scopedStakeibcKeeper
 	app.StakeibcKeeper = stakeibcmodulekeeper.NewKeeper(
@@ -467,10 +458,18 @@ func NewStrideApp(
 		app.TransferKeeper,
 		app.InterchainqueryKeeper,
 		app.RecordsKeeper,
-		app.EpochsKeeper,
 	)
 	stakeibcModule := stakeibcmodule.NewAppModule(appCodec, app.StakeibcKeeper, app.AccountKeeper, app.BankKeeper)
 	stakeibcIBCModule := stakeibcmodule.NewIBCModule(app.StakeibcKeeper)
+
+	epochsKeeper := epochsmodulekeeper.NewKeeper(appCodec, keys[epochsmoduletypes.StoreKey])
+	app.EpochsKeeper = *epochsKeeper.SetHooks(
+		epochsmoduletypes.NewMultiEpochHooks(
+			app.StakeibcKeeper.Hooks(),
+		),
+	)
+	epochsModule := epochsmodule.NewAppModule(appCodec, app.EpochsKeeper)
+	// this line is used by starport scaffolding # stargate/app/keeperDefinition
 
 	app.ICAHostKeeper = icahostkeeper.NewKeeper(
 		appCodec, keys[icahosttypes.StoreKey], app.GetSubspace(icahosttypes.SubModuleName),

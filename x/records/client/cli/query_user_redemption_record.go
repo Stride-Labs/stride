@@ -2,7 +2,6 @@ package cli
 
 import (
 	"context"
-	"strconv"
 
 	"github.com/Stride-Labs/stride/x/records/types"
 	"github.com/cosmos/cosmos-sdk/client"
@@ -53,10 +52,7 @@ func CmdShowUserRedemptionRecord() *cobra.Command {
 
 			queryClient := types.NewQueryClient(clientCtx)
 
-			id, err := strconv.ParseUint(args[0], 10, 64)
-			if err != nil {
-				return err
-			}
+			id := args[0]
 
 			params := &types.QueryGetUserRedemptionRecordRequest{
 				Id: id,

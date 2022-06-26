@@ -28485,8 +28485,8 @@ paths:
                       type: string
                       format: int64
                     hostZoneUnbondings:
-                      type: array
-                      items:
+                      type: object
+                      additionalProperties:
                         type: object
                         properties:
                           amount:
@@ -28496,6 +28496,8 @@ paths:
                             type: string
                           hostZoneId:
                             type: string
+                          unbondingSent:
+                            type: boolean
               pagination:
                 type: object
                 properties:
@@ -28617,8 +28619,8 @@ paths:
                     type: string
                     format: int64
                   hostZoneUnbondings:
-                    type: array
-                    items:
+                    type: object
+                    additionalProperties:
                       type: object
                       properties:
                         amount:
@@ -28628,6 +28630,8 @@ paths:
                           type: string
                         hostZoneId:
                           type: string
+                        unbondingSent:
+                          type: boolean
         default:
           description: An unexpected error response.
           schema:
@@ -28842,7 +28846,6 @@ paths:
           in: path
           required: true
           type: string
-          format: uint64
       tags:
         - Query
   /StrideLabs/stride/records/params:
@@ -30524,6 +30527,12 @@ paths:
                         then calculate a TWARR?
                     RedemptionRate:
                       type: string
+                    unbondingFrequency:
+                      type: string
+                      format: uint64
+                      title: >-
+                        stores how many days we should wait before issuing
+                        unbondings
                   title: 'next id: 13'
               pagination:
                 type: object
@@ -31049,6 +31058,12 @@ paths:
                       then calculate a TWARR?
                   RedemptionRate:
                     type: string
+                  unbondingFrequency:
+                    type: string
+                    format: uint64
+                    title: >-
+                      stores how many days we should wait before issuing
+                      unbondings
                 title: 'next id: 13'
         default:
           description: An unexpected error response.
@@ -52412,8 +52427,8 @@ definitions:
         type: string
         format: int64
       hostZoneUnbondings:
-        type: array
-        items:
+        type: object
+        additionalProperties:
           type: object
           properties:
             amount:
@@ -52423,6 +52438,8 @@ definitions:
               type: string
             hostZoneId:
               type: string
+            unbondingSent:
+              type: boolean
   StrideLabs.stride.records.EpochUnbondingRecord.hostZoneUnbonding:
     type: object
     properties:
@@ -52433,6 +52450,8 @@ definitions:
         type: string
       hostZoneId:
         type: string
+      unbondingSent:
+        type: boolean
   StrideLabs.stride.records.Params:
     type: object
     description: Params defines the parameters for the module.
@@ -52451,8 +52470,8 @@ definitions:
               type: string
               format: int64
             hostZoneUnbondings:
-              type: array
-              items:
+              type: object
+              additionalProperties:
                 type: object
                 properties:
                   amount:
@@ -52462,6 +52481,8 @@ definitions:
                     type: string
                   hostZoneId:
                     type: string
+                  unbondingSent:
+                    type: boolean
       pagination:
         type: object
         properties:
@@ -52551,8 +52572,8 @@ definitions:
             type: string
             format: int64
           hostZoneUnbondings:
-            type: array
-            items:
+            type: object
+            additionalProperties:
               type: object
               properties:
                 amount:
@@ -52562,6 +52583,8 @@ definitions:
                   type: string
                 hostZoneId:
                   type: string
+                unbondingSent:
+                  type: boolean
   StrideLabs.stride.records.QueryGetUserRedemptionRecordResponse:
     type: object
     properties:
@@ -53147,6 +53170,10 @@ definitions:
           then calculate a TWARR?
       RedemptionRate:
         type: string
+      unbondingFrequency:
+        type: string
+        format: uint64
+        title: stores how many days we should wait before issuing unbondings
     title: 'next id: 13'
   Stridelabs.stride.stakeibc.ICAAccount:
     type: object
@@ -53212,6 +53239,8 @@ definitions:
       uptime:
         type: integer
         format: int32
+  Stridelabs.stride.stakeibc.MsgEpochTrackerResponse:
+    type: object
   Stridelabs.stride.stakeibc.MsgLiquidStakeResponse:
     type: object
   Stridelabs.stride.stakeibc.MsgRedeemStakeResponse:
@@ -53571,6 +53600,10 @@ definitions:
                 then calculate a TWARR?
             RedemptionRate:
               type: string
+            unbondingFrequency:
+              type: string
+              format: uint64
+              title: stores how many days we should wait before issuing unbondings
           title: 'next id: 13'
       pagination:
         type: object
@@ -53896,6 +53929,10 @@ definitions:
               then calculate a TWARR?
           RedemptionRate:
             type: string
+          unbondingFrequency:
+            type: string
+            format: uint64
+            title: stores how many days we should wait before issuing unbondings
         title: 'next id: 13'
   Stridelabs.stride.stakeibc.QueryGetICAAccountResponse:
     type: object
