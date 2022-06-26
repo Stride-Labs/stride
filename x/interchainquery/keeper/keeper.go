@@ -10,6 +10,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/tendermint/tendermint/libs/log"
 )
 
@@ -104,6 +105,45 @@ func (k Keeper) QueryBalances(ctx sdk.Context, zone stakeibctypes.HostZone, cb C
 	balanceQuery := banktypes.QueryAllBalancesRequest{Address: address}
 	k.Logger(ctx).Info(fmt.Sprintf("\tabout to query %s", address))
 	bz, err := k.cdc.Marshal(&balanceQuery)
+	if err != nil {
+		k.Logger(ctx).Error(fmt.Sprintf("failed to marshal query %s %s", address, err.Error()))
+		return err
+	}
+	k.MakeRequest(
+		ctx,
+		connectionId,
+		chainId,
+		query_type,
+		bz,
+		// TODO(TEST-79) understand and use proper period
+		sdk.NewInt(25),
+		types.ModuleName,
+		cb,
+	)
+	ctx.EventManager().EmitEvents(sdk.Events{
+		sdk.NewEvent(
+			sdk.EventTypeMessage,
+			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
+			sdk.NewAttribute(sdk.AttributeKeyAction, types.AttributeValueQuery),
+			sdk.NewAttribute(types.AttributeKeyQueryId, GenerateQueryHash(connectionId, chainId, query_type, bz)),
+			sdk.NewAttribute(types.AttributeKeyChainId, chainId),
+			sdk.NewAttribute(types.AttributeKeyConnectionId, connectionId),
+			sdk.NewAttribute(types.AttributeKeyType, query_type),
+			sdk.NewAttribute(types.AttributeKeyHeight, "0"),
+			sdk.NewAttribute(types.AttributeKeyRequest, hex.EncodeToString(bz)),
+		),
+	})
+	return nil
+}
+
+func (k Keeper) QueryUnbondingDelegation(ctx sdk.Context, zone stakeibctypes.HostZone, cb Callback, address string) error {
+	connectionId := zone.ConnectionId
+	chainId := zone.ChainId
+	// Validate address
+	query_type := "cosmos.bank.v1beta1.Query/AllBalances"
+	unbondingQuery := stakingtypes.QueryDelegatorUnbondingDelegationsRequest{DelegatorAddr: address}
+	k.Logger(ctx).Info(fmt.Sprintf("\tabout to query unbonding delegations for %s", address))
+	bz, err := k.cdc.Marshal(&unbondingQuery)
 	if err != nil {
 		k.Logger(ctx).Error(fmt.Sprintf("failed to marshal query %s %s", address, err.Error()))
 		return err
