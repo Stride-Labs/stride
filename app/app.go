@@ -426,6 +426,21 @@ func NewStrideApp(
 	interchainQueryModule := interchainquery.NewAppModule(appCodec, app.InterchainqueryKeeper)
 	app.InterchainqueryKeeper.SetCallbackHandler(interchainquerytypes.ModuleName, app.InterchainqueryKeeper.CallbackHandler())
 
+	scopedRecordsKeeper := app.CapabilityKeeper.ScopeToModule(recordsmoduletypes.ModuleName)
+	app.ScopedRecordsKeeper = scopedRecordsKeeper
+	app.RecordsKeeper = *recordsmodulekeeper.NewKeeper(
+		appCodec,
+		keys[recordsmoduletypes.StoreKey],
+		keys[recordsmoduletypes.MemStoreKey],
+		app.GetSubspace(recordsmoduletypes.ModuleName),
+		scopedRecordsKeeper,
+	)
+	recordsModule := recordsmodule.NewAppModule(appCodec, app.RecordsKeeper, app.AccountKeeper, app.BankKeeper)
+
+	// create IBC stacks by combining middleware with base application
+	// recordsStack contains records -> transfer
+	recordsStack := recordsmodule.NewIBCModule(app.RecordsKeeper, transferIBCModule)
+
 	scopedStakeibcKeeper := app.CapabilityKeeper.ScopeToModule(stakeibcmoduletypes.ModuleName)
 	app.ScopedStakeibcKeeper = scopedStakeibcKeeper
 	app.StakeibcKeeper = stakeibcmodulekeeper.NewKeeper(
@@ -442,6 +457,7 @@ func NewStrideApp(
 		scopedStakeibcKeeper,
 		app.TransferKeeper,
 		app.InterchainqueryKeeper,
+		app.RecordsKeeper,
 	)
 	stakeibcModule := stakeibcmodule.NewAppModule(appCodec, app.StakeibcKeeper, app.AccountKeeper, app.BankKeeper)
 	stakeibcIBCModule := stakeibcmodule.NewIBCModule(app.StakeibcKeeper)
@@ -463,21 +479,6 @@ func NewStrideApp(
 		),
 	)
 	epochsModule := epochsmodule.NewAppModule(appCodec, app.EpochsKeeper)
-
-	scopedRecordsKeeper := app.CapabilityKeeper.ScopeToModule(recordsmoduletypes.ModuleName)
-	app.ScopedRecordsKeeper = scopedRecordsKeeper
-	app.RecordsKeeper = *recordsmodulekeeper.NewKeeper(
-		appCodec,
-		keys[recordsmoduletypes.StoreKey],
-		keys[recordsmoduletypes.MemStoreKey],
-		app.GetSubspace(recordsmoduletypes.ModuleName),
-		scopedRecordsKeeper,
-	)
-	recordsModule := recordsmodule.NewAppModule(appCodec, app.RecordsKeeper, app.AccountKeeper, app.BankKeeper)
-
-	// create IBC stacks by combining middleware with base application
-	// recordsStack contains records -> transfer
-	recordsStack := recordsmodule.NewIBCModule(app.RecordsKeeper, transferIBCModule)
 
 	// this line is used by starport scaffolding # stargate/app/keeperDefinition
 

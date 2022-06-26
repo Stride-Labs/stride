@@ -6,6 +6,7 @@ import (
 	"github.com/tendermint/tendermint/libs/log"
 
 	icqkeeper "github.com/Stride-Labs/stride/x/interchainquery/keeper"
+	recordskeeper "github.com/Stride-Labs/stride/x/records/keeper"
 	"github.com/Stride-Labs/stride/x/stakeibc/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -33,6 +34,7 @@ type (
 		transferKeeper        ibctransferkeeper.Keeper
 		bankKeeper            bankkeeper.Keeper
 		InterchainQueryKeeper icqkeeper.Keeper
+		recordsKeeper         recordskeeper.Keeper
 
 		accountKeeper types.AccountKeeper
 	}
@@ -53,6 +55,7 @@ func NewKeeper(
 	scopedKeeper capabilitykeeper.ScopedKeeper,
 	transferKeeper ibctransferkeeper.Keeper,
 	interchainQueryKeeper icqkeeper.Keeper,
+	recordsKeeper recordskeeper.Keeper,
 ) Keeper {
 	// set KeyTable if it has not already been set
 	if !ps.HasKeyTable() {
@@ -71,6 +74,7 @@ func NewKeeper(
 		scopedKeeper:          scopedKeeper,
 		transferKeeper:        transferKeeper,
 		InterchainQueryKeeper: interchainQueryKeeper,
+		recordsKeeper:         recordsKeeper,
 	}
 }
 
