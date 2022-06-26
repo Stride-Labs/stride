@@ -18,15 +18,16 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochIdentifier string, epochN
 		EpochNumber:     epochNumber,
 	})
 	if epochIdentifier == "day" {
+		// here, we process everything we need to for redemptions
 		k.Logger(ctx).Info(fmt.Sprintf("Day %d Beginning", epochNumber))
-		// first we create an empty unbonding record for this epoch
-		k.CreateEpochUnbondings(ctx, epochNumber)
-		// then we initiate unbondings from any hostZone where it's appropriate
+		// first we initiate unbondings from any hostZone where it's appropriate
 		k.InitiateAllHostZoneUnbondings(ctx, uint64(epochNumber))
-		// then we check previous epochs to see if unbondings finished, and sweep if so
+		// then we check previous epochs to see if unbondings finished, and sweep the tokens if so
 		k.SweepAllUnbondedTokens(ctx)
-		// lastly we cleanup any records that are no longer needed
+		// then we cleanup any records that are no longer needed
 		k.CleanupEpochUnbondingRecords(ctx)
+		// lastly we create an empty unbonding record for this epoch
+		k.CreateEpochUnbondings(ctx, epochNumber)
 	}
 	if epochIdentifier == "stride_epoch" {
 		k.Logger(ctx).Info(fmt.Sprintf("Stride Epoch %d Beginning", epochNumber))
@@ -110,10 +111,6 @@ func (k Keeper) AfterEpochEnd(ctx sdk.Context, epochIdentifier string, epochNumb
 	k.Logger(ctx).Info(fmt.Sprintf("Handling epoch end %s %d", epochIdentifier, epochNumber))
 	if epochIdentifier == "day" {
 		k.Logger(ctx).Info(fmt.Sprintf("Day %d Ending", epochNumber))
-		success := k.ProcessAllEpochUnbondings(ctx, uint64(epochNumber))
-		if !success {
-			k.Logger(ctx).Error("Failed to process daily unbondings %d", epochNumber)
-		}
 	}
 }
 
