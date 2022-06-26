@@ -44,7 +44,7 @@ func (k Keeper) AppendDepositRecord(
 	depositRecord.Id = count
 
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.DepositRecordKey))
-	appendedValue := k.cdc.MustMarshal(&depositRecord)
+	appendedValue := k.Cdc.MustMarshal(&depositRecord)
 	store.Set(GetDepositRecordIDBytes(depositRecord.Id), appendedValue)
 
 	// Update depositRecord count
@@ -56,7 +56,7 @@ func (k Keeper) AppendDepositRecord(
 // SetDepositRecord set a specific depositRecord in the store
 func (k Keeper) SetDepositRecord(ctx sdk.Context, depositRecord types.DepositRecord) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.DepositRecordKey))
-	b := k.cdc.MustMarshal(&depositRecord)
+	b := k.Cdc.MustMarshal(&depositRecord)
 	store.Set(GetDepositRecordIDBytes(depositRecord.Id), b)
 }
 
@@ -67,7 +67,7 @@ func (k Keeper) GetDepositRecord(ctx sdk.Context, id uint64) (val types.DepositR
 	if b == nil {
 		return val, false
 	}
-	k.cdc.MustUnmarshal(b, &val)
+	k.Cdc.MustUnmarshal(b, &val)
 	return val, true
 }
 
@@ -86,7 +86,7 @@ func (k Keeper) GetAllDepositRecord(ctx sdk.Context) (list []types.DepositRecord
 
 	for ; iterator.Valid(); iterator.Next() {
 		var val types.DepositRecord
-		k.cdc.MustUnmarshal(iterator.Value(), &val)
+		k.Cdc.MustUnmarshal(iterator.Value(), &val)
 		list = append(list, val)
 	}
 
