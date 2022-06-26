@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
+	recordstypes "github.com/Stride-Labs/stride/x/records/types"
 	"github.com/Stride-Labs/stride/x/stakeibc/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -157,14 +158,14 @@ func (k Keeper) HandleIBCTransfer(ctx sdk.Context, msg sdk.Msg) error {
 	// NOTE: there must be a better way to do this, in it's current form it feels somewhat unsafe
 	// we could add some "dust" to each transfer / deposit record to make this less susceptible to attacks
 	// but it's a hack
-	record, found := k.GetTransferDepositRecordByAmount(ctx, ibcTransferMsg.Token.Amount.Int64())
+	record, found := k.RecordsKeeper.GetTransferDepositRecordByAmount(ctx, ibcTransferMsg.Token.Amount.Int64())
 	if !found {
 		k.Logger(ctx).Error("No record found for %s", ibcTransferMsg.Token.Amount)
 		return fmt.Errorf("No record found for %s", ibcTransferMsg.Token.Amount)
 	}
 	// update the record
-	record.Status = types.DepositRecord_STAKE
-	k.SetDepositRecord(ctx, *record)
+	record.Status = recordstypes.DepositRecord_STAKE
+	k.RecordsKeeper.SetDepositRecord(ctx, *record)
 	// set the deposit record state to STAKE
 
 	return nil

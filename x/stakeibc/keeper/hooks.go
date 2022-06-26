@@ -8,6 +8,7 @@ import (
 	epochstypes "github.com/Stride-Labs/stride/x/epochs/types"
 	icqkeeper "github.com/Stride-Labs/stride/x/interchainquery/keeper"
 	icqtypes "github.com/Stride-Labs/stride/x/interchainquery/types"
+	recordstypes "github.com/Stride-Labs/stride/x/records/types"
 	"github.com/Stride-Labs/stride/x/stakeibc/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -49,6 +50,40 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochIdentifier string, epochN
 		}
 		// deposit records *must* exist for this epoch
 		k.SetEpochTracker(ctx, epochTracker)
+
+		k.Logger(ctx).Info("Triggering deposits")
+		// Create a new deposit record for each host zone for the upcoming epoch
+		k.CreateDepositRecordsForEpoch(ctx, epochNumber)
+
+		depositRecords := k.RecordsKeeper.GetAllDepositRecord(ctx)
+		depositInterval := int64(k.GetParam(ctx, types.KeyDepositInterval))
+		if epochNumber%depositInterval == 0 {
+			// process previous deposit records
+			k.TransferExistingDepositsToHostZones(ctx, epochNumber, depositRecords)
+		}
+		
+		// NOTE: the stake ICA timeout *must* be l.t. the staking epoch length, otherwise
+		// we could send a stake ICA call (which could succeed), without deleting the record.
+		// This could happen if the ack doesn't return by the next epoch. We would then send
+		// *another* stake ICA call, for a portion of the balance which has *already* been staked,
+		// which is very bad! This could result in the protocol becoming insolvent, by staking balances
+		// that were earmarked for another purpose, e.g. redemptions.
+		// The same holds true for IBC transfers.
+		// Given these assumptions, the order of staking / transfers is not important, because stride deposit
+		// records always accurately reflect the state of the controller / host chain by the next epoch.
+		// Put another way, all outstanding ICA calls / IBC transfers must be settled on the controller
+		// chain before the next epoch begins.
+		delegationInterval := int64(k.GetParam(ctx, types.KeyDelegateInterval))
+		if epochNumber%delegationInterval == 0 {
+			k.StakeExistingDepositsOnHostZones(ctx, epochNumber, depositRecords)
+		}
+
+		// TODO(TEST-88): Close this ticket
+		// UNCOMMENT
+		// reinvestInterval := int64(k.GetParam(ctx, types.KeyReinvestInterval))
+		// if epochNumber%reinvestInterval == 0 {
+		// 	k.ProcessRewardsInterval(ctx)
+		// }
 	}
 }
 
@@ -83,17 +118,17 @@ func (k Keeper) CreateDepositRecordsForEpoch(ctx sdk.Context, epochNumber int64)
 	// Create one new deposit record / host zone for the next epoch
 	createDepositRecords := func(index int64, zoneInfo types.HostZone) (stop bool) {
 		// create a deposit record / host zone
-		depositRecord := types.NewDepositRecord(0, zoneInfo.HostDenom, zoneInfo.ChainId, types.DepositRecord_TRANSFER, uint64(epochNumber))
-		k.AppendDepositRecord(ctx, *depositRecord)
+		depositRecord := recordstypes.NewDepositRecord(0, zoneInfo.HostDenom, zoneInfo.ChainId, recordstypes.DepositRecord_TRANSFER, uint64(epochNumber))
+		k.RecordsKeeper.AppendDepositRecord(ctx, *depositRecord)
 		return false
 	}
 	// Iterate the zones and apply icaReinvest
 	k.IterateHostZones(ctx, createDepositRecords)
 }
 
-func (k Keeper) StakeExistingDepositsOnHostZones(ctx sdk.Context, epochNumber int64, depositRecords []types.DepositRecord) {
-	stakeDepositRecords := utils.FilterDepositRecords(depositRecords, func(record types.DepositRecord) (condition bool) {
-		return record.Status == types.DepositRecord_STAKE
+func (k Keeper) StakeExistingDepositsOnHostZones(ctx sdk.Context, epochNumber int64, depositRecords []recordstypes.DepositRecord) {
+	stakeDepositRecords := utils.FilterDepositRecords(depositRecords, func(record recordstypes.DepositRecord) (condition bool) {
+		return record.Status == recordstypes.DepositRecord_STAKE
 	})
 	for _, depositRecord := range stakeDepositRecords {
 		if depositRecord.EpochNumber < uint64(epochNumber) {
@@ -238,9 +273,9 @@ func (k Keeper) ReinvestRewards(ctx sdk.Context, hostZone types.HostZone) error 
 	return nil
 }
 
-func (k Keeper) TransferExistingDepositsToHostZones(ctx sdk.Context, epochNumber int64, depositRecords []types.DepositRecord) {
-	transferDepositRecords := utils.FilterDepositRecords(depositRecords, func(record types.DepositRecord) (condition bool) {
-		return record.Status == types.DepositRecord_TRANSFER
+func (k Keeper) TransferExistingDepositsToHostZones(ctx sdk.Context, epochNumber int64, depositRecords []recordstypes.DepositRecord) {
+	transferDepositRecords := utils.FilterDepositRecords(depositRecords, func(record recordstypes.DepositRecord) (condition bool) {
+		return record.Status == recordstypes.DepositRecord_TRANSFER
 	})
 	addr := k.accountKeeper.GetModuleAccount(ctx, types.ModuleName).GetAddress().String()
 	var emptyRecords []uint64
@@ -284,6 +319,6 @@ func (k Keeper) TransferExistingDepositsToHostZones(ctx sdk.Context, epochNumber
 	}
 	// clear empty records
 	for _, recordId := range emptyRecords {
-		k.RemoveDepositRecord(ctx, recordId)
+		k.RecordsKeeper.RemoveDepositRecord(ctx, recordId)
 	}
 }
