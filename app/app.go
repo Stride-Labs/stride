@@ -415,6 +415,7 @@ func NewStrideApp(
 	// monitoringModule := monitoringp.NewAppModule(appCodec, app.MonitoringKeeper)
 
 	// Note: must be above app.StakeibcKeeper
+
 	app.ICAControllerKeeper = icacontrollerkeeper.NewKeeper(
 		appCodec, keys[icacontrollertypes.StoreKey], app.GetSubspace(icacontrollertypes.SubModuleName),
 		app.IBCKeeper.ChannelKeeper, // may be replaced with middleware such as ics29 fee
@@ -442,7 +443,9 @@ func NewStrideApp(
 		scopedStakeibcKeeper,
 		app.TransferKeeper,
 		app.InterchainqueryKeeper,
+		app.RecordsKeeper,
 	)
+
 	stakeibcModule := stakeibcmodule.NewAppModule(appCodec, app.StakeibcKeeper, app.AccountKeeper, app.BankKeeper)
 	stakeibcIBCModule := stakeibcmodule.NewIBCModule(app.StakeibcKeeper)
 

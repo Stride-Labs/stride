@@ -33,8 +33,7 @@ type (
 		transferKeeper        ibctransferkeeper.Keeper
 		bankKeeper            bankkeeper.Keeper
 		InterchainQueryKeeper icqkeeper.Keeper
-
-		accountKeeper types.AccountKeeper
+		accountKeeper         types.AccountKeeper
 	}
 )
 

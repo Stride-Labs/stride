@@ -4,7 +4,7 @@ import (
 	"context"
 	"strconv"
 
-	epochtypes "github.com/Stride-Labs/stride/x/epoch/types"
+	epochtypes "github.com/Stride-Labs/stride/x/epochs/types"
 	"github.com/Stride-Labs/stride/x/stakeibc/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -83,6 +83,12 @@ func (k msgServer) LiquidStake(goCtx context.Context, msg *types.MsgLiquidStake)
 	}
 	depositRecord.Amount += msg.Amount
 	k.SetDepositRecord(ctx, *depositRecord)
+
+	// Reference on how to create a deposit record using the recordsKeeper
+	// // // create a deposit record of these tokens
+	// depositRecord := recordtypes.NewDepositRecord(msg.Amount, msg.HostDenom, hostZone.ChainId,
+	// 	sender.String(), recordtypes.DepositRecord_RECEIPT)
+	// k.RecordsKeeper.AppendDepositRecord(ctx, *depositRecord)
 
 	return &types.MsgLiquidStakeResponse{}, nil
 }

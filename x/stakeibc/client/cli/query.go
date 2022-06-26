@@ -31,8 +31,6 @@ func GetQueryCmd(queryRoute string) *cobra.Command {
 	cmd.AddCommand(CmdShowICAAccount())
 	cmd.AddCommand(CmdListHostZone())
 	cmd.AddCommand(CmdShowHostZone())
-	cmd.AddCommand(CmdListDepositRecord())
-	cmd.AddCommand(CmdShowDepositRecord())
 	cmd.AddCommand(CmdModuleAddress())
 	cmd.AddCommand(CmdShowInterchainAccount())
 	cmd.AddCommand(CmdListEpochTracker())

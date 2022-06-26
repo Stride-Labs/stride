@@ -44,7 +44,7 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochIdentifier string, epochN
 		}
 		epochTracker := types.EpochTracker{
 			EpochIdentifier: epochIdentifier,
-			EpochNumber: uint64(epochNumber),
+			EpochNumber:     uint64(epochNumber),
 		}
 		// deposit records *must* exist for this epoch
 		k.SetEpochTracker(ctx, epochTracker)
@@ -52,13 +52,13 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochIdentifier string, epochN
 		// Create a new deposit record for each host zone for the upcoming epoch
 		k.CreateDepositRecordsForEpoch(ctx, epochNumber)
 
-		depositRecords := k.GetAllDepositRecord(ctx)
+		depositRecords := k.RecordsKeeper.GetAllDepositRecord(ctx)
 		depositInterval := int64(k.GetParam(ctx, types.KeyDepositInterval))
 		if epochNumber%depositInterval == 0 {
 			// process previous deposit records
 			k.TransferExistingDepositsToHostZones(ctx, epochNumber, depositRecords)
 		}
-		
+
 		// NOTE: the stake ICA timeout *must* be l.t. the staking epoch length, otherwise
 		// we could send a stake ICA call (which could succeed), without deleting the record.
 		// This could happen if the ack doesn't return by the next epoch. We would then send
