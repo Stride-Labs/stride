@@ -1,15 +1,17 @@
 syntax = "proto3";
-package StrideLabs.stride.records;
+package Stridelabs.stride.records;
 
 import "gogoproto/gogo.proto";
 import "records/params.proto";
 import "records/user_redemption_record.proto";
 import "records/epoch_unbonding_record.proto";
+import "records/deposit_record.proto";
 // this line is used by starport scaffolding # genesis/proto/import
 
 option go_package = "github.com/Stride-Labs/stride/x/records/types";
 
-// GenesisState defines the records module's genesis state.
+// GenesisState defines the recordπs module's genesis state.
+// next id: 9
 message GenesisState {
   Params params = 1 [(gogoproto.nullable) = false];
   string port_id = 2;
@@ -17,5 +19,7 @@ message GenesisState {
   uint64 userRedemptionRecordCount = 4;
   repeated EpochUnbondingRecord epochUnbondingRecordList = 5 [(gogoproto.nullable) = false];
   uint64 epochUnbondingRecordCount = 6;
+  repeated DepositRecord depositRecordList = 8 [(gogoproto.nullable) = false];
+  uint64 depositRecordCount = 7;
   // this line is used by starport scaffolding # genesis/proto/state
 }

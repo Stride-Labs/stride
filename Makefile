@@ -291,7 +291,7 @@ init:
 	sh scripts/init_main.sh -${build}
 
 logs: 
-	sh scripts/logs/create_logs.sh 
+	sh scripts-local/logs/create_logs.sh 
 
 
 ###############################################################################

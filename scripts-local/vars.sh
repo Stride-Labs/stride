@@ -22,7 +22,9 @@ GAIA_CHAIN=GAIA
 GAIA_PORT_ID=26658
 GAIA_NODE_NAME=gaia
 GAIA_VAL_ACCT=gval1
+GAIA_REV_ACCT=grev1
 GAIA_VAL_MNEMONIC="move next relief spatial resemble onion exhibit fitness major toss where square wrong exact infant skate dragon shift region over you gospel absorb double"
+GAIA_REV_MNEMONIC="tonight bonus finish chaos orchard plastic view nurse salad regret pause awake link bacon process core talent whale million hope luggage sauce card weasel"
 GAIA_CMD="$SCRIPT_DIR/../build/gaiad --home $STATE/gaia"
 
 HERMES_CMD="$SCRIPT_DIR/../build/hermes/release/hermes -c $SCRIPT_DIR/hermes/config.toml"

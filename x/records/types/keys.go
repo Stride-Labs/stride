@@ -40,4 +40,6 @@ const (
 const (
 	EpochUnbondingRecordKey      = "EpochUnbondingRecord-value-"
 	EpochUnbondingRecordCountKey = "EpochUnbondingRecord-count-"
+	DepositRecordKey      = "DepositRecord-value-"
+	DepositRecordCountKey = "DepositRecord-count-"
 )

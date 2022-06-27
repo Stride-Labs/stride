@@ -23,9 +23,9 @@ func TestGenesisState_Validate(t *testing.T) {
 			genState: &types.GenesisState{
 				PortId: types.PortID,
 				ICAAccount: &types.ICAAccount{
-					Address:          "79",
-					Balance:          2,
-					DelegatedBalance: 8,
+					Address:            "79",
+					UndelegatedBalance: 2,
+					DelegatedBalance:   8,
 				},
 				HostZoneList: []types.HostZone{
 					{
@@ -36,90 +36,12 @@ func TestGenesisState_Validate(t *testing.T) {
 					},
 				},
 				HostZoneCount: 2,
-				DepositRecordList: []types.DepositRecord{
-					{
-						Id: 0,
-					},
-					{
-						Id: 1,
-					},
-				},
-				DepositRecordCount: 2,
-				EpochTrackerList: []types.EpochTracker{
-					{
-						Index: "0",
-					},
-					{
-						Index: "1",
-					},
-				},
-				// this line is used by starport scaffolding # types/genesis/validField
-			},
-			valid: true,
-		},
-		{
-			desc: "duplicated hostZone",
 			genState: &types.GenesisState{
-				HostZoneList: []types.HostZone{
-					{
-						Id: 0,
-					},
-					{
-						Id: 0,
-					},
-				},
-			},
-			valid: false,
-		},
-		{
-			desc: "invalid hostZone count",
-			genState: &types.GenesisState{
-				HostZoneList: []types.HostZone{
 					{
 						Id: 1,
 					},
 				},
 				HostZoneCount: 0,
-			},
-			valid: false,
-		},
-		{
-			desc: "duplicated depositRecord",
-			genState: &types.GenesisState{
-				DepositRecordList: []types.DepositRecord{
-					{
-						Id: 0,
-					},
-					{
-						Id: 0,
-					},
-				},
-			},
-			valid: false,
-		},
-		{
-			desc: "invalid depositRecord count",
-			genState: &types.GenesisState{
-				DepositRecordList: []types.DepositRecord{
-					{
-						Id: 1,
-					},
-				},
-				DepositRecordCount: 0,
-			},
-			valid: false,
-		},
-		{
-			desc: "duplicated epochTracker",
-			genState: &types.GenesisState{
-				EpochTrackerList: []types.EpochTracker{
-					{
-						Index: "0",
-					},
-					{
-						Index: "0",
-					},
-				},
 			},
 			valid: false,
 		},

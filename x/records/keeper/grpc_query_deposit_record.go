@@ -3,7 +3,7 @@ package keeper
 import (
 	"context"
 
-	"github.com/Stride-Labs/stride/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/x/records/types"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -25,7 +25,7 @@ func (k Keeper) DepositRecordAll(c context.Context, req *types.QueryAllDepositRe
 
 	pageRes, err := query.Paginate(depositRecordStore, req.Pagination, func(key []byte, value []byte) error {
 		var depositRecord types.DepositRecord
-		if err := k.cdc.Unmarshal(value, &depositRecord); err != nil {
+		if err := k.Cdc.Unmarshal(value, &depositRecord); err != nil {
 			return err
 		}
 

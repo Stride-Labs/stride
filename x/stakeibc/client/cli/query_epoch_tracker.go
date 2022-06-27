@@ -12,62 +12,63 @@ import (
 func CmdListEpochTracker() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "list-epoch-tracker",
-		Short: "list all epochTracker",
+		Short: "list all epoch-tracker",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			clientCtx := client.GetClientContextFromCmd(cmd)
+            clientCtx := client.GetClientContextFromCmd(cmd)
 
-			pageReq, err := client.ReadPageRequest(cmd.Flags())
-			if err != nil {
-				return err
-			}
+            pageReq, err := client.ReadPageRequest(cmd.Flags())
+            if err != nil {
+                return err
+            }
 
-			queryClient := types.NewQueryClient(clientCtx)
+            queryClient := types.NewQueryClient(clientCtx)
 
-			params := &types.QueryAllEpochTrackerRequest{
-				Pagination: pageReq,
-			}
+            params := &types.QueryAllEpochTrackerRequest{
+                Pagination: pageReq,
+            }
 
-			res, err := queryClient.EpochTrackerAll(context.Background(), params)
-			if err != nil {
-				return err
-			}
+            res, err := queryClient.EpochTrackerAll(context.Background(), params)
+            if err != nil {
+                return err
+            }
 
-			return clientCtx.PrintProto(res)
+            return clientCtx.PrintProto(res)
 		},
 	}
 
 	flags.AddPaginationFlagsToCmd(cmd, cmd.Use)
 	flags.AddQueryFlagsToCmd(cmd)
 
-	return cmd
+    return cmd
 }
 
 func CmdShowEpochTracker() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "show-epoch-tracker [index]",
-		Short: "shows a epochTracker",
+		Use:   "show-epoch-tracker [epoch-identifier]",
+		Short: "shows a epoch-tracker",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
-			clientCtx := client.GetClientContextFromCmd(cmd)
+            clientCtx := client.GetClientContextFromCmd(cmd)
 
-			queryClient := types.NewQueryClient(clientCtx)
+            queryClient := types.NewQueryClient(clientCtx)
 
-			argIndex := args[0]
+             argEpochIdentifier := args[0]
+            
+            params := &types.QueryGetEpochTrackerRequest{
+                EpochIdentifier: argEpochIdentifier,
+                
+            }
 
-			params := &types.QueryGetEpochTrackerRequest{
-				Index: argIndex,
-			}
+            res, err := queryClient.EpochTracker(context.Background(), params)
+            if err != nil {
+                return err
+            }
 
-			res, err := queryClient.EpochTracker(context.Background(), params)
-			if err != nil {
-				return err
-			}
-
-			return clientCtx.PrintProto(res)
+            return clientCtx.PrintProto(res)
 		},
 	}
 
 	flags.AddQueryFlagsToCmd(cmd)
 
-	return cmd
+    return cmd
 }

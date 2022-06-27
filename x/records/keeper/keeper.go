@@ -16,7 +16,7 @@ import (
 type (
 	Keeper struct {
 		// *cosmosibckeeper.Keeper
-		cdc          codec.BinaryCodec
+		Cdc          codec.BinaryCodec
 		storeKey     sdk.StoreKey
 		memKey       sdk.StoreKey
 		paramstore   paramtypes.Subspace
@@ -25,7 +25,7 @@ type (
 )
 
 func NewKeeper(
-	cdc codec.BinaryCodec,
+	Cdc codec.BinaryCodec,
 	storeKey,
 	memKey sdk.StoreKey,
 	ps paramtypes.Subspace,
@@ -38,7 +38,7 @@ func NewKeeper(
 	}
 
 	return &Keeper{
-		cdc:          cdc,
+		Cdc:          Cdc,
 		storeKey:     storeKey,
 		memKey:       memKey,
 		paramstore:   ps,
