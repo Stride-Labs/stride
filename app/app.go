@@ -426,7 +426,6 @@ func NewStrideApp(
 		app.GetSubspace(recordsmoduletypes.ModuleName),
 		scopedRecordsKeeper,
 	)
-
 	recordsModule := recordsmodule.NewAppModule(appCodec, app.RecordsKeeper, app.AccountKeeper, app.BankKeeper)
 
 	// create IBC stacks by combining middleware with base application
@@ -442,21 +441,6 @@ func NewStrideApp(
 
 	app.InterchainqueryKeeper = interchainquerykeeper.NewKeeper(appCodec, keys[interchainquerytypes.StoreKey], app.IBCKeeper)
 	interchainQueryModule := interchainquery.NewAppModule(appCodec, app.InterchainqueryKeeper)
-
-	scopedRecordsKeeper := app.CapabilityKeeper.ScopeToModule(recordsmoduletypes.ModuleName)
-	app.ScopedRecordsKeeper = scopedRecordsKeeper
-	app.RecordsKeeper = *recordsmodulekeeper.NewKeeper(
-		appCodec,
-		keys[recordsmoduletypes.StoreKey],
-		keys[recordsmoduletypes.MemStoreKey],
-		app.GetSubspace(recordsmoduletypes.ModuleName),
-		scopedRecordsKeeper,
-	)
-	recordsModule := recordsmodule.NewAppModule(appCodec, app.RecordsKeeper, app.AccountKeeper, app.BankKeeper)
-
-	// create IBC stacks by combining middleware with base application
-	// recordsStack contains records -> transfer
-	recordsStack := recordsmodule.NewIBCModule(app.RecordsKeeper, transferIBCModule)
 
 	scopedStakeibcKeeper := app.CapabilityKeeper.ScopeToModule(stakeibcmoduletypes.ModuleName)
 	app.ScopedStakeibcKeeper = scopedStakeibcKeeper
@@ -479,6 +463,8 @@ func NewStrideApp(
 
 	stakeibcModule := stakeibcmodule.NewAppModule(appCodec, app.StakeibcKeeper, app.AccountKeeper, app.BankKeeper)
 	stakeibcIBCModule := stakeibcmodule.NewIBCModule(app.StakeibcKeeper)
+
+	app.InterchainqueryKeeper.SetCallbackHandler(stakeibcmoduletypes.ModuleName, app.StakeibcKeeper.CallbackHandler())
 
 	epochsKeeper := epochsmodulekeeper.NewKeeper(appCodec, keys[epochsmoduletypes.StoreKey])
 	app.EpochsKeeper = *epochsKeeper.SetHooks(

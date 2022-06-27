@@ -72,7 +72,13 @@ func (k Keeper) RegisterHostZone(goCtx context.Context, msg *types.MsgRegisterHo
 		return nil, sdkerrors.Wrapf(recordstypes.ErrEpochUnbondingRecordNotFound, errMsg)
 	}
 	hostZoneUnbondings := epochUnbondingRecord.GetHostZoneUnbondings()
-	hostZoneUnbondings[zone.ChainId] = &recordstypes.EpochUnbondingRecordHostZoneUnbonding{
+	k.Logger(ctx).Info(fmt.Sprintf("epoch unbonding BEAR %s", epochUnbondingRecord.String()))
+	k.Logger(ctx).Info(fmt.Sprintf("hostZoneUnbondings BEAR %v", hostZoneUnbondings))
+	if len(hostZoneUnbondings) == 0 {
+		hostZoneUnbondings = make(map[string]*recordstypes.HostZoneUnbonding)
+	}
+	k.Logger(ctx).Info(fmt.Sprintf("hostZoneUnbondings BEAR after check %v", hostZoneUnbondings))
+	hostZoneUnbondings[zone.ChainId] = &recordstypes.HostZoneUnbonding{
 		Amount:        0,
 		Denom:         zone.HostDenom,
 		HostZoneId:    zone.ChainId,
