@@ -14,7 +14,7 @@ message Params {
   uint64 rewards_interval = 1;
   uint64 delegate_interval = 6;
   uint64 deposit_interval = 2;
-  uint64 exchange_rate_interval = 3;
+  uint64 redemption_rate_interval = 3;
 
   uint64 stride_commission = 4;
   // zone_com_address stores which addresses to 

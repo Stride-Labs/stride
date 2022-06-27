@@ -40,7 +40,7 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochIdentifier string, epochN
 		}
 		epochTracker := types.EpochTracker{
 			EpochIdentifier: epochIdentifier,
-			EpochNumber: uint64(epochNumber),
+			EpochNumber:     uint64(epochNumber),
 		}
 		// deposit records *must* exist for this epoch
 		k.SetEpochTracker(ctx, epochTracker)
@@ -52,12 +52,20 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochIdentifier string, epochN
 		k.SetWithdrawalAddress(ctx)
 
 		depositRecords := k.RecordsKeeper.GetAllDepositRecord(ctx)
+
+		// Update the redemption rate
+		redemptionRateInterval := int64(k.GetParam(ctx, types.KeyDepositInterval))
+		if epochNumber%redemptionRateInterval == 0 {
+			k.Logger(ctx).Info("Triggeting update redemption rate")
+			k.UpdateRedemptionRates(ctx, depositRecords)
+		}
+
 		depositInterval := int64(k.GetParam(ctx, types.KeyDepositInterval))
 		if epochNumber%depositInterval == 0 {
 			// process previous deposit records
 			k.TransferExistingDepositsToHostZones(ctx, epochNumber, depositRecords)
 		}
-		
+
 		// NOTE: the stake ICA timeout *must* be l.t. the staking epoch length, otherwise
 		// we could send a stake ICA call (which could succeed), without deleting the record.
 		// This could happen if the ack doesn't return by the next epoch. We would then send
@@ -114,14 +122,14 @@ func (h Hooks) AfterEpochEnd(ctx sdk.Context, epochIdentifier string, epochNumbe
 // -------------------- helper functions --------------------
 func (k Keeper) CreateDepositRecordsForEpoch(ctx sdk.Context, epochNumber int64) {
 	// Create one new deposit record / host zone for the next epoch
-	createDepositRecords := func(ctx sdk.Context, index int64, zoneInfo types.HostZone) (error) {
+	createDepositRecords := func(ctx sdk.Context, index int64, zoneInfo types.HostZone) error {
 		// create a deposit record / host zone
 		depositRecord := recordstypes.DepositRecord{
-			Id:         0,
-			Amount:     0,
-			Denom:      zoneInfo.HostDenom,
-			HostZoneId: zoneInfo.ChainId,
-			Status:    recordstypes.DepositRecord_TRANSFER,
+			Id:          0,
+			Amount:      0,
+			Denom:       zoneInfo.HostDenom,
+			HostZoneId:  zoneInfo.ChainId,
+			Status:      recordstypes.DepositRecord_TRANSFER,
 			EpochNumber: uint64(epochNumber),
 		}
 		k.RecordsKeeper.AppendDepositRecord(ctx, depositRecord)
@@ -132,7 +140,7 @@ func (k Keeper) CreateDepositRecordsForEpoch(ctx sdk.Context, epochNumber int64)
 }
 
 func (k Keeper) SetWithdrawalAddress(ctx sdk.Context) {
-	setWithdrawalAddresses := func(ctx sdk.Context, index int64, zoneInfo types.HostZone) (error) {
+	setWithdrawalAddresses := func(ctx sdk.Context, index int64, zoneInfo types.HostZone) error {
 		k.Logger(ctx).Info(fmt.Sprintf("\tsetting withdrawal addresses on host zones"))
 		err := k.SetWithdrawalAddressOnHost(ctx, zoneInfo)
 		if err != nil {
@@ -237,4 +245,67 @@ func (k Keeper) TransferExistingDepositsToHostZones(ctx sdk.Context, epochNumber
 	for _, recordId := range emptyRecords {
 		k.RecordsKeeper.RemoveDepositRecord(ctx, recordId)
 	}
+}
+
+func (k Keeper) UpdateRedemptionRates(ctx sdk.Context, depositRecords []recordstypes.DepositRecord) {
+	// Calc redemptionRate for each host zone
+	UpdateRedemptionRate := func(ctx sdk.Context, index int64, zoneInfo types.HostZone) error {
+
+		undelegatedBalance, error := k.GetUndelegatedBalance(ctx, zoneInfo, depositRecords)
+		if error != nil {
+			return error
+		}
+		stakedBalance := zoneInfo.StakedBal
+		modeuleAcctBalance, error := k.GetModuleAccountBalance(ctx, zoneInfo, depositRecords)
+		if error != nil {
+			return error
+		}
+		stSupply := k.bankKeeper.GetSupply(ctx, types.StAssetDenomFromHostZoneDenom(zoneInfo.HostDenom)).Amount.Int64()
+		if stSupply == 0 {
+			return fmt.Errorf("stSupply is 0")
+		}
+
+		// calc redemptionRate = (UB+SB+MA)/stSupply
+		redemptionRate := (sdk.NewDec(undelegatedBalance).Add(sdk.NewDec(stakedBalance)).Add(sdk.NewDec(modeuleAcctBalance))).Quo(sdk.NewDec(stSupply))
+		k.Logger(ctx).Info(fmt.Sprintf("[REDEMPTION-RATE] New Rate is %d (vs prev %d)", redemptionRate, zoneInfo.LastRedemptionRate))
+
+		// set redemptionRate attribute for the hostZone (and update last RedemptionRate)
+		zoneInfo.LastRedemptionRate = zoneInfo.RedemptionRate
+		zoneInfo.RedemptionRate = redemptionRate
+		k.SetHostZone(ctx, zoneInfo)
+
+		return nil
+	}
+	// Iterate the zones and apply icaReinvest
+	k.IterateHostZones(ctx, UpdateRedemptionRate)
+}
+
+func (k Keeper) GetUndelegatedBalance(ctx sdk.Context, hostZone types.HostZone, depositRecords []recordstypes.DepositRecord) (int64, error) {
+	// filter to only the deposit records for the host zone with status STAKE
+	UndelegatedDepositRecords := utils.FilterDepositRecords(depositRecords, func(record recordstypes.DepositRecord) (condition bool) {
+		return record.Status == recordstypes.DepositRecord_STAKE && record.HostZoneId == hostZone.ChainId
+	})
+
+	// sum the amounts of the deposit records
+	var totalAmount int64
+	for _, depositRecord := range UndelegatedDepositRecords {
+		totalAmount += depositRecord.Amount
+	}
+
+	return totalAmount, nil
+}
+
+func (k Keeper) GetModuleAccountBalance(ctx sdk.Context, hostZone types.HostZone, depositRecords []recordstypes.DepositRecord) (int64, error) {
+	// filter to only the deposit records for the host zone with status DELEGATION
+	ModuleAccountRecords := utils.FilterDepositRecords(depositRecords, func(record recordstypes.DepositRecord) (condition bool) {
+		return record.Status == recordstypes.DepositRecord_TRANSFER && record.HostZoneId == hostZone.ChainId
+	})
+
+	// sum the amounts of the deposit records
+	var totalAmount int64
+	for _, depositRecord := range ModuleAccountRecords {
+		totalAmount += depositRecord.Amount
+	}
+
+	return totalAmount, nil
 }
