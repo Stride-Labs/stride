@@ -90,7 +90,9 @@ func (k msgServer) MintStAsset(ctx sdk.Context, sender sdk.AccAddress, amount in
 
 	// TODO(TEST-7): Add an exchange rate here! What object should we store the exchange rate on?
 	// How can we ensure that the exchange rate is not manipulated?
-	coinString := strconv.Itoa(int(amount)) + stAssetDenom
+	hz, _ := k.GetHostZoneFromHostDenom(ctx, denom)
+	amountToMint := (sdk.NewDec(amount).Quo(hz.RedemptionRate)).TruncateInt()
+	coinString := amountToMint.String() + stAssetDenom
 	stCoins, err := sdk.ParseCoinsNormalized(coinString)
 	if err != nil {
 		k.Logger(ctx).Info("Failed to parse coins")

@@ -37,7 +37,7 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochIdentifier string, epochN
 				delegateAddress := delegateAccount.Address
 				// TODO(TEST-89): Set NewHeight relative to the most recent known gaia height (based on the LC)
 				// TODO(TEST-90): why do we have two gaia LCs?
-				timeoutHeight := clienttypes.NewHeight(0, 1000000)
+				timeoutHeight := clienttypes.NewHeight(0, 1000000000000)
 				transferCoin := sdk.NewCoin(hostZone.GetIBCDenom(), sdk.NewInt(int64(depositRecord.Amount)))
 				goCtx := sdk.WrapSDKContext(ctx)
 
@@ -54,39 +54,20 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochIdentifier string, epochN
 				}
 			}
 		}
+
+		// DELEGATE FROM DELEGATION ACCOUNT
 		delegateInterval := int64(k.GetParam(ctx, types.KeyDelegateInterval))
 		if epochNumber%delegateInterval == 0 {
 			k.ProcessDelegationStaking(ctx)
 		}
-		// process withdrawals
-		// TODO(TEST-88): restructure this to be more efficient, we should only have to loop
-		// over host zones once
-		reinvestInterval := int64(k.GetParam(ctx, types.KeyReinvestInterval))
-		if epochNumber%reinvestInterval == 0 {
-			icaReinvest := func(index int64, zoneInfo types.HostZone) (stop bool) {
-				// Verify the delegation ICA is registered
-				delegationIca := zoneInfo.GetDelegationAccount()
-				if delegationIca == nil || delegationIca.Address == "" {
-					k.Logger(ctx).Error("Zone %s is missing a delegation address!", zoneInfo.ChainId)
-					return true
-				}
-				withdrawIca := zoneInfo.GetWithdrawalAccount()
-				if withdrawIca == nil || withdrawIca.Address == "" {
-					k.Logger(ctx).Error("Zone %s is missing a withdrawal address!", zoneInfo.ChainId)
-					return true
-				}
-				// err := k.ReinvestRewards(ctx, zoneInfo)
-				// if err != nil {
-				// 	k.Logger(ctx).Error("Did not withdraw rewards on %s", zoneInfo.ChainId)
-				// 	return true
-				// } else {
-				// 	k.Logger(ctx).Info(fmt.Sprintf("Successfully withdrew rewards on %s", zoneInfo.ChainId))
-				// }
-				return false
-			}
 
-			// Iterate the zones and apply icaReinvest
-			k.IterateHostZones(ctx, icaReinvest)
+		reinvestInterval := int64(k.GetParam(ctx, types.KeyReinvestInterval))
+		if epochNumber%reinvestInterval == 0 { // allow a few blocks from UpdateUndelegatedBal to avoid conflicts
+			for _, hz := range k.GetAllHostZone(ctx) {
+				if (&hz).WithdrawalAccount != nil { // only process host zones once withdrawal accounts are registered
+					k.UpdateWithdrawalBalance(ctx, hz)
+				}
+			}
 		}
 	}
 }

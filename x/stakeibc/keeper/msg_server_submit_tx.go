@@ -2,12 +2,12 @@ package keeper
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/Stride-Labs/stride/x/stakeibc/types"
+	"github.com/cosmos/cosmos-sdk/types/bech32"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
-	icqkeeper "github.com/Stride-Labs/stride/x/interchainquery/keeper"
-	icqtypes "github.com/Stride-Labs/stride/x/interchainquery/types"
 	bankTypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	stakingTypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
@@ -94,73 +94,32 @@ func (k Keeper) DelegateOnHost(ctx sdk.Context, hostZone types.HostZone, amt sdk
 	return nil
 }
 
-func (k Keeper) ReinvestRewards(ctx sdk.Context, hostZone types.HostZone) error {
-	_ = ctx
-	// the relevant ICA is the delegate account
-	owner := types.FormatICAAccountOwner(hostZone.ChainId, types.ICAAccountType_DELEGATION)
-	portID, err := icatypes.NewControllerPortID(owner)
-	if err != nil {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "%s has no associated portId", owner)
+// Simple balance query helper using new ICQ module
+func (k Keeper) UpdateWithdrawalBalance(ctx sdk.Context, zoneInfo types.HostZone) {
+	k.Logger(ctx).Info(fmt.Sprintf("\tUpdating withdrawal balances on %s", zoneInfo.ChainId))
+
+	withdrawalIca := zoneInfo.GetWithdrawalAccount()
+	if withdrawalIca == nil || withdrawalIca.Address == "" {
+		k.Logger(ctx).Error("Zone %s is missing a delegation address!", zoneInfo.ChainId)
 	}
-	connectionId, err := k.GetConnectionId(ctx, portID)
-	if err != nil {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidChainID, "%s has no associated connection", portID)
-	}
+	k.Logger(ctx).Info(fmt.Sprintf("\tQuerying withdrawalBalances for %s at %d height", zoneInfo.ChainId))
 
-	// Fetch the relevant ICA
-	delegationAccount := hostZone.GetDelegationAccount()
-	withdrawAccount := hostZone.GetWithdrawalAccount()
-
-	var cb icqkeeper.Callback = func(icqk icqkeeper.Keeper, ctx sdk.Context, args []byte, query icqtypes.Query) error {
-		var msgs []sdk.Msg
-		queryRes := bankTypes.QueryAllBalancesResponse{}
-		err := k.cdc.Unmarshal(args, &queryRes)
-		if err != nil {
-			k.Logger(ctx).Error("Unable to unmarshal balances info for zone", "err", err)
-			return err
-		}
-		// Get denom dynamically
-		balance := queryRes.Balances.AmountOf(hostZone.HostDenom)
-		balanceDec := sdk.NewDec(balance.Int64())
-		commission := sdk.NewDec(int64(k.GetParam(ctx, types.KeyStrideCommission))).Quo(sdk.NewDec(100))
-		// Dec type has 18 decimals and the same precision as Coin types
-		strideAmount := balanceDec.Mul(commission)
-		reinvestAmount := balanceDec.Sub(strideAmount)
-		strideCoin := sdk.NewCoin(hostZone.HostDenom, strideAmount.TruncateInt())
-		reinvestCoin := sdk.NewCoin(hostZone.HostDenom, reinvestAmount.TruncateInt())
-
-		// transfer balances from the withdraw address to the delegation account
-		sendBalanceToDelegationAccount := &bankTypes.MsgSend{FromAddress: withdrawAccount.GetAddress(), ToAddress: delegationAccount.GetAddress(), Amount: sdk.NewCoins(reinvestCoin)}
-		msgs = append(msgs, sendBalanceToDelegationAccount)
-		// TODO: [TEST-115] get the stride commission addresses (potentially split this up into multiple messages)
-		strideCommmissionAccount := "cosmos12vfkpj7lpqg0n4j68rr5kyffc6wu55dzqewda4"
-		sendBalanceToStrideAccount := &bankTypes.MsgSend{FromAddress: withdrawAccount.GetAddress(), ToAddress: strideCommmissionAccount, Amount: sdk.NewCoins(strideCoin)}
-		msgs = append(msgs, sendBalanceToStrideAccount)
-
-		// Send the transaction through SubmitTx
-		// TODO(TEST-5): Add a record with STATUS PENDING
-		// TODO(TEST-5): In the ack, update the record to STATUS STAKE
-		err = k.SubmitTxs(ctx, connectionId, msgs, *withdrawAccount)
-		if err != nil {
-			return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "Failed to SubmitTxs for %s, %s, %s", connectionId, hostZone.ChainId, msgs)
-		}
-
-		ctx.EventManager().EmitEvents(sdk.Events{
-			sdk.NewEvent(
-				sdk.EventTypeMessage,
-				sdk.NewAttribute("WithdrawalAccountBalance", balance.String()),
-				sdk.NewAttribute("ReinvestedPortion", reinvestCoin.String()),
-				sdk.NewAttribute("StrideCommission", strideCoin.String()),
-			),
-		})
-
-		return nil
-	}
-	// 1. query withdraw account balances using icq
-	// 2. transfer withdraw account balances to the delegation account in the cb
-	// 3. TODO: in the ICA ack upon transfer, reinvest those rewards and withdraw rewards
-	k.InterchainQueryKeeper.QueryBalances(ctx, hostZone, cb, withdrawAccount.Address)
-	return nil
+	_, addr, _ := bech32.DecodeAndConvert(withdrawalIca.GetAddress())
+	data := bankTypes.CreateAccountBalancesPrefix(addr)
+	key := "store/bank/key"
+	k.Logger(ctx).Info("Querying for value", "key", key, "denom", zoneInfo.HostDenom)
+	k.InterchainQueryKeeper.MakeRequest(
+		ctx,
+		zoneInfo.ConnectionId,
+		zoneInfo.ChainId,
+		key,
+		append(data, []byte(zoneInfo.HostDenom)...),
+		sdk.NewInt(-1),
+		types.ModuleName,
+		"withdrawalbalance",
+		0, //ttl
+		0, //height
+	)
 }
 
 // SubmitTxs submits an ICA transaction containing multiple messages
@@ -205,4 +164,25 @@ func (k Keeper) SubmitTxs(ctx sdk.Context, connectionId string, msgs []sdk.Msg, 
 	}
 
 	return nil
+}
+
+func (k Keeper) GetLightClientHeightSafely(ctx sdk.Context, connectionID string) (int64, bool) {
+
+	var latestHeightHostZone int64 // defaults to 0
+	// get light client's latest height
+	conn, found := k.IBCKeeper.ConnectionKeeper.GetConnection(ctx, connectionID)
+	if !found {
+		k.Logger(ctx).Info(fmt.Sprintf("invalid connection id, \"%s\" not found", connectionID))
+	}
+	//TODO(TEST-112) make sure to update host LCs here!
+	clientState, found := k.IBCKeeper.ClientKeeper.GetClientState(ctx, conn.ClientId)
+	if !found {
+		k.Logger(ctx).Info(fmt.Sprintf("client id \"%s\" not found for connection \"%s\"", conn.ClientId, connectionID))
+		return 0, false
+	} else {
+		// TODO(TEST-119) get stAsset supply at SAME time as hostZone height
+		// TODO(TEST-112) check on safety of castng uint64 to int64
+		latestHeightHostZone = int64(clientState.GetLatestHeight().GetRevisionHeight())
+		return latestHeightHostZone, true
+	}
 }

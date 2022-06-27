@@ -11,9 +11,7 @@ message Query {
   string connection_id = 2;
   string chain_id = 3;
   string query_type = 4;
-  bytes request = 8;
-  // TODO(TEST-66) add proofops
-  map<string, string> query_parameters = 5;
+  bytes request = 5;
   string period = 6 [
     (cosmos_proto.scalar) = "cosmos.Int",
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
@@ -24,6 +22,9 @@ message Query {
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
     (gogoproto.nullable) = false
   ];
+  string callback_id = 8;
+  uint64 ttl = 9;
+  int64 height = 10;
 }
 
 message DataPoint {
@@ -44,8 +45,4 @@ message DataPoint {
 // GenesisState defines the epochs module's genesis state.
 message GenesisState {
   repeated Query queries = 1 [ (gogoproto.nullable) = false ];
-}
-
-// Query defines the gRPC querier service.
-service QueryService {
 }
