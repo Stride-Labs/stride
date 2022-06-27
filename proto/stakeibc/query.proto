@@ -10,7 +10,7 @@ import "stakeibc/delegation.proto";
 import "stakeibc/min_validator_requirements.proto";
 import "stakeibc/ica_account.proto";
 import "stakeibc/host_zone.proto";
-import "stakeibc/deposit_record.proto";
+import "stakeibc/epoch_tracker.proto";
 // this line is used by starport scaffolding # 1
 
 option go_package = "github.com/Stride-Labs/stride/x/stakeibc/types";
@@ -47,22 +47,22 @@ service Query {
 		option (google.api.http).get = "/Stride-Labs/stride/stakeibc/host_zone";
 	}
 
-// Queries a DepositRecord by id.
-	rpc DepositRecord(QueryGetDepositRecordRequest) returns (QueryGetDepositRecordResponse) {
-		option (google.api.http).get = "/Stride-Labs/stride/stakeibc/deposit_record/{id}";
-	}
-
-	// Queries a list of DepositRecord items.
-	rpc DepositRecordAll(QueryAllDepositRecordRequest) returns (QueryAllDepositRecordResponse) {
-		option (google.api.http).get = "/Stride-Labs/stride/stakeibc/deposit_record";
-	}
-
 // Queries a list of ModuleAddress items.
 	rpc ModuleAddress(QueryModuleAddressRequest) returns (QueryModuleAddressResponse) {
 		option (google.api.http).get = "/Stride-Labs/stride/stakeibc/module_address/{name}";
 	}
 	// QueryInterchainAccountFromAddress returns the interchain account for given owner address on a given connection pair
 	rpc InterchainAccountFromAddress(QueryInterchainAccountFromAddressRequest) returns (QueryInterchainAccountFromAddressResponse);
+
+// Queries a EpochTracker by index.
+	rpc EpochTracker(QueryGetEpochTrackerRequest) returns (QueryGetEpochTrackerResponse) {
+		option (google.api.http).get = "/Stride-Labs/stride/stakeibc/epoch_tracker/{epochIdentifier}";
+	}
+
+	// Queries a list of EpochTracker items.
+	rpc EpochTrackerAll(QueryAllEpochTrackerRequest) returns (QueryAllEpochTrackerResponse) {
+		option (google.api.http).get = "/Stride-Labs/stride/stakeibc/epoch_tracker";
+	}
 
 // this line is used by starport scaffolding # 2
 }
@@ -124,29 +124,30 @@ message QueryAllHostZoneResponse {
 	cosmos.base.query.v1beta1.PageResponse pagination = 2;
 }
 
-message QueryGetDepositRecordRequest {
-	uint64 id = 1;
-}
-
-message QueryGetDepositRecordResponse {
-	DepositRecord DepositRecord = 1 [(gogoproto.nullable) = false];
-}
-
-message QueryAllDepositRecordRequest {
-	cosmos.base.query.v1beta1.PageRequest pagination = 1;
-}
-
-message QueryAllDepositRecordResponse {
-	repeated DepositRecord DepositRecord = 1 [(gogoproto.nullable) = false];
-	cosmos.base.query.v1beta1.PageResponse pagination = 2;
-}
-
 message QueryModuleAddressRequest {
   string name = 1;
 }
 
 message QueryModuleAddressResponse {
   string addr = 1;
+}
+
+message QueryGetEpochTrackerRequest {
+	  string epochIdentifier = 1;
+
+}
+
+message QueryGetEpochTrackerResponse {
+	EpochTracker epochTracker = 1 [(gogoproto.nullable) = false];
+}
+
+message QueryAllEpochTrackerRequest {
+	cosmos.base.query.v1beta1.PageRequest pagination = 1;
+}
+
+message QueryAllEpochTrackerResponse {
+	repeated EpochTracker epochTracker = 1 [(gogoproto.nullable) = false];
+	cosmos.base.query.v1beta1.PageResponse pagination = 2;
 }
 
 // this line is used by starport scaffolding # 3

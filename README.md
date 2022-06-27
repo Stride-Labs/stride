@@ -105,6 +105,8 @@ Or, if you just want to re-serve, run `make init build=` to
 Install the required git submodule dependencies (gaia, hermes, icq)
 ```
 git submodule update --init
+make local-install
+make local-init build=sghi
 ```
 Install the required packages for each module
 ```
@@ -115,18 +117,18 @@ make stride-local-install
 make gaia-local-install
 make icq-local-install
 ```
-Build executables and initialize the state with `make local-init`
+Build executables, initialize state, and start the network with `make local-init`
 * You can optionally pass build arguments to specify which binary to rebuild
 1. `s` This will re-build the Stride binary (default)
 2. `g` This will re-build the Gaia binary
 3. `h` This will re-build the Hermes binary
 4. `i` This will re-build the ICQ binary
 * You can optionally pass `cache=true` to restore the state from a backup instead of re-intializing it. 
-* Example: `make local-init build=si`
-    * This will rebuild the Stride and Gaia binarys
-    
-Start the local network with `make start`
-* You can optionally pass `cache=true` to start the chain from the last backed up state.
+* Example: `make local-init build=si`, this will:
+    * Rebuild the Stride and Gaia binarys
+    * Start 1 Stride and 1 Gaia node in the background
+    * Start Hermes and ICQ Relayers
+Run `make stop` to bring down the chain
 ## Testing
 
 To run the full test suite, run `make init`, then `sh scripts/tests/run_all_tests.sh`.
