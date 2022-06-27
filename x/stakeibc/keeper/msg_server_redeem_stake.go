@@ -63,7 +63,7 @@ func (k Keeper) RedeemStake(goCtx context.Context, msg *types.MsgRedeemStake) (*
 	_ = validator_address
 
 	// UNBONDING RECORD KEEPING
-	recordsKeeper := k.recordsKeeper
+	recordsKeeper := k.RecordsKeeper
 	// TODO I thought we had parameterized stride_epoch? if so, change this to parameter
 	// first construct a user redemption record
 	epochInfo, found := k.epochsKeeper.GetEpochInfo(ctx, "day")

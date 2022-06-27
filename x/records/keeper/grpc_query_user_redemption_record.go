@@ -25,7 +25,7 @@ func (k Keeper) UserRedemptionRecordAll(c context.Context, req *types.QueryAllUs
 
 	pageRes, err := query.Paginate(userRedemptionRecordStore, req.Pagination, func(key []byte, value []byte) error {
 		var userRedemptionRecord types.UserRedemptionRecord
-		if err := k.cdc.Unmarshal(value, &userRedemptionRecord); err != nil {
+		if err := k.Cdc.Unmarshal(value, &userRedemptionRecord); err != nil {
 			return err
 		}
 

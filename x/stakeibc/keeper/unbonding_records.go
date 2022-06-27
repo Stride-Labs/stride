@@ -28,7 +28,7 @@ func (k Keeper) CreateEpochUnbondings(ctx sdk.Context, epochNumber int64) bool {
 		EpochNumber:        epochNumber,
 		HostZoneUnbondings: hostZoneUnbondings,
 	}
-	k.recordsKeeper.AppendEpochUnbondingRecord(ctx, epochUnbondingRecord)
+	k.RecordsKeeper.AppendEpochUnbondingRecord(ctx, epochUnbondingRecord)
 	return true
 }
 
@@ -38,7 +38,7 @@ func (k Keeper) SendHostZoneUnbondings(ctx sdk.Context, hostZone types.HostZone)
 	totalAmtToUnbond := uint64(0)
 	var msgs []sdk.Msg
 	var allHostZoneUnbondings *[]recordstypes.EpochUnbondingRecordHostZoneUnbonding
-	for _, epochUnbonding := range k.recordsKeeper.GetAllEpochUnbondingRecord(ctx) {
+	for _, epochUnbonding := range k.RecordsKeeper.GetAllEpochUnbondingRecord(ctx) {
 		hostZoneRecord, found := epochUnbonding.HostZoneUnbondings[hostZone.ChainId]
 		if !found {
 			k.Logger(ctx).Error(fmt.Sprintf("Host zone unbonding record not found for hostZoneId %s in epoch %d", hostZone.ChainId, epochUnbonding.EpochNumber))
@@ -98,10 +98,10 @@ func (k Keeper) InitiateAllHostZoneUnbondings(ctx sdk.Context, dayNumber uint64)
 func (k Keeper) CleanupEpochUnbondingRecords(ctx sdk.Context) bool {
 	// this function goes through each EpochUnbondingRecord
 	// if any of them don't have any hostZones, then it deletes the record
-	for i, epochUnbondingRecord := range k.recordsKeeper.GetAllEpochUnbondingRecord(ctx) {
+	for i, epochUnbondingRecord := range k.RecordsKeeper.GetAllEpochUnbondingRecord(ctx) {
 		k.Logger(ctx).Info(fmt.Sprintf("Processing epoch unbondings for host zone %d", i))
 		if len(epochUnbondingRecord.HostZoneUnbondings) == 0 {
-			k.recordsKeeper.RemoveEpochUnbondingRecord(ctx, epochUnbondingRecord.GetId())
+			k.RecordsKeeper.RemoveEpochUnbondingRecord(ctx, epochUnbondingRecord.GetId())
 		}
 	}
 	return true
