@@ -65,7 +65,7 @@ func (k Keeper) RegisterHostZone(goCtx context.Context, msg *types.MsgRegisterHo
 
 	// add this host zone to unbonding hostZones, otherwise users won't be able to unbond
 	// for this host zone until the following day
-	epochUnbondingRecord, found := k.recordsKeeper.GetLatestEpochUnbondingRecord(ctx)
+	epochUnbondingRecord, found := k.RecordsKeeper.GetLatestEpochUnbondingRecord(ctx)
 	if !found {
 		errMsg := "unable to add host zone to latest epoch unbonding record"
 		k.Logger(ctx).Error(errMsg)

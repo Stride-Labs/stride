@@ -37,7 +37,7 @@ func (k msgServer) ClaimUndelegatedTokens(goCtx context.Context, msg *types.MsgC
 	// go through the desired number of records and claim them
 	numRecordsToClaim := min(int(msg.MaxClaims), len(hostZone.ClaimableRecordIds))
 	for i := 0; i < numRecordsToClaim; i++ {
-		record, found := k.recordsKeeper.GetUserRedemptionRecord(ctx, hostZone.ClaimableRecordIds[i])
+		record, found := k.RecordsKeeper.GetUserRedemptionRecord(ctx, hostZone.ClaimableRecordIds[i])
 		if !found {
 			errMsg := fmt.Sprintf("User redemption record %s not found on host zone %s", hostZone.ClaimableRecordIds[i], hostZone.ChainId)
 			k.Logger(ctx).Error(errMsg)
@@ -56,7 +56,7 @@ func (k msgServer) ClaimUndelegatedTokens(goCtx context.Context, msg *types.MsgC
 	}
 	// now go through and delete these records
 	for i := 0; i < numRecordsToClaim; i++ {
-		k.recordsKeeper.RemoveUserRedemptionRecord(ctx, hostZone.ClaimableRecordIds[i])
+		k.RecordsKeeper.RemoveUserRedemptionRecord(ctx, hostZone.ClaimableRecordIds[i])
 	}
 	// finally clean up these records from claimable records
 	hostZone.ClaimableRecordIds = hostZone.ClaimableRecordIds[numRecordsToClaim:]
