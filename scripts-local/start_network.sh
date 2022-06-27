@@ -46,6 +46,8 @@ nohup $GAIA_CMD start | sed -r -u "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2})?)?[mGK]//g" 
 sleep 5
 echo "Done"
 
+CSLEEP 5
+
 if [ "$CACHE" != "true" ]; then
     # If cache mode is disabled, create the hermes connection and channels, 
     # Logs are piped to the hermes log file and the script is halted until:
@@ -70,6 +72,7 @@ fi
 
 # Start hermes in the background and pause until the log message shows that it is up and running
 printf '%s' "Starting Hermes...            "
+
 nohup $HERMES_CMD start >> $HERMES_LOGS 2>&1 &
 ( tail -f -n0 $HERMES_LOGS & ) | grep -q -E "$hermes_start_msg_indicator"
 echo "Done"

@@ -25,16 +25,16 @@ import (
 type (
 	Keeper struct {
 		// *cosmosibckeeper.Keeper
-		cdc                 codec.BinaryCodec
-		storeKey            sdk.StoreKey
-		memKey              sdk.StoreKey
-		paramstore          paramtypes.Subspace
-		ICAControllerKeeper icacontrollerkeeper.Keeper
-		IBCKeeper           ibckeeper.Keeper
-		scopedKeeper        capabilitykeeper.ScopedKeeper
-		TransferKeeper      ibctransferkeeper.Keeper
-		bankKeeper    		bankkeeper.Keeper
-		InterchainQueryKeeper	icqkeeper.Keeper
+		cdc                   codec.BinaryCodec
+		storeKey              sdk.StoreKey
+		memKey                sdk.StoreKey
+		paramstore            paramtypes.Subspace
+		ICAControllerKeeper   icacontrollerkeeper.Keeper
+		IBCKeeper             ibckeeper.Keeper
+		scopedKeeper          capabilitykeeper.ScopedKeeper
+		TransferKeeper        ibctransferkeeper.Keeper
+		bankKeeper            bankkeeper.Keeper
+		InterchainQueryKeeper icqkeeper.Keeper
 		RecordsKeeper         recordsmodulekeeper.Keeper
 
 		accountKeeper types.AccountKeeper
@@ -64,16 +64,16 @@ func NewKeeper(
 	}
 
 	return Keeper{
-		cdc:                 cdc,
-		storeKey:            storeKey,
-		memKey:              memKey,
-		paramstore:          ps,
-		accountKeeper:       accountKeeper,
-		bankKeeper:          bankKeeper,
-		ICAControllerKeeper: icacontrollerkeeper,
-		IBCKeeper:           ibcKeeper,
-		scopedKeeper:        scopedKeeper,
-		TransferKeeper:      TransferKeeper,
+		cdc:                   cdc,
+		storeKey:              storeKey,
+		memKey:                memKey,
+		paramstore:            ps,
+		accountKeeper:         accountKeeper,
+		bankKeeper:            bankKeeper,
+		ICAControllerKeeper:   icacontrollerkeeper,
+		IBCKeeper:             ibcKeeper,
+		scopedKeeper:          scopedKeeper,
+		TransferKeeper:        TransferKeeper,
 		InterchainQueryKeeper: interchainQueryKeeper,
 		RecordsKeeper:         RecordsKeeper,
 	}

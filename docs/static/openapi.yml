@@ -29229,11 +29229,14 @@ paths:
                       status:
                         type: string
                       commissionRate:
-                        type: integer
-                        format: int32
+                        type: string
+                        format: uint64
                       delegationAmt:
                         type: string
-                        format: int64
+                        format: uint64
+                      weight:
+                        type: string
+                        format: uint64
                   amt:
                     type: string
                     format: int64
@@ -29955,11 +29958,14 @@ paths:
                           status:
                             type: string
                           commissionRate:
-                            type: integer
-                            format: int32
+                            type: string
+                            format: uint64
                           delegationAmt:
                             type: string
-                            format: int64
+                            format: uint64
+                          weight:
+                            type: string
+                            format: uint64
                     blacklistedValidators:
                       type: array
                       items:
@@ -29972,11 +29978,14 @@ paths:
                           status:
                             type: string
                           commissionRate:
-                            type: integer
-                            format: int32
+                            type: string
+                            format: uint64
                           delegationAmt:
                             type: string
-                            format: int64
+                            format: uint64
+                          weight:
+                            type: string
+                            format: uint64
                     withdrawalAccount:
                       type: object
                       properties:
@@ -29999,11 +30008,14 @@ paths:
                                   status:
                                     type: string
                                   commissionRate:
-                                    type: integer
-                                    format: int32
+                                    type: string
+                                    format: uint64
                                   delegationAmt:
                                     type: string
-                                    format: int64
+                                    format: uint64
+                                  weight:
+                                    type: string
+                                    format: uint64
                               amt:
                                 type: string
                                 format: int64
@@ -30044,11 +30056,14 @@ paths:
                                   status:
                                     type: string
                                   commissionRate:
-                                    type: integer
-                                    format: int32
+                                    type: string
+                                    format: uint64
                                   delegationAmt:
                                     type: string
-                                    format: int64
+                                    format: uint64
+                                  weight:
+                                    type: string
+                                    format: uint64
                               amt:
                                 type: string
                                 format: int64
@@ -30089,11 +30104,14 @@ paths:
                                   status:
                                     type: string
                                   commissionRate:
-                                    type: integer
-                                    format: int32
+                                    type: string
+                                    format: uint64
                                   delegationAmt:
                                     type: string
-                                    format: int64
+                                    format: uint64
+                                  weight:
+                                    type: string
+                                    format: uint64
                               amt:
                                 type: string
                                 format: int64
@@ -30427,11 +30445,14 @@ paths:
                         status:
                           type: string
                         commissionRate:
-                          type: integer
-                          format: int32
+                          type: string
+                          format: uint64
                         delegationAmt:
                           type: string
-                          format: int64
+                          format: uint64
+                        weight:
+                          type: string
+                          format: uint64
                   blacklistedValidators:
                     type: array
                     items:
@@ -30444,11 +30465,14 @@ paths:
                         status:
                           type: string
                         commissionRate:
-                          type: integer
-                          format: int32
+                          type: string
+                          format: uint64
                         delegationAmt:
                           type: string
-                          format: int64
+                          format: uint64
+                        weight:
+                          type: string
+                          format: uint64
                   withdrawalAccount:
                     type: object
                     properties:
@@ -30471,11 +30495,14 @@ paths:
                                 status:
                                   type: string
                                 commissionRate:
-                                  type: integer
-                                  format: int32
+                                  type: string
+                                  format: uint64
                                 delegationAmt:
                                   type: string
-                                  format: int64
+                                  format: uint64
+                                weight:
+                                  type: string
+                                  format: uint64
                             amt:
                               type: string
                               format: int64
@@ -30515,11 +30542,14 @@ paths:
                                 status:
                                   type: string
                                 commissionRate:
-                                  type: integer
-                                  format: int32
+                                  type: string
+                                  format: uint64
                                 delegationAmt:
                                   type: string
-                                  format: int64
+                                  format: uint64
+                                weight:
+                                  type: string
+                                  format: uint64
                             amt:
                               type: string
                               format: int64
@@ -30559,11 +30589,14 @@ paths:
                                 status:
                                   type: string
                                 commissionRate:
-                                  type: integer
-                                  format: int32
+                                  type: string
+                                  format: uint64
                                 delegationAmt:
                                   type: string
-                                  format: int64
+                                  format: uint64
+                                weight:
+                                  type: string
+                                  format: uint64
                             amt:
                               type: string
                               format: int64
@@ -30821,11 +30854,14 @@ paths:
                             status:
                               type: string
                             commissionRate:
-                              type: integer
-                              format: int32
+                              type: string
+                              format: uint64
                             delegationAmt:
                               type: string
-                              format: int64
+                              format: uint64
+                            weight:
+                              type: string
+                              format: uint64
                         amt:
                           type: string
                           format: int64
@@ -31460,11 +31496,14 @@ paths:
                   status:
                     type: string
                   commissionRate:
-                    type: integer
-                    format: int32
+                    type: string
+                    format: uint64
                   delegationAmt:
                     type: string
-                    format: int64
+                    format: uint64
+                  weight:
+                    type: string
+                    format: uint64
         default:
           description: An unexpected error response.
           schema:
@@ -52409,11 +52448,14 @@ definitions:
           status:
             type: string
           commissionRate:
-            type: integer
-            format: int32
+            type: string
+            format: uint64
           delegationAmt:
             type: string
-            format: int64
+            format: uint64
+          weight:
+            type: string
+            format: uint64
       amt:
         type: string
         format: int64
@@ -52446,11 +52488,14 @@ definitions:
             status:
               type: string
             commissionRate:
-              type: integer
-              format: int32
+              type: string
+              format: uint64
             delegationAmt:
               type: string
-              format: int64
+              format: uint64
+            weight:
+              type: string
+              format: uint64
       blacklistedValidators:
         type: array
         items:
@@ -52463,11 +52508,14 @@ definitions:
             status:
               type: string
             commissionRate:
-              type: integer
-              format: int32
+              type: string
+              format: uint64
             delegationAmt:
               type: string
-              format: int64
+              format: uint64
+            weight:
+              type: string
+              format: uint64
       withdrawalAccount:
         type: object
         properties:
@@ -52490,11 +52538,14 @@ definitions:
                     status:
                       type: string
                     commissionRate:
-                      type: integer
-                      format: int32
+                      type: string
+                      format: uint64
                     delegationAmt:
                       type: string
-                      format: int64
+                      format: uint64
+                    weight:
+                      type: string
+                      format: uint64
                 amt:
                   type: string
                   format: int64
@@ -52534,11 +52585,14 @@ definitions:
                     status:
                       type: string
                     commissionRate:
-                      type: integer
-                      format: int32
+                      type: string
+                      format: uint64
                     delegationAmt:
                       type: string
-                      format: int64
+                      format: uint64
+                    weight:
+                      type: string
+                      format: uint64
                 amt:
                   type: string
                   format: int64
@@ -52578,11 +52632,14 @@ definitions:
                     status:
                       type: string
                     commissionRate:
-                      type: integer
-                      format: int32
+                      type: string
+                      format: uint64
                     delegationAmt:
                       type: string
-                      format: int64
+                      format: uint64
+                    weight:
+                      type: string
+                      format: uint64
                 amt:
                   type: string
                   format: int64
@@ -52638,11 +52695,14 @@ definitions:
                 status:
                   type: string
                 commissionRate:
-                  type: integer
-                  format: int32
+                  type: string
+                  format: uint64
                 delegationAmt:
                   type: string
-                  format: int64
+                  format: uint64
+                weight:
+                  type: string
+                  format: uint64
             amt:
               type: string
               format: int64
@@ -52676,7 +52736,15 @@ definitions:
       uptime:
         type: integer
         format: int32
+  Stridelabs.stride.stakeibc.MsgAddValidatorResponse:
+    type: object
+  Stridelabs.stride.stakeibc.MsgChangeValidatorWeightResponse:
+    type: object
+  Stridelabs.stride.stakeibc.MsgDeleteValidatorResponse:
+    type: object
   Stridelabs.stride.stakeibc.MsgLiquidStakeResponse:
+    type: object
+  Stridelabs.stride.stakeibc.MsgRebalanceValidatorsResponse:
     type: object
   Stridelabs.stride.stakeibc.MsgRedeemStakeResponse:
     type: object
@@ -52800,11 +52868,14 @@ definitions:
                   status:
                     type: string
                   commissionRate:
-                    type: integer
-                    format: int32
+                    type: string
+                    format: uint64
                   delegationAmt:
                     type: string
-                    format: int64
+                    format: uint64
+                  weight:
+                    type: string
+                    format: uint64
             blacklistedValidators:
               type: array
               items:
@@ -52817,11 +52888,14 @@ definitions:
                   status:
                     type: string
                   commissionRate:
-                    type: integer
-                    format: int32
+                    type: string
+                    format: uint64
                   delegationAmt:
                     type: string
-                    format: int64
+                    format: uint64
+                  weight:
+                    type: string
+                    format: uint64
             withdrawalAccount:
               type: object
               properties:
@@ -52844,11 +52918,14 @@ definitions:
                           status:
                             type: string
                           commissionRate:
-                            type: integer
-                            format: int32
+                            type: string
+                            format: uint64
                           delegationAmt:
                             type: string
-                            format: int64
+                            format: uint64
+                          weight:
+                            type: string
+                            format: uint64
                       amt:
                         type: string
                         format: int64
@@ -52888,11 +52965,14 @@ definitions:
                           status:
                             type: string
                           commissionRate:
-                            type: integer
-                            format: int32
+                            type: string
+                            format: uint64
                           delegationAmt:
                             type: string
-                            format: int64
+                            format: uint64
+                          weight:
+                            type: string
+                            format: uint64
                       amt:
                         type: string
                         format: int64
@@ -52932,11 +53012,14 @@ definitions:
                           status:
                             type: string
                           commissionRate:
-                            type: integer
-                            format: int32
+                            type: string
+                            format: uint64
                           delegationAmt:
                             type: string
-                            format: int64
+                            format: uint64
+                          weight:
+                            type: string
+                            format: uint64
                       amt:
                         type: string
                         format: int64
@@ -53013,11 +53096,14 @@ definitions:
               status:
                 type: string
               commissionRate:
-                type: integer
-                format: int32
+                type: string
+                format: uint64
               delegationAmt:
                 type: string
-                format: int64
+                format: uint64
+              weight:
+                type: string
+                format: uint64
           amt:
             type: string
             format: int64
@@ -53056,11 +53142,14 @@ definitions:
                 status:
                   type: string
                 commissionRate:
-                  type: integer
-                  format: int32
+                  type: string
+                  format: uint64
                 delegationAmt:
                   type: string
-                  format: int64
+                  format: uint64
+                weight:
+                  type: string
+                  format: uint64
           blacklistedValidators:
             type: array
             items:
@@ -53073,11 +53162,14 @@ definitions:
                 status:
                   type: string
                 commissionRate:
-                  type: integer
-                  format: int32
+                  type: string
+                  format: uint64
                 delegationAmt:
                   type: string
-                  format: int64
+                  format: uint64
+                weight:
+                  type: string
+                  format: uint64
           withdrawalAccount:
             type: object
             properties:
@@ -53100,11 +53192,14 @@ definitions:
                         status:
                           type: string
                         commissionRate:
-                          type: integer
-                          format: int32
+                          type: string
+                          format: uint64
                         delegationAmt:
                           type: string
-                          format: int64
+                          format: uint64
+                        weight:
+                          type: string
+                          format: uint64
                     amt:
                       type: string
                       format: int64
@@ -53144,11 +53239,14 @@ definitions:
                         status:
                           type: string
                         commissionRate:
-                          type: integer
-                          format: int32
+                          type: string
+                          format: uint64
                         delegationAmt:
                           type: string
-                          format: int64
+                          format: uint64
+                        weight:
+                          type: string
+                          format: uint64
                     amt:
                       type: string
                       format: int64
@@ -53188,11 +53286,14 @@ definitions:
                         status:
                           type: string
                         commissionRate:
-                          type: integer
-                          format: int32
+                          type: string
+                          format: uint64
                         delegationAmt:
                           type: string
-                          format: int64
+                          format: uint64
+                        weight:
+                          type: string
+                          format: uint64
                     amt:
                       type: string
                       format: int64
@@ -53251,11 +53352,14 @@ definitions:
                     status:
                       type: string
                     commissionRate:
-                      type: integer
-                      format: int32
+                      type: string
+                      format: uint64
                     delegationAmt:
                       type: string
-                      format: int64
+                      format: uint64
+                    weight:
+                      type: string
+                      format: uint64
                 amt:
                   type: string
                   format: int64
@@ -53298,11 +53402,14 @@ definitions:
           status:
             type: string
           commissionRate:
-            type: integer
-            format: int32
+            type: string
+            format: uint64
           delegationAmt:
             type: string
-            format: int64
+            format: uint64
+          weight:
+            type: string
+            format: uint64
   Stridelabs.stride.stakeibc.QueryInterchainAccountFromAddressResponse:
     type: object
     properties:
@@ -53368,8 +53475,11 @@ definitions:
       status:
         type: string
       commissionRate:
-        type: integer
-        format: int32
+        type: string
+        format: uint64
       delegationAmt:
         type: string
-        format: int64
+        format: uint64
+      weight:
+        type: string
+        format: uint64
