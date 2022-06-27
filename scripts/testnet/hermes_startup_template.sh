@@ -13,6 +13,7 @@ done
 echo "Restoring Hermes Accounts"
 hermes keys restore -m "HERMES_STRIDE_MNEMONIC" STRIDE
 hermes keys restore -m "HERMES_GAIA_MNEMONIC" GAIA
+sleep 30
 
 hermes start &
 sleep 30
