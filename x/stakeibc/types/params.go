@@ -9,18 +9,17 @@ import (
 
 // Default init params
 var (
-	DefaultBlockBasedEpochInterval uint64 = 10
 	// these are default intervals _in epochs_ NOT in blocks
-	DefaultDepositInterval      uint64 = 5
-	DefaultDelegateInterval     uint64 = 5
-	DefaultReinvestInterval     uint64 = 2
-	DefaultRewardsInterval      uint64 = 5
-	DefaultExchangeRateInterval uint64 = 2
-	// you apparantly cannot safely encode floats, so we make commission * 100
+	DefaultDepositInterval       uint64 = 3
+	DefaultDelegateInterval      uint64 = 3
+	DefaultReinvestInterval      uint64 = 3
+	DefaultRewardsInterval       uint64 = 3
+	DefaultExchangeRateInterval  uint64 = 3
+	DefaultKeyWithdrawalInterval uint64 = 3
+	// you apparantly cannot safely encode floats, so we make commission / 100
 	DefaultStrideCommission uint64 = 10
 
 	// KeyDepositInterval is store's key for the DepositInterval option
-	KeyBlockBasedEpochInterval      = []byte("BlockBasedEpochInterval")
 	KeyDepositInterval      = []byte("DepositInterval")
 	KeyDelegateInterval     = []byte("DelegateInterval")
 	KeyReinvestInterval     = []byte("ReinvestInterval")
@@ -43,8 +42,7 @@ func NewParams(
 	rewards_interval uint64,
 	exchange_rate_interval uint64,
 	stride_commission uint64,
-	withdraw_interval uint64,
-	block_based_epoch_interval uint64,
+	reinvest_interval uint64,
 ) Params {
 	return Params{
 		DepositInterval:      deposit_interval,
@@ -52,8 +50,7 @@ func NewParams(
 		RewardsInterval:      rewards_interval,
 		ExchangeRateInterval: exchange_rate_interval,
 		StrideCommission:     stride_commission,
-		ReinvestInterval:     withdraw_interval,
-		BlockBasedEpochInterval: block_based_epoch_interval,
+		ReinvestInterval:     reinvest_interval,
 	}
 }
 
@@ -66,7 +63,6 @@ func DefaultParams() Params {
 		DefaultExchangeRateInterval,
 		DefaultStrideCommission,
 		DefaultReinvestInterval,
-		DefaultBlockBasedEpochInterval,
 	)
 }
 
@@ -79,7 +75,6 @@ func (p *Params) ParamSetPairs() paramtypes.ParamSetPairs {
 		paramtypes.NewParamSetPair(KeyExchangeRateInterval, &p.ExchangeRateInterval, isPositive),
 		paramtypes.NewParamSetPair(KeyStrideCommission, &p.StrideCommission, isCommission),
 		paramtypes.NewParamSetPair(KeyReinvestInterval, &p.ReinvestInterval, isPositive),
-		paramtypes.NewParamSetPair(KeyBlockBasedEpochInterval, &p.BlockBasedEpochInterval, isPositive),
 	}
 }
 

@@ -23,9 +23,9 @@ func TestGenesisState_Validate(t *testing.T) {
 			genState: &types.GenesisState{
 				PortId: types.PortID,
 				ICAAccount: &types.ICAAccount{
-					Address:          "79",
-					Balance:          2,
-					DelegatedBalance: 8,
+					Address:            "79",
+					UndelegatedBalance: 2,
+					DelegatedBalance:   8,
 				},
 				HostZoneList: []types.HostZone{
 					{
@@ -45,7 +45,6 @@ func TestGenesisState_Validate(t *testing.T) {
 			},
 			valid: false,
 		},
-
 		// this line is used by starport scaffolding # types/genesis/testcase
 	} {
 		t.Run(tc.desc, func(t *testing.T) {

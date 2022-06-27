@@ -6,20 +6,15 @@ import (
 
 	utils "github.com/Stride-Labs/stride/utils"
 	epochstypes "github.com/Stride-Labs/stride/x/epochs/types"
-	icqkeeper "github.com/Stride-Labs/stride/x/interchainquery/keeper"
-	icqtypes "github.com/Stride-Labs/stride/x/interchainquery/types"
 	recordstypes "github.com/Stride-Labs/stride/x/records/types"
 	"github.com/Stride-Labs/stride/x/stakeibc/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	bankTypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	icatypes "github.com/cosmos/ibc-go/v3/modules/apps/27-interchain-accounts/types"
 	ibctypes "github.com/cosmos/ibc-go/v3/modules/apps/transfer/types"
 	clienttypes "github.com/cosmos/ibc-go/v3/modules/core/02-client/types"
 )
 
-// TODO: ensure all timeouts are less than the epoch length
-// TODO: add events from event manager, e.g.
+// TODO [TEST-127]: ensure all timeouts are less than the epoch length
+// TODO [TEST-126]: add events from event manager, e.g.
 // ctx.EventManager().EmitEvents(sdk.Events{
 // 	sdk.NewEvent(
 // 		sdk.EventTypeMessage,
@@ -27,7 +22,6 @@ import (
 // 		sdk.NewAttribute("newAmountStaked", balance.String()),
 // 	),
 // })
-// TODO: update OnAcknowledgementPacket
 
 func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochIdentifier string, epochNumber int64) {
 	// every epoch
@@ -55,6 +49,8 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochIdentifier string, epochN
 		// Create a new deposit record for each host zone for the upcoming epoch
 		k.CreateDepositRecordsForEpoch(ctx, epochNumber)
 
+		k.SetWithdrawalAddress(ctx)
+
 		depositRecords := k.RecordsKeeper.GetAllDepositRecord(ctx)
 		depositInterval := int64(k.GetParam(ctx, types.KeyDepositInterval))
 		if epochNumber%depositInterval == 0 {
@@ -78,12 +74,14 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochIdentifier string, epochN
 			k.StakeExistingDepositsOnHostZones(ctx, epochNumber, depositRecords)
 		}
 
-		// TODO(TEST-88): Close this ticket
-		// UNCOMMENT
-		// reinvestInterval := int64(k.GetParam(ctx, types.KeyReinvestInterval))
-		// if epochNumber%reinvestInterval == 0 {
-		// 	k.ProcessRewardsInterval(ctx)
-		// }
+		reinvestInterval := int64(k.GetParam(ctx, types.KeyReinvestInterval))
+		if epochNumber%reinvestInterval == 0 { // allow a few blocks from UpdateUndelegatedBal to avoid conflicts
+			for _, hz := range k.GetAllHostZone(ctx) {
+				if (&hz).WithdrawalAccount != nil { // only process host zones once withdrawal accounts are registered
+					k.UpdateWithdrawalBalance(ctx, hz)
+				}
+			}
+		}
 	}
 }
 
@@ -116,7 +114,7 @@ func (h Hooks) AfterEpochEnd(ctx sdk.Context, epochIdentifier string, epochNumbe
 // -------------------- helper functions --------------------
 func (k Keeper) CreateDepositRecordsForEpoch(ctx sdk.Context, epochNumber int64) {
 	// Create one new deposit record / host zone for the next epoch
-	createDepositRecords := func(index int64, zoneInfo types.HostZone) (stop bool) {
+	createDepositRecords := func(ctx sdk.Context, index int64, zoneInfo types.HostZone) (error) {
 		// create a deposit record / host zone
 		depositRecord := recordstypes.DepositRecord{
 			Id:         0,
@@ -127,10 +125,24 @@ func (k Keeper) CreateDepositRecordsForEpoch(ctx sdk.Context, epochNumber int64)
 			EpochNumber: uint64(epochNumber),
 		}
 		k.RecordsKeeper.AppendDepositRecord(ctx, depositRecord)
-		return false
+		return nil
 	}
 	// Iterate the zones and apply icaReinvest
 	k.IterateHostZones(ctx, createDepositRecords)
+}
+
+func (k Keeper) SetWithdrawalAddress(ctx sdk.Context) {
+	setWithdrawalAddresses := func(ctx sdk.Context, index int64, zoneInfo types.HostZone) (error) {
+		k.Logger(ctx).Info(fmt.Sprintf("\tsetting withdrawal addresses on host zones"))
+		err := k.SetWithdrawalAddressOnHost(ctx, zoneInfo)
+		if err != nil {
+			k.Logger(ctx).Error(fmt.Sprintf("Did not set withdrawal address to %s on %s", zoneInfo.GetWithdrawalAccount().GetAddress(), zoneInfo.GetChainId()))
+		} else {
+			k.Logger(ctx).Info(fmt.Sprintf("Successfully set withdrawal address to %s on %s", zoneInfo.GetWithdrawalAccount().GetAddress(), zoneInfo.GetChainId()))
+		}
+		return nil
+	}
+	k.IterateHostZones(ctx, setWithdrawalAddresses)
 }
 
 func (k Keeper) StakeExistingDepositsOnHostZones(ctx sdk.Context, epochNumber int64, depositRecords []recordstypes.DepositRecord) {
@@ -175,105 +187,6 @@ func (k Keeper) StakeExistingDepositsOnHostZones(ctx sdk.Context, epochNumber in
 			})
 		}
 	}
-}
-
-func (k Keeper) ProcessRewardsInterval(ctx sdk.Context) {
-	icaReinvest := func(index int64, zoneInfo types.HostZone) (stop bool) {
-		// Verify the delegation and withdrawal accounts are registered
-		delegationIca := zoneInfo.GetDelegationAccount()
-		if delegationIca == nil || delegationIca.Address == "" {
-			k.Logger(ctx).Error("Zone %s is missing a delegation address!", zoneInfo.ChainId)
-			return true
-		}
-		withdrawIca := zoneInfo.GetWithdrawalAccount()
-		if withdrawIca == nil || withdrawIca.Address == "" {
-			k.Logger(ctx).Error("Zone %s is missing a withdrawal address!", zoneInfo.ChainId)
-			return true
-		}
-		err := k.ReinvestRewards(ctx, zoneInfo)
-		if err != nil {
-			k.Logger(ctx).Error("Did not withdraw rewards on %s", zoneInfo.ChainId)
-			return true
-		} else {
-			k.Logger(ctx).Info(fmt.Sprintf("Successfully withdrew rewards on %s", zoneInfo.ChainId))
-		}
-		return false
-	}
-
-	// Iterate the zones and apply icaReinvest
-	k.IterateHostZones(ctx, icaReinvest)
-}
-
-func (k Keeper) ReinvestRewards(ctx sdk.Context, hostZone types.HostZone) error {
-	// 1) [X] Query for rewards on the withdrawal account (entire outstanding balance)
-	// 2) [X] Transfer rewards (entire outstanding balance) to delegation account from withdrawal account
-	// 		[] transfer timeout must be l.t. epoch length
-	// 		[] In the ack, create a deposit record for the rewards transferred out
-
-	// Assumptions
-	// - By the next epoch, any outstanding balance must be accounted for on stride (query timeout must be scoped to
-	// 		a block height OR must timeout before the next epoch)
-
-	// the relevant ICA is the delegate account
-	owner := types.FormatICAAccountOwner(hostZone.ChainId, types.ICAAccountType_DELEGATION)
-	portID, err := icatypes.NewControllerPortID(owner)
-	if err != nil {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "%s has no associated portId", owner)
-	}
-	connectionId, err := k.GetConnectionId(ctx, portID)
-	if err != nil {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidChainID, "%s has no associated connection", portID)
-	}
-
-	// Fetch the relevant ICA
-	delegationAccount := hostZone.GetDelegationAccount()
-	withdrawAccount := hostZone.GetWithdrawalAccount()
-
-	var cb icqkeeper.Callback = func(icqk icqkeeper.Keeper, ctx sdk.Context, args []byte, query icqtypes.Query) error {
-		var msgs []sdk.Msg
-		queryRes := bankTypes.QueryAllBalancesResponse{}
-		err := k.cdc.Unmarshal(args, &queryRes)
-		if err != nil {
-			k.Logger(ctx).Error("Unable to unmarshal balances info for zone", "err", err)
-			return err
-		}
-		// Get denom dynamically
-		balance := queryRes.Balances.AmountOf(hostZone.HostDenom)
-		balanceDec := sdk.NewDec(balance.Int64())
-		commission := sdk.NewDec(int64(k.GetParam(ctx, types.KeyStrideCommission))).Quo(sdk.NewDec(100))
-		// Dec type has 18 decimals and the same precision as Coin types
-		strideAmount := balanceDec.Mul(commission)
-		reinvestAmount := balanceDec.Sub(strideAmount)
-		strideCoin := sdk.NewCoin(hostZone.HostDenom, strideAmount.TruncateInt())
-		reinvestCoin := sdk.NewCoin(hostZone.HostDenom, reinvestAmount.TruncateInt())
-
-		// transfer balances from the withdraw address to the delegation account
-		sendBalanceToDelegationAccount := &bankTypes.MsgSend{FromAddress: withdrawAccount.GetAddress(), ToAddress: delegationAccount.GetAddress(), Amount: sdk.NewCoins(reinvestCoin)}
-		msgs = append(msgs, sendBalanceToDelegationAccount)
-		// TODO: [TEST-115] get the stride commission addresses (potentially split this up into multiple messages)
-		strideCommmissionAccount := "cosmos12vfkpj7lpqg0n4j68rr5kyffc6wu55dzqewda4"
-		sendBalanceToStrideAccount := &bankTypes.MsgSend{FromAddress: withdrawAccount.GetAddress(), ToAddress: strideCommmissionAccount, Amount: sdk.NewCoins(strideCoin)}
-		msgs = append(msgs, sendBalanceToStrideAccount)
-
-		// Send the transaction through SubmitTx
-		err = k.SubmitTxs(ctx, connectionId, msgs, *withdrawAccount)
-		if err != nil {
-			return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "Failed to SubmitTxs for %s, %s, %s", connectionId, hostZone.ChainId, msgs)
-		}
-
-		ctx.EventManager().EmitEvents(sdk.Events{
-			sdk.NewEvent(
-				sdk.EventTypeMessage,
-				sdk.NewAttribute("WithdrawalAccountBalance", balance.String()),
-				sdk.NewAttribute("ReinvestedPortion", reinvestCoin.String()),
-				sdk.NewAttribute("StrideCommission", strideCoin.String()),
-			),
-		})
-
-		return nil
-	}
-	k.InterchainQueryKeeper.QueryBalances(ctx, hostZone, cb, withdrawAccount.Address)
-	return nil
 }
 
 func (k Keeper) TransferExistingDepositsToHostZones(ctx sdk.Context, epochNumber int64, depositRecords []recordstypes.DepositRecord) {

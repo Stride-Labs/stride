@@ -72,6 +72,8 @@ func (k Keeper) HandleAcknowledgement(ctx sdk.Context, modulePacket channeltypes
 
 	for msgIndex, msgData := range txMsgData.Data {
 		src := msgs[msgIndex]
+		pstr := fmt.Sprintf("\t[DOGE] Message {%s}", msgData.MsgType)
+		k.Logger(ctx).Info(pstr)
 		switch msgData.MsgType {
 		// staking to validators
 		case "/cosmos.staking.v1beta1.MsgDelegate":
@@ -105,7 +107,7 @@ func (k Keeper) HandleAcknowledgement(ctx sdk.Context, modulePacket channeltypes
 		case "/cosmos.distribution.v1beta1.MsgWithdrawDelegatorReward":
 			// TODO: Implement! (lo pri)
 			continue
-		case "cosmos.bank.v1beta1.MsgSend":
+		case "/cosmos.bank.v1beta1.MsgSend":
 			response := banktypes.MsgSendResponse{}
 			err := proto.Unmarshal(msgData.Data, &response)
 			if err != nil {
@@ -119,8 +121,6 @@ func (k Keeper) HandleAcknowledgement(ctx sdk.Context, modulePacket channeltypes
 				return err
 			}
 			continue
-
-
 		default:
 			k.Logger(ctx).Error("Unhandled acknowledgement packet", "type", msgData.MsgType)
 		}
@@ -144,7 +144,6 @@ func (k *Keeper) HandleSend(ctx sdk.Context, msg sdk.Msg) error {
 		k.Logger(ctx).Error("unable to cast source message to MsgSend")
 		return fmt.Errorf("unable to cast source message to MsgSend")
 	}
-	// TODO: CHECK THIS LOGIC
 	coin := sendMsg.Amount[0]
 	// Pull host zone
 	hostZoneDenom := coin.Denom
