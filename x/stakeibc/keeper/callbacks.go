@@ -43,18 +43,7 @@ func (c Callbacks) AddCallback(id string, fn interface{}) types.QueryCallbacks {
 }
 
 func (c Callbacks) RegisterCallbacks() types.QueryCallbacks {
-	a := c.
-		// AddCallback("valset", Callback(ValsetCallback)).
-		// AddCallback("validator", Callback(ValidatorCallback)).
-		// AddCallback("delegations", Callback(DelegationsCallback)).
-		// AddCallback("delegation", Callback(DelegationCallback)).
-		// AddCallback("distributerewards", Callback(DistributeRewardsFromWithdrawAccount)).
-		// AddCallback("depositinterval", Callback(DepositIntervalCallback)).
-		// AddCallback("perfbalance", Callback(PerfBalanceCallback)).
-		// AddCallback("allbalances", Callback(AllBalancesCallback)).
-		// AddCallback("accountbalance", Callback(AccountBalanceCallback))
-		AddCallback("withdrawalbalance", Callback(WithdrawalBalanceCallback))
-
+	a := c.AddCallback("withdrawalbalance", Callback(WithdrawalBalanceCallback))
 	return a.(Callbacks)
 }
 
@@ -64,6 +53,7 @@ func (c Callbacks) RegisterCallbacks() types.QueryCallbacks {
 
 // WithdrawalBalanceCallback is a callback handler for WithdrawalBalance queries.
 func WithdrawalBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query icqtypes.Query) error {
+	// NOTE(TEST-112) for now, to get proofs in your ICQs, you need to query the entire store on the host zone! e.g. "store/bank/key"
 	zone, found := k.GetHostZone(ctx, query.GetChainId())
 	if !found {
 		return fmt.Errorf("no registered zone for chain id: %s", query.GetChainId())
@@ -97,10 +87,10 @@ func WithdrawalBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query icq
 
 	// Set withdrawal balance as attribute on HostZone's withdrawal ICA account
 	wa := zone.WithdrawalAccount
-	wa.WithdrawalBalance = coin.Amount.Int64()
+	wa.Balance = coin.Amount.Int64()
 	zone.WithdrawalAccount = wa
 	k.SetHostZone(ctx, zone)
-	k.Logger(ctx).Info(fmt.Sprintf("Just set WithdrawalBalance to: %d", wa.WithdrawalBalance))
+	k.Logger(ctx).Info(fmt.Sprintf("Just set WithdrawalBalance to: %d", wa.Balance))
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(
 			sdk.EventTypeMessage,
@@ -109,8 +99,7 @@ func WithdrawalBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query icq
 		),
 	})
 
-	// Sweep the withdrawal account balance, to the feeAccount and the delegationAccount
-	//    - TODO(TEST-123) In the ICA bank send ack, create a deposit record for the swept amount that's in delegationAccount
+	// Sweep the withdrawal account balance, to the commission and the delegation accounts
 	k.Logger(ctx).Info(fmt.Sprintf("ICA Bank Sending %d%s from withdrawalAddr to delegationAddr.", coin.Amount.Int64(), coin.Denom))
 
 	withdrawalAccount := zone.GetWithdrawalAccount()

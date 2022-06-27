@@ -107,7 +107,7 @@ func (k Keeper) UpdateWithdrawalBalance(ctx sdk.Context, zoneInfo types.HostZone
 	_, addr, _ := bech32.DecodeAndConvert(withdrawalIca.GetAddress())
 	data := bankTypes.CreateAccountBalancesPrefix(addr)
 	key := "store/bank/key"
-	k.Logger(ctx).Info("Querying for value", "key", key, "denom", zoneInfo.HostDenom) // debug?
+	k.Logger(ctx).Info("Querying for value", "key", key, "denom", zoneInfo.HostDenom)
 	k.InterchainQueryKeeper.MakeRequest(
 		ctx,
 		zoneInfo.ConnectionId,
