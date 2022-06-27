@@ -17,7 +17,7 @@ func CmdAddValidator() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "add-validator [host-zone] [name] [address] [commission] [weight]",
 		Short: "Broadcast message add-validator",
-		Args:  cobra.ExactArgs(4),
+		Args:  cobra.ExactArgs(5),
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
 			argHostZone := args[0]
 			argName := args[1]

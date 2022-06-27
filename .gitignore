@@ -9,6 +9,7 @@
 
 
 # build
+launch.sh
 build/*
 state/*
 .state.backup

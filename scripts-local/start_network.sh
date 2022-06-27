@@ -29,19 +29,21 @@ fi
 # Starts Stride and Gaia in the background using nohup, pipes the logs to their corresponding log files,
 #   and halts the script until Stride/Gaia have each finalized a block
 printf '%s' "Starting Stride and Gaia...   "
-nohup $STRIDE_CMD start | sed -r -u "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2})?)?[mGK]//g" > $STRIDE_LOGS 2>&1 &
-nohup $GAIA_CMD start | sed -r -u "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2})?)?[mGK]//g" > $GAIA_LOGS 2>&1 &
+nohup $STRIDE_CMD start | sed -r -u "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2})?)?[mGK]//g" >> $STRIDE_LOGS 2>&1 &
+nohup $GAIA_CMD start | sed -r -u "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2})?)?[mGK]//g" >> $GAIA_LOGS 2>&1 &
 ( tail -f -n0 $STRIDE_LOGS & ) | grep -q "finalizing commit of block"
 ( tail -f -n0 $GAIA_LOGS & ) | grep -q "finalizing commit of block"
 echo "Done"
+
+CSLEEP 5
 
 if [ "$CACHE" != "true" ]; then
     # If cache mode is disabled, create the hermes connection and channels, 
     # Logs are piped to the hermes log file and the script is halted until:
     #  1)  "Creating transfer channel" is printed (indicating the connection has been created)
     #  2)  "Message ChanOpenInit" is printed (indicating the channnel has been created)
-    printf '%s' "Creating Hermes Connection... "
-    bash $SCRIPT_DIR/init_channel.sh > $HERMES_LOGS 2>&1 &
+    printf '\n%s' "Creating Hermes Connection... "
+    bash $SCRIPT_DIR/init_channel.sh >> $HERMES_LOGS 2>&1 &
     ( tail -f -n0 $HERMES_LOGS & ) | grep -q "Creating transfer channel"
     echo "Done"
 
@@ -60,13 +62,14 @@ else
     hermes_start_msg_indicator="Hermes has started"
 fi
 printf '%s' "Starting Hermes...            "
+
 nohup $HERMES_CMD start >> $HERMES_LOGS 2>&1 &
 ( tail -f -n0 $HERMES_LOGS & ) | grep -q -E "$hermes_start_msg_indicator"
 echo "Done"
 
 # Start ICQ in the background
 printf '%s' "Starting ICQ...               "
-nohup $ICQ_CMD run --local > $ICQ_LOGS 2>&1 &
+nohup $ICQ_CMD run --local >> $ICQ_LOGS 2>&1 &
 sleep 5
 echo "Done"
 

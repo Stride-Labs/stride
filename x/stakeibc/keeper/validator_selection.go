@@ -7,23 +7,26 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-func (k Keeper) GetValidatorAmtDifferences(ctx sdk.Context, hostZone types.HostZone) (map[string]int64, error) {
+func (k Keeper) GetValidatorDelegationAmtDifferences(ctx sdk.Context, hostZone types.HostZone) (map[string]int64, error) {
 	/*
 		This function returns a map from Validator Address to how many extra tokens
-		need to be given to that validator (posit)
+		need to be given to that validator
+
+		positive implies extra tokens need to be given,
+		negative impleis tokens need to be taken away
 	*/
 	validators := hostZone.GetValidators()
-	scaled_weights := make(map[string]int64)
-	totalWeight := k.GetTotalValidatorWeight(ctx, hostZone)
-	target_weights, err := k.GetTargetValAmtsForHostZone(ctx, hostZone, totalWeight)
+	delegationDelta := make(map[string]int64)
+	totalDelegatedAmt := k.GetTotalValidatorDelegations(ctx, hostZone)
+	targetDelegation, err := k.GetTargetValAmtsForHostZone(ctx, hostZone, totalDelegatedAmt)
 	if err != nil {
 		k.Logger(ctx).Error(fmt.Sprintf("Error getting target weights for host zone %s", hostZone.ChainId))
 		return nil, err
 	}
 	for _, validator := range validators {
-		scaled_weights[validator.Address] = int64(target_weights[validator.Address]) - int64(validator.DelegationAmt)
+		delegationDelta[validator.Address] = int64(targetDelegation[validator.Address]) - int64(validator.DelegationAmt)
 	}
-	return scaled_weights, nil
+	return delegationDelta, nil
 }
 
 func (k Keeper) GetTargetValAmtsForHostZone(ctx sdk.Context, hostZone types.HostZone, finalDelegation uint64) (map[string]uint64, error) {

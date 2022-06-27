@@ -15,7 +15,7 @@ var _ = strconv.Itoa(0)
 
 func CmdChangeValidatorWeight() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "change-validator-weight [host-zone] [name] [weight]",
+		Use:   "change-validator-weight [host-zone] [address] [weight]",
 		Short: "Broadcast message change-validator-weight",
 		Args:  cobra.ExactArgs(3),
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
