@@ -18,19 +18,17 @@ var _ = strconv.IntSize
 func createNEpochTracker(keeper *keeper.Keeper, ctx sdk.Context, n int) []types.EpochTracker {
 	items := make([]types.EpochTracker, n)
 	for i := range items {
-		items[i].Index = strconv.Itoa(i)
-
-		keeper.SetEpochTracker(ctx, items[i])
+		items[i].EpochIdentifier = strconv.Itoa(i)
 	}
-	return items
 }
+        
 
 func TestEpochTrackerGet(t *testing.T) {
-	keeper, ctx := keepertest.StakeibcKeeper(t)
 	items := createNEpochTracker(keeper, ctx, 10)
 	for _, item := range items {
 		rst, found := keeper.GetEpochTracker(ctx,
-			item.Index,
+		    item.EpochIdentifier,
+            
 		)
 		require.True(t, found)
 		require.Equal(t,
@@ -44,10 +42,12 @@ func TestEpochTrackerRemove(t *testing.T) {
 	items := createNEpochTracker(keeper, ctx, 10)
 	for _, item := range items {
 		keeper.RemoveEpochTracker(ctx,
-			item.Index,
+		    item.EpochIdentifier,
+            
 		)
 		_, found := keeper.GetEpochTracker(ctx,
-			item.Index,
+		    item.EpochIdentifier,
+            
 		)
 		require.False(t, found)
 	}

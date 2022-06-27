@@ -415,6 +415,24 @@ func NewStrideApp(
 	// monitoringModule := monitoringp.NewAppModule(appCodec, app.MonitoringKeeper)
 
 	// Note: must be above app.StakeibcKeeper
+
+	scopedRecordsKeeper := app.CapabilityKeeper.ScopeToModule(recordsmoduletypes.ModuleName)
+	app.ScopedRecordsKeeper = scopedRecordsKeeper
+
+	app.RecordsKeeper = *recordsmodulekeeper.NewKeeper(
+		appCodec,
+		keys[recordsmoduletypes.StoreKey],
+		keys[recordsmoduletypes.MemStoreKey],
+		app.GetSubspace(recordsmoduletypes.ModuleName),
+		scopedRecordsKeeper,
+	)
+
+	recordsModule := recordsmodule.NewAppModule(appCodec, app.RecordsKeeper, app.AccountKeeper, app.BankKeeper)
+
+	// create IBC stacks by combining middleware with base application
+	// recordsStack contains records -> transfer
+	recordsStack := recordsmodule.NewIBCModule(app.RecordsKeeper, transferIBCModule)
+
 	app.ICAControllerKeeper = icacontrollerkeeper.NewKeeper(
 		appCodec, keys[icacontrollertypes.StoreKey], app.GetSubspace(icacontrollertypes.SubModuleName),
 		app.IBCKeeper.ChannelKeeper, // may be replaced with middleware such as ics29 fee
@@ -422,9 +440,8 @@ func NewStrideApp(
 		scopedICAControllerKeeper, app.MsgServiceRouter(),
 	)
 
-	app.InterchainqueryKeeper = interchainquerykeeper.NewKeeper(appCodec, keys[interchainquerytypes.StoreKey])
+	app.InterchainqueryKeeper = interchainquerykeeper.NewKeeper(appCodec, keys[interchainquerytypes.StoreKey], app.IBCKeeper)
 	interchainQueryModule := interchainquery.NewAppModule(appCodec, app.InterchainqueryKeeper)
-	app.InterchainqueryKeeper.SetCallbackHandler(interchainquerytypes.ModuleName, app.InterchainqueryKeeper.CallbackHandler())
 
 	scopedRecordsKeeper := app.CapabilityKeeper.ScopeToModule(recordsmoduletypes.ModuleName)
 	app.ScopedRecordsKeeper = scopedRecordsKeeper
@@ -459,6 +476,7 @@ func NewStrideApp(
 		app.InterchainqueryKeeper,
 		app.RecordsKeeper,
 	)
+
 	stakeibcModule := stakeibcmodule.NewAppModule(appCodec, app.StakeibcKeeper, app.AccountKeeper, app.BankKeeper)
 	stakeibcIBCModule := stakeibcmodule.NewIBCModule(app.StakeibcKeeper)
 
@@ -531,7 +549,6 @@ func NewStrideApp(
 		icaModule,
 		recordsModule,
 		// this line is used by starport scaffolding # stargate/app/appModule
-		epochsModule,
 	)
 
 	// During begin block slashing happens after distr.BeginBlocker so that

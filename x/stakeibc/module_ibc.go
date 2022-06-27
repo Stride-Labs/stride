@@ -26,6 +26,11 @@ func NewIBCModule(k keeper.Keeper) IBCModule {
 	}
 }
 
+
+func (im IBCModule) Hooks() keeper.Hooks {
+	return im.keeper.Hooks()
+}
+
 // OnChanOpenInit implements the IBCModule interface
 
 // func(ctx, order, connectionHops []string, portID string, channelID string, chanCap, counterparty, version string) (string, error)
@@ -99,15 +104,15 @@ func (im IBCModule) OnChanOpenAck(
 	switch {
 	// withdrawal address
 	case portID == withdrawalAddress:
-		zoneInfo.WithdrawalAccount = &types.ICAAccount{Address: address, Balance: 0, DelegatedBalance: 0, Target: types.ICAAccountType_WITHDRAWAL}
+		zoneInfo.WithdrawalAccount = &types.ICAAccount{Address: address, Target: types.ICAAccountType_WITHDRAWAL}
 	// fee address
 	case portID == feeAddress:
-		zoneInfo.FeeAccount = &types.ICAAccount{Address: address, Balance: 0, DelegatedBalance: 0, Target: types.ICAAccountType_FEE}
+		zoneInfo.FeeAccount = &types.ICAAccount{Address: address, Target: types.ICAAccountType_FEE}
 	// delegation address
 	case portID == delegationAddress:
-		zoneInfo.DelegationAccount = &types.ICAAccount{Address: address, Balance: 0, DelegatedBalance: 0, Target: types.ICAAccountType_DELEGATION}
+		zoneInfo.DelegationAccount = &types.ICAAccount{Address: address, Target: types.ICAAccountType_DELEGATION}
 	case portID == redemptionAddress:
-		zoneInfo.RedemptionAccount = &types.ICAAccount{Address: address, Balance: 0, DelegatedBalance: 0, Target: types.ICAAccountType_REDEMPTION}
+		zoneInfo.RedemptionAccount = &types.ICAAccount{Address: address, Target: types.ICAAccountType_REDEMPTION}
 	default:
 		ctx.Logger().Error("Missing portId: ", portID)
 	}
@@ -131,7 +136,7 @@ func (im IBCModule) OnAcknowledgementPacket(
 		return err
 	}
 	ctx = ctx.WithContext(context.WithValue(ctx.Context(), "connectionId", connectionId))
-
+	im.keeper.Logger(ctx).Info("HANDLING ACK")
 	return im.keeper.HandleAcknowledgement(ctx, modulePacket, acknowledgement)
 }
 

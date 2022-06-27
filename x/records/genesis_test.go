@@ -33,8 +33,16 @@ func TestGenesis(t *testing.T) {
 		},
 		EpochUnbondingRecordCount: 2,
 		// this line is used by starport scaffolding # genesis/test/state
+		DepositRecordList: []types.DepositRecord{
+			{
+				Id: 0,
+			},
+			{
+				Id: 1,
+			},
+		},
+		DepositRecordCount: 2,
 	}
-
 	k, ctx := keepertest.RecordsKeeper(t)
 	records.InitGenesis(ctx, *k, genesisState)
 	got := records.ExportGenesis(ctx, *k)
@@ -45,9 +53,7 @@ func TestGenesis(t *testing.T) {
 
 	require.Equal(t, genesisState.PortId, got.PortId)
 
-	require.ElementsMatch(t, genesisState.UserRedemptionRecordList, got.UserRedemptionRecordList)
-	require.Equal(t, genesisState.UserRedemptionRecordCount, got.UserRedemptionRecordCount)
-	require.ElementsMatch(t, genesisState.EpochUnbondingRecordList, got.EpochUnbondingRecordList)
-	require.Equal(t, genesisState.EpochUnbondingRecordCount, got.EpochUnbondingRecordCount)
+	require.ElementsMatch(t, genesisState.DepositRecordList, got.DepositRecordList)
+	require.Equal(t, genesisState.DepositRecordCount, got.DepositRecordCount)
 	// this line is used by starport scaffolding # genesis/test/assert
 }

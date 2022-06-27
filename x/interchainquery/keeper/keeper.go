@@ -4,14 +4,14 @@ import (
 	"encoding/hex"
 	"fmt"
 
-	"github.com/Stride-Labs/stride/x/interchainquery/types"
-	stakeibctypes "github.com/Stride-Labs/stride/x/stakeibc/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	ibckeeper "github.com/cosmos/ibc-go/v3/modules/core/keeper"
 	"github.com/tendermint/tendermint/libs/log"
+
+	"github.com/Stride-Labs/stride/x/interchainquery/types"
 )
 
 // Keeper of this module maintains collections of registered zones.
@@ -19,14 +19,16 @@ type Keeper struct {
 	cdc       codec.Codec
 	storeKey  sdk.StoreKey
 	callbacks map[string]types.QueryCallbacks
+	IBCKeeper *ibckeeper.Keeper
 }
 
 // NewKeeper returns a new instance of zones Keeper
-func NewKeeper(cdc codec.Codec, storeKey sdk.StoreKey) Keeper {
+func NewKeeper(cdc codec.Codec, storeKey sdk.StoreKey, ibckeeper *ibckeeper.Keeper) Keeper {
 	return Keeper{
 		cdc:       cdc,
 		storeKey:  storeKey,
 		callbacks: make(map[string]types.QueryCallbacks),
+		IBCKeeper: ibckeeper,
 	}
 }
 
@@ -35,7 +37,7 @@ func (k *Keeper) SetCallbackHandler(module string, handler types.QueryCallbacks)
 	if found {
 		return fmt.Errorf("callback handler already set for %s", module)
 	}
-	k.callbacks[module] = handler
+	k.callbacks[module] = handler.RegisterCallbacks()
 	return nil
 }
 
@@ -64,76 +66,88 @@ func (k *Keeper) GetDatapointForId(ctx sdk.Context, id string) (types.DataPoint,
 	return mapping, nil
 }
 
-func (k *Keeper) GetDatapoint(ctx sdk.Context, connection_id string, chain_id string, query_type string, request []byte) (types.DataPoint, error) {
-	id := GenerateQueryHash(connection_id, chain_id, query_type, request)
+// IterateDatapoints iterate through datapoints
+func (k Keeper) IterateDatapoints(ctx sdk.Context, fn func(index int64, dp types.DataPoint) (stop bool)) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefixData)
+	iterator := sdk.KVStorePrefixIterator(store, nil)
+	defer iterator.Close()
+
+	i := int64(0)
+	for ; iterator.Valid(); iterator.Next() {
+		datapoint := types.DataPoint{}
+		k.cdc.MustUnmarshal(iterator.Value(), &datapoint)
+		stop := fn(i, datapoint)
+
+		if stop {
+			break
+		}
+		i++
+	}
+}
+
+// DeleteQuery delete datapoint
+func (k Keeper) DeleteDatapoint(ctx sdk.Context, id string) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefixData)
+	store.Delete([]byte(id))
+}
+
+func (k *Keeper) GetDatapoint(ctx sdk.Context, module string, connection_id string, chain_id string, query_type string, request []byte, height int64) (types.DataPoint, error) {
+	id := GenerateQueryHash(connection_id, chain_id, query_type, request, module, height)
 	return k.GetDatapointForId(ctx, id)
 }
 
-func (k *Keeper) GetDatapointOrRequest(ctx sdk.Context, connection_id string, chain_id string, query_type string, request []byte, max_age int64) (types.DataPoint, error) {
-	val, err := k.GetDatapoint(ctx, connection_id, chain_id, query_type, request)
+func (k *Keeper) GetDatapointOrRequest(ctx sdk.Context, module string, connection_id string, chain_id string, query_type string, request []byte, max_age uint64, height int64) (types.DataPoint, error) {
+	val, err := k.GetDatapoint(ctx, module, connection_id, chain_id, query_type, request, height)
 	if err != nil {
 		// no datapoint
-		k.MakeRequest(ctx, connection_id, chain_id, query_type, request, sdk.NewInt(-1), "", nil)
+		k.MakeRequest(ctx, connection_id, chain_id, query_type, request, sdk.NewInt(-1), "", "", max_age, height)
 		return types.DataPoint{}, fmt.Errorf("no data; query submitted")
 	}
 
-	if val.LocalHeight.LT(sdk.NewInt(ctx.BlockHeight() - max_age)) { // this is somewhat arbitrary; TODO: make this better
-		k.MakeRequest(ctx, connection_id, chain_id, query_type, request, sdk.NewInt(-1), "", nil)
+	if val.LocalHeight.LT(sdk.NewInt(ctx.BlockHeight() - int64(max_age))) { // this is somewhat arbitrary; TODO: make this better
+		k.MakeRequest(ctx, connection_id, chain_id, query_type, request, sdk.NewInt(-1), "", "", max_age, height)
 		return types.DataPoint{}, fmt.Errorf("stale data; query submitted")
 	}
 	// check ttl
 	return val, nil
 }
 
-func (k *Keeper) MakeRequest(ctx sdk.Context, connection_id string, chain_id string, query_type string, request []byte, period sdk.Int, module string, callback interface{}) {
-	key := GenerateQueryHash(connection_id, chain_id, query_type, request)
-	_, found := k.GetQuery(ctx, key)
+func (k *Keeper) MakeRequest(ctx sdk.Context, connection_id string, chain_id string, query_type string, request []byte, period sdk.Int, module string, callback_id string, ttl uint64, height int64) {
+	k.Logger(ctx).Info(
+		"MakeRequest",
+		"connection_id", connection_id,
+		"chain_id", chain_id,
+		"query_type", query_type,
+		"request", request,
+		"period", period,
+		"module", module,
+		"callback", callback_id,
+		"ttl", ttl,
+		"height", height,
+	)
+	key := GenerateQueryHash(connection_id, chain_id, query_type, request, module, height)
+	existingQuery, found := k.GetQuery(ctx, key)
 	if !found {
 		if module != "" {
-			k.callbacks[module].AddCallback(key, callback)
+			if _, exists := k.callbacks[module]; !exists {
+				err := fmt.Errorf("no callback handler registered for module %s", module)
+				k.Logger(ctx).Error(err.Error())
+				panic(err)
+			}
+			if exists := k.callbacks[module].Has(callback_id); !exists {
+				err := fmt.Errorf("no callback %s registered for module %s", callback_id, module)
+				k.Logger(ctx).Error(err.Error())
+				panic(err)
+			}
 		}
-		newQuery := k.NewQuery(ctx, connection_id, chain_id, query_type, request, period)
+		newQuery := k.NewQuery(ctx, module, connection_id, chain_id, query_type, request, period, callback_id, ttl, height)
 		k.SetQuery(ctx, *newQuery)
-	}
-}
 
-func (k Keeper) QueryBalances(ctx sdk.Context, zone stakeibctypes.HostZone, cb Callback, address string) error {
-	connectionId := zone.ConnectionId
-	chainId := zone.ChainId
-	// Validate address
-	query_type := "cosmos.bank.v1beta1.Query/AllBalances"
-	balanceQuery := banktypes.QueryAllBalancesRequest{Address: address}
-	k.Logger(ctx).Info(fmt.Sprintf("\tabout to query %s", address))
-	bz, err := k.cdc.Marshal(&balanceQuery)
-	if err != nil {
-		k.Logger(ctx).Error(fmt.Sprintf("failed to marshal query %s %s", address, err.Error()))
-		return err
+	} else {
+		// a re-request of an existing query triggers resetting of height to trigger immediately.
+		existingQuery.LastHeight = sdk.ZeroInt()
+		k.SetQuery(ctx, existingQuery)
 	}
-	k.MakeRequest(
-		ctx,
-		connectionId,
-		chainId,
-		query_type,
-		bz,
-		// TODO(TEST-79) understand and use proper period
-		sdk.NewInt(25),
-		types.ModuleName,
-		cb,
-	)
-	ctx.EventManager().EmitEvents(sdk.Events{
-		sdk.NewEvent(
-			sdk.EventTypeMessage,
-			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
-			sdk.NewAttribute(sdk.AttributeKeyAction, types.AttributeValueQuery),
-			sdk.NewAttribute(types.AttributeKeyQueryId, GenerateQueryHash(connectionId, chainId, query_type, bz)),
-			sdk.NewAttribute(types.AttributeKeyChainId, chainId),
-			sdk.NewAttribute(types.AttributeKeyConnectionId, connectionId),
-			sdk.NewAttribute(types.AttributeKeyType, query_type),
-			sdk.NewAttribute(types.AttributeKeyHeight, "0"),
-			sdk.NewAttribute(types.AttributeKeyRequest, hex.EncodeToString(bz)),
-		),
-	})
-	return nil
 }
 
 func (k Keeper) QueryUnbondingDelegation(ctx sdk.Context, zone stakeibctypes.HostZone, cb Callback, address string) error {

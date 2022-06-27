@@ -15,9 +15,9 @@ func TestGenesis(t *testing.T) {
 		Params: types.DefaultParams(),
 		PortId: types.PortID,
 		ICAAccount: &types.ICAAccount{
-			Address:          "78",
-			Balance:          49,
-			DelegatedBalance: 80,
+			Address:            "78",
+			UndelegatedBalance: 49,
+			DelegatedBalance:   80,
 		},
 		HostZoneList: []types.HostZone{
 			{
@@ -28,23 +28,6 @@ func TestGenesis(t *testing.T) {
 			},
 		},
 		HostZoneCount: 2,
-		DepositRecordList: []types.DepositRecord{
-			{
-				Id: 0,
-			},
-			{
-				Id: 1,
-			},
-		},
-		DepositRecordCount: 2,
-		EpochTrackerList: []types.EpochTracker{
-			{
-				Index: "0",
-			},
-			{
-				Index: "1",
-			},
-		},
 		// this line is used by starport scaffolding # genesis/test/state
 	}
 
@@ -61,8 +44,5 @@ func TestGenesis(t *testing.T) {
 	require.Equal(t, genesisState.ICAAccount, got.ICAAccount)
 	require.ElementsMatch(t, genesisState.HostZoneList, got.HostZoneList)
 	require.Equal(t, genesisState.HostZoneCount, got.HostZoneCount)
-	require.ElementsMatch(t, genesisState.DepositRecordList, got.DepositRecordList)
-	require.Equal(t, genesisState.DepositRecordCount, got.DepositRecordCount)
-	require.ElementsMatch(t, genesisState.EpochTrackerList, got.EpochTrackerList)
 	// this line is used by starport scaffolding # genesis/test/assert
 }

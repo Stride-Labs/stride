@@ -22,7 +22,7 @@ func TestGenesisState_Validate(t *testing.T) {
 			desc: "valid genesis state",
 			genState: &types.GenesisState{
 				PortId: types.PortID,
-				UserRedemptionRecordList: []types.UserRedemptionRecord{
+				DepositRecordList: []types.DepositRecord{
 					{
 						Id: 0,
 					},
@@ -30,24 +30,15 @@ func TestGenesisState_Validate(t *testing.T) {
 						Id: 1,
 					},
 				},
-				UserRedemptionRecordCount: 2,
-				EpochUnbondingRecordList: []types.EpochUnbondingRecord{
-					{
-						Id: 0,
-					},
-					{
-						Id: 1,
-					},
-				},
-				EpochUnbondingRecordCount: 2,
+				DepositRecordCount: 2,
 				// this line is used by starport scaffolding # types/genesis/validField
 			},
 			valid: true,
 		},
 		{
-			desc: "duplicated userRedemptionRecord",
+			desc: "duplicated depositRecord",
 			genState: &types.GenesisState{
-				UserRedemptionRecordList: []types.UserRedemptionRecord{
+				DepositRecordList: []types.DepositRecord{
 					{
 						Id: 0,
 					},
@@ -55,44 +46,6 @@ func TestGenesisState_Validate(t *testing.T) {
 						Id: 0,
 					},
 				},
-			},
-			valid: false,
-		},
-		{
-			desc: "invalid userRedemptionRecord count",
-			genState: &types.GenesisState{
-				UserRedemptionRecordList: []types.UserRedemptionRecord{
-					{
-						Id: 1,
-					},
-				},
-				UserRedemptionRecordCount: 0,
-			},
-			valid: false,
-		},
-		{
-			desc: "duplicated epochUnbondingRecord",
-			genState: &types.GenesisState{
-				EpochUnbondingRecordList: []types.EpochUnbondingRecord{
-					{
-						Id: 0,
-					},
-					{
-						Id: 0,
-					},
-				},
-			},
-			valid: false,
-		},
-		{
-			desc: "invalid epochUnbondingRecord count",
-			genState: &types.GenesisState{
-				EpochUnbondingRecordList: []types.EpochUnbondingRecord{
-					{
-						Id: 1,
-					},
-				},
-				EpochUnbondingRecordCount: 0,
 			},
 			valid: false,
 		},

@@ -4,6 +4,7 @@ import (
 	"context"
 	"strconv"
 
+	epochtypes "github.com/Stride-Labs/stride/x/epochs/types"
 	"github.com/Stride-Labs/stride/x/stakeibc/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -68,10 +69,21 @@ func (k msgServer) LiquidStake(goCtx context.Context, msg *types.MsgLiquidStake)
 		k.Logger(ctx).Info("failed to send tokens from Account to Module")
 		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidCoins, "failed to mint stAssets to user")
 	}
-	// create a deposit record of these tokens
-	depositRecord := types.NewDepositRecord(msg.Amount, msg.HostDenom, hostZone.ChainId,
-		sender.String(), types.DepositRecord_RECEIPT)
-	k.AppendDepositRecord(ctx, *depositRecord)
+
+	// create a deposit record of these tokens (pending transfer)
+	strideEpochTracker, found := k.GetEpochTracker(ctx, epochtypes.STRIDE_EPOCH)
+	if !found {
+		k.Logger(ctx).Info("failed to find epoch")
+		return nil, sdkerrors.Wrapf(types.ErrInvalidLengthEpochTracker, "no number for epoch (%s)", epochtypes.STRIDE_EPOCH)
+	}
+	// Does this use too much gas?
+	depositRecord, found := k.RecordsKeeper.GetDepositRecordByEpochAndChain(ctx, strideEpochTracker.EpochNumber, hostZone.ChainId)
+	if !found {
+		k.Logger(ctx).Info("failed to find deposit record")
+		return nil, sdkerrors.Wrapf(types.ErrInvalidLengthEpochTracker, "no deposit record (%s)", strideEpochTracker.EpochNumber)
+	}
+	depositRecord.Amount += msg.Amount
+	k.RecordsKeeper.SetDepositRecord(ctx, *depositRecord)
 
 	return &types.MsgLiquidStakeResponse{}, nil
 }
@@ -88,7 +100,9 @@ func (k msgServer) MintStAsset(ctx sdk.Context, sender sdk.AccAddress, amount in
 
 	// TODO(TEST-7): Add an exchange rate here! What object should we store the exchange rate on?
 	// How can we ensure that the exchange rate is not manipulated?
-	coinString := strconv.Itoa(int(amount)) + stAssetDenom
+	hz, _ := k.GetHostZoneFromHostDenom(ctx, denom)
+	amountToMint := (sdk.NewDec(amount).Quo(hz.RedemptionRate)).TruncateInt()
+	coinString := amountToMint.String() + stAssetDenom
 	stCoins, err := sdk.ParseCoinsNormalized(coinString)
 	if err != nil {
 		k.Logger(ctx).Info("Failed to parse coins")

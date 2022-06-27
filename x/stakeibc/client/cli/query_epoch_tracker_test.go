@@ -25,11 +25,12 @@ func networkWithEpochTrackerObjects(t *testing.T, n int) (*network.Network, []ty
 	t.Helper()
 	cfg := network.DefaultConfig()
 	state := types.GenesisState{}
-	require.NoError(t, cfg.Codec.UnmarshalJSON(cfg.GenesisState[types.ModuleName], &state))
+    require.NoError(t, cfg.Codec.UnmarshalJSON(cfg.GenesisState[types.ModuleName], &state))
 
 	for i := 0; i < n; i++ {
 		epochTracker := types.EpochTracker{
-			Index: strconv.Itoa(i),
+			EpochIdentifier: strconv.Itoa(i),
+			
 		}
 		nullify.Fill(&epochTracker)
 		state.EpochTrackerList = append(state.EpochTrackerList, epochTracker)
@@ -48,24 +49,24 @@ func TestShowEpochTracker(t *testing.T) {
 		fmt.Sprintf("--%s=json", tmcli.OutputFlag),
 	}
 	for _, tc := range []struct {
-		desc    string
-		idIndex string
-
+		desc string
+		idEpochIdentifier string
+        
 		args []string
 		err  error
 		obj  types.EpochTracker
 	}{
 		{
-			desc:    "found",
-			idIndex: objs[0].Index,
-
+			desc: "found",
+			idEpochIdentifier: objs[0].EpochIdentifier,
+            
 			args: common,
 			obj:  objs[0],
 		},
 		{
-			desc:    "not found",
-			idIndex: strconv.Itoa(100000),
-
+			desc: "not found",
+			idEpochIdentifier: strconv.Itoa(100000),
+            
 			args: common,
 			err:  status.Error(codes.NotFound, "not found"),
 		},
@@ -73,7 +74,8 @@ func TestShowEpochTracker(t *testing.T) {
 		tc := tc
 		t.Run(tc.desc, func(t *testing.T) {
 			args := []string{
-				tc.idIndex,
+			    tc.idEpochIdentifier,
+                
 			}
 			args = append(args, tc.args...)
 			out, err := clitestutil.ExecTestCLICmd(ctx, cli.CmdShowEpochTracker(), args)
@@ -124,9 +126,9 @@ func TestListEpochTracker(t *testing.T) {
 			require.NoError(t, net.Config.Codec.UnmarshalJSON(out.Bytes(), &resp))
 			require.LessOrEqual(t, len(resp.EpochTracker), step)
 			require.Subset(t,
-				nullify.Fill(objs),
-				nullify.Fill(resp.EpochTracker),
-			)
+            	nullify.Fill(objs),
+            	nullify.Fill(resp.EpochTracker),
+            )
 		}
 	})
 	t.Run("ByKey", func(t *testing.T) {
@@ -140,9 +142,9 @@ func TestListEpochTracker(t *testing.T) {
 			require.NoError(t, net.Config.Codec.UnmarshalJSON(out.Bytes(), &resp))
 			require.LessOrEqual(t, len(resp.EpochTracker), step)
 			require.Subset(t,
-				nullify.Fill(objs),
-				nullify.Fill(resp.EpochTracker),
-			)
+            	nullify.Fill(objs),
+            	nullify.Fill(resp.EpochTracker),
+            )
 			next = resp.Pagination.NextKey
 		}
 	})
