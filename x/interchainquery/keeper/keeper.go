@@ -140,7 +140,7 @@ func (k Keeper) QueryUnbondingDelegation(ctx sdk.Context, zone stakeibctypes.Hos
 	connectionId := zone.ConnectionId
 	chainId := zone.ChainId
 	// Validate address
-	query_type := "cosmos.bank.v1beta1.Query/AllBalances"
+	query_type := "cosmos.staking.v1beta1.Query/DelegatorUnbondingDelegations"
 	unbondingQuery := stakingtypes.QueryDelegatorUnbondingDelegationsRequest{DelegatorAddr: address}
 	k.Logger(ctx).Info(fmt.Sprintf("\tabout to query unbonding delegations for %s", address))
 	bz, err := k.cdc.Marshal(&unbondingQuery)
