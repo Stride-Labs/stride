@@ -57,7 +57,7 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochIdentifier string, epochN
 		redemptionRateInterval := int64(k.GetParam(ctx, types.KeyDepositInterval))
 		if epochNumber%redemptionRateInterval == 0 {
 			k.Logger(ctx).Info("Triggeting update redemption rate")
-			k.UpdateRedemptionRates(ctx, epochNumber, depositRecords)
+			k.UpdateRedemptionRates(ctx, depositRecords)
 		}
 
 		depositInterval := int64(k.GetParam(ctx, types.KeyDepositInterval))
@@ -247,7 +247,7 @@ func (k Keeper) TransferExistingDepositsToHostZones(ctx sdk.Context, epochNumber
 	}
 }
 
-func (k Keeper) UpdateRedemptionRates(ctx sdk.Context, epochNumber int64, depositRecords []recordstypes.DepositRecord) {
+func (k Keeper) UpdateRedemptionRates(ctx sdk.Context, depositRecords []recordstypes.DepositRecord) {
 	// Calc redemptionRate for each host zone
 	UpdateRedemptionRate := func(ctx sdk.Context, index int64, zoneInfo types.HostZone) error {
 
