@@ -48,8 +48,6 @@ func (k Keeper) HandleAcknowledgement(ctx sdk.Context, modulePacket channeltypes
 		return err
 	}
 
-	
-
 	txMsgData := &sdk.TxMsgData{}
 	err = proto.Unmarshal(ack.Result, txMsgData)
 	if err != nil {
@@ -135,7 +133,6 @@ func (k Keeper) HandleAcknowledgement(ctx sdk.Context, modulePacket channeltypes
 	return nil
 }
 
-
 func (k *Keeper) HandleSend(ctx sdk.Context, msg sdk.Msg) error {
 	k.Logger(ctx).Info("Received MsgSend acknowledgement")
 	// first, type assertion. we should have banktypes.MsgSend
@@ -168,23 +165,21 @@ func (k *Keeper) HandleSend(ctx sdk.Context, msg sdk.Msg) error {
 		epochNumber := strideEpochTracker.EpochNumber
 		// create a new record so that rewards are reinvested
 		record := recordstypes.DepositRecord{
-			Id:         0,
-			Amount:     amount,
-			Denom:      hostZoneDenom,
-			HostZoneId: zone.ChainId,
-			Status:    recordstypes.DepositRecord_STAKE,
-			Source: recordstypes.DepositRecord_WITHDRAWAL_ICA,
+			Id:          0,
+			Amount:      amount,
+			Denom:       hostZoneDenom,
+			HostZoneId:  zone.ChainId,
+			Status:      recordstypes.DepositRecord_STAKE,
+			Source:      recordstypes.DepositRecord_WITHDRAWAL_ICA,
 			EpochNumber: uint64(epochNumber),
 		}
-		k.RecordsKeeper.AppendDepositRecord(ctx, record)	
+		k.RecordsKeeper.AppendDepositRecord(ctx, record)
 	} else {
 		return nil
 	}
 
-
 	return nil
 }
-
 
 func (k *Keeper) HandleDelegate(ctx sdk.Context, msg sdk.Msg) error {
 	k.Logger(ctx).Info("Received MsgDelegate acknowledgement")
@@ -206,10 +201,18 @@ func (k *Keeper) HandleDelegate(ctx sdk.Context, msg sdk.Msg) error {
 		return sdkerrors.Wrapf(sdkerrors.ErrNotFound, "No deposit record found for zone: %s, amount: %s", zone.ChainId, amount)
 	}
 
+	// TODO(TEST-112) more safety checks here
+	// increment the stakedBal on the hostZome
+	if amount < 0 {
+		return sdkerrors.Wrapf(sdkerrors.ErrLogic, "Balance to stake was negative: %d", amount)
+	} else {
+		zone.StakedBal += amount
+		k.SetHostZone(ctx, *zone)
+	}
+
 	k.RecordsKeeper.RemoveDepositRecord(ctx, record.Id)
 	return nil
 }
-
 
 // TODO(TEST-28): Burn stAssets if RedeemStake succeeds
 func (k Keeper) HandleUndelegate(ctx sdk.Context, msg sdk.Msg) error {
