@@ -1,12 +1,19 @@
 package records
 
 import (
+	"fmt"
+	"strconv"
+
 	"github.com/Stride-Labs/stride/x/records/keeper"
+	"github.com/Stride-Labs/stride/x/records/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
+	ibctransfertypes "github.com/cosmos/ibc-go/v3/modules/apps/transfer/types"
 	channeltypes "github.com/cosmos/ibc-go/v3/modules/core/04-channel/types"
 	porttypes "github.com/cosmos/ibc-go/v3/modules/core/05-port/types"
+
+	// "google.golang.org/protobuf/proto" <-- this breaks tx parsing
 
 	// host "github.com/cosmos/ibc-go/v3/modules/core/24-host"
 
@@ -163,6 +170,8 @@ func (im IBCModule) OnRecvPacket(
 	return wrapperAck
 }
 
+
+
 // OnAcknowledgementPacket implements the IBCModule interface
 func (im IBCModule) OnAcknowledgementPacket(
 	ctx sdk.Context,
@@ -171,38 +180,41 @@ func (im IBCModule) OnAcknowledgementPacket(
 	relayer sdk.AccAddress,
 ) error {
 	// doCustomLogic(packet, ack)
-	// Store a deposit record here!
-	// // create a deposit record of these tokens
-	// fmt.Println("packet returned from MsgTransfer: ", 	packet.)
+	// ICS-20 ack
+	var ack channeltypes.Acknowledgement
+	if err := ibctransfertypes.ModuleCdc.UnmarshalJSON(acknowledgement, &ack); err != nil {
+		im.keeper.Logger(ctx).Error("Error unmarshalling ack  %v", err)
+		return sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "cannot unmarshal ICS-20 transfer packet acknowledgement: %v", err)
+	}
+	var data ibctransfertypes.FungibleTokenPacketData
+	if err := ibctransfertypes.ModuleCdc.UnmarshalJSON(packet.GetData(), &data); err != nil {
+		im.keeper.Logger(ctx).Error("Error unmarshalling packet  %v", err)
+		return sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "cannot unmarshal ICS-20 transfer packet data: %s", err.Error())
+	}
 
-	// // packet returned from MsgTransfer: {1 transfer channel-0 transfer channel-0
-	// // [123 34 97 109 111 117 110 116 34 58 34 49 48 48 48 34 44 34 100 101 110 111 109 34 58 34 116 114 97 110 115 102 101 114 47 99 104 97 110 110 101 108 45 48 47 117 97 116 111 109 34 44 34 114 101 99 101 105 118 101 114 34 58 34 99 111 115 109 111 115 49 57 108 54 100 51 100 55 107 50 112 101 108 56 101 112 103 99 112 120 99 57 110 112 54 102 115 118 106 112 97 97 97 48 54 110 109 54 53 118 97 103 119 120 97 112 48 101 52 106 101 122 113 48 53 109 109 118 117 34 44 34 115 101 110 100 101 114 34 58 34 115 116 114 105 100 101 49 109 118 100 113 52 110 108 117 112 108 51 57 50 52 51 113 106 122 55 115 100 115 53 101 122 51 114 108 57 109 110 120 50 53 51 108 122 97 34 125] 0-1000000 0} 4:09PM ERR This is where we're going to add DepositRecords!
-
-	// // var packetData icatypes.InterchainAccountPacketData
-	// var packetData ibctransfertypes.MsgTransferReponse
-	// // err := icatypes.ModuleCdc.UnmarshalJSON(packet.GetData(), &packetData)
-	// err := ibctransfertypes.ModuleCdc.UnmarshalJSON(packet.GetData(), &packetData)
-	// if err != nil {
-	// 	fmt.Println("unable to unmarshal acknowledgement packet data", "error", err, "data", packetData)
-	// 	return sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "cannot unmarshal packet data: %s", err.Error())
-	// }
-
-	// // msgs, err := icatypes.DeserializeCosmosTx(, packetData.Data)
-	// // if err != nil {
-	// // 	fmt.Println("unable to decode messages", "err", err)
-	// // 	return err
-	// // }
-	// // fmt.Println("Decoded msgs: ", msgs)
-
-	// // depositRecord := recordtypes.NewDepositRecord(msg.Amount, msg.HostDenom, hostZone.ChainId,
-	// // 	sender.String(), recordtypes.DepositRecord_RECEIPT)
-	// // k.RecordsKeeper.AppendDepositRecord(ctx, *depositRecord)
-
-	// depositRecord := recordtypes.NewDepositRecord(1, "uatom", "GAIA", "cosmosXXXXXXXX", recordtypes.DepositRecord_RECEIPT)
-	// im.keeper.AppendDepositRecord(ctx, *depositRecord)
-
-	// ctx.Logger().Error("This is where we're going to add DepositRecords!")
-	// im.app.OnAcknowledgementPacket(ctx, packet, acknowledgement, relayer)
+	switch resp := ack.Response.(type) {
+	case *channeltypes.Acknowledgement_Result:
+		log := fmt.Sprintf("\t [IBC-TRANSFER] Acknowledgement_Result {%s}", string(resp.Result))
+		im.keeper.Logger(ctx).Error(log)
+		// UPDATE RECORD
+		// match record based on amount
+		amount, err := strconv.ParseInt(data.Amount, 10, 64)
+		if err != nil {
+			return sdkerrors.Wrapf(sdkerrors.ErrInvalidType, "Error parsing int %s", amount)
+		}
+		record, found := im.keeper.GetTransferDepositRecordByAmount(ctx, amount)
+		if found == false {
+			return sdkerrors.Wrapf(sdkerrors.ErrNotFound, "No deposit record found for amount: %s", amount)
+		}
+		// update the record
+		record.Status = types.DepositRecord_STAKE
+		im.keeper.SetDepositRecord(ctx, *record)
+		log = fmt.Sprintf("\t [IBC-TRANSFER] Deposit record updated: {%v}", record)
+		im.keeper.Logger(ctx).Error(log)
+	case *channeltypes.Acknowledgement_Error:
+		log := fmt.Sprintf("\t [IBC-TRANSFER] Acknowledgement_Error {%s}", resp.Error)
+		im.keeper.Logger(ctx).Error(log)
+	}
 	return nil
 }
 

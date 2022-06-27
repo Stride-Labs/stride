@@ -26,6 +26,11 @@ func NewIBCModule(k keeper.Keeper) IBCModule {
 	}
 }
 
+
+func (im IBCModule) Hooks() keeper.Hooks {
+	return im.keeper.Hooks()
+}
+
 // OnChanOpenInit implements the IBCModule interface
 
 // func(ctx, order, connectionHops []string, portID string, channelID string, chanCap, counterparty, version string) (string, error)
@@ -128,7 +133,7 @@ func (im IBCModule) OnAcknowledgementPacket(
 		return err
 	}
 	ctx = ctx.WithContext(context.WithValue(ctx.Context(), "connectionId", connectionId))
-
+	im.keeper.Logger(ctx).Info("HANDLING ACK")
 	return im.keeper.HandleAcknowledgement(ctx, modulePacket, acknowledgement)
 }
 

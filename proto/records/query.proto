@@ -16,17 +16,17 @@ service Query {
   rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
     option (google.api.http).get = "/StrideLabs/stride/records/params";
   }
-  // this line is used by starport scaffolding # 2
-
-// Queries a DepositRecord by id.
-	rpc DepositRecord(QueryGetDepositRecordRequest) returns (QueryGetDepositRecordResponse) {
-		option (google.api.http).get = "/Stride-Labs/stride/records/deposit_record/{id}";
+  
+  // Queries a DepositRecord by id.
+  rpc DepositRecord(QueryGetDepositRecordRequest) returns (QueryGetDepositRecordResponse) {
+	  option (google.api.http).get = "/Stride-Labs/stride/records/deposit_record/{id}";
 	}
-
+	
 	// Queries a list of DepositRecord items.
 	rpc DepositRecordAll(QueryAllDepositRecordRequest) returns (QueryAllDepositRecordResponse) {
 		option (google.api.http).get = "/Stride-Labs/stride/records/deposit_record";
 	}
+	// this line is used by starport scaffolding # 2
 }
 
 // QueryParamsRequest is request type for the Query/Params RPC method.

@@ -9,6 +9,7 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
 	bankTypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	distributiontypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 	stakingTypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -82,10 +83,47 @@ func (k Keeper) DelegateOnHost(ctx sdk.Context, hostZone types.HostZone, amt sdk
 
 	// Construct the transaction
 	// TODO(TEST-39): Implement validator selection
-	validator_address := "cosmosvaloper19e7sugzt8zaamk2wyydzgmg9n3ysylg6na6k6e" // gval2
+	validator_address := "cosmosvaloper1pcag0cj4ttxg8l7pcg0q4ksuglswuuedadj7ne" // gval2
 
 	// construct the msg
 	msgs = append(msgs, &stakingTypes.MsgDelegate{DelegatorAddress: delegationIca.GetAddress(), ValidatorAddress: validator_address, Amount: amt})
+	// Send the transaction through SubmitTx
+	err = k.SubmitTxs(ctx, connectionId, msgs, *delegationIca)
+	if err != nil {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "Failed to SubmitTxs for %s, %s, %s", connectionId, hostZone.ChainId, msgs)
+	}
+	return nil
+}
+
+func (k Keeper) SetWithdrawalAddressOnHost(ctx sdk.Context, hostZone types.HostZone) error {
+	_ = ctx
+	var msgs []sdk.Msg
+	// the relevant ICA is the delegate account
+	owner := types.FormatICAAccountOwner(hostZone.ChainId, types.ICAAccountType_DELEGATION)
+	portID, err := icatypes.NewControllerPortID(owner)
+	if err != nil {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "%s has no associated portId", owner)
+	}
+	connectionId, err := k.GetConnectionId(ctx, portID)
+	if err != nil {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidChainID, "%s has no associated connection", portID)
+	}
+
+	// Fetch the relevant ICA
+	delegationIca := hostZone.GetDelegationAccount()
+	if delegationIca == nil || delegationIca.Address == "" {
+		k.Logger(ctx).Error("Zone %s is missing a delegation address!", hostZone.ChainId)
+		return nil
+	}
+	withdrawalIca := hostZone.GetWithdrawalAccount()
+	if withdrawalIca == nil || withdrawalIca.Address == "" {
+		k.Logger(ctx).Error("Zone %s is missing a withdrawal address!", hostZone.ChainId)
+		return nil
+	}
+	withdrawalIcaAddr := hostZone.GetWithdrawalAccount().Address
+
+	// construct the msg
+	msgs = append(msgs, &distributiontypes.MsgSetWithdrawAddress{DelegatorAddress: delegationIca.GetAddress(), WithdrawAddress: withdrawalIcaAddr})
 	// Send the transaction through SubmitTx
 	err = k.SubmitTxs(ctx, connectionId, msgs, *delegationIca)
 	if err != nil {

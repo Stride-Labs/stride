@@ -1,6 +1,8 @@
 package types
 
 import (
+	fmt "fmt"
+
 	host "github.com/cosmos/ibc-go/v3/modules/core/24-host"
 )
 
@@ -23,6 +25,16 @@ func DefaultGenesis() *GenesisState {
 func (gs GenesisState) Validate() error {
 	if err := host.PortIdentifierValidator(gs.PortId); err != nil {
 		return err
+	}
+	// Check for duplicated index in epochTracker
+	epochTrackerIndexMap := make(map[string]struct{})
+
+	for _, elem := range gs.EpochTrackerList {
+		index := string(EpochTrackerKey(elem.EpochIdentifier))
+		if _, ok := epochTrackerIndexMap[index]; ok {
+			return fmt.Errorf("duplicated index for epochTracker")
+		}
+		epochTrackerIndexMap[index] = struct{}{}
 	}
 	// this line is used by starport scaffolding # genesis/types/validate
 

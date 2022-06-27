@@ -51,6 +51,7 @@ func ExportGenesis(ctx sdk.Context, k keeper.Keeper) *types.GenesisState {
 	}
 	genesis.HostZoneList = k.GetAllHostZone(ctx)
 	genesis.HostZoneCount = k.GetHostZoneCount(ctx)
+	genesis.EpochTrackerList = k.GetAllEpochTracker(ctx)
 	// this line is used by starport scaffolding # genesis/module/export
 
 	return genesis
