@@ -21,7 +21,7 @@ func (k Keeper) EndBlocker(ctx sdk.Context) {
 	events := sdk.Events{}
 	// emit events for periodic queries
 	k.IterateQueries(ctx, func(_ int64, queryInfo types.Query) (stop bool) {
-		if queryInfo.LastHeight.Equal(sdk.ZeroInt()) || queryInfo.LastHeight.Add(queryInfo.Period).Equal(sdk.NewInt(ctx.BlockHeight())) || queryInfo.Period.IsNegative() {
+		if queryInfo.LastHeight.Equal(sdk.ZeroInt()) || queryInfo.LastHeight.Add(queryInfo.Period).Equal(sdk.NewInt(ctx.BlockHeight())) {
 			k.Logger(ctx).Info("Interchainquery event emitted", "id", queryInfo.Id)
 			event := sdk.NewEvent(
 				sdk.EventTypeMessage,
@@ -31,7 +31,7 @@ func (k Keeper) EndBlocker(ctx sdk.Context) {
 				sdk.NewAttribute(types.AttributeKeyChainId, queryInfo.ChainId),
 				sdk.NewAttribute(types.AttributeKeyConnectionId, queryInfo.ConnectionId),
 				sdk.NewAttribute(types.AttributeKeyType, queryInfo.QueryType),
-				// TODO(TEST-79) understand and use proper height
+				// TODO: add height to request type
 				sdk.NewAttribute(types.AttributeKeyHeight, "0"),
 				sdk.NewAttribute(types.AttributeKeyRequest, hex.EncodeToString(queryInfo.Request)),
 			)
@@ -47,5 +47,20 @@ func (k Keeper) EndBlocker(ctx sdk.Context) {
 	if len(events) > 0 {
 		ctx.EventManager().EmitEvents(events)
 	}
-	// garbage collection of DataPoints
+
+	k.IterateDatapoints(ctx, func(_ int64, dp types.DataPoint) bool {
+		q, found := k.GetQuery(ctx, dp.Id)
+		if !found {
+			// query was removed; delete datapoint
+			k.DeleteDatapoint(ctx, dp.Id)
+		} else {
+			if dp.LocalHeight.Int64()+int64(q.Ttl) > ctx.BlockHeader().Height {
+				// gc old data
+				k.DeleteDatapoint(ctx, dp.Id)
+			}
+		}
+
+		return false
+
+	})
 }

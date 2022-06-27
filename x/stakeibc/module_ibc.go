@@ -103,13 +103,13 @@ func (im IBCModule) OnChanOpenAck(
 	switch {
 	// withdrawal address
 	case portID == withdrawalAddress:
-		zoneInfo.WithdrawalAccount = &types.ICAAccount{Address: address, Balance: 0, DelegatedBalance: 0, Target: types.ICAAccountType_WITHDRAWAL}
+		zoneInfo.WithdrawalAccount = &types.ICAAccount{Address: address, Target: types.ICAAccountType_WITHDRAWAL}
 	// fee address
 	case portID == feeAddress:
-		zoneInfo.FeeAccount = &types.ICAAccount{Address: address, Balance: 0, DelegatedBalance: 0, Target: types.ICAAccountType_FEE}
+		zoneInfo.FeeAccount = &types.ICAAccount{Address: address, Target: types.ICAAccountType_FEE}
 	// delegation address
 	case portID == delegationAddress:
-		zoneInfo.DelegationAccount = &types.ICAAccount{Address: address, Balance: 0, DelegatedBalance: 0, Target: types.ICAAccountType_DELEGATION}
+		zoneInfo.DelegationAccount = &types.ICAAccount{Address: address, Target: types.ICAAccountType_DELEGATION}
 	default:
 		ctx.Logger().Error("Missing portId: ", portID)
 	}

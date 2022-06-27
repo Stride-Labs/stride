@@ -2,10 +2,14 @@ package keeper
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/Stride-Labs/stride/x/stakeibc/types"
+	"github.com/cosmos/cosmos-sdk/types/bech32"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
+	bankTypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	distributiontypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 	stakingTypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -91,6 +95,71 @@ func (k Keeper) DelegateOnHost(ctx sdk.Context, hostZone types.HostZone, amt sdk
 	return nil
 }
 
+func (k Keeper) SetWithdrawalAddressOnHost(ctx sdk.Context, hostZone types.HostZone) error {
+	_ = ctx
+	var msgs []sdk.Msg
+	// the relevant ICA is the delegate account
+	owner := types.FormatICAAccountOwner(hostZone.ChainId, types.ICAAccountType_DELEGATION)
+	portID, err := icatypes.NewControllerPortID(owner)
+	if err != nil {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "%s has no associated portId", owner)
+	}
+	connectionId, err := k.GetConnectionId(ctx, portID)
+	if err != nil {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidChainID, "%s has no associated connection", portID)
+	}
+
+	// Fetch the relevant ICA
+	delegationIca := hostZone.GetDelegationAccount()
+	if delegationIca == nil || delegationIca.Address == "" {
+		k.Logger(ctx).Error("Zone %s is missing a delegation address!", hostZone.ChainId)
+		return nil
+	}
+	withdrawalIca := hostZone.GetWithdrawalAccount()
+	if withdrawalIca == nil || withdrawalIca.Address == "" {
+		k.Logger(ctx).Error("Zone %s is missing a withdrawal address!", hostZone.ChainId)
+		return nil
+	}
+	withdrawalIcaAddr := hostZone.GetWithdrawalAccount().Address
+
+	// construct the msg
+	msgs = append(msgs, &distributiontypes.MsgSetWithdrawAddress{DelegatorAddress: delegationIca.GetAddress(), WithdrawAddress: withdrawalIcaAddr})
+	// Send the transaction through SubmitTx
+	err = k.SubmitTxs(ctx, connectionId, msgs, *delegationIca)
+	if err != nil {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "Failed to SubmitTxs for %s, %s, %s", connectionId, hostZone.ChainId, msgs)
+	}
+	return nil
+}
+
+// Simple balance query helper using new ICQ module
+func (k Keeper) UpdateWithdrawalBalance(ctx sdk.Context, zoneInfo types.HostZone) {
+	k.Logger(ctx).Info(fmt.Sprintf("\tUpdating withdrawal balances on %s", zoneInfo.ChainId))
+
+	withdrawalIca := zoneInfo.GetWithdrawalAccount()
+	if withdrawalIca == nil || withdrawalIca.Address == "" {
+		k.Logger(ctx).Error("Zone %s is missing a delegation address!", zoneInfo.ChainId)
+	}
+	k.Logger(ctx).Info(fmt.Sprintf("\tQuerying withdrawalBalances for %s at %d height", zoneInfo.ChainId))
+
+	_, addr, _ := bech32.DecodeAndConvert(withdrawalIca.GetAddress())
+	data := bankTypes.CreateAccountBalancesPrefix(addr)
+	key := "store/bank/key"
+	k.Logger(ctx).Info("Querying for value", "key", key, "denom", zoneInfo.HostDenom)
+	k.InterchainQueryKeeper.MakeRequest(
+		ctx,
+		zoneInfo.ConnectionId,
+		zoneInfo.ChainId,
+		key,
+		append(data, []byte(zoneInfo.HostDenom)...),
+		sdk.NewInt(-1),
+		types.ModuleName,
+		"withdrawalbalance",
+		0, //ttl
+		0, //height
+	)
+}
+
 // SubmitTxs submits an ICA transaction containing multiple messages
 func (k Keeper) SubmitTxs(ctx sdk.Context, connectionId string, msgs []sdk.Msg, account types.ICAAccount) error {
 	chainId, err := k.GetChainID(ctx, connectionId)
@@ -133,4 +202,25 @@ func (k Keeper) SubmitTxs(ctx sdk.Context, connectionId string, msgs []sdk.Msg, 
 	}
 
 	return nil
+}
+
+func (k Keeper) GetLightClientHeightSafely(ctx sdk.Context, connectionID string) (int64, bool) {
+
+	var latestHeightHostZone int64 // defaults to 0
+	// get light client's latest height
+	conn, found := k.IBCKeeper.ConnectionKeeper.GetConnection(ctx, connectionID)
+	if !found {
+		k.Logger(ctx).Info(fmt.Sprintf("invalid connection id, \"%s\" not found", connectionID))
+	}
+	//TODO(TEST-112) make sure to update host LCs here!
+	clientState, found := k.IBCKeeper.ClientKeeper.GetClientState(ctx, conn.ClientId)
+	if !found {
+		k.Logger(ctx).Info(fmt.Sprintf("client id \"%s\" not found for connection \"%s\"", conn.ClientId, connectionID))
+		return 0, false
+	} else {
+		// TODO(TEST-119) get stAsset supply at SAME time as hostZone height
+		// TODO(TEST-112) check on safety of castng uint64 to int64
+		latestHeightHostZone = int64(clientState.GetLatestHeight().GetRevisionHeight())
+		return latestHeightHostZone, true
+	}
 }

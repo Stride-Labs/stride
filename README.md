@@ -105,6 +105,8 @@ Or, if you just want to re-serve, run `make init build=` to
 Install the required git submodule dependencies (gaia, hermes, icq)
 ```
 git submodule update --init
+make local-install
+make local-init build=sghi
 ```
 Install the required packages for each module
 ```
