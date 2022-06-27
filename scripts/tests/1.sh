@@ -1,10 +1,11 @@
-### LIQ STAKE + EXCH RATE TEST
-SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
-# import dependencies
-source ${SCRIPT_DIR}/../account_vars.sh
+### IBC OVER TOKENS
+GAIA1_EXEC="build/gaiad --home scripts-local/state/gaia"
+STR1_EXEC="build/strided --home scripts-local/state/stride"
+SCRIPT_DIR="./scripts-local/logs/"
+STRIDE_ADDRESS="stride1uk4ze0x4nvh4fk0xm4jdud58eqn4yxhrt52vv7"
 
-## GAIA
 #  ibc over atoms to stride
-$GAIA1_EXEC tx ibc-transfer transfer transfer channel-0 $STRIDE_ADDRESS_1 100000uatom --from gval1 --chain-id GAIA -y --keyring-backend test
-CSLEEP 20
-$STRIDE1_EXEC q bank balances $STRIDE_ADDRESS_1
+$GAIA1_EXEC tx ibc-transfer transfer transfer channel-0 $STRIDE_ADDRESS 100000uatom --from gval1 --chain-id GAIA -y --keyring-backend test
+SLEEP 5
+$STR1_EXEC q bank balances $STRIDE_ADDRESS
+

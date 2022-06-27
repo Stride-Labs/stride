@@ -41,6 +41,11 @@ ICQ_GAIA_ADDRESS=$($GAIA_CMD keys show $ICQ_GAIA_ACCT --keyring-backend test -a)
 # Give relayer account token balance
 $GAIA_CMD add-genesis-account ${ICQ_GAIA_ADDRESS} 5000000000000uatom
 
+# add revenue account
+echo $GAIA_REV_MNEMONIC | $GAIA_CMD keys add $GAIA_REV_ACCT --recover --keyring-backend=test 
+# get revenue address
+rev_addr=$($GAIA_CMD keys show $GAIA_REV_ACCT --keyring-backend test -a) > /dev/null
+
 # Collect genesis transactions
 $GAIA_CMD collect-gentxs 2> /dev/null
 
