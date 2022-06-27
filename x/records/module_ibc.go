@@ -181,7 +181,6 @@ func (im IBCModule) OnAcknowledgementPacket(
 ) error {
 	// doCustomLogic(packet, ack)
 	// ICS-20 ack
-
 	var ack channeltypes.Acknowledgement
 	if err := ibctransfertypes.ModuleCdc.UnmarshalJSON(acknowledgement, &ack); err != nil {
 		im.keeper.Logger(ctx).Error("Error unmarshalling ack  %v", err)
@@ -216,7 +215,6 @@ func (im IBCModule) OnAcknowledgementPacket(
 		log := fmt.Sprintf("\t [IBC-TRANSFER] Acknowledgement_Error {%s}", resp.Error)
 		im.keeper.Logger(ctx).Error(log)
 	}
-
 	return nil
 }
 
