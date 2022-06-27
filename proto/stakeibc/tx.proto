@@ -122,7 +122,7 @@ message MsgChangeValidatorWeightResponse {
 message MsgDeleteValidator {
   string creator = 1;
   string hostZone = 2;
-  string name = 3;
+  string valAddr = 3 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
 }
 
 message MsgDeleteValidatorResponse {

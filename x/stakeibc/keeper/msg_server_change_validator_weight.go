@@ -18,7 +18,7 @@ func (k msgServer) ChangeValidatorWeight(goCtx context.Context, msg *types.MsgCh
 	}
 	validators := hostZone.Validators
 	for _, validator := range validators {
-		if validator.Address == msg.ValAddr {
+		if validator.GetAddress() == msg.ValAddr {
 			validator.Weight = msg.Weight
 			k.SetHostZone(ctx, hostZone)
 			return &types.MsgChangeValidatorWeightResponse{}, nil

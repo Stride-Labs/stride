@@ -151,7 +151,7 @@ func (k Keeper) UpdateWithdrawalBalance(ctx sdk.Context, zoneInfo types.HostZone
 	if withdrawalIca == nil || withdrawalIca.Address == "" {
 		k.Logger(ctx).Error("Zone %s is missing a delegation address!", zoneInfo.ChainId)
 	}
-	k.Logger(ctx).Info(fmt.Sprintf("\tQuerying withdrawalBalances for %s at %d height", zoneInfo.ChainId))
+	k.Logger(ctx).Info(fmt.Sprintf("\tQuerying withdrawalBalances for %s", zoneInfo.ChainId))
 
 	_, addr, _ := bech32.DecodeAndConvert(withdrawalIca.GetAddress())
 	data := bankTypes.CreateAccountBalancesPrefix(addr)

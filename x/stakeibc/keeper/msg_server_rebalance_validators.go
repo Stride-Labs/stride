@@ -82,7 +82,7 @@ func (k msgServer) RebalanceValidators(goCtx context.Context, msg *types.MsgReba
 	}
 
 	var msgs []sdk.Msg
-	delegatorAddressStr := hostZone.DelegationAccount.Address
+	delegatorAddressStr := hostZone.GetDelegationAccount().GetAddress()
 	delegatorAddress := sdk.AccAddress(delegatorAddressStr)
 
 	for i := 1; i < maxNumRebalance; i++ {
@@ -138,7 +138,7 @@ func (k msgServer) RebalanceValidators(goCtx context.Context, msg *types.MsgReba
 	}
 
 	connectionId := hostZone.GetConnectionId()
-	err = k.SubmitTxs(ctx, connectionId, msgs, *hostZone.DelegationAccount)
+	err = k.SubmitTxs(ctx, connectionId, msgs, *hostZone.GetDelegationAccount())
 	if err != nil {
 		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "Failed to SubmitTxs for %s, %s, %s", connectionId, hostZone.ChainId, msgs)
 	}
