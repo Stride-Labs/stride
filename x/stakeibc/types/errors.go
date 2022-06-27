@@ -17,4 +17,5 @@ var (
 	ErrValidatorAlreadyExists = sdkerrors.Register(ModuleName, 1505, "validator already exists")
 	ErrNoValidatorWeights     = sdkerrors.Register(ModuleName, 1506, "no non-zero validator weights")
 	ErrValidatorNotFound      = sdkerrors.Register(ModuleName, 1507, "validator not found")
+	ErrWeightsNotDifferent    = sdkerrors.Register(ModuleName, 1508, "validator weights haven't changed")
 )
