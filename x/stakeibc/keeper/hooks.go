@@ -26,22 +26,23 @@ import (
 func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochIdentifier string, epochNumber int64) {
 	// every epoch
 	k.Logger(ctx).Info(fmt.Sprintf("Handling epoch start %s %d", epochIdentifier, epochNumber))
+
+	// process redemption records
+	if epochIdentifier == "day" {
+		// here, we process everything we need to for redemptions
+		k.Logger(ctx).Info(fmt.Sprintf("Day %d Beginning", epochNumber))
+		// first we initiate unbondings from any hostZone where it's appropriate
+		k.InitiateAllHostZoneUnbondings(ctx, uint64(epochNumber))
+		// then we check previous epochs to see if unbondings finished, and sweep the tokens if so
+		k.SweepAllUnbondedTokens(ctx)
+		// then we cleanup any records that are no longer needed
+		k.CleanupEpochUnbondingRecords(ctx)
+		// lastly we create an empty unbonding record for this epoch
+		k.CreateEpochUnbondings(ctx, epochNumber)
+	}
+
 	if epochIdentifier == epochstypes.STRIDE_EPOCH {
 		k.Logger(ctx).Info(fmt.Sprintf("Stride Epoch %d", epochNumber))
-
-		// process redemption records
-		if epochIdentifier == "day" {
-			// here, we process everything we need to for redemptions
-			k.Logger(ctx).Info(fmt.Sprintf("Day %d Beginning", epochNumber))
-			// first we initiate unbondings from any hostZone where it's appropriate
-			k.InitiateAllHostZoneUnbondings(ctx, uint64(epochNumber))
-			// then we check previous epochs to see if unbondings finished, and sweep the tokens if so
-			k.SweepAllUnbondedTokens(ctx)
-			// then we cleanup any records that are no longer needed
-			k.CleanupEpochUnbondingRecords(ctx)
-			// lastly we create an empty unbonding record for this epoch
-			k.CreateEpochUnbondings(ctx, epochNumber)
-		}
 
 		// NOTE: We could nest this under `if epochNumber%depositInterval == 0 {`
 		// -- should we?

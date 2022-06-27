@@ -3,8 +3,6 @@ package keeper
 import (
 	"fmt"
 
-	icqkeeper "github.com/Stride-Labs/stride/x/interchainquery/keeper"
-	icqtypes "github.com/Stride-Labs/stride/x/interchainquery/types"
 	recordstypes "github.com/Stride-Labs/stride/x/records/types"
 	"github.com/Stride-Labs/stride/x/stakeibc/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -12,22 +10,25 @@ import (
 )
 
 func (k Keeper) CreateEpochUnbondings(ctx sdk.Context, epochNumber int64) bool {
-	var hostZoneUnbondings = map[string]*recordstypes.EpochUnbondingRecordHostZoneUnbonding{}
-	addEpochUndelegation := func(index int64, hostZone types.HostZone) (stop bool) {
-		hostZoneUnbonding := recordstypes.EpochUnbondingRecordHostZoneUnbonding{
+	hostZoneUnbondings := make(map[string]*recordstypes.HostZoneUnbonding)
+	addEpochUndelegation := func(ctx sdk.Context, index int64, hostZone types.HostZone) error {
+		hostZoneUnbonding := recordstypes.HostZoneUnbonding{
 			Amount:        uint64(0),
 			Denom:         hostZone.HostDenom,
 			HostZoneId:    hostZone.ChainId,
 			UnbondingSent: false,
 		}
 		hostZoneUnbondings[hostZone.ChainId] = &hostZoneUnbonding
-		return false
+		return nil
 	}
+
 	k.IterateHostZones(ctx, addEpochUndelegation)
 	epochUnbondingRecord := recordstypes.EpochUnbondingRecord{
 		EpochNumber:        epochNumber,
 		HostZoneUnbondings: hostZoneUnbondings,
 	}
+	k.Logger(ctx).Info(fmt.Sprintf("epoch unbonding MOOSE %s", epochUnbondingRecord.String()))
+	k.Logger(ctx).Info(fmt.Sprintf("hostZoneUnbondings MOOSE %v", hostZoneUnbondings))
 	k.RecordsKeeper.AppendEpochUnbondingRecord(ctx, epochUnbondingRecord)
 	return true
 }
@@ -37,7 +38,7 @@ func (k Keeper) SendHostZoneUnbondings(ctx sdk.Context, hostZone types.HostZone)
 	// regardless of what epoch they belong to
 	totalAmtToUnbond := uint64(0)
 	var msgs []sdk.Msg
-	var allHostZoneUnbondings *[]recordstypes.EpochUnbondingRecordHostZoneUnbonding
+	var allHostZoneUnbondings *[]recordstypes.HostZoneUnbonding
 	for _, epochUnbonding := range k.RecordsKeeper.GetAllEpochUnbondingRecord(ctx) {
 		hostZoneRecord, found := epochUnbonding.HostZoneUnbondings[hostZone.ChainId]
 		if !found {
@@ -110,40 +111,8 @@ func (k Keeper) CleanupEpochUnbondingRecords(ctx sdk.Context) bool {
 func (k Keeper) SweepAllUnbondedTokens(ctx sdk.Context) bool {
 	// this function goes through each host zone, and sees if any tokens
 	// have been unbonded and are ready to sweep. If so, it processes them
-	for _, hostZone := range k.GetAllHostZone(ctx) {
-		var queryBalanceCB icqkeeper.Callback = func(icqk icqkeeper.Keeper, ctx sdk.Context, args []byte, query icqtypes.Query) error {
-			k.Logger(ctx).Info(fmt.Sprintf("\tunbonding query callback on %s", hostZone.ChainId))
-			queryRes := stakingtypes.QueryDelegatorUnbondingDelegationsResponse{}
-			err := k.cdc.Unmarshal(args, &queryRes)
-			if err != nil {
-				k.Logger(ctx).Error("Unable to unmarshal balances info for zone", "err", err)
-				return err
-			}
-			for _, unbondingResponse := range queryRes.UnbondingResponses {
-				// delegatorAddr := unbondingResponse.DelegatorAddress
-				validatorAddr := unbondingResponse.ValidatorAddress
-				unbondingEntries := unbondingResponse.Entries
-				for _, unbondingEntry := range unbondingEntries {
-					/*
-						unbondingEntry has CreationHeight, CompletionTime, InitialBalance, Balance
-					*/
-					balance := unbondingEntry.Balance
-					if !balance.IsZero() {
-						// this entry is unbonded!
-						k.Logger(ctx).Info(fmt.Sprintf("\t%s Tokens on %s Zone with validator %s are unbonded", balance.String(), hostZone.ChainId, validatorAddr))
-					}
-				}
-			}
 
-			/*
-				TODO Handle logic here for how to unbond tokens
-			*/
+	// TODO: replace with clock time check
 
-			return nil
-		}
-		k.Logger(ctx).Info(fmt.Sprintf("Checking if any unbondings occurred on host zone %s", hostZone.ChainId))
-		delegationIca := hostZone.GetDelegationAccount()
-		k.InterchainQueryKeeper.QueryUnbondingDelegation(ctx, hostZone, queryBalanceCB, delegationIca.Address)
-	}
 	return true
 }
