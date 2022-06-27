@@ -1,16 +1,10 @@
 FROM golang:1.17-bullseye
 
-# TODO uncomment update if installs are breaking below
-# RUN apt update
 RUN apt install git
 
-RUN apt-get update
-RUN apt-get install jq --yes
-
 WORKDIR /src/app
-
-RUN git clone https://github.com/Stride-Labs/icq.git
-RUN cp -r icq/* .
+RUN git clone https://github.com/Stride-Labs/interchain-queries.git
+RUN cp -r interchain-queries/* .
 RUN rm -rf interchain-queries
 
 # copy over stride module and install it
@@ -19,8 +13,6 @@ RUN mkdir stride_ref/stride
 COPY . /src/app/stride_ref/stride
 WORKDIR /src/app/stride_ref/stride
 WORKDIR /src/app
-RUN go get github.com/Stride-Labs/interchain-queries/cmd
-RUN go get github.com/Stride-Labs/interchain-queries/pkg/runner
 RUN go mod download
 RUN go build
 
