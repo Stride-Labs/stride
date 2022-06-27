@@ -537,7 +537,6 @@ func NewStrideApp(
 		icaModule,
 		recordsModule,
 		// this line is used by starport scaffolding # stargate/app/appModule
-		epochsModule,
 	)
 
 	// During begin block slashing happens after distr.BeginBlocker so that

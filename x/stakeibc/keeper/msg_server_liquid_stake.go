@@ -4,7 +4,7 @@ import (
 	"context"
 	"strconv"
 
-	recordtypes "github.com/Stride-Labs/stride/x/records/types"
+	epochtypes "github.com/Stride-Labs/stride/x/epochs/types"
 	"github.com/Stride-Labs/stride/x/stakeibc/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -70,10 +70,20 @@ func (k msgServer) LiquidStake(goCtx context.Context, msg *types.MsgLiquidStake)
 		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidCoins, "failed to mint stAssets to user")
 	}
 
-	// // create a deposit record of these tokens
-	depositRecord := recordtypes.NewDepositRecord(msg.Amount, msg.HostDenom, hostZone.ChainId,
-		sender.String(), recordtypes.DepositRecord_RECEIPT)
-	k.RecordsKeeper.AppendDepositRecord(ctx, *depositRecord)
+	// create a deposit record of these tokens (pending transfer)
+	strideEpochTracker, found := k.GetEpochTracker(ctx, epochtypes.STRIDE_EPOCH)
+	if !found {
+		k.Logger(ctx).Info("failed to find epoch")
+		return nil, sdkerrors.Wrapf(types.ErrInvalidLengthEpochTracker, "no number for epoch (%s)", epochtypes.STRIDE_EPOCH)
+	}
+	// Does this use too much gas?
+	depositRecord, found := k.RecordsKeeper.GetDepositRecordByEpochAndChain(ctx, strideEpochTracker.EpochNumber, hostZone.ChainId)
+	if !found {
+		k.Logger(ctx).Info("failed to find deposit record")
+		return nil, sdkerrors.Wrapf(types.ErrInvalidLengthEpochTracker, "no deposit record (%s)", strideEpochTracker.EpochNumber)
+	}
+	depositRecord.Amount += msg.Amount
+	k.RecordsKeeper.SetDepositRecord(ctx, *depositRecord)
 
 	return &types.MsgLiquidStakeResponse{}, nil
 }

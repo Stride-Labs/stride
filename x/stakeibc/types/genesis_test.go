@@ -36,28 +36,7 @@ func TestGenesisState_Validate(t *testing.T) {
 					},
 				},
 				HostZoneCount: 2,
-				// this line is used by starport scaffolding # types/genesis/validField
-			},
-			valid: true,
-		},
-		{
-			desc: "duplicated hostZone",
 			genState: &types.GenesisState{
-				HostZoneList: []types.HostZone{
-					{
-						Id: 0,
-					},
-					{
-						Id: 0,
-					},
-				},
-			},
-			valid: false,
-		},
-		{
-			desc: "invalid hostZone count",
-			genState: &types.GenesisState{
-				HostZoneList: []types.HostZone{
 					{
 						Id: 1,
 					},
