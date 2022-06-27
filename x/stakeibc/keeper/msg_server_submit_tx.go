@@ -82,7 +82,6 @@ func (k Keeper) DelegateOnHost(ctx sdk.Context, hostZone types.HostZone, amt sdk
 	delegationIca := hostZone.GetDelegationAccount()
 
 	// Construct the transaction
-	// validator_address := "cosmosvaloper19e7sugzt8zaamk2wyydzgmg9n3ysylg6na6k6e" // gval2
 	targetDelegatedAmts, err := k.GetTargetValAmtsForHostZone(ctx, hostZone, amt.Amount.Uint64())
 	if err != nil {
 		k.Logger(ctx).Error(fmt.Sprintf("Error getting target delegation amounts for host zone %s", hostZone.ChainId))
@@ -90,11 +89,12 @@ func (k Keeper) DelegateOnHost(ctx sdk.Context, hostZone types.HostZone, amt sdk
 	}
 	for _, validator := range hostZone.GetValidators() {
 		relAmt := sdk.NewCoin(amt.Denom, sdk.NewIntFromUint64(targetDelegatedAmts[validator.Address]))
-		msgs = append(msgs, &stakingTypes.MsgDelegate{
-			DelegatorAddress: delegationIca.GetAddress(),
-			ValidatorAddress: validator.GetAddress(),
-			Amount:           relAmt})
-
+		if relAmt.Amount.IsPositive() {
+			msgs = append(msgs, &stakingTypes.MsgDelegate{
+				DelegatorAddress: delegationIca.GetAddress(),
+				ValidatorAddress: validator.GetAddress(),
+				Amount:           relAmt})
+		}
 	}
 	// construct the msg
 	// Send the transaction through SubmitTx

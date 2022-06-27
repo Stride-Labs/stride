@@ -16,10 +16,10 @@ func CmdRebalanceValidators() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "rebalance-validators [host-zone]",
 		Short: "Broadcast message rebalanceValidators",
-		Args:  cobra.ExactArgs(1),
+		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
 			argHostZone := args[0]
-
+			argNumValidators, err := strconv.ParseUint(args[1], 10, 64)
 			clientCtx, err := client.GetClientTxContext(cmd)
 			if err != nil {
 				return err
@@ -28,6 +28,7 @@ func CmdRebalanceValidators() *cobra.Command {
 			msg := types.NewMsgRebalanceValidators(
 				clientCtx.GetFromAddress().String(),
 				argHostZone,
+				argNumValidators,
 			)
 			if err := msg.ValidateBasic(); err != nil {
 				return err

@@ -18,12 +18,13 @@ func (k msgServer) ChangeValidatorWeight(goCtx context.Context, msg *types.MsgCh
 	}
 	validators := hostZone.Validators
 	for _, validator := range validators {
-		if validator.Name == msg.Name {
+		if validator.Address == msg.ValAddr {
 			validator.Weight = msg.Weight
+			k.SetHostZone(ctx, hostZone)
 			return &types.MsgChangeValidatorWeightResponse{}, nil
 		}
 	}
 
-	k.Logger(ctx).Error(fmt.Sprintf("Validator %s not found on Host Zone %s", msg.Name, msg.HostZone))
+	k.Logger(ctx).Error(fmt.Sprintf("Validator %s not found on Host Zone %s", msg.ValAddr, msg.HostZone))
 	return nil, types.ErrValidatorNotFound
 }
