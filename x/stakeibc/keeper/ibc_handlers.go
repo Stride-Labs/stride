@@ -105,7 +105,7 @@ func (k Keeper) HandleAcknowledgement(ctx sdk.Context, modulePacket channeltypes
 			continue
 		// withdrawing rewards ()
 		case "/cosmos.distribution.v1beta1.MsgWithdrawDelegatorReward":
-			// TODO: Implement! (lo pri)
+			// TODO [TEST-124]: Implement! (lo pri)
 			continue
 		case "/cosmos.bank.v1beta1.MsgSend":
 			response := banktypes.MsgSendResponse{}
