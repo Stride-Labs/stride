@@ -115,6 +115,7 @@ func (k Keeper) GetDepositRecordByEpochAndChain(ctx sdk.Context, epochNumber uin
 	return nil, false
 }
 
+// TODO: pass in hostZoneId
 func (k Keeper) GetTransferDepositRecordByAmount(ctx sdk.Context, amount int64)  (val *types.DepositRecord, found bool) {
 	records := k.GetAllDepositRecord(ctx)
 	for _, depositRecord := range records {
