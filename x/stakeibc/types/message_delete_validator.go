@@ -9,11 +9,11 @@ const TypeMsgDeleteValidator = "delete_validator"
 
 var _ sdk.Msg = &MsgDeleteValidator{}
 
-func NewMsgDeleteValidator(creator string, hostZone string, name string) *MsgDeleteValidator {
+func NewMsgDeleteValidator(creator string, hostZone string, valAddr string) *MsgDeleteValidator {
 	return &MsgDeleteValidator{
 		Creator:  creator,
 		HostZone: hostZone,
-		Name:     name,
+		ValAddr:  valAddr,
 	}
 }
 

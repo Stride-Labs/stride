@@ -93,29 +93,29 @@ func (k Keeper) GetAllHostZone(ctx sdk.Context) (list []types.HostZone) {
 	return
 }
 
-func (k Keeper) AddValidatorToHostZone(ctx sdk.Context, chainId string, val types.Validator) (success bool) {
-	hostZone, found := k.GetHostZone(ctx, chainId)
-	if !found {
-		k.Logger(ctx).Error(fmt.Sprintf("HostZone not found %s", chainId))
-		return false
-	}
-	hostZone.Validators = append(hostZone.Validators, &val)
-	return true
-}
+// func (k Keeper) AddValidatorToHostZone(ctx sdk.Context, chainId string, val types.Validator) (success bool) {
+// 	hostZone, found := k.GetHostZone(ctx, chainId)
+// 	if !found {
+// 		k.Logger(ctx).Error(fmt.Sprintf("HostZone not found %s", chainId))
+// 		return false
+// 	}
+// 	hostZone.Validators = append(hostZone.Validators, &val)
+// 	return true
+// }
 
-func (k Keeper) RemoveValidatorFromHostZone(ctx sdk.Context, chainId string, validatorName string) (success bool) {
+func (k Keeper) RemoveValidatorFromHostZone(ctx sdk.Context, chainId string, validatorAddress string) (success bool) {
 	hostZone, found := k.GetHostZone(ctx, chainId)
 	if !found {
 		k.Logger(ctx).Error(fmt.Sprintf("HostZone not found %s", chainId))
 		return false
 	}
 	for i, val := range hostZone.Validators {
-		if val.Name == validatorName {
+		if val.GetAddress() == validatorAddress {
 			hostZone.Validators = append(hostZone.Validators[:i], hostZone.Validators[i+1:]...)
 			return true
 		}
 	}
-	k.Logger(ctx).Error(fmt.Sprintf("Validator %s not found on Host Zone %s", validatorName, chainId))
+	k.Logger(ctx).Error(fmt.Sprintf("Validator %s not found on Host Zone %s", validatorAddress, chainId))
 	return false
 }
 

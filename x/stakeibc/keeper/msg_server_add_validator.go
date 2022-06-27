@@ -19,7 +19,7 @@ func (k msgServer) AddValidator(goCtx context.Context, msg *types.MsgAddValidato
 	validators := hostZone.Validators
 	// check that we don't already have this validator
 	for _, validator := range validators {
-		if validator.Address == msg.Address {
+		if validator.GetAddress() == msg.Address {
 			k.Logger(ctx).Info(fmt.Sprintf("Validator address %s already exists on Host Zone %s", msg.Address, msg.HostZone))
 			return nil, types.ErrValidatorAlreadyExists
 		}
