@@ -13,7 +13,7 @@ func NewMsgChangeValidatorWeight(creator string, hostZone string, address string
 	return &MsgChangeValidatorWeight{
 		Creator:  creator,
 		HostZone: hostZone,
-		Address:  address,
+		ValAddr:  address,
 		Weight:   weight,
 	}
 }

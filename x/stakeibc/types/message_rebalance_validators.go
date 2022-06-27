@@ -11,9 +11,9 @@ var _ sdk.Msg = &MsgRebalanceValidators{}
 
 func NewMsgRebalanceValidators(creator string, hostZone string, numValidators uint64) *MsgRebalanceValidators {
 	return &MsgRebalanceValidators{
-		Creator:       creator,
-		HostZone:      hostZone,
-		numValidators: numValidators,
+		Creator:      creator,
+		HostZone:     hostZone,
+		NumRebalance: numValidators,
 	}
 }
 
