@@ -64,6 +64,7 @@ func WithdrawalBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query icq
 		return err
 	}
 
+	//TODO(TEST-112) revisit this code, it's not vetted
 	coin := sdk.Coin{}
 	err = k.cdc.Unmarshal(args, &coin)
 	if err != nil {
@@ -86,7 +87,7 @@ func WithdrawalBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query icq
 	}
 
 	// Set withdrawal balance as attribute on HostZone's withdrawal ICA account
-	wa := zone.WithdrawalAccount
+	wa := zone.GetWithdrawalAccount()
 	wa.Balance = coin.Amount.Int64()
 	zone.WithdrawalAccount = wa
 	k.SetHostZone(ctx, zone)
@@ -120,6 +121,7 @@ func WithdrawalBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query icq
 	// TODO(TEST-112) safety check, balances should add to original amount
 	if (strideClaimFloored.Int64() + reinvestAmountCeil.Int64()) != coin.Amount.Int64() {
 		ctx.Logger().Error(fmt.Sprintf("Error with withdraw logic: %d, Fee portion: %d, reinvestPortion %d", coin.Amount.Int64(), strideClaimFloored.Int64(), reinvestAmountCeil.Int64()))
+		// TODO(TEST-112) will this crash the chain?
 		panic("Failed to subdivide rewards to feeAccount and delegationAccount")
 	}
 	strideCoin := sdk.NewCoin(coin.Denom, strideClaimFloored)

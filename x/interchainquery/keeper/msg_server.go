@@ -49,7 +49,6 @@ func (k msgServer) SubmitQueryResponse(goCtx context.Context, msg *types.MsgSubm
 			if !found {
 				return nil, fmt.Errorf("unable to fetch client state")
 			}
-
 			path := commitmenttypes.NewMerklePath([]string{pathParts[1], url.PathEscape(string(q.Request))}...)
 
 			merkleProof, err := commitmenttypes.ConvertProofs(msg.ProofOps)
