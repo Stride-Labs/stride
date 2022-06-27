@@ -4,10 +4,7 @@ package Stridelabs.stride.records;
 import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
 import "cosmos/base/query/v1beta1/pagination.proto";
-import "records/params.proto";
-import "records/user_redemption_record.proto";
-import "records/epoch_unbonding_record.proto";
-import "records/deposit_record.proto";
+import "records/genesis.proto";
 // this line is used by starport scaffolding # 1
 
 option go_package = "github.com/Stride-Labs/stride/x/records/types";
