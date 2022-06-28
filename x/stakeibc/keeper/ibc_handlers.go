@@ -225,9 +225,33 @@ func (k Keeper) HandleUndelegate(ctx sdk.Context, msg sdk.Msg) error {
 		return fmt.Errorf("unable to cast source message to MsgUndelegate")
 	}
 
+	// CHECK ZONE
+	hostZoneDenom := undelegateMsg.Amount.Denom
+	zone, err := k.GetHostZoneFromHostDenom(ctx, hostZoneDenom)
+	if err != nil {
+		return err
+	}
+
 	// Implement!
 	// burn stAssets if successful
 	// return stAssets to user if unsuccessful
+
+	// set unbondingTime on EpochUnbondingRecord.hostZoneUnbonding from light client
+	unbondingRecord, found := k.RecordsKeeper.GetLatestEpochUnbondingRecord(ctx)
+	if !found {
+		return sdkerrors.Wrapf(sdkerrors.ErrNotFound, "No unbonding record found")
+	}
+	blockTime, found := k.GetLightClientTimeSafely(ctx, zone.ConnectionId)
+	if !found {
+		k.Logger(ctx).Error(fmt.Sprintf("Could not find blockTime for host zone %s", zone.ChainId))
+	}
+	// iterate through all unbonding record hostZone unbondings and set the unbonding times
+	for _, unbonding := range unbondingRecord.HostZoneUnbondings {
+		if unbonding.HostZoneId == zone.ChainId {
+			unbonding.UnbondingTime = blockTime
+			k.Logger(ctx).Info(fmt.Sprintf("Set unbonding time for host zone %s's unbonding for %d%s", zone.ChainId, undelegateMsg.Amount.Amount.Int64(), undelegateMsg.Amount.Denom))
+		}
+	}
 
 	return nil
 }
