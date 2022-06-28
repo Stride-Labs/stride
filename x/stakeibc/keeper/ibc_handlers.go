@@ -3,6 +3,7 @@ package keeper
 import (
 	"encoding/json"
 	"fmt"
+	time "time"
 
 	epochtypes "github.com/Stride-Labs/stride/x/epochs/types"
 	recordstypes "github.com/Stride-Labs/stride/x/records/types"
@@ -97,7 +98,7 @@ func (k Keeper) HandleAcknowledgement(ctx sdk.Context, modulePacket channeltypes
 			}
 			k.Logger(ctx).Debug("Delegated", "response", response)
 			// we should update delegation records here.
-			if err := k.HandleUndelegate(ctx, src); err != nil {
+			if err := k.HandleUndelegate(ctx, src, response.CompletionTime); err != nil {
 				return err
 			}
 			continue
@@ -171,7 +172,7 @@ func (k *Keeper) HandleSend(ctx sdk.Context, msg sdk.Msg) error {
 			HostZoneId:  zone.ChainId,
 			Status:      recordstypes.DepositRecord_STAKE,
 			Source:      recordstypes.DepositRecord_WITHDRAWAL_ICA,
-			EpochNumber: uint64(epochNumber),
+			DepositEpochNumber: uint64(epochNumber),
 		}
 		k.RecordsKeeper.AppendDepositRecord(ctx, record)
 	} else {
@@ -214,8 +215,7 @@ func (k *Keeper) HandleDelegate(ctx sdk.Context, msg sdk.Msg) error {
 	return nil
 }
 
-// TODO(TEST-28): Burn stAssets if RedeemStake succeeds
-func (k Keeper) HandleUndelegate(ctx sdk.Context, msg sdk.Msg) error {
+func (k Keeper) HandleUndelegate(ctx sdk.Context, msg sdk.Msg, completionTime time.Time) error {
 	k.Logger(ctx).Info("Received MsgUndelegate acknowledgement")
 	// first, type assertion. we should have stakingtypes.MsgDelegate
 	undelegateMsg, ok := msg.(*stakingtypes.MsgUndelegate)
@@ -225,9 +225,38 @@ func (k Keeper) HandleUndelegate(ctx sdk.Context, msg sdk.Msg) error {
 		return fmt.Errorf("unable to cast source message to MsgUndelegate")
 	}
 
-	// Implement!
-	// burn stAssets if successful
-	// return stAssets to user if unsuccessful
+	// Check if the unbonding message was for a delegate account (msg.DelegatorAddress)
+	zone, err := k.GetHostZoneFromHostDenom(ctx, undelegateMsg.Amount.Denom)
+	if err != nil {
+		return err
+	}
+	if undelegateMsg.DelegatorAddress != zone.GetDelegationAccount().GetAddress() {
+		return sdkerrors.Wrapf(sdkerrors.ErrLogic, "Undelegate message was not for a delegation account")
+	}
+	
+	zone.StakedBal -= undelegateMsg.Amount.Amount.Int64()
+	k.SetHostZone(ctx, *zone)
+
+	epochTracker, found := k.GetEpochTracker(ctx, "day")
+	if !found {
+		return sdkerrors.Wrapf(types.ErrInvalidLengthEpochTracker, "no number for epoch (%s)", "day")
+	}
+	currentEpochNumber := epochTracker.GetEpochNumber()
+	for _, epochUnbonding := range k.RecordsKeeper.GetAllEpochUnbondingRecord(ctx) {
+		if epochUnbonding.UnbondingEpochNumber == currentEpochNumber {
+			continue
+		}
+		hostZoneRecord, found := epochUnbonding.HostZoneUnbondings[zone.ChainId]
+		if !found {
+			k.Logger(ctx).Error(fmt.Sprintf("Host zone unbonding record not found for hostZoneId %s in epoch %d", zone.ChainId, epochUnbonding.UnbondingEpochNumber))
+			continue
+		}
+		hostZoneRecord.Status = recordstypes.HostZoneUnbonding_UNBONDED
+		hostZoneRecord.UnbondingTime = completionTime
+	}
+
+	// burn stAssets upon successful unbonding
+	k.bankKeeper.BurnCoins(ctx, types.ModuleName, sdk.NewCoins(undelegateMsg.Amount))
 
 	return nil
 }

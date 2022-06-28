@@ -16,7 +16,7 @@ func (k Keeper) CreateEpochUnbondings(ctx sdk.Context, epochNumber int64) bool {
 			Amount:        uint64(0),
 			Denom:         hostZone.HostDenom,
 			HostZoneId:    hostZone.ChainId,
-			UnbondingSent: false,
+			Status: types.HostZoneUnbonding_BONDED,
 		}
 		hostZoneUnbondings[hostZone.ChainId] = &hostZoneUnbonding
 		return nil
@@ -24,7 +24,7 @@ func (k Keeper) CreateEpochUnbondings(ctx sdk.Context, epochNumber int64) bool {
 
 	k.IterateHostZones(ctx, addEpochUndelegation)
 	epochUnbondingRecord := recordstypes.EpochUnbondingRecord{
-		EpochNumber:        epochNumber,
+		UnbondingEpochNumber:        epochNumber,
 		HostZoneUnbondings: hostZoneUnbondings,
 	}
 	k.Logger(ctx).Info(fmt.Sprintf("epoch unbonding MOOSE %s", epochUnbondingRecord.String()))
@@ -42,10 +42,10 @@ func (k Keeper) SendHostZoneUnbondings(ctx sdk.Context, hostZone types.HostZone)
 	for _, epochUnbonding := range k.RecordsKeeper.GetAllEpochUnbondingRecord(ctx) {
 		hostZoneRecord, found := epochUnbonding.HostZoneUnbondings[hostZone.ChainId]
 		if !found {
-			k.Logger(ctx).Error(fmt.Sprintf("Host zone unbonding record not found for hostZoneId %s in epoch %d", hostZone.ChainId, epochUnbonding.EpochNumber))
+			k.Logger(ctx).Error(fmt.Sprintf("Host zone unbonding record not found for hostZoneId %s in epoch %d", hostZone.ChainId, epochUnbonding.UnbondedEpochNumber))
 			continue
 		}
-		if !hostZoneRecord.UnbondingSent { // we only send the ICA call if this hostZone hasn't triggered yet
+		if hostZoneRecord.Status == recordstypes.HostZoneUnbonding_BONDED{ // we only send the ICA call if this hostZone hasn't triggered yet
 			totalAmtToUnbond += hostZoneRecord.Amount
 			*allHostZoneUnbondings = append(*allHostZoneUnbondings, *hostZoneRecord)
 		}
@@ -65,11 +65,6 @@ func (k Keeper) SendHostZoneUnbondings(ctx sdk.Context, hostZone types.HostZone)
 	if err != nil {
 		k.Logger(ctx).Error(fmt.Sprintf("Error submitting unbonding tx: %s", err))
 		return false
-	}
-
-	// mark all of these unbondings as done
-	for _, unbonding := range *allHostZoneUnbondings {
-		unbonding.UnbondingSent = true
 	}
 
 	ctx.EventManager().EmitEvents(sdk.Events{
