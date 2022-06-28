@@ -158,7 +158,7 @@ func (k Keeper) CreateDepositRecordsForEpoch(ctx sdk.Context, epochNumber int64)
 			Denom:       zoneInfo.HostDenom,
 			HostZoneId:  zoneInfo.ChainId,
 			Status:      recordstypes.DepositRecord_TRANSFER,
-			EpochNumber: uint64(epochNumber),
+			DepositEpochNumber: uint64(epochNumber),
 		}
 		k.RecordsKeeper.AppendDepositRecord(ctx, depositRecord)
 		return nil
@@ -186,7 +186,7 @@ func (k Keeper) StakeExistingDepositsOnHostZones(ctx sdk.Context, epochNumber in
 		return record.Status == recordstypes.DepositRecord_STAKE
 	})
 	for _, depositRecord := range stakeDepositRecords {
-		if depositRecord.EpochNumber < uint64(epochNumber) {
+		if depositRecord.DepositEpochNumber < uint64(epochNumber) {
 			pstr := fmt.Sprintf("\t[STAKE] Processing deposit {%d} {%s} {%d}", depositRecord.Id, depositRecord.Denom, depositRecord.Amount)
 			k.Logger(ctx).Info(pstr)
 			hostZone, hostZoneFound := k.GetHostZone(ctx, depositRecord.HostZoneId)
@@ -232,7 +232,7 @@ func (k Keeper) TransferExistingDepositsToHostZones(ctx sdk.Context, epochNumber
 	addr := k.accountKeeper.GetModuleAccount(ctx, types.ModuleName).GetAddress().String()
 	var emptyRecords []uint64
 	for _, depositRecord := range transferDepositRecords {
-		if depositRecord.EpochNumber < uint64(epochNumber) {
+		if depositRecord.DepositEpochNumber < uint64(epochNumber) {
 			pstr := fmt.Sprintf("\t[TRANSFER] Processing deposits {%d} {%s} {%d}", depositRecord.Id, depositRecord.Denom, depositRecord.Amount)
 			k.Logger(ctx).Info(pstr)
 
