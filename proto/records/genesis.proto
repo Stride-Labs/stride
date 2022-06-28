@@ -78,13 +78,19 @@ message HostZoneUnbonding {
     BONDED = 0;
     // unbonding completed on delegate account
     UNBONDED = 1;
+    // transfer from delegate account to withdrawal account attempted
+    PENDING_TRANSFER = 2;
+    // transfer success
+    TRANSFERRED = 3;
   }
   uint64 amount = 1;
   string denom = 2;
   string hostZoneId = 3;
   Status status = 4;
-  google.protobuf.Timestamp unbondingTime = 5
+  google.protobuf.Timestamp completionTime = 5
       [(gogoproto.nullable) = false, (gogoproto.stdtime) = true, (gogoproto.moretags) = "yaml:\"unbonding_time\""];
+  // Index UserRedemptionRecords here (note: id is {chain_id}.{epoch}.{sender})
+  repeated string userRedemptionRecords = 6;
 }
 
 message EpochUnbondingRecord {
