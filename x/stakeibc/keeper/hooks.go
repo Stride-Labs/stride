@@ -101,6 +101,17 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochIdentifier string, epochN
 		if epochNumber%reinvestInterval == 0 { // allow a few blocks from UpdateUndelegatedBal to avoid conflicts
 			for _, hz := range k.GetAllHostZone(ctx) {
 				if (&hz).WithdrawalAccount != nil { // only process host zones once withdrawal accounts are registered
+
+					// read clock time on host zome
+					// k.ReadClockTime(ctx, hz)
+					blockTime, found := k.GetLightClientTimeSafely(ctx, hz.ConnectionId)
+					if !found {
+						k.Logger(ctx).Error(fmt.Sprintf("LILLO Could not find blockTime for host zone %s", hz.ConnectionId))
+						continue
+					} else {
+						k.Logger(ctx).Info(fmt.Sprintf("LILLO Found blockTime for host zone %s: %d", hz.ConnectionId, blockTime))
+					}
+
 					k.UpdateWithdrawalBalance(ctx, hz)
 				}
 			}
