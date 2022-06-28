@@ -75,6 +75,7 @@ message hostZoneUnbonding {
   string denom = 2;
   string hostZoneId = 3;
   bool   unbondingSent = 4;
+  uint64 unbondingTime = 5;
 }
 
 message EpochUnbondingRecord {

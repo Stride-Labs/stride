@@ -27,6 +27,13 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochIdentifier string, epochN
 	// every epoch
 	k.Logger(ctx).Info(fmt.Sprintf("Handling epoch start %s %d", epochIdentifier, epochNumber))
 
+	epochTracker := types.EpochTracker{
+		EpochIdentifier: epochIdentifier,
+		EpochNumber:     uint64(epochNumber),
+	}
+	// deposit records *must* exist for this epoch
+	k.SetEpochTracker(ctx, epochTracker)
+
 	// process redemption records
 	if epochIdentifier == "day" {
 		// here, we process everything we need to for redemptions
@@ -53,12 +60,6 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochIdentifier string, epochN
 			k.Logger(ctx).Error(fmt.Sprintf("Stride Epoch %d negative", epochNumber))
 			return
 		}
-		epochTracker := types.EpochTracker{
-			EpochIdentifier: epochIdentifier,
-			EpochNumber:     uint64(epochNumber),
-		}
-		// deposit records *must* exist for this epoch
-		k.SetEpochTracker(ctx, epochTracker)
 
 		k.Logger(ctx).Info("Triggering deposits")
 		// Create a new deposit record for each host zone for the upcoming epoch
