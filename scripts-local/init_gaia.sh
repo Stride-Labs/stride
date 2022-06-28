@@ -20,6 +20,10 @@ sed -i -E "s|timeout_commit = \"5s\"|timeout_commit = \"${BLOCK_TIME}\"|g" "${ST
 sed -i -E 's|enable = false|enable = true|g'  "${STATE}/${GAIA_NODE_NAME}/config/app.toml"
 sed -i -E 's|unsafe-cors = false|unsafe-cors = true|g' "${STATE}/${GAIA_NODE_NAME}/config/app.toml"
 
+# set the unbonding time
+GAIA_CFG_TMP="${STATE}/${GAIA_NODE_NAME}/config/genesis.json"
+jq '.app_state.staking.params.unbonding_time = $newVal' --arg newVal "180s" $GAIA_CFG_TMP > json.tmp && mv json.tmp $GAIA_CFG_TMP
+
 # add validator account
 echo $GAIA_VAL_MNEMONIC | $GAIA_CMD keys add $GAIA_VAL_ACCT --recover --keyring-backend=test 
 # get validator address
