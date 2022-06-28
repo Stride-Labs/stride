@@ -104,6 +104,15 @@ func (k Keeper) CleanupEpochUnbondingRecords(ctx sdk.Context) bool {
 }
 
 func (k Keeper) SweepAllUnbondedTokens(ctx sdk.Context) bool {
+	// NOTE: at the beginning of the epoch we mark all PENDING_TRANSFER HostZoneUnbondingRecords as UNBONDED 
+	// so that they're retried if the transfer fails
+	for _, epochUnbondingRecord := range k.RecordsKeeper.GetAllEpochUnbondingRecord(ctx) {
+		for _, hostZoneUnbonding := range epochUnbondingRecord.HostZoneUnbondings {
+			if hostZoneUnbonding.Status == recordstypes.HostZoneUnbonding_PENDING_TRANSFER {
+				hostZoneUnbonding.Status = recordstypes.HostZoneUnbonding_UNBONDED
+			}
+		}
+	}
 	// this function goes through each host zone, and sees if any tokens
 	// have been unbonded and are ready to sweep. If so, it processes them
 
