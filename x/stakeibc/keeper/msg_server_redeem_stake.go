@@ -112,6 +112,10 @@ func (k Keeper) RedeemStake(goCtx context.Context, msg *types.MsgRedeemStake) (*
 	k.RecordsKeeper.SetUserRedemptionRecord(ctx, userRedemptionRecord)
 
 	// Set the UserUnbondingRecords on the proper HostZoneUnbondingRecord
+	hostZoneUnbondings := epochUnbondingRecord.GetHostZoneUnbondings()
+	if len(hostZoneUnbondings) == 0 {
+		hostZoneUnbondings = make(map[string]*recordstypes.HostZoneUnbonding)
+	}
 	epochUnbondingRecord.HostZoneUnbondings[hostZone.ChainId] = hostZoneUnbonding
 	k.RecordsKeeper.SetEpochUnbondingRecord(ctx, epochUnbondingRecord)
 

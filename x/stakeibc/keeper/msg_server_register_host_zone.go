@@ -86,6 +86,7 @@ func (k Keeper) RegisterHostZone(goCtx context.Context, msg *types.MsgRegisterHo
 	k.Logger(ctx).Info(fmt.Sprintf("hostZoneUnbondings BEAR %v", hostZoneUnbondings))
 	if len(hostZoneUnbondings) == 0 {
 		hostZoneUnbondings = make(map[string]*recordstypes.HostZoneUnbonding)
+		k.Logger(ctx).Info(fmt.Sprintf("hostZoneUnbondings BEAR after check %v", hostZoneUnbondings))
 	}
 	k.Logger(ctx).Info(fmt.Sprintf("hostZoneUnbondings BEAR after check %v", hostZoneUnbondings))
 	hostZoneUnbondings[zone.ChainId] = &recordstypes.HostZoneUnbonding{
@@ -94,6 +95,7 @@ func (k Keeper) RegisterHostZone(goCtx context.Context, msg *types.MsgRegisterHo
 		HostZoneId: zone.ChainId,
 		Status:     recordstypes.HostZoneUnbonding_UNBONDED,
 	}
+	epochUnbondingRecord.HostZoneUnbondings = hostZoneUnbondings
 	k.Logger(ctx).Info(fmt.Sprintf("hostZoneUnbondings MOOSE after check %v", hostZoneUnbondings))
 	k.RecordsKeeper.SetEpochUnbondingRecord(ctx, epochUnbondingRecord)
 	epochUnbondingRecordNew, found := k.RecordsKeeper.GetLatestEpochUnbondingRecord(ctx)
