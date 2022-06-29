@@ -170,7 +170,7 @@ func (k Keeper) CreateDepositRecordsForEpoch(ctx sdk.Context, epochNumber int64)
 
 func (k Keeper) SetWithdrawalAddress(ctx sdk.Context) {
 	setWithdrawalAddresses := func(ctx sdk.Context, index int64, zoneInfo types.HostZone) error {
-		k.Logger(ctx).Info(fmt.Sprintf("\tsetting withdrawal addresses on host zones"))
+		k.Logger(ctx).Info("\tsetting withdrawal addresses on host zones")
 		err := k.SetWithdrawalAddressOnHost(ctx, zoneInfo)
 		if err != nil {
 			k.Logger(ctx).Error(fmt.Sprintf("Did not set withdrawal address to %s on %s", zoneInfo.GetWithdrawalAccount().GetAddress(), zoneInfo.GetChainId()))
@@ -196,7 +196,7 @@ func (k Keeper) StakeExistingDepositsOnHostZones(ctx sdk.Context, epochNumber in
 				continue
 			}
 			delegateAccount := hostZone.GetDelegationAccount()
-			if delegateAccount == nil || delegateAccount.Address == "" {
+			if delegateAccount == nil || delegateAccount.GetAddress() == "" {
 				k.Logger(ctx).Error("[STAKE] Zone %s is missing a delegation address!", hostZone.ChainId)
 				continue
 			}
@@ -250,11 +250,11 @@ func (k Keeper) TransferExistingDepositsToHostZones(ctx sdk.Context, epochNumber
 				continue
 			}
 			delegateAccount := hostZone.GetDelegationAccount()
-			if delegateAccount == nil || delegateAccount.Address == "" {
+			if delegateAccount == nil || delegateAccount.GetAddress() == "" {
 				k.Logger(ctx).Error("[TRANSFER] Zone %s is missing a delegation address!", hostZone.ChainId)
 				continue
 			}
-			delegateAddress := delegateAccount.Address
+			delegateAddress := delegateAccount.GetAddress()
 			// TODO(TEST-89): Set NewHeight relative to the most recent known gaia height (based on the LC)
 			// TODO(TEST-90): why do we have two gaia LCs?
 			timeoutHeight := clienttypes.NewHeight(0, 1000000)

@@ -28967,7 +28967,47 @@ paths:
           schema:
             type: object
             properties:
+<<<<<<< HEAD
               DepositRecord:
+=======
+              Delegation:
+                type: object
+                properties:
+                  delegateAcctAddress:
+                    type: string
+                  validator:
+                    type: object
+                    properties:
+                      name:
+                        type: string
+                      address:
+                        type: string
+                      status:
+                        type: string
+                      commissionRate:
+                        type: string
+                        format: uint64
+                      delegationAmt:
+                        type: string
+                        format: uint64
+                      weight:
+                        type: string
+                        format: uint64
+                  amt:
+                    type: string
+                    format: int64
+        default:
+          description: An unexpected error response.
+          schema:
+            type: object
+            properties:
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+>>>>>>> test-validator-selection
                 type: array
                 items:
                   type: object
@@ -29196,16 +29236,35 @@ paths:
                         properties:
                           amount:
                             type: string
+<<<<<<< HEAD
                             format: uint64
                           denom:
                             type: string
                           hostZoneId:
+=======
+                          commissionRate:
+                            type: string
+                            format: uint64
+                          delegationAmt:
+                            type: string
+                            format: uint64
+                          weight:
+                            type: string
+                            format: uint64
+                    blacklistedValidators:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          name:
+>>>>>>> test-validator-selection
                             type: string
                           unbondingTime:
                             type: string
                             format: uint64
                           status:
                             type: string
+<<<<<<< HEAD
                             enum:
                               - BONDED
                               - UNBONDED
@@ -29228,6 +29287,177 @@ paths:
                                   [(gogoproto.nullable) = false, (gogoproto.stdtime) = true, (gogoproto.moretags) = "yaml:\"unbonding_time\""];
                               Index UserRedemptionRecords here (note: id is
                               {chain_id}.{epoch}.{sender})
+=======
+                          commissionRate:
+                            type: string
+                            format: uint64
+                          delegationAmt:
+                            type: string
+                            format: uint64
+                          weight:
+                            type: string
+                            format: uint64
+                    withdrawalAccount:
+                      type: object
+                      properties:
+                        address:
+                          type: string
+                        delegations:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              delegateAcctAddress:
+                                type: string
+                              validator:
+                                type: object
+                                properties:
+                                  name:
+                                    type: string
+                                  address:
+                                    type: string
+                                  status:
+                                    type: string
+                                  commissionRate:
+                                    type: string
+                                    format: uint64
+                                  delegationAmt:
+                                    type: string
+                                    format: uint64
+                                  weight:
+                                    type: string
+                                    format: uint64
+                              amt:
+                                type: string
+                                format: int64
+                        target:
+                          type: string
+                          enum:
+                            - DELEGATION
+                            - FEE
+                            - WITHDRAWAL
+                          default: DELEGATION
+                        balance:
+                          type: string
+                          format: int64
+                          title: TODO(TEST-112) use cosmos dec for all balances
+                      title: >-
+                        TODO(TEST-XX): Update these fields to be more useful
+                        (e.g. balances should be coins, maybe store port name
+                        directly)
+                    feeAccount:
+                      type: object
+                      properties:
+                        address:
+                          type: string
+                        delegations:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              delegateAcctAddress:
+                                type: string
+                              validator:
+                                type: object
+                                properties:
+                                  name:
+                                    type: string
+                                  address:
+                                    type: string
+                                  status:
+                                    type: string
+                                  commissionRate:
+                                    type: string
+                                    format: uint64
+                                  delegationAmt:
+                                    type: string
+                                    format: uint64
+                                  weight:
+                                    type: string
+                                    format: uint64
+                              amt:
+                                type: string
+                                format: int64
+                        target:
+                          type: string
+                          enum:
+                            - DELEGATION
+                            - FEE
+                            - WITHDRAWAL
+                          default: DELEGATION
+                        balance:
+                          type: string
+                          format: int64
+                          title: TODO(TEST-112) use cosmos dec for all balances
+                      title: >-
+                        TODO(TEST-XX): Update these fields to be more useful
+                        (e.g. balances should be coins, maybe store port name
+                        directly)
+                    delegationAccount:
+                      type: object
+                      properties:
+                        address:
+                          type: string
+                        delegations:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              delegateAcctAddress:
+                                type: string
+                              validator:
+                                type: object
+                                properties:
+                                  name:
+                                    type: string
+                                  address:
+                                    type: string
+                                  status:
+                                    type: string
+                                  commissionRate:
+                                    type: string
+                                    format: uint64
+                                  delegationAmt:
+                                    type: string
+                                    format: uint64
+                                  weight:
+                                    type: string
+                                    format: uint64
+                              amt:
+                                type: string
+                                format: int64
+                        target:
+                          type: string
+                          enum:
+                            - DELEGATION
+                            - FEE
+                            - WITHDRAWAL
+                          default: DELEGATION
+                        balance:
+                          type: string
+                          format: int64
+                          title: TODO(TEST-112) use cosmos dec for all balances
+                      title: >-
+                        TODO(TEST-XX): Update these fields to be more useful
+                        (e.g. balances should be coins, maybe store port name
+                        directly)
+                    IBCDenom:
+                      type: string
+                      title: ibc denom on stride
+                    HostDenom:
+                      type: string
+                      title: native denom on host zone
+                    LastRedemptionRate:
+                      type: string
+                      title: >-
+                        TODO(TEST-68): Should we make this an array and store
+                        the last n redemption rates
+
+                        then calculate a TWARR?
+                    RedemptionRate:
+                      type: string
+                  title: 'next id: 13'
+>>>>>>> test-validator-selection
               pagination:
                 type: object
                 properties:
@@ -29360,11 +29590,32 @@ paths:
                           type: string
                         hostZoneId:
                           type: string
+<<<<<<< HEAD
                         unbondingTime:
+=======
+                        commissionRate:
+                          type: string
+                          format: uint64
+                        delegationAmt:
+                          type: string
+                          format: uint64
+                        weight:
+                          type: string
+                          format: uint64
+                  blacklistedValidators:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        name:
+                          type: string
+                        address:
+>>>>>>> test-validator-selection
                           type: string
                           format: uint64
                         status:
                           type: string
+<<<<<<< HEAD
                           enum:
                             - BONDED
                             - UNBONDED
@@ -29450,6 +29701,162 @@ paths:
                 type: object
                 properties:
                   next_key:
+=======
+                        commissionRate:
+                          type: string
+                          format: uint64
+                        delegationAmt:
+                          type: string
+                          format: uint64
+                        weight:
+                          type: string
+                          format: uint64
+                  withdrawalAccount:
+                    type: object
+                    properties:
+                      address:
+                        type: string
+                      delegations:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            delegateAcctAddress:
+                              type: string
+                            validator:
+                              type: object
+                              properties:
+                                name:
+                                  type: string
+                                address:
+                                  type: string
+                                status:
+                                  type: string
+                                commissionRate:
+                                  type: string
+                                  format: uint64
+                                delegationAmt:
+                                  type: string
+                                  format: uint64
+                                weight:
+                                  type: string
+                                  format: uint64
+                            amt:
+                              type: string
+                              format: int64
+                      target:
+                        type: string
+                        enum:
+                          - DELEGATION
+                          - FEE
+                          - WITHDRAWAL
+                        default: DELEGATION
+                      balance:
+                        type: string
+                        format: int64
+                        title: TODO(TEST-112) use cosmos dec for all balances
+                    title: >-
+                      TODO(TEST-XX): Update these fields to be more useful (e.g.
+                      balances should be coins, maybe store port name directly)
+                  feeAccount:
+                    type: object
+                    properties:
+                      address:
+                        type: string
+                      delegations:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            delegateAcctAddress:
+                              type: string
+                            validator:
+                              type: object
+                              properties:
+                                name:
+                                  type: string
+                                address:
+                                  type: string
+                                status:
+                                  type: string
+                                commissionRate:
+                                  type: string
+                                  format: uint64
+                                delegationAmt:
+                                  type: string
+                                  format: uint64
+                                weight:
+                                  type: string
+                                  format: uint64
+                            amt:
+                              type: string
+                              format: int64
+                      target:
+                        type: string
+                        enum:
+                          - DELEGATION
+                          - FEE
+                          - WITHDRAWAL
+                        default: DELEGATION
+                      balance:
+                        type: string
+                        format: int64
+                        title: TODO(TEST-112) use cosmos dec for all balances
+                    title: >-
+                      TODO(TEST-XX): Update these fields to be more useful (e.g.
+                      balances should be coins, maybe store port name directly)
+                  delegationAccount:
+                    type: object
+                    properties:
+                      address:
+                        type: string
+                      delegations:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            delegateAcctAddress:
+                              type: string
+                            validator:
+                              type: object
+                              properties:
+                                name:
+                                  type: string
+                                address:
+                                  type: string
+                                status:
+                                  type: string
+                                commissionRate:
+                                  type: string
+                                  format: uint64
+                                delegationAmt:
+                                  type: string
+                                  format: uint64
+                                weight:
+                                  type: string
+                                  format: uint64
+                            amt:
+                              type: string
+                              format: int64
+                      target:
+                        type: string
+                        enum:
+                          - DELEGATION
+                          - FEE
+                          - WITHDRAWAL
+                        default: DELEGATION
+                      balance:
+                        type: string
+                        format: int64
+                        title: TODO(TEST-112) use cosmos dec for all balances
+                    title: >-
+                      TODO(TEST-XX): Update these fields to be more useful (e.g.
+                      balances should be coins, maybe store port name directly)
+                  IBCDenom:
+                    type: string
+                    title: ibc denom on stride
+                  HostDenom:
+>>>>>>> test-validator-selection
                     type: string
                     format: byte
                     title: |-
@@ -29882,7 +30289,41 @@ paths:
               pagination:
                 type: object
                 properties:
+<<<<<<< HEAD
                   next_key:
+=======
+                  address:
+                    type: string
+                  delegations:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        delegateAcctAddress:
+                          type: string
+                        validator:
+                          type: object
+                          properties:
+                            name:
+                              type: string
+                            address:
+                              type: string
+                            status:
+                              type: string
+                            commissionRate:
+                              type: string
+                              format: uint64
+                            delegationAmt:
+                              type: string
+                              format: uint64
+                            weight:
+                              type: string
+                              format: uint64
+                        amt:
+                          type: string
+                          format: int64
+                  target:
+>>>>>>> test-validator-selection
                     type: string
                     format: byte
                     title: |-
@@ -32021,11 +32462,14 @@ paths:
                   status:
                     type: string
                   commissionRate:
-                    type: integer
-                    format: int32
+                    type: string
+                    format: uint64
                   delegationAmt:
                     type: string
-                    format: int64
+                    format: uint64
+                  weight:
+                    type: string
+                    format: uint64
         default:
           description: An unexpected error response.
           schema:
@@ -53290,11 +53734,14 @@ definitions:
           status:
             type: string
           commissionRate:
-            type: integer
-            format: int32
+            type: string
+            format: uint64
           delegationAmt:
             type: string
-            format: int64
+            format: uint64
+          weight:
+            type: string
+            format: uint64
       amt:
         type: string
         format: int64
@@ -53327,11 +53774,14 @@ definitions:
             status:
               type: string
             commissionRate:
-              type: integer
-              format: int32
+              type: string
+              format: uint64
             delegationAmt:
               type: string
-              format: int64
+              format: uint64
+            weight:
+              type: string
+              format: uint64
       blacklistedValidators:
         type: array
         items:
@@ -53344,11 +53794,14 @@ definitions:
             status:
               type: string
             commissionRate:
-              type: integer
-              format: int32
+              type: string
+              format: uint64
             delegationAmt:
               type: string
-              format: int64
+              format: uint64
+            weight:
+              type: string
+              format: uint64
       withdrawalAccount:
         type: object
         properties:
@@ -53371,11 +53824,14 @@ definitions:
                     status:
                       type: string
                     commissionRate:
-                      type: integer
-                      format: int32
+                      type: string
+                      format: uint64
                     delegationAmt:
                       type: string
-                      format: int64
+                      format: uint64
+                    weight:
+                      type: string
+                      format: uint64
                 amt:
                   type: string
                   format: int64
@@ -53416,11 +53872,14 @@ definitions:
                     status:
                       type: string
                     commissionRate:
-                      type: integer
-                      format: int32
+                      type: string
+                      format: uint64
                     delegationAmt:
                       type: string
-                      format: int64
+                      format: uint64
+                    weight:
+                      type: string
+                      format: uint64
                 amt:
                   type: string
                   format: int64
@@ -53461,11 +53920,14 @@ definitions:
                     status:
                       type: string
                     commissionRate:
-                      type: integer
-                      format: int32
+                      type: string
+                      format: uint64
                     delegationAmt:
                       type: string
-                      format: int64
+                      format: uint64
+                    weight:
+                      type: string
+                      format: uint64
                 amt:
                   type: string
                   format: int64
@@ -53579,11 +54041,14 @@ definitions:
                 status:
                   type: string
                 commissionRate:
-                  type: integer
-                  format: int32
+                  type: string
+                  format: uint64
                 delegationAmt:
                   type: string
-                  format: int64
+                  format: uint64
+                weight:
+                  type: string
+                  format: uint64
             amt:
               type: string
               format: int64
@@ -53619,9 +54084,19 @@ definitions:
       uptime:
         type: integer
         format: int32
+<<<<<<< HEAD
   Stridelabs.stride.stakeibc.MsgClaimUndelegatedTokensResponse:
+=======
+  Stridelabs.stride.stakeibc.MsgAddValidatorResponse:
+    type: object
+  Stridelabs.stride.stakeibc.MsgChangeValidatorWeightResponse:
+    type: object
+  Stridelabs.stride.stakeibc.MsgDeleteValidatorResponse:
+>>>>>>> test-validator-selection
     type: object
   Stridelabs.stride.stakeibc.MsgLiquidStakeResponse:
+    type: object
+  Stridelabs.stride.stakeibc.MsgRebalanceValidatorsResponse:
     type: object
   Stridelabs.stride.stakeibc.MsgRedeemStakeResponse:
     type: object
@@ -53742,11 +54217,14 @@ definitions:
                   status:
                     type: string
                   commissionRate:
-                    type: integer
-                    format: int32
+                    type: string
+                    format: uint64
                   delegationAmt:
                     type: string
-                    format: int64
+                    format: uint64
+                  weight:
+                    type: string
+                    format: uint64
             blacklistedValidators:
               type: array
               items:
@@ -53759,11 +54237,14 @@ definitions:
                   status:
                     type: string
                   commissionRate:
-                    type: integer
-                    format: int32
+                    type: string
+                    format: uint64
                   delegationAmt:
                     type: string
-                    format: int64
+                    format: uint64
+                  weight:
+                    type: string
+                    format: uint64
             withdrawalAccount:
               type: object
               properties:
@@ -53786,11 +54267,14 @@ definitions:
                           status:
                             type: string
                           commissionRate:
-                            type: integer
-                            format: int32
+                            type: string
+                            format: uint64
                           delegationAmt:
                             type: string
-                            format: int64
+                            format: uint64
+                          weight:
+                            type: string
+                            format: uint64
                       amt:
                         type: string
                         format: int64
@@ -53831,11 +54315,14 @@ definitions:
                           status:
                             type: string
                           commissionRate:
-                            type: integer
-                            format: int32
+                            type: string
+                            format: uint64
                           delegationAmt:
                             type: string
-                            format: int64
+                            format: uint64
+                          weight:
+                            type: string
+                            format: uint64
                       amt:
                         type: string
                         format: int64
@@ -53876,11 +54363,14 @@ definitions:
                           status:
                             type: string
                           commissionRate:
-                            type: integer
-                            format: int32
+                            type: string
+                            format: uint64
                           delegationAmt:
                             type: string
-                            format: int64
+                            format: uint64
+                          weight:
+                            type: string
+                            format: uint64
                       amt:
                         type: string
                         format: int64
@@ -54015,11 +54505,14 @@ definitions:
               status:
                 type: string
               commissionRate:
-                type: integer
-                format: int32
+                type: string
+                format: uint64
               delegationAmt:
                 type: string
-                format: int64
+                format: uint64
+              weight:
+                type: string
+                format: uint64
           amt:
             type: string
             format: int64
@@ -54058,11 +54551,14 @@ definitions:
                 status:
                   type: string
                 commissionRate:
-                  type: integer
-                  format: int32
+                  type: string
+                  format: uint64
                 delegationAmt:
                   type: string
-                  format: int64
+                  format: uint64
+                weight:
+                  type: string
+                  format: uint64
           blacklistedValidators:
             type: array
             items:
@@ -54075,11 +54571,14 @@ definitions:
                 status:
                   type: string
                 commissionRate:
-                  type: integer
-                  format: int32
+                  type: string
+                  format: uint64
                 delegationAmt:
                   type: string
-                  format: int64
+                  format: uint64
+                weight:
+                  type: string
+                  format: uint64
           withdrawalAccount:
             type: object
             properties:
@@ -54102,11 +54601,14 @@ definitions:
                         status:
                           type: string
                         commissionRate:
-                          type: integer
-                          format: int32
+                          type: string
+                          format: uint64
                         delegationAmt:
                           type: string
-                          format: int64
+                          format: uint64
+                        weight:
+                          type: string
+                          format: uint64
                     amt:
                       type: string
                       format: int64
@@ -54147,11 +54649,14 @@ definitions:
                         status:
                           type: string
                         commissionRate:
-                          type: integer
-                          format: int32
+                          type: string
+                          format: uint64
                         delegationAmt:
                           type: string
-                          format: int64
+                          format: uint64
+                        weight:
+                          type: string
+                          format: uint64
                     amt:
                       type: string
                       format: int64
@@ -54192,11 +54697,14 @@ definitions:
                         status:
                           type: string
                         commissionRate:
-                          type: integer
-                          format: int32
+                          type: string
+                          format: uint64
                         delegationAmt:
                           type: string
-                          format: int64
+                          format: uint64
+                        weight:
+                          type: string
+                          format: uint64
                     amt:
                       type: string
                       format: int64
@@ -54313,11 +54821,14 @@ definitions:
                     status:
                       type: string
                     commissionRate:
-                      type: integer
-                      format: int32
+                      type: string
+                      format: uint64
                     delegationAmt:
                       type: string
-                      format: int64
+                      format: uint64
+                    weight:
+                      type: string
+                      format: uint64
                 amt:
                   type: string
                   format: int64
@@ -54361,11 +54872,14 @@ definitions:
           status:
             type: string
           commissionRate:
-            type: integer
-            format: int32
+            type: string
+            format: uint64
           delegationAmt:
             type: string
-            format: int64
+            format: uint64
+          weight:
+            type: string
+            format: uint64
   Stridelabs.stride.stakeibc.QueryInterchainAccountFromAddressResponse:
     type: object
     properties:
@@ -54428,8 +54942,11 @@ definitions:
       status:
         type: string
       commissionRate:
-        type: integer
-        format: int32
+        type: string
+        format: uint64
       delegationAmt:
         type: string
-        format: int64
+        format: uint64
+      weight:
+        type: string
+        format: uint64

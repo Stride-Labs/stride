@@ -17,6 +17,7 @@ $STRIDE_CMD init test --chain-id $STRIDE_CHAIN --overwrite 2> /dev/null
 # change the denom
 sed -i -E 's|"stake"|"ustrd"|g' "${STATE}/${STRIDE_NODE_NAME}/config/genesis.json"
 sed -i -E "s|timeout_commit = \"5s\"|timeout_commit = \"${BLOCK_TIME}\"|g" "${STATE}/${STRIDE_NODE_NAME}/config/config.toml"
+sed -i -E "s|cors_allowed_origins = \[\]|cors_allowed_origins = [\"\*\"]|g" "${STATE}/${STRIDE_NODE_NAME}/config/config.toml"
 # modify Stride epoch to be 3s
 main_config=$STATE/$STRIDE_NODE_NAME/config/genesis.json
 jq '.app_state.epochs.epochs[2].duration = $newVal' --arg newVal "3s" $main_config > json.tmp && mv json.tmp $main_config

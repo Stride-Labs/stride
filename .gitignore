@@ -11,10 +11,12 @@ launch.sh
 
 
 # build
+launch.sh
 build/*
 state/*
 .state.backup
 scripts/state/*
+scripts/testnet/*/state/keys.txt
 scripts/logs/*.log
 scripts/logs/*/*.log
 scripts-local/state
