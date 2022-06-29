@@ -51,7 +51,6 @@ sed -i -E "s|minimum-gas-prices = \"\"|minimum-gas-prices = \"0uatom\"|g" "${STA
 sed -i -E 's|enable = false|enable = true|g' "${STATE}/${NODE_NAME}/config/app.toml"
 sed -i -E 's|unsafe-cors = false|unsafe-cors = true|g' "${STATE}/${NODE_NAME}/config/app.toml"
 
-
 ## add the message types ICA should allow to the host chain
 ALLOW_MESSAGES='\"/cosmos.bank.v1beta1.MsgSend\", \"/cosmos.bank.v1beta1.MsgMultiSend\", \"/cosmos.staking.v1beta1.MsgDelegate\", \"/cosmos.staking.v1beta1.MsgUndelegate\", \"/cosmos.staking.v1beta1.MsgRedeemTokensforShares\", \"/cosmos.staking.v1beta1.MsgTokenizeShares\", \"/cosmos.distribution.v1beta1.MsgWithdrawDelegatorReward\", \"/cosmos.distribution.v1beta1.MsgSetWithdrawAddress\", \"/ibc.applications.transfer.v1.MsgTransfer\"'
 sed -i -E "s|\"allow_messages\": \[\]|\"allow_messages\": \[${ALLOW_MESSAGES}\]|g" "${STATE}/${NODE_NAME}/config/genesis.json"
