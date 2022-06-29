@@ -15,23 +15,32 @@ import (
 	"github.com/Stride-Labs/stride/x/stakeibc/types"
 )
 
-func networkWithValidatorObjects(t *testing.T) (*network.Network, types.Validator) {
+func networkWithValidatorObjects(t *testing.T) (*network.Network, map[string][]*types.Validator) {
 	t.Helper()
 	cfg := network.DefaultConfig()
 	state := types.GenesisState{}
 	require.NoError(t, cfg.Codec.UnmarshalJSON(cfg.GenesisState[types.ModuleName], &state))
 
-	validator := &types.Validator{}
-	nullify.Fill(&validator)
-	state.Validator = validator
+	var validatorsByHostZone = make(map[string][]*types.Validator)
+	validators := []*types.Validator{}
+	nullify.Fill(&validators)
+
+	chainId := "GAIA"
+	hostZone := &types.HostZone{
+		ChainId:    chainId,
+		Validators: validators,
+	}
+	validatorsByHostZone[chainId] = validators
+
+	state.HostZoneList = []types.HostZone{*hostZone}
 	buf, err := cfg.Codec.MarshalJSON(&state)
 	require.NoError(t, err)
 	cfg.GenesisState[types.ModuleName] = buf
-	return network.New(t, cfg), *state.Validator
+	return network.New(t, cfg), validatorsByHostZone
 }
 
 func TestShowValidator(t *testing.T) {
-	net, obj := networkWithValidatorObjects(t)
+	net, validatorsByHostZone := networkWithValidatorObjects(t)
 
 	ctx := net.Validators[0].ClientCtx
 	common := []string{
@@ -41,31 +50,31 @@ func TestShowValidator(t *testing.T) {
 		desc string
 		args []string
 		err  error
-		obj  types.Validator
+		obj  []*types.Validator
 	}{
 		{
 			desc: "get",
-			args: common,
-			obj:  obj,
+			args: append(common, "GAIA"),
+			obj:  validatorsByHostZone["GAIA"],
 		},
 	} {
 		tc := tc
 		t.Run(tc.desc, func(t *testing.T) {
 			var args []string
 			args = append(args, tc.args...)
-			out, err := clitestutil.ExecTestCLICmd(ctx, cli.CmdShowValidator(), args)
+			out, err := clitestutil.ExecTestCLICmd(ctx, cli.CmdShowValidators(), args)
 			if tc.err != nil {
 				stat, ok := status.FromError(tc.err)
 				require.True(t, ok)
 				require.ErrorIs(t, stat.Err(), tc.err)
 			} else {
 				require.NoError(t, err)
-				var resp types.QueryGetValidatorResponse
+				var resp types.QueryGetValidatorsResponse
 				require.NoError(t, net.Config.Codec.UnmarshalJSON(out.Bytes(), &resp))
-				require.NotNil(t, resp.Validator)
+				require.NotNil(t, resp.Validators)
 				require.Equal(t,
 					nullify.Fill(&tc.obj),
-					nullify.Fill(&resp.Validator),
+					nullify.Fill(&resp.Validators),
 				)
 			}
 		})
