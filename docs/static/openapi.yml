@@ -28321,253 +28321,6 @@ paths:
               request.
       tags:
         - Msg
-  /Stride-Labs/stride/records/deposit_record:
-    get:
-      summary: Queries a list of DepositRecord items.
-      operationId: StrideLabsStrideRecordsDepositRecordAll
-      responses:
-        '200':
-          description: A successful response.
-          schema:
-            type: object
-            properties:
-              DepositRecord:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    id:
-                      type: string
-                      format: uint64
-                    amount:
-                      type: string
-                      format: int64
-                    denom:
-                      type: string
-                    hostZoneId:
-                      type: string
-                    status:
-                      type: string
-                      enum:
-                        - TRANSFER
-                        - STAKE
-                      default: TRANSFER
-                      title: |-
-                        - TRANSFER: pending transfer to delegate account
-                         - STAKE: pending staking on delegate account
-                    epochNumber:
-                      type: string
-                      format: uint64
-                    source:
-                      type: string
-                      enum:
-                        - STRIDE
-                        - WITHDRAWAL_ICA
-                      default: STRIDE
-              pagination:
-                type: object
-                properties:
-                  next_key:
-                    type: string
-                    format: byte
-                    title: |-
-                      next_key is the key to be passed to PageRequest.key to
-                      query the next page most efficiently
-                  total:
-                    type: string
-                    format: uint64
-                    title: >-
-                      total is total number of results available if
-                      PageRequest.count_total
-
-                      was set, its value is undefined otherwise
-                description: >-
-                  PageResponse is to be embedded in gRPC response messages where
-                  the
-
-                  corresponding request message has used PageRequest.
-
-                   message SomeResponse {
-                           repeated Bar results = 1;
-                           PageResponse page = 2;
-                   }
-        default:
-          description: An unexpected error response.
-          schema:
-            type: object
-            properties:
-              code:
-                type: integer
-                format: int32
-              message:
-                type: string
-              details:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    '@type':
-                      type: string
-                  additionalProperties: {}
-      parameters:
-        - name: pagination.key
-          description: |-
-            key is a value returned in PageResponse.next_key to begin
-            querying the next page most efficiently. Only one of offset or key
-            should be set.
-          in: query
-          required: false
-          type: string
-          format: byte
-        - name: pagination.offset
-          description: >-
-            offset is a numeric offset that can be used when key is unavailable.
-
-            It is less efficient than using key. Only one of offset or key
-            should
-
-            be set.
-          in: query
-          required: false
-          type: string
-          format: uint64
-        - name: pagination.limit
-          description: >-
-            limit is the total number of results to be returned in the result
-            page.
-
-            If left empty it will default to a value to be set by each app.
-          in: query
-          required: false
-          type: string
-          format: uint64
-        - name: pagination.count_total
-          description: >-
-            count_total is set to true  to indicate that the result set should
-            include
-
-            a count of the total number of items available for pagination in
-            UIs.
-
-            count_total is only respected when offset is used. It is ignored
-            when key
-
-            is set.
-          in: query
-          required: false
-          type: boolean
-        - name: pagination.reverse
-          description: >-
-            reverse is set to true if results are to be returned in the
-            descending order.
-          in: query
-          required: false
-          type: boolean
-      tags:
-        - Query
-  '/Stride-Labs/stride/records/deposit_record/{id}':
-    get:
-      summary: Queries a DepositRecord by id.
-      operationId: StrideLabsStrideRecordsSingleDepositRecord
-      responses:
-        '200':
-          description: A successful response.
-          schema:
-            type: object
-            properties:
-              DepositRecord:
-                type: object
-                properties:
-                  id:
-                    type: string
-                    format: uint64
-                  amount:
-                    type: string
-                    format: int64
-                  denom:
-                    type: string
-                  hostZoneId:
-                    type: string
-                  status:
-                    type: string
-                    enum:
-                      - TRANSFER
-                      - STAKE
-                    default: TRANSFER
-                    title: |-
-                      - TRANSFER: pending transfer to delegate account
-                       - STAKE: pending staking on delegate account
-                  epochNumber:
-                    type: string
-                    format: uint64
-                  source:
-                    type: string
-                    enum:
-                      - STRIDE
-                      - WITHDRAWAL_ICA
-                    default: STRIDE
-        default:
-          description: An unexpected error response.
-          schema:
-            type: object
-            properties:
-              code:
-                type: integer
-                format: int32
-              message:
-                type: string
-              details:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    '@type':
-                      type: string
-                  additionalProperties: {}
-      parameters:
-        - name: id
-          in: path
-          required: true
-          type: string
-          format: uint64
-      tags:
-        - Query
-  /StrideLabs/stride/records/params:
-    get:
-      summary: Parameters queries the parameters of the module.
-      operationId: StrideLabsStrideRecordsParams
-      responses:
-        '200':
-          description: A successful response.
-          schema:
-            type: object
-            properties:
-              params:
-                description: params holds all the parameters of this module.
-                type: object
-            description: >-
-              QueryParamsResponse is response type for the Query/Params RPC
-              method.
-        default:
-          description: An unexpected error response.
-          schema:
-            type: object
-            properties:
-              code:
-                type: integer
-                format: int32
-              message:
-                type: string
-              details:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    '@type':
-                      type: string
-                  additionalProperties: {}
-      tags:
-        - Query
   /mint/v1beta1/epoch_provisions:
     get:
       summary: EpochProvisions current minting epoch provisions value.
@@ -29204,6 +28957,1095 @@ paths:
           type: string
       tags:
         - Query
+  /Stride-Labs/stride/records/deposit_record:
+    get:
+      summary: Queries a list of DepositRecord items.
+      operationId: StridelabsStrideRecordsDepositRecordAll
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+<<<<<<< HEAD
+              DepositRecord:
+=======
+              Delegation:
+                type: object
+                properties:
+                  delegateAcctAddress:
+                    type: string
+                  validator:
+                    type: object
+                    properties:
+                      name:
+                        type: string
+                      address:
+                        type: string
+                      status:
+                        type: string
+                      commissionRate:
+                        type: string
+                        format: uint64
+                      delegationAmt:
+                        type: string
+                        format: uint64
+                      weight:
+                        type: string
+                        format: uint64
+                  amt:
+                    type: string
+                    format: int64
+        default:
+          description: An unexpected error response.
+          schema:
+            type: object
+            properties:
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+>>>>>>> test-validator-selection
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      format: uint64
+                    amount:
+                      type: string
+                      format: int64
+                    denom:
+                      type: string
+                    hostZoneId:
+                      type: string
+                    status:
+                      type: string
+                      enum:
+                        - TRANSFER
+                        - STAKE
+                      default: TRANSFER
+                      title: |-
+                        - TRANSFER: pending transfer to delegate account
+                         - STAKE: pending staking on delegate account
+                    depositEpochNumber:
+                      type: string
+                      format: uint64
+                    source:
+                      type: string
+                      enum:
+                        - STRIDE
+                        - WITHDRAWAL_ICA
+                      default: STRIDE
+              pagination:
+                type: object
+                properties:
+                  next_key:
+                    type: string
+                    format: byte
+                    title: |-
+                      next_key is the key to be passed to PageRequest.key to
+                      query the next page most efficiently
+                  total:
+                    type: string
+                    format: uint64
+                    title: >-
+                      total is total number of results available if
+                      PageRequest.count_total
+
+                      was set, its value is undefined otherwise
+                description: >-
+                  PageResponse is to be embedded in gRPC response messages where
+                  the
+
+                  corresponding request message has used PageRequest.
+
+                   message SomeResponse {
+                           repeated Bar results = 1;
+                           PageResponse page = 2;
+                   }
+        default:
+          description: An unexpected error response.
+          schema:
+            type: object
+            properties:
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    '@type':
+                      type: string
+                  additionalProperties: {}
+      parameters:
+        - name: pagination.key
+          description: |-
+            key is a value returned in PageResponse.next_key to begin
+            querying the next page most efficiently. Only one of offset or key
+            should be set.
+          in: query
+          required: false
+          type: string
+          format: byte
+        - name: pagination.offset
+          description: >-
+            offset is a numeric offset that can be used when key is unavailable.
+
+            It is less efficient than using key. Only one of offset or key
+            should
+
+            be set.
+          in: query
+          required: false
+          type: string
+          format: uint64
+        - name: pagination.limit
+          description: >-
+            limit is the total number of results to be returned in the result
+            page.
+
+            If left empty it will default to a value to be set by each app.
+          in: query
+          required: false
+          type: string
+          format: uint64
+        - name: pagination.count_total
+          description: >-
+            count_total is set to true  to indicate that the result set should
+            include
+
+            a count of the total number of items available for pagination in
+            UIs.
+
+            count_total is only respected when offset is used. It is ignored
+            when key
+
+            is set.
+          in: query
+          required: false
+          type: boolean
+        - name: pagination.reverse
+          description: >-
+            reverse is set to true if results are to be returned in the
+            descending order.
+          in: query
+          required: false
+          type: boolean
+      tags:
+        - Query
+  '/Stride-Labs/stride/records/deposit_record/{id}':
+    get:
+      summary: Queries a DepositRecord by id.
+      operationId: StridelabsStrideRecordsDepositRecord
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              DepositRecord:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    format: uint64
+                  amount:
+                    type: string
+                    format: int64
+                  denom:
+                    type: string
+                  hostZoneId:
+                    type: string
+                  status:
+                    type: string
+                    enum:
+                      - TRANSFER
+                      - STAKE
+                    default: TRANSFER
+                    title: |-
+                      - TRANSFER: pending transfer to delegate account
+                       - STAKE: pending staking on delegate account
+                  depositEpochNumber:
+                    type: string
+                    format: uint64
+                  source:
+                    type: string
+                    enum:
+                      - STRIDE
+                      - WITHDRAWAL_ICA
+                    default: STRIDE
+        default:
+          description: An unexpected error response.
+          schema:
+            type: object
+            properties:
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    '@type':
+                      type: string
+                  additionalProperties: {}
+      parameters:
+        - name: id
+          in: path
+          required: true
+          type: string
+          format: uint64
+      tags:
+        - Query
+  /Stride-Labs/stride/records/epoch_unbonding_record:
+    get:
+      summary: Queries a list of EpochUnbondingRecord items.
+      operationId: StridelabsStrideRecordsEpochUnbondingRecordAll
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              EpochUnbondingRecord:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      format: uint64
+                    unbondingEpochNumber:
+                      type: string
+                      format: uint64
+                    hostZoneUnbondings:
+                      type: object
+                      additionalProperties:
+                        type: object
+                        properties:
+                          amount:
+                            type: string
+<<<<<<< HEAD
+                            format: uint64
+                          denom:
+                            type: string
+                          hostZoneId:
+=======
+                          commissionRate:
+                            type: string
+                            format: uint64
+                          delegationAmt:
+                            type: string
+                            format: uint64
+                          weight:
+                            type: string
+                            format: uint64
+                    blacklistedValidators:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          name:
+>>>>>>> test-validator-selection
+                            type: string
+                          unbondingTime:
+                            type: string
+                            format: uint64
+                          status:
+                            type: string
+<<<<<<< HEAD
+                            enum:
+                              - BONDED
+                              - UNBONDED
+                              - PENDING_TRANSFER
+                              - TRANSFERRED
+                            default: BONDED
+                            title: |-
+                              - BONDED: tokens bonded on delegate account
+                               - UNBONDED: unbonding completed on delegate account
+                               - PENDING_TRANSFER: transfer from delegate account to withdrawal account attempted
+                               - TRANSFERRED: transfer success
+                          userRedemptionRecords:
+                            type: array
+                            items:
+                              type: string
+                            title: >-
+                              google.protobuf.Timestamp unbondingTime = 5
+                                  [(gogoproto.nullable) = false, (gogoproto.stdtime) = true, (gogoproto.moretags) = "yaml:\"unbonding_time\""];
+                              google.protobuf.Timestamp completionTime = 5
+                                  [(gogoproto.nullable) = false, (gogoproto.stdtime) = true, (gogoproto.moretags) = "yaml:\"unbonding_time\""];
+                              Index UserRedemptionRecords here (note: id is
+                              {chain_id}.{epoch}.{sender})
+=======
+                          commissionRate:
+                            type: string
+                            format: uint64
+                          delegationAmt:
+                            type: string
+                            format: uint64
+                          weight:
+                            type: string
+                            format: uint64
+                    withdrawalAccount:
+                      type: object
+                      properties:
+                        address:
+                          type: string
+                        delegations:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              delegateAcctAddress:
+                                type: string
+                              validator:
+                                type: object
+                                properties:
+                                  name:
+                                    type: string
+                                  address:
+                                    type: string
+                                  status:
+                                    type: string
+                                  commissionRate:
+                                    type: string
+                                    format: uint64
+                                  delegationAmt:
+                                    type: string
+                                    format: uint64
+                                  weight:
+                                    type: string
+                                    format: uint64
+                              amt:
+                                type: string
+                                format: int64
+                        target:
+                          type: string
+                          enum:
+                            - DELEGATION
+                            - FEE
+                            - WITHDRAWAL
+                          default: DELEGATION
+                        balance:
+                          type: string
+                          format: int64
+                          title: TODO(TEST-112) use cosmos dec for all balances
+                      title: >-
+                        TODO(TEST-XX): Update these fields to be more useful
+                        (e.g. balances should be coins, maybe store port name
+                        directly)
+                    feeAccount:
+                      type: object
+                      properties:
+                        address:
+                          type: string
+                        delegations:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              delegateAcctAddress:
+                                type: string
+                              validator:
+                                type: object
+                                properties:
+                                  name:
+                                    type: string
+                                  address:
+                                    type: string
+                                  status:
+                                    type: string
+                                  commissionRate:
+                                    type: string
+                                    format: uint64
+                                  delegationAmt:
+                                    type: string
+                                    format: uint64
+                                  weight:
+                                    type: string
+                                    format: uint64
+                              amt:
+                                type: string
+                                format: int64
+                        target:
+                          type: string
+                          enum:
+                            - DELEGATION
+                            - FEE
+                            - WITHDRAWAL
+                          default: DELEGATION
+                        balance:
+                          type: string
+                          format: int64
+                          title: TODO(TEST-112) use cosmos dec for all balances
+                      title: >-
+                        TODO(TEST-XX): Update these fields to be more useful
+                        (e.g. balances should be coins, maybe store port name
+                        directly)
+                    delegationAccount:
+                      type: object
+                      properties:
+                        address:
+                          type: string
+                        delegations:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              delegateAcctAddress:
+                                type: string
+                              validator:
+                                type: object
+                                properties:
+                                  name:
+                                    type: string
+                                  address:
+                                    type: string
+                                  status:
+                                    type: string
+                                  commissionRate:
+                                    type: string
+                                    format: uint64
+                                  delegationAmt:
+                                    type: string
+                                    format: uint64
+                                  weight:
+                                    type: string
+                                    format: uint64
+                              amt:
+                                type: string
+                                format: int64
+                        target:
+                          type: string
+                          enum:
+                            - DELEGATION
+                            - FEE
+                            - WITHDRAWAL
+                          default: DELEGATION
+                        balance:
+                          type: string
+                          format: int64
+                          title: TODO(TEST-112) use cosmos dec for all balances
+                      title: >-
+                        TODO(TEST-XX): Update these fields to be more useful
+                        (e.g. balances should be coins, maybe store port name
+                        directly)
+                    IBCDenom:
+                      type: string
+                      title: ibc denom on stride
+                    HostDenom:
+                      type: string
+                      title: native denom on host zone
+                    LastRedemptionRate:
+                      type: string
+                      title: >-
+                        TODO(TEST-68): Should we make this an array and store
+                        the last n redemption rates
+
+                        then calculate a TWARR?
+                    RedemptionRate:
+                      type: string
+                  title: 'next id: 13'
+>>>>>>> test-validator-selection
+              pagination:
+                type: object
+                properties:
+                  next_key:
+                    type: string
+                    format: byte
+                    title: |-
+                      next_key is the key to be passed to PageRequest.key to
+                      query the next page most efficiently
+                  total:
+                    type: string
+                    format: uint64
+                    title: >-
+                      total is total number of results available if
+                      PageRequest.count_total
+
+                      was set, its value is undefined otherwise
+                description: >-
+                  PageResponse is to be embedded in gRPC response messages where
+                  the
+
+                  corresponding request message has used PageRequest.
+
+                   message SomeResponse {
+                           repeated Bar results = 1;
+                           PageResponse page = 2;
+                   }
+        default:
+          description: An unexpected error response.
+          schema:
+            type: object
+            properties:
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    '@type':
+                      type: string
+                  additionalProperties: {}
+      parameters:
+        - name: pagination.key
+          description: |-
+            key is a value returned in PageResponse.next_key to begin
+            querying the next page most efficiently. Only one of offset or key
+            should be set.
+          in: query
+          required: false
+          type: string
+          format: byte
+        - name: pagination.offset
+          description: >-
+            offset is a numeric offset that can be used when key is unavailable.
+
+            It is less efficient than using key. Only one of offset or key
+            should
+
+            be set.
+          in: query
+          required: false
+          type: string
+          format: uint64
+        - name: pagination.limit
+          description: >-
+            limit is the total number of results to be returned in the result
+            page.
+
+            If left empty it will default to a value to be set by each app.
+          in: query
+          required: false
+          type: string
+          format: uint64
+        - name: pagination.count_total
+          description: >-
+            count_total is set to true  to indicate that the result set should
+            include
+
+            a count of the total number of items available for pagination in
+            UIs.
+
+            count_total is only respected when offset is used. It is ignored
+            when key
+
+            is set.
+          in: query
+          required: false
+          type: boolean
+        - name: pagination.reverse
+          description: >-
+            reverse is set to true if results are to be returned in the
+            descending order.
+          in: query
+          required: false
+          type: boolean
+      tags:
+        - Query
+  '/Stride-Labs/stride/records/epoch_unbonding_record/{id}':
+    get:
+      summary: Queries a EpochUnbondingRecord by id.
+      operationId: StridelabsStrideRecordsEpochUnbondingRecord
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              EpochUnbondingRecord:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    format: uint64
+                  unbondingEpochNumber:
+                    type: string
+                    format: uint64
+                  hostZoneUnbondings:
+                    type: object
+                    additionalProperties:
+                      type: object
+                      properties:
+                        amount:
+                          type: string
+                          format: uint64
+                        denom:
+                          type: string
+                        hostZoneId:
+                          type: string
+<<<<<<< HEAD
+                        unbondingTime:
+=======
+                        commissionRate:
+                          type: string
+                          format: uint64
+                        delegationAmt:
+                          type: string
+                          format: uint64
+                        weight:
+                          type: string
+                          format: uint64
+                  blacklistedValidators:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        name:
+                          type: string
+                        address:
+>>>>>>> test-validator-selection
+                          type: string
+                          format: uint64
+                        status:
+                          type: string
+<<<<<<< HEAD
+                          enum:
+                            - BONDED
+                            - UNBONDED
+                            - PENDING_TRANSFER
+                            - TRANSFERRED
+                          default: BONDED
+                          title: |-
+                            - BONDED: tokens bonded on delegate account
+                             - UNBONDED: unbonding completed on delegate account
+                             - PENDING_TRANSFER: transfer from delegate account to withdrawal account attempted
+                             - TRANSFERRED: transfer success
+                        userRedemptionRecords:
+                          type: array
+                          items:
+                            type: string
+                          title: >-
+                            google.protobuf.Timestamp unbondingTime = 5
+                                [(gogoproto.nullable) = false, (gogoproto.stdtime) = true, (gogoproto.moretags) = "yaml:\"unbonding_time\""];
+                            google.protobuf.Timestamp completionTime = 5
+                                [(gogoproto.nullable) = false, (gogoproto.stdtime) = true, (gogoproto.moretags) = "yaml:\"unbonding_time\""];
+                            Index UserRedemptionRecords here (note: id is
+                            {chain_id}.{epoch}.{sender})
+        default:
+          description: An unexpected error response.
+          schema:
+            type: object
+            properties:
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    '@type':
+                      type: string
+                  additionalProperties: {}
+      parameters:
+        - name: id
+          in: path
+          required: true
+          type: string
+          format: uint64
+      tags:
+        - Query
+  /Stride-Labs/stride/records/user_redemption_record:
+    get:
+      summary: Queries a list of UserRedemptionRecord items.
+      operationId: StridelabsStrideRecordsUserRedemptionRecordAll
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              UserRedemptionRecord:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                    sender:
+                      type: string
+                    receiver:
+                      type: string
+                    amount:
+                      type: string
+                      format: uint64
+                    denom:
+                      type: string
+                    hostZoneId:
+                      type: string
+                    epochNumber:
+                      type: string
+                      format: int64
+                    isClaimable:
+                      type: boolean
+              pagination:
+                type: object
+                properties:
+                  next_key:
+=======
+                        commissionRate:
+                          type: string
+                          format: uint64
+                        delegationAmt:
+                          type: string
+                          format: uint64
+                        weight:
+                          type: string
+                          format: uint64
+                  withdrawalAccount:
+                    type: object
+                    properties:
+                      address:
+                        type: string
+                      delegations:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            delegateAcctAddress:
+                              type: string
+                            validator:
+                              type: object
+                              properties:
+                                name:
+                                  type: string
+                                address:
+                                  type: string
+                                status:
+                                  type: string
+                                commissionRate:
+                                  type: string
+                                  format: uint64
+                                delegationAmt:
+                                  type: string
+                                  format: uint64
+                                weight:
+                                  type: string
+                                  format: uint64
+                            amt:
+                              type: string
+                              format: int64
+                      target:
+                        type: string
+                        enum:
+                          - DELEGATION
+                          - FEE
+                          - WITHDRAWAL
+                        default: DELEGATION
+                      balance:
+                        type: string
+                        format: int64
+                        title: TODO(TEST-112) use cosmos dec for all balances
+                    title: >-
+                      TODO(TEST-XX): Update these fields to be more useful (e.g.
+                      balances should be coins, maybe store port name directly)
+                  feeAccount:
+                    type: object
+                    properties:
+                      address:
+                        type: string
+                      delegations:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            delegateAcctAddress:
+                              type: string
+                            validator:
+                              type: object
+                              properties:
+                                name:
+                                  type: string
+                                address:
+                                  type: string
+                                status:
+                                  type: string
+                                commissionRate:
+                                  type: string
+                                  format: uint64
+                                delegationAmt:
+                                  type: string
+                                  format: uint64
+                                weight:
+                                  type: string
+                                  format: uint64
+                            amt:
+                              type: string
+                              format: int64
+                      target:
+                        type: string
+                        enum:
+                          - DELEGATION
+                          - FEE
+                          - WITHDRAWAL
+                        default: DELEGATION
+                      balance:
+                        type: string
+                        format: int64
+                        title: TODO(TEST-112) use cosmos dec for all balances
+                    title: >-
+                      TODO(TEST-XX): Update these fields to be more useful (e.g.
+                      balances should be coins, maybe store port name directly)
+                  delegationAccount:
+                    type: object
+                    properties:
+                      address:
+                        type: string
+                      delegations:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            delegateAcctAddress:
+                              type: string
+                            validator:
+                              type: object
+                              properties:
+                                name:
+                                  type: string
+                                address:
+                                  type: string
+                                status:
+                                  type: string
+                                commissionRate:
+                                  type: string
+                                  format: uint64
+                                delegationAmt:
+                                  type: string
+                                  format: uint64
+                                weight:
+                                  type: string
+                                  format: uint64
+                            amt:
+                              type: string
+                              format: int64
+                      target:
+                        type: string
+                        enum:
+                          - DELEGATION
+                          - FEE
+                          - WITHDRAWAL
+                        default: DELEGATION
+                      balance:
+                        type: string
+                        format: int64
+                        title: TODO(TEST-112) use cosmos dec for all balances
+                    title: >-
+                      TODO(TEST-XX): Update these fields to be more useful (e.g.
+                      balances should be coins, maybe store port name directly)
+                  IBCDenom:
+                    type: string
+                    title: ibc denom on stride
+                  HostDenom:
+>>>>>>> test-validator-selection
+                    type: string
+                    format: byte
+                    title: |-
+                      next_key is the key to be passed to PageRequest.key to
+                      query the next page most efficiently
+                  total:
+                    type: string
+                    format: uint64
+                    title: >-
+                      total is total number of results available if
+                      PageRequest.count_total
+
+                      was set, its value is undefined otherwise
+                description: >-
+                  PageResponse is to be embedded in gRPC response messages where
+                  the
+
+                  corresponding request message has used PageRequest.
+
+                   message SomeResponse {
+                           repeated Bar results = 1;
+                           PageResponse page = 2;
+                   }
+        default:
+          description: An unexpected error response.
+          schema:
+            type: object
+            properties:
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    '@type':
+                      type: string
+                  additionalProperties: {}
+      parameters:
+        - name: pagination.key
+          description: |-
+            key is a value returned in PageResponse.next_key to begin
+            querying the next page most efficiently. Only one of offset or key
+            should be set.
+          in: query
+          required: false
+          type: string
+          format: byte
+        - name: pagination.offset
+          description: >-
+            offset is a numeric offset that can be used when key is unavailable.
+
+            It is less efficient than using key. Only one of offset or key
+            should
+
+            be set.
+          in: query
+          required: false
+          type: string
+          format: uint64
+        - name: pagination.limit
+          description: >-
+            limit is the total number of results to be returned in the result
+            page.
+
+            If left empty it will default to a value to be set by each app.
+          in: query
+          required: false
+          type: string
+          format: uint64
+        - name: pagination.count_total
+          description: >-
+            count_total is set to true  to indicate that the result set should
+            include
+
+            a count of the total number of items available for pagination in
+            UIs.
+
+            count_total is only respected when offset is used. It is ignored
+            when key
+
+            is set.
+          in: query
+          required: false
+          type: boolean
+        - name: pagination.reverse
+          description: >-
+            reverse is set to true if results are to be returned in the
+            descending order.
+          in: query
+          required: false
+          type: boolean
+      tags:
+        - Query
+  '/Stride-Labs/stride/records/user_redemption_record/{id}':
+    get:
+      summary: Queries a UserRedemptionRecord by id.
+      operationId: StridelabsStrideRecordsUserRedemptionRecord
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              UserRedemptionRecord:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  sender:
+                    type: string
+                  receiver:
+                    type: string
+                  amount:
+                    type: string
+                    format: uint64
+                  denom:
+                    type: string
+                  hostZoneId:
+                    type: string
+                  epochNumber:
+                    type: string
+                    format: int64
+                  isClaimable:
+                    type: boolean
+        default:
+          description: An unexpected error response.
+          schema:
+            type: object
+            properties:
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    '@type':
+                      type: string
+                  additionalProperties: {}
+      parameters:
+        - name: id
+          in: path
+          required: true
+          type: string
+      tags:
+        - Query
+  /StrideLabs/stride/records/params:
+    get:
+      summary: Parameters queries the parameters of the module.
+      operationId: StridelabsStrideRecordsParams
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              params:
+                description: params holds all the parameters of this module.
+                type: object
+            description: >-
+              QueryParamsResponse is response type for the Query/Params RPC
+              method.
+        default:
+          description: An unexpected error response.
+          schema:
+            type: object
+            properties:
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    '@type':
+                      type: string
+                  additionalProperties: {}
+      tags:
+        - Query
   /Stride-Labs/stride/stakeibc/delegation:
     get:
       summary: Queries a Delegation by index.
@@ -29229,14 +30071,11 @@ paths:
                       status:
                         type: string
                       commissionRate:
-                        type: string
-                        format: uint64
+                        type: integer
+                        format: int32
                       delegationAmt:
                         type: string
-                        format: uint64
-                      weight:
-                        type: string
-                        format: uint64
+                        format: int64
                   amt:
                     type: string
                     format: int64
@@ -29450,7 +30289,41 @@ paths:
               pagination:
                 type: object
                 properties:
+<<<<<<< HEAD
                   next_key:
+=======
+                  address:
+                    type: string
+                  delegations:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        delegateAcctAddress:
+                          type: string
+                        validator:
+                          type: object
+                          properties:
+                            name:
+                              type: string
+                            address:
+                              type: string
+                            status:
+                              type: string
+                            commissionRate:
+                              type: string
+                              format: uint64
+                            delegationAmt:
+                              type: string
+                              format: uint64
+                            weight:
+                              type: string
+                              format: uint64
+                        amt:
+                          type: string
+                          format: int64
+                  target:
+>>>>>>> test-validator-selection
                     type: string
                     format: byte
                     title: |-
@@ -29958,14 +30831,11 @@ paths:
                           status:
                             type: string
                           commissionRate:
-                            type: string
-                            format: uint64
+                            type: integer
+                            format: int32
                           delegationAmt:
                             type: string
-                            format: uint64
-                          weight:
-                            type: string
-                            format: uint64
+                            format: int64
                     blacklistedValidators:
                       type: array
                       items:
@@ -29978,14 +30848,11 @@ paths:
                           status:
                             type: string
                           commissionRate:
-                            type: string
-                            format: uint64
+                            type: integer
+                            format: int32
                           delegationAmt:
                             type: string
-                            format: uint64
-                          weight:
-                            type: string
-                            format: uint64
+                            format: int64
                     withdrawalAccount:
                       type: object
                       properties:
@@ -30008,14 +30875,11 @@ paths:
                                   status:
                                     type: string
                                   commissionRate:
-                                    type: string
-                                    format: uint64
+                                    type: integer
+                                    format: int32
                                   delegationAmt:
                                     type: string
-                                    format: uint64
-                                  weight:
-                                    type: string
-                                    format: uint64
+                                    format: int64
                               amt:
                                 type: string
                                 format: int64
@@ -30025,6 +30889,7 @@ paths:
                             - DELEGATION
                             - FEE
                             - WITHDRAWAL
+                            - REDEMPTION
                           default: DELEGATION
                         balance:
                           type: string
@@ -30056,14 +30921,11 @@ paths:
                                   status:
                                     type: string
                                   commissionRate:
-                                    type: string
-                                    format: uint64
+                                    type: integer
+                                    format: int32
                                   delegationAmt:
                                     type: string
-                                    format: uint64
-                                  weight:
-                                    type: string
-                                    format: uint64
+                                    format: int64
                               amt:
                                 type: string
                                 format: int64
@@ -30073,6 +30935,7 @@ paths:
                             - DELEGATION
                             - FEE
                             - WITHDRAWAL
+                            - REDEMPTION
                           default: DELEGATION
                         balance:
                           type: string
@@ -30104,14 +30967,11 @@ paths:
                                   status:
                                     type: string
                                   commissionRate:
-                                    type: string
-                                    format: uint64
+                                    type: integer
+                                    format: int32
                                   delegationAmt:
                                     type: string
-                                    format: uint64
-                                  weight:
-                                    type: string
-                                    format: uint64
+                                    format: int64
                               amt:
                                 type: string
                                 format: int64
@@ -30121,6 +30981,53 @@ paths:
                             - DELEGATION
                             - FEE
                             - WITHDRAWAL
+                            - REDEMPTION
+                          default: DELEGATION
+                        balance:
+                          type: string
+                          format: int64
+                          title: TODO(TEST-112) use cosmos dec for all balances
+                      title: >-
+                        TODO(TEST-XX): Update these fields to be more useful
+                        (e.g. balances should be coins, maybe store port name
+                        directly)
+                    redemptionAccount:
+                      type: object
+                      properties:
+                        address:
+                          type: string
+                        delegations:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              delegateAcctAddress:
+                                type: string
+                              validator:
+                                type: object
+                                properties:
+                                  name:
+                                    type: string
+                                  address:
+                                    type: string
+                                  status:
+                                    type: string
+                                  commissionRate:
+                                    type: integer
+                                    format: int32
+                                  delegationAmt:
+                                    type: string
+                                    format: int64
+                              amt:
+                                type: string
+                                format: int64
+                        target:
+                          type: string
+                          enum:
+                            - DELEGATION
+                            - FEE
+                            - WITHDRAWAL
+                            - REDEMPTION
                           default: DELEGATION
                         balance:
                           type: string
@@ -30145,7 +31052,21 @@ paths:
                         then calculate a TWARR?
                     RedemptionRate:
                       type: string
-                  title: 'next id: 13'
+                    unbondingFrequency:
+                      type: string
+                      format: uint64
+                      title: >-
+                        stores how many days we should wait before issuing
+                        unbondings
+                    claimableRecordIds:
+                      type: array
+                      items:
+                        type: string
+                    stakedBal:
+                      type: string
+                      format: int64
+                      title: TODO(TEST-101) int to dec
+                  title: 'next id: 17'
               pagination:
                 type: object
                 properties:
@@ -30445,14 +31366,11 @@ paths:
                         status:
                           type: string
                         commissionRate:
-                          type: string
-                          format: uint64
+                          type: integer
+                          format: int32
                         delegationAmt:
                           type: string
-                          format: uint64
-                        weight:
-                          type: string
-                          format: uint64
+                          format: int64
                   blacklistedValidators:
                     type: array
                     items:
@@ -30465,14 +31383,11 @@ paths:
                         status:
                           type: string
                         commissionRate:
-                          type: string
-                          format: uint64
+                          type: integer
+                          format: int32
                         delegationAmt:
                           type: string
-                          format: uint64
-                        weight:
-                          type: string
-                          format: uint64
+                          format: int64
                   withdrawalAccount:
                     type: object
                     properties:
@@ -30495,14 +31410,11 @@ paths:
                                 status:
                                   type: string
                                 commissionRate:
-                                  type: string
-                                  format: uint64
+                                  type: integer
+                                  format: int32
                                 delegationAmt:
                                   type: string
-                                  format: uint64
-                                weight:
-                                  type: string
-                                  format: uint64
+                                  format: int64
                             amt:
                               type: string
                               format: int64
@@ -30512,6 +31424,7 @@ paths:
                           - DELEGATION
                           - FEE
                           - WITHDRAWAL
+                          - REDEMPTION
                         default: DELEGATION
                       balance:
                         type: string
@@ -30542,14 +31455,11 @@ paths:
                                 status:
                                   type: string
                                 commissionRate:
-                                  type: string
-                                  format: uint64
+                                  type: integer
+                                  format: int32
                                 delegationAmt:
                                   type: string
-                                  format: uint64
-                                weight:
-                                  type: string
-                                  format: uint64
+                                  format: int64
                             amt:
                               type: string
                               format: int64
@@ -30559,6 +31469,7 @@ paths:
                           - DELEGATION
                           - FEE
                           - WITHDRAWAL
+                          - REDEMPTION
                         default: DELEGATION
                       balance:
                         type: string
@@ -30589,14 +31500,11 @@ paths:
                                 status:
                                   type: string
                                 commissionRate:
-                                  type: string
-                                  format: uint64
+                                  type: integer
+                                  format: int32
                                 delegationAmt:
                                   type: string
-                                  format: uint64
-                                weight:
-                                  type: string
-                                  format: uint64
+                                  format: int64
                             amt:
                               type: string
                               format: int64
@@ -30606,6 +31514,52 @@ paths:
                           - DELEGATION
                           - FEE
                           - WITHDRAWAL
+                          - REDEMPTION
+                        default: DELEGATION
+                      balance:
+                        type: string
+                        format: int64
+                        title: TODO(TEST-112) use cosmos dec for all balances
+                    title: >-
+                      TODO(TEST-XX): Update these fields to be more useful (e.g.
+                      balances should be coins, maybe store port name directly)
+                  redemptionAccount:
+                    type: object
+                    properties:
+                      address:
+                        type: string
+                      delegations:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            delegateAcctAddress:
+                              type: string
+                            validator:
+                              type: object
+                              properties:
+                                name:
+                                  type: string
+                                address:
+                                  type: string
+                                status:
+                                  type: string
+                                commissionRate:
+                                  type: integer
+                                  format: int32
+                                delegationAmt:
+                                  type: string
+                                  format: int64
+                            amt:
+                              type: string
+                              format: int64
+                      target:
+                        type: string
+                        enum:
+                          - DELEGATION
+                          - FEE
+                          - WITHDRAWAL
+                          - REDEMPTION
                         default: DELEGATION
                       balance:
                         type: string
@@ -30629,7 +31583,21 @@ paths:
                       then calculate a TWARR?
                   RedemptionRate:
                     type: string
-                title: 'next id: 13'
+                  unbondingFrequency:
+                    type: string
+                    format: uint64
+                    title: >-
+                      stores how many days we should wait before issuing
+                      unbondings
+                  claimableRecordIds:
+                    type: array
+                    items:
+                      type: string
+                  stakedBal:
+                    type: string
+                    format: int64
+                    title: TODO(TEST-101) int to dec
+                title: 'next id: 17'
         default:
           description: An unexpected error response.
           schema:
@@ -30854,14 +31822,11 @@ paths:
                             status:
                               type: string
                             commissionRate:
-                              type: string
-                              format: uint64
+                              type: integer
+                              format: int32
                             delegationAmt:
                               type: string
-                              format: uint64
-                            weight:
-                              type: string
-                              format: uint64
+                              format: int64
                         amt:
                           type: string
                           format: int64
@@ -30871,6 +31836,7 @@ paths:
                       - DELEGATION
                       - FEE
                       - WITHDRAWAL
+                      - REDEMPTION
                     default: DELEGATION
                   balance:
                     type: string
@@ -31715,7 +32681,7 @@ paths:
                   deposit_interval:
                     type: string
                     format: uint64
-                  exchange_rate_interval:
+                  redemption_rate_interval:
                     type: string
                     format: uint64
                   stride_commission:
@@ -31731,9 +32697,6 @@ paths:
                       of the fee each address is entitled to
                       TODO implement this
                   reinvest_interval:
-                    type: string
-                    format: uint64
-                  block_based_epoch_interval:
                     type: string
                     format: uint64
                 title: |-
@@ -52045,157 +53008,6 @@ definitions:
             The data could be arbitrary format, providing nessecary data
             for example neighbouring node hash
     title: ProofOps is Merkle proof defined by the list of ProofOps
-  Stridelabs.stride.records.DepositRecord:
-    type: object
-    properties:
-      id:
-        type: string
-        format: uint64
-      amount:
-        type: string
-        format: int64
-      denom:
-        type: string
-      hostZoneId:
-        type: string
-      status:
-        type: string
-        enum:
-          - TRANSFER
-          - STAKE
-        default: TRANSFER
-        title: |-
-          - TRANSFER: pending transfer to delegate account
-           - STAKE: pending staking on delegate account
-      epochNumber:
-        type: string
-        format: uint64
-      source:
-        type: string
-        enum:
-          - STRIDE
-          - WITHDRAWAL_ICA
-        default: STRIDE
-  Stridelabs.stride.records.DepositRecord.Source:
-    type: string
-    enum:
-      - STRIDE
-      - WITHDRAWAL_ICA
-    default: STRIDE
-  Stridelabs.stride.records.DepositRecord.Status:
-    type: string
-    enum:
-      - TRANSFER
-      - STAKE
-    default: TRANSFER
-    title: |-
-      - TRANSFER: pending transfer to delegate account
-       - STAKE: pending staking on delegate account
-  Stridelabs.stride.records.Params:
-    type: object
-    description: Params defines the parameters for the module.
-  Stridelabs.stride.records.QueryAllDepositRecordResponse:
-    type: object
-    properties:
-      DepositRecord:
-        type: array
-        items:
-          type: object
-          properties:
-            id:
-              type: string
-              format: uint64
-            amount:
-              type: string
-              format: int64
-            denom:
-              type: string
-            hostZoneId:
-              type: string
-            status:
-              type: string
-              enum:
-                - TRANSFER
-                - STAKE
-              default: TRANSFER
-              title: |-
-                - TRANSFER: pending transfer to delegate account
-                 - STAKE: pending staking on delegate account
-            epochNumber:
-              type: string
-              format: uint64
-            source:
-              type: string
-              enum:
-                - STRIDE
-                - WITHDRAWAL_ICA
-              default: STRIDE
-      pagination:
-        type: object
-        properties:
-          next_key:
-            type: string
-            format: byte
-            title: |-
-              next_key is the key to be passed to PageRequest.key to
-              query the next page most efficiently
-          total:
-            type: string
-            format: uint64
-            title: >-
-              total is total number of results available if
-              PageRequest.count_total
-
-              was set, its value is undefined otherwise
-        description: |-
-          PageResponse is to be embedded in gRPC response messages where the
-          corresponding request message has used PageRequest.
-
-           message SomeResponse {
-                   repeated Bar results = 1;
-                   PageResponse page = 2;
-           }
-  Stridelabs.stride.records.QueryGetDepositRecordResponse:
-    type: object
-    properties:
-      DepositRecord:
-        type: object
-        properties:
-          id:
-            type: string
-            format: uint64
-          amount:
-            type: string
-            format: int64
-          denom:
-            type: string
-          hostZoneId:
-            type: string
-          status:
-            type: string
-            enum:
-              - TRANSFER
-              - STAKE
-            default: TRANSFER
-            title: |-
-              - TRANSFER: pending transfer to delegate account
-               - STAKE: pending staking on delegate account
-          epochNumber:
-            type: string
-            format: uint64
-          source:
-            type: string
-            enum:
-              - STRIDE
-              - WITHDRAWAL_ICA
-            default: STRIDE
-  Stridelabs.stride.records.QueryParamsResponse:
-    type: object
-    properties:
-      params:
-        description: params holds all the parameters of this module.
-        type: object
-    description: QueryParamsResponse is response type for the Query/Params RPC method.
   stride.mint.v1beta1.DistributionProportions:
     type: object
     properties:
@@ -52433,6 +53245,480 @@ definitions:
                    repeated Bar results = 1;
                    PageResponse page = 2;
            }
+  Stridelabs.stride.records.DepositRecord:
+    type: object
+    properties:
+      id:
+        type: string
+        format: uint64
+      amount:
+        type: string
+        format: int64
+      denom:
+        type: string
+      hostZoneId:
+        type: string
+      status:
+        type: string
+        enum:
+          - TRANSFER
+          - STAKE
+        default: TRANSFER
+        title: |-
+          - TRANSFER: pending transfer to delegate account
+           - STAKE: pending staking on delegate account
+      depositEpochNumber:
+        type: string
+        format: uint64
+      source:
+        type: string
+        enum:
+          - STRIDE
+          - WITHDRAWAL_ICA
+        default: STRIDE
+  Stridelabs.stride.records.DepositRecord.Source:
+    type: string
+    enum:
+      - STRIDE
+      - WITHDRAWAL_ICA
+    default: STRIDE
+  Stridelabs.stride.records.DepositRecord.Status:
+    type: string
+    enum:
+      - TRANSFER
+      - STAKE
+    default: TRANSFER
+    title: |-
+      - TRANSFER: pending transfer to delegate account
+       - STAKE: pending staking on delegate account
+  Stridelabs.stride.records.EpochUnbondingRecord:
+    type: object
+    properties:
+      id:
+        type: string
+        format: uint64
+      unbondingEpochNumber:
+        type: string
+        format: uint64
+      hostZoneUnbondings:
+        type: object
+        additionalProperties:
+          type: object
+          properties:
+            amount:
+              type: string
+              format: uint64
+            denom:
+              type: string
+            hostZoneId:
+              type: string
+            unbondingTime:
+              type: string
+              format: uint64
+            status:
+              type: string
+              enum:
+                - BONDED
+                - UNBONDED
+                - PENDING_TRANSFER
+                - TRANSFERRED
+              default: BONDED
+              title: |-
+                - BONDED: tokens bonded on delegate account
+                 - UNBONDED: unbonding completed on delegate account
+                 - PENDING_TRANSFER: transfer from delegate account to withdrawal account attempted
+                 - TRANSFERRED: transfer success
+            userRedemptionRecords:
+              type: array
+              items:
+                type: string
+              title: >-
+                google.protobuf.Timestamp unbondingTime = 5
+                    [(gogoproto.nullable) = false, (gogoproto.stdtime) = true, (gogoproto.moretags) = "yaml:\"unbonding_time\""];
+                google.protobuf.Timestamp completionTime = 5
+                    [(gogoproto.nullable) = false, (gogoproto.stdtime) = true, (gogoproto.moretags) = "yaml:\"unbonding_time\""];
+                Index UserRedemptionRecords here (note: id is
+                {chain_id}.{epoch}.{sender})
+  Stridelabs.stride.records.HostZoneUnbonding:
+    type: object
+    properties:
+      amount:
+        type: string
+        format: uint64
+      denom:
+        type: string
+      hostZoneId:
+        type: string
+      unbondingTime:
+        type: string
+        format: uint64
+      status:
+        type: string
+        enum:
+          - BONDED
+          - UNBONDED
+          - PENDING_TRANSFER
+          - TRANSFERRED
+        default: BONDED
+        title: |-
+          - BONDED: tokens bonded on delegate account
+           - UNBONDED: unbonding completed on delegate account
+           - PENDING_TRANSFER: transfer from delegate account to withdrawal account attempted
+           - TRANSFERRED: transfer success
+      userRedemptionRecords:
+        type: array
+        items:
+          type: string
+        title: >-
+          google.protobuf.Timestamp unbondingTime = 5
+              [(gogoproto.nullable) = false, (gogoproto.stdtime) = true, (gogoproto.moretags) = "yaml:\"unbonding_time\""];
+          google.protobuf.Timestamp completionTime = 5
+              [(gogoproto.nullable) = false, (gogoproto.stdtime) = true, (gogoproto.moretags) = "yaml:\"unbonding_time\""];
+          Index UserRedemptionRecords here (note: id is
+          {chain_id}.{epoch}.{sender})
+  Stridelabs.stride.records.HostZoneUnbonding.Status:
+    type: string
+    enum:
+      - BONDED
+      - UNBONDED
+      - PENDING_TRANSFER
+      - TRANSFERRED
+    default: BONDED
+    title: |-
+      - BONDED: tokens bonded on delegate account
+       - UNBONDED: unbonding completed on delegate account
+       - PENDING_TRANSFER: transfer from delegate account to withdrawal account attempted
+       - TRANSFERRED: transfer success
+  Stridelabs.stride.records.Params:
+    type: object
+    description: Params defines the parameters for the module.
+  Stridelabs.stride.records.QueryAllDepositRecordResponse:
+    type: object
+    properties:
+      DepositRecord:
+        type: array
+        items:
+          type: object
+          properties:
+            id:
+              type: string
+              format: uint64
+            amount:
+              type: string
+              format: int64
+            denom:
+              type: string
+            hostZoneId:
+              type: string
+            status:
+              type: string
+              enum:
+                - TRANSFER
+                - STAKE
+              default: TRANSFER
+              title: |-
+                - TRANSFER: pending transfer to delegate account
+                 - STAKE: pending staking on delegate account
+            depositEpochNumber:
+              type: string
+              format: uint64
+            source:
+              type: string
+              enum:
+                - STRIDE
+                - WITHDRAWAL_ICA
+              default: STRIDE
+      pagination:
+        type: object
+        properties:
+          next_key:
+            type: string
+            format: byte
+            title: |-
+              next_key is the key to be passed to PageRequest.key to
+              query the next page most efficiently
+          total:
+            type: string
+            format: uint64
+            title: >-
+              total is total number of results available if
+              PageRequest.count_total
+
+              was set, its value is undefined otherwise
+        description: |-
+          PageResponse is to be embedded in gRPC response messages where the
+          corresponding request message has used PageRequest.
+
+           message SomeResponse {
+                   repeated Bar results = 1;
+                   PageResponse page = 2;
+           }
+  Stridelabs.stride.records.QueryAllEpochUnbondingRecordResponse:
+    type: object
+    properties:
+      EpochUnbondingRecord:
+        type: array
+        items:
+          type: object
+          properties:
+            id:
+              type: string
+              format: uint64
+            unbondingEpochNumber:
+              type: string
+              format: uint64
+            hostZoneUnbondings:
+              type: object
+              additionalProperties:
+                type: object
+                properties:
+                  amount:
+                    type: string
+                    format: uint64
+                  denom:
+                    type: string
+                  hostZoneId:
+                    type: string
+                  unbondingTime:
+                    type: string
+                    format: uint64
+                  status:
+                    type: string
+                    enum:
+                      - BONDED
+                      - UNBONDED
+                      - PENDING_TRANSFER
+                      - TRANSFERRED
+                    default: BONDED
+                    title: |-
+                      - BONDED: tokens bonded on delegate account
+                       - UNBONDED: unbonding completed on delegate account
+                       - PENDING_TRANSFER: transfer from delegate account to withdrawal account attempted
+                       - TRANSFERRED: transfer success
+                  userRedemptionRecords:
+                    type: array
+                    items:
+                      type: string
+                    title: >-
+                      google.protobuf.Timestamp unbondingTime = 5
+                          [(gogoproto.nullable) = false, (gogoproto.stdtime) = true, (gogoproto.moretags) = "yaml:\"unbonding_time\""];
+                      google.protobuf.Timestamp completionTime = 5
+                          [(gogoproto.nullable) = false, (gogoproto.stdtime) = true, (gogoproto.moretags) = "yaml:\"unbonding_time\""];
+                      Index UserRedemptionRecords here (note: id is
+                      {chain_id}.{epoch}.{sender})
+      pagination:
+        type: object
+        properties:
+          next_key:
+            type: string
+            format: byte
+            title: |-
+              next_key is the key to be passed to PageRequest.key to
+              query the next page most efficiently
+          total:
+            type: string
+            format: uint64
+            title: >-
+              total is total number of results available if
+              PageRequest.count_total
+
+              was set, its value is undefined otherwise
+        description: |-
+          PageResponse is to be embedded in gRPC response messages where the
+          corresponding request message has used PageRequest.
+
+           message SomeResponse {
+                   repeated Bar results = 1;
+                   PageResponse page = 2;
+           }
+  Stridelabs.stride.records.QueryAllUserRedemptionRecordResponse:
+    type: object
+    properties:
+      UserRedemptionRecord:
+        type: array
+        items:
+          type: object
+          properties:
+            id:
+              type: string
+            sender:
+              type: string
+            receiver:
+              type: string
+            amount:
+              type: string
+              format: uint64
+            denom:
+              type: string
+            hostZoneId:
+              type: string
+            epochNumber:
+              type: string
+              format: int64
+            isClaimable:
+              type: boolean
+      pagination:
+        type: object
+        properties:
+          next_key:
+            type: string
+            format: byte
+            title: |-
+              next_key is the key to be passed to PageRequest.key to
+              query the next page most efficiently
+          total:
+            type: string
+            format: uint64
+            title: >-
+              total is total number of results available if
+              PageRequest.count_total
+
+              was set, its value is undefined otherwise
+        description: |-
+          PageResponse is to be embedded in gRPC response messages where the
+          corresponding request message has used PageRequest.
+
+           message SomeResponse {
+                   repeated Bar results = 1;
+                   PageResponse page = 2;
+           }
+  Stridelabs.stride.records.QueryGetDepositRecordResponse:
+    type: object
+    properties:
+      DepositRecord:
+        type: object
+        properties:
+          id:
+            type: string
+            format: uint64
+          amount:
+            type: string
+            format: int64
+          denom:
+            type: string
+          hostZoneId:
+            type: string
+          status:
+            type: string
+            enum:
+              - TRANSFER
+              - STAKE
+            default: TRANSFER
+            title: |-
+              - TRANSFER: pending transfer to delegate account
+               - STAKE: pending staking on delegate account
+          depositEpochNumber:
+            type: string
+            format: uint64
+          source:
+            type: string
+            enum:
+              - STRIDE
+              - WITHDRAWAL_ICA
+            default: STRIDE
+  Stridelabs.stride.records.QueryGetEpochUnbondingRecordResponse:
+    type: object
+    properties:
+      EpochUnbondingRecord:
+        type: object
+        properties:
+          id:
+            type: string
+            format: uint64
+          unbondingEpochNumber:
+            type: string
+            format: uint64
+          hostZoneUnbondings:
+            type: object
+            additionalProperties:
+              type: object
+              properties:
+                amount:
+                  type: string
+                  format: uint64
+                denom:
+                  type: string
+                hostZoneId:
+                  type: string
+                unbondingTime:
+                  type: string
+                  format: uint64
+                status:
+                  type: string
+                  enum:
+                    - BONDED
+                    - UNBONDED
+                    - PENDING_TRANSFER
+                    - TRANSFERRED
+                  default: BONDED
+                  title: |-
+                    - BONDED: tokens bonded on delegate account
+                     - UNBONDED: unbonding completed on delegate account
+                     - PENDING_TRANSFER: transfer from delegate account to withdrawal account attempted
+                     - TRANSFERRED: transfer success
+                userRedemptionRecords:
+                  type: array
+                  items:
+                    type: string
+                  title: >-
+                    google.protobuf.Timestamp unbondingTime = 5
+                        [(gogoproto.nullable) = false, (gogoproto.stdtime) = true, (gogoproto.moretags) = "yaml:\"unbonding_time\""];
+                    google.protobuf.Timestamp completionTime = 5
+                        [(gogoproto.nullable) = false, (gogoproto.stdtime) = true, (gogoproto.moretags) = "yaml:\"unbonding_time\""];
+                    Index UserRedemptionRecords here (note: id is
+                    {chain_id}.{epoch}.{sender})
+  Stridelabs.stride.records.QueryGetUserRedemptionRecordResponse:
+    type: object
+    properties:
+      UserRedemptionRecord:
+        type: object
+        properties:
+          id:
+            type: string
+          sender:
+            type: string
+          receiver:
+            type: string
+          amount:
+            type: string
+            format: uint64
+          denom:
+            type: string
+          hostZoneId:
+            type: string
+          epochNumber:
+            type: string
+            format: int64
+          isClaimable:
+            type: boolean
+  Stridelabs.stride.records.QueryParamsResponse:
+    type: object
+    properties:
+      params:
+        description: params holds all the parameters of this module.
+        type: object
+    description: QueryParamsResponse is response type for the Query/Params RPC method.
+  Stridelabs.stride.records.UserRedemptionRecord:
+    type: object
+    properties:
+      id:
+        type: string
+      sender:
+        type: string
+      receiver:
+        type: string
+      amount:
+        type: string
+        format: uint64
+      denom:
+        type: string
+      hostZoneId:
+        type: string
+      epochNumber:
+        type: string
+        format: int64
+      isClaimable:
+        type: boolean
   Stridelabs.stride.stakeibc.Delegation:
     type: object
     properties:
@@ -52555,6 +53841,7 @@ definitions:
               - DELEGATION
               - FEE
               - WITHDRAWAL
+              - REDEMPTION
             default: DELEGATION
           balance:
             type: string
@@ -52602,6 +53889,7 @@ definitions:
               - DELEGATION
               - FEE
               - WITHDRAWAL
+              - REDEMPTION
             default: DELEGATION
           balance:
             type: string
@@ -52649,6 +53937,52 @@ definitions:
               - DELEGATION
               - FEE
               - WITHDRAWAL
+              - REDEMPTION
+            default: DELEGATION
+          balance:
+            type: string
+            format: int64
+            title: TODO(TEST-112) use cosmos dec for all balances
+        title: >-
+          TODO(TEST-XX): Update these fields to be more useful (e.g. balances
+          should be coins, maybe store port name directly)
+      redemptionAccount:
+        type: object
+        properties:
+          address:
+            type: string
+          delegations:
+            type: array
+            items:
+              type: object
+              properties:
+                delegateAcctAddress:
+                  type: string
+                validator:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                    address:
+                      type: string
+                    status:
+                      type: string
+                    commissionRate:
+                      type: integer
+                      format: int32
+                    delegationAmt:
+                      type: string
+                      format: int64
+                amt:
+                  type: string
+                  format: int64
+          target:
+            type: string
+            enum:
+              - DELEGATION
+              - FEE
+              - WITHDRAWAL
+              - REDEMPTION
             default: DELEGATION
           balance:
             type: string
@@ -52672,7 +54006,19 @@ definitions:
           then calculate a TWARR?
       RedemptionRate:
         type: string
-    title: 'next id: 13'
+      unbondingFrequency:
+        type: string
+        format: uint64
+        title: stores how many days we should wait before issuing unbondings
+      claimableRecordIds:
+        type: array
+        items:
+          type: string
+      stakedBal:
+        type: string
+        format: int64
+        title: TODO(TEST-101) int to dec
+    title: 'next id: 17'
   Stridelabs.stride.stakeibc.ICAAccount:
     type: object
     properties:
@@ -52712,6 +54058,7 @@ definitions:
           - DELEGATION
           - FEE
           - WITHDRAWAL
+          - REDEMPTION
         default: DELEGATION
       balance:
         type: string
@@ -52726,6 +54073,7 @@ definitions:
       - DELEGATION
       - FEE
       - WITHDRAWAL
+      - REDEMPTION
     default: DELEGATION
   Stridelabs.stride.stakeibc.MinValidatorRequirements:
     type: object
@@ -52736,11 +54084,15 @@ definitions:
       uptime:
         type: integer
         format: int32
+<<<<<<< HEAD
+  Stridelabs.stride.stakeibc.MsgClaimUndelegatedTokensResponse:
+=======
   Stridelabs.stride.stakeibc.MsgAddValidatorResponse:
     type: object
   Stridelabs.stride.stakeibc.MsgChangeValidatorWeightResponse:
     type: object
   Stridelabs.stride.stakeibc.MsgDeleteValidatorResponse:
+>>>>>>> test-validator-selection
     type: object
   Stridelabs.stride.stakeibc.MsgLiquidStakeResponse:
     type: object
@@ -52780,7 +54132,7 @@ definitions:
       deposit_interval:
         type: string
         format: uint64
-      exchange_rate_interval:
+      redemption_rate_interval:
         type: string
         format: uint64
       stride_commission:
@@ -52796,9 +54148,6 @@ definitions:
           of the fee each address is entitled to
           TODO implement this
       reinvest_interval:
-        type: string
-        format: uint64
-      block_based_epoch_interval:
         type: string
         format: uint64
     title: |-
@@ -52935,6 +54284,7 @@ definitions:
                     - DELEGATION
                     - FEE
                     - WITHDRAWAL
+                    - REDEMPTION
                   default: DELEGATION
                 balance:
                   type: string
@@ -52982,6 +54332,7 @@ definitions:
                     - DELEGATION
                     - FEE
                     - WITHDRAWAL
+                    - REDEMPTION
                   default: DELEGATION
                 balance:
                   type: string
@@ -53029,6 +54380,52 @@ definitions:
                     - DELEGATION
                     - FEE
                     - WITHDRAWAL
+                    - REDEMPTION
+                  default: DELEGATION
+                balance:
+                  type: string
+                  format: int64
+                  title: TODO(TEST-112) use cosmos dec for all balances
+              title: >-
+                TODO(TEST-XX): Update these fields to be more useful (e.g.
+                balances should be coins, maybe store port name directly)
+            redemptionAccount:
+              type: object
+              properties:
+                address:
+                  type: string
+                delegations:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      delegateAcctAddress:
+                        type: string
+                      validator:
+                        type: object
+                        properties:
+                          name:
+                            type: string
+                          address:
+                            type: string
+                          status:
+                            type: string
+                          commissionRate:
+                            type: integer
+                            format: int32
+                          delegationAmt:
+                            type: string
+                            format: int64
+                      amt:
+                        type: string
+                        format: int64
+                target:
+                  type: string
+                  enum:
+                    - DELEGATION
+                    - FEE
+                    - WITHDRAWAL
+                    - REDEMPTION
                   default: DELEGATION
                 balance:
                   type: string
@@ -53052,7 +54449,19 @@ definitions:
                 then calculate a TWARR?
             RedemptionRate:
               type: string
-          title: 'next id: 13'
+            unbondingFrequency:
+              type: string
+              format: uint64
+              title: stores how many days we should wait before issuing unbondings
+            claimableRecordIds:
+              type: array
+              items:
+                type: string
+            stakedBal:
+              type: string
+              format: int64
+              title: TODO(TEST-101) int to dec
+          title: 'next id: 17'
       pagination:
         type: object
         properties:
@@ -53209,6 +54618,7 @@ definitions:
                   - DELEGATION
                   - FEE
                   - WITHDRAWAL
+                  - REDEMPTION
                 default: DELEGATION
               balance:
                 type: string
@@ -53256,6 +54666,7 @@ definitions:
                   - DELEGATION
                   - FEE
                   - WITHDRAWAL
+                  - REDEMPTION
                 default: DELEGATION
               balance:
                 type: string
@@ -53303,6 +54714,52 @@ definitions:
                   - DELEGATION
                   - FEE
                   - WITHDRAWAL
+                  - REDEMPTION
+                default: DELEGATION
+              balance:
+                type: string
+                format: int64
+                title: TODO(TEST-112) use cosmos dec for all balances
+            title: >-
+              TODO(TEST-XX): Update these fields to be more useful (e.g.
+              balances should be coins, maybe store port name directly)
+          redemptionAccount:
+            type: object
+            properties:
+              address:
+                type: string
+              delegations:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    delegateAcctAddress:
+                      type: string
+                    validator:
+                      type: object
+                      properties:
+                        name:
+                          type: string
+                        address:
+                          type: string
+                        status:
+                          type: string
+                        commissionRate:
+                          type: integer
+                          format: int32
+                        delegationAmt:
+                          type: string
+                          format: int64
+                    amt:
+                      type: string
+                      format: int64
+              target:
+                type: string
+                enum:
+                  - DELEGATION
+                  - FEE
+                  - WITHDRAWAL
+                  - REDEMPTION
                 default: DELEGATION
               balance:
                 type: string
@@ -53326,7 +54783,19 @@ definitions:
               then calculate a TWARR?
           RedemptionRate:
             type: string
-        title: 'next id: 13'
+          unbondingFrequency:
+            type: string
+            format: uint64
+            title: stores how many days we should wait before issuing unbondings
+          claimableRecordIds:
+            type: array
+            items:
+              type: string
+          stakedBal:
+            type: string
+            format: int64
+            title: TODO(TEST-101) int to dec
+        title: 'next id: 17'
   Stridelabs.stride.stakeibc.QueryGetICAAccountResponse:
     type: object
     properties:
@@ -53369,6 +54838,7 @@ definitions:
               - DELEGATION
               - FEE
               - WITHDRAWAL
+              - REDEMPTION
             default: DELEGATION
           balance:
             type: string
@@ -53440,7 +54910,7 @@ definitions:
           deposit_interval:
             type: string
             format: uint64
-          exchange_rate_interval:
+          redemption_rate_interval:
             type: string
             format: uint64
           stride_commission:
@@ -53456,9 +54926,6 @@ definitions:
               of the fee each address is entitled to
               TODO implement this
           reinvest_interval:
-            type: string
-            format: uint64
-          block_based_epoch_interval:
             type: string
             format: uint64
         title: |-

@@ -2,8 +2,9 @@ package keeper
 
 import (
 	"context"
-	"strconv"
+	"fmt"
 
+	recordstypes "github.com/Stride-Labs/stride/x/records/types"
 	"github.com/Stride-Labs/stride/x/stakeibc/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -13,40 +14,79 @@ import (
 func (k Keeper) RedeemStake(goCtx context.Context, msg *types.MsgRedeemStake) (*types.MsgRedeemStakeResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	// vars
+	// get our addresses, make sure they're valid
 	sender, err := sdk.AccAddressFromBech32(msg.Creator)
 	if err != nil {
 		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "address is invalid: %s", msg.Creator)
 	}
-	coinString := strconv.Itoa(int(msg.Amount)) + msg.StAssetDenom
+
+	// TODO(TEST-112) add safety check to validate the receiver address is a valid hostZone address
+	// then make sure host zone is valid
+	hostZone, found := k.GetHostZone(ctx, msg.HostZone)
+	if !found {
+		return nil, sdkerrors.Wrapf(types.ErrInvalidHostZone, "host zone is invalid: %s", msg.HostZone)
+	}
+
+	if msg.Amount > hostZone.StakedBal {
+		return nil, sdkerrors.Wrapf(types.ErrInvalidAmount, "cannot unstake an amount g.t. staked balance on host zone: %d", msg.Amount)
+	}
+
+	// construct desired unstaking amount from host zone
+	coinDenom := "st" + hostZone.HostDenom
+	stAmount := sdk.NewDec(msg.Amount).Mul(hostZone.RedemptionRate)
+	// TODO(TEST-112) bigint safety
+	coinString := stAmount.RoundInt().String() + coinDenom
 	inCoin, err := sdk.ParseCoinNormalized(coinString)
 	if err != nil {
 		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidCoins, "could not parse inCoin: %s", coinString)
 	}
-	// remove st prefix to get the base denom
-	hostZoneDenom := types.HostZoneDenomFromStAssetDenom(msg.StAssetDenom)
-	hostZone, err := k.GetHostZoneFromHostDenom(ctx, hostZoneDenom)
-	if err != nil {
-		return nil, err
-	}
-	delegationAccount := hostZone.GetDelegationAccount()
-	connectionId := hostZone.GetConnectionId()
-
-	// Safety checks
-	// Redemption amount must be positive
+	// safety checks on the coin
+	// 	- Redemption amount must be positive
 	if !inCoin.IsPositive() {
 		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidCoins, "amount must be greater than 0. found: %s", msg.Amount)
 	}
-	// StAssetDenom is valid
-	// Should we register stAssets somewhere and add an additional check here?
-	if types.IsStAsset(msg.StAssetDenom) != true {
-		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidCoins, "denom is not a valid stAsset. found: %s", msg.StAssetDenom)
-	}
-	// Creator owns at least "amount" stAssets
-	balance := k.bankKeeper.GetBalance(ctx, sender, msg.StAssetDenom)
-	if balance.IsLT(inCoin) {
+	// 	- Creator owns at least "amount" stAssets
+	balance := k.bankKeeper.GetBalance(ctx, sender, coinDenom)
+	k.Logger(ctx).Info(fmt.Sprintf("Redemption issuer IBCDenom balance: %d%s", balance.Amount, balance.Denom))
+	k.Logger(ctx).Info(fmt.Sprintf("Redemption requested redemotion amount: %v%s", inCoin.Amount, inCoin.Denom))
+	if balance.Amount.LT(inCoin.Amount) {
 		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidCoins, "balance is lower than redemption amount. redemption amount: %s, balance %s: ", msg.Amount, balance.Amount)
 	}
+	// UNBONDING RECORD KEEPING
+	// first construct a user redemption record
+	epochTracker, found := k.GetEpochTracker(ctx, "day")
+	if !found {
+		return nil, sdkerrors.Wrapf(types.ErrEpochNotFound, "epoch tracker found: %s", "day")
+	}
+	senderAddr := sender.String()
+	redemptionId := fmt.Sprintf("%s.%d.%s", hostZone.ChainId, epochTracker.EpochNumber, senderAddr) // {chain_id}.{epoch}.{sender}
+	userRedemptionRecord := recordstypes.UserRedemptionRecord{
+		Id:          redemptionId,
+		Sender:      senderAddr,
+		Receiver:    msg.Receiver,
+		Amount:      inCoin.Amount.Uint64(),
+		Denom:       hostZone.HostDenom,
+		HostZoneId:  hostZone.ChainId,
+		EpochNumber: int64(epochTracker.EpochNumber),
+		IsClaimable: false,
+	}
+	_, found = k.RecordsKeeper.GetUserRedemptionRecord(ctx, redemptionId)
+	if found {
+		return nil, sdkerrors.Wrapf(recordstypes.ErrRedemptionAlreadyExists, "user already redeemed this epoch: %s", redemptionId)
+	}
+	// then add undelegation amount to epoch unbonding records
+	epochUnbondingRecord, found := k.RecordsKeeper.GetLatestEpochUnbondingRecord(ctx)
+	if !found {
+		k.Logger(ctx).Error("latest epoch unbonding record not found")
+		return nil, sdkerrors.Wrapf(recordstypes.ErrEpochUnbondingRecordNotFound, "latest epoch unbonding record not found")
+	}
+	// get relevant host zone on this epoch unbonding record
+	hostZoneUnbonding, found := epochUnbondingRecord.HostZoneUnbondings[hostZone.ChainId]
+	if !found {
+		return nil, sdkerrors.Wrapf(types.ErrInvalidHostZone, "host zone not found in unbondings: %s", hostZone.ChainId)
+	}
+	hostZoneUnbonding.Amount += inCoin.Amount.Uint64()
+	hostZoneUnbonding.UserRedemptionRecords = append(hostZoneUnbonding.UserRedemptionRecords, userRedemptionRecord.Id)
 
 	// Escrow user's balance
 	err = k.bankKeeper.SendCoinsFromAccountToModule(ctx, sender, types.ModuleName, sdk.NewCoins(inCoin))
@@ -55,31 +95,17 @@ func (k Keeper) RedeemStake(goCtx context.Context, msg *types.MsgRedeemStake) (*
 		panic(err)
 	}
 
-	// calculate the redemption rate
-	// when redeeming tokens, multiply stAssets by the exchange rate (allStakedAssets / allStAssets)
-	// TODO(TEST-7): Update redemption_rate via ICQ
-	var rate sdk.Dec
-	rate = hostZone.LastRedemptionRate
-	if hostZone.RedemptionRate.LT(rate) {
-		rate = hostZone.RedemptionRate
+	// Actually set the records, we wait until now to prevent any errors
+	k.RecordsKeeper.SetUserRedemptionRecord(ctx, userRedemptionRecord)
+
+	// Set the UserUnbondingRecords on the proper HostZoneUnbondingRecord
+	hostZoneUnbondings := epochUnbondingRecord.GetHostZoneUnbondings()
+	if len(hostZoneUnbondings) == 0 {
+		hostZoneUnbondings = make(map[string]*recordstypes.HostZoneUnbonding)
+		epochUnbondingRecord.HostZoneUnbondings = hostZoneUnbondings
 	}
-	native_tokens := inCoin.Amount.ToDec().Mul(rate).TruncateInt()
-	outCoin := sdk.NewCoin(hostZone.HostDenom, native_tokens)
-	_ = outCoin
-
-	// Select validators for unbonding
-	// TODO(TEST-39): Implement validator selection
-	validator_address := "cosmosvaloper19e7sugzt8zaamk2wyydzgmg9n3ysylg6na6k6e" // gval2
-	_ = validator_address
-
-	// Construct the transaction. Note, this transaction must be atomically executed.
-	// TODO(TEST-5): Add messages to redeem stake
-	var msgs []sdk.Msg
-	// TODO(TEST-5)
-	// Implement record keeping logic!
-
-	// Send the ICA transaction
-	k.SubmitTxs(ctx, connectionId, msgs, *delegationAccount)
+	epochUnbondingRecord.HostZoneUnbondings[hostZone.ChainId] = hostZoneUnbonding
+	k.RecordsKeeper.SetEpochUnbondingRecord(ctx, epochUnbondingRecord)
 
 	return &types.MsgRedeemStakeResponse{}, nil
 }

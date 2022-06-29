@@ -426,7 +426,6 @@ func NewStrideApp(
 		app.GetSubspace(recordsmoduletypes.ModuleName),
 		scopedRecordsKeeper,
 	)
-
 	recordsModule := recordsmodule.NewAppModule(appCodec, app.RecordsKeeper, app.AccountKeeper, app.BankKeeper)
 
 	// create IBC stacks by combining middleware with base application
@@ -467,6 +466,15 @@ func NewStrideApp(
 
 	app.InterchainqueryKeeper.SetCallbackHandler(stakeibcmoduletypes.ModuleName, app.StakeibcKeeper.CallbackHandler())
 
+	epochsKeeper := epochsmodulekeeper.NewKeeper(appCodec, keys[epochsmoduletypes.StoreKey])
+	app.EpochsKeeper = *epochsKeeper.SetHooks(
+		epochsmoduletypes.NewMultiEpochHooks(
+			app.StakeibcKeeper.Hooks(),
+		),
+	)
+	epochsModule := epochsmodule.NewAppModule(appCodec, app.EpochsKeeper)
+	// this line is used by starport scaffolding # stargate/app/keeperDefinition
+
 	app.ICAHostKeeper = icahostkeeper.NewKeeper(
 		appCodec, keys[icahosttypes.StoreKey], app.GetSubspace(icahosttypes.SubModuleName),
 		app.IBCKeeper.ChannelKeeper, &app.IBCKeeper.PortKeeper,
@@ -476,16 +484,6 @@ func NewStrideApp(
 	// NEXT TODO: implement OnAcknowledgementPacket in module_ibc.go for stakeibc so this type doesn't error
 	icaControllerIBCModule := icacontroller.NewIBCModule(app.ICAControllerKeeper, stakeibcIBCModule)
 	icaHostIBCModule := icahost.NewIBCModule(app.ICAHostKeeper)
-
-	epochsKeeper := epochsmodulekeeper.NewKeeper(appCodec, keys[epochsmoduletypes.StoreKey])
-	app.EpochsKeeper = *epochsKeeper.SetHooks(
-		epochsmoduletypes.NewMultiEpochHooks(
-			app.StakeibcKeeper.Hooks(),
-		),
-	)
-	epochsModule := epochsmodule.NewAppModule(appCodec, app.EpochsKeeper)
-
-	// this line is used by starport scaffolding # stargate/app/keeperDefinition
 
 	// Create static IBC router, add transfer route, then set and seal it
 	ibcRouter := ibcporttypes.NewRouter()

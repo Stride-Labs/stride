@@ -33,6 +33,13 @@ func KeyPrefix(p string) []byte {
 }
 
 const (
+	UserRedemptionRecordKey      = "UserRedemptionRecord-value-"
+	UserRedemptionRecordCountKey = "UserRedemptionRecord-count-"
+)
+
+const (
+	EpochUnbondingRecordKey      = "EpochUnbondingRecord-value-"
+	EpochUnbondingRecordCountKey = "EpochUnbondingRecord-count-"
 	DepositRecordKey      = "DepositRecord-value-"
 	DepositRecordCountKey = "DepositRecord-count-"
 )

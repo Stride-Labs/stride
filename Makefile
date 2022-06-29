@@ -145,7 +145,7 @@ proto:
 	@echo
 	@echo "=========== Generate Message ============"
 	@echo
-	./scripts/protocgen.sh
+	@ignite generate proto-go
 	@echo
 	@echo "=========== Generate Complete ============"
 	@echo
@@ -291,7 +291,7 @@ init:
 	sh scripts/init_main.sh -${build}
 
 logs: 
-	sh scripts-local/logs/create_logs.sh 
+	sh scripts-local/create_logs.sh 
 
 
 ###############################################################################
