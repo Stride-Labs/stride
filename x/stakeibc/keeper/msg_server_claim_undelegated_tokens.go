@@ -37,27 +37,38 @@ func (k msgServer) ClaimUndelegatedTokens(goCtx context.Context, msg *types.MsgC
 	// go through the desired number of records and claim them
 	numRecordsToClaim := min(int(msg.MaxClaims), len(hostZone.ClaimableRecordIds))
 	for i := 0; i < numRecordsToClaim; i++ {
-		record, found := k.recordsKeeper.GetUserRedemptionRecord(ctx, hostZone.ClaimableRecordIds[i])
+		record, found := k.RecordsKeeper.GetUserRedemptionRecord(ctx, hostZone.ClaimableRecordIds[i])
 		if !found {
 			errMsg := fmt.Sprintf("User redemption record %s not found on host zone %s", hostZone.ClaimableRecordIds[i], hostZone.ChainId)
 			k.Logger(ctx).Error(errMsg)
 			return nil, sdkerrors.Wrap(types.ErrInvalidHostZone, errMsg)
 		}
+		errMsg := fmt.Sprintf("FromAddress %s, ToAddress %s", redemptionAccount.Address, record.Receiver)
+		k.Logger(ctx).Error(errMsg)
+		errMsg = fmt.Sprintf("Claimable record ids %s", hostZone.ClaimableRecordIds)
+		k.Logger(ctx).Error(errMsg)
+		errMsg = fmt.Sprintf("Amount %d", record.Amount)
+		k.Logger(ctx).Error(errMsg)
+
 		msgs = append(msgs, &bankTypes.MsgSend{
 			FromAddress: redemptionAccount.Address,
 			ToAddress:   record.Receiver,
+			Amount: 	sdk.NewCoins(sdk.NewInt64Coin(record.Denom, int64(record.Amount))),
 		})
 	}
 	// TODO we should do some error handling here, in case this call fails
 	err := k.SubmitTxs(ctx, hostZone.GetConnectionId(), msgs, *redemptionAccount)
 	if err != nil {
-		k.Logger(ctx).Error(err.Error())
+		k.Logger(ctx).Error(fmt.Sprintf("MOOSE: %s", err.Error()))
 		return nil, err
 	}
+	k.Logger(ctx).Error(fmt.Sprintf("MOOSE - SubmitTxs success"))
 	// now go through and delete these records
 	for i := 0; i < numRecordsToClaim; i++ {
-		k.recordsKeeper.RemoveUserRedemptionRecord(ctx, hostZone.ClaimableRecordIds[i])
+		k.RecordsKeeper.RemoveUserRedemptionRecord(ctx, hostZone.ClaimableRecordIds[i])
+		k.Logger(ctx).Error(fmt.Sprintf("MOOSE - RemoveUserRedemptionRecord"))
 	}
+
 	// finally clean up these records from claimable records
 	hostZone.ClaimableRecordIds = hostZone.ClaimableRecordIds[numRecordsToClaim:]
 	return &types.MsgClaimUndelegatedTokensResponse{}, nil

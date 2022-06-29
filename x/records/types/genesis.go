@@ -12,12 +12,15 @@ const DefaultIndex uint64 = 1
 // DefaultGenesis returns the default Capability genesis state
 func DefaultGenesis() *GenesisState {
 	return &GenesisState{
-		PortId:                   PortID,
-		UserRedemptionRecordList: []UserRedemptionRecord{},
-		EpochUnbondingRecordList: []EpochUnbondingRecord{},
-		DepositRecordList: []DepositRecord{},
+		Params:                    DefaultParams(),
+		PortId:                    PortID,
+		UserRedemptionRecordList:  []UserRedemptionRecord{},
+		UserRedemptionRecordCount: 0,
+		EpochUnbondingRecordList:  []EpochUnbondingRecord{},
+		EpochUnbondingRecordCount: 0,
+		DepositRecordList:         []DepositRecord{},
+		DepositRecordCount:        0,
 		// this line is used by starport scaffolding # genesis/types/default
-		Params: DefaultParams(),
 	}
 }
 

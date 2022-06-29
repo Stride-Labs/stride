@@ -44,7 +44,7 @@ func (k Keeper) AppendEpochUnbondingRecord(
 	epochUnbondingRecord.Id = count
 
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.EpochUnbondingRecordKey))
-	appendedValue := k.cdc.MustMarshal(&epochUnbondingRecord)
+	appendedValue := k.Cdc.MustMarshal(&epochUnbondingRecord)
 	store.Set(GetEpochUnbondingRecordIDBytes(epochUnbondingRecord.Id), appendedValue)
 
 	// Update epochUnbondingRecord count
@@ -56,7 +56,7 @@ func (k Keeper) AppendEpochUnbondingRecord(
 // SetEpochUnbondingRecord set a specific epochUnbondingRecord in the store
 func (k Keeper) SetEpochUnbondingRecord(ctx sdk.Context, epochUnbondingRecord types.EpochUnbondingRecord) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.EpochUnbondingRecordKey))
-	b := k.cdc.MustMarshal(&epochUnbondingRecord)
+	b := k.Cdc.MustMarshal(&epochUnbondingRecord)
 	store.Set(GetEpochUnbondingRecordIDBytes(epochUnbondingRecord.Id), b)
 }
 
@@ -67,14 +67,14 @@ func (k Keeper) GetEpochUnbondingRecord(ctx sdk.Context, id uint64) (val types.E
 	if b == nil {
 		return val, false
 	}
-	k.cdc.MustUnmarshal(b, &val)
+	k.Cdc.MustUnmarshal(b, &val)
 	return val, true
 }
 
 // GetEpochUnbondingRecordByEpoch returns a epochUnbondingRecord from its epochNumber
-func (k Keeper) GetEpochUnbondingRecordByEpoch(ctx sdk.Context, epochNumber int64) (val types.EpochUnbondingRecord, found bool) {
+func (k Keeper) GetEpochUnbondingRecordByEpoch(ctx sdk.Context, epochNumber uint64) (val types.EpochUnbondingRecord, found bool) {
 	for _, epochUnbondingRecord := range k.GetAllEpochUnbondingRecord(ctx) {
-		if epochUnbondingRecord.EpochNumber == epochNumber {
+		if epochUnbondingRecord.UnbondingEpochNumber == epochNumber {
 			return epochUnbondingRecord, true
 		}
 	}
@@ -108,7 +108,7 @@ func (k Keeper) GetAllEpochUnbondingRecord(ctx sdk.Context) (list []types.EpochU
 
 	for ; iterator.Valid(); iterator.Next() {
 		var val types.EpochUnbondingRecord
-		k.cdc.MustUnmarshal(iterator.Value(), &val)
+		k.Cdc.MustUnmarshal(iterator.Value(), &val)
 		list = append(list, val)
 	}
 
@@ -139,7 +139,7 @@ func (k Keeper) IterateEpochUnbondingRecords(ctx sdk.Context,
 
 	for ; iterator.Valid(); iterator.Next() {
 		epochUnbondRecord := types.EpochUnbondingRecord{}
-		k.cdc.MustUnmarshal(iterator.Value(), &epochUnbondRecord)
+		k.Cdc.MustUnmarshal(iterator.Value(), &epochUnbondRecord)
 
 		stop := fn(i, epochUnbondRecord)
 
