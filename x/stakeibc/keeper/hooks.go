@@ -36,6 +36,9 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochIdentifier string, epochN
 
 	// process redemption records
 	if epochIdentifier == "day" {
+		// k.Logger(ctx).Info(fmt.Sprintf("Total supply %s", k.bankKeeper.GetSupply(ctx, "stuatom")))
+		// k.Logger(ctx).Info(fmt.Sprintf("Stakeibc address %s", k.accountKeeper.GetModuleAccount(ctx, "stakeibc").GetAddress()))
+		// k.Logger(ctx).Info(fmt.Sprintf("Bank address %s", k.accountKeeper.GetModuleAccount(ctx, "bank").GetAddress()))
 		// here, we process everything we need to for redemptions
 		k.Logger(ctx).Info(fmt.Sprintf("Day %d Beginning", epochNumber))
 		// first we initiate unbondings from any hostZone where it's appropriate
