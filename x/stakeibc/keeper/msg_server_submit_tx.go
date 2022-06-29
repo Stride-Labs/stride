@@ -229,6 +229,9 @@ func (k Keeper) SubmitTxs(ctx sdk.Context, connectionId string, msgs []sdk.Msg, 
 		return err
 	}
 
+	// log the data sent in the transaction
+	k.Logger(ctx).Info("MICE SubmitTxs tx:", connectionId)
+
 	return nil
 }
 

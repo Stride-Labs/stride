@@ -3,6 +3,7 @@ package keeper
 import (
 	"encoding/json"
 	"fmt"
+	time "time"
 
 	epochtypes "github.com/Stride-Labs/stride/x/epochs/types"
 	recordstypes "github.com/Stride-Labs/stride/x/records/types"
@@ -10,6 +11,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	distributiontypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	channeltypes "github.com/cosmos/ibc-go/v3/modules/core/04-channel/types"
 	"github.com/golang/protobuf/proto"
@@ -33,6 +35,7 @@ func (k Keeper) HandleAcknowledgement(ctx sdk.Context, modulePacket channeltypes
 	err := json.Unmarshal(acknowledgement, &ack)
 	if err != nil {
 		ackErr := channeltypes.Acknowledgement_Error{}
+		k.Logger(ctx).Error(fmt.Sprintf("MICE Unable to unmarshal acknowledgement error %v data %v", err, acknowledgement))
 		err := json.Unmarshal(acknowledgement, &ackErr)
 		if err != nil {
 			ctx.EventManager().EmitEvent(
@@ -97,7 +100,7 @@ func (k Keeper) HandleAcknowledgement(ctx sdk.Context, modulePacket channeltypes
 			}
 			k.Logger(ctx).Debug("Delegated", "response", response)
 			// we should update delegation records here.
-			if err := k.HandleUndelegate(ctx, src); err != nil {
+			if err := k.HandleUndelegate(ctx, src, response.CompletionTime); err != nil {
 				return err
 			}
 			continue
@@ -119,6 +122,15 @@ func (k Keeper) HandleAcknowledgement(ctx sdk.Context, modulePacket channeltypes
 				return err
 			}
 			continue
+		case "/cosmos.distribution.v1beta1.MsgSetWithdrawAddress":
+			response := distributiontypes.MsgSetWithdrawAddressResponse{}
+			err := proto.Unmarshal(msgData.Data, &response)
+			if err != nil {
+				k.Logger(ctx).Error("unable to unmarshal MsgSend response", "error", err)
+				return err
+			}
+			k.Logger(ctx).Info("WithdrawalAddress set", "response", response)
+			continue
 		default:
 			k.Logger(ctx).Error("Unhandled acknowledgement packet", "type", msgData.MsgType)
 		}
@@ -134,13 +146,13 @@ func (k Keeper) HandleAcknowledgement(ctx sdk.Context, modulePacket channeltypes
 }
 
 func (k *Keeper) HandleSend(ctx sdk.Context, msg sdk.Msg) error {
-	k.Logger(ctx).Info("Received MsgSend acknowledgement")
 	// first, type assertion. we should have banktypes.MsgSend
 	sendMsg, ok := msg.(*banktypes.MsgSend)
 	if !ok {
 		k.Logger(ctx).Error("unable to cast source message to MsgSend")
 		return fmt.Errorf("unable to cast source message to MsgSend")
 	}
+	k.Logger(ctx).Info(fmt.Sprintf("Received MsgSend acknowledgement for msg %v", sendMsg))
 	coin := sendMsg.Amount[0]
 	// Pull host zone
 	hostZoneDenom := coin.Denom
@@ -153,6 +165,7 @@ func (k *Keeper) HandleSend(ctx sdk.Context, msg sdk.Msg) error {
 	// Check to and from addresses
 	withdrawalAddress := zone.GetWithdrawalAccount().GetAddress()
 	delegationAddress := zone.GetDelegationAccount().GetAddress()
+	redemptionAddress := zone.GetRedemptionAccount().GetAddress()
 
 	// Only process bank sends that reinvest user rewards
 	if sendMsg.FromAddress == withdrawalAddress && sendMsg.ToAddress == delegationAddress {
@@ -165,15 +178,17 @@ func (k *Keeper) HandleSend(ctx sdk.Context, msg sdk.Msg) error {
 		epochNumber := strideEpochTracker.EpochNumber
 		// create a new record so that rewards are reinvested
 		record := recordstypes.DepositRecord{
-			Id:          0,
-			Amount:      amount,
-			Denom:       hostZoneDenom,
-			HostZoneId:  zone.ChainId,
-			Status:      recordstypes.DepositRecord_STAKE,
-			Source:      recordstypes.DepositRecord_WITHDRAWAL_ICA,
-			EpochNumber: uint64(epochNumber),
+			Id:                 0,
+			Amount:             amount,
+			Denom:              hostZoneDenom,
+			HostZoneId:         zone.ChainId,
+			Status:             recordstypes.DepositRecord_STAKE,
+			Source:             recordstypes.DepositRecord_WITHDRAWAL_ICA,
+			DepositEpochNumber: uint64(epochNumber),
 		}
 		k.RecordsKeeper.AppendDepositRecord(ctx, record)
+	} else if sendMsg.FromAddress == delegationAddress && sendMsg.ToAddress == redemptionAddress {
+		k.Logger(ctx).Info(fmt.Sprintf("[REDEMPTION] Received MsgSend acknowledgement for msg %v", sendMsg))
 	} else {
 		return nil
 	}
@@ -214,8 +229,7 @@ func (k *Keeper) HandleDelegate(ctx sdk.Context, msg sdk.Msg) error {
 	return nil
 }
 
-// TODO(TEST-28): Burn stAssets if RedeemStake succeeds
-func (k Keeper) HandleUndelegate(ctx sdk.Context, msg sdk.Msg) error {
+func (k Keeper) HandleUndelegate(ctx sdk.Context, msg sdk.Msg, completionTime time.Time) error {
 	k.Logger(ctx).Info("Received MsgUndelegate acknowledgement")
 	// first, type assertion. we should have stakingtypes.MsgDelegate
 	undelegateMsg, ok := msg.(*stakingtypes.MsgUndelegate)
@@ -225,33 +239,58 @@ func (k Keeper) HandleUndelegate(ctx sdk.Context, msg sdk.Msg) error {
 		return fmt.Errorf("unable to cast source message to MsgUndelegate")
 	}
 
-	// CHECK ZONE
-	hostZoneDenom := undelegateMsg.Amount.Denom
-	zone, err := k.GetHostZoneFromHostDenom(ctx, hostZoneDenom)
+	// Check if the unbonding message was for a delegate account (msg.DelegatorAddress)
+	zone, err := k.GetHostZoneFromHostDenom(ctx, undelegateMsg.Amount.Denom)
 	if err != nil {
 		return err
 	}
+	if undelegateMsg.DelegatorAddress != zone.GetDelegationAccount().GetAddress() {
+		return sdkerrors.Wrapf(sdkerrors.ErrLogic, "Undelegate message was not for a delegation account")
+	}
 
-	// Implement!
-	// burn stAssets if successful
-	// return stAssets to user if unsuccessful
+	zone.StakedBal -= undelegateMsg.Amount.Amount.Int64()
+	k.SetHostZone(ctx, *zone)
+
+	epochTracker, found := k.GetEpochTracker(ctx, "day")
+	if !found {
+		return sdkerrors.Wrapf(types.ErrInvalidLengthEpochTracker, "no number for epoch (%s)", "day")
+	}
+	currentEpochNumber := epochTracker.GetEpochNumber()
+	for _, epochUnbonding := range k.RecordsKeeper.GetAllEpochUnbondingRecord(ctx) {
+		if epochUnbonding.UnbondingEpochNumber == currentEpochNumber {
+			continue
+		}
+		hostZoneRecord, found := epochUnbonding.HostZoneUnbondings[zone.ChainId]
+		if !found {
+			k.Logger(ctx).Error(fmt.Sprintf("Host zone unbonding record not found for hostZoneId %s in epoch %d", zone.ChainId, epochUnbonding.UnbondingEpochNumber))
+			continue
+		}
+		hostZoneRecord.Status = recordstypes.HostZoneUnbonding_UNBONDED
+		hostZoneRecord.UnbondingTime = uint64(completionTime.Unix())
+		k.Logger(ctx).Info(fmt.Sprintf("Set unbonding time to %v for host zone %s's unbonding for %d%s", completionTime, zone.ChainId, undelegateMsg.Amount.Amount.Int64(), undelegateMsg.Amount.Denom))
+		// save back the altered SetEpochUnbondingRecord
+		k.RecordsKeeper.SetEpochUnbondingRecord(ctx, epochUnbonding)
+	}
+
+	// burn stAssets upon successful unbonding
+	k.bankKeeper.BurnCoins(ctx, types.ModuleName, sdk.NewCoins(undelegateMsg.Amount))
 
 	// set unbondingTime on EpochUnbondingRecord.hostZoneUnbonding from light client
-	unbondingRecord, found := k.RecordsKeeper.GetLatestEpochUnbondingRecord(ctx)
-	if !found {
-		return sdkerrors.Wrapf(sdkerrors.ErrNotFound, "No unbonding record found")
-	}
-	blockTime, found := k.GetLightClientTimeSafely(ctx, zone.ConnectionId)
-	if !found {
-		k.Logger(ctx).Error(fmt.Sprintf("Could not find blockTime for host zone %s", zone.ChainId))
-	}
-	// iterate through all unbonding record hostZone unbondings and set the unbonding times
-	for _, unbonding := range unbondingRecord.HostZoneUnbondings {
-		if unbonding.HostZoneId == zone.ChainId {
-			unbonding.UnbondingTime = blockTime
-			k.Logger(ctx).Info(fmt.Sprintf("Set unbonding time for host zone %s's unbonding for %d%s", zone.ChainId, undelegateMsg.Amount.Amount.Int64(), undelegateMsg.Amount.Denom))
-		}
-	}
+	// unbondingRecord, found := k.RecordsKeeper.GetLatestEpochUnbondingRecord(ctx)
+	// if !found {
+	// 	return sdkerrors.Wrapf(sdkerrors.ErrNotFound, "No unbonding record found")
+	// }
+	// blockTime, found := k.GetLightClientTimeSafely(ctx, zone.ConnectionId)
+	// if !found {
+	// 	k.Logger(ctx).Error(fmt.Sprintf("Could not find blockTime for host zone %s", zone.ChainId))
+	// }
+	// // iterate through all unbonding record hostZone unbondings and set the unbonding times
+	// for _, unbonding := range unbondingRecord.HostZoneUnbondings {
+	// 	if unbonding.HostZoneId == zone.ChainId {
+	// 		unbonding.UnbondingTime = blockTime
+	// 		k.Logger(ctx).Info(fmt.Sprintf("Set unbonding time to %d for host zone %s's unbonding for %d%s", blockTime, zone.ChainId, undelegateMsg.Amount.Amount.Int64(), undelegateMsg.Amount.Denom))
+	// 	}
+	// }
 
 	return nil
 }

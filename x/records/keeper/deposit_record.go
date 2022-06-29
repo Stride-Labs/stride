@@ -108,7 +108,7 @@ func GetDepositRecordIDFromBytes(bz []byte) uint64 {
 func (k Keeper) GetDepositRecordByEpochAndChain(ctx sdk.Context, epochNumber uint64, chainId string)  (val *types.DepositRecord, found bool) {
 	records := k.GetAllDepositRecord(ctx)
 	for _, depositRecord := range records {
-		if depositRecord.EpochNumber == epochNumber && depositRecord.HostZoneId == chainId {
+		if depositRecord.DepositEpochNumber == epochNumber && depositRecord.HostZoneId == chainId {
 			return &depositRecord, true
 		} 
 	} 

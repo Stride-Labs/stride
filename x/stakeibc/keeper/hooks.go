@@ -46,6 +46,38 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochIdentifier string, epochN
 		k.CleanupEpochUnbondingRecords(ctx)
 		// lastly we create an empty unbonding record for this epoch
 		k.CreateEpochUnbondings(ctx, epochNumber)
+
+		// zoneInfo, found := k.GetHostZone(ctx, "GAIA")
+		// if !found {
+		// 	k.Logger(ctx).Error(fmt.Sprintf("Could not find GAIA host zone"))
+		// }
+		//------------------------------------------------------
+		// if (&zoneInfo).WithdrawalAccount != nil && (&zoneInfo).RedemptionAccount != nil { // only process host zones once withdrawal accounts are registered
+		// 	k.Logger(ctx).Info(fmt.Sprintf("MICE testing bank send"))
+
+		// 	// get the delegation account and rewards account
+		// 	delegationAccount := zoneInfo.GetDelegationAccount()
+		// 	redemptionAccount := zoneInfo.GetRedemptionAccount()
+
+		// 	sweepCoin := sdk.NewCoin(zoneInfo.HostDenom, sdk.NewInt(int64(99)))
+		// 	var msgs []sdk.Msg
+		// 	// construct the msg
+		// 	msgs = append(msgs, &banktypes.MsgSend{FromAddress: delegationAccount.GetAddress(),
+		// 		ToAddress: redemptionAccount.GetAddress(), Amount: sdk.NewCoins(sweepCoin)})
+
+		// 	ctx.Logger().Info(fmt.Sprintf("Bank sending unbonded tokens batch, from delegation to redemption account. Msg: %v", msgs))
+
+		// 	// Send the transaction through SubmitTx
+		// 	err := k.SubmitTxs(ctx, zoneInfo.ConnectionId, msgs, *delegationAccount)
+		// 	if err != nil {
+		// 		ctx.Logger().Info(fmt.Sprintf("MICE Failed to SubmitTxs for %s, %s, %v", zoneInfo.ConnectionId, zoneInfo.ChainId, msgs))
+		// 		ctx.Logger().Info(fmt.Sprintf("MICE Failed to SubmitTxs with err: %v", err))
+		// 	}
+		// 	ctx.Logger().Info(fmt.Sprintf("MICE Successfully completed SubmitTxs for %s, %s, %v", zoneInfo.ConnectionId, zoneInfo.ChainId, msgs))
+
+		// }
+		//------------------------------------------------------
+
 	}
 
 	if epochIdentifier == epochstypes.STRIDE_EPOCH {
@@ -154,12 +186,12 @@ func (k Keeper) CreateDepositRecordsForEpoch(ctx sdk.Context, epochNumber int64)
 	createDepositRecords := func(ctx sdk.Context, index int64, zoneInfo types.HostZone) error {
 		// create a deposit record / host zone
 		depositRecord := recordstypes.DepositRecord{
-			Id:          0,
-			Amount:      0,
-			Denom:       zoneInfo.HostDenom,
-			HostZoneId:  zoneInfo.ChainId,
-			Status:      recordstypes.DepositRecord_TRANSFER,
-			EpochNumber: uint64(epochNumber),
+			Id:                 0,
+			Amount:             0,
+			Denom:              zoneInfo.HostDenom,
+			HostZoneId:         zoneInfo.ChainId,
+			Status:             recordstypes.DepositRecord_TRANSFER,
+			DepositEpochNumber: uint64(epochNumber),
 		}
 		k.RecordsKeeper.AppendDepositRecord(ctx, depositRecord)
 		return nil
@@ -187,7 +219,7 @@ func (k Keeper) StakeExistingDepositsOnHostZones(ctx sdk.Context, epochNumber in
 		return record.Status == recordstypes.DepositRecord_STAKE
 	})
 	for _, depositRecord := range stakeDepositRecords {
-		if depositRecord.EpochNumber < uint64(epochNumber) {
+		if depositRecord.DepositEpochNumber < uint64(epochNumber) {
 			pstr := fmt.Sprintf("\t[STAKE] Processing deposit {%d} {%s} {%d}", depositRecord.Id, depositRecord.Denom, depositRecord.Amount)
 			k.Logger(ctx).Info(pstr)
 			hostZone, hostZoneFound := k.GetHostZone(ctx, depositRecord.HostZoneId)
@@ -233,7 +265,7 @@ func (k Keeper) TransferExistingDepositsToHostZones(ctx sdk.Context, epochNumber
 	addr := k.accountKeeper.GetModuleAccount(ctx, types.ModuleName).GetAddress().String()
 	var emptyRecords []uint64
 	for _, depositRecord := range transferDepositRecords {
-		if depositRecord.EpochNumber < uint64(epochNumber) {
+		if depositRecord.DepositEpochNumber < uint64(epochNumber) {
 			pstr := fmt.Sprintf("\t[TRANSFER] Processing deposits {%d} {%s} {%d}", depositRecord.Id, depositRecord.Denom, depositRecord.Amount)
 			k.Logger(ctx).Info(pstr)
 
