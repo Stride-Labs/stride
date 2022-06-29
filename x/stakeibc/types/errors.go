@@ -21,4 +21,5 @@ var (
 	ErrNoValidatorWeights     = sdkerrors.Register(ModuleName, 1509, "no non-zero validator weights")
 	ErrValidatorNotFound      = sdkerrors.Register(ModuleName, 1510, "validator not found")
 	ErrWeightsNotDifferent    = sdkerrors.Register(ModuleName, 1511, "validator weights haven't changed")
+	ErrValidatorDelegationChg = sdkerrors.Register(ModuleName, 1512, "can't change delegation on validator")
 )

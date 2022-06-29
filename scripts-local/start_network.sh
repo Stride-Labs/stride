@@ -23,7 +23,7 @@ make stop 2>/dev/null || true
 rm -rf $SCRIPT_DIR/state $SCRIPT_DIR/logs/*.log $SCRIPT_DIR/logs/temp
 
 # Recreate each log file
-for log in $STRIDE_LOGS $GAIA_LOGS $GAIA_LOGS_2 $GAIA_LOGS_3 $HERMES_LOGS $ICQ_LOGS; do
+for log in $STRIDE_LOGS $GAIA_LOGS $GAIA_LOGS_2 $HERMES_LOGS $ICQ_LOGS; do
     touch $log
 done
 
