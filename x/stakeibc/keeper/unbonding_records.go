@@ -110,7 +110,7 @@ func (k Keeper) CleanupEpochUnbondingRecords(ctx sdk.Context) bool {
 	return true
 }
 
-func (k Keeper) SweepAllUnbondedTokens(ctx sdk.Context) bool {
+func (k Keeper) SweepAllUnbondedTokens(ctx sdk.Context) {
 	// NOTE: at the beginning of the epoch we mark all PENDING_TRANSFER HostZoneUnbondingRecords as UNBONDED
 	// so that they're retried if the transfer fails
 	for _, epochUnbondingRecord := range k.RecordsKeeper.GetAllEpochUnbondingRecord(ctx) {
@@ -188,7 +188,7 @@ func (k Keeper) SweepAllUnbondedTokens(ctx sdk.Context) bool {
 				// Send the transaction through SubmitTx
 				err := k.SubmitTxs(ctx, zoneInfo.ConnectionId, msgs, *delegationAccount)
 				if err != nil {
-					// ctx.Logger().Info(fmt.Sprintf("MICE Failed to SubmitTxs for %s, %s, %v", zoneInfo.ConnectionId, zoneInfo.ChainId, msgs))
+					ctx.Logger().Info(fmt.Sprintf("MICE Failed to SubmitTxs for %s", zoneInfo.ChainId))
 					// return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "Failed to SubmitTxs for %s, %s, %v", zoneInfo.ConnectionId, zoneInfo.ChainId, msgs)
 				}
 				ctx.Logger().Info(fmt.Sprintf("MICE Successfully completed SubmitTxs for %s, %s, %v", zoneInfo.ConnectionId, zoneInfo.ChainId, msgs))
