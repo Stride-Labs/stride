@@ -198,7 +198,7 @@ func (k *Keeper) HandleDelegate(ctx sdk.Context, msg sdk.Msg) error {
 	}
 	record, found := k.RecordsKeeper.GetStakeDepositRecordByAmount(ctx, amount, zone.ChainId)
 	if found != true {
-		return sdkerrors.Wrapf(sdkerrors.ErrNotFound, "No deposit record found for zone: %s, amount: %s", zone.ChainId, amount)
+		return sdkerrors.Wrapf(sdkerrors.ErrNotFound, "No deposit record found for zone: %s, amount: %d", zone.ChainId, amount)
 	}
 
 	// TODO(TEST-112) more safety checks here

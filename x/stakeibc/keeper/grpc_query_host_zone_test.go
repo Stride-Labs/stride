@@ -1,6 +1,7 @@
 package keeper_test
 
 import (
+	"strconv"
 	"testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -19,6 +20,9 @@ func TestHostZoneQuerySingle(t *testing.T) {
 	keeper, ctx := keepertest.StakeibcKeeper(t)
 	wctx := sdk.WrapSDKContext(ctx)
 	msgs := createNHostZone(keeper, ctx, 2)
+	for _, msg := range msgs {
+		t.Log(msg.ChainId)
+	}
 	for _, tc := range []struct {
 		desc     string
 		request  *types.QueryGetHostZoneRequest
@@ -27,17 +31,17 @@ func TestHostZoneQuerySingle(t *testing.T) {
 	}{
 		{
 			desc:     "First",
-			request:  &types.QueryGetHostZoneRequest{Id: msgs[0].Id},
+			request:  &types.QueryGetHostZoneRequest{ChainId: msgs[0].ChainId},
 			response: &types.QueryGetHostZoneResponse{HostZone: msgs[0]},
 		},
 		{
 			desc:     "Second",
-			request:  &types.QueryGetHostZoneRequest{Id: msgs[1].Id},
+			request:  &types.QueryGetHostZoneRequest{ChainId: msgs[1].ChainId},
 			response: &types.QueryGetHostZoneResponse{HostZone: msgs[1]},
 		},
 		{
 			desc:    "KeyNotFound",
-			request: &types.QueryGetHostZoneRequest{Id: uint64(len(msgs))},
+			request: &types.QueryGetHostZoneRequest{ChainId: strconv.Itoa((len(msgs)))},
 			err:     sdkerrors.ErrKeyNotFound,
 		},
 		{

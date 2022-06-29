@@ -35,7 +35,7 @@ func (k Keeper) RedeemStake(goCtx context.Context, msg *types.MsgRedeemStake) (*
 	// Safety checks
 	// Redemption amount must be positive
 	if !inCoin.IsPositive() {
-		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidCoins, "amount must be greater than 0. found: %s", msg.Amount)
+		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidCoins, "amount must be greater than 0. found: %d", msg.Amount)
 	}
 	// StAssetDenom is valid
 	// Should we register stAssets somewhere and add an additional check here?
@@ -45,7 +45,7 @@ func (k Keeper) RedeemStake(goCtx context.Context, msg *types.MsgRedeemStake) (*
 	// Creator owns at least "amount" stAssets
 	balance := k.bankKeeper.GetBalance(ctx, sender, msg.StAssetDenom)
 	if balance.IsLT(inCoin) {
-		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidCoins, "balance is lower than redemption amount. redemption amount: %s, balance %s: ", msg.Amount, balance.Amount)
+		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidCoins, "balance is lower than redemption amount. redemption amount: %d, balance %d: ", msg.Amount, balance.Amount)
 	}
 
 	// Escrow user's balance
