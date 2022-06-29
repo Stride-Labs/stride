@@ -14,6 +14,24 @@ func TestGenesis(t *testing.T) {
 	genesisState := types.GenesisState{
 		Params: types.DefaultParams(),
 		PortId: types.PortID,
+		UserRedemptionRecordList: []types.UserRedemptionRecord{
+			{
+				Id: 0,
+			},
+			{
+				Id: 1,
+			},
+		},
+		UserRedemptionRecordCount: 2,
+		EpochUnbondingRecordList: []types.EpochUnbondingRecord{
+			{
+				Id: 0,
+			},
+			{
+				Id: 1,
+			},
+		},
+		EpochUnbondingRecordCount: 2,
 		// this line is used by starport scaffolding # genesis/test/state
 		DepositRecordList: []types.DepositRecord{
 			{

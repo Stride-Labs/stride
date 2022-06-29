@@ -1,6 +1,7 @@
 syntax = "proto3";
 package Stridelabs.stride.stakeibc;
 
+import "stakeibc/epoch_tracker.proto";
 // this line is used by starport scaffolding # proto/tx/import
 
 option go_package = "github.com/Stride-Labs/stride/x/stakeibc/types";
@@ -10,15 +11,16 @@ import "cosmos_proto/cosmos.proto";
 
 // Msg defines the Msg service.
 service Msg {
-      rpc LiquidStake(MsgLiquidStake) returns (MsgLiquidStakeResponse);
-      rpc RedeemStake(MsgRedeemStake) returns (MsgRedeemStakeResponse);
-      // TODO(TEST-53): Remove this pre-launch (no need for clients to create / interact with ICAs)
-      // Register defines a rpc handler for MsgRegisterAccount
-      rpc RegisterAccount(MsgRegisterAccount) returns (MsgRegisterAccountResponse);
-      // TODO(TEST-53): Remove this pre-launch (no need for clients to create / interact with ICAs)
-      rpc SubmitTx(MsgSubmitTx) returns (MsgSubmitTxResponse);
-      // TODO(TEST-53): Remove this pre-launch (no need for clients to create / interact with ICAs)
-      rpc RegisterHostZone(MsgRegisterHostZone) returns (MsgRegisterHostZoneResponse);
+  rpc LiquidStake(MsgLiquidStake) returns (MsgLiquidStakeResponse);
+  rpc RedeemStake(MsgRedeemStake) returns (MsgRedeemStakeResponse);
+  // TODO(TEST-53): Remove this pre-launch (no need for clients to create / interact with ICAs)
+  // Register defines a rpc handler for MsgRegisterAccount
+  rpc RegisterAccount(MsgRegisterAccount) returns (MsgRegisterAccountResponse);
+  // TODO(TEST-53): Remove this pre-launch (no need for clients to create / interact with ICAs)
+  rpc SubmitTx(MsgSubmitTx) returns (MsgSubmitTxResponse);
+  // TODO(TEST-53): Remove this pre-launch (no need for clients to create / interact with ICAs)
+  rpc RegisterHostZone(MsgRegisterHostZone) returns (MsgRegisterHostZoneResponse);
+  rpc ClaimUndelegatedTokens(MsgClaimUndelegatedTokens) returns (MsgClaimUndelegatedTokensResponse);
   rpc RebalanceValidators(MsgRebalanceValidators) returns (MsgRebalanceValidatorsResponse);
   rpc AddValidator(MsgAddValidator) returns (MsgAddValidatorResponse);
   rpc ChangeValidatorWeight(MsgChangeValidatorWeight) returns (MsgChangeValidatorWeightResponse);
@@ -39,7 +41,7 @@ message MsgLiquidStakeResponse {
 message MsgRedeemStake {
   string creator = 1;
   int64 amount = 2;
-  string st_asset_denom = 3;
+  string hostZone = 3;
   string receiver = 4;
 }
 
@@ -83,10 +85,20 @@ message MsgRegisterHostZone{
   string ibc_denom = 5 [ (gogoproto.moretags) = "yaml:\"ibc_denom\"" ];
   string creator = 6;
   string transfer_channel_id = 10 [ (gogoproto.moretags) = "yaml:\"transfer_channel_id\"" ];
+  uint64 unbonding_frequency = 11 [ (gogoproto.moretags) = "yaml:\"unbonding_frequency\"" ];
 }
 
 // TODO(TEST-53): Remove this pre-launch (no need for clients to create / interact with ICAs)
 message MsgRegisterHostZoneResponse{}
+
+message MsgClaimUndelegatedTokens {
+  string creator = 1;
+  string hostZone = 2;
+  uint64 maxClaims = 3;
+}
+
+message MsgClaimUndelegatedTokensResponse {
+}
 
 message MsgRebalanceValidators {
   string creator = 1;
