@@ -57,13 +57,17 @@ func (k Keeper) SendHostZoneUnbondings(ctx sdk.Context, hostZone types.HostZone)
 	delegationAccount := hostZone.GetDelegationAccount()
 	validators := hostZone.GetValidators()
 	// we distribute the unbonding based on our target weights
-	newUnbondingToValidator := k.GetTargetValAmtsForHostZone(ctx, hostZone, totalAmtToUnbond)
+	newUnbondingToValidator, err := k.GetTargetValAmtsForHostZone(ctx, hostZone, totalAmtToUnbond)
+	if err != nil {
+		k.Logger(ctx).Error(fmt.Sprintf("Error getting target val amts for host zone %s %d: %s", hostZone.ChainId, totalAmtToUnbond, err))
+		return false
+	}
 	valAddrToUnbondAmt := make(map[string]int64)
-	overflowAmt := uint64(0)
+	overflowAmt := int64(0)
 	for _, validator := range validators {
 		valAddr := validator.GetAddress()
-		valUnbondAmt := newUnbondingToValidator[valAddr]
-		currentAmtStaked := validator.GetDelegationAmt()
+		valUnbondAmt := int64(newUnbondingToValidator[valAddr])
+		currentAmtStaked := int64(validator.GetDelegationAmt())
 		if valUnbondAmt > currentAmtStaked { // if we don't have enough assets to unbond
 			overflowAmt += valUnbondAmt - currentAmtStaked
 			valUnbondAmt = currentAmtStaked
@@ -76,7 +80,7 @@ func (k Keeper) SendHostZoneUnbondings(ctx sdk.Context, hostZone types.HostZone)
 			valUnbondAmt := valAddrToUnbondAmt[valAddr]
 			currentAmtStaked := validator.GetDelegationAmt()
 			// store how many more tokens we could unbond, if needed
-			amtToPotentiallyUnbond := currentAmtStaked - valUnbondAmt
+			amtToPotentiallyUnbond := int64(currentAmtStaked) - valUnbondAmt
 			if amtToPotentiallyUnbond > 0 { // if we can afford to unbond more
 				if amtToPotentiallyUnbond > overflowAmt { // we can fully cover the overflow
 					valAddrToUnbondAmt[valAddr] += overflowAmt
@@ -103,7 +107,7 @@ func (k Keeper) SendHostZoneUnbondings(ctx sdk.Context, hostZone types.HostZone)
 		})
 	}
 	// now we have to handle the overflow amount
-	err := k.SubmitTxs(ctx, hostZone.GetConnectionId(), msgs, *delegationAccount)
+	err = k.SubmitTxs(ctx, hostZone.GetConnectionId(), msgs, *delegationAccount)
 	if err != nil {
 		k.Logger(ctx).Error(fmt.Sprintf("Error submitting unbonding tx: %s", err))
 		return false
@@ -165,16 +169,15 @@ func (k Keeper) SweepAllUnbondedTokens(ctx sdk.Context) {
 	// this function goes through each host zone, and sees if any tokens
 	// have been unbonded and are ready to sweep. If so, it processes them
 
-	
 	sweepUnbondedTokens := func(ctx sdk.Context, index int64, zoneInfo types.HostZone) error {
-		
+
 		// get latest epoch unbonding record
 		unbondingRecords := k.RecordsKeeper.GetAllEpochUnbondingRecord(ctx)
 		totalAmtTransferToRedemptionAcct := uint64(0)
 		for _, unbondingRecord := range unbondingRecords {
-			
+
 			// total amount of tokens to be swept
-	
+
 			// iterate through all host zone unbondings and process them if they're ready to be swept
 			// TODO() index into the HostZoneUnbonding map with chainID rather than iterating and checking chainID equality
 			unbonding := unbondingRecord.HostZoneUnbondings[zoneInfo.ChainId]
@@ -184,7 +187,7 @@ func (k Keeper) SweepAllUnbondedTokens(ctx sdk.Context) {
 				k.Logger(ctx).Info(fmt.Sprintf("\t\tHost zone not found for hostZoneId %s", unbonding.HostZoneId))
 				continue
 			}
-	
+
 			// get latest blockTime from light client
 			blockTime, found := k.GetLightClientTimeSafely(ctx, zone.ConnectionId)
 			if !found {
@@ -192,11 +195,11 @@ func (k Keeper) SweepAllUnbondedTokens(ctx sdk.Context) {
 				sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, "\t\tCould not find blockTime for host zone")
 			}
 
-			if (unbonding.Status != recordstypes.HostZoneUnbonding_UNBONDED) &&  
+			if (unbonding.Status != recordstypes.HostZoneUnbonding_UNBONDED) &&
 				(unbonding.Status != recordstypes.HostZoneUnbonding_PENDING_TRANSFER) {
 				continue
 			}
-	
+
 			// if the unbonding period has elapsed, then we can send the ICA call to sweep this hostZone's unbondings to the rewards account (in a batch)
 			k.Logger(ctx).Info(fmt.Sprintf("\tUnbonding time:  %d blockTime %d", unbonding.UnbondingTime, blockTime))
 			if unbonding.UnbondingTime < blockTime {
@@ -206,8 +209,7 @@ func (k Keeper) SweepAllUnbondedTokens(ctx sdk.Context) {
 				unbonding.Status = recordstypes.HostZoneUnbonding_PENDING_TRANSFER
 				k.RecordsKeeper.SetEpochUnbondingRecord(ctx, unbondingRecord)
 			}
-	
-			
+
 		}
 		// if we have any amount to sweep, then we can send the ICA call to sweep them
 		if totalAmtTransferToRedemptionAcct > 0 {
@@ -238,8 +240,6 @@ func (k Keeper) SweepAllUnbondedTokens(ctx sdk.Context) {
 		} else {
 			k.Logger(ctx).Info(fmt.Sprintf("\tNo unbonded tokens this day to sweep for host zone %s", zoneInfo.ChainId))
 		}
-		
-
 
 		return nil
 	}

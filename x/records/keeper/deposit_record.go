@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"encoding/binary"
+	"fmt"
 
 	"github.com/Stride-Labs/stride/x/records/types"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
@@ -105,18 +106,18 @@ func GetDepositRecordIDFromBytes(bz []byte) uint64 {
 	return binary.BigEndian.Uint64(bz)
 }
 
-func (k Keeper) GetDepositRecordByEpochAndChain(ctx sdk.Context, epochNumber uint64, chainId string)  (val *types.DepositRecord, found bool) {
+func (k Keeper) GetDepositRecordByEpochAndChain(ctx sdk.Context, epochNumber uint64, chainId string) (val *types.DepositRecord, found bool) {
 	records := k.GetAllDepositRecord(ctx)
 	for _, depositRecord := range records {
 		if depositRecord.DepositEpochNumber == epochNumber && depositRecord.HostZoneId == chainId {
 			return &depositRecord, true
-		} 
-	} 
+		}
+	}
 	return nil, false
 }
 
 // TODO: pass in hostZoneId
-func (k Keeper) GetTransferDepositRecordByAmount(ctx sdk.Context, amount int64)  (val *types.DepositRecord, found bool) {
+func (k Keeper) GetTransferDepositRecordByAmount(ctx sdk.Context, amount int64) (val *types.DepositRecord, found bool) {
 	records := k.GetAllDepositRecord(ctx)
 	for _, depositRecord := range records {
 		amountsMatch := depositRecord.Amount == amount && depositRecord.Status == types.DepositRecord_TRANSFER
@@ -124,19 +125,24 @@ func (k Keeper) GetTransferDepositRecordByAmount(ctx sdk.Context, amount int64) 
 		hostZoneMatches := true
 		if amountsMatch && hostZoneMatches {
 			return &depositRecord, true
-		} 
-	} 
+		}
+	}
 	return nil, false
 }
 
-func (k Keeper) GetStakeDepositRecordByAmount(ctx sdk.Context, amount int64, hostZoneId string)  (val *types.DepositRecord, found bool) {
+func (k Keeper) GetStakeDepositRecordByAmount(ctx sdk.Context, amount int64, hostZoneId string) (val *types.DepositRecord, found bool) {
 	records := k.GetAllDepositRecord(ctx)
 	for _, depositRecord := range records {
+		k.Logger(ctx).Error(fmt.Sprintf("\tMOOSE %d %d", depositRecord.Amount, amount))
+		k.Logger(ctx).Error(fmt.Sprintf("\tMOOSE2 %d %d", depositRecord.Status, types.DepositRecord_STAKE))
+		k.Logger(ctx).Error(fmt.Sprintf("\tMOOSE3 %s %s", depositRecord.HostZoneId, hostZoneId))
+
 		amountsMatch := depositRecord.Amount == amount && depositRecord.Status == types.DepositRecord_STAKE
 		hostZoneMatches := depositRecord.HostZoneId == hostZoneId
+		k.Logger(ctx).Error(fmt.Sprintf("\tMOOSE4 %v %v", amountsMatch, hostZoneMatches))
 		if amountsMatch && hostZoneMatches {
 			return &depositRecord, true
-		} 
-	} 
+		}
+	}
 	return nil, false
 }

@@ -96,9 +96,7 @@ func (k Keeper) DelegateOnHost(ctx sdk.Context, hostZone types.HostZone, amt sdk
 				Amount:           relAmt})
 		}
 	}
-	// construct the msg
 	// Send the transaction through SubmitTx
-	// QUESTION is there any error handling we should do here?
 	err = k.SubmitTxs(ctx, connectionId, msgs, *delegationIca)
 	if err != nil {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "Failed to SubmitTxs for %s, %s, %s", connectionId, hostZone.ChainId, msgs)

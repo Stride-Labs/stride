@@ -3,7 +3,6 @@ package keeper
 import (
 	"context"
 	"fmt"
-	"strconv"
 
 	recordstypes "github.com/Stride-Labs/stride/x/records/types"
 	"github.com/Stride-Labs/stride/x/stakeibc/types"
@@ -35,7 +34,9 @@ func (k Keeper) RedeemStake(goCtx context.Context, msg *types.MsgRedeemStake) (*
 
 	// construct desired unstaking amount from host zone
 	coinDenom := "st" + hostZone.HostDenom
-	coinString := strconv.Itoa(int(msg.Amount)) + coinDenom
+	stAmount := sdk.NewDec(msg.Amount).Mul(hostZone.RedemptionRate)
+	// TODO(TEST-112) bigint safety
+	coinString := stAmount.BigInt().String() + coinDenom
 	inCoin, err := sdk.ParseCoinNormalized(coinString)
 	if err != nil {
 		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidCoins, "could not parse inCoin: %s", coinString)
@@ -52,20 +53,7 @@ func (k Keeper) RedeemStake(goCtx context.Context, msg *types.MsgRedeemStake) (*
 	if balance.Amount.LT(inCoin.Amount) {
 		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidCoins, "balance is lower than redemption amount. redemption amount: %s, balance %s: ", msg.Amount, balance.Amount)
 	}
-	// calculate the redemption rate
-	// when redeeming tokens, multiply stAssets by the exchange rate (allStakedAssets / allStAssets)
-	redemptionRate := hostZone.RedemptionRate
-	native_tokens := inCoin.Amount.ToDec().Mul(redemptionRate).TruncateInt()
-	outCoin := sdk.NewCoin(hostZone.HostDenom, native_tokens)
-	_ = outCoin
-	// Select validators for unbonding
-	// TODO(TEST-39): Implement validator selection
-	// validator_address := "cosmosvaloper19e7sugzt8zaamk2wyydzgmg9n3ysylg6na6k6e" // gval2
-	validator_address := "cosmosvaloper1pcag0cj4ttxg8l7pcg0q4ksuglswuuedadj7ne" // local validator
-	_ = validator_address
-
 	// UNBONDING RECORD KEEPING
-	// TODO I thought we had parameterized stride_epoch? if so, change this to parameter
 	// first construct a user redemption record
 	epochTracker, found := k.GetEpochTracker(ctx, "day")
 	if !found {
@@ -115,6 +103,7 @@ func (k Keeper) RedeemStake(goCtx context.Context, msg *types.MsgRedeemStake) (*
 	hostZoneUnbondings := epochUnbondingRecord.GetHostZoneUnbondings()
 	if len(hostZoneUnbondings) == 0 {
 		hostZoneUnbondings = make(map[string]*recordstypes.HostZoneUnbonding)
+		epochUnbondingRecord.HostZoneUnbondings = hostZoneUnbondings
 	}
 	epochUnbondingRecord.HostZoneUnbondings[hostZone.ChainId] = hostZoneUnbonding
 	k.RecordsKeeper.SetEpochUnbondingRecord(ctx, epochUnbondingRecord)

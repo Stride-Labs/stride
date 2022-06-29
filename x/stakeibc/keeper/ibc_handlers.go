@@ -71,6 +71,31 @@ func (k Keeper) HandleAcknowledgement(ctx sdk.Context, modulePacket channeltypes
 		return err
 	}
 
+	// store total amount that was delegated
+	totalMsgDelegate := int64(0)
+	recordIdToDelete := int64(0)
+	for msgIndex, msgData := range txMsgData.Data {
+		src := msgs[msgIndex]
+		pstr := fmt.Sprintf("\t[DOGE] Message {%s}", msgData.MsgType)
+		k.Logger(ctx).Info(pstr)
+		switch msgData.MsgType {
+		// staking to validators
+		case "/cosmos.staking.v1beta1.MsgDelegate":
+			response := stakingtypes.MsgDelegateResponse{}
+			err := proto.Unmarshal(msgData.Data, &response)
+			if err != nil {
+				k.Logger(ctx).Error("unable to unmarshal MsgDelegate response", "error", err)
+				return err
+			}
+			delegateMsg, ok := src.(*stakingtypes.MsgDelegate)
+			if !ok {
+				k.Logger(ctx).Error("unable to cast source message to MsgDelegate")
+				return fmt.Errorf("unable to cast source message to MsgDelegate")
+			}
+			totalMsgDelegate += delegateMsg.Amount.Amount.Int64()
+		}
+	}
+
 	for msgIndex, msgData := range txMsgData.Data {
 		src := msgs[msgIndex]
 		pstr := fmt.Sprintf("\t[DOGE] Message {%s}", msgData.MsgType)
@@ -86,7 +111,8 @@ func (k Keeper) HandleAcknowledgement(ctx sdk.Context, modulePacket channeltypes
 			}
 			k.Logger(ctx).Info("Delegated", "response", response)
 			// we should update delegation records here.
-			if err := k.HandleDelegate(ctx, src); err != nil {
+			recordIdToDelete, err = k.HandleDelegate(ctx, src, totalMsgDelegate)
+			if err != nil {
 				return err
 			}
 			continue
@@ -134,6 +160,10 @@ func (k Keeper) HandleAcknowledgement(ctx sdk.Context, modulePacket channeltypes
 		default:
 			k.Logger(ctx).Error("Unhandled acknowledgement packet", "type", msgData.MsgType)
 		}
+	}
+
+	if recordIdToDelete >= 0 {
+		k.RecordsKeeper.RemoveDepositRecord(ctx, uint64(recordIdToDelete))
 	}
 
 	ctx.EventManager().EmitEvent(
@@ -196,7 +226,7 @@ func (k *Keeper) HandleSend(ctx sdk.Context, msg sdk.Msg) error {
 			return sdkerrors.Wrapf(types.ErrInvalidLengthEpochTracker, "no number for epoch (%s)", "day")
 		}
 		epochUnbondingRecords := k.RecordsKeeper.GetAllEpochUnbondingRecord(ctx)
-		
+
 		for _, epochUnbondingRecord := range epochUnbondingRecords {
 			k.Logger(ctx).Error(fmt.Sprintf("epoch number: %d", epochUnbondingRecord.Id))
 			if epochUnbondingRecord.Id == dayEpochTracker.EpochNumber {
@@ -242,37 +272,47 @@ func (k *Keeper) HandleSend(ctx sdk.Context, msg sdk.Msg) error {
 	return nil
 }
 
-func (k *Keeper) HandleDelegate(ctx sdk.Context, msg sdk.Msg) error {
+func (k *Keeper) HandleDelegate(ctx sdk.Context, msg sdk.Msg, totalDelegate int64) (int64, error) {
 	k.Logger(ctx).Info("Received MsgDelegate acknowledgement")
 	// first, type assertion. we should have stakingtypes.MsgDelegate
 	delegateMsg, ok := msg.(*stakingtypes.MsgDelegate)
 	if !ok {
 		k.Logger(ctx).Error("unable to cast source message to MsgDelegate")
-		return fmt.Errorf("unable to cast source message to MsgDelegate")
+		return -1, fmt.Errorf("unable to cast source message to MsgDelegate")
 	}
 	// CHECK ZONE
 	hostZoneDenom := delegateMsg.Amount.Denom
 	amount := delegateMsg.Amount.Amount.Int64()
 	zone, err := k.GetHostZoneFromHostDenom(ctx, hostZoneDenom)
+	k.Logger(ctx).Error(fmt.Sprintf("BEAR balance %s %d", hostZoneDenom, zone.StakedBal))
 	if err != nil {
-		return err
+		k.Logger(ctx).Error(fmt.Sprintf("failed to get host zone from host denom %s", hostZoneDenom))
+		return -1, err
 	}
-	record, found := k.RecordsKeeper.GetStakeDepositRecordByAmount(ctx, amount, zone.ChainId)
-	if found != true {
-		return sdkerrors.Wrapf(sdkerrors.ErrNotFound, "No deposit record found for zone: %s, amount: %s", zone.ChainId, amount)
+	record, found := k.RecordsKeeper.GetStakeDepositRecordByAmount(ctx, totalDelegate, zone.ChainId)
+	if !found {
+		errMsg := fmt.Sprintf("No deposit record found for zone: %s, amount: %d", zone.ChainId, totalDelegate)
+		k.Logger(ctx).Error(errMsg)
+		return -1, sdkerrors.Wrapf(sdkerrors.ErrNotFound, errMsg)
 	}
 
 	// TODO(TEST-112) more safety checks here
 	// increment the stakedBal on the hostZome
+	k.Logger(ctx).Info(fmt.Sprintf("incrementing stakedBal %d", amount))
 	if amount < 0 {
-		return sdkerrors.Wrapf(sdkerrors.ErrLogic, "Balance to stake was negative: %d", amount)
+		errMsg := fmt.Sprintf("Balance to stake was negative: %d", amount)
+		k.Logger(ctx).Error(errMsg)
+		return -1, sdkerrors.Wrapf(sdkerrors.ErrLogic, errMsg)
 	} else {
 		zone.StakedBal += amount
+		success := k.AddDelegationToValidator(ctx, *zone, delegateMsg.ValidatorAddress, amount)
+		if !success {
+			return 0, sdkerrors.Wrapf(types.ErrValidatorDelegationChg, "Failed to add delegation to validator")
+		}
 		k.SetHostZone(ctx, *zone)
 	}
 
-	k.RecordsKeeper.RemoveDepositRecord(ctx, record.Id)
-	return nil
+	return int64(record.Id), nil
 }
 
 func (k Keeper) HandleUndelegate(ctx sdk.Context, msg sdk.Msg, completionTime time.Time) error {
@@ -294,7 +334,12 @@ func (k Keeper) HandleUndelegate(ctx sdk.Context, msg sdk.Msg, completionTime ti
 		return sdkerrors.Wrapf(sdkerrors.ErrLogic, "Undelegate message was not for a delegation account")
 	}
 
-	zone.StakedBal -= undelegateMsg.Amount.Amount.Int64()
+	undelegateAmt := undelegateMsg.Amount.Amount.Int64()
+	success := k.AddDelegationToValidator(ctx, *zone, undelegateMsg.ValidatorAddress, -undelegateAmt)
+	if !success {
+		return sdkerrors.Wrapf(types.ErrValidatorDelegationChg, "Failed to add delegation to validator")
+	}
+	zone.StakedBal -= undelegateAmt
 	k.SetHostZone(ctx, *zone)
 
 	epochTracker, found := k.GetEpochTracker(ctx, "day")
