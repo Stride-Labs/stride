@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"encoding/binary"
+	"fmt"
 	"strings"
 
 	"github.com/Stride-Labs/stride/x/stakeibc/types"
@@ -56,13 +57,13 @@ func (k Keeper) GetHostZone(ctx sdk.Context, chain_id string) (val types.HostZon
 func (k Keeper) GetHostZoneFromHostDenom(ctx sdk.Context, denom string) (*types.HostZone, error) {
 	var matchZone types.HostZone
 	inDenom := strings.ToUpper(denom)
-	k.IterateHostZones(ctx, func(index int64, zoneInfo types.HostZone) (stop bool) {
+	k.IterateHostZones(ctx, func(ctx sdk.Context, index int64, zoneInfo types.HostZone) error {
 		zoneDenom := strings.ToUpper(zoneInfo.HostDenom)
 		if zoneDenom == inDenom {
 			matchZone = zoneInfo
-			return true
+			return nil
 		}
-		return false
+		return nil
 	})
 	if matchZone.ChainId != "" {
 		return &matchZone, nil
@@ -92,6 +93,44 @@ func (k Keeper) GetAllHostZone(ctx sdk.Context) (list []types.HostZone) {
 	return
 }
 
+func (k Keeper) AddDelegationToValidator(ctx sdk.Context, hostZone types.HostZone, valAddr string, amt int64) (success bool) {
+	for _, val := range hostZone.GetValidators() {
+		k.Logger(ctx).Info(fmt.Sprintf("Validator %s %d %d", val.GetAddress(), val.GetDelegationAmt(), amt))
+		if val.GetAddress() == valAddr {
+			if amt >= 0 {
+				val.DelegationAmt = val.GetDelegationAmt() + uint64(amt)
+				return true
+			} else {
+				absAmt := uint64(-amt)
+				if absAmt > val.GetDelegationAmt() {
+					k.Logger(ctx).Error(fmt.Sprintf("Delegation amount %d is greater than validator %s delegation amount %d", absAmt, valAddr, val.GetDelegationAmt()))
+					return false
+				}
+				val.DelegationAmt = val.GetDelegationAmt() - absAmt
+				return true
+			}
+		}
+	}
+	k.Logger(ctx).Info(fmt.Sprintf("Could not find validator %s on host zone %s", valAddr, hostZone.GetChainId()))
+	return false
+}
+
+func (k Keeper) RemoveValidatorFromHostZone(ctx sdk.Context, chainId string, validatorAddress string) (success bool) {
+	hostZone, found := k.GetHostZone(ctx, chainId)
+	if !found {
+		k.Logger(ctx).Error(fmt.Sprintf("HostZone not found %s", chainId))
+		return false
+	}
+	for i, val := range hostZone.Validators {
+		if val.GetAddress() == validatorAddress {
+			hostZone.Validators = append(hostZone.Validators[:i], hostZone.Validators[i+1:]...)
+			return true
+		}
+	}
+	k.Logger(ctx).Error(fmt.Sprintf("Validator %s not found on Host Zone %s", validatorAddress, chainId))
+	return false
+}
+
 // GetHostZoneIDFromBytes returns ID in uint64 format from a byte array
 func GetHostZoneIDFromBytes(bz []byte) uint64 {
 	return binary.BigEndian.Uint64(bz)
@@ -100,12 +139,12 @@ func GetHostZoneIDFromBytes(bz []byte) uint64 {
 // GetHostZoneFromIBCDenom returns a HostZone from a IBCDenom
 func (k Keeper) GetHostZoneFromIBCDenom(ctx sdk.Context, denom string) (*types.HostZone, error) {
 	var matchZone types.HostZone
-	k.IterateHostZones(ctx, func(index int64, zoneInfo types.HostZone) (stop bool) {
+	k.IterateHostZones(ctx, func(ctx sdk.Context, index int64, zoneInfo types.HostZone) error {
 		if zoneInfo.IBCDenom == denom {
 			matchZone = zoneInfo
-			return true
+			return nil
 		}
-		return false
+		return nil
 	})
 	if matchZone.ChainId != "" {
 		return &matchZone, nil
@@ -114,7 +153,7 @@ func (k Keeper) GetHostZoneFromIBCDenom(ctx sdk.Context, denom string) (*types.H
 }
 
 // IterateHostZones iterates zones
-func (k Keeper) IterateHostZones(ctx sdk.Context, fn func(index int64, zoneInfo types.HostZone) (stop bool)) {
+func (k Keeper) IterateHostZones(ctx sdk.Context, fn func(ctx sdk.Context, index int64, zoneInfo types.HostZone) error) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.HostZoneKey))
 
 	iterator := sdk.KVStorePrefixIterator(store, nil)
@@ -126,11 +165,19 @@ func (k Keeper) IterateHostZones(ctx sdk.Context, fn func(index int64, zoneInfo 
 		zone := types.HostZone{}
 		k.cdc.MustUnmarshal(iterator.Value(), &zone)
 
-		stop := fn(i, zone)
+		error := fn(ctx, i, zone)
 
-		if stop {
+		if error != nil {
 			break
 		}
 		i++
 	}
+}
+
+// GetHostZoneFromIBCDenom returns a HostZone from a IBCDenom
+func (k Keeper) GetRedemptionAccount(ctx sdk.Context, hostZone types.HostZone) (*types.ICAAccount, bool) {
+	if hostZone.RedemptionAccount == nil {
+		return nil, false
+	}
+	return hostZone.RedemptionAccount, true
 }
