@@ -2,7 +2,6 @@ package keeper
 
 import (
 	"encoding/binary"
-	"fmt"
 
 	"github.com/Stride-Labs/stride/x/records/types"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
@@ -133,13 +132,8 @@ func (k Keeper) GetTransferDepositRecordByAmount(ctx sdk.Context, amount int64) 
 func (k Keeper) GetStakeDepositRecordByAmount(ctx sdk.Context, amount int64, hostZoneId string) (val *types.DepositRecord, found bool) {
 	records := k.GetAllDepositRecord(ctx)
 	for _, depositRecord := range records {
-		k.Logger(ctx).Error(fmt.Sprintf("\tMOOSE %d %d", depositRecord.Amount, amount))
-		k.Logger(ctx).Error(fmt.Sprintf("\tMOOSE2 %d %d", depositRecord.Status, types.DepositRecord_STAKE))
-		k.Logger(ctx).Error(fmt.Sprintf("\tMOOSE3 %s %s", depositRecord.HostZoneId, hostZoneId))
-
 		amountsMatch := depositRecord.Amount == amount && depositRecord.Status == types.DepositRecord_STAKE
 		hostZoneMatches := depositRecord.HostZoneId == hostZoneId
-		k.Logger(ctx).Error(fmt.Sprintf("\tMOOSE4 %v %v", amountsMatch, hostZoneMatches))
 		if amountsMatch && hostZoneMatches {
 			return &depositRecord, true
 		}

@@ -169,34 +169,6 @@ func (k Keeper) UpdateWithdrawalBalance(ctx sdk.Context, zoneInfo types.HostZone
 	)
 }
 
-// Simple query helper to get the current clock time of the host chain
-func (k Keeper) ReadClockTime(ctx sdk.Context, zoneInfo types.HostZone) {
-	// k.Logger(ctx).Info(fmt.Sprintf("\tQuerying clock time on %s", zoneInfo.ChainId))
-
-	// withdrawalIca := zoneInfo.GetWithdrawalAccount()
-	// if withdrawalIca == nil || withdrawalIca.Address == "" {
-	// 	k.Logger(ctx).Error("Zone %s is missing a delegation address!", zoneInfo.ChainId)
-	// }
-	// k.Logger(ctx).Info(fmt.Sprintf("\tQuerying withdrawalBalances for %s at %d height", zoneInfo.ChainId))
-
-	// _, addr, _ := bech32.DecodeAndConvert(withdrawalIca.GetAddress())
-	// data := bankTypes.CreateAccountBalancesPrefix(addr)
-	// key := "store/bank/key"
-	// k.Logger(ctx).Info("Querying for value", "key", key, "denom", zoneInfo.HostDenom)
-	// k.InterchainQueryKeeper.MakeRequest(
-	// 	ctx,
-	// 	zoneInfo.ConnectionId,
-	// 	zoneInfo.ChainId,
-	// 	key,
-	// 	append(data, []byte(zoneInfo.HostDenom)...),
-	// 	sdk.NewInt(-1),
-	// 	types.ModuleName,
-	// 	"withdrawalbalance",
-	// 	0, //ttl
-	// 	0, //height
-	// )
-}
-
 // SubmitTxs submits an ICA transaction containing multiple messages
 func (k Keeper) SubmitTxs(ctx sdk.Context, connectionId string, msgs []sdk.Msg, account types.ICAAccount) error {
 	chainId, err := k.GetChainID(ctx, connectionId)
@@ -237,9 +209,6 @@ func (k Keeper) SubmitTxs(ctx sdk.Context, connectionId string, msgs []sdk.Msg, 
 	if err != nil {
 		return err
 	}
-
-	// log the data sent in the transaction
-	k.Logger(ctx).Info("MICE SubmitTxs tx:", connectionId)
 
 	return nil
 }

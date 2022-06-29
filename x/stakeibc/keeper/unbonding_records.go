@@ -31,8 +31,6 @@ func (k Keeper) CreateEpochUnbondings(ctx sdk.Context, epochNumber int64) bool {
 		UnbondingEpochNumber: uint64(epochNumber),
 		HostZoneUnbondings:   hostZoneUnbondings,
 	}
-	k.Logger(ctx).Info(fmt.Sprintf("epoch unbonding MOOSE %s", epochUnbondingRecord.String()))
-	k.Logger(ctx).Info(fmt.Sprintf("hostZoneUnbondings MOOSE %v", hostZoneUnbondings))
 	k.RecordsKeeper.AppendEpochUnbondingRecord(ctx, epochUnbondingRecord)
 	return true
 }
@@ -232,10 +230,9 @@ func (k Keeper) SweepAllUnbondedTokens(ctx sdk.Context) {
 				// Send the transaction through SubmitTx
 				err := k.SubmitTxs(ctx, zoneInfo.ConnectionId, msgs, *delegationAccount)
 				if err != nil {
-					ctx.Logger().Info(fmt.Sprintf("MICE Failed to SubmitTxs for %s", zoneInfo.ChainId))
-					// return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "Failed to SubmitTxs for %s, %s, %v", zoneInfo.ConnectionId, zoneInfo.ChainId, msgs)
+					ctx.Logger().Info(fmt.Sprintf("Failed to SubmitTxs for %s", zoneInfo.ChainId))
 				}
-				ctx.Logger().Info(fmt.Sprintf("MICE Successfully completed SubmitTxs for %s, %s, %v", zoneInfo.ConnectionId, zoneInfo.ChainId, msgs))
+				ctx.Logger().Info(fmt.Sprintf("Successfully completed unbonded token sweep ICA call for %s, %s, %v", zoneInfo.ConnectionId, zoneInfo.ChainId, msgs))
 			}
 		} else {
 			k.Logger(ctx).Info(fmt.Sprintf("\tNo unbonded tokens this day to sweep for host zone %s", zoneInfo.ChainId))

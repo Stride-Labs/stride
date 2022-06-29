@@ -55,9 +55,6 @@ func (c Callbacks) RegisterCallbacks() types.QueryCallbacks {
 func WithdrawalBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query icqtypes.Query) error {
 	// NOTE(TEST-112) for now, to get proofs in your ICQs, you need to query the entire store on the host zone! e.g. "store/bank/key"
 
-	k.Logger(ctx).Info(fmt.Sprintf("LILLO context from ICQ WithdrawalBalanceCallback: %v", ctx))
-	k.Logger(ctx).Info(fmt.Sprintf("LILLO context from ICQ WithdrawalBalanceCallback's chainID: %v", ctx.ChainID()))
-	k.Logger(ctx).Info(fmt.Sprintf("LILLO context from ICQ WithdrawalBalanceCallback's time: %v", ctx.BlockHeader().Time))
 	zone, found := k.GetHostZone(ctx, query.GetChainId())
 	if !found {
 		return fmt.Errorf("no registered zone for chain id: %s", query.GetChainId())
