@@ -53,7 +53,7 @@ func TestShowHostZone(t *testing.T) {
 	}{
 		{
 			desc: "found",
-			id:   fmt.Sprintf("%d", objs[0].ChainId),
+			id:   fmt.Sprintf("%s", objs[0].ChainId),
 			args: common,
 			obj:  objs[0],
 		},
