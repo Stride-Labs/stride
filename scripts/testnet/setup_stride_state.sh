@@ -52,8 +52,6 @@ for (( i=1; i <= $NUM_NODES; i++ )); do
         MAIN_NODE_CMD=$st_cmd
         MAIN_NODE_ID=$node_id
     else
-        # add this node's id to the list of peer nodes that will be used by the main node
-        PEER_NODE_IDS="${node_id},${PEER_NODE_IDS}" 
         # also add this account and it's genesis tx to the main node
         $MAIN_NODE_CMD add-genesis-account ${val_addr} $VAL_TOKENS
         cp ${STATE}/${node_name}/config/gentx/*.json ${STATE}/${MAIN_NODE_NAME}/config/gentx/
