@@ -72,9 +72,9 @@ func BenchmarkSimulation(b *testing.B) {
 		require.NoError(b, err)
 	})
 
-	encoding := cosmoscmd.MakeEncodingConfig(app.ModuleBasics)
+	encoding := app.MakeEncodingConfig()
 
-	app := app.New(
+	app := app.NewStrideApp(
 		logger,
 		db,
 		nil,
