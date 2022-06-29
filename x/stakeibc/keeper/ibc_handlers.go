@@ -233,6 +233,7 @@ func (k *Keeper) HandleSend(ctx sdk.Context, msg sdk.Msg) error {
 				k.RecordsKeeper.SetUserRedemptionRecord(ctx, userRedemptionRecord)
 				// Append the UserRedemptionRecords to the host zone's claimableRecordIds
 				zone.ClaimableRecordIds = append(zone.ClaimableRecordIds, userRedemptionRecord.Id)
+				k.SetHostZone(ctx, *zone)
 			}
 			k.RecordsKeeper.SetEpochUnbondingRecord(ctx, epochUnbondingRecord)
 		}
@@ -326,23 +327,6 @@ func (k Keeper) HandleUndelegate(ctx sdk.Context, msg sdk.Msg, completionTime ti
 
 	// burn stAssets upon successful unbonding
 	k.bankKeeper.BurnCoins(ctx, types.ModuleName, sdk.NewCoins(undelegateMsg.Amount))
-
-	// set unbondingTime on EpochUnbondingRecord.hostZoneUnbonding from light client
-	// unbondingRecord, found := k.RecordsKeeper.GetLatestEpochUnbondingRecord(ctx)
-	// if !found {
-	// 	return sdkerrors.Wrapf(sdkerrors.ErrNotFound, "No unbonding record found")
-	// }
-	// blockTime, found := k.GetLightClientTimeSafely(ctx, zone.ConnectionId)
-	// if !found {
-	// 	k.Logger(ctx).Error(fmt.Sprintf("Could not find blockTime for host zone %s", zone.ChainId))
-	// }
-	// // iterate through all unbonding record hostZone unbondings and set the unbonding times
-	// for _, unbonding := range unbondingRecord.HostZoneUnbondings {
-	// 	if unbonding.HostZoneId == zone.ChainId {
-	// 		unbonding.UnbondingTime = blockTime
-	// 		k.Logger(ctx).Info(fmt.Sprintf("Set unbonding time to %d for host zone %s's unbonding for %d%s", blockTime, zone.ChainId, undelegateMsg.Amount.Amount.Int64(), undelegateMsg.Amount.Denom))
-	// 	}
-	// }
 
 	return nil
 }
