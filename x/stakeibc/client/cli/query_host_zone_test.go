@@ -2,6 +2,7 @@ package cli_test
 
 import (
 	"fmt"
+	"strconv"
 	"testing"
 
 	"github.com/cosmos/cosmos-sdk/client/flags"
@@ -25,7 +26,7 @@ func networkWithHostZoneObjects(t *testing.T, n int) (*network.Network, []types.
 
 	for i := 0; i < n; i++ {
 		hostZone := types.HostZone{
-			Id: uint64(i),
+			ChainId: strconv.Itoa(i),
 		}
 		nullify.Fill(&hostZone)
 		state.HostZoneList = append(state.HostZoneList, hostZone)
@@ -52,7 +53,7 @@ func TestShowHostZone(t *testing.T) {
 	}{
 		{
 			desc: "found",
-			id:   fmt.Sprintf("%d", objs[0].Id),
+			id:   fmt.Sprintf("%d", objs[0].ChainId),
 			args: common,
 			obj:  objs[0],
 		},
