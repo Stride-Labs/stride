@@ -167,7 +167,7 @@ func (k *Keeper) HandleSend(ctx sdk.Context, msg sdk.Msg) error {
 	delegationAddress := zone.GetDelegationAccount().GetAddress()
 	redemptionAddress := zone.GetRedemptionAccount().GetAddress()
 
-	// Only process bank sends that reinvest user rewards
+	// Process bank sends that reinvest user rewards
 	if sendMsg.FromAddress == withdrawalAddress && sendMsg.ToAddress == delegationAddress {
 		// fetch epoch
 		strideEpochTracker, found := k.GetEpochTracker(ctx, epochtypes.STRIDE_EPOCH)
@@ -187,10 +187,46 @@ func (k *Keeper) HandleSend(ctx sdk.Context, msg sdk.Msg) error {
 			DepositEpochNumber: uint64(epochNumber),
 		}
 		k.RecordsKeeper.AppendDepositRecord(ctx, record)
+		// process unbonding transfers from the DelegationAccount to the RedemptionAccount
 	} else if sendMsg.FromAddress == delegationAddress && sendMsg.ToAddress == redemptionAddress {
-		k.Logger(ctx).Info(fmt.Sprintf("[REDEMPTION] Received MsgSend acknowledgement for msg %v", sendMsg))
-	} else {
-		return nil
+		dayEpochTracker, found := k.GetEpochTracker(ctx, "day")
+		if !found {
+			k.Logger(ctx).Info("failed to find epoch day")
+			return sdkerrors.Wrapf(types.ErrInvalidLengthEpochTracker, "no number for epoch (%s)", "day")
+		}
+		epochUnbondingRecords := k.RecordsKeeper.GetAllEpochUnbondingRecord(ctx)
+		for _, epochUnbondingRecord := range epochUnbondingRecords {
+			if epochUnbondingRecord.Id == dayEpochTracker.EpochNumber {
+				continue
+			}
+			// filter out HostZoneUnbondingRecords that are not in a "pending" state
+			// this protects against an edge case where a HostZoneUnbondingRecord becomes unbonded after the epoch has been completed
+			// but before the ack is received
+			hostZoneUnbonding := epochUnbondingRecord.HostZoneUnbondings[zone.ChainId]
+			// NOTE: at the beginning of the epoch we mark all PENDING_TRANSFER HostZoneUnbondingRecords as UNBONDED
+			// so that they're retried if the transfer fails
+			if hostZoneUnbonding.Status != recordstypes.HostZoneUnbonding_PENDING_TRANSFER {
+				continue
+			}
+			hostZoneUnbonding.Status = recordstypes.HostZoneUnbonding_TRANSFERRED
+			userRedemptionRecords := hostZoneUnbonding.UserRedemptionRecords
+			for _, recordId := range userRedemptionRecords {
+				userRedemptionRecord, found := k.RecordsKeeper.GetUserRedemptionRecord(ctx, recordId)
+				if !found {
+					k.Logger(ctx).Error("failed to find user redemption record")
+					return sdkerrors.Wrapf(types.ErrRecordNotFound, "no user redemption record found for id (%d)", recordId)
+				}
+				if userRedemptionRecord.IsClaimable == true {
+					k.Logger(ctx).Info("user redemption record is already claimable")
+					continue
+				}
+				userRedemptionRecord.IsClaimable = true
+				k.RecordsKeeper.SetUserRedemptionRecord(ctx, userRedemptionRecord)
+				// Append the UserRedemptionRecords to the host zone's claimableRecordIds
+				zone.ClaimableRecordIds = append(zone.ClaimableRecordIds, userRedemptionRecord.Id)
+			}
+			k.RecordsKeeper.SetEpochUnbondingRecord(ctx, epochUnbondingRecord)
+		}
 	}
 
 	return nil

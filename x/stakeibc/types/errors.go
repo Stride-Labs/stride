@@ -15,4 +15,5 @@ var (
 	ErrInvalidHostZone      = sdkerrors.Register(ModuleName, 1503, "host zone not registered")
 	ErrICAStake             = sdkerrors.Register(ModuleName, 1504, "ICA stake failed")
 	ErrEpochNotFound        = sdkerrors.Register(ModuleName, 1505, "epoch not found")
+	ErrRecordNotFound        = sdkerrors.Register(ModuleName, 1505, "record not found")
 )
