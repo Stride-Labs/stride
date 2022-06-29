@@ -20,12 +20,12 @@ func createTestDelegation(keeper *keeper.Keeper, ctx sdk.Context) types.Delegati
 
 func TestDelegationGet(t *testing.T) {
 	keeper, ctx := keepertest.StakeibcKeeper(t)
-	item := createTestDelegation(keeper, ctx)
-	rst, found := keeper.GetDelegation(ctx)
+	expected := createTestDelegation(keeper, ctx)
+	actual, found := keeper.GetDelegation(ctx)
 	require.True(t, found)
 	require.Equal(t,
-		nullify.Fill(&item),
-		nullify.Fill(&rst),
+		nullify.Fill(&expected),
+		nullify.Fill(&actual),
 	)
 }
 
