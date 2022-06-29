@@ -27,9 +27,8 @@ func (k Keeper) CreateEpochUnbondings(ctx sdk.Context, epochNumber int64) bool {
 	k.IterateHostZones(ctx, addEpochUndelegation)
 	//TODO(TEST-112) replace this with a check downstream for nil hostZoneUnbonding => replacing with empty struct
 	hostZoneUnbondings[""] = &recordstypes.HostZoneUnbonding{}
-	latestEpochUnbondingRecordCount := k.RecordsKeeper.GetEpochUnbondingRecordCount(ctx)
 	epochUnbondingRecord := recordstypes.EpochUnbondingRecord{
-		Id:                   latestEpochUnbondingRecordCount + 1,
+		Id:                   0,
 		UnbondingEpochNumber: uint64(epochNumber),
 		HostZoneUnbondings:   hostZoneUnbondings,
 	}
@@ -103,7 +102,14 @@ func (k Keeper) CleanupEpochUnbondingRecords(ctx sdk.Context) bool {
 	// if any of them don't have any hostZones, then it deletes the record
 	for _, epochUnbondingRecord := range k.RecordsKeeper.GetAllEpochUnbondingRecord(ctx) {
 		k.Logger(ctx).Info(fmt.Sprintf("Processing epoch unbondings for epoch unbonding record from epoch %d", epochUnbondingRecord.GetId()))
-		if len(epochUnbondingRecord.HostZoneUnbondings) == 0 {
+		shouldDeleteRecord := true
+		for _, hostZoneUnbonding := range epochUnbondingRecord.GetHostZoneUnbondings() {
+			if (hostZoneUnbonding.Status != recordstypes.HostZoneUnbonding_TRANSFERRED) && (hostZoneUnbonding.GetAmount() != 0) {
+				shouldDeleteRecord = false
+				break
+			}
+		}
+		if shouldDeleteRecord {
 			k.RecordsKeeper.RemoveEpochUnbondingRecord(ctx, epochUnbondingRecord.GetId())
 		}
 	}
