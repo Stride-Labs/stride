@@ -43,10 +43,8 @@ nohup $STRIDE_CMD start | sed -r -u "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2})?)?[mGK]//g
 nohup $GAIA_CMD start | sed -r -u "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2})?)?[mGK]//g" > $GAIA_LOGS 2>&1 &
 ( tail -f -n0 $STRIDE_LOGS & ) | grep -q "finalizing commit of block"
 ( tail -f -n0 $GAIA_LOGS & ) | grep -q "finalizing commit of block"
-sleep 5
+sleep 10
 echo "Done"
-
-CSLEEP 5
 
 if [ "$CACHE" != "true" ]; then
     # If cache mode is disabled, create the hermes connection and channels, 
