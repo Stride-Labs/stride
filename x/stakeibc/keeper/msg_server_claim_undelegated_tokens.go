@@ -51,13 +51,16 @@ func (k msgServer) ClaimUndelegatedTokens(goCtx context.Context, msg *types.MsgC
 	// TODO we should do some error handling here, in case this call fails
 	err := k.SubmitTxs(ctx, hostZone.GetConnectionId(), msgs, *redemptionAccount)
 	if err != nil {
-		k.Logger(ctx).Error(err.Error())
+		k.Logger(ctx).Error(fmt.Sprintf("MOOSE: %s", err.Error()))
 		return nil, err
 	}
+	k.Logger(ctx).Error(fmt.Sprintf("MOOSE - SubmitTxs success"))
 	// now go through and delete these records
 	for i := 0; i < numRecordsToClaim; i++ {
 		k.RecordsKeeper.RemoveUserRedemptionRecord(ctx, hostZone.ClaimableRecordIds[i])
+		k.Logger(ctx).Error(fmt.Sprintf("MOOSE - RemoveUserRedemptionRecord"))
 	}
+
 	// finally clean up these records from claimable records
 	hostZone.ClaimableRecordIds = hostZone.ClaimableRecordIds[numRecordsToClaim:]
 	return &types.MsgClaimUndelegatedTokensResponse{}, nil

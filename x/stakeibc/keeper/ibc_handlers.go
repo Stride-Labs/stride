@@ -189,14 +189,18 @@ func (k *Keeper) HandleSend(ctx sdk.Context, msg sdk.Msg) error {
 		k.RecordsKeeper.AppendDepositRecord(ctx, record)
 		// process unbonding transfers from the DelegationAccount to the RedemptionAccount
 	} else if sendMsg.FromAddress == delegationAddress && sendMsg.ToAddress == redemptionAddress {
+		k.Logger(ctx).Error("ACK - sendMsg.FromAddress == delegationAddress && sendMsg.ToAddress == redemptionAddress")
 		dayEpochTracker, found := k.GetEpochTracker(ctx, "day")
 		if !found {
 			k.Logger(ctx).Info("failed to find epoch day")
 			return sdkerrors.Wrapf(types.ErrInvalidLengthEpochTracker, "no number for epoch (%s)", "day")
 		}
 		epochUnbondingRecords := k.RecordsKeeper.GetAllEpochUnbondingRecord(ctx)
+		
 		for _, epochUnbondingRecord := range epochUnbondingRecords {
+			k.Logger(ctx).Error(fmt.Sprintf("epoch number: %d", epochUnbondingRecord.Id))
 			if epochUnbondingRecord.Id == dayEpochTracker.EpochNumber {
+				k.Logger(ctx).Error("epochUnbondingRecord.Id == dayEpochTracker.EpochNumber")
 				continue
 			}
 			// filter out HostZoneUnbondingRecords that are not in a "pending" state
@@ -206,6 +210,7 @@ func (k *Keeper) HandleSend(ctx sdk.Context, msg sdk.Msg) error {
 			// NOTE: at the beginning of the epoch we mark all PENDING_TRANSFER HostZoneUnbondingRecords as UNBONDED
 			// so that they're retried if the transfer fails
 			if hostZoneUnbonding.Status != recordstypes.HostZoneUnbonding_PENDING_TRANSFER {
+				k.Logger(ctx).Error("hostZoneUnbonding.Status != recordstypes.HostZoneUnbonding_PENDING_TRANSFER")
 				continue
 			}
 			hostZoneUnbonding.Status = recordstypes.HostZoneUnbonding_TRANSFERRED
@@ -301,8 +306,11 @@ func (k Keeper) HandleUndelegate(ctx sdk.Context, msg sdk.Msg, completionTime ti
 			k.Logger(ctx).Error(fmt.Sprintf("Host zone unbonding record not found for hostZoneId %s in epoch %d", zone.ChainId, epochUnbonding.UnbondingEpochNumber))
 			continue
 		}
+		if hostZoneRecord.Status != recordstypes.HostZoneUnbonding_BONDED {
+			continue
+		}
 		hostZoneRecord.Status = recordstypes.HostZoneUnbonding_UNBONDED
-		hostZoneRecord.UnbondingTime = uint64(completionTime.Unix())
+		hostZoneRecord.UnbondingTime = uint64(completionTime.UnixNano())
 		k.Logger(ctx).Info(fmt.Sprintf("Set unbonding time to %v for host zone %s's unbonding for %d%s", completionTime, zone.ChainId, undelegateMsg.Amount.Amount.Int64(), undelegateMsg.Amount.Denom))
 		// save back the altered SetEpochUnbondingRecord
 		k.RecordsKeeper.SetEpochUnbondingRecord(ctx, epochUnbonding)
