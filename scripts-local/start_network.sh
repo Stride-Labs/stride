@@ -13,6 +13,8 @@ STRIDE_STATE=$SCRIPT_DIR/state/stride
 STRIDE_LOGS=$SCRIPT_DIR/logs/stride.log
 GAIA_STATE=$SCRIPT_DIR/state/gaia
 GAIA_LOGS=$SCRIPT_DIR/logs/gaia.log
+GAIA_LOGS_2=$SCRIPT_DIR/logs/gaia2.log
+GAIA_LOGS_3=$SCRIPT_DIR/logs/gaia3.log
 HERMES_LOGS=$SCRIPT_DIR/logs/hermes.log
 ICQ_LOGS=$SCRIPT_DIR/logs/icq.log
 
@@ -21,7 +23,7 @@ make stop 2>/dev/null || true
 rm -rf $SCRIPT_DIR/state $SCRIPT_DIR/logs/*.log $SCRIPT_DIR/logs/temp
 
 # Recreate each log file
-for log in $STRIDE_LOGS $GAIA_LOGS $HERMES_LOGS $ICQ_LOGS; do
+for log in $STRIDE_LOGS $GAIA_LOGS $GAIA_LOGS_2 $GAIA_LOGS_3 $HERMES_LOGS $ICQ_LOGS; do
     touch $log
 done
 
@@ -41,12 +43,13 @@ fi
 printf '\n%s' "Starting Stride and Gaia...   "
 nohup $STRIDE_CMD start | sed -r -u "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2})?)?[mGK]//g" > $STRIDE_LOGS 2>&1 &
 nohup $GAIA_CMD start | sed -r -u "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2})?)?[mGK]//g" > $GAIA_LOGS 2>&1 &
+nohup $GAIA_CMD_2 start | sed -r -u "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2})?)?[mGK]//g" > $GAIA_LOGS_2 2>&1 &
+# nohup $GAIA_CMD_3 start | sed -r -u "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2})?)?[mGK]//g" > $GAIA_LOGS_3 2>&1 &
+
 ( tail -f -n0 $STRIDE_LOGS & ) | grep -q "finalizing commit of block"
 ( tail -f -n0 $GAIA_LOGS & ) | grep -q "finalizing commit of block"
 sleep 5
 echo "Done"
-
-CSLEEP 5
 
 if [ "$CACHE" != "true" ]; then
     # If cache mode is disabled, create the hermes connection and channels, 
