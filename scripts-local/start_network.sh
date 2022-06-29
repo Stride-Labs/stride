@@ -91,7 +91,7 @@ if [ "$CACHE" != "true" ]; then
     $STRIDE_CMD tx stakeibc register-host-zone \
         connection-0 $ATOM $IBCATOM channel-0 3 \
         --chain-id $STRIDE_CHAIN --home $STATE/stride \
-        --keyring-backend test --from $STRIDE_VAL_ACCT --gas 500000 -y
+        --keyring-backend test --from $STRIDE_VAL_ACCT --gas 1000000 -y
 fi
 
 # Add more detailed log files
