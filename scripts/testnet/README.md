@@ -27,8 +27,8 @@ This folder contains the scripts necessary to launch a testnet on GCP. The main 
             * The Type SOA record named `{deployment_name}.stridenet.co` in the `{deployment_name}-stridenet` managed zone
             * The Type NS Record named `{deployment_name}.stridenet.co` in the `stridenet` managed zone
 ## Shutting Down
-* Terraform has trouble removing the DNS resources. To get around this, first manually delete the managed zone that was created (named `{deployment_name}-stridenet`) by deleting all records sets in the zone and then deleting the zone itself.
-* Then run `terraform destroy` to remove the remaing resources
+* Run `terraform destroy` to remove each resource.
+* Terraform has trouble removing the DNS resources. To get around this, you'll have to manually delete the DNS managed zone (named `{deployment_name}-stridenet`) from GCP. This is best run after the above command so that the record sets in the managed zone are already deleted.
 ## Pending TODO
 1. Create base images for each service that contains just the executable. That way, the image building step will simply have to copy the new state files in.
 2. Link the terraform step in Github Actions so that it creates our nodes on push 
