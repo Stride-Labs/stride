@@ -15,16 +15,14 @@ func TestGenesis(t *testing.T) {
 		Params: types.DefaultParams(),
 		PortId: types.PortID,
 		ICAAccount: &types.ICAAccount{
-			Address:            "78",
-			UndelegatedBalance: 49,
-			DelegatedBalance:   80,
+			Address: "78",
 		},
 		HostZoneList: []types.HostZone{
 			{
-				Id: 0,
+				ChainId: "0",
 			},
 			{
-				Id: 1,
+				ChainId: "1",
 			},
 		},
 		HostZoneCount: 2,
