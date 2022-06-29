@@ -43,9 +43,17 @@ func (k msgServer) ClaimUndelegatedTokens(goCtx context.Context, msg *types.MsgC
 			k.Logger(ctx).Error(errMsg)
 			return nil, sdkerrors.Wrap(types.ErrInvalidHostZone, errMsg)
 		}
+		errMsg := fmt.Sprintf("FromAddress %s, ToAddress %s", redemptionAccount.Address, record.Receiver)
+		k.Logger(ctx).Error(errMsg)
+		errMsg = fmt.Sprintf("Claimable record ids %s", hostZone.ClaimableRecordIds)
+		k.Logger(ctx).Error(errMsg)
+		errMsg = fmt.Sprintf("Amount %d", record.Amount)
+		k.Logger(ctx).Error(errMsg)
+
 		msgs = append(msgs, &bankTypes.MsgSend{
 			FromAddress: redemptionAccount.Address,
 			ToAddress:   record.Receiver,
+			Amount: 	sdk.NewCoins(sdk.NewInt64Coin(record.Denom, int64(record.Amount))),
 		})
 	}
 	// TODO we should do some error handling here, in case this call fails
