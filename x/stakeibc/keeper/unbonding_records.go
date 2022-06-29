@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"fmt"
+	"strconv"
 
 	icqkeeper "github.com/Stride-Labs/stride/x/interchainquery/keeper"
 	icqtypes "github.com/Stride-Labs/stride/x/interchainquery/types"
@@ -50,16 +51,54 @@ func (k Keeper) SendHostZoneUnbondings(ctx sdk.Context, hostZone types.HostZone)
 		}
 	}
 	delegationAccount := hostZone.GetDelegationAccount()
-	// TODO add proper validator selection on merge
-	validator_address := "cosmosvaloper19e7sugzt8zaamk2wyydzgmg9n3ysylg6na6k6e" // gval2
-	stakeAmt := sdk.NewInt64Coin(hostZone.HostDenom, int64(totalAmtToUnbond))
+	validators := hostZone.GetValidators()
+	// we distribute the unbonding based on our target weights
+	newUnbondingToValidator := k.GetTargetValAmtsForHostZone(ctx, hostZone, totalAmtToUnbond)
+	valAddrToUnbondAmt := make(map[string]int64)
+	overflowAmt := uint64(0)
+	for _, validator := range validators {
+		valAddr := validator.GetAddress()
+		valUnbondAmt := newUnbondingToValidator[valAddr]
+		currentAmtStaked := validator.GetDelegationAmt()
+		if valUnbondAmt > currentAmtStaked { // if we don't have enough assets to unbond
+			overflowAmt += valUnbondAmt - currentAmtStaked
+			valUnbondAmt = currentAmtStaked
+		}
+		valAddrToUnbondAmt[valAddr] = valUnbondAmt
+	}
+	if overflowAmt > 0 { // if we need to reallocate any weights
+		for _, validator := range validators {
+			valAddr := validator.GetAddress()
+			valUnbondAmt := valAddrToUnbondAmt[valAddr]
+			currentAmtStaked := validator.GetDelegationAmt()
+			// store how many more tokens we could unbond, if needed
+			amtToPotentiallyUnbond := currentAmtStaked - valUnbondAmt
+			if amtToPotentiallyUnbond > 0 { // if we can afford to unbond more
+				if amtToPotentiallyUnbond > overflowAmt { // we can fully cover the overflow
+					valAddrToUnbondAmt[valAddr] += overflowAmt
+					overflowAmt = 0
+					break
+				} else {
+					valAddrToUnbondAmt[valAddr] += amtToPotentiallyUnbond
+					overflowAmt -= amtToPotentiallyUnbond
+				}
+			}
+		}
+	}
+	if overflowAmt > 0 { // what?? we still can't cover the overflow? something is very wrong
+		k.Logger(ctx).Error(fmt.Sprintf("Could not unbond %d on Host Zone %s", totalAmtToUnbond, hostZone.ChainId))
+		return false
+	}
+	for valAddr, valUnbondAmt := range valAddrToUnbondAmt {
+		stakeAmt := sdk.NewInt64Coin(hostZone.HostDenom, int64(valUnbondAmt))
 
-	msgs = append(msgs, &stakingtypes.MsgUndelegate{
-		DelegatorAddress: delegationAccount.GetAddress(),
-		ValidatorAddress: validator_address,
-		Amount:           stakeAmt,
-	})
-
+		msgs = append(msgs, &stakingtypes.MsgUndelegate{
+			DelegatorAddress: delegationAccount.GetAddress(),
+			ValidatorAddress: valAddr,
+			Amount:           stakeAmt,
+		})
+	}
+	// now we have to handle the overflow amount
 	err := k.SubmitTxs(ctx, hostZone.GetConnectionId(), msgs, *delegationAccount)
 	if err != nil {
 		k.Logger(ctx).Error(fmt.Sprintf("Error submitting unbonding tx: %s", err))
@@ -75,7 +114,7 @@ func (k Keeper) SendHostZoneUnbondings(ctx sdk.Context, hostZone types.HostZone)
 		sdk.NewEvent(
 			sdk.EventTypeMessage,
 			sdk.NewAttribute("hostZone", hostZone.ChainId),
-			sdk.NewAttribute("newAmountUnbonding", stakeAmt.String()),
+			sdk.NewAttribute("newAmountUnbonding", strconv.FormatUint(totalAmtToUnbond, 10)),
 		),
 	})
 	return true
