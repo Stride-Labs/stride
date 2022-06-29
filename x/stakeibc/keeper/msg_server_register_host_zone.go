@@ -82,13 +82,9 @@ func (k Keeper) RegisterHostZone(goCtx context.Context, msg *types.MsgRegisterHo
 		return nil, sdkerrors.Wrapf(recordstypes.ErrEpochUnbondingRecordNotFound, errMsg)
 	}
 	hostZoneUnbondings := epochUnbondingRecord.GetHostZoneUnbondings()
-	k.Logger(ctx).Info(fmt.Sprintf("epoch unbonding BEAR %s", epochUnbondingRecord.String()))
-	k.Logger(ctx).Info(fmt.Sprintf("hostZoneUnbondings BEAR %v", hostZoneUnbondings))
 	if len(hostZoneUnbondings) == 0 {
 		hostZoneUnbondings = make(map[string]*recordstypes.HostZoneUnbonding)
-		k.Logger(ctx).Info(fmt.Sprintf("hostZoneUnbondings BEAR after check %v", hostZoneUnbondings))
 	}
-	k.Logger(ctx).Info(fmt.Sprintf("hostZoneUnbondings BEAR after check %v", hostZoneUnbondings))
 	hostZoneUnbondings[zone.ChainId] = &recordstypes.HostZoneUnbonding{
 		Amount:     0,
 		Denom:      zone.HostDenom,
@@ -96,7 +92,6 @@ func (k Keeper) RegisterHostZone(goCtx context.Context, msg *types.MsgRegisterHo
 		Status:     recordstypes.HostZoneUnbonding_UNBONDED,
 	}
 	epochUnbondingRecord.HostZoneUnbondings = hostZoneUnbondings
-	k.Logger(ctx).Info(fmt.Sprintf("hostZoneUnbondings MOOSE after check %v", hostZoneUnbondings))
 	k.RecordsKeeper.SetEpochUnbondingRecord(ctx, epochUnbondingRecord)
 	epochUnbondingRecordNew, found := k.RecordsKeeper.GetLatestEpochUnbondingRecord(ctx)
 	if !found {
@@ -104,7 +99,7 @@ func (k Keeper) RegisterHostZone(goCtx context.Context, msg *types.MsgRegisterHo
 		k.Logger(ctx).Error(errMsg)
 		return nil, sdkerrors.Wrapf(recordstypes.ErrEpochUnbondingRecordNotFound, errMsg)
 	}
-	k.Logger(ctx).Info(fmt.Sprintf("hostZoneUnbondings MOUSE after check %v", epochUnbondingRecordNew.GetHostZoneUnbondings()))
+	k.Logger(ctx).Info(fmt.Sprintf("hostZoneUnbondings after register host zone %v", epochUnbondingRecordNew.GetHostZoneUnbondings()))
 
 	// TODO(TEST-39): TODO(TEST-42): Set validators on the host zone, either using ICQ + intents or a WL
 

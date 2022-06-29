@@ -35,7 +35,6 @@ func (k Keeper) HandleAcknowledgement(ctx sdk.Context, modulePacket channeltypes
 	err := json.Unmarshal(acknowledgement, &ack)
 	if err != nil {
 		ackErr := channeltypes.Acknowledgement_Error{}
-		k.Logger(ctx).Error(fmt.Sprintf("MICE Unable to unmarshal acknowledgement error %v data %v", err, acknowledgement))
 		err := json.Unmarshal(acknowledgement, &ackErr)
 		if err != nil {
 			ctx.EventManager().EmitEvent(
@@ -76,8 +75,6 @@ func (k Keeper) HandleAcknowledgement(ctx sdk.Context, modulePacket channeltypes
 	recordIdToDelete := int64(0)
 	for msgIndex, msgData := range txMsgData.Data {
 		src := msgs[msgIndex]
-		pstr := fmt.Sprintf("\t[DOGE] Message {%s}", msgData.MsgType)
-		k.Logger(ctx).Info(pstr)
 		switch msgData.MsgType {
 		// staking to validators
 		case "/cosmos.staking.v1beta1.MsgDelegate":
@@ -98,8 +95,6 @@ func (k Keeper) HandleAcknowledgement(ctx sdk.Context, modulePacket channeltypes
 
 	for msgIndex, msgData := range txMsgData.Data {
 		src := msgs[msgIndex]
-		pstr := fmt.Sprintf("\t[DOGE] Message {%s}", msgData.MsgType)
-		k.Logger(ctx).Info(pstr)
 		switch msgData.MsgType {
 		// staking to validators
 		case "/cosmos.staking.v1beta1.MsgDelegate":
@@ -284,7 +279,6 @@ func (k *Keeper) HandleDelegate(ctx sdk.Context, msg sdk.Msg, totalDelegate int6
 	hostZoneDenom := delegateMsg.Amount.Denom
 	amount := delegateMsg.Amount.Amount.Int64()
 	zone, err := k.GetHostZoneFromHostDenom(ctx, hostZoneDenom)
-	k.Logger(ctx).Error(fmt.Sprintf("BEAR balance %s %d", hostZoneDenom, zone.StakedBal))
 	if err != nil {
 		k.Logger(ctx).Error(fmt.Sprintf("failed to get host zone from host denom %s", hostZoneDenom))
 		return -1, err

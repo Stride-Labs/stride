@@ -21,7 +21,6 @@ func (k Keeper) RedeemStake(goCtx context.Context, msg *types.MsgRedeemStake) (*
 	}
 
 	// TODO(TEST-112) add safety check to validate the receiver address is a valid hostZone address
-
 	// then make sure host zone is valid
 	hostZone, found := k.GetHostZone(ctx, msg.HostZone)
 	if !found {

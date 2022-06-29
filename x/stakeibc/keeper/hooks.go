@@ -110,10 +110,10 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochIdentifier string, epochN
 					// k.ReadClockTime(ctx, hz)
 					blockTime, found := k.GetLightClientTimeSafely(ctx, hz.ConnectionId)
 					if !found {
-						k.Logger(ctx).Error(fmt.Sprintf("LILLO Could not find blockTime for host zone %s", hz.ConnectionId))
+						k.Logger(ctx).Error(fmt.Sprintf("Could not find blockTime for host zone %s", hz.ConnectionId))
 						continue
 					} else {
-						k.Logger(ctx).Info(fmt.Sprintf("LILLO Found blockTime for host zone %s: %d", hz.ConnectionId, blockTime))
+						k.Logger(ctx).Info(fmt.Sprintf("Found blockTime for host zone %s: %d", hz.ConnectionId, blockTime))
 					}
 
 					k.UpdateWithdrawalBalance(ctx, hz)
