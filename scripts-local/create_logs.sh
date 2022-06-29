@@ -32,10 +32,9 @@ while true; do
     printf '\n%s\n' "DELEGATIONS GAIA" >>$TEMP_LOGS_DIR/accounts.log
     $GAIA_CMD q staking delegations $GAIA_DELEGATE >>$TEMP_LOGS_DIR/accounts.log
     printf '\n%s\n' "LIST-HOST-ZONES STRIDE" >>$TEMP_LOGS_DIR/accounts.log
-    $STRIDE_CMD q stakeibc list-host-zone | head -n 16 >>$TEMP_LOGS_DIR/accounts.log
+    $STRIDE_CMD q stakeibc list-host-zone >>$TEMP_LOGS_DIR/accounts.log
     printf '\n%s\n' "LIST-DEPOSIT-RECORDS" >>$TEMP_LOGS_DIR/accounts.log
     $STRIDE_CMD q records list-deposit-record  >> $TEMP_LOGS_DIR/accounts.log
-    
     mv $TEMP_LOGS_DIR/*.log $LOGS_DIR
     sleep 3
 done
