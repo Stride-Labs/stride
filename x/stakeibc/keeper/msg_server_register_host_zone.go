@@ -48,36 +48,64 @@ func (k Keeper) RegisterHostZone(goCtx context.Context, msg *types.MsgRegisterHo
 	// NOTE: in the future, if we implement proxy governance, we'll need many more delegate accounts
 	delegateAccount := types.FormatICAAccountOwner(chainId, types.ICAAccountType_DELEGATION)
 	if err := k.ICAControllerKeeper.RegisterInterchainAccount(ctx, zone.ConnectionId, delegateAccount); err != nil {
+		k.Logger(ctx).Info("unable to register delegate account", "error", err)
 		return nil, err
 	}
 
 	// generate fee account
 	feeAccount := types.FormatICAAccountOwner(chainId, types.ICAAccountType_FEE)
 	if err := k.ICAControllerKeeper.RegisterInterchainAccount(ctx, zone.ConnectionId, feeAccount); err != nil {
+		k.Logger(ctx).Info("unable to register fee account", "error", err)
 		return nil, err
 	}
 
 	// generate withdrawal account
 	withdrawalAccount := types.FormatICAAccountOwner(chainId, types.ICAAccountType_WITHDRAWAL)
 	if err := k.ICAControllerKeeper.RegisterInterchainAccount(ctx, zone.ConnectionId, withdrawalAccount); err != nil {
+		k.Logger(ctx).Info("unable to register withdrawal account", "error", err)
+		return nil, err
+	}
+
+	// generate redemption account
+	redemptionAccount := types.FormatICAAccountOwner(chainId, types.ICAAccountType_REDEMPTION)
+	if err := k.ICAControllerKeeper.RegisterInterchainAccount(ctx, zone.ConnectionId, redemptionAccount); err != nil {
+		k.Logger(ctx).Info("unable to register redemption account", "error", err)
 		return nil, err
 	}
 
 	// add this host zone to unbonding hostZones, otherwise users won't be able to unbond
 	// for this host zone until the following day
-	epochUnbondingRecord, found := k.recordsKeeper.GetLatestEpochUnbondingRecord(ctx)
+	epochUnbondingRecord, found := k.RecordsKeeper.GetLatestEpochUnbondingRecord(ctx)
 	if !found {
 		errMsg := "unable to add host zone to latest epoch unbonding record"
 		k.Logger(ctx).Error(errMsg)
 		return nil, sdkerrors.Wrapf(recordstypes.ErrEpochUnbondingRecordNotFound, errMsg)
 	}
 	hostZoneUnbondings := epochUnbondingRecord.GetHostZoneUnbondings()
-	hostZoneUnbondings[zone.ChainId] = &recordstypes.EpochUnbondingRecordHostZoneUnbonding{
-		Amount:        0,
-		Denom:         zone.HostDenom,
-		HostZoneId:    zone.ChainId,
-		UnbondingSent: false,
+	k.Logger(ctx).Info(fmt.Sprintf("epoch unbonding BEAR %s", epochUnbondingRecord.String()))
+	k.Logger(ctx).Info(fmt.Sprintf("hostZoneUnbondings BEAR %v", hostZoneUnbondings))
+	if len(hostZoneUnbondings) == 0 {
+		hostZoneUnbondings = make(map[string]*recordstypes.HostZoneUnbonding)
+		k.Logger(ctx).Info(fmt.Sprintf("hostZoneUnbondings BEAR after check %v", hostZoneUnbondings))
 	}
+	k.Logger(ctx).Info(fmt.Sprintf("hostZoneUnbondings BEAR after check %v", hostZoneUnbondings))
+	hostZoneUnbondings[zone.ChainId] = &recordstypes.HostZoneUnbonding{
+		Amount:     0,
+		Denom:      zone.HostDenom,
+		HostZoneId: zone.ChainId,
+		Status:     recordstypes.HostZoneUnbonding_UNBONDED,
+	}
+	epochUnbondingRecord.HostZoneUnbondings = hostZoneUnbondings
+	k.Logger(ctx).Info(fmt.Sprintf("hostZoneUnbondings MOOSE after check %v", hostZoneUnbondings))
+	k.RecordsKeeper.SetEpochUnbondingRecord(ctx, epochUnbondingRecord)
+	epochUnbondingRecordNew, found := k.RecordsKeeper.GetLatestEpochUnbondingRecord(ctx)
+	if !found {
+		errMsg := "unable to add host zone to latest epoch unbonding record"
+		k.Logger(ctx).Error(errMsg)
+		return nil, sdkerrors.Wrapf(recordstypes.ErrEpochUnbondingRecordNotFound, errMsg)
+	}
+	k.Logger(ctx).Info(fmt.Sprintf("hostZoneUnbondings MOUSE after check %v", epochUnbondingRecordNew.GetHostZoneUnbondings()))
+
 	// TODO(TEST-39): TODO(TEST-42): Set validators on the host zone, either using ICQ + intents or a WL
 
 	// emit events

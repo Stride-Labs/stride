@@ -5,7 +5,7 @@ import "stakeibc/validator.proto";
 import "stakeibc/ica_account.proto";
 import "gogoproto/gogo.proto";
 import "cosmos_proto/cosmos.proto";
-import "records/user_redemption_record.proto";
+import "records/genesis.proto";
 
 option go_package = "github.com/Stride-Labs/stride/x/stakeibc/types";
 

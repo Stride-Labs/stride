@@ -9,7 +9,7 @@ import (
 // SetUserRedemptionRecord set a specific userRedemptionRecord in the store
 func (k Keeper) SetUserRedemptionRecord(ctx sdk.Context, userRedemptionRecord types.UserRedemptionRecord) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.UserRedemptionRecordKey))
-	b := k.cdc.MustMarshal(&userRedemptionRecord)
+	b := k.Cdc.MustMarshal(&userRedemptionRecord)
 	store.Set([]byte(userRedemptionRecord.Id), b)
 }
 
@@ -20,7 +20,7 @@ func (k Keeper) GetUserRedemptionRecord(ctx sdk.Context, id string) (val types.U
 	if b == nil {
 		return val, false
 	}
-	k.cdc.MustUnmarshal(b, &val)
+	k.Cdc.MustUnmarshal(b, &val)
 	return val, true
 }
 
@@ -39,7 +39,7 @@ func (k Keeper) GetAllUserRedemptionRecord(ctx sdk.Context) (list []types.UserRe
 
 	for ; iterator.Valid(); iterator.Next() {
 		var val types.UserRedemptionRecord
-		k.cdc.MustUnmarshal(iterator.Value(), &val)
+		k.Cdc.MustUnmarshal(iterator.Value(), &val)
 		list = append(list, val)
 	}
 
@@ -58,7 +58,7 @@ func (k Keeper) IterateUserRedemptionRecords(ctx sdk.Context,
 
 	for ; iterator.Valid(); iterator.Next() {
 		userRedRecord := types.UserRedemptionRecord{}
-		k.cdc.MustUnmarshal(iterator.Value(), &userRedRecord)
+		k.Cdc.MustUnmarshal(iterator.Value(), &userRedRecord)
 
 		stop := fn(i, userRedRecord)
 
