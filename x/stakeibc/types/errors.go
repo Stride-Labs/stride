@@ -16,4 +16,5 @@ var (
 	ErrICAStake             = sdkerrors.Register(ModuleName, 1504, "ICA stake failed")
 	ErrEpochNotFound        = sdkerrors.Register(ModuleName, 1505, "epoch not found")
 	ErrRecordNotFound        = sdkerrors.Register(ModuleName, 1506, "record not found")
+	ErrInvalidAmount        = sdkerrors.Register(ModuleName, 1507, "invalid unstaking amount")
 )

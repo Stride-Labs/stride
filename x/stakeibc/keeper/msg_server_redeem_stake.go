@@ -28,6 +28,11 @@ func (k Keeper) RedeemStake(goCtx context.Context, msg *types.MsgRedeemStake) (*
 	if !found {
 		return nil, sdkerrors.Wrapf(types.ErrInvalidHostZone, "host zone is invalid: %s", msg.HostZone)
 	}
+
+	if msg.Amount > hostZone.StakedBal {
+		return nil, sdkerrors.Wrapf(types.ErrInvalidAmount, "cannot unstake an amount g.t. staked balance on host zone: %d", msg.Amount)
+	}
+
 	// construct desired unstaking amount from host zone
 	coinDenom := "st" + hostZone.HostDenom
 	coinString := strconv.Itoa(int(msg.Amount)) + coinDenom

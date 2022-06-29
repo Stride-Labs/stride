@@ -94,6 +94,16 @@ func (k Keeper) RegisterHostZone(goCtx context.Context, msg *types.MsgRegisterHo
 		HostZoneId: zone.ChainId,
 		Status:     recordstypes.HostZoneUnbonding_UNBONDED,
 	}
+	k.Logger(ctx).Info(fmt.Sprintf("hostZoneUnbondings MOOSE after check %v", hostZoneUnbondings))
+	k.RecordsKeeper.SetEpochUnbondingRecord(ctx, epochUnbondingRecord)
+	epochUnbondingRecordNew, found := k.RecordsKeeper.GetLatestEpochUnbondingRecord(ctx)
+	if !found {
+		errMsg := "unable to add host zone to latest epoch unbonding record"
+		k.Logger(ctx).Error(errMsg)
+		return nil, sdkerrors.Wrapf(recordstypes.ErrEpochUnbondingRecordNotFound, errMsg)
+	}
+	k.Logger(ctx).Info(fmt.Sprintf("hostZoneUnbondings MOUSE after check %v", epochUnbondingRecordNew.GetHostZoneUnbondings()))
+
 	// TODO(TEST-39): TODO(TEST-42): Set validators on the host zone, either using ICQ + intents or a WL
 
 	// emit events
