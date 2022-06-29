@@ -46,38 +46,6 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochIdentifier string, epochN
 		k.CleanupEpochUnbondingRecords(ctx)
 		// lastly we create an empty unbonding record for this epoch
 		k.CreateEpochUnbondings(ctx, epochNumber)
-
-		// zoneInfo, found := k.GetHostZone(ctx, "GAIA")
-		// if !found {
-		// 	k.Logger(ctx).Error(fmt.Sprintf("Could not find GAIA host zone"))
-		// }
-		//------------------------------------------------------
-		// if (&zoneInfo).WithdrawalAccount != nil && (&zoneInfo).RedemptionAccount != nil { // only process host zones once withdrawal accounts are registered
-		// 	k.Logger(ctx).Info(fmt.Sprintf("MICE testing bank send"))
-
-		// 	// get the delegation account and rewards account
-		// 	delegationAccount := zoneInfo.GetDelegationAccount()
-		// 	redemptionAccount := zoneInfo.GetRedemptionAccount()
-
-		// 	sweepCoin := sdk.NewCoin(zoneInfo.HostDenom, sdk.NewInt(int64(99)))
-		// 	var msgs []sdk.Msg
-		// 	// construct the msg
-		// 	msgs = append(msgs, &banktypes.MsgSend{FromAddress: delegationAccount.GetAddress(),
-		// 		ToAddress: redemptionAccount.GetAddress(), Amount: sdk.NewCoins(sweepCoin)})
-
-		// 	ctx.Logger().Info(fmt.Sprintf("Bank sending unbonded tokens batch, from delegation to redemption account. Msg: %v", msgs))
-
-		// 	// Send the transaction through SubmitTx
-		// 	err := k.SubmitTxs(ctx, zoneInfo.ConnectionId, msgs, *delegationAccount)
-		// 	if err != nil {
-		// 		ctx.Logger().Info(fmt.Sprintf("MICE Failed to SubmitTxs for %s, %s, %v", zoneInfo.ConnectionId, zoneInfo.ChainId, msgs))
-		// 		ctx.Logger().Info(fmt.Sprintf("MICE Failed to SubmitTxs with err: %v", err))
-		// 	}
-		// 	ctx.Logger().Info(fmt.Sprintf("MICE Successfully completed SubmitTxs for %s, %s, %v", zoneInfo.ConnectionId, zoneInfo.ChainId, msgs))
-
-		// }
-		//------------------------------------------------------
-
 	}
 
 	if epochIdentifier == epochstypes.STRIDE_EPOCH {

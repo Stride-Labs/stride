@@ -25,8 +25,6 @@ func (k Keeper) CreateEpochUnbondings(ctx sdk.Context, epochNumber int64) bool {
 	}
 
 	k.IterateHostZones(ctx, addEpochUndelegation)
-	//TODO(TEST-112) replace this with a check downstream for nil hostZoneUnbonding => replacing with empty struct
-	hostZoneUnbondings[""] = &recordstypes.HostZoneUnbonding{}
 	epochUnbondingRecord := recordstypes.EpochUnbondingRecord{
 		Id:                   0,
 		UnbondingEpochNumber: uint64(epochNumber),

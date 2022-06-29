@@ -206,6 +206,10 @@ func (k *Keeper) HandleSend(ctx sdk.Context, msg sdk.Msg) error {
 			// filter out HostZoneUnbondingRecords that are not in a "pending" state
 			// this protects against an edge case where a HostZoneUnbondingRecord becomes unbonded after the epoch has been completed
 			// but before the ack is received
+			hostZoneUnbondings := epochUnbondingRecord.GetHostZoneUnbondings()
+			if len(hostZoneUnbondings) == 0 {
+				hostZoneUnbondings = make(map[string]*recordstypes.HostZoneUnbonding)
+			}
 			hostZoneUnbonding := epochUnbondingRecord.HostZoneUnbondings[zone.ChainId]
 			// NOTE: at the beginning of the epoch we mark all PENDING_TRANSFER HostZoneUnbondingRecords as UNBONDED
 			// so that they're retried if the transfer fails
@@ -300,6 +304,10 @@ func (k Keeper) HandleUndelegate(ctx sdk.Context, msg sdk.Msg, completionTime ti
 	for _, epochUnbonding := range k.RecordsKeeper.GetAllEpochUnbondingRecord(ctx) {
 		if epochUnbonding.UnbondingEpochNumber == currentEpochNumber {
 			continue
+		}
+		hostZoneUnbondings := epochUnbonding.GetHostZoneUnbondings()
+		if len(hostZoneUnbondings) == 0 {
+			hostZoneUnbondings = make(map[string]*recordstypes.HostZoneUnbonding)
 		}
 		hostZoneRecord, found := epochUnbonding.HostZoneUnbondings[zone.ChainId]
 		if !found {
