@@ -6,7 +6,7 @@ import "gogoproto/gogo.proto";
 option go_package = "github.com/Stride-Labs/stride/x/stakeibc/types";
 
 // Params defines the parameters for the module.
-// next id: 8
+// next id: 9
 message Params {
   option (gogoproto.goproto_stringer) = false;
 
@@ -14,7 +14,7 @@ message Params {
   uint64 rewards_interval = 1;
   uint64 delegate_interval = 6;
   uint64 deposit_interval = 2;
-  uint64 exchange_rate_interval = 3;
+  uint64 redemption_rate_interval = 3;
 
   uint64 stride_commission = 4;
   // zone_com_address stores which addresses to 
@@ -23,6 +23,5 @@ message Params {
   // TODO implement this 
   map<string, string> zone_com_address = 5;
   uint64 reinvest_interval = 7;
-
+  uint64 validator_rebalancing_threshold = 8;
 }
-

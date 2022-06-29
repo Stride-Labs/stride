@@ -5,6 +5,7 @@ import (
 
 	"github.com/tendermint/tendermint/libs/log"
 
+	epochskeeper "github.com/Stride-Labs/stride/x/epochs/keeper"
 	icqkeeper "github.com/Stride-Labs/stride/x/interchainquery/keeper"
 	"github.com/Stride-Labs/stride/x/stakeibc/types"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -18,21 +19,25 @@ import (
 	ibctransferkeeper "github.com/cosmos/ibc-go/v3/modules/apps/transfer/keeper"
 	ibckeeper "github.com/cosmos/ibc-go/v3/modules/core/keeper"
 	ibctmtypes "github.com/cosmos/ibc-go/v3/modules/light-clients/07-tendermint/types"
+
+	recordsmodulekeeper "github.com/Stride-Labs/stride/x/records/keeper"
 )
 
 type (
 	Keeper struct {
 		// *cosmosibckeeper.Keeper
-		cdc                 codec.BinaryCodec
-		storeKey            sdk.StoreKey
-		memKey              sdk.StoreKey
-		paramstore          paramtypes.Subspace
-		ICAControllerKeeper icacontrollerkeeper.Keeper
-		IBCKeeper           ibckeeper.Keeper
-		scopedKeeper        capabilitykeeper.ScopedKeeper
-		transferKeeper      ibctransferkeeper.Keeper
-		bankKeeper    		bankkeeper.Keeper
-		InterchainQueryKeeper	icqkeeper.Keeper
+		cdc                   codec.BinaryCodec
+		storeKey              sdk.StoreKey
+		memKey                sdk.StoreKey
+		paramstore            paramtypes.Subspace
+		ICAControllerKeeper   icacontrollerkeeper.Keeper
+		IBCKeeper             ibckeeper.Keeper
+		scopedKeeper          capabilitykeeper.ScopedKeeper
+		TransferKeeper        ibctransferkeeper.Keeper
+		bankKeeper            bankkeeper.Keeper
+		InterchainQueryKeeper icqkeeper.Keeper
+		RecordsKeeper         recordsmodulekeeper.Keeper
+		epochsKeeper          epochskeeper.Keeper
 
 		accountKeeper types.AccountKeeper
 	}
@@ -51,8 +56,9 @@ func NewKeeper(
 	icacontrollerkeeper icacontrollerkeeper.Keeper,
 	ibcKeeper ibckeeper.Keeper,
 	scopedKeeper capabilitykeeper.ScopedKeeper,
-	transferKeeper ibctransferkeeper.Keeper,
+	TransferKeeper ibctransferkeeper.Keeper,
 	interchainQueryKeeper icqkeeper.Keeper,
+	RecordsKeeper recordsmodulekeeper.Keeper,
 ) Keeper {
 	// set KeyTable if it has not already been set
 	if !ps.HasKeyTable() {
@@ -60,17 +66,18 @@ func NewKeeper(
 	}
 
 	return Keeper{
-		cdc:                 cdc,
-		storeKey:            storeKey,
-		memKey:              memKey,
-		paramstore:          ps,
-		accountKeeper:       accountKeeper,
-		bankKeeper:          bankKeeper,
-		ICAControllerKeeper: icacontrollerkeeper,
-		IBCKeeper:           ibcKeeper,
-		scopedKeeper:        scopedKeeper,
-		transferKeeper:      transferKeeper,
+		cdc:                   cdc,
+		storeKey:              storeKey,
+		memKey:                memKey,
+		paramstore:            ps,
+		accountKeeper:         accountKeeper,
+		bankKeeper:            bankKeeper,
+		ICAControllerKeeper:   icacontrollerkeeper,
+		IBCKeeper:             ibcKeeper,
+		scopedKeeper:          scopedKeeper,
+		TransferKeeper:        TransferKeeper,
 		InterchainQueryKeeper: interchainQueryKeeper,
+		RecordsKeeper:         RecordsKeeper,
 	}
 }
 
