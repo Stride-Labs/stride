@@ -17,15 +17,17 @@ var (
 	DefaultRedemptionRateInterval uint64 = 3
 	DefaultKeyWithdrawalInterval  uint64 = 3
 	// you apparantly cannot safely encode floats, so we make commission / 100
-	DefaultStrideCommission uint64 = 10
+	DefaultStrideCommission              uint64 = 10
+	DefaultValidatorRebalancingThreshold uint64 = 100 // divide by 10,000, so 100 = 1%
 
 	// KeyDepositInterval is store's key for the DepositInterval option
-	KeyDepositInterval        = []byte("DepositInterval")
-	KeyDelegateInterval       = []byte("DelegateInterval")
-	KeyReinvestInterval       = []byte("ReinvestInterval")
-	KeyRewardsInterval        = []byte("RewardsInterval")
-	KeyRedemptionRateInterval = []byte("RedemptionRateInterval")
-	KeyStrideCommission       = []byte("StrideCommission")
+	KeyDepositInterval               = []byte("DepositInterval")
+	KeyDelegateInterval              = []byte("DelegateInterval")
+	KeyReinvestInterval              = []byte("ReinvestInterval")
+	KeyRewardsInterval               = []byte("RewardsInterval")
+	KeyRedemptionRateInterval        = []byte("RedemptionRateInterval")
+	KeyStrideCommission              = []byte("StrideCommission")
+	KeyValidatorRebalancingThreshold = []byte("ValidatorRebalancingThreshold")
 )
 
 var _ paramtypes.ParamSet = (*Params)(nil)
@@ -43,14 +45,16 @@ func NewParams(
 	redemption_rate_interval uint64,
 	stride_commission uint64,
 	reinvest_interval uint64,
+	validator_rebalancing_threshold uint64,
 ) Params {
 	return Params{
-		DepositInterval:        deposit_interval,
-		DelegateInterval:       delegate_interval,
-		RewardsInterval:        rewards_interval,
-		RedemptionRateInterval: redemption_rate_interval,
-		StrideCommission:       stride_commission,
-		ReinvestInterval:       reinvest_interval,
+		DepositInterval:               deposit_interval,
+		DelegateInterval:              delegate_interval,
+		RewardsInterval:               rewards_interval,
+		RedemptionRateInterval:        redemption_rate_interval,
+		StrideCommission:              stride_commission,
+		ReinvestInterval:              reinvest_interval,
+		ValidatorRebalancingThreshold: validator_rebalancing_threshold,
 	}
 }
 
@@ -63,6 +67,7 @@ func DefaultParams() Params {
 		DefaultRedemptionRateInterval,
 		DefaultStrideCommission,
 		DefaultReinvestInterval,
+		DefaultValidatorRebalancingThreshold,
 	)
 }
 
@@ -75,7 +80,23 @@ func (p *Params) ParamSetPairs() paramtypes.ParamSetPairs {
 		paramtypes.NewParamSetPair(KeyRedemptionRateInterval, &p.RedemptionRateInterval, isPositive),
 		paramtypes.NewParamSetPair(KeyStrideCommission, &p.StrideCommission, isCommission),
 		paramtypes.NewParamSetPair(KeyReinvestInterval, &p.ReinvestInterval, isPositive),
+		paramtypes.NewParamSetPair(KeyValidatorRebalancingThreshold, &p.ValidatorRebalancingThreshold, isThreshold),
 	}
+}
+
+func isThreshold(i interface{}) error {
+	ival, ok := i.(uint64)
+	if !ok {
+		return fmt.Errorf("parameter not accepted: %T", i)
+	}
+
+	if ival <= 0 {
+		return fmt.Errorf("parameter must be positive: %d", ival)
+	}
+	if ival > 10000 {
+		return fmt.Errorf("parameter must be less than 10,000: %d", ival)
+	}
+	return nil
 }
 
 func isPositive(i interface{}) error {

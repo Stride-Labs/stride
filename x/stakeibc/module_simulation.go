@@ -101,6 +101,50 @@ func (am AppModule) WeightedOperations(simState module.SimulationState) []simtyp
 		stakeibcsimulation.SimulateMsgClaimUndelegatedTokens(am.accountKeeper, am.bankKeeper, am.keeper),
 	))
 
+	var weightMsgRebalanceValidators int
+	simState.AppParams.GetOrGenerate(simState.Cdc, opWeightMsgRebalanceValidators, &weightMsgRebalanceValidators, nil,
+		func(_ *rand.Rand) {
+			weightMsgRebalanceValidators = defaultWeightMsgRebalanceValidators
+		},
+	)
+	operations = append(operations, simulation.NewWeightedOperation(
+		weightMsgRebalanceValidators,
+		stakeibcsimulation.SimulateMsgRebalanceValidators(am.accountKeeper, am.bankKeeper, am.keeper),
+	))
+
+	var weightMsgAddValidator int
+	simState.AppParams.GetOrGenerate(simState.Cdc, opWeightMsgAddValidator, &weightMsgAddValidator, nil,
+		func(_ *rand.Rand) {
+			weightMsgAddValidator = defaultWeightMsgAddValidator
+		},
+	)
+	operations = append(operations, simulation.NewWeightedOperation(
+		weightMsgAddValidator,
+		stakeibcsimulation.SimulateMsgAddValidator(am.accountKeeper, am.bankKeeper, am.keeper),
+	))
+
+	var weightMsgChangeValidatorWeight int
+	simState.AppParams.GetOrGenerate(simState.Cdc, opWeightMsgChangeValidatorWeight, &weightMsgChangeValidatorWeight, nil,
+		func(_ *rand.Rand) {
+			weightMsgChangeValidatorWeight = defaultWeightMsgChangeValidatorWeight
+		},
+	)
+	operations = append(operations, simulation.NewWeightedOperation(
+		weightMsgChangeValidatorWeight,
+		stakeibcsimulation.SimulateMsgChangeValidatorWeight(am.accountKeeper, am.bankKeeper, am.keeper),
+	))
+
+	var weightMsgDeleteValidator int
+	simState.AppParams.GetOrGenerate(simState.Cdc, opWeightMsgDeleteValidator, &weightMsgDeleteValidator, nil,
+		func(_ *rand.Rand) {
+			weightMsgDeleteValidator = defaultWeightMsgDeleteValidator
+		},
+	)
+	operations = append(operations, simulation.NewWeightedOperation(
+		weightMsgDeleteValidator,
+		stakeibcsimulation.SimulateMsgDeleteValidator(am.accountKeeper, am.bankKeeper, am.keeper),
+	))
+
 	// this line is used by starport scaffolding # simapp/module/operation
 
 	return operations

@@ -82,12 +82,23 @@ func (k Keeper) DelegateOnHost(ctx sdk.Context, hostZone types.HostZone, amt sdk
 	delegationIca := hostZone.GetDelegationAccount()
 
 	// Construct the transaction
-	// TODO(TEST-39): Implement validator selection
-	validator_address := "cosmosvaloper1pcag0cj4ttxg8l7pcg0q4ksuglswuuedadj7ne" // gval2
-
+	targetDelegatedAmts, err := k.GetTargetValAmtsForHostZone(ctx, hostZone, amt.Amount.Uint64())
+	if err != nil {
+		k.Logger(ctx).Error(fmt.Sprintf("Error getting target delegation amounts for host zone %s", hostZone.ChainId))
+		return err
+	}
+	for _, validator := range hostZone.GetValidators() {
+		relAmt := sdk.NewCoin(amt.Denom, sdk.NewIntFromUint64(targetDelegatedAmts[validator.GetAddress()]))
+		if relAmt.Amount.IsPositive() {
+			msgs = append(msgs, &stakingTypes.MsgDelegate{
+				DelegatorAddress: delegationIca.GetAddress(),
+				ValidatorAddress: validator.GetAddress(),
+				Amount:           relAmt})
+		}
+	}
 	// construct the msg
-	msgs = append(msgs, &stakingTypes.MsgDelegate{DelegatorAddress: delegationIca.GetAddress(), ValidatorAddress: validator_address, Amount: amt})
 	// Send the transaction through SubmitTx
+	// QUESTION is there any error handling we should do here?
 	err = k.SubmitTxs(ctx, connectionId, msgs, *delegationIca)
 	if err != nil {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "Failed to SubmitTxs for %s, %s, %s", connectionId, hostZone.ChainId, msgs)
@@ -140,7 +151,7 @@ func (k Keeper) UpdateWithdrawalBalance(ctx sdk.Context, zoneInfo types.HostZone
 	if withdrawalIca == nil || withdrawalIca.Address == "" {
 		k.Logger(ctx).Error("Zone %s is missing a delegation address!", zoneInfo.ChainId)
 	}
-	k.Logger(ctx).Info(fmt.Sprintf("\tQuerying withdrawalBalances for %s at %d height", zoneInfo.ChainId))
+	k.Logger(ctx).Info(fmt.Sprintf("\tQuerying withdrawalBalances for %s", zoneInfo.ChainId))
 
 	_, addr, _ := bech32.DecodeAndConvert(withdrawalIca.GetAddress())
 	data := bankTypes.CreateAccountBalancesPrefix(addr)
