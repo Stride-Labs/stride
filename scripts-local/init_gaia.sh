@@ -22,7 +22,7 @@ sed -i -E 's|unsafe-cors = false|unsafe-cors = true|g' "${STATE}/${GAIA_NODE_NAM
 
 # set the unbonding time
 GAIA_CFG_TMP="${STATE}/${GAIA_NODE_NAME}/config/genesis.json"
-jq '.app_state.staking.params.unbonding_time = $newVal' --arg newVal "180s" $GAIA_CFG_TMP > json.tmp && mv json.tmp $GAIA_CFG_TMP
+jq '.app_state.staking.params.unbonding_time = $newVal' --arg newVal "130s" $GAIA_CFG_TMP > json.tmp && mv json.tmp $GAIA_CFG_TMP
 
 # add validator account
 echo $GAIA_VAL_MNEMONIC | $GAIA_CMD keys add $GAIA_VAL_ACCT --recover --keyring-backend=test 

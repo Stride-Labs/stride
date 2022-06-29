@@ -86,9 +86,12 @@ message HostZoneUnbonding {
   uint64 amount = 1;
   string denom = 2;
   string hostZoneId = 3;
+  uint64 unbondingTime = 5;
   Status status = 4;
-  google.protobuf.Timestamp completionTime = 5
-      [(gogoproto.nullable) = false, (gogoproto.stdtime) = true, (gogoproto.moretags) = "yaml:\"unbonding_time\""];
+  // google.protobuf.Timestamp unbondingTime = 5
+  //     [(gogoproto.nullable) = false, (gogoproto.stdtime) = true, (gogoproto.moretags) = "yaml:\"unbonding_time\""];
+  // google.protobuf.Timestamp completionTime = 5
+  //     [(gogoproto.nullable) = false, (gogoproto.stdtime) = true, (gogoproto.moretags) = "yaml:\"unbonding_time\""];
   // Index UserRedemptionRecords here (note: id is {chain_id}.{epoch}.{sender})
   repeated string userRedemptionRecords = 6;
 }
