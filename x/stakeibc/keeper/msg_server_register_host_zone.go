@@ -89,10 +89,10 @@ func (k Keeper) RegisterHostZone(goCtx context.Context, msg *types.MsgRegisterHo
 	}
 	k.Logger(ctx).Info(fmt.Sprintf("hostZoneUnbondings BEAR after check %v", hostZoneUnbondings))
 	hostZoneUnbondings[zone.ChainId] = &recordstypes.HostZoneUnbonding{
-		Amount:        0,
-		Denom:         zone.HostDenom,
-		HostZoneId:    zone.ChainId,
-		UnbondingSent: false,
+		Amount:     0,
+		Denom:      zone.HostDenom,
+		HostZoneId: zone.ChainId,
+		Status:     recordstypes.HostZoneUnbonding_UNBONDED,
 	}
 	// TODO(TEST-39): TODO(TEST-42): Set validators on the host zone, either using ICQ + intents or a WL
 

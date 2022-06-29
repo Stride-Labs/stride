@@ -37,11 +37,11 @@ while true; do
     $GAIA_CMD q staking unbonding-delegations $GAIA_DELEGATE >>$TEMP_LOGS_DIR/accounts.log
 
     printf '\n%s\n' "BALANCES GAIA (REDEMPTION ACCT)" >>$TEMP_LOGS_DIR/accounts.log
-    $GAIA_CMD q staking delegations $GAIA_REDEMPTION >>$TEMP_LOGS_DIR/accounts.log
+    $GAIA_CMD q bank balances $GAIA_REDEMPTION >>$TEMP_LOGS_DIR/accounts.log
     printf '\n%s\n' "BALANCES GAIA (REVENUE ACCT)" >>$TEMP_LOGS_DIR/accounts.log
-    $GAIA_CMD q staking delegations $GAIA_REV >>$TEMP_LOGS_DIR/accounts.log
+    $GAIA_CMD q bank balances $GAIA_REV >>$TEMP_LOGS_DIR/accounts.log
     printf '\n%s\n' "BALANCES GAIA (WITHDRAWAL ACCT)" >>$TEMP_LOGS_DIR/accounts.log
-    $GAIA_CMD q staking delegations $GAIA_WITHDRAWAL >>$TEMP_LOGS_DIR/accounts.log
+    $GAIA_CMD q bank balances $GAIA_WITHDRAWAL >>$TEMP_LOGS_DIR/accounts.log
 
     printf '\n%s\n' "LIST-HOST-ZONES STRIDE" >>$TEMP_LOGS_DIR/accounts.log
     $STRIDE_CMD q stakeibc list-host-zone | head -n 40 >>$TEMP_LOGS_DIR/accounts.log
