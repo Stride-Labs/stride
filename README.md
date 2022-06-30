@@ -1,4 +1,4 @@
-<img src="https://uploads-ssl.webflow.com/62a7d17b43a3e81b399380a0/62aa83f5a22e3f5e3e0d655f_stride-logo.svg" width="400">
+<img src="https://drive.google.com/uc?id=1c4DbV3lQ2Ely9VwEur4EmeHIea1my2AC" width="400">
 # Multichain Liquid Staking
 
 [Twitter](https://twitter.com/stride_zone) | [Discord](http://stride.zone/discord) | [Website](https://stride.zone/)
