@@ -131,14 +131,17 @@ npm run serve
 ```
 
 The frontend app is built using the `@starport/vue` and `@starport/vuex` packages. For details, see the [monorepo for Starport front-end development](https://github.com/tendermint/vue).
-
 ## Stride's Technical Architecture
 
 Users stake their tokens on Stride from any Cosmos chain. Rewards accumulate in real time. No minimum. They will receive staked tokens immediately when they liquid stake. These staked tokens can be freely traded, and can be redeemed with Stride at any time to receive your original tokens plus staking rewards.
-<img src="https://drive.google.com/uc?id=1FGo06bHxg0DQOyBcJulWm3DI2zwxQHWR" width="920">
+
+<img src="https://drive.google.com/uc?id=1CjEkovV3tHspZxlgP8b_th5NPb78T9nB" width="920">
 
 On the backend, Stride permissionly stakes these tokens on the host chain and compounds user rewards. Stride lets users use your staked assets to compound their yields. Continue to earn staking yield, and earn additional yield by lending, LPing, and more. They can set their own risk tolerance in Cosmos DeFi.  
-<img src="https://drive.google.com/uc?id=1bfEnNjbxUNNlYBcz7z0BpCVAUVSRStZW" width="900">
+
+<img src="https://drive.google.com/uc?id=11kJZE93BdhNjkaNig3DGYnTnuSNClP8Y" width="900">
 
 Users can always redeem from Stride. When they select "redeeem" on the Stride website, Stride will initiate unbonding on the host zone. Once the unbonding period elapses, the users will receive native tokens in their wallets. 
-<img src="https://drive.google.com/uc?id=1eiair4GMouOlLpWeA_303sLC4UbL8Ybt" width="900">
+
+<img src="https://drive.google.com/uc?id=1rtFiUwziiKjeUkJcJ9YuT1AN3JUtSVVr" width="900">
+
