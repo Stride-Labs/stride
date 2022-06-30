@@ -1,12 +1,10 @@
 on:
   workflow_dispatch:
-    # inputs:
-    #   deployment_name:
-    #     description: Testnet that you want to launch (e.g. droplet)
-    #     required: true
-
+    inputs:
+      deployment_name:
+        description: Testnet that you want to launch (e.g. poolparty)
+        required: true
 env:
-  deployment_name: testnet
   network_name: stride
   num_stride_nodes: 3
 
@@ -52,7 +50,6 @@ jobs:
           mkdir build
           cd gaia
           go build -mod=readonly -trimpath -o ../build ./...
-
       - name: Store Gaia Executable
         uses: actions/upload-artifact@v3
         with:
@@ -83,8 +80,7 @@ jobs:
         shell: bash
         run: |
           chmod +x -R ./build
-          ./scripts/testnet/setup_testnet_state.sh ${deployment_name} ${num_stride_nodes}
-
+          ./scripts/testnet/setup_testnet_state.sh ${{ github.event.inputs.deployment_name }} ${num_stride_nodes}
       - name: Persist State Files
         uses: actions/upload-artifact@v3
         with:
@@ -128,7 +124,6 @@ jobs:
       - name: GCloud Configure Docker
         run: |
           gcloud auth configure-docker
-
       - name: Build Stride Node Images
         uses: docker/build-push-action@v3
         with:
@@ -139,9 +134,8 @@ jobs:
           push: true
           platforms: linux/amd64
           tags: |
-            stridelabs/nodes-${{ env.deployment_name }}:${{ matrix.node-name }}
-            gcr.io/stride-nodes/${{ env.deployment_name }}:${{ matrix.node-name }}
-
+            stridelabs/nodes-${{ github.event.inputs.deployment_name }}:${{ matrix.node-name }}
+            gcr.io/stride-nodes/${{ github.event.inputs.deployment_name }}:${{ matrix.node-name }}
   build-dep-images:
     needs: [initialize-state]
     runs-on: ubuntu-latest
@@ -181,13 +175,11 @@ jobs:
       - name: GCloud Configure Docker
         run: |
           gcloud auth configure-docker
-
       - name: Construct Image
         shell: bash
         run: |
-          hub_tag=stridelabs/nodes-${{ env.deployment_name }}:${{ matrix.dep-name }}
-          gcr_tag=gcr.io/stride-nodes/${{ env.deployment_name }}:${{ matrix.dep-name }}
-
+          hub_tag=stridelabs/nodes-${{ github.event.inputs.deployment_name }}:${{ matrix.dep-name }}
+          gcr_tag=gcr.io/stride-nodes/${{ github.event.inputs.deployment_name }}:${{ matrix.dep-name }}
           docker build -t $hub_tag -f scripts/testnet/dockerfiles/Dockerfile.${{ matrix.dep-name }} .
           docker push $hub_tag
           docker tag $hub_tag $gcr_tag
