@@ -1,4 +1,5 @@
 <img src="https://drive.google.com/uc?id=1c4DbV3lQ2Ely9VwEur4EmeHIea1my2AC" width="400">
+
 # Multichain Liquid Staking
 
 [Twitter](https://twitter.com/stride_zone) | [Discord](http://stride.zone/discord) | [Website](https://stride.zone/)
