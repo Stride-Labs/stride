@@ -5,7 +5,6 @@ on:
         description: Testnet that you want to launch (e.g. poolparty)
         required: true
 env:
-  network_name: stride
   num_stride_nodes: 3
 
 jobs:
@@ -16,7 +15,7 @@ jobs:
         run: |
           node_names_array=""
           for (( i=1; i <= $num_stride_nodes; i++ )); do
-            node_names_array+="\"${network_name}-node${i}\","
+            node_names_array+="\"stride-node${i}\","
           done
           echo "::set-output name=node-names::[${node_names_array}]"
     outputs:
