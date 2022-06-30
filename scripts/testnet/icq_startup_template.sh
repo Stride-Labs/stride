@@ -11,8 +11,8 @@ while true; do
 done
 
 echo "Restoring ICQ Accounts"
-echo "ICQ_STRIDE_MNEMONIC" | interchain-queries keys restore icq1 --chain STRIDE
-echo "ICQ_GAIA_MNEMONIC" | interchain-queries keys restore icq2 --chain GAIA
+echo "ICQ_STRIDE_MNEMONIC" | interchain-queries keys restore icq1 --chain stride
+echo "ICQ_GAIA_MNEMONIC" | interchain-queries keys restore icq2 --chain gaia
 
 echo "Starting ICQ..."
 interchain-queries run
