@@ -17,6 +17,8 @@ COPY --from=golang /src/app/build/strided /usr/local/bin/strided
 RUN addgroup -g 1000 stride \
     && adduser -S -h /stride -D stride -u 1000 -G stride
 
+RUN curl https://get.starport.network/faucet! | bash 
+
 USER stride
 WORKDIR /stride
 
