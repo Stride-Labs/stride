@@ -24,6 +24,6 @@ RUN strided init test
 EXPOSE 1317
 
 COPY --chown=stride "./state/$node_name/" /stride/.stride/ 
-COPY --chown=stride "./state/keys.txt" /stride/.stride/ 
+COPY --chown=stride "./state/keys.txt" /stride/keys.txt
 
 CMD ["strided", "start"]

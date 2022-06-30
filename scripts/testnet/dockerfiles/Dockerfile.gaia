@@ -3,6 +3,7 @@ FROM gcr.io/stride-nodes/base-images/gaia:latest
 RUN gaiad init test
 
 COPY --chown=1000 "./state/gaia/" /gaia/.gaia/ 
+COPY --chown=1000 "./state/keys.txt" /gaia/keys.txt
 
 EXPOSE 26656 26657 1317 9090
 CMD ["gaiad", "start"]
