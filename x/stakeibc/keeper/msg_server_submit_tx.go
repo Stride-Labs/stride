@@ -88,7 +88,7 @@ func (k Keeper) DelegateOnHost(ctx sdk.Context, hostZone types.HostZone, amt sdk
 		return err
 	}
 	for _, validator := range hostZone.GetValidators() {
-		relAmt := sdk.NewCoin(amt.Denom, sdk.NewIntFromUint64(targetDelegatedAmts[validator.Address]))
+		relAmt := sdk.NewCoin(amt.Denom, sdk.NewIntFromUint64(targetDelegatedAmts[validator.GetAddress()]))
 		if relAmt.Amount.IsPositive() {
 			msgs = append(msgs, &stakingTypes.MsgDelegate{
 				DelegatorAddress: delegationIca.GetAddress(),
@@ -96,9 +96,7 @@ func (k Keeper) DelegateOnHost(ctx sdk.Context, hostZone types.HostZone, amt sdk
 				Amount:           relAmt})
 		}
 	}
-	// construct the msg
 	// Send the transaction through SubmitTx
-	// QUESTION is there any error handling we should do here?
 	err = k.SubmitTxs(ctx, connectionId, msgs, *delegationIca)
 	if err != nil {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "Failed to SubmitTxs for %s, %s, %s", connectionId, hostZone.ChainId, msgs)
@@ -233,5 +231,23 @@ func (k Keeper) GetLightClientHeightSafely(ctx sdk.Context, connectionID string)
 		// TODO(TEST-112) check on safety of castng uint64 to int64
 		latestHeightHostZone = int64(clientState.GetLatestHeight().GetRevisionHeight())
 		return latestHeightHostZone, true
+	}
+}
+
+func (k Keeper) GetLightClientTimeSafely(ctx sdk.Context, connectionID string) (uint64, bool) {
+
+	// get light client's latest height
+	conn, found := k.IBCKeeper.ConnectionKeeper.GetConnection(ctx, connectionID)
+	if !found {
+		k.Logger(ctx).Info(fmt.Sprintf("invalid connection id, \"%s\" not found", connectionID))
+	}
+	//TODO(TEST-112) make sure to update host LCs here!
+	latestConsensusClientState, found := k.IBCKeeper.ClientKeeper.GetLatestClientConsensusState(ctx, conn.ClientId)
+	if !found {
+		k.Logger(ctx).Info(fmt.Sprintf("client id \"%s\" not found for connection \"%s\"", conn.ClientId, connectionID))
+		return 0, false
+	} else {
+		latestTime := latestConsensusClientState.GetTimestamp()
+		return latestTime, true
 	}
 }

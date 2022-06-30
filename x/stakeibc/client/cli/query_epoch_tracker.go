@@ -1,12 +1,12 @@
 package cli
 
 import (
-    "context"
-	
-    "github.com/spf13/cobra"
+	"context"
+
+	"github.com/Stride-Labs/stride/x/stakeibc/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
-    "github.com/Stride-Labs/stride/x/stakeibc/types"
+	"github.com/spf13/cobra"
 )
 
 func CmdListEpochTracker() *cobra.Command {

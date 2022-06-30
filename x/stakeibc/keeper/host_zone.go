@@ -93,15 +93,27 @@ func (k Keeper) GetAllHostZone(ctx sdk.Context) (list []types.HostZone) {
 	return
 }
 
-// func (k Keeper) AddValidatorToHostZone(ctx sdk.Context, chainId string, val types.Validator) (success bool) {
-// 	hostZone, found := k.GetHostZone(ctx, chainId)
-// 	if !found {
-// 		k.Logger(ctx).Error(fmt.Sprintf("HostZone not found %s", chainId))
-// 		return false
-// 	}
-// 	hostZone.Validators = append(hostZone.Validators, &val)
-// 	return true
-// }
+func (k Keeper) AddDelegationToValidator(ctx sdk.Context, hostZone types.HostZone, valAddr string, amt int64) (success bool) {
+	for _, val := range hostZone.GetValidators() {
+		k.Logger(ctx).Info(fmt.Sprintf("Validator %s %d %d", val.GetAddress(), val.GetDelegationAmt(), amt))
+		if val.GetAddress() == valAddr {
+			if amt >= 0 {
+				val.DelegationAmt = val.GetDelegationAmt() + uint64(amt)
+				return true
+			} else {
+				absAmt := uint64(-amt)
+				if absAmt > val.GetDelegationAmt() {
+					k.Logger(ctx).Error(fmt.Sprintf("Delegation amount %d is greater than validator %s delegation amount %d", absAmt, valAddr, val.GetDelegationAmt()))
+					return false
+				}
+				val.DelegationAmt = val.GetDelegationAmt() - absAmt
+				return true
+			}
+		}
+	}
+	k.Logger(ctx).Info(fmt.Sprintf("Could not find validator %s on host zone %s", valAddr, hostZone.GetChainId()))
+	return false
+}
 
 func (k Keeper) RemoveValidatorFromHostZone(ctx sdk.Context, chainId string, validatorAddress string) (success bool) {
 	hostZone, found := k.GetHostZone(ctx, chainId)
@@ -160,4 +172,12 @@ func (k Keeper) IterateHostZones(ctx sdk.Context, fn func(ctx sdk.Context, index
 		}
 		i++
 	}
+}
+
+// GetHostZoneFromIBCDenom returns a HostZone from a IBCDenom
+func (k Keeper) GetRedemptionAccount(ctx sdk.Context, hostZone types.HostZone) (*types.ICAAccount, bool) {
+	if hostZone.RedemptionAccount == nil {
+		return nil, false
+	}
+	return hostZone.RedemptionAccount, true
 }
