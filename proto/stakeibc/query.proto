@@ -25,19 +25,19 @@ service Query {
 	rpc Validator(QueryGetValidatorRequest) returns (QueryGetValidatorResponse) {
 		option (google.api.http).get = "/Stride-Labs/stride/stakeibc/validator";
 	}
-// Queries a Delegation by index.
+	// Queries a Delegation by index.
 	rpc Delegation(QueryGetDelegationRequest) returns (QueryGetDelegationResponse) {
 		option (google.api.http).get = "/Stride-Labs/stride/stakeibc/delegation";
 	}
-// Queries a MinValidatorRequirements by index.
+	// Queries a MinValidatorRequirements by index.
 	rpc MinValidatorRequirements(QueryGetMinValidatorRequirementsRequest) returns (QueryGetMinValidatorRequirementsResponse) {
 		option (google.api.http).get = "/Stride-Labs/stride/stakeibc/min_validator_requirements";
 	}
-// Queries a ICAAccount by index.
+	// Queries a ICAAccount by index.
 	rpc ICAAccount(QueryGetICAAccountRequest) returns (QueryGetICAAccountResponse) {
 		option (google.api.http).get = "/Stride-Labs/stride/stakeibc/ica_account";
 	}
-// Queries a HostZone by id.
+	// Queries a HostZone by id.
 	rpc HostZone(QueryGetHostZoneRequest) returns (QueryGetHostZoneResponse) {
 		option (google.api.http).get = "/Stride-Labs/stride/stakeibc/host_zone/{chain_id}";
 	}
@@ -97,6 +97,7 @@ message QueryGetDelegationRequest {}
 message QueryGetDelegationResponse {
 	Delegation Delegation = 1 [(gogoproto.nullable) = false];
 }
+
 message QueryGetMinValidatorRequirementsRequest {}
 
 message QueryGetMinValidatorRequirementsResponse {

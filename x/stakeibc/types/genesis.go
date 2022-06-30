@@ -12,8 +12,9 @@ const DefaultIndex uint64 = 1
 // DefaultGenesis returns the default Capability genesis state
 func DefaultGenesis() *GenesisState {
 	return &GenesisState{
-		ICAAccount:   nil,
-		HostZoneList: []HostZone{},
+		ICAAccount:       nil,
+		HostZoneList:     []HostZone{},
+		EpochTrackerList: []EpochTracker{},
 		// this line is used by starport scaffolding # genesis/types/default
 		Params: DefaultParams(),
 		PortId: PortID,
