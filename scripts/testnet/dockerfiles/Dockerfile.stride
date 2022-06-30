@@ -16,11 +16,14 @@ ARG node_name
 COPY --from=golang /src/app/build/strided /usr/local/bin/strided
 RUN addgroup -g 1000 stride \
     && adduser -S -h /stride -D stride -u 1000 -G stride
+
 USER stride
+WORKDIR /stride/.stride/ 
 
 RUN strided init test
 EXPOSE 1317
 
 COPY --chown=stride "./state/$node_name/" /stride/.stride/ 
+COPY --chown=stride "./state/keys.txt" /stride/.stride/ 
 
 CMD ["strided", "start"]

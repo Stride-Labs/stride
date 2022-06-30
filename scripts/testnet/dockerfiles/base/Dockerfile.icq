@@ -15,4 +15,6 @@ COPY --from=icq-builder /src/app/interchain-queries /usr/local/bin/
 
 RUN apk add --update iputils \
     && adduser -S -h /icq -D icq -u 1000 
+
 USER icq
+WORKDIR /icq

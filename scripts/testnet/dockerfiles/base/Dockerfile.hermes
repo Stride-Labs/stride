@@ -16,4 +16,6 @@ COPY --from=rust /app/src/ibc-rs/target/release/hermes /usr/local/bin/hermes
 RUN apt-get update \
     && apt-get install -y iputils-ping \
     && adduser --system --home /hermes --disabled-password --disabled-login hermes -u 1000
+
 USER hermes
+WORKDIR /hermes

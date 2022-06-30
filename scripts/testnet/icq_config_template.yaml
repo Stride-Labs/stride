@@ -18,8 +18,8 @@ chains:
   gaia:
     key: icq2
     chain-id: GAIA
-    rpc-addr: http://GAIA_ENDPOINT:26557
-    grpc-addr: http://GAIA_ENDPOINT:9080
+    rpc-addr: http://GAIA_ENDPOINT:26657
+    grpc-addr: http://GAIA_ENDPOINT:9090
     account-prefix: cosmos
     keyring-backend: test
     gas-adjustment: 1.2
