@@ -25,7 +25,7 @@ RUN gaiad init test --home /gaia/.gaiad
 # set minimum-gas-prices in app.toml for gaia
 
 EXPOSE 26656 26657 1317 9090
-CMD ["gaiad", "start", "--home", "/gaia/.gaiad"]]
+CMD ["gaiad", "start", "--home", "/gaia/.gaiad"]
 
 
 # # Add to a distroless container

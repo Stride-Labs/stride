@@ -7,9 +7,9 @@ jobs:
     strategy:
       matrix:
         dep-name:
-          - gaia-base
-          - hermes-base
-          - icq-base
+          - gaia
+          - hermes
+          - icq
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -41,7 +41,7 @@ jobs:
           hub_tag=stridelabs/nodes-base-images:${{ matrix.dep-name }}
           gcr_tag=gcr.io/stride-nodes/base-images/:${{ matrix.dep-name }}
 
-          docker build -t $hub_tag -f scripts/testnet/dockerfiles/Dockerfile.${{ matrix.dep-name }} .
+          docker build -t $hub_tag -f scripts/testnet/dockerfiles/base/Dockerfile.${{ matrix.dep-name }} .
           docker push $hub_tag
           docker tag $hub_tag $gcr_tag
           docker push $gcr_tag
