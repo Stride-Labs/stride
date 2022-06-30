@@ -8,8 +8,9 @@ NUM_NODES="$1"
 NETWORK_NAME=stride
 CHAIN_NAME=STRIDE
 VAL_PREFIX=val
-VAL_TOKENS=500000000ustrd
-STAKE_TOKENS=300000000ustrd
+VAL_TOKENS=5000000000000ustrd
+STAKE_TOKENS=3000000000000ustrd
+FAUCET_TOKENS=1000000000000000ustrd
 
 PEER_NODE_IDS=""
 MAIN_ID=1 # Node responsible for genesis and persistent_peers
@@ -22,6 +23,12 @@ for (( i=1; i <= $NUM_NODES; i++ )); do
     # Moniker is of the form: STRIDE_1
     moniker=$(printf "${NETWORK_NAME}_${i}" | awk '{ print toupper($0) }')
 
+    # figure out how many tokens to give this account
+    if [ $i -eq 2 ]; then
+        NODE_TOKENS=$FAUCET_TOKENS
+    else
+        NODE_TOKENS=$VAL_TOKENS
+    fi 
     # Create a state directory for the current node and initialize the chain
     mkdir -p $STATE/$node_name
     st_cmd="$STRIDE_CMD --home ${STATE}/$node_name"
@@ -43,7 +50,7 @@ for (( i=1; i <= $NUM_NODES; i++ )); do
     $st_cmd keys add $val_acct --keyring-backend=test >> $STATE/keys.txt 2>&1
     val_addr=$($st_cmd keys show $val_acct --keyring-backend test -a)
     # Add this account to the current node
-    $st_cmd add-genesis-account ${val_addr} $VAL_TOKENS
+    $st_cmd add-genesis-account ${val_addr} $NODE_TOKENS
     # actually set this account as a validator on the current node 
     $st_cmd gentx $val_acct $STAKE_TOKENS --chain-id $CHAIN_NAME --keyring-backend test 2> /dev/null
     
@@ -53,7 +60,7 @@ for (( i=1; i <= $NUM_NODES; i++ )); do
         MAIN_NODE_ID=$node_id
     else
         # also add this account and it's genesis tx to the main node
-        $MAIN_NODE_CMD add-genesis-account ${val_addr} $VAL_TOKENS
+        $MAIN_NODE_CMD add-genesis-account ${val_addr} $NODE_TOKENS
         cp ${STATE}/${node_name}/config/gentx/*.json ${STATE}/${MAIN_NODE_NAME}/config/gentx/
     fi
 done
