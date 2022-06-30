@@ -5,11 +5,7 @@
 *.so
 *.dylib
 
-# Stride files
-launch.sh
-# auto-generated go files
-
-
+scripts/testnet/state/keys.txt
 # build
 launch.sh
 build/*
@@ -17,6 +13,9 @@ state/*
 .state.backup
 scripts/state/*
 scripts/testnet/*/state/keys.txt
+scripts/testnet/state/*
+scripts/testnet/certs/*
+
 scripts/logs/*.log
 scripts/logs/*/*.log
 scripts-local/state
@@ -36,5 +35,6 @@ vue/*
 # vendor/
 
 # vscode 
-.vscode/*
+.vscode
 .DS_Store
+.terraform

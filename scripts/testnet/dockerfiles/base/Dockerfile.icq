@@ -1,0 +1,27 @@
+FROM golang:1.17-alpine3.15 AS icq-builder
+
+# RUN apt update
+RUN apk add --update git iputils
+
+WORKDIR /src/app
+
+RUN git clone https://github.com/Stride-Labs/interchain-queries.git
+RUN cp -r interchain-queries/* .
+RUN rm -rf interchain-queries
+
+# copy over stride module and install it
+RUN mkdir stride_ref
+RUN mkdir stride_ref/stride
+COPY . /src/app/stride_ref/stride
+WORKDIR /src/app/stride_ref/stride
+WORKDIR /src/app
+RUN go mod download
+RUN go build
+
+FROM alpine:3.15
+
+COPY --from=icq-builder /src/app/interchain-queries /usr/local/bin/
+
+RUN apk add --update iputils \
+    && adduser -S -h /icq -D icq -u 1000 
+USER icq
