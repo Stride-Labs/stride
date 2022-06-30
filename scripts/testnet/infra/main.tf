@@ -23,8 +23,7 @@ variable "regions" {
   default = ["us-central1"]
 }
 variable "deployment_name" {
-  type    = string
-  default = "testnet"
+  type = string
 }
 variable "num_stride_nodes" {
   type    = number
@@ -159,5 +158,3 @@ resource "google_dns_record_set" "external-addresses" {
 
   rrdatas = [google_compute_instance.nodes[count.index].network_interface[0].access_config[0].nat_ip]
 }
-
-
