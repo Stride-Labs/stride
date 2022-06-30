@@ -18,7 +18,7 @@ RUN addgroup -g 1000 stride \
     && adduser -S -h /stride -D stride -u 1000 -G stride
 
 USER stride
-WORKDIR /stride/.stride/ 
+WORKDIR /stride
 
 RUN strided init test
 EXPOSE 1317
