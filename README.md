@@ -117,20 +117,6 @@ git push origin v0.1
 
 After a draft release is created, make your final changes from the release page and publish it.
 
-# GUI for interacting with Stride
-### Web Frontend
-
-Stride's frontend is currently under development. 
-
-Starport has scaffolded a Vue.js-based web app in the `vue` directory. Once it's ready, you'll be able to run the following commands to install dependencies and start the app:
-
-```
-cd vue
-npm install
-npm run serve
-```
-
-The frontend app is built using the `@starport/vue` and `@starport/vuex` packages. For details, see the [monorepo for Starport front-end development](https://github.com/tendermint/vue).
 ## Stride's Technical Architecture
 
 Users stake their tokens on Stride from any Cosmos chain. Rewards accumulate in real time. No minimum. They will receive staked tokens immediately when they liquid stake. These staked tokens can be freely traded, and can be redeemed with Stride at any time to receive your original tokens plus staking rewards.
