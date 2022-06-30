@@ -1,5 +1,6 @@
-# Stride: Multichain Liquid Staking
- 
+<img src="https://uploads-ssl.webflow.com/62a7d17b43a3e81b399380a0/62aa83f5a22e3f5e3e0d655f_stride-logo.svg" width="400">
+# Multichain Liquid Staking
+
 [Twitter](https://twitter.com/stride_zone) | [Discord](http://stride.zone/discord) | [Website](https://stride.zone/)
 ## What is Stride?
 
@@ -8,7 +9,13 @@ Stride is a blockchain ("zone") that provides liquidity for staked assets. Using
 
 **Stride** is built using Cosmos SDK and Tendermint and created with [Ignite](https://ignite.com/). Stride allows users to liquid stake any IBC-compatible cosmos SDK native appchain token. Under the hood, Stride leverages the [Inter-Blockchain Communication protocol](https://ibc.cosmos.network/), [Interchain Accounts](https://blog.cosmos.network/interchain-accounts-take-cosmos-interoperability-to-the-next-level-39c9a8aad4ad) and [Interchain Queries](https://github.com/schnetzlerjoe/interchain-query-spec).
 
-## Get started
+
+
+## How does Multichain Liquid Staking work?
+
+![](https://drive.google.com/uc?id=1RuK2YeMH7O6P9-8ro_ybOg5n79ySwFjN)
+
+## Getting Started as a Developer
 
 #### Installing Stride
 
@@ -43,26 +50,14 @@ Developers who wish to develop on Stride can easily spin up 3 Stride nodes, 3 Ga
 The fastest way to develop on Stride is local development mode.
 
 #### Set up local development mode 
-Install the required git submodule dependencies (gaia, hermes, interchain-queries)
+Install the required git submodule dependencies (gaia, hermes, interchain-queries). 
 ```
 git submodule update --init
-make local-install
-make local-init build=sghi
-```
-Install the required packages for each module
-```
-make local-install
-
-# Or to install to a specific module
-make stride-local-install
-make gaia-local-install
-make icq-local-install
 ```
 
-#### Build and serve in local development mode
 Build executables, initialize state, and start the network with
 ```
-make local-init
+make init-local build=sghi
 ```
 You can optionally pass build arguments to specify which binary to rebuild
 1. `s` This will re-build the Stride binary (default)
@@ -70,7 +65,7 @@ You can optionally pass build arguments to specify which binary to rebuild
 3. `h` This will re-build the Hermes binary
 4. `i` This will re-build the ICQ binary
 
-Example: `make local-init build=si`, this will:
+Example: `make init-local build=sg`, this will:
 - Rebuild the Stride and Gaia binarys
 - Start 1 Stride and 1 Gaia node in the background
 - Start Hermes and ICQ Relayers
@@ -135,3 +130,14 @@ npm run serve
 ```
 
 The frontend app is built using the `@starport/vue` and `@starport/vuex` packages. For details, see the [monorepo for Starport front-end development](https://github.com/tendermint/vue).
+
+## Stride's Technical Architecture
+
+Users stake their tokens on Stride from any Cosmos chain. Rewards accumulate in real time. No minimum. They will receive staked tokens immediately when they liquid stake. These staked tokens can be freely traded, and can be redeemed with Stride at any time to receive your original tokens plus staking rewards.
+<img src="https://drive.google.com/uc?id=1FGo06bHxg0DQOyBcJulWm3DI2zwxQHWR" width="920">
+
+On the backend, Stride permissionly stakes these tokens on the host chain and compounds user rewards. Stride lets users use your staked assets to compound their yields. Continue to earn staking yield, and earn additional yield by lending, LPing, and more. They can set their own risk tolerance in Cosmos DeFi.  
+<img src="https://drive.google.com/uc?id=1bfEnNjbxUNNlYBcz7z0BpCVAUVSRStZW" width="900">
+
+Users can always redeem from Stride. When they select "redeeem" on the Stride website, Stride will initiate unbonding on the host zone. Once the unbonding period elapses, the users will receive native tokens in their wallets. 
+<img src="https://drive.google.com/uc?id=1eiair4GMouOlLpWeA_303sLC4UbL8Ybt" width="900">
