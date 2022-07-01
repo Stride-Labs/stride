@@ -35,7 +35,7 @@ func TestGenesisState_Validate(t *testing.T) {
 				},
 				HostZoneCount: 2,
 			},
-			valid: false,
+			valid: true,
 		},
 		// this line is used by starport scaffolding # types/genesis/testcase
 	} {
