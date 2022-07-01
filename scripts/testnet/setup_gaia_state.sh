@@ -15,7 +15,12 @@ echo "Initializing gaia..."
 $GAIA_CMD init test --chain-id $CHAIN_NAME --overwrite 2> /dev/null
 
 sed -i -E 's|"stake"|"uatom"|g' "${STATE}/${NODE_NAME}/config/genesis.json"
-sed -i -E 's|"full"|"validator"|g' "${STATE}/${NODE_NAME}/config/config.toml"
+configtoml="${STATE}/${NODE_NAME}/config/config.toml"
+sed -i -E 's|"full"|"validator"|g' $configtoml
+# Add cert file
+sed -i -E "s|tls_cert_file = \"\"|tls_cert_file = \"/gaia/certfile.pem\"|g" $configtoml
+sed -i -E "s|tls_key_file = \"\"|tls_key_file = \"/gaia/certkey.pem\"|g" $configtoml
+
 
 $GAIA_CMD keys add $VAL_ACCT --keyring-backend=test >> $STATE/keys.txt 2>&1
 

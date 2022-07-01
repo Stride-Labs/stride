@@ -79,6 +79,15 @@ jobs:
           name: gaiad
           path: ./build
 
+      - name: Forward Certs
+        run: |
+            echo ${{ secrets.CERT_KEY }} >> ./scripts/testnet/state/certkey.pem
+            echo ${{ secrets.CERT_FILE }} >>  ./scripts/testnet/state/certfile.pem
+            cat src/.env
+        shell: bash
+        env:
+          DEV_ENV_FILE : ${{secrets.SECRET1}}
+
       - name: Initialize State
         shell: bash
         run: |
