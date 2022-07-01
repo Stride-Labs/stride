@@ -19,7 +19,7 @@ sleep 5
 strided tx stakeibc add-validator GAIA gval1 $GAIA_VAL_ADDR 10 5 --chain-id STRIDE --keyring-backend test --from STRIDE_ACCT -y
 
 sleep 5
-strided q list-host-zone
+strided q stakeibc list-host-zone
 
 #
 #    0. Run the above command `q bank balances val1` to check that tokens were IBC'd over

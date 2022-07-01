@@ -17,15 +17,7 @@ This folder contains the scripts necessary to launch a testnet on GCP. The main 
     5. A DNS Name Service (NS) Record for `{deployment_name}.stridenet.co` in the `stridenet` managed zone
     6. A SOA Record and NS Record in the `{deployment_name}.stridenet.co` managed zone
         * The reason for this is to keep the name servers consistent 
-* The DNS setup is hit or miss and sometimes requires manual intervention. 
-    * If it works properly, you should be able to successfully ping the endpoint (`ping stride-node1.{deployment_name}.stridenet.co`)
-    * If that doesn't work, go to the Cloud DNS section and do the following:
-        * Click on the managed zone that was created (named `{deployment_name}-stridenet`)
-        * Click the edit button on the Type NS Record. There should be a warning message at the bottom that says the name servers might not have been configured properly, and there will be an option to restore them to defaults. Click this option.
-        * Identify the letter ("a" through "e") that indicates the grouping of name servers (e.g. ns-cloud-e1.googledomains.com. => "e")
-        * Then make all name servers consistent by replacing the "a" in each name server with this new letter (e.g. ns-cloud-a1.googledomains.com. should be changed to ns-cloud-e1.googledomains.com.). This should be done for:
-            * The Type SOA record named `{deployment_name}.stridenet.co` in the `{deployment_name}-stridenet` managed zone
-            * The Type NS Record named `{deployment_name}.stridenet.co` in the `stridenet` managed zone
+* The DNS setup is hit or miss. To check if there's an error (and restart if there is), run `bash fix_dns.sh`
 ## Shutting Down
 * Run `terraform destroy` to remove each resource.
 * Terraform has trouble removing the DNS resources. To get around this, you'll have to manually delete the DNS managed zone (named `{deployment_name}-stridenet`) from GCP. This is best run after the above command so that the record sets in the managed zone are already deleted.
