@@ -38,6 +38,7 @@ else
     cp -r $SCRIPT_DIR/.state.backup $SCRIPT_DIR/state
 fi
 
+exit 
 # Starts Stride and Gaia in the background using nohup, pipes the logs to their corresponding log files,
 #   and halts the script until Stride/Gaia have each finalized a block
 printf '\n%s' "Starting Stride and Gaia...   "
