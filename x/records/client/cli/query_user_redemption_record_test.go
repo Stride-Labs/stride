@@ -53,7 +53,7 @@ func TestShowUserRedemptionRecord(t *testing.T) {
 	}{
 		{
 			desc: "found",
-			id:   fmt.Sprintf("%d", objs[0].Id),
+			id:   objs[0].Id,
 			args: common,
 			obj:  objs[0],
 		},
