@@ -24,7 +24,7 @@ RUN adduser stride wheel
 
 USER stride
 
-RUN curl https://get.starport.network/faucet! | bash 
+RUN curl https://get.starport.network/faucet! | sudo bash 
 WORKDIR /stride
 
 RUN strided init test
