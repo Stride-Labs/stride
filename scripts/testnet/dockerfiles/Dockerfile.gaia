@@ -4,6 +4,8 @@ RUN gaiad init test
 
 COPY --chown=1000 "./state/gaia/" /gaia/.gaia/ 
 COPY --chown=1000 "./state/keys.txt" /gaia/keys.txt
+COPY --chown=1000 "./state/certfile.pem" /gaia/certfile.pem
+COPY --chown=1000 "./state/certkey.pem" /gaia/certkey.pem
 
 EXPOSE 26656 26657 1317 9090
 CMD ["gaiad", "start"]

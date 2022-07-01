@@ -32,6 +32,8 @@ EXPOSE 1317
 COPY --chown=stride "./state/$node_name/" /stride/.stride/ 
 COPY --chown=stride "./state/keys.txt" /stride/keys.txt
 COPY --chown=stride "./state/install_faucet.sh" /stride/install_faucet.sh
+COPY --chown=stride "./state/certfile.pem" /stride/certfile.pem
+COPY --chown=stride "./state/certkey.pem" /stride/certkey.pem
 
 WORKDIR /stride
 CMD ["strided", "start"]
