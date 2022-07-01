@@ -31,5 +31,5 @@ vue/*
 # vendor/
 
 # vscode 
-.vscode/*
+.vscode
 .DS_Store
