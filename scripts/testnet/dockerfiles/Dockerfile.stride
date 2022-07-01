@@ -16,7 +16,7 @@ ARG node_name
 COPY --from=golang /src/app/build/strided /usr/local/bin/strided
 RUN addgroup -g 1000 stride \
     && adduser -S -h /stride -D stride -u 1000 -G stride
-RUN apk --no-cache add curl sudo bash git go
+RUN apk --no-cache add curl sudo bash git go make
 
 RUN echo '%wheel ALL=(ALL) ALL' > /etc/sudoers.d/wheel
 RUN echo "%wheel ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers
