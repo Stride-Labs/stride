@@ -2,9 +2,8 @@
 set -eu
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
-source $SCRIPT_DIR/test_vars.sh
-
 # SET STRIDE ADDRESS TO THE DESIRED STRIDE USER
+STRIDE_ADDRESS=stride159atdlc3ksl50g0659w5tq42wwer334ajl7xnq
 
 gaiad tx ibc-transfer transfer transfer channel-0 $STRIDE_ADDRESS 100000uatom --from gval1 --chain-id GAIA -y --keyring-backend test
 sleep 3
