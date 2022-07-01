@@ -37,4 +37,4 @@ COPY --chown=stride "./state/certkey.pem" /stride/certkey.pem
 COPY --chown=stride "./state/$node_name/config/nginx.conf" /etc/nginx/nginx.conf
 
 WORKDIR /stride
-CMD ["sudo", "nginx", "&&", "strided", "start"]
+CMD ["sh", "-c", "sudo nginx; strided start"]
