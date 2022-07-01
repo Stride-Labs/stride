@@ -6,7 +6,7 @@ WORKDIR /src/app/
 RUN git clone https://github.com/Stride-Labs/gaia --branch v7.0.2-stride-second-attempt-5
 WORKDIR /src/app/gaia
 
-ENV PACKAGES curl make git libc-dev bash gcc linux-headers eudev-dev python3
+ENV PACKAGES curl make git libc-dev bash gcc linux-headers eudev-dev python3 sudo make
 RUN apk add --no-cache $PACKAGES
 RUN CGO_ENABLED=0 make install
 
