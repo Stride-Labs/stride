@@ -5,9 +5,7 @@
 *.so
 *.dylib
 
-# auto-generated go files
-
-
+scripts/testnet/state/keys.txt
 # build
 launch.sh
 build/*
@@ -15,11 +13,17 @@ state/*
 .state.backup
 scripts/state/*
 scripts/testnet/*/state/keys.txt
+scripts/testnet/state/*
+scripts/testnet/certs/*
+
 scripts/logs/*.log
 scripts/logs/*/*.log
 scripts-local/state
 scripts-local/logs
 scripts/temp.sh
+scripts/testnet/*/state/keys.txt
+scripts/tests/validator_selection
+scripts/tests/local_tests.bats
 vue/*
 # Test binary, built with `go test -c`
 *.test
@@ -33,3 +37,4 @@ vue/*
 # vscode 
 .vscode
 .DS_Store
+.terraform

@@ -32,6 +32,9 @@ func NewHandler(k keeper.Keeper) sdk.Handler {
 		case *types.MsgRedeemStake:
 			res, err := msgServer.RedeemStake(sdk.WrapSDKContext(ctx), msg)
 			return sdk.WrapServiceResult(ctx, res, err)
+		case *types.MsgClaimUndelegatedTokens:
+			res, err := msgServer.ClaimUndelegatedTokens(sdk.WrapSDKContext(ctx), msg)
+			return sdk.WrapServiceResult(ctx, res, err)
 		case *types.MsgRebalanceValidators:
 			res, err := msgServer.RebalanceValidators(sdk.WrapSDKContext(ctx), msg)
 			return sdk.WrapServiceResult(ctx, res, err)

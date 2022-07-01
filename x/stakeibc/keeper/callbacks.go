@@ -54,6 +54,7 @@ func (c Callbacks) RegisterCallbacks() types.QueryCallbacks {
 // WithdrawalBalanceCallback is a callback handler for WithdrawalBalance queries.
 func WithdrawalBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query icqtypes.Query) error {
 	// NOTE(TEST-112) for now, to get proofs in your ICQs, you need to query the entire store on the host zone! e.g. "store/bank/key"
+
 	zone, found := k.GetHostZone(ctx, query.GetChainId())
 	if !found {
 		return fmt.Errorf("no registered zone for chain id: %s", query.GetChainId())

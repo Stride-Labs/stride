@@ -5,13 +5,14 @@ COPY go.mod go.sum* ./
 RUN go mod download
 COPY . .
 
-RUN apk add --no-cache make git gcc musl-dev openssl-dev linux-headers 
-RUN make build
+RUN apk add --no-cache make git gcc musl-dev openssl-dev linux-headers \
+    && make build
 
 # Add to a distroless container
 FROM alpine:3.15
 COPY --from=golang /src/app/build/strided /usr/local/bin/strided
-RUN adduser -S -h /stride -D stride -u 1000
+RUN addgroup -g 1000 stride \
+    && adduser -S -h /stride -D stride -u 1000 -G stride
 USER stride
 
 RUN strided init test

@@ -10,9 +10,12 @@
 #
 #    This type of prelease is useful to make your bleeding-edge binaries available to advanced users.
 #
-# The workflow will not run if there is no tag pushed with a "v" prefix and no change pushed to your 
+# The workflow will not run if there is no tag pushed with a "v" prefix and no change pushed to your
 # default branch.
-on: push
+on:
+  push:
+    branches:
+      - main
 
 jobs:
   might_release:
@@ -22,12 +25,12 @@ jobs:
         uses: actions/checkout@v2
         with:
           fetch-depth: 0
-        
-      - name: Prepare Release Variables 
+
+      - name: Prepare Release Variables
         id: vars
         uses: ignite-hq/cli/actions/release/vars@develop
 
-      - name: Issue Release Assets 
+      - name: Issue Release Assets
         uses: ignite-hq/cli/actions/cli@develop
         if: ${{ steps.vars.outputs.should_release == 'true' }}
         with:
@@ -48,6 +51,6 @@ jobs:
         with:
           tag_name: ${{ steps.vars.outputs.tag_name }}
           files: release/*
-          prerelease: true 
+          prerelease: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
