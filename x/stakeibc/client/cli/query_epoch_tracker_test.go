@@ -88,13 +88,17 @@ func TestListEpochTracker(t *testing.T) {
 	ctx := net.Validators[0].ClientCtx
 	out, err := clitestutil.ExecTestCLICmd(ctx, cli.CmdListEpochTracker(), []string{})
 
-	expected := []types.EpochTracker{{EpochIdentifier: "stride_epoch", EpochNumber: 1}}
+	expected := []types.EpochTracker{
+		{EpochIdentifier: "day", EpochNumber: 1},
+		{EpochIdentifier: "stride_epoch", EpochNumber: 1},
+		{EpochIdentifier: "week", EpochNumber: 1},
+	}
 	require.NoError(t, err)
 
 	var actual types.QueryAllEpochTrackerResponse
 	require.NoError(t, net.Config.Codec.UnmarshalJSON(out.Bytes(), &actual))
 
 	require.NotNil(t, actual.EpochTracker)
-	require.Len(t, actual.EpochTracker, 1)
+	require.Len(t, actual.EpochTracker, 3)
 	require.Equal(t, expected, actual.EpochTracker)
 }

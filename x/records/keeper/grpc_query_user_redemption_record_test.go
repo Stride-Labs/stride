@@ -1,6 +1,7 @@
 package keeper_test
 
 import (
+	"strconv"
 	"testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -37,7 +38,7 @@ func TestUserRedemptionRecordQuerySingle(t *testing.T) {
 		},
 		{
 			desc:    "KeyNotFound",
-			request: &types.QueryGetUserRedemptionRecordRequest{Id: uint64(len(msgs))},
+			request: &types.QueryGetUserRedemptionRecordRequest{Id: strconv.Itoa(len(msgs))},
 			err:     sdkerrors.ErrKeyNotFound,
 		},
 		{

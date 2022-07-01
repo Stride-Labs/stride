@@ -2,6 +2,7 @@ package cli_test
 
 import (
 	"fmt"
+	"strconv"
 	"testing"
 
 	"github.com/cosmos/cosmos-sdk/client/flags"
@@ -25,7 +26,7 @@ func networkWithUserRedemptionRecordObjects(t *testing.T, n int) (*network.Netwo
 
 	for i := 0; i < n; i++ {
 		userRedemptionRecord := types.UserRedemptionRecord{
-			Id: uint64(i),
+			Id: strconv.Itoa(i),
 		}
 		nullify.Fill(&userRedemptionRecord)
 		state.UserRedemptionRecordList = append(state.UserRedemptionRecordList, userRedemptionRecord)
