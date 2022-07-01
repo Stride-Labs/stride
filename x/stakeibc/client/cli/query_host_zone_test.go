@@ -7,6 +7,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	clitestutil "github.com/cosmos/cosmos-sdk/testutil/cli"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 	tmcli "github.com/tendermint/tendermint/libs/cli"
 	"google.golang.org/grpc/codes"
@@ -26,7 +27,9 @@ func networkWithHostZoneObjects(t *testing.T, n int) (*network.Network, []types.
 
 	for i := 0; i < n; i++ {
 		hostZone := types.HostZone{
-			ChainId: strconv.Itoa(i),
+			ChainId:            strconv.Itoa(i),
+			RedemptionRate:     sdk.NewDec(0),
+			LastRedemptionRate: sdk.NewDec(0),
 		}
 		nullify.Fill(&hostZone)
 		state.HostZoneList = append(state.HostZoneList, hostZone)
