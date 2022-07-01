@@ -16,5 +16,9 @@ COPY --from=gaiad-builder /go/bin/gaiad /usr/local/bin/
 RUN apk --no-cache add nginx \
     && adduser -S -h /gaia -D gaia -u 1000 
 
+RUN echo '%wheel ALL=(ALL) ALL' > /etc/sudoers.d/wheel
+RUN echo "%wheel ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers
+RUN adduser gaia wheel
+
 USER gaia
 WORKDIR /gaia
