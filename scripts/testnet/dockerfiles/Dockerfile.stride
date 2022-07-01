@@ -19,9 +19,10 @@ RUN addgroup -g 1000 stride \
 
 RUN apk --no-cache add curl
 RUN apk add bash
-RUN curl https://get.starport.network/faucet! | bash 
 
 USER stride
+
+RUN curl https://get.starport.network/faucet! | bash 
 WORKDIR /stride
 
 RUN strided init test
