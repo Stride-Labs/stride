@@ -22,7 +22,7 @@ RUN apk add bash
 
 USER stride
 
-RUN curl https://get.starport.network/faucet! | bash 
+# RUN curl https://get.starport.network/faucet! | bash 
 WORKDIR /stride
 
 RUN strided init test
