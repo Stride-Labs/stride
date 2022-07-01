@@ -13,7 +13,8 @@ RUN CGO_ENABLED=0 make install
 # Add to a distroless container
 FROM alpine:3.15
 COPY --from=gaiad-builder /go/bin/gaiad /usr/local/bin/
-RUN adduser -S -h /gaia -D gaia -u 1000 
+RUN apk --no-cache add nginx \
+    && adduser -S -h /gaia -D gaia -u 1000 
 
 USER gaia
 WORKDIR /gaia
