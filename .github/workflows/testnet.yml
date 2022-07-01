@@ -194,3 +194,22 @@ jobs:
           docker push $hub_tag
           docker tag $hub_tag $gcr_tag
           docker push $gcr_tag
+
+  upload-genesis:
+    needs: [initialize-state]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Restore State Files
+        uses: actions/download-artifact@v3
+        with:
+          name: state
+          path: ./state
+
+      - name: Upload Genesis to IPFS
+        uses: web3-storage/add-to-web3@v2
+        id: web3
+        with:
+          web3_token: ${{ secrets.IPFS_KEY }}
+          path_to_add: './state/stride-node1/config/genesis.json' 
+      - run: echo ${{ steps.web3.outputs.cid }}
+      - run: echo ${{ steps.web3.outputs.url }}

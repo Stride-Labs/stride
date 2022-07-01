@@ -20,10 +20,10 @@ clienttoml="${STATE}/${NODE_NAME}/config/client.toml"
 
 sed -i -E 's|"full"|"validator"|g' $configtoml
 # Add cert file
-sed -i -E "s|tls_cert_file = \"\"|tls_cert_file = \"/gaia/certfile.pem\"|g" $configtoml
-sed -i -E "s|tls_key_file = \"\"|tls_key_file = \"/gaia/certkey.pem\"|g" $configtoml
-sed -i -E "s|localhost|127.0.0.1|g" $configtoml
-sed -i -E "s|localhost|127.0.0.1|g" $clienttoml
+# sed -i -E "s|tls_cert_file = \"\"|tls_cert_file = \"/gaia/certfile.pem\"|g" $configtoml
+# sed -i -E "s|tls_key_file = \"\"|tls_key_file = \"/gaia/certkey.pem\"|g" $configtoml
+# sed -i -E "s|localhost|127.0.0.1|g" $configtoml
+# sed -i -E "s|localhost|127.0.0.1|g" $clienttoml
 # Enable prometheus
 sed -i -E "s|prometheus = false|prometheus = true|g" $configtoml
 
