@@ -38,13 +38,13 @@ for (( i=1; i <= $NUM_NODES; i++ )); do
     configtoml="${STATE}/${node_name}/config/config.toml"
     clienttoml="${STATE}/${node_name}/config/client.toml"
     sed -i -E "s|cors_allowed_origins = \[\]|cors_allowed_origins = [\"\*\"]|g" $configtoml
-    # sed -i -E "s|127.0.0.1|0.0.0.0|g" $configtoml
+    sed -i -E "s|127.0.0.1|0.0.0.0|g" $configtoml
     sed -i -E "s|timeout_commit = \"5s\"|timeout_commit = \"${BLOCK_TIME}\"|g" $configtoml
     # Add cert file
-    sed -i -E "s|tls_cert_file = \"\"|tls_cert_file = \"/stride/certfile.pem\"|g" $configtoml
-    sed -i -E "s|tls_key_file = \"\"|tls_key_file = \"/stride/certkey.pem\"|g" $configtoml
-    sed -i -E "s|localhost|127.0.0.1|g" $configtoml
-    sed -i -E "s|localhost|127.0.0.1|g" $clienttoml
+    # sed -i -E "s|tls_cert_file = \"\"|tls_cert_file = \"/stride/certfile.pem\"|g" $configtoml
+    # sed -i -E "s|tls_key_file = \"\"|tls_key_file = \"/stride/certkey.pem\"|g" $configtoml
+    # sed -i -E "s|localhost|127.0.0.1|g" $configtoml
+    # sed -i -E "s|localhost|127.0.0.1|g" $clienttoml
     # Enable prometheus
     sed -i -E "s|prometheus = false|prometheus = true|g" $configtoml
 
