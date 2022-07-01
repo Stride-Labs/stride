@@ -17,9 +17,19 @@ func TestValidatorQuery(t *testing.T) {
 	keeper, ctx := keepertest.StakeibcKeeper(t)
 	wctx := sdk.WrapSDKContext(ctx)
 
-	item := []*types.Validator{
-		{Name: "A", Address: "A", Status: types.Validator_Active},
+	var validatorsByHostZone = make(map[string][]*types.Validator)
+	validators := []*types.Validator{}
+	nullify.Fill(&validators)
+
+	chainId := "GAIA"
+	hostZone := &types.HostZone{
+		ChainId:    chainId,
+		Validators: validators,
 	}
+	nullify.Fill(&hostZone)
+	validatorsByHostZone[chainId] = validators
+	keeper.SetHostZone(ctx, *hostZone)
+
 	for _, tc := range []struct {
 		desc     string
 		request  *types.QueryGetValidatorsRequest
@@ -28,8 +38,8 @@ func TestValidatorQuery(t *testing.T) {
 	}{
 		{
 			desc:     "First",
-			request:  &types.QueryGetValidatorsRequest{},
-			response: &types.QueryGetValidatorsResponse{Validators: item},
+			request:  &types.QueryGetValidatorsRequest{ChainId: chainId},
+			response: &types.QueryGetValidatorsResponse{Validators: validators},
 		},
 		{
 			desc: "InvalidRequest",
