@@ -16,14 +16,15 @@ ARG node_name
 COPY --from=golang /src/app/build/strided /usr/local/bin/strided
 RUN addgroup -g 1000 stride \
     && adduser -S -h /stride -D stride -u 1000 -G stride
-RUN echo "stride ALL=(ALL) ALL" > /etc/sudoers.d/stride && chmod 0440 /etc/sudoers.d/stride
+RUN apk --no-cache add curl sudo bash
 
-RUN apk --no-cache add curl sudo
-RUN apk add bash
+RUN echo '%wheel ALL=(ALL) ALL' > /etc/sudoers.d/wheel
+RUN echo "%wheel ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers
+RUN adduser stride wheel
 
 USER stride
 
-# RUN curl https://get.starport.network/faucet! | bash 
+RUN curl https://get.starport.network/faucet! | bash 
 WORKDIR /stride
 
 RUN strided init test
