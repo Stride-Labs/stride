@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/Stride-Labs/stride/x/epochs/types"
+	_ "github.com/stretchr/testify/suite"
 )
 
 func (suite *KeeperTestSuite) TestEpochLifeCycle() {
@@ -22,8 +23,9 @@ func (suite *KeeperTestSuite) TestEpochLifeCycle() {
 	suite.Require().Equal(epochInfo, epochInfoSaved)
 
 	allEpochs := suite.app.EpochsKeeper.AllEpochInfos(suite.ctx)
-	suite.Require().Len(allEpochs, 3)
+	suite.Require().Len(allEpochs, 4)
 	suite.Require().Equal(allEpochs[0].Identifier, "day") // alphabetical order
 	suite.Require().Equal(allEpochs[1].Identifier, "monthly")
-	suite.Require().Equal(allEpochs[2].Identifier, "week")
+	suite.Require().Equal(allEpochs[2].Identifier, "stride_epoch")
+	suite.Require().Equal(allEpochs[3].Identifier, "week")
 }
