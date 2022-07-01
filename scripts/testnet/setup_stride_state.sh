@@ -51,6 +51,13 @@ for (( i=1; i <= $NUM_NODES; i++ )); do
     node_id=$($st_cmd tendermint show-node-id)@$endpoint:$PORT_ID
     echo "Node ID: $node_id"
 
+    # Configure an NGINX reverse proxy
+    nginx_conf="${STATE}/${node_name}/config/nginx.conf"
+    cp ${SCRIPT_DIR}/nginx_config_template.conf $nginx_conf
+    sed -i -E "s|HOME_DIR|stride|g" $nginx_conf
+    sed -i -E "s|ENDPOINT|$endpoint|g" $nginx_conf
+    rm -f "${nginx_conf}-e"
+
     # add a validator account
     val_acct="${VAL_PREFIX}${i}"
     $st_cmd keys add $val_acct --keyring-backend=test >> $STATE/keys.txt 2>&1
@@ -91,7 +98,6 @@ sed -i -E "s|persistent_peers = .*|persistent_peers = \"\"|g" "${STATE}/${MAIN_N
 main_genesis="${STATE}/${MAIN_NODE_NAME}/config/genesis.json"
 jq '.app_state.epochs.epochs[2].duration = $newVal' --arg newVal "5s" $main_genesis > json.tmp && mv json.tmp $main_genesis
 jq '.app_state.epochs.epochs[1].duration = $newVal' --arg newVal "3600s" $main_genesis > json.tmp && mv json.tmp $main_genesis
-
 
 # for all peer nodes....
 for (( i=2; i <= $NUM_NODES; i++ )); do
