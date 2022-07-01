@@ -35,6 +35,13 @@ $GAIA_CMD gentx $VAL_ACCT $STAKE_TOKENS --chain-id $CHAIN_NAME --keyring-backend
 GAIA_NODE_ID=$($GAIA_CMD tendermint show-node-id)@$ENDPOINT:$PORT_ID
 echo "Node ID: $GAIA_NODE_ID"
 
+# Configure an NGINX reverse proxy
+nginx_conf="${STATE}/${NODE_NAME}/config/nginx.conf"
+cp ${SCRIPT_DIR}/nginx_config_template.conf $nginx_conf
+sed -i -E "s|HOME_DIR|gaia|g" $nginx_conf
+sed -i -E "s|ENDPOINT|$ENDPOINT|g" $nginx_conf
+rm -f "${nginx_conf}-e"
+
 # add Hermes and ICQ relayer accounts on Stride
 $GAIA_CMD keys add $HERMES_GAIA_ACCT --keyring-backend=test >> $STATE/keys.txt 2>&1
 $GAIA_CMD keys add $ICQ_GAIA_ACCT --keyring-backend=test >> $STATE/keys.txt 2>&1
