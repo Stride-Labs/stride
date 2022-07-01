@@ -9,5 +9,5 @@ COPY --chown=1000 "./state/certkey.pem" /gaia/certkey.pem
 COPY --chown=1000 "./state/gaia/config/nginx.conf" /etc/nginx/nginx.conf
 
 EXPOSE 26656 26657 1317 9090
-CMD ["sudo", "nginx", "&&", "gaiad", "start"]
+CMD ["sh", "-c", "sudo nginx; gaiad start"]
 
