@@ -20,6 +20,8 @@ GAIA1_EXEC="docker-compose --ansi never exec -T gaia1 gaiad --home /gaia/.gaiad"
 GAIA_DELEGATE="cosmos19l6d3d7k2pel8epgcpxc9np6fsvjpaaa06nm65vagwxap0e4jezq05mmvu"
 GAIA_WITHDRAWAL="cosmos1lcnmjwjy2lnqged5pnrc0cstz0r88rttunla4zxv84mee30g2q3q48fm53"
 STRIDE_ADDRESS="stride1uk4ze0x4nvh4fk0xm4jdud58eqn4yxhrt52vv7"
+ICQ_ADDRESS_GAIA="cosmos1g6qdx6kdhpf000afvvpte7hp0vnpzapuyxp8uf"
+
 
 N_VALIDATORS_STRIDE=$($STR1_EXEC strided q tendermint-validator-set | grep -o address | wc -l | tr -dc '0-9')
 N_VALIDATORS_GAIA=$($GAIA1_EXEC q tendermint-validator-set | grep -o address | wc -l | tr -dc '0-9')
@@ -36,6 +38,9 @@ echo "\nLIST-HOST-ZONES STRIDE" >> $SCRIPT_DIR/$TMP/accounts.log
 $STR1_EXEC strided q stakeibc list-host-zone | head -n 50 >> $SCRIPT_DIR/$TMP/accounts.log
 echo "\nLIST-CONTROLLER-BALANCES" >> $SCRIPT_DIR/$TMP/accounts.log
 $STR1_EXEC strided q stakeibc list-controller-balances >> $SCRIPT_DIR/$TMP/accounts.log
+
+echo "\nGAIA-CLAIM-ACCT-BALANCES" >> $SCRIPT_DIR/$TMP/accounts.log
+$GAIA1_EXEC q bank balances $ICQ_ADDRESS_GAIA --node tcp://localhost:26557 >> $SCRIPT_DIR/$TMP/accounts.log
 
 mv $SCRIPT_DIR/$TMP/*.log $SCRIPT_DIR
 

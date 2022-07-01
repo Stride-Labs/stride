@@ -26,6 +26,31 @@ import (
 func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochIdentifier string, epochNumber int64) {
 	// every epoch
 	k.Logger(ctx).Info(fmt.Sprintf("Handling epoch start %s %d", epochIdentifier, epochNumber))
+
+	epochTracker := types.EpochTracker{
+		EpochIdentifier: epochIdentifier,
+		EpochNumber:     uint64(epochNumber),
+	}
+	// deposit records *must* exist for this epoch
+	k.SetEpochTracker(ctx, epochTracker)
+
+	// process redemption records
+	if epochIdentifier == "day" {
+		// k.Logger(ctx).Info(fmt.Sprintf("Total supply %s", k.bankKeeper.GetSupply(ctx, "stuatom")))
+		// k.Logger(ctx).Info(fmt.Sprintf("Stakeibc address %s", k.accountKeeper.GetModuleAccount(ctx, "stakeibc").GetAddress()))
+		// k.Logger(ctx).Info(fmt.Sprintf("Bank address %s", k.accountKeeper.GetModuleAccount(ctx, "bank").GetAddress()))
+		// here, we process everything we need to for redemptions
+		k.Logger(ctx).Info(fmt.Sprintf("Day %d Beginning", epochNumber))
+		// first we initiate unbondings from any hostZone where it's appropriate
+		k.InitiateAllHostZoneUnbondings(ctx, uint64(epochNumber))
+		// then we check previous epochs to see if unbondings finished, and sweep the tokens if so
+		k.SweepAllUnbondedTokens(ctx)
+		// then we cleanup any records that are no longer needed
+		k.CleanupEpochUnbondingRecords(ctx)
+		// lastly we create an empty unbonding record for this epoch
+		k.CreateEpochUnbondings(ctx, epochNumber)
+	}
+
 	if epochIdentifier == epochstypes.STRIDE_EPOCH {
 		k.Logger(ctx).Info(fmt.Sprintf("Stride Epoch %d", epochNumber))
 
@@ -38,12 +63,6 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochIdentifier string, epochN
 			k.Logger(ctx).Error(fmt.Sprintf("Stride Epoch %d negative", epochNumber))
 			return
 		}
-		epochTracker := types.EpochTracker{
-			EpochIdentifier: epochIdentifier,
-			EpochNumber:     uint64(epochNumber),
-		}
-		// deposit records *must* exist for this epoch
-		k.SetEpochTracker(ctx, epochTracker)
 
 		k.Logger(ctx).Info("Triggering deposits")
 		// Create a new deposit record for each host zone for the upcoming epoch
@@ -86,6 +105,17 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochIdentifier string, epochN
 		if epochNumber%reinvestInterval == 0 { // allow a few blocks from UpdateUndelegatedBal to avoid conflicts
 			for _, hz := range k.GetAllHostZone(ctx) {
 				if (&hz).WithdrawalAccount != nil { // only process host zones once withdrawal accounts are registered
+
+					// read clock time on host zome
+					// k.ReadClockTime(ctx, hz)
+					blockTime, found := k.GetLightClientTimeSafely(ctx, hz.ConnectionId)
+					if !found {
+						k.Logger(ctx).Error(fmt.Sprintf("Could not find blockTime for host zone %s", hz.ConnectionId))
+						continue
+					} else {
+						k.Logger(ctx).Info(fmt.Sprintf("Found blockTime for host zone %s: %d", hz.ConnectionId, blockTime))
+					}
+
 					k.UpdateWithdrawalBalance(ctx, hz)
 				}
 			}
@@ -96,7 +126,9 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochIdentifier string, epochN
 func (k Keeper) AfterEpochEnd(ctx sdk.Context, epochIdentifier string, epochNumber int64) {
 	// every epoch
 	k.Logger(ctx).Info(fmt.Sprintf("Handling epoch end %s %d", epochIdentifier, epochNumber))
-
+	if epochIdentifier == "day" {
+		k.Logger(ctx).Info(fmt.Sprintf("Day %d Ending", epochNumber))
+	}
 }
 
 // Hooks wrapper struct for incentives keeper
@@ -125,12 +157,12 @@ func (k Keeper) CreateDepositRecordsForEpoch(ctx sdk.Context, epochNumber int64)
 	createDepositRecords := func(ctx sdk.Context, index int64, zoneInfo types.HostZone) error {
 		// create a deposit record / host zone
 		depositRecord := recordstypes.DepositRecord{
-			Id:          0,
-			Amount:      0,
-			Denom:       zoneInfo.HostDenom,
-			HostZoneId:  zoneInfo.ChainId,
-			Status:      recordstypes.DepositRecord_TRANSFER,
-			EpochNumber: uint64(epochNumber),
+			Id:                 0,
+			Amount:             0,
+			Denom:              zoneInfo.HostDenom,
+			HostZoneId:         zoneInfo.ChainId,
+			Status:             recordstypes.DepositRecord_TRANSFER,
+			DepositEpochNumber: uint64(epochNumber),
 		}
 		k.RecordsKeeper.AppendDepositRecord(ctx, depositRecord)
 		return nil
@@ -158,7 +190,7 @@ func (k Keeper) StakeExistingDepositsOnHostZones(ctx sdk.Context, epochNumber in
 		return record.Status == recordstypes.DepositRecord_STAKE
 	})
 	for _, depositRecord := range stakeDepositRecords {
-		if depositRecord.EpochNumber < uint64(epochNumber) {
+		if depositRecord.DepositEpochNumber < uint64(epochNumber) {
 			pstr := fmt.Sprintf("\t[STAKE] Processing deposit {%d} {%s} {%d}", depositRecord.Id, depositRecord.Denom, depositRecord.Amount)
 			k.Logger(ctx).Info(pstr)
 			hostZone, hostZoneFound := k.GetHostZone(ctx, depositRecord.HostZoneId)
@@ -204,7 +236,7 @@ func (k Keeper) TransferExistingDepositsToHostZones(ctx sdk.Context, epochNumber
 	addr := k.accountKeeper.GetModuleAccount(ctx, types.ModuleName).GetAddress().String()
 	var emptyRecords []uint64
 	for _, depositRecord := range transferDepositRecords {
-		if depositRecord.EpochNumber < uint64(epochNumber) {
+		if depositRecord.DepositEpochNumber < uint64(epochNumber) {
 			pstr := fmt.Sprintf("\t[TRANSFER] Processing deposits {%d} {%s} {%d}", depositRecord.Id, depositRecord.Denom, depositRecord.Amount)
 			k.Logger(ctx).Info(pstr)
 

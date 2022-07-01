@@ -19,7 +19,6 @@ func createNEpochTracker(keeper *keeper.Keeper, ctx sdk.Context, n int) []types.
 	items := make([]types.EpochTracker, n)
 	for i := range items {
 		items[i].EpochIdentifier = strconv.Itoa(i)
-
 		keeper.SetEpochTracker(ctx, items[i])
 	}
 	return items

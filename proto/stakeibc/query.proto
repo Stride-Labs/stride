@@ -25,11 +25,11 @@ service Query {
 	rpc Validators(QueryGetValidatorsRequest) returns (QueryGetValidatorsResponse) {
 		option (google.api.http).get = "/Stride-Labs/stride/stakeibc/validators/{chain_id}";
 	}
-// Queries a ICAAccount by index.
+	// Queries a ICAAccount by index.
 	rpc ICAAccount(QueryGetICAAccountRequest) returns (QueryGetICAAccountResponse) {
 		option (google.api.http).get = "/Stride-Labs/stride/stakeibc/ica_account";
 	}
-// Queries a HostZone by id.
+	// Queries a HostZone by id.
 	rpc HostZone(QueryGetHostZoneRequest) returns (QueryGetHostZoneResponse) {
 		option (google.api.http).get = "/Stride-Labs/stride/stakeibc/host_zone/{chain_id}";
 	}

@@ -5,6 +5,7 @@ import (
 
 	"github.com/tendermint/tendermint/libs/log"
 
+	epochskeeper "github.com/Stride-Labs/stride/x/epochs/keeper"
 	icqkeeper "github.com/Stride-Labs/stride/x/interchainquery/keeper"
 	"github.com/Stride-Labs/stride/x/stakeibc/types"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -36,6 +37,7 @@ type (
 		bankKeeper            bankkeeper.Keeper
 		InterchainQueryKeeper icqkeeper.Keeper
 		RecordsKeeper         recordsmodulekeeper.Keeper
+		epochsKeeper          epochskeeper.Keeper
 
 		accountKeeper types.AccountKeeper
 	}
