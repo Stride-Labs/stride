@@ -89,7 +89,6 @@ jobs:
         run: |
             echo "${{ secrets.CERT_KEY }}" >> scripts/testnet/state/certkey.pem
             echo "${{ secrets.CERT_FILE }}" >>  scripts/testnet/state/certfile.pem
-            cat src/.env
         shell: bash
           
       - name: Persist State Files
