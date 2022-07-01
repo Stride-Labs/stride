@@ -11,7 +11,7 @@ import (
 )
 
 func (k Keeper) Validators(c context.Context, req *types.QueryGetValidatorsRequest) (*types.QueryGetValidatorsResponse, error) {
-	if req == nil {
+	if req == nil || req.ChainId == "" {
 		return nil, status.Error(codes.InvalidArgument, "invalid request")
 	}
 	ctx := sdk.UnwrapSDKContext(c)
