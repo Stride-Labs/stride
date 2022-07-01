@@ -45,6 +45,8 @@ for (( i=1; i <= $NUM_NODES; i++ )); do
     sed -i -E "s|tls_key_file = \"\"|tls_key_file = \"/stride/certkey.pem\"|g" $configtoml
     sed -i -E "s|localhost|127.0.0.1|g" $configtoml
     sed -i -E "s|localhost|127.0.0.1|g" $clienttoml
+    # Enable prometheus
+    sed -i -E "s|prometheus = false|prometheus = true|g" $configtoml
 
     # update the denom in the genesis file 
     sed -i -E 's|"stake"|"ustrd"|g' "${STATE}/${node_name}/config/genesis.json"

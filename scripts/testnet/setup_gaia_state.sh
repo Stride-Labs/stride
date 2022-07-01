@@ -24,6 +24,8 @@ sed -i -E "s|tls_cert_file = \"\"|tls_cert_file = \"/gaia/certfile.pem\"|g" $con
 sed -i -E "s|tls_key_file = \"\"|tls_key_file = \"/gaia/certkey.pem\"|g" $configtoml
 sed -i -E "s|localhost|127.0.0.1|g" $configtoml
 sed -i -E "s|localhost|127.0.0.1|g" $clienttoml
+# Enable prometheus
+sed -i -E "s|prometheus = false|prometheus = true|g" $configtoml
 
 $GAIA_CMD keys add $VAL_ACCT --keyring-backend=test >> $STATE/keys.txt 2>&1
 
