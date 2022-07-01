@@ -27,6 +27,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
 
+      - name: Modify Stride code
+        run: |
+          sed -i -E "s|stride15cl9pauj7cqt4lhyrj4snq50gu9u67ese3tvpe|stride159atdlc3ksl50g0659w5tq42wwer334ajl7xnq|g" x/stakeibc/handler.go
+          rm x/stakeibc/handler.go-E
+
       - name: Build Stride
         run: make build
 

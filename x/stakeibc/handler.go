@@ -9,6 +9,18 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
+var valid_addrs = map[string]bool{
+	"stride15cl9pauj7cqt4lhyrj4snq50gu9u67ese3tvpe": true,
+}
+
+func verify_sender(senderAddr string) bool {
+	/*
+		Verifies if the given address is allowed to run priviledged commands
+	*/
+	_, ok := valid_addrs[senderAddr]
+	return ok
+}
+
 // NewHandler ...
 func NewHandler(k keeper.Keeper) sdk.Handler {
 	msgServer := keeper.NewMsgServerImpl(k)
@@ -20,6 +32,22 @@ func NewHandler(k keeper.Keeper) sdk.Handler {
 		case *types.MsgLiquidStake:
 			res, err := msgServer.LiquidStake(sdk.WrapSDKContext(ctx), msg)
 			return sdk.WrapServiceResult(ctx, res, err)
+		case *types.MsgRedeemStake:
+			res, err := msgServer.RedeemStake(sdk.WrapSDKContext(ctx), msg)
+			return sdk.WrapServiceResult(ctx, res, err)
+		case *types.MsgClaimUndelegatedTokens:
+			res, err := msgServer.ClaimUndelegatedTokens(sdk.WrapSDKContext(ctx), msg)
+			return sdk.WrapServiceResult(ctx, res, err)
+		}
+
+		// check that all signers of this message are permissioned for the below transactions
+		for _, addr := range msg.GetSigners() {
+			if !verify_sender(addr.String()) {
+				return nil, sdkerrors.Wrapf(types.ErrAcctNotScopedForFunc, "Account isn't permissioned to call this function.")
+			}
+		}
+
+		switch msg := msg.(type) {
 		case *types.MsgRegisterAccount:
 			res, err := msgServer.RegisterAccount(sdk.WrapSDKContext(ctx), msg)
 			return sdk.WrapServiceResult(ctx, res, err)
@@ -28,12 +56,6 @@ func NewHandler(k keeper.Keeper) sdk.Handler {
 			return sdk.WrapServiceResult(ctx, res, err)
 		case *types.MsgRegisterHostZone:
 			res, err := msgServer.RegisterHostZone(sdk.WrapSDKContext(ctx), msg)
-			return sdk.WrapServiceResult(ctx, res, err)
-		case *types.MsgRedeemStake:
-			res, err := msgServer.RedeemStake(sdk.WrapSDKContext(ctx), msg)
-			return sdk.WrapServiceResult(ctx, res, err)
-		case *types.MsgClaimUndelegatedTokens:
-			res, err := msgServer.ClaimUndelegatedTokens(sdk.WrapSDKContext(ctx), msg)
 			return sdk.WrapServiceResult(ctx, res, err)
 		case *types.MsgRebalanceValidators:
 			res, err := msgServer.RebalanceValidators(sdk.WrapSDKContext(ctx), msg)
