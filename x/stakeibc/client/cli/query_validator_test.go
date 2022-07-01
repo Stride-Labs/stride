@@ -30,6 +30,7 @@ func networkWithValidatorObjects(t *testing.T) (*network.Network, map[string][]*
 		ChainId:    chainId,
 		Validators: validators,
 	}
+	nullify.Fill(&hostZone)
 	validatorsByHostZone[chainId] = validators
 
 	state.HostZoneList = []types.HostZone{*hostZone}
