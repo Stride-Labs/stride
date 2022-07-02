@@ -68,7 +68,10 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochIdentifier string, epochN
 		// Create a new deposit record for each host zone for the upcoming epoch
 		k.CreateDepositRecordsForEpoch(ctx, epochNumber)
 
-		k.SetWithdrawalAddress(ctx)
+		// TODO bring out as a parameter
+		if epochNumber%30 == 0 {
+			k.SetWithdrawalAddress(ctx)
+		}
 
 		depositRecords := k.RecordsKeeper.GetAllDepositRecord(ctx)
 
@@ -191,7 +194,7 @@ func (k Keeper) StakeExistingDepositsOnHostZones(ctx sdk.Context, epochNumber in
 	})
 	for _, depositRecord := range stakeDepositRecords {
 		if depositRecord.DepositEpochNumber < uint64(epochNumber) {
-			pstr := fmt.Sprintf("\t[STAKE] Processing deposit {%d} {%s} {%d}", depositRecord.Id, depositRecord.Denom, depositRecord.Amount)
+			pstr := fmt.Sprintf("\t[STAKE] Processing deposit ID:{%d} DENOM:{%s} AMT:{%d}", depositRecord.Id, depositRecord.Denom, depositRecord.Amount)
 			k.Logger(ctx).Info(pstr)
 			hostZone, hostZoneFound := k.GetHostZone(ctx, depositRecord.HostZoneId)
 			if !hostZoneFound {
