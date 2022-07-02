@@ -20,8 +20,9 @@ sed -i -E "s|timeout_commit = \"5s\"|timeout_commit = \"${BLOCK_TIME}\"|g" "${ST
 sed -i -E "s|cors_allowed_origins = \[\]|cors_allowed_origins = [\"\*\"]|g" "${STATE}/${STRIDE_NODE_NAME}/config/config.toml"
 # modify Stride epoch to be 3s
 main_config=$STATE/$STRIDE_NODE_NAME/config/genesis.json
-jq '.app_state.epochs.epochs[2].duration = $newVal' --arg newVal "10s" $main_config > json.tmp && mv json.tmp $main_config
-jq '.app_state.epochs.epochs[1].duration = $newVal' --arg newVal "60s" $main_config > json.tmp && mv json.tmp $main_config
+# NOTE: If you add new epochs, these indexes will need to be updated
+jq '.app_state.epochs.epochs[$epochIndex].duration = $epochLen' --arg epochLen $DAY_EPOCH_LEN --argjson epochIndex $DAY_EPOCH_INDEX  $main_config > json.tmp && mv json.tmp $main_config
+jq '.app_state.epochs.epochs[$epochIndex].duration = $epochLen' --arg epochLen $STRIDE_EPOCH_LEN --argjson epochIndex $STRIDE_EPOCH_INDEX $main_config > json.tmp && mv json.tmp $main_config
 
 # add validator account
 echo $STRIDE_VAL_MNEMONIC | $STRIDE_CMD keys add $STRIDE_VAL_ACCT --recover --keyring-backend=test 

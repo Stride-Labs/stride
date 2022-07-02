@@ -5,9 +5,15 @@ SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
 STATE=$SCRIPT_DIR/state
 
+# CHAIN PARAMS
 ATOM='uatom'
 IBCATOM='ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2'
 BLOCK_TIME='7s'
+# NOTE: If you add new epochs, these indexes will need to be updated
+DAY_EPOCH_INDEX=1
+DAY_EPOCH_LEN="60s"
+STRIDE_EPOCH_INDEX=2
+STRIDE_EPOCH_LEN="10s"
 
 # define STRIDE vars
 STRIDE_PORT_ID=26657  # 36564 
