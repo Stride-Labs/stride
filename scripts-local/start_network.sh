@@ -99,6 +99,8 @@ if [ "$CACHE" != "true" ]; then
         --chain-id $STRIDE_CHAIN --home $STATE/stride \
         --keyring-backend test --from $STRIDE_VAL_ACCT --gas 1000000 -y
 fi
+# sleep a while longer to wait for ICA accounts to set up
+sleep 30
 
 # Add more detailed log files
 $SCRIPT_DIR/create_logs.sh &
