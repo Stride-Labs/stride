@@ -11,6 +11,11 @@ do
 done
 [[ $deps -ne 1 ]] && echo "OK\n" || { echo "\nInstall the missing dependencies and rerun this script...\n"; }
 
+# add jq
+if ! type "jq" > /dev/null; then
+  brew install jq
+fi
+
 echo "Checking module dependencies... ";
 MODULES=("gaia" "hermes" "interchain-queries")
 deps=0
