@@ -9,6 +9,18 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
+var valid_addrs = map[string]bool{
+	"stride15cl9pauj7cqt4lhyrj4snq50gu9u67ese3tvpe": true,
+}
+
+func verify_sender(senderAddr string) bool {
+	/*
+		Verifies if the given address is allowed to run priviledged commands
+	*/
+	_, ok := valid_addrs[senderAddr]
+	return ok
+}
+
 // NewHandler ...
 func NewHandler(k keeper.Keeper) sdk.Handler {
 	WHITELIST := make(map[string]bool)

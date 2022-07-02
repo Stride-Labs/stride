@@ -14,9 +14,9 @@ while getopts sghi flag; do
         g) printf '%s' "Building Gaia...   ";
            cd deps/gaia; 
            go build -mod=readonly -trimpath -o $BUILDDIR ./... 2>&1 | grep -v -E "deprecated|keychain" || true; 
-           mkdir $BUILDDIR/gaia2
+           mkdir -p $BUILDDIR/gaia2
            go build -mod=readonly -trimpath -o $BUILDDIR/gaia2 ./... 2>&1 | grep -v -E "deprecated|keychain" || true; 
-           mkdir $BUILDDIR/gaia3
+           mkdir -p $BUILDDIR/gaia3
            go build -mod=readonly -trimpath -o $BUILDDIR/gaia3 ./... 2>&1 | grep -v -E "deprecated|keychain" || true; 
            cd ../..;
            echo "Done" ;;

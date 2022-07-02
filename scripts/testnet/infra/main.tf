@@ -23,8 +23,7 @@ variable "regions" {
   default = ["us-central1"]
 }
 variable "deployment_name" {
-  type    = string
-  default = "testnet"
+  type = string
 }
 variable "num_stride_nodes" {
   type    = number
@@ -106,42 +105,14 @@ resource "google_dns_managed_zone" "stridenet-network-sub-zone" {
 }
 
 # Sub-Zone NS Record in Parent Zone: e.g testnet.stridenet.co IN stridenet.co
+# The name servers are hard coded at the time of deployment 
+#  - use the fix_dns.sh script to confirm that these name servers match the subzone
 resource "google_dns_record_set" "stridenet-sub-zone-name-service-in-parent" {
   name = google_dns_managed_zone.stridenet-network-sub-zone.dns_name
   type = "NS"
   ttl  = 300
 
   managed_zone = "stridenet"
-
-  rrdatas = [
-    "ns-cloud-a1.googledomains.com.", "ns-cloud-a2.googledomains.com.", "ns-cloud-a3.googledomains.com.", "ns-cloud-a4.googledomains.com."
-  ]
-}
-
-# Type SOA (Start of Authority) Record for Managed Zone: e.g testnet.stridenet.co
-resource "google_dns_record_set" "stridenet-sub-zone-name-service" {
-  name = google_dns_managed_zone.stridenet-network-sub-zone.dns_name
-  type = "SOA"
-  ttl  = 21600
-
-  managed_zone = google_dns_managed_zone.stridenet-network-sub-zone.name
-
-  rrdatas = [
-    "ns-cloud-a1.googledomains.com. cloud-dns-hostmaster.google.com. 1 21600 3600 259200 300"
-  ]
-
-  depends_on = [
-    google_dns_managed_zone.stridenet-network-sub-zone
-  ]
-}
-
-# Type NS (Name Service) Record for Managed Zone: e.g testnet.stridenet.co
-resource "google_dns_record_set" "stridenet-sub-zone-start-of-authority" {
-  name = google_dns_managed_zone.stridenet-network-sub-zone.dns_name
-  type = "NS"
-  ttl  = 300
-
-  managed_zone = google_dns_managed_zone.stridenet-network-sub-zone.name
 
   rrdatas = [
     "ns-cloud-a1.googledomains.com.", "ns-cloud-a2.googledomains.com.", "ns-cloud-a3.googledomains.com.", "ns-cloud-a4.googledomains.com."
@@ -159,5 +130,3 @@ resource "google_dns_record_set" "external-addresses" {
 
   rrdatas = [google_compute_instance.nodes[count.index].network_interface[0].access_config[0].nat_ip]
 }
-
-
