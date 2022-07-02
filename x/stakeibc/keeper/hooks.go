@@ -177,6 +177,7 @@ func (k Keeper) SetWithdrawalAddress(ctx sdk.Context) {
 		err := k.SetWithdrawalAddressOnHost(ctx, zoneInfo)
 		if err != nil {
 			k.Logger(ctx).Error(fmt.Sprintf("Did not set withdrawal address to %s on %s", zoneInfo.GetWithdrawalAccount().GetAddress(), zoneInfo.GetChainId()))
+			k.Logger(ctx).Error(fmt.Sprintf("Withdrawal address setting error: %v", err))
 		} else {
 			k.Logger(ctx).Info(fmt.Sprintf("Successfully set withdrawal address to %s on %s", zoneInfo.GetWithdrawalAccount().GetAddress(), zoneInfo.GetChainId()))
 		}
