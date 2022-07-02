@@ -37,6 +37,7 @@ for (( i=1; i <= $NUM_NODES; i++ )); do
     # Update node networking configuration 
     configtoml="${STATE}/${node_name}/config/config.toml"
     clienttoml="${STATE}/${node_name}/config/client.toml"
+    apptoml="${STATE}/${node_name}/config/app.toml"
     sed -i -E "s|cors_allowed_origins = \[\]|cors_allowed_origins = [\"\*\"]|g" $configtoml
     sed -i -E "s|127.0.0.1|0.0.0.0|g" $configtoml
     sed -i -E "s|timeout_commit = \"5s\"|timeout_commit = \"${BLOCK_TIME}\"|g" $configtoml
@@ -72,6 +73,9 @@ for (( i=1; i <= $NUM_NODES; i++ )); do
     # actually set this account as a validator on the current node 
     $st_cmd gentx $val_acct $STAKE_TOKENS --chain-id $CHAIN_NAME --keyring-backend test 2> /dev/null
     
+    # modify our snapshot interval
+    sed -i -E "s|snapshot-interval = 0|snapshot-interval = 300|g" $apptoml
+
     if [ $i -eq $MAIN_ID ]; then
         MAIN_NODE_NAME=$node_name
         MAIN_NODE_CMD=$st_cmd
@@ -101,7 +105,7 @@ sed -i -E "s|persistent_peers = .*|persistent_peers = \"\"|g" "${STATE}/${MAIN_N
 
 # modify our stride epochs
 main_genesis="${STATE}/${MAIN_NODE_NAME}/config/genesis.json"
-jq '.app_state.epochs.epochs[2].duration = $newVal' --arg newVal "10s" $main_genesis > json.tmp && mv json.tmp $main_genesis
+jq '.app_state.epochs.epochs[2].duration = $newVal' --arg newVal "15s" $main_genesis > json.tmp && mv json.tmp $main_genesis
 jq '.app_state.epochs.epochs[1].duration = $newVal' --arg newVal "3600s" $main_genesis > json.tmp && mv json.tmp $main_genesis
 
 # for all peer nodes....

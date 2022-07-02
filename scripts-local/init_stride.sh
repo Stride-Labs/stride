@@ -44,5 +44,7 @@ ICQ_STRIDE_ADDRESS=$($STRIDE_CMD keys show $ICQ_STRIDE_ACCT --keyring-backend te
 # Give relayer account token balance
 $STRIDE_CMD add-genesis-account ${ICQ_STRIDE_ADDRESS} 500000000000ustrd
 
+sed -i -E "s|snapshot-interval = 0|snapshot-interval = 300|g" "${STATE}/${STRIDE_NODE_NAME}/config/app.toml"
+
 # Collect genesis transactions
 $STRIDE_CMD collect-gentxs 2> /dev/null
