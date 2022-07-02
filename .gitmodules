@@ -13,7 +13,6 @@
 [submodule "deps/gaia"]
 	path = deps/gaia
 	url = git@github.com:Stride-Labs/gaia.git
-	branch = v7.0.2-stride-second-attempt
 [submodule "deps/interchain-queries"]
 	path = deps/interchain-queries
 	url = git@github.com:Stride-Labs/interchain-queries.git
