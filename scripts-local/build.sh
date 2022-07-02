@@ -1,7 +1,5 @@
 #!/bin/bash
 
-rm -rf scripts-local/state/*
-
 set -eu 
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
