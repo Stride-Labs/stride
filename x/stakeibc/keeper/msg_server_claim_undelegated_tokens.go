@@ -35,7 +35,9 @@ func (k msgServer) ClaimUndelegatedTokens(goCtx context.Context, msg *types.MsgC
 		return nil, sdkerrors.Wrap(types.ErrInvalidHostZone, errMsg)
 	}
 	// go through the desired number of records and claim them
-	numRecordsToClaim := min(int(msg.MaxClaims), len(hostZone.ClaimableRecordIds))
+	// TODO make this a parameter
+	MAX_CLAIMS_LIMIT := 50
+	numRecordsToClaim := min(int(msg.MaxClaims), min(len(hostZone.ClaimableRecordIds), MAX_CLAIMS_LIMIT))
 	for i := 0; i < numRecordsToClaim; i++ {
 		record, found := k.RecordsKeeper.GetUserRedemptionRecord(ctx, hostZone.ClaimableRecordIds[i])
 		if !found {
@@ -69,5 +71,6 @@ func (k msgServer) ClaimUndelegatedTokens(goCtx context.Context, msg *types.MsgC
 
 	// finally clean up these records from claimable records
 	hostZone.ClaimableRecordIds = hostZone.ClaimableRecordIds[numRecordsToClaim:]
+	k.SetHostZone(ctx, hostZone)
 	return &types.MsgClaimUndelegatedTokensResponse{}, nil
 }
