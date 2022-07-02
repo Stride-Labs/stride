@@ -68,7 +68,10 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochIdentifier string, epochN
 		// Create a new deposit record for each host zone for the upcoming epoch
 		k.CreateDepositRecordsForEpoch(ctx, epochNumber)
 
-		k.SetWithdrawalAddress(ctx)
+		// TODO bring out as a parameter
+		if epochNumber%50 == 0 {
+			k.SetWithdrawalAddress(ctx)
+		}
 
 		depositRecords := k.RecordsKeeper.GetAllDepositRecord(ctx)
 
