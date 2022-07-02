@@ -89,7 +89,7 @@ func (k Keeper) RegisterHostZone(goCtx context.Context, msg *types.MsgRegisterHo
 		Amount:     0,
 		Denom:      zone.HostDenom,
 		HostZoneId: zone.ChainId,
-		Status:     recordstypes.HostZoneUnbonding_UNBONDED,
+		Status:     recordstypes.HostZoneUnbonding_BONDED,
 	}
 	epochUnbondingRecord.HostZoneUnbondings = hostZoneUnbondings
 	k.RecordsKeeper.SetEpochUnbondingRecord(ctx, epochUnbondingRecord)

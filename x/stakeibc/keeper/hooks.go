@@ -177,6 +177,7 @@ func (k Keeper) SetWithdrawalAddress(ctx sdk.Context) {
 		err := k.SetWithdrawalAddressOnHost(ctx, zoneInfo)
 		if err != nil {
 			k.Logger(ctx).Error(fmt.Sprintf("Did not set withdrawal address to %s on %s", zoneInfo.GetWithdrawalAccount().GetAddress(), zoneInfo.GetChainId()))
+			k.Logger(ctx).Error(fmt.Sprintf("Withdrawal address setting error: %v", err))
 		} else {
 			k.Logger(ctx).Info(fmt.Sprintf("Successfully set withdrawal address to %s on %s", zoneInfo.GetWithdrawalAccount().GetAddress(), zoneInfo.GetChainId()))
 		}
@@ -191,7 +192,7 @@ func (k Keeper) StakeExistingDepositsOnHostZones(ctx sdk.Context, epochNumber in
 	})
 	for _, depositRecord := range stakeDepositRecords {
 		if depositRecord.DepositEpochNumber < uint64(epochNumber) {
-			pstr := fmt.Sprintf("\t[STAKE] Processing deposit {%d} {%s} {%d}", depositRecord.Id, depositRecord.Denom, depositRecord.Amount)
+			pstr := fmt.Sprintf("\t[STAKE] Processing deposit ID:{%d} DENOM:{%s} AMT:{%d}", depositRecord.Id, depositRecord.Denom, depositRecord.Amount)
 			k.Logger(ctx).Info(pstr)
 			hostZone, hostZoneFound := k.GetHostZone(ctx, depositRecord.HostZoneId)
 			if !hostZoneFound {

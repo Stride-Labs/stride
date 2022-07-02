@@ -28,12 +28,9 @@ var _ types.MsgServer = msgServer{}
 
 func (k msgServer) SubmitQueryResponse(goCtx context.Context, msg *types.MsgSubmitQueryResponse) (*types.MsgSubmitQueryResponseResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
-	k.Logger(ctx).Info(fmt.Sprintf("LILLO context from ICQ: %v", ctx))
-	k.Logger(ctx).Info(fmt.Sprintf("LILLO context.BlockHeader() from ICQ: %v", ctx.BlockHeader().Time))
 	q, found := k.GetQuery(ctx, msg.QueryId)
 	//if found && q.LastHeight.Int64() != ctx.BlockHeader().Height {
 	if found {
-		k.Logger(ctx).Info(fmt.Sprintf("LILLO msg: %v", msg))
 		pathParts := strings.Split(q.QueryType, "/")
 		if pathParts[len(pathParts)-1] == "key" {
 			if msg.ProofOps == nil {
