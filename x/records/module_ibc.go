@@ -96,8 +96,8 @@ func (im IBCModule) OnChanOpenTry(
 	if err != nil {
 		return "", err
 	}
-	ctx.Logger().Error("version %s: ", version)
-	ctx.Logger().Error("cpAppVersion %s: ", cpAppVersion)
+	ctx.Logger().Info(fmt.Sprintf("IBC Chan Open Version %s: ", version))
+	ctx.Logger().Info(fmt.Sprintf("IBC Chan Open cpAppVersion %s: ", cpAppVersion))
 	_ = version
 	return version, nil
 }
@@ -169,8 +169,6 @@ func (im IBCModule) OnRecvPacket(
 	// doCustomLogic(transferAck) // middleware may modify outgoing ack
 	return wrapperAck
 }
-
-
 
 // OnAcknowledgementPacket implements the IBCModule interface
 func (im IBCModule) OnAcknowledgementPacket(
