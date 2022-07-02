@@ -101,7 +101,7 @@ sed -i -E "s|persistent_peers = .*|persistent_peers = \"\"|g" "${STATE}/${MAIN_N
 
 # modify our stride epochs
 main_genesis="${STATE}/${MAIN_NODE_NAME}/config/genesis.json"
-jq '.app_state.epochs.epochs[2].duration = $newVal' --arg newVal "5s" $main_genesis > json.tmp && mv json.tmp $main_genesis
+jq '.app_state.epochs.epochs[2].duration = $newVal' --arg newVal "10s" $main_genesis > json.tmp && mv json.tmp $main_genesis
 jq '.app_state.epochs.epochs[1].duration = $newVal' --arg newVal "3600s" $main_genesis > json.tmp && mv json.tmp $main_genesis
 
 # for all peer nodes....

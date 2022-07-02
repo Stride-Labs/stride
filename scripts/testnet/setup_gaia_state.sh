@@ -62,11 +62,12 @@ $GAIA_CMD collect-gentxs 2> /dev/null
 
 # add small changes to config.toml
 # use blind address (not loopback) to allow incoming connections from outside networks for local debugging
-sed -i -E "s|127.0.0.1|0.0.0.0|g" "${STATE}/${NODE_NAME}/config/config.toml"
+sed -i -E "s|127.0.0.1|0.0.0.0|g" $configtoml
 sed -i -E "s|minimum-gas-prices = \"\"|minimum-gas-prices = \"0uatom\"|g" "${STATE}/${NODE_NAME}/config/app.toml"
 # allow CORS and API endpoints for block explorer
 sed -i -E 's|enable = false|enable = true|g' "${STATE}/${NODE_NAME}/config/app.toml"
 sed -i -E 's|unsafe-cors = false|unsafe-cors = true|g' "${STATE}/${NODE_NAME}/config/app.toml"
+sed -i -E "s|timeout_commit = \"5s\"|timeout_commit = \"${BLOCK_TIME}\"|g" $configtoml
 
 ## add the message types ICA should allow to the host chain
 ALLOW_MESSAGES='\"/cosmos.bank.v1beta1.MsgSend\", \"/cosmos.bank.v1beta1.MsgMultiSend\", \"/cosmos.staking.v1beta1.MsgDelegate\", \"/cosmos.staking.v1beta1.MsgUndelegate\", \"/cosmos.staking.v1beta1.MsgRedeemTokensforShares\", \"/cosmos.staking.v1beta1.MsgTokenizeShares\", \"/cosmos.distribution.v1beta1.MsgWithdrawDelegatorReward\", \"/cosmos.distribution.v1beta1.MsgSetWithdrawAddress\", \"/ibc.applications.transfer.v1.MsgTransfer\"'
