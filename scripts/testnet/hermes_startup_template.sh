@@ -33,7 +33,7 @@ sleep 15
 
 echo "Creating transfer channel"
 hermes create channel --port-a transfer --port-b transfer GAIA connection-0 
-hermes tx raw chan-open-init STRIDE GAIA connection-0 transfer transfer
+# hermes tx raw chan-open-init STRIDE GAIA connection-0 transfer transfer
 
 hermes start &
 wait
