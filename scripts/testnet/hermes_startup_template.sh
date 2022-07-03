@@ -10,6 +10,8 @@ while true; do
     sleep 30
 done
 
+sleep 60
+
 echo "Restoring Hermes Accounts"
 hermes keys restore -m "HERMES_STRIDE_MNEMONIC" STRIDE
 hermes keys restore -m "HERMES_GAIA_MNEMONIC" GAIA
