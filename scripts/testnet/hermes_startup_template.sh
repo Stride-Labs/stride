@@ -17,7 +17,7 @@ hermes keys restore -m "HERMES_STRIDE_MNEMONIC" STRIDE
 hermes keys restore -m "HERMES_GAIA_MNEMONIC" GAIA
 sleep 30
 
-hermes start &
+# hermes start &
 sleep 30
 
 echo "Creating hermes identifiers"
@@ -33,5 +33,7 @@ sleep 15
 
 echo "Creating transfer channel"
 hermes create channel --port-a transfer --port-b transfer GAIA connection-0 
+hermes tx raw chan-open-init STRIDE GAIA connection-0 transfer transfer
 
+hermes start &
 wait
