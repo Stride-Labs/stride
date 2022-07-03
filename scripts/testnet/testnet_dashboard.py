@@ -5,7 +5,7 @@ import pandas as pd
 
 TESTNET = "internal"
 
-STRIDE_ADDR = "stride159atdlc3ksl50g0659w5tq42wwer334ajl7xnq"
+STRIDE_TEAM_ADDR = "stride159atdlc3ksl50g0659w5tq42wwer334ajl7xnq"
 
 STRIDE_BANK_QUERY = f"https://stride-node3.{TESTNET}.stridenet.co/bank/balances/ADDRESS"
 GAIA_BANK_QUERY = f"https://gaia.{TESTNET}.stridenet.co/bank/balances/ADDRESS"
@@ -14,17 +14,13 @@ GAIA_VALIDATOR_QUERY = "https://gaia.internal.stridenet.co/staking/validators"
 
 SEPARATOR = "\n\n============================================================\n\n"
 
-def query_stride_team_balance():
-    url = STRIDE_BANK_QUERY.replace("ADDRESS", STRIDE_ADDR)
-    r = requests.get(url=url)
-    data = r.json()
-    out = {}
-    for res in data['result']:
-        out[res['denom']] = res['amount']
-    return out
-
-def query_stride_team_balance():
-    url = STRIDE_BANK_QUERY.replace("ADDRESS", STRIDE_ADDR)
+def query_balance(addr, net="stride"):
+    if net == 'stride':
+        url = STRIDE_BANK_QUERY.replace("ADDRESS", addr)
+    elif net == 'gaia':
+        url = GAIA_BANK_QUERY.replace("ADDRESS", addr)
+    else:
+        raise Exception(f"Unknown network {net}")
     r = requests.get(url=url)
     data = r.json()
     out = {}
@@ -41,15 +37,24 @@ def query_host_zone_info():
 def get_host_zone_accts(host_zone):
     accts = ["delegationAccount", "feeAccount", "redemptionAccount", "withdrawalAccount"]
     out = {}
+    if "HostZone" not in host_zone:
+        return {}
     hz = host_zone['HostZone']
     for acct in accts:
+        if (acct not in hz) or (hz[acct] is None):
+            out[acct] = {}
+            continue 
         out[acct] = {
             'Address': hz[acct]['address'],
             'EstBalance': hz[acct]['balance'],
             'target': hz[acct]['target'],
         }
-        out['TrueBalance'] = query_gaia
-        out['TrueStaked'] = 
+        def parse_balance(addr):
+            qb = query_balance(addr, net='gaia')
+            if 'uatom' not in qb:
+                qb['uatom'] = 0
+            return qb['uatom']
+        out[acct]['TrueBalance'] = parse_balance(out[acct]['Address'])
     return out
 
 def query_gaia_validators():
@@ -70,12 +75,13 @@ def fmt_dict(d, prefix=''):
 def fmt_json(j):
     return json.dumps(j, indent=4, sort_keys=True)
 
-stride_team_balance = query_stride_team_balance()
+stride_team_balance = query_balance(STRIDE_TEAM_ADDR)
 host_zone_info = query_host_zone_info()
 
 
 # Get Gaia info
 gaia_validators = query_gaia_validators()
+gaia_accts = pd.DataFrame(get_host_zone_accts(host_zone_info)).T
 
 print(SEPARATOR)
 print("STRIDE TEAM BALANCE")
@@ -87,5 +93,7 @@ print(SEPARATOR)
 print("\nGAIA INFO")
 print("\tVALIDATORS")
 print(fmt_dict(gaia_validators, prefix="\t\t"))
+print("\tACCOUNTS")
+print(gaia_accts)
 
 # gaia_addr_balance = query_stride_team_balance()
