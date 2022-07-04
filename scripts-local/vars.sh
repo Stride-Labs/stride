@@ -14,6 +14,9 @@ DAY_EPOCH_INDEX=1
 DAY_EPOCH_LEN="60s"
 STRIDE_EPOCH_INDEX=2
 STRIDE_EPOCH_LEN="10s"
+# build/strided --home scripts-local/state/stride tx stakeibc add-validator GAIA gval1 cosmosvaloper12mae306lphem7fvw2mz6swjr2m0he43recftfk 10 5 --chain-id STRIDE --from val1 --keyring-backend test
+# build/strided --home scripts-local/state/stride q bank balances stride1uk4ze0x4nvh4fk0xm4jdud58eqn4yxhrt52vv7
+# build/strided --home scripts-local/state/stride q stakeibc list-host-zone
 
 # define STRIDE vars
 STRIDE_PORT_ID=26657  # 36564 
