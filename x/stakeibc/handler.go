@@ -9,18 +9,6 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
-var valid_addrs = map[string]bool{
-	"stride15cl9pauj7cqt4lhyrj4snq50gu9u67ese3tvpe": true,
-}
-
-func verify_sender(senderAddr string) bool {
-	/*
-		Verifies if the given address is allowed to run priviledged commands
-	*/
-	_, ok := valid_addrs[senderAddr]
-	return ok
-}
-
 // NewHandler ...
 func NewHandler(k keeper.Keeper) sdk.Handler {
 	WHITELIST := make(map[string]bool)
@@ -28,8 +16,9 @@ func NewHandler(k keeper.Keeper) sdk.Handler {
 	msgServer := keeper.NewMsgServerImpl(k)
 
 	return func(ctx sdk.Context, msg sdk.Msg) (*sdk.Result, error) {
+		k.Logger(ctx).Info(fmt.Sprintf("MOOSE msg: %v", msg))
 		switch msg := msg.(type) {
-			
+
 		// NOT WHITELISTED!
 		case *types.MsgLiquidStake:
 			res, err := msgServer.LiquidStake(sdk.WrapSDKContext(ctx), msg)
@@ -73,6 +62,7 @@ func NewHandler(k keeper.Keeper) sdk.Handler {
 			res, err := msgServer.RebalanceValidators(sdk.WrapSDKContext(ctx), msg)
 			return sdk.WrapServiceResult(ctx, res, err)
 		case *types.MsgAddValidator:
+			k.Logger(ctx).Error(fmt.Sprintf("WHITELIST %v", WHITELIST[msg.Creator]))
 			if !WHITELIST[msg.Creator] {
 				return nil, sdkerrors.Wrap(sdkerrors.ErrUnauthorized, "address not whitelisted")
 			}
