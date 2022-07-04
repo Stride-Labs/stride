@@ -3,7 +3,7 @@ import requests
 import json 
 import pandas as pd
 
-TESTNET = "internal"
+TESTNET = "poolparty"
 
 STRIDE_TEAM_ADDR = "stride159atdlc3ksl50g0659w5tq42wwer334ajl7xnq"
 
