@@ -89,10 +89,18 @@ func (k Keeper) RedeemStake(goCtx context.Context, msg *types.MsgRedeemStake) (*
 	hostZoneUnbonding.UserRedemptionRecords = append(hostZoneUnbonding.UserRedemptionRecords, userRedemptionRecord.Id)
 
 	// Escrow user's balance
-	err = k.bankKeeper.SendCoinsFromAccountToModule(ctx, sender, types.ModuleName, sdk.NewCoins(sdk.NewCoin(coinDenom, sdk.NewInt(msg.Amount))))
+	redeemCoin := sdk.NewCoins(sdk.NewCoin(coinDenom, sdk.NewInt(msg.Amount)))
+	err = k.bankKeeper.SendCoinsFromAccountToModule(ctx, sender, types.ModuleName, redeemCoin)
 	if err != nil {
 		k.Logger(ctx).Info("Failed to send sdk.NewCoins(inCoins) from account to module")
-		panic(err)
+		return nil, sdkerrors.Wrapf(types.ErrInsufficientFunds, "couldn't send %d %s tokens to module account", msg.Amount, coinDenom)
+	}
+
+	// burn stAssets upon successful unbonding
+	err = k.bankKeeper.BurnCoins(ctx, types.ModuleName, redeemCoin)
+	if err != nil {
+		k.Logger(ctx).Error(fmt.Sprintf("Failed to burn stAssets upon successful unbonding %v", err))
+		return nil, sdkerrors.Wrapf(types.ErrInsufficientFunds, "couldn't burn %d %s tokens in module account", msg.Amount, coinDenom)
 	}
 
 	// Actually set the records, we wait until now to prevent any errors

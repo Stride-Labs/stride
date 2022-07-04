@@ -23,4 +23,5 @@ var (
 	ErrWeightsNotDifferent    = sdkerrors.Register(ModuleName, 1511, "validator weights haven't changed")
 	ErrValidatorDelegationChg = sdkerrors.Register(ModuleName, 1512, "can't change delegation on validator")
 	ErrAcctNotScopedForFunc   = sdkerrors.Register(ModuleName, 1513, "this account can't call this function")
+	ErrInsufficientFunds      = sdkerrors.Register(ModuleName, 1514, "balance is insufficient")
 )
