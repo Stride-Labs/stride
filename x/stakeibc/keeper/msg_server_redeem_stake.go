@@ -89,7 +89,7 @@ func (k Keeper) RedeemStake(goCtx context.Context, msg *types.MsgRedeemStake) (*
 	hostZoneUnbonding.UserRedemptionRecords = append(hostZoneUnbonding.UserRedemptionRecords, userRedemptionRecord.Id)
 
 	// Escrow user's balance
-	err = k.bankKeeper.SendCoinsFromAccountToModule(ctx, sender, types.ModuleName, sdk.NewCoins(inCoin))
+	err = k.bankKeeper.SendCoinsFromAccountToModule(ctx, sender, types.ModuleName, sdk.NewCoins(sdk.NewCoin(coinDenom, sdk.NewInt(msg.Amount))))
 	if err != nil {
 		k.Logger(ctx).Info("Failed to send sdk.NewCoins(inCoins) from account to module")
 		panic(err)
