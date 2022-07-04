@@ -266,6 +266,7 @@ func (k Keeper) TransferExistingDepositsToHostZones(ctx sdk.Context, epochNumber
 			goCtx := sdk.WrapSDKContext(ctx)
 
 			msg := ibctypes.NewMsgTransfer("transfer", hostZone.TransferChannelId, transferCoin, addr, delegateAddress, timeoutHeight, 0)
+			k.Logger(ctx).Info("TransferExistingDepositsToHostZones msg:", msg)
 			_, err := k.TransferKeeper.Transfer(goCtx, msg)
 			if err != nil {
 				pstr := fmt.Sprintf("\t[TRANSFER] ERROR WITH DEPOSIT RECEIPT {%d}", depositRecord.Id)
