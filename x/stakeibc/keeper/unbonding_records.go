@@ -54,6 +54,9 @@ func (k Keeper) SendHostZoneUnbondings(ctx sdk.Context, hostZone types.HostZone)
 	}
 	delegationAccount := hostZone.GetDelegationAccount()
 	validators := hostZone.GetValidators()
+	if totalAmtToUnbond == 0 {
+		return true
+	}
 	// we distribute the unbonding based on our target weights
 	newUnbondingToValidator, err := k.GetTargetValAmtsForHostZone(ctx, hostZone, totalAmtToUnbond)
 	if err != nil {
