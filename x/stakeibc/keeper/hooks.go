@@ -216,7 +216,7 @@ func (k Keeper) StakeExistingDepositsOnHostZones(ctx sdk.Context, epochNumber in
 				k.Logger(ctx).Error(fmt.Sprintf("Did not stake %s on %s", processAmount, hostZone.ChainId))
 				return
 			} else {
-				k.Logger(ctx).Info(fmt.Sprintf("Successfully staked %s on %s", processAmount, hostZone.ChainId))
+				k.Logger(ctx).Info(fmt.Sprintf("Successfully submitted stake for %s on %s", processAmount, hostZone.ChainId))
 			}
 
 			ctx.EventManager().EmitEvents(sdk.Events{
