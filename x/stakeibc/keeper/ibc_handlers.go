@@ -364,14 +364,6 @@ func (k Keeper) HandleUndelegate(ctx sdk.Context, msg sdk.Msg, completionTime ti
 		k.RecordsKeeper.SetEpochUnbondingRecord(ctx, epochUnbonding)
 	}
 
-	// burn stAssets upon successful unbonding
-	rmCoin := sdk.NewCoin("st"+undelegateMsg.Amount.Denom, undelegateMsg.Amount.Amount)
-
-	err = k.bankKeeper.BurnCoins(ctx, types.ModuleName, sdk.NewCoins(rmCoin))
-	if err != nil {
-		k.Logger(ctx).Error(fmt.Sprintf("Failed to burn stAssets upon successful unbonding %v", err))
-		return err
-	}
 	k.Logger(ctx).Info(fmt.Sprintf("Total supply %s", k.bankKeeper.GetSupply(ctx, "stuatom")))
 	return nil
 }
