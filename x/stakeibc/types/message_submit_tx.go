@@ -3,6 +3,7 @@ package types
 import (
 	fmt "fmt"
 
+	"github.com/Stride-Labs/stride/utils"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -90,6 +91,8 @@ func (msg *MsgSubmitTx) ValidateBasic() error {
 	if err != nil {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "invalid owner address")
 	}
-
+	if err := utils.ValidateWhitelistedAddress(msg.Owner); err != nil {
+		return err
+	}
 	return nil
 }

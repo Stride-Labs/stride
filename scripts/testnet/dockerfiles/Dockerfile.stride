@@ -14,13 +14,27 @@ FROM alpine:3.15
 ARG node_name
 
 COPY --from=golang /src/app/build/strided /usr/local/bin/strided
-RUN addgroup -g 1000 stride \
-    && adduser -S -h /stride -D stride -u 1000 -G stride
+RUN apk --no-cache add curl sudo bash git go make nginx \
+    && addgroup -g 1000 stride \
+    && adduser -S -h /stride -D stride -u 1000 -G stride 
+
+RUN echo '%wheel ALL=(ALL) ALL' > /etc/sudoers.d/wheel
+RUN echo "%wheel ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers
+RUN adduser stride wheel
+
 USER stride
+
+WORKDIR /stride
 
 RUN strided init test
 EXPOSE 1317
 
 COPY --chown=stride "./state/$node_name/" /stride/.stride/ 
+COPY --chown=stride "./state/keys.txt" /stride/keys.txt
+COPY --chown=stride "./state/install_faucet.sh" /stride/install_faucet.sh
+COPY --chown=stride "./state/certfile.pem" /stride/certfile.pem
+COPY --chown=stride "./state/certkey.pem" /stride/certkey.pem
+COPY --chown=stride "./state/$node_name/config/nginx.conf" /etc/nginx/nginx.conf
 
-CMD ["strided", "start"]
+WORKDIR /stride
+CMD ["sh", "-c", "sudo nginx; strided start"]

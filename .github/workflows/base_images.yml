@@ -39,7 +39,7 @@ jobs:
         shell: bash
         run: |
           hub_tag=stridelabs/nodes-base-images:${{ matrix.dep-name }}
-          gcr_tag=gcr.io/stride-nodes/base-images/:${{ matrix.dep-name }}
+          gcr_tag=gcr.io/stride-nodes/base-images/${{ matrix.dep-name }}:latest
 
           docker build -t $hub_tag -f scripts/testnet/dockerfiles/base/Dockerfile.${{ matrix.dep-name }} .
           docker push $hub_tag

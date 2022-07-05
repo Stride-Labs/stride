@@ -49,7 +49,7 @@ func (k Keeper) RedeemStake(goCtx context.Context, msg *types.MsgRedeemStake) (*
 	balance := k.bankKeeper.GetBalance(ctx, sender, coinDenom)
 	k.Logger(ctx).Info(fmt.Sprintf("Redemption issuer IBCDenom balance: %d%s", balance.Amount, balance.Denom))
 	k.Logger(ctx).Info(fmt.Sprintf("Redemption requested redemotion amount: %v%s", inCoin.Amount, inCoin.Denom))
-	if balance.Amount.LT(inCoin.Amount) {
+	if balance.Amount.LT(sdk.NewInt(msg.Amount)) {
 		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidCoins, "balance is lower than redemption amount. redemption amount: %s, balance %s: ", msg.Amount, balance.Amount)
 	}
 	// UNBONDING RECORD KEEPING
@@ -89,10 +89,18 @@ func (k Keeper) RedeemStake(goCtx context.Context, msg *types.MsgRedeemStake) (*
 	hostZoneUnbonding.UserRedemptionRecords = append(hostZoneUnbonding.UserRedemptionRecords, userRedemptionRecord.Id)
 
 	// Escrow user's balance
-	err = k.bankKeeper.SendCoinsFromAccountToModule(ctx, sender, types.ModuleName, sdk.NewCoins(inCoin))
+	redeemCoin := sdk.NewCoins(sdk.NewCoin(coinDenom, sdk.NewInt(msg.Amount)))
+	err = k.bankKeeper.SendCoinsFromAccountToModule(ctx, sender, types.ModuleName, redeemCoin)
 	if err != nil {
 		k.Logger(ctx).Info("Failed to send sdk.NewCoins(inCoins) from account to module")
-		panic(err)
+		return nil, sdkerrors.Wrapf(types.ErrInsufficientFunds, "couldn't send %d %s tokens to module account", msg.Amount, coinDenom)
+	}
+
+	// burn stAssets upon successful unbonding
+	err = k.bankKeeper.BurnCoins(ctx, types.ModuleName, redeemCoin)
+	if err != nil {
+		k.Logger(ctx).Error(fmt.Sprintf("Failed to burn stAssets upon successful unbonding %v", err))
+		return nil, sdkerrors.Wrapf(types.ErrInsufficientFunds, "couldn't burn %d %s tokens in module account", msg.Amount, coinDenom)
 	}
 
 	// Actually set the records, we wait until now to prevent any errors

@@ -54,6 +54,9 @@ func (k Keeper) SendHostZoneUnbondings(ctx sdk.Context, hostZone types.HostZone)
 	}
 	delegationAccount := hostZone.GetDelegationAccount()
 	validators := hostZone.GetValidators()
+	if totalAmtToUnbond == 0 {
+		return true
+	}
 	// we distribute the unbonding based on our target weights
 	newUnbondingToValidator, err := k.GetTargetValAmtsForHostZone(ctx, hostZone, totalAmtToUnbond)
 	if err != nil {
@@ -139,7 +142,7 @@ func (k Keeper) CleanupEpochUnbondingRecords(ctx sdk.Context) bool {
 	// this function goes through each EpochUnbondingRecord
 	// if any of them don't have any hostZones, then it deletes the record
 	for _, epochUnbondingRecord := range k.RecordsKeeper.GetAllEpochUnbondingRecord(ctx) {
-		k.Logger(ctx).Info(fmt.Sprintf("Processing epoch unbondings for epoch unbonding record from epoch %d", epochUnbondingRecord.GetId()))
+		k.Logger(ctx).Info(fmt.Sprintf("Cleaning up epoch unbondings for epoch unbonding record from epoch %d", epochUnbondingRecord.GetId()))
 		shouldDeleteRecord := true
 		for _, hostZoneUnbonding := range epochUnbondingRecord.GetHostZoneUnbondings() {
 			if (hostZoneUnbonding.Status != recordstypes.HostZoneUnbonding_TRANSFERRED) && (hostZoneUnbonding.GetAmount() != 0) {
