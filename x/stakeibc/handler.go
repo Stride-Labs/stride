@@ -14,17 +14,12 @@ func NewHandler(k keeper.Keeper) sdk.Handler {
 	msgServer := keeper.NewMsgServerImpl(k)
 
 	return func(ctx sdk.Context, msg sdk.Msg) (*sdk.Result, error) {
-		switch msg := msg.(type) {
+		ctx = ctx.WithEventManager(sdk.NewEventManager())
 
-		// NOT WHITELISTED!
+		switch msg := msg.(type) {
 		case *types.MsgLiquidStake:
 			res, err := msgServer.LiquidStake(sdk.WrapSDKContext(ctx), msg)
 			return sdk.WrapServiceResult(ctx, res, err)
-		case *types.MsgRedeemStake:
-			res, err := msgServer.RedeemStake(sdk.WrapSDKContext(ctx), msg)
-			return sdk.WrapServiceResult(ctx, res, err)
-
-		// WHITELISTED!
 		case *types.MsgRegisterAccount:
 			res, err := msgServer.RegisterAccount(sdk.WrapSDKContext(ctx), msg)
 			return sdk.WrapServiceResult(ctx, res, err)
@@ -33,6 +28,9 @@ func NewHandler(k keeper.Keeper) sdk.Handler {
 			return sdk.WrapServiceResult(ctx, res, err)
 		case *types.MsgRegisterHostZone:
 			res, err := msgServer.RegisterHostZone(sdk.WrapSDKContext(ctx), msg)
+			return sdk.WrapServiceResult(ctx, res, err)
+		case *types.MsgRedeemStake:
+			res, err := msgServer.RedeemStake(sdk.WrapSDKContext(ctx), msg)
 			return sdk.WrapServiceResult(ctx, res, err)
 		case *types.MsgClaimUndelegatedTokens:
 			res, err := msgServer.ClaimUndelegatedTokens(sdk.WrapSDKContext(ctx), msg)
