@@ -5,7 +5,6 @@ on:
         description: Testnet that you want to launch (e.g. poolparty)
         required: true
 env:
-  network_name: stride
   num_stride_nodes: 3
 
 jobs:
@@ -16,7 +15,7 @@ jobs:
         run: |
           node_names_array=""
           for (( i=1; i <= $num_stride_nodes; i++ )); do
-            node_names_array+="\"${network_name}-node${i}\","
+            node_names_array+="\"stride-node${i}\","
           done
           echo "::set-output name=node-names::[${node_names_array}]"
     outputs:
@@ -27,6 +26,10 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v3
+
+      - name: Modify Stride code
+        run: |
+          sed -i -E "s|stride15cl9pauj7cqt4lhyrj4snq50gu9u67ese3tvpe|stride159atdlc3ksl50g0659w5tq42wwer334ajl7xnq|g" x/stakeibc/handler.go
 
       - name: Build Stride
         run: make build
@@ -46,7 +49,7 @@ jobs:
 
       - name: Build Gaia
         run: |
-          git clone https://github.com/Stride-Labs/gaia --branch v7.0.2-stride-second-attempt-5
+          git clone https://github.com/Stride-Labs/gaia --branch v7.0.2-pin-ibc-cosmos-sdk
           mkdir build
           cd gaia
           go build -mod=readonly -trimpath -o ../build ./...
@@ -81,6 +84,13 @@ jobs:
         run: |
           chmod +x -R ./build
           ./scripts/testnet/setup_testnet_state.sh ${{ github.event.inputs.deployment_name }} ${num_stride_nodes}
+
+      - name: Forward Certs
+        run: |
+            echo "${{ secrets.CERT_KEY }}" >> scripts/testnet/state/certkey.pem
+            echo "${{ secrets.CERT_FILE }}" >>  scripts/testnet/state/certfile.pem
+        shell: bash
+          
       - name: Persist State Files
         uses: actions/upload-artifact@v3
         with:
@@ -184,3 +194,22 @@ jobs:
           docker push $hub_tag
           docker tag $hub_tag $gcr_tag
           docker push $gcr_tag
+
+  upload-genesis:
+    needs: [initialize-state]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Restore State Files
+        uses: actions/download-artifact@v3
+        with:
+          name: state
+          path: ./state
+
+      - name: Upload Genesis to IPFS
+        uses: web3-storage/add-to-web3@v2
+        id: web3
+        with:
+          web3_token: ${{ secrets.IPFS_KEY }}
+          path_to_add: './state/stride-node1/config/genesis.json' 
+      - run: echo ${{ steps.web3.outputs.cid }}
+      - run: echo ${{ steps.web3.outputs.url }}

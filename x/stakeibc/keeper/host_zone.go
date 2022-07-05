@@ -127,6 +127,7 @@ func (k Keeper) RemoveValidatorFromHostZone(ctx sdk.Context, chainId string, val
 			return true
 		}
 	}
+	k.SetHostZone(ctx, hostZone)
 	k.Logger(ctx).Error(fmt.Sprintf("Validator %s not found on Host Zone %s", validatorAddress, chainId))
 	return false
 }
