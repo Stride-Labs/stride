@@ -9,10 +9,11 @@ import "records/genesis.proto";
 
 option go_package = "github.com/Stride-Labs/stride/x/stakeibc/types";
 
-// next id: 17
+// next id: 18
 message HostZone {
   string chainId = 1;
   string connectionId = 2;
+  string bech32prefix = 17;
   string transferChannelId = 12;
   repeated Validator validators = 3;
   repeated Validator blacklistedValidators = 4;
