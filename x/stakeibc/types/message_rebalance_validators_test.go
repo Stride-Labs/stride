@@ -21,10 +21,11 @@ func TestMsgRebalanceValidators_ValidateBasic(t *testing.T) {
 			},
 			err: sdkerrors.ErrInvalidAddress,
 		}, {
-			name: "valid address",
+			name: "valid address but not whitelisted",
 			msg: MsgRebalanceValidators{
 				Creator: sample.AccAddress(),
 			},
+			err: sdkerrors.ErrInvalidAddress,
 		},
 	}
 	for _, tt := range tests {
