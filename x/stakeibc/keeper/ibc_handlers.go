@@ -248,7 +248,7 @@ func (k *Keeper) HandleSend(ctx sdk.Context, msg sdk.Msg) error {
 				userRedemptionRecord, found := k.RecordsKeeper.GetUserRedemptionRecord(ctx, recordId)
 				if !found {
 					k.Logger(ctx).Error("failed to find user redemption record")
-					return sdkerrors.Wrapf(types.ErrRecordNotFound, "no user redemption record found for id (%d)", recordId)
+					return sdkerrors.Wrapf(types.ErrRecordNotFound, "no user redemption record found for id (%s)", recordId)
 				}
 				if userRedemptionRecord.IsClaimable == true {
 					k.Logger(ctx).Info("user redemption record is already claimable")

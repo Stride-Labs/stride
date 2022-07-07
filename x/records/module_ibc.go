@@ -198,11 +198,11 @@ func (im IBCModule) OnAcknowledgementPacket(
 		// match record based on amount
 		amount, err := strconv.ParseInt(data.Amount, 10, 64)
 		if err != nil {
-			return sdkerrors.Wrapf(sdkerrors.ErrInvalidType, "Error parsing int %s", amount)
+			return sdkerrors.Wrapf(sdkerrors.ErrInvalidType, "Error parsing int %d", amount)
 		}
 		record, found := im.keeper.GetTransferDepositRecordByAmount(ctx, amount)
 		if found == false {
-			return sdkerrors.Wrapf(sdkerrors.ErrNotFound, "No deposit record found for amount: %s", amount)
+			return sdkerrors.Wrapf(sdkerrors.ErrNotFound, "No deposit record found for amount: %d", amount)
 		}
 		// update the record
 		record.Status = types.DepositRecord_STAKE

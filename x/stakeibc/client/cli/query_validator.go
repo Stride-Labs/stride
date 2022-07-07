@@ -9,19 +9,21 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func CmdShowValidator() *cobra.Command {
+func CmdShowValidators() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "show-validator",
-		Short: "shows validator",
-		Args:  cobra.NoArgs,
+		Use:   "show-validators [chain-id]",
+		Short: "shows validators",
+		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx := client.GetClientContextFromCmd(cmd)
 
 			queryClient := types.NewQueryClient(clientCtx)
 
-			params := &types.QueryGetValidatorRequest{}
+			chainId := args[0]
 
-			res, err := queryClient.Validator(context.Background(), params)
+			params := &types.QueryGetValidatorsRequest{ChainId: chainId}
+
+			res, err := queryClient.Validators(context.Background(), params)
 			if err != nil {
 				return err
 			}
