@@ -1,6 +1,7 @@
 package types
 
 import (
+	"github.com/Stride-Labs/stride/utils"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
@@ -41,6 +42,9 @@ func (msg *MsgRegisterAccount) ValidateBasic() error {
 	_, err := sdk.AccAddressFromBech32(msg.Owner)
 	if err != nil {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid owner address (%s)", err)
+	}
+	if err := utils.ValidateWhitelistedAddress(msg.Owner); err != nil {
+		return err
 	}
 	return nil
 }

@@ -14,7 +14,7 @@ state/*
 scripts/state/*
 scripts/testnet/*/state/keys.txt
 scripts/testnet/state/*
-scripts/testnet/certs/*
+scripts/testnet/certs/*.pem
 
 scripts/logs/*.log
 scripts/logs/*/*.log

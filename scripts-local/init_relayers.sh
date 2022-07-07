@@ -6,8 +6,8 @@ SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 source ${SCRIPT_DIR}/vars.sh
 
 echo "Adding Hermes keys"
-echo $HERMES_STRIDE_MNEMONIC | $HERMES_CMD keys add -m /dev/stdin $STRIDE_CHAIN
-echo $HERMES_GAIA_MNEMONIC | $HERMES_CMD keys add -m /dev/stdin $GAIA_CHAIN
+$HERMES_CMD keys restore --mnemonic "$HERMES_STRIDE_MNEMONIC" $STRIDE_CHAIN
+$HERMES_CMD keys restore --mnemonic "$HERMES_GAIA_MNEMONIC" $GAIA_CHAIN
 
 echo "Adding ICQ keys"
 echo $ICQ_STRIDE_MNEMONIC | $ICQ_CMD keys restore stridekey --chain stride-local --local

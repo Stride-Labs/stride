@@ -87,6 +87,12 @@ func WithdrawalBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query icq
 		coin = sdk.NewCoin(denom, sdk.ZeroInt())
 	}
 
+	// sanity check, do not transfer if we have 0 balance!
+	if coin.Amount.Int64() == 0 {
+		k.Logger(ctx).Info("WithdrawalBalanceCallback: no balance to transfer", "zone", zone.ChainId, "accAddr", accAddr, "coin", coin)
+		return nil
+	}
+
 	// Set withdrawal balance as attribute on HostZone's withdrawal ICA account
 	wa := zone.GetWithdrawalAccount()
 	wa.Balance = coin.Amount.Int64()
