@@ -262,6 +262,17 @@ func (k *Keeper) HandleSend(ctx sdk.Context, msg sdk.Msg) error {
 			}
 			k.RecordsKeeper.SetEpochUnbondingRecord(ctx, epochUnbondingRecord)
 		}
+	}  else if sendMsg.FromAddress == redemptionAddress {
+		k.Logger(ctx).Error("ACK - sendMsg.FromAddress == redemptionAddress")
+		// process claims from the RedemptionAccount
+		// fetch the record associated with the claim by matching on the ToAddress, the amount and isClaimable
+		// fetch all records associated with the claim by matching the recipient address, isClaimable, amount, denom, hostZoneId
+		// delete the record with the lowest epoch id ()
+		// remove the record from the claimableRecordIds
+		// delete the record from the userRedemptionRecords
+	} else {
+		k.Logger(ctx).Error("ACK - sendMsg.FromAddress != withdrawalAddress && sendMsg.FromAddress != delegationAddress")
+
 	}
 
 	return nil

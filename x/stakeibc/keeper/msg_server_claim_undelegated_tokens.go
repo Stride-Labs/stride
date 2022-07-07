@@ -52,6 +52,8 @@ func (k msgServer) ClaimUndelegatedTokens(goCtx context.Context, msg *types.MsgC
 		errMsg = fmt.Sprintf("Amount %d", record.Amount)
 		k.Logger(ctx).Error(errMsg)
 
+		// TODO: how should we handle invalid records?
+
 		msgs = append(msgs, &bankTypes.MsgSend{
 			FromAddress: redemptionAccount.Address,
 			ToAddress:   record.Receiver,
