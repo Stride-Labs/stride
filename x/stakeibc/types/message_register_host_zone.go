@@ -10,10 +10,11 @@ const TypeMsgRegisterHostZone = "register_host_zone"
 
 var _ sdk.Msg = &MsgRegisterHostZone{}
 
-func NewMsgRegisterHostZone(creator string, connectionId string, hostDenom string, ibcDenom string, transferChannelId string, unbondingFrequency uint64) *MsgRegisterHostZone {
+func NewMsgRegisterHostZone(creator string, connectionId string, bech32prefix string, hostDenom string, ibcDenom string, transferChannelId string, unbondingFrequency uint64) *MsgRegisterHostZone {
 	return &MsgRegisterHostZone{
 		Creator:            creator,
 		ConnectionId:       connectionId,
+		Bech32Prefix:	    bech32prefix,
 		HostDenom:          hostDenom,
 		IbcDenom:           ibcDenom,
 		TransferChannelId:  transferChannelId,
@@ -42,6 +43,7 @@ func (msg *MsgRegisterHostZone) GetSignBytes() []byte {
 	return sdk.MustSortJSON(bz)
 }
 
+// TODO(TEST-112) add validation on bech32prefix upon zone creation
 func (msg *MsgRegisterHostZone) ValidateBasic() error {
 	_, err := sdk.AccAddressFromBech32(msg.Creator)
 	if err != nil {

@@ -56,10 +56,9 @@ func (msg *MsgRedeemStake) ValidateBasic() error {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid creator address (%s)", err)
 	}
 	// ensure the recipient address is a valid bech32 address on the hostZone
-	add, err := utils.AccAddressFromBech32(msg.Receiver)
+	_, err = utils.AccAddressFromBech32(msg.Receiver)
 	if err != nil {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid creator address (%s)", err)
 	}
-	fmt.Sprintf("RedeemStake ValidateBasic | out: %v", add)
 	return nil
 }
