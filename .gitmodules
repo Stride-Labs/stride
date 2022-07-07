@@ -13,6 +13,8 @@
 [submodule "deps/hermes"]
 	path = deps/hermes
 	url = git@github.com:informalsystems/ibc-rs.git
+	branch = 4e83aae8afdc9a88a
 [submodule "deps/gaia"]
 	path = deps/gaia
 	url = git@github.com:Stride-Labs/gaia.git
+	branch = v7.0.2-pinned
