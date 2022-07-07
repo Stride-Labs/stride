@@ -29,6 +29,10 @@ func (k Keeper) RegisterHostZone(goCtx context.Context, msg *types.MsgRegisterHo
 		return nil, fmt.Errorf("invalid chain id, zone for \"%s\" already registered", chainId)
 	}
 
+	if msg.UnbondingFrequency < 1 {
+		return nil, fmt.Errorf("invalid unbonding frequency %d, must be positive", msg.UnbondingFrequency)
+	}
+
 	// set the zone
 	zone := types.HostZone{
 		ChainId:           chainId,
@@ -89,7 +93,7 @@ func (k Keeper) RegisterHostZone(goCtx context.Context, msg *types.MsgRegisterHo
 		Amount:     0,
 		Denom:      zone.HostDenom,
 		HostZoneId: zone.ChainId,
-		Status:     recordstypes.HostZoneUnbonding_UNBONDED,
+		Status:     recordstypes.HostZoneUnbonding_BONDED,
 	}
 	epochUnbondingRecord.HostZoneUnbondings = hostZoneUnbondings
 	k.RecordsKeeper.SetEpochUnbondingRecord(ctx, epochUnbondingRecord)

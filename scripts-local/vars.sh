@@ -5,9 +5,18 @@ SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
 STATE=$SCRIPT_DIR/state
 
+# CHAIN PARAMS
 ATOM='uatom'
 IBCATOM='ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2'
-BLOCK_TIME='1s'
+BLOCK_TIME='5s'
+# NOTE: If you add new epochs, these indexes will need to be updated
+DAY_EPOCH_INDEX=1
+DAY_EPOCH_LEN="60s"
+STRIDE_EPOCH_INDEX=2
+STRIDE_EPOCH_LEN="10s"
+# build/strided --home scripts-local/state/stride tx stakeibc add-validator GAIA gval1 cosmosvaloper12mae306lphem7fvw2mz6swjr2m0he43recftfk 10 5 --chain-id STRIDE --from val1 --keyring-backend test
+# build/strided --home scripts-local/state/stride q bank balances stride1uk4ze0x4nvh4fk0xm4jdud58eqn4yxhrt52vv7
+# build/strided --home scripts-local/state/stride q stakeibc list-host-zone
 
 # define STRIDE vars
 STRIDE_PORT_ID=26657  # 36564 

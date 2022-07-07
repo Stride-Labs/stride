@@ -21,4 +21,6 @@ source ${SCRIPT_DIR}/setup_gaia_state.sh
 source ${SCRIPT_DIR}/setup_hermes_state.sh
 source ${SCRIPT_DIR}/setup_icq_state.sh $DEPLOYMENT_NAME
 
+cp ${SCRIPT_DIR}/install_faucet.sh $STATE/install_faucet.sh
+
 echo "Done"

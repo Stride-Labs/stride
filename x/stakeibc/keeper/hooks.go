@@ -177,6 +177,7 @@ func (k Keeper) SetWithdrawalAddress(ctx sdk.Context) {
 		err := k.SetWithdrawalAddressOnHost(ctx, zoneInfo)
 		if err != nil {
 			k.Logger(ctx).Error(fmt.Sprintf("Did not set withdrawal address to %s on %s", zoneInfo.GetWithdrawalAccount().GetAddress(), zoneInfo.GetChainId()))
+			k.Logger(ctx).Error(fmt.Sprintf("Withdrawal address setting error: %v", err))
 		} else {
 			k.Logger(ctx).Info(fmt.Sprintf("Successfully set withdrawal address to %s on %s", zoneInfo.GetWithdrawalAccount().GetAddress(), zoneInfo.GetChainId()))
 		}
@@ -191,7 +192,7 @@ func (k Keeper) StakeExistingDepositsOnHostZones(ctx sdk.Context, epochNumber in
 	})
 	for _, depositRecord := range stakeDepositRecords {
 		if depositRecord.DepositEpochNumber < uint64(epochNumber) {
-			pstr := fmt.Sprintf("\t[STAKE] Processing deposit {%d} {%s} {%d}", depositRecord.Id, depositRecord.Denom, depositRecord.Amount)
+			pstr := fmt.Sprintf("\t[STAKE] Processing deposit ID:{%d} DENOM:{%s} AMT:{%d}", depositRecord.Id, depositRecord.Denom, depositRecord.Amount)
 			k.Logger(ctx).Info(pstr)
 			hostZone, hostZoneFound := k.GetHostZone(ctx, depositRecord.HostZoneId)
 			if !hostZoneFound {
@@ -215,7 +216,7 @@ func (k Keeper) StakeExistingDepositsOnHostZones(ctx sdk.Context, epochNumber in
 				k.Logger(ctx).Error(fmt.Sprintf("Did not stake %s on %s", processAmount, hostZone.ChainId))
 				return
 			} else {
-				k.Logger(ctx).Info(fmt.Sprintf("Successfully staked %s on %s", processAmount, hostZone.ChainId))
+				k.Logger(ctx).Info(fmt.Sprintf("Successfully submitted stake for %s on %s", processAmount, hostZone.ChainId))
 			}
 
 			ctx.EventManager().EmitEvents(sdk.Events{
@@ -265,9 +266,13 @@ func (k Keeper) TransferExistingDepositsToHostZones(ctx sdk.Context, epochNumber
 			goCtx := sdk.WrapSDKContext(ctx)
 
 			msg := ibctypes.NewMsgTransfer("transfer", hostZone.TransferChannelId, transferCoin, addr, delegateAddress, timeoutHeight, 0)
+			k.Logger(ctx).Info("TransferExistingDepositsToHostZones msg:", msg)
 			_, err := k.TransferKeeper.Transfer(goCtx, msg)
 			if err != nil {
 				pstr := fmt.Sprintf("\t[TRANSFER] ERROR WITH DEPOSIT RECEIPT {%d}", depositRecord.Id)
+				k.Logger(ctx).Info(pstr)
+				k.Logger(ctx).Info("\t[TRANSFER] ERROR WITH DEPOSIT RECEIPT", hostZone.TransferChannelId, transferCoin, addr, delegateAddress, timeoutHeight)
+				pstr = fmt.Sprintf("\t[TRANSFER] ERROR WITH DEPOSIT RECEIPT {%v}", err)
 				k.Logger(ctx).Info(pstr)
 				return
 			}
