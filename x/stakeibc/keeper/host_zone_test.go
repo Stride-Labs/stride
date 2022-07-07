@@ -16,8 +16,8 @@ func createNHostZone(keeper *keeper.Keeper, ctx sdk.Context, n int) []types.Host
 	items := make([]types.HostZone, n)
 	for i := range items {
 		items[i].ChainId = strconv.Itoa(i)
-		items[i].RedemptionRate = sdk.NewDec(0)
-		items[i].LastRedemptionRate = sdk.NewDec(0)
+		items[i].RedemptionRate = sdk.NewDec(1)
+		items[i].LastRedemptionRate = sdk.NewDec(1)
 		keeper.SetHostZone(ctx, items[i])
 	}
 	return items
