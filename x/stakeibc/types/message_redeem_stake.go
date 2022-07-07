@@ -2,12 +2,9 @@ package types
 
 import (
 	"strings"
-	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-
-	utils "github.com/Stride-Labs/stride/utils"
 )
 
 const TypeMsgRedeemStake = "redeem_stake"
@@ -55,10 +52,9 @@ func (msg *MsgRedeemStake) ValidateBasic() error {
 	if err != nil {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid creator address (%s)", err)
 	}
-	// ensure the recipient address is a valid bech32 address on the hostZone
-	_, err = utils.AccAddressFromBech32(msg.Receiver)
-	if err != nil {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid creator address (%s)", err)
+	// ensure amount is a nonzero positive integer
+	if msg.Amount <= 0 {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "invalid amount (%d)", msg.Amount)
 	}
 	return nil
 }
