@@ -31,3 +31,10 @@ func ValidateWhitelistedAddress(address string) error {
 	}
 	return nil
 }
+
+func Min(a int, b int) int {
+	if a < b {
+		return a
+	}
+	return b
+}
