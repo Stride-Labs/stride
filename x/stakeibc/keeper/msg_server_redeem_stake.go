@@ -59,7 +59,7 @@ func (k Keeper) RedeemStake(goCtx context.Context, msg *types.MsgRedeemStake) (*
 		return nil, sdkerrors.Wrapf(types.ErrEpochNotFound, "epoch tracker found: %s", "day")
 	}
 	senderAddr := sender.String()
-	redemptionId := fmt.Sprintf("%s.%d.%s", hostZone.ChainId, epochTracker.EpochNumber, senderAddr) // {chain_id}.{epoch}.{sender}
+	redemptionId := recordstypes.UserRedemptionRecordKeyFormatter(hostZone.ChainId, epochTracker.EpochNumber, senderAddr)
 	userRedemptionRecord := recordstypes.UserRedemptionRecord{
 		Id:          redemptionId,
 		Sender:      senderAddr,
