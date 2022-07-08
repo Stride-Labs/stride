@@ -67,7 +67,7 @@ func (k msgServer) ClaimUndelegatedTokens(goCtx context.Context, msg *types.MsgC
 
 	// Store the sequence number to record id mapping
 	pendingClaims := types.PendingClaims{
-		Sequence: string(sequence),
+		Sequence: fmt.Sprint(sequence),
 		// NOTE: we could extend this to process multiple claims in the future, given this field is repeated
 		UserRedemptionRecordIds: []string{userRedemptionRecord.Id},
 	}
