@@ -37,9 +37,21 @@ func (k Keeper) HandleAcknowledgement(ctx sdk.Context, modulePacket channeltypes
 	if err != nil {
 		ackErr := channeltypes.Acknowledgement_Error{}
 		// Clean up any pending claims
-		_, found := k.GetPendingClaims(ctx, packetSequenceKey)
+		pendingClaims, found := k.GetPendingClaims(ctx, packetSequenceKey)
 		if found {
 			k.RemovePendingClaims(ctx, packetSequenceKey)
+			userRedemptionRecordKey, err := k.GetUserRedemptionRecordKeyFromPendingClaims(ctx, pendingClaims)
+			if err != nil {
+				k.Logger(ctx).Error("failed to get user redemption record key from pending claim")
+				return err
+			}
+			record, found := k.RecordsKeeper.GetUserRedemptionRecord(ctx, userRedemptionRecordKey)
+			if !found {
+				k.Logger(ctx).Error("failed to get user redemption record from key %s", userRedemptionRecordKey)
+				return err
+			}
+			record.IsClaimable = true
+			k.RecordsKeeper.SetUserRedemptionRecord(ctx, record)
 		}
 		err := json.Unmarshal(acknowledgement, &ackErr)
 		if err != nil {
@@ -274,11 +286,11 @@ func (k *Keeper) HandleSend(ctx sdk.Context, msg sdk.Msg, sequence string) error
 			k.Logger(ctx).Error("failed to find pending claim")
 			return sdkerrors.Wrapf(types.ErrRecordNotFound, "no pending claim found for sequence (%d)", sequence)
 		}
-		if len(pendingClaims.UserRedemptionRecordIds) > 1 {
-			k.Logger(ctx).Error("user redemption records are not unique")
-			return sdkerrors.Wrapf(types.ErrInvalidUserRedemptionRecord, "user redemption records are not unique")
+		userRedemptionRecordKey, err := k.GetUserRedemptionRecordKeyFromPendingClaims(ctx, pendingClaims)
+		if err != nil {
+			k.Logger(ctx).Error("failed to get user redemption record key from pending claim")
+			return err
 		}
-		userRedemptionRecordKey := pendingClaims.UserRedemptionRecordIds[0]
 		_, found = k.RecordsKeeper.GetUserRedemptionRecord(ctx, userRedemptionRecordKey)
 		if !found {
 			errMsg := fmt.Sprintf("User redemption record %s not found on host zone", userRedemptionRecordKey)
