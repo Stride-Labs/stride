@@ -59,5 +59,9 @@ func (msg *MsgLiquidStake) ValidateBasic() error {
 	if err != nil {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid creator address (%s)", err)
 	}
+	// validate amount is positive nonzero
+	if msg.Amount <= 0 {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "amount liquid staked must be positive and nonzero")
+	}
 	return nil
 }
