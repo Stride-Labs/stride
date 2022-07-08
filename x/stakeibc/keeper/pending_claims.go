@@ -1,9 +1,10 @@
 package keeper
 
 import (
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/Stride-Labs/stride/x/stakeibc/types"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
 // SetPendingClaims set a specific pendingClaims in the store from its index
@@ -32,6 +33,19 @@ func (k Keeper) GetPendingClaims(
 
 	k.cdc.MustUnmarshal(b, &val)
 	return val, true
+}
+
+// GetPendingClaims returns a unique UserRedemptionRecordId, if it exists
+func (k Keeper) GetUserRedemptionRecordKeyFromPendingClaims(
+    ctx sdk.Context,
+    pendingClaims types.PendingClaims,
+) (string, error) {
+	if len(pendingClaims.UserRedemptionRecordIds) != 1 {
+		k.Logger(ctx).Error("no unique user redemption record exists on the claim")
+		return "", sdkerrors.Wrapf(types.ErrInvalidUserRedemptionRecord, "no unique user redemption record exists on the claim")
+	}
+	userRedemptionRecordKey := pendingClaims.UserRedemptionRecordIds[0]
+	return userRedemptionRecordKey, nil
 }
 
 // RemovePendingClaims removes a pendingClaims from the store

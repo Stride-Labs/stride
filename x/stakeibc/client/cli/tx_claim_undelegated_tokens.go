@@ -13,12 +13,6 @@ import (
 
 var _ = strconv.Itoa(0)
 
-// string creator = 1;
-//   string hostZoneId = 2;
-//   uint64 epoch = 3;
-//   string sender = 4;
-// }
-
 func CmdClaimUndelegatedTokens() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "claim-undelegated-tokens [host-zone] [epoch] [sender]",
