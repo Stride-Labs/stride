@@ -24,7 +24,7 @@ import (
 // TODO(TEST-33): Scope out what to store on different acks (by function call, success/failure)
 func (k Keeper) HandleAcknowledgement(ctx sdk.Context, modulePacket channeltypes.Packet, acknowledgement []byte) error {
 	ack := channeltypes.Acknowledgement_Result{}
-	packetSequenceKey := string(modulePacket.Sequence)
+	packetSequenceKey := fmt.Sprint(modulePacket.Sequence)
 	var eventType string
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
@@ -300,7 +300,7 @@ func (k *Keeper) HandleSend(ctx sdk.Context, msg sdk.Msg, sequence string) error
 		k.RecordsKeeper.RemoveUserRedemptionRecord(ctx, userRedemptionRecordKey)
 		k.RemovePendingClaims(ctx, sequence)
 	} else {
-		k.Logger(ctx).Error("ACK - sendMsg.FromAddress != withdrawalAddress && sendMsg.FromAddress != delegationAddress")
+		k.Logger(ctx).Error("ACK - sendMsg.FromAddress != withdrawalAddress && sendMsg.FromAddress != delegationAddress && sendMsg.FromAddress != redemptionAddress")
 
 	}
 
