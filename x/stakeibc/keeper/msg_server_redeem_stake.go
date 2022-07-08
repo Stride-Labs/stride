@@ -9,6 +9,8 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+
+	utils "github.com/Stride-Labs/stride/utils"
 )
 
 func (k Keeper) RedeemStake(goCtx context.Context, msg *types.MsgRedeemStake) (*types.MsgRedeemStakeResponse, error) {
@@ -19,12 +21,17 @@ func (k Keeper) RedeemStake(goCtx context.Context, msg *types.MsgRedeemStake) (*
 	if err != nil {
 		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "address is invalid: %s", msg.Creator)
 	}
-
-	// TODO(TEST-112) add safety check to validate the receiver address is a valid hostZone address
 	// then make sure host zone is valid
 	hostZone, found := k.GetHostZone(ctx, msg.HostZone)
 	if !found {
 		return nil, sdkerrors.Wrapf(types.ErrInvalidHostZone, "host zone is invalid: %s", msg.HostZone)
+	}
+
+	// ensure the recipient address is a valid bech32 address on the hostZone
+	// TODO(TEST-112) do we need to check the hostZone before this check? Would need access to keeper 
+	_, err = utils.AccAddressFromBech32(msg.Receiver, hostZone.Bech32Prefix)
+	if err != nil {
+		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid creator address (%s)", err)
 	}
 
 	if msg.Amount > hostZone.StakedBal {
