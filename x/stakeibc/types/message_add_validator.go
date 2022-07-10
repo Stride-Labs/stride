@@ -60,7 +60,7 @@ func (msg *MsgAddValidator) ValidateBasic() error {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "commission must be between 0 and 100")
 	}
 	if msg.Commission > 10 {
-		fmt.Sprintf("WARNING: commission is %d (greater than 10%)", msg.Commission)
+		fmt.Sprintf("WARNING: commission is %d (greater than 10pct)", msg.Commission)
 	}
 	// weight validation
 	if msg.Weight < 0 {
