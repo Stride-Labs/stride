@@ -47,7 +47,7 @@ func (msg *MsgAddValidator) ValidateBasic() error {
 	if err != nil {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid creator address (%s)", err)
 	}
-	if err := utils.ValidateWhitelistedAddress(msg.Creator); err != nil {
+	if err := utils.ValidateAdminAddress(msg.Creator); err != nil {
 		return err
 	}
 	return nil
