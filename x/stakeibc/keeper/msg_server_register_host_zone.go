@@ -29,10 +29,6 @@ func (k Keeper) RegisterHostZone(goCtx context.Context, msg *types.MsgRegisterHo
 		return nil, fmt.Errorf("invalid chain id, zone for \"%s\" already registered", chainId)
 	}
 
-	if msg.UnbondingFrequency < 1 {
-		return nil, fmt.Errorf("invalid unbonding frequency %d, must be positive", msg.UnbondingFrequency)
-	}
-
 	// set the zone
 	zone := types.HostZone{
 		ChainId:           chainId,
