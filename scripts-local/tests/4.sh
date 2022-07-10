@@ -7,7 +7,9 @@ source ${SCRIPT_DIR}/../account_vars.sh
 $GAIA_CMD q bank balances cosmos1g6qdx6kdhpf000afvvpte7hp0vnpzapuyxp8uf
 
 #claim stake
-$STRIDE_CMD tx stakeibc claim-undelegated-tokens GAIA 3 --from val1 --keyring-backend test --chain-id STRIDE -y
+EPOCH=9
+SENDER=stride1uk4ze0x4nvh4fk0xm4jdud58eqn4yxhrt52vv7
+$STRIDE_CMD tx stakeibc claim-undelegated-tokens GAIA $EPOCH $SENDER --from val1 --keyring-backend test --chain-id STRIDE -y
 
 CSLEEP 30
 # check balances after claiming redeemed stake

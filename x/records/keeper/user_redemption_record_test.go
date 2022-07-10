@@ -1,6 +1,7 @@
 package keeper_test
 
 import (
+	"strconv"
 	"testing"
 
 	keepertest "github.com/Stride-Labs/stride/testutil/keeper"
@@ -14,7 +15,8 @@ import (
 func createNUserRedemptionRecord(keeper *keeper.Keeper, ctx sdk.Context, n int) []types.UserRedemptionRecord {
 	items := make([]types.UserRedemptionRecord, n)
 	for i := range items {
-		items[i].Id = keeper.AppendUserRedemptionRecord(ctx, items[i])
+		items[i].Id = strconv.Itoa(i)
+		keeper.SetUserRedemptionRecord(ctx, items[i])
 	}
 	return items
 }
@@ -49,11 +51,4 @@ func TestUserRedemptionRecordGetAll(t *testing.T) {
 		nullify.Fill(items),
 		nullify.Fill(keeper.GetAllUserRedemptionRecord(ctx)),
 	)
-}
-
-func TestUserRedemptionRecordCount(t *testing.T) {
-	keeper, ctx := keepertest.RecordsKeeper(t)
-	items := createNUserRedemptionRecord(keeper, ctx, 10)
-	count := uint64(len(items))
-	require.Equal(t, count, keeper.GetUserRedemptionRecordCount(ctx))
 }

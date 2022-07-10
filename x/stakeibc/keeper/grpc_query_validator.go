@@ -5,20 +5,21 @@ import (
 
 	"github.com/Stride-Labs/stride/x/stakeibc/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
 
-func (k Keeper) Validator(c context.Context, req *types.QueryGetValidatorRequest) (*types.QueryGetValidatorResponse, error) {
-	if req == nil {
+func (k Keeper) Validators(c context.Context, req *types.QueryGetValidatorsRequest) (*types.QueryGetValidatorsResponse, error) {
+	if req == nil || req.ChainId == "" {
 		return nil, status.Error(codes.InvalidArgument, "invalid request")
 	}
 	ctx := sdk.UnwrapSDKContext(c)
 
-	val, found := k.GetValidator(ctx)
+	hostZone, found := k.GetHostZone(ctx, req.ChainId)
 	if !found {
-		return nil, status.Error(codes.NotFound, "not found")
+		return nil, sdkerrors.ErrKeyNotFound
 	}
 
-	return &types.QueryGetValidatorResponse{Validator: val}, nil
+	return &types.QueryGetValidatorsResponse{Validators: hostZone.Validators}, nil
 }
