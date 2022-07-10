@@ -34,5 +34,6 @@ func TestGenesis(t *testing.T) {
 	require.Equal(t, genesisState.PortId, got.PortId)
 	require.Equal(t, genesisState.ICAAccount, got.ICAAccount)
 	require.Equal(t, genesisState.EpochTrackerList, got.EpochTrackerList)
+	require.Equal(t, genesisState.Params, got.Params)
 	// this line is used by starport scaffolding # genesis/test/assert
 }
