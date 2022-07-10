@@ -16,10 +16,10 @@ func TestGenesis(t *testing.T) {
 		PortId: types.PortID,
 		UserRedemptionRecordList: []types.UserRedemptionRecord{
 			{
-				Id: 0,
+				Id: "0",
 			},
 			{
-				Id: 1,
+				Id: "1",
 			},
 		},
 		UserRedemptionRecordCount: 2,

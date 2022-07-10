@@ -44,5 +44,9 @@ func (msg *MsgClaimUndelegatedTokens) ValidateBasic() error {
 	if err != nil {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid creator address (%s)", err)
 	}
+	// max claims must be greater than 0
+	if msg.MaxClaims <= 0 {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "max claims must be greater than 0")
+	}
 	return nil
 }

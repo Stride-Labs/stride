@@ -29,28 +29,25 @@ func TestEpochTrackerQuerySingle(t *testing.T) {
 		err      error
 	}{
 		{
-			desc:     "First",
-			request:  &types.QueryGetEpochTrackerRequest{
-			    EpochIdentifier: msgs[0].EpochIdentifier,
-                
+			desc: "First",
+			request: &types.QueryGetEpochTrackerRequest{
+				EpochIdentifier: msgs[0].EpochIdentifier,
 			},
 			response: &types.QueryGetEpochTrackerResponse{EpochTracker: msgs[0]},
 		},
 		{
-			desc:     "Second",
-			request:  &types.QueryGetEpochTrackerRequest{
-			    EpochIdentifier: msgs[1].EpochIdentifier,
-                
+			desc: "Second",
+			request: &types.QueryGetEpochTrackerRequest{
+				EpochIdentifier: msgs[1].EpochIdentifier,
 			},
 			response: &types.QueryGetEpochTrackerResponse{EpochTracker: msgs[1]},
 		},
 		{
-			desc:    "KeyNotFound",
+			desc: "KeyNotFound",
 			request: &types.QueryGetEpochTrackerRequest{
-			    EpochIdentifier:strconv.Itoa(100000),
-                
+				EpochIdentifier: strconv.Itoa(100000),
 			},
-			err:     status.Error(codes.NotFound, "not found"),
+			err: status.Error(codes.NotFound, "not found"),
 		},
 		{
 			desc: "InvalidRequest",
@@ -94,9 +91,9 @@ func TestEpochTrackerQueryPaginated(t *testing.T) {
 			require.NoError(t, err)
 			require.LessOrEqual(t, len(resp.EpochTracker), step)
 			require.Subset(t,
-            	nullify.Fill(msgs),
-            	nullify.Fill(resp.EpochTracker),
-            )
+				nullify.Fill(msgs),
+				nullify.Fill(resp.EpochTracker),
+			)
 		}
 	})
 	t.Run("ByKey", func(t *testing.T) {
@@ -107,9 +104,9 @@ func TestEpochTrackerQueryPaginated(t *testing.T) {
 			require.NoError(t, err)
 			require.LessOrEqual(t, len(resp.EpochTracker), step)
 			require.Subset(t,
-            	nullify.Fill(msgs),
-            	nullify.Fill(resp.EpochTracker),
-            )
+				nullify.Fill(msgs),
+				nullify.Fill(resp.EpochTracker),
+			)
 			next = resp.Pagination.NextKey
 		}
 	})

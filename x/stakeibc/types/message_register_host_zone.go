@@ -1,6 +1,7 @@
 package types
 
 import (
+	"strings"
 	"github.com/Stride-Labs/stride/utils"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -52,5 +53,35 @@ func (msg *MsgRegisterHostZone) ValidateBasic() error {
 	if err := utils.ValidateAdminAddress(msg.Creator); err != nil {
 		return err
 	}
+	// host denom cannot be empty
+	if msg.HostDenom == "" {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "host denom cannot be empty")
+	}
+	// connection id cannot be empty and must begin with "connection"
+	if msg.ConnectionId == "" {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "connection id cannot be empty")
+	}
+	if !strings.HasPrefix(msg.ConnectionId, "connection") {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "connection id must begin with 'connection'")
+	}
+	// ibc denom cannot be empty and must begin with "ibc"
+	if msg.IbcDenom == "" {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "ibc denom cannot be empty")
+	}
+	if !strings.HasPrefix(msg.IbcDenom, "ibc") {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "ibc denom must begin with 'ibc'")
+	}
+	// transfer channel id cannot be empty and must begin with "transfer"
+	if msg.TransferChannelId == "" {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "transfer channel id cannot be empty")
+	}
+	if !strings.HasPrefix(msg.TransferChannelId, "channel") {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "transfer channel id must begin with 'channel'")
+	}
+	// unbonding frequency must be positive nonzero
+	if msg.UnbondingFrequency < 1 {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "unbonding frequency must be greater than zero")
+	}
+
 	return nil
 }

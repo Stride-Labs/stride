@@ -48,5 +48,9 @@ func (msg *MsgChangeValidatorWeight) ValidateBasic() error {
 	if err := utils.ValidateAdminAddress(msg.Creator); err != nil {
 		return err
 	}
+	// validate new weight
+	if msg.Weight < 0 {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "new validator weight must be positive")
+	}
 	return nil
 }

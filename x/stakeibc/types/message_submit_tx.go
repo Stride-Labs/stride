@@ -2,7 +2,7 @@ package types
 
 import (
 	fmt "fmt"
-
+	"strings"
 	"github.com/Stride-Labs/stride/utils"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -90,6 +90,10 @@ func (msg *MsgSubmitTx) ValidateBasic() error {
 	_, err := sdk.AccAddressFromBech32(msg.Owner)
 	if err != nil {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "invalid owner address")
+	}
+	// connectionid should not be empty and should begin with "connection"
+	if msg.ConnectionId == "" || !strings.HasPrefix(msg.ConnectionId, "connection") {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "invalid connection id (can't be empty and must begin with connection)")
 	}
 	if err := utils.ValidateAdminAddress(msg.Owner); err != nil {
 		return err
