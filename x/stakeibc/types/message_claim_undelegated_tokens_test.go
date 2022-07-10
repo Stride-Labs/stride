@@ -1,6 +1,7 @@
 package types
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/Stride-Labs/stride/testutil/sample"
@@ -9,6 +10,7 @@ import (
 )
 
 func TestMsgClaimUndelegatedTokens_ValidateBasic(t *testing.T) {
+	fmt.Println(sample.AccAddress())
 	tests := []struct {
 		name string
 		msg  MsgClaimUndelegatedTokens
@@ -18,14 +20,12 @@ func TestMsgClaimUndelegatedTokens_ValidateBasic(t *testing.T) {
 			name: "invalid address",
 			msg: MsgClaimUndelegatedTokens{
 				Creator: "invalid_address",
-				MaxClaims: 1,
 			},
 			err: sdkerrors.ErrInvalidAddress,
 		}, {
 			name: "valid address",
 			msg: MsgClaimUndelegatedTokens{
 				Creator: sample.AccAddress(),
-				MaxClaims: 1,
 			},
 		},
 	}
