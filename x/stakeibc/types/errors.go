@@ -24,4 +24,5 @@ var (
 	ErrValidatorDelegationChg = sdkerrors.Register(ModuleName, 1512, "can't change delegation on validator")
 	ErrAcctNotScopedForFunc   = sdkerrors.Register(ModuleName, 1513, "this account can't call this function")
 	ErrInsufficientFunds      = sdkerrors.Register(ModuleName, 1514, "balance is insufficient")
+	ErrInvalidUserRedemptionRecord      = sdkerrors.Register(ModuleName, 1515, "user redemption record error")
 )
