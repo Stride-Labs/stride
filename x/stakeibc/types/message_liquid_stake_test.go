@@ -67,15 +67,6 @@ func TestMsgLiquidStake_ValidateBasic(t *testing.T) {
 			},
 			err: ErrRequiredFieldEmpty,
 		},
-		{
-			name: "host denom for unregistered host zone",
-			msg: MsgLiquidStake{
-				Creator: sample.AccAddress(),
-				Amount: 1,
-				HostDenom: "invalid_host_denom",
-			},
-			err: ErrInvalidHostZone,
-		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
