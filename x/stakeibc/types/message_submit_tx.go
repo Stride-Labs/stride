@@ -91,7 +91,7 @@ func (msg *MsgSubmitTx) ValidateBasic() error {
 	if err != nil {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "invalid owner address")
 	}
-	if err := utils.ValidateWhitelistedAddress(msg.Owner); err != nil {
+	if err := utils.ValidateAdminAddress(msg.Owner); err != nil {
 		return err
 	}
 	return nil
