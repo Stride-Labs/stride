@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/Stride-Labs/stride/utils"
 	recordstypes "github.com/Stride-Labs/stride/x/records/types"
 
 	"github.com/Stride-Labs/stride/x/stakeibc/types"
@@ -12,8 +11,6 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	bankTypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 )
-
-var min = utils.Min
 
 func (k msgServer) ClaimUndelegatedTokens(goCtx context.Context, msg *types.MsgClaimUndelegatedTokens) (*types.MsgClaimUndelegatedTokensResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
