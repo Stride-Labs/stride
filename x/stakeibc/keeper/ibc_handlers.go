@@ -284,7 +284,7 @@ func (k *Keeper) HandleSend(ctx sdk.Context, msg sdk.Msg, sequence string) error
 		pendingClaims, found := k.GetPendingClaims(ctx, sequence)
 		if !found {
 			k.Logger(ctx).Error("failed to find pending claim")
-			return sdkerrors.Wrapf(types.ErrRecordNotFound, "no pending claim found for sequence (%d)", sequence)
+			return sdkerrors.Wrapf(types.ErrRecordNotFound, "no pending claim found for sequence (%s)", sequence)
 		}
 		userRedemptionRecordKey, err := k.GetUserRedemptionRecordKeyFromPendingClaims(ctx, pendingClaims)
 		if err != nil {
