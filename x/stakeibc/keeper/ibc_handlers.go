@@ -24,6 +24,7 @@ import (
 // TODO(TEST-33): Scope out what to store on different acks (by function call, success/failure)
 func (k Keeper) HandleAcknowledgement(ctx sdk.Context, modulePacket channeltypes.Packet, acknowledgement []byte) error {
 	ack := channeltypes.Acknowledgement_Result{}
+	packetSequenceKey := fmt.Sprint(modulePacket.Sequence)
 	var eventType string
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
@@ -35,6 +36,23 @@ func (k Keeper) HandleAcknowledgement(ctx sdk.Context, modulePacket channeltypes
 	err := json.Unmarshal(acknowledgement, &ack)
 	if err != nil {
 		ackErr := channeltypes.Acknowledgement_Error{}
+		// Clean up any pending claims
+		pendingClaims, found := k.GetPendingClaims(ctx, packetSequenceKey)
+		if found {
+			k.RemovePendingClaims(ctx, packetSequenceKey)
+			userRedemptionRecordKey, err := k.GetUserRedemptionRecordKeyFromPendingClaims(ctx, pendingClaims)
+			if err != nil {
+				k.Logger(ctx).Error("failed to get user redemption record key from pending claim")
+				return err
+			}
+			record, found := k.RecordsKeeper.GetUserRedemptionRecord(ctx, userRedemptionRecordKey)
+			if !found {
+				k.Logger(ctx).Error("failed to get user redemption record from key %s", userRedemptionRecordKey)
+				return err
+			}
+			record.IsClaimable = true
+			k.RecordsKeeper.SetUserRedemptionRecord(ctx, record)
+		}
 		err := json.Unmarshal(acknowledgement, &ackErr)
 		if err != nil {
 			ctx.EventManager().EmitEvent(
@@ -139,7 +157,7 @@ func (k Keeper) HandleAcknowledgement(ctx sdk.Context, modulePacket channeltypes
 			k.Logger(ctx).Info("Sent", "response", response)
 
 			// we should update delegation records here.
-			if err := k.HandleSend(ctx, src); err != nil {
+			if err := k.HandleSend(ctx, src, packetSequenceKey); err != nil {
 				return err
 			}
 			continue
@@ -170,7 +188,7 @@ func (k Keeper) HandleAcknowledgement(ctx sdk.Context, modulePacket channeltypes
 	return nil
 }
 
-func (k *Keeper) HandleSend(ctx sdk.Context, msg sdk.Msg) error {
+func (k *Keeper) HandleSend(ctx sdk.Context, msg sdk.Msg, sequence string) error {
 	// first, type assertion. we should have banktypes.MsgSend
 	sendMsg, ok := msg.(*banktypes.MsgSend)
 	if !ok {
@@ -256,12 +274,34 @@ func (k *Keeper) HandleSend(ctx sdk.Context, msg sdk.Msg) error {
 				}
 				userRedemptionRecord.IsClaimable = true
 				k.RecordsKeeper.SetUserRedemptionRecord(ctx, userRedemptionRecord)
-				// Append the UserRedemptionRecords to the host zone's claimableRecordIds
-				zone.ClaimableRecordIds = append(zone.ClaimableRecordIds, userRedemptionRecord.Id)
 				k.SetHostZone(ctx, *zone)
 			}
 			k.RecordsKeeper.SetEpochUnbondingRecord(ctx, epochUnbondingRecord)
 		}
+	}  else if sendMsg.FromAddress == redemptionAddress {
+		k.Logger(ctx).Error("ACK - sendMsg.FromAddress == redemptionAddress")
+		// fetch the record from the packet sequence number, then delete the UserRedemptionRecord and the sequence mapping
+		pendingClaims, found := k.GetPendingClaims(ctx, sequence)
+		if !found {
+			k.Logger(ctx).Error("failed to find pending claim")
+			return sdkerrors.Wrapf(types.ErrRecordNotFound, "no pending claim found for sequence (%d)", sequence)
+		}
+		userRedemptionRecordKey, err := k.GetUserRedemptionRecordKeyFromPendingClaims(ctx, pendingClaims)
+		if err != nil {
+			k.Logger(ctx).Error("failed to get user redemption record key from pending claim")
+			return err
+		}
+		_, found = k.RecordsKeeper.GetUserRedemptionRecord(ctx, userRedemptionRecordKey)
+		if !found {
+			errMsg := fmt.Sprintf("User redemption record %s not found on host zone", userRedemptionRecordKey)
+			k.Logger(ctx).Error(errMsg)
+			return sdkerrors.Wrapf(types.ErrInvalidUserRedemptionRecord, "could not get user redemption record: %s", userRedemptionRecordKey)
+		}
+		k.RecordsKeeper.RemoveUserRedemptionRecord(ctx, userRedemptionRecordKey)
+		k.RemovePendingClaims(ctx, sequence)
+	} else {
+		k.Logger(ctx).Error("ACK - sendMsg.FromAddress != withdrawalAddress && sendMsg.FromAddress != delegationAddress && sendMsg.FromAddress != redemptionAddress")
+
 	}
 
 	return nil

@@ -4,10 +4,11 @@ import (
 	"fmt"
 	"strconv"
 
-	"strings"
 	"errors"
-	"github.com/cosmos/cosmos-sdk/types/bech32"
+	"strings"
+
 	"github.com/cosmos/cosmos-sdk/types/address"
+	"github.com/cosmos/cosmos-sdk/types/bech32"
 
 	recordstypes "github.com/Stride-Labs/stride/x/records/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -38,6 +39,12 @@ func ValidateAdminAddress(address string) error {
 	return nil
 }
 
+func Min(a int, b int) int {
+	if a < b {
+		return a
+	}
+	return b
+}
 
 //==============================  ADDRESS VERIFICATION UTILS  ================================ 
 // ref: https://github.com/cosmos/cosmos-sdk/blob/b75c2ebcfab1a6b535723f1ac2889a2fc2509520/types/address.go#L177

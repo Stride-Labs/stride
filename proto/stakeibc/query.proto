@@ -11,6 +11,7 @@ import "stakeibc/min_validator_requirements.proto";
 import "stakeibc/ica_account.proto";
 import "stakeibc/host_zone.proto";
 import "stakeibc/epoch_tracker.proto";
+import "stakeibc/genesis.proto";
 // this line is used by starport scaffolding # 1
 
 option go_package = "github.com/Stride-Labs/stride/x/stakeibc/types";
@@ -62,6 +63,16 @@ service Query {
 	// Queries a list of EpochTracker items.
 	rpc EpochTrackerAll(QueryAllEpochTrackerRequest) returns (QueryAllEpochTrackerResponse) {
 		option (google.api.http).get = "/Stride-Labs/stride/stakeibc/epoch_tracker";
+	}
+
+// Queries a PendingClaims by index.
+	rpc PendingClaims(QueryGetPendingClaimsRequest) returns (QueryGetPendingClaimsResponse) {
+		option (google.api.http).get = "/Stride-Labs/stride/stakeibc/pending_claims/{sequence}";
+	}
+
+	// Queries a list of PendingClaims items.
+	rpc PendingClaimsAll(QueryAllPendingClaimsRequest) returns (QueryAllPendingClaimsResponse) {
+		option (google.api.http).get = "/Stride-Labs/stride/stakeibc/pending_claims";
 	}
 
 // this line is used by starport scaffolding # 2
@@ -148,6 +159,24 @@ message QueryAllEpochTrackerRequest {
 
 message QueryAllEpochTrackerResponse {
 	repeated EpochTracker epochTracker = 1 [(gogoproto.nullable) = false];
+	cosmos.base.query.v1beta1.PageResponse pagination = 2;
+}
+
+message QueryGetPendingClaimsRequest {
+	  string sequence = 1;
+
+}
+
+message QueryGetPendingClaimsResponse {
+	PendingClaims pendingClaims = 1 [(gogoproto.nullable) = false];
+}
+
+message QueryAllPendingClaimsRequest {
+	cosmos.base.query.v1beta1.PageRequest pagination = 1;
+}
+
+message QueryAllPendingClaimsResponse {
+	repeated PendingClaims pendingClaims = 1 [(gogoproto.nullable) = false];
 	cosmos.base.query.v1beta1.PageResponse pagination = 2;
 }
 
