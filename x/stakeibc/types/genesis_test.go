@@ -23,36 +23,19 @@ func TestGenesisState_Validate(t *testing.T) {
 			genState: &types.GenesisState{
 				PortId: types.PortID,
 				ICAAccount: &types.ICAAccount{
-					Address:            "79",
-					UndelegatedBalance: 2,
-					DelegatedBalance:   8,
+					Address: "79",
 				},
 				HostZoneList: []types.HostZone{
 					{
-						Id: 0,
+						ChainId: "0",
 					},
 					{
-						Id: 1,
+						ChainId: "1",
 					},
 				},
 				HostZoneCount: 2,
-			genState: &types.GenesisState{
-					{
-						Id: 1,
-					},
-				},
-				HostZoneCount: 0,
 			},
-			PendingClaimsList: []types.PendingClaims{
-	{
-		Sequence: "0",
-},
-	{
-		Sequence: "1",
-},
-},
-// this line is used by starport scaffolding # types/genesis/validField
-			valid: false,
+			valid: true,
 		},
 		{
 	desc:     "duplicated pendingClaims",

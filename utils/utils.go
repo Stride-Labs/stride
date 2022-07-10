@@ -14,8 +14,9 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
-var WHITELIST = map[string]bool{
+var ADMINS = map[string]bool{
 	"stride1uk4ze0x4nvh4fk0xm4jdud58eqn4yxhrt52vv7": true,
+	"stride159atdlc3ksl50g0659w5tq42wwer334ajl7xnq": true,
 }
 
 func FilterDepositRecords(arr []recordstypes.DepositRecord, condition func(recordstypes.DepositRecord) bool) (ret []recordstypes.DepositRecord) {
@@ -31,8 +32,8 @@ func Int64ToCoinString(amount int64, denom string) string {
 	return strconv.FormatInt(amount, 10) + denom
 }
 
-func ValidateWhitelistedAddress(address string) error {
-	if !WHITELIST[address] {
+func ValidateAdminAddress(address string) error {
+	if !ADMINS[address] {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, fmt.Sprintf("invalid creator address (%s)", address))
 	}
 	return nil

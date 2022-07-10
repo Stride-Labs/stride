@@ -21,10 +21,11 @@ func TestMsgChangeValidatorWeight_ValidateBasic(t *testing.T) {
 			},
 			err: sdkerrors.ErrInvalidAddress,
 		}, {
-			name: "valid address",
+			name: "valid address but not whitelisted",
 			msg: MsgChangeValidatorWeight{
 				Creator: sample.AccAddress(),
 			},
+			err: sdkerrors.ErrInvalidAddress,
 		},
 	}
 	for _, tt := range tests {

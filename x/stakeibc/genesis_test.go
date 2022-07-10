@@ -15,28 +15,12 @@ func TestGenesis(t *testing.T) {
 		Params: types.DefaultParams(),
 		PortId: types.PortID,
 		ICAAccount: &types.ICAAccount{
-			Address:            "78",
-			UndelegatedBalance: 49,
-			DelegatedBalance:   80,
+			Address: "78",
 		},
-		HostZoneList: []types.HostZone{
-			{
-				Id: 0,
-			},
-			{
-				Id: 1,
-			},
+		EpochTrackerList: []types.EpochTracker{
+			{EpochIdentifier: "stride_epoch"},
 		},
-		HostZoneCount: 2,
-		PendingClaimsList: []types.PendingClaims{
-		{
-			Sequence: "0",
-},
-		{
-			Sequence: "1",
-},
-	},
-	// this line is used by starport scaffolding # genesis/test/state
+		// this line is used by starport scaffolding # genesis/test/state
 	}
 
 	k, ctx := keepertest.StakeibcKeeper(t)
@@ -48,10 +32,8 @@ func TestGenesis(t *testing.T) {
 	nullify.Fill(got)
 
 	require.Equal(t, genesisState.PortId, got.PortId)
-
 	require.Equal(t, genesisState.ICAAccount, got.ICAAccount)
-	require.ElementsMatch(t, genesisState.HostZoneList, got.HostZoneList)
-	require.Equal(t, genesisState.HostZoneCount, got.HostZoneCount)
-	require.ElementsMatch(t, genesisState.PendingClaimsList, got.PendingClaimsList)
-// this line is used by starport scaffolding # genesis/test/assert
+	require.Equal(t, genesisState.EpochTrackerList, got.EpochTrackerList)
+	require.Equal(t, genesisState.Params, got.Params)
+	// this line is used by starport scaffolding # genesis/test/assert
 }

@@ -99,8 +99,16 @@ An example of a PR using this strategy can be found [here](https://github.com/St
 Opening a pull request (PR) will automatically create Summary and Test plan fields in the description. In the summary, add a high-level summary of what the change entails. For pull requests that scaffold ignite code, include the ignite scaffold commands run.
 ###### Summary
 Add summary of the pull request here (*E.g. This pull request adds XYZ feature to the x/ABC module and associated unit tests.*)
-###### Test plan
-Add test plan here (*E.g. Test feature XYZ by executing unit tests D and E, with `sh scripts/tests/unit-test-D.sh` and `sh scripts/tests/unit-test-E.sh`*)
+###### Unit tests
+
+To run unit tests for the whole project, execute:
+`make unit-test`
+To run unit tests for a particular module (e.g. the stakeibc module), execute:
+`make unit-test path=stakeibc`
+To run unit tests for a particular package (e.g. the stakeibc module), execute:
+`make unit-test path=stakeibc/types`
+To inspect unit test coverage, execute:
+`make test-cover`
 
 #### Configure
 
