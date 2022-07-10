@@ -17,6 +17,7 @@ import (
 var ADMINS = map[string]bool{
 	"stride1uk4ze0x4nvh4fk0xm4jdud58eqn4yxhrt52vv7": true,
 	"stride159atdlc3ksl50g0659w5tq42wwer334ajl7xnq": true,
+	"stride1uk4ze0x4nvh4fk0xm4jdud58eqn4yxhrt52vv7": true,
 }
 
 func FilterDepositRecords(arr []recordstypes.DepositRecord, condition func(recordstypes.DepositRecord) bool) (ret []recordstypes.DepositRecord) {

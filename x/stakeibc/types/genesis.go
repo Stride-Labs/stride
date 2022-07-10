@@ -13,7 +13,6 @@ const DefaultIndex uint64 = 1
 func DefaultGenesis() *GenesisState {
 	return &GenesisState{
 		ICAAccount:       nil,
-		HostZoneList:     []HostZone{},
 		EpochTrackerList: []EpochTracker{},
 		PendingClaimsList: []PendingClaims{},
 // this line is used by starport scaffolding # genesis/types/default

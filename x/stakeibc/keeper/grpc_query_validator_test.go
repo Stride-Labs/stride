@@ -16,17 +16,30 @@ import (
 func TestValidatorQuery(t *testing.T) {
 	keeper, ctx := keepertest.StakeibcKeeper(t)
 	wctx := sdk.WrapSDKContext(ctx)
-	item := createTestValidator(keeper, ctx)
+
+	var validatorsByHostZone = make(map[string][]*types.Validator)
+	validators := []*types.Validator{}
+	nullify.Fill(&validators)
+
+	chainId := "GAIA"
+	hostZone := &types.HostZone{
+		ChainId:    chainId,
+		Validators: validators,
+	}
+	nullify.Fill(&hostZone)
+	validatorsByHostZone[chainId] = validators
+	keeper.SetHostZone(ctx, *hostZone)
+
 	for _, tc := range []struct {
 		desc     string
-		request  *types.QueryGetValidatorRequest
-		response *types.QueryGetValidatorResponse
+		request  *types.QueryGetValidatorsRequest
+		response *types.QueryGetValidatorsResponse
 		err      error
 	}{
 		{
 			desc:     "First",
-			request:  &types.QueryGetValidatorRequest{},
-			response: &types.QueryGetValidatorResponse{Validator: item},
+			request:  &types.QueryGetValidatorsRequest{ChainId: chainId},
+			response: &types.QueryGetValidatorsResponse{Validators: validators},
 		},
 		{
 			desc: "InvalidRequest",
@@ -34,7 +47,7 @@ func TestValidatorQuery(t *testing.T) {
 		},
 	} {
 		t.Run(tc.desc, func(t *testing.T) {
-			response, err := keeper.Validator(wctx, tc.request)
+			response, err := keeper.Validators(wctx, tc.request)
 			if tc.err != nil {
 				require.ErrorIs(t, err, tc.err)
 			} else {

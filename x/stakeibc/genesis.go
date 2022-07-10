@@ -53,8 +53,6 @@ func ExportGenesis(ctx sdk.Context, k keeper.Keeper) *types.GenesisState {
 	if found {
 		genesis.ICAAccount = &iCAAccount
 	}
-	genesis.HostZoneList = k.GetAllHostZone(ctx)
-	genesis.HostZoneCount = k.GetHostZoneCount(ctx)
 	genesis.EpochTrackerList = k.GetAllEpochTracker(ctx)
 	genesis.PendingClaimsList = k.GetAllPendingClaims(ctx)
 // this line is used by starport scaffolding # genesis/module/export

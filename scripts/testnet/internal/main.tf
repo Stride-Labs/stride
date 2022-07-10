@@ -72,6 +72,7 @@ resource "google_compute_instance" "nodes" {
   metadata = {
     enable-oslogin            = "TRUE"
     gce-container-declaration = module.images[count.index].metadata_value
+    google-logging-enabled    = "true"
   }
   boot_disk {
     initialize_params {

@@ -12,11 +12,21 @@ import (
 
 	keepertest "github.com/Stride-Labs/stride/testutil/keeper"
 	"github.com/Stride-Labs/stride/testutil/nullify"
+	"github.com/Stride-Labs/stride/x/records/keeper"
 	"github.com/Stride-Labs/stride/x/records/types"
 )
 
+func createNDepositRecord(keeper *keeper.Keeper, ctx sdk.Context, n int) []types.DepositRecord {
+	items := make([]types.DepositRecord, n)
+	for i := range items {
+		items[i].Id = uint64(i)
+		keeper.AppendDepositRecord(ctx, items[i])
+	}
+	return items
+}
+
 func TestDepositRecordQuerySingle(t *testing.T) {
-	keeper, ctx := keepertest.StakeibcKeeper(t)
+	keeper, ctx := keepertest.RecordsKeeper(t)
 	wctx := sdk.WrapSDKContext(ctx)
 	msgs := createNDepositRecord(keeper, ctx, 2)
 	for _, tc := range []struct {
@@ -61,7 +71,7 @@ func TestDepositRecordQuerySingle(t *testing.T) {
 }
 
 func TestDepositRecordQueryPaginated(t *testing.T) {
-	keeper, ctx := keepertest.StakeibcKeeper(t)
+	keeper, ctx := keepertest.RecordsKeeper(t)
 	wctx := sdk.WrapSDKContext(ctx)
 	msgs := createNDepositRecord(keeper, ctx, 5)
 
