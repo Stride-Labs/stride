@@ -35,6 +35,9 @@ test-cover:
 test-integration:
 	sh scripts-local/tests/run_all_tests.sh
 
+test-integration-docker:
+	sh scripts/tests/run_all_tests.sh
+
 ###############################################################################
 ###                                DockerNet                                ###
 ###############################################################################

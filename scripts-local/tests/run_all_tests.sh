@@ -4,4 +4,4 @@ BASE_SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && p
 run_bats=$BASE_SCRIPT_DIR/bats/bin/bats
 
 # run test files
-$run_bats $BASE_SCRIPT_DIR/basic_tests.bats
+$run_bats $BASE_SCRIPT_DIR/integration_tests.bats
