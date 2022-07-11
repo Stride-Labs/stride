@@ -95,7 +95,7 @@ func (msg *MsgSubmitTx) ValidateBasic() error {
 	if msg.ConnectionId == "" || !strings.HasPrefix(msg.ConnectionId, "connection") {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "invalid connection id (can't be empty and must begin with connection)")
 	}
-	if err := utils.ValidateWhitelistedAddress(msg.Owner); err != nil {
+	if err := utils.ValidateAdminAddress(msg.Owner); err != nil {
 		return err
 	}
 	return nil

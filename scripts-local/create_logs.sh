@@ -49,6 +49,11 @@ while true; do
     $STRIDE_CMD q records list-deposit-record  >> $TEMP_LOGS_DIR/accounts.log
     printf '\n%s\n' "LIST-EPOCH-UNBONDING-RECORDS" >>$TEMP_LOGS_DIR/accounts.log
     $STRIDE_CMD q records list-epoch-unbonding-record  >> $TEMP_LOGS_DIR/accounts.log
+
+    printf '\n%s\n' "LIST-USER-REDEMPTION-RECORDS" >>$TEMP_LOGS_DIR/accounts.log
+    $STRIDE_CMD q records list-user-redemption-record >> $TEMP_LOGS_DIR/accounts.log
+    # printf '\n%s\n' "LIST-PENDING-CLAIMS" >>$TEMP_LOGS_DIR/accounts.log
+    # $STRIDE_CMD q records list-user-redemption-record >> $TEMP_LOGS_DIR/accounts.log
     
     mv $TEMP_LOGS_DIR/*.log $LOGS_DIR
     sleep 3

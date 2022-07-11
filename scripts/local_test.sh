@@ -4,7 +4,7 @@ ignite chain init --home ~/.stride/
 jq '.app_state.epochs.epochs[2].duration = $newVal' --arg newVal "3s" $main_config > json.tmp && mv json.tmp $main_config
 strided start --home ~/.stride/ 
 
-# strided tx stakeibc register-host-zone connection-0 ATOM stATOM --chain-id stride --home ~/.stride/ --from bob --gas 500000 -y
+# strided tx stakeibc register-host-zone connection-0 ATOM stATOM "cosmos" --chain-id stride --home ~/.stride/ --from bob --gas 500000 -y
 
 
 # BOBADDR=$(strided keys show bob -a)

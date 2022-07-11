@@ -48,7 +48,7 @@ func (msg *MsgAddValidator) ValidateBasic() error {
 	if err != nil {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid creator address (%s)", err)
 	}
-	if err := utils.ValidateWhitelistedAddress(msg.Creator); err != nil {
+	if err := utils.ValidateAdminAddress(msg.Creator); err != nil {
 		return err
 	}
 	// name validation
@@ -60,7 +60,7 @@ func (msg *MsgAddValidator) ValidateBasic() error {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "commission must be between 0 and 100")
 	}
 	if msg.Commission > 10 {
-		fmt.Sprintf("WARNING: commission is %d (greater than 10%)", msg.Commission)
+		fmt.Sprintf("WARNING: commission is %d (greater than 10pct)", msg.Commission)
 	}
 	// weight validation
 	if msg.Weight < 0 {
