@@ -13,7 +13,8 @@ STRD_DENOM='ustrd'
 STATOM_DENOM="stuatom"
 
 # CHAIN PARAMS
-BLOCK_TIME='5s'
+BLOCK_TIME_SECONDS=5
+BLOCK_TIME="${BLOCK_TIME_SECONDS}s"
 # NOTE: If you add new epochs, these indexes will need to be updated
 DAY_EPOCH_INDEX=1
 DAY_EPOCH_LEN="60s"
@@ -86,9 +87,9 @@ CSLEEP() {
   printf "\n"
 }
 
-SLEEP_BLOCKS() {
+BLOCK_SLEEP() {
   for i in $(seq $1); do
-    sleep $BLOCK_TIME
+    sleep $BLOCK_TIME_SECONDS
     printf "\r\t$(($1 - $i)) blocks left..."
   done
   printf "\n"
