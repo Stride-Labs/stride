@@ -29,7 +29,7 @@ func (k Keeper) RedeemStake(goCtx context.Context, msg *types.MsgRedeemStake) (*
 
 	// ensure the recipient address is a valid bech32 address on the hostZone
 	// TODO(TEST-112) do we need to check the hostZone before this check? Would need access to keeper 
-	_, err = utils.AccAddressFromBech32(msg.Receiver, hostZone.Bech32Prefix)
+	_, err = utils.AccAddressFromBech32WithPrefix(msg.Receiver, hostZone.Bech32Prefix)
 	if err != nil {
 		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid creator address (%s)", err)
 	}

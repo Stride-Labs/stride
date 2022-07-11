@@ -102,7 +102,7 @@ func VerifyAddressFormat(bz []byte) error {
 type AccAddress []byte
 
 // AccAddressFromBech32 creates an AccAddress from a Bech32 string.
-func AccAddressFromBech32(address string, bech32prefix string) (addr AccAddress, err error) {
+func AccAddressFromBech32WithPrefix(address string, bech32prefix string) (addr AccAddress, err error) {
 	if len(strings.TrimSpace(address)) == 0 {
 		return AccAddress{}, errors.New("empty address string is not allowed")
 	}

@@ -50,7 +50,7 @@ func (msg *MsgClaimUndelegatedTokens) ValidateBasic() error {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "epoch must be positive")
 	}
 	// sender must be a valid stride address
-	_, err = utils.AccAddressFromBech32(msg.Sender, "stride")
+	_, err = utils.AccAddressFromBech32WithPrefix(msg.Sender, "stride")
 	if err != nil {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid sender address (%s)", err)
 	}

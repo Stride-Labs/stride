@@ -388,7 +388,7 @@ func (m *MsgSubmitTxResponse) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_MsgSubmitTxResponse proto.InternalMessageInfo
 
-// next: 13
+// next id: 13
 type MsgRegisterHostZone struct {
 	ConnectionId       string `protobuf:"bytes,2,opt,name=connection_id,json=connectionId,proto3" json:"connection_id,omitempty" yaml:"connection_id"`
 	Bech32Prefix       string `protobuf:"bytes,12,opt,name=bech32prefix,proto3" json:"bech32prefix,omitempty"`
