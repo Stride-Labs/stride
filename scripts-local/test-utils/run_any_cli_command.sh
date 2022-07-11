@@ -4,4 +4,4 @@ SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 source ${SCRIPT_DIR}/../account_vars.sh
 
 
-$STRIDE_CMD q stakeibc show-host-zone GAIA
+$STRIDE_CMD q epochs seconds-remaining day
