@@ -39,65 +39,74 @@ setup() {
   assert_equal $ICQ_STRIDE_ADDR "stride12vfkpj7lpqg0n4j68rr5kyffc6wu55dzqewda4"
 }
 
-@test "ibc transfer updates all balances" {
-  # get initial balances
-  str1_balance=$($STRIDE_CMD q bank balances $STRIDE_ADDRESS --denom ustrd | GETBAL)
-  gaia1_balance=$($GAIA_CMD q bank balances $GAIA_ADDRESS --denom $IBC_STRD_DENOM | GETBAL)
-  str1_balance_atom=$($STRIDE_CMD q bank balances $STRIDE_ADDRESS --denom $IBC_ATOM_DENOM | GETBAL)
-  gaia1_balance_atom=$($GAIA_CMD q bank balances $GAIA_ADDRESS --denom uatom | GETBAL)
-  # do IBC transfer
-  $STRIDE_CMD tx ibc-transfer transfer transfer channel-0 $GAIA_ADDRESS 10000ustrd --from val1 --chain-id STRIDE -y --keyring-backend test
-  $GAIA_CMD tx ibc-transfer transfer transfer channel-0 $STRIDE_ADDRESS 10000uatom --from gval1 --chain-id GAIA -y --keyring-backend test
-  sleep 30
-  # get new balances
-  str1_balance_new=$($STRIDE_CMD q bank balances $STRIDE_ADDRESS --denom ustrd | GETBAL)
-  gaia1_balance_new=$($GAIA_CMD q bank balances $GAIA_ADDRESS --denom $IBC_STRD_DENOM | GETBAL)
-  str1_balance_atom_new=$($STRIDE_CMD q bank balances $STRIDE_ADDRESS --denom $IBC_ATOM_DENOM | GETBAL)
-  gaia1_balance_atom_new=$($GAIA_CMD q bank balances $GAIA_ADDRESS --denom uatom | GETBAL)
-  # get all STRD balance diffs
-  str1_diff=$(($str1_balance - $str1_balance_new))
-  gaia1_diff=$(($gaia1_balance - $gaia1_balance_new))
-  assert_equal "$str1_diff" '10000'
-  assert_equal "$gaia1_diff" '-10000'
-  # get all ATOM_DENOM balance diffs
-  str1_diff=$(($str1_balance_atom - $str1_balance_atom_new))
-  gaia1_diff=$(($gaia1_balance_atom - $gaia1_balance_atom_new))
-  assert_equal "$str1_diff" '-10000'
-  assert_equal "$gaia1_diff" '10000'
-}
+# @test "ibc transfer updates all balances" {
+#   # get initial balances
+#   str1_balance=$($STRIDE_CMD q bank balances $STRIDE_ADDRESS --denom ustrd | GETBAL)
+#   gaia1_balance=$($GAIA_CMD q bank balances $GAIA_ADDRESS --denom $IBC_STRD_DENOM | GETBAL)
+#   str1_balance_atom=$($STRIDE_CMD q bank balances $STRIDE_ADDRESS --denom $IBC_ATOM_DENOM | GETBAL)
+#   gaia1_balance_atom=$($GAIA_CMD q bank balances $GAIA_ADDRESS --denom uatom | GETBAL)
+#   # do IBC transfer
+#   $STRIDE_CMD tx ibc-transfer transfer transfer channel-0 $GAIA_ADDRESS 10000ustrd --from val1 --chain-id STRIDE -y --keyring-backend test
+#   $GAIA_CMD tx ibc-transfer transfer transfer channel-0 $STRIDE_ADDRESS 10000uatom --from gval1 --chain-id GAIA -y --keyring-backend test
+#   sleep 30
+#   # get new balances
+#   str1_balance_new=$($STRIDE_CMD q bank balances $STRIDE_ADDRESS --denom ustrd | GETBAL)
+#   gaia1_balance_new=$($GAIA_CMD q bank balances $GAIA_ADDRESS --denom $IBC_STRD_DENOM | GETBAL)
+#   str1_balance_atom_new=$($STRIDE_CMD q bank balances $STRIDE_ADDRESS --denom $IBC_ATOM_DENOM | GETBAL)
+#   gaia1_balance_atom_new=$($GAIA_CMD q bank balances $GAIA_ADDRESS --denom uatom | GETBAL)
+#   # get all STRD balance diffs
+#   str1_diff=$(($str1_balance - $str1_balance_new))
+#   gaia1_diff=$(($gaia1_balance - $gaia1_balance_new))
+#   assert_equal "$str1_diff" '10000'
+#   assert_equal "$gaia1_diff" '-10000'
+#   # get all ATOM_DENOM balance diffs
+#   str1_diff=$(($str1_balance_atom - $str1_balance_atom_new))
+#   gaia1_diff=$(($gaia1_balance_atom - $gaia1_balance_atom_new))
+#   assert_equal "$str1_diff" '-10000'
+#   assert_equal "$gaia1_diff" '10000'
+# }
 
-@test "liquid stake mints stATOM" {
-  # get module address 
-  MODADDR=$($STRIDE_CMD q stakeibc module-address stakeibc | awk '{print $NF}') 
-  # get initial balances
-  mod_balance_atom=$($STRIDE_CMD q bank balances $MODADDR --denom $IBC_ATOM_DENOM | GETBAL)
-  str1_balance_atom=$($STRIDE_CMD q bank balances $STRIDE_ADDRESS --denom $IBC_ATOM_DENOM | GETBAL)
-  str1_balance_statom=$($STRIDE_CMD q bank balances $STRIDE_ADDRESS --denom $STATOM_DENOM | GETBAL)
-  # liquid stake
-  $STRIDE_CMD tx stakeibc liquid-stake 1000 uatom --keyring-backend test --from val1 -y --chain-id $STRIDE_CHAIN
-  BLOCK_SLEEP 1
-  # make sure Module Acct received ATOM_DENOM - remove if IBC transfer is automated
-  # mod_balance_atom_new=$($STRIDE_CMD q bank balances $MODADDR --denom $IBC_ATOM_DENOM | GETBAL)
-  # mod_atom_diff=$(($mod_balance_atom_new - $mod_balance_atom))
-  # assert_equal "$mod_atom_diff" '1000'
-  # make sure IBC_ATOM_DENOM went down 
-  str1_balance_atom_new=$($STRIDE_CMD q bank balances $STRIDE_ADDRESS --denom $IBC_ATOM_DENOM | GETBAL)
-  str1_atom_diff=$(($str1_balance_atom - $str1_balance_atom_new))
-  assert_equal "$str1_atom_diff" '1000'
-  # make sure STATOM went up
-  str1_balance_statom_new=$($STRIDE_CMD q bank balances $STRIDE_ADDRESS --denom $STATOM_DENOM | GETBAL)
-  str1_statom_diff=$(($str1_balance_statom_new-$str1_balance_statom))
-  assert_equal "$str1_statom_diff" "1000"
-}
+# @test "liquid stake mints stATOM" {
+#   # get module address 
+#   MODADDR=$($STRIDE_CMD q stakeibc module-address stakeibc | awk '{print $NF}') 
+#   # get initial balances
+#   mod_balance_atom=$($STRIDE_CMD q bank balances $MODADDR --denom $IBC_ATOM_DENOM | GETBAL)
+#   str1_balance_atom=$($STRIDE_CMD q bank balances $STRIDE_ADDRESS --denom $IBC_ATOM_DENOM | GETBAL)
+#   str1_balance_statom=$($STRIDE_CMD q bank balances $STRIDE_ADDRESS --denom $STATOM_DENOM | GETBAL)
+#   # liquid stake
+#   $STRIDE_CMD tx stakeibc liquid-stake 1000 uatom --keyring-backend test --from val1 -y --chain-id $STRIDE_CHAIN
+#   BLOCK_SLEEP 1
+#   # make sure Module Acct received ATOM_DENOM - remove if IBC transfer is automated
+#   # mod_balance_atom_new=$($STRIDE_CMD q bank balances $MODADDR --denom $IBC_ATOM_DENOM | GETBAL)
+#   # mod_atom_diff=$(($mod_balance_atom_new - $mod_balance_atom))
+#   # assert_equal "$mod_atom_diff" '1000'
+#   # make sure IBC_ATOM_DENOM went down 
+#   str1_balance_atom_new=$($STRIDE_CMD q bank balances $STRIDE_ADDRESS --denom $IBC_ATOM_DENOM | GETBAL)
+#   str1_atom_diff=$(($str1_balance_atom - $str1_balance_atom_new))
+#   assert_equal "$str1_atom_diff" '1000'
+#   # make sure STATOM went up
+#   str1_balance_statom_new=$($STRIDE_CMD q bank balances $STRIDE_ADDRESS --denom $STATOM_DENOM | GETBAL)
+#   str1_statom_diff=$(($str1_balance_statom_new-$str1_balance_statom))
+#   assert_equal "$str1_statom_diff" "1000"
+# }
+
 
 # # add test to register host zone 
-# @test "host zone successfully registered" {
-#   run $STRIDE_CMD q stakeibc show-host-zone GAIA
-#   assert_line '  HostDenom: uatom'
-#   assert_line '  chainId: GAIA'
-#   assert_line '  delegationAccount:'
-#   assert_line '    address: cosmos19l6d3d7k2pel8epgcpxc9np6fsvjpaaa06nm65vagwxap0e4jezq05mmvu'
-# }
+@test "host zone successfully registered" {
+  run $STRIDE_CMD q stakeibc show-host-zone GAIA
+  assert_line '  HostDenom: uatom'
+  assert_line '  chainId: GAIA'
+  assert_line '  delegationAccount:'
+  assert_line '    address: cosmos19l6d3d7k2pel8epgcpxc9np6fsvjpaaa06nm65vagwxap0e4jezq05mmvu'
+  assert_line '  feeAccount:'
+  assert_line '    address: cosmos1x0d2ay0xs9t40ah965ey2ufucmcea39cq28r7ud56ta388pjjhwsxqugxe'
+  assert_line '  redemptionAccount:'
+  assert_line '    address: cosmos1nc4hn8s7zp62vg4ugqzuul84zhvg5q7srq00f792zzmf5kyfre6sxfwmqw'
+  assert_line '  withdrawalAccount:'
+  assert_line '    address: cosmos1lcnmjwjy2lnqged5pnrc0cstz0r88rttunla4zxv84mee30g2q3q48fm53'
+  assert_line '  unbondingFrequency: "3"'
+  assert_line '  RedemptionRate: "1.000000000000000000"'
+}
 
 # # add test to see if assets are properly being staked on host zone
 # @test "tokens staking on host zone" {
