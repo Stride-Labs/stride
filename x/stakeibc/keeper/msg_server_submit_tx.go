@@ -193,8 +193,11 @@ func (k Keeper) SubmitTxsEpoch(ctx sdk.Context, connectionId string, msgs []sdk.
 		k.Logger(ctx).Error("Failed to get epoch info for %s", epochType)
 		return 0, sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "Failed to get epoch info for %s", epochType)
 	}
-	timeoutTimestamp := uint64(epochInfo.GetCurrentEpochStartTime().Add(epochInfo.GetDuration()).UnixNano())
-	sequence, err := k.SubmitTxs(ctx, connectionId, msgs, account, timeoutTimestamp)
+	// BUFFER by 5% of the epoch length
+	BUFFER := epochInfo.GetDuration().Nanoseconds() / 20
+	nextEpochStartTime := epochInfo.GetCurrentEpochStartTime().Add(epochInfo.GetDuration())
+	timeoutNanos := nextEpochStartTime.UnixNano() - BUFFER
+	sequence, err := k.SubmitTxs(ctx, connectionId, msgs, account, uint64(timeoutNanos))
 	if err != nil {
 		return 0, err
 	}
