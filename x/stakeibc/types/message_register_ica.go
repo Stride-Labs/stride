@@ -43,7 +43,7 @@ func (msg *MsgRegisterAccount) ValidateBasic() error {
 	if err != nil {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid owner address (%s)", err)
 	}
-	if err := utils.ValidateWhitelistedAddress(msg.Owner); err != nil {
+	if err := utils.ValidateAdminAddress(msg.Owner); err != nil {
 		return err
 	}
 	return nil

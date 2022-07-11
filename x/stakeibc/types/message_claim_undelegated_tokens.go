@@ -3,17 +3,19 @@ package types
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	utils "github.com/Stride-Labs/stride/utils"
 )
 
 const TypeMsgClaimUndelegatedTokens = "claim_undelegated_tokens"
 
 var _ sdk.Msg = &MsgClaimUndelegatedTokens{}
 
-func NewMsgClaimUndelegatedTokens(creator string, hostZone string, maxClaims uint64) *MsgClaimUndelegatedTokens {
+func NewMsgClaimUndelegatedTokens(creator string, hostZone string, epoch uint64, sender string) *MsgClaimUndelegatedTokens {
 	return &MsgClaimUndelegatedTokens{
 		Creator:   creator,
-		HostZone:  hostZone,
-		MaxClaims: maxClaims,
+		HostZoneId:  hostZone,
+		Epoch: epoch,
+		Sender: sender,
 	}
 }
 
@@ -43,9 +45,14 @@ func (msg *MsgClaimUndelegatedTokens) ValidateBasic() error {
 	if err != nil {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid creator address (%s)", err)
 	}
-	// max claims must be greater than 0
-	if msg.MaxClaims <= 0 {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "max claims must be greater than 0")
+	// epoch much be greater than 0
+	if msg.Epoch < 0 {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "epoch must be positive")
+	}
+	// sender must be a valid stride address
+	_, err = utils.AccAddressFromBech32(msg.Sender, "stride")
+	if err != nil {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid sender address (%s)", err)
 	}
 	return nil
 }

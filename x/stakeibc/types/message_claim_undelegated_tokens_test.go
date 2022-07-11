@@ -18,12 +18,14 @@ func TestMsgClaimUndelegatedTokens_ValidateBasic(t *testing.T) {
 			name: "invalid address",
 			msg: MsgClaimUndelegatedTokens{
 				Creator: "invalid_address",
+				Sender: sample.StrideAddress(),
 			},
 			err: sdkerrors.ErrInvalidAddress,
 		}, {
 			name: "valid address",
 			msg: MsgClaimUndelegatedTokens{
 				Creator: sample.AccAddress(),
+				Sender: sample.StrideAddress(),
 			},
 		},
 	}

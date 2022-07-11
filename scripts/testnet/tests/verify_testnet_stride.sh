@@ -13,7 +13,7 @@ IBCATOM="ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2"
 strided q bank balances $STRIDE_ADDR
 sleep 5
 
-strided tx stakeibc register-host-zone connection-0 uatom $IBCATOM channel-0 3 --chain-id STRIDE \
+strided tx stakeibc register-host-zone connection-0 uatom cosmos $IBCATOM channel-0 3 --chain-id STRIDE \
  --keyring-backend test --from val2 --gas 1000000 -y
 
 sleep 5

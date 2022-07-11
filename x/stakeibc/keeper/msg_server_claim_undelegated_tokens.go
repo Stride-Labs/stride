@@ -4,73 +4,72 @@ import (
 	"context"
 	"fmt"
 
+	recordstypes "github.com/Stride-Labs/stride/x/records/types"
+
 	"github.com/Stride-Labs/stride/x/stakeibc/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	bankTypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 )
 
-func min(a int, b int) int {
-	if a < b {
-		return a
-	}
-	return b
-}
-
 func (k msgServer) ClaimUndelegatedTokens(goCtx context.Context, msg *types.MsgClaimUndelegatedTokens) (*types.MsgClaimUndelegatedTokensResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
-	// grab our host zone
-	hostZone, found := k.GetHostZone(ctx, msg.HostZone)
+
+	// grab the UserRedemptionRecord from the store
+	userRedemptionRecordKey := recordstypes.UserRedemptionRecordKeyFormatter(msg.HostZoneId, msg.Epoch, msg.Sender)
+	userRedemptionRecord, found := k.RecordsKeeper.GetUserRedemptionRecord(ctx, userRedemptionRecordKey)
 	if !found {
-		errMsg := fmt.Sprintf("Host zone %s not found", msg.HostZone)
+		errMsg := fmt.Sprintf("User redemption record %s not found on host zone %s", userRedemptionRecordKey, msg.HostZoneId)
+		k.Logger(ctx).Error(errMsg)
+		return nil, sdkerrors.Wrapf(types.ErrInvalidUserRedemptionRecord, "could not get user redemption record: %s", userRedemptionRecordKey)
+	}
+
+	// check that the record is claimable
+	if !userRedemptionRecord.GetIsClaimable() {
+		errMsg := fmt.Sprintf("User redemption record %s is not claimable", userRedemptionRecord.Id)
+		k.Logger(ctx).Error(errMsg)
+		return nil, sdkerrors.Wrapf(types.ErrInvalidUserRedemptionRecord, "user redemption record is not claimable: %s", userRedemptionRecordKey)
+	}
+
+	// grab necessary fields to construct ICA call
+	hostZone, found := k.GetHostZone(ctx, msg.HostZoneId)
+	if !found {
+		errMsg := fmt.Sprintf("Host zone %s not found", msg.HostZoneId)
 		k.Logger(ctx).Error(errMsg)
 		return nil, sdkerrors.Wrap(types.ErrInvalidHostZone, errMsg)
 	}
-	// grab necessary fields to construct ICA call
-	var msgs []sdk.Msg
 	redemptionAccount, found := k.GetRedemptionAccount(ctx, hostZone)
 	if !found {
-		errMsg := fmt.Sprintf("Redemption account not found for host zone %s", msg.HostZone)
+		errMsg := fmt.Sprintf("Redemption account not found for host zone %s", msg.HostZoneId)
 		k.Logger(ctx).Error(errMsg)
 		return nil, sdkerrors.Wrap(types.ErrInvalidHostZone, errMsg)
 	}
-	// go through the desired number of records and claim them
-	// TODO make this a parameter
-	MAX_CLAIMS_LIMIT := 50
-	numRecordsToClaim := min(int(msg.MaxClaims), min(len(hostZone.ClaimableRecordIds), MAX_CLAIMS_LIMIT))
-	for i := 0; i < numRecordsToClaim; i++ {
-		record, found := k.RecordsKeeper.GetUserRedemptionRecord(ctx, hostZone.ClaimableRecordIds[i])
-		if !found {
-			errMsg := fmt.Sprintf("User redemption record %s not found on host zone %s", hostZone.ClaimableRecordIds[i], hostZone.ChainId)
-			k.Logger(ctx).Error(errMsg)
-			return nil, sdkerrors.Wrap(types.ErrInvalidHostZone, errMsg)
-		}
-		errMsg := fmt.Sprintf("FromAddress %s, ToAddress %s", redemptionAccount.Address, record.Receiver)
-		k.Logger(ctx).Error(errMsg)
-		errMsg = fmt.Sprintf("Claimable record ids %s", hostZone.ClaimableRecordIds)
-		k.Logger(ctx).Error(errMsg)
-		errMsg = fmt.Sprintf("Amount %d", record.Amount)
-		k.Logger(ctx).Error(errMsg)
 
-		msgs = append(msgs, &bankTypes.MsgSend{
-			FromAddress: redemptionAccount.Address,
-			ToAddress:   record.Receiver,
-			Amount:      sdk.NewCoins(sdk.NewInt64Coin(record.Denom, int64(record.Amount))),
-		})
-	}
-	// TODO we should do some error handling here, in case this call fails
-	err := k.SubmitTxs(ctx, hostZone.GetConnectionId(), msgs, *redemptionAccount)
+	var msgs []sdk.Msg
+	msgs = append(msgs, &bankTypes.MsgSend{
+		FromAddress: redemptionAccount.Address,
+		ToAddress:   userRedemptionRecord.Receiver,
+		Amount:      sdk.NewCoins(sdk.NewInt64Coin(userRedemptionRecord.Denom, int64(userRedemptionRecord.Amount))),
+	})
+	
+	sequence, err := k.SubmitTxs(ctx, hostZone.GetConnectionId(), msgs, *redemptionAccount)
 	if err != nil {
 		k.Logger(ctx).Error(fmt.Sprintf("Submit tx error: %s", err.Error()))
 		return nil, err
 	}
-	// now go through and delete these records
-	for i := 0; i < numRecordsToClaim; i++ {
-		k.RecordsKeeper.RemoveUserRedemptionRecord(ctx, hostZone.ClaimableRecordIds[i])
-	}
 
-	// finally clean up these records from claimable records
-	hostZone.ClaimableRecordIds = hostZone.ClaimableRecordIds[numRecordsToClaim:]
-	k.SetHostZone(ctx, hostZone)
+	// Set isClaimable to false, so that the record can't be claimed again
+	userRedemptionRecord.IsClaimable = false
+	k.RecordsKeeper.SetUserRedemptionRecord(ctx, userRedemptionRecord)
+
+	// Store the sequence number to record id mapping
+	pendingClaims := types.PendingClaims{
+		Sequence: fmt.Sprint(sequence),
+		// NOTE: we could extend this to process multiple claims in the future, given this field is repeated
+		UserRedemptionRecordIds: []string{userRedemptionRecord.Id},
+	}
+	k.SetPendingClaims(ctx, pendingClaims)
+
+
 	return &types.MsgClaimUndelegatedTokensResponse{}, nil
 }

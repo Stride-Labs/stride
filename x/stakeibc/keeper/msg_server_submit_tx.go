@@ -97,7 +97,7 @@ func (k Keeper) DelegateOnHost(ctx sdk.Context, hostZone types.HostZone, amt sdk
 		}
 	}
 	// Send the transaction through SubmitTx
-	err = k.SubmitTxs(ctx, connectionId, msgs, *delegationIca)
+	_, err = k.SubmitTxs(ctx, connectionId, msgs, *delegationIca)
 	if err != nil {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "Failed to SubmitTxs for %s, %s, %s", connectionId, hostZone.ChainId, msgs)
 	}
@@ -135,7 +135,7 @@ func (k Keeper) SetWithdrawalAddressOnHost(ctx sdk.Context, hostZone types.HostZ
 	// construct the msg
 	msgs = append(msgs, &distributiontypes.MsgSetWithdrawAddress{DelegatorAddress: delegationIca.GetAddress(), WithdrawAddress: withdrawalIcaAddr})
 	// Send the transaction through SubmitTx
-	err = k.SubmitTxs(ctx, connectionId, msgs, *delegationIca)
+	_, err = k.SubmitTxs(ctx, connectionId, msgs, *delegationIca)
 	if err != nil {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "Failed to SubmitTxs for %s, %s, %s", connectionId, hostZone.ChainId, msgs)
 	}
@@ -171,30 +171,30 @@ func (k Keeper) UpdateWithdrawalBalance(ctx sdk.Context, zoneInfo types.HostZone
 }
 
 // SubmitTxs submits an ICA transaction containing multiple messages
-func (k Keeper) SubmitTxs(ctx sdk.Context, connectionId string, msgs []sdk.Msg, account types.ICAAccount) error {
+func (k Keeper) SubmitTxs(ctx sdk.Context, connectionId string, msgs []sdk.Msg, account types.ICAAccount) (uint64, error) {
 	chainId, err := k.GetChainID(ctx, connectionId)
 	if err != nil {
-		return err
+		return 0, err
 	}
 	owner := types.FormatICAAccountOwner(chainId, account.GetTarget())
 	portID, err := icatypes.NewControllerPortID(owner)
 	if err != nil {
-		return err
+		return 0, err
 	}
 
 	channelID, found := k.ICAControllerKeeper.GetActiveChannelID(ctx, connectionId, portID)
 	if !found {
-		return sdkerrors.Wrapf(icatypes.ErrActiveChannelNotFound, "failed to retrieve active channel for port %s", portID)
+		return 0, sdkerrors.Wrapf(icatypes.ErrActiveChannelNotFound, "failed to retrieve active channel for port %s", portID)
 	}
 
 	chanCap, found := k.scopedKeeper.GetCapability(ctx, host.ChannelCapabilityPath(portID, channelID))
 	if !found {
-		return sdkerrors.Wrap(channeltypes.ErrChannelCapabilityNotFound, "module does not own channel capability")
+		return 0, sdkerrors.Wrap(channeltypes.ErrChannelCapabilityNotFound, "module does not own channel capability")
 	}
 
 	data, err := icatypes.SerializeCosmosTx(k.cdc, msgs)
 	if err != nil {
-		return err
+		return 0, err
 	}
 
 	packetData := icatypes.InterchainAccountPacketData{
@@ -206,12 +206,12 @@ func (k Keeper) SubmitTxs(ctx sdk.Context, connectionId string, msgs []sdk.Msg, 
 	// it is the responsibility of the auth module developer to ensure an appropriate timeout timestamp
 	// TODO(TEST-37): Decide on timeout logic
 	timeoutTimestamp := ^uint64(0) >> 1
-	_, err = k.ICAControllerKeeper.SendTx(ctx, chanCap, connectionId, portID, packetData, uint64(timeoutTimestamp))
+	sequence, err := k.ICAControllerKeeper.SendTx(ctx, chanCap, connectionId, portID, packetData, uint64(timeoutTimestamp))
 	if err != nil {
-		return err
+		return 0, err
 	}
 
-	return nil
+	return sequence, nil
 }
 
 func (k Keeper) GetLightClientHeightSafely(ctx sdk.Context, connectionID string) (int64, bool) {
