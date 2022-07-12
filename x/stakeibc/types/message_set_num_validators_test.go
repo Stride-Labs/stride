@@ -8,24 +8,22 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestMsgClaimUndelegatedTokens_ValidateBasic(t *testing.T) {
+func TestMsgSetNumValidators_ValidateBasic(t *testing.T) {
 	tests := []struct {
 		name string
-		msg  MsgClaimUndelegatedTokens
+		msg  MsgSetNumValidators
 		err  error
 	}{
 		{
 			name: "invalid address",
-			msg: MsgClaimUndelegatedTokens{
+			msg: MsgSetNumValidators{
 				Creator: "invalid_address",
-				Sender:  sample.StrideAddress(),
 			},
 			err: sdkerrors.ErrInvalidAddress,
 		}, {
 			name: "valid address",
-			msg: MsgClaimUndelegatedTokens{
+			msg: MsgSetNumValidators{
 				Creator: sample.AccAddress(),
-				Sender:  sample.StrideAddress(),
 			},
 		},
 	}

@@ -15,7 +15,7 @@ import (
 	"github.com/Stride-Labs/stride/testutil/network"
 	"github.com/Stride-Labs/stride/testutil/nullify"
 	"github.com/Stride-Labs/stride/x/stakeibc/client/cli"
-    "github.com/Stride-Labs/stride/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/x/stakeibc/types"
 )
 
 // Prevent strconv unused error
@@ -25,12 +25,11 @@ func networkWithPendingClaimsObjects(t *testing.T, n int) (*network.Network, []t
 	t.Helper()
 	cfg := network.DefaultConfig()
 	state := types.GenesisState{}
-    require.NoError(t, cfg.Codec.UnmarshalJSON(cfg.GenesisState[types.ModuleName], &state))
+	require.NoError(t, cfg.Codec.UnmarshalJSON(cfg.GenesisState[types.ModuleName], &state))
 
 	for i := 0; i < n; i++ {
 		pendingClaims := types.PendingClaims{
 			Sequence: strconv.Itoa(i),
-			
 		}
 		nullify.Fill(&pendingClaims)
 		state.PendingClaimsList = append(state.PendingClaimsList, pendingClaims)
@@ -49,24 +48,24 @@ func TestShowPendingClaims(t *testing.T) {
 		fmt.Sprintf("--%s=json", tmcli.OutputFlag),
 	}
 	for _, tc := range []struct {
-		desc string
+		desc       string
 		idSequence string
-        
+
 		args []string
 		err  error
 		obj  types.PendingClaims
 	}{
 		{
-			desc: "found",
+			desc:       "found",
 			idSequence: objs[0].Sequence,
-            
+
 			args: common,
 			obj:  objs[0],
 		},
 		{
-			desc: "not found",
+			desc:       "not found",
 			idSequence: strconv.Itoa(100000),
-            
+
 			args: common,
 			err:  status.Error(codes.NotFound, "not found"),
 		},
@@ -74,8 +73,7 @@ func TestShowPendingClaims(t *testing.T) {
 		tc := tc
 		t.Run(tc.desc, func(t *testing.T) {
 			args := []string{
-			    tc.idSequence,
-                
+				tc.idSequence,
 			}
 			args = append(args, tc.args...)
 			out, err := clitestutil.ExecTestCLICmd(ctx, cli.CmdShowPendingClaims(), args)
@@ -126,9 +124,9 @@ func TestListPendingClaims(t *testing.T) {
 			require.NoError(t, net.Config.Codec.UnmarshalJSON(out.Bytes(), &resp))
 			require.LessOrEqual(t, len(resp.PendingClaims), step)
 			require.Subset(t,
-            	nullify.Fill(objs),
-            	nullify.Fill(resp.PendingClaims),
-            )
+				nullify.Fill(objs),
+				nullify.Fill(resp.PendingClaims),
+			)
 		}
 	})
 	t.Run("ByKey", func(t *testing.T) {
@@ -142,9 +140,9 @@ func TestListPendingClaims(t *testing.T) {
 			require.NoError(t, net.Config.Codec.UnmarshalJSON(out.Bytes(), &resp))
 			require.LessOrEqual(t, len(resp.PendingClaims), step)
 			require.Subset(t,
-            	nullify.Fill(objs),
-            	nullify.Fill(resp.PendingClaims),
-            )
+				nullify.Fill(objs),
+				nullify.Fill(resp.PendingClaims),
+			)
 			next = resp.Pagination.NextKey
 		}
 	})
