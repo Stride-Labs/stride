@@ -78,11 +78,13 @@ setup() {
   str1_balance_statom=$($STRIDE_CMD q bank balances $STRIDE_ADDRESS --denom $STATOM_DENOM | GETBAL)
   # liquid stake
   $STRIDE_CMD tx stakeibc liquid-stake 1000 uatom --keyring-backend test --from val1 -y --chain-id $STRIDE_CHAIN
+  # sleep one block for the tx to settle on stride
   BLOCK_SLEEP 1
-  # make sure Module Acct received ATOM_DENOM - remove if IBC transfer is automated
-  # mod_balance_atom_new=$($STRIDE_CMD q bank balances $MODADDR --denom $IBC_ATOM_DENOM | GETBAL)
-  # mod_atom_diff=$(($mod_balance_atom_new - $mod_balance_atom))
-  # assert_equal "$mod_atom_diff" '1000'
+  remaining_seconds=$($STRIDE_CMD q epochs seconds-remaining stride_epoch)
+  # sleep until the next day epoch passes
+  sleep $remaining_seconds
+  # sleep 30 seconds for the IBC calls to settle
+  sleep $IBC_TX_WAIT_SECONDS
   # make sure IBC_ATOM_DENOM went down 
   str1_balance_atom_new=$($STRIDE_CMD q bank balances $STRIDE_ADDRESS --denom $IBC_ATOM_DENOM | GETBAL)
   str1_atom_diff=$(($str1_balance_atom - $str1_balance_atom_new))
