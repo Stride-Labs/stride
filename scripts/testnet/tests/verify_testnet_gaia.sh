@@ -6,12 +6,14 @@ GET_ADDRESS() {
 
 STRIDE_ADDRESS=$(GET_ADDRESS val1)
 
+printf "\n>>> gaiad tx ibc-transfer transfer transfer channel-0 $STRIDE_ADDRESS 100000uatom... \n"
 gaiad tx ibc-transfer transfer transfer channel-0 $STRIDE_ADDRESS 100000uatom --from gval1 --chain-id GAIA -y --keyring-backend test
-sleep 3
+sleep 5
 
+printf "\n>>> gaiad q staking validators \n"
 gaiad q staking validators 
 
-echo "Validator Addresses:"
+printf "\nValidator Address: \n"
 gaiad q staking validators | grep operator_address | awk '{print $2}'
 
 #
