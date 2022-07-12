@@ -18,6 +18,8 @@ $STRIDE_CMD init test --chain-id $STRIDE_CHAIN --overwrite 2> /dev/null
 sed -i -E 's|"stake"|"ustrd"|g' "${STATE}/${STRIDE_NODE_NAME}/config/genesis.json"
 sed -i -E "s|timeout_commit = \"5s\"|timeout_commit = \"${BLOCK_TIME}\"|g" "${STATE}/${STRIDE_NODE_NAME}/config/config.toml"
 sed -i -E "s|cors_allowed_origins = \[\]|cors_allowed_origins = [\"\*\"]|g" "${STATE}/${STRIDE_NODE_NAME}/config/config.toml"
+sed -i -E "s|max_deposit_period\": \"172800s\"|max_deposit_period\": \"60s\"|g" "${STATE}/${STRIDE_NODE_NAME}/config/genesis.json"
+sed -i -E "s|voting_period\": \"172800s\"|voting_period\": \"60s\"|g" "${STATE}/${STRIDE_NODE_NAME}/config/genesis.json"
 # modify Stride epoch to be 3s
 main_config=$STATE/$STRIDE_NODE_NAME/config/genesis.json
 # NOTE: If you add new epochs, these indexes will need to be updated

@@ -24,7 +24,7 @@ STRIDE_CHAIN=STRIDE
 STRIDE_NODE_NAME=stride
 STRIDE_VAL_ACCT=val1
 STRIDE_VAL_MNEMONIC="close soup mirror crew erode defy knock trigger gather eyebrow tent farm gym gloom base lemon sleep weekend rich forget diagram hurt prize fly"
-STRIDE_CMD="$SCRIPT_DIR/../build/strided --home $STATE/stride"
+STRIDE_CMD="$SCRIPT_DIR/../../upgrades-stride/binaries/strided1 --home $STATE/stride"
 
 # define GAIA vars
 GAIA_CHAIN=GAIA

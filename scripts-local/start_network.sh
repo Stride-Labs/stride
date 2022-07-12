@@ -41,7 +41,14 @@ fi
 # Starts Stride and Gaia in the background using nohup, pipes the logs to their corresponding log files,
 #   and halts the script until Stride/Gaia have each finalized a block
 printf '\n%s' "Starting Stride and Gaia...   "
-nohup $STRIDE_CMD start | sed -r -u "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2})?)?[mGK]//g" > $STRIDE_LOGS 2>&1 &
+export DAEMON_NAME=strided
+export DAEMON_HOME=$STATE/stride
+export DAEMON_RESTART_AFTER_UPGRADE=true
+cp $SCRIPT_DIR/../build/strided $SCRIPT_DIR/../../upgrades-stride/binaries/strided2
+cp $SCRIPT_DIR/../build/strided $SCRIPT_DIR/../../upgrades-stride/cosmovisor/upgrades/v2/bin/strided
+mkdir -p $STATE/stride/cosmovisor
+cp -r $SCRIPT_DIR/../../upgrades-stride/cosmovisor/* $STATE/stride/cosmovisor/
+nohup cosmovisor run start --home $STATE/stride | sed -r -u "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2})?)?[mGK]//g" > $STRIDE_LOGS 2>&1 &
 nohup $GAIA_CMD start | sed -r -u "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2})?)?[mGK]//g" > $GAIA_LOGS 2>&1 &
 nohup $GAIA_CMD_2 start | sed -r -u "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2})?)?[mGK]//g" > $GAIA_LOGS_2 2>&1 &
 # nohup $GAIA_CMD_3 start | sed -r -u "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2})?)?[mGK]//g" > $GAIA_LOGS_3 2>&1 &
@@ -95,7 +102,7 @@ if [ "$CACHE" != "true" ]; then
     # Submit a transaction on stride to register the gaia host zone
     echo "Creating host zone..."
     $STRIDE_CMD tx stakeibc register-host-zone \
-        connection-0 $ATOM cosmos $IBCATOM channel-0 3 \
+        connection-0 $ATOM $IBCATOM channel-0 3 \
         --chain-id $STRIDE_CHAIN --home $STATE/stride \
         --keyring-backend test --from $STRIDE_VAL_ACCT --gas 1000000 -y
 fi
