@@ -2,14 +2,12 @@ package keeper
 
 import (
 	// v2 "github.com/Stride-Labs/stride/x/stakeibc/migrations/v2"
+
 	stakeibctypes "github.com/Stride-Labs/stride/x/stakeibc/types"
-	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	ibcchanneltypes "github.com/cosmos/ibc-go/v3/modules/core/04-channel/types"
 
 	// channelkeeper "github.com/cosmos/ibc-go/v3/modules/core/04-channel/keeper"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
-	host "github.com/cosmos/ibc-go/v3/modules/core/24-host"
 )
 
 type Migrator struct {
@@ -37,17 +35,7 @@ func (m Migrator) Migrate1to2(ctx sdk.Context) error {
 		}
 	}
 
-	ibcChannelStoreKey := storetypes.NewKVStoreKey(ibcchanneltypes.StoreKey)
-	ibcChannelKeeper := m.keeper.IBCKeeper.ChannelKeeper
-
-	ibcChannelStore := ctx.KVStore(ibcChannelStoreKey)
-
-	for _, packet := range ibcChannelKeeper.GetAllPacketCommitments(ctx) {
-		packetKey := host.PacketCommitmentKey(packet.PortId, packet.ChannelId, packet.Sequence)
-		ibcChannelStore.Delete(packetKey)
-	}
-
 	return nil
 
-	// return v2.MigrateStore(ctx, stakeIbcStoreKey, ibcChannelStoreKey, ibcChannelKeeper)
+	// return v2.MigrateStore(ctx, m.keeper.storeKey, m.keeper.cdc)
 }
