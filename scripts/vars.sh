@@ -3,7 +3,7 @@
 set -eu
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
-DEPENDENCIES="jq"
+DEPENDENCIES="jq bats"
 
 # check and install dependencies
 echo "\nChecking dependencies... "
