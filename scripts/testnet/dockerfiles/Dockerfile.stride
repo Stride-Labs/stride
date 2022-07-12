@@ -4,8 +4,9 @@ WORKDIR /src/app/
 
 COPY . .
 
-RUN apk add --no-cache make git gcc musl-dev openssl-dev linux-headers \
-    && go build -mod=readonly -trimpath -o /src/app/build ./... 
+RUN apk add --no-cache make git gcc musl-dev openssl-dev linux-headers 
+RUN ls
+RUN go build -mod=readonly -trimpath -o /src/app/build ./... 
 
 
 FROM gcr.io/stride-nodes/base-images/stride:latest
