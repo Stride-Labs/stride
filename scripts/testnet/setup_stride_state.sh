@@ -104,8 +104,8 @@ $MAIN_NODE_CMD add-genesis-account ${HERMES_STRIDE_ADDRESS} $VAL_TOKENS
 $MAIN_NODE_CMD add-genesis-account ${ICQ_STRIDE_ADDRESS} $VAL_TOKENS
 
 # Add the stride admin account
-echo "$STRIDE_ADMIN_MNEMONIC" | $MAIN_NODE_CMD keys add $STRIDE_ADMIN_ACCT=stride --recover --keyring-backend=test >> $STATE/keys.txt 2>&1
-STRIDE_ADMIN_ADDRESS=$($MAIN_NODE_CMD keys show $STRIDE_ADMIN_ACCT=stride --keyring-backend test -a)
+echo "$STRIDE_ADMIN_MNEMONIC" | $MAIN_NODE_CMD keys add $STRIDE_ADMIN_ACCT --recover --keyring-backend=test >> $STATE/keys.txt 2>&1
+STRIDE_ADMIN_ADDRESS=$($MAIN_NODE_CMD keys show $STRIDE_ADMIN_ACCT --keyring-backend test -a)
 $MAIN_NODE_CMD add-genesis-account ${STRIDE_ADMIN_ADDRESS} $STRIDE_ADMIN_TOKENS
 
 # now we process gentx txs on the main node
