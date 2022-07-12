@@ -30203,6 +30203,12 @@ paths:
                     epochNumber:
                       type: string
                       format: uint64
+                    nextEpochStartTime:
+                      type: string
+                      format: int64
+                    duration:
+                      type: string
+                      format: int64
               pagination:
                 type: object
                 properties:
@@ -30489,6 +30495,12 @@ paths:
                   epochNumber:
                     type: string
                     format: uint64
+                  nextEpochStartTime:
+                    type: string
+                    format: int64
+                  duration:
+                    type: string
+                    format: int64
         default:
           description: An unexpected error response.
           schema:
@@ -54131,6 +54143,12 @@ definitions:
       epochNumber:
         type: string
         format: uint64
+      nextEpochStartTime:
+        type: string
+        format: int64
+      duration:
+        type: string
+        format: int64
   Stridelabs.stride.stakeibc.HostZone:
     type: object
     properties:
@@ -54582,6 +54600,12 @@ definitions:
             epochNumber:
               type: string
               format: uint64
+            nextEpochStartTime:
+              type: string
+              format: int64
+            duration:
+              type: string
+              format: int64
       pagination:
         type: object
         properties:
@@ -54978,6 +55002,12 @@ definitions:
           epochNumber:
             type: string
             format: uint64
+          nextEpochStartTime:
+            type: string
+            format: int64
+          duration:
+            type: string
+            format: int64
   Stridelabs.stride.stakeibc.QueryGetHostZoneResponse:
     type: object
     properties:
