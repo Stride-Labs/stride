@@ -150,32 +150,53 @@ setup() {
 
 # check that a second liquid staking call kicks off reinvestment
 @test "rewards are being reinvested" {
-  
+  # check the rewards balance
+  # wait a day
+  # check the withdrawal account balance
+  # wait a day
+  # check that 90% of rewards were transferred to the delegation account
+  # check that 10% of rewards were transferred to the rev EOA
+  # wait a day
+  # check that rewards were staked
 }
+
 # check that redemptions and claims work
 @test "redemption works" {
-  
+  # call redeem-stake
+  # check for an unbonding record
+  # check that a UserRedemptionRecord was created with isClaimabled = false
+  # wait for the unbonding period to pass
+  # check that the tokens were transferred to the delegation account
+  # wait for an epoch to pass
+  # check that the tokens were transferred to the redemption account
+}
+
+@test "claimed tokens are returned to sender" {
+  # check that the UserRedemptionRecord has isClaimable = true
+  # claim the record
+  # check that UserRedemptionRecord has isClaimable = false
+  # check that the tokens were transferred to the sender account
+  # check that the 
 }
 
 # check that exchange rate is updating
 @test "exchange rate is updating" {
-  
+  # read the exchange rate
+  # wait a day
+  # check that the exchange rate has updated
 }
+
 
 # @test "exchange rate" {
 #  # Test: liquid stake
 #  # TODO(VISHAL) write a proper test here
-# RR=$($STR1_EXEC q stakeibc list-host-zone | grep -Fiw 'RedemptionRate' | grep -Eo '[+-]?[0-9]+([.][0-9]+)?')
-# UDBAL=$($GAIA_CMD q bank balances $DELEGATION_ICA_ADDR | grep -Fiw 'amount:' | tr -dc '0-9')
-# DBAL=$($GAIA_CMD q staking delegations $DELEGATION_ICA_ADDR | grep -Fiw 'amount:' | grep -Eo '[+-]?[0-9]+([.][0-9]+)?')
-# STSUPPLY=$($STR1_EXEC q bank balances $STRIDE_ADDR | grep -Fiw 'stuatom' -B 1 | tr -dc '0-9')
-# BAL=$(( $UDBAL + $DBAL ))
-# echo $BAL"="$STSUPPLY"*"$RR
+#   RR=$($STR1_EXEC q stakeibc list-host-zone | grep -Fiw 'RedemptionRate' | grep -Eo '[+-]?[0-9]+([.][0-9]+)?')
+#   UDBAL=$($GAIA_CMD q bank balances $DELEGATION_ICA_ADDR | grep -Fiw 'amount:' | tr -dc '0-9')
+#   DBAL=$($GAIA_CMD q staking delegations $DELEGATION_ICA_ADDR | grep -Fiw 'amount:' | grep -Eo '[+-]?[0-9]+([.][0-9]+)?')
+#   STSUPPLY=$($STR1_EXEC q bank balances $STRIDE_ADDR | grep -Fiw 'stuatom' -B 1 | tr -dc '0-9')
+#   BAL=$(( $UDBAL + $DBAL ))
+#   echo $BAL"="$STSUPPLY"*"$RR
 # }
-
-@test "claimed tokens are returned to sender" {
-  
-}
 
 
 # @test "icq: exchange rate and delegated balance queries" {
@@ -191,5 +212,3 @@ setup() {
 #   run $STRIDE_CMD q txs --events message.action=/stride.interchainquery.MsgSubmitQueryResponse --limit=1
 #   assert_line --partial 'key: totalDelegations'
 # }
-
-
