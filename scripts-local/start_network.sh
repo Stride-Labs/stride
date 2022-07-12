@@ -3,8 +3,10 @@
 set -eu
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
+
 source ${SCRIPT_DIR}/account_vars.sh
 source $SCRIPT_DIR/vars.sh
+
 
 mkdir -p $SCRIPT_DIR/logs
 
@@ -27,6 +29,7 @@ rm -rf $SCRIPT_DIR/state $SCRIPT_DIR/logs/*.log $SCRIPT_DIR/logs/temp
 for log in $STRIDE_LOGS $GAIA_LOGS $GAIA_LOGS_2 $HERMES_LOGS $ICQ_LOGS; do
     touch $log
 done
+
 
 if [ "$CACHE" != "true" ]; then
     # If not caching, initialize state for Stride, Gaia, and relayers
