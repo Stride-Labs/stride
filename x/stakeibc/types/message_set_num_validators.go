@@ -10,7 +10,7 @@ const TypeMsgSetNumValidators = "set_num_validators"
 
 var _ sdk.Msg = &MsgSetNumValidators{}
 
-func NewMsgSetNumValidators(creator string, numValidators uint64) *MsgSetNumValidators {
+func NewMsgSetNumValidators(creator string, numValidators uint32) *MsgSetNumValidators {
 	return &MsgSetNumValidators{
 		Creator:       creator,
 		NumValidators: numValidators,

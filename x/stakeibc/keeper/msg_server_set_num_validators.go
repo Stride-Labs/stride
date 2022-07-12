@@ -10,9 +10,9 @@ import (
 func (k msgServer) SetNumValidators(goCtx context.Context, msg *types.MsgSetNumValidators) (*types.MsgSetNumValidatorsResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	// TODO: Handling the message
-	_ = ctx
-	// k.stakingKeeper.SetNumValidators(ctx, msg.NumValidators)
+	ps := k.StakingKeeper.GetParams(ctx)
+	ps.MaxValidators = msg.NumValidators
+	k.StakingKeeper.SetParams(ctx, ps)
 
 	return &types.MsgSetNumValidatorsResponse{}, nil
 }

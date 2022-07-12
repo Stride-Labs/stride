@@ -459,6 +459,7 @@ func NewStrideApp(
 		app.TransferKeeper,
 		app.InterchainqueryKeeper,
 		app.RecordsKeeper,
+		app.StakingKeeper,
 	)
 
 	stakeibcModule := stakeibcmodule.NewAppModule(appCodec, app.StakeibcKeeper, app.AccountKeeper, app.BankKeeper)

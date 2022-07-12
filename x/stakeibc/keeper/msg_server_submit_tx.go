@@ -197,11 +197,14 @@ func (k Keeper) SubmitTxsEpoch(ctx sdk.Context, connectionId string, msgs []sdk.
 	bufferSize := int64(k.GetParam(ctx, types.KeyBufferSize))
 	BUFFER := epochTracker.Duration / bufferSize
 	timeoutNanos := epochTracker.NextEpochStartTime - BUFFER
+	k.Logger(ctx).Info(fmt.Sprintf("Submitting txs BUFFER %d", BUFFER))
+	k.Logger(ctx).Info(fmt.Sprintf("Submitting txs NextEpochStartTime %d", epochTracker.NextEpochStartTime))
 	k.Logger(ctx).Info(fmt.Sprintf("Submitting txs for epoch %s %d", epochTracker.EpochIdentifier, timeoutNanos))
 	sequence, err := k.SubmitTxs(ctx, connectionId, msgs, account, uint64(timeoutNanos))
 	if err != nil {
 		return 0, err
 	}
+	k.Logger(ctx).Info("Submitted Txs", "connectionId", connectionId, "sequence", sequence)
 	return sequence, nil
 }
 
