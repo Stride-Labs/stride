@@ -14,7 +14,7 @@ FROM alpine:3.15
 
 COPY --from=golang /src/app/cosmovisor /usr/local/bin/cosmovisor
 
-RUN apk --no-cache add curl sudo bash git go make nginx \
+RUN apk --no-cache add curl sudo bash git go make nginx iputils \
     && addgroup -g 1000 stride \
     && adduser -S -h /stride -D stride -u 1000 -G stride 
 
