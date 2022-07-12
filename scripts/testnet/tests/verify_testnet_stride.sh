@@ -17,7 +17,7 @@ strided tx stakeibc register-host-zone connection-0 uatom $IBCATOM channel-0 3 -
  --keyring-backend test --from val2 --gas 1000000 -y
 
 sleep 5
-strided tx stakeibc add-validator GAIA gval1 $GAIA_VAL_ADDR 10 5 --chain-id STRIDE --keyring-backend test --from STRIDE_ACCT -y
+strided tx stakeibc add-validator GAIA gval1 $GAIA_VAL_ADDR 10 5 --chain-id STRIDE --keyring-backend test --from $STRIDE_ADDR -y
 
 sleep 5
 strided q stakeibc list-host-zone

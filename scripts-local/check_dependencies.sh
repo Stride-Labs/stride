@@ -3,7 +3,7 @@
 set -eu 
 
 echo "Checking executable dependencies... ";
-DEPENDENCIES="jq"
+DEPENDENCIES="jq bats"
 deps=0
 for name in ${DEPENDENCIES}
 do
