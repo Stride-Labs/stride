@@ -124,7 +124,7 @@ setup() {
   $STRIDE_CMD tx stakeibc liquid-stake 1000 uatom --keyring-backend test --from val1 -y --chain-id $STRIDE_CHAIN
   # sleep one block for the tx to settle on stride
   BLOCK_SLEEP 1
-  remaining_seconds=$($STRIDE_CMD q epochs seconds-remaining day)
+  remaining_seconds=$($STRIDE_CMD q epochs seconds-remaining stride_epoch)
   # sleep until the next day epoch passes
   sleep $remaining_seconds
   # sleep 30 seconds for the IBC calls to settle
@@ -140,7 +140,7 @@ setup() {
   # check delegations
   STAKE=$($GAIA_CMD q staking delegation $DELEGATION_ICA_ADDR $GAIA_DELEGATE_VAL | GETSTAKE)
   # wait a day
-  remaining_seconds=$($STRIDE_CMD q epochs seconds-remaining day)
+  remaining_seconds=$($STRIDE_CMD q epochs seconds-remaining stride_epoch)
   sleep $remaining_seconds
   # check delegations again
   NEW_STAKE=$($GAIA_CMD q staking delegation $DELEGATION_ICA_ADDR $GAIA_DELEGATE_VAL | GETSTAKE)
