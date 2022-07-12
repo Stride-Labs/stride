@@ -4,16 +4,15 @@ WORKDIR /src/app/
 
 COPY . .
 
-RUN apk add --no-cache make git gcc musl-dev openssl-dev linux-headers 
-RUN ls
-RUN go build -mod=readonly -trimpath -o /src/app/build ./... 
+RUN apk add --no-cache make git gcc musl-dev openssl-dev linux-headers \
+    && go build -mod=readonly -trimpath -o /src/app/ ./... 
 
 
 FROM gcr.io/stride-nodes/base-images/stride:latest
 
 ARG node_name
 
-COPY --from=golang /src/app/build/strided /usr/local/bin/strided
+COPY --from=golang /src/app/strided /usr/local/bin/strided
 COPY --chown=stride "./state/$node_name/" /stride/.stride/ 
 COPY --chown=stride "./state/keys.txt" /stride/keys.txt
 COPY --chown=stride "./state/install_faucet.sh" /stride/install_faucet.sh
