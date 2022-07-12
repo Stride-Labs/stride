@@ -6,7 +6,7 @@ import "gogoproto/gogo.proto";
 option go_package = "github.com/Stride-Labs/stride/x/stakeibc/types";
 
 // Params defines the parameters for the module.
-// next id: 10
+// next id: 11
 message Params {
   option (gogoproto.goproto_stringer) = false;
 
@@ -25,4 +25,5 @@ message Params {
   uint64 reinvest_interval = 7;
   uint64 validator_rebalancing_threshold = 8;
   uint64 ica_timeout_nanos = 9;
+  uint64 buffer_size = 10;
 }
