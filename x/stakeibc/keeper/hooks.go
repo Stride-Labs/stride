@@ -29,6 +29,7 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochInfo epochstypes.EpochInf
 	epochNumber := epochInfo.CurrentEpoch
 
 	k.Logger(ctx).Info(fmt.Sprintf("Handling epoch start %s %d", epochIdentifier, epochNumber))
+	k.Logger(ctx).Info(fmt.Sprintf("Epoch start time %d", epochInfo.GetCurrentEpochStartTime().UnixNano()))
 
 	epochTracker := types.EpochTracker{
 		EpochIdentifier:    epochIdentifier,

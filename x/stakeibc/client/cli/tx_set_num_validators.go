@@ -19,7 +19,7 @@ func CmdSetNumValidators() *cobra.Command {
 		Short: "Broadcast message set-num-validators",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
-			argNumValidators, err := cast.ToUint64E(args[0])
+			argNumValidators, err := cast.ToUint32E(args[0])
 			if err != nil {
 				return err
 			}

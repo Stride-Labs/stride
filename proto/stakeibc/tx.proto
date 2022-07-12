@@ -147,7 +147,7 @@ message MsgDeleteValidatorResponse {
 
 message MsgSetNumValidators {
   string creator = 1;
-  uint64 numValidators = 2;
+  uint32 numValidators = 2;
 }
 
 message MsgSetNumValidatorsResponse {
