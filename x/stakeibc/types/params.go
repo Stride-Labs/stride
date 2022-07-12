@@ -21,6 +21,7 @@ var (
 	DefaultValidatorRebalancingThreshold uint64 = 100 // divide by 10,000, so 100 = 1%
 	// 10 minutes
 	DefaultICATimeoutNanos 			 uint64 = 600000000000;
+	DefaultBufferSize 			 	uint64 = 20;
 
 	// KeyDepositInterval is store's key for the DepositInterval option
 	KeyDepositInterval               = []byte("DepositInterval")
@@ -31,6 +32,7 @@ var (
 	KeyStrideCommission              = []byte("StrideCommission")
 	KeyValidatorRebalancingThreshold = []byte("ValidatorRebalancingThreshold")
 	KeyICATimeoutNanos 				 = []byte("ICATimeoutNanos")
+	KeyBufferSize 				 	 = []byte("BufferSize")
 )
 
 var _ paramtypes.ParamSet = (*Params)(nil)
@@ -50,6 +52,7 @@ func NewParams(
 	reinvest_interval uint64,
 	validator_rebalancing_threshold uint64,
 	ica_timeout_nanos uint64,
+	buffer_size uint64,
 ) Params {
 	return Params{
 		DepositInterval:               deposit_interval,
@@ -59,7 +62,8 @@ func NewParams(
 		StrideCommission:              stride_commission,
 		ReinvestInterval:              reinvest_interval,
 		ValidatorRebalancingThreshold: validator_rebalancing_threshold,
-		IcaTimeoutNanos: 				  ica_timeout_nanos,
+		IcaTimeoutNanos: 			   ica_timeout_nanos,
+		BufferSize: 				   buffer_size,
 	}
 }
 
@@ -74,6 +78,7 @@ func DefaultParams() Params {
 		DefaultReinvestInterval,
 		DefaultValidatorRebalancingThreshold,
 		DefaultICATimeoutNanos,
+		DefaultBufferSize,
 	)
 }
 
@@ -88,6 +93,7 @@ func (p *Params) ParamSetPairs() paramtypes.ParamSetPairs {
 		paramtypes.NewParamSetPair(KeyReinvestInterval, &p.ReinvestInterval, isPositive),
 		paramtypes.NewParamSetPair(KeyValidatorRebalancingThreshold, &p.ValidatorRebalancingThreshold, isThreshold),
 		paramtypes.NewParamSetPair(KeyICATimeoutNanos, &p.IcaTimeoutNanos, isPositive),
+		paramtypes.NewParamSetPair(KeyBufferSize, &p.BufferSize, isPositive),
 	}
 }
 
