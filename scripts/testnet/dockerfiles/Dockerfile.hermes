@@ -7,6 +7,4 @@ COPY --chown=1000 "./state/hermes_startup.sh" /hermes/hermes_startup.sh
 RUN chmod +x /hermes/hermes_startup.sh /hermes/hermes_keys.sh \
     && bash /hermes/hermes_keys.sh
 
-ENV CHANNEL_INIT=true
-
 CMD ["bash", "/hermes/hermes_startup.sh"]
