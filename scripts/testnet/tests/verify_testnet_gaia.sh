@@ -1,14 +1,18 @@
+#!/bin/bash
 
-set -eu
-SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+GET_ADDRESS() {
+  grep -i -A 10 "\- name: val1" /gaia/keys.txt | sed -n 3p | awk '{printf $2}'
+}
 
-# SET STRIDE ADDRESS TO THE DESIRED STRIDE USER
-STRIDE_ADDRESS=stride159atdlc3ksl50g0659w5tq42wwer334ajl7xnq
+STRIDE_ADDRESS=$(GET_ADDRESS val1)
 
 gaiad tx ibc-transfer transfer transfer channel-0 $STRIDE_ADDRESS 100000uatom --from gval1 --chain-id GAIA -y --keyring-backend test
 sleep 3
 
-gaiad q staking validators
+gaiad q staking validators 
+
+echo "Validator Addresses:"
+gaiad q staking validators | grep operator_address | awk '{print $2}'
 
 #
 #    1. Get stride address, replace $STRIDE_ADDRESS above with that
