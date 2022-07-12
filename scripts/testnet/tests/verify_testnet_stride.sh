@@ -11,7 +11,7 @@ if [[ "$GAIA_VAL_ADDR" == "" ]]; then
     exit
 fi
 
-STRIDE_ACCT="val1"
+STRIDE_ACCT="stride"
 STRIDE_ADDR=$(GET_ADDRESS $STRIDE_ACCT)
 IBCATOM="ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2"
 
@@ -26,7 +26,7 @@ done
 
 printf "\n>>> strided tx stakeibc register-host-zone connection-0 uatom cosmos $IBCATOM channel-0 3... \n"
 strided tx stakeibc register-host-zone connection-0 uatom cosmos $IBCATOM channel-0 3 --chain-id STRIDE \
- --keyring-backend test --from val1 --gas 1000000 -y
+ --keyring-backend test --from $STRIDE_ACCT --gas 1000000 -y
 
 sleep 5
 printf "\n>>> strided tx stakeibc add-validator GAIA gval1 $GAIA_VAL_ADDR 10 5... \n"

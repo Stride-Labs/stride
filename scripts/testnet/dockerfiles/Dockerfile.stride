@@ -24,7 +24,7 @@ COPY --chown=stride "scripts/testnet/tests/verify_testnet_stride.sh" /stride/ver
 
 RUN mkdir -p /stride/.stride/cosmovisor/genesis/bin \
     && mkdir -p /stride/.stride/cosmovisor/upgrades \
-    && cp /usr/local/bin/strided /stride/.stride/cosmovisor/genesis/bin/strided
+    && cp /usr/local/bin/strided /stride/.stride/cosmovisor/genesis/bin/strided 
 
 ENV DAEMON_NAME=strided
 ENV DAEMON_HOME=/stride/.stride
