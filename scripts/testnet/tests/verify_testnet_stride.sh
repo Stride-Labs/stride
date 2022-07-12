@@ -30,13 +30,13 @@ strided tx stakeibc register-host-zone connection-0 uatom cosmos $IBCATOM channe
 
 sleep 5
 printf "\n>>> strided tx stakeibc add-validator GAIA gval1 $GAIA_VAL_ADDR 10 5... \n"
-strided tx stakeibc add-validator GAIA gval1 $GAIA_VAL_ADDR 10 5 --chain-id STRIDE --keyring-backend test --from STRIDE_ACCT -y
+strided tx stakeibc add-validator GAIA gval1 $GAIA_VAL_ADDR 10 5 --chain-id STRIDE --keyring-backend test --from $STRIDE_ACCT -y
 
 sleep 5
 while true; do
     printf "\n>>> strided q stakeibc list-host-zone \n"
     strided q stakeibc list-host-zone 
-    if strided q bank balances $STRIDE_ADDR | grep -q $GAIA_VAL_ADDR; then 
+    if strided q stakeibc list-host-zone | grep -q $GAIA_VAL_ADDR; then 
         break
     fi
     sleep 5
