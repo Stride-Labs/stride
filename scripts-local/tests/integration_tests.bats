@@ -149,7 +149,7 @@ setup() {
 }
 
 # check that a second liquid staking call kicks off reinvestment
-@test "rewards are being reinvested" {
+@test "[NOT-IMPLEMENTED] rewards are being reinvested" {
   # check the rewards balance
   # wait a day
   # check the withdrawal account balance
@@ -161,7 +161,7 @@ setup() {
 }
 
 # check that redemptions and claims work
-@test "redemption works" {
+@test "[NOT-IMPLEMENTED] redemption works" {
   # call redeem-stake
   # check for an unbonding record
   # check that a UserRedemptionRecord was created with isClaimabled = false
@@ -171,7 +171,7 @@ setup() {
   # check that the tokens were transferred to the redemption account
 }
 
-@test "claimed tokens are returned to sender" {
+@test "[NOT-IMPLEMENTED] claimed tokens are returned to sender" {
   # check that the UserRedemptionRecord has isClaimable = true
   # claim the record
   # check that UserRedemptionRecord has isClaimable = false
@@ -180,7 +180,7 @@ setup() {
 }
 
 # check that exchange rate is updating
-@test "exchange rate is updating" {
+@test "[NOT-IMPLEMENTED] exchange rate is updating" {
   # read the exchange rate
   # wait a day
   # check that the exchange rate has updated
