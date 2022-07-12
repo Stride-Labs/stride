@@ -51,7 +51,7 @@ func (k msgServer) ClaimUndelegatedTokens(goCtx context.Context, msg *types.MsgC
 		ToAddress:   userRedemptionRecord.Receiver,
 		Amount:      sdk.NewCoins(sdk.NewInt64Coin(userRedemptionRecord.Denom, int64(userRedemptionRecord.Amount))),
 	})
-	
+
 	// Give claims a 10 minute timeout
 	timeout := uint64(k.GetParam(ctx, types.KeyICATimeoutNanos))
 	sequence, err := k.SubmitTxs(ctx, hostZone.GetConnectionId(), msgs, *redemptionAccount, timeout)
@@ -71,7 +71,6 @@ func (k msgServer) ClaimUndelegatedTokens(goCtx context.Context, msg *types.MsgC
 		UserRedemptionRecordIds: []string{userRedemptionRecord.Id},
 	}
 	k.SetPendingClaims(ctx, pendingClaims)
-
 
 	return &types.MsgClaimUndelegatedTokensResponse{}, nil
 }

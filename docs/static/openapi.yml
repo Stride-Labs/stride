@@ -18277,6 +18277,222 @@ paths:
                   additionalProperties: {}
       tags:
         - Query
+  '/ibc/apps/transfer/v1/channels/{channel_id}/ports/{port_id}/escrow_address':
+    get:
+      summary: >-
+        EscrowAddress returns the escrow address for a particular port and
+        channel id.
+      operationId: IbcApplicationsTransferV1EscrowAddress
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              escrow_address:
+                type: string
+                title: the escrow account address
+            description: >-
+              QueryEscrowAddressResponse is the response type of the
+              EscrowAddress RPC method.
+        default:
+          description: An unexpected error response.
+          schema:
+            type: object
+            properties:
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    '@type':
+                      type: string
+                      description: >-
+                        A URL/resource name that uniquely identifies the type of
+                        the serialized
+
+                        protocol buffer message. This string must contain at
+                        least
+
+                        one "/" character. The last segment of the URL's path
+                        must represent
+
+                        the fully qualified name of the type (as in
+
+                        `path/google.protobuf.Duration`). The name should be in
+                        a canonical form
+
+                        (e.g., leading "." is not accepted).
+
+
+                        In practice, teams usually precompile into the binary
+                        all types that they
+
+                        expect it to use in the context of Any. However, for
+                        URLs which use the
+
+                        scheme `http`, `https`, or no scheme, one can optionally
+                        set up a type
+
+                        server that maps type URLs to message definitions as
+                        follows:
+
+
+                        * If no scheme is provided, `https` is assumed.
+
+                        * An HTTP GET on the URL must yield a
+                        [google.protobuf.Type][]
+                          value in binary format, or produce an error.
+                        * Applications are allowed to cache lookup results based
+                        on the
+                          URL, or have them precompiled into a binary to avoid any
+                          lookup. Therefore, binary compatibility needs to be preserved
+                          on changes to types. (Use versioned type names to manage
+                          breaking changes.)
+
+                        Note: this functionality is not currently available in
+                        the official
+
+                        protobuf release, and it is not used for type URLs
+                        beginning with
+
+                        type.googleapis.com.
+
+
+                        Schemes other than `http`, `https` (or the empty scheme)
+                        might be
+
+                        used with implementation specific semantics.
+                  additionalProperties: {}
+                  description: >-
+                    `Any` contains an arbitrary serialized protocol buffer
+                    message along with a
+
+                    URL that describes the type of the serialized message.
+
+
+                    Protobuf library provides support to pack/unpack Any values
+                    in the form
+
+                    of utility functions or additional generated methods of the
+                    Any type.
+
+
+                    Example 1: Pack and unpack a message in C++.
+
+                        Foo foo = ...;
+                        Any any;
+                        any.PackFrom(foo);
+                        ...
+                        if (any.UnpackTo(&foo)) {
+                          ...
+                        }
+
+                    Example 2: Pack and unpack a message in Java.
+
+                        Foo foo = ...;
+                        Any any = Any.pack(foo);
+                        ...
+                        if (any.is(Foo.class)) {
+                          foo = any.unpack(Foo.class);
+                        }
+
+                     Example 3: Pack and unpack a message in Python.
+
+                        foo = Foo(...)
+                        any = Any()
+                        any.Pack(foo)
+                        ...
+                        if any.Is(Foo.DESCRIPTOR):
+                          any.Unpack(foo)
+                          ...
+
+                     Example 4: Pack and unpack a message in Go
+
+                         foo := &pb.Foo{...}
+                         any, err := anypb.New(foo)
+                         if err != nil {
+                           ...
+                         }
+                         ...
+                         foo := &pb.Foo{}
+                         if err := any.UnmarshalTo(foo); err != nil {
+                           ...
+                         }
+
+                    The pack methods provided by protobuf library will by
+                    default use
+
+                    'type.googleapis.com/full.type.name' as the type URL and the
+                    unpack
+
+                    methods only use the fully qualified type name after the
+                    last '/'
+
+                    in the type URL, for example "foo.bar.com/x/y.z" will yield
+                    type
+
+                    name "y.z".
+
+
+
+                    JSON
+
+                    ====
+
+                    The JSON representation of an `Any` value uses the regular
+
+                    representation of the deserialized, embedded message, with
+                    an
+
+                    additional field `@type` which contains the type URL.
+                    Example:
+
+                        package google.profile;
+                        message Person {
+                          string first_name = 1;
+                          string last_name = 2;
+                        }
+
+                        {
+                          "@type": "type.googleapis.com/google.profile.Person",
+                          "firstName": <string>,
+                          "lastName": <string>
+                        }
+
+                    If the embedded message type is well-known and has a custom
+                    JSON
+
+                    representation, that representation will be embedded adding
+                    a field
+
+                    `value` which holds the custom JSON in addition to the
+                    `@type`
+
+                    field. Example (for message [google.protobuf.Duration][]):
+
+                        {
+                          "@type": "type.googleapis.com/google.protobuf.Duration",
+                          "value": "1.212s"
+                        }
+      parameters:
+        - name: channel_id
+          description: unique channel identifier
+          in: path
+          required: true
+          type: string
+        - name: port_id
+          description: unique port identifier
+          in: path
+          required: true
+          type: string
+      tags:
+        - Query
   '/ibc/apps/transfer/v1/denom_hashes/{trace}':
     get:
       summary: DenomHash queries a denomination hash information.
@@ -18996,7 +19212,9 @@ paths:
                         }
       parameters:
         - name: hash
-          description: hash (in hex format) of the denomination trace information.
+          description: >-
+            hash (in hex format) or denom (full denom with ibc prefix) of the
+            denomination trace information.
           in: path
           required: true
           type: string
@@ -25235,6 +25453,326 @@ paths:
           type: boolean
       tags:
         - Query
+  '/ibc/core/client/v1/consensus_states/{client_id}/heights':
+    get:
+      summary: >-
+        ConsensusStateHeights queries the height of every consensus states
+        associated with a given client.
+      operationId: IbcCoreClientV1ConsensusStateHeights
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              consensus_state_heights:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    revision_number:
+                      type: string
+                      format: uint64
+                      title: the revision that the client is currently on
+                    revision_height:
+                      type: string
+                      format: uint64
+                      title: the height within the given revision
+                  description: >-
+                    Normally the RevisionHeight is incremented at each height
+                    while keeping
+
+                    RevisionNumber the same. However some consensus algorithms
+                    may choose to
+
+                    reset the height in certain conditions e.g. hard forks,
+                    state-machine
+
+                    breaking changes In these cases, the RevisionNumber is
+                    incremented so that
+
+                    height continues to be monitonically increasing even as the
+                    RevisionHeight
+
+                    gets reset
+                  title: >-
+                    Height is a monotonically increasing data type
+
+                    that can be compared against another Height for the purposes
+                    of updating and
+
+                    freezing clients
+                title: consensus state heights
+              pagination:
+                title: pagination response
+                type: object
+                properties:
+                  next_key:
+                    type: string
+                    format: byte
+                    title: |-
+                      next_key is the key to be passed to PageRequest.key to
+                      query the next page most efficiently
+                  total:
+                    type: string
+                    format: uint64
+                    title: >-
+                      total is total number of results available if
+                      PageRequest.count_total
+
+                      was set, its value is undefined otherwise
+                description: >-
+                  PageResponse is to be embedded in gRPC response messages where
+                  the
+
+                  corresponding request message has used PageRequest.
+
+                   message SomeResponse {
+                           repeated Bar results = 1;
+                           PageResponse page = 2;
+                   }
+            title: |-
+              QueryConsensusStateHeightsResponse is the response type for the
+              Query/ConsensusStateHeights RPC method
+        default:
+          description: An unexpected error response.
+          schema:
+            type: object
+            properties:
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    '@type':
+                      type: string
+                      description: >-
+                        A URL/resource name that uniquely identifies the type of
+                        the serialized
+
+                        protocol buffer message. This string must contain at
+                        least
+
+                        one "/" character. The last segment of the URL's path
+                        must represent
+
+                        the fully qualified name of the type (as in
+
+                        `path/google.protobuf.Duration`). The name should be in
+                        a canonical form
+
+                        (e.g., leading "." is not accepted).
+
+
+                        In practice, teams usually precompile into the binary
+                        all types that they
+
+                        expect it to use in the context of Any. However, for
+                        URLs which use the
+
+                        scheme `http`, `https`, or no scheme, one can optionally
+                        set up a type
+
+                        server that maps type URLs to message definitions as
+                        follows:
+
+
+                        * If no scheme is provided, `https` is assumed.
+
+                        * An HTTP GET on the URL must yield a
+                        [google.protobuf.Type][]
+                          value in binary format, or produce an error.
+                        * Applications are allowed to cache lookup results based
+                        on the
+                          URL, or have them precompiled into a binary to avoid any
+                          lookup. Therefore, binary compatibility needs to be preserved
+                          on changes to types. (Use versioned type names to manage
+                          breaking changes.)
+
+                        Note: this functionality is not currently available in
+                        the official
+
+                        protobuf release, and it is not used for type URLs
+                        beginning with
+
+                        type.googleapis.com.
+
+
+                        Schemes other than `http`, `https` (or the empty scheme)
+                        might be
+
+                        used with implementation specific semantics.
+                  additionalProperties: {}
+                  description: >-
+                    `Any` contains an arbitrary serialized protocol buffer
+                    message along with a
+
+                    URL that describes the type of the serialized message.
+
+
+                    Protobuf library provides support to pack/unpack Any values
+                    in the form
+
+                    of utility functions or additional generated methods of the
+                    Any type.
+
+
+                    Example 1: Pack and unpack a message in C++.
+
+                        Foo foo = ...;
+                        Any any;
+                        any.PackFrom(foo);
+                        ...
+                        if (any.UnpackTo(&foo)) {
+                          ...
+                        }
+
+                    Example 2: Pack and unpack a message in Java.
+
+                        Foo foo = ...;
+                        Any any = Any.pack(foo);
+                        ...
+                        if (any.is(Foo.class)) {
+                          foo = any.unpack(Foo.class);
+                        }
+
+                     Example 3: Pack and unpack a message in Python.
+
+                        foo = Foo(...)
+                        any = Any()
+                        any.Pack(foo)
+                        ...
+                        if any.Is(Foo.DESCRIPTOR):
+                          any.Unpack(foo)
+                          ...
+
+                     Example 4: Pack and unpack a message in Go
+
+                         foo := &pb.Foo{...}
+                         any, err := anypb.New(foo)
+                         if err != nil {
+                           ...
+                         }
+                         ...
+                         foo := &pb.Foo{}
+                         if err := any.UnmarshalTo(foo); err != nil {
+                           ...
+                         }
+
+                    The pack methods provided by protobuf library will by
+                    default use
+
+                    'type.googleapis.com/full.type.name' as the type URL and the
+                    unpack
+
+                    methods only use the fully qualified type name after the
+                    last '/'
+
+                    in the type URL, for example "foo.bar.com/x/y.z" will yield
+                    type
+
+                    name "y.z".
+
+
+
+                    JSON
+
+                    ====
+
+                    The JSON representation of an `Any` value uses the regular
+
+                    representation of the deserialized, embedded message, with
+                    an
+
+                    additional field `@type` which contains the type URL.
+                    Example:
+
+                        package google.profile;
+                        message Person {
+                          string first_name = 1;
+                          string last_name = 2;
+                        }
+
+                        {
+                          "@type": "type.googleapis.com/google.profile.Person",
+                          "firstName": <string>,
+                          "lastName": <string>
+                        }
+
+                    If the embedded message type is well-known and has a custom
+                    JSON
+
+                    representation, that representation will be embedded adding
+                    a field
+
+                    `value` which holds the custom JSON in addition to the
+                    `@type`
+
+                    field. Example (for message [google.protobuf.Duration][]):
+
+                        {
+                          "@type": "type.googleapis.com/google.protobuf.Duration",
+                          "value": "1.212s"
+                        }
+      parameters:
+        - name: client_id
+          description: client identifier
+          in: path
+          required: true
+          type: string
+        - name: pagination.key
+          description: |-
+            key is a value returned in PageResponse.next_key to begin
+            querying the next page most efficiently. Only one of offset or key
+            should be set.
+          in: query
+          required: false
+          type: string
+          format: byte
+        - name: pagination.offset
+          description: >-
+            offset is a numeric offset that can be used when key is unavailable.
+
+            It is less efficient than using key. Only one of offset or key
+            should
+
+            be set.
+          in: query
+          required: false
+          type: string
+          format: uint64
+        - name: pagination.limit
+          description: >-
+            limit is the total number of results to be returned in the result
+            page.
+
+            If left empty it will default to a value to be set by each app.
+          in: query
+          required: false
+          type: string
+          format: uint64
+        - name: pagination.count_total
+          description: >-
+            count_total is set to true  to indicate that the result set should
+            include
+
+            a count of the total number of items available for pagination in
+            UIs.
+
+            count_total is only respected when offset is used. It is ignored
+            when key
+
+            is set.
+          in: query
+          required: false
+          type: boolean
+      tags:
+        - Query
   '/ibc/core/client/v1/consensus_states/{client_id}/revision/{revision_number}/height/{revision_height}':
     get:
       summary: >-
@@ -25426,7 +25964,6 @@ paths:
                 format: byte
                 title: merkle proof of existence
               proof_height:
-                title: height at which the proof was retrieved
                 type: object
                 properties:
                   revision_number:
@@ -25454,6 +25991,13 @@ paths:
                   RevisionHeight
 
                   gets reset
+                title: >-
+                  Height is a monotonically increasing data type
+
+                  that can be compared against another Height for the purposes
+                  of updating and
+
+                  freezing clients
             title: >-
               QueryConsensusStateResponse is the response type for the
               Query/ConsensusState
@@ -28967,47 +29511,7 @@ paths:
           schema:
             type: object
             properties:
-<<<<<<< HEAD
               DepositRecord:
-=======
-              Delegation:
-                type: object
-                properties:
-                  delegateAcctAddress:
-                    type: string
-                  validator:
-                    type: object
-                    properties:
-                      name:
-                        type: string
-                      address:
-                        type: string
-                      status:
-                        type: string
-                      commissionRate:
-                        type: string
-                        format: uint64
-                      delegationAmt:
-                        type: string
-                        format: uint64
-                      weight:
-                        type: string
-                        format: uint64
-                  amt:
-                    type: string
-                    format: int64
-        default:
-          description: An unexpected error response.
-          schema:
-            type: object
-            properties:
-              code:
-                type: integer
-                format: int32
-              message:
-                type: string
-              details:
->>>>>>> test-validator-selection
                 type: array
                 items:
                   type: object
@@ -29236,35 +29740,16 @@ paths:
                         properties:
                           amount:
                             type: string
-<<<<<<< HEAD
                             format: uint64
                           denom:
                             type: string
                           hostZoneId:
-=======
-                          commissionRate:
-                            type: string
-                            format: uint64
-                          delegationAmt:
-                            type: string
-                            format: uint64
-                          weight:
-                            type: string
-                            format: uint64
-                    blacklistedValidators:
-                      type: array
-                      items:
-                        type: object
-                        properties:
-                          name:
->>>>>>> test-validator-selection
                             type: string
                           unbondingTime:
                             type: string
                             format: uint64
                           status:
                             type: string
-<<<<<<< HEAD
                             enum:
                               - BONDED
                               - UNBONDED
@@ -29287,177 +29772,6 @@ paths:
                                   [(gogoproto.nullable) = false, (gogoproto.stdtime) = true, (gogoproto.moretags) = "yaml:\"unbonding_time\""];
                               Index UserRedemptionRecords here (note: id is
                               {chain_id}.{epoch}.{sender})
-=======
-                          commissionRate:
-                            type: string
-                            format: uint64
-                          delegationAmt:
-                            type: string
-                            format: uint64
-                          weight:
-                            type: string
-                            format: uint64
-                    withdrawalAccount:
-                      type: object
-                      properties:
-                        address:
-                          type: string
-                        delegations:
-                          type: array
-                          items:
-                            type: object
-                            properties:
-                              delegateAcctAddress:
-                                type: string
-                              validator:
-                                type: object
-                                properties:
-                                  name:
-                                    type: string
-                                  address:
-                                    type: string
-                                  status:
-                                    type: string
-                                  commissionRate:
-                                    type: string
-                                    format: uint64
-                                  delegationAmt:
-                                    type: string
-                                    format: uint64
-                                  weight:
-                                    type: string
-                                    format: uint64
-                              amt:
-                                type: string
-                                format: int64
-                        target:
-                          type: string
-                          enum:
-                            - DELEGATION
-                            - FEE
-                            - WITHDRAWAL
-                          default: DELEGATION
-                        balance:
-                          type: string
-                          format: int64
-                          title: TODO(TEST-112) use cosmos dec for all balances
-                      title: >-
-                        TODO(TEST-XX): Update these fields to be more useful
-                        (e.g. balances should be coins, maybe store port name
-                        directly)
-                    feeAccount:
-                      type: object
-                      properties:
-                        address:
-                          type: string
-                        delegations:
-                          type: array
-                          items:
-                            type: object
-                            properties:
-                              delegateAcctAddress:
-                                type: string
-                              validator:
-                                type: object
-                                properties:
-                                  name:
-                                    type: string
-                                  address:
-                                    type: string
-                                  status:
-                                    type: string
-                                  commissionRate:
-                                    type: string
-                                    format: uint64
-                                  delegationAmt:
-                                    type: string
-                                    format: uint64
-                                  weight:
-                                    type: string
-                                    format: uint64
-                              amt:
-                                type: string
-                                format: int64
-                        target:
-                          type: string
-                          enum:
-                            - DELEGATION
-                            - FEE
-                            - WITHDRAWAL
-                          default: DELEGATION
-                        balance:
-                          type: string
-                          format: int64
-                          title: TODO(TEST-112) use cosmos dec for all balances
-                      title: >-
-                        TODO(TEST-XX): Update these fields to be more useful
-                        (e.g. balances should be coins, maybe store port name
-                        directly)
-                    delegationAccount:
-                      type: object
-                      properties:
-                        address:
-                          type: string
-                        delegations:
-                          type: array
-                          items:
-                            type: object
-                            properties:
-                              delegateAcctAddress:
-                                type: string
-                              validator:
-                                type: object
-                                properties:
-                                  name:
-                                    type: string
-                                  address:
-                                    type: string
-                                  status:
-                                    type: string
-                                  commissionRate:
-                                    type: string
-                                    format: uint64
-                                  delegationAmt:
-                                    type: string
-                                    format: uint64
-                                  weight:
-                                    type: string
-                                    format: uint64
-                              amt:
-                                type: string
-                                format: int64
-                        target:
-                          type: string
-                          enum:
-                            - DELEGATION
-                            - FEE
-                            - WITHDRAWAL
-                          default: DELEGATION
-                        balance:
-                          type: string
-                          format: int64
-                          title: TODO(TEST-112) use cosmos dec for all balances
-                      title: >-
-                        TODO(TEST-XX): Update these fields to be more useful
-                        (e.g. balances should be coins, maybe store port name
-                        directly)
-                    IBCDenom:
-                      type: string
-                      title: ibc denom on stride
-                    HostDenom:
-                      type: string
-                      title: native denom on host zone
-                    LastRedemptionRate:
-                      type: string
-                      title: >-
-                        TODO(TEST-68): Should we make this an array and store
-                        the last n redemption rates
-
-                        then calculate a TWARR?
-                    RedemptionRate:
-                      type: string
-                  title: 'next id: 13'
->>>>>>> test-validator-selection
               pagination:
                 type: object
                 properties:
@@ -29590,32 +29904,11 @@ paths:
                           type: string
                         hostZoneId:
                           type: string
-<<<<<<< HEAD
                         unbondingTime:
-=======
-                        commissionRate:
-                          type: string
-                          format: uint64
-                        delegationAmt:
-                          type: string
-                          format: uint64
-                        weight:
-                          type: string
-                          format: uint64
-                  blacklistedValidators:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        name:
-                          type: string
-                        address:
->>>>>>> test-validator-selection
                           type: string
                           format: uint64
                         status:
                           type: string
-<<<<<<< HEAD
                           enum:
                             - BONDED
                             - UNBONDED
@@ -29701,162 +29994,6 @@ paths:
                 type: object
                 properties:
                   next_key:
-=======
-                        commissionRate:
-                          type: string
-                          format: uint64
-                        delegationAmt:
-                          type: string
-                          format: uint64
-                        weight:
-                          type: string
-                          format: uint64
-                  withdrawalAccount:
-                    type: object
-                    properties:
-                      address:
-                        type: string
-                      delegations:
-                        type: array
-                        items:
-                          type: object
-                          properties:
-                            delegateAcctAddress:
-                              type: string
-                            validator:
-                              type: object
-                              properties:
-                                name:
-                                  type: string
-                                address:
-                                  type: string
-                                status:
-                                  type: string
-                                commissionRate:
-                                  type: string
-                                  format: uint64
-                                delegationAmt:
-                                  type: string
-                                  format: uint64
-                                weight:
-                                  type: string
-                                  format: uint64
-                            amt:
-                              type: string
-                              format: int64
-                      target:
-                        type: string
-                        enum:
-                          - DELEGATION
-                          - FEE
-                          - WITHDRAWAL
-                        default: DELEGATION
-                      balance:
-                        type: string
-                        format: int64
-                        title: TODO(TEST-112) use cosmos dec for all balances
-                    title: >-
-                      TODO(TEST-XX): Update these fields to be more useful (e.g.
-                      balances should be coins, maybe store port name directly)
-                  feeAccount:
-                    type: object
-                    properties:
-                      address:
-                        type: string
-                      delegations:
-                        type: array
-                        items:
-                          type: object
-                          properties:
-                            delegateAcctAddress:
-                              type: string
-                            validator:
-                              type: object
-                              properties:
-                                name:
-                                  type: string
-                                address:
-                                  type: string
-                                status:
-                                  type: string
-                                commissionRate:
-                                  type: string
-                                  format: uint64
-                                delegationAmt:
-                                  type: string
-                                  format: uint64
-                                weight:
-                                  type: string
-                                  format: uint64
-                            amt:
-                              type: string
-                              format: int64
-                      target:
-                        type: string
-                        enum:
-                          - DELEGATION
-                          - FEE
-                          - WITHDRAWAL
-                        default: DELEGATION
-                      balance:
-                        type: string
-                        format: int64
-                        title: TODO(TEST-112) use cosmos dec for all balances
-                    title: >-
-                      TODO(TEST-XX): Update these fields to be more useful (e.g.
-                      balances should be coins, maybe store port name directly)
-                  delegationAccount:
-                    type: object
-                    properties:
-                      address:
-                        type: string
-                      delegations:
-                        type: array
-                        items:
-                          type: object
-                          properties:
-                            delegateAcctAddress:
-                              type: string
-                            validator:
-                              type: object
-                              properties:
-                                name:
-                                  type: string
-                                address:
-                                  type: string
-                                status:
-                                  type: string
-                                commissionRate:
-                                  type: string
-                                  format: uint64
-                                delegationAmt:
-                                  type: string
-                                  format: uint64
-                                weight:
-                                  type: string
-                                  format: uint64
-                            amt:
-                              type: string
-                              format: int64
-                      target:
-                        type: string
-                        enum:
-                          - DELEGATION
-                          - FEE
-                          - WITHDRAWAL
-                        default: DELEGATION
-                      balance:
-                        type: string
-                        format: int64
-                        title: TODO(TEST-112) use cosmos dec for all balances
-                    title: >-
-                      TODO(TEST-XX): Update these fields to be more useful (e.g.
-                      balances should be coins, maybe store port name directly)
-                  IBCDenom:
-                    type: string
-                    title: ibc denom on stride
-                  HostDenom:
->>>>>>> test-validator-selection
                     type: string
                     format: byte
                     title: |-
@@ -30046,226 +30183,6 @@ paths:
                   additionalProperties: {}
       tags:
         - Query
-  /Stride-Labs/stride/stakeibc/delegation:
-    get:
-      summary: Queries a Delegation by index.
-      operationId: StridelabsStrideStakeibcDelegation
-      responses:
-        '200':
-          description: A successful response.
-          schema:
-            type: object
-            properties:
-              Delegation:
-                type: object
-                properties:
-                  delegateAcctAddress:
-                    type: string
-                  validator:
-                    type: object
-                    properties:
-                      name:
-                        type: string
-                      address:
-                        type: string
-                      status:
-                        type: string
-                      commissionRate:
-                        type: integer
-                        format: int32
-                      delegationAmt:
-                        type: string
-                        format: int64
-                  amt:
-                    type: string
-                    format: int64
-        default:
-          description: An unexpected error response.
-          schema:
-            type: object
-            properties:
-              code:
-                type: integer
-                format: int32
-              message:
-                type: string
-              details:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    '@type':
-                      type: string
-                      description: >-
-                        A URL/resource name that uniquely identifies the type of
-                        the serialized
-
-                        protocol buffer message. This string must contain at
-                        least
-
-                        one "/" character. The last segment of the URL's path
-                        must represent
-
-                        the fully qualified name of the type (as in
-
-                        `path/google.protobuf.Duration`). The name should be in
-                        a canonical form
-
-                        (e.g., leading "." is not accepted).
-
-
-                        In practice, teams usually precompile into the binary
-                        all types that they
-
-                        expect it to use in the context of Any. However, for
-                        URLs which use the
-
-                        scheme `http`, `https`, or no scheme, one can optionally
-                        set up a type
-
-                        server that maps type URLs to message definitions as
-                        follows:
-
-
-                        * If no scheme is provided, `https` is assumed.
-
-                        * An HTTP GET on the URL must yield a
-                        [google.protobuf.Type][]
-                          value in binary format, or produce an error.
-                        * Applications are allowed to cache lookup results based
-                        on the
-                          URL, or have them precompiled into a binary to avoid any
-                          lookup. Therefore, binary compatibility needs to be preserved
-                          on changes to types. (Use versioned type names to manage
-                          breaking changes.)
-
-                        Note: this functionality is not currently available in
-                        the official
-
-                        protobuf release, and it is not used for type URLs
-                        beginning with
-
-                        type.googleapis.com.
-
-
-                        Schemes other than `http`, `https` (or the empty scheme)
-                        might be
-
-                        used with implementation specific semantics.
-                  additionalProperties: {}
-                  description: >-
-                    `Any` contains an arbitrary serialized protocol buffer
-                    message along with a
-
-                    URL that describes the type of the serialized message.
-
-
-                    Protobuf library provides support to pack/unpack Any values
-                    in the form
-
-                    of utility functions or additional generated methods of the
-                    Any type.
-
-
-                    Example 1: Pack and unpack a message in C++.
-
-                        Foo foo = ...;
-                        Any any;
-                        any.PackFrom(foo);
-                        ...
-                        if (any.UnpackTo(&foo)) {
-                          ...
-                        }
-
-                    Example 2: Pack and unpack a message in Java.
-
-                        Foo foo = ...;
-                        Any any = Any.pack(foo);
-                        ...
-                        if (any.is(Foo.class)) {
-                          foo = any.unpack(Foo.class);
-                        }
-
-                     Example 3: Pack and unpack a message in Python.
-
-                        foo = Foo(...)
-                        any = Any()
-                        any.Pack(foo)
-                        ...
-                        if any.Is(Foo.DESCRIPTOR):
-                          any.Unpack(foo)
-                          ...
-
-                     Example 4: Pack and unpack a message in Go
-
-                         foo := &pb.Foo{...}
-                         any, err := anypb.New(foo)
-                         if err != nil {
-                           ...
-                         }
-                         ...
-                         foo := &pb.Foo{}
-                         if err := any.UnmarshalTo(foo); err != nil {
-                           ...
-                         }
-
-                    The pack methods provided by protobuf library will by
-                    default use
-
-                    'type.googleapis.com/full.type.name' as the type URL and the
-                    unpack
-
-                    methods only use the fully qualified type name after the
-                    last '/'
-
-                    in the type URL, for example "foo.bar.com/x/y.z" will yield
-                    type
-
-                    name "y.z".
-
-
-
-                    JSON
-
-                    ====
-
-                    The JSON representation of an `Any` value uses the regular
-
-                    representation of the deserialized, embedded message, with
-                    an
-
-                    additional field `@type` which contains the type URL.
-                    Example:
-
-                        package google.profile;
-                        message Person {
-                          string first_name = 1;
-                          string last_name = 2;
-                        }
-
-                        {
-                          "@type": "type.googleapis.com/google.profile.Person",
-                          "firstName": <string>,
-                          "lastName": <string>
-                        }
-
-                    If the embedded message type is well-known and has a custom
-                    JSON
-
-                    representation, that representation will be embedded adding
-                    a field
-
-                    `value` which holds the custom JSON in addition to the
-                    `@type`
-
-                    field. Example (for message [google.protobuf.Duration][]):
-
-                        {
-                          "@type": "type.googleapis.com/google.protobuf.Duration",
-                          "value": "1.212s"
-                        }
-      tags:
-        - Query
   /Stride-Labs/stride/stakeibc/epoch_tracker:
     get:
       summary: Queries a list of EpochTracker items.
@@ -30289,41 +30206,7 @@ paths:
               pagination:
                 type: object
                 properties:
-<<<<<<< HEAD
                   next_key:
-=======
-                  address:
-                    type: string
-                  delegations:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        delegateAcctAddress:
-                          type: string
-                        validator:
-                          type: object
-                          properties:
-                            name:
-                              type: string
-                            address:
-                              type: string
-                            status:
-                              type: string
-                            commissionRate:
-                              type: string
-                              format: uint64
-                            delegationAmt:
-                              type: string
-                              format: uint64
-                            weight:
-                              type: string
-                              format: uint64
-                        amt:
-                          type: string
-                          format: int64
-                  target:
->>>>>>> test-validator-selection
                     type: string
                     format: byte
                     title: |-
@@ -30817,6 +30700,8 @@ paths:
                       type: string
                     connectionId:
                       type: string
+                    bech32prefix:
+                      type: string
                     transferChannelId:
                       type: string
                     validators:
@@ -30830,12 +30715,19 @@ paths:
                             type: string
                           status:
                             type: string
+                            enum:
+                              - Active
+                              - Inactive
+                            default: Active
                           commissionRate:
-                            type: integer
-                            format: int32
+                            type: string
+                            format: uint64
                           delegationAmt:
                             type: string
-                            format: int64
+                            format: uint64
+                          weight:
+                            type: string
+                            format: uint64
                     blacklistedValidators:
                       type: array
                       items:
@@ -30847,12 +30739,19 @@ paths:
                             type: string
                           status:
                             type: string
+                            enum:
+                              - Active
+                              - Inactive
+                            default: Active
                           commissionRate:
-                            type: integer
-                            format: int32
+                            type: string
+                            format: uint64
                           delegationAmt:
                             type: string
-                            format: int64
+                            format: uint64
+                          weight:
+                            type: string
+                            format: uint64
                     withdrawalAccount:
                       type: object
                       properties:
@@ -30874,12 +30773,19 @@ paths:
                                     type: string
                                   status:
                                     type: string
+                                    enum:
+                                      - Active
+                                      - Inactive
+                                    default: Active
                                   commissionRate:
-                                    type: integer
-                                    format: int32
+                                    type: string
+                                    format: uint64
                                   delegationAmt:
                                     type: string
-                                    format: int64
+                                    format: uint64
+                                  weight:
+                                    type: string
+                                    format: uint64
                               amt:
                                 type: string
                                 format: int64
@@ -30920,12 +30826,19 @@ paths:
                                     type: string
                                   status:
                                     type: string
+                                    enum:
+                                      - Active
+                                      - Inactive
+                                    default: Active
                                   commissionRate:
-                                    type: integer
-                                    format: int32
+                                    type: string
+                                    format: uint64
                                   delegationAmt:
                                     type: string
-                                    format: int64
+                                    format: uint64
+                                  weight:
+                                    type: string
+                                    format: uint64
                               amt:
                                 type: string
                                 format: int64
@@ -30966,12 +30879,19 @@ paths:
                                     type: string
                                   status:
                                     type: string
+                                    enum:
+                                      - Active
+                                      - Inactive
+                                    default: Active
                                   commissionRate:
-                                    type: integer
-                                    format: int32
+                                    type: string
+                                    format: uint64
                                   delegationAmt:
                                     type: string
-                                    format: int64
+                                    format: uint64
+                                  weight:
+                                    type: string
+                                    format: uint64
                               amt:
                                 type: string
                                 format: int64
@@ -31012,12 +30932,19 @@ paths:
                                     type: string
                                   status:
                                     type: string
+                                    enum:
+                                      - Active
+                                      - Inactive
+                                    default: Active
                                   commissionRate:
-                                    type: integer
-                                    format: int32
+                                    type: string
+                                    format: uint64
                                   delegationAmt:
                                     type: string
-                                    format: int64
+                                    format: uint64
+                                  weight:
+                                    type: string
+                                    format: uint64
                               amt:
                                 type: string
                                 format: int64
@@ -31058,15 +30985,11 @@ paths:
                       title: >-
                         stores how many days we should wait before issuing
                         unbondings
-                    claimableRecordIds:
-                      type: array
-                      items:
-                        type: string
                     stakedBal:
                       type: string
                       format: int64
                       title: TODO(TEST-101) int to dec
-                  title: 'next id: 17'
+                  title: 'next id: 18'
               pagination:
                 type: object
                 properties:
@@ -31352,6 +31275,8 @@ paths:
                     type: string
                   connectionId:
                     type: string
+                  bech32prefix:
+                    type: string
                   transferChannelId:
                     type: string
                   validators:
@@ -31365,12 +31290,19 @@ paths:
                           type: string
                         status:
                           type: string
+                          enum:
+                            - Active
+                            - Inactive
+                          default: Active
                         commissionRate:
-                          type: integer
-                          format: int32
+                          type: string
+                          format: uint64
                         delegationAmt:
                           type: string
-                          format: int64
+                          format: uint64
+                        weight:
+                          type: string
+                          format: uint64
                   blacklistedValidators:
                     type: array
                     items:
@@ -31382,12 +31314,19 @@ paths:
                           type: string
                         status:
                           type: string
+                          enum:
+                            - Active
+                            - Inactive
+                          default: Active
                         commissionRate:
-                          type: integer
-                          format: int32
+                          type: string
+                          format: uint64
                         delegationAmt:
                           type: string
-                          format: int64
+                          format: uint64
+                        weight:
+                          type: string
+                          format: uint64
                   withdrawalAccount:
                     type: object
                     properties:
@@ -31409,12 +31348,19 @@ paths:
                                   type: string
                                 status:
                                   type: string
+                                  enum:
+                                    - Active
+                                    - Inactive
+                                  default: Active
                                 commissionRate:
-                                  type: integer
-                                  format: int32
+                                  type: string
+                                  format: uint64
                                 delegationAmt:
                                   type: string
-                                  format: int64
+                                  format: uint64
+                                weight:
+                                  type: string
+                                  format: uint64
                             amt:
                               type: string
                               format: int64
@@ -31454,12 +31400,19 @@ paths:
                                   type: string
                                 status:
                                   type: string
+                                  enum:
+                                    - Active
+                                    - Inactive
+                                  default: Active
                                 commissionRate:
-                                  type: integer
-                                  format: int32
+                                  type: string
+                                  format: uint64
                                 delegationAmt:
                                   type: string
-                                  format: int64
+                                  format: uint64
+                                weight:
+                                  type: string
+                                  format: uint64
                             amt:
                               type: string
                               format: int64
@@ -31499,12 +31452,19 @@ paths:
                                   type: string
                                 status:
                                   type: string
+                                  enum:
+                                    - Active
+                                    - Inactive
+                                  default: Active
                                 commissionRate:
-                                  type: integer
-                                  format: int32
+                                  type: string
+                                  format: uint64
                                 delegationAmt:
                                   type: string
-                                  format: int64
+                                  format: uint64
+                                weight:
+                                  type: string
+                                  format: uint64
                             amt:
                               type: string
                               format: int64
@@ -31544,12 +31504,19 @@ paths:
                                   type: string
                                 status:
                                   type: string
+                                  enum:
+                                    - Active
+                                    - Inactive
+                                  default: Active
                                 commissionRate:
-                                  type: integer
-                                  format: int32
+                                  type: string
+                                  format: uint64
                                 delegationAmt:
                                   type: string
-                                  format: int64
+                                  format: uint64
+                                weight:
+                                  type: string
+                                  format: uint64
                             amt:
                               type: string
                               format: int64
@@ -31589,15 +31556,11 @@ paths:
                     title: >-
                       stores how many days we should wait before issuing
                       unbondings
-                  claimableRecordIds:
-                    type: array
-                    items:
-                      type: string
                   stakedBal:
                     type: string
                     format: int64
                     title: TODO(TEST-101) int to dec
-                title: 'next id: 17'
+                title: 'next id: 18'
         default:
           description: An unexpected error response.
           schema:
@@ -31821,12 +31784,19 @@ paths:
                               type: string
                             status:
                               type: string
+                              enum:
+                                - Active
+                                - Inactive
+                              default: Active
                             commissionRate:
-                              type: integer
-                              format: int32
+                              type: string
+                              format: uint64
                             delegationAmt:
                               type: string
-                              format: int64
+                              format: uint64
+                            weight:
+                              type: string
+                              format: uint64
                         amt:
                           type: string
                           format: int64
@@ -31845,212 +31815,6 @@ paths:
                 title: >-
                   TODO(TEST-XX): Update these fields to be more useful (e.g.
                   balances should be coins, maybe store port name directly)
-        default:
-          description: An unexpected error response.
-          schema:
-            type: object
-            properties:
-              code:
-                type: integer
-                format: int32
-              message:
-                type: string
-              details:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    '@type':
-                      type: string
-                      description: >-
-                        A URL/resource name that uniquely identifies the type of
-                        the serialized
-
-                        protocol buffer message. This string must contain at
-                        least
-
-                        one "/" character. The last segment of the URL's path
-                        must represent
-
-                        the fully qualified name of the type (as in
-
-                        `path/google.protobuf.Duration`). The name should be in
-                        a canonical form
-
-                        (e.g., leading "." is not accepted).
-
-
-                        In practice, teams usually precompile into the binary
-                        all types that they
-
-                        expect it to use in the context of Any. However, for
-                        URLs which use the
-
-                        scheme `http`, `https`, or no scheme, one can optionally
-                        set up a type
-
-                        server that maps type URLs to message definitions as
-                        follows:
-
-
-                        * If no scheme is provided, `https` is assumed.
-
-                        * An HTTP GET on the URL must yield a
-                        [google.protobuf.Type][]
-                          value in binary format, or produce an error.
-                        * Applications are allowed to cache lookup results based
-                        on the
-                          URL, or have them precompiled into a binary to avoid any
-                          lookup. Therefore, binary compatibility needs to be preserved
-                          on changes to types. (Use versioned type names to manage
-                          breaking changes.)
-
-                        Note: this functionality is not currently available in
-                        the official
-
-                        protobuf release, and it is not used for type URLs
-                        beginning with
-
-                        type.googleapis.com.
-
-
-                        Schemes other than `http`, `https` (or the empty scheme)
-                        might be
-
-                        used with implementation specific semantics.
-                  additionalProperties: {}
-                  description: >-
-                    `Any` contains an arbitrary serialized protocol buffer
-                    message along with a
-
-                    URL that describes the type of the serialized message.
-
-
-                    Protobuf library provides support to pack/unpack Any values
-                    in the form
-
-                    of utility functions or additional generated methods of the
-                    Any type.
-
-
-                    Example 1: Pack and unpack a message in C++.
-
-                        Foo foo = ...;
-                        Any any;
-                        any.PackFrom(foo);
-                        ...
-                        if (any.UnpackTo(&foo)) {
-                          ...
-                        }
-
-                    Example 2: Pack and unpack a message in Java.
-
-                        Foo foo = ...;
-                        Any any = Any.pack(foo);
-                        ...
-                        if (any.is(Foo.class)) {
-                          foo = any.unpack(Foo.class);
-                        }
-
-                     Example 3: Pack and unpack a message in Python.
-
-                        foo = Foo(...)
-                        any = Any()
-                        any.Pack(foo)
-                        ...
-                        if any.Is(Foo.DESCRIPTOR):
-                          any.Unpack(foo)
-                          ...
-
-                     Example 4: Pack and unpack a message in Go
-
-                         foo := &pb.Foo{...}
-                         any, err := anypb.New(foo)
-                         if err != nil {
-                           ...
-                         }
-                         ...
-                         foo := &pb.Foo{}
-                         if err := any.UnmarshalTo(foo); err != nil {
-                           ...
-                         }
-
-                    The pack methods provided by protobuf library will by
-                    default use
-
-                    'type.googleapis.com/full.type.name' as the type URL and the
-                    unpack
-
-                    methods only use the fully qualified type name after the
-                    last '/'
-
-                    in the type URL, for example "foo.bar.com/x/y.z" will yield
-                    type
-
-                    name "y.z".
-
-
-
-                    JSON
-
-                    ====
-
-                    The JSON representation of an `Any` value uses the regular
-
-                    representation of the deserialized, embedded message, with
-                    an
-
-                    additional field `@type` which contains the type URL.
-                    Example:
-
-                        package google.profile;
-                        message Person {
-                          string first_name = 1;
-                          string last_name = 2;
-                        }
-
-                        {
-                          "@type": "type.googleapis.com/google.profile.Person",
-                          "firstName": <string>,
-                          "lastName": <string>
-                        }
-
-                    If the embedded message type is well-known and has a custom
-                    JSON
-
-                    representation, that representation will be embedded adding
-                    a field
-
-                    `value` which holds the custom JSON in addition to the
-                    `@type`
-
-                    field. Example (for message [google.protobuf.Duration][]):
-
-                        {
-                          "@type": "type.googleapis.com/google.protobuf.Duration",
-                          "value": "1.212s"
-                        }
-      tags:
-        - Query
-  /Stride-Labs/stride/stakeibc/min_validator_requirements:
-    get:
-      summary: Queries a MinValidatorRequirements by index.
-      operationId: StridelabsStrideStakeibcMinValidatorRequirements
-      responses:
-        '200':
-          description: A successful response.
-          schema:
-            type: object
-            properties:
-              MinValidatorRequirements:
-                type: object
-                properties:
-                  commissionRate:
-                    type: integer
-                    format: int32
-                  uptime:
-                    type: integer
-                    format: int32
         default:
           description: An unexpected error response.
           schema:
@@ -32442,34 +32206,54 @@ paths:
           type: string
       tags:
         - Query
-  /Stride-Labs/stride/stakeibc/validator:
+  /Stride-Labs/stride/stakeibc/pending_claims:
     get:
-      summary: Queries a Validator by index.
-      operationId: StridelabsStrideStakeibcValidator
+      summary: Queries a list of PendingClaims items.
+      operationId: StridelabsStrideStakeibcPendingClaimsAll
       responses:
         '200':
           description: A successful response.
           schema:
             type: object
             properties:
-              Validator:
+              pendingClaims:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    sequence:
+                      type: string
+                    userRedemptionRecordIds:
+                      type: array
+                      items:
+                        type: string
+              pagination:
                 type: object
                 properties:
-                  name:
+                  next_key:
                     type: string
-                  address:
-                    type: string
-                  status:
-                    type: string
-                  commissionRate:
-                    type: string
-                    format: uint64
-                  delegationAmt:
+                    format: byte
+                    title: |-
+                      next_key is the key to be passed to PageRequest.key to
+                      query the next page most efficiently
+                  total:
                     type: string
                     format: uint64
-                  weight:
-                    type: string
-                    format: uint64
+                    title: >-
+                      total is total number of results available if
+                      PageRequest.count_total
+
+                      was set, its value is undefined otherwise
+                description: >-
+                  PageResponse is to be embedded in gRPC response messages where
+                  the
+
+                  corresponding request message has used PageRequest.
+
+                   message SomeResponse {
+                           repeated Bar results = 1;
+                           PageResponse page = 2;
+                   }
         default:
           description: An unexpected error response.
           schema:
@@ -32655,6 +32439,497 @@ paths:
                           "@type": "type.googleapis.com/google.protobuf.Duration",
                           "value": "1.212s"
                         }
+      parameters:
+        - name: pagination.key
+          description: |-
+            key is a value returned in PageResponse.next_key to begin
+            querying the next page most efficiently. Only one of offset or key
+            should be set.
+          in: query
+          required: false
+          type: string
+          format: byte
+        - name: pagination.offset
+          description: >-
+            offset is a numeric offset that can be used when key is unavailable.
+
+            It is less efficient than using key. Only one of offset or key
+            should
+
+            be set.
+          in: query
+          required: false
+          type: string
+          format: uint64
+        - name: pagination.limit
+          description: >-
+            limit is the total number of results to be returned in the result
+            page.
+
+            If left empty it will default to a value to be set by each app.
+          in: query
+          required: false
+          type: string
+          format: uint64
+        - name: pagination.count_total
+          description: >-
+            count_total is set to true  to indicate that the result set should
+            include
+
+            a count of the total number of items available for pagination in
+            UIs.
+
+            count_total is only respected when offset is used. It is ignored
+            when key
+
+            is set.
+          in: query
+          required: false
+          type: boolean
+        - name: pagination.reverse
+          description: >-
+            reverse is set to true if results are to be returned in the
+            descending order.
+          in: query
+          required: false
+          type: boolean
+      tags:
+        - Query
+  '/Stride-Labs/stride/stakeibc/pending_claims/{sequence}':
+    get:
+      summary: Queries a PendingClaims by index.
+      operationId: StridelabsStrideStakeibcPendingClaims
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              pendingClaims:
+                type: object
+                properties:
+                  sequence:
+                    type: string
+                  userRedemptionRecordIds:
+                    type: array
+                    items:
+                      type: string
+        default:
+          description: An unexpected error response.
+          schema:
+            type: object
+            properties:
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    '@type':
+                      type: string
+                      description: >-
+                        A URL/resource name that uniquely identifies the type of
+                        the serialized
+
+                        protocol buffer message. This string must contain at
+                        least
+
+                        one "/" character. The last segment of the URL's path
+                        must represent
+
+                        the fully qualified name of the type (as in
+
+                        `path/google.protobuf.Duration`). The name should be in
+                        a canonical form
+
+                        (e.g., leading "." is not accepted).
+
+
+                        In practice, teams usually precompile into the binary
+                        all types that they
+
+                        expect it to use in the context of Any. However, for
+                        URLs which use the
+
+                        scheme `http`, `https`, or no scheme, one can optionally
+                        set up a type
+
+                        server that maps type URLs to message definitions as
+                        follows:
+
+
+                        * If no scheme is provided, `https` is assumed.
+
+                        * An HTTP GET on the URL must yield a
+                        [google.protobuf.Type][]
+                          value in binary format, or produce an error.
+                        * Applications are allowed to cache lookup results based
+                        on the
+                          URL, or have them precompiled into a binary to avoid any
+                          lookup. Therefore, binary compatibility needs to be preserved
+                          on changes to types. (Use versioned type names to manage
+                          breaking changes.)
+
+                        Note: this functionality is not currently available in
+                        the official
+
+                        protobuf release, and it is not used for type URLs
+                        beginning with
+
+                        type.googleapis.com.
+
+
+                        Schemes other than `http`, `https` (or the empty scheme)
+                        might be
+
+                        used with implementation specific semantics.
+                  additionalProperties: {}
+                  description: >-
+                    `Any` contains an arbitrary serialized protocol buffer
+                    message along with a
+
+                    URL that describes the type of the serialized message.
+
+
+                    Protobuf library provides support to pack/unpack Any values
+                    in the form
+
+                    of utility functions or additional generated methods of the
+                    Any type.
+
+
+                    Example 1: Pack and unpack a message in C++.
+
+                        Foo foo = ...;
+                        Any any;
+                        any.PackFrom(foo);
+                        ...
+                        if (any.UnpackTo(&foo)) {
+                          ...
+                        }
+
+                    Example 2: Pack and unpack a message in Java.
+
+                        Foo foo = ...;
+                        Any any = Any.pack(foo);
+                        ...
+                        if (any.is(Foo.class)) {
+                          foo = any.unpack(Foo.class);
+                        }
+
+                     Example 3: Pack and unpack a message in Python.
+
+                        foo = Foo(...)
+                        any = Any()
+                        any.Pack(foo)
+                        ...
+                        if any.Is(Foo.DESCRIPTOR):
+                          any.Unpack(foo)
+                          ...
+
+                     Example 4: Pack and unpack a message in Go
+
+                         foo := &pb.Foo{...}
+                         any, err := anypb.New(foo)
+                         if err != nil {
+                           ...
+                         }
+                         ...
+                         foo := &pb.Foo{}
+                         if err := any.UnmarshalTo(foo); err != nil {
+                           ...
+                         }
+
+                    The pack methods provided by protobuf library will by
+                    default use
+
+                    'type.googleapis.com/full.type.name' as the type URL and the
+                    unpack
+
+                    methods only use the fully qualified type name after the
+                    last '/'
+
+                    in the type URL, for example "foo.bar.com/x/y.z" will yield
+                    type
+
+                    name "y.z".
+
+
+
+                    JSON
+
+                    ====
+
+                    The JSON representation of an `Any` value uses the regular
+
+                    representation of the deserialized, embedded message, with
+                    an
+
+                    additional field `@type` which contains the type URL.
+                    Example:
+
+                        package google.profile;
+                        message Person {
+                          string first_name = 1;
+                          string last_name = 2;
+                        }
+
+                        {
+                          "@type": "type.googleapis.com/google.profile.Person",
+                          "firstName": <string>,
+                          "lastName": <string>
+                        }
+
+                    If the embedded message type is well-known and has a custom
+                    JSON
+
+                    representation, that representation will be embedded adding
+                    a field
+
+                    `value` which holds the custom JSON in addition to the
+                    `@type`
+
+                    field. Example (for message [google.protobuf.Duration][]):
+
+                        {
+                          "@type": "type.googleapis.com/google.protobuf.Duration",
+                          "value": "1.212s"
+                        }
+      parameters:
+        - name: sequence
+          in: path
+          required: true
+          type: string
+      tags:
+        - Query
+  '/Stride-Labs/stride/stakeibc/validators/{chain_id}':
+    get:
+      summary: Queries a Validator by host zone.
+      operationId: StridelabsStrideStakeibcValidators
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              validators:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                    address:
+                      type: string
+                    status:
+                      type: string
+                      enum:
+                        - Active
+                        - Inactive
+                      default: Active
+                    commissionRate:
+                      type: string
+                      format: uint64
+                    delegationAmt:
+                      type: string
+                      format: uint64
+                    weight:
+                      type: string
+                      format: uint64
+        default:
+          description: An unexpected error response.
+          schema:
+            type: object
+            properties:
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    '@type':
+                      type: string
+                      description: >-
+                        A URL/resource name that uniquely identifies the type of
+                        the serialized
+
+                        protocol buffer message. This string must contain at
+                        least
+
+                        one "/" character. The last segment of the URL's path
+                        must represent
+
+                        the fully qualified name of the type (as in
+
+                        `path/google.protobuf.Duration`). The name should be in
+                        a canonical form
+
+                        (e.g., leading "." is not accepted).
+
+
+                        In practice, teams usually precompile into the binary
+                        all types that they
+
+                        expect it to use in the context of Any. However, for
+                        URLs which use the
+
+                        scheme `http`, `https`, or no scheme, one can optionally
+                        set up a type
+
+                        server that maps type URLs to message definitions as
+                        follows:
+
+
+                        * If no scheme is provided, `https` is assumed.
+
+                        * An HTTP GET on the URL must yield a
+                        [google.protobuf.Type][]
+                          value in binary format, or produce an error.
+                        * Applications are allowed to cache lookup results based
+                        on the
+                          URL, or have them precompiled into a binary to avoid any
+                          lookup. Therefore, binary compatibility needs to be preserved
+                          on changes to types. (Use versioned type names to manage
+                          breaking changes.)
+
+                        Note: this functionality is not currently available in
+                        the official
+
+                        protobuf release, and it is not used for type URLs
+                        beginning with
+
+                        type.googleapis.com.
+
+
+                        Schemes other than `http`, `https` (or the empty scheme)
+                        might be
+
+                        used with implementation specific semantics.
+                  additionalProperties: {}
+                  description: >-
+                    `Any` contains an arbitrary serialized protocol buffer
+                    message along with a
+
+                    URL that describes the type of the serialized message.
+
+
+                    Protobuf library provides support to pack/unpack Any values
+                    in the form
+
+                    of utility functions or additional generated methods of the
+                    Any type.
+
+
+                    Example 1: Pack and unpack a message in C++.
+
+                        Foo foo = ...;
+                        Any any;
+                        any.PackFrom(foo);
+                        ...
+                        if (any.UnpackTo(&foo)) {
+                          ...
+                        }
+
+                    Example 2: Pack and unpack a message in Java.
+
+                        Foo foo = ...;
+                        Any any = Any.pack(foo);
+                        ...
+                        if (any.is(Foo.class)) {
+                          foo = any.unpack(Foo.class);
+                        }
+
+                     Example 3: Pack and unpack a message in Python.
+
+                        foo = Foo(...)
+                        any = Any()
+                        any.Pack(foo)
+                        ...
+                        if any.Is(Foo.DESCRIPTOR):
+                          any.Unpack(foo)
+                          ...
+
+                     Example 4: Pack and unpack a message in Go
+
+                         foo := &pb.Foo{...}
+                         any, err := anypb.New(foo)
+                         if err != nil {
+                           ...
+                         }
+                         ...
+                         foo := &pb.Foo{}
+                         if err := any.UnmarshalTo(foo); err != nil {
+                           ...
+                         }
+
+                    The pack methods provided by protobuf library will by
+                    default use
+
+                    'type.googleapis.com/full.type.name' as the type URL and the
+                    unpack
+
+                    methods only use the fully qualified type name after the
+                    last '/'
+
+                    in the type URL, for example "foo.bar.com/x/y.z" will yield
+                    type
+
+                    name "y.z".
+
+
+
+                    JSON
+
+                    ====
+
+                    The JSON representation of an `Any` value uses the regular
+
+                    representation of the deserialized, embedded message, with
+                    an
+
+                    additional field `@type` which contains the type URL.
+                    Example:
+
+                        package google.profile;
+                        message Person {
+                          string first_name = 1;
+                          string last_name = 2;
+                        }
+
+                        {
+                          "@type": "type.googleapis.com/google.profile.Person",
+                          "firstName": <string>,
+                          "lastName": <string>
+                        }
+
+                    If the embedded message type is well-known and has a custom
+                    JSON
+
+                    representation, that representation will be embedded adding
+                    a field
+
+                    `value` which holds the custom JSON in addition to the
+                    `@type`
+
+                    field. Example (for message [google.protobuf.Duration][]):
+
+                        {
+                          "@type": "type.googleapis.com/google.protobuf.Duration",
+                          "value": "1.212s"
+                        }
+      parameters:
+        - name: chain_id
+          in: path
+          required: true
+          type: string
       tags:
         - Query
   /Stridelabs/stride/stakeibc/params:
@@ -32699,9 +32974,18 @@ paths:
                   reinvest_interval:
                     type: string
                     format: uint64
+                  validator_rebalancing_threshold:
+                    type: string
+                    format: uint64
+                  ica_timeout_nanos:
+                    type: string
+                    format: uint64
+                  buffer_size:
+                    type: string
+                    format: uint64
                 title: |-
                   Params defines the parameters for the module.
-                  next id: 9
+                  next id: 11
             description: >-
               QueryParamsResponse is response type for the Query/Params RPC
               method.
@@ -48693,6 +48977,15 @@ definitions:
       RPC
 
       method.
+  ibc.applications.transfer.v1.QueryEscrowAddressResponse:
+    type: object
+    properties:
+      escrow_address:
+        type: string
+        title: the escrow account address
+    description: >-
+      QueryEscrowAddressResponse is the response type of the EscrowAddress RPC
+      method.
   ibc.applications.transfer.v1.QueryParamsResponse:
     type: object
     properties:
@@ -48889,14 +49182,14 @@ definitions:
       result:
         type: string
         enum:
-          - RESPONSE_RESULT_UNSPECIFIED
-          - RESPONSE_RESULT_NOOP
-          - RESPONSE_RESULT_SUCCESS
-        default: RESPONSE_RESULT_UNSPECIFIED
+          - RESPONSE_RESULT_TYPE_UNSPECIFIED
+          - RESPONSE_RESULT_TYPE_NOOP
+          - RESPONSE_RESULT_TYPE_SUCCESS
+        default: RESPONSE_RESULT_TYPE_UNSPECIFIED
         description: |-
-          - RESPONSE_RESULT_UNSPECIFIED: Default zero value enumeration
-           - RESPONSE_RESULT_NOOP: The message did not call the IBC application callbacks (because, for example, the packet had already been relayed)
-           - RESPONSE_RESULT_SUCCESS: The message was executed successfully
+          - RESPONSE_RESULT_TYPE_UNSPECIFIED: Default zero value enumeration
+           - RESPONSE_RESULT_TYPE_NOOP: The message did not call the IBC application callbacks (because, for example, the packet had already been relayed)
+           - RESPONSE_RESULT_TYPE_SUCCESS: The message was executed successfully
         title: >-
           ResponseResultType defines the possible outcomes of the execution of a
           message
@@ -48926,9 +49219,14 @@ definitions:
     properties:
       channel_id:
         type: string
+      version:
+        type: string
     description: MsgChannelOpenInitResponse defines the Msg/ChannelOpenInit response type.
   ibc.core.channel.v1.MsgChannelOpenTryResponse:
     type: object
+    properties:
+      version:
+        type: string
     description: MsgChannelOpenTryResponse defines the Msg/ChannelOpenTry response type.
   ibc.core.channel.v1.MsgRecvPacketResponse:
     type: object
@@ -48936,14 +49234,14 @@ definitions:
       result:
         type: string
         enum:
-          - RESPONSE_RESULT_UNSPECIFIED
-          - RESPONSE_RESULT_NOOP
-          - RESPONSE_RESULT_SUCCESS
-        default: RESPONSE_RESULT_UNSPECIFIED
+          - RESPONSE_RESULT_TYPE_UNSPECIFIED
+          - RESPONSE_RESULT_TYPE_NOOP
+          - RESPONSE_RESULT_TYPE_SUCCESS
+        default: RESPONSE_RESULT_TYPE_UNSPECIFIED
         description: |-
-          - RESPONSE_RESULT_UNSPECIFIED: Default zero value enumeration
-           - RESPONSE_RESULT_NOOP: The message did not call the IBC application callbacks (because, for example, the packet had already been relayed)
-           - RESPONSE_RESULT_SUCCESS: The message was executed successfully
+          - RESPONSE_RESULT_TYPE_UNSPECIFIED: Default zero value enumeration
+           - RESPONSE_RESULT_TYPE_NOOP: The message did not call the IBC application callbacks (because, for example, the packet had already been relayed)
+           - RESPONSE_RESULT_TYPE_SUCCESS: The message was executed successfully
         title: >-
           ResponseResultType defines the possible outcomes of the execution of a
           message
@@ -48954,14 +49252,14 @@ definitions:
       result:
         type: string
         enum:
-          - RESPONSE_RESULT_UNSPECIFIED
-          - RESPONSE_RESULT_NOOP
-          - RESPONSE_RESULT_SUCCESS
-        default: RESPONSE_RESULT_UNSPECIFIED
+          - RESPONSE_RESULT_TYPE_UNSPECIFIED
+          - RESPONSE_RESULT_TYPE_NOOP
+          - RESPONSE_RESULT_TYPE_SUCCESS
+        default: RESPONSE_RESULT_TYPE_UNSPECIFIED
         description: |-
-          - RESPONSE_RESULT_UNSPECIFIED: Default zero value enumeration
-           - RESPONSE_RESULT_NOOP: The message did not call the IBC application callbacks (because, for example, the packet had already been relayed)
-           - RESPONSE_RESULT_SUCCESS: The message was executed successfully
+          - RESPONSE_RESULT_TYPE_UNSPECIFIED: Default zero value enumeration
+           - RESPONSE_RESULT_TYPE_NOOP: The message did not call the IBC application callbacks (because, for example, the packet had already been relayed)
+           - RESPONSE_RESULT_TYPE_SUCCESS: The message was executed successfully
         title: >-
           ResponseResultType defines the possible outcomes of the execution of a
           message
@@ -48972,14 +49270,14 @@ definitions:
       result:
         type: string
         enum:
-          - RESPONSE_RESULT_UNSPECIFIED
-          - RESPONSE_RESULT_NOOP
-          - RESPONSE_RESULT_SUCCESS
-        default: RESPONSE_RESULT_UNSPECIFIED
+          - RESPONSE_RESULT_TYPE_UNSPECIFIED
+          - RESPONSE_RESULT_TYPE_NOOP
+          - RESPONSE_RESULT_TYPE_SUCCESS
+        default: RESPONSE_RESULT_TYPE_UNSPECIFIED
         description: |-
-          - RESPONSE_RESULT_UNSPECIFIED: Default zero value enumeration
-           - RESPONSE_RESULT_NOOP: The message did not call the IBC application callbacks (because, for example, the packet had already been relayed)
-           - RESPONSE_RESULT_SUCCESS: The message was executed successfully
+          - RESPONSE_RESULT_TYPE_UNSPECIFIED: Default zero value enumeration
+           - RESPONSE_RESULT_TYPE_NOOP: The message did not call the IBC application callbacks (because, for example, the packet had already been relayed)
+           - RESPONSE_RESULT_TYPE_SUCCESS: The message was executed successfully
         title: >-
           ResponseResultType defines the possible outcomes of the execution of a
           message
@@ -50310,14 +50608,14 @@ definitions:
   ibc.core.channel.v1.ResponseResultType:
     type: string
     enum:
-      - RESPONSE_RESULT_UNSPECIFIED
-      - RESPONSE_RESULT_NOOP
-      - RESPONSE_RESULT_SUCCESS
-    default: RESPONSE_RESULT_UNSPECIFIED
+      - RESPONSE_RESULT_TYPE_UNSPECIFIED
+      - RESPONSE_RESULT_TYPE_NOOP
+      - RESPONSE_RESULT_TYPE_SUCCESS
+    default: RESPONSE_RESULT_TYPE_UNSPECIFIED
     description: |-
-      - RESPONSE_RESULT_UNSPECIFIED: Default zero value enumeration
-       - RESPONSE_RESULT_NOOP: The message did not call the IBC application callbacks (because, for example, the packet had already been relayed)
-       - RESPONSE_RESULT_SUCCESS: The message was executed successfully
+      - RESPONSE_RESULT_TYPE_UNSPECIFIED: Default zero value enumeration
+       - RESPONSE_RESULT_TYPE_NOOP: The message did not call the IBC application callbacks (because, for example, the packet had already been relayed)
+       - RESPONSE_RESULT_TYPE_SUCCESS: The message was executed successfully
     title: >-
       ResponseResultType defines the possible outcomes of the execution of a
       message
@@ -51168,6 +51466,76 @@ definitions:
       RPC
 
       method. It returns the current status of the IBC client.
+  ibc.core.client.v1.QueryConsensusStateHeightsResponse:
+    type: object
+    properties:
+      consensus_state_heights:
+        type: array
+        items:
+          type: object
+          properties:
+            revision_number:
+              type: string
+              format: uint64
+              title: the revision that the client is currently on
+            revision_height:
+              type: string
+              format: uint64
+              title: the height within the given revision
+          description: >-
+            Normally the RevisionHeight is incremented at each height while
+            keeping
+
+            RevisionNumber the same. However some consensus algorithms may
+            choose to
+
+            reset the height in certain conditions e.g. hard forks,
+            state-machine
+
+            breaking changes In these cases, the RevisionNumber is incremented
+            so that
+
+            height continues to be monitonically increasing even as the
+            RevisionHeight
+
+            gets reset
+          title: >-
+            Height is a monotonically increasing data type
+
+            that can be compared against another Height for the purposes of
+            updating and
+
+            freezing clients
+        title: consensus state heights
+      pagination:
+        title: pagination response
+        type: object
+        properties:
+          next_key:
+            type: string
+            format: byte
+            title: |-
+              next_key is the key to be passed to PageRequest.key to
+              query the next page most efficiently
+          total:
+            type: string
+            format: uint64
+            title: >-
+              total is total number of results available if
+              PageRequest.count_total
+
+              was set, its value is undefined otherwise
+        description: |-
+          PageResponse is to be embedded in gRPC response messages where the
+          corresponding request message has used PageRequest.
+
+           message SomeResponse {
+                   repeated Bar results = 1;
+                   PageResponse page = 2;
+           }
+    title: |-
+      QueryConsensusStateHeightsResponse is the response type for the
+      Query/ConsensusStateHeights RPC method
   ibc.core.client.v1.QueryConsensusStateResponse:
     type: object
     properties:
@@ -51336,7 +51704,6 @@ definitions:
         format: byte
         title: merkle proof of existence
       proof_height:
-        title: height at which the proof was retrieved
         type: object
         properties:
           revision_number:
@@ -51363,6 +51730,13 @@ definitions:
           RevisionHeight
 
           gets reset
+        title: >-
+          Height is a monotonically increasing data type
+
+          that can be compared against another Height for the purposes of
+          updating and
+
+          freezing clients
     title: >-
       QueryConsensusStateResponse is the response type for the
       Query/ConsensusState
@@ -53733,6 +54107,10 @@ definitions:
             type: string
           status:
             type: string
+            enum:
+              - Active
+              - Inactive
+            default: Active
           commissionRate:
             type: string
             format: uint64
@@ -53760,6 +54138,8 @@ definitions:
         type: string
       connectionId:
         type: string
+      bech32prefix:
+        type: string
       transferChannelId:
         type: string
       validators:
@@ -53773,6 +54153,10 @@ definitions:
               type: string
             status:
               type: string
+              enum:
+                - Active
+                - Inactive
+              default: Active
             commissionRate:
               type: string
               format: uint64
@@ -53793,6 +54177,10 @@ definitions:
               type: string
             status:
               type: string
+              enum:
+                - Active
+                - Inactive
+              default: Active
             commissionRate:
               type: string
               format: uint64
@@ -53823,6 +54211,10 @@ definitions:
                       type: string
                     status:
                       type: string
+                      enum:
+                        - Active
+                        - Inactive
+                      default: Active
                     commissionRate:
                       type: string
                       format: uint64
@@ -53871,6 +54263,10 @@ definitions:
                       type: string
                     status:
                       type: string
+                      enum:
+                        - Active
+                        - Inactive
+                      default: Active
                     commissionRate:
                       type: string
                       format: uint64
@@ -53919,6 +54315,10 @@ definitions:
                       type: string
                     status:
                       type: string
+                      enum:
+                        - Active
+                        - Inactive
+                      default: Active
                     commissionRate:
                       type: string
                       format: uint64
@@ -53967,12 +54367,19 @@ definitions:
                       type: string
                     status:
                       type: string
+                      enum:
+                        - Active
+                        - Inactive
+                      default: Active
                     commissionRate:
-                      type: integer
-                      format: int32
+                      type: string
+                      format: uint64
                     delegationAmt:
                       type: string
-                      format: int64
+                      format: uint64
+                    weight:
+                      type: string
+                      format: uint64
                 amt:
                   type: string
                   format: int64
@@ -54010,15 +54417,11 @@ definitions:
         type: string
         format: uint64
         title: stores how many days we should wait before issuing unbondings
-      claimableRecordIds:
-        type: array
-        items:
-          type: string
       stakedBal:
         type: string
         format: int64
         title: TODO(TEST-101) int to dec
-    title: 'next id: 17'
+    title: 'next id: 18'
   Stridelabs.stride.stakeibc.ICAAccount:
     type: object
     properties:
@@ -54040,6 +54443,10 @@ definitions:
                   type: string
                 status:
                   type: string
+                  enum:
+                    - Active
+                    - Inactive
+                  default: Active
                 commissionRate:
                   type: string
                   format: uint64
@@ -54075,24 +54482,13 @@ definitions:
       - WITHDRAWAL
       - REDEMPTION
     default: DELEGATION
-  Stridelabs.stride.stakeibc.MinValidatorRequirements:
-    type: object
-    properties:
-      commissionRate:
-        type: integer
-        format: int32
-      uptime:
-        type: integer
-        format: int32
-<<<<<<< HEAD
-  Stridelabs.stride.stakeibc.MsgClaimUndelegatedTokensResponse:
-=======
   Stridelabs.stride.stakeibc.MsgAddValidatorResponse:
     type: object
   Stridelabs.stride.stakeibc.MsgChangeValidatorWeightResponse:
     type: object
+  Stridelabs.stride.stakeibc.MsgClaimUndelegatedTokensResponse:
+    type: object
   Stridelabs.stride.stakeibc.MsgDeleteValidatorResponse:
->>>>>>> test-validator-selection
     type: object
   Stridelabs.stride.stakeibc.MsgLiquidStakeResponse:
     type: object
@@ -54112,6 +54508,8 @@ definitions:
     title: >-
       TODO(TEST-53): Remove this pre-launch (no need for clients to create /
       interact with ICAs)
+  Stridelabs.stride.stakeibc.MsgSetNumValidatorsResponse:
+    type: object
   Stridelabs.stride.stakeibc.MsgSubmitTxResponse:
     type: object
     title: >-
@@ -54150,9 +54548,27 @@ definitions:
       reinvest_interval:
         type: string
         format: uint64
+      validator_rebalancing_threshold:
+        type: string
+        format: uint64
+      ica_timeout_nanos:
+        type: string
+        format: uint64
+      buffer_size:
+        type: string
+        format: uint64
     title: |-
       Params defines the parameters for the module.
-      next id: 9
+      next id: 11
+  Stridelabs.stride.stakeibc.PendingClaims:
+    type: object
+    properties:
+      sequence:
+        type: string
+      userRedemptionRecordIds:
+        type: array
+        items:
+          type: string
   Stridelabs.stride.stakeibc.QueryAllEpochTrackerResponse:
     type: object
     properties:
@@ -54203,6 +54619,8 @@ definitions:
               type: string
             connectionId:
               type: string
+            bech32prefix:
+              type: string
             transferChannelId:
               type: string
             validators:
@@ -54216,6 +54634,10 @@ definitions:
                     type: string
                   status:
                     type: string
+                    enum:
+                      - Active
+                      - Inactive
+                    default: Active
                   commissionRate:
                     type: string
                     format: uint64
@@ -54236,6 +54658,10 @@ definitions:
                     type: string
                   status:
                     type: string
+                    enum:
+                      - Active
+                      - Inactive
+                    default: Active
                   commissionRate:
                     type: string
                     format: uint64
@@ -54266,6 +54692,10 @@ definitions:
                             type: string
                           status:
                             type: string
+                            enum:
+                              - Active
+                              - Inactive
+                            default: Active
                           commissionRate:
                             type: string
                             format: uint64
@@ -54314,6 +54744,10 @@ definitions:
                             type: string
                           status:
                             type: string
+                            enum:
+                              - Active
+                              - Inactive
+                            default: Active
                           commissionRate:
                             type: string
                             format: uint64
@@ -54362,6 +54796,10 @@ definitions:
                             type: string
                           status:
                             type: string
+                            enum:
+                              - Active
+                              - Inactive
+                            default: Active
                           commissionRate:
                             type: string
                             format: uint64
@@ -54410,12 +54848,19 @@ definitions:
                             type: string
                           status:
                             type: string
+                            enum:
+                              - Active
+                              - Inactive
+                            default: Active
                           commissionRate:
-                            type: integer
-                            format: int32
+                            type: string
+                            format: uint64
                           delegationAmt:
                             type: string
-                            format: int64
+                            format: uint64
+                          weight:
+                            type: string
+                            format: uint64
                       amt:
                         type: string
                         format: int64
@@ -54453,15 +54898,11 @@ definitions:
               type: string
               format: uint64
               title: stores how many days we should wait before issuing unbondings
-            claimableRecordIds:
-              type: array
-              items:
-                type: string
             stakedBal:
               type: string
               format: int64
               title: TODO(TEST-101) int to dec
-          title: 'next id: 17'
+          title: 'next id: 18'
       pagination:
         type: object
         properties:
@@ -54487,35 +54928,45 @@ definitions:
                    repeated Bar results = 1;
                    PageResponse page = 2;
            }
-  Stridelabs.stride.stakeibc.QueryGetDelegationResponse:
+  Stridelabs.stride.stakeibc.QueryAllPendingClaimsResponse:
     type: object
     properties:
-      Delegation:
+      pendingClaims:
+        type: array
+        items:
+          type: object
+          properties:
+            sequence:
+              type: string
+            userRedemptionRecordIds:
+              type: array
+              items:
+                type: string
+      pagination:
         type: object
         properties:
-          delegateAcctAddress:
+          next_key:
             type: string
-          validator:
-            type: object
-            properties:
-              name:
-                type: string
-              address:
-                type: string
-              status:
-                type: string
-              commissionRate:
-                type: string
-                format: uint64
-              delegationAmt:
-                type: string
-                format: uint64
-              weight:
-                type: string
-                format: uint64
-          amt:
+            format: byte
+            title: |-
+              next_key is the key to be passed to PageRequest.key to
+              query the next page most efficiently
+          total:
             type: string
-            format: int64
+            format: uint64
+            title: >-
+              total is total number of results available if
+              PageRequest.count_total
+
+              was set, its value is undefined otherwise
+        description: |-
+          PageResponse is to be embedded in gRPC response messages where the
+          corresponding request message has used PageRequest.
+
+           message SomeResponse {
+                   repeated Bar results = 1;
+                   PageResponse page = 2;
+           }
   Stridelabs.stride.stakeibc.QueryGetEpochTrackerResponse:
     type: object
     properties:
@@ -54537,6 +54988,8 @@ definitions:
             type: string
           connectionId:
             type: string
+          bech32prefix:
+            type: string
           transferChannelId:
             type: string
           validators:
@@ -54550,6 +55003,10 @@ definitions:
                   type: string
                 status:
                   type: string
+                  enum:
+                    - Active
+                    - Inactive
+                  default: Active
                 commissionRate:
                   type: string
                   format: uint64
@@ -54570,6 +55027,10 @@ definitions:
                   type: string
                 status:
                   type: string
+                  enum:
+                    - Active
+                    - Inactive
+                  default: Active
                 commissionRate:
                   type: string
                   format: uint64
@@ -54600,6 +55061,10 @@ definitions:
                           type: string
                         status:
                           type: string
+                          enum:
+                            - Active
+                            - Inactive
+                          default: Active
                         commissionRate:
                           type: string
                           format: uint64
@@ -54648,6 +55113,10 @@ definitions:
                           type: string
                         status:
                           type: string
+                          enum:
+                            - Active
+                            - Inactive
+                          default: Active
                         commissionRate:
                           type: string
                           format: uint64
@@ -54696,6 +55165,10 @@ definitions:
                           type: string
                         status:
                           type: string
+                          enum:
+                            - Active
+                            - Inactive
+                          default: Active
                         commissionRate:
                           type: string
                           format: uint64
@@ -54744,12 +55217,19 @@ definitions:
                           type: string
                         status:
                           type: string
+                          enum:
+                            - Active
+                            - Inactive
+                          default: Active
                         commissionRate:
-                          type: integer
-                          format: int32
+                          type: string
+                          format: uint64
                         delegationAmt:
                           type: string
-                          format: int64
+                          format: uint64
+                        weight:
+                          type: string
+                          format: uint64
                     amt:
                       type: string
                       format: int64
@@ -54787,15 +55267,11 @@ definitions:
             type: string
             format: uint64
             title: stores how many days we should wait before issuing unbondings
-          claimableRecordIds:
-            type: array
-            items:
-              type: string
           stakedBal:
             type: string
             format: int64
             title: TODO(TEST-101) int to dec
-        title: 'next id: 17'
+        title: 'next id: 18'
   Stridelabs.stride.stakeibc.QueryGetICAAccountResponse:
     type: object
     properties:
@@ -54820,6 +55296,10 @@ definitions:
                       type: string
                     status:
                       type: string
+                      enum:
+                        - Active
+                        - Inactive
+                      default: Active
                     commissionRate:
                       type: string
                       format: uint64
@@ -54847,39 +55327,45 @@ definitions:
         title: >-
           TODO(TEST-XX): Update these fields to be more useful (e.g. balances
           should be coins, maybe store port name directly)
-  Stridelabs.stride.stakeibc.QueryGetMinValidatorRequirementsResponse:
+  Stridelabs.stride.stakeibc.QueryGetPendingClaimsResponse:
     type: object
     properties:
-      MinValidatorRequirements:
+      pendingClaims:
         type: object
         properties:
-          commissionRate:
-            type: integer
-            format: int32
-          uptime:
-            type: integer
-            format: int32
-  Stridelabs.stride.stakeibc.QueryGetValidatorResponse:
+          sequence:
+            type: string
+          userRedemptionRecordIds:
+            type: array
+            items:
+              type: string
+  Stridelabs.stride.stakeibc.QueryGetValidatorsResponse:
     type: object
     properties:
-      Validator:
-        type: object
-        properties:
-          name:
-            type: string
-          address:
-            type: string
-          status:
-            type: string
-          commissionRate:
-            type: string
-            format: uint64
-          delegationAmt:
-            type: string
-            format: uint64
-          weight:
-            type: string
-            format: uint64
+      validators:
+        type: array
+        items:
+          type: object
+          properties:
+            name:
+              type: string
+            address:
+              type: string
+            status:
+              type: string
+              enum:
+                - Active
+                - Inactive
+              default: Active
+            commissionRate:
+              type: string
+              format: uint64
+            delegationAmt:
+              type: string
+              format: uint64
+            weight:
+              type: string
+              format: uint64
   Stridelabs.stride.stakeibc.QueryInterchainAccountFromAddressResponse:
     type: object
     properties:
@@ -54928,9 +55414,18 @@ definitions:
           reinvest_interval:
             type: string
             format: uint64
+          validator_rebalancing_threshold:
+            type: string
+            format: uint64
+          ica_timeout_nanos:
+            type: string
+            format: uint64
+          buffer_size:
+            type: string
+            format: uint64
         title: |-
           Params defines the parameters for the module.
-          next id: 9
+          next id: 11
     description: QueryParamsResponse is response type for the Query/Params RPC method.
   Stridelabs.stride.stakeibc.Validator:
     type: object
@@ -54941,6 +55436,10 @@ definitions:
         type: string
       status:
         type: string
+        enum:
+          - Active
+          - Inactive
+        default: Active
       commissionRate:
         type: string
         format: uint64
@@ -54950,3 +55449,9 @@ definitions:
       weight:
         type: string
         format: uint64
+  Stridelabs.stride.stakeibc.Validator.ValidatorStatus:
+    type: string
+    enum:
+      - Active
+      - Inactive
+    default: Active
