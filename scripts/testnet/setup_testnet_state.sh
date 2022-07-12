@@ -5,7 +5,7 @@ SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
 DEPLOYMENT_NAME="$1"
 NUM_STRIDE_NODES="$2"
-STRIDE_ADMIN_MNEMONIC="$3"
+STRIDE_ADMIN_MNEMONIC="${@:3}"
 
 # import dependencies
 source ${SCRIPT_DIR}/testnet_vars.sh $DEPLOYMENT_NAME

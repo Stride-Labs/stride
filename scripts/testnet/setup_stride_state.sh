@@ -4,7 +4,7 @@ set -eu
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
 NUM_NODES="$1"    
-STRIDE_ADMIN_MNEMONIC="$2"
+STRIDE_ADMIN_MNEMONIC="${@:2}"
 
 NETWORK_NAME=stride
 CHAIN_NAME=STRIDE
