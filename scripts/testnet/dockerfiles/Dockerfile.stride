@@ -19,6 +19,7 @@ COPY --chown=stride "./state/install_faucet.sh" /stride/install_faucet.sh
 COPY --chown=stride "./state/certfile.pem" /stride/certfile.pem
 COPY --chown=stride "./state/certkey.pem" /stride/certkey.pem
 COPY --chown=stride "./state/$node_name/config/nginx.conf" /etc/nginx/nginx.conf
+COPY --chown=1000 "./state/stride_startup.sh" /stride/stride_startup.sh
 COPY --chown=stride "scripts/testnet/tests/verify_testnet_stride.sh" /stride/verify_testnet_stride.sh
 
 RUN mkdir -p /stride/.stride/cosmovisor/genesis/bin \
@@ -30,4 +31,4 @@ ENV DAEMON_HOME=/stride/.stride
 ENV DAEMON_RESTART_AFTER_UPGRADE=true
 
 WORKDIR /stride
-CMD ["sh", "-c", "sudo nginx; cosmovisor run start"]
+CMD ["sh", "-c", "sudo nginx; bash /stride/stride_startup.sh"]
