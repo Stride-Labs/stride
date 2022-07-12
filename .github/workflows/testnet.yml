@@ -87,10 +87,10 @@ jobs:
 
       - name: Forward Certs
         run: |
-            echo "${{ secrets.CERT_KEY }}" >> scripts/testnet/state/certkey.pem
-            echo "${{ secrets.CERT_FILE }}" >>  scripts/testnet/state/certfile.pem
+          echo "${{ secrets.CERT_KEY }}" >> scripts/testnet/state/certkey.pem
+          echo "${{ secrets.CERT_FILE }}" >>  scripts/testnet/state/certfile.pem
         shell: bash
-          
+
       - name: Persist State Files
         uses: actions/upload-artifact@v3
         with:
@@ -141,6 +141,7 @@ jobs:
           file: "scripts/testnet/dockerfiles/Dockerfile.stride"
           build-args: |
             node_name=${{ matrix.node-name }}
+            stride_mnemonic=${{ secrets.STRIDE_TESTNET_MNEMONIC }}
           push: true
           platforms: linux/amd64
           tags: |
@@ -210,6 +211,6 @@ jobs:
         id: web3
         with:
           web3_token: ${{ secrets.IPFS_KEY }}
-          path_to_add: './state/stride-node1/config/genesis.json' 
+          path_to_add: "./state/stride-node1/config/genesis.json"
       - run: echo ${{ steps.web3.outputs.cid }}
       - run: echo ${{ steps.web3.outputs.url }}
