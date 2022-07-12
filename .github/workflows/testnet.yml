@@ -83,7 +83,7 @@ jobs:
         shell: bash
         run: |
           chmod +x -R ./build
-          ./scripts/testnet/setup_testnet_state.sh ${{ github.event.inputs.deployment_name }} ${num_stride_nodes}
+          ./scripts/testnet/setup_testnet_state.sh ${{ github.event.inputs.deployment_name }} ${num_stride_nodes} ${{ secrets.STRIDE_TESTNET_MNEMONIC }}
 
       - name: Forward Certs
         run: |
@@ -141,7 +141,6 @@ jobs:
           file: "scripts/testnet/dockerfiles/Dockerfile.stride"
           build-args: |
             node_name=${{ matrix.node-name }}
-            stride_mnemonic=${{ secrets.STRIDE_TESTNET_MNEMONIC }}
           push: true
           platforms: linux/amd64
           tags: |
