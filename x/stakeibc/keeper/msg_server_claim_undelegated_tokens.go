@@ -3,7 +3,6 @@ package keeper
 import (
 	"context"
 	"fmt"
-	time "time"
 
 	recordstypes "github.com/Stride-Labs/stride/x/records/types"
 
@@ -54,7 +53,7 @@ func (k msgServer) ClaimUndelegatedTokens(goCtx context.Context, msg *types.MsgC
 	})
 	
 	// Give claims a 10 minute timeout
-	timeout := uint64((10 * time.Minute).Nanoseconds())
+	timeout := uint64(k.GetParam(ctx, types.KeyICATimeoutNanos))
 	sequence, err := k.SubmitTxs(ctx, hostZone.GetConnectionId(), msgs, *redemptionAccount, timeout)
 	if err != nil {
 		k.Logger(ctx).Error(fmt.Sprintf("Submit tx error: %s", err.Error()))
