@@ -3,7 +3,7 @@ FROM golang:1.17-alpine3.15 AS golang
 WORKDIR /src/app/
 
 RUN apk add --no-cache make git gcc musl-dev openssl-dev linux-headers \
-    && git clone https://github.com:cosmos/cosmos-sdk \
+    && git clone https://github.com/cosmos/cosmos-sdk \
     && cd cosmos-sdk \
     && git checkout cosmovisor/v1.1.0 \
     && make cosmovisor \
@@ -12,7 +12,7 @@ RUN apk add --no-cache make git gcc musl-dev openssl-dev linux-headers \
 # Add to a distroless container
 FROM alpine:3.15
 
-COPY --from=golang /src/app/build/cosmovisor /usr/local/bin/cosmovisor
+COPY --from=golang /src/app/cosmovisor /usr/local/bin/cosmovisor
 
 RUN apk --no-cache add curl sudo bash git go make nginx \
     && addgroup -g 1000 stride \
