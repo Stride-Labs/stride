@@ -236,10 +236,6 @@ func (k Keeper) SubmitTxs(ctx sdk.Context, connectionId string, msgs []sdk.Msg, 
 		Data: data,
 	}
 
-	// timeoutTimestamp set to max value with the unsigned bit shifted to sastisfy hermes timestamp conversion
-	// it is the responsibility of the auth module developer to ensure an appropriate timeout timestamp
-	// TODO(TEST-37): Decide on timeout logic
-	// timeoutTimestamp := ^uint64(0) >> 1
 	sequence, err := k.ICAControllerKeeper.SendTx(ctx, chanCap, connectionId, portID, packetData, uint64(timeoutTimestamp))
 	if err != nil {
 		return 0, err

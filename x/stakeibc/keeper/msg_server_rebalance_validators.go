@@ -138,7 +138,7 @@ func (k msgServer) RebalanceValidators(goCtx context.Context, msg *types.MsgReba
 	}
 
 	connectionId := hostZone.GetConnectionId()
-	_, err = k.SubmitTxs(ctx, connectionId, msgs, *hostZone.GetDelegationAccount(), ^uint64(0) >> 1)
+	_, err = k.SubmitTxsStrideEpoch(ctx, connectionId, msgs, *hostZone.GetDelegationAccount())
 	if err != nil {
 		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "Failed to SubmitTxs for %s, %s, %s", connectionId, hostZone.ChainId, msgs)
 	}
