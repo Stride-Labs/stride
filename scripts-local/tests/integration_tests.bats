@@ -81,11 +81,13 @@ setup() {
   str1_balance_statom=$($STRIDE_CMD q bank balances $STRIDE_ADDRESS --denom $STATOM_DENOM | GETBAL)
   # liquid stake
   $STRIDE_CMD tx stakeibc liquid-stake 1000 uatom --keyring-backend test --from val1 -y --chain-id $STRIDE_CHAIN
+  # sleep one block for the tx to settle on stride
   BLOCK_SLEEP 1
-  # make sure Module Acct received ATOM_DENOM - remove if IBC transfer is automated
-  # mod_balance_atom_new=$($STRIDE_CMD q bank balances $MODADDR --denom $IBC_ATOM_DENOM | GETBAL)
-  # mod_atom_diff=$(($mod_balance_atom_new - $mod_balance_atom))
-  # assert_equal "$mod_atom_diff" '1000'
+  remaining_seconds=$($STRIDE_CMD q epochs seconds-remaining stride_epoch)
+  # sleep until the next day epoch passes
+  sleep $remaining_seconds
+  # sleep 30 seconds for the IBC calls to settle
+  sleep $IBC_TX_WAIT_SECONDS
   # make sure IBC_ATOM_DENOM went down 
   str1_balance_atom_new=$($STRIDE_CMD q bank balances $STRIDE_ADDRESS --denom $IBC_ATOM_DENOM | GETBAL)
   str1_atom_diff=$(($str1_balance_atom - $str1_balance_atom_new))
@@ -127,7 +129,7 @@ setup() {
   $STRIDE_CMD tx stakeibc liquid-stake 1000 uatom --keyring-backend test --from val1 -y --chain-id $STRIDE_CHAIN
   # sleep one block for the tx to settle on stride
   BLOCK_SLEEP 1
-  remaining_seconds=$($STRIDE_CMD q epochs seconds-remaining day)
+  remaining_seconds=$($STRIDE_CMD q epochs seconds-remaining stride_epoch)
   # sleep until the next day epoch passes
   sleep $remaining_seconds
   # sleep 30 seconds for the IBC calls to settle
@@ -143,7 +145,7 @@ setup() {
   # check delegations
   STAKE=$($GAIA_CMD q staking delegation $DELEGATION_ICA_ADDR $GAIA_DELEGATE_VAL | GETSTAKE)
   # wait a day
-  remaining_seconds=$($STRIDE_CMD q epochs seconds-remaining day)
+  remaining_seconds=$($STRIDE_CMD q epochs seconds-remaining stride_epoch)
   sleep $remaining_seconds
   # check delegations again
   NEW_STAKE=$($GAIA_CMD q staking delegation $DELEGATION_ICA_ADDR $GAIA_DELEGATE_VAL | GETSTAKE)
@@ -152,7 +154,7 @@ setup() {
 }
 
 # check that a second liquid staking call kicks off reinvestment
-@test "rewards are being reinvested" {
+@test "[NOT-IMPLEMENTED] rewards are being reinvested" {
   # check the rewards balance
   # wait a day
   # check the withdrawal account balance
@@ -164,7 +166,7 @@ setup() {
 }
 
 # check that redemptions and claims work
-@test "redemption works" {
+@test "[NOT-IMPLEMENTED] redemption works" {
   # call redeem-stake
   # check for an unbonding record
   # check that a UserRedemptionRecord was created with isClaimabled = false
@@ -174,7 +176,7 @@ setup() {
   # check that the tokens were transferred to the redemption account
 }
 
-@test "claimed tokens are returned to sender" {
+@test "[NOT-IMPLEMENTED] claimed tokens are returned to sender" {
   # check that the UserRedemptionRecord has isClaimable = true
   # claim the record
   # check that UserRedemptionRecord has isClaimable = false
@@ -183,7 +185,7 @@ setup() {
 }
 
 # check that exchange rate is updating
-@test "exchange rate is updating" {
+@test "[NOT-IMPLEMENTED] exchange rate is updating" {
   # read the exchange rate
   # wait a day
   # check that the exchange rate has updated
