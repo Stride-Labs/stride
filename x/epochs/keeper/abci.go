@@ -36,7 +36,7 @@ func (k Keeper) BeginBlocker(ctx sdk.Context) {
 					sdk.NewAttribute(types.AttributeEpochNumber, strconv.FormatInt(epochInfo.CurrentEpoch, 10)),
 				),
 			)
-			k.AfterEpochEnd(ctx, epochInfo.Identifier, epochInfo.CurrentEpoch)
+			k.AfterEpochEnd(ctx, epochInfo)
 		default:
 			// continue
 			return false
@@ -52,7 +52,7 @@ func (k Keeper) BeginBlocker(ctx sdk.Context) {
 			),
 		)
 
-		k.BeforeEpochStart(ctx, epochInfo.Identifier, epochInfo.CurrentEpoch)
+		k.BeforeEpochStart(ctx, epochInfo)
 
 		return false
 	})

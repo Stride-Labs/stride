@@ -23,13 +23,18 @@ import (
 // 	),
 // })
 
-func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochIdentifier string, epochNumber int64) {
+func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochInfo epochstypes.EpochInfo) {
 	// every epoch
+	epochIdentifier := epochInfo.Identifier
+	epochNumber := epochInfo.CurrentEpoch
+
 	k.Logger(ctx).Info(fmt.Sprintf("Handling epoch start %s %d", epochIdentifier, epochNumber))
 
 	epochTracker := types.EpochTracker{
-		EpochIdentifier: epochIdentifier,
-		EpochNumber:     uint64(epochNumber),
+		EpochIdentifier:    epochIdentifier,
+		EpochNumber:        uint64(epochNumber),
+		Duration:           epochInfo.GetDuration().Nanoseconds(),
+		NextEpochStartTime: epochInfo.GetCurrentEpochStartTime().Add(epochInfo.GetDuration()).UnixNano(),
 	}
 	// deposit records *must* exist for this epoch
 	k.SetEpochTracker(ctx, epochTracker)
@@ -123,8 +128,10 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochIdentifier string, epochN
 	}
 }
 
-func (k Keeper) AfterEpochEnd(ctx sdk.Context, epochIdentifier string, epochNumber int64) {
+func (k Keeper) AfterEpochEnd(ctx sdk.Context, epochInfo epochstypes.EpochInfo) {
 	// every epoch
+	epochIdentifier := epochInfo.Identifier
+	epochNumber := epochInfo.CurrentEpoch
 	k.Logger(ctx).Info(fmt.Sprintf("Handling epoch end %s %d", epochIdentifier, epochNumber))
 	if epochIdentifier == "day" {
 		k.Logger(ctx).Info(fmt.Sprintf("Day %d Ending", epochNumber))
@@ -143,12 +150,12 @@ func (k Keeper) Hooks() Hooks {
 }
 
 // epochs hooks
-func (h Hooks) BeforeEpochStart(ctx sdk.Context, epochIdentifier string, epochNumber int64) {
-	h.k.BeforeEpochStart(ctx, epochIdentifier, epochNumber)
+func (h Hooks) BeforeEpochStart(ctx sdk.Context, epochInfo epochstypes.EpochInfo) {
+	h.k.BeforeEpochStart(ctx, epochInfo)
 }
 
-func (h Hooks) AfterEpochEnd(ctx sdk.Context, epochIdentifier string, epochNumber int64) {
-	h.k.AfterEpochEnd(ctx, epochIdentifier, epochNumber)
+func (h Hooks) AfterEpochEnd(ctx sdk.Context, epochInfo epochstypes.EpochInfo) {
+	h.k.AfterEpochEnd(ctx, epochInfo)
 }
 
 // -------------------- helper functions --------------------

@@ -11,7 +11,8 @@ func (k msgServer) SetNumValidators(goCtx context.Context, msg *types.MsgSetNumV
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	// TODO: Handling the message
-	k.stakingKeeper.SetNumValidators(ctx, msg.NumValidators)
+	_ = ctx
+	// k.stakingKeeper.SetNumValidators(ctx, msg.NumValidators)
 
 	return &types.MsgSetNumValidatorsResponse{}, nil
 }
