@@ -16,6 +16,8 @@ PEER_NODE_IDS=""
 MAIN_ID=1 # Node responsible for genesis and persistent_peers
 MAIN_NODE_NAME=""
 MAIN_NODE_CMD=""
+MAIN_NODE_ID=""
+MAIN_NODE_ENDPOINT=""
 echo 'Initializing stride...'
 for (( i=1; i <= $NUM_NODES; i++ )); do
     # Node names will be of the form: "stride-node1"
@@ -80,6 +82,7 @@ for (( i=1; i <= $NUM_NODES; i++ )); do
         MAIN_NODE_NAME=$node_name
         MAIN_NODE_CMD=$st_cmd
         MAIN_NODE_ID=$node_id
+        MAIN_NODE_ENDPOINT=$endpoint
     else
         # also add this account and it's genesis tx to the main node
         $MAIN_NODE_CMD add-genesis-account ${val_addr} $NODE_TOKENS
@@ -116,3 +119,7 @@ for (( i=2; i <= $NUM_NODES; i++ )); do
     # copy the main node's genesis to the peer nodes to ensure they all have the same genesis
     cp $main_genesis ${STATE}/${node_name}/config/genesis.json
 done
+
+STRIDE_STARTUP_FILE="${STATE}/stride_startup.sh"
+cp ${SCRIPT_DIR}/stride_startup_template.sh $STRIDE_STARTUP_FILE
+sed -i -E "s|STRIDE_ENDPOINT|$MAIN_NODE_ENDPOINT|g" $STRIDE_STARTUP_FILE
