@@ -17,6 +17,7 @@ STATE=$SCRIPT_DIR/state
 mkdir -p $STATE
 touch $STATE/keys.txt
 
+echo "$STRIDE_ADMIN_MNEMONIC"
 source ${SCRIPT_DIR}/setup_stride_state.sh $NUM_STRIDE_NODES $STRIDE_ADMIN_MNEMONIC
 source ${SCRIPT_DIR}/setup_gaia_state.sh 
 source ${SCRIPT_DIR}/setup_hermes_state.sh
