@@ -3,7 +3,7 @@ FROM golang:1.17-alpine3.15 AS golang
 WORKDIR /src/app/
 
 RUN apk add --no-cache make git gcc musl-dev openssl-dev linux-headers \
-    && git clone git@github.com:cosmos/cosmos-sdk \
+    && git clone https://github.com:cosmos/cosmos-sdk \
     && cd cosmos-sdk \
     && git checkout cosmovisor/v1.1.0 \
     && make cosmovisor \
