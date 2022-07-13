@@ -13,7 +13,7 @@ done
 sleep 60
 
 echo "Creating connection STRIDE <> GAIA"
-hermes create connection STRIDE GAIA
+hermes create connection STRIDE_CHAIN_ID GAIA
 
 echo "Creating transfer channel"
 hermes create channel --port-a transfer --port-b transfer GAIA connection-0 
