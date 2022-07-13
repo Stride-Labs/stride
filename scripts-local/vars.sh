@@ -12,15 +12,19 @@ ATOM_DENOM='uatom'
 STRD_DENOM='ustrd'
 STATOM_DENOM="stuatom"
 
+# **************************************************************************
+# WARNING: CHANGES TO THESE PARAMS COULD BREAK INTEGRATION TESTS
+# **************************************************************************
 # CHAIN PARAMS
 BLOCK_TIME_SECONDS=5
 BLOCK_TIME="${BLOCK_TIME_SECONDS}s"
 # NOTE: If you add new epochs, these indexes will need to be updated
 DAY_EPOCH_INDEX=1
+INTERVAL_LEN=1
 DAY_EPOCH_LEN="60s"
 STRIDE_EPOCH_INDEX=2
-STRIDE_EPOCH_LEN="10s"
-IBC_TX_WAIT_SECONDS=45
+STRIDE_EPOCH_LEN="40s"
+IBC_TX_WAIT_SECONDS=30
 
 # define STRIDE vars
 STRIDE_PORT_ID=26657  # 36564 
@@ -79,6 +83,10 @@ ICQ_GAIA_ACCT=icq2
 ICQ_STRIDE_MNEMONIC="helmet say goat special plug umbrella finger night flip axis resource tuna trigger angry shove essay point laundry horror eager forget depend siren alarm"
 ICQ_STRIDE_ADDR="stride12vfkpj7lpqg0n4j68rr5kyffc6wu55dzqewda4"
 ICQ_GAIA_MNEMONIC="capable later bamboo snow drive afraid cheese practice latin brush hand true visa drama mystery bird client nature jealous guess tank marriage volume fantasy"
+
+DELEGATION_ICA_ADDR='cosmos19l6d3d7k2pel8epgcpxc9np6fsvjpaaa06nm65vagwxap0e4jezq05mmvu'
+GAIA_DELEGATE_VAL='cosmosvaloper1pcag0cj4ttxg8l7pcg0q4ksuglswuuedadj7ne'
+GAIA_DELEGATE_VAL_2='cosmosvaloper133lfs9gcpxqj6er3kx605e3v9lqp2pg5syhvsz'
 
 CSLEEP() {
   for i in $(seq $1); do

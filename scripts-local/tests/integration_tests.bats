@@ -31,6 +31,16 @@ setup() {
 }
 
 ##############################################################################################
+######                              HOW TO                                              ######
+##############################################################################################
+# Tests are written sequentially
+# Each test depends on the previous tests, and examines the chain state at a point in time
+
+# To add a new test, take an action then sleep for seconds / blocks / IBC_TX_WAIT_SECONDS
+#     / epochs
+# Reordering existing tests could break them
+
+##############################################################################################
 ######                              SETUP TESTS                                         ######
 ##############################################################################################
 
@@ -72,33 +82,6 @@ setup() {
   assert_equal "$gaia1_diff" '10000'
 }
 
-@test "liquid stake mints stATOM" {
-  # get module address 
-  MODADDR=$($STRIDE_CMD q stakeibc module-address stakeibc | awk '{print $NF}') 
-  # get initial balances
-  mod_balance_atom=$($STRIDE_CMD q bank balances $MODADDR --denom $IBC_ATOM_DENOM | GETBAL)
-  str1_balance_atom=$($STRIDE_CMD q bank balances $STRIDE_ADDRESS --denom $IBC_ATOM_DENOM | GETBAL)
-  str1_balance_statom=$($STRIDE_CMD q bank balances $STRIDE_ADDRESS --denom $STATOM_DENOM | GETBAL)
-  # liquid stake
-  $STRIDE_CMD tx stakeibc liquid-stake 1000 uatom --keyring-backend test --from val1 -y --chain-id $STRIDE_CHAIN
-  # sleep one block for the tx to settle on stride
-  BLOCK_SLEEP 1
-  remaining_seconds=$($STRIDE_CMD q epochs seconds-remaining stride_epoch)
-  # sleep until the next day epoch passes
-  sleep $remaining_seconds
-  # sleep 30 seconds for the IBC calls to settle
-  sleep $IBC_TX_WAIT_SECONDS
-  # make sure IBC_ATOM_DENOM went down 
-  str1_balance_atom_new=$($STRIDE_CMD q bank balances $STRIDE_ADDRESS --denom $IBC_ATOM_DENOM | GETBAL)
-  str1_atom_diff=$(($str1_balance_atom - $str1_balance_atom_new))
-  assert_equal "$str1_atom_diff" '1000'
-  # make sure STATOM went up
-  str1_balance_statom_new=$($STRIDE_CMD q bank balances $STRIDE_ADDRESS --denom $STATOM_DENOM | GETBAL)
-  str1_statom_diff=$(($str1_balance_statom_new-$str1_balance_statom))
-  assert_equal "$str1_statom_diff" "1000"
-}
-
-
 # # add test to register host zone 
 @test "host zone successfully registered" {
   run $STRIDE_CMD q stakeibc show-host-zone GAIA
@@ -121,16 +104,33 @@ setup() {
 ######                TEST BASIC STRIDE FUNCTIONALITY                                   ######
 ##############################################################################################
 
+@test "liquid stake mints stATOM" {
+  # get module address
+  MODADDR=$($STRIDE_CMD q stakeibc module-address stakeibc | awk '{print $NF}') 
+  # get initial balances
+  mod_balance_atom=$($STRIDE_CMD q bank balances $MODADDR --denom $IBC_ATOM_DENOM | GETBAL)
+  str1_balance_atom=$($STRIDE_CMD q bank balances $STRIDE_ADDRESS --denom $IBC_ATOM_DENOM | GETBAL)
+  str1_balance_statom=$($STRIDE_CMD q bank balances $STRIDE_ADDRESS --denom $STATOM_DENOM | GETBAL)
+  # liquid stake
+  $STRIDE_CMD tx stakeibc liquid-stake 1000 uatom --keyring-backend test --from val1 -y --chain-id $STRIDE_CHAIN
+  # sleep two block for the tx to settle on stride
+  BLOCK_SLEEP 2
+  # make sure IBC_ATOM_DENOM went down 
+  str1_balance_atom_new=$($STRIDE_CMD q bank balances $STRIDE_ADDRESS --denom $IBC_ATOM_DENOM | GETBAL)
+  str1_atom_diff=$(($str1_balance_atom - $str1_balance_atom_new))
+  assert_equal "$str1_atom_diff" '1000'
+  # make sure STATOM went up
+  str1_balance_statom_new=$($STRIDE_CMD q bank balances $STRIDE_ADDRESS --denom $STATOM_DENOM | GETBAL)
+  str1_statom_diff=$(($str1_balance_statom_new-$str1_balance_statom))
+  assert_equal "$str1_statom_diff" "1000"
+}
+
 # check that tokens were transferred to GAIA
 @test "tokens were transferred to GAIA after liquid staking" {
   # initial balance of delegation ICA
   initial_delegation_ica_bal=$($GAIA_CMD q bank balances $DELEGATION_ICA_ADDR --denom uatom | GETBAL)
-  # liquid stake
-  $STRIDE_CMD tx stakeibc liquid-stake 1000 uatom --keyring-backend test --from val1 -y --chain-id $STRIDE_CHAIN
-  # sleep one block for the tx to settle on stride
-  BLOCK_SLEEP 1
+  # wait for the epoch to pass (we liquid staked above)
   remaining_seconds=$($STRIDE_CMD q epochs seconds-remaining stride_epoch)
-  # sleep until the next day epoch passes
   sleep $remaining_seconds
   # sleep 30 seconds for the IBC calls to settle
   sleep $IBC_TX_WAIT_SECONDS
@@ -142,15 +142,14 @@ setup() {
 
 # check that tokens on GAIA are staked
 @test "tokens on GAIA were staked" {
-  # check delegations
-  STAKE=$($GAIA_CMD q staking delegation $DELEGATION_ICA_ADDR $GAIA_DELEGATE_VAL | GETSTAKE)
-  # wait a day
+  # wait for another epoch to pass so that tokens are staked
   remaining_seconds=$($STRIDE_CMD q epochs seconds-remaining stride_epoch)
   sleep $remaining_seconds
-  # check delegations again
+  # sleep 30 seconds for the IBC calls to settle
+  sleep $IBC_TX_WAIT_SECONDS
+  # check staked tokens
   NEW_STAKE=$($GAIA_CMD q staking delegation $DELEGATION_ICA_ADDR $GAIA_DELEGATE_VAL | GETSTAKE)
-  stake_diff=$((($NEW_STAKE - $STAKE) > 0))
-  assert_equal "$stake_diff" "1"
+  assert_equal "$NEW_STAKE" "333"
 }
 
 # check that a second liquid staking call kicks off reinvestment
