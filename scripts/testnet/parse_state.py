@@ -3,9 +3,7 @@ import json
 with open('state.json') as f:
     data = json.load(f)
 
-IGNORE_ADDRS = set(
-    'stride159atdlc3ksl50g0659w5tq42wwer334ajl7xnq',
-)
+IGNORE_ADDRS = set(['stride159atdlc3ksl50g0659w5tq42wwer334ajl7xnq'])
 
 ibc_denom = 'ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2'
 STATOM_EXCH_RATE = 1.0005
