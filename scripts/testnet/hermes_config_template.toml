@@ -26,7 +26,7 @@ host = '0.0.0.0'
 port = 3001
 
 [[chains]]
-id = 'STRIDE'
+id = 'STRIDE_CHAIN_ID'
 rpc_addr = 'http://STRIDE_ENDPOINT:26657'
 grpc_addr = 'http://STRIDE_ENDPOINT:9090'
 websocket_addr = 'ws://STRIDE_ENDPOINT:26657/websocket'
