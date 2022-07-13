@@ -26,6 +26,18 @@ bank_sends = []
 genesis = []
 genesis_local = []
 
+bank_suffix = "--keyring-backend=test --chain-id STRIDE -y"
+
+gen_amts = {}
+
+for delegation_record in data['app_state']['staking']['delegations']:
+    addr = delegation_record['delegator_address']
+    if addr in IGNORE_ADDRS:
+        continue
+    if addr not in gen_amts:
+        gen_amts[addr] = 0
+    gen_amts[addr] += int(float(delegation_record['shares']))
+
 for bank_record in data['app_state']['bank']['balances']:
     if bank_record['address'] in IGNORE_ADDRS:
         continue
@@ -33,17 +45,24 @@ for bank_record in data['app_state']['bank']['balances']:
         if int(coin_record['amount']) > 1000000000:
             continue
         if coin_record['denom'] == ibc_denom:
-            bank_sends.append(f"strided tx bank send val2 {bank_record['address']} {coin_record['amount']}{coin_record['denom']}")
+            bank_sends.append(f"strided tx bank send val2 {bank_record['address']} {coin_record['amount']}{coin_record['denom']} {bank_suffix}")
         elif coin_record['denom'] == 'ustrd':
-            genesis_local.append(f"$STRIDE_CMD add-genesis-account {bank_record['address']} {coin_record['amount']}{coin_record['denom']}")
-            genesis.append(f"$MAIN_NODE_CMD add-genesis-account {bank_record['address']} {coin_record['amount']}{coin_record['denom']}")
+            if bank_record['address'] not in gen_amts:
+                gen_amts[bank_record['address']] = 0
+            gen_amts[bank_record['address']] += int(coin_record['amount'])
         elif coin_record['denom'] == 'stuatom':
             iamt = int(int(coin_record['amount']) * STATOM_EXCH_RATE)
-            bank_sends.append(f"strided tx bank send val2 {bank_record['address']} {iamt}{ibc_denom}")
+            bank_sends.append(f"strided tx bank send val2 {bank_record['address']} {iamt}{ibc_denom} {bank_suffix}")
         else:
             raise Exception(f"Unknown denom {coin_record['denom']}")
 
-bStr = "\n".join(bank_sends)
+for addr, amt in gen_amts.items():
+    if amt > 1000000000:
+        continue
+    genesis_local.append(f"$STRIDE_CMD add-genesis-account {addr} {amt}ustrd")
+    genesis.append(f"$MAIN_NODE_CMD add-genesis-account {addr} {amt}ustrd")
+
+bStr = "\nsleep 8\n".join(bank_sends)
 with open('bank_sends.sh', 'w') as f:
     f.write(bStr)
 

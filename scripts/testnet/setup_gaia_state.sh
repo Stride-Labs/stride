@@ -10,7 +10,7 @@ VAL_TOKENS=10000000000000000uatom
 STAKE_TOKENS=1000000uatom
 VAL_ACCT=gval1
 ENDPOINT=$GAIA_MAIN_ENDPOINT
-UNBONDING_TIME="1440s"
+UNBONDING_TIME="3600s"
 
 echo "Initializing gaia..."
 $GAIA_CMD init test --chain-id $CHAIN_NAME --overwrite 2> /dev/null
