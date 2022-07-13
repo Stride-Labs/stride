@@ -6,6 +6,7 @@
 *.dylib
 
 scripts/testnet/state/keys.txt
+**state.json
 **test.sh
 # build
 launch.sh
