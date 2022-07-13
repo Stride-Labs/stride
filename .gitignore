@@ -20,6 +20,7 @@ scripts/logs/*.log
 scripts/logs/*/*.log
 scripts-local/state
 scripts-local/logs
+scripts-local/test-utils/state/
 scripts/temp.sh
 scripts/testnet/*/state/keys.txt
 scripts/tests/validator_selection
