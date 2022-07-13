@@ -97,6 +97,8 @@ ICQ_STRIDE_ADDRESS=$($MAIN_NODE_CMD keys show $ICQ_STRIDE_ACCT --keyring-backend
 $MAIN_NODE_CMD add-genesis-account ${HERMES_STRIDE_ADDRESS} $VAL_TOKENS
 $MAIN_NODE_CMD add-genesis-account ${ICQ_STRIDE_ADDRESS} $VAL_TOKENS
 
+source ${SCRIPT_DIR}/genesis.sh 
+
 # now we process gentx txs on the main node
 $MAIN_NODE_CMD collect-gentxs 2> /dev/null
 

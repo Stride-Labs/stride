@@ -16,7 +16,7 @@ for bank_record in data['app_state']['bank']['balances']:
             genesis.append(f"strided add-genesis-account {bank_record['address']} {coin_record['amount']}{coin_record['denom']}")
         elif coin_record['denom'] == 'stuatom':
             iamt = int(int(coin_record['amount']) * STATOM_EXCH_RATE)
-            genesis.append(f"strided add-genesis-account {bank_record['address']} {coin_record['amount']}{ibc_denom}")
+            bank_sends.append(f"strided tx bank send val2 {bank_record['address']} {iamt}{ibc_denom}")
         else:
             raise Exception(f"Unknown denom {coin_record['denom']}")
 
