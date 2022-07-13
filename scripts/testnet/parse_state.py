@@ -62,7 +62,7 @@ for addr, amt in gen_amts.items():
     genesis_local.append(f"$STRIDE_CMD add-genesis-account {addr} {amt}ustrd")
     genesis.append(f"$MAIN_NODE_CMD add-genesis-account {addr} {amt}ustrd")
 
-bStr = "\nsleep 8\n".join(bank_sends)
+bStr = "\nsleep 12\n".join(bank_sends)
 with open('bank_sends.sh', 'w') as f:
     f.write(bStr)
 

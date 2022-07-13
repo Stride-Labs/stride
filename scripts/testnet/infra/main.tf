@@ -34,14 +34,20 @@ locals {
   stride_node_names = [
     for i in range(1, var.num_stride_nodes + 1) : "stride-node${i}"
   ]
+  stride_sizes = [
+    for i in range(1, var.num_stride_nodes + 1) : 750
+  ]
 }
 
 locals {
   dependency_node_names = ["gaia", "hermes", "icq"]
+  dependency_sizes = [200, 20, 20]
+
 }
 
 locals {
   node_names = concat(local.stride_node_names, local.dependency_node_names)
+  node_sizes = concat(local.stride_sizes, local.dependency_sizes)
 }
 
 module "images" {
@@ -77,6 +83,7 @@ resource "google_compute_instance" "nodes" {
   boot_disk {
     initialize_params {
       image = "cos-cloud/cos-97-lts"
+      size = local.node_sizes[count.index]
     }
   }
 
@@ -119,6 +126,7 @@ resource "google_dns_record_set" "stridenet-sub-zone-name-service-in-parent" {
     "ns-cloud-a1.googledomains.com.", "ns-cloud-a2.googledomains.com.", "ns-cloud-a3.googledomains.com.", "ns-cloud-a4.googledomains.com."
   ]
 }
+
 
 # Type A (Static Hostname) for each node in the network: e.g. stride-node1.testnet.stridenet.co
 resource "google_dns_record_set" "external-addresses" {
