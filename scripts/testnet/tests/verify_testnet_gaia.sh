@@ -1,7 +1,7 @@
 #!/bin/bash
 
 GET_ADDRESS() {
-  grep -i -A 10 "\- name: val1" /gaia/keys.txt | sed -n 3p | awk '{printf $2}'
+  grep -i -A 10 "\- name: $1" /gaia/keys.txt | sed -n 3p | awk '{printf $2}'
 }
 
 STRIDE_ADDRESS=$(GET_ADDRESS stride)
