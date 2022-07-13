@@ -33,6 +33,9 @@ test-cover:
 	@go test -mod=readonly -race -coverprofile=coverage.out -covermode=atomic ./x/$(module)/...
 
 test-integration:
+	sh scripts-local/tests/run_all_tests.sh
+
+test-integration-docker:
 	sh scripts/tests/run_all_tests.sh
 
 ###############################################################################

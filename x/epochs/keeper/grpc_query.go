@@ -57,3 +57,21 @@ func (k Keeper) CurrentEpoch(c context.Context, req *types.QueryCurrentEpochRequ
 		CurrentEpoch: info.CurrentEpoch,
 	}, nil
 }
+
+// CurrentEpoch provides current epoch of specified identifier
+func (k Keeper) EpochInfo(c context.Context, req *types.QueryEpochInfoRequest) (*types.QueryEpochInfoResponse, error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "empty request")
+	}
+
+	ctx := sdk.UnwrapSDKContext(c)
+
+	info, found := k.GetEpochInfo(ctx, req.Identifier)
+	if !found {
+		return nil, status.Error(codes.NotFound, "epoch info not found")
+	}
+
+	return &types.QueryEpochInfoResponse{
+		Epoch: info,
+	}, nil
+}

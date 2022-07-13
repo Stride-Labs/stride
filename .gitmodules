@@ -1,20 +1,12 @@
-[submodule "scripts/tests/bats"]
-	path = scripts/tests/bats
-	url = https://github.com/bats-core/bats-core.git
-[submodule "scripts/tests/test_helper/bats-support"]
-	path = scripts/tests/test_helper/bats-support
-	url = https://github.com/bats-core/bats-support.git
-[submodule "scripts/tests/test_helper/bats-assert"]
-	path = scripts/tests/test_helper/bats-assert
-	url = https://github.com/bats-core/bats-assert.git
 [submodule "deps/interchain-queries"]
 	path = deps/interchain-queries
 	url = git@github.com:Stride-Labs/interchain-queries.git
+	branch = main
 [submodule "deps/hermes"]
 	path = deps/hermes
 	url = git@github.com:informalsystems/ibc-rs.git
-	branch = 4e83aae8afdc9a88a
+	branch = 4e83aae8a
 [submodule "deps/gaia"]
 	path = deps/gaia
 	url = git@github.com:Stride-Labs/gaia.git
-	branch = v7.0.2-pinned
+	branch = bfb8f8ceb
