@@ -38,6 +38,8 @@ $STRIDE_CMD add-genesis-account ${val_addr} 500000000000ustrd
 # actually set this account as a validator
 $STRIDE_CMD gentx $STRIDE_VAL_ACCT 1000000000ustrd --chain-id $STRIDE_CHAIN --keyring-backend test 2> /dev/null
 
+# source $SCRIPT_DIR/genesis.sh
+
 # Add hermes relayer account
 echo $HERMES_STRIDE_MNEMONIC | $STRIDE_CMD keys add $HERMES_STRIDE_ACCT --recover --keyring-backend=test 
 HERMES_STRIDE_ADDRESS=$($STRIDE_CMD keys show $HERMES_STRIDE_ACCT --keyring-backend test -a)
