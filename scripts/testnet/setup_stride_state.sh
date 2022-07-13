@@ -4,6 +4,7 @@ set -eu
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
 NUM_NODES="$1"    
+STRIDE_ADMIN_MNEMONIC="${@:2}"
 
 NETWORK_NAME=stride
 CHAIN_NAME=STRIDE
@@ -11,11 +12,15 @@ VAL_PREFIX=val
 VAL_TOKENS=5000000000000ustrd
 STAKE_TOKENS=3000000000000ustrd
 FAUCET_TOKENS=10000000000000000ustrd
+STRIDE_ADMIN_ACCT=stride
+STRIDE_ADMIN_TOKENS=1000000000ustrd
 
 PEER_NODE_IDS=""
 MAIN_ID=1 # Node responsible for genesis and persistent_peers
 MAIN_NODE_NAME=""
 MAIN_NODE_CMD=""
+MAIN_NODE_ID=""
+MAIN_NODE_ENDPOINT=""
 echo 'Initializing stride...'
 for (( i=1; i <= $NUM_NODES; i++ )); do
     # Node names will be of the form: "stride-node1"
@@ -80,6 +85,7 @@ for (( i=1; i <= $NUM_NODES; i++ )); do
         MAIN_NODE_NAME=$node_name
         MAIN_NODE_CMD=$st_cmd
         MAIN_NODE_ID=$node_id
+        MAIN_NODE_ENDPOINT=$endpoint
     else
         # also add this account and it's genesis tx to the main node
         $MAIN_NODE_CMD add-genesis-account ${val_addr} $NODE_TOKENS
@@ -96,6 +102,11 @@ ICQ_STRIDE_ADDRESS=$($MAIN_NODE_CMD keys show $ICQ_STRIDE_ACCT --keyring-backend
 # give relayer accounts token balances
 $MAIN_NODE_CMD add-genesis-account ${HERMES_STRIDE_ADDRESS} $VAL_TOKENS
 $MAIN_NODE_CMD add-genesis-account ${ICQ_STRIDE_ADDRESS} $VAL_TOKENS
+
+# Add the stride admin account
+echo "$STRIDE_ADMIN_MNEMONIC" | $MAIN_NODE_CMD keys add $STRIDE_ADMIN_ACCT --recover --keyring-backend=test >> $STATE/keys.txt 2>&1
+STRIDE_ADMIN_ADDRESS=$($MAIN_NODE_CMD keys show $STRIDE_ADMIN_ACCT --keyring-backend test -a)
+$MAIN_NODE_CMD add-genesis-account ${STRIDE_ADMIN_ADDRESS} $STRIDE_ADMIN_TOKENS
 
 # now we process gentx txs on the main node
 $MAIN_NODE_CMD collect-gentxs 2> /dev/null
@@ -116,3 +127,7 @@ for (( i=2; i <= $NUM_NODES; i++ )); do
     # copy the main node's genesis to the peer nodes to ensure they all have the same genesis
     cp $main_genesis ${STATE}/${node_name}/config/genesis.json
 done
+
+STRIDE_STARTUP_FILE="${STATE}/stride_startup.sh"
+cp ${SCRIPT_DIR}/stride_startup_template.sh $STRIDE_STARTUP_FILE
+sed -i -E "s|STRIDE_ENDPOINT|$MAIN_NODE_ENDPOINT|g" $STRIDE_STARTUP_FILE

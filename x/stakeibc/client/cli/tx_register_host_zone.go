@@ -15,9 +15,9 @@ var _ = strconv.Itoa(0)
 // TODO(TEST-53): Remove this pre-launch (no need for clients to create / interact with ICAs)
 func CmdRegisterHostZone() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "register-host-zone [connection-id] [host-denom] [ibc-denom] [channel-id] [unbonding-frequency]",
+		Use:   "register-host-zone [connection-id] [host-denom] [bech32prefix] [ibc-denom] [channel-id] [unbonding-frequency]",
 		Short: "Broadcast message register-host-zone",
-		Args:  cobra.ExactArgs(5),
+		Args:  cobra.ExactArgs(6),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientTxContext(cmd)
 			if err != nil {
@@ -26,15 +26,17 @@ func CmdRegisterHostZone() *cobra.Command {
 
 			connectionId := args[0]
 			hostDenom := args[1]
-			ibcDenom := args[2]
-			channelId := args[3]
-			unbondingFrequency, err := strconv.ParseUint(args[4], 10, 64)
+			bech32prefix := args[2]
+			ibcDenom := args[3]
+			channelId := args[4]
+			unbondingFrequency, err := strconv.ParseUint(args[5], 10, 64)
 			if err != nil {
 				return err
 			}
 			msg := types.NewMsgRegisterHostZone(
 				clientCtx.GetFromAddress().String(),
 				connectionId,
+				bech32prefix,
 				hostDenom,
 				ibcDenom,
 				channelId,
