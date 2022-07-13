@@ -66,7 +66,7 @@ if [ "$CACHE" != "true" ]; then
 
     printf '%s' "Creating Hermes Channel...    "
     # continuation of logs from above command
-    ( tail -f -n0 $HERMES_LOGS & ) | grep -q "Message ChanOpenInit"
+    ( tail -f -n0 $HERMES_LOGS & ) | grep -q "Success: Channel"
     echo "Done"
 
     # If we're starting for the first time, confirm with the connection handshake
