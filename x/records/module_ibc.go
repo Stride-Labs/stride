@@ -6,6 +6,7 @@ import (
 
 	"github.com/Stride-Labs/stride/x/records/keeper"
 	"github.com/Stride-Labs/stride/x/records/types"
+	stakeibctypes "github.com/Stride-Labs/stride/x/stakeibc/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
@@ -190,29 +191,35 @@ func (im IBCModule) OnAcknowledgementPacket(
 		return sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "cannot unmarshal ICS-20 transfer packet data: %s", err.Error())
 	}
 
-	switch resp := ack.Response.(type) {
-	case *channeltypes.Acknowledgement_Result:
-		log := fmt.Sprintf("\t [IBC-TRANSFER] Acknowledgement_Result {%s}", string(resp.Result))
-		im.keeper.Logger(ctx).Error(log)
-		// UPDATE RECORD
-		// match record based on amount
-		amount, err := strconv.ParseInt(data.Amount, 10, 64)
-		if err != nil {
-			return sdkerrors.Wrapf(sdkerrors.ErrInvalidType, "Error parsing int %d", amount)
+	// Custom ack logic only applies to ibc transfers initiated from the `stakeibc` module account
+	// NOTE: if the `stakeibc` module account IBC transfers tokens for some other reason in the future,
+	// this will need to be updated
+	if data.Sender == im.keeper.AccountKeeper.GetModuleAddress(stakeibctypes.ModuleName).String() {
+		switch resp := ack.Response.(type) {
+		case *channeltypes.Acknowledgement_Result:
+			log := fmt.Sprintf("\t [IBC-TRANSFER] Acknowledgement_Result {%s}", string(resp.Result))
+			im.keeper.Logger(ctx).Error(log)
+			// UPDATE RECORD
+			// match record based on amount
+			amount, err := strconv.ParseInt(data.Amount, 10, 64)
+			if err != nil {
+				return sdkerrors.Wrapf(sdkerrors.ErrInvalidType, "Error parsing int %d", amount)
+			}
+			record, found := im.keeper.GetTransferDepositRecordByAmount(ctx, amount)
+			if found == false {
+				return sdkerrors.Wrapf(sdkerrors.ErrNotFound, "No deposit record found for amount: %d", amount)
+			}
+			// update the record
+			record.Status = types.DepositRecord_STAKE
+			im.keeper.SetDepositRecord(ctx, *record)
+			log = fmt.Sprintf("\t [IBC-TRANSFER] Deposit record updated: {%v}", record)
+			im.keeper.Logger(ctx).Error(log)
+		case *channeltypes.Acknowledgement_Error:
+			log := fmt.Sprintf("\t [IBC-TRANSFER] Acknowledgement_Error {%s}", resp.Error)
+			im.keeper.Logger(ctx).Error(log)
 		}
-		record, found := im.keeper.GetTransferDepositRecordByAmount(ctx, amount)
-		if found == false {
-			return sdkerrors.Wrapf(sdkerrors.ErrNotFound, "No deposit record found for amount: %d", amount)
-		}
-		// update the record
-		record.Status = types.DepositRecord_STAKE
-		im.keeper.SetDepositRecord(ctx, *record)
-		log = fmt.Sprintf("\t [IBC-TRANSFER] Deposit record updated: {%v}", record)
-		im.keeper.Logger(ctx).Error(log)
-	case *channeltypes.Acknowledgement_Error:
-		log := fmt.Sprintf("\t [IBC-TRANSFER] Acknowledgement_Error {%s}", resp.Error)
-		im.keeper.Logger(ctx).Error(log)
 	}
+
 	return nil
 }
 
