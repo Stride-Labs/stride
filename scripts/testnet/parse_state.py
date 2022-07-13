@@ -13,7 +13,7 @@ for bank_record in data['app_state']['bank']['balances']:
         if coin_record['denom'] == ibc_denom:
             bank_sends.append(f"strided tx bank send val2 {bank_record['address']} {coin_record['amount']}{coin_record['denom']}")
         elif coin_record['denom'] == 'ustrd':
-            genesis.append(f"strided add-genesis-account {bank_record['address']} {coin_record['amount']}{coin_record['denom']}")
+            genesis.append(f"$MAIN_NODE_CMD add-genesis-account {bank_record['address']} {coin_record['amount']}{coin_record['denom']}")
         elif coin_record['denom'] == 'stuatom':
             iamt = int(int(coin_record['amount']) * STATOM_EXCH_RATE)
             bank_sends.append(f"strided tx bank send val2 {bank_record['address']} {iamt}{ibc_denom}")
