@@ -5,6 +5,7 @@ on:
         description: Testnet that you want to launch (e.g. poolparty)
         required: true
 env:
+  stride_chain_id: STRIDE-1
   num_stride_nodes: 3
 
 jobs:
@@ -82,7 +83,11 @@ jobs:
         shell: bash
         run: |
           chmod +x -R ./build
-          ./scripts/testnet/setup_testnet_state.sh ${{ github.event.inputs.deployment_name }} ${num_stride_nodes} ${{ secrets.STRIDE_TESTNET_MNEMONIC }}
+          ./scripts/testnet/setup_testnet_state.sh \
+            ${{ github.event.inputs.deployment_name }} \
+            ${stride_chain_id} \
+            ${num_stride_nodes} \
+            ${{ secrets.STRIDE_TESTNET_MNEMONIC }}
 
       - name: Forward Certs
         run: |
