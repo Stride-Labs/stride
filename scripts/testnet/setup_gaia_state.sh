@@ -20,6 +20,8 @@ configtoml="${STATE}/${NODE_NAME}/config/config.toml"
 clienttoml="${STATE}/${NODE_NAME}/config/client.toml"
 
 sed -i -E 's|"full"|"validator"|g' $configtoml
+sed -i -E "s|chain-id = \"\"|chain-id = \"GAIA\"|g" $clienttoml
+sed -i -E "s|keyring-backend = \"os\"|keyring-backend = \"test\"|g" $clienttoml
 # Add cert file
 # sed -i -E "s|tls_cert_file = \"\"|tls_cert_file = \"/gaia/certfile.pem\"|g" $configtoml
 # sed -i -E "s|tls_key_file = \"\"|tls_key_file = \"/gaia/certkey.pem\"|g" $configtoml

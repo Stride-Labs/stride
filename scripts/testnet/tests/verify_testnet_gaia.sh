@@ -7,7 +7,7 @@ GET_ADDRESS() {
 STRIDE_ADDRESS=$(GET_ADDRESS stride)
 
 printf "\n>>> gaiad tx ibc-transfer transfer transfer channel-0 $STRIDE_ADDRESS 100000uatom... \n"
-gaiad tx ibc-transfer transfer transfer channel-0 $STRIDE_ADDRESS 100000uatom --from gval1 --chain-id GAIA -y --keyring-backend test
+gaiad tx ibc-transfer transfer transfer channel-0 $STRIDE_ADDRESS 100000uatom --from gval1 -y 
 sleep 5
 
 printf "\n>>> gaiad q staking validators \n"
