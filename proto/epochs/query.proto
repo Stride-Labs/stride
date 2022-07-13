@@ -19,6 +19,11 @@ service Query {
       returns (QueryCurrentEpochResponse) {
     option (google.api.http).get = "/Stridelabs/stride/epochs/current_epoch";
   }
+  // CurrentEpoch provide current epoch of specified identifier
+  rpc EpochInfo(QueryEpochInfoRequest)
+      returns (QueryEpochInfoResponse) {
+    option (google.api.http).get = "/Stridelabs/stride/epochs/epoch_info";
+  }
 }
 
 message QueryEpochsInfoRequest {
@@ -32,6 +37,9 @@ message QueryEpochsInfoResponse {
 
 message QueryCurrentEpochRequest { string identifier = 1; }
 message QueryCurrentEpochResponse { int64 current_epoch = 1; }
+
+message QueryEpochInfoRequest { string identifier = 1; }
+message QueryEpochInfoResponse { EpochInfo epoch = 1 [ (gogoproto.nullable) = false ]; }
 
 // syntax = "proto3";
 // package Stridelabs.stride.epochs;

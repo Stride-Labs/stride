@@ -5,18 +5,26 @@ SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
 STATE=$SCRIPT_DIR/state
 
+# DENOMS
+IBC_STRD_DENOM='ibc/FF6C2E86490C1C4FBBD24F55032831D2415B9D7882F85C3CC9C2401D79362BEA'
+IBC_ATOM_DENOM='ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2'
+ATOM_DENOM='uatom'
+STRD_DENOM='ustrd'
+STATOM_DENOM="stuatom"
+
+# **************************************************************************
+# WARNING: CHANGES TO THESE PARAMS COULD BREAK INTEGRATION TESTS
+# **************************************************************************
 # CHAIN PARAMS
-ATOM='uatom'
-IBCATOM='ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2'
-BLOCK_TIME='5s'
+BLOCK_TIME_SECONDS=5
+BLOCK_TIME="${BLOCK_TIME_SECONDS}s"
 # NOTE: If you add new epochs, these indexes will need to be updated
 DAY_EPOCH_INDEX=1
-DAY_EPOCH_LEN="90s"
+INTERVAL_LEN=1
+DAY_EPOCH_LEN="60s"
 STRIDE_EPOCH_INDEX=2
-STRIDE_EPOCH_LEN="30s"
-# build/strided --home scripts-local/state/stride tx stakeibc add-validator GAIA gval1 cosmosvaloper12mae306lphem7fvw2mz6swjr2m0he43recftfk 10 5 --chain-id STRIDE --from val1 --keyring-backend test
-# build/strided --home scripts-local/state/stride q bank balances stride1uk4ze0x4nvh4fk0xm4jdud58eqn4yxhrt52vv7
-# build/strided --home scripts-local/state/stride q stakeibc list-host-zone
+STRIDE_EPOCH_LEN="40s"
+IBC_TX_WAIT_SECONDS=30
 
 # define STRIDE vars
 STRIDE_PORT_ID=26657  # 36564 
@@ -24,6 +32,8 @@ STRIDE_CHAIN=STRIDE
 STRIDE_NODE_NAME=stride
 STRIDE_VAL_ACCT=val1
 STRIDE_VAL_MNEMONIC="close soup mirror crew erode defy knock trigger gather eyebrow tent farm gym gloom base lemon sleep weekend rich forget diagram hurt prize fly"
+STRIDE_VAL_ADDR="stride1uk4ze0x4nvh4fk0xm4jdud58eqn4yxhrt52vv7"
+
 STRIDE_CMD="$SCRIPT_DIR/../build/strided --home $STATE/stride"
 
 # define GAIA vars
@@ -63,6 +73,7 @@ HERMES_CMD="$SCRIPT_DIR/../build/hermes/release/hermes -c $SCRIPT_DIR/hermes/con
 HERMES_STRIDE_ACCT=rly1
 HERMES_GAIA_ACCT=rly2
 HERMES_STRIDE_MNEMONIC="alter old invest friend relief slot swear pioneer syrup economy vendor tray focus hedgehog artist legend antenna hair almost donkey spice protect sustain increase"
+HERMES_STRIDE_ADDR="stride1ft20pydau82pgesyl9huhhux307s9h3078692y"
 HERMES_GAIA_MNEMONIC="resemble accident lake amateur physical jewel taxi nut demand magnet person blanket trip entire awkward fiber usual current index limb lady lady depart train"
 
 ICQ_CMD="$SCRIPT_DIR/../build/interchain-queries --home $STATE/icq"
@@ -70,12 +81,25 @@ ICQ_CMD="$SCRIPT_DIR/../build/interchain-queries --home $STATE/icq"
 ICQ_STRIDE_ACCT=icq1
 ICQ_GAIA_ACCT=icq2
 ICQ_STRIDE_MNEMONIC="helmet say goat special plug umbrella finger night flip axis resource tuna trigger angry shove essay point laundry horror eager forget depend siren alarm"
+ICQ_STRIDE_ADDR="stride12vfkpj7lpqg0n4j68rr5kyffc6wu55dzqewda4"
 ICQ_GAIA_MNEMONIC="capable later bamboo snow drive afraid cheese practice latin brush hand true visa drama mystery bird client nature jealous guess tank marriage volume fantasy"
+
+DELEGATION_ICA_ADDR='cosmos19l6d3d7k2pel8epgcpxc9np6fsvjpaaa06nm65vagwxap0e4jezq05mmvu'
+GAIA_DELEGATE_VAL='cosmosvaloper1pcag0cj4ttxg8l7pcg0q4ksuglswuuedadj7ne'
+GAIA_DELEGATE_VAL_2='cosmosvaloper133lfs9gcpxqj6er3kx605e3v9lqp2pg5syhvsz'
 
 CSLEEP() {
   for i in $(seq $1); do
     sleep 1
     printf "\r\t$(($1 - $i))s left..."
+  done
+  printf "\n"
+}
+
+BLOCK_SLEEP() {
+  for i in $(seq $1); do
+    sleep $BLOCK_TIME_SECONDS
+    printf "\r\t$(($1 - $i)) blocks left..."
   done
   printf "\n"
 }
