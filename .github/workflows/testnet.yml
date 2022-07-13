@@ -50,7 +50,6 @@ jobs:
       - name: Build Gaia
         run: |
           git clone https://github.com/Stride-Labs/gaia --branch v7.0.2-pin-ibc-cosmos-sdk
-          mkdir build
           cd gaia
           go build -mod=readonly -trimpath -o ../build ./...
       - name: Store Gaia Executable
