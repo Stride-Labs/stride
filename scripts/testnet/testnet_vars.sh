@@ -18,6 +18,8 @@ DOMAIN=stridenet.co
 
 BLOCK_TIME=5s
 
+STRIDE_CHAIN_ID=STRIDE-1
+
 STRIDE_CMD="$SCRIPT_DIR/../../build/strided"
 STRIDE_MAIN_ENDPOINT="stride-node1.${DEPLOYMENT_NAME}.${DOMAIN}"
 
