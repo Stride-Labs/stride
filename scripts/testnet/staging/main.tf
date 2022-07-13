@@ -83,7 +83,7 @@ resource "google_compute_instance" "nodes" {
   boot_disk {
     initialize_params {
       image = "cos-cloud/cos-97-lts"
-      size = node_sizes[count.index]
+      size = local.node_sizes[count.index]
     }
   }
 
@@ -126,6 +126,7 @@ resource "google_dns_record_set" "stridenet-sub-zone-name-service-in-parent" {
     "ns-cloud-a1.googledomains.com.", "ns-cloud-a2.googledomains.com.", "ns-cloud-a3.googledomains.com.", "ns-cloud-a4.googledomains.com."
   ]
 }
+
 
 # Type A (Static Hostname) for each node in the network: e.g. stride-node1.testnet.stridenet.co
 resource "google_dns_record_set" "external-addresses" {
