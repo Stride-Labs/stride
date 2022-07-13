@@ -83,14 +83,14 @@ jobs:
         shell: bash
         run: |
           chmod +x -R ./build
-          ./scripts/testnet/setup_testnet_state.sh ${{ github.event.inputs.deployment_name }} ${num_stride_nodes}
+          ./scripts/testnet/setup_testnet_state.sh ${{ github.event.inputs.deployment_name }} ${num_stride_nodes} ${{ secrets.STRIDE_TESTNET_MNEMONIC }}
 
       - name: Forward Certs
         run: |
-            echo "${{ secrets.CERT_KEY }}" >> scripts/testnet/state/certkey.pem
-            echo "${{ secrets.CERT_FILE }}" >>  scripts/testnet/state/certfile.pem
+          echo "${{ secrets.CERT_KEY }}" >> scripts/testnet/state/certkey.pem
+          echo "${{ secrets.CERT_FILE }}" >>  scripts/testnet/state/certfile.pem
         shell: bash
-          
+
       - name: Persist State Files
         uses: actions/upload-artifact@v3
         with:
@@ -210,6 +210,6 @@ jobs:
         id: web3
         with:
           web3_token: ${{ secrets.IPFS_KEY }}
-          path_to_add: './state/stride-node1/config/genesis.json' 
+          path_to_add: "./state/stride-node1/config/genesis.json"
       - run: echo ${{ steps.web3.outputs.cid }}
       - run: echo ${{ steps.web3.outputs.url }}
