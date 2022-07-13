@@ -2,7 +2,9 @@ package cli
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
+	"time"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
@@ -26,6 +28,7 @@ func GetQueryCmd() *cobra.Command {
 	cmd.AddCommand(
 		GetCmdEpochsInfos(),
 		GetCmdCurrentEpoch(),
+		GetCmdSecondsRemaining(),
 	)
 
 	return cmd
@@ -99,6 +102,52 @@ func GetCmdCurrentEpoch() *cobra.Command {
 			}
 
 			return clientCtx.PrintProto(res)
+		},
+	}
+
+	flags.AddQueryFlagsToCmd(cmd)
+
+	return cmd
+}
+
+
+// GetCmdSecondsRemaining provides seconds-remaining by specified identifier
+func GetCmdSecondsRemaining() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "seconds-remaining",
+		Short: "Query seconds remaining by specified identifier",
+		Example: strings.TrimSpace(
+			fmt.Sprintf(`$ %s query epochs seconds-remaining week`,
+				version.AppName,
+			),
+		),
+		Args: cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+
+			clientCtx, err := client.GetClientQueryContext(cmd)
+			if err != nil {
+				return err
+			}
+
+			queryClient := types.NewQueryClient(clientCtx)
+
+			res, err := queryClient.EpochInfo(cmd.Context(), &types.QueryEpochInfoRequest{
+				Identifier: args[0],
+			})
+			if err != nil {
+				return err
+			}
+
+			// duration: seconds
+			duration := int64(res.Epoch.Duration.Seconds())
+			// current epoch start time
+			startTime := res.Epoch.CurrentEpochStartTime.Unix()
+			// diff in seconds
+			currTime := time.Now().Unix()
+			// 60 - (100 - 80)
+			remaining := duration - (currTime - startTime)
+
+			return clientCtx.PrintString(strconv.FormatInt(remaining, 10))
 		},
 	}
 

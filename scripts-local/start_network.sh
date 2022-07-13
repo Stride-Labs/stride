@@ -3,7 +3,9 @@
 set -eu
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
+
 source $SCRIPT_DIR/vars.sh
+
 
 mkdir -p $SCRIPT_DIR/logs
 
@@ -26,6 +28,7 @@ rm -rf $SCRIPT_DIR/state $SCRIPT_DIR/logs/*.log $SCRIPT_DIR/logs/temp
 for log in $STRIDE_LOGS $GAIA_LOGS $GAIA_LOGS_2 $HERMES_LOGS $ICQ_LOGS; do
     touch $log
 done
+
 
 if [ "$CACHE" != "true" ]; then
     # If not caching, initialize state for Stride, Gaia, and relayers
@@ -95,12 +98,26 @@ if [ "$CACHE" != "true" ]; then
     # Submit a transaction on stride to register the gaia host zone
     echo "Creating host zone..."
     $STRIDE_CMD tx stakeibc register-host-zone \
-        connection-0 $ATOM cosmos $IBCATOM channel-0 3 \
+        connection-0 $ATOM_DENOM $IBC_ATOM_DENOM channel-0 3 \
         --chain-id $STRIDE_CHAIN --home $STATE/stride \
         --keyring-backend test --from $STRIDE_VAL_ACCT --gas 1000000 -y
 fi
 # sleep a while longer to wait for ICA accounts to set up
 sleep 60
+
+echo "Registering validators on host zone..."
+
+CSLEEP 10
+$GAIA_CMD tx bank send gval1 $GAIA_VAL_2_ADDR 10000uatom --chain-id $GAIA_CHAIN --keyring-backend test -y
+CSLEEP 10
+$GAIA_CMD tx bank send gval1 $GAIA_VAL_3_ADDR 10000uatom --chain-id $GAIA_CHAIN --keyring-backend test -y
+
+CSLEEP 10
+$STRIDE_CMD tx stakeibc add-validator GAIA gval1 $GAIA_DELEGATE_VAL 10 5 --chain-id $STRIDE_CHAIN --keyring-backend test --from $STRIDE_VAL_ACCT -y
+CSLEEP 30
+$STRIDE_CMD tx stakeibc add-validator GAIA gval2 $GAIA_DELEGATE_VAL_2 10 10 --chain-id $STRIDE_CHAIN --keyring-backend test --from $STRIDE_VAL_ACCT -y
+CSLEEP 30
+
 
 # Add more detailed log files
 $SCRIPT_DIR/create_logs.sh &
