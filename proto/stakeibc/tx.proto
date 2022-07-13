@@ -76,11 +76,13 @@ message MsgSubmitTx {
 // MsgSubmitTxResponse defines the response for Msg/SubmitTx
 message MsgSubmitTxResponse {}
 
+// next: 13
 message MsgRegisterHostZone{
   option (gogoproto.equal) = false;
   option (gogoproto.goproto_getters) = false;
 
   string connection_id = 2 [ (gogoproto.moretags) = "yaml:\"connection_id\"" ];
+  string bech32prefix = 12;
   string host_denom = 4 [ (gogoproto.moretags) = "yaml:\"host_denom\"" ];
   string ibc_denom = 5 [ (gogoproto.moretags) = "yaml:\"ibc_denom\"" ];
   string creator = 6;
@@ -93,8 +95,10 @@ message MsgRegisterHostZoneResponse{}
 
 message MsgClaimUndelegatedTokens {
   string creator = 1;
-  string hostZone = 2;
-  uint64 maxClaims = 3;
+  // UserUnbondingRecords are keyed on {chain_id}.{epoch}.{sender}
+  string hostZoneId = 2;
+  uint64 epoch = 3;
+  string sender = 4;
 }
 
 message MsgClaimUndelegatedTokensResponse {

@@ -61,7 +61,11 @@ func (msg *MsgLiquidStake) ValidateBasic() error {
 	}
 	// validate amount is positive nonzero
 	if msg.Amount <= 0 {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "amount liquid staked must be positive and nonzero")
+		return sdkerrors.Wrapf(ErrInvalidAmount, "amount liquid staked must be positive and nonzero")
+	}
+	// validate host denom is not empty
+	if msg.HostDenom == "" {
+		return sdkerrors.Wrapf(ErrRequiredFieldEmpty, "host denom cannot be empty")
 	}
 	return nil
 }

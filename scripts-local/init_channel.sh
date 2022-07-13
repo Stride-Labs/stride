@@ -14,5 +14,4 @@ $HERMES_CMD create connection $STRIDE_CHAIN $GAIA_CHAIN
 
 echo "Creating transfer channel"
 $HERMES_CMD create channel --port-a transfer --port-b transfer $GAIA_CHAIN connection-0 
-$HERMES_CMD tx raw chan-open-init $STRIDE_CHAIN $GAIA_CHAIN connection-0 transfer transfer 
 
