@@ -21,6 +21,7 @@ type (
 		memKey       sdk.StoreKey
 		paramstore   paramtypes.Subspace
 		scopedKeeper capabilitykeeper.ScopedKeeper
+		AccountKeeper types.AccountKeeper
 	}
 )
 
@@ -30,6 +31,7 @@ func NewKeeper(
 	memKey sdk.StoreKey,
 	ps paramtypes.Subspace,
 	scopedKeeper capabilitykeeper.ScopedKeeper,
+	AccountKeeper types.AccountKeeper,
 
 ) *Keeper {
 	// set KeyTable if it has not already been set
@@ -43,6 +45,7 @@ func NewKeeper(
 		memKey:       memKey,
 		paramstore:   ps,
 		scopedKeeper: scopedKeeper,
+		AccountKeeper: AccountKeeper,
 	}
 }
 
