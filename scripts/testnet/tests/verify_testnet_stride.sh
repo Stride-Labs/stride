@@ -1,26 +1,46 @@
+#!/bin/bash
 
-set -eu
-SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
-
-source $SCRIPT_DIR/test_vars.sh
+GET_ADDRESS() {
+  grep -i -A 10 "\- name: val1" /stride/keys.txt | sed -n 3p | awk '{printf $2}'
+}
 
 # SET GAIA ADDRESS TO THE DESIRED VALIDATOR
-GAIA_VAL_ADDR=""
-STRIDE_ACCT="val1"
-STRIDE_ADDR="stride159atdlc3ksl50g0659w5tq42wwer334ajl7xnq"
+GAIA_VAL_ADDR="$1"
+if [[ "$GAIA_VAL_ADDR" == "" ]]; then
+    echo "Please pass the GAIA validator address as an arugment to this script."
+    exit
+fi
+
+STRIDE_ACCT="stride"
+STRIDE_ADDR=$(GET_ADDRESS $STRIDE_ACCT)
 IBCATOM="ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2"
 
-strided q bank balances $STRIDE_ADDR
-sleep 5
+while true; do
+    printf "\n>>> strided q bank balances $STRIDE_ADDR \n"
+    strided q bank balances $STRIDE_ADDR
+    if strided q bank balances $STRIDE_ADDR | grep -q $IBCATOM; then 
+        break
+    fi
+    sleep 5
+done
 
+printf "\n>>> strided tx stakeibc register-host-zone connection-0 uatom cosmos $IBCATOM channel-0 3... \n"
 strided tx stakeibc register-host-zone connection-0 uatom cosmos $IBCATOM channel-0 3 --chain-id STRIDE \
- --keyring-backend test --from val2 --gas 1000000 -y
+ --keyring-backend test --from $STRIDE_ACCT --gas 1000000 -y
 
 sleep 5
-strided tx stakeibc add-validator GAIA gval1 $GAIA_VAL_ADDR 10 5 --chain-id STRIDE --keyring-backend test --from STRIDE_ACCT -y
+printf "\n>>> strided tx stakeibc add-validator GAIA gval1 $GAIA_VAL_ADDR 10 5... \n"
+strided tx stakeibc add-validator GAIA gval1 $GAIA_VAL_ADDR 10 5 --chain-id STRIDE --keyring-backend test --from $STRIDE_ACCT -y
 
 sleep 5
-strided q stakeibc list-host-zone
+while true; do
+    printf "\n>>> strided q stakeibc list-host-zone \n"
+    strided q stakeibc list-host-zone 
+    if strided q stakeibc list-host-zone | grep -q $GAIA_VAL_ADDR; then 
+        break
+    fi
+    sleep 5
+done
 
 #
 #    0. Run the above command `q bank balances val1` to check that tokens were IBC'd over
