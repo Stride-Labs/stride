@@ -1,7 +1,7 @@
 #!/bin/bash
 
 GET_ADDRESS() {
-  grep -i -A 10 "\- name: val1" /stride/keys.txt | sed -n 3p | awk '{printf $2}'
+  grep -i -A 10 "\- name: $1" /stride/keys.txt | sed -n 3p | awk '{printf $2}'
 }
 
 # SET GAIA ADDRESS TO THE DESIRED VALIDATOR
