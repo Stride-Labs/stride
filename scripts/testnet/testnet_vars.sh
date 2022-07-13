@@ -3,22 +3,11 @@
 set -eu
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
-if [ -z "$1" ]
-then
-    echo "Error, you must pass deployment name in. E.g. \"sh setup_testnet_state.sh internal\""
-    exit 1
-fi
-
-DEPLOYMENT_NAME="$1"
-echo "Setting up deployment $DEPLOYMENT_NAME"
-
 STATE=$SCRIPT_DIR/state
 PORT_ID=26656
 DOMAIN=stridenet.co
 
 BLOCK_TIME=5s
-
-STRIDE_CHAIN_ID=STRIDE-1
 
 STRIDE_CMD="$SCRIPT_DIR/../../build/strided"
 STRIDE_MAIN_ENDPOINT="stride-node1.${DEPLOYMENT_NAME}.${DOMAIN}"

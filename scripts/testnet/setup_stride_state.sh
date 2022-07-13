@@ -3,9 +3,6 @@
 set -eu
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
-NUM_NODES="$1"    
-STRIDE_ADMIN_MNEMONIC="${@:2}"
-
 NETWORK_NAME=stride
 VAL_PREFIX=val
 VAL_TOKENS=5000000000000ustrd
@@ -13,6 +10,7 @@ STAKE_TOKENS=3000000000000ustrd
 FAUCET_TOKENS=10000000000000000ustrd
 STRIDE_ADMIN_ACCT=stride
 STRIDE_ADMIN_TOKENS=1000000000ustrd
+NUM_NODES=$NUM_STRIDE_NODES
 
 PEER_NODE_IDS=""
 MAIN_ID=1 # Node responsible for genesis and persistent_peers
