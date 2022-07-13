@@ -16,9 +16,9 @@ while true; do
     $STRIDE_CMD q txs --events message.module=stakeibc --limit=100000 >$TEMP_LOGS_DIR/stakeibc-events.log
 
     # accounts
-    GAIA_DELEGATE="cosmos19l6d3d7k2pel8epgcpxc9np6fsvjpaaa06nm65vagwxap0e4jezq05mmvu"
-    GAIA_WITHDRAWAL="cosmos1lcnmjwjy2lnqged5pnrc0cstz0r88rttunla4zxv84mee30g2q3q48fm53"
-    GAIA_REDEMPTION="cosmos1nc4hn8s7zp62vg4ugqzuul84zhvg5q7srq00f792zzmf5kyfre6sxfwmqw"
+    GAIA_DELEGATE="cosmos1sy63lffevueudvvlvh2lf6s387xh9xq72n3fsy6n2gr5hm6u2szs2v0ujm"
+    GAIA_WITHDRAWAL="cosmos1x5p8er7e2ne8l54tx33l560l8djuyapny55pksctuguzdc00dj7saqcw2l"
+    GAIA_REDEMPTION="cosmos1xmcwu75s8v7s54k79390wc5gwtgkeqhvzegpj0nm2tdwacv47tmqg9ut30"
     GAIA_REV="cosmos1wdplq6qjh2xruc7qqagma9ya665q6qhcwju3ng"
     STRIDE_ADDRESS="stride1uk4ze0x4nvh4fk0xm4jdud58eqn4yxhrt52vv7"
 
