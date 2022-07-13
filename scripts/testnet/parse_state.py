@@ -26,7 +26,7 @@ bank_sends = []
 genesis = []
 genesis_local = []
 
-bank_suffix = "--keyring-backend=test --chain-id STRIDE -y"
+bank_suffix = "--keyring-backend=test -y"
 
 gen_amts = {}
 
