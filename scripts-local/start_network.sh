@@ -92,7 +92,7 @@ if [ "$CACHE" != "true" ]; then
     # Submit a transaction on stride to register the gaia host zone
     echo "Creating host zone..."
     $STRIDE_CMD tx stakeibc register-host-zone \
-        connection-0 $ATOM_DENOM cosmos $IBC_ATOM_DENOM channel-0 2 \
+        connection-0 $ATOM_DENOM cosmos $IBC_ATOM_DENOM channel-0 1 \
         --chain-id $STRIDE_CHAIN --home $STATE/stride \
         --keyring-backend test --from $STRIDE_VAL_ACCT --gas 1000000 -y
 fi
