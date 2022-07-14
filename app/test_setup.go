@@ -10,7 +10,7 @@ import (
 )
 
 // Setup initializes a new StrideApp
-func Setup(isCheckTx bool) *StrideApp {
+func InitTestApp(isCheckTx bool) *StrideApp {
 	db := dbm.NewMemDB()
 	app := NewStrideApp(
 		log.NewNopLogger(),
