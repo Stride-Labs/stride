@@ -34,6 +34,10 @@ func (k Keeper) GetTargetValAmtsForHostZone(ctx sdk.Context, hostZone types.Host
 	// such that the total validator delegation is equal to the finalDelegation
 	// output key is ADDRESS not NAME
 	totalWeight := k.GetTotalValidatorWeight(ctx, hostZone)
+	if totalWeight == 0 {
+		k.Logger(ctx).Error(fmt.Sprintf("No non-zero validators found for host zone %s", hostZone.ChainId))
+		return nil, types.ErrNoValidatorWeights
+	}
 	if finalDelegation == 0 {
 		k.Logger(ctx).Error(fmt.Sprintf("Cannot calculate target delegation if final amount is 0 %s", hostZone.ChainId))
 		return nil, types.ErrNoValidatorWeights
