@@ -116,7 +116,13 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochIdentifier string, epochN
 						k.Logger(ctx).Info(fmt.Sprintf("Found blockTime for host zone %s: %d", hz.ConnectionId, blockTime))
 					}
 
-					k.UpdateWithdrawalBalance(ctx, hz)
+					err := k.UpdateWithdrawalBalance(ctx, hz)
+					if err != nil {
+						k.Logger(ctx).Error(fmt.Sprintf("Error updating withdrawal balance for host zone %s: %s", hz.ConnectionId, err.Error()))
+						continue
+					} else {
+						k.Logger(ctx).Info(fmt.Sprintf("Updated withdrawal balance for host zone %s", hz.ConnectionId))
+					}
 				}
 			}
 		}

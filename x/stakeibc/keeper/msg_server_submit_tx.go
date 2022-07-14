@@ -144,7 +144,7 @@ func (k Keeper) SetWithdrawalAddressOnHost(ctx sdk.Context, hostZone types.HostZ
 }
 
 // Simple balance query helper using new ICQ module
-func (k Keeper) UpdateWithdrawalBalance(ctx sdk.Context, zoneInfo types.HostZone) {
+func (k Keeper) UpdateWithdrawalBalance(ctx sdk.Context, zoneInfo types.HostZone) error {
 	k.Logger(ctx).Info(fmt.Sprintf("\tUpdating withdrawal balances on %s", zoneInfo.ChainId))
 
 	withdrawalIca := zoneInfo.GetWithdrawalAccount()
@@ -157,7 +157,7 @@ func (k Keeper) UpdateWithdrawalBalance(ctx sdk.Context, zoneInfo types.HostZone
 	data := bankTypes.CreateAccountBalancesPrefix(addr)
 	key := "store/bank/key"
 	k.Logger(ctx).Info("Querying for value", "key", key, "denom", zoneInfo.HostDenom)
-	k.InterchainQueryKeeper.MakeRequest(
+	err := k.InterchainQueryKeeper.MakeRequest(
 		ctx,
 		zoneInfo.ConnectionId,
 		zoneInfo.ChainId,
@@ -169,6 +169,10 @@ func (k Keeper) UpdateWithdrawalBalance(ctx sdk.Context, zoneInfo types.HostZone
 		0, //ttl
 		0, //height
 	)
+	if err != nil {
+		k.Logger(ctx).Error("Error querying for withdrawal balance", "error", err)
+		return err
+	}
 }
 
 func (k Keeper) SubmitTxsDayEpoch(ctx sdk.Context, connectionId string, msgs []sdk.Msg, account types.ICAAccount) (uint64, error) {

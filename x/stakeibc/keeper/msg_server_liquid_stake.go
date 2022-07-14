@@ -16,7 +16,7 @@ func (k msgServer) LiquidStake(goCtx context.Context, msg *types.MsgLiquidStake)
 	// Init variables
 	// deposit `amount` of `denom` token to the stakeibc module
 	// NOTE: Should we add an additional check here? This is a pretty important line of code
-	// NOTE: If sender doesn't have enough inCoin, this panics (error is hard to interpret)
+	// NOTE: If sender doesn't have enough inCoin, this errors (error is hard to interpret)
 	// check that hostZone is registered
 	// strided tx stakeibc liquid-stake 100 uatom
 	hostZone, err := k.GetHostZoneFromHostDenom(ctx, msg.HostDenom)
@@ -60,7 +60,7 @@ func (k msgServer) LiquidStake(goCtx context.Context, msg *types.MsgLiquidStake)
 	sdkerror := k.bankKeeper.SendCoinsFromAccountToModule(ctx, sender, types.ModuleName, sdk.NewCoins(inCoin))
 	if sdkerror != nil {
 		k.Logger(ctx).Error("failed to send tokens from Account to Module")
-		panic(sdkerror)
+		return nil, sdkerrors.Wrapf(types.ErrInvalidToken, "failed to send tokens from Account to Module")
 	}
 	// mint user `amount` of the corresponding stAsset
 	// NOTE: We should ensure that denoms are unique - we don't want anyone spoofing denoms
@@ -106,22 +106,23 @@ func (k msgServer) MintStAsset(ctx sdk.Context, sender sdk.AccAddress, amount in
 	stCoins, err := sdk.ParseCoinsNormalized(coinString)
 	if err != nil {
 		k.Logger(ctx).Info("Failed to parse coins")
-		panic(err)
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "Failed to parse coins")
 	}
 
 	// mint new coins of the asset type
 	// MintCoins creates new coins from thin air and adds it to the module account.
-	// It will panic if the module account does not exist or is unauthorized.
+	// It will error if the module account does not exist or is unauthorized.
 	sdkerror := k.bankKeeper.MintCoins(ctx, types.ModuleName, stCoins)
 	if sdkerror != nil {
 		k.Logger(ctx).Info("Failed to mint coins")
-		panic(sdkerror)
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "Failed to mint coins")
 	}
 	// transfer those coins to the user
 	sdkerror = k.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, sender, stCoins)
 	if sdkerror != nil {
 		k.Logger(ctx).Info("Failed to send coins from module to account")
-		panic(sdkerror)
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "Failed to send coins from module to account")
+
 	}
 	return nil
 }
