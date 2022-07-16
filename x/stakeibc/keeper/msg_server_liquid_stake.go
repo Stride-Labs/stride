@@ -22,7 +22,7 @@ func (k msgServer) LiquidStake(goCtx context.Context, msg *types.MsgLiquidStake)
 	hostZone, err := k.GetHostZoneFromHostDenom(ctx, msg.HostDenom)
 	if err != nil {
 		k.Logger(ctx).Error("Host Zone not found for denom (%s)", msg.HostDenom)
-		return nil, sdkerrors.Wrap(types.ErrInvalidHostZone, "no host zone found for denom")
+		return nil, sdkerrors.Wrapf(types.ErrInvalidHostZone, "no host zone found for denom (%s)", msg.HostDenom)
 	}
 	// get the sender address
 	sender, err := sdk.AccAddressFromBech32(msg.Creator)
@@ -32,19 +32,21 @@ func (k msgServer) LiquidStake(goCtx context.Context, msg *types.MsgLiquidStake)
 	coinString := strconv.Itoa(int(msg.Amount)) + ibcDenom
 	inCoin, err := sdk.ParseCoinNormalized(coinString)
 	if err != nil {
-		return nil, sdkerrors.Wrapf(err, "failed to parse %s inCoin", coinString)
+		k.Logger(ctx).Error("failed to parse coin (%s)", coinString)
+		return nil, sdkerrors.Wrapf(err, "failed to parse coin (%s)", coinString)
 	}
 
 	// Creator owns at least "amount" of inCoin
 	balance := k.bankKeeper.GetBalance(ctx, sender, ibcDenom)
 	if balance.IsLT(inCoin) {
-		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidCoins, "balance is lower than staking amount. staking amount: %d, balance %d: ", msg.Amount, balance.Amount)
+		k.Logger(ctx).Error("balance is lower than staking amount. staking amount: %d, balance: %d", msg.Amount, balance.Amount.Int64())
+		return nil, sdkerrors.Wrapf(sdkerrors.ErrInsufficientFunds, "balance is lower than staking amount. staking amount: %d, balance: %d", msg.Amount, balance.Amount.Int64())
 	}
 	// check that the token is an IBC token
 	isIbcToken := types.IsIBCToken(ibcDenom)
 	if !isIbcToken {
-		k.Logger(ctx).Error("invalid token denom")
-		return nil, sdkerrors.Wrapf(types.ErrInvalidToken, "invalid token denom (%s)", ibcDenom)
+		k.Logger(ctx).Error("invalid token denom - denom is not an IBC token (%s)")
+		return nil, sdkerrors.Wrapf(types.ErrInvalidToken, "denom is not an IBC token (%s)", ibcDenom)
 	}
 
 	err = k.bankKeeper.SendCoinsFromAccountToModule(ctx, sender, types.ModuleName, sdk.NewCoins(inCoin))
@@ -64,13 +66,13 @@ func (k msgServer) LiquidStake(goCtx context.Context, msg *types.MsgLiquidStake)
 	strideEpochTracker, found := k.GetEpochTracker(ctx, epochtypes.STRIDE_EPOCH)
 	if !found {
 		k.Logger(ctx).Error("failed to find epoch")
-		return nil, sdkerrors.Wrapf(types.ErrInvalidLengthEpochTracker, "no number for epoch (%s)", epochtypes.STRIDE_EPOCH)
+		return nil, sdkerrors.Wrapf(sdkerrors.ErrNotFound, "no epoch number for epoch (%s)", epochtypes.STRIDE_EPOCH)
 	}
 	// Does this use too much gas?
 	depositRecord, found := k.RecordsKeeper.GetDepositRecordByEpochAndChain(ctx, strideEpochTracker.EpochNumber, hostZone.ChainId)
 	if !found {
 		k.Logger(ctx).Error("failed to find deposit record")
-		return nil, sdkerrors.Wrapf(types.ErrInvalidLengthEpochTracker, "no deposit record (%d)", strideEpochTracker.EpochNumber)
+		return nil, sdkerrors.Wrapf(sdkerrors.ErrNotFound, "no deposit record for epoch (%d)", strideEpochTracker.EpochNumber)
 	}
 	depositRecord.Amount += msg.Amount
 	k.RecordsKeeper.SetDepositRecord(ctx, *depositRecord)
