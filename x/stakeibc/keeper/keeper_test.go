@@ -17,7 +17,6 @@ type KeeperTestSuite struct {
 func (suite *KeeperTestSuite) SetupTest() {
 	suite.Setup()
 	suite.msgServer = keeper.NewMsgServerImpl(suite.App.StakeibcKeeper)
-	suite.FundModuleAccount(types.ModuleName, "1000000000000ustrd")
 }
 
 func TestKeeperTestSuite(t *testing.T) {
