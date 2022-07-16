@@ -10,7 +10,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
-
 	_ "github.com/stretchr/testify/suite"
 )
 
@@ -32,19 +31,20 @@ type TestCase struct {
 	validMsg     stakeibc.MsgLiquidStake
 }
 
-func (suite *KeeperTestSuite) PrintBalances() {
+func (suite *KeeperTestSuite) PrintBalances(denom string) {
 	stakeIbcModule := suite.App.AccountKeeper.GetModuleAddress(stakeibc.ModuleName)
-	mintModule := suite.App.AccountKeeper.GetModuleAddress(minttypes.ModuleName)
 	bankModule := suite.App.AccountKeeper.GetModuleAddress(banktypes.ModuleName)
-	fmt.Println("Stakeibc Module Balance:", suite.App.BankKeeper.GetBalance(suite.Ctx, stakeIbcModule, "ustrd"))
-	fmt.Println("Mint Module Balance:    ", suite.App.BankKeeper.GetBalance(suite.Ctx, mintModule, "ustrd"))
-	fmt.Println("Bank Module Balance:    ", suite.App.BankKeeper.GetBalance(suite.Ctx, bankModule, "ustrd"))
-	fmt.Println("User Balance:           ", suite.App.BankKeeper.GetBalance(suite.Ctx, suite.TestAccs[0], "ustrd"))
-	fmt.Println("Stride Supply:          ", suite.App.BankKeeper.GetSupply(suite.Ctx, "ustrd"))
+	// mintModule := suite.App.AccountKeeper.GetModuleAddress(minttypes.ModuleName)
+	fmt.Println("========================")
+	fmt.Println("Stakeibc Module Balance:", suite.App.BankKeeper.GetBalance(suite.Ctx, stakeIbcModule, denom))
+	fmt.Println("Bank Module Balance:    ", suite.App.BankKeeper.GetBalance(suite.Ctx, bankModule, denom))
+	fmt.Println("User Balance:           ", suite.App.BankKeeper.GetBalance(suite.Ctx, suite.TestAccs[0], denom))
+	// fmt.Println("Total Supply:           ", suite.App.BankKeeper.GetSupply(suite.Ctx, denom))
 }
 
 func (suite *KeeperTestSuite) SetupLiquidStake() TestCase {
 	stakeAmount := int64(1_000_000)
+	initialDepositAmount := int64(1_000_000)
 	user := Account{
 		acc:           suite.TestAccs[0],
 		atomBalance:   sdk.NewInt64Coin("ibc/uatom", 5_000_000),
@@ -53,12 +53,12 @@ func (suite *KeeperTestSuite) SetupLiquidStake() TestCase {
 	suite.FundAccount(user.acc, user.atomBalance)
 
 	module := Account{
-		acc:           suite.App.AccountKeeper.GetModuleAddress(types.ModuleName),
+		acc:           suite.App.AccountKeeper.GetModuleAddress(stakeibc.ModuleName),
 		atomBalance:   sdk.NewInt64Coin("ibc/uatom", 10_000_000),
 		stAtomBalance: sdk.NewInt64Coin("stuatom", 10_000_000),
 	}
-	suite.FundAccount(module.acc, module.atomBalance)
-	suite.FundAccount(module.acc, module.stAtomBalance)
+	suite.FundModuleAccount(stakeibc.ModuleName, module.atomBalance)
+	suite.FundModuleAccount(stakeibc.ModuleName, module.stAtomBalance)
 
 	hostZone := stakeibc.HostZone{
 		ChainId:        "GAIA",
@@ -76,7 +76,7 @@ func (suite *KeeperTestSuite) SetupLiquidStake() TestCase {
 		Id:                 1,
 		DepositEpochNumber: 1,
 		HostZoneId:         "GAIA",
-		Amount:             0,
+		Amount:             initialDepositAmount,
 	}
 
 	suite.App.StakeibcKeeper.SetHostZone(suite.Ctx, hostZone)
@@ -87,7 +87,7 @@ func (suite *KeeperTestSuite) SetupLiquidStake() TestCase {
 		user:   user,
 		module: module,
 		initialState: State{
-			depositRecordAmount: 0,
+			depositRecordAmount: initialDepositAmount,
 			hostZone:            hostZone,
 		},
 		validMsg: stakeibc.MsgLiquidStake{
@@ -96,6 +96,57 @@ func (suite *KeeperTestSuite) SetupLiquidStake() TestCase {
 			Amount:    stakeAmount,
 		},
 	}
+}
+
+func (suite *KeeperTestSuite) TestPlayground() {
+	amount := sdk.NewCoins(sdk.NewInt64Coin("atom", 1_000_000))
+	stakeIbcModule := suite.App.AccountKeeper.GetModuleAddress(stakeibc.ModuleName)
+	bankModule := suite.App.AccountKeeper.GetModuleAddress(banktypes.ModuleName)
+	mintModule := suite.App.AccountKeeper.GetModuleAddress(minttypes.ModuleName)
+
+	fmt.Println(suite.App.BankKeeper.BlockedAddr(stakeIbcModule))
+	fmt.Println(suite.App.BankKeeper.BlockedAddr(mintModule))
+	fmt.Println(suite.App.BankKeeper.BlockedAddr(bankModule))
+	for k, v := range suite.App.ModuleAccountAddrs() {
+		fmt.Println(k, v)
+	}
+	fmt.Println(bankModule.String())
+	fmt.Println(mintModule.String())
+	fmt.Println(stakeIbcModule.String())
+
+	suite.PrintBalances("atom")
+
+	if err := suite.App.BankKeeper.MintCoins(suite.Ctx, stakeibc.ModuleName, amount); err != nil {
+		fmt.Println("ERR:", err)
+	}
+	suite.PrintBalances("atom")
+	fmt.Println("Minted to mint Module")
+
+	if err := suite.App.BankKeeper.SendCoinsFromModuleToAccount(suite.Ctx, stakeibc.ModuleName, suite.TestAccs[0], amount); err != nil {
+		fmt.Println("ERR:", err)
+	}
+	suite.PrintBalances("atom")
+	fmt.Println("Sent from stakeibc module to user")
+
+	// if err := suite.App.BankKeeper.SendCoinsFromAccountToModule(suite.Ctx, suite.TestAccs[0], stakeibc.ModuleName, amount); err != nil {
+	// 	fmt.Println("ERR:", err)
+	// }
+	// suite.PrintBalances("atom")
+	// fmt.Println("Sent from module to elsewhere")
+
+	// if err := suite.App.BankKeeper.SendCoinsFromModuleToAccount(suite.Ctx, stakeibc.ModuleName, suite.TestAccs[0], amount); err != nil {
+	// 	fmt.Println("ERR:", err)
+	// }
+	// suite.PrintBalances("atom")
+	// fmt.Println("Sent from module to account")
+
+	// bankAddress := s.App.AccountKeeper.GetModuleAddress(banktypes.ModuleName)
+	// err = s.App.BankKeeper.SendCoins(s.Ctx, bankAddress, acc, sdk.NewCoins(amount))
+	// s.Require().NoError(err)
+
+	// suite.PrintBalances("atom")
+	// err := suite.App.BankKeeper.SendCoinsFromModuleToAccount(suite.Ctx, types.ModuleName, tc.user.acc, sdk.NewCoins(sdk.NewInt64Coin("stuatom", 1_000_000)))
+	// suite.PrintBalances("atom")
 }
 
 func (suite *KeeperTestSuite) TestLiquidStakeSuccessful() {
@@ -113,7 +164,7 @@ func (suite *KeeperTestSuite) TestLiquidStakeSuccessful() {
 	actualUserAtomBalance := suite.App.BankKeeper.GetBalance(suite.Ctx, user.acc, "ibc/uatom")
 	// Module IBC/UATOM balance should have INCREASED by the size of the stake
 	expectedModuleAtomBalance := module.atomBalance.AddAmount(stakeAmount)
-	actualModuleAtomBalance := suite.GetModuleBalance(stakeibc.ModuleName, "ibc/uatom")
+	actualModuleAtomBalance := suite.App.BankKeeper.GetBalance(suite.Ctx, module.acc, "ibc/uatom")
 	// User STUATOM balance should have INCREASED by the size of the stake
 	expectedUserStAtomBalance := user.stAtomBalance.AddAmount(stakeAmount)
 	actualUserStAtomBalance := suite.App.BankKeeper.GetBalance(suite.Ctx, user.acc, "stuatom")

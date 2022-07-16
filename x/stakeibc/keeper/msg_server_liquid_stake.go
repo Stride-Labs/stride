@@ -32,7 +32,7 @@ func (k msgServer) LiquidStake(goCtx context.Context, msg *types.MsgLiquidStake)
 	coinString := strconv.Itoa(int(msg.Amount)) + ibcDenom
 	inCoin, err := sdk.ParseCoinNormalized(coinString)
 	if err != nil {
-		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidType, "failed to parse %s inCoin", coinString)
+		return nil, sdkerrors.Wrapf(err, "failed to parse %s inCoin", coinString)
 	}
 
 	// Creator owns at least "amount" of inCoin
@@ -50,14 +50,14 @@ func (k msgServer) LiquidStake(goCtx context.Context, msg *types.MsgLiquidStake)
 	err = k.bankKeeper.SendCoinsFromAccountToModule(ctx, sender, types.ModuleName, sdk.NewCoins(inCoin))
 	if err != nil {
 		k.Logger(ctx).Error("failed to send tokens from Account to Module")
-		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "failed to send tokens from Account to Module")
+		return nil, sdkerrors.Wrap(err, "failed to send tokens from Account to Module")
 	}
 	// mint user `amount` of the corresponding stAsset
 	// NOTE: We should ensure that denoms are unique - we don't want anyone spoofing denoms
 	err = k.MintStAsset(ctx, sender, msg.Amount, msg.HostDenom)
 	if err != nil {
 		k.Logger(ctx).Error("failed to send tokens from Account to Module")
-		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidCoins, "failed to mint stAssets to user")
+		return nil, sdkerrors.Wrapf(err, "failed to mint %s stAssets to user", msg.HostDenom)
 	}
 
 	// create a deposit record of these tokens (pending transfer)
@@ -111,7 +111,7 @@ func (k msgServer) MintStAsset(ctx sdk.Context, sender sdk.AccAddress, amount in
 	err = k.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, sender, stCoins)
 	if err != nil {
 		k.Logger(ctx).Error("Failed to send coins from module to account")
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "Failed to send coins from module to account")
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "Failed to send %s from module to account", stCoins.GetDenomByIndex(0))
 	}
 	return nil
 }
