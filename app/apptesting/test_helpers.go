@@ -24,7 +24,6 @@ type AppTestHelper struct {
 func (s *AppTestHelper) Setup() {
 	config := sdk.GetConfig()
 	config.SetBech32PrefixForAccount(Bech32Prefix, Bech32Prefix+sdk.PrefixPublic)
-	config.Seal()
 
 	checkTx := false
 	s.App = app.InitTestApp(checkTx)
