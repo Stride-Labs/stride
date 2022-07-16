@@ -109,19 +109,17 @@ func (k msgServer) MintStAsset(ctx sdk.Context, sender sdk.AccAddress, amount in
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "Failed to parse coins")
 	}
 
-	// mint new coins of the asset type
-	// MintCoins creates new coins from thin air and adds it to the module account.
-	// It will error if the module account does not exist or is unauthorized.
-	sdkerror := k.bankKeeper.MintCoins(ctx, types.ModuleName, stCoins)
-	if sdkerror != nil {
+	// Mints coins to the module account, will error if the module account does not exist or is unauthorized.
+	err = k.bankKeeper.MintCoins(ctx, types.ModuleName, stCoins)
+	if err != nil {
 		k.Logger(ctx).Info("Failed to mint coins")
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "Failed to mint coins")
+		return sdkerrors.Wrapf(err, "Failed to mint coins")
 	}
 	// transfer those coins to the user
-	sdkerror = k.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, sender, stCoins)
-	if sdkerror != nil {
+	err = k.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, sender, stCoins)
+	if err != nil {
 		k.Logger(ctx).Info("Failed to send coins from module to account")
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "Failed to send coins from module to account")
+		return sdkerrors.Wrapf(err, "Failed to send coins from module to account")
 
 	}
 	return nil
