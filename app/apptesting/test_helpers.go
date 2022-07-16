@@ -2,9 +2,10 @@ package apptesting
 
 import (
 	"github.com/Stride-Labs/stride/app"
+	stakeibc "github.com/Stride-Labs/stride/x/stakeibc/types"
 	"github.com/cosmos/cosmos-sdk/baseapp"
-	"github.com/cosmos/cosmos-sdk/simapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/stretchr/testify/suite"
 	"github.com/tendermint/tendermint/crypto/ed25519"
 	tmtypes "github.com/tendermint/tendermint/proto/tendermint/types"
@@ -36,22 +37,33 @@ func (s *AppTestHelper) Setup() {
 	config.Seal()
 }
 
-func (s *AppTestHelper) FundModuleAccount(moduleName string, amount string) {
-	coins := s.StringToCoin(amount)
-	simapp.FundModuleAccount(s.App.BankKeeper, s.Ctx, moduleName, coins)
-}
-
-func (s *AppTestHelper) FundAcc(acc sdk.AccAddress, moduleName, amount string) {
-	coins := s.StringToCoin(amount)
-	err := s.App.BankKeeper.SendCoinsFromModuleToAccount(s.Ctx, moduleName, acc, coins)
-	// err := simapp.FundAccount(s.App.BankKeeper, s.Ctx, acc, coins)
+func (s *AppTestHelper) mintAndSend(acc sdk.AccAddress, amount sdk.Coin) {
+	// This mints to the bank module (even though stakeibc module is specified)
+	err := s.App.BankKeeper.MintCoins(s.Ctx, stakeibc.ModuleName, sdk.NewCoins(amount))
+	s.Require().NoError(err)
+	// SendFromModule fails so we need to get the actual address of the bank
+	bankAddress := s.App.AccountKeeper.GetModuleAddress(banktypes.ModuleName)
+	err = s.App.BankKeeper.SendCoins(s.Ctx, bankAddress, acc, sdk.NewCoins(amount))
 	s.Require().NoError(err)
 }
 
-func (s *AppTestHelper) StringToCoin(amount string) sdk.Coins {
-	coins, err := sdk.ParseCoinNormalized(amount)
-	s.Require().NoError(err)
-	return sdk.NewCoins(coins)
+func (s *AppTestHelper) FundModuleAccount(moduleName string, amount sdk.Coin) {
+	// SendToModule fails so we need to get the actual module address
+	moduleAddress := s.App.AccountKeeper.GetModuleAddress(moduleName)
+	s.mintAndSend(moduleAddress, amount)
+}
+
+func (s *AppTestHelper) FundAccount(acc sdk.AccAddress, amount sdk.Coin) {
+	s.mintAndSend(acc, amount)
+}
+
+func (s *AppTestHelper) GetModuleBalance(moduleName string, denom string) sdk.Coin {
+	moduleAddress := s.App.AccountKeeper.GetModuleAddress(moduleName)
+	return s.App.BankKeeper.GetBalance(s.Ctx, moduleAddress, denom)
+}
+
+func (s *AppTestHelper) CompareCoins(expectedCoin sdk.Coin, actualCoin sdk.Coin, msg string) {
+	s.Require().Equal(expectedCoin.Amount.Int64(), actualCoin.Amount.Int64(), msg)
 }
 
 func CreateRandomAccounts(numAccts int) []sdk.AccAddress {
