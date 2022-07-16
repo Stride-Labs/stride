@@ -1,9 +1,9 @@
 package types
 
 import (
+	utils "github.com/Stride-Labs/stride/utils"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	utils "github.com/Stride-Labs/stride/utils"
 )
 
 const TypeMsgClaimUndelegatedTokens = "claim_undelegated_tokens"
@@ -12,10 +12,10 @@ var _ sdk.Msg = &MsgClaimUndelegatedTokens{}
 
 func NewMsgClaimUndelegatedTokens(creator string, hostZone string, epoch uint64, sender string) *MsgClaimUndelegatedTokens {
 	return &MsgClaimUndelegatedTokens{
-		Creator:   creator,
-		HostZoneId:  hostZone,
-		Epoch: epoch,
-		Sender: sender,
+		Creator:    creator,
+		HostZoneId: hostZone,
+		Epoch:      epoch,
+		Sender:     sender,
 	}
 }
 

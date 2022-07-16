@@ -6,6 +6,7 @@ import (
 
 	recordstypes "github.com/Stride-Labs/stride/x/records/types"
 
+	epochstypes "github.com/Stride-Labs/stride/x/epochs/types"
 	"github.com/Stride-Labs/stride/x/stakeibc/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -51,9 +52,16 @@ func (k msgServer) ClaimUndelegatedTokens(goCtx context.Context, msg *types.MsgC
 		ToAddress:   userRedemptionRecord.Receiver,
 		Amount:      sdk.NewCoins(sdk.NewInt64Coin(userRedemptionRecord.Denom, int64(userRedemptionRecord.Amount))),
 	})
-	
+
 	// Give claims a 10 minute timeout
-	timeout := uint64(k.GetParam(ctx, types.KeyICATimeoutNanos))
+	epoch_tracker, found := k.GetEpochTracker(ctx, epochstypes.STRIDE_EPOCH)
+	if !found {
+		errMsg := fmt.Sprintf("Epoch tracker not found for epoch %s", epochstypes.STRIDE_EPOCH)
+		k.Logger(ctx).Error(errMsg)
+		return nil, sdkerrors.Wrap(types.ErrEpochNotFound, errMsg)
+	}
+	timeout := uint64(epoch_tracker.NextEpochStartTime) + uint64(k.GetParam(ctx, types.KeyICATimeoutNanos))
+
 	sequence, err := k.SubmitTxs(ctx, hostZone.GetConnectionId(), msgs, *redemptionAccount, timeout)
 	if err != nil {
 		k.Logger(ctx).Error(fmt.Sprintf("Submit tx error: %s", err.Error()))
@@ -71,7 +79,6 @@ func (k msgServer) ClaimUndelegatedTokens(goCtx context.Context, msg *types.MsgC
 		UserRedemptionRecordIds: []string{userRedemptionRecord.Id},
 	}
 	k.SetPendingClaims(ctx, pendingClaims)
-
 
 	return &types.MsgClaimUndelegatedTokensResponse{}, nil
 }

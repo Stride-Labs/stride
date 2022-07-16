@@ -1,12 +1,12 @@
 package cli
 
 import (
-    "context"
-	
-    "github.com/spf13/cobra"
+	"context"
+
+	"github.com/Stride-Labs/stride/x/stakeibc/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
-    "github.com/Stride-Labs/stride/x/stakeibc/types"
+	"github.com/spf13/cobra"
 )
 
 func CmdListPendingClaims() *cobra.Command {
@@ -14,32 +14,32 @@ func CmdListPendingClaims() *cobra.Command {
 		Use:   "list-pending-claims",
 		Short: "list all pending-claims",
 		RunE: func(cmd *cobra.Command, args []string) error {
-            clientCtx := client.GetClientContextFromCmd(cmd)
+			clientCtx := client.GetClientContextFromCmd(cmd)
 
-            pageReq, err := client.ReadPageRequest(cmd.Flags())
-            if err != nil {
-                return err
-            }
+			pageReq, err := client.ReadPageRequest(cmd.Flags())
+			if err != nil {
+				return err
+			}
 
-            queryClient := types.NewQueryClient(clientCtx)
+			queryClient := types.NewQueryClient(clientCtx)
 
-            params := &types.QueryAllPendingClaimsRequest{
-                Pagination: pageReq,
-            }
+			params := &types.QueryAllPendingClaimsRequest{
+				Pagination: pageReq,
+			}
 
-            res, err := queryClient.PendingClaimsAll(context.Background(), params)
-            if err != nil {
-                return err
-            }
+			res, err := queryClient.PendingClaimsAll(context.Background(), params)
+			if err != nil {
+				return err
+			}
 
-            return clientCtx.PrintProto(res)
+			return clientCtx.PrintProto(res)
 		},
 	}
 
 	flags.AddPaginationFlagsToCmd(cmd, cmd.Use)
 	flags.AddQueryFlagsToCmd(cmd)
 
-    return cmd
+	return cmd
 }
 
 func CmdShowPendingClaims() *cobra.Command {
@@ -48,27 +48,26 @@ func CmdShowPendingClaims() *cobra.Command {
 		Short: "shows a pending-claims",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
-            clientCtx := client.GetClientContextFromCmd(cmd)
+			clientCtx := client.GetClientContextFromCmd(cmd)
 
-            queryClient := types.NewQueryClient(clientCtx)
+			queryClient := types.NewQueryClient(clientCtx)
 
-             argSequence := args[0]
-            
-            params := &types.QueryGetPendingClaimsRequest{
-                Sequence: argSequence,
-                
-            }
+			argSequence := args[0]
 
-            res, err := queryClient.PendingClaims(context.Background(), params)
-            if err != nil {
-                return err
-            }
+			params := &types.QueryGetPendingClaimsRequest{
+				Sequence: argSequence,
+			}
 
-            return clientCtx.PrintProto(res)
+			res, err := queryClient.PendingClaims(context.Background(), params)
+			if err != nil {
+				return err
+			}
+
+			return clientCtx.PrintProto(res)
 		},
 	}
 
 	flags.AddQueryFlagsToCmd(cmd)
 
-    return cmd
+	return cmd
 }

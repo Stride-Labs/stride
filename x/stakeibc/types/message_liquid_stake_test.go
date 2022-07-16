@@ -17,34 +17,34 @@ func TestMsgLiquidStake_ValidateBasic(t *testing.T) {
 		{
 			name: "invalid address",
 			msg: MsgLiquidStake{
-				Creator: "invalid_address",
-				Amount: 1,
+				Creator:   "invalid_address",
+				Amount:    1,
 				HostDenom: "uatom",
 			},
 			err: sdkerrors.ErrInvalidAddress,
-		}, 
+		},
 		{
 			name: "invalid address: wrong chain's bech32prefix",
 			msg: MsgLiquidStake{
-				Creator: "osmo1yjq0n2ewufluenyyvj2y9sead9jfstpxnqv2xz",
-				Amount: 1,
+				Creator:   "osmo1yjq0n2ewufluenyyvj2y9sead9jfstpxnqv2xz",
+				Amount:    1,
 				HostDenom: "uatom",
 			},
 			err: sdkerrors.ErrInvalidAddress,
-		}, 
+		},
 		{
 			name: "valid inputs",
 			msg: MsgLiquidStake{
-				Creator: sample.AccAddress(),
-				Amount: 1,
+				Creator:   sample.AccAddress(),
+				Amount:    1,
 				HostDenom: "uatom",
 			},
 		},
 		{
 			name: "zero amount",
 			msg: MsgLiquidStake{
-				Creator: sample.AccAddress(),
-				Amount: 0,
+				Creator:   sample.AccAddress(),
+				Amount:    0,
 				HostDenom: "uatom",
 			},
 			err: ErrInvalidAmount,
@@ -52,8 +52,8 @@ func TestMsgLiquidStake_ValidateBasic(t *testing.T) {
 		{
 			name: "negative amount",
 			msg: MsgLiquidStake{
-				Creator: sample.AccAddress(),
-				Amount: -1,
+				Creator:   sample.AccAddress(),
+				Amount:    -1,
 				HostDenom: "uatom",
 			},
 			err: ErrInvalidAmount,
@@ -61,8 +61,8 @@ func TestMsgLiquidStake_ValidateBasic(t *testing.T) {
 		{
 			name: "empty host denom",
 			msg: MsgLiquidStake{
-				Creator: sample.AccAddress(),
-				Amount: 1,
+				Creator:   sample.AccAddress(),
+				Amount:    1,
 				HostDenom: "",
 			},
 			err: ErrRequiredFieldEmpty,
@@ -79,7 +79,7 @@ func TestMsgLiquidStake_ValidateBasic(t *testing.T) {
 			require.NoError(t, err)
 
 			// check msg_server
-			
+
 		})
 	}
 }

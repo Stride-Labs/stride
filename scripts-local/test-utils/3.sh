@@ -11,4 +11,4 @@ source ${SCRIPT_DIR}/../account_vars.sh
 $STRIDE_CMD tx stakeibc redeem-stake 89 GAIA cosmos1g6qdx6kdhpf000afvvpte7hp0vnpzapuyxp8uf --from $STRIDE_VAL_ACCT --keyring-backend test --chain-id $STRIDE_CHAIN -y
 
 
-build/gaiad --home ./scripts-local/state/gaia q bank balances cosmos1g6qdx6kdhpf000afvvpte7hp0vnpzapuyxp8uf
+$GAIA_CMD q bank balances cosmos1g6qdx6kdhpf000afvvpte7hp0vnpzapuyxp8uf
