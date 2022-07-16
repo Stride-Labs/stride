@@ -85,6 +85,9 @@ ICQ_STRIDE_ADDR="stride12vfkpj7lpqg0n4j68rr5kyffc6wu55dzqewda4"
 ICQ_GAIA_MNEMONIC="capable later bamboo snow drive afraid cheese practice latin brush hand true visa drama mystery bird client nature jealous guess tank marriage volume fantasy"
 
 DELEGATION_ICA_ADDR='cosmos1sy63lffevueudvvlvh2lf6s387xh9xq72n3fsy6n2gr5hm6u2szs2v0ujm'
+REDEMPTION_ICA_ADDR='cosmos1xmcwu75s8v7s54k79390wc5gwtgkeqhvzegpj0nm2tdwacv47tmqg9ut30'
+WITHDRAWAL_ICA_ADDR='cosmos1lcnmjwjy2lnqged5pnrc0cstz0r88rttunla4zxv84mee30g2q3q48fm53'
+REVENUE_EOA_ADDR='cosmos1wdplq6qjh2xruc7qqagma9ya665q6qhcwju3ng'
 GAIA_DELEGATE_VAL='cosmosvaloper1pcag0cj4ttxg8l7pcg0q4ksuglswuuedadj7ne'
 GAIA_DELEGATE_VAL_2='cosmosvaloper133lfs9gcpxqj6er3kx605e3v9lqp2pg5syhvsz'
 
