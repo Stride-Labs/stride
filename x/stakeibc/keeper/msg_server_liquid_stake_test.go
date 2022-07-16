@@ -34,7 +34,7 @@ func (suite *KeeperTestSuite) SetupLiquidStake() TestCase {
 	initialDepositAmount := int64(1_000_000)
 	user := Account{
 		acc:           suite.TestAccs[0],
-		atomBalance:   sdk.NewInt64Coin("ibc/uatom", 5_000_000),
+		atomBalance:   sdk.NewInt64Coin("ibc/uatom", 10_000_000),
 		stAtomBalance: sdk.NewInt64Coin("stuatom", 0),
 	}
 	suite.FundAccount(user.acc, user.atomBalance)
@@ -119,24 +119,33 @@ func (suite *KeeperTestSuite) TestLiquidStakeSuccessful() {
 	suite.Require().Equal(expectedDepositRecordAmount, actualDepositRecordAmount, "deposit record amount")
 }
 
-func (suite *KeeperTestSuite) TestLiquidStakeDifferentExchangeRates() {
-	// tc := suite.SetupLiquidStake()
-	// msg := tc.validMsg
-	// type cases struct {
-	// 	exchangeRate sdk.NewDec
+func (suite *KeeperTestSuite) TestLiquidStakeDifferentRedemptionRates() {
+	tc := suite.SetupLiquidStake()
+	user := tc.user
+	msg := tc.validMsg
 
-	// }
-	// for exchangeRate := range []float64{0.25, 0.5, 0.75, 1.0, 1.25, 1.5} {
-	// 	hz := tc.initialState.hostZone
-	// 	hz.RedemptionRate = sdk.NewDecWithPrec(exchangeRate)
-	// 	suite.App.StakeibcKeeper.SetHostZone(suite.Ctx, hz)
+	// Loop over exchange rates: {0.2, 0.4, 0.6, ..., 2.0}
+	for i := -8; i <= 10; i += 2 {
+		redemptionDelta := sdk.NewDecWithPrec(1.0, 1).Mul(sdk.NewDec(int64(i))) // i = 2 => delta = 0.2
+		newRedemptionRate := sdk.NewDec(1.0).Add(redemptionDelta)
+		redemptionRateFloat := newRedemptionRate.MustFloat64()
 
-	// 	suite.msgServer.LiquidStake(sdk.WrapSDKContext(suite.Ctx), &tc.validMsg)
+		// Update rate in host zone
+		hz := tc.initialState.hostZone
+		hz.RedemptionRate = newRedemptionRate
+		suite.App.StakeibcKeeper.SetHostZone(suite.Ctx, hz)
 
-	// 	expectedStAtomBalance := exchangeRate * tc.user.atomBalance
-	// 	suite.Require().Equal()
-	// }
-	// confirm balances are good
+		// Liquid stake for each balance and confirm stAtom minted
+		startingStAtomBalance := suite.App.BankKeeper.GetBalance(suite.Ctx, user.acc, "stuatom").Amount.Int64()
+		_, err := suite.msgServer.LiquidStake(sdk.WrapSDKContext(suite.Ctx), &msg)
+		suite.Require().NoError(err)
+		endingStAtomBalance := suite.App.BankKeeper.GetBalance(suite.Ctx, user.acc, "stuatom").Amount.Int64()
+		actualStAtomMinted := endingStAtomBalance - startingStAtomBalance
+
+		expectedStAtomMinted := int64(float64(msg.Amount) / redemptionRateFloat)
+		testDescription := fmt.Sprintf("st atom balance for redemption rate: %v", redemptionRateFloat)
+		suite.Require().Equal(expectedStAtomMinted, actualStAtomMinted, testDescription)
+	}
 }
 
 func (suite *KeeperTestSuite) TestLiquidStakeHostZoneNotFound() {

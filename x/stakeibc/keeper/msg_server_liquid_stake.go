@@ -83,7 +83,7 @@ func (k msgServer) LiquidStake(goCtx context.Context, msg *types.MsgLiquidStake)
 func (k msgServer) MintStAsset(ctx sdk.Context, sender sdk.AccAddress, amount int64, denom string) error {
 	// repeat safety checks from LiquidStake in case MintStAsset is called from another site
 	// ensure Amount is positive, liquid staking 0 or less tokens is invalid
-	if amount < 1 {
+	if amount <= 0 {
 		k.Logger(ctx).Error("Amount to mint must be positive")
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidCoins, "Amount to mint must be positive")
 	}

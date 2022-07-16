@@ -61,3 +61,7 @@ func CreateRandomAccounts(numAccts int) []sdk.AccAddress {
 
 	return testAddrs
 }
+
+func floatToFixed(num float64, precision int) float64 {
+	return float64(int(num*100)) / 100
+}
