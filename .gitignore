@@ -6,6 +6,8 @@
 *.dylib
 
 scripts/testnet/state/keys.txt
+**state.json
+**test.sh
 # build
 launch.sh
 build/*
@@ -14,7 +16,7 @@ state/*
 scripts/state/*
 scripts/testnet/*/state/keys.txt
 scripts/testnet/state/*
-scripts/testnet/certs/*.pem
+scripts/testnet/certs/**.pem
 
 scripts/logs/*.log
 scripts/logs/*/*.log
@@ -39,3 +41,4 @@ vue/*
 .vscode
 .DS_Store
 .terraform
+*.pem

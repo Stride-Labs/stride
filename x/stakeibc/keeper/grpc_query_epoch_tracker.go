@@ -46,11 +46,11 @@ func (k Keeper) EpochTracker(c context.Context, req *types.QueryGetEpochTrackerR
 	ctx := sdk.UnwrapSDKContext(c)
 
 	val, found := k.GetEpochTracker(
-	    ctx,
-	    req.EpochIdentifier,
-        )
+		ctx,
+		req.EpochIdentifier,
+	)
 	if !found {
-	    return nil, status.Error(codes.NotFound, "not found")
+		return nil, status.Error(codes.NotFound, "not found")
 	}
 
 	return &types.QueryGetEpochTrackerResponse{EpochTracker: val}, nil

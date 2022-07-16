@@ -20,7 +20,7 @@ data "google_compute_default_service_account" "default" {}
 
 variable "regions" {
   type    = list(string)
-  default = ["us-central1"]
+  default = ["us-west1"]
 }
 variable "deployment_name" {
   type = string

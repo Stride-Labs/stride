@@ -22,7 +22,7 @@ func (k msgServer) LiquidStake(goCtx context.Context, msg *types.MsgLiquidStake)
 	hostZone, err := k.GetHostZoneFromHostDenom(ctx, msg.HostDenom)
 	if err != nil {
 		k.Logger(ctx).Info("Host Zone not found for denom (%s)", msg.HostDenom)
-		return nil,  sdkerrors.Wrap(types.ErrInvalidHostZone, "no host zone found for denom")
+		return nil, sdkerrors.Wrap(types.ErrInvalidHostZone, "no host zone found for denom")
 	}
 	// get the sender address
 	sender, err := sdk.AccAddressFromBech32(msg.Creator)

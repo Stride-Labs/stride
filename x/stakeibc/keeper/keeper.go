@@ -15,6 +15,7 @@ import (
 	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
 
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
+	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	icacontrollerkeeper "github.com/cosmos/ibc-go/v3/modules/apps/27-interchain-accounts/controller/keeper"
 	ibctransferkeeper "github.com/cosmos/ibc-go/v3/modules/apps/transfer/keeper"
 	ibckeeper "github.com/cosmos/ibc-go/v3/modules/core/keeper"
@@ -38,6 +39,7 @@ type (
 		InterchainQueryKeeper icqkeeper.Keeper
 		RecordsKeeper         recordsmodulekeeper.Keeper
 		epochsKeeper          epochskeeper.Keeper
+		StakingKeeper         stakingkeeper.Keeper
 
 		accountKeeper types.AccountKeeper
 	}
@@ -59,6 +61,7 @@ func NewKeeper(
 	TransferKeeper ibctransferkeeper.Keeper,
 	interchainQueryKeeper icqkeeper.Keeper,
 	RecordsKeeper recordsmodulekeeper.Keeper,
+	StakingKeeper stakingkeeper.Keeper,
 ) Keeper {
 	// set KeyTable if it has not already been set
 	if !ps.HasKeyTable() {
@@ -78,6 +81,7 @@ func NewKeeper(
 		TransferKeeper:        TransferKeeper,
 		InterchainQueryKeeper: interchainQueryKeeper,
 		RecordsKeeper:         RecordsKeeper,
+		StakingKeeper:         StakingKeeper,
 	}
 }
 
