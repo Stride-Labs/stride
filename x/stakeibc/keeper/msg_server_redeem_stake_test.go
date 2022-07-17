@@ -1,25 +1,14 @@
 package keeper_test
 
 import (
+	"fmt"
+
 	epochtypes "github.com/Stride-Labs/stride/x/epochs/types"
 	recordtypes "github.com/Stride-Labs/stride/x/records/types"
-
-	// "github.com/Stride-Labs/stride/x/stakeibc/types"
 	stakeibc "github.com/Stride-Labs/stride/x/stakeibc/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	_ "github.com/stretchr/testify/suite"
 )
-
-// type Account struct {
-// 	acc           sdk.AccAddress
-// 	atomBalance   sdk.Coin
-// 	stAtomBalance sdk.Coin
-// }
-
-// type State struct {
-// 	depositRecordAmount int64
-// 	hostZone            types.HostZone
-// }
 
 type RedeemStakeTestCase struct {
 	user         Account
@@ -131,7 +120,53 @@ func (suite *KeeperTestSuite) TestRedeemStakeSuccessful() {
 	expectedHostZoneUnbondingGaiaAmount := redeemAmount.Int64() * hostZone.RedemptionRate.TruncateInt().Int64()
 	suite.Require().Equal(expectedHostZoneUnbondingGaiaAmount, actualHostZoneUnbondingGaiaAmount, "host zone unbonding amount")
 
-	suite.Require().Equal(1, 2)
+	// UserRedemptionRecord should have been created with correct amount, sender, receiver, host zone, isClaimable
+	userRedemptionRecords := hostZoneUnbondingGaia.UserRedemptionRecords
+	suite.Require().Equal(len(userRedemptionRecords), 1)
+	userRedemptionRecordId := userRedemptionRecords[0]
+	userRedemptionRecord, found := suite.App.RecordsKeeper.GetUserRedemptionRecord(suite.Ctx, userRedemptionRecordId)
+	suite.Require().True(found)
+	// check amount
+	suite.Require().Equal(int64(userRedemptionRecord.Amount), expectedHostZoneUnbondingGaiaAmount)
+	// check sender
+	suite.Require().Equal(userRedemptionRecord.Sender, msg.Creator)
+	// check receiver
+	suite.Require().Equal(userRedemptionRecord.Receiver, msg.Receiver)
+	// check host zone
+	suite.Require().Equal(userRedemptionRecord.HostZoneId, msg.HostZone)
+	// check isClaimable
+	suite.Require().Equal(userRedemptionRecord.IsClaimable, false)
+
+	// make sure stTokens that were transfered to the module account were burned (stAsset supply should decrease by redeemAmount)
+	expectedStAssetSupply := tc.module.stAtomBalance.Amount.Int64() + tc.user.stAtomBalance.Amount.Int64() - redeemAmount.Int64()
+	actualStAssetSupply := suite.App.BankKeeper.GetSupply(suite.Ctx, "stuatom")
+	suite.Require().Equal(expectedStAssetSupply, actualStAssetSupply.Amount.Int64())
+}
+
+func (suite *KeeperTestSuite) TestInvalidCreatorAddress() {
+	tc := suite.SetupRedeemStake()
+	// Update message with invalid denom
+	invalidMsg := tc.validMsg
+
+	// cosmos instead of stride address
+	invalidMsg.Creator = "cosmos1g6qdx6kdhpf000afvvpte7hp0vnpzapuyxp8uf"
+	_, err := suite.msgServer.RedeemStake(sdk.WrapSDKContext(suite.Ctx), &invalidMsg)
+	suite.Require().EqualError(err, fmt.Sprintf("creator address is invalid: %s: invalid address", invalidMsg.Creator))
+
+	// invalid stride address
+	invalidMsg.Creator = "stride1g6qdx6kdhpf000afvvpte7hp0vnpzapuyxp8uf"
+	_, err = suite.msgServer.RedeemStake(sdk.WrapSDKContext(suite.Ctx), &invalidMsg)
+	suite.Require().EqualError(err, fmt.Sprintf("creator address is invalid: %s: invalid address", invalidMsg.Creator))
+
+	// empty address
+	invalidMsg.Creator = ""
+	_, err = suite.msgServer.RedeemStake(sdk.WrapSDKContext(suite.Ctx), &invalidMsg)
+	suite.Require().EqualError(err, fmt.Sprintf("creator address is invalid: %s: invalid address", invalidMsg.Creator))
+
+	// wrong len address
+	invalidMsg.Creator = "stride1g6qdx6kdhpf000afvvpte7hp0vnpzapuyxp8ufabc"
+	_, err = suite.msgServer.RedeemStake(sdk.WrapSDKContext(suite.Ctx), &invalidMsg)
+	suite.Require().EqualError(err, fmt.Sprintf("creator address is invalid: %s: invalid address", invalidMsg.Creator))
 }
 
 func (suite *KeeperTestSuite) TestRedeemStakeHostZoneNotFound() {
@@ -142,4 +177,92 @@ func (suite *KeeperTestSuite) TestRedeemStakeHostZoneNotFound() {
 	_, err := suite.msgServer.RedeemStake(sdk.WrapSDKContext(suite.Ctx), &invalidMsg)
 
 	suite.Require().EqualError(err, "host zone is invalid: fake_host_zone: host zone not registered")
+}
+
+func (suite *KeeperTestSuite) TestInvalidReceiverAddress() {
+	tc := suite.SetupRedeemStake()
+	// Update message with invalid denom
+	invalidMsg := tc.validMsg
+
+	// stride instead of cosmos address
+	invalidMsg.Receiver = "stride159atdlc3ksl50g0659w5tq42wwer334ajl7xnq"
+	_, err := suite.msgServer.RedeemStake(sdk.WrapSDKContext(suite.Ctx), &invalidMsg)
+	suite.Require().EqualError(err, "invalid receiver address (invalid Bech32 prefix; expected cosmos, got stride): invalid address")
+
+	// invalid cosmos address
+	invalidMsg.Receiver = "cosmos1g6qdx6kdhpf000afvvpte7hp0vnpzapuyxp8ua"
+	_, err = suite.msgServer.RedeemStake(sdk.WrapSDKContext(suite.Ctx), &invalidMsg)
+	suite.Require().EqualError(err, "invalid receiver address (decoding bech32 failed: invalid checksum (expected yxp8uf got yxp8ua)): invalid address")
+
+	// empty address
+	invalidMsg.Receiver = ""
+	_, err = suite.msgServer.RedeemStake(sdk.WrapSDKContext(suite.Ctx), &invalidMsg)
+	suite.Require().EqualError(err, "invalid receiver address (empty address string is not allowed): invalid address")
+
+	// wrong len address
+	invalidMsg.Receiver = "cosmos1g6qdx6kdhpf000afvvpte7hp0vnpzapuyxp8ufa"
+	_, err = suite.msgServer.RedeemStake(sdk.WrapSDKContext(suite.Ctx), &invalidMsg)
+	suite.Require().EqualError(err, "invalid receiver address (decoding bech32 failed: invalid checksum (expected xp8ugp got xp8ufa)): invalid address")
+}
+
+func (suite *KeeperTestSuite) TestRedeemStakeRedeemMoreThanStaked() {
+	tc := suite.SetupRedeemStake()
+	// Update message with invalid denom
+	invalidMsg := tc.validMsg
+	invalidMsg.Amount = int64(1_000_000_000_000_000)
+	_, err := suite.msgServer.RedeemStake(sdk.WrapSDKContext(suite.Ctx), &invalidMsg)
+
+	suite.Require().EqualError(err, fmt.Sprintf("cannot unstake an amount g.t. staked balance on host zone: %d: invalid amount", invalidMsg.Amount))
+}
+
+func (suite *KeeperTestSuite) TestRedeemStakeRedeemUnableToParseCoin() {
+	tc := suite.SetupRedeemStake()
+	// Update message with invalid denom
+	invalidMsg := tc.validMsg
+	invalidMsg.Amount = int64(-1_000_000)
+	_, err := suite.msgServer.RedeemStake(sdk.WrapSDKContext(suite.Ctx), &invalidMsg)
+
+	suite.Require().EqualError(err, fmt.Sprintf("could not parse inCoin: %d%v: invalid coins", invalidMsg.Amount, "stuatom"))
+}
+
+func (suite *KeeperTestSuite) TestRedeemStakeRedeemNoEpochTrackerDay() {
+	tc := suite.SetupRedeemStake()
+	// Update message with invalid denom
+	invalidMsg := tc.validMsg
+	suite.App.RecordsKeeper.SetEpochUnbondingRecord(suite.Ctx, recordtypes.EpochUnbondingRecord{})
+	suite.App.RecordsKeeper.SetEpochUnbondingRecordCount(suite.Ctx, 0)
+	_, err := suite.msgServer.RedeemStake(sdk.WrapSDKContext(suite.Ctx), &invalidMsg)
+
+	suite.Require().EqualError(err, fmt.Sprintf("latest epoch unbonding record not found: epoch unbonding record not found"))
+}
+
+func (suite *KeeperTestSuite) TestRedeemStakeRedeemUserAlreadyRedeemedThisEpoch() {
+	tc := suite.SetupRedeemStake()
+	// Update message with invalid denom
+	invalidMsg := tc.validMsg
+	_, err := suite.msgServer.RedeemStake(sdk.WrapSDKContext(suite.Ctx), &invalidMsg)
+	_, err = suite.msgServer.RedeemStake(sdk.WrapSDKContext(suite.Ctx), &invalidMsg)
+
+	suite.Require().EqualError(err, fmt.Sprintf("user already redeemed this epoch: GAIA.1.%s: redemption record already exists", suite.TestAccs[0]))
+}
+
+func (suite *KeeperTestSuite) TestRedeemStakeRedeemHostZoneNotUnbondings() {
+	tc := suite.SetupRedeemStake()
+	// Update message with invalid denom
+	invalidMsg := tc.validMsg
+	epochUnbondingRecord := recordtypes.EpochUnbondingRecord{
+		Id:                   1,
+		UnbondingEpochNumber: 1,
+		HostZoneUnbondings:   make(map[string]*recordtypes.HostZoneUnbonding),
+	}
+	epochUnbondingRecord.HostZoneUnbondings["NOT_GAIA"] = &recordtypes.HostZoneUnbonding{
+		Amount:     uint64(0),
+		Denom:      "uatom",
+		HostZoneId: "GAIA",
+		Status:     recordtypes.HostZoneUnbonding_BONDED,
+	}
+	suite.App.RecordsKeeper.SetEpochUnbondingRecord(suite.Ctx, epochUnbondingRecord)
+	_, err := suite.msgServer.RedeemStake(sdk.WrapSDKContext(suite.Ctx), &invalidMsg)
+
+	suite.Require().EqualError(err, "host zone not found in unbondings: GAIA: host zone not registered")
 }
