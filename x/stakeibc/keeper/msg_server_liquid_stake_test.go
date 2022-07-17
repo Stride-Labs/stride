@@ -22,14 +22,14 @@ type State struct {
 	hostZone            types.HostZone
 }
 
-type TestCase struct {
+type LiquidStakeTestCase struct {
 	user         Account
 	module       Account
 	initialState State
 	validMsg     stakeibc.MsgLiquidStake
 }
 
-func (suite *KeeperTestSuite) SetupLiquidStake() TestCase {
+func (suite *KeeperTestSuite) SetupLiquidStake() LiquidStakeTestCase {
 	stakeAmount := int64(1_000_000)
 	initialDepositAmount := int64(1_000_000)
 	user := Account{
@@ -70,7 +70,7 @@ func (suite *KeeperTestSuite) SetupLiquidStake() TestCase {
 	suite.App.StakeibcKeeper.SetEpochTracker(suite.Ctx, epochTracker)
 	suite.App.RecordsKeeper.SetDepositRecord(suite.Ctx, initialDepositRecord)
 
-	return TestCase{
+	return LiquidStakeTestCase{
 		user:   user,
 		module: module,
 		initialState: State{
@@ -91,6 +91,7 @@ func (suite *KeeperTestSuite) TestLiquidStakeSuccessful() {
 	module := tc.module
 	msg := tc.validMsg
 	stakeAmount := sdk.NewInt(msg.Amount)
+	initialStAtomSupply := suite.App.BankKeeper.GetSupply(suite.Ctx, "stuatom")
 
 	_, err := suite.msgServer.LiquidStake(sdk.WrapSDKContext(suite.Ctx), &msg)
 	suite.Require().NoError(err)
@@ -105,10 +106,14 @@ func (suite *KeeperTestSuite) TestLiquidStakeSuccessful() {
 	// User STUATOM balance should have INCREASED by the size of the stake
 	expectedUserStAtomBalance := user.stAtomBalance.AddAmount(stakeAmount)
 	actualUserStAtomBalance := suite.App.BankKeeper.GetBalance(suite.Ctx, user.acc, "stuatom")
+	// Bank supply of STUATOM should have INCREASED by the size of the stake
+	expectedBankSupply := initialStAtomSupply.AddAmount(stakeAmount)
+	actualBankSupply := suite.App.BankKeeper.GetSupply(suite.Ctx, "stuatom")
 
 	suite.CompareCoins(expectedUserStAtomBalance, actualUserStAtomBalance, "user stuatom balance")
 	suite.CompareCoins(expectedUserAtomBalance, actualUserAtomBalance, "user ibc/uatom balance")
 	suite.CompareCoins(expectedModuleAtomBalance, actualModuleAtomBalance, "module ibc/uatom balance")
+	suite.CompareCoins(expectedBankSupply, actualBankSupply, "bank stuatom supply")
 
 	// Confirm deposit record adjustment
 	records := suite.App.RecordsKeeper.GetAllDepositRecord(suite.Ctx)
