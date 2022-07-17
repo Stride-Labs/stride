@@ -2,7 +2,7 @@ default_chain: stride
 chains:
   stride:
     key: icq1
-    chain-id: STRIDE
+    chain-id: STRIDE_CHAIN_ID
     rpc-addr: http://STRIDE_ENDPOINT:26657
     grpc-addr: http://STRIDE_ENDPOINT:9090
     account-prefix: stride

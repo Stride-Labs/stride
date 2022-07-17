@@ -1,10 +1,10 @@
 package types
 
 import (
-	"strings"
 	"github.com/Stride-Labs/stride/utils"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	"strings"
 )
 
 const TypeMsgRegisterHostZone = "register_host_zone"
@@ -15,7 +15,7 @@ func NewMsgRegisterHostZone(creator string, connectionId string, bech32prefix st
 	return &MsgRegisterHostZone{
 		Creator:            creator,
 		ConnectionId:       connectionId,
-		Bech32Prefix:	    bech32prefix,
+		Bech32Prefix:       bech32prefix,
 		HostDenom:          hostDenom,
 		IbcDenom:           ibcDenom,
 		TransferChannelId:  transferChannelId,

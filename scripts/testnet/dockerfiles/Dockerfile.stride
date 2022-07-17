@@ -19,8 +19,9 @@ COPY --chown=stride "./state/install_faucet.sh" /stride/install_faucet.sh
 COPY --chown=stride "./state/certfile.pem" /stride/certfile.pem
 COPY --chown=stride "./state/certkey.pem" /stride/certkey.pem
 COPY --chown=stride "./state/$node_name/config/nginx.conf" /etc/nginx/nginx.conf
-COPY --chown=1000 "./state/stride_startup.sh" /stride/stride_startup.sh
+COPY --chown=stride "./state/stride_startup.sh" /stride/stride_startup.sh
 COPY --chown=stride "scripts/testnet/tests/verify_testnet_stride.sh" /stride/verify_testnet_stride.sh
+COPY --chown=stride "scripts/testnet/bank_sends.sh" /stride/bank_sends.sh
 
 RUN mkdir -p /stride/.stride/cosmovisor/genesis/bin \
     && mkdir -p /stride/.stride/cosmovisor/upgrades \

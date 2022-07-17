@@ -26,7 +26,6 @@ func NewIBCModule(k keeper.Keeper) IBCModule {
 	}
 }
 
-
 func (im IBCModule) Hooks() keeper.Hooks {
 	return im.keeper.Hooks()
 }
