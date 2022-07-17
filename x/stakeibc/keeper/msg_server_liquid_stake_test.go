@@ -11,6 +11,12 @@ import (
 	_ "github.com/stretchr/testify/suite"
 )
 
+const (
+	atom    = "uatom"
+	stAtom  = "stuatom"
+	ibcAtom = "ibc/uatom"
+)
+
 type Account struct {
 	acc           sdk.AccAddress
 	atomBalance   sdk.Coin
@@ -34,23 +40,23 @@ func (suite *KeeperTestSuite) SetupLiquidStake() LiquidStakeTestCase {
 	initialDepositAmount := int64(1_000_000)
 	user := Account{
 		acc:           suite.TestAccs[0],
-		atomBalance:   sdk.NewInt64Coin("ibc/uatom", 10_000_000),
-		stAtomBalance: sdk.NewInt64Coin("stuatom", 0),
+		atomBalance:   sdk.NewInt64Coin(ibcAtom, 10_000_000),
+		stAtomBalance: sdk.NewInt64Coin(stAtom, 0),
 	}
 	suite.FundAccount(user.acc, user.atomBalance)
 
 	module := Account{
 		acc:           suite.App.AccountKeeper.GetModuleAddress(stakeibc.ModuleName),
-		atomBalance:   sdk.NewInt64Coin("ibc/uatom", 10_000_000),
-		stAtomBalance: sdk.NewInt64Coin("stuatom", 10_000_000),
+		atomBalance:   sdk.NewInt64Coin(ibcAtom, 10_000_000),
+		stAtomBalance: sdk.NewInt64Coin(stAtom, 10_000_000),
 	}
 	suite.FundModuleAccount(stakeibc.ModuleName, module.atomBalance)
 	suite.FundModuleAccount(stakeibc.ModuleName, module.stAtomBalance)
 
 	hostZone := stakeibc.HostZone{
 		ChainId:        "GAIA",
-		HostDenom:      "uatom",
-		IBCDenom:       "ibc/uatom",
+		HostDenom:      atom,
+		IBCDenom:       ibcAtom,
 		RedemptionRate: sdk.NewDec(1.0),
 	}
 
@@ -79,7 +85,7 @@ func (suite *KeeperTestSuite) SetupLiquidStake() LiquidStakeTestCase {
 		},
 		validMsg: stakeibc.MsgLiquidStake{
 			Creator:   user.acc.String(),
-			HostDenom: "uatom",
+			HostDenom: atom,
 			Amount:    stakeAmount,
 		},
 	}
@@ -91,7 +97,7 @@ func (suite *KeeperTestSuite) TestLiquidStakeSuccessful() {
 	module := tc.module
 	msg := tc.validMsg
 	stakeAmount := sdk.NewInt(msg.Amount)
-	initialStAtomSupply := suite.App.BankKeeper.GetSupply(suite.Ctx, "stuatom")
+	initialStAtomSupply := suite.App.BankKeeper.GetSupply(suite.Ctx, stAtom)
 
 	_, err := suite.msgServer.LiquidStake(sdk.WrapSDKContext(suite.Ctx), &msg)
 	suite.Require().NoError(err)
@@ -99,16 +105,16 @@ func (suite *KeeperTestSuite) TestLiquidStakeSuccessful() {
 	// Confirm balances
 	// User IBC/UATOM balance should have DECREASED by the size of the stake
 	expectedUserAtomBalance := user.atomBalance.SubAmount(stakeAmount)
-	actualUserAtomBalance := suite.App.BankKeeper.GetBalance(suite.Ctx, user.acc, "ibc/uatom")
+	actualUserAtomBalance := suite.App.BankKeeper.GetBalance(suite.Ctx, user.acc, ibcAtom)
 	// Module IBC/UATOM balance should have INCREASED by the size of the stake
 	expectedModuleAtomBalance := module.atomBalance.AddAmount(stakeAmount)
-	actualModuleAtomBalance := suite.App.BankKeeper.GetBalance(suite.Ctx, module.acc, "ibc/uatom")
+	actualModuleAtomBalance := suite.App.BankKeeper.GetBalance(suite.Ctx, module.acc, ibcAtom)
 	// User STUATOM balance should have INCREASED by the size of the stake
 	expectedUserStAtomBalance := user.stAtomBalance.AddAmount(stakeAmount)
-	actualUserStAtomBalance := suite.App.BankKeeper.GetBalance(suite.Ctx, user.acc, "stuatom")
+	actualUserStAtomBalance := suite.App.BankKeeper.GetBalance(suite.Ctx, user.acc, stAtom)
 	// Bank supply of STUATOM should have INCREASED by the size of the stake
 	expectedBankSupply := initialStAtomSupply.AddAmount(stakeAmount)
-	actualBankSupply := suite.App.BankKeeper.GetSupply(suite.Ctx, "stuatom")
+	actualBankSupply := suite.App.BankKeeper.GetSupply(suite.Ctx, stAtom)
 
 	suite.CompareCoins(expectedUserStAtomBalance, actualUserStAtomBalance, "user stuatom balance")
 	suite.CompareCoins(expectedUserAtomBalance, actualUserAtomBalance, "user ibc/uatom balance")
@@ -141,10 +147,10 @@ func (suite *KeeperTestSuite) TestLiquidStakeDifferentRedemptionRates() {
 		suite.App.StakeibcKeeper.SetHostZone(suite.Ctx, hz)
 
 		// Liquid stake for each balance and confirm stAtom minted
-		startingStAtomBalance := suite.App.BankKeeper.GetBalance(suite.Ctx, user.acc, "stuatom").Amount.Int64()
+		startingStAtomBalance := suite.App.BankKeeper.GetBalance(suite.Ctx, user.acc, stAtom).Amount.Int64()
 		_, err := suite.msgServer.LiquidStake(sdk.WrapSDKContext(suite.Ctx), &msg)
 		suite.Require().NoError(err)
-		endingStAtomBalance := suite.App.BankKeeper.GetBalance(suite.Ctx, user.acc, "stuatom").Amount.Int64()
+		endingStAtomBalance := suite.App.BankKeeper.GetBalance(suite.Ctx, user.acc, stAtom).Amount.Int64()
 		actualStAtomMinted := endingStAtomBalance - startingStAtomBalance
 
 		expectedStAtomMinted := int64(float64(msg.Amount) / redemptionRateFloat)
@@ -212,7 +218,7 @@ func (suite *KeeperTestSuite) TestLiquidStakeNoEpochTracker() {
 
 func (suite *KeeperTestSuite) TestLiquidStakeNoDepositRecord() {
 	tc := suite.SetupLiquidStake()
-	// Remove epoch tracker
+	// Remove deposit record
 	suite.App.RecordsKeeper.RemoveDepositRecord(suite.Ctx, 1)
 	_, err := suite.msgServer.LiquidStake(sdk.WrapSDKContext(suite.Ctx), &tc.validMsg)
 
