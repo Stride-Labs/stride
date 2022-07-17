@@ -3,28 +3,46 @@ package types
 import (
 	"testing"
 
-	"github.com/Stride-Labs/stride/testutil/sample"
+	"github.com/Stride-Labs/stride/utils"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/stretchr/testify/require"
 )
 
 func TestMsgSetNumValidators_ValidateBasic(t *testing.T) {
+	adminAddress := ""
+	for addr, _ := range utils.ADMINS {
+		adminAddress = addr
+		break
+	}
+	sdk.GetConfig().SetBech32PrefixForAccount("stride", "pub")
+
 	tests := []struct {
 		name string
 		msg  MsgSetNumValidators
 		err  error
 	}{
 		{
+			name: "valid message",
+			msg: MsgSetNumValidators{
+				Creator:       adminAddress,
+				NumValidators: 1,
+			},
+		},
+		{
+			name: "not enough validators",
+			msg: MsgSetNumValidators{
+				Creator:       adminAddress,
+				NumValidators: 0,
+			},
+			err: sdkerrors.ErrInvalidRequest,
+		},
+		{
 			name: "invalid address",
 			msg: MsgSetNumValidators{
 				Creator: "invalid_address",
 			},
 			err: sdkerrors.ErrInvalidAddress,
-		}, {
-			name: "valid address",
-			msg: MsgSetNumValidators{
-				Creator: sample.AccAddress(),
-			},
 		},
 	}
 	for _, tt := range tests {
