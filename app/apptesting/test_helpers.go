@@ -1,16 +1,17 @@
 package apptesting
 
 import (
+	"fmt"
+
 	"github.com/Stride-Labs/stride/app"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 	"github.com/stretchr/testify/suite"
 	"github.com/tendermint/tendermint/crypto/ed25519"
 	tmtypes "github.com/tendermint/tendermint/proto/tendermint/types"
 )
-
-const Bech32Prefix = "stride"
 
 type AppTestHelper struct {
 	suite.Suite
@@ -22,9 +23,6 @@ type AppTestHelper struct {
 }
 
 func (s *AppTestHelper) Setup() {
-	config := sdk.GetConfig()
-	config.SetBech32PrefixForAccount(Bech32Prefix, Bech32Prefix+sdk.PrefixPublic)
-
 	checkTx := false
 	s.App = app.InitTestApp(checkTx)
 	s.Ctx = s.App.BaseApp.NewContext(checkTx, tmtypes.Header{Height: 1, ChainID: "stride-1"})
@@ -43,6 +41,8 @@ func (s *AppTestHelper) FundModuleAccount(moduleName string, amount sdk.Coin) {
 func (s *AppTestHelper) FundAccount(acc sdk.AccAddress, amount sdk.Coin) {
 	amountCoins := sdk.NewCoins(amount)
 	err := s.App.BankKeeper.MintCoins(s.Ctx, minttypes.ModuleName, amountCoins)
+	fmt.Println("MINT BALANCE\n", s.App.BankKeeper.GetAllBalances(s.Ctx, s.App.AccountKeeper.GetModuleAddress(minttypes.ModuleName)))
+	fmt.Println("BANK BALANCE\n", s.App.BankKeeper.GetAllBalances(s.Ctx, s.App.AccountKeeper.GetModuleAddress(banktypes.ModuleName)))
 	s.Require().NoError(err)
 	err = s.App.BankKeeper.SendCoinsFromModuleToAccount(s.Ctx, minttypes.ModuleName, acc, amountCoins)
 	s.Require().NoError(err)
