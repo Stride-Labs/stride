@@ -22,10 +22,10 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) 
 	// Set hostZone count
 	k.SetHostZoneCount(ctx, genState.HostZoneCount)
 	// Set all the pendingClaims
-for _, elem := range genState.PendingClaimsList {
-	k.SetPendingClaims(ctx, elem)
-}
-// this line is used by starport scaffolding # genesis/module/init
+	for _, elem := range genState.PendingClaimsList {
+		k.SetPendingClaims(ctx, elem)
+	}
+	// this line is used by starport scaffolding # genesis/module/init
 	// TODO(TEST-22): Set ports
 	// k.SetPort(ctx, genState.PortId)
 	// // Only try to bind to port if it is not already bound, since we may already own
@@ -55,7 +55,7 @@ func ExportGenesis(ctx sdk.Context, k keeper.Keeper) *types.GenesisState {
 	}
 	genesis.EpochTrackerList = k.GetAllEpochTracker(ctx)
 	genesis.PendingClaimsList = k.GetAllPendingClaims(ctx)
-// this line is used by starport scaffolding # genesis/module/export
+	// this line is used by starport scaffolding # genesis/module/export
 
 	return genesis
 }

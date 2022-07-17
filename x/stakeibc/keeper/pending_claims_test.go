@@ -4,10 +4,10 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/Stride-Labs/stride/x/stakeibc/keeper"
-	"github.com/Stride-Labs/stride/x/stakeibc/types"
 	keepertest "github.com/Stride-Labs/stride/testutil/keeper"
 	"github.com/Stride-Labs/stride/testutil/nullify"
+	"github.com/Stride-Labs/stride/x/stakeibc/keeper"
+	"github.com/Stride-Labs/stride/x/stakeibc/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 )
@@ -19,7 +19,7 @@ func createNPendingClaims(keeper *keeper.Keeper, ctx sdk.Context, n int) []types
 	items := make([]types.PendingClaims, n)
 	for i := range items {
 		items[i].Sequence = strconv.Itoa(i)
-        
+
 		keeper.SetPendingClaims(ctx, items[i])
 	}
 	return items
@@ -30,8 +30,7 @@ func TestPendingClaimsGet(t *testing.T) {
 	items := createNPendingClaims(keeper, ctx, 10)
 	for _, item := range items {
 		rst, found := keeper.GetPendingClaims(ctx,
-		    item.Sequence,
-            
+			item.Sequence,
 		)
 		require.True(t, found)
 		require.Equal(t,
@@ -45,12 +44,10 @@ func TestPendingClaimsRemove(t *testing.T) {
 	items := createNPendingClaims(keeper, ctx, 10)
 	for _, item := range items {
 		keeper.RemovePendingClaims(ctx,
-		    item.Sequence,
-            
+			item.Sequence,
 		)
 		_, found := keeper.GetPendingClaims(ctx,
-		    item.Sequence,
-            
+			item.Sequence,
 		)
 		require.False(t, found)
 	}

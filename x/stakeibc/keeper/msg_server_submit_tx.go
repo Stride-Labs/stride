@@ -192,20 +192,21 @@ func (k Keeper) SubmitTxsStrideEpoch(ctx sdk.Context, connectionId string, msgs 
 }
 
 func (k Keeper) SubmitTxsEpoch(ctx sdk.Context, connectionId string, msgs []sdk.Msg, account types.ICAAccount, epochType string) (uint64, error) {
-	epochInfo, found := k.epochsKeeper.GetEpochInfo(ctx, epochType)
+	epochTracker, found := k.GetEpochTracker(ctx, epochType)
 	if !found {
-		k.Logger(ctx).Error("Failed to get epoch info for %s", epochType)
-		return 0, sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "Failed to get epoch info for %s", epochType)
+		k.Logger(ctx).Error("Failed to get epoch tracker for %s", epochType)
+		return 0, sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "Failed to get epoch tracker for %s", epochType)
 	}
 	// BUFFER by 5% of the epoch length
 	bufferSize := int64(k.GetParam(ctx, types.KeyBufferSize))
-	BUFFER := epochInfo.GetDuration().Nanoseconds() / bufferSize
-	nextEpochStartTime := epochInfo.GetCurrentEpochStartTime().Add(epochInfo.GetDuration())
-	timeoutNanos := nextEpochStartTime.UnixNano() - BUFFER
+	BUFFER := epochTracker.Duration / bufferSize
+	timeoutNanos := epochTracker.NextEpochStartTime - BUFFER
+	k.Logger(ctx).Info(fmt.Sprintf("Submitting txs for epoch %s %d %d", epochTracker.EpochIdentifier, epochTracker.NextEpochStartTime, timeoutNanos))
 	sequence, err := k.SubmitTxs(ctx, connectionId, msgs, account, uint64(timeoutNanos))
 	if err != nil {
 		return 0, err
 	}
+	k.Logger(ctx).Info("Submitted Txs", "connectionId", connectionId, "sequence", sequence)
 	return sequence, nil
 }
 

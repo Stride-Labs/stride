@@ -66,21 +66,15 @@ if [ "$CACHE" != "true" ]; then
 
     printf '%s' "Creating Hermes Channel...    "
     # continuation of logs from above command
-    ( tail -f -n0 $HERMES_LOGS & ) | grep -q "Message ChanOpenInit"
+    ( tail -f -n0 $HERMES_LOGS & ) | grep -q "Success: Channel"
     echo "Done"
-
-    # If we're starting for the first time, confirm with the connection handshake
-    hermes_start_msg_indicator="STRIDE->GAIA}: connection handshake step completed with events: OpenConfirmConnection"
-else
-    # If we're starting from cache, no need to wait for a handshake
-    hermes_start_msg_indicator="Hermes has started"
 fi
 
 # Start hermes in the background and pause until the log message shows that it is up and running
 printf '%s' "Starting Hermes...            "
 
 nohup $HERMES_CMD start >> $HERMES_LOGS 2>&1 &
-( tail -f -n0 $HERMES_LOGS & ) | grep -q -E "$hermes_start_msg_indicator"
+( tail -f -n0 $HERMES_LOGS & ) | grep -q -E "Hermes has started"
 echo "Done"
 
 # Start ICQ in the background
@@ -98,7 +92,7 @@ if [ "$CACHE" != "true" ]; then
     # Submit a transaction on stride to register the gaia host zone
     echo "Creating host zone..."
     $STRIDE_CMD tx stakeibc register-host-zone \
-        connection-0 $ATOM_DENOM $IBC_ATOM_DENOM channel-0 3 \
+        connection-0 $ATOM_DENOM cosmos $IBC_ATOM_DENOM channel-0 1 \
         --chain-id $STRIDE_CHAIN --home $STATE/stride \
         --keyring-backend test --from $STRIDE_VAL_ACCT --gas 1000000 -y
 fi
