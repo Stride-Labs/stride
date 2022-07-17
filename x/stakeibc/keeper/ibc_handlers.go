@@ -215,7 +215,7 @@ func (k *Keeper) HandleSend(ctx sdk.Context, msg sdk.Msg, sequence string) error
 		// fetch epoch
 		strideEpochTracker, found := k.GetEpochTracker(ctx, epochtypes.STRIDE_EPOCH)
 		if !found {
-			k.Logger(ctx).Info("failed to find epoch")
+			k.Logger(ctx).Error("failed to find epoch")
 			return sdkerrors.Wrapf(types.ErrInvalidLengthEpochTracker, "no number for epoch (%s)", epochtypes.STRIDE_EPOCH)
 		}
 		epochNumber := strideEpochTracker.EpochNumber
