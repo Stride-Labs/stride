@@ -42,9 +42,6 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochInfo epochstypes.EpochInf
 
 	// process redemption records
 	if epochIdentifier == "day" {
-		// k.Logger(ctx).Info(fmt.Sprintf("Total supply %s", k.bankKeeper.GetSupply(ctx, "stuatom")))
-		// k.Logger(ctx).Info(fmt.Sprintf("Stakeibc address %s", k.accountKeeper.GetModuleAccount(ctx, "stakeibc").GetAddress()))
-		// k.Logger(ctx).Info(fmt.Sprintf("Bank address %s", k.accountKeeper.GetModuleAccount(ctx, "bank").GetAddress()))
 		// here, we process everything we need to for redemptions
 		k.Logger(ctx).Info(fmt.Sprintf("Day %d Beginning", epochNumber))
 		// first we initiate unbondings from any hostZone where it's appropriate
@@ -122,7 +119,13 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochInfo epochstypes.EpochInf
 						k.Logger(ctx).Info(fmt.Sprintf("Found blockTime for host zone %s: %d", hz.ConnectionId, blockTime))
 					}
 
-					k.UpdateWithdrawalBalance(ctx, hz)
+					err := k.UpdateWithdrawalBalance(ctx, hz)
+					if err != nil {
+						k.Logger(ctx).Error(fmt.Sprintf("Error updating withdrawal balance for host zone %s: %s", hz.ConnectionId, err.Error()))
+						continue
+					} else {
+						k.Logger(ctx).Info(fmt.Sprintf("Updated withdrawal balance for host zone %s", hz.ConnectionId))
+					}
 				}
 			}
 		}
@@ -277,11 +280,9 @@ func (k Keeper) TransferExistingDepositsToHostZones(ctx sdk.Context, epochNumber
 			k.Logger(ctx).Info("TransferExistingDepositsToHostZones msg:", msg)
 			_, err := k.TransferKeeper.Transfer(goCtx, msg)
 			if err != nil {
-				pstr := fmt.Sprintf("\t[TRANSFER] ERROR WITH DEPOSIT RECEIPT {%d}", depositRecord.Id)
-				k.Logger(ctx).Info(pstr)
-				k.Logger(ctx).Info("\t[TRANSFER] ERROR WITH DEPOSIT RECEIPT", hostZone.TransferChannelId, transferCoin, addr, delegateAddress, timeoutHeight)
+				k.Logger(ctx).Error("\t[TRANSFER] ERROR WITH DEPOSIT RECEIPT", hostZone.TransferChannelId, transferCoin, addr, delegateAddress, timeoutHeight)
 				pstr = fmt.Sprintf("\t[TRANSFER] ERROR WITH DEPOSIT RECEIPT {%v}", err)
-				k.Logger(ctx).Info(pstr)
+				k.Logger(ctx).Error(pstr)
 				return
 			}
 		}

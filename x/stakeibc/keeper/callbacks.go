@@ -128,8 +128,7 @@ func WithdrawalBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query icq
 	// TODO(TEST-112) safety check, balances should add to original amount
 	if (strideClaimFloored.Int64() + reinvestAmountCeil.Int64()) != coin.Amount.Int64() {
 		ctx.Logger().Error(fmt.Sprintf("Error with withdraw logic: %d, Fee portion: %d, reinvestPortion %d", coin.Amount.Int64(), strideClaimFloored.Int64(), reinvestAmountCeil.Int64()))
-		// TODO(TEST-112) will this crash the chain?
-		panic("Failed to subdivide rewards to feeAccount and delegationAccount")
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "Failed to subdivide rewards to feeAccount and delegationAccount")
 	}
 	strideCoin := sdk.NewCoin(coin.Denom, strideClaimFloored)
 	reinvestCoin := sdk.NewCoin(coin.Denom, reinvestAmountCeil)
