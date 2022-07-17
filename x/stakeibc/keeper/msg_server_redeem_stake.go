@@ -99,7 +99,7 @@ func (k Keeper) RedeemStake(goCtx context.Context, msg *types.MsgRedeemStake) (*
 	redeemCoin := sdk.NewCoins(sdk.NewCoin(coinDenom, sdk.NewInt(msg.Amount)))
 	err = k.bankKeeper.SendCoinsFromAccountToModule(ctx, sender, types.ModuleName, redeemCoin)
 	if err != nil {
-		k.Logger(ctx).Info("Failed to send sdk.NewCoins(inCoins) from account to module")
+		k.Logger(ctx).Error("Failed to send sdk.NewCoins(inCoins) from account to module")
 		return nil, sdkerrors.Wrapf(types.ErrInsufficientFunds, "couldn't send %d %s tokens to module account", msg.Amount, coinDenom)
 	}
 
