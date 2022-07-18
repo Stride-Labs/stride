@@ -11,10 +11,11 @@ import (
 )
 
 type RedeemStakeTestCase struct {
-	user         Account
-	module       Account
-	initialState State
-	validMsg     stakeibc.MsgRedeemStake
+	user                        Account
+	module                      Account
+	initialState                State
+	initialEpochUnbondingAmount uint64
+	validMsg                    stakeibc.MsgRedeemStake
 }
 
 func (suite *KeeperTestSuite) SetupRedeemStake() RedeemStakeTestCase {
@@ -68,8 +69,9 @@ func (suite *KeeperTestSuite) SetupRedeemStake() RedeemStakeTestCase {
 	suite.App.RecordsKeeper.AppendEpochUnbondingRecord(suite.Ctx, epochUnbondingRecord)
 
 	return RedeemStakeTestCase{
-		user:   user,
-		module: module,
+		user:                        user,
+		module:                      module,
+		initialEpochUnbondingAmount: uint64(0),
 		initialState: State{
 			depositRecordAmount: initialDepositAmount,
 			hostZone:            hostZone,
@@ -92,11 +94,7 @@ func (suite *KeeperTestSuite) TestRedeemStakeSuccessful() {
 	redeemAmount := sdk.NewInt(msg.Amount)
 
 	// get the initial unbonding amount *before* calling liquid stake, so we can use it to calc expected vs actual in diff space
-	epochUnbondingRecordStart, found := suite.App.RecordsKeeper.GetLatestEpochUnbondingRecord(suite.Ctx)
-	suite.Require().True(found)
-	hostZoneUnbondingGaiaStart, found := epochUnbondingRecordStart.HostZoneUnbondings["GAIA"]
-	suite.Require().True(found)
-	actualHostZoneUnbondingGaiaAmountStart := int64(hostZoneUnbondingGaiaStart.Amount)
+	actualHostZoneUnbondingGaiaAmountStart := int64(tc.initialEpochUnbondingAmount)
 
 	_, err := suite.msgServer.RedeemStake(sdk.WrapSDKContext(suite.Ctx), &msg)
 	suite.Require().NoError(err)
@@ -228,7 +226,7 @@ func (suite *KeeperTestSuite) TestRedeemStakeNoEpochTrackerDay() {
 	suite.App.RecordsKeeper.SetEpochUnbondingRecordCount(suite.Ctx, 0)
 	_, err := suite.msgServer.RedeemStake(sdk.WrapSDKContext(suite.Ctx), &invalidMsg)
 
-	suite.Require().EqualError(err, fmt.Sprintf("latest epoch unbonding record not found: epoch unbonding record not found"))
+	suite.Require().EqualError(err, "latest epoch unbonding record not found: epoch unbonding record not found")
 }
 
 func (suite *KeeperTestSuite) TestRedeemStakeUserAlreadyRedeemedThisEpoch() {
