@@ -36,7 +36,7 @@ type LiquidStakeTestCase struct {
 }
 
 func (suite *KeeperTestSuite) SetupLiquidStake() LiquidStakeTestCase {
-	stakeAmount := int64(1_000_000)
+	stakeAmount := uint64(1_000_000)
 	initialDepositAmount := int64(1_000_000)
 	user := Account{
 		acc:           suite.TestAccs[0],
@@ -96,7 +96,7 @@ func (suite *KeeperTestSuite) TestLiquidStakeSuccessful() {
 	user := tc.user
 	module := tc.module
 	msg := tc.validMsg
-	stakeAmount := sdk.NewInt(msg.Amount)
+	stakeAmount := sdk.NewInt(int64(msg.Amount))
 	initialStAtomSupply := suite.App.BankKeeper.GetSupply(suite.Ctx, stAtom)
 
 	_, err := suite.msgServer.LiquidStake(sdk.WrapSDKContext(suite.Ctx), &msg)
@@ -200,7 +200,7 @@ func (suite *KeeperTestSuite) TestLiquidStakeInsufficientBalance() {
 	// Set liquid stake amount to value greater than account balance
 	invalidMsg := tc.validMsg
 	balance := tc.user.atomBalance.Amount.Int64()
-	invalidMsg.Amount = balance + 1000
+	invalidMsg.Amount = uint64(balance + 1000)
 	_, err := suite.msgServer.LiquidStake(sdk.WrapSDKContext(suite.Ctx), &invalidMsg)
 
 	expectedErr := fmt.Sprintf("balance is lower than staking amount. staking amount: %d, balance: %d: insufficient funds", balance+1000, balance)

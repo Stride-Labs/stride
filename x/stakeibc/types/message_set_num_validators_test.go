@@ -35,7 +35,7 @@ func TestMsgSetNumValidators_ValidateBasic(t *testing.T) {
 				Creator:       adminAddress,
 				NumValidators: 0,
 			},
-			err: sdkerrors.ErrInvalidRequest,
+			err: ErrInvalidNumValidator,
 		},
 		{
 			name: "invalid address",
