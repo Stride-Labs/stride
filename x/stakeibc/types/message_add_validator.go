@@ -1,10 +1,10 @@
 package types
 
 import (
-	"fmt"
-	"github.com/Stride-Labs/stride/utils"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+
+	"github.com/Stride-Labs/stride/utils"
 )
 
 const TypeMsgAddValidator = "add_validator"
@@ -58,13 +58,6 @@ func (msg *MsgAddValidator) ValidateBasic() error {
 	// commission validation
 	if msg.Commission > 100 {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "commission must be between 0 and 100")
-	}
-	if msg.Commission > 10 {
-		fmt.Sprintf("WARNING: commission is %d (greater than 10pct)", msg.Commission)
-	}
-	// weight validation
-	if msg.Weight < 0 {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "cannot add validator with negative weight (weights passed: %d)", msg.Weight)
 	}
 
 	return nil
