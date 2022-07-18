@@ -12,17 +12,17 @@ import (
 	strideapp "github.com/Stride-Labs/stride/app"
 	"github.com/Stride-Labs/stride/x/stakeibc/types"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
+	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
 	secp256k1 "github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
-	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	"github.com/cosmos/cosmos-sdk/simapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/bech32"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	distrtypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	clienttypes "github.com/cosmos/ibc-go/v3/modules/core/02-client/types"
 	ibctesting "github.com/cosmos/ibc-go/v3/testing"
-	ibcmock "github.com/cosmos/ibc-go/v3/testing/mock"
+	"github.com/cosmos/ibc-go/v3/testing/mock"
 	"github.com/stretchr/testify/require"
 	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/libs/log"
@@ -84,16 +84,19 @@ func SetSDKDefaults() {
 	cfg.SetBech32PrefixForAccount("stride", "stridepub")
 	cfg.SetBech32PrefixForConsensusNode("stride", "stridecons")
 	cfg.SetBech32PrefixForValidator("stridevaloper", "stridevaloperpub")
+	cfg.SetAddressVerifier(func([]byte) (err error) { return nil })
 }
 
-func SetupBaseApp(t *testing.T) (*strideapp.StrideApp, sdk.Context, map[string]tmtypes.PrivValidator) {
+func SetupBaseApp(t *testing.T) (*strideapp.StrideApp, sdk.Context, *tmtypes.ValidatorSet, map[string]tmtypes.PrivValidator, []ibctesting.SenderAccount) {
 	// Be warned, I wasted 2 hours because I put `app := ...` before the cfg changes.
 	// DO NOT MOVE SETTING DEFAULTS
 	SetSDKDefaults()
 	app := BaseAppState(t)
+	SetSDKDefaults()
 	// set genesis accounts
 	genAccs := []authtypes.GenesisAccount{}
 	genBals := []banktypes.Balance{}
+	senderAccs := []ibctesting.SenderAccount{}
 
 	allKeys := []string{"87b02600b8e300691689b51254c3fd23fa2d381d6e18a59583d0d483d549ce0f"}
 	for _, hexKey := range allKeys {
@@ -109,26 +112,34 @@ func SetupBaseApp(t *testing.T) (*strideapp.StrideApp, sdk.Context, map[string]t
 
 		genAccs = append(genAccs, acc)
 		genBals = append(genBals, balance)
+
+		senderAcc := ibctesting.SenderAccount{
+			SenderAccount: acc,
+			SenderPrivKey: &senderPrivKey,
+		}
+		senderAccs = append(senderAccs, senderAcc)
+
 	}
 	// set genesis state
 	authGenesis := authtypes.NewGenesisState(authtypes.DefaultParams(), genAccs)
 	genesisState := strideapp.NewDefaultGenesisState()
 	genesisState[authtypes.ModuleName] = app.AppCodec().MustMarshalJSON(authGenesis)
 
-	valAddrs := []string{"stridevaloper1uk4ze0x4nvh4fk0xm4jdud58eqn4yxhrgpwsqm"}
-	numVals := len(valAddrs)
+	numVals := 1
+	tmValidators := make([]*tmtypes.Validator, 0, numVals)
 	validators := make([]stakingtypes.Validator, 0, numVals)
 	delegations := make([]stakingtypes.Delegation, 0, numVals)
-	signersByAddr := make(map[string]tmtypes.PrivValidator, numVals)
+	signers := make(map[string]tmtypes.PrivValidator, numVals)
 	bondAmt := sdk.TokensFromConsensusPower(1, sdk.NewInt(1000000))
 
-	for _, valAddrBech32 := range valAddrs {
-		privKey := getPrivKey(t, allKeys[0])
-		pubKey := privKey.PubKey()
-		pkAny, err := codectypes.NewAnyWithValue(pubKey)
+	for i := 0; i < numVals; i++ {
+		privKey := mock.NewPV()
+		pubKey, err := privKey.GetPubKey()
 		require.NoError(t, err)
-
-		valAddr, err := sdk.ValAddressFromBech32(valAddrBech32)
+		val := tmtypes.NewValidator(pubKey, 1)
+		pk, err := cryptocodec.FromTmPubKeyInterface(pubKey)
+		require.NoError(t, err)
+		pkAny, err := codectypes.NewAnyWithValue(pk)
 		require.NoError(t, err)
 		valDescr := stakingtypes.Description{
 			Moniker:  "Stride Validator",
@@ -137,7 +148,7 @@ func SetupBaseApp(t *testing.T) (*strideapp.StrideApp, sdk.Context, map[string]t
 			Details:  "Stride Validator",
 		}
 		validator := stakingtypes.Validator{
-			OperatorAddress:   valAddr.String(),
+			OperatorAddress:   sdk.ValAddress(val.Address).String(),
 			ConsensusPubkey:   pkAny,
 			Jailed:            false,
 			Status:            stakingtypes.Bonded,
@@ -149,21 +160,21 @@ func SetupBaseApp(t *testing.T) (*strideapp.StrideApp, sdk.Context, map[string]t
 			Commission:        stakingtypes.NewCommission(sdk.ZeroDec(), sdk.ZeroDec(), sdk.ZeroDec()),
 			MinSelfDelegation: sdk.ZeroInt(),
 		}
-
+		tmValidators = append(tmValidators, tmtypes.NewValidator(pubKey, 1))
 		validators = append(validators, validator)
-		cryptoPrivKey := cryptotypes.PrivKey{}
-		signersByAddr[pubKey.Address().String()] = ibcmock.PV{PrivKey: cryptoPrivKey}
+		signers[pubKey.Address().String()] = privKey
 		// privKey
-		delegations = append(delegations, stakingtypes.NewDelegation(genAccs[0].GetAddress(), valAddr.Bytes(), sdk.OneDec()))
+		delegations = append(delegations, stakingtypes.NewDelegation(genAccs[0].GetAddress(), val.Address.Bytes(), sdk.OneDec()))
 	}
 
 	// set validators and delegations
 	var stakingGenesis stakingtypes.GenesisState
+	stakingGenesis.Params.BondDenom = "ustrd"
 	app.AppCodec().MustUnmarshalJSON(genesisState[stakingtypes.ModuleName], &stakingGenesis)
+	stakingGenesis.Params.BondDenom = "ustrd"
 	// get bondedPool address
 	bondedAddr := GetModuleAddress(t, stakingtypes.BondedPoolName)
 
-	stakingGenesis.Params.BondDenom = "ustrd"
 	// add bonded amount to bonded pool module account
 	genBals = append(genBals, banktypes.Balance{
 		Address: bondedAddr,
@@ -177,6 +188,24 @@ func SetupBaseApp(t *testing.T) (*strideapp.StrideApp, sdk.Context, map[string]t
 	// update total supply
 	bankGenesis := banktypes.NewGenesisState(banktypes.DefaultGenesisState().Params, genBals, sdk.NewCoins(), []banktypes.Metadata{})
 	genesisState[banktypes.ModuleName] = app.AppCodec().MustMarshalJSON(bankGenesis)
+
+	// update distribution supply
+	defaultDistr := distrtypes.DefaultGenesisState()
+	fp := distrtypes.InitialFeePool()
+	for _, bal := range genBals {
+		coinList := []sdk.Coin{}
+		for _, coin := range bal.Coins {
+			coinList = append(coinList, coin)
+		}
+		decCoins := sdk.NewDecCoinsFromCoins(coinList...)
+		fp.CommunityPool.Add(decCoins...)
+	}
+	distrGenesis := distrtypes.NewGenesisState(defaultDistr.Params,
+		fp, defaultDistr.DelegatorWithdrawInfos, sdk.ConsAddress(defaultDistr.PreviousProposer),
+		defaultDistr.OutstandingRewards, defaultDistr.ValidatorAccumulatedCommissions,
+		defaultDistr.ValidatorHistoricalRewards, defaultDistr.ValidatorCurrentRewards,
+		defaultDistr.DelegatorStartingInfos, defaultDistr.ValidatorSlashEvents)
+	genesisState[distrtypes.ModuleName] = app.AppCodec().MustMarshalJSON(distrGenesis)
 
 	stateBytes, err := json.MarshalIndent(genesisState, "", " ")
 	require.NoError(t, err)
@@ -204,28 +233,36 @@ func SetupBaseApp(t *testing.T) (*strideapp.StrideApp, sdk.Context, map[string]t
 	)
 
 	ctx := app.BaseApp.NewContext(false, tmproto.Header{Height: 1, ChainID: CHAIN_ID, Time: time.Now().UTC()})
+	valSet := tmtypes.NewValidatorSet(tmValidators)
 
-	return app, ctx, signers
+	return app, ctx, valSet, signers, senderAccs
 }
 
-func CreateGaiaIBCClient(t *testing.T, app *strideapp.StrideApp, ctx sdk.Context) (*testing.T, *strideapp.StrideApp, sdk.Context) {
-	k := app.IBCKeeper
-	goCtx := sdk.WrapSDKContext(ctx)
+func IterateBlock(coord *ibctesting.Coordinator) {
+	coord.CommitBlock(coord.GetChain(CHAIN_ID), coord.GetChain(ibctesting.GetChainID(1)))
+}
 
-	clientState := codectypes.Any{}
-	consensusState := codectypes.Any{}
-	resp, err := k.CreateClient(goCtx, &clienttypes.MsgCreateClient{
-		ClientState:    &clientState,
-		ConsensusState: &consensusState,
-		Signer:         "NIL",
-	})
-	if err != nil {
-		t.Fatalf("failed to create client: %s", err)
-	}
-	app.StakeibcKeeper.Logger(ctx).Info(fmt.Sprintf("%v", resp))
-	_, _ = k, goCtx
+func CreateIBCConnection(t *testing.T, coord *ibctesting.Coordinator, ctx sdk.Context) (*testing.T, *ibctesting.Coordinator, sdk.Context) {
+	stride := coord.Chains[CHAIN_ID]
+	gaia := coord.GetChain(ibctesting.GetChainID(1))
+	// app := (stride.App).(*strideapp.StrideApp)
+	// k := app.IBCKeeper
+	// goCtx := sdk.WrapSDKContext(ctx)
 
-	return t, app, ctx
+	// create transfer channel
+	path := ibctesting.NewPath(stride, gaia)
+	path.EndpointA.ChannelConfig.PortID = ibctesting.TransferPort
+	path.EndpointB.ChannelConfig.PortID = ibctesting.TransferPort
+	path.EndpointA.ChannelConfig.Version = "ics20-1"
+	path.EndpointB.ChannelConfig.Version = "ics20-1"
+	path.EndpointA.ConnectionID = "connection-0"
+	path.EndpointB.ConnectionID = "connection-0"
+
+	coord.Setup(path)
+	coord.CommitBlock()
+
+	IterateBlock(coord)
+	return t, coord, ctx
 }
 
 // func OpenGaiaConnection(app *strideapp.StrideApp, ctx sdk.Context, t testing.T) (*strideapp.StrideApp, sdk.Context) {
@@ -270,36 +307,45 @@ func CreateGaiaIBCClient(t *testing.T, app *strideapp.StrideApp, ctx sdk.Context
 // 	return app, ctx
 // }
 
-func RegisterHostZone(app *strideapp.StrideApp, ctx sdk.Context, t *testing.T) (*strideapp.StrideApp, sdk.Context, *testing.T) {
-	k := app.StakeibcKeeper
-	goCtx := sdk.WrapSDKContext(ctx)
-	msg := types.MsgRegisterHostZone{
+func RegisterHostZone(t *testing.T, coord *ibctesting.Coordinator, ctx sdk.Context) (*testing.T, *ibctesting.Coordinator, sdk.Context) {
+	stride := coord.Chains[CHAIN_ID]
+	app := (stride.App).(*strideapp.StrideApp)
+	// k := app.StakeibcKeeper
+	// goCtx := sdk.WrapSDKContext(ctx)
+	msg := &types.MsgRegisterHostZone{
 		ConnectionId:       "connection-0",
 		Bech32Prefix:       "cosmos",
-		HostDenom:          "uatom",
 		IbcDenom:           "ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2",
-		Creator:            "stride159atdlc3ksl50g0659w5tq42wwer334ajl7xnq",
-		TransferChannelId:  "channel-1",
+		Creator:            STRIDE_ACCT,
+		TransferChannelId:  "transfer",
 		UnbondingFrequency: 3,
 	}
-	_, err := k.RegisterHostZone(goCtx, &msg)
-	if err != nil {
-		t.Fatalf("error registering host zone: %v", err)
-	}
-	return app, ctx, t
+	handler := app.MsgServiceRouter().Handler(msg)
+	resp, err := handler(ctx, msg)
+	require.NoError(t, err)
+	fmt.Printf("Response: %v\n", resp)
+	IterateBlock(coord)
+	IterateBlock(coord)
+	return t, coord, ctx
 }
 
 func InitialBasicSetup(t *testing.T) (*testing.T, *ibctesting.Coordinator, sdk.Context) {
-	// Create a coordinator
-	coord := ibctesting.NewCoordinator(t, 1)
-	// gaia := coordinator.GetChain(ibctesting.GetChainID(1))
-
 	// Create Stride's app
-	app, ctx, signers := SetupBaseApp(t)
+	app, ctx, valSet, signersMap, senderAccs := SetupBaseApp(t)
 	if app == nil {
 		t.Error("app is nil")
 	}
-	//coordinator.Chains[CHAIN_ID] =
+	// create signers indexed by the valSet validators's order
+	signers := []tmtypes.PrivValidator{}
+	for _, val := range valSet.Validators {
+		signers = append(signers, signersMap[val.PubKey.Address().String()])
+	}
+
+	// this makes no sense to me, but if you move the below line to the top
+	// of this function, you will get an INCREDIBLY arcane error.
+	// Create a coordinator
+	coord := ibctesting.NewCoordinator(t, 1)
+	// gaia := coordinator.GetChain(ibctesting.GetChainID(1))
 	chain := &ibctesting.TestChain{
 		T:              t,
 		Coordinator:    coord,
@@ -310,12 +356,15 @@ func InitialBasicSetup(t *testing.T) (*testing.T, *ibctesting.Coordinator, sdk.C
 		TxConfig:       app.GetTxConfig(),
 		Codec:          app.AppCodec(),
 		Vals:           valSet,
-		NextVals:       valSet,
 		Signers:        signers,
 		SenderPrivKey:  senderAccs[0].SenderPrivKey,
 		SenderAccount:  senderAccs[0].SenderAccount,
 		SenderAccounts: senderAccs,
 	}
+	coord.CommitBlock(chain)
 	coord.Chains[CHAIN_ID] = chain
+
+	CreateIBCConnection(t, coord, ctx)
+
 	return t, coord, ctx
 }
