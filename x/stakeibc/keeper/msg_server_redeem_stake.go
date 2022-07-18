@@ -40,9 +40,9 @@ func (k Keeper) RedeemStake(goCtx context.Context, msg *types.MsgRedeemStake) (*
 
 	// construct desired unstaking amount from host zone
 	coinDenom := "st" + hostZone.HostDenom
-	stAmount := sdk.NewDec(msg.Amount).Mul(hostZone.RedemptionRate)
+	nativeAmount := sdk.NewDec(msg.Amount).Mul(hostZone.RedemptionRate)
 	// TODO(TEST-112) bigint safety
-	coinString := stAmount.RoundInt().String() + coinDenom
+	coinString := nativeAmount.RoundInt().String() + coinDenom
 	inCoin, err := sdk.ParseCoinNormalized(coinString)
 	if err != nil {
 		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidCoins, "could not parse inCoin: %s", coinString)
