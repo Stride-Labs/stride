@@ -48,7 +48,7 @@ func (msg *MsgSetNumValidators) ValidateBasic() error {
 	}
 	// num validators validation
 	if msg.NumValidators < 1 {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "num validators must be greater than 0")
+		return sdkerrors.Wrapf(ErrInvalidNumValidator, "number of validators must be greater than 0 (%d provided)", msg.NumValidators)
 	}
 	return nil
 }

@@ -22,7 +22,7 @@ type AppTestHelper struct {
 func (s *AppTestHelper) Setup() {
 	checkTx := false
 	s.App = app.InitTestApp(checkTx)
-	s.Ctx = s.App.BaseApp.NewContext(checkTx, tmtypes.Header{Height: 1, ChainID: "stride-1"})
+	s.Ctx = s.App.BaseApp.NewContext(checkTx, tmtypes.Header{Height: 1, ChainID: "STRIDE"})
 	s.QueryHelper = &baseapp.QueryServiceTestHelper{
 		GRPCQueryRouter: s.App.GRPCQueryRouter(),
 		Ctx:             s.Ctx,
@@ -55,8 +55,4 @@ func CreateRandomAccounts(numAccts int) []sdk.AccAddress {
 	}
 
 	return testAddrs
-}
-
-func floatToFixed(num float64, precision int) float64 {
-	return float64(int(num*100)) / 100
 }

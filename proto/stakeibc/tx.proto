@@ -31,7 +31,7 @@ service Msg {
 
 message MsgLiquidStake {
   string creator = 1;
-  int64 amount = 2;
+  uint64 amount = 2;
   // TODO(TEST-86): Update Denom -> HostDenom
   string host_denom = 3;
 }
