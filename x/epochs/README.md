@@ -5,12 +5,12 @@ parent:
   title: "epochs"
 -->
 
-# Epochs---
+# Epochs
 
 ## Abstract
 
 While using the SDK, we often want to run certain code periodically. The `epochs` module allows other modules to be configured such that they are signaled once every period. So another module can specify it wants to execute code once a week, starting at UTC-time = x. `epochs` creates a generalized epoch interface to other modules so that they can easily be signalled upon such events.
----
+
 
 ## Contents
 
@@ -21,7 +21,7 @@ While using the SDK, we often want to run certain code periodically. The `epochs
 5. **[Hooks](#hooks)**  
 6. **[Queries](#queries)**  
 7. **[Future Improvements](#future-improvements)**
----
+
 
 ## Concepts
 
@@ -29,7 +29,6 @@ Epochs are on-chain timers that have timer ticks at specific time intervals, tri
 
 Every epoch has a unique identifier. Every epoch will have a start time, and an end time, where `end_time = start_time + duration`.
 When an epoch triggers the execution of code, that code is executed at the first block whose blocktime is greater than `end_time`. It follows that the `start_time` of the following epoch will be the `end_time` of the previous epoch.
----
 
 ## State
 
@@ -91,7 +90,7 @@ The `epochs` module emits the following events:
 | Type        | Attribute Key | Attribute Value |
 | ----------- | ------------- | --------------- |
 | epoch_end   | epoch_number  | {epoch_number}  |
----
+
 
 ## Keeper
 
@@ -114,7 +113,7 @@ type Keeper interface {
   AllEpochInfos(ctx sdk.Context) []types.EpochInfo
 }
 ```
---- 
+
 
 ## Hooks
 
@@ -131,7 +130,7 @@ type Keeper interface {
 On the hook receiver functions of other modules, they need to filter `epochIdentifier` and execute for only a specific `epochIdentifier`.
 Filtering `epochIdentifier` could be in `Params` of other modules so that they can be modified by governance.
 Governance can change an epoch from `week` to `day` as needed.
----
+
 
 ## Queries
 
@@ -145,7 +144,7 @@ service Query {
   rpc CurrentEpoch(QueryCurrentEpochRequest) returns (QueryCurrentEpochResponse) {}
 }
 ```
----
+
 ## Future Improvements
 
 ### Lack point using this module
