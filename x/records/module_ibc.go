@@ -4,15 +4,16 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/Stride-Labs/stride/x/records/keeper"
-	"github.com/Stride-Labs/stride/x/records/types"
-	stakeibctypes "github.com/Stride-Labs/stride/x/stakeibc/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
 	ibctransfertypes "github.com/cosmos/ibc-go/v3/modules/apps/transfer/types"
 	channeltypes "github.com/cosmos/ibc-go/v3/modules/core/04-channel/types"
 	porttypes "github.com/cosmos/ibc-go/v3/modules/core/05-port/types"
+
+	"github.com/Stride-Labs/stride/x/records/keeper"
+	"github.com/Stride-Labs/stride/x/records/types"
+	stakeibctypes "github.com/Stride-Labs/stride/x/stakeibc/types"
 
 	// "google.golang.org/protobuf/proto" <-- this breaks tx parsing
 
@@ -55,7 +56,7 @@ func (im IBCModule) OnChanOpenInit(
 	// }
 	_, appVersion := channeltypes.SplitChannelVersion(version)
 	// doCustomLogic()
-	im.app.OnChanOpenInit(
+	err := im.app.OnChanOpenInit(
 		ctx,
 		order,
 		connectionHops,
@@ -65,6 +66,9 @@ func (im IBCModule) OnChanOpenInit(
 		counterparty,
 		appVersion, // note we only pass app version here
 	)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -115,7 +119,10 @@ func (im IBCModule) OnChanOpenAck(
 	// _, _ := channeltypes.SplitChannelVersion(counterpartyVersion)
 	// doCustomLogic()
 	// call the underlying applications OnChanOpenTry callback
-	im.app.OnChanOpenAck(ctx, portID, channelID, counterpartyChannelId, counterpartyVersion)
+	err := im.app.OnChanOpenAck(ctx, portID, channelID, counterpartyChannelId, counterpartyVersion)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -126,7 +133,10 @@ func (im IBCModule) OnChanOpenConfirm(
 	channelID string,
 ) error {
 	// doCustomLogic()
-	im.app.OnChanOpenConfirm(ctx, portID, channelID)
+	err := im.app.OnChanOpenConfirm(ctx, portID, channelID)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -137,7 +147,10 @@ func (im IBCModule) OnChanCloseInit(
 	channelID string,
 ) error {
 	// doCustomLogic()
-	im.app.OnChanCloseInit(ctx, portID, channelID)
+	err := im.app.OnChanCloseInit(ctx, portID, channelID)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -148,7 +161,10 @@ func (im IBCModule) OnChanCloseConfirm(
 	channelID string,
 ) error {
 	// doCustomLogic()
-	im.app.OnChanCloseConfirm(ctx, portID, channelID)
+	err := im.app.OnChanCloseConfirm(ctx, portID, channelID)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -206,7 +222,7 @@ func (im IBCModule) OnAcknowledgementPacket(
 				return sdkerrors.Wrapf(sdkerrors.ErrInvalidType, "Error parsing int %d", amount)
 			}
 			record, found := im.keeper.GetTransferDepositRecordByAmount(ctx, amount)
-			if found == false {
+			if !found {
 				return sdkerrors.Wrapf(sdkerrors.ErrNotFound, "No deposit record found for amount: %d", amount)
 			}
 			// update the record
@@ -230,7 +246,10 @@ func (im IBCModule) OnTimeoutPacket(
 	relayer sdk.AccAddress,
 ) error {
 	// doCustomLogic(packet)
-	im.app.OnTimeoutPacket(ctx, packet, relayer)
+	err := im.app.OnTimeoutPacket(ctx, packet, relayer)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
