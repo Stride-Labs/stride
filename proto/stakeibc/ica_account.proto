@@ -13,6 +13,11 @@ enum ICAAccountType {
   REDEMPTION = 3;
 }
 
+message SequenceCallback {
+  string callback_id = 1;
+  bytes callback_values = 2;
+}
+
 // TODO(TEST-XX): Update these fields to be more useful (e.g. balances should be coins, maybe store port name directly)
 message ICAAccount {
   string address = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ]; 
@@ -20,4 +25,7 @@ message ICAAccount {
   ICAAccountType target = 5;
   //TODO(TEST-112) use cosmos dec for all balances
   int64 balance = 8;
+  // NOTE: if this were note stored on an ICAAccount, which is scoped to a channel
+  // we'd need the channel_id in the key to be able to uniquely identify it.
+  map<uint64, SequenceCallback> sequence_callbacks = 9;
 }

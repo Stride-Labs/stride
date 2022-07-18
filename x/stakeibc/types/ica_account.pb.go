@@ -54,6 +54,58 @@ func (ICAAccountType) EnumDescriptor() ([]byte, []int) {
 	return fileDescriptor_f7243c23ee376c2f, []int{0}
 }
 
+type SequenceCallback struct {
+	CallbackId     string `protobuf:"bytes,1,opt,name=callback_id,json=callbackId,proto3" json:"callback_id,omitempty"`
+	CallbackValues []byte `protobuf:"bytes,2,opt,name=callback_values,json=callbackValues,proto3" json:"callback_values,omitempty"`
+}
+
+func (m *SequenceCallback) Reset()         { *m = SequenceCallback{} }
+func (m *SequenceCallback) String() string { return proto.CompactTextString(m) }
+func (*SequenceCallback) ProtoMessage()    {}
+func (*SequenceCallback) Descriptor() ([]byte, []int) {
+	return fileDescriptor_f7243c23ee376c2f, []int{0}
+}
+func (m *SequenceCallback) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *SequenceCallback) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_SequenceCallback.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *SequenceCallback) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_SequenceCallback.Merge(m, src)
+}
+func (m *SequenceCallback) XXX_Size() int {
+	return m.Size()
+}
+func (m *SequenceCallback) XXX_DiscardUnknown() {
+	xxx_messageInfo_SequenceCallback.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_SequenceCallback proto.InternalMessageInfo
+
+func (m *SequenceCallback) GetCallbackId() string {
+	if m != nil {
+		return m.CallbackId
+	}
+	return ""
+}
+
+func (m *SequenceCallback) GetCallbackValues() []byte {
+	if m != nil {
+		return m.CallbackValues
+	}
+	return nil
+}
+
 // TODO(TEST-XX): Update these fields to be more useful (e.g. balances should be coins, maybe store port name directly)
 type ICAAccount struct {
 	Address     string         `protobuf:"bytes,1,opt,name=address,proto3" json:"address,omitempty"`
@@ -61,13 +113,16 @@ type ICAAccount struct {
 	Target      ICAAccountType `protobuf:"varint,5,opt,name=target,proto3,enum=Stridelabs.stride.stakeibc.ICAAccountType" json:"target,omitempty"`
 	//TODO(TEST-112) use cosmos dec for all balances
 	Balance int64 `protobuf:"varint,8,opt,name=balance,proto3" json:"balance,omitempty"`
+	// NOTE: if this were note stored on an ICAAccount, which is scoped to a channel
+	// we'd need the channel_id in the key to be able to uniquely identify it.
+	SequenceCallbacks map[uint64]*SequenceCallback `protobuf:"bytes,9,rep,name=sequence_callbacks,json=sequenceCallbacks,proto3" json:"sequence_callbacks,omitempty" protobuf_key:"varint,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
 }
 
 func (m *ICAAccount) Reset()         { *m = ICAAccount{} }
 func (m *ICAAccount) String() string { return proto.CompactTextString(m) }
 func (*ICAAccount) ProtoMessage()    {}
 func (*ICAAccount) Descriptor() ([]byte, []int) {
-	return fileDescriptor_f7243c23ee376c2f, []int{0}
+	return fileDescriptor_f7243c23ee376c2f, []int{1}
 }
 func (m *ICAAccount) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -124,37 +179,91 @@ func (m *ICAAccount) GetBalance() int64 {
 	return 0
 }
 
+func (m *ICAAccount) GetSequenceCallbacks() map[uint64]*SequenceCallback {
+	if m != nil {
+		return m.SequenceCallbacks
+	}
+	return nil
+}
+
 func init() {
 	proto.RegisterEnum("Stridelabs.stride.stakeibc.ICAAccountType", ICAAccountType_name, ICAAccountType_value)
+	proto.RegisterType((*SequenceCallback)(nil), "Stridelabs.stride.stakeibc.SequenceCallback")
 	proto.RegisterType((*ICAAccount)(nil), "Stridelabs.stride.stakeibc.ICAAccount")
+	proto.RegisterMapType((map[uint64]*SequenceCallback)(nil), "Stridelabs.stride.stakeibc.ICAAccount.SequenceCallbacksEntry")
 }
 
 func init() { proto.RegisterFile("stakeibc/ica_account.proto", fileDescriptor_f7243c23ee376c2f) }
 
 var fileDescriptor_f7243c23ee376c2f = []byte{
-	// 345 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x7c, 0x91, 0xcd, 0x4a, 0xf3, 0x40,
-	0x14, 0x86, 0x33, 0x5f, 0x3e, 0x5b, 0x9d, 0x42, 0x29, 0x83, 0x8b, 0x34, 0x8b, 0x10, 0x5c, 0x48,
-	0x28, 0x74, 0x02, 0xf5, 0x0a, 0x52, 0x13, 0x6d, 0xa0, 0xfe, 0x10, 0x0b, 0x05, 0x37, 0x65, 0x32,
-	0x19, 0x62, 0xb0, 0xcd, 0x94, 0xcc, 0x14, 0xec, 0x5d, 0x78, 0x31, 0x5e, 0x84, 0xcb, 0xe2, 0xca,
-	0xa5, 0xb4, 0x1b, 0x2f, 0x43, 0x9a, 0xe9, 0x8f, 0x2e, 0x74, 0x37, 0x2f, 0xe7, 0x7d, 0xe6, 0x3c,
-	0x70, 0xa0, 0x29, 0x24, 0x79, 0x64, 0x59, 0x4c, 0xdd, 0x8c, 0x92, 0x11, 0xa1, 0x94, 0xcf, 0x72,
-	0x89, 0xa7, 0x05, 0x97, 0x1c, 0x99, 0x77, 0xb2, 0xc8, 0x12, 0x36, 0x26, 0xb1, 0xc0, 0xa2, 0x7c,
-	0xe2, 0x6d, 0xdb, 0x6c, 0xee, 0xb8, 0x84, 0x8d, 0x59, 0x4a, 0x64, 0xc6, 0x73, 0x85, 0x99, 0x4d,
-	0xca, 0xc5, 0x84, 0x8b, 0x51, 0x99, 0x5c, 0x15, 0xd4, 0xe8, 0xe4, 0x13, 0x40, 0x18, 0x9e, 0x7b,
-	0x9e, 0x5a, 0x83, 0x3a, 0xb0, 0x4a, 0x92, 0xa4, 0x60, 0x42, 0x18, 0xc0, 0x06, 0xce, 0x51, 0xd7,
-	0x78, 0x7b, 0x69, 0x1f, 0x6f, 0x08, 0x4f, 0x4d, 0xd6, 0x0e, 0x79, 0x1a, 0x6d, 0x8b, 0xa8, 0x07,
-	0x6b, 0xfb, 0x8d, 0xc2, 0xf8, 0x6f, 0xeb, 0x4e, 0xad, 0x73, 0x8a, 0x7f, 0x57, 0xc5, 0xfe, 0xae,
-	0x1e, 0x7d, 0x47, 0x51, 0x17, 0x56, 0x24, 0x29, 0x52, 0x26, 0x8d, 0x03, 0x1b, 0x38, 0xf5, 0x4e,
-	0xeb, 0xaf, 0x4f, 0xf6, 0xd6, 0x83, 0xf9, 0x94, 0x45, 0x1b, 0x12, 0x19, 0xb0, 0x1a, 0x93, 0x31,
-	0xc9, 0x29, 0x33, 0x0e, 0x6d, 0xe0, 0xe8, 0xd1, 0x36, 0xb6, 0x42, 0x58, 0xff, 0xc9, 0xa0, 0x3a,
-	0x84, 0x7e, 0xd0, 0x0f, 0x2e, 0xbd, 0x41, 0x78, 0x73, 0xdd, 0xd0, 0x50, 0x15, 0xea, 0x17, 0x41,
-	0xd0, 0x00, 0xeb, 0xc1, 0x30, 0x1c, 0xf4, 0xfc, 0xc8, 0x1b, 0x7a, 0xfd, 0xc6, 0xbf, 0x75, 0x8e,
-	0x02, 0x3f, 0xb8, 0xba, 0x2d, 0x8b, 0x7a, 0xb7, 0xf7, 0xba, 0xb4, 0xc0, 0x62, 0x69, 0x81, 0x8f,
-	0xa5, 0x05, 0x9e, 0x57, 0x96, 0xb6, 0x58, 0x59, 0xda, 0xfb, 0xca, 0xd2, 0xee, 0x71, 0x9a, 0xc9,
-	0x87, 0x59, 0x8c, 0x29, 0x9f, 0xb8, 0x4a, 0xbe, 0xdd, 0x27, 0xb1, 0x70, 0x95, 0xbd, 0xfb, 0xe4,
-	0xee, 0xae, 0x24, 0xe7, 0x53, 0x26, 0xe2, 0x4a, 0x79, 0x86, 0xb3, 0xaf, 0x00, 0x00, 0x00, 0xff,
-	0xff, 0xae, 0xee, 0x6f, 0x01, 0xf6, 0x01, 0x00, 0x00,
+	// 471 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x8c, 0x52, 0xdd, 0x8a, 0xd3, 0x40,
+	0x14, 0xee, 0x6c, 0x76, 0xb7, 0xee, 0xa9, 0xd4, 0x38, 0x88, 0x64, 0x73, 0x11, 0xc3, 0x5e, 0x68,
+	0x58, 0xdc, 0x04, 0xea, 0x8d, 0x08, 0x5e, 0xa4, 0xdb, 0x68, 0x03, 0xf5, 0x87, 0xd9, 0xe2, 0x82,
+	0x08, 0x65, 0x32, 0x19, 0x6a, 0x68, 0x36, 0xa9, 0x99, 0xa9, 0xd8, 0xb7, 0xf0, 0x61, 0x7c, 0x08,
+	0xf1, 0x6a, 0xf1, 0xca, 0x4b, 0x69, 0x5f, 0x44, 0x3a, 0xd3, 0x74, 0xb5, 0xe8, 0xe2, 0xdd, 0xf9,
+	0xf9, 0xbe, 0x33, 0xdf, 0xf9, 0xce, 0x80, 0x2d, 0x24, 0x9d, 0xf0, 0x2c, 0x61, 0x41, 0xc6, 0xe8,
+	0x88, 0x32, 0x56, 0xce, 0x0a, 0xe9, 0x4f, 0xab, 0x52, 0x96, 0xd8, 0x3e, 0x93, 0x55, 0x96, 0xf2,
+	0x9c, 0x26, 0xc2, 0x17, 0x2a, 0xf4, 0x6b, 0xb4, 0x7d, 0xb8, 0xe1, 0xa5, 0x3c, 0xe7, 0x63, 0x2a,
+	0xb3, 0xb2, 0xd0, 0x34, 0xfb, 0x90, 0x95, 0xe2, 0xa2, 0x14, 0x23, 0x95, 0x05, 0x3a, 0xd1, 0xad,
+	0xa3, 0x77, 0x60, 0x9e, 0xf1, 0x0f, 0x33, 0x5e, 0x30, 0x7e, 0x4a, 0xf3, 0x3c, 0xa1, 0x6c, 0x82,
+	0xef, 0x41, 0x8b, 0xad, 0xe3, 0x51, 0x96, 0x5a, 0xc8, 0x45, 0xde, 0x01, 0x81, 0xba, 0x14, 0xa7,
+	0xf8, 0x01, 0xdc, 0xda, 0x00, 0x3e, 0xd2, 0x7c, 0xc6, 0x85, 0xb5, 0xe3, 0x22, 0xef, 0x26, 0x69,
+	0xd7, 0xe5, 0x37, 0xaa, 0x7a, 0xf4, 0xcd, 0x00, 0x88, 0x4f, 0xc3, 0x50, 0x2f, 0x81, 0x3b, 0xd0,
+	0xa4, 0x69, 0x5a, 0x71, 0x21, 0xf4, 0xd0, 0xae, 0xf5, 0xfd, 0xcb, 0xc9, 0x9d, 0xb5, 0x9e, 0x50,
+	0x77, 0x56, 0x1b, 0x16, 0x63, 0x52, 0x03, 0x71, 0x1f, 0x5a, 0x57, 0xfb, 0x08, 0x6b, 0xd7, 0x35,
+	0xbc, 0x56, 0xe7, 0xbe, 0xff, 0x6f, 0x23, 0xfc, 0xde, 0x06, 0x4e, 0x7e, 0xa7, 0xe2, 0x2e, 0xec,
+	0x4b, 0x5a, 0x8d, 0xb9, 0xb4, 0xf6, 0x5c, 0xe4, 0xb5, 0x3b, 0xc7, 0xd7, 0x0d, 0xb9, 0x52, 0x3d,
+	0x9c, 0x4f, 0x39, 0x59, 0x33, 0xb1, 0x05, 0xcd, 0x84, 0xe6, 0xb4, 0x60, 0xdc, 0xba, 0xe1, 0x22,
+	0xcf, 0x20, 0x75, 0x8a, 0x73, 0xc0, 0x62, 0x6d, 0xe4, 0xa8, 0x76, 0x41, 0x58, 0x07, 0x4a, 0xee,
+	0xd3, 0xff, 0x7b, 0xc9, 0xdf, 0xbe, 0x84, 0x88, 0x0a, 0x59, 0xcd, 0xc9, 0x6d, 0xb1, 0x5d, 0xb7,
+	0x2b, 0xb8, 0xfb, 0x77, 0x30, 0x36, 0xc1, 0x98, 0xf0, 0xb9, 0xf2, 0x77, 0x97, 0xac, 0x42, 0xdc,
+	0x85, 0x3d, 0x75, 0x24, 0x75, 0xa3, 0x56, 0xe7, 0xe1, 0x75, 0x62, 0xb6, 0x87, 0x12, 0x4d, 0x7d,
+	0xb2, 0xf3, 0x18, 0x1d, 0xc7, 0xd0, 0xfe, 0xd3, 0x15, 0xdc, 0x06, 0xe8, 0x45, 0x83, 0xe8, 0x79,
+	0x38, 0x8c, 0x5f, 0xbd, 0x34, 0x1b, 0xb8, 0x09, 0xc6, 0xb3, 0x28, 0x32, 0xd1, 0xaa, 0x71, 0x1e,
+	0x0f, 0xfb, 0x3d, 0x12, 0x9e, 0x87, 0x03, 0x73, 0x67, 0x95, 0x93, 0xa8, 0x17, 0xbd, 0x78, 0xad,
+	0x80, 0x46, 0xb7, 0xff, 0x75, 0xe1, 0xa0, 0xcb, 0x85, 0x83, 0x7e, 0x2e, 0x1c, 0xf4, 0x79, 0xe9,
+	0x34, 0x2e, 0x97, 0x4e, 0xe3, 0xc7, 0xd2, 0x69, 0xbc, 0xf5, 0xc7, 0x99, 0x7c, 0x3f, 0x4b, 0x7c,
+	0x56, 0x5e, 0x04, 0x5a, 0xe7, 0xc9, 0x80, 0x26, 0x22, 0xd0, 0x42, 0x83, 0x4f, 0xc1, 0xe6, 0x97,
+	0xcb, 0xf9, 0x94, 0x8b, 0x64, 0x5f, 0x7d, 0xe3, 0x47, 0xbf, 0x02, 0x00, 0x00, 0xff, 0xff, 0x84,
+	0xe2, 0x7c, 0xee, 0x36, 0x03, 0x00, 0x00,
+}
+
+func (m *SequenceCallback) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *SequenceCallback) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *SequenceCallback) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.CallbackValues) > 0 {
+		i -= len(m.CallbackValues)
+		copy(dAtA[i:], m.CallbackValues)
+		i = encodeVarintIcaAccount(dAtA, i, uint64(len(m.CallbackValues)))
+		i--
+		dAtA[i] = 0x12
+	}
+	if len(m.CallbackId) > 0 {
+		i -= len(m.CallbackId)
+		copy(dAtA[i:], m.CallbackId)
+		i = encodeVarintIcaAccount(dAtA, i, uint64(len(m.CallbackId)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
 }
 
 func (m *ICAAccount) Marshal() (dAtA []byte, err error) {
@@ -177,6 +286,30 @@ func (m *ICAAccount) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	_ = i
 	var l int
 	_ = l
+	if len(m.SequenceCallbacks) > 0 {
+		for k := range m.SequenceCallbacks {
+			v := m.SequenceCallbacks[k]
+			baseI := i
+			if v != nil {
+				{
+					size, err := v.MarshalToSizedBuffer(dAtA[:i])
+					if err != nil {
+						return 0, err
+					}
+					i -= size
+					i = encodeVarintIcaAccount(dAtA, i, uint64(size))
+				}
+				i--
+				dAtA[i] = 0x12
+			}
+			i = encodeVarintIcaAccount(dAtA, i, uint64(k))
+			i--
+			dAtA[i] = 0x8
+			i = encodeVarintIcaAccount(dAtA, i, uint64(baseI-i))
+			i--
+			dAtA[i] = 0x4a
+		}
+	}
 	if m.Balance != 0 {
 		i = encodeVarintIcaAccount(dAtA, i, uint64(m.Balance))
 		i--
@@ -222,6 +355,23 @@ func encodeVarintIcaAccount(dAtA []byte, offset int, v uint64) int {
 	dAtA[offset] = uint8(v)
 	return base
 }
+func (m *SequenceCallback) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.CallbackId)
+	if l > 0 {
+		n += 1 + l + sovIcaAccount(uint64(l))
+	}
+	l = len(m.CallbackValues)
+	if l > 0 {
+		n += 1 + l + sovIcaAccount(uint64(l))
+	}
+	return n
+}
+
 func (m *ICAAccount) Size() (n int) {
 	if m == nil {
 		return 0
@@ -244,6 +394,19 @@ func (m *ICAAccount) Size() (n int) {
 	if m.Balance != 0 {
 		n += 1 + sovIcaAccount(uint64(m.Balance))
 	}
+	if len(m.SequenceCallbacks) > 0 {
+		for k, v := range m.SequenceCallbacks {
+			_ = k
+			_ = v
+			l = 0
+			if v != nil {
+				l = v.Size()
+				l += 1 + sovIcaAccount(uint64(l))
+			}
+			mapEntrySize := 1 + sovIcaAccount(uint64(k)) + l
+			n += mapEntrySize + 1 + sovIcaAccount(uint64(mapEntrySize))
+		}
+	}
 	return n
 }
 
@@ -252,6 +415,122 @@ func sovIcaAccount(x uint64) (n int) {
 }
 func sozIcaAccount(x uint64) (n int) {
 	return sovIcaAccount(uint64((x << 1) ^ uint64((int64(x) >> 63))))
+}
+func (m *SequenceCallback) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowIcaAccount
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: SequenceCallback: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: SequenceCallback: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field CallbackId", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowIcaAccount
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthIcaAccount
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthIcaAccount
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.CallbackId = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field CallbackValues", wireType)
+			}
+			var byteLen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowIcaAccount
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				byteLen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if byteLen < 0 {
+				return ErrInvalidLengthIcaAccount
+			}
+			postIndex := iNdEx + byteLen
+			if postIndex < 0 {
+				return ErrInvalidLengthIcaAccount
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.CallbackValues = append(m.CallbackValues[:0], dAtA[iNdEx:postIndex]...)
+			if m.CallbackValues == nil {
+				m.CallbackValues = []byte{}
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipIcaAccount(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthIcaAccount
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
 }
 func (m *ICAAccount) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
@@ -386,6 +665,121 @@ func (m *ICAAccount) Unmarshal(dAtA []byte) error {
 					break
 				}
 			}
+		case 9:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field SequenceCallbacks", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowIcaAccount
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthIcaAccount
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthIcaAccount
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.SequenceCallbacks == nil {
+				m.SequenceCallbacks = make(map[uint64]*SequenceCallback)
+			}
+			var mapkey uint64
+			var mapvalue *SequenceCallback
+			for iNdEx < postIndex {
+				entryPreIndex := iNdEx
+				var wire uint64
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return ErrIntOverflowIcaAccount
+					}
+					if iNdEx >= l {
+						return io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					wire |= uint64(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+				fieldNum := int32(wire >> 3)
+				if fieldNum == 1 {
+					for shift := uint(0); ; shift += 7 {
+						if shift >= 64 {
+							return ErrIntOverflowIcaAccount
+						}
+						if iNdEx >= l {
+							return io.ErrUnexpectedEOF
+						}
+						b := dAtA[iNdEx]
+						iNdEx++
+						mapkey |= uint64(b&0x7F) << shift
+						if b < 0x80 {
+							break
+						}
+					}
+				} else if fieldNum == 2 {
+					var mapmsglen int
+					for shift := uint(0); ; shift += 7 {
+						if shift >= 64 {
+							return ErrIntOverflowIcaAccount
+						}
+						if iNdEx >= l {
+							return io.ErrUnexpectedEOF
+						}
+						b := dAtA[iNdEx]
+						iNdEx++
+						mapmsglen |= int(b&0x7F) << shift
+						if b < 0x80 {
+							break
+						}
+					}
+					if mapmsglen < 0 {
+						return ErrInvalidLengthIcaAccount
+					}
+					postmsgIndex := iNdEx + mapmsglen
+					if postmsgIndex < 0 {
+						return ErrInvalidLengthIcaAccount
+					}
+					if postmsgIndex > l {
+						return io.ErrUnexpectedEOF
+					}
+					mapvalue = &SequenceCallback{}
+					if err := mapvalue.Unmarshal(dAtA[iNdEx:postmsgIndex]); err != nil {
+						return err
+					}
+					iNdEx = postmsgIndex
+				} else {
+					iNdEx = entryPreIndex
+					skippy, err := skipIcaAccount(dAtA[iNdEx:])
+					if err != nil {
+						return err
+					}
+					if (skippy < 0) || (iNdEx+skippy) < 0 {
+						return ErrInvalidLengthIcaAccount
+					}
+					if (iNdEx + skippy) > postIndex {
+						return io.ErrUnexpectedEOF
+					}
+					iNdEx += skippy
+				}
+			}
+			m.SequenceCallbacks[mapkey] = mapvalue
+			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
 			skippy, err := skipIcaAccount(dAtA[iNdEx:])
