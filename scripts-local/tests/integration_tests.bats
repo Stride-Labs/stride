@@ -67,6 +67,16 @@ setup() {
 
   assert_equal $HERMES_STRIDE_ADDR "stride1ft20pydau82pgesyl9huhhux307s9h3078692y"
   assert_equal $ICQ_STRIDE_ADDR "stride12vfkpj7lpqg0n4j68rr5kyffc6wu55dzqewda4"
+
+  assert_equal $DELEGATION_ICA_ADDR "cosmos1sy63lffevueudvvlvh2lf6s387xh9xq72n3fsy6n2gr5hm6u2szs2v0ujm"
+  assert_equal $REDEMPTION_ICA_ADDR "cosmos1xmcwu75s8v7s54k79390wc5gwtgkeqhvzegpj0nm2tdwacv47tmqg9ut30"
+  assert_equal $WITHDRAWAL_ICA_ADDR "cosmos1x5p8er7e2ne8l54tx33l560l8djuyapny55pksctuguzdc00dj7saqcw2l"
+  assert_equal $REVENUE_EOA_ADDR "cosmos1wdplq6qjh2xruc7qqagma9ya665q6qhcwju3ng"
+  assert_equal $FEE_ICA_ADDR "cosmos1lkgt5sfshn9shm7hd7chtytkq4mvwvswgmyl0hkacd4rmusu9wwq60cezx"
+  assert_equal $GAIA_DELEGATE_VAL "cosmosvaloper1pcag0cj4ttxg8l7pcg0q4ksuglswuuedadj7ne"
+  assert_equal $GAIA_DELEGATE_VAL_2 "cosmosvaloper133lfs9gcpxqj6er3kx605e3v9lqp2pg5syhvsz"
+  assert_equal $GAIA_RECEIVER_ACCT "cosmos1g6qdx6kdhpf000afvvpte7hp0vnpzapuyxp8uf"
+
 }
 
 @test "[INTEGRATION-BASIC] ibc transfer updates all balances" {
@@ -156,7 +166,6 @@ setup() {
 
 # check that tokens on GAIA are staked
 @test "[INTEGRATION-BASIC] tokens on GAIA were staked" {
-  OLD_STAKE=0
   # wait for another epoch to pass so that tokens are staked
   remaining_seconds=$($STRIDE_CMD q epochs seconds-remaining stride_epoch)
   sleep $remaining_seconds
@@ -164,52 +173,8 @@ setup() {
   sleep $IBC_TX_WAIT_SECONDS
   # check staked tokens
   NEW_STAKE=$($GAIA_CMD q staking delegation $DELEGATION_ICA_ADDR $GAIA_DELEGATE_VAL | GETSTAKE)
-  diff=$(($NEW_STAKE - $OLD_STAKE))
-  assert_equal "$diff" "333"
-}
-
-# check that a second liquid staking call kicks off reinvestment
-@test "[INTEGRATION-BASIC] rewards are being reinvested (delegated balance increasing)" {
-  old_staked_bal=$($GAIA_CMD q staking delegation $DELEGATION_ICA_ADDR $GAIA_DELEGATE_VAL | GETSTAKE)
-
-  # liquid stake again to kickstart the reinvestment process
-  $STRIDE_CMD tx stakeibc liquid-stake 1000 uatom --keyring-backend test --from val1 -y --chain-id $STRIDE_CHAIN
-  # wait four days (transfers, stake, move rewards, reinvest rewards)
-  remaining_seconds=$($STRIDE_CMD q epochs seconds-remaining day)
-  sleep $remaining_seconds
-  BLOCK_SLEEP 2  
-  remaining_seconds=$($STRIDE_CMD q epochs seconds-remaining day)
-  sleep $remaining_seconds
-  remaining_seconds=$($STRIDE_CMD q epochs seconds-remaining day)
-  sleep $remaining_seconds
-  remaining_seconds=$($STRIDE_CMD q epochs seconds-remaining day)
-  sleep $remaining_seconds
-
-  # simple check that number of tokens staked increases
-  new_staked_bal=$($GAIA_CMD q staking delegation $DELEGATION_ICA_ADDR $GAIA_DELEGATE_VAL | GETSTAKE)
-  STAKED_BAL_INCREASED=$((new_staked_bal > old_staked_bal))
-  assert_equal "$STAKED_BAL_INCREASED" "1"
-}
-
-# check that exchange rate is updating
-@test "[INTEGRATION-BASIC] exchange rate is updating" {
-  # read the exchange rate
-  RR1=$($STRIDE_CMD q stakeibc list-host-zone | grep -Fiw 'RedemptionRate' | grep -Eo '[+-]?[0-9]+([.][0-9]+)?')
-
-  # wait for reinvestment to happen (3 days is enough)
-  remaining_seconds=$($STRIDE_CMD q epochs seconds-remaining day)
-  sleep $remaining_seconds
-  remaining_seconds=$($STRIDE_CMD q epochs seconds-remaining day)
-  sleep $remaining_seconds
-  remaining_seconds=$($STRIDE_CMD q epochs seconds-remaining day)
-  sleep $remaining_seconds
-
-  RR2=$($STRIDE_CMD q stakeibc list-host-zone | grep -Fiw 'RedemptionRate' | grep -Eo '[+-]?[0-9]+([.][0-9]+)?')
-
-  # check that the exchange rate has increased
-  MULT=1000000
-  RR_INCREASED=$(( $(FLOOR $(DECMUL $RR2 $MULT)) > $(FLOOR $(DECMUL $RR1 10000))))
-  assert_equal "$RR_INCREASED" "1"
+  # note that old stake is 0, so we can safely check the new stake value rather than the diff
+  assert_equal "$NEW_STAKE" "333"
 }
 
 
@@ -217,8 +182,8 @@ setup() {
 @test "[INTEGRATION-BASIC] redemption works" {
   old_redemption_ica_bal=$($GAIA_CMD q bank balances $REDEMPTION_ICA_ADDR --denom uatom | GETBAL)
   # call redeem-stake
-  amt_to_redeem=89
-  $STRIDE_CMD tx stakeibc redeem-stake $amt_to_redeem GAIA cosmos1g6qdx6kdhpf000afvvpte7hp0vnpzapuyxp8uf \
+  amt_to_redeem=5
+  $STRIDE_CMD tx stakeibc redeem-stake $amt_to_redeem GAIA $GAIA_RECEIVER_ACCT \
       --from val1 --keyring-backend test --chain-id $STRIDE_CHAIN -y
   # wait for beginning of next day, then for ibc transaction time for the unbonding period to begin
   remaining_seconds=$($STRIDE_CMD q epochs seconds-remaining day)
@@ -252,9 +217,8 @@ setup() {
 
   # TODO(optimize tests) extra sleep just in case
   sleep 30
-  SENDER_ACCT=stride1uk4ze0x4nvh4fk0xm4jdud58eqn4yxhrt52vv7
-  RECEIVER_ACCT=cosmos1g6qdx6kdhpf000afvvpte7hp0vnpzapuyxp8uf
-  old_sender_bal=$($GAIA_CMD q bank balances $RECEIVER_ACCT --denom uatom | GETBAL)
+  SENDER_ACCT=$STRIDE_VAL_ADDR
+  old_sender_bal=$($GAIA_CMD q bank balances $GAIA_RECEIVER_ACCT --denom uatom | GETBAL)
   # TODO check that the UserRedemptionRecord has isClaimable = true
 
   # grab the epoch number for the first deposit record in the list od DRs  
@@ -265,13 +229,46 @@ setup() {
   # TODO check that UserRedemptionRecord has isClaimable = false
   
   # check that the tokens were transferred to the sender account
-  new_sender_bal=$($GAIA_CMD q bank balances $RECEIVER_ACCT --denom uatom | GETBAL)
+  new_sender_bal=$($GAIA_CMD q bank balances $GAIA_RECEIVER_ACCT --denom uatom | GETBAL)
 
   # check that the undelegated tokens were transfered to the sender account
   diff=$(($new_sender_bal - $old_sender_bal))
-  assert_equal "$diff" "89"
+  assert_equal "$diff" "5"
 }
 
+
+# check that a second liquid staking call kicks off reinvestment
+@test "[INTEGRATION-BASIC] rewards are being reinvested (delegated balance increasing)" {
+  # liquid stake again to kickstart the reinvestment process
+  $STRIDE_CMD tx stakeibc liquid-stake 1000 uatom --keyring-backend test --from val1 -y --chain-id $STRIDE_CHAIN
+  BLOCK_SLEEP 2  
+  # wait four days (transfers, stake, move rewards, reinvest rewards)
+  day_duration=$($STRIDE_CMD q epochs epoch-infos | grep -Fiw 'duration' | head -n 1 | grep -o -E '[0-9]+')
+  sleep $(($day_duration * 4))
+
+  # simple check that number of tokens staked increases
+  NEW_STAKED_BAL=$($GAIA_CMD q staking delegation $DELEGATION_ICA_ADDR $GAIA_DELEGATE_VAL | GETSTAKE)
+  EXPECTED_STAKED_BAL=680
+  STAKED_BAL_INCREASED=$(($NEW_STAKED_BAL > $EXPECTED_STAKED_BAL))
+  assert_equal "$STAKED_BAL_INCREASED" "1" 
+}
+
+# check that exchange rate is updating
+@test "[INTEGRATION-BASIC] exchange rate is updating" {
+  # read the exchange rate
+  RR1=$($STRIDE_CMD q stakeibc list-host-zone | grep -Fiw 'RedemptionRate' | grep -Eo '[+-]?[0-9]+([.][0-9]+)?')
+
+  # wait for reinvestment to happen (4 days is enough)
+  day_duration=$($STRIDE_CMD q epochs epoch-infos | grep -Fiw 'duration' | head -n 1 | grep -o -E '[0-9]+')
+  sleep $(($day_duration * 4))
+
+  RR2=$($STRIDE_CMD q stakeibc list-host-zone | grep -Fiw 'RedemptionRate' | grep -Eo '[+-]?[0-9]+([.][0-9]+)?')
+
+  # check that the exchange rate has increased
+  MULT=1000000
+  RR_INCREASED=$(( $(FLOOR $(DECMUL $RR2 $MULT)) > $(FLOOR $(DECMUL $RR1 $MULT))))
+  assert_equal "$RR_INCREASED" "1"
+}
 
 # TODO check that the correct amount is being reinvested and the correct amount is flowing to the rev EOA
 @test "[NOT-IMPLEMENTED] reinvestment and revenue amounts are correct" {
