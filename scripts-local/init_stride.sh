@@ -28,7 +28,6 @@ jq '.app_state.stakeibc.params.delegate_interval = $interval' --arg interval $IN
 jq '.app_state.stakeibc.params.deposit_interval = $interval' --arg interval $INTERVAL_LEN $main_config > json.tmp && mv json.tmp $main_config
 jq '.app_state.stakeibc.params.redemption_rate_interval = $interval' --arg interval $INTERVAL_LEN $main_config > json.tmp && mv json.tmp $main_config
 jq '.app_state.stakeibc.params.reinvest_interval = $interval' --arg interval $INTERVAL_LEN $main_config > json.tmp && mv json.tmp $main_config
-jq '.app_state.stakeibc.params.withdrawal_interval = $interval' --arg interval $INTERVAL_LEN $main_config > json.tmp && mv json.tmp $main_config
 
 # add validator account
 echo $STRIDE_VAL_MNEMONIC | $STRIDE_CMD keys add $STRIDE_VAL_ACCT --recover --keyring-backend=test 
