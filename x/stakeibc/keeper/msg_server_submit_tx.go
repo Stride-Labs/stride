@@ -258,6 +258,7 @@ func (k Keeper) GetLightClientHeightSafely(ctx sdk.Context, connectionID string)
 	conn, found := k.IBCKeeper.ConnectionKeeper.GetConnection(ctx, connectionID)
 	if !found {
 		k.Logger(ctx).Error(fmt.Sprintf("invalid connection id, \"%s\" not found", connectionID))
+		return 0, false
 	}
 	//TODO(TEST-112) make sure to update host LCs here!
 	clientState, found := k.IBCKeeper.ClientKeeper.GetClientState(ctx, conn.ClientId)
