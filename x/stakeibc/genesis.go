@@ -25,6 +25,11 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) 
 	for _, elem := range genState.PendingClaimsList {
 		k.SetPendingClaims(ctx, elem)
 	}
+
+	// set safety gas fee flag to begin disabled
+	disabledSafetyGasFeeFlag := types.SafetyGasFeeFlag{Enabled: false}
+	k.SetterSafetyGasFeeFlag(ctx, disabledSafetyGasFeeFlag)
+
 	// this line is used by starport scaffolding # genesis/module/init
 	// TODO(TEST-22): Set ports
 	// k.SetPort(ctx, genState.PortId)

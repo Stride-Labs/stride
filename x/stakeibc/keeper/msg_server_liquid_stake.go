@@ -6,6 +6,7 @@ import (
 
 	epochtypes "github.com/Stride-Labs/stride/x/epochs/types"
 	"github.com/Stride-Labs/stride/x/stakeibc/types"
+	"github.com/cosmos/cosmos-sdk/server/rosetta/lib/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
@@ -13,6 +14,19 @@ import (
 func (k msgServer) LiquidStake(goCtx context.Context, msg *types.MsgLiquidStake) (*types.MsgLiquidStakeResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
+	// safety gas fee check for chain spam prevention
+	safetyGasFeeFlag, found := k.GetSafetyGasFeeFlag(ctx)
+	if !found {
+		return nil, sdkerrors.Wrap(errors.ErrInvalidOperation, "unable to fetch safety gas fee flag")
+	} else {
+		if safetyGasFeeFlag.Enabled {
+			// only charge a fee if the amount liquid staked is less than 10 (greater amounts are not spam risk!)
+			CHARGE_THRESHOLD := int64(10_000_000)
+			if msg.Amount < CHARGE_THRESHOLD {
+				k.ConsumeSafetyGasFee(ctx)
+			}
+		}
+	}
 	// Init variables
 	// deposit `amount` of `denom` token to the stakeibc module
 	// NOTE: Should we add an additional check here? This is a pretty important line of code

@@ -6,8 +6,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-// SetSafetyGasFeeFlag set SafetyGasFeeFlag in the store
-func (k Keeper) SetSafetyGasFeeFlag(ctx sdk.Context, safetyGasFeeFlag types.SafetyGasFeeFlag) {
+// SetterSafetyGasFeeFlag set SafetyGasFeeFlag in the store
+func (k Keeper) SetterSafetyGasFeeFlag(ctx sdk.Context, safetyGasFeeFlag types.SafetyGasFeeFlag) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.SafetyGasFeeFlagKey))
 	b := k.cdc.MustMarshal(&safetyGasFeeFlag)
 	store.Set([]byte{0}, b)
