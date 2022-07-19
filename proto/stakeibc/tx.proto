@@ -25,7 +25,6 @@ service Msg {
   rpc AddValidator(MsgAddValidator) returns (MsgAddValidatorResponse);
   rpc ChangeValidatorWeight(MsgChangeValidatorWeight) returns (MsgChangeValidatorWeightResponse);
   rpc DeleteValidator(MsgDeleteValidator) returns (MsgDeleteValidatorResponse);
-  rpc SetNumValidators(MsgSetNumValidators) returns (MsgSetNumValidatorsResponse);
 // this line is used by starport scaffolding # proto/tx/rpc
 }
 
@@ -143,14 +142,6 @@ message MsgDeleteValidator {
 }
 
 message MsgDeleteValidatorResponse {
-}
-
-message MsgSetNumValidators {
-  string creator = 1;
-  uint32 numValidators = 2;
-}
-
-message MsgSetNumValidatorsResponse {
 }
 
 // this line is used by starport scaffolding # proto/tx/message

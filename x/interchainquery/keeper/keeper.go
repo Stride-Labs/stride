@@ -6,6 +6,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	ibckeeper "github.com/cosmos/ibc-go/v3/modules/core/keeper"
 	"github.com/tendermint/tendermint/libs/log"
 
@@ -98,19 +99,25 @@ func (k *Keeper) GetDatapointOrRequest(ctx sdk.Context, module string, connectio
 	val, err := k.GetDatapoint(ctx, module, connection_id, chain_id, query_type, request, height)
 	if err != nil {
 		// no datapoint
-		k.MakeRequest(ctx, connection_id, chain_id, query_type, request, sdk.NewInt(-1), "", "", max_age, height)
+		err := k.MakeRequest(ctx, connection_id, chain_id, query_type, request, sdk.NewInt(-1), "", "", max_age, height)
+		if err != nil {
+			return types.DataPoint{}, err
+		}
 		return types.DataPoint{}, fmt.Errorf("no data; query submitted")
 	}
 
 	if val.LocalHeight.LT(sdk.NewInt(ctx.BlockHeight() - int64(max_age))) { // this is somewhat arbitrary; TODO: make this better
-		k.MakeRequest(ctx, connection_id, chain_id, query_type, request, sdk.NewInt(-1), "", "", max_age, height)
+		err := k.MakeRequest(ctx, connection_id, chain_id, query_type, request, sdk.NewInt(-1), "", "", max_age, height)
+		if err != nil {
+			return types.DataPoint{}, err
+		}
 		return types.DataPoint{}, fmt.Errorf("stale data; query submitted")
 	}
 	// check ttl
 	return val, nil
 }
 
-func (k *Keeper) MakeRequest(ctx sdk.Context, connection_id string, chain_id string, query_type string, request []byte, period sdk.Int, module string, callback_id string, ttl uint64, height int64) {
+func (k *Keeper) MakeRequest(ctx sdk.Context, connection_id string, chain_id string, query_type string, request []byte, period sdk.Int, module string, callback_id string, ttl uint64, height int64) error {
 	k.Logger(ctx).Info(
 		"MakeRequest",
 		"connection_id", connection_id,
@@ -130,12 +137,13 @@ func (k *Keeper) MakeRequest(ctx sdk.Context, connection_id string, chain_id str
 			if _, exists := k.callbacks[module]; !exists {
 				err := fmt.Errorf("no callback handler registered for module %s", module)
 				k.Logger(ctx).Error(err.Error())
-				panic(err)
+				return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "no callback handler registered for module")
 			}
 			if exists := k.callbacks[module].Has(callback_id); !exists {
 				err := fmt.Errorf("no callback %s registered for module %s", callback_id, module)
 				k.Logger(ctx).Error(err.Error())
-				panic(err)
+				return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "no callback handler registered for module")
+
 			}
 		}
 		newQuery := k.NewQuery(ctx, module, connection_id, chain_id, query_type, request, period, callback_id, ttl, height)
