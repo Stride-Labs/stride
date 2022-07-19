@@ -18,7 +18,6 @@ func RegisterCodec(cdc *codec.LegacyAmino) {
 	cdc.RegisterConcrete(&MsgAddValidator{}, "stakeibc/AddValidator", nil)
 	cdc.RegisterConcrete(&MsgChangeValidatorWeight{}, "stakeibc/ChangeValidatorWeight", nil)
 	cdc.RegisterConcrete(&MsgDeleteValidator{}, "stakeibc/DeleteValidator", nil)
-	cdc.RegisterConcrete(&MsgSetNumValidators{}, "stakeibc/SetNumValidators", nil)
 	// this line is used by starport scaffolding # 2
 }
 
@@ -45,9 +44,6 @@ func RegisterInterfaces(registry cdctypes.InterfaceRegistry) {
 	)
 	registry.RegisterImplementations((*sdk.Msg)(nil),
 		&MsgDeleteValidator{},
-	)
-	registry.RegisterImplementations((*sdk.Msg)(nil),
-		&MsgSetNumValidators{},
 	)
 	// this line is used by starport scaffolding # 3
 

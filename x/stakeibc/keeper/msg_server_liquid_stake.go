@@ -16,7 +16,7 @@ func (k msgServer) LiquidStake(goCtx context.Context, msg *types.MsgLiquidStake)
 	// Init variables
 	// deposit `amount` of `denom` token to the stakeibc module
 	// NOTE: Should we add an additional check here? This is a pretty important line of code
-	// NOTE: If sender doesn't have enough inCoin, this panics (error is hard to interpret)
+	// NOTE: If sender doesn't have enough inCoin, this errors (error is hard to interpret)
 	// check that hostZone is registered
 	// strided tx stakeibc liquid-stake 100 uatom
 	hostZone, err := k.GetHostZoneFromHostDenom(ctx, msg.HostDenom)
@@ -25,7 +25,7 @@ func (k msgServer) LiquidStake(goCtx context.Context, msg *types.MsgLiquidStake)
 		return nil, sdkerrors.Wrapf(types.ErrInvalidHostZone, "no host zone found for denom (%s)", msg.HostDenom)
 	}
 	// get the sender address
-	sender, err := sdk.AccAddressFromBech32(msg.Creator)
+	sender, _ := sdk.AccAddressFromBech32(msg.Creator)
 	// get the coins to send, they need to be in the format {amount}{denom}
 	// is safe. The converse is not true.
 	ibcDenom := hostZone.GetIBCDenom()
@@ -94,9 +94,8 @@ func (k msgServer) MintStAsset(ctx sdk.Context, sender sdk.AccAddress, amount ui
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "Failed to parse coins %s", coinString)
 	}
 
-	// mint new coins of the asset type
-	// MintCoins creates new coins from thin air and adds it to the module account.
-	// It will panic if the module account does not exist or is unauthorized.
+	// Mints coins to the module account, will error if the module account does not exist or is unauthorized.
+
 	err = k.bankKeeper.MintCoins(ctx, types.ModuleName, stCoins)
 	if err != nil {
 		k.Logger(ctx).Error("Failed to mint coins")
