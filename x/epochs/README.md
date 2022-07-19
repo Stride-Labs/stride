@@ -31,9 +31,8 @@ Every epoch has a unique identifier. Every epoch will have a start time, and an 
 When an epoch triggers the execution of code, that code is executed at the first block whose blocktime is greater than `end_time`. It follows that the `start_time` of the following epoch will be the `end_time` of the previous epoch.
 
 Stride uses three epoch identifiers as found in `x/epochs/genesis.go`
-1. `"week"`: this identifies an epoch that lasts one week (or 168 hours).
-2. `DAY_EPOCH`: this identifies an epoch that lasts 24 hours.
-3. `STRIDE_EPOCH`: this identifies an epoch that lasts 5 minutes (although this may be changed), and is used in the `x/stakeibc/` module as a time interval in accordance with which the Stride app chain performs certain functions.
+1. `DAY_EPOCH`: this identifies an epoch that lasts 24 hours.
+2. `STRIDE_EPOCH`: this identifies an epoch that lasts 5 minutes (although this may be changed), and is used in the `x/stakeibc/` module as a time interval in accordance with which the Stride app chain performs certain functions.
 
 ## State
 
