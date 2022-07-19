@@ -10,10 +10,12 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochIdentifier string, epochNumber int64) {
+func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochInfo epochstypes.EpochInfo) {
 }
 
-func (k Keeper) AfterEpochEnd(ctx sdk.Context, epochIdentifier string, epochNumber int64) {
+func (k Keeper) AfterEpochEnd(ctx sdk.Context, epochInfo epochstypes.EpochInfo) {
+	epochIdentifier := epochInfo.Identifier
+	epochNumber := epochInfo.CurrentEpoch
 	params := k.GetParams(ctx)
 
 	if epochIdentifier == params.EpochIdentifier {
@@ -83,10 +85,10 @@ func (k Keeper) Hooks() Hooks {
 }
 
 // epochs hooks.
-func (h Hooks) BeforeEpochStart(ctx sdk.Context, epochIdentifier string, epochNumber int64) {
-	h.k.BeforeEpochStart(ctx, epochIdentifier, epochNumber)
+func (h Hooks) BeforeEpochStart(ctx sdk.Context, epochInfo epochstypes.EpochInfo) {
+	h.k.BeforeEpochStart(ctx, epochInfo)
 }
 
-func (h Hooks) AfterEpochEnd(ctx sdk.Context, epochIdentifier string, epochNumber int64) {
-	h.k.AfterEpochEnd(ctx, epochIdentifier, epochNumber)
+func (h Hooks) AfterEpochEnd(ctx sdk.Context, epochInfo epochstypes.EpochInfo) {
+	h.k.AfterEpochEnd(ctx, epochInfo)
 }

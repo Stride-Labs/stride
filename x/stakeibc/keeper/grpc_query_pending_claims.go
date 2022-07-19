@@ -3,10 +3,10 @@ package keeper
 import (
 	"context"
 
+	"github.com/Stride-Labs/stride/x/stakeibc/types"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
-	"github.com/Stride-Labs/stride/x/stakeibc/types"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -46,11 +46,11 @@ func (k Keeper) PendingClaims(c context.Context, req *types.QueryGetPendingClaim
 	ctx := sdk.UnwrapSDKContext(c)
 
 	val, found := k.GetPendingClaims(
-	    ctx,
-	    req.Sequence,
-        )
+		ctx,
+		req.Sequence,
+	)
 	if !found {
-	    return nil, status.Error(codes.NotFound, "not found")
+		return nil, status.Error(codes.NotFound, "not found")
 	}
 
 	return &types.QueryGetPendingClaimsResponse{PendingClaims: val}, nil

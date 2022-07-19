@@ -3,17 +3,14 @@
 set -eu
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
-NUM_NODES="$1"    
-STRIDE_ADMIN_MNEMONIC="${@:2}"
-
 NETWORK_NAME=stride
-CHAIN_NAME=STRIDE
 VAL_PREFIX=val
 VAL_TOKENS=5000000000000ustrd
 STAKE_TOKENS=3000000000000ustrd
 FAUCET_TOKENS=10000000000000000ustrd
 STRIDE_ADMIN_ACCT=stride
 STRIDE_ADMIN_TOKENS=1000000000ustrd
+NUM_NODES=$NUM_STRIDE_NODES
 
 PEER_NODE_IDS=""
 MAIN_ID=1 # Node responsible for genesis and persistent_peers
@@ -37,7 +34,7 @@ for (( i=1; i <= $NUM_NODES; i++ )); do
     # Create a state directory for the current node and initialize the chain
     mkdir -p $STATE/$node_name
     st_cmd="$STRIDE_CMD --home ${STATE}/$node_name"
-    $st_cmd init $moniker --chain-id $CHAIN_NAME --overwrite 2> /dev/null
+    $st_cmd init $moniker --chain-id $STRIDE_CHAIN_ID --overwrite 2> /dev/null
 
     # Update node networking configuration 
     configtoml="${STATE}/${node_name}/config/config.toml"
@@ -46,6 +43,8 @@ for (( i=1; i <= $NUM_NODES; i++ )); do
     sed -i -E "s|cors_allowed_origins = \[\]|cors_allowed_origins = [\"\*\"]|g" $configtoml
     sed -i -E "s|127.0.0.1|0.0.0.0|g" $configtoml
     sed -i -E "s|timeout_commit = \"5s\"|timeout_commit = \"${BLOCK_TIME}\"|g" $configtoml
+    sed -i -E "s|chain-id = \"\"|chain-id = \"${STRIDE_CHAIN_ID}\"|g" $clienttoml
+    sed -i -E "s|keyring-backend = \"os\"|keyring-backend = \"test\"|g" $clienttoml
     # Add cert file
     # sed -i -E "s|tls_cert_file = \"\"|tls_cert_file = \"/stride/certfile.pem\"|g" $configtoml
     # sed -i -E "s|tls_key_file = \"\"|tls_key_file = \"/stride/certkey.pem\"|g" $configtoml
@@ -76,7 +75,7 @@ for (( i=1; i <= $NUM_NODES; i++ )); do
     # Add this account to the current node
     $st_cmd add-genesis-account ${val_addr} $NODE_TOKENS
     # actually set this account as a validator on the current node 
-    $st_cmd gentx $val_acct $STAKE_TOKENS --chain-id $CHAIN_NAME --keyring-backend test 2> /dev/null
+    $st_cmd gentx $val_acct $STAKE_TOKENS --chain-id $STRIDE_CHAIN_ID --keyring-backend test 2> /dev/null
     
     # modify our snapshot interval
     sed -i -E "s|snapshot-interval = 0|snapshot-interval = 300|g" $apptoml
@@ -103,6 +102,8 @@ ICQ_STRIDE_ADDRESS=$($MAIN_NODE_CMD keys show $ICQ_STRIDE_ACCT --keyring-backend
 $MAIN_NODE_CMD add-genesis-account ${HERMES_STRIDE_ADDRESS} $VAL_TOKENS
 $MAIN_NODE_CMD add-genesis-account ${ICQ_STRIDE_ADDRESS} $VAL_TOKENS
 
+source ${SCRIPT_DIR}/genesis.sh 
+
 # Add the stride admin account
 echo "$STRIDE_ADMIN_MNEMONIC" | $MAIN_NODE_CMD keys add $STRIDE_ADMIN_ACCT --recover --keyring-backend=test >> $STATE/keys.txt 2>&1
 STRIDE_ADMIN_ADDRESS=$($MAIN_NODE_CMD keys show $STRIDE_ADMIN_ACCT --keyring-backend test -a)
@@ -117,7 +118,9 @@ sed -i -E "s|persistent_peers = .*|persistent_peers = \"\"|g" "${STATE}/${MAIN_N
 # modify our stride epochs
 main_genesis="${STATE}/${MAIN_NODE_NAME}/config/genesis.json"
 jq '.app_state.epochs.epochs[2].duration = $newVal' --arg newVal "60s" $main_genesis > json.tmp && mv json.tmp $main_genesis
-jq '.app_state.epochs.epochs[1].duration = $newVal' --arg newVal "240s" $main_genesis > json.tmp && mv json.tmp $main_genesis
+jq '.app_state.epochs.epochs[1].duration = $newVal' --arg newVal "180s" $main_genesis > json.tmp && mv json.tmp $main_genesis
+jq '.app_state.staking.params.unbonding_time = $newVal' --arg newVal "3600s" $main_genesis > json.tmp && mv json.tmp $main_genesis
+
 
 # for all peer nodes....
 for (( i=2; i <= $NUM_NODES; i++ )); do

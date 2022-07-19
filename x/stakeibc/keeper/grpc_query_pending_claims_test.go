@@ -1,7 +1,7 @@
 package keeper_test
 
 import (
-    "strconv"
+	"strconv"
 	"testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -10,9 +10,9 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/Stride-Labs/stride/x/stakeibc/types"
-	"github.com/Stride-Labs/stride/testutil/nullify"
 	keepertest "github.com/Stride-Labs/stride/testutil/keeper"
+	"github.com/Stride-Labs/stride/testutil/nullify"
+	"github.com/Stride-Labs/stride/x/stakeibc/types"
 )
 
 // Prevent strconv unused error
@@ -29,28 +29,25 @@ func TestPendingClaimsQuerySingle(t *testing.T) {
 		err      error
 	}{
 		{
-			desc:     "First",
-			request:  &types.QueryGetPendingClaimsRequest{
-			    Sequence: msgs[0].Sequence,
-                
+			desc: "First",
+			request: &types.QueryGetPendingClaimsRequest{
+				Sequence: msgs[0].Sequence,
 			},
 			response: &types.QueryGetPendingClaimsResponse{PendingClaims: msgs[0]},
 		},
 		{
-			desc:     "Second",
-			request:  &types.QueryGetPendingClaimsRequest{
-			    Sequence: msgs[1].Sequence,
-                
+			desc: "Second",
+			request: &types.QueryGetPendingClaimsRequest{
+				Sequence: msgs[1].Sequence,
 			},
 			response: &types.QueryGetPendingClaimsResponse{PendingClaims: msgs[1]},
 		},
 		{
-			desc:    "KeyNotFound",
+			desc: "KeyNotFound",
 			request: &types.QueryGetPendingClaimsRequest{
-			    Sequence:strconv.Itoa(100000),
-                
+				Sequence: strconv.Itoa(100000),
 			},
-			err:     status.Error(codes.NotFound, "not found"),
+			err: status.Error(codes.NotFound, "not found"),
 		},
 		{
 			desc: "InvalidRequest",
@@ -94,9 +91,9 @@ func TestPendingClaimsQueryPaginated(t *testing.T) {
 			require.NoError(t, err)
 			require.LessOrEqual(t, len(resp.PendingClaims), step)
 			require.Subset(t,
-            	nullify.Fill(msgs),
-            	nullify.Fill(resp.PendingClaims),
-            )
+				nullify.Fill(msgs),
+				nullify.Fill(resp.PendingClaims),
+			)
 		}
 	})
 	t.Run("ByKey", func(t *testing.T) {
@@ -107,9 +104,9 @@ func TestPendingClaimsQueryPaginated(t *testing.T) {
 			require.NoError(t, err)
 			require.LessOrEqual(t, len(resp.PendingClaims), step)
 			require.Subset(t,
-            	nullify.Fill(msgs),
-            	nullify.Fill(resp.PendingClaims),
-            )
+				nullify.Fill(msgs),
+				nullify.Fill(resp.PendingClaims),
+			)
 			next = resp.Pagination.NextKey
 		}
 	})
