@@ -77,7 +77,9 @@ func TestShowEpochTracker(t *testing.T) {
 				var resp types.QueryGetEpochTrackerResponse
 				require.NoError(t, net.Config.Codec.UnmarshalJSON(out.Bytes(), &resp))
 				require.NotNil(t, resp.EpochTracker)
-				require.Equal(t, tc.obj, resp.EpochTracker)
+				require.Equal(t, tc.obj.EpochIdentifier, resp.EpochTracker.EpochIdentifier)
+				require.Equal(t, tc.obj.EpochNumber, resp.EpochTracker.EpochNumber)
+
 			}
 		})
 	}
@@ -100,5 +102,14 @@ func TestListEpochTracker(t *testing.T) {
 
 	require.NotNil(t, actual.EpochTracker)
 	require.Len(t, actual.EpochTracker, 3)
-	require.Equal(t, expected, actual.EpochTracker)
+
+	actualTrim := []types.EpochTracker{}
+	for _, epochTracker := range actual.EpochTracker {
+		trimmed := types.EpochTracker{
+			EpochIdentifier: epochTracker.EpochIdentifier,
+			EpochNumber:     epochTracker.EpochNumber,
+		}
+		actualTrim = append(actualTrim, trimmed)
+	}
+	require.Equal(t, expected, actualTrim)
 }

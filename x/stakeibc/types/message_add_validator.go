@@ -2,6 +2,7 @@ package types
 
 import (
 	"fmt"
+
 	"github.com/Stride-Labs/stride/utils"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
