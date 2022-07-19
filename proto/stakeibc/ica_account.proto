@@ -13,8 +13,23 @@ enum ICAAccountType {
   REDEMPTION = 3;
 }
 
+enum ICACallbackType {
+  NO_CALLBACK = 0;
+  MSG_DELEGATE = 1;
+  MSG_UNDELEGATE = 2;
+  MSG_WITHDRAW_DELEGATOR_REWARD = 3;
+  MSG_SEND = 4;
+  MSG_SET_WITHDRAW_ADDRESS = 5;
+  MSG_REDELEGATE = 6;
+}
+
+// 1. store callbacks in SubmitTxs based on the inputs
+// 2. write callback functions to handle the callbacks (most of the logic should be repeated from HandleXYZ in ibc_handlers.go)
+// 3. call callbacks in OnAcknowledgementPacket and remove them from the map
+//     3a. if the callback fails, remove it from the map
+//     3b. if the callback succeeds
 message SequenceCallback {
-  string callback_id = 1;
+  ICACallbackType callback_id = 1;
   bytes callback_values = 2;
 }
 

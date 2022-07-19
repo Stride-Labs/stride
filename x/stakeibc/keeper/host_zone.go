@@ -182,3 +182,18 @@ func (k Keeper) GetRedemptionAccount(ctx sdk.Context, hostZone types.HostZone) (
 	}
 	return hostZone.RedemptionAccount, true
 }
+
+func (k Keeper) SetICAAccountOnHostZone(ctx sdk.Context, hostZone *types.HostZone, accountType types.ICAAccountType, account types.ICAAccount) error {
+	if accountType == types.ICAAccountType_DELEGATION {
+		hostZone.DelegationAccount = &account
+	} else if accountType == types.ICAAccountType_REDEMPTION {
+		hostZone.RedemptionAccount = &account
+	} else if accountType == types.ICAAccountType_FEE {
+		hostZone.FeeAccount = &account
+	} else if accountType == types.ICAAccountType_WITHDRAWAL {
+		hostZone.WithdrawalAccount = &account
+	} else {
+		return sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "Invalid ICA Account Type %s", accountType)
+	}
+	return nil
+}

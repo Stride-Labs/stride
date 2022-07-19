@@ -98,7 +98,7 @@ func (k Keeper) DelegateOnHost(ctx sdk.Context, hostZone types.HostZone, amt sdk
 		}
 	}
 	// Send the transaction through SubmitTx
-	_, err = k.SubmitTxsStrideEpoch(ctx, connectionId, msgs, *delegationIca)
+	_, err = k.SubmitTxsStrideEpoch(ctx, hostZone, msgs, *delegationIca, types.ICACallbackType_MSG_DELEGATE, []byte("MOOSE BYTES"))
 	if err != nil {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "Failed to SubmitTxs for %s, %s, %s", connectionId, hostZone.ChainId, msgs)
 	}
@@ -136,7 +136,7 @@ func (k Keeper) SetWithdrawalAddressOnHost(ctx sdk.Context, hostZone types.HostZ
 	// construct the msg
 	msgs = append(msgs, &distributiontypes.MsgSetWithdrawAddress{DelegatorAddress: delegationIca.GetAddress(), WithdrawAddress: withdrawalIcaAddr})
 	// Send the transaction through SubmitTx
-	_, err = k.SubmitTxsStrideEpoch(ctx, connectionId, msgs, *delegationIca)
+	_, err = k.SubmitTxsStrideEpoch(ctx, hostZone, msgs, *delegationIca, types.ICACallbackType_MSG_SET_WITHDRAW_ADDRESS, []byte("MOOSE BYTES"))
 	if err != nil {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "Failed to SubmitTxs for %s, %s, %s", connectionId, hostZone.ChainId, msgs)
 	}
@@ -173,25 +173,26 @@ func (k Keeper) UpdateWithdrawalBalance(ctx sdk.Context, zoneInfo types.HostZone
 		k.Logger(ctx).Error("Error querying for withdrawal balance", "error", err)
 		return err
 	}
+	return nil
 }
 
-func (k Keeper) SubmitTxsDayEpoch(ctx sdk.Context, connectionId string, msgs []sdk.Msg, account types.ICAAccount) (uint64, error) {
-	sequence, err := k.SubmitTxsEpoch(ctx, connectionId, msgs, account, epochstypes.DAY_EPOCH)
+func (k Keeper) SubmitTxsDayEpoch(ctx sdk.Context, hostZone types.HostZone, msgs []sdk.Msg, account types.ICAAccount, callbackId types.ICACallbackType, callbackValues []byte) (uint64, error) {
+	sequence, err := k.SubmitTxsEpoch(ctx, hostZone, msgs, account, epochstypes.DAY_EPOCH, callbackId, callbackValues)
 	if err != nil {
 		return 0, err
 	}
 	return sequence, nil
 }
 
-func (k Keeper) SubmitTxsStrideEpoch(ctx sdk.Context, connectionId string, msgs []sdk.Msg, account types.ICAAccount) (uint64, error) {
-	sequence, err := k.SubmitTxsEpoch(ctx, connectionId, msgs, account, epochstypes.STRIDE_EPOCH)
+func (k Keeper) SubmitTxsStrideEpoch(ctx sdk.Context, hostZone types.HostZone, msgs []sdk.Msg, account types.ICAAccount, callbackId types.ICACallbackType, callbackValues []byte) (uint64, error) {
+	sequence, err := k.SubmitTxsEpoch(ctx, hostZone, msgs, account, epochstypes.STRIDE_EPOCH, callbackId, callbackValues)
 	if err != nil {
 		return 0, err
 	}
 	return sequence, nil
 }
 
-func (k Keeper) SubmitTxsEpoch(ctx sdk.Context, connectionId string, msgs []sdk.Msg, account types.ICAAccount, epochType string) (uint64, error) {
+func (k Keeper) SubmitTxsEpoch(ctx sdk.Context, hostZone types.HostZone, msgs []sdk.Msg, account types.ICAAccount, epochType string, callbackId types.ICACallbackType, callbackValues []byte) (uint64, error) {
 	epochTracker, found := k.GetEpochTracker(ctx, epochType)
 	if !found {
 		k.Logger(ctx).Error("Failed to get epoch tracker for %s", epochType)
@@ -202,16 +203,18 @@ func (k Keeper) SubmitTxsEpoch(ctx sdk.Context, connectionId string, msgs []sdk.
 	BUFFER := epochTracker.Duration / bufferSize
 	timeoutNanos := epochTracker.NextEpochStartTime - BUFFER
 	k.Logger(ctx).Info(fmt.Sprintf("Submitting txs for epoch %s %d %d", epochTracker.EpochIdentifier, epochTracker.NextEpochStartTime, timeoutNanos))
-	sequence, err := k.SubmitTxs(ctx, connectionId, msgs, account, uint64(timeoutNanos))
+	sequence, err := k.SubmitTxs(ctx, hostZone, msgs, account, uint64(timeoutNanos), callbackId, callbackValues)
 	if err != nil {
 		return 0, err
 	}
+	connectionId := hostZone.GetConnectionId()
 	k.Logger(ctx).Info("Submitted Txs", "connectionId", connectionId, "sequence", sequence)
 	return sequence, nil
 }
 
 // SubmitTxs submits an ICA transaction containing multiple messages
-func (k Keeper) SubmitTxs(ctx sdk.Context, connectionId string, msgs []sdk.Msg, account types.ICAAccount, timeoutTimestamp uint64) (uint64, error) {
+func (k Keeper) SubmitTxs(ctx sdk.Context, hostZone types.HostZone, msgs []sdk.Msg, account types.ICAAccount, timeoutTimestamp uint64, callbackId types.ICACallbackType, callbackValues []byte) (uint64, error) {
+	connectionId := hostZone.GetConnectionId()
 	chainId, err := k.GetChainID(ctx, connectionId)
 	if err != nil {
 		return 0, err
@@ -246,6 +249,14 @@ func (k Keeper) SubmitTxs(ctx sdk.Context, connectionId string, msgs []sdk.Msg, 
 	if err != nil {
 		return 0, err
 	}
+	sequenceCallback := types.SequenceCallback{
+		CallbackId: callbackId,
+		CallbackValues: []byte("RANDOM DATA"),
+	}
+	account.SequenceCallbacks[sequence] = &sequenceCallback
+	k.SetICAAccountOnHostZone(ctx, &hostZone, account.Target, account)
+	k.SetHostZone(ctx, hostZone)
+
 
 	return sequence, nil
 }

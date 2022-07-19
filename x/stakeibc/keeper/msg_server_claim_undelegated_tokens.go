@@ -62,7 +62,7 @@ func (k msgServer) ClaimUndelegatedTokens(goCtx context.Context, msg *types.MsgC
 	}
 	timeout := uint64(epoch_tracker.NextEpochStartTime) + uint64(k.GetParam(ctx, types.KeyICATimeoutNanos))
 
-	sequence, err := k.SubmitTxs(ctx, hostZone.GetConnectionId(), msgs, *redemptionAccount, timeout)
+	sequence, err := k.SubmitTxs(ctx, hostZone, msgs, *redemptionAccount, timeout, types.ICACallbackType_MSG_SEND, []byte("MOOSE BYTES"))
 	if err != nil {
 		k.Logger(ctx).Error(fmt.Sprintf("Submit tx error: %s", err.Error()))
 		return nil, err

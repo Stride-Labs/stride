@@ -108,7 +108,7 @@ func (k Keeper) SendHostZoneUnbondings(ctx sdk.Context, hostZone types.HostZone)
 		})
 	}
 	// now we have to handle the overflow amount
-	_, err = k.SubmitTxsDayEpoch(ctx, hostZone.GetConnectionId(), msgs, *delegationAccount)
+	_, err = k.SubmitTxsDayEpoch(ctx, hostZone, msgs, *delegationAccount, types.ICACallbackType_MSG_UNDELEGATE, []byte("MOOSE BYTES"))
 	if err != nil {
 		k.Logger(ctx).Error(fmt.Sprintf("Error submitting unbonding tx: %s", err))
 		return false
@@ -231,7 +231,7 @@ func (k Keeper) SweepAllUnbondedTokens(ctx sdk.Context) {
 				ctx.Logger().Info(fmt.Sprintf("Bank sending unbonded tokens batch, from delegation to redemption account. Msg: %v", msgs))
 
 				// Send the transaction through SubmitTx
-				_, err := k.SubmitTxsDayEpoch(ctx, zoneInfo.ConnectionId, msgs, *delegationAccount)
+				_, err := k.SubmitTxsDayEpoch(ctx, zoneInfo, msgs, *delegationAccount, types.ICACallbackType_MSG_SEND, []byte("MOOSE BYTES"))
 				if err != nil {
 					ctx.Logger().Info(fmt.Sprintf("Failed to SubmitTxs for %s", zoneInfo.ChainId))
 				}
