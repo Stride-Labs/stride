@@ -1,15 +1,16 @@
 package keeper
 
 import (
+	"github.com/Stride-Labs/stride/x/epochs/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // AfterEpochEnd executes the indicated hook after epochs ends
-func (k Keeper) AfterEpochEnd(ctx sdk.Context, identifier string, epochNumber int64) {
-	k.hooks.AfterEpochEnd(ctx, identifier, epochNumber)
+func (k Keeper) AfterEpochEnd(ctx sdk.Context, epochInfo types.EpochInfo) {
+	k.hooks.AfterEpochEnd(ctx, epochInfo)
 }
 
 // BeforeEpochStart executes the indicated hook before the epochs
-func (k Keeper) BeforeEpochStart(ctx sdk.Context, identifier string, epochNumber int64) {
-	k.hooks.BeforeEpochStart(ctx, identifier, epochNumber)
+func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochInfo types.EpochInfo) {
+	k.hooks.BeforeEpochStart(ctx, epochInfo)
 }

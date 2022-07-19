@@ -33,7 +33,7 @@ func (k Keeper) RegisterHostZone(goCtx context.Context, msg *types.MsgRegisterHo
 	zone := types.HostZone{
 		ChainId:           chainId,
 		ConnectionId:      msg.ConnectionId,
-		Bech32Prefix: 	   msg.Bech32Prefix,
+		Bech32Prefix:      msg.Bech32Prefix,
 		IBCDenom:          msg.IbcDenom,
 		HostDenom:         msg.HostDenom,
 		TransferChannelId: msg.TransferChannelId,

@@ -278,7 +278,7 @@ func (k *Keeper) HandleSend(ctx sdk.Context, msg sdk.Msg, sequence string) error
 			}
 			k.RecordsKeeper.SetEpochUnbondingRecord(ctx, epochUnbondingRecord)
 		}
-	}  else if sendMsg.FromAddress == redemptionAddress {
+	} else if sendMsg.FromAddress == redemptionAddress {
 		k.Logger(ctx).Error("ACK - sendMsg.FromAddress == redemptionAddress")
 		// fetch the record from the packet sequence number, then delete the UserRedemptionRecord and the sequence mapping
 		pendingClaims, found := k.GetPendingClaims(ctx, sequence)

@@ -15,13 +15,12 @@ var (
 	DefaultReinvestInterval       uint64 = 3
 	DefaultRewardsInterval        uint64 = 3
 	DefaultRedemptionRateInterval uint64 = 3
-	DefaultKeyWithdrawalInterval  uint64 = 3
 	// you apparantly cannot safely encode floats, so we make commission / 100
 	DefaultStrideCommission              uint64 = 10
 	DefaultValidatorRebalancingThreshold uint64 = 100 // divide by 10,000, so 100 = 1%
 	// 10 minutes
-	DefaultICATimeoutNanos 			 uint64 = 600000000000;
-	DefaultBufferSize 			 	uint64 = 20;
+	DefaultICATimeoutNanos uint64 = 600000000000
+	DefaultBufferSize      uint64 = 20
 
 	// KeyDepositInterval is store's key for the DepositInterval option
 	KeyDepositInterval               = []byte("DepositInterval")
@@ -31,8 +30,8 @@ var (
 	KeyRedemptionRateInterval        = []byte("RedemptionRateInterval")
 	KeyStrideCommission              = []byte("StrideCommission")
 	KeyValidatorRebalancingThreshold = []byte("ValidatorRebalancingThreshold")
-	KeyICATimeoutNanos 				 = []byte("ICATimeoutNanos")
-	KeyBufferSize 				 	 = []byte("BufferSize")
+	KeyICATimeoutNanos               = []byte("ICATimeoutNanos")
+	KeyBufferSize                    = []byte("BufferSize")
 )
 
 var _ paramtypes.ParamSet = (*Params)(nil)
@@ -62,8 +61,8 @@ func NewParams(
 		StrideCommission:              stride_commission,
 		ReinvestInterval:              reinvest_interval,
 		ValidatorRebalancingThreshold: validator_rebalancing_threshold,
-		IcaTimeoutNanos: 			   ica_timeout_nanos,
-		BufferSize: 				   buffer_size,
+		IcaTimeoutNanos:               ica_timeout_nanos,
+		BufferSize:                    buffer_size,
 	}
 }
 
