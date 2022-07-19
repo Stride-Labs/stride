@@ -12,7 +12,7 @@ func (suite *KeeperTestSuite) TestQueryEpochInfos() {
 	suite.SetupTest()
 	queryClient := suite.queryClient
 
-	chainStartTime := suite.ctx.BlockTime()
+	chainStartTime := suite.Ctx.BlockTime()
 
 	// Invalid param
 	epochInfosResponse, err := queryClient.EpochInfos(gocontext.Background(), &types.QueryEpochsInfoRequest{})

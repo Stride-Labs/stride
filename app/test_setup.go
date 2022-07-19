@@ -4,13 +4,18 @@ import (
 	"encoding/json"
 
 	"github.com/cosmos/cosmos-sdk/simapp"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/libs/log"
 	dbm "github.com/tendermint/tm-db"
 )
 
+const Bech32Prefix = "stride"
+
 // Setup initializes a new StrideApp
-func Setup(isCheckTx bool) *StrideApp {
+func InitTestApp(isCheckTx bool) *StrideApp {
+	config := sdk.GetConfig()
+	config.SetBech32PrefixForAccount(Bech32Prefix, Bech32Prefix+sdk.PrefixPublic)
 	db := dbm.NewMemDB()
 	app := NewStrideApp(
 		log.NewNopLogger(),
