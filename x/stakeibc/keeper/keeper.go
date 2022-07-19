@@ -137,3 +137,12 @@ func (k Keeper) GetConnectionId(ctx sdk.Context, portId string) (string, error) 
 	}
 	return "", fmt.Errorf("portId %s has no associated connectionId", portId)
 }
+
+// if safety gas fees are enabled, charge a governance determined gas fee for the designated function to prevent spam attacks on the chain
+func (k Keeper) SafetyGasFee(ctx sdk.Context) {
+	// if the SafetyGasFeeFlag param is true, consume SafetyGasFee gas
+
+	// 	k.Logger(ctx).Info("SafetyGasFee is enabled, charging %d gas", types.SafetyGasFee)
+	// 	ctx.GasMeter().ConsumeGas(types.SafetyGasFee, "charging the safety gas fee!")
+	// }
+}
