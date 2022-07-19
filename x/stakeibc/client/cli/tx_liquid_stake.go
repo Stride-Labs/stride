@@ -19,7 +19,7 @@ func CmdLiquidStake() *cobra.Command {
 		Short: "Broadcast message liquid-stake",
 		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
-			argAmount, err := cast.ToInt64E(args[0])
+			argAmount, err := cast.ToUint64E(args[0])
 			if err != nil {
 				return err
 			}

@@ -15,7 +15,6 @@ var (
 	DefaultReinvestInterval       uint64 = 3
 	DefaultRewardsInterval        uint64 = 3
 	DefaultRedemptionRateInterval uint64 = 3
-	DefaultKeyWithdrawalInterval  uint64 = 3
 	// you apparantly cannot safely encode floats, so we make commission / 100
 	DefaultStrideCommission              uint64 = 10
 	DefaultValidatorRebalancingThreshold uint64 = 100 // divide by 10,000, so 100 = 1%

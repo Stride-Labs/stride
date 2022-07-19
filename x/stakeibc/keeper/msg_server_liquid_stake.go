@@ -16,7 +16,7 @@ func (k msgServer) LiquidStake(goCtx context.Context, msg *types.MsgLiquidStake)
 	// Init variables
 	// deposit `amount` of `denom` token to the stakeibc module
 	// NOTE: Should we add an additional check here? This is a pretty important line of code
-	// NOTE: If sender doesn't have enough inCoin, this panics (error is hard to interpret)
+	// NOTE: If sender doesn't have enough inCoin, this errors (error is hard to interpret)
 	// check that hostZone is registered
 	// strided tx stakeibc liquid-stake 100 uatom
 	hostZone, err := k.GetHostZoneFromHostDenom(ctx, msg.HostDenom)
@@ -25,7 +25,7 @@ func (k msgServer) LiquidStake(goCtx context.Context, msg *types.MsgLiquidStake)
 		return nil, sdkerrors.Wrapf(types.ErrInvalidHostZone, "no host zone found for denom (%s)", msg.HostDenom)
 	}
 	// get the sender address
-	sender, err := sdk.AccAddressFromBech32(msg.Creator)
+	sender, _ := sdk.AccAddressFromBech32(msg.Creator)
 	// get the coins to send, they need to be in the format {amount}{denom}
 	// is safe. The converse is not true.
 	ibcDenom := hostZone.GetIBCDenom()
@@ -74,26 +74,19 @@ func (k msgServer) LiquidStake(goCtx context.Context, msg *types.MsgLiquidStake)
 		k.Logger(ctx).Error("failed to find deposit record")
 		return nil, sdkerrors.Wrapf(sdkerrors.ErrNotFound, "no deposit record for epoch (%d)", strideEpochTracker.EpochNumber)
 	}
-	depositRecord.Amount += msg.Amount
+	depositRecord.Amount += int64(msg.Amount)
 	k.RecordsKeeper.SetDepositRecord(ctx, *depositRecord)
 
 	return &types.MsgLiquidStakeResponse{}, nil
 }
 
-func (k msgServer) MintStAsset(ctx sdk.Context, sender sdk.AccAddress, amount int64, denom string) error {
-	// repeat safety checks from LiquidStake in case MintStAsset is called from another site
-	// ensure Amount is positive, liquid staking 0 or less tokens is invalid
-	if amount <= 0 {
-		k.Logger(ctx).Error("Amount to mint must be positive")
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidCoins, "Amount to mint must be positive")
-	}
-
+func (k msgServer) MintStAsset(ctx sdk.Context, sender sdk.AccAddress, amount uint64, denom string) error {
 	stAssetDenom := types.StAssetDenomFromHostZoneDenom(denom)
 
 	// TODO(TEST-7): Add an exchange rate here! What object should we store the exchange rate on?
 	// How can we ensure that the exchange rate is not manipulated?
 	hz, _ := k.GetHostZoneFromHostDenom(ctx, denom)
-	amountToMint := (sdk.NewDec(amount).Quo(hz.RedemptionRate)).TruncateInt()
+	amountToMint := (sdk.NewDec(int64(amount)).Quo(hz.RedemptionRate)).TruncateInt()
 	coinString := amountToMint.String() + stAssetDenom
 	stCoins, err := sdk.ParseCoinsNormalized(coinString)
 	if err != nil {
@@ -101,9 +94,8 @@ func (k msgServer) MintStAsset(ctx sdk.Context, sender sdk.AccAddress, amount in
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "Failed to parse coins %s", coinString)
 	}
 
-	// mint new coins of the asset type
-	// MintCoins creates new coins from thin air and adds it to the module account.
-	// It will panic if the module account does not exist or is unauthorized.
+	// Mints coins to the module account, will error if the module account does not exist or is unauthorized.
+
 	err = k.bankKeeper.MintCoins(ctx, types.ModuleName, stCoins)
 	if err != nil {
 		k.Logger(ctx).Error("Failed to mint coins")
