@@ -1,0 +1,9 @@
+syntax = "proto3";
+package Stridelabs.stride.stakeibc;
+
+option go_package = "github.com/Stride-Labs/stride/x/stakeibc/types";
+
+message SafetyGasFeeFlag { 
+  bool Enabled = 1;
+}
+

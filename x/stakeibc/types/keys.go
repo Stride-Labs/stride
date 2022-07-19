@@ -22,8 +22,9 @@ const (
 	// PortID is the default port id that module binds to
 	PortID = "stakeibc"
 
-	ValidatorKey  = "Validator-value-"
-	DelegationKey = "Delegation-value-"
+	ValidatorKey        = "Validator-value-"
+	DelegationKey       = "Delegation-value-"
+	SafetyGasFeeFlagKey = "SafetyGasFee-value-"
 
 	MinValidatorRequirementsKey = "MinValidatorRequirements-value-"
 	ICAAccountKey               = "ICAAccount-value-"
