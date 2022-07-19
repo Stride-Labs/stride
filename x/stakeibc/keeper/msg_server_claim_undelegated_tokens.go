@@ -18,15 +18,18 @@ func (k msgServer) ClaimUndelegatedTokens(goCtx context.Context, msg *types.MsgC
 
 	userRedemptionRecord, err := k.GetClaimableRedemptionRecord(ctx, msg)
 	if err != nil {
-		return nil, err
+		return nil, sdkerrors.Wrapf(err, "unable to find claimable redemption record")
 	}
 
 	icaTx, err := k.GetRedemptionTransferMsg(ctx, userRedemptionRecord, msg.HostZoneId)
+	if err != nil {
+		return nil, sdkerrors.Wrapf(err, "unable to build redemption transfer message")
+	}
 
 	sequence, err := k.SubmitTxs(ctx, icaTx)
 	if err != nil {
 		k.Logger(ctx).Error(fmt.Sprintf("Submit tx error: %s", err.Error()))
-		return nil, err
+		return nil, sdkerrors.Wrapf(err, "unable to submit ICA redemption tx")
 	}
 
 	k.FlagRedemptionRecordsAsClaimed(ctx, userRedemptionRecord, sequence)

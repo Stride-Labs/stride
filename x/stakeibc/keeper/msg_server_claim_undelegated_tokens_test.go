@@ -138,8 +138,10 @@ func (s *KeeperTestSuite) TestClaimUndelegatedTokensNoUserRedemptionRecord() {
 	// Remove the user redemption record
 	s.App.RecordsKeeper.RemoveUserRedemptionRecord(s.Ctx, tc.redemptionRecordId)
 
-	_, err := s.App.StakeibcKeeper.GetClaimableRedemptionRecord(s.Ctx, &tc.validMsg)
-	s.Require().EqualError(err, "could not get user redemption record: GAIA.1.stride_SENDER: user redemption record error")
+	_, err := s.msgServer.ClaimUndelegatedTokens(sdk.WrapSDKContext(s.Ctx), &tc.validMsg)
+	expectedErr := "unable to find claimable redemption record: "
+	expectedErr += "could not get user redemption record: GAIA.1.stride_SENDER: user redemption record error"
+	s.Require().EqualError(err, expectedErr)
 }
 
 func (s *KeeperTestSuite) TestClaimUndelegatedTokensRecordNotClaimable() {
@@ -149,15 +151,22 @@ func (s *KeeperTestSuite) TestClaimUndelegatedTokensRecordNotClaimable() {
 	alreadyClaimedRedemptionRecord.IsClaimable = false
 	s.App.RecordsKeeper.SetUserRedemptionRecord(s.Ctx, alreadyClaimedRedemptionRecord)
 
-	_, err := s.App.StakeibcKeeper.GetClaimableRedemptionRecord(s.Ctx, &tc.validMsg)
-	s.Require().EqualError(err, "user redemption record is not claimable: GAIA.1.stride_SENDER: user redemption record error")
+	_, err := s.msgServer.ClaimUndelegatedTokens(sdk.WrapSDKContext(s.Ctx), &tc.validMsg)
+	expectedErr := "unable to find claimable redemption record: "
+	expectedErr += "user redemption record is not claimable: GAIA.1.stride_SENDER: user redemption record error"
+	s.Require().EqualError(err, expectedErr)
 }
 
 func (s *KeeperTestSuite) TestClaimUndelegatedTokensHostZoneNotFound() {
 	tc := s.SetupClaimUndelegatedTokens()
 	// Change host zone in message
-	_, err := s.App.StakeibcKeeper.GetRedemptionTransferMsg(s.Ctx, &tc.redemptionRecord, "fake_host_zone")
-	s.Require().EqualError(err, "Host zone fake_host_zone not found: host zone not registered")
+	invalidMsg := tc.validMsg
+	invalidMsg.HostZoneId = "fake_host_zone"
+
+	_, err := s.msgServer.ClaimUndelegatedTokens(sdk.WrapSDKContext(s.Ctx), &invalidMsg)
+	expectedErr := "unable to find claimable redemption record: "
+	expectedErr += "could not get user redemption record: fake_host_zone.1.stride_SENDER: user redemption record error"
+	s.Require().EqualError(err, expectedErr)
 }
 
 func (s *KeeperTestSuite) TestClaimUndelegatedTokensNoRedemptionAccount() {
@@ -167,8 +176,10 @@ func (s *KeeperTestSuite) TestClaimUndelegatedTokensNoRedemptionAccount() {
 	hostZone.RedemptionAccount = nil
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
 
-	_, err := s.App.StakeibcKeeper.GetRedemptionTransferMsg(s.Ctx, &tc.redemptionRecord, tc.validMsg.HostZoneId)
-	s.Require().EqualError(err, "Redemption account not found for host zone GAIA: host zone not registered")
+	_, err := s.msgServer.ClaimUndelegatedTokens(sdk.WrapSDKContext(s.Ctx), &tc.validMsg)
+	expectedErr := "unable to build redemption transfer message: "
+	expectedErr += "Redemption account not found for host zone GAIA: host zone not registered"
+	s.Require().EqualError(err, expectedErr)
 }
 
 func (s *KeeperTestSuite) TestClaimUndelegatedTokensNoEpochTracker() {
@@ -176,6 +187,8 @@ func (s *KeeperTestSuite) TestClaimUndelegatedTokensNoEpochTracker() {
 	tc := s.SetupClaimUndelegatedTokens()
 	s.App.StakeibcKeeper.RemoveEpochTracker(s.Ctx, epochtypes.STRIDE_EPOCH)
 
-	_, err := s.App.StakeibcKeeper.GetRedemptionTransferMsg(s.Ctx, &tc.redemptionRecord, tc.validMsg.HostZoneId)
-	s.Require().EqualError(err, "Epoch tracker not found for epoch stride_epoch: epoch not found")
+	_, err := s.msgServer.ClaimUndelegatedTokens(sdk.WrapSDKContext(s.Ctx), &tc.validMsg)
+	expectedErr := "unable to build redemption transfer message: "
+	expectedErr += "Epoch tracker not found for epoch stride_epoch: epoch not found"
+	s.Require().EqualError(err, expectedErr)
 }
