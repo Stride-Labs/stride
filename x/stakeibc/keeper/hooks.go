@@ -245,6 +245,7 @@ func (k Keeper) TransferExistingDepositsToHostZones(ctx sdk.Context, epochNumber
 	transferDepositRecords := utils.FilterDepositRecords(depositRecords, func(record recordstypes.DepositRecord) (condition bool) {
 		return record.Status == recordstypes.DepositRecord_TRANSFER
 	})
+	ibcTimeoutBlocks := uint64(k.GetParam(ctx, types.KeyIbcTimeoutBlocks))
 	addr := k.accountKeeper.GetModuleAccount(ctx, types.ModuleName).GetAddress().String()
 	var emptyRecords []uint64
 	for _, depositRecord := range transferDepositRecords {
@@ -270,9 +271,14 @@ func (k Keeper) TransferExistingDepositsToHostZones(ctx sdk.Context, epochNumber
 				continue
 			}
 			delegateAddress := delegateAccount.GetAddress()
-			// TODO(TEST-89): Set NewHeight relative to the most recent known gaia height (based on the LC)
 			// TODO(TEST-90): why do we have two gaia LCs?
-			timeoutHeight := clienttypes.NewHeight(0, 1000000)
+			blockHeight, found := k.GetLightClientHeightSafely(ctx, hostZone.ConnectionId)
+			if !found {
+				k.Logger(ctx).Error(fmt.Sprintf("Could not find blockHeight for host zone %s, aborting transfers to host zone this epoch", hostZone.ConnectionId))				continue
+			} else {
+				k.Logger(ctx).Info(fmt.Sprintf("Found blockHeight for host zone %s: %d", hostZone.ConnectionId, blockHeight))
+			}
+			timeoutHeight := clienttypes.NewHeight(0, uint64(blockHeight)+ibcTimeoutBlocks)
 			transferCoin := sdk.NewCoin(hostZone.GetIBCDenom(), sdk.NewInt(int64(depositRecord.Amount)))
 			goCtx := sdk.WrapSDKContext(ctx)
 
