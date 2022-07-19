@@ -11,10 +11,10 @@ import (
 )
 
 func RecordsKeeper(t testing.TB) (*keeper.Keeper, sdk.Context) {
-	isCheckTx := false
-	app := strideapp.Setup(isCheckTx)
+	checkTx := false
+	app := strideapp.InitTestApp(checkTx)
 	recordKeeper := app.RecordsKeeper
-	ctx := app.BaseApp.NewContext(isCheckTx, tmproto.Header{Height: 1, ChainID: "stride-1", Time: time.Now().UTC()})
+	ctx := app.BaseApp.NewContext(checkTx, tmproto.Header{Height: 1, ChainID: "stride-1", Time: time.Now().UTC()})
 
 	return &recordKeeper, ctx
 }

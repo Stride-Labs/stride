@@ -3,22 +3,20 @@ package keeper_test
 import (
 	"testing"
 
-	"github.com/stretchr/testify/suite"
-
 	"github.com/Stride-Labs/stride/app/apptesting"
-	"github.com/Stride-Labs/stride/x/epochs/types"
+	"github.com/Stride-Labs/stride/x/stakeibc/keeper"
+	"github.com/Stride-Labs/stride/x/stakeibc/types"
+	"github.com/stretchr/testify/suite"
 )
 
 type KeeperTestSuite struct {
 	apptesting.AppTestHelper
-	suite.Suite
-	queryClient types.QueryClient
+	msgServer types.MsgServer
 }
 
-// Test helpers
 func (suite *KeeperTestSuite) SetupTest() {
 	suite.Setup()
-	suite.queryClient = types.NewQueryClient(suite.QueryHelper)
+	suite.msgServer = keeper.NewMsgServerImpl(suite.App.StakeibcKeeper)
 }
 
 func TestKeeperTestSuite(t *testing.T) {

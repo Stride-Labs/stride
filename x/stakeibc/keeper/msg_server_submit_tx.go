@@ -173,6 +173,7 @@ func (k Keeper) UpdateWithdrawalBalance(ctx sdk.Context, zoneInfo types.HostZone
 		k.Logger(ctx).Error("Error querying for withdrawal balance", "error", err)
 		return err
 	}
+	return nil
 }
 
 func (k Keeper) SubmitTxsDayEpoch(ctx sdk.Context, connectionId string, msgs []sdk.Msg, account types.ICAAccount) (uint64, error) {
