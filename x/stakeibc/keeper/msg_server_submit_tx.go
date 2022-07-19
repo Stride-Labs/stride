@@ -109,6 +109,7 @@ func (k Keeper) SetWithdrawalAddressOnHost(ctx sdk.Context, hostZone types.HostZ
 	_ = ctx
 	var msgs []sdk.Msg
 	// the relevant ICA is the delegate account
+	k.Logger(ctx).Info(fmt.Sprintf("Setting withdrawal address on host zone %s", hostZone.ChainId))
 	owner := types.FormatICAAccountOwner(hostZone.ChainId, types.ICAAccountType_DELEGATION)
 	portID, err := icatypes.NewControllerPortID(owner)
 	if err != nil {
@@ -173,6 +174,7 @@ func (k Keeper) UpdateWithdrawalBalance(ctx sdk.Context, zoneInfo types.HostZone
 		k.Logger(ctx).Error("Error querying for withdrawal balance", "error", err)
 		return err
 	}
+	return nil
 }
 
 func (k Keeper) SubmitTxsDayEpoch(ctx sdk.Context, connectionId string, msgs []sdk.Msg, account types.ICAAccount) (uint64, error) {

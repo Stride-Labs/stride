@@ -8,9 +8,12 @@ STATE=$SCRIPT_DIR/state
 # DENOMS
 IBC_STRD_DENOM='ibc/FF6C2E86490C1C4FBBD24F55032831D2415B9D7882F85C3CC9C2401D79362BEA'
 IBC_ATOM_DENOM='ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2'
+IBC_JUNO_DENOM='ibc/EFF323CC632EC4F747C61BCE238A758EFDB7699C3226565F7C20DA06509D59A5'
 ATOM_DENOM='uatom'
+JUNO_DENOM='ujuno'
 STRD_DENOM='ustrd'
 STATOM_DENOM="stuatom"
+STJUNO_DENOM="stujuno"
 
 # **************************************************************************
 # WARNING: CHANGES TO THESE PARAMS COULD BREAK INTEGRATION TESTS
@@ -72,17 +75,21 @@ HERMES_CMD="$SCRIPT_DIR/../build/hermes/release/hermes -c $SCRIPT_DIR/hermes/con
 # define relayer vars
 HERMES_STRIDE_ACCT=rly1
 HERMES_GAIA_ACCT=rly2
+HERMES_JUNO_ACCT=rly3
 HERMES_STRIDE_MNEMONIC="alter old invest friend relief slot swear pioneer syrup economy vendor tray focus hedgehog artist legend antenna hair almost donkey spice protect sustain increase"
 HERMES_STRIDE_ADDR="stride1ft20pydau82pgesyl9huhhux307s9h3078692y"
 HERMES_GAIA_MNEMONIC="resemble accident lake amateur physical jewel taxi nut demand magnet person blanket trip entire awkward fiber usual current index limb lady lady depart train"
+HERMES_JUNO_MNEMONIC="uphold decorate moon memory taste century work pride force genius width ripple myself year steel ivory type sweet tree ignore danger pudding owner discover"
 
 ICQ_CMD="$SCRIPT_DIR/../build/interchain-queries --home $STATE/icq"
 
 ICQ_STRIDE_ACCT=icq1
 ICQ_GAIA_ACCT=icq2
+ICQ_JUNO_ACCT=icq3
 ICQ_STRIDE_MNEMONIC="helmet say goat special plug umbrella finger night flip axis resource tuna trigger angry shove essay point laundry horror eager forget depend siren alarm"
 ICQ_STRIDE_ADDR="stride12vfkpj7lpqg0n4j68rr5kyffc6wu55dzqewda4"
 ICQ_GAIA_MNEMONIC="capable later bamboo snow drive afraid cheese practice latin brush hand true visa drama mystery bird client nature jealous guess tank marriage volume fantasy"
+ICQ_JUNO_MNEMONIC="divorce loop depth announce strategy goddess short cash private raise spatial parent deal acid casual love inner bind ozone picnic fee earn scene galaxy"
 
 DELEGATION_ICA_ADDR='cosmos1sy63lffevueudvvlvh2lf6s387xh9xq72n3fsy6n2gr5hm6u2szs2v0ujm'
 GAIA_DELEGATE_VAL='cosmosvaloper1pcag0cj4ttxg8l7pcg0q4ksuglswuuedadj7ne'
@@ -103,3 +110,15 @@ BLOCK_SLEEP() {
   done
   printf "\n"
 }
+
+# define JUNO vars
+JUNO_CHAIN=JUNO
+JUNO_PEER_PORT=24656
+JUNO_NODE_NAME=JUNO
+JUNO_VAL_ACCT=jval1
+JUNO_REV_ACCT=jrev1
+JUNO_VAL_MNEMONIC="move next relief spatial resemble onion exhibit fitness major toss where square wrong exact infant skate dragon shift region over you gospel absorb double"
+JUNO_REV_MNEMONIC="tonight bonus finish chaos orchard plastic view nurse salad regret pause awake link bacon process core talent whale million hope luggage sauce card weasel"
+JUNO_VAL_ADDR="juno1pcag0cj4ttxg8l7pcg0q4ksuglswuuedcextl2"
+JUNO_HOME="$STATE/juno"
+JUNO_CMD="$SCRIPT_DIR/../build/junod --home $JUNO_HOME"

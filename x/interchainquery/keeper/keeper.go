@@ -154,4 +154,5 @@ func (k *Keeper) MakeRequest(ctx sdk.Context, connection_id string, chain_id str
 		existingQuery.LastHeight = sdk.ZeroInt()
 		k.SetQuery(ctx, existingQuery)
 	}
+	return nil
 }
