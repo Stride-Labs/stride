@@ -75,7 +75,7 @@ func (k msgServer) RebalanceValidators(goCtx context.Context, msg *types.MsgReba
 	overweight_delta := floatabs(float64(valDeltaList[overWeightIndex].deltaAmt) / total_delegation)
 	underweight_delta := floatabs(float64(valDeltaList[underWeightIndex].deltaAmt) / total_delegation)
 	max_delta := floatmax(overweight_delta, underweight_delta)
-	rebalanceThreshold := float64(k.GetParam(ctx, types.KeyDepositInterval)) / float64(10000)
+	rebalanceThreshold := float64(k.GetParam(ctx, types.KeyValidatorRebalancingThreshold)) / float64(10000)
 	if max_delta < rebalanceThreshold {
 		k.Logger(ctx).Error("Not enough validator disruption to rebalance")
 		return nil, types.ErrNoValidatorWeights
@@ -97,9 +97,9 @@ func (k msgServer) RebalanceValidators(goCtx context.Context, msg *types.MsgReba
 			break
 		}
 		if abs(underWeightElem.deltaAmt) > abs(overWeightElem.deltaAmt) {
-			// if the underweight element is more overweight than the overweight element
+			// if the underweight element is more off than the overweight element
 			// we transfer stake from the underweight element to the overweight element
-			underWeightElem.deltaAmt -= overWeightElem.deltaAmt
+			underWeightElem.deltaAmt -= abs(overWeightElem.deltaAmt)
 			overWeightIndex += 1
 			// issue an ICA call to the host zone to rebalance the validator
 			redelagateMsg := stakingTypes.NewMsgBeginRedelegate(
