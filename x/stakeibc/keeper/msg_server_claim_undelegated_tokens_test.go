@@ -3,6 +3,7 @@ package keeper_test
 import (
 	epochtypes "github.com/Stride-Labs/stride/x/epochs/types"
 	recordtypes "github.com/Stride-Labs/stride/x/records/types"
+	stakeibckeeper "github.com/Stride-Labs/stride/x/stakeibc/keeper"
 	"github.com/Stride-Labs/stride/x/stakeibc/types"
 	stakeibc "github.com/Stride-Labs/stride/x/stakeibc/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -22,7 +23,7 @@ import (
 type ClaimUndelegatedTestCase struct {
 	redemptionRecordId string
 	validMsg           stakeibc.MsgClaimUndelegatedTokens
-	expectedIca        banktypes.MsgSend
+	expectedTxMsg      stakeibckeeper.IcaTx
 	redemptionRecord   recordtypes.UserRedemptionRecord
 	hostZone           types.HostZone
 }
@@ -68,11 +69,6 @@ func (s *KeeperTestSuite) SetupClaimUndelegatedTokens() ClaimUndelegatedTestCase
 	s.App.RecordsKeeper.SetUserRedemptionRecord(s.Ctx, redemptionRecord)
 
 	connectionEnd := connectiontypes.ConnectionEnd{ClientId: "client-0", Versions: []*connectiontypes.Version{connectiontypes.DefaultIBCVersion}}
-	// s.App.ClientState
-	// tmClientState, ok := subjectClientState.(*ibctmtypes.ClientState)
-	// s.App.GetIBCKeeper().ClientKeeper.GetClientState(s.Ctx, "client-0")
-	// store := s.App.IBCKeeper.ClientKeeper.ClientStore(s.Ctx, "client-0")
-	// store.Set(host.ClientStateKey(), k.MustMarshalClientState(clientState))
 	owner := stakeibc.FormatICAAccountOwner("STRIDE", stakeibc.ICAAccountType_REDEMPTION)
 	portId := "icacontroller-" + owner
 	state := ibctmtypes.NewClientState("STRIDE", ibctmtypes.DefaultTrustLevel, ibctesting.TrustingPeriod, ibctesting.UnbondingPeriod, ibctesting.MaxClockDrift, clienttypes.NewHeight(0, 10), commitmenttypes.GetSDKSpecs(), ibctesting.UpgradePath, false, false)
@@ -86,7 +82,12 @@ func (s *KeeperTestSuite) SetupClaimUndelegatedTokens() ClaimUndelegatedTestCase
 	channel.State = channeltypes.OPEN
 	channel.Counterparty = channeltypes.NewCounterparty(portId, "channel-0")
 	s.App.StakeibcKeeper.IBCKeeper.ChannelKeeper.SetChannel(s.Ctx, portId, "channel-0", channel)
-	// s.App.StakeibcKeeper.IBCKeeper.ChannelKeeper.Wr
+
+	msgSend := banktypes.MsgSend{
+		FromAddress: redemptionAccount.Address,
+		ToAddress:   receiverAddr,
+		Amount:      redemptionAmount,
+	}
 
 	return ClaimUndelegatedTestCase{
 		redemptionRecordId: redemptionRecordId,
@@ -96,10 +97,11 @@ func (s *KeeperTestSuite) SetupClaimUndelegatedTokens() ClaimUndelegatedTestCase
 			Epoch:      1,
 			Sender:     senderAddr,
 		},
-		expectedIca: banktypes.MsgSend{
-			FromAddress: redemptionAccount.Address,
-			ToAddress:   receiverAddr,
-			Amount:      redemptionAmount,
+		expectedTxMsg: stakeibckeeper.IcaTx{
+			ConnectionId: connectionId,
+			Msgs:         []sdk.Msg{&msgSend},
+			Account:      redemptionAccount,
+			Timeout:      uint64(types.DefaultICATimeoutNanos),
 		},
 		redemptionRecord: redemptionRecord,
 		hostZone:         hostZone,
@@ -112,18 +114,12 @@ func (s *KeeperTestSuite) TestClaimUndelegatedTokensSuccessful() {
 	userRedemptionRecord, err := s.App.StakeibcKeeper.GetClaimableRedemptionRecord(s.Ctx, &tc.validMsg)
 	s.Require().NoError(err, "get redemptions record should not error")
 
-	redemptionAccount, _, err := s.App.StakeibcKeeper.GetRedemptionAccountFromHostZoneId(s.Ctx, tc.validMsg.HostZoneId)
-	s.Require().NoError(err, "get redemption account should not error")
-
-	timeout, err := s.App.StakeibcKeeper.GetIcaTimeout(s.Ctx)
-	s.Require().NoError(err, "get ica timeout should not error")
-	s.Require().Equal(types.DefaultICATimeoutNanos, timeout)
-
-	actualMsg := s.App.StakeibcKeeper.GetRedemptionTransferMessage(*userRedemptionRecord, redemptionAccount.Address)
-	s.Require().Equal([]sdk.Msg{&tc.expectedIca}, actualMsg, "redemption transfer message")
+	actualTxMsg, err := s.App.StakeibcKeeper.GetRedemptionTransferMsg(s.Ctx, userRedemptionRecord, tc.validMsg.HostZoneId)
+	s.Require().NoError(err, "get redemption transfer msg should not error")
+	s.Require().Equal(tc.expectedTxMsg, *actualTxMsg, "redemption transfer message")
 
 	//Confirm the redemption record has been flagged as not claimable
-	s.App.StakeibcKeeper.FlagRedemptionRecordsAsClaimed(s.Ctx, *userRedemptionRecord, 1)
+	s.App.StakeibcKeeper.FlagRedemptionRecordsAsClaimed(s.Ctx, userRedemptionRecord, 1)
 	redemptionRecord, found := s.App.RecordsKeeper.GetUserRedemptionRecord(s.Ctx, tc.redemptionRecordId)
 	s.Require().True(found)
 	s.Require().False(redemptionRecord.IsClaimable)
@@ -158,9 +154,9 @@ func (s *KeeperTestSuite) TestClaimUndelegatedTokensRecordNotClaimable() {
 }
 
 func (s *KeeperTestSuite) TestClaimUndelegatedTokensHostZoneNotFound() {
-	s.SetupClaimUndelegatedTokens()
+	tc := s.SetupClaimUndelegatedTokens()
 	// Change host zone in message
-	_, _, err := s.App.StakeibcKeeper.GetRedemptionAccountFromHostZoneId(s.Ctx, "fake_host_zone")
+	_, err := s.App.StakeibcKeeper.GetRedemptionTransferMsg(s.Ctx, &tc.redemptionRecord, "fake_host_zone")
 	s.Require().EqualError(err, "Host zone fake_host_zone not found: host zone not registered")
 }
 
@@ -171,15 +167,15 @@ func (s *KeeperTestSuite) TestClaimUndelegatedTokensNoRedemptionAccount() {
 	hostZone.RedemptionAccount = nil
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
 
-	_, _, err := s.App.StakeibcKeeper.GetRedemptionAccountFromHostZoneId(s.Ctx, tc.validMsg.HostZoneId)
+	_, err := s.App.StakeibcKeeper.GetRedemptionTransferMsg(s.Ctx, &tc.redemptionRecord, tc.validMsg.HostZoneId)
 	s.Require().EqualError(err, "Redemption account not found for host zone GAIA: host zone not registered")
 }
 
 func (s *KeeperTestSuite) TestClaimUndelegatedTokensNoEpochTracker() {
 	// Remove epoch tracker
-	s.SetupClaimUndelegatedTokens()
+	tc := s.SetupClaimUndelegatedTokens()
 	s.App.StakeibcKeeper.RemoveEpochTracker(s.Ctx, epochtypes.STRIDE_EPOCH)
-	_, err := s.App.StakeibcKeeper.GetIcaTimeout(s.Ctx)
 
+	_, err := s.App.StakeibcKeeper.GetRedemptionTransferMsg(s.Ctx, &tc.redemptionRecord, tc.validMsg.HostZoneId)
 	s.Require().EqualError(err, "Epoch tracker not found for epoch stride_epoch: epoch not found")
 }
