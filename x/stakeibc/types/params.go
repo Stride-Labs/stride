@@ -22,7 +22,7 @@ var (
 	// 10 minutes
 	DefaultICATimeoutNanos uint64 = 600000000000
 	DefaultBufferSize      uint64 = 20
-	SafetyGasFee           uint64 = 1
+	SafetyGasFee           uint64 = 10_000
 
 	// KeyDepositInterval is store's key for the DepositInterval option
 	KeyDepositInterval               = []byte("DepositInterval")

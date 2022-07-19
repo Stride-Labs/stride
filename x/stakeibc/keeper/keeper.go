@@ -140,6 +140,8 @@ func (k Keeper) GetConnectionId(ctx sdk.Context, portId string) (string, error) 
 
 // if safety gas fees are enabled, charge a governance determined gas fee for the designated function to prevent spam attacks on the chain
 func (k Keeper) ConsumeSafetyGasFee(ctx sdk.Context) {
-	k.Logger(ctx).Info("SafetyGasFee is enabled! Consuming extra %d gas as a safety precaution", types.SafetyGasFee)
-	ctx.GasMeter().ConsumeGas(types.SafetyGasFee, "charging the safety gas fee!")
+	safetyGasFeeAmount := uint64(k.GetParam(ctx, types.KeySafetyGasFee))
+	k.Logger(ctx).Info(fmt.Sprintf("[SafetyGasFee] enabled! Consuming extra %d gas as a safety precaution.", safetyGasFeeAmount))
+	ctx.GasMeter().ConsumeGas(safetyGasFeeAmount, "charging the safety gas fee!")
+	k.Logger(ctx).Info(fmt.Sprintf("[SafetyGasFee] charged %d gas as a safety precaution.", safetyGasFeeAmount))
 }
