@@ -274,8 +274,7 @@ func (k Keeper) TransferExistingDepositsToHostZones(ctx sdk.Context, epochNumber
 			// TODO(TEST-90): why do we have two gaia LCs?
 			blockHeight, found := k.GetLightClientHeightSafely(ctx, hostZone.ConnectionId)
 			if !found {
-				k.Logger(ctx).Error(fmt.Sprintf("Could not find blockHeight for host zone %s", hostZone.ConnectionId))
-				continue
+				k.Logger(ctx).Error(fmt.Sprintf("Could not find blockHeight for host zone %s, aborting transfers to host zone this epoch", hostZone.ConnectionId))				continue
 			} else {
 				k.Logger(ctx).Info(fmt.Sprintf("Found blockHeight for host zone %s: %d", hostZone.ConnectionId, blockHeight))
 			}
