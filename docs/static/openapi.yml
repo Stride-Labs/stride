@@ -29501,6 +29501,62 @@ paths:
           type: string
       tags:
         - Query
+  /Stridelabs/stride/epochs/epoch_info:
+    get:
+      summary: CurrentEpoch provide current epoch of specified identifier
+      operationId: StridelabsStrideEpochsEpochInfo
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              epoch:
+                type: object
+                properties:
+                  identifier:
+                    type: string
+                  start_time:
+                    type: string
+                    format: date-time
+                  duration:
+                    type: string
+                  current_epoch:
+                    type: string
+                    format: int64
+                  current_epoch_start_time:
+                    type: string
+                    format: date-time
+                  epoch_counting_started:
+                    type: boolean
+                  current_epoch_start_height:
+                    type: string
+                    format: int64
+        default:
+          description: An unexpected error response.
+          schema:
+            type: object
+            properties:
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    '@type':
+                      type: string
+                  additionalProperties: {}
+      parameters:
+        - name: identifier
+          in: query
+          required: false
+          type: string
+      tags:
+        - Query
   /Stride-Labs/stride/records/deposit_record:
     get:
       summary: Queries a list of DepositRecord items.
@@ -53580,6 +53636,30 @@ definitions:
       current_epoch:
         type: string
         format: int64
+  Stridelabs.stride.epochs.QueryEpochInfoResponse:
+    type: object
+    properties:
+      epoch:
+        type: object
+        properties:
+          identifier:
+            type: string
+          start_time:
+            type: string
+            format: date-time
+          duration:
+            type: string
+          current_epoch:
+            type: string
+            format: int64
+          current_epoch_start_time:
+            type: string
+            format: date-time
+          epoch_counting_started:
+            type: boolean
+          current_epoch_start_height:
+            type: string
+            format: int64
   Stridelabs.stride.epochs.QueryEpochsInfoResponse:
     type: object
     properties:
@@ -54526,8 +54606,6 @@ definitions:
     title: >-
       TODO(TEST-53): Remove this pre-launch (no need for clients to create /
       interact with ICAs)
-  Stridelabs.stride.stakeibc.MsgSetNumValidatorsResponse:
-    type: object
   Stridelabs.stride.stakeibc.MsgSubmitTxResponse:
     type: object
     title: >-

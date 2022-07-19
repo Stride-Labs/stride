@@ -144,7 +144,7 @@ func (k Keeper) SetWithdrawalAddressOnHost(ctx sdk.Context, hostZone types.HostZ
 }
 
 // Simple balance query helper using new ICQ module
-func (k Keeper) UpdateWithdrawalBalance(ctx sdk.Context, zoneInfo types.HostZone) {
+func (k Keeper) UpdateWithdrawalBalance(ctx sdk.Context, zoneInfo types.HostZone) error {
 	k.Logger(ctx).Info(fmt.Sprintf("\tUpdating withdrawal balances on %s", zoneInfo.ChainId))
 
 	withdrawalIca := zoneInfo.GetWithdrawalAccount()
@@ -157,7 +157,7 @@ func (k Keeper) UpdateWithdrawalBalance(ctx sdk.Context, zoneInfo types.HostZone
 	data := bankTypes.CreateAccountBalancesPrefix(addr)
 	key := "store/bank/key"
 	k.Logger(ctx).Info("Querying for value", "key", key, "denom", zoneInfo.HostDenom)
-	k.InterchainQueryKeeper.MakeRequest(
+	err := k.InterchainQueryKeeper.MakeRequest(
 		ctx,
 		zoneInfo.ConnectionId,
 		zoneInfo.ChainId,
@@ -169,6 +169,11 @@ func (k Keeper) UpdateWithdrawalBalance(ctx sdk.Context, zoneInfo types.HostZone
 		0, //ttl
 		0, //height
 	)
+	if err != nil {
+		k.Logger(ctx).Error("Error querying for withdrawal balance", "error", err)
+		return err
+	}
+	return nil
 }
 
 func (k Keeper) SubmitTxsDayEpoch(ctx sdk.Context, connectionId string, msgs []sdk.Msg, account types.ICAAccount) (uint64, error) {
@@ -252,12 +257,12 @@ func (k Keeper) GetLightClientHeightSafely(ctx sdk.Context, connectionID string)
 	// get light client's latest height
 	conn, found := k.IBCKeeper.ConnectionKeeper.GetConnection(ctx, connectionID)
 	if !found {
-		k.Logger(ctx).Info(fmt.Sprintf("invalid connection id, \"%s\" not found", connectionID))
+		k.Logger(ctx).Error(fmt.Sprintf("invalid connection id, \"%s\" not found", connectionID))
 	}
 	//TODO(TEST-112) make sure to update host LCs here!
 	clientState, found := k.IBCKeeper.ClientKeeper.GetClientState(ctx, conn.ClientId)
 	if !found {
-		k.Logger(ctx).Info(fmt.Sprintf("client id \"%s\" not found for connection \"%s\"", conn.ClientId, connectionID))
+		k.Logger(ctx).Error(fmt.Sprintf("client id \"%s\" not found for connection \"%s\"", conn.ClientId, connectionID))
 		return 0, false
 	} else {
 		// TODO(TEST-119) get stAsset supply at SAME time as hostZone height
@@ -272,12 +277,12 @@ func (k Keeper) GetLightClientTimeSafely(ctx sdk.Context, connectionID string) (
 	// get light client's latest height
 	conn, found := k.IBCKeeper.ConnectionKeeper.GetConnection(ctx, connectionID)
 	if !found {
-		k.Logger(ctx).Info(fmt.Sprintf("invalid connection id, \"%s\" not found", connectionID))
+		k.Logger(ctx).Error(fmt.Sprintf("invalid connection id, \"%s\" not found", connectionID))
 	}
 	//TODO(TEST-112) make sure to update host LCs here!
 	latestConsensusClientState, found := k.IBCKeeper.ClientKeeper.GetLatestClientConsensusState(ctx, conn.ClientId)
 	if !found {
-		k.Logger(ctx).Info(fmt.Sprintf("client id \"%s\" not found for connection \"%s\"", conn.ClientId, connectionID))
+		k.Logger(ctx).Error(fmt.Sprintf("client id \"%s\" not found for connection \"%s\"", conn.ClientId, connectionID))
 		return 0, false
 	} else {
 		latestTime := latestConsensusClientState.GetTimestamp()

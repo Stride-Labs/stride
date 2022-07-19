@@ -23,14 +23,6 @@ var (
 	_ = baseapp.Paramspace
 )
 
-const (
-	opWeightMsgSetNumValidators = "op_weight_msg_set_num_validators"
-	// TODO: Determine the simulation weight value
-	defaultWeightMsgSetNumValidators int = 100
-
-	// this line is used by starport scaffolding # simapp/module/const
-)
-
 // GenerateGenesisState creates a randomized GenState of the module
 func (AppModule) GenerateGenesisState(simState *module.SimulationState) {
 	accs := make([]string, len(simState.Accounts))
@@ -61,17 +53,6 @@ func (am AppModule) RegisterStoreDecoder(_ sdk.StoreDecoderRegistry) {}
 // WeightedOperations returns the all the gov module operations with their respective weights.
 func (am AppModule) WeightedOperations(simState module.SimulationState) []simtypes.WeightedOperation {
 	operations := make([]simtypes.WeightedOperation, 0)
-
-	var weightMsgSetNumValidators int
-	simState.AppParams.GetOrGenerate(simState.Cdc, opWeightMsgSetNumValidators, &weightMsgSetNumValidators, nil,
-		func(_ *rand.Rand) {
-			weightMsgSetNumValidators = defaultWeightMsgSetNumValidators
-		},
-	)
-	operations = append(operations, simulation.NewWeightedOperation(
-		weightMsgSetNumValidators,
-		stakeibcsimulation.SimulateMsgSetNumValidators(am.accountKeeper, am.bankKeeper, am.keeper),
-	))
 
 	// this line is used by starport scaffolding # simapp/module/operation
 
