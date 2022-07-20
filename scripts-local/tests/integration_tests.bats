@@ -4,18 +4,6 @@ setup_file() {
   # get the containing directory of this file
   SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
   PATH="$SCRIPT_DIR/../../:$PATH"
-
-  # set allows us to export all variables in account_vars
-  set -a
-  source scripts-local/account_vars.sh
-
-  GETBAL() {
-    head -n 1 | grep -o -E '[0-9]+'
-  }
-  GETSTAKE() {
-    tail -n 2 | head -n 1 | grep -o -E '[0-9]+' | head -n 1
-  }
-  set +a
 }
 
 setup() {
@@ -23,7 +11,17 @@ setup() {
   SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
   PATH="$SCRIPT_DIR/../../:$PATH"
 
-  
+   # set allows us to export all variables in account_vars
+  set -a
+  source scripts-local/account_vars.sh
+  BATS_TEST_SKIPPED=0
+  GETBAL() {
+    head -n 1 | grep -o -E '[0-9]+'
+  }
+  GETSTAKE() {
+    tail -n 2 | head -n 1 | grep -o -E '[0-9]+' | head -n 1
+  }
+  set +a
   # if these extensions don't load properly, adjust the paths accoring to these instructions  
   TEST_BREW_PREFIX="$(brew --prefix)"
   load "${TEST_BREW_PREFIX}/lib/bats-support/load.bash"
@@ -43,6 +41,11 @@ setup() {
 ##############################################################################################
 ######                              SETUP TESTS                                         ######
 ##############################################################################################
+
+@test "test" {
+  assert_equal "HI" "HI"
+}
+
 
 @test "address names are correct" {
   assert_equal $STRIDE_VAL_ADDR "stride1uk4ze0x4nvh4fk0xm4jdud58eqn4yxhrt52vv7"

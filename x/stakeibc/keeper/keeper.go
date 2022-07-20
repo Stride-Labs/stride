@@ -116,7 +116,7 @@ func (k Keeper) GetCounterpartyChainId(ctx sdk.Context, connectionID string) (st
 	if !found {
 		return "", fmt.Errorf("invalid connection id, \"%s\" not found", connectionID)
 	}
-	counterPartyClientState, found := k.IBCKeeper.ClientKeeper.GetClientState(ctx, conn.Counterparty.ClientId)
+	counterPartyClientState, found := k.IBCKeeper.ClientKeeper.GetClientState(ctx, conn.ClientId)
 	if !found {
 		return "", fmt.Errorf("counterparty client id \"%s\" not found for connection \"%s\"", conn.Counterparty.ClientId, connectionID)
 	}
