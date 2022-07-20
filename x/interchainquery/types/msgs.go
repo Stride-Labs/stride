@@ -2,6 +2,7 @@ package types
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
 // interchainquery message types
@@ -16,7 +17,6 @@ var (
 // NewMsgSubmitQueryResponse - construct a msg to fulfil query request.
 //nolint:interfacer
 func NewMsgSubmitQueryResponse(chain_id string, result string, from_address sdk.Address) *MsgSubmitQueryResponse {
-	// TODO: fix me.
 	return &MsgSubmitQueryResponse{ChainId: chain_id, Result: nil, FromAddress: from_address.String()}
 }
 
@@ -28,13 +28,15 @@ func (msg MsgSubmitQueryResponse) Type() string { return TypeMsgSubmitQueryRespo
 
 // ValidateBasic Implements Msg.
 func (msg MsgSubmitQueryResponse) ValidateBasic() error {
-	// TODO: check from address
-
-	// TODO: check for valid identifier
-
-	// TODO: check for valid chain_id
-
-	// TODO: check for valid denominations
+	// check from address
+	_, err := sdk.AccAddressFromBech32(msg.FromAddress)
+	if err != nil {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid fromAddress in ICQ response (%s)", err)
+	}
+	// check chain_id is not empty
+	if msg.ChainId == "" {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "chain_id cannot be empty in ICQ response")
+	}
 
 	return nil
 }

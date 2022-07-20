@@ -19,7 +19,7 @@ func (k Keeper) RedeemStake(goCtx context.Context, msg *types.MsgRedeemStake) (*
 	// get our addresses, make sure they're valid
 	sender, err := sdk.AccAddressFromBech32(msg.Creator)
 	if err != nil {
-		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "address is invalid: %s", msg.Creator)
+		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "creator address is invalid: %s. err: %s", msg.Creator, err.Error())
 	}
 	// then make sure host zone is valid
 	hostZone, found := k.GetHostZone(ctx, msg.HostZone)
@@ -31,7 +31,7 @@ func (k Keeper) RedeemStake(goCtx context.Context, msg *types.MsgRedeemStake) (*
 	// TODO(TEST-112) do we need to check the hostZone before this check? Would need access to keeper
 	_, err = utils.AccAddressFromBech32(msg.Receiver, hostZone.Bech32Prefix)
 	if err != nil {
-		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid creator address (%s)", err)
+		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid receiver address (%s)", err)
 	}
 
 	if msg.Amount > hostZone.StakedBal {
@@ -40,12 +40,12 @@ func (k Keeper) RedeemStake(goCtx context.Context, msg *types.MsgRedeemStake) (*
 
 	// construct desired unstaking amount from host zone
 	coinDenom := "st" + hostZone.HostDenom
-	stAmount := sdk.NewDec(msg.Amount).Mul(hostZone.RedemptionRate)
+	nativeAmount := sdk.NewDec(msg.Amount).Mul(hostZone.RedemptionRate)
 	// TODO(TEST-112) bigint safety
-	coinString := stAmount.RoundInt().String() + coinDenom
+	coinString := nativeAmount.RoundInt().String() + coinDenom
 	inCoin, err := sdk.ParseCoinNormalized(coinString)
 	if err != nil {
-		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidCoins, "could not parse inCoin: %s", coinString)
+		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidCoins, "could not parse inCoin: %s. err: %s", coinString, err.Error())
 	}
 	// safety checks on the coin
 	// 	- Redemption amount must be positive
@@ -100,14 +100,14 @@ func (k Keeper) RedeemStake(goCtx context.Context, msg *types.MsgRedeemStake) (*
 	err = k.bankKeeper.SendCoinsFromAccountToModule(ctx, sender, types.ModuleName, redeemCoin)
 	if err != nil {
 		k.Logger(ctx).Error("Failed to send sdk.NewCoins(inCoins) from account to module")
-		return nil, sdkerrors.Wrapf(types.ErrInsufficientFunds, "couldn't send %d %s tokens to module account", msg.Amount, coinDenom)
+		return nil, sdkerrors.Wrapf(types.ErrInsufficientFunds, "couldn't send %d %s tokens to module account. err: %s", msg.Amount, coinDenom, err.Error())
 	}
 
 	// burn stAssets upon successful unbonding
 	err = k.bankKeeper.BurnCoins(ctx, types.ModuleName, redeemCoin)
 	if err != nil {
 		k.Logger(ctx).Error(fmt.Sprintf("Failed to burn stAssets upon successful unbonding %v", err))
-		return nil, sdkerrors.Wrapf(types.ErrInsufficientFunds, "couldn't burn %d %s tokens in module account", msg.Amount, coinDenom)
+		return nil, sdkerrors.Wrapf(types.ErrInsufficientFunds, "couldn't burn %d %s tokens in module account. err: %s", msg.Amount, coinDenom, err.Error())
 	}
 
 	// Actually set the records, we wait until now to prevent any errors

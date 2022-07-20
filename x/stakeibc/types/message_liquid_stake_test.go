@@ -50,15 +50,6 @@ func TestMsgLiquidStake_ValidateBasic(t *testing.T) {
 			err: ErrInvalidAmount,
 		},
 		{
-			name: "negative amount",
-			msg: MsgLiquidStake{
-				Creator:   sample.AccAddress(),
-				Amount:    -1,
-				HostDenom: "uatom",
-			},
-			err: ErrInvalidAmount,
-		},
-		{
 			name: "empty host denom",
 			msg: MsgLiquidStake{
 				Creator:   sample.AccAddress(),

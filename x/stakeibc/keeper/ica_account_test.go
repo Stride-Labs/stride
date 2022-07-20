@@ -1,38 +1,25 @@
 package keeper_test
 
 import (
-	"testing"
-
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/stretchr/testify/require"
-
-	keepertest "github.com/Stride-Labs/stride/testutil/keeper"
-	"github.com/Stride-Labs/stride/testutil/nullify"
-	"github.com/Stride-Labs/stride/x/stakeibc/keeper"
 	"github.com/Stride-Labs/stride/x/stakeibc/types"
 )
 
-func createTestICAAccount(keeper *keeper.Keeper, ctx sdk.Context) types.ICAAccount {
+func (suite *KeeperTestSuite) createTestICAAccount() types.ICAAccount {
 	item := types.ICAAccount{}
-	keeper.SetICAAccount(ctx, item)
+	suite.App.StakeibcKeeper.SetICAAccount(suite.Ctx, item)
 	return item
 }
 
-func TestICAAccountGet(t *testing.T) {
-	keeper, ctx := keepertest.StakeibcKeeper(t)
-	item := createTestICAAccount(keeper, ctx)
-	rst, found := keeper.GetICAAccount(ctx)
-	require.True(t, found)
-	require.Equal(t,
-		nullify.Fill(&item),
-		nullify.Fill(&rst),
-	)
+func (suite *KeeperTestSuite) TestICAAccountGet() {
+	item := suite.createTestICAAccount()
+	rst, found := suite.App.StakeibcKeeper.GetICAAccount(suite.Ctx)
+	suite.Require().True(found)
+	suite.Require().Equal(&item, &rst)
 }
 
-func TestICAAccountRemove(t *testing.T) {
-	keeper, ctx := keepertest.StakeibcKeeper(t)
-	createTestICAAccount(keeper, ctx)
-	keeper.RemoveICAAccount(ctx)
-	_, found := keeper.GetICAAccount(ctx)
-	require.False(t, found)
+func (suite *KeeperTestSuite) TestICAAccountRemove() {
+	suite.createTestICAAccount()
+	suite.App.StakeibcKeeper.RemoveICAAccount(suite.Ctx)
+	_, found := suite.App.StakeibcKeeper.GetICAAccount(suite.Ctx)
+	suite.Require().False(found)
 }
