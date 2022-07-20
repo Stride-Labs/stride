@@ -1,12 +1,12 @@
 [submodule "deps/interchain-queries"]
 	path = deps/interchain-queries
-	url = git@github.com:Stride-Labs/interchain-queries.git
+	url = http://github.com/Stride-Labs/interchain-queries.git
 	branch = main
 [submodule "deps/hermes"]
 	path = deps/hermes
-	url = git@github.com:informalsystems/ibc-rs.git
+	url = http://github.com/informalsystems/ibc-rs.git
 	branch = 4e83aae8a
 [submodule "deps/gaia"]
 	path = deps/gaia
-	url = git@github.com:Stride-Labs/gaia.git
+	url = http://github.com/cosmos/gaia.git
 	branch = bfb8f8ceb
