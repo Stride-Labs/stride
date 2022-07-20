@@ -36,7 +36,7 @@ Stride uses three epoch identifiers as found in `x/epochs/genesis.go`
 
 ## State
 
-The `epochs` module keeps `EpochInfo` objects and modifies the information as epoch info changes. Each 
+The `epochs` module keeps `EpochInfo` objects and modifies the information as epoch info changes.
 Epochs are initialized as part of genesis initialization, and modified on begin blockers or end blockers.
 
 ### Epoch information type
@@ -121,13 +121,28 @@ type Keeper interface {
 
 ## Hooks
 
-### Hooks
 ```go
   // the first block whose timestamp is after the duration is counted as the end of the epoch
   AfterEpochEnd(ctx sdk.Context, epochIdentifier string, epochNumber int64)
   // new epoch is next block of epoch end block
   BeforeEpochStart(ctx sdk.Context, epochIdentifier string, epochNumber int64)
 ```
+
+The `BeforeEpochStart` hook does different things depending on the identifier.
+
+If in a `day` identifier it:
+1. begins unbondings
+2. sweeps unbonded tokens to the redemption account
+3. cleans up old records
+4. creates empty epoch unbonding records for the next day
+
+If in a `stride_epoch` identifier it:
+5. creates and deposits records on each host zone
+6. sets withdrawal addresses
+7. updates redemption rates (if the epoch coincides with the correct interval)
+8. processes `TRANSFER` deposit records to the delegation Interchain Account (if the epoch coincides with the correct interval)
+9. processes `STAKE` deposit records to the delegation Interchain Account (if the epoch coincides with the correct interval)
+10. Query the rewards account using interchain queries, with the transfer callback to a delegation account as a staked record (if at proper interval)
 
 ### How modules receive hooks
 
