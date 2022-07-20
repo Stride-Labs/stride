@@ -14,20 +14,18 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     
+    # TODO: add these to a docker image, push to docker hub
     - name: install bats
       run: brew install bats-core
-    
     - name: tap kaos/shell
       run: brew tap kaos/shell
-    
     - name: install bats-assert
       run: brew install bats-assert
-    
     - name: install bats-file
       run: brew install bats-file
     
-    - name: install gitmodules
-      run: git submodule update --init
+    # - name: install gitmodules
+    #   run: git submodule update --init
       
     - name: Install dependencies
       run: make check-dependencies
