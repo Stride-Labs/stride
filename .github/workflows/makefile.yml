@@ -1,5 +1,8 @@
 name: Makefile CI
 
+env:
+  STRIDE_ADMIN_MNEMONIC: ${{ secrets.STRIDE_TESTNET_MNEMONIC }}
+
 on:
   push:
     branches: [ "main" ]
