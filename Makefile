@@ -65,5 +65,5 @@ init-local: build-local
 	@sh scripts-local/start_network.sh ${cache}
 
 stop:
-	@killall gaiad strided hermes interchain-queries
+	@killall gaiad strided hermes interchain-queries junod
 	@pkill -f "/bin/bash.*create_logs.sh"
