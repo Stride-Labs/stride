@@ -1,0 +1,28 @@
+name: Makefile CI
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: install gitmodules
+      run: git submodule update --init
+      
+    - name: Install dependencies
+      run: make check-dependencies
+    
+    - name: build local chains
+      run: make build-local build=sghi
+      
+    - name: start local net
+      run: make init-local
+      
