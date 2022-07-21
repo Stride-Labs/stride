@@ -126,8 +126,8 @@ func WithdrawalBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query icq
 	strideClaim := strideCommission.Mul(withdrawalBalance)
 	strideClaimFloored := strideClaim.TruncateInt()
 
-	reinvestAmount := (sdk.NewDec(1).Sub(strideCommission)).Mul(withdrawalBalance)
-	reinvestAmountCeil := reinvestAmount.Ceil().TruncateInt()
+	// back the reinvestment amount out of the total less the commission
+	reinvestAmountCeil := sdk.NewInt(coin.Amount.Int64()).Sub(strideClaimFloored)
 
 	// TODO(TEST-112) safety check, balances should add to original amount
 	if (strideClaimFloored.Int64() + reinvestAmountCeil.Int64()) != coin.Amount.Int64() {
