@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"errors"
 	"strconv"
 
 	"github.com/Stride-Labs/stride/x/stakeibc/types"
@@ -21,6 +22,11 @@ func CmdRegisterInterchainAccount() *cobra.Command {
 			argChainId := args[0]
 			argAccountType := args[1]
 
+			accountType, ok := types.ICAAccountType_value[argAccountType]
+			if !ok {
+				return errors.New("Invalid account type.")
+			}
+
 			clientCtx, err := client.GetClientTxContext(cmd)
 			if err != nil {
 				return err
@@ -29,7 +35,7 @@ func CmdRegisterInterchainAccount() *cobra.Command {
 			msg := types.NewMsgRegisterInterchainAccount(
 				clientCtx.GetFromAddress().String(),
 				argChainId,
-				argAccountType,
+				types.ICAAccountType(accountType),
 			)
 			if err := msg.ValidateBasic(); err != nil {
 				return err
