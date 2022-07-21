@@ -29,7 +29,6 @@ func RegisterInterfaces(registry cdctypes.InterfaceRegistry) {
 		&MsgRegisterHostZone{},
 		&MsgRedeemStake{},
 	)
-	registry.RegisterImplementations((*sdk.Msg)(nil))
 	registry.RegisterImplementations((*sdk.Msg)(nil),
 		&MsgClaimUndelegatedTokens{},
 	)
