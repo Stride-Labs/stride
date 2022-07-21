@@ -76,7 +76,7 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochInfo epochstypes.EpochInf
 		depositRecords := k.RecordsKeeper.GetAllDepositRecord(ctx)
 
 		// Update the redemption rate
-		redemptionRateInterval := int64(k.GetParam(ctx, types.KeyDepositInterval))
+		redemptionRateInterval := int64(k.GetParam(ctx, types.KeyRedemptionRateInterval))
 		if epochNumber%redemptionRateInterval == 0 {
 			k.Logger(ctx).Info("Triggeting update redemption rate")
 			k.UpdateRedemptionRates(ctx, depositRecords)
