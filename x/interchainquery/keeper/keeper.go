@@ -135,6 +135,12 @@ func (k *Keeper) MakeRequest(ctx sdk.Context, connection_id string, chain_id str
 	// ======================================================================================================================
 	// Perform basic validation on the query input
 
+	// today we only support queries at the latest block height on the host zone, specified by "height=0"
+
+	if height != 0 {
+		return fmt.Errorf("ICQ query height must be 0! Found a query at non-zero height %d", height)
+	}
+
 	// connection id cannot be empty and must begin with "connection"
 	if connection_id == "" {
 		k.Logger(ctx).Error("[ICQ Validation Check] Failed! connection id cannot be empty")
