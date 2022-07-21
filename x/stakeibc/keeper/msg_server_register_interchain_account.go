@@ -10,7 +10,6 @@ import (
 func (k msgServer) RegisterInterchainAccount(goCtx context.Context, msg *types.MsgRegisterInterchainAccount) (*types.MsgRegisterInterchainAccountResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	// TODO: Handling the message
 	_ = ctx
 
 	return &types.MsgRegisterInterchainAccountResponse{}, nil

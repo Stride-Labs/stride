@@ -9,7 +9,7 @@ const TypeMsgRegisterInterchainAccount = "register_interchain_account"
 
 var _ sdk.Msg = &MsgRegisterInterchainAccount{}
 
-func NewMsgRegisterInterchainAccount(creator string, chainId string, accountType string) *MsgRegisterInterchainAccount {
+func NewMsgRegisterInterchainAccount(creator string, chainId string, accountType ICAAccountType) *MsgRegisterInterchainAccount {
 	return &MsgRegisterInterchainAccount{
 		Creator:     creator,
 		ChainId:     chainId,

@@ -2,6 +2,7 @@ syntax = "proto3";
 package Stridelabs.stride.stakeibc;
 
 import "stakeibc/epoch_tracker.proto";
+import "stakeibc/ica_account.proto";
 // this line is used by starport scaffolding # proto/tx/import
 
 option go_package = "github.com/Stride-Labs/stride/x/stakeibc/types";
@@ -148,7 +149,7 @@ message MsgDeleteValidatorResponse {
 message MsgRegisterInterchainAccount {
   string creator = 1;
   string chainId = 2;
-  string accountType = 3;
+  ICAAccountType accountType = 3;
 }
 
 message MsgRegisterInterchainAccountResponse {
