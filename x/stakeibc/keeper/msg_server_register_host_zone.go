@@ -15,8 +15,6 @@ import (
 func (k Keeper) RegisterHostZone(goCtx context.Context, msg *types.MsgRegisterHostZone) (*types.MsgRegisterHostZoneResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	_ = ctx
-
 	// Get chain id from connection
 	chainId, err := k.GetChainID(ctx, msg.ConnectionId)
 	if err != nil {
