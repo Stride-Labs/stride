@@ -308,7 +308,7 @@ func (k Keeper) UpdateRedemptionRates(ctx sdk.Context, depositRecords []recordst
 			return error
 		}
 		stakedBalance := zoneInfo.StakedBal
-		modeuleAcctBalance, error := k.GetModuleAccountBalance(ctx, zoneInfo, depositRecords)
+		moduleAcctBalance, error := k.GetModuleAccountBalance(ctx, zoneInfo, depositRecords)
 		if error != nil {
 			return error
 		}
@@ -318,7 +318,7 @@ func (k Keeper) UpdateRedemptionRates(ctx sdk.Context, depositRecords []recordst
 		}
 
 		// calc redemptionRate = (UB+SB+MA)/stSupply
-		redemptionRate := (sdk.NewDec(undelegatedBalance).Add(sdk.NewDec(stakedBalance)).Add(sdk.NewDec(modeuleAcctBalance))).Quo(sdk.NewDec(stSupply))
+		redemptionRate := (sdk.NewDec(undelegatedBalance).Add(sdk.NewDec(stakedBalance)).Add(sdk.NewDec(moduleAcctBalance))).Quo(sdk.NewDec(stSupply))
 		k.Logger(ctx).Info(fmt.Sprintf("[REDEMPTION-RATE] New Rate is %d (vs prev %d)", redemptionRate, zoneInfo.LastRedemptionRate))
 
 		// set redemptionRate attribute for the hostZone (and update last RedemptionRate)
