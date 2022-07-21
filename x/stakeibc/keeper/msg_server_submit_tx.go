@@ -100,7 +100,7 @@ func (k Keeper) DelegateOnHost(ctx sdk.Context, hostZone types.HostZone, amt sdk
 	// Send the transaction through SubmitTx
 	_, err = k.SubmitTxsStrideEpoch(ctx, connectionId, msgs, *delegationIca)
 	if err != nil {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "Failed to SubmitTxs for %s, %s, %s", connectionId, hostZone.ChainId, msgs)
+		return sdkerrors.Wrapf(err, "Failed to SubmitTxs for connectionId %s on %s. Messages: %s", connectionId, hostZone.ChainId, msgs)
 	}
 	return nil
 }
@@ -243,7 +243,7 @@ func (k Keeper) SubmitTxs(ctx sdk.Context, connectionId string, msgs []sdk.Msg, 
 		Data: data,
 	}
 
-	sequence, err := k.ICAControllerKeeper.SendTx(ctx, chanCap, connectionId, portID, packetData, uint64(timeoutTimestamp))
+	sequence, err := k.ICAControllerKeeper.SendTx(ctx, chanCap, connectionId, portID, packetData, timeoutTimestamp)
 	if err != nil {
 		return 0, err
 	}
