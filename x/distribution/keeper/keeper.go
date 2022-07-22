@@ -6,51 +6,53 @@ import (
 	"github.com/tendermint/tendermint/libs/log"
 
 	"github.com/cosmos/cosmos-sdk/codec"
-	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/x/distribution/types"
+	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 )
 
 // Keeper of the distribution store
 type Keeper struct {
-	storeKey      storetypes.StoreKey
+	storeKey      sdk.StoreKey
 	cdc           codec.BinaryCodec
+	paramSpace    paramtypes.Subspace
 	authKeeper    types.AccountKeeper
 	bankKeeper    types.BankKeeper
 	stakingKeeper types.StakingKeeper
-	// the address capable of executing a MsgUpdateParams message. Typically, this
-	// should be the x/gov module account.
-	authority string
+
+	blockedAddrs map[string]bool
 
 	feeCollectorName string // name of the FeeCollector ModuleAccount
 }
 
 // NewKeeper creates a new distribution Keeper instance
 func NewKeeper(
-	cdc codec.BinaryCodec, key storetypes.StoreKey,
+	cdc codec.BinaryCodec, key sdk.StoreKey, paramSpace paramtypes.Subspace,
 	ak types.AccountKeeper, bk types.BankKeeper, sk types.StakingKeeper,
-	feeCollectorName string, authority string,
+	feeCollectorName string, blockedAddrs map[string]bool,
 ) Keeper {
+
 	// ensure distribution module account is set
 	if addr := ak.GetModuleAddress(types.ModuleName); addr == nil {
 		panic(fmt.Sprintf("%s module account has not been set", types.ModuleName))
 	}
 
+	// set KeyTable if it has not already been set
+	if !paramSpace.HasKeyTable() {
+		paramSpace = paramSpace.WithKeyTable(types.ParamKeyTable())
+	}
+
 	return Keeper{
 		storeKey:         key,
 		cdc:              cdc,
+		paramSpace:       paramSpace,
 		authKeeper:       ak,
 		bankKeeper:       bk,
 		stakingKeeper:    sk,
 		feeCollectorName: feeCollectorName,
-		authority:        authority,
+		blockedAddrs:     blockedAddrs,
 	}
-}
-
-// GetAuthority returns the x/distribution module's authority.
-func (k Keeper) GetAuthority() string {
-	return k.authority
 }
 
 // Logger returns a module-specific logger.
@@ -60,7 +62,7 @@ func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 
 // SetWithdrawAddr sets a new address that will receive the rewards upon withdrawal
 func (k Keeper) SetWithdrawAddr(ctx sdk.Context, delegatorAddr sdk.AccAddress, withdrawAddr sdk.AccAddress) error {
-	if k.bankKeeper.BlockedAddr(withdrawAddr) {
+	if k.blockedAddrs[withdrawAddr.String()] {
 		return sdkerrors.Wrapf(sdkerrors.ErrUnauthorized, "%s is not allowed to receive external funds", withdrawAddr)
 	}
 
@@ -95,14 +97,6 @@ func (k Keeper) WithdrawDelegationRewards(ctx sdk.Context, delAddr sdk.AccAddres
 	rewards, err := k.withdrawDelegationRewards(ctx, val, del)
 	if err != nil {
 		return nil, err
-	}
-
-	if rewards.IsZero() {
-		baseDenom, _ := sdk.GetBaseDenom()
-		rewards = sdk.Coins{sdk.Coin{
-			Denom:  baseDenom,
-			Amount: sdk.ZeroInt(),
-		}}
 	}
 
 	ctx.EventManager().EmitEvent(

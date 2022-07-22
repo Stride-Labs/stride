@@ -17,6 +17,7 @@ func (k Keeper) AllocateTokens(
 	ctx sdk.Context, sumPreviousPrecommitPower, totalPreviousPower int64,
 	previousProposer sdk.ConsAddress, bondedVotes []abci.VoteInfo,
 ) {
+
 	logger := k.Logger(ctx)
 
 	// fetch and clear the collected fees for distribution, since this is
@@ -133,16 +134,5 @@ func (k Keeper) AllocateTokensToValidator(ctx sdk.Context, val stakingtypes.Vali
 	)
 	outstanding := k.GetValidatorOutstandingRewards(ctx, val.GetOperator())
 	outstanding.Rewards = outstanding.Rewards.Add(tokens...)
-
-	// blacklist dummy address to 0 rewards
-	operatorAddr := val.GetOperator()
-	if operatorAddr.String() == "cosmos123456789" {
-		zeroDecCoins := sdk.NewDecCoins(sdk.NewDecCoin(tokens[0].Denom, math.NewInt(0)))
-		zeroOutstandingRewards := types.ValidatorOutstandingRewards{Rewards: zeroDecCoins}
-
-		k.SetValidatorOutstandingRewards(ctx, val.GetOperator(), zeroOutstandingRewards)
-
-	} else {
-		k.SetValidatorOutstandingRewards(ctx, val.GetOperator(), outstanding)
-	}
+	k.SetValidatorOutstandingRewards(ctx, val.GetOperator(), outstanding)
 }

@@ -9,8 +9,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/testutil"
 	"github.com/cosmos/cosmos-sdk/testutil/testdata"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	v042distribution "github.com/cosmos/cosmos-sdk/x/distribution/migrations/v042"
-	v043distribution "github.com/cosmos/cosmos-sdk/x/distribution/migrations/v043"
+	v040distribution "github.com/cosmos/cosmos-sdk/x/distribution/legacy/v040"
+	v043distribution "github.com/cosmos/cosmos-sdk/x/distribution/legacy/v043"
 	"github.com/cosmos/cosmos-sdk/x/distribution/types"
 )
 
@@ -32,47 +32,47 @@ func TestStoreMigration(t *testing.T) {
 	}{
 		{
 			"FeePoolKey",
-			v042distribution.FeePoolKey,
+			v040distribution.FeePoolKey,
 			types.FeePoolKey,
 		},
 		{
 			"ProposerKey",
-			v042distribution.ProposerKey,
+			v040distribution.ProposerKey,
 			types.ProposerKey,
 		},
 		{
 			"ValidatorOutstandingRewards",
-			v042distribution.GetValidatorOutstandingRewardsKey(valAddr),
+			v040distribution.GetValidatorOutstandingRewardsKey(valAddr),
 			types.GetValidatorOutstandingRewardsKey(valAddr),
 		},
 		{
 			"DelegatorWithdrawAddr",
-			v042distribution.GetDelegatorWithdrawAddrKey(addr2),
+			v040distribution.GetDelegatorWithdrawAddrKey(addr2),
 			types.GetDelegatorWithdrawAddrKey(addr2),
 		},
 		{
 			"DelegatorStartingInfo",
-			v042distribution.GetDelegatorStartingInfoKey(valAddr, addr2),
+			v040distribution.GetDelegatorStartingInfoKey(valAddr, addr2),
 			types.GetDelegatorStartingInfoKey(valAddr, addr2),
 		},
 		{
 			"ValidatorHistoricalRewards",
-			v042distribution.GetValidatorHistoricalRewardsKey(valAddr, 6),
+			v040distribution.GetValidatorHistoricalRewardsKey(valAddr, 6),
 			types.GetValidatorHistoricalRewardsKey(valAddr, 6),
 		},
 		{
 			"ValidatorCurrentRewards",
-			v042distribution.GetValidatorCurrentRewardsKey(valAddr),
+			v040distribution.GetValidatorCurrentRewardsKey(valAddr),
 			types.GetValidatorCurrentRewardsKey(valAddr),
 		},
 		{
 			"ValidatorAccumulatedCommission",
-			v042distribution.GetValidatorAccumulatedCommissionKey(valAddr),
+			v040distribution.GetValidatorAccumulatedCommissionKey(valAddr),
 			types.GetValidatorAccumulatedCommissionKey(valAddr),
 		},
 		{
 			"ValidatorSlashEvent",
-			v042distribution.GetValidatorSlashEventKey(valAddr, 6, 8),
+			v040distribution.GetValidatorSlashEventKey(valAddr, 6, 8),
 			types.GetValidatorSlashEventKey(valAddr, 6, 8),
 		},
 	}
