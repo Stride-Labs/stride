@@ -22,6 +22,7 @@ func CmdRestoreInterchainAccount() *cobra.Command {
 			argChainId := args[0]
 			argAccountType := args[1]
 
+			// QUESTION: Does it make more sense for this to be in validate basic?
 			accountType, found := types.ICAAccountType_value[argAccountType]
 			if !found {
 				return errors.New("Invalid account type.")
