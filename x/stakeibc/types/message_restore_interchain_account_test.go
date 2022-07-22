@@ -8,21 +8,21 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestMsgRegisterInterchainAccount_ValidateBasic(t *testing.T) {
+func TestMsgRestoreInterchainAccount_ValidateBasic(t *testing.T) {
 	tests := []struct {
 		name string
-		msg  MsgRegisterInterchainAccount
+		msg  MsgRestoreInterchainAccount
 		err  error
 	}{
 		{
 			name: "invalid address",
-			msg: MsgRegisterInterchainAccount{
+			msg: MsgRestoreInterchainAccount{
 				Creator: "invalid_address",
 			},
 			err: sdkerrors.ErrInvalidAddress,
 		}, {
 			name: "valid address",
-			msg: MsgRegisterInterchainAccount{
+			msg: MsgRestoreInterchainAccount{
 				Creator: sample.AccAddress(),
 			},
 		},

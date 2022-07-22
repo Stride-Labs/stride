@@ -13,10 +13,10 @@ import (
 
 var _ = strconv.Itoa(0)
 
-func CmdRegisterInterchainAccount() *cobra.Command {
+func CmdRestoreInterchainAccount() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "register-interchain-account [chain-id] [account-type]",
-		Short: "Broadcast message register-interchain-account",
+		Use:   "restore-interchain-account [chain-id] [account-type]",
+		Short: "Broadcast message restore-interchain-account",
 		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
 			argChainId := args[0]
@@ -32,7 +32,7 @@ func CmdRegisterInterchainAccount() *cobra.Command {
 				return err
 			}
 
-			msg := types.NewMsgRegisterInterchainAccount(
+			msg := types.NewMsgRestoreInterchainAccount(
 				clientCtx.GetFromAddress().String(),
 				argChainId,
 				types.ICAAccountType(accountType),
