@@ -42,7 +42,7 @@ mkdir -p $SCRIPT_DIR/upgrades/cosmovisor/genesis/bin/
 mkdir -p $SCRIPT_DIR/upgrades/cosmovisor/upgrades/v2/bin/
 mkdir -p $SCRIPT_DIR/state/stride/cosmovisor
 
-rm $SCRIPT_DIR/upgrades/binaries/strided2
+rm -f $SCRIPT_DIR/upgrades/binaries/strided2
 cp $SCRIPT_DIR/../build/strided $SCRIPT_DIR/upgrades/binaries/strided2
 cp $SCRIPT_DIR/upgrades/binaries/strided1 $SCRIPT_DIR/upgrades/cosmovisor/genesis/bin/strided
 cp $SCRIPT_DIR/upgrades/binaries/strided2 $SCRIPT_DIR/upgrades/cosmovisor/upgrades/v2/bin/strided
