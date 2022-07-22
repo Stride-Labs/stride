@@ -3,6 +3,9 @@
 set -eu
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
+PROPOSAL_NAME=v2
+UPGRADE_HEIGHT=30
+
 STRIDED="$SCRIPT_DIR/binaries/strided1 --home $SCRIPT_DIR/../state/stride"
 
 printf "\nPROPOSAL\n"

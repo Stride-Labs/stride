@@ -6,6 +6,8 @@ SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 # import dependencies
 source ${SCRIPT_DIR}/vars.sh
 
+STRIDE_CMD="$SCRIPT_DIR/upgrades/binaries/strided1 --home $SCRIPT_DIR/state/stride"
+
 # first, we need to create some saved state, so that we can copy to docker files
 mkdir -p $STATE/$STRIDE_NODE_NAME
 
@@ -61,3 +63,7 @@ sed -i -E "s|snapshot-interval = 0|snapshot-interval = 300|g" "${STATE}/${STRIDE
 
 # Collect genesis transactions
 $STRIDE_CMD collect-gentxs 2> /dev/null
+
+# Shorten voting period
+sed -i -E "s|max_deposit_period\": \"172800s\"|max_deposit_period\": \"${MAX_DEPOSIT_PERIOD}\"|g" "${STATE}/${STRIDE_NODE_NAME}/config/genesis.json"
+sed -i -E "s|voting_period\": \"172800s\"|voting_period\": \"${VOTING_PERIOD}\"|g" "${STATE}/${STRIDE_NODE_NAME}/config/genesis.json"
