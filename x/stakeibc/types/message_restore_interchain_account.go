@@ -1,7 +1,6 @@
 package types
 
 import (
-	"github.com/Stride-Labs/stride/utils"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
@@ -43,9 +42,6 @@ func (msg *MsgRestoreInterchainAccount) ValidateBasic() error {
 	_, err := sdk.AccAddressFromBech32(msg.Creator)
 	if err != nil {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid creator address (%s)", err)
-	}
-	if err := utils.ValidateAdminAddress(msg.Creator); err != nil {
-		return err
 	}
 	return nil
 }

@@ -4,20 +4,11 @@ import (
 	"testing"
 
 	"github.com/Stride-Labs/stride/testutil/sample"
-	"github.com/Stride-Labs/stride/utils"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/stretchr/testify/require"
 )
 
 func TestMsgRestoreInterchainAccount_ValidateBasic(t *testing.T) {
-	sdk.GetConfig().SetBech32PrefixForAccount("stride", "pub")
-	adminAddress := ""
-	for address, _ := range utils.ADMINS {
-		adminAddress = address
-		break
-	}
-
 	tests := []struct {
 		name string
 		msg  MsgRestoreInterchainAccount
@@ -33,12 +24,6 @@ func TestMsgRestoreInterchainAccount_ValidateBasic(t *testing.T) {
 			name: "not admin address",
 			msg: MsgRestoreInterchainAccount{
 				Creator: sample.AccAddress(),
-			},
-			err: sdkerrors.ErrInvalidAddress,
-		}, {
-			name: "valid message",
-			msg: MsgRestoreInterchainAccount{
-				Creator: adminAddress,
 			},
 		},
 	}
