@@ -13,6 +13,13 @@ import (
 	bankTypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 )
 
+type IcaTx struct {
+	ConnectionId string
+	Msgs         []sdk.Msg
+	Account      types.ICAAccount
+	Timeout      uint64
+}
+
 func (k msgServer) ClaimUndelegatedTokens(goCtx context.Context, msg *types.MsgClaimUndelegatedTokens) (*types.MsgClaimUndelegatedTokensResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
@@ -26,7 +33,7 @@ func (k msgServer) ClaimUndelegatedTokens(goCtx context.Context, msg *types.MsgC
 		return nil, sdkerrors.Wrapf(err, "unable to build redemption transfer message")
 	}
 
-	sequence, err := k.SubmitTxs(ctx, icaTx)
+	sequence, err := k.SubmitTxs(ctx, icaTx.ConnectionId, icaTx.Msgs, icaTx.Account, icaTx.Timeout)
 	if err != nil {
 		k.Logger(ctx).Error(fmt.Sprintf("Submit tx error: %s", err.Error()))
 		return nil, sdkerrors.Wrapf(err, "unable to submit ICA redemption tx")
