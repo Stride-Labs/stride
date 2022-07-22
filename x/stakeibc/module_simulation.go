@@ -24,9 +24,9 @@ var (
 )
 
 const (
-	opWeightMsgRegisterInterchainAccount = "op_weight_msg_register_interchain_account"
+	opWeightMsgRestoreInterchainAccount = "op_weight_msg_register_interchain_account"
 	// TODO: Determine the simulation weight value
-	defaultWeightMsgRegisterInterchainAccount int = 100
+	defaultWeightMsgRestoreInterchainAccount int = 100
 
 	// this line is used by starport scaffolding # simapp/module/const
 )
@@ -62,15 +62,15 @@ func (am AppModule) RegisterStoreDecoder(_ sdk.StoreDecoderRegistry) {}
 func (am AppModule) WeightedOperations(simState module.SimulationState) []simtypes.WeightedOperation {
 	operations := make([]simtypes.WeightedOperation, 0)
 
-	var weightMsgRegisterInterchainAccount int
-	simState.AppParams.GetOrGenerate(simState.Cdc, opWeightMsgRegisterInterchainAccount, &weightMsgRegisterInterchainAccount, nil,
+	var weightMsgRestoreInterchainAccount int
+	simState.AppParams.GetOrGenerate(simState.Cdc, opWeightMsgRestoreInterchainAccount, &weightMsgRestoreInterchainAccount, nil,
 		func(_ *rand.Rand) {
-			weightMsgRegisterInterchainAccount = defaultWeightMsgRegisterInterchainAccount
+			weightMsgRestoreInterchainAccount = defaultWeightMsgRestoreInterchainAccount
 		},
 	)
 	operations = append(operations, simulation.NewWeightedOperation(
-		weightMsgRegisterInterchainAccount,
-		stakeibcsimulation.SimulateMsgRegisterInterchainAccount(am.accountKeeper, am.bankKeeper, am.keeper),
+		weightMsgRestoreInterchainAccount,
+		stakeibcsimulation.SimulateMsgRestoreInterchainAccount(am.accountKeeper, am.bankKeeper, am.keeper),
 	))
 
 	// this line is used by starport scaffolding # simapp/module/operation

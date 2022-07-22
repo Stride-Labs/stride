@@ -10,7 +10,7 @@ import (
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
 )
 
-func SimulateMsgRegisterInterchainAccount(
+func SimulateMsgRestoreInterchainAccount(
 	ak types.AccountKeeper,
 	bk types.BankKeeper,
 	k keeper.Keeper,
@@ -18,12 +18,12 @@ func SimulateMsgRegisterInterchainAccount(
 	return func(r *rand.Rand, app *baseapp.BaseApp, ctx sdk.Context, accs []simtypes.Account, chainID string,
 	) (simtypes.OperationMsg, []simtypes.FutureOperation, error) {
 		simAccount, _ := simtypes.RandomAcc(r, accs)
-		msg := &types.MsgRegisterInterchainAccount{
+		msg := &types.MsgRestoreInterchainAccount{
 			Creator: simAccount.Address.String(),
 		}
 
-		// TODO: Handling the RegisterInterchainAccount simulation
+		// TODO: Handling the RestoreInterchainAccount simulation
 
-		return simtypes.NoOpMsg(types.ModuleName, msg.Type(), "RegisterInterchainAccount simulation not implemented"), nil, nil
+		return simtypes.NoOpMsg(types.ModuleName, msg.Type(), "RestoreInterchainAccount simulation not implemented"), nil, nil
 	}
 }
