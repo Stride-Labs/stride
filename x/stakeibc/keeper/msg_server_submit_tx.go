@@ -166,8 +166,8 @@ func (k Keeper) UpdateWithdrawalBalance(ctx sdk.Context, zoneInfo types.HostZone
 		sdk.NewInt(-1),
 		types.ModuleName,
 		"withdrawalbalance",
-		0, //ttl
-		0, //height
+		0, // ttl
+		0, // height always 0 (which means current height)
 	)
 	if err != nil {
 		k.Logger(ctx).Error("Error querying for withdrawal balance", "error", err)
