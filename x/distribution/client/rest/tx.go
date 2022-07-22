@@ -5,12 +5,12 @@ import (
 
 	"github.com/gorilla/mux"
 
+	"github.com/Stride-Labs/stride/x/distribution/client/common"
+	"github.com/Stride-Labs/stride/x/distribution/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/rest"
-	"github.com/cosmos/cosmos-sdk/x/distribution/client/common"
-	"github.com/cosmos/cosmos-sdk/x/distribution/types"
 )
 
 type (
