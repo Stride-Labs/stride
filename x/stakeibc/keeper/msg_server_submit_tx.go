@@ -19,13 +19,6 @@ import (
 	host "github.com/cosmos/ibc-go/v3/modules/core/24-host"
 )
 
-type IcaTx struct {
-	ConnectionId string
-	Msgs         []sdk.Msg
-	Account      types.ICAAccount
-	Timeout      uint64
-}
-
 // SubmitTx sends an ICA transaction to a host chain on behalf of an account on the controller
 // chain.
 // NOTE: this is not a standard message; only the stakeibc module should call this function. However,
@@ -173,8 +166,8 @@ func (k Keeper) UpdateWithdrawalBalance(ctx sdk.Context, zoneInfo types.HostZone
 		sdk.NewInt(-1),
 		types.ModuleName,
 		"withdrawalbalance",
-		0, //ttl
-		0, //height
+		0, // ttl
+		0, // height always 0 (which means current height)
 	)
 	if err != nil {
 		k.Logger(ctx).Error("Error querying for withdrawal balance", "error", err)
@@ -210,14 +203,7 @@ func (k Keeper) SubmitTxsEpoch(ctx sdk.Context, connectionId string, msgs []sdk.
 	BUFFER := epochTracker.Duration / bufferSize
 	timeoutNanos := epochTracker.NextEpochStartTime - BUFFER
 	k.Logger(ctx).Info(fmt.Sprintf("Submitting txs for epoch %s %d %d", epochTracker.EpochIdentifier, epochTracker.NextEpochStartTime, timeoutNanos))
-	tx := IcaTx{
-		ConnectionId: connectionId,
-		Msgs:         msgs,
-		Account:      account,
-		Timeout:      uint64(timeoutNanos),
-	}
-
-	sequence, err := k.SubmitTxs(ctx, &tx)
+	sequence, err := k.SubmitTxs(ctx, connectionId, msgs, account, uint64(timeoutNanos))
 	if err != nil {
 		return 0, err
 	}
@@ -226,18 +212,18 @@ func (k Keeper) SubmitTxsEpoch(ctx sdk.Context, connectionId string, msgs []sdk.
 }
 
 // SubmitTxs submits an ICA transaction containing multiple messages
-func (k Keeper) SubmitTxs(ctx sdk.Context, tx *IcaTx) (uint64, error) {
-	chainId, err := k.GetChainID(ctx, tx.ConnectionId)
+func (k Keeper) SubmitTxs(ctx sdk.Context, connectionId string, msgs []sdk.Msg, account types.ICAAccount, timeoutTimestamp uint64) (uint64, error) {
+	chainId, err := k.GetChainID(ctx, connectionId)
 	if err != nil {
 		return 0, err
 	}
-	owner := types.FormatICAAccountOwner(chainId, tx.Account.GetTarget())
+	owner := types.FormatICAAccountOwner(chainId, account.GetTarget())
 	portID, err := icatypes.NewControllerPortID(owner)
 	if err != nil {
 		return 0, err
 	}
 
-	channelID, found := k.ICAControllerKeeper.GetActiveChannelID(ctx, tx.ConnectionId, portID)
+	channelID, found := k.ICAControllerKeeper.GetActiveChannelID(ctx, connectionId, portID)
 	if !found {
 		return 0, sdkerrors.Wrapf(icatypes.ErrActiveChannelNotFound, "failed to retrieve active channel for port %s", portID)
 	}
@@ -247,7 +233,7 @@ func (k Keeper) SubmitTxs(ctx sdk.Context, tx *IcaTx) (uint64, error) {
 		return 0, sdkerrors.Wrap(channeltypes.ErrChannelCapabilityNotFound, "module does not own channel capability")
 	}
 
-	data, err := icatypes.SerializeCosmosTx(k.cdc, tx.Msgs)
+	data, err := icatypes.SerializeCosmosTx(k.cdc, msgs)
 	if err != nil {
 		return 0, err
 	}
@@ -257,7 +243,7 @@ func (k Keeper) SubmitTxs(ctx sdk.Context, tx *IcaTx) (uint64, error) {
 		Data: data,
 	}
 
-	sequence, err := k.ICAControllerKeeper.SendTx(ctx, chanCap, tx.ConnectionId, portID, packetData, tx.Timeout)
+	sequence, err := k.ICAControllerKeeper.SendTx(ctx, chanCap, connectionId, portID, packetData, uint64(timeoutTimestamp))
 	if err != nil {
 		return 0, err
 	}
@@ -272,6 +258,7 @@ func (k Keeper) GetLightClientHeightSafely(ctx sdk.Context, connectionID string)
 	conn, found := k.IBCKeeper.ConnectionKeeper.GetConnection(ctx, connectionID)
 	if !found {
 		k.Logger(ctx).Error(fmt.Sprintf("invalid connection id, \"%s\" not found", connectionID))
+		return 0, false
 	}
 	//TODO(TEST-112) make sure to update host LCs here!
 	clientState, found := k.IBCKeeper.ClientKeeper.GetClientState(ctx, conn.ClientId)

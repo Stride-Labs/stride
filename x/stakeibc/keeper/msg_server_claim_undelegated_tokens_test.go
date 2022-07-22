@@ -8,9 +8,6 @@ import (
 	stakeibc "github.com/Stride-Labs/stride/x/stakeibc/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-
-	// host "github.com/cosmos/ibc-go/v3/modules/core/24-host"
-
 	_ "github.com/stretchr/testify/suite"
 )
 
