@@ -29,24 +29,11 @@ func RegisterInterfaces(registry cdctypes.InterfaceRegistry) {
 		&MsgSubmitTx{},
 		&MsgRegisterHostZone{},
 		&MsgRedeemStake{},
-	)
-	registry.RegisterImplementations((*sdk.Msg)(nil))
-	registry.RegisterImplementations((*sdk.Msg)(nil),
 		&MsgClaimUndelegatedTokens{},
-	)
-	registry.RegisterImplementations((*sdk.Msg)(nil),
 		&MsgRebalanceValidators{},
-	)
-	registry.RegisterImplementations((*sdk.Msg)(nil),
 		&MsgAddValidator{},
-	)
-	registry.RegisterImplementations((*sdk.Msg)(nil),
 		&MsgChangeValidatorWeight{},
-	)
-	registry.RegisterImplementations((*sdk.Msg)(nil),
 		&MsgDeleteValidator{},
-	)
-	registry.RegisterImplementations((*sdk.Msg)(nil),
 		&MsgRestoreInterchainAccount{},
 	)
 	// this line is used by starport scaffolding # 3
