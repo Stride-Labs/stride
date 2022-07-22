@@ -23,8 +23,13 @@ func CreateUpgradeHandler(
 }
 
 func UpdateGovParams(ctx sdk.Context, gk govkeeper.Keeper) {
-	params := gk.GetDepositParams(ctx)
-	// TODO: Set all params of interest
-	params.MaxDepositPeriod = time.Duration(123456789)
-	gk.SetDepositParams(ctx, params)
+	oneHour := time.Duration(3600_000_000_000)
+
+	depositParams := gk.GetDepositParams(ctx)
+	depositParams.MaxDepositPeriod = oneHour
+	gk.SetDepositParams(ctx, depositParams)
+
+	votingParams := gk.GetVotingParams(ctx)
+	votingParams.VotingPeriod = oneHour
+	gk.SetVotingParams(ctx, votingParams)
 }
