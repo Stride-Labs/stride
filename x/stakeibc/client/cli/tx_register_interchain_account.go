@@ -22,8 +22,8 @@ func CmdRegisterInterchainAccount() *cobra.Command {
 			argChainId := args[0]
 			argAccountType := args[1]
 
-			accountType, ok := types.ICAAccountType_value[argAccountType]
-			if !ok {
+			accountType, found := types.ICAAccountType_value[argAccountType]
+			if !found {
 				return errors.New("Invalid account type.")
 			}
 
