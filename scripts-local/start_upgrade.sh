@@ -32,7 +32,8 @@ done
 make build-local build=s
 
 # Initialize state for Stride, Gaia, and relayers
-sh ${SCRIPT_DIR}/init_stride.sh
+# Init stride with old binary
+sh ${SCRIPT_DIR}/init_stride.sh $SCRIPT_DIR/upgrades/binaries/strided1
 sh ${SCRIPT_DIR}/init_gaia.sh
 sh ${SCRIPT_DIR}/init_relayers.sh
 

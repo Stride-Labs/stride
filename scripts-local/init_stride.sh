@@ -6,7 +6,9 @@ SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 # import dependencies
 source ${SCRIPT_DIR}/vars.sh
 
-STRIDE_CMD="$SCRIPT_DIR/upgrades/binaries/strided1 --home $SCRIPT_DIR/state/stride"
+# Optionally pass an argument to override the stride binary
+STRIDE_BINARY="${1:-$SCRIPT_DIR/../build/strided}"
+STRIDE_CMD="$STRIDE_BINARY --home $SCRIPT_DIR/state/stride"
 
 # first, we need to create some saved state, so that we can copy to docker files
 mkdir -p $STATE/$STRIDE_NODE_NAME
