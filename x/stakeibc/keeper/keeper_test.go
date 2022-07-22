@@ -14,9 +14,9 @@ type KeeperTestSuite struct {
 	msgServer types.MsgServer
 }
 
-func (suite *KeeperTestSuite) SetupTest() {
-	suite.Setup()
-	suite.msgServer = keeper.NewMsgServerImpl(suite.App.StakeibcKeeper)
+func (s *KeeperTestSuite) SetupTest() {
+	s.Setup()
+	s.msgServer = keeper.NewMsgServerImpl(s.App.StakeibcKeeper)
 }
 
 func TestKeeperTestSuite(t *testing.T) {
