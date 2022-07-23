@@ -34,6 +34,11 @@ STRIDE_VAL_ACCT=val1
 STRIDE_VAL_MNEMONIC="close soup mirror crew erode defy knock trigger gather eyebrow tent farm gym gloom base lemon sleep weekend rich forget diagram hurt prize fly"
 STRIDE_VAL_ADDR="stride1uk4ze0x4nvh4fk0xm4jdud58eqn4yxhrt52vv7"
 
+STRIDE_VAL2_ACCT=val2
+STRIDE_VAL2_MNEMONIC="turkey miss hurry unable embark hospital kangaroo nuclear outside term toy fall buffalo book opinion such moral meadow wing olive camp sad metal banner"
+STRIDE_VAL2_ADDR="stride17kht2x2ped6qytr2kklevtvmxpw7wq9rmuc3ca"
+
+
 STRIDE_CMD="$SCRIPT_DIR/../build/strided --home $STATE/stride"
 
 # define GAIA vars
