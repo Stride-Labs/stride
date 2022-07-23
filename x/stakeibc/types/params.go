@@ -19,8 +19,8 @@ var (
 	DefaultStrideCommission              uint64 = 10
 	DefaultValidatorRebalancingThreshold uint64 = 100 // divide by 10,000, so 100 = 1%
 	// 10 minutes
-	DefaultICATimeoutNanos uint64 = 600000000000
-	DefaultBufferSize      uint64 = 20
+	DefaultICATimeoutNanos  uint64 = 600000000000
+	DefaultBufferSize       uint64 = 20
 	DefaultIbcTimeoutBlocks uint64 = 300 // 300 blocks ~= 30 minutes
 
 	// KeyDepositInterval is store's key for the DepositInterval option
