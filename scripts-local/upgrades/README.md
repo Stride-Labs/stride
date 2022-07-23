@@ -1,6 +1,7 @@
 # Testing Upgrades in Local Mode
 ## Run Instructions
 * Before working on the upgrade logic, compile the original binary and place it in `scripts-local/upgrades/binaries/` named `strided1`
+* **This binary should represent the code before the upgrade changes. You'll likely want to checkout to the main branch to compile this.**
 ```
 make build-local build=s
 mkdir -p scripts-local/upgrades/binaries
@@ -8,10 +9,10 @@ cp build/strided scripts-local/upgrades/binaries/strided1
 ```
 * Then upgrade code as needed
 * Optionally update timing parameters to your liking
-    * MAX_DEPOSIT_PERIOD (defined in `scripts-local/vars.sh`)   
-    * VOTING_PERIOD (defined in `scripts-local/vars.sh`)   
-    * PROPOSAL_NAME (defined in `scripts-local/submit_upgrade.sh`)   
-    * UPGRADE_HEIGHT (defined in `scripts-local/submit_upgrade.sh`)   
+    * `MAX_DEPOSIT_PERIOD` (defined in `scripts-local/vars.sh`)   
+    * `VOTING_PERIOD` (defined in `scripts-local/vars.sh`)   
+    * `PROPOSAL_NAME` (defined in `scripts-local/submit_upgrade.sh`)   
+    * `UPGRADE_HEIGHT` (defined in `scripts-local/submit_upgrade.sh`)   
 * Then startup the chain in upgrade mode 
 ```
 bash scripts-local/start_upgrade.sh
