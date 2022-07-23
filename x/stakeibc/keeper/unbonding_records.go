@@ -192,7 +192,7 @@ func (k Keeper) SweepAllUnbondedTokens(ctx sdk.Context) {
 			blockTime, found := k.GetLightClientTimeSafely(ctx, zone.ConnectionId)
 			if !found {
 				k.Logger(ctx).Error(fmt.Sprintf("\t\tCould not find blockTime for host zone %s", zone.ChainId))
-				sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, "\t\tCould not find blockTime for host zone")
+				return sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "\t\tCould not find blockTime for host zone")
 			}
 
 			if (unbonding.Status != recordstypes.HostZoneUnbonding_UNBONDED) &&

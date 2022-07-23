@@ -27,6 +27,11 @@ func NewIBCModule(k keeper.Keeper) IBCModule {
 	}
 }
 
+type connectionIdContextKey string
+func (c connectionIdContextKey) String() string {
+    return string(c)
+}
+
 func (im IBCModule) Hooks() keeper.Hooks {
 	return im.keeper.Hooks()
 }
@@ -147,7 +152,7 @@ func (im IBCModule) OnAcknowledgementPacket(
 		ctx.Logger().Error(err.Error())
 		return err
 	}
-	ctx = ctx.WithContext(context.WithValue(ctx.Context(), "connectionId", connectionId))
+	ctx = ctx.WithContext(context.WithValue(ctx.Context(), connectionIdContextKey(connectionId), connectionId))
 	im.keeper.Logger(ctx).Info("HANDLING ACK")
 	return im.keeper.HandleAcknowledgement(ctx, modulePacket, acknowledgement)
 }
