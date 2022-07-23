@@ -49,6 +49,9 @@ func NewHandler(k keeper.Keeper) sdk.Handler {
 		case *types.MsgDeleteValidator:
 			res, err := msgServer.DeleteValidator(sdk.WrapSDKContext(ctx), msg)
 			return sdk.WrapServiceResult(ctx, res, err)
+		case *types.MsgRestoreInterchainAccount:
+			res, err := msgServer.RestoreInterchainAccount(sdk.WrapSDKContext(ctx), msg)
+			return sdk.WrapServiceResult(ctx, res, err)
 			// this line is used by starport scaffolding # 1
 		default:
 			errMsg := fmt.Sprintf("unrecognized %s message type: %T", types.ModuleName, msg)

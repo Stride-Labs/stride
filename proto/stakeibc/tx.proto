@@ -2,6 +2,7 @@ syntax = "proto3";
 package Stridelabs.stride.stakeibc;
 
 import "stakeibc/epoch_tracker.proto";
+import "stakeibc/ica_account.proto";
 // this line is used by starport scaffolding # proto/tx/import
 
 option go_package = "github.com/Stride-Labs/stride/x/stakeibc/types";
@@ -25,12 +26,13 @@ service Msg {
   rpc AddValidator(MsgAddValidator) returns (MsgAddValidatorResponse);
   rpc ChangeValidatorWeight(MsgChangeValidatorWeight) returns (MsgChangeValidatorWeightResponse);
   rpc DeleteValidator(MsgDeleteValidator) returns (MsgDeleteValidatorResponse);
+  rpc RestoreInterchainAccount(MsgRestoreInterchainAccount) returns (MsgRestoreInterchainAccountResponse);
 // this line is used by starport scaffolding # proto/tx/rpc
 }
 
 message MsgLiquidStake {
   string creator = 1;
-  int64 amount = 2;
+  uint64 amount = 2;
   // TODO(TEST-86): Update Denom -> HostDenom
   string host_denom = 3;
 }
@@ -142,6 +144,15 @@ message MsgDeleteValidator {
 }
 
 message MsgDeleteValidatorResponse {
+}
+
+message MsgRestoreInterchainAccount {
+  string creator = 1;
+  string chainId = 2;
+  ICAAccountType accountType = 3;
+}
+
+message MsgRestoreInterchainAccountResponse {
 }
 
 // this line is used by starport scaffolding # proto/tx/message

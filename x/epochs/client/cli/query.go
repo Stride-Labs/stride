@@ -110,7 +110,6 @@ func GetCmdCurrentEpoch() *cobra.Command {
 	return cmd
 }
 
-
 // GetCmdSecondsRemaining provides seconds-remaining by specified identifier
 func GetCmdSecondsRemaining() *cobra.Command {
 	cmd := &cobra.Command{

@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
@@ -130,6 +131,33 @@ func (k *Keeper) MakeRequest(ctx sdk.Context, connection_id string, chain_id str
 		"ttl", ttl,
 		"height", height,
 	)
+
+	// ======================================================================================================================
+	// Perform basic validation on the query input
+
+	// today we only support queries at the latest block height on the host zone, specified by "height=0"
+
+	if height != 0 {
+		return fmt.Errorf("ICQ query height must be 0! Found a query at non-zero height %d", height)
+	}
+
+	// connection id cannot be empty and must begin with "connection"
+	if connection_id == "" {
+		k.Logger(ctx).Error("[ICQ Validation Check] Failed! connection id cannot be empty")
+	}
+	if !strings.HasPrefix(connection_id, "connection") {
+		k.Logger(ctx).Error("[ICQ Validation Check] Failed! connection id must begin with 'connection'")
+	}
+	// height must be 0
+	if height != 0 {
+		k.Logger(ctx).Error("[ICQ Validation Check] Failed! height for interchainquery must be 0 (we exclusively query at the latest height on the host zone)")
+	}
+	// chain_id cannot be empty
+	if chain_id == "" {
+		k.Logger(ctx).Error("[ICQ Validation Check] Failed! chain_id cannot be empty")
+	}
+	// ======================================================================================================================
+
 	key := GenerateQueryHash(connection_id, chain_id, query_type, request, module, height)
 	existingQuery, found := k.GetQuery(ctx, key)
 	if !found {
