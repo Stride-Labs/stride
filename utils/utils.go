@@ -10,8 +10,9 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/address"
 	"github.com/cosmos/cosmos-sdk/types/bech32"
 
-	recordstypes "github.com/Stride-Labs/stride/x/records/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+
+	recordstypes "github.com/Stride-Labs/stride/x/records/types"
 )
 
 var ADMINS = map[string]bool{
@@ -112,8 +113,6 @@ func AccAddressFromBech32(address string, bech32prefix string) (addr AccAddress,
 	if err != nil {
 		return nil, err
 	}
-
-	fmt.Sprintf("AccAddressFromBech32 | bz: %x", bz)
 
 	err = VerifyAddressFormat(bz)
 	if err != nil {

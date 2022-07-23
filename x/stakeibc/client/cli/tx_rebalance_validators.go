@@ -3,11 +3,12 @@ package cli
 import (
 	"strconv"
 
-	"github.com/Stride-Labs/stride/x/stakeibc/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	"github.com/spf13/cobra"
+
+	"github.com/Stride-Labs/stride/x/stakeibc/types"
 )
 
 var _ = strconv.Itoa(0)
@@ -20,6 +21,9 @@ func CmdRebalanceValidators() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
 			argHostZone := args[0]
 			argNumValidators, err := strconv.ParseUint(args[1], 10, 64)
+			if err != nil {
+				return err
+			}
 			clientCtx, err := client.GetClientTxContext(cmd)
 			if err != nil {
 				return err

@@ -39,8 +39,10 @@ vue/*
 # Dependency directories (remove the comment below to include it)
 # vendor/
 
-# vscode 
-.vscode
+
 .DS_Store
 .terraform
 *.pem
+
+.vscode/*
+!.vscode/settings.json

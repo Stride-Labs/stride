@@ -135,9 +135,7 @@ func isCommission(i interface{}) error {
 		return fmt.Errorf("commission not accepted: %T", i)
 	}
 
-	if ival < 0 {
-		return fmt.Errorf("commission must be non-negative: %d", ival)
-	} else if ival > 100 {
+	if ival > 100 {
 		return fmt.Errorf("commission must be less than 100: %d", ival)
 	}
 	return nil

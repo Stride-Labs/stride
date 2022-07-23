@@ -1,0 +1,22 @@
+{
+    "go.lintTool": "golangci-lint",
+    "go.formatTool": "goimports",
+    "go.useLanguageServer": true,
+    "[go.mod]": {
+        "editor.formatOnSave": true,
+        "editor.codeActionsOnSave": {
+            "source.organizeImports": true
+        }
+    },
+    "[go]": {
+        "editor.snippetSuggestions": "none",
+        "editor.formatOnSave": true,
+        "editor.codeActionsOnSave": {
+        "source.organizeImports": true
+        }
+    },
+    "gopls": {
+        "local": "github.com/Stride-Labs/stride"
+    },
+    "files.eol": "\n",
+}

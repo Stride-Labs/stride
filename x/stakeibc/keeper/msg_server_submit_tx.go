@@ -4,14 +4,16 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/Stride-Labs/stride/x/stakeibc/types"
 	"github.com/cosmos/cosmos-sdk/types/bech32"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
-	epochstypes "github.com/Stride-Labs/stride/x/epochs/types"
+	"github.com/Stride-Labs/stride/x/stakeibc/types"
+
 	bankTypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	distributiontypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 	stakingTypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+
+	epochstypes "github.com/Stride-Labs/stride/x/epochs/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	icatypes "github.com/cosmos/ibc-go/v3/modules/apps/27-interchain-accounts/types"

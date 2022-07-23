@@ -4,14 +4,15 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/Stride-Labs/stride/x/stakeibc/keeper"
-	"github.com/Stride-Labs/stride/x/stakeibc/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
 	icatypes "github.com/cosmos/ibc-go/v3/modules/apps/27-interchain-accounts/types"
 	channeltypes "github.com/cosmos/ibc-go/v3/modules/core/04-channel/types"
 	host "github.com/cosmos/ibc-go/v3/modules/core/24-host"
 	ibcexported "github.com/cosmos/ibc-go/v3/modules/core/exported"
+
+	"github.com/Stride-Labs/stride/x/stakeibc/keeper"
+	"github.com/Stride-Labs/stride/x/stakeibc/types"
 )
 
 // IBCModule implements the ICS26 interface for interchain accounts controller chains
@@ -24,6 +25,11 @@ func NewIBCModule(k keeper.Keeper) IBCModule {
 	return IBCModule{
 		keeper: k,
 	}
+}
+
+type connectionIdContextKey string
+func (c connectionIdContextKey) String() string {
+    return string(c)
 }
 
 func (im IBCModule) Hooks() keeper.Hooks {
@@ -95,9 +101,21 @@ func (im IBCModule) OnChanOpenAck(
 
 	// addresses
 	withdrawalAddress, err := icatypes.NewControllerPortID(types.FormatICAAccountOwner(hostChainId, types.ICAAccountType_WITHDRAWAL))
+	if err != nil {
+		return err
+	}
 	feeAddress, err := icatypes.NewControllerPortID(types.FormatICAAccountOwner(hostChainId, types.ICAAccountType_FEE))
+	if err != nil {
+		return err
+	}
 	delegationAddress, err := icatypes.NewControllerPortID(types.FormatICAAccountOwner(hostChainId, types.ICAAccountType_DELEGATION))
+	if err != nil {
+		return err
+	}
 	redemptionAddress, err := icatypes.NewControllerPortID(types.FormatICAAccountOwner(hostChainId, types.ICAAccountType_REDEMPTION))
+	if err != nil {
+		return err
+	}
 
 	// Set ICA account addresses
 	switch {
@@ -134,7 +152,7 @@ func (im IBCModule) OnAcknowledgementPacket(
 		ctx.Logger().Error(err.Error())
 		return err
 	}
-	ctx = ctx.WithContext(context.WithValue(ctx.Context(), "connectionId", connectionId))
+	ctx = ctx.WithContext(context.WithValue(ctx.Context(), connectionIdContextKey(connectionId), connectionId))
 	im.keeper.Logger(ctx).Info("HANDLING ACK")
 	return im.keeper.HandleAcknowledgement(ctx, modulePacket, acknowledgement)
 }
