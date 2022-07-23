@@ -4,12 +4,13 @@ import (
 	"fmt"
 	"strconv"
 
-	recordstypes "github.com/Stride-Labs/stride/x/records/types"
-	"github.com/Stride-Labs/stride/x/stakeibc/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+
+	recordstypes "github.com/Stride-Labs/stride/x/records/types"
+	"github.com/Stride-Labs/stride/x/stakeibc/types"
 )
 
 func (k Keeper) CreateEpochUnbondings(ctx sdk.Context, epochNumber int64) bool {
@@ -40,7 +41,6 @@ func (k Keeper) SendHostZoneUnbondings(ctx sdk.Context, hostZone types.HostZone)
 	// regardless of what epoch they belong to
 	totalAmtToUnbond := uint64(0)
 	var msgs []sdk.Msg
-	var allHostZoneUnbondings []*recordstypes.HostZoneUnbonding
 	for _, epochUnbonding := range k.RecordsKeeper.GetAllEpochUnbondingRecord(ctx) {
 		hostZoneRecord, found := epochUnbonding.HostZoneUnbondings[hostZone.ChainId]
 		if !found {
@@ -49,7 +49,6 @@ func (k Keeper) SendHostZoneUnbondings(ctx sdk.Context, hostZone types.HostZone)
 		}
 		if hostZoneRecord.Status == recordstypes.HostZoneUnbonding_BONDED { // we only send the ICA call if this hostZone hasn't triggered yet
 			totalAmtToUnbond += hostZoneRecord.Amount
-			allHostZoneUnbondings = append(allHostZoneUnbondings, hostZoneRecord)
 		}
 	}
 	delegationAccount := hostZone.GetDelegationAccount()
@@ -193,7 +192,7 @@ func (k Keeper) SweepAllUnbondedTokens(ctx sdk.Context) {
 			blockTime, found := k.GetLightClientTimeSafely(ctx, zone.ConnectionId)
 			if !found {
 				k.Logger(ctx).Error(fmt.Sprintf("\t\tCould not find blockTime for host zone %s", zone.ChainId))
-				sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, "\t\tCould not find blockTime for host zone")
+				return sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "\t\tCould not find blockTime for host zone")
 			}
 
 			if (unbonding.Status != recordstypes.HostZoneUnbonding_UNBONDED) &&

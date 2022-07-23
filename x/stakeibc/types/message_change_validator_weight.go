@@ -1,9 +1,10 @@
 package types
 
 import (
-	"github.com/Stride-Labs/stride/utils"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+
+	"github.com/Stride-Labs/stride/utils"
 )
 
 const TypeMsgChangeValidatorWeight = "change_validator_weight"
@@ -47,10 +48,6 @@ func (msg *MsgChangeValidatorWeight) ValidateBasic() error {
 	}
 	if err := utils.ValidateAdminAddress(msg.Creator); err != nil {
 		return err
-	}
-	// validate new weight
-	if msg.Weight < 0 {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "new validator weight must be positive")
 	}
 	return nil
 }
