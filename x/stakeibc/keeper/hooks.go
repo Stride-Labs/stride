@@ -225,6 +225,7 @@ func (k Keeper) StakeExistingDepositsOnHostZones(ctx sdk.Context, epochNumber in
 			err = k.DelegateOnHost(ctx, hostZone, amt)
 			if err != nil {
 				k.Logger(ctx).Error(fmt.Sprintf("Did not stake %s on %s", processAmount, hostZone.ChainId))
+				k.Logger(ctx).Error(err.Error())
 				return
 			} else {
 				k.Logger(ctx).Info(fmt.Sprintf("Successfully submitted stake for %s on %s", processAmount, hostZone.ChainId))
