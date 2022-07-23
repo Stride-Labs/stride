@@ -769,6 +769,9 @@ func (app *StrideApp) ModuleAccountAddrs() map[string]bool {
 	return modAccAddrs
 }
 
+// CHANGE APP.GO
+
+
 // LegacyAmino returns SimApp's amino codec.
 //
 // NOTE: This is solely to be used for testing purposes as it may be desirable
