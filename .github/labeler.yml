@@ -42,8 +42,8 @@
   - x/**/*/*.md
   - tests/**/*.md
 "C:proto":
-  - proto/*
+  - proto/**
 "C:submodules":
-  - deps/*
+  - deps/**
 "C:test":
-  - testutil/*
+  - testutil/**
