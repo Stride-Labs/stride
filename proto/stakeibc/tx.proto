@@ -30,6 +30,7 @@ service Msg {
 // this line is used by starport scaffolding # proto/tx/rpc
 }
 // CHANGE
+// CHANGES
 
 message MsgLiquidStake {
   string creator = 1;

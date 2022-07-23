@@ -4,10 +4,11 @@ import (
 	"testing"
 	"time"
 
-	strideapp "github.com/Stride-Labs/stride/app"
-	"github.com/Stride-Labs/stride/x/stakeibc/keeper"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
+
+	strideapp "github.com/Stride-Labs/stride/app"
+	"github.com/Stride-Labs/stride/x/stakeibc/keeper"
 )
 
 func StakeibcKeeper(t testing.TB) (*keeper.Keeper, sdk.Context) {
@@ -18,3 +19,4 @@ func StakeibcKeeper(t testing.TB) (*keeper.Keeper, sdk.Context) {
 
 	return &stakeibcKeeper, ctx
 }
+// CHANGES

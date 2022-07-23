@@ -35,7 +35,6 @@
 "C:CLI":
   - cmd/**/*
   - x/*/client/**/*
-# Add "C:docs" label to documented related files and directories. 
 "C:docs":
   - README.md
   - x/*.md
