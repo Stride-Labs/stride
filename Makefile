@@ -6,7 +6,7 @@ cache=false
 
 .PHONY: build
 
-all: check-dependencies build-local
+all: lint check-dependencies build-local
 
 ###############################################################################
 ###                            Build & Clean                                ###
@@ -21,6 +21,9 @@ clean:
 
 clean-state:
 	rm -rf scripts-local/state
+
+lint:
+	golangci-lint run
 
 ###############################################################################
 ###                                Tests                                    ###

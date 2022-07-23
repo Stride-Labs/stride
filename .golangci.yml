@@ -1,0 +1,9 @@
+issues:
+  exclude-rules:
+    - text: "SA1019: package github.com/golang/protobuf/proto is deprecated: Use the \"google.golang.org/protobuf/proto\" package instead."
+      linters:
+        - staticcheck
+    - text: "SA1019: clientCtx.JSONCodec is deprecated: Codec codec will be changed to Codec: codec.Codec"
+      linters:
+        - staticcheck
+
