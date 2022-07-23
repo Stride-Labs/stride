@@ -3,11 +3,12 @@ package keeper_test
 import (
 	"fmt"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	_ "github.com/stretchr/testify/suite"
+
 	epochtypes "github.com/Stride-Labs/stride/x/epochs/types"
 	recordtypes "github.com/Stride-Labs/stride/x/records/types"
 	stakeibc "github.com/Stride-Labs/stride/x/stakeibc/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	_ "github.com/stretchr/testify/suite"
 )
 
 type RedeemStakeTestCase struct {
@@ -234,8 +235,8 @@ func (suite *KeeperTestSuite) TestRedeemStakeUserAlreadyRedeemedThisEpoch() {
 
 	invalidMsg := tc.validMsg
 	_, err := suite.msgServer.RedeemStake(sdk.WrapSDKContext(suite.Ctx), &invalidMsg)
+	suite.Require().NoError(err)
 	_, err = suite.msgServer.RedeemStake(sdk.WrapSDKContext(suite.Ctx), &invalidMsg)
-
 	suite.Require().EqualError(err, fmt.Sprintf("user already redeemed this epoch: GAIA.1.%s: redemption record already exists", suite.TestAccs[0]))
 }
 
