@@ -33,11 +33,12 @@
   - .github/**/*.yml
   - .golangci.yml
 "C:CLI":
-  - client/**/*
+  - cmd/**/*
   - x/*/client/**/*
 # Add "C:docs" label to documented related files and directories. 
 "C:docs":
   - README.md
+  - x/*.md
   - x/**/*.md
   - x/**/*/*.md
   - tests/**/*.md
