@@ -3,8 +3,9 @@ package keeper_test
 import (
 	"time"
 
-	"github.com/Stride-Labs/stride/x/epochs/types"
 	_ "github.com/stretchr/testify/suite"
+
+	"github.com/Stride-Labs/stride/x/epochs/types"
 )
 
 func (suite *KeeperTestSuite) TestEpochLifeCycle() {
@@ -29,3 +30,5 @@ func (suite *KeeperTestSuite) TestEpochLifeCycle() {
 	suite.Require().Equal(allEpochs[2].Identifier, "stride_epoch")
 	suite.Require().Equal(allEpochs[3].Identifier, "week")
 }
+
+// EPOCHS

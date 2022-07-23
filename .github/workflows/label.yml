@@ -1,9 +1,10 @@
 name: Labeler
-on:
-  push:
-    branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
+on: [ pull_request_target ]
+
+permissions:
+  contents: read
+  pull-requests: write
+
 
 jobs:
   label:

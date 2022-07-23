@@ -15,15 +15,15 @@
   - x/**/simulation/*.go
 # Label module changes
 "C:epochs":
-  - app/epochs/**/*
+  - x/epochs/**/*
 "C:interchainquery":
-  - app/interchainquery/**/*
+  - x/interchainquery/**/*
 "C:mint":
-  - app/mint/**/*
+  - x/mint/**/*
 "C:stakeibc":
-  - app/stakeibc/**/*
+  - x/stakeibc/**/*
 "C:records":
-  - app/records/**/*
+  - x/records/**/*
 "T:build":
   - Makefile
   - Dockerfile
