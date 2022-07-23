@@ -27,7 +27,7 @@ func BenchmarkEpochProvision(b *testing.B) {
 		minter.EpochProvision(params)
 	}
 }
-
+// CHANGE
 // Next epoch provisions benchmarking
 // BenchmarkNextEpochProvisions-4 5000000 251 ns/op
 func BenchmarkNextEpochProvisions(b *testing.B) {

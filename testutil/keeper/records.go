@@ -4,10 +4,11 @@ import (
 	"testing"
 	"time"
 
-	strideapp "github.com/Stride-Labs/stride/app"
-	"github.com/Stride-Labs/stride/x/records/keeper"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
+
+	strideapp "github.com/Stride-Labs/stride/app"
+	"github.com/Stride-Labs/stride/x/records/keeper"
 )
 
 func RecordsKeeper(t testing.TB) (*keeper.Keeper, sdk.Context) {
@@ -18,3 +19,5 @@ func RecordsKeeper(t testing.TB) (*keeper.Keeper, sdk.Context) {
 
 	return &recordKeeper, ctx
 }
+
+// CHANGE

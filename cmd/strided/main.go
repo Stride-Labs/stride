@@ -3,9 +3,10 @@ package main
 import (
 	"os"
 
-	"github.com/Stride-Labs/stride/app"
 	svrcmd "github.com/cosmos/cosmos-sdk/server/cmd"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	"github.com/Stride-Labs/stride/app"
 
 	cmdcfg "github.com/Stride-Labs/stride/cmd/strided/config"
 )
@@ -19,6 +20,7 @@ func main() {
 		os.Exit(1)
 	}
 }
+// CHANGE
 
 func setupConfig() {
 	// set the address prefixes

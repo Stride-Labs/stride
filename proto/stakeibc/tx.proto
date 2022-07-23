@@ -29,6 +29,7 @@ service Msg {
   rpc RestoreInterchainAccount(MsgRestoreInterchainAccount) returns (MsgRestoreInterchainAccountResponse);
 // this line is used by starport scaffolding # proto/tx/rpc
 }
+// CHANGE
 
 message MsgLiquidStake {
   string creator = 1;

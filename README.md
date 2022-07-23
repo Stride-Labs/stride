@@ -43,7 +43,7 @@ You can learn more about the install process [here](https://github.com/allinbits
 - [Starport docs](https://docs.starport.com)
 - [Cosmos SDK docs](https://docs.cosmos.network)
 - [Developer Chat](https://discord.gg/H6wGTY8sxw)
-
+<!-- CHANGE -->
 ### Developing on Stride
 
 Developers who wish to develop on Stride can easily spin up 3 Stride nodes, 3 Gaia nodes, 1 Hermes relayer and 1 interchain-queries relayer. The Gaia nodes simulate the Cosmos Hub (Gaia) zone in local development node, and the relayers allow Stride zone to interact with that instance of Gaia.

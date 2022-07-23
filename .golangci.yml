@@ -7,3 +7,4 @@ issues:
       linters:
         - staticcheck
 
+# CHANGE
