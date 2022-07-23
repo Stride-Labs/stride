@@ -41,3 +41,6 @@ vue/*
 .DS_Store
 .terraform
 *.pem
+
+.vscode/*
+!.vscode/settings.json
