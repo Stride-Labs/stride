@@ -18,6 +18,7 @@ func RegisterCodec(cdc *codec.LegacyAmino) {
 	cdc.RegisterConcrete(&MsgAddValidator{}, "stakeibc/AddValidator", nil)
 	cdc.RegisterConcrete(&MsgChangeValidatorWeight{}, "stakeibc/ChangeValidatorWeight", nil)
 	cdc.RegisterConcrete(&MsgDeleteValidator{}, "stakeibc/DeleteValidator", nil)
+	cdc.RegisterConcrete(&MsgRestoreInterchainAccount{}, "stakeibc/RestoreInterchainAccount", nil)
 	// this line is used by starport scaffolding # 2
 }
 
@@ -28,22 +29,12 @@ func RegisterInterfaces(registry cdctypes.InterfaceRegistry) {
 		&MsgSubmitTx{},
 		&MsgRegisterHostZone{},
 		&MsgRedeemStake{},
-	)
-	registry.RegisterImplementations((*sdk.Msg)(nil))
-	registry.RegisterImplementations((*sdk.Msg)(nil),
 		&MsgClaimUndelegatedTokens{},
-	)
-	registry.RegisterImplementations((*sdk.Msg)(nil),
 		&MsgRebalanceValidators{},
-	)
-	registry.RegisterImplementations((*sdk.Msg)(nil),
 		&MsgAddValidator{},
-	)
-	registry.RegisterImplementations((*sdk.Msg)(nil),
 		&MsgChangeValidatorWeight{},
-	)
-	registry.RegisterImplementations((*sdk.Msg)(nil),
 		&MsgDeleteValidator{},
+		&MsgRestoreInterchainAccount{},
 	)
 	// this line is used by starport scaffolding # 3
 

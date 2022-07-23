@@ -27,6 +27,8 @@ scripts/temp.sh
 scripts/testnet/*/state/keys.txt
 scripts/tests/validator_selection
 scripts/tests/local_tests.bats
+scripts-local/upgrades/binaries
+scripts-local/upgrades/cosmovisor
 vue/*
 # Test binary, built with `go test -c`
 *.test

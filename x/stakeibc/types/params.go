@@ -15,13 +15,13 @@ var (
 	DefaultReinvestInterval       uint64 = 3
 	DefaultRewardsInterval        uint64 = 3
 	DefaultRedemptionRateInterval uint64 = 3
-	DefaultKeyWithdrawalInterval  uint64 = 3
 	// you apparantly cannot safely encode floats, so we make commission / 100
 	DefaultStrideCommission              uint64 = 10
 	DefaultValidatorRebalancingThreshold uint64 = 100 // divide by 10,000, so 100 = 1%
 	// 10 minutes
-	DefaultICATimeoutNanos uint64 = 600000000000
-	DefaultBufferSize      uint64 = 20
+	DefaultICATimeoutNanos  uint64 = 600000000000
+	DefaultBufferSize       uint64 = 20
+	DefaultIbcTimeoutBlocks uint64 = 300 // 300 blocks ~= 30 minutes
 
 	// KeyDepositInterval is store's key for the DepositInterval option
 	KeyDepositInterval               = []byte("DepositInterval")
@@ -33,6 +33,7 @@ var (
 	KeyValidatorRebalancingThreshold = []byte("ValidatorRebalancingThreshold")
 	KeyICATimeoutNanos               = []byte("ICATimeoutNanos")
 	KeyBufferSize                    = []byte("BufferSize")
+	KeyIbcTimeoutBlocks              = []byte("IBCTimeoutBlocks")
 )
 
 var _ paramtypes.ParamSet = (*Params)(nil)
@@ -53,6 +54,7 @@ func NewParams(
 	validator_rebalancing_threshold uint64,
 	ica_timeout_nanos uint64,
 	buffer_size uint64,
+	ibc_timeout_blocks uint64,
 ) Params {
 	return Params{
 		DepositInterval:               deposit_interval,
@@ -64,6 +66,7 @@ func NewParams(
 		ValidatorRebalancingThreshold: validator_rebalancing_threshold,
 		IcaTimeoutNanos:               ica_timeout_nanos,
 		BufferSize:                    buffer_size,
+		IbcTimeoutBlocks:              ibc_timeout_blocks,
 	}
 }
 
@@ -79,6 +82,7 @@ func DefaultParams() Params {
 		DefaultValidatorRebalancingThreshold,
 		DefaultICATimeoutNanos,
 		DefaultBufferSize,
+		DefaultIbcTimeoutBlocks,
 	)
 }
 
@@ -94,6 +98,7 @@ func (p *Params) ParamSetPairs() paramtypes.ParamSetPairs {
 		paramtypes.NewParamSetPair(KeyValidatorRebalancingThreshold, &p.ValidatorRebalancingThreshold, isThreshold),
 		paramtypes.NewParamSetPair(KeyICATimeoutNanos, &p.IcaTimeoutNanos, isPositive),
 		paramtypes.NewParamSetPair(KeyBufferSize, &p.BufferSize, isPositive),
+		paramtypes.NewParamSetPair(KeyIbcTimeoutBlocks, &p.IbcTimeoutBlocks, isPositive),
 	}
 }
 
