@@ -78,13 +78,13 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochInfo epochstypes.EpochInf
 		depositRecords := k.RecordsKeeper.GetAllDepositRecord(ctx)
 
 		// Update the redemption rate
-		redemptionRateInterval := int64(k.GetParam(ctx, types.KeyDepositInterval))
+		redemptionRateInterval := cast.ToInt64(k.GetParam(ctx, types.KeyDepositInterval))
 		if epochNumber%redemptionRateInterval == 0 {
 			k.Logger(ctx).Info("Triggeting update redemption rate")
 			k.UpdateRedemptionRates(ctx, depositRecords)
 		}
 
-		depositInterval := int64(k.GetParam(ctx, types.KeyDepositInterval))
+		depositInterval := cast.ToInt64(k.GetParam(ctx, types.KeyDepositInterval))
 		if epochNumber%depositInterval == 0 {
 			// process previous deposit records
 			k.TransferExistingDepositsToHostZones(ctx, epochNumber, depositRecords)
