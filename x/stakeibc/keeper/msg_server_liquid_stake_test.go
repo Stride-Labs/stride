@@ -129,7 +129,6 @@ func (s *KeeperTestSuite) TestLiquidStakeSuccessful() {
 	expectedDepositRecordAmount := tc.initialState.depositRecordAmount + stakeAmount.Int64()
 	actualDepositRecordAmount := records[0].Amount
 	s.Require().Equal(expectedDepositRecordAmount, actualDepositRecordAmount, "deposit record amount")
-	s.Require().Equal(1, 2, "should fail")
 }
 
 func (s *KeeperTestSuite) TestLiquidStakeDifferentRedemptionRates() {
