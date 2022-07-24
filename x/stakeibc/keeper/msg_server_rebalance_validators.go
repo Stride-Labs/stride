@@ -8,6 +8,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	stakingTypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	"github.com/spf13/cast"
 
 	"github.com/Stride-Labs/stride/utils"
 	"github.com/Stride-Labs/stride/x/stakeibc/types"
@@ -42,7 +43,7 @@ func (k msgServer) RebalanceValidators(goCtx context.Context, msg *types.MsgReba
 		k.Logger(ctx).Error(fmt.Sprintf("Host Zone not found %s", msg.HostZone))
 		return nil, types.ErrInvalidHostZone
 	}
-	maxNumRebalance := int(msg.NumRebalance)
+	maxNumRebalance := cast.ToInt(msg.NumRebalance)
 	if maxNumRebalance < 1 {
 		k.Logger(ctx).Error(fmt.Sprintf("Invalid number of validators to rebalance %d", maxNumRebalance))
 		return nil, types.ErrNoValidatorWeights
