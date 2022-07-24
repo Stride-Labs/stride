@@ -4,8 +4,8 @@
 
 Evmos x/vesting (from Agoric)
 - Osmosis' clawback vesting, in the _auth_ module https://github.com/osmosis-labs/cosmos-sdk/tree/osmosis-main/x/auth/vesting
-- https://docs.evmos.org/modules/vesting/ (removes all vesting account types other than clawback type)
-- https://github.com/evmos/evmos/blob/main/x/vesting/spec/README.md
+- https://docs.evmos.org/modules/vesting/ 
+- https://github.com/evmos/evmos/blob/main/x/vesting/spec/README.md (removes all vesting account types other than clawback type)
 - https://docs.cosmos.network/main/modules/auth/05_vesting.html
 - https://github.com/Agoric/agoric-sdk/issues/4085
 - https://github.com/agoric-labs/cosmos-sdk/tree/Agoric/x/auth/vesting/cmd/vestcalc
