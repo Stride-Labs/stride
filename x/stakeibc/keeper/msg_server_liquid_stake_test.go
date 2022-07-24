@@ -3,12 +3,13 @@ package keeper_test
 import (
 	"fmt"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	_ "github.com/stretchr/testify/suite"
+
 	epochtypes "github.com/Stride-Labs/stride/x/epochs/types"
 	recordtypes "github.com/Stride-Labs/stride/x/records/types"
 	"github.com/Stride-Labs/stride/x/stakeibc/types"
 	stakeibc "github.com/Stride-Labs/stride/x/stakeibc/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	_ "github.com/stretchr/testify/suite"
 )
 
 const (
