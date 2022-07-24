@@ -101,12 +101,12 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochInfo epochstypes.EpochInf
 		// records always accurately reflect the state of the controller / host chain by the next epoch.
 		// Put another way, all outstanding ICA calls / IBC transfers must be settled on the controller
 		// chain before the next epoch begins.
-		delegationInterval := int64(k.GetParam(ctx, types.KeyDelegateInterval))
+		delegationInterval := cast.ToInt64(k.GetParam(ctx, types.KeyDelegateInterval))
 		if epochNumber%delegationInterval == 0 {
 			k.StakeExistingDepositsOnHostZones(ctx, epochNumber, depositRecords)
 		}
 
-		reinvestInterval := int64(k.GetParam(ctx, types.KeyReinvestInterval))
+		reinvestInterval := cast.ToInt64(k.GetParam(ctx, types.KeyReinvestInterval))
 		if epochNumber%reinvestInterval == 0 { // allow a few blocks from UpdateUndelegatedBal to avoid conflicts
 			for _, hz := range k.GetAllHostZone(ctx) {
 				if (&hz).WithdrawalAccount != nil { // only process host zones once withdrawal accounts are registered
