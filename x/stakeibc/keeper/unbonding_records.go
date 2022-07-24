@@ -32,7 +32,7 @@ func (k Keeper) CreateEpochUnbondings(ctx sdk.Context, epochNumber int64) bool {
 	k.IterateHostZones(ctx, addEpochUndelegation)
 	epochUnbondingRecord := recordstypes.EpochUnbondingRecord{
 		Id:                   0,
-		UnbondingEpochNumber: uint64(epochNumber),
+		UnbondingEpochNumber: cast.ToUint64(epochNumber),
 		HostZoneUnbondings:   hostZoneUnbondings,
 	}
 	k.RecordsKeeper.AppendEpochUnbondingRecord(ctx, epochUnbondingRecord)

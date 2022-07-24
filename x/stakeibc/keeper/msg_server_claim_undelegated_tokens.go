@@ -4,13 +4,16 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/spf13/cast"
+
 	recordstypes "github.com/Stride-Labs/stride/x/records/types"
 
-	epochstypes "github.com/Stride-Labs/stride/x/epochs/types"
-	"github.com/Stride-Labs/stride/x/stakeibc/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	bankTypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+
+	epochstypes "github.com/Stride-Labs/stride/x/epochs/types"
+	"github.com/Stride-Labs/stride/x/stakeibc/types"
 )
 
 type IcaTx struct {
@@ -82,7 +85,7 @@ func (k Keeper) GetRedemptionTransferMsg(ctx sdk.Context, userRedemptionRecord *
 	msgs = append(msgs, &bankTypes.MsgSend{
 		FromAddress: redemptionAccount.Address,
 		ToAddress:   userRedemptionRecord.Receiver,
-		Amount:      sdk.NewCoins(sdk.NewInt64Coin(userRedemptionRecord.Denom, int64(userRedemptionRecord.Amount))),
+		Amount:      sdk.NewCoins(sdk.NewInt64Coin(userRedemptionRecord.Denom, cast.ToInt64(userRedemptionRecord.Amount))),
 	})
 
 	// Give claims a 10 minute timeout
@@ -92,7 +95,7 @@ func (k Keeper) GetRedemptionTransferMsg(ctx sdk.Context, userRedemptionRecord *
 		k.Logger(ctx).Error(errMsg)
 		return nil, sdkerrors.Wrap(types.ErrEpochNotFound, errMsg)
 	}
-	timeout := uint64(epoch_tracker.NextEpochStartTime) + uint64(k.GetParam(ctx, types.KeyICATimeoutNanos))
+	timeout := cast.ToUint64(epoch_tracker.NextEpochStartTime) + cast.ToUint64(k.GetParam(ctx, types.KeyICATimeoutNanos))
 
 	icaTx := IcaTx{
 		ConnectionId: hostZone.GetConnectionId(),
