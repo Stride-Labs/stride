@@ -5,10 +5,12 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/Stride-Labs/stride/x/stakeibc/types"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	"github.com/spf13/cast"
+
+	"github.com/Stride-Labs/stride/x/stakeibc/types"
 )
 
 // GetHostZoneCount get the total number of hostZone
@@ -98,10 +100,10 @@ func (k Keeper) AddDelegationToValidator(ctx sdk.Context, hostZone types.HostZon
 		k.Logger(ctx).Info(fmt.Sprintf("Validator %s %d %d", val.GetAddress(), val.GetDelegationAmt(), amt))
 		if val.GetAddress() == valAddr {
 			if amt >= 0 {
-				val.DelegationAmt = val.GetDelegationAmt() + uint64(amt)
+				val.DelegationAmt = val.GetDelegationAmt() + cast.ToUint64(amt)
 				return true
 			} else {
-				absAmt := uint64(-amt)
+				absAmt := cast.ToUint64(-amt)
 				if absAmt > val.GetDelegationAmt() {
 					k.Logger(ctx).Error(fmt.Sprintf("Delegation amount %d is greater than validator %s delegation amount %d", absAmt, valAddr, val.GetDelegationAmt()))
 					return false
