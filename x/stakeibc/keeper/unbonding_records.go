@@ -9,6 +9,8 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
+	utils "github.com/Stride-Labs/stride/utils"
+
 	recordstypes "github.com/Stride-Labs/stride/x/records/types"
 	"github.com/Stride-Labs/stride/x/stakeibc/types"
 )
@@ -143,7 +145,9 @@ func (k Keeper) CleanupEpochUnbondingRecords(ctx sdk.Context) bool {
 	for _, epochUnbondingRecord := range k.RecordsKeeper.GetAllEpochUnbondingRecord(ctx) {
 		k.Logger(ctx).Info(fmt.Sprintf("Cleaning up epoch unbondings for epoch unbonding record from epoch %d", epochUnbondingRecord.GetId()))
 		shouldDeleteRecord := true
-		for _, hostZoneUnbonding := range epochUnbondingRecord.GetHostZoneUnbondings() {
+		hostZoneUnbondings := epochUnbondingRecord.GetHostZoneUnbondings()
+		for _, key := range utils.HostZoneUnbondingKeys(hostZoneUnbondings) {
+			hostZoneUnbonding := hostZoneUnbondings[key]
 			if (hostZoneUnbonding.Status != recordstypes.HostZoneUnbonding_TRANSFERRED) && (hostZoneUnbonding.GetAmount() != 0) {
 				shouldDeleteRecord = false
 				break

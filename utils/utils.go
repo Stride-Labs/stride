@@ -2,6 +2,7 @@ package utils
 
 import (
 	"fmt"
+	"sort"
 	"strconv"
 
 	"errors"
@@ -47,6 +48,16 @@ func Min(a int, b int) int {
 	}
 	return b
 }
+
+func HostZoneUnbondingKeys(m map[string]*recordstypes.HostZoneUnbonding) []string {
+	keys := make([]string, 0, len(m))
+	for k := range m {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	return keys
+}
+
 
 //==============================  ADDRESS VERIFICATION UTILS  ================================
 // ref: https://github.com/cosmos/cosmos-sdk/blob/b75c2ebcfab1a6b535723f1ac2889a2fc2509520/types/address.go#L177
