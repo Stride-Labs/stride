@@ -98,19 +98,26 @@ cp -r $SCRIPT_DIR/state $SCRIPT_DIR/.state.backup
 
 if [ "$CACHE" != "true" ]; then
     # Submit a transaction on stride to register the gaia host zone
-    echo "Creating host zone..."
+    echo "Creating Gaia host zone..."
     $STRIDE_CMD tx stakeibc register-host-zone \
         connection-0 $ATOM_DENOM cosmos $IBC_ATOM_DENOM channel-0 1 \
         --chain-id $STRIDE_CHAIN --home $STATE/stride \
         --keyring-backend test --from $STRIDE_VAL_ACCT --gas 1000000 -y
+    CSLEEP 15
+    echo "Creating Juno host zone..."
+    $STRIDE_CMD tx stakeibc register-host-zone \
+    connection-1 $JUNO_DENOM juno $IBC_JUNO_DENOM channel-1 1 \
+    --chain-id $STRIDE_CHAIN --home $STATE/stride \
+    --keyring-backend test --from $STRIDE_VAL_ACCT --gas 1000000 -y
 fi
 # sleep a while longer to wait for ICA accounts to set up
 sleep 60
 
-echo "Registering validators on host zone..."
+echo "Registering validators on host zones..."
 
 CSLEEP 10
-$GAIA_CMD tx bank send gval1 $GAIA_VAL_2_ADDR 10000uatom --chain-id $GAIA_CHAIN --keyring-backend test -y
+$GAIA_CMD tx bank send $GAIA_VAL_ACCT $GAIA_VAL_2_ADDR 10000uatom --chain-id $GAIA_CHAIN --keyring-backend test -y
+$STRIDE_CMD tx stakeibc add-validator JUNO $JUNO_VAL_ACCT $JUNO_DELEGATE_VAL 10 5 --chain-id $STRIDE_CHAIN --keyring-backend test --from $STRIDE_VAL_ACCT -y
 CSLEEP 10
 $GAIA_CMD tx bank send gval1 $GAIA_VAL_3_ADDR 10000uatom --chain-id $GAIA_CHAIN --keyring-backend test -y
 
@@ -120,10 +127,7 @@ CSLEEP 30
 $STRIDE_CMD tx stakeibc add-validator GAIA gval2 $GAIA_DELEGATE_VAL_2 10 10 --chain-id $STRIDE_CHAIN --keyring-backend test --from $STRIDE_VAL_ACCT -y
 CSLEEP 30
 
-$STRIDE_CMD tx stakeibc register-host-zone \
-    connection-1 $JUNO_DENOM juno $IBC_JUNO_DENOM channel-1 1 \
-    --chain-id $STRIDE_CHAIN --home $STATE/stride \
-    --keyring-backend test --from $STRIDE_VAL_ACCT --gas 1000000 -y
+
 
 # Add more detailed log files
 $SCRIPT_DIR/create_logs.sh &

@@ -5,7 +5,7 @@ setup_file() {
   SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
   PATH="$SCRIPT_DIR/../../:$PATH"
 
-  # set allows us to export all variables in account_vars
+  set allows us to export all variables in account_vars
   set -a
   source scripts-local/account_vars.sh
 
@@ -28,7 +28,6 @@ setup_file() {
   CEIL () {
     printf "%.0f\n" $(ADD $1 1)
   } 
-
   set +a
 }
 
@@ -37,7 +36,7 @@ setup() {
   SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
   PATH="$SCRIPT_DIR/../../:$PATH"
 
-  
+
   # if these extensions don't load properly, adjust the paths accoring to these instructions  
   TEST_BREW_PREFIX="$(brew --prefix)"
   load "${TEST_BREW_PREFIX}/lib/bats-support/load.bash"
@@ -76,7 +75,6 @@ setup() {
   assert_equal $GAIA_DELEGATE_VAL "cosmosvaloper1pcag0cj4ttxg8l7pcg0q4ksuglswuuedadj7ne"
   assert_equal $GAIA_DELEGATE_VAL_2 "cosmosvaloper133lfs9gcpxqj6er3kx605e3v9lqp2pg5syhvsz"
   assert_equal $GAIA_RECEIVER_ACCT "cosmos1g6qdx6kdhpf000afvvpte7hp0vnpzapuyxp8uf"
-
 }
 
 @test "[INTEGRATION-BASIC] ibc transfer updates all balances" {
