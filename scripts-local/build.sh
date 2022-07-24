@@ -10,6 +10,8 @@ while getopts sghi flag; do
     case "${flag}" in
         s) printf '%s' "Building Stride... ";
            go build -mod=readonly -trimpath -o $BUILDDIR ./...;
+           mkdir -p $BUILDDIR/stride2
+           go build -mod=readonly -trimpath -o $BUILDDIR/stride2 ./... 2>&1 | grep -v -E "deprecated|keychain" || true; 
            echo "Done" ;;
         g) printf '%s' "Building Gaia...   ";
            cd deps/gaia; 
