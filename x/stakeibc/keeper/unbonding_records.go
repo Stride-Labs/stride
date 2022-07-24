@@ -8,6 +8,7 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	"github.com/spf13/cast"
 
 	utils "github.com/Stride-Labs/stride/utils"
 
@@ -68,8 +69,8 @@ func (k Keeper) SendHostZoneUnbondings(ctx sdk.Context, hostZone types.HostZone)
 	overflowAmt := int64(0)
 	for _, validator := range validators {
 		valAddr := validator.GetAddress()
-		valUnbondAmt := int64(newUnbondingToValidator[valAddr])
-		currentAmtStaked := int64(validator.GetDelegationAmt())
+		valUnbondAmt := cast.ToInt64(newUnbondingToValidator[valAddr])
+		currentAmtStaked := cast.ToInt64(validator.GetDelegationAmt())
 		if valUnbondAmt > currentAmtStaked { // if we don't have enough assets to unbond
 			overflowAmt += valUnbondAmt - currentAmtStaked
 			valUnbondAmt = currentAmtStaked
@@ -82,7 +83,7 @@ func (k Keeper) SendHostZoneUnbondings(ctx sdk.Context, hostZone types.HostZone)
 			valUnbondAmt := valAddrToUnbondAmt[valAddr]
 			currentAmtStaked := validator.GetDelegationAmt()
 			// store how many more tokens we could unbond, if needed
-			amtToPotentiallyUnbond := int64(currentAmtStaked) - valUnbondAmt
+			amtToPotentiallyUnbond := cast.ToInt64(currentAmtStaked) - valUnbondAmt
 			if amtToPotentiallyUnbond > 0 { // if we can afford to unbond more
 				if amtToPotentiallyUnbond > overflowAmt { // we can fully cover the overflow
 					valAddrToUnbondAmt[valAddr] += overflowAmt
@@ -101,7 +102,7 @@ func (k Keeper) SendHostZoneUnbondings(ctx sdk.Context, hostZone types.HostZone)
 	}
 	for _, valAddr := range utils.StringToIntMapKeys(valAddrToUnbondAmt) {
 		valUnbondAmt := valAddrToUnbondAmt[valAddr]
-		stakeAmt := sdk.NewInt64Coin(hostZone.HostDenom, int64(valUnbondAmt))
+		stakeAmt := sdk.NewInt64Coin(hostZone.HostDenom, cast.ToInt64(valUnbondAmt))
 
 		msgs = append(msgs, &stakingtypes.MsgUndelegate{
 			DelegatorAddress: delegationAccount.GetAddress(),
@@ -226,7 +227,7 @@ func (k Keeper) SweepAllUnbondedTokens(ctx sdk.Context) {
 				delegationAccount := zoneInfo.GetDelegationAccount()
 				redemptionAccount := zoneInfo.GetRedemptionAccount()
 
-				sweepCoin := sdk.NewCoin(zoneInfo.HostDenom, sdk.NewInt(int64(totalAmtTransferToRedemptionAcct)))
+				sweepCoin := sdk.NewCoin(zoneInfo.HostDenom, sdk.NewInt(cast.ToInt64(totalAmtTransferToRedemptionAcct)))
 				var msgs []sdk.Msg
 				// construct the msg
 				msgs = append(msgs, &banktypes.MsgSend{FromAddress: delegationAccount.GetAddress(),
