@@ -3,12 +3,13 @@ package keeper_test
 import (
 	"fmt"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	_ "github.com/stretchr/testify/suite"
+
 	epochtypes "github.com/Stride-Labs/stride/x/epochs/types"
 	recordtypes "github.com/Stride-Labs/stride/x/records/types"
 	"github.com/Stride-Labs/stride/x/stakeibc/types"
 	stakeibc "github.com/Stride-Labs/stride/x/stakeibc/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	_ "github.com/stretchr/testify/suite"
 )
 
 const (
@@ -128,6 +129,7 @@ func (s *KeeperTestSuite) TestLiquidStakeSuccessful() {
 	expectedDepositRecordAmount := tc.initialState.depositRecordAmount + stakeAmount.Int64()
 	actualDepositRecordAmount := records[0].Amount
 	s.Require().Equal(expectedDepositRecordAmount, actualDepositRecordAmount, "deposit record amount")
+	s.Require().Equal(1, 2, "should fail")
 }
 
 func (s *KeeperTestSuite) TestLiquidStakeDifferentRedemptionRates() {
