@@ -4,9 +4,6 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/Stride-Labs/stride/x/records/keeper"
-	"github.com/Stride-Labs/stride/x/records/types"
-	stakeibctypes "github.com/Stride-Labs/stride/x/stakeibc/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
@@ -14,9 +11,11 @@ import (
 	channeltypes "github.com/cosmos/ibc-go/v3/modules/core/04-channel/types"
 	porttypes "github.com/cosmos/ibc-go/v3/modules/core/05-port/types"
 
-	// "google.golang.org/protobuf/proto" <-- this breaks tx parsing
+	"github.com/Stride-Labs/stride/x/records/keeper"
+	"github.com/Stride-Labs/stride/x/records/types"
+	stakeibctypes "github.com/Stride-Labs/stride/x/stakeibc/types"
 
-	// host "github.com/cosmos/ibc-go/v3/modules/core/24-host"
+	// "google.golang.org/protobuf/proto" <-- this breaks tx parsing
 
 	ibcexported "github.com/cosmos/ibc-go/v3/modules/core/exported"
 )
@@ -55,7 +54,7 @@ func (im IBCModule) OnChanOpenInit(
 	// }
 	_, appVersion := channeltypes.SplitChannelVersion(version)
 	// doCustomLogic()
-	im.app.OnChanOpenInit(
+	return im.app.OnChanOpenInit(
 		ctx,
 		order,
 		connectionHops,
@@ -65,7 +64,6 @@ func (im IBCModule) OnChanOpenInit(
 		counterparty,
 		appVersion, // note we only pass app version here
 	)
-	return nil
 }
 
 // OnChanOpenTry implements the IBCModule interface.
@@ -99,7 +97,6 @@ func (im IBCModule) OnChanOpenTry(
 	}
 	ctx.Logger().Info(fmt.Sprintf("IBC Chan Open Version %s: ", version))
 	ctx.Logger().Info(fmt.Sprintf("IBC Chan Open cpAppVersion %s: ", cpAppVersion))
-	_ = version
 	return version, nil
 }
 
@@ -115,8 +112,7 @@ func (im IBCModule) OnChanOpenAck(
 	// _, _ := channeltypes.SplitChannelVersion(counterpartyVersion)
 	// doCustomLogic()
 	// call the underlying applications OnChanOpenTry callback
-	im.app.OnChanOpenAck(ctx, portID, channelID, counterpartyChannelId, counterpartyVersion)
-	return nil
+	return im.app.OnChanOpenAck(ctx, portID, channelID, counterpartyChannelId, counterpartyVersion)
 }
 
 // OnChanOpenConfirm implements the IBCModule interface
@@ -126,8 +122,7 @@ func (im IBCModule) OnChanOpenConfirm(
 	channelID string,
 ) error {
 	// doCustomLogic()
-	im.app.OnChanOpenConfirm(ctx, portID, channelID)
-	return nil
+	return im.app.OnChanOpenConfirm(ctx, portID, channelID)
 }
 
 // OnChanCloseInit implements the IBCModule interface
@@ -137,8 +132,7 @@ func (im IBCModule) OnChanCloseInit(
 	channelID string,
 ) error {
 	// doCustomLogic()
-	im.app.OnChanCloseInit(ctx, portID, channelID)
-	return nil
+	return im.app.OnChanCloseInit(ctx, portID, channelID)
 }
 
 // OnChanCloseConfirm implements the IBCModule interface
@@ -148,8 +142,7 @@ func (im IBCModule) OnChanCloseConfirm(
 	channelID string,
 ) error {
 	// doCustomLogic()
-	im.app.OnChanCloseConfirm(ctx, portID, channelID)
-	return nil
+	return im.app.OnChanCloseConfirm(ctx, portID, channelID)
 }
 
 // OnRecvPacket implements the IBCModule interface. A successful acknowledgement
@@ -161,14 +154,11 @@ func (im IBCModule) OnRecvPacket(
 	relayer sdk.AccAddress,
 ) ibcexported.Acknowledgement {
 	wrapperAck := channeltypes.NewResultAcknowledgement([]byte{byte(1)})
+	// handle(wrapperAck)
 	_ = wrapperAck
 	// NOTE: acknowledgement will be written synchronously during IBC handler execution.
 	// doCustomLogic(packet)
-	transferAck := im.app.OnRecvPacket(ctx, packet, relayer)
-	_ = transferAck
-
-	// doCustomLogic(transferAck) // middleware may modify outgoing ack
-	return wrapperAck
+	return im.app.OnRecvPacket(ctx, packet, relayer)
 }
 
 // OnAcknowledgementPacket implements the IBCModule interface
@@ -206,7 +196,7 @@ func (im IBCModule) OnAcknowledgementPacket(
 				return sdkerrors.Wrapf(sdkerrors.ErrInvalidType, "Error parsing int %d", amount)
 			}
 			record, found := im.keeper.GetTransferDepositRecordByAmount(ctx, amount)
-			if found == false {
+			if !found {
 				return sdkerrors.Wrapf(sdkerrors.ErrNotFound, "No deposit record found for amount: %d", amount)
 			}
 			// update the record
@@ -220,7 +210,7 @@ func (im IBCModule) OnAcknowledgementPacket(
 		}
 	}
 
-	return nil
+	return im.app.OnAcknowledgementPacket(ctx, packet, acknowledgement, relayer)
 }
 
 // OnTimeoutPacket implements the IBCModule interface
@@ -230,8 +220,7 @@ func (im IBCModule) OnTimeoutPacket(
 	relayer sdk.AccAddress,
 ) error {
 	// doCustomLogic(packet)
-	im.app.OnTimeoutPacket(ctx, packet, relayer)
-	return nil
+	return im.app.OnTimeoutPacket(ctx, packet, relayer)
 }
 
 // This is implemented by ICS4 and all middleware that are wrapping base application.
@@ -258,7 +247,7 @@ func (im IBCModule) WriteAcknowledgement(
 
 // GetAppVersion returns the interchain accounts metadata.
 func (im IBCModule) GetAppVersion(ctx sdk.Context, portID, channelID string) (string, bool) {
-	return "ics20-1", true // im.keeper.GetAppVersion(ctx, portID, channelID)
+	return ibctransfertypes.Version, true // im.keeper.GetAppVersion(ctx, portID, channelID)
 }
 
 // APP MODULE IMPLEMENTATION

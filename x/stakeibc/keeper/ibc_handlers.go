@@ -5,9 +5,6 @@ import (
 	"fmt"
 	time "time"
 
-	epochtypes "github.com/Stride-Labs/stride/x/epochs/types"
-	recordstypes "github.com/Stride-Labs/stride/x/records/types"
-	"github.com/Stride-Labs/stride/x/stakeibc/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
@@ -15,6 +12,10 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	channeltypes "github.com/cosmos/ibc-go/v3/modules/core/04-channel/types"
 	"github.com/golang/protobuf/proto"
+
+	epochtypes "github.com/Stride-Labs/stride/x/epochs/types"
+	recordstypes "github.com/Stride-Labs/stride/x/records/types"
+	"github.com/Stride-Labs/stride/x/stakeibc/types"
 
 	icatypes "github.com/cosmos/ibc-go/v3/modules/apps/27-interchain-accounts/types"
 )
@@ -246,13 +247,6 @@ func (k *Keeper) HandleSend(ctx sdk.Context, msg sdk.Msg, sequence string) error
 				k.Logger(ctx).Error("epochUnbondingRecord.Id == dayEpochTracker.EpochNumber")
 				continue
 			}
-			// filter out HostZoneUnbondingRecords that are not in a "pending" state
-			// this protects against an edge case where a HostZoneUnbondingRecord becomes unbonded after the epoch has been completed
-			// but before the ack is received
-			hostZoneUnbondings := epochUnbondingRecord.GetHostZoneUnbondings()
-			if len(hostZoneUnbondings) == 0 {
-				hostZoneUnbondings = make(map[string]*recordstypes.HostZoneUnbonding)
-			}
 			hostZoneUnbonding := epochUnbondingRecord.HostZoneUnbondings[zone.ChainId]
 			// NOTE: at the beginning of the epoch we mark all PENDING_TRANSFER HostZoneUnbondingRecords as UNBONDED
 			// so that they're retried if the transfer fails
@@ -268,7 +262,7 @@ func (k *Keeper) HandleSend(ctx sdk.Context, msg sdk.Msg, sequence string) error
 					k.Logger(ctx).Error("failed to find user redemption record")
 					return sdkerrors.Wrapf(types.ErrRecordNotFound, "no user redemption record found for id (%s)", recordId)
 				}
-				if userRedemptionRecord.IsClaimable == true {
+				if userRedemptionRecord.IsClaimable {
 					k.Logger(ctx).Info("user redemption record is already claimable")
 					continue
 				}
@@ -384,10 +378,6 @@ func (k Keeper) HandleUndelegate(ctx sdk.Context, msg sdk.Msg, completionTime ti
 	for _, epochUnbonding := range k.RecordsKeeper.GetAllEpochUnbondingRecord(ctx) {
 		if epochUnbonding.UnbondingEpochNumber == currentEpochNumber {
 			continue
-		}
-		hostZoneUnbondings := epochUnbonding.GetHostZoneUnbondings()
-		if len(hostZoneUnbondings) == 0 {
-			hostZoneUnbondings = make(map[string]*recordstypes.HostZoneUnbonding)
 		}
 		hostZoneRecord, found := epochUnbonding.HostZoneUnbondings[zone.ChainId]
 		if !found {
