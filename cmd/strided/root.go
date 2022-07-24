@@ -255,7 +255,7 @@ func (a appCreator) newApp(logger log.Logger, db dbm.DB, traceStore io.Writer, a
 
 	skipUpgradeHeights := make(map[int64]bool)
 	for _, h := range cast.ToIntSlice(appOpts.Get(server.FlagUnsafeSkipUpgrades)) {
-		skipUpgradeHeights[int64(h)] = true
+		skipUpgradeHeights[cast.ToInt64(h)] = true
 	}
 
 	pruningOpts, err := server.GetPruningOptionsFromFlags(appOpts)
