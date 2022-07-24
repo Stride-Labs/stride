@@ -8,6 +8,8 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/snapshots"
 
+	utils "github.com/Stride-Labs/stride/utils"
+
 	"github.com/spf13/cast"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
@@ -349,7 +351,9 @@ func overwriteFlagDefaults(c *cobra.Command, defaults map[string]string) {
 			}
 		}
 	}
-	for key, val := range defaults {
+
+	for _, key := range utils.StringToStringMapKeys(defaults) {
+		val := defaults[key]
 		set(c.Flags(), key, val)
 		set(c.PersistentFlags(), key, val)
 	}
