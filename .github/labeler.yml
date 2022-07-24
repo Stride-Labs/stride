@@ -47,3 +47,5 @@
   - deps/**
 "C:test":
   - testutil/**
+"dependencies":
+  - go.*
