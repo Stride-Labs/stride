@@ -24,7 +24,7 @@ import (
 // NOTE: this is not a standard message; only the stakeibc module should call this function. However,
 // this is temporarily in the message server to facilitate easy testing and development.
 // TODO(TEST-53): Remove this pre-launch (no need for clients to create / interact with ICAs)
-func (k Keeper) SubmitTx(goCtx context.Context, msg *types.MsgSubmitTx) (*types.MsgSubmitTxResponse, error) {
+func (k msgServer) SubmitTx(goCtx context.Context, msg *types.MsgSubmitTx) (*types.MsgSubmitTxResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	_ = ctx
 
