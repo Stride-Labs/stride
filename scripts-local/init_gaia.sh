@@ -21,6 +21,8 @@ for NODE_NAME in gaia gaia2; do
     sed -i -E 's|"stake"|"uatom"|g' "${STATE}/${NODE_NAME}/config/genesis.json"
     sed -i -E 's|"full"|"validator"|g' "${STATE}/${NODE_NAME}/config/config.toml"
     sed -i -E "s|timeout_commit = \"5s\"|timeout_commit = \"${BLOCK_TIME}\"|g" "${STATE}/${NODE_NAME}/config/config.toml"
+    sed -i -E "s|chain-id = \"\"|chain-id = \"${GAIA_CHAIN}\"|g" "${STATE}/${NODE_NAME}/config/client.toml"
+    sed -i -E "s|keyring-backend = \"os\"|keyring-backend = \"test\"|g" "${STATE}/${NODE_NAME}/config/client.toml"
 done
 
 MAIN_NODE_ID=$($GAIA_CMD tendermint show-node-id)@localhost:$GAIA_PEER_PORT,
@@ -60,46 +62,46 @@ sed -i -E "s|persistent_peers = \"\"|persistent_peers = \"$MAIN_NODE_ID\"|g" "${
 mkdir $GAIA_HOME/config/gentx/
 
 # ============================== SETUP CHAIN 2 ======================================
-echo $GAIA_VAL_MNEMONIC_2 | $GAIA_CMD_2 keys add $GAIA_VAL_ACCT_2 --recover --keyring-backend=test 
+echo $GAIA_VAL_MNEMONIC_2 | $GAIA_CMD_2 keys add $GAIA_VAL_ACCT_2 --recover
 $GAIA_CMD_2 add-genesis-account $GAIA_VAL_2_ADDR 500000000000000uatom
 $GAIA_CMD add-genesis-account $GAIA_VAL_2_ADDR 500000000000000uatom
-$GAIA_CMD_2 gentx $GAIA_VAL_ACCT_2 1000000000uatom --chain-id $GAIA_CHAIN --keyring-backend test --output-document=$GAIA_HOME/config/gentx/gval2.json
+$GAIA_CMD_2 gentx $GAIA_VAL_ACCT_2 1000000000uatom --chain-id $GAIA_CHAIN --output-document=$GAIA_HOME/config/gentx/gval2.json
 
 # ============================== SETUP CHAIN 3 ======================================
-# echo $GAIA_VAL_MNEMONIC_3 | $GAIA_CMD_3 keys add $GAIA_VAL_ACCT_3 --recover --keyring-backend=test 
+# echo $GAIA_VAL_MNEMONIC_3 | $GAIA_CMD_3 keys add $GAIA_VAL_ACCT_3 --recover 
 # $GAIA_CMD_3 add-genesis-account $GAIA_VAL_3_ADDR 500000000000000uatom
 # $GAIA_CMD add-genesis-account $GAIA_VAL_3_ADDR 500000000000000uatom
-# $GAIA_CMD_3 gentx $GAIA_VAL_ACCT_3 1000000000uatom --chain-id $GAIA_CHAIN --keyring-backend test --output-document=$GAIA_HOME/config/gentx/gval3.json
+# $GAIA_CMD_3 gentx $GAIA_VAL_ACCT_3 1000000000uatom --output-document=$GAIA_HOME/config/gentx/gval3.json
 
 # set the unbonding time
 GAIA_CFG_TMP="${STATE}/${GAIA_NODE_NAME}/config/genesis.json"
 jq '.app_state.staking.params.unbonding_time = $newVal' --arg newVal "200s" $GAIA_CFG_TMP > json.tmp && mv json.tmp $GAIA_CFG_TMP
 
 # add validator account
-echo $GAIA_VAL_MNEMONIC | $GAIA_CMD keys add $GAIA_VAL_ACCT --recover --keyring-backend=test 
+echo $GAIA_VAL_MNEMONIC | $GAIA_CMD keys add $GAIA_VAL_ACCT --recover 
 # get validator address
-val_addr=$($GAIA_CMD keys show $GAIA_VAL_ACCT --keyring-backend test -a) > /dev/null
+val_addr=$($GAIA_CMD keys show $GAIA_VAL_ACCT -a) > /dev/null
 # add money for this validator account
 $GAIA_CMD add-genesis-account ${val_addr} 500000000000000uatom
 # actually set this account as a validator
-$GAIA_CMD gentx $GAIA_VAL_ACCT 1000000000uatom --chain-id $GAIA_CHAIN --keyring-backend test 2> /dev/null
+$GAIA_CMD gentx $GAIA_VAL_ACCT 1000000000uatom --chain-id $GAIA_CHAIN 2> /dev/null
 
 # Add hermes relayer account
-echo $HERMES_GAIA_MNEMONIC | $GAIA_CMD keys add $HERMES_GAIA_ACCT --recover --keyring-backend=test 
-HERMES_GAIA_ADDRESS=$($GAIA_CMD keys show $HERMES_GAIA_ACCT --keyring-backend test -a)
+echo $HERMES_GAIA_MNEMONIC | $GAIA_CMD keys add $HERMES_GAIA_ACCT --recover 
+HERMES_GAIA_ADDRESS=$($GAIA_CMD keys show $HERMES_GAIA_ACCT -a)
 # Give relayer account token balance
 $GAIA_CMD add-genesis-account ${HERMES_GAIA_ADDRESS} 5000000000000uatom
 
 # Add ICQ relayer account
-echo $ICQ_GAIA_MNEMONIC | $GAIA_CMD keys add $ICQ_GAIA_ACCT --recover --keyring-backend=test 
-ICQ_GAIA_ADDRESS=$($GAIA_CMD keys show $ICQ_GAIA_ACCT --keyring-backend test -a)
+echo $ICQ_GAIA_MNEMONIC | $GAIA_CMD keys add $ICQ_GAIA_ACCT --recover 
+ICQ_GAIA_ADDRESS=$($GAIA_CMD keys show $ICQ_GAIA_ACCT -a)
 # Give relayer account token balance
 $GAIA_CMD add-genesis-account ${ICQ_GAIA_ADDRESS} 5000000000000uatom
 
 # add revenue account
-echo $GAIA_REV_MNEMONIC | $GAIA_CMD keys add $GAIA_REV_ACCT --recover --keyring-backend=test 
+echo $GAIA_REV_MNEMONIC | $GAIA_CMD keys add $GAIA_REV_ACCT --recover 
 # get revenue address
-rev_addr=$($GAIA_CMD keys show $GAIA_REV_ACCT --keyring-backend test -a) > /dev/null
+rev_addr=$($GAIA_CMD keys show $GAIA_REV_ACCT -a) > /dev/null
 
 # Collect genesis transactions
 $GAIA_CMD collect-gentxs 2> /dev/null
