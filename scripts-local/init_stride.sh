@@ -14,20 +14,47 @@ echo 'Initializing stride state...'
 
 # initialize the chain
 $STRIDE_CMD init test --chain-id $STRIDE_CHAIN --overwrite 2> /dev/null
-# change the denom
-sed -i -E 's|"stake"|"ustrd"|g' "${STATE}/${STRIDE_NODE_NAME}/config/genesis.json"
-sed -i -E "s|timeout_commit = \"5s\"|timeout_commit = \"${BLOCK_TIME}\"|g" "${STATE}/${STRIDE_NODE_NAME}/config/config.toml"
-sed -i -E "s|cors_allowed_origins = \[\]|cors_allowed_origins = [\"\*\"]|g" "${STATE}/${STRIDE_NODE_NAME}/config/config.toml"
-# modify Stride epoch to be 3s
-main_config=$STATE/$STRIDE_NODE_NAME/config/genesis.json
-# NOTE: If you add new epochs, these indexes will need to be updated
-jq '.app_state.epochs.epochs[$epochIndex].duration = $epochLen' --arg epochLen $DAY_EPOCH_LEN --argjson epochIndex $DAY_EPOCH_INDEX  $main_config > json.tmp && mv json.tmp $main_config
-jq '.app_state.epochs.epochs[$epochIndex].duration = $epochLen' --arg epochLen $STRIDE_EPOCH_LEN --argjson epochIndex $STRIDE_EPOCH_INDEX $main_config > json.tmp && mv json.tmp $main_config
-jq '.app_state.stakeibc.params.rewards_interval = $interval' --arg interval $INTERVAL_LEN $main_config > json.tmp && mv json.tmp $main_config
-jq '.app_state.stakeibc.params.delegate_interval = $interval' --arg interval $INTERVAL_LEN $main_config > json.tmp && mv json.tmp $main_config
-jq '.app_state.stakeibc.params.deposit_interval = $interval' --arg interval $INTERVAL_LEN $main_config > json.tmp && mv json.tmp $main_config
-jq '.app_state.stakeibc.params.redemption_rate_interval = $interval' --arg interval $INTERVAL_LEN $main_config > json.tmp && mv json.tmp $main_config
-jq '.app_state.stakeibc.params.reinvest_interval = $interval' --arg interval $INTERVAL_LEN $main_config > json.tmp && mv json.tmp $main_config
+$STRIDE_CMD_2 init test --chain-id $STRIDE_CHAIN --overwrite 2> /dev/null
+
+for NODE_NAME in stride stride2; do
+    # change the denom
+    sed -i -E 's|"stake"|"ustrd"|g' "${STATE}/${NODE_NAME}/config/genesis.json"
+    sed -i -E "s|timeout_commit = \"5s\"|timeout_commit = \"${BLOCK_TIME}\"|g" "${STATE}/${NODE_NAME}/config/config.toml"
+    sed -i -E "s|cors_allowed_origins = \[\]|cors_allowed_origins = [\"\*\"]|g" "${STATE}/${NODE_NAME}/config/config.toml"
+    # modify Stride epoch to be 3s
+    main_config=$STATE/$NODE_NAME/config/genesis.json
+    # NOTE: If you add new epochs, these indexes will need to be updated
+    jq '.app_state.epochs.epochs[$epochIndex].duration = $epochLen' --arg epochLen $DAY_EPOCH_LEN --argjson epochIndex $DAY_EPOCH_INDEX  $main_config > json.tmp && mv json.tmp $main_config
+    jq '.app_state.epochs.epochs[$epochIndex].duration = $epochLen' --arg epochLen $STRIDE_EPOCH_LEN --argjson epochIndex $STRIDE_EPOCH_INDEX $main_config > json.tmp && mv json.tmp $main_config
+    jq '.app_state.stakeibc.params.rewards_interval = $interval' --arg interval $INTERVAL_LEN $main_config > json.tmp && mv json.tmp $main_config
+    jq '.app_state.stakeibc.params.delegate_interval = $interval' --arg interval $INTERVAL_LEN $main_config > json.tmp && mv json.tmp $main_config
+    jq '.app_state.stakeibc.params.deposit_interval = $interval' --arg interval $INTERVAL_LEN $main_config > json.tmp && mv json.tmp $main_config
+    jq '.app_state.stakeibc.params.redemption_rate_interval = $interval' --arg interval $INTERVAL_LEN $main_config > json.tmp && mv json.tmp $main_config
+    jq '.app_state.stakeibc.params.reinvest_interval = $interval' --arg interval $INTERVAL_LEN $main_config > json.tmp && mv json.tmp $main_config
+done
+
+sed -i -E 's|enable = true|enable = false|g' "${STATE}/stride2/config/app.toml"
+
+MAIN_NODE_ID=$($STRIDE_CMD tendermint show-node-id)@localhost:26656,
+
+# ================= MAP PORTS FOR NODE 2 SO IT DOESN'T CONFLICT WITH NODE 1 =================
+sed -i -E 's|6060|6020|g' "${STATE}/stride2/config/config.toml"
+sed -i -E "s|26657|$STRIDE_PORT_ID_2|g" "${STATE}/stride2/config/client.toml"
+sed -i -E "s|26657|$STRIDE_PORT_ID_2|g" "${STATE}/stride2/config/config.toml"
+sed -i -E "s|26656|$STRIDE_PORT_ID_2|g" "${STATE}/stride2/config/config.toml"
+sed -i -E "s|26658|26258|g" "${STATE}/stride2/config/config.toml"
+sed -i -E "s|external_address = \"\"|external_address = \"localhost:${STRIDE_EXT_ADR_2}\"|g" "${STATE}/stride2/config/config.toml"
+
+sed -i -E "s|9090|9020|g" "${STATE}/stride2/config/app.toml"
+sed -i -E "s|9091|9021|g" "${STATE}/stride2/config/app.toml"
+sed -i -E "s|persistent_peers = \"\"|persistent_peers = \"$MAIN_NODE_ID\"|g" "${STATE}/stride2/config/config.toml"
+
+mkdir $STRIDE_HOME/config/gentx/
+# ============================== SETUP CHAIN 2 ======================================
+echo $STRIDE_VAL_MNEMONIC_2 | $STRIDE_CMD_2 keys add $STRIDE_VAL_ACCT_2 --recover --keyring-backend=test 
+$STRIDE_CMD_2 add-genesis-account $STRIDE_VAL_2_ADDR 500000000000000ustrd
+$STRIDE_CMD add-genesis-account $STRIDE_VAL_2_ADDR 500000000000000ustrd
+$STRIDE_CMD_2 gentx $STRIDE_VAL_ACCT_2 1000000000ustrd --chain-id $STRIDE_CHAIN --keyring-backend test --output-document=$STRIDE_HOME/config/gentx/val2.json
 
 # add validator account
 echo $STRIDE_VAL_MNEMONIC | $STRIDE_CMD keys add $STRIDE_VAL_ACCT --recover --keyring-backend=test 
@@ -37,19 +64,6 @@ val_addr=$($STRIDE_CMD keys show $STRIDE_VAL_ACCT --keyring-backend test -a) > /
 $STRIDE_CMD add-genesis-account ${val_addr} 500000000000ustrd
 # actually set this account as a validator
 $STRIDE_CMD gentx $STRIDE_VAL_ACCT 1000000000ustrd --chain-id $STRIDE_CHAIN --keyring-backend test 2> /dev/null
-
-$STRIDE_CMD collect-gentxs #2> /dev/null
-
-# add another validator
-# add validator account
-echo $STRIDE_VAL2_MNEMONIC | $STRIDE_CMD keys add $STRIDE_VAL2_ACCT --recover --keyring-backend=test 
-# get validator address
-val2_addr=$($STRIDE_CMD keys show $STRIDE_VAL2_ACCT --keyring-backend test -a) > /dev/null
-# add money for this validator account
-$STRIDE_CMD add-genesis-account ${val2_addr} 500000000000ustrd
-# actually set this account as a validator
-$STRIDE_CMD gentx $STRIDE_VAL2_ACCT 1000000000ustrd --chain-id $STRIDE_CHAIN --keyring-backend test #2> /dev/null
-
 
 # source $SCRIPT_DIR/genesis.sh
 
@@ -69,3 +83,4 @@ sed -i -E "s|snapshot-interval = 0|snapshot-interval = 300|g" "${STATE}/${STRIDE
 
 # Collect genesis transactions
 $STRIDE_CMD collect-gentxs 2> /dev/null
+cp $STRIDE_HOME/config/genesis.json $STRIDE_HOME_2/config/genesis.json
