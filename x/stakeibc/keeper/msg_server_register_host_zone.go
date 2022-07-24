@@ -12,7 +12,7 @@ import (
 )
 
 // TODO(TEST-53): Remove this pre-launch (no need for clients to create / interact with ICAs)
-func (k Keeper) RegisterHostZone(goCtx context.Context, msg *types.MsgRegisterHostZone) (*types.MsgRegisterHostZoneResponse, error) {
+func (k msgServer) RegisterHostZone(goCtx context.Context, msg *types.MsgRegisterHostZone) (*types.MsgRegisterHostZoneResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	// Get chain id from connection
