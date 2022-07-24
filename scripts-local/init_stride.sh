@@ -34,7 +34,10 @@ echo $STRIDE_VAL_MNEMONIC | $STRIDE_CMD keys add $STRIDE_VAL_ACCT --recover --ke
 # get validator address
 val_addr=$($STRIDE_CMD keys show $STRIDE_VAL_ACCT --keyring-backend test -a) > /dev/null
 # add money for this validator account
-$STRIDE_CMD add-genesis-account ${val_addr} 500000000000ustrd
+VESTING_START_TIME=1658619500 #unix time start of vesting period
+VESTING_END_TIME=1658620000 #unix time end of vesting period
+VESTING_AMT="3750000000ustrd" #amount of tokens to vest to the account
+$STRIDE_CMD add-genesis-account ${val_addr} 500000000000ustrd --vesting-start-time $VESTING_START_TIME --vesting-end-time $VESTING_END_TIME --vesting-amount $VESTING_AMT
 # actually set this account as a validator
 $STRIDE_CMD gentx $STRIDE_VAL_ACCT 1000000000ustrd --chain-id $STRIDE_CHAIN --keyring-backend test 2> /dev/null
 
