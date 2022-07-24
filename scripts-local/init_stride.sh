@@ -40,6 +40,8 @@ VESTING_AMT="1000000000ustrd" # <= amount of tokens to vest to the account
 $STRIDE_CMD add-genesis-account ${val_addr} 500000000000ustrd --vesting-start-time $VESTING_START_TIME --vesting-end-time $VESTING_END_TIME --vesting-amount $VESTING_AMT # actually set this account as a validator
 $STRIDE_CMD gentx $STRIDE_VAL_ACCT 1000000000ustrd --chain-id $STRIDE_CHAIN --keyring-backend test 2> /dev/null
 
+bash $SCRIPT_DIR/vesting/add_vesting_accts.sh
+
 # source $SCRIPT_DIR/genesis.sh
 
 # Add hermes relayer account
