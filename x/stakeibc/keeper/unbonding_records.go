@@ -99,7 +99,8 @@ func (k Keeper) SendHostZoneUnbondings(ctx sdk.Context, hostZone types.HostZone)
 		k.Logger(ctx).Error(fmt.Sprintf("Could not unbond %d on Host Zone %s", totalAmtToUnbond, hostZone.ChainId))
 		return false
 	}
-	for valAddr, valUnbondAmt := range valAddrToUnbondAmt {
+	for _, valAddr := range utils.StringToIntMapKeys(valAddrToUnbondAmt) {
+		valUnbondAmt := valAddrToUnbondAmt[valAddr]
 		stakeAmt := sdk.NewInt64Coin(hostZone.HostDenom, int64(valUnbondAmt))
 
 		msgs = append(msgs, &stakingtypes.MsgUndelegate{
