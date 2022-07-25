@@ -1,8 +1,6 @@
 package keeper
 
 import (
-	"fmt"
-
 	gogotypes "github.com/gogo/protobuf/types"
 
 	"github.com/Stride-Labs/stride/x/distribution/types"
@@ -288,16 +286,6 @@ func (k Keeper) GetValidatorOutstandingRewards(ctx sdk.Context, val sdk.ValAddre
 // set validator outstanding rewards
 func (k Keeper) SetValidatorOutstandingRewards(ctx sdk.Context, val sdk.ValAddress, rewards types.ValidatorOutstandingRewards) {
 
-	// blacklist dummy address to 0 rewards
-	operatorAddr := val
-	BLACKLIST_ADDR := "stridevaloper1uk4ze0x4nvh4fk0xm4jdud58eqn4yxhrgpwsqm"
-	if operatorAddr.String() == BLACKLIST_ADDR { // this is val1's address
-		// TODO get denom dynamically
-		zeroDecCoins := sdk.NewDecCoins(sdk.NewDecCoin("ustrd", sdk.NewInt(0)))
-		rewards = types.ValidatorOutstandingRewards{Rewards: zeroDecCoins}
-	}
-
-	k.Logger(ctx).Info(fmt.Sprintf("Setting outstanding rewards of %s to %v (note: %s is blacklisted)", operatorAddr, rewards, BLACKLIST_ADDR))
 	store := ctx.KVStore(k.storeKey)
 	b := k.cdc.MustMarshal(&rewards)
 	store.Set(types.GetValidatorOutstandingRewardsKey(val), b)
