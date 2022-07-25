@@ -4,6 +4,7 @@ package Stridelabs.stride.stakeibc;
 option go_package = "github.com/Stride-Labs/stride/x/stakeibc/types";
 
 message MinValidatorRequirements {
-  int32 commissionRate = 1;
-  int32 uptime = 2;
+  int32 commissionRate = 1; 
+  int32 uptime = 2; 
+  
 }

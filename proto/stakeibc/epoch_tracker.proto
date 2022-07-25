@@ -4,8 +4,9 @@ package Stridelabs.stride.stakeibc;
 option go_package = "github.com/Stride-Labs/stride/x/stakeibc/types";
 
 message EpochTracker {
-  string epochIdentifier = 1;
+  string epochIdentifier = 1; 
   uint64 epochNumber = 2;
   int64 nextEpochStartTime = 3;
   int64 duration = 4;
 }
+
