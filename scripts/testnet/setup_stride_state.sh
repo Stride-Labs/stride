@@ -120,7 +120,11 @@ main_genesis="${STATE}/${MAIN_NODE_NAME}/config/genesis.json"
 jq '.app_state.epochs.epochs[2].duration = $newVal' --arg newVal "60s" $main_genesis > json.tmp && mv json.tmp $main_genesis
 jq '.app_state.epochs.epochs[1].duration = $newVal' --arg newVal "180s" $main_genesis > json.tmp && mv json.tmp $main_genesis
 jq '.app_state.staking.params.unbonding_time = $newVal' --arg newVal "3600s" $main_genesis > json.tmp && mv json.tmp $main_genesis
-
+jq '.app_state.gov.deposit_params.max_deposit_period = $newVal' --arg newVal "3600s" $main_genesis > json.tmp && mv json.tmp $main_genesis
+jq '.app_state.gov.voting_params.voting_period = $newVal' --arg newVal "3600s" $main_genesis > json.tmp && mv json.tmp $main_genesis
+jq '.app_state.slashing.params.signed_blocks_window = $newVal' --arg newVal "30000" $main_genesis > json.tmp && mv json.tmp $main_genesis
+jq '.app_state.slashing.params.min_signed_per_window = $newVal' --arg newVal "0.050000000000000000" $main_genesis > json.tmp && mv json.tmp $main_genesis
+jq '.app_state.slashing.params.slash_fraction_downtime = $newVal' --arg newVal "0.001000000000000000" $main_genesis > json.tmp && mv json.tmp $main_genesis
 
 # for all peer nodes....
 for (( i=2; i <= $NUM_NODES; i++ )); do
