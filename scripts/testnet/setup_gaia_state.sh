@@ -10,7 +10,9 @@ VAL_TOKENS=10000000000000000uatom
 STAKE_TOKENS=1000000uatom
 VAL_ACCT=gval1
 ENDPOINT=$GAIA_MAIN_ENDPOINT
-UNBONDING_TIME="3600s"
+
+TRUST_PERIOD="21600s"
+UNBONDING_TIME="21600s"
 
 echo "Initializing gaia..."
 $GAIA_CMD init test --chain-id $CHAIN_NAME --overwrite 2> /dev/null
@@ -71,6 +73,7 @@ sed -i -E "s|minimum-gas-prices = \"\"|minimum-gas-prices = \"0uatom\"|g" "${STA
 sed -i -E 's|enable = false|enable = true|g' "${STATE}/${NODE_NAME}/config/app.toml"
 sed -i -E 's|unsafe-cors = false|unsafe-cors = true|g' "${STATE}/${NODE_NAME}/config/app.toml"
 sed -i -E "s|timeout_commit = \"5s\"|timeout_commit = \"${BLOCK_TIME}\"|g" $configtoml
+sed -i -E  "s|trust_period = \"168h0m0s\"|trust_period = \"${TRUST_PERIOD}\"|g" $configtoml
 
 GAIA_GENESIS_FILE_TMP="${STATE}/${NODE_NAME}/config/genesis.json"
 jq '.app_state.staking.params.unbonding_time = $newVal' --arg newVal "$UNBONDING_TIME" $GAIA_GENESIS_FILE_TMP > json.tmp && mv json.tmp $GAIA_GENESIS_FILE_TMP
