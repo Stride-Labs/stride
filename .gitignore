@@ -44,5 +44,5 @@ vue/*
 .terraform
 *.pem
 
-.vscode/*
+.vscode
 !.vscode/settings.json
