@@ -47,11 +47,9 @@ replace (
 	// NOTE: If you need to bump the cosmos-sdk version, create a branch at the commit hash
 	// of the target version on github.com/Stride-Labs/cosmos-sdk, then remove the error redaction
 	// logic and push a new tag and the branch to github (use that tag below)
-	github.com/cosmos/cosmos-sdk => github.com/Stride-Labs/cosmos-sdk v0.45.4-debug-2
+	github.com/cosmos/cosmos-sdk => github.com/Stride-Labs/cosmos-sdk v0.45.4-stride-4
 	github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alpha.regen.1
 	github.com/ignite-hq/cli => github.com/ignite-hq/cli v0.21.0
 	github.com/keybase/go-keychain => github.com/99designs/go-keychain v0.0.0-20191008050251-8e49817e8af4
 	google.golang.org/grpc => google.golang.org/grpc v1.33.2
-	// replace distribution module
-	github.com/cosmos/cosmos-sdk/x/distribution => ./x/distribution
 )
