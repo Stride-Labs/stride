@@ -14,27 +14,20 @@ import "cosmos_proto/cosmos.proto";
 service Msg {
   rpc LiquidStake(MsgLiquidStake) returns (MsgLiquidStakeResponse);
   rpc RedeemStake(MsgRedeemStake) returns (MsgRedeemStakeResponse);
-  // TODO(TEST-53): Remove this pre-launch (no need for clients to create /
-  // interact with ICAs) Register defines a rpc handler for MsgRegisterAccount
+  // TODO(TEST-53): Remove this pre-launch (no need for clients to create / interact with ICAs)
+  // Register defines a rpc handler for MsgRegisterAccount
   rpc RegisterAccount(MsgRegisterAccount) returns (MsgRegisterAccountResponse);
-  // TODO(TEST-53): Remove this pre-launch (no need for clients to create /
-  // interact with ICAs)
+  // TODO(TEST-53): Remove this pre-launch (no need for clients to create / interact with ICAs)
   rpc SubmitTx(MsgSubmitTx) returns (MsgSubmitTxResponse);
-  // TODO(TEST-53): Remove this pre-launch (no need for clients to create /
-  // interact with ICAs)
-  rpc RegisterHostZone(MsgRegisterHostZone)
-      returns (MsgRegisterHostZoneResponse);
-  rpc ClaimUndelegatedTokens(MsgClaimUndelegatedTokens)
-      returns (MsgClaimUndelegatedTokensResponse);
-  rpc RebalanceValidators(MsgRebalanceValidators)
-      returns (MsgRebalanceValidatorsResponse);
+  // TODO(TEST-53): Remove this pre-launch (no need for clients to create / interact with ICAs)
+  rpc RegisterHostZone(MsgRegisterHostZone) returns (MsgRegisterHostZoneResponse);
+  rpc ClaimUndelegatedTokens(MsgClaimUndelegatedTokens) returns (MsgClaimUndelegatedTokensResponse);
+  rpc RebalanceValidators(MsgRebalanceValidators) returns (MsgRebalanceValidatorsResponse);
   rpc AddValidator(MsgAddValidator) returns (MsgAddValidatorResponse);
-  rpc ChangeValidatorWeight(MsgChangeValidatorWeight)
-      returns (MsgChangeValidatorWeightResponse);
+  rpc ChangeValidatorWeight(MsgChangeValidatorWeight) returns (MsgChangeValidatorWeightResponse);
   rpc DeleteValidator(MsgDeleteValidator) returns (MsgDeleteValidatorResponse);
-  rpc RestoreInterchainAccount(MsgRestoreInterchainAccount)
-      returns (MsgRestoreInterchainAccountResponse);
-  // this line is used by starport scaffolding # proto/tx/rpc
+  rpc RestoreInterchainAccount(MsgRestoreInterchainAccount) returns (MsgRestoreInterchainAccountResponse);
+// this line is used by starport scaffolding # proto/tx/rpc
 }
 
 message MsgLiquidStake {
@@ -44,7 +37,8 @@ message MsgLiquidStake {
   string host_denom = 3;
 }
 
-message MsgLiquidStakeResponse {}
+message MsgLiquidStakeResponse {
+}
 
 message MsgRedeemStake {
   string creator = 1;
@@ -53,40 +47,39 @@ message MsgRedeemStake {
   string receiver = 4;
 }
 
-message MsgRedeemStakeResponse {}
+message MsgRedeemStakeResponse {
+}
 
-// TODO(TEST-53): Remove this pre-launch (no need for clients to create /
-// interact with ICAs) MsgRegisterAccount defines the payload for
-// Msg/RegisterAccount
+// TODO(TEST-53): Remove this pre-launch (no need for clients to create / interact with ICAs)
+// MsgRegisterAccount defines the payload for Msg/RegisterAccount
 message MsgRegisterAccount {
-  option (gogoproto.equal) = false;
+  option (gogoproto.equal)           = false;
   option (gogoproto.goproto_getters) = false;
 
-  string owner = 1;
-  string connection_id = 2 [ (gogoproto.moretags) = "yaml:\"connection_id\"" ];
+  string owner                      = 1;
+  string connection_id              = 2 [(gogoproto.moretags) = "yaml:\"connection_id\""];
 }
-// TODO(TEST-53): Remove this pre-launch (no need for clients to create /
-// interact with ICAs) MsgRegisterAccountResponse defines the response for
-// Msg/RegisterAccount
+// TODO(TEST-53): Remove this pre-launch (no need for clients to create / interact with ICAs)
+// MsgRegisterAccountResponse defines the response for Msg/RegisterAccount
 message MsgRegisterAccountResponse {}
 
-// TODO(TEST-53): Remove this pre-launch (no need for clients to create /
-// interact with ICAs) MsgSubmitTx defines the payload for Msg/SubmitTx
+// TODO(TEST-53): Remove this pre-launch (no need for clients to create / interact with ICAs)
+// MsgSubmitTx defines the payload for Msg/SubmitTx
 message MsgSubmitTx {
-  option (gogoproto.equal) = false;
+  option (gogoproto.equal)           = false;
   option (gogoproto.goproto_getters) = false;
 
-  string owner = 1;
-  string connection_id = 2 [ (gogoproto.moretags) = "yaml:\"connection_id\"" ];
-  google.protobuf.Any msg = 3;
+  string owner                       = 1;
+  string connection_id = 2 [(gogoproto.moretags) = "yaml:\"connection_id\""];
+  google.protobuf.Any msg            = 3;
 }
 
-// TODO(TEST-53): Remove this pre-launch (no need for clients to create /
-// interact with ICAs) MsgSubmitTxResponse defines the response for Msg/SubmitTx
+// TODO(TEST-53): Remove this pre-launch (no need for clients to create / interact with ICAs)
+// MsgSubmitTxResponse defines the response for Msg/SubmitTx
 message MsgSubmitTxResponse {}
 
 // next: 13
-message MsgRegisterHostZone {
+message MsgRegisterHostZone{
   option (gogoproto.equal) = false;
   option (gogoproto.goproto_getters) = false;
 
@@ -95,15 +88,12 @@ message MsgRegisterHostZone {
   string host_denom = 4 [ (gogoproto.moretags) = "yaml:\"host_denom\"" ];
   string ibc_denom = 5 [ (gogoproto.moretags) = "yaml:\"ibc_denom\"" ];
   string creator = 6;
-  string transfer_channel_id = 10
-      [ (gogoproto.moretags) = "yaml:\"transfer_channel_id\"" ];
-  uint64 unbonding_frequency = 11
-      [ (gogoproto.moretags) = "yaml:\"unbonding_frequency\"" ];
+  string transfer_channel_id = 10 [ (gogoproto.moretags) = "yaml:\"transfer_channel_id\"" ];
+  uint64 unbonding_frequency = 11 [ (gogoproto.moretags) = "yaml:\"unbonding_frequency\"" ];
 }
 
-// TODO(TEST-53): Remove this pre-launch (no need for clients to create /
-// interact with ICAs)
-message MsgRegisterHostZoneResponse {}
+// TODO(TEST-53): Remove this pre-launch (no need for clients to create / interact with ICAs)
+message MsgRegisterHostZoneResponse{}
 
 message MsgClaimUndelegatedTokens {
   string creator = 1;
@@ -113,7 +103,8 @@ message MsgClaimUndelegatedTokens {
   string sender = 4;
 }
 
-message MsgClaimUndelegatedTokensResponse {}
+message MsgClaimUndelegatedTokensResponse {
+}
 
 message MsgRebalanceValidators {
   string creator = 1;
@@ -121,7 +112,8 @@ message MsgRebalanceValidators {
   uint64 numRebalance = 3;
 }
 
-message MsgRebalanceValidatorsResponse {}
+message MsgRebalanceValidatorsResponse {
+}
 
 message MsgAddValidator {
   string creator = 1;
@@ -132,7 +124,8 @@ message MsgAddValidator {
   uint64 weight = 6;
 }
 
-message MsgAddValidatorResponse {}
+message MsgAddValidatorResponse {
+}
 
 message MsgChangeValidatorWeight {
   string creator = 1;
@@ -141,7 +134,8 @@ message MsgChangeValidatorWeight {
   uint64 weight = 4;
 }
 
-message MsgChangeValidatorWeightResponse {}
+message MsgChangeValidatorWeightResponse {
+}
 
 message MsgDeleteValidator {
   string creator = 1;
@@ -149,7 +143,8 @@ message MsgDeleteValidator {
   string valAddr = 3 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
 }
 
-message MsgDeleteValidatorResponse {}
+message MsgDeleteValidatorResponse {
+}
 
 message MsgRestoreInterchainAccount {
   string creator = 1;
@@ -157,6 +152,7 @@ message MsgRestoreInterchainAccount {
   ICAAccountType accountType = 3;
 }
 
-message MsgRestoreInterchainAccountResponse {}
+message MsgRestoreInterchainAccountResponse {
+}
 
 // this line is used by starport scaffolding # proto/tx/message

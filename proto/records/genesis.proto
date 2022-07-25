@@ -8,16 +8,18 @@ import "google/protobuf/timestamp.proto";
 
 option go_package = "github.com/Stride-Labs/stride/x/records/types";
 
+
 message UserRedemptionRecord {
   string id = 1; // {chain_id}.{epoch}.{sender}
-  string sender = 2;
-  string receiver = 3;
-  uint64 amount = 4;
-  string denom = 5;
-  string hostZoneId = 6;
-  int64 epochNumber = 7;
-  bool isClaimable = 8;
+  string sender = 2; 
+  string receiver = 3; 
+  uint64 amount = 4; 
+  string denom = 5; 
+  string hostZoneId = 6; 
+  int64 epochNumber = 7; 
+  bool isClaimable = 8;   
 }
+
 
 // Msg defines the Msg service.
 service Msg {
@@ -26,25 +28,32 @@ service Msg {
 
 // this line is used by starport scaffolding # proto/tx/message
 
+
 // Params defines the parameters for the module.
-message Params { option (gogoproto.goproto_stringer) = false; }
+message Params {
+  option (gogoproto.goproto_stringer) = false;
+  
+}
+
 
 message RecordsPacketData {
   oneof packet {
-    NoData noData = 1;
-    // this line is used by starport scaffolding # ibc/packet/proto/field
+      NoData noData = 1;
+      // this line is used by starport scaffolding # ibc/packet/proto/field
   }
 }
 
-message NoData {}
+message NoData {
+}
 
 // this line is used by starport scaffolding # ibc/packet/proto/message
+
 
 message DepositRecord {
   uint64 id = 1;
   int64 amount = 2;
   string denom = 3;
-  string hostZoneId = 4;
+  string hostZoneId = 4; 
   enum Status {
     // pending transfer to delegate account
     TRANSFER = 0;
@@ -61,6 +70,7 @@ message DepositRecord {
 
   reserved 5;
 }
+
 
 message HostZoneUnbonding {
   enum Status {
@@ -79,11 +89,9 @@ message HostZoneUnbonding {
   uint64 unbondingTime = 5;
   Status status = 4;
   // google.protobuf.Timestamp unbondingTime = 5
-  //     [(gogoproto.nullable) = false, (gogoproto.stdtime) = true,
-  //     (gogoproto.moretags) = "yaml:\"unbonding_time\""];
+  //     [(gogoproto.nullable) = false, (gogoproto.stdtime) = true, (gogoproto.moretags) = "yaml:\"unbonding_time\""];
   // google.protobuf.Timestamp completionTime = 5
-  //     [(gogoproto.nullable) = false, (gogoproto.stdtime) = true,
-  //     (gogoproto.moretags) = "yaml:\"unbonding_time\""];
+  //     [(gogoproto.nullable) = false, (gogoproto.stdtime) = true, (gogoproto.moretags) = "yaml:\"unbonding_time\""];
   // Index UserRedemptionRecords here (note: id is {chain_id}.{epoch}.{sender})
   repeated string userRedemptionRecords = 6;
 }
@@ -95,18 +103,19 @@ message EpochUnbondingRecord {
   map<string, HostZoneUnbonding> hostZoneUnbondings = 3;
 }
 
+
 // GenesisState defines the recordπs module's genesis state.
 // next id: 9
 message GenesisState {
-  Params params = 1 [ (gogoproto.nullable) = false ];
+  Params params = 1 [(gogoproto.nullable) = false];
   string port_id = 2;
-  repeated UserRedemptionRecord userRedemptionRecordList = 3
-      [ (gogoproto.nullable) = false ];
+  repeated UserRedemptionRecord userRedemptionRecordList = 3 [(gogoproto.nullable) = false];
   uint64 userRedemptionRecordCount = 4;
-  repeated EpochUnbondingRecord epochUnbondingRecordList = 5
-      [ (gogoproto.nullable) = false ];
+  repeated EpochUnbondingRecord epochUnbondingRecordList = 5 [(gogoproto.nullable) = false];
   uint64 epochUnbondingRecordCount = 6;
-  repeated DepositRecord depositRecordList = 7 [ (gogoproto.nullable) = false ];
+  repeated DepositRecord depositRecordList = 7 [(gogoproto.nullable) = false];
   uint64 depositRecordCount = 8;
   // this line is used by starport scaffolding # genesis/proto/state
 }
+
+
