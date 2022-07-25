@@ -136,7 +136,7 @@ func (im IBCModule) OnAcknowledgementPacket(
 	}
 	ctx = ctx.WithContext(context.WithValue(ctx.Context(), "connectionId", connectionId))
 	im.keeper.Logger(ctx).Info("HANDLING ACK")
-	return im.keeper.HandleAcknowledgement(ctx, modulePacket, acknowledgement)
+	return im.keeper.HandleAcknowledgementChannel(ctx, modulePacket, acknowledgement, connectionId)
 }
 
 // OnTimeoutPacket implements the IBCModule interface
@@ -145,7 +145,7 @@ func (im IBCModule) OnTimeoutPacket(
 	modulePacket channeltypes.Packet,
 	relayer sdk.AccAddress,
 ) error {
-	return nil
+	// Clean up the callbacks for the packet
 	// TODO(TEST-21): Implement OnTimeoutPacket logic
 	// var modulePacketData types.StakeibcPacketData
 	// if err := modulePacketData.Unmarshal(modulePacket.GetData()); err != nil {
@@ -160,7 +160,7 @@ func (im IBCModule) OnTimeoutPacket(
 	// 	return sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, errMsg)
 	// }
 
-	// return nil
+	return nil
 }
 
 // OnChanCloseConfirm implements the IBCModule interface

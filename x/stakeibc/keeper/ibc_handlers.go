@@ -230,7 +230,7 @@ func (k *Keeper) HandleSend(ctx sdk.Context, msg sdk.Msg, sequence string) error
 			DepositEpochNumber: uint64(epochNumber),
 		}
 		k.RecordsKeeper.AppendDepositRecord(ctx, record)
-		// process unbonding transfers from the DelegationAccount to the RedemptionAccount
+	// process unbonding transfers from the DelegationAccount to the RedemptionAccount
 	} else if sendMsg.FromAddress == delegationAddress && sendMsg.ToAddress == redemptionAddress {
 		k.Logger(ctx).Error("ACK - sendMsg.FromAddress == delegationAddress && sendMsg.ToAddress == redemptionAddress")
 		dayEpochTracker, found := k.GetEpochTracker(ctx, "day")

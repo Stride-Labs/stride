@@ -9,6 +9,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	icatypes "github.com/cosmos/ibc-go/v3/modules/apps/27-interchain-accounts/types"
+	channeltypes "github.com/cosmos/ibc-go/v3/modules/core/04-channel/types"
 )
 
 // GetHostZoneCount get the total number of hostZone
@@ -196,4 +198,88 @@ func (k Keeper) SetICAAccountOnHostZone(ctx sdk.Context, hostZone *types.HostZon
 		return sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "Invalid ICA Account Type %s", accountType)
 	}
 	return nil
+}
+
+
+func (k Keeper) GetChainIdFromConnection(ctx sdk.Context, connectionId string) (*types.HostZone, error) {
+	var matchZone types.HostZone
+	connectionId = strings.ToUpper(connectionId)
+	k.IterateHostZones(ctx, func(ctx sdk.Context, index int64, zoneInfo types.HostZone) error {
+		zoneConnectionId := strings.ToUpper(zoneInfo.HostDenom)
+		if zoneConnectionId == connectionId {
+			matchZone = zoneInfo
+			return nil
+		}
+		return nil
+	})
+	if matchZone.ChainId != "" {
+		return &matchZone, nil
+	}
+	return nil, sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "No HostZone for connectionId %s found", connectionId)
+}
+
+func (k Keeper) GetCallback(ctx sdk.Context, modulePacket channeltypes.Packet, connectionId string) (*types.SequenceCallback, bool) {
+	portId := modulePacket.GetSourcePort()
+	channel := modulePacket.GetSourceChannel()
+	sequence := modulePacket.GetSequence()
+
+	hostZone, err := k.GetChainIdFromConnection(ctx, connectionId)
+	if err != nil {
+		k.Logger(ctx).Error(err.Error())	
+		return nil, false
+	}
+
+	withdrawalPortId, err := icatypes.NewControllerPortID(types.FormatICAAccountOwner(hostZone.ChainId, types.ICAAccountType_WITHDRAWAL))
+	if err != nil {
+		k.Logger(ctx).Error(err.Error())
+		return nil, false
+	}
+	feePortId, err := icatypes.NewControllerPortID(types.FormatICAAccountOwner(hostZone.ChainId, types.ICAAccountType_FEE))
+	if err != nil {
+		k.Logger(ctx).Error(err.Error())
+		return nil, false
+	}
+	delegationPortId, err := icatypes.NewControllerPortID(types.FormatICAAccountOwner(hostZone.ChainId, types.ICAAccountType_DELEGATION))
+	if err != nil {
+		k.Logger(ctx).Error(err.Error())
+		return nil, false
+	}
+	redemptionPortId, err := icatypes.NewControllerPortID(types.FormatICAAccountOwner(hostZone.ChainId, types.ICAAccountType_REDEMPTION))
+	if err != nil {
+		k.Logger(ctx).Error(err.Error())
+		return nil, false
+	}
+
+	var account *types.ICAAccount
+	switch portId {
+		case withdrawalPortId:
+			account = hostZone.WithdrawalAccount
+		case feePortId:
+			account = hostZone.FeeAccount
+		case delegationPortId:
+			account = hostZone.DelegationAccount
+		case redemptionPortId:
+			account = hostZone.RedemptionAccount
+		default:
+			return nil, false
+	}
+
+	activeChannelID, found := k.ICAControllerKeeper.GetActiveChannelID(ctx, connectionId, portId)
+	if !found {
+		k.Logger(ctx).Error("Active channel not found for connectionId", connectionId, "portId", portId)
+		return nil, false
+	}
+
+	if activeChannelID != channel {
+		k.Logger(ctx).Error("Active channel does not match for connectionId", connectionId, "portId", portId, "activeChannelID", activeChannelID, "channel", channel)
+		return nil, false
+	}
+
+	callback := account.GetSequenceCallbacks()[sequence]
+	if callback == nil {
+		k.Logger(ctx).Error("Callback not found for connectionId", connectionId, "portId", portId, "sequence", sequence)
+		return nil, false
+	}
+
+	return callback, true
 }

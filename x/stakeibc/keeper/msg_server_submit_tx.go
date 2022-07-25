@@ -251,7 +251,7 @@ func (k Keeper) SubmitTxs(ctx sdk.Context, hostZone types.HostZone, msgs []sdk.M
 	}
 	sequenceCallback := types.SequenceCallback{
 		CallbackId: callbackId,
-		CallbackValues: []byte("RANDOM DATA"),
+		CallbackValues: callbackValues,
 	}
 	account.SequenceCallbacks[sequence] = &sequenceCallback
 	k.SetICAAccountOnHostZone(ctx, &hostZone, account.Target, account)

@@ -122,3 +122,13 @@ func AccAddressFromBech32(address string, bech32prefix string) (addr AccAddress,
 
 	return AccAddress(bz), nil
 }
+
+func StringArrayToBytesArray(strArray []string) ([]byte, error) {
+	// TODO
+	return nil, nil
+}
+
+func ByteArrayToStringArray(bz []byte) ([]string, error) {
+	// TODO
+	return nil, nil
+}
