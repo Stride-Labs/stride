@@ -32,7 +32,7 @@ When an epoch triggers the execution of code, that code is executed at the first
 
 Stride uses three epoch identifiers as found in `x/epochs/genesis.go`
 1. `DAY_EPOCH`: this identifies an epoch that lasts 24 hours.
-2. `STRIDE_EPOCH`: this identifies an epoch that lasts 5 minutes (although this may be changed), and is used in the `x/stakeibc/` module as a time interval in accordance with which the Stride app chain performs certain functions.
+2. `STRIDE_EPOCH`: this identifies an epoch that lasts 5 minutes (although this may be changed), and is used in the `x/stakeibc/` module as a time interval in accordance with which the Stride app chain performs certain functions, such as autocompound stakig rewards.
 
 ## State
 
@@ -67,7 +67,7 @@ message EpochInfo {
 }
 ```
 
-EpochInfo keeps `identifier`, `start_time`,`duration`, `current_epoch`, `current_epoch_start_time`,  `epoch_counting_started`, `current_epoch_start_height`.
+`EpochInfo` keeps `identifier`, `start_time`,`duration`, `current_epoch`, `current_epoch_start_time`,  `epoch_counting_started`, `current_epoch_start_height`.
 
 1. `identifier` keeps epoch identification string.
 2. `start_time` keeps epoch counting start time, if block time passes `start_time`, `epoch_counting_started` is set.
@@ -98,7 +98,7 @@ The `epochs` module emits the following events:
 
 ## Keeper
 
-### Keeper functions
+### Keeper Functions
 
 `epochs/keeper/` module provides utility functions to manage epochs.
 
