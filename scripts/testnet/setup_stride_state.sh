@@ -87,7 +87,7 @@ for (( i=1; i <= $NUM_NODES; i++ )); do
     $st_cmd gentx $val_acct $STAKE_TOKENS --chain-id $STRIDE_CHAIN_ID --keyring-backend test 2> /dev/null
     
     # modify our snapshot interval
-    sed -i -E "s|snapshot-interval = 0|snapshot-interval = 300|g" $apptoml
+    sed -i -E "s|snapshot-interval = 0|snapshot-interval = 1000|g" $apptoml
 
     if [ $i -eq $MAIN_ID ]; then
         MAIN_NODE_NAME=$node_name
