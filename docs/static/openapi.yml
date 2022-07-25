@@ -28818,6 +28818,9 @@ paths:
                   additionalProperties: {}
       parameters:
         - name: body
+          description: >-
+            MsgSubmitQueryResponse represents a message type to fulfil a query
+            request.
           in: body
           required: true
           schema:
@@ -33051,9 +33054,12 @@ paths:
                   buffer_size:
                     type: string
                     format: uint64
+                  ibc_timeout_blocks:
+                    type: string
+                    format: uint64
                 title: |-
                   Params defines the parameters for the module.
-                  next id: 11
+                  next id: 12
             description: >-
               QueryParamsResponse is response type for the Query/Params RPC
               method.
@@ -54606,6 +54612,8 @@ definitions:
     title: >-
       TODO(TEST-53): Remove this pre-launch (no need for clients to create /
       interact with ICAs)
+  Stridelabs.stride.stakeibc.MsgRegisterInterchainAccountResponse:
+    type: object
   Stridelabs.stride.stakeibc.MsgSubmitTxResponse:
     type: object
     title: >-
@@ -54653,9 +54661,12 @@ definitions:
       buffer_size:
         type: string
         format: uint64
+      ibc_timeout_blocks:
+        type: string
+        format: uint64
     title: |-
       Params defines the parameters for the module.
-      next id: 11
+      next id: 12
   Stridelabs.stride.stakeibc.PendingClaims:
     type: object
     properties:
@@ -55531,9 +55542,12 @@ definitions:
           buffer_size:
             type: string
             format: uint64
+          ibc_timeout_blocks:
+            type: string
+            format: uint64
         title: |-
           Params defines the parameters for the module.
-          next id: 11
+          next id: 12
     description: QueryParamsResponse is response type for the Query/Params RPC method.
   Stridelabs.stride.stakeibc.Validator:
     type: object

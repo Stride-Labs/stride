@@ -5,14 +5,14 @@ import (
 
 	"github.com/tendermint/tendermint/libs/log"
 
-	epochskeeper "github.com/Stride-Labs/stride/x/epochs/keeper"
-	icqkeeper "github.com/Stride-Labs/stride/x/interchainquery/keeper"
-	"github.com/Stride-Labs/stride/x/stakeibc/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	capabilitykeeper "github.com/cosmos/cosmos-sdk/x/capability/keeper"
 	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
+
+	icqkeeper "github.com/Stride-Labs/stride/x/interchainquery/keeper"
+	"github.com/Stride-Labs/stride/x/stakeibc/types"
 
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
@@ -38,7 +38,6 @@ type (
 		bankKeeper            bankkeeper.Keeper
 		InterchainQueryKeeper icqkeeper.Keeper
 		RecordsKeeper         recordsmodulekeeper.Keeper
-		epochsKeeper          epochskeeper.Keeper
 		StakingKeeper         stakingkeeper.Keeper
 
 		accountKeeper types.AccountKeeper

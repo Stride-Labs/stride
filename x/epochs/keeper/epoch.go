@@ -1,8 +1,6 @@
 package keeper
 
 import (
-	"fmt"
-
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -12,12 +10,8 @@ import (
 // GetEpochInfo returns epoch info by identifier
 func (k Keeper) GetEpochInfo(ctx sdk.Context, identifier string) (types.EpochInfo, bool) {
 	epoch := types.EpochInfo{}
-	k.Logger(ctx).Info(fmt.Sprintf("MOOSE GetEpochInfo %v", k.storeKey))
-	k.Logger(ctx).Info(fmt.Sprintf("MOOSE GetEpochInfo %v", types.KeyPrefixEpoch))
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefixEpoch)
-	k.Logger(ctx).Info(fmt.Sprintf("MOOSE GetEpochInfo Pt 2 %s", identifier))
 	bz := store.Get([]byte(identifier))
-	k.Logger(ctx).Info(fmt.Sprintf("MOOSE GetEpochInfo Pt 3"))
 	if len(bz) == 0 {
 		return epoch, false
 	}

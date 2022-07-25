@@ -3,12 +3,13 @@ package cli
 import (
 	"strconv"
 
-	"github.com/Stride-Labs/stride/x/stakeibc/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	"github.com/spf13/cast"
 	"github.com/spf13/cobra"
+
+	"github.com/Stride-Labs/stride/x/stakeibc/types"
 )
 
 var _ = strconv.Itoa(0)
@@ -23,6 +24,9 @@ func CmdAddValidator() *cobra.Command {
 			argName := args[1]
 			argAddress := args[2]
 			argCommission, err := cast.ToUint64E(args[3])
+			if err != nil {
+				return err
+			}
 			argWeight, err := cast.ToUint64E(args[4])
 			if err != nil {
 				return err
