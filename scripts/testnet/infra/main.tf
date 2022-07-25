@@ -37,17 +37,21 @@ locals {
   stride_sizes = [
     for i in range(1, var.num_stride_nodes + 1) : 750
   ]
+  stride_vms = [
+    for i in range(1, var.num_stride_nodes + 1) : "e2-standard-8"
+  ]
 }
 
 locals {
   dependency_node_names = ["gaia", "hermes", "icq"]
   dependency_sizes = [200, 20, 20]
-
+  dependency_vms = ["e2-standard-8", "e2-standard-4", "e2-standard-4"]
 }
 
 locals {
   node_names = concat(local.stride_node_names, local.dependency_node_names)
   node_sizes = concat(local.stride_sizes, local.dependency_sizes)
+  node_types = concat(local.stride_vms, local.dependency_vms)
 }
 
 module "images" {
@@ -70,7 +74,7 @@ resource "google_compute_address" "internal-addresses" {
 resource "google_compute_instance" "nodes" {
   count                     = length(local.node_names)
   name                      = "${var.deployment_name}-${local.node_names[count.index]}"
-  machine_type              = "e2-standard-4"
+  machine_type              = "${local.node_types[count.index]}"
   zone                      = "${element(var.regions, count.index)}-a"
   tags                      = ["ssh"]
   allow_stopping_for_update = true
