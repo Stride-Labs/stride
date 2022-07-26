@@ -26,7 +26,7 @@ bank_sends = []
 genesis = []
 genesis_local = []
 
-bank_suffix = "--keyring-backend=test --chain-id STRIDE-1 -y"
+bank_suffix = "--keyring-backend=test --chain-id STRIDE-TESTNET-2 -y"
 
 gen_amts = {}
 
@@ -42,7 +42,7 @@ for bank_record in data['app_state']['bank']['balances']:
     if bank_record['address'] in IGNORE_ADDRS:
         continue
     for coin_record in bank_record['coins']:
-        if int(coin_record['amount']) > 1000000000:
+        if int(coin_record['amount']) > 10000000000:
             continue
         if coin_record['denom'] == ibc_denom:
             bank_sends.append(f"strided tx bank send val2 {bank_record['address']} {coin_record['amount']}{coin_record['denom']} {bank_suffix}")
@@ -50,11 +50,13 @@ for bank_record in data['app_state']['bank']['balances']:
             if bank_record['address'] not in gen_amts:
                 gen_amts[bank_record['address']] = 0
             gen_amts[bank_record['address']] += int(coin_record['amount'])
+            bank_sends.append(f"strided tx bank send val2 {bank_record['address']} {coin_record['amount']}ustrd {bank_suffix}")
         elif coin_record['denom'] == 'stuatom':
             iamt = int(int(coin_record['amount']) * STATOM_EXCH_RATE)
             bank_sends.append(f"strided tx bank send val2 {bank_record['address']} {iamt}{ibc_denom} {bank_suffix}")
         else:
-            raise Exception(f"Unknown denom {coin_record['denom']}")
+            continue
+            # raise Exception(f"Unknown denom {coin_record['denom']}")
 
 for addr, amt in gen_amts.items():
     if amt > 1000000000:
@@ -62,8 +64,14 @@ for addr, amt in gen_amts.items():
     genesis_local.append(f"$STRIDE_CMD add-genesis-account {addr} {amt}ustrd")
     genesis.append(f"$MAIN_NODE_CMD add-genesis-account {addr} {amt}ustrd")
 
-bStr = "\nsleep 12\n".join(bank_sends)
-with open('bank_sends.sh', 'w') as f:
+stride_sends = [c for c in bank_sends if 'ustrd' in c]
+uatom_sends = [c for c in bank_sends if ibc_denom in c]
+
+# bStr = "\nsleep 16\n".join(stride_sends)
+# with open('stride_sends.sh', 'w') as f:
+#     f.write(bStr)
+bStr = "\nsleep 16\n".join(uatom_sends)
+with open('atom_sends.sh', 'w') as f:
     f.write(bStr)
 
 gStr = "\n".join(genesis_local)

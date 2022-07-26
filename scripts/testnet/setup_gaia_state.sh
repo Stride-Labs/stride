@@ -11,8 +11,8 @@ STAKE_TOKENS=1000000uatom
 VAL_ACCT=gval1
 ENDPOINT=$GAIA_MAIN_ENDPOINT
 
-TRUST_PERIOD="21600s"
-UNBONDING_TIME="21600s"
+TRUST_PERIOD="37700s"
+UNBONDING_TIME="37800s"
 
 echo "Initializing gaia..."
 $GAIA_CMD init test --chain-id $CHAIN_NAME --overwrite 2> /dev/null
