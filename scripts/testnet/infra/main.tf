@@ -25,6 +25,9 @@ variable "regions" {
 variable "deployment_name" {
   type = string
 }
+variable "chain_id" {
+  type = string
+}
 variable "num_stride_nodes" {
   type    = number
   default = 3
@@ -135,7 +138,7 @@ resource "google_dns_record_set" "stridenet-sub-zone-name-service-in-parent" {
 # Type A (Static Hostname) for each node in the network: e.g. stride-node1.testnet.stridenet.co
 resource "google_dns_record_set" "external-addresses" {
   count = length(local.node_names)
-  name  = "${local.node_names[count.index]}.${google_dns_managed_zone.stridenet-network-sub-zone.dns_name}"
+  name  = "${local.node_names[count.index]}-${var.chain_id}.${google_dns_managed_zone.stridenet-network-sub-zone.dns_name}"
   type  = "A"
   ttl   = 300
 

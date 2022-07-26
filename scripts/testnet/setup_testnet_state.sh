@@ -8,6 +8,8 @@ STRIDE_CHAIN_ID="$2"
 NUM_STRIDE_NODES="$3"
 STRIDE_ADMIN_MNEMONIC="${@:4}"
 
+LOWER_CHAIN_ID=$(printf "${STRIDE_CHAIN_ID}" | awk '{ print tolower($0) }')
+
 echo "Setting up deployment $DEPLOYMENT_NAME"
 
 # import dependencies
