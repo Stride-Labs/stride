@@ -4,13 +4,17 @@ import (
 	"fmt"
 	"strconv"
 
+	math "github.com/pkg/math"
+	"github.com/spf13/cast"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	ibctypes "github.com/cosmos/ibc-go/v3/modules/apps/transfer/types"
+	clienttypes "github.com/cosmos/ibc-go/v3/modules/core/02-client/types"
+
 	utils "github.com/Stride-Labs/stride/utils"
 	epochstypes "github.com/Stride-Labs/stride/x/epochs/types"
 	recordstypes "github.com/Stride-Labs/stride/x/records/types"
 	"github.com/Stride-Labs/stride/x/stakeibc/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	ibctypes "github.com/cosmos/ibc-go/v3/modules/apps/transfer/types"
-	clienttypes "github.com/cosmos/ibc-go/v3/modules/core/02-client/types"
 )
 
 // TODO [TEST-127]: ensure all timeouts are less than the epoch length
@@ -201,7 +205,11 @@ func (k Keeper) StakeExistingDepositsOnHostZones(ctx sdk.Context, epochNumber in
 	stakeDepositRecords := utils.FilterDepositRecords(depositRecords, func(record recordstypes.DepositRecord) (condition bool) {
 		return record.Status == recordstypes.DepositRecord_STAKE
 	})
-	for _, depositRecord := range stakeDepositRecords {
+
+	// Limit the number of staking deposits to process per epoch
+	MAX_TO_PROCESS := math.Min(len(stakeDepositRecords), cast.ToInt(k.GetParam(ctx, types.KeyMaxICACallsPerEpoch)))
+	for _, depositRecord := range stakeDepositRecords[:MAX_TO_PROCESS] {
+		k.Logger(ctx).Info(fmt.Sprintf("Staking %d out of %d deposit records", MAX_TO_PROCESS, len(stakeDepositRecords)))
 		if depositRecord.DepositEpochNumber < uint64(epochNumber) {
 			pstr := fmt.Sprintf("\t[STAKE] Processing deposit ID:{%d} DENOM:{%s} AMT:{%d}", depositRecord.Id, depositRecord.Denom, depositRecord.Amount)
 			k.Logger(ctx).Info(pstr)

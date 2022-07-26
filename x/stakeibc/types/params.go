@@ -11,7 +11,7 @@ import (
 var (
 	// these are default intervals _in epochs_ NOT in blocks
 	DefaultDepositInterval        uint64 = 3
-	DefaultDelegateInterval       uint64 = 3
+	DefaultDelegateInterval       uint64 = 5
 	DefaultReinvestInterval       uint64 = 3
 	DefaultRewardsInterval        uint64 = 3
 	DefaultRedemptionRateInterval uint64 = 3
@@ -19,9 +19,10 @@ var (
 	DefaultStrideCommission              uint64 = 10
 	DefaultValidatorRebalancingThreshold uint64 = 100 // divide by 10,000, so 100 = 1%
 	// 10 minutes
-	DefaultICATimeoutNanos  uint64 = 600000000000
-	DefaultBufferSize       uint64 = 20
-	DefaultIbcTimeoutBlocks uint64 = 300 // 300 blocks ~= 30 minutes
+	DefaultICATimeoutNanos     uint64 = 600000000000
+	DefaultBufferSize          uint64 = 20
+	DefaultIbcTimeoutBlocks    uint64 = 300 // 300 blocks ~= 30 minutes
+	DefaultMaxICACallsPerEpoch uint64 = 2
 
 	// KeyDepositInterval is store's key for the DepositInterval option
 	KeyDepositInterval               = []byte("DepositInterval")
@@ -34,6 +35,7 @@ var (
 	KeyICATimeoutNanos               = []byte("ICATimeoutNanos")
 	KeyBufferSize                    = []byte("BufferSize")
 	KeyIbcTimeoutBlocks              = []byte("IBCTimeoutBlocks")
+	KeyMaxICACallsPerEpoch           = []byte("MaxICACallsPerEpoch")
 )
 
 var _ paramtypes.ParamSet = (*Params)(nil)
@@ -55,6 +57,7 @@ func NewParams(
 	ica_timeout_nanos uint64,
 	buffer_size uint64,
 	ibc_timeout_blocks uint64,
+	max_ica_calls_per_epoch uint64,
 ) Params {
 	return Params{
 		DepositInterval:               deposit_interval,
@@ -67,6 +70,7 @@ func NewParams(
 		IcaTimeoutNanos:               ica_timeout_nanos,
 		BufferSize:                    buffer_size,
 		IbcTimeoutBlocks:              ibc_timeout_blocks,
+		MaxIcaCallsPerEpoch:           max_ica_calls_per_epoch,
 	}
 }
 
@@ -83,6 +87,7 @@ func DefaultParams() Params {
 		DefaultICATimeoutNanos,
 		DefaultBufferSize,
 		DefaultIbcTimeoutBlocks,
+		DefaultMaxICACallsPerEpoch,
 	)
 }
 
@@ -99,6 +104,7 @@ func (p *Params) ParamSetPairs() paramtypes.ParamSetPairs {
 		paramtypes.NewParamSetPair(KeyICATimeoutNanos, &p.IcaTimeoutNanos, isPositive),
 		paramtypes.NewParamSetPair(KeyBufferSize, &p.BufferSize, isPositive),
 		paramtypes.NewParamSetPair(KeyIbcTimeoutBlocks, &p.IbcTimeoutBlocks, isPositive),
+		paramtypes.NewParamSetPair(KeyMaxICACallsPerEpoch, &p.MaxIcaCallsPerEpoch, isPositive),
 	}
 }
 
