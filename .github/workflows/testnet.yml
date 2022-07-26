@@ -1,3 +1,4 @@
+name: "Buildnet Testnet Docker Images"
 on:
   workflow_dispatch:
     inputs:
