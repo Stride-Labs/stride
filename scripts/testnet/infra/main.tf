@@ -37,6 +37,9 @@ locals {
   stride_node_names = [
     for i in range(1, var.num_stride_nodes + 1) : "stride-node${i}"
   ]
+  stride_dns_node_names = [
+    for i in range(1, var.num_stride_nodes + 1) : "${var.chain_id}-node${i}"
+  ]
   stride_sizes = [
     for i in range(1, var.num_stride_nodes + 1) : 750
   ]
@@ -53,6 +56,7 @@ locals {
 
 locals {
   node_names = concat(local.stride_node_names, local.dependency_node_names)
+  dns_node_names = concat(local.stride_dns_node_names, local.dependency_node_names)
   node_sizes = concat(local.stride_sizes, local.dependency_sizes)
   node_types = concat(local.stride_vms, local.dependency_vms)
 }
@@ -137,8 +141,8 @@ resource "google_dns_record_set" "stridenet-sub-zone-name-service-in-parent" {
 
 # Type A (Static Hostname) for each node in the network: e.g. stride-node1.testnet.stridenet.co
 resource "google_dns_record_set" "external-addresses" {
-  count = length(local.node_names)
-  name  = "${local.node_names[count.index]}-${var.chain_id}.${google_dns_managed_zone.stridenet-network-sub-zone.dns_name}"
+  count = length(local.dns_node_names)
+  name  = "${local.dns_node_names[count.index]}.${google_dns_managed_zone.stridenet-network-sub-zone.dns_name}"
   type  = "A"
   ttl   = 300
 

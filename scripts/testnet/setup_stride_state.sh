@@ -66,7 +66,7 @@ for (( i=1; i <= $NUM_NODES; i++ )); do
     sed -i -E 's|"stake"|"ustrd"|g' "${STATE}/${node_name}/config/genesis.json"
 
     # Get the endpoint and node ID
-    endpoint="${node_name}-${LOWER_CHAIN_ID}.${DEPLOYMENT_NAME}.${DOMAIN}"
+    endpoint="${LOWER_CHAIN_ID}-node${i}.${DEPLOYMENT_NAME}.${DOMAIN}"
     node_id=$($st_cmd tendermint show-node-id)@$endpoint:$PORT_ID
     echo "Node ID: $node_id"
 
