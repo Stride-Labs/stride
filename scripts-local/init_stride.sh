@@ -31,7 +31,7 @@ sed -i -E "s|cors_allowed_origins = \[\]|cors_allowed_origins = [\"\*\"]|g" $con
 jq '.app_state.epochs.epochs[$epochIndex].duration = $epochLen' --arg epochLen $DAY_EPOCH_LEN --argjson epochIndex $DAY_EPOCH_INDEX  $genesis_config > json.tmp && mv json.tmp $genesis_config
 jq '.app_state.epochs.epochs[$epochIndex].duration = $epochLen' --arg epochLen $STRIDE_EPOCH_LEN --argjson epochIndex $STRIDE_EPOCH_INDEX $genesis_config > json.tmp && mv json.tmp $genesis_config
 jq '.app_state.stakeibc.params.rewards_interval = $interval' --arg interval $INTERVAL_LEN $genesis_config > json.tmp && mv json.tmp $genesis_config
-jq '.app_state.stakeibc.params.delegate_interval = $interval' --arg interval $INTERVAL_LEN $genesis_config > json.tmp && mv json.tmp $genesis_config
+jq '.app_state.stakeibc.params.delegate_interval = $interval' --arg interval $(($INTERVAL_LEN*5) $genesis_config > json.tmp && mv json.tmp $genesis_config
 jq '.app_state.stakeibc.params.deposit_interval = $interval' --arg interval $INTERVAL_LEN $genesis_config > json.tmp && mv json.tmp $genesis_config
 jq '.app_state.stakeibc.params.redemption_rate_interval = $interval' --arg interval $INTERVAL_LEN $genesis_config > json.tmp && mv json.tmp $genesis_config
 jq '.app_state.stakeibc.params.reinvest_interval = $interval' --arg interval $INTERVAL_LEN $genesis_config > json.tmp && mv json.tmp $genesis_config
