@@ -2,13 +2,15 @@ package cli
 
 import (
 	"strconv"
+	"strings"
 
-	"github.com/Stride-Labs/stride/x/stakeibc/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	"github.com/spf13/cast"
 	"github.com/spf13/cobra"
+
+	"github.com/Stride-Labs/stride/x/stakeibc/types"
 )
 
 var _ = strconv.Itoa(0)
@@ -24,6 +26,7 @@ func CmdLiquidStake() *cobra.Command {
 				return err
 			}
 			argHostDenom := args[1]
+			argHostDenom = strings.ToUpper(argHostDenom)
 
 			clientCtx, err := client.GetClientTxContext(cmd)
 			if err != nil {
