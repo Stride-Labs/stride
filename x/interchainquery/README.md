@@ -70,3 +70,18 @@ IterateQueries(ctx sdk.Context, fn func(index int64, queryInfo types.Query) (sto
 // AllQueries returns every queryInfo in the store
 AllQueries(ctx sdk.Context) []types.Query
 ```
+
+## Hooks
+
+
+## Msg
+
+`interchainquery` has a `Msg` service that passes messages between chains. 
+
+```protobuf
+service Msg {
+  // SubmitQueryResponse defines a method for submiting query responses.
+  rpc SubmitQueryResponse(MsgSubmitQueryResponse) returns (MsgSubmitQueryResponseResponse)
+}
+```
+
