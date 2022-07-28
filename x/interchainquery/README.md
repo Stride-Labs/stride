@@ -15,10 +15,8 @@ Stride uses interchain queries and interchain accounts to perform multichain liq
 1. **[Concepts](#concepts)**
 2. **[State](#state)**
 3. **[Events](#events)**
-4. **[Keeper](#keeper)**  
-5. **[Hooks](#hooks)**  
-6. **[Queries](#queries)**  
-7. **[Future Improvements](#future-improvements)**
+4. **[Keeper](#keeper)**   
+5. **[Msgs](#msgs)**  
 
 ## Concepts
 
@@ -53,6 +51,26 @@ The `interchainquery` module keeps `Query` objects and modifies the information 
 3. `local_height` keeps the block height of the querying chain
 4. `value` keeps the bytecode value of the data retrieved by the Query
 
+## Events
+
+The `interchainquery` module emits an event at the end of every 3 `stride_epoch`s (i.e. 15 minutes).
+The purpose of this event is to send interchainqueries that query data about staking rewards, which Stride uses to reinvest (aka autocompound) staking rewards.
+
+```go
+			event := sdk.NewEvent(
+				sdk.EventTypeMessage,
+				sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
+				sdk.NewAttribute(sdk.AttributeKeyAction, types.AttributeValueQuery),
+				sdk.NewAttribute(types.AttributeKeyQueryId, queryInfo.Id),
+				sdk.NewAttribute(types.AttributeKeyChainId, queryInfo.ChainId),
+				sdk.NewAttribute(types.AttributeKeyConnectionId, queryInfo.ConnectionId),
+				sdk.NewAttribute(types.AttributeKeyType, queryInfo.QueryType),
+				// TODO: add height to request type
+				sdk.NewAttribute(types.AttributeKeyHeight, "0"),
+				sdk.NewAttribute(types.AttributeKeyRequest, hex.EncodeToString(queryInfo.Request)),
+			)
+```
+
 ## Keeper
 
 ### Keeper Functions
@@ -71,10 +89,7 @@ IterateQueries(ctx sdk.Context, fn func(index int64, queryInfo types.Query) (sto
 AllQueries(ctx sdk.Context) []types.Query
 ```
 
-## Hooks
-
-
-## Msg
+## Msgs
 
 `interchainquery` has a `Msg` service that passes messages between chains. 
 
