@@ -82,9 +82,8 @@ func (k Keeper) GetEpochUnbondingRecordByEpoch(ctx sdk.Context, epochNumber uint
 	return types.EpochUnbondingRecord{}, false
 }
 
-// GetEpochUnbondingRecordByEpoch returns a epochUnbondingRecord from its epochNumber
+// GetLatestEpochUnbondingRecord returns the latest epochUnbondingRecord
 func (k Keeper) GetLatestEpochUnbondingRecord(ctx sdk.Context) (val types.EpochUnbondingRecord, found bool) {
-	// then add undelegation amount to epoch unbonding records
 	currentUnbondingRecord := k.GetEpochUnbondingRecordCount(ctx) - 1
 	epochUnbondingRecord, found := k.GetEpochUnbondingRecord(ctx, currentUnbondingRecord)
 	if !found {
@@ -123,7 +122,6 @@ func GetEpochUnbondingRecordIDBytes(id uint64) []byte {
 	return bz
 }
 
-// IterateHostZones iterates zones
 func (k Keeper) IterateEpochUnbondingRecords(ctx sdk.Context,
 	fn func(index int64, epochUnbondingRecords types.EpochUnbondingRecord) (stop bool)) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.UserRedemptionRecordKey))
