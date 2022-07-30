@@ -233,13 +233,13 @@ func (k Keeper) StakeExistingDepositsOnHostZones(ctx sdk.Context, epochNumber in
 				k.Logger(ctx).Info(fmt.Sprintf("Successfully submitted stake for %s on %s", processAmount, hostZone.ChainId))
 			}
 
-			ctx.EventManager().EmitEvents(sdk.Events{
+			ctx.EventManager().EmitEvent(
 				sdk.NewEvent(
 					sdk.EventTypeMessage,
 					sdk.NewAttribute("hostZone", hostZone.ChainId),
 					sdk.NewAttribute("newAmountStaked", strconv.FormatInt(depositRecord.Amount, 10)),
 				),
-			})
+			)
 		}
 	}
 }
