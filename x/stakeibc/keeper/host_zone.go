@@ -5,10 +5,11 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/Stride-Labs/stride/x/stakeibc/types"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+
+	"github.com/Stride-Labs/stride/x/stakeibc/types"
 )
 
 // GetHostZoneCount get the total number of hostZone
@@ -111,7 +112,7 @@ func (k Keeper) AddDelegationToValidator(ctx sdk.Context, hostZone types.HostZon
 			}
 		}
 	}
-	k.Logger(ctx).Info(fmt.Sprintf("Could not find validator %s on host zone %s", valAddr, hostZone.GetChainId()))
+	k.Logger(ctx).Error(fmt.Sprintf("Could not find validator %s on host zone %s", valAddr, hostZone.GetChainId()))
 	return false
 }
 
