@@ -188,7 +188,7 @@ func (im IBCModule) OnAcknowledgementPacket(
 		switch resp := ack.Response.(type) {
 		case *channeltypes.Acknowledgement_Result:
 			log := fmt.Sprintf("\t [IBC-TRANSFER] Acknowledgement_Result {%s}", string(resp.Result))
-			im.keeper.Logger(ctx).Error(log)
+			im.keeper.Logger(ctx).Info(log)
 			// UPDATE RECORD
 			// match record based on amount
 			amount, err := strconv.ParseInt(data.Amount, 10, 64)
@@ -203,7 +203,7 @@ func (im IBCModule) OnAcknowledgementPacket(
 			record.Status = types.DepositRecord_STAKE
 			im.keeper.SetDepositRecord(ctx, *record)
 			log = fmt.Sprintf("\t [IBC-TRANSFER] Deposit record updated: {%v}", record)
-			im.keeper.Logger(ctx).Error(log)
+			im.keeper.Logger(ctx).Info(log)
 		case *channeltypes.Acknowledgement_Error:
 			log := fmt.Sprintf("\t [IBC-TRANSFER] Acknowledgement_Error {%s}", resp.Error)
 			im.keeper.Logger(ctx).Error(log)
