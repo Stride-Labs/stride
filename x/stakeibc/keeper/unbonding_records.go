@@ -8,6 +8,9 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	"github.com/spf13/cast"
+
+	utils "github.com/Stride-Labs/stride/utils"
 
 	recordstypes "github.com/Stride-Labs/stride/x/records/types"
 	"github.com/Stride-Labs/stride/x/stakeibc/types"
@@ -29,7 +32,7 @@ func (k Keeper) CreateEpochUnbondings(ctx sdk.Context, epochNumber int64) bool {
 	k.IterateHostZones(ctx, addEpochUndelegation)
 	epochUnbondingRecord := recordstypes.EpochUnbondingRecord{
 		Id:                   0,
-		UnbondingEpochNumber: uint64(epochNumber),
+		UnbondingEpochNumber: cast.ToUint64(epochNumber),
 		HostZoneUnbondings:   hostZoneUnbondings,
 	}
 	k.RecordsKeeper.AppendEpochUnbondingRecord(ctx, epochUnbondingRecord)
@@ -66,8 +69,8 @@ func (k Keeper) SendHostZoneUnbondings(ctx sdk.Context, hostZone types.HostZone)
 	overflowAmt := int64(0)
 	for _, validator := range validators {
 		valAddr := validator.GetAddress()
-		valUnbondAmt := int64(newUnbondingToValidator[valAddr])
-		currentAmtStaked := int64(validator.GetDelegationAmt())
+		valUnbondAmt := cast.ToInt64(newUnbondingToValidator[valAddr])
+		currentAmtStaked := cast.ToInt64(validator.GetDelegationAmt())
 		if valUnbondAmt > currentAmtStaked { // if we don't have enough assets to unbond
 			overflowAmt += valUnbondAmt - currentAmtStaked
 			valUnbondAmt = currentAmtStaked
@@ -80,7 +83,7 @@ func (k Keeper) SendHostZoneUnbondings(ctx sdk.Context, hostZone types.HostZone)
 			valUnbondAmt := valAddrToUnbondAmt[valAddr]
 			currentAmtStaked := validator.GetDelegationAmt()
 			// store how many more tokens we could unbond, if needed
-			amtToPotentiallyUnbond := int64(currentAmtStaked) - valUnbondAmt
+			amtToPotentiallyUnbond := cast.ToInt64(currentAmtStaked) - valUnbondAmt
 			if amtToPotentiallyUnbond > 0 { // if we can afford to unbond more
 				if amtToPotentiallyUnbond > overflowAmt { // we can fully cover the overflow
 					valAddrToUnbondAmt[valAddr] += overflowAmt
@@ -97,8 +100,9 @@ func (k Keeper) SendHostZoneUnbondings(ctx sdk.Context, hostZone types.HostZone)
 		k.Logger(ctx).Error(fmt.Sprintf("Could not unbond %d on Host Zone %s", totalAmtToUnbond, hostZone.ChainId))
 		return false
 	}
-	for valAddr, valUnbondAmt := range valAddrToUnbondAmt {
-		stakeAmt := sdk.NewInt64Coin(hostZone.HostDenom, int64(valUnbondAmt))
+	for _, valAddr := range utils.StringToIntMapKeys(valAddrToUnbondAmt) {
+		valUnbondAmt := valAddrToUnbondAmt[valAddr]
+		stakeAmt := sdk.NewInt64Coin(hostZone.HostDenom, cast.ToInt64(valUnbondAmt))
 
 		msgs = append(msgs, &stakingtypes.MsgUndelegate{
 			DelegatorAddress: delegationAccount.GetAddress(),
@@ -143,7 +147,9 @@ func (k Keeper) CleanupEpochUnbondingRecords(ctx sdk.Context) bool {
 	for _, epochUnbondingRecord := range k.RecordsKeeper.GetAllEpochUnbondingRecord(ctx) {
 		k.Logger(ctx).Info(fmt.Sprintf("Cleaning up epoch unbondings for epoch unbonding record from epoch %d", epochUnbondingRecord.GetId()))
 		shouldDeleteRecord := true
-		for _, hostZoneUnbonding := range epochUnbondingRecord.GetHostZoneUnbondings() {
+		hostZoneUnbondings := epochUnbondingRecord.GetHostZoneUnbondings()
+		for _, key := range utils.HostZoneUnbondingKeys(hostZoneUnbondings) {
+			hostZoneUnbonding := hostZoneUnbondings[key]
 			if (hostZoneUnbonding.Status != recordstypes.HostZoneUnbonding_TRANSFERRED) && (hostZoneUnbonding.GetAmount() != 0) {
 				shouldDeleteRecord = false
 				break
@@ -221,7 +227,7 @@ func (k Keeper) SweepAllUnbondedTokens(ctx sdk.Context) {
 				delegationAccount := zoneInfo.GetDelegationAccount()
 				redemptionAccount := zoneInfo.GetRedemptionAccount()
 
-				sweepCoin := sdk.NewCoin(zoneInfo.HostDenom, sdk.NewInt(int64(totalAmtTransferToRedemptionAcct)))
+				sweepCoin := sdk.NewCoin(zoneInfo.HostDenom, sdk.NewInt(cast.ToInt64(totalAmtTransferToRedemptionAcct)))
 				var msgs []sdk.Msg
 				// construct the msg
 				msgs = append(msgs, &banktypes.MsgSend{FromAddress: delegationAccount.GetAddress(),
