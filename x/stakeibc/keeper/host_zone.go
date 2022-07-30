@@ -5,10 +5,11 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/Stride-Labs/stride/x/stakeibc/types"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+
+	"github.com/Stride-Labs/stride/x/stakeibc/types"
 )
 
 // GetHostZoneCount get the total number of hostZone
@@ -123,12 +124,17 @@ func (k Keeper) RemoveValidatorFromHostZone(ctx sdk.Context, chainId string, val
 	}
 	for i, val := range hostZone.Validators {
 		if val.GetAddress() == validatorAddress {
-			hostZone.Validators = append(hostZone.Validators[:i], hostZone.Validators[i+1:]...)
-			return true
+			if val.GetDelegationAmt() == 0 && val.GetWeight() == 0 {
+				hostZone.Validators = append(hostZone.Validators[:i], hostZone.Validators[i+1:]...)
+				return true
+			} else {
+				k.Logger(ctx).Error(fmt.Sprintf("Validator %s has non-zero delegation or weight", validatorAddress))
+				return false
+			}
 		}
 	}
 	k.SetHostZone(ctx, hostZone)
-	k.Logger(ctx).Error(fmt.Sprintf("Validator %s not found on Host Zone %s", validatorAddress, chainId))
+	k.Logger(ctx).Error(fmt.Sprintf("Validator %s not found on the host zone %s", validatorAddress, chainId))
 	return false
 }
 
