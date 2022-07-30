@@ -8,7 +8,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/snapshots"
 
-	utils "github.com/Stride-Labs/stride/utils"
+	"github.com/Stride-Labs/stride/utils"
 
 	"github.com/spf13/cast"
 	"github.com/spf13/cobra"
