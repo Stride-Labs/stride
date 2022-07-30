@@ -41,7 +41,7 @@ func (k Keeper) RedeemStake(goCtx context.Context, msg *types.MsgRedeemStake) (*
 	}
 
 	// construct desired unstaking amount from host zone
-	coinDenom := "st" + hostZone.HostDenom
+	coinDenom := types.StAssetDenomFromHostZoneDenom(hostZone.HostDenom)
 	nativeAmount := sdk.NewDec(msg.Amount).Mul(hostZone.RedemptionRate)
 	// TODO(TEST-112) bigint safety
 	coinString := nativeAmount.RoundInt().String() + coinDenom

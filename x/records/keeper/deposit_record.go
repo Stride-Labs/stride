@@ -101,11 +101,6 @@ func GetDepositRecordIDBytes(id uint64) []byte {
 	return bz
 }
 
-// GetDepositRecordIDFromBytes returns ID in uint64 format from a byte array
-func GetDepositRecordIDFromBytes(bz []byte) uint64 {
-	return binary.BigEndian.Uint64(bz)
-}
-
 func (k Keeper) GetDepositRecordByEpochAndChain(ctx sdk.Context, epochNumber uint64, chainId string) (val *types.DepositRecord, found bool) {
 	records := k.GetAllDepositRecord(ctx)
 	for _, depositRecord := range records {

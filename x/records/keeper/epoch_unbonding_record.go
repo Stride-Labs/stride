@@ -3,9 +3,10 @@ package keeper
 import (
 	"encoding/binary"
 
-	"github.com/Stride-Labs/stride/x/records/types"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	"github.com/Stride-Labs/stride/x/records/types"
 )
 
 // GetEpochUnbondingRecordCount get the total number of epochUnbondingRecord
@@ -120,11 +121,6 @@ func GetEpochUnbondingRecordIDBytes(id uint64) []byte {
 	bz := make([]byte, 8)
 	binary.BigEndian.PutUint64(bz, id)
 	return bz
-}
-
-// GetEpochUnbondingRecordIDFromBytes returns ID in uint64 format from a byte array
-func GetEpochUnbondingRecordIDFromBytes(bz []byte) uint64 {
-	return binary.BigEndian.Uint64(bz)
 }
 
 // IterateHostZones iterates zones
