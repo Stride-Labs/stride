@@ -13,7 +13,7 @@ import (
 	utils "github.com/Stride-Labs/stride/utils"
 )
 
-func (k Keeper) RedeemStake(goCtx context.Context, msg *types.MsgRedeemStake) (*types.MsgRedeemStakeResponse, error) {
+func (k msgServer) RedeemStake(goCtx context.Context, msg *types.MsgRedeemStake) (*types.MsgRedeemStakeResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	// get our addresses, make sure they're valid
