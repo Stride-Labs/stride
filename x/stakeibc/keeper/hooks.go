@@ -307,12 +307,12 @@ func (k Keeper) UpdateRedemptionRates(ctx sdk.Context, depositRecords []recordst
 	// Calc redemptionRate for each host zone
 	UpdateRedemptionRate := func(ctx sdk.Context, index int64, zoneInfo types.HostZone) error {
 
-		undelegatedBalance, error := k.GetUndelegatedBalance(ctx, zoneInfo, depositRecords)
+		undelegatedBalance, error := k.GetUndelegatedBalance(zoneInfo, depositRecords)
 		if error != nil {
 			return error
 		}
 		stakedBalance := zoneInfo.StakedBal
-		modeuleAcctBalance, error := k.GetModuleAccountBalance(ctx, zoneInfo, depositRecords)
+		modeuleAcctBalance, error := k.GetModuleAccountBalance(zoneInfo, depositRecords)
 		if error != nil {
 			return error
 		}
@@ -336,7 +336,7 @@ func (k Keeper) UpdateRedemptionRates(ctx sdk.Context, depositRecords []recordst
 	k.IterateHostZones(ctx, UpdateRedemptionRate)
 }
 
-func (k Keeper) GetUndelegatedBalance(ctx sdk.Context, hostZone types.HostZone, depositRecords []recordstypes.DepositRecord) (int64, error) {
+func (k Keeper) GetUndelegatedBalance(hostZone types.HostZone, depositRecords []recordstypes.DepositRecord) (int64, error) {
 	// filter to only the deposit records for the host zone with status STAKE
 	UndelegatedDepositRecords := utils.FilterDepositRecords(depositRecords, func(record recordstypes.DepositRecord) (condition bool) {
 		return record.Status == recordstypes.DepositRecord_STAKE && record.HostZoneId == hostZone.ChainId
@@ -351,7 +351,7 @@ func (k Keeper) GetUndelegatedBalance(ctx sdk.Context, hostZone types.HostZone, 
 	return totalAmount, nil
 }
 
-func (k Keeper) GetModuleAccountBalance(ctx sdk.Context, hostZone types.HostZone, depositRecords []recordstypes.DepositRecord) (int64, error) {
+func (k Keeper) GetModuleAccountBalance(hostZone types.HostZone, depositRecords []recordstypes.DepositRecord) (int64, error) {
 	// filter to only the deposit records for the host zone with status DELEGATION
 	ModuleAccountRecords := utils.FilterDepositRecords(depositRecords, func(record recordstypes.DepositRecord) (condition bool) {
 		return record.Status == recordstypes.DepositRecord_TRANSFER && record.HostZoneId == hostZone.ChainId
