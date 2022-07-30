@@ -9,6 +9,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	ibckeeper "github.com/cosmos/ibc-go/v3/modules/core/keeper"
+	"github.com/spf13/cast"
 	"github.com/tendermint/tendermint/libs/log"
 
 	"github.com/Stride-Labs/stride/x/interchainquery/types"
@@ -107,7 +108,7 @@ func (k *Keeper) GetDatapointOrRequest(ctx sdk.Context, module string, connectio
 		return types.DataPoint{}, fmt.Errorf("no data; query submitted")
 	}
 
-	if val.LocalHeight.LT(sdk.NewInt(ctx.BlockHeight() - int64(max_age))) { // this is somewhat arbitrary; TODO: make this better
+	if val.LocalHeight.LT(sdk.NewInt(ctx.BlockHeight() - cast.ToInt64(max_age))) { // this is somewhat arbitrary; TODO: make this better
 		err := k.MakeRequest(ctx, connection_id, chain_id, query_type, request, sdk.NewInt(-1), "", "", max_age, height)
 		if err != nil {
 			return types.DataPoint{}, err

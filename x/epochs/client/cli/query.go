@@ -9,6 +9,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/version"
+	"github.com/spf13/cast"
 	"github.com/spf13/cobra"
 
 	"github.com/Stride-Labs/stride/x/epochs/types"
@@ -138,7 +139,7 @@ func GetCmdSecondsRemaining() *cobra.Command {
 			}
 
 			// duration: seconds
-			duration := int64(res.Epoch.Duration.Seconds())
+			duration := cast.ToInt64(res.Epoch.Duration.Seconds())
 			// current epoch start time
 			startTime := res.Epoch.CurrentEpochStartTime.Unix()
 			// diff in seconds

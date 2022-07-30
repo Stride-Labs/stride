@@ -3,15 +3,16 @@ package stakeibc
 import (
 	"math/rand"
 
-	"github.com/Stride-Labs/stride/testutil/sample"
-	stakeibcsimulation "github.com/Stride-Labs/stride/x/stakeibc/simulation"
-	"github.com/Stride-Labs/stride/x/stakeibc/types"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	simappparams "github.com/cosmos/cosmos-sdk/simapp/params"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
 	"github.com/cosmos/cosmos-sdk/x/simulation"
+
+	"github.com/Stride-Labs/stride/testutil/sample"
+	stakeibcsimulation "github.com/Stride-Labs/stride/x/stakeibc/simulation"
+	"github.com/Stride-Labs/stride/x/stakeibc/types"
 )
 
 // avoid unused import issue
@@ -24,7 +25,7 @@ var (
 )
 
 const (
-	opWeightMsgRestoreInterchainAccount = "op_weight_msg_register_interchain_account"
+	opWeightMsgRestoreInterchainAccount = "op_weight_msg_register_interchain_account" // #nosec
 	// TODO: Determine the simulation weight value
 	defaultWeightMsgRestoreInterchainAccount int = 100
 

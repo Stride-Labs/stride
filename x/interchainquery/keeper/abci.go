@@ -6,6 +6,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/telemetry"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/spf13/cast"
 
 	"github.com/Stride-Labs/stride/x/interchainquery/types"
 )
@@ -54,7 +55,7 @@ func (k Keeper) EndBlocker(ctx sdk.Context) {
 			// query was removed; delete datapoint
 			k.DeleteDatapoint(ctx, dp.Id)
 		} else {
-			if dp.LocalHeight.Int64()+int64(q.Ttl) > ctx.BlockHeader().Height {
+			if dp.LocalHeight.Int64()+cast.ToInt64(q.Ttl) > ctx.BlockHeader().Height {
 				// gc old data
 				k.DeleteDatapoint(ctx, dp.Id)
 			}
