@@ -2,9 +2,11 @@ package keeper
 
 import (
 	"fmt"
+	"sort"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/Stride-Labs/stride/x/stakeibc/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 func (k Keeper) GetValidatorDelegationAmtDifferences(ctx sdk.Context, hostZone types.HostZone) (map[string]int64, error) {
@@ -44,6 +46,13 @@ func (k Keeper) GetTargetValAmtsForHostZone(ctx sdk.Context, hostZone types.Host
 	}
 	targetAmount := make(map[string]uint64)
 	allocatedAmt := uint64(0)
+
+	// sort validators by weight ascending
+	validators := hostZone.GetValidators()
+	sort.Slice(validators, func(i, j int) bool {
+		return validators[i].Weight < validators[j].Weight
+	})
+
 	for i, validator := range hostZone.Validators {
 		if i == len(hostZone.Validators)-1 {
 			// for the last element, we need to make sure that the allocatedAmt is equal to the finalDelegation
