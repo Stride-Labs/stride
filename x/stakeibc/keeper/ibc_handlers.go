@@ -325,7 +325,7 @@ func (k *Keeper) HandleDelegate(ctx sdk.Context, msg sdk.Msg, totalDelegate int6
 	}
 
 	// TODO(TEST-112) more safety checks here
-	// increment the stakedBal on the hostZome
+	// increment the stakedBal on the hostZone
 	k.Logger(ctx).Info(fmt.Sprintf("incrementing stakedBal %d", amount))
 	if amount < 0 {
 		errMsg := fmt.Sprintf("Balance to stake was negative: %d", amount)
