@@ -8,10 +8,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-<<<<<<< HEAD
-=======
 	"github.com/spf13/cast"
->>>>>>> main
 
 	"github.com/Stride-Labs/stride/x/stakeibc/types"
 )
