@@ -29,6 +29,14 @@ func (k Keeper) RegisterHostZone(goCtx context.Context, msg *types.MsgRegisterHo
 		return nil, fmt.Errorf("invalid chain id, zone for \"%s\" already registered", chainId)
 	}
 
+	// check the denom is not already registered
+	hostZones := k.GetAllHostZone(ctx)
+	for _, hostZone := range hostZones {
+		if hostZone.HostDenom == msg.HostDenom {
+			return nil, fmt.Errorf("host denom \"%s\" already registered", msg.HostDenom)
+		}
+	}
+
 	// set the zone
 	zone := types.HostZone{
 		ChainId:           chainId,
