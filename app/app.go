@@ -5,6 +5,8 @@ import (
 	"os"
 	"path/filepath"
 
+	utils "github.com/Stride-Labs/stride/utils"
+
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/grpc/tmservice"
@@ -762,7 +764,7 @@ func (app *StrideApp) LoadHeight(height int64) error {
 // ModuleAccountAddrs returns all the app's module account addresses.
 func (app *StrideApp) ModuleAccountAddrs() map[string]bool {
 	modAccAddrs := make(map[string]bool)
-	for acc := range maccPerms {
+	for _, acc := range utils.StringToStringSliceMapKeys(maccPerms) {
 		modAccAddrs[authtypes.NewModuleAddress(acc).String()] = true
 	}
 

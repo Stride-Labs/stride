@@ -11,6 +11,7 @@ import (
 	clienttypes "github.com/cosmos/ibc-go/v3/modules/core/02-client/types"
 	commitmenttypes "github.com/cosmos/ibc-go/v3/modules/core/23-commitment/types"
 	tmclienttypes "github.com/cosmos/ibc-go/v3/modules/light-clients/07-tendermint/types"
+	"github.com/spf13/cast"
 
 	"github.com/Stride-Labs/stride/x/interchainquery/types"
 )
@@ -38,7 +39,7 @@ func (k msgServer) SubmitQueryResponse(goCtx context.Context, msg *types.MsgSubm
 			}
 			connection, _ := k.IBCKeeper.ConnectionKeeper.GetConnection(ctx, q.ConnectionId)
 
-			height := clienttypes.NewHeight(clienttypes.ParseChainID(q.ChainId), uint64(msg.Height)+1)
+			height := clienttypes.NewHeight(clienttypes.ParseChainID(q.ChainId), cast.ToUint64(msg.Height)+1)
 			consensusState, found := k.IBCKeeper.ClientKeeper.GetClientConsensusState(ctx, connection.ClientId, height)
 
 			if !found {
