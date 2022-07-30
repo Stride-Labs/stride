@@ -138,7 +138,7 @@ func (k Keeper) HandleAcknowledgement(ctx sdk.Context, modulePacket channeltypes
 				k.Logger(ctx).Error("Unable to unmarshal MsgUndelegate response", "error", err)
 				return err
 			}
-			k.Logger(ctx).Debug("Undelegated", "response", response)
+			k.Logger(ctx).Info("Undelegated", "response", response)
 			// we should update delegation records here.
 			if err := k.HandleUndelegate(ctx, src, response.CompletionTime); err != nil {
 				return err
