@@ -3,9 +3,10 @@ package keeper
 import (
 	"encoding/binary"
 
-	"github.com/Stride-Labs/stride/x/records/types"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	"github.com/Stride-Labs/stride/x/records/types"
 )
 
 // GetDepositRecordCount get the total number of depositRecord
@@ -115,14 +116,11 @@ func (k Keeper) GetDepositRecordByEpochAndChain(ctx sdk.Context, epochNumber uin
 	return nil, false
 }
 
-// TODO: pass in hostZoneId
 func (k Keeper) GetTransferDepositRecordByAmount(ctx sdk.Context, amount int64) (val *types.DepositRecord, found bool) {
 	records := k.GetAllDepositRecord(ctx)
 	for _, depositRecord := range records {
 		amountsMatch := depositRecord.Amount == amount && depositRecord.Status == types.DepositRecord_TRANSFER
-		// hostZoneMatches := depositRecord.HostZoneId == hostZoneId
-		hostZoneMatches := true
-		if amountsMatch && hostZoneMatches {
+		if amountsMatch {
 			return &depositRecord, true
 		}
 	}
