@@ -12,6 +12,7 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	channeltypes "github.com/cosmos/ibc-go/v3/modules/core/04-channel/types"
 	"github.com/golang/protobuf/proto"
+	"github.com/spf13/cast"
 
 	epochtypes "github.com/Stride-Labs/stride/x/epochs/types"
 	recordstypes "github.com/Stride-Labs/stride/x/records/types"
@@ -177,7 +178,7 @@ func (k Keeper) HandleAcknowledgement(ctx sdk.Context, modulePacket channeltypes
 	}
 
 	if recordIdToDelete >= 0 {
-		k.RecordsKeeper.RemoveDepositRecord(ctx, uint64(recordIdToDelete))
+		k.RecordsKeeper.RemoveDepositRecord(ctx, cast.ToUint64(recordIdToDelete))
 	}
 
 	ctx.EventManager().EmitEvent(
@@ -228,7 +229,7 @@ func (k *Keeper) HandleSend(ctx sdk.Context, msg sdk.Msg, sequence string) error
 			HostZoneId:         zone.ChainId,
 			Status:             recordstypes.DepositRecord_STAKE,
 			Source:             recordstypes.DepositRecord_WITHDRAWAL_ICA,
-			DepositEpochNumber: uint64(epochNumber),
+			DepositEpochNumber: cast.ToUint64(epochNumber),
 		}
 		k.RecordsKeeper.AppendDepositRecord(ctx, record)
 		// process unbonding transfers from the DelegationAccount to the RedemptionAccount
@@ -340,7 +341,7 @@ func (k *Keeper) HandleDelegate(ctx sdk.Context, msg sdk.Msg, totalDelegate int6
 		k.SetHostZone(ctx, *zone)
 	}
 
-	return int64(record.Id), nil
+	return cast.ToInt64(record.Id), nil
 }
 
 func (k Keeper) HandleUndelegate(ctx sdk.Context, msg sdk.Msg, completionTime time.Time) error {
@@ -388,7 +389,7 @@ func (k Keeper) HandleUndelegate(ctx sdk.Context, msg sdk.Msg, completionTime ti
 			continue
 		}
 		hostZoneRecord.Status = recordstypes.HostZoneUnbonding_UNBONDED
-		hostZoneRecord.UnbondingTime = uint64(completionTime.UnixNano())
+		hostZoneRecord.UnbondingTime = cast.ToUint64(completionTime.UnixNano())
 		k.Logger(ctx).Info(fmt.Sprintf("Set unbonding time to %v for host zone %s's unbonding for %d%s", completionTime, zone.ChainId, undelegateMsg.Amount.Amount.Int64(), undelegateMsg.Amount.Denom))
 		// save back the altered SetEpochUnbondingRecord
 		k.RecordsKeeper.SetEpochUnbondingRecord(ctx, epochUnbonding)

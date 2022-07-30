@@ -8,6 +8,8 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/snapshots"
 
+	utils "github.com/Stride-Labs/stride/utils"
+
 	"github.com/spf13/cast"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
@@ -253,7 +255,7 @@ func (a appCreator) newApp(logger log.Logger, db dbm.DB, traceStore io.Writer, a
 
 	skipUpgradeHeights := make(map[int64]bool)
 	for _, h := range cast.ToIntSlice(appOpts.Get(server.FlagUnsafeSkipUpgrades)) {
-		skipUpgradeHeights[int64(h)] = true
+		skipUpgradeHeights[cast.ToInt64(h)] = true
 	}
 
 	pruningOpts, err := server.GetPruningOptionsFromFlags(appOpts)
@@ -349,7 +351,9 @@ func overwriteFlagDefaults(c *cobra.Command, defaults map[string]string) {
 			}
 		}
 	}
-	for key, val := range defaults {
+
+	for _, key := range utils.StringToStringMapKeys(defaults) {
+		val := defaults[key]
 		set(c.Flags(), key, val)
 		set(c.PersistentFlags(), key, val)
 	}
