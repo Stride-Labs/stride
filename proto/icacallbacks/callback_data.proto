@@ -9,7 +9,6 @@ message CallbackData {
   string channelId = 3; 
   uint64 sequence = 4; 
   string callbackId = 5; 
-  string callbackArgs = 6; 
-  
+  bytes callbackArgs = 6; 
 }
 
