@@ -47,7 +47,7 @@ func IcacallbacksKeeper(t testing.TB) (*keeper.Keeper, sdk.Context) {
 		storeKey,
 		ss,
 		nil,
-        nil,
+		nil,
 		capabilityKeeper.ScopeToModule("IcacallbacksIBCKeeper"),
 	)
 
@@ -58,14 +58,12 @@ func IcacallbacksKeeper(t testing.TB) (*keeper.Keeper, sdk.Context) {
 		"IcacallbacksParams",
 	)
 	k := keeper.NewKeeper(
-        appCodec,
-        storeKey,
-        memStoreKey,
-        paramsSubspace,
-		IBCKeeper.ChannelKeeper,
-		&IBCKeeper.PortKeeper,
-        capabilityKeeper.ScopeToModule("IcacallbacksScopedKeeper"),
-    )
+		appCodec,
+		storeKey,
+		memStoreKey,
+		paramsSubspace,
+		capabilityKeeper.ScopeToModule("IcacallbacksScopedKeeper"),
+	)
 
 	ctx := sdk.NewContext(stateStore, tmproto.Header{}, false, logger)
 

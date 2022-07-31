@@ -5,6 +5,7 @@ import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
 import "cosmos/base/query/v1beta1/pagination.proto";
 import "icacallbacks/params.proto";
+import "icacallbacks/callback_data.proto";
 // this line is used by starport scaffolding # 1
 
 option go_package = "github.com/Stride-Labs/stride/x/icacallbacks/types";
@@ -15,7 +16,17 @@ service Query {
   rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
     option (google.api.http).get = "/Stride-Labs/stride/icacallbacks/params";
   }
-  // this line is used by starport scaffolding # 2
+  // Queries a CallbackData by index.
+	rpc CallbackData(QueryGetCallbackDataRequest) returns (QueryGetCallbackDataResponse) {
+		option (google.api.http).get = "/Stride-Labs/stride/icacallbacks/callback_data/{callbackKey}";
+	}
+
+	// Queries a list of CallbackData items.
+	rpc CallbackDataAll(QueryAllCallbackDataRequest) returns (QueryAllCallbackDataResponse) {
+		option (google.api.http).get = "/Stride-Labs/stride/icacallbacks/callback_data";
+	}
+
+// this line is used by starport scaffolding # 2
 }
 
 // QueryParamsRequest is request type for the Query/Params RPC method.
@@ -25,6 +36,24 @@ message QueryParamsRequest {}
 message QueryParamsResponse {
   // params holds all the parameters of this module.
   Params params = 1 [(gogoproto.nullable) = false];
+}
+
+message QueryGetCallbackDataRequest {
+	  string callbackKey = 1;
+
+}
+
+message QueryGetCallbackDataResponse {
+	CallbackData callbackData = 1 [(gogoproto.nullable) = false];
+}
+
+message QueryAllCallbackDataRequest {
+	cosmos.base.query.v1beta1.PageRequest pagination = 1;
+}
+
+message QueryAllCallbackDataResponse {
+	repeated CallbackData callbackData = 1 [(gogoproto.nullable) = false];
+	cosmos.base.query.v1beta1.PageResponse pagination = 2;
 }
 
 // this line is used by starport scaffolding # 3

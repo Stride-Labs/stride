@@ -24,7 +24,6 @@ func (am AppModule) OnChanOpenInit(
 	counterparty channeltypes.Counterparty,
 	version string,
 ) error {
-    
 
 	// Require portID is the portID module is bound to
 	// boundPort := am.keeper.GetPort(ctx)
@@ -55,14 +54,12 @@ func (am AppModule) OnChanOpenTry(
 	counterparty channeltypes.Counterparty,
 	counterpartyVersion string,
 ) (version string, err error) {
-	
 
 	// Require portID is the portID module is bound to
 	// boundPort := am.keeper.GetPort(ctx)
 	// if boundPort != portID {
 	// 	return sdkerrors.Wrapf(porttypes.ErrInvalidPort, "invalid port: %s, expected %s", portID, boundPort)
 	// }
-
 
 	if counterpartyVersion != types.Version {
 		return "", sdkerrors.Wrapf(types.ErrInvalidVersion, "invalid counterparty version: got: %s, expected %s", counterpartyVersion, types.Version)
@@ -148,7 +145,7 @@ func (am AppModule) OnRecvPacket(
 	}
 
 	// NOTE: acknowledgement will be written synchronously during IBC handler execution.
-    return ack
+	return ack
 }
 
 // OnAcknowledgementPacket implements the IBCModule interface
@@ -180,13 +177,13 @@ func (am AppModule) OnAcknowledgementPacket(
 		return sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, errMsg)
 	}
 
-    ctx.EventManager().EmitEvent(
-        sdk.NewEvent(
-            eventType,
-            sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
-            sdk.NewAttribute(types.AttributeKeyAck, fmt.Sprintf("%v", ack)),
-        ),
-    )
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			eventType,
+			sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
+			sdk.NewAttribute(types.AttributeKeyAck, fmt.Sprintf("%v", ack)),
+		),
+	)
 
 	switch resp := ack.Response.(type) {
 	case *channeltypes.Acknowledgement_Result:
@@ -212,7 +209,7 @@ func (am AppModule) OnAcknowledgementPacket(
 func (am AppModule) OnTimeoutPacket(
 	ctx sdk.Context,
 	modulePacket channeltypes.Packet,
-    relayer sdk.AccAddress,
+	relayer sdk.AccAddress,
 ) error {
 	var modulePacketData types.IcacallbacksPacketData
 	if err := modulePacketData.Unmarshal(modulePacket.GetData()); err != nil {
@@ -220,14 +217,14 @@ func (am AppModule) OnTimeoutPacket(
 	}
 
 	// Dispatch packet
-    switch packet := modulePacketData.Packet.(type) {
-        // this line is used by starport scaffolding # ibc/packet/module/timeout
-        default:
-            errMsg := fmt.Sprintf("unrecognized %s packet type: %T", types.ModuleName, packet)
-            return sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, errMsg)
-    }
+	switch packet := modulePacketData.Packet.(type) {
+	// this line is used by starport scaffolding # ibc/packet/module/timeout
+	default:
+		errMsg := fmt.Sprintf("unrecognized %s packet type: %T", types.ModuleName, packet)
+		return sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, errMsg)
+	}
 
-    return nil
+	return nil
 }
 
 func (am AppModule) NegotiateAppVersion(
