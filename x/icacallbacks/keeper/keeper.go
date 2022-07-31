@@ -16,21 +16,21 @@ import (
 
 type (
 	Keeper struct {
-		cdc      	codec.BinaryCodec
-		storeKey 	sdk.StoreKey
-		memKey   	sdk.StoreKey
-		paramstore	paramtypes.Subspace
-		scopedKeeper          capabilitykeeper.ScopedKeeper
+		cdc          codec.BinaryCodec
+		storeKey     sdk.StoreKey
+		memKey       sdk.StoreKey
+		paramstore   paramtypes.Subspace
+		scopedKeeper capabilitykeeper.ScopedKeeper
 	}
 )
 
 func NewKeeper(
-    cdc codec.BinaryCodec,
-    storeKey,
-    memKey sdk.StoreKey,
+	cdc codec.BinaryCodec,
+	storeKey,
+	memKey sdk.StoreKey,
 	ps paramtypes.Subspace,
 	scopedKeeper capabilitykeeper.ScopedKeeper,
-    
+
 ) *Keeper {
 	// set KeyTable if it has not already been set
 	if !ps.HasKeyTable() {
@@ -38,11 +38,11 @@ func NewKeeper(
 	}
 
 	return &Keeper{
-		cdc:      	cdc,
-		storeKey: 	storeKey,
-		memKey:   	memKey,
-		paramstore:	ps,
-		scopedKeeper:          scopedKeeper,
+		cdc:          cdc,
+		storeKey:     storeKey,
+		memKey:       memKey,
+		paramstore:   ps,
+		scopedKeeper: scopedKeeper,
 	}
 }
 
@@ -50,9 +50,7 @@ func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 	return ctx.Logger().With("module", fmt.Sprintf("x/%s", types.ModuleName))
 }
 
-
 // ClaimCapability claims the channel capability passed via the OnOpenChanInit callback
 func (k *Keeper) ClaimCapability(ctx sdk.Context, cap *capabilitytypes.Capability, name string) error {
 	return k.scopedKeeper.ClaimCapability(ctx, cap, name)
 }
-

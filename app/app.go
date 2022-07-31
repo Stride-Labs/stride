@@ -178,7 +178,7 @@ var (
 		ica.AppModuleBasic{},
 		recordsmodule.AppModuleBasic{},
 		icacallbacksmodule.AppModuleBasic{},
-// this line is used by starport scaffolding # stargate/app/moduleBasic
+		// this line is used by starport scaffolding # stargate/app/moduleBasic
 	)
 
 	// module account permissions
@@ -258,13 +258,13 @@ type StrideApp struct {
 	ScopedStakeibcKeeper capabilitykeeper.ScopedKeeper
 	StakeibcKeeper       stakeibcmodulekeeper.Keeper
 
-	EpochsKeeper          epochsmodulekeeper.Keeper
-	InterchainqueryKeeper interchainquerykeeper.Keeper
-	ScopedRecordsKeeper   capabilitykeeper.ScopedKeeper
-	RecordsKeeper         recordsmodulekeeper.Keeper
+	EpochsKeeper             epochsmodulekeeper.Keeper
+	InterchainqueryKeeper    interchainquerykeeper.Keeper
+	ScopedRecordsKeeper      capabilitykeeper.ScopedKeeper
+	RecordsKeeper            recordsmodulekeeper.Keeper
 	ScopedIcacallbacksKeeper capabilitykeeper.ScopedKeeper
-		IcacallbacksKeeper icacallbacksmodulekeeper.Keeper
-// this line is used by starport scaffolding # stargate/app/keeperDeclaration
+	IcacallbacksKeeper       icacallbacksmodulekeeper.Keeper
+	// this line is used by starport scaffolding # stargate/app/keeperDeclaration
 
 	mm           *module.Manager
 	sm           *module.SimulationManager
@@ -304,7 +304,7 @@ func NewStrideApp(
 		icacontrollertypes.StoreKey, icahosttypes.StoreKey,
 		recordsmoduletypes.StoreKey,
 		icacallbacksmoduletypes.StoreKey,
-// this line is used by starport scaffolding # stargate/app/storeKey
+		// this line is used by starport scaffolding # stargate/app/storeKey
 	)
 	tkeys := sdk.NewTransientStoreKeys(paramstypes.TStoreKey)
 	memKeys := sdk.NewMemoryStoreKeys(capabilitytypes.MemStoreKey)
@@ -559,7 +559,7 @@ func NewStrideApp(
 		icaModule,
 		recordsModule,
 		icacallbacksModule,
-// this line is used by starport scaffolding # stargate/app/appModule
+		// this line is used by starport scaffolding # stargate/app/appModule
 	)
 
 	// During begin block slashing happens after distr.BeginBlocker so that
@@ -591,7 +591,7 @@ func NewStrideApp(
 		interchainquerytypes.ModuleName,
 		recordsmoduletypes.ModuleName,
 		icacallbacksmoduletypes.ModuleName,
-// this line is used by starport scaffolding # stargate/app/beginBlockers
+		// this line is used by starport scaffolding # stargate/app/beginBlockers
 	)
 
 	app.mm.SetOrderEndBlockers(
@@ -619,7 +619,7 @@ func NewStrideApp(
 		interchainquerytypes.ModuleName,
 		recordsmoduletypes.ModuleName,
 		icacallbacksmoduletypes.ModuleName,
-// this line is used by starport scaffolding # stargate/app/endBlockers
+		// this line is used by starport scaffolding # stargate/app/endBlockers
 	)
 
 	// NOTE: The genutils module must occur after staking so that pools are
@@ -652,7 +652,7 @@ func NewStrideApp(
 		interchainquerytypes.ModuleName,
 		recordsmoduletypes.ModuleName,
 		icacallbacksmoduletypes.ModuleName,
-// this line is used by starport scaffolding # stargate/app/initGenesis
+		// this line is used by starport scaffolding # stargate/app/initGenesis
 	)
 
 	app.mm.RegisterInvariants(&app.CrisisKeeper)
@@ -903,7 +903,7 @@ func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino
 	paramsKeeper.Subspace(icahosttypes.SubModuleName)
 	paramsKeeper.Subspace(recordsmoduletypes.ModuleName)
 	paramsKeeper.Subspace(icacallbacksmoduletypes.ModuleName)
-// this line is used by starport scaffolding # stargate/app/paramSubspace
+	// this line is used by starport scaffolding # stargate/app/paramSubspace
 
 	return paramsKeeper
 }
