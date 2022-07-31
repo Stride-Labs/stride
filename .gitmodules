@@ -14,3 +14,6 @@
 	path = deps/juno
 	url = https://github.com/CosmosContracts/juno.git
 	branch = e6f962953
+[submodule "deps/osmosis"]
+	path = deps/osmosis
+	url = https://github.com/osmosis-labs/osmosis.git
