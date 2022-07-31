@@ -27,4 +27,5 @@ var (
 	ErrInvalidUserRedemptionRecord = sdkerrors.Register(ModuleName, 1515, "user redemption record error")
 	ErrRequiredFieldEmpty          = sdkerrors.Register(ModuleName, 1516, "required field is missing")
 	ErrInvalidNumValidator         = sdkerrors.Register(ModuleName, 1517, "invalid number of validators")
+	ErrValidatorNotRemoved         = sdkerrors.Register(ModuleName, 1518, "validator not removed")
 )
