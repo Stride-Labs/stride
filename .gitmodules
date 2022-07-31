@@ -13,5 +13,4 @@
 [submodule "deps/juno"]
 	path = deps/juno
 	url = https://github.com/CosmosContracts/juno.git
-	branch = d0d9f36c5
-
+	branch = e6f962953
