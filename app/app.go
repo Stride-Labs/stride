@@ -109,16 +109,16 @@ import (
 	interchainquerykeeper "github.com/Stride-Labs/stride/x/interchainquery/keeper"
 	interchainquerytypes "github.com/Stride-Labs/stride/x/interchainquery/types"
 
+	icacallbacksmodule "github.com/Stride-Labs/stride/x/icacallbacks"
+	icacallbacksmodulekeeper "github.com/Stride-Labs/stride/x/icacallbacks/keeper"
+	icacallbacksmoduletypes "github.com/Stride-Labs/stride/x/icacallbacks/types"
 	recordsmodule "github.com/Stride-Labs/stride/x/records"
 	recordsmodulekeeper "github.com/Stride-Labs/stride/x/records/keeper"
 	recordsmoduletypes "github.com/Stride-Labs/stride/x/records/types"
 	stakeibcmodule "github.com/Stride-Labs/stride/x/stakeibc"
 	stakeibcmodulekeeper "github.com/Stride-Labs/stride/x/stakeibc/keeper"
 	stakeibcmoduletypes "github.com/Stride-Labs/stride/x/stakeibc/types"
-	icacallbacksmodule "github.com/Stride-Labs/stride/x/icacallbacks"
-		icacallbacksmodulekeeper "github.com/Stride-Labs/stride/x/icacallbacks/keeper"
-		icacallbacksmoduletypes "github.com/Stride-Labs/stride/x/icacallbacks/types"
-// this line is used by starport scaffolding # stargate/app/moduleImport
+	// this line is used by starport scaffolding # stargate/app/moduleImport
 )
 
 const (
@@ -486,19 +486,17 @@ func NewStrideApp(
 	)
 	epochsModule := epochsmodule.NewAppModule(appCodec, app.EpochsKeeper)
 	scopedIcacallbacksKeeper := app.CapabilityKeeper.ScopeToModule(icacallbacksmoduletypes.ModuleName)
-app.ScopedIcacallbacksKeeper = scopedIcacallbacksKeeper
-		app.IcacallbacksKeeper = *icacallbacksmodulekeeper.NewKeeper(
-			appCodec,
-			keys[icacallbacksmoduletypes.StoreKey],
-			keys[icacallbacksmoduletypes.MemStoreKey],
-			app.GetSubspace(icacallbacksmoduletypes.ModuleName),
-			app.IBCKeeper.ChannelKeeper,
-&app.IBCKeeper.PortKeeper,
-scopedIcacallbacksKeeper,
-			)
-		icacallbacksModule := icacallbacksmodule.NewAppModule(appCodec, app.IcacallbacksKeeper, app.AccountKeeper, app.BankKeeper)
+	app.ScopedIcacallbacksKeeper = scopedIcacallbacksKeeper
+	app.IcacallbacksKeeper = *icacallbacksmodulekeeper.NewKeeper(
+		appCodec,
+		keys[icacallbacksmoduletypes.StoreKey],
+		keys[icacallbacksmoduletypes.MemStoreKey],
+		app.GetSubspace(icacallbacksmoduletypes.ModuleName),
+		scopedIcacallbacksKeeper,
+	)
+	icacallbacksModule := icacallbacksmodule.NewAppModule(appCodec, app.IcacallbacksKeeper, app.AccountKeeper, app.BankKeeper)
 
-		// this line is used by starport scaffolding # stargate/app/keeperDefinition
+	// this line is used by starport scaffolding # stargate/app/keeperDefinition
 
 	app.ICAHostKeeper = icahostkeeper.NewKeeper(
 		appCodec, keys[icahosttypes.StoreKey], app.GetSubspace(icahosttypes.SubModuleName),
@@ -521,7 +519,7 @@ scopedIcacallbacksKeeper,
 	// all packets routed to recordsmoduletypes should go through "transfer"
 	// ibcRouter.AddRoute(recordsmoduletypes.ModuleName, recordsModule)
 	ibcRouter.AddRoute(icacallbacksmoduletypes.ModuleName, icacallbacksModule)
-// this line is used by starport scaffolding # ibc/app/router
+	// this line is used by starport scaffolding # ibc/app/router
 	app.IBCKeeper.SetRouter(ibcRouter)
 
 	/****  Module Options ****/
@@ -683,8 +681,8 @@ scopedIcacallbacksKeeper,
 	// 	epochsModule,
 	// 	interchainQueryModule,
 	// 	recordsModule,
-	icacallbacksModule,
-// this line is used by starport scaffolding # stargate/app/appModule
+	// icacallbacksModule,
+	// this line is used by starport scaffolding # stargate/app/appModule
 	// )
 	// app.sm.RegisterStoreDecoders()
 
