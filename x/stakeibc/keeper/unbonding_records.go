@@ -221,7 +221,7 @@ func (k Keeper) SweepAllUnbondedTokens(ctx sdk.Context) {
 		if totalAmtTransferToRedemptionAcct > 0 {
 			k.Logger(ctx).Info(fmt.Sprintf("\tSending batch SweepAllUnbondedTokens for %d amt to host zone %s", totalAmtTransferToRedemptionAcct, zoneInfo.ChainId))
 			// Issue ICA bank send from delegation account to rewards account
-			if (&zoneInfo).WithdrawalAccount != nil && (&zoneInfo).RedemptionAccount != nil { // only process host zones once withdrawal accounts are registered
+			if (&zoneInfo).DelegationAccount != nil && (&zoneInfo).RedemptionAccount != nil { // only process host zones once withdrawal accounts are registered
 
 				// get the delegation account and rewards account
 				delegationAccount := zoneInfo.GetDelegationAccount()
