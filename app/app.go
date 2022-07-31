@@ -511,13 +511,8 @@ func NewStrideApp(
 	// Create static IBC router, add transfer route, then set and seal it
 	ibcRouter := ibcporttypes.NewRouter()
 	ibcRouter.AddRoute(ibctransfertypes.ModuleName, recordsStack)
-	// Unclear whether this can be included in ibc-v3?
-	// ibcRouter.AddRoute(monitoringptypes.ModuleName, monitoringModule)
-	ibcRouter.AddRoute(stakeibcmoduletypes.ModuleName, icaControllerIBCModule)
 	ibcRouter.AddRoute(icacontrollertypes.SubModuleName, icaControllerIBCModule)
 	ibcRouter.AddRoute(icahosttypes.SubModuleName, icaHostIBCModule)
-	// all packets routed to recordsmoduletypes should go through "transfer"
-	// ibcRouter.AddRoute(recordsmoduletypes.ModuleName, recordsModule)
 	ibcRouter.AddRoute(icacallbacksmoduletypes.ModuleName, icacallbacksModule)
 	// this line is used by starport scaffolding # ibc/app/router
 	app.IBCKeeper.SetRouter(ibcRouter)
