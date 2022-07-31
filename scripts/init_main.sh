@@ -17,6 +17,7 @@ while getopts sghi flag; do
         g) docker build --tag stridezone:gaia -f Dockerfile.gaia . ;;
         h) docker build --tag stridezone:hermes -f Dockerfile.hermes . ;;
         i) docker build --tag stridezone:interchain-queries -f Dockerfile.icq . ;;
+        *) echo "usage: $0 [-s] [-g] [-h] [-i]" >&2 exit 1 ;;
     esac
 done
 
