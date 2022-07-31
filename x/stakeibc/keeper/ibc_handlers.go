@@ -139,7 +139,7 @@ func (k Keeper) HandleAcknowledgement(ctx sdk.Context, modulePacket channeltypes
 				k.Logger(ctx).Error("Unable to unmarshal MsgUndelegate response", "error", err)
 				return err
 			}
-			k.Logger(ctx).Debug("Undelegated", "response", response)
+			k.Logger(ctx).Info("Undelegated", "response", response)
 			// we should update delegation records here.
 			if err := k.HandleUndelegate(ctx, src, response.CompletionTime); err != nil {
 				return err
@@ -326,7 +326,7 @@ func (k *Keeper) HandleDelegate(ctx sdk.Context, msg sdk.Msg, totalDelegate int6
 	}
 
 	// TODO(TEST-112) more safety checks here
-	// increment the stakedBal on the hostZome
+	// increment the stakedBal on the hostZone
 	k.Logger(ctx).Info(fmt.Sprintf("incrementing stakedBal %d", amount))
 	if amount < 0 {
 		errMsg := fmt.Sprintf("Balance to stake was negative: %d", amount)
