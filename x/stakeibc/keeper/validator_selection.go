@@ -19,7 +19,7 @@ func (k Keeper) GetValidatorDelegationAmtDifferences(ctx sdk.Context, hostZone t
 	*/
 	validators := hostZone.GetValidators()
 	delegationDelta := make(map[string]int64)
-	totalDelegatedAmt := k.GetTotalValidatorDelegations(ctx, hostZone)
+	totalDelegatedAmt := k.GetTotalValidatorDelegations(hostZone)
 	targetDelegation, err := k.GetTargetValAmtsForHostZone(ctx, hostZone, totalDelegatedAmt)
 	if err != nil {
 		k.Logger(ctx).Error(fmt.Sprintf("Error getting target weights for host zone %s", hostZone.ChainId))
@@ -35,7 +35,7 @@ func (k Keeper) GetTargetValAmtsForHostZone(ctx sdk.Context, hostZone types.Host
 	// This will get the target validator delegation for the given hostZone
 	// such that the total validator delegation is equal to the finalDelegation
 	// output key is ADDRESS not NAME
-	totalWeight := k.GetTotalValidatorWeight(ctx, hostZone)
+	totalWeight := k.GetTotalValidatorWeight(hostZone)
 	if totalWeight == 0 {
 		k.Logger(ctx).Error(fmt.Sprintf("No non-zero validators found for host zone %s", hostZone.ChainId))
 		return nil, types.ErrNoValidatorWeights
@@ -60,7 +60,7 @@ func (k Keeper) GetTargetValAmtsForHostZone(ctx sdk.Context, hostZone types.Host
 	return targetAmount, nil
 }
 
-func (k Keeper) GetTotalValidatorDelegations(ctx sdk.Context, hostZone types.HostZone) uint64 {
+func (k Keeper) GetTotalValidatorDelegations(hostZone types.HostZone) uint64 {
 	validators := hostZone.GetValidators()
 	total_delegation := uint64(0)
 	for _, validator := range validators {
@@ -69,7 +69,7 @@ func (k Keeper) GetTotalValidatorDelegations(ctx sdk.Context, hostZone types.Hos
 	return total_delegation
 }
 
-func (k Keeper) GetTotalValidatorWeight(ctx sdk.Context, hostZone types.HostZone) uint64 {
+func (k Keeper) GetTotalValidatorWeight(hostZone types.HostZone) uint64 {
 	validators := hostZone.GetValidators()
 	total_weight := uint64(0)
 	for _, validator := range validators {

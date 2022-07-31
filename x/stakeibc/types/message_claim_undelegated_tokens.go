@@ -4,7 +4,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
-	utils "github.com/Stride-Labs/stride/utils"
+	"github.com/Stride-Labs/stride/utils"
 )
 
 const TypeMsgClaimUndelegatedTokens = "claim_undelegated_tokens"
