@@ -7,8 +7,8 @@ import (
 )
 
 type ICACallbackHandler interface {
-	AddCallback(id string, fn interface{}) ICACallbackHandler
-	RegisterCallbacks() ICACallbackHandler
-	Call(ctx sdk.Context, id string, packet channeltypes.Packet, ack []byte, args []byte) error
-	Has(id string) bool
+	AddICACallback(id string, fn interface{}) ICACallbackHandler
+	RegisterICACallbacks() ICACallbackHandler
+	CallICACallback(ctx sdk.Context, id string, packet channeltypes.Packet, ack []byte, args []byte) error
+	HasICACallback(id string) bool
 }
