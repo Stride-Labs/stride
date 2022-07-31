@@ -436,10 +436,6 @@ func NewStrideApp(
 	)
 	recordsModule := recordsmodule.NewAppModule(appCodec, app.RecordsKeeper, app.AccountKeeper, app.BankKeeper)
 
-	// create IBC stacks by combining middleware with base application
-	// recordsStack contains records -> transfer
-	recordsStack := recordsmodule.NewIBCModule(app.RecordsKeeper, transferIBCModule)
-
 	app.ICAControllerKeeper = icacontrollerkeeper.NewKeeper(
 		appCodec, keys[icacontrollertypes.StoreKey], app.GetSubspace(icacontrollertypes.SubModuleName),
 		app.IBCKeeper.ChannelKeeper, // may be replaced with middleware such as ics29 fee
@@ -495,25 +491,33 @@ func NewStrideApp(
 		scopedIcacallbacksKeeper,
 	)
 	icacallbacksModule := icacallbacksmodule.NewAppModule(appCodec, app.IcacallbacksKeeper, app.AccountKeeper, app.BankKeeper)
+	icacallbacksIBCModule := icacallbacksmodule.NewIBCModule(app.IcacallbacksKeeper)
 
 	// this line is used by starport scaffolding # stargate/app/keeperDefinition
 
+	// create IBC middleware stacks by combining middleware with base application
 	app.ICAHostKeeper = icahostkeeper.NewKeeper(
 		appCodec, keys[icahosttypes.StoreKey], app.GetSubspace(icahosttypes.SubModuleName),
 		app.IBCKeeper.ChannelKeeper, &app.IBCKeeper.PortKeeper,
 		app.AccountKeeper, scopedICAHostKeeper, app.MsgServiceRouter(),
 	)
 	icaModule := ica.NewAppModule(&app.ICAControllerKeeper, &app.ICAHostKeeper)
-	// NEXT TODO: implement OnAcknowledgementPacket in module_ibc.go for stakeibc so this type doesn't error
-	icaControllerIBCModule := icacontroller.NewIBCModule(app.ICAControllerKeeper, stakeibcIBCModule)
+	// icacontroller -> stakeibc
+	stakeibcICAControllerIBCModule := icacontroller.NewIBCModule(app.ICAControllerKeeper, stakeibcIBCModule)
+	// icacontroller -> icacallbacks
+	icacallbacksICAControllerIBCModule := icacontroller.NewIBCModule(app.ICAControllerKeeper, icacallbacksIBCModule)
 	icaHostIBCModule := icahost.NewIBCModule(app.ICAHostKeeper)
+	// records -> transfer
+	recordsStack := recordsmodule.NewIBCModule(app.RecordsKeeper, transferIBCModule)
 
 	// Create static IBC router, add transfer route, then set and seal it
 	ibcRouter := ibcporttypes.NewRouter()
-	ibcRouter.AddRoute(ibctransfertypes.ModuleName, recordsStack)
-	ibcRouter.AddRoute(icacontrollertypes.SubModuleName, icaControllerIBCModule)
-	ibcRouter.AddRoute(icahosttypes.SubModuleName, icaHostIBCModule)
-	ibcRouter.AddRoute(icacallbacksmoduletypes.ModuleName, icacallbacksModule)
+	ibcRouter.
+		AddRoute(ibctransfertypes.ModuleName, recordsStack).
+		AddRoute(icacontrollertypes.SubModuleName, stakeibcICAControllerIBCModule).
+		AddRoute(icahosttypes.SubModuleName, icaHostIBCModule).
+		AddRoute(stakeibcmoduletypes.ModuleName, stakeibcICAControllerIBCModule).
+		AddRoute(icacallbacksmoduletypes.ModuleName, icacallbacksICAControllerIBCModule)
 	// this line is used by starport scaffolding # ibc/app/router
 	app.IBCKeeper.SetRouter(ibcRouter)
 
