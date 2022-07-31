@@ -22,7 +22,7 @@ done
 
 # TODO(TEST-117) Modularize/generalize chain init scripts 
 # Initialize the state for stride/gaia and relayers
-go build -mod=readonly -trimpath -o ~/go/bin ./...
+go build -mod=readonly -trimpath -o ~/go/bin ./..
 sh ${SCRIPT_DIR}/init_stride.sh
 sh ${SCRIPT_DIR}/init_gaia.sh
 sh ${SCRIPT_DIR}/init_hermes.sh
