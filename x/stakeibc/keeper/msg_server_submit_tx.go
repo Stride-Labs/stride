@@ -60,7 +60,7 @@ func (k Keeper) SubmitTx(goCtx context.Context, msg *types.MsgSubmitTx) (*types.
 	// it is the responsibility of the auth module developer to ensure an appropriate timeout timestamp
 	// timeoutTimestamp := time.Now().Add(time.Minute).UnixNano()
 	timeoutTimestamp := ^uint64(0) >> 1
-	_, err = k.ICAControllerKeeper.SendTx(ctx, chanCap, msg.ConnectionId, portID, packetData, cast.ToUint64(timeoutTimestamp))
+	_, err = k.ICAControllerKeeper.SendTx(ctx, chanCap, msg.ConnectionId, portID, packetData, timeoutTimestamp)
 	if err != nil {
 		return nil, err
 	}

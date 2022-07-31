@@ -102,7 +102,7 @@ func (k Keeper) SendHostZoneUnbondings(ctx sdk.Context, hostZone types.HostZone)
 	}
 	for _, valAddr := range utils.StringToIntMapKeys(valAddrToUnbondAmt) {
 		valUnbondAmt := valAddrToUnbondAmt[valAddr]
-		stakeAmt := sdk.NewInt64Coin(hostZone.HostDenom, cast.ToInt64(valUnbondAmt))
+		stakeAmt := sdk.NewInt64Coin(hostZone.HostDenom, valUnbondAmt)
 
 		msgs = append(msgs, &stakingtypes.MsgUndelegate{
 			DelegatorAddress: delegationAccount.GetAddress(),

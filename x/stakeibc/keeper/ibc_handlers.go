@@ -229,7 +229,7 @@ func (k *Keeper) HandleSend(ctx sdk.Context, msg sdk.Msg, sequence string) error
 			HostZoneId:         zone.ChainId,
 			Status:             recordstypes.DepositRecord_STAKE,
 			Source:             recordstypes.DepositRecord_WITHDRAWAL_ICA,
-			DepositEpochNumber: cast.ToUint64(epochNumber),
+			DepositEpochNumber: epochNumber,
 		}
 		k.RecordsKeeper.AppendDepositRecord(ctx, record)
 		// process unbonding transfers from the DelegationAccount to the RedemptionAccount
