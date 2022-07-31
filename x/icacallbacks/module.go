@@ -3,7 +3,8 @@ package icacallbacks
 import (
 	"encoding/json"
 	"fmt"
-    // this line is used by starport scaffolding # 1
+
+	// this line is used by starport scaffolding # 1
 
 	"github.com/gorilla/mux"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
@@ -16,16 +17,15 @@ import (
 	cdctypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
+
+	"github.com/Stride-Labs/stride/x/icacallbacks/client/cli"
 	"github.com/Stride-Labs/stride/x/icacallbacks/keeper"
 	"github.com/Stride-Labs/stride/x/icacallbacks/types"
-	"github.com/Stride-Labs/stride/x/icacallbacks/client/cli"
-	porttypes "github.com/cosmos/ibc-go/v2/modules/core/05-port/types"
 )
 
 var (
 	_ module.AppModule      = AppModule{}
 	_ module.AppModuleBasic = AppModuleBasic{}
-	_ porttypes.IBCModule   = AppModule{}
 )
 
 // ----------------------------------------------------------------------------
