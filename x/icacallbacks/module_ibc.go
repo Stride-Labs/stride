@@ -66,7 +66,7 @@ func (im IBCModule) OnAcknowledgementPacket(
 	acknowledgement []byte,
 	relayer sdk.AccAddress,
 ) error {
-	return nil
+	return im.CallRegisteredICACallback(ctx, modulePacket)
 }
 
 // OnTimeoutPacket implements the IBCModule interface
@@ -75,7 +75,7 @@ func (im IBCModule) OnTimeoutPacket(
 	modulePacket channeltypes.Packet,
 	relayer sdk.AccAddress,
 ) error {
-	return nil
+	return im.CallRegisteredICACallback(ctx, modulePacket)
 }
 
 // OnChanCloseConfirm implements the IBCModule interface
@@ -97,6 +97,24 @@ func (im IBCModule) NegotiateAppVersion(
 	proposedVersion string,
 ) (version string, err error) {
 	return proposedVersion, nil
+}
+
+func (im IBCModule) CallRegisteredICACallback(ctx sdk.Context, modulePacket channeltypes.Packet) error {
+	// get the relevant module from the channel and port
+	portID := modulePacket.GetSourcePort()
+	channelID := modulePacket.GetSourceChannel()
+	module, _, err := im.keeper.IBCKeeper.ChannelKeeper.LookupModuleByChannel(ctx, portID, channelID)
+	if err != nil {
+		return err
+	}
+	// fetch the callback data
+	callback, err := im.keeper.GetICACallbackHandler(module)
+	if err != nil {
+		return err
+	}
+	// call the callback
+	_ = callback
+	return nil
 }
 
 // ###################################################################################

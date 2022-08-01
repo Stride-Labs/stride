@@ -11,6 +11,8 @@ import (
 	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 
+	ibckeeper "github.com/cosmos/ibc-go/v3/modules/core/keeper"
+
 	"github.com/Stride-Labs/stride/x/icacallbacks/types"
 )
 
@@ -22,6 +24,7 @@ type (
 		paramstore   paramtypes.Subspace
 		scopedKeeper capabilitykeeper.ScopedKeeper
 		icacallbacks map[string]types.ICACallbackHandler
+		IBCKeeper    ibckeeper.Keeper
 	}
 )
 
@@ -31,6 +34,7 @@ func NewKeeper(
 	memKey sdk.StoreKey,
 	ps paramtypes.Subspace,
 	scopedKeeper capabilitykeeper.ScopedKeeper,
+	ibcKeeper ibckeeper.Keeper,
 
 ) *Keeper {
 	// set KeyTable if it has not already been set
@@ -45,6 +49,7 @@ func NewKeeper(
 		paramstore:   ps,
 		scopedKeeper: scopedKeeper,
 		icacallbacks: make(map[string]types.ICACallbackHandler),
+		IBCKeeper: ibcKeeper,
 	}
 }
 
@@ -52,6 +57,7 @@ func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 	return ctx.Logger().With("module", fmt.Sprintf("x/%s", types.ModuleName))
 }
 
+// Should we add a `AddICACallback`
 func (k *Keeper) SetICACallbackHandler(module string, handler types.ICACallbackHandler) error {
 	_, found := k.icacallbacks[module]
 	if found {
@@ -59,6 +65,14 @@ func (k *Keeper) SetICACallbackHandler(module string, handler types.ICACallbackH
 	}
 	k.icacallbacks[module] = handler.RegisterICACallbacks()
 	return nil
+}
+
+func (k *Keeper) GetICACallbackHandler(module string) (types.ICACallbackHandler, error) {
+	callback, found := k.icacallbacks[module]
+	if !found {
+		return nil, fmt.Errorf("no callback handler found for %s", module)
+	}
+	return callback, nil
 }
 
 // ClaimCapability claims the channel capability passed via the OnOpenChanInit callback
