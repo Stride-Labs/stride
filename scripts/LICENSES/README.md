@@ -1,0 +1,1 @@
+The licenses included here are pulled from https://github.com/osmosis-labs/osmosis/blob/main/LICENSE and https://github.com/ingenuity-build/quicksilver/blob/main/LICENSE, which heavily inspired this repo.
