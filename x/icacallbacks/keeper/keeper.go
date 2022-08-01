@@ -120,10 +120,21 @@ func (k Keeper) SubmitICATx(ctx sdk.Context, connectionId string, msgs []sdk.Msg
 		Data: data,
 	}
 
+	
 	sequence, err := k.ICAControllerKeeper.SendTx(ctx, chanCap, connectionId, portID, packetData, timeoutTimestamp)
 	if err != nil {
 		return 0, err
 	}
+
+	callback := types.CallbackData{
+		CallbackKey: callbackId,
+		PortId: portID,
+		ChannelId: channelID,
+		Sequence: sequence,
+		CallbackId: callbackId,
+		CallbackArgs: callbackArgs,
+	}
+	k.SetCallbackData(ctx, callback)
 
 	return sequence, nil
 }

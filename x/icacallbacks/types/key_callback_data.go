@@ -1,6 +1,9 @@
 package types
 
-import "encoding/binary"
+import (
+	"encoding/binary"
+	fmt "fmt"
+)
 
 var _ binary.ByteOrder
 
@@ -20,4 +23,12 @@ func CallbackDataKey(
 	key = append(key, []byte("/")...)
 
 	return key
+}
+
+func CallbackDataKeyFormatter(
+	portId string,
+	channelId string,
+	sequence uint64,
+) string {
+	return portId + "/" + channelId + "/" + fmt.Sprint(sequence)
 }

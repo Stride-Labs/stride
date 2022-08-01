@@ -1,11 +1,16 @@
 package icacallbacks
 
 import (
+	"fmt"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
 	channeltypes "github.com/cosmos/ibc-go/v3/modules/core/04-channel/types"
 	host "github.com/cosmos/ibc-go/v3/modules/core/24-host"
 	ibcexported "github.com/cosmos/ibc-go/v3/modules/core/exported"
+
+	"github.com/Stride-Labs/stride/x/icacallbacks/types"
 
 	"github.com/Stride-Labs/stride/x/icacallbacks/keeper"
 )
@@ -66,7 +71,7 @@ func (im IBCModule) OnAcknowledgementPacket(
 	acknowledgement []byte,
 	relayer sdk.AccAddress,
 ) error {
-	return im.CallRegisteredICACallback(ctx, modulePacket)
+	return im.CallRegisteredICACallback(ctx, modulePacket, acknowledgement)
 }
 
 // OnTimeoutPacket implements the IBCModule interface
@@ -75,7 +80,7 @@ func (im IBCModule) OnTimeoutPacket(
 	modulePacket channeltypes.Packet,
 	relayer sdk.AccAddress,
 ) error {
-	return im.CallRegisteredICACallback(ctx, modulePacket)
+	return im.CallRegisteredICACallback(ctx, modulePacket, []byte{})
 }
 
 // OnChanCloseConfirm implements the IBCModule interface
@@ -99,7 +104,7 @@ func (im IBCModule) NegotiateAppVersion(
 	return proposedVersion, nil
 }
 
-func (im IBCModule) CallRegisteredICACallback(ctx sdk.Context, modulePacket channeltypes.Packet) error {
+func (im IBCModule) CallRegisteredICACallback(ctx sdk.Context, modulePacket channeltypes.Packet, acknowledgement []byte) error {
 	// get the relevant module from the channel and port
 	portID := modulePacket.GetSourcePort()
 	channelID := modulePacket.GetSourceChannel()
@@ -108,12 +113,29 @@ func (im IBCModule) CallRegisteredICACallback(ctx sdk.Context, modulePacket chan
 		return err
 	}
 	// fetch the callback data
-	callback, err := im.keeper.GetICACallbackHandler(module)
+	callbackDataKey := types.CallbackDataKeyFormatter(portID, channelID, modulePacket.Sequence)
+	callbackData, found := im.keeper.GetCallbackData(ctx, callbackDataKey)
+	if !found {
+		errMsg := fmt.Sprintf("callback data not found for portID: %s, channelID: %s, sequence: %d", portID, channelID, modulePacket.Sequence)
+		return sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, errMsg)
+	}
+	// fetch the callback function
+	callbackHandler, err := im.keeper.GetICACallbackHandler(module)
 	if err != nil {
 		return err
 	}
 	// call the callback
-	_ = callback
+	if callbackHandler.HasICACallback(callbackData.CallbackId) {
+		// if acknowledgement is empty, then it is a timeout
+		err := callbackHandler.CallICACallback(ctx, callbackData.CallbackId, modulePacket, acknowledgement, callbackData.CallbackArgs)
+		if err != nil {
+			return err
+		}
+	}
+
+	// remove the callback data
+	// NOTE: Should we remove the callback data here, or above (conditional on HasICACallback == true)?
+	im.keeper.RemoveCallbackData(ctx, callbackDataKey)
 	return nil
 }
 
