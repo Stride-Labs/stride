@@ -139,3 +139,18 @@ Users can always redeem from Stride. When they select "redeeem" on the Stride we
 
 <img src="https://drive.google.com/uc?id=1rtFiUwziiKjeUkJcJ9YuT1AN3JUtSVVr" width="900">
 
+## Attribution
+
+Stride is proud to be an open-source project, and we welcome all other projects to use our repo. We use modules from the cosmos-sdk and other open source projects.
+
+We operate under the Apache 2.0 License, and have used the following modules from fellow Cosmos projects. Huge thank you to these projects!
+
+We use the following modules from [Osmosis](https://github.com/osmosis-labs/osmosis) provided  under [this License](https://github.com/osmosis-labs/osmosis/blob/main/LICENSE):
+```
+Epochs
+Mint
+```
+We use the following module (marketed as public infra) from [Quicksilver](https://github.com/ingenuity-build/quicksilver) provided under [this License](https://github.com/ingenuity-build/quicksilver/blob/main/LICENSE): 
+```
+Interchainqueries
+```
