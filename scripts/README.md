@@ -1,0 +1,1 @@
+`/scripts` contains (unmaintained) infrastructure that was used for early testing and development of the Stride protocol. The scripts here support docker-image based testing and are heavily inspired by those used by Osmosis and Quicksilver. The relevant licenses are included here.
