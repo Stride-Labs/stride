@@ -57,10 +57,10 @@ test-integration-docker:
 init-docker:
 	sh scripts/init_main.sh -${build}
 
-clean-docker: 
+clean-docker:
+        @docker-compose stop
+	@docker-compose down 
 	rm -rf scripts/state
-	@docker-compose stop
-	@docker-compose down
 	docker image prune -a
 
 ###############################################################################
