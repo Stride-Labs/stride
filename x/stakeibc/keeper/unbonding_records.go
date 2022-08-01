@@ -201,14 +201,10 @@ func (k Keeper) SweepAllUnbondedTokens(ctx sdk.Context) {
 				return sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "\t\tCould not find blockTime for host zone")
 			}
 
-			if (unbonding.Status != recordstypes.HostZoneUnbonding_UNBONDED) &&
-				(unbonding.Status != recordstypes.HostZoneUnbonding_PENDING_TRANSFER) {
-				continue
-			}
-
+			shouldProcess := (unbonding.Status == recordstypes.HostZoneUnbonding_PENDING_TRANSFER || unbonding.Status == recordstypes.HostZoneUnbonding_UNBONDED)
 			// if the unbonding period has elapsed, then we can send the ICA call to sweep this hostZone's unbondings to the rewards account (in a batch)
 			k.Logger(ctx).Info(fmt.Sprintf("\tUnbonding time:  %d blockTime %d", unbonding.UnbondingTime, blockTime))
-			if unbonding.UnbondingTime < blockTime {
+			if (unbonding.UnbondingTime < blockTime) && shouldProcess {
 				// we have a match, so we can process this unbonding
 				k.Logger(ctx).Info(fmt.Sprintf("\t\tAdding %d to amt to batch transfer from delegation acct to rewards acct for host zone %s", unbonding.Amount, zone.ChainId))
 				totalAmtTransferToRedemptionAcct += unbonding.Amount
