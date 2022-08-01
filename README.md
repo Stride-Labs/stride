@@ -147,10 +147,12 @@ We operate under the Apache 2.0 License, and have used the following modules fro
 
 We use the following modules from [Osmosis](https://github.com/osmosis-labs/osmosis) provided  under [this License](https://github.com/osmosis-labs/osmosis/blob/main/LICENSE):
 ```
-Epochs
-Mint
+x/epochs
+x/mint
 ```
 We use the following module (marketed as public infra) from [Quicksilver](https://github.com/ingenuity-build/quicksilver) provided under [this License](https://github.com/ingenuity-build/quicksilver/blob/main/LICENSE): 
 ```
-Interchainqueries
+x/interchainqueries
 ```
+
+Relevant licenses with full attribution can be found in the subdirectories.
