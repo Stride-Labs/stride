@@ -12,6 +12,15 @@ STRIDE_ADMIN_ACCT=stride
 STRIDE_ADMIN_TOKENS=1000000000ustrd
 NUM_NODES=$NUM_STRIDE_NODES
 
+DAY_EPOCH_DURATION="180s"
+STRIDE_EPOCH_DURATION="60s"
+UNBONDING_TIME="21600s"
+MAX_DEPOSIT_PERIOD="3600s"
+VOTING_PERIOD="3600s"
+SIGNED_BLOCKS_WINDOW="30000"
+MIN_SIGNED_PER_WINDOW="0.050000000000000000"
+SLASH_FRACTION_DOWNTIME="0.001000000000000000"
+
 PEER_NODE_IDS=""
 MAIN_ID=1 # Node responsible for genesis and persistent_peers
 MAIN_NODE_NAME=""
@@ -78,7 +87,7 @@ for (( i=1; i <= $NUM_NODES; i++ )); do
     $st_cmd gentx $val_acct $STAKE_TOKENS --chain-id $STRIDE_CHAIN_ID --keyring-backend test 2> /dev/null
     
     # modify our snapshot interval
-    sed -i -E "s|snapshot-interval = 0|snapshot-interval = 300|g" $apptoml
+    sed -i -E "s|snapshot-interval = 0|snapshot-interval = 1000|g" $apptoml
 
     if [ $i -eq $MAIN_ID ]; then
         MAIN_NODE_NAME=$node_name
@@ -117,10 +126,14 @@ sed -i -E "s|persistent_peers = .*|persistent_peers = \"\"|g" "${STATE}/${MAIN_N
 
 # modify our stride epochs
 main_genesis="${STATE}/${MAIN_NODE_NAME}/config/genesis.json"
-jq '.app_state.epochs.epochs[2].duration = $newVal' --arg newVal "60s" $main_genesis > json.tmp && mv json.tmp $main_genesis
-jq '.app_state.epochs.epochs[1].duration = $newVal' --arg newVal "180s" $main_genesis > json.tmp && mv json.tmp $main_genesis
-jq '.app_state.staking.params.unbonding_time = $newVal' --arg newVal "3600s" $main_genesis > json.tmp && mv json.tmp $main_genesis
-
+jq '.app_state.epochs.epochs[1].duration = $newVal' --arg newVal "$DAY_EPOCH_DURATION" $main_genesis > json.tmp && mv json.tmp $main_genesis
+jq '.app_state.epochs.epochs[2].duration = $newVal' --arg newVal "$STRIDE_EPOCH_DURATION" $main_genesis > json.tmp && mv json.tmp $main_genesis
+jq '.app_state.staking.params.unbonding_time = $newVal' --arg newVal "$UNBONDING_TIME" $main_genesis > json.tmp && mv json.tmp $main_genesis
+jq '.app_state.gov.deposit_params.max_deposit_period = $newVal' --arg newVal "$MAX_DEPOSIT_PERIOD" $main_genesis > json.tmp && mv json.tmp $main_genesis
+jq '.app_state.gov.voting_params.voting_period = $newVal' --arg newVal "$VOTING_PERIOD" $main_genesis > json.tmp && mv json.tmp $main_genesis
+jq '.app_state.slashing.params.signed_blocks_window = $newVal' --arg newVal "$SIGNED_BLOCKS_WINDOW" $main_genesis > json.tmp && mv json.tmp $main_genesis
+jq '.app_state.slashing.params.min_signed_per_window = $newVal' --arg newVal "$MIN_SIGNED_PER_WINDOW" $main_genesis > json.tmp && mv json.tmp $main_genesis
+jq '.app_state.slashing.params.slash_fraction_downtime = $newVal' --arg newVal "$SLASH_FRACTION_DOWNTIME" $main_genesis > json.tmp && mv json.tmp $main_genesis
 
 # for all peer nodes....
 for (( i=2; i <= $NUM_NODES; i++ )); do

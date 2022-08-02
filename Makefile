@@ -22,6 +22,15 @@ clean:
 clean-state:
 	rm -rf scripts-local/state
 
+###############################################################################
+###                                CI                                       ###
+###############################################################################
+
+ci: lint check-dependencies test-unit gosec build-local
+
+gosec:
+	gosec -exclude-dir=deps -severity=high ./...
+
 lint:
 	golangci-lint run
 

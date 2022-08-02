@@ -4,8 +4,10 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/Stride-Labs/stride/x/stakeibc/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+
+	"github.com/Stride-Labs/stride/x/stakeibc/types"
 )
 
 func (k msgServer) AddValidator(goCtx context.Context, msg *types.MsgAddValidator) (*types.MsgAddValidatorResponse, error) {
@@ -15,6 +17,7 @@ func (k msgServer) AddValidator(goCtx context.Context, msg *types.MsgAddValidato
 	hostZone, host_zone_found := k.GetHostZone(ctx, msg.HostZone)
 	if !host_zone_found {
 		k.Logger(ctx).Info(fmt.Sprintf("Host Zone not found %s", msg.HostZone))
+		return nil, sdkerrors.Wrap(types.ErrHostZoneNotFound, msg.HostZone)
 	}
 	validators := hostZone.Validators
 	// check that we don't already have this validator
