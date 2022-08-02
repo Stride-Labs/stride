@@ -5,7 +5,7 @@ on:
         description: Testnet that you want to launch (e.g. poolparty)
         required: true
 env:
-  stride_chain_id: STRIDE-1
+  stride_chain_id: STRIDE-TESTNET-2
   num_stride_nodes: 3
 
 jobs:

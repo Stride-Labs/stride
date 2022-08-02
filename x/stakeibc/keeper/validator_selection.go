@@ -3,8 +3,10 @@ package keeper
 import (
 	"fmt"
 
-	"github.com/Stride-Labs/stride/x/stakeibc/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/spf13/cast"
+
+	"github.com/Stride-Labs/stride/x/stakeibc/types"
 )
 
 func (k Keeper) GetValidatorDelegationAmtDifferences(ctx sdk.Context, hostZone types.HostZone) (map[string]int64, error) {
@@ -24,7 +26,7 @@ func (k Keeper) GetValidatorDelegationAmtDifferences(ctx sdk.Context, hostZone t
 		return nil, err
 	}
 	for _, validator := range validators {
-		delegationDelta[validator.GetAddress()] = int64(targetDelegation[validator.GetAddress()]) - int64(validator.DelegationAmt)
+		delegationDelta[validator.GetAddress()] = cast.ToInt64(targetDelegation[validator.GetAddress()]) - cast.ToInt64(validator.DelegationAmt)
 	}
 	return delegationDelta, nil
 }
@@ -49,7 +51,7 @@ func (k Keeper) GetTargetValAmtsForHostZone(ctx sdk.Context, hostZone types.Host
 			// for the last element, we need to make sure that the allocatedAmt is equal to the finalDelegation
 			targetAmount[validator.GetAddress()] = finalDelegation - allocatedAmt
 		} else {
-			delegateAmt := uint64(float64(validator.Weight*finalDelegation) / float64(totalWeight))
+			delegateAmt := cast.ToUint64(float64(validator.Weight*finalDelegation) / float64(totalWeight))
 			allocatedAmt += delegateAmt
 			targetAmount[validator.GetAddress()] = delegateAmt
 		}

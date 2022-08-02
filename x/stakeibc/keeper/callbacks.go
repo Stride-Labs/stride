@@ -4,11 +4,13 @@ import (
 	"bytes"
 	"fmt"
 
-	"github.com/Stride-Labs/stride/x/interchainquery/types"
-	icqtypes "github.com/Stride-Labs/stride/x/interchainquery/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	"github.com/spf13/cast"
+
+	"github.com/Stride-Labs/stride/x/interchainquery/types"
+	icqtypes "github.com/Stride-Labs/stride/x/interchainquery/types"
 )
 
 // ___________________________________________________________________________________________________
@@ -116,7 +118,7 @@ func WithdrawalBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query icq
 	REV_ACCT := "cosmos1wdplq6qjh2xruc7qqagma9ya665q6qhcwju3ng"
 
 	params := k.GetParams(ctx)
-	strideCommission := sdk.NewDec(int64(params.GetStrideCommission())).Quo(sdk.NewDec(100)) // convert to decimal
+	strideCommission := sdk.NewDec(cast.ToInt64(params.GetStrideCommission())).Quo(sdk.NewDec(100)) // convert to decimal
 	// check that stride commission is between 0 and 1
 	if strideCommission.LT(sdk.ZeroDec()) || strideCommission.GT(sdk.OneDec()) {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "Aborting reinvestment callback -- Stride commission must be between 0 and 1!")
