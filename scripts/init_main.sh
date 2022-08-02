@@ -17,12 +17,13 @@ while getopts sghi flag; do
         g) docker build --tag stridezone:gaia -f Dockerfile.gaia . ;;
         h) docker build --tag stridezone:hermes -f Dockerfile.hermes . ;;
         i) docker build --tag stridezone:interchain-queries -f Dockerfile.icq . ;;
+        *) echo "usage: $0 [-s] [-g] [-h] [-i]" >&2 exit 1 ;;
     esac
 done
 
 # TODO(TEST-117) Modularize/generalize chain init scripts 
 # Initialize the state for stride/gaia and relayers
-go build -mod=readonly -trimpath -o ~/go/bin ./...
+go build -mod=readonly -trimpath -o ~/go/bin ./..
 sh ${SCRIPT_DIR}/init_stride.sh
 sh ${SCRIPT_DIR}/init_gaia.sh
 sh ${SCRIPT_DIR}/init_hermes.sh
