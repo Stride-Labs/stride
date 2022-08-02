@@ -47,6 +47,9 @@ $STRIDE_CMD add-genesis-account ${val_addr} 500000000000ustrd
 # actually set this account as a validator
 $STRIDE_CMD gentx $STRIDE_VAL_ACCT 1000000000ustrd --chain-id $STRIDE_CHAIN 2> /dev/null
 
+# add vesting accounts
+bash $SCRIPT_DIR/vesting/add_vesting_accts.sh
+
 # source $SCRIPT_DIR/genesis.sh
 
 # Add hermes relayer account
