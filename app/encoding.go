@@ -8,8 +8,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/auth/tx"
 )
 
-// TODO this file is heavily inspired by QS, we should see if any changes are needed
-
+// This data structure (EncodingConfig) is heavily inspired by Quicksilver. https://github.com/ingenuity-build/quicksilver/blob/main/app/encoding.go
 type EncodingConfig struct {
 	InterfaceRegistry types.InterfaceRegistry
 	Marshaler         codec.Codec
