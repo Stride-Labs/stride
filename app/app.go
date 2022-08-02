@@ -426,6 +426,7 @@ func NewStrideApp(
 		app.GetSubspace(recordsmoduletypes.ModuleName),
 		scopedRecordsKeeper,
 		app.AccountKeeper,
+		app.BankKeeper,
 	)
 	recordsModule := recordsmodule.NewAppModule(appCodec, app.RecordsKeeper, app.AccountKeeper, app.BankKeeper)
 
