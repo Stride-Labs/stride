@@ -43,7 +43,7 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochInfo epochstypes.EpochInf
 	k.SetEpochTracker(ctx, epochTracker)
 
 	// process redemption records
-	if epochIdentifier == "day" {
+	if epochIdentifier == epochstypes.DAY_EPOCH {
 		// here, we process everything we need to for redemptions
 		k.Logger(ctx).Info(fmt.Sprintf("Day %d Beginning", epochNumber))
 		// first we initiate unbondings from any hostZone where it's appropriate
