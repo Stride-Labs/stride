@@ -40,7 +40,7 @@ sed -i -E "s|26657|$GAIA_PORT_ID_2|g" "${STATE}/gaia2/config/client.toml"
 sed -i -E "s|26657|$GAIA_PORT_ID_2|g" "${STATE}/gaia2/config/config.toml"
 sed -i -E "s|26656|$GAIA_PEER_PORT_2|g" "${STATE}/gaia2/config/config.toml"
 sed -i -E "s|26658|26458|g" "${STATE}/gaia2/config/config.toml"
-sed -i -E "s|external_address = \"\"|external_address = \"localhost:26455\"|g" "${STATE}/gaia2/config/config.toml"
+sed -i -E "s|external_address = \"\"|external_address = \"localhost:${GAIA_EXT_ADR_2}\"|g" "${STATE}/gaia2/config/config.toml"
 
 sed -i -E "s|9090|9070|g" "${STATE}/gaia2/config/app.toml"
 sed -i -E "s|9091|9071|g" "${STATE}/gaia2/config/app.toml"
