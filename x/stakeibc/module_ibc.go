@@ -28,8 +28,9 @@ func NewIBCModule(k keeper.Keeper) IBCModule {
 }
 
 type connectionIdContextKey string
+
 func (c connectionIdContextKey) String() string {
-    return string(c)
+	return string(c)
 }
 
 func (im IBCModule) Hooks() keeper.Hooks {

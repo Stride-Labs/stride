@@ -15795,6 +15795,9 @@ paths:
                         }
       parameters:
         - name: body
+          description: |-
+            SimulateRequest is the request type for the Service.Simulate
+            RPC method.
           in: body
           required: true
           schema:
@@ -16594,6 +16597,11 @@ paths:
                         }
       parameters:
         - name: body
+          description: >-
+            BroadcastTxRequest is the request type for the
+            Service.BroadcastTxRequest
+
+            RPC method.
           in: body
           required: true
           schema:
@@ -29558,6 +29566,222 @@ paths:
           in: query
           required: false
           type: string
+      tags:
+        - Query
+  /Stride-Labs/stride/icacallbacks/callback_data:
+    get:
+      summary: Queries a list of CallbackData items.
+      operationId: StridelabsStrideIcacallbacksCallbackDataAll
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              callbackData:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    callbackKey:
+                      type: string
+                    portId:
+                      type: string
+                    channelId:
+                      type: string
+                    sequence:
+                      type: string
+                      format: uint64
+                    callbackId:
+                      type: string
+                    callbackArgs:
+                      type: string
+              pagination:
+                type: object
+                properties:
+                  next_key:
+                    type: string
+                    format: byte
+                    title: |-
+                      next_key is the key to be passed to PageRequest.key to
+                      query the next page most efficiently
+                  total:
+                    type: string
+                    format: uint64
+                    title: >-
+                      total is total number of results available if
+                      PageRequest.count_total
+
+                      was set, its value is undefined otherwise
+                description: >-
+                  PageResponse is to be embedded in gRPC response messages where
+                  the
+
+                  corresponding request message has used PageRequest.
+
+                   message SomeResponse {
+                           repeated Bar results = 1;
+                           PageResponse page = 2;
+                   }
+        default:
+          description: An unexpected error response.
+          schema:
+            type: object
+            properties:
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    '@type':
+                      type: string
+                  additionalProperties: {}
+      parameters:
+        - name: pagination.key
+          description: |-
+            key is a value returned in PageResponse.next_key to begin
+            querying the next page most efficiently. Only one of offset or key
+            should be set.
+          in: query
+          required: false
+          type: string
+          format: byte
+        - name: pagination.offset
+          description: >-
+            offset is a numeric offset that can be used when key is unavailable.
+
+            It is less efficient than using key. Only one of offset or key
+            should
+
+            be set.
+          in: query
+          required: false
+          type: string
+          format: uint64
+        - name: pagination.limit
+          description: >-
+            limit is the total number of results to be returned in the result
+            page.
+
+            If left empty it will default to a value to be set by each app.
+          in: query
+          required: false
+          type: string
+          format: uint64
+        - name: pagination.count_total
+          description: >-
+            count_total is set to true  to indicate that the result set should
+            include
+
+            a count of the total number of items available for pagination in
+            UIs.
+
+            count_total is only respected when offset is used. It is ignored
+            when key
+
+            is set.
+          in: query
+          required: false
+          type: boolean
+        - name: pagination.reverse
+          description: >-
+            reverse is set to true if results are to be returned in the
+            descending order.
+          in: query
+          required: false
+          type: boolean
+      tags:
+        - Query
+  '/Stride-Labs/stride/icacallbacks/callback_data/{callbackKey}':
+    get:
+      summary: Queries a CallbackData by index.
+      operationId: StridelabsStrideIcacallbacksCallbackData
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              callbackData:
+                type: object
+                properties:
+                  callbackKey:
+                    type: string
+                  portId:
+                    type: string
+                  channelId:
+                    type: string
+                  sequence:
+                    type: string
+                    format: uint64
+                  callbackId:
+                    type: string
+                  callbackArgs:
+                    type: string
+        default:
+          description: An unexpected error response.
+          schema:
+            type: object
+            properties:
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    '@type':
+                      type: string
+                  additionalProperties: {}
+      parameters:
+        - name: callbackKey
+          in: path
+          required: true
+          type: string
+      tags:
+        - Query
+  /Stride-Labs/stride/icacallbacks/params:
+    get:
+      summary: Parameters queries the parameters of the module.
+      operationId: StridelabsStrideIcacallbacksParams
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              params:
+                description: params holds all the parameters of this module.
+                type: object
+            description: >-
+              QueryParamsResponse is response type for the Query/Params RPC
+              method.
+        default:
+          description: An unexpected error response.
+          schema:
+            type: object
+            properties:
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    '@type':
+                      type: string
+                  additionalProperties: {}
       tags:
         - Query
   /Stride-Labs/stride/records/deposit_record:
@@ -53717,6 +53941,97 @@ definitions:
                    repeated Bar results = 1;
                    PageResponse page = 2;
            }
+  stridelabs.stride.icacallbacks.CallbackData:
+    type: object
+    properties:
+      callbackKey:
+        type: string
+      portId:
+        type: string
+      channelId:
+        type: string
+      sequence:
+        type: string
+        format: uint64
+      callbackId:
+        type: string
+      callbackArgs:
+        type: string
+  stridelabs.stride.icacallbacks.Params:
+    type: object
+    description: Params defines the parameters for the module.
+  stridelabs.stride.icacallbacks.QueryAllCallbackDataResponse:
+    type: object
+    properties:
+      callbackData:
+        type: array
+        items:
+          type: object
+          properties:
+            callbackKey:
+              type: string
+            portId:
+              type: string
+            channelId:
+              type: string
+            sequence:
+              type: string
+              format: uint64
+            callbackId:
+              type: string
+            callbackArgs:
+              type: string
+      pagination:
+        type: object
+        properties:
+          next_key:
+            type: string
+            format: byte
+            title: |-
+              next_key is the key to be passed to PageRequest.key to
+              query the next page most efficiently
+          total:
+            type: string
+            format: uint64
+            title: >-
+              total is total number of results available if
+              PageRequest.count_total
+
+              was set, its value is undefined otherwise
+        description: |-
+          PageResponse is to be embedded in gRPC response messages where the
+          corresponding request message has used PageRequest.
+
+           message SomeResponse {
+                   repeated Bar results = 1;
+                   PageResponse page = 2;
+           }
+  stridelabs.stride.icacallbacks.QueryGetCallbackDataResponse:
+    type: object
+    properties:
+      callbackData:
+        type: object
+        properties:
+          callbackKey:
+            type: string
+          portId:
+            type: string
+          channelId:
+            type: string
+          sequence:
+            type: string
+            format: uint64
+          callbackId:
+            type: string
+          callbackArgs:
+            type: string
+  stridelabs.stride.icacallbacks.QueryParamsResponse:
+    type: object
+    properties:
+      params:
+        description: params holds all the parameters of this module.
+        type: object
+    description: QueryParamsResponse is response type for the Query/Params RPC method.
   Stridelabs.stride.records.DepositRecord:
     type: object
     properties:
@@ -54612,7 +54927,7 @@ definitions:
     title: >-
       TODO(TEST-53): Remove this pre-launch (no need for clients to create /
       interact with ICAs)
-  Stridelabs.stride.stakeibc.MsgRegisterInterchainAccountResponse:
+  Stridelabs.stride.stakeibc.MsgRestoreInterchainAccountResponse:
     type: object
   Stridelabs.stride.stakeibc.MsgSubmitTxResponse:
     type: object
