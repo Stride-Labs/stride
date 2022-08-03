@@ -223,20 +223,7 @@ func (im IBCModule) OnTimeoutPacket(
 	relayer sdk.AccAddress,
 ) error {
 	// doCustomLogic(packet)
-	fmt.Println("IN ON TIMEOUT PACKET RECORDS")
-	moduleAddress := im.keeper.AccountKeeper.GetModuleAddress(stakeibctypes.ModuleName)
-	fmt.Println("ModuleAddress", moduleAddress.String())
-	fmt.Println("Address matches", moduleAddress.String() == "stride1mvdq4nlupl39243qjz7sds5ez3rl9mnx253lza")
-
-	gaiaBalance := im.keeper.BankKeeper.GetBalance(ctx, moduleAddress, "ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2")
-	fmt.Println("GAIA BALANCE BEFORE:", gaiaBalance)
-
-	// err := im.app.OnTimeoutPacket(ctx, packet, relayer)
-	err := im.ICS_20_module_patch_OnTimeoutPacket(ctx, packet, relayer)
-
-	gaiaBalance = im.keeper.BankKeeper.GetBalance(ctx, moduleAddress, "ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2")
-	fmt.Println("GAIA BALANCE AFTER:", gaiaBalance)
-	return err
+	return im.ICS_20_module_patch_OnTimeoutPacket(ctx, packet, relayer)
 }
 
 // Wrapper for the refundPacketToken patch
