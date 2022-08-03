@@ -11,6 +11,7 @@ import (
 	channeltypes "github.com/cosmos/ibc-go/v3/modules/core/04-channel/types"
 	porttypes "github.com/cosmos/ibc-go/v3/modules/core/05-port/types"
 
+	"github.com/Stride-Labs/stride/utils"
 	"github.com/Stride-Labs/stride/x/records/keeper"
 	"github.com/Stride-Labs/stride/x/records/types"
 	stakeibctypes "github.com/Stride-Labs/stride/x/stakeibc/types"
@@ -23,15 +24,17 @@ import (
 // IBC MODULE IMPLEMENTATION
 // IBCModule implements the ICS26 interface for transfer given the transfer keeper.
 type IBCModule struct {
-	keeper keeper.Keeper
-	app    porttypes.IBCModule
+	keeper          keeper.Keeper
+	app             porttypes.IBCModule
+	moduleAddresses map[string]string
 }
 
 // NewIBCModule creates a new IBCModule given the keeper
-func NewIBCModule(k keeper.Keeper, app porttypes.IBCModule) IBCModule {
+func NewIBCModule(k keeper.Keeper, app porttypes.IBCModule, moduleAddresses map[string]string) IBCModule {
 	return IBCModule{
-		keeper: k,
-		app:    app,
+		keeper:          k,
+		app:             app,
+		moduleAddresses: moduleAddresses,
 	}
 }
 
@@ -220,7 +223,104 @@ func (im IBCModule) OnTimeoutPacket(
 	relayer sdk.AccAddress,
 ) error {
 	// doCustomLogic(packet)
-	return im.app.OnTimeoutPacket(ctx, packet, relayer)
+	return im.ICS_20_module_patch_OnTimeoutPacket(ctx, packet, relayer)
+}
+
+// Wrapper for the refundPacketToken patch
+// (Identical to the transfer module's `OnTimeoutPacket` except for the `refundPacketToken` call which calls the patched function)
+func (im IBCModule) ICS_20_module_patch_OnTimeoutPacket(
+	ctx sdk.Context,
+	packet channeltypes.Packet,
+	relayer sdk.AccAddress,
+) error {
+	var data ibctransfertypes.FungibleTokenPacketData
+	if err := types.ModuleCdc.UnmarshalJSON(packet.GetData(), &data); err != nil {
+		return sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "cannot unmarshal ICS-20 transfer packet data: %s", err.Error())
+	}
+	// refund tokens
+	if err := im.ICS_20_module_patch_refundPacketToken(ctx, packet, data); err != nil {
+		return err
+	}
+
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			types.EventTypeTimeout,
+			sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
+			sdk.NewAttribute(ibctransfertypes.AttributeKeyRefundReceiver, data.Sender),
+			sdk.NewAttribute(ibctransfertypes.AttributeKeyRefundDenom, data.Denom),
+			sdk.NewAttribute(ibctransfertypes.AttributeKeyRefundAmount, data.Amount),
+		),
+	)
+
+	return nil
+}
+
+// The refundPacketToken function in the IBC transfer module will panic if it attempts to refund to a module address
+// The module's address is blacklisted in the bankKeeper's `blockedAddr`, which is referenced in `SendCoinsFromModuleToAccount``
+// This must be patched, otherwise, if a transfer from a module account fails, it will not be refunded
+func (im IBCModule) ICS_20_module_patch_refundPacketToken(
+	ctx sdk.Context,
+	packet channeltypes.Packet,
+	data ibctransfertypes.FungibleTokenPacketData,
+) error {
+	// NOTE: packet data type already checked in handler.go
+
+	// parse the denomination from the full denom path
+	trace := ibctransfertypes.ParseDenomTrace(data.Denom)
+
+	// parse the transfer amount
+	transferAmount, ok := sdk.NewIntFromString(data.Amount)
+	if !ok {
+		return sdkerrors.Wrapf(ibctransfertypes.ErrInvalidAmount, "unable to parse transfer amount (%s) into math.Int", data.Amount)
+	}
+	token := sdk.NewCoin(trace.IBCDenom(), transferAmount)
+
+	// decode the sender address
+	sender, err := sdk.AccAddressFromBech32(data.Sender)
+	if err != nil {
+		return err
+	}
+
+	if ibctransfertypes.SenderChainIsSource(packet.GetSourcePort(), packet.GetSourceChannel(), data.Denom) {
+		// unescrow tokens back to sender
+		escrowAddress := ibctransfertypes.GetEscrowAddress(packet.GetSourcePort(), packet.GetSourceChannel())
+		if err := im.keeper.BankKeeper.SendCoins(ctx, escrowAddress, sender, sdk.NewCoins(token)); err != nil {
+			// NOTE: this error is only expected to occur given an unexpected bug or a malicious
+			// counterparty module. The bug may occur in bank or any part of the code that allows
+			// the escrow address to be drained. A malicious counterparty module could drain the
+			// escrow address by allowing more tokens to be sent back then were escrowed.
+			return sdkerrors.Wrap(err, "unable to unescrow tokens, this may be caused by a malicious counterparty module or a bug: please open an issue on counterparty module")
+		}
+
+		return nil
+	}
+
+	// mint vouchers back to sender
+	if err := im.keeper.BankKeeper.MintCoins(ctx, ibctransfertypes.ModuleName, sdk.NewCoins(token)); err != nil {
+		return err
+	}
+
+	// If the recipient is a module address, use SendCoinsFromModuleToModule
+	for _, moduleName := range utils.StringToStringMapKeys(im.moduleAddresses) {
+		moduleAddress := im.moduleAddresses[moduleName]
+		if sender.String() == moduleAddress {
+			if err := im.keeper.BankKeeper.SendCoinsFromModuleToModule(ctx, ibctransfertypes.ModuleName, moduleName, sdk.NewCoins(token)); err != nil {
+				errMsg := fmt.Sprintf("unable to send coins from module (%s) to module (%s) ", types.ModuleName, moduleName)
+				errMsg += fmt.Sprintf("despite previously minting coins to module account: %v", err)
+				panic(errMsg)
+			}
+			return nil
+		}
+	}
+
+	// Otherwise, if the recipient is not a module, use SendCoinsFromModuleToAccount
+	if err := im.keeper.BankKeeper.SendCoinsFromModuleToAccount(ctx, ibctransfertypes.ModuleName, sender, sdk.NewCoins(token)); err != nil {
+		errMsg := fmt.Sprintf("unable to send coins from module (%s) to account (%s) ", types.ModuleName, sender.String())
+		errMsg += fmt.Sprintf("despite previously minting coins to module account: %v", err)
+		panic(errMsg)
+	}
+
+	return nil
 }
 
 // This is implemented by ICS4 and all middleware that are wrapping base application.
