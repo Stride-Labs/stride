@@ -248,7 +248,7 @@ func (k Keeper) TransferExistingDepositsToHostZones(ctx sdk.Context, epochNumber
 	transferDepositRecords := utils.FilterDepositRecords(depositRecords, func(record recordstypes.DepositRecord) (condition bool) {
 		return record.Status == recordstypes.DepositRecord_TRANSFER
 	})
-	// ibcTimeoutBlocks := cast.ToUint64(k.GetParam(ctx, types.KeyIbcTimeoutBlocks))
+	ibcTimeoutBlocks := cast.ToUint64(k.GetParam(ctx, types.KeyIbcTimeoutBlocks))
 	addr := k.accountKeeper.GetModuleAccount(ctx, types.ModuleName).GetAddress().String()
 	var emptyRecords []uint64
 	for _, depositRecord := range transferDepositRecords {
@@ -282,13 +282,9 @@ func (k Keeper) TransferExistingDepositsToHostZones(ctx sdk.Context, epochNumber
 			} else {
 				k.Logger(ctx).Info(fmt.Sprintf("Found blockHeight for host zone %s: %d", hostZone.ConnectionId, blockHeight))
 			}
-			timeoutHeight := clienttypes.NewHeight(0, cast.ToUint64(blockHeight)+1)
+			timeoutHeight := clienttypes.NewHeight(0, cast.ToUint64(blockHeight)+ibcTimeoutBlocks)
 			transferCoin := sdk.NewCoin(hostZone.GetIBCDenom(), sdk.NewInt(int64(depositRecord.Amount)))
 			goCtx := sdk.WrapSDKContext(ctx)
-
-			a, _ := sdk.AccAddressFromBech32("stride1mvdq4nlupl39243qjz7sds5ez3rl9mnx253lza")
-			gaiaBalance := k.bankKeeper.GetBalance(ctx, a, "ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2")
-			fmt.Println("GAIA BALANCE BEFORE TRANSFER:", gaiaBalance)
 
 			msg := ibctypes.NewMsgTransfer("transfer", hostZone.TransferChannelId, transferCoin, addr, delegateAddress, timeoutHeight, 0)
 			k.Logger(ctx).Info("TransferExistingDepositsToHostZones msg:", msg)
