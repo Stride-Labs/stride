@@ -11,6 +11,7 @@ import (
 	channeltypes "github.com/cosmos/ibc-go/v3/modules/core/04-channel/types"
 	porttypes "github.com/cosmos/ibc-go/v3/modules/core/05-port/types"
 
+	"github.com/Stride-Labs/stride/utils"
 	"github.com/Stride-Labs/stride/x/records/keeper"
 	"github.com/Stride-Labs/stride/x/records/types"
 	stakeibctypes "github.com/Stride-Labs/stride/x/stakeibc/types"
@@ -23,15 +24,17 @@ import (
 // IBC MODULE IMPLEMENTATION
 // IBCModule implements the ICS26 interface for transfer given the transfer keeper.
 type IBCModule struct {
-	keeper keeper.Keeper
-	app    porttypes.IBCModule
+	keeper          keeper.Keeper
+	app             porttypes.IBCModule
+	moduleAddresses map[string]string
 }
 
 // NewIBCModule creates a new IBCModule given the keeper
-func NewIBCModule(k keeper.Keeper, app porttypes.IBCModule) IBCModule {
+func NewIBCModule(k keeper.Keeper, app porttypes.IBCModule, moduleAddresses map[string]string) IBCModule {
 	return IBCModule{
-		keeper: k,
-		app:    app,
+		keeper:          k,
+		app:             app,
+		moduleAddresses: moduleAddresses,
 	}
 }
 
@@ -228,6 +231,7 @@ func (im IBCModule) OnTimeoutPacket(
 	gaiaBalance := im.keeper.BankKeeper.GetBalance(ctx, moduleAddress, "ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2")
 	fmt.Println("GAIA BALANCE BEFORE:", gaiaBalance)
 
+	// err := im.app.OnTimeoutPacket(ctx, packet, relayer)
 	err := im.ICS_20_module_patch_OnTimeoutPacket(ctx, packet, relayer)
 
 	gaiaBalance = im.keeper.BankKeeper.GetBalance(ctx, moduleAddress, "ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2")
@@ -309,19 +313,24 @@ func (im IBCModule) ICS_20_module_patch_refundPacketToken(
 		return err
 	}
 
-	if sender.String() == im.keeper.AccountKeeper.GetModuleAddress(stakeibctypes.ModuleName).String() {
-		recipientModule := "stakeibc"
-		if err := im.keeper.BankKeeper.SendCoinsFromModuleToModule(ctx, ibctransfertypes.ModuleName, recipientModule, sdk.NewCoins(token)); err != nil {
-			errMsg := fmt.Sprintf("unable to send coins from module (%s) to module (%s) ", types.ModuleName, recipientModule)
-			errMsg += fmt.Sprintf("despite previously minting coins to module account: %v", err)
-			panic(errMsg)
+	// If the recipient is a module address, use SendCoinsFromModuleToModule
+	for _, moduleName := range utils.StringToStringMapKeys(im.moduleAddresses) {
+		moduleAddress := im.moduleAddresses[moduleName]
+		if sender.String() == moduleAddress {
+			if err := im.keeper.BankKeeper.SendCoinsFromModuleToModule(ctx, ibctransfertypes.ModuleName, moduleName, sdk.NewCoins(token)); err != nil {
+				errMsg := fmt.Sprintf("unable to send coins from module (%s) to module (%s) ", types.ModuleName, moduleName)
+				errMsg += fmt.Sprintf("despite previously minting coins to module account: %v", err)
+				panic(errMsg)
+			}
+			return nil
 		}
-	} else {
-		if err := im.keeper.BankKeeper.SendCoinsFromModuleToAccount(ctx, ibctransfertypes.ModuleName, sender, sdk.NewCoins(token)); err != nil {
-			errMsg := fmt.Sprintf("unable to send coins from module (%s) to account (%s) ", types.ModuleName, sender.String())
-			errMsg += fmt.Sprintf("despite previously minting coins to module account: %v", err)
-			panic(errMsg)
-		}
+	}
+
+	// Otherwise, if the recipient is not a module, use SendCoinsFromModuleToAccount
+	if err := im.keeper.BankKeeper.SendCoinsFromModuleToAccount(ctx, ibctransfertypes.ModuleName, sender, sdk.NewCoins(token)); err != nil {
+		errMsg := fmt.Sprintf("unable to send coins from module (%s) to account (%s) ", types.ModuleName, sender.String())
+		errMsg += fmt.Sprintf("despite previously minting coins to module account: %v", err)
+		panic(errMsg)
 	}
 
 	return nil

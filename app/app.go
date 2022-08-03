@@ -333,7 +333,7 @@ func NewStrideApp(
 		appCodec, keys[authtypes.StoreKey], app.GetSubspace(authtypes.ModuleName), authtypes.ProtoBaseAccount, maccPerms,
 	)
 	app.BankKeeper = bankkeeper.NewBaseKeeper(
-		appCodec, keys[banktypes.StoreKey], app.AccountKeeper, app.GetSubspace(banktypes.ModuleName), app.ModuleAccountAddrs(),
+		appCodec, keys[banktypes.StoreKey], app.AccountKeeper, app.GetSubspace(banktypes.ModuleName), app.ModuleAccountAddrsToInd(),
 	)
 	stakingKeeper := stakingkeeper.NewKeeper(
 		appCodec, keys[stakingtypes.StoreKey], app.AccountKeeper, app.BankKeeper, app.GetSubspace(stakingtypes.ModuleName),
@@ -343,7 +343,7 @@ func NewStrideApp(
 	)
 	app.DistrKeeper = distrkeeper.NewKeeper(
 		appCodec, keys[distrtypes.StoreKey], app.GetSubspace(distrtypes.ModuleName), app.AccountKeeper, app.BankKeeper,
-		&stakingKeeper, authtypes.FeeCollectorName, app.ModuleAccountAddrs(),
+		&stakingKeeper, authtypes.FeeCollectorName, app.ModuleAccountAddrsToInd(),
 	)
 	app.SlashingKeeper = slashingkeeper.NewKeeper(
 		appCodec, keys[slashingtypes.StoreKey], &stakingKeeper, app.GetSubspace(slashingtypes.ModuleName),
@@ -432,7 +432,7 @@ func NewStrideApp(
 
 	// create IBC stacks by combining middleware with base application
 	// recordsStack contains records -> transfer
-	recordsStack := recordsmodule.NewIBCModule(app.RecordsKeeper, transferIBCModule)
+	recordsStack := recordsmodule.NewIBCModule(app.RecordsKeeper, transferIBCModule, app.ModuleAccountNameToAddrs())
 
 	app.ICAControllerKeeper = icacontrollerkeeper.NewKeeper(
 		appCodec, keys[icacontrollertypes.StoreKey], app.GetSubspace(icacontrollertypes.SubModuleName),
@@ -762,8 +762,18 @@ func (app *StrideApp) LoadHeight(height int64) error {
 	return app.LoadVersion(height)
 }
 
+// ModuleAccountNameToAddrs returns a mapping of each module's name to address
+func (app *StrideApp) ModuleAccountNameToAddrs() map[string]string {
+	modAccAddrs := make(map[string]string)
+	for _, moduleName := range utils.StringToStringSliceMapKeys(maccPerms) {
+		modAccAddrs[moduleName] = authtypes.NewModuleAddress(moduleName).String()
+	}
+
+	return modAccAddrs
+}
+
 // ModuleAccountAddrs returns all the app's module account addresses.
-func (app *StrideApp) ModuleAccountAddrs() map[string]bool {
+func (app *StrideApp) ModuleAccountAddrsToInd() map[string]bool {
 	modAccAddrs := make(map[string]bool)
 	for _, acc := range utils.StringToStringSliceMapKeys(maccPerms) {
 		modAccAddrs[authtypes.NewModuleAddress(acc).String()] = true
