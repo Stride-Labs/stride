@@ -6,7 +6,7 @@ SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 # First argument is build flags
 BUILDDIR="$2"
 
-while getopts sghij flag; do
+while getopts sghijo flag; do
     case "${flag}" in
         s) printf '%s' "Building Stride... ";
            go build -mod=readonly -trimpath -o $BUILDDIR ./...;
@@ -32,6 +32,11 @@ while getopts sghij flag; do
            echo "Done" ;;
         j) printf '%s' "Building Juno...   ";
            cd deps/juno; 
+           go build -mod=readonly -trimpath -o $BUILDDIR ./... 2>&1 | grep -v -E "deprecated|keychain" || true; 
+           cd ../..
+           echo "Done" ;;
+        o) printf '%s' "Building Osmosis...   ";
+           cd deps/osmosis; 
            go build -mod=readonly -trimpath -o $BUILDDIR ./... 2>&1 | grep -v -E "deprecated|keychain" || true; 
            cd ../..
            echo "Done" ;;

@@ -7,27 +7,31 @@ STATE=$SCRIPT_DIR/state
 
 # DENOMS
 IBC_STRD_DENOM='ibc/FF6C2E86490C1C4FBBD24F55032831D2415B9D7882F85C3CC9C2401D79362BEA'
+IBC_STRD_DENOM_JUNO='ibc/FF6C2E86490C1C4FBBD24F55032831D2415B9D7882F85C3CC9C2401D79362BEA'
+IBC_STRD_DENOM_OSMO='ibc/FF6C2E86490C1C4FBBD24F55032831D2415B9D7882F85C3CC9C2401D79362BEA'
 IBC_ATOM_DENOM='ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2'
 IBC_JUNO_DENOM='ibc/EFF323CC632EC4F747C61BCE238A758EFDB7699C3226565F7C20DA06509D59A5'
+IBC_OSMO_DENOM='ibc/13B2C536BB057AC79D5616B8EA1B9540EC1F2170718CAFF6F0083C966FFFED0B'
 ATOM_DENOM='uatom'
 JUNO_DENOM='ujuno'
+OSMO_DENOM='uosmo'
 STRD_DENOM='ustrd'
 STATOM_DENOM="stuatom"
 STJUNO_DENOM="stujuno"
+STOSMO_DENOM="stuosmo"
 
 # **************************************************************************
 # WARNING: CHANGES TO THESE PARAMS COULD BREAK INTEGRATION TESTS
 # **************************************************************************
 # CHAIN PARAMS
-BLOCK_TIME_SECONDS=5
+BLOCK_TIME_SECONDS=3
 BLOCK_TIME="${BLOCK_TIME_SECONDS}s"
 # NOTE: If you add new epochs, these indexes will need to be updated
 DAY_EPOCH_INDEX=1
 INTERVAL_LEN=1
 DAY_EPOCH_LEN="100s"
 STRIDE_EPOCH_INDEX=2
-STRIDE_EPOCH_LEN="40s"
-IBC_TX_WAIT_SECONDS=30
+STRIDE_EPOCH_LEN="30s"
 
 # define STRIDE vars
 STRIDE_PORT_ID=26657  # 36564 
@@ -76,20 +80,25 @@ HERMES_CMD="$SCRIPT_DIR/../build/hermes/release/hermes -c $SCRIPT_DIR/hermes/con
 HERMES_STRIDE_ACCT=rly1
 HERMES_GAIA_ACCT=rly2
 HERMES_JUNO_ACCT=rly3
+HERMES_OSMO_ACCT=rly4
 HERMES_STRIDE_MNEMONIC="alter old invest friend relief slot swear pioneer syrup economy vendor tray focus hedgehog artist legend antenna hair almost donkey spice protect sustain increase"
 HERMES_STRIDE_ADDR="stride1ft20pydau82pgesyl9huhhux307s9h3078692y"
 HERMES_GAIA_MNEMONIC="resemble accident lake amateur physical jewel taxi nut demand magnet person blanket trip entire awkward fiber usual current index limb lady lady depart train"
 HERMES_JUNO_MNEMONIC="uphold decorate moon memory taste century work pride force genius width ripple myself year steel ivory type sweet tree ignore danger pudding owner discover"
+HERMES_OSMO_MNEMONIC="lawn inside color february double myth depart invite miracle nest silver spider spray recall theme loan exotic puzzle uncover dial young earn disagree fee"
+HERMES_OSMO_ADDRESS="osmo1lajwg95utv75fny0w39806xuk92ky57csvj6f5"
 
 ICQ_CMD="$SCRIPT_DIR/../build/interchain-queries --home $STATE/icq"
 
 ICQ_STRIDE_ACCT=icq1
 ICQ_GAIA_ACCT=icq2
 ICQ_JUNO_ACCT=icq3
+ICQ_OSMO_ACCT=icq4
 ICQ_STRIDE_MNEMONIC="helmet say goat special plug umbrella finger night flip axis resource tuna trigger angry shove essay point laundry horror eager forget depend siren alarm"
 ICQ_STRIDE_ADDR="stride12vfkpj7lpqg0n4j68rr5kyffc6wu55dzqewda4"
 ICQ_GAIA_MNEMONIC="capable later bamboo snow drive afraid cheese practice latin brush hand true visa drama mystery bird client nature jealous guess tank marriage volume fantasy"
 ICQ_JUNO_MNEMONIC="divorce loop depth announce strategy goddess short cash private raise spatial parent deal acid casual love inner bind ozone picnic fee earn scene galaxy"
+ICQ_OSMO_MNEMONIC="mix deal extend cargo office intact illegal cage fabric must upset yellow put any shaft area use piece patrol tobacco village guilt iron program"
 
 DELEGATION_ICA_ADDR='cosmos1sy63lffevueudvvlvh2lf6s387xh9xq72n3fsy6n2gr5hm6u2szs2v0ujm'
 REDEMPTION_ICA_ADDR='cosmos1xmcwu75s8v7s54k79390wc5gwtgkeqhvzegpj0nm2tdwacv47tmqg9ut30'
@@ -99,6 +108,16 @@ FEE_ICA_ADDR='cosmos1lkgt5sfshn9shm7hd7chtytkq4mvwvswgmyl0hkacd4rmusu9wwq60cezx'
 GAIA_DELEGATE_VAL='cosmosvaloper1pcag0cj4ttxg8l7pcg0q4ksuglswuuedadj7ne'
 GAIA_DELEGATE_VAL_2='cosmosvaloper133lfs9gcpxqj6er3kx605e3v9lqp2pg5syhvsz'
 GAIA_RECEIVER_ACCT='cosmos1g6qdx6kdhpf000afvvpte7hp0vnpzapuyxp8uf'
+
+JUNO_DELEGATION_ICA_ADDR='juno1xan7vt4nurz6c7x0lnqnvpmuc0lljz7rycqmuz2kk6wxv4k69d0sfats35'
+JUNO_REDEMPTION_ICA_ADDR='juno1y6haxdt03cgkc7aedxrlaleeteel7fgc0nvtu2kggee3hnrlvnvs4kw2v9'
+JUNO_WITHDRAWAL_ICA_ADDR='juno104n6h822n6n7psqjgjl7emd2uz67lptggp5cargh6mw0gxpch2gsk53qk5'
+JUNO_FEE_ICA_ADDR='juno1rp8qgfq64wmjg7exyhjqrehnvww0t9ev3f3p2ls82umz2fxgylqsz3vl9h'
+
+OSMO_DELEGATION_ICA_ADDR='osmo1cx04p5974f8hzh2lqev48kjrjugdxsxy7mzrd0eyweycpr90vk8q8d6f3h'
+OSMO_REDEMPTION_ICA_ADDR='osmo1uy9p9g609676rflkjnnelaxatv8e4sd245snze7qsxzlk7dk7s8qrcjaez'
+OSMO_WITHDRAWAL_ICA_ADDR='osmo10arcf5r89cdmppntzkvulc7gfmw5lr66y2m25c937t6ccfzk0cqqz2l6xv'
+OSMO_FEE_ICA_ADDR='osmo1n4r77qsmu9chvchtmuqy9cv3s539q87r398l6ugf7dd2q5wgyg9su3wd4g'
 
 CSLEEP() {
   for i in $(seq $1); do
@@ -127,3 +146,46 @@ JUNO_REV_MNEMONIC="tonight bonus finish chaos orchard plastic view nurse salad r
 JUNO_VAL_ADDR="juno1pcag0cj4ttxg8l7pcg0q4ksuglswuuedcextl2"
 JUNO_HOME="$STATE/juno"
 JUNO_CMD="$SCRIPT_DIR/../build/junod --home $JUNO_HOME"
+JUNO_DELEGATE_VAL='junovaloper1pcag0cj4ttxg8l7pcg0q4ksuglswuued3knlr0'
+
+# define OSMO vars
+OSMO_CHAIN=OSMO
+OSMO_PEER_PORT=23656
+OSMO_NODE_NAME=OSMO
+OSMO_VAL_ACCT=oval1
+OSMO_REV_ACCT=orev1
+OSMO_VAL_MNEMONIC="badge thumb upper scrap gift prosper milk whale journey term indicate risk acquire afford awake margin venture penalty simple fancy fluid review enrich ozone"
+OSMO_REV_MNEMONIC="furnace spell ring dinosaur paper thank sketch social mystery tissue upgrade voice advice peasant quote surge meat december level broom clock hurdle portion predict"
+OSMO_VAL_ADDR="osmo12ffkl30v0ghtyaezvedazquhtsf4q5ngapllmj"
+OSMO_HOME="$STATE/osmo"
+OSMO_CMD="$SCRIPT_DIR/../build/osmosisd --home $OSMO_HOME"
+OSMO_DELEGATE_VAL='osmovaloper12ffkl30v0ghtyaezvedazquhtsf4q5ng8khuv4'
+OSMO_RECEIVER_ACCT='osmo1w6wdc2684g9h3xl8nhgwr282tcxx4kl06n4sjl'
+
+WAIT_FOR_BLOCK () {
+  num_blocks="${2:-1}"
+  ( tail -f -n0 $1 & ) | grep -q "INF executed block height="
+}
+
+WAIT_FOR_NONEMPTY_BLOCK () {
+  ( tail -f -n0 $1 & ) | grep -q -E "num_valid_txs=[1-9]"
+}
+
+WAIT_FOR_IBC_TRANSFER () {
+  success_string="packet_cmd{src_chain=(.*)port=transfer(.*): success"
+  ( tail -f -n0 $HERMES_LOGS & ) | grep -q -E "$success_string"
+  ( tail -f -n0 $HERMES_LOGS & ) | grep -q -E "$success_string"
+}
+
+STRIDE_STATE=$SCRIPT_DIR/state/stride
+STRIDE_LOGS=$SCRIPT_DIR/logs/stride.log
+GAIA_STATE=$SCRIPT_DIR/state/gaia
+GAIA_LOGS=$SCRIPT_DIR/logs/gaia.log
+GAIA_LOGS_2=$SCRIPT_DIR/logs/gaia2.log
+GAIA_LOGS_3=$SCRIPT_DIR/logs/gaia3.log
+HERMES_LOGS=$SCRIPT_DIR/logs/hermes.log
+ICQ_LOGS=$SCRIPT_DIR/logs/icq.log
+JUNO_LOGS=$SCRIPT_DIR/logs/juno.log
+OSMO_LOGS=$SCRIPT_DIR/logs/osmo.log
+TX_LOGS=$SCRIPT_DIR/logs/tx.log
+KEYS_LOGS=$SCRIPT_DIR/logs/keys.log

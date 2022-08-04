@@ -39,7 +39,7 @@ JUNO_CFG_TMP="${STATE}/${JUNO_NODE_NAME}/config/genesis.json"
 jq '.app_state.staking.params.unbonding_time = $newVal' --arg newVal "200s" $JUNO_CFG_TMP > json.tmp && mv json.tmp $JUNO_CFG_TMP
 
 # add validator account
-echo $JUNO_VAL_MNEMONIC | $JUNO_CMD keys add $JUNO_VAL_ACCT --recover --keyring-backend=test 
+echo $JUNO_VAL_MNEMONIC | $JUNO_CMD keys add $JUNO_VAL_ACCT --recover --keyring-backend=test >> $KEYS_LOGS 2>&1 
 # get validator address
 val_addr=$($JUNO_CMD keys show $JUNO_VAL_ACCT --keyring-backend test -a) > /dev/null
 # add money for this validator account
@@ -48,19 +48,19 @@ $JUNO_CMD add-genesis-account ${val_addr} 500000000000000ujuno
 $JUNO_CMD gentx $JUNO_VAL_ACCT 1000000000ujuno --chain-id $JUNO_CHAIN --keyring-backend test 2> /dev/null
 
 # Add hermes relayer account
-echo $HERMES_JUNO_MNEMONIC | $JUNO_CMD keys add $HERMES_JUNO_ACCT --recover --keyring-backend=test 
+echo $HERMES_JUNO_MNEMONIC | $JUNO_CMD keys add $HERMES_JUNO_ACCT --recover --keyring-backend=test >> $KEYS_LOGS 2>&1 
 HERMES_JUNO_ADDRESS=$($JUNO_CMD keys show $HERMES_JUNO_ACCT --keyring-backend test -a)
 # Give relayer account token balance
 $JUNO_CMD add-genesis-account ${HERMES_JUNO_ADDRESS} 5000000000000ujuno
 
 # Add ICQ relayer account
-echo $ICQ_JUNO_MNEMONIC | $JUNO_CMD keys add $ICQ_JUNO_ACCT --recover --keyring-backend=test 
+echo $ICQ_JUNO_MNEMONIC | $JUNO_CMD keys add $ICQ_JUNO_ACCT --recover --keyring-backend=test >> $KEYS_LOGS 2>&1 
 ICQ_JUNO_ADDRESS=$($JUNO_CMD keys show $ICQ_JUNO_ACCT --keyring-backend test -a)
 # Give relayer account token balance
 $JUNO_CMD add-genesis-account ${ICQ_JUNO_ADDRESS} 5000000000000ujuno
 
 # add revenue account
-echo $JUNO_REV_MNEMONIC | $JUNO_CMD keys add $JUNO_REV_ACCT --recover --keyring-backend=test 
+echo $JUNO_REV_MNEMONIC | $JUNO_CMD keys add $JUNO_REV_ACCT --recover --keyring-backend=test >> $KEYS_LOGS 2>&1 
 # get revenue address
 rev_addr=$($JUNO_CMD keys show $JUNO_REV_ACCT --keyring-backend test -a) > /dev/null
 
