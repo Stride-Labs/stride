@@ -48,7 +48,7 @@ nohup $OSMO_CMD start | sed -r -u "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2})?)?[mGK]//g" 
 ( tail -f -n0 $OSMO_LOGS & ) | grep -q "finalizing commit of block"
 sleep 2
 echo "Done"
-exit 0
+
 if [ "$CACHE" != "true" ]; then
     # If cache mode is disabled, create the hermes connection and channels, 
     # Logs are piped to the hermes log file and the script is halted until:

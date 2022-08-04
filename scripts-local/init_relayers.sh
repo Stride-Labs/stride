@@ -4,7 +4,7 @@ set -eu
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
 source ${SCRIPT_DIR}/vars.sh
-OSMO_CHAIN="osmo-test-4"
+
 echo "Adding Hermes keys"
 $HERMES_CMD keys restore --mnemonic "$HERMES_STRIDE_MNEMONIC" $STRIDE_CHAIN >> $KEYS_LOGS 2>&1 
 $HERMES_CMD keys restore --mnemonic "$HERMES_GAIA_MNEMONIC" $GAIA_CHAIN >> $KEYS_LOGS 2>&1  

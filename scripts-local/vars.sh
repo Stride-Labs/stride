@@ -43,6 +43,7 @@ STRIDE_NODE_NAME=stride
 STRIDE_VAL_ACCT=val1
 STRIDE_VAL_MNEMONIC="close soup mirror crew erode defy knock trigger gather eyebrow tent farm gym gloom base lemon sleep weekend rich forget diagram hurt prize fly"
 STRIDE_VAL_ADDR="stride1uk4ze0x4nvh4fk0xm4jdud58eqn4yxhrt52vv7"
+STRIDE_ADMIN_ADDRESS="stride159atdlc3ksl50g0659w5tq42wwer334ajl7xnq"
 
 STRIDE_CMD="$SCRIPT_DIR/../build/strided --home $STATE/stride"
 

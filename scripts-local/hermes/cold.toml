@@ -44,6 +44,5 @@ address_type = { derivation = 'cosmos' }
 policy = 'allow'
 list = [
   ['ica*', '*'], # allow relaying on all channels whose port starts with `ica`
-  ['transfer', 'channel-407'],
-  # Add any other port/channel pairs you wish to relay on
+  ['transfer', 'channel-417'],
 ]
