@@ -1,8 +1,10 @@
 package keeper
 
 import (
-	"github.com/Stride-Labs/stride/x/mint/types"
+	"github.com/spf13/cast"
 	"github.com/tendermint/tendermint/libs/log"
+
+	"github.com/Stride-Labs/stride/x/mint/types"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -76,13 +78,13 @@ func (k Keeper) GetLastReductionEpochNum(ctx sdk.Context) int64 {
 		return 0
 	}
 
-	return int64(sdk.BigEndianToUint64(b))
+	return cast.ToInt64(sdk.BigEndianToUint64(b))
 }
 
 // SetLastReductionEpochNum set last Reduction epoch number.
 func (k Keeper) SetLastReductionEpochNum(ctx sdk.Context, epochNum int64) {
 	store := ctx.KVStore(k.storeKey)
-	store.Set(types.LastReductionEpochKey, sdk.Uint64ToBigEndian(uint64(epochNum)))
+	store.Set(types.LastReductionEpochKey, sdk.Uint64ToBigEndian(cast.ToUint64(epochNum)))
 }
 
 // get the minter.

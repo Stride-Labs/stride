@@ -2,6 +2,7 @@ package utils
 
 import (
 	"fmt"
+	"sort"
 	"strconv"
 
 	"errors"
@@ -10,12 +11,13 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/address"
 	"github.com/cosmos/cosmos-sdk/types/bech32"
 
-	recordstypes "github.com/Stride-Labs/stride/x/records/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+
+	recordstypes "github.com/Stride-Labs/stride/x/records/types"
 )
 
 var ADMINS = map[string]bool{
-	"stride1uk4ze0x4nvh4fk0xm4jdud58eqn4yxhrt52vv7": true, // stride 1
+	"stride1u20df3trc2c2zdhm8qvh2hdjx9ewh00sv6eyy8": true, // stride localnet
 	"stride159atdlc3ksl50g0659w5tq42wwer334ajl7xnq": true, // stride testnet
 	"stride10d07y265gmmuvt4z0w9aw880jnsr700jefnezl": true, // gov module
 }
@@ -45,6 +47,42 @@ func Min(a int, b int) int {
 		return a
 	}
 	return b
+}
+
+func HostZoneUnbondingKeys(m map[string]*recordstypes.HostZoneUnbonding) []string {
+	keys := make([]string, 0, len(m))
+	for k := range m {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	return keys
+}
+
+func StringToIntMapKeys(m map[string]int64) []string {
+	keys := make([]string, 0, len(m))
+	for k := range m {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	return keys
+}
+
+func StringToStringMapKeys(m map[string]string) []string {
+	keys := make([]string, 0, len(m))
+	for k := range m {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	return keys
+}
+
+func StringToStringSliceMapKeys(m map[string][]string) []string {
+	keys := make([]string, 0, len(m))
+	for k := range m {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	return keys
 }
 
 //==============================  ADDRESS VERIFICATION UTILS  ================================
@@ -112,8 +150,6 @@ func AccAddressFromBech32(address string, bech32prefix string) (addr AccAddress,
 	if err != nil {
 		return nil, err
 	}
-
-	fmt.Sprintf("AccAddressFromBech32 | bz: %x", bz)
 
 	err = VerifyAddressFormat(bz)
 	if err != nil {

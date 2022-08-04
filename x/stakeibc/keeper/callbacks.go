@@ -4,11 +4,13 @@ import (
 	"bytes"
 	"fmt"
 
-	"github.com/Stride-Labs/stride/x/interchainquery/types"
-	icqtypes "github.com/Stride-Labs/stride/x/interchainquery/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	"github.com/spf13/cast"
+
+	"github.com/Stride-Labs/stride/x/interchainquery/types"
+	icqtypes "github.com/Stride-Labs/stride/x/interchainquery/types"
 )
 
 // ___________________________________________________________________________________________________
@@ -116,14 +118,18 @@ func WithdrawalBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query icq
 	REV_ACCT := "cosmos1wdplq6qjh2xruc7qqagma9ya665q6qhcwju3ng"
 
 	params := k.GetParams(ctx)
-	strideCommission := sdk.NewDec(int64(params.GetStrideCommission())).Quo(sdk.NewDec(100)) // convert to decimal
+	strideCommission := sdk.NewDec(cast.ToInt64(params.GetStrideCommission())).Quo(sdk.NewDec(100)) // convert to decimal
+	// check that stride commission is between 0 and 1
+	if strideCommission.LT(sdk.ZeroDec()) || strideCommission.GT(sdk.OneDec()) {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "Aborting reinvestment callback -- Stride commission must be between 0 and 1!")
+	}
 	withdrawalBalance := sdk.NewDec(coin.Amount.Int64())
 	// TODO(TEST-112) don't perform unsafe uint64 to int64 conversion
 	strideClaim := strideCommission.Mul(withdrawalBalance)
 	strideClaimFloored := strideClaim.TruncateInt()
 
-	reinvestAmount := (sdk.NewDec(1).Sub(strideCommission)).Mul(withdrawalBalance)
-	reinvestAmountCeil := reinvestAmount.Ceil().TruncateInt()
+	// back the reinvestment amount out of the total less the commission
+	reinvestAmountCeil := sdk.NewInt(coin.Amount.Int64()).Sub(strideClaimFloored)
 
 	// TODO(TEST-112) safety check, balances should add to original amount
 	if (strideClaimFloored.Int64() + reinvestAmountCeil.Int64()) != coin.Amount.Int64() {

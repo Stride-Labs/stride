@@ -5,9 +5,6 @@ import (
 	"fmt"
 	time "time"
 
-	epochtypes "github.com/Stride-Labs/stride/x/epochs/types"
-	recordstypes "github.com/Stride-Labs/stride/x/records/types"
-	"github.com/Stride-Labs/stride/x/stakeibc/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
@@ -15,6 +12,11 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	channeltypes "github.com/cosmos/ibc-go/v3/modules/core/04-channel/types"
 	"github.com/golang/protobuf/proto"
+	"github.com/spf13/cast"
+
+	epochtypes "github.com/Stride-Labs/stride/x/epochs/types"
+	recordstypes "github.com/Stride-Labs/stride/x/records/types"
+	"github.com/Stride-Labs/stride/x/stakeibc/types"
 
 	icatypes "github.com/cosmos/ibc-go/v3/modules/apps/27-interchain-accounts/types"
 )
@@ -137,7 +139,7 @@ func (k Keeper) HandleAcknowledgement(ctx sdk.Context, modulePacket channeltypes
 				k.Logger(ctx).Error("Unable to unmarshal MsgUndelegate response", "error", err)
 				return err
 			}
-			k.Logger(ctx).Debug("Undelegated", "response", response)
+			k.Logger(ctx).Info("Undelegated", "response", response)
 			// we should update delegation records here.
 			if err := k.HandleUndelegate(ctx, src, response.CompletionTime); err != nil {
 				return err
@@ -176,7 +178,7 @@ func (k Keeper) HandleAcknowledgement(ctx sdk.Context, modulePacket channeltypes
 	}
 
 	if recordIdToDelete >= 0 {
-		k.RecordsKeeper.RemoveDepositRecord(ctx, uint64(recordIdToDelete))
+		k.RecordsKeeper.RemoveDepositRecord(ctx, cast.ToUint64(recordIdToDelete))
 	}
 
 	ctx.EventManager().EmitEvent(
@@ -227,7 +229,7 @@ func (k *Keeper) HandleSend(ctx sdk.Context, msg sdk.Msg, sequence string) error
 			HostZoneId:         zone.ChainId,
 			Status:             recordstypes.DepositRecord_STAKE,
 			Source:             recordstypes.DepositRecord_WITHDRAWAL_ICA,
-			DepositEpochNumber: uint64(epochNumber),
+			DepositEpochNumber: cast.ToUint64(epochNumber),
 		}
 		k.RecordsKeeper.AppendDepositRecord(ctx, record)
 		// process unbonding transfers from the DelegationAccount to the RedemptionAccount
@@ -241,17 +243,10 @@ func (k *Keeper) HandleSend(ctx sdk.Context, msg sdk.Msg, sequence string) error
 		epochUnbondingRecords := k.RecordsKeeper.GetAllEpochUnbondingRecord(ctx)
 
 		for _, epochUnbondingRecord := range epochUnbondingRecords {
-			k.Logger(ctx).Error(fmt.Sprintf("epoch number: %d", epochUnbondingRecord.Id))
-			if epochUnbondingRecord.Id == dayEpochTracker.EpochNumber {
-				k.Logger(ctx).Error("epochUnbondingRecord.Id == dayEpochTracker.EpochNumber")
+			k.Logger(ctx).Info(fmt.Sprintf("epoch number: %d", epochUnbondingRecord.UnbondingEpochNumber))
+			if epochUnbondingRecord.UnbondingEpochNumber == dayEpochTracker.EpochNumber {
+				k.Logger(ctx).Error("epochUnbondingRecord.UnbondingEpochNumber == dayEpochTracker.EpochNumber")
 				continue
-			}
-			// filter out HostZoneUnbondingRecords that are not in a "pending" state
-			// this protects against an edge case where a HostZoneUnbondingRecord becomes unbonded after the epoch has been completed
-			// but before the ack is received
-			hostZoneUnbondings := epochUnbondingRecord.GetHostZoneUnbondings()
-			if len(hostZoneUnbondings) == 0 {
-				hostZoneUnbondings = make(map[string]*recordstypes.HostZoneUnbonding)
 			}
 			hostZoneUnbonding := epochUnbondingRecord.HostZoneUnbondings[zone.ChainId]
 			// NOTE: at the beginning of the epoch we mark all PENDING_TRANSFER HostZoneUnbondingRecords as UNBONDED
@@ -268,7 +263,7 @@ func (k *Keeper) HandleSend(ctx sdk.Context, msg sdk.Msg, sequence string) error
 					k.Logger(ctx).Error("failed to find user redemption record")
 					return sdkerrors.Wrapf(types.ErrRecordNotFound, "no user redemption record found for id (%s)", recordId)
 				}
-				if userRedemptionRecord.IsClaimable == true {
+				if userRedemptionRecord.IsClaimable {
 					k.Logger(ctx).Info("user redemption record is already claimable")
 					continue
 				}
@@ -331,7 +326,7 @@ func (k *Keeper) HandleDelegate(ctx sdk.Context, msg sdk.Msg, totalDelegate int6
 	}
 
 	// TODO(TEST-112) more safety checks here
-	// increment the stakedBal on the hostZome
+	// increment the stakedBal on the hostZone
 	k.Logger(ctx).Info(fmt.Sprintf("incrementing stakedBal %d", amount))
 	if amount < 0 {
 		errMsg := fmt.Sprintf("Balance to stake was negative: %d", amount)
@@ -346,7 +341,7 @@ func (k *Keeper) HandleDelegate(ctx sdk.Context, msg sdk.Msg, totalDelegate int6
 		k.SetHostZone(ctx, *zone)
 	}
 
-	return int64(record.Id), nil
+	return cast.ToInt64(record.Id), nil
 }
 
 func (k Keeper) HandleUndelegate(ctx sdk.Context, msg sdk.Msg, completionTime time.Time) error {
@@ -385,10 +380,6 @@ func (k Keeper) HandleUndelegate(ctx sdk.Context, msg sdk.Msg, completionTime ti
 		if epochUnbonding.UnbondingEpochNumber == currentEpochNumber {
 			continue
 		}
-		hostZoneUnbondings := epochUnbonding.GetHostZoneUnbondings()
-		if len(hostZoneUnbondings) == 0 {
-			hostZoneUnbondings = make(map[string]*recordstypes.HostZoneUnbonding)
-		}
 		hostZoneRecord, found := epochUnbonding.HostZoneUnbondings[zone.ChainId]
 		if !found {
 			k.Logger(ctx).Error(fmt.Sprintf("Host zone unbonding record not found for hostZoneId %s in epoch %d", zone.ChainId, epochUnbonding.UnbondingEpochNumber))
@@ -398,7 +389,7 @@ func (k Keeper) HandleUndelegate(ctx sdk.Context, msg sdk.Msg, completionTime ti
 			continue
 		}
 		hostZoneRecord.Status = recordstypes.HostZoneUnbonding_UNBONDED
-		hostZoneRecord.UnbondingTime = uint64(completionTime.UnixNano())
+		hostZoneRecord.UnbondingTime = cast.ToUint64(completionTime.UnixNano())
 		k.Logger(ctx).Info(fmt.Sprintf("Set unbonding time to %v for host zone %s's unbonding for %d%s", completionTime, zone.ChainId, undelegateMsg.Amount.Amount.Int64(), undelegateMsg.Amount.Denom))
 		// save back the altered SetEpochUnbondingRecord
 		k.RecordsKeeper.SetEpochUnbondingRecord(ctx, epochUnbonding)

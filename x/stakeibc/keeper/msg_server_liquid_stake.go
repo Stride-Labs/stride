@@ -2,12 +2,13 @@ package keeper
 
 import (
 	"context"
-	"strconv"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	"github.com/spf13/cast"
 
 	epochtypes "github.com/Stride-Labs/stride/x/epochs/types"
 	"github.com/Stride-Labs/stride/x/stakeibc/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
 func (k msgServer) LiquidStake(goCtx context.Context, msg *types.MsgLiquidStake) (*types.MsgLiquidStakeResponse, error) {
@@ -29,7 +30,7 @@ func (k msgServer) LiquidStake(goCtx context.Context, msg *types.MsgLiquidStake)
 	// get the coins to send, they need to be in the format {amount}{denom}
 	// is safe. The converse is not true.
 	ibcDenom := hostZone.GetIBCDenom()
-	coinString := strconv.Itoa(int(msg.Amount)) + ibcDenom
+	coinString := cast.ToString(msg.Amount) + ibcDenom
 	inCoin, err := sdk.ParseCoinNormalized(coinString)
 	if err != nil {
 		k.Logger(ctx).Error("failed to parse coin (%s)", coinString)
@@ -74,7 +75,7 @@ func (k msgServer) LiquidStake(goCtx context.Context, msg *types.MsgLiquidStake)
 		k.Logger(ctx).Error("failed to find deposit record")
 		return nil, sdkerrors.Wrapf(sdkerrors.ErrNotFound, "no deposit record for epoch (%d)", strideEpochTracker.EpochNumber)
 	}
-	depositRecord.Amount += int64(msg.Amount)
+	depositRecord.Amount += cast.ToInt64(msg.Amount)
 	k.RecordsKeeper.SetDepositRecord(ctx, *depositRecord)
 
 	return &types.MsgLiquidStakeResponse{}, nil
@@ -86,7 +87,7 @@ func (k msgServer) MintStAsset(ctx sdk.Context, sender sdk.AccAddress, amount ui
 	// TODO(TEST-7): Add an exchange rate here! What object should we store the exchange rate on?
 	// How can we ensure that the exchange rate is not manipulated?
 	hz, _ := k.GetHostZoneFromHostDenom(ctx, denom)
-	amountToMint := (sdk.NewDec(int64(amount)).Quo(hz.RedemptionRate)).TruncateInt()
+	amountToMint := (sdk.NewDec(cast.ToInt64(amount)).Quo(hz.RedemptionRate)).TruncateInt()
 	coinString := amountToMint.String() + stAssetDenom
 	stCoins, err := sdk.ParseCoinsNormalized(coinString)
 	if err != nil {

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/spf13/cast"
 	"github.com/spf13/cobra"
 
 	"github.com/cosmos/cosmos-sdk/client"
@@ -12,12 +13,7 @@ import (
 )
 
 var (
-	DefaultRelativePacketTimeoutTimestamp = uint64((time.Duration(10) * time.Minute).Nanoseconds())
-)
-
-const (
-	flagPacketTimeoutTimestamp = "packet-timeout-timestamp"
-	listSeparator              = ","
+	DefaultRelativePacketTimeoutTimestamp = cast.ToUint64((time.Duration(10) * time.Minute).Nanoseconds())
 )
 
 // GetTxCmd returns the transaction commands for this module
@@ -41,6 +37,7 @@ func GetTxCmd() *cobra.Command {
 	cmd.AddCommand(CmdAddValidator())
 	cmd.AddCommand(CmdChangeValidatorWeight())
 	cmd.AddCommand(CmdDeleteValidator())
+	cmd.AddCommand(CmdRestoreInterchainAccount())
 	// this line is used by starport scaffolding # 1
 
 	return cmd
