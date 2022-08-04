@@ -365,8 +365,7 @@ func (k Keeper) HandleUndelegate(ctx sdk.Context, msg sdk.Msg, completionTime ti
 	
 	undelegateAmt := undelegateMsg.Amount.Amount.Int64()
 	if undelegateAmt <= 0 {
-
-		return sdkerrors.Wrapf(sdkerrors.ErrLogic, "Undelegate amount was negative")
+		return sdkerrors.Wrapf(sdkerrors.ErrLogic, "Undelegate amount must be positive")
 	}
 	success := k.AddDelegationToValidator(ctx, *zone, undelegateMsg.ValidatorAddress, -undelegateAmt)
 	if !success {
