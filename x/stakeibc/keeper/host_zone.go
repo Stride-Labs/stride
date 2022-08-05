@@ -99,18 +99,8 @@ func (k Keeper) AddDelegationToValidator(ctx sdk.Context, hostZone types.HostZon
 	for _, val := range hostZone.GetValidators() {
 		k.Logger(ctx).Info(fmt.Sprintf("Validator %s %d %d", val.GetAddress(), val.GetDelegationAmt(), amt))
 		if val.GetAddress() == valAddr {
-			if amt >= 0 {
-				val.DelegationAmt = val.GetDelegationAmt() + cast.ToUint64(amt)
-				return true
-			} else {
-				absAmt := cast.ToUint64(-amt)
-				if absAmt > val.GetDelegationAmt() {
-					k.Logger(ctx).Error(fmt.Sprintf("Delegation amount %d is greater than validator %s delegation amount %d", absAmt, valAddr, val.GetDelegationAmt()))
-					return false
-				}
-				val.DelegationAmt = val.GetDelegationAmt() - absAmt
-				return true
-			}
+			val.DelegationAmt = val.GetDelegationAmt() + cast.ToUint64(amt)
+			return true
 		}
 	}
 	k.Logger(ctx).Error(fmt.Sprintf("Could not find validator %s on host zone %s", valAddr, hostZone.GetChainId()))

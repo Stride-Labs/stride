@@ -11,8 +11,8 @@ import (
 	distributiontypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	channeltypes "github.com/cosmos/ibc-go/v3/modules/core/04-channel/types"
-	"github.com/golang/protobuf/proto"
 	"github.com/spf13/cast"
+	"google.golang.org/protobuf/proto"
 
 	epochtypes "github.com/Stride-Labs/stride/x/epochs/types"
 	recordstypes "github.com/Stride-Labs/stride/x/records/types"
@@ -177,9 +177,8 @@ func (k Keeper) HandleAcknowledgement(ctx sdk.Context, modulePacket channeltypes
 		}
 	}
 
-	if recordIdToDelete >= 0 {
-		k.RecordsKeeper.RemoveDepositRecord(ctx, cast.ToUint64(recordIdToDelete))
-	}
+	// no need to check id because error case is handled above
+	k.RecordsKeeper.RemoveDepositRecord(ctx, cast.ToUint64(recordIdToDelete))
 
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
@@ -328,18 +327,12 @@ func (k *Keeper) HandleDelegate(ctx sdk.Context, msg sdk.Msg, totalDelegate uint
 	// TODO(TEST-112) more safety checks here
 	// increment the stakedBal on the hostZone
 	k.Logger(ctx).Info(fmt.Sprintf("incrementing stakedBal %d", amount))
-	if amount < 0 {
-		errMsg := fmt.Sprintf("Balance to stake was negative: %d", amount)
-		k.Logger(ctx).Error(errMsg)
-		return 0, sdkerrors.Wrapf(sdkerrors.ErrLogic, errMsg)
-	} else {
-		zone.StakedBal += amount
-		success := k.AddDelegationToValidator(ctx, *zone, delegateMsg.ValidatorAddress, amount)
-		if !success {
-			return 0, sdkerrors.Wrapf(types.ErrValidatorDelegationChg, "Failed to add delegation to validator")
-		}
-		k.SetHostZone(ctx, *zone)
+	zone.StakedBal += amount
+	success := k.AddDelegationToValidator(ctx, *zone, delegateMsg.ValidatorAddress, amount)
+	if !success {
+		return 0, sdkerrors.Wrapf(types.ErrValidatorDelegationChg, "Failed to add delegation to validator")
 	}
+	k.SetHostZone(ctx, *zone)
 
 	return record.Id, nil
 }
