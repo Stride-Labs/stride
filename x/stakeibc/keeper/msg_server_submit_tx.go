@@ -202,9 +202,16 @@ func (k Keeper) SubmitTxsEpoch(ctx sdk.Context, connectionId string, msgs []sdk.
 		return 0, sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "Failed to get epoch tracker for %s", epochType)
 	}
 	// BUFFER by 5% of the epoch length
+	// ICQ_BUFFER by 10% of the epoch length
 	bufferSize := cast.ToInt64(k.GetParam(ctx, types.KeyBufferSize))
+	icqBufferSize := cast.ToInt64(k.GetParam(ctx, types.KeyIcqBufferSize))
 	BUFFER := epochTracker.Duration / bufferSize
-	timeoutNanos := epochTracker.NextEpochStartTime - BUFFER
+	ICQBUFFER := epochTracker.Duration / icqBufferSize
+	timeoutNanos := epochTracker.NextEpochStartTime - ICQBUFFER - BUFFER
+	// TODO safety: it's possible the cast below will handle this case with a graceful error, but leaving this here to make double sure until we can be sure
+	if timeoutNanos < 0 {
+		return 0, sdkerrors.Wrapf(sdkerrors.ErrTxTimeoutHeight, "Too late in the epoch to submitTx")
+	}
 	k.Logger(ctx).Info(fmt.Sprintf("Submitting txs for epoch %s %d %d", epochTracker.EpochIdentifier, epochTracker.NextEpochStartTime, timeoutNanos))
 	sequence, err := k.SubmitTxs(ctx, connectionId, msgs, account, cast.ToUint64(timeoutNanos))
 	if err != nil {
