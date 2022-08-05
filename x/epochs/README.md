@@ -32,11 +32,11 @@ When an epoch triggers the execution of code, that code is executed at the first
 
 Stride uses three epoch identifiers as found in `x/epochs/genesis.go`
 1. `DAY_EPOCH`: this identifies an epoch that lasts 24 hours.
-2. `STRIDE_EPOCH`: this identifies an epoch that lasts 5 minutes (although this may be changed), and is used in the `x/stakeibc/` module as a time interval in accordance with which the Stride app chain performs certain functions, such as autocompound stakig rewards.
+2. `STRIDE_EPOCH`: this identifies an epoch that lasts 5 minutes (although this may be changed), and is used in the `x/stakeibc/` module as a time interval in accordance with which the Stride app chain performs certain functions.
 
 ## State
 
-The `epochs` module keeps `EpochInfo` objects and modifies the information as epoch info changes.
+The `epochs` module keeps `EpochInfo` objects and modifies the information as epoch info changes. Each 
 Epochs are initialized as part of genesis initialization, and modified on begin blockers or end blockers.
 
 ### Epoch information type
@@ -67,7 +67,7 @@ message EpochInfo {
 }
 ```
 
-`EpochInfo` keeps `identifier`, `start_time`,`duration`, `current_epoch`, `current_epoch_start_time`,  `epoch_counting_started`, `current_epoch_start_height`.
+EpochInfo keeps `identifier`, `start_time`,`duration`, `current_epoch`, `current_epoch_start_time`,  `epoch_counting_started`, `current_epoch_start_height`.
 
 1. `identifier` keeps epoch identification string.
 2. `start_time` keeps epoch counting start time, if block time passes `start_time`, `epoch_counting_started` is set.
@@ -98,7 +98,7 @@ The `epochs` module emits the following events:
 
 ## Keeper
 
-### Keeper Functions
+### Keeper functions
 
 `epochs/keeper/` module provides utility functions to manage epochs.
 
@@ -121,28 +121,13 @@ type Keeper interface {
 
 ## Hooks
 
+### Hooks
 ```go
   // the first block whose timestamp is after the duration is counted as the end of the epoch
   AfterEpochEnd(ctx sdk.Context, epochIdentifier string, epochNumber int64)
   // new epoch is next block of epoch end block
   BeforeEpochStart(ctx sdk.Context, epochIdentifier string, epochNumber int64)
 ```
-
-The `BeforeEpochStart` hook does different things depending on the identifier.
-
-If in a `day` identifier it:
-1. begins unbondings
-2. sweeps unbonded tokens to the redemption account
-3. cleans up old records
-4. creates empty epoch unbonding records for the next day
-
-If in a `stride_epoch` identifier it:
-5. creates and deposits records on each host zone
-6. sets withdrawal addresses
-7. updates redemption rates (if the epoch coincides with the correct interval)
-8. processes `TRANSFER` deposit records to the delegation Interchain Account (if the epoch coincides with the correct interval)
-9. processes `STAKE` deposit records to the delegation Interchain Account (if the epoch coincides with the correct interval)
-10. Query the rewards account using interchain queries, with the transfer callback to a delegation account as a staked record (if at proper interval)
 
 ### How modules receive hooks
 
