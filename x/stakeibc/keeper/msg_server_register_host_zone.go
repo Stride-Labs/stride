@@ -9,11 +9,21 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+
+	"github.com/Stride-Labs/stride/utils"
 )
 
 // TODO(TEST-53): Remove this pre-launch (no need for clients to create / interact with ICAs)
 func (k msgServer) RegisterHostZone(goCtx context.Context, msg *types.MsgRegisterHostZone) (*types.MsgRegisterHostZoneResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	// If we're at less than 30k blocks (50 hours from genesis), allow the ADMIN to register a host zone
+	if ctx.BlockHeight() < 30_000 {
+		if err := utils.ValidateAdminAddress(msg.Creator); err != nil {
+			return nil, err
+		}
+		return nil, sdkerrors.Wrap(sdkerrors.ErrUnauthorized, "must be at least 30k blocks before registering a host zone")
+	}
 
 	// Get chain id from connection
 	chainId, err := k.GetChainID(ctx, msg.ConnectionId)
