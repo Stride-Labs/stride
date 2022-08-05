@@ -75,7 +75,7 @@ func (k msgServer) LiquidStake(goCtx context.Context, msg *types.MsgLiquidStake)
 		k.Logger(ctx).Error("failed to find deposit record")
 		return nil, sdkerrors.Wrapf(sdkerrors.ErrNotFound, "no deposit record for epoch (%d)", strideEpochTracker.EpochNumber)
 	}
-	depositRecord.Amount += cast.ToInt64(msg.Amount)
+	depositRecord.Amount += msg.Amount
 	k.RecordsKeeper.SetDepositRecord(ctx, *depositRecord)
 
 	return &types.MsgLiquidStakeResponse{}, nil

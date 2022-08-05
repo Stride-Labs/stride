@@ -42,7 +42,7 @@ func (k msgServer) RedeemStake(goCtx context.Context, msg *types.MsgRedeemStake)
 
 	// construct desired unstaking amount from host zone
 	coinDenom := "st" + hostZone.HostDenom
-	nativeAmount := sdk.NewDec(msg.Amount).Mul(hostZone.RedemptionRate)
+	nativeAmount := sdk.NewDec(cast.ToInt64(msg.Amount)).Mul(hostZone.RedemptionRate)
 	// TODO(TEST-112) bigint safety
 	coinString := nativeAmount.RoundInt().String() + coinDenom
 	inCoin, err := sdk.ParseCoinNormalized(coinString)
@@ -58,7 +58,7 @@ func (k msgServer) RedeemStake(goCtx context.Context, msg *types.MsgRedeemStake)
 	balance := k.bankKeeper.GetBalance(ctx, sender, coinDenom)
 	k.Logger(ctx).Info(fmt.Sprintf("Redemption issuer IBCDenom balance: %v%s", balance.Amount, balance.Denom))
 	k.Logger(ctx).Info(fmt.Sprintf("Redemption requested redemotion amount: %v%s", inCoin.Amount, inCoin.Denom))
-	if balance.Amount.LT(sdk.NewInt(msg.Amount)) {
+	if balance.Amount.LT(sdk.NewInt(cast.ToInt64(msg.Amount))) {
 		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidCoins, "balance is lower than redemption amount. redemption amount: %d, balance %d: ", msg.Amount, balance.Amount)
 	}
 	// UNBONDING RECORD KEEPING
@@ -76,7 +76,7 @@ func (k msgServer) RedeemStake(goCtx context.Context, msg *types.MsgRedeemStake)
 		Amount:      inCoin.Amount.Uint64(),
 		Denom:       hostZone.HostDenom,
 		HostZoneId:  hostZone.ChainId,
-		EpochNumber: cast.ToInt64(epochTracker.EpochNumber),
+		EpochNumber: epochTracker.EpochNumber,
 		IsClaimable: false,
 	}
 	_, found = k.RecordsKeeper.GetUserRedemptionRecord(ctx, redemptionId)
@@ -98,7 +98,7 @@ func (k msgServer) RedeemStake(goCtx context.Context, msg *types.MsgRedeemStake)
 	hostZoneUnbonding.UserRedemptionRecords = append(hostZoneUnbonding.UserRedemptionRecords, userRedemptionRecord.Id)
 
 	// Escrow user's balance
-	redeemCoin := sdk.NewCoins(sdk.NewCoin(coinDenom, sdk.NewInt(msg.Amount)))
+	redeemCoin := sdk.NewCoins(sdk.NewCoin(coinDenom, sdk.NewInt(cast.ToInt64(msg.Amount))))
 	err = k.bankKeeper.SendCoinsFromAccountToModule(ctx, sender, types.ModuleName, redeemCoin)
 	if err != nil {
 		k.Logger(ctx).Error("Failed to send sdk.NewCoins(inCoins) from account to module")

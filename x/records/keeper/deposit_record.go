@@ -3,9 +3,10 @@ package keeper
 import (
 	"encoding/binary"
 
-	"github.com/Stride-Labs/stride/x/records/types"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	"github.com/Stride-Labs/stride/x/records/types"
 )
 
 // GetDepositRecordCount get the total number of depositRecord
@@ -116,7 +117,7 @@ func (k Keeper) GetDepositRecordByEpochAndChain(ctx sdk.Context, epochNumber uin
 }
 
 // TODO: pass in hostZoneId
-func (k Keeper) GetTransferDepositRecordByAmount(ctx sdk.Context, amount int64) (val *types.DepositRecord, found bool) {
+func (k Keeper) GetTransferDepositRecordByAmount(ctx sdk.Context, amount uint64) (val *types.DepositRecord, found bool) {
 	records := k.GetAllDepositRecord(ctx)
 	for _, depositRecord := range records {
 		amountsMatch := depositRecord.Amount == amount && depositRecord.Status == types.DepositRecord_TRANSFER
@@ -129,7 +130,7 @@ func (k Keeper) GetTransferDepositRecordByAmount(ctx sdk.Context, amount int64) 
 	return nil, false
 }
 
-func (k Keeper) GetStakeDepositRecordByAmount(ctx sdk.Context, amount int64, hostZoneId string) (val *types.DepositRecord, found bool) {
+func (k Keeper) GetStakeDepositRecordByAmount(ctx sdk.Context, amount uint64, hostZoneId string) (val *types.DepositRecord, found bool) {
 	records := k.GetAllDepositRecord(ctx)
 	for _, depositRecord := range records {
 		amountsMatch := depositRecord.Amount == amount && depositRecord.Status == types.DepositRecord_STAKE

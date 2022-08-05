@@ -97,7 +97,7 @@ func WithdrawalBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query icq
 
 	// Set withdrawal balance as attribute on HostZone's withdrawal ICA account
 	wa := zone.GetWithdrawalAccount()
-	wa.Balance = coin.Amount.Int64()
+	wa.Balance = coin.Amount.Uint64()
 	zone.WithdrawalAccount = wa
 	k.SetHostZone(ctx, zone)
 	k.Logger(ctx).Info(fmt.Sprintf("Just set WithdrawalBalance to: %d", wa.Balance))

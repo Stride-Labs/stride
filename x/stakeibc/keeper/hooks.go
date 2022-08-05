@@ -218,7 +218,7 @@ func (k Keeper) StakeExistingDepositsOnHostZones(ctx sdk.Context, epochNumber in
 				continue
 			}
 			k.Logger(ctx).Info(fmt.Sprintf("\tdelegation staking on %s", hostZone.HostDenom))
-			processAmount := utils.Int64ToCoinString(depositRecord.Amount, hostZone.HostDenom)
+			processAmount := utils.Uint64ToCoinString(depositRecord.Amount, hostZone.HostDenom)
 			amt, err := sdk.ParseCoinNormalized(processAmount)
 			if err != nil {
 				k.Logger(ctx).Error(fmt.Sprintf("Could not process coin %s: %s", hostZone.HostDenom, err))
@@ -237,7 +237,7 @@ func (k Keeper) StakeExistingDepositsOnHostZones(ctx sdk.Context, epochNumber in
 				sdk.NewEvent(
 					sdk.EventTypeMessage,
 					sdk.NewAttribute("hostZone", hostZone.ChainId),
-					sdk.NewAttribute("newAmountStaked", strconv.FormatInt(depositRecord.Amount, 10)),
+					sdk.NewAttribute("newAmountStaked", strconv.FormatUint(depositRecord.Amount, 10)),
 				),
 			})
 		}
@@ -322,7 +322,7 @@ func (k Keeper) UpdateRedemptionRates(ctx sdk.Context, depositRecords []recordst
 		}
 
 		// calc redemptionRate = (UB+SB+MA)/stSupply
-		redemptionRate := (sdk.NewDec(undelegatedBalance).Add(sdk.NewDec(stakedBalance)).Add(sdk.NewDec(moduleAcctBalance))).Quo(sdk.NewDec(stSupply))
+		redemptionRate := (sdk.NewDec(cast.ToInt64(undelegatedBalance)).Add(sdk.NewDec(cast.ToInt64(stakedBalance))).Add(sdk.NewDec(cast.ToInt64(moduleAcctBalance)))).Quo(sdk.NewDec(stSupply))
 		k.Logger(ctx).Info(fmt.Sprintf("[REDEMPTION-RATE] New Rate is %d (vs prev %d)", redemptionRate, zoneInfo.LastRedemptionRate))
 
 		// set redemptionRate attribute for the hostZone (and update last RedemptionRate)
@@ -336,14 +336,14 @@ func (k Keeper) UpdateRedemptionRates(ctx sdk.Context, depositRecords []recordst
 	k.IterateHostZones(ctx, UpdateRedemptionRate)
 }
 
-func (k Keeper) GetUndelegatedBalance(ctx sdk.Context, hostZone types.HostZone, depositRecords []recordstypes.DepositRecord) (int64, error) {
+func (k Keeper) GetUndelegatedBalance(ctx sdk.Context, hostZone types.HostZone, depositRecords []recordstypes.DepositRecord) (uint64, error) {
 	// filter to only the deposit records for the host zone with status STAKE
 	UndelegatedDepositRecords := utils.FilterDepositRecords(depositRecords, func(record recordstypes.DepositRecord) (condition bool) {
 		return record.Status == recordstypes.DepositRecord_STAKE && record.HostZoneId == hostZone.ChainId
 	})
 
 	// sum the amounts of the deposit records
-	var totalAmount int64
+	var totalAmount uint64
 	for _, depositRecord := range UndelegatedDepositRecords {
 		totalAmount += depositRecord.Amount
 	}
@@ -351,14 +351,14 @@ func (k Keeper) GetUndelegatedBalance(ctx sdk.Context, hostZone types.HostZone, 
 	return totalAmount, nil
 }
 
-func (k Keeper) GetModuleAccountBalance(ctx sdk.Context, hostZone types.HostZone, depositRecords []recordstypes.DepositRecord) (int64, error) {
+func (k Keeper) GetModuleAccountBalance(ctx sdk.Context, hostZone types.HostZone, depositRecords []recordstypes.DepositRecord) (uint64, error) {
 	// filter to only the deposit records for the host zone with status DELEGATION
 	ModuleAccountRecords := utils.FilterDepositRecords(depositRecords, func(record recordstypes.DepositRecord) (condition bool) {
 		return record.Status == recordstypes.DepositRecord_TRANSFER && record.HostZoneId == hostZone.ChainId
 	})
 
 	// sum the amounts of the deposit records
-	var totalAmount int64
+	var totalAmount uint64
 	for _, depositRecord := range ModuleAccountRecords {
 		totalAmount += depositRecord.Amount
 	}

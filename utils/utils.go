@@ -35,6 +35,10 @@ func Int64ToCoinString(amount int64, denom string) string {
 	return strconv.FormatInt(amount, 10) + denom
 }
 
+func Uint64ToCoinString(amount uint64, denom string) string {
+	return strconv.FormatUint(amount, 10) + denom
+}
+
 func ValidateAdminAddress(address string) error {
 	if !ADMINS[address] {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, fmt.Sprintf("invalid creator address (%s)", address))

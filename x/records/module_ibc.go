@@ -191,7 +191,7 @@ func (im IBCModule) OnAcknowledgementPacket(
 			im.keeper.Logger(ctx).Info(log)
 			// UPDATE RECORD
 			// match record based on amount
-			amount, err := strconv.ParseInt(data.Amount, 10, 64)
+			amount, err := strconv.ParseUint(data.Amount, 10, 64)
 			if err != nil {
 				return sdkerrors.Wrapf(sdkerrors.ErrInvalidType, "Error parsing int %d", amount)
 			}

@@ -20,7 +20,7 @@ message EpochInfo {
     (gogoproto.jsontag) = "duration,omitempty",
     (gogoproto.moretags) = "yaml:\"duration\""
   ];
-  uint64 current_epoch = 4;
+  int64 current_epoch = 4;
   google.protobuf.Timestamp current_epoch_start_time = 5 [
     (gogoproto.stdtime) = true,
     (gogoproto.nullable) = false,

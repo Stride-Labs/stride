@@ -25,7 +25,7 @@ type Account struct {
 }
 
 type State struct {
-	depositRecordAmount int64
+	depositRecordAmount uint64
 	hostZone            types.HostZone
 }
 
@@ -38,7 +38,7 @@ type LiquidStakeTestCase struct {
 
 func (s *KeeperTestSuite) SetupLiquidStake() LiquidStakeTestCase {
 	stakeAmount := uint64(1_000_000)
-	initialDepositAmount := int64(1_000_000)
+	initialDepositAmount := uint64(1_000_000)
 	user := Account{
 		acc:           s.TestAccs[0],
 		atomBalance:   sdk.NewInt64Coin(ibcAtom, 10_000_000),
@@ -126,7 +126,7 @@ func (s *KeeperTestSuite) TestLiquidStakeSuccessful() {
 	records := s.App.RecordsKeeper.GetAllDepositRecord(s.Ctx)
 	s.Require().Len(records, 1, "number of deposit records")
 
-	expectedDepositRecordAmount := tc.initialState.depositRecordAmount + stakeAmount.Int64()
+	expectedDepositRecordAmount := tc.initialState.depositRecordAmount + stakeAmount.Uint64()
 	actualDepositRecordAmount := records[0].Amount
 	s.Require().Equal(expectedDepositRecordAmount, actualDepositRecordAmount, "deposit record amount")
 }
