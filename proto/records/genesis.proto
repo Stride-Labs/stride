@@ -16,7 +16,7 @@ message UserRedemptionRecord {
   uint64 amount = 4; 
   string denom = 5; 
   string hostZoneId = 6; 
-  int64 epochNumber = 7; 
+  uint64 epochNumber = 7; 
   bool isClaimable = 8;   
 }
 
@@ -51,7 +51,7 @@ message NoData {
 
 message DepositRecord {
   uint64 id = 1;
-  int64 amount = 2;
+  uint64 amount = 2;
   string denom = 3;
   string hostZoneId = 4; 
   enum Status {
