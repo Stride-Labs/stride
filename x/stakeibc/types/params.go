@@ -20,7 +20,8 @@ var (
 	DefaultValidatorRebalancingThreshold uint64 = 100 // divide by 10,000, so 100 = 1%
 	// 10 minutes
 	DefaultICATimeoutNanos  uint64 = 600000000000
-	DefaultBufferSize       uint64 = 20
+	DefaultBufferSize       uint64 = 20  // 1/20=5% of the epoch
+	DefaultIcqBufferSize    uint64 = 10  // 1/10=10% of the epoch
 	DefaultIbcTimeoutBlocks uint64 = 300 // 300 blocks ~= 30 minutes
 
 	// KeyDepositInterval is store's key for the DepositInterval option
@@ -33,6 +34,7 @@ var (
 	KeyValidatorRebalancingThreshold = []byte("ValidatorRebalancingThreshold")
 	KeyICATimeoutNanos               = []byte("ICATimeoutNanos")
 	KeyBufferSize                    = []byte("BufferSize")
+	KeyIcqBufferSize                 = []byte("IcqBufferSize")
 	KeyIbcTimeoutBlocks              = []byte("IBCTimeoutBlocks")
 )
 
@@ -54,6 +56,7 @@ func NewParams(
 	validator_rebalancing_threshold uint64,
 	ica_timeout_nanos uint64,
 	buffer_size uint64,
+	icq_buffer_size uint64,
 	ibc_timeout_blocks uint64,
 ) Params {
 	return Params{
@@ -66,6 +69,7 @@ func NewParams(
 		ValidatorRebalancingThreshold: validator_rebalancing_threshold,
 		IcaTimeoutNanos:               ica_timeout_nanos,
 		BufferSize:                    buffer_size,
+		IcqBufferSize:                 icq_buffer_size,
 		IbcTimeoutBlocks:              ibc_timeout_blocks,
 	}
 }
@@ -82,6 +86,7 @@ func DefaultParams() Params {
 		DefaultValidatorRebalancingThreshold,
 		DefaultICATimeoutNanos,
 		DefaultBufferSize,
+		DefaultIcqBufferSize,
 		DefaultIbcTimeoutBlocks,
 	)
 }
@@ -98,6 +103,7 @@ func (p *Params) ParamSetPairs() paramtypes.ParamSetPairs {
 		paramtypes.NewParamSetPair(KeyValidatorRebalancingThreshold, &p.ValidatorRebalancingThreshold, isThreshold),
 		paramtypes.NewParamSetPair(KeyICATimeoutNanos, &p.IcaTimeoutNanos, isPositive),
 		paramtypes.NewParamSetPair(KeyBufferSize, &p.BufferSize, isPositive),
+		paramtypes.NewParamSetPair(KeyIcqBufferSize, &p.IcqBufferSize, isPositive),
 		paramtypes.NewParamSetPair(KeyIbcTimeoutBlocks, &p.IbcTimeoutBlocks, isPositive),
 	}
 }
