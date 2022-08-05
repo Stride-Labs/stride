@@ -27,6 +27,7 @@ service Msg {
   rpc ChangeValidatorWeight(MsgChangeValidatorWeight) returns (MsgChangeValidatorWeightResponse);
   rpc DeleteValidator(MsgDeleteValidator) returns (MsgDeleteValidatorResponse);
   rpc RestoreInterchainAccount(MsgRestoreInterchainAccount) returns (MsgRestoreInterchainAccountResponse);
+  rpc QueryDelegation(MsgQueryDelegation) returns (MsgQueryDelegationResponse);
 // this line is used by starport scaffolding # proto/tx/rpc
 }
 
@@ -153,6 +154,15 @@ message MsgRestoreInterchainAccount {
 }
 
 message MsgRestoreInterchainAccountResponse {
+}
+
+message MsgQueryDelegation {
+  string creator = 1;
+  string hostzone = 2;
+  string valoper = 3;
+}
+
+message MsgQueryDelegationResponse {
 }
 
 // this line is used by starport scaffolding # proto/tx/message

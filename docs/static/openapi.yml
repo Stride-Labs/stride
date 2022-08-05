@@ -15795,6 +15795,9 @@ paths:
                         }
       parameters:
         - name: body
+          description: |-
+            SimulateRequest is the request type for the Service.Simulate
+            RPC method.
           in: body
           required: true
           schema:
@@ -16594,6 +16597,11 @@ paths:
                         }
       parameters:
         - name: body
+          description: >-
+            BroadcastTxRequest is the request type for the
+            Service.BroadcastTxRequest
+
+            RPC method.
           in: body
           required: true
           schema:
@@ -33054,12 +33062,15 @@ paths:
                   buffer_size:
                     type: string
                     format: uint64
+                  icq_buffer_size:
+                    type: string
+                    format: uint64
                   ibc_timeout_blocks:
                     type: string
                     format: uint64
                 title: |-
                   Params defines the parameters for the module.
-                  next id: 12
+                  next id: 13
             description: >-
               QueryParamsResponse is response type for the Query/Params RPC
               method.
@@ -54596,6 +54607,8 @@ definitions:
     type: object
   Stridelabs.stride.stakeibc.MsgLiquidStakeResponse:
     type: object
+  Stridelabs.stride.stakeibc.MsgQueryDelegationResponse:
+    type: object
   Stridelabs.stride.stakeibc.MsgRebalanceValidatorsResponse:
     type: object
   Stridelabs.stride.stakeibc.MsgRedeemStakeResponse:
@@ -54612,7 +54625,7 @@ definitions:
     title: >-
       TODO(TEST-53): Remove this pre-launch (no need for clients to create /
       interact with ICAs)
-  Stridelabs.stride.stakeibc.MsgRegisterInterchainAccountResponse:
+  Stridelabs.stride.stakeibc.MsgRestoreInterchainAccountResponse:
     type: object
   Stridelabs.stride.stakeibc.MsgSubmitTxResponse:
     type: object
@@ -54661,12 +54674,15 @@ definitions:
       buffer_size:
         type: string
         format: uint64
+      icq_buffer_size:
+        type: string
+        format: uint64
       ibc_timeout_blocks:
         type: string
         format: uint64
     title: |-
       Params defines the parameters for the module.
-      next id: 12
+      next id: 13
   Stridelabs.stride.stakeibc.PendingClaims:
     type: object
     properties:
@@ -55542,12 +55558,15 @@ definitions:
           buffer_size:
             type: string
             format: uint64
+          icq_buffer_size:
+            type: string
+            format: uint64
           ibc_timeout_blocks:
             type: string
             format: uint64
         title: |-
           Params defines the parameters for the module.
-          next id: 12
+          next id: 13
     description: QueryParamsResponse is response type for the Query/Params RPC method.
   Stridelabs.stride.stakeibc.Validator:
     type: object
