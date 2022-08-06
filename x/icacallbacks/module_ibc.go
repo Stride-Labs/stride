@@ -8,7 +8,6 @@ import (
 	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
 	channeltypes "github.com/cosmos/ibc-go/v3/modules/core/04-channel/types"
 	porttypes "github.com/cosmos/ibc-go/v3/modules/core/05-port/types"
-	host "github.com/cosmos/ibc-go/v3/modules/core/24-host"
 	ibcexported "github.com/cosmos/ibc-go/v3/modules/core/exported"
 
 	"github.com/Stride-Labs/stride/x/icacallbacks/types"
@@ -49,12 +48,10 @@ func (im IBCModule) OnChanOpenInit(
 	version string,
 ) error {
 	im.keeper.Logger(ctx).Error(fmt.Sprintf("chanCap claimed (icacallbacks) %s", channelCap))
-	// Note: The channel capability must be claimed by the authentication module in OnChanOpenInit otherwise the
-	// authentication module will not be able to send packets on the channel created for the associated interchain account.
-	if err := im.keeper.ClaimCapability(ctx, channelCap, host.ChannelCapabilityPath(portID, channelID)); err != nil {
-		return err
-	}
-	return nil
+	// Note: The channel capability is claimed by the underlying app.
+	// call underlying app's OnChanOpenInit callback with the appVersion
+	return im.app.OnChanOpenInit(ctx, order, connectionHops, portID, channelID,
+		channelCap, counterparty, version)
 }
 
 // OnChanOpenAck implements the IBCModule interface
@@ -65,7 +62,8 @@ func (im IBCModule) OnChanOpenAck(
 	counterpartyChannelID string,
 	counterpartyVersion string,
 ) error {
-	return nil
+	// call underlying app's OnChanOpenAck callback with the counterparty app version.
+	return im.app.OnChanOpenAck(ctx, portID, channelID, counterpartyChannelID, counterpartyVersion)
 }
 
 // OnAcknowledgementPacket implements the IBCModule interface
@@ -75,7 +73,12 @@ func (im IBCModule) OnAcknowledgementPacket(
 	acknowledgement []byte,
 	relayer sdk.AccAddress,
 ) error {
-	return im.CallRegisteredICACallback(ctx, modulePacket, acknowledgement)
+	err := im.CallRegisteredICACallback(ctx, modulePacket, acknowledgement)
+	if err != nil {
+		return err
+	}
+	// call underlying app's OnAcknowledgementPacket callback.
+	return im.app.OnAcknowledgementPacket(ctx, modulePacket, acknowledgement, relayer)
 }
 
 // OnTimeoutPacket implements the IBCModule interface
@@ -84,17 +87,11 @@ func (im IBCModule) OnTimeoutPacket(
 	modulePacket channeltypes.Packet,
 	relayer sdk.AccAddress,
 ) error {
-	return im.CallRegisteredICACallback(ctx, modulePacket, []byte{})
-}
-
-// OnChanCloseConfirm implements the IBCModule interface
-func (im IBCModule) OnChanCloseConfirm(
-	ctx sdk.Context,
-	portID,
-	channelID string,
-) error {
-	// TODO(TEST-21): Implement OnTimeoutPacket logic
-	return nil
+	err := im.CallRegisteredICACallback(ctx, modulePacket, []byte{})
+	if err != nil {
+		return err
+	}
+	return im.app.OnTimeoutPacket(ctx, modulePacket, relayer)
 }
 
 func (im IBCModule) NegotiateAppVersion(
@@ -146,6 +143,16 @@ func (im IBCModule) CallRegisteredICACallback(ctx sdk.Context, modulePacket chan
 // ###################################################################################
 // 	Required functions to satisfy interface but not implemented for ICA auth modules
 // ###################################################################################
+
+// OnChanCloseConfirm implements the IBCModule interface
+func (im IBCModule) OnChanCloseConfirm(
+	ctx sdk.Context,
+	portID,
+	channelID string,
+) error {
+	// icacontroller calls OnChanCloseConfirm but doesn't call the underlying app's OnChanCloseConfirm callback.
+	return nil
+}
 
 // OnChanOpenTry implements the IBCModule interface
 func (im IBCModule) OnChanOpenTry(
