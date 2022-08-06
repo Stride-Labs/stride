@@ -158,7 +158,7 @@ message MsgRestoreInterchainAccountResponse {
 
 message MsgQueryDelegation {
   string creator = 1;
-  string hostzone = 2;
+  string hostdenom = 2;
   string valoper = 3;
 }
 

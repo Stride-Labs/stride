@@ -14,6 +14,8 @@ import (
 	distributiontypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 	stakingTypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
+	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+
 	epochstypes "github.com/Stride-Labs/stride/x/epochs/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -300,4 +302,33 @@ func (k Keeper) GetLightClientTimeSafely(ctx sdk.Context, connectionID string) (
 		latestTime := latestConsensusClientState.GetTimestamp()
 		return latestTime, true
 	}
+}
+
+// to icq delegation amounts, this fn is executed after validator exch rates are icq'd
+func (k Keeper) QueryDelegationDaisyChain(ctx sdk.Context, hostZone types.HostZone, valoper string) error {
+
+	delegationAcctAddr := hostZone.GetDelegationAccount().GetAddress()
+	_, valAddr, _ := bech32.DecodeAndConvert(valoper)
+	_, delAddr, _ := bech32.DecodeAndConvert(delegationAcctAddr)
+	data := stakingtypes.GetDelegationKey(delAddr, valAddr)
+
+	key := "store/staking/key"
+	k.Logger(ctx).Info(fmt.Sprintf("Querying delegation for %s on %s", delAddr, valoper))
+	err := k.InterchainQueryKeeper.MakeRequest(
+		ctx,
+		hostZone.ConnectionId,
+		hostZone.ChainId,
+		key,
+		data,
+		sdk.NewInt(-1),
+		types.ModuleName,
+		"delegation",
+		0, // ttl
+		0, // height always 0 (which means current height)
+	)
+	if err != nil {
+		k.Logger(ctx).Error("Error querying for delegation", "error", err)
+		return err
+	}
+	return nil
 }
