@@ -7,6 +7,7 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
 	channeltypes "github.com/cosmos/ibc-go/v3/modules/core/04-channel/types"
+	porttypes "github.com/cosmos/ibc-go/v3/modules/core/05-port/types"
 	host "github.com/cosmos/ibc-go/v3/modules/core/24-host"
 	ibcexported "github.com/cosmos/ibc-go/v3/modules/core/exported"
 
@@ -18,12 +19,14 @@ import (
 // IBCModule implements the ICS26 interface for interchain accounts controller chains
 type IBCModule struct {
 	keeper keeper.Keeper
+	app    porttypes.IBCModule
 }
 
 // NewIBCModule creates a new IBCModule given the keeper
-func NewIBCModule(k keeper.Keeper) IBCModule {
+func NewIBCModule(k keeper.Keeper, app porttypes.IBCModule) IBCModule {
 	return IBCModule{
 		keeper: k,
+		app:    app,
 	}
 }
 
@@ -45,6 +48,7 @@ func (im IBCModule) OnChanOpenInit(
 	counterparty channeltypes.Counterparty,
 	version string,
 ) error {
+	im.keeper.Logger(ctx).Error(fmt.Sprintf("chanCap claimed (icacallbacks) %s", channelCap))
 	// Note: The channel capability must be claimed by the authentication module in OnChanOpenInit otherwise the
 	// authentication module will not be able to send packets on the channel created for the associated interchain account.
 	if err := im.keeper.ClaimCapability(ctx, channelCap, host.ChannelCapabilityPath(portID, channelID)); err != nil {

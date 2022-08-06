@@ -220,6 +220,19 @@ func (k Keeper) SubmitTxs(ctx sdk.Context, connectionId string, msgs []sdk.Msg, 
 	if err != nil {
 		return 0, err
 	}
+	seq, err := k.ICACallbacksKeeper.SubmitICATx(ctx, connectionId, msgs, account, timeoutTimestamp, chainId, "samplecallback", []byte{})
+	if err != nil {
+		return 0, err
+	}
+	return seq, nil
+}
+
+// SubmitTxs submits an ICA transaction containing multiple messages
+func (k Keeper) SubmitTxs_OLD(ctx sdk.Context, connectionId string, msgs []sdk.Msg, account types.ICAAccount, timeoutTimestamp uint64) (uint64, error) {
+	chainId, err := k.GetChainID(ctx, connectionId)
+	if err != nil {
+		return 0, err
+	}
 	owner := types.FormatICAAccountOwner(chainId, account.GetTarget())
 	portID, err := icatypes.NewControllerPortID(owner)
 	if err != nil {

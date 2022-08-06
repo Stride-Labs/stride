@@ -5,6 +5,8 @@ import (
 	"os"
 	"path/filepath"
 
+	porttypes "github.com/cosmos/ibc-go/v3/modules/core/05-port/types"
+
 	utils "github.com/Stride-Labs/stride/utils"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
@@ -446,6 +448,18 @@ func NewStrideApp(
 	app.InterchainqueryKeeper = interchainquerykeeper.NewKeeper(appCodec, keys[interchainquerytypes.StoreKey], app.IBCKeeper)
 	interchainQueryModule := interchainquery.NewAppModule(appCodec, app.InterchainqueryKeeper)
 
+	scopedIcacallbacksKeeper := app.CapabilityKeeper.ScopeToModule(icacallbacksmoduletypes.ModuleName)
+	app.ScopedIcacallbacksKeeper = scopedIcacallbacksKeeper
+	app.IcacallbacksKeeper = *icacallbacksmodulekeeper.NewKeeper(
+		appCodec,
+		keys[icacallbacksmoduletypes.StoreKey],
+		keys[icacallbacksmoduletypes.MemStoreKey],
+		app.GetSubspace(icacallbacksmoduletypes.ModuleName),
+		scopedIcacallbacksKeeper,
+		*app.IBCKeeper,
+		app.ICAControllerKeeper,
+	)
+
 	scopedStakeibcKeeper := app.CapabilityKeeper.ScopeToModule(stakeibcmoduletypes.ModuleName)
 	app.ScopedStakeibcKeeper = scopedStakeibcKeeper
 	app.StakeibcKeeper = stakeibcmodulekeeper.NewKeeper(
@@ -464,6 +478,7 @@ func NewStrideApp(
 		app.InterchainqueryKeeper,
 		app.RecordsKeeper,
 		app.StakingKeeper,
+		app.IcacallbacksKeeper,
 	)
 
 	stakeibcModule := stakeibcmodule.NewAppModule(appCodec, app.StakeibcKeeper, app.AccountKeeper, app.BankKeeper)
@@ -483,19 +498,8 @@ func NewStrideApp(
 		),
 	)
 	epochsModule := epochsmodule.NewAppModule(appCodec, app.EpochsKeeper)
-	scopedIcacallbacksKeeper := app.CapabilityKeeper.ScopeToModule(icacallbacksmoduletypes.ModuleName)
-	app.ScopedIcacallbacksKeeper = scopedIcacallbacksKeeper
-	app.IcacallbacksKeeper = *icacallbacksmodulekeeper.NewKeeper(
-		appCodec,
-		keys[icacallbacksmoduletypes.StoreKey],
-		keys[icacallbacksmoduletypes.MemStoreKey],
-		app.GetSubspace(icacallbacksmoduletypes.ModuleName),
-		scopedIcacallbacksKeeper,
-		*app.IBCKeeper,
-		app.ICAControllerKeeper,
-	)
+
 	icacallbacksModule := icacallbacksmodule.NewAppModule(appCodec, app.IcacallbacksKeeper, app.AccountKeeper, app.BankKeeper)
-	icacallbacksIBCModule := icacallbacksmodule.NewIBCModule(app.IcacallbacksKeeper)
 	// Register ICA calllbacks
 	err = app.IcacallbacksKeeper.SetICACallbackHandler(stakeibcmoduletypes.ModuleName, app.StakeibcKeeper.ICACallbackHandler())
 	if err != nil {
@@ -511,22 +515,37 @@ func NewStrideApp(
 		app.AccountKeeper, scopedICAHostKeeper, app.MsgServiceRouter(),
 	)
 	icaModule := ica.NewAppModule(&app.ICAControllerKeeper, &app.ICAHostKeeper)
-	// icacontroller -> stakeibc
-	stakeibcICAControllerIBCModule := icacontroller.NewIBCModule(app.ICAControllerKeeper, stakeibcIBCModule)
-	// icacontroller -> icacallbacks
-	icacallbacksICAControllerIBCModule := icacontroller.NewIBCModule(app.ICAControllerKeeper, icacallbacksIBCModule)
+
+	// Create the middleware stacks
+
+	// Stack one contains
+	// - IBC
+	// - ICA
+	// - icacallbacks
+	// - stakeibc
+	// - base app
+	var icamiddlewareStack porttypes.IBCModule
+	icamiddlewareStack = icacallbacksmodule.NewIBCModule(app.IcacallbacksKeeper, stakeibcIBCModule)
+	icamiddlewareStack = icacontroller.NewIBCModule(app.ICAControllerKeeper, icamiddlewareStack)
 	icaHostIBCModule := icahost.NewIBCModule(app.ICAHostKeeper)
-	// records -> transfer
+
+	// Stack two contains
+	// - IBC
+	// - ICA
+	// - icacallbacks
+	// - stakeibc
+	// - base app
 	recordsStack := recordsmodule.NewIBCModule(app.RecordsKeeper, transferIBCModule)
 
 	// Create static IBC router, add transfer route, then set and seal it
 	ibcRouter := ibcporttypes.NewRouter()
 	ibcRouter.
 		AddRoute(ibctransfertypes.ModuleName, recordsStack).
-		AddRoute(icacontrollertypes.SubModuleName, stakeibcICAControllerIBCModule).
+		AddRoute(icacontrollertypes.SubModuleName, icamiddlewareStack).
 		AddRoute(icahosttypes.SubModuleName, icaHostIBCModule).
-		AddRoute(stakeibcmoduletypes.ModuleName, stakeibcICAControllerIBCModule).
-		AddRoute(icacallbacksmoduletypes.ModuleName, icacallbacksICAControllerIBCModule)
+		// Note, authentication module packets are routed to the top level of the middleware stack
+		AddRoute(stakeibcmoduletypes.ModuleName, icamiddlewareStack).
+		AddRoute(icacallbacksmoduletypes.ModuleName, icamiddlewareStack)
 	// this line is used by starport scaffolding # ibc/app/router
 	app.IBCKeeper.SetRouter(ibcRouter)
 

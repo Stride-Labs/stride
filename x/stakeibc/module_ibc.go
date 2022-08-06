@@ -51,6 +51,7 @@ func (im IBCModule) OnChanOpenInit(
 	counterparty channeltypes.Counterparty,
 	version string,
 ) error {
+	im.keeper.Logger(ctx).Error(fmt.Sprintf("chanCap claimed (stakeibc) %s", channelCap))
 	// Note: The channel capability must be claimed by the authentication module in OnChanOpenInit otherwise the
 	// authentication module will not be able to send packets on the channel created for the associated interchain account.
 	if err := im.keeper.ClaimCapability(ctx, channelCap, host.ChannelCapabilityPath(portID, channelID)); err != nil {
