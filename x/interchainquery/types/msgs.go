@@ -37,6 +37,10 @@ func (msg MsgSubmitQueryResponse) ValidateBasic() error {
 	if msg.ChainId == "" {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "chain_id cannot be empty in ICQ response")
 	}
+	// check amound positiv
+	if !m.Coins.IsAllPositive() {
+		return fmt.Errorf("cannot lock up a zero or negative amount")
+	}
 
 	return nil
 }
