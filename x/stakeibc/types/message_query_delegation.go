@@ -1,19 +1,23 @@
 package types
 
 import (
+	"strings"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+
+	"github.com/Stride-Labs/stride/utils"
 )
 
 const TypeMsgQueryDelegation = "query_delegation"
 
 var _ sdk.Msg = &MsgQueryDelegation{}
 
-func NewMsgQueryDelegation(creator string, hostzone string, valoper string) *MsgQueryDelegation {
+func NewMsgQueryDelegation(creator string, hostdenom string, valoper string) *MsgQueryDelegation {
 	return &MsgQueryDelegation{
-		Creator:  creator,
-		Hostzone: hostzone,
-		Valoper:  valoper,
+		Creator:   creator,
+		Hostdenom: hostdenom,
+		Valoper:   valoper,
 	}
 }
 
@@ -43,5 +47,24 @@ func (msg *MsgQueryDelegation) ValidateBasic() error {
 	if err != nil {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid creator address (%s)", err)
 	}
+	if err := utils.ValidateAdminAddress(msg.Creator); err != nil {
+		return err
+	}
+	// basic checks on host denom
+	if len(msg.Hostdenom) == 0 {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "host denom is required")
+	}
+	// host denom must be a valid asset denom
+	if err := sdk.ValidateDenom(msg.Hostdenom); err != nil {
+		return err
+	}
+	// basic checks on host zone
+	if len(msg.Valoper) == 0 {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "valoper is required")
+	}
+	if !strings.Contains(msg.Valoper, "valoper") {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "validator operator address must contrain 'valoper'")
+	}
+
 	return nil
 }

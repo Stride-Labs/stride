@@ -9,6 +9,8 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/spf13/cast"
 
+	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+
 	"github.com/Stride-Labs/stride/x/interchainquery/types"
 	icqtypes "github.com/Stride-Labs/stride/x/interchainquery/types"
 )
@@ -45,7 +47,9 @@ func (c Callbacks) AddCallback(id string, fn interface{}) types.QueryCallbacks {
 }
 
 func (c Callbacks) RegisterCallbacks() types.QueryCallbacks {
-	a := c.AddCallback("withdrawalbalance", Callback(WithdrawalBalanceCallback))
+	a := c.AddCallback("withdrawalbalance", Callback(WithdrawalBalanceCallback)).
+		AddCallback("delegation", Callback(DelegationCallback)).
+		AddCallback("validator", Callback(ValidatorCallback))
 	return a.(Callbacks)
 }
 
@@ -154,5 +158,88 @@ func WithdrawalBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query icq
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "Failed to SubmitTxs for %s, %s, %s", zone.ConnectionId, zone.ChainId, msgs)
 	}
 
+	return nil
+}
+
+// DelegationCallback is a callback handler for Querydelegation queries.
+func DelegationCallback(k Keeper, ctx sdk.Context, args []byte, query icqtypes.Query) error {
+	// NOTE(TEST-112) for now, to get proofs in your ICQs, you need to query the entire store on the host zone! e.g. "store/bank/key"
+
+	zone, found := k.GetHostZone(ctx, query.GetChainId())
+	if !found {
+		return fmt.Errorf("no registered zone for chain id: %s", query.GetChainId())
+	}
+
+	qdel := stakingtypes.Delegation{}
+	err := k.cdc.Unmarshal(args, &qdel)
+	if err != nil {
+		k.Logger(ctx).Error("unable to unmarshal qdel info for zone", "zone", zone.ChainId, "err", err)
+		return err
+	}
+	k.Logger(ctx).Info(fmt.Sprintf("DelegationCallback: zone %s qdel %v", zone.ChainId, qdel))
+
+	// get tokens using the validator's conversion rate
+	for i, v := range zone.Validators {
+		k.Logger(ctx).Info(fmt.Sprintf("DELCB %s", v.Address))
+		if v.Address == qdel.ValidatorAddress {
+			// convert shares to tokens using the exchange rate
+			// TODO: make sure conversion math precision matches the sdk's staking module's version (we did it slightly differently)
+			// note: truncateInt per https://github.com/cosmos/cosmos-sdk/blob/cb31043d35bad90c4daa923bb109f38fd092feda/x/staking/types/validator.go#L431
+			qNumTokens := qdel.Shares.Mul(v.TokensFromShares).TruncateInt()
+			k.Logger(ctx).Info(fmt.Sprintf("DelegationCallback: zone %s validator %s prevNtokens %v qNumTokens %v", zone.ChainId, v.Address, v.DelegationAmt, qNumTokens))
+			if qNumTokens.Uint64() != v.DelegationAmt {
+				k.Logger(ctx).Info("ICQ'd delAmt mismatch", "zone", zone.ChainId,
+					"validator", v.Address,
+					"delegator", qdel.DelegatorAddress,
+					"records was", v.DelegationAmt,
+					"icq shows", qNumTokens,
+					"... UPDATING!")
+				// TODO add some safety checks here
+				// update our record of the validator's delegation amt
+				v.DelegationAmt = qNumTokens.Uint64()
+			}
+			// write back to state and break
+			zone.Validators[i] = v
+			k.SetHostZone(ctx, zone)
+			break
+		}
+	}
+	return nil
+}
+
+// ValidatorCallback is a callback handler for validator queries.
+func ValidatorCallback(k Keeper, ctx sdk.Context, args []byte, query icqtypes.Query) error {
+	zone, found := k.GetHostZone(ctx, query.GetChainId())
+	if !found {
+		return fmt.Errorf("no registered zone for chain id: %s", query.GetChainId())
+	}
+	qval := stakingtypes.Validator{}
+	err := k.cdc.Unmarshal(args, &qval)
+	if err != nil {
+		k.Logger(ctx).Error("unable to unmarshal qval info for zone", "zone", zone.ChainId, "err", err)
+		return err
+	}
+	k.Logger(ctx).Info(fmt.Sprintf("ValidatorCallback: zone %v qval %v", zone.ChainId, qval))
+
+	// set the validator's conversion rate
+	for i, v := range zone.Validators {
+		if v.Address == qval.OperatorAddress {
+			// converting 1.0 gives us the exchange rate to later use in the next CB
+			v.TokensFromShares = qval.TokensFromShares(sdk.NewDec(1.0))
+			k.Logger(ctx).Info(fmt.Sprintf("ValidatorCallback: zone %s validator %v tokensFromShares %v", zone.ChainId, v.Address, v.TokensFromShares))
+
+			// write back to state and break
+			zone.Validators[i] = v
+			k.SetHostZone(ctx, zone)
+			break
+		}
+	}
+
+	// armed with the exch rate, we can now query the (val,del) delegation
+	err = k.QueryDelegationDaisyChain(ctx, zone, qval.OperatorAddress)
+	if err != nil {
+		k.Logger(ctx).Error("ValidatorCallback: failed to query delegation", "zone", zone.ChainId, "err", err)
+		return err
+	}
 	return nil
 }

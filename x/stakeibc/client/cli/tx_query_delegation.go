@@ -3,22 +3,23 @@ package cli
 import (
 	"strconv"
 
-	"github.com/Stride-Labs/stride/x/stakeibc/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	"github.com/spf13/cobra"
+
+	"github.com/Stride-Labs/stride/x/stakeibc/types"
 )
 
 var _ = strconv.Itoa(0)
 
 func CmdQueryDelegation() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "query-delegation [hostzone] [valoper]",
+		Use:   "query-delegation [hostdenom] [valoper]",
 		Short: "Broadcast message query-delegation",
 		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
-			argHostzone := args[0]
+			argHostdenom := args[0]
 			argValoper := args[1]
 
 			clientCtx, err := client.GetClientTxContext(cmd)
@@ -28,7 +29,7 @@ func CmdQueryDelegation() *cobra.Command {
 
 			msg := types.NewMsgQueryDelegation(
 				clientCtx.GetFromAddress().String(),
-				argHostzone,
+				argHostdenom,
 				argValoper,
 			)
 			if err := msg.ValidateBasic(); err != nil {
