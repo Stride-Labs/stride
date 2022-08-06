@@ -161,7 +161,8 @@ func (k Keeper) GetEpochElapsedShare(ctx sdk.Context) (sdk.Dec, error) {
 		return sdk.ZeroDec(), sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "Failed to get epoch tracker for %s", epochType)
 	}
 	prevEpochStartTime := cast.ToUint64(epochTracker.NextEpochStartTime) - cast.ToUint64(epochTracker.Duration)
-	elapsedShare := sdk.NewDec(ctx.BlockTime().Unix() - cast.ToInt64(prevEpochStartTime)).Quo(sdk.NewDec(cast.ToInt64(epochTracker.Duration)))
+	elapsedShare := sdk.NewDec(ctx.BlockTime().UnixNano() - cast.ToInt64(prevEpochStartTime)).Quo(sdk.NewDec(cast.ToInt64(epochTracker.Duration)))
+	k.Logger(ctx).Info(fmt.Sprintf("epochTracker.NextEpochStartTime %v epochTracker.Duration %v prevEpochStartTime %v", epochTracker.NextEpochStartTime, epochTracker.Duration, prevEpochStartTime))
 	return elapsedShare, nil
 }
 
@@ -173,8 +174,10 @@ func (k Keeper) IsWithinICQEpochWindow(ctx sdk.Context) (bool, error) {
 	}
 	icqBufferSize := cast.ToInt64(k.GetParam(ctx, types.KeyIcqBufferSize))
 	epochShareThresh := sdk.NewDec(1).Sub(sdk.NewDec(1).Quo(sdk.NewDec(icqBufferSize)))
-	k.Logger(ctx).Error(fmt.Sprintf("ICQ SANITY CHECK: aborting! we're %d pct through the epoch, ICQ cutoff is %d", elapsedShareOfEpoch, epochShareThresh))
 
 	inWindow := elapsedShareOfEpoch.GT(epochShareThresh)
+	if !inWindow {
+		k.Logger(ctx).Error(fmt.Sprintf("ICQCB: We're %d pct through the epoch, ICQ cutoff is %d", elapsedShareOfEpoch, epochShareThresh))
+	}
 	return inWindow, nil
 }

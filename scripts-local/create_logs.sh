@@ -44,7 +44,7 @@ while true; do
     $GAIA_CMD q bank balances $GAIA_WITHDRAWAL >>$TEMP_LOGS_DIR/accounts.log
 
     printf '\n%s\n' "LIST-HOST-ZONES STRIDE" >>$TEMP_LOGS_DIR/accounts.log
-    $STRIDE_CMD q stakeibc list-host-zone | head -n 40 >>$TEMP_LOGS_DIR/accounts.log
+    $STRIDE_CMD q stakeibc list-host-zone | head -n 50 >>$TEMP_LOGS_DIR/accounts.log
     printf '\n%s\n' "LIST-DEPOSIT-RECORDS" >>$TEMP_LOGS_DIR/accounts.log
     $STRIDE_CMD q records list-deposit-record  >> $TEMP_LOGS_DIR/accounts.log
     printf '\n%s\n' "LIST-EPOCH-UNBONDING-RECORDS" >>$TEMP_LOGS_DIR/accounts.log
