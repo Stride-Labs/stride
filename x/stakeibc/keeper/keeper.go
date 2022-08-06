@@ -3,6 +3,8 @@ package keeper
 import (
 	"fmt"
 
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	"github.com/spf13/cast"
 	"github.com/tendermint/tendermint/libs/log"
 
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -20,6 +22,8 @@ import (
 	ibctransferkeeper "github.com/cosmos/ibc-go/v3/modules/apps/transfer/keeper"
 	ibckeeper "github.com/cosmos/ibc-go/v3/modules/core/keeper"
 	ibctmtypes "github.com/cosmos/ibc-go/v3/modules/light-clients/07-tendermint/types"
+
+	epochstypes "github.com/Stride-Labs/stride/x/epochs/types"
 
 	recordsmodulekeeper "github.com/Stride-Labs/stride/x/records/keeper"
 )
@@ -135,4 +139,43 @@ func (k Keeper) GetConnectionId(ctx sdk.Context, portId string) (string, error) 
 		}
 	}
 	return "", fmt.Errorf("portId %s has no associated connectionId", portId)
+}
+
+// helper to get the time of the next epoch end
+func (k Keeper) GetEpochEndTime(ctx sdk.Context) (uint64, error) {
+	epochType := epochstypes.STRIDE_EPOCH
+	epochTracker, found := k.GetEpochTracker(ctx, epochType)
+	if !found {
+		k.Logger(ctx).Error("Failed to get epoch tracker for %s", epochType)
+		return 0, sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "Failed to get epoch tracker for %s", epochType)
+	}
+	return cast.ToUint64(epochTracker.NextEpochStartTime), nil
+}
+
+// helper to get what share of the curr epoch we're through
+func (k Keeper) GetEpochElapsedShare(ctx sdk.Context) (sdk.Dec, error) {
+	epochType := epochstypes.STRIDE_EPOCH
+	epochTracker, found := k.GetEpochTracker(ctx, epochType)
+	if !found {
+		k.Logger(ctx).Error("Failed to get epoch tracker for %s", epochType)
+		return sdk.ZeroDec(), sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "Failed to get epoch tracker for %s", epochType)
+	}
+	prevEpochStartTime := cast.ToUint64(epochTracker.Duration)
+	nextEpochStartTime := cast.ToUint64(epochTracker.NextEpochStartTime)
+	elapsedShare := sdk.NewDec(ctx.BlockTime().Unix() - cast.ToInt64(prevEpochStartTime)).Quo(sdk.NewDec((cast.ToInt64(nextEpochStartTime - prevEpochStartTime))))
+	return elapsedShare, nil
+}
+
+// helper to check whether ICQs are valid in this portion of the epoch
+func (k Keeper) IsWithinICQEpochWindow(ctx sdk.Context) (bool, error) {
+	elapsedShareOfEpoch, err := k.GetEpochElapsedShare(ctx)
+	if err != nil {
+		return false, err
+	}
+	icqBufferSize := cast.ToInt64(k.GetParam(ctx, types.KeyIcqBufferSize))
+	epochShareThresh := sdk.NewDec(1).Sub(sdk.NewDec(1).Quo(sdk.NewDec(icqBufferSize)))
+	k.Logger(ctx).Error(fmt.Sprintf("ICQ SANITY CHECK: aborting! we're %d pct through the epoch, ICQ cutoff is %d", elapsedShareOfEpoch, epochShareThresh))
+
+	inWindow := elapsedShareOfEpoch.GT(epochShareThresh)
+	return inWindow, nil
 }

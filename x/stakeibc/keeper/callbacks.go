@@ -170,8 +170,16 @@ func DelegationCallback(k Keeper, ctx sdk.Context, args []byte, query icqtypes.Q
 		return fmt.Errorf("no registered zone for chain id: %s", query.GetChainId())
 	}
 
+	// ensure ICQ can be issued now! else fail the callback
+	valid, err := k.IsWithinICQEpochWindow(ctx)
+	if err != nil {
+		return err
+	} else if !valid {
+		return nil
+	}
+
 	qdel := stakingtypes.Delegation{}
-	err := k.cdc.Unmarshal(args, &qdel)
+	err = k.cdc.Unmarshal(args, &qdel)
 	if err != nil {
 		k.Logger(ctx).Error("unable to unmarshal qdel info for zone", "zone", zone.ChainId, "err", err)
 		return err
@@ -188,17 +196,27 @@ func DelegationCallback(k Keeper, ctx sdk.Context, args []byte, query icqtypes.Q
 			qNumTokens := qdel.Shares.Mul(v.TokensFromShares).TruncateInt()
 			k.Logger(ctx).Info(fmt.Sprintf("DelegationCallback: zone %s validator %s prevNtokens %v qNumTokens %v", zone.ChainId, v.Address, v.DelegationAmt, qNumTokens))
 			if qNumTokens.Uint64() != v.DelegationAmt {
-				k.Logger(ctx).Info("ICQ'd delAmt mismatch", "zone", zone.ChainId,
-					"validator", v.Address,
-					"delegator", qdel.DelegatorAddress,
-					"records was", v.DelegationAmt,
-					"icq shows", qNumTokens,
-					"... UPDATING!")
 				// TODO add some safety checks here
-				// update our record of the validator's delegation amt
-				v.DelegationAmt = qNumTokens.Uint64()
+
+				// update our records of the total stakedbal and of the validator's delegation amt
+				slashAmt := v.DelegationAmt - qNumTokens.Uint64()
+				slashPct := sdk.NewDec(cast.ToInt64(slashAmt)).Quo(sdk.NewDec(cast.ToInt64(v.DelegationAmt)))
+				k.Logger(ctx).Info(fmt.Sprintf("ICQ'd delAmt mismatch zone %s validator %s delegator %s records was %d icq shows %d slashAmt %d slashPct %d... UPDATING!",
+					zone.ChainId, v.Address, qdel.DelegatorAddress, v.DelegationAmt, qNumTokens, slashAmt, slashPct))
+				k.Logger(ctx).Info(fmt.Sprintf("ICQ'd: slashPct: %v", slashPct))
+				if slashPct.GT(sdk.NewDec(10).Quo(sdk.NewDec(100))) {
+					k.Logger(ctx).Info(fmt.Sprintf("DELCB | slashed but ABORTING bc slash GT10pct: query shows slash of %v", slashPct))
+					return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "DELCB | slashed but ABORTING bc slash GT10pct: query shows slash of %v", slashPct)
+				}
+				// slash the validator's weight
+				weightMul := sdk.NewDec(qNumTokens.Int64()).Quo(sdk.NewDec(cast.ToInt64(v.DelegationAmt)))
+
+				zone.StakedBal -= cast.ToInt64(slashAmt)
+				v.DelegationAmt -= slashAmt
+				v.Weight = sdk.NewDec(cast.ToInt64(v.Weight)).Mul(weightMul).TruncateInt().Uint64()
 			}
-			// write back to state and break
+			// write back to state and break (reset TokensFromShares for clarity, so we're not tempted to use it again later)
+			v.TokensFromShares = sdk.NewDec(0)
 			zone.Validators[i] = v
 			k.SetHostZone(ctx, zone)
 			break
@@ -220,6 +238,14 @@ func ValidatorCallback(k Keeper, ctx sdk.Context, args []byte, query icqtypes.Qu
 		return err
 	}
 	k.Logger(ctx).Info(fmt.Sprintf("ValidatorCallback: zone %v qval %v", zone.ChainId, qval))
+
+	// ensure ICQ can be issued now! else fail the callback
+	valid, err := k.IsWithinICQEpochWindow(ctx)
+	if err != nil {
+		return err
+	} else if !valid {
+		return nil
+	}
 
 	// set the validator's conversion rate
 	for i, v := range zone.Validators {
