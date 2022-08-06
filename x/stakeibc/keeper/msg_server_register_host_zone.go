@@ -48,28 +48,28 @@ func (k Keeper) RegisterHostZone(goCtx context.Context, msg *types.MsgRegisterHo
 	// generate delegate account
 	// NOTE: in the future, if we implement proxy governance, we'll need many more delegate accounts
 	delegateAccount := types.FormatICAAccountOwner(chainId, types.ICAAccountType_DELEGATION)
-	if err := k.ICACallbacksKeeper.ICAControllerKeeper.RegisterInterchainAccount(ctx, zone.ConnectionId, delegateAccount); err != nil {
+	if err := k.ICAControllerKeeper.RegisterInterchainAccount(ctx, zone.ConnectionId, delegateAccount); err != nil {
 		k.Logger(ctx).Error("unable to register delegate account", "error", err)
 		return nil, err
 	}
 
 	// generate fee account
 	feeAccount := types.FormatICAAccountOwner(chainId, types.ICAAccountType_FEE)
-	if err := k.ICACallbacksKeeper.ICAControllerKeeper.RegisterInterchainAccount(ctx, zone.ConnectionId, feeAccount); err != nil {
+	if err := k.ICAControllerKeeper.RegisterInterchainAccount(ctx, zone.ConnectionId, feeAccount); err != nil {
 		k.Logger(ctx).Error("unable to register fee account", "error", err)
 		return nil, err
 	}
 
 	// generate withdrawal account
 	withdrawalAccount := types.FormatICAAccountOwner(chainId, types.ICAAccountType_WITHDRAWAL)
-	if err := k.ICACallbacksKeeper.ICAControllerKeeper.RegisterInterchainAccount(ctx, zone.ConnectionId, withdrawalAccount); err != nil {
+	if err := k.ICAControllerKeeper.RegisterInterchainAccount(ctx, zone.ConnectionId, withdrawalAccount); err != nil {
 		k.Logger(ctx).Error("unable to register withdrawal account", "error", err)
 		return nil, err
 	}
 
 	// generate redemption account
 	redemptionAccount := types.FormatICAAccountOwner(chainId, types.ICAAccountType_REDEMPTION)
-	if err := k.ICACallbacksKeeper.ICAControllerKeeper.RegisterInterchainAccount(ctx, zone.ConnectionId, redemptionAccount); err != nil {
+	if err := k.ICAControllerKeeper.RegisterInterchainAccount(ctx, zone.ConnectionId, redemptionAccount); err != nil {
 		k.Logger(ctx).Error("unable to register redemption account", "error", err)
 		return nil, err
 	}

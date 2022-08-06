@@ -215,7 +215,7 @@ func (k Keeper) SubmitTxsEpoch(ctx sdk.Context, connectionId string, msgs []sdk.
 }
 
 // SubmitTxs submits an ICA transaction containing multiple messages
-func (k Keeper) SubmitTxs(ctx sdk.Context, connectionId string, msgs []sdk.Msg, account types.ICAAccount, timeoutTimestamp uint64) (uint64, error) {
+func (k Keeper) SubmitTxs_NEW(ctx sdk.Context, connectionId string, msgs []sdk.Msg, account types.ICAAccount, timeoutTimestamp uint64) (uint64, error) {
 	chainId, err := k.GetChainID(ctx, connectionId)
 	if err != nil {
 		return 0, err
@@ -228,7 +228,7 @@ func (k Keeper) SubmitTxs(ctx sdk.Context, connectionId string, msgs []sdk.Msg, 
 }
 
 // SubmitTxs submits an ICA transaction containing multiple messages
-func (k Keeper) SubmitTxs_OLD(ctx sdk.Context, connectionId string, msgs []sdk.Msg, account types.ICAAccount, timeoutTimestamp uint64) (uint64, error) {
+func (k Keeper) SubmitTxs(ctx sdk.Context, connectionId string, msgs []sdk.Msg, account types.ICAAccount, timeoutTimestamp uint64) (uint64, error) {
 	chainId, err := k.GetChainID(ctx, connectionId)
 	if err != nil {
 		return 0, err

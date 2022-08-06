@@ -68,6 +68,7 @@ func (im IBCModule) OnChanOpenAck(
 	counterpartyChannelID string,
 	counterpartyVersion string,
 ) error {
+	ctx.Logger().Info("OnChanOpenAck - stakeibc")
 	// TODO(TEST-21): Implement this! The `counterpartyVersion != types.Version` is causing errors
 	// if counterpartyVersion != types.Version {
 	// 	return sdkerrors.Wrapf(types.ErrInvalidVersion, "invalid counterparty version: %s, expected %s", counterpartyVersion, types.Version)
