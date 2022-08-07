@@ -125,18 +125,12 @@ func (k Keeper) RemoveValidatorFromHostZone(ctx sdk.Context, chainId string, val
 	}
 	for i, val := range hostZone.Validators {
 		if val.GetAddress() == validatorAddress {
-			if val.GetDelegationAmt() == 0 && val.GetWeight() == 0 {
-				hostZone.Validators = append(hostZone.Validators[:i], hostZone.Validators[i+1:]...)
-				return true
-			} else {
-				k.Logger(ctx).Error(fmt.Sprintf("Validator %s has non-zero delegation (%d) or weight (%d)", validatorAddress, val.GetDelegationAmt(), val.GetWeight()))
-
-				return false
-			}
+			hostZone.Validators = append(hostZone.Validators[:i], hostZone.Validators[i+1:]...)
+			return true
 		}
 	}
 	k.SetHostZone(ctx, hostZone)
-	k.Logger(ctx).Error(fmt.Sprintf("Validator %s not found on the host zone %s", validatorAddress, chainId))
+	k.Logger(ctx).Error(fmt.Sprintf("Validator %s not found on Host Zone %s", validatorAddress, chainId))
 	return false
 }
 
