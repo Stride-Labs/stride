@@ -29,7 +29,7 @@ const (
 	// TODO: Determine the simulation weight value
 	defaultWeightMsgRestoreInterchainAccount int = 100
 
-	opWeightMsgQueryDelegation = "op_weight_msg_query_delegation"
+	opWeightMsgQueryDelegation = "op_weight_msg_query_delegation" // #nosec
 	// TODO: Determine the simulation weight value
 	defaultWeightMsgQueryDelegation int = 100
 
