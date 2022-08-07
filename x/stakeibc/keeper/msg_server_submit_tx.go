@@ -27,7 +27,7 @@ import (
 // NOTE: this is not a standard message; only the stakeibc module should call this function. However,
 // this is temporarily in the message server to facilitate easy testing and development.
 // TODO(TEST-53): Remove this pre-launch (no need for clients to create / interact with ICAs)
-func (k Keeper) SubmitTx(goCtx context.Context, msg *types.MsgSubmitTx) (*types.MsgSubmitTxResponse, error) {
+func (k msgServer) SubmitTx(goCtx context.Context, msg *types.MsgSubmitTx) (*types.MsgSubmitTxResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	_ = ctx
 
@@ -282,6 +282,7 @@ func (k Keeper) GetLightClientTimeSafely(ctx sdk.Context, connectionID string) (
 	conn, found := k.IBCKeeper.ConnectionKeeper.GetConnection(ctx, connectionID)
 	if !found {
 		k.Logger(ctx).Error(fmt.Sprintf("invalid connection id, \"%s\" not found", connectionID))
+		return 0, false
 	}
 	//TODO(TEST-112) make sure to update host LCs here!
 	latestConsensusClientState, found := k.IBCKeeper.ClientKeeper.GetLatestClientConsensusState(ctx, conn.ClientId)

@@ -78,9 +78,9 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochInfo epochstypes.EpochInf
 		depositRecords := k.RecordsKeeper.GetAllDepositRecord(ctx)
 
 		// Update the redemption rate
-		redemptionRateInterval := cast.ToInt64(k.GetParam(ctx, types.KeyDepositInterval))
+		redemptionRateInterval := cast.ToInt64(k.GetParam(ctx, types.KeyRedemptionRateInterval))
 		if epochNumber%redemptionRateInterval == 0 {
-			k.Logger(ctx).Info("Triggeting update redemption rate")
+			k.Logger(ctx).Info("Triggering update redemption rate")
 			k.UpdateRedemptionRates(ctx, depositRecords)
 		}
 
@@ -111,7 +111,7 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochInfo epochstypes.EpochInf
 			for _, hz := range k.GetAllHostZone(ctx) {
 				if (&hz).WithdrawalAccount != nil { // only process host zones once withdrawal accounts are registered
 
-					// read clock time on host zome
+					// read clock time on host zone
 					// k.ReadClockTime(ctx, hz)
 					blockTime, found := k.GetLightClientTimeSafely(ctx, hz.ConnectionId)
 					if !found {
@@ -312,7 +312,7 @@ func (k Keeper) UpdateRedemptionRates(ctx sdk.Context, depositRecords []recordst
 			return error
 		}
 		stakedBalance := zoneInfo.StakedBal
-		modeuleAcctBalance, error := k.GetModuleAccountBalance(ctx, zoneInfo, depositRecords)
+		moduleAcctBalance, error := k.GetModuleAccountBalance(ctx, zoneInfo, depositRecords)
 		if error != nil {
 			return error
 		}
@@ -322,7 +322,7 @@ func (k Keeper) UpdateRedemptionRates(ctx sdk.Context, depositRecords []recordst
 		}
 
 		// calc redemptionRate = (UB+SB+MA)/stSupply
-		redemptionRate := (sdk.NewDec(undelegatedBalance).Add(sdk.NewDec(stakedBalance)).Add(sdk.NewDec(modeuleAcctBalance))).Quo(sdk.NewDec(stSupply))
+		redemptionRate := (sdk.NewDec(undelegatedBalance).Add(sdk.NewDec(stakedBalance)).Add(sdk.NewDec(moduleAcctBalance))).Quo(sdk.NewDec(stSupply))
 		k.Logger(ctx).Info(fmt.Sprintf("[REDEMPTION-RATE] New Rate is %d (vs prev %d)", redemptionRate, zoneInfo.LastRedemptionRate))
 
 		// set redemptionRate attribute for the hostZone (and update last RedemptionRate)

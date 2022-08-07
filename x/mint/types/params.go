@@ -5,8 +5,9 @@ import (
 	"fmt"
 	"strings"
 
-	epochtypes "github.com/Stride-Labs/stride/x/epochs/types"
 	yaml "gopkg.in/yaml.v2"
+
+	epochtypes "github.com/Stride-Labs/stride/x/epochs/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
@@ -45,19 +46,19 @@ func NewParams(
 	}
 }
 
-// TODO(TEST-25) default minting module parameters.
+// minting params
 func DefaultParams() Params {
 	return Params{
 		MintDenom:               sdk.DefaultBondDenom,
-		GenesisEpochProvisions:  sdk.NewDec(5000000 / 3),
-		EpochIdentifier:         "day",                    // 1 day
-		ReductionPeriodInEpochs: 365,                      // 1 years
-		ReductionFactor:         sdk.NewDecWithPrec(5, 1), // 0.75
+		GenesisEpochProvisions:  sdk.NewDec(6_700_000).QuoInt64(365),
+		EpochIdentifier:         "day",                     // 1 day
+		ReductionPeriodInEpochs: 365,                       // 1 years
+		ReductionFactor:         sdk.NewDec(3).QuoInt64(4), // 3/4
 		DistributionProportions: DistributionProportions{
-			Staking:              sdk.NewDecWithPrec(5, 1), // 0.5
-			PoolIncentives:       sdk.NewDecWithPrec(0, 1), // 0
-			ParticipationRewards: sdk.NewDecWithPrec(2, 1), // 0.2
-			CommunityPool:        sdk.NewDecWithPrec(3, 1), // 0.3
+			Staking:              sdk.MustNewDecFromStr("0.9"), // 1
+			PoolIncentives:       sdk.MustNewDecFromStr("0.0"), // 0
+			ParticipationRewards: sdk.MustNewDecFromStr("0.0"), // 0
+			CommunityPool:        sdk.MustNewDecFromStr("0.1"), // 0
 		},
 		MintingRewardsDistributionStartEpoch: 0,
 	}
