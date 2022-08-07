@@ -35,6 +35,12 @@ func (k Keeper) RegisterHostZone(goCtx context.Context, msg *types.MsgRegisterHo
 		if hostZone.HostDenom == msg.HostDenom {
 			return nil, fmt.Errorf("host denom \"%s\" already registered", msg.HostDenom)
 		}
+		if hostZone.ConnectionId == msg.ConnectionId {
+			return nil, fmt.Errorf("connectionId \"%s\" already registered", msg.HostDenom)
+		}
+		if hostZone.Bech32Prefix == msg.Bech32Prefix {
+			return nil, fmt.Errorf("host denom \"%s\" already registered", msg.HostDenom)
+		}
 	}
 
 	// set the zone
