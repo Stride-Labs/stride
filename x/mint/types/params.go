@@ -55,10 +55,10 @@ func DefaultParams() Params {
 		ReductionPeriodInEpochs: 365,                       // 1 years
 		ReductionFactor:         sdk.NewDec(3).QuoInt64(4), // 3/4
 		DistributionProportions: DistributionProportions{
-			Staking:              sdk.MustNewDecFromStr("1.0"), // 1
+			Staking:              sdk.MustNewDecFromStr("0.9"), // 1
 			PoolIncentives:       sdk.MustNewDecFromStr("0.0"), // 0
 			ParticipationRewards: sdk.MustNewDecFromStr("0.0"), // 0
-			CommunityPool:        sdk.MustNewDecFromStr("0.0"), // 0
+			CommunityPool:        sdk.MustNewDecFromStr("0.1"), // 0
 		},
 		MintingRewardsDistributionStartEpoch: 0,
 	}
