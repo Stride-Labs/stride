@@ -56,7 +56,7 @@ We want delayed vesting for all vesting accounts. We simply need to, for each ac
 3. set up vesting for that account with the following params 
     ```
     VESTING_START_TIME=1685592000 # June 1st 2023
-    VESTING_END_TIME=1780286400 # June 1st 2026
+    VESTING_END_TIME=1748768365 # June 1st 2025
     VESTING_AMT='XXXustrd'
     VESTER_ADDR='YYY'
     $STRIDE_CMD add-genesis-account $VESTER_ADDR $VESTING_AMT --vesting-start-time $VESTING_START_TIME --vesting-end-time $VESTING_END_TIME --vesting-amount $VESTING_AMT
