@@ -51,7 +51,6 @@ func (im IBCModule) OnChanOpenInit(
 	counterparty channeltypes.Counterparty,
 	version string,
 ) error {
-	im.keeper.Logger(ctx).Error(fmt.Sprintf("chanCap claimed (stakeibc) %s", channelCap))
 	// Note: The channel capability must be claimed by the authentication module in OnChanOpenInit otherwise the
 	// authentication module will not be able to send packets on the channel created for the associated interchain account.
 	if err := im.keeper.ClaimCapability(ctx, channelCap, host.ChannelCapabilityPath(portID, channelID)); err != nil {
@@ -68,7 +67,6 @@ func (im IBCModule) OnChanOpenAck(
 	counterpartyChannelID string,
 	counterpartyVersion string,
 ) error {
-	ctx.Logger().Info("OnChanOpenAck - stakeibc")
 	// TODO(TEST-21): Implement this! The `counterpartyVersion != types.Version` is causing errors
 	// if counterpartyVersion != types.Version {
 	// 	return sdkerrors.Wrapf(types.ErrInvalidVersion, "invalid counterparty version: %s, expected %s", counterpartyVersion, types.Version)
@@ -157,6 +155,10 @@ func (im IBCModule) OnAcknowledgementPacket(
 	}
 	ctx = ctx.WithContext(context.WithValue(ctx.Context(), connectionIdContextKey(connectionId), connectionId))
 	im.keeper.Logger(ctx).Info("HANDLING ACK")
+	err = im.keeper.ICACallbacksKeeper.CallRegisteredICACallback(ctx, modulePacket, []byte{})
+	if err != nil {
+		return err
+	}
 	return im.keeper.HandleAcknowledgement(ctx, modulePacket, acknowledgement)
 }
 
@@ -166,6 +168,10 @@ func (im IBCModule) OnTimeoutPacket(
 	modulePacket channeltypes.Packet,
 	relayer sdk.AccAddress,
 ) error {
+	err := im.keeper.ICACallbacksKeeper.CallRegisteredICACallback(ctx, modulePacket, []byte{})
+	if err != nil {
+		return err
+	}
 	return nil
 	// TODO(TEST-21): Implement OnTimeoutPacket logic
 	// var modulePacketData types.StakeibcPacketData
@@ -204,6 +210,8 @@ func (im IBCModule) NegotiateAppVersion(
 ) (version string, err error) {
 	return proposedVersion, nil
 }
+
+
 
 // ###################################################################################
 // 	Required functions to satisfy interface but not implemented for ICA auth modules

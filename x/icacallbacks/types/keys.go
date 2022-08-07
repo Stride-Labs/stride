@@ -1,5 +1,7 @@
 package types
 
+import fmt "fmt"
+
 const (
 	// ModuleName defines the module name
 	ModuleName = "icacallbacks"
@@ -30,4 +32,8 @@ var (
 
 func KeyPrefix(p string) []byte {
 	return []byte(p)
+}
+
+func PacketID(portID string, channelID string, sequence uint64) string {
+	return fmt.Sprintf("%s.%s.%d", portID, channelID, sequence)
 }

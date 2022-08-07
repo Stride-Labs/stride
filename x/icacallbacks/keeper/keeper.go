@@ -138,3 +138,51 @@ func (k Keeper) SubmitICATx(ctx sdk.Context, connectionId string, msgs []sdk.Msg
 
 	return sequence, nil
 }
+
+func (k Keeper) CallRegisteredICACallback(ctx sdk.Context, modulePacket channeltypes.Packet, acknowledgement []byte) error {
+	k.Logger(ctx).Info("CallRegisteredICACallback", "dst portID", modulePacket.GetDestPort())
+	k.Logger(ctx).Info("CallRegisteredICACallback", "dst channelID", modulePacket.GetDestChannel())
+	// get the relevant module from the channel and port
+	portID := modulePacket.GetSourcePort()
+	k.Logger(ctx).Info("CallRegisteredICACallback", "portID", portID)
+	channelID := modulePacket.GetSourceChannel()
+	k.Logger(ctx).Info("CallRegisteredICACallback", "channelID", channelID)
+	module, _, err := k.IBCKeeper.ChannelKeeper.LookupModuleByChannel(ctx, portID, channelID)
+	if err != nil {
+		return err
+	}
+	k.Logger(ctx).Info("CallRegisteredICACallback", "module", module)
+	// fetch the callback data
+	callbackDataKey := types.PacketID(portID, channelID, modulePacket.Sequence)
+	k.Logger(ctx).Info("CallRegisteredICACallback", "callbackDataKey", callbackDataKey)
+	callbackData, found := k.GetCallbackData(ctx, callbackDataKey)
+	if !found {
+		errMsg := fmt.Sprintf("callback data not found for portID: %s, channelID: %s, sequence: %d", portID, channelID, modulePacket.Sequence)
+		k.Logger(ctx).Info(errMsg)
+		return nil
+	}
+	k.Logger(ctx).Info("CallRegisteredICACallback", "callbackData", callbackData)
+	// fetch the callback function
+	callbackHandler, err := k.GetICACallbackHandler(module)
+	if err != nil {
+		k.Logger(ctx).Info("CallRegisteredICACallback", "err", err)
+		return err
+	}
+	k.Logger(ctx).Info("CallRegisteredICACallback", "callbackHandler", callbackHandler)
+	// call the callback
+	if callbackHandler.HasICACallback(callbackData.CallbackId) {
+		// if acknowledgement is empty, then it is a timeout
+		err := callbackHandler.CallICACallback(ctx, callbackData.CallbackId, modulePacket, acknowledgement, callbackData.CallbackArgs)
+		if err != nil {
+			k.Logger(ctx).Info("CallRegisteredICACallback", "err", err)
+			return err
+		}
+	}
+	k.Logger(ctx).Info("CallRegisteredICACallback - HasICACallback")
+
+	// remove the callback data
+	// NOTE: Should we remove the callback data here, or above (conditional on HasICACallback == true)?
+	k.RemoveCallbackData(ctx, callbackDataKey)
+	k.Logger(ctx).Info("CallRegisteredICACallback - RemoveCallbackData")
+	return nil
+}
