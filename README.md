@@ -42,7 +42,7 @@ You can learn more about the install process [here](https://github.com/allinbits
 - [Tutorials](https://docs.starport.com/guide)
 - [Starport docs](https://docs.starport.com)
 - [Cosmos SDK docs](https://docs.cosmos.network)
-- [Developer Chat](https://discord.gg/npKnCK4q)
+- [Developer Chat](https://stride.zone/discord)
 
 ### Developing on Stride
 
