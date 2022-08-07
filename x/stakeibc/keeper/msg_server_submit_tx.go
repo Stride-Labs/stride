@@ -262,7 +262,6 @@ func (k Keeper) SubmitTxs(ctx sdk.Context, connectionId string, msgs []sdk.Msg, 
 		CallbackId: "samplecallback",
 		CallbackArgs: []byte{},
 	}
-	k.Logger(ctx).Info("Storing callback data", "callback", callback, "key", callback.CallbackKey)
 	k.ICACallbacksKeeper.SetCallbackData(ctx, callback)
 
 	return sequence, nil
