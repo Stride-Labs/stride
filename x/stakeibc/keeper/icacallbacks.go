@@ -50,5 +50,6 @@ func (c ICACallbacks) RegisterICACallbacks() icacallbackstypes.ICACallbackHandle
 // -----------------------------------
 
 func SampleCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ack []byte, args []byte) error {
+	k.Logger(ctx).Info("samplecallback SUCCESS", "packet", packet, "ack", ack, "args", args)
 	return nil
 }

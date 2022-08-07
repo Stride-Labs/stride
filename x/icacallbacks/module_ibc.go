@@ -1,16 +1,11 @@
 package icacallbacks
 
 import (
-	"fmt"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
 	channeltypes "github.com/cosmos/ibc-go/v3/modules/core/04-channel/types"
 	porttypes "github.com/cosmos/ibc-go/v3/modules/core/05-port/types"
 	ibcexported "github.com/cosmos/ibc-go/v3/modules/core/exported"
-
-	"github.com/Stride-Labs/stride/x/icacallbacks/types"
 
 	"github.com/Stride-Labs/stride/x/icacallbacks/keeper"
 )
@@ -47,7 +42,6 @@ func (im IBCModule) OnChanOpenInit(
 	counterparty channeltypes.Counterparty,
 	version string,
 ) error {
-	im.keeper.Logger(ctx).Error(fmt.Sprintf("chanCap claimed (icacallbacks) %s", channelCap))
 	// Note: The channel capability is claimed by the underlying app.
 	// call underlying app's OnChanOpenInit callback with the appVersion
 	return im.app.OnChanOpenInit(ctx, order, connectionHops, portID, channelID,
@@ -73,10 +67,6 @@ func (im IBCModule) OnAcknowledgementPacket(
 	acknowledgement []byte,
 	relayer sdk.AccAddress,
 ) error {
-	err := im.CallRegisteredICACallback(ctx, modulePacket, acknowledgement)
-	if err != nil {
-		return err
-	}
 	// call underlying app's OnAcknowledgementPacket callback.
 	return im.app.OnAcknowledgementPacket(ctx, modulePacket, acknowledgement, relayer)
 }
@@ -87,10 +77,6 @@ func (im IBCModule) OnTimeoutPacket(
 	modulePacket channeltypes.Packet,
 	relayer sdk.AccAddress,
 ) error {
-	err := im.CallRegisteredICACallback(ctx, modulePacket, []byte{})
-	if err != nil {
-		return err
-	}
 	return im.app.OnTimeoutPacket(ctx, modulePacket, relayer)
 }
 
@@ -103,41 +89,6 @@ func (im IBCModule) NegotiateAppVersion(
 	proposedVersion string,
 ) (version string, err error) {
 	return proposedVersion, nil
-}
-
-func (im IBCModule) CallRegisteredICACallback(ctx sdk.Context, modulePacket channeltypes.Packet, acknowledgement []byte) error {
-	// get the relevant module from the channel and port
-	portID := modulePacket.GetSourcePort()
-	channelID := modulePacket.GetSourceChannel()
-	module, _, err := im.keeper.IBCKeeper.ChannelKeeper.LookupModuleByChannel(ctx, portID, channelID)
-	if err != nil {
-		return err
-	}
-	// fetch the callback data
-	callbackDataKey := types.CallbackDataKeyFormatter(portID, channelID, modulePacket.Sequence)
-	callbackData, found := im.keeper.GetCallbackData(ctx, callbackDataKey)
-	if !found {
-		errMsg := fmt.Sprintf("callback data not found for portID: %s, channelID: %s, sequence: %d", portID, channelID, modulePacket.Sequence)
-		return sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, errMsg)
-	}
-	// fetch the callback function
-	callbackHandler, err := im.keeper.GetICACallbackHandler(module)
-	if err != nil {
-		return err
-	}
-	// call the callback
-	if callbackHandler.HasICACallback(callbackData.CallbackId) {
-		// if acknowledgement is empty, then it is a timeout
-		err := callbackHandler.CallICACallback(ctx, callbackData.CallbackId, modulePacket, acknowledgement, callbackData.CallbackArgs)
-		if err != nil {
-			return err
-		}
-	}
-
-	// remove the callback data
-	// NOTE: Should we remove the callback data here, or above (conditional on HasICACallback == true)?
-	im.keeper.RemoveCallbackData(ctx, callbackDataKey)
-	return nil
 }
 
 // ###################################################################################

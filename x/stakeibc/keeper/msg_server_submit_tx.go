@@ -8,6 +8,8 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/spf13/cast"
 
+	icacallbackstypes "github.com/Stride-Labs/stride/x/icacallbacks/types"
+
 	"github.com/Stride-Labs/stride/x/stakeibc/types"
 
 	bankTypes "github.com/cosmos/cosmos-sdk/x/bank/types"
@@ -215,20 +217,59 @@ func (k Keeper) SubmitTxsEpoch(ctx sdk.Context, connectionId string, msgs []sdk.
 }
 
 // SubmitTxs submits an ICA transaction containing multiple messages
-func (k Keeper) SubmitTxs_NEW(ctx sdk.Context, connectionId string, msgs []sdk.Msg, account types.ICAAccount, timeoutTimestamp uint64) (uint64, error) {
+func (k Keeper) SubmitTxs(ctx sdk.Context, connectionId string, msgs []sdk.Msg, account types.ICAAccount, timeoutTimestamp uint64) (uint64, error) {
 	chainId, err := k.GetChainID(ctx, connectionId)
 	if err != nil {
 		return 0, err
 	}
-	seq, err := k.ICACallbacksKeeper.SubmitICATx(ctx, connectionId, msgs, account, timeoutTimestamp, chainId, "samplecallback", []byte{})
+	owner := types.FormatICAAccountOwner(chainId, account.GetTarget())
+	portID, err := icatypes.NewControllerPortID(owner)
 	if err != nil {
 		return 0, err
 	}
-	return seq, nil
+
+	channelID, found := k.ICAControllerKeeper.GetActiveChannelID(ctx, connectionId, portID)
+	if !found {
+		return 0, sdkerrors.Wrapf(icatypes.ErrActiveChannelNotFound, "failed to retrieve active channel for port %s", portID)
+	}
+
+	chanCap, found := k.scopedKeeper.GetCapability(ctx, host.ChannelCapabilityPath(portID, channelID))
+	if !found {
+		return 0, sdkerrors.Wrap(channeltypes.ErrChannelCapabilityNotFound, "module does not own channel capability")
+	}
+
+	data, err := icatypes.SerializeCosmosTx(k.cdc, msgs)
+	if err != nil {
+		return 0, err
+	}
+
+	packetData := icatypes.InterchainAccountPacketData{
+		Type: icatypes.EXECUTE_TX,
+		Data: data,
+	}
+
+	sequence, err := k.ICAControllerKeeper.SendTx(ctx, chanCap, connectionId, portID, packetData, timeoutTimestamp)
+	if err != nil {
+		return 0, err
+	}
+
+	// Store the callback data
+	callback := icacallbackstypes.CallbackData{
+		CallbackKey: icacallbackstypes.PacketID(portID, channelID, sequence),
+		PortId: portID,
+		ChannelId: channelID,
+		Sequence: sequence,
+		CallbackId: "samplecallback",
+		CallbackArgs: []byte{},
+	}
+	k.Logger(ctx).Info("Storing callback data", "callback", callback, "key", callback.CallbackKey)
+	k.ICACallbacksKeeper.SetCallbackData(ctx, callback)
+
+	return sequence, nil
 }
 
 // SubmitTxs submits an ICA transaction containing multiple messages
-func (k Keeper) SubmitTxs(ctx sdk.Context, connectionId string, msgs []sdk.Msg, account types.ICAAccount, timeoutTimestamp uint64) (uint64, error) {
+func (k Keeper) SubmitTxs_OLD(ctx sdk.Context, connectionId string, msgs []sdk.Msg, account types.ICAAccount, timeoutTimestamp uint64) (uint64, error) {
 	chainId, err := k.GetChainID(ctx, connectionId)
 	if err != nil {
 		return 0, err
