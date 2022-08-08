@@ -25,7 +25,7 @@ func (k Keeper) CreateEpochUnbondings(ctx sdk.Context, epochNumber int64) bool {
 			HostZoneId: hostZone.ChainId,
 			Status:     recordstypes.HostZoneUnbonding_BONDED,
 		}
-		k.Logger(ctx).Info(fmt.Sprintf("Adding hostZoneUnbonding %v to %v", hostZoneUnbonding, hostZone.ChainId))
+		k.Logger(ctx).Info(fmt.Sprintf("Adding hostZoneUnbonding %v to %s", hostZoneUnbonding, hostZone.ChainId))
 		hostZoneUnbondings[hostZone.ChainId] = &hostZoneUnbonding
 		return nil
 	}
@@ -180,7 +180,7 @@ func (k Keeper) SweepAllUnbondedTokens(ctx sdk.Context) {
 	// have been unbonded and are ready to sweep. If so, it processes them
 
 	sweepUnbondedTokens := func(ctx sdk.Context, index int64, zoneInfo types.HostZone) error {
-		k.Logger(ctx).Info(fmt.Sprintf("sweepUnbondedTokens for host zone %v", zoneInfo.ChainId))
+		k.Logger(ctx).Info(fmt.Sprintf("sweepUnbondedTokens for host zone %s", zoneInfo.ChainId))
 
 		// get latest epoch unbonding record
 		unbondingRecords := k.RecordsKeeper.GetAllEpochUnbondingRecord(ctx)
