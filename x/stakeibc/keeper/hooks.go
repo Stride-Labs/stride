@@ -40,8 +40,8 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochInfo epochstypes.EpochInf
 		NextEpochStartTime: epochInfo.GetCurrentEpochStartTime().Add(epochInfo.GetDuration()).UnixNano(),
 	}
 	// deposit records *must* exist for this epoch
-	k.SetEpochTracker(ctx, epochTracker)
 	k.Logger(ctx).Info(fmt.Sprintf("Setting epochTracker %v", epochTracker))
+	k.SetEpochTracker(ctx, epochTracker)
 
 	// process redemption records
 	if epochIdentifier == "day" {
@@ -93,6 +93,7 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochInfo epochstypes.EpochInf
 		depositInterval := cast.ToInt64(k.GetParam(ctx, types.KeyDepositInterval))
 		if epochNumber%depositInterval == 0 {
 			// process previous deposit records
+			k.Logger(ctx).Info("TransferExistingDepositsToHostZones")
 			k.TransferExistingDepositsToHostZones(ctx, epochNumber, depositRecords)
 		}
 
@@ -109,6 +110,7 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochInfo epochstypes.EpochInf
 		// chain before the next epoch begins.
 		delegationInterval := cast.ToInt64(k.GetParam(ctx, types.KeyDelegateInterval))
 		if epochNumber%delegationInterval == 0 {
+			k.Logger(ctx).Info("StakeExistingDepositsOnHostZones")
 			k.StakeExistingDepositsOnHostZones(ctx, epochNumber, depositRecords)
 		}
 
@@ -193,7 +195,7 @@ func (k Keeper) CreateDepositRecordsForEpoch(ctx sdk.Context, epochNumber int64)
 
 func (k Keeper) SetWithdrawalAddress(ctx sdk.Context) {
 	setWithdrawalAddresses := func(ctx sdk.Context, index int64, zoneInfo types.HostZone) error {
-		k.Logger(ctx).Info("\tsetting withdrawal address for index %d, zoneInfo %v", index, zoneInfo)
+		k.Logger(ctx).Info(fmt.Sprintf("\tsetting withdrawal address for index %d, zoneInfo %v", index, zoneInfo))
 		err := k.SetWithdrawalAddressOnHost(ctx, zoneInfo)
 		if err != nil {
 			k.Logger(ctx).Error(fmt.Sprintf("Did not set withdrawal address to %s on %s", zoneInfo.GetWithdrawalAccount().GetAddress(), zoneInfo.GetChainId()))
@@ -212,16 +214,16 @@ func (k Keeper) StakeExistingDepositsOnHostZones(ctx sdk.Context, epochNumber in
 	})
 	for _, depositRecord := range stakeDepositRecords {
 		if depositRecord.DepositEpochNumber < cast.ToUint64(epochNumber) {
-			pstr := fmt.Sprintf("\t[STAKE] Processing deposit ID:{%d} DENOM:{%s} AMT:{%d}", depositRecord.Id, depositRecord.Denom, depositRecord.Amount)
+			pstr := fmt.Sprintf("\t[StakeExistingDepositsOnHostZones] Processing deposit ID:{%d} DENOM:{%s} AMT:{%d}", depositRecord.Id, depositRecord.Denom, depositRecord.Amount)
 			k.Logger(ctx).Info(pstr)
 			hostZone, hostZoneFound := k.GetHostZone(ctx, depositRecord.HostZoneId)
 			if !hostZoneFound {
-				k.Logger(ctx).Error("[STAKE] Host zone not found for deposit record {%d}", depositRecord.Id)
+				k.Logger(ctx).Error("[StakeExistingDepositsOnHostZones] Host zone not found for deposit record {%d}", depositRecord.Id)
 				continue
 			}
 			delegateAccount := hostZone.GetDelegationAccount()
 			if delegateAccount == nil || delegateAccount.GetAddress() == "" {
-				k.Logger(ctx).Error("[STAKE] Zone %s is missing a delegation address!", hostZone.ChainId)
+				k.Logger(ctx).Error("[StakeExistingDepositsOnHostZones] Zone %s is missing a delegation address!", hostZone.ChainId)
 				continue
 			}
 			k.Logger(ctx).Info(fmt.Sprintf("\tdelegation staking on %s", hostZone.HostDenom))
@@ -297,16 +299,15 @@ func (k Keeper) TransferExistingDepositsToHostZones(ctx sdk.Context, epochNumber
 			k.Logger(ctx).Info("TransferExistingDepositsToHostZones msg:", msg)
 			_, err := k.TransferKeeper.Transfer(goCtx, msg)
 			if err != nil {
-				k.Logger(ctx).Error("\t[TransferExistingDepositsToHostZones] ERROR WITH DEPOSIT RECEIPT", hostZone.TransferChannelId, transferCoin, addr, delegateAddress, timeoutHeight)
-				pstr = fmt.Sprintf("\t[TransferExistingDepositsToHostZones] ERROR WITH DEPOSIT RECEIPT {%v}", err)
-				k.Logger(ctx).Error(pstr)
+				k.Logger(ctx).Error(fmt.Sprintf("\t[TransferExistingDepositsToHostZones] ERROR WITH DEPOSIT RECEIPT %s %v %s %s %v", hostZone.TransferChannelId, transferCoin, addr, delegateAddress, timeoutHeight))
+				k.Logger(ctx).Error(fmt.Sprintf("\t[TransferExistingDepositsToHostZones] err {%v}", err))
 				return
 			}
 		}
 	}
 	// clear empty records
 	for _, recordId := range emptyRecords {
-		k.Logger(ctx).Info("\t[TransferExistingDepositsToHostZones] clear empty deposit record record", recordId)
+		k.Logger(ctx).Info(fmt.Sprintf("\t[TransferExistingDepositsToHostZones] clear empty deposit record record %v", recordId))
 		k.RecordsKeeper.RemoveDepositRecord(ctx, recordId)
 	}
 }
