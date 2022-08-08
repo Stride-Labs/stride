@@ -94,11 +94,12 @@ func (k Keeper) DelegateOnHost(ctx sdk.Context, hostZone types.HostZone, amt sdk
 	for _, validator := range hostZone.GetValidators() {
 		relAmt := sdk.NewCoin(amt.Denom, sdk.NewIntFromUint64(targetDelegatedAmts[validator.GetAddress()]))
 		if relAmt.Amount.IsPositive() {
+			k.Logger(ctx).Error(fmt.Sprintf("Appending MsgDelegate to msgs, DelegatorAddress: %s, ValidatorAddress: %s, relAmt: %v", delegationIca.GetAddress(), validator.GetAddress(), relAmt))
 			msgs = append(msgs, &stakingTypes.MsgDelegate{
 				DelegatorAddress: delegationIca.GetAddress(),
 				ValidatorAddress: validator.GetAddress(),
 				Amount:           relAmt})
-		}
+			}
 	}
 	// Send the transaction through SubmitTx
 	_, err = k.SubmitTxsStrideEpoch(ctx, connectionId, msgs, *delegationIca)
@@ -180,6 +181,7 @@ func (k Keeper) UpdateWithdrawalBalance(ctx sdk.Context, zoneInfo types.HostZone
 }
 
 func (k Keeper) SubmitTxsDayEpoch(ctx sdk.Context, connectionId string, msgs []sdk.Msg, account types.ICAAccount) (uint64, error) {
+	k.Logger(ctx).Info("SubmitTxsDayEpoch", "msgs", msgs)
 	sequence, err := k.SubmitTxsEpoch(ctx, connectionId, msgs, account, epochstypes.DAY_EPOCH)
 	if err != nil {
 		return 0, err
@@ -188,6 +190,7 @@ func (k Keeper) SubmitTxsDayEpoch(ctx sdk.Context, connectionId string, msgs []s
 }
 
 func (k Keeper) SubmitTxsStrideEpoch(ctx sdk.Context, connectionId string, msgs []sdk.Msg, account types.ICAAccount) (uint64, error) {
+	k.Logger(ctx).Info("SubmitTxsStrideEpoch", "msgs", msgs)
 	sequence, err := k.SubmitTxsEpoch(ctx, connectionId, msgs, account, epochstypes.STRIDE_EPOCH)
 	if err != nil {
 		return 0, err
@@ -196,6 +199,7 @@ func (k Keeper) SubmitTxsStrideEpoch(ctx sdk.Context, connectionId string, msgs 
 }
 
 func (k Keeper) SubmitTxsEpoch(ctx sdk.Context, connectionId string, msgs []sdk.Msg, account types.ICAAccount, epochType string) (uint64, error) {
+	k.Logger(ctx).Info("SubmitTxsEpoch", "msgs", msgs)
 	epochTracker, found := k.GetEpochTracker(ctx, epochType)
 	if !found {
 		k.Logger(ctx).Error("Failed to get epoch tracker for %s", epochType)
@@ -216,6 +220,7 @@ func (k Keeper) SubmitTxsEpoch(ctx sdk.Context, connectionId string, msgs []sdk.
 
 // SubmitTxs submits an ICA transaction containing multiple messages
 func (k Keeper) SubmitTxs(ctx sdk.Context, connectionId string, msgs []sdk.Msg, account types.ICAAccount, timeoutTimestamp uint64) (uint64, error) {
+	k.Logger(ctx).Info("SubmitTxs", "msgs", msgs)
 	chainId, err := k.GetChainID(ctx, connectionId)
 	if err != nil {
 		return 0, err
