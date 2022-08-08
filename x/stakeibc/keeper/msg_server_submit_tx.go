@@ -190,7 +190,7 @@ func (k Keeper) SubmitTxsDayEpoch(ctx sdk.Context, connectionId string, msgs []s
 }
 
 func (k Keeper) SubmitTxsStrideEpoch(ctx sdk.Context, connectionId string, msgs []sdk.Msg, account types.ICAAccount) (uint64, error) {
-	k.Logger(ctx).Info("SubmitTxsStrideEpoch", "msgs", msgs)
+	k.Logger(ctx).Info(fmt.Sprintf("SubmitTxsStrideEpoch %v", msgs))
 	sequence, err := k.SubmitTxsEpoch(ctx, connectionId, msgs, account, epochstypes.STRIDE_EPOCH)
 	if err != nil {
 		return 0, err
@@ -199,7 +199,7 @@ func (k Keeper) SubmitTxsStrideEpoch(ctx sdk.Context, connectionId string, msgs 
 }
 
 func (k Keeper) SubmitTxsEpoch(ctx sdk.Context, connectionId string, msgs []sdk.Msg, account types.ICAAccount, epochType string) (uint64, error) {
-	k.Logger(ctx).Info("SubmitTxsEpoch", "msgs", msgs)
+	k.Logger(ctx).Info(fmt.Sprintf("SubmitTxsEpoch: %v", msgs))
 	epochTracker, found := k.GetEpochTracker(ctx, epochType)
 	if !found {
 		k.Logger(ctx).Error("Failed to get epoch tracker for %s", epochType)
@@ -220,7 +220,7 @@ func (k Keeper) SubmitTxsEpoch(ctx sdk.Context, connectionId string, msgs []sdk.
 
 // SubmitTxs submits an ICA transaction containing multiple messages
 func (k Keeper) SubmitTxs(ctx sdk.Context, connectionId string, msgs []sdk.Msg, account types.ICAAccount, timeoutTimestamp uint64) (uint64, error) {
-	k.Logger(ctx).Info("SubmitTxs", "msgs", msgs)
+	k.Logger(ctx).Info(fmt.Sprintf("SubmitTxs %v", msgs))
 	chainId, err := k.GetChainID(ctx, connectionId)
 	if err != nil {
 		return 0, err
