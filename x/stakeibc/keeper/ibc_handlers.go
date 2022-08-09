@@ -118,6 +118,8 @@ func (k Keeper) HandleAcknowledgement(ctx sdk.Context, modulePacket channeltypes
 		switch msgData.MsgType {
 		// staking to validators
 		case "/cosmos.staking.v1beta1.MsgDelegate":
+			// skip handling delegations here, handled in DelegateCallback
+			continue
 			response := stakingtypes.MsgDelegateResponse{}
 			err := proto.Unmarshal(msgData.Data, &response)
 			if err != nil {
