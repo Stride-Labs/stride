@@ -113,7 +113,7 @@ func (k Keeper) AddDelegationToValidator(ctx sdk.Context, hostZone types.HostZon
 			}
 		}
 	}
-	k.Logger(ctx).Info(fmt.Sprintf("Could not find validator %s on host zone %s", valAddr, hostZone.GetChainId()))
+	k.Logger(ctx).Error(fmt.Sprintf("Could not find validator %s on host zone %s", valAddr, hostZone.GetChainId()))
 	return false
 }
 

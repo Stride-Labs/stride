@@ -1,10 +1,11 @@
 package types
 
 import (
+	"strings"
+
 	"github.com/Stride-Labs/stride/utils"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	"strings"
 )
 
 const TypeMsgRegisterHostZone = "register_host_zone"
@@ -68,7 +69,7 @@ func (msg *MsgRegisterHostZone) ValidateBasic() error {
 	if msg.IbcDenom == "" {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "ibc denom cannot be empty")
 	}
-	if !strings.HasPrefix(msg.IbcDenom, "ibc") {
+	if !strings.HasPrefix(msg.IbcDenom, "ibc/") {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "ibc denom must begin with 'ibc'")
 	}
 	// transfer channel id cannot be empty and must begin with "transfer"

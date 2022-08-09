@@ -12,10 +12,8 @@ import (
 )
 
 // TODO(TEST-53): Remove this pre-launch (no need for clients to create / interact with ICAs)
-func (k Keeper) RegisterHostZone(goCtx context.Context, msg *types.MsgRegisterHostZone) (*types.MsgRegisterHostZoneResponse, error) {
+func (k msgServer) RegisterHostZone(goCtx context.Context, msg *types.MsgRegisterHostZone) (*types.MsgRegisterHostZoneResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
-
-	_ = ctx
 
 	// Get chain id from connection
 	chainId, err := k.GetChainID(ctx, msg.ConnectionId)
@@ -27,6 +25,20 @@ func (k Keeper) RegisterHostZone(goCtx context.Context, msg *types.MsgRegisterHo
 	_, found := k.GetHostZone(ctx, chainId)
 	if found {
 		return nil, fmt.Errorf("invalid chain id, zone for \"%s\" already registered", chainId)
+	}
+
+	// check the denom is not already registered
+	hostZones := k.GetAllHostZone(ctx)
+	for _, hostZone := range hostZones {
+		if hostZone.HostDenom == msg.HostDenom {
+			return nil, fmt.Errorf("host denom \"%s\" already registered", msg.HostDenom)
+		}
+		if hostZone.ConnectionId == msg.ConnectionId {
+			return nil, fmt.Errorf("connectionId \"%s\" already registered", msg.HostDenom)
+		}
+		if hostZone.Bech32Prefix == msg.Bech32Prefix {
+			return nil, fmt.Errorf("host denom \"%s\" already registered", msg.HostDenom)
+		}
 	}
 
 	// set the zone

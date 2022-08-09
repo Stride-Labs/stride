@@ -82,7 +82,7 @@ func (im IBCModule) OnChanOpenAck(
 	}
 	// get host chain id from connection
 	// fetch counterparty connection
-	hostChainId, err := im.keeper.GetCounterpartyChainId(ctx, controllerConnectionId)
+	hostChainId, err := im.keeper.GetChainID(ctx, controllerConnectionId)
 	if err != nil {
 		ctx.Logger().Error(
 			"Unable to obtain counterparty chain for given connection and port",
