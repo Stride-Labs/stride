@@ -90,49 +90,9 @@ func (k Keeper) HandleAcknowledgement(ctx sdk.Context, modulePacket channeltypes
 		return err
 	}
 
-	// store total amount that was delegated
-	totalMsgDelegate := int64(0)
-	recordIdToDelete := int64(0)
 	for msgIndex, msgData := range txMsgData.Data {
 		src := msgs[msgIndex]
 		switch msgData.MsgType {
-		// staking to validators
-		case "/cosmos.staking.v1beta1.MsgDelegate":
-			response := stakingtypes.MsgDelegateResponse{}
-			err := proto.Unmarshal(msgData.Data, &response)
-			if err != nil {
-				k.Logger(ctx).Error("unable to unmarshal MsgDelegate response", "error", err)
-				return err
-			}
-			delegateMsg, ok := src.(*stakingtypes.MsgDelegate)
-			if !ok {
-				k.Logger(ctx).Error("unable to cast source message to MsgDelegate")
-				return fmt.Errorf("unable to cast source message to MsgDelegate")
-			}
-			totalMsgDelegate += delegateMsg.Amount.Amount.Int64()
-		}
-	}
-
-	for msgIndex, msgData := range txMsgData.Data {
-		src := msgs[msgIndex]
-		switch msgData.MsgType {
-		// staking to validators
-		case "/cosmos.staking.v1beta1.MsgDelegate":
-			// skip handling delegations here, handled in DelegateCallback
-			continue
-			response := stakingtypes.MsgDelegateResponse{}
-			err := proto.Unmarshal(msgData.Data, &response)
-			if err != nil {
-				k.Logger(ctx).Error("unable to unmarshal MsgDelegate response", "error", err)
-				return err
-			}
-			k.Logger(ctx).Info("Delegated", "response", response)
-			// we should update delegation records here.
-			recordIdToDelete, err = k.HandleDelegate(ctx, src, totalMsgDelegate)
-			if err != nil {
-				return err
-			}
-			continue
 		// unstake
 		case "/cosmos.staking.v1beta1.MsgUndelegate":
 			response := stakingtypes.MsgUndelegateResponse{}
@@ -177,10 +137,6 @@ func (k Keeper) HandleAcknowledgement(ctx sdk.Context, modulePacket channeltypes
 		default:
 			k.Logger(ctx).Error("Unhandled acknowledgement packet", "type", msgData.MsgType)
 		}
-	}
-
-	if recordIdToDelete >= 0 {
-		k.RecordsKeeper.RemoveDepositRecord(ctx, cast.ToUint64(recordIdToDelete))
 	}
 
 	ctx.EventManager().EmitEvent(

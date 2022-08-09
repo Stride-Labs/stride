@@ -2,6 +2,7 @@ syntax = "proto3";
 package Stridelabs.stride.stakeibc;
 option go_package = "github.com/Stride-Labs/stride/x/stakeibc/types";
 
+// ---------------------- Delegation Callbacks ---------------------- //
 message SplitDelegation {
   string validator = 1;
   uint64 amount = 2;
