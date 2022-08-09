@@ -75,7 +75,7 @@ func (k Keeper) UnmarshalDelegateCallbackArgs(ctx sdk.Context, delegateCallback 
 
 // QUESTION: Would it be cleaner to pass in ack as a bool (success / failure) here?
 func DelegateCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ack []byte, args []byte) error {
-	k.Logger(ctx).Info("DOGE DelegateCallback executing", "packet", packet, "ack", ack, "args", args)
+	k.Logger(ctx).Info("DelegateCallback executing", "packet", packet, "ack", ack, "args", args)
 	// deserialize the ack
 	txMsgData, err := k.GetTxMsgData(ctx, ack)
 	if err != nil {
@@ -100,7 +100,7 @@ func DelegateCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ack
 		amount := cast.ToInt64(splitDelegation.Amount)
 		validator := splitDelegation.Validator
 
-		k.Logger(ctx).Info(fmt.Sprintf("incrementing stakedBal %d", amount))
+		k.Logger(ctx).Info(fmt.Sprintf("incrementing stakedBal %d on %s", amount, validator))
 		if amount < 0 {
 			errMsg := fmt.Sprintf("Balance to stake was negative: %d", amount)
 			k.Logger(ctx).Error(errMsg)
