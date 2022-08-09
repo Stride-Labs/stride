@@ -4,5 +4,10 @@ option go_package = "github.com/Stride-Labs/stride/x/stakeibc/types";
 
 message DelegateCallback {
   string hostZoneId = 1; 
-  uint64 depositRecordId = 2; 
+  uint64 depositRecordId = 2;
+  message Delegations {
+    string validator = 1;
+    uint64 amount = 2;
+  }
+  repeated Delegations delegations = 3;
 }
