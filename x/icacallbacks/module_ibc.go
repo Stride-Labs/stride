@@ -24,12 +24,6 @@ func NewIBCModule(k keeper.Keeper, app porttypes.IBCModule) IBCModule {
 	}
 }
 
-type connectionIdContextKey string
-
-func (c connectionIdContextKey) String() string {
-	return string(c)
-}
-
 // func(ctx, order, connectionHops []string, portID string, channelID string, chanCap, counterparty, version string) (string, error)
 // func(ctx , order , connectionHops []string, portID string, channelID string, channelCap , counterparty , version string) error)
 func (im IBCModule) OnChanOpenInit(

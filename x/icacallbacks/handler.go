@@ -3,10 +3,11 @@ package icacallbacks
 import (
 	"fmt"
 
-	"github.com/Stride-Labs/stride/x/icacallbacks/keeper"
-	"github.com/Stride-Labs/stride/x/icacallbacks/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+
+	"github.com/Stride-Labs/stride/x/icacallbacks/keeper"
+	"github.com/Stride-Labs/stride/x/icacallbacks/types"
 )
 
 // NewHandler ...
@@ -15,6 +16,7 @@ func NewHandler(k keeper.Keeper) sdk.Handler {
 
 	return func(ctx sdk.Context, msg sdk.Msg) (*sdk.Result, error) {
 		ctx = ctx.WithEventManager(sdk.NewEventManager())
+		_ = ctx
 
 		switch msg := msg.(type) {
 		// this line is used by starport scaffolding # 1
