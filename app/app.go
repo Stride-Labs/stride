@@ -532,9 +532,8 @@ func NewStrideApp(
 
 	// Stack two contains
 	// - IBC
-	// - ICA
-	// - icacallbacks
-	// - stakeibc
+	// - records
+	// - transfer
 	// - base app
 	recordsStack := recordsmodule.NewIBCModule(app.RecordsKeeper, transferIBCModule)
 
