@@ -1,12 +1,16 @@
 package keeper
 
 import (
+	"fmt"
+
 	channeltypes "github.com/cosmos/ibc-go/v3/modules/core/04-channel/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Stride-Labs/stride/x/icacallbacks/types"
+	proto "github.com/gogo/protobuf/proto"
+
 	icacallbackstypes "github.com/Stride-Labs/stride/x/icacallbacks/types"
+	"github.com/Stride-Labs/stride/x/stakeibc/types"
 )
 
 // ___________________________________________________________________________________________________
@@ -19,7 +23,7 @@ type ICACallbacks struct {
 	icacallbacks map[string]ICACallback
 }
 
-var _ types.ICACallbackHandler = ICACallbacks{}
+var _ icacallbackstypes.ICACallbackHandler = ICACallbacks{}
 
 func (k Keeper) ICACallbackHandler() ICACallbacks {
 	return ICACallbacks{k, make(map[string]ICACallback)}
@@ -41,7 +45,7 @@ func (c ICACallbacks) AddICACallback(id string, fn interface{}) icacallbackstype
 }
 
 func (c ICACallbacks) RegisterICACallbacks() icacallbackstypes.ICACallbackHandler {
-	a := c.AddICACallback("samplecallback", ICACallback(SampleCallback))
+	a := c.AddICACallback("delegate", ICACallback(DelegateCallback))
 	return a.(ICACallbacks)
 }
 
@@ -49,7 +53,28 @@ func (c ICACallbacks) RegisterICACallbacks() icacallbackstypes.ICACallbackHandle
 // ICACallback Handlers
 // -----------------------------------
 
-func SampleCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ack []byte, args []byte) error {
-	k.Logger(ctx).Info("samplecallback SUCCESS", "packet", packet, "ack", ack, "args", args)
+// ----------------------------------- Delegate Callback ----------------------------------- //
+func MarshalDelegateCallbackArgs(k Keeper, ctx sdk.Context, delegateCallback types.DelegateCallback) []byte {
+	out, err := proto.Marshal(&delegateCallback)
+	if err != nil {
+		k.Logger(ctx).Error(fmt.Sprintf("UnmarshalDelegateCallbackArgs %v", err.Error()))
+	}
+	return out
+}
+
+func UnmarshalDelegateCallbackArgs(k Keeper, ctx sdk.Context, delegateCallback []byte) types.DelegateCallback {
+	unmarshalledDelegateCallback := types.DelegateCallback{}
+	if err := proto.Unmarshal(delegateCallback, &unmarshalledDelegateCallback); err != nil {
+        k.Logger(ctx).Error(fmt.Sprintf("UnmarshalDelegateCallbackArgs %v", err.Error()))
+	}
+	return unmarshalledDelegateCallback
+}
+
+func DelegateCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ack []byte, args []byte) error {
+	k.Logger(ctx).Info("DelegateCallback executing", "packet", packet, "ack", ack, "args", args)
+	// deserialize the ack
+	// deserialize the args
+	delegateCallback := UnmarshalDelegateCallbackArgs(k, ctx, args)
+	k.Logger(ctx).Info(fmt.Sprintf("DelegateCallback %v", delegateCallback))
 	return nil
 }

@@ -1,0 +1,8 @@
+syntax = "proto3";
+package Stridelabs.stride.stakeibc;
+option go_package = "github.com/Stride-Labs/stride/x/stakeibc/types";
+
+message DelegateCallback {
+  string hostZoneId = 1; 
+  string depositRecordId = 2; 
+}
