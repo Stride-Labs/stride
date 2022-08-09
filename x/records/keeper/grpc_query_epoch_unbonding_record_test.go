@@ -27,12 +27,12 @@ func TestEpochUnbondingRecordQuerySingle(t *testing.T) {
 	}{
 		{
 			desc:     "First",
-			request:  &types.QueryGetEpochUnbondingRecordRequest{Id: msgs[0].Id},
+			request:  &types.QueryGetEpochUnbondingRecordRequest{Id: msgs[0].EpochNumber},
 			response: &types.QueryGetEpochUnbondingRecordResponse{EpochUnbondingRecord: msgs[0]},
 		},
 		{
 			desc:     "Second",
-			request:  &types.QueryGetEpochUnbondingRecordRequest{Id: msgs[1].Id},
+			request:  &types.QueryGetEpochUnbondingRecordRequest{Id: msgs[1].EpochNumber},
 			response: &types.QueryGetEpochUnbondingRecordResponse{EpochUnbondingRecord: msgs[1]},
 		},
 		{
