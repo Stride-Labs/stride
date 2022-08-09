@@ -73,11 +73,13 @@ func (k Keeper) UnmarshalDelegateCallbackArgs(ctx sdk.Context, delegateCallback 
 	return unmarshalledDelegateCallback
 }
 
+// QUESTION: Would it be cleaner to pass in ack as a bool (success / failure) here?
 func DelegateCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ack []byte, args []byte) error {
 	k.Logger(ctx).Info("DOGE DelegateCallback executing", "packet", packet, "ack", ack, "args", args)
 	// deserialize the ack
 	txMsgData, err := k.GetTxMsgData(ctx, ack)
 	if err != nil {
+		// ack failed, handle here
 		return err
 	}
 	// do we need txMsgData?
@@ -94,20 +96,24 @@ func DelegateCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ack
 	}
 	recordId := delegateCallback.GetDepositRecordId()
 
+	for _, splitDelegation := range delegateCallback.SplitDelegations {
+		amount := cast.ToInt64(splitDelegation.Amount)
+		validator := splitDelegation.Validator
 
-	// k.Logger(ctx).Info(fmt.Sprintf("incrementing stakedBal %d", amount))
-	// if amount < 0 {
-	// 	errMsg := fmt.Sprintf("Balance to stake was negative: %d", amount)
-	// 	k.Logger(ctx).Error(errMsg)
-	// 	return sdkerrors.Wrapf(sdkerrors.ErrLogic, errMsg)
-	// } else {
-	// 	zone.StakedBal += amount
-	// 	success := k.AddDelegationToValidator(ctx, zone, delegateMsg.ValidatorAddress, amount)
-	// 	if !success {
-	// 		return sdkerrors.Wrapf(types.ErrValidatorDelegationChg, "Failed to add delegation to validator")
-	// 	}
-	// 	k.SetHostZone(ctx, zone)
-	// }
+		k.Logger(ctx).Info(fmt.Sprintf("incrementing stakedBal %d", amount))
+		if amount < 0 {
+			errMsg := fmt.Sprintf("Balance to stake was negative: %d", amount)
+			k.Logger(ctx).Error(errMsg)
+			return sdkerrors.Wrapf(sdkerrors.ErrLogic, errMsg)
+		} else {
+			zone.StakedBal += amount
+			success := k.AddDelegationToValidator(ctx, zone, validator, amount)
+			if !success {
+				return sdkerrors.Wrapf(types.ErrValidatorDelegationChg, "Failed to add delegation to validator")
+			}
+			k.SetHostZone(ctx, zone)
+		}
+	}
 
 	k.RecordsKeeper.RemoveDepositRecord(ctx, cast.ToUint64(recordId))
 	return nil

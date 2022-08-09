@@ -93,6 +93,7 @@ func (k Keeper) DelegateOnHost(ctx sdk.Context, hostZone types.HostZone, amt sdk
 		k.Logger(ctx).Error(fmt.Sprintf("Error getting target delegation amounts for host zone %s", hostZone.ChainId))
 		return err
 	}
+	var splitDelegations []*types.SplitDelegation
 	for _, validator := range hostZone.GetValidators() {
 		relAmt := sdk.NewCoin(amt.Denom, sdk.NewIntFromUint64(targetDelegatedAmts[validator.GetAddress()]))
 		if relAmt.Amount.IsPositive() {
@@ -102,12 +103,14 @@ func (k Keeper) DelegateOnHost(ctx sdk.Context, hostZone types.HostZone, amt sdk
 				ValidatorAddress: validator.GetAddress(),
 				Amount:           relAmt})
 			}
+			splitDelegations = append(splitDelegations, &types.SplitDelegation{Validator: validator.GetAddress(), Amount: relAmt.Amount.Uint64()})
 	}
 
 	// add callback data
 	delegateCallback := types.DelegateCallback{
 		HostZoneId: hostZone.ChainId,
 		DepositRecordId: depositRecordId,
+		SplitDelegations: splitDelegations,
 	}
 	marshalledCallbackArgs := k.MarshalDelegateCallbackArgs(ctx, delegateCallback)
 	// Send the transaction through SubmitTx
