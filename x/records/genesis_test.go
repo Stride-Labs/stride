@@ -3,11 +3,12 @@ package records_test
 import (
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	keepertest "github.com/Stride-Labs/stride/testutil/keeper"
 	"github.com/Stride-Labs/stride/testutil/nullify"
 	"github.com/Stride-Labs/stride/x/records"
 	"github.com/Stride-Labs/stride/x/records/types"
-	"github.com/stretchr/testify/require"
 )
 
 func TestGenesis(t *testing.T) {
@@ -25,13 +26,12 @@ func TestGenesis(t *testing.T) {
 		UserRedemptionRecordCount: 2,
 		EpochUnbondingRecordList: []types.EpochUnbondingRecord{
 			{
-				Id: 0,
+				EpochNumber: 0,
 			},
 			{
-				Id: 1,
+				EpochNumber: 1,
 			},
 		},
-		EpochUnbondingRecordCount: 2,
 		// this line is used by starport scaffolding # genesis/test/state
 		DepositRecordList: []types.DepositRecord{
 			{

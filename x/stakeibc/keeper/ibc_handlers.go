@@ -201,8 +201,8 @@ func (k *Keeper) HandleSend(ctx sdk.Context, msg sdk.Msg, sequence string) error
 		epochUnbondingRecords := k.RecordsKeeper.GetAllEpochUnbondingRecord(ctx)
 
 		for _, epochUnbondingRecord := range epochUnbondingRecords {
-			k.Logger(ctx).Info(fmt.Sprintf("epoch number: %d", epochUnbondingRecord.UnbondingEpochNumber))
-			if epochUnbondingRecord.UnbondingEpochNumber == dayEpochTracker.EpochNumber {
+			k.Logger(ctx).Info(fmt.Sprintf("epoch number: %d", epochUnbondingRecord.EpochNumber))
+			if epochUnbondingRecord.EpochNumber == dayEpochTracker.EpochNumber {
 				k.Logger(ctx).Error("epochUnbondingRecord.UnbondingEpochNumber == dayEpochTracker.EpochNumber")
 				continue
 			}
@@ -297,12 +297,12 @@ func (k Keeper) HandleUndelegate(ctx sdk.Context, msg sdk.Msg, completionTime ti
 	}
 	currentEpochNumber := epochTracker.GetEpochNumber()
 	for _, epochUnbonding := range k.RecordsKeeper.GetAllEpochUnbondingRecord(ctx) {
-		if epochUnbonding.UnbondingEpochNumber == currentEpochNumber {
+		if epochUnbonding.EpochNumber == currentEpochNumber {
 			continue
 		}
 		hostZoneRecord, found := epochUnbonding.HostZoneUnbondings[zone.ChainId]
 		if !found {
-			k.Logger(ctx).Error(fmt.Sprintf("Host zone unbonding record not found for hostZoneId %s in epoch %d", zone.ChainId, epochUnbonding.UnbondingEpochNumber))
+			k.Logger(ctx).Error(fmt.Sprintf("Host zone unbonding record not found for hostZoneId %s in epoch %d", zone.ChainId, epochUnbonding.EpochNumber))
 			continue
 		}
 		if hostZoneRecord.Status != recordstypes.HostZoneUnbonding_BONDED {
