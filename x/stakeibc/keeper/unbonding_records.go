@@ -196,7 +196,7 @@ func (k Keeper) SweepAllUnbondedTokens(ctx sdk.Context) {
 			k.Logger(ctx).Info(fmt.Sprintf("\tProcessing batch SweepAllUnbondedTokens for host zone %s", zoneInfo.ChainId))
 			zone, found := k.GetHostZone(ctx, unbonding.HostZoneId)
 			if !found {
-				k.Logger(ctx).Info(fmt.Sprintf("\t\tHost zone not found for hostZoneId %s", unbonding.HostZoneId))
+				k.Logger(ctx).Error(fmt.Sprintf("\t\tHost zone not found for hostZoneId %s", unbonding.HostZoneId))
 				continue
 			}
 
