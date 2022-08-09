@@ -54,7 +54,7 @@ func (c ICACallbacks) RegisterICACallbacks() icacallbackstypes.ICACallbackHandle
 // -----------------------------------
 
 // ----------------------------------- Delegate Callback ----------------------------------- //
-func MarshalDelegateCallbackArgs(k Keeper, ctx sdk.Context, delegateCallback types.DelegateCallback) []byte {
+func (k Keeper) MarshalDelegateCallbackArgs(ctx sdk.Context, delegateCallback types.DelegateCallback) []byte {
 	out, err := proto.Marshal(&delegateCallback)
 	if err != nil {
 		k.Logger(ctx).Error(fmt.Sprintf("UnmarshalDelegateCallbackArgs %v", err.Error()))
@@ -62,7 +62,7 @@ func MarshalDelegateCallbackArgs(k Keeper, ctx sdk.Context, delegateCallback typ
 	return out
 }
 
-func UnmarshalDelegateCallbackArgs(k Keeper, ctx sdk.Context, delegateCallback []byte) types.DelegateCallback {
+func (k Keeper) UnmarshalDelegateCallbackArgs(ctx sdk.Context, delegateCallback []byte) types.DelegateCallback {
 	unmarshalledDelegateCallback := types.DelegateCallback{}
 	if err := proto.Unmarshal(delegateCallback, &unmarshalledDelegateCallback); err != nil {
         k.Logger(ctx).Error(fmt.Sprintf("UnmarshalDelegateCallbackArgs %v", err.Error()))
@@ -71,10 +71,10 @@ func UnmarshalDelegateCallbackArgs(k Keeper, ctx sdk.Context, delegateCallback [
 }
 
 func DelegateCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ack []byte, args []byte) error {
-	k.Logger(ctx).Info("DelegateCallback executing", "packet", packet, "ack", ack, "args", args)
+	k.Logger(ctx).Info("DOGE DelegateCallback executing", "packet", packet, "ack", ack, "args", args)
 	// deserialize the ack
 	// deserialize the args
-	delegateCallback := UnmarshalDelegateCallbackArgs(k, ctx, args)
+	delegateCallback := k.UnmarshalDelegateCallbackArgs(ctx, args)
 	k.Logger(ctx).Info(fmt.Sprintf("DelegateCallback %v", delegateCallback))
 	return nil
 }
