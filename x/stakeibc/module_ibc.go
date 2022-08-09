@@ -155,7 +155,7 @@ func (im IBCModule) OnAcknowledgementPacket(
 	}
 	ctx = ctx.WithContext(context.WithValue(ctx.Context(), connectionIdContextKey(connectionId), connectionId))
 	im.keeper.Logger(ctx).Info("HANDLING ACK")
-	err = im.keeper.ICACallbacksKeeper.CallRegisteredICACallback(ctx, modulePacket, []byte{})
+	err = im.keeper.ICACallbacksKeeper.CallRegisteredICACallback(ctx, modulePacket, acknowledgement)
 	if err != nil {
 		return err
 	}
