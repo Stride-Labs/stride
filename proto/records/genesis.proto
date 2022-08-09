@@ -83,23 +83,18 @@ message HostZoneUnbonding {
     // transfer success
     TRANSFERRED = 3;
   }
-  uint64 amount = 1;
-  string denom = 2;
-  string hostZoneId = 3;
+  uint64 stTokenAmount = 1;
+  uint64 nativeTokenAmount = 2;
+  string denom = 3;
+  string hostZoneId = 4;
   uint64 unbondingTime = 5;
-  Status status = 4;
-  // google.protobuf.Timestamp unbondingTime = 5
-  //     [(gogoproto.nullable) = false, (gogoproto.stdtime) = true, (gogoproto.moretags) = "yaml:\"unbonding_time\""];
-  // google.protobuf.Timestamp completionTime = 5
-  //     [(gogoproto.nullable) = false, (gogoproto.stdtime) = true, (gogoproto.moretags) = "yaml:\"unbonding_time\""];
-  // Index UserRedemptionRecords here (note: id is {chain_id}.{epoch}.{sender})
-  repeated string userRedemptionRecords = 6;
+  Status status = 6;
+  repeated string userRedemptionRecords = 7;
 }
 
 message EpochUnbondingRecord {
-  uint64 id = 1;
-  uint64 unbondingEpochNumber = 2;
-
+  uint64 epochNumber = 1;
+  
   map<string, HostZoneUnbonding> hostZoneUnbondings = 3;
 }
 
