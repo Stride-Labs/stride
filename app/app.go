@@ -273,6 +273,7 @@ type StrideApp struct {
 	configurator module.Configurator
 }
 
+// RUN GOSEC
 // New returns a reference to an initialized blockchain app
 func NewStrideApp(
 	logger log.Logger,

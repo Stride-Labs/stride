@@ -119,13 +119,17 @@ func WithdrawalBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query icq
 
 	params := k.GetParams(ctx)
 	strideCommission := sdk.NewDec(cast.ToInt64(params.GetStrideCommission())).Quo(sdk.NewDec(100)) // convert to decimal
+	// check that stride commission is between 0 and 1
+	if strideCommission.LT(sdk.ZeroDec()) || strideCommission.GT(sdk.OneDec()) {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "Aborting reinvestment callback -- Stride commission must be between 0 and 1!")
+	}
 	withdrawalBalance := sdk.NewDec(coin.Amount.Int64())
 	// TODO(TEST-112) don't perform unsafe uint64 to int64 conversion
 	strideClaim := strideCommission.Mul(withdrawalBalance)
 	strideClaimFloored := strideClaim.TruncateInt()
 
-	reinvestAmount := (sdk.NewDec(1).Sub(strideCommission)).Mul(withdrawalBalance)
-	reinvestAmountCeil := reinvestAmount.Ceil().TruncateInt()
+	// back the reinvestment amount out of the total less the commission
+	reinvestAmountCeil := sdk.NewInt(coin.Amount.Int64()).Sub(strideClaimFloored)
 
 	// TODO(TEST-112) safety check, balances should add to original amount
 	if (strideClaimFloored.Int64() + reinvestAmountCeil.Int64()) != coin.Amount.Int64() {
