@@ -76,12 +76,6 @@ func (k Keeper) GetDepositRecord(ctx sdk.Context, id uint64) (val types.DepositR
 func (k Keeper) RemoveDepositRecord(ctx sdk.Context, id uint64) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.DepositRecordKey))
 	store.Delete(GetDepositRecordIDBytes(id))
-	count := k.GetDepositRecordCount(ctx)
-	if count > 0 {
-		k.SetDepositRecordCount(ctx, count-1)
-	} else {
-		k.Logger(ctx).Error("depositRecord count is less than 0, cannot remove non-existent depositRecord")
-	}
 }
 
 // GetAllDepositRecord returns all depositRecord
