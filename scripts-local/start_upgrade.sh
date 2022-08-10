@@ -4,6 +4,8 @@ set -eu
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 source $SCRIPT_DIR/vars.sh
 
+UPGRADE_NAME="v2"
+
 export DAEMON_NAME=strided
 export DAEMON_HOME=$SCRIPT_DIR/state/stride
 export DAEMON_RESTART_AFTER_UPGRADE=true
@@ -39,13 +41,13 @@ sh ${SCRIPT_DIR}/init_relayers.sh
 
 # Setup upgrade and cosmovisor directories
 mkdir -p $SCRIPT_DIR/upgrades/cosmovisor/genesis/bin/
-mkdir -p $SCRIPT_DIR/upgrades/cosmovisor/upgrades/v2/bin/
+mkdir -p $SCRIPT_DIR/upgrades/cosmovisor/upgrades/$UPGRADE_NAME/bin/
 mkdir -p $SCRIPT_DIR/state/stride/cosmovisor
 
 rm -f $SCRIPT_DIR/upgrades/binaries/strided2
 cp $SCRIPT_DIR/../build/strided $SCRIPT_DIR/upgrades/binaries/strided2
 cp $SCRIPT_DIR/upgrades/binaries/strided1 $SCRIPT_DIR/upgrades/cosmovisor/genesis/bin/strided
-cp $SCRIPT_DIR/upgrades/binaries/strided2 $SCRIPT_DIR/upgrades/cosmovisor/upgrades/v2/bin/strided
+cp $SCRIPT_DIR/upgrades/binaries/strided2 $SCRIPT_DIR/upgrades/cosmovisor/upgrades/$UPGRADE_NAME/bin/strided
 
 printf '\n%s' "Starting Stride and Gaia...   "
 cp -r $SCRIPT_DIR/upgrades/cosmovisor/* $STATE/stride/cosmovisor/

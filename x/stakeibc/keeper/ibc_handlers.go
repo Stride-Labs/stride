@@ -139,7 +139,7 @@ func (k Keeper) HandleAcknowledgement(ctx sdk.Context, modulePacket channeltypes
 				k.Logger(ctx).Error("Unable to unmarshal MsgUndelegate response", "error", err)
 				return err
 			}
-			k.Logger(ctx).Debug("Undelegated", "response", response)
+			k.Logger(ctx).Info("Undelegated", "response", response)
 			// we should update delegation records here.
 			if err := k.HandleUndelegate(ctx, src, response.CompletionTime); err != nil {
 				return err
@@ -237,15 +237,15 @@ func (k *Keeper) HandleSend(ctx sdk.Context, msg sdk.Msg, sequence string) error
 		k.Logger(ctx).Error("ACK - sendMsg.FromAddress == delegationAddress && sendMsg.ToAddress == redemptionAddress")
 		dayEpochTracker, found := k.GetEpochTracker(ctx, "day")
 		if !found {
-			k.Logger(ctx).Info("failed to find epoch day")
+			k.Logger(ctx).Error("failed to find epoch day")
 			return sdkerrors.Wrapf(types.ErrInvalidLengthEpochTracker, "no number for epoch (%s)", "day")
 		}
 		epochUnbondingRecords := k.RecordsKeeper.GetAllEpochUnbondingRecord(ctx)
 
 		for _, epochUnbondingRecord := range epochUnbondingRecords {
-			k.Logger(ctx).Error(fmt.Sprintf("epoch number: %d", epochUnbondingRecord.Id))
-			if epochUnbondingRecord.Id == dayEpochTracker.EpochNumber {
-				k.Logger(ctx).Error("epochUnbondingRecord.Id == dayEpochTracker.EpochNumber")
+			k.Logger(ctx).Info(fmt.Sprintf("epoch number: %d", epochUnbondingRecord.UnbondingEpochNumber))
+			if epochUnbondingRecord.UnbondingEpochNumber == dayEpochTracker.EpochNumber {
+				k.Logger(ctx).Error("epochUnbondingRecord.UnbondingEpochNumber == dayEpochTracker.EpochNumber")
 				continue
 			}
 			hostZoneUnbonding := epochUnbondingRecord.HostZoneUnbondings[zone.ChainId]
@@ -326,7 +326,7 @@ func (k *Keeper) HandleDelegate(ctx sdk.Context, msg sdk.Msg, totalDelegate int6
 	}
 
 	// TODO(TEST-112) more safety checks here
-	// increment the stakedBal on the hostZome
+	// increment the stakedBal on the hostZone
 	k.Logger(ctx).Info(fmt.Sprintf("incrementing stakedBal %d", amount))
 	if amount < 0 {
 		errMsg := fmt.Sprintf("Balance to stake was negative: %d", amount)
