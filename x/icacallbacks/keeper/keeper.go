@@ -119,7 +119,6 @@ func (k Keeper) CallRegisteredICACallback(ctx sdk.Context, modulePacket channelt
 	}
 
 	// remove the callback data
-	// NOTE: Should we remove the callback data here, or above (conditional on HasICACallback == true)?
 	k.RemoveCallbackData(ctx, callbackDataKey)
 	return nil
 }
