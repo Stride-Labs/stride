@@ -27,17 +27,17 @@ func TestEpochUnbondingRecordQuerySingle(t *testing.T) {
 	}{
 		{
 			desc:     "First",
-			request:  &types.QueryGetEpochUnbondingRecordRequest{Id: msgs[0].EpochNumber},
+			request:  &types.QueryGetEpochUnbondingRecordRequest{EpochNumber: msgs[0].EpochNumber},
 			response: &types.QueryGetEpochUnbondingRecordResponse{EpochUnbondingRecord: msgs[0]},
 		},
 		{
 			desc:     "Second",
-			request:  &types.QueryGetEpochUnbondingRecordRequest{Id: msgs[1].EpochNumber},
+			request:  &types.QueryGetEpochUnbondingRecordRequest{EpochNumber: msgs[1].EpochNumber},
 			response: &types.QueryGetEpochUnbondingRecordResponse{EpochUnbondingRecord: msgs[1]},
 		},
 		{
 			desc:    "KeyNotFound",
-			request: &types.QueryGetEpochUnbondingRecordRequest{Id: uint64(len(msgs))},
+			request: &types.QueryGetEpochUnbondingRecordRequest{EpochNumber: uint64(len(msgs))},
 			err:     sdkerrors.ErrKeyNotFound,
 		},
 		{
