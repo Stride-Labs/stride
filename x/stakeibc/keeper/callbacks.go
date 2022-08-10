@@ -61,7 +61,7 @@ func WithdrawalBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query icq
 	if !found {
 		return fmt.Errorf("no registered zone for chain id: %s", query.GetChainId())
 	}
-	balancesStore := []byte(query.Request[1:])
+	balancesStore := query.Request[1:]
 	accAddr, err := banktypes.AddressFromBalancesStore(balancesStore)
 	if err != nil {
 		return err
@@ -101,13 +101,13 @@ func WithdrawalBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query icq
 	zone.WithdrawalAccount = wa
 	k.SetHostZone(ctx, zone)
 	k.Logger(ctx).Info(fmt.Sprintf("Just set WithdrawalBalance to: %d", wa.Balance))
-	ctx.EventManager().EmitEvents(sdk.Events{
+	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
 			sdk.EventTypeMessage,
 			sdk.NewAttribute("hostZone", zone.ChainId),
 			sdk.NewAttribute("totalWithdrawalBalance", coin.Amount.String()),
 		),
-	})
+	)
 
 	// Sweep the withdrawal account balance, to the commission and the delegation accounts
 	k.Logger(ctx).Info(fmt.Sprintf("ICA Bank Sending %d%s from withdrawalAddr to delegationAddr.", coin.Amount.Int64(), coin.Denom))
