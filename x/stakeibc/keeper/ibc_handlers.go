@@ -237,7 +237,7 @@ func (k *Keeper) HandleSend(ctx sdk.Context, msg sdk.Msg, sequence string) error
 		k.Logger(ctx).Error("ACK - sendMsg.FromAddress == delegationAddress && sendMsg.ToAddress == redemptionAddress")
 		dayEpochTracker, found := k.GetEpochTracker(ctx, "day")
 		if !found {
-			k.Logger(ctx).Info("failed to find epoch day")
+			k.Logger(ctx).Error("failed to find epoch day")
 			return sdkerrors.Wrapf(types.ErrInvalidLengthEpochTracker, "no number for epoch (%s)", "day")
 		}
 		epochUnbondingRecords := k.RecordsKeeper.GetAllEpochUnbondingRecord(ctx)
