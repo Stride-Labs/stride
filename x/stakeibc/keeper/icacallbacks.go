@@ -50,7 +50,7 @@ func (c ICACallbacks) AddICACallback(id string, fn interface{}) icacallbackstype
 func (c ICACallbacks) RegisterICACallbacks() icacallbackstypes.ICACallbackHandler {
 	a := c.
 			AddICACallback("delegate", ICACallback(DelegateCallback)).
-			AddICACallback("redemption", ICACallback(DelegateCallback))
+			AddICACallback("redemption", ICACallback(RedemptionCallback))
 	return a.(ICACallbacks)
 }
 
@@ -154,7 +154,8 @@ func RedemptionCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, a
 	if err != nil {
 		// ack failed, set UserRedemptionRecord as claimable
 		// NOTE: we probably only want to do this if we could unmarshal the ack and it failed
-		// DO NOT MERGE THIS IN
+		// DO NOT MERGE THIS INy
+
 		userRedemptionRecord.IsClaimable = true
 		k.RecordsKeeper.SetUserRedemptionRecord(ctx, userRedemptionRecord)
 		return err

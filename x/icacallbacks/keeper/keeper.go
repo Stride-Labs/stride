@@ -116,6 +116,8 @@ func (k Keeper) CallRegisteredICACallback(ctx sdk.Context, modulePacket channelt
 			k.Logger(ctx).Info("CallRegisteredICACallback", "err", err)
 			return err
 		}
+	} else {
+		k.Logger(ctx).Info("CallRegisteredICACallback", "err", "callback not found")
 	}
 
 	// remove the callback data
