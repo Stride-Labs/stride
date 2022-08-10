@@ -16,7 +16,7 @@ func (k msgServer) AddValidator(goCtx context.Context, msg *types.MsgAddValidato
 
 	hostZone, host_zone_found := k.GetHostZone(ctx, msg.HostZone)
 	if !host_zone_found {
-		k.Logger(ctx).Info(fmt.Sprintf("Host Zone not found %s", msg.HostZone))
+		k.Logger(ctx).Error(fmt.Sprintf("Host Zone not found %s", msg.HostZone))
 		return nil, sdkerrors.Wrap(types.ErrHostZoneNotFound, msg.HostZone)
 	}
 	validators := hostZone.Validators

@@ -3,9 +3,12 @@ package main
 import (
 	"os"
 
-	"github.com/Stride-Labs/stride/app"
 	svrcmd "github.com/cosmos/cosmos-sdk/server/cmd"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	"github.com/cosmos/cosmos-sdk/version"
+
+	"github.com/Stride-Labs/stride/app"
 
 	cmdcfg "github.com/Stride-Labs/stride/cmd/strided/config"
 )
@@ -26,4 +29,8 @@ func setupConfig() {
 	cmdcfg.SetBech32Prefixes(config)
 	cmdcfg.SetBip44CoinType(config)
 	config.Seal()
+
+	version.AppName = "stride"
+	version.Name = "strided"
+	version.Version = "v0.3.0"
 }
