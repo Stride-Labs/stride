@@ -125,18 +125,19 @@ func (k Keeper) RemoveValidatorFromHostZone(ctx sdk.Context, chainId string, val
 	}
 	for i, val := range hostZone.Validators {
 		if val.GetAddress() == validatorAddress {
-			hostZone.Validators = append(hostZone.Validators[:i], hostZone.Validators[i+1:]...)
-			return true
+			if val.GetDelegationAmt() == 0 && val.GetWeight() == 0 {
+				hostZone.Validators = append(hostZone.Validators[:i], hostZone.Validators[i+1:]...)
+				return true
+			} else {
+				k.Logger(ctx).Error(fmt.Sprintf("Validator %s has non-zero delegation (%d) or weight (%d)", validatorAddress, val.GetDelegationAmt(), val.GetWeight()))
+
+				return false
+			}
 		}
 	}
 	k.SetHostZone(ctx, hostZone)
-	k.Logger(ctx).Error(fmt.Sprintf("Validator %s not found on Host Zone %s", validatorAddress, chainId))
+	k.Logger(ctx).Error(fmt.Sprintf("Validator %s not found on the host zone %s", validatorAddress, chainId))
 	return false
-}
-
-// GetHostZoneIDFromBytes returns ID in uint64 format from a byte array
-func GetHostZoneIDFromBytes(bz []byte) uint64 {
-	return binary.BigEndian.Uint64(bz)
 }
 
 // GetHostZoneFromIBCDenom returns a HostZone from a IBCDenom
@@ -177,7 +178,6 @@ func (k Keeper) IterateHostZones(ctx sdk.Context, fn func(ctx sdk.Context, index
 	}
 }
 
-// GetRedemptionAccount gest the redemption account from a HostZone
 func (k Keeper) GetRedemptionAccount(ctx sdk.Context, hostZone types.HostZone) (*types.ICAAccount, bool) {
 	if hostZone.RedemptionAccount == nil {
 		return nil, false

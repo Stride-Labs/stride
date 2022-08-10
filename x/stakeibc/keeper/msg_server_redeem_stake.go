@@ -12,7 +12,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
-	utils "github.com/Stride-Labs/stride/utils"
+	"github.com/Stride-Labs/stride/utils"
 )
 
 func (k msgServer) RedeemStake(goCtx context.Context, msg *types.MsgRedeemStake) (*types.MsgRedeemStakeResponse, error) {
@@ -41,7 +41,7 @@ func (k msgServer) RedeemStake(goCtx context.Context, msg *types.MsgRedeemStake)
 	}
 
 	// construct desired unstaking amount from host zone
-	coinDenom := "st" + hostZone.HostDenom
+	coinDenom := types.StAssetDenomFromHostZoneDenom(hostZone.HostDenom)
 	nativeAmount := sdk.NewDec(msg.Amount).Mul(hostZone.RedemptionRate)
 	// TODO(TEST-112) bigint safety
 	coinString := nativeAmount.RoundInt().String() + coinDenom
