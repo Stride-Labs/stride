@@ -105,12 +105,8 @@ func (k msgServer) RedeemStake(goCtx context.Context, msg *types.MsgRedeemStake)
 		return nil, sdkerrors.Wrapf(types.ErrInsufficientFunds, "couldn't send %d %s tokens to module account. err: %s", msg.Amount, coinDenom, err.Error())
 	}
 
-	// burn stAssets upon successful unbonding
-	err = k.bankKeeper.BurnCoins(ctx, types.ModuleName, redeemCoin)
-	if err != nil {
-		k.Logger(ctx).Error(fmt.Sprintf("Failed to burn stAssets upon successful unbonding %v", err))
-		return nil, sdkerrors.Wrapf(types.ErrInsufficientFunds, "couldn't burn %d %s tokens in module account. err: %s", msg.Amount, coinDenom, err.Error())
-	}
+	// record the number of stAssets that should be burned after unbonding
+	hostZoneUnbonding.StTokenAmount += uint64(msg.Amount)
 
 	// Actually set the records, we wait until now to prevent any errors
 	k.RecordsKeeper.SetUserRedemptionRecord(ctx, userRedemptionRecord)
