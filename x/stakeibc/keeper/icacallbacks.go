@@ -51,6 +51,7 @@ func (c ICACallbacks) RegisterICACallbacks() icacallbackstypes.ICACallbackHandle
 	a := c.
 			AddICACallback("delegate", ICACallback(DelegateCallback)).
 			AddICACallback("redemption", ICACallback(RedemptionCallback))
+			AddICACallback("logging", ICACallback(LoggingCallback))
 	return a.(ICACallbacks)
 }
 
@@ -145,6 +146,50 @@ func RedemptionCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, a
 	redemptionCallback := k.UnmarshalRedemptionCallbackArgs(ctx, args)
 	k.Logger(ctx).Info(fmt.Sprintf("RedemptionCallback %v", redemptionCallback))
 	userRedemptionRecord, found := k.RecordsKeeper.GetUserRedemptionRecord(ctx, redemptionCallback.GetUserRedemptionRecordId())
+	if !found {
+		return sdkerrors.Wrap(types.ErrRecordNotFound, "user redemption record not found")
+	}
+
+	// deserialize the ack
+	_, err := k.GetTxMsgData(ctx, ack)
+	if err != nil {
+		// ack failed, set UserRedemptionRecord as claimable
+		// NOTE: we probably only want to do this if we could unmarshal the ack and it failed
+		// DO NOT MERGE THIS INy
+
+		userRedemptionRecord.IsClaimable = true
+		k.RecordsKeeper.SetUserRedemptionRecord(ctx, userRedemptionRecord)
+		return err
+	}
+	// claim successfully processed
+	k.RecordsKeeper.RemoveUserRedemptionRecord(ctx, redemptionCallback.GetUserRedemptionRecordId())
+	return nil
+}
+
+// ----------------------------------- logging callback ----------------------------------- //
+func (k Keeper) MarshalLoggingCallbackArgs(ctx sdk.Context, redemptionCallback types.LoggingCallback) []byte {
+	out, err := proto.Marshal(&redemptionCallback)
+	if err != nil {
+		k.Logger(ctx).Error(fmt.Sprintf("MarshalLoggingCallbackArgs %v", err.Error()))
+	}
+	return out
+}
+
+func (k Keeper) UnmarshalLoggingCallbackArgs(ctx sdk.Context, redemptionCallback []byte) types.LoggingCallback {
+	unmarshalledDelegateCallback := types.LoggingCallback{}
+	if err := proto.Unmarshal(redemptionCallback, &unmarshalledDelegateCallback); err != nil {
+        k.Logger(ctx).Error(fmt.Sprintf("UnmarshalLoggingCallbackArgs %v", err.Error()))
+	}
+	return unmarshalledDelegateCallback
+}
+
+func LoggingCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ack []byte, args []byte) error {
+	// QUESTION: should we check invariants here? e.g. sendMsg.FromAddress == redemptionAddress, msg type == MsgSend, etc.
+	k.Logger(ctx).Info("LoggingCallback executing", "packet", packet, "ack", ack, "args", args)
+	// deserialize the args
+	redemptionCallback := k.UnmarshalLoggingCallbackArgs(ctx, args)
+	k.Logger(ctx).Info(fmt.Sprintf("LoggingCallback %v", redemptionCallback))
+	userLoggingRecord, found := k.RecordsKeeper.GetUserLoggingRecord(ctx, redemptionCallback.GetUserRedemptionRecordId())
 	if !found {
 		return sdkerrors.Wrap(types.ErrRecordNotFound, "user redemption record not found")
 	}

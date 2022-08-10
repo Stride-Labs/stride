@@ -20,3 +20,9 @@ message RedemptionCallback {
   string userRedemptionRecordId = 1;
 }
 
+// ---------------------- Logging Callback ---------------------- //
+
+message LoggingCallback {
+  string logMessage = 1;
+}
+
