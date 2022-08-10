@@ -17,7 +17,6 @@ func DefaultGenesis() *GenesisState {
 		UserRedemptionRecordList:  []UserRedemptionRecord{},
 		UserRedemptionRecordCount: 0,
 		EpochUnbondingRecordList:  []EpochUnbondingRecord{},
-		EpochUnbondingRecordCount: 0,
 		DepositRecordList:         []DepositRecord{},
 		DepositRecordCount:        0,
 		// this line is used by starport scaffolding # genesis/types/default
