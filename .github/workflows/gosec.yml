@@ -13,6 +13,6 @@ jobs:
       - name: Checkout Source
         uses: actions/checkout@v3
       - name: Run Gosec Security Scanner
-        uses: informalsystems/gosec@master
+        uses: securego/gosec@master
         with:
           args: -exclude-dir=deps -severity=high ./...

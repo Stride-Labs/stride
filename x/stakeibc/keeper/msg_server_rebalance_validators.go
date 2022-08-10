@@ -63,6 +63,7 @@ func (k msgServer) RebalanceValidators(goCtx context.Context, msg *types.MsgReba
 	valDeltaList := make([]valPair, 0)
 	for _, valAddr := range utils.StringToIntMapKeys(validatorDeltas) {
 		deltaAmt := validatorDeltas[valAddr]
+		k.Logger(ctx).Info(fmt.Sprintf("Adding deltaAmt: %d to validator: %s", deltaAmt, valAddr))
 		valDeltaList = append(valDeltaList, valPair{deltaAmt, sdk.ValAddress(valAddr)})
 	}
 	// now we sort that list
