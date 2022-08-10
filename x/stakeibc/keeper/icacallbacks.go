@@ -139,7 +139,7 @@ func (k Keeper) UnmarshalRedemptionCallbackArgs(ctx sdk.Context, redemptionCallb
 }
 
 func RedemptionCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ack []byte, args []byte) error {
-	// QUESTION: should we check invariants here? e.g. fromAddress == redemptionAddress, msg type == MsgSend, etc.
+	// QUESTION: should we check invariants here? e.g. sendMsg.FromAddress == redemptionAddress, msg type == MsgSend, etc.
 	k.Logger(ctx).Info("RedemptionCallback executing", "packet", packet, "ack", ack, "args", args)
 	// deserialize the args
 	redemptionCallback := k.UnmarshalRedemptionCallbackArgs(ctx, args)

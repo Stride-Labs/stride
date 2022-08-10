@@ -41,13 +41,15 @@ func (k msgServer) ClaimUndelegatedTokens(goCtx context.Context, msg *types.MsgC
 		UserRedemptionRecordId: userRedemptionRecord.Id,
 	}
 	marshalledCallbackArgs := k.MarshalRedemptionCallbackArgs(ctx, redemptionCallback)
-	sequence, err := k.SubmitTxs(ctx, icaTx.ConnectionId, icaTx.Msgs, icaTx.Account, icaTx.Timeout, "redemption", marshalledCallbackArgs)
+	_, err = k.SubmitTxs(ctx, icaTx.ConnectionId, icaTx.Msgs, icaTx.Account, icaTx.Timeout, "redemption", marshalledCallbackArgs)
 	if err != nil {
 		k.Logger(ctx).Error(fmt.Sprintf("Submit tx error: %s", err.Error()))
 		return nil, sdkerrors.Wrapf(err, "unable to submit ICA redemption tx")
 	}
 
-	k.FlagRedemptionRecordsAsClaimed(ctx, userRedemptionRecord, sequence)
+	// Set isClaimable to false, so that the record can't be claimed again
+	userRedemptionRecord.IsClaimable = false
+	k.RecordsKeeper.SetUserRedemptionRecord(ctx, *userRedemptionRecord)
 
 	return &types.MsgClaimUndelegatedTokensResponse{}, nil
 }
@@ -110,18 +112,4 @@ func (k Keeper) GetRedemptionTransferMsg(ctx sdk.Context, userRedemptionRecord *
 	}
 
 	return &icaTx, nil
-}
-
-func (k Keeper) FlagRedemptionRecordsAsClaimed(ctx sdk.Context, userRedemptionRecord *recordstypes.UserRedemptionRecord, sequence uint64) {
-	// Set isClaimable to false, so that the record can't be claimed again
-	userRedemptionRecord.IsClaimable = false
-	k.RecordsKeeper.SetUserRedemptionRecord(ctx, *userRedemptionRecord)
-
-	// Store the sequence number to record id mapping
-	pendingClaims := types.PendingClaims{
-		Sequence: fmt.Sprint(sequence),
-		// NOTE: we could extend this to process multiple claims in the future, given this field is repeated
-		UserRedemptionRecordIds: []string{userRedemptionRecord.Id},
-	}
-	k.SetPendingClaims(ctx, pendingClaims)
 }
