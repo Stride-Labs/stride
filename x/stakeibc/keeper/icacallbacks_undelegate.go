@@ -33,15 +33,13 @@ func (k Keeper) UnmarshalUndelegateCallbackArgs(ctx sdk.Context, undelegateCallb
 	return unmarshalledUndelegateCallback, nil
 }
 
-func UndelegateCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ack []byte, args []byte) error {
-	logMsg := fmt.Sprintf("UndelegateCallback executing packet: %s, source: %s %s, dest: %s %s",
+func UndelegateCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ack *channeltypes.Acknowledgement_Result, args []byte) error {
+	logMsg := fmt.Sprintf("UndelegateCallback executing packet: %d, source: %s %s, dest: %s %s",
 		packet.Sequence, packet.SourceChannel, packet.SourcePort, packet.DestinationChannel, packet.DestinationPort)
 	k.Logger(ctx).Info(logMsg)
 
-	txMsgs, err := k.GetTxMsgData(ctx, ack)
-	if err != nil {
-		// TODO: handle ack failed
-		return err
+	if ack == nil {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "ack is nil")
 	}
 
 	// unmarshal the callback args and get the host zone
@@ -90,7 +88,7 @@ func UndelegateCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, a
 	for _, epochNumber := range undelegateCallback.UnbondingEpochNumbers {
 		epochUnbondingRecord, found := k.RecordsKeeper.GetEpochUnbondingRecord(ctx, epochNumber)
 		if !found {
-			errMsg := fmt.Sprintf("could find epoch unbonding record for epoch: %s", epochNumber)
+			errMsg := fmt.Sprintf("could find epoch unbonding record for epoch: %d", epochNumber)
 			k.Logger(ctx).Error(errMsg)
 			return sdkerrors.Wrapf(sdkerrors.ErrKeyNotFound, errMsg)
 		}
@@ -109,8 +107,8 @@ func UndelegateCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, a
 		hostZoneUnbondings.UnbondingTime = cast.ToUint64(latestCompletionTime.UnixNano())
 		k.RecordsKeeper.SetEpochUnbondingRecord(ctx, epochUnbondingRecord)
 
-		logMsg := fmt.Sprintf("Set unbonding time to %v for host zone %s's unbonding record: %d%s",
-			latestCompletionTime, hostZone.ChainId, epochNumber)
+		logMsg := fmt.Sprintf("Set unbonding time to %s for host zone %s's unbonding record: %d",
+			latestCompletionTime.String(), hostZone.ChainId, epochNumber)
 		k.Logger(ctx).Info(logMsg)
 	}
 
