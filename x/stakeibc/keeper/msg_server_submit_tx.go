@@ -112,7 +112,10 @@ func (k Keeper) DelegateOnHost(ctx sdk.Context, hostZone types.HostZone, amt sdk
 		DepositRecordId: depositRecordId,
 		SplitDelegations: splitDelegations,
 	}
-	marshalledCallbackArgs := k.MarshalDelegateCallbackArgs(ctx, delegateCallback)
+	marshalledCallbackArgs, err := k.MarshalDelegateCallbackArgs(ctx, delegateCallback)
+	if err != nil {
+		return err
+	}
 	// Send the transaction through SubmitTx
 	_, err = k.SubmitTxsStrideEpoch(ctx, connectionId, msgs, *delegationIca, "delegate", marshalledCallbackArgs)
 	if err != nil {

@@ -57,25 +57,27 @@ func (c ICACallbacks) RegisterICACallbacks() icacallbackstypes.ICACallbackHandle
 // -----------------------------------
 
 // ----------------------------------- Delegate Callback ----------------------------------- //
-func (k Keeper) MarshalDelegateCallbackArgs(ctx sdk.Context, delegateCallback types.DelegateCallback) []byte {
+func (k Keeper) MarshalDelegateCallbackArgs(ctx sdk.Context, delegateCallback types.DelegateCallback) ([]byte, error) {
 	out, err := proto.Marshal(&delegateCallback)
 	if err != nil {
-		k.Logger(ctx).Error(fmt.Sprintf("UnmarshalDelegateCallbackArgs %v", err.Error()))
+		k.Logger(ctx).Error(fmt.Sprintf("MarshalDelegateCallbackArgs %v", err.Error()))
+		return nil, err
 	}
-	return out
+	return out, nil
 }
 
-func (k Keeper) UnmarshalDelegateCallbackArgs(ctx sdk.Context, delegateCallback []byte) types.DelegateCallback {
+func (k Keeper) UnmarshalDelegateCallbackArgs(ctx sdk.Context, delegateCallback []byte) (*types.DelegateCallback, error) {
 	unmarshalledDelegateCallback := types.DelegateCallback{}
 	if err := proto.Unmarshal(delegateCallback, &unmarshalledDelegateCallback); err != nil {
         k.Logger(ctx).Error(fmt.Sprintf("UnmarshalDelegateCallbackArgs %v", err.Error()))
+		return nil, err
 	}
-	return unmarshalledDelegateCallback
+	return &unmarshalledDelegateCallback, nil
 }
 
 // QUESTION: Would it be cleaner to pass in ack as a bool (success / failure) here?
 func DelegateCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ack []byte, args []byte) error {
-	k.Logger(ctx).Info("DelegateCallback executing", "packet", packet, "ack", ack, "args", args)
+	k.Logger(ctx).Info("DelegateCallback executing", "packet", packet)
 	// deserialize the ack
 	txMsgData, err := k.GetTxMsgData(ctx, ack)
 	if err != nil {
@@ -86,7 +88,10 @@ func DelegateCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ack
 	_ = txMsgData
 
 	// deserialize the args
-	delegateCallback := k.UnmarshalDelegateCallbackArgs(ctx, args)
+	delegateCallback, err := k.UnmarshalDelegateCallbackArgs(ctx, args)
+	if err != nil {
+		return err
+	}
 	k.Logger(ctx).Info(fmt.Sprintf("DelegateCallback %v", delegateCallback))
 	hostZone := delegateCallback.GetHostZoneId()
 	zone, found := k.GetHostZone(ctx, hostZone)
