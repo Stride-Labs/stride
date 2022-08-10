@@ -67,14 +67,14 @@ func (k msgServer) SubmitQueryResponse(goCtx context.Context, msg *types.MsgSubm
 				if err := merkleProof.VerifyMembership(tmclientstate.ProofSpecs, consensusState.GetRoot(), path, msg.Result); err != nil {
 					return nil, fmt.Errorf("unable to verify proof: %s", err)
 				}
-				k.Logger(ctx).Debug("Proof validated!", "module", types.ModuleName, "queryId", q.Id)
+				k.Logger(ctx).Info("Proof validated!", "module", types.ModuleName, "queryId", q.Id)
 
 			} else {
 				// if we got a nil response, verify non inclusion proof.
 				if err := merkleProof.VerifyNonMembership(tmclientstate.ProofSpecs, consensusState.GetRoot(), path); err != nil {
 					return nil, fmt.Errorf("unable to verify proof: %s", err)
 				}
-				k.Logger(ctx).Debug("Non-inclusion Proof validated!", "module", types.ModuleName, "queryId", q.Id)
+				k.Logger(ctx).Info("Non-inclusion Proof validated!", "module", types.ModuleName, "queryId", q.Id)
 			}
 		}
 
