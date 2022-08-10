@@ -27,4 +27,7 @@ var (
 	ErrInvalidNumValidator         = sdkerrors.Register(ModuleName, 1517, "invalid number of validators")
 	ErrValidatorNotRemoved         = sdkerrors.Register(ModuleName, 1518, "validator not removed")
 	ErrHostZoneNotFound            = sdkerrors.Register(ModuleName, 1519, "host zone not found")
+	ErrUnmarshalFailure            = sdkerrors.Register(ModuleName, 1520, "unable to unmarshal data structure")
+	ErrMarshalFailure              = sdkerrors.Register(ModuleName, 1521, "unable to marshal data structure")
+	ErrInvalidPacketCompletionTime = sdkerrors.Register(ModuleName, 1522, "invalid packet completion time")
 )

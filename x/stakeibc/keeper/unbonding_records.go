@@ -16,7 +16,7 @@ import (
 	"github.com/Stride-Labs/stride/x/stakeibc/types"
 )
 
-func (k Keeper) CreateEpochUnbonding(ctx sdk.Context, epochNumber int64) bool {
+func (k Keeper) CreateEpochUnbondingRecord(ctx sdk.Context, epochNumber int64) bool {
 	hostZoneUnbondings := make(map[string]*recordstypes.HostZoneUnbonding)
 	addEpochUndelegation := func(ctx sdk.Context, index int64, hostZone types.HostZone) error {
 		hostZoneUnbonding := recordstypes.HostZoneUnbonding{
@@ -45,6 +45,7 @@ func (k Keeper) SendHostZoneUnbondings(ctx sdk.Context, hostZone types.HostZone)
 	// this function goes and processes all unbonded records for this hostZone
 	// regardless of what epoch they belong to
 	totalAmtToUnbond := uint64(0)
+	unbondingEpochNumbers := []uint64{}
 	var msgs []sdk.Msg
 	for _, epochUnbonding := range k.RecordsKeeper.GetAllEpochUnbondingRecord(ctx) {
 		hostZoneRecord, found := epochUnbonding.HostZoneUnbondings[hostZone.ChainId]
@@ -56,6 +57,7 @@ func (k Keeper) SendHostZoneUnbondings(ctx sdk.Context, hostZone types.HostZone)
 		}
 		if hostZoneRecord.Status == recordstypes.HostZoneUnbonding_BONDED { // we only send the ICA call if this hostZone hasn't triggered yet
 			totalAmtToUnbond += hostZoneRecord.NativeTokenAmount
+			unbondingEpochNumbers = append(unbondingEpochNumbers, epochUnbonding.EpochNumber)
 		}
 	}
 	delegationAccount := hostZone.GetDelegationAccount()
@@ -101,9 +103,11 @@ func (k Keeper) SendHostZoneUnbondings(ctx sdk.Context, hostZone types.HostZone)
 		}
 	}
 	if overflowAmt > 0 { // what?? we still can't cover the overflow? something is very wrong
-		k.Logger(ctx).Error(fmt.Sprintf("Could not unbond %d on Host Zone %s", totalAmtToUnbond, hostZone.ChainId))
+		k.Logger(ctx).Error(fmt.Sprintf("Could not unbond %d on Host Zone %s, unable to balance the unbond amount across validators",
+			totalAmtToUnbond, hostZone.ChainId))
 		return false
 	}
+	var splitDelegations []*types.SplitDelegation
 	for _, valAddr := range utils.StringToIntMapKeys(valAddrToUnbondAmt) {
 		valUnbondAmt := valAddrToUnbondAmt[valAddr]
 		stakeAmt := sdk.NewInt64Coin(hostZone.HostDenom, valUnbondAmt)
@@ -113,9 +117,21 @@ func (k Keeper) SendHostZoneUnbondings(ctx sdk.Context, hostZone types.HostZone)
 			ValidatorAddress: valAddr,
 			Amount:           stakeAmt,
 		})
+
+		splitDelegations = append(splitDelegations, &types.SplitDelegation{
+			Validator: valAddr,
+			Amount:    stakeAmt.Amount.Uint64(),
+		})
 	}
-	// now we have to handle the overflow amount
-	_, err = k.SubmitTxsDayEpoch(ctx, hostZone.GetConnectionId(), msgs, *delegationAccount)
+
+	undelegateCallback := types.UndelegateCallback{
+		HostZoneId:            hostZone.ChainId,
+		SplitDelegations:      splitDelegations,
+		UnbondingEpochNumbers: unbondingEpochNumbers,
+	}
+	marshalledCallbackArgs := k.MarshalUndelegateCallbackArgs(ctx, undelegateCallback)
+
+	_, err = k.SubmitTxsDayEpoch(ctx, hostZone.GetConnectionId(), msgs, *delegationAccount, "undelegate", marshalledCallbackArgs)
 	if err != nil {
 		k.Logger(ctx).Error(fmt.Sprintf("Error submitting unbonding tx: %s", err))
 		return false
@@ -242,7 +258,7 @@ func (k Keeper) SweepAllUnbondedTokens(ctx sdk.Context) {
 				ctx.Logger().Info(fmt.Sprintf("Bank sending unbonded tokens batch, from delegation to redemption account. Msg: %v", msgs))
 
 				// Send the transaction through SubmitTx
-				_, err := k.SubmitTxsDayEpoch(ctx, zoneInfo.ConnectionId, msgs, *delegationAccount)
+				_, err := k.SubmitTxsDayEpoch(ctx, zoneInfo.ConnectionId, msgs, *delegationAccount, "", nil)
 				if err != nil {
 					ctx.Logger().Info(fmt.Sprintf("Failed to SubmitTxs for %s", zoneInfo.ChainId))
 				}

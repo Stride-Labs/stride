@@ -93,20 +93,20 @@ func (k Keeper) HandleAcknowledgement(ctx sdk.Context, modulePacket channeltypes
 	for msgIndex, msgData := range txMsgData.Data {
 		src := msgs[msgIndex]
 		switch msgData.MsgType {
-		// unstake
-		case "/cosmos.staking.v1beta1.MsgUndelegate":
-			response := stakingtypes.MsgUndelegateResponse{}
-			err := proto.Unmarshal(msgData.Data, &response)
-			if err != nil {
-				k.Logger(ctx).Error("Unable to unmarshal MsgUndelegate response", "error", err)
-				return err
-			}
-			k.Logger(ctx).Info("Undelegated", "response", response)
-			// we should update delegation records here.
-			if err := k.HandleUndelegate(ctx, src, response.CompletionTime); err != nil {
-				return err
-			}
-			continue
+		// // unstake
+		// case "/cosmos.staking.v1beta1.MsgUndelegate":
+		// 	response := stakingtypes.MsgUndelegateResponse{}
+		// 	err := proto.Unmarshal(msgData.Data, &response)
+		// 	if err != nil {
+		// 		k.Logger(ctx).Error("Unable to unmarshal MsgUndelegate response", "error", err)
+		// 		return err
+		// 	}
+		// 	k.Logger(ctx).Info("Undelegated", "response", response)
+		// 	// we should update delegation records here.
+		// 	if err := k.HandleUndelegate(ctx, src, response.CompletionTime); err != nil {
+		// 		return err
+		// 	}
+		// 	continue
 		// withdrawing rewards ()
 		case "/cosmos.distribution.v1beta1.MsgWithdrawDelegatorReward":
 			// TODO [TEST-124]: Implement! (lo pri)
@@ -279,7 +279,6 @@ func (k Keeper) HandleUndelegate(ctx sdk.Context, msg sdk.Msg, completionTime ti
 		return sdkerrors.Wrapf(sdkerrors.ErrLogic, "Undelegate message was not for a delegation account")
 	}
 
-	
 	undelegateAmt := undelegateMsg.Amount.Amount.Int64()
 	if undelegateAmt <= 0 {
 		return sdkerrors.Wrapf(sdkerrors.ErrLogic, "Undelegate amount must be positive")
