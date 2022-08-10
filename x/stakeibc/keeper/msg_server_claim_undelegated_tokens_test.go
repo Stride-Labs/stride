@@ -1,14 +1,15 @@
 package keeper_test
 
 import (
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	_ "github.com/stretchr/testify/suite"
+
 	epochtypes "github.com/Stride-Labs/stride/x/epochs/types"
 	recordtypes "github.com/Stride-Labs/stride/x/records/types"
 	stakeibckeeper "github.com/Stride-Labs/stride/x/stakeibc/keeper"
 	"github.com/Stride-Labs/stride/x/stakeibc/types"
 	stakeibc "github.com/Stride-Labs/stride/x/stakeibc/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	_ "github.com/stretchr/testify/suite"
 )
 
 type ClaimUndelegatedState struct {
@@ -99,18 +100,11 @@ func (s *KeeperTestSuite) TestClaimUndelegatedTokensSuccessful() {
 	s.Require().NoError(err, "get redemption transfer msg should not error")
 	s.Require().Equal(tc.expectedIcaMsg, *actualTxMsg, "redemption transfer message")
 
-	//Confirm the redemption record has been flagged as not claimable
-	s.App.StakeibcKeeper.FlagRedemptionRecordsAsClaimed(s.Ctx, userRedemptionRecord, 1)
 	redemptionRecord, found := s.App.RecordsKeeper.GetUserRedemptionRecord(s.Ctx, redemptionRecordId)
 	s.Require().True(found)
 	s.Require().False(redemptionRecord.IsClaimable)
 
-	// Confirm pending claims added
-	pendingClaims := s.App.StakeibcKeeper.GetAllPendingClaims(s.Ctx)
-	s.Require().Equal(1, len(pendingClaims))
-	pendingRedemptionRecordIds := pendingClaims[0].UserRedemptionRecordIds
-	s.Require().Equal(1, len(pendingRedemptionRecordIds))
-	s.Require().Equal(redemptionRecordId, pendingRedemptionRecordIds[0])
+	// TODO: check callback data here
 }
 
 func (s *KeeperTestSuite) TestClaimUndelegatedTokensNoUserRedemptionRecord() {

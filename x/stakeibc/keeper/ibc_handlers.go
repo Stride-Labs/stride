@@ -38,23 +38,6 @@ func (k Keeper) HandleAcknowledgement(ctx sdk.Context, modulePacket channeltypes
 	err := json.Unmarshal(acknowledgement, &ack)
 	if err != nil {
 		ackErr := channeltypes.Acknowledgement_Error{}
-		// Clean up any pending claims
-		pendingClaims, found := k.GetPendingClaims(ctx, packetSequenceKey)
-		if found {
-			k.RemovePendingClaims(ctx, packetSequenceKey)
-			userRedemptionRecordKey, err := k.GetUserRedemptionRecordKeyFromPendingClaims(ctx, pendingClaims)
-			if err != nil {
-				k.Logger(ctx).Error("failed to get user redemption record key from pending claim")
-				return err
-			}
-			record, found := k.RecordsKeeper.GetUserRedemptionRecord(ctx, userRedemptionRecordKey)
-			if !found {
-				k.Logger(ctx).Error("failed to get user redemption record from key %s", userRedemptionRecordKey)
-				return err
-			}
-			record.IsClaimable = true
-			k.RecordsKeeper.SetUserRedemptionRecord(ctx, record)
-		}
 		err := json.Unmarshal(acknowledgement, &ackErr)
 		if err != nil {
 			ctx.EventManager().EmitEvent(
@@ -231,27 +214,6 @@ func (k *Keeper) HandleSend(ctx sdk.Context, msg sdk.Msg, sequence string) error
 			}
 			k.RecordsKeeper.SetEpochUnbondingRecord(ctx, epochUnbondingRecord)
 		}
-	} else if sendMsg.FromAddress == redemptionAddress {
-		k.Logger(ctx).Error("ACK - sendMsg.FromAddress == redemptionAddress")
-		// fetch the record from the packet sequence number, then delete the UserRedemptionRecord and the sequence mapping
-		pendingClaims, found := k.GetPendingClaims(ctx, sequence)
-		if !found {
-			k.Logger(ctx).Error("failed to find pending claim")
-			return sdkerrors.Wrapf(types.ErrRecordNotFound, "no pending claim found for sequence (%s)", sequence)
-		}
-		userRedemptionRecordKey, err := k.GetUserRedemptionRecordKeyFromPendingClaims(ctx, pendingClaims)
-		if err != nil {
-			k.Logger(ctx).Error("failed to get user redemption record key from pending claim")
-			return err
-		}
-		_, found = k.RecordsKeeper.GetUserRedemptionRecord(ctx, userRedemptionRecordKey)
-		if !found {
-			errMsg := fmt.Sprintf("User redemption record %s not found on host zone", userRedemptionRecordKey)
-			k.Logger(ctx).Error(errMsg)
-			return sdkerrors.Wrapf(types.ErrInvalidUserRedemptionRecord, "could not get user redemption record: %s", userRedemptionRecordKey)
-		}
-		k.RecordsKeeper.RemoveUserRedemptionRecord(ctx, userRedemptionRecordKey)
-		k.RemovePendingClaims(ctx, sequence)
 	} else {
 		k.Logger(ctx).Error("ACK - sendMsg.FromAddress != withdrawalAddress && sendMsg.FromAddress != delegationAddress && sendMsg.FromAddress != redemptionAddress")
 
