@@ -86,7 +86,6 @@ func (k Keeper) IterateDatapoints(ctx sdk.Context, fn func(index int64, dp types
 	}
 }
 
-// DeleteQuery delete datapoint
 func (k Keeper) DeleteDatapoint(ctx sdk.Context, id string) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefixData)
 	store.Delete([]byte(id))
