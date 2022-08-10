@@ -3,7 +3,10 @@ package keeper
 import (
 	"encoding/json"
 	"fmt"
+<<<<<<< HEAD
 	"time"
+=======
+>>>>>>> 5bb42200 (removed obsolete undelegate function)
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -93,21 +96,6 @@ func (k Keeper) HandleAcknowledgement(ctx sdk.Context, modulePacket channeltypes
 	for msgIndex, msgData := range txMsgData.Data {
 		src := msgs[msgIndex]
 		switch msgData.MsgType {
-		// // unstake
-		// case "/cosmos.staking.v1beta1.MsgUndelegate":
-		// 	response := stakingtypes.MsgUndelegateResponse{}
-		// 	err := proto.Unmarshal(msgData.Data, &response)
-		// 	if err != nil {
-		// 		k.Logger(ctx).Error("Unable to unmarshal MsgUndelegate response", "error", err)
-		// 		return err
-		// 	}
-		// 	k.Logger(ctx).Info("Undelegated", "response", response)
-		// 	// we should update delegation records here.
-		// 	if err := k.HandleUndelegate(ctx, src, response.CompletionTime); err != nil {
-		// 		return err
-		// 	}
-		// 	continue
-		// withdrawing rewards ()
 		case "/cosmos.distribution.v1beta1.MsgWithdrawDelegatorReward":
 			// TODO [TEST-124]: Implement! (lo pri)
 			continue
@@ -260,6 +248,7 @@ func (k *Keeper) HandleSend(ctx sdk.Context, msg sdk.Msg, sequence string) error
 	return nil
 }
 
+<<<<<<< HEAD
 func (k Keeper) HandleUndelegate(ctx sdk.Context, msg sdk.Msg, completionTime time.Time) error {
 	k.Logger(ctx).Info("Received MsgUndelegate acknowledgement")
 	// first, type assertion. we should have stakingtypes.MsgDelegate
@@ -316,4 +305,46 @@ func (k Keeper) HandleUndelegate(ctx sdk.Context, msg sdk.Msg, completionTime ti
 
 	k.Logger(ctx).Info(fmt.Sprintf("Total supply %s", k.bankKeeper.GetSupply(ctx, "stuatom")))
 	return nil
+=======
+func (k *Keeper) HandleDelegate(ctx sdk.Context, msg sdk.Msg, totalDelegate int64) (int64, error) {
+	k.Logger(ctx).Info("Received MsgDelegate acknowledgement")
+	// first, type assertion. we should have stakingtypes.MsgDelegate
+	delegateMsg, ok := msg.(*stakingtypes.MsgDelegate)
+	if !ok {
+		k.Logger(ctx).Error("unable to cast source message to MsgDelegate")
+		return -1, fmt.Errorf("unable to cast source message to MsgDelegate")
+	}
+	// CHECK ZONE
+	hostZoneDenom := delegateMsg.Amount.Denom
+	amount := delegateMsg.Amount.Amount.Int64()
+	zone, err := k.GetHostZoneFromHostDenom(ctx, hostZoneDenom)
+	if err != nil {
+		k.Logger(ctx).Error(fmt.Sprintf("failed to get host zone from host denom %s", hostZoneDenom))
+		return -1, err
+	}
+	record, found := k.RecordsKeeper.GetStakeDepositRecordByAmount(ctx, totalDelegate, zone.ChainId)
+	if !found {
+		errMsg := fmt.Sprintf("No deposit record found for zone: %s, amount: %d", zone.ChainId, totalDelegate)
+		k.Logger(ctx).Error(errMsg)
+		return -1, sdkerrors.Wrapf(sdkerrors.ErrNotFound, errMsg)
+	}
+
+	// TODO(TEST-112) more safety checks here
+	// increment the stakedBal on the hostZone
+	k.Logger(ctx).Info(fmt.Sprintf("incrementing stakedBal %d", amount))
+	if amount < 0 {
+		errMsg := fmt.Sprintf("Balance to stake was negative: %d", amount)
+		k.Logger(ctx).Error(errMsg)
+		return -1, sdkerrors.Wrapf(sdkerrors.ErrLogic, errMsg)
+	} else {
+		zone.StakedBal += amount
+		success := k.AddDelegationToValidator(ctx, *zone, delegateMsg.ValidatorAddress, amount)
+		if !success {
+			return 0, sdkerrors.Wrapf(types.ErrValidatorDelegationChg, "Failed to add delegation to validator")
+		}
+		k.SetHostZone(ctx, *zone)
+	}
+
+	return cast.ToInt64(record.Id), nil
+>>>>>>> 5bb42200 (removed obsolete undelegate function)
 }
