@@ -1,9 +1,10 @@
 package records
 
 import (
+	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	"github.com/Stride-Labs/stride/x/records/keeper"
 	"github.com/Stride-Labs/stride/x/records/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // InitGenesis initializes the capability module's state from a provided genesis
@@ -14,8 +15,6 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) 
 		k.SetUserRedemptionRecord(ctx, elem)
 	}
 
-	// Set userRedemptionRecord count
-	// k.SetUserRedemptionRecordCount(ctx, genState.UserRedemptionRecordCount)
 	// Set all the epochUnbondingRecord
 	for _, elem := range genState.EpochUnbondingRecordList {
 		k.SetEpochUnbondingRecord(ctx, elem)
@@ -44,7 +43,6 @@ func ExportGenesis(ctx sdk.Context, k keeper.Keeper) *types.GenesisState {
 	genesis.DepositRecordCount = k.GetDepositRecordCount(ctx)
 
 	genesis.UserRedemptionRecordList = k.GetAllUserRedemptionRecord(ctx)
-	// genesis.UserRedemptionRecordCount = k.GetUserRedemptionRecordCount(ctx)
 	genesis.EpochUnbondingRecordList = k.GetAllEpochUnbondingRecord(ctx)
 	genesis.EpochUnbondingRecordCount = k.GetEpochUnbondingRecordCount(ctx)
 	// this line is used by starport scaffolding # genesis/module/export

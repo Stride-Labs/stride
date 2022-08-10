@@ -5,6 +5,8 @@ import (
 	"os"
 	"path/filepath"
 
+	porttypes "github.com/cosmos/ibc-go/v3/modules/core/05-port/types"
+
 	"github.com/Stride-Labs/stride/utils"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
@@ -109,6 +111,9 @@ import (
 	interchainquerykeeper "github.com/Stride-Labs/stride/x/interchainquery/keeper"
 	interchainquerytypes "github.com/Stride-Labs/stride/x/interchainquery/types"
 
+	icacallbacksmodule "github.com/Stride-Labs/stride/x/icacallbacks"
+	icacallbacksmodulekeeper "github.com/Stride-Labs/stride/x/icacallbacks/keeper"
+	icacallbacksmoduletypes "github.com/Stride-Labs/stride/x/icacallbacks/types"
 	recordsmodule "github.com/Stride-Labs/stride/x/records"
 	recordsmodulekeeper "github.com/Stride-Labs/stride/x/records/keeper"
 	recordsmoduletypes "github.com/Stride-Labs/stride/x/records/types"
@@ -174,6 +179,7 @@ var (
 		interchainquery.AppModuleBasic{},
 		ica.AppModuleBasic{},
 		recordsmodule.AppModuleBasic{},
+		icacallbacksmodule.AppModuleBasic{},
 		// this line is used by starport scaffolding # stargate/app/moduleBasic
 	)
 
@@ -254,10 +260,12 @@ type StrideApp struct {
 	ScopedStakeibcKeeper capabilitykeeper.ScopedKeeper
 	StakeibcKeeper       stakeibcmodulekeeper.Keeper
 
-	EpochsKeeper          epochsmodulekeeper.Keeper
-	InterchainqueryKeeper interchainquerykeeper.Keeper
-	ScopedRecordsKeeper   capabilitykeeper.ScopedKeeper
-	RecordsKeeper         recordsmodulekeeper.Keeper
+	EpochsKeeper             epochsmodulekeeper.Keeper
+	InterchainqueryKeeper    interchainquerykeeper.Keeper
+	ScopedRecordsKeeper      capabilitykeeper.ScopedKeeper
+	RecordsKeeper            recordsmodulekeeper.Keeper
+	ScopedIcacallbacksKeeper capabilitykeeper.ScopedKeeper
+	IcacallbacksKeeper       icacallbacksmodulekeeper.Keeper
 	// this line is used by starport scaffolding # stargate/app/keeperDeclaration
 
 	mm           *module.Manager
@@ -298,6 +306,7 @@ func NewStrideApp(
 		interchainquerytypes.StoreKey,
 		icacontrollertypes.StoreKey, icahosttypes.StoreKey,
 		recordsmoduletypes.StoreKey,
+		icacallbacksmoduletypes.StoreKey,
 		// this line is used by starport scaffolding # stargate/app/storeKey
 	)
 	tkeys := sdk.NewTransientStoreKeys(paramstypes.TStoreKey)
@@ -430,10 +439,6 @@ func NewStrideApp(
 	)
 	recordsModule := recordsmodule.NewAppModule(appCodec, app.RecordsKeeper, app.AccountKeeper, app.BankKeeper)
 
-	// create IBC stacks by combining middleware with base application
-	// recordsStack contains records -> transfer
-	recordsStack := recordsmodule.NewIBCModule(app.RecordsKeeper, transferIBCModule)
-
 	app.ICAControllerKeeper = icacontrollerkeeper.NewKeeper(
 		appCodec, keys[icacontrollertypes.StoreKey], app.GetSubspace(icacontrollertypes.SubModuleName),
 		app.IBCKeeper.ChannelKeeper, // may be replaced with middleware such as ics29 fee
@@ -443,6 +448,18 @@ func NewStrideApp(
 
 	app.InterchainqueryKeeper = interchainquerykeeper.NewKeeper(appCodec, keys[interchainquerytypes.StoreKey], app.IBCKeeper)
 	interchainQueryModule := interchainquery.NewAppModule(appCodec, app.InterchainqueryKeeper)
+
+	scopedIcacallbacksKeeper := app.CapabilityKeeper.ScopeToModule(icacallbacksmoduletypes.ModuleName)
+	app.ScopedIcacallbacksKeeper = scopedIcacallbacksKeeper
+	app.IcacallbacksKeeper = *icacallbacksmodulekeeper.NewKeeper(
+		appCodec,
+		keys[icacallbacksmoduletypes.StoreKey],
+		keys[icacallbacksmoduletypes.MemStoreKey],
+		app.GetSubspace(icacallbacksmoduletypes.ModuleName),
+		scopedIcacallbacksKeeper,
+		*app.IBCKeeper,
+		app.ICAControllerKeeper,
+	)
 
 	scopedStakeibcKeeper := app.CapabilityKeeper.ScopeToModule(stakeibcmoduletypes.ModuleName)
 	app.ScopedStakeibcKeeper = scopedStakeibcKeeper
@@ -462,16 +479,19 @@ func NewStrideApp(
 		app.InterchainqueryKeeper,
 		app.RecordsKeeper,
 		app.StakingKeeper,
+		app.IcacallbacksKeeper,
 	)
 
 	stakeibcModule := stakeibcmodule.NewAppModule(appCodec, app.StakeibcKeeper, app.AccountKeeper, app.BankKeeper)
 	stakeibcIBCModule := stakeibcmodule.NewIBCModule(app.StakeibcKeeper)
 
+	// Register ICQ callbacks
 	err := app.InterchainqueryKeeper.SetCallbackHandler(stakeibcmoduletypes.ModuleName, app.StakeibcKeeper.CallbackHandler())
 	if err != nil {
 		return nil
 	}
 
+	
 	epochsKeeper := epochsmodulekeeper.NewKeeper(appCodec, keys[epochsmoduletypes.StoreKey])
 	app.EpochsKeeper = *epochsKeeper.SetHooks(
 		epochsmoduletypes.NewMultiEpochHooks(
@@ -479,28 +499,53 @@ func NewStrideApp(
 		),
 	)
 	epochsModule := epochsmodule.NewAppModule(appCodec, app.EpochsKeeper)
+
+	icacallbacksModule := icacallbacksmodule.NewAppModule(appCodec, app.IcacallbacksKeeper, app.AccountKeeper, app.BankKeeper)
+	// Register ICA calllbacks
+	err = app.IcacallbacksKeeper.SetICACallbackHandler(stakeibcmoduletypes.ModuleName, app.StakeibcKeeper.ICACallbackHandler())
+	if err != nil {
+		return nil
+	}
+
 	// this line is used by starport scaffolding # stargate/app/keeperDefinition
 
+	// create IBC middleware stacks by combining middleware with base application
 	app.ICAHostKeeper = icahostkeeper.NewKeeper(
 		appCodec, keys[icahosttypes.StoreKey], app.GetSubspace(icahosttypes.SubModuleName),
 		app.IBCKeeper.ChannelKeeper, &app.IBCKeeper.PortKeeper,
 		app.AccountKeeper, scopedICAHostKeeper, app.MsgServiceRouter(),
 	)
 	icaModule := ica.NewAppModule(&app.ICAControllerKeeper, &app.ICAHostKeeper)
-	// NEXT TODO: implement OnAcknowledgementPacket in module_ibc.go for stakeibc so this type doesn't error
-	icaControllerIBCModule := icacontroller.NewIBCModule(app.ICAControllerKeeper, stakeibcIBCModule)
+
+	// Create the middleware stacks
+
+	// Stack one contains
+	// - IBC
+	// - ICA
+	// - icacallbacks
+	// - stakeibc
+	// - base app
+	var icamiddlewareStack porttypes.IBCModule
+	icamiddlewareStack = icacallbacksmodule.NewIBCModule(app.IcacallbacksKeeper, stakeibcIBCModule)
+	icamiddlewareStack = icacontroller.NewIBCModule(app.ICAControllerKeeper, icamiddlewareStack)
 	icaHostIBCModule := icahost.NewIBCModule(app.ICAHostKeeper)
+
+	// Stack two contains
+	// - IBC
+	// - records
+	// - transfer
+	// - base app
+	recordsStack := recordsmodule.NewIBCModule(app.RecordsKeeper, transferIBCModule)
 
 	// Create static IBC router, add transfer route, then set and seal it
 	ibcRouter := ibcporttypes.NewRouter()
-	ibcRouter.AddRoute(ibctransfertypes.ModuleName, recordsStack)
-	// Unclear whether this can be included in ibc-v3?
-	// ibcRouter.AddRoute(monitoringptypes.ModuleName, monitoringModule)
-	ibcRouter.AddRoute(stakeibcmoduletypes.ModuleName, icaControllerIBCModule)
-	ibcRouter.AddRoute(icacontrollertypes.SubModuleName, icaControllerIBCModule)
-	ibcRouter.AddRoute(icahosttypes.SubModuleName, icaHostIBCModule)
-	// all packets routed to recordsmoduletypes should go through "transfer"
-	// ibcRouter.AddRoute(recordsmoduletypes.ModuleName, recordsModule)
+	ibcRouter.
+		AddRoute(ibctransfertypes.ModuleName, recordsStack).
+		AddRoute(icacontrollertypes.SubModuleName, icamiddlewareStack).
+		AddRoute(icahosttypes.SubModuleName, icaHostIBCModule).
+		// Note, authentication module packets are routed to the top level of the middleware stack
+		AddRoute(stakeibcmoduletypes.ModuleName, icamiddlewareStack).
+		AddRoute(icacallbacksmoduletypes.ModuleName, icamiddlewareStack)
 	// this line is used by starport scaffolding # ibc/app/router
 	app.IBCKeeper.SetRouter(ibcRouter)
 
@@ -540,6 +585,7 @@ func NewStrideApp(
 		interchainQueryModule,
 		icaModule,
 		recordsModule,
+		icacallbacksModule,
 		// this line is used by starport scaffolding # stargate/app/appModule
 	)
 
@@ -571,6 +617,7 @@ func NewStrideApp(
 		epochsmoduletypes.ModuleName,
 		interchainquerytypes.ModuleName,
 		recordsmoduletypes.ModuleName,
+		icacallbacksmoduletypes.ModuleName,
 		// this line is used by starport scaffolding # stargate/app/beginBlockers
 	)
 
@@ -598,6 +645,7 @@ func NewStrideApp(
 		epochsmoduletypes.ModuleName,
 		interchainquerytypes.ModuleName,
 		recordsmoduletypes.ModuleName,
+		icacallbacksmoduletypes.ModuleName,
 		// this line is used by starport scaffolding # stargate/app/endBlockers
 	)
 
@@ -630,6 +678,7 @@ func NewStrideApp(
 		epochsmoduletypes.ModuleName,
 		interchainquerytypes.ModuleName,
 		recordsmoduletypes.ModuleName,
+		icacallbacksmoduletypes.ModuleName,
 		// this line is used by starport scaffolding # stargate/app/initGenesis
 	)
 
@@ -659,6 +708,7 @@ func NewStrideApp(
 	// 	epochsModule,
 	// 	interchainQueryModule,
 	// 	recordsModule,
+	// icacallbacksModule,
 	// this line is used by starport scaffolding # stargate/app/appModule
 	// )
 	// app.sm.RegisterStoreDecoders()
@@ -879,6 +929,7 @@ func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino
 	paramsKeeper.Subspace(icacontrollertypes.SubModuleName)
 	paramsKeeper.Subspace(icahosttypes.SubModuleName)
 	paramsKeeper.Subspace(recordsmoduletypes.ModuleName)
+	paramsKeeper.Subspace(icacallbacksmoduletypes.ModuleName)
 	// this line is used by starport scaffolding # stargate/app/paramSubspace
 
 	return paramsKeeper
