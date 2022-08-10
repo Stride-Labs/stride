@@ -7,7 +7,7 @@ import (
 )
 
 const (
-	UpgradeName = "Upgrade%20to%20Resolve%20Consensus%20Bug"
+	UpgradeName = "Upgrade to Resolve Consensus Bug"
 )
 
 // CreateUpgradeHandler creates an SDK upgrade handler for v2
