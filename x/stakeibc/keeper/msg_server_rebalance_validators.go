@@ -76,7 +76,7 @@ func (k msgServer) RebalanceValidators(goCtx context.Context, msg *types.MsgReba
 	underWeightIndex := len(valDeltaList) - 1
 
 	// check if there is a large enough rebalance, if not, just exit
-	total_delegation := float64(k.GetTotalValidatorDelegations(ctx, hostZone))
+	total_delegation := float64(k.GetTotalValidatorDelegations(hostZone))
 	overweight_delta := floatabs(float64(valDeltaList[overWeightIndex].deltaAmt) / total_delegation)
 	underweight_delta := floatabs(float64(valDeltaList[underWeightIndex].deltaAmt) / total_delegation)
 	max_delta := floatmax(overweight_delta, underweight_delta)

@@ -62,7 +62,7 @@ func (k msgServer) SubmitTx(goCtx context.Context, msg *types.MsgSubmitTx) (*typ
 	// it is the responsibility of the auth module developer to ensure an appropriate timeout timestamp
 	// timeoutTimestamp := time.Now().Add(time.Minute).UnixNano()
 	timeoutTimestamp := ^uint64(0) >> 1
-	_, err = k.ICAControllerKeeper.SendTx(ctx, chanCap, msg.ConnectionId, portID, packetData, cast.ToUint64(timeoutTimestamp))
+	_, err = k.ICAControllerKeeper.SendTx(ctx, chanCap, msg.ConnectionId, portID, packetData, timeoutTimestamp)
 	if err != nil {
 		return nil, err
 	}
@@ -165,7 +165,7 @@ func (k Keeper) UpdateWithdrawalBalance(ctx sdk.Context, zoneInfo types.HostZone
 
 	withdrawalIca := zoneInfo.GetWithdrawalAccount()
 	if withdrawalIca == nil || withdrawalIca.Address == "" {
-		k.Logger(ctx).Error("Zone %s is missing a delegation address!", zoneInfo.ChainId)
+		k.Logger(ctx).Error("Zone %s is missing a withdrawal address!", zoneInfo.ChainId)
 	}
 	k.Logger(ctx).Info(fmt.Sprintf("\tQuerying withdrawalBalances for %s", zoneInfo.ChainId))
 

@@ -14,12 +14,6 @@ var (
 	_ sdk.Msg = &MsgSubmitQueryResponse{}
 )
 
-// NewMsgSubmitQueryResponse - construct a msg to fulfil query request.
-//nolint:interfacer
-func NewMsgSubmitQueryResponse(chain_id string, result string, from_address sdk.Address) *MsgSubmitQueryResponse {
-	return &MsgSubmitQueryResponse{ChainId: chain_id, Result: nil, FromAddress: from_address.String()}
-}
-
 // Route Implements Msg.
 func (msg MsgSubmitQueryResponse) Route() string { return RouterKey }
 
