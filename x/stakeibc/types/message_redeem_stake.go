@@ -1,8 +1,6 @@
 package types
 
 import (
-	"strings"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
@@ -18,12 +16,6 @@ func NewMsgRedeemStake(creator string, amount int64, hostZone string, receiver s
 		HostZone: hostZone,
 		Receiver: receiver,
 	}
-}
-
-// isStAsset checks if the denom of the asset matches our stAsset prefix
-// Note, this is not definitive (other f'st{something}' tokens could be minted)
-func IsStAsset(denom string) bool {
-	return strings.HasPrefix(denom, "st")
 }
 
 func (msg *MsgRedeemStake) Route() string {

@@ -11,10 +11,6 @@ import (
 	"github.com/Stride-Labs/stride/x/interchainquery/types"
 )
 
-const (
-	RetryInterval = 25
-)
-
 // EndBlocker of interchainquery module
 func (k Keeper) EndBlocker(ctx sdk.Context) {
 	defer telemetry.ModuleMeasureSince(types.ModuleName, time.Now(), telemetry.MetricKeyBeginBlocker)
