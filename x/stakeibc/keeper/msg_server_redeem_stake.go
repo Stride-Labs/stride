@@ -4,8 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/spf13/cast"
-
 	recordstypes "github.com/Stride-Labs/stride/x/records/types"
 	"github.com/Stride-Labs/stride/x/stakeibc/types"
 
@@ -76,7 +74,7 @@ func (k msgServer) RedeemStake(goCtx context.Context, msg *types.MsgRedeemStake)
 		Amount:      inCoin.Amount.Uint64(),
 		Denom:       hostZone.HostDenom,
 		HostZoneId:  hostZone.ChainId,
-		EpochNumber: cast.ToInt64(epochTracker.EpochNumber),
+		EpochNumber: epochTracker.EpochNumber,
 		IsClaimable: false,
 	}
 	_, found = k.RecordsKeeper.GetUserRedemptionRecord(ctx, redemptionId)

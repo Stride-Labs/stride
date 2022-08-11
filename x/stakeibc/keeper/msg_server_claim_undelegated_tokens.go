@@ -82,10 +82,14 @@ func (k Keeper) GetRedemptionTransferMsg(ctx sdk.Context, userRedemptionRecord *
 	}
 
 	var msgs []sdk.Msg
+	rrAmt, err := cast.ToInt64E(userRedemptionRecord.Amount)
+	if err != nil {
+		return nil, sdkerrors.Wrap(types.ErrInvalidUserRedemptionRecord, err.Error())
+	}
 	msgs = append(msgs, &bankTypes.MsgSend{
 		FromAddress: redemptionAccount.Address,
 		ToAddress:   userRedemptionRecord.Receiver,
-		Amount:      sdk.NewCoins(sdk.NewInt64Coin(userRedemptionRecord.Denom, cast.ToInt64(userRedemptionRecord.Amount))),
+		Amount:      sdk.NewCoins(sdk.NewInt64Coin(userRedemptionRecord.Denom, rrAmt)),
 	})
 
 	// Give claims a 10 minute timeout
@@ -95,7 +99,15 @@ func (k Keeper) GetRedemptionTransferMsg(ctx sdk.Context, userRedemptionRecord *
 		k.Logger(ctx).Error(errMsg)
 		return nil, sdkerrors.Wrap(types.ErrEpochNotFound, errMsg)
 	}
-	timeout := cast.ToUint64(epoch_tracker.NextEpochStartTime) + cast.ToUint64(k.GetParam(ctx, types.KeyICATimeoutNanos))
+	icaTimeOutNanos, err := cast.ToUint64E(k.GetParam(ctx, types.KeyICATimeoutNanos))
+	if err != nil {
+		return nil, sdkerrors.Wrap(types.ErrParamNotFound, err.Error())
+	}
+	nextEpochStarttime, err := cast.ToUint64E(epoch_tracker.NextEpochStartTime)
+	if err != nil {
+		return nil, sdkerrors.Wrap(types.ErrParamNotFound, err.Error())
+	}
+	timeout := nextEpochStarttime + icaTimeOutNanos
 
 	icaTx := IcaTx{
 		ConnectionId: hostZone.GetConnectionId(),

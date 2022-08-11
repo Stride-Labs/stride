@@ -118,7 +118,11 @@ func WithdrawalBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query icq
 	REV_ACCT := "cosmos1wdplq6qjh2xruc7qqagma9ya665q6qhcwju3ng"
 
 	params := k.GetParams(ctx)
-	strideCommission := sdk.NewDec(cast.ToInt64(params.GetStrideCommission())).Quo(sdk.NewDec(100)) // convert to decimal
+	stCommission, err := cast.ToInt64E(params.GetStrideCommission())
+	if err != nil {
+		return err
+	}
+	strideCommission := sdk.NewDec(stCommission).Quo(sdk.NewDec(100))
 	// check that stride commission is between 0 and 1
 	if strideCommission.LT(sdk.ZeroDec()) || strideCommission.GT(sdk.OneDec()) {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "Aborting reinvestment callback -- Stride commission must be between 0 and 1!")

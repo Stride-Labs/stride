@@ -16,7 +16,7 @@ import (
 	"github.com/Stride-Labs/stride/x/stakeibc/types"
 )
 
-func (k Keeper) CreateEpochUnbondings(ctx sdk.Context, epochNumber int64) bool {
+func (k Keeper) CreateEpochUnbondings(ctx sdk.Context, epochNumber uint64) bool {
 	hostZoneUnbondings := make(map[string]*recordstypes.HostZoneUnbonding)
 	addEpochUndelegation := func(ctx sdk.Context, index int64, hostZone types.HostZone) error {
 		hostZoneUnbonding := recordstypes.HostZoneUnbonding{
@@ -33,7 +33,7 @@ func (k Keeper) CreateEpochUnbondings(ctx sdk.Context, epochNumber int64) bool {
 	k.IterateHostZones(ctx, addEpochUndelegation)
 	epochUnbondingRecord := recordstypes.EpochUnbondingRecord{
 		Id:                   0,
-		UnbondingEpochNumber: cast.ToUint64(epochNumber),
+		UnbondingEpochNumber: epochNumber,
 		HostZoneUnbondings:   hostZoneUnbondings,
 	}
 	k.Logger(ctx).Info(fmt.Sprintf("AppendEpochUnbondingRecord %v", epochUnbondingRecord))
@@ -71,8 +71,16 @@ func (k Keeper) SendHostZoneUnbondings(ctx sdk.Context, hostZone types.HostZone)
 	overflowAmt := int64(0)
 	for _, validator := range validators {
 		valAddr := validator.GetAddress()
-		valUnbondAmt := cast.ToInt64(newUnbondingToValidator[valAddr])
-		currentAmtStaked := cast.ToInt64(validator.GetDelegationAmt())
+		valUnbondAmt, err := cast.ToInt64E(newUnbondingToValidator[valAddr])
+		if err != nil {
+			k.Logger(ctx).Error(fmt.Sprintf("Error casting validator unbonding amount %d: %s", newUnbondingToValidator[valAddr], err))
+			return false
+		}
+		currentAmtStaked, err := cast.ToInt64E(validator.GetDelegationAmt())
+		if err != nil {
+			k.Logger(ctx).Error(fmt.Sprintf("Error casting validator staked amount %d: %s", validator.GetDelegationAmt(), err))
+			return false
+		}
 		if valUnbondAmt > currentAmtStaked { // if we don't have enough assets to unbond
 			overflowAmt += valUnbondAmt - currentAmtStaked
 			valUnbondAmt = currentAmtStaked
@@ -85,7 +93,12 @@ func (k Keeper) SendHostZoneUnbondings(ctx sdk.Context, hostZone types.HostZone)
 			valUnbondAmt := valAddrToUnbondAmt[valAddr]
 			currentAmtStaked := validator.GetDelegationAmt()
 			// store how many more tokens we could unbond, if needed
-			amtToPotentiallyUnbond := cast.ToInt64(currentAmtStaked) - valUnbondAmt
+			curAmtStaked, err := cast.ToInt64E(currentAmtStaked)
+			if err != nil {
+				k.Logger(ctx).Error(fmt.Sprintf("Error casting validator staked amount %d: %s", currentAmtStaked, err))
+				return false
+			}
+			amtToPotentiallyUnbond := curAmtStaked - valUnbondAmt
 			if amtToPotentiallyUnbond > 0 { // if we can afford to unbond more
 				if amtToPotentiallyUnbond > overflowAmt { // we can fully cover the overflow
 					valAddrToUnbondAmt[valAddr] += overflowAmt
@@ -229,7 +242,12 @@ func (k Keeper) SweepAllUnbondedTokens(ctx sdk.Context) {
 				delegationAccount := zoneInfo.GetDelegationAccount()
 				redemptionAccount := zoneInfo.GetRedemptionAccount()
 
-				sweepCoin := sdk.NewCoin(zoneInfo.HostDenom, sdk.NewInt(cast.ToInt64(totalAmtTransferToRedemptionAcct)))
+				totalAmtTransferToRedemptionAcct, err := cast.ToInt64E(totalAmtTransferToRedemptionAcct)
+				if err != nil {
+					k.Logger(ctx).Error(fmt.Sprintf("\t\tCould not convert %d to int64", totalAmtTransferToRedemptionAcct))
+					return sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "\t\tCould not convert %d to int64", totalAmtTransferToRedemptionAcct)
+				}
+				sweepCoin := sdk.NewCoin(zoneInfo.HostDenom, sdk.NewInt(totalAmtTransferToRedemptionAcct))
 				var msgs []sdk.Msg
 				// construct the msg
 				msgs = append(msgs, &banktypes.MsgSend{FromAddress: delegationAccount.GetAddress(),
@@ -238,7 +256,7 @@ func (k Keeper) SweepAllUnbondedTokens(ctx sdk.Context) {
 				ctx.Logger().Info(fmt.Sprintf("Bank sending unbonded tokens batch, from delegation to redemption account. Msg: %v", msgs))
 
 				// Send the transaction through SubmitTx
-				_, err := k.SubmitTxsDayEpoch(ctx, zoneInfo.ConnectionId, msgs, *delegationAccount)
+				_, err = k.SubmitTxsDayEpoch(ctx, zoneInfo.ConnectionId, msgs, *delegationAccount)
 				if err != nil {
 					ctx.Logger().Info(fmt.Sprintf("Failed to SubmitTxs for %s", zoneInfo.ChainId))
 				}

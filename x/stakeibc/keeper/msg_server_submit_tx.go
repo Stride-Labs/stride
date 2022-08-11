@@ -101,7 +101,7 @@ func (k Keeper) DelegateOnHost(ctx sdk.Context, hostZone types.HostZone, amt sdk
 				DelegatorAddress: delegationIca.GetAddress(),
 				ValidatorAddress: validator.GetAddress(),
 				Amount:           relAmt})
-			}
+		}
 	}
 	// Send the transaction through SubmitTx
 	_, err = k.SubmitTxsStrideEpoch(ctx, connectionId, msgs, *delegationIca)
@@ -208,11 +208,18 @@ func (k Keeper) SubmitTxsEpoch(ctx sdk.Context, connectionId string, msgs []sdk.
 		return 0, sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "Failed to get epoch tracker for %s", epochType)
 	}
 	// BUFFER by 5% of the epoch length
-	bufferSize := cast.ToInt64(k.GetParam(ctx, types.KeyBufferSize))
+	bufferSize, err := cast.ToInt64E(k.GetParam(ctx, types.KeyBufferSize))
+	if err != nil {
+		return 0, sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "Failed to get buffer size: %s", err)
+	}
 	BUFFER := epochTracker.Duration / bufferSize
 	timeoutNanos := epochTracker.NextEpochStartTime - BUFFER
-	k.Logger(ctx).Info(fmt.Sprintf("Submitting txs for epoch %s %d %d", epochTracker.EpochIdentifier, epochTracker.NextEpochStartTime, timeoutNanos))
-	sequence, err := k.SubmitTxs(ctx, connectionId, msgs, account, cast.ToUint64(timeoutNanos))
+	timeoutNanosSafe, err := cast.ToUint64E(timeoutNanos)
+	if err != nil {
+		return 0, sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "Failed to get timeout nanos: %s", err)
+	}
+	k.Logger(ctx).Info(fmt.Sprintf("Submitting txs for epoch %s %d %d", epochTracker.EpochIdentifier, epochTracker.NextEpochStartTime, timeoutNanosSafe))
+	sequence, err := k.SubmitTxs(ctx, connectionId, msgs, account, timeoutNanosSafe)
 	if err != nil {
 		return 0, err
 	}
@@ -260,11 +267,11 @@ func (k Keeper) SubmitTxs(ctx sdk.Context, connectionId string, msgs []sdk.Msg, 
 
 	// Store the callback data
 	callback := icacallbackstypes.CallbackData{
-		CallbackKey: icacallbackstypes.PacketID(portID, channelID, sequence),
-		PortId: portID,
-		ChannelId: channelID,
-		Sequence: sequence,
-		CallbackId: "samplecallback",
+		CallbackKey:  icacallbackstypes.PacketID(portID, channelID, sequence),
+		PortId:       portID,
+		ChannelId:    channelID,
+		Sequence:     sequence,
+		CallbackId:   "samplecallback",
 		CallbackArgs: []byte{},
 	}
 	k.ICACallbacksKeeper.SetCallbackData(ctx, callback)
@@ -312,9 +319,8 @@ func (k Keeper) SubmitTxs_OLD(ctx sdk.Context, connectionId string, msgs []sdk.M
 	return sequence, nil
 }
 
-func (k Keeper) GetLightClientHeightSafely(ctx sdk.Context, connectionID string) (int64, bool) {
+func (k Keeper) GetLightClientHeightSafely(ctx sdk.Context, connectionID string) (uint64, bool) {
 
-	var latestHeightHostZone int64 // defaults to 0
 	// get light client's latest height
 	conn, found := k.IBCKeeper.ConnectionKeeper.GetConnection(ctx, connectionID)
 	if !found {
@@ -329,7 +335,11 @@ func (k Keeper) GetLightClientHeightSafely(ctx sdk.Context, connectionID string)
 	} else {
 		// TODO(TEST-119) get stAsset supply at SAME time as hostZone height
 		// TODO(TEST-112) check on safety of castng uint64 to int64
-		latestHeightHostZone = cast.ToInt64(clientState.GetLatestHeight().GetRevisionHeight())
+		latestHeightHostZone, err := cast.ToUint64E(clientState.GetLatestHeight().GetRevisionHeight())
+		if err != nil {
+			k.Logger(ctx).Error(fmt.Sprintf("error casting latest height to int64: %s", err))
+			return 0, false
+		}
 		return latestHeightHostZone, true
 	}
 }

@@ -178,7 +178,12 @@ func (k Keeper) HandleAcknowledgement(ctx sdk.Context, modulePacket channeltypes
 	}
 
 	if recordIdToDelete >= 0 {
-		k.RecordsKeeper.RemoveDepositRecord(ctx, cast.ToUint64(recordIdToDelete))
+		id, err := cast.ToUint64E(recordIdToDelete)
+		if err != nil {
+			k.Logger(ctx).Error("unable to convert record id to uint64", "error", err)
+			return err
+		}
+		k.RecordsKeeper.RemoveDepositRecord(ctx, id)
 	}
 
 	ctx.EventManager().EmitEvent(
@@ -341,7 +346,12 @@ func (k *Keeper) HandleDelegate(ctx sdk.Context, msg sdk.Msg, totalDelegate int6
 		k.SetHostZone(ctx, *zone)
 	}
 
-	return cast.ToInt64(record.Id), nil
+	id, err := cast.ToInt64E(record.Id)
+	if err != nil {
+		k.Logger(ctx).Error("failed to convert record id to int64")
+		return -1, err
+	}
+	return id, nil
 }
 
 func (k Keeper) HandleUndelegate(ctx sdk.Context, msg sdk.Msg, completionTime time.Time) error {
@@ -363,7 +373,6 @@ func (k Keeper) HandleUndelegate(ctx sdk.Context, msg sdk.Msg, completionTime ti
 		return sdkerrors.Wrapf(sdkerrors.ErrLogic, "Undelegate message was not for a delegation account")
 	}
 
-	
 	undelegateAmt := undelegateMsg.Amount.Amount.Int64()
 	if undelegateAmt <= 0 {
 		return sdkerrors.Wrapf(sdkerrors.ErrLogic, "Undelegate amount must be positive")
@@ -393,7 +402,11 @@ func (k Keeper) HandleUndelegate(ctx sdk.Context, msg sdk.Msg, completionTime ti
 			continue
 		}
 		hostZoneRecord.Status = recordstypes.HostZoneUnbonding_UNBONDED
-		hostZoneRecord.UnbondingTime = cast.ToUint64(completionTime.UnixNano())
+		hostZoneRecord.UnbondingTime, err = cast.ToUint64E(completionTime.UnixNano())
+		if err != nil {
+			k.Logger(ctx).Error("failed to convert completion time to uint64")
+			return err
+		}
 		k.Logger(ctx).Info(fmt.Sprintf("Set unbonding time to %v for host zone %s's unbonding for %d%s", completionTime, zone.ChainId, undelegateMsg.Amount.Amount.Int64(), undelegateMsg.Amount.Denom))
 		// save back the altered SetEpochUnbondingRecord
 		k.RecordsKeeper.SetEpochUnbondingRecord(ctx, epochUnbonding)

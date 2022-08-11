@@ -107,7 +107,11 @@ func (k *Keeper) GetDatapointOrRequest(ctx sdk.Context, module string, connectio
 		return types.DataPoint{}, fmt.Errorf("no data; query submitted")
 	}
 
-	if val.LocalHeight.LT(sdk.NewInt(ctx.BlockHeight() - cast.ToInt64(max_age))) { // this is somewhat arbitrary; TODO: make this better
+	max_age_, err := cast.ToInt64E(max_age)
+	if err != nil {
+		return types.DataPoint{}, err
+	}
+	if val.LocalHeight.LT(sdk.NewInt(ctx.BlockHeight() - max_age_)) { // this is somewhat arbitrary; TODO: make this better
 		err := k.MakeRequest(ctx, connection_id, chain_id, query_type, request, sdk.NewInt(-1), "", "", max_age, height)
 		if err != nil {
 			return types.DataPoint{}, err

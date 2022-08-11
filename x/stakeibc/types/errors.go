@@ -27,4 +27,5 @@ var (
 	ErrInvalidNumValidator         = sdkerrors.Register(ModuleName, 1517, "invalid number of validators")
 	ErrValidatorNotRemoved         = sdkerrors.Register(ModuleName, 1518, "validator not removed")
 	ErrHostZoneNotFound            = sdkerrors.Register(ModuleName, 1519, "host zone not found")
+	ErrParamNotFound               = sdkerrors.Register(ModuleName, 1520, "param not found")
 )
