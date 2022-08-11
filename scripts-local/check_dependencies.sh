@@ -17,7 +17,7 @@ if ! type "jq" > /dev/null; then
 fi
 
 echo "Checking module dependencies... ";
-MODULES=("gaia" "hermes" "interchain-queries")
+MODULES=("gaia" "hermes" "icq")
 deps=0
 for module in ${MODULES}; 
 do

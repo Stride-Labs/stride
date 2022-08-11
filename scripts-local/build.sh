@@ -26,7 +26,7 @@ while getopts sghi flag; do
            cd ../..
            echo "Done" ;;
         i) printf '%s' "Building ICQ...    ";
-           cd deps/interchain-queries; 
+           cd deps/icq; 
            go build -mod=readonly -trimpath -o $BUILDDIR ./... 2>&1 | grep -v -E "deprecated|keychain" || true; 
            cd ../..
            echo "Done" ;;

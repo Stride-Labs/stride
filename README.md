@@ -51,7 +51,7 @@ Developers who wish to develop on Stride can easily spin up 3 Stride nodes, 3 Ga
 The fastest way to develop on Stride is local development mode.
 
 #### Set up local development mode 
-Install the required git submodule dependencies (gaia, hermes, interchain-queries). 
+Install the required git submodule dependencies (gaia, hermes, icq). 
 ```
 git submodule update --init
 ```

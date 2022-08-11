@@ -16,7 +16,7 @@ while getopts sghi flag; do
         s) docker build --tag stridezone:stride -f Dockerfile.stride . ;;
         g) docker build --tag stridezone:gaia -f Dockerfile.gaia . ;;
         h) docker build --tag stridezone:hermes -f Dockerfile.hermes . ;;
-        i) docker build --tag stridezone:interchain-queries -f Dockerfile.icq . ;;
+        i) docker build --tag stridezone:icq -f Dockerfile.icq . ;;
     esac
 done
 

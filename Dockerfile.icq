@@ -3,9 +3,9 @@ FROM golang:1.17-bullseye
 RUN apt install git
 
 WORKDIR /src/app
-RUN git clone https://github.com/Stride-Labs/interchain-queries.git
-RUN cp -r interchain-queries/* .
-RUN rm -rf interchain-queries
+RUN git clone https://github.com/Stride-Labs/icq.git
+RUN cp -r icq/* .
+RUN rm -rf icq
 
 # copy over stride module and install it
 RUN mkdir stride_ref
@@ -16,7 +16,7 @@ WORKDIR /src/app
 RUN go mod download
 RUN go build
 
-RUN ln -s /src/app/interchain-queries /usr/local/bin
+RUN ln -s /src/app/icq /usr/local/bin
 RUN adduser --system --home /icq --disabled-password --disabled-login icq -U 1000
 USER icq
 

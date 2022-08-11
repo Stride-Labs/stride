@@ -21,7 +21,7 @@ HERMES_CMD="$SCRIPT_DIR/../../build/hermes/release/hermes -c $SCRIPT_DIR/hermes/
 
 ICQ_STRIDE_ACCT=icq1
 ICQ_GAIA_ACCT=icq2
-ICQ_CMD="$SCRIPT_DIR/../../build/interchain-queries --home $STATE/icq"
+ICQ_CMD="$SCRIPT_DIR/../../build/icq --home $STATE/icq"
 
 GET_MNEMONIC() {
   grep -i -A 10 "\- name: $1" "$STATE/keys.txt" | tail -n 1

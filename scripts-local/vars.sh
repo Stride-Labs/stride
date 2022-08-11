@@ -78,7 +78,7 @@ HERMES_STRIDE_MNEMONIC="alter old invest friend relief slot swear pioneer syrup 
 HERMES_STRIDE_ADDR="stride1ft20pydau82pgesyl9huhhux307s9h3078692y"
 HERMES_GAIA_MNEMONIC="resemble accident lake amateur physical jewel taxi nut demand magnet person blanket trip entire awkward fiber usual current index limb lady lady depart train"
 
-ICQ_CMD="$SCRIPT_DIR/../build/interchain-queries --home $STATE/icq"
+ICQ_CMD="$SCRIPT_DIR/../build/icq --home $STATE/icq"
 
 ICQ_STRIDE_ACCT=icq1
 ICQ_GAIA_ACCT=icq2

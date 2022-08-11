@@ -72,7 +72,7 @@ GAIA3_EXEC="$gaia_exec ${GAIA_NODE_NAMES[2]} gaiad --home /gaia/.gaiad"
 RLY_MNEMONIC_1="alter old invest friend relief slot swear pioneer syrup economy vendor tray focus hedgehog artist legend antenna hair almost donkey spice protect sustain increase"
 RLY_MNEMONIC_2="resemble accident lake amateur physical jewel taxi nut demand magnet person blanket trip entire awkward fiber usual current index limb lady lady depart train"
 
-ICQ_RUN="docker-compose --ansi never run --rm -T icq interchain-queries"
+ICQ_RUN="docker-compose --ansi never run --rm -T icq icq"
 
 ICQ_STRIDE_KEY="helmet say goat special plug umbrella finger night flip axis resource tuna trigger angry shove essay point laundry horror eager forget depend siren alarm"
 ICQ_GAIA_KEY="capable later bamboo snow drive afraid cheese practice latin brush hand true visa drama mystery bird client nature jealous guess tank marriage volume fantasy"
@@ -86,4 +86,4 @@ CSLEEP() {
 }
 
 # ICQ
-ICQ_RUN="docker-compose --ansi never run -T icq interchain-queries"
+ICQ_RUN="docker-compose --ansi never run -T icq icq"
