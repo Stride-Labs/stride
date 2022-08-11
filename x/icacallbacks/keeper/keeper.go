@@ -86,7 +86,7 @@ func (k *Keeper) ClaimCapability(ctx sdk.Context, cap *capabilitytypes.Capabilit
 	return k.scopedKeeper.ClaimCapability(ctx, cap, name)
 }
 
-func (k Keeper) CallRegisteredICACallback(ctx sdk.Context, modulePacket channeltypes.Packet, acknowledgement []byte) error {
+func (k Keeper) CallRegisteredICACallback(ctx sdk.Context, modulePacket channeltypes.Packet, acknowledgement *channeltypes.Acknowledgement_Result) error {
 	// get the relevant module from the channel and port
 	portID := modulePacket.GetSourcePort()
 	channelID := modulePacket.GetSourceChannel()
