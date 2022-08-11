@@ -77,6 +77,7 @@ func (k msgServer) LiquidStake(goCtx context.Context, msg *types.MsgLiquidStake)
 	}
 	depositRecord.Amount += cast.ToInt64(msg.Amount)
 	k.RecordsKeeper.SetDepositRecord(ctx, *depositRecord)
+	// TEST
 
 	return &types.MsgLiquidStakeResponse{}, nil
 }
