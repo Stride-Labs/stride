@@ -129,7 +129,11 @@ func (k Keeper) SendHostZoneUnbondings(ctx sdk.Context, hostZone types.HostZone)
 		SplitDelegations:      splitDelegations,
 		UnbondingEpochNumbers: unbondingEpochNumbers,
 	}
-	marshalledCallbackArgs := k.MarshalUndelegateCallbackArgs(ctx, undelegateCallback)
+	marshalledCallbackArgs, err := k.MarshalUndelegateCallbackArgs(ctx, undelegateCallback)
+	if err != nil {
+		k.Logger(ctx).Error(err.Error())
+		return false
+	}
 
 	_, err = k.SubmitTxsDayEpoch(ctx, hostZone.GetConnectionId(), msgs, *delegationAccount, "undelegate", marshalledCallbackArgs)
 	if err != nil {
