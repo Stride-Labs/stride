@@ -93,9 +93,8 @@ func DelegateCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ack
 	k.Logger(ctx).Info(fmt.Sprintf("DelegateCallback %v", delegateCallback))
 	hostZone := delegateCallback.GetHostZoneId()
 	zone, found := k.GetHostZone(ctx, hostZone)
-	_ = zone
 	if !found {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "host zone not found")
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "host zone not found %s", hostZone)
 	}
 	recordId := delegateCallback.GetDepositRecordId()
 
