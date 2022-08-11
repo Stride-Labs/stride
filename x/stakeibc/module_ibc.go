@@ -155,6 +155,10 @@ func (im IBCModule) OnAcknowledgementPacket(
 	}
 	ctx = ctx.WithContext(context.WithValue(ctx.Context(), connectionIdContextKey(connectionId), connectionId))
 	im.keeper.Logger(ctx).Info("HANDLING ACK")
+	err = im.keeper.ICACallbacksKeeper.CallRegisteredICACallback(ctx, modulePacket, []byte{})
+	if err != nil {
+		return err
+	}
 	return im.keeper.HandleAcknowledgement(ctx, modulePacket, acknowledgement)
 }
 
@@ -164,6 +168,10 @@ func (im IBCModule) OnTimeoutPacket(
 	modulePacket channeltypes.Packet,
 	relayer sdk.AccAddress,
 ) error {
+	err := im.keeper.ICACallbacksKeeper.CallRegisteredICACallback(ctx, modulePacket, []byte{})
+	if err != nil {
+		return err
+	}
 	return nil
 	// TODO(TEST-21): Implement OnTimeoutPacket logic
 	// var modulePacketData types.StakeibcPacketData
@@ -202,6 +210,8 @@ func (im IBCModule) NegotiateAppVersion(
 ) (version string, err error) {
 	return proposedVersion, nil
 }
+
+
 
 // ###################################################################################
 // 	Required functions to satisfy interface but not implemented for ICA auth modules

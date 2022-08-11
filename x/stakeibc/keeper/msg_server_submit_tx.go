@@ -8,6 +8,8 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/spf13/cast"
 
+	icacallbackstypes "github.com/Stride-Labs/stride/x/icacallbacks/types"
+
 	"github.com/Stride-Labs/stride/x/stakeibc/types"
 
 	bankTypes "github.com/cosmos/cosmos-sdk/x/bank/types"
@@ -60,7 +62,7 @@ func (k msgServer) SubmitTx(goCtx context.Context, msg *types.MsgSubmitTx) (*typ
 	// it is the responsibility of the auth module developer to ensure an appropriate timeout timestamp
 	// timeoutTimestamp := time.Now().Add(time.Minute).UnixNano()
 	timeoutTimestamp := ^uint64(0) >> 1
-	_, err = k.ICAControllerKeeper.SendTx(ctx, chanCap, msg.ConnectionId, portID, packetData, cast.ToUint64(timeoutTimestamp))
+	_, err = k.ICAControllerKeeper.SendTx(ctx, chanCap, msg.ConnectionId, portID, packetData, timeoutTimestamp)
 	if err != nil {
 		return nil, err
 	}
@@ -153,7 +155,7 @@ func (k Keeper) UpdateWithdrawalBalance(ctx sdk.Context, zoneInfo types.HostZone
 
 	withdrawalIca := zoneInfo.GetWithdrawalAccount()
 	if withdrawalIca == nil || withdrawalIca.Address == "" {
-		k.Logger(ctx).Error("Zone %s is missing a delegation address!", zoneInfo.ChainId)
+		k.Logger(ctx).Error("Zone %s is missing a withdrawal address!", zoneInfo.ChainId)
 	}
 	k.Logger(ctx).Info(fmt.Sprintf("\tQuerying withdrawalBalances for %s", zoneInfo.ChainId))
 
@@ -221,6 +223,57 @@ func (k Keeper) SubmitTxsEpoch(ctx sdk.Context, connectionId string, msgs []sdk.
 // SubmitTxs submits an ICA transaction containing multiple messages
 func (k Keeper) SubmitTxs(ctx sdk.Context, connectionId string, msgs []sdk.Msg, account types.ICAAccount, timeoutTimestamp uint64) (uint64, error) {
 	k.Logger(ctx).Info(fmt.Sprintf("SubmitTxs %v", msgs))
+	chainId, err := k.GetChainID(ctx, connectionId)
+	if err != nil {
+		return 0, err
+	}
+	owner := types.FormatICAAccountOwner(chainId, account.GetTarget())
+	portID, err := icatypes.NewControllerPortID(owner)
+	if err != nil {
+		return 0, err
+	}
+
+	channelID, found := k.ICAControllerKeeper.GetActiveChannelID(ctx, connectionId, portID)
+	if !found {
+		return 0, sdkerrors.Wrapf(icatypes.ErrActiveChannelNotFound, "failed to retrieve active channel for port %s", portID)
+	}
+
+	chanCap, found := k.scopedKeeper.GetCapability(ctx, host.ChannelCapabilityPath(portID, channelID))
+	if !found {
+		return 0, sdkerrors.Wrap(channeltypes.ErrChannelCapabilityNotFound, "module does not own channel capability")
+	}
+
+	data, err := icatypes.SerializeCosmosTx(k.cdc, msgs)
+	if err != nil {
+		return 0, err
+	}
+
+	packetData := icatypes.InterchainAccountPacketData{
+		Type: icatypes.EXECUTE_TX,
+		Data: data,
+	}
+
+	sequence, err := k.ICAControllerKeeper.SendTx(ctx, chanCap, connectionId, portID, packetData, timeoutTimestamp)
+	if err != nil {
+		return 0, err
+	}
+
+	// Store the callback data
+	callback := icacallbackstypes.CallbackData{
+		CallbackKey: icacallbackstypes.PacketID(portID, channelID, sequence),
+		PortId: portID,
+		ChannelId: channelID,
+		Sequence: sequence,
+		CallbackId: "samplecallback",
+		CallbackArgs: []byte{},
+	}
+	k.ICACallbacksKeeper.SetCallbackData(ctx, callback)
+
+	return sequence, nil
+}
+
+// SubmitTxs submits an ICA transaction containing multiple messages
+func (k Keeper) SubmitTxs_OLD(ctx sdk.Context, connectionId string, msgs []sdk.Msg, account types.ICAAccount, timeoutTimestamp uint64) (uint64, error) {
 	chainId, err := k.GetChainID(ctx, connectionId)
 	if err != nil {
 		return 0, err
