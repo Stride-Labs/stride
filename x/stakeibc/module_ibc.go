@@ -1,7 +1,6 @@
 package stakeibc
 
 import (
-	"context"
 	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -25,12 +24,6 @@ func NewIBCModule(k keeper.Keeper) IBCModule {
 	return IBCModule{
 		keeper: k,
 	}
-}
-
-type connectionIdContextKey string
-
-func (c connectionIdContextKey) String() string {
-	return string(c)
 }
 
 func (im IBCModule) Hooks() keeper.Hooks {
@@ -139,15 +132,8 @@ func (im IBCModule) OnAcknowledgementPacket(
 	acknowledgement []byte,
 	relayer sdk.AccAddress,
 ) error {
-	connectionId, _, err := im.keeper.IBCKeeper.ChannelKeeper.GetChannelConnection(ctx, modulePacket.SourcePort, modulePacket.SourceChannel)
-	if err != nil {
-		err = fmt.Errorf("packet connection not found: %w", err)
-		ctx.Logger().Error(err.Error())
-		return err
-	}
-	ctx = ctx.WithContext(context.WithValue(ctx.Context(), connectionIdContextKey(connectionId), connectionId))
 	im.keeper.Logger(ctx).Info("HANDLING ACK")
-	err = im.keeper.ICACallbacksKeeper.CallRegisteredICACallback(ctx, modulePacket, acknowledgement)
+	err := im.keeper.ICACallbacksKeeper.CallRegisteredICACallback(ctx, modulePacket, acknowledgement)
 	if err != nil {
 		return err
 	}
