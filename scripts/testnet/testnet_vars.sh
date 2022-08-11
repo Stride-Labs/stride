@@ -28,5 +28,5 @@ GET_MNEMONIC() {
 }
 
 GET_ADDRESS() {
-  grep -i -A 10 "\- name: val1" scripts/testnet/state/keys.txt | sed -n 3p | awk '{printf $2}'
+  grep -i -A 10 "\- name: $1" scripts/testnet/state/keys.txt | sed -n 3p | awk '{printf $2}'
 }
