@@ -260,48 +260,6 @@ func (k *Keeper) HandleSend(ctx sdk.Context, msg sdk.Msg, sequence string) error
 	return nil
 }
 
-func (k *Keeper) HandleDelegate(ctx sdk.Context, msg sdk.Msg, totalDelegate int64) (int64, error) {
-	k.Logger(ctx).Info("Received MsgDelegate acknowledgement")
-	// first, type assertion. we should have stakingtypes.MsgDelegate
-	delegateMsg, ok := msg.(*stakingtypes.MsgDelegate)
-	if !ok {
-		k.Logger(ctx).Error("unable to cast source message to MsgDelegate")
-		return -1, fmt.Errorf("unable to cast source message to MsgDelegate")
-	}
-	// CHECK ZONE
-	hostZoneDenom := delegateMsg.Amount.Denom
-	amount := delegateMsg.Amount.Amount.Int64()
-	zone, err := k.GetHostZoneFromHostDenom(ctx, hostZoneDenom)
-	if err != nil {
-		k.Logger(ctx).Error(fmt.Sprintf("failed to get host zone from host denom %s", hostZoneDenom))
-		return -1, err
-	}
-	record, found := k.RecordsKeeper.GetStakeDepositRecordByAmount(ctx, totalDelegate, zone.ChainId)
-	if !found {
-		errMsg := fmt.Sprintf("No deposit record found for zone: %s, amount: %d", zone.ChainId, totalDelegate)
-		k.Logger(ctx).Error(errMsg)
-		return -1, sdkerrors.Wrapf(sdkerrors.ErrNotFound, errMsg)
-	}
-
-	// TODO(TEST-112) more safety checks here
-	// increment the stakedBal on the hostZone
-	k.Logger(ctx).Info(fmt.Sprintf("incrementing stakedBal %d", amount))
-	if amount < 0 {
-		errMsg := fmt.Sprintf("Balance to stake was negative: %d", amount)
-		k.Logger(ctx).Error(errMsg)
-		return -1, sdkerrors.Wrapf(sdkerrors.ErrLogic, errMsg)
-	} else {
-		zone.StakedBal += amount
-		success := k.AddDelegationToValidator(ctx, *zone, delegateMsg.ValidatorAddress, amount)
-		if !success {
-			return 0, sdkerrors.Wrapf(types.ErrValidatorDelegationChg, "Failed to add delegation to validator")
-		}
-		k.SetHostZone(ctx, *zone)
-	}
-
-	return cast.ToInt64(record.Id), nil
-}
-
 func (k Keeper) HandleUndelegate(ctx sdk.Context, msg sdk.Msg, completionTime time.Time) error {
 	k.Logger(ctx).Info("Received MsgUndelegate acknowledgement")
 	// first, type assertion. we should have stakingtypes.MsgDelegate
