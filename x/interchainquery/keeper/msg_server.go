@@ -59,7 +59,7 @@ func (k msgServer) SubmitQueryResponse(goCtx context.Context, msg *types.MsgSubm
 
 			tmclientstate, ok := clientState.(*tmclienttypes.ClientState)
 			if !ok {
-				k.Logger(ctx).Error(fmt.Sprintf("error unmarshaling client state %v", clientState))
+				k.Logger(ctx).Error("error unmarshaling client state", "cs", clientState)
 			}
 
 			if len(msg.Result) != 0 {
@@ -67,14 +67,14 @@ func (k msgServer) SubmitQueryResponse(goCtx context.Context, msg *types.MsgSubm
 				if err := merkleProof.VerifyMembership(tmclientstate.ProofSpecs, consensusState.GetRoot(), path, msg.Result); err != nil {
 					return nil, fmt.Errorf("unable to verify proof: %s", err)
 				}
-				k.Logger(ctx).Info(fmt.Sprintf("Proof validated! module: %s, queryId %s", types.ModuleName, q.Id))
+				k.Logger(ctx).Info("Proof validated!", "module", types.ModuleName, "queryId", q.Id)
 
 			} else {
 				// if we got a nil response, verify non inclusion proof.
 				if err := merkleProof.VerifyNonMembership(tmclientstate.ProofSpecs, consensusState.GetRoot(), path); err != nil {
 					return nil, fmt.Errorf("unable to verify proof: %s", err)
 				}
-				k.Logger(ctx).Info(fmt.Sprintf("Non-inclusion Proof validated! module: %s, queryId %s", types.ModuleName, q.Id))
+				k.Logger(ctx).Info("Non-inclusion Proof validated!", "module", types.ModuleName, "queryId", q.Id)
 			}
 		}
 
@@ -98,7 +98,7 @@ func (k msgServer) SubmitQueryResponse(goCtx context.Context, msg *types.MsgSubm
 					if err == types.ErrSucceededNoDelete {
 						noDelete = true
 					} else {
-						k.Logger(ctx).Error(fmt.Sprintf("error in callback, error: %s, msg: %s, result: %v, type: %s, params: %v", err.Error(), msg.QueryId, msg.Result, q.QueryType, q.Request))
+						k.Logger(ctx).Error("error in callback", "error", err, "msg", msg.QueryId, "result", msg.Result, "type", q.QueryType, "params", q.Request)
 						return nil, err
 					}
 				}

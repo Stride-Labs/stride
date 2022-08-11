@@ -71,7 +71,7 @@ func WithdrawalBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query icq
 	coin := sdk.Coin{}
 	err = k.cdc.Unmarshal(args, &coin)
 	if err != nil {
-		k.Logger(ctx).Error(fmt.Sprintf("unable to unmarshal balance info for zone: %s, err: %s", zone.ChainId, err.Error()))
+		k.Logger(ctx).Error("unable to unmarshal balance info for zone", "zone", zone.ChainId, "err", err)
 		return err
 	}
 
@@ -91,7 +91,7 @@ func WithdrawalBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query icq
 
 	// sanity check, do not transfer if we have 0 balance!
 	if coin.Amount.Int64() == 0 {
-		k.Logger(ctx).Info(fmt.Sprintf("WithdrawalBalanceCallback: no balance to transfer for zone: %s, accAddr: %v, coin: %v", zone.ChainId, accAddr, coin))
+		k.Logger(ctx).Info("WithdrawalBalanceCallback: no balance to transfer", "zone", zone.ChainId, "accAddr", accAddr, "coin", coin)
 		return nil
 	}
 
