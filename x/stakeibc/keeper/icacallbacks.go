@@ -3,8 +3,6 @@ package keeper
 import (
 	"fmt"
 
-	"encoding/json"
-
 	"github.com/spf13/cast"
 
 	icacallbackstypes "github.com/Stride-Labs/stride/x/icacallbacks/types"
@@ -19,7 +17,7 @@ import (
 // ___________________________________________________________________________________________________
 
 // ICACallbacks wrapper struct for interchainstaking keeper
-type ICACallback func(Keeper, sdk.Context, channeltypes.Packet, []byte, []byte) error
+type ICACallback func(Keeper, sdk.Context, channeltypes.Packet, *channeltypes.Acknowledgement_Result, []byte) error
 
 type ICACallbacks struct {
 	k         Keeper
@@ -33,7 +31,7 @@ func (k Keeper) ICACallbackHandler() ICACallbacks {
 }
 
 //callback handler
-func (c ICACallbacks) CallICACallback(ctx sdk.Context, id string, packet channeltypes.Packet, ack []byte, args []byte) error {
+func (c ICACallbacks) CallICACallback(ctx sdk.Context, id string, packet channeltypes.Packet, ack *channeltypes.Acknowledgement_Result, args []byte) error {
 	return c.icacallbacks[id](c.k, ctx, packet, ack, args)
 }
 
@@ -75,17 +73,13 @@ func (k Keeper) UnmarshalDelegateCallbackArgs(ctx sdk.Context, delegateCallback 
 	return &unmarshalledDelegateCallback, nil
 }
 
-// QUESTION: Would it be cleaner to pass in ack as a bool (success / failure) here?
-func DelegateCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ack []byte, args []byte) error {
+func DelegateCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ack *channeltypes.Acknowledgement_Result, args []byte) error {
 	k.Logger(ctx).Info("DelegateCallback executing", "packet", packet)
-	// deserialize the ack
-	txMsgData, err := k.GetTxMsgData(ctx, ack)
-	if err != nil {
-		// ack failed, handle here
-		return err
+
+	if ack == nil {
+		// transaction on the host chain failed
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "ack is nil")
 	}
-	// do we need txMsgData?
-	_ = txMsgData
 
 	// deserialize the args
 	delegateCallback, err := k.UnmarshalDelegateCallbackArgs(ctx, args)
@@ -122,41 +116,4 @@ func DelegateCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ack
 
 	k.RecordsKeeper.RemoveDepositRecord(ctx, cast.ToUint64(recordId))
 	return nil
-}
-
-func (k Keeper) GetTxMsgData(ctx sdk.Context, acknowledgement []byte) (*sdk.TxMsgData, error) {
-	ack := channeltypes.Acknowledgement_Result{}
-	eventType := "callback"
-	ctx.EventManager().EmitEvent(
-		sdk.NewEvent(
-			eventType,
-			sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
-			sdk.NewAttribute(types.AttributeKeyAck, fmt.Sprintf("%v", ack)),
-		),
-	)
-	err := json.Unmarshal(acknowledgement, &ack)
-	if err != nil {
-		ackErr := channeltypes.Acknowledgement_Error{}
-		err := json.Unmarshal(acknowledgement, &ackErr)
-		if err != nil {
-			ctx.EventManager().EmitEvent(
-				sdk.NewEvent(
-					eventType,
-					sdk.NewAttribute(types.AttributeKeyAckError, ackErr.Error),
-				),
-			)
-			k.Logger(ctx).Error("Unable to unmarshal acknowledgement error", "error", err, "data", acknowledgement)
-			return nil, err
-		}
-		k.Logger(ctx).Error("Unable to unmarshal acknowledgement result", "error", err, "remote_err", ackErr, "data", acknowledgement)
-		return nil, err
-	}
-
-	txMsgData := &sdk.TxMsgData{}
-	err = proto.Unmarshal(ack.Result, txMsgData)
-	if err != nil {
-		k.Logger(ctx).Error("Unable to unmarshal acknowledgement", "error", err, "ack", ack.Result)
-		return nil, err
-	}
-	return txMsgData, nil
 }

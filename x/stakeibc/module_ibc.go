@@ -1,6 +1,7 @@
 package stakeibc
 
 import (
+	"encoding/json"
 	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -41,11 +42,13 @@ func (im IBCModule) OnChanOpenInit(
 	counterparty channeltypes.Counterparty,
 	version string,
 ) error {
+	im.keeper.Logger(ctx).Info(fmt.Sprintf("OnChanOpenAck: portID %s, channelID %s", portID, channelID))
 	// Note: The channel capability must be claimed by the authentication module in OnChanOpenInit otherwise the
 	// authentication module will not be able to send packets on the channel created for the associated interchain account.
 	if err := im.keeper.ClaimCapability(ctx, channelCap, host.ChannelCapabilityPath(portID, channelID)); err != nil {
 		return err
 	}
+	im.keeper.Logger(ctx).Info(fmt.Sprintf("%s claimed the channel capability %v", types.ModuleName, channelCap))
 	return nil
 }
 
@@ -57,6 +60,7 @@ func (im IBCModule) OnChanOpenAck(
 	counterpartyChannelID string,
 	counterpartyVersion string,
 ) error {
+	im.keeper.Logger(ctx).Info(fmt.Sprintf("OnChanOpenAck: portID %s, channelID %s, counterpartyChannelID %s, counterpartyVersion %s", portID, channelID, counterpartyChannelID, counterpartyVersion))
 	controllerConnectionId, err := im.keeper.GetConnectionId(ctx, portID)
 	if err != nil {
 		ctx.Logger().Error("Unable to get connection for port " + portID)
@@ -132,8 +136,12 @@ func (im IBCModule) OnAcknowledgementPacket(
 	acknowledgement []byte,
 	relayer sdk.AccAddress,
 ) error {
-	im.keeper.Logger(ctx).Info("HANDLING ACK")
-	err := im.keeper.ICACallbacksKeeper.CallRegisteredICACallback(ctx, modulePacket, acknowledgement)
+	im.keeper.Logger(ctx).Info(fmt.Sprintf("OnAcknowledgementPacket: packet %v, relayer %v", modulePacket, relayer))
+	ack, err := im.UnmarshalAck(ctx, acknowledgement)
+	if err != nil {
+		return err
+	}
+	err = im.keeper.ICACallbacksKeeper.CallRegisteredICACallback(ctx, modulePacket, ack)
 	if err != nil {
 		return err
 	}
@@ -146,7 +154,8 @@ func (im IBCModule) OnTimeoutPacket(
 	modulePacket channeltypes.Packet,
 	relayer sdk.AccAddress,
 ) error {
-	err := im.keeper.ICACallbacksKeeper.CallRegisteredICACallback(ctx, modulePacket, []byte{})
+	im.keeper.Logger(ctx).Info(fmt.Sprintf("OnTimeoutPacket: packet %v, relayer %v", modulePacket, relayer))
+	err := im.keeper.ICACallbacksKeeper.CallRegisteredICACallback(ctx, modulePacket, nil)
 	if err != nil {
 		return err
 	}
@@ -162,6 +171,10 @@ func (im IBCModule) OnChanCloseConfirm(
 	return nil
 }
 
+// ###################################################################################
+// 	Helper functions
+// ###################################################################################
+
 func (im IBCModule) NegotiateAppVersion(
 	ctx sdk.Context,
 	order channeltypes.Order,
@@ -173,6 +186,40 @@ func (im IBCModule) NegotiateAppVersion(
 	return proposedVersion, nil
 }
 
+func (im IBCModule) UnmarshalAck(ctx sdk.Context, acknowledgement []byte) (*channeltypes.Acknowledgement_Result, error) {
+	ack := channeltypes.Acknowledgement_Result{}
+	eventType := "callback"
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			eventType,
+			sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
+			sdk.NewAttribute(types.AttributeKeyAck, fmt.Sprintf("%v", ack)),
+		),
+	)
+	err := json.Unmarshal(acknowledgement, &ack)
+	if err != nil {
+		ackErr := channeltypes.Acknowledgement_Error{}
+		err := json.Unmarshal(acknowledgement, &ackErr)
+		if err != nil {
+			ctx.EventManager().EmitEvent(
+				sdk.NewEvent(
+					eventType,
+					sdk.NewAttribute(types.AttributeKeyAckError, ackErr.Error),
+				),
+			)
+			im.keeper.Logger(ctx).Error("Unable to unmarshal acknowledgement error", "error", err, "data", acknowledgement)
+			return nil, err
+		}
+		im.keeper.Logger(ctx).Error("Unable to unmarshal acknowledgement result", "error", err, "remote_err", ackErr, "data", acknowledgement)
+		return nil, err
+	}
+
+	// NOTE: to use the acknowledgement result, unmarshal into TxMsgData
+	// txMsgData := &sdk.TxMsgData{}
+	// err = proto.Unmarshal(ack.Result, txMsgData)
+
+	return &ack, nil
+}
 
 // ###################################################################################
 // 	Required functions to satisfy interface but not implemented for ICA auth modules
