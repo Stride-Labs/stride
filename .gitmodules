@@ -1,7 +1,3 @@
-[submodule "deps/interchain-queries"]
-	path = deps/interchain-queries
-	url = git@github.com:Stride-Labs/interchain-queries.git
-	branch = main
 [submodule "deps/hermes"]
 	path = deps/hermes
 	url = git@github.com:informalsystems/ibc-rs.git
