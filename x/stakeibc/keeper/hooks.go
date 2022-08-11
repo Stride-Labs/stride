@@ -83,10 +83,6 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochInfo epochstypes.EpochInf
 		// e.g. CreateDepositRecordsForDepositInterval
 		// Imagine it will be slightly cleaner to track state by epoch, rather than
 		// by DepositInterval
-		if epochNumber < 0 {
-			k.Logger(ctx).Error(fmt.Sprintf("Stride Epoch %d negative", epochNumber))
-			return
-		}
 
 		// Create a new deposit record for each host zone for the upcoming epoch
 		k.Logger(ctx).Info("CreateDepositRecordsForEpoch")
