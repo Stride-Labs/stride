@@ -5,13 +5,12 @@ RUN apk add --update git iputils
 WORKDIR /src/app
 
 RUN git clone https://github.com/Stride-Labs/icq.git --branch v0.0.4 \
-    && cp -r icq/* . \
-    && rm -rf icq \
+    && cd icq \
     && go build
 
 FROM alpine:3.15
 
-COPY --from=icq-builder /src/app/icq /usr/local/bin/
+COPY --from=icq-builder /src/app/icq/icq /usr/local/bin/
 
 RUN apk add --update iputils \
     && adduser -S -h /icq -D icq -u 1000 
