@@ -14,7 +14,6 @@ import (
 	"github.com/golang/protobuf/proto"
 	"github.com/spf13/cast"
 
-	epochtypes "github.com/Stride-Labs/stride/x/epochs/types"
 	recordstypes "github.com/Stride-Labs/stride/x/records/types"
 	"github.com/Stride-Labs/stride/x/stakeibc/types"
 
@@ -159,39 +158,16 @@ func (k *Keeper) HandleSend(ctx sdk.Context, msg sdk.Msg, sequence string) error
 	coin := sendMsg.Amount[0]
 	// Pull host zone
 	hostZoneDenom := coin.Denom
-	amount := coin.Amount.Int64()
 	zone, err := k.GetHostZoneFromHostDenom(ctx, hostZoneDenom)
 	if err != nil {
 		return err
 	}
 
 	// Check to and from addresses
-	withdrawalAddress := zone.GetWithdrawalAccount().GetAddress()
 	delegationAddress := zone.GetDelegationAccount().GetAddress()
 	redemptionAddress := zone.GetRedemptionAccount().GetAddress()
 
-	// Process bank sends that reinvest user rewards
-	if sendMsg.FromAddress == withdrawalAddress && sendMsg.ToAddress == delegationAddress {
-		// fetch epoch
-		strideEpochTracker, found := k.GetEpochTracker(ctx, epochtypes.STRIDE_EPOCH)
-		if !found {
-			k.Logger(ctx).Error("failed to find epoch")
-			return sdkerrors.Wrapf(types.ErrInvalidLengthEpochTracker, "no number for epoch (%s)", epochtypes.STRIDE_EPOCH)
-		}
-		epochNumber := strideEpochTracker.EpochNumber
-		// create a new record so that rewards are reinvested
-		record := recordstypes.DepositRecord{
-			Id:                 0,
-			Amount:             amount,
-			Denom:              hostZoneDenom,
-			HostZoneId:         zone.ChainId,
-			Status:             recordstypes.DepositRecord_STAKE,
-			Source:             recordstypes.DepositRecord_WITHDRAWAL_ICA,
-			DepositEpochNumber: epochNumber,
-		}
-		k.RecordsKeeper.AppendDepositRecord(ctx, record)
-		// process unbonding transfers from the DelegationAccount to the RedemptionAccount
-	} else if sendMsg.FromAddress == delegationAddress && sendMsg.ToAddress == redemptionAddress {
+	if sendMsg.FromAddress == delegationAddress && sendMsg.ToAddress == redemptionAddress {
 		k.Logger(ctx).Error("ACK - sendMsg.FromAddress == delegationAddress && sendMsg.ToAddress == redemptionAddress")
 		dayEpochTracker, found := k.GetEpochTracker(ctx, "day")
 		if !found {
