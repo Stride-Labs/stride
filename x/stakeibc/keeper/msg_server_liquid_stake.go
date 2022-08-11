@@ -2,7 +2,6 @@ package keeper
 
 import (
 	"context"
-	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -23,7 +22,7 @@ func (k msgServer) LiquidStake(goCtx context.Context, msg *types.MsgLiquidStake)
 	// strided tx stakeibc liquid-stake 100 uatom
 	hostZone, err := k.GetHostZoneFromHostDenom(ctx, msg.HostDenom)
 	if err != nil {
-		k.Logger(ctx).Error(fmt.Sprintf("Host Zone not found for denom (%s)", msg.HostDenom))
+		k.Logger(ctx).Error("Host Zone not found for denom (%s)", msg.HostDenom)
 		return nil, sdkerrors.Wrapf(types.ErrInvalidHostZone, "no host zone found for denom (%s)", msg.HostDenom)
 	}
 	// get the sender address
@@ -34,20 +33,20 @@ func (k msgServer) LiquidStake(goCtx context.Context, msg *types.MsgLiquidStake)
 	coinString := cast.ToString(msg.Amount) + ibcDenom
 	inCoin, err := sdk.ParseCoinNormalized(coinString)
 	if err != nil {
-		k.Logger(ctx).Error(fmt.Sprintf("failed to parse coin (%s)", coinString))
+		k.Logger(ctx).Error("failed to parse coin (%s)", coinString)
 		return nil, sdkerrors.Wrapf(err, "failed to parse coin (%s)", coinString)
 	}
 
 	// Creator owns at least "amount" of inCoin
 	balance := k.bankKeeper.GetBalance(ctx, sender, ibcDenom)
 	if balance.IsLT(inCoin) {
-		k.Logger(ctx).Error(fmt.Sprintf("balance is lower than staking amount. staking amount: %d, balance: %d", msg.Amount, balance.Amount.Int64()))
+		k.Logger(ctx).Error("balance is lower than staking amount. staking amount: %d, balance: %d", msg.Amount, balance.Amount.Int64())
 		return nil, sdkerrors.Wrapf(sdkerrors.ErrInsufficientFunds, "balance is lower than staking amount. staking amount: %d, balance: %d", msg.Amount, balance.Amount.Int64())
 	}
 	// check that the token is an IBC token
 	isIbcToken := types.IsIBCToken(ibcDenom)
 	if !isIbcToken {
-		k.Logger(ctx).Error("invalid token denom - denom is not an IBC token (%s)", ibcDenom)
+		k.Logger(ctx).Error("invalid token denom - denom is not an IBC token (%s)")
 		return nil, sdkerrors.Wrapf(types.ErrInvalidToken, "denom is not an IBC token (%s)", ibcDenom)
 	}
 
@@ -67,13 +66,13 @@ func (k msgServer) LiquidStake(goCtx context.Context, msg *types.MsgLiquidStake)
 	// create a deposit record of these tokens (pending transfer)
 	strideEpochTracker, found := k.GetEpochTracker(ctx, epochtypes.STRIDE_EPOCH)
 	if !found {
-		k.Logger(ctx).Error("failed to find stride epoch")
+		k.Logger(ctx).Error("failed to find epoch")
 		return nil, sdkerrors.Wrapf(sdkerrors.ErrNotFound, "no epoch number for epoch (%s)", epochtypes.STRIDE_EPOCH)
 	}
 	// Does this use too much gas?
 	depositRecord, found := k.RecordsKeeper.GetDepositRecordByEpochAndChain(ctx, strideEpochTracker.EpochNumber, hostZone.ChainId)
 	if !found {
-		k.Logger(ctx).Error("failed to find deposit record %d", depositRecord.Id)
+		k.Logger(ctx).Error("failed to find deposit record")
 		return nil, sdkerrors.Wrapf(sdkerrors.ErrNotFound, "no deposit record for epoch (%d)", strideEpochTracker.EpochNumber)
 	}
 	depositRecord.Amount += cast.ToInt64(msg.Amount)
