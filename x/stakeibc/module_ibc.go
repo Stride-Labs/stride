@@ -141,6 +141,14 @@ func (im IBCModule) OnAcknowledgementPacket(
 	if err != nil {
 		return err
 	}
+	eventType := "ack"
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			eventType,
+			sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
+			sdk.NewAttribute(types.AttributeKeyAck, fmt.Sprintf("%v", ack)),
+		),
+	)
 	err = im.keeper.ICACallbacksKeeper.CallRegisteredICACallback(ctx, modulePacket, ack)
 	if err != nil {
 		return err
@@ -188,29 +196,23 @@ func (im IBCModule) NegotiateAppVersion(
 
 func (im IBCModule) UnmarshalAck(ctx sdk.Context, acknowledgement []byte) (*channeltypes.Acknowledgement_Result, error) {
 	ack := channeltypes.Acknowledgement_Result{}
-	eventType := "callback"
-	ctx.EventManager().EmitEvent(
-		sdk.NewEvent(
-			eventType,
-			sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
-			sdk.NewAttribute(types.AttributeKeyAck, fmt.Sprintf("%v", ack)),
-		),
-	)
 	err := json.Unmarshal(acknowledgement, &ack)
 	if err != nil {
 		ackErr := channeltypes.Acknowledgement_Error{}
+		// acknowledgement comes back as a Acknowledgement_Result, Acknowledgement_Error, or something
+		// that can't be handled
 		err := json.Unmarshal(acknowledgement, &ackErr)
 		if err != nil {
 			ctx.EventManager().EmitEvent(
 				sdk.NewEvent(
-					eventType,
+					"ack_error",
 					sdk.NewAttribute(types.AttributeKeyAckError, ackErr.Error),
 				),
 			)
 			im.keeper.Logger(ctx).Error("Unable to unmarshal acknowledgement error", "error", err, "data", acknowledgement)
 			return nil, err
 		}
-		im.keeper.Logger(ctx).Error("Unable to unmarshal acknowledgement result", "error", err, "remote_err", ackErr, "data", acknowledgement)
+		im.keeper.Logger(ctx).Error("Acknowledgement result unmarshalled as an error", "error", err, "remote_err", ackErr, "data", acknowledgement)
 		return nil, err
 	}
 
