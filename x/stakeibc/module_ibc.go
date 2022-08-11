@@ -37,10 +37,7 @@ func (im IBCModule) Hooks() keeper.Hooks {
 	return im.keeper.Hooks()
 }
 
-// OnChanOpenInit implements the IBCModule interface
 
-// func(ctx, order, connectionHops []string, portID string, channelID string, chanCap, counterparty, version string) (string, error)
-// func(ctx , order , connectionHops []string, portID string, channelID string, channelCap , counterparty , version string) error)
 func (im IBCModule) OnChanOpenInit(
 	ctx sdk.Context,
 	order channeltypes.Order,
@@ -67,10 +64,6 @@ func (im IBCModule) OnChanOpenAck(
 	counterpartyChannelID string,
 	counterpartyVersion string,
 ) error {
-	// TODO(TEST-21): Implement this! The `counterpartyVersion != types.Version` is causing errors
-	// if counterpartyVersion != types.Version {
-	// 	return sdkerrors.Wrapf(types.ErrInvalidVersion, "invalid counterparty version: %s, expected %s", counterpartyVersion, types.Version)
-	// }
 	controllerConnectionId, err := im.keeper.GetConnectionId(ctx, portID)
 	if err != nil {
 		ctx.Logger().Error("Unable to get connection for port " + portID)
@@ -146,7 +139,6 @@ func (im IBCModule) OnAcknowledgementPacket(
 	acknowledgement []byte,
 	relayer sdk.AccAddress,
 ) error {
-	// TODO(TEST-21): Implement OnAcknowledgementPacket logic
 	connectionId, _, err := im.keeper.IBCKeeper.ChannelKeeper.GetChannelConnection(ctx, modulePacket.SourcePort, modulePacket.SourceChannel)
 	if err != nil {
 		err = fmt.Errorf("packet connection not found: %w", err)
@@ -173,21 +165,6 @@ func (im IBCModule) OnTimeoutPacket(
 		return err
 	}
 	return nil
-	// TODO(TEST-21): Implement OnTimeoutPacket logic
-	// var modulePacketData types.StakeibcPacketData
-	// if err := modulePacketData.Unmarshal(modulePacket.GetData()); err != nil {
-	// 	return sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "cannot unmarshal packet data: %s", err.Error())
-	// }
-
-	// // Dispatch packet
-	// switch packet := modulePacketData.Packet.(type) {
-	// // this line is used by starport scaffolding # ibc/packet/module/timeout
-	// default:
-	// 	errMsg := fmt.Sprintf("unrecognized %s packet type: %T", types.ModuleName, packet)
-	// 	return sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, errMsg)
-	// }
-
-	// return nil
 }
 
 // OnChanCloseConfirm implements the IBCModule interface
@@ -196,7 +173,6 @@ func (im IBCModule) OnChanCloseConfirm(
 	portID,
 	channelID string,
 ) error {
-	// TODO(TEST-21): Implement OnTimeoutPacket logic
 	return nil
 }
 
@@ -210,7 +186,6 @@ func (im IBCModule) NegotiateAppVersion(
 ) (version string, err error) {
 	return proposedVersion, nil
 }
-
 
 
 // ###################################################################################
