@@ -5,7 +5,7 @@ import (
 	// v1 "github.com/Stride-Labs/stride/x/records/migrations/v1"
 )
 
-// TODO: Add migration logic to deserialize with other protos and re-serialize with new ones
+// TODO: Add migration logic to deserialize with old protos and re-serialize with new ones
 func UpdateUnbondingRecords(ctx sdk.Context) error {
 	var _ = ctx
 	return nil
