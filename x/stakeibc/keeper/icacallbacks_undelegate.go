@@ -16,12 +16,13 @@ import (
 	"github.com/golang/protobuf/proto"
 )
 
-func (k Keeper) MarshalUndelegateCallbackArgs(ctx sdk.Context, undelegateCallback types.UndelegateCallback) []byte {
+func (k Keeper) MarshalUndelegateCallbackArgs(ctx sdk.Context, undelegateCallback types.UndelegateCallback) ([]byte, error) {
 	out, err := proto.Marshal(&undelegateCallback)
 	if err != nil {
 		k.Logger(ctx).Error(fmt.Sprintf("MarshalUndelegateCallbackArgs | %s", err.Error()))
+		return nil, err
 	}
-	return out
+	return out, nil
 }
 
 func (k Keeper) UnmarshalUndelegateCallbackArgs(ctx sdk.Context, undelegateCallback []byte) (types.UndelegateCallback, error) {
@@ -63,9 +64,17 @@ func UndelegateCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, a
 	}
 	k.SetHostZone(ctx, hostZone)
 
+	// Get the individual msg responses from inside the transaction
+	txMsgData := &sdk.TxMsgData{}
+	err = proto.Unmarshal(ack.Result, txMsgData)
+	if err != nil {
+		k.Logger(ctx).Error(fmt.Sprintf("UnmarshalUndelegateCallbackArgs | %s", err.Error()))
+		return sdkerrors.Wrapf(types.ErrUnmarshalFailure, "undelegate callback args")
+	}
+
 	// Update the completion time using the latest completion time across each message within the transaction
 	latestCompletionTime := time.Time{}
-	for _, msgResponseBytes := range txMsgs.Data {
+	for _, msgResponseBytes := range txMsgData.Data {
 		var undelegateResponse stakingtypes.MsgUndelegateResponse
 		err := proto.Unmarshal(msgResponseBytes.Data, &undelegateResponse)
 		if err != nil {
