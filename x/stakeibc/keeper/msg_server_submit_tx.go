@@ -208,7 +208,7 @@ func (k Keeper) SubmitTxsEpoch(ctx sdk.Context, connectionId string, msgs []sdk.
 		return 0, sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "Failed to get epoch tracker for %s", epochType)
 	}
 	// BUFFER by 5% of the epoch length
-	bufferSize, err := cast.ToInt64E(k.GetParam(ctx, types.KeyBufferSize))
+	bufferSize, err := cast.ToUint64E(k.GetParam(ctx, types.KeyBufferSize))
 	if err != nil {
 		return 0, sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "Failed to get buffer size: %s", err)
 	}

@@ -37,11 +37,21 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochInfo epochstypes.EpochInf
 	k.Logger(ctx).Info(fmt.Sprintf("Handling epoch start %s %d", epochIdentifier, epochNumber))
 	k.Logger(ctx).Info(fmt.Sprintf("Epoch start time %d", epochInfo.GetCurrentEpochStartTime().UnixNano()))
 
+	ns, err := cast.ToUint64E(epochInfo.GetDuration().Nanoseconds())
+	if err != nil {
+		k.Logger(ctx).Error(fmt.Sprintf("Could not convert epoch duration to uint64: %v", err))
+		return
+	}
+	nextEpochStartTime, err := cast.ToUint64E(epochInfo.GetCurrentEpochStartTime().Add(epochInfo.GetDuration()).UnixNano())
+	if err != nil {
+		k.Logger(ctx).Error(fmt.Sprintf("Could not convert epoch duration to uint64: %v", err))
+		return
+	}
 	epochTracker := types.EpochTracker{
 		EpochIdentifier:    epochIdentifier,
 		EpochNumber:        epochNumber,
-		Duration:           epochInfo.GetDuration().Nanoseconds(),
-		NextEpochStartTime: epochInfo.GetCurrentEpochStartTime().Add(epochInfo.GetDuration()).UnixNano(),
+		Duration:           ns,
+		NextEpochStartTime: nextEpochStartTime,
 	}
 	// deposit records *must* exist for this epoch
 	k.Logger(ctx).Info(fmt.Sprintf("Setting epochTracker %v", epochTracker))
@@ -347,7 +357,11 @@ func (k Keeper) UpdateRedemptionRates(ctx sdk.Context, depositRecords []recordst
 			return error
 		}
 		k.Logger(ctx).Info(fmt.Sprintf("undelegatedBalance: %d", undelegatedBalance))
-		stakedBalance := zoneInfo.GetStakedBal()
+		stakedBalance, err := cast.ToInt64E(zoneInfo.GetStakedBal())
+		if err != nil {
+			k.Logger(ctx).Error(fmt.Sprintf("Could not get staked balance for host zone %s: %s", zoneInfo.ChainId, err))
+			return err
+		}
 		k.Logger(ctx).Info(fmt.Sprintf("stakedBalance: %d", stakedBalance))
 		moduleAcctBalance, error := k.GetModuleAccountBalance(zoneInfo, depositRecords)
 		if error != nil {

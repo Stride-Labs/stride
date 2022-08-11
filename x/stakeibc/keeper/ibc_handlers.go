@@ -338,7 +338,13 @@ func (k *Keeper) HandleDelegate(ctx sdk.Context, msg sdk.Msg, totalDelegate int6
 		k.Logger(ctx).Error(errMsg)
 		return -1, sdkerrors.Wrapf(sdkerrors.ErrLogic, errMsg)
 	} else {
-		zone.StakedBal += amount
+		// we should refactor AddDelegationToValidator at some point to take in only uint amounts, and make a separate fn for ReduceDelegationFromValidator; currently AddDelegationToValidator is used to both add and reduce, which is (a) confusing and (b) requires funky casting
+		amountUint64, err := cast.ToUint64E(amount)
+		if err != nil {
+			k.Logger(ctx).Error(fmt.Sprintf("failed to convert amount %d to uint64", amount))
+			return -1, err
+		}
+		zone.StakedBal += amountUint64
 		success := k.AddDelegationToValidator(ctx, *zone, delegateMsg.ValidatorAddress, amount)
 		if !success {
 			return 0, sdkerrors.Wrapf(types.ErrValidatorDelegationChg, "Failed to add delegation to validator")
@@ -381,7 +387,12 @@ func (k Keeper) HandleUndelegate(ctx sdk.Context, msg sdk.Msg, completionTime ti
 	if !success {
 		return sdkerrors.Wrapf(types.ErrValidatorDelegationChg, "Failed to add delegation to validator")
 	}
-	zone.StakedBal -= undelegateAmt
+	undelegateAmtUint64, err := cast.ToUint64E(undelegateAmt)
+	if err != nil {
+		k.Logger(ctx).Error(fmt.Sprintf("failed to convert undelegateAmt amount %d to uint64", undelegateAmt))
+		return err
+	}
+	zone.StakedBal -= undelegateAmtUint64
 	k.SetHostZone(ctx, *zone)
 
 	epochTracker, found := k.GetEpochTracker(ctx, "day")

@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/spf13/cast"
+
 	recordstypes "github.com/Stride-Labs/stride/x/records/types"
 	"github.com/Stride-Labs/stride/x/stakeibc/types"
 
@@ -38,9 +40,15 @@ func (k msgServer) RedeemStake(goCtx context.Context, msg *types.MsgRedeemStake)
 		return nil, sdkerrors.Wrapf(types.ErrInvalidAmount, "cannot unstake an amount g.t. staked balance on host zone: %d", msg.Amount)
 	}
 
+	amt, err := cast.ToInt64E(msg.Amount)
+	if err != nil {
+		k.Logger(ctx).Error("error casting RedeemStake msg.Amount to int64", "err", err)
+		return nil, sdkerrors.Wrapf(types.ErrInvalidAmount, "invalid amount: %s", err)
+	}
+
 	// construct desired unstaking amount from host zone
 	coinDenom := types.StAssetDenomFromHostZoneDenom(hostZone.HostDenom)
-	nativeAmount := sdk.NewDec(msg.Amount).Mul(hostZone.RedemptionRate)
+	nativeAmount := sdk.NewDec(amt).Mul(hostZone.RedemptionRate)
 	// TODO(TEST-112) bigint safety
 	coinString := nativeAmount.RoundInt().String() + coinDenom
 	inCoin, err := sdk.ParseCoinNormalized(coinString)
@@ -56,7 +64,7 @@ func (k msgServer) RedeemStake(goCtx context.Context, msg *types.MsgRedeemStake)
 	balance := k.bankKeeper.GetBalance(ctx, sender, coinDenom)
 	k.Logger(ctx).Info(fmt.Sprintf("Redemption issuer IBCDenom balance: %v%s", balance.Amount, balance.Denom))
 	k.Logger(ctx).Info(fmt.Sprintf("Redemption requested redemotion amount: %v%s", inCoin.Amount, inCoin.Denom))
-	if balance.Amount.LT(sdk.NewInt(msg.Amount)) {
+	if balance.Amount.LT(sdk.NewInt(amt)) {
 		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidCoins, "balance is lower than redemption amount. redemption amount: %d, balance %d: ", msg.Amount, balance.Amount)
 	}
 	// UNBONDING RECORD KEEPING
@@ -96,7 +104,7 @@ func (k msgServer) RedeemStake(goCtx context.Context, msg *types.MsgRedeemStake)
 	hostZoneUnbonding.UserRedemptionRecords = append(hostZoneUnbonding.UserRedemptionRecords, userRedemptionRecord.Id)
 
 	// Escrow user's balance
-	redeemCoin := sdk.NewCoins(sdk.NewCoin(coinDenom, sdk.NewInt(msg.Amount)))
+	redeemCoin := sdk.NewCoins(sdk.NewCoin(coinDenom, sdk.NewInt(amt)))
 	err = k.bankKeeper.SendCoinsFromAccountToModule(ctx, sender, types.ModuleName, redeemCoin)
 	if err != nil {
 		k.Logger(ctx).Error("Failed to send sdk.NewCoins(inCoins) from account to module")
