@@ -76,12 +76,6 @@ func (k Keeper) GetDepositRecord(ctx sdk.Context, id uint64) (val types.DepositR
 func (k Keeper) RemoveDepositRecord(ctx sdk.Context, id uint64) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.DepositRecordKey))
 	store.Delete(GetDepositRecordIDBytes(id))
-	count := k.GetDepositRecordCount(ctx)
-	if count > 0 {
-		k.SetDepositRecordCount(ctx, count-1)
-	} else {
-		k.Logger(ctx).Error("depositRecord count is less than 0, cannot remove non-existent depositRecord")
-	}
 }
 
 // GetAllDepositRecord returns all depositRecord
@@ -107,11 +101,6 @@ func GetDepositRecordIDBytes(id uint64) []byte {
 	return bz
 }
 
-// GetDepositRecordIDFromBytes returns ID in uint64 format from a byte array
-func GetDepositRecordIDFromBytes(bz []byte) uint64 {
-	return binary.BigEndian.Uint64(bz)
-}
-
 func (k Keeper) GetDepositRecordByEpochAndChain(ctx sdk.Context, epochNumber uint64, chainId string) (val *types.DepositRecord, found bool) {
 	records := k.GetAllDepositRecord(ctx)
 	for _, depositRecord := range records {
@@ -122,14 +111,11 @@ func (k Keeper) GetDepositRecordByEpochAndChain(ctx sdk.Context, epochNumber uin
 	return nil, false
 }
 
-// TODO: pass in hostZoneId
 func (k Keeper) GetTransferDepositRecordByAmount(ctx sdk.Context, amount int64) (val *types.DepositRecord, found bool) {
 	records := k.GetAllDepositRecord(ctx)
 	for _, depositRecord := range records {
 		amountsMatch := depositRecord.Amount == amount && depositRecord.Status == types.DepositRecord_TRANSFER
-		// hostZoneMatches := depositRecord.HostZoneId == hostZoneId
-		hostZoneMatches := true
-		if amountsMatch && hostZoneMatches {
+		if amountsMatch {
 			return &depositRecord, true
 		}
 	}

@@ -3,9 +3,10 @@ package stakeibc
 import (
 	"time"
 
+	"github.com/cosmos/cosmos-sdk/telemetry"
+
 	"github.com/Stride-Labs/stride/x/stakeibc/keeper"
 	"github.com/Stride-Labs/stride/x/stakeibc/types"
-	"github.com/cosmos/cosmos-sdk/telemetry"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )

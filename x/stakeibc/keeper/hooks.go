@@ -9,7 +9,7 @@ import (
 	clienttypes "github.com/cosmos/ibc-go/v3/modules/core/02-client/types"
 	"github.com/spf13/cast"
 
-	utils "github.com/Stride-Labs/stride/utils"
+	"github.com/Stride-Labs/stride/utils"
 	epochstypes "github.com/Stride-Labs/stride/x/epochs/types"
 	recordstypes "github.com/Stride-Labs/stride/x/records/types"
 	"github.com/Stride-Labs/stride/x/stakeibc/types"
@@ -242,13 +242,13 @@ func (k Keeper) StakeExistingDepositsOnHostZones(ctx sdk.Context, epochNumber in
 				k.Logger(ctx).Info(fmt.Sprintf("Successfully submitted stake for %s on %s", processAmount, hostZone.ChainId))
 			}
 
-			ctx.EventManager().EmitEvents(sdk.Events{
+			ctx.EventManager().EmitEvent(
 				sdk.NewEvent(
 					sdk.EventTypeMessage,
 					sdk.NewAttribute("hostZone", hostZone.ChainId),
 					sdk.NewAttribute("newAmountStaked", strconv.FormatInt(depositRecord.Amount, 10)),
 				),
-			})
+			)
 		}
 	}
 }
@@ -317,12 +317,13 @@ func (k Keeper) UpdateRedemptionRates(ctx sdk.Context, depositRecords []recordst
 	UpdateRedemptionRate := func(ctx sdk.Context, index int64, zoneInfo types.HostZone) error {
 		k.Logger(ctx).Info(fmt.Sprintf("index: %d, zoneInfo: %s", index, zoneInfo.ChainId))
 
-		undelegatedBalance, error := k.GetUndelegatedBalance(ctx, zoneInfo, depositRecords)
+		undelegatedBalance, error := k.GetUndelegatedBalance(zoneInfo, depositRecords)
 		if error != nil {
 			return error
 		}
 		stakedBalance := zoneInfo.StakedBal
-		moduleAcctBalance, error := k.GetModuleAccountBalance(ctx, zoneInfo, depositRecords)
+		moduleAcctBalance, error := k.GetModuleAccountBalance(zoneInfo, depositRecords)
+
 		if error != nil {
 			return error
 		}
@@ -347,7 +348,7 @@ func (k Keeper) UpdateRedemptionRates(ctx sdk.Context, depositRecords []recordst
 	k.IterateHostZones(ctx, UpdateRedemptionRate)
 }
 
-func (k Keeper) GetUndelegatedBalance(ctx sdk.Context, hostZone types.HostZone, depositRecords []recordstypes.DepositRecord) (int64, error) {
+func (k Keeper) GetUndelegatedBalance(hostZone types.HostZone, depositRecords []recordstypes.DepositRecord) (int64, error) {
 	// filter to only the deposit records for the host zone with status STAKE
 	UndelegatedDepositRecords := utils.FilterDepositRecords(depositRecords, func(record recordstypes.DepositRecord) (condition bool) {
 		return record.Status == recordstypes.DepositRecord_STAKE && record.HostZoneId == hostZone.ChainId
@@ -362,7 +363,7 @@ func (k Keeper) GetUndelegatedBalance(ctx sdk.Context, hostZone types.HostZone, 
 	return totalAmount, nil
 }
 
-func (k Keeper) GetModuleAccountBalance(ctx sdk.Context, hostZone types.HostZone, depositRecords []recordstypes.DepositRecord) (int64, error) {
+func (k Keeper) GetModuleAccountBalance(hostZone types.HostZone, depositRecords []recordstypes.DepositRecord) (int64, error) {
 	// filter to only the deposit records for the host zone with status DELEGATION
 	ModuleAccountRecords := utils.FilterDepositRecords(depositRecords, func(record recordstypes.DepositRecord) (condition bool) {
 		return record.Status == recordstypes.DepositRecord_TRANSFER && record.HostZoneId == hostZone.ChainId
