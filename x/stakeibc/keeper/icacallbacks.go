@@ -5,7 +5,9 @@ import (
 
 	"github.com/spf13/cast"
 
+	epochtypes "github.com/Stride-Labs/stride/x/epochs/types"
 	icacallbackstypes "github.com/Stride-Labs/stride/x/icacallbacks/types"
+	recordstypes "github.com/Stride-Labs/stride/x/records/types"
 	"github.com/Stride-Labs/stride/x/stakeibc/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -46,7 +48,9 @@ func (c ICACallbacks) AddICACallback(id string, fn interface{}) icacallbackstype
 }
 
 func (c ICACallbacks) RegisterICACallbacks() icacallbackstypes.ICACallbackHandler {
-	a := c.AddICACallback("delegate", ICACallback(DelegateCallback))
+	a := c.
+		AddICACallback("delegate", ICACallback(DelegateCallback)).
+		AddICACallback("reinvest", ICACallback(ReinvestCallback))
 	return a.(ICACallbacks)
 }
 
@@ -117,3 +121,60 @@ func DelegateCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ack
 	k.RecordsKeeper.RemoveDepositRecord(ctx, cast.ToUint64(recordId))
 	return nil
 }
+
+// ----------------------------------- Reinvest Callback ----------------------------------- //
+func (k Keeper) MarshalReinvestCallbackArgs(ctx sdk.Context, delegateCallback types.ReinvestCallback) ([]byte, error) {
+	out, err := proto.Marshal(&delegateCallback)
+	if err != nil {
+		k.Logger(ctx).Error(fmt.Sprintf("MarshalReinvestCallbackArgs %v", err.Error()))
+		return nil, err
+	}
+	return out, nil
+}
+
+func (k Keeper) UnmarshalReinvestCallbackArgs(ctx sdk.Context, delegateCallback []byte) (*types.ReinvestCallback, error) {
+	unmarshalledReinvestCallback := types.ReinvestCallback{}
+	if err := proto.Unmarshal(delegateCallback, &unmarshalledReinvestCallback); err != nil {
+        k.Logger(ctx).Error(fmt.Sprintf("UnmarshalReinvestCallbackArgs %v", err.Error()))
+		return nil, err
+	}
+	return &unmarshalledReinvestCallback, nil
+}
+
+func ReinvestCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ack *channeltypes.Acknowledgement_Result, args []byte) error {
+	// invariant: sendMsg.FromAddress == withdrawalAddress && sendMsg.ToAddress == delegationAddress
+	k.Logger(ctx).Info("ReinvestCallback executing", "packet", packet)
+
+	if ack == nil {
+		// transaction on the host chain failed
+		// don't create a record
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "ack is nil")
+	}
+
+	// deserialize the args
+	reinvestCallback, err := k.UnmarshalReinvestCallbackArgs(ctx, args)
+	if err != nil {
+		return err
+	}
+	
+	// fetch epoch
+	strideEpochTracker, found := k.GetEpochTracker(ctx, epochtypes.STRIDE_EPOCH)
+	if !found {
+		k.Logger(ctx).Error("failed to find epoch")
+		return sdkerrors.Wrapf(types.ErrInvalidLengthEpochTracker, "no number for epoch (%s)", epochtypes.STRIDE_EPOCH)
+	}
+	epochNumber := strideEpochTracker.EpochNumber
+	// create a new record so that rewards are reinvested
+	record := recordstypes.DepositRecord{
+		Id:                 0,
+		Amount:             cast.ToInt64(reinvestCallback.GetAmount()),
+		Denom:              reinvestCallback.Denom,
+		HostZoneId:         reinvestCallback.HostZoneId,
+		Status:             recordstypes.DepositRecord_STAKE,
+		Source:             recordstypes.DepositRecord_WITHDRAWAL_ICA,
+		DepositEpochNumber: epochNumber,
+	}
+	k.RecordsKeeper.AppendDepositRecord(ctx, record)
+	return nil
+}
+
