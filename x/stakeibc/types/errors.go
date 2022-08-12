@@ -30,4 +30,5 @@ var (
 	ErrUnmarshalFailure            = sdkerrors.Register(ModuleName, 1520, "unable to unmarshal data structure")
 	ErrMarshalFailure              = sdkerrors.Register(ModuleName, 1521, "unable to marshal data structure")
 	ErrInvalidPacketCompletionTime = sdkerrors.Register(ModuleName, 1522, "invalid packet completion time")
+	ErrIntCast                     = sdkerrors.Register(ModuleName, 1523, "unable to cast to safe cast int")
 )

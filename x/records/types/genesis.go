@@ -37,6 +37,14 @@ func (gs GenesisState) Validate() error {
 		}
 		userRedemptionRecordIdMap[elem.Id] = true
 	}
+	// Check for duplicated ID in epochUnbondingRecord
+	epochUnbondingRecordIdMap := make(map[uint64]bool)
+	for _, elem := range gs.EpochUnbondingRecordList {
+		if _, ok := epochUnbondingRecordIdMap[elem.EpochNumber]; ok {
+			return fmt.Errorf("duplicated id for epochUnbondingRecord")
+		}
+		epochUnbondingRecordIdMap[elem.EpochNumber] = true
+	}
 	// Check for duplicated ID in depositRecord
 	depositRecordIdMap := make(map[uint64]bool)
 	depositRecordCount := gs.GetDepositRecordCount()
