@@ -36,7 +36,7 @@ func (k msgServer) ClaimUndelegatedTokens(goCtx context.Context, msg *types.MsgC
 		return nil, sdkerrors.Wrapf(err, "unable to build redemption transfer message")
 	}
 
-	sequence, err := k.SubmitTxs(ctx, icaTx.ConnectionId, icaTx.Msgs, icaTx.Account, icaTx.Timeout)
+	sequence, err := k.SubmitTxs(ctx, icaTx.ConnectionId, icaTx.Msgs, icaTx.Account, icaTx.Timeout, "", nil)
 	if err != nil {
 		k.Logger(ctx).Error(fmt.Sprintf("Submit tx error: %s", err.Error()))
 		return nil, sdkerrors.Wrapf(err, "unable to submit ICA redemption tx")
