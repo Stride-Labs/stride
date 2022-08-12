@@ -45,6 +45,11 @@ func UndelegateCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, a
 
 	// unmarshal the callback args and get the host zone
 	undelegateCallback, err := k.UnmarshalUndelegateCallbackArgs(ctx, args)
+	if err != nil {
+		errMsg := fmt.Sprintf("Unable to unmarshal undelegate callback args | %s", err.Error())
+		k.Logger(ctx).Error(errMsg)
+		return sdkerrors.Wrapf(types.ErrUnmarshalFailure, errMsg)
+	}
 	k.Logger(ctx).Info(fmt.Sprintf("UndelegateCallback, HostZone: %s", undelegateCallback.HostZoneId))
 
 	hostZone, found := k.GetHostZone(ctx, undelegateCallback.HostZoneId)
