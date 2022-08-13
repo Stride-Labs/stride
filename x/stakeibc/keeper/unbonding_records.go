@@ -17,7 +17,7 @@ import (
 )
 
 func (k Keeper) CreateEpochUnbondings(ctx sdk.Context, epochNumber int64) bool {
-	hostZoneUnbondings := []*recordstypes.HostZoneUnbonding{}
+	hostZoneUnbondings := make(map[string]*recordstypes.HostZoneUnbonding)
 	addEpochUndelegation := func(ctx sdk.Context, index int64, hostZone types.HostZone) error {
 		hostZoneUnbonding := recordstypes.HostZoneUnbonding{
 			Amount:     uint64(0),
@@ -25,8 +25,7 @@ func (k Keeper) CreateEpochUnbondings(ctx sdk.Context, epochNumber int64) bool {
 			HostZoneId: hostZone.ChainId,
 			Status:     recordstypes.HostZoneUnbonding_BONDED,
 		}
-		// MOOSE
-		hostZoneUnbondings = append(hostZoneUnbondings, &hostZoneUnbonding) // [hostZone.ChainId] = &hostZoneUnbonding
+		hostZoneUnbondings[hostZone.ChainId] = &hostZoneUnbonding
 		return nil
 	}
 
@@ -46,9 +45,7 @@ func (k Keeper) SendHostZoneUnbondings(ctx sdk.Context, hostZone types.HostZone)
 	totalAmtToUnbond := uint64(0)
 	var msgs []sdk.Msg
 	for _, epochUnbonding := range k.RecordsKeeper.GetAllEpochUnbondingRecord(ctx) {
-		// hostZoneRecord, found := epochUnbonding.HostZoneUnbondings[hostZone.ChainId]
-		// MOOSE
-		hostZoneRecord, found := k.RecordsKeeper.GetHostZoneUnbondingByChainId(ctx, epochUnbonding.Id, hostZone.ChainId)
+		hostZoneRecord, found := epochUnbonding.HostZoneUnbondings[hostZone.ChainId]
 		if !found {
 			k.Logger(ctx).Error(fmt.Sprintf("Host zone unbonding record not found for hostZoneId %s in epoch %d", hostZone.ChainId, epochUnbonding.GetUnbondingEpochNumber()))
 			continue
@@ -151,8 +148,8 @@ func (k Keeper) CleanupEpochUnbondingRecords(ctx sdk.Context) bool {
 		k.Logger(ctx).Info(fmt.Sprintf("Cleaning up epoch unbondings for epoch unbonding record from epoch %d", epochUnbondingRecord.GetId()))
 		shouldDeleteRecord := true
 		hostZoneUnbondings := epochUnbondingRecord.GetHostZoneUnbondings()
-		for _, hostZoneUnbonding := range hostZoneUnbondings {
-			// hostZoneUnbonding := hostZoneUnbondings[key]
+		for _, key := range utils.HostZoneUnbondingKeys(hostZoneUnbondings) {
+			hostZoneUnbonding := hostZoneUnbondings[key]
 			if (hostZoneUnbonding.Status != recordstypes.HostZoneUnbonding_TRANSFERRED) && (hostZoneUnbonding.GetAmount() != 0) {
 				shouldDeleteRecord = false
 				break
@@ -189,11 +186,7 @@ func (k Keeper) SweepAllUnbondedTokens(ctx sdk.Context) {
 
 			// iterate through all host zone unbondings and process them if they're ready to be swept
 			// TODO() index into the HostZoneUnbonding map with chainID rather than iterating and checking chainID equality
-			// unbonding := unbondingRecord.HostZoneUnbondings[zoneInfo.ChainId]
-			unbonding, found := k.RecordsKeeper.GetHostZoneUnbondingByChainId(ctx, unbondingRecord.Id, zoneInfo.ChainId)
-			if !found {
-				return sdkerrors.Wrapf(types.ErrInvalidHostZone, "host zone not found in unbondings: %s", zoneInfo.ChainId)
-			}
+			unbonding := unbondingRecord.HostZoneUnbondings[zoneInfo.ChainId]
 			k.Logger(ctx).Info(fmt.Sprintf("\tProcessing batch SweepAllUnbondedTokens for host zone %s", zoneInfo.ChainId))
 			zone, found := k.GetHostZone(ctx, unbonding.HostZoneId)
 			if !found {

@@ -71,40 +71,27 @@ func (k msgServer) RegisterHostZone(goCtx context.Context, msg *types.MsgRegiste
 		k.Logger(ctx).Error("unable to register redemption account", "error", err)
 		return nil, err
 	}
-	// START
+
 	// add this host zone to unbonding hostZones, otherwise users won't be able to unbond
 	// for this host zone until the following day
 	epochUnbondingRecord, found := k.RecordsKeeper.GetLatestEpochUnbondingRecord(ctx)
-	k.Logger(ctx).Info(fmt.Sprintf("DOGE-1"))
 	if !found {
 		errMsg := "unable to add host zone to latest epoch unbonding record"
 		k.Logger(ctx).Error(errMsg)
 		return nil, sdkerrors.Wrapf(recordstypes.ErrEpochUnbondingRecordNotFound, errMsg)
 	}
-	k.Logger(ctx).Info(fmt.Sprintf("DOGE-2"))
 	hostZoneUnbondings := epochUnbondingRecord.GetHostZoneUnbondings()
-	k.Logger(ctx).Info(fmt.Sprintf("DOGE-3"))
 	if len(hostZoneUnbondings) == 0 {
-		hostZoneUnbondings = []*recordstypes.HostZoneUnbonding{}
+		hostZoneUnbondings = make(map[string]*recordstypes.HostZoneUnbonding)
 	}
-	k.Logger(ctx).Info(fmt.Sprintf("DOGE-4"))
-	// MOOSE
-	hostZoneUnbonding := &recordstypes.HostZoneUnbonding{
+	hostZoneUnbondings[zone.ChainId] = &recordstypes.HostZoneUnbonding{
 		Amount:     0,
 		Denom:      zone.HostDenom,
 		HostZoneId: zone.ChainId,
 		Status:     recordstypes.HostZoneUnbonding_BONDED,
 	}
-	didSet := k.RecordsKeeper.SetHostZoneEpochUnbondingRecord(ctx, epochUnbondingRecord.Id, chainId, hostZoneUnbonding)
-	if !didSet {
-		k.Logger(ctx).Error(fmt.Sprintf("Failed to set host zone epoch unbonding record %v", err))
-		return nil, sdkerrors.Wrapf(types.ErrInsufficientFunds, "couldn't set host zone epoch unbonding record. err: %s", err.Error())
-	}
-	k.Logger(ctx).Info(fmt.Sprintf("about to add hostZoneUnbondings to epochUnbondingRecord %v", hostZoneUnbondings))
 	epochUnbondingRecord.HostZoneUnbondings = hostZoneUnbondings
 	k.RecordsKeeper.SetEpochUnbondingRecord(ctx, epochUnbondingRecord)
-	k.Logger(ctx).Info(fmt.Sprintf("added host zone to latest epoch unbonding record %v", epochUnbondingRecord))
-	return &types.MsgRegisterHostZoneResponse{}, nil
 	epochUnbondingRecordNew, found := k.RecordsKeeper.GetLatestEpochUnbondingRecord(ctx)
 	if !found {
 		errMsg := "unable to add host zone to latest epoch unbonding record"
@@ -112,7 +99,7 @@ func (k msgServer) RegisterHostZone(goCtx context.Context, msg *types.MsgRegiste
 		return nil, sdkerrors.Wrapf(recordstypes.ErrEpochUnbondingRecordNotFound, errMsg)
 	}
 	k.Logger(ctx).Info(fmt.Sprintf("hostZoneUnbondings after register host zone %v", epochUnbondingRecordNew.GetHostZoneUnbondings()))
-	// END
+
 	// TODO(TEST-39): TODO(TEST-42): Set validators on the host zone, either using ICQ + intents or a WL
 
 	// emit events

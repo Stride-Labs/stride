@@ -105,7 +105,6 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochInfo epochstypes.EpochInf
 		if epochNumber%delegationInterval == 0 {
 			k.StakeExistingDepositsOnHostZones(ctx, epochNumber, depositRecords)
 		}
-		return
 
 		reinvestInterval := cast.ToInt64(k.GetParam(ctx, types.KeyReinvestInterval))
 		if epochNumber%reinvestInterval == 0 { // allow a few blocks from UpdateUndelegatedBal to avoid conflicts
