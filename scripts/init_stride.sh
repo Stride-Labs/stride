@@ -3,81 +3,130 @@
 set -eu 
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
-# import dependencies
-source ${SCRIPT_DIR}/vars.sh
+source $SCRIPT_DIR/vars.sh
 
-# first, we need to create some saved state, so that we can copy to docker files
-for node_name in ${STRIDE_NODE_NAMES[@]}; do
-    mkdir -p $STATE/$node_name
-done
+CHAIN_ID=$STRIDE_CHAIN_ID
+CMD=$STRIDE_CMD
+NUM_NODES=$STRIDE_NUM_NODES
+NODE_PREFIX=$STRIDE_NODE_PREFIX
+VAL_PREFIX=$STRIDE_VAL_PREFIX
 
-# fetch the stride node ids
-STRIDE_NODE_IDS=()
-# then, we initialize our chains 
+ADMIN_ACCT=$STRIDE_ADMIN_ACCT
+HERMES_ACCT=$HERMES_STRIDE_ACCT
+HERMES_MNEMONIC=$HERMES_STRIDE_MNEMONIC
+ICQ_ACCT=$ICQ_STRIDE_ACCT
+ICQ_MNEMONIC=$ICQ_STRIDE_MNEMONIC
+
+VAL_TOKENS=$STRIDE_VAL_TOKENS
+STAKE_TOKENS=$STRIDE_STAKE_TOKENS
+ADMIN_TOKENS=$STRIDE_ADMIN_TOKENS
+
+MAIN_ID=1 # Node responsible for genesis and persistent_peers
+MAIN_NODE_NAME=""
+MAIN_NODE_CMD=""
+MAIN_NODE_ID=""
+MAIN_CONFIG=""
+MAIN_GENESIS=""
 echo 'Initializing stride chain...'
-for i in ${!STRIDE_NODE_NAMES[@]}; do
-    node_name=${STRIDE_NODE_NAMES[i]}
-    vkey=${STRIDE_VAL_KEYS[i]}
-    val_acct=${STRIDE_VAL_ACCTS[i]}
-    st_cmd=${STRIDE_RUN_CMDS[i]}
-    echo "\t$node_name"
-    $st_cmd init test --chain-id $STRIDE_CHAIN --overwrite 2> /dev/null
-    sed -i -E 's|"stake"|"ustrd"|g' "${STATE}/${node_name}/config/genesis.json"
-    # add validator account
-    echo $vkey | $st_cmd keys add $val_acct --recover --keyring-backend=test > /dev/null
-    # get validator address
-    val_addr=$($st_cmd keys show $val_acct --keyring-backend test -a)
-    # add money for this validator account
-    $st_cmd add-genesis-account ${val_addr} 500000000000ustrd
-    # actually set this account as a validator
-    $st_cmd gentx $val_acct 1000000000ustrd --chain-id $STRIDE_CHAIN --keyring-backend test 2> /dev/null
-    # now we process these txs 
-    $st_cmd collect-gentxs 2> /dev/null
-    # now we grab the relevant node id
+for (( i=1; i <= $NUM_NODES; i++ )); do
+    # Node names will be of the form: "stride-node1"
+    node_name="stride${i}"
+    # Moniker is of the form: STRIDE_1
+    moniker=$(printf "${NODE_PREFIX}_${i}" | awk '{ print toupper($0) }')
+
+    # Create a state directory for the current node and initialize the chain
+    mkdir -p $STATE/$node_name
+    st_cmd="$CMD --home ${STATE}/$node_name"
+    $st_cmd init $moniker --chain-id $CHAIN_ID --overwrite 2> /dev/null
+
+    # Update node networking configuration 
+    config_toml="${STATE}/${node_name}/config/config.toml"
+    client_toml="${STATE}/${node_name}/config/client.toml"
+    app_toml="${STATE}/${node_name}/config/app.toml"
+    genesis_json="${STATE}/${node_name}/config/genesis.json"
+
+    sed -i -E "s|cors_allowed_origins = \[\]|cors_allowed_origins = [\"\*\"]|g" $config_toml
+    sed -i -E "s|127.0.0.1|0.0.0.0|g" $config_toml
+    sed -i -E "s|timeout_commit = \"5s\"|timeout_commit = \"${BLOCK_TIME}\"|g" $config_toml
+    sed -i -E "s|prometheus = false|prometheus = true|g" $config_toml
+
+    sed -i -E "s|chain-id = \"\"|chain-id = \"${CHAIN_ID}\"|g" $client_toml
+    sed -i -E "s|keyring-backend = \"os\"|keyring-backend = \"test\"|g" $client_toml
+
+    sed -i -E 's|"stake"|"ustrd"|g' $genesis_json
+
+    # Get the endpoint and node ID
     node_id=$($st_cmd tendermint show-node-id)@$node_name:$PORT_ID
-    STRIDE_NODE_IDS+=( $node_id )
+    echo "Node #$i ID: $node_id"
 
-    if [ $i -ne $MAIN_ID ]
-    then
-        $STRIDE_MAIN_CMD add-genesis-account ${val_addr} 500000000000ustrd
-        cp ${STATE}/${node_name}/config/gentx/*.json ${STATE}/${STRIDE_MAIN_NODE}/config/gentx/
+    # add a validator account
+    val_acct="${VAL_PREFIX}${i}"
+    val_mnemonic="${STRIDE_VAL_MNEMONICS[((i-1))]}"
+    echo "$val_mnemonic" | $st_cmd keys add $val_acct --recover --keyring-backend=test 
+    val_addr=$($st_cmd keys show $val_acct --keyring-backend test -a)
+    # Add this account to the current node
+    $st_cmd add-genesis-account ${val_addr} $VAL_TOKENS
+    # actually set this account as a validator on the current node 
+    $st_cmd gentx $val_acct $STAKE_TOKENS --chain-id $CHAIN_ID --keyring-backend test 2> /dev/null
+
+    # Cleanup from seds
+    rm -rf ${client_toml}-E
+    rm -rf ${config_toml}-E
+    rm -rf ${genesis_json}-E
+
+    if [ $i -eq $MAIN_ID ]; then
+        MAIN_NODE_NAME=$node_name
+        MAIN_NODE_CMD=$st_cmd
+        MAIN_NODE_ID=$node_id
+        MAIN_CONFIG=$config_toml
+        MAIN_GENESIS=$genesis_json
+    else
+        # also add this account and it's genesis tx to the main node
+        $MAIN_NODE_CMD add-genesis-account ${val_addr} $VAL_TOKENS
+        cp ${STATE}/${node_name}/config/gentx/*.json ${STATE}/${MAIN_NODE_NAME}/config/gentx/
     fi
 done
 
-# modify Stride epoch to be 3s
-main_config=$STATE/${STRIDE_MAIN_NODE}/config/genesis.json
-jq '.app_state.epochs.epochs[2].duration = $newVal' --arg newVal "3s" $main_config > json.tmp && mv json.tmp $main_config
+# add Hermes and ICQ relayer accounts on Stride
+echo "$HERMES_MNEMONIC" | $MAIN_NODE_CMD keys add $HERMES_ACCT --recover --keyring-backend=test 
+echo "$ICQ_MNEMONIC" | $MAIN_NODE_CMD keys add $ICQ_ACCT --recover --keyring-backend=test
+HERMES_ADDRESS=$($MAIN_NODE_CMD keys show $HERMES_ACCT --keyring-backend test -a)
+ICQ_ADDRESS=$($MAIN_NODE_CMD keys show $ICQ_ACCT --keyring-backend test -a)
 
-# Restore relayer account on stride
-echo $RLY_MNEMONIC_1 | $STRIDE_MAIN_CMD keys add rly1 --recover --keyring-backend=test > /dev/null
-RLY_ADDRESS_1=$($STRIDE_MAIN_CMD keys show rly1 --keyring-backend test -a)
-# Give relayer account token balance
-$STRIDE_MAIN_CMD add-genesis-account ${RLY_ADDRESS_1} 500000000000ustrd
+# give relayer accounts token balances
+$MAIN_NODE_CMD add-genesis-account ${HERMES_ADDRESS} $VAL_TOKENS
+$MAIN_NODE_CMD add-genesis-account ${ICQ_ADDRESS} $VAL_TOKENS
 
-$STRIDE_MAIN_CMD collect-gentxs 2> /dev/null
-# add peers in config.toml so that nodes can find each other by constructing a fully connected
-# graph of nodes
-for i in ${!STRIDE_NODE_NAMES[@]}; do
-    node_name=${STRIDE_NODE_NAMES[i]}
-    peers=""
-    for j in "${!STRIDE_NODE_IDS[@]}"; do
-        if [ $j -ne $i ]
-        then
-            peers="${STRIDE_NODE_IDS[j]},${peers}"
-        fi
-    done
-    sed -i -E "s|persistent_peers = \"\"|persistent_peers = \"$peers\"|g" "${STATE}/${node_name}/config/config.toml"
-    # use blind address (not loopback) to allow incoming connections from outside networks for local debugging
-    sed -i -E "s|127.0.0.1|0.0.0.0|g" "${STATE}/${node_name}/config/config.toml"
+# Add the stride admin account
+echo "$STRIDE_ADMIN_MNEMONIC" | $MAIN_NODE_CMD keys add $ADMIN_ACCT --recover --keyring-backend=test
+ADMIN_ADDRESS=$($MAIN_NODE_CMD keys show $ADMIN_ACCT --keyring-backend test -a)
+$MAIN_NODE_CMD add-genesis-account ${ADMIN_ADDRESS} $ADMIN_TOKENS
+
+# now we process gentx txs on the main node
+$MAIN_NODE_CMD collect-gentxs 2> /dev/null
+
+# wipe out the persistent peers for the main node (these are incorrectly autogenerated for each validator during collect-gentxs)
+sed -i -E "s|persistent_peers = .*|persistent_peers = \"\"|g" $MAIN_CONFIG
+
+# modify our params
+jq '.app_state.epochs.epochs[1].duration = $newVal' --arg newVal "$DAY_EPOCH_DURATION" $MAIN_GENESIS > json.tmp && mv json.tmp $MAIN_GENESIS
+jq '.app_state.epochs.epochs[2].duration = $newVal' --arg newVal "$STRIDE_EPOCH_DURATION" $MAIN_GENESIS > json.tmp && mv json.tmp $MAIN_GENESIS
+jq '.app_state.staking.params.unbonding_time = $newVal' --arg newVal "$UNBONDING_TIME" $MAIN_GENESIS > json.tmp && mv json.tmp $MAIN_GENESIS
+jq '.app_state.gov.deposit_params.max_deposit_period = $newVal' --arg newVal "$MAX_DEPOSIT_PERIOD" $MAIN_GENESIS > json.tmp && mv json.tmp $MAIN_GENESIS
+jq '.app_state.gov.voting_params.voting_period = $newVal' --arg newVal "$VOTING_PERIOD" $MAIN_GENESIS > json.tmp && mv json.tmp $MAIN_GENESIS
+jq '.app_state.slashing.params.signed_blocks_window = $newVal' --arg newVal "$SIGNED_BLOCKS_WINDOW" $MAIN_GENESIS > json.tmp && mv json.tmp $MAIN_GENESIS
+jq '.app_state.slashing.params.min_signed_per_window = $newVal' --arg newVal "$MIN_SIGNED_PER_WINDOW" $MAIN_GENESIS > json.tmp && mv json.tmp $MAIN_GENESIS
+jq '.app_state.slashing.params.slash_fraction_downtime = $newVal' --arg newVal "$SLASH_FRACTION_DOWNTIME" $MAIN_GENESIS > json.tmp && mv json.tmp $MAIN_GENESIS
+
+# for all peer nodes....
+for (( i=2; i <= $NUM_NODES; i++ )); do
+    node_name="${NODE_PREFIX}${i}"
+    # add the main node as a persistent peer
+    sed -i -E "s|persistent_peers = .*|persistent_peers = \"${MAIN_NODE_ID}\"|g" $MAIN_CONFIG
+    # copy the main node's genesis to the peer nodes to ensure they all have the same genesis
+    cp $MAIN_GENESIS ${STATE}/${node_name}/config/genesis.json
 done
 
-# make sure all Stride nodes have the same genesis
-for i in "${!STRIDE_NODE_NAMES[@]}"; do
-    if [ $i -ne $MAIN_ID ]
-    then
-        cp ${STATE}/${STRIDE_MAIN_NODE}/config/genesis.json ${STATE}/${STRIDE_NODE_NAMES[i]}/config/genesis.json
-    fi
-done
-
-echo "Creating stride chain"
-docker-compose up -d stride1 stride2 stride3 
+# Cleanup from seds
+rm -rf ${MAIN_CONFIG}-E
+rm -rf ${MAIN_GENESIS}-E
