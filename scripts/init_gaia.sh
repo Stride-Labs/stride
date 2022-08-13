@@ -8,7 +8,6 @@ source $SCRIPT_DIR/vars.sh
 CHAIN_ID=$GAIA_CHAIN_ID
 CMD=$GAIA_CMD
 DENOM=$GAIA_DENOM
-RPC_PORT=$GAIA_RPC_PORT
 NUM_NODES=$GAIA_NUM_NODES
 NODE_PREFIX=$GAIA_NODE_PREFIX
 VAL_PREFIX=$GAIA_VAL_PREFIX
@@ -47,18 +46,17 @@ for (( i=1; i <= $NUM_NODES; i++ )); do
     sed -i -E "s|timeout_commit = \"5s\"|timeout_commit = \"${BLOCK_TIME}\"|g" $config_toml
     sed -i -E "s|prometheus = false|prometheus = true|g" $config_toml
 
-    sed -i -E "s|minimum-gas-prices = \".*\"|minimum-gas-prices = \"0${DENOM}\"|g" $app_toml
-    sed -i -E '/\[api\]/,/^enable = .*$/ s/^enable = .*$/enable = true/' $app_toml
-    sed -i -E 's|unsafe-cors = .*|unsafe-cors = true|g' $app_toml
-
     sed -i -E "s|chain-id = \"\"|chain-id = \"${CHAIN_ID}\"|g" $client_toml
     sed -i -E "s|keyring-backend = \"os\"|keyring-backend = \"test\"|g" $client_toml
-    sed -i -E "s|node = \".*\"|node = \"tcp://localhost:$RPC_PORT\"|g" $client_toml
+
+    sed -i -E "s|minimum-gas-prices = \".*\"|minimum-gas-prices = \"0${DENOM}\"|g" $app_toml
+    sed -i -E '/\[api\]/,/^enable = .*$/ s/^enable = .*$/enable = true/' $app_toml
+    sed -i -E 's|enable-unsafe-cors = .*|enable-unsafe-cors = true|g' $app_toml
 
     sed -i -E "s|\"stake\"|\"${DENOM}\"|g" $genesis_json
 
     # Get the endpoint and node ID
-    node_id=$($cmd tendermint show-node-id)@$node_name:$PEER_PORT
+    node_id=$($cmd tendermint show-node-id)@$node_name:$PORT_ID
     echo "Node #$i ID: $node_id"
 
     # add a validator account
@@ -73,8 +71,8 @@ for (( i=1; i <= $NUM_NODES; i++ )); do
 
     # Cleanup from seds
     rm -rf ${client_toml}-E
+    rm -rf ${config_toml}-E
     rm -rf ${genesis_json}-E
-    rm -rf ${app_toml}-E
 
     if [ $i -eq $MAIN_ID ]; then
         MAIN_NODE_NAME=$node_name
@@ -123,8 +121,6 @@ for (( i=2; i <= $NUM_NODES; i++ )); do
     sed -i -E "s|persistent_peers = .*|persistent_peers = \"${MAIN_NODE_ID}\"|g" $config_toml
     # copy the main node's genesis to the peer nodes to ensure they all have the same genesis
     cp $MAIN_GENESIS $genesis_json
-
-    rm -rf ${config_toml}-E
 done
 
 # Cleanup from seds
