@@ -172,47 +172,6 @@ func (k *Keeper) HandleSend(ctx sdk.Context, msg sdk.Msg, sequence string) error
 			DepositEpochNumber: epochNumber,
 		}
 		k.RecordsKeeper.AppendDepositRecord(ctx, record)
-		// process unbonding transfers from the DelegationAccount to the RedemptionAccount
-	} else if sendMsg.FromAddress == delegationAddress && sendMsg.ToAddress == redemptionAddress {
-		k.Logger(ctx).Error("ACK - sendMsg.FromAddress == delegationAddress && sendMsg.ToAddress == redemptionAddress")
-		dayEpochTracker, found := k.GetEpochTracker(ctx, "day")
-		if !found {
-			k.Logger(ctx).Error("failed to find epoch day")
-			return sdkerrors.Wrapf(types.ErrInvalidLengthEpochTracker, "no number for epoch (%s)", "day")
-		}
-		epochUnbondingRecords := k.RecordsKeeper.GetAllEpochUnbondingRecord(ctx)
-
-		for _, epochUnbondingRecord := range epochUnbondingRecords {
-			k.Logger(ctx).Info(fmt.Sprintf("epoch number: %d", epochUnbondingRecord.EpochNumber))
-			if epochUnbondingRecord.EpochNumber == dayEpochTracker.EpochNumber {
-				k.Logger(ctx).Error("epochUnbondingRecord.UnbondingEpochNumber == dayEpochTracker.EpochNumber")
-				continue
-			}
-			hostZoneUnbonding := epochUnbondingRecord.HostZoneUnbondings[zone.ChainId]
-			// NOTE: at the beginning of the epoch we mark all PENDING_TRANSFER HostZoneUnbondingRecords as UNBONDED
-			// so that they're retried if the transfer fails
-			if hostZoneUnbonding.Status != recordstypes.HostZoneUnbonding_PENDING_TRANSFER {
-				k.Logger(ctx).Error("hostZoneUnbonding.Status != recordstypes.HostZoneUnbonding_PENDING_TRANSFER")
-				continue
-			}
-			hostZoneUnbonding.Status = recordstypes.HostZoneUnbonding_TRANSFERRED
-			userRedemptionRecords := hostZoneUnbonding.UserRedemptionRecords
-			for _, recordId := range userRedemptionRecords {
-				userRedemptionRecord, found := k.RecordsKeeper.GetUserRedemptionRecord(ctx, recordId)
-				if !found {
-					k.Logger(ctx).Error("failed to find user redemption record")
-					return sdkerrors.Wrapf(types.ErrRecordNotFound, "no user redemption record found for id (%s)", recordId)
-				}
-				if userRedemptionRecord.IsClaimable {
-					k.Logger(ctx).Info("user redemption record is already claimable")
-					continue
-				}
-				userRedemptionRecord.IsClaimable = true
-				k.RecordsKeeper.SetUserRedemptionRecord(ctx, userRedemptionRecord)
-				k.SetHostZone(ctx, *zone)
-			}
-			k.RecordsKeeper.SetEpochUnbondingRecord(ctx, epochUnbondingRecord)
-		}
 	} else if sendMsg.FromAddress == redemptionAddress {
 		k.Logger(ctx).Error("ACK - sendMsg.FromAddress == redemptionAddress")
 		// fetch the record from the packet sequence number, then delete the UserRedemptionRecord and the sequence mapping
