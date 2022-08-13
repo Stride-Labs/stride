@@ -1,20 +1,30 @@
 FROM golang:1.17-alpine3.15 AS golang
 
-WORKDIR /src/app/
-COPY go.mod go.sum* ./
-RUN go mod download
-COPY . .
+WORKDIR /src/
 
-RUN apk add --no-cache make git gcc musl-dev openssl-dev linux-headers \
-    && make build
+RUN apk add --no-cache make git gcc musl-dev openssl-dev linux-headers
+
+COPY go.mod .
+COPY go.sum .
+COPY Makefile .
+RUN go mod download
+
+COPY app /src/app
+COPY cmd /src/cmd
+COPY proto /src/proto
+COPY testutil /src/testutil
+COPY utils /src/utils
+COPY x /src/x
+
+RUN make build
 
 # Add to a distroless container
 FROM alpine:3.15
-COPY --from=golang /src/app/build/strided /usr/local/bin/strided
+COPY --from=golang /src/build/strided /usr/local/bin/strided
 RUN addgroup -g 1000 stride \
-    && adduser -S -h /stride -D stride -u 1000 -G stride
+    && adduser -S -h /home/stride -D stride -u 1000 -G stride
 USER stride
 
-RUN strided init test
-EXPOSE 1317
-CMD ["strided", "start", "--home", "/stride/.strided"]
+WORKDIR /home/stride
+
+CMD ["strided", "start"]
