@@ -21,3 +21,4 @@ USER icq
 WORKDIR /home/icq
 
 CMD ["interchain-queries", "run"]
+
