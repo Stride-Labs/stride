@@ -94,17 +94,13 @@ func (k msgServer) RegisterHostZone(goCtx context.Context, msg *types.MsgRegiste
 		k.Logger(ctx).Error(errMsg)
 		return nil, sdkerrors.Wrapf(recordstypes.ErrEpochUnbondingRecordNotFound, errMsg)
 	}
-	hostZoneUnbondings := epochUnbondingRecord.GetHostZoneUnbondings()
-	if len(hostZoneUnbondings) == 0 {
-		hostZoneUnbondings = []*recordstypes.HostZoneUnbonding{}
-	}
 	hostZoneUnbonding := &recordstypes.HostZoneUnbonding{
 		Amount:     0,
 		Denom:      zone.HostDenom,
 		HostZoneId: zone.ChainId,
 		Status:     recordstypes.HostZoneUnbonding_BONDED,
 	}
-	didSet := k.RecordsKeeper.SetHostZoneEpochUnbondingRecord(ctx, epochUnbondingRecord.Id, chainId, hostZoneUnbonding)
+	didSet := k.RecordsKeeper.SetHostZoneOnEpochUnbondingRecord(ctx, epochUnbondingRecord.Id, chainId, hostZoneUnbonding)
 	if !didSet {
 		k.Logger(ctx).Error(fmt.Sprintf("Failed to set host zone epoch unbonding record %v", err))
 		return nil, sdkerrors.Wrapf(types.ErrInsufficientFunds, "couldn't set host zone epoch unbonding record. err: %s", err.Error())

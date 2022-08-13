@@ -159,7 +159,7 @@ func (k Keeper) GetHostZoneUnbondingByChainId(ctx sdk.Context, id uint64, chainI
 	return &types.HostZoneUnbonding{}, false
 }
 
-func (k Keeper) SetHostZoneEpochUnbondingRecord(ctx sdk.Context, id uint64, chainId string, hzu *types.HostZoneUnbonding) (success bool) {
+func (k Keeper) SetHostZoneOnEpochUnbondingRecord(ctx sdk.Context, id uint64, chainId string, hzu *types.HostZoneUnbonding) (success bool) {
 	epochUnbondingRecord, found := k.GetEpochUnbondingRecord(ctx, id)
 	if !found {
 		return false
