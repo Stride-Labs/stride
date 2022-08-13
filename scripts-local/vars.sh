@@ -70,6 +70,28 @@ STRIDE_VAL_3_PUBKEY='{"@type":"/cosmos.crypto.secp256k1.PubKey","key":"A0GIT0Ftl
 STRIDE_HOME_3="$STATE/stride3"
 STRIDE_CMD_3="$SCRIPT_DIR/../build/stride3/strided --home $STRIDE_HOME_3"
 
+# define vars for STRIDE 4
+STRIDE_VAL_ACCT_4=val4
+STRIDE_PORT_ID_4=26057
+STRIDE_PEER_PORT_4=26056
+STRIDE_EXT_ADR_4=26055
+STRIDE_VAL_MNEMONIC_4="tail forward era width glory magnet knock shiver cup broken turkey upgrade cigar story agent lake transfer misery sustain fragile parrot also air document"
+STRIDE_VAL_4_ADDR="stride1py0fvhdtq4au3d9l88rec6vyda3e0wtt9szext"
+STRIDE_VAL_4_PUBKEY='{"@type":"/cosmos.crypto.secp256k1.PubKey","key":"A0v7/E7N4O5OLD1IG8KqwDkm9i961JDUrYyoN3l2OgEg"}'
+STRIDE_HOME_4="$STATE/stride4"
+STRIDE_CMD_4="$SCRIPT_DIR/../build/stride4/strided --home $STRIDE_HOME_4"
+
+# define vars for STRIDE 5
+STRIDE_VAL_ACCT_5=val5
+STRIDE_PORT_ID_5=25957
+STRIDE_PEER_PORT_5=25956
+STRIDE_EXT_ADR_5=25955
+STRIDE_VAL_MNEMONIC_5="crime lumber parrot enforce chimney turtle wing iron scissors jealous indicate peace empty game host protect juice submit motor cause second picture nuclear area"
+STRIDE_VAL_5_ADDR="stride1c5jnf370kaxnv009yhc3jt27f549l5u36chzem"
+STRIDE_VAL_5_PUBKEY='{"@type":"/cosmos.crypto.secp256k1.PubKey","key":"A3cNnP5IXZ2llK10AyU4xa/T+YorvBXZBTT4aVxFKTCo"}'
+STRIDE_HOME_5="$STATE/stride5"
+STRIDE_CMD_5="$SCRIPT_DIR/../build/stride5/strided --home $STRIDE_HOME_5"
+
 STRIDE_CMD="$SCRIPT_DIR/../build/strided --home $STATE/stride"
 
 # define GAIA vars
@@ -210,6 +232,8 @@ STRIDE_STATE=$SCRIPT_DIR/state/stride
 STRIDE_LOGS=$SCRIPT_DIR/logs/stride.log
 STRIDE_LOGS_2=$SCRIPT_DIR/logs/stride2.log
 STRIDE_LOGS_3=$SCRIPT_DIR/logs/stride3.log
+STRIDE_LOGS_4=$SCRIPT_DIR/logs/stride4.log
+STRIDE_LOGS_5=$SCRIPT_DIR/logs/stride5.log
 GAIA_STATE=$SCRIPT_DIR/state/gaia
 GAIA_LOGS=$SCRIPT_DIR/logs/gaia.log
 GAIA_LOGS_2=$SCRIPT_DIR/logs/gaia2.log

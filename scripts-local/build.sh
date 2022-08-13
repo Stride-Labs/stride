@@ -13,7 +13,11 @@ while getopts sghijo flag; do
            mkdir -p $BUILDDIR/stride2
            go build -mod=readonly -trimpath -o $BUILDDIR/stride2 ./... 2>&1 | grep -v -E "deprecated|keychain" || true; 
            mkdir -p $BUILDDIR/stride3
-           go build -mod=readonly -trimpath -o $BUILDDIR/stride3 ./... 2>&1 | grep -v -E "deprecated|keychain" || true; 
+           go build -mod=readonly -trimpath -o $BUILDDIR/stride3 ./... 2>&1 | grep -v -E "deprecated|keychain" || true;
+           mkdir -p $BUILDDIR/stride4
+           go build -mod=readonly -trimpath -o $BUILDDIR/stride4 ./... 2>&1 | grep -v -E "deprecated|keychain" || true;
+           mkdir -p $BUILDDIR/stride5
+           go build -mod=readonly -trimpath -o $BUILDDIR/stride5 ./... 2>&1 | grep -v -E "deprecated|keychain" || true; 
            echo "Done" ;;
         g) printf '%s' "Building Gaia...   ";
            cd deps/gaia; 

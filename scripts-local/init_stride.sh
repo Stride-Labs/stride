@@ -17,11 +17,13 @@ mkdir -p $STATE/$STRIDE_NODE_NAME
 echo 'Initializing stride state...'
 
 # initialize the chain
-$STRIDE_CMD init test --chain-id $STRIDE_CHAIN --overwrite 2> /dev/null
-$STRIDE_CMD_2 init test --chain-id $STRIDE_CHAIN --overwrite 2> /dev/null
-$STRIDE_CMD_3 init test --chain-id $STRIDE_CHAIN --overwrite 2> /dev/null
+$STRIDE_CMD init stride1 --chain-id $STRIDE_CHAIN --overwrite 2> /dev/null
+$STRIDE_CMD_2 init stride2 --chain-id $STRIDE_CHAIN --overwrite 2> /dev/null
+$STRIDE_CMD_3 init stride3 --chain-id $STRIDE_CHAIN --overwrite 2> /dev/null
+$STRIDE_CMD_4 init stride4 --chain-id $STRIDE_CHAIN --overwrite 2> /dev/null
+$STRIDE_CMD_5 init stride5 --chain-id $STRIDE_CHAIN --overwrite 2> /dev/null
 
-for NODE_NAME in stride stride2 stride3; do
+for NODE_NAME in stride stride2 stride3 stride4 stride5; do
     # change the denom
     sed -i -E 's|"stake"|"ustrd"|g' "${STATE}/${NODE_NAME}/config/genesis.json"
     sed -i -E "s|timeout_commit = \"5s\"|timeout_commit = \"${BLOCK_TIME}\"|g" "${STATE}/${NODE_NAME}/config/config.toml"
@@ -65,7 +67,7 @@ mkdir $STRIDE_HOME/config/gentx/
 echo $STRIDE_VAL_MNEMONIC_2 | $STRIDE_CMD_2 keys add $STRIDE_VAL_ACCT_2 --recover --keyring-backend=test >> $KEYS_LOGS 2>&1 
 $STRIDE_CMD_2 add-genesis-account $STRIDE_VAL_2_ADDR 500000000000000ustrd
 $STRIDE_CMD add-genesis-account $STRIDE_VAL_2_ADDR 500000000000000ustrd
-$STRIDE_CMD_2 gentx $STRIDE_VAL_ACCT_2 1000000000ustrd --chain-id $STRIDE_CHAIN --keyring-backend test --output-document=$STRIDE_HOME/config/gentx/val2.json
+$STRIDE_CMD_2 gentx $STRIDE_VAL_ACCT_2 1000000000ustrd --chain-id $STRIDE_CHAIN --keyring-backend test --output-document=$STRIDE_HOME/config/gentx/val2.json >> $TX_LOGS 2>&1 
 
 
 # ================= MAP PORTS FOR NODE 3 SO IT DOESN'T CONFLICT WITH NODE 1 =================
@@ -85,7 +87,48 @@ sed -i -E 's|enable = true|enable = false|g' "${STATE}/stride3/config/app.toml"
 echo $STRIDE_VAL_MNEMONIC_3 | $STRIDE_CMD_3 keys add $STRIDE_VAL_ACCT_3 --recover --keyring-backend=test >> $KEYS_LOGS 2>&1 
 $STRIDE_CMD_3 add-genesis-account $STRIDE_VAL_3_ADDR 500000000000000ustrd
 $STRIDE_CMD add-genesis-account $STRIDE_VAL_3_ADDR 500000000000000ustrd
-$STRIDE_CMD_3 gentx $STRIDE_VAL_ACCT_3 1000000000ustrd --chain-id $STRIDE_CHAIN --keyring-backend test --output-document=$STRIDE_HOME/config/gentx/val3.json
+$STRIDE_CMD_3 gentx $STRIDE_VAL_ACCT_3 1000000000ustrd --chain-id $STRIDE_CHAIN --keyring-backend test --output-document=$STRIDE_HOME/config/gentx/val3.json >> $TX_LOGS 2>&1 
+
+
+# ================= MAP PORTS FOR NODE 4 SO IT DOESN'T CONFLICT WITH NODE 1 =================
+sed -i -E 's|6060|6000|g' "${STATE}/stride4/config/config.toml"
+sed -i -E "s|26657|$STRIDE_PORT_ID_4|g" "${STATE}/stride4/config/client.toml"
+sed -i -E "s|26657|$STRIDE_PORT_ID_4|g" "${STATE}/stride4/config/config.toml"
+sed -i -E "s|26656|$STRIDE_PORT_ID_4|g" "${STATE}/stride4/config/config.toml"
+sed -i -E "s|26658|26058|g" "${STATE}/stride4/config/config.toml"
+sed -i -E "s|external_address = \"\"|external_address = \"localhost:${STRIDE_EXT_ADR_4}\"|g" "${STATE}/stride4/config/config.toml"
+
+sed -i -E "s|9090|9000|g" "${STATE}/stride4/config/app.toml"
+sed -i -E "s|9091|9001|g" "${STATE}/stride4/config/app.toml"
+sed -i -E "s|persistent_peers = \"\"|persistent_peers = \"$MAIN_NODE_ID\"|g" "${STATE}/stride4/config/config.toml"
+sed -i -E 's|enable = true|enable = false|g' "${STATE}/stride4/config/app.toml"
+
+# ============================== SETUP CHAIN 4 ======================================
+echo $STRIDE_VAL_MNEMONIC_4 | $STRIDE_CMD_4 keys add $STRIDE_VAL_ACCT_4 --recover --keyring-backend=test >> $KEYS_LOGS 2>&1 
+$STRIDE_CMD_4 add-genesis-account $STRIDE_VAL_4_ADDR 500000000000000ustrd
+$STRIDE_CMD add-genesis-account $STRIDE_VAL_4_ADDR 500000000000000ustrd
+$STRIDE_CMD_4 gentx $STRIDE_VAL_ACCT_4 1000000000ustrd --chain-id $STRIDE_CHAIN --keyring-backend test --output-document=$STRIDE_HOME/config/gentx/val4.json >> $TX_LOGS 2>&1 
+
+
+# ================= MAP PORTS FOR NODE 5 SO IT DOESN'T CONFLICT WITH NODE 1 =================
+sed -i -E 's|6060|5090|g' "${STATE}/stride5/config/config.toml"
+sed -i -E "s|26657|$STRIDE_PORT_ID_5|g" "${STATE}/stride5/config/client.toml"
+sed -i -E "s|26657|$STRIDE_PORT_ID_5|g" "${STATE}/stride5/config/config.toml"
+sed -i -E "s|26656|$STRIDE_PORT_ID_5|g" "${STATE}/stride5/config/config.toml"
+sed -i -E "s|26658|25958|g" "${STATE}/stride5/config/config.toml"
+sed -i -E "s|external_address = \"\"|external_address = \"localhost:${STRIDE_EXT_ADR_5}\"|g" "${STATE}/stride5/config/config.toml"
+
+sed -i -E "s|9090|8090|g" "${STATE}/stride5/config/app.toml"
+sed -i -E "s|9091|8091|g" "${STATE}/stride5/config/app.toml"
+sed -i -E "s|persistent_peers = \"\"|persistent_peers = \"$MAIN_NODE_ID\"|g" "${STATE}/stride5/config/config.toml"
+sed -i -E 's|enable = true|enable = false|g' "${STATE}/stride5/config/app.toml"
+
+# ============================== SETUP CHAIN 5 ======================================
+echo $STRIDE_VAL_MNEMONIC_5 | $STRIDE_CMD_5 keys add $STRIDE_VAL_ACCT_5 --recover --keyring-backend=test >> $KEYS_LOGS 2>&1 
+$STRIDE_CMD_5 add-genesis-account $STRIDE_VAL_5_ADDR 500000000000000ustrd
+$STRIDE_CMD add-genesis-account $STRIDE_VAL_5_ADDR 500000000000000ustrd
+$STRIDE_CMD_5 gentx $STRIDE_VAL_ACCT_5 1000000000ustrd --chain-id $STRIDE_CHAIN --keyring-backend test --output-document=$STRIDE_HOME/config/gentx/val5.json >> $TX_LOGS 2>&1 
+
 
 # add validator account
 echo $STRIDE_VAL_MNEMONIC | $STRIDE_CMD keys add $STRIDE_VAL_ACCT --recover --keyring-backend=test >> $KEYS_LOGS 2>&1
@@ -121,3 +164,5 @@ sed -i -E "s|voting_period\": \"172800s\"|voting_period\": \"${VOTING_PERIOD}\"|
 
 cp $STRIDE_HOME/config/genesis.json $STRIDE_HOME_2/config/genesis.json
 cp $STRIDE_HOME/config/genesis.json $STRIDE_HOME_3/config/genesis.json
+cp $STRIDE_HOME/config/genesis.json $STRIDE_HOME_4/config/genesis.json
+cp $STRIDE_HOME/config/genesis.json $STRIDE_HOME_5/config/genesis.json
