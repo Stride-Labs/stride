@@ -3,27 +3,29 @@
 set -eu
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
-# define STRIDE vars
 STATE=$SCRIPT_DIR/state
 PORT_ID=26657
-BLOCK_TIME='3s'
-DAY_EPOCH_DURATION="180s"
-STRIDE_EPOCH_DURATION="60s"
-UNBONDING_TIME="21600s"
-MAX_DEPOSIT_PERIOD="3600s"
-VOTING_PERIOD="3600s"
-SIGNED_BLOCKS_WINDOW="30000"
-MIN_SIGNED_PER_WINDOW="0.050000000000000000"
-SLASH_FRACTION_DOWNTIME="0.001000000000000000"
 
+BLOCK_TIME='5s'
+DAY_EPOCH_INDEX=1
+DAY_EPOCH_DURATION="100s"
+STRIDE_EPOCH_INDEX=2
+STRIDE_EPOCH_DURATION="40s"
+UNBONDING_TIME="200s"
+MAX_DEPOSIT_PERIOD="30s"
+VOTING_PERIOD="30s"
+
+VAL_TOKENS=5000000000000
+STAKE_TOKENS=3000000000000
+ADMIN_TOKENS=1000000000
+
+# STRIDE vars
 STRIDE_CHAIN_ID=STRIDE
 STRIDE_NODE_PREFIX=stride
 STRIDE_NUM_NODES=3
 STRIDE_CMD="$SCRIPT_DIR/../build/strided"
 STRIDE_VAL_PREFIX=val
-STRIDE_VAL_TOKENS=5000000000000ustrd
-STRIDE_STAKE_TOKENS=3000000000000ustrd
-STRIDE_ADMIN_TOKENS=1000000000ustrd
+STRIDE_DENOM=ustrd
 STRIDE_ADMIN_ACCT=admin
 
 STRIDE_MNEMONIC_1="close soup mirror crew erode defy knock trigger gather eyebrow tent farm gym gloom base lemon sleep weekend rich forget diagram hurt prize fly"
@@ -33,33 +35,23 @@ STRIDE_MNEMONIC_4="vacant margin wave rice brush drastic false rifle tape critic
 STRIDE_MNEMONIC_5="river spin follow make trash wreck clever increase dial divert meadow abuse victory able foot kid sell bench embody river income utility dismiss timber"
 STRIDE_VAL_MNEMONICS=("$STRIDE_MNEMONIC_1" "$STRIDE_MNEMONIC_2" "$STRIDE_MNEMONIC_3" "$STRIDE_MNEMONIC_4" "$STRIDE_MNEMONIC_5")
 
-# define GAIA vars
-MAIN_ID=1
-GAIA_CHAIN=GAIA
-GAIA_NODE_NAMES=(gaia1 gaia2 gaia3)
-GAIA_MAIN_NODE=${GAIA_NODE_NAMES[$MAIN_ID]}
+# GAIA vars
+GAIA_CHAIN_ID=GAIA
+GAIA_NODE_PREFIX=gaia
+GAIA_NUM_NODES=3
+GAIA_CMD="$SCRIPT_DIR/../build/gaiad"
+GAIA_VAL_PREFIX=gval
+GAIA_DENOM=uatom
 
-GAIA_VAL_ACCTS=(gval1 gval2 gval3)
 GAIA_MNEMONIC_1="move next relief spatial resemble onion exhibit fitness major toss where square wrong exact infant skate dragon shift region over you gospel absorb double"
 GAIA_MNEMONIC_2="social smooth replace total room drip donor science wheel source scare hammer affair fade opinion injury mandate then orbit work worry exhaust diagram hotel"
 GAIA_MNEMONIC_3="spike expire grant chef cheese cave someone blue price juice crash field sell camera true wet card saddle oblige where inject process dismiss soft"
-GAIA_VAL_KEYS=("$GAIA_MNEMONIC_1" "$GAIA_MNEMONIC_2" "$GAIA_MNEMONIC_3")
-
-gaia_run="docker-compose --ansi never run --rm -T"
-gaia_exec="docker-compose --ansi never exec -T"
-
-GAIA_RUN_CMDS=()
-for node_name in "${GAIA_NODE_NAMES[@]}"; do
-  GAIA_RUN_CMDS+=( "$gaia_run $node_name gaiad --home=/gaia/.gaiad" )
-done
-GAIA_MAIN_CMD=${GAIA_RUN_CMDS[$MAIN_ID]}
-
-GAIA1_EXEC="$gaia_exec ${GAIA_NODE_NAMES[0]} gaiad --home /gaia/.gaiad"
-GAIA2_EXEC="$gaia_exec ${GAIA_NODE_NAMES[1]} gaiad --home /gaia/.gaiad"
-GAIA3_EXEC="$gaia_exec ${GAIA_NODE_NAMES[2]} gaiad --home /gaia/.gaiad"
+GAIA_MNEMONIC_4="curtain mom patrol rifle list lamp interest hard lock stairs display world disagree ten fantasy engine van explain chunk social smile detail initial typical"
+GAIA_MNEMONIC_5="invite close edit quick effort mosquito ocean north term spread dial throw human review west bike mandate learn cabin bubble remove unlock lab unique"
+GAIA_VAL_MNEMONICS=("$GAIA_MNEMONIC_1" "$GAIA_MNEMONIC_2" "$GAIA_MNEMONIC_3" "$GAIA_MNEMONIC_4" "$GAIA_MNEMONIC_5")
 
 # define relayer vars
-HERMES_CMD="docker-compose --ansi never run --rm hermes hermes"
+HERMES_CMD="$SCRIPT_DIR/../build/hermes/release/hermes -c $STATE/hermes/config.toml"
 
 HERMES_STRIDE_ACCT=rly1
 HERMES_GAIA_ACCT=rly2
@@ -69,7 +61,7 @@ HERMES_STRIDE_MNEMONIC="alter old invest friend relief slot swear pioneer syrup 
 HERMES_GAIA_MNEMONIC="resemble accident lake amateur physical jewel taxi nut demand magnet person blanket trip entire awkward fiber usual current index limb lady lady depart train"
 HERMES_OSMOSIS_MNEMONIC="artwork ranch dinosaur maple unhappy office bone vote rebel slot outside benefit innocent wrist certain cradle almost fat trial build chicken enroll strike milk"
 
-ICQ_CMD="docker-compose --ansi never run --rm icq interchain-queries"
+ICQ_CMD="$SCRIPT_DIR/../build/interchain-queries --home $STATE/icq"
 
 ICQ_STRIDE_ACCT=icq1
 ICQ_GAIA_ACCT=icq2

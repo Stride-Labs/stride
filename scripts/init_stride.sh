@@ -7,6 +7,7 @@ source $SCRIPT_DIR/vars.sh
 
 CHAIN_ID=$STRIDE_CHAIN_ID
 CMD=$STRIDE_CMD
+DENOM=$STRIDE_DENOM
 NUM_NODES=$STRIDE_NUM_NODES
 NODE_PREFIX=$STRIDE_NODE_PREFIX
 VAL_PREFIX=$STRIDE_VAL_PREFIX
@@ -17,10 +18,6 @@ HERMES_MNEMONIC=$HERMES_STRIDE_MNEMONIC
 ICQ_ACCT=$ICQ_STRIDE_ACCT
 ICQ_MNEMONIC=$ICQ_STRIDE_MNEMONIC
 
-VAL_TOKENS=$STRIDE_VAL_TOKENS
-STAKE_TOKENS=$STRIDE_STAKE_TOKENS
-ADMIN_TOKENS=$STRIDE_ADMIN_TOKENS
-
 MAIN_ID=1 # Node responsible for genesis and persistent_peers
 MAIN_NODE_NAME=""
 MAIN_NODE_CMD=""
@@ -30,14 +27,14 @@ MAIN_GENESIS=""
 echo 'Initializing stride chain...'
 for (( i=1; i <= $NUM_NODES; i++ )); do
     # Node names will be of the form: "stride-node1"
-    node_name="stride${i}"
+    node_name="${NODE_PREFIX}${i}"
     # Moniker is of the form: STRIDE_1
     moniker=$(printf "${NODE_PREFIX}_${i}" | awk '{ print toupper($0) }')
 
     # Create a state directory for the current node and initialize the chain
     mkdir -p $STATE/$node_name
-    st_cmd="$CMD --home ${STATE}/$node_name"
-    $st_cmd init $moniker --chain-id $CHAIN_ID --overwrite 2> /dev/null
+    cmd="$CMD --home ${STATE}/$node_name"
+    $cmd init $moniker --chain-id $CHAIN_ID --overwrite 2> /dev/null
 
     # Update node networking configuration 
     config_toml="${STATE}/${node_name}/config/config.toml"
@@ -53,21 +50,25 @@ for (( i=1; i <= $NUM_NODES; i++ )); do
     sed -i -E "s|chain-id = \"\"|chain-id = \"${CHAIN_ID}\"|g" $client_toml
     sed -i -E "s|keyring-backend = \"os\"|keyring-backend = \"test\"|g" $client_toml
 
-    sed -i -E 's|"stake"|"ustrd"|g' $genesis_json
+    sed -i -E "s|minimum-gas-prices = \".*\"|minimum-gas-prices = \"0${DENOM}\"|g" $app_toml
+    sed -i -E '/\[api\]/,/^enable = .*$/ s/^enable = .*$/enable = true/' $app_toml
+    sed -i -E 's|enable-unsafe-cors = .*|enable-unsafe-cors = true|g' $app_toml
 
+    sed -i -E "s|\"stake\"|\"${DENOM}\"|g" $genesis_json
+    
     # Get the endpoint and node ID
-    node_id=$($st_cmd tendermint show-node-id)@$node_name:$PORT_ID
+    node_id=$($cmd tendermint show-node-id)@$node_name:$PORT_ID
     echo "Node #$i ID: $node_id"
 
     # add a validator account
     val_acct="${VAL_PREFIX}${i}"
     val_mnemonic="${STRIDE_VAL_MNEMONICS[((i-1))]}"
-    echo "$val_mnemonic" | $st_cmd keys add $val_acct --recover --keyring-backend=test 
-    val_addr=$($st_cmd keys show $val_acct --keyring-backend test -a)
+    echo "$val_mnemonic" | $cmd keys add $val_acct --recover --keyring-backend=test 
+    val_addr=$($cmd keys show $val_acct --keyring-backend test -a)
     # Add this account to the current node
-    $st_cmd add-genesis-account ${val_addr} $VAL_TOKENS
+    $cmd add-genesis-account ${val_addr} ${VAL_TOKENS}${DENOM}
     # actually set this account as a validator on the current node 
-    $st_cmd gentx $val_acct $STAKE_TOKENS --chain-id $CHAIN_ID --keyring-backend test 2> /dev/null
+    $cmd gentx $val_acct ${STAKE_TOKENS}${DENOM} --chain-id $CHAIN_ID --keyring-backend test 2> /dev/null
 
     # Cleanup from seds
     rm -rf ${client_toml}-E
@@ -76,13 +77,13 @@ for (( i=1; i <= $NUM_NODES; i++ )); do
 
     if [ $i -eq $MAIN_ID ]; then
         MAIN_NODE_NAME=$node_name
-        MAIN_NODE_CMD=$st_cmd
+        MAIN_NODE_CMD=$cmd
         MAIN_NODE_ID=$node_id
         MAIN_CONFIG=$config_toml
         MAIN_GENESIS=$genesis_json
     else
         # also add this account and it's genesis tx to the main node
-        $MAIN_NODE_CMD add-genesis-account ${val_addr} $VAL_TOKENS
+        $MAIN_NODE_CMD add-genesis-account ${val_addr} ${VAL_TOKENS}${DENOM}
         cp ${STATE}/${node_name}/config/gentx/*.json ${STATE}/${MAIN_NODE_NAME}/config/gentx/
     fi
 done
@@ -94,13 +95,13 @@ HERMES_ADDRESS=$($MAIN_NODE_CMD keys show $HERMES_ACCT --keyring-backend test -a
 ICQ_ADDRESS=$($MAIN_NODE_CMD keys show $ICQ_ACCT --keyring-backend test -a)
 
 # give relayer accounts token balances
-$MAIN_NODE_CMD add-genesis-account ${HERMES_ADDRESS} $VAL_TOKENS
-$MAIN_NODE_CMD add-genesis-account ${ICQ_ADDRESS} $VAL_TOKENS
+$MAIN_NODE_CMD add-genesis-account ${HERMES_ADDRESS} ${VAL_TOKENS}${DENOM}
+$MAIN_NODE_CMD add-genesis-account ${ICQ_ADDRESS} ${VAL_TOKENS}${DENOM}
 
 # Add the stride admin account
 echo "$STRIDE_ADMIN_MNEMONIC" | $MAIN_NODE_CMD keys add $ADMIN_ACCT --recover --keyring-backend=test
 ADMIN_ADDRESS=$($MAIN_NODE_CMD keys show $ADMIN_ACCT --keyring-backend test -a)
-$MAIN_NODE_CMD add-genesis-account ${ADMIN_ADDRESS} $ADMIN_TOKENS
+$MAIN_NODE_CMD add-genesis-account ${ADMIN_ADDRESS} ${ADMIN_TOKENS}${DENOM}
 
 # now we process gentx txs on the main node
 $MAIN_NODE_CMD collect-gentxs 2> /dev/null
@@ -109,14 +110,11 @@ $MAIN_NODE_CMD collect-gentxs 2> /dev/null
 sed -i -E "s|persistent_peers = .*|persistent_peers = \"\"|g" $MAIN_CONFIG
 
 # modify our params
-jq '.app_state.epochs.epochs[1].duration = $newVal' --arg newVal "$DAY_EPOCH_DURATION" $MAIN_GENESIS > json.tmp && mv json.tmp $MAIN_GENESIS
-jq '.app_state.epochs.epochs[2].duration = $newVal' --arg newVal "$STRIDE_EPOCH_DURATION" $MAIN_GENESIS > json.tmp && mv json.tmp $MAIN_GENESIS
+jq '.app_state.epochs.epochs[$epochIndex].duration = $epochLen' --arg epochLen $DAY_EPOCH_DURATION --argjson epochIndex $DAY_EPOCH_INDEX  $MAIN_GENESIS > json.tmp && mv json.tmp $MAIN_GENESIS
+jq '.app_state.epochs.epochs[$epochIndex].duration = $epochLen' --arg epochLen $STRIDE_EPOCH_DURATION --argjson epochIndex $STRIDE_EPOCH_INDEX $MAIN_GENESIS > json.tmp && mv json.tmp $MAIN_GENESIS
 jq '.app_state.staking.params.unbonding_time = $newVal' --arg newVal "$UNBONDING_TIME" $MAIN_GENESIS > json.tmp && mv json.tmp $MAIN_GENESIS
 jq '.app_state.gov.deposit_params.max_deposit_period = $newVal' --arg newVal "$MAX_DEPOSIT_PERIOD" $MAIN_GENESIS > json.tmp && mv json.tmp $MAIN_GENESIS
 jq '.app_state.gov.voting_params.voting_period = $newVal' --arg newVal "$VOTING_PERIOD" $MAIN_GENESIS > json.tmp && mv json.tmp $MAIN_GENESIS
-jq '.app_state.slashing.params.signed_blocks_window = $newVal' --arg newVal "$SIGNED_BLOCKS_WINDOW" $MAIN_GENESIS > json.tmp && mv json.tmp $MAIN_GENESIS
-jq '.app_state.slashing.params.min_signed_per_window = $newVal' --arg newVal "$MIN_SIGNED_PER_WINDOW" $MAIN_GENESIS > json.tmp && mv json.tmp $MAIN_GENESIS
-jq '.app_state.slashing.params.slash_fraction_downtime = $newVal' --arg newVal "$SLASH_FRACTION_DOWNTIME" $MAIN_GENESIS > json.tmp && mv json.tmp $MAIN_GENESIS
 
 # for all peer nodes....
 for (( i=2; i <= $NUM_NODES; i++ )); do
