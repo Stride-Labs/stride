@@ -16,8 +16,6 @@ import (
 )
 
 type SendHostZoneUnbondingTestCase struct {
-	user                    Account
-	module                  Account
 	amt_to_unbond           uint64
 	epoch_unbonding_records []recordtypes.EpochUnbondingRecord
 	host_zone               stakeibc.HostZone
