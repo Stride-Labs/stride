@@ -28,4 +28,5 @@ var (
 	ErrRequiredFieldEmpty          = sdkerrors.Register(ModuleName, 1516, "required field is missing")
 	ErrInvalidNumValidator         = sdkerrors.Register(ModuleName, 1517, "invalid number of validators")
 	ErrHostZoneNotFound            = sdkerrors.Register(ModuleName, 1519, "host zone not found")
+	ErrOutsideIcqWindow            = sdkerrors.Register(ModuleName, 1520, "outside time window that accepts icqs")
 )

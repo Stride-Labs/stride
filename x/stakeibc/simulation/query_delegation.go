@@ -3,14 +3,15 @@ package simulation
 import (
 	"math/rand"
 
-	"github.com/Stride-Labs/stride/x/stakeibc/keeper"
-	"github.com/Stride-Labs/stride/x/stakeibc/types"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
+
+	"github.com/Stride-Labs/stride/x/stakeibc/keeper"
+	"github.com/Stride-Labs/stride/x/stakeibc/types"
 )
 
-func SimulateMsgQueryDelegation(
+func SimulateMsgUpdateValidatorSharesExchRate(
 	ak types.AccountKeeper,
 	bk types.BankKeeper,
 	k keeper.Keeper,
@@ -18,12 +19,12 @@ func SimulateMsgQueryDelegation(
 	return func(r *rand.Rand, app *baseapp.BaseApp, ctx sdk.Context, accs []simtypes.Account, chainID string,
 	) (simtypes.OperationMsg, []simtypes.FutureOperation, error) {
 		simAccount, _ := simtypes.RandomAcc(r, accs)
-		msg := &types.MsgQueryDelegation{
+		msg := &types.MsgUpdateValidatorSharesExchRate{
 			Creator: simAccount.Address.String(),
 		}
 
-		// TODO: Handling the QueryDelegation simulation
+		// TODO: Handling the UpdateValidatorSharesExchRate simulation
 
-		return simtypes.NoOpMsg(types.ModuleName, msg.Type(), "QueryDelegation simulation not implemented"), nil, nil
+		return simtypes.NoOpMsg(types.ModuleName, msg.Type(), "UpdateValidatorSharesExchRate simulation not implemented"), nil, nil
 	}
 }

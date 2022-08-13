@@ -153,7 +153,7 @@ func (k Keeper) GetEpochEndTime(ctx sdk.Context) (uint64, error) {
 }
 
 // helper to get what share of the curr epoch we're through
-func (k Keeper) GetEpochElapsedShare(ctx sdk.Context) (sdk.Dec, error) {
+func (k Keeper) GetStrideEpochElapsedShare(ctx sdk.Context) (sdk.Dec, error) {
 	epochType := epochstypes.STRIDE_EPOCH
 	epochTracker, found := k.GetEpochTracker(ctx, epochType)
 	if !found {
@@ -167,13 +167,13 @@ func (k Keeper) GetEpochElapsedShare(ctx sdk.Context) (sdk.Dec, error) {
 }
 
 // helper to check whether ICQs are valid in this portion of the epoch
-func (k Keeper) IsWithinICQEpochWindow(ctx sdk.Context) (bool, error) {
-	elapsedShareOfEpoch, err := k.GetEpochElapsedShare(ctx)
+func (k Keeper) IsWithinBufferWindow(ctx sdk.Context) (bool, error) {
+	elapsedShareOfEpoch, err := k.GetStrideEpochElapsedShare(ctx)
 	if err != nil {
 		return false, err
 	}
-	icqBufferSize := cast.ToInt64(k.GetParam(ctx, types.KeyIcqBufferSize))
-	epochShareThresh := sdk.NewDec(1).Sub(sdk.NewDec(1).Quo(sdk.NewDec(icqBufferSize)))
+	bufferSize := cast.ToInt64(k.GetParam(ctx, types.KeyBufferSize))
+	epochShareThresh := sdk.NewDec(1).Sub(sdk.NewDec(1).Quo(sdk.NewDec(bufferSize)))
 
 	inWindow := elapsedShareOfEpoch.GT(epochShareThresh)
 	if !inWindow {
