@@ -222,7 +222,7 @@ func (suite *KeeperTestSuite) TestRedeemStakeUnableToParseCoin() {
 	invalidMsg.Amount = int64(-1_000_000)
 	_, err := suite.msgServer.RedeemStake(sdk.WrapSDKContext(suite.Ctx), &invalidMsg)
 
-	suite.Require().EqualError(err, fmt.Sprintf("could not parse inCoin: %d%v. err: invalid decimal coin expression: -1000000stuatom: invalid coins", invalidMsg.Amount, "stuatom"))
+	suite.Require().EqualError(err, fmt.Sprintf("amount must be greater than 0. found: %d: invalid coins", invalidMsg.Amount))
 }
 
 func (suite *KeeperTestSuite) TestRedeemStakeNoEpochTrackerDay() {
