@@ -99,8 +99,8 @@ message HostZoneUnbonding {
 message EpochUnbondingRecord {
   uint64 id = 1;
   uint64 unbondingEpochNumber = 2;
-
-  map<string, HostZoneUnbonding> hostZoneUnbondings = 3;
+  repeated HostZoneUnbonding hostZoneUnbondings = 3;
+  // map<string, HostZoneUnbonding> hostZoneUnbondings = 3;
 }
 
 

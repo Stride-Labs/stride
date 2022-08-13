@@ -90,6 +90,9 @@ nohup $ICQ_CMD run --local >> $ICQ_LOGS 2>&1 &
 sleep 5
 echo "Done"
 
+# Add more detailed log files
+$SCRIPT_DIR/create_logs.sh &
+
 # Create a copy of the state that can be used for the "cache" option
 echo "Network is ready for transactions.\n"
 rm -rf $SCRIPT_DIR/.state.backup
@@ -99,8 +102,5 @@ cp -r $SCRIPT_DIR/state $SCRIPT_DIR/.state.backup
 if [ "$CACHE" != "true" ]; then
     bash $SCRIPT_DIR/register_host.sh
 fi
-
-# Add more detailed log files
-$SCRIPT_DIR/create_logs.sh &
 
 echo "Done! Go get em."

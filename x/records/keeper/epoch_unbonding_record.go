@@ -3,9 +3,10 @@ package keeper
 import (
 	"encoding/binary"
 
-	"github.com/Stride-Labs/stride/x/records/types"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	"github.com/Stride-Labs/stride/x/records/types"
 )
 
 // GetEpochUnbondingRecordCount get the total number of epochUnbondingRecord
@@ -148,4 +149,34 @@ func (k Keeper) IterateEpochUnbondingRecords(ctx sdk.Context,
 		}
 		i++
 	}
+}
+
+// GetEpochUnbondingRecordByEpoch returns a epochUnbondingRecord from its epochNumber
+func (k Keeper) GetHostZoneUnbondingByChainId(ctx sdk.Context, id uint64, chainId string) (val *types.HostZoneUnbonding, found bool) {
+	epochUnbondingRecord, found := k.GetEpochUnbondingRecord(ctx, id)
+	if !found {
+		return nil, false
+	}
+	hostZoneUnbondings := epochUnbondingRecord.HostZoneUnbondings
+	for _, hzUnbondingRecord := range hostZoneUnbondings {
+		if hzUnbondingRecord.HostZoneId == chainId {
+			return hzUnbondingRecord, true
+		}
+	}
+	return &types.HostZoneUnbonding{}, false
+}
+
+func (k Keeper) SetHostZoneEpochUnbondingRecord(ctx sdk.Context, id uint64, chainId string, hzu *types.HostZoneUnbonding) (success bool) {
+	epochUnbondingRecord, found := k.GetEpochUnbondingRecord(ctx, id)
+	if !found {
+		return false
+	}
+	for i, iter_hzu := range epochUnbondingRecord.HostZoneUnbondings {
+		if iter_hzu.GetHostZoneId() == chainId {
+			epochUnbondingRecord.HostZoneUnbondings[i] = hzu
+			return true
+		}
+	}
+	epochUnbondingRecord.HostZoneUnbondings = append(epochUnbondingRecord.HostZoneUnbondings, hzu)
+	return true
 }
