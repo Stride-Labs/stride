@@ -55,7 +55,7 @@ func (k msgServer) RedeemStake(goCtx context.Context, msg *types.MsgRedeemStake)
 	k.Logger(ctx).Info(fmt.Sprintf("Redemption requested redemption amount: %v%s", msg.Amount, hostZone.HostDenom))
 	if senderStAssetBalance.Amount.LT(sdk.NewInt(msg.Amount)) {
 		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidCoins,
-			"sender balance is lower than redemption amount. redemption amount: %d, balance %d: ", msg.Amount, senderStAssetBalance.Amount)
+			"sender balance is less than redemption amount. redemption amount: %d, balance %d: ", msg.Amount, senderStAssetBalance.Amount)
 	}
 	// UNBONDING RECORD KEEPING
 	// first construct a user redemption record
