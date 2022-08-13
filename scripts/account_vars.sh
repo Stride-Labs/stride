@@ -7,14 +7,10 @@ source ${SCRIPT_DIR}/vars.sh
 echo "Getting relevant addresses..."
 
 # Stride
-STRIDE_ADDRESS_1=$(${STRIDE_RUN_CMDS[0]} keys show ${STRIDE_VAL_ACCTS[0]} --keyring-backend test -a)
-STRIDE_ADDRESS_2=$(${STRIDE_RUN_CMDS[1]} keys show ${STRIDE_VAL_ACCTS[1]} --keyring-backend test -a)
-STRIDE_ADDRESS_3=$(${STRIDE_RUN_CMDS[2]} keys show ${STRIDE_VAL_ACCTS[2]} --keyring-backend test -a)
+STRIDE_VAL_ADDRESS=$($STRIDE_CMD --home $SCRIPT_DIR/state/stride1 keys show ${STRIDE_VAL_PREFIX}1 --keyring-backend test -a)
 
 # Gaia
-GAIA_ADDRESS_1=$($GAIA1_EXEC keys show ${GAIA_VAL_ACCTS[0]} --keyring-backend test -a --home=/gaia/.gaiad)
-GAIA_ADDRESS_2=$($GAIA2_EXEC keys show ${GAIA_VAL_ACCTS[1]} --keyring-backend test -a --home=/gaia/.gaiad)
-GAIA_ADDRESS_3=$($GAIA3_EXEC keys show ${GAIA_VAL_ACCTS[2]} --keyring-backend test -a --home=/gaia/.gaiad)
+GAIA_VAL_ADDRESS=$($GAIA_EXEC keys show ${GAIA_VAL_PREFIX}1 --keyring-backend test -a)
 
 # Relayers
 # NOTE: using $STRIDE_MAIN_CMD and $GAIA_MAIN_CMD here ONLY works because they rly1 and rly2
