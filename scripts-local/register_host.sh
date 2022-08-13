@@ -46,23 +46,23 @@ OSMO_CONFIRM="OSMO.WITHDRAWAL:STRIDE->OSMO}: channel handshake step completed wi
 
 echo "Registering validators on host zones..." | tee -a $TX_LOGS
 
-# send gaia validator 2 money
-$GAIA_CMD tx bank send $GAIA_VAL_ACCT $GAIA_VAL_2_ADDR 10000uatom --chain-id $GAIA_CHAIN --keyring-backend test -y >> $TX_LOGS 2>&1
-WAIT_FOR_NONEMPTY_BLOCK $GAIA_LOGS
-# add juno validator
-$STRIDE_CMD tx stakeibc add-validator JUNO $JUNO_VAL_ACCT $JUNO_DELEGATE_VAL 10 5 --chain-id $STRIDE_CHAIN --keyring-backend test --from $STRIDE_ADMIN_ACCT -y >> $TX_LOGS 2>&1
-WAIT_FOR_NONEMPTY_BLOCK $STRIDE_LOGS
-# add osmo validator
-$STRIDE_CMD tx stakeibc add-validator OSMO $OSMO_VAL_ACCT $OSMO_DELEGATE_VAL 10 5 --chain-id $STRIDE_CHAIN --keyring-backend test --from $STRIDE_ADMIN_ACCT -y >> $TX_LOGS 2>&1
-WAIT_FOR_NONEMPTY_BLOCK $STRIDE_LOGS
-# send gaia validator 3 money
-# $GAIA_CMD tx bank send gval1 $GAIA_VAL_3_ADDR 10000uatom --chain-id $GAIA_CHAIN --keyring-backend test -y >> $TX_LOGS 2>&1
+# # send gaia validator 2 money
+# $GAIA_CMD tx bank send $GAIA_VAL_ACCT $GAIA_VAL_2_ADDR 10000uatom --chain-id $GAIA_CHAIN --keyring-backend test -y >> $TX_LOGS 2>&1
 # WAIT_FOR_NONEMPTY_BLOCK $GAIA_LOGS
-# add validator 2 for gaia
-$STRIDE_CMD tx stakeibc add-validator GAIA gval1 $GAIA_DELEGATE_VAL 10 5 --chain-id $STRIDE_CHAIN --keyring-backend test --from $STRIDE_ADMIN_ACCT -y >> $TX_LOGS 2>&1
-WAIT_FOR_NONEMPTY_BLOCK $STRIDE_LOGS
-# add validator 2 for gaia
-$STRIDE_CMD tx stakeibc add-validator GAIA gval2 $GAIA_DELEGATE_VAL_2 10 10 --chain-id $STRIDE_CHAIN --keyring-backend test --from $STRIDE_ADMIN_ACCT -y >> $TX_LOGS 2>&1
-WAIT_FOR_NONEMPTY_BLOCK $STRIDE_LOGS
+# # add juno validator
+# $STRIDE_CMD tx stakeibc add-validator JUNO $JUNO_VAL_ACCT $JUNO_DELEGATE_VAL 10 5 --chain-id $STRIDE_CHAIN --keyring-backend test --from $STRIDE_ADMIN_ACCT -y >> $TX_LOGS 2>&1
+# WAIT_FOR_NONEMPTY_BLOCK $STRIDE_LOGS
+# # add osmo validator
+# $STRIDE_CMD tx stakeibc add-validator OSMO $OSMO_VAL_ACCT $OSMO_DELEGATE_VAL 10 5 --chain-id $STRIDE_CHAIN --keyring-backend test --from $STRIDE_ADMIN_ACCT -y >> $TX_LOGS 2>&1
+# WAIT_FOR_NONEMPTY_BLOCK $STRIDE_LOGS
+# # send gaia validator 3 money
+# # $GAIA_CMD tx bank send gval1 $GAIA_VAL_3_ADDR 10000uatom --chain-id $GAIA_CHAIN --keyring-backend test -y >> $TX_LOGS 2>&1
+# # WAIT_FOR_NONEMPTY_BLOCK $GAIA_LOGS
+# # add validator 2 for gaia
+# $STRIDE_CMD tx stakeibc add-validator GAIA gval1 $GAIA_DELEGATE_VAL 10 5 --chain-id $STRIDE_CHAIN --keyring-backend test --from $STRIDE_ADMIN_ACCT -y >> $TX_LOGS 2>&1
+# WAIT_FOR_NONEMPTY_BLOCK $STRIDE_LOGS
+# # add validator 2 for gaia
+# $STRIDE_CMD tx stakeibc add-validator GAIA gval2 $GAIA_DELEGATE_VAL_2 10 10 --chain-id $STRIDE_CHAIN --keyring-backend test --from $STRIDE_ADMIN_ACCT -y >> $TX_LOGS 2>&1
+# WAIT_FOR_NONEMPTY_BLOCK $STRIDE_LOGS
 
 echo "Done"
