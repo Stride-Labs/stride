@@ -59,6 +59,16 @@ STRIDE_VAL_2_PUBKEY='{"@type":"/cosmos.crypto.secp256k1.PubKey","key":"A8E8fiJfe
 STRIDE_HOME_2="$STATE/stride2"
 STRIDE_CMD_2="$SCRIPT_DIR/../build/stride2/strided --home $STRIDE_HOME_2"
 
+# define vars for STRIDE 3
+STRIDE_VAL_ACCT_3=val3
+STRIDE_PORT_ID_3=26157
+STRIDE_PEER_PORT_3=26156
+STRIDE_EXT_ADR_3=26155
+STRIDE_VAL_MNEMONIC_3="tenant neck ask season exist hill churn rice convince shock modify evidence armor track army street stay light program harvest now settle feed wheat"
+STRIDE_VAL_3_ADDR="stride1nnurja9zt97huqvsfuartetyjx63tc5zq8s6fv"
+STRIDE_VAL_3_PUBKEY='{"@type":"/cosmos.crypto.secp256k1.PubKey","key":"A0GIT0Ftl4rGIjx+KPwzUIlMqm/4ZMUv6IgsmdwXbt3f"}'
+STRIDE_HOME_3="$STATE/stride3"
+STRIDE_CMD_3="$SCRIPT_DIR/../build/stride3/strided --home $STRIDE_HOME_3"
 
 STRIDE_CMD="$SCRIPT_DIR/../build/strided --home $STATE/stride"
 
@@ -199,6 +209,7 @@ WAIT_FOR_IBC_TRANSFER () {
 STRIDE_STATE=$SCRIPT_DIR/state/stride
 STRIDE_LOGS=$SCRIPT_DIR/logs/stride.log
 STRIDE_LOGS_2=$SCRIPT_DIR/logs/stride2.log
+STRIDE_LOGS_3=$SCRIPT_DIR/logs/stride3.log
 GAIA_STATE=$SCRIPT_DIR/state/gaia
 GAIA_LOGS=$SCRIPT_DIR/logs/gaia.log
 GAIA_LOGS_2=$SCRIPT_DIR/logs/gaia2.log

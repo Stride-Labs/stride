@@ -12,6 +12,8 @@ while getopts sghijo flag; do
            go build -mod=readonly -trimpath -o $BUILDDIR ./...;
            mkdir -p $BUILDDIR/stride2
            go build -mod=readonly -trimpath -o $BUILDDIR/stride2 ./... 2>&1 | grep -v -E "deprecated|keychain" || true; 
+           mkdir -p $BUILDDIR/stride3
+           go build -mod=readonly -trimpath -o $BUILDDIR/stride3 ./... 2>&1 | grep -v -E "deprecated|keychain" || true; 
            echo "Done" ;;
         g) printf '%s' "Building Gaia...   ";
            cd deps/gaia; 
