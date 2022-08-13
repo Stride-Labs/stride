@@ -6,12 +6,15 @@ WORKDIR /app/src
 
 RUN git clone https://github.com/informalsystems/ibc-rs --branch v0.15.0
 
-WORKDIR ibc-rs
+WORKDIR /app/src/ibc-rs
 
 RUN cargo build --release
 
 FROM debian:bullseye-slim
 
 COPY --from=rust /app/src/ibc-rs/target/release/hermes /usr/local/bin/hermes
-RUN adduser --system --home /hermes --disabled-password --disabled-login hermes -u 1000
+RUN apt-get update \
+    && adduser --system --home /home/hermes --disabled-password --disabled-login hermes -u 1000
+
 USER hermes
+WORKDIR /home/hermes
