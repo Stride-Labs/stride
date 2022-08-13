@@ -96,25 +96,19 @@ func (k msgServer) RegisterHostZone(goCtx context.Context, msg *types.MsgRegiste
 	}
 	hostZoneUnbondings := epochUnbondingRecord.GetHostZoneUnbondings()
 	if len(hostZoneUnbondings) == 0 {
-		hostZoneUnbondings = make(map[string]*recordstypes.HostZoneUnbonding)
+		hostZoneUnbondings = []*recordstypes.HostZoneUnbonding{}
 	}
-	hostZoneUnbondings[zone.ChainId] = &recordstypes.HostZoneUnbonding{
+	hostZoneUnbonding := &recordstypes.HostZoneUnbonding{
 		Amount:     0,
 		Denom:      zone.HostDenom,
 		HostZoneId: zone.ChainId,
 		Status:     recordstypes.HostZoneUnbonding_BONDED,
 	}
-	epochUnbondingRecord.HostZoneUnbondings = hostZoneUnbondings
-	k.RecordsKeeper.SetEpochUnbondingRecord(ctx, epochUnbondingRecord)
-	epochUnbondingRecordNew, found := k.RecordsKeeper.GetLatestEpochUnbondingRecord(ctx)
-	if !found {
-		errMsg := "unable to add host zone to latest epoch unbonding record"
-		k.Logger(ctx).Error(errMsg)
-		return nil, sdkerrors.Wrapf(recordstypes.ErrEpochUnbondingRecordNotFound, errMsg)
+	didSet := k.RecordsKeeper.SetHostZoneEpochUnbondingRecord(ctx, epochUnbondingRecord.Id, chainId, hostZoneUnbonding)
+	if !didSet {
+		k.Logger(ctx).Error(fmt.Sprintf("Failed to set host zone epoch unbonding record %v", err))
+		return nil, sdkerrors.Wrapf(types.ErrInsufficientFunds, "couldn't set host zone epoch unbonding record. err: %s", err.Error())
 	}
-	k.Logger(ctx).Info(fmt.Sprintf("hostZoneUnbondings after register host zone %v", epochUnbondingRecordNew.GetHostZoneUnbondings()))
-
-	// TODO(TEST-39): TODO(TEST-42): Set validators on the host zone, either using ICQ + intents or a WL
 
 	// emit events
 	ctx.EventManager().EmitEvent(
