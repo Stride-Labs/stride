@@ -143,3 +143,40 @@ func (k Keeper) IterateEpochUnbondingRecords(ctx sdk.Context,
 		i++
 	}
 }
+
+// GetEpochUnbondingRecordByEpoch returns a epochUnbondingRecord from its epochNumber
+func (k Keeper) GetHostZoneUnbondingByChainId(ctx sdk.Context, id uint64, chainId string) (val *types.HostZoneUnbonding, found bool) {
+	epochUnbondingRecord, found := k.GetEpochUnbondingRecord(ctx, id)
+	if !found {
+		return nil, false
+	}
+	hostZoneUnbondings := epochUnbondingRecord.HostZoneUnbondings
+	for _, hzUnbondingRecord := range hostZoneUnbondings {
+		if hzUnbondingRecord.HostZoneId == chainId {
+			return hzUnbondingRecord, true
+		}
+	}
+	return &types.HostZoneUnbonding{}, false
+}
+
+func (k Keeper) SetHostZoneEpochUnbondingRecord(ctx sdk.Context, id uint64, chainId string, hzu *types.HostZoneUnbonding) (success bool) {
+	epochUnbondingRecord, found := k.GetEpochUnbondingRecord(ctx, id)
+	if !found {
+		return false
+	}
+	wasSet := false
+	for i, hostZoneUnbonding := range epochUnbondingRecord.HostZoneUnbondings {
+		if hostZoneUnbonding.GetHostZoneId() == chainId {
+			epochUnbondingRecord.HostZoneUnbondings[i] = hzu
+			wasSet = true
+			break
+		}
+	}
+	if !wasSet {
+		// add new host zone unbonding record
+		epochUnbondingRecord.HostZoneUnbondings = append(epochUnbondingRecord.HostZoneUnbondings, hzu)
+	}
+	// write the updated EpochUnbondingRecord to the store
+	k.SetEpochUnbondingRecord(ctx, epochUnbondingRecord)
+	return true
+}

@@ -22,6 +22,7 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
+// ---------------------- Delegation Callbacks ---------------------- //
 type SplitDelegation struct {
 	Validator string `protobuf:"bytes,1,opt,name=validator,proto3" json:"validator,omitempty"`
 	Amount    uint64 `protobuf:"varint,2,opt,name=amount,proto3" json:"amount,omitempty"`
