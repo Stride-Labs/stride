@@ -13,10 +13,10 @@ import (
 
 var _ = strconv.Itoa(0)
 
-func CmdQueryDelegation() *cobra.Command {
+func CmdUpdateValidatorSharesExchRate() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "query-delegation [hostdenom] [valoper]",
-		Short: "Broadcast message query-delegation",
+		Use:   "update-delegation [chainid] [valoper]",
+		Short: "Broadcast message update-delegation",
 		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
 			argHostdenom := args[0]
@@ -27,7 +27,7 @@ func CmdQueryDelegation() *cobra.Command {
 				return err
 			}
 
-			msg := types.NewMsgQueryDelegation(
+			msg := types.NewMsgUpdateValidatorSharesExchRate(
 				clientCtx.GetFromAddress().String(),
 				argHostdenom,
 				argValoper,

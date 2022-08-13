@@ -13,13 +13,21 @@ import (
 )
 
 // todo rename for clarity (this is the validator query : 1st step of daisy chain)
-func (k msgServer) QueryDelegation(goCtx context.Context, msg *types.MsgQueryDelegation) (*types.MsgQueryDelegationResponse, error) {
+func (k msgServer) UpdateValidatorSharesExchRate(goCtx context.Context, msg *types.MsgUpdateValidatorSharesExchRate) (*types.MsgUpdateValidatorSharesExchRateResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	hostZone, err := k.GetHostZoneFromHostDenom(ctx, msg.Hostdenom)
+	// ensure ICQ can be issued now! else fail the callback
+	valid, err := k.IsWithinBufferWindow(ctx)
 	if err != nil {
-		k.Logger(ctx).Error("Host Zone not found for denom (%s)", msg.Hostdenom)
-		return nil, sdkerrors.Wrapf(types.ErrInvalidHostZone, "no host zone found for denom (%s)", msg.Hostdenom)
+		return nil, err
+	} else if !valid {
+		return nil, sdkerrors.Wrapf(types.ErrOutsideIcqWindow, "no host zone found for denom (%s)", msg.ChainId)
+	}
+
+	hostZone, found := k.GetHostZone(ctx, msg.ChainId)
+	if !found {
+		k.Logger(ctx).Error("Host Zone not found for denom (%s)", msg.ChainId)
+		return nil, sdkerrors.Wrapf(types.ErrInvalidHostZone, "no host zone found for denom (%s)", msg.ChainId)
 	}
 
 	_, valAddr, _ := bech32.DecodeAndConvert(msg.Valoper)
@@ -43,5 +51,5 @@ func (k msgServer) QueryDelegation(goCtx context.Context, msg *types.MsgQueryDel
 		k.Logger(ctx).Error("Error querying for validator", "error", err)
 		return nil, err
 	}
-	return &types.MsgQueryDelegationResponse{}, nil
+	return &types.MsgUpdateValidatorSharesExchRateResponse{}, nil
 }

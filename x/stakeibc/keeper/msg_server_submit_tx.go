@@ -204,12 +204,9 @@ func (k Keeper) SubmitTxsEpoch(ctx sdk.Context, connectionId string, msgs []sdk.
 		return 0, sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "Failed to get epoch tracker for %s", epochType)
 	}
 	// BUFFER by 5% of the epoch length
-	// ICQ_BUFFER by 10% of the epoch length
 	bufferSize := cast.ToInt64(k.GetParam(ctx, types.KeyBufferSize))
-	icqBufferSize := cast.ToInt64(k.GetParam(ctx, types.KeyIcqBufferSize))
 	BUFFER := epochTracker.Duration / bufferSize
-	ICQBUFFER := epochTracker.Duration / icqBufferSize
-	timeoutNanos := epochTracker.NextEpochStartTime - ICQBUFFER - BUFFER
+	timeoutNanos := epochTracker.NextEpochStartTime - BUFFER
 	// TODO safety: it's possible the cast below will handle this case with a graceful error, but leaving this here to make double sure until we can be sure
 	if timeoutNanos < 0 {
 		return 0, sdkerrors.Wrapf(sdkerrors.ErrTxTimeoutHeight, "Too late in the epoch to submitTx")
@@ -305,7 +302,15 @@ func (k Keeper) GetLightClientTimeSafely(ctx sdk.Context, connectionID string) (
 }
 
 // to icq delegation amounts, this fn is executed after validator exch rates are icq'd
-func (k Keeper) QueryDelegationDaisyChain(ctx sdk.Context, hostZone types.HostZone, valoper string) error {
+func (k Keeper) UpdateDelegationsIcq(ctx sdk.Context, hostZone types.HostZone, valoper string) error {
+
+	// ensure ICQ can be issued now! else fail the callback
+	valid, err := k.IsWithinBufferWindow(ctx)
+	if err != nil {
+		return err
+	} else if !valid {
+		return sdkerrors.Wrapf(types.ErrOutsideIcqWindow, "no host zone found for denom (%s)", hostZone.HostDenom)
+	}
 
 	delegationAcctAddr := hostZone.GetDelegationAccount().GetAddress()
 	_, valAddr, _ := bech32.DecodeAndConvert(valoper)
@@ -314,7 +319,7 @@ func (k Keeper) QueryDelegationDaisyChain(ctx sdk.Context, hostZone types.HostZo
 
 	key := "store/staking/key"
 	k.Logger(ctx).Info(fmt.Sprintf("Querying delegation for %s on %s", delAddr, valoper))
-	err := k.InterchainQueryKeeper.MakeRequest(
+	err = k.InterchainQueryKeeper.MakeRequest(
 		ctx,
 		hostZone.ConnectionId,
 		hostZone.ChainId,
@@ -327,7 +332,7 @@ func (k Keeper) QueryDelegationDaisyChain(ctx sdk.Context, hostZone types.HostZo
 		0, // height always 0 (which means current height)
 	)
 	if err != nil {
-		k.Logger(ctx).Error("Error querying for delegation", "error", err)
+		k.Logger(ctx).Error(fmt.Sprintf("Error querying for delegation, error : %s", err.Error()))
 		return err
 	}
 	return nil

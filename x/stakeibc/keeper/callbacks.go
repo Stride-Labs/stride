@@ -161,7 +161,7 @@ func WithdrawalBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query icq
 	return nil
 }
 
-// DelegationCallback is a callback handler for Querydelegation queries.
+// DelegationCallback is a callback handler for UpdateValidatorSharesExchRate queries.
 func DelegationCallback(k Keeper, ctx sdk.Context, args []byte, query icqtypes.Query) error {
 	// NOTE(TEST-112) for now, to get proofs in your ICQs, you need to query the entire store on the host zone! e.g. "store/bank/key"
 
@@ -171,7 +171,7 @@ func DelegationCallback(k Keeper, ctx sdk.Context, args []byte, query icqtypes.Q
 	}
 
 	// ensure ICQ can be issued now! else fail the callback
-	valid, err := k.IsWithinICQEpochWindow(ctx)
+	valid, err := k.IsWithinBufferWindow(ctx)
 	if err != nil {
 		return err
 	} else if !valid {
@@ -195,15 +195,16 @@ func DelegationCallback(k Keeper, ctx sdk.Context, args []byte, query icqtypes.Q
 			// note: truncateInt per https://github.com/cosmos/cosmos-sdk/blob/cb31043d35bad90c4daa923bb109f38fd092feda/x/staking/types/validator.go#L431
 			qNumTokens := qdel.Shares.Mul(v.TokensFromShares).TruncateInt()
 			k.Logger(ctx).Info(fmt.Sprintf("DelegationCallback: zone %s validator %s prevNtokens %v qNumTokens %v", zone.ChainId, v.Address, v.DelegationAmt, qNumTokens))
-			if qNumTokens.Uint64() != v.DelegationAmt {
-				// TODO add some safety checks here
-
+			if qNumTokens.Uint64() < v.DelegationAmt {
+				// TODO(later) add some safety checks here (e.g. we could query the slashing module to confirm the decr in tokens was due to slash)
 				// update our records of the total stakedbal and of the validator's delegation amt
+				// NOTE:  we assume any decrease in delegation amt that's not tracked via records is a slash
 				slashAmt := v.DelegationAmt - qNumTokens.Uint64()
 				slashPct := sdk.NewDec(cast.ToInt64(slashAmt)).Quo(sdk.NewDec(cast.ToInt64(v.DelegationAmt)))
 				k.Logger(ctx).Info(fmt.Sprintf("ICQ'd delAmt mismatch zone %s validator %s delegator %s records was %d icq shows %d slashAmt %d slashPct %d... UPDATING!",
 					zone.ChainId, v.Address, qdel.DelegatorAddress, v.DelegationAmt, qNumTokens, slashAmt, slashPct))
 				k.Logger(ctx).Info(fmt.Sprintf("ICQ'd: slashPct: %v", slashPct))
+				// TODO (not priority) move rate limiting logic to new rate limiting module
 				if slashPct.GT(sdk.NewDec(10).Quo(sdk.NewDec(100))) {
 					k.Logger(ctx).Info(fmt.Sprintf("DELCB | slashed but ABORTING bc slash GT10pct: query shows slash of %v", slashPct))
 					return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "DELCB | slashed but ABORTING bc slash GT10pct: query shows slash of %v", slashPct)
@@ -240,7 +241,7 @@ func ValidatorCallback(k Keeper, ctx sdk.Context, args []byte, query icqtypes.Qu
 	k.Logger(ctx).Info(fmt.Sprintf("ValidatorCallback: zone %v qval %v", zone.ChainId, qval))
 
 	// ensure ICQ can be issued now! else fail the callback
-	valid, err := k.IsWithinICQEpochWindow(ctx)
+	valid, err := k.IsWithinBufferWindow(ctx)
 	if err != nil {
 		return err
 	} else if !valid {
@@ -262,7 +263,7 @@ func ValidatorCallback(k Keeper, ctx sdk.Context, args []byte, query icqtypes.Qu
 	}
 
 	// armed with the exch rate, we can now query the (val,del) delegation
-	err = k.QueryDelegationDaisyChain(ctx, zone, qval.OperatorAddress)
+	err = k.UpdateDelegationsIcq(ctx, zone, qval.OperatorAddress)
 	if err != nil {
 		k.Logger(ctx).Error("ValidatorCallback: failed to query delegation", "zone", zone.ChainId, "err", err)
 		return err

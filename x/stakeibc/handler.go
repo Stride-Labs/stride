@@ -52,8 +52,8 @@ func NewHandler(k keeper.Keeper) sdk.Handler {
 		case *types.MsgRestoreInterchainAccount:
 			res, err := msgServer.RestoreInterchainAccount(sdk.WrapSDKContext(ctx), msg)
 			return sdk.WrapServiceResult(ctx, res, err)
-		case *types.MsgQueryDelegation:
-			res, err := msgServer.QueryDelegation(sdk.WrapSDKContext(ctx), msg)
+		case *types.MsgUpdateValidatorSharesExchRate:
+			res, err := msgServer.UpdateValidatorSharesExchRate(sdk.WrapSDKContext(ctx), msg)
 			return sdk.WrapServiceResult(ctx, res, err)
 			// this line is used by starport scaffolding # 1
 		default:
