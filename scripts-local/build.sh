@@ -6,10 +6,18 @@ SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 # First argument is build flags
 BUILDDIR="$2"
 
-while getopts sghi flag; do
+while getopts sghijo flag; do
     case "${flag}" in
         s) printf '%s' "Building Stride... ";
            go build -mod=readonly -trimpath -o $BUILDDIR ./...;
+           mkdir -p $BUILDDIR/stride2
+           go build -mod=readonly -trimpath -o $BUILDDIR/stride2 ./... 2>&1 | grep -v -E "deprecated|keychain" || true; 
+           mkdir -p $BUILDDIR/stride3
+           go build -mod=readonly -trimpath -o $BUILDDIR/stride3 ./... 2>&1 | grep -v -E "deprecated|keychain" || true;
+           mkdir -p $BUILDDIR/stride4
+           go build -mod=readonly -trimpath -o $BUILDDIR/stride4 ./... 2>&1 | grep -v -E "deprecated|keychain" || true;
+           mkdir -p $BUILDDIR/stride5
+           go build -mod=readonly -trimpath -o $BUILDDIR/stride5 ./... 2>&1 | grep -v -E "deprecated|keychain" || true; 
            echo "Done" ;;
         g) printf '%s' "Building Gaia...   ";
            cd deps/gaia; 
@@ -27,6 +35,16 @@ while getopts sghi flag; do
            echo "Done" ;;
         i) printf '%s' "Building ICQ...    ";
            cd deps/interchain-queries; 
+           go build -mod=readonly -trimpath -o $BUILDDIR ./... 2>&1 | grep -v -E "deprecated|keychain" || true; 
+           cd ../..
+           echo "Done" ;;
+        j) printf '%s' "Building Juno...   ";
+           cd deps/juno; 
+           go build -mod=readonly -trimpath -o $BUILDDIR ./... 2>&1 | grep -v -E "deprecated|keychain" || true; 
+           cd ../..
+           echo "Done" ;;
+        o) printf '%s' "Building Osmosis...   ";
+           cd deps/osmosis; 
            go build -mod=readonly -trimpath -o $BUILDDIR ./... 2>&1 | grep -v -E "deprecated|keychain" || true; 
            cd ../..
            echo "Done" ;;

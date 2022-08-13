@@ -128,6 +128,7 @@ func (k Keeper) SetWithdrawalAddressOnHost(ctx sdk.Context, hostZone types.HostZ
 	_ = ctx
 	var msgs []sdk.Msg
 	// the relevant ICA is the delegate account
+	k.Logger(ctx).Info(fmt.Sprintf("Setting withdrawal address on host zone %s", hostZone.ChainId))
 	owner := types.FormatICAAccountOwner(hostZone.ChainId, types.ICAAccountType_DELEGATION)
 	portID, err := icatypes.NewControllerPortID(owner)
 	if err != nil {
