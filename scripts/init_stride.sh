@@ -8,7 +8,6 @@ source $SCRIPT_DIR/vars.sh
 CHAIN_ID=$STRIDE_CHAIN_ID
 CMD=$STRIDE_CMD
 DENOM=$STRIDE_DENOM
-RPC_PORT=$STRIDE_RPC_PORT
 NUM_NODES=$STRIDE_NUM_NODES
 NODE_PREFIX=$STRIDE_NODE_PREFIX
 VAL_PREFIX=$STRIDE_VAL_PREFIX
@@ -29,6 +28,7 @@ echo 'Initializing stride chain...'
 for (( i=1; i <= $NUM_NODES; i++ )); do
     # Node names will be of the form: "stride-node1"
     node_name="${NODE_PREFIX}${i}"
+
     # Moniker is of the form: STRIDE_1
     moniker=$(printf "${NODE_PREFIX}_${i}" | awk '{ print toupper($0) }')
 
@@ -48,18 +48,13 @@ for (( i=1; i <= $NUM_NODES; i++ )); do
     sed -i -E "s|timeout_commit = \"5s\"|timeout_commit = \"${BLOCK_TIME}\"|g" $config_toml
     sed -i -E "s|prometheus = false|prometheus = true|g" $config_toml
 
-    sed -i -E "s|minimum-gas-prices = \".*\"|minimum-gas-prices = \"0${DENOM}\"|g" $app_toml
-    sed -i -E '/\[api\]/,/^enable = .*$/ s/^enable = .*$/enable = true/' $app_toml
-    sed -i -E 's|unsafe-cors = .*|unsafe-cors = true|g' $app_toml
-
     sed -i -E "s|chain-id = \"\"|chain-id = \"${CHAIN_ID}\"|g" $client_toml
     sed -i -E "s|keyring-backend = \"os\"|keyring-backend = \"test\"|g" $client_toml
-    sed -i -E "s|node = \".*\"|node = \"tcp://localhost:$RPC_PORT\"|g" $client_toml
 
-    sed -i -E "s|\"stake\"|\"${DENOM}\"|g" $genesis_json
-    
+    sed -i -E 's|"stake"|"ustrd"|g' $genesis_json
+
     # Get the endpoint and node ID
-    node_id=$($cmd tendermint show-node-id)@$node_name:$PEER_PORT
+    node_id=$($st_cmd tendermint show-node-id)@$node_name:$PORT_ID
     echo "Node #$i ID: $node_id"
 
     # add a validator account
