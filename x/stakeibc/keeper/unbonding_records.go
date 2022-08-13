@@ -180,76 +180,88 @@ func (k Keeper) SweepAllUnbondedTokens(ctx sdk.Context) {
 	// have been unbonded and are ready to sweep. If so, it processes them
 
 	sweepUnbondedTokens := func(ctx sdk.Context, index int64, zoneInfo types.HostZone) error {
-		k.Logger(ctx).Info(fmt.Sprintf("sweepUnbondedTokens for host zone %s", zoneInfo.ChainId))
-
-		// get latest epoch unbonding record
-		unbondingRecords := k.RecordsKeeper.GetAllEpochUnbondingRecord(ctx)
-		totalAmtTransferToRedemptionAcct := uint64(0)
-		for _, unbondingRecord := range unbondingRecords {
-			k.Logger(ctx).Info(fmt.Sprintf("processing unbondingRecord %v", unbondingRecord.Id))
-
-			// total amount of tokens to be swept
-
-			// iterate through all host zone unbondings and process them if they're ready to be swept
-			// TODO() index into the HostZoneUnbonding map with chainID rather than iterating and checking chainID equality
-			unbonding := unbondingRecord.HostZoneUnbondings[zoneInfo.ChainId]
-			k.Logger(ctx).Info(fmt.Sprintf("\tProcessing batch SweepAllUnbondedTokens for host zone %s", zoneInfo.ChainId))
-			zone, found := k.GetHostZone(ctx, unbonding.HostZoneId)
-			if !found {
-				k.Logger(ctx).Error(fmt.Sprintf("\t\tHost zone not found for hostZoneId %s", unbonding.HostZoneId))
-				continue
-			}
-
-			// get latest blockTime from light client
-			blockTime, found := k.GetLightClientTimeSafely(ctx, zone.ConnectionId)
-			if !found {
-				k.Logger(ctx).Error(fmt.Sprintf("\t\tCould not find blockTime for host zone %s", zone.ChainId))
-				return sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "\t\tCould not find blockTime for host zone")
-			}
-
-			shouldProcess := (unbonding.Status == recordstypes.HostZoneUnbonding_PENDING_TRANSFER || unbonding.Status == recordstypes.HostZoneUnbonding_UNBONDED)
-			// if the unbonding period has elapsed, then we can send the ICA call to sweep this hostZone's unbondings to the rewards account (in a batch)
-			k.Logger(ctx).Info(fmt.Sprintf("\tUnbonding time:  %d blockTime %d, shouldProcess %v", unbonding.UnbondingTime, blockTime, shouldProcess))
-			if (unbonding.UnbondingTime < blockTime) && shouldProcess {
-				// we have a match, so we can process this unbonding
-				k.Logger(ctx).Info(fmt.Sprintf("\t\tAdding %d to amt to batch transfer from delegation acct to rewards acct for host zone %s, record %v", unbonding.Amount, zone.ChainId, unbondingRecord.Id))
-				totalAmtTransferToRedemptionAcct += unbonding.Amount
-				unbonding.Status = recordstypes.HostZoneUnbonding_PENDING_TRANSFER
-				k.RecordsKeeper.SetEpochUnbondingRecord(ctx, unbondingRecord)
-			}
-
+		connectionId, msgs, delegationAccount, error := k.PrepSweepUnbondedTokens(ctx, index, zoneInfo)
+		if error != nil {
+			ctx.Logger().Info(fmt.Sprintf("Coulod not prep sweeping any unbonded tokens for %s due to err %s", zoneInfo.GetChainId(), error.Error()))
+			return error
 		}
-		// if we have any amount to sweep, then we can send the ICA call to sweep them
-		if totalAmtTransferToRedemptionAcct > 0 {
-			k.Logger(ctx).Info(fmt.Sprintf("\tSending batch SweepAllUnbondedTokens for %d amt to host zone %s", totalAmtTransferToRedemptionAcct, zoneInfo.ChainId))
-			// Issue ICA bank send from delegation account to rewards account
-			if (&zoneInfo).DelegationAccount != nil && (&zoneInfo).RedemptionAccount != nil { // only process host zones once withdrawal accounts are registered
-
-				// get the delegation account and rewards account
-				delegationAccount := zoneInfo.GetDelegationAccount()
-				redemptionAccount := zoneInfo.GetRedemptionAccount()
-
-				sweepCoin := sdk.NewCoin(zoneInfo.HostDenom, sdk.NewInt(cast.ToInt64(totalAmtTransferToRedemptionAcct)))
-				var msgs []sdk.Msg
-				// construct the msg
-				msgs = append(msgs, &banktypes.MsgSend{FromAddress: delegationAccount.GetAddress(),
-					ToAddress: redemptionAccount.GetAddress(), Amount: sdk.NewCoins(sweepCoin)})
-
-				ctx.Logger().Info(fmt.Sprintf("Bank sending unbonded tokens batch, from delegation to redemption account. Msg: %v", msgs))
-
-				// Send the transaction through SubmitTx
-				_, err := k.SubmitTxsDayEpoch(ctx, zoneInfo.ConnectionId, msgs, *delegationAccount)
-				if err != nil {
-					ctx.Logger().Info(fmt.Sprintf("Failed to SubmitTxs for %s", zoneInfo.ChainId))
-				}
-				ctx.Logger().Info(fmt.Sprintf("Successfully completed unbonded token sweep ICA call for %s, %s, %v", zoneInfo.ConnectionId, zoneInfo.ChainId, msgs))
-			}
-		} else {
-			k.Logger(ctx).Info(fmt.Sprintf("\tNo unbonded tokens this day to sweep for host zone %s", zoneInfo.ChainId))
-		}
-
-		return nil
+		return k.SubmitSweepAllUnbondedTokensICA(ctx, connectionId, msgs, delegationAccount)
 	}
 	// Iterate the zones and sweep their unbonded tokens
 	k.IterateHostZones(ctx, sweepUnbondedTokens)
+}
+
+func (k Keeper) SubmitSweepAllUnbondedTokensICA(ctx sdk.Context, zoneInfo types.HostZone, msgs []sdk.Msg, delegationAccount *types.ICAAccount) error {
+	ctx.Logger().Info(fmt.Sprintf("Bank sending unbonded tokens batch, from delegation to redemption account. Msg: %v", msgs))
+
+	// Send the transaction through SubmitTx
+	_, err := k.SubmitTxsDayEpoch(ctx, zoneInfo.GetConnectionId(), msgs, *delegationAccount)
+	if err != nil {
+		ctx.Logger().Info(fmt.Sprintf("Did not sweep any unbonded tokens for %s due to err %s", zoneInfo.GetChainId(), err.Error()))
+	}
+	ctx.Logger().Info(fmt.Sprintf("Successfully completed unbonded token sweep ICA call for %s, %s, %v", zoneInfo.ConnectionId, zoneInfo.ChainId, msgs))
+	return nil
+}
+
+// helper for non-IBC portion of sweep unbonded tokens
+func (k Keeper) PrepSweepUnbondedTokens(ctx sdk.Context, index int64, zoneInfo types.HostZone) (types.HostZone, []sdk.Msg, *types.ICAAccount, error) {
+	k.Logger(ctx).Info(fmt.Sprintf("sweepUnbondedTokens for host zone %s", zoneInfo.ChainId))
+
+	// get latest epoch unbonding record
+	unbondingRecords := k.RecordsKeeper.GetAllEpochUnbondingRecord(ctx)
+	// total amount of tokens to be swept
+	totalAmtTransferToRedemptionAcct := uint64(0)
+	for _, unbondingRecord := range unbondingRecords {
+		k.Logger(ctx).Info(fmt.Sprintf("processing unbondingRecord %v", unbondingRecord.Id))
+
+		// iterate through all host zone unbondings and process them if they're ready to be swept
+		unbonding := unbondingRecord.HostZoneUnbondings[zoneInfo.ChainId]
+		k.Logger(ctx).Info(fmt.Sprintf("\tProcessing batch SweepAllUnbondedTokens for host zone %s", zoneInfo.ChainId))
+		zone, found := k.GetHostZone(ctx, unbonding.HostZoneId)
+		if !found {
+			k.Logger(ctx).Error(fmt.Sprintf("\t\tHost zone not found for hostZoneId %s", unbonding.HostZoneId))
+			continue
+		}
+
+		// get latest blockTime from light client
+		blockTime, found := k.GetLightClientTimeSafely(ctx, zone.ConnectionId)
+		if !found {
+			k.Logger(ctx).Error(fmt.Sprintf("\t\tCould not find blockTime for host zone %s", zone.ChainId))
+			return types.HostZone{}, nil, nil, sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "\t\tCould not find blockTime for host zone")
+		}
+
+		shouldProcess := (unbonding.Status == recordstypes.HostZoneUnbonding_PENDING_TRANSFER || unbonding.Status == recordstypes.HostZoneUnbonding_UNBONDED)
+		// if the unbonding period has elapsed, then we can send the ICA call to sweep this hostZone's unbondings to the rewards account (in a batch)
+		k.Logger(ctx).Info(fmt.Sprintf("\tUnbonding time:  %d blockTime %d, shouldProcess %v", unbonding.UnbondingTime, blockTime, shouldProcess))
+		if (unbonding.UnbondingTime < blockTime) && shouldProcess {
+			// we have a match, so we can process this unbonding
+			k.Logger(ctx).Info(fmt.Sprintf("\t\tAdding %d to amt to batch transfer from delegation acct to rewards acct for host zone %s, record %v", unbonding.Amount, zone.ChainId, unbondingRecord.Id))
+			totalAmtTransferToRedemptionAcct += unbonding.Amount
+			unbonding.Status = recordstypes.HostZoneUnbonding_PENDING_TRANSFER
+			k.RecordsKeeper.SetEpochUnbondingRecord(ctx, unbondingRecord)
+		}
+
+	}
+	// if we have any amount to sweep, then we can send the ICA call to sweep them
+	if totalAmtTransferToRedemptionAcct > 0 {
+		k.Logger(ctx).Info(fmt.Sprintf("\tSending batch SweepAllUnbondedTokens for %d amt to host zone %s", totalAmtTransferToRedemptionAcct, zoneInfo.ChainId))
+		// Issue ICA bank send from delegation account to rewards account
+		if (&zoneInfo).DelegationAccount != nil && (&zoneInfo).RedemptionAccount != nil { // only process host zones once withdrawal accounts are registered
+
+			// get the delegation account and rewards account
+			delegationAccount := zoneInfo.GetDelegationAccount()
+			redemptionAccount := zoneInfo.GetRedemptionAccount()
+
+			sweepCoin := sdk.NewCoin(zoneInfo.HostDenom, sdk.NewInt(cast.ToInt64(totalAmtTransferToRedemptionAcct)))
+			var msgs []sdk.Msg
+			// construct the msg
+			msgs = append(msgs, &banktypes.MsgSend{FromAddress: delegationAccount.GetAddress(),
+				ToAddress: redemptionAccount.GetAddress(), Amount: sdk.NewCoins(sweepCoin)})
+
+			return zoneInfo, msgs, redemptionAccount, nil
+		}
+	} else {
+		k.Logger(ctx).Info(fmt.Sprintf("\tNo unbonded tokens this day to sweep for host zone %s", zoneInfo.ChainId))
+	}
+	return types.HostZone{}, nil, nil, sdkerrors.Wrapf(sdkerrors.ErrNotFound, "\t\tNo unbonded tokens this day to sweep for host zone")
 }

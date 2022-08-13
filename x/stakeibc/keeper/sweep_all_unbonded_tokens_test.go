@@ -3,10 +3,6 @@ package keeper_test
 import (
 	// "fmt"
 
-	"fmt"
-	"strings"
-
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	_ "github.com/stretchr/testify/suite"
 
 	recordtypes "github.com/Stride-Labs/stride/x/records/types"
@@ -35,6 +31,7 @@ func (s *KeeperTestSuite) SetupSweepAllUnbondedTokens() SweepAllUnbondedTokensTe
 	wgt_val2 := uint64(1)
 	unbonding_time := uint64(1660348276)
 	light_client_time := unbonding_time + 1
+	connection_id := "connection-0"
 
 	//  define the host zone with stakedBal and validators with staked amounts
 	validators := []*stakeibc.Validator{
@@ -61,6 +58,7 @@ func (s *KeeperTestSuite) SetupSweepAllUnbondedTokens() SweepAllUnbondedTokensTe
 		Bech32Prefix:      "cosmos",
 		Validators:        validators,
 		DelegationAccount: &delegationAccount,
+		ConnectionId:      connection_id,
 	}
 
 	// list of epoch unbonding records
@@ -80,7 +78,7 @@ func (s *KeeperTestSuite) SetupSweepAllUnbondedTokens() SweepAllUnbondedTokensTe
 			Denom:         "uatom",
 			HostZoneId:    "GAIA",
 			UnbondingTime: unbonding_time, // 2022-08-12T19:51
-			Status:        recordtypes.HostZoneUnbonding_BONDED,
+			Status:        recordtypes.HostZoneUnbonding_UNBONDED,
 		}
 
 		s.App.RecordsKeeper.AppendEpochUnbondingRecord(s.Ctx, epochUnbondingRecord)
@@ -99,68 +97,82 @@ func (s *KeeperTestSuite) SetupSweepAllUnbondedTokens() SweepAllUnbondedTokensTe
 func (s *KeeperTestSuite) TestSweepAllUnbondedTokensSuccessful() {
 	tc := s.SetupSweepAllUnbondedTokens()
 
-	msgs, totalAmtToUnbond, err := s.App.StakeibcKeeper.SweepAllUnbondedTokenss(s.Ctx, tc.host_zone)
+	// set the light client time so that the unbonded token sweep check can retrieve it dynamically
+	// consensusState, found := s.App.IBCKeeper.ClientKeeper.GetClientConsensusState(ctx, connection.ClientId, height)
+
+	// if !found {
+	// 	return nil, fmt.Errorf("unable to fetch consensus state")
+	// }
+	// // cs = exported.
+	// // height := clienttypes.NewHeight(clienttypes.ParseChainID(tc.host_zone.ChainId), 1) // revision height arbitrarily set to 1
+	// s.App.IBCKeeper.ClientKeeper.SetClientConsensusState(s.Ctx, "clientIDXXX", height, cs)
+
+	//		msgs = append(msgs, &banktypes.MsgSend{FromAddress: delegationAccount.GetAddress(),
+	//	ToAddress: redemptionAccount.GetAddress(), Amount: sdk.NewCoins(sweepCoin)})
+	hz, _, delAcct, err := s.App.StakeibcKeeper.PrepSweepUnbondedTokens(s.Ctx, 0, tc.host_zone) // note index is an unused param, so we set it to 0 (artifact of iterateHostZones)
 	s.Require().Nil(err)
-
-	// function to get total wgt of all validators on a host zone
-	getTotalWgt := func(hostZone stakeibc.HostZone) sdk.Dec {
-		totalWgt := sdk.ZeroDec()
-		for _, validator := range hostZone.Validators {
-			totalWgt = totalWgt.Add(sdk.NewDec(int64(validator.Weight)))
-		}
-		return totalWgt
-	}
-	totalWgt := getTotalWgt(tc.host_zone)
-	amtToUnbond := sdk.NewDec(int64(tc.amt_to_unbond))
-	// due to erratic rounding and random validator ordering, we can only guarantee that at least one of the undelegations is correct
-	a := strings.Contains(msgs[1].String(), (sdk.NewDec(int64(tc.host_zone.Validators[1].Weight)).Quo(totalWgt).Mul(amtToUnbond)).TruncateInt().String())
-	b := strings.Contains(msgs[0].String(), (sdk.NewDec(int64(tc.host_zone.Validators[1].Weight)).Quo(totalWgt).Mul(amtToUnbond)).TruncateInt().String())
-	c := strings.Contains(msgs[1].String(), (sdk.NewDec(int64(tc.host_zone.Validators[0].Weight)).Quo(totalWgt).Mul(amtToUnbond)).TruncateInt().String())
-	d := strings.Contains(msgs[0].String(), (sdk.NewDec(int64(tc.host_zone.Validators[0].Weight)).Quo(totalWgt).Mul(amtToUnbond)).TruncateInt().String())
-
-	s.Require().True(a || b || c || d)
-	s.Require().Equal(int64(tc.amt_to_unbond), int64(totalAmtToUnbond))
+	s.Require().Equal(hz.ChainId, tc.host_zone.ChainId)
+	s.Require().Equal(delAcct, tc.host_zone.DelegationAccount)
 }
 
-func (s *KeeperTestSuite) TestSweepAllUnbondedTokensWrongChainId() {
-	tc := s.SetupSweepAllUnbondedTokens()
+// // function to get total wgt of all validators on a host zone
+// getTotalWgt := func(hostZone stakeibc.HostZone) sdk.Dec {
+// 	totalWgt := sdk.ZeroDec()
+// 	for _, validator := range hostZone.Validators {
+// 		totalWgt = totalWgt.Add(sdk.NewDec(int64(validator.Weight)))
+// 	}
+// 	return totalWgt
+// }
+// totalWgt := getTotalWgt(tc.host_zone)
+// amtToUnbond := sdk.NewDec(int64(tc.amt_to_unbond))
+// // due to erratic rounding and random validator ordering, we can only guarantee that at least one of the undelegations is correct
+// a := strings.Contains(msgs[1].String(), (sdk.NewDec(int64(tc.host_zone.Validators[1].Weight)).Quo(totalWgt).Mul(amtToUnbond)).TruncateInt().String())
+// b := strings.Contains(msgs[0].String(), (sdk.NewDec(int64(tc.host_zone.Validators[1].Weight)).Quo(totalWgt).Mul(amtToUnbond)).TruncateInt().String())
+// c := strings.Contains(msgs[1].String(), (sdk.NewDec(int64(tc.host_zone.Validators[0].Weight)).Quo(totalWgt).Mul(amtToUnbond)).TruncateInt().String())
+// d := strings.Contains(msgs[0].String(), (sdk.NewDec(int64(tc.host_zone.Validators[0].Weight)).Quo(totalWgt).Mul(amtToUnbond)).TruncateInt().String())
 
-	tc.host_zone.ChainId = "nonExistentChainId"
-	msgs, totalAmtToUnbond, err := s.App.StakeibcKeeper.SweepAllUnbondedTokenss(s.Ctx, tc.host_zone)
-	// error should be nil -- we do NOT raise an error on a non-existent chain id, we simply do not send any messages
-	s.Require().Nil(err)
-	// no messages should be sent
-	s.Require().Equal(0, len(msgs))
-	// no value should be unbonded
-	s.Require().Equal(int64(0), int64(totalAmtToUnbond))
-}
+// s.Require().True(a || b || c || d)
+// s.Require().Equal(int64(tc.amt_to_unbond), int64(totalAmtToUnbond))
 
-func (s *KeeperTestSuite) TestSweepAllUnbondedTokensNoEpochUnbondingRecords() {
-	tc := s.SetupSweepAllUnbondedTokens()
+// func (s *KeeperTestSuite) TestSweepAllUnbondedTokensWrongChainId() {
+// 	tc := s.SetupSweepAllUnbondedTokens()
 
-	// iterate epoch unbonding records and delete them
-	for i, _ := range tc.epoch_unbonding_records {
-		s.App.RecordsKeeper.RemoveEpochUnbondingRecord(s.Ctx, uint64(i))
-	}
+// 	tc.host_zone.ChainId = "nonExistentChainId"
+// 	msgs, totalAmtToUnbond, err := s.App.StakeibcKeeper.SweepAllUnbondedTokens(s.Ctx, 0,)
+// 	// error should be nil -- we do NOT raise an error on a non-existent chain id, we simply do not send any messages
+// 	s.Require().Nil(err)
+// 	// no messages should be sent
+// 	s.Require().Equal(0, len(msgs))
+// 	// no value should be unbonded
+// 	s.Require().Equal(int64(0), int64(totalAmtToUnbond))
+// }
 
-	msgs, totalAmtToUnbond, err := s.App.StakeibcKeeper.SweepAllUnbondedTokenss(s.Ctx, tc.host_zone)
-	// error should be nil -- we do NOT raise an error on a non-existent chain id, we simply do not send any messages
-	s.Require().Nil(err)
-	// no messages should be sent
-	s.Require().Equal(0, len(msgs))
-	// no value should be unbonded
-	s.Require().Equal(int64(0), int64(totalAmtToUnbond))
-}
+// func (s *KeeperTestSuite) TestSweepAllUnbondedTokensNoEpochUnbondingRecords() {
+// 	tc := s.SetupSweepAllUnbondedTokens()
 
-func (s *KeeperTestSuite) TestSweepAllUnbondedTokensUnbondingTooMuch() {
-	tc := s.SetupSweepAllUnbondedTokens()
+// 	// iterate epoch unbonding records and delete them
+// 	for i, _ := range tc.epoch_unbonding_records {
+// 		s.App.RecordsKeeper.RemoveEpochUnbondingRecord(s.Ctx, uint64(i))
+// 	}
 
-	// iterate the validators and set all their delegated amounts to 0
-	for i, _ := range tc.host_zone.Validators {
-		tc.host_zone.Validators[i].DelegationAmt = 0
-	}
+// 	msgs, totalAmtToUnbond, err := s.App.StakeibcKeeper.SweepAllUnbondedTokenss(s.Ctx, tc.host_zone)
+// 	// error should be nil -- we do NOT raise an error on a non-existent chain id, we simply do not send any messages
+// 	s.Require().Nil(err)
+// 	// no messages should be sent
+// 	s.Require().Equal(0, len(msgs))
+// 	// no value should be unbonded
+// 	s.Require().Equal(int64(0), int64(totalAmtToUnbond))
+// }
 
-	_, _, err := s.App.StakeibcKeeper.SweepAllUnbondedTokenss(s.Ctx, tc.host_zone)
-	// error should be nil -- we do NOT raise an error on a non-existent chain id, we simply do not send any messages
-	s.Require().EqualError(err, fmt.Sprintf("Could not unbond %d on Host Zone %s, overflow is %d: balance is insufficient", tc.amt_to_unbond, tc.host_zone.ChainId, tc.amt_to_unbond))
-}
+// func (s *KeeperTestSuite) TestSweepAllUnbondedTokensUnbondingTooMuch() {
+// 	tc := s.SetupSweepAllUnbondedTokens()
+
+// 	// iterate the validators and set all their delegated amounts to 0
+// 	for i, _ := range tc.host_zone.Validators {
+// 		tc.host_zone.Validators[i].DelegationAmt = 0
+// 	}
+
+// 	_, _, err := s.App.StakeibcKeeper.SweepAllUnbondedTokenss(s.Ctx, tc.host_zone)
+// 	// error should be nil -- we do NOT raise an error on a non-existent chain id, we simply do not send any messages
+// 	s.Require().EqualError(err, fmt.Sprintf("Could not unbond %d on Host Zone %s, overflow is %d: balance is insufficient", tc.amt_to_unbond, tc.host_zone.ChainId, tc.amt_to_unbond))
+// }
