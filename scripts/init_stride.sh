@@ -51,10 +51,14 @@ for (( i=1; i <= $NUM_NODES; i++ )); do
     sed -i -E "s|chain-id = \"\"|chain-id = \"${CHAIN_ID}\"|g" $client_toml
     sed -i -E "s|keyring-backend = \"os\"|keyring-backend = \"test\"|g" $client_toml
 
-    sed -i -E 's|"stake"|"ustrd"|g' $genesis_json
+    sed -i -E "s|minimum-gas-prices = \".*\"|minimum-gas-prices = \"0${DENOM}\"|g" $app_toml
+    sed -i -E '/\[api\]/,/^enable = .*$/ s/^enable = .*$/enable = true/' $app_toml
+    sed -i -E 's|enable-unsafe-cors = .*|enable-unsafe-cors = true|g' $app_toml
 
+    sed -i -E "s|\"stake\"|\"${DENOM}\"|g" $genesis_json
+    
     # Get the endpoint and node ID
-    node_id=$($st_cmd tendermint show-node-id)@$node_name:$PORT_ID
+    node_id=$($cmd tendermint show-node-id)@$node_name:$PORT_ID
     echo "Node #$i ID: $node_id"
 
     # add a validator account

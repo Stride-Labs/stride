@@ -3,27 +3,29 @@
 set -eu
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
-# define STRIDE vars
 STATE=$SCRIPT_DIR/state
 PORT_ID=26657
-BLOCK_TIME='3s'
-DAY_EPOCH_DURATION="180s"
-STRIDE_EPOCH_DURATION="60s"
-UNBONDING_TIME="21600s"
-MAX_DEPOSIT_PERIOD="3600s"
-VOTING_PERIOD="3600s"
-SIGNED_BLOCKS_WINDOW="30000"
-MIN_SIGNED_PER_WINDOW="0.050000000000000000"
-SLASH_FRACTION_DOWNTIME="0.001000000000000000"
 
+BLOCK_TIME='5s'
+DAY_EPOCH_INDEX=1
+DAY_EPOCH_DURATION="100s"
+STRIDE_EPOCH_INDEX=2
+STRIDE_EPOCH_DURATION="40s"
+UNBONDING_TIME="200s"
+MAX_DEPOSIT_PERIOD="30s"
+VOTING_PERIOD="30s"
+
+VAL_TOKENS=5000000000000
+STAKE_TOKENS=3000000000000
+ADMIN_TOKENS=1000000000
+
+# STRIDE vars
 STRIDE_CHAIN_ID=STRIDE
 STRIDE_NODE_PREFIX=stride
 STRIDE_NUM_NODES=3
 STRIDE_CMD="$SCRIPT_DIR/../build/strided"
 STRIDE_VAL_PREFIX=val
-STRIDE_VAL_TOKENS=5000000000000ustrd
-STRIDE_STAKE_TOKENS=3000000000000ustrd
-STRIDE_ADMIN_TOKENS=1000000000ustrd
+STRIDE_DENOM=ustrd
 STRIDE_ADMIN_ACCT=admin
 
 STRIDE_MNEMONIC_1="close soup mirror crew erode defy knock trigger gather eyebrow tent farm gym gloom base lemon sleep weekend rich forget diagram hurt prize fly"
@@ -51,8 +53,7 @@ GAIA_MNEMONIC_5="invite close edit quick effort mosquito ocean north term spread
 GAIA_VAL_MNEMONICS=("$GAIA_MNEMONIC_1" "$GAIA_MNEMONIC_2" "$GAIA_MNEMONIC_3" "$GAIA_MNEMONIC_4" "$GAIA_MNEMONIC_5")
 
 # define relayer vars
-HERMES_CMD="$SCRIPT_DIR/../build/hermes/release/hermes --config $STATE/hermes/config.toml"
-HERMES_EXEC="docker-compose run --rm hermes hermes"
+HERMES_CMD="$SCRIPT_DIR/../build/hermes/release/hermes -c $STATE/hermes/config.toml"
 
 HERMES_STRIDE_ACCT=rly1
 HERMES_GAIA_ACCT=rly2
@@ -74,7 +75,6 @@ RELAYER_GAIA_MNEMONIC="resemble accident lake amateur physical jewel taxi nut de
 RELAYER_OSMOSIS_MNEMONIC="artwork ranch dinosaur maple unhappy office bone vote rebel slot outside benefit innocent wrist certain cradle almost fat trial build chicken enroll strike milk"
 
 ICQ_CMD="$SCRIPT_DIR/../build/interchain-queries --home $STATE/icq"
-ICQ_EXEC="docker-compose run --rm icq interchain-queries"
 
 ICQ_STRIDE_ACCT=icq1
 ICQ_GAIA_ACCT=icq2
