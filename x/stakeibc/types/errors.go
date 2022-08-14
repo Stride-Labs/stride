@@ -28,4 +28,8 @@ var (
 	ErrValidatorNotRemoved         = sdkerrors.Register(ModuleName, 1518, "validator not removed")
 	ErrHostZoneNotFound            = sdkerrors.Register(ModuleName, 1519, "host zone not found")
 	ErrParamNotFound               = sdkerrors.Register(ModuleName, 1520, "param not found")
+	ErrUnmarshalFailure            = sdkerrors.Register(ModuleName, 1521, "unable to unmarshal data structure")
+	ErrMarshalFailure              = sdkerrors.Register(ModuleName, 1522, "unable to marshal data structure")
+	ErrInvalidPacketCompletionTime = sdkerrors.Register(ModuleName, 1523, "invalid packet completion time")
+	ErrIntCast                     = sdkerrors.Register(ModuleName, 1524, "unable to cast to safe cast int")
 )

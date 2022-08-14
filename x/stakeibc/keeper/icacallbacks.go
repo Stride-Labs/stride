@@ -5,13 +5,14 @@ import (
 
 	"github.com/spf13/cast"
 
+	"github.com/golang/protobuf/proto"
+
 	icacallbackstypes "github.com/Stride-Labs/stride/x/icacallbacks/types"
 	"github.com/Stride-Labs/stride/x/stakeibc/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	channeltypes "github.com/cosmos/ibc-go/v3/modules/core/04-channel/types"
-	"github.com/golang/protobuf/proto"
 )
 
 // ___________________________________________________________________________________________________
@@ -46,13 +47,10 @@ func (c ICACallbacks) AddICACallback(id string, fn interface{}) icacallbackstype
 }
 
 func (c ICACallbacks) RegisterICACallbacks() icacallbackstypes.ICACallbackHandler {
-	a := c.AddICACallback("delegate", ICACallback(DelegateCallback))
-	return a.(ICACallbacks)
+	return c.
+		AddICACallback("delegate", ICACallback(DelegateCallback)).
+		AddICACallback("undelegate", ICACallback(UndelegateCallback))
 }
-
-// -----------------------------------
-// ICACallback Handlers
-// -----------------------------------
 
 // ----------------------------------- Delegate Callback ----------------------------------- //
 func (k Keeper) MarshalDelegateCallbackArgs(ctx sdk.Context, delegateCallback types.DelegateCallback) ([]byte, error) {

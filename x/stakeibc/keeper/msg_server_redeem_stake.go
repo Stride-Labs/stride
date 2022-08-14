@@ -48,16 +48,16 @@ func (k msgServer) RedeemStake(goCtx context.Context, msg *types.MsgRedeemStake)
 
 	// construct desired unstaking amount from host zone
 	coinDenom := types.StAssetDenomFromHostZoneDenom(hostZone.HostDenom)
-	nativeAmount := sdk.NewDec(amt).Mul(hostZone.RedemptionRate)
+	nativeAmount := sdk.NewDec(amt).Mul(hostZone.RedemptionRate).RoundInt()
 	// TODO(TEST-112) bigint safety
-	coinString := nativeAmount.RoundInt().String() + coinDenom
+	coinString := nativeAmount.String() + coinDenom
 	inCoin, err := sdk.ParseCoinNormalized(coinString)
 	if err != nil {
 		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidCoins, "could not parse inCoin: %s. err: %s", coinString, err.Error())
 	}
 	// safety checks on the coin
 	// 	- Redemption amount must be positive
-	if !inCoin.IsPositive() {
+	if !nativeAmount.IsPositive() {
 		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidCoins, "amount must be greater than 0. found: %d", msg.Amount)
 	}
 	// 	- Creator owns at least "amount" stAssets
@@ -65,13 +65,13 @@ func (k msgServer) RedeemStake(goCtx context.Context, msg *types.MsgRedeemStake)
 	k.Logger(ctx).Info(fmt.Sprintf("Redemption issuer IBCDenom balance: %v%s", balance.Amount, balance.Denom))
 	k.Logger(ctx).Info(fmt.Sprintf("Redemption requested redemotion amount: %v%s", inCoin.Amount, inCoin.Denom))
 	if balance.Amount.LT(sdk.NewInt(amt)) {
-		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidCoins, fmt.Sprintf("balance is lower than redemption amount. redemption amount: %d, balance %d: ", msg.Amount, balance.Amount))
+		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidCoins, "balance is lower than redemption amount. redemption amount: %d, balance %d: ", msg.Amount, balance.Amount)
 	}
 	// UNBONDING RECORD KEEPING
 	// first construct a user redemption record
 	epochTracker, found := k.GetEpochTracker(ctx, "day")
 	if !found {
-		return nil, sdkerrors.Wrapf(types.ErrEpochNotFound, "epoch tracker found: %s", "day")
+		return nil, sdkerrors.Wrapf(types.ErrEpochNotFound, "epoch tracker not found: %s", "day")
 	}
 	senderAddr := sender.String()
 	redemptionId := recordstypes.UserRedemptionRecordKeyFormatter(hostZone.ChainId, epochTracker.EpochNumber, senderAddr)
@@ -79,7 +79,7 @@ func (k msgServer) RedeemStake(goCtx context.Context, msg *types.MsgRedeemStake)
 		Id:          redemptionId,
 		Sender:      senderAddr,
 		Receiver:    msg.Receiver,
-		Amount:      inCoin.Amount.Uint64(),
+		Amount:      nativeAmount.Uint64(),
 		Denom:       hostZone.HostDenom,
 		HostZoneId:  hostZone.ChainId,
 		EpochNumber: epochTracker.EpochNumber,
@@ -90,7 +90,7 @@ func (k msgServer) RedeemStake(goCtx context.Context, msg *types.MsgRedeemStake)
 		return nil, sdkerrors.Wrapf(recordstypes.ErrRedemptionAlreadyExists, "user already redeemed this epoch: %s", redemptionId)
 	}
 	// then add undelegation amount to epoch unbonding records
-	epochUnbondingRecord, found := k.RecordsKeeper.GetLatestEpochUnbondingRecord(ctx)
+	epochUnbondingRecord, found := k.RecordsKeeper.GetEpochUnbondingRecord(ctx, epochTracker.EpochNumber)
 	if !found {
 		k.Logger(ctx).Error("latest epoch unbonding record not found")
 		return nil, sdkerrors.Wrapf(recordstypes.ErrEpochUnbondingRecordNotFound, "latest epoch unbonding record not found")
@@ -100,7 +100,7 @@ func (k msgServer) RedeemStake(goCtx context.Context, msg *types.MsgRedeemStake)
 	if !found {
 		return nil, sdkerrors.Wrapf(types.ErrInvalidHostZone, "host zone not found in unbondings: %s", hostZone.ChainId)
 	}
-	hostZoneUnbonding.Amount += inCoin.Amount.Uint64()
+	hostZoneUnbonding.NativeTokenAmount += nativeAmount.Uint64()
 	hostZoneUnbonding.UserRedemptionRecords = append(hostZoneUnbonding.UserRedemptionRecords, userRedemptionRecord.Id)
 
 	// Escrow user's balance
@@ -108,15 +108,17 @@ func (k msgServer) RedeemStake(goCtx context.Context, msg *types.MsgRedeemStake)
 	err = k.bankKeeper.SendCoinsFromAccountToModule(ctx, sender, types.ModuleName, redeemCoin)
 	if err != nil {
 		k.Logger(ctx).Error("Failed to send sdk.NewCoins(inCoins) from account to module")
-		return nil, sdkerrors.Wrapf(types.ErrInsufficientFunds, "couldn't send %d %s tokens to module account. err: %s", msg.Amount, coinDenom, err.Error())
+		return nil, sdkerrors.Wrapf(types.ErrInsufficientFunds, "couldn't send %d derivative %s tokens to module account. err: %s", msg.Amount, hostZone.HostDenom, err.Error())
 	}
 
-	// burn stAssets upon successful unbonding
-	err = k.bankKeeper.BurnCoins(ctx, types.ModuleName, redeemCoin)
+	// record the number of stAssets that should be burned after unbonding
+	stTokenAmount, err := cast.ToUint64E(msg.Amount)
 	if err != nil {
-		k.Logger(ctx).Error(fmt.Sprintf("Failed to burn stAssets upon successful unbonding %v", err))
-		return nil, sdkerrors.Wrapf(types.ErrInsufficientFunds, "couldn't burn %d %s tokens in module account. err: %s", msg.Amount, coinDenom, err.Error())
+		errMsg := fmt.Sprintf("Could not convert redemption amount to int64 in redeem stake | %s", err.Error())
+		k.Logger(ctx).Error(errMsg)
+		return nil, sdkerrors.Wrapf(types.ErrIntCast, errMsg)
 	}
+	hostZoneUnbonding.StTokenAmount += stTokenAmount
 
 	// Actually set the records, we wait until now to prevent any errors
 	k.RecordsKeeper.SetUserRedemptionRecord(ctx, userRedemptionRecord)

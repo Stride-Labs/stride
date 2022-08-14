@@ -24,7 +24,7 @@ type Account struct {
 	stAtomBalance sdk.Coin
 }
 
-type State struct {
+type LiquidStakeState struct {
 	depositRecordAmount int64
 	hostZone            types.HostZone
 }
@@ -32,7 +32,7 @@ type State struct {
 type LiquidStakeTestCase struct {
 	user         Account
 	module       Account
-	initialState State
+	initialState LiquidStakeState
 	validMsg     stakeibc.MsgLiquidStake
 }
 
@@ -80,7 +80,7 @@ func (s *KeeperTestSuite) SetupLiquidStake() LiquidStakeTestCase {
 	return LiquidStakeTestCase{
 		user:   user,
 		module: module,
-		initialState: State{
+		initialState: LiquidStakeState{
 			depositRecordAmount: initialDepositAmount,
 			hostZone:            hostZone,
 		},
