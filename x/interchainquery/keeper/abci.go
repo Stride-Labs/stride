@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"encoding/hex"
+	"fmt"
 	"time"
 
 	"github.com/cosmos/cosmos-sdk/telemetry"
@@ -53,12 +54,12 @@ func (k Keeper) EndBlocker(ctx sdk.Context) {
 		} else {
 			ttl, err := cast.ToInt64E(q.Ttl)
 			if err != nil {
-				k.Logger(ctx).Error("Error casting ttl to int64", "err", err)
+				k.Logger(ctx).Error(fmt.Sprintf("Error casting ttl to int64, err: %s", err.Error()))
 				return false
 			}
 			lh, err := cast.ToInt64E(dp.LocalHeight)
 			if err != nil {
-				k.Logger(ctx).Error("Error casting local height to int64", "err", err)
+				k.Logger(ctx).Error(fmt.Sprintf("Error casting local height to int64, err: %s", err.Error()))
 				return false
 			}
 			if lh+ttl > ctx.BlockHeader().Height {

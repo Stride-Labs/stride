@@ -73,12 +73,12 @@ func (k Keeper) SendHostZoneUnbondings(ctx sdk.Context, hostZone types.HostZone)
 		valAddr := validator.GetAddress()
 		valUnbondAmt, err := cast.ToInt64E(newUnbondingToValidator[valAddr])
 		if err != nil {
-			k.Logger(ctx).Error(fmt.Sprintf("Error casting validator unbonding amount %d: %s", newUnbondingToValidator[valAddr], err))
+			k.Logger(ctx).Error(fmt.Sprintf("Error casting validator unbonding amount %d: %s", newUnbondingToValidator[valAddr], err.Error()))
 			return false
 		}
 		currentAmtStaked, err := cast.ToInt64E(validator.GetDelegationAmt())
 		if err != nil {
-			k.Logger(ctx).Error(fmt.Sprintf("Error casting validator staked amount %d: %s", validator.GetDelegationAmt(), err))
+			k.Logger(ctx).Error(fmt.Sprintf("Error casting validator staked amount %d: %s", validator.GetDelegationAmt(), err.Error()))
 			return false
 		}
 		if valUnbondAmt > currentAmtStaked { // if we don't have enough assets to unbond
@@ -95,7 +95,7 @@ func (k Keeper) SendHostZoneUnbondings(ctx sdk.Context, hostZone types.HostZone)
 			// store how many more tokens we could unbond, if needed
 			curAmtStaked, err := cast.ToInt64E(currentAmtStaked)
 			if err != nil {
-				k.Logger(ctx).Error(fmt.Sprintf("Error casting validator staked amount %d: %s", currentAmtStaked, err))
+				k.Logger(ctx).Error(fmt.Sprintf("Error casting validator staked amount %d: %s", currentAmtStaked, err.Error()))
 				return false
 			}
 			amtToPotentiallyUnbond := curAmtStaked - valUnbondAmt
@@ -245,7 +245,7 @@ func (k Keeper) SweepAllUnbondedTokens(ctx sdk.Context) {
 				totalAmtTransferToRedemptionAcct, err := cast.ToInt64E(totalAmtTransferToRedemptionAcct)
 				if err != nil {
 					k.Logger(ctx).Error(fmt.Sprintf("\t\tCould not convert %d to int64", totalAmtTransferToRedemptionAcct))
-					return sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "\t\tCould not convert %d to int64", totalAmtTransferToRedemptionAcct)
+					return sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, fmt.Sprintf("\t\tCould not convert %d to int64", totalAmtTransferToRedemptionAcct))
 				}
 				sweepCoin := sdk.NewCoin(zoneInfo.HostDenom, sdk.NewInt(totalAmtTransferToRedemptionAcct))
 				var msgs []sdk.Msg

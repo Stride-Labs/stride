@@ -99,7 +99,7 @@ func WithdrawalBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query icq
 	wa := zone.GetWithdrawalAccount()
 	waBal, err := cast.ToUint64E(coin.Amount.Int64())
 	if err != nil {
-		k.Logger(ctx).Error("unable to convert amount to uint64", "zone", zone.ChainId, "err", err)
+		k.Logger(ctx).Error(fmt.Sprintf("unable to convert amount to uint64, zone %s, err %s", zone.ChainId, err.Error()))
 		return err
 	}
 	wa.Balance = waBal

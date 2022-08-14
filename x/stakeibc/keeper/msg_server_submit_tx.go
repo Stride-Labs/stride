@@ -223,13 +223,13 @@ func (k Keeper) SubmitTxsEpoch(ctx sdk.Context, connectionId string, msgs []sdk.
 	// BUFFER by 5% of the epoch length
 	bufferSize, err := cast.ToUint64E(k.GetParam(ctx, types.KeyBufferSize))
 	if err != nil {
-		return 0, sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "Failed to get buffer size: %s", err)
+		return 0, sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, fmt.Sprintf("Failed to get buffer size: %s", err.Error()))
 	}
 	BUFFER := epochTracker.Duration / bufferSize
 	timeoutNanos := epochTracker.NextEpochStartTime - BUFFER
 	timeoutNanosSafe, err := cast.ToUint64E(timeoutNanos)
 	if err != nil {
-		return 0, sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "Failed to get timeout nanos: %s", err)
+		return 0, sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, fmt.Sprintf("Failed to get timeout nanos: %s", err.Error()))
 	}
 	k.Logger(ctx).Info(fmt.Sprintf("Submitting txs for epoch %s %d %d", epochTracker.EpochIdentifier, epochTracker.NextEpochStartTime, timeoutNanosSafe))
 	sequence, err := k.SubmitTxs(ctx, connectionId, msgs, account, timeoutNanosSafe, callbackId, callbackArgs)
@@ -350,7 +350,7 @@ func (k Keeper) GetLightClientHeightSafely(ctx sdk.Context, connectionID string)
 		// TODO(TEST-112) check on safety of castng uint64 to int64
 		latestHeightHostZone, err := cast.ToUint64E(clientState.GetLatestHeight().GetRevisionHeight())
 		if err != nil {
-			k.Logger(ctx).Error(fmt.Sprintf("error casting latest height to int64: %s", err))
+			k.Logger(ctx).Error(fmt.Sprintf("error casting latest height to int64: %s", err.Error()))
 			return 0, false
 		}
 		return latestHeightHostZone, true

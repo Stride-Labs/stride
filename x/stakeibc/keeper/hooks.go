@@ -285,7 +285,7 @@ func (k Keeper) TransferExistingDepositsToHostZones(ctx sdk.Context, epochNumber
 	})
 	ibcTimeoutBlocks, err := cast.ToUint64E(k.GetParam(ctx, types.KeyIbcTimeoutBlocks))
 	if err != nil {
-		k.Logger(ctx).Error(fmt.Sprintf("Could not get IBC timeout blocks: %s", err))
+		k.Logger(ctx).Error(fmt.Sprintf("Could not get IBC timeout blocks: %s", err.Error()))
 		return
 	}
 	addr := k.accountKeeper.GetModuleAccount(ctx, types.ModuleName).GetAddress().String()
@@ -349,19 +349,19 @@ func (k Keeper) UpdateRedemptionRates(ctx sdk.Context, depositRecords []recordst
 
 		undelegatedBalance, error := k.GetUndelegatedBalance(zoneInfo, depositRecords)
 		if error != nil {
-			k.Logger(ctx).Error(fmt.Sprintf("Could not get undelegated balance for host zone %s: %s", zoneInfo.ChainId, error))
+			k.Logger(ctx).Error(fmt.Sprintf("Could not get undelegated balance for host zone %s: %s", zoneInfo.ChainId, error.Error()))
 			return error
 		}
 		k.Logger(ctx).Info(fmt.Sprintf("undelegatedBalance: %d", undelegatedBalance))
 		stakedBalance, err := cast.ToInt64E(zoneInfo.GetStakedBal())
 		if err != nil {
-			k.Logger(ctx).Error(fmt.Sprintf("Could not get staked balance for host zone %s: %s", zoneInfo.ChainId, err))
+			k.Logger(ctx).Error(fmt.Sprintf("Could not get staked balance for host zone %s: %s", zoneInfo.ChainId, err.Error()))
 			return err
 		}
 		k.Logger(ctx).Info(fmt.Sprintf("stakedBalance: %d", stakedBalance))
 		moduleAcctBalance, error := k.GetModuleAccountBalance(zoneInfo, depositRecords)
 		if error != nil {
-			k.Logger(ctx).Error(fmt.Sprintf("Could not get module account balance for host zone %s: %s", zoneInfo.ChainId, error))
+			k.Logger(ctx).Error(fmt.Sprintf("Could not get module account balance for host zone %s: %s", zoneInfo.ChainId, error.Error()))
 			return error
 		}
 		k.Logger(ctx).Info(fmt.Sprintf("moduleAcctBalance: %d", moduleAcctBalance))

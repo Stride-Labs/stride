@@ -42,8 +42,8 @@ func (k msgServer) RedeemStake(goCtx context.Context, msg *types.MsgRedeemStake)
 
 	amt, err := cast.ToInt64E(msg.Amount)
 	if err != nil {
-		k.Logger(ctx).Error("error casting RedeemStake msg.Amount to int64", "err", err)
-		return nil, sdkerrors.Wrapf(types.ErrInvalidAmount, "invalid amount: %s", err)
+		k.Logger(ctx).Error(fmt.Sprintf("error casting RedeemStake msg.Amount to int64, err: %s", err.Error()))
+		return nil, sdkerrors.Wrapf(types.ErrInvalidAmount, fmt.Sprintf("invalid amount: %s", err.Error()))
 	}
 
 	// construct desired unstaking amount from host zone
@@ -65,7 +65,7 @@ func (k msgServer) RedeemStake(goCtx context.Context, msg *types.MsgRedeemStake)
 	k.Logger(ctx).Info(fmt.Sprintf("Redemption issuer IBCDenom balance: %v%s", balance.Amount, balance.Denom))
 	k.Logger(ctx).Info(fmt.Sprintf("Redemption requested redemotion amount: %v%s", inCoin.Amount, inCoin.Denom))
 	if balance.Amount.LT(sdk.NewInt(amt)) {
-		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidCoins, "balance is lower than redemption amount. redemption amount: %d, balance %d: ", msg.Amount, balance.Amount)
+		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidCoins, fmt.Sprintf("balance is lower than redemption amount. redemption amount: %d, balance %d: ", msg.Amount, balance.Amount))
 	}
 	// UNBONDING RECORD KEEPING
 	// first construct a user redemption record
