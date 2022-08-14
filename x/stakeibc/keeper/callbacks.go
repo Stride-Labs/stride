@@ -9,28 +9,28 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/spf13/cast"
 
-	"github.com/Stride-Labs/stride/x/interchainquery/types"
 	icqtypes "github.com/Stride-Labs/stride/x/interchainquery/types"
+	"github.com/Stride-Labs/stride/x/stakeibc/types"
 )
 
 // ___________________________________________________________________________________________________
 
 // Callbacks wrapper struct for interchainstaking keeper
-type Callback func(Keeper, sdk.Context, []byte, types.Query) error
+type Callback func(Keeper, sdk.Context, []byte, icqtypes.Query) error
 
 type Callbacks struct {
 	k         Keeper
 	callbacks map[string]Callback
 }
 
-var _ types.QueryCallbacks = Callbacks{}
+var _ icqtypes.QueryCallbacks = Callbacks{}
 
 func (k Keeper) CallbackHandler() Callbacks {
 	return Callbacks{k, make(map[string]Callback)}
 }
 
 //callback handler
-func (c Callbacks) Call(ctx sdk.Context, id string, args []byte, query types.Query) error {
+func (c Callbacks) Call(ctx sdk.Context, id string, args []byte, query icqtypes.Query) error {
 	return c.callbacks[id](c.k, ctx, args, query)
 }
 
@@ -39,12 +39,12 @@ func (c Callbacks) Has(id string) bool {
 	return found
 }
 
-func (c Callbacks) AddCallback(id string, fn interface{}) types.QueryCallbacks {
+func (c Callbacks) AddCallback(id string, fn interface{}) icqtypes.QueryCallbacks {
 	c.callbacks[id] = fn.(Callback)
 	return c
 }
 
-func (c Callbacks) RegisterCallbacks() types.QueryCallbacks {
+func (c Callbacks) RegisterCallbacks() icqtypes.QueryCallbacks {
 	a := c.AddCallback("withdrawalbalance", Callback(WithdrawalBalanceCallback))
 	return a.(Callbacks)
 }
@@ -71,7 +71,7 @@ func WithdrawalBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query icq
 	coin := sdk.Coin{}
 	err = k.cdc.Unmarshal(args, &coin)
 	if err != nil {
-		k.Logger(ctx).Error("unable to unmarshal balance info for zone", "zone", zone.ChainId, "err", err)
+		k.Logger(ctx).Error(fmt.Sprintf("unable to unmarshal balance info for zone: %s, err: %s", zone.ChainId, err.Error()))
 		return err
 	}
 
@@ -91,7 +91,7 @@ func WithdrawalBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query icq
 
 	// sanity check, do not transfer if we have 0 balance!
 	if coin.Amount.Int64() == 0 {
-		k.Logger(ctx).Info("WithdrawalBalanceCallback: no balance to transfer", "zone", zone.ChainId, "accAddr", accAddr, "coin", coin)
+		k.Logger(ctx).Info(fmt.Sprintf("WithdrawalBalanceCallback: no balance to transfer for zone: %s, accAddr: %v, coin: %v", zone.ChainId, accAddr, coin))
 		return nil
 	}
 
@@ -157,8 +157,18 @@ func WithdrawalBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query icq
 
 	ctx.Logger().Info(fmt.Sprintf("Submitting withdrawal sweep messages for: %v", msgs))
 
+	// add callback data
+	reinvestCallback := types.ReinvestCallback{
+		ReinvestAmount: reinvestCoin,
+		HostZoneId: zone.ChainId,
+	}
+	marshalledCallbackArgs, err := k.MarshalReinvestCallbackArgs(ctx, reinvestCallback)
+	if err != nil {
+		return err
+	}
+
 	// Send the transaction through SubmitTx
-	_, err = k.SubmitTxsStrideEpoch(ctx, zone.ConnectionId, msgs, *withdrawalAccount, "", nil)
+	_, err = k.SubmitTxsStrideEpoch(ctx, zone.ConnectionId, msgs, *withdrawalAccount, REINVEST, marshalledCallbackArgs)
 	if err != nil {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "Failed to SubmitTxs for %s, %s, %s", zone.ConnectionId, zone.ChainId, msgs)
 	}

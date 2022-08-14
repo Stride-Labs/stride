@@ -117,7 +117,7 @@ func (k Keeper) DelegateOnHost(ctx sdk.Context, hostZone types.HostZone, amt sdk
 		return err
 	}
 	// Send the transaction through SubmitTx
-	_, err = k.SubmitTxsStrideEpoch(ctx, connectionId, msgs, *delegationIca, "delegate", marshalledCallbackArgs)
+	_, err = k.SubmitTxsStrideEpoch(ctx, connectionId, msgs, *delegationIca, DELEGATE, marshalledCallbackArgs)
 
 	if err != nil {
 		return sdkerrors.Wrapf(err, "Failed to SubmitTxs for connectionId %s on %s. Messages: %s", connectionId, hostZone.ChainId, msgs)
@@ -142,12 +142,12 @@ func (k Keeper) SetWithdrawalAddressOnHost(ctx sdk.Context, hostZone types.HostZ
 	// Fetch the relevant ICA
 	delegationIca := hostZone.GetDelegationAccount()
 	if delegationIca == nil || delegationIca.Address == "" {
-		k.Logger(ctx).Error("Zone %s is missing a delegation address!", hostZone.ChainId)
+		k.Logger(ctx).Error(fmt.Sprintf("Zone %s is missing a delegation address!", hostZone.ChainId))
 		return nil
 	}
 	withdrawalIca := hostZone.GetWithdrawalAccount()
 	if withdrawalIca == nil || withdrawalIca.Address == "" {
-		k.Logger(ctx).Error("Zone %s is missing a withdrawal address!", hostZone.ChainId)
+		k.Logger(ctx).Error(fmt.Sprintf("Zone %s is missing a withdrawal address!", hostZone.ChainId))
 		return nil
 	}
 	withdrawalIcaAddr := hostZone.GetWithdrawalAccount().GetAddress()
@@ -169,14 +169,14 @@ func (k Keeper) UpdateWithdrawalBalance(ctx sdk.Context, zoneInfo types.HostZone
 
 	withdrawalIca := zoneInfo.GetWithdrawalAccount()
 	if withdrawalIca == nil || withdrawalIca.Address == "" {
-		k.Logger(ctx).Error("Zone %s is missing a withdrawal address!", zoneInfo.ChainId)
+		k.Logger(ctx).Error(fmt.Sprintf("Zone %s is missing a withdrawal address!", zoneInfo.ChainId))
 	}
 	k.Logger(ctx).Info(fmt.Sprintf("\tQuerying withdrawalBalances for %s", zoneInfo.ChainId))
 
 	_, addr, _ := bech32.DecodeAndConvert(withdrawalIca.GetAddress())
 	data := bankTypes.CreateAccountBalancesPrefix(addr)
 	key := "store/bank/key"
-	k.Logger(ctx).Info("Querying for value", "key", key, "denom", zoneInfo.HostDenom)
+	k.Logger(ctx).Info(fmt.Sprintf("Querying for value key: %s, denom: %s", key, zoneInfo.HostDenom))
 	err := k.InterchainQueryKeeper.MakeRequest(
 		ctx,
 		zoneInfo.ConnectionId,
@@ -190,7 +190,7 @@ func (k Keeper) UpdateWithdrawalBalance(ctx sdk.Context, zoneInfo types.HostZone
 		0, // height always 0 (which means current height)
 	)
 	if err != nil {
-		k.Logger(ctx).Error("Error querying for withdrawal balance", "error", err)
+		k.Logger(ctx).Error(fmt.Sprintf("Error querying for withdrawal balance, error: %s", err.Error()))
 		return err
 	}
 	return nil
@@ -240,7 +240,7 @@ func (k Keeper) SubmitTxsEpoch(
 	k.Logger(ctx).Info(fmt.Sprintf("SubmitTxsEpoch: %v", msgs))
 	epochTracker, found := k.GetEpochTracker(ctx, epochType)
 	if !found {
-		k.Logger(ctx).Error("Failed to get epoch tracker for %s", epochType)
+		k.Logger(ctx).Error(fmt.Sprintf("Failed to get epoch tracker for %s", epochType))
 		return 0, sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "Failed to get epoch tracker for %s", epochType)
 	}
 	// BUFFER by 5% of the epoch length
@@ -255,7 +255,7 @@ func (k Keeper) SubmitTxsEpoch(
 	if err != nil {
 		return 0, err
 	}
-	k.Logger(ctx).Info("Submitted Txs", "connectionId", connectionId, "sequence", sequence)
+	k.Logger(ctx).Info(fmt.Sprintf("Submitted Txs, connectionId: %s, sequence: %d", connectionId, sequence))
 	return sequence, nil
 }
 
