@@ -50,26 +50,18 @@ func RedemptionCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, a
 
 	hostZoneId := redemptionCallback.HostZoneId
 
-	dayEpochTracker, found := k.GetEpochTracker(ctx, "day")
-	if !found {
-		k.Logger(ctx).Error("failed to find epoch day")
-		return sdkerrors.Wrapf(types.ErrInvalidLengthEpochTracker, "no number for epoch (%s)", "day")
-	}
-	epochUnbondingRecords := k.RecordsKeeper.GetAllEpochUnbondingRecord(ctx)
-
-	for _, epochUnbondingRecord := range epochUnbondingRecords {
-		if epochUnbondingRecord.EpochNumber == dayEpochTracker.EpochNumber {
-			continue
+	for _, epochNumber := range redemptionCallback.UnbondingEpochNumbers {
+		epochUnbondingRecord, found := k.RecordsKeeper.GetEpochUnbondingRecord(ctx, epochNumber)
+		if !found {
+			errMsg := fmt.Sprintf("Epoch unbonding record not found for epoch #%d", epochNumber)
+			k.Logger(ctx).Error(errMsg)
+			return sdkerrors.Wrapf(sdkerrors.ErrKeyNotFound, errMsg)
 		}
+
 		// TODO: Update with nondeterministic loop
 		hostZoneUnbonding := epochUnbondingRecord.HostZoneUnbondings[hostZoneId]
-		// NOTE: at the beginning of the epoch we mark all PENDING_TRANSFER HostZoneUnbondingRecords as UNBONDED
-		// so that they're retried if the transfer fails
-		if hostZoneUnbonding.Status != recordstypes.HostZoneUnbonding_PENDING_TRANSFER {
-			k.Logger(ctx).Error("hostZoneUnbonding.Status != recordstypes.HostZoneUnbonding_PENDING_TRANSFER")
-			continue
-		}
 		hostZoneUnbonding.Status = recordstypes.HostZoneUnbonding_TRANSFERRED
+
 		userRedemptionRecords := hostZoneUnbonding.UserRedemptionRecords
 		for _, recordId := range userRedemptionRecords {
 			userRedemptionRecord, found := k.RecordsKeeper.GetUserRedemptionRecord(ctx, recordId)

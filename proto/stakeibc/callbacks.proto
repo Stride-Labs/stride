@@ -24,4 +24,5 @@ message UndelegateCallback {
 // ---------------------- Redemption Callbacks ---------------------- //
 message RedemptionCallback {
   string hostZoneId = 1; 
+  repeated uint64 unbondingEpochNumbers = 2;
 }

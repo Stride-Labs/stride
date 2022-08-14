@@ -117,6 +117,7 @@ func (k Keeper) HandleAcknowledgement(ctx sdk.Context, modulePacket channeltypes
 			k.Logger(ctx).Info("WithdrawalAddress set", "response", response)
 			continue
 		default:
+			// TODO: Remove this once everything has been migrated to callbacks
 			k.Logger(ctx).Error("Unhandled acknowledgement packet", "type", msgData.MsgType)
 		}
 	}
@@ -194,6 +195,7 @@ func (k *Keeper) HandleSend(ctx sdk.Context, msg sdk.Msg, sequence string) error
 		k.RecordsKeeper.RemoveUserRedemptionRecord(ctx, userRedemptionRecordKey)
 		k.RemovePendingClaims(ctx, sequence)
 	} else {
+		// TODO: Remove this once everything has been migrated to callbacks
 		k.Logger(ctx).Error("ACK - sendMsg.FromAddress != withdrawalAddress && sendMsg.FromAddress != delegationAddress && sendMsg.FromAddress != redemptionAddress")
 
 	}

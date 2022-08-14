@@ -78,10 +78,8 @@ message HostZoneUnbonding {
     BONDED = 0;
     // unbonding completed on delegate account
     UNBONDED = 1;
-    // transfer from delegate account to withdrawal account attempted
-    PENDING_TRANSFER = 2;
     // transfer success
-    TRANSFERRED = 3;
+    TRANSFERRED = 2;
   }
   uint64 stTokenAmount = 1;
   uint64 nativeTokenAmount = 2;
