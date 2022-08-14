@@ -4,7 +4,7 @@ set -eu
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
 STATE=$SCRIPT_DIR/state
-PORT_ID=26657
+PEER_PORT_ID=26656
 
 BLOCK_TIME='5s'
 DAY_EPOCH_INDEX=1
