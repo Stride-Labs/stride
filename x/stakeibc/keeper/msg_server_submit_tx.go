@@ -251,13 +251,19 @@ func (k Keeper) SubmitTxsEpoch(
 	// BUFFER by 5% of the epoch length
 	bufferSizeParam := cast.ToInt64(k.GetParam(ctx, types.KeyBufferSize))
 	bufferSize := epochTracker.Duration / bufferSizeParam
+	// buffer size should not be negative or longer than the epoch duration
+	if bufferSize < 0 || bufferSize > epochTracker.Duration {
+		k.Logger(ctx).Error(fmt.Sprintf("Invalid buffer size %d", bufferSize))
+		return 0, sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "Invalid buffer size %d", bufferSize)
+	}
 	timeoutNanos := epochTracker.NextEpochStartTime - bufferSize
-	// TODO safety: it's possible the cast below will handle this case with a graceful error, but leaving this here to make double sure until we can be sure
-	if timeoutNanos < 0 {
-		return 0, sdkerrors.Wrapf(sdkerrors.ErrTxTimeoutHeight, "Too late in the epoch to submitTx")
+	timeoutNanosUint64, err := cast.ToUint64E(timeoutNanos)
+	if err != nil {
+		k.Logger(ctx).Error(fmt.Sprintf("Failed to convert timeoutNanos to uint64, error: %s", err.Error()))
+		return 0, sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "Failed to convert timeoutNanos to uint64, error: %s", err.Error())
 	}
 	k.Logger(ctx).Info(fmt.Sprintf("Submitting txs for epoch %s %d %d", epochTracker.EpochIdentifier, epochTracker.NextEpochStartTime, timeoutNanos))
-	sequence, err := k.SubmitTxs(ctx, connectionId, msgs, account, cast.ToUint64(timeoutNanos), callbackId, callbackArgs)
+	sequence, err := k.SubmitTxs(ctx, connectionId, msgs, account, timeoutNanosUint64, callbackId, callbackArgs)
 	if err != nil {
 		return 0, err
 	}
@@ -417,7 +423,7 @@ func (k Keeper) QueryValidatorExchangeRate(ctx sdk.Context, msg *types.MsgUpdate
 }
 
 // to icq delegation amounts, this fn is executed after validator exch rates are icq'd
-func (k Keeper) UpdateDelegationsIcq(ctx sdk.Context, hostZone types.HostZone, valoper string) error {
+func (k Keeper) QueryDelegationsIcq(ctx sdk.Context, hostZone types.HostZone, valoper string) error {
 
 	// ensure ICQ can be issued now! else fail the callback
 	valid, err := k.IsWithinBufferWindow(ctx)
