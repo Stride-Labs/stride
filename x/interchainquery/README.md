@@ -22,7 +22,9 @@ Stride uses interchain queries and interchain accounts to perform multichain liq
 
 Nearly all of Stride's functionality is built using interchain accounts (ICAs), which are a new functionality in Cosmos, and a critical component of IBC. ICAs allow accounts on Zone A to be controlled by Zone B. ICAs communicate with one another using Interchain Queries (ICQs), which involve Zone A querying Zone B for relevant information. 
 
-Two Zones communicate via a connection, or channel. All communications between the Controller Zone (the chain that is querying) and the Host Zone (the chain that is being queried) is done through a dedicated IBC channel between the two chains, which is opened the first time the two chains interact.
+Two Zones communicate via a connection and channel. All communications between the Controller Zone (the chain that is querying) and the Host Zone (the chain that is being queried) is done through a dedicated IBC channel between the two chains, which is opened the first time the two chains interact.
+
+For context, ICS standards define that each channel is associated with a particular connection, and a connection may have any number of associated channels.
 
 
 ## State
@@ -42,7 +44,7 @@ The `interchainquery` module keeps `Query` objects and modifies the information 
 7. `last_height` keeps the blockheight of the last block before the query was made
 8. `callback_id` keeps the function that will be called by the interchain query
 9. `ttl` TODO
-10. `height` keeps the number of blocks delay between the ICQ and the callback function being called. This is often `0`, meaning the callback function should be called immediately.
+10. `height` keeps the height at which the ICQ query should execute on the host zone. This is often `0`, meaning the query should execute at the latest height on the host zone.
 
 `DataPoint` has information types that pertain to the data that is queried. `DataPoint` keeps the following:
 
@@ -53,7 +55,8 @@ The `interchainquery` module keeps `Query` objects and modifies the information 
 
 ## Events
 
-The `interchainquery` module emits an event at the end of every 3 `stride_epoch`s (i.e. 15 minutes).
+The `interchainquery` module emits an event at the end of every 3 `stride_epoch`s (e.g. 15 minutes on local testnet).
+
 The purpose of this event is to send interchainqueries that query data about staking rewards, which Stride uses to reinvest (aka autocompound) staking rewards.
 
 ```go

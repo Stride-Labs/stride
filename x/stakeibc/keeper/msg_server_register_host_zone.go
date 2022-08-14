@@ -27,6 +27,20 @@ func (k msgServer) RegisterHostZone(goCtx context.Context, msg *types.MsgRegiste
 		return nil, fmt.Errorf("invalid chain id, zone for \"%s\" already registered", chainId)
 	}
 
+	// check the denom is not already registered
+	hostZones := k.GetAllHostZone(ctx)
+	for _, hostZone := range hostZones {
+		if hostZone.HostDenom == msg.HostDenom {
+			return nil, fmt.Errorf("host denom \"%s\" already registered", msg.HostDenom)
+		}
+		if hostZone.ConnectionId == msg.ConnectionId {
+			return nil, fmt.Errorf("connectionId \"%s\" already registered", msg.HostDenom)
+		}
+		if hostZone.Bech32Prefix == msg.Bech32Prefix {
+			return nil, fmt.Errorf("host denom \"%s\" already registered", msg.HostDenom)
+		}
+	}
+
 	// set the zone
 	zone := types.HostZone{
 		ChainId:           chainId,
@@ -103,17 +117,19 @@ func (k msgServer) RegisterHostZone(goCtx context.Context, msg *types.MsgRegiste
 	// TODO(TEST-39): TODO(TEST-42): Set validators on the host zone, either using ICQ + intents or a WL
 
 	// emit events
-	ctx.EventManager().EmitEvents(sdk.Events{
+	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
 			sdk.EventTypeMessage,
 			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
 		),
+	)
+	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
 			types.EventTypeRegisterZone,
 			sdk.NewAttribute(types.AttributeKeyConnectionId, msg.ConnectionId),
 			sdk.NewAttribute(types.AttributeKeyRecipientChain, chainId),
 		),
-	})
+	)
 
 	return &types.MsgRegisterHostZoneResponse{}, nil
 }

@@ -10,7 +10,7 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/spf13/cast"
 
-	utils "github.com/Stride-Labs/stride/utils"
+	"github.com/Stride-Labs/stride/utils"
 
 	recordstypes "github.com/Stride-Labs/stride/x/records/types"
 	"github.com/Stride-Labs/stride/x/stakeibc/types"
@@ -25,6 +25,7 @@ func (k Keeper) CreateEpochUnbondings(ctx sdk.Context, epochNumber int64) bool {
 			HostZoneId: hostZone.ChainId,
 			Status:     recordstypes.HostZoneUnbonding_BONDED,
 		}
+		k.Logger(ctx).Info(fmt.Sprintf("Adding hostZoneUnbonding %v to %s", hostZoneUnbonding, hostZone.ChainId))
 		hostZoneUnbondings[hostZone.ChainId] = &hostZoneUnbonding
 		return nil
 	}
@@ -35,6 +36,7 @@ func (k Keeper) CreateEpochUnbondings(ctx sdk.Context, epochNumber int64) bool {
 		UnbondingEpochNumber: cast.ToUint64(epochNumber),
 		HostZoneUnbondings:   hostZoneUnbondings,
 	}
+	k.Logger(ctx).Info(fmt.Sprintf("AppendEpochUnbondingRecord %v", epochUnbondingRecord))
 	k.RecordsKeeper.AppendEpochUnbondingRecord(ctx, epochUnbondingRecord)
 	return true
 }
@@ -102,7 +104,7 @@ func (k Keeper) SendHostZoneUnbondings(ctx sdk.Context, hostZone types.HostZone)
 	}
 	for _, valAddr := range utils.StringToIntMapKeys(valAddrToUnbondAmt) {
 		valUnbondAmt := valAddrToUnbondAmt[valAddr]
-		stakeAmt := sdk.NewInt64Coin(hostZone.HostDenom, cast.ToInt64(valUnbondAmt))
+		stakeAmt := sdk.NewInt64Coin(hostZone.HostDenom, valUnbondAmt)
 
 		msgs = append(msgs, &stakingtypes.MsgUndelegate{
 			DelegatorAddress: delegationAccount.GetAddress(),
@@ -117,13 +119,13 @@ func (k Keeper) SendHostZoneUnbondings(ctx sdk.Context, hostZone types.HostZone)
 		return false
 	}
 
-	ctx.EventManager().EmitEvents(sdk.Events{
+	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
 			sdk.EventTypeMessage,
 			sdk.NewAttribute("hostZone", hostZone.ChainId),
 			sdk.NewAttribute("newAmountUnbonding", strconv.FormatUint(totalAmtToUnbond, 10)),
 		),
-	})
+	)
 	return true
 }
 
@@ -150,12 +152,14 @@ func (k Keeper) CleanupEpochUnbondingRecords(ctx sdk.Context) bool {
 		hostZoneUnbondings := epochUnbondingRecord.GetHostZoneUnbondings()
 		for _, key := range utils.HostZoneUnbondingKeys(hostZoneUnbondings) {
 			hostZoneUnbonding := hostZoneUnbondings[key]
+			k.Logger(ctx).Info(fmt.Sprintf("processing hostZoneUnbonding %v", hostZoneUnbonding))
 			if (hostZoneUnbonding.Status != recordstypes.HostZoneUnbonding_TRANSFERRED) && (hostZoneUnbonding.GetAmount() != 0) {
 				shouldDeleteRecord = false
 				break
 			}
 		}
 		if shouldDeleteRecord {
+			k.Logger(ctx).Info(fmt.Sprintf("removing EpochUnbondingRecord %v", epochUnbondingRecord.GetId()))
 			k.RecordsKeeper.RemoveEpochUnbondingRecord(ctx, epochUnbondingRecord.GetId())
 		}
 	}
@@ -176,11 +180,13 @@ func (k Keeper) SweepAllUnbondedTokens(ctx sdk.Context) {
 	// have been unbonded and are ready to sweep. If so, it processes them
 
 	sweepUnbondedTokens := func(ctx sdk.Context, index int64, zoneInfo types.HostZone) error {
+		k.Logger(ctx).Info(fmt.Sprintf("sweepUnbondedTokens for host zone %s", zoneInfo.ChainId))
 
 		// get latest epoch unbonding record
 		unbondingRecords := k.RecordsKeeper.GetAllEpochUnbondingRecord(ctx)
 		totalAmtTransferToRedemptionAcct := uint64(0)
 		for _, unbondingRecord := range unbondingRecords {
+			k.Logger(ctx).Info(fmt.Sprintf("processing unbondingRecord %v", unbondingRecord.Id))
 
 			// total amount of tokens to be swept
 
@@ -190,7 +196,7 @@ func (k Keeper) SweepAllUnbondedTokens(ctx sdk.Context) {
 			k.Logger(ctx).Info(fmt.Sprintf("\tProcessing batch SweepAllUnbondedTokens for host zone %s", zoneInfo.ChainId))
 			zone, found := k.GetHostZone(ctx, unbonding.HostZoneId)
 			if !found {
-				k.Logger(ctx).Info(fmt.Sprintf("\t\tHost zone not found for hostZoneId %s", unbonding.HostZoneId))
+				k.Logger(ctx).Error(fmt.Sprintf("\t\tHost zone not found for hostZoneId %s", unbonding.HostZoneId))
 				continue
 			}
 
@@ -203,10 +209,10 @@ func (k Keeper) SweepAllUnbondedTokens(ctx sdk.Context) {
 
 			shouldProcess := (unbonding.Status == recordstypes.HostZoneUnbonding_PENDING_TRANSFER || unbonding.Status == recordstypes.HostZoneUnbonding_UNBONDED)
 			// if the unbonding period has elapsed, then we can send the ICA call to sweep this hostZone's unbondings to the rewards account (in a batch)
-			k.Logger(ctx).Info(fmt.Sprintf("\tUnbonding time:  %d blockTime %d", unbonding.UnbondingTime, blockTime))
+			k.Logger(ctx).Info(fmt.Sprintf("\tUnbonding time:  %d blockTime %d, shouldProcess %v", unbonding.UnbondingTime, blockTime, shouldProcess))
 			if (unbonding.UnbondingTime < blockTime) && shouldProcess {
 				// we have a match, so we can process this unbonding
-				k.Logger(ctx).Info(fmt.Sprintf("\t\tAdding %d to amt to batch transfer from delegation acct to rewards acct for host zone %s", unbonding.Amount, zone.ChainId))
+				k.Logger(ctx).Info(fmt.Sprintf("\t\tAdding %d to amt to batch transfer from delegation acct to rewards acct for host zone %s, record %v", unbonding.Amount, zone.ChainId, unbondingRecord.Id))
 				totalAmtTransferToRedemptionAcct += unbonding.Amount
 				unbonding.Status = recordstypes.HostZoneUnbonding_PENDING_TRANSFER
 				k.RecordsKeeper.SetEpochUnbondingRecord(ctx, unbondingRecord)

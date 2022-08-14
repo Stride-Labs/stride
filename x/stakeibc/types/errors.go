@@ -8,8 +8,6 @@ import (
 
 // x/stakeibc module sentinel errors
 var (
-	ErrSample                      = sdkerrors.Register(ModuleName, 1100, "sample error")
-	ErrInvalidPacketTimeout        = sdkerrors.Register(ModuleName, 1500, "invalid packet timeout")
 	ErrInvalidVersion              = sdkerrors.Register(ModuleName, 1501, "invalid version")
 	ErrInvalidToken                = sdkerrors.Register(ModuleName, 1502, "invalid token denom")
 	ErrInvalidHostZone             = sdkerrors.Register(ModuleName, 1503, "host zone not registered")
@@ -27,6 +25,7 @@ var (
 	ErrInvalidUserRedemptionRecord = sdkerrors.Register(ModuleName, 1515, "user redemption record error")
 	ErrRequiredFieldEmpty          = sdkerrors.Register(ModuleName, 1516, "required field is missing")
 	ErrInvalidNumValidator         = sdkerrors.Register(ModuleName, 1517, "invalid number of validators")
+	ErrValidatorNotRemoved         = sdkerrors.Register(ModuleName, 1518, "validator not removed")
 	ErrHostZoneNotFound            = sdkerrors.Register(ModuleName, 1519, "host zone not found")
 	ErrOutsideIcqWindow            = sdkerrors.Register(ModuleName, 1520, "outside time window that accepts icqs")
 )
