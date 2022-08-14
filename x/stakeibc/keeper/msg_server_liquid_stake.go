@@ -74,9 +74,14 @@ func (k msgServer) LiquidStake(goCtx context.Context, msg *types.MsgLiquidStake)
 	depositRecord, found := k.RecordsKeeper.GetDepositRecordByEpochAndChain(ctx, strideEpochTracker.EpochNumber, hostZone.ChainId)
 	if !found {
 		k.Logger(ctx).Error("failed to find deposit record")
-		return nil, sdkerrors.Wrapf(sdkerrors.ErrNotFound, "no deposit record for epoch (%d)", strideEpochTracker.EpochNumber)
+		return nil, sdkerrors.Wrapf(sdkerrors.ErrNotFound, fmt.Sprintf("no deposit record for epoch (%d)", strideEpochTracker.EpochNumber))
 	}
-	depositRecord.Amount += cast.ToInt64(msg.Amount)
+	msgAmt, err := cast.ToInt64E(msg.Amount)
+	if err != nil {
+		k.Logger(ctx).Error("failed to convert msg.Amount to int64")
+		return nil, sdkerrors.Wrapf(err, "failed to convert msg.Amount to int64")
+	}
+	depositRecord.Amount += msgAmt
 	k.RecordsKeeper.SetDepositRecord(ctx, *depositRecord)
 
 	return &types.MsgLiquidStakeResponse{}, nil
@@ -88,7 +93,12 @@ func (k msgServer) MintStAsset(ctx sdk.Context, sender sdk.AccAddress, amount ui
 	// TODO(TEST-7): Add an exchange rate here! What object should we store the exchange rate on?
 	// How can we ensure that the exchange rate is not manipulated?
 	hz, _ := k.GetHostZoneFromHostDenom(ctx, denom)
-	amountToMint := (sdk.NewDec(cast.ToInt64(amount)).Quo(hz.RedemptionRate)).TruncateInt()
+	amt, err := cast.ToInt64E(amount)
+	if err != nil {
+		k.Logger(ctx).Error("failed to convert amount to int64")
+		return sdkerrors.Wrapf(err, "failed to convert amount to int64")
+	}
+	amountToMint := (sdk.NewDec(amt).Quo(hz.RedemptionRate)).TruncateInt()
 	coinString := amountToMint.String() + stAssetDenom
 	stCoins, err := sdk.ParseCoinsNormalized(coinString)
 	if err != nil {
