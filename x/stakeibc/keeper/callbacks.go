@@ -206,6 +206,9 @@ func ValidatorExchangeRateCallback(k Keeper, ctx sdk.Context, args []byte, query
 
 	// set the validator's conversion rate
 	v, i, found := getValidator(zone.Validators, queriedValidator.OperatorAddress)
+	if !found {
+		return fmt.Errorf("no registered validator for address: %s", queriedValidator.OperatorAddress)
+	}
 	// converting 1.0 gives us the exchange rate to later use in the next CB
 	v.TokensFromShares = queriedValidator.TokensFromShares(sdk.NewDec(1.0))
 	k.Logger(ctx).Info(fmt.Sprintf("ValidatorCallback: zone %s validator %v tokensFromShares %v", zone.ChainId, v.Address, v.TokensFromShares))
