@@ -104,14 +104,14 @@ func (k Keeper) DelegateOnHost(ctx sdk.Context, hostZone types.HostZone, amt sdk
 				DelegatorAddress: delegationIca.GetAddress(),
 				ValidatorAddress: validator.GetAddress(),
 				Amount:           relAmt})
-			}
-			splitDelegations = append(splitDelegations, &types.SplitDelegation{Validator: validator.GetAddress(), Amount: relAmt.Amount.Uint64()})
+		}
+		splitDelegations = append(splitDelegations, &types.SplitDelegation{Validator: validator.GetAddress(), Amount: relAmt.Amount.Uint64()})
 	}
 
 	// add callback data
 	delegateCallback := types.DelegateCallback{
-		HostZoneId: hostZone.ChainId,
-		DepositRecordId: depositRecordId,
+		HostZoneId:       hostZone.ChainId,
+		DepositRecordId:  depositRecordId,
 		SplitDelegations: splitDelegations,
 	}
 	marshalledCallbackArgs, err := k.MarshalDelegateCallbackArgs(ctx, delegateCallback)
@@ -120,6 +120,7 @@ func (k Keeper) DelegateOnHost(ctx sdk.Context, hostZone types.HostZone, amt sdk
 	}
 	// Send the transaction through SubmitTx
 	_, err = k.SubmitTxsStrideEpoch(ctx, connectionId, msgs, *delegationIca, "delegate", marshalledCallbackArgs)
+
 	if err != nil {
 		return sdkerrors.Wrapf(err, "Failed to SubmitTxs for connectionId %s on %s. Messages: %s", connectionId, hostZone.ChainId, msgs)
 	}
@@ -197,16 +198,30 @@ func (k Keeper) UpdateWithdrawalBalance(ctx sdk.Context, zoneInfo types.HostZone
 	return nil
 }
 
-func (k Keeper) SubmitTxsDayEpoch(ctx sdk.Context, connectionId string, msgs []sdk.Msg, account types.ICAAccount) (uint64, error) {
+func (k Keeper) SubmitTxsDayEpoch(
+	ctx sdk.Context,
+	connectionId string,
+	msgs []sdk.Msg,
+	account types.ICAAccount,
+	callbackId string,
+	callbackArgs []byte,
+) (uint64, error) {
 	k.Logger(ctx).Info(fmt.Sprintf("SubmitTxsDayEpoch %v", msgs))
-	sequence, err := k.SubmitTxsEpoch(ctx, connectionId, msgs, account, epochstypes.DAY_EPOCH, "", nil)
+	sequence, err := k.SubmitTxsEpoch(ctx, connectionId, msgs, account, epochstypes.DAY_EPOCH, callbackId, callbackArgs)
 	if err != nil {
 		return 0, err
 	}
 	return sequence, nil
 }
 
-func (k Keeper) SubmitTxsStrideEpoch(ctx sdk.Context, connectionId string, msgs []sdk.Msg, account types.ICAAccount, callbackId string, callbackArgs []byte) (uint64, error) {
+func (k Keeper) SubmitTxsStrideEpoch(
+	ctx sdk.Context,
+	connectionId string,
+	msgs []sdk.Msg,
+	account types.ICAAccount,
+	callbackId string,
+	callbackArgs []byte,
+) (uint64, error) {
 	k.Logger(ctx).Info(fmt.Sprintf("SubmitTxsStrideEpoch %v", msgs))
 	sequence, err := k.SubmitTxsEpoch(ctx, connectionId, msgs, account, epochstypes.STRIDE_EPOCH, callbackId, callbackArgs)
 	if err != nil {
@@ -215,7 +230,15 @@ func (k Keeper) SubmitTxsStrideEpoch(ctx sdk.Context, connectionId string, msgs 
 	return sequence, nil
 }
 
-func (k Keeper) SubmitTxsEpoch(ctx sdk.Context, connectionId string, msgs []sdk.Msg, account types.ICAAccount, epochType string, callbackId string, callbackArgs []byte) (uint64, error) {
+func (k Keeper) SubmitTxsEpoch(
+	ctx sdk.Context,
+	connectionId string,
+	msgs []sdk.Msg,
+	account types.ICAAccount,
+	epochType string,
+	callbackId string,
+	callbackArgs []byte,
+) (uint64, error) {
 	k.Logger(ctx).Info(fmt.Sprintf("SubmitTxsEpoch: %v", msgs))
 	epochTracker, found := k.GetEpochTracker(ctx, epochType)
 	if !found {
@@ -240,7 +263,15 @@ func (k Keeper) SubmitTxsEpoch(ctx sdk.Context, connectionId string, msgs []sdk.
 }
 
 // SubmitTxs submits an ICA transaction containing multiple messages
-func (k Keeper) SubmitTxs(ctx sdk.Context, connectionId string, msgs []sdk.Msg, account types.ICAAccount, timeoutTimestamp uint64, callbackId string, callbackArgs []byte) (uint64, error) {
+func (k Keeper) SubmitTxs(
+	ctx sdk.Context,
+	connectionId string,
+	msgs []sdk.Msg,
+	account types.ICAAccount,
+	timeoutTimestamp uint64,
+	callbackId string,
+	callbackArgs []byte,
+) (uint64, error) {
 	k.Logger(ctx).Info(fmt.Sprintf("SubmitTxs %v", msgs))
 	chainId, err := k.GetChainID(ctx, connectionId)
 	if err != nil {
@@ -279,11 +310,11 @@ func (k Keeper) SubmitTxs(ctx sdk.Context, connectionId string, msgs []sdk.Msg, 
 
 	// Store the callback data
 	callback := icacallbackstypes.CallbackData{
-		CallbackKey: icacallbackstypes.PacketID(portID, channelID, sequence),
-		PortId: portID,
-		ChannelId: channelID,
-		Sequence: sequence,
-		CallbackId: callbackId,
+		CallbackKey:  icacallbackstypes.PacketID(portID, channelID, sequence),
+		PortId:       portID,
+		ChannelId:    channelID,
+		Sequence:     sequence,
+		CallbackId:   callbackId,
 		CallbackArgs: callbackArgs,
 	}
 	k.ICACallbacksKeeper.SetCallbackData(ctx, callback)
