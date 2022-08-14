@@ -261,7 +261,7 @@ func (k Keeper) TransferExistingDepositsToHostZones(ctx sdk.Context, epochNumber
 	var emptyRecords []uint64
 	for _, depositRecord := range transferDepositRecords {
 		if depositRecord.DepositEpochNumber < cast.ToUint64(epochNumber) {
-			k.Logger(ctx).Info(fmt.Sprintf("\t[TransferExistingDepositsToHostZones] Processing deposits {%d} {%s} {%d}", depositRecord.Id, depositRecord.Denom, depositRecord.Amount))
+			k.Logger(ctx).Info(fmt.Sprintf("\t[TransferExistingDepositsToHostZones] Processing deposits ID: %d, Amount: %d%s", depositRecord.Id, depositRecord.Amount, depositRecord.Denom))
 
 			// skip empty records
 			if depositRecord.Amount <= 0 {
@@ -272,7 +272,7 @@ func (k Keeper) TransferExistingDepositsToHostZones(ctx sdk.Context, epochNumber
 
 			hostZone, hostZoneFound := k.GetHostZone(ctx, depositRecord.HostZoneId)
 			if !hostZoneFound {
-				k.Logger(ctx).Error(fmt.Sprintf("[TransferExistingDepositsToHostZones] Host zone not found for deposit record {%d}", depositRecord.Id))
+				k.Logger(ctx).Error(fmt.Sprintf("[TransferExistingDepositsToHostZones] Host zone not found for deposit record id %d", depositRecord.Id))
 				continue
 			}
 			delegateAccount := hostZone.GetDelegationAccount()
