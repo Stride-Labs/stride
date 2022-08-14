@@ -284,7 +284,8 @@ func DelegatorSharesCallback(k Keeper, ctx sdk.Context, args []byte, query icqty
 				slashPct := sdk.NewDec(slashAmtInt64).Quo(sdk.NewDec(delAmtInt64))
 				k.Logger(ctx).Info(fmt.Sprintf("ICQ'd delAmt mismatch zone %s validator %s delegator %s records was %d icq shows %d slashAmt %d slashPct %d... UPDATING!",
 					zone.ChainId, v.Address, qdel.DelegatorAddress, v.DelegationAmt, qNumTokens, slashAmt, slashPct))
-				// TODO (not priority) move rate limiting logic to new rate limiting module
+				// TODO(TEST-172): move rate limiting logic to new rate limiting module
+
 				if slashPct.GT(sdk.NewDec(10).Quo(sdk.NewDec(100))) {
 					k.Logger(ctx).Error(fmt.Sprintf("DELCB | slashed but ABORTING bc slash GT10pct: query shows slash of %v", slashPct))
 					return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "DELCB | slashed but ABORTING bc slash GT10pct: query shows slash of %v", slashPct)
