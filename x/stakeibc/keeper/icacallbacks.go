@@ -156,6 +156,8 @@ func ReinvestCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ack
 	if err != nil {
 		return err
 	}
+	amount := reinvestCallback.ReinvestAmount.Amount
+	denom := reinvestCallback.ReinvestAmount.Denom
 	
 	// fetch epoch
 	strideEpochTracker, found := k.GetEpochTracker(ctx, epochtypes.STRIDE_EPOCH)
@@ -165,14 +167,14 @@ func ReinvestCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ack
 	}
 	epochNumber := strideEpochTracker.EpochNumber
 	// create a new record so that rewards are reinvested
-	amt, err := cast.ToInt64E(reinvestCallback.GetAmount())
+	amt, err := cast.ToInt64E(amount)
 	if err != nil {
 		k.Logger(ctx).Error(fmt.Sprintf("failed to convert amount %v", err.Error()))
 		return err
 	}
 	record := recordstypes.DepositRecord{
 		Amount:             amt,
-		Denom:              reinvestCallback.Denom,
+		Denom:              denom,
 		HostZoneId:         reinvestCallback.HostZoneId,
 		Status:             recordstypes.DepositRecord_STAKE,
 		Source:             recordstypes.DepositRecord_WITHDRAWAL_ICA,
