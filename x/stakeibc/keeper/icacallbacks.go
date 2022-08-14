@@ -5,7 +5,10 @@ import (
 
 	"github.com/spf13/cast"
 
+	"github.com/golang/protobuf/proto"
+
 	epochtypes "github.com/Stride-Labs/stride/x/epochs/types"
+
 	icacallbackstypes "github.com/Stride-Labs/stride/x/icacallbacks/types"
 	recordstypes "github.com/Stride-Labs/stride/x/records/types"
 	"github.com/Stride-Labs/stride/x/stakeibc/types"
@@ -13,7 +16,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	channeltypes "github.com/cosmos/ibc-go/v3/modules/core/04-channel/types"
-	"github.com/golang/protobuf/proto"
 )
 
 // ___________________________________________________________________________________________________
@@ -22,7 +24,7 @@ import (
 type ICACallback func(Keeper, sdk.Context, channeltypes.Packet, *channeltypes.Acknowledgement_Result, []byte) error
 
 type ICACallbacks struct {
-	k         Keeper
+	k            Keeper
 	icacallbacks map[string]ICACallback
 }
 
@@ -48,15 +50,11 @@ func (c ICACallbacks) AddICACallback(id string, fn interface{}) icacallbackstype
 }
 
 func (c ICACallbacks) RegisterICACallbacks() icacallbackstypes.ICACallbackHandler {
-	a := c.
+	return c.
 		AddICACallback("delegate", ICACallback(DelegateCallback)).
-		AddICACallback("reinvest", ICACallback(ReinvestCallback))
-	return a.(ICACallbacks)
+		AddICACallback("reinvest", ICACallback(ReinvestCallback)).
+		AddICACallback("undelegate", ICACallback(UndelegateCallback))
 }
-
-// -----------------------------------
-// ICACallback Handlers
-// -----------------------------------
 
 // ----------------------------------- Delegate Callback ----------------------------------- //
 func (k Keeper) MarshalDelegateCallbackArgs(ctx sdk.Context, delegateCallback types.DelegateCallback) ([]byte, error) {
@@ -71,7 +69,7 @@ func (k Keeper) MarshalDelegateCallbackArgs(ctx sdk.Context, delegateCallback ty
 func (k Keeper) UnmarshalDelegateCallbackArgs(ctx sdk.Context, delegateCallback []byte) (*types.DelegateCallback, error) {
 	unmarshalledDelegateCallback := types.DelegateCallback{}
 	if err := proto.Unmarshal(delegateCallback, &unmarshalledDelegateCallback); err != nil {
-        k.Logger(ctx).Error(fmt.Sprintf("UnmarshalDelegateCallbackArgs %v", err.Error()))
+		k.Logger(ctx).Error(fmt.Sprintf("UnmarshalDelegateCallbackArgs %v", err.Error()))
 		return nil, err
 	}
 	return &unmarshalledDelegateCallback, nil
