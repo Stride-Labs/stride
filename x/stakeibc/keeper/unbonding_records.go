@@ -68,15 +68,11 @@ func (k Keeper) SendHostZoneUnbondings(ctx sdk.Context, hostZone types.HostZone)
 		return false
 	}
 	valAddrToUnbondAmt := make(map[string]int64)
-	overflowAmt := int64(0)
+	overflowAmt := uint64(0)
 	for _, validator := range validators {
 		valAddr := validator.GetAddress()
-		valUnbondAmt, err := cast.ToInt64E(newUnbondingToValidator[valAddr])
-		if err != nil {
-			k.Logger(ctx).Error(fmt.Sprintf("Error casting validator unbonding amount %d: %s", newUnbondingToValidator[valAddr], err.Error()))
-			return false
-		}
-		currentAmtStaked, err := cast.ToInt64E(validator.GetDelegationAmt())
+		valUnbondAmt := newUnbondingToValidator[valAddr]
+		currentAmtStaked := validator.GetDelegationAmt()
 		if err != nil {
 			k.Logger(ctx).Error(fmt.Sprintf("Error casting validator staked amount %d: %s", validator.GetDelegationAmt(), err.Error()))
 			return false
@@ -85,27 +81,42 @@ func (k Keeper) SendHostZoneUnbondings(ctx sdk.Context, hostZone types.HostZone)
 			overflowAmt += valUnbondAmt - currentAmtStaked
 			valUnbondAmt = currentAmtStaked
 		}
-		valAddrToUnbondAmt[valAddr] = valUnbondAmt
+		valUnbondAmtInt64, err := cast.ToInt64E(valUnbondAmt)
+		if err != nil {
+			k.Logger(ctx).Error(fmt.Sprintf("Error casting validator staked amount %d: %s", validator.GetDelegationAmt(), err.Error()))
+			return false
+		}
+		valAddrToUnbondAmt[valAddr] = valUnbondAmtInt64
 	}
 	if overflowAmt > 0 { // if we need to reallocate any weights
 		for _, validator := range validators {
 			valAddr := validator.GetAddress()
-			valUnbondAmt := valAddrToUnbondAmt[valAddr]
-			currentAmtStaked := validator.GetDelegationAmt()
-			// store how many more tokens we could unbond, if needed
-			curAmtStaked, err := cast.ToInt64E(currentAmtStaked)
+			valUnbondAmt, err := cast.ToUint64E(valAddrToUnbondAmt[valAddr])
 			if err != nil {
-				k.Logger(ctx).Error(fmt.Sprintf("Error casting validator staked amount %d: %s", currentAmtStaked, err.Error()))
+				k.Logger(ctx).Error(fmt.Sprintf("Error casting validator staked amount %d: %s", validator.GetDelegationAmt(), err.Error()))
 				return false
 			}
+			currentAmtStaked := validator.GetDelegationAmt()
+			// store how many more tokens we could unbond, if needed
+			curAmtStaked := currentAmtStaked
 			amtToPotentiallyUnbond := curAmtStaked - valUnbondAmt
 			if amtToPotentiallyUnbond > 0 { // if we can afford to unbond more
 				if amtToPotentiallyUnbond > overflowAmt { // we can fully cover the overflow
-					valAddrToUnbondAmt[valAddr] += overflowAmt
+					overflowAmtInt64, err := cast.ToInt64E(overflowAmt)
+					if err != nil {
+						k.Logger(ctx).Error(fmt.Sprintf("Error casting overflow amount %d: %s", overflowAmt, err.Error()))
+						return false
+					}
+					valAddrToUnbondAmt[valAddr] += overflowAmtInt64
 					overflowAmt = 0
 					break
 				} else {
-					valAddrToUnbondAmt[valAddr] += amtToPotentiallyUnbond
+					amtToPotentiallyUnbondInt64, err := cast.ToInt64E(amtToPotentiallyUnbond)
+					if err != nil {
+						k.Logger(ctx).Error(fmt.Sprintf("Error casting overflow amount %d: %s", amtToPotentiallyUnbond, err.Error()))
+						return false
+					}
+					valAddrToUnbondAmt[valAddr] += amtToPotentiallyUnbondInt64
 					overflowAmt -= amtToPotentiallyUnbond
 				}
 			}

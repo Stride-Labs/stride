@@ -93,20 +93,14 @@ func (k Keeper) GetRedemptionTransferMsg(ctx sdk.Context, userRedemptionRecord *
 	})
 
 	// Give claims a 10 minute timeout
-	epoch_tracker, found := k.GetEpochTracker(ctx, epochstypes.STRIDE_EPOCH)
+	epochTracker, found := k.GetEpochTracker(ctx, epochstypes.STRIDE_EPOCH)
 	if !found {
 		errMsg := fmt.Sprintf("Epoch tracker not found for epoch %s", epochstypes.STRIDE_EPOCH)
 		k.Logger(ctx).Error(errMsg)
 		return nil, sdkerrors.Wrap(types.ErrEpochNotFound, errMsg)
 	}
-	icaTimeOutNanos, err := cast.ToUint64E(k.GetParam(ctx, types.KeyICATimeoutNanos))
-	if err != nil {
-		return nil, sdkerrors.Wrap(types.ErrParamNotFound, err.Error())
-	}
-	nextEpochStarttime, err := cast.ToUint64E(epoch_tracker.NextEpochStartTime)
-	if err != nil {
-		return nil, sdkerrors.Wrap(types.ErrParamNotFound, err.Error())
-	}
+	icaTimeOutNanos := k.GetParam(ctx, types.KeyICATimeoutNanos)
+	nextEpochStarttime := epochTracker.NextEpochStartTime
 	timeout := nextEpochStarttime + icaTimeOutNanos
 
 	icaTx := IcaTx{

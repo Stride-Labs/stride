@@ -283,11 +283,7 @@ func (k Keeper) TransferExistingDepositsToHostZones(ctx sdk.Context, epochNumber
 	transferDepositRecords := utils.FilterDepositRecords(depositRecords, func(record recordstypes.DepositRecord) (condition bool) {
 		return record.Status == recordstypes.DepositRecord_TRANSFER
 	})
-	ibcTimeoutBlocks, err := cast.ToUint64E(k.GetParam(ctx, types.KeyIbcTimeoutBlocks))
-	if err != nil {
-		k.Logger(ctx).Error(fmt.Sprintf("Could not get IBC timeout blocks: %s", err.Error()))
-		return
-	}
+	ibcTimeoutBlocks := k.GetParam(ctx, types.KeyIbcTimeoutBlocks)
 	addr := k.accountKeeper.GetModuleAccount(ctx, types.ModuleName).GetAddress().String()
 	var emptyRecords []uint64
 	for _, depositRecord := range transferDepositRecords {

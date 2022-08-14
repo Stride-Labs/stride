@@ -227,12 +227,8 @@ func (k Keeper) SubmitTxsEpoch(ctx sdk.Context, connectionId string, msgs []sdk.
 	}
 	BUFFER := epochTracker.Duration / bufferSize
 	timeoutNanos := epochTracker.NextEpochStartTime - BUFFER
-	timeoutNanosSafe, err := cast.ToUint64E(timeoutNanos)
-	if err != nil {
-		return 0, sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, fmt.Sprintf("Failed to get timeout nanos: %s", err.Error()))
-	}
-	k.Logger(ctx).Info(fmt.Sprintf("Submitting txs for epoch %s %d %d", epochTracker.EpochIdentifier, epochTracker.NextEpochStartTime, timeoutNanosSafe))
-	sequence, err := k.SubmitTxs(ctx, connectionId, msgs, account, timeoutNanosSafe, callbackId, callbackArgs)
+	k.Logger(ctx).Info(fmt.Sprintf("Submitting txs for epoch %s %d %d", epochTracker.EpochIdentifier, epochTracker.NextEpochStartTime, timeoutNanos))
+	sequence, err := k.SubmitTxs(ctx, connectionId, msgs, account, timeoutNanos, callbackId, callbackArgs)
 	if err != nil {
 		return 0, err
 	}
