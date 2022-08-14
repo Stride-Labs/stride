@@ -119,32 +119,37 @@ func DelegateCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ack
 	return nil
 }
 
-// ----------------------------------- redemption callback ----------------------------------- //
-func (k Keeper) MarshalRedemptionCallbackArgs(ctx sdk.Context, redemptionCallback types.RedemptionCallback) []byte {
+// ----------------------------------- claim callback ----------------------------------- //
+func (k Keeper) MarshalRedemptionCallbackArgs(ctx sdk.Context, redemptionCallback types.RedemptionCallback) ([]byte, error) {
 	out, err := proto.Marshal(&redemptionCallback)
 	if err != nil {
 		k.Logger(ctx).Error(fmt.Sprintf("MarshalRedemptionCallbackArgs %v", err.Error()))
+		return nil, err
 	}
-	return out
+	return out, nil
 }
 
-func (k Keeper) UnmarshalRedemptionCallbackArgs(ctx sdk.Context, redemptionCallback []byte) types.RedemptionCallback {
+func (k Keeper) UnmarshalRedemptionCallbackArgs(ctx sdk.Context, redemptionCallback []byte) (*types.RedemptionCallback, error) {
 	unmarshalledDelegateCallback := types.RedemptionCallback{}
 	if err := proto.Unmarshal(redemptionCallback, &unmarshalledDelegateCallback); err != nil {
         k.Logger(ctx).Error(fmt.Sprintf("UnmarshalRedemptionCallbackArgs %v", err.Error()))
+		return nil, err
 	}
-	return unmarshalledDelegateCallback
+	return &unmarshalledDelegateCallback, nil
 }
 
 func RedemptionCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ack *channeltypes.Acknowledgement_Result, args []byte) error {
 	// QUESTION: should we check invariants here? e.g. sendMsg.FromAddress == redemptionAddress, msg type == MsgSend, etc.
 	k.Logger(ctx).Info("RedemptionCallback executing", "packet", packet, "ack", ack, "args", args)
 	// deserialize the args
-	redemptionCallback := k.UnmarshalRedemptionCallbackArgs(ctx, args)
+	redemptionCallback, err := k.UnmarshalRedemptionCallbackArgs(ctx, args)
+	if err != nil {
+		return err
+	}
 	k.Logger(ctx).Info(fmt.Sprintf("RedemptionCallback %v", redemptionCallback))
 	userRedemptionRecord, found := k.RecordsKeeper.GetUserRedemptionRecord(ctx, redemptionCallback.GetUserRedemptionRecordId())
 	if !found {
-		return sdkerrors.Wrap(types.ErrRecordNotFound, "user redemption record not found")
+		return sdkerrors.Wrapf(types.ErrRecordNotFound, "user redemption record not found %s", redemptionCallback.GetUserRedemptionRecordId())
 	}
 
 	if ack == nil {
@@ -152,7 +157,7 @@ func RedemptionCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, a
 		// set UserRedemptionRecord as claimable
 		userRedemptionRecord.IsClaimable = true
 		k.RecordsKeeper.SetUserRedemptionRecord(ctx, userRedemptionRecord)
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "ack is nil")
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "ack is nil, tx failed on host chain")
 	}
 	// claim successfully processed
 	k.RecordsKeeper.RemoveUserRedemptionRecord(ctx, redemptionCallback.GetUserRedemptionRecordId())
