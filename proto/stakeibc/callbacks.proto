@@ -20,3 +20,10 @@ message ReinvestCallback {
   uint64 amount = 2;
   string hostZoneId = 3;
 }
+
+// ---------------------- Undelegation Callbacks ---------------------- //
+message UndelegateCallback {
+  string hostZoneId = 1; 
+  repeated SplitDelegation splitDelegations = 2;
+  repeated uint64 unbondingEpochNumbers = 3;
+}
