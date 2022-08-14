@@ -24,7 +24,7 @@ func (k Keeper) MarshalRedemptionCallbackArgs(ctx sdk.Context, redemptionCallbac
 func (k Keeper) UnmarshalRedemptionCallbackArgs(ctx sdk.Context, redemptionCallback []byte) (types.RedemptionCallback, error) {
 	unmarshalledRedemptionCallback := types.RedemptionCallback{}
 	if err := proto.Unmarshal(redemptionCallback, &unmarshalledRedemptionCallback); err != nil {
-		k.Logger(ctx).Error(fmt.Sprintf("UnmarshalUndelegateCallbackArgs | %s", err.Error()))
+		k.Logger(ctx).Error(fmt.Sprintf("UnmarshalRedemptionCallbackArgs | %s", err.Error()))
 		return unmarshalledRedemptionCallback, err
 	}
 	return unmarshalledRedemptionCallback, nil
@@ -50,6 +50,7 @@ func RedemptionCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, a
 
 	hostZoneId := redemptionCallback.HostZoneId
 
+	// Loop through all the epoch numbers that were stored with the callback (that identify the unbonding records)
 	for _, epochNumber := range redemptionCallback.UnbondingEpochNumbers {
 		epochUnbondingRecord, found := k.RecordsKeeper.GetEpochUnbondingRecord(ctx, epochNumber)
 		if !found {
@@ -58,10 +59,12 @@ func RedemptionCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, a
 			return sdkerrors.Wrapf(sdkerrors.ErrKeyNotFound, errMsg)
 		}
 
+		// Update the unbonding status to TRANSFERRED
 		// TODO: Update with nondeterministic loop
 		hostZoneUnbonding := epochUnbondingRecord.HostZoneUnbondings[hostZoneId]
 		hostZoneUnbonding.Status = recordstypes.HostZoneUnbonding_TRANSFERRED
 
+		// Mark the redemption records claimable
 		userRedemptionRecords := hostZoneUnbonding.UserRedemptionRecords
 		for _, recordId := range userRedemptionRecords {
 			userRedemptionRecord, found := k.RecordsKeeper.GetUserRedemptionRecord(ctx, recordId)
