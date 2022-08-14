@@ -152,15 +152,15 @@ func request_Query_EpochUnbondingRecord_0(ctx context.Context, marshaler runtime
 		_   = err
 	)
 
-	val, ok = pathParams["id"]
+	val, ok = pathParams["epochNumber"]
 	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "id")
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "epochNumber")
 	}
 
-	protoReq.Id, err = runtime.Uint64(val)
+	protoReq.EpochNumber, err = runtime.Uint64(val)
 
 	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "id", err)
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "epochNumber", err)
 	}
 
 	msg, err := client.EpochUnbondingRecord(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
@@ -179,15 +179,15 @@ func local_request_Query_EpochUnbondingRecord_0(ctx context.Context, marshaler r
 		_   = err
 	)
 
-	val, ok = pathParams["id"]
+	val, ok = pathParams["epochNumber"]
 	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "id")
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "epochNumber")
 	}
 
-	protoReq.Id, err = runtime.Uint64(val)
+	protoReq.EpochNumber, err = runtime.Uint64(val)
 
 	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "id", err)
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "epochNumber", err)
 	}
 
 	msg, err := server.EpochUnbondingRecord(ctx, &protoReq)
@@ -679,7 +679,7 @@ var (
 
 	pattern_Query_UserRedemptionRecordAll_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"Stride-Labs", "stride", "records", "user_redemption_record"}, "", runtime.AssumeColonVerbOpt(true)))
 
-	pattern_Query_EpochUnbondingRecord_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4}, []string{"Stride-Labs", "stride", "records", "epoch_unbonding_record", "id"}, "", runtime.AssumeColonVerbOpt(true)))
+	pattern_Query_EpochUnbondingRecord_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4}, []string{"Stride-Labs", "stride", "records", "epoch_unbonding_record", "epochNumber"}, "", runtime.AssumeColonVerbOpt(true)))
 
 	pattern_Query_EpochUnbondingRecordAll_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"Stride-Labs", "stride", "records", "epoch_unbonding_record"}, "", runtime.AssumeColonVerbOpt(true)))
 
