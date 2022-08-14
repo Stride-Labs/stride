@@ -37,12 +37,12 @@ func (k msgServer) ClaimUndelegatedTokens(goCtx context.Context, msg *types.MsgC
 	}
 
 	// add callback data
-	redemptionCallback := types.RedemptionCallback{
+	claimCallback := types.ClaimCallback{
 		UserRedemptionRecordId: userRedemptionRecord.Id,
 	}
-	marshalledCallbackArgs, err := k.MarshalRedemptionCallbackArgs(ctx, redemptionCallback)
+	marshalledCallbackArgs, err := k.MarshalClaimCallbackArgs(ctx, claimCallback)
 	if err != nil {
-		return nil, sdkerrors.Wrapf(err, "unable to marshal redemption callback args")
+		return nil, sdkerrors.Wrapf(err, "unable to marshal claim callback args")
 	}
 	_, err = k.SubmitTxs(ctx, icaTx.ConnectionId, icaTx.Msgs, icaTx.Account, icaTx.Timeout, "redemption", marshalledCallbackArgs)
 	if err != nil {
