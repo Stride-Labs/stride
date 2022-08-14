@@ -144,27 +144,16 @@ func (k Keeper) GetConnectionId(ctx sdk.Context, portId string) (string, error) 
 	return "", fmt.Errorf("portId %s has no associated connectionId", portId)
 }
 
-// helper to get the time of the next epoch end
-func (k Keeper) GetEpochEndTime(ctx sdk.Context) (uint64, error) {
-	epochType := epochstypes.STRIDE_EPOCH
-	epochTracker, found := k.GetEpochTracker(ctx, epochType)
-	if !found {
-		k.Logger(ctx).Error("Failed to get epoch tracker for %s", epochType)
-		return 0, sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "Failed to get epoch tracker for %s", epochType)
-	}
-	return cast.ToUint64(epochTracker.NextEpochStartTime), nil
-}
-
 // helper to get what share of the curr epoch we're through
 func (k Keeper) GetStrideEpochElapsedShare(ctx sdk.Context) (sdk.Dec, error) {
 	epochType := epochstypes.STRIDE_EPOCH
 	epochTracker, found := k.GetEpochTracker(ctx, epochType)
 	if !found {
-		k.Logger(ctx).Error("Failed to get epoch tracker for %s", epochType)
+		k.Logger(ctx).Error(fmt.Sprintf("Failed to get epoch tracker for %s", epochType))
 		return sdk.ZeroDec(), sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "Failed to get epoch tracker for %s", epochType)
 	}
-	prevEpochStartTime := cast.ToUint64(epochTracker.NextEpochStartTime) - cast.ToUint64(epochTracker.Duration)
-	elapsedShare := sdk.NewDec(ctx.BlockTime().UnixNano() - cast.ToInt64(prevEpochStartTime)).Quo(sdk.NewDec(cast.ToInt64(epochTracker.Duration)))
+	prevEpochStartTime := epochTracker.NextEpochStartTime - epochTracker.Duration
+	elapsedShare := sdk.NewDec(ctx.BlockTime().UnixNano() - prevEpochStartTime).Quo(sdk.NewDec(epochTracker.Duration))
 	k.Logger(ctx).Info(fmt.Sprintf("epochTracker.NextEpochStartTime %v epochTracker.Duration %v prevEpochStartTime %v", epochTracker.NextEpochStartTime, epochTracker.Duration, prevEpochStartTime))
 	return elapsedShare, nil
 }
@@ -175,7 +164,10 @@ func (k Keeper) IsWithinBufferWindow(ctx sdk.Context) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	bufferSize := cast.ToInt64(k.GetParam(ctx, types.KeyBufferSize))
+	bufferSize, err := cast.ToInt64E(k.GetParam(ctx, types.KeyBufferSize))
+	if err != nil {
+		return false, err
+	}
 	epochShareThresh := sdk.NewDec(1).Sub(sdk.NewDec(1).Quo(sdk.NewDec(bufferSize)))
 
 	inWindow := elapsedShareOfEpoch.GT(epochShareThresh)

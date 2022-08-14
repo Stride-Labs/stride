@@ -3,6 +3,7 @@ package keeper
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/cosmos/cosmos-sdk/types/bech32"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -19,6 +20,7 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
 	epochstypes "github.com/Stride-Labs/stride/x/epochs/types"
+	icqtypes "github.com/Stride-Labs/stride/x/interchainquery/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	icatypes "github.com/cosmos/ibc-go/v3/modules/apps/27-interchain-accounts/types"
@@ -104,14 +106,14 @@ func (k Keeper) DelegateOnHost(ctx sdk.Context, hostZone types.HostZone, amt sdk
 				DelegatorAddress: delegationIca.GetAddress(),
 				ValidatorAddress: validator.GetAddress(),
 				Amount:           relAmt})
-			}
-			splitDelegations = append(splitDelegations, &types.SplitDelegation{Validator: validator.GetAddress(), Amount: relAmt.Amount.Uint64()})
+		}
+		splitDelegations = append(splitDelegations, &types.SplitDelegation{Validator: validator.GetAddress(), Amount: relAmt.Amount.Uint64()})
 	}
 
 	// add callback data
 	delegateCallback := types.DelegateCallback{
-		HostZoneId: hostZone.ChainId,
-		DepositRecordId: depositRecordId,
+		HostZoneId:       hostZone.ChainId,
+		DepositRecordId:  depositRecordId,
 		SplitDelegations: splitDelegations,
 	}
 	marshalledCallbackArgs, err := k.MarshalDelegateCallbackArgs(ctx, delegateCallback)
@@ -176,13 +178,14 @@ func (k Keeper) UpdateWithdrawalBalance(ctx sdk.Context, zoneInfo types.HostZone
 
 	_, addr, _ := bech32.DecodeAndConvert(withdrawalIca.GetAddress())
 	data := bankTypes.CreateAccountBalancesPrefix(addr)
-	key := "store/bank/key"
-	k.Logger(ctx).Info("Querying for value", "key", key, "denom", zoneInfo.HostDenom)
+	k.Logger(ctx).Info("Querying for value", "key", icqtypes.BANK_STORE_QUERY_WITH_PROOF, "denom", zoneInfo.HostDenom)
 	err := k.InterchainQueryKeeper.MakeRequest(
 		ctx,
 		zoneInfo.ConnectionId,
 		zoneInfo.ChainId,
-		key,
+		// use "bank" store to access acct balances which live in the bank module
+		// use "key" suffix to retrieve a proof alongside the query result
+		icqtypes.BANK_STORE_QUERY_WITH_PROOF,
 		append(data, []byte(zoneInfo.HostDenom)...),
 		sdk.NewInt(-1),
 		types.ModuleName,
@@ -223,9 +226,9 @@ func (k Keeper) SubmitTxsEpoch(ctx sdk.Context, connectionId string, msgs []sdk.
 		return 0, sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "Failed to get epoch tracker for %s", epochType)
 	}
 	// BUFFER by 5% of the epoch length
-	bufferSize := cast.ToInt64(k.GetParam(ctx, types.KeyBufferSize))
-	BUFFER := epochTracker.Duration / bufferSize
-	timeoutNanos := epochTracker.NextEpochStartTime - BUFFER
+	bufferSizeParam := cast.ToInt64(k.GetParam(ctx, types.KeyBufferSize))
+	bufferSize := epochTracker.Duration / bufferSizeParam
+	timeoutNanos := epochTracker.NextEpochStartTime - bufferSize
 	// TODO safety: it's possible the cast below will handle this case with a graceful error, but leaving this here to make double sure until we can be sure
 	if timeoutNanos < 0 {
 		return 0, sdkerrors.Wrapf(sdkerrors.ErrTxTimeoutHeight, "Too late in the epoch to submitTx")
@@ -279,11 +282,11 @@ func (k Keeper) SubmitTxs(ctx sdk.Context, connectionId string, msgs []sdk.Msg, 
 
 	// Store the callback data
 	callback := icacallbackstypes.CallbackData{
-		CallbackKey: icacallbackstypes.PacketID(portID, channelID, sequence),
-		PortId: portID,
-		ChannelId: channelID,
-		Sequence: sequence,
-		CallbackId: callbackId,
+		CallbackKey:  icacallbackstypes.PacketID(portID, channelID, sequence),
+		PortId:       portID,
+		ChannelId:    channelID,
+		Sequence:     sequence,
+		CallbackId:   callbackId,
 		CallbackArgs: callbackArgs,
 	}
 	k.ICACallbacksKeeper.SetCallbackData(ctx, callback)
@@ -372,6 +375,56 @@ func (k Keeper) GetLightClientTimeSafely(ctx sdk.Context, connectionID string) (
 	}
 }
 
+// query and update validator exchange rate
+func (k Keeper) QueryValidatorExchangeRate(ctx sdk.Context, msg *types.MsgUpdateValidatorSharesExchRate) (*types.MsgUpdateValidatorSharesExchRateResponse, error) {
+
+	// ensure ICQ can be issued now! else fail the callback
+	valid, err := k.IsWithinBufferWindow(ctx)
+	if err != nil {
+		return nil, err
+	} else if !valid {
+		return nil, sdkerrors.Wrapf(types.ErrOutsideIcqWindow, "outside the buffer time during which ICQs are allowed (%s)", msg.ChainId)
+	}
+
+	hostZone, found := k.GetHostZone(ctx, msg.ChainId)
+	if !found {
+		k.Logger(ctx).Error(fmt.Sprintf("Host Zone not found for denom (%s)", msg.ChainId))
+		return nil, sdkerrors.Wrapf(types.ErrInvalidHostZone, "no host zone found for denom (%s)", msg.ChainId)
+	}
+
+	// check that the validator address matches the bech32 prefix of the hz
+	if !strings.Contains(msg.Valoper, hostZone.Bech32Prefix) {
+		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "validator operator address must match the host zone bech32 prefix")
+	}
+
+	_, valAddr, err := bech32.DecodeAndConvert(msg.Valoper)
+	if err != nil {
+		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "invalid validator operator address, could not decode (%s)", err.Error())
+	}
+	data := stakingtypes.GetValidatorKey(valAddr)
+
+	k.Logger(ctx).Info(fmt.Sprintf("Querying validator %v key %v denom %v", valAddr, icqtypes.STAKING_STORE_QUERY_WITH_PROOF, hostZone.HostDenom))
+	err = k.InterchainQueryKeeper.MakeRequest(
+		ctx,
+		hostZone.ConnectionId,
+		hostZone.ChainId,
+		// use "staking" store to access validator which lives in the staking module
+		// use "key" suffix to retrieve a proof alongside the query result
+		icqtypes.STAKING_STORE_QUERY_WITH_PROOF,
+		data,
+		sdk.NewInt(-1),
+		types.ModuleName,
+		"validator",
+		0, // ttl
+		0, // height always 0 (which means current height)
+	)
+	if err != nil {
+		k.Logger(ctx).Error(fmt.Sprintf("Error querying for validator, error %s", err.Error()))
+		return nil, err
+	}
+	return &types.MsgUpdateValidatorSharesExchRateResponse{}, nil
+}
+
 // to icq delegation amounts, this fn is executed after validator exch rates are icq'd
 func (k Keeper) UpdateDelegationsIcq(ctx sdk.Context, hostZone types.HostZone, valoper string) error {
 
@@ -388,13 +441,14 @@ func (k Keeper) UpdateDelegationsIcq(ctx sdk.Context, hostZone types.HostZone, v
 	_, delAddr, _ := bech32.DecodeAndConvert(delegationAcctAddr)
 	data := stakingtypes.GetDelegationKey(delAddr, valAddr)
 
-	key := "store/staking/key"
 	k.Logger(ctx).Info(fmt.Sprintf("Querying delegation for %s on %s", delAddr, valoper))
 	err = k.InterchainQueryKeeper.MakeRequest(
 		ctx,
 		hostZone.ConnectionId,
 		hostZone.ChainId,
-		key,
+		// use "staking" store to access delegation which lives in the staking module
+		// use "key" suffix to retrieve a proof alongside the query result
+		icqtypes.STAKING_STORE_QUERY_WITH_PROOF,
 		data,
 		sdk.NewInt(-1),
 		types.ModuleName,

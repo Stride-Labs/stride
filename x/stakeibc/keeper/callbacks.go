@@ -13,6 +13,7 @@ import (
 
 	"github.com/Stride-Labs/stride/x/interchainquery/types"
 	icqtypes "github.com/Stride-Labs/stride/x/interchainquery/types"
+	stakeibctypes "github.com/Stride-Labs/stride/x/stakeibc/types"
 )
 
 // ___________________________________________________________________________________________________
@@ -47,10 +48,10 @@ func (c Callbacks) AddCallback(id string, fn interface{}) types.QueryCallbacks {
 }
 
 func (c Callbacks) RegisterCallbacks() types.QueryCallbacks {
-	a := c.AddCallback("withdrawalbalance", Callback(WithdrawalBalanceCallback)).
-		AddCallback("delegation", Callback(DelegationCallback)).
-		AddCallback("validator", Callback(ValidatorCallback))
-	return a.(Callbacks)
+	return c.
+		AddCallback("withdrawalbalance", Callback(WithdrawalBalanceCallback)).
+		AddCallback("delegation", Callback(DelegatorSharesCallback)).
+		AddCallback("validator", Callback(ValidatorExchangeRateCallback))
 }
 
 // -----------------------------------
@@ -161,8 +162,58 @@ func WithdrawalBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query icq
 	return nil
 }
 
+// get a validator and its index from a list of validators, by address
+func getValidator(validators []*stakeibctypes.Validator, address string) (stakeibctypes.Validator, int64, bool) {
+	for i, v := range validators {
+		if v.Address == address {
+			return *v, int64(i), true
+		}
+	}
+	return stakeibctypes.Validator{}, 0, false
+}
+
+// ValidatorCallback is a callback handler for validator queries.
+func ValidatorExchangeRateCallback(k Keeper, ctx sdk.Context, args []byte, query icqtypes.Query) error {
+	zone, found := k.GetHostZone(ctx, query.GetChainId())
+	if !found {
+		return fmt.Errorf("no registered zone for chain id: %s", query.GetChainId())
+	}
+	queriedValidator := stakingtypes.Validator{}
+	err := k.cdc.Unmarshal(args, &queriedValidator)
+	if err != nil {
+		k.Logger(ctx).Error(fmt.Sprintf("unable to unmarshal queriedValidator info for zone %s, err: %s", zone.ChainId, err.Error()))
+		return err
+	}
+	k.Logger(ctx).Info(fmt.Sprintf("ValidatorCallback: zone %v queriedValidator %v", zone.ChainId, queriedValidator))
+
+	// ensure ICQ can be issued now! else fail the callback
+	valid, err := k.IsWithinBufferWindow(ctx)
+	if err != nil {
+		return err
+	} else if !valid {
+		return nil
+	}
+
+	// set the validator's conversion rate
+	v, i, found := getValidator(zone.Validators, queriedValidator.OperatorAddress)
+	// converting 1.0 gives us the exchange rate to later use in the next CB
+	v.TokensFromShares = queriedValidator.TokensFromShares(sdk.NewDec(1.0))
+	k.Logger(ctx).Info(fmt.Sprintf("ValidatorCallback: zone %s validator %v tokensFromShares %v", zone.ChainId, v.Address, v.TokensFromShares))
+	// write back to state and break
+	zone.Validators[i] = &v
+	k.SetHostZone(ctx, zone)
+
+	// armed with the exch rate, we can now query the (val,del) delegation
+	err = k.UpdateDelegationsIcq(ctx, zone, queriedValidator.OperatorAddress)
+	if err != nil {
+		k.Logger(ctx).Error(fmt.Sprintf("ValidatorCallback: failed to query delegation, zone %s, err: %s", zone.ChainId, err.Error()))
+		return err
+	}
+	return nil
+}
+
 // DelegationCallback is a callback handler for UpdateValidatorSharesExchRate queries.
-func DelegationCallback(k Keeper, ctx sdk.Context, args []byte, query icqtypes.Query) error {
+func DelegatorSharesCallback(k Keeper, ctx sdk.Context, args []byte, query icqtypes.Query) error {
 	// NOTE(TEST-112) for now, to get proofs in your ICQs, you need to query the entire store on the host zone! e.g. "store/bank/key"
 
 	zone, found := k.GetHostZone(ctx, query.GetChainId())
@@ -181,7 +232,7 @@ func DelegationCallback(k Keeper, ctx sdk.Context, args []byte, query icqtypes.Q
 	qdel := stakingtypes.Delegation{}
 	err = k.cdc.Unmarshal(args, &qdel)
 	if err != nil {
-		k.Logger(ctx).Error("unable to unmarshal qdel info for zone", "zone", zone.ChainId, "err", err)
+		k.Logger(ctx).Error(fmt.Sprintf("unable to unmarshal qdel info for zone %s, err: %s", zone.ChainId, err.Error()))
 		return err
 	}
 	k.Logger(ctx).Info(fmt.Sprintf("DelegationCallback: zone %s qdel %v", zone.ChainId, qdel))
@@ -190,6 +241,12 @@ func DelegationCallback(k Keeper, ctx sdk.Context, args []byte, query icqtypes.Q
 	for i, v := range zone.Validators {
 		k.Logger(ctx).Info(fmt.Sprintf("DELCB %s", v.Address))
 		if v.Address == qdel.ValidatorAddress {
+			delAmtInt64, err := cast.ToInt64E(v.DelegationAmt)
+			if err != nil {
+				k.Logger(ctx).Error(fmt.Sprintf("unable to convert delegationAmt to uint64, err: %s", err.Error()))
+				return err
+			}
+
 			// convert shares to tokens using the exchange rate
 			// TODO: make sure conversion math precision matches the sdk's staking module's version (we did it slightly differently)
 			// note: truncateInt per https://github.com/cosmos/cosmos-sdk/blob/cb31043d35bad90c4daa923bb109f38fd092feda/x/staking/types/validator.go#L431
@@ -200,21 +257,31 @@ func DelegationCallback(k Keeper, ctx sdk.Context, args []byte, query icqtypes.Q
 				// update our records of the total stakedbal and of the validator's delegation amt
 				// NOTE:  we assume any decrease in delegation amt that's not tracked via records is a slash
 				slashAmt := v.DelegationAmt - qNumTokens.Uint64()
-				slashPct := sdk.NewDec(cast.ToInt64(slashAmt)).Quo(sdk.NewDec(cast.ToInt64(v.DelegationAmt)))
+				slashAmtInt64, err := cast.ToInt64E(slashAmt)
+				if err != nil {
+					k.Logger(ctx).Error(fmt.Sprintf("unable to convert slashAmt to uint64, err: %s", err.Error()))
+					return err
+				}
+				weightInt64, err := cast.ToInt64E(v.Weight)
+				if err != nil {
+					k.Logger(ctx).Error(fmt.Sprintf("unable to convert weight to uint64, err: %s", err.Error()))
+					return err
+				}
+
+				slashPct := sdk.NewDec(slashAmtInt64).Quo(sdk.NewDec(delAmtInt64))
 				k.Logger(ctx).Info(fmt.Sprintf("ICQ'd delAmt mismatch zone %s validator %s delegator %s records was %d icq shows %d slashAmt %d slashPct %d... UPDATING!",
 					zone.ChainId, v.Address, qdel.DelegatorAddress, v.DelegationAmt, qNumTokens, slashAmt, slashPct))
-				k.Logger(ctx).Info(fmt.Sprintf("ICQ'd: slashPct: %v", slashPct))
 				// TODO (not priority) move rate limiting logic to new rate limiting module
 				if slashPct.GT(sdk.NewDec(10).Quo(sdk.NewDec(100))) {
-					k.Logger(ctx).Info(fmt.Sprintf("DELCB | slashed but ABORTING bc slash GT10pct: query shows slash of %v", slashPct))
+					k.Logger(ctx).Error(fmt.Sprintf("DELCB | slashed but ABORTING bc slash GT10pct: query shows slash of %v", slashPct))
 					return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "DELCB | slashed but ABORTING bc slash GT10pct: query shows slash of %v", slashPct)
 				}
 				// slash the validator's weight
-				weightMul := sdk.NewDec(qNumTokens.Int64()).Quo(sdk.NewDec(cast.ToInt64(v.DelegationAmt)))
+				weightMul := sdk.NewDec(qNumTokens.Int64()).Quo(sdk.NewDec(delAmtInt64))
 
-				zone.StakedBal -= cast.ToInt64(slashAmt)
+				zone.StakedBal -= slashAmtInt64
 				v.DelegationAmt -= slashAmt
-				v.Weight = sdk.NewDec(cast.ToInt64(v.Weight)).Mul(weightMul).TruncateInt().Uint64()
+				v.Weight = sdk.NewDec(weightInt64).Mul(weightMul).TruncateInt().Uint64()
 			}
 			// write back to state and break (reset TokensFromShares for clarity, so we're not tempted to use it again later)
 			v.TokensFromShares = sdk.NewDec(0)
@@ -222,51 +289,6 @@ func DelegationCallback(k Keeper, ctx sdk.Context, args []byte, query icqtypes.Q
 			k.SetHostZone(ctx, zone)
 			break
 		}
-	}
-	return nil
-}
-
-// ValidatorCallback is a callback handler for validator queries.
-func ValidatorCallback(k Keeper, ctx sdk.Context, args []byte, query icqtypes.Query) error {
-	zone, found := k.GetHostZone(ctx, query.GetChainId())
-	if !found {
-		return fmt.Errorf("no registered zone for chain id: %s", query.GetChainId())
-	}
-	qval := stakingtypes.Validator{}
-	err := k.cdc.Unmarshal(args, &qval)
-	if err != nil {
-		k.Logger(ctx).Error("unable to unmarshal qval info for zone", "zone", zone.ChainId, "err", err)
-		return err
-	}
-	k.Logger(ctx).Info(fmt.Sprintf("ValidatorCallback: zone %v qval %v", zone.ChainId, qval))
-
-	// ensure ICQ can be issued now! else fail the callback
-	valid, err := k.IsWithinBufferWindow(ctx)
-	if err != nil {
-		return err
-	} else if !valid {
-		return nil
-	}
-
-	// set the validator's conversion rate
-	for i, v := range zone.Validators {
-		if v.Address == qval.OperatorAddress {
-			// converting 1.0 gives us the exchange rate to later use in the next CB
-			v.TokensFromShares = qval.TokensFromShares(sdk.NewDec(1.0))
-			k.Logger(ctx).Info(fmt.Sprintf("ValidatorCallback: zone %s validator %v tokensFromShares %v", zone.ChainId, v.Address, v.TokensFromShares))
-
-			// write back to state and break
-			zone.Validators[i] = v
-			k.SetHostZone(ctx, zone)
-			break
-		}
-	}
-
-	// armed with the exch rate, we can now query the (val,del) delegation
-	err = k.UpdateDelegationsIcq(ctx, zone, qval.OperatorAddress)
-	if err != nil {
-		k.Logger(ctx).Error("ValidatorCallback: failed to query delegation", "zone", zone.ChainId, "err", err)
-		return err
 	}
 	return nil
 }
