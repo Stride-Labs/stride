@@ -57,8 +57,8 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochInfo epochstypes.EpochInf
 		k.Logger(ctx).Info("CleanupEpochUnbondingRecords")
 		k.CleanupEpochUnbondingRecords(ctx)
 		// lastly we create an empty unbonding record for this epoch
-		k.Logger(ctx).Info("CreateEpochUnbondings")
-		k.CreateEpochUnbondings(ctx, epochNumber)
+		k.Logger(ctx).Info("CreateEpochUnbondingRecord")
+		k.CreateEpochUnbondingRecord(ctx, epochNumber)
 	}
 
 	if epochIdentifier == epochstypes.STRIDE_EPOCH {
@@ -232,7 +232,7 @@ func (k Keeper) StakeExistingDepositsOnHostZones(ctx sdk.Context, epochNumber in
 				k.Logger(ctx).Error(fmt.Sprintf("Could not process coin %s: %s", hostZone.HostDenom, err))
 				return
 			}
-			err = k.DelegateOnHost(ctx, hostZone, amt)
+			err = k.DelegateOnHost(ctx, hostZone, amt, depositRecord.Id)
 			if err != nil {
 				k.Logger(ctx).Error(fmt.Sprintf("Did not stake %s on %s", processAmount, hostZone.ChainId))
 				k.Logger(ctx).Error(err.Error())
