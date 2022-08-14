@@ -17,7 +17,6 @@ func DefaultGenesis() *GenesisState {
 		UserRedemptionRecordList:  []UserRedemptionRecord{},
 		UserRedemptionRecordCount: 0,
 		EpochUnbondingRecordList:  []EpochUnbondingRecord{},
-		EpochUnbondingRecordCount: 0,
 		DepositRecordList:         []DepositRecord{},
 		DepositRecordCount:        0,
 		// this line is used by starport scaffolding # genesis/types/default
@@ -40,15 +39,11 @@ func (gs GenesisState) Validate() error {
 	}
 	// Check for duplicated ID in epochUnbondingRecord
 	epochUnbondingRecordIdMap := make(map[uint64]bool)
-	epochUnbondingRecordCount := gs.GetEpochUnbondingRecordCount()
 	for _, elem := range gs.EpochUnbondingRecordList {
-		if _, ok := epochUnbondingRecordIdMap[elem.Id]; ok {
+		if _, ok := epochUnbondingRecordIdMap[elem.EpochNumber]; ok {
 			return fmt.Errorf("duplicated id for epochUnbondingRecord")
 		}
-		if elem.Id >= epochUnbondingRecordCount {
-			return fmt.Errorf("epochUnbondingRecord id should be lower or equal than the last id")
-		}
-		epochUnbondingRecordIdMap[elem.Id] = true
+		epochUnbondingRecordIdMap[elem.EpochNumber] = true
 	}
 	// Check for duplicated ID in depositRecord
 	depositRecordIdMap := make(map[uint64]bool)

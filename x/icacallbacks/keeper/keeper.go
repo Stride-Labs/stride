@@ -105,7 +105,7 @@ func (k Keeper) CallRegisteredICACallback(ctx sdk.Context, modulePacket channelt
 	// fetch the callback function
 	callbackHandler, err := k.GetICACallbackHandler(module)
 	if err != nil {
-		k.Logger(ctx).Error("CallRegisteredICACallback", "err", err)
+		k.Logger(ctx).Error(fmt.Sprintf("no callback handler found for module %s", err.Error()))
 		return err
 	}
 	// call the callback
@@ -113,11 +113,11 @@ func (k Keeper) CallRegisteredICACallback(ctx sdk.Context, modulePacket channelt
 		// if acknowledgement is empty, then it is a timeout
 		err := callbackHandler.CallICACallback(ctx, callbackData.CallbackId, modulePacket, acknowledgement, callbackData.CallbackArgs)
 		if err != nil {
-			k.Logger(ctx).Error("CallRegisteredICACallback", "err", err)
+			k.Logger(ctx).Error(fmt.Sprintf("Error executing callback %s, %s", callbackData.CallbackId, err.Error()))
 			return err
 		}
 	} else {
-		k.Logger(ctx).Info(fmt.Sprintf("CallRegisteredICACallback callback not found: %s", callbackData.CallbackId))
+		k.Logger(ctx).Error(fmt.Sprintf("Callback id %s has no callback", callbackData.CallbackId))
 	}
 
 	// remove the callback data
