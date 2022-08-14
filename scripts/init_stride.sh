@@ -58,7 +58,7 @@ for (( i=1; i <= $NUM_NODES; i++ )); do
     sed -i -E "s|\"stake\"|\"${DENOM}\"|g" $genesis_json
     
     # Get the endpoint and node ID
-    node_id=$($cmd tendermint show-node-id)@$node_name:$PORT_ID
+    node_id=$($cmd tendermint show-node-id)@$node_name:$PEER_PORT_ID
     echo "Node #$i ID: $node_id"
 
     # add a validator account
