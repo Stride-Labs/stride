@@ -21,7 +21,7 @@ func (k msgServer) UpdateValidatorSharesExchRate(goCtx context.Context, msg *typ
 	if err != nil {
 		return nil, err
 	} else if !valid {
-		return nil, sdkerrors.Wrapf(types.ErrOutsideIcqWindow, "no host zone found for denom (%s)", msg.ChainId)
+		return nil, sdkerrors.Wrapf(types.ErrOutsideIcqWindow, "outside the buffer time during which ICQs are allowed (%s)", msg.ChainId)
 	}
 
 	hostZone, found := k.GetHostZone(ctx, msg.ChainId)

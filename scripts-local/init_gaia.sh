@@ -19,6 +19,12 @@ $GAIA_CMD_2 init test --chain-id $GAIA_CHAIN --overwrite 2> /dev/null
 
 for NODE_NAME in gaia gaia2; do
     sed -i -E 's|"stake"|"uatom"|g' "${STATE}/${NODE_NAME}/config/genesis.json"
+    sed -i -E 's|"min_signed_per_window": "0.500000000000000000"|"min_signed_per_window": "1.000000000000000"|g' "${STATE}/${NODE_NAME}/config/genesis.json"
+    sed -i -E 's|"max_deposit_period": "172800s"|"max_deposit_period": "120s"|g' "${STATE}/${NODE_NAME}/config/genesis.json"
+    sed -i -E 's|"voting_period": "172800s"|"voting_period": "120s"|g' "${STATE}/${NODE_NAME}/config/genesis.json"
+    sed -i -E 's|"quorum": "0.334000000000000000"|"quorum": "0.000001"|g' "${STATE}/${NODE_NAME}/config/genesis.json"
+    sed -i -E 's|"signed_blocks_window": "100"|"signed_blocks_window": "10"|g' "${STATE}/${NODE_NAME}/config/genesis.json"
+    sed -i -E 's|"slash_fraction_downtime": "0.010000000000000000"|"slash_fraction_downtime": "0.030000000000000000"|g' "${STATE}/${NODE_NAME}/config/genesis.json"
     sed -i -E 's|"full"|"validator"|g' "${STATE}/${NODE_NAME}/config/config.toml"
     sed -i -E "s|timeout_commit = \"5s\"|timeout_commit = \"${BLOCK_TIME}\"|g" "${STATE}/${NODE_NAME}/config/config.toml"
     sed -i -E "s|chain-id = \"\"|chain-id = \"${GAIA_CHAIN}\"|g" "${STATE}/${NODE_NAME}/config/client.toml"
@@ -84,7 +90,7 @@ val_addr=$($GAIA_CMD keys show $GAIA_VAL_ACCT -a) > /dev/null
 # add money for this validator account
 $GAIA_CMD add-genesis-account ${val_addr} 500000000000000uatom
 # actually set this account as a validator
-$GAIA_CMD gentx $GAIA_VAL_ACCT 1000000000uatom --chain-id $GAIA_CHAIN 2> /dev/null
+$GAIA_CMD gentx $GAIA_VAL_ACCT 40000000000uatom --chain-id $GAIA_CHAIN 2> /dev/null
 
 # Add hermes relayer account
 echo $HERMES_GAIA_MNEMONIC | $GAIA_CMD keys add $HERMES_GAIA_ACCT --recover 

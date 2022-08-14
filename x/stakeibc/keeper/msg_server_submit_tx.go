@@ -309,7 +309,7 @@ func (k Keeper) UpdateDelegationsIcq(ctx sdk.Context, hostZone types.HostZone, v
 	if err != nil {
 		return err
 	} else if !valid {
-		return sdkerrors.Wrapf(types.ErrOutsideIcqWindow, "no host zone found for denom (%s)", hostZone.HostDenom)
+		return sdkerrors.Wrapf(types.ErrOutsideIcqWindow, "outside the buffer time during which ICQs are allowed (%s)", hostZone.HostDenom)
 	}
 
 	delegationAcctAddr := hostZone.GetDelegationAccount().GetAddress()
