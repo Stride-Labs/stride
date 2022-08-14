@@ -18,3 +18,5 @@ RUN apt-get update \
 
 USER hermes
 WORKDIR /home/hermes
+
+CMD ["hermes", "start"]
