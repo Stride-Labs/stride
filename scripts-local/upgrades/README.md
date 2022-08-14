@@ -9,6 +9,7 @@ cp build/strided scripts-local/upgrades/binaries/strided1
 ```
 * Then upgrade code as needed
 * Optionally update timing parameters to your liking
+    * `UPGRADE_NAME` (defined in `scripts-local/start_upgrade.sh`)   
     * `MAX_DEPOSIT_PERIOD` (defined in `scripts-local/vars.sh`)   
     * `VOTING_PERIOD` (defined in `scripts-local/vars.sh`)   
     * `PROPOSAL_NAME` (defined in `scripts-local/submit_upgrade.sh`)   

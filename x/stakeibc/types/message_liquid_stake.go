@@ -29,10 +29,6 @@ func StAssetDenomFromHostZoneDenom(hostZoneDenom string) string {
 	return "st" + hostZoneDenom
 }
 
-func HostZoneDenomFromStAssetDenom(stAssetDenom string) string {
-	return stAssetDenom[2:]
-}
-
 func (msg *MsgLiquidStake) Route() string {
 	return RouterKey
 }

@@ -63,6 +63,7 @@ func (k msgServer) RebalanceValidators(goCtx context.Context, msg *types.MsgReba
 	valDeltaList := make([]valPair, 0)
 	for _, valAddr := range utils.StringToIntMapKeys(validatorDeltas) {
 		deltaAmt := validatorDeltas[valAddr]
+		k.Logger(ctx).Info(fmt.Sprintf("Adding deltaAmt: %d to validator: %s", deltaAmt, valAddr))
 		valDeltaList = append(valDeltaList, valPair{deltaAmt, sdk.ValAddress(valAddr)})
 	}
 	// now we sort that list
@@ -75,7 +76,7 @@ func (k msgServer) RebalanceValidators(goCtx context.Context, msg *types.MsgReba
 	underWeightIndex := len(valDeltaList) - 1
 
 	// check if there is a large enough rebalance, if not, just exit
-	total_delegation := float64(k.GetTotalValidatorDelegations(ctx, hostZone))
+	total_delegation := float64(k.GetTotalValidatorDelegations(hostZone))
 	overweight_delta := floatabs(float64(valDeltaList[overWeightIndex].deltaAmt) / total_delegation)
 	underweight_delta := floatabs(float64(valDeltaList[underWeightIndex].deltaAmt) / total_delegation)
 	max_delta := floatmax(overweight_delta, underweight_delta)
@@ -142,7 +143,7 @@ func (k msgServer) RebalanceValidators(goCtx context.Context, msg *types.MsgReba
 	}
 
 	connectionId := hostZone.GetConnectionId()
-	_, err = k.SubmitTxsStrideEpoch(ctx, connectionId, msgs, *hostZone.GetDelegationAccount())
+	_, err = k.SubmitTxsStrideEpoch(ctx, connectionId, msgs, *hostZone.GetDelegationAccount(), "", nil)
 	if err != nil {
 		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "Failed to SubmitTxs for %s, %s, %s", connectionId, hostZone.ChainId, msgs)
 	}
