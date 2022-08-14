@@ -142,5 +142,6 @@ replace (
 	github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alpha.regen.1
 	github.com/ignite-hq/cli => github.com/ignite-hq/cli v0.21.0
 	github.com/keybase/go-keychain => github.com/99designs/go-keychain v0.0.0-20191008050251-8e49817e8af4
+	github.com/spf13/cast => github.com/Stride-Labs/cast v0.0.3
 	google.golang.org/grpc => google.golang.org/grpc v1.33.2
 )
