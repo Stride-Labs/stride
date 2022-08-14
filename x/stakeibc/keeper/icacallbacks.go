@@ -110,7 +110,12 @@ func DelegateCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ack
 			k.Logger(ctx).Error(errMsg)
 			return sdkerrors.Wrapf(sdkerrors.ErrLogic, errMsg)
 		} else {
-			zone.StakedBal += amount
+			amt, err := cast.ToUint64E(amount)
+			if err != nil {
+				k.Logger(ctx).Error(fmt.Sprintf("Error casting amount to uint64: %v", err))
+				return err
+			}
+			zone.StakedBal += amt
 			success := k.AddDelegationToValidator(ctx, zone, validator, amount)
 			if !success {
 				return sdkerrors.Wrapf(types.ErrValidatorDelegationChg, "Failed to add delegation to validator")

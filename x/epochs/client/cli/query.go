@@ -139,7 +139,10 @@ func GetCmdSecondsRemaining() *cobra.Command {
 			}
 
 			// duration: seconds
-			duration := cast.ToInt64(res.Epoch.Duration.Seconds())
+			duration, err := cast.ToInt64E(res.Epoch.Duration.Seconds())
+			if err != nil {
+				return err
+			}
 			// current epoch start time
 			startTime := res.Epoch.CurrentEpochStartTime.Unix()
 			// diff in seconds

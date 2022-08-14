@@ -3,12 +3,13 @@ package cli
 import (
 	"strconv"
 
-	"github.com/Stride-Labs/stride/x/stakeibc/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	"github.com/spf13/cast"
 	"github.com/spf13/cobra"
+
+	"github.com/Stride-Labs/stride/x/stakeibc/types"
 )
 
 var _ = strconv.Itoa(0)
@@ -19,7 +20,7 @@ func CmdRedeemStake() *cobra.Command {
 		Short: "Broadcast message redeem-stake",
 		Args:  cobra.ExactArgs(3),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			argAmount, err := cast.ToInt64E(args[0])
+			argAmount, err := cast.ToUint64E(args[0])
 			if err != nil {
 				return err
 			}
