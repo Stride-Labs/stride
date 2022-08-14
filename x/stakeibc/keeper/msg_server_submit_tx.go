@@ -331,9 +331,7 @@ func (k Keeper) SubmitTxs(
 	return sequence, nil
 }
 
-func (k Keeper) GetLightClientHeightSafely(ctx sdk.Context, connectionID string) (int64, bool) {
-
-	var latestHeightHostZone int64 // defaults to 0
+func (k Keeper) GetLightClientHeightSafely(ctx sdk.Context, connectionID string) (uint64, bool) {
 	// get light client's latest height
 	conn, found := k.IBCKeeper.ConnectionKeeper.GetConnection(ctx, connectionID)
 	if !found {
@@ -348,7 +346,11 @@ func (k Keeper) GetLightClientHeightSafely(ctx sdk.Context, connectionID string)
 	} else {
 		// TODO(TEST-119) get stAsset supply at SAME time as hostZone height
 		// TODO(TEST-112) check on safety of castng uint64 to int64
-		latestHeightHostZone = cast.ToInt64(clientState.GetLatestHeight().GetRevisionHeight())
+		latestHeightHostZone, err := cast.ToUint64E(clientState.GetLatestHeight().GetRevisionHeight())
+		if err != nil {
+			k.Logger(ctx).Error(fmt.Sprintf("error casting latest height to int64: %s", err.Error()))
+			return 0, false
+		}
 		return latestHeightHostZone, true
 	}
 }
