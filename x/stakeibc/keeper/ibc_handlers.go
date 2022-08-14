@@ -164,7 +164,7 @@ func (k *Keeper) HandleSend(ctx sdk.Context, msg sdk.Msg, sequence string) error
 				k.Logger(ctx).Error("epochUnbondingRecord.UnbondingEpochNumber == dayEpochTracker.EpochNumber")
 				continue
 			}
-			hostZoneUnbonding, found := k.RecordsKeeper.GetHostZoneUnbondingByChainId(ctx, epochUnbondingRecord.Id, zone.ChainId)
+			hostZoneUnbonding, found := k.RecordsKeeper.GetHostZoneUnbondingByChainId(ctx, epochUnbondingRecord.EpochNumber, zone.ChainId)
 			if !found {
 				k.Logger(ctx).Error("failed to find hostZoneUnbonding")
 				continue

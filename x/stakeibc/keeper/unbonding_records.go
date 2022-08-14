@@ -45,7 +45,7 @@ func (k Keeper) SendHostZoneUnbondings(ctx sdk.Context, hostZone types.HostZone)
 	// this function goes and processes all unbonded records for this hostZone
 	// regardless of what epoch they belong to
 	totalAmtToUnbond := uint64(0)
-	unbondingEpochNumbers := []uint64{}
+	epochUnbondingNumbers := []uint64{}
 	var msgs []sdk.Msg
 	for _, epochUnbonding := range k.RecordsKeeper.GetAllEpochUnbondingRecord(ctx) {
 		hostZoneRecord, found := k.RecordsKeeper.GetHostZoneUnbondingByChainId(ctx, epochUnbonding.Id, hostZone.ChainId)
@@ -57,7 +57,7 @@ func (k Keeper) SendHostZoneUnbondings(ctx sdk.Context, hostZone types.HostZone)
 		}
 		if hostZoneRecord.Status == recordstypes.HostZoneUnbonding_BONDED { // we only send the ICA call if this hostZone hasn't triggered yet
 			totalAmtToUnbond += hostZoneRecord.NativeTokenAmount
-			unbondingEpochNumbers = append(unbondingEpochNumbers, epochUnbonding.EpochNumber)
+			epochUnbondingNumbers = append(epochUnbondingNumbers, epochUnbonding.EpochNumber)
 		}
 	}
 	delegationAccount := hostZone.GetDelegationAccount()
@@ -127,7 +127,7 @@ func (k Keeper) SendHostZoneUnbondings(ctx sdk.Context, hostZone types.HostZone)
 	undelegateCallback := types.UndelegateCallback{
 		HostZoneId:            hostZone.ChainId,
 		SplitDelegations:      splitDelegations,
-		UnbondingEpochNumbers: unbondingEpochNumbers,
+		EpochUnbondingNumbers: epochUnbondingNumbers,
 	}
 	marshalledCallbackArgs, err := k.MarshalUndelegateCallbackArgs(ctx, undelegateCallback)
 	if err != nil {
