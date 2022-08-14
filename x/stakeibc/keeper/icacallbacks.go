@@ -20,6 +20,10 @@ import (
 
 // ___________________________________________________________________________________________________
 
+var DELEGATE = "delegate"
+var REINVEST = "reinvest"
+var UNDELEGATE = "undelegate"
+
 // ICACallbacks wrapper struct for interchainstaking keeper
 type ICACallback func(Keeper, sdk.Context, channeltypes.Packet, *channeltypes.Acknowledgement_Result, []byte) error
 
@@ -51,9 +55,9 @@ func (c ICACallbacks) AddICACallback(id string, fn interface{}) icacallbackstype
 
 func (c ICACallbacks) RegisterICACallbacks() icacallbackstypes.ICACallbackHandler {
 	return c.
-		AddICACallback("delegate", ICACallback(DelegateCallback)).
-		AddICACallback("reinvest", ICACallback(ReinvestCallback)).
-		AddICACallback("undelegate", ICACallback(UndelegateCallback))
+		AddICACallback(DELEGATE, ICACallback(DelegateCallback)).
+		AddICACallback(REINVEST, ICACallback(ReinvestCallback)).
+		AddICACallback(UNDELEGATE, ICACallback(UndelegateCallback))
 }
 
 // ----------------------------------- Delegate Callback ----------------------------------- //
