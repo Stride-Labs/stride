@@ -90,7 +90,7 @@ func (k msgServer) RedeemStake(goCtx context.Context, msg *types.MsgRedeemStake)
 		return nil, sdkerrors.Wrapf(recordstypes.ErrEpochUnbondingRecordNotFound, "latest epoch unbonding record not found")
 	}
 	// get relevant host zone on this epoch unbonding record
-	hostZoneUnbonding, found := k.RecordsKeeper.GetHostZoneUnbondingByChainId(ctx, epochUnbondingRecord.Id, hostZone.ChainId)
+	hostZoneUnbonding, found := k.RecordsKeeper.GetHostZoneUnbondingByChainId(ctx, epochUnbondingRecord.EpochNumber, hostZone.ChainId)
 	if !found {
 		return nil, sdkerrors.Wrapf(types.ErrInvalidHostZone, "host zone not found in unbondings: %s", hostZone.ChainId)
 	}
@@ -123,7 +123,7 @@ func (k msgServer) RedeemStake(goCtx context.Context, msg *types.MsgRedeemStake)
 		hostZoneUnbondings = []*recordstypes.HostZoneUnbonding{}
 		epochUnbondingRecord.HostZoneUnbondings = hostZoneUnbondings
 	}
-	didSet := k.RecordsKeeper.SetHostZoneOnEpochUnbondingRecord(ctx, epochUnbondingRecord.Id, hostZone.ChainId, hostZoneUnbonding)
+	didSet := k.RecordsKeeper.SetHostZoneOnEpochUnbondingRecord(ctx, epochUnbondingRecord.EpochNumber, hostZone.ChainId, hostZoneUnbonding)
 	if !didSet {
 		k.Logger(ctx).Error(fmt.Sprintf("Failed to set host zone epoch unbonding record %v", err))
 		return nil, sdkerrors.Wrapf(types.ErrInsufficientFunds, "couldn't set host zone epoch unbonding record. err: %s", err.Error())
