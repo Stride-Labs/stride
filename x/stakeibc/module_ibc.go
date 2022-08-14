@@ -139,7 +139,7 @@ func (im IBCModule) OnAcknowledgementPacket(
 	im.keeper.Logger(ctx).Info(fmt.Sprintf("OnAcknowledgementPacket: packet %v, relayer %v", modulePacket, relayer))
 	ack, err := im.UnmarshalAck(ctx, acknowledgement)
 	if err != nil {
-		errMsg := fmt.Sprintf("Unable to unmarshal ack from stakeibc OnAcknowledgePacket | Sequence %d, from %s.%s, to %s.%s",
+		errMsg := fmt.Sprintf("Unable to unmarshal ack from stakeibc OnAcknowledgePacket | Sequence %d, from %s %s, to %s %s",
 			modulePacket.Sequence, modulePacket.SourceChannel, modulePacket.SourcePort, modulePacket.DestinationChannel, modulePacket.DestinationPort)
 		im.keeper.Logger(ctx).Error(errMsg)
 		return sdkerrors.Wrapf(types.ErrMarshalFailure, errMsg)
@@ -154,7 +154,7 @@ func (im IBCModule) OnAcknowledgementPacket(
 	)
 	err = im.keeper.ICACallbacksKeeper.CallRegisteredICACallback(ctx, modulePacket, ack)
 	if err != nil {
-		errMsg := fmt.Sprintf("Unable to call registered callback from stakeibc OnAcknowledgePacket | Sequence %d, from %s.%s, to %s.%s",
+		errMsg := fmt.Sprintf("Unable to call registered callback from stakeibc OnAcknowledgePacket | Sequence %d, from %s %s, to %s %s",
 			modulePacket.Sequence, modulePacket.SourceChannel, modulePacket.SourcePort, modulePacket.DestinationChannel, modulePacket.DestinationPort)
 		im.keeper.Logger(ctx).Error(errMsg)
 		return err
