@@ -56,7 +56,7 @@ for (( i=1; i <= $NUM_NODES; i++ )); do
     sed -i -E "s|\"stake\"|\"${DENOM}\"|g" $genesis_json
 
     # Get the endpoint and node ID
-    node_id=$($cmd tendermint show-node-id)@$node_name:$PORT_ID
+    node_id=$($cmd tendermint show-node-id)@$node_name:$PEER_PORT_ID
     echo "Node #$i ID: $node_id"
 
     # add a validator account
@@ -71,8 +71,8 @@ for (( i=1; i <= $NUM_NODES; i++ )); do
 
     # Cleanup from seds
     rm -rf ${client_toml}-E
-    rm -rf ${config_toml}-E
     rm -rf ${genesis_json}-E
+    rm -rf ${app_toml}-E
 
     if [ $i -eq $MAIN_ID ]; then
         MAIN_NODE_NAME=$node_name
@@ -111,10 +111,15 @@ jq '.app_state.staking.params.unbonding_time = $newVal' --arg newVal "$UNBONDING
 # for all peer nodes....
 for (( i=2; i <= $NUM_NODES; i++ )); do
     node_name="${NODE_PREFIX}${i}"
+    config_toml="${STATE}/${node_name}/config/config.toml"
+    genesis_json="${STATE}/${node_name}/config/genesis.json"
+
     # add the main node as a persistent peer
-    sed -i -E "s|persistent_peers = .*|persistent_peers = \"${MAIN_NODE_ID}\"|g" $MAIN_CONFIG
+    sed -i -E "s|persistent_peers = .*|persistent_peers = \"${MAIN_NODE_ID}\"|g" $config_toml
     # copy the main node's genesis to the peer nodes to ensure they all have the same genesis
-    cp $MAIN_GENESIS ${STATE}/${node_name}/config/genesis.json
+    cp $MAIN_GENESIS $genesis_json
+
+    rm -rf ${config_toml}-E
 done
 
 # Cleanup from seds

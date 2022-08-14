@@ -1,60 +1,50 @@
 version: "3.8"
 services:
   stride1:
-    # image: stridezone/stride:latest
     image: stridezone:stride
     hostname: stride
     volumes:
-      - ./scripts/state/stride1:/stride/.strided
-    # command:
-    #   - /bin/sh
-    # stdin_open: true # docker run -i
-    # tty: true        # docker run -t
-    ports:
-      - "26655:26657"
-      - "26650:1317"
-    build:
-      context: .
-      dockerfile: Dockerfile.stride
-  stride2:
-    # image: stridezone/stride:latest
-    image: stridezone:stride
-    hostname: stride
-    volumes:
-      - ./scripts/state/stride2:/stride/.strided
-    ports:
-      - "26656:26657"
-      - "26651:1317"
-    build:
-      context: .
-      dockerfile: Dockerfile.stride
-  stride3:
-    # image: stridezone/stride:latest
-    image: stridezone:stride
-    hostname: stride
-    volumes:
-      - ./scripts/state/stride3:/stride/.strided
+      - ./scripts/state/stride1:/home/stride/.stride
     ports:
       - "26657:26657"
       - "1317:1317"
+      - "9090:9090"
     build:
       context: .
       dockerfile: Dockerfile.stride
 
-  # now run Gaia nodes
+  stride2:
+    image: stridezone:stride
+    hostname: stride
+    volumes:
+      - ./scripts/state/stride2:/home/stride/.stride
+    expose:
+      - "26656"
+    build:
+      context: .
+      dockerfile: Dockerfile.stride
+
+  stride3:
+    image: stridezone:stride
+    hostname: stride
+    volumes:
+      - ./scripts/state/stride3:/home/stride/.stride
+    expose:
+      - "26656"
+    build:
+      context: .
+      dockerfile: Dockerfile.stride
+
   gaia1:
     # image: stridezone/stride:latest
     image: stridezone:gaia
     hostname: stride
-    volumes:
-      - ./scripts/state/gaia1:/gaia/.gaiad
     ports:
-      - "26662:26657"
-      - "26661:1317"
-    # command:
-    #   - /bin/sh
-    # stdin_open: true # docker run -i
-    # tty: true        # docker run -t
+      - "26557:26657"
+      - "1307:1317"
+      - "9080:9090"
+    volumes:
+      - ./scripts/state/gaia1:/home/gaia/.gaia
     build:
       context: .
       dockerfile: Dockerfile.gaia
@@ -63,56 +53,40 @@ services:
     image: stridezone:gaia
     hostname: stride
     volumes:
-      - ./scripts/state/gaia2:/gaia/.gaiad
-    ports:
-      - "26659:26657"
+      - ./scripts/state/gaia2:/home/gaia/.gaia
+    expose:
+      - "26656"
     build:
       context: .
       dockerfile: Dockerfile.gaia
+
   gaia3:
     # image: stridezone/stride:latest
     image: stridezone:gaia
     hostname: stride
     volumes:
-      - ./scripts/state/gaia3:/gaia/.gaiad
-    ports:
-      - "26660:26657"
+      - ./scripts/state/gaia3:/home/gaia/.gaia
+    expose:
+      - "26656"
     build:
       context: .
       dockerfile: Dockerfile.gaia
+
   hermes:
     image: stridezone:hermes
-    hostname: stride
     volumes:
-      - ./scripts/config/hermes.toml:/tmp/hermes.toml
-      - ./scripts/state:/hermes/.hermes/keys
-      # - ./scripts:/tmp
-    #   - ./data/hermes:/hermes/.hermes
-    command:
-      - hermes
-      - -c
-      - /tmp/hermes.toml
-      - start
+      - ./scripts/state/hermes:/home/hermes/.hermes
     restart: always
-    ports:
-      - "3001:3001"
+
     build:
       context: .
       dockerfile: Dockerfile.hermes
+
   icq:
     image: stridezone:interchain-queries
     volumes:
-      - ./scripts/state/ICQ:/icq/.icq
-    command:
-      - interchain-queries
-      - run
+      - ./scripts/state/icq:/home/icq/.icq
     restart: always
     build:
       context: .
       dockerfile: Dockerfile.icq
-    # logging:
-    #   driver: "local"
-    #   options:
-    #     max-size: 10m
-    #     max-file: "3"
-    #     env: "os"
