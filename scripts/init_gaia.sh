@@ -8,6 +8,7 @@ source $SCRIPT_DIR/vars.sh
 CHAIN_ID=$GAIA_CHAIN_ID
 CMD=$GAIA_CMD
 DENOM=$GAIA_DENOM
+RPC_PORT=$GAIA_RPC_PORT
 NUM_NODES=$GAIA_NUM_NODES
 NODE_PREFIX=$GAIA_NODE_PREFIX
 VAL_PREFIX=$GAIA_VAL_PREFIX
@@ -48,6 +49,7 @@ for (( i=1; i <= $NUM_NODES; i++ )); do
 
     sed -i -E "s|chain-id = \"\"|chain-id = \"${CHAIN_ID}\"|g" $client_toml
     sed -i -E "s|keyring-backend = \"os\"|keyring-backend = \"test\"|g" $client_toml
+    sed -i -E "s|node = \".*\"|node = \"tcp://localhost:$RPC_PORT\"|g" $client_toml
 
     sed -i -E "s|minimum-gas-prices = \".*\"|minimum-gas-prices = \"0${DENOM}\"|g" $app_toml
     sed -i -E '/\[api\]/,/^enable = .*$/ s/^enable = .*$/enable = true/' $app_toml
@@ -56,7 +58,7 @@ for (( i=1; i <= $NUM_NODES; i++ )); do
     sed -i -E "s|\"stake\"|\"${DENOM}\"|g" $genesis_json
 
     # Get the endpoint and node ID
-    node_id=$($cmd tendermint show-node-id)@$node_name:$PEER_PORT_ID
+    node_id=$($cmd tendermint show-node-id)@$node_name:$PEER_PORT
     echo "Node #$i ID: $node_id"
 
     # add a validator account

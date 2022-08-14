@@ -4,7 +4,14 @@ set -eu
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
 STATE=$SCRIPT_DIR/state
-PEER_PORT_ID=26656
+PEER_PORT=26656
+
+# DENOMS
+IBC_STRD_DENOM='ibc/FF6C2E86490C1C4FBBD24F55032831D2415B9D7882F85C3CC9C2401D79362BEA'
+IBC_ATOM_DENOM='ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2'
+ATOM_DENOM='uatom'
+STRD_DENOM='ustrd'
+STATOM_DENOM="stuatom"
 
 BLOCK_TIME='5s'
 DAY_EPOCH_INDEX=1
@@ -25,8 +32,10 @@ STRIDE_NODE_PREFIX=stride
 STRIDE_NUM_NODES=3
 STRIDE_CMD="$SCRIPT_DIR/../build/strided"
 STRIDE_VAL_PREFIX=val
-STRIDE_DENOM=ustrd
+STRIDE_DENOM=$STRD_DENOM
+STRIDE_RPC_PORT=26657
 STRIDE_ADMIN_ACCT=admin
+MAIN_STRIDE_CMD="$STRIDE_CMD --home $SCRIPT_DIR/state/stride1"
 
 STRIDE_MNEMONIC_1="close soup mirror crew erode defy knock trigger gather eyebrow tent farm gym gloom base lemon sleep weekend rich forget diagram hurt prize fly"
 STRIDE_MNEMONIC_2="timber vacant teach wedding disease fashion place merge poet produce promote renew sunny industry enforce heavy inch three call sustain deal flee athlete intact"
@@ -41,7 +50,9 @@ GAIA_NODE_PREFIX=gaia
 GAIA_NUM_NODES=3
 GAIA_CMD="$SCRIPT_DIR/../build/gaiad"
 GAIA_VAL_PREFIX=gval
-GAIA_DENOM=uatom
+GAIA_DENOM=$ATOM_DENOM
+GAIA_RPC_PORT=26557
+MAIN_GAIA_CMD="$GAIA_CMD --home $SCRIPT_DIR/state/gaia1"
 
 GAIA_MNEMONIC_1="move next relief spatial resemble onion exhibit fitness major toss where square wrong exact infant skate dragon shift region over you gospel absorb double"
 GAIA_MNEMONIC_2="social smooth replace total room drip donor science wheel source scare hammer affair fade opinion injury mandate then orbit work worry exhaust diagram hotel"
@@ -52,6 +63,7 @@ GAIA_VAL_MNEMONICS=("$GAIA_MNEMONIC_1" "$GAIA_MNEMONIC_2" "$GAIA_MNEMONIC_3" "$G
 
 # define relayer vars
 HERMES_CMD="$SCRIPT_DIR/../build/hermes/release/hermes -c $STATE/hermes/config.toml"
+HERMES_EXEC="docker-compose run --rm hermes hermes"
 
 HERMES_STRIDE_ACCT=rly1
 HERMES_GAIA_ACCT=rly2
@@ -62,6 +74,7 @@ HERMES_GAIA_MNEMONIC="resemble accident lake amateur physical jewel taxi nut dem
 HERMES_OSMOSIS_MNEMONIC="artwork ranch dinosaur maple unhappy office bone vote rebel slot outside benefit innocent wrist certain cradle almost fat trial build chicken enroll strike milk"
 
 ICQ_CMD="$SCRIPT_DIR/../build/interchain-queries --home $STATE/icq"
+ICQ_EXEC="docker-compose run --rm icq icq"
 
 ICQ_STRIDE_ACCT=icq1
 ICQ_GAIA_ACCT=icq2

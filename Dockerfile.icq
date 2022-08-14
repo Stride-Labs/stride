@@ -17,3 +17,5 @@ RUN adduser -S -h /home/icq -D icq -u 1000
 USER icq
 
 WORKDIR /home/icq
+
+CMD ["interchain-queries", "start"]

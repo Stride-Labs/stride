@@ -75,7 +75,8 @@ services:
   hermes:
     image: stridezone:hermes
     volumes:
-      - ./scripts/state/hermes:/home/hermes/.hermes
+      - ~/.hermes:/home/hermes/.hermes
+      - ./scripts/state/hermes/config.toml:/home/hermes/.hermes/config.toml
     restart: always
 
     build:
