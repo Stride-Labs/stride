@@ -48,3 +48,6 @@ This change added tests and can be verified as follows:
   - Does this pull request introduce a new feature or user-facing behavior changes? (yes / no)
   - Is a relevant changelog entry added to the `Unreleased` section in `CHANGELOG.md`? (yes / no)
   - How is the feature or change documented? (not applicable   /   specification (`x/<module>/spec/`)  / README.md  /   not documented)
+  - Does this pull request update existing proto field values (and require a backend and frontend migration)? (yes / no)
+  - Does this pull request change existing proto field names (and require a frontend migration)? (yes / no)
+
