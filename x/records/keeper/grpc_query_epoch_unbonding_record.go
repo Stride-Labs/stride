@@ -3,13 +3,14 @@ package keeper
 import (
 	"context"
 
-	"github.com/Stride-Labs/stride/x/records/types"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/types/query"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+
+	"github.com/Stride-Labs/stride/x/records/types"
 )
 
 func (k Keeper) EpochUnbondingRecordAll(c context.Context, req *types.QueryAllEpochUnbondingRecordRequest) (*types.QueryAllEpochUnbondingRecordResponse, error) {
@@ -46,7 +47,7 @@ func (k Keeper) EpochUnbondingRecord(c context.Context, req *types.QueryGetEpoch
 	}
 
 	ctx := sdk.UnwrapSDKContext(c)
-	epochUnbondingRecord, found := k.GetEpochUnbondingRecord(ctx, req.Id)
+	epochUnbondingRecord, found := k.GetEpochUnbondingRecord(ctx, req.EpochNumber)
 	if !found {
 		return nil, sdkerrors.ErrKeyNotFound
 	}
