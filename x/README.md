@@ -6,6 +6,7 @@ Osmosis implements the following custom modules:
 * `interchainquery` - Issues queries between IBC chains, verifies state proof and executes callbacks.
 * `records` - IBC middleware wrapping the transfer module, does record keeping on IBC transfers and ICA calls
 * `stakeibc` - Manages minting and burning of `stAssets`, staking and unstaking of native assets across chains.
+* `icacallbacks` - Callbacks for interchain accounts.
 
 This is done in addition to updates to several modules within the SDK.
 
