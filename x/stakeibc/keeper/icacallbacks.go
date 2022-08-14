@@ -80,7 +80,7 @@ func DelegateCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ack
 
 	if ack == nil {
 		// transaction on the host chain failed
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "ack is nil")
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "ack is nil, packet %v", packet)
 	}
 
 	// deserialize the args
@@ -120,8 +120,8 @@ func DelegateCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ack
 }
 
 // ----------------------------------- Reinvest Callback ----------------------------------- //
-func (k Keeper) MarshalReinvestCallbackArgs(ctx sdk.Context, delegateCallback types.ReinvestCallback) ([]byte, error) {
-	out, err := proto.Marshal(&delegateCallback)
+func (k Keeper) MarshalReinvestCallbackArgs(ctx sdk.Context, reinvestCallback types.ReinvestCallback) ([]byte, error) {
+	out, err := proto.Marshal(&reinvestCallback)
 	if err != nil {
 		k.Logger(ctx).Error(fmt.Sprintf("MarshalReinvestCallbackArgs %v", err.Error()))
 		return nil, err
@@ -129,23 +129,22 @@ func (k Keeper) MarshalReinvestCallbackArgs(ctx sdk.Context, delegateCallback ty
 	return out, nil
 }
 
-func (k Keeper) UnmarshalReinvestCallbackArgs(ctx sdk.Context, delegateCallback []byte) (*types.ReinvestCallback, error) {
+func (k Keeper) UnmarshalReinvestCallbackArgs(ctx sdk.Context, reinvestCallback []byte) (*types.ReinvestCallback, error) {
 	unmarshalledReinvestCallback := types.ReinvestCallback{}
-	if err := proto.Unmarshal(delegateCallback, &unmarshalledReinvestCallback); err != nil {
-        k.Logger(ctx).Error(fmt.Sprintf("UnmarshalReinvestCallbackArgs %v", err.Error()))
+	if err := proto.Unmarshal(reinvestCallback, &unmarshalledReinvestCallback); err != nil {
+        k.Logger(ctx).Error(fmt.Sprintf("UnmarshalReinvestCallbackArgs %s", err.Error()))
 		return nil, err
 	}
 	return &unmarshalledReinvestCallback, nil
 }
 
 func ReinvestCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ack *channeltypes.Acknowledgement_Result, args []byte) error {
-	// invariant: sendMsg.FromAddress == withdrawalAddress && sendMsg.ToAddress == delegationAddress
 	k.Logger(ctx).Info("ReinvestCallback executing", "packet", packet)
 
 	if ack == nil {
 		// transaction on the host chain failed
 		// don't create a record
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "ack is nil")
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "ack is nil, packet %v", packet)
 	}
 
 	// deserialize the args
@@ -162,9 +161,13 @@ func ReinvestCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ack
 	}
 	epochNumber := strideEpochTracker.EpochNumber
 	// create a new record so that rewards are reinvested
+	amt, err := cast.ToInt64E(reinvestCallback.GetAmount())
+	if err != nil {
+		k.Logger(ctx).Error(fmt.Sprintf("failed to convert amount %v", err.Error()))
+		return err
+	}
 	record := recordstypes.DepositRecord{
-		Id:                 0,
-		Amount:             cast.ToInt64(reinvestCallback.GetAmount()),
+		Amount:             amt,
 		Denom:              reinvestCallback.Denom,
 		HostZoneId:         reinvestCallback.HostZoneId,
 		Status:             recordstypes.DepositRecord_STAKE,
