@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
 	icatypes "github.com/cosmos/ibc-go/v3/modules/apps/27-interchain-accounts/types"
 	channeltypes "github.com/cosmos/ibc-go/v3/modules/core/04-channel/types"
@@ -30,7 +31,6 @@ func NewIBCModule(k keeper.Keeper) IBCModule {
 func (im IBCModule) Hooks() keeper.Hooks {
 	return im.keeper.Hooks()
 }
-
 
 func (im IBCModule) OnChanOpenInit(
 	ctx sdk.Context,
@@ -139,7 +139,10 @@ func (im IBCModule) OnAcknowledgementPacket(
 	im.keeper.Logger(ctx).Info(fmt.Sprintf("OnAcknowledgementPacket: packet %v, relayer %v", modulePacket, relayer))
 	ack, err := im.UnmarshalAck(ctx, acknowledgement)
 	if err != nil {
-		return err
+		errMsg := fmt.Sprintf("Unable to unmarshal ack from stakeibc OnAcknowledgePacket | Sequence %d, from %s.%s, to %s.%s",
+			modulePacket.Sequence, modulePacket.SourceChannel, modulePacket.SourcePort, modulePacket.DestinationChannel, modulePacket.DestinationPort)
+		im.keeper.Logger(ctx).Error(errMsg)
+		return sdkerrors.Wrapf(types.ErrMarshalFailure, errMsg)
 	}
 	eventType := "ack"
 	ctx.EventManager().EmitEvent(
@@ -151,6 +154,9 @@ func (im IBCModule) OnAcknowledgementPacket(
 	)
 	err = im.keeper.ICACallbacksKeeper.CallRegisteredICACallback(ctx, modulePacket, ack)
 	if err != nil {
+		errMsg := fmt.Sprintf("Unable to call registered callback from stakeibc OnAcknowledgePacket | Sequence %d, from %s.%s, to %s.%s",
+			modulePacket.Sequence, modulePacket.SourceChannel, modulePacket.SourcePort, modulePacket.DestinationChannel, modulePacket.DestinationPort)
+		im.keeper.Logger(ctx).Error(errMsg)
 		return err
 	}
 	return im.keeper.HandleAcknowledgement(ctx, modulePacket, acknowledgement)

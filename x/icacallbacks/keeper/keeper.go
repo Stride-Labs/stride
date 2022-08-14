@@ -7,6 +7,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	capabilitykeeper "github.com/cosmos/cosmos-sdk/x/capability/keeper"
 	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
@@ -22,14 +23,14 @@ import (
 
 type (
 	Keeper struct {
-		cdc          codec.BinaryCodec
-		storeKey     sdk.StoreKey
-		memKey       sdk.StoreKey
-		paramstore   paramtypes.Subspace
-		scopedKeeper capabilitykeeper.ScopedKeeper
-		icacallbacks map[string]types.ICACallbackHandler
-		IBCKeeper    ibckeeper.Keeper
-		ICAControllerKeeper   icacontrollerkeeper.Keeper
+		cdc                 codec.BinaryCodec
+		storeKey            sdk.StoreKey
+		memKey              sdk.StoreKey
+		paramstore          paramtypes.Subspace
+		scopedKeeper        capabilitykeeper.ScopedKeeper
+		icacallbacks        map[string]types.ICACallbackHandler
+		IBCKeeper           ibckeeper.Keeper
+		ICAControllerKeeper icacontrollerkeeper.Keeper
 	}
 )
 
@@ -48,14 +49,14 @@ func NewKeeper(
 	}
 
 	return &Keeper{
-		cdc:          cdc,
-		storeKey:     storeKey,
-		memKey:       memKey,
-		paramstore:   ps,
-		scopedKeeper: scopedKeeper,
-		icacallbacks: make(map[string]types.ICACallbackHandler),
-		IBCKeeper: ibcKeeper,
-		ICAControllerKeeper:   icacontrollerkeeper,
+		cdc:                 cdc,
+		storeKey:            storeKey,
+		memKey:              memKey,
+		paramstore:          ps,
+		scopedKeeper:        scopedKeeper,
+		icacallbacks:        make(map[string]types.ICACallbackHandler),
+		IBCKeeper:           ibcKeeper,
+		ICAControllerKeeper: icacontrollerkeeper,
 	}
 }
 
@@ -102,21 +103,30 @@ func (k Keeper) CallRegisteredICACallback(ctx sdk.Context, modulePacket channelt
 		k.Logger(ctx).Info(errMsg)
 		return nil
 	}
+
 	// fetch the callback function
 	callbackHandler, err := k.GetICACallbackHandler(module)
 	if err != nil {
-		k.Logger(ctx).Info("CallRegisteredICACallback", "err", err)
-		return err
+		errMsg := fmt.Sprintf("Callback handler does not exist for module %s | err: %s", module, err.Error())
+		k.Logger(ctx).Error(errMsg)
+		return sdkerrors.Wrapf(types.ErrCallbackHandlerNotFound, errMsg)
 	}
+
 	// call the callback
 	if callbackHandler.HasICACallback(callbackData.CallbackId) {
 		// if acknowledgement is empty, then it is a timeout
 		err := callbackHandler.CallICACallback(ctx, callbackData.CallbackId, modulePacket, acknowledgement, callbackData.CallbackArgs)
 		if err != nil {
-			k.Logger(ctx).Info("CallRegisteredICACallback", "err", err)
-			return err
+			errMsg := fmt.Sprintf("Error occured while calling ICACallback (%s) | err: %s", callbackData.CallbackId, err.Error())
+			k.Logger(ctx).Error(errMsg)
+			return sdkerrors.Wrapf(types.ErrCallbackFailed, errMsg)
 		}
 	}
+	// else {
+	// 	errMsg := fmt.Sprintf("Callback ID (%s) has not been registered", callbackData.CallbackId)
+	// 	k.Logger(ctx).Error(errMsg)
+	// 	return sdkerrors.Wrapf(types.ErrCallbackIdNotFound, errMsg)
+	// }
 
 	// remove the callback data
 	k.RemoveCallbackData(ctx, callbackDataKey)
