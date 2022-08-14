@@ -152,7 +152,8 @@ func (k Keeper) GetStrideEpochElapsedShare(ctx sdk.Context) (sdk.Dec, error) {
 		k.Logger(ctx).Error(fmt.Sprintf("Failed to get epoch tracker for %s", epochType))
 		return sdk.ZeroDec(), sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "Failed to get epoch tracker for %s", epochType)
 	}
-	prevEpochStartTime := epochTracker.NextEpochStartTime - epochTracker.Duration
+	currEpochStartTime := epochTracker.NextEpochStartTime - epochTracker.Duration
+
 	elapsedShare := sdk.NewDec(ctx.BlockTime().UnixNano() - prevEpochStartTime).Quo(sdk.NewDec(epochTracker.Duration))
 	k.Logger(ctx).Info(fmt.Sprintf("epochTracker.NextEpochStartTime %v epochTracker.Duration %v prevEpochStartTime %v", epochTracker.NextEpochStartTime, epochTracker.Duration, prevEpochStartTime))
 	return elapsedShare, nil
