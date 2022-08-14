@@ -63,7 +63,7 @@ func (im IBCModule) OnChanOpenAck(
 	im.keeper.Logger(ctx).Info(fmt.Sprintf("OnChanOpenAck: portID %s, channelID %s, counterpartyChannelID %s, counterpartyVersion %s", portID, channelID, counterpartyChannelID, counterpartyVersion))
 	controllerConnectionId, err := im.keeper.GetConnectionId(ctx, portID)
 	if err != nil {
-		ctx.Logger().Error("Unable to get connection for port " + portID)
+		ctx.Logger().Error(fmt.Sprintf("Unable to get connection for port: %s", portID))
 	}
 	address, found := im.keeper.ICAControllerKeeper.GetInterchainAccountAddress(ctx, controllerConnectionId, portID)
 	if !found {
@@ -74,12 +74,7 @@ func (im IBCModule) OnChanOpenAck(
 	// fetch counterparty connection
 	hostChainId, err := im.keeper.GetChainID(ctx, controllerConnectionId)
 	if err != nil {
-		ctx.Logger().Error(
-			"Unable to obtain counterparty chain for given connection and port",
-			"ConnectionID", controllerConnectionId,
-			"PortID", portID,
-			"Error", err,
-		)
+		ctx.Logger().Error(fmt.Sprintf("Unable to obtain counterparty chain for connection: %s, port: %s, err: %s", controllerConnectionId, portID, err.Error()))
 		return nil
 	}
 	//  get zone info
@@ -88,7 +83,7 @@ func (im IBCModule) OnChanOpenAck(
 		ctx.Logger().Error(fmt.Sprintf("Expected to find zone info for %v", hostChainId))
 		return nil
 	}
-	ctx.Logger().Info("Found matching address", "chain", zoneInfo.ChainId, "address", address, "port", portID)
+	ctx.Logger().Info(fmt.Sprintf("Found matching address for chain: %s, address %s, port %s", zoneInfo.ChainId, address, portID))
 
 	// addresses
 	withdrawalAddress, err := icatypes.NewControllerPortID(types.FormatICAAccountOwner(hostChainId, types.ICAAccountType_WITHDRAWAL))
@@ -122,7 +117,7 @@ func (im IBCModule) OnChanOpenAck(
 	case portID == redemptionAddress:
 		zoneInfo.RedemptionAccount = &types.ICAAccount{Address: address, Target: types.ICAAccountType_REDEMPTION}
 	default:
-		ctx.Logger().Error("Missing portId: ", portID)
+		ctx.Logger().Error(fmt.Sprintf("Missing portId: %s", portID))
 	}
 
 	im.keeper.SetHostZone(ctx, zoneInfo)
