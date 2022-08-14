@@ -7,9 +7,9 @@ import (
 	channeltypes "github.com/cosmos/ibc-go/v3/modules/core/04-channel/types"
 )
 
-var DELEGATE = "delegate"
-var CLAIM = "claim"
-var UNDELEGATE = "undelegate"
+const DELEGATE = "delegate"
+const CLAIM = "claim"
+const UNDELEGATE = "undelegate"
 
 // ICACallbacks wrapper struct for stakeibc keeper
 type ICACallback func(Keeper, sdk.Context, channeltypes.Packet, *channeltypes.Acknowledgement_Result, []byte) error
