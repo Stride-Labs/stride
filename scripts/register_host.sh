@@ -4,12 +4,6 @@ set -eu
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 source $SCRIPT_DIR/vars.sh
 
-# Get validator addresses
-GAIA_VAL_2_ADDR="$($MAIN_GAIA_CMD keys show gval2 -a)"
-GAIA_VAL_3_ADDR="$($MAIN_GAIA_CMD keys show gval3 -a)"
-GAIA_DELEGATE_VAL_1="$($MAIN_GAIA_CMD q staking validators | grep GAIA_1 -A 5 | grep operator | awk '{print $2}')"
-GAIA_DELEGATE_VAL_2="$($MAIN_GAIA_CMD q staking validators | grep GAIA_2 -A 5 | grep operator | awk '{print $2}')"
-
 # Submit a transaction on stride to register the gaia host zone
 printf "\nCreating host zone...\n"
 $MAIN_STRIDE_CMD tx stakeibc register-host-zone \
@@ -31,4 +25,3 @@ while true; do
         break
     fi
 done
-echo "Done"

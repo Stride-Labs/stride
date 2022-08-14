@@ -129,6 +129,9 @@ stop-docker:
 	@pkill -f "/bin/bash.*create_logs.sh" || true
 	docker-compose down
 
+stop-docker:
+	docker-compose down
+
 ###############################################################################
 ###                                LocalNet                                 ###
 ###############################################################################
@@ -146,3 +149,4 @@ stop-local:
 	@killall gaiad strided junod osmosisd rly hermes interchain-queries || true
 	@pkill -f "/bin/bash.*create_logs.sh" || true
 	@pkill -f "sh.*start_network.sh" || true
+
