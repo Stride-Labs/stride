@@ -34,20 +34,20 @@ func (k msgServer) LiquidStake(goCtx context.Context, msg *types.MsgLiquidStake)
 	coinString := cast.ToString(msg.Amount) + ibcDenom
 	inCoin, err := sdk.ParseCoinNormalized(coinString)
 	if err != nil {
-		k.Logger(ctx).Error("failed to parse coin (%s)", coinString)
+		k.Logger(ctx).Error(fmt.Sprintf("failed to parse coin (%s)", coinString))
 		return nil, sdkerrors.Wrapf(err, "failed to parse coin (%s)", coinString)
 	}
 
 	// Creator owns at least "amount" of inCoin
 	balance := k.bankKeeper.GetBalance(ctx, sender, ibcDenom)
 	if balance.IsLT(inCoin) {
-		k.Logger(ctx).Error("balance is lower than staking amount. staking amount: %d, balance: %d", msg.Amount, balance.Amount.Int64())
+		k.Logger(ctx).Error(fmt.Sprintf("balance is lower than staking amount. staking amount: %d, balance: %d", msg.Amount, balance.Amount.Int64()))
 		return nil, sdkerrors.Wrapf(sdkerrors.ErrInsufficientFunds, "balance is lower than staking amount. staking amount: %d, balance: %d", msg.Amount, balance.Amount.Int64())
 	}
 	// check that the token is an IBC token
 	isIbcToken := types.IsIBCToken(ibcDenom)
 	if !isIbcToken {
-		k.Logger(ctx).Error("invalid token denom - denom is not an IBC token (%s)")
+		k.Logger(ctx).Error("invalid token denom - denom is not an IBC token (%s)", ibcDenom)
 		return nil, sdkerrors.Wrapf(types.ErrInvalidToken, "denom is not an IBC token (%s)", ibcDenom)
 	}
 
@@ -67,7 +67,7 @@ func (k msgServer) LiquidStake(goCtx context.Context, msg *types.MsgLiquidStake)
 	// create a deposit record of these tokens (pending transfer)
 	strideEpochTracker, found := k.GetEpochTracker(ctx, epochtypes.STRIDE_EPOCH)
 	if !found {
-		k.Logger(ctx).Error("failed to find epoch")
+		k.Logger(ctx).Error("failed to find stride epoch")
 		return nil, sdkerrors.Wrapf(sdkerrors.ErrNotFound, "no epoch number for epoch (%s)", epochtypes.STRIDE_EPOCH)
 	}
 	// Does this use too much gas?

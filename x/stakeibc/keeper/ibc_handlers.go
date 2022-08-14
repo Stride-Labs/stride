@@ -11,7 +11,6 @@ import (
 	channeltypes "github.com/cosmos/ibc-go/v3/modules/core/04-channel/types"
 	"github.com/golang/protobuf/proto"
 
-	epochtypes "github.com/Stride-Labs/stride/x/epochs/types"
 	recordstypes "github.com/Stride-Labs/stride/x/records/types"
 	"github.com/Stride-Labs/stride/x/stakeibc/types"
 
@@ -46,7 +45,7 @@ func (k Keeper) HandleAcknowledgement(ctx sdk.Context, modulePacket channeltypes
 			}
 			record, found := k.RecordsKeeper.GetUserRedemptionRecord(ctx, userRedemptionRecordKey)
 			if !found {
-				k.Logger(ctx).Error("failed to get user redemption record from key %s", userRedemptionRecordKey)
+				k.Logger(ctx).Error(fmt.Sprintf("failed to get user redemption record from key %s", userRedemptionRecordKey))
 				return err
 			}
 			record.IsClaimable = true
@@ -60,30 +59,30 @@ func (k Keeper) HandleAcknowledgement(ctx sdk.Context, modulePacket channeltypes
 					sdk.NewAttribute(types.AttributeKeyAckError, ackErr.Error),
 				),
 			)
-			k.Logger(ctx).Error("Unable to unmarshal acknowledgement error", "error", err, "data", acknowledgement)
+			k.Logger(ctx).Error(fmt.Sprintf("Unable to unmarshal acknowledgement error: %s, data: %s", err.Error(), acknowledgement))
 			return err
 		}
-		k.Logger(ctx).Error("Unable to unmarshal acknowledgement result", "error", err, "remote_err", ackErr, "data", acknowledgement)
+		k.Logger(ctx).Error(fmt.Sprintf("Unable to unmarshal acknowledgement result, error: %s, remote_err: %v, data: %v", err.Error(), ackErr, acknowledgement))
 		return err
 	}
 
 	txMsgData := &sdk.TxMsgData{}
 	err = proto.Unmarshal(ack.Result, txMsgData)
 	if err != nil {
-		k.Logger(ctx).Error("Unable to unmarshal acknowledgement", "error", err, "ack", ack.Result)
+		k.Logger(ctx).Error(fmt.Sprintf("Unable to unmarshal acknowledgement, error: %s, ack result: %v", err, ack.Result))
 		return err
 	}
 
 	var packetData icatypes.InterchainAccountPacketData
 	err = icatypes.ModuleCdc.UnmarshalJSON(modulePacket.GetData(), &packetData)
 	if err != nil {
-		k.Logger(ctx).Error("unable to unmarshal acknowledgement packet data", "error", err, "data", packetData)
+		k.Logger(ctx).Error(fmt.Sprintf("unable to unmarshal acknowledgement packet data, error: %s, data: %s", err, packetData))
 		return sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "cannot unmarshal packet data: %s", err.Error())
 	}
 
 	msgs, err := icatypes.DeserializeCosmosTx(k.cdc, packetData.Data)
 	if err != nil {
-		k.Logger(ctx).Error("unable to decode messages", "err", err)
+		k.Logger(ctx).Error(fmt.Sprintf("unable to decode messages, err: %s", err))
 		return err
 	}
 
@@ -97,10 +96,10 @@ func (k Keeper) HandleAcknowledgement(ctx sdk.Context, modulePacket channeltypes
 			response := banktypes.MsgSendResponse{}
 			err := proto.Unmarshal(msgData.Data, &response)
 			if err != nil {
-				k.Logger(ctx).Error("unable to unmarshal MsgSend response", "error", err)
+				k.Logger(ctx).Error(fmt.Sprintf("unable to unmarshal MsgSend response, error: %s", err.Error()))
 				return err
 			}
-			k.Logger(ctx).Info("Sent", "response", response)
+			k.Logger(ctx).Info(fmt.Sprintf("Sent response: %v", response))
 
 			// we should update delegation records here.
 			if err := k.HandleSend(ctx, src, packetSequenceKey); err != nil {
@@ -111,13 +110,13 @@ func (k Keeper) HandleAcknowledgement(ctx sdk.Context, modulePacket channeltypes
 			response := distributiontypes.MsgSetWithdrawAddressResponse{}
 			err := proto.Unmarshal(msgData.Data, &response)
 			if err != nil {
-				k.Logger(ctx).Error("unable to unmarshal MsgSend response", "error", err)
+				k.Logger(ctx).Error(fmt.Sprintf("unable to unmarshal MsgSend response, error: %s", err.Error()))
 				return err
 			}
-			k.Logger(ctx).Info("WithdrawalAddress set", "response", response)
+			k.Logger(ctx).Info(fmt.Sprintf("WithdrawalAddress set response: %v", response))
 			continue
 		default:
-			k.Logger(ctx).Error("Unhandled acknowledgement packet", "type", msgData.MsgType)
+			k.Logger(ctx).Error(fmt.Sprintf("Unhandled acknowledgement packet type: %v", msgData.MsgType))
 		}
 	}
 
@@ -141,39 +140,16 @@ func (k *Keeper) HandleSend(ctx sdk.Context, msg sdk.Msg, sequence string) error
 	coin := sendMsg.Amount[0]
 	// Pull host zone
 	hostZoneDenom := coin.Denom
-	amount := coin.Amount.Int64()
 	zone, err := k.GetHostZoneFromHostDenom(ctx, hostZoneDenom)
 	if err != nil {
 		return err
 	}
 
 	// Check to and from addresses
-	withdrawalAddress := zone.GetWithdrawalAccount().GetAddress()
 	delegationAddress := zone.GetDelegationAccount().GetAddress()
 	redemptionAddress := zone.GetRedemptionAccount().GetAddress()
 
-	// Process bank sends that reinvest user rewards
-	if sendMsg.FromAddress == withdrawalAddress && sendMsg.ToAddress == delegationAddress {
-		// fetch epoch
-		strideEpochTracker, found := k.GetEpochTracker(ctx, epochtypes.STRIDE_EPOCH)
-		if !found {
-			k.Logger(ctx).Error("failed to find epoch")
-			return sdkerrors.Wrapf(types.ErrInvalidLengthEpochTracker, "no number for epoch (%s)", epochtypes.STRIDE_EPOCH)
-		}
-		epochNumber := strideEpochTracker.EpochNumber
-		// create a new record so that rewards are reinvested
-		record := recordstypes.DepositRecord{
-			Id:                 0,
-			Amount:             amount,
-			Denom:              hostZoneDenom,
-			HostZoneId:         zone.ChainId,
-			Status:             recordstypes.DepositRecord_STAKE,
-			Source:             recordstypes.DepositRecord_WITHDRAWAL_ICA,
-			DepositEpochNumber: epochNumber,
-		}
-		k.RecordsKeeper.AppendDepositRecord(ctx, record)
-		// process unbonding transfers from the DelegationAccount to the RedemptionAccount
-	} else if sendMsg.FromAddress == delegationAddress && sendMsg.ToAddress == redemptionAddress {
+	if sendMsg.FromAddress == delegationAddress && sendMsg.ToAddress == redemptionAddress {
 		k.Logger(ctx).Error("ACK - sendMsg.FromAddress == delegationAddress && sendMsg.ToAddress == redemptionAddress")
 		dayEpochTracker, found := k.GetEpochTracker(ctx, "day")
 		if !found {
@@ -192,7 +168,7 @@ func (k *Keeper) HandleSend(ctx sdk.Context, msg sdk.Msg, sequence string) error
 			// NOTE: at the beginning of the epoch we mark all PENDING_TRANSFER HostZoneUnbondingRecords as UNBONDED
 			// so that they're retried if the transfer fails
 			if hostZoneUnbonding.Status != recordstypes.HostZoneUnbonding_PENDING_TRANSFER {
-				k.Logger(ctx).Error("hostZoneUnbonding.Status != recordstypes.HostZoneUnbonding_PENDING_TRANSFER")
+				k.Logger(ctx).Error(fmt.Sprintf("hostZoneUnbonding.Status != recordstypes.HostZoneUnbonding_PENDING_TRANSFER (%v)", hostZoneUnbonding.Status))
 				continue
 			}
 			hostZoneUnbonding.Status = recordstypes.HostZoneUnbonding_TRANSFERRED
