@@ -20,6 +20,12 @@ const (
 	prefixQuery = iota + 1
 )
 
+// keys for proof queries to various stores
+const (
+	STAKING_STORE_QUERY_WITH_PROOF = "store/staking/key"
+	BANK_STORE_QUERY_WITH_PROOF    = "store/bank/key"
+)
+
 var (
 	KeyPrefixData  = []byte{prefixData}
 	KeyPrefixQuery = []byte{prefixQuery}

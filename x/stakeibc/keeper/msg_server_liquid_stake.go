@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"context"
+	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -22,7 +23,7 @@ func (k msgServer) LiquidStake(goCtx context.Context, msg *types.MsgLiquidStake)
 	// strided tx stakeibc liquid-stake 100 uatom
 	hostZone, err := k.GetHostZoneFromHostDenom(ctx, msg.HostDenom)
 	if err != nil {
-		k.Logger(ctx).Error("Host Zone not found for denom (%s)", msg.HostDenom)
+		k.Logger(ctx).Error(fmt.Sprintf("Host Zone not found for denom (%s)", msg.HostDenom))
 		return nil, sdkerrors.Wrapf(types.ErrInvalidHostZone, "no host zone found for denom (%s)", msg.HostDenom)
 	}
 	// get the sender address
