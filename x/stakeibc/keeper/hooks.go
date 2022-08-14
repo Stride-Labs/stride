@@ -57,8 +57,8 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochInfo epochstypes.EpochInf
 		k.Logger(ctx).Info("CleanupEpochUnbondingRecords")
 		k.CleanupEpochUnbondingRecords(ctx)
 		// lastly we create an empty unbonding record for this epoch
-		k.Logger(ctx).Info("CreateEpochUnbondings")
-		k.CreateEpochUnbondings(ctx, epochNumber)
+		k.Logger(ctx).Info("CreateEpochUnbondingRecord")
+		k.CreateEpochUnbondingRecord(ctx, epochNumber)
 	}
 
 	if epochIdentifier == epochstypes.STRIDE_EPOCH {
