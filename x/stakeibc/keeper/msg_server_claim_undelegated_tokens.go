@@ -40,7 +40,10 @@ func (k msgServer) ClaimUndelegatedTokens(goCtx context.Context, msg *types.MsgC
 	redemptionCallback := types.RedemptionCallback{
 		UserRedemptionRecordId: userRedemptionRecord.Id,
 	}
-	marshalledCallbackArgs := k.MarshalRedemptionCallbackArgs(ctx, redemptionCallback)
+	marshalledCallbackArgs, err := k.MarshalRedemptionCallbackArgs(ctx, redemptionCallback)
+	if err != nil {
+		return nil, sdkerrors.Wrapf(err, "unable to marshal redemption callback args")
+	}
 	_, err = k.SubmitTxs(ctx, icaTx.ConnectionId, icaTx.Msgs, icaTx.Account, icaTx.Timeout, "redemption", marshalledCallbackArgs)
 	if err != nil {
 		k.Logger(ctx).Error(fmt.Sprintf("Submit tx error: %s", err.Error()))
