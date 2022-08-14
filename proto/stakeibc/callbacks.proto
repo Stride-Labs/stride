@@ -14,9 +14,9 @@ message DelegateCallback {
   repeated SplitDelegation splitDelegations = 3;
 }
 
-// ---------------------- Redemption Callbacks ---------------------- //
+// ---------------------- Claim Callbacks ---------------------- //
 
-message RedemptionCallback {
+message ClaimCallback {
   string userRedemptionRecordId = 1;
 }
 
