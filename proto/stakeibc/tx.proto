@@ -42,7 +42,7 @@ message MsgLiquidStakeResponse {
 
 message MsgRedeemStake {
   string creator = 1;
-  int64 amount = 2;
+  uint64 amount = 2;
   string hostZone = 3;
   string receiver = 4;
 }
