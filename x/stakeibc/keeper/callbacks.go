@@ -217,7 +217,7 @@ func ValidatorExchangeRateCallback(k Keeper, ctx sdk.Context, args []byte, query
 	k.SetHostZone(ctx, zone)
 
 	// armed with the exch rate, we can now query the (val,del) delegation
-	err = k.UpdateDelegationsIcq(ctx, zone, queriedValidator.OperatorAddress)
+	err = k.QueryDelegationsIcq(ctx, zone, queriedValidator.OperatorAddress)
 	if err != nil {
 		k.Logger(ctx).Error(fmt.Sprintf("ValidatorCallback: failed to query delegation, zone %s, err: %s", zone.ChainId, err.Error()))
 		return err
@@ -266,7 +266,7 @@ func DelegatorSharesCallback(k Keeper, ctx sdk.Context, args []byte, query icqty
 			qNumTokens := qdel.Shares.Mul(v.TokensFromShares).TruncateInt()
 			k.Logger(ctx).Info(fmt.Sprintf("DelegationCallback: zone %s validator %s prevNtokens %v qNumTokens %v", zone.ChainId, v.Address, v.DelegationAmt, qNumTokens))
 			if qNumTokens.Uint64() < v.DelegationAmt {
-				// TODO(later) add some safety checks here (e.g. we could query the slashing module to confirm the decr in tokens was due to slash)
+				// TODO(TESTS-171) add some safety checks here (e.g. we could query the slashing module to confirm the decr in tokens was due to slash)
 				// update our records of the total stakedbal and of the validator's delegation amt
 				// NOTE:  we assume any decrease in delegation amt that's not tracked via records is a slash
 				slashAmt := v.DelegationAmt - qNumTokens.Uint64()

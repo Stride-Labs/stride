@@ -152,9 +152,22 @@ func (k Keeper) GetStrideEpochElapsedShare(ctx sdk.Context) (sdk.Dec, error) {
 		k.Logger(ctx).Error(fmt.Sprintf("Failed to get epoch tracker for %s", epochType))
 		return sdk.ZeroDec(), sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "Failed to get epoch tracker for %s", epochType)
 	}
-	prevEpochStartTime := epochTracker.NextEpochStartTime - epochTracker.Duration
-	elapsedShare := sdk.NewDec(ctx.BlockTime().UnixNano() - prevEpochStartTime).Quo(sdk.NewDec(epochTracker.Duration))
-	k.Logger(ctx).Info(fmt.Sprintf("epochTracker.NextEpochStartTime %v epochTracker.Duration %v prevEpochStartTime %v", epochTracker.NextEpochStartTime, epochTracker.Duration, prevEpochStartTime))
+	currEpochStartTime := epochTracker.NextEpochStartTime - epochTracker.Duration
+	currBlockTime := ctx.BlockTime().UnixNano()
+	// sanity check: current block time is:
+	//     * GT time of start of current epoch
+	//     * LT time of end of current epoch
+	if currBlockTime < currEpochStartTime || currBlockTime > epochTracker.NextEpochStartTime {
+		k.Logger(ctx).Error(fmt.Sprintf("Current block time %d is not within current epoch %d", currBlockTime, epochTracker.NextEpochStartTime))
+		return sdk.ZeroDec(), sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "Current block time %d is not within current epoch %d", currBlockTime, epochTracker.NextEpochStartTime)
+	}
+	elapsedShare := sdk.NewDec(currBlockTime - currEpochStartTime).Quo(sdk.NewDec(epochTracker.Duration))
+	// sanity check: elapsed share is \in (0,1)
+	if elapsedShare.LT(sdk.ZeroDec()) || elapsedShare.GT(sdk.OneDec()) {
+		k.Logger(ctx).Error(fmt.Sprintf("Elapsed share %s is not within (0,1)", elapsedShare))
+		return sdk.ZeroDec(), sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "Elapsed share %s is not within (0,1)", elapsedShare)
+	}
+	k.Logger(ctx).Info(fmt.Sprintf("epochTracker.NextEpochStartTime %v epochTracker.Duration %v currEpochStartTime %v", epochTracker.NextEpochStartTime, epochTracker.Duration, currEpochStartTime))
 	return elapsedShare, nil
 }
 
