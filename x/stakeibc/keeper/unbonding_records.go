@@ -16,7 +16,7 @@ import (
 	"github.com/Stride-Labs/stride/x/stakeibc/types"
 )
 
-func (k Keeper) CreateEpochUnbondingRecord(ctx sdk.Context, epochNumber int64) bool {
+func (k Keeper) CreateEpochUnbondingRecord(ctx sdk.Context, epochNumber uint64) bool {
 	hostZoneUnbondings := []*recordstypes.HostZoneUnbonding{}
 	addEpochUndelegation := func(ctx sdk.Context, index int64, hostZone types.HostZone) error {
 		hostZoneUnbonding := recordstypes.HostZoneUnbonding{
@@ -72,31 +72,55 @@ func (k Keeper) SendHostZoneUnbondings(ctx sdk.Context, hostZone types.HostZone)
 		return false
 	}
 	valAddrToUnbondAmt := make(map[string]int64)
-	overflowAmt := int64(0)
+	overflowAmt := uint64(0)
 	for _, validator := range validators {
 		valAddr := validator.GetAddress()
-		valUnbondAmt := cast.ToInt64(newUnbondingToValidator[valAddr])
-		currentAmtStaked := cast.ToInt64(validator.GetDelegationAmt())
+		valUnbondAmt := newUnbondingToValidator[valAddr]
+		currentAmtStaked := validator.GetDelegationAmt()
+		if err != nil {
+			k.Logger(ctx).Error(fmt.Sprintf("Error casting validator staked amount %d: %s", validator.GetDelegationAmt(), err.Error()))
+			return false
+		}
 		if valUnbondAmt > currentAmtStaked { // if we don't have enough assets to unbond
 			overflowAmt += valUnbondAmt - currentAmtStaked
 			valUnbondAmt = currentAmtStaked
 		}
-		valAddrToUnbondAmt[valAddr] = valUnbondAmt
+		valUnbondAmtInt64, err := cast.ToInt64E(valUnbondAmt)
+		if err != nil {
+			k.Logger(ctx).Error(fmt.Sprintf("Error casting validator staked amount %d: %s", validator.GetDelegationAmt(), err.Error()))
+			return false
+		}
+		valAddrToUnbondAmt[valAddr] = valUnbondAmtInt64
 	}
 	if overflowAmt > 0 { // if we need to reallocate any weights
 		for _, validator := range validators {
 			valAddr := validator.GetAddress()
-			valUnbondAmt := valAddrToUnbondAmt[valAddr]
+			valUnbondAmt, err := cast.ToUint64E(valAddrToUnbondAmt[valAddr])
+			if err != nil {
+				k.Logger(ctx).Error(fmt.Sprintf("Error casting validator staked amount %d: %s", validator.GetDelegationAmt(), err.Error()))
+				return false
+			}
 			currentAmtStaked := validator.GetDelegationAmt()
 			// store how many more tokens we could unbond, if needed
-			amtToPotentiallyUnbond := cast.ToInt64(currentAmtStaked) - valUnbondAmt
+			curAmtStaked := currentAmtStaked
+			amtToPotentiallyUnbond := curAmtStaked - valUnbondAmt
 			if amtToPotentiallyUnbond > 0 { // if we can afford to unbond more
 				if amtToPotentiallyUnbond > overflowAmt { // we can fully cover the overflow
-					valAddrToUnbondAmt[valAddr] += overflowAmt
+					overflowAmtInt64, err := cast.ToInt64E(overflowAmt)
+					if err != nil {
+						k.Logger(ctx).Error(fmt.Sprintf("Error casting overflow amount %d: %s", overflowAmt, err.Error()))
+						return false
+					}
+					valAddrToUnbondAmt[valAddr] += overflowAmtInt64
 					overflowAmt = 0
 					break
 				} else {
-					valAddrToUnbondAmt[valAddr] += amtToPotentiallyUnbond
+					amtToPotentiallyUnbondInt64, err := cast.ToInt64E(amtToPotentiallyUnbond)
+					if err != nil {
+						k.Logger(ctx).Error(fmt.Sprintf("Error casting overflow amount %d: %s", amtToPotentiallyUnbond, err.Error()))
+						return false
+					}
+					valAddrToUnbondAmt[valAddr] += amtToPotentiallyUnbondInt64
 					overflowAmt -= amtToPotentiallyUnbond
 				}
 			}
@@ -242,7 +266,12 @@ func (k Keeper) SweepAllUnbondedTokens(ctx sdk.Context) {
 				delegationAccount := zoneInfo.GetDelegationAccount()
 				redemptionAccount := zoneInfo.GetRedemptionAccount()
 
-				sweepCoin := sdk.NewCoin(zoneInfo.HostDenom, sdk.NewInt(cast.ToInt64(totalAmtTransferToRedemptionAcct)))
+				totalAmtTransferToRedemptionAcct, err := cast.ToInt64E(totalAmtTransferToRedemptionAcct)
+				if err != nil {
+					k.Logger(ctx).Error(fmt.Sprintf("\t\tCould not convert %d to int64", totalAmtTransferToRedemptionAcct))
+					return sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, fmt.Sprintf("\t\tCould not convert %d to int64", totalAmtTransferToRedemptionAcct))
+				}
+				sweepCoin := sdk.NewCoin(zoneInfo.HostDenom, sdk.NewInt(totalAmtTransferToRedemptionAcct))
 				var msgs []sdk.Msg
 				// construct the msg
 				msgs = append(msgs, &banktypes.MsgSend{FromAddress: delegationAccount.GetAddress(),
@@ -251,7 +280,7 @@ func (k Keeper) SweepAllUnbondedTokens(ctx sdk.Context) {
 				ctx.Logger().Info(fmt.Sprintf("Bank sending unbonded tokens batch, from delegation to redemption account. Msg: %v", msgs))
 
 				// Send the transaction through SubmitTx
-				_, err := k.SubmitTxsDayEpoch(ctx, zoneInfo.ConnectionId, msgs, *delegationAccount, "", nil)
+				_, err = k.SubmitTxsDayEpoch(ctx, zoneInfo.ConnectionId, msgs, *delegationAccount, "", nil)
 				if err != nil {
 					ctx.Logger().Info(fmt.Sprintf("Failed to SubmitTxs for %s", zoneInfo.ChainId))
 				}

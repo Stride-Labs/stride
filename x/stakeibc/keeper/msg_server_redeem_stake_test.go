@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/spf13/cast"
 	_ "github.com/stretchr/testify/suite"
 
 	epochtypes "github.com/Stride-Labs/stride/x/epochs/types"
@@ -24,7 +25,7 @@ type RedeemStakeTestCase struct {
 }
 
 func (suite *KeeperTestSuite) SetupRedeemStake() RedeemStakeTestCase {
-	redeemAmount := int64(1_000_000)
+	redeemAmount := uint64(1_000_000)
 	user := Account{
 		acc:           suite.TestAccs[0],
 		atomBalance:   sdk.NewInt64Coin("ibc/uatom", 10_000_000),
@@ -96,9 +97,14 @@ func (suite *KeeperTestSuite) TestRedeemStakeSuccessful() {
 
 	msg := tc.validMsg
 	user := tc.user
-	redeemAmount := sdk.NewInt(msg.Amount)
+	amt, err := cast.ToInt64E(msg.Amount)
+	if err != nil {
+		panic(err)
+	}
+	redeemAmount := sdk.NewInt(amt)
 
-	_, err := suite.msgServer.RedeemStake(sdk.WrapSDKContext(suite.Ctx), &msg)
+	// get the initial unbonding amount *before* calling liquid stake, so we can use it to calc expected vs actual in diff space
+	_, err = suite.msgServer.RedeemStake(sdk.WrapSDKContext(suite.Ctx), &msg)
 	suite.Require().NoError(err)
 
 	// User STUATOM balance should have DECREASED by the amount to be redeemed
@@ -210,20 +216,10 @@ func (suite *KeeperTestSuite) TestRedeemStakeRedeemMoreThanStaked() {
 	tc := suite.SetupRedeemStake()
 
 	invalidMsg := tc.validMsg
-	invalidMsg.Amount = int64(1_000_000_000_000_000)
+	invalidMsg.Amount = uint64(1_000_000_000_000_000)
 	_, err := suite.msgServer.RedeemStake(sdk.WrapSDKContext(suite.Ctx), &invalidMsg)
 
 	suite.Require().EqualError(err, fmt.Sprintf("cannot unstake an amount g.t. staked balance on host zone: %d: invalid amount", invalidMsg.Amount))
-}
-
-func (suite *KeeperTestSuite) TestRedeemStakeUnableToParseCoin() {
-	tc := suite.SetupRedeemStake()
-
-	invalidMsg := tc.validMsg
-	invalidMsg.Amount = int64(-1_000_000)
-	_, err := suite.msgServer.RedeemStake(sdk.WrapSDKContext(suite.Ctx), &invalidMsg)
-
-	suite.Require().EqualError(err, fmt.Sprintf("amount must be greater than 0. found: %d: invalid coins", invalidMsg.Amount))
 }
 
 func (suite *KeeperTestSuite) TestRedeemStakeNoEpochTrackerDay() {

@@ -39,7 +39,11 @@ func (k msgServer) SubmitQueryResponse(goCtx context.Context, msg *types.MsgSubm
 			}
 			connection, _ := k.IBCKeeper.ConnectionKeeper.GetConnection(ctx, q.ConnectionId)
 
-			height := clienttypes.NewHeight(clienttypes.ParseChainID(q.ChainId), cast.ToUint64(msg.Height)+1)
+			msgHeight, err := cast.ToUint64E(msg.Height)
+			if err != nil {
+				return nil, err
+			}
+			height := clienttypes.NewHeight(clienttypes.ParseChainID(q.ChainId), msgHeight+1)
 			consensusState, found := k.IBCKeeper.ClientKeeper.GetClientConsensusState(ctx, connection.ClientId, height)
 
 			if !found {

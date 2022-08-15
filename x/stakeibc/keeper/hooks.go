@@ -28,16 +28,30 @@ import (
 func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochInfo epochstypes.EpochInfo) {
 	// every epoch
 	epochIdentifier := epochInfo.Identifier
-	epochNumber := epochInfo.CurrentEpoch
+	epochNumber, err := cast.ToUint64E(epochInfo.CurrentEpoch)
+	if err != nil {
+		k.Logger(ctx).Error(fmt.Sprintf("Could not convert epoch number to uint64: %v", err))
+		return
+	}
 
 	k.Logger(ctx).Info(fmt.Sprintf("Handling epoch start %s %d", epochIdentifier, epochNumber))
 	k.Logger(ctx).Info(fmt.Sprintf("Epoch start time %d", epochInfo.GetCurrentEpochStartTime().UnixNano()))
 
+	ns, err := cast.ToUint64E(epochInfo.GetDuration().Nanoseconds())
+	if err != nil {
+		k.Logger(ctx).Error(fmt.Sprintf("Could not convert epoch duration to uint64: %v", err))
+		return
+	}
+	nextEpochStartTime, err := cast.ToUint64E(epochInfo.GetCurrentEpochStartTime().Add(epochInfo.GetDuration()).UnixNano())
+	if err != nil {
+		k.Logger(ctx).Error(fmt.Sprintf("Could not convert epoch duration to uint64: %v", err))
+		return
+	}
 	epochTracker := types.EpochTracker{
 		EpochIdentifier:    epochIdentifier,
-		EpochNumber:        cast.ToUint64(epochNumber),
-		Duration:           epochInfo.GetDuration().Nanoseconds(),
-		NextEpochStartTime: epochInfo.GetCurrentEpochStartTime().Add(epochInfo.GetDuration()).UnixNano(),
+		EpochNumber:        epochNumber,
+		Duration:           ns,
+		NextEpochStartTime: nextEpochStartTime,
 	}
 	// deposit records *must* exist for this epoch
 	k.Logger(ctx).Info(fmt.Sprintf("Setting epochTracker %v", epochTracker))
@@ -49,7 +63,7 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochInfo epochstypes.EpochInf
 		k.Logger(ctx).Info(fmt.Sprintf("Day %d Beginning", epochNumber))
 		// first we initiate unbondings from any hostZone where it's appropriate
 		k.Logger(ctx).Info("InitiateAllHostZoneUnbondings")
-		k.InitiateAllHostZoneUnbondings(ctx, cast.ToUint64(epochNumber))
+		k.InitiateAllHostZoneUnbondings(ctx, epochNumber)
 		// then we check previous epochs to see if unbondings finished, and sweep the tokens if so
 		k.Logger(ctx).Info("SweepAllUnbondedTokens")
 		k.SweepAllUnbondedTokens(ctx)
@@ -69,10 +83,6 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochInfo epochstypes.EpochInf
 		// e.g. CreateDepositRecordsForDepositInterval
 		// Imagine it will be slightly cleaner to track state by epoch, rather than
 		// by DepositInterval
-		if epochNumber < 0 {
-			k.Logger(ctx).Error(fmt.Sprintf("Stride Epoch %d negative", epochNumber))
-			return
-		}
 
 		// Create a new deposit record for each host zone for the upcoming epoch
 		k.Logger(ctx).Info("CreateDepositRecordsForEpoch")
@@ -84,13 +94,21 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochInfo epochstypes.EpochInf
 		depositRecords := k.RecordsKeeper.GetAllDepositRecord(ctx)
 
 		// Update the redemption rate
-		redemptionRateInterval := cast.ToInt64(k.GetParam(ctx, types.KeyRedemptionRateInterval))
+		redemptionRateInterval, err := cast.ToUint64E(k.GetParam(ctx, types.KeyRedemptionRateInterval))
+		if err != nil {
+			k.Logger(ctx).Error(fmt.Sprintf("Could not convert redemptionRateInterval to uint64: %v", err))
+			return
+		}
 		if epochNumber%redemptionRateInterval == 0 {
 			k.Logger(ctx).Info("Triggering update redemption rate")
 			k.UpdateRedemptionRates(ctx, depositRecords)
 		}
 
-		depositInterval := cast.ToInt64(k.GetParam(ctx, types.KeyDepositInterval))
+		depositInterval, err := cast.ToUint64E(k.GetParam(ctx, types.KeyDepositInterval))
+		if err != nil {
+			k.Logger(ctx).Error(fmt.Sprintf("Could not convert depositInterval to int64: %v", err))
+			return
+		}
 		if epochNumber%depositInterval == 0 {
 			// process previous deposit records
 			k.Logger(ctx).Info("TransferExistingDepositsToHostZones")
@@ -108,13 +126,21 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochInfo epochstypes.EpochInf
 		// records always accurately reflect the state of the controller / host chain by the next epoch.
 		// Put another way, all outstanding ICA calls / IBC transfers must be settled on the controller
 		// chain before the next epoch begins.
-		delegationInterval := cast.ToInt64(k.GetParam(ctx, types.KeyDelegateInterval))
+		delegationInterval, err := cast.ToUint64E(k.GetParam(ctx, types.KeyDelegateInterval))
+		if err != nil {
+			k.Logger(ctx).Error(fmt.Sprintf("Could not convert delegationInterval to int64: %v", err))
+			return
+		}
 		if epochNumber%delegationInterval == 0 {
 			k.Logger(ctx).Info("StakeExistingDepositsOnHostZones")
 			k.StakeExistingDepositsOnHostZones(ctx, epochNumber, depositRecords)
 		}
 
-		reinvestInterval := cast.ToInt64(k.GetParam(ctx, types.KeyReinvestInterval))
+		reinvestInterval, err := cast.ToUint64E(k.GetParam(ctx, types.KeyReinvestInterval))
+		if err != nil {
+			k.Logger(ctx).Error(fmt.Sprintf("Could not convert reinvestInterval to int64: %v", err))
+			return
+		}
 		if epochNumber%reinvestInterval == 0 { // allow a few blocks from UpdateUndelegatedBal to avoid conflicts
 			for _, hz := range k.GetAllHostZone(ctx) {
 				if (&hz).WithdrawalAccount != nil { // only process host zones once withdrawal accounts are registered
@@ -173,7 +199,7 @@ func (h Hooks) AfterEpochEnd(ctx sdk.Context, epochInfo epochstypes.EpochInfo) {
 }
 
 // -------------------- helper functions --------------------
-func (k Keeper) CreateDepositRecordsForEpoch(ctx sdk.Context, epochNumber int64) {
+func (k Keeper) CreateDepositRecordsForEpoch(ctx sdk.Context, epochNumber uint64) {
 	// Create one new deposit record / host zone for the next epoch
 	createDepositRecords := func(ctx sdk.Context, index int64, zoneInfo types.HostZone) error {
 		k.Logger(ctx).Info(fmt.Sprintf("createDepositRecords, index: %d, zoneInfo: %s", index, zoneInfo.ConnectionId))
@@ -184,7 +210,7 @@ func (k Keeper) CreateDepositRecordsForEpoch(ctx sdk.Context, epochNumber int64)
 			Denom:              zoneInfo.HostDenom,
 			HostZoneId:         zoneInfo.ChainId,
 			Status:             recordstypes.DepositRecord_TRANSFER,
-			DepositEpochNumber: cast.ToUint64(epochNumber),
+			DepositEpochNumber: epochNumber,
 		}
 		k.RecordsKeeper.AppendDepositRecord(ctx, depositRecord)
 		return nil
@@ -208,13 +234,14 @@ func (k Keeper) SetWithdrawalAddress(ctx sdk.Context) {
 	k.IterateHostZones(ctx, setWithdrawalAddresses)
 }
 
-func (k Keeper) StakeExistingDepositsOnHostZones(ctx sdk.Context, epochNumber int64, depositRecords []recordstypes.DepositRecord) {
+func (k Keeper) StakeExistingDepositsOnHostZones(ctx sdk.Context, epochNumber uint64, depositRecords []recordstypes.DepositRecord) {
 	stakeDepositRecords := utils.FilterDepositRecords(depositRecords, func(record recordstypes.DepositRecord) (condition bool) {
 		return record.Status == recordstypes.DepositRecord_STAKE
 	})
 	for _, depositRecord := range stakeDepositRecords {
 		if depositRecord.DepositEpochNumber < cast.ToUint64(epochNumber) {
-			k.Logger(ctx).Info(fmt.Sprintf("\t[StakeExistingDepositsOnHostZones] Processing deposit ID:{%d} DENOM:{%s} AMT:{%d}", depositRecord.Id, depositRecord.Denom, depositRecord.Amount))
+			pstr := fmt.Sprintf("\t[StakeExistingDepositsOnHostZones] Processing deposit ID:{%d} DENOM:{%s} AMT:{%d}", depositRecord.Id, depositRecord.Denom, depositRecord.Amount)
+			k.Logger(ctx).Info(pstr)
 			hostZone, hostZoneFound := k.GetHostZone(ctx, depositRecord.HostZoneId)
 			if !hostZoneFound {
 				k.Logger(ctx).Error(fmt.Sprintf("[StakeExistingDepositsOnHostZones] Host zone not found for deposit record {%d}", depositRecord.Id))
@@ -252,16 +279,17 @@ func (k Keeper) StakeExistingDepositsOnHostZones(ctx sdk.Context, epochNumber in
 	}
 }
 
-func (k Keeper) TransferExistingDepositsToHostZones(ctx sdk.Context, epochNumber int64, depositRecords []recordstypes.DepositRecord) {
+func (k Keeper) TransferExistingDepositsToHostZones(ctx sdk.Context, epochNumber uint64, depositRecords []recordstypes.DepositRecord) {
 	transferDepositRecords := utils.FilterDepositRecords(depositRecords, func(record recordstypes.DepositRecord) (condition bool) {
 		return record.Status == recordstypes.DepositRecord_TRANSFER
 	})
-	ibcTimeoutBlocks := cast.ToUint64(k.GetParam(ctx, types.KeyIbcTimeoutBlocks))
+	ibcTimeoutBlocks := k.GetParam(ctx, types.KeyIbcTimeoutBlocks)
 	addr := k.accountKeeper.GetModuleAccount(ctx, types.ModuleName).GetAddress().String()
 	var emptyRecords []uint64
 	for _, depositRecord := range transferDepositRecords {
 		if depositRecord.DepositEpochNumber < cast.ToUint64(epochNumber) {
-			k.Logger(ctx).Info(fmt.Sprintf("\t[TransferExistingDepositsToHostZones] Processing deposits ID: %d, Amount: %d%s", depositRecord.Id, depositRecord.Amount, depositRecord.Denom))
+			pstr := fmt.Sprintf("\t[TransferExistingDepositsToHostZones] Processing deposits {%d} {%s} {%d}", depositRecord.Id, depositRecord.Denom, depositRecord.Amount)
+			k.Logger(ctx).Info(pstr)
 
 			// skip empty records
 			if depositRecord.Amount <= 0 {
@@ -289,8 +317,8 @@ func (k Keeper) TransferExistingDepositsToHostZones(ctx sdk.Context, epochNumber
 			} else {
 				k.Logger(ctx).Info(fmt.Sprintf("Found blockHeight for host zone %s: %d", hostZone.ConnectionId, blockHeight))
 			}
-			timeoutHeight := clienttypes.NewHeight(0, cast.ToUint64(blockHeight)+ibcTimeoutBlocks)
-			transferCoin := sdk.NewCoin(hostZone.GetIBCDenom(), sdk.NewInt(int64(depositRecord.Amount)))
+			timeoutHeight := clienttypes.NewHeight(0, blockHeight+ibcTimeoutBlocks)
+			transferCoin := sdk.NewCoin(hostZone.GetIBCDenom(), sdk.NewInt(depositRecord.Amount))
 			goCtx := sdk.WrapSDKContext(ctx)
 
 			msg := ibctypes.NewMsgTransfer("transfer", hostZone.TransferChannelId, transferCoin, addr, delegateAddress, timeoutHeight, 0)
@@ -317,21 +345,31 @@ func (k Keeper) UpdateRedemptionRates(ctx sdk.Context, depositRecords []recordst
 
 		undelegatedBalance, error := k.GetUndelegatedBalance(zoneInfo, depositRecords)
 		if error != nil {
+			k.Logger(ctx).Error(fmt.Sprintf("Could not get undelegated balance for host zone %s: %s", zoneInfo.ChainId, error.Error()))
 			return error
 		}
-		stakedBalance := zoneInfo.StakedBal
+		k.Logger(ctx).Info(fmt.Sprintf("undelegatedBalance: %d", undelegatedBalance))
+		stakedBalance, err := cast.ToInt64E(zoneInfo.GetStakedBal())
+		if err != nil {
+			k.Logger(ctx).Error(fmt.Sprintf("Could not get staked balance for host zone %s: %s", zoneInfo.ChainId, err.Error()))
+			return err
+		}
+		k.Logger(ctx).Info(fmt.Sprintf("stakedBalance: %d", stakedBalance))
 		moduleAcctBalance, error := k.GetModuleAccountBalance(zoneInfo, depositRecords)
-
 		if error != nil {
+			k.Logger(ctx).Error(fmt.Sprintf("Could not get module account balance for host zone %s: %s", zoneInfo.ChainId, error.Error()))
 			return error
 		}
+		k.Logger(ctx).Info(fmt.Sprintf("moduleAcctBalance: %d", moduleAcctBalance))
 		stSupply := k.bankKeeper.GetSupply(ctx, types.StAssetDenomFromHostZoneDenom(zoneInfo.HostDenom)).Amount.Int64()
 		if stSupply == 0 {
+			k.Logger(ctx).Info(fmt.Sprintf("stSupply: %d", stSupply))
 			return fmt.Errorf("stSupply is 0")
 		}
+		k.Logger(ctx).Info(fmt.Sprintf("stSupply: %d", stSupply))
 
 		// calc redemptionRate = (UB+SB+MA)/stSupply
-		k.Logger(ctx).Info(fmt.Sprintf("undelegatedBalance: %d, stakedBalance: %d, moduleAcctBalance: %d, stSupply: %d", undelegatedBalance, stakedBalance, moduleAcctBalance, stSupply))
+		k.Logger(ctx).Info(fmt.Sprintf("[REDEMPTION-RATE] undelegatedBalance: %d, stakedBalance: %d, moduleAcctBalance: %d, stSupply: %d", undelegatedBalance, stakedBalance, moduleAcctBalance, stSupply))
 		redemptionRate := (sdk.NewDec(undelegatedBalance).Add(sdk.NewDec(stakedBalance)).Add(sdk.NewDec(moduleAcctBalance))).Quo(sdk.NewDec(stSupply))
 		k.Logger(ctx).Info(fmt.Sprintf("[REDEMPTION-RATE] New Rate is %d (vs prev %d)", redemptionRate, zoneInfo.LastRedemptionRate))
 
@@ -368,7 +406,7 @@ func (k Keeper) GetModuleAccountBalance(hostZone types.HostZone, depositRecords 
 	})
 
 	// sum the amounts of the deposit records
-	var totalAmount int64
+	totalAmount := int64(0)
 	for _, depositRecord := range ModuleAccountRecords {
 		totalAmount += depositRecord.Amount
 	}
