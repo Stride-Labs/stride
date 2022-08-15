@@ -61,28 +61,28 @@ func (k msgServer) RegisterHostZone(goCtx context.Context, msg *types.MsgRegiste
 	// NOTE: in the future, if we implement proxy governance, we'll need many more delegate accounts
 	delegateAccount := types.FormatICAAccountOwner(chainId, types.ICAAccountType_DELEGATION)
 	if err := k.ICAControllerKeeper.RegisterInterchainAccount(ctx, zone.ConnectionId, delegateAccount); err != nil {
-		k.Logger(ctx).Error("unable to register delegate account", "error", err)
+		k.Logger(ctx).Error(fmt.Sprintf("unable to register delegate account, err: %s", err.Error()))
 		return nil, err
 	}
 
 	// generate fee account
 	feeAccount := types.FormatICAAccountOwner(chainId, types.ICAAccountType_FEE)
 	if err := k.ICAControllerKeeper.RegisterInterchainAccount(ctx, zone.ConnectionId, feeAccount); err != nil {
-		k.Logger(ctx).Error("unable to register fee account", "error", err)
+		k.Logger(ctx).Error(fmt.Sprintf("unable to register fee account, err: %s", err.Error()))
 		return nil, err
 	}
 
 	// generate withdrawal account
 	withdrawalAccount := types.FormatICAAccountOwner(chainId, types.ICAAccountType_WITHDRAWAL)
 	if err := k.ICAControllerKeeper.RegisterInterchainAccount(ctx, zone.ConnectionId, withdrawalAccount); err != nil {
-		k.Logger(ctx).Error("unable to register withdrawal account", "error", err)
+		k.Logger(ctx).Error("unable to register withdrawal account, err: %s", err.Error())
 		return nil, err
 	}
 
 	// generate redemption account
 	redemptionAccount := types.FormatICAAccountOwner(chainId, types.ICAAccountType_REDEMPTION)
 	if err := k.ICAControllerKeeper.RegisterInterchainAccount(ctx, zone.ConnectionId, redemptionAccount); err != nil {
-		k.Logger(ctx).Error("unable to register redemption account", "error", err)
+		k.Logger(ctx).Error(fmt.Sprintf("unable to register redemption account, err: %s", err.Error()))
 		return nil, err
 	}
 
@@ -98,22 +98,19 @@ func (k msgServer) RegisterHostZone(goCtx context.Context, msg *types.MsgRegiste
 		k.Logger(ctx).Error(errMsg)
 		return nil, sdkerrors.Wrapf(recordstypes.ErrEpochUnbondingRecordNotFound, errMsg)
 	}
-	hostZoneUnbondings := epochUnbondingRecord.GetHostZoneUnbondings()
-	if len(hostZoneUnbondings) == 0 {
-		hostZoneUnbondings = make(map[string]*recordstypes.HostZoneUnbonding)
-	}
-	hostZoneUnbondings[zone.ChainId] = &recordstypes.HostZoneUnbonding{
+	hostZoneUnbonding := &recordstypes.HostZoneUnbonding{
 		NativeTokenAmount: 0,
 		StTokenAmount:     0,
-		Denom:             zone.HostDenom,
-		HostZoneId:        zone.ChainId,
-		Status:            recordstypes.HostZoneUnbonding_BONDED,
+		Denom:      zone.HostDenom,
+		HostZoneId: zone.ChainId,
+		Status:     recordstypes.HostZoneUnbonding_BONDED,
 	}
-	epochUnbondingRecord.HostZoneUnbondings = hostZoneUnbondings
-	k.RecordsKeeper.SetEpochUnbondingRecord(ctx, epochUnbondingRecord)
-	k.Logger(ctx).Info(fmt.Sprintf("hostZoneUnbondings after register host zone %v", epochUnbondingRecord.GetHostZoneUnbondings()))
-
-	// TODO(TEST-39): TODO(TEST-42): Set validators on the host zone, either using ICQ + intents or a WL
+	updatedEpochUnbondingRecord, success := k.RecordsKeeper.AddHostZoneToEpochUnbondingRecord(ctx, epochUnbondingRecord.EpochNumber, chainId, hostZoneUnbonding)
+	if !success {
+		k.Logger(ctx).Error(fmt.Sprintf("Failed to set host zone epoch unbonding record: epochNumber %d, chainId %s, hostZoneUnbonding %v", epochUnbondingRecord.EpochNumber, chainId, hostZoneUnbonding))
+		return nil, sdkerrors.Wrapf(types.ErrEpochNotFound, "couldn't set host zone epoch unbonding record. err: %s", err.Error())
+	}
+	k.RecordsKeeper.SetEpochUnbondingRecord(ctx, *updatedEpochUnbondingRecord)
 
 	// emit events
 	ctx.EventManager().EmitEvent(

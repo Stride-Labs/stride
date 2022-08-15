@@ -100,8 +100,10 @@ func (k Keeper) CallRegisteredICACallback(ctx sdk.Context, modulePacket channelt
 	callbackData, found := k.GetCallbackData(ctx, callbackDataKey)
 	if !found {
 		errMsg := fmt.Sprintf("callback data not found for portID: %s, channelID: %s, sequence: %d", portID, channelID, modulePacket.Sequence)
-		k.Logger(ctx).Info(errMsg)
+		k.Logger(ctx).Error(errMsg)
 		return nil
+	} else {
+		k.Logger(ctx).Info(fmt.Sprintf("callback data found for portID: %s, channelID: %s, sequence: %d", portID, channelID, modulePacket.Sequence))
 	}
 
 	// fetch the callback function
@@ -121,6 +123,8 @@ func (k Keeper) CallRegisteredICACallback(ctx sdk.Context, modulePacket channelt
 			k.Logger(ctx).Error(errMsg)
 			return sdkerrors.Wrapf(types.ErrCallbackFailed, errMsg)
 		}
+	} else {
+		k.Logger(ctx).Error(fmt.Sprintf("Callback %v has no associated callback", callbackData))
 	}
 	// QUESTION: Do we want to catch the case where the callback ID has not been registered?
 	// Maybe just as an info log if it's expected that some acks do not have an associated callback?

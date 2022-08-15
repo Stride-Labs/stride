@@ -172,12 +172,12 @@ func (im IBCModule) OnAcknowledgementPacket(
 	// ICS-20 ack
 	var ack channeltypes.Acknowledgement
 	if err := ibctransfertypes.ModuleCdc.UnmarshalJSON(acknowledgement, &ack); err != nil {
-		im.keeper.Logger(ctx).Error("Error unmarshalling ack  %v", err)
+		im.keeper.Logger(ctx).Error(fmt.Sprintf("Error unmarshalling ack  %v", err.Error()))
 		return sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "cannot unmarshal ICS-20 transfer packet acknowledgement: %v", err)
 	}
 	var data ibctransfertypes.FungibleTokenPacketData
 	if err := ibctransfertypes.ModuleCdc.UnmarshalJSON(packet.GetData(), &data); err != nil {
-		im.keeper.Logger(ctx).Error("Error unmarshalling packet  %v", err)
+		im.keeper.Logger(ctx).Error(fmt.Sprintf("Error unmarshalling packet  %v", err.Error()))
 		return sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "cannot unmarshal ICS-20 transfer packet data: %s", err.Error())
 	}
 
@@ -187,8 +187,7 @@ func (im IBCModule) OnAcknowledgementPacket(
 	if data.Sender == im.keeper.AccountKeeper.GetModuleAddress(stakeibctypes.ModuleName).String() {
 		switch resp := ack.Response.(type) {
 		case *channeltypes.Acknowledgement_Result:
-			log := fmt.Sprintf("\t [IBC-TRANSFER] Acknowledgement_Result {%s}", string(resp.Result))
-			im.keeper.Logger(ctx).Info(log)
+			im.keeper.Logger(ctx).Info(fmt.Sprintf("\t [IBC-TRANSFER] Acknowledgement_Result {%s}", string(resp.Result)))
 			// UPDATE RECORD
 			// match record based on amount
 			amount, err := strconv.ParseInt(data.Amount, 10, 64)
@@ -202,11 +201,9 @@ func (im IBCModule) OnAcknowledgementPacket(
 			// update the record
 			record.Status = types.DepositRecord_STAKE
 			im.keeper.SetDepositRecord(ctx, *record)
-			log = fmt.Sprintf("\t [IBC-TRANSFER] Deposit record updated: {%v}", record)
-			im.keeper.Logger(ctx).Info(log)
+			im.keeper.Logger(ctx).Info(fmt.Sprintf("\t [IBC-TRANSFER] Deposit record updated: {%v}", record))
 		case *channeltypes.Acknowledgement_Error:
-			log := fmt.Sprintf("\t [IBC-TRANSFER] Acknowledgement_Error {%s}", resp.Error)
-			im.keeper.Logger(ctx).Error(log)
+			im.keeper.Logger(ctx).Error(fmt.Sprintf("\t [IBC-TRANSFER] Acknowledgement_Error {%s}", resp.Error))
 		}
 	}
 

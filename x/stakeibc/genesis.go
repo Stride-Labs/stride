@@ -1,9 +1,10 @@
 package stakeibc
 
 import (
+	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	"github.com/Stride-Labs/stride/x/stakeibc/keeper"
 	"github.com/Stride-Labs/stride/x/stakeibc/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // InitGenesis initializes the capability module's state from a provided genesis
@@ -21,10 +22,6 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) 
 
 	// Set hostZone count
 	k.SetHostZoneCount(ctx, genState.HostZoneCount)
-	// Set all the pendingClaims
-	for _, elem := range genState.PendingClaimsList {
-		k.SetPendingClaims(ctx, elem)
-	}
 	// this line is used by starport scaffolding # genesis/module/init
 	// TODO(TEST-22): Set ports
 	// k.SetPort(ctx, genState.PortId)
@@ -54,7 +51,6 @@ func ExportGenesis(ctx sdk.Context, k keeper.Keeper) *types.GenesisState {
 		genesis.ICAAccount = &iCAAccount
 	}
 	genesis.EpochTrackerList = k.GetAllEpochTracker(ctx)
-	genesis.PendingClaimsList = k.GetAllPendingClaims(ctx)
 	// this line is used by starport scaffolding # genesis/module/export
 
 	return genesis

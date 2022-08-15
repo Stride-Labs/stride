@@ -36,13 +36,23 @@ func (k msgServer) ClaimUndelegatedTokens(goCtx context.Context, msg *types.MsgC
 		return nil, sdkerrors.Wrapf(err, "unable to build redemption transfer message")
 	}
 
-	sequence, err := k.SubmitTxs(ctx, icaTx.ConnectionId, icaTx.Msgs, icaTx.Account, icaTx.Timeout, "", nil)
+	// add callback data
+	claimCallback := types.ClaimCallback{
+		UserRedemptionRecordId: userRedemptionRecord.Id,
+	}
+	marshalledCallbackArgs, err := k.MarshalClaimCallbackArgs(ctx, claimCallback)
+	if err != nil {
+		return nil, sdkerrors.Wrapf(err, "unable to marshal claim callback args")
+	}
+	_, err = k.SubmitTxs(ctx, icaTx.ConnectionId, icaTx.Msgs, icaTx.Account, icaTx.Timeout, "redemption", marshalledCallbackArgs)
 	if err != nil {
 		k.Logger(ctx).Error(fmt.Sprintf("Submit tx error: %s", err.Error()))
 		return nil, sdkerrors.Wrapf(err, "unable to submit ICA redemption tx")
 	}
 
-	k.FlagRedemptionRecordsAsClaimed(ctx, userRedemptionRecord, sequence)
+	// Set isClaimable to false, so that the record can't be claimed again
+	userRedemptionRecord.IsClaimable = false
+	k.RecordsKeeper.SetUserRedemptionRecord(ctx, *userRedemptionRecord)
 
 	return &types.MsgClaimUndelegatedTokensResponse{}, nil
 }
@@ -82,20 +92,26 @@ func (k Keeper) GetRedemptionTransferMsg(ctx sdk.Context, userRedemptionRecord *
 	}
 
 	var msgs []sdk.Msg
+	rrAmt, err := cast.ToInt64E(userRedemptionRecord.Amount)
+	if err != nil {
+		return nil, sdkerrors.Wrap(types.ErrInvalidUserRedemptionRecord, err.Error())
+	}
 	msgs = append(msgs, &bankTypes.MsgSend{
 		FromAddress: redemptionAccount.Address,
 		ToAddress:   userRedemptionRecord.Receiver,
-		Amount:      sdk.NewCoins(sdk.NewInt64Coin(userRedemptionRecord.Denom, cast.ToInt64(userRedemptionRecord.Amount))),
+		Amount:      sdk.NewCoins(sdk.NewInt64Coin(userRedemptionRecord.Denom, rrAmt)),
 	})
 
 	// Give claims a 10 minute timeout
-	epoch_tracker, found := k.GetEpochTracker(ctx, epochstypes.STRIDE_EPOCH)
+	epochTracker, found := k.GetEpochTracker(ctx, epochstypes.STRIDE_EPOCH)
 	if !found {
 		errMsg := fmt.Sprintf("Epoch tracker not found for epoch %s", epochstypes.STRIDE_EPOCH)
 		k.Logger(ctx).Error(errMsg)
 		return nil, sdkerrors.Wrap(types.ErrEpochNotFound, errMsg)
 	}
-	timeout := cast.ToUint64(epoch_tracker.NextEpochStartTime) + cast.ToUint64(k.GetParam(ctx, types.KeyICATimeoutNanos))
+	icaTimeOutNanos := k.GetParam(ctx, types.KeyICATimeoutNanos)
+	nextEpochStarttime := epochTracker.NextEpochStartTime
+	timeout := nextEpochStarttime + icaTimeOutNanos
 
 	icaTx := IcaTx{
 		ConnectionId: hostZone.GetConnectionId(),
@@ -105,18 +121,4 @@ func (k Keeper) GetRedemptionTransferMsg(ctx sdk.Context, userRedemptionRecord *
 	}
 
 	return &icaTx, nil
-}
-
-func (k Keeper) FlagRedemptionRecordsAsClaimed(ctx sdk.Context, userRedemptionRecord *recordstypes.UserRedemptionRecord, sequence uint64) {
-	// Set isClaimable to false, so that the record can't be claimed again
-	userRedemptionRecord.IsClaimable = false
-	k.RecordsKeeper.SetUserRedemptionRecord(ctx, *userRedemptionRecord)
-
-	// Store the sequence number to record id mapping
-	pendingClaims := types.PendingClaims{
-		Sequence: fmt.Sprint(sequence),
-		// NOTE: we could extend this to process multiple claims in the future, given this field is repeated
-		UserRedemptionRecordIds: []string{userRedemptionRecord.Id},
-	}
-	k.SetPendingClaims(ctx, pendingClaims)
 }
