@@ -105,7 +105,7 @@ func UndelegateCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, a
 
 	// Update the status and time of each unbonding record and grab the number of stTokens that need to be burned
 	stAmountToBurn := int64(0)
-	for _, epochNumber := range undelegateCallback.EpochUnbondingNumbers {
+	for _, epochNumber := range undelegateCallback.EpochUnbondingRecordIds {
 		epochUnbondingRecord, found := k.RecordsKeeper.GetEpochUnbondingRecord(ctx, epochNumber)
 		if !found {
 			errMsg := fmt.Sprintf("Unable to find epoch unbonding record for epoch: %d", epochNumber)
