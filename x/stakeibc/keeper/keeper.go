@@ -157,6 +157,8 @@ func (k Keeper) GetStrideEpochElapsedShare(ctx sdk.Context) (sdk.Dec, error) {
 		k.Logger(ctx).Error(fmt.Sprintf("Failed to convert epoch duration to int64: %s", err.Error()))
 		return sdk.ZeroDec(), sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "Failed to convert epoch duration to int64: %s", err.Error())
 	}
+	// log epoch length
+	k.Logger(ctx).Info(fmt.Sprintf("Epoch length: %d", durationInt64))
 	nextEpochStartTimeInt64, err := cast.ToInt64E(epochTracker.NextEpochStartTime)
 	if err != nil {
 		k.Logger(ctx).Error(fmt.Sprintf("Failed to convert next epoch start time to int64: %s", err.Error()))
