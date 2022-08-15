@@ -141,7 +141,7 @@ func (k Keeper) MarshalReinvestCallbackArgs(ctx sdk.Context, reinvestCallback ty
 func (k Keeper) UnmarshalReinvestCallbackArgs(ctx sdk.Context, reinvestCallback []byte) (*types.ReinvestCallback, error) {
 	unmarshalledReinvestCallback := types.ReinvestCallback{}
 	if err := proto.Unmarshal(reinvestCallback, &unmarshalledReinvestCallback); err != nil {
-        k.Logger(ctx).Error(fmt.Sprintf("UnmarshalReinvestCallbackArgs %s", err.Error()))
+		k.Logger(ctx).Error(fmt.Sprintf("UnmarshalReinvestCallbackArgs %s", err.Error()))
 		return nil, err
 	}
 	return &unmarshalledReinvestCallback, nil
@@ -163,7 +163,7 @@ func ReinvestCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ack
 	}
 	amount := reinvestCallback.ReinvestAmount.Amount
 	denom := reinvestCallback.ReinvestAmount.Denom
-	
+
 	// fetch epoch
 	strideEpochTracker, found := k.GetEpochTracker(ctx, epochtypes.STRIDE_EPOCH)
 	if !found {
@@ -172,13 +172,8 @@ func ReinvestCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ack
 	}
 	epochNumber := strideEpochTracker.EpochNumber
 	// create a new record so that rewards are reinvested
-	amt, err := cast.ToInt64E(amount)
-	if err != nil {
-		k.Logger(ctx).Error(fmt.Sprintf("failed to convert amount %v", err.Error()))
-		return err
-	}
 	record := recordstypes.DepositRecord{
-		Amount:             amt,
+		Amount:             amount.Int64(),
 		Denom:              denom,
 		HostZoneId:         reinvestCallback.HostZoneId,
 		Status:             recordstypes.DepositRecord_STAKE,
@@ -188,4 +183,3 @@ func ReinvestCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ack
 	k.RecordsKeeper.AppendDepositRecord(ctx, record)
 	return nil
 }
-
