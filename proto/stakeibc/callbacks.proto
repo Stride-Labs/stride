@@ -16,6 +16,12 @@ message DelegateCallback {
   repeated SplitDelegation splitDelegations = 3;
 }
 
+// ---------------------- Claim Callbacks ---------------------- //
+
+message ClaimCallback {
+  string userRedemptionRecordId = 1;
+}
+
 // ---------------------- Reinvest Callback ---------------------- //
 message ReinvestCallback {
   cosmos.base.v1beta1.Coin reinvestAmount = 1 [

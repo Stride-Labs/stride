@@ -10,12 +10,6 @@ import "stakeibc/epoch_tracker.proto";
 
 option go_package = "github.com/Stride-Labs/stride/x/stakeibc/types";
 
-message PendingClaims {
-  string sequence = 1; 
-  repeated string userRedemptionRecordIds = 2; 
-  
-}
-
 // GenesisState defines the stakeibc module's genesis state.
 message GenesisState {
   Params params = 1 [(gogoproto.nullable) = false];
@@ -27,7 +21,6 @@ message GenesisState {
   // stores a map from hostZone base denom to hostZone
   map<string, string> denomToHostZone = 9;
   repeated EpochTracker epochTrackerList = 10 [(gogoproto.nullable) = false];
-  repeated PendingClaims pendingClaimsList = 11 [(gogoproto.nullable) = false];
   // this line is used by starport scaffolding # genesis/proto/state
-  reserved 3;
+  reserved 3, 11;
 }
