@@ -119,6 +119,7 @@ start-docker: build-docker
 	@sh scripts/start_network.sh 
 
 clean-docker: 
+	@pkill -f "docker-compose logs"
 	@docker-compose stop
 	@docker-compose down
 	rm -rf scripts/state
