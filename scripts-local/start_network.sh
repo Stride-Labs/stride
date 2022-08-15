@@ -83,6 +83,7 @@ echo "Done"
 # Create a copy of the state that can be used for the "cache" option
 echo "Network is ready for transactions.\n"
 rm -rf $SCRIPT_DIR/.state.backup
+sleep 1
 cp -r $SCRIPT_DIR/state $SCRIPT_DIR/.state.backup
 
 if [ "$CACHE" != "true" ]; then
