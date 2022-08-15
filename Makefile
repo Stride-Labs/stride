@@ -119,7 +119,6 @@ start-docker: build-docker
 	@sh scripts/start_network.sh 
 
 clean-docker: 
-	@pkill -f "docker-compose logs"
 	@docker-compose stop
 	@docker-compose down
 	rm -rf scripts/state
@@ -144,7 +143,6 @@ start-local: build-local
 	@sh scripts-local/start_network.sh ${cache}
 
 stop-local:
-	@killall gaiad strided junod osmosisd rly hermes interchain-queries || true
+	@killall gaiad strided junod osmosisd rly hermes interchain-queries icq-startup.sh || true
 	@pkill -f "/bin/bash.*create_logs.sh" || true
 	@pkill -f "sh.*start_network.sh" || true
-
