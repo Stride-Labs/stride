@@ -54,10 +54,11 @@ func (c ICACallbacks) AddICACallback(id string, fn interface{}) icacallbackstype
 }
 
 func (c ICACallbacks) RegisterICACallbacks() icacallbackstypes.ICACallbackHandler {
-	return c.
+	a := c.
 		AddICACallback(DELEGATE, ICACallback(DelegateCallback)).
 		AddICACallback(REINVEST, ICACallback(ReinvestCallback)).
 		AddICACallback(UNDELEGATE, ICACallback(UndelegateCallback))
+	return a.(ICACallbacks)
 }
 
 // ----------------------------------- Delegate Callback ----------------------------------- //
