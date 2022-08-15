@@ -164,7 +164,11 @@ func (k *Keeper) HandleSend(ctx sdk.Context, msg sdk.Msg, sequence string) error
 				k.Logger(ctx).Error("epochUnbondingRecord.UnbondingEpochNumber == dayEpochTracker.EpochNumber")
 				continue
 			}
-			hostZoneUnbonding := epochUnbondingRecord.HostZoneUnbondings[zone.ChainId]
+			hostZoneUnbonding, found := k.RecordsKeeper.GetHostZoneUnbondingByChainId(ctx, epochUnbondingRecord.EpochNumber, zone.ChainId)
+			if !found {
+				k.Logger(ctx).Error("failed to find hostZoneUnbonding")
+				continue
+			}
 			// NOTE: at the beginning of the epoch we mark all PENDING_TRANSFER HostZoneUnbondingRecords as UNBONDED
 			// so that they're retried if the transfer fails
 			if hostZoneUnbonding.Status != recordstypes.HostZoneUnbonding_PENDING_TRANSFER {

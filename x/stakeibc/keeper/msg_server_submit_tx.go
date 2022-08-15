@@ -97,7 +97,7 @@ func (k Keeper) DelegateOnHost(ctx sdk.Context, hostZone types.HostZone, amt sdk
 	for _, validator := range hostZone.GetValidators() {
 		relAmt := sdk.NewCoin(amt.Denom, sdk.NewIntFromUint64(targetDelegatedAmts[validator.GetAddress()]))
 		if relAmt.Amount.IsPositive() {
-			k.Logger(ctx).Error(fmt.Sprintf("Appending MsgDelegate to msgs, DelegatorAddress: %s, ValidatorAddress: %s, relAmt: %v", delegationIca.GetAddress(), validator.GetAddress(), relAmt))
+			k.Logger(ctx).Info(fmt.Sprintf("Appending MsgDelegate to msgs, DelegatorAddress: %s, ValidatorAddress: %s, relAmt: %v", delegationIca.GetAddress(), validator.GetAddress(), relAmt))
 			msgs = append(msgs, &stakingTypes.MsgDelegate{
 				DelegatorAddress: delegationIca.GetAddress(),
 				ValidatorAddress: validator.GetAddress(),
@@ -112,6 +112,7 @@ func (k Keeper) DelegateOnHost(ctx sdk.Context, hostZone types.HostZone, amt sdk
 		DepositRecordId:  depositRecordId,
 		SplitDelegations: splitDelegations,
 	}
+	k.Logger(ctx).Info(fmt.Sprintf("Marshalling DelegateCallback args: %v", delegateCallback))
 	marshalledCallbackArgs, err := k.MarshalDelegateCallbackArgs(ctx, delegateCallback)
 	if err != nil {
 		return err
@@ -255,7 +256,7 @@ func (k Keeper) SubmitTxsEpoch(
 	if err != nil {
 		return 0, err
 	}
-	k.Logger(ctx).Info(fmt.Sprintf("Submitted Txs, connectionId: %s, sequence: %d", connectionId, sequence))
+	k.Logger(ctx).Info(fmt.Sprintf("Submitted Txs, connectionId: %s, sequence: %d, block: %d", connectionId, sequence, ctx.BlockHeight()))
 	return sequence, nil
 }
 
@@ -306,15 +307,17 @@ func (k Keeper) SubmitTxs(
 	}
 
 	// Store the callback data
-	callback := icacallbackstypes.CallbackData{
-		CallbackKey:  icacallbackstypes.PacketID(portID, channelID, sequence),
-		PortId:       portID,
-		ChannelId:    channelID,
-		Sequence:     sequence,
-		CallbackId:   callbackId,
-		CallbackArgs: callbackArgs,
+	if callbackId != "" && callbackArgs != nil {
+		callback := icacallbackstypes.CallbackData{
+			CallbackKey:  icacallbackstypes.PacketID(portID, channelID, sequence),
+			PortId:       portID,
+			ChannelId:    channelID,
+			Sequence:     sequence,
+			CallbackId:   callbackId,
+			CallbackArgs: callbackArgs,
+		}
+		k.ICACallbacksKeeper.SetCallbackData(ctx, callback)
 	}
-	k.ICACallbacksKeeper.SetCallbackData(ctx, callback)
 
 	return sequence, nil
 }
