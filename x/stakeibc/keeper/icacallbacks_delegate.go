@@ -53,22 +53,19 @@ func DelegateCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ack
 	recordId := delegateCallback.GetDepositRecordId()
 
 	for _, splitDelegation := range delegateCallback.SplitDelegations {
-		amount := cast.ToInt64(splitDelegation.Amount)
-		validator := splitDelegation.Validator
-
-		k.Logger(ctx).Info(fmt.Sprintf("incrementing stakedBal %d on %s", amount, validator))
-		if amount < 0 {
-			errMsg := fmt.Sprintf("Balance to stake was negative: %d", amount)
-			k.Logger(ctx).Error(errMsg)
-			return sdkerrors.Wrapf(sdkerrors.ErrLogic, errMsg)
-		} else {
-			zone.StakedBal += amount
-			success := k.AddDelegationToValidator(ctx, zone, validator, amount)
-			if !success {
-				return sdkerrors.Wrapf(types.ErrValidatorDelegationChg, "Failed to add delegation to validator")
-			}
-			k.SetHostZone(ctx, zone)
+		amount, err := cast.ToInt64E(splitDelegation.Amount)
+		if err != nil {
+			return err
 		}
+		validator := splitDelegation.Validator
+		k.Logger(ctx).Info(fmt.Sprintf("incrementing stakedBal %d on %s", amount, validator))
+
+		zone.StakedBal += splitDelegation.Amount
+		success := k.AddDelegationToValidator(ctx, zone, validator, amount)
+		if !success {
+			return sdkerrors.Wrapf(types.ErrValidatorDelegationChg, "Failed to add delegation to validator")
+		}
+		k.SetHostZone(ctx, zone)
 	}
 
 	k.RecordsKeeper.RemoveDepositRecord(ctx, cast.ToUint64(recordId))
