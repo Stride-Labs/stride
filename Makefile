@@ -61,13 +61,14 @@ init-docker: build-docker
 	@sh scripts/start_network.sh 
 
 clean-docker: 
-	@pkill -f "docker-compose logs"
 	@docker-compose stop
 	@docker-compose down
 	rm -rf scripts/state
 	docker image prune -a
 	
 stop-docker:
+	@pkill -f "docker-compose logs" 
+	@pkill -f "/bin/bash.*create_logs.sh"
 	docker-compose down
 
 ###############################################################################

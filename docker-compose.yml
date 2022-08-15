@@ -53,6 +53,12 @@ services:
       - ./scripts/state/hermes/config.toml:/home/hermes/.hermes/config.toml
     restart: always
 
+  relayer:
+    image: stridezone:relayer
+    volumes:
+      - ./scripts/state/relayer:/home/relayer/.relayer
+    restart: always
+
   icq:
     image: stridezone:interchain-queries
     volumes:

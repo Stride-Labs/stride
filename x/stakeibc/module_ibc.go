@@ -140,7 +140,10 @@ func (im IBCModule) OnAcknowledgementPacket(
 	var ack channeltypes.Acknowledgement
 	err := channeltypes.SubModuleCdc.UnmarshalJSON(acknowledgement, &ack)
 	if err != nil {
-		return sdkerrors.Wrapf(types.ErrMarshalFailure, err.Error())
+		errMsg := fmt.Sprintf("Unable to unmarshal ack from stakeibc OnAcknowledgePacket | Sequence %d, from %s %s, to %s %s",
+			modulePacket.Sequence, modulePacket.SourceChannel, modulePacket.SourcePort, modulePacket.DestinationChannel, modulePacket.DestinationPort)
+		im.keeper.Logger(ctx).Error(errMsg)
+		return sdkerrors.Wrapf(types.ErrMarshalFailure, errMsg)
 	}
 
 	txMsgData, err := im.GetTxMsgData(ctx, ack)
@@ -166,7 +169,11 @@ func (im IBCModule) OnAcknowledgementPacket(
 		errMsg := fmt.Sprintf("Unable to call registered callback from stakeibc OnAcknowledgePacket | Sequence %d, from %s %s, to %s %s",
 			modulePacket.Sequence, modulePacket.SourceChannel, modulePacket.SourcePort, modulePacket.DestinationChannel, modulePacket.DestinationPort)
 		im.keeper.Logger(ctx).Error(errMsg)
+<<<<<<< HEAD
 		return sdkerrors.Wrapf(icacallbacktypes.ErrCallbackFailed, errMsg)
+=======
+		return err
+>>>>>>> 647294b0 (continuing to debug relayer)
 	}
 	return nil
 }

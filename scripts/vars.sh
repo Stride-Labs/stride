@@ -29,7 +29,7 @@ ADMIN_TOKENS=1000000000
 # STRIDE vars
 STRIDE_CHAIN_ID=STRIDE
 STRIDE_NODE_PREFIX=stride
-STRIDE_NUM_NODES=3
+STRIDE_NUM_NODES=1
 STRIDE_CMD="$SCRIPT_DIR/../build/strided"
 STRIDE_VAL_PREFIX=val
 STRIDE_DENOM=$STRD_DENOM
@@ -47,7 +47,7 @@ STRIDE_VAL_MNEMONICS=("$STRIDE_MNEMONIC_1" "$STRIDE_MNEMONIC_2" "$STRIDE_MNEMONI
 # GAIA vars
 GAIA_CHAIN_ID=GAIA
 GAIA_NODE_PREFIX=gaia
-GAIA_NUM_NODES=3
+GAIA_NUM_NODES=1
 GAIA_CMD="$SCRIPT_DIR/../build/gaiad"
 GAIA_VAL_PREFIX=gval
 GAIA_DENOM=$ATOM_DENOM
@@ -73,8 +73,19 @@ HERMES_STRIDE_MNEMONIC="alter old invest friend relief slot swear pioneer syrup 
 HERMES_GAIA_MNEMONIC="resemble accident lake amateur physical jewel taxi nut demand magnet person blanket trip entire awkward fiber usual current index limb lady lady depart train"
 HERMES_OSMOSIS_MNEMONIC="artwork ranch dinosaur maple unhappy office bone vote rebel slot outside benefit innocent wrist certain cradle almost fat trial build chicken enroll strike milk"
 
+RELAYER_CMD="$SCRIPT_DIR/../build/relayer --home $STATE/relayer"
+RELAYER_EXEC="docker-compose run --rm relayer rly"
+
+RELAYER_STRIDE_ACCT=rly1
+RELAYER_GAIA_ACCT=rly2
+RELAYER_OSMOSIS_ACCT=rly3
+
+RELAYER_STRIDE_MNEMONIC="alter old invest friend relief slot swear pioneer syrup economy vendor tray focus hedgehog artist legend antenna hair almost donkey spice protect sustain increase"
+RELAYER_GAIA_MNEMONIC="resemble accident lake amateur physical jewel taxi nut demand magnet person blanket trip entire awkward fiber usual current index limb lady lady depart train"
+RELAYER_OSMOSIS_MNEMONIC="artwork ranch dinosaur maple unhappy office bone vote rebel slot outside benefit innocent wrist certain cradle almost fat trial build chicken enroll strike milk"
+
 ICQ_CMD="$SCRIPT_DIR/../build/interchain-queries --home $STATE/icq"
-ICQ_EXEC="docker-compose run --rm icq icq"
+ICQ_EXEC="docker-compose run --rm icq interchain-queries"
 
 ICQ_STRIDE_ACCT=icq1
 ICQ_GAIA_ACCT=icq2

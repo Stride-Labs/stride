@@ -7,7 +7,7 @@ source ${SCRIPT_DIR}/vars.sh
 BUILDDIR="$2"
 
 # build docker images and local binaries
-while getopts sghi flag; do
+while getopts sghir flag; do
     case "${flag}" in
         s) echo "Building Stride Docker...  ";
            docker build --tag stridezone:stride -f Dockerfile.stride . ;
@@ -41,6 +41,15 @@ while getopts sghi flag; do
            cd deps/interchain-queries; 
            go build -mod=readonly -trimpath -o $BUILDDIR ./... 2>&1 | grep -v -E "deprecated|keychain" || true; 
            cd ../..
-           echo "Done" ;;           
+           echo "Done" ;;         
+
+        r) echo "Building Relayer Docker...    ";
+           docker build --tag stridezone:relayer -f Dockerfile.relayer . ;
+
+           printf '%s' "Building Relayer Locally...    ";
+           cd deps/relayer; 
+           go build -mod=readonly -trimpath -o $BUILDDIR ./... 2>&1 | grep -v -E "deprecated|keychain" || true; 
+           cd ../..
+           echo "Done" ;;     
     esac
 done
