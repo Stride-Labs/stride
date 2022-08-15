@@ -76,10 +76,10 @@ func (k Keeper) GetHostZoneUnbondingByChainId(ctx sdk.Context, id uint64, chainI
 	return &types.HostZoneUnbonding{}, false
 }
 
-func (k Keeper) SetHostZoneOnEpochUnbondingRecord(ctx sdk.Context, id uint64, chainId string, hzu *types.HostZoneUnbonding) (success bool) {
+func (k Keeper) AddHostZoneToEpochUnbondingRecord(ctx sdk.Context, id uint64, chainId string, hzu *types.HostZoneUnbonding) (val *types.EpochUnbondingRecord, success bool) {
 	epochUnbondingRecord, found := k.GetEpochUnbondingRecord(ctx, id)
 	if !found {
-		return false
+		return nil, false
 	}
 	wasSet := false
 	for i, hostZoneUnbonding := range epochUnbondingRecord.HostZoneUnbondings {
@@ -93,7 +93,5 @@ func (k Keeper) SetHostZoneOnEpochUnbondingRecord(ctx sdk.Context, id uint64, ch
 		// add new host zone unbonding record
 		epochUnbondingRecord.HostZoneUnbondings = append(epochUnbondingRecord.HostZoneUnbondings, hzu)
 	}
-	// write the updated EpochUnbondingRecord to the store
-	k.SetEpochUnbondingRecord(ctx, epochUnbondingRecord)
-	return true
+	return &epochUnbondingRecord, true
 }
