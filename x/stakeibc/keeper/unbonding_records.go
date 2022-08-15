@@ -17,7 +17,7 @@ import (
 )
 
 func (k Keeper) CreateEpochUnbondingRecord(ctx sdk.Context, epochNumber uint64) bool {
-	hostZoneUnbondings := make(map[string]*recordstypes.HostZoneUnbonding)
+	hostZoneUnbondings := []*recordstypes.HostZoneUnbonding{}
 	addEpochUndelegation := func(ctx sdk.Context, index int64, hostZone types.HostZone) error {
 		hostZoneUnbonding := recordstypes.HostZoneUnbonding{
 			NativeTokenAmount: uint64(0),
@@ -27,7 +27,7 @@ func (k Keeper) CreateEpochUnbondingRecord(ctx sdk.Context, epochNumber uint64) 
 			Status:            recordstypes.HostZoneUnbonding_BONDED,
 		}
 		k.Logger(ctx).Info(fmt.Sprintf("Adding hostZoneUnbonding %v to %s", hostZoneUnbonding, hostZone.ChainId))
-		hostZoneUnbondings[hostZone.ChainId] = &hostZoneUnbonding
+		hostZoneUnbondings = append(hostZoneUnbondings, &hostZoneUnbonding)
 		return nil
 	}
 
@@ -45,10 +45,10 @@ func (k Keeper) SendHostZoneUnbondings(ctx sdk.Context, hostZone types.HostZone)
 	// this function goes and processes all unbonded records for this hostZone
 	// regardless of what epoch they belong to
 	totalAmtToUnbond := uint64(0)
-	unbondingEpochNumbers := []uint64{}
+	epochUnbondingRecordIds := []uint64{}
 	var msgs []sdk.Msg
 	for _, epochUnbonding := range k.RecordsKeeper.GetAllEpochUnbondingRecord(ctx) {
-		hostZoneRecord, found := epochUnbonding.HostZoneUnbondings[hostZone.ChainId]
+		hostZoneRecord, found := k.RecordsKeeper.GetHostZoneUnbondingByChainId(ctx, epochUnbonding.EpochNumber, hostZone.ChainId)
 		if !found {
 			errMsg := fmt.Sprintf("Host zone unbonding record not found for hostZoneId %s in epoch %d",
 				hostZone.ChainId, epochUnbonding.GetEpochNumber())
@@ -57,7 +57,7 @@ func (k Keeper) SendHostZoneUnbondings(ctx sdk.Context, hostZone types.HostZone)
 		}
 		if hostZoneRecord.Status == recordstypes.HostZoneUnbonding_BONDED { // we only send the ICA call if this hostZone hasn't triggered yet
 			totalAmtToUnbond += hostZoneRecord.NativeTokenAmount
-			unbondingEpochNumbers = append(unbondingEpochNumbers, epochUnbonding.EpochNumber)
+			epochUnbondingRecordIds = append(epochUnbondingRecordIds, epochUnbonding.EpochNumber)
 		}
 	}
 	delegationAccount := hostZone.GetDelegationAccount()
@@ -151,14 +151,14 @@ func (k Keeper) SendHostZoneUnbondings(ctx sdk.Context, hostZone types.HostZone)
 	undelegateCallback := types.UndelegateCallback{
 		HostZoneId:            hostZone.ChainId,
 		SplitDelegations:      splitDelegations,
-		UnbondingEpochNumbers: unbondingEpochNumbers,
+		EpochUnbondingRecordIds: epochUnbondingRecordIds,
 	}
+	k.Logger(ctx).Info(fmt.Sprintf("Marshalling UndelegateCallback args: %v", undelegateCallback))
 	marshalledCallbackArgs, err := k.MarshalUndelegateCallbackArgs(ctx, undelegateCallback)
 	if err != nil {
 		k.Logger(ctx).Error(err.Error())
 		return false
 	}
-
 	_, err = k.SubmitTxsDayEpoch(ctx, hostZone.GetConnectionId(), msgs, *delegationAccount, UNDELEGATE, marshalledCallbackArgs)
 	if err != nil {
 		k.Logger(ctx).Error(fmt.Sprintf("Error submitting unbonding tx: %s", err))
@@ -196,8 +196,7 @@ func (k Keeper) CleanupEpochUnbondingRecords(ctx sdk.Context) bool {
 		k.Logger(ctx).Info(fmt.Sprintf("Cleaning up epoch unbondings for epoch unbonding record from epoch %d", epochUnbondingRecord.GetEpochNumber()))
 		shouldDeleteRecord := true
 		hostZoneUnbondings := epochUnbondingRecord.GetHostZoneUnbondings()
-		for _, key := range utils.HostZoneUnbondingKeys(hostZoneUnbondings) {
-			hostZoneUnbonding := hostZoneUnbondings[key]
+		for _, hostZoneUnbonding := range hostZoneUnbondings {
 			k.Logger(ctx).Info(fmt.Sprintf("processing hostZoneUnbonding %v", hostZoneUnbonding))
 			if (hostZoneUnbonding.Status != recordstypes.HostZoneUnbonding_TRANSFERRED) && (hostZoneUnbonding.GetNativeTokenAmount() != 0) {
 				shouldDeleteRecord = false
@@ -213,17 +212,7 @@ func (k Keeper) CleanupEpochUnbondingRecords(ctx sdk.Context) bool {
 }
 
 func (k Keeper) SweepAllUnbondedTokens(ctx sdk.Context) {
-	// NOTE: at the beginning of the epoch we mark all PENDING_TRANSFER HostZoneUnbondingRecords as UNBONDED
-	// so that they're retried if the transfer fails
-	// for _, epochUnbondingRecord := range k.RecordsKeeper.GetAllEpochUnbondingRecord(ctx) {
-	// 	for _, hostZoneUnbonding := range epochUnbondingRecord.HostZoneUnbondings {
-	// 		if hostZoneUnbonding.Status == recordstypes.HostZoneUnbonding_PENDING_TRANSFER {
-	// 			hostZoneUnbonding.Status = recordstypes.HostZoneUnbonding_UNBONDED
-	// 		}
-	// 	}
-	// }
-	// this function goes through each host zone, and sees if any tokens
-	// have been unbonded and are ready to sweep. If so, it processes them
+	// SweepAllUnbondedTokens iterates host zones and transfers unbonded tokens to the redemption account
 
 	sweepUnbondedTokens := func(ctx sdk.Context, index int64, zoneInfo types.HostZone) error {
 		k.Logger(ctx).Info(fmt.Sprintf("sweepUnbondedTokens for host zone %s", zoneInfo.ChainId))
@@ -234,16 +223,16 @@ func (k Keeper) SweepAllUnbondedTokens(ctx sdk.Context) {
 		for _, unbondingRecord := range unbondingRecords {
 			k.Logger(ctx).Info(fmt.Sprintf("processing unbondingRecord %v", unbondingRecord.EpochNumber))
 
-			// total amount of tokens to be swept
-
 			// iterate through all host zone unbondings and process them if they're ready to be swept
-			// TODO() index into the HostZoneUnbonding map with chainID rather than iterating and checking chainID equality
-			unbonding := unbondingRecord.HostZoneUnbondings[zoneInfo.ChainId]
+			unbonding, found := k.RecordsKeeper.GetHostZoneUnbondingByChainId(ctx, unbondingRecord.EpochNumber, zoneInfo.ChainId)
+			if !found {
+				return sdkerrors.Wrapf(types.ErrInvalidHostZone, "host zone not found in unbondings: %s", zoneInfo.ChainId)
+			}
 			k.Logger(ctx).Info(fmt.Sprintf("\tProcessing batch SweepAllUnbondedTokens for host zone %s", zoneInfo.ChainId))
 			zone, found := k.GetHostZone(ctx, unbonding.HostZoneId)
 			if !found {
 				k.Logger(ctx).Error(fmt.Sprintf("\t\tHost zone not found for hostZoneId %s", unbonding.HostZoneId))
-				continue
+				return sdkerrors.Wrapf(types.ErrInvalidHostZone, "tHost zone not found for hostZoneId %s", unbonding.HostZoneId)
 			}
 
 			// get latest blockTime from light client
