@@ -11,6 +11,7 @@ import (
 
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
+	epochtypes "github.com/Stride-Labs/stride/x/epochs/types"
 	icqtypes "github.com/Stride-Labs/stride/x/interchainquery/types"
 	"github.com/Stride-Labs/stride/x/stakeibc/types"
 )
@@ -218,9 +219,18 @@ func ValidatorExchangeRateCallback(k Keeper, ctx sdk.Context, args []byte, query
 	if !found {
 		return fmt.Errorf("no registered validator for address: %s", queriedValidator.OperatorAddress)
 	}
+	// get the stride epoch number
+	strideEpochTracker, found := k.GetEpochTracker(ctx, epochtypes.STRIDE_EPOCH)
+	if !found {
+		k.Logger(ctx).Error("failed to find stride epoch")
+		return sdkerrors.Wrapf(sdkerrors.ErrNotFound, "no epoch number for epoch (%s)", epochtypes.STRIDE_EPOCH)
+	}
 	// converting 1.0 gives us the exchange rate to later use in the next CB
-	v.TokensFromShares = queriedValidator.TokensFromShares(sdk.NewDec(1.0))
-	k.Logger(ctx).Info(fmt.Sprintf("ValidatorCallback: zone %s validator %v tokensFromShares %v", zone.ChainId, v.Address, v.TokensFromShares))
+	v.InternalExchangeRate = &types.ValidatorExchangeRate{
+		InternalTokensToSharesRate: queriedValidator.TokensFromShares(sdk.NewDec(1.0)),
+		EpochNumber:                strideEpochTracker.GetEpochNumber(),
+	}
+	k.Logger(ctx).Info(fmt.Sprintf("ValidatorCallback: zone %s validator %v tokensFromShares %v", zone.ChainId, v.Address, v.InternalExchangeRate.InternalTokensToSharesRate))
 	// write back to state and break
 	zone.Validators[i] = &v
 	k.SetHostZone(ctx, zone)
@@ -270,9 +280,20 @@ func DelegatorSharesCallback(k Keeper, ctx sdk.Context, args []byte, query icqty
 			}
 
 			// convert shares to tokens using the exchange rate
+
+			// get the validator's internal exchange rate, aborting if it hasn't been updated this epoch
+			strideEpochTracker, found := k.GetEpochTracker(ctx, epochtypes.STRIDE_EPOCH)
+			if !found {
+				k.Logger(ctx).Error("failed to find stride epoch")
+				return sdkerrors.Wrapf(sdkerrors.ErrNotFound, "no epoch number for epoch (%s)", epochtypes.STRIDE_EPOCH)
+			}
+			if v.InternalExchangeRate.EpochNumber != strideEpochTracker.GetEpochNumber() {
+				k.Logger(ctx).Error(fmt.Sprintf("delegation callback: validator %s internalExchRate has not been updated this epoch", v.Address))
+				return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "validator %s internalExchRate  has not been updated this epoch", v.Address)
+			}
 			// TODO: make sure conversion math precision matches the sdk's staking module's version (we did it slightly differently)
 			// note: truncateInt per https://github.com/cosmos/cosmos-sdk/blob/cb31043d35bad90c4daa923bb109f38fd092feda/x/staking/types/validator.go#L431
-			qNumTokens := qdel.Shares.Mul(v.TokensFromShares).TruncateInt()
+			qNumTokens := qdel.Shares.Mul(v.InternalExchangeRate.InternalTokensToSharesRate).TruncateInt()
 			k.Logger(ctx).Info(fmt.Sprintf("DelegationCallback: zone %s validator %s prevNtokens %v qNumTokens %v", zone.ChainId, v.Address, v.DelegationAmt, qNumTokens))
 			if qNumTokens.Uint64() < v.DelegationAmt {
 				// TODO(TESTS-171) add some safety checks here (e.g. we could query the slashing module to confirm the decr in tokens was due to slash)
@@ -307,7 +328,6 @@ func DelegatorSharesCallback(k Keeper, ctx sdk.Context, args []byte, query icqty
 				v.Weight = sdk.NewDec(weightInt64).Mul(weightMul).TruncateInt().Uint64()
 			}
 			// write back to state and break (reset TokensFromShares for clarity, so we're not tempted to use it again later)
-			v.TokensFromShares = sdk.NewDec(0)
 			zone.Validators[i] = v
 			k.SetHostZone(ctx, zone)
 			break
