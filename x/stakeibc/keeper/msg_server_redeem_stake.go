@@ -128,7 +128,6 @@ func (k msgServer) RedeemStake(goCtx context.Context, msg *types.MsgRedeemStake)
 		k.Logger(ctx).Error(fmt.Sprintf("Failed to set host zone epoch unbonding record %v", err))
 		return nil, sdkerrors.Wrapf(types.ErrInsufficientFunds, "couldn't set host zone epoch unbonding record. err: %s", err.Error())
 	}
-	k.RecordsKeeper.SetEpochUnbondingRecord(ctx, epochUnbondingRecord)
 
 	return &types.MsgRedeemStakeResponse{}, nil
 }
