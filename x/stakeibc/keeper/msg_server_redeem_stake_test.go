@@ -57,15 +57,16 @@ func (suite *KeeperTestSuite) SetupRedeemStake() RedeemStakeTestCase {
 
 	epochUnbondingRecord := recordtypes.EpochUnbondingRecord{
 		EpochNumber:        1,
-		HostZoneUnbondings: make(map[string]*recordtypes.HostZoneUnbonding),
+		HostZoneUnbondings: []*recordtypes.HostZoneUnbonding{},
 	}
 
-	epochUnbondingRecord.HostZoneUnbondings["GAIA"] = &recordtypes.HostZoneUnbonding{
+	hostZoneUnbonding := &recordtypes.HostZoneUnbonding{
 		NativeTokenAmount: uint64(0),
 		Denom:             "uatom",
 		HostZoneId:        "GAIA",
 		Status:            recordtypes.HostZoneUnbonding_BONDED,
 	}
+	epochUnbondingRecord.HostZoneUnbondings = append(epochUnbondingRecord.HostZoneUnbondings, hostZoneUnbonding)
 
 	suite.App.StakeibcKeeper.SetHostZone(suite.Ctx, hostZone)
 	suite.App.StakeibcKeeper.SetEpochTracker(suite.Ctx, epochTrackerDay)
@@ -111,7 +112,7 @@ func (suite *KeeperTestSuite) TestRedeemStakeSuccessful() {
 	suite.Require().True(found)
 	epochUnbondingRecord, found := suite.App.RecordsKeeper.GetEpochUnbondingRecord(suite.Ctx, epochTracker.EpochNumber)
 	suite.Require().True(found)
-	hostZoneUnbonding, found := epochUnbondingRecord.HostZoneUnbondings["GAIA"]
+	hostZoneUnbonding, found := suite.App.RecordsKeeper.GetHostZoneUnbondingByChainId(suite.Ctx, epochUnbondingRecord.EpochNumber, "GAIA")
 	suite.Require().True(found)
 
 	hostZone, _ := suite.App.StakeibcKeeper.GetHostZone(suite.Ctx, msg.HostZone)
@@ -251,12 +252,15 @@ func (suite *KeeperTestSuite) TestRedeemStakeHostZoneNoUnbondings() {
 	invalidMsg := tc.validMsg
 	epochUnbondingRecord := recordtypes.EpochUnbondingRecord{
 		EpochNumber:        1,
-		HostZoneUnbondings: make(map[string]*recordtypes.HostZoneUnbonding),
+		HostZoneUnbondings: []*recordtypes.HostZoneUnbonding{},
 	}
-	epochUnbondingRecord.HostZoneUnbondings["NOT_GAIA"] = &recordtypes.HostZoneUnbonding{
+	hostZoneUnbonding := &recordtypes.HostZoneUnbonding{
 		NativeTokenAmount: uint64(0),
 		Denom:             "uatom",
+		HostZoneId:		"NOT_GAIA",
 	}
+	epochUnbondingRecord.HostZoneUnbondings = append(epochUnbondingRecord.HostZoneUnbondings, hostZoneUnbonding)
+	
 	suite.App.RecordsKeeper.SetEpochUnbondingRecord(suite.Ctx, epochUnbondingRecord)
 	_, err := suite.msgServer.RedeemStake(sdk.WrapSDKContext(suite.Ctx), &invalidMsg)
 
