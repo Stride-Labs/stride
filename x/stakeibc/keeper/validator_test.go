@@ -14,7 +14,7 @@ import (
 
 func createTestValidator(keeper *keeper.Keeper, ctx sdk.Context) types.Validator {
 	item := types.Validator{}
-	item.TokensFromShares = sdk.NewDec(0)
+	item.InternalExchangeRate.InternalTokensToSharesRate = sdk.NewDec(0)
 	keeper.SetValidator(ctx, item)
 	return item
 }
