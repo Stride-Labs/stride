@@ -9,14 +9,14 @@ BUILDDIR="$2"
 # build docker images and local binaries
 while getopts sghi flag; do
     case "${flag}" in
-        s) printf '%s' "Building Stride Docker...  ";
+        s) echo "Building Stride Docker...  ";
            docker build --tag stridezone:stride -f Dockerfile.stride . ;
 
            printf '%s' "Building Stride Locally...  ";
            go build -mod=readonly -trimpath -o $BUILDDIR ./... ;
            echo "Done" ;;
 
-        g) printf '%s' "Building Gaia Docker...    ";
+        g) echo "Building Gaia Docker...    ";
            docker build --tag stridezone:gaia -f Dockerfile.gaia . ;
 
            printf '%s' "Building Gaia Locally...   ";
@@ -25,7 +25,7 @@ while getopts sghi flag; do
            cd ../.. ;
            echo "Done" ;;
 
-        h) printf '%s' "Building Hermes Docker... ";
+        h) echo "Building Hermes Docker... ";
            docker build --tag stridezone:hermes -f Dockerfile.hermes . ;
 
            printf '%s' "Building Hermes Locally... ";
@@ -34,7 +34,7 @@ while getopts sghi flag; do
            cd ../..
            echo "Done" ;;
 
-        i) printf '%s' "Building ICQ Docker...    ";
+        i) echo "Building ICQ Docker...    ";
            docker build --tag stridezone:interchain-queries -f Dockerfile.icq . ;
 
            printf '%s' "Building ICQ Locally...    ";
