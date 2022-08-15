@@ -100,10 +100,19 @@ func (k Keeper) AddDelegationToValidator(ctx sdk.Context, hostZone types.HostZon
 		k.Logger(ctx).Info(fmt.Sprintf("Validator %s %d %d", val.GetAddress(), val.GetDelegationAmt(), amt))
 		if val.GetAddress() == valAddr {
 			if amt >= 0 {
-				val.DelegationAmt = val.GetDelegationAmt() + cast.ToUint64(amt)
+				amt, err := cast.ToUint64E(amt)
+				if err != nil {
+					k.Logger(ctx).Error(fmt.Sprintf("Error converting %d to uint64", amt))
+					return false
+				}
+				val.DelegationAmt = val.GetDelegationAmt() + amt
 				return true
 			} else {
-				absAmt := cast.ToUint64(-amt)
+				absAmt, err := cast.ToUint64E(-amt)
+				if err != nil {
+					k.Logger(ctx).Error(fmt.Sprintf("Error converting %d to uint64", amt))
+					return false
+				}
 				if absAmt > val.GetDelegationAmt() {
 					k.Logger(ctx).Error(fmt.Sprintf("Delegation amount %d is greater than validator %s delegation amount %d", absAmt, valAddr, val.GetDelegationAmt()))
 					return false
@@ -166,6 +175,7 @@ func (k Keeper) IterateHostZones(ctx sdk.Context, fn func(ctx sdk.Context, index
 	i := int64(0)
 
 	for ; iterator.Valid(); iterator.Next() {
+		k.Logger(ctx).Info(fmt.Sprintf("Iterating HostZone %d", i))
 		zone := types.HostZone{}
 		k.cdc.MustUnmarshal(iterator.Value(), &zone)
 

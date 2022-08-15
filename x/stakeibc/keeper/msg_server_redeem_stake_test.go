@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/spf13/cast"
 	_ "github.com/stretchr/testify/suite"
 
 	epochtypes "github.com/Stride-Labs/stride/x/epochs/types"
@@ -11,17 +12,20 @@ import (
 	stakeibc "github.com/Stride-Labs/stride/x/stakeibc/types"
 )
 
+type RedeemStakeState struct {
+	epochNumber                        uint64
+	initialNativeEpochUnbondingAmount  uint64
+	initialStTokenEpochUnbondingAmount uint64
+}
 type RedeemStakeTestCase struct {
-	user                        Account
-	module                      Account
-	initialState                State
-	initialEpochUnbondingAmount uint64
-	validMsg                    stakeibc.MsgRedeemStake
+	user         Account
+	module       Account
+	initialState RedeemStakeState
+	validMsg     stakeibc.MsgRedeemStake
 }
 
 func (suite *KeeperTestSuite) SetupRedeemStake() RedeemStakeTestCase {
-	redeemAmount := int64(1_000_000)
-	initialDepositAmount := int64(1_000_000)
+	redeemAmount := uint64(1_000_000)
 	user := Account{
 		acc:           suite.TestAccs[0],
 		atomBalance:   sdk.NewInt64Coin("ibc/uatom", 10_000_000),
@@ -53,29 +57,29 @@ func (suite *KeeperTestSuite) SetupRedeemStake() RedeemStakeTestCase {
 	}
 
 	epochUnbondingRecord := recordtypes.EpochUnbondingRecord{
-		Id:                   1,
-		UnbondingEpochNumber: 1,
-		HostZoneUnbondings:   make(map[string]*recordtypes.HostZoneUnbonding),
+		EpochNumber:        1,
+		HostZoneUnbondings: []*recordtypes.HostZoneUnbonding{},
 	}
 
-	epochUnbondingRecord.HostZoneUnbondings["GAIA"] = &recordtypes.HostZoneUnbonding{
-		Amount:     uint64(0),
-		Denom:      "uatom",
-		HostZoneId: "GAIA",
-		Status:     recordtypes.HostZoneUnbonding_BONDED,
+	hostZoneUnbonding := &recordtypes.HostZoneUnbonding{
+		NativeTokenAmount: uint64(0),
+		Denom:             "uatom",
+		HostZoneId:        "GAIA",
+		Status:            recordtypes.HostZoneUnbonding_BONDED,
 	}
+	epochUnbondingRecord.HostZoneUnbondings = append(epochUnbondingRecord.HostZoneUnbondings, hostZoneUnbonding)
 
 	suite.App.StakeibcKeeper.SetHostZone(suite.Ctx, hostZone)
 	suite.App.StakeibcKeeper.SetEpochTracker(suite.Ctx, epochTrackerDay)
-	suite.App.RecordsKeeper.AppendEpochUnbondingRecord(suite.Ctx, epochUnbondingRecord)
+	suite.App.RecordsKeeper.SetEpochUnbondingRecord(suite.Ctx, epochUnbondingRecord)
 
 	return RedeemStakeTestCase{
-		user:                        user,
-		module:                      module,
-		initialEpochUnbondingAmount: uint64(0),
-		initialState: State{
-			depositRecordAmount: initialDepositAmount,
-			hostZone:            hostZone,
+		user:   user,
+		module: module,
+		initialState: RedeemStakeState{
+			epochNumber:                        epochTrackerDay.EpochNumber,
+			initialNativeEpochUnbondingAmount:  uint64(0),
+			initialStTokenEpochUnbondingAmount: uint64(0),
 		},
 		validMsg: stakeibc.MsgRedeemStake{
 			Creator:  user.acc.String(),
@@ -89,15 +93,18 @@ func (suite *KeeperTestSuite) SetupRedeemStake() RedeemStakeTestCase {
 
 func (suite *KeeperTestSuite) TestRedeemStakeSuccessful() {
 	tc := suite.SetupRedeemStake()
+	initialState := tc.initialState
 
 	msg := tc.validMsg
 	user := tc.user
-	redeemAmount := sdk.NewInt(msg.Amount)
+	amt, err := cast.ToInt64E(msg.Amount)
+	if err != nil {
+		panic(err)
+	}
+	redeemAmount := sdk.NewInt(amt)
 
 	// get the initial unbonding amount *before* calling liquid stake, so we can use it to calc expected vs actual in diff space
-	actualHostZoneUnbondingGaiaAmountStart := int64(tc.initialEpochUnbondingAmount)
-
-	_, err := suite.msgServer.RedeemStake(sdk.WrapSDKContext(suite.Ctx), &msg)
+	_, err = suite.msgServer.RedeemStake(sdk.WrapSDKContext(suite.Ctx), &msg)
 	suite.Require().NoError(err)
 
 	// User STUATOM balance should have DECREASED by the amount to be redeemed
@@ -105,24 +112,35 @@ func (suite *KeeperTestSuite) TestRedeemStakeSuccessful() {
 	actualUserStAtomBalance := suite.App.BankKeeper.GetBalance(suite.Ctx, user.acc, "stuatom")
 	suite.CompareCoins(expectedUserStAtomBalance, actualUserStAtomBalance, "user stuatom balance")
 
-	// Gaia's hostZoneUnbonding amount should have INCREASED from 0 to be amount redeemed multiplied by the redemption rate
-	epochUnbondingRecord, found := suite.App.RecordsKeeper.GetLatestEpochUnbondingRecord(suite.Ctx)
+	// Gaia's hostZoneUnbonding NATIVE TOKEN amount should have INCREASED from 0 to the amount redeemed multiplied by the redemption rate
+	// Gaia's hostZoneUnbonding STTOKEN amount should have INCREASED from 0 to be amount redeemed
+	epochTracker, found := suite.App.StakeibcKeeper.GetEpochTracker(suite.Ctx, "day")
 	suite.Require().True(found)
-	hostZoneUnbondingGaia, found := epochUnbondingRecord.HostZoneUnbondings["GAIA"]
+	epochUnbondingRecord, found := suite.App.RecordsKeeper.GetEpochUnbondingRecord(suite.Ctx, epochTracker.EpochNumber)
 	suite.Require().True(found)
-	actualHostZoneUnbondingGaiaAmount := int64(hostZoneUnbondingGaia.Amount)
+	hostZoneUnbonding, found := suite.App.RecordsKeeper.GetHostZoneUnbondingByChainId(suite.Ctx, epochUnbondingRecord.EpochNumber, "GAIA")
+	suite.Require().True(found)
+
 	hostZone, _ := suite.App.StakeibcKeeper.GetHostZone(suite.Ctx, msg.HostZone)
-	expectedHostZoneUnbondingGaiaAmount := redeemAmount.Int64() * hostZone.RedemptionRate.TruncateInt().Int64()
-	suite.Require().Equal(expectedHostZoneUnbondingGaiaAmount-actualHostZoneUnbondingGaiaAmountStart, actualHostZoneUnbondingGaiaAmount-actualHostZoneUnbondingGaiaAmountStart, "host zone unbonding amount")
+	nativeRedemptionAmount := (redeemAmount.Int64() * hostZone.RedemptionRate.TruncateInt().Int64())
+	stTokenBurnAmount := redeemAmount.Int64()
+
+	actualHostZoneUnbondingNativeAmount := int64(hostZoneUnbonding.NativeTokenAmount)
+	actualHostZoneUnbondingStTokenAmount := int64(hostZoneUnbonding.StTokenAmount)
+	expectedHostZoneUnbondingNativeAmount := int64(initialState.initialNativeEpochUnbondingAmount) + nativeRedemptionAmount
+	expectedHostZoneUnbondingStTokenAmount := int64(initialState.initialStTokenEpochUnbondingAmount) + stTokenBurnAmount
+
+	suite.Require().Equal(expectedHostZoneUnbondingNativeAmount, actualHostZoneUnbondingNativeAmount, "host zone native unbonding amount")
+	suite.Require().Equal(expectedHostZoneUnbondingStTokenAmount, actualHostZoneUnbondingStTokenAmount, "host zone stToken burn amount")
 
 	// UserRedemptionRecord should have been created with correct amount, sender, receiver, host zone, isClaimable
-	userRedemptionRecords := hostZoneUnbondingGaia.UserRedemptionRecords
+	userRedemptionRecords := hostZoneUnbonding.UserRedemptionRecords
 	suite.Require().Equal(len(userRedemptionRecords), 1)
 	userRedemptionRecordId := userRedemptionRecords[0]
 	userRedemptionRecord, found := suite.App.RecordsKeeper.GetUserRedemptionRecord(suite.Ctx, userRedemptionRecordId)
 	suite.Require().True(found)
 	// check amount
-	suite.Require().Equal(int64(userRedemptionRecord.Amount), expectedHostZoneUnbondingGaiaAmount)
+	suite.Require().Equal(int64(userRedemptionRecord.Amount), expectedHostZoneUnbondingNativeAmount)
 	// check sender
 	suite.Require().Equal(userRedemptionRecord.Sender, msg.Creator)
 	// check receiver
@@ -131,11 +149,6 @@ func (suite *KeeperTestSuite) TestRedeemStakeSuccessful() {
 	suite.Require().Equal(userRedemptionRecord.HostZoneId, msg.HostZone)
 	// check isClaimable
 	suite.Require().Equal(userRedemptionRecord.IsClaimable, false)
-
-	// make sure stTokens that were transfered to the module account were burned (stAsset supply should decrease by redeemAmount)
-	expectedStAssetSupply := tc.module.stAtomBalance.Amount.Int64() + tc.user.stAtomBalance.Amount.Int64() - redeemAmount.Int64()
-	actualStAssetSupply := suite.App.BankKeeper.GetSupply(suite.Ctx, "stuatom")
-	suite.Require().Equal(expectedStAssetSupply, actualStAssetSupply.Amount.Int64())
 }
 
 func (suite *KeeperTestSuite) TestInvalidCreatorAddress() {
@@ -203,28 +216,17 @@ func (suite *KeeperTestSuite) TestRedeemStakeRedeemMoreThanStaked() {
 	tc := suite.SetupRedeemStake()
 
 	invalidMsg := tc.validMsg
-	invalidMsg.Amount = int64(1_000_000_000_000_000)
+	invalidMsg.Amount = uint64(1_000_000_000_000_000)
 	_, err := suite.msgServer.RedeemStake(sdk.WrapSDKContext(suite.Ctx), &invalidMsg)
 
 	suite.Require().EqualError(err, fmt.Sprintf("cannot unstake an amount g.t. staked balance on host zone: %d: invalid amount", invalidMsg.Amount))
-}
-
-func (suite *KeeperTestSuite) TestRedeemStakeUnableToParseCoin() {
-	tc := suite.SetupRedeemStake()
-
-	invalidMsg := tc.validMsg
-	invalidMsg.Amount = int64(-1_000_000)
-	_, err := suite.msgServer.RedeemStake(sdk.WrapSDKContext(suite.Ctx), &invalidMsg)
-
-	suite.Require().EqualError(err, fmt.Sprintf("could not parse inCoin: %d%v. err: invalid decimal coin expression: -1000000stuatom: invalid coins", invalidMsg.Amount, "stuatom"))
 }
 
 func (suite *KeeperTestSuite) TestRedeemStakeNoEpochTrackerDay() {
 	tc := suite.SetupRedeemStake()
 
 	invalidMsg := tc.validMsg
-	suite.App.RecordsKeeper.SetEpochUnbondingRecord(suite.Ctx, recordtypes.EpochUnbondingRecord{})
-	suite.App.RecordsKeeper.SetEpochUnbondingRecordCount(suite.Ctx, 0)
+	suite.App.RecordsKeeper.RemoveEpochUnbondingRecord(suite.Ctx, tc.initialState.epochNumber)
 	_, err := suite.msgServer.RedeemStake(sdk.WrapSDKContext(suite.Ctx), &invalidMsg)
 
 	suite.Require().EqualError(err, "latest epoch unbonding record not found: epoch unbonding record not found")
@@ -245,14 +247,17 @@ func (suite *KeeperTestSuite) TestRedeemStakeHostZoneNoUnbondings() {
 
 	invalidMsg := tc.validMsg
 	epochUnbondingRecord := recordtypes.EpochUnbondingRecord{
-		Id:                 1,
-		HostZoneUnbondings: make(map[string]*recordtypes.HostZoneUnbonding),
+		EpochNumber:        1,
+		HostZoneUnbondings: []*recordtypes.HostZoneUnbonding{},
 	}
-	epochUnbondingRecord.HostZoneUnbondings["NOT_GAIA"] = &recordtypes.HostZoneUnbonding{
-		Amount: uint64(0),
-		Denom:  "uatom",
+	hostZoneUnbonding := &recordtypes.HostZoneUnbonding{
+		NativeTokenAmount: uint64(0),
+		Denom:             "uatom",
+		HostZoneId:		"NOT_GAIA",
 	}
-	suite.App.RecordsKeeper.AppendEpochUnbondingRecord(suite.Ctx, epochUnbondingRecord)
+	epochUnbondingRecord.HostZoneUnbondings = append(epochUnbondingRecord.HostZoneUnbondings, hostZoneUnbonding)
+	
+	suite.App.RecordsKeeper.SetEpochUnbondingRecord(suite.Ctx, epochUnbondingRecord)
 	_, err := suite.msgServer.RedeemStake(sdk.WrapSDKContext(suite.Ctx), &invalidMsg)
 
 	suite.Require().EqualError(err, "host zone not found in unbondings: GAIA: host zone not registered")

@@ -4,10 +4,11 @@ import (
 	"context"
 	"strconv"
 
-	"github.com/Stride-Labs/stride/x/records/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/spf13/cobra"
+
+	"github.com/Stride-Labs/stride/x/records/types"
 )
 
 func CmdListEpochUnbondingRecord() *cobra.Command {
@@ -53,13 +54,13 @@ func CmdShowEpochUnbondingRecord() *cobra.Command {
 
 			queryClient := types.NewQueryClient(clientCtx)
 
-			id, err := strconv.ParseUint(args[0], 10, 64)
+			epochNumber, err := strconv.ParseUint(args[0], 10, 64)
 			if err != nil {
 				return err
 			}
 
 			params := &types.QueryGetEpochUnbondingRecordRequest{
-				Id: id,
+				EpochNumber: epochNumber,
 			}
 
 			res, err := queryClient.EpochUnbondingRecord(context.Background(), params)

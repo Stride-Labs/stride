@@ -27,7 +27,7 @@ service Query {
 
 // Queries a EpochUnbondingRecord by id.
 	rpc EpochUnbondingRecord(QueryGetEpochUnbondingRecordRequest) returns (QueryGetEpochUnbondingRecordResponse) {
-		option (google.api.http).get = "/Stride-Labs/stride/records/epoch_unbonding_record/{id}";
+		option (google.api.http).get = "/Stride-Labs/stride/records/epoch_unbonding_record/{epochNumber}";
 	}
 
 	// Queries a list of EpochUnbondingRecord items.
@@ -94,7 +94,7 @@ message QueryAllUserRedemptionRecordResponse {
 }
 
 message QueryGetEpochUnbondingRecordRequest {
-	uint64 id = 1;
+	uint64 epochNumber = 1;
 }
 
 message QueryGetEpochUnbondingRecordResponse {
