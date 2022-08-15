@@ -222,7 +222,11 @@ func (k Keeper) SweepAllUnbondedTokens(ctx sdk.Context) {
 			k.Logger(ctx).Info(fmt.Sprintf("processing epochUnbondingRecord %v", epochUnbondingRecord.EpochNumber))
 
 			// iterate through all host zone unbondings and process them if they're ready to be swept
-			hostZoneUnbonding := epochUnbondingRecord.HostZoneUnbondings[hostZone.ChainId]
+			hostZoneUnbonding, found := k.RecordsKeeper.GetHostZoneUnbondingByChainId(ctx, epochUnbondingRecord.EpochNumber, hostZone.ChainId)
+			if !found {
+				k.Logger(ctx).Error(fmt.Sprintf("Could not find host zone unbonding %d for host zone %s", epochUnbondingRecord.EpochNumber, hostZone.ChainId))
+				return sdkerrors.Wrapf(sdkerrors.ErrNotFound, "Could not find host zone unbonding %d for host zone %s", epochUnbondingRecord.EpochNumber, hostZone.ChainId)
+			}
 			k.Logger(ctx).Info(fmt.Sprintf("\tProcessing batch SweepAllUnbondedTokens for host zone %s", hostZone.ChainId))
 
 			// get latest blockTime from light client
