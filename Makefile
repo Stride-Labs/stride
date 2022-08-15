@@ -56,16 +56,17 @@ test-integration-docker:
 
 build-docker: 
 	@sh scripts/build.sh -${build} ${BUILDDIR}
-
+	
 init-docker: build-docker
 	@sh scripts/start_network.sh 
 
 clean-docker: 
-	rm -rf scripts/state
 	@docker-compose stop
 	@docker-compose down
+	@pkill -f "docker-compose logs"
+	rm -rf scripts/state
 	docker image prune -a
-
+	
 stop-docker:
 	docker-compose down
 

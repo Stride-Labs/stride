@@ -18,4 +18,4 @@ USER icq
 
 WORKDIR /home/icq
 
-CMD ["interchain-queries", "start"]
+CMD ["interchain-queries", "run"]
