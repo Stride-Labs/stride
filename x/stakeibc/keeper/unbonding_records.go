@@ -16,8 +16,8 @@ import (
 	"github.com/Stride-Labs/stride/x/stakeibc/types"
 )
 
-func (k Keeper) CreateEpochUnbondingRecord(ctx sdk.Context, epochNumber int64) bool {
-	hostZoneUnbondings := make(map[string]*recordstypes.HostZoneUnbonding)
+func (k Keeper) CreateEpochUnbondingRecord(ctx sdk.Context, epochNumber uint64) bool {
+	hostZoneUnbondings := []*recordstypes.HostZoneUnbonding{}
 	addEpochUndelegation := func(ctx sdk.Context, index int64, hostZone types.HostZone) error {
 		hostZoneUnbonding := recordstypes.HostZoneUnbonding{
 			NativeTokenAmount: uint64(0),
@@ -27,7 +27,7 @@ func (k Keeper) CreateEpochUnbondingRecord(ctx sdk.Context, epochNumber int64) b
 			Status:            recordstypes.HostZoneUnbonding_BONDED,
 		}
 		k.Logger(ctx).Info(fmt.Sprintf("Adding hostZoneUnbonding %v to %s", hostZoneUnbonding, hostZone.ChainId))
-		hostZoneUnbondings[hostZone.ChainId] = &hostZoneUnbonding
+		hostZoneUnbondings = append(hostZoneUnbondings, &hostZoneUnbonding)
 		return nil
 	}
 
@@ -45,10 +45,10 @@ func (k Keeper) SendHostZoneUnbondings(ctx sdk.Context, hostZone types.HostZone)
 	// this function goes and processes all unbonded records for this hostZone
 	// regardless of what epoch they belong to
 	totalAmtToUnbond := uint64(0)
-	unbondingEpochNumbers := []uint64{}
+	epochUnbondingRecordIds := []uint64{}
 	var msgs []sdk.Msg
 	for _, epochUnbonding := range k.RecordsKeeper.GetAllEpochUnbondingRecord(ctx) {
-		hostZoneRecord, found := epochUnbonding.HostZoneUnbondings[hostZone.ChainId]
+		hostZoneRecord, found := k.RecordsKeeper.GetHostZoneUnbondingByChainId(ctx, epochUnbonding.EpochNumber, hostZone.ChainId)
 		if !found {
 			errMsg := fmt.Sprintf("Host zone unbonding record not found for hostZoneId %s in epoch %d",
 				hostZone.ChainId, epochUnbonding.GetEpochNumber())
@@ -57,7 +57,7 @@ func (k Keeper) SendHostZoneUnbondings(ctx sdk.Context, hostZone types.HostZone)
 		}
 		if hostZoneRecord.Status == recordstypes.HostZoneUnbonding_BONDED { // we only send the ICA call if this hostZone hasn't triggered yet
 			totalAmtToUnbond += hostZoneRecord.NativeTokenAmount
-			unbondingEpochNumbers = append(unbondingEpochNumbers, epochUnbonding.EpochNumber)
+			epochUnbondingRecordIds = append(epochUnbondingRecordIds, epochUnbonding.EpochNumber)
 		}
 	}
 	delegationAccount := hostZone.GetDelegationAccount()
@@ -72,31 +72,55 @@ func (k Keeper) SendHostZoneUnbondings(ctx sdk.Context, hostZone types.HostZone)
 		return false
 	}
 	valAddrToUnbondAmt := make(map[string]int64)
-	overflowAmt := int64(0)
+	overflowAmt := uint64(0)
 	for _, validator := range validators {
 		valAddr := validator.GetAddress()
-		valUnbondAmt := cast.ToInt64(newUnbondingToValidator[valAddr])
-		currentAmtStaked := cast.ToInt64(validator.GetDelegationAmt())
+		valUnbondAmt := newUnbondingToValidator[valAddr]
+		currentAmtStaked := validator.GetDelegationAmt()
+		if err != nil {
+			k.Logger(ctx).Error(fmt.Sprintf("Error casting validator staked amount %d: %s", validator.GetDelegationAmt(), err.Error()))
+			return false
+		}
 		if valUnbondAmt > currentAmtStaked { // if we don't have enough assets to unbond
 			overflowAmt += valUnbondAmt - currentAmtStaked
 			valUnbondAmt = currentAmtStaked
 		}
-		valAddrToUnbondAmt[valAddr] = valUnbondAmt
+		valUnbondAmtInt64, err := cast.ToInt64E(valUnbondAmt)
+		if err != nil {
+			k.Logger(ctx).Error(fmt.Sprintf("Error casting validator staked amount %d: %s", validator.GetDelegationAmt(), err.Error()))
+			return false
+		}
+		valAddrToUnbondAmt[valAddr] = valUnbondAmtInt64
 	}
 	if overflowAmt > 0 { // if we need to reallocate any weights
 		for _, validator := range validators {
 			valAddr := validator.GetAddress()
-			valUnbondAmt := valAddrToUnbondAmt[valAddr]
+			valUnbondAmt, err := cast.ToUint64E(valAddrToUnbondAmt[valAddr])
+			if err != nil {
+				k.Logger(ctx).Error(fmt.Sprintf("Error casting validator staked amount %d: %s", validator.GetDelegationAmt(), err.Error()))
+				return false
+			}
 			currentAmtStaked := validator.GetDelegationAmt()
 			// store how many more tokens we could unbond, if needed
-			amtToPotentiallyUnbond := cast.ToInt64(currentAmtStaked) - valUnbondAmt
+			curAmtStaked := currentAmtStaked
+			amtToPotentiallyUnbond := curAmtStaked - valUnbondAmt
 			if amtToPotentiallyUnbond > 0 { // if we can afford to unbond more
 				if amtToPotentiallyUnbond > overflowAmt { // we can fully cover the overflow
-					valAddrToUnbondAmt[valAddr] += overflowAmt
+					overflowAmtInt64, err := cast.ToInt64E(overflowAmt)
+					if err != nil {
+						k.Logger(ctx).Error(fmt.Sprintf("Error casting overflow amount %d: %s", overflowAmt, err.Error()))
+						return false
+					}
+					valAddrToUnbondAmt[valAddr] += overflowAmtInt64
 					overflowAmt = 0
 					break
 				} else {
-					valAddrToUnbondAmt[valAddr] += amtToPotentiallyUnbond
+					amtToPotentiallyUnbondInt64, err := cast.ToInt64E(amtToPotentiallyUnbond)
+					if err != nil {
+						k.Logger(ctx).Error(fmt.Sprintf("Error casting overflow amount %d: %s", amtToPotentiallyUnbond, err.Error()))
+						return false
+					}
+					valAddrToUnbondAmt[valAddr] += amtToPotentiallyUnbondInt64
 					overflowAmt -= amtToPotentiallyUnbond
 				}
 			}
@@ -127,15 +151,15 @@ func (k Keeper) SendHostZoneUnbondings(ctx sdk.Context, hostZone types.HostZone)
 	undelegateCallback := types.UndelegateCallback{
 		HostZoneId:            hostZone.ChainId,
 		SplitDelegations:      splitDelegations,
-		UnbondingEpochNumbers: unbondingEpochNumbers,
+		EpochUnbondingRecordIds: epochUnbondingRecordIds,
 	}
+	k.Logger(ctx).Info(fmt.Sprintf("Marshalling UndelegateCallback args: %v", undelegateCallback))
 	marshalledCallbackArgs, err := k.MarshalUndelegateCallbackArgs(ctx, undelegateCallback)
 	if err != nil {
 		k.Logger(ctx).Error(err.Error())
 		return false
 	}
-
-	_, err = k.SubmitTxsDayEpoch(ctx, hostZone.GetConnectionId(), msgs, *delegationAccount, "undelegate", marshalledCallbackArgs)
+	_, err = k.SubmitTxsDayEpoch(ctx, hostZone.GetConnectionId(), msgs, *delegationAccount, UNDELEGATE, marshalledCallbackArgs)
 	if err != nil {
 		k.Logger(ctx).Error(fmt.Sprintf("Error submitting unbonding tx: %s", err))
 		return false
@@ -172,8 +196,7 @@ func (k Keeper) CleanupEpochUnbondingRecords(ctx sdk.Context) bool {
 		k.Logger(ctx).Info(fmt.Sprintf("Cleaning up epoch unbondings for epoch unbonding record from epoch %d", epochUnbondingRecord.GetEpochNumber()))
 		shouldDeleteRecord := true
 		hostZoneUnbondings := epochUnbondingRecord.GetHostZoneUnbondings()
-		for _, key := range utils.HostZoneUnbondingKeys(hostZoneUnbondings) {
-			hostZoneUnbonding := hostZoneUnbondings[key]
+		for _, hostZoneUnbonding := range hostZoneUnbondings {
 			k.Logger(ctx).Info(fmt.Sprintf("processing hostZoneUnbonding %v", hostZoneUnbonding))
 			if (hostZoneUnbonding.Status != recordstypes.HostZoneUnbonding_TRANSFERRED) && (hostZoneUnbonding.GetNativeTokenAmount() != 0) {
 				shouldDeleteRecord = false

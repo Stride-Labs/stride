@@ -60,3 +60,38 @@ func GetEpochUnbondingRecordIDBytes(id uint64) []byte {
 func GetEpochUnbondingRecordIDFromBytes(bz []byte) uint64 {
 	return binary.BigEndian.Uint64(bz)
 }
+
+// GetEpochUnbondingRecordByEpoch returns a epochUnbondingRecord from its epochNumber
+func (k Keeper) GetHostZoneUnbondingByChainId(ctx sdk.Context, epochNumber uint64, chainId string) (val *types.HostZoneUnbonding, found bool) {
+	epochUnbondingRecord, found := k.GetEpochUnbondingRecord(ctx, epochNumber)
+	if !found {
+		return nil, false
+	}
+	hostZoneUnbondings := epochUnbondingRecord.HostZoneUnbondings
+	for _, hzUnbondingRecord := range hostZoneUnbondings {
+		if hzUnbondingRecord.HostZoneId == chainId {
+			return hzUnbondingRecord, true
+		}
+	}
+	return &types.HostZoneUnbonding{}, false
+}
+
+func (k Keeper) AddHostZoneToEpochUnbondingRecord(ctx sdk.Context, epochNumber uint64, chainId string, hzu *types.HostZoneUnbonding) (val *types.EpochUnbondingRecord, success bool) {
+	epochUnbondingRecord, found := k.GetEpochUnbondingRecord(ctx, epochNumber)
+	if !found {
+		return nil, false
+	}
+	wasSet := false
+	for i, hostZoneUnbonding := range epochUnbondingRecord.HostZoneUnbondings {
+		if hostZoneUnbonding.GetHostZoneId() == chainId {
+			epochUnbondingRecord.HostZoneUnbondings[i] = hzu
+			wasSet = true
+			break
+		}
+	}
+	if !wasSet {
+		// add new host zone unbonding record
+		epochUnbondingRecord.HostZoneUnbondings = append(epochUnbondingRecord.HostZoneUnbondings, hzu)
+	}
+	return &epochUnbondingRecord, true
+}
