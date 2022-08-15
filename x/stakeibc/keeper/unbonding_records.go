@@ -193,42 +193,47 @@ func (k Keeper) SweepAllUnbondedTokens(ctx sdk.Context) {
 		k.Logger(ctx).Info(fmt.Sprintf("sweepUnbondedTokens for host zone %s", hostZone.ChainId))
 
 		epochUnbondingRecords := k.RecordsKeeper.GetAllEpochUnbondingRecord(ctx)
-		totalAmtTransferToRedemptionAcct := uint64(0)
+		totalAmtTransferToRedemptionAcct := int64(0)
 		unbondingEpochNumbers := []uint64{}
 		for _, epochUnbondingRecord := range epochUnbondingRecords {
 			k.Logger(ctx).Info(fmt.Sprintf("processing epochUnbondingRecord %v", epochUnbondingRecord.EpochNumber))
 
 			// iterate through all host zone unbondings and process them if they're ready to be swept
-			// TODO() index into the HostZoneUnbonding map with chainID rather than iterating and checking chainID equality
 			hostZoneUnbonding := epochUnbondingRecord.HostZoneUnbondings[hostZone.ChainId]
 			k.Logger(ctx).Info(fmt.Sprintf("\tProcessing batch SweepAllUnbondedTokens for host zone %s", hostZone.ChainId))
 
 			// get latest blockTime from light client
 			blockTime, found := k.GetLightClientTimeSafely(ctx, hostZone.ConnectionId)
 			if !found {
-				k.Logger(ctx).Error(fmt.Sprintf("\t\tCould not find blockTime for host zone %s", hostZone.ChainId))
-				return sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "\t\tCould not find blockTime for host zone")
+				errMsg := fmt.Sprintf("\tCould not find blockTime for host zone %s", hostZone.ChainId)
+				k.Logger(ctx).Error(errMsg)
+				return sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, errMsg)
 			}
 
 			shouldProcess := hostZoneUnbonding.Status == recordstypes.HostZoneUnbonding_UNBONDED
 			k.Logger(ctx).Info(fmt.Sprintf("\tUnbonding time:  %d blockTime %d, shouldProcess %v", hostZoneUnbonding.UnbondingTime, blockTime, shouldProcess))
 
-			// if the unbonding period has elapsed, then we can send the ICA call to sweep this hostZone's unbondings to the rewards account (in a batch)
+			// if the unbonding period has elapsed, then we can send the ICA call to sweep this hostZone's unbondings to the redemption account (in a batch)
 			if (hostZoneUnbonding.UnbondingTime < blockTime) && shouldProcess {
 				// we have a match, so we can process this unbonding
 				logMsg := fmt.Sprintf("\t\tAdding %d to amt to batch transfer from delegation acct to rewards acct for host zone %s, epoch %v",
 					hostZoneUnbonding.NativeTokenAmount, hostZone.ChainId, epochUnbondingRecord.EpochNumber)
 				k.Logger(ctx).Info(logMsg)
 
-				totalAmtTransferToRedemptionAcct += hostZoneUnbonding.NativeTokenAmount
-				k.RecordsKeeper.SetEpochUnbondingRecord(ctx, epochUnbondingRecord)
+				nativeTokenAmount, err := cast.ToInt64E(hostZoneUnbonding.NativeTokenAmount)
+				if err != nil {
+					errMsg := fmt.Sprintf("Could not convert native token amount to int64 | %s", err.Error())
+					k.Logger(ctx).Error(errMsg)
+					return sdkerrors.Wrapf(types.ErrIntCast, errMsg)
+				}
+				totalAmtTransferToRedemptionAcct += nativeTokenAmount
 				unbondingEpochNumbers = append(unbondingEpochNumbers, epochUnbondingRecord.EpochNumber)
 			}
 		}
 		// if we have any amount to sweep, then we can send the ICA call to sweep them
 		if totalAmtTransferToRedemptionAcct > 0 {
 			k.Logger(ctx).Info(fmt.Sprintf("\tSending batch SweepAllUnbondedTokens for %d amt to host zone %s", totalAmtTransferToRedemptionAcct, hostZone.ChainId))
-			// Issue ICA bank send from delegation account to rewards account
+			// Issue ICA bank send from delegation account to redemption account
 			if (&hostZone).DelegationAccount != nil && (&hostZone).RedemptionAccount != nil { // only process host zones once withdrawal accounts are registered
 
 				// get the delegation account and rewards account
@@ -236,7 +241,7 @@ func (k Keeper) SweepAllUnbondedTokens(ctx sdk.Context) {
 				redemptionAccount := hostZone.GetRedemptionAccount()
 
 				// build transfer message from delegation account to redemption account
-				sweepCoin := sdk.NewCoin(hostZone.HostDenom, sdk.NewInt(cast.ToInt64(totalAmtTransferToRedemptionAcct)))
+				sweepCoin := sdk.NewCoin(hostZone.HostDenom, sdk.NewInt(totalAmtTransferToRedemptionAcct))
 				var msgs []sdk.Msg
 				msgs = append(msgs, &banktypes.MsgSend{
 					FromAddress: delegationAccount.GetAddress(),
