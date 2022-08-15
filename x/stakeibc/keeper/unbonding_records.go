@@ -208,7 +208,7 @@ func (k Keeper) SweepAllUnbondedTokens(ctx sdk.Context) {
 			zone, found := k.GetHostZone(ctx, unbonding.HostZoneId)
 			if !found {
 				k.Logger(ctx).Error(fmt.Sprintf("\t\tHost zone not found for hostZoneId %s", unbonding.HostZoneId))
-				continue
+				return sdkerrors.Wrapf(types.ErrInvalidHostZone, "tHost zone not found for hostZoneId %s", unbonding.HostZoneId)
 			}
 
 			// get latest blockTime from light client
