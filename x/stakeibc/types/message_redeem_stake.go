@@ -9,7 +9,7 @@ const TypeMsgRedeemStake = "redeem_stake"
 
 var _ sdk.Msg = &MsgRedeemStake{}
 
-func NewMsgRedeemStake(creator string, amount int64, hostZone string, receiver string) *MsgRedeemStake {
+func NewMsgRedeemStake(creator string, amount uint64, hostZone string, receiver string) *MsgRedeemStake {
 	return &MsgRedeemStake{
 		Creator:  creator,
 		Amount:   amount,

@@ -244,11 +244,14 @@ func (k Keeper) SubmitTxsEpoch(
 		return 0, sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "Failed to get epoch tracker for %s", epochType)
 	}
 	// BUFFER by 5% of the epoch length
-	bufferSize := cast.ToInt64(k.GetParam(ctx, types.KeyBufferSize))
+	bufferSize, err := cast.ToUint64E(k.GetParam(ctx, types.KeyBufferSize))
+	if err != nil {
+		return 0, sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, fmt.Sprintf("Failed to get buffer size: %s", err.Error()))
+	}
 	BUFFER := epochTracker.Duration / bufferSize
 	timeoutNanos := epochTracker.NextEpochStartTime - BUFFER
 	k.Logger(ctx).Info(fmt.Sprintf("Submitting txs for epoch %s %d %d", epochTracker.EpochIdentifier, epochTracker.NextEpochStartTime, timeoutNanos))
-	sequence, err := k.SubmitTxs(ctx, connectionId, msgs, account, cast.ToUint64(timeoutNanos), callbackId, callbackArgs)
+	sequence, err := k.SubmitTxs(ctx, connectionId, msgs, account, timeoutNanos, callbackId, callbackArgs)
 	if err != nil {
 		return 0, err
 	}
@@ -356,9 +359,8 @@ func (k Keeper) SubmitTxs_OLD(ctx sdk.Context, connectionId string, msgs []sdk.M
 	return sequence, nil
 }
 
-func (k Keeper) GetLightClientHeightSafely(ctx sdk.Context, connectionID string) (int64, bool) {
+func (k Keeper) GetLightClientHeightSafely(ctx sdk.Context, connectionID string) (uint64, bool) {
 
-	var latestHeightHostZone int64 // defaults to 0
 	// get light client's latest height
 	conn, found := k.IBCKeeper.ConnectionKeeper.GetConnection(ctx, connectionID)
 	if !found {
@@ -373,7 +375,11 @@ func (k Keeper) GetLightClientHeightSafely(ctx sdk.Context, connectionID string)
 	} else {
 		// TODO(TEST-119) get stAsset supply at SAME time as hostZone height
 		// TODO(TEST-112) check on safety of castng uint64 to int64
-		latestHeightHostZone = cast.ToInt64(clientState.GetLatestHeight().GetRevisionHeight())
+		latestHeightHostZone, err := cast.ToUint64E(clientState.GetLatestHeight().GetRevisionHeight())
+		if err != nil {
+			k.Logger(ctx).Error(fmt.Sprintf("error casting latest height to int64: %s", err.Error()))
+			return 0, false
+		}
 		return latestHeightHostZone, true
 	}
 }

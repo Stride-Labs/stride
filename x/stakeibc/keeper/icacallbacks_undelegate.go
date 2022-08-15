@@ -70,7 +70,7 @@ func UndelegateCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, a
 		if !success {
 			return sdkerrors.Wrapf(types.ErrValidatorDelegationChg, "Failed to remove delegation to validator")
 		}
-		hostZone.StakedBal -= undelegateAmt
+		hostZone.StakedBal -= undelegation.Amount
 	}
 	k.SetHostZone(ctx, hostZone)
 
