@@ -21,9 +21,9 @@ BLOCK_TIME="${BLOCK_TIME_SECONDS}s"
 # NOTE: If you add new epochs, these indexes will need to be updated
 DAY_EPOCH_INDEX=1
 INTERVAL_LEN=1
-DAY_EPOCH_LEN="100s"
+DAY_EPOCH_LEN="25s"
 STRIDE_EPOCH_INDEX=2
-STRIDE_EPOCH_LEN="40s"
+STRIDE_EPOCH_LEN="10s"
 IBC_TX_WAIT_SECONDS=30
 MAX_DEPOSIT_PERIOD="30s"
 VOTING_PERIOD="30s"
@@ -114,6 +114,21 @@ BLOCK_SLEEP() {
 WAIT_FOR_BLOCK () {
   num_blocks="${2:-1}"
   ( tail -f -n0 $1 & ) | grep -q "INF executed block height="
+}
+
+WAIT_FOR_TRANSFER () {
+  success_string="[IBC-TRANSFER].*}"
+  ( tail -f -n500 $1 & ) | grep -q -E "$success_string"
+}
+
+WAIT_FOR_DELEGATION () {
+  success_string="DelegateCallback executing.*"
+  ( tail -f -n0 $1 & ) | grep -q -E "$success_string"
+}
+
+WAIT_FOR_REDEMPTION () {
+  success_string=".*ACK - sendMsg.FromAddress == delegationAddress && sendMsg.ToAddress == redemptionAddress.*"
+  ( tail -f -n0 $1 & ) | grep -q -E "$success_string"
 }
 
 WAIT_FOR_NONEMPTY_BLOCK () {
