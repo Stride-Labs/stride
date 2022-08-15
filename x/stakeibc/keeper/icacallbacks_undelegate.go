@@ -70,7 +70,7 @@ func UndelegateCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, a
 		if !success {
 			return sdkerrors.Wrapf(types.ErrValidatorDelegationChg, "Failed to remove delegation to validator")
 		}
-		hostZone.StakedBal -= undelegateAmt
+		hostZone.StakedBal -= undelegation.Amount
 	}
 	k.SetHostZone(ctx, hostZone)
 
@@ -105,14 +105,14 @@ func UndelegateCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, a
 
 	// Update the status and time of each unbonding record and grab the number of stTokens that need to be burned
 	stAmountToBurn := int64(0)
-	for _, epochNumber := range undelegateCallback.UnbondingEpochNumbers {
+	for _, epochNumber := range undelegateCallback.EpochUnbondingRecordIds {
 		epochUnbondingRecord, found := k.RecordsKeeper.GetEpochUnbondingRecord(ctx, epochNumber)
 		if !found {
 			errMsg := fmt.Sprintf("Unable to find epoch unbonding record for epoch: %d", epochNumber)
 			k.Logger(ctx).Error(errMsg)
 			return sdkerrors.Wrapf(sdkerrors.ErrKeyNotFound, errMsg)
 		}
-		hostZoneUnbonding, found := epochUnbondingRecord.HostZoneUnbondings[hostZone.ChainId]
+		hostZoneUnbonding, found := k.RecordsKeeper.GetHostZoneUnbondingByChainId(ctx, epochUnbondingRecord.EpochNumber, hostZone.ChainId)
 		if !found {
 			errMsg := fmt.Sprintf("Host zone not found (%s) in epoch unbonding record: %d", hostZone.ChainId, epochNumber)
 			k.Logger(ctx).Error(errMsg)
@@ -131,7 +131,12 @@ func UndelegateCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, a
 		// Update the bonded status and time
 		hostZoneUnbonding.Status = recordstypes.HostZoneUnbonding_UNBONDED
 		hostZoneUnbonding.UnbondingTime = cast.ToUint64(latestCompletionTime.UnixNano())
-		k.RecordsKeeper.SetEpochUnbondingRecord(ctx, epochUnbondingRecord)
+		updatedEpochUnbondingRecord, success := k.RecordsKeeper.AddHostZoneToEpochUnbondingRecord(ctx, epochUnbondingRecord.EpochNumber, hostZone.ChainId, hostZoneUnbonding)
+		if !success {
+			k.Logger(ctx).Error(fmt.Sprintf("Failed to set host zone epoch unbonding record: epochNumber %d, chainId %s, hostZoneUnbonding %v", epochUnbondingRecord.EpochNumber, hostZone.ChainId, hostZoneUnbonding))
+			return sdkerrors.Wrapf(types.ErrEpochNotFound, "couldn't set host zone epoch unbonding record. err: %s", err.Error())
+		}
+		k.RecordsKeeper.SetEpochUnbondingRecord(ctx, *updatedEpochUnbondingRecord)
 
 		logMsg := fmt.Sprintf("Set unbonding time to %s for host zone %s's unbonding record: %d",
 			latestCompletionTime.String(), hostZone.ChainId, epochNumber)

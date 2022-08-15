@@ -35,5 +35,5 @@ message ReinvestCallback {
 message UndelegateCallback {
   string hostZoneId = 1; 
   repeated SplitDelegation splitDelegations = 2;
-  repeated uint64 unbondingEpochNumbers = 3;
+  repeated uint64 epochUnbondingRecordIds = 3;
 }

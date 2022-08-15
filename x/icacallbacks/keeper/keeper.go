@@ -101,6 +101,8 @@ func (k Keeper) CallRegisteredICACallback(ctx sdk.Context, modulePacket channelt
 		errMsg := fmt.Sprintf("callback data not found for portID: %s, channelID: %s, sequence: %d", portID, channelID, modulePacket.Sequence)
 		k.Logger(ctx).Error(errMsg)
 		return nil
+	} else {
+		k.Logger(ctx).Info(fmt.Sprintf("callback data found for portID: %s, channelID: %s, sequence: %d", portID, channelID, modulePacket.Sequence))
 	}
 	// fetch the callback function
 	callbackHandler, err := k.GetICACallbackHandler(module)
@@ -117,7 +119,7 @@ func (k Keeper) CallRegisteredICACallback(ctx sdk.Context, modulePacket channelt
 			return err
 		}
 	} else {
-		k.Logger(ctx).Error(fmt.Sprintf("Callback id %s has no callback", callbackData.CallbackId))
+		k.Logger(ctx).Error(fmt.Sprintf("Callback %v has no associated callback", callbackData))
 	}
 
 	// remove the callback data

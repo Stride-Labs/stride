@@ -16,7 +16,7 @@ message UserRedemptionRecord {
   uint64 amount = 4; 
   string denom = 5; 
   string hostZoneId = 6; 
-  int64 epochNumber = 7; 
+  uint64 epochNumber = 7; 
   bool isClaimable = 8;   
 }
 
@@ -94,8 +94,8 @@ message HostZoneUnbonding {
 
 message EpochUnbondingRecord {
   uint64 epochNumber = 1;
-  
-  map<string, HostZoneUnbonding> hostZoneUnbondings = 3;
+  repeated HostZoneUnbonding hostZoneUnbondings = 3;
+  reserved 2;
 }
 
 

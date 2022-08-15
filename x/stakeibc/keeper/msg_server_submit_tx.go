@@ -97,7 +97,7 @@ func (k Keeper) DelegateOnHost(ctx sdk.Context, hostZone types.HostZone, amt sdk
 	for _, validator := range hostZone.GetValidators() {
 		relAmt := sdk.NewCoin(amt.Denom, sdk.NewIntFromUint64(targetDelegatedAmts[validator.GetAddress()]))
 		if relAmt.Amount.IsPositive() {
-			k.Logger(ctx).Error(fmt.Sprintf("Appending MsgDelegate to msgs, DelegatorAddress: %s, ValidatorAddress: %s, relAmt: %v", delegationIca.GetAddress(), validator.GetAddress(), relAmt))
+			k.Logger(ctx).Info(fmt.Sprintf("Appending MsgDelegate to msgs, DelegatorAddress: %s, ValidatorAddress: %s, relAmt: %v", delegationIca.GetAddress(), validator.GetAddress(), relAmt))
 			msgs = append(msgs, &stakingTypes.MsgDelegate{
 				DelegatorAddress: delegationIca.GetAddress(),
 				ValidatorAddress: validator.GetAddress(),
@@ -112,6 +112,7 @@ func (k Keeper) DelegateOnHost(ctx sdk.Context, hostZone types.HostZone, amt sdk
 		DepositRecordId:  depositRecordId,
 		SplitDelegations: splitDelegations,
 	}
+	k.Logger(ctx).Info(fmt.Sprintf("Marshalling DelegateCallback args: %v", delegateCallback))
 	marshalledCallbackArgs, err := k.MarshalDelegateCallbackArgs(ctx, delegateCallback)
 	if err != nil {
 		return err
@@ -244,15 +245,18 @@ func (k Keeper) SubmitTxsEpoch(
 		return 0, sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "Failed to get epoch tracker for %s", epochType)
 	}
 	// BUFFER by 5% of the epoch length
-	bufferSize := cast.ToInt64(k.GetParam(ctx, types.KeyBufferSize))
+	bufferSize, err := cast.ToUint64E(k.GetParam(ctx, types.KeyBufferSize))
+	if err != nil {
+		return 0, sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, fmt.Sprintf("Failed to get buffer size: %s", err.Error()))
+	}
 	BUFFER := epochTracker.Duration / bufferSize
 	timeoutNanos := epochTracker.NextEpochStartTime - BUFFER
 	k.Logger(ctx).Info(fmt.Sprintf("Submitting txs for epoch %s %d %d", epochTracker.EpochIdentifier, epochTracker.NextEpochStartTime, timeoutNanos))
-	sequence, err := k.SubmitTxs(ctx, connectionId, msgs, account, cast.ToUint64(timeoutNanos), callbackId, callbackArgs)
+	sequence, err := k.SubmitTxs(ctx, connectionId, msgs, account, timeoutNanos, callbackId, callbackArgs)
 	if err != nil {
 		return 0, err
 	}
-	k.Logger(ctx).Info(fmt.Sprintf("Submitted Txs, connectionId: %s, sequence: %d", connectionId, sequence))
+	k.Logger(ctx).Info(fmt.Sprintf("Submitted Txs, connectionId: %s, sequence: %d, block: %d", connectionId, sequence, ctx.BlockHeight()))
 	return sequence, nil
 }
 
@@ -303,15 +307,17 @@ func (k Keeper) SubmitTxs(
 	}
 
 	// Store the callback data
-	callback := icacallbackstypes.CallbackData{
-		CallbackKey:  icacallbackstypes.PacketID(portID, channelID, sequence),
-		PortId:       portID,
-		ChannelId:    channelID,
-		Sequence:     sequence,
-		CallbackId:   callbackId,
-		CallbackArgs: callbackArgs,
+	if callbackId != "" && callbackArgs != nil {
+		callback := icacallbackstypes.CallbackData{
+			CallbackKey:  icacallbackstypes.PacketID(portID, channelID, sequence),
+			PortId:       portID,
+			ChannelId:    channelID,
+			Sequence:     sequence,
+			CallbackId:   callbackId,
+			CallbackArgs: callbackArgs,
+		}
+		k.ICACallbacksKeeper.SetCallbackData(ctx, callback)
 	}
-	k.ICACallbacksKeeper.SetCallbackData(ctx, callback)
 
 	return sequence, nil
 }
@@ -356,9 +362,8 @@ func (k Keeper) SubmitTxs_OLD(ctx sdk.Context, connectionId string, msgs []sdk.M
 	return sequence, nil
 }
 
-func (k Keeper) GetLightClientHeightSafely(ctx sdk.Context, connectionID string) (int64, bool) {
+func (k Keeper) GetLightClientHeightSafely(ctx sdk.Context, connectionID string) (uint64, bool) {
 
-	var latestHeightHostZone int64 // defaults to 0
 	// get light client's latest height
 	conn, found := k.IBCKeeper.ConnectionKeeper.GetConnection(ctx, connectionID)
 	if !found {
@@ -373,7 +378,11 @@ func (k Keeper) GetLightClientHeightSafely(ctx sdk.Context, connectionID string)
 	} else {
 		// TODO(TEST-119) get stAsset supply at SAME time as hostZone height
 		// TODO(TEST-112) check on safety of castng uint64 to int64
-		latestHeightHostZone = cast.ToInt64(clientState.GetLatestHeight().GetRevisionHeight())
+		latestHeightHostZone, err := cast.ToUint64E(clientState.GetLatestHeight().GetRevisionHeight())
+		if err != nil {
+			k.Logger(ctx).Error(fmt.Sprintf("error casting latest height to int64: %s", err.Error()))
+			return 0, false
+		}
 		return latestHeightHostZone, true
 	}
 }

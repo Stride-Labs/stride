@@ -52,7 +52,17 @@ func (k Keeper) EndBlocker(ctx sdk.Context) {
 			// query was removed; delete datapoint
 			k.DeleteDatapoint(ctx, dp.Id)
 		} else {
-			if dp.LocalHeight.Int64()+cast.ToInt64(q.Ttl) > ctx.BlockHeader().Height {
+			ttl, err := cast.ToInt64E(q.Ttl)
+			if err != nil {
+				k.Logger(ctx).Error(fmt.Sprintf("Error casting ttl to int64, err: %s", err.Error()))
+				return false
+			}
+			lh, err := cast.ToInt64E(dp.LocalHeight)
+			if err != nil {
+				k.Logger(ctx).Error(fmt.Sprintf("Error casting local height to int64, err: %s", err.Error()))
+				return false
+			}
+			if lh+ttl > ctx.BlockHeader().Height {
 				// gc old data
 				k.DeleteDatapoint(ctx, dp.Id)
 			}
