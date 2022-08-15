@@ -131,7 +131,12 @@ func UndelegateCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, a
 		// Update the bonded status and time
 		hostZoneUnbonding.Status = recordstypes.HostZoneUnbonding_UNBONDED
 		hostZoneUnbonding.UnbondingTime = cast.ToUint64(latestCompletionTime.UnixNano())
-		k.RecordsKeeper.SetEpochUnbondingRecord(ctx, epochUnbondingRecord)
+		updatedEpochUnbondingRecord, success := k.RecordsKeeper.AddHostZoneToEpochUnbondingRecord(ctx, epochUnbondingRecord.EpochNumber, hostZone.ChainId, hostZoneUnbonding)
+		if !success {
+			k.Logger(ctx).Error(fmt.Sprintf("Failed to set host zone epoch unbonding record: epochNumber %d, chainId %s, hostZoneUnbonding %v", epochUnbondingRecord.EpochNumber, hostZone.ChainId, hostZoneUnbonding))
+			return sdkerrors.Wrapf(types.ErrEpochNotFound, "couldn't set host zone epoch unbonding record. err: %s", err.Error())
+		}
+		k.RecordsKeeper.SetEpochUnbondingRecord(ctx, *updatedEpochUnbondingRecord)
 
 		logMsg := fmt.Sprintf("Set unbonding time to %s for host zone %s's unbonding record: %d",
 			latestCompletionTime.String(), hostZone.ChainId, epochNumber)
