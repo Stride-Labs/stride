@@ -60,12 +60,11 @@ func RedemptionCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, a
 		}
 
 		// Update the unbonding status to TRANSFERRED
-		// TODO: Update with nondeterministic loop
 		hostZoneUnbonding, found := k.RecordsKeeper.GetHostZoneUnbondingByChainId(ctx, epochUnbondingRecord.EpochNumber, hostZoneId)
-			if !found {
-				k.Logger(ctx).Error(fmt.Sprintf("Could not find host zone unbonding %d for host zone %s", epochUnbondingRecord.EpochNumber, hostZoneId))
-				return sdkerrors.Wrapf(sdkerrors.ErrNotFound, "Could not find host zone unbonding %d for host zone %s", epochUnbondingRecord.EpochNumber, hostZoneId)
-			}
+		if !found {
+			k.Logger(ctx).Error(fmt.Sprintf("Could not find host zone unbonding %d for host zone %s", epochUnbondingRecord.EpochNumber, hostZoneId))
+			return sdkerrors.Wrapf(sdkerrors.ErrNotFound, "Could not find host zone unbonding %d for host zone %s", epochUnbondingRecord.EpochNumber, hostZoneId)
+		}
 		hostZoneUnbonding.Status = recordstypes.HostZoneUnbonding_TRANSFERRED
 
 		// Mark the redemption records claimable
