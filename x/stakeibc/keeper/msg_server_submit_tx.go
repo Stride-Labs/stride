@@ -252,7 +252,7 @@ func (k Keeper) SubmitTxsEpoch(
 	bufferSizeParam := k.GetParam(ctx, types.KeyBufferSize)
 	bufferSize := epochTracker.Duration / bufferSizeParam
 	// buffer size should not be negative or longer than the epoch duration
-	if bufferSize < 0 || bufferSize > epochTracker.Duration {
+	if bufferSize > epochTracker.Duration {
 		k.Logger(ctx).Error(fmt.Sprintf("Invalid buffer size %d", bufferSize))
 		return 0, sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "Invalid buffer size %d", bufferSize)
 	}
