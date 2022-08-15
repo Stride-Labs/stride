@@ -99,7 +99,7 @@ func (k Keeper) CallRegisteredICACallback(ctx sdk.Context, modulePacket channelt
 	callbackData, found := k.GetCallbackData(ctx, callbackDataKey)
 	if !found {
 		errMsg := fmt.Sprintf("callback data not found for portID: %s, channelID: %s, sequence: %d", portID, channelID, modulePacket.Sequence)
-		k.Logger(ctx).Info(errMsg)
+		k.Logger(ctx).Error(errMsg)
 		return nil
 	} else {
 		k.Logger(ctx).Info(fmt.Sprintf("callback data found for portID: %s, channelID: %s, sequence: %d", portID, channelID, modulePacket.Sequence))

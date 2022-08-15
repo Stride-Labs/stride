@@ -3,8 +3,9 @@ package types_test
 import (
 	"testing"
 
-	"github.com/Stride-Labs/stride/x/stakeibc/types"
 	"github.com/stretchr/testify/require"
+
+	"github.com/Stride-Labs/stride/x/stakeibc/types"
 )
 
 func TestGenesisState_Validate(t *testing.T) {
@@ -36,20 +37,6 @@ func TestGenesisState_Validate(t *testing.T) {
 				HostZoneCount: 2,
 			},
 			valid: true,
-		},
-		{
-			desc: "duplicated pendingClaims",
-			genState: &types.GenesisState{
-				PendingClaimsList: []types.PendingClaims{
-					{
-						Sequence: "0",
-					},
-					{
-						Sequence: "0",
-					},
-				},
-			},
-			valid: false,
 		},
 		// this line is used by starport scaffolding # types/genesis/testcase
 	} {
