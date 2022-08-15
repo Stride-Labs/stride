@@ -129,9 +129,6 @@ stop-docker:
 	@pkill -f "/bin/bash.*create_logs.sh" || true
 	docker-compose down
 
-stop-docker:
-	docker-compose down
-
 ###############################################################################
 ###                                LocalNet                                 ###
 ###############################################################################
