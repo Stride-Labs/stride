@@ -1,4 +1,4 @@
-FROM golang:1.17-alpine3.15 AS golang
+FROM golang:1.18-alpine3.15 AS golang
 
 WORKDIR /src/
 
@@ -23,8 +23,10 @@ FROM alpine:3.15
 COPY --from=golang /src/build/strided /usr/local/bin/strided
 RUN addgroup -g 1000 stride \
     && adduser -S -h /home/stride -D stride -u 1000 -G stride
-USER stride
 
+USER stride
 WORKDIR /home/stride
+
+EXPOSE 26657 26656 1317 9090
 
 CMD ["strided", "start"]

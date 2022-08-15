@@ -39,7 +39,7 @@ sleep 5
 echo "Done"
 
 printf "Creating connection..."
-$HERMES_EXEC create connection $STRIDE_CHAIN_ID $GAIA_CHAIN_ID 
+$HERMES_EXEC create connection $STRIDE_CHAIN_ID $GAIA_CHAIN_ID &> /dev/null
 echo "Done"
 
 printf "Creating transfer channel..."

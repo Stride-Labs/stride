@@ -9,56 +9,35 @@ services:
       - "26657:26657"
       - "1317:1317"
       - "9090:9090"
-    build:
-      context: .
-      dockerfile: Dockerfile.stride
 
   stride2:
     image: stridezone:stride
     hostname: stride
     volumes:
       - ./scripts/state/stride2:/home/stride/.stride
-    expose:
-      - "26656"
-    build:
-      context: .
-      dockerfile: Dockerfile.stride
 
   stride3:
     image: stridezone:stride
     hostname: stride
     volumes:
       - ./scripts/state/stride3:/home/stride/.stride
-    expose:
-      - "26656"
-    build:
-      context: .
-      dockerfile: Dockerfile.stride
 
   gaia1:
     # image: stridezone/stride:latest
     image: stridezone:gaia
     hostname: stride
+    volumes:
+      - ./scripts/state/gaia1:/home/gaia/.gaia
     ports:
       - "26557:26657"
       - "1307:1317"
       - "9080:9090"
-    volumes:
-      - ./scripts/state/gaia1:/home/gaia/.gaia
-    build:
-      context: .
-      dockerfile: Dockerfile.gaia
   gaia2:
     # image: stridezone/stride:latest
     image: stridezone:gaia
     hostname: stride
     volumes:
       - ./scripts/state/gaia2:/home/gaia/.gaia
-    expose:
-      - "26656"
-    build:
-      context: .
-      dockerfile: Dockerfile.gaia
 
   gaia3:
     # image: stridezone/stride:latest
@@ -66,11 +45,6 @@ services:
     hostname: stride
     volumes:
       - ./scripts/state/gaia3:/home/gaia/.gaia
-    expose:
-      - "26656"
-    build:
-      context: .
-      dockerfile: Dockerfile.gaia
 
   hermes:
     image: stridezone:hermes
@@ -79,15 +53,8 @@ services:
       - ./scripts/state/hermes/config.toml:/home/hermes/.hermes/config.toml
     restart: always
 
-    build:
-      context: .
-      dockerfile: Dockerfile.hermes
-
   icq:
     image: stridezone:interchain-queries
     volumes:
       - ./scripts/state/icq:/home/icq/.icq
     restart: always
-    build:
-      context: .
-      dockerfile: Dockerfile.icq
