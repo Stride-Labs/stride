@@ -133,7 +133,7 @@ func (k *Keeper) HandleSend(ctx sdk.Context, msg sdk.Msg, sequence string) error
 	redemptionAddress := zone.GetRedemptionAccount().GetAddress()
 
 	if sendMsg.FromAddress == delegationAddress && sendMsg.ToAddress == redemptionAddress {
-		k.Logger(ctx).Error("ACK - sendMsg.FromAddress == delegationAddress && sendMsg.ToAddress == redemptionAddress")
+		k.Logger(ctx).Info("ACK - sendMsg.FromAddress == delegationAddress && sendMsg.ToAddress == redemptionAddress")
 		dayEpochTracker, found := k.GetEpochTracker(ctx, "day")
 		if !found {
 			k.Logger(ctx).Error("failed to find epoch day")
@@ -172,7 +172,6 @@ func (k *Keeper) HandleSend(ctx sdk.Context, msg sdk.Msg, sequence string) error
 				}
 				userRedemptionRecord.IsClaimable = true
 				k.RecordsKeeper.SetUserRedemptionRecord(ctx, userRedemptionRecord)
-				k.SetHostZone(ctx, *zone)
 			}
 			k.RecordsKeeper.SetEpochUnbondingRecord(ctx, epochUnbondingRecord)
 		}
