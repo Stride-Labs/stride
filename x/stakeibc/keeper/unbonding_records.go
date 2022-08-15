@@ -27,7 +27,7 @@ func (k Keeper) CreateEpochUnbondingRecord(ctx sdk.Context, epochNumber int64) b
 			Status:            recordstypes.HostZoneUnbonding_BONDED,
 		}
 		k.Logger(ctx).Info(fmt.Sprintf("Adding hostZoneUnbonding %v to %s", hostZoneUnbonding, hostZone.ChainId))
-		hostZoneUnbondings = append(hostZoneUnbondings, &hostZoneUnbonding) // [hostZone.ChainId] = &hostZoneUnbonding
+		hostZoneUnbondings = append(hostZoneUnbondings, &hostZoneUnbonding)
 		return nil
 	}
 
