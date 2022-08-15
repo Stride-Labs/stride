@@ -326,11 +326,20 @@ func DelegatorSharesCallback(k Keeper, ctx sdk.Context, args []byte, query icqty
 				zone.StakedBal -= slashAmt
 				v.DelegationAmt -= slashAmt
 				v.Weight = sdk.NewDec(weightInt64).Mul(weightMul).TruncateInt().Uint64()
+
+				// write back to state and break
+				zone.Validators[i] = v
+				k.Logger(ctx).Info(fmt.Sprintf("SLASHING! val to update to: %v", zone.Validators[i].String()))
+				k.SetHostZone(ctx, zone)
+
+				zone, found = k.GetHostZone(ctx, zone.ChainId)
+				if !found {
+					k.Logger(ctx).Error(fmt.Sprintf("failed to find zone %s", zone.ChainId))
+					return sdkerrors.Wrapf(sdkerrors.ErrNotFound, "no zone %s", zone.ChainId)
+				}
+				k.Logger(ctx).Info(fmt.Sprintf("SLASHED! val updated: %v", zone.Validators[i].String()))
+				break
 			}
-			// write back to state and break (reset TokensFromShares for clarity, so we're not tempted to use it again later)
-			zone.Validators[i] = v
-			k.SetHostZone(ctx, zone)
-			break
 		}
 	}
 	return nil
