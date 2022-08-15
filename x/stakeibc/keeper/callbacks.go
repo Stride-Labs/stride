@@ -302,7 +302,7 @@ func DelegatorSharesCallback(k Keeper, ctx sdk.Context, args []byte, query icqty
 				// slash the validator's weight
 				weightMul := sdk.NewDec(qNumTokens.Int64()).Quo(sdk.NewDec(delAmtInt64))
 
-				zone.StakedBal -= slashAmtInt64
+				zone.StakedBal -= slashAmt
 				v.DelegationAmt -= slashAmt
 				v.Weight = sdk.NewDec(weightInt64).Mul(weightMul).TruncateInt().Uint64()
 			}

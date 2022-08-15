@@ -152,16 +152,31 @@ func (k Keeper) GetStrideEpochElapsedShare(ctx sdk.Context) (sdk.Dec, error) {
 		k.Logger(ctx).Error(fmt.Sprintf("Failed to get epoch tracker for %s", epochType))
 		return sdk.ZeroDec(), sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "Failed to get epoch tracker for %s", epochType)
 	}
-	currEpochStartTime := epochTracker.NextEpochStartTime - epochTracker.Duration
+	durationInt64, err := cast.ToInt64E(epochTracker.Duration)
+	if err != nil {
+		k.Logger(ctx).Error(fmt.Sprintf("Failed to convert epoch duration to int64: %s", err.Error()))
+		return sdk.ZeroDec(), sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "Failed to convert epoch duration to int64: %s", err.Error())
+	}
+	nextEpochStartTimeInt64, err := cast.ToInt64E(epochTracker.NextEpochStartTime)
+	if err != nil {
+		k.Logger(ctx).Error(fmt.Sprintf("Failed to convert next epoch start time to int64: %s", err.Error()))
+		return sdk.ZeroDec(), sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "Failed to convert next epoch start time to int64: %s", err.Error())
+	}
+	currEpochStartTime := nextEpochStartTimeInt64 - durationInt64
 	currBlockTime := ctx.BlockTime().UnixNano()
+	currBlockTimeUint64, err := cast.ToUint64E(currBlockTime)
+	if err != nil {
+		k.Logger(ctx).Error(fmt.Sprintf("Failed to get current block time: %s", err))
+		return sdk.ZeroDec(), sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "Failed to get current block time: %s", err)
+	}
 	// sanity check: current block time is:
 	//     * GT time of start of current epoch
 	//     * LT time of end of current epoch
-	if currBlockTime < currEpochStartTime || currBlockTime > epochTracker.NextEpochStartTime {
+	if currBlockTime < currEpochStartTime || currBlockTimeUint64 > epochTracker.NextEpochStartTime {
 		k.Logger(ctx).Error(fmt.Sprintf("Current block time %d is not within current epoch %d", currBlockTime, epochTracker.NextEpochStartTime))
 		return sdk.ZeroDec(), sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "Current block time %d is not within current epoch %d", currBlockTime, epochTracker.NextEpochStartTime)
 	}
-	elapsedShare := sdk.NewDec(currBlockTime - currEpochStartTime).Quo(sdk.NewDec(epochTracker.Duration))
+	elapsedShare := sdk.NewDec(currBlockTime - currEpochStartTime).Quo(sdk.NewDec(durationInt64))
 	// sanity check: elapsed share is \in (0,1)
 	if elapsedShare.LT(sdk.ZeroDec()) || elapsedShare.GT(sdk.OneDec()) {
 		k.Logger(ctx).Error(fmt.Sprintf("Elapsed share %s is not within (0,1)", elapsedShare))
