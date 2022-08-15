@@ -105,14 +105,14 @@ func UndelegateCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, a
 
 	// Update the status and time of each unbonding record and grab the number of stTokens that need to be burned
 	stAmountToBurn := int64(0)
-	for _, epochNumber := range undelegateCallback.UnbondingEpochNumbers {
+	for _, epochNumber := range undelegateCallback.EpochUnbondingNumbers {
 		epochUnbondingRecord, found := k.RecordsKeeper.GetEpochUnbondingRecord(ctx, epochNumber)
 		if !found {
 			errMsg := fmt.Sprintf("Unable to find epoch unbonding record for epoch: %d", epochNumber)
 			k.Logger(ctx).Error(errMsg)
 			return sdkerrors.Wrapf(sdkerrors.ErrKeyNotFound, errMsg)
 		}
-		hostZoneUnbonding, found := epochUnbondingRecord.HostZoneUnbondings[hostZone.ChainId]
+		hostZoneUnbonding, found := k.RecordsKeeper.GetHostZoneUnbondingByChainId(ctx, epochUnbondingRecord.EpochNumber, hostZone.ChainId)
 		if !found {
 			errMsg := fmt.Sprintf("Host zone not found (%s) in epoch unbonding record: %d", hostZone.ChainId, epochNumber)
 			k.Logger(ctx).Error(errMsg)
