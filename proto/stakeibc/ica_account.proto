@@ -19,5 +19,5 @@ message ICAAccount {
   repeated Delegation delegations = 4;
   ICAAccountType target = 5;
   //TODO(TEST-112) use cosmos dec for all balances
-  int64 balance = 8;
+  uint64 balance = 8;
 }
