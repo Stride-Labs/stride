@@ -97,27 +97,29 @@ func (k Keeper) DelegateOnHost(ctx sdk.Context, hostZone types.HostZone, amt sdk
 	for _, validator := range hostZone.GetValidators() {
 		relAmt := sdk.NewCoin(amt.Denom, sdk.NewIntFromUint64(targetDelegatedAmts[validator.GetAddress()]))
 		if relAmt.Amount.IsPositive() {
-			k.Logger(ctx).Error(fmt.Sprintf("Appending MsgDelegate to msgs, DelegatorAddress: %s, ValidatorAddress: %s, relAmt: %v", delegationIca.GetAddress(), validator.GetAddress(), relAmt))
+			k.Logger(ctx).Info(fmt.Sprintf("Appending MsgDelegate to msgs, DelegatorAddress: %s, ValidatorAddress: %s, relAmt: %v", delegationIca.GetAddress(), validator.GetAddress(), relAmt))
 			msgs = append(msgs, &stakingTypes.MsgDelegate{
 				DelegatorAddress: delegationIca.GetAddress(),
 				ValidatorAddress: validator.GetAddress(),
 				Amount:           relAmt})
-			}
-			splitDelegations = append(splitDelegations, &types.SplitDelegation{Validator: validator.GetAddress(), Amount: relAmt.Amount.Uint64()})
+		}
+		splitDelegations = append(splitDelegations, &types.SplitDelegation{Validator: validator.GetAddress(), Amount: relAmt.Amount.Uint64()})
 	}
 
 	// add callback data
 	delegateCallback := types.DelegateCallback{
-		HostZoneId: hostZone.ChainId,
-		DepositRecordId: depositRecordId,
+		HostZoneId:       hostZone.ChainId,
+		DepositRecordId:  depositRecordId,
 		SplitDelegations: splitDelegations,
 	}
+	k.Logger(ctx).Info(fmt.Sprintf("Marshalling DelegateCallback args: %v", delegateCallback))
 	marshalledCallbackArgs, err := k.MarshalDelegateCallbackArgs(ctx, delegateCallback)
 	if err != nil {
 		return err
 	}
 	// Send the transaction through SubmitTx
-	_, err = k.SubmitTxsStrideEpoch(ctx, connectionId, msgs, *delegationIca, "delegate", marshalledCallbackArgs)
+	_, err = k.SubmitTxsStrideEpoch(ctx, connectionId, msgs, *delegationIca, DELEGATE, marshalledCallbackArgs)
+
 	if err != nil {
 		return sdkerrors.Wrapf(err, "Failed to SubmitTxs for connectionId %s on %s. Messages: %s", connectionId, hostZone.ChainId, msgs)
 	}
@@ -141,12 +143,12 @@ func (k Keeper) SetWithdrawalAddressOnHost(ctx sdk.Context, hostZone types.HostZ
 	// Fetch the relevant ICA
 	delegationIca := hostZone.GetDelegationAccount()
 	if delegationIca == nil || delegationIca.Address == "" {
-		k.Logger(ctx).Error("Zone %s is missing a delegation address!", hostZone.ChainId)
+		k.Logger(ctx).Error(fmt.Sprintf("Zone %s is missing a delegation address!", hostZone.ChainId))
 		return nil
 	}
 	withdrawalIca := hostZone.GetWithdrawalAccount()
 	if withdrawalIca == nil || withdrawalIca.Address == "" {
-		k.Logger(ctx).Error("Zone %s is missing a withdrawal address!", hostZone.ChainId)
+		k.Logger(ctx).Error(fmt.Sprintf("Zone %s is missing a withdrawal address!", hostZone.ChainId))
 		return nil
 	}
 	withdrawalIcaAddr := hostZone.GetWithdrawalAccount().GetAddress()
@@ -168,14 +170,14 @@ func (k Keeper) UpdateWithdrawalBalance(ctx sdk.Context, zoneInfo types.HostZone
 
 	withdrawalIca := zoneInfo.GetWithdrawalAccount()
 	if withdrawalIca == nil || withdrawalIca.Address == "" {
-		k.Logger(ctx).Error("Zone %s is missing a withdrawal address!", zoneInfo.ChainId)
+		k.Logger(ctx).Error(fmt.Sprintf("Zone %s is missing a withdrawal address!", zoneInfo.ChainId))
 	}
 	k.Logger(ctx).Info(fmt.Sprintf("\tQuerying withdrawalBalances for %s", zoneInfo.ChainId))
 
 	_, addr, _ := bech32.DecodeAndConvert(withdrawalIca.GetAddress())
 	data := bankTypes.CreateAccountBalancesPrefix(addr)
 	key := "store/bank/key"
-	k.Logger(ctx).Info("Querying for value", "key", key, "denom", zoneInfo.HostDenom)
+	k.Logger(ctx).Info(fmt.Sprintf("Querying for value key: %s, denom: %s", key, zoneInfo.HostDenom))
 	err := k.InterchainQueryKeeper.MakeRequest(
 		ctx,
 		zoneInfo.ConnectionId,
@@ -189,22 +191,36 @@ func (k Keeper) UpdateWithdrawalBalance(ctx sdk.Context, zoneInfo types.HostZone
 		0, // height always 0 (which means current height)
 	)
 	if err != nil {
-		k.Logger(ctx).Error("Error querying for withdrawal balance", "error", err)
+		k.Logger(ctx).Error(fmt.Sprintf("Error querying for withdrawal balance, error: %s", err.Error()))
 		return err
 	}
 	return nil
 }
 
-func (k Keeper) SubmitTxsDayEpoch(ctx sdk.Context, connectionId string, msgs []sdk.Msg, account types.ICAAccount) (uint64, error) {
+func (k Keeper) SubmitTxsDayEpoch(
+	ctx sdk.Context,
+	connectionId string,
+	msgs []sdk.Msg,
+	account types.ICAAccount,
+	callbackId string,
+	callbackArgs []byte,
+) (uint64, error) {
 	k.Logger(ctx).Info(fmt.Sprintf("SubmitTxsDayEpoch %v", msgs))
-	sequence, err := k.SubmitTxsEpoch(ctx, connectionId, msgs, account, epochstypes.DAY_EPOCH, "", nil)
+	sequence, err := k.SubmitTxsEpoch(ctx, connectionId, msgs, account, epochstypes.DAY_EPOCH, callbackId, callbackArgs)
 	if err != nil {
 		return 0, err
 	}
 	return sequence, nil
 }
 
-func (k Keeper) SubmitTxsStrideEpoch(ctx sdk.Context, connectionId string, msgs []sdk.Msg, account types.ICAAccount, callbackId string, callbackArgs []byte) (uint64, error) {
+func (k Keeper) SubmitTxsStrideEpoch(
+	ctx sdk.Context,
+	connectionId string,
+	msgs []sdk.Msg,
+	account types.ICAAccount,
+	callbackId string,
+	callbackArgs []byte,
+) (uint64, error) {
 	k.Logger(ctx).Info(fmt.Sprintf("SubmitTxsStrideEpoch %v", msgs))
 	sequence, err := k.SubmitTxsEpoch(ctx, connectionId, msgs, account, epochstypes.STRIDE_EPOCH, callbackId, callbackArgs)
 	if err != nil {
@@ -213,28 +229,47 @@ func (k Keeper) SubmitTxsStrideEpoch(ctx sdk.Context, connectionId string, msgs 
 	return sequence, nil
 }
 
-func (k Keeper) SubmitTxsEpoch(ctx sdk.Context, connectionId string, msgs []sdk.Msg, account types.ICAAccount, epochType string, callbackId string, callbackArgs []byte) (uint64, error) {
+func (k Keeper) SubmitTxsEpoch(
+	ctx sdk.Context,
+	connectionId string,
+	msgs []sdk.Msg,
+	account types.ICAAccount,
+	epochType string,
+	callbackId string,
+	callbackArgs []byte,
+) (uint64, error) {
 	k.Logger(ctx).Info(fmt.Sprintf("SubmitTxsEpoch: %v", msgs))
 	epochTracker, found := k.GetEpochTracker(ctx, epochType)
 	if !found {
-		k.Logger(ctx).Error("Failed to get epoch tracker for %s", epochType)
+		k.Logger(ctx).Error(fmt.Sprintf("Failed to get epoch tracker for %s", epochType))
 		return 0, sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "Failed to get epoch tracker for %s", epochType)
 	}
 	// BUFFER by 5% of the epoch length
-	bufferSize := cast.ToInt64(k.GetParam(ctx, types.KeyBufferSize))
+	bufferSize, err := cast.ToUint64E(k.GetParam(ctx, types.KeyBufferSize))
+	if err != nil {
+		return 0, sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, fmt.Sprintf("Failed to get buffer size: %s", err.Error()))
+	}
 	BUFFER := epochTracker.Duration / bufferSize
 	timeoutNanos := epochTracker.NextEpochStartTime - BUFFER
 	k.Logger(ctx).Info(fmt.Sprintf("Submitting txs for epoch %s %d %d", epochTracker.EpochIdentifier, epochTracker.NextEpochStartTime, timeoutNanos))
-	sequence, err := k.SubmitTxs(ctx, connectionId, msgs, account, cast.ToUint64(timeoutNanos), callbackId, callbackArgs)
+	sequence, err := k.SubmitTxs(ctx, connectionId, msgs, account, timeoutNanos, callbackId, callbackArgs)
 	if err != nil {
 		return 0, err
 	}
-	k.Logger(ctx).Info("Submitted Txs", "connectionId", connectionId, "sequence", sequence)
+	k.Logger(ctx).Info(fmt.Sprintf("Submitted Txs, connectionId: %s, sequence: %d, block: %d", connectionId, sequence, ctx.BlockHeight()))
 	return sequence, nil
 }
 
 // SubmitTxs submits an ICA transaction containing multiple messages
-func (k Keeper) SubmitTxs(ctx sdk.Context, connectionId string, msgs []sdk.Msg, account types.ICAAccount, timeoutTimestamp uint64, callbackId string, callbackArgs []byte) (uint64, error) {
+func (k Keeper) SubmitTxs(
+	ctx sdk.Context,
+	connectionId string,
+	msgs []sdk.Msg,
+	account types.ICAAccount,
+	timeoutTimestamp uint64,
+	callbackId string,
+	callbackArgs []byte,
+) (uint64, error) {
 	k.Logger(ctx).Info(fmt.Sprintf("SubmitTxs %v", msgs))
 	chainId, err := k.GetChainID(ctx, connectionId)
 	if err != nil {
@@ -272,15 +307,17 @@ func (k Keeper) SubmitTxs(ctx sdk.Context, connectionId string, msgs []sdk.Msg, 
 	}
 
 	// Store the callback data
-	callback := icacallbackstypes.CallbackData{
-		CallbackKey: icacallbackstypes.PacketID(portID, channelID, sequence),
-		PortId: portID,
-		ChannelId: channelID,
-		Sequence: sequence,
-		CallbackId: callbackId,
-		CallbackArgs: callbackArgs,
+	if callbackId != "" && callbackArgs != nil {
+		callback := icacallbackstypes.CallbackData{
+			CallbackKey:  icacallbackstypes.PacketID(portID, channelID, sequence),
+			PortId:       portID,
+			ChannelId:    channelID,
+			Sequence:     sequence,
+			CallbackId:   callbackId,
+			CallbackArgs: callbackArgs,
+		}
+		k.ICACallbacksKeeper.SetCallbackData(ctx, callback)
 	}
-	k.ICACallbacksKeeper.SetCallbackData(ctx, callback)
 
 	return sequence, nil
 }
@@ -325,9 +362,8 @@ func (k Keeper) SubmitTxs_OLD(ctx sdk.Context, connectionId string, msgs []sdk.M
 	return sequence, nil
 }
 
-func (k Keeper) GetLightClientHeightSafely(ctx sdk.Context, connectionID string) (int64, bool) {
+func (k Keeper) GetLightClientHeightSafely(ctx sdk.Context, connectionID string) (uint64, bool) {
 
-	var latestHeightHostZone int64 // defaults to 0
 	// get light client's latest height
 	conn, found := k.IBCKeeper.ConnectionKeeper.GetConnection(ctx, connectionID)
 	if !found {
@@ -342,7 +378,11 @@ func (k Keeper) GetLightClientHeightSafely(ctx sdk.Context, connectionID string)
 	} else {
 		// TODO(TEST-119) get stAsset supply at SAME time as hostZone height
 		// TODO(TEST-112) check on safety of castng uint64 to int64
-		latestHeightHostZone = cast.ToInt64(clientState.GetLatestHeight().GetRevisionHeight())
+		latestHeightHostZone, err := cast.ToUint64E(clientState.GetLatestHeight().GetRevisionHeight())
+		if err != nil {
+			k.Logger(ctx).Error(fmt.Sprintf("error casting latest height to int64: %s", err.Error()))
+			return 0, false
+		}
 		return latestHeightHostZone, true
 	}
 }
