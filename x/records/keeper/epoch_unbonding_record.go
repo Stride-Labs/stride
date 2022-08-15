@@ -62,8 +62,8 @@ func GetEpochUnbondingRecordIDFromBytes(bz []byte) uint64 {
 }
 
 // GetEpochUnbondingRecordByEpoch returns a epochUnbondingRecord from its epochNumber
-func (k Keeper) GetHostZoneUnbondingByChainId(ctx sdk.Context, id uint64, chainId string) (val *types.HostZoneUnbonding, found bool) {
-	epochUnbondingRecord, found := k.GetEpochUnbondingRecord(ctx, id)
+func (k Keeper) GetHostZoneUnbondingByChainId(ctx sdk.Context, epochNumber uint64, chainId string) (val *types.HostZoneUnbonding, found bool) {
+	epochUnbondingRecord, found := k.GetEpochUnbondingRecord(ctx, epochNumber)
 	if !found {
 		return nil, false
 	}
@@ -76,8 +76,8 @@ func (k Keeper) GetHostZoneUnbondingByChainId(ctx sdk.Context, id uint64, chainI
 	return &types.HostZoneUnbonding{}, false
 }
 
-func (k Keeper) AddHostZoneToEpochUnbondingRecord(ctx sdk.Context, id uint64, chainId string, hzu *types.HostZoneUnbonding) (val *types.EpochUnbondingRecord, success bool) {
-	epochUnbondingRecord, found := k.GetEpochUnbondingRecord(ctx, id)
+func (k Keeper) AddHostZoneToEpochUnbondingRecord(ctx sdk.Context, epochNumber uint64, chainId string, hzu *types.HostZoneUnbonding) (val *types.EpochUnbondingRecord, success bool) {
+	epochUnbondingRecord, found := k.GetEpochUnbondingRecord(ctx, epochNumber)
 	if !found {
 		return nil, false
 	}
