@@ -35,11 +35,11 @@ printf "Waiting for STRIDE and GAIA to start..."
 sleep 5
 echo "Done"
 
-printf "Creating connection..."
+echo "Creating connection..."
 $HERMES_EXEC create connection $STRIDE_CHAIN_ID $GAIA_CHAIN_ID | sed -r -u "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2})?)?[mGK]//g" >> $HERMES_LOGS 2>&1 
 echo "Done"
 
-printf "Creating transfer channel..."
+echo "Creating transfer channel..."
 $HERMES_EXEC create channel --port-a transfer --port-b transfer $GAIA_CHAIN_ID connection-0 | sed -r -u "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2})?)?[mGK]//g" >> $HERMES_LOGS 2>&1 
 echo "Done"
 
