@@ -46,6 +46,7 @@ message MsgClearBalance {
   string creator = 1;
   string chain_id = 2;
   uint64 amount = 3;
+  string channel = 4;
 }
 
 message MsgClearBalanceResponse {}

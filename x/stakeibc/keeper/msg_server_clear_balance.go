@@ -28,7 +28,7 @@ func (k msgServer) ClearBalance(goCtx context.Context, msg *types.MsgClearBalanc
 	sourcePort := "transfer"
 	// Should this be a param?
 	// I think as long as we have a timeout on this, it should be hard to attack (even if someone send a tx on a bad channel, it would be reverted relatively quickly)
-	sourceChannel := "???"
+	sourceChannel := msg.Channel
 	coinString := cast.ToString(msg.Amount) + zone.GetHostDenom()
 	tokens, err := sdk.ParseCoinNormalized(coinString)
 	if err != nil {
@@ -38,7 +38,8 @@ func (k msgServer) ClearBalance(goCtx context.Context, msg *types.MsgClearBalanc
 	sender := feeAccount.GetAddress()
 	// where to store this?
 	receiver := "stride19uvw0azm9u0k6vqe4e22cga6kteskdqq3ulj6q"
-	timeoutTimestamp := cast.ToUint64(ctx.BlockTime().UnixNano()) + icaTimeoutNanos
+	feeTransferTimeoutNanos := k.GetParam(ctx, types.KeyFeeTransferTimeoutNanos)
+	timeoutTimestamp := cast.ToUint64(ctx.BlockTime().UnixNano()) + feeTransferTimeoutNanos
 	msgs := []sdk.Msg{
 		&ibctransfertypes.MsgTransfer{
 			SourcePort: sourcePort,
