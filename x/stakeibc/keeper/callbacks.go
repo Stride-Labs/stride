@@ -124,9 +124,8 @@ func WithdrawalBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query icq
 	k.Logger(ctx).Info(fmt.Sprintf("ICA Bank Sending %d%s from withdrawalAddr to delegationAddr.", coin.Amount.Int64(), coin.Denom))
 
 	withdrawalAccount := zone.GetWithdrawalAccount()
+	feeAccount := zone.GetFeeAccount()
 	delegationAccount := zone.GetDelegationAccount()
-	// TODO(TEST-112) set the stride revenue address in a config file
-	REV_ACCT := "cosmos1wdplq6qjh2xruc7qqagma9ya665q6qhcwju3ng"
 
 	params := k.GetParams(ctx)
 	stCommission, err := cast.ToInt64E(params.GetStrideCommission())
@@ -157,7 +156,7 @@ func WithdrawalBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query icq
 	var msgs []sdk.Msg
 	// construct the msg
 	msgs = append(msgs, &banktypes.MsgSend{FromAddress: withdrawalAccount.GetAddress(),
-		ToAddress: REV_ACCT, Amount: sdk.NewCoins(strideCoin)})
+		ToAddress: feeAccount.GetAddress(), Amount: sdk.NewCoins(strideCoin)})
 	msgs = append(msgs, &banktypes.MsgSend{FromAddress: withdrawalAccount.GetAddress(),
 		ToAddress: delegationAccount.GetAddress(), Amount: sdk.NewCoins(reinvestCoin)})
 
