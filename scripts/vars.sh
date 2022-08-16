@@ -53,6 +53,8 @@ GAIA_VAL_PREFIX=gval
 GAIA_DENOM=$ATOM_DENOM
 GAIA_RPC_PORT=26557
 MAIN_GAIA_CMD="$GAIA_CMD --home $SCRIPT_DIR/state/gaia1"
+GAIA_IBC_DENOM=$IBC_ATOM_DENOM
+GAIA_HOST_DENOM=$ATOM_DENOM
 
 GAIA_MNEMONIC_1="move next relief spatial resemble onion exhibit fitness major toss where square wrong exact infant skate dragon shift region over you gospel absorb double"
 GAIA_MNEMONIC_2="guilt leader matrix lecture infant axis method grain diesel sting reflect brave estate surge october candy busy crash parade club practice sure gentle celery"

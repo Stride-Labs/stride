@@ -49,6 +49,6 @@ docker-compose up -d hermes icq
 docker-compose logs -f hermes | sed -r -u "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2})?)?[mGK]//g" >> $HERMES_LOGS 2>&1 &
 docker-compose logs -f icq | sed -r -u "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2})?)?[mGK]//g" > $ICQ_LOGS 2>&1 &
 
-bash $SCRIPT_DIR/register_host.sh
+bash $SCRIPT_DIR/register_host.sh GAIA
 
 $SCRIPT_DIR/create_logs.sh &
