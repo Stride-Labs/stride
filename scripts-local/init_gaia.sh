@@ -84,7 +84,7 @@ val_addr=$($GAIA_CMD keys show $GAIA_VAL_ACCT -a) > /dev/null
 # add money for this validator account
 $GAIA_CMD add-genesis-account ${val_addr} 500000000000000uatom
 # actually set this account as a validator
-$GAIA_CMD gentx $GAIA_VAL_ACCT 1000000000uatom --chain-id $GAIA_CHAIN 2> /dev/null
+$GAIA_CMD gentx $GAIA_VAL_ACCT 400000000000uatom --chain-id $GAIA_CHAIN 2> /dev/null
 
 # Add hermes relayer account
 echo $HERMES_GAIA_MNEMONIC | $GAIA_CMD keys add $HERMES_GAIA_ACCT --recover 
