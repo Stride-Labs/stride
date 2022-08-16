@@ -29,7 +29,7 @@ ADMIN_TOKENS=1000000000
 # STRIDE vars
 STRIDE_CHAIN_ID=STRIDE
 STRIDE_NODE_PREFIX=stride
-STRIDE_NUM_NODES=1
+STRIDE_NUM_NODES=3
 STRIDE_CMD="$SCRIPT_DIR/../build/strided"
 STRIDE_VAL_PREFIX=val
 STRIDE_DENOM=$STRD_DENOM
@@ -47,7 +47,7 @@ STRIDE_VAL_MNEMONICS=("$STRIDE_MNEMONIC_1" "$STRIDE_MNEMONIC_2" "$STRIDE_MNEMONI
 # GAIA vars
 GAIA_CHAIN_ID=GAIA
 GAIA_NODE_PREFIX=gaia
-GAIA_NUM_NODES=1
+GAIA_NUM_NODES=3
 GAIA_CMD="$SCRIPT_DIR/../build/gaiad"
 GAIA_VAL_PREFIX=gval
 GAIA_DENOM=$ATOM_DENOM
@@ -55,8 +55,8 @@ GAIA_RPC_PORT=26557
 MAIN_GAIA_CMD="$GAIA_CMD --home $SCRIPT_DIR/state/gaia1"
 
 GAIA_MNEMONIC_1="move next relief spatial resemble onion exhibit fitness major toss where square wrong exact infant skate dragon shift region over you gospel absorb double"
-GAIA_MNEMONIC_2="social smooth replace total room drip donor science wheel source scare hammer affair fade opinion injury mandate then orbit work worry exhaust diagram hotel"
-GAIA_MNEMONIC_3="spike expire grant chef cheese cave someone blue price juice crash field sell camera true wet card saddle oblige where inject process dismiss soft"
+GAIA_MNEMONIC_2="guilt leader matrix lecture infant axis method grain diesel sting reflect brave estate surge october candy busy crash parade club practice sure gentle celery"
+GAIA_MNEMONIC_3="fire tape spread wing click winter awful ozone visa spray swear color table settle review rival meadow gauge speed tide timber disease float live"
 GAIA_MNEMONIC_4="curtain mom patrol rifle list lamp interest hard lock stairs display world disagree ten fantasy engine van explain chunk social smile detail initial typical"
 GAIA_MNEMONIC_5="invite close edit quick effort mosquito ocean north term spread dial throw human review west bike mandate learn cabin bubble remove unlock lab unique"
 GAIA_VAL_MNEMONICS=("$GAIA_MNEMONIC_1" "$GAIA_MNEMONIC_2" "$GAIA_MNEMONIC_3" "$GAIA_MNEMONIC_4" "$GAIA_MNEMONIC_5")

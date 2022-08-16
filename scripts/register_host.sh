@@ -14,10 +14,10 @@ $MAIN_STRIDE_CMD tx stakeibc register-host-zone \
 sleep 60
 
 printf "\nRegistering validators on host zone...\n"
-GAIA_VAL_2_ADDR="cosmos133lfs9gcpxqj6er3kx605e3v9lqp2pg54sreu3"
-GAIA_VAL_3_ADDR="cosmos1fumal3j4lxzjp22fzffge8mw56qm33h9ez0xy2"
-GAIA_DELEGATE_VAL_1='cosmosvaloper1pcag0cj4ttxg8l7pcg0q4ksuglswuuedadj7ne'
-GAIA_DELEGATE_VAL_2='cosmosvaloper133lfs9gcpxqj6er3kx605e3v9lqp2pg5syhvsz'
+GAIA_VAL_2_ADDR="cosmos133lfs9gcpxqj6er3kx605e3v9lqp2pg54sreu3" 
+GAIA_VAL_3_ADDR="cosmos1fumal3j4lxzjp22fzffge8mw56qm33h9ez0xy2" 
+GAIA_DELEGATE_VAL_1='cosmosvaloper1pcag0cj4ttxg8l7pcg0q4ksuglswuuedadj7ne' 
+GAIA_DELEGATE_VAL_2='cosmosvaloper133lfs9gcpxqj6er3kx605e3v9lqp2pg5syhvsz' 
 
 CSLEEP 10
 $MAIN_GAIA_CMD tx bank send gval1 $GAIA_VAL_2_ADDR 10000uatom -y

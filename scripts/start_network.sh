@@ -19,10 +19,10 @@ sh ${SCRIPT_DIR}/init_gaia.sh
 sh ${SCRIPT_DIR}/init_relayers.sh
 
 echo "Starting STRIDE chain"
-docker-compose up -d stride1 # stride2 stride3 
+docker-compose up -d stride1 stride2 stride3 
 
 echo "Starting GAIA chain"
-docker-compose up -d gaia1 # gaia2 gaia3
+docker-compose up -d gaia1 gaia2 gaia3
 
 docker-compose logs -f stride1 | sed -r -u "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2})?)?[mGK]//g" > $STRIDE_LOGS 2>&1 &
 docker-compose logs -f gaia1 | sed -r -u "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2})?)?[mGK]//g" > $GAIA_LOGS 2>&1 &

@@ -169,11 +169,7 @@ func (im IBCModule) OnAcknowledgementPacket(
 		errMsg := fmt.Sprintf("Unable to call registered callback from stakeibc OnAcknowledgePacket | Sequence %d, from %s %s, to %s %s",
 			modulePacket.Sequence, modulePacket.SourceChannel, modulePacket.SourcePort, modulePacket.DestinationChannel, modulePacket.DestinationPort)
 		im.keeper.Logger(ctx).Error(errMsg)
-<<<<<<< HEAD
 		return sdkerrors.Wrapf(icacallbacktypes.ErrCallbackFailed, errMsg)
-=======
-		return err
->>>>>>> 647294b0 (continuing to debug relayer)
 	}
 	return nil
 }
@@ -232,7 +228,6 @@ func (im IBCModule) GetTxMsgData(ctx sdk.Context, ack channeltypes.Acknowledgeme
 	case *channeltypes.Acknowledgement_Error:
 		im.keeper.Logger(ctx).Error(fmt.Sprintf("acknowledgement error: %s", response.Error))
 		return txMsgData, nil
-
 	default:
 		return nil, sdkerrors.Wrapf(channeltypes.ErrInvalidAcknowledgement, "unsupported acknowledgement response field type %T", response)
 	}

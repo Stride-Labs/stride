@@ -87,6 +87,9 @@ for (( i=1; i <= $NUM_NODES; i++ )); do
         # also add this account and it's genesis tx to the main node
         $MAIN_NODE_CMD add-genesis-account ${val_addr} ${VAL_TOKENS}${DENOM}
         cp ${STATE}/${node_name}/config/gentx/*.json ${STATE}/${MAIN_NODE_NAME}/config/gentx/
+
+        # and add each validator's keys to the first state directory
+        echo "$val_mnemonic" | $MAIN_NODE_CMD keys add $val_acct --recover --keyring-backend=test 
     fi
 done
 
