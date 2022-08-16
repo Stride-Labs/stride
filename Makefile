@@ -57,7 +57,7 @@ test-integration-docker:
 build-docker: 
 	@sh scripts/build.sh -${build} ${BUILDDIR}
 	
-init-docker: build-docker
+start-docker: build-docker
 	@sh scripts/start_network.sh 
 
 clean-docker: 
@@ -81,7 +81,7 @@ check-dependencies:
 build-local: 
 	@sh scripts-local/build.sh -${build} ${BUILDDIR}
 
-init-local: build-local
+start-local: build-local
 	@sh scripts-local/start_network.sh ${cache}
 
 stop-local:
