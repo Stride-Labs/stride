@@ -43,27 +43,12 @@ printf "Creating transfer channel..."
 $HERMES_EXEC create channel --port-a transfer --port-b transfer $GAIA_CHAIN_ID connection-0 | sed -r -u "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2})?)?[mGK]//g" >> $HERMES_LOGS 2>&1 
 echo "Done"
 
-<<<<<<< HEAD
-# printf "Creating clients, connections, and transfer channel"
-# $RELAYER_EXEC transact link stride-gaia
-# echo "DONE"
-
-=======
->>>>>>> a6c7a90d (continuing to debug relayer)
 echo "Starting relayers"
 docker-compose up -d hermes icq
 
 docker-compose logs -f hermes | sed -r -u "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2})?)?[mGK]//g" >> $HERMES_LOGS 2>&1 &
 docker-compose logs -f icq | sed -r -u "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2})?)?[mGK]//g" > $ICQ_LOGS 2>&1 &
 
-<<<<<<< HEAD
-=======
-
-# printf "Creating clients, connections, and transfer channel"
-# $RELAYER_EXEC transact link stride-gaia
-# echo "DONE"
-
->>>>>>> a6c7a90d (continuing to debug relayer)
 bash $SCRIPT_DIR/register_host.sh
 
 $SCRIPT_DIR/create_logs.sh &
