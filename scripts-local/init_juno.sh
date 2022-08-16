@@ -36,7 +36,7 @@ sed -i -e '1,/enable = false/ s/enable = false/enable = true/' "${STATE}/${JUNO_
 
 # set the unbonding time
 JUNO_CFG_TMP="${STATE}/${JUNO_NODE_NAME}/config/genesis.json"
-jq '.app_state.staking.params.unbonding_time = $newVal' --arg newVal "180s" $JUNO_CFG_TMP > json.tmp && mv json.tmp $JUNO_CFG_TMP
+jq '.app_state.staking.params.unbonding_time = $newVal' --arg newVal "60s" $JUNO_CFG_TMP > json.tmp && mv json.tmp $JUNO_CFG_TMP
 
 # add validator account
 echo $JUNO_VAL_MNEMONIC | $JUNO_CMD keys add $JUNO_VAL_ACCT --recover --keyring-backend=test >> $KEYS_LOGS 2>&1 
