@@ -23,7 +23,6 @@ services:
       - ./scripts/state/stride3:/home/stride/.stride
 
   gaia1:
-    # image: stridezone/stride:latest
     image: stridezone:gaia
     hostname: stride
     volumes:
@@ -33,18 +32,28 @@ services:
       - "1307:1317"
       - "9080:9090"
   gaia2:
-    # image: stridezone/stride:latest
     image: stridezone:gaia
     hostname: stride
     volumes:
       - ./scripts/state/gaia2:/home/gaia/.gaia
 
   gaia3:
-    # image: stridezone/stride:latest
     image: stridezone:gaia
     hostname: stride
     volumes:
       - ./scripts/state/gaia3:/home/gaia/.gaia
+
+  gaia4:
+    image: stridezone:gaia
+    hostname: stride
+    volumes:
+      - ./scripts/state/gaia4:/home/gaia/.gaia
+
+  gaia5:
+    image: stridezone:gaia
+    hostname: stride
+    volumes:
+      - ./scripts/state/gaia5:/home/gaia/.gaia
 
   hermes:
     image: stridezone:hermes

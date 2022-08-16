@@ -19,10 +19,12 @@ sh ${SCRIPT_DIR}/init_gaia.sh
 sh ${SCRIPT_DIR}/init_relayers.sh
 
 echo "Starting STRIDE chain"
-docker-compose up -d stride1 stride2 stride3 
+stride_nodes=$(i=1; while [ $i -le $STRIDE_NUM_NODES ]; do printf "%s " stride$i; i=$(($i + 1)); done;)
+docker-compose up -d $stride_nodes
 
 echo "Starting GAIA chain"
-docker-compose up -d gaia1 gaia2 gaia3
+gaia_nodes=$(i=1; while [ $i -le $GAIA_NUM_NODES ]; do printf "%s " gaia$i; i=$(($i + 1)); done;)
+docker-compose up -d $gaia_nodes
 
 docker-compose logs -f stride1 | sed -r -u "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2})?)?[mGK]//g" > $STRIDE_LOGS 2>&1 &
 docker-compose logs -f gaia1 | sed -r -u "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2})?)?[mGK]//g" > $GAIA_LOGS 2>&1 &
@@ -41,16 +43,15 @@ printf "Creating transfer channel..."
 $HERMES_EXEC create channel --port-a transfer --port-b transfer $GAIA_CHAIN_ID connection-0 | sed -r -u "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2})?)?[mGK]//g" >> $HERMES_LOGS 2>&1 
 echo "Done"
 
+# printf "Creating clients, connections, and transfer channel"
+# $RELAYER_EXEC transact link stride-gaia
+# echo "DONE"
+
 echo "Starting relayers"
 docker-compose up -d hermes icq
 
 docker-compose logs -f hermes | sed -r -u "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2})?)?[mGK]//g" >> $HERMES_LOGS 2>&1 &
 docker-compose logs -f icq | sed -r -u "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2})?)?[mGK]//g" > $ICQ_LOGS 2>&1 &
-
-
-# printf "Creating clients, connections, and transfer channel"
-# $RELAYER_EXEC transact link stride-gaia
-# echo "DONE"
 
 bash $SCRIPT_DIR/register_host.sh
 

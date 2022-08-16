@@ -67,8 +67,8 @@ clean-docker:
 	docker image prune -a
 	
 stop-docker:
-	@pkill -f "docker-compose logs" 
-	@pkill -f "/bin/bash.*create_logs.sh"
+	@pkill -f "docker-compose logs" || true
+	@pkill -f "/bin/bash.*create_logs.sh" || true
 	docker-compose down
 
 ###############################################################################
@@ -85,5 +85,5 @@ start-local: build-local
 	@sh scripts-local/start_network.sh ${cache}
 
 stop-local:
-	@killall gaiad strided hermes interchain-queries
-	@pkill -f "/bin/bash.*create_logs.sh"
+	@killall gaiad strided hermes interchain-queries || true
+	@pkill -f "/bin/bash.*create_logs.sh" || true
