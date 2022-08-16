@@ -1,10 +1,10 @@
 package stakeibc
 
 import (
-	"encoding/json"
 	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
 	icatypes "github.com/cosmos/ibc-go/v3/modules/apps/27-interchain-accounts/types"
 	channeltypes "github.com/cosmos/ibc-go/v3/modules/core/04-channel/types"
@@ -30,7 +30,6 @@ func NewIBCModule(k keeper.Keeper) IBCModule {
 func (im IBCModule) Hooks() keeper.Hooks {
 	return im.keeper.Hooks()
 }
-
 
 func (im IBCModule) OnChanOpenInit(
 	ctx sdk.Context,
@@ -132,10 +131,25 @@ func (im IBCModule) OnAcknowledgementPacket(
 	relayer sdk.AccAddress,
 ) error {
 	im.keeper.Logger(ctx).Info(fmt.Sprintf("OnAcknowledgementPacket: packet %v, relayer %v", modulePacket, relayer))
+	ackInfo := fmt.Sprintf("sequence #%d, from %s %s, to %s %s",
+		modulePacket.Sequence, modulePacket.SourceChannel, modulePacket.SourcePort, modulePacket.DestinationChannel, modulePacket.DestinationPort)
+
 	ack, err := im.UnmarshalAck(ctx, acknowledgement)
 	if err != nil {
-		return err
+		ctx.EventManager().EmitEvent(
+			sdk.NewEvent(
+				"ack_error",
+				sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
+				sdk.NewAttribute(types.AttributeKeyAckError, err.Error()),
+			),
+		)
+
+		errMsg := fmt.Sprintf("Acknowledgement came back as error: %s | %s", ackInfo, err.Error())
+		im.keeper.Logger(ctx).Error(errMsg)
+		return sdkerrors.Wrapf(channeltypes.ErrInvalidAcknowledgement, errMsg)
 	}
+
+	im.keeper.Logger(ctx).Info(fmt.Sprintf("Acknowledgement came back as success: %s", ackInfo))
 	eventType := "ack"
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
@@ -144,8 +158,12 @@ func (im IBCModule) OnAcknowledgementPacket(
 			sdk.NewAttribute(types.AttributeKeyAck, fmt.Sprintf("%v", ack)),
 		),
 	)
+
 	err = im.keeper.ICACallbacksKeeper.CallRegisteredICACallback(ctx, modulePacket, ack)
 	if err != nil {
+		errMsg := fmt.Sprintf("Unable to call registered callback from stakeibc OnAcknowledgePacket | Sequence %d, from %s %s, to %s %s",
+			modulePacket.Sequence, modulePacket.SourceChannel, modulePacket.SourcePort, modulePacket.DestinationChannel, modulePacket.DestinationPort)
+		im.keeper.Logger(ctx).Error(errMsg)
 		return err
 	}
 	return im.keeper.HandleAcknowledgement(ctx, modulePacket, acknowledgement)
@@ -190,32 +208,27 @@ func (im IBCModule) NegotiateAppVersion(
 }
 
 func (im IBCModule) UnmarshalAck(ctx sdk.Context, acknowledgement []byte) (*channeltypes.Acknowledgement_Result, error) {
-	ack := channeltypes.Acknowledgement_Result{}
-	err := json.Unmarshal(acknowledgement, &ack)
-	if err != nil {
-		ackErr := channeltypes.Acknowledgement_Error{}
-		// acknowledgement comes back as a Acknowledgement_Result, Acknowledgement_Error, or something
-		// that can't be handled
-		err := json.Unmarshal(acknowledgement, &ackErr)
-		if err != nil {
-			ctx.EventManager().EmitEvent(
-				sdk.NewEvent(
-					"ack_error",
-					sdk.NewAttribute(types.AttributeKeyAckError, ackErr.Error),
-				),
-			)
-			im.keeper.Logger(ctx).Error("Unable to unmarshal acknowledgement error", "error", err, "data", acknowledgement)
-			return nil, err
-		}
-		im.keeper.Logger(ctx).Error("Acknowledgement result unmarshalled as an error", "error", err, "remote_err", ackErr, "data", acknowledgement)
-		return nil, err
-	}
-
 	// NOTE: to use the acknowledgement result, unmarshal into TxMsgData
 	// txMsgData := &sdk.TxMsgData{}
 	// err = proto.Unmarshal(ack.Result, txMsgData)
+	var ack channeltypes.Acknowledgement
+	if err := types.ModuleCdc.UnmarshalJSON(acknowledgement, &ack); err != nil {
+		return nil, sdkerrors.Wrapf(types.ErrMarshalFailure, err.Error())
+	}
 
-	return &ack, nil
+	switch response := ack.Response.(type) {
+	case *channeltypes.Acknowledgement_Result:
+		if len(response.Result) == 0 {
+			return nil, sdkerrors.Wrapf(channeltypes.ErrInvalidAcknowledgement, "acknowledgement result cannot be empty")
+		}
+		return response, nil
+
+	case *channeltypes.Acknowledgement_Error:
+		return nil, sdkerrors.Wrapf(channeltypes.ErrInvalidAcknowledgement, "acknowledgement response was an error")
+
+	default:
+		return nil, sdkerrors.Wrapf(channeltypes.ErrInvalidAcknowledgement, "unsupported acknowledgement response field type %T", response)
+	}
 }
 
 // ###################################################################################
