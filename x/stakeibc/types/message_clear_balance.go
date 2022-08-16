@@ -9,11 +9,12 @@ const TypeMsgClearBalance = "clear_balance"
 
 var _ sdk.Msg = &MsgClearBalance{}
 
-func NewMsgClearBalance(creator string, chainId string, amount uint64) *MsgClearBalance {
+func NewMsgClearBalance(creator string, chainId string, amount uint64, channelId string) *MsgClearBalance {
 	return &MsgClearBalance{
 		Creator:   creator,
 		ChainId:    chainId,
 		Amount: amount,
+		Channel: channelId,
 	}
 }
 

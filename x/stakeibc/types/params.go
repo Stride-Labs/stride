@@ -22,6 +22,8 @@ var (
 	DefaultICATimeoutNanos  uint64 = 600000000000
 	DefaultBufferSize       uint64 = 5   // 1/5=20% of the epoch
 	DefaultIbcTimeoutBlocks uint64 = 300 // 300 blocks ~= 30 minutes
+	DefaultFeeTransferTimeoutNanos  uint64 = 600000000000 // 10 minutes
+
 
 	// KeyDepositInterval is store's key for the DepositInterval option
 	KeyDepositInterval               = []byte("DepositInterval")
@@ -32,6 +34,7 @@ var (
 	KeyStrideCommission              = []byte("StrideCommission")
 	KeyValidatorRebalancingThreshold = []byte("ValidatorRebalancingThreshold")
 	KeyICATimeoutNanos               = []byte("ICATimeoutNanos")
+	KeyFeeTransferTimeoutNanos       = []byte("FeeTransferTimeoutNanos")
 	KeyBufferSize                    = []byte("BufferSize")
 	KeyIbcTimeoutBlocks              = []byte("IBCTimeoutBlocks")
 )
@@ -55,6 +58,7 @@ func NewParams(
 	ica_timeout_nanos uint64,
 	buffer_size uint64,
 	ibc_timeout_blocks uint64,
+	fee_transfer_timeout_nanos uint64,
 ) Params {
 	return Params{
 		DepositInterval:               deposit_interval,
@@ -67,6 +71,7 @@ func NewParams(
 		IcaTimeoutNanos:               ica_timeout_nanos,
 		BufferSize:                    buffer_size,
 		IbcTimeoutBlocks:              ibc_timeout_blocks,
+		FeeTransferTimeoutNanos:       fee_transfer_timeout_nanos,
 	}
 }
 
@@ -83,6 +88,7 @@ func DefaultParams() Params {
 		DefaultICATimeoutNanos,
 		DefaultBufferSize,
 		DefaultIbcTimeoutBlocks,
+		DefaultFeeTransferTimeoutNanos,
 	)
 }
 
@@ -99,6 +105,7 @@ func (p *Params) ParamSetPairs() paramtypes.ParamSetPairs {
 		paramtypes.NewParamSetPair(KeyICATimeoutNanos, &p.IcaTimeoutNanos, isPositive),
 		paramtypes.NewParamSetPair(KeyBufferSize, &p.BufferSize, isPositive),
 		paramtypes.NewParamSetPair(KeyIbcTimeoutBlocks, &p.IbcTimeoutBlocks, isPositive),
+		paramtypes.NewParamSetPair(KeyFeeTransferTimeoutNanos, &p.FeeTransferTimeoutNanos, isPositive),
 	}
 }
 
