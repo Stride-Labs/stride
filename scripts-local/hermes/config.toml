@@ -16,12 +16,12 @@ clear_interval = 100
 clear_on_start = true
 
 [rest]
-enabled = true
+enabled = false
 host = '0.0.0.0'
 port = 3000
 
 [telemetry]
-enabled = true
+enabled = false
 host = '127.0.0.1'
 port = 3001
 
@@ -63,7 +63,7 @@ max_msg_num = 30
 max_tx_size = 2097152
 clock_drift = '5s'
 max_block_time = '10s'
-trusting_period = '110s'
+trusting_period = '170s'
 trust_threshold = { numerator = '1', denominator = '3' }
 address_type = { derivation = 'cosmos' }
 
@@ -84,7 +84,7 @@ max_msg_num = 30
 max_tx_size = 2097152
 clock_drift = '5s'
 max_block_time = '10s'
-trusting_period = '110s'
+trusting_period = '170s'
 trust_threshold = { numerator = '1', denominator = '3' }
 address_type = { derivation = 'cosmos' }
 
