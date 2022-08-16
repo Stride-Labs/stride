@@ -146,3 +146,4 @@ stop-local:
 	@killall gaiad strided junod osmosisd rly hermes interchain-queries icq-startup.sh || true
 	@pkill -f "/bin/bash.*create_logs.sh" || true
 	@pkill -f "sh.*start_network.sh" || true
+
