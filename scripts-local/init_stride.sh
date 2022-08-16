@@ -26,13 +26,12 @@ $STRIDE_CMD_5 init stride5 --chain-id $STRIDE_CHAIN --overwrite 2> /dev/null
 for NODE_NAME in stride stride2 stride3 stride4 stride5; do
     # change the denom
     sed -i -E 's|"stake"|"ustrd"|g' "${STATE}/${NODE_NAME}/config/genesis.json"
-    sed -i -E 's|timeout_propose = "3s"|timeout_propose = "5s"|g' "${STATE}/${NODE_NAME}/config/config.toml"
-    sed -i -E "s|timeout_commit = \"5s\"|timeout_commit = \"${BLOCK_TIME}\"|g" "${STATE}/${NODE_NAME}/config/config.toml"
+    # sed -i -E 's|timeout_propose = "3s"|timeout_propose = "5s"|g' "${STATE}/${NODE_NAME}/config/config.toml"
+    sed -i -E "s|timeout_commit = \"3s\"|timeout_commit = \"${BLOCK_TIME}\"|g" "${STATE}/${NODE_NAME}/config/config.toml"
     sed -i -E "s|cors_allowed_origins = \[\]|cors_allowed_origins = [\"\*\"]|g" "${STATE}/${NODE_NAME}/config/config.toml"
     sed -i -E "s|allow_duplicate_ip = false|allow_duplicate_ip = true|g" "${STATE}/${NODE_NAME}/config/config.toml"
     sed -i -E "s|addr_book_strict = true|addr_book_strict = false|g" "${STATE}/${NODE_NAME}/config/config.toml"
     # sed -i -E "s|skip_timeout_commit = false|skip_timeout_commit = true|g" "${STATE}/${NODE_NAME}/config/config.toml"
-
 
     # update the client config
     clienttoml="${STATE}/${NODE_NAME}/config/client.toml"

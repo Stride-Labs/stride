@@ -94,13 +94,13 @@ func (k msgServer) SubmitQueryResponse(goCtx context.Context, msg *types.MsgSubm
 
 		k.Logger(ctx).Info(fmt.Sprintf("Executing callbacks for queryId %s", q.Id))
 		for _, key := range keys {
+			k.Logger(ctx).Info(fmt.Sprintf("Executing callback for module %s", key))
 			module := k.callbacks[key]
-			k.Logger(ctx).Info(fmt.Sprintf("Executing callback for module %s", module))
 			if module.Has(q.CallbackId) {
 				err := module.Call(ctx, q.CallbackId, msg.Result, q)
 				k.Logger(ctx).Info(fmt.Sprintf("Callback %s executed", q.CallbackId))
 				if err != nil {
-					k.Logger(ctx).Error(fmt.Sprintf("error executing callback %s: %s", q.CallbackId, err))
+					k.Logger(ctx).Error(fmt.Sprintf("error executing callback %s: %v", q.CallbackId, err))
 					// handle edge case; callback has resent the same query!
 					// set noDelete to true and short circuit error handling!
 					if err == types.ErrSucceededNoDelete {
@@ -111,7 +111,7 @@ func (k msgServer) SubmitQueryResponse(goCtx context.Context, msg *types.MsgSubm
 					}
 				}
 			} else {
-				k.Logger(ctx).Info(fmt.Sprintf("Callback not found for module %s", module))
+				k.Logger(ctx).Info(fmt.Sprintf("Callback not found for module %s", key))
 			}
 		}
 

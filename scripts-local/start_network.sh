@@ -41,7 +41,7 @@ else
 fi
 
 # Starts Stride and Gaia in the background using nohup, pipes the logs to their corresponding log files,
-#   and halts the script until Stride/Gaia have each finalized a block
+#  and halts the script until Stride/Gaia have each finalized a block
 printf '\n%s' "Starting Stride, Gaia, Osmo, and Juno...   "
 nohup $STRIDE_CMD start | sed -r -u "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2})?)?[mGK]//g" > $STRIDE_LOGS 2>&1 &
 nohup $STRIDE_CMD_2 start | sed -r -u "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2})?)?[mGK]//g" > $STRIDE_LOGS_2 2>&1 &

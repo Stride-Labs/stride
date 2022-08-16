@@ -224,6 +224,10 @@ WAIT_FOR_NONEMPTY_BLOCK () {
   ( tail -f -n0 $1 & ) | grep -q -E "num_valid_txs=[1-9]"
 }
 
+WAIT_FOR_STRING () {
+  ( tail -f -n0 $1 & ) | grep -q -E "$2"
+}
+
 WAIT_FOR_IBC_TRANSFER () {
   success_string="packet_cmd{src_chain=(.*)port=transfer(.*): success"
   ( tail -f -n0 $HERMES_LOGS & ) | grep -q -E "$success_string"

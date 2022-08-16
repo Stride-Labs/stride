@@ -40,7 +40,7 @@ connection-2 $OSMO_DENOM osmo $IBC_OSMO_DENOM channel-2 1 \
 GAIA_CONFIRM="GAIA.WITHDRAWAL:STRIDE->GAIA}: channel handshake step completed with events: OpenConfirmChannel"
 JUNO_CONFIRM="JUNO.WITHDRAWAL:STRIDE->JUNO}: channel handshake step completed with events: OpenConfirmChannel"
 OSMO_CONFIRM="OSMO.WITHDRAWAL:STRIDE->OSMO}: channel handshake step completed with events: OpenConfirmChannel"
-( tail -f -n0 $HERMES_LOGS & ) | grep -q "$GAIA_CONFIRM"
+( tail -f -n500 $HERMES_LOGS & ) | grep -q "$GAIA_CONFIRM"
 ( tail -f -n1000 $HERMES_LOGS & ) | grep -q "$JUNO_CONFIRM"
 ( tail -f -n2000 $HERMES_LOGS & ) | grep -q "$OSMO_CONFIRM"
 

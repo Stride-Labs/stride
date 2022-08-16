@@ -201,7 +201,7 @@ setup() {
   sleep "$(($remaining_seconds-1))"
   # let the IBC calls
   WAIT_FOR_BLOCK $STRIDE_LOGS
-  WAIT_FOR_BLOCK $OSMO_LOGS 2
+  WAIT_FOR_STRING $STRIDE_LOGS 'DelegateCallback hostZoneId:"OSMO" depositRecordId'
   # check staked tokens
   NEW_STAKE=$($OSMO_CMD q staking delegation $OSMO_DELEGATION_ICA_ADDR $OSMO_DELEGATE_VAL | GETSTAKE)
   stake_diff=$(($NEW_STAKE > 0))
@@ -226,9 +226,15 @@ setup() {
   # wait for a day to pass (to transfer from delegation to redemption acct)
   remaining_seconds=$($STRIDE_CMD q epochs seconds-remaining day)
   sleep $remaining_seconds
+  WAIT_FOR_BLOCK $OSMO_LOGS 3
   # TODO we're sleeping more than we should have to here, investigate why redemptions take so long!
   # wait for ica bank send to process on host chain (delegation => redemption acct)
-  WAIT_FOR_BLOCK $OSMO_LOGS 2
+  remaining_seconds=$($STRIDE_CMD q epochs seconds-remaining day)
+  sleep $remaining_seconds
+  WAIT_FOR_BLOCK $OSMO_LOGS 3
+  remaining_seconds=$($STRIDE_CMD q epochs seconds-remaining day)
+  sleep $remaining_seconds
+  WAIT_FOR_BLOCK $OSMO_LOGS 3
   # check that the tokens were transferred to the redemption account
   new_redemption_ica_bal=$($OSMO_CMD q bank balances $OSMO_REDEMPTION_ICA_ADDR --denom uosmo | GETBAL)
   diff=$(($new_redemption_ica_bal - $old_redemption_ica_bal))
@@ -265,7 +271,9 @@ setup() {
   sleep $($day_duration)
   EXPECTED_STAKED_BAL=$($OSMO_CMD q staking delegation $OSMO_DELEGATION_ICA_ADDR $OSMO_DELEGATE_VAL | GETSTAKE)
   EXPECTED_STAKED_BAL=${EXPECTED_STAKED_BAL:=0}
-  sleep $(($day_duration * 3))
+  sleep $day_duration
+  sleep $day_duration
+  sleep $day_duration
   # simple check that number of tokens staked increases
   NEW_STAKED_BAL=$($OSMO_CMD q staking delegation $OSMO_DELEGATION_ICA_ADDR $OSMO_DELEGATE_VAL | GETSTAKE)
   STAKED_BAL_INCREASED=$(($NEW_STAKED_BAL > $EXPECTED_STAKED_BAL))
