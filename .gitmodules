@@ -10,3 +10,11 @@
 	path = deps/gaia
 	url = git@github.com:Stride-Labs/gaia.git
 	branch = bfb8f8ceb
+[submodule "deps/juno"]
+	path = deps/juno
+	url = https://github.com/CosmosContracts/juno.git
+	branch = e6f962953
+[submodule "deps/osmosis"]
+	path = deps/osmosis
+	url = https://github.com/osmosis-labs/osmosis.git
+	branch = 4800c2be7
