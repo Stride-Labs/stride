@@ -38,7 +38,7 @@ sed -i -e '1,/enable = false/ s/enable = false/enable = true/' "${STATE}/${OSMO_
 
 # set the unbonding time
 OSMO_CFG_TMP="${STATE}/${OSMO_NODE_NAME}/config/genesis.json"
-jq '.app_state.staking.params.unbonding_time = $newVal' --arg newVal "60s" $OSMO_CFG_TMP > json.tmp && mv json.tmp $OSMO_CFG_TMP
+jq '.app_state.staking.params.unbonding_time = $newVal' --arg newVal "120s" $OSMO_CFG_TMP > json.tmp && mv json.tmp $OSMO_CFG_TMP
 
 # add validator account
 echo $OSMO_VAL_MNEMONIC | $OSMO_CMD keys add $OSMO_VAL_ACCT --recover --keyring-backend=test >> $KEYS_LOGS 2>&1 
