@@ -244,7 +244,7 @@ setup() {
   BLOCK_SLEEP 2  
   # wait four days (transfers, stake, move rewards, reinvest rewards)
   day_duration=$($STRIDE_CMD q epochs epoch-infos | grep -Fiw 'duration' | head -n 1 | grep -o -E '[0-9]+')
-  sleep $(($day_duration * 4))
+  sleep $(($day_duration * 4)) # 1 for transfer, 1 for stake (plus some buffer)
 
   # simple check that number of tokens staked increases
   NEW_STAKED_BAL=$($GAIA_CMD q staking delegation $DELEGATION_ICA_ADDR $GAIA_DELEGATE_VAL | GETSTAKE)

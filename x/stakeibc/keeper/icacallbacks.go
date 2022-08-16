@@ -13,7 +13,6 @@ const UNDELEGATE = "undelegate"
 const REINVEST = "reinvest"
 const REDEMPTION = "redemption"
 
-
 // ICACallbacks wrapper struct for stakeibc keeper
 type ICACallback func(Keeper, sdk.Context, channeltypes.Packet, *channeltypes.Acknowledgement_Result, []byte) error
 

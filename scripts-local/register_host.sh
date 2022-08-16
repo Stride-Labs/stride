@@ -34,9 +34,10 @@ CSLEEP 10
 $GAIA_CMD tx bank send gval1 $GAIA_VAL_3_ADDR 10000uatom -y
 
 CSLEEP 10
-$STRIDE_CMD tx stakeibc add-validator GAIA gval1 $GAIA_DELEGATE_VAL 10 5 --from $STRIDE_ADMIN_ACCT -y
+# weights must be high so that we can slash them with reasonable precision
+$STRIDE_CMD tx stakeibc add-validator GAIA gval1 $GAIA_DELEGATE_VAL 10 5000000 --from $STRIDE_ADMIN_ACCT -y
 CSLEEP 30
-$STRIDE_CMD tx stakeibc add-validator GAIA gval2 $GAIA_DELEGATE_VAL_2 10 10 --from $STRIDE_ADMIN_ACCT -y
+$STRIDE_CMD tx stakeibc add-validator GAIA gval2 $GAIA_DELEGATE_VAL_2 10 10000000 --from $STRIDE_ADMIN_ACCT -y
 CSLEEP 30
 
 echo "Done"
