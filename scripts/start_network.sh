@@ -14,16 +14,16 @@ HERMES_LOGS=$SCRIPT_DIR/logs/hermes.log
 ICQ_LOGS=$SCRIPT_DIR/logs/icq.log
 
 # Initialize the state for stride/gaia and relayers
-sh ${SCRIPT_DIR}/init_stride.sh
-sh ${SCRIPT_DIR}/init_gaia.sh
+sh ${SCRIPT_DIR}/init_chain.sh STRIDE
+sh ${SCRIPT_DIR}/init_chain.sh GAIA
 sh ${SCRIPT_DIR}/init_relayers.sh
 
 echo "Starting STRIDE chain"
-stride_nodes=$(i=1; while [ $i -le $STRIDE_NUM_NODES ]; do printf "%s " stride$i; i=$(($i + 1)); done;)
+stride_nodes=$(i=1; while [ $i -le $STRIDE_NUM_NODES ]; do printf "%s " ${STRIDE_NODE_PREFIX}${i}; i=$(($i + 1)); done;)
 docker-compose up -d $stride_nodes
 
 echo "Starting GAIA chain"
-gaia_nodes=$(i=1; while [ $i -le $GAIA_NUM_NODES ]; do printf "%s " gaia$i; i=$(($i + 1)); done;)
+gaia_nodes=$(i=1; while [ $i -le $GAIA_NUM_NODES ]; do printf "%s " ${GAIA_NODE_PREFIX}${i}; i=$(($i + 1)); done;)
 docker-compose up -d $gaia_nodes
 
 docker-compose logs -f stride1 | sed -r -u "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2})?)?[mGK]//g" > $STRIDE_LOGS 2>&1 &

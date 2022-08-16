@@ -42,7 +42,7 @@ STRIDE_MNEMONIC_2="timber vacant teach wedding disease fashion place merge poet 
 STRIDE_MNEMONIC_3="enjoy dignity rule multiply kitchen arrange flight rocket kingdom domain motion fire wage viable enough comic cry motor memory fancy dish sing border among"
 STRIDE_MNEMONIC_4="vacant margin wave rice brush drastic false rifle tape critic volcano worry tumble assist pulp swamp sheriff stairs decorate chaos empower already obvious caught"
 STRIDE_MNEMONIC_5="river spin follow make trash wreck clever increase dial divert meadow abuse victory able foot kid sell bench embody river income utility dismiss timber"
-STRIDE_VAL_MNEMONICS=("$STRIDE_MNEMONIC_1" "$STRIDE_MNEMONIC_2" "$STRIDE_MNEMONIC_3" "$STRIDE_MNEMONIC_4" "$STRIDE_MNEMONIC_5")
+STRIDE_VAL_MNEMONICS=("$STRIDE_MNEMONIC_1","$STRIDE_MNEMONIC_2","$STRIDE_MNEMONIC_3","$STRIDE_MNEMONIC_4","$STRIDE_MNEMONIC_5")
 
 # GAIA vars
 GAIA_CHAIN_ID=GAIA
@@ -59,7 +59,7 @@ GAIA_MNEMONIC_2="guilt leader matrix lecture infant axis method grain diesel sti
 GAIA_MNEMONIC_3="fire tape spread wing click winter awful ozone visa spray swear color table settle review rival meadow gauge speed tide timber disease float live"
 GAIA_MNEMONIC_4="curtain mom patrol rifle list lamp interest hard lock stairs display world disagree ten fantasy engine van explain chunk social smile detail initial typical"
 GAIA_MNEMONIC_5="invite close edit quick effort mosquito ocean north term spread dial throw human review west bike mandate learn cabin bubble remove unlock lab unique"
-GAIA_VAL_MNEMONICS=("$GAIA_MNEMONIC_1" "$GAIA_MNEMONIC_2" "$GAIA_MNEMONIC_3" "$GAIA_MNEMONIC_4" "$GAIA_MNEMONIC_5")
+GAIA_VAL_MNEMONICS=("$GAIA_MNEMONIC_1","$GAIA_MNEMONIC_2","$GAIA_MNEMONIC_3","$GAIA_MNEMONIC_4","$GAIA_MNEMONIC_5")
 
 # define relayer vars
 HERMES_CMD="$SCRIPT_DIR/../build/hermes/release/hermes -c $STATE/hermes/config.toml"
@@ -67,33 +67,33 @@ HERMES_EXEC="docker-compose run --rm hermes hermes"
 
 HERMES_STRIDE_ACCT=rly1
 HERMES_GAIA_ACCT=rly2
-HERMES_OSMOSIS_ACCT=rly3
+HERMES_OSMO_ACCT=rly3
 
 HERMES_STRIDE_MNEMONIC="alter old invest friend relief slot swear pioneer syrup economy vendor tray focus hedgehog artist legend antenna hair almost donkey spice protect sustain increase"
 HERMES_GAIA_MNEMONIC="resemble accident lake amateur physical jewel taxi nut demand magnet person blanket trip entire awkward fiber usual current index limb lady lady depart train"
-HERMES_OSMOSIS_MNEMONIC="artwork ranch dinosaur maple unhappy office bone vote rebel slot outside benefit innocent wrist certain cradle almost fat trial build chicken enroll strike milk"
+HERMES_OSMO_MNEMONIC="artwork ranch dinosaur maple unhappy office bone vote rebel slot outside benefit innocent wrist certain cradle almost fat trial build chicken enroll strike milk"
 
 RELAYER_CMD="$SCRIPT_DIR/../build/relayer --home $STATE/relayer"
 RELAYER_EXEC="docker-compose run --rm relayer rly"
 
 RELAYER_STRIDE_ACCT=rly1
 RELAYER_GAIA_ACCT=rly2
-RELAYER_OSMOSIS_ACCT=rly3
+RELAYER_OSMO_ACCT=rly3
 
 RELAYER_STRIDE_MNEMONIC="alter old invest friend relief slot swear pioneer syrup economy vendor tray focus hedgehog artist legend antenna hair almost donkey spice protect sustain increase"
 RELAYER_GAIA_MNEMONIC="resemble accident lake amateur physical jewel taxi nut demand magnet person blanket trip entire awkward fiber usual current index limb lady lady depart train"
-RELAYER_OSMOSIS_MNEMONIC="artwork ranch dinosaur maple unhappy office bone vote rebel slot outside benefit innocent wrist certain cradle almost fat trial build chicken enroll strike milk"
+RELAYER_OSMO_MNEMONIC="artwork ranch dinosaur maple unhappy office bone vote rebel slot outside benefit innocent wrist certain cradle almost fat trial build chicken enroll strike milk"
 
 ICQ_CMD="$SCRIPT_DIR/../build/interchain-queries --home $STATE/icq"
 ICQ_EXEC="docker-compose run --rm icq interchain-queries"
 
 ICQ_STRIDE_ACCT=icq1
 ICQ_GAIA_ACCT=icq2
-ICQ_OSMOSIS_ACCT=icq3
+ICQ_OSMO_ACCT=icq3
 
 ICQ_STRIDE_MNEMONIC="helmet say goat special plug umbrella finger night flip axis resource tuna trigger angry shove essay point laundry horror eager forget depend siren alarm"
 ICQ_GAIA_MNEMONIC="capable later bamboo snow drive afraid cheese practice latin brush hand true visa drama mystery bird client nature jealous guess tank marriage volume fantasy"
-ICQ_OSMOSIS_MNEMONIC="rival inch buzz slow high dynamic antique idle switch evolve math virus direct health simple capital place mutual air orphan champion prefer garage over"
+ICQ_OSMO_MNEMONIC="rival inch buzz slow high dynamic antique idle switch evolve math virus direct health simple capital place mutual air orphan champion prefer garage over"
 
 
 CSLEEP() {
