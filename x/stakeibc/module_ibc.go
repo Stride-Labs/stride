@@ -207,7 +207,7 @@ func (im IBCModule) UnmarshalAck(ctx sdk.Context, acknowledgement []byte) (*chan
 	// txMsgData := &sdk.TxMsgData{}
 	// err = proto.Unmarshal(ack.Result, txMsgData)
 	var ack channeltypes.Acknowledgement
-	if err := types.ModuleCdc.UnmarshalJSON(acknowledgement, &ack); err != nil {
+	if err := channeltypes.SubModuleCdc.UnmarshalJSON(acknowledgement, &ack); err != nil {
 		return nil, sdkerrors.Wrapf(types.ErrMarshalFailure, err.Error())
 	}
 
