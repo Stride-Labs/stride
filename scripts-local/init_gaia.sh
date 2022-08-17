@@ -65,7 +65,7 @@ mkdir $GAIA_HOME/config/gentx/
 echo $GAIA_VAL_MNEMONIC_2 | $GAIA_CMD_2 keys add $GAIA_VAL_ACCT_2 --recover
 $GAIA_CMD_2 add-genesis-account $GAIA_VAL_2_ADDR 500000000000000uatom
 $GAIA_CMD add-genesis-account $GAIA_VAL_2_ADDR 500000000000000uatom
-$GAIA_CMD_2 gentx $GAIA_VAL_ACCT_2 1000000000uatom --chain-id $GAIA_CHAIN --output-document=$GAIA_HOME/config/gentx/gval2.json
+$GAIA_CMD_2 gentx $GAIA_VAL_ACCT_2 1000000uatom --chain-id $GAIA_CHAIN --output-document=$GAIA_HOME/config/gentx/gval2.json
 
 # ============================== SETUP CHAIN 3 ======================================
 # echo $GAIA_VAL_MNEMONIC_3 | $GAIA_CMD_3 keys add $GAIA_VAL_ACCT_3 --recover 
@@ -84,7 +84,7 @@ val_addr=$($GAIA_CMD keys show $GAIA_VAL_ACCT -a) > /dev/null
 # add money for this validator account
 $GAIA_CMD add-genesis-account ${val_addr} 500000000000000uatom
 # actually set this account as a validator
-$GAIA_CMD gentx $GAIA_VAL_ACCT 400000000000uatom --chain-id $GAIA_CHAIN 2> /dev/null
+$GAIA_CMD gentx $GAIA_VAL_ACCT 400000000uatom --chain-id $GAIA_CHAIN 2> /dev/null
 
 # Add hermes relayer account
 echo $HERMES_GAIA_MNEMONIC | $GAIA_CMD keys add $HERMES_GAIA_ACCT --recover 
