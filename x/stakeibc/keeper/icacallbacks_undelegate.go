@@ -39,8 +39,11 @@ func UndelegateCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, t
 		packet.Sequence, packet.SourceChannel, packet.SourcePort, packet.DestinationChannel, packet.DestinationPort)
 	k.Logger(ctx).Info(logMsg)
 
-	if txMsgData == nil ||  len(txMsgData.Data) == 0 {
-		k.Logger(ctx).Info(fmt.Sprintf("UndelegateCallback failed or timed out, txMsgData is nil, packet %v", packet))
+	if txMsgData == nil {
+		k.Logger(ctx).Error(fmt.Sprintf("UndelegateCallback timeout, txMsgData is nil, packet %v", packet))
+		return nil
+	} else if len(txMsgData.Data) == 0 {
+		k.Logger(ctx).Error(fmt.Sprintf("UndelegateCallback tx failed, txMsgData is empty, ack error, packet %v", packet))
 		return nil
 	}
 
