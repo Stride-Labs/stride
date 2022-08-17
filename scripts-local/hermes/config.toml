@@ -84,11 +84,7 @@ max_msg_num = 30
 max_tx_size = 2097152
 clock_drift = '5s'
 max_block_time = '10s'
-<<<<<<< HEAD
 trusting_period = '99s'
-=======
-trusting_period = '60s'
->>>>>>> 29b3139371c7dfe1d17d805b2acbc550951cdf19
 trust_threshold = { numerator = '1', denominator = '3' }
 address_type = { derivation = 'cosmos' }
 
@@ -109,10 +105,6 @@ max_msg_num = 30
 max_tx_size = 2097152
 clock_drift = '5s'
 max_block_time = '10s'
-<<<<<<< HEAD
 trusting_period = '99s'
-=======
-trusting_period = '60s'
->>>>>>> 29b3139371c7dfe1d17d805b2acbc550951cdf19
 trust_threshold = { numerator = '1', denominator = '3' }
 address_type = { derivation = 'cosmos' }
