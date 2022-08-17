@@ -367,7 +367,7 @@ func (k Keeper) UpdateRedemptionRates(ctx sdk.Context, depositRecords []recordst
 		stSupply := k.bankKeeper.GetSupply(ctx, types.StAssetDenomFromHostZoneDenom(zoneInfo.HostDenom)).Amount.Int64()
 		if stSupply == 0 {
 			k.Logger(ctx).Info(fmt.Sprintf("stSupply: %d", stSupply))
-			return fmt.Errorf("stSupply is 0")
+			return nil
 		}
 		k.Logger(ctx).Info(fmt.Sprintf("stSupply: %d", stSupply))
 

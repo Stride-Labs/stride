@@ -62,7 +62,7 @@ paths:
     osmo_path:
         src:
             chain-id: STRIDE
-            client-id: 07-tendermint-0
+            client-id: 07-tendermint-1
             connection-id: connection-1
         dst:
             chain-id: OSMO

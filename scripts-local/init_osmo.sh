@@ -39,6 +39,7 @@ sed -i -e '1,/enable = false/ s/enable = false/enable = true/' "${STATE}/${OSMO_
 # set the unbonding time
 OSMO_CFG_TMP="${STATE}/${OSMO_NODE_NAME}/config/genesis.json"
 jq '.app_state.staking.params.unbonding_time = $newVal' --arg newVal "$UNBONDING_TIME" $OSMO_CFG_TMP > json.tmp && mv json.tmp $OSMO_CFG_TMP
+jq '.app_state.epochs.epochs[$epochIndex].duration = $epochLen' --arg epochLen $DAY_EPOCH_LEN --argjson epochIndex 0  $OSMO_CFG_TMP > json.tmp && mv json.tmp $OSMO_CFG_TMP
 
 # add validator account
 echo $OSMO_VAL_MNEMONIC | $OSMO_CMD keys add $OSMO_VAL_ACCT --recover --keyring-backend=test >> $KEYS_LOGS 2>&1 
@@ -47,7 +48,7 @@ val_addr=$($OSMO_CMD keys show $OSMO_VAL_ACCT --keyring-backend test -a) > /dev/
 # add money for this validator account
 $OSMO_CMD add-genesis-account ${val_addr} 500000000000000uosmo
 # actually set this account as a validator
-$OSMO_CMD gentx $OSMO_VAL_ACCT 1000000000uosmo --chain-id $OSMO_CHAIN --keyring-backend test 2> /dev/null
+$OSMO_CMD gentx $OSMO_VAL_ACCT 1000000uosmo --chain-id $OSMO_CHAIN --keyring-backend test 2> /dev/null
 
 # Add hermes relayer account
 echo $HERMES_OSMO_MNEMONIC | $OSMO_CMD keys add $HERMES_OSMO_ACCT --recover --keyring-backend=test >> $KEYS_LOGS 2>&1 

@@ -29,12 +29,13 @@ $STRIDE_CMD tx stakeibc register-host-zone \
 connection-1 $OSMO_DENOM osmo $IBC_OSMO_DENOM channel-1 1 \
 --chain-id $STRIDE_CHAIN --home $STATE/stride \
 --keyring-backend test --from $STRIDE_ADMIN_ACCT --gas 1000000 -y >> $TX_LOGS 2>&1
-# echo "Creating Juno host zone..." | tee -a $TX_LOGS
-# $STRIDE_CMD tx stakeibc register-host-zone \
-# connection-1 $JUNO_DENOM juno $IBC_JUNO_DENOM channel-1 1 \
-# --chain-id $STRIDE_CHAIN --home $STATE/stride \
-# --keyring-backend test --from $STRIDE_ADMIN_ACCT --gas 1000000 -y >> $TX_LOGS 2>&1
-# WAIT_FOR_BLOCK $STRIDE_LOGS 2
+WAIT_FOR_BLOCK $STRIDE_LOGS 2
+echo "Creating Juno host zone..." | tee -a $TX_LOGS
+$STRIDE_CMD tx stakeibc register-host-zone \
+connection-1 $JUNO_DENOM juno $IBC_JUNO_DENOM channel-1 1 \
+--chain-id $STRIDE_CHAIN --home $STATE/stride \
+--keyring-backend test --from $STRIDE_ADMIN_ACCT --gas 1000000 -y >> $TX_LOGS 2>&1
+WAIT_FOR_BLOCK $STRIDE_LOGS 2
 
 # sleep a while longer to wait for ICA accounts to set up
 GAIA_CONFIRM="GAIA.WITHDRAWAL:STRIDE->GAIA}: channel handshake step completed with events: OpenConfirmChannel"
@@ -48,10 +49,10 @@ echo "Registering validators on host zones..." | tee -a $TX_LOGS
 
 # send gaia validator 2 money
 $GAIA_CMD tx bank send $GAIA_VAL_ACCT $GAIA_VAL_2_ADDR 10000uatom --chain-id $GAIA_CHAIN --keyring-backend test -y >> $TX_LOGS 2>&1
-WAIT_FOR_BLOCK $GAIA_LOGS
+WAIT_FOR_BLOCK $GAIA_LOGS 2
 # add juno validator
-# $STRIDE_CMD tx stakeibc add-validator JUNO $JUNO_VAL_ACCT $JUNO_DELEGATE_VAL 10 5 --chain-id $STRIDE_CHAIN --keyring-backend test --from $STRIDE_ADMIN_ACCT -y >> $TX_LOGS 2>&1
-# WAIT_FOR_BLOCK $STRIDE_LOGS 2
+$STRIDE_CMD tx stakeibc add-validator JUNO $JUNO_VAL_ACCT $JUNO_DELEGATE_VAL 10 5 --chain-id $STRIDE_CHAIN --keyring-backend test --from $STRIDE_ADMIN_ACCT -y >> $TX_LOGS 2>&1
+WAIT_FOR_BLOCK $STRIDE_LOGS 2
 # # add osmo validator
 $STRIDE_CMD tx stakeibc add-validator OSMO $OSMO_VAL_ACCT $OSMO_DELEGATE_VAL 10 5 --chain-id $STRIDE_CHAIN --keyring-backend test --from $STRIDE_ADMIN_ACCT -y >> $TX_LOGS 2>&1
 WAIT_FOR_BLOCK $STRIDE_LOGS 2
