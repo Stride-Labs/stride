@@ -23,7 +23,7 @@ func (k Keeper) MarshalClaimCallbackArgs(ctx sdk.Context, claimCallback types.Cl
 func (k Keeper) UnmarshalClaimCallbackArgs(ctx sdk.Context, claimCallback []byte) (*types.ClaimCallback, error) {
 	unmarshalledDelegateCallback := types.ClaimCallback{}
 	if err := proto.Unmarshal(claimCallback, &unmarshalledDelegateCallback); err != nil {
-        k.Logger(ctx).Error(fmt.Sprintf("UnmarshalClaimCallbackArgs %v", err.Error()))
+		k.Logger(ctx).Error(fmt.Sprintf("UnmarshalClaimCallbackArgs %v", err.Error()))
 		return nil, err
 	}
 	return &unmarshalledDelegateCallback, nil
@@ -42,8 +42,8 @@ func ClaimCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, txMsgD
 		return sdkerrors.Wrapf(types.ErrRecordNotFound, "user redemption record not found %s", claimCallback.GetUserRedemptionRecordId())
 	}
 
-	if txMsgData == nil ||  len(txMsgData.Data) == 0 {
-		k.Logger(ctx).Info(fmt.Sprintf("ClaimCallback failed or timed out, txMsgData is nil, packet %v", packet))
+	if txMsgData == nil || len(txMsgData.Data) == 0 {
+		k.Logger(ctx).Error(fmt.Sprintf("ClaimCallback failed or timed out, txMsgData is nil or empty, packet %v", packet))
 		// transaction on the host chain failed
 		// set UserClaimRecord as claimable
 		userClaimRecord.IsClaimable = true

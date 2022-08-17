@@ -19,3 +19,7 @@ echo $ICQ_STRIDE_MNEMONIC | $ICQ_CMD keys restore stridekey --chain stride-local
 echo $ICQ_GAIA_MNEMONIC | $ICQ_CMD keys restore gaiakey --chain gaia-local --local >> $KEYS_LOGS 2>&1
 echo $ICQ_JUNO_MNEMONIC | $ICQ_CMD keys restore junokey --chain juno-local --local >> $KEYS_LOGS 2>&1
 echo $ICQ_OSMO_MNEMONIC | $ICQ_CMD keys restore osmokey --chain osmo-local --local >> $KEYS_LOGS 2>&1
+
+# rly keys restore gaia gaiarly "$RLY_GAIA_MNEMONIC"
+# rly keys restore stride striderly "$RLY_STRIDE_MNEMONIC"
+
