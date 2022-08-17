@@ -9,6 +9,8 @@ source ${SCRIPT_DIR}/vars.sh
 LOGS_DIR=$SCRIPT_DIR/logs
 TEMP_LOGS_DIR=$LOGS_DIR/temp_osmo
 mkdir -p $TEMP_LOGS_DIR
+OSMO_LOGS_DIR=$LOGS_DIR/osmo
+mkdir -p $OSMO_LOGS_DIR
 
 while true; do
     # transactions logs
@@ -55,6 +57,6 @@ while true; do
     # printf '\n%s\n' "LIST-PENDING-CLAIMS" >>$TEMP_LOGS_DIR/accounts_osmo.log
     # $STRIDE_CMD q records list-user-redemption-record >> $TEMP_LOGS_DIR/accounts_osmo.log
     
-    mv $TEMP_LOGS_DIR/*.log $LOGS_DIR
+    mv $TEMP_LOGS_DIR/*.log $OSMO_LOGS_DIR
     sleep 3
 done

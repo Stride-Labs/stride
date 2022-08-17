@@ -112,7 +112,7 @@ setup() {
   str1_balance_juno=$($STRIDE_CMD q bank balances $STRIDE_ADDRESS --denom $IBC_JUNO_DENOM | GETBAL)
   juno1_balance_juno=$($JUNO_CMD q bank balances $JUNO_ADDRESS --denom ujuno | GETBAL)
   # do IBC transfer
-  $STRIDE_CMD tx ibc-transfer transfer transfer channel-2 $JUNO_ADDRESS 100ustrd --from val1 --chain-id STRIDE -y --keyring-backend test
+  $STRIDE_CMD tx ibc-transfer transfer transfer channel-2 $JUNO_ADDRESS 100000000ustrd --from val1 --chain-id STRIDE -y --keyring-backend test
   $JUNO_CMD tx ibc-transfer transfer transfer channel-0 $STRIDE_ADDRESS 100000000ujuno --from jval1 --chain-id JUNO -y --keyring-backend test
   WAIT_FOR_BLOCK $STRIDE_LOGS 8
   # get new balances
@@ -163,7 +163,7 @@ setup() {
   # get the new delegation ICA balance
   post_delegation_ica_bal=$($JUNO_CMD q bank balances $JUNO_DELEGATION_ICA_ADDR --denom ujuno | GETBAL)
   diff=$(($post_delegation_ica_bal - $initial_delegation_ica_bal))
-  assert_equal "$diff" '100000000'
+  assert_equal "$diff" '10000000'
 }
 
 @test "[INTEGRATION-BASIC-JUNO] tokens on JUNO were staked" {
