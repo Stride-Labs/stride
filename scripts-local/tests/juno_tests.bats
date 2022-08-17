@@ -112,8 +112,8 @@ setup() {
   str1_balance_juno=$($STRIDE_CMD q bank balances $STRIDE_ADDRESS --denom $IBC_JUNO_DENOM | GETBAL)
   juno1_balance_juno=$($JUNO_CMD q bank balances $JUNO_ADDRESS --denom ujuno | GETBAL)
   # do IBC transfer
-  $STRIDE_CMD tx ibc-transfer transfer transfer channel-1 $JUNO_ADDRESS 3000000000ustrd --from val1 --chain-id STRIDE -y --keyring-backend test &
-  $JUNO_CMD tx ibc-transfer transfer transfer channel-0 $STRIDE_ADDRESS 3000000000ujuno --from oval1 --chain-id JUNO -y --keyring-backend test &
+  $STRIDE_CMD tx ibc-transfer transfer transfer channel-2 $JUNO_ADDRESS 3000000000ustrd --from val1 --chain-id STRIDE -y --keyring-backend test &
+  $JUNO_CMD tx ibc-transfer transfer transfer channel-0 $STRIDE_ADDRESS 3000000000ujuno --from jval1 --chain-id JUNO -y --keyring-backend test &
   WAIT_FOR_BLOCK $STRIDE_LOGS 8
   # get new balances
   str1_balance_new=$($STRIDE_CMD q bank balances $STRIDE_ADDRESS --denom ustrd | GETBAL)
