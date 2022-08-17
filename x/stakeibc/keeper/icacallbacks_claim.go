@@ -43,7 +43,7 @@ func ClaimCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, txMsgD
 	}
 
 	if txMsgData == nil || len(txMsgData.Data) == 0 {
-		k.Logger(ctx).Info(fmt.Sprintf("ClaimCallback failed or timed out, txMsgData is nil or empty, packet %v", packet))
+		k.Logger(ctx).Error(fmt.Sprintf("ClaimCallback failed or timed out, txMsgData is nil or empty, packet %v", packet))
 		// transaction on the host chain failed
 		// set UserClaimRecord as claimable
 		userClaimRecord.IsClaimable = true
