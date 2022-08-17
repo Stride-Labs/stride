@@ -113,10 +113,9 @@ setup() {
   str1_balance_osmo=$($STRIDE_CMD q bank balances $STRIDE_ADDRESS --denom $IBC_OSMO_DENOM | GETBAL)
   osmo1_balance_osmo=$($OSMO_CMD q bank balances $OSMO_ADDRESS --denom uosmo | GETBAL)
   # do IBC transfer
-  $STRIDE_CMD tx ibc-transfer transfer transfer channel-2 $OSMO_ADDRESS 3000ustrd --from val1 --chain-id STRIDE -y --keyring-backend test &
+  $STRIDE_CMD tx ibc-transfer transfer transfer channel-1 $OSMO_ADDRESS 3000ustrd --from val1 --chain-id STRIDE -y --keyring-backend test &
   $OSMO_CMD tx ibc-transfer transfer transfer channel-0 $STRIDE_ADDRESS 3000uosmo --from oval1 --chain-id OSMO -y --keyring-backend test &
-  WAIT_FOR_IBC_TRANSFER
-  WAIT_FOR_IBC_TRANSFER
+  WAIT_FOR_BLOCK $STRIDE_LOGS 8
   # get new balances
   str1_balance_new=$($STRIDE_CMD q bank balances $STRIDE_ADDRESS --denom ustrd | GETBAL)  
   osmo1_balance_new=$($OSMO_CMD q bank balances $OSMO_ADDRESS --denom $IBC_STRD_DENOM_OSMO | GETBAL)
@@ -257,7 +256,7 @@ setup() {
   # read the exchange rate
   RR1=$($STRIDE_CMD q stakeibc show-host-zone OSMO | grep -Fiw 'RedemptionRate' | grep -Eo '[+-]?[0-9]+([.][0-9]+)?')
   # liquid stake again to kickstart the reinvestment process
-  $STRIDE_CMD tx stakeibc liquid-stake 1000 uatom --keyring-backend test --from val1 -y --chain-id $STRIDE_CHAIN
+  $STRIDE_CMD tx stakeibc liquid-stake 1000 uosmo --keyring-backend test --from val1 -y --chain-id $STRIDE_CHAIN
   WAIT_FOR_BLOCK $STRIDE_LOGS 2
   # wait four days (transfers, stake, move rewards, reinvest rewards)
   epoch_duration=$($STRIDE_CMD q epochs epoch-infos | grep -Fiw -B 2 'stride_epoch' | head -n 1 | grep -o -E '[0-9]+')
