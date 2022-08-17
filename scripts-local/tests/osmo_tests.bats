@@ -5,7 +5,7 @@ setup_file() {
   SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
   PATH="$SCRIPT_DIR/../../:$PATH"
 
-  set allows us to export all variables in account_vars
+  # set allows us to export all variables in account_vars
   set -a
   source scripts-local/account_vars.sh
 
@@ -113,8 +113,8 @@ setup() {
   str1_balance_osmo=$($STRIDE_CMD q bank balances $STRIDE_ADDRESS --denom $IBC_OSMO_DENOM | GETBAL)
   osmo1_balance_osmo=$($OSMO_CMD q bank balances $OSMO_ADDRESS --denom uosmo | GETBAL)
   # do IBC transfer
-  $STRIDE_CMD tx ibc-transfer transfer transfer channel-1 $OSMO_ADDRESS 3000ustrd --from val1 --chain-id STRIDE -y --keyring-backend test &
-  $OSMO_CMD tx ibc-transfer transfer transfer channel-0 $STRIDE_ADDRESS 3000uosmo --from oval1 --chain-id OSMO -y --keyring-backend test &
+  $STRIDE_CMD tx ibc-transfer transfer transfer channel-1 $OSMO_ADDRESS 3000000000ustrd --from val1 --chain-id STRIDE -y --keyring-backend test &
+  $OSMO_CMD tx ibc-transfer transfer transfer channel-0 $STRIDE_ADDRESS 3000000000uosmo --from oval1 --chain-id OSMO -y --keyring-backend test &
   WAIT_FOR_BLOCK $STRIDE_LOGS 8
   # get new balances
   str1_balance_new=$($STRIDE_CMD q bank balances $STRIDE_ADDRESS --denom ustrd | GETBAL)  
@@ -124,13 +124,13 @@ setup() {
   # get all STRD balance diffs
   str1_diff=$(($str1_balance - $str1_balance_new))
   osmo1_diff=$(($osmo1_balance - $osmo1_balance_new))
-  assert_equal "$str1_diff" '3000'
-  assert_equal "$osmo1_diff" '-3000'
-  # get all JUNO_DENOM balance diffs
+  assert_equal "$str1_diff" '3000000000'
+  assert_equal "$osmo1_diff" '-3000000000'
+  # get all OSMO_DENOM balance diffs
   str1_diff=$(($str1_balance_osmo - $str1_balance_osmo_new))
   osmo1_diff=$(($osmo1_balance_osmo - $osmo1_balance_osmo_new))
-  assert_equal "$str1_diff" '-3000'
-  assert_equal "$osmo1_diff" '3000'
+  assert_equal "$str1_diff" '-3000000000'
+  assert_equal "$osmo1_diff" '3000000000'
 }
 
 @test "[INTEGRATION-BASIC-OSMO] liquid stake mints stOSMO" {
@@ -141,17 +141,17 @@ setup() {
   str1_balance_osmo=$($STRIDE_CMD q bank balances $STRIDE_ADDRESS --denom $IBC_OSMO_DENOM | GETBAL)
   str1_balance_stosmo=$($STRIDE_CMD q bank balances $STRIDE_ADDRESS --denom $STOSMO_DENOM | GETBAL)
   # liquid stake
-  $STRIDE_CMD tx stakeibc liquid-stake 1000 uosmo --keyring-backend test --from val1 -y --chain-id $STRIDE_CHAIN
+  $STRIDE_CMD tx stakeibc liquid-stake 1000000000 uosmo --keyring-backend test --from val1 -y --chain-id $STRIDE_CHAIN
   # sleep two block for the tx to settle on stride
   WAIT_FOR_BLOCK $STRIDE_LOGS 2
   # make sure IBC_OSMO_DENOM went down 
   str1_balance_osmo_new=$($STRIDE_CMD q bank balances $STRIDE_ADDRESS --denom $IBC_OSMO_DENOM | GETBAL)
   str1_osmo_diff=$(($str1_balance_osmo - $str1_balance_osmo_new))
-  assert_equal "$str1_osmo_diff" '1000'
+  assert_equal "$str1_osmo_diff" '1000000000'
   # make sure STOSMO went up
   str1_balance_stosmo_new=$($STRIDE_CMD q bank balances $STRIDE_ADDRESS --denom $STOSMO_DENOM | GETBAL)
   str1_stosmo_diff=$(($str1_balance_stosmo_new-$str1_balance_stosmo))
-  assert_equal "$str1_stosmo_diff" "1000"
+  assert_equal "$str1_stosmo_diff" "1000000000"
 }
 
 @test "[INTEGRATION-BASIC-OSMO] tokens were transferred to OSMO after liquid staking" {
@@ -164,7 +164,7 @@ setup() {
   # get the new delegation ICA balance
   post_delegation_ica_bal=$($OSMO_CMD q bank balances $OSMO_DELEGATION_ICA_ADDR --denom uosmo | GETBAL)
   diff=$(($post_delegation_ica_bal - $initial_delegation_ica_bal))
-  assert_equal "$diff" '1000'
+  assert_equal "$diff" '1000000000'
 }
 
 @test "[INTEGRATION-BASIC-OSMO] tokens on OSMO were staked" {
@@ -229,27 +229,6 @@ setup() {
   diff_positive=$(($new_sender_bal > $old_sender_bal))
   assert_equal "$diff_positive" "1"
 }
-
-
-# check that a second liquid staking call kicks off reinvestment
-@test "[INTEGRATION-BASIC-OSMO] rewards are being reinvested (delegated balance increasing)" {
-  # liquid stake again to kickstart the reinvestment process
-  $STRIDE_CMD tx stakeibc liquid-stake 1000 uosmo --keyring-backend test --from val1 -y --chain-id $STRIDE_CHAIN
-  WAIT_FOR_BLOCK $STRIDE_LOGS 2 
-  # wait four days (transfers, stake, move rewards, reinvest rewards)
-  day_duration=$($STRIDE_CMD q epochs epoch-infos | grep -Fiw 'duration' | head -n 1 | grep -o -E '[0-9]+')
-  sleep $($day_duration)
-  EXPECTED_STAKED_BAL=$($OSMO_CMD q staking delegation $OSMO_DELEGATION_ICA_ADDR $OSMO_DELEGATE_VAL | GETSTAKE)
-  EXPECTED_STAKED_BAL=${EXPECTED_STAKED_BAL:=0}
-  sleep $day_duration
-  sleep $day_duration
-  sleep $day_duration
-  # simple check that number of tokens staked increases
-  NEW_STAKED_BAL=$($OSMO_CMD q staking delegation $OSMO_DELEGATION_ICA_ADDR $OSMO_DELEGATE_VAL | GETSTAKE)
-  STAKED_BAL_INCREASED=$(($NEW_STAKED_BAL > $EXPECTED_STAKED_BAL))
-  assert_equal "$STAKED_BAL_INCREASED" "1" 
-}
-
 
 # check that a second liquid staking call kicks off reinvestment
 @test "[INTEGRATION-BASIC-OSMO] rewards are being reinvested, exchange rate updating" {
