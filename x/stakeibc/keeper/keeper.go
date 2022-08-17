@@ -3,6 +3,8 @@ package keeper
 import (
 	"fmt"
 
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	"github.com/spf13/cast"
 	"github.com/tendermint/tendermint/libs/log"
 
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -21,6 +23,7 @@ import (
 	ibckeeper "github.com/cosmos/ibc-go/v3/modules/core/keeper"
 	ibctmtypes "github.com/cosmos/ibc-go/v3/modules/light-clients/07-tendermint/types"
 
+	epochstypes "github.com/Stride-Labs/stride/x/epochs/types"
 	icacallbacksmodulekeeper "github.com/Stride-Labs/stride/x/icacallbacks/keeper"
 	recordsmodulekeeper "github.com/Stride-Labs/stride/x/records/keeper"
 )
@@ -139,4 +142,67 @@ func (k Keeper) GetConnectionId(ctx sdk.Context, portId string) (string, error) 
 		}
 	}
 	return "", fmt.Errorf("portId %s has no associated connectionId", portId)
+}
+
+// helper to get what share of the curr epoch we're through
+func (k Keeper) GetStrideEpochElapsedShare(ctx sdk.Context) (sdk.Dec, error) {
+	epochType := epochstypes.STRIDE_EPOCH
+	epochTracker, found := k.GetEpochTracker(ctx, epochType)
+	if !found {
+		k.Logger(ctx).Error(fmt.Sprintf("Failed to get epoch tracker for %s", epochType))
+		return sdk.ZeroDec(), sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "Failed to get epoch tracker for %s", epochType)
+	}
+	durationInt64, err := cast.ToInt64E(epochTracker.Duration)
+	if err != nil {
+		k.Logger(ctx).Error(fmt.Sprintf("Failed to convert epoch duration to int64: %s", err.Error()))
+		return sdk.ZeroDec(), sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "Failed to convert epoch duration to int64: %s", err.Error())
+	}
+	// log epoch length
+	k.Logger(ctx).Info(fmt.Sprintf("Epoch length: %d", durationInt64))
+	nextEpochStartTimeInt64, err := cast.ToInt64E(epochTracker.NextEpochStartTime)
+	if err != nil {
+		k.Logger(ctx).Error(fmt.Sprintf("Failed to convert next epoch start time to int64: %s", err.Error()))
+		return sdk.ZeroDec(), sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "Failed to convert next epoch start time to int64: %s", err.Error())
+	}
+	currEpochStartTime := nextEpochStartTimeInt64 - durationInt64
+	currBlockTime := ctx.BlockTime().UnixNano()
+	currBlockTimeUint64, err := cast.ToUint64E(currBlockTime)
+	if err != nil {
+		k.Logger(ctx).Error(fmt.Sprintf("Failed to get current block time: %s", err))
+		return sdk.ZeroDec(), sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "Failed to get current block time: %s", err)
+	}
+	// sanity check: current block time is:
+	//     * GT time of start of current epoch
+	//     * LT time of end of current epoch
+	if currBlockTime < currEpochStartTime || currBlockTimeUint64 > epochTracker.NextEpochStartTime {
+		k.Logger(ctx).Error(fmt.Sprintf("Current block time %d is not within current epoch %d", currBlockTime, epochTracker.NextEpochStartTime))
+		return sdk.ZeroDec(), sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "Current block time %d is not within current epoch %d", currBlockTime, epochTracker.NextEpochStartTime)
+	}
+	elapsedShare := sdk.NewDec(currBlockTime - currEpochStartTime).Quo(sdk.NewDec(durationInt64))
+	// sanity check: elapsed share is \in (0,1)
+	if elapsedShare.LT(sdk.ZeroDec()) || elapsedShare.GT(sdk.OneDec()) {
+		k.Logger(ctx).Error(fmt.Sprintf("Elapsed share %s is not within (0,1)", elapsedShare))
+		return sdk.ZeroDec(), sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "Elapsed share %s is not within (0,1)", elapsedShare)
+	}
+	k.Logger(ctx).Info(fmt.Sprintf("epochTracker.NextEpochStartTime %v epochTracker.Duration %v currEpochStartTime %v", epochTracker.NextEpochStartTime, epochTracker.Duration, currEpochStartTime))
+	return elapsedShare, nil
+}
+
+// helper to check whether ICQs are valid in this portion of the epoch
+func (k Keeper) IsWithinBufferWindow(ctx sdk.Context) (bool, error) {
+	elapsedShareOfEpoch, err := k.GetStrideEpochElapsedShare(ctx)
+	if err != nil {
+		return false, err
+	}
+	bufferSize, err := cast.ToInt64E(k.GetParam(ctx, types.KeyBufferSize))
+	if err != nil {
+		return false, err
+	}
+	epochShareThresh := sdk.NewDec(1).Sub(sdk.NewDec(1).Quo(sdk.NewDec(bufferSize)))
+
+	inWindow := elapsedShareOfEpoch.GT(epochShareThresh)
+	if !inWindow {
+		k.Logger(ctx).Error(fmt.Sprintf("ICQCB: We're %d pct through the epoch, ICQ cutoff is %d", elapsedShareOfEpoch, epochShareThresh))
+	}
+	return inWindow, nil
 }

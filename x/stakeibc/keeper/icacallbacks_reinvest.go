@@ -33,13 +33,12 @@ func (k Keeper) UnmarshalReinvestCallbackArgs(ctx sdk.Context, reinvestCallback 
 	return &unmarshalledReinvestCallback, nil
 }
 
-func ReinvestCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ack *channeltypes.Acknowledgement_Result, args []byte) error {
+func ReinvestCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, txMsgData *sdk.TxMsgData, args []byte) error {
 	k.Logger(ctx).Info("ReinvestCallback executing", "packet", packet)
 
-	if ack == nil {
-		// transaction on the host chain failed
-		// don't create a record
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "ack is nil, packet %v", packet)
+	if txMsgData == nil ||  len(txMsgData.Data) == 0 {
+		k.Logger(ctx).Info(fmt.Sprintf("ReinvestCallback failed or timed out, txMsgData is nil, packet %v", packet))
+		return nil
 	}
 
 	// deserialize the args

@@ -27,7 +27,7 @@ setup_file() {
   }
   CEIL () {
     printf "%.0f\n" $(ADD $1 1)
-  } 
+  }
   set +a
 }
 
@@ -37,7 +37,7 @@ setup() {
   PATH="$SCRIPT_DIR/../../:$PATH"
 
 
-  # if these extensions don't load properly, adjust the paths accoring to these instructions  
+  # if these extensions don't load properly, adjust the paths accoring to these instructions
   TEST_BREW_PREFIX="$(brew --prefix)"
   load "${TEST_BREW_PREFIX}/lib/bats-support/load.bash"
   load "${TEST_BREW_PREFIX}/lib/bats-assert/load.bash"
@@ -83,7 +83,7 @@ setup() {
   assert_equal $JUNO_FEE_ICA_ADDR 'juno1rp8qgfq64wmjg7exyhjqrehnvww0t9ev3f3p2ls82umz2fxgylqsz3vl9h'
 }
 
-# # add test to register host zone 
+# # add test to register host zone
 @test "[INTEGRATION-BASIC] host zones successfully registered" {
   run $STRIDE_CMD q stakeibc show-host-zone GAIA
   assert_line '  HostDenom: uatom'
@@ -136,7 +136,7 @@ setup() {
 
 @test "[INTEGRATION-BASIC-GAIA] liquid stake mints stATOM" {
   # get module address
-  MODADDR=$($STRIDE_CMD q stakeibc module-address stakeibc | awk '{print $NF}') 
+  MODADDR=$($STRIDE_CMD q stakeibc module-address stakeibc | awk '{print $NF}')
   # get initial balances
   mod_balance_atom=$($STRIDE_CMD q bank balances $MODADDR --denom $IBC_ATOM_DENOM | GETBAL)
   str1_balance_atom=$($STRIDE_CMD q bank balances $STRIDE_ADDRESS --denom $IBC_ATOM_DENOM | GETBAL)
@@ -145,7 +145,7 @@ setup() {
   $STRIDE_CMD tx stakeibc liquid-stake 1000 uatom --keyring-backend test --from val1 -y --chain-id $STRIDE_CHAIN
   # sleep two block for the tx to settle on stride
   WAIT_FOR_BLOCK $STRIDE_LOGS 2
-  # make sure IBC_ATOM_DENOM went down 
+  # make sure IBC_ATOM_DENOM went down
   str1_balance_atom_new=$($STRIDE_CMD q bank balances $STRIDE_ADDRESS --denom $IBC_ATOM_DENOM | GETBAL)
   str1_atom_diff=$(($str1_balance_atom - $str1_balance_atom_new))
   assert_equal "$str1_atom_diff" '1000'
@@ -223,14 +223,14 @@ setup() {
   old_sender_bal=$($GAIA_CMD q bank balances $GAIA_RECEIVER_ACCT --denom uatom | GETBAL)
   # TODO check that the UserRedemptionRecord has isClaimable = true
 
-  # grab the epoch number for the first deposit record in the list od DRs  
+  # grab the epoch number for the first deposit record in the list od DRs
   EPOCH=$(strided q records list-user-redemption-record  | grep -Fiw 'epochNumber' | head -n 1 | grep -o -E '[0-9]+')
   # claim the record
   $STRIDE_CMD tx stakeibc claim-undelegated-tokens GAIA $EPOCH $SENDER_ACCT --from val1 --keyring-backend test --chain-id STRIDE -y
   WAIT_FOR_BLOCK $STRIDE_LOGS 2
   WAIT_FOR_BLOCK $GAIA_LOGS 5
   # TODO check that UserRedemptionRecord has isClaimable = false
-  
+
   # check that the tokens were transferred to the sender account
   new_sender_bal=$($GAIA_CMD q bank balances $GAIA_RECEIVER_ACCT --denom uatom | GETBAL)
 
@@ -252,7 +252,7 @@ setup() {
 #   NEW_STAKED_BAL=$($GAIA_CMD q staking delegation $DELEGATION_ICA_ADDR $GAIA_DELEGATE_VAL | GETSTAKE)
 #   EXPECTED_STAKED_BAL=667
 #   STAKED_BAL_INCREASED=$(($NEW_STAKED_BAL > $EXPECTED_STAKED_BAL))
-#   assert_equal "$STAKED_BAL_INCREASED" "1" 
+#   assert_equal "$STAKED_BAL_INCREASED" "1"
 # }
 
 # # check that exchange rate is updating
@@ -288,7 +288,7 @@ setup() {
 #   WAIT_FOR_IBC_TRANSFER
 #   WAIT_FOR_IBC_TRANSFER
 #   # get new balances
-#   str1_balance_new=$($STRIDE_CMD q bank balances $STRIDE_ADDRESS --denom ustrd | GETBAL)  
+#   str1_balance_new=$($STRIDE_CMD q bank balances $STRIDE_ADDRESS --denom ustrd | GETBAL)
 #   juno1_balance_new=$($JUNO_CMD q bank balances $JUNO_ADDRESS --denom $IBC_STRD_DENOM_JUNO | GETBAL)
 #   str1_balance_juno_new=$($STRIDE_CMD q bank balances $STRIDE_ADDRESS --denom $IBC_JUNO_DENOM | GETBAL)
 #   juno1_balance_juno_new=$($JUNO_CMD q bank balances $JUNO_ADDRESS --denom ujuno | GETBAL)

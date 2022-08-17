@@ -1,7 +1,6 @@
 package stakeibc
 
 import (
-	"encoding/json"
 	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -11,6 +10,7 @@ import (
 	channeltypes "github.com/cosmos/ibc-go/v3/modules/core/04-channel/types"
 	host "github.com/cosmos/ibc-go/v3/modules/core/24-host"
 	ibcexported "github.com/cosmos/ibc-go/v3/modules/core/exported"
+	"github.com/gogo/protobuf/proto"
 
 	icacallbacktypes "github.com/Stride-Labs/stride/x/icacallbacks/types"
 
@@ -134,22 +134,28 @@ func (im IBCModule) OnAcknowledgementPacket(
 	relayer sdk.AccAddress,
 ) error {
 	im.keeper.Logger(ctx).Info(fmt.Sprintf("OnAcknowledgementPacket: packet %v, relayer %v", modulePacket, relayer))
-	ack, err := im.UnmarshalAck(ctx, acknowledgement)
+	ackInfo := fmt.Sprintf("sequence #%d, from %s %s, to %s %s",
+		modulePacket.Sequence, modulePacket.SourceChannel, modulePacket.SourcePort, modulePacket.DestinationChannel, modulePacket.DestinationPort)
+
+	txMsgData, err := im.GetTxMsgData(ctx, acknowledgement)
 	if err != nil {
 		errMsg := fmt.Sprintf("Unable to unmarshal ack from stakeibc OnAcknowledgePacket | Sequence %d, from %s %s, to %s %s",
 			modulePacket.Sequence, modulePacket.SourceChannel, modulePacket.SourcePort, modulePacket.DestinationChannel, modulePacket.DestinationPort)
 		im.keeper.Logger(ctx).Error(errMsg)
 		return sdkerrors.Wrapf(types.ErrMarshalFailure, errMsg)
 	}
+
+	im.keeper.Logger(ctx).Info(fmt.Sprintf("Acknowledgement was successfully unmarshalled: ackInfo: %s, txMsgData: %v", ackInfo, txMsgData))
 	eventType := "ack"
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
 			eventType,
 			sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
-			sdk.NewAttribute(types.AttributeKeyAck, fmt.Sprintf("%v", ack)),
+			sdk.NewAttribute(types.AttributeKeyAck, fmt.Sprintf("%v", ackInfo)),
 		),
 	)
-	err = im.keeper.ICACallbacksKeeper.CallRegisteredICACallback(ctx, modulePacket, ack)
+
+	err = im.keeper.ICACallbacksKeeper.CallRegisteredICACallback(ctx, modulePacket, txMsgData)
 	if err != nil {
 		errMsg := fmt.Sprintf("Unable to call registered callback from stakeibc OnAcknowledgePacket | Sequence %d, from %s %s, to %s %s",
 			modulePacket.Sequence, modulePacket.SourceChannel, modulePacket.SourcePort, modulePacket.DestinationChannel, modulePacket.DestinationPort)
@@ -197,33 +203,24 @@ func (im IBCModule) NegotiateAppVersion(
 	return proposedVersion, nil
 }
 
-func (im IBCModule) UnmarshalAck(ctx sdk.Context, acknowledgement []byte) (*channeltypes.Acknowledgement_Result, error) {
-	ack := channeltypes.Acknowledgement_Result{}
-	err := json.Unmarshal(acknowledgement, &ack)
-	if err != nil {
-		ackErr := channeltypes.Acknowledgement_Error{}
-		// acknowledgement comes back as a Acknowledgement_Result, Acknowledgement_Error, or something
-		// that can't be handled
-		err := json.Unmarshal(acknowledgement, &ackErr)
-		if err != nil {
-			ctx.EventManager().EmitEvent(
-				sdk.NewEvent(
-					"ack_error",
-					sdk.NewAttribute(types.AttributeKeyAckError, ackErr.Error),
-				),
-			)
-			im.keeper.Logger(ctx).Error("Unable to unmarshal acknowledgement error", "error", err, "data", acknowledgement)
-			return nil, err
-		}
-		im.keeper.Logger(ctx).Error("Acknowledgement result unmarshalled as an error", "error", err, "remote_err", ackErr, "data", acknowledgement)
-		return nil, err
-	}
-
+func (im IBCModule) GetTxMsgData(ctx sdk.Context, acknowledgement []byte) (*sdk.TxMsgData, error) {
 	// NOTE: to use the acknowledgement result, unmarshal into TxMsgData
 	// txMsgData := &sdk.TxMsgData{}
 	// err = proto.Unmarshal(ack.Result, txMsgData)
+	var ack channeltypes.Acknowledgement
+	err := channeltypes.SubModuleCdc.UnmarshalJSON(acknowledgement, &ack)
+	if err != nil {
+		return nil, sdkerrors.Wrapf(types.ErrMarshalFailure, err.Error())
+	}
 
-	return &ack, nil
+	txMsgData := &sdk.TxMsgData{}
+	err = proto.Unmarshal(ack.GetResult(), txMsgData)
+	if err != nil {
+		im.keeper.Logger(ctx).Error(fmt.Sprintf("cannot unmarshal ICS-27 tx message data: %s", err.Error()))
+		return nil, sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "cannot unmarshal ICS-27 tx message data: %s", err.Error())
+	}
+
+	return txMsgData, nil
 }
 
 // ###################################################################################
