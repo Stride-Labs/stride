@@ -148,6 +148,9 @@ RLY_STRIDE_ACCT=striderly
 RLY_OSMO_MNEMONIC="unaware wine ramp february bring trust leaf beyond fever inside option dilemma save know captain endless salute radio humble chicken property culture foil taxi"
 RLY_OSMO_ADDR="osmo1zwj4yr264fr9au20gur3qapt3suwkgp0w039jd"
 RLY_OSMO_ACCT=osmorly
+RLY_JUNO_MNEMONIC="kiwi betray topple van vapor flag decorate cement crystal fee family clown cry story gain frost strong year blanket remain grass pig hen empower"
+RLY_JUNO_ADDR="juno1jrmtt5c6z8h5yrrwml488qnm7p3vxrrm2n40l0"
+RLY_JUNO_ACCT=junorly
 
 ICQ_CMD="$SCRIPT_DIR/../build/interchain-queries --home $STATE/icq"
 
@@ -257,6 +260,7 @@ GAIA_LOGS_3=$SCRIPT_DIR/logs/gaia3.log
 HERMES_LOGS=$SCRIPT_DIR/logs/hermes.log
 RLY_GAIA_LOGS=$SCRIPT_DIR/logs/rly_gaia.log
 RLY_OSMO_LOGS=$SCRIPT_DIR/logs/rly_osmo.log
+RLY_JUNO_LOGS=$SCRIPT_DIR/logs/rly_juno.log
 ICQ_LOGS=$SCRIPT_DIR/logs/icq.log
 JUNO_LOGS=$SCRIPT_DIR/logs/juno.log
 OSMO_LOGS=$SCRIPT_DIR/logs/osmo.log
