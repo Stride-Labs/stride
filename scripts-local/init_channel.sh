@@ -11,6 +11,7 @@ $HERMES_CMD create connection $STRIDE_CHAIN $GAIA_CHAIN
 echo "Creating transfer channel for Gaia"
 $HERMES_CMD create channel --port-a transfer --port-b transfer $GAIA_CHAIN connection-0 
 
+sleep 5
 # start go relayer 
 nohup rly start gaia_path -p events --home $SCRIPT_DIR/go-rly >> $RLY_GAIA_LOGS 2>&1 &
 

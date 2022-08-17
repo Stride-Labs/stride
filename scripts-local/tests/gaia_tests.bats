@@ -114,9 +114,7 @@ setup() {
   # do IBC transfer
   $STRIDE_CMD tx ibc-transfer transfer transfer channel-0 $GAIA_ADDRESS 3000ustrd --from val1 --chain-id STRIDE -y --keyring-backend test &
   $GAIA_CMD tx ibc-transfer transfer transfer channel-0 $STRIDE_ADDRESS 3000uatom --from gval1 --chain-id GAIA -y --keyring-backend test &
-  WAIT_FOR_IBC_TRANSFER
-  WAIT_FOR_IBC_TRANSFER
-  WAIT_FOR_BLOCK $STRIDE_LOGS
+  WAIT_FOR_BLOCK $STRIDE_LOGS 8
   # get new balances
   str1_balance_new=$($STRIDE_CMD q bank balances $STRIDE_ADDRESS --denom ustrd | GETBAL)
   gaia1_balance_new=$($GAIA_CMD q bank balances $GAIA_ADDRESS --denom $IBC_STRD_DENOM | GETBAL)
@@ -161,8 +159,8 @@ setup() {
   initial_delegation_ica_bal=$($GAIA_CMD q bank balances $DELEGATION_ICA_ADDR --denom uatom | GETBAL)
   # wait for the epoch to pass (we liquid staked above)
   remaining_seconds=$($STRIDE_CMD q epochs seconds-remaining stride_epoch)
-  sleep "$(($remaining_seconds-3))"
-  WAIT_FOR_IBC_TRANSFER
+  sleep "$(($remaining_seconds))"
+  WAIT_FOR_BLOCK $STRIDE_LOGS 10
   # get the new delegation ICA balance
   post_delegation_ica_bal=$($GAIA_CMD q bank balances $DELEGATION_ICA_ADDR --denom uatom | GETBAL)
   diff=$(($post_delegation_ica_bal - $initial_delegation_ica_bal))
@@ -194,7 +192,7 @@ setup() {
   # wait for beginning of next day, then for ibc transaction time for the unbonding period to begin
   remaining_seconds=$($STRIDE_CMD q epochs seconds-remaining day)
   sleep $remaining_seconds
-  WAIT_FOR_BLOCK $STRIDE_LOGS 2
+  WAIT_FOR_BLOCK $STRIDE_LOGS 3
   # TODO check for an unbonding record
   # TODO check that a UserRedemptionRecord was created with isClaimabled = false
   # wait for the unbonding period to pass
@@ -206,15 +204,14 @@ setup() {
   sleep $remaining_seconds
   day_duration=$($STRIDE_CMD q epochs epoch-infos | grep -Fiw 'duration' | head -n 1 | grep -o -E '[0-9]+')
   sleep $day_duration
-  sleep $day_duration
   # TODO we're sleeping more than we should have to here, investigate why redemptions take so long!
   # wait for ica bank send to process on host chain (delegation => redemption acct)
   WAIT_FOR_BLOCK $GAIA_LOGS 2
   sleep 15
   # check that the tokens were transferred to the redemption account
   new_redemption_ica_bal=$($GAIA_CMD q bank balances $REDEMPTION_ICA_ADDR --denom uatom | GETBAL)
-  diff=$(($new_redemption_ica_bal - $old_redemption_ica_bal))
-  assert_equal "$diff" "$amt_to_redeem"
+  diff_positive=$(($new_redemption_ica_bal > $old_redemption_ica_bal))
+  assert_equal "$diff_positive" "1"
 }
 
 @test "[INTEGRATION-BASIC-GAIA] claimed tokens are properly distributed" {
@@ -235,46 +232,37 @@ setup() {
   new_sender_bal=$($GAIA_CMD q bank balances $GAIA_RECEIVER_ACCT --denom uatom | GETBAL)
 
   # check that the undelegated tokens were transfered to the sender account
-  diff=$(($new_sender_bal - $old_sender_bal))
-  assert_equal "$diff" "5"
+  diff_positive=$(($new_sender_bal > $old_sender_bal))
+  assert_equal "$diff_positive" "1"
 }
 
 
-# # check that a second liquid staking call kicks off reinvestment
-# @test "[INTEGRATION-BASIC-GAIA] rewards are being reinvested (delegated balance increasing)" {
-#   # liquid stake again to kickstart the reinvestment process
-#   $STRIDE_CMD tx stakeibc liquid-stake 1000 uatom --keyring-backend test --from val1 -y --chain-id $STRIDE_CHAIN
-#   WAIT_FOR_BLOCK $STRIDE_LOGS 2
-#   # wait four days (transfers, stake, move rewards, reinvest rewards)
-#   day_duration=$($STRIDE_CMD q epochs epoch-infos | grep -Fiw 'duration' | head -n 1 | grep -o -E '[0-9]+')
-#   sleep $(($day_duration * 4))
-#   # simple check that number of tokens staked increases
-#   NEW_STAKED_BAL=$($GAIA_CMD q staking delegation $DELEGATION_ICA_ADDR $GAIA_DELEGATE_VAL | GETSTAKE)
-#   EXPECTED_STAKED_BAL=667
-#   STAKED_BAL_INCREASED=$(($NEW_STAKED_BAL > $EXPECTED_STAKED_BAL))
-#   assert_equal "$STAKED_BAL_INCREASED" "1"
-# }
+# check that a second liquid staking call kicks off reinvestment
+@test "[INTEGRATION-BASIC-GAIA] rewards are being reinvested, exchange rate updating" {
+  # read the exchange rate
+  RR1=$($STRIDE_CMD q stakeibc show-host-zone GAIA | grep -Fiw 'RedemptionRate' | grep -Eo '[+-]?[0-9]+([.][0-9]+)?')
+  # liquid stake again to kickstart the reinvestment process
+  $STRIDE_CMD tx stakeibc liquid-stake 1000 uatom --keyring-backend test --from val1 -y --chain-id $STRIDE_CHAIN
+  WAIT_FOR_BLOCK $STRIDE_LOGS 2
+  # wait four days (transfers, stake, move rewards, reinvest rewards)
+  epoch_duration=$($STRIDE_CMD q epochs epoch-infos | grep -Fiw -B 2 'stride_epoch' | head -n 1 | grep -o -E '[0-9]+')
+  sleep $(($epoch_duration * 4))
+  # simple check that number of tokens staked increases
+  NEW_STAKED_BAL=$($GAIA_CMD q staking delegation $DELEGATION_ICA_ADDR $GAIA_DELEGATE_VAL | GETSTAKE)
+  EXPECTED_STAKED_BAL=667
+  STAKED_BAL_INCREASED=$(($NEW_STAKED_BAL > $EXPECTED_STAKED_BAL))
+  assert_equal "$STAKED_BAL_INCREASED" "1"
 
-# # check that exchange rate is updating
-# @test "[INTEGRATION-BASIC-GAIA] exchange rate is updating" {
-#   # read the exchange rate
-#   RR1=$($STRIDE_CMD q stakeibc list-host-zone | grep -Fiw 'RedemptionRate' | grep -Eo '[+-]?[0-9]+([.][0-9]+)?')
+  RR2=$($STRIDE_CMD q stakeibc show-host-zone GAIA | grep -Fiw 'RedemptionRate' | grep -Eo '[+-]?[0-9]+([.][0-9]+)?')
+  # check that the exchange rate has increased
+  MULT=1000000
+  RR_INCREASED=$(( $(FLOOR $(DECMUL $RR2 $MULT)) > $(FLOOR $(DECMUL $RR1 $MULT))))
+  assert_equal "$RR_INCREASED" "1"
+}
 
-#   # wait for reinvestment to happen (4 days is enough)
-#   day_duration=$($STRIDE_CMD q epochs epoch-infos | grep -Fiw 'duration' | head -n 1 | grep -o -E '[0-9]+')
-#   sleep $(($day_duration * 4))
-
-#   RR2=$($STRIDE_CMD q stakeibc list-host-zone | grep -Fiw 'RedemptionRate' | grep -Eo '[+-]?[0-9]+([.][0-9]+)?')
-
-#   # check that the exchange rate has increased
-#   MULT=1000000
-#   RR_INCREASED=$(( $(FLOOR $(DECMUL $RR2 $MULT)) > $(FLOOR $(DECMUL $RR1 $MULT))))
-#   assert_equal "$RR_INCREASED" "1"
-# }
-
-# # TODO check that the correct amount is being reinvested and the correct amount is flowing to the rev EOA
-# @test "[NOT-IMPLEMENTED] reinvestment and revenue amounts are correct" {
-# }
+# TODO check that the correct amount is being reinvested and the correct amount is flowing to the rev EOA
+@test "[NOT-IMPLEMENTED] reinvestment and revenue amounts are correct" {
+}
 
 # @test "[INTEGRATION-BASIC-JUNO] ibc transfer updates all balances" {
 #   # get initial balances
