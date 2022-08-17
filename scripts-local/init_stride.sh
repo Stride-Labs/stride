@@ -140,7 +140,7 @@ val_addr=$($STRIDE_CMD keys show $STRIDE_VAL_ACCT -a) > /dev/null
 # add money for this validator account
 $STRIDE_CMD add-genesis-account ${val_addr} 500000000000ustrd 
 # actually set this account as a validator
-$STRIDE_CMD gentx $STRIDE_VAL_ACCT 1000000000ustrd --chain-id $STRIDE_CHAIN 2> /dev/null
+$STRIDE_CMD gentx $STRIDE_VAL_ACCT 100000000000ustrd --chain-id $STRIDE_CHAIN 2> /dev/null
 
 # add vesting accounts
 bash $SCRIPT_DIR/vesting/add_vesting_accts.sh
