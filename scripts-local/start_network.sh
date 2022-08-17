@@ -111,4 +111,4 @@ $SCRIPT_DIR/create_logs.sh &
 
 echo "Done! Go get em.\n\n"
 
-bash $SCRIPT_DIR/tests/run_all_tests.sh
+# bash $SCRIPT_DIR/tests/run_all_tests.sh
