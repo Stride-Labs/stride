@@ -30,13 +30,14 @@ func (k Keeper) UnmarshalRedemptionCallbackArgs(ctx sdk.Context, redemptionCallb
 	return unmarshalledRedemptionCallback, nil
 }
 
-func RedemptionCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ack *channeltypes.Acknowledgement_Result, args []byte) error {
+func RedemptionCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, txMsgData *sdk.TxMsgData, args []byte) error {
 	logMsg := fmt.Sprintf("RedemptionCallback executing packet: %d, source: %s %s, dest: %s %s",
 		packet.Sequence, packet.SourceChannel, packet.SourcePort, packet.DestinationChannel, packet.DestinationPort)
 	k.Logger(ctx).Info(logMsg)
 
-	if ack == nil {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "ack is nil")
+	if txMsgData == nil ||  len(txMsgData.Data) == 0 {
+		k.Logger(ctx).Info(fmt.Sprintf("RedemptionCallback failed or timed out, txMsgData is nil, packet %v", packet))
+		return nil
 	}
 
 	// unmarshal the callback args and get the host zone

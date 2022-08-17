@@ -34,13 +34,14 @@ func (k Keeper) UnmarshalUndelegateCallbackArgs(ctx sdk.Context, undelegateCallb
 	return unmarshalledUndelegateCallback, nil
 }
 
-func UndelegateCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ack *channeltypes.Acknowledgement_Result, args []byte) error {
+func UndelegateCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, txMsgData *sdk.TxMsgData, args []byte) error {
 	logMsg := fmt.Sprintf("UndelegateCallback executing packet: %d, source: %s %s, dest: %s %s",
 		packet.Sequence, packet.SourceChannel, packet.SourcePort, packet.DestinationChannel, packet.DestinationPort)
 	k.Logger(ctx).Info(logMsg)
 
-	if ack == nil {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "ack is nil")
+	if txMsgData == nil ||  len(txMsgData.Data) == 0 {
+		k.Logger(ctx).Info(fmt.Sprintf("UndelegateCallback failed or timed out, txMsgData is nil, packet %v", packet))
+		return nil
 	}
 
 	// unmarshal the callback args and get the host zone
@@ -73,15 +74,6 @@ func UndelegateCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, a
 		hostZone.StakedBal -= undelegation.Amount
 	}
 	k.SetHostZone(ctx, hostZone)
-
-	// Get the individual msg responses from inside the transaction
-	txMsgData := &sdk.TxMsgData{}
-	err = proto.Unmarshal(ack.Result, txMsgData)
-	if err != nil {
-		errMsg := fmt.Sprintf("Unable to unmarshal tx ack in callback | %s", err.Error())
-		k.Logger(ctx).Error(errMsg)
-		return sdkerrors.Wrapf(types.ErrUnmarshalFailure, errMsg)
-	}
 
 	// Update the completion time using the latest completion time across each message within the transaction
 	latestCompletionTime := time.Time{}
