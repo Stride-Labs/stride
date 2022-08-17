@@ -16,9 +16,9 @@ var _ = strconv.Itoa(0)
 
 func CmdClearBalance() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "clear-balance [chain-id] [amount [channel-id]",
+		Use:   "clear-balance [chain-id] [amount] [channel-id]",
 		Short: "Broadcast message clear-balance",
-		Args:  cobra.ExactArgs(2),
+		Args:  cobra.ExactArgs(3),
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
 			argChainId := args[0]
 			argAmount, err := cast.ToUint64E(args[1])
