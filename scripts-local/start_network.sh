@@ -71,7 +71,7 @@ if [ "$CACHE" != "true" ]; then
     #  1)  "Creating transfer channel" is printed (indicating the connection has been created)
     #  2)  "Message ChanOpenInit" is printed (indicating the channnel has been created)
     bash $SCRIPT_DIR/init_channel.sh >> $HERMES_LOGS 2>&1 &
-    for i in {1..1}
+    for i in {1..2}
     do
         printf '%s' "Creating Hermes Connection $i... "
         ( tail -f -n0 $HERMES_LOGS & ) | grep -q "Creating transfer channel"
