@@ -8,8 +8,9 @@ source ${SCRIPT_DIR}/../account_vars.sh
 # $GAIA_CMD q tx DC7D62F7D9AD1F8CBE48F95C1E3DADDBAD7FE85DFB6979B458A086FE5ED56A8C
 # exit
 
-# $STRIDE_CMD q bank balances stride1uk4ze0x4nvh4fk0xm4jdud58eqn4yxhrt52vv7
-# exit
+# $STRIDE_CMD q stakeibc show-host-zone OSMO
+$OSMO_CMD q bank balances osmo1cx04p5974f8hzh2lqev48kjrjugdxsxy7mzrd0eyweycpr90vk8q8d6f3h
+exit
 
 # $STRIDE_CMD q tx 48DF6A5FA859BC4DE0A5D891798DEBA36DF7A61561090F635B823B38557E5C41
 # exit
