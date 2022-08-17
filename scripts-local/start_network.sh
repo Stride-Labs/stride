@@ -22,7 +22,7 @@ make stop 2>/dev/null || true
 rm -rf $SCRIPT_DIR/state $SCRIPT_DIR/logs/*.log $SCRIPT_DIR/logs/temp
 
 # Recreate each log file
-for log in $STRIDE_LOGS $STRIDE_LOGS_2 $STRIDE_LOGS_3 $STRIDE_LOGS_4 $STRIDE_LOGS_5 $GAIA_LOGS $GAIA_LOGS_2 $HERMES_LOGS $ICQ_LOGS $JUNO_LOGS $TX_LOGS $KEYS_LOGS $OSMO_LOGS $RLY_GAIA_LOGS $RLY_OSMO_LOGS; do
+for log in $STRIDE_LOGS $STRIDE_LOGS_2 $STRIDE_LOGS_3 $STRIDE_LOGS_4 $STRIDE_LOGS_5 $GAIA_LOGS $GAIA_LOGS_2 $HERMES_LOGS $ICQ_LOGS $JUNO_LOGS $TX_LOGS $KEYS_LOGS $OSMO_LOGS $RLY_GAIA_LOGS $RLY_OSMO_LOGS $RLY_JUNO_LOGS; do
     touch $log
 done
 
@@ -71,7 +71,7 @@ if [ "$CACHE" != "true" ]; then
     #  1)  "Creating transfer channel" is printed (indicating the connection has been created)
     #  2)  "Message ChanOpenInit" is printed (indicating the channnel has been created)
     bash $SCRIPT_DIR/init_channel.sh >> $HERMES_LOGS 2>&1 &
-    for i in {1..2}
+    for i in {1..3}
     do
         printf '%s' "Creating Hermes Connection $i... "
         ( tail -f -n0 $HERMES_LOGS & ) | grep -q "Creating transfer channel"
