@@ -27,7 +27,7 @@ func (k Keeper) MarshalReinvestCallbackArgs(ctx sdk.Context, reinvestCallback ty
 func (k Keeper) UnmarshalReinvestCallbackArgs(ctx sdk.Context, reinvestCallback []byte) (*types.ReinvestCallback, error) {
 	unmarshalledReinvestCallback := types.ReinvestCallback{}
 	if err := proto.Unmarshal(reinvestCallback, &unmarshalledReinvestCallback); err != nil {
-        k.Logger(ctx).Error(fmt.Sprintf("UnmarshalReinvestCallbackArgs %s", err.Error()))
+		k.Logger(ctx).Error(fmt.Sprintf("UnmarshalReinvestCallbackArgs %s", err.Error()))
 		return nil, err
 	}
 	return &unmarshalledReinvestCallback, nil
@@ -36,8 +36,11 @@ func (k Keeper) UnmarshalReinvestCallbackArgs(ctx sdk.Context, reinvestCallback 
 func ReinvestCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, txMsgData *sdk.TxMsgData, args []byte) error {
 	k.Logger(ctx).Info("ReinvestCallback executing", "packet", packet)
 
-	if txMsgData == nil ||  len(txMsgData.Data) == 0 {
-		k.Logger(ctx).Info(fmt.Sprintf("ReinvestCallback failed or timed out, txMsgData is nil, packet %v", packet))
+	if txMsgData == nil {
+		k.Logger(ctx).Error(fmt.Sprintf("ReinvestCallback timeout, txMsgData is nil, packet %v", packet))
+		return nil
+	} else if len(txMsgData.Data) == 0 {
+		k.Logger(ctx).Error(fmt.Sprintf("ReinvestCallback tx failed, txMsgData is empty, ack error, packet %v", packet))
 		return nil
 	}
 
@@ -48,7 +51,7 @@ func ReinvestCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, txM
 	}
 	amount := reinvestCallback.ReinvestAmount.Amount
 	denom := reinvestCallback.ReinvestAmount.Denom
-	
+
 	// fetch epoch
 	strideEpochTracker, found := k.GetEpochTracker(ctx, epochtypes.STRIDE_EPOCH)
 	if !found {
