@@ -108,6 +108,8 @@ fi
 
 # Add more detailed log files
 $SCRIPT_DIR/create_logs.sh &
+$SCRIPT_DIR/create_logs_osmo.sh &
+$SCRIPT_DIR/create_logs_juno.sh &
 
 echo "Done! Go get em.\n\n"
 

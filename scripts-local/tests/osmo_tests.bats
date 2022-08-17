@@ -5,7 +5,7 @@ setup_file() {
   SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
   PATH="$SCRIPT_DIR/../../:$PATH"
 
-  set allows us to export all variables in account_vars
+  # set allows us to export all variables in account_vars
   set -a
   source scripts-local/account_vars.sh
 
@@ -27,7 +27,7 @@ setup_file() {
   }
   CEIL () {
     printf "%.0f\n" $(ADD $1 1)
-  } 
+  }
   set +a
 }
 
@@ -37,7 +37,7 @@ setup() {
   PATH="$SCRIPT_DIR/../../:$PATH"
 
 
-  # if these extensions don't load properly, adjust the paths accoring to these instructions  
+  # if these extensions don't load properly, adjust the paths accoring to these instructions
   TEST_BREW_PREFIX="$(brew --prefix)"
   load "${TEST_BREW_PREFIX}/lib/bats-support/load.bash"
   load "${TEST_BREW_PREFIX}/lib/bats-assert/load.bash"
@@ -83,7 +83,7 @@ setup() {
   assert_equal $JUNO_FEE_ICA_ADDR 'juno1rp8qgfq64wmjg7exyhjqrehnvww0t9ev3f3p2ls82umz2fxgylqsz3vl9h'
 }
 
-# # add test to register host zone 
+# # add test to register host zone
 @test "[INTEGRATION-BASIC] host zones successfully registered" {
 
   run $STRIDE_CMD q stakeibc show-host-zone OSMO
@@ -113,46 +113,45 @@ setup() {
   str1_balance_osmo=$($STRIDE_CMD q bank balances $STRIDE_ADDRESS --denom $IBC_OSMO_DENOM | GETBAL)
   osmo1_balance_osmo=$($OSMO_CMD q bank balances $OSMO_ADDRESS --denom uosmo | GETBAL)
   # do IBC transfer
-  $STRIDE_CMD tx ibc-transfer transfer transfer channel-1 $OSMO_ADDRESS 3000ustrd --from val1 --chain-id STRIDE -y --keyring-backend test &
-  $OSMO_CMD tx ibc-transfer transfer transfer channel-0 $STRIDE_ADDRESS 3000uosmo --from oval1 --chain-id OSMO -y --keyring-backend test &
-  WAIT_FOR_IBC_TRANSFER
-  WAIT_FOR_IBC_TRANSFER
+  $STRIDE_CMD tx ibc-transfer transfer transfer channel-1 $OSMO_ADDRESS 3000000000ustrd --from val1 --chain-id STRIDE -y --keyring-backend test &
+  $OSMO_CMD tx ibc-transfer transfer transfer channel-0 $STRIDE_ADDRESS 3000000000uosmo --from oval1 --chain-id OSMO -y --keyring-backend test &
+  WAIT_FOR_BLOCK $STRIDE_LOGS 8
   # get new balances
-  str1_balance_new=$($STRIDE_CMD q bank balances $STRIDE_ADDRESS --denom ustrd | GETBAL)  
+  str1_balance_new=$($STRIDE_CMD q bank balances $STRIDE_ADDRESS --denom ustrd | GETBAL)
   osmo1_balance_new=$($OSMO_CMD q bank balances $OSMO_ADDRESS --denom $IBC_STRD_DENOM_OSMO | GETBAL)
   str1_balance_osmo_new=$($STRIDE_CMD q bank balances $STRIDE_ADDRESS --denom $IBC_OSMO_DENOM | GETBAL)
   osmo1_balance_osmo_new=$($OSMO_CMD q bank balances $OSMO_ADDRESS --denom uosmo | GETBAL)
   # get all STRD balance diffs
   str1_diff=$(($str1_balance - $str1_balance_new))
   osmo1_diff=$(($osmo1_balance - $osmo1_balance_new))
-  assert_equal "$str1_diff" '3000'
-  assert_equal "$osmo1_diff" '-3000'
-  # get all JUNO_DENOM balance diffs
+  assert_equal "$str1_diff" '3000000000'
+  assert_equal "$osmo1_diff" '-3000000000'
+  # get all OSMO_DENOM balance diffs
   str1_diff=$(($str1_balance_osmo - $str1_balance_osmo_new))
   osmo1_diff=$(($osmo1_balance_osmo - $osmo1_balance_osmo_new))
-  assert_equal "$str1_diff" '-3000'
-  assert_equal "$osmo1_diff" '3000'
+  assert_equal "$str1_diff" '-3000000000'
+  assert_equal "$osmo1_diff" '3000000000'
 }
 
 @test "[INTEGRATION-BASIC-OSMO] liquid stake mints stOSMO" {
   # get module address
-  MODADDR=$($STRIDE_CMD q stakeibc module-address stakeibc | awk '{print $NF}') 
+  MODADDR=$($STRIDE_CMD q stakeibc module-address stakeibc | awk '{print $NF}')
   # get initial balances
   mod_balance_osmo=$($STRIDE_CMD q bank balances $MODADDR --denom $IBC_OSMO_DENOM | GETBAL)
   str1_balance_osmo=$($STRIDE_CMD q bank balances $STRIDE_ADDRESS --denom $IBC_OSMO_DENOM | GETBAL)
   str1_balance_stosmo=$($STRIDE_CMD q bank balances $STRIDE_ADDRESS --denom $STOSMO_DENOM | GETBAL)
   # liquid stake
-  $STRIDE_CMD tx stakeibc liquid-stake 1000 uosmo --keyring-backend test --from val1 -y --chain-id $STRIDE_CHAIN
+  $STRIDE_CMD tx stakeibc liquid-stake 1000000000 uosmo --keyring-backend test --from val1 -y --chain-id $STRIDE_CHAIN
   # sleep two block for the tx to settle on stride
   WAIT_FOR_BLOCK $STRIDE_LOGS 2
-  # make sure IBC_OSMO_DENOM went down 
+  # make sure IBC_OSMO_DENOM went down
   str1_balance_osmo_new=$($STRIDE_CMD q bank balances $STRIDE_ADDRESS --denom $IBC_OSMO_DENOM | GETBAL)
   str1_osmo_diff=$(($str1_balance_osmo - $str1_balance_osmo_new))
-  assert_equal "$str1_osmo_diff" '1000'
+  assert_equal "$str1_osmo_diff" '1000000000'
   # make sure STOSMO went up
   str1_balance_stosmo_new=$($STRIDE_CMD q bank balances $STRIDE_ADDRESS --denom $STOSMO_DENOM | GETBAL)
   str1_stosmo_diff=$(($str1_balance_stosmo_new-$str1_balance_stosmo))
-  assert_equal "$str1_stosmo_diff" "1000"
+  assert_equal "$str1_stosmo_diff" "1000000000"
 }
 
 @test "[INTEGRATION-BASIC-OSMO] tokens were transferred to OSMO after liquid staking" {
@@ -165,7 +164,7 @@ setup() {
   # get the new delegation ICA balance
   post_delegation_ica_bal=$($OSMO_CMD q bank balances $OSMO_DELEGATION_ICA_ADDR --denom uosmo | GETBAL)
   diff=$(($post_delegation_ica_bal - $initial_delegation_ica_bal))
-  assert_equal "$diff" '1000'
+  assert_equal "$diff" '1000000000'
 }
 
 @test "[INTEGRATION-BASIC-OSMO] tokens on OSMO were staked" {
@@ -217,7 +216,7 @@ setup() {
   SENDER_ACCT=$STRIDE_VAL_ADDR
   old_sender_bal=$($OSMO_CMD q bank balances $OSMO_RECEIVER_ACCT --denom uosmo | GETBAL)
   # TODO check that the UserRedemptionRecord has isClaimable = true
-  # grab the epoch number for the first deposit record in the list od DRs  
+  # grab the epoch number for the first deposit record in the list od DRs
   EPOCH=$(strided q records list-user-redemption-record  | grep -Fiw 'epochNumber' | head -n 1 | grep -o -E '[0-9]+')
   # claim the record
   $STRIDE_CMD tx stakeibc claim-undelegated-tokens OSMO $EPOCH $SENDER_ACCT --from val1 --keyring-backend test --chain-id STRIDE -y
