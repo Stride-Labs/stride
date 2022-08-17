@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -eu 
+set -eu
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
 # import dependencies
@@ -9,7 +9,7 @@ source ${SCRIPT_DIR}/vars.sh
 # first, we need to create some saved state, so that we can copy to docker files
 mkdir -p $STATE/$GAIA_NODE_NAME
 
-# then, we initialize our chains 
+# then, we initialize our chains
 echo 'Initializing Gaia state...'
 
 # initialize the chain
@@ -78,7 +78,7 @@ GAIA_CFG_TMP="${STATE}/${GAIA_NODE_NAME}/config/genesis.json"
 jq '.app_state.staking.params.unbonding_time = $newVal' --arg newVal "$UNBONDING_TIME" $GAIA_CFG_TMP > json.tmp && mv json.tmp $GAIA_CFG_TMP
 
 # add validator account
-echo $GAIA_VAL_MNEMONIC | $GAIA_CMD keys add $GAIA_VAL_ACCT --recover --keyring-backend=test >> $KEYS_LOGS 2>&1 
+echo $GAIA_VAL_MNEMONIC | $GAIA_CMD keys add $GAIA_VAL_ACCT --recover --keyring-backend=test >> $KEYS_LOGS 2>&1
 # get validator address
 val_addr=$($GAIA_CMD keys show $GAIA_VAL_ACCT -a) > /dev/null
 # add money for this validator account
@@ -90,7 +90,7 @@ $GAIA_CMD gentx $GAIA_VAL_ACCT 1000000uatom --chain-id $GAIA_CHAIN 2> /dev/null
 echo $HERMES_GAIA_MNEMONIC | $GAIA_CMD keys add $HERMES_GAIA_ACCT --recover --keyring-backend=test >> $KEYS_LOGS 2>&1
 HERMES_GAIA_ADDRESS=$($GAIA_CMD keys show $HERMES_GAIA_ACCT --keyring-backend test -a)
 # Give relayer account token balance
-$GAIA_CMD add-genesis-account ${HERMES_GAIA_ADDRESS} 5000000000000uatom >> $KEYS_LOGS 2>&1 & 
+$GAIA_CMD add-genesis-account ${HERMES_GAIA_ADDRESS} 5000000000000uatom >> $KEYS_LOGS 2>&1 &
 
 # Add ICQ relayer account
 echo $ICQ_GAIA_MNEMONIC | $GAIA_CMD keys add $ICQ_GAIA_ACCT --recover --keyring-backend=test >> $KEYS_LOGS 2>&1

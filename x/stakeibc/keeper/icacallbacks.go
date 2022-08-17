@@ -13,9 +13,8 @@ const UNDELEGATE = "undelegate"
 const REINVEST = "reinvest"
 const REDEMPTION = "redemption"
 
-
 // ICACallbacks wrapper struct for stakeibc keeper
-type ICACallback func(Keeper, sdk.Context, channeltypes.Packet, *channeltypes.Acknowledgement_Result, []byte) error
+type ICACallback func(Keeper, sdk.Context, channeltypes.Packet, *sdk.TxMsgData, []byte) error
 
 type ICACallbacks struct {
 	k            Keeper
@@ -28,8 +27,8 @@ func (k Keeper) ICACallbackHandler() ICACallbacks {
 	return ICACallbacks{k, make(map[string]ICACallback)}
 }
 
-func (c ICACallbacks) CallICACallback(ctx sdk.Context, id string, packet channeltypes.Packet, ack *channeltypes.Acknowledgement_Result, args []byte) error {
-	return c.icacallbacks[id](c.k, ctx, packet, ack, args)
+func (c ICACallbacks) CallICACallback(ctx sdk.Context, id string, packet channeltypes.Packet, txMsgData *sdk.TxMsgData, args []byte) error {
+	return c.icacallbacks[id](c.k, ctx, packet, txMsgData, args)
 }
 
 func (c ICACallbacks) HasICACallback(id string) bool {

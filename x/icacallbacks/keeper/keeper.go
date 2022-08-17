@@ -87,7 +87,7 @@ func (k *Keeper) ClaimCapability(ctx sdk.Context, cap *capabilitytypes.Capabilit
 	return k.scopedKeeper.ClaimCapability(ctx, cap, name)
 }
 
-func (k Keeper) CallRegisteredICACallback(ctx sdk.Context, modulePacket channeltypes.Packet, acknowledgement *channeltypes.Acknowledgement_Result) error {
+func (k Keeper) CallRegisteredICACallback(ctx sdk.Context, modulePacket channeltypes.Packet, txMsgData *sdk.TxMsgData) error {
 	// get the relevant module from the channel and port
 	portID := modulePacket.GetSourcePort()
 	channelID := modulePacket.GetSourceChannel()
@@ -117,7 +117,7 @@ func (k Keeper) CallRegisteredICACallback(ctx sdk.Context, modulePacket channelt
 	// call the callback
 	if callbackHandler.HasICACallback(callbackData.CallbackId) {
 		// if acknowledgement is empty, then it is a timeout
-		err := callbackHandler.CallICACallback(ctx, callbackData.CallbackId, modulePacket, acknowledgement, callbackData.CallbackArgs)
+		err := callbackHandler.CallICACallback(ctx, callbackData.CallbackId, modulePacket, txMsgData, callbackData.CallbackArgs)
 		if err != nil {
 			errMsg := fmt.Sprintf("Error occured while calling ICACallback (%s) | err: %s", callbackData.CallbackId, err.Error())
 			k.Logger(ctx).Error(errMsg)
