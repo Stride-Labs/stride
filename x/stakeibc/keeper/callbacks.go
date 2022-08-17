@@ -127,7 +127,7 @@ func WithdrawalBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query icq
 	withdrawalAccount := zone.GetWithdrawalAccount()
 	delegationAccount := zone.GetDelegationAccount()
 	// TODO(TEST-112) set the stride revenue address in a config file
-	REV_ACCT := "cosmos1wdplq6qjh2xruc7qqagma9ya665q6qhcwju3ng"
+	REV_ACCT := zone.GetFeeAccount().GetAddress()
 
 	params := k.GetParams(ctx)
 	stCommission, err := cast.ToInt64E(params.GetStrideCommission())
