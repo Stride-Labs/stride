@@ -14,7 +14,7 @@ STRIDE_CMD="$STRIDE_BINARY --home $SCRIPT_DIR/state/stride"
 mkdir -p $STATE/$STRIDE_NODE_NAME
 
 # then, we initialize our chains 
-echo 'Initializing stride state...'
+echo 'Initializing Stride state...'
 
 # initialize the chain
 $STRIDE_CMD init stride1 --chain-id $STRIDE_CHAIN --overwrite 2> /dev/null
@@ -27,7 +27,7 @@ for NODE_NAME in stride stride2 stride3 stride4 stride5; do
     # change the denom
     sed -i -E 's|"stake"|"ustrd"|g' "${STATE}/${NODE_NAME}/config/genesis.json"
     # sed -i -E 's|timeout_propose = "3s"|timeout_propose = "5s"|g' "${STATE}/${NODE_NAME}/config/config.toml"
-    sed -i -E "s|timeout_commit = \"3s\"|timeout_commit = \"${BLOCK_TIME}\"|g" "${STATE}/${NODE_NAME}/config/config.toml"
+    sed -i -E "s|timeout_commit = \"5s\"|timeout_commit = \"${BLOCK_TIME}\"|g" "${STATE}/${NODE_NAME}/config/config.toml"
     sed -i -E "s|cors_allowed_origins = \[\]|cors_allowed_origins = [\"\*\"]|g" "${STATE}/${NODE_NAME}/config/config.toml"
     sed -i -E "s|allow_duplicate_ip = false|allow_duplicate_ip = true|g" "${STATE}/${NODE_NAME}/config/config.toml"
     sed -i -E "s|addr_book_strict = true|addr_book_strict = false|g" "${STATE}/${NODE_NAME}/config/config.toml"
@@ -151,13 +151,18 @@ bash $SCRIPT_DIR/vesting/add_vesting_accts.sh
 echo $HERMES_STRIDE_MNEMONIC | $STRIDE_CMD keys add $HERMES_STRIDE_ACCT --recover --keyring-backend=test >> $KEYS_LOGS 2>&1
 HERMES_STRIDE_ADDRESS=$($STRIDE_CMD keys show $HERMES_STRIDE_ACCT --keyring-backend test -a)
 # Give relayer account token balance
-$STRIDE_CMD add-genesis-account ${HERMES_STRIDE_ADDRESS} 500000000000ustrd
+$STRIDE_CMD add-genesis-account ${HERMES_STRIDE_ADDRESS} 500000000000ustrd >> $KEYS_LOGS 2>&1 &
 
 # Add ICQ relayer account
 echo $ICQ_STRIDE_MNEMONIC | $STRIDE_CMD keys add $ICQ_STRIDE_ACCT --recover --keyring-backend=test >> $KEYS_LOGS 2>&1
 ICQ_STRIDE_ADDRESS=$($STRIDE_CMD keys show $ICQ_STRIDE_ACCT --keyring-backend test -a)
 # Give relayer account token balance
-$STRIDE_CMD add-genesis-account ${ICQ_STRIDE_ADDRESS} 500000000000ustrd
+$STRIDE_CMD add-genesis-account ${ICQ_STRIDE_ADDRESS} 500000000000ustrd  # >> $KEYS_LOGS 2>&1 &
+
+# Add rly relayer account
+echo $RLY_STRIDE_MNEMONIC | $STRIDE_CMD keys add $RLY_STRIDE_ACCT --recover --keyring-backend=test >> $KEYS_LOGS 2>&1
+# Give relayer account token balance
+$STRIDE_CMD add-genesis-account ${RLY_STRIDE_ADDR} 500000000000ustrd # >> $KEYS_LOGS 2>&1 &
 
 sed -i -E "s|snapshot-interval = 0|snapshot-interval = 300|g" "${STATE}/${STRIDE_NODE_NAME}/config/app.toml"
 

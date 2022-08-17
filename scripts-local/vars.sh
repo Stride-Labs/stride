@@ -24,17 +24,18 @@ STOSMO_DENOM="stuosmo"
 # WARNING: CHANGES TO THESE PARAMS COULD BREAK INTEGRATION TESTS
 # **************************************************************************
 # CHAIN PARAMS
-BLOCK_TIME_SECONDS=3
+BLOCK_TIME_SECONDS=1
 BLOCK_TIME="${BLOCK_TIME_SECONDS}s"
 # NOTE: If you add new epochs, these indexes will need to be updated
 DAY_EPOCH_INDEX=1
 INTERVAL_LEN=1
-DAY_EPOCH_LEN="60s"
+DAY_EPOCH_LEN="20s"
 STRIDE_EPOCH_INDEX=2
-STRIDE_EPOCH_LEN="20s"
+STRIDE_EPOCH_LEN="10s"
 IBC_TX_WAIT_SECONDS=30
 MAX_DEPOSIT_PERIOD="30s"
 VOTING_PERIOD="30s"
+UNBONDING_TIME="30s"
 
 # define STRIDE vars
 STRIDE_PORT_ID=26657  # 36564 
@@ -138,6 +139,12 @@ HERMES_GAIA_MNEMONIC="resemble accident lake amateur physical jewel taxi nut dem
 HERMES_JUNO_MNEMONIC="uphold decorate moon memory taste century work pride force genius width ripple myself year steel ivory type sweet tree ignore danger pudding owner discover"
 HERMES_OSMO_MNEMONIC="lawn inside color february double myth depart invite miracle nest silver spider spray recall theme loan exotic puzzle uncover dial young earn disagree fee"
 HERMES_OSMO_ADDRESS="osmo1lajwg95utv75fny0w39806xuk92ky57csvj6f5"
+RLY_GAIA_MNEMONIC="fiction perfect rapid steel bundle giant blade grain eagle wing cannon fever must humble dance kitchen lazy episode museum faith off notable rate flavor"
+RLY_GAIA_ADDR="cosmos16lmf7t0jhaatan6vnxlgv47h2wf0k5lnhvye5h"
+RLY_GAIA_ACCT=gaiarly
+RLY_STRIDE_MNEMONIC="pride narrow breeze fitness sign bounce dose smart squirrel spell length federal replace coral lunar thunder vital push nuclear crouch fun accident hood need"
+RLY_STRIDE_ADDR="stride1z56v8wqvgmhm3hmnffapxujvd4w4rkw6mdrmjg"
+RLY_STRIDE_ACCT=striderly
 
 ICQ_CMD="$SCRIPT_DIR/../build/interchain-queries --home $STATE/icq"
 
@@ -245,6 +252,7 @@ GAIA_LOGS=$SCRIPT_DIR/logs/gaia.log
 GAIA_LOGS_2=$SCRIPT_DIR/logs/gaia2.log
 GAIA_LOGS_3=$SCRIPT_DIR/logs/gaia3.log
 HERMES_LOGS=$SCRIPT_DIR/logs/hermes.log
+RLY_LOGS=$SCRIPT_DIR/logs/rly.log
 ICQ_LOGS=$SCRIPT_DIR/logs/icq.log
 JUNO_LOGS=$SCRIPT_DIR/logs/juno.log
 OSMO_LOGS=$SCRIPT_DIR/logs/osmo.log

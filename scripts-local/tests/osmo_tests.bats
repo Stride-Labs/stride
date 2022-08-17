@@ -85,33 +85,6 @@ setup() {
 
 # # add test to register host zone 
 @test "[INTEGRATION-BASIC] host zones successfully registered" {
-  run $STRIDE_CMD q stakeibc show-host-zone GAIA
-  assert_line '  HostDenom: uatom'
-  assert_line '  chainId: GAIA'
-  assert_line '  delegationAccount:'
-  assert_line '    address: cosmos1sy63lffevueudvvlvh2lf6s387xh9xq72n3fsy6n2gr5hm6u2szs2v0ujm'
-  assert_line '  feeAccount:'
-  assert_line '    address: cosmos1lkgt5sfshn9shm7hd7chtytkq4mvwvswgmyl0hkacd4rmusu9wwq60cezx'
-  assert_line '  redemptionAccount:'
-  assert_line '    address: cosmos1xmcwu75s8v7s54k79390wc5gwtgkeqhvzegpj0nm2tdwacv47tmqg9ut30'
-  assert_line '  withdrawalAccount:'
-  assert_line '    address: cosmos1x5p8er7e2ne8l54tx33l560l8djuyapny55pksctuguzdc00dj7saqcw2l'
-  assert_line '  unbondingFrequency: "1"'
-  assert_line '  RedemptionRate: "1.000000000000000000"'
-
-  run $STRIDE_CMD q stakeibc show-host-zone JUNO
-  assert_line '  HostDenom: ujuno'
-  assert_line '  chainId: JUNO'
-  assert_line '  delegationAccount:'
-  assert_line '    address: juno1xan7vt4nurz6c7x0lnqnvpmuc0lljz7rycqmuz2kk6wxv4k69d0sfats35'
-  assert_line '  feeAccount:'
-  assert_line '    address: juno1rp8qgfq64wmjg7exyhjqrehnvww0t9ev3f3p2ls82umz2fxgylqsz3vl9h'
-  assert_line '  redemptionAccount:'
-  assert_line '    address: juno1y6haxdt03cgkc7aedxrlaleeteel7fgc0nvtu2kggee3hnrlvnvs4kw2v9'
-  assert_line '  withdrawalAccount:'
-  assert_line '    address: juno104n6h822n6n7psqjgjl7emd2uz67lptggp5cargh6mw0gxpch2gsk53qk5'
-  assert_line '  unbondingFrequency: "1"'
-  assert_line '  RedemptionRate: "1.000000000000000000"'
 
   run $STRIDE_CMD q stakeibc show-host-zone OSMO
   assert_line '  HostDenom: uosmo'
