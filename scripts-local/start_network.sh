@@ -107,7 +107,7 @@ if [ "$CACHE" != "true" ]; then
 fi
 
 # Add more detailed log files
-$SCRIPT_DIR/create_logs.sh &
+$SCRIPT_DIR/create_logs_gaia.sh &
 $SCRIPT_DIR/create_logs_osmo.sh &
 $SCRIPT_DIR/create_logs_juno.sh &
 
