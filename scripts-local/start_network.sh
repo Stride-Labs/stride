@@ -22,7 +22,7 @@ make stop 2>/dev/null || true
 rm -rf $SCRIPT_DIR/state $SCRIPT_DIR/logs/*.log $SCRIPT_DIR/logs/temp
 
 # Recreate each log file
-for log in $STRIDE_LOGS $STRIDE_LOGS_2 $STRIDE_LOGS_3 $STRIDE_LOGS_4 $STRIDE_LOGS_5 $GAIA_LOGS $GAIA_LOGS_2 $HERMES_LOGS $ICQ_LOGS $JUNO_LOGS $TX_LOGS $KEYS_LOGS $OSMO_LOGS; do
+for log in $STRIDE_LOGS $STRIDE_LOGS_2 $STRIDE_LOGS_3 $STRIDE_LOGS_4 $STRIDE_LOGS_5 $GAIA_LOGS $GAIA_LOGS_2 $HERMES_LOGS $ICQ_LOGS $JUNO_LOGS $TX_LOGS $KEYS_LOGS $OSMO_LOGS $RLY_LOGS; do
     touch $log
 done
 
@@ -71,7 +71,7 @@ if [ "$CACHE" != "true" ]; then
     #  1)  "Creating transfer channel" is printed (indicating the connection has been created)
     #  2)  "Message ChanOpenInit" is printed (indicating the channnel has been created)
     bash $SCRIPT_DIR/init_channel.sh >> $HERMES_LOGS 2>&1 &
-    for i in {1..3}
+    for i in {1..1}
     do
         printf '%s' "Creating Hermes Connection $i... "
         ( tail -f -n0 $HERMES_LOGS & ) | grep -q "Creating transfer channel"
@@ -86,9 +86,13 @@ fi
 
 # Start hermes in the background and pause until the log message shows that it is up and running
 printf '%s' "Starting Hermes...            "
-
 nohup $HERMES_CMD start >> $HERMES_LOGS 2>&1 &
 ( tail -f -n0 $HERMES_LOGS & ) | grep -q -E "Hermes has started"
+echo "Done"
+
+printf '%s' "Starting Rly...            "
+nohup rly start gaia_path -p events >> $RLY_LOGS 2>&1 &
+# ( tail -f -n0 $HERMES_LOGS & ) | grep -q -E "Hermes has started"
 echo "Done"
 
 # Start ICQ in the background
@@ -110,4 +114,6 @@ fi
 # Add more detailed log files
 $SCRIPT_DIR/create_logs.sh &
 
-echo "Done! Go get em."
+echo "Done! Go get em.\n\n"
+
+bash $SCRIPT_DIR/tests/run_all_tests.sh
