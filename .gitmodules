@@ -13,8 +13,8 @@
 [submodule "deps/juno"]
 	path = deps/juno
 	url = https://github.com/CosmosContracts/juno.git
-	branch = e6f962953
+	branch = 955892041359443fbb5addd34c0ab8b66bd8d75c
 [submodule "deps/osmosis"]
 	path = deps/osmosis
 	url = https://github.com/osmosis-labs/osmosis.git
-	branch = 4176b287
+	branch = 4176b287d48338870bfda3029bfa20a6e45ac126
