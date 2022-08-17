@@ -11,7 +11,7 @@ IBC_STRD_DENOM_JUNO='ibc/FF6C2E86490C1C4FBBD24F55032831D2415B9D7882F85C3CC9C2401
 IBC_STRD_DENOM_OSMO='ibc/FF6C2E86490C1C4FBBD24F55032831D2415B9D7882F85C3CC9C2401D79362BEA'
 IBC_ATOM_DENOM='ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2'
 IBC_JUNO_DENOM='ibc/EFF323CC632EC4F747C61BCE238A758EFDB7699C3226565F7C20DA06509D59A5'
-IBC_OSMO_DENOM='ibc/0471F1C4E7AFD3F07702BEF6DC365268D64570F7C1FDC98EA6098DD6DE59817B'
+IBC_OSMO_DENOM='ibc/13B2C536BB057AC79D5616B8EA1B9540EC1F2170718CAFF6F0083C966FFFED0B'
 ATOM_DENOM='uatom'
 JUNO_DENOM='ujuno'
 OSMO_DENOM='uosmo'
@@ -24,18 +24,17 @@ STOSMO_DENOM="stuosmo"
 # WARNING: CHANGES TO THESE PARAMS COULD BREAK INTEGRATION TESTS
 # **************************************************************************
 # CHAIN PARAMS
-BLOCK_TIME_SECONDS=1
+BLOCK_TIME_SECONDS=3
 BLOCK_TIME="${BLOCK_TIME_SECONDS}s"
 # NOTE: If you add new epochs, these indexes will need to be updated
 DAY_EPOCH_INDEX=1
 INTERVAL_LEN=1
-DAY_EPOCH_LEN="40s"
+DAY_EPOCH_LEN="100s"
 STRIDE_EPOCH_INDEX=2
-STRIDE_EPOCH_LEN="20s"
+STRIDE_EPOCH_LEN="40s"
 IBC_TX_WAIT_SECONDS=30
 MAX_DEPOSIT_PERIOD="30s"
 VOTING_PERIOD="30s"
-UNBONDING_TIME="100s"
 
 # define STRIDE vars
 STRIDE_PORT_ID=26657  # 36564 
@@ -139,18 +138,6 @@ HERMES_GAIA_MNEMONIC="resemble accident lake amateur physical jewel taxi nut dem
 HERMES_JUNO_MNEMONIC="uphold decorate moon memory taste century work pride force genius width ripple myself year steel ivory type sweet tree ignore danger pudding owner discover"
 HERMES_OSMO_MNEMONIC="lawn inside color february double myth depart invite miracle nest silver spider spray recall theme loan exotic puzzle uncover dial young earn disagree fee"
 HERMES_OSMO_ADDRESS="osmo1lajwg95utv75fny0w39806xuk92ky57csvj6f5"
-RLY_GAIA_MNEMONIC="fiction perfect rapid steel bundle giant blade grain eagle wing cannon fever must humble dance kitchen lazy episode museum faith off notable rate flavor"
-RLY_GAIA_ADDR="cosmos16lmf7t0jhaatan6vnxlgv47h2wf0k5lnhvye5h"
-RLY_GAIA_ACCT=gaiarly
-RLY_STRIDE_MNEMONIC="pride narrow breeze fitness sign bounce dose smart squirrel spell length federal replace coral lunar thunder vital push nuclear crouch fun accident hood need"
-RLY_STRIDE_ADDR="stride1z56v8wqvgmhm3hmnffapxujvd4w4rkw6mdrmjg"
-RLY_STRIDE_ACCT=striderly
-RLY_OSMO_MNEMONIC="unaware wine ramp february bring trust leaf beyond fever inside option dilemma save know captain endless salute radio humble chicken property culture foil taxi"
-RLY_OSMO_ADDR="osmo1zwj4yr264fr9au20gur3qapt3suwkgp0w039jd"
-RLY_OSMO_ACCT=osmorly
-RLY_JUNO_MNEMONIC="kiwi betray topple van vapor flag decorate cement crystal fee family clown cry story gain frost strong year blanket remain grass pig hen empower"
-RLY_JUNO_ADDR="juno1jrmtt5c6z8h5yrrwml488qnm7p3vxrrm2n40l0"
-RLY_JUNO_ACCT=junorly
 
 ICQ_CMD="$SCRIPT_DIR/../build/interchain-queries --home $STATE/icq"
 
@@ -228,17 +215,11 @@ OSMO_RECEIVER_ACCT='osmo1w6wdc2684g9h3xl8nhgwr282tcxx4kl06n4sjl'
 
 WAIT_FOR_BLOCK () {
   num_blocks="${2:-1}"
-  for i in $(seq $num_blocks); do
-    ( tail -f -n0 $1 & ) | grep -q "INF executed block height="
-  done
+  ( tail -f -n0 $1 & ) | grep -q "INF executed block height="
 }
 
 WAIT_FOR_NONEMPTY_BLOCK () {
   ( tail -f -n0 $1 & ) | grep -q -E "num_valid_txs=[1-9]"
-}
-
-WAIT_FOR_STRING () {
-  ( tail -f -n0 $1 & ) | grep -q -E "$2"
 }
 
 WAIT_FOR_IBC_TRANSFER () {
@@ -258,9 +239,6 @@ GAIA_LOGS=$SCRIPT_DIR/logs/gaia.log
 GAIA_LOGS_2=$SCRIPT_DIR/logs/gaia2.log
 GAIA_LOGS_3=$SCRIPT_DIR/logs/gaia3.log
 HERMES_LOGS=$SCRIPT_DIR/logs/hermes.log
-RLY_GAIA_LOGS=$SCRIPT_DIR/logs/rly_gaia.log
-RLY_OSMO_LOGS=$SCRIPT_DIR/logs/rly_osmo.log
-RLY_JUNO_LOGS=$SCRIPT_DIR/logs/rly_juno.log
 ICQ_LOGS=$SCRIPT_DIR/logs/icq.log
 JUNO_LOGS=$SCRIPT_DIR/logs/juno.log
 OSMO_LOGS=$SCRIPT_DIR/logs/osmo.log
