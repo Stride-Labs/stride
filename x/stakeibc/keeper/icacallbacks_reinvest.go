@@ -72,10 +72,5 @@ func ReinvestCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ack
 		DepositEpochNumber: epochNumber,
 	}
 	k.RecordsKeeper.AppendDepositRecord(ctx, record)
-
-	// update the balance on the fee account TODO
-	// store the chain id on the reinvestment callback
-	// feeAccount := zone.GetFeeAccount()
-	// update the balance on the fee account
 	return nil
 }
