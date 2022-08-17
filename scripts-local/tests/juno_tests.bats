@@ -116,7 +116,7 @@ setup() {
   $JUNO_CMD tx ibc-transfer transfer transfer channel-0 $STRIDE_ADDRESS 100000000ujuno --from jval1 --chain-id JUNO -y --keyring-backend test
   WAIT_FOR_BLOCK $STRIDE_LOGS 8
   # get new balances
-  str1_balance_new=$($STRIDE_CMD q bank balances $STRIDE_ADDRESS --denom ustrd | GETBAL)  
+  str1_balance_new=$($STRIDE_CMD q bank balances $STRIDE_ADDRESS --denom ustrd | GETBAL)
   juno1_balance_new=$($JUNO_CMD q bank balances $JUNO_ADDRESS --denom $IBC_STRD_DENOM_JUNO | GETBAL)
   str1_balance_juno_new=$($STRIDE_CMD q bank balances $STRIDE_ADDRESS --denom $IBC_JUNO_DENOM | GETBAL)
   juno1_balance_juno_new=$($JUNO_CMD q bank balances $JUNO_ADDRESS --denom ujuno | GETBAL)
@@ -134,7 +134,7 @@ setup() {
 
 @test "[INTEGRATION-BASIC-JUNO] liquid stake mints stJUNO" {
   # get module address
-  MODADDR=$($STRIDE_CMD q stakeibc module-address stakeibc | awk '{print $NF}') 
+  MODADDR=$($STRIDE_CMD q stakeibc module-address stakeibc | awk '{print $NF}')
   # get initial balances
   mod_balance_juno=$($STRIDE_CMD q bank balances $MODADDR --denom $IBC_JUNO_DENOM | GETBAL)
   str1_balance_juno=$($STRIDE_CMD q bank balances $STRIDE_ADDRESS --denom $IBC_JUNO_DENOM | GETBAL)
@@ -143,7 +143,7 @@ setup() {
   $STRIDE_CMD tx stakeibc liquid-stake 10000000 ujuno --keyring-backend test --from val1 -y --chain-id $STRIDE_CHAIN
   # sleep two block for the tx to settle on stride
   WAIT_FOR_BLOCK $STRIDE_LOGS 2
-  # make sure IBC_JUNO_DENOM went down 
+  # make sure IBC_JUNO_DENOM went down
   str1_balance_juno_new=$($STRIDE_CMD q bank balances $STRIDE_ADDRESS --denom $IBC_JUNO_DENOM | GETBAL)
   str1_juno_diff=$(($str1_balance_juno - $str1_balance_juno_new))
   assert_equal "$str1_juno_diff" '10000000'
@@ -215,7 +215,7 @@ setup() {
   SENDER_ACCT=$STRIDE_VAL_ADDR
   old_sender_bal=$($JUNO_CMD q bank balances $JUNO_RECEIVER_ACCT --denom ujuno | GETBAL)
   # TODO check that the UserRedemptionRecord has isClaimable = true
-  # grab the epoch number for the first deposit record in the list od DRs  
+  # grab the epoch number for the first deposit record in the list od DRs
   EPOCH=$(strided q records list-user-redemption-record  | grep -Fiw 'epochNumber' | head -n 1 | grep -o -E '[0-9]+')
   # claim the record
   $STRIDE_CMD tx stakeibc claim-undelegated-tokens JUNO $EPOCH $SENDER_ACCT --from val1 --keyring-backend test --chain-id STRIDE -y
