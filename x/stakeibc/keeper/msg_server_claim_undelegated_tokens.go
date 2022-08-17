@@ -25,7 +25,7 @@ type IcaTx struct {
 
 func (k msgServer) ClaimUndelegatedTokens(goCtx context.Context, msg *types.MsgClaimUndelegatedTokens) (*types.MsgClaimUndelegatedTokensResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
-
+	k.Logger(ctx).Info(fmt.Sprintf("ClaimUndelegatedTokens %v", msg))
 	userRedemptionRecord, err := k.GetClaimableRedemptionRecord(ctx, msg)
 	if err != nil {
 		return nil, sdkerrors.Wrapf(err, "unable to find claimable redemption record")
@@ -44,7 +44,7 @@ func (k msgServer) ClaimUndelegatedTokens(goCtx context.Context, msg *types.MsgC
 	if err != nil {
 		return nil, sdkerrors.Wrapf(err, "unable to marshal claim callback args")
 	}
-	_, err = k.SubmitTxs(ctx, icaTx.ConnectionId, icaTx.Msgs, icaTx.Account, icaTx.Timeout, "redemption", marshalledCallbackArgs)
+	_, err = k.SubmitTxs(ctx, icaTx.ConnectionId, icaTx.Msgs, icaTx.Account, icaTx.Timeout, CLAIM, marshalledCallbackArgs)
 	if err != nil {
 		k.Logger(ctx).Error(fmt.Sprintf("Submit tx error: %s", err.Error()))
 		return nil, sdkerrors.Wrapf(err, "unable to submit ICA redemption tx")
