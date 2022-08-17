@@ -108,6 +108,7 @@ fi
 
 # Add more detailed log files
 $SCRIPT_DIR/create_logs.sh &
+$SCRIPT_DIR/create_osmo_logs.sh &
 
 echo "Done! Go get em.\n\n"
 
