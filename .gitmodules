@@ -17,4 +17,4 @@
 [submodule "deps/osmosis"]
 	path = deps/osmosis
 	url = https://github.com/osmosis-labs/osmosis.git
-	branch = df2c511b0
+	branch = 4176b287
