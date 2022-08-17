@@ -35,8 +35,11 @@ func RedemptionCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, t
 		packet.Sequence, packet.SourceChannel, packet.SourcePort, packet.DestinationChannel, packet.DestinationPort)
 	k.Logger(ctx).Info(logMsg)
 
-	if txMsgData == nil ||  len(txMsgData.Data) == 0 {
-		k.Logger(ctx).Info(fmt.Sprintf("RedemptionCallback failed or timed out, txMsgData is nil, packet %v", packet))
+	if txMsgData == nil {
+		k.Logger(ctx).Error(fmt.Sprintf("RedemptionCallback timeout, txMsgData is nil, packet %v", packet))
+		return nil
+	} else if len(txMsgData.Data) == 0 {
+		k.Logger(ctx).Error(fmt.Sprintf("RedemptionCallback tx failed, txMsgData is empty, ack error, packet %v", packet))
 		return nil
 	}
 
@@ -67,6 +70,12 @@ func RedemptionCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, t
 			return sdkerrors.Wrapf(sdkerrors.ErrNotFound, "Could not find host zone unbonding %d for host zone %s", epochUnbondingRecord.EpochNumber, hostZoneId)
 		}
 		hostZoneUnbonding.Status = recordstypes.HostZoneUnbonding_TRANSFERRED
+		updatedEpochUnbondingRecord, success := k.RecordsKeeper.AddHostZoneToEpochUnbondingRecord(ctx, epochUnbondingRecord.EpochNumber, hostZoneId, hostZoneUnbonding)
+		if !success {
+			k.Logger(ctx).Error(fmt.Sprintf("Failed to set host zone epoch unbonding record: epochNumber %d, chainId %s, hostZoneUnbonding %v", epochUnbondingRecord.EpochNumber, hostZoneId, hostZoneUnbonding))
+			return sdkerrors.Wrapf(types.ErrEpochNotFound, "couldn't set host zone epoch unbonding record. err: %s", err.Error())
+		}
+		k.RecordsKeeper.SetEpochUnbondingRecord(ctx, *updatedEpochUnbondingRecord)
 
 		// Mark the redemption records claimable
 		userRedemptionRecords := hostZoneUnbonding.UserRedemptionRecords
@@ -83,7 +92,6 @@ func RedemptionCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, t
 			userRedemptionRecord.IsClaimable = true
 			k.RecordsKeeper.SetUserRedemptionRecord(ctx, userRedemptionRecord)
 		}
-		k.RecordsKeeper.SetEpochUnbondingRecord(ctx, epochUnbondingRecord)
 	}
 	return nil
 }

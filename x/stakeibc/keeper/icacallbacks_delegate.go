@@ -36,11 +36,11 @@ func DelegateCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, txM
 
 	if txMsgData == nil {
 		// timeout
-		k.Logger(ctx).Info(fmt.Sprintf("DelegateCallback timeout, ack is nil, packet %v", packet))
+		k.Logger(ctx).Error(fmt.Sprintf("DelegateCallback timeout, ack is nil, packet %v", packet))
 		return nil
 	} else if len(txMsgData.Data) == 0 {
 		// failed transaction
-		k.Logger(ctx).Info(fmt.Sprintf("DelegateCallback tx failed, ack is nil, packet %v", packet))
+		k.Logger(ctx).Error(fmt.Sprintf("DelegateCallback tx failed, txMsgData is empty (ack error), packet %v", packet))
 		return nil
 	}
 
@@ -76,4 +76,3 @@ func DelegateCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, txM
 	k.RecordsKeeper.RemoveDepositRecord(ctx, cast.ToUint64(recordId))
 	return nil
 }
-
