@@ -22,7 +22,7 @@ make stop 2>/dev/null || true
 rm -rf $SCRIPT_DIR/state $SCRIPT_DIR/logs/*.log $SCRIPT_DIR/logs/temp
 
 # Recreate each log file
-for log in $STRIDE_LOGS $STRIDE_LOGS_2 $STRIDE_LOGS_3 $STRIDE_LOGS_4 $STRIDE_LOGS_5 $GAIA_LOGS $GAIA_LOGS_2 $HERMES_LOGS $ICQ_LOGS $JUNO_LOGS $TX_LOGS $KEYS_LOGS $OSMO_LOGS $RLY_LOGS; do
+for log in $STRIDE_LOGS $STRIDE_LOGS_2 $STRIDE_LOGS_3 $STRIDE_LOGS_4 $STRIDE_LOGS_5 $GAIA_LOGS $GAIA_LOGS_2 $HERMES_LOGS $ICQ_LOGS $JUNO_LOGS $TX_LOGS $KEYS_LOGS $OSMO_LOGS $RLY_GAIA_LOGS $RLY_OSMO_LOGS; do
     touch $log
 done
 
@@ -90,11 +90,6 @@ nohup $HERMES_CMD start >> $HERMES_LOGS 2>&1 &
 ( tail -f -n0 $HERMES_LOGS & ) | grep -q -E "Hermes has started"
 echo "Done"
 
-printf '%s' "Starting Rly...            "
-nohup rly start gaia_path -p events >> $RLY_LOGS 2>&1 &
-# ( tail -f -n0 $HERMES_LOGS & ) | grep -q -E "Hermes has started"
-echo "Done"
-
 # Start ICQ in the background
 printf '%s' "Starting ICQ...               "
 nohup $ICQ_CMD run --local >> $ICQ_LOGS 2>&1 &
@@ -102,10 +97,10 @@ sleep 5
 echo "Done"
 
 # Create a copy of the state that can be used for the "cache" option
-echo "Network is ready for transactions.\n"
+echo "Network is ready for transactions!\n"
 rm -rf $SCRIPT_DIR/.state.backup
 sleep 1
-cp -r $SCRIPT_DIR/state $SCRIPT_DIR/.state.backup
+# cp -r $SCRIPT_DIR/state $SCRIPT_DIR/.state.backup
 
 if [ "$CACHE" != "true" ]; then
     bash $SCRIPT_DIR/register_host.sh

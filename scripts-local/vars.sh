@@ -145,6 +145,9 @@ RLY_GAIA_ACCT=gaiarly
 RLY_STRIDE_MNEMONIC="pride narrow breeze fitness sign bounce dose smart squirrel spell length federal replace coral lunar thunder vital push nuclear crouch fun accident hood need"
 RLY_STRIDE_ADDR="stride1z56v8wqvgmhm3hmnffapxujvd4w4rkw6mdrmjg"
 RLY_STRIDE_ACCT=striderly
+RLY_OSMO_MNEMONIC="unaware wine ramp february bring trust leaf beyond fever inside option dilemma save know captain endless salute radio humble chicken property culture foil taxi"
+RLY_OSMO_ADDR="osmo1zwj4yr264fr9au20gur3qapt3suwkgp0w039jd"
+RLY_OSMO_ACCT=osmorly
 
 ICQ_CMD="$SCRIPT_DIR/../build/interchain-queries --home $STATE/icq"
 
@@ -252,7 +255,8 @@ GAIA_LOGS=$SCRIPT_DIR/logs/gaia.log
 GAIA_LOGS_2=$SCRIPT_DIR/logs/gaia2.log
 GAIA_LOGS_3=$SCRIPT_DIR/logs/gaia3.log
 HERMES_LOGS=$SCRIPT_DIR/logs/hermes.log
-RLY_LOGS=$SCRIPT_DIR/logs/rly.log
+RLY_GAIA_LOGS=$SCRIPT_DIR/logs/rly_gaia.log
+RLY_OSMO_LOGS=$SCRIPT_DIR/logs/rly_osmo.log
 ICQ_LOGS=$SCRIPT_DIR/logs/icq.log
 JUNO_LOGS=$SCRIPT_DIR/logs/juno.log
 OSMO_LOGS=$SCRIPT_DIR/logs/osmo.log

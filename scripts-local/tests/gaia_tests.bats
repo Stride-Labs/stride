@@ -210,6 +210,7 @@ setup() {
   # TODO we're sleeping more than we should have to here, investigate why redemptions take so long!
   # wait for ica bank send to process on host chain (delegation => redemption acct)
   WAIT_FOR_BLOCK $GAIA_LOGS 2
+  sleep 15
   # check that the tokens were transferred to the redemption account
   new_redemption_ica_bal=$($GAIA_CMD q bank balances $REDEMPTION_ICA_ADDR --denom uatom | GETBAL)
   diff=$(($new_redemption_ica_bal - $old_redemption_ica_bal))
@@ -218,7 +219,6 @@ setup() {
 
 @test "[INTEGRATION-BASIC-GAIA] claimed tokens are properly distributed" {
   # TODO(optimize tests) extra sleep just in case
-  sleep 15
   SENDER_ACCT=$STRIDE_VAL_ADDR
   old_sender_bal=$($GAIA_CMD q bank balances $GAIA_RECEIVER_ACCT --denom uatom | GETBAL)
   # TODO check that the UserRedemptionRecord has isClaimable = true
@@ -240,37 +240,37 @@ setup() {
 }
 
 
-# check that a second liquid staking call kicks off reinvestment
-@test "[INTEGRATION-BASIC-GAIA] rewards are being reinvested (delegated balance increasing)" {
-  # liquid stake again to kickstart the reinvestment process
-  $STRIDE_CMD tx stakeibc liquid-stake 1000 uatom --keyring-backend test --from val1 -y --chain-id $STRIDE_CHAIN
-  WAIT_FOR_BLOCK $STRIDE_LOGS 2
-  # wait four days (transfers, stake, move rewards, reinvest rewards)
-  day_duration=$($STRIDE_CMD q epochs epoch-infos | grep -Fiw 'duration' | head -n 1 | grep -o -E '[0-9]+')
-  sleep $(($day_duration * 4))
-  # simple check that number of tokens staked increases
-  NEW_STAKED_BAL=$($GAIA_CMD q staking delegation $DELEGATION_ICA_ADDR $GAIA_DELEGATE_VAL | GETSTAKE)
-  EXPECTED_STAKED_BAL=680
-  STAKED_BAL_INCREASED=$(($NEW_STAKED_BAL > $EXPECTED_STAKED_BAL))
-  assert_equal "$STAKED_BAL_INCREASED" "1" 
-}
+# # check that a second liquid staking call kicks off reinvestment
+# @test "[INTEGRATION-BASIC-GAIA] rewards are being reinvested (delegated balance increasing)" {
+#   # liquid stake again to kickstart the reinvestment process
+#   $STRIDE_CMD tx stakeibc liquid-stake 1000 uatom --keyring-backend test --from val1 -y --chain-id $STRIDE_CHAIN
+#   WAIT_FOR_BLOCK $STRIDE_LOGS 2
+#   # wait four days (transfers, stake, move rewards, reinvest rewards)
+#   day_duration=$($STRIDE_CMD q epochs epoch-infos | grep -Fiw 'duration' | head -n 1 | grep -o -E '[0-9]+')
+#   sleep $(($day_duration * 4))
+#   # simple check that number of tokens staked increases
+#   NEW_STAKED_BAL=$($GAIA_CMD q staking delegation $DELEGATION_ICA_ADDR $GAIA_DELEGATE_VAL | GETSTAKE)
+#   EXPECTED_STAKED_BAL=667
+#   STAKED_BAL_INCREASED=$(($NEW_STAKED_BAL > $EXPECTED_STAKED_BAL))
+#   assert_equal "$STAKED_BAL_INCREASED" "1" 
+# }
 
-# check that exchange rate is updating
-@test "[INTEGRATION-BASIC-GAIA] exchange rate is updating" {
-  # read the exchange rate
-  RR1=$($STRIDE_CMD q stakeibc list-host-zone | grep -Fiw 'RedemptionRate' | grep -Eo '[+-]?[0-9]+([.][0-9]+)?')
+# # check that exchange rate is updating
+# @test "[INTEGRATION-BASIC-GAIA] exchange rate is updating" {
+#   # read the exchange rate
+#   RR1=$($STRIDE_CMD q stakeibc list-host-zone | grep -Fiw 'RedemptionRate' | grep -Eo '[+-]?[0-9]+([.][0-9]+)?')
 
-  # wait for reinvestment to happen (4 days is enough)
-  day_duration=$($STRIDE_CMD q epochs epoch-infos | grep -Fiw 'duration' | head -n 1 | grep -o -E '[0-9]+')
-  sleep $(($day_duration * 4))
+#   # wait for reinvestment to happen (4 days is enough)
+#   day_duration=$($STRIDE_CMD q epochs epoch-infos | grep -Fiw 'duration' | head -n 1 | grep -o -E '[0-9]+')
+#   sleep $(($day_duration * 4))
 
-  RR2=$($STRIDE_CMD q stakeibc list-host-zone | grep -Fiw 'RedemptionRate' | grep -Eo '[+-]?[0-9]+([.][0-9]+)?')
+#   RR2=$($STRIDE_CMD q stakeibc list-host-zone | grep -Fiw 'RedemptionRate' | grep -Eo '[+-]?[0-9]+([.][0-9]+)?')
 
-  # check that the exchange rate has increased
-  MULT=1000000
-  RR_INCREASED=$(( $(FLOOR $(DECMUL $RR2 $MULT)) > $(FLOOR $(DECMUL $RR1 $MULT))))
-  assert_equal "$RR_INCREASED" "1"
-}
+#   # check that the exchange rate has increased
+#   MULT=1000000
+#   RR_INCREASED=$(( $(FLOOR $(DECMUL $RR2 $MULT)) > $(FLOOR $(DECMUL $RR1 $MULT))))
+#   assert_equal "$RR_INCREASED" "1"
+# }
 
 # # TODO check that the correct amount is being reinvested and the correct amount is flowing to the rev EOA
 # @test "[NOT-IMPLEMENTED] reinvestment and revenue amounts are correct" {
@@ -302,51 +302,4 @@ setup() {
 #   juno1_diff=$(($juno1_balance_juno - $juno1_balance_juno_new))
 #   assert_equal "$str1_diff" '-3000'
 #   assert_equal "$juno1_diff" '3000'
-# }
-
-# @test "[INTEGRATION-BASIC-JUNO] liquid stake mints stJUNO" {
-#   # get module address
-#   MODADDR=$($STRIDE_CMD q stakeibc module-address stakeibc | awk '{print $NF}') 
-#   # get initial balances
-#   mod_balance_juno=$($STRIDE_CMD q bank balances $MODADDR --denom $IBC_JUNO_DENOM | GETBAL)
-#   str1_balance_juno=$($STRIDE_CMD q bank balances $STRIDE_ADDRESS --denom $IBC_JUNO_DENOM | GETBAL)
-#   str1_balance_stjuno=$($STRIDE_CMD q bank balances $STRIDE_ADDRESS --denom $STJUNO_DENOM | GETBAL)
-#   # liquid stake
-#   $STRIDE_CMD tx stakeibc liquid-stake 1000 ujuno --keyring-backend test --from val1 -y --chain-id $STRIDE_CHAIN
-#   # sleep two block for the tx to settle on stride
-#   WAIT_FOR_BLOCK $STRIDE_LOGS
-#   WAIT_FOR_BLOCK $STRIDE_LOGS
-#   # make sure IBC_JUNO_DENOM went down 
-#   str1_balance_juno_new=$($STRIDE_CMD q bank balances $STRIDE_ADDRESS --denom $IBC_JUNO_DENOM | GETBAL)
-#   str1_juno_diff=$(($str1_balance_juno - $str1_balance_juno_new))
-#   assert_equal "$str1_juno_diff" '1000'
-#   # make sure STJUNO went up
-#   str1_balance_stjuno_new=$($STRIDE_CMD q bank balances $STRIDE_ADDRESS --denom $STJUNO_DENOM | GETBAL)
-#   str1_stjuno_diff=$(($str1_balance_stjuno_new-$str1_balance_stjuno))
-#   assert_equal "$str1_stjuno_diff" "1000"
-# }
-
-# @test "[INTEGRATION-BASIC-JUNO] tokens were transferred to JUNO after liquid staking" {
-#   # initial balance of delegation ICA
-#   initial_delegation_ica_bal=$($JUNO_CMD q bank balances $JUNO_DELEGATION_ICA_ADDR --denom ujuno | GETBAL)
-#   # wait for the epoch to pass (we liquid staked above)
-#   remaining_seconds=$($STRIDE_CMD q epochs seconds-remaining stride_epoch)
-#   sleep $remaining_seconds
-#   WAIT_FOR_IBC_TRANSFER
-#   # get the new delegation ICA balance
-#   post_delegation_ica_bal=$($JUNO_CMD q bank balances $JUNO_DELEGATION_ICA_ADDR --denom ujuno | GETBAL)
-#   diff=$(($post_delegation_ica_bal - $initial_delegation_ica_bal))
-#   assert_equal "$diff" '1000'
-# }
-
-# @test "[INTEGRATION-BASIC-JUNO] tokens on JUNO were staked" {
-#   # wait for another epoch to pass so that tokens are staked
-#   remaining_seconds=$($STRIDE_CMD q epochs seconds-remaining stride_epoch)
-#   sleep $remaining_seconds
-#   # sleep 30 seconds for the IBC calls to settle
-#   sleep $IBC_TX_WAIT_SECONDS
-#   # check staked tokens
-#   NEW_STAKE=$($GAIA_CMD q staking delegation $DELEGATION_ICA_ADDR $GAIA_DELEGATE_VAL | GETSTAKE)
-#   # note that old stake is 0, so we can safely check the new stake value rather than the diff
-#   assert_equal "$NEW_STAKE" "333"
 # }

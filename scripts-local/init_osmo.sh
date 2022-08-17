@@ -61,6 +61,11 @@ ICQ_OSMO_ADDRESS=$($OSMO_CMD keys show $ICQ_OSMO_ACCT --keyring-backend test -a)
 # Give relayer account token balance
 $OSMO_CMD add-genesis-account ${ICQ_OSMO_ADDRESS} 5000000000000uosmo
 
+# Add ibc-go relayer account
+echo $RLY_OSMO_MNEMONIC | $OSMO_CMD keys add $RLY_OSMO_ACCT --recover --keyring-backend=test >> $KEYS_LOGS 2>&1 
+# Give relayer account token balance
+$OSMO_CMD add-genesis-account ${RLY_OSMO_ADDR} 5000000000000uosmo
+
 # add revenue account
 echo $OSMO_REV_MNEMONIC | $OSMO_CMD keys add $OSMO_REV_ACCT --recover --keyring-backend=test >> $KEYS_LOGS 2>&1 
 # get revenue address
