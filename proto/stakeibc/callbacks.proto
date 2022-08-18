@@ -16,6 +16,12 @@ message DelegateCallback {
   repeated SplitDelegation splitDelegations = 3;
 }
 
+// ---------------------- Claim Callbacks ---------------------- //
+
+message ClaimCallback {
+  string userRedemptionRecordId = 1;
+}
+
 // ---------------------- Reinvest Callback ---------------------- //
 message ReinvestCallback {
   cosmos.base.v1beta1.Coin reinvestAmount = 1 [
@@ -30,4 +36,10 @@ message UndelegateCallback {
   string hostZoneId = 1; 
   repeated SplitDelegation splitDelegations = 2;
   repeated uint64 epochUnbondingRecordIds = 3;
+}
+
+// ---------------------- Redemption Callbacks ---------------------- //
+message RedemptionCallback {
+  string hostZoneId = 1; 
+  repeated uint64 unbondingEpochNumbers = 2;
 }

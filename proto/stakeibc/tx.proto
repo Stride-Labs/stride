@@ -27,6 +27,8 @@ service Msg {
   rpc ChangeValidatorWeight(MsgChangeValidatorWeight) returns (MsgChangeValidatorWeightResponse);
   rpc DeleteValidator(MsgDeleteValidator) returns (MsgDeleteValidatorResponse);
   rpc RestoreInterchainAccount(MsgRestoreInterchainAccount) returns (MsgRestoreInterchainAccountResponse);
+  rpc UpdateValidatorSharesExchRate(MsgUpdateValidatorSharesExchRate) returns (MsgUpdateValidatorSharesExchRateResponse);
+  rpc ClearBalance(MsgClearBalance) returns (MsgClearBalanceResponse);
 // this line is used by starport scaffolding # proto/tx/rpc
 }
 
@@ -40,6 +42,15 @@ message MsgLiquidStake {
 message MsgLiquidStakeResponse {
 }
 
+message MsgClearBalance {
+  string creator = 1;
+  string chain_id = 2;
+  uint64 amount = 3;
+  string channel = 4;
+}
+
+message MsgClearBalanceResponse {}
+
 message MsgRedeemStake {
   string creator = 1;
   uint64 amount = 2;
@@ -47,8 +58,7 @@ message MsgRedeemStake {
   string receiver = 4;
 }
 
-message MsgRedeemStakeResponse {
-}
+message MsgRedeemStakeResponse {}
 
 // TODO(TEST-53): Remove this pre-launch (no need for clients to create / interact with ICAs)
 // MsgRegisterAccount defines the payload for Msg/RegisterAccount
@@ -153,6 +163,15 @@ message MsgRestoreInterchainAccount {
 }
 
 message MsgRestoreInterchainAccountResponse {
+}
+
+message MsgUpdateValidatorSharesExchRate {
+  string creator = 1;
+  string chainId = 2;
+  string valoper = 3;
+}
+
+message MsgUpdateValidatorSharesExchRateResponse {
 }
 
 // this line is used by starport scaffolding # proto/tx/message

@@ -17,10 +17,10 @@ DURATION=300
 VESTING_START_TIME=$(($(date +%s)+$CLIFF)) # <= unix time start of vesting period (2 minutes from now)
 VESTING_END_TIME=$((VESTING_START_TIME+$DURATION)) # <= unix time end of vesting period (7 minutes from now)
 
-echo "VESTING ACCOUNTS:"
+echo "VESTING ACCOUNTS:" >> $TX_LOGS 2>&1
 while IFS=, read -r addr amt
 do
-    echo "Vesting $amt to $addr, with a $(convertsecs $CLIFF) cliff, then linearly over $(convertsecs $DURATION)."
+    echo "Vesting $amt to $addr, with a $(convertsecs $CLIFF) cliff, then linearly over $(convertsecs $DURATION)." >> $TX_LOGS 2>&1
     $STRIDE_CMD add-genesis-account ${addr} $amt --vesting-start-time $VESTING_START_TIME --vesting-end-time $VESTING_END_TIME --vesting-amount $amt # actually set this account as a validator
 done < $SCRIPT_DIR/vesting/vesting_accts.csv
 

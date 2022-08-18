@@ -1,10 +1,18 @@
 syntax = "proto3";
 package Stridelabs.stride.stakeibc;
 import "cosmos_proto/cosmos.proto";
-
+import "gogoproto/gogo.proto";
 option go_package = "github.com/Stride-Labs/stride/x/stakeibc/types";
 
 
+message ValidatorExchangeRate {
+  string internalTokensToSharesRate = 1 [
+    (cosmos_proto.scalar) = "cosmos.Dec",
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+  uint64 epochNumber = 2;
+}
 
 message Validator {
   string name = 1; 
@@ -19,4 +27,5 @@ message Validator {
   uint64 commissionRate = 4; 
   uint64 delegationAmt = 5;
   uint64 weight = 6;
+  ValidatorExchangeRate internalExchangeRate = 7;
 }

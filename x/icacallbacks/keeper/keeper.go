@@ -7,6 +7,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	capabilitykeeper "github.com/cosmos/cosmos-sdk/x/capability/keeper"
 	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
@@ -22,14 +23,14 @@ import (
 
 type (
 	Keeper struct {
-		cdc          codec.BinaryCodec
-		storeKey     sdk.StoreKey
-		memKey       sdk.StoreKey
-		paramstore   paramtypes.Subspace
-		scopedKeeper capabilitykeeper.ScopedKeeper
-		icacallbacks map[string]types.ICACallbackHandler
-		IBCKeeper    ibckeeper.Keeper
-		ICAControllerKeeper   icacontrollerkeeper.Keeper
+		cdc                 codec.BinaryCodec
+		storeKey            sdk.StoreKey
+		memKey              sdk.StoreKey
+		paramstore          paramtypes.Subspace
+		scopedKeeper        capabilitykeeper.ScopedKeeper
+		icacallbacks        map[string]types.ICACallbackHandler
+		IBCKeeper           ibckeeper.Keeper
+		ICAControllerKeeper icacontrollerkeeper.Keeper
 	}
 )
 
@@ -48,14 +49,14 @@ func NewKeeper(
 	}
 
 	return &Keeper{
-		cdc:          cdc,
-		storeKey:     storeKey,
-		memKey:       memKey,
-		paramstore:   ps,
-		scopedKeeper: scopedKeeper,
-		icacallbacks: make(map[string]types.ICACallbackHandler),
-		IBCKeeper: ibcKeeper,
-		ICAControllerKeeper:   icacontrollerkeeper,
+		cdc:                 cdc,
+		storeKey:            storeKey,
+		memKey:              memKey,
+		paramstore:          ps,
+		scopedKeeper:        scopedKeeper,
+		icacallbacks:        make(map[string]types.ICACallbackHandler),
+		IBCKeeper:           ibcKeeper,
+		ICAControllerKeeper: icacontrollerkeeper,
 	}
 }
 
@@ -86,7 +87,7 @@ func (k *Keeper) ClaimCapability(ctx sdk.Context, cap *capabilitytypes.Capabilit
 	return k.scopedKeeper.ClaimCapability(ctx, cap, name)
 }
 
-func (k Keeper) CallRegisteredICACallback(ctx sdk.Context, modulePacket channeltypes.Packet, acknowledgement *channeltypes.Acknowledgement_Result) error {
+func (k Keeper) CallRegisteredICACallback(ctx sdk.Context, modulePacket channeltypes.Packet, txMsgData *sdk.TxMsgData) error {
 	// get the relevant module from the channel and port
 	portID := modulePacket.GetSourcePort()
 	channelID := modulePacket.GetSourceChannel()
@@ -99,28 +100,34 @@ func (k Keeper) CallRegisteredICACallback(ctx sdk.Context, modulePacket channelt
 	callbackData, found := k.GetCallbackData(ctx, callbackDataKey)
 	if !found {
 		errMsg := fmt.Sprintf("callback data not found for portID: %s, channelID: %s, sequence: %d", portID, channelID, modulePacket.Sequence)
-		k.Logger(ctx).Info(errMsg)
+		k.Logger(ctx).Error(errMsg)
 		return nil
 	} else {
 		k.Logger(ctx).Info(fmt.Sprintf("callback data found for portID: %s, channelID: %s, sequence: %d", portID, channelID, modulePacket.Sequence))
 	}
+
 	// fetch the callback function
 	callbackHandler, err := k.GetICACallbackHandler(module)
 	if err != nil {
-		k.Logger(ctx).Error(fmt.Sprintf("no callback handler found for module %s", err.Error()))
-		return err
+		errMsg := fmt.Sprintf("Callback handler does not exist for module %s | err: %s", module, err.Error())
+		k.Logger(ctx).Error(errMsg)
+		return sdkerrors.Wrapf(types.ErrCallbackHandlerNotFound, errMsg)
 	}
+
 	// call the callback
 	if callbackHandler.HasICACallback(callbackData.CallbackId) {
 		// if acknowledgement is empty, then it is a timeout
-		err := callbackHandler.CallICACallback(ctx, callbackData.CallbackId, modulePacket, acknowledgement, callbackData.CallbackArgs)
+		err := callbackHandler.CallICACallback(ctx, callbackData.CallbackId, modulePacket, txMsgData, callbackData.CallbackArgs)
 		if err != nil {
-			k.Logger(ctx).Error(fmt.Sprintf("Error executing callback %s, %s", callbackData.CallbackId, err.Error()))
-			return err
+			errMsg := fmt.Sprintf("Error occured while calling ICACallback (%s) | err: %s", callbackData.CallbackId, err.Error())
+			k.Logger(ctx).Error(errMsg)
+			return sdkerrors.Wrapf(types.ErrCallbackFailed, errMsg)
 		}
 	} else {
 		k.Logger(ctx).Error(fmt.Sprintf("Callback %v has no associated callback", callbackData))
 	}
+	// QUESTION: Do we want to catch the case where the callback ID has not been registered?
+	// Maybe just as an info log if it's expected that some acks do not have an associated callback?
 
 	// remove the callback data
 	k.RemoveCallbackData(ctx, callbackDataKey)
