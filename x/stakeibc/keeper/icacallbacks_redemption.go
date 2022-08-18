@@ -31,7 +31,7 @@ func (k Keeper) UnmarshalRedemptionCallbackArgs(ctx sdk.Context, redemptionCallb
 }
 
 func RedemptionCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, txMsgData *sdk.TxMsgData, args []byte) error {
-	logMsg := fmt.Sprintf("RedemptionCallback on executing packet: %d, source: %s %s, dest: %s %s",
+	logMsg := fmt.Sprintf("RedemptionCallback executing on packet: %d, source: %s %s, dest: %s %s",
 		packet.Sequence, packet.SourceChannel, packet.SourcePort, packet.DestinationChannel, packet.DestinationPort)
 	k.Logger(ctx).Info(logMsg)
 
