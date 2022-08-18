@@ -22,6 +22,8 @@ var (
 	DefaultICATimeoutNanos  uint64 = 600000000000
 	DefaultBufferSize       uint64 = 5   // 1/5=20% of the epoch
 	DefaultIbcTimeoutBlocks uint64 = 300 // 300 blocks ~= 30 minutes
+	DefaultFeeTransferTimeoutNanos  uint64 = 600000000000 // 10 minutes
+
 
 	// KeyDepositInterval is store's key for the DepositInterval option
 	KeyDepositInterval               = []byte("DepositInterval")
@@ -32,6 +34,7 @@ var (
 	KeyStrideCommission              = []byte("StrideCommission")
 	KeyValidatorRebalancingThreshold = []byte("ValidatorRebalancingThreshold")
 	KeyICATimeoutNanos               = []byte("ICATimeoutNanos")
+	KeyFeeTransferTimeoutNanos       = []byte("FeeTransferTimeoutNanos")
 	KeyBufferSize                    = []byte("BufferSize")
 	KeyIbcTimeoutBlocks              = []byte("IBCTimeoutBlocks")
 )
@@ -55,6 +58,7 @@ func NewParams(
 	ica_timeout_nanos uint64,
 	buffer_size uint64,
 	ibc_timeout_blocks uint64,
+	fee_transfer_timeout_nanos uint64,
 ) Params {
 	return Params{
 		DepositInterval:               deposit_interval,
@@ -67,6 +71,7 @@ func NewParams(
 		IcaTimeoutNanos:               ica_timeout_nanos,
 		BufferSize:                    buffer_size,
 		IbcTimeoutBlocks:              ibc_timeout_blocks,
+		FeeTransferTimeoutNanos:       fee_transfer_timeout_nanos,
 	}
 }
 
@@ -83,6 +88,7 @@ func DefaultParams() Params {
 		DefaultICATimeoutNanos,
 		DefaultBufferSize,
 		DefaultIbcTimeoutBlocks,
+		DefaultFeeTransferTimeoutNanos,
 	)
 }
 
@@ -99,6 +105,7 @@ func (p *Params) ParamSetPairs() paramtypes.ParamSetPairs {
 		paramtypes.NewParamSetPair(KeyICATimeoutNanos, &p.IcaTimeoutNanos, isPositive),
 		paramtypes.NewParamSetPair(KeyBufferSize, &p.BufferSize, isPositive),
 		paramtypes.NewParamSetPair(KeyIbcTimeoutBlocks, &p.IbcTimeoutBlocks, isPositive),
+		paramtypes.NewParamSetPair(KeyFeeTransferTimeoutNanos, &p.FeeTransferTimeoutNanos, validTimeoutNanos),
 	}
 }
 
@@ -113,6 +120,24 @@ func isThreshold(i interface{}) error {
 	}
 	if ival > 10000 {
 		return fmt.Errorf("parameter must be less than 10,000: %d", ival)
+	}
+	return nil
+}
+
+func validTimeoutNanos(i interface{}) error {
+	ival, ok := i.(uint64)
+	if !ok {
+		return fmt.Errorf("parameter not accepted: %T", i)
+	}
+
+	tenMin := uint64(600000000000)
+	oneHour := uint64(600000000000 * 6)
+
+	if ival < tenMin {
+		return fmt.Errorf("parameter must be g.t. 600000000000ns: %d", ival)
+	}
+	if ival > oneHour {
+		return fmt.Errorf("parameter must be less than %dns: %d", oneHour, ival)
 	}
 	return nil
 }
