@@ -187,7 +187,7 @@ func (im IBCModule) OnAcknowledgementPacket(
 	if data.Sender == im.keeper.AccountKeeper.GetModuleAddress(stakeibctypes.ModuleName).String() {
 		switch resp := ack.Response.(type) {
 		case *channeltypes.Acknowledgement_Result:
-			im.keeper.Logger(ctx).Info(fmt.Sprintf("\t [IBC-TRANSFER] Acknowledgement_Result {%s}", string(resp.Result)))
+			im.keeper.Logger(ctx).Info(fmt.Sprintf("[IBC-TRANSFER] Acknowledgement_Result {%s}", string(resp.Result)))
 			// UPDATE RECORD
 			// match record based on amount
 			amount, err := strconv.ParseInt(data.Amount, 10, 64)
@@ -201,9 +201,10 @@ func (im IBCModule) OnAcknowledgementPacket(
 			// update the record
 			record.Status = types.DepositRecord_STAKE
 			im.keeper.SetDepositRecord(ctx, *record)
-			im.keeper.Logger(ctx).Info(fmt.Sprintf("\t [IBC-TRANSFER] Deposit record updated: {%v}", record))
+			im.keeper.Logger(ctx).Info(fmt.Sprintf("[IBC-TRANSFER] Deposit record updated to STAKE: {%v}", record))
+			im.keeper.Logger(ctx).Info(fmt.Sprintf("[IBC-TRANSFER] success to %s", record.HostZoneId))
 		case *channeltypes.Acknowledgement_Error:
-			im.keeper.Logger(ctx).Error(fmt.Sprintf("\t [IBC-TRANSFER] Acknowledgement_Error {%s}", resp.Error))
+			im.keeper.Logger(ctx).Error(fmt.Sprintf("[IBC-TRANSFER] Acknowledgement_Error {%s}", resp.Error))
 		}
 	}
 
