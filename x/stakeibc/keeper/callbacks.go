@@ -104,15 +104,12 @@ func WithdrawalBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query icq
 
 	// Set withdrawal balance as attribute on HostZone's withdrawal ICA account
 	wa := zone.GetWithdrawalAccount()
-	waBal, err := cast.ToUint64E(coin.Amount.Int64())
 	if err != nil {
 		k.Logger(ctx).Error(fmt.Sprintf("unable to convert amount to uint64, zone %s, err %s", zone.ChainId, err.Error()))
 		return err
 	}
-	wa.Balance = waBal
 	zone.WithdrawalAccount = wa
 	k.SetHostZone(ctx, zone)
-	k.Logger(ctx).Info(fmt.Sprintf("Just set WithdrawalBalance to: %d", wa.Balance))
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
 			sdk.EventTypeMessage,
@@ -125,9 +122,8 @@ func WithdrawalBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query icq
 	k.Logger(ctx).Info(fmt.Sprintf("ICA Bank Sending %d%s from withdrawalAddr to delegationAddr.", coin.Amount.Int64(), coin.Denom))
 
 	withdrawalAccount := zone.GetWithdrawalAccount()
+	feeAccount := zone.GetFeeAccount()
 	delegationAccount := zone.GetDelegationAccount()
-	// TODO(TEST-112) set the stride revenue address in a config file
-	REV_ACCT := zone.GetFeeAccount().GetAddress()
 
 	params := k.GetParams(ctx)
 	stCommission, err := cast.ToInt64E(params.GetStrideCommission())
@@ -158,7 +154,7 @@ func WithdrawalBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query icq
 	var msgs []sdk.Msg
 	// construct the msg
 	msgs = append(msgs, &banktypes.MsgSend{FromAddress: withdrawalAccount.GetAddress(),
-		ToAddress: REV_ACCT, Amount: sdk.NewCoins(strideCoin)})
+		ToAddress: feeAccount.GetAddress(), Amount: sdk.NewCoins(strideCoin)})
 	msgs = append(msgs, &banktypes.MsgSend{FromAddress: withdrawalAccount.GetAddress(),
 		ToAddress: delegationAccount.GetAddress(), Amount: sdk.NewCoins(reinvestCoin)})
 
@@ -175,7 +171,7 @@ func WithdrawalBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query icq
 		return err
 	}
 
-	// Send the transaction through SubmitTx
+	// Send the transaction through SubmitTx if either amouns is greater than 0
 	_, err = k.SubmitTxsStrideEpoch(ctx, zone.ConnectionId, msgs, *withdrawalAccount, REINVEST, marshalledCallbackArgs)
 	if err != nil {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "Failed to SubmitTxs for %s, %s, %s", zone.ConnectionId, zone.ChainId, msgs)
