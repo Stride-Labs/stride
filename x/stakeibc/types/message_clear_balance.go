@@ -3,6 +3,9 @@ package types
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	channeltypes "github.com/cosmos/ibc-go/v3/modules/core/04-channel/types"
+
+	"github.com/Stride-Labs/stride/utils"
 )
 
 const TypeMsgClearBalance = "clear_balance"
@@ -44,10 +47,18 @@ func (msg *MsgClearBalance) ValidateBasic() error {
 	if err != nil {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid creator address (%s)", err)
 	}
-	// TODO: add validation
-	// Should we let anyone call this?
-	// if err := utils.ValidateAdminAddress(msg.Creator); err != nil {
-	// 	return err
-	// }
+	if err := utils.ValidateAdminAddress(msg.Creator); err != nil {
+		return err
+	}
+	// basic checks on host denom
+	if len(msg.ChainId) == 0 {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "chainid is required")
+	}
+	if msg.Amount <= 0 {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "amount must be greater than 0")
+	}
+	if isValid := channeltypes.IsValidChannelID(msg.Channel); !isValid {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "channel is invalid")
+	}
 	return nil
 }
