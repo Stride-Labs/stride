@@ -27,19 +27,21 @@ func (k Keeper) MarshalReinvestCallbackArgs(ctx sdk.Context, reinvestCallback ty
 func (k Keeper) UnmarshalReinvestCallbackArgs(ctx sdk.Context, reinvestCallback []byte) (*types.ReinvestCallback, error) {
 	unmarshalledReinvestCallback := types.ReinvestCallback{}
 	if err := proto.Unmarshal(reinvestCallback, &unmarshalledReinvestCallback); err != nil {
-        k.Logger(ctx).Error(fmt.Sprintf("UnmarshalReinvestCallbackArgs %s", err.Error()))
+		k.Logger(ctx).Error(fmt.Sprintf("UnmarshalReinvestCallbackArgs %s", err.Error()))
 		return nil, err
 	}
 	return &unmarshalledReinvestCallback, nil
 }
 
-func ReinvestCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ack *channeltypes.Acknowledgement_Result, args []byte) error {
+func ReinvestCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, txMsgData *sdk.TxMsgData, args []byte) error {
 	k.Logger(ctx).Info("ReinvestCallback executing", "packet", packet)
 
-	if ack == nil {
-		// transaction on the host chain failed
-		// don't create a record
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "ack is nil, packet %v", packet)
+	if txMsgData == nil {
+		k.Logger(ctx).Error(fmt.Sprintf("ReinvestCallback timeout, txMsgData is nil, packet %v", packet))
+		return nil
+	} else if len(txMsgData.Data) == 0 {
+		k.Logger(ctx).Error(fmt.Sprintf("ReinvestCallback tx failed, txMsgData is empty, ack error, packet %v", packet))
+		return nil
 	}
 
 	// deserialize the args
@@ -49,7 +51,7 @@ func ReinvestCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ack
 	}
 	amount := reinvestCallback.ReinvestAmount.Amount
 	denom := reinvestCallback.ReinvestAmount.Denom
-	
+
 	// fetch epoch
 	strideEpochTracker, found := k.GetEpochTracker(ctx, epochtypes.STRIDE_EPOCH)
 	if !found {
@@ -58,7 +60,7 @@ func ReinvestCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ack
 	}
 	epochNumber := strideEpochTracker.EpochNumber
 	// create a new record so that rewards are reinvested
-	amt, err := cast.ToInt64E(amount)
+	amt, err := cast.ToInt64E(amount.Int64())
 	if err != nil {
 		k.Logger(ctx).Error(fmt.Sprintf("failed to convert amount %v", err.Error()))
 		return err
