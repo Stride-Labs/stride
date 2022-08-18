@@ -97,7 +97,7 @@ func WithdrawalBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query icq
 	}
 
 	// sanity check, do not transfer if we have 0 balance!
-	if coin.Amount.Int64() == 0 {
+	if coin.Amount.Int64() <= 0 {
 		k.Logger(ctx).Info(fmt.Sprintf("WithdrawalBalanceCallback: no balance to transfer for zone: %s, accAddr: %v, coin: %v", zone.ChainId, accAddr.String(), coin))
 		return nil
 	}
@@ -168,11 +168,14 @@ func WithdrawalBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query icq
 
 	var msgs []sdk.Msg
 	// construct the msg
-	msgs = append(msgs, &banktypes.MsgSend{FromAddress: withdrawalAccount.GetAddress(),
-		ToAddress: feeAccount.GetAddress(), Amount: sdk.NewCoins(strideCoin)})
-	msgs = append(msgs, &banktypes.MsgSend{FromAddress: withdrawalAccount.GetAddress(),
-		ToAddress: delegationAccount.GetAddress(), Amount: sdk.NewCoins(reinvestCoin)})
-
+	if strideCoin.Amount.Int64() > 0 {
+		msgs = append(msgs, &banktypes.MsgSend{FromAddress: withdrawalAccount.GetAddress(),
+			ToAddress: feeAccount.GetAddress(), Amount: sdk.NewCoins(strideCoin)})
+	}
+	if reinvestCoin.Amount.Int64() > 0 {
+		msgs = append(msgs, &banktypes.MsgSend{FromAddress: withdrawalAccount.GetAddress(),
+			ToAddress: delegationAccount.GetAddress(), Amount: sdk.NewCoins(reinvestCoin)})
+	}
 	ctx.Logger().Info(fmt.Sprintf("Submitting withdrawal sweep messages for: %v", msgs))
 
 	// add callback data
