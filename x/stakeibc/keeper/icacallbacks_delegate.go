@@ -31,12 +31,17 @@ func (k Keeper) UnmarshalDelegateCallbackArgs(ctx sdk.Context, delegateCallback 
 	return &unmarshalledDelegateCallback, nil
 }
 
-func DelegateCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ack *channeltypes.Acknowledgement_Result, args []byte) error {
+func DelegateCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, txMsgData *sdk.TxMsgData, args []byte) error {
 	k.Logger(ctx).Info("DelegateCallback executing", "packet", packet)
 
-	if ack == nil {
-		// transaction on the host chain failed
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "ack is nil, packet %v", packet)
+	if txMsgData == nil {
+		// timeout
+		k.Logger(ctx).Error(fmt.Sprintf("DelegateCallback timeout, ack is nil, packet %v", packet))
+		return nil
+	} else if len(txMsgData.Data) == 0 {
+		// failed transaction
+		k.Logger(ctx).Error(fmt.Sprintf("DelegateCallback tx failed, txMsgData is empty (ack error), packet %v", packet))
+		return nil
 	}
 
 	// deserialize the args
@@ -71,4 +76,3 @@ func DelegateCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ack
 	k.RecordsKeeper.RemoveDepositRecord(ctx, cast.ToUint64(recordId))
 	return nil
 }
-

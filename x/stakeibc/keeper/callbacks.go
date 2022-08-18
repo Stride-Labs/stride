@@ -62,6 +62,7 @@ func (c Callbacks) RegisterCallbacks() icqtypes.QueryCallbacks {
 // WithdrawalBalanceCallback is a callback handler for WithdrawalBalance queries.
 func WithdrawalBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query icqtypes.Query) error {
 	// NOTE(TEST-112) for now, to get proofs in your ICQs, you need to query the entire store on the host zone! e.g. "store/bank/key"
+	k.Logger(ctx).Error(fmt.Sprintf("WithdrawalBalanceCallback: %v", query))
 
 	zone, found := k.GetHostZone(ctx, query.GetChainId())
 	if !found {
@@ -97,7 +98,7 @@ func WithdrawalBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query icq
 
 	// sanity check, do not transfer if we have 0 balance!
 	if coin.Amount.Int64() == 0 {
-		k.Logger(ctx).Info(fmt.Sprintf("WithdrawalBalanceCallback: no balance to transfer for zone: %s, accAddr: %v, coin: %v", zone.ChainId, accAddr, coin))
+		k.Logger(ctx).Info(fmt.Sprintf("WithdrawalBalanceCallback: no balance to transfer for zone: %s, accAddr: %v, coin: %v", zone.ChainId, accAddr.String(), coin))
 		return nil
 	}
 
@@ -156,11 +157,18 @@ func WithdrawalBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query icq
 
 	var msgs []sdk.Msg
 	// construct the msg
-	msgs = append(msgs, &banktypes.MsgSend{FromAddress: withdrawalAccount.GetAddress(),
-		ToAddress: REV_ACCT, Amount: sdk.NewCoins(strideCoin)})
-	msgs = append(msgs, &banktypes.MsgSend{FromAddress: withdrawalAccount.GetAddress(),
-		ToAddress: delegationAccount.GetAddress(), Amount: sdk.NewCoins(reinvestCoin)})
-
+	if strideCoin.Amount.Int64() > 0 {
+		msgs = append(msgs, &banktypes.MsgSend{FromAddress: withdrawalAccount.GetAddress(),
+			ToAddress: REV_ACCT, Amount: sdk.NewCoins(strideCoin)})
+	}
+	if reinvestCoin.Amount.Int64() > 0 {
+		msgs = append(msgs, &banktypes.MsgSend{FromAddress: withdrawalAccount.GetAddress(),
+			ToAddress: delegationAccount.GetAddress(), Amount: sdk.NewCoins(reinvestCoin)})
+	}
+	// if both amounts are 0, return an error
+	if strideCoin.Amount.Int64() <= 0 && reinvestCoin.Amount.Int64() <= 0 {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "No amount to send in withdrawal callback.")
+	}
 	ctx.Logger().Info(fmt.Sprintf("Submitting withdrawal sweep messages for: %v", msgs))
 
 	// add callback data
@@ -174,7 +182,7 @@ func WithdrawalBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query icq
 		return err
 	}
 
-	// Send the transaction through SubmitTx
+	// Send the transaction through SubmitTx if either amouns is greater than 0
 	_, err = k.SubmitTxsStrideEpoch(ctx, zone.ConnectionId, msgs, *withdrawalAccount, REINVEST, marshalledCallbackArgs)
 	if err != nil {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "Failed to SubmitTxs for %s, %s, %s", zone.ConnectionId, zone.ChainId, msgs)
