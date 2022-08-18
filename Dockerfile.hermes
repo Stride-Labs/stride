@@ -10,8 +10,7 @@ RUN git clone https://github.com/informalsystems/ibc-rs --branch v1.0.0 \
 
 FROM debian:bullseye-slim
 
-COPY --from=builer /opt/ibc-rs/target/release/hermes /usr/local/bin/hermes
-
+COPY --from=builder /opt/ibc-rs/target/release/hermes /usr/local/bin/hermes
 RUN apt-get update \
     && adduser --system --home /home/hermes --disabled-password --disabled-login hermes -u 1000
 
