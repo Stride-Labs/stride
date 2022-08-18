@@ -7,8 +7,10 @@ SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &>/dev/null && pwd)
 source ${SCRIPT_DIR}/vars.sh
 
 LOGS_DIR=$SCRIPT_DIR/logs
-TEMP_LOGS_DIR=$LOGS_DIR/temp
+TEMP_LOGS_DIR=$LOGS_DIR/temp_gaia
 mkdir -p $TEMP_LOGS_DIR
+GAIA_LOGS_DIR=$LOGS_DIR/gaia
+mkdir -p $GAIA_LOGS_DIR
 
 while true; do
     # transactions logs
@@ -82,12 +84,12 @@ while true; do
     $OSMO_CMD q bank balances $OSMO_WITHDRAWAL >>$TEMP_LOGS_DIR/accounts.log
 
     printf '\n%s\n' "LIST-HOST-ZONES STRIDE" >>$TEMP_LOGS_DIR/accounts.log
-    $STRIDE_CMD q stakeibc list-host-zone >>$TEMP_LOGS_DIR/accounts.log
+    $STRIDE_CMD q stakeibc show-host-zone GAIA >>$TEMP_LOGS_DIR/accounts.log
     printf '\n%s\n' "LIST-DEPOSIT-RECORDS" >>$TEMP_LOGS_DIR/accounts.log
     $STRIDE_CMD q records list-deposit-record  >> $TEMP_LOGS_DIR/accounts.log
     printf '\n%s\n' "LIST-EPOCH-UNBONDING-RECORDS" >>$TEMP_LOGS_DIR/accounts.log
     $STRIDE_CMD q records list-epoch-unbonding-record  >> $TEMP_LOGS_DIR/accounts.log
     
-    mv $TEMP_LOGS_DIR/*.log $LOGS_DIR
+    mv $TEMP_LOGS_DIR/*.log $GAIA_LOGS_DIR
     sleep 3
 done
