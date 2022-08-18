@@ -144,10 +144,10 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochInfo epochstypes.EpochInf
 		if epochNumber%reinvestInterval == 0 { // allow a few blocks from UpdateUndelegatedBal to avoid conflicts
 			k.Logger(ctx).Info("Reinvesting tokens")
 			for _, hz := range k.GetAllHostZone(ctx) {
-				if (&hz).WithdrawalAccount != nil { // only process host zones once withdrawal accounts are registered
-
+				// only process host zones once withdrawal accounts are registered
+				withdrawalIca := hz.GetWithdrawalAccount()
+				if withdrawalIca != nil {
 					// read clock time on host zone
-					// k.ReadClockTime(ctx, hz)
 					blockTime, found := k.GetLightClientTimeSafely(ctx, hz.ConnectionId)
 					if !found {
 						k.Logger(ctx).Error(fmt.Sprintf("Could not find blockTime for host zone %s", hz.ConnectionId))
@@ -259,7 +259,7 @@ func (k Keeper) StakeExistingDepositsOnHostZones(ctx sdk.Context, epochNumber ui
 			processAmount := utils.Int64ToCoinString(depositRecord.Amount, hostZone.HostDenom)
 			amt, err := sdk.ParseCoinNormalized(processAmount)
 			if err != nil {
-				k.Logger(ctx).Error(fmt.Sprintf("Could not process coin %s: %s", hostZone.HostDenom, err.Error()))
+				k.Logger(ctx).Error(fmt.Sprintf("Could not process coin %v: %v", hostZone.HostDenom, err.Error()))
 				return
 			}
 			err = k.DelegateOnHost(ctx, hostZone, amt, depositRecord.Id)

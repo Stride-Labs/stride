@@ -142,7 +142,7 @@ setup() {
   # liquid stake
   $STRIDE_CMD tx stakeibc liquid-stake 10000000 ujuno --keyring-backend test --from val1 -y --chain-id $STRIDE_CHAIN
   # sleep two block for the tx to settle on stride
-  WAIT_FOR_BLOCK $STRIDE_LOGS 2
+  WAIT_FOR_BLOCK $STRIDE_LOGS 8
   # make sure IBC_JUNO_DENOM went down
   str1_balance_juno_new=$($STRIDE_CMD q bank balances $STRIDE_ADDRESS --denom $IBC_JUNO_DENOM | GETBAL)
   str1_juno_diff=$(($str1_balance_juno - $str1_balance_juno_new))
@@ -241,7 +241,7 @@ setup() {
   sleep $(($epoch_duration * 4))
   # simple check that number of tokens staked increases
   NEW_STAKED_BAL=$($JUNO_CMD q staking delegation $JUNO_DELEGATION_ICA_ADDR $JUNO_DELEGATE_VAL | GETSTAKE)
-  EXPECTED_STAKED_BAL=667
+  EXPECTED_STAKED_BAL=667000
   STAKED_BAL_INCREASED=$(($NEW_STAKED_BAL > $EXPECTED_STAKED_BAL))
   assert_equal "$STAKED_BAL_INCREASED" "1"
 

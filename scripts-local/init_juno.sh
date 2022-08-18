@@ -39,7 +39,7 @@ JUNO_CFG_TMP="${STATE}/${JUNO_NODE_NAME}/config/genesis.json"
 jq '.app_state.staking.params.unbonding_time = $newVal' --arg newVal "$UNBONDING_TIME" $JUNO_CFG_TMP > json.tmp && mv json.tmp $JUNO_CFG_TMP
 
 # add validator account
-echo $JUNO_VAL_MNEMONIC | $JUNO_CMD keys add $JUNO_VAL_ACCT --recover --keyring-backend=test #>> $KEYS_LOGS 2>&1 
+echo $JUNO_VAL_MNEMONIC | $JUNO_CMD keys add $JUNO_VAL_ACCT --recover --keyring-backend=test >> $KEYS_LOGS 2>&1 
 # get validator address
 val_addr=$($JUNO_CMD keys show $JUNO_VAL_ACCT --keyring-backend test -a) > /dev/null
 # add money for this validator account
