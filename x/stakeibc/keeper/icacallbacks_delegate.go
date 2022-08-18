@@ -74,5 +74,6 @@ func DelegateCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, txM
 	}
 
 	k.RecordsKeeper.RemoveDepositRecord(ctx, cast.ToUint64(recordId))
+	k.Logger(ctx).Info(fmt.Sprintf("[DELEGATION] success on %s", hostZone))
 	return nil
 }

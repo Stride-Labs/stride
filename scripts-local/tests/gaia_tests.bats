@@ -142,6 +142,7 @@ setup() {
   # liquid stake
   $STRIDE_CMD tx stakeibc liquid-stake 1000 uatom --keyring-backend test --from val1 -y --chain-id $STRIDE_CHAIN
   # sleep two block for the tx to settle on stride
+  WAIT_FOR_STRING $STRIDE_LOGS '\[MINT ST ASSET\] success on GAIA'
   WAIT_FOR_BLOCK $STRIDE_LOGS 2
   # make sure IBC_ATOM_DENOM went down
   str1_balance_atom_new=$($STRIDE_CMD q bank balances $STRIDE_ADDRESS --denom $IBC_ATOM_DENOM | GETBAL)
@@ -157,10 +158,8 @@ setup() {
 @test "[INTEGRATION-BASIC-GAIA] tokens were transferred to GAIA after liquid staking" {
   # initial balance of delegation ICA
   initial_delegation_ica_bal=$($GAIA_CMD q bank balances $DELEGATION_ICA_ADDR --denom uatom | GETBAL)
-  # wait for the epoch to pass (we liquid staked above)
-  remaining_seconds=$($STRIDE_CMD q epochs seconds-remaining stride_epoch)
-  sleep "$(($remaining_seconds))"
-  WAIT_FOR_BLOCK $STRIDE_LOGS 10
+  WAIT_FOR_STRING $STRIDE_LOGS '\[IBC-TRANSFER\] success to GAIA'
+  WAIT_FOR_BLOCK $STRIDE_LOGS 2
   # get the new delegation ICA balance
   post_delegation_ica_bal=$($GAIA_CMD q bank balances $DELEGATION_ICA_ADDR --denom uatom | GETBAL)
   diff=$(($post_delegation_ica_bal - $initial_delegation_ica_bal))
@@ -170,16 +169,12 @@ setup() {
 # check that tokens on GAIA are staked
 @test "[INTEGRATION-BASIC-GAIA] tokens on GAIA were staked" {
   # wait for another epoch to pass so that tokens are staked
-  remaining_seconds=$($STRIDE_CMD q epochs seconds-remaining stride_epoch)
-  sleep "$(($remaining_seconds-1))"
-  # let the IBC calls
-  WAIT_FOR_BLOCK $STRIDE_LOGS
-  WAIT_FOR_STRING $STRIDE_LOGS 'DelegateCallback hostZoneId:"GAIA" depositRecordId'
+  WAIT_FOR_STRING $STRIDE_LOGS '\[DELEGATION\] success on GAIA'
+  WAIT_FOR_BLOCK $STRIDE_LOGS 2
   # check staked tokens
   NEW_STAKE=$($GAIA_CMD q staking delegation $DELEGATION_ICA_ADDR $GAIA_DELEGATE_VAL | GETSTAKE)
-  NEW_STAKE=$(($NEW_STAKE > 0))
-  # note that old stake is 0, so we can safely check the new stake value rather than the diff
-  assert_equal "$NEW_STAKE" "1"
+  stake_diff=$(($NEW_STAKE > 0))
+  assert_equal "$stake_diff" "1"
 }
 
 # check that redemptions and claims work
@@ -189,25 +184,8 @@ setup() {
   amt_to_redeem=5
   $STRIDE_CMD tx stakeibc redeem-stake $amt_to_redeem GAIA $GAIA_RECEIVER_ACCT \
       --from val1 --keyring-backend test --chain-id $STRIDE_CHAIN -y
-  # wait for beginning of next day, then for ibc transaction time for the unbonding period to begin
-  remaining_seconds=$($STRIDE_CMD q epochs seconds-remaining day)
-  sleep $remaining_seconds
-  WAIT_FOR_BLOCK $STRIDE_LOGS 3
-  # TODO check for an unbonding record
-  # TODO check that a UserRedemptionRecord was created with isClaimabled = false
-  # wait for the unbonding period to pass
-  UNBONDING_PERIOD=$($GAIA_CMD q staking params |  grep -o -E '[0-9]+' | tail -n 1)
-  sleep $UNBONDING_PERIOD
-  WAIT_FOR_BLOCK $GAIA_LOGS 5 # for unbonded amount to land in delegation acct on host chain
-  # wait for a day to pass (to transfer from delegation to redemption acct)
-  remaining_seconds=$($STRIDE_CMD q epochs seconds-remaining day)
-  sleep $remaining_seconds
-  day_duration=$($STRIDE_CMD q epochs epoch-infos | grep -Fiw 'duration' | head -n 1 | grep -o -E '[0-9]+')
-  sleep $day_duration
-  # TODO we're sleeping more than we should have to here, investigate why redemptions take so long!
-  # wait for ica bank send to process on host chain (delegation => redemption acct)
-  WAIT_FOR_BLOCK $GAIA_LOGS 2
-  sleep 15
+  WAIT_FOR_STRING $STRIDE_LOGS '\[REDEMPTION] completed on GAIA'
+  WAIT_FOR_BLOCK $STRIDE_LOGS 2
   # check that the tokens were transferred to the redemption account
   new_redemption_ica_bal=$($GAIA_CMD q bank balances $REDEMPTION_ICA_ADDR --denom uatom | GETBAL)
   diff_positive=$(($new_redemption_ica_bal > $old_redemption_ica_bal))
@@ -224,8 +202,8 @@ setup() {
   EPOCH=$(strided q records list-user-redemption-record  | grep -Fiw 'epochNumber' | head -n 1 | grep -o -E '[0-9]+')
   # claim the record
   $STRIDE_CMD tx stakeibc claim-undelegated-tokens GAIA $EPOCH $SENDER_ACCT --from val1 --keyring-backend test --chain-id STRIDE -y
+  WAIT_FOR_STRING $STRIDE_LOGS '\[CLAIM\] success on GAIA'
   WAIT_FOR_BLOCK $STRIDE_LOGS 2
-  WAIT_FOR_BLOCK $GAIA_LOGS 5
   # TODO check that UserRedemptionRecord has isClaimable = false
 
   # check that the tokens were transferred to the sender account

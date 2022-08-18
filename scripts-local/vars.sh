@@ -239,7 +239,7 @@ WAIT_FOR_NONEMPTY_BLOCK () {
 }
 
 WAIT_FOR_STRING () {
-  ( tail -f -n0 $1 & ) | grep -q -E "$2"
+  ( tail -f -n0 $1 & ) | grep -q "$2"
 }
 
 WAIT_FOR_IBC_TRANSFER () {
