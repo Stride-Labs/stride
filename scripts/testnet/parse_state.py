@@ -26,7 +26,7 @@ bank_sends = []
 genesis = []
 genesis_local = []
 
-bank_suffix = "--keyring-backend=test --chain-id STRIDE-1 -y"
+bank_suffix = "--keyring-backend=test --chain-id STRIDE-3 -y"
 
 gen_amts = {}
 
@@ -54,7 +54,8 @@ for bank_record in data['app_state']['bank']['balances']:
             iamt = int(int(coin_record['amount']) * STATOM_EXCH_RATE)
             bank_sends.append(f"strided tx bank send val2 {bank_record['address']} {iamt}{ibc_denom} {bank_suffix}")
         else:
-            raise Exception(f"Unknown denom {coin_record['denom']}")
+            continue
+            # raise Exception(f"Unknown denom {coin_record['denom']}")
 
 for addr, amt in gen_amts.items():
     if amt > 1000000000:
