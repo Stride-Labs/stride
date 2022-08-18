@@ -91,8 +91,8 @@ func RedemptionCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, t
 			}
 			userRedemptionRecord.IsClaimable = true
 			k.RecordsKeeper.SetUserRedemptionRecord(ctx, userRedemptionRecord)
-			k.Logger(ctx).Info(fmt.Sprintf("[REDEMPTION] completed on %s", hostZoneId))
 		}
 	}
+	k.Logger(ctx).Info(fmt.Sprintf("[REDEMPTION] completed on %s", hostZoneId))
 	return nil
 }
