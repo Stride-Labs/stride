@@ -290,7 +290,7 @@ func (k Keeper) SweepAllUnbondedTokens(ctx sdk.Context) {
 				}
 
 				// Send the transaction through SubmitTx
-				_, err = k.SubmitTxsDayEpoch(ctx, hostZone.ConnectionId, msgs, *delegationAccount, REDEMPTION, marshalledCallbackArgs)
+				_, err = k.SubmitTxsDayEpoch(ctx, hostZone.ConnectionId, msgs, *delegationAccount, "redemption", marshalledCallbackArgs)
 				if err != nil {
 					ctx.Logger().Info(fmt.Sprintf("Failed to SubmitTxs, transfer to redemption account on %s", hostZone.ChainId))
 				}

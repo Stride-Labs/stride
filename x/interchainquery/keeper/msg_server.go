@@ -100,7 +100,7 @@ func (k msgServer) SubmitQueryResponse(goCtx context.Context, msg *types.MsgSubm
 				err := module.Call(ctx, q.CallbackId, msg.Result, q)
 				k.Logger(ctx).Info(fmt.Sprintf("Callback %s executed", q.CallbackId))
 				if err != nil {
-					k.Logger(ctx).Error(fmt.Sprintf("error executing callback %s: %v", q.CallbackId, err))
+					k.Logger(ctx).Error(fmt.Sprintf("error executing callback %s: %s", q.CallbackId, err.Error()))
 					// handle edge case; callback has resent the same query!
 					// set noDelete to true and short circuit error handling!
 					if err == types.ErrSucceededNoDelete {
