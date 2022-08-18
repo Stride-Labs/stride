@@ -84,7 +84,7 @@ while true; do
     $OSMO_CMD q bank balances $OSMO_WITHDRAWAL >>$TEMP_LOGS_DIR/accounts.log
 
     printf '\n%s\n' "LIST-HOST-ZONES STRIDE" >>$TEMP_LOGS_DIR/accounts.log
-    $STRIDE_CMD q stakeibc list-host-zone >>$TEMP_LOGS_DIR/accounts.log
+    $STRIDE_CMD q stakeibc show-host-zone GAIA >>$TEMP_LOGS_DIR/accounts.log
     printf '\n%s\n' "LIST-DEPOSIT-RECORDS" >>$TEMP_LOGS_DIR/accounts.log
     $STRIDE_CMD q records list-deposit-record  >> $TEMP_LOGS_DIR/accounts.log
     printf '\n%s\n' "LIST-EPOCH-UNBONDING-RECORDS" >>$TEMP_LOGS_DIR/accounts.log
