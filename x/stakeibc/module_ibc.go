@@ -1,15 +1,18 @@
 package stakeibc
 
 import (
-	"encoding/json"
 	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
 	icatypes "github.com/cosmos/ibc-go/v3/modules/apps/27-interchain-accounts/types"
 	channeltypes "github.com/cosmos/ibc-go/v3/modules/core/04-channel/types"
 	host "github.com/cosmos/ibc-go/v3/modules/core/24-host"
 	ibcexported "github.com/cosmos/ibc-go/v3/modules/core/exported"
+	"github.com/gogo/protobuf/proto"
+
+	icacallbacktypes "github.com/Stride-Labs/stride/x/icacallbacks/types"
 
 	"github.com/Stride-Labs/stride/x/stakeibc/keeper"
 	"github.com/Stride-Labs/stride/x/stakeibc/types"
@@ -30,7 +33,6 @@ func NewIBCModule(k keeper.Keeper) IBCModule {
 func (im IBCModule) Hooks() keeper.Hooks {
 	return im.keeper.Hooks()
 }
-
 
 func (im IBCModule) OnChanOpenInit(
 	ctx sdk.Context,
@@ -132,23 +134,41 @@ func (im IBCModule) OnAcknowledgementPacket(
 	relayer sdk.AccAddress,
 ) error {
 	im.keeper.Logger(ctx).Info(fmt.Sprintf("OnAcknowledgementPacket: packet %v, relayer %v", modulePacket, relayer))
-	ack, err := im.UnmarshalAck(ctx, acknowledgement)
+	ackInfo := fmt.Sprintf("sequence #%d, from %s %s, to %s %s",
+		modulePacket.Sequence, modulePacket.SourceChannel, modulePacket.SourcePort, modulePacket.DestinationChannel, modulePacket.DestinationPort)
+
+	var ack channeltypes.Acknowledgement
+	err := channeltypes.SubModuleCdc.UnmarshalJSON(acknowledgement, &ack)
 	if err != nil {
-		return err
+		return sdkerrors.Wrapf(types.ErrMarshalFailure, err.Error())
 	}
+
+	txMsgData, err := im.GetTxMsgData(ctx, ack)
+	if err != nil {
+		errMsg := fmt.Sprintf("Unable to unmarshal ack from stakeibc OnAcknowledgePacket | Sequence %d, from %s %s, to %s %s",
+			modulePacket.Sequence, modulePacket.SourceChannel, modulePacket.SourcePort, modulePacket.DestinationChannel, modulePacket.DestinationPort)
+		im.keeper.Logger(ctx).Error(errMsg)
+		return sdkerrors.Wrapf(types.ErrMarshalFailure, errMsg)
+	}
+
+	im.keeper.Logger(ctx).Info(fmt.Sprintf("Acknowledgement was successfully unmarshalled: ackInfo: %s, txMsgData: %v", ackInfo, txMsgData))
 	eventType := "ack"
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
 			eventType,
 			sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
-			sdk.NewAttribute(types.AttributeKeyAck, fmt.Sprintf("%v", ack)),
+			sdk.NewAttribute(types.AttributeKeyAck, fmt.Sprintf("%v", ackInfo)),
 		),
 	)
-	err = im.keeper.ICACallbacksKeeper.CallRegisteredICACallback(ctx, modulePacket, ack)
+
+	err = im.keeper.ICACallbacksKeeper.CallRegisteredICACallback(ctx, modulePacket, txMsgData)
 	if err != nil {
-		return err
+		errMsg := fmt.Sprintf("Unable to call registered callback from stakeibc OnAcknowledgePacket | Sequence %d, from %s %s, to %s %s",
+			modulePacket.Sequence, modulePacket.SourceChannel, modulePacket.SourcePort, modulePacket.DestinationChannel, modulePacket.DestinationPort)
+		im.keeper.Logger(ctx).Error(errMsg)
+		return sdkerrors.Wrapf(icacallbacktypes.ErrCallbackFailed, errMsg)
 	}
-	return im.keeper.HandleAcknowledgement(ctx, modulePacket, acknowledgement)
+	return nil
 }
 
 // OnTimeoutPacket implements the IBCModule interface
@@ -189,33 +209,26 @@ func (im IBCModule) NegotiateAppVersion(
 	return proposedVersion, nil
 }
 
-func (im IBCModule) UnmarshalAck(ctx sdk.Context, acknowledgement []byte) (*channeltypes.Acknowledgement_Result, error) {
-	ack := channeltypes.Acknowledgement_Result{}
-	err := json.Unmarshal(acknowledgement, &ack)
-	if err != nil {
-		ackErr := channeltypes.Acknowledgement_Error{}
-		// acknowledgement comes back as a Acknowledgement_Result, Acknowledgement_Error, or something
-		// that can't be handled
-		err := json.Unmarshal(acknowledgement, &ackErr)
-		if err != nil {
-			ctx.EventManager().EmitEvent(
-				sdk.NewEvent(
-					"ack_error",
-					sdk.NewAttribute(types.AttributeKeyAckError, ackErr.Error),
-				),
-			)
-			im.keeper.Logger(ctx).Error("Unable to unmarshal acknowledgement error", "error", err, "data", acknowledgement)
-			return nil, err
+func (im IBCModule) GetTxMsgData(ctx sdk.Context, ack channeltypes.Acknowledgement) (*sdk.TxMsgData, error) {
+	txMsgData := &sdk.TxMsgData{}
+	switch response := ack.Response.(type) {
+	case *channeltypes.Acknowledgement_Result:
+		if len(response.Result) == 0 {
+			return nil, sdkerrors.Wrapf(channeltypes.ErrInvalidAcknowledgement, "acknowledgement result cannot be empty")
 		}
-		im.keeper.Logger(ctx).Error("Acknowledgement result unmarshalled as an error", "error", err, "remote_err", ackErr, "data", acknowledgement)
-		return nil, err
+		err := proto.Unmarshal(ack.GetResult(), txMsgData)
+		if err != nil {
+			im.keeper.Logger(ctx).Error(fmt.Sprintf("cannot unmarshal ICS-27 tx message data: %s", err.Error()))
+			return nil, sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "cannot unmarshal ICS-27 tx message data: %s", err.Error())
+		}
+		return txMsgData, nil
+	case *channeltypes.Acknowledgement_Error:
+		im.keeper.Logger(ctx).Error(fmt.Sprintf("acknowledgement error: %s", response.Error))
+		return txMsgData, nil
+
+	default:
+		return nil, sdkerrors.Wrapf(channeltypes.ErrInvalidAcknowledgement, "unsupported acknowledgement response field type %T", response)
 	}
-
-	// NOTE: to use the acknowledgement result, unmarshal into TxMsgData
-	// txMsgData := &sdk.TxMsgData{}
-	// err = proto.Unmarshal(ack.Result, txMsgData)
-
-	return &ack, nil
 }
 
 // ###################################################################################
