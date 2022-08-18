@@ -147,7 +147,6 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochInfo epochstypes.EpochInf
 				if (&hz).WithdrawalAccount != nil { // only process host zones once withdrawal accounts are registered
 
 					// read clock time on host zone
-					// k.ReadClockTime(ctx, hz)
 					blockTime, found := k.GetLightClientTimeSafely(ctx, hz.ConnectionId)
 					if !found {
 						k.Logger(ctx).Error(fmt.Sprintf("Could not find blockTime for host zone %s", hz.ConnectionId))
