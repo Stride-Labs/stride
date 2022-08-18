@@ -103,15 +103,12 @@ func WithdrawalBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query icq
 
 	// Set withdrawal balance as attribute on HostZone's withdrawal ICA account
 	wa := zone.GetWithdrawalAccount()
-	waBal, err := cast.ToUint64E(coin.Amount.Int64())
 	if err != nil {
 		k.Logger(ctx).Error(fmt.Sprintf("unable to convert amount to uint64, zone %s, err %s", zone.ChainId, err.Error()))
 		return err
 	}
-	wa.Balance = waBal
 	zone.WithdrawalAccount = wa
 	k.SetHostZone(ctx, zone)
-	k.Logger(ctx).Info(fmt.Sprintf("Just set WithdrawalBalance to: %d", wa.Balance))
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
 			sdk.EventTypeMessage,
