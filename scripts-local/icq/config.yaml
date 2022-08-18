@@ -30,34 +30,34 @@ chains:
     block-timeout: ""
     output-format: json
     sign-mode: direct
-  # juno-local:
-  #   key: junokey
-  #   chain-id: JUNO
-  #   rpc-addr: http://localhost:24657
-  #   grpc-addr: http://localhost:9030
-  #   account-prefix: juno
-  #   keyring-backend: test
-  #   gas-adjustment: 1.2
-  #   gas-prices: 1ujuno
-  #   key-directory: /Users/sampocs/Documents/Projects/stride/scripts-local/state/icq/keys
-  #   debug: false
-  #   timeout: 20s
-  #   block-timeout: ""
-  #   output-format: json
-  #   sign-mode: direct
-  # osmo-local:
-  #   key: osmokey
-  #   chain-id: OSMO
-  #   rpc-addr: http://localhost:23657
-  #   grpc-addr: http://localhost:9040
-  #   account-prefix: osmo
-  #   keyring-backend: test
-  #   gas-adjustment: 1.2
-  #   gas-prices: 1uosmo
-  #   key-directory: /Users/sampocs/Documents/Projects/stride/scripts-local/state/icq/keys
-  #   debug: false
-  #   timeout: 20s
-  #   block-timeout: ""
-  #   output-format: json
-  #   sign-mode: direct
+  juno-local:
+    key: junokey
+    chain-id: JUNO
+    rpc-addr: http://localhost:24657
+    grpc-addr: http://localhost:9030
+    account-prefix: juno
+    keyring-backend: test
+    gas-adjustment: 1.2
+    gas-prices: 1ujuno
+    key-directory: /Users/sampocs/Documents/Projects/stride/scripts-local/state/icq/keys
+    debug: false
+    timeout: 20s
+    block-timeout: ""
+    output-format: json
+    sign-mode: direct
+  osmo-local:
+    key: osmokey
+    chain-id: OSMO
+    rpc-addr: http://localhost:23657
+    grpc-addr: http://localhost:9040
+    account-prefix: osmo
+    keyring-backend: test
+    gas-adjustment: 1.2
+    gas-prices: 1uosmo
+    key-directory: /Users/sampocs/Documents/Projects/stride/scripts-local/state/icq/keys
+    debug: false
+    timeout: 20s
+    block-timeout: ""
+    output-format: json
+    sign-mode: direct
 cl: {}

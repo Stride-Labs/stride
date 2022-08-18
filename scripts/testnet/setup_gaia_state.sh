@@ -10,9 +10,10 @@ VAL_TOKENS=10000000000000000uatom
 STAKE_TOKENS=1000000uatom
 VAL_ACCT=gval1
 ENDPOINT=$GAIA_MAIN_ENDPOINT
-
-TRUST_PERIOD="21600s"
-UNBONDING_TIME="21600s"
+MAX_DEPOSIT_PERIOD="600s"
+VOTING_PERIOD="900s"
+TRUST_PERIOD="43100s"
+UNBONDING_TIME="43200s"
 
 echo "Initializing gaia..."
 $GAIA_CMD init test --chain-id $CHAIN_NAME --overwrite 2> /dev/null
@@ -77,7 +78,8 @@ sed -i -E  "s|trust_period = \"168h0m0s\"|trust_period = \"${TRUST_PERIOD}\"|g" 
 
 GAIA_GENESIS_FILE_TMP="${STATE}/${NODE_NAME}/config/genesis.json"
 jq '.app_state.staking.params.unbonding_time = $newVal' --arg newVal "$UNBONDING_TIME" $GAIA_GENESIS_FILE_TMP > json.tmp && mv json.tmp $GAIA_GENESIS_FILE_TMP
-
+jq '.app_state.gov.deposit_params.max_deposit_period = $newVal' --arg newVal "$MAX_DEPOSIT_PERIOD" $GAIA_GENESIS_FILE_TMP > json.tmp && mv json.tmp $GAIA_GENESIS_FILE_TMP
+jq '.app_state.gov.voting_params.voting_period = $newVal' --arg newVal "$VOTING_PERIOD" $GAIA_GENESIS_FILE_TMP > json.tmp && mv json.tmp $GAIA_GENESIS_FILE_TMP
 ## add the message types ICA should allow to the host chain
 ALLOW_MESSAGES='\"/cosmos.bank.v1beta1.MsgSend\", \"/cosmos.bank.v1beta1.MsgMultiSend\", \"/cosmos.staking.v1beta1.MsgDelegate\", \"/cosmos.staking.v1beta1.MsgUndelegate\", \"/cosmos.staking.v1beta1.MsgRedeemTokensforShares\", \"/cosmos.staking.v1beta1.MsgTokenizeShares\", \"/cosmos.distribution.v1beta1.MsgWithdrawDelegatorReward\", \"/cosmos.distribution.v1beta1.MsgSetWithdrawAddress\", \"/ibc.applications.transfer.v1.MsgTransfer\"'
 sed -i -E "s|\"allow_messages\": \[\]|\"allow_messages\": \[${ALLOW_MESSAGES}\]|g" "${STATE}/${NODE_NAME}/config/genesis.json"

@@ -85,17 +85,18 @@ setup() {
 
 # # add test to register host zone
 @test "[INTEGRATION-BASIC] host zones successfully registered" {
-  run $STRIDE_CMD q stakeibc show-host-zone JUNO
-  assert_line '  HostDenom: ujuno'
-  assert_line '  chainId: JUNO'
+
+  run $STRIDE_CMD q stakeibc show-host-zone OSMO
+  assert_line '  HostDenom: uosmo'
+  assert_line '  chainId: OSMO'
   assert_line '  delegationAccount:'
-  assert_line '    address: juno1xan7vt4nurz6c7x0lnqnvpmuc0lljz7rycqmuz2kk6wxv4k69d0sfats35'
+  assert_line '    address: osmo1cx04p5974f8hzh2lqev48kjrjugdxsxy7mzrd0eyweycpr90vk8q8d6f3h'
   assert_line '  feeAccount:'
-  assert_line '    address: juno1rp8qgfq64wmjg7exyhjqrehnvww0t9ev3f3p2ls82umz2fxgylqsz3vl9h'
+  assert_line '    address: osmo1n4r77qsmu9chvchtmuqy9cv3s539q87r398l6ugf7dd2q5wgyg9su3wd4g'
   assert_line '  redemptionAccount:'
-  assert_line '    address: juno1y6haxdt03cgkc7aedxrlaleeteel7fgc0nvtu2kggee3hnrlvnvs4kw2v9'
+  assert_line '    address: osmo1uy9p9g609676rflkjnnelaxatv8e4sd245snze7qsxzlk7dk7s8qrcjaez'
   assert_line '  withdrawalAccount:'
-  assert_line '    address: juno104n6h822n6n7psqjgjl7emd2uz67lptggp5cargh6mw0gxpch2gsk53qk5'
+  assert_line '    address: osmo10arcf5r89cdmppntzkvulc7gfmw5lr66y2m25c937t6ccfzk0cqqz2l6xv'
   assert_line '  unbondingFrequency: "1"'
   assert_line '  RedemptionRate: "1.000000000000000000"'
 }
@@ -105,96 +106,96 @@ setup() {
 ######                TEST BASIC STRIDE FUNCTIONALITY                                   ######
 ##############################################################################################
 
-@test "[INTEGRATION-BASIC-JUNO] ibc transfer updates all balances" {
+@test "[INTEGRATION-BASIC-OSMO] ibc transfer updates all balances" {
   # get initial balances
   str1_balance=$($STRIDE_CMD q bank balances $STRIDE_ADDRESS --denom ustrd | GETBAL)
-  juno1_balance=$($JUNO_CMD q bank balances $JUNO_ADDRESS --denom $IBC_STRD_DENOM_JUNO | GETBAL)
-  str1_balance_juno=$($STRIDE_CMD q bank balances $STRIDE_ADDRESS --denom $IBC_JUNO_DENOM | GETBAL)
-  juno1_balance_juno=$($JUNO_CMD q bank balances $JUNO_ADDRESS --denom ujuno | GETBAL)
+  osmo1_balance=$($OSMO_CMD q bank balances $OSMO_ADDRESS --denom $IBC_STRD_DENOM_OSMO | GETBAL)
+  str1_balance_osmo=$($STRIDE_CMD q bank balances $STRIDE_ADDRESS --denom $IBC_OSMO_DENOM | GETBAL)
+  osmo1_balance_osmo=$($OSMO_CMD q bank balances $OSMO_ADDRESS --denom uosmo | GETBAL)
   # do IBC transfer
-  $STRIDE_CMD tx ibc-transfer transfer transfer channel-2 $JUNO_ADDRESS 100000000ustrd --from val1 --chain-id STRIDE -y --keyring-backend test
-  $JUNO_CMD tx ibc-transfer transfer transfer channel-0 $STRIDE_ADDRESS 100000000ujuno --from jval1 --chain-id JUNO -y --keyring-backend test
+  $STRIDE_CMD tx ibc-transfer transfer transfer channel-1 $OSMO_ADDRESS 3000000000ustrd --from val1 --chain-id STRIDE -y --keyring-backend test &
+  $OSMO_CMD tx ibc-transfer transfer transfer channel-0 $STRIDE_ADDRESS 3000000000uosmo --from oval1 --chain-id OSMO -y --keyring-backend test &
   WAIT_FOR_BLOCK $STRIDE_LOGS 8
   # get new balances
   str1_balance_new=$($STRIDE_CMD q bank balances $STRIDE_ADDRESS --denom ustrd | GETBAL)
-  juno1_balance_new=$($JUNO_CMD q bank balances $JUNO_ADDRESS --denom $IBC_STRD_DENOM_JUNO | GETBAL)
-  str1_balance_juno_new=$($STRIDE_CMD q bank balances $STRIDE_ADDRESS --denom $IBC_JUNO_DENOM | GETBAL)
-  juno1_balance_juno_new=$($JUNO_CMD q bank balances $JUNO_ADDRESS --denom ujuno | GETBAL)
+  osmo1_balance_new=$($OSMO_CMD q bank balances $OSMO_ADDRESS --denom $IBC_STRD_DENOM_OSMO | GETBAL)
+  str1_balance_osmo_new=$($STRIDE_CMD q bank balances $STRIDE_ADDRESS --denom $IBC_OSMO_DENOM | GETBAL)
+  osmo1_balance_osmo_new=$($OSMO_CMD q bank balances $OSMO_ADDRESS --denom uosmo | GETBAL)
   # get all STRD balance diffs
   str1_diff=$(($str1_balance - $str1_balance_new))
-  juno1_diff=$(($juno1_balance - $juno1_balance_new))
-  assert_equal "$str1_diff" '100000000'
-  assert_equal "$juno1_diff" '-100000000'
-  # get all JUNO_DENOM balance diffs
-  str1_diff=$(($str1_balance_juno - $str1_balance_juno_new))
-  juno1_diff=$(($juno1_balance_juno - $juno1_balance_juno_new))
-  assert_equal "$str1_diff" '-100000000'
-  assert_equal "$juno1_diff" '100000000'
+  osmo1_diff=$(($osmo1_balance - $osmo1_balance_new))
+  assert_equal "$str1_diff" '3000000000'
+  assert_equal "$osmo1_diff" '-3000000000'
+  # get all OSMO_DENOM balance diffs
+  str1_diff=$(($str1_balance_osmo - $str1_balance_osmo_new))
+  osmo1_diff=$(($osmo1_balance_osmo - $osmo1_balance_osmo_new))
+  assert_equal "$str1_diff" '-3000000000'
+  assert_equal "$osmo1_diff" '3000000000'
 }
 
-@test "[INTEGRATION-BASIC-JUNO] liquid stake mints stJUNO" {
+@test "[INTEGRATION-BASIC-OSMO] liquid stake mints stOSMO" {
   # get module address
   MODADDR=$($STRIDE_CMD q stakeibc module-address stakeibc | awk '{print $NF}')
   # get initial balances
-  mod_balance_juno=$($STRIDE_CMD q bank balances $MODADDR --denom $IBC_JUNO_DENOM | GETBAL)
-  str1_balance_juno=$($STRIDE_CMD q bank balances $STRIDE_ADDRESS --denom $IBC_JUNO_DENOM | GETBAL)
-  str1_balance_stjuno=$($STRIDE_CMD q bank balances $STRIDE_ADDRESS --denom $STJUNO_DENOM | GETBAL)
+  mod_balance_osmo=$($STRIDE_CMD q bank balances $MODADDR --denom $IBC_OSMO_DENOM | GETBAL)
+  str1_balance_osmo=$($STRIDE_CMD q bank balances $STRIDE_ADDRESS --denom $IBC_OSMO_DENOM | GETBAL)
+  str1_balance_stosmo=$($STRIDE_CMD q bank balances $STRIDE_ADDRESS --denom $STOSMO_DENOM | GETBAL)
   # liquid stake
-  $STRIDE_CMD tx stakeibc liquid-stake 10000000 ujuno --keyring-backend test --from val1 -y --chain-id $STRIDE_CHAIN
+  $STRIDE_CMD tx stakeibc liquid-stake 1000000000 uosmo --keyring-backend test --from val1 -y --chain-id $STRIDE_CHAIN
   # sleep two block for the tx to settle on stride
-  WAIT_FOR_BLOCK $STRIDE_LOGS 8
-  # make sure IBC_JUNO_DENOM went down
-  str1_balance_juno_new=$($STRIDE_CMD q bank balances $STRIDE_ADDRESS --denom $IBC_JUNO_DENOM | GETBAL)
-  str1_juno_diff=$(($str1_balance_juno - $str1_balance_juno_new))
-  assert_equal "$str1_juno_diff" '10000000'
-  # make sure STJUNO went up
-  str1_balance_stjuno_new=$($STRIDE_CMD q bank balances $STRIDE_ADDRESS --denom $STJUNO_DENOM | GETBAL)
-  str1_stjuno_diff=$(($str1_balance_stjuno_new-$str1_balance_stjuno))
-  assert_equal "$str1_stjuno_diff" "10000000"
+  WAIT_FOR_BLOCK $STRIDE_LOGS 2
+  # make sure IBC_OSMO_DENOM went down
+  str1_balance_osmo_new=$($STRIDE_CMD q bank balances $STRIDE_ADDRESS --denom $IBC_OSMO_DENOM | GETBAL)
+  str1_osmo_diff=$(($str1_balance_osmo - $str1_balance_osmo_new))
+  assert_equal "$str1_osmo_diff" '1000000000'
+  # make sure STOSMO went up
+  str1_balance_stosmo_new=$($STRIDE_CMD q bank balances $STRIDE_ADDRESS --denom $STOSMO_DENOM | GETBAL)
+  str1_stosmo_diff=$(($str1_balance_stosmo_new-$str1_balance_stosmo))
+  assert_equal "$str1_stosmo_diff" "1000000000"
 }
 
-@test "[INTEGRATION-BASIC-JUNO] tokens were transferred to JUNO after liquid staking" {
+@test "[INTEGRATION-BASIC-OSMO] tokens were transferred to OSMO after liquid staking" {
   # initial balance of delegation ICA
-  initial_delegation_ica_bal=$($JUNO_CMD q bank balances $JUNO_DELEGATION_ICA_ADDR --denom ujuno | GETBAL)
+  initial_delegation_ica_bal=$($OSMO_CMD q bank balances $OSMO_DELEGATION_ICA_ADDR --denom uosmo | GETBAL)
   # wait for the epoch to pass (we liquid staked above)
   remaining_seconds=$($STRIDE_CMD q epochs seconds-remaining stride_epoch)
   sleep "$(($remaining_seconds))"
   WAIT_FOR_BLOCK $STRIDE_LOGS 10
   # get the new delegation ICA balance
-  post_delegation_ica_bal=$($JUNO_CMD q bank balances $JUNO_DELEGATION_ICA_ADDR --denom ujuno | GETBAL)
+  post_delegation_ica_bal=$($OSMO_CMD q bank balances $OSMO_DELEGATION_ICA_ADDR --denom uosmo | GETBAL)
   diff=$(($post_delegation_ica_bal - $initial_delegation_ica_bal))
-  assert_equal "$diff" '10000000'
+  assert_equal "$diff" '1000000000'
 }
 
-@test "[INTEGRATION-BASIC-JUNO] tokens on JUNO were staked" {
+@test "[INTEGRATION-BASIC-OSMO] tokens on OSMO were staked" {
   # wait for another epoch to pass so that tokens are staked
   remaining_seconds=$($STRIDE_CMD q epochs seconds-remaining stride_epoch)
   sleep "$(($remaining_seconds-1))"
   # let the IBC calls
   WAIT_FOR_BLOCK $STRIDE_LOGS
-  WAIT_FOR_STRING $STRIDE_LOGS 'DelegateCallback hostZoneId:"JUNO" depositRecordId'
+  WAIT_FOR_STRING $STRIDE_LOGS 'DelegateCallback hostZoneId:"OSMO" depositRecordId'
   # check staked tokens
-  NEW_STAKE=$($JUNO_CMD q staking delegation $JUNO_DELEGATION_ICA_ADDR $JUNO_DELEGATE_VAL | GETSTAKE)
+  NEW_STAKE=$($OSMO_CMD q staking delegation $OSMO_DELEGATION_ICA_ADDR $OSMO_DELEGATE_VAL | GETSTAKE)
   stake_diff=$(($NEW_STAKE > 0))
   assert_equal "$stake_diff" "1"
 }
 
 # check that redemptions and claims work
-@test "[INTEGRATION-BASIC-JUNO] redemption works" {
+@test "[INTEGRATION-BASIC-OSMO] redemption works" {
   sleep 5
-  old_redemption_ica_bal=$($JUNO_CMD q bank balances $JUNO_REDEMPTION_ICA_ADDR --denom ujuno | GETBAL)
+  old_redemption_ica_bal=$($OSMO_CMD q bank balances $OSMO_REDEMPTION_ICA_ADDR --denom uosmo | GETBAL)
   # call redeem-stake
   amt_to_redeem=5
-  $STRIDE_CMD tx stakeibc redeem-stake $amt_to_redeem JUNO $JUNO_RECEIVER_ACCT \
+  $STRIDE_CMD tx stakeibc redeem-stake $amt_to_redeem OSMO $OSMO_RECEIVER_ACCT \
       --from val1 --keyring-backend test --chain-id $STRIDE_CHAIN -y
   # wait for beginning of next day, then for ibc transaction time for the unbonding period to begin
   remaining_seconds=$($STRIDE_CMD q epochs seconds-remaining day)
   sleep "$remaining_seconds"
   WAIT_FOR_BLOCK $STRIDE_LOGS 3
   # wait for the unbonding period to pass
-  UNBONDING_PERIOD=$($JUNO_CMD q staking params |  grep -o -E '[0-9]+' | tail -n 1)
+  UNBONDING_PERIOD=$($OSMO_CMD q staking params |  grep -o -E '[0-9]+' | tail -n 1)
   sleep $UNBONDING_PERIOD
-  WAIT_FOR_BLOCK $JUNO_LOGS 5
+  WAIT_FOR_BLOCK $OSMO_LOGS 5
   # wait for a day to pass (to transfer from delegation to redemption acct)
   remaining_seconds=$($STRIDE_CMD q epochs seconds-remaining day)
   sleep $remaining_seconds
@@ -202,50 +203,50 @@ setup() {
   sleep $day_duration
   # TODO we're sleeping more than we should have to here, investigate why redemptions take so long!
   # wait for ica bank send to process on host chain (delegation => redemption acct)
-  WAIT_FOR_BLOCK $JUNO_LOGS 2
+  WAIT_FOR_BLOCK $OSMO_LOGS 2
   sleep 15
   # check that the tokens were transferred to the redemption account
-  new_redemption_ica_bal=$($JUNO_CMD q bank balances $JUNO_REDEMPTION_ICA_ADDR --denom ujuno | GETBAL)
+  new_redemption_ica_bal=$($OSMO_CMD q bank balances $OSMO_REDEMPTION_ICA_ADDR --denom uosmo | GETBAL)
   diff_positive=$(($new_redemption_ica_bal > $old_redemption_ica_bal))
   assert_equal "$diff_positive" "1"
 }
 
-@test "[INTEGRATION-BASIC-JUNO] claimed tokens are properly distributed" {
+@test "[INTEGRATION-BASIC-OSMO] claimed tokens are properly distributed" {
   # TODO(optimize tests) extra sleep just in case
   SENDER_ACCT=$STRIDE_VAL_ADDR
-  old_sender_bal=$($JUNO_CMD q bank balances $JUNO_RECEIVER_ACCT --denom ujuno | GETBAL)
+  old_sender_bal=$($OSMO_CMD q bank balances $OSMO_RECEIVER_ACCT --denom uosmo | GETBAL)
   # TODO check that the UserRedemptionRecord has isClaimable = true
   # grab the epoch number for the first deposit record in the list od DRs
   EPOCH=$(strided q records list-user-redemption-record  | grep -Fiw 'epochNumber' | head -n 1 | grep -o -E '[0-9]+')
   # claim the record
-  $STRIDE_CMD tx stakeibc claim-undelegated-tokens JUNO $EPOCH $SENDER_ACCT --from val1 --keyring-backend test --chain-id STRIDE -y
+  $STRIDE_CMD tx stakeibc claim-undelegated-tokens OSMO $EPOCH $SENDER_ACCT --from val1 --keyring-backend test --chain-id STRIDE -y
   WAIT_FOR_BLOCK $STRIDE_LOGS 2
-  WAIT_FOR_BLOCK $JUNO_LOGS 5
+  WAIT_FOR_BLOCK $OSMO_LOGS 5
   # TODO check that UserRedemptionRecord has isClaimable = false
   # check that the tokens were transferred to the sender account
-  new_sender_bal=$($JUNO_CMD q bank balances $JUNO_RECEIVER_ACCT --denom ujuno | GETBAL)
+  new_sender_bal=$($OSMO_CMD q bank balances $OSMO_RECEIVER_ACCT --denom uosmo | GETBAL)
   # check that the undelegated tokens were transfered to the sender account
   diff_positive=$(($new_sender_bal > $old_sender_bal))
   assert_equal "$diff_positive" "1"
 }
 
 # check that a second liquid staking call kicks off reinvestment
-@test "[INTEGRATION-BASIC-JUNO] rewards are being reinvested, exchange rate updating" {
+@test "[INTEGRATION-BASIC-OSMO] rewards are being reinvested, exchange rate updating" {
   # read the exchange rate
-  RR1=$($STRIDE_CMD q stakeibc show-host-zone JUNO | grep -Fiw 'RedemptionRate' | grep -Eo '[+-]?[0-9]+([.][0-9]+)?')
+  RR1=$($STRIDE_CMD q stakeibc show-host-zone OSMO | grep -Fiw 'RedemptionRate' | grep -Eo '[+-]?[0-9]+([.][0-9]+)?')
   # liquid stake again to kickstart the reinvestment process
-  $STRIDE_CMD tx stakeibc liquid-stake 1000 ujuno --keyring-backend test --from val1 -y --chain-id $STRIDE_CHAIN
+  $STRIDE_CMD tx stakeibc liquid-stake 1000 uosmo --keyring-backend test --from val1 -y --chain-id $STRIDE_CHAIN
   WAIT_FOR_BLOCK $STRIDE_LOGS 2
   # wait four days (transfers, stake, move rewards, reinvest rewards)
   epoch_duration=$($STRIDE_CMD q epochs epoch-infos | grep -Fiw -B 2 'stride_epoch' | head -n 1 | grep -o -E '[0-9]+')
   sleep $(($epoch_duration * 4))
   # simple check that number of tokens staked increases
-  NEW_STAKED_BAL=$($JUNO_CMD q staking delegation $JUNO_DELEGATION_ICA_ADDR $JUNO_DELEGATE_VAL | GETSTAKE)
-  EXPECTED_STAKED_BAL=667000
+  NEW_STAKED_BAL=$($OSMO_CMD q staking delegation $OSMO_DELEGATION_ICA_ADDR $OSMO_DELEGATE_VAL | GETSTAKE)
+  EXPECTED_STAKED_BAL=667
   STAKED_BAL_INCREASED=$(($NEW_STAKED_BAL > $EXPECTED_STAKED_BAL))
   assert_equal "$STAKED_BAL_INCREASED" "1"
 
-  RR2=$($STRIDE_CMD q stakeibc show-host-zone JUNO | grep -Fiw 'RedemptionRate' | grep -Eo '[+-]?[0-9]+([.][0-9]+)?')
+  RR2=$($STRIDE_CMD q stakeibc show-host-zone OSMO | grep -Fiw 'RedemptionRate' | grep -Eo '[+-]?[0-9]+([.][0-9]+)?')
   # check that the exchange rate has increased
   MULT=1000000
   RR_INCREASED=$(( $(FLOOR $(DECMUL $RR2 $MULT)) > $(FLOOR $(DECMUL $RR1 $MULT))))
