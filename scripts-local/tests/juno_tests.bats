@@ -142,7 +142,7 @@ setup() {
   # liquid stake
   $STRIDE_CMD tx stakeibc liquid-stake 10000000 ujuno --keyring-backend test --from val1 -y --chain-id $STRIDE_CHAIN
   # sleep two block for the tx to settle on stride
-  WAIT_FOR_BLOCK $STRIDE_LOGS 8
+  WAIT_FOR_STRING $STRIDE_LOGS '\[MINT ST ASSET\] success on JUNO'
   # make sure IBC_JUNO_DENOM went down
   str1_balance_juno_new=$($STRIDE_CMD q bank balances $STRIDE_ADDRESS --denom $IBC_JUNO_DENOM | GETBAL)
   str1_juno_diff=$(($str1_balance_juno - $str1_balance_juno_new))
@@ -156,10 +156,7 @@ setup() {
 @test "[INTEGRATION-BASIC-JUNO] tokens were transferred to JUNO after liquid staking" {
   # initial balance of delegation ICA
   initial_delegation_ica_bal=$($JUNO_CMD q bank balances $JUNO_DELEGATION_ICA_ADDR --denom ujuno | GETBAL)
-  # wait for the epoch to pass (we liquid staked above)
-  remaining_seconds=$($STRIDE_CMD q epochs seconds-remaining stride_epoch)
-  sleep "$(($remaining_seconds))"
-  WAIT_FOR_BLOCK $STRIDE_LOGS 10
+  WAIT_FOR_STRING $STRIDE_LOGS '\[IBC-TRANSFER\] success to JUNO'
   # get the new delegation ICA balance
   post_delegation_ica_bal=$($JUNO_CMD q bank balances $JUNO_DELEGATION_ICA_ADDR --denom ujuno | GETBAL)
   diff=$(($post_delegation_ica_bal - $initial_delegation_ica_bal))
@@ -168,11 +165,7 @@ setup() {
 
 @test "[INTEGRATION-BASIC-JUNO] tokens on JUNO were staked" {
   # wait for another epoch to pass so that tokens are staked
-  remaining_seconds=$($STRIDE_CMD q epochs seconds-remaining stride_epoch)
-  sleep "$(($remaining_seconds-1))"
-  # let the IBC calls
-  WAIT_FOR_BLOCK $STRIDE_LOGS
-  WAIT_FOR_STRING $STRIDE_LOGS 'DelegateCallback hostZoneId:"JUNO" depositRecordId'
+  WAIT_FOR_STRING $STRIDE_LOGS '\[DELEGATION\] success on JUNO'
   # check staked tokens
   NEW_STAKE=$($JUNO_CMD q staking delegation $JUNO_DELEGATION_ICA_ADDR $JUNO_DELEGATE_VAL | GETSTAKE)
   stake_diff=$(($NEW_STAKE > 0))
@@ -187,23 +180,7 @@ setup() {
   amt_to_redeem=5
   $STRIDE_CMD tx stakeibc redeem-stake $amt_to_redeem JUNO $JUNO_RECEIVER_ACCT \
       --from val1 --keyring-backend test --chain-id $STRIDE_CHAIN -y
-  # wait for beginning of next day, then for ibc transaction time for the unbonding period to begin
-  remaining_seconds=$($STRIDE_CMD q epochs seconds-remaining day)
-  sleep "$remaining_seconds"
-  WAIT_FOR_BLOCK $STRIDE_LOGS 3
-  # wait for the unbonding period to pass
-  UNBONDING_PERIOD=$($JUNO_CMD q staking params |  grep -o -E '[0-9]+' | tail -n 1)
-  sleep $UNBONDING_PERIOD
-  WAIT_FOR_BLOCK $JUNO_LOGS 5
-  # wait for a day to pass (to transfer from delegation to redemption acct)
-  remaining_seconds=$($STRIDE_CMD q epochs seconds-remaining day)
-  sleep $remaining_seconds
-  day_duration=$($STRIDE_CMD q epochs epoch-infos | grep -Fiw 'duration' | head -n 1 | grep -o -E '[0-9]+')
-  sleep $day_duration
-  # TODO we're sleeping more than we should have to here, investigate why redemptions take so long!
-  # wait for ica bank send to process on host chain (delegation => redemption acct)
-  WAIT_FOR_BLOCK $JUNO_LOGS 2
-  sleep 15
+  WAIT_FOR_STRING $STRIDE_LOGS '\[REDEMPTION] completed on JUNO'
   # check that the tokens were transferred to the redemption account
   new_redemption_ica_bal=$($JUNO_CMD q bank balances $JUNO_REDEMPTION_ICA_ADDR --denom ujuno | GETBAL)
   diff_positive=$(($new_redemption_ica_bal > $old_redemption_ica_bal))
@@ -219,8 +196,7 @@ setup() {
   EPOCH=$(strided q records list-user-redemption-record  | grep -Fiw 'epochNumber' | head -n 1 | grep -o -E '[0-9]+')
   # claim the record
   $STRIDE_CMD tx stakeibc claim-undelegated-tokens JUNO $EPOCH $SENDER_ACCT --from val1 --keyring-backend test --chain-id STRIDE -y
-  WAIT_FOR_BLOCK $STRIDE_LOGS 2
-  WAIT_FOR_BLOCK $JUNO_LOGS 5
+  WAIT_FOR_STRING $STRIDE_LOGS '\[CLAIM\] success on JUNO'
   # TODO check that UserRedemptionRecord has isClaimable = false
   # check that the tokens were transferred to the sender account
   new_sender_bal=$($JUNO_CMD q bank balances $JUNO_RECEIVER_ACCT --denom ujuno | GETBAL)
