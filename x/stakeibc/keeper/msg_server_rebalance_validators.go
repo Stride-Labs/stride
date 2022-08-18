@@ -87,7 +87,13 @@ func (k msgServer) RebalanceValidators(goCtx context.Context, msg *types.MsgReba
 	}
 
 	var msgs []sdk.Msg
-	delegatorAddressStr := hostZone.GetDelegationAccount().GetAddress()
+	delegationIca := hostZone.GetDelegationAccount()
+	if delegationIca == nil || delegationIca.GetAddress() == "" {
+		k.Logger(ctx).Error(fmt.Sprintf("Zone %s is missing a delegation address!", hostZone.ChainId))
+		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "Invalid delegation account")
+	}
+
+	delegatorAddressStr := delegationIca.GetAddress()
 	delegatorAddress := sdk.AccAddress(delegatorAddressStr)
 
 	for i := 1; i < maxNumRebalance; i++ {
@@ -143,7 +149,7 @@ func (k msgServer) RebalanceValidators(goCtx context.Context, msg *types.MsgReba
 	}
 
 	connectionId := hostZone.GetConnectionId()
-	_, err = k.SubmitTxsStrideEpoch(ctx, connectionId, msgs, *hostZone.GetDelegationAccount(), "", nil)
+	_, err = k.SubmitTxsStrideEpoch(ctx, connectionId, msgs, *delegationIca, "", nil)
 	if err != nil {
 		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "Failed to SubmitTxs for %s, %s, %s", connectionId, hostZone.ChainId, msgs)
 	}
