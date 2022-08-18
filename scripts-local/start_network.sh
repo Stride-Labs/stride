@@ -1,7 +1,12 @@
 #!/bin/bash
 
 # kill previous networks
-make stop &> /dev/null
+# loop three times in bash
+echo "Killing previous networks..."
+for i in {1..5}; do
+    make stop &> /dev/null
+    sleep 1
+done
 
 set -eu
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
