@@ -119,5 +119,6 @@ func (k msgServer) MintStAsset(ctx sdk.Context, sender sdk.AccAddress, amount ui
 		k.Logger(ctx).Error("Failed to send coins from module to account")
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "Failed to send %s from module to account", stCoins.GetDenomByIndex(0))
 	}
+	k.Logger(ctx).Info(fmt.Sprintf("[MINT ST ASSET] success on %s.", hz.GetChainId()))
 	return nil
 }
