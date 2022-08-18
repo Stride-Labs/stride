@@ -91,7 +91,7 @@ nohup $HERMES_CMD start >> $HERMES_LOGS 2>&1 &
 echo "Done"
 
 # Start ICQ in the background
-printf '%s' "Starting ICQ...               "
+printf '%s' "Starting ICQ...     "
 nohup $ICQ_CMD run --local >> $ICQ_LOGS 2>&1 &
 sleep 5
 echo "Done"
@@ -107,7 +107,7 @@ if [ "$CACHE" != "true" ]; then
 fi
 
 # Add more detailed log files
-$SCRIPT_DIR/create_logs.sh &
+$SCRIPT_DIR/create_logs_gaia.sh &
 $SCRIPT_DIR/create_logs_osmo.sh &
 $SCRIPT_DIR/create_logs_juno.sh &
 
