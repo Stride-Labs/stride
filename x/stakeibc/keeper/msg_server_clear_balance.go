@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	ibctransfertypes "github.com/cosmos/ibc-go/v3/modules/apps/transfer/types"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	ibctransfertypes "github.com/cosmos/ibc-go/v3/modules/apps/transfer/types"
@@ -24,8 +26,7 @@ func (k msgServer) ClearBalance(goCtx context.Context, msg *types.MsgClearBalanc
 		return nil, sdkerrors.Wrapf(types.ErrFeeAccountNotRegistered, "chainId: %s", msg.ChainId)
 	}
 
-	// should this be a param? the transfer port _should_ always be the same across zones
-	sourcePort := "transfer"
+	sourcePort := ibctransfertypes.PortID
 	// Should this be a param?
 	// I think as long as we have a timeout on this, it should be hard to attack (even if someone send a tx on a bad channel, it would be reverted relatively quickly)
 	sourceChannel := msg.Channel
@@ -36,8 +37,7 @@ func (k msgServer) ClearBalance(goCtx context.Context, msg *types.MsgClearBalanc
 		return nil, sdkerrors.Wrapf(err, "failed to parse coin (%s)", coinString)
 	}
 	sender := feeAccount.GetAddress()
-	// TODO(TEST-174): this is a random testing address, update this before launch
-	receiver := "stride19uvw0azm9u0k6vqe4e22cga6kteskdqq3ulj6q"
+	// KeyICATimeoutNanos are for our Stride ICA calls, KeyFeeTransferTimeoutNanos is for the IBC transfer
 	feeTransferTimeoutNanos := k.GetParam(ctx, types.KeyFeeTransferTimeoutNanos)
 	timeoutTimestamp := cast.ToUint64(ctx.BlockTime().UnixNano()) + feeTransferTimeoutNanos
 	msgs := []sdk.Msg{
@@ -46,7 +46,7 @@ func (k msgServer) ClearBalance(goCtx context.Context, msg *types.MsgClearBalanc
 			SourceChannel: sourceChannel,
 			Token: tokens,
 			Sender: sender,
-			Receiver: receiver,
+			Receiver: types.FeeAccount,
 			TimeoutTimestamp: timeoutTimestamp,
 		},
 	}
