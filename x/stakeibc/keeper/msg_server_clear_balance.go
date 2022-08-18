@@ -54,7 +54,10 @@ func (k msgServer) ClearBalance(goCtx context.Context, msg *types.MsgClearBalanc
 	icaTimeoutNanos := k.GetParam(ctx, types.KeyICATimeoutNanos)
 	icaTimeoutNanos = cast.ToUint64(ctx.BlockTime().UnixNano()) + icaTimeoutNanos
 
-	k.SubmitTxs(ctx, connectionId, msgs, *feeAccount, icaTimeoutNanos, "", nil)
+	_, err = k.SubmitTxs(ctx, connectionId, msgs, *feeAccount, icaTimeoutNanos, "", nil)
+	if err != nil {
+		return nil, sdkerrors.Wrapf(err, "failed to submit txs")
+	}
 	return &types.MsgClearBalanceResponse{}, nil
 }
 
