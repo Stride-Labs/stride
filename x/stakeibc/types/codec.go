@@ -26,6 +26,7 @@ func RegisterCodec(cdc *codec.LegacyAmino) {
 func RegisterInterfaces(registry cdctypes.InterfaceRegistry) {
 	registry.RegisterImplementations((*sdk.Msg)(nil),
 		&MsgLiquidStake{},
+		&MsgClearBalance{},
 		&MsgRegisterAccount{},
 		&MsgSubmitTx{},
 		&MsgRegisterHostZone{},
@@ -36,8 +37,6 @@ func RegisterInterfaces(registry cdctypes.InterfaceRegistry) {
 		&MsgChangeValidatorWeight{},
 		&MsgDeleteValidator{},
 		&MsgRestoreInterchainAccount{},
-	)
-	registry.RegisterImplementations((*sdk.Msg)(nil),
 		&MsgUpdateValidatorSharesExchRate{},
 	)
 	// this line is used by starport scaffolding # 3

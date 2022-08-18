@@ -33,4 +33,5 @@ var (
 	ErrMarshalFailure              = sdkerrors.Register(ModuleName, 1523, "unable to marshal data structure")
 	ErrInvalidPacketCompletionTime = sdkerrors.Register(ModuleName, 1524, "invalid packet completion time")
 	ErrIntCast                     = sdkerrors.Register(ModuleName, 1525, "unable to cast to safe cast int")
+	ErrFeeAccountNotRegistered     = sdkerrors.Register(ModuleName, 1526, "fee account is not registered")
 )

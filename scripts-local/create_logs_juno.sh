@@ -43,7 +43,7 @@ while true; do
     $JUNO_CMD q bank balances $JUNO_WITHDRAWAL >>$TEMP_LOGS_DIR/accounts_juno.log
 
     printf '\n%s\n' "LIST-HOST-ZONES STRIDE" >>$TEMP_LOGS_DIR/accounts_juno.log
-    $STRIDE_CMD q stakeibc list-host-zone >>$TEMP_LOGS_DIR/accounts_juno.log
+    $STRIDE_CMD q stakeibc show-host-zone JUNO >>$TEMP_LOGS_DIR/accounts_juno.log
     printf '\n%s\n' "LIST-DEPOSIT-RECORDS" >>$TEMP_LOGS_DIR/accounts_juno.log
     $STRIDE_CMD q records list-deposit-record  >> $TEMP_LOGS_DIR/accounts_juno.log
     printf '\n%s\n' "LIST-EPOCH-UNBONDING-RECORDS" >>$TEMP_LOGS_DIR/accounts_juno.log

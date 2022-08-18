@@ -90,6 +90,10 @@ func (k Keeper) DelegateOnHost(ctx sdk.Context, hostZone types.HostZone, amt sdk
 
 	// Fetch the relevant ICA
 	delegationIca := hostZone.GetDelegationAccount()
+	if delegationIca == nil || delegationIca.GetAddress() == "" {
+		k.Logger(ctx).Error(fmt.Sprintf("Zone %s is missing a delegation address!", hostZone.ChainId))
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "Invalid delegation account")
+	}
 
 	// Construct the transaction
 	targetDelegatedAmts, err := k.GetTargetValAmtsForHostZone(ctx, hostZone, amt.Amount.Uint64())
@@ -438,7 +442,12 @@ func (k Keeper) QueryDelegationsIcq(ctx sdk.Context, hostZone types.HostZone, va
 		return sdkerrors.Wrapf(types.ErrOutsideIcqWindow, "outside the buffer time during which ICQs are allowed (%s)", hostZone.HostDenom)
 	}
 
-	delegationAcctAddr := hostZone.GetDelegationAccount().GetAddress()
+	delegationIca := hostZone.GetDelegationAccount()
+	if delegationIca == nil || delegationIca.GetAddress() == "" {
+		k.Logger(ctx).Error(fmt.Sprintf("Zone %s is missing a delegation address!", hostZone.ChainId))
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, fmt.Sprintf("Invalid delegation account (%s)", err))
+	}
+	delegationAcctAddr := delegationIca.GetAddress()
 	_, valAddr, _ := bech32.DecodeAndConvert(valoper)
 	_, delAddr, _ := bech32.DecodeAndConvert(delegationAcctAddr)
 	data := stakingtypes.GetDelegationKey(delAddr, valAddr)
