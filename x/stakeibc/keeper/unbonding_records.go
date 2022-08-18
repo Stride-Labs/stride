@@ -61,6 +61,10 @@ func (k Keeper) SendHostZoneUnbondings(ctx sdk.Context, hostZone types.HostZone)
 		}
 	}
 	delegationAccount := hostZone.GetDelegationAccount()
+	if delegationAccount == nil || delegationAccount.GetAddress() == "" {
+		k.Logger(ctx).Error(fmt.Sprintf("Zone %s is missing a delegation address!", hostZone.ChainId))
+		return false
+	}
 	validators := hostZone.GetValidators()
 	if totalAmtToUnbond == 0 {
 		return true
@@ -149,8 +153,8 @@ func (k Keeper) SendHostZoneUnbondings(ctx sdk.Context, hostZone types.HostZone)
 	}
 
 	undelegateCallback := types.UndelegateCallback{
-		HostZoneId:            hostZone.ChainId,
-		SplitDelegations:      splitDelegations,
+		HostZoneId:              hostZone.ChainId,
+		SplitDelegations:        splitDelegations,
 		EpochUnbondingRecordIds: epochUnbondingRecordIds,
 	}
 	k.Logger(ctx).Info(fmt.Sprintf("Marshalling UndelegateCallback args: %v", undelegateCallback))
@@ -265,7 +269,15 @@ func (k Keeper) SweepAllUnbondedTokens(ctx sdk.Context) {
 
 				// get the delegation account and rewards account
 				delegationAccount := hostZone.GetDelegationAccount()
+				if delegationAccount == nil || delegationAccount.Address == "" {
+					k.Logger(ctx).Error(fmt.Sprintf("Zone %s is missing a delegation address!", hostZone.ChainId))
+					return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "Invalid delegation account")
+				}
 				redemptionAccount := hostZone.GetRedemptionAccount()
+				if redemptionAccount == nil || redemptionAccount.Address == "" {
+					k.Logger(ctx).Error(fmt.Sprintf("Zone %s is missing a redemption address!", hostZone.ChainId))
+					return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "Invalid redemption account")
+				}
 
 				// build transfer message from delegation account to redemption account
 				sweepCoin := sdk.NewCoin(hostZone.HostDenom, sdk.NewInt(totalAmtTransferToRedemptionAcct))
@@ -290,7 +302,7 @@ func (k Keeper) SweepAllUnbondedTokens(ctx sdk.Context) {
 				}
 
 				// Send the transaction through SubmitTx
-				_, err = k.SubmitTxsDayEpoch(ctx, hostZone.ConnectionId, msgs, *delegationAccount, "redemption", marshalledCallbackArgs)
+				_, err = k.SubmitTxsDayEpoch(ctx, hostZone.ConnectionId, msgs, *delegationAccount, REDEMPTION, marshalledCallbackArgs)
 				if err != nil {
 					ctx.Logger().Info(fmt.Sprintf("Failed to SubmitTxs, transfer to redemption account on %s", hostZone.ChainId))
 				}

@@ -97,7 +97,7 @@ func WithdrawalBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query icq
 	}
 
 	// sanity check, do not transfer if we have 0 balance!
-	if coin.Amount.Int64() == 0 {
+	if coin.Amount.Int64() <= 0 {
 		k.Logger(ctx).Info(fmt.Sprintf("WithdrawalBalanceCallback: no balance to transfer for zone: %s, accAddr: %v, coin: %v", zone.ChainId, accAddr.String(), coin))
 		return nil
 	}
@@ -122,8 +122,20 @@ func WithdrawalBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query icq
 	k.Logger(ctx).Info(fmt.Sprintf("ICA Bank Sending %d%s from withdrawalAddr to delegationAddr.", coin.Amount.Int64(), coin.Denom))
 
 	withdrawalAccount := zone.GetWithdrawalAccount()
-	feeAccount := zone.GetFeeAccount()
+	if withdrawalAccount == nil {
+		k.Logger(ctx).Error(fmt.Sprintf("WithdrawalBalanceCallback: no withdrawal account found for zone: %s", zone.ChainId))
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, fmt.Sprintf("WithdrawalBalanceCallback: no withdrawal account found for zone: %s", zone.ChainId))
+	}
 	delegationAccount := zone.GetDelegationAccount()
+	if delegationAccount == nil {
+		k.Logger(ctx).Error(fmt.Sprintf("WithdrawalBalanceCallback: no delegation account found for zone: %s", zone.ChainId))
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, fmt.Sprintf("WithdrawalBalanceCallback: no delegation account found for zone: %s", zone.ChainId))
+	}
+	feeAccount := zone.GetFeeAccount()
+	if feeAccount == nil {
+		k.Logger(ctx).Error(fmt.Sprintf("WithdrawalBalanceCallback: no fee account found for zone: %s", zone.ChainId))
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, fmt.Sprintf("WithdrawalBalanceCallback: no fee account found for zone: %s", zone.ChainId))
+	}
 
 	params := k.GetParams(ctx)
 	stCommission, err := cast.ToInt64E(params.GetStrideCommission())
@@ -153,11 +165,14 @@ func WithdrawalBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query icq
 
 	var msgs []sdk.Msg
 	// construct the msg
-	msgs = append(msgs, &banktypes.MsgSend{FromAddress: withdrawalAccount.GetAddress(),
-		ToAddress: feeAccount.GetAddress(), Amount: sdk.NewCoins(strideCoin)})
-	msgs = append(msgs, &banktypes.MsgSend{FromAddress: withdrawalAccount.GetAddress(),
-		ToAddress: delegationAccount.GetAddress(), Amount: sdk.NewCoins(reinvestCoin)})
-
+	if strideCoin.Amount.Int64() > 0 {
+		msgs = append(msgs, &banktypes.MsgSend{FromAddress: withdrawalAccount.GetAddress(),
+			ToAddress: feeAccount.GetAddress(), Amount: sdk.NewCoins(strideCoin)})
+	}
+	if reinvestCoin.Amount.Int64() > 0 {
+		msgs = append(msgs, &banktypes.MsgSend{FromAddress: withdrawalAccount.GetAddress(),
+			ToAddress: delegationAccount.GetAddress(), Amount: sdk.NewCoins(reinvestCoin)})
+	}
 	ctx.Logger().Info(fmt.Sprintf("Submitting withdrawal sweep messages for: %v", msgs))
 
 	// add callback data
@@ -171,7 +186,7 @@ func WithdrawalBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query icq
 		return err
 	}
 
-	// Send the transaction through SubmitTx if either amouns is greater than 0
+	// Send the transaction through SubmitTx
 	_, err = k.SubmitTxsStrideEpoch(ctx, zone.ConnectionId, msgs, *withdrawalAccount, REINVEST, marshalledCallbackArgs)
 	if err != nil {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "Failed to SubmitTxs for %s, %s, %s", zone.ConnectionId, zone.ChainId, msgs)
