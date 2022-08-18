@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# kill previous networks
+make stop &> /dev/null
+
 set -eu
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 source $SCRIPT_DIR/vars.sh
@@ -92,7 +95,7 @@ echo "Done"
 
 # Start ICQ in the background
 printf '%s' "Starting ICQ...     "
-nohup $ICQ_CMD run --local >> $ICQ_LOGS 2>&1 &
+source $SCRIPT_DIR/icq_startup.sh &
 sleep 5
 echo "Done"
 
