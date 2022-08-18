@@ -144,8 +144,9 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochInfo epochstypes.EpochInf
 		if epochNumber%reinvestInterval == 0 { // allow a few blocks from UpdateUndelegatedBal to avoid conflicts
 			k.Logger(ctx).Info("Reinvesting tokens")
 			for _, hz := range k.GetAllHostZone(ctx) {
-				if (&hz).WithdrawalAccount != nil { // only process host zones once withdrawal accounts are registered
-
+				// only process host zones once withdrawal accounts are registered
+				withdrawalIca := hz.GetWithdrawalAccount()
+				if withdrawalIca != nil {
 					// read clock time on host zone
 					blockTime, found := k.GetLightClientTimeSafely(ctx, hz.ConnectionId)
 					if !found {
