@@ -143,6 +143,7 @@ setup() {
   $STRIDE_CMD tx stakeibc liquid-stake 10000000 ujuno --keyring-backend test --from val1 -y --chain-id $STRIDE_CHAIN
   # sleep two block for the tx to settle on stride
   WAIT_FOR_STRING $STRIDE_LOGS '\[MINT ST ASSET\] success on JUNO'
+  WAIT_FOR_BLOCK $STRIDE_LOGS 2
   # make sure IBC_JUNO_DENOM went down
   str1_balance_juno_new=$($STRIDE_CMD q bank balances $STRIDE_ADDRESS --denom $IBC_JUNO_DENOM | GETBAL)
   str1_juno_diff=$(($str1_balance_juno - $str1_balance_juno_new))
@@ -157,6 +158,7 @@ setup() {
   # initial balance of delegation ICA
   initial_delegation_ica_bal=$($JUNO_CMD q bank balances $JUNO_DELEGATION_ICA_ADDR --denom ujuno | GETBAL)
   WAIT_FOR_STRING $STRIDE_LOGS '\[IBC-TRANSFER\] success to JUNO'
+  WAIT_FOR_BLOCK $STRIDE_LOGS 2
   # get the new delegation ICA balance
   post_delegation_ica_bal=$($JUNO_CMD q bank balances $JUNO_DELEGATION_ICA_ADDR --denom ujuno | GETBAL)
   diff=$(($post_delegation_ica_bal - $initial_delegation_ica_bal))
@@ -166,6 +168,7 @@ setup() {
 @test "[INTEGRATION-BASIC-JUNO] tokens on JUNO were staked" {
   # wait for another epoch to pass so that tokens are staked
   WAIT_FOR_STRING $STRIDE_LOGS '\[DELEGATION\] success on JUNO'
+  WAIT_FOR_BLOCK $STRIDE_LOGS 2
   # check staked tokens
   NEW_STAKE=$($JUNO_CMD q staking delegation $JUNO_DELEGATION_ICA_ADDR $JUNO_DELEGATE_VAL | GETSTAKE)
   stake_diff=$(($NEW_STAKE > 0))
@@ -181,6 +184,7 @@ setup() {
   $STRIDE_CMD tx stakeibc redeem-stake $amt_to_redeem JUNO $JUNO_RECEIVER_ACCT \
       --from val1 --keyring-backend test --chain-id $STRIDE_CHAIN -y
   WAIT_FOR_STRING $STRIDE_LOGS '\[REDEMPTION] completed on JUNO'
+  WAIT_FOR_BLOCK $STRIDE_LOGS 2
   # check that the tokens were transferred to the redemption account
   new_redemption_ica_bal=$($JUNO_CMD q bank balances $JUNO_REDEMPTION_ICA_ADDR --denom ujuno | GETBAL)
   diff_positive=$(($new_redemption_ica_bal > $old_redemption_ica_bal))
@@ -197,6 +201,7 @@ setup() {
   # claim the record
   $STRIDE_CMD tx stakeibc claim-undelegated-tokens JUNO $EPOCH $SENDER_ACCT --from val1 --keyring-backend test --chain-id STRIDE -y
   WAIT_FOR_STRING $STRIDE_LOGS '\[CLAIM\] success on JUNO'
+  WAIT_FOR_BLOCK $STRIDE_LOGS 2
   # TODO check that UserRedemptionRecord has isClaimable = false
   # check that the tokens were transferred to the sender account
   new_sender_bal=$($JUNO_CMD q bank balances $JUNO_RECEIVER_ACCT --denom ujuno | GETBAL)

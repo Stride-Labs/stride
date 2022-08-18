@@ -143,6 +143,7 @@ setup() {
   $STRIDE_CMD tx stakeibc liquid-stake 1000 uatom --keyring-backend test --from val1 -y --chain-id $STRIDE_CHAIN
   # sleep two block for the tx to settle on stride
   WAIT_FOR_STRING $STRIDE_LOGS '\[MINT ST ASSET\] success on GAIA'
+  WAIT_FOR_BLOCK $STRIDE_LOGS 2
   # make sure IBC_ATOM_DENOM went down
   str1_balance_atom_new=$($STRIDE_CMD q bank balances $STRIDE_ADDRESS --denom $IBC_ATOM_DENOM | GETBAL)
   str1_atom_diff=$(($str1_balance_atom - $str1_balance_atom_new))
@@ -158,6 +159,7 @@ setup() {
   # initial balance of delegation ICA
   initial_delegation_ica_bal=$($GAIA_CMD q bank balances $DELEGATION_ICA_ADDR --denom uatom | GETBAL)
   WAIT_FOR_STRING $STRIDE_LOGS '\[IBC-TRANSFER\] success to GAIA'
+  WAIT_FOR_BLOCK $STRIDE_LOGS 2
   # get the new delegation ICA balance
   post_delegation_ica_bal=$($GAIA_CMD q bank balances $DELEGATION_ICA_ADDR --denom uatom | GETBAL)
   diff=$(($post_delegation_ica_bal - $initial_delegation_ica_bal))
@@ -168,6 +170,7 @@ setup() {
 @test "[INTEGRATION-BASIC-GAIA] tokens on GAIA were staked" {
   # wait for another epoch to pass so that tokens are staked
   WAIT_FOR_STRING $STRIDE_LOGS '\[DELEGATION\] success on GAIA'
+  WAIT_FOR_BLOCK $STRIDE_LOGS 2
   # check staked tokens
   NEW_STAKE=$($GAIA_CMD q staking delegation $DELEGATION_ICA_ADDR $GAIA_DELEGATE_VAL | GETSTAKE)
   stake_diff=$(($NEW_STAKE > 0))
@@ -182,6 +185,7 @@ setup() {
   $STRIDE_CMD tx stakeibc redeem-stake $amt_to_redeem GAIA $GAIA_RECEIVER_ACCT \
       --from val1 --keyring-backend test --chain-id $STRIDE_CHAIN -y
   WAIT_FOR_STRING $STRIDE_LOGS '\[REDEMPTION] completed on GAIA'
+  WAIT_FOR_BLOCK $STRIDE_LOGS 2
   # check that the tokens were transferred to the redemption account
   new_redemption_ica_bal=$($GAIA_CMD q bank balances $REDEMPTION_ICA_ADDR --denom uatom | GETBAL)
   diff_positive=$(($new_redemption_ica_bal > $old_redemption_ica_bal))
@@ -199,6 +203,7 @@ setup() {
   # claim the record
   $STRIDE_CMD tx stakeibc claim-undelegated-tokens GAIA $EPOCH $SENDER_ACCT --from val1 --keyring-backend test --chain-id STRIDE -y
   WAIT_FOR_STRING $STRIDE_LOGS '\[CLAIM\] success on GAIA'
+  WAIT_FOR_BLOCK $STRIDE_LOGS 2
   # TODO check that UserRedemptionRecord has isClaimable = false
 
   # check that the tokens were transferred to the sender account
