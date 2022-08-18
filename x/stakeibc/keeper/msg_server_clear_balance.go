@@ -36,7 +36,7 @@ func (k msgServer) ClearBalance(goCtx context.Context, msg *types.MsgClearBalanc
 		return nil, sdkerrors.Wrapf(err, "failed to parse coin (%s)", coinString)
 	}
 	sender := feeAccount.GetAddress()
-	// where to store this?
+	// TODO(TEST-174): this is a random testing address, update this before launch
 	receiver := "stride19uvw0azm9u0k6vqe4e22cga6kteskdqq3ulj6q"
 	feeTransferTimeoutNanos := k.GetParam(ctx, types.KeyFeeTransferTimeoutNanos)
 	timeoutTimestamp := cast.ToUint64(ctx.BlockTime().UnixNano()) + feeTransferTimeoutNanos
