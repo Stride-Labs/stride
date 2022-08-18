@@ -8,8 +8,9 @@ source ${SCRIPT_DIR}/../account_vars.sh
 # $GAIA_CMD tx ibc-transfer transfer transfer channel-0 stride1uk4ze0x4nvh4fk0xm4jdud58eqn4yxhrt52vv7 1000000uatom --from gval1 --chain-id GAIA -y --keyring-backend test
 # exit
 
-# $STRIDE_CMD q bank balances stride1uk4ze0x4nvh4fk0xm4jdud58eqn4yxhrt52vv7
-# exit
+# $STRIDE_CMD q stakeibc show-host-zone OSMO
+$OSMO_CMD q bank balances osmo1cx04p5974f8hzh2lqev48kjrjugdxsxy7mzrd0eyweycpr90vk8q8d6f3h
+exit
 
 # $STRIDE_CMD q ibc channel channels
 # exit
