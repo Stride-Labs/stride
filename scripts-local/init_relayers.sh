@@ -22,3 +22,4 @@ echo $ICQ_OSMO_MNEMONIC | $ICQ_CMD keys restore osmokey --chain osmo-local --loc
 
 # rly keys restore gaia gaiarly "$RLY_GAIA_MNEMONIC"
 # rly keys restore stride striderly "$RLY_STRIDE_MNEMONIC"
+
