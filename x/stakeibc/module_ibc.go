@@ -228,6 +228,7 @@ func (im IBCModule) GetTxMsgData(ctx sdk.Context, ack channeltypes.Acknowledgeme
 	case *channeltypes.Acknowledgement_Error:
 		im.keeper.Logger(ctx).Error(fmt.Sprintf("acknowledgement error: %s", response.Error))
 		return txMsgData, nil
+
 	default:
 		return nil, sdkerrors.Wrapf(channeltypes.ErrInvalidAcknowledgement, "unsupported acknowledgement response field type %T", response)
 	}
