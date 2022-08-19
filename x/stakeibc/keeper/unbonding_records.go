@@ -59,6 +59,9 @@ func (k Keeper) SendHostZoneUnbondings(ctx sdk.Context, hostZone types.HostZone)
 		if hostZoneRecord.Status == recordstypes.HostZoneUnbonding_BONDED && hostZoneRecord.NativeTokenAmount > 0 {
 			totalAmtToUnbond += hostZoneRecord.NativeTokenAmount
 			epochUnbondingRecordIds = append(epochUnbondingRecordIds, epochUnbonding.EpochNumber)
+			k.Logger(ctx).Info(fmt.Sprintf("[SendHostZoneUnbondings] Sending unbondings, host zone: %s, epochUnbonding: %v", hostZone.ChainId, epochUnbonding))
+
+
 		}
 	}
 	delegationAccount := hostZone.GetDelegationAccount()
