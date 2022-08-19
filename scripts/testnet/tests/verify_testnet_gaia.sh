@@ -9,8 +9,9 @@ VAL2_ADDRESS=$(GET_ADDRESS val2)
 
 printf "\n>>> gaiad tx ibc-transfer transfer transfer channel-0 $STRIDE_ADDRESS 100000uatom... \n"
 gaiad tx ibc-transfer transfer transfer channel-0 $STRIDE_ADDRESS 100000uatom --from gval1 -y 
-gaiad tx ibc-transfer transfer transfer channel-0 $VAL2_ADDRESS 1000000000000000uatom --from gval1
-sleep 5
+sleep 10
+gaiad tx ibc-transfer transfer transfer channel-0 $VAL2_ADDRESS 4000000000000000uatom --from gval1
+sleep 10
 
 printf "\n>>> gaiad q staking validators \n"
 gaiad q staking validators 

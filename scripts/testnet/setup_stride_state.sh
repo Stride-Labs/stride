@@ -54,6 +54,7 @@ for (( i=1; i <= $NUM_NODES; i++ )); do
     sed -i -E "s|timeout_commit = \"5s\"|timeout_commit = \"${BLOCK_TIME}\"|g" $configtoml
     sed -i -E "s|chain-id = \"\"|chain-id = \"${STRIDE_CHAIN_ID}\"|g" $clienttoml
     sed -i -E "s|keyring-backend = \"os\"|keyring-backend = \"test\"|g" $clienttoml
+    sed -i -E "s|allow_duplicate_ip = false|allow_duplicate_ip = true|g" $configtoml
     # Add cert file
     # sed -i -E "s|tls_cert_file = \"\"|tls_cert_file = \"/stride/certfile.pem\"|g" $configtoml
     # sed -i -E "s|tls_key_file = \"\"|tls_key_file = \"/stride/certkey.pem\"|g" $configtoml
@@ -87,7 +88,7 @@ for (( i=1; i <= $NUM_NODES; i++ )); do
     $st_cmd gentx $val_acct $STAKE_TOKENS --chain-id $STRIDE_CHAIN_ID --keyring-backend test 2> /dev/null
     
     # modify our snapshot interval
-    sed -i -E "s|snapshot-interval = 0|snapshot-interval = 1000|g" $apptoml
+    sed -i -E "s|snapshot-interval = 0|snapshot-interval = 200|g" $apptoml
 
     if [ $i -eq $MAIN_ID ]; then
         MAIN_NODE_NAME=$node_name
