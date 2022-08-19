@@ -53,5 +53,6 @@ func ClaimCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, txMsgD
 
 	// claim successfully processed
 	k.RecordsKeeper.RemoveUserRedemptionRecord(ctx, claimCallback.GetUserRedemptionRecordId())
+	k.Logger(ctx).Info(fmt.Sprintf("[CLAIM] success on %s", userClaimRecord.GetHostZoneId()))
 	return nil
 }
