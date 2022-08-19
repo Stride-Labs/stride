@@ -6,7 +6,7 @@ RUN set -eux; apk add --no-cache ca-certificates build-base; apk add git linux-h
 
 RUN git clone https://github.com/osmosis-labs/osmosis.git \
     && cd osmosis \
-    && git checkout 4800c2be7 
+    && git checkout 08669da8509059980dc964976ee1ca60c84f5c8a 
 
 WORKDIR /src/app/osmosis
 
