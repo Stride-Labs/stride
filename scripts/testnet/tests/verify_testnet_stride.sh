@@ -25,7 +25,7 @@ while true; do
 done
 
 printf "\n>>> strided tx stakeibc register-host-zone connection-0 uatom cosmos $IBCATOM channel-0 3... \n"
-strided tx stakeibc register-host-zone connection-0 uatom cosmos $IBCATOM channel-0 3 --from $STRIDE_ACCT --gas 1000000 -y
+strided tx stakeibc register-host-zone connection-0 uatom cosmos $IBCATOM channel-0 2 --from $STRIDE_ACCT --gas 1000000 -y
 
 sleep 5
 printf "\n>>> strided tx stakeibc add-validator GAIA gval1 $GAIA_VAL_ADDR 10 5... \n"

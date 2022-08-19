@@ -25,6 +25,9 @@ variable "regions" {
 variable "deployment_name" {
   type = string
 }
+variable "chain_name" {
+  type = string
+}
 variable "num_stride_nodes" {
   type    = number
   default = 3
@@ -32,6 +35,10 @@ variable "num_stride_nodes" {
 
 locals {
   stride_node_names = [
+    for i in range(1, var.num_stride_nodes + 1) : "stride-node${i}"
+  ]
+  stride_ip_prefix = [
+    # for i in range(1, var.num_stride_nodes + 1) : "stride-${var.chain_name}-node${i}"
     for i in range(1, var.num_stride_nodes + 1) : "stride-node${i}"
   ]
   stride_sizes = [
@@ -50,6 +57,7 @@ locals {
 
 locals {
   node_names = concat(local.stride_node_names, local.dependency_node_names)
+  node_ips = concat(local.stride_ip_prefix, local.dependency_node_names)
   node_sizes = concat(local.stride_sizes, local.dependency_sizes)
   node_types = concat(local.stride_vms, local.dependency_vms)
 }
@@ -67,7 +75,7 @@ module "images" {
 
 resource "google_compute_address" "internal-addresses" {
   count  = length(local.node_names)
-  name   = "${var.deployment_name}-${local.node_names[count.index]}"
+  name   = "${var.deployment_name}-${local.node_ips[count.index]}"
   region = element(var.regions, count.index)
 }
 
@@ -88,6 +96,7 @@ resource "google_compute_instance" "nodes" {
     initialize_params {
       image = "cos-cloud/cos-97-lts"
       size = local.node_sizes[count.index]
+      type = "pd-ssd"
     }
   }
 
@@ -135,7 +144,7 @@ resource "google_dns_record_set" "stridenet-sub-zone-name-service-in-parent" {
 # Type A (Static Hostname) for each node in the network: e.g. stride-node1.testnet.stridenet.co
 resource "google_dns_record_set" "external-addresses" {
   count = length(local.node_names)
-  name  = "${local.node_names[count.index]}.${google_dns_managed_zone.stridenet-network-sub-zone.dns_name}"
+  name  = "${local.node_ips[count.index]}.${google_dns_managed_zone.stridenet-network-sub-zone.dns_name}"
   type  = "A"
   ttl   = 300
 

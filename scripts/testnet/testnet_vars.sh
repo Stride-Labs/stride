@@ -7,6 +7,8 @@ STATE=$SCRIPT_DIR/state
 PORT_ID=26656
 DOMAIN=stridenet.co
 
+BLOCK_TIME=5s
+
 STRIDE_CMD="$SCRIPT_DIR/../../build/strided"
 STRIDE_MAIN_ENDPOINT="stride-node1.${DEPLOYMENT_NAME}.${DOMAIN}"
 

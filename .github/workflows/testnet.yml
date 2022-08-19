@@ -1,11 +1,14 @@
+name: Build Testnet Images
 on:
   workflow_dispatch:
     inputs:
       deployment_name:
         description: Testnet that you want to launch (e.g. poolparty)
         required: true
+      stride_chain_id:
+        description: Stride chain-id
+        required: true
 env:
-  stride_chain_id: STRIDE-TESTNET-2
   num_stride_nodes: 3
 
 jobs:
@@ -85,7 +88,7 @@ jobs:
           chmod +x -R ./build
           ./scripts/testnet/setup_testnet_state.sh \
             ${{ github.event.inputs.deployment_name }} \
-            ${stride_chain_id} \
+            ${{ github.event.inputs.stride_chain_id }} \
             ${num_stride_nodes} \
             ${{ secrets.STRIDE_TESTNET_MNEMONIC }}
 
