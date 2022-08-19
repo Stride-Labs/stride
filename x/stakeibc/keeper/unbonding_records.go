@@ -55,9 +55,13 @@ func (k Keeper) SendHostZoneUnbondings(ctx sdk.Context, hostZone types.HostZone)
 			k.Logger(ctx).Error(errMsg)
 			continue
 		}
-		if hostZoneRecord.Status == recordstypes.HostZoneUnbonding_BONDED { // we only send the ICA call if this hostZone hasn't triggered yet
+		// mark the epoch unbonding record for processing if it's bonded and the host zone unbonding has an amount g.t. zero
+		if hostZoneRecord.Status == recordstypes.HostZoneUnbonding_BONDED && hostZoneRecord.NativeTokenAmount > 0 {
 			totalAmtToUnbond += hostZoneRecord.NativeTokenAmount
 			epochUnbondingRecordIds = append(epochUnbondingRecordIds, epochUnbonding.EpochNumber)
+			k.Logger(ctx).Info(fmt.Sprintf("[SendHostZoneUnbondings] Sending unbondings, host zone: %s, epochUnbonding: %v", hostZone.ChainId, epochUnbonding))
+
+
 		}
 	}
 	delegationAccount := hostZone.GetDelegationAccount()
