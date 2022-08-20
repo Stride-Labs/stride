@@ -66,7 +66,7 @@ MAIN_NODE_CMD=""
 MAIN_NODE_ID=""
 MAIN_CONFIG=""
 MAIN_GENESIS=""
-echo 'Initializing gaia chain...'
+echo "Initializing $CHAIN_ID chain..."
 for (( i=1; i <= $NUM_NODES; i++ )); do
     # Node names will be of the form: "stride-node1"
     node_name="${NODE_PREFIX}${i}"
@@ -130,7 +130,7 @@ for (( i=1; i <= $NUM_NODES; i++ )); do
         cp ${STATE}/${node_name}/config/gentx/*.json ${STATE}/${MAIN_NODE_NAME}/config/gentx/
 
         # and add each validator's keys to the first state directory
-        echo "$val_mnemonic" | $MAIN_NODE_CMD keys add $val_acct --recover --keyring-backend=test 
+        echo "$val_mnemonic" | $MAIN_NODE_CMD keys add $val_acct --recover --keyring-backend=test 2> /dev/null
     fi
 done
 
