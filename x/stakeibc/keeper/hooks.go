@@ -286,7 +286,6 @@ func (k Keeper) TransferExistingDepositsToHostZones(ctx sdk.Context, epochNumber
 		return record.Status == recordstypes.DepositRecord_TRANSFER
 	})
 	ibcTimeoutBlocks := k.GetParam(ctx, types.KeyIbcTimeoutBlocks)
-	addr := k.accountKeeper.GetModuleAccount(ctx, types.ModuleName).GetAddress().String()
 	var emptyRecords []uint64
 	for _, depositRecord := range transferDepositRecords {
 		if depositRecord.DepositEpochNumber < cast.ToUint64(epochNumber) {
@@ -305,6 +304,7 @@ func (k Keeper) TransferExistingDepositsToHostZones(ctx sdk.Context, epochNumber
 				k.Logger(ctx).Error(fmt.Sprintf("[TransferExistingDepositsToHostZones] Host zone not found for deposit record id %d", depositRecord.Id))
 				continue
 			}
+			addr := hostZone.GetAddress()
 			delegateAccount := hostZone.GetDelegationAccount()
 			if delegateAccount == nil || delegateAccount.GetAddress() == "" {
 				k.Logger(ctx).Error(fmt.Sprintf("[TransferExistingDepositsToHostZones] Zone %s is missing a delegation address!", hostZone.ChainId))
