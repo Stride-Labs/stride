@@ -184,8 +184,17 @@ func (k Keeper) UpdateWithdrawalBalance(ctx sdk.Context, zoneInfo types.HostZone
 
 	_, addr, _ := bech32.DecodeAndConvert(withdrawalIca.GetAddress())
 	data := bankTypes.CreateAccountBalancesPrefix(addr)
+
+	// get ttl
+	ttl, err := k.GetStartTimeNextEpoch(ctx, epochstypes.DAY_EPOCH)
+	if err != nil {
+		errMsg := fmt.Sprintf("could not get start time for next epoch: %s", err.Error())
+		k.Logger(ctx).Error(errMsg)
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, errMsg)
+	}
+
 	k.Logger(ctx).Info("Querying for value", "key", icqtypes.BANK_STORE_QUERY_WITH_PROOF, "denom", zoneInfo.HostDenom)
-	err := k.InterchainQueryKeeper.MakeRequest(
+	err = k.InterchainQueryKeeper.MakeRequest(
 		ctx,
 		zoneInfo.ConnectionId,
 		zoneInfo.ChainId,
@@ -196,14 +205,24 @@ func (k Keeper) UpdateWithdrawalBalance(ctx sdk.Context, zoneInfo types.HostZone
 		sdk.NewInt(-1),
 		types.ModuleName,
 		"withdrawalbalance",
-		0, // ttl
-		0, // height always 0 (which means current height)
+		ttl, // ttl
+		0,   // height always 0 (which means current height)
 	)
 	if err != nil {
 		k.Logger(ctx).Error(fmt.Sprintf("Error querying for withdrawal balance, error: %s", err.Error()))
 		return err
 	}
 	return nil
+}
+
+// helper to get time at which next epoch begins, in unix nano units
+func (k Keeper) GetStartTimeNextEpoch(ctx sdk.Context, epochType string) (uint64, error) {
+	epochTracker, found := k.GetEpochTracker(ctx, epochType)
+	if !found {
+		k.Logger(ctx).Error(fmt.Sprintf("Failed to get epoch tracker for %s", epochType))
+		return 0, sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "Failed to get epoch tracker for %s", epochType)
+	}
+	return epochTracker.NextEpochStartTime, nil
 }
 
 func (k Keeper) SubmitTxsDayEpoch(
@@ -409,6 +428,14 @@ func (k Keeper) QueryValidatorExchangeRate(ctx sdk.Context, msg *types.MsgUpdate
 	}
 	data := stakingtypes.GetValidatorKey(valAddr)
 
+	// get ttl
+	ttl, err := k.GetStartTimeNextEpoch(ctx, epochstypes.DAY_EPOCH)
+	if err != nil {
+		errMsg := fmt.Sprintf("could not get start time for next epoch: %s", err.Error())
+		k.Logger(ctx).Error(errMsg)
+		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, errMsg)
+	}
+
 	k.Logger(ctx).Info(fmt.Sprintf("Querying validator %v key %v denom %v", valAddr, icqtypes.STAKING_STORE_QUERY_WITH_PROOF, hostZone.HostDenom))
 	err = k.InterchainQueryKeeper.MakeRequest(
 		ctx,
@@ -421,8 +448,8 @@ func (k Keeper) QueryValidatorExchangeRate(ctx sdk.Context, msg *types.MsgUpdate
 		sdk.NewInt(-1),
 		types.ModuleName,
 		"validator",
-		0, // ttl
-		0, // height always 0 (which means current height)
+		ttl, // ttl
+		0,   // height always 0 (which means current height)
 	)
 	if err != nil {
 		k.Logger(ctx).Error(fmt.Sprintf("Error querying for validator, error %s", err.Error()))
@@ -452,6 +479,14 @@ func (k Keeper) QueryDelegationsIcq(ctx sdk.Context, hostZone types.HostZone, va
 	_, delAddr, _ := bech32.DecodeAndConvert(delegationAcctAddr)
 	data := stakingtypes.GetDelegationKey(delAddr, valAddr)
 
+	// get ttl
+	ttl, err := k.GetStartTimeNextEpoch(ctx, epochstypes.DAY_EPOCH)
+	if err != nil {
+		errMsg := fmt.Sprintf("could not get start time for next epoch: %s", err.Error())
+		k.Logger(ctx).Error(errMsg)
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, errMsg)
+	}
+
 	k.Logger(ctx).Info(fmt.Sprintf("Querying delegation for %s on %s", delAddr, valoper))
 	err = k.InterchainQueryKeeper.MakeRequest(
 		ctx,
@@ -464,8 +499,8 @@ func (k Keeper) QueryDelegationsIcq(ctx sdk.Context, hostZone types.HostZone, va
 		sdk.NewInt(-1),
 		types.ModuleName,
 		"delegation",
-		0, // ttl
-		0, // height always 0 (which means current height)
+		ttl, // ttl
+		0,   // height always 0 (which means current height)
 	)
 	if err != nil {
 		k.Logger(ctx).Error(fmt.Sprintf("Error querying for delegation, error : %s", err.Error()))
