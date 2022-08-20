@@ -10,7 +10,7 @@ import (
 func (app *StrideApp) setupUpgradeHandlers() {
 	upgradeInfo, err := app.UpgradeKeeper.ReadUpgradeInfoFromDisk()
 	if err != nil {
-		panic(fmt.Errorf("Failed to read upgrade info from disk: %w", err))
+		panic(fmt.Errorf("failed to read upgrade info from disk: %w", err))
 	}
 
 	if app.UpgradeKeeper.IsSkipHeight(upgradeInfo.Height) {

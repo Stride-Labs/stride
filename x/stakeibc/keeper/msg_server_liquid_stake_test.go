@@ -9,7 +9,6 @@ import (
 	epochtypes "github.com/Stride-Labs/stride/x/epochs/types"
 	recordtypes "github.com/Stride-Labs/stride/x/records/types"
 	"github.com/Stride-Labs/stride/x/stakeibc/types"
-	stakeibc "github.com/Stride-Labs/stride/x/stakeibc/types"
 )
 
 const (
@@ -33,7 +32,7 @@ type LiquidStakeTestCase struct {
 	user         Account
 	module       Account
 	initialState LiquidStakeState
-	validMsg     stakeibc.MsgLiquidStake
+	validMsg     types.MsgLiquidStake
 }
 
 func (s *KeeperTestSuite) SetupLiquidStake() LiquidStakeTestCase {
@@ -47,21 +46,21 @@ func (s *KeeperTestSuite) SetupLiquidStake() LiquidStakeTestCase {
 	s.FundAccount(user.acc, user.atomBalance)
 
 	module := Account{
-		acc:           s.App.AccountKeeper.GetModuleAddress(stakeibc.ModuleName),
+		acc:           s.App.AccountKeeper.GetModuleAddress(types.ModuleName),
 		atomBalance:   sdk.NewInt64Coin(ibcAtom, 10_000_000),
 		stAtomBalance: sdk.NewInt64Coin(stAtom, 10_000_000),
 	}
-	s.FundModuleAccount(stakeibc.ModuleName, module.atomBalance)
-	s.FundModuleAccount(stakeibc.ModuleName, module.stAtomBalance)
+	s.FundModuleAccount(types.ModuleName, module.atomBalance)
+	s.FundModuleAccount(types.ModuleName, module.stAtomBalance)
 
-	hostZone := stakeibc.HostZone{
+	hostZone := types.HostZone{
 		ChainId:        "GAIA",
 		HostDenom:      atom,
 		IBCDenom:       ibcAtom,
 		RedemptionRate: sdk.NewDec(1.0),
 	}
 
-	epochTracker := stakeibc.EpochTracker{
+	epochTracker := types.EpochTracker{
 		EpochIdentifier: epochtypes.STRIDE_EPOCH,
 		EpochNumber:     1,
 	}
@@ -84,7 +83,7 @@ func (s *KeeperTestSuite) SetupLiquidStake() LiquidStakeTestCase {
 			depositRecordAmount: initialDepositAmount,
 			hostZone:            hostZone,
 		},
-		validMsg: stakeibc.MsgLiquidStake{
+		validMsg: types.MsgLiquidStake{
 			Creator:   user.acc.String(),
 			HostDenom: atom,
 			Amount:    stakeAmount,

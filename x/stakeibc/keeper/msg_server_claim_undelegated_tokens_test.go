@@ -9,17 +9,16 @@ import (
 	recordtypes "github.com/Stride-Labs/stride/x/records/types"
 	stakeibckeeper "github.com/Stride-Labs/stride/x/stakeibc/keeper"
 	"github.com/Stride-Labs/stride/x/stakeibc/types"
-	stakeibc "github.com/Stride-Labs/stride/x/stakeibc/types"
 )
 
 type ClaimUndelegatedState struct {
-	hostZone           stakeibc.HostZone
+	hostZone           types.HostZone
 	redemptionRecordId string
 	redemptionRecord   recordtypes.UserRedemptionRecord
 }
 
 type ClaimUndelegatedTestCase struct {
-	validMsg       stakeibc.MsgClaimUndelegatedTokens
+	validMsg       types.MsgClaimUndelegatedTokens
 	initialState   ClaimUndelegatedState
 	expectedIcaMsg stakeibckeeper.IcaTx
 }
@@ -32,11 +31,11 @@ func (s *KeeperTestSuite) SetupClaimUndelegatedTokens() ClaimUndelegatedTestCase
 	redemptionRecordId := "GAIA.1.stride_SENDER"
 	connectionId := "connection-0"
 
-	redemptionAccount := stakeibc.ICAAccount{
+	redemptionAccount := types.ICAAccount{
 		Address: redemptionAddr,
-		Target:  stakeibc.ICAAccountType_REDEMPTION,
+		Target:  types.ICAAccountType_REDEMPTION,
 	}
-	hostZone := stakeibc.HostZone{
+	hostZone := types.HostZone{
 		ChainId:           chainId,
 		RedemptionAccount: &redemptionAccount,
 		ConnectionId:      connectionId,
@@ -54,7 +53,7 @@ func (s *KeeperTestSuite) SetupClaimUndelegatedTokens() ClaimUndelegatedTestCase
 	}
 	redemptionAmount := sdk.NewCoins(sdk.NewInt64Coin(redemptionRecord.Denom, int64(redemptionRecord.Amount)))
 
-	epochTracker := stakeibc.EpochTracker{
+	epochTracker := types.EpochTracker{
 		EpochIdentifier:    epochtypes.STRIDE_EPOCH,
 		EpochNumber:        1,
 		NextEpochStartTime: 0,
@@ -65,7 +64,7 @@ func (s *KeeperTestSuite) SetupClaimUndelegatedTokens() ClaimUndelegatedTestCase
 	s.App.RecordsKeeper.SetUserRedemptionRecord(s.Ctx, redemptionRecord)
 
 	return ClaimUndelegatedTestCase{
-		validMsg: stakeibc.MsgClaimUndelegatedTokens{
+		validMsg: types.MsgClaimUndelegatedTokens{
 			Creator:    senderAddr,
 			HostZoneId: "GAIA",
 			Epoch:      1,
