@@ -32,19 +32,20 @@ var _ types.MsgServer = msgServer{}
 func (k msgServer) SubmitQueryResponse(goCtx context.Context, msg *types.MsgSubmitQueryResponse) (*types.MsgSubmitQueryResponseResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	q, found := k.GetQuery(ctx, msg.QueryId)
+
 	if found {
 
-		// EXIT QUERY RESPONSE IF WE EXCEEDED THE TTL
-		k.Logger(ctx).Info(fmt.Sprintf("[ICQ Resp] ttl is %d, height now %d vs %d at submission", q.Ttl, q.LastHeight.Int64(), ctx.BlockHeader().Height))
-		curH, err := cast.ToUint64E(ctx.BlockHeader().Height)
+		// ABORT PROCESSING QUERY RESPONSE IF WE EXCEEDED THE TTL
+		k.Logger(ctx).Info(fmt.Sprintf("[ICQ Resp] query %s with ttl: %d, resp time: %d.", msg.QueryId, q.Ttl, ctx.BlockHeader().Time.UnixNano()))
+		curT, err := cast.ToUint64E(ctx.BlockHeader().Time.UnixNano())
 		if err != nil {
 			return nil, err
 		}
-		if (q.LastHeight.Uint64() + q.Ttl) < curH {
-			errMsg := fmt.Sprintf("[ICQ Resp] aborting query callback due to ttl expiry! ttl is %d, height now %d vs %d at submission for query of type %s with id %s, on chain %s", q.Ttl, q.LastHeight.Int64(), ctx.BlockHeader().Height, q.QueryType, q.ChainId, msg.QueryId)
+		if q.Ttl < curT {
+			errMsg := fmt.Sprintf("[ICQ Resp] aborting query callback due to ttl expiry! ttl is %d, time now %d for query of type %s with id %s, on chain %s", q.Ttl, ctx.BlockHeader().Time.UnixNano(), q.QueryType, q.ChainId, msg.QueryId)
 			k.DeleteQuery(ctx, msg.QueryId)
 			k.Logger(ctx).Info(errMsg)
-			return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidHeight, errMsg)
+			return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, errMsg)
 		}
 
 		// PROCESS QUERY RESPONSE
