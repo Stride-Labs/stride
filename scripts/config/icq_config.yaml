@@ -42,3 +42,17 @@ chains:
     block-timeout: ""
     output-format: json
     sign-mode: direct
+  osmo:
+    key: icq4
+    chain-id: OSMO
+    rpc-addr: http://osmo1:26657
+    grpc-addr: http://osmo1:9090
+    account-prefix: osmo
+    keyring-backend: test
+    gas-adjustment: 1.2
+    gas-prices: 1uosmo
+    debug: false
+    timeout: 20s
+    block-timeout: ""
+    output-format: json
+    sign-mode: direct
