@@ -58,7 +58,11 @@ func (k msgServer) LiquidStake(goCtx context.Context, msg *types.MsgLiquidStake)
 		return nil, sdkerrors.Wrapf(types.ErrRedemptionRateOutsideSafetyBounds, errMsg)
 	}
 
-	err = k.bankKeeper.SendCoinsFromAccountToModule(ctx, sender, types.ModuleName, sdk.NewCoins(inCoin))
+	bech32ZoneAddress, err := sdk.AccAddressFromBech32(hostZone.Address)
+	if err != nil {
+		return nil, fmt.Errorf("could not bech32 decode address %s of zone with id: %s", hostZone.Address, hostZone.ChainId)
+	}
+	err = k.bankKeeper.SendCoins(ctx, sender, bech32ZoneAddress, sdk.NewCoins(inCoin))
 	if err != nil {
 		k.Logger(ctx).Error("failed to send tokens from Account to Module")
 		return nil, sdkerrors.Wrap(err, "failed to send tokens from Account to Module")
