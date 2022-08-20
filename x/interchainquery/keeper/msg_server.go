@@ -134,13 +134,6 @@ func (k msgServer) SubmitQueryResponse(goCtx context.Context, msg *types.MsgSubm
 			}
 		}
 
-		if q.Ttl > 0 {
-			// don't store if ttl is 0
-			if err := k.SetDatapointForId(ctx, msg.QueryId, msg.Result, sdk.NewInt(msg.Height)); err != nil {
-				return nil, err
-			}
-		}
-
 		if q.Period.IsNegative() {
 			if !noDelete {
 				k.DeleteQuery(ctx, msg.QueryId)
