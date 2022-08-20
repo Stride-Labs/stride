@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	clienttypes "github.com/cosmos/ibc-go/v3/modules/core/02-client/types"
 	commitmenttypes "github.com/cosmos/ibc-go/v3/modules/core/23-commitment/types"
 	tmclienttypes "github.com/cosmos/ibc-go/v3/modules/light-clients/07-tendermint/types"
@@ -32,7 +33,26 @@ func (k msgServer) SubmitQueryResponse(goCtx context.Context, msg *types.MsgSubm
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	q, found := k.GetQuery(ctx, msg.QueryId)
 	if found {
+
+		// EXIT QUERY RESPONSE IF WE EXCEEDED THE TTL
+		k.Logger(ctx).Info(fmt.Sprintf("[ICQ Resp] ttl is %d, height now %d vs %d at submission", q.Ttl, q.LastHeight.Int64(), ctx.BlockHeader().Height))
+		curH, err := cast.ToUint64E(ctx.BlockHeader().Height)
+		if err != nil {
+			return nil, err
+		}
+		if (q.LastHeight.Uint64() + q.Ttl) < curH {
+			errMsg := fmt.Sprintf("[ICQ Resp] aborting query callback due to ttl expiry! ttl is %d, height now %d vs %d at submission for query of type %s with id %s, on chain %s", q.Ttl, q.LastHeight.Int64(), ctx.BlockHeader().Height, q.QueryType, q.ChainId, msg.QueryId)
+			k.Logger(ctx).Info(fmt.Sprintf("[ICQ Resp] before deletion, callbacks are %v", len(k.callbacks)))
+			k.DeleteQuery(ctx, msg.QueryId)
+			k.Logger(ctx).Info(fmt.Sprintf("[ICQ Resp] after deletion, callbacks are %v", len(k.callbacks)))
+			k.Logger(ctx).Info(errMsg)
+			return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidHeight, errMsg)
+		}
+
+		// PROCESS QUERY RESPONSE
 		pathParts := strings.Split(q.QueryType, "/")
+
+		// verify the query results are valid by checking the assocaited proof
 		if pathParts[len(pathParts)-1] == "key" {
 			if msg.ProofOps == nil {
 				return nil, fmt.Errorf("unable to validate proof. No proof submitted")
