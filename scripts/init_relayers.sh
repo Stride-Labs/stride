@@ -22,11 +22,8 @@ cp ${SCRIPT_DIR}/config/relayer_config.yaml $STATE/relayer/config/config.yaml
 
 echo "Adding Hermes keys"
 for chain_id in ${CHAINS[@]}; do
-    __account_name_var=HERMES_${chain_id}_ACCT
-    __mnemonic_var=HERMES_${chain_id}_MNEMONIC
-
-    account_name=${!__account_name_var}
-    mnemonic=${!__mnemonic_var}
+    account_name=$(GET_VAR_VALUE HERMES_${chain_id}_ACCT)
+    mnemonic=$(GET_VAR_VALUE     HERMES_${chain_id}_MNEMONIC)
 
     $HERMES_CMD keys restore --name $account_name --mnemonic "$mnemonic" $chain_id 
 done
@@ -45,11 +42,8 @@ done
 
 echo "Adding ICQ keys"
 for chain_id in ${CHAINS[@]}; do
-    __account_name_var=ICQ_${chain_id}_ACCT
-    __mnemonic_var=ICQ_${chain_id}_MNEMONIC
-
-    account_name=${!__account_name_var}
-    mnemonic=${!__mnemonic_var}
+    account_name=$(GET_VAR_VALUE ICQ_${chain_id}_ACCT)
+    mnemonic=$(GET_VAR_VALUE     ICQ_${chain_id}_MNEMONIC)
     chain_name=$(printf "$chain_id" | awk '{ print tolower($0) }')
 
     echo $mnemonic | $ICQ_CMD keys restore $account_name --chain $chain_name 
