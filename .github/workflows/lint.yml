@@ -20,3 +20,5 @@ jobs:
         with:
             version: v1.46.2
             args: --timeout 10m
+      - name: lint-locally
+        run: make lint
