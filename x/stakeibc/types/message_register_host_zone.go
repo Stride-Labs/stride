@@ -89,10 +89,11 @@ func (msg *MsgRegisterHostZone) ValidateBasic() error {
 	if !strings.HasPrefix(msg.ConnectionId, "connection") {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "connection id must begin with 'connection'")
 	}
-	// transfer channel id cannot be empty and must begin with "transfer"
+	// transfer channel id cannot be empty
 	if msg.TransferChannelId == "" {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "transfer channel id cannot be empty")
 	}
+	// transfer channel id must begin with "channel"
 	if !strings.HasPrefix(msg.TransferChannelId, "channel") {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "transfer channel id must begin with 'channel'")
 	}
