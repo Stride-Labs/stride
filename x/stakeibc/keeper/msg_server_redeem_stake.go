@@ -125,7 +125,7 @@ func (k msgServer) RedeemStake(goCtx context.Context, msg *types.MsgRedeemStake)
 
 	// Set the UserUnbondingRecords on the proper HostZoneUnbondingRecord
 	hostZoneUnbondings := epochUnbondingRecord.GetHostZoneUnbondings()
-	if len(hostZoneUnbondings) == 0 {
+	if hostZoneUnbondings == nil {
 		hostZoneUnbondings = []*recordstypes.HostZoneUnbonding{}
 		epochUnbondingRecord.HostZoneUnbondings = hostZoneUnbondings
 	}
