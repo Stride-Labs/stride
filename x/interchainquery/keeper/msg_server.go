@@ -37,7 +37,8 @@ func (k msgServer) SubmitQueryResponse(goCtx context.Context, msg *types.MsgSubm
 
 		// ABORT PROCESSING QUERY RESPONSE IF WE EXCEEDED THE TTL
 		k.Logger(ctx).Info(fmt.Sprintf("[ICQ Resp] query %s with ttl: %d, resp time: %d.", msg.QueryId, q.Ttl, ctx.BlockHeader().Time.UnixNano()))
-		curT, err := cast.ToUint64E(ctx.BlockHeader().Time.UnixNano())
+		curT, err := cast.ToUint64E(ctx.BlockTime().UnixNano())
+
 		if err != nil {
 			return nil, err
 		}
