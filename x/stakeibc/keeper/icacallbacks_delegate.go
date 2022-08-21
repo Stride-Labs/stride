@@ -5,7 +5,10 @@ import (
 
 	"github.com/spf13/cast"
 
+	"github.com/Stride-Labs/stride/x/icacallbacks"
 	"github.com/Stride-Labs/stride/x/stakeibc/types"
+
+	icacallbackstypes "github.com/Stride-Labs/stride/x/icacallbacks/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -31,14 +34,21 @@ func (k Keeper) UnmarshalDelegateCallbackArgs(ctx sdk.Context, delegateCallback 
 	return &unmarshalledDelegateCallback, nil
 }
 
-func DelegateCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, txMsgData *sdk.TxMsgData, args []byte) error {
+func DelegateCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ack *channeltypes.Acknowledgement, args []byte) error {
 	k.Logger(ctx).Info("DelegateCallback executing", "packet", packet)
-
-	if txMsgData == nil {
+	if ack == nil {
 		// timeout
 		k.Logger(ctx).Error(fmt.Sprintf("DelegateCallback timeout, ack is nil, packet %v", packet))
 		return nil
-	} else if len(txMsgData.Data) == 0 {
+	}
+
+	txMsgData, err := icacallbacks.GetTxMsgData(ctx, *ack, k.Logger(ctx))
+	if err != nil {
+		k.Logger(ctx).Error(fmt.Sprintf("failed to fetch txMsgData, packet %v", packet))
+		return sdkerrors.Wrap(icacallbackstypes.ErrTxMsgData, err.Error())
+	}
+
+	if len(txMsgData.Data) == 0 {
 		// failed transaction
 		k.Logger(ctx).Error(fmt.Sprintf("DelegateCallback tx failed, txMsgData is empty (ack error), packet %v", packet))
 		return nil

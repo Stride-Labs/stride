@@ -13,7 +13,6 @@ import (
 
 	"github.com/Stride-Labs/stride/x/records/keeper"
 	"github.com/Stride-Labs/stride/x/records/types"
-	stakeibctypes "github.com/Stride-Labs/stride/x/stakeibc/types"
 
 	// "google.golang.org/protobuf/proto" <-- this breaks tx parsing
 
@@ -184,28 +183,25 @@ func (im IBCModule) OnAcknowledgementPacket(
 	// Custom ack logic only applies to ibc transfers initiated from the `stakeibc` module account
 	// NOTE: if the `stakeibc` module account IBC transfers tokens for some other reason in the future,
 	// this will need to be updated
-	if data.Sender == im.keeper.AccountKeeper.GetModuleAddress(stakeibctypes.ModuleName).String() {
-		switch resp := ack.Response.(type) {
-		case *channeltypes.Acknowledgement_Result:
-			im.keeper.Logger(ctx).Info(fmt.Sprintf("[IBC-TRANSFER] Acknowledgement_Result {%s}", string(resp.Result)))
-			// UPDATE RECORD
-			// match record based on amount
-			amount, err := strconv.ParseInt(data.Amount, 10, 64)
-			if err != nil {
-				return sdkerrors.Wrapf(sdkerrors.ErrInvalidType, "Error parsing int %d", amount)
-			}
-			record, found := im.keeper.GetTransferDepositRecordByAmount(ctx, amount)
-			if !found {
-				return sdkerrors.Wrapf(sdkerrors.ErrNotFound, "No deposit record found for amount: %d", amount)
-			}
-			// update the record
-			record.Status = types.DepositRecord_STAKE
-			im.keeper.SetDepositRecord(ctx, *record)
-			im.keeper.Logger(ctx).Info(fmt.Sprintf("[IBC-TRANSFER] Deposit record updated to STAKE: {%v}", record))
-			im.keeper.Logger(ctx).Info(fmt.Sprintf("[IBC-TRANSFER] success to %s", record.HostZoneId))
-		case *channeltypes.Acknowledgement_Error:
-			im.keeper.Logger(ctx).Error(fmt.Sprintf("[IBC-TRANSFER] Acknowledgement_Error {%s}", resp.Error))
+	switch resp := ack.Response.(type) {
+	case *channeltypes.Acknowledgement_Result:
+		im.keeper.Logger(ctx).Info(fmt.Sprintf("\t [IBC-TRANSFER] Acknowledgement_Result {%s}", string(resp.Result)))
+		// UPDATE RECORD
+		// match record based on amount
+		amount, err := strconv.ParseInt(data.Amount, 10, 64)
+		if err != nil {
+			return sdkerrors.Wrapf(sdkerrors.ErrInvalidType, "Error parsing int %d", amount)
 		}
+		record, found := im.keeper.GetTransferDepositRecordByAmount(ctx, amount)
+		if !found {
+			return sdkerrors.Wrapf(sdkerrors.ErrNotFound, "No deposit record found for amount: %d", amount)
+		}
+		// update the record
+		record.Status = types.DepositRecord_STAKE
+		im.keeper.SetDepositRecord(ctx, *record)
+		im.keeper.Logger(ctx).Info(fmt.Sprintf("\t [IBC-TRANSFER] Deposit record updated: {%v}", record))
+	case *channeltypes.Acknowledgement_Error:
+		im.keeper.Logger(ctx).Error(fmt.Sprintf("\t [IBC-TRANSFER] Acknowledgement_Error {%s}", resp.Error))
 	}
 
 	return im.app.OnAcknowledgementPacket(ctx, packet, acknowledgement, relayer)

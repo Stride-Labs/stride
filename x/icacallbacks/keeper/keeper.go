@@ -87,36 +87,50 @@ func (k *Keeper) ClaimCapability(ctx sdk.Context, cap *capabilitytypes.Capabilit
 	return k.scopedKeeper.ClaimCapability(ctx, cap, name)
 }
 
-func (k Keeper) CallRegisteredICACallback(ctx sdk.Context, modulePacket channeltypes.Packet, txMsgData *sdk.TxMsgData) error {
+func (k Keeper) GetCallbackDataFromPacket(ctx sdk.Context, modulePacket channeltypes.Packet, callbackDataKey string) (*types.CallbackData, error) {
 	// get the relevant module from the channel and port
 	portID := modulePacket.GetSourcePort()
 	channelID := modulePacket.GetSourceChannel()
-	module, _, err := k.IBCKeeper.ChannelKeeper.LookupModuleByChannel(ctx, portID, channelID)
-	if err != nil {
-		return err
-	}
 	// fetch the callback data
-	callbackDataKey := types.PacketID(portID, channelID, modulePacket.Sequence)
 	callbackData, found := k.GetCallbackData(ctx, callbackDataKey)
 	if !found {
 		k.Logger(ctx).Info(fmt.Sprintf("callback data not found for portID: %s, channelID: %s, sequence: %d", portID, channelID, modulePacket.Sequence))
-		return nil
+		return nil, sdkerrors.Wrapf(types.ErrCallbackDataNotFound, "portID: %s, channelID: %s, sequence: %d", portID, channelID, modulePacket.Sequence)
 	} else {
 		k.Logger(ctx).Info(fmt.Sprintf("callback data found for portID: %s, channelID: %s, sequence: %d", portID, channelID, modulePacket.Sequence))
 	}
+	return &callbackData, nil
+}
 
+func (k Keeper) GetICACallbackHandlerFromPacket(ctx sdk.Context, modulePacket channeltypes.Packet) (*types.ICACallbackHandler, error) {
+	module, _, err := k.IBCKeeper.ChannelKeeper.LookupModuleByChannel(ctx, modulePacket.GetSourcePort(), modulePacket.GetSourceChannel())
+	if err != nil {
+		return nil, err
+	}
 	// fetch the callback function
 	callbackHandler, err := k.GetICACallbackHandler(module)
 	if err != nil {
-		errMsg := fmt.Sprintf("Callback handler does not exist for module %s | err: %s", module, err.Error())
-		k.Logger(ctx).Error(errMsg)
-		return sdkerrors.Wrapf(types.ErrCallbackHandlerNotFound, errMsg)
+		return nil, sdkerrors.Wrapf(types.ErrCallbackHandlerNotFound, "Callback handler does not exist for module %s | err: %s", module, err.Error())
+	}
+	return &callbackHandler, nil
+}
+
+
+func (k Keeper) CallRegisteredICACallback(ctx sdk.Context, modulePacket channeltypes.Packet, ack *channeltypes.Acknowledgement) error {
+	callbackDataKey := types.PacketID(modulePacket.GetSourcePort(), modulePacket.GetSourceChannel(), modulePacket.Sequence)
+	callbackData, err := k.GetCallbackDataFromPacket(ctx, modulePacket, callbackDataKey)
+	if err != nil {
+		return err
+	}
+	callbackHandler, err := k.GetICACallbackHandlerFromPacket(ctx, modulePacket)
+	if err != nil {
+		return err
 	}
 
 	// call the callback
-	if callbackHandler.HasICACallback(callbackData.CallbackId) {
+	if (*callbackHandler).HasICACallback(callbackData.CallbackId) {
 		// if acknowledgement is empty, then it is a timeout
-		err := callbackHandler.CallICACallback(ctx, callbackData.CallbackId, modulePacket, txMsgData, callbackData.CallbackArgs)
+		err := (*callbackHandler).CallICACallback(ctx, callbackData.CallbackId, modulePacket, ack, callbackData.CallbackArgs)
 		if err != nil {
 			errMsg := fmt.Sprintf("Error occured while calling ICACallback (%s) | err: %s", callbackData.CallbackId, err.Error())
 			k.Logger(ctx).Error(errMsg)

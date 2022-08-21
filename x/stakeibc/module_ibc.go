@@ -10,7 +10,6 @@ import (
 	channeltypes "github.com/cosmos/ibc-go/v3/modules/core/04-channel/types"
 	host "github.com/cosmos/ibc-go/v3/modules/core/24-host"
 	ibcexported "github.com/cosmos/ibc-go/v3/modules/core/exported"
-	"github.com/gogo/protobuf/proto"
 
 	icacallbacktypes "github.com/Stride-Labs/stride/x/icacallbacks/types"
 
@@ -145,16 +144,7 @@ func (im IBCModule) OnAcknowledgementPacket(
 		im.keeper.Logger(ctx).Error(errMsg)
 		return sdkerrors.Wrapf(types.ErrMarshalFailure, errMsg)
 	}
-
-	txMsgData, err := im.GetTxMsgData(ctx, ack)
-	if err != nil {
-		errMsg := fmt.Sprintf("Unable to unmarshal ack from stakeibc OnAcknowledgePacket | Sequence %d, from %s %s, to %s %s",
-			modulePacket.Sequence, modulePacket.SourceChannel, modulePacket.SourcePort, modulePacket.DestinationChannel, modulePacket.DestinationPort)
-		im.keeper.Logger(ctx).Error(errMsg)
-		return sdkerrors.Wrapf(types.ErrMarshalFailure, errMsg)
-	}
-
-	im.keeper.Logger(ctx).Info(fmt.Sprintf("Acknowledgement was successfully unmarshalled: ackInfo: %s, txMsgData: %v", ackInfo, txMsgData))
+	im.keeper.Logger(ctx).Info(fmt.Sprintf("Acknowledgement was successfully unmarshalled: ackInfo: %s", ackInfo))
 	eventType := "ack"
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
@@ -164,7 +154,7 @@ func (im IBCModule) OnAcknowledgementPacket(
 		),
 	)
 
-	err = im.keeper.ICACallbacksKeeper.CallRegisteredICACallback(ctx, modulePacket, txMsgData)
+	err = im.keeper.ICACallbacksKeeper.CallRegisteredICACallback(ctx, modulePacket, ack)
 	if err != nil {
 		errMsg := fmt.Sprintf("Unable to call registered callback from stakeibc OnAcknowledgePacket | Sequence %d, from %s %s, to %s %s",
 			modulePacket.Sequence, modulePacket.SourceChannel, modulePacket.SourcePort, modulePacket.DestinationChannel, modulePacket.DestinationPort)
@@ -210,28 +200,6 @@ func (im IBCModule) NegotiateAppVersion(
 	proposedVersion string,
 ) (version string, err error) {
 	return proposedVersion, nil
-}
-
-func (im IBCModule) GetTxMsgData(ctx sdk.Context, ack channeltypes.Acknowledgement) (*sdk.TxMsgData, error) {
-	txMsgData := &sdk.TxMsgData{}
-	switch response := ack.Response.(type) {
-	case *channeltypes.Acknowledgement_Result:
-		if len(response.Result) == 0 {
-			return nil, sdkerrors.Wrapf(channeltypes.ErrInvalidAcknowledgement, "acknowledgement result cannot be empty")
-		}
-		err := proto.Unmarshal(ack.GetResult(), txMsgData)
-		if err != nil {
-			im.keeper.Logger(ctx).Error(fmt.Sprintf("cannot unmarshal ICS-27 tx message data: %s", err.Error()))
-			return nil, sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "cannot unmarshal ICS-27 tx message data: %s", err.Error())
-		}
-		return txMsgData, nil
-	case *channeltypes.Acknowledgement_Error:
-		im.keeper.Logger(ctx).Error(fmt.Sprintf("acknowledgement error: %s", response.Error))
-		return txMsgData, nil
-
-	default:
-		return nil, sdkerrors.Wrapf(channeltypes.ErrInvalidAcknowledgement, "unsupported acknowledgement response field type %T", response)
-	}
 }
 
 // ###################################################################################

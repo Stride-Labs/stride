@@ -1,0 +1,9 @@
+syntax = "proto3";
+package Stridelabs.stride.records;
+option go_package = "github.com/Stride-Labs/stride/x/records/types";
+// import "gogoproto/gogo.proto";
+
+// ---------------------- Transfer Callback ---------------------- //
+message TransferCallback {
+  uint64 depositRecordId = 1;
+}
