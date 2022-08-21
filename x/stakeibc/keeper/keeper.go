@@ -23,7 +23,7 @@ import (
 	ibctmtypes "github.com/cosmos/ibc-go/v3/modules/light-clients/07-tendermint/types"
 
 	epochstypes "github.com/Stride-Labs/stride/x/epochs/types"
-	icacallbacksmodulekeeper "github.com/Stride-Labs/stride/x/icacallbacks/keeper"
+	icacallbackskeeper "github.com/Stride-Labs/stride/x/icacallbacks/keeper"
 	recordsmodulekeeper "github.com/Stride-Labs/stride/x/records/keeper"
 )
 
@@ -41,7 +41,7 @@ type (
 		InterchainQueryKeeper icqkeeper.Keeper
 		RecordsKeeper         recordsmodulekeeper.Keeper
 		StakingKeeper         stakingkeeper.Keeper
-		ICACallbacksKeeper    icacallbacksmodulekeeper.Keeper
+		ICACallbacksKeeper    icacallbackskeeper.Keeper
 
 		accountKeeper types.AccountKeeper
 	}
@@ -63,7 +63,7 @@ func NewKeeper(
 	interchainQueryKeeper icqkeeper.Keeper,
 	RecordsKeeper recordsmodulekeeper.Keeper,
 	StakingKeeper stakingkeeper.Keeper,
-	ICACallbacksKeeper icacallbacksmodulekeeper.Keeper,
+	ICACallbacksKeeper icacallbackskeeper.Keeper,
 ) Keeper {
 	// set KeyTable if it has not already been set
 	if !ps.HasKeyTable() {

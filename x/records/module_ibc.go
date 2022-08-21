@@ -2,7 +2,6 @@ package records
 
 import (
 	"fmt"
-	"strconv"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -11,8 +10,9 @@ import (
 	channeltypes "github.com/cosmos/ibc-go/v3/modules/core/04-channel/types"
 	porttypes "github.com/cosmos/ibc-go/v3/modules/core/05-port/types"
 
+	icacallbacktypes "github.com/Stride-Labs/stride/x/icacallbacks/types"
+
 	"github.com/Stride-Labs/stride/x/records/keeper"
-	"github.com/Stride-Labs/stride/x/records/types"
 
 	// "google.golang.org/protobuf/proto" <-- this breaks tx parsing
 
@@ -167,17 +167,13 @@ func (im IBCModule) OnAcknowledgementPacket(
 	acknowledgement []byte,
 	relayer sdk.AccAddress,
 ) error {
+	im.keeper.Logger(ctx).Error(fmt.Sprintf("[IBC-TRANSFER] OnAcknowledgementPacket  %v", packet))
 	// doCustomLogic(packet, ack)
 	// ICS-20 ack
 	var ack channeltypes.Acknowledgement
 	if err := ibctransfertypes.ModuleCdc.UnmarshalJSON(acknowledgement, &ack); err != nil {
 		im.keeper.Logger(ctx).Error(fmt.Sprintf("Error unmarshalling ack  %v", err.Error()))
 		return sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "cannot unmarshal ICS-20 transfer packet acknowledgement: %v", err)
-	}
-	var data ibctransfertypes.FungibleTokenPacketData
-	if err := ibctransfertypes.ModuleCdc.UnmarshalJSON(packet.GetData(), &data); err != nil {
-		im.keeper.Logger(ctx).Error(fmt.Sprintf("Error unmarshalling packet  %v", err.Error()))
-		return sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "cannot unmarshal ICS-20 transfer packet data: %s", err.Error())
 	}
 
 	// Custom ack logic only applies to ibc transfers initiated from the `stakeibc` module account
@@ -186,22 +182,18 @@ func (im IBCModule) OnAcknowledgementPacket(
 	switch resp := ack.Response.(type) {
 	case *channeltypes.Acknowledgement_Result:
 		im.keeper.Logger(ctx).Info(fmt.Sprintf("\t [IBC-TRANSFER] Acknowledgement_Result {%s}", string(resp.Result)))
-		// UPDATE RECORD
-		// match record based on amount
-		amount, err := strconv.ParseInt(data.Amount, 10, 64)
+		// callback
+		err := im.keeper.ICACallbacksKeeper.CallRegisteredICACallback(ctx, packet, &ack)
 		if err != nil {
-			return sdkerrors.Wrapf(sdkerrors.ErrInvalidType, "Error parsing int %d", amount)
+			errMsg := fmt.Sprintf("Unable to call registered callback from records OnAcknowledgePacket | Sequence %d, from %s %s, to %s %s",
+				packet.Sequence, packet.SourceChannel, packet.SourcePort, packet.DestinationChannel, packet.DestinationPort)
+			im.keeper.Logger(ctx).Error(errMsg)
+			return sdkerrors.Wrapf(icacallbacktypes.ErrCallbackFailed, errMsg)
 		}
-		record, found := im.keeper.GetTransferDepositRecordByAmount(ctx, amount)
-		if !found {
-			return sdkerrors.Wrapf(sdkerrors.ErrNotFound, "No deposit record found for amount: %d", amount)
-		}
-		// update the record
-		record.Status = types.DepositRecord_STAKE
-		im.keeper.SetDepositRecord(ctx, *record)
-		im.keeper.Logger(ctx).Info(fmt.Sprintf("\t [IBC-TRANSFER] Deposit record updated: {%v}", record))
 	case *channeltypes.Acknowledgement_Error:
 		im.keeper.Logger(ctx).Error(fmt.Sprintf("\t [IBC-TRANSFER] Acknowledgement_Error {%s}", resp.Error))
+	default:
+		im.keeper.Logger(ctx).Error(fmt.Sprintf("\t [IBC-TRANSFER] Unrecognized ack for packet {%v}", packet))
 	}
 
 	return im.app.OnAcknowledgementPacket(ctx, packet, acknowledgement, relayer)
@@ -214,6 +206,7 @@ func (im IBCModule) OnTimeoutPacket(
 	relayer sdk.AccAddress,
 ) error {
 	// doCustomLogic(packet)
+	im.keeper.Logger(ctx).Error(fmt.Sprintf("[IBC-TRANSFER] OnTimeoutPacket  %v", packet))
 	return im.app.OnTimeoutPacket(ctx, packet, relayer)
 }
 

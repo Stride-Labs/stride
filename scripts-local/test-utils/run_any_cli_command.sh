@@ -5,7 +5,9 @@ source ${SCRIPT_DIR}/../account_vars.sh
 
 
 # transfer tokens to stride
-# $GAIA_CMD tx ibc-transfer transfer transfer channel-0 stride1uk4ze0x4nvh4fk0xm4jdud58eqn4yxhrt52vv7 1000000uatom --from gval1 --chain-id GAIA -y --keyring-backend test
+# $GAIA_CMD q tx F382BB9C7B9970C41F0BE5F04CB59B85A68CF360949A97C599DFA92A80CAD5D0
+# exit
+# $GAIA_CMD tx ibc-transfer transfer transfer channel-0 stride1uk4ze0x4nvh4fk0xm4jdud58eqn4yxhrt52vv7 333uatom --from gval1 --chain-id GAIA -y --keyring-backend test
 # exit
 
 # $STRIDE_CMD q stakeibc show-host-zone OSMO
