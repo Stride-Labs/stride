@@ -28,6 +28,17 @@ func (k msgServer) RedeemStake(goCtx context.Context, msg *types.MsgRedeemStake)
 	if !found {
 		return nil, sdkerrors.Wrapf(types.ErrInvalidHostZone, "host zone is invalid: %s", msg.HostZone)
 	}
+	// first construct a user redemption record
+	epochTracker, found := k.GetEpochTracker(ctx, "day")
+	if !found {
+		return nil, sdkerrors.Wrapf(types.ErrEpochNotFound, "epoch tracker found: %s", "day")
+	}
+	senderAddr := sender.String()
+	redemptionId := recordstypes.UserRedemptionRecordKeyFormatter(hostZone.ChainId, epochTracker.EpochNumber, senderAddr)
+	_, found = k.RecordsKeeper.GetUserRedemptionRecord(ctx, redemptionId)
+	if found {
+		return nil, sdkerrors.Wrapf(recordstypes.ErrRedemptionAlreadyExists, "user already redeemed this epoch: %s", redemptionId)
+	}
 
 	// ensure the recipient address is a valid bech32 address on the hostZone
 	// TODO(TEST-112) do we need to check the hostZone before this check? Would need access to keeper
@@ -68,13 +79,6 @@ func (k msgServer) RedeemStake(goCtx context.Context, msg *types.MsgRedeemStake)
 		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidCoins, "balance is lower than redemption amount. redemption amount: %d, balance %d: ", msg.Amount, balance.Amount)
 	}
 	// UNBONDING RECORD KEEPING
-	// first construct a user redemption record
-	epochTracker, found := k.GetEpochTracker(ctx, "day")
-	if !found {
-		return nil, sdkerrors.Wrapf(types.ErrEpochNotFound, "epoch tracker not found: %s", "day")
-	}
-	senderAddr := sender.String()
-	redemptionId := recordstypes.UserRedemptionRecordKeyFormatter(hostZone.ChainId, epochTracker.EpochNumber, senderAddr)
 	userRedemptionRecord := recordstypes.UserRedemptionRecord{
 		Id:          redemptionId,
 		Sender:      senderAddr,
@@ -84,10 +88,6 @@ func (k msgServer) RedeemStake(goCtx context.Context, msg *types.MsgRedeemStake)
 		HostZoneId:  hostZone.ChainId,
 		EpochNumber: epochTracker.EpochNumber,
 		IsClaimable: false,
-	}
-	_, found = k.RecordsKeeper.GetUserRedemptionRecord(ctx, redemptionId)
-	if found {
-		return nil, sdkerrors.Wrapf(recordstypes.ErrRedemptionAlreadyExists, "user already redeemed this epoch: %s", redemptionId)
 	}
 	// then add undelegation amount to epoch unbonding records
 	epochUnbondingRecord, found := k.RecordsKeeper.GetEpochUnbondingRecord(ctx, epochTracker.EpochNumber)
