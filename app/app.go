@@ -5,7 +5,7 @@ import (
 	"os"
 	"path/filepath"
 
-	porttypes "github.com/cosmos/ibc-go/v3/modules/core/05-port/types"
+	ibcporttypes "github.com/cosmos/ibc-go/v3/modules/core/05-port/types"
 
 	"github.com/Stride-Labs/stride/utils"
 
@@ -523,7 +523,7 @@ func NewStrideApp(
 	// - icacallbacks
 	// - stakeibc
 	// - base app
-	var icamiddlewareStack porttypes.IBCModule
+	var icamiddlewareStack ibcporttypes.IBCModule
 	icamiddlewareStack = icacallbacksmodule.NewIBCModule(app.IcacallbacksKeeper, stakeibcIBCModule)
 	icamiddlewareStack = icacontroller.NewIBCModule(app.ICAControllerKeeper, icamiddlewareStack)
 	icaHostIBCModule := icahost.NewIBCModule(app.ICAHostKeeper)
@@ -536,7 +536,7 @@ func NewStrideApp(
 	recordsStack := recordsmodule.NewIBCModule(app.RecordsKeeper, transferIBCModule)
 
 	// Create static IBC router, add transfer route, then set and seal it
-	ibcRouter := porttypes.NewRouter()
+	ibcRouter := ibcporttypes.NewRouter()
 	ibcRouter.
 		AddRoute(ibctransfertypes.ModuleName, recordsStack).
 		AddRoute(icacontrollertypes.SubModuleName, icamiddlewareStack).
