@@ -189,6 +189,10 @@ func validateDistributionProportions(i interface{}) error {
 		return errors.New("community pool distribution ratio should not be negative")
 	}
 
+	if v.ParticipationRewards.IsNegative() {
+		return errors.New("participation rewards distribution ratio should not be negative")
+	}
+
 	totalProportions := v.Staking.Add(v.PoolIncentives).Add(v.CommunityPool).Add(v.ParticipationRewards)
 
 	if !totalProportions.Equal(sdk.NewDec(1)) {
