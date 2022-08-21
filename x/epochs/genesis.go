@@ -20,11 +20,11 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) 
 		}
 
 		if epoch.CurrentEpoch < 0 {
-			panic("current epoch cannot be negative")
+			panic("current epoch should NOT be negative")
 		}
 
 		if epoch.CurrentEpochStartHeight < 0 {
-			panic("current epoch start height cannot be negative")
+			panic("current epoch start height should NOT be negative")
 		}
 
 		epoch.CurrentEpochStartHeight = ctx.BlockHeight()
