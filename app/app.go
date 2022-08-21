@@ -436,6 +436,8 @@ func NewStrideApp(
 		app.GetSubspace(recordsmoduletypes.ModuleName),
 		scopedRecordsKeeper,
 		app.AccountKeeper,
+		app.TransferKeeper,
+		app.IBCKeeper.ChannelKeeper,
 	)
 	recordsModule := recordsmodule.NewAppModule(appCodec, app.RecordsKeeper, app.AccountKeeper, app.BankKeeper)
 
@@ -475,7 +477,6 @@ func NewStrideApp(
 		app.ICAControllerKeeper,
 		*app.IBCKeeper,
 		scopedStakeibcKeeper,
-		app.TransferKeeper,
 		app.InterchainqueryKeeper,
 		app.RecordsKeeper,
 		app.StakingKeeper,
