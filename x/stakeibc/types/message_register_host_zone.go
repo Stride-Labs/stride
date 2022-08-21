@@ -5,6 +5,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	ibctransfertypes "github.com/cosmos/ibc-go/v3/modules/apps/transfer/types"
 
 	"github.com/Stride-Labs/stride/utils"
 )
@@ -55,11 +56,29 @@ func (msg *MsgRegisterHostZone) ValidateBasic() error {
 	if err := utils.ValidateAdminAddress(msg.Creator); err != nil {
 		return err
 	}
+	// VALIDATE DENOMS
 	// host denom cannot be empty
 	if msg.HostDenom == "" {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "host denom cannot be empty")
 	}
-	// bech32 prefix must be non-empty
+	// host denom must be a valid asset denom
+	if err := sdk.ValidateDenom(msg.HostDenom); err != nil {
+		return err
+	}
+
+	// ibc denom cannot be empty and must begin with "ibc"
+	if msg.IbcDenom == "" {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "ibc denom cannot be empty")
+	}
+	if !strings.HasPrefix(msg.IbcDenom, "ibc") {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "ibc denom must begin with 'ibc'")
+	}
+	// ibc denom must be valid
+	err = ibctransfertypes.ValidateIBCDenom(msg.IbcDenom)
+	if err != nil {
+		return err
+	}
+	// bech32 prefix must be non-empty (we validate it fully in msg_server)
 	if strings.TrimSpace(msg.Bech32Prefix) == "" {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "bech32 prefix must be non-empty")
 	}
@@ -69,13 +88,6 @@ func (msg *MsgRegisterHostZone) ValidateBasic() error {
 	}
 	if !strings.HasPrefix(msg.ConnectionId, "connection") {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "connection id must begin with 'connection'")
-	}
-	// ibc denom cannot be empty and must begin with "ibc"
-	if msg.IbcDenom == "" {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "ibc denom cannot be empty")
-	}
-	if !strings.HasPrefix(msg.IbcDenom, "ibc/") {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "ibc denom must begin with 'ibc'")
 	}
 	// transfer channel id cannot be empty and must begin with "transfer"
 	if msg.TransferChannelId == "" {

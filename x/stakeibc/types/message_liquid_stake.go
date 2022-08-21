@@ -63,5 +63,9 @@ func (msg *MsgLiquidStake) ValidateBasic() error {
 	if msg.HostDenom == "" {
 		return sdkerrors.Wrapf(ErrRequiredFieldEmpty, "host denom cannot be empty")
 	}
+	// host denom must be a valid asset denom
+	if err := sdk.ValidateDenom(msg.HostDenom); err != nil {
+		return err
+	}
 	return nil
 }
