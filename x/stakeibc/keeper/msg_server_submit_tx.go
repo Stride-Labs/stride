@@ -185,10 +185,11 @@ func (k Keeper) UpdateWithdrawalBalance(ctx sdk.Context, zoneInfo types.HostZone
 	_, addr, _ := bech32.DecodeAndConvert(withdrawalIca.GetAddress())
 	data := bankTypes.CreateAccountBalancesPrefix(addr)
 
-	// get ttl
-	ttl, err := k.GetStartTimeNextEpoch(ctx, epochstypes.DAY_EPOCH)
+	// get ttl, the end of the ICA buffer window
+	epochType := epochstypes.STRIDE_EPOCH
+	ttl, err := k.GetICATimeoutNanos(ctx, epochType)
 	if err != nil {
-		errMsg := fmt.Sprintf("could not get start time for next epoch: %s", err.Error())
+		errMsg := fmt.Sprintf("Failed to get ICA timeout nanos for epochType %s using param, error: %s", epochType, err.Error())
 		k.Logger(ctx).Error(errMsg)
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, errMsg)
 	}
@@ -266,27 +267,11 @@ func (k Keeper) SubmitTxsEpoch(
 	callbackId string,
 	callbackArgs []byte,
 ) (uint64, error) {
-	k.Logger(ctx).Info(fmt.Sprintf("SubmitTxsEpoch: %v", msgs))
-	epochTracker, found := k.GetEpochTracker(ctx, epochType)
-	if !found {
-		k.Logger(ctx).Error(fmt.Sprintf("Failed to get epoch tracker for %s", epochType))
-		return 0, sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "Failed to get epoch tracker for %s", epochType)
-	}
-	// BUFFER by 5% of the epoch length
-	bufferSizeParam := k.GetParam(ctx, types.KeyBufferSize)
-	bufferSize := epochTracker.Duration / bufferSizeParam
-	// buffer size should not be negative or longer than the epoch duration
-	if bufferSize > epochTracker.Duration {
-		k.Logger(ctx).Error(fmt.Sprintf("Invalid buffer size %d", bufferSize))
-		return 0, sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "Invalid buffer size %d", bufferSize)
-	}
-	timeoutNanos := epochTracker.NextEpochStartTime - bufferSize
-	timeoutNanosUint64, err := cast.ToUint64E(timeoutNanos)
+	timeoutNanosUint64, err := k.GetICATimeoutNanos(ctx, epochType)
 	if err != nil {
-		k.Logger(ctx).Error(fmt.Sprintf("Failed to convert timeoutNanos to uint64, error: %s", err.Error()))
+		k.Logger(ctx).Error(fmt.Sprintf("Failed to get ICA timeout nanos for epochType %s using param, error: %s", epochType, err.Error()))
 		return 0, sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "Failed to convert timeoutNanos to uint64, error: %s", err.Error())
 	}
-	k.Logger(ctx).Info(fmt.Sprintf("Submitting txs for epoch %s %d %d", epochTracker.EpochIdentifier, epochTracker.NextEpochStartTime, timeoutNanos))
 	sequence, err := k.SubmitTxs(ctx, connectionId, msgs, account, timeoutNanosUint64, callbackId, callbackArgs)
 	if err != nil {
 		return 0, err
