@@ -3,9 +3,10 @@ package types
 import (
 	"strings"
 
-	"github.com/Stride-Labs/stride/utils"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+
+	"github.com/Stride-Labs/stride/utils"
 )
 
 const TypeMsgRegisterHostZone = "register_host_zone"
@@ -57,6 +58,10 @@ func (msg *MsgRegisterHostZone) ValidateBasic() error {
 	// host denom cannot be empty
 	if msg.HostDenom == "" {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "host denom cannot be empty")
+	}
+	// bech32 prefix must be non-empty
+	if strings.TrimSpace(msg.Bech32Prefix) == "" {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "bech32 prefix must be non-empty")
 	}
 	// connection id cannot be empty and must begin with "connection"
 	if msg.ConnectionId == "" {
