@@ -167,7 +167,7 @@ func (im IBCModule) OnAcknowledgementPacket(
 	acknowledgement []byte,
 	relayer sdk.AccAddress,
 ) error {
-	im.keeper.Logger(ctx).Error(fmt.Sprintf("[IBC-TRANSFER] OnAcknowledgementPacket  %v", packet))
+	im.keeper.Logger(ctx).Info(fmt.Sprintf("[IBC-TRANSFER] OnAcknowledgementPacket  %v", packet))
 	// doCustomLogic(packet, ack)
 	// ICS-20 ack
 	var ack channeltypes.Acknowledgement
@@ -185,8 +185,8 @@ func (im IBCModule) OnAcknowledgementPacket(
 		// callback
 		err := im.keeper.ICACallbacksKeeper.CallRegisteredICACallback(ctx, packet, &ack)
 		if err != nil {
-			errMsg := fmt.Sprintf("Unable to call registered callback from records OnAcknowledgePacket | Sequence %d, from %s %s, to %s %s",
-				packet.Sequence, packet.SourceChannel, packet.SourcePort, packet.DestinationChannel, packet.DestinationPort)
+			errMsg := fmt.Sprintf("Unable to call registered callback from records OnAcknowledgePacket | Sequence %d, from %s %s, to %s %s | Error %s",
+				packet.Sequence, packet.SourceChannel, packet.SourcePort, packet.DestinationChannel, packet.DestinationPort, err.Error())
 			im.keeper.Logger(ctx).Error(errMsg)
 			return sdkerrors.Wrapf(icacallbacktypes.ErrCallbackFailed, errMsg)
 		}

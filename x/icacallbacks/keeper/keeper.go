@@ -15,6 +15,7 @@ import (
 	ibckeeper "github.com/cosmos/ibc-go/v3/modules/core/keeper"
 
 	"github.com/Stride-Labs/stride/x/icacallbacks/types"
+	recordstypes "github.com/Stride-Labs/stride/x/records/types"
 
 	channeltypes "github.com/cosmos/ibc-go/v3/modules/core/04-channel/types"
 
@@ -87,7 +88,7 @@ func (k *Keeper) ClaimCapability(ctx sdk.Context, cap *capabilitytypes.Capabilit
 	return k.scopedKeeper.ClaimCapability(ctx, cap, name)
 }
 
-func (k Keeper) GetCallbackDataFromPacket(ctx sdk.Context, modulePacket channeltypes.Packet, callbackDataKey string) (*types.CallbackData, error) {
+func (k Keeper) GetCallbackDataFromPacket(ctx sdk.Context, modulePacket channeltypes.Packet, callbackDataKey string) (cbd *types.CallbackData, found bool) {
 	// get the relevant module from the channel and port
 	portID := modulePacket.GetSourcePort()
 	channelID := modulePacket.GetSourceChannel()
@@ -95,17 +96,23 @@ func (k Keeper) GetCallbackDataFromPacket(ctx sdk.Context, modulePacket channelt
 	callbackData, found := k.GetCallbackData(ctx, callbackDataKey)
 	if !found {
 		k.Logger(ctx).Info(fmt.Sprintf("callback data not found for portID: %s, channelID: %s, sequence: %d", portID, channelID, modulePacket.Sequence))
-		return nil, sdkerrors.Wrapf(types.ErrCallbackDataNotFound, "portID: %s, channelID: %s, sequence: %d", portID, channelID, modulePacket.Sequence)
+		return nil, false
 	} else {
 		k.Logger(ctx).Info(fmt.Sprintf("callback data found for portID: %s, channelID: %s, sequence: %d", portID, channelID, modulePacket.Sequence))
 	}
-	return &callbackData, nil
+	return &callbackData, true
 }
 
 func (k Keeper) GetICACallbackHandlerFromPacket(ctx sdk.Context, modulePacket channeltypes.Packet) (*types.ICACallbackHandler, error) {
 	module, _, err := k.IBCKeeper.ChannelKeeper.LookupModuleByChannel(ctx, modulePacket.GetSourcePort(), modulePacket.GetSourceChannel())
 	if err != nil {
+		k.Logger(ctx).Error(fmt.Sprintf("error LookupModuleByChannel for portID: %s, channelID: %s, sequence: %d", modulePacket.GetSourcePort(), modulePacket.GetSourceChannel(), modulePacket.Sequence))
 		return nil, err
+	}
+	// redirect transfer callbacks to the records module
+	// is there a better way to do this?
+	if module == "transfer" {
+		module = recordstypes.ModuleName
 	}
 	// fetch the callback function
 	callbackHandler, err := k.GetICACallbackHandler(module)
@@ -118,17 +125,19 @@ func (k Keeper) GetICACallbackHandlerFromPacket(ctx sdk.Context, modulePacket ch
 
 func (k Keeper) CallRegisteredICACallback(ctx sdk.Context, modulePacket channeltypes.Packet, ack *channeltypes.Acknowledgement) error {
 	callbackDataKey := types.PacketID(modulePacket.GetSourcePort(), modulePacket.GetSourceChannel(), modulePacket.Sequence)
-	callbackData, err := k.GetCallbackDataFromPacket(ctx, modulePacket, callbackDataKey)
-	if err != nil {
-		return err
+	callbackData, found := k.GetCallbackDataFromPacket(ctx, modulePacket, callbackDataKey)
+	if !found {
+		return nil
 	}
 	callbackHandler, err := k.GetICACallbackHandlerFromPacket(ctx, modulePacket)
 	if err != nil {
+		k.Logger(ctx).Error(fmt.Sprintf("GetICACallbackHandlerFromPacket %s", err.Error()))
 		return err
 	}
 
 	// call the callback
 	if (*callbackHandler).HasICACallback(callbackData.CallbackId) {
+		k.Logger(ctx).Info(fmt.Sprintf("Calling callback for %s", callbackData.CallbackId))
 		// if acknowledgement is empty, then it is a timeout
 		err := (*callbackHandler).CallICACallback(ctx, callbackData.CallbackId, modulePacket, ack, callbackData.CallbackArgs)
 		if err != nil {
