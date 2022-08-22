@@ -30,11 +30,8 @@ done
 
 # echo "Adding Relayer keys"
 # for chain_id in ${chains[@]}; do
-#     __account_name_var=RELAYER_${chain_id}_ACCT
-#     __mnemonic_var=RELAYER_${chain_id}_MNEMONIC
-
-#     account_name=${!__account_name_var}
-#     mnemonic=${!__mnemonic_var}
+#     account_name=$(GET_VAR_VALUE RELAYER_${chain_id}_ACCT)
+#     mnemonic=$(GET_VAR_VALUE     RELAYER_${chain_id}_MNEMONIC)
 #     chain_name=$(printf "$chain_id" | awk '{ print tolower($0) }')
 
 #     $RELAYER_CMD keys restore $chain_name $account_name "$mnemonic" 
