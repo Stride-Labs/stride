@@ -23,16 +23,13 @@ sh ${SCRIPT_DIR}/start_chain.sh STRIDE ${HOST_CHAINS[@]}
 sh ${SCRIPT_DIR}/init_relayers.sh STRIDE ${HOST_CHAINS[@]}
 sh ${SCRIPT_DIR}/create_channels.sh ${HOST_CHAINS[@]}
 
-# printf "Creating clients, connections, and transfer channel"
-# $RELAYER_EXEC transact link stride-gaia
-# echo "DONE"
-
 echo "Starting relayers"
 docker-compose up -d hermes icq
 
 docker-compose logs -f hermes | sed -r -u "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2})?)?[mGK]//g" >> $HERMES_LOGS 2>&1 &
 docker-compose logs -f icq | sed -r -u "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2})?)?[mGK]//g" > $ICQ_LOGS 2>&1 &
 
+# Wait for hermes to start
 ( tail -f -n0 $HERMES_LOGS & ) | grep -q -E "Hermes has started"
 
 # Register all host zones in parallel
