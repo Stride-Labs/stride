@@ -41,7 +41,7 @@ func (k Keeper) CreateEpochUnbondingRecord(ctx sdk.Context, epochNumber uint64) 
 	return true
 }
 
-func (k Keeper) SendHostZoneUnbondings(ctx sdk.Context, hostZone types.HostZone) bool {
+func (k Keeper) GetHostZoneUnbondingMsgs(ctx sdk.Context, hostZone types.HostZone) ([]sdk.Msg, uint64, []byte, error) {
 	// this function goes and processes all unbonded records for this hostZone
 	// regardless of what epoch they belong to
 	totalAmtToUnbond := uint64(0)
@@ -61,23 +61,24 @@ func (k Keeper) SendHostZoneUnbondings(ctx sdk.Context, hostZone types.HostZone)
 			epochUnbondingRecordIds = append(epochUnbondingRecordIds, epochUnbonding.EpochNumber)
 			k.Logger(ctx).Info(fmt.Sprintf("[SendHostZoneUnbondings] Sending unbondings, host zone: %s, epochUnbonding: %v", hostZone.ChainId, epochUnbonding))
 
-
 		}
 	}
 	delegationAccount := hostZone.GetDelegationAccount()
 	if delegationAccount == nil || delegationAccount.GetAddress() == "" {
-		k.Logger(ctx).Error(fmt.Sprintf("Zone %s is missing a delegation address!", hostZone.ChainId))
-		return false
+		errMsg := fmt.Sprintf("Zone %s is missing a delegation address!", hostZone.ChainId)
+		k.Logger(ctx).Error(errMsg)
+		return nil, 0, nil, sdkerrors.Wrap(sdkerrors.ErrNotFound, errMsg)
 	}
 	validators := hostZone.GetValidators()
 	if totalAmtToUnbond == 0 {
-		return true
+		return nil, 0, nil, nil
 	}
 	// we distribute the unbonding based on our target weights
 	newUnbondingToValidator, err := k.GetTargetValAmtsForHostZone(ctx, hostZone, totalAmtToUnbond)
 	if err != nil {
-		k.Logger(ctx).Error(fmt.Sprintf("Error getting target val amts for host zone %s %d: %s", hostZone.ChainId, totalAmtToUnbond, err))
-		return false
+		errMsg := fmt.Sprintf("Error getting target val amts for host zone %s %d: %s", hostZone.ChainId, totalAmtToUnbond, err)
+		k.Logger(ctx).Error(errMsg)
+		return nil, 0, nil, sdkerrors.Wrap(sdkerrors.ErrNotFound, errMsg)
 	}
 	valAddrToUnbondAmt := make(map[string]int64)
 	overflowAmt := uint64(0)
@@ -86,8 +87,9 @@ func (k Keeper) SendHostZoneUnbondings(ctx sdk.Context, hostZone types.HostZone)
 		valUnbondAmt := newUnbondingToValidator[valAddr]
 		currentAmtStaked := validator.GetDelegationAmt()
 		if err != nil {
-			k.Logger(ctx).Error(fmt.Sprintf("Error casting validator staked amount %d: %s", validator.GetDelegationAmt(), err.Error()))
-			return false
+			errMsg := fmt.Sprintf("Error casting validator staked amount %d: %s", validator.GetDelegationAmt(), err.Error())
+			k.Logger(ctx).Error(errMsg)
+			return nil, 0, nil, sdkerrors.Wrap(sdkerrors.ErrNotFound, errMsg)
 		}
 		if valUnbondAmt > currentAmtStaked { // if we don't have enough assets to unbond
 			overflowAmt += valUnbondAmt - currentAmtStaked
@@ -95,8 +97,9 @@ func (k Keeper) SendHostZoneUnbondings(ctx sdk.Context, hostZone types.HostZone)
 		}
 		valUnbondAmtInt64, err := cast.ToInt64E(valUnbondAmt)
 		if err != nil {
-			k.Logger(ctx).Error(fmt.Sprintf("Error casting validator staked amount %d: %s", validator.GetDelegationAmt(), err.Error()))
-			return false
+			errMsg := fmt.Sprintf("Error casting validator staked amount %d: %s", validator.GetDelegationAmt(), err.Error())
+			k.Logger(ctx).Error(errMsg)
+			return nil, 0, nil, sdkerrors.Wrap(sdkerrors.ErrNotFound, errMsg)
 		}
 		valAddrToUnbondAmt[valAddr] = valUnbondAmtInt64
 	}
@@ -105,8 +108,9 @@ func (k Keeper) SendHostZoneUnbondings(ctx sdk.Context, hostZone types.HostZone)
 			valAddr := validator.GetAddress()
 			valUnbondAmt, err := cast.ToUint64E(valAddrToUnbondAmt[valAddr])
 			if err != nil {
-				k.Logger(ctx).Error(fmt.Sprintf("Error casting validator staked amount %d: %s", validator.GetDelegationAmt(), err.Error()))
-				return false
+				errMsg := fmt.Sprintf("Error casting validator staked amount %d: %s", validator.GetDelegationAmt(), err.Error())
+				k.Logger(ctx).Error(errMsg)
+				return nil, 0, nil, sdkerrors.Wrap(sdkerrors.ErrNotFound, errMsg)
 			}
 			currentAmtStaked := validator.GetDelegationAmt()
 			// store how many more tokens we could unbond, if needed
@@ -116,8 +120,9 @@ func (k Keeper) SendHostZoneUnbondings(ctx sdk.Context, hostZone types.HostZone)
 				if amtToPotentiallyUnbond > overflowAmt { // we can fully cover the overflow
 					overflowAmtInt64, err := cast.ToInt64E(overflowAmt)
 					if err != nil {
-						k.Logger(ctx).Error(fmt.Sprintf("Error casting overflow amount %d: %s", overflowAmt, err.Error()))
-						return false
+						errMsg := fmt.Sprintf("Error casting overflow amount %d: %s", overflowAmt, err.Error())
+						k.Logger(ctx).Error(errMsg)
+						return nil, 0, nil, sdkerrors.Wrap(sdkerrors.ErrNotFound, errMsg)
 					}
 					valAddrToUnbondAmt[valAddr] += overflowAmtInt64
 					overflowAmt = 0
@@ -125,8 +130,9 @@ func (k Keeper) SendHostZoneUnbondings(ctx sdk.Context, hostZone types.HostZone)
 				} else {
 					amtToPotentiallyUnbondInt64, err := cast.ToInt64E(amtToPotentiallyUnbond)
 					if err != nil {
-						k.Logger(ctx).Error(fmt.Sprintf("Error casting overflow amount %d: %s", amtToPotentiallyUnbond, err.Error()))
-						return false
+						errMsg := fmt.Sprintf("Error casting overflow amount %d: %s", amtToPotentiallyUnbond, err.Error())
+						k.Logger(ctx).Error(errMsg)
+						return nil, 0, nil, sdkerrors.Wrap(sdkerrors.ErrNotFound, errMsg)
 					}
 					valAddrToUnbondAmt[valAddr] += amtToPotentiallyUnbondInt64
 					overflowAmt -= amtToPotentiallyUnbond
@@ -135,9 +141,10 @@ func (k Keeper) SendHostZoneUnbondings(ctx sdk.Context, hostZone types.HostZone)
 		}
 	}
 	if overflowAmt > 0 { // what?? we still can't cover the overflow? something is very wrong
-		k.Logger(ctx).Error(fmt.Sprintf("Could not unbond %d on Host Zone %s, unable to balance the unbond amount across validators",
-			totalAmtToUnbond, hostZone.ChainId))
-		return false
+		errMsg := fmt.Sprintf("Could not unbond %d on Host Zone %s, unable to balance the unbond amount across validators",
+			totalAmtToUnbond, hostZone.ChainId)
+		k.Logger(ctx).Error(errMsg)
+		return nil, 0, nil, sdkerrors.Wrap(sdkerrors.ErrNotFound, errMsg)
 	}
 	var splitDelegations []*types.SplitDelegation
 	for _, valAddr := range utils.StringToIntMapKeys(valAddrToUnbondAmt) {
@@ -165,12 +172,13 @@ func (k Keeper) SendHostZoneUnbondings(ctx sdk.Context, hostZone types.HostZone)
 	marshalledCallbackArgs, err := k.MarshalUndelegateCallbackArgs(ctx, undelegateCallback)
 	if err != nil {
 		k.Logger(ctx).Error(err.Error())
-		return false
+		return nil, 0, nil, sdkerrors.Wrap(sdkerrors.ErrNotFound, err.Error())
 	}
 	_, err = k.SubmitTxsDayEpoch(ctx, hostZone.GetConnectionId(), msgs, *delegationAccount, UNDELEGATE, marshalledCallbackArgs)
 	if err != nil {
-		k.Logger(ctx).Error(fmt.Sprintf("Error submitting unbonding tx: %s", err))
-		return false
+		errMsg := fmt.Sprintf("Error submitting unbonding tx: %s", err)
+		k.Logger(ctx).Error(errMsg)
+		return nil, 0, nil, sdkerrors.Wrap(sdkerrors.ErrNotFound, errMsg)
 	}
 
 	ctx.EventManager().EmitEvent(
@@ -180,7 +188,29 @@ func (k Keeper) SendHostZoneUnbondings(ctx sdk.Context, hostZone types.HostZone)
 			sdk.NewAttribute("newAmountUnbonding", strconv.FormatUint(totalAmtToUnbond, 10)),
 		),
 	)
-	return true
+	return msgs, totalAmtToUnbond, marshalledCallbackArgs, nil
+}
+
+func (k Keeper) SubmitHostZoneUnbondingMsg(ctx sdk.Context, msgs []sdk.Msg, totalAmtToUnbond uint64, marshalledCallbackArgs []byte, hostZone types.HostZone) error {
+	// now we have to handle the overflow amount
+	delegationAccount := hostZone.GetDelegationAccount()
+
+	_, err := k.SubmitTxsDayEpoch(ctx, hostZone.GetConnectionId(), msgs, *delegationAccount, UNDELEGATE, marshalledCallbackArgs)
+	if err != nil {
+		errMsg := fmt.Sprintf("Error submitting unbonding tx: %s", err)
+		k.Logger(ctx).Error(errMsg)
+		return sdkerrors.Wrap(sdkerrors.ErrNotFound, errMsg)
+	}
+
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			sdk.EventTypeMessage,
+			sdk.NewAttribute("hostZone", hostZone.ChainId),
+			sdk.NewAttribute("newAmountUnbonding", strconv.FormatUint(totalAmtToUnbond, 10)),
+		),
+	)
+
+	return nil
 }
 
 func (k Keeper) InitiateAllHostZoneUnbondings(ctx sdk.Context, dayNumber uint64) bool {
@@ -191,7 +221,18 @@ func (k Keeper) InitiateAllHostZoneUnbondings(ctx sdk.Context, dayNumber uint64)
 		// we only send the ICA call if this hostZone is supposed to be triggered
 		if dayNumber%hostZone.UnbondingFrequency == 0 {
 			k.Logger(ctx).Info(fmt.Sprintf("Sending unbondings for host zone %s", hostZone.ChainId))
-			k.SendHostZoneUnbondings(ctx, hostZone)
+			msgs, totalAmtToUnbond, marshalledCallbackArgs, err := k.GetHostZoneUnbondingMsgs(ctx, hostZone)
+			if err != nil {
+				errMsg := fmt.Sprintf("Error getting unbonding msgs for host zone %s: %s", hostZone.ChainId, err.Error())
+				k.Logger(ctx).Error(errMsg)
+				return false
+			}
+			err = k.SubmitHostZoneUnbondingMsg(ctx, msgs, totalAmtToUnbond, marshalledCallbackArgs, hostZone)
+			if err != nil {
+				errMsg := fmt.Sprintf("Error submitting unbonding tx for host zone %s: %s", hostZone.ChainId, err.Error())
+				k.Logger(ctx).Error(errMsg)
+				return false
+			}
 		}
 	}
 	return true
