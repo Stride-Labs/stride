@@ -75,6 +75,7 @@ func UndelegateCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, a
 	// Redelegate to each validator and updated host zone staked balance if successful
 	for _, undelegation := range undelegateCallback.SplitDelegations {
 		undelegateAmt, err := cast.ToInt64E(undelegation.Amount)
+		k.Logger(ctx).Info(fmt.Sprintf("UndelegateCallback, Undelegation: %d, validator: %s", undelegateAmt, undelegation.Validator))
 		if err != nil {
 			errMsg := fmt.Sprintf("Could not convert undelegate amount to int64 in undelegation callback | %s", err.Error())
 			k.Logger(ctx).Error(errMsg)
@@ -155,6 +156,14 @@ func UndelegateCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, a
 	stCoin, err := sdk.ParseCoinNormalized(stCoinString)
 	if err != nil {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidCoins, "could not parse burnCoin: %s. err: %s", stCoinString, err.Error())
+	}
+	bech32ZoneAddress, err := sdk.AccAddressFromBech32(hostZone.Address)
+	if err != nil {
+		return fmt.Errorf("could not bech32 decode address %s of zone with id: %s", hostZone.Address, hostZone.ChainId)
+	}
+	err = k.bankKeeper.SendCoinsFromAccountToModule(ctx, bech32ZoneAddress, types.ModuleName, sdk.NewCoins(stCoin))
+	if err != nil {
+		return fmt.Errorf("could not send coins from account %s to module %s. err: %s", hostZone.Address, types.ModuleName, err.Error())
 	}
 	err = k.bankKeeper.BurnCoins(ctx, types.ModuleName, sdk.NewCoins(stCoin))
 	if err != nil {

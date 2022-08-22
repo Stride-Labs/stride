@@ -136,8 +136,8 @@ func (im IBCModule) OnAcknowledgementPacket(
 	ackInfo := fmt.Sprintf("sequence #%d, from %s %s, to %s %s",
 		modulePacket.Sequence, modulePacket.SourceChannel, modulePacket.SourcePort, modulePacket.DestinationChannel, modulePacket.DestinationPort)
 
-	var ack *channeltypes.Acknowledgement
-	err := channeltypes.SubModuleCdc.UnmarshalJSON(acknowledgement, ack)
+	var ack channeltypes.Acknowledgement
+	err := channeltypes.SubModuleCdc.UnmarshalJSON(acknowledgement, &ack)
 	if err != nil {
 		errMsg := fmt.Sprintf("Unable to unmarshal ack from stakeibc OnAcknowledgePacket | Sequence %d, from %s %s, to %s %s",
 			modulePacket.Sequence, modulePacket.SourceChannel, modulePacket.SourcePort, modulePacket.DestinationChannel, modulePacket.DestinationPort)
@@ -154,7 +154,7 @@ func (im IBCModule) OnAcknowledgementPacket(
 		),
 	)
 
-	err = im.keeper.ICACallbacksKeeper.CallRegisteredICACallback(ctx, modulePacket, ack)
+	err = im.keeper.ICACallbacksKeeper.CallRegisteredICACallback(ctx, modulePacket, &ack)
 	if err != nil {
 		errMsg := fmt.Sprintf("Unable to call registered callback from stakeibc OnAcknowledgePacket | Sequence %d, from %s %s, to %s %s",
 			modulePacket.Sequence, modulePacket.SourceChannel, modulePacket.SourcePort, modulePacket.DestinationChannel, modulePacket.DestinationPort)
