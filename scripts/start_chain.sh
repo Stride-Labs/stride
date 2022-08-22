@@ -9,11 +9,8 @@ source ${SCRIPT_DIR}/vars.sh
 CHAINS="$@"
 
 for chain_id in ${CHAINS[@]}; do
-    __num_nodes_var=${chain_id}_NUM_NODES
-    __node_prefix_var=${chain_id}_NODE_PREFIX
-
-    num_nodes=${!__num_nodes_var}
-    node_prefix=${!__node_prefix_var}
+    num_nodes=$(GET_VAR_VALUE ${chain_id}_NUM_NODES)
+    node_prefix=$(GET_VAR_VALUE ${chain_id}_NODE_PREFIX)
 
     log_file=$SCRIPT_DIR/logs/${node_prefix}.log
 
@@ -27,9 +24,7 @@ done
 for chain_id in ${CHAINS[@]}; do
     printf "Waiting for $chain_id to start..."
 
-    __node_prefix_var=${chain_id}_NODE_PREFIX
-    node_prefix=${!__node_prefix_var}
-    
+    node_prefix=$(GET_VAR_VALUE ${chain_id}_NODE_PREFIX)
     log_file=$SCRIPT_DIR/logs/${node_prefix}.log
 
     ( tail -f -n0 $log_file & ) | grep -q "finalizing commit of block"

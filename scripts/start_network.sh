@@ -18,32 +18,10 @@ sh ${SCRIPT_DIR}/init_chain.sh GAIA
 sh ${SCRIPT_DIR}/init_chain.sh JUNO
 sh ${SCRIPT_DIR}/init_chain.sh OSMO
 
-sh ${SCRIPT_DIR}/start_chain.sh STRIDE GAIA JUNO OSMO
-sh ${SCRIPT_DIR}/init_relayers.sh STRIDE GAIA JUNO OSMO
-
-echo "Creating connection STRIDE <> GAIA..."
-$HERMES_EXEC create connection $STRIDE_CHAIN_ID $GAIA_CHAIN_ID | sed -r -u "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2})?)?[mGK]//g" >> $HERMES_LOGS 2>&1 
-echo "Done"
-
-echo "Creating transfer channel STRIDE <> GAIA..."
-$HERMES_EXEC create channel --port-a transfer --port-b transfer $GAIA_CHAIN_ID connection-0 | sed -r -u "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2})?)?[mGK]//g" >> $HERMES_LOGS 2>&1 
-echo "Done"
-
-echo "Creating connection STRIDE <> JUNO..."
-$HERMES_EXEC create connection $STRIDE_CHAIN_ID $JUNO_CHAIN_ID | sed -r -u "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2})?)?[mGK]//g" >> $HERMES_LOGS 2>&1 
-echo "Done"
-
-echo "Creating transfer channel STRIDE <> JUNO..."
-$HERMES_EXEC create channel --port-a transfer --port-b transfer $JUNO_CHAIN_ID connection-0 | sed -r -u "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2})?)?[mGK]//g" >> $HERMES_LOGS 2>&1 
-echo "Done"
-
-echo "Creating connection STRIDE <> OSMO..."
-$HERMES_EXEC create connection $STRIDE_CHAIN_ID $OSMO_CHAIN_ID | sed -r -u "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2})?)?[mGK]//g" >> $HERMES_LOGS 2>&1 
-echo "Done"
-
-echo "Creating transfer channel STRIDE <> OSMO..."
-$HERMES_EXEC create channel --port-a transfer --port-b transfer $OSMO_CHAIN_ID connection-0 | sed -r -u "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2})?)?[mGK]//g" >> $HERMES_LOGS 2>&1 
-echo "Done"
+HOST_CHAINS=(GAIA JUNO OSMO)
+sh ${SCRIPT_DIR}/start_chain.sh STRIDE ${HOST_CHAINS[@]}
+sh ${SCRIPT_DIR}/init_relayers.sh STRIDE ${HOST_CHAINS[@]}
+sh ${SCRIPT_DIR}/create_channels.sh ${HOST_CHAINS[@]}
 
 # printf "Creating clients, connections, and transfer channel"
 # $RELAYER_EXEC transact link stride-gaia
@@ -57,8 +35,16 @@ docker-compose logs -f icq | sed -r -u "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2})?)?[mGK]
 
 ( tail -f -n0 $HERMES_LOGS & ) | grep -q -E "Hermes has started"
 
-bash $SCRIPT_DIR/register_host.sh GAIA connection-0 channel-0
-bash $SCRIPT_DIR/register_host.sh JUNO connection-1 channel-1
-bash $SCRIPT_DIR/register_host.sh OSMO connection-2 channel-2
+# Register all host zones in parallel
+pids=()
+for i in ${!HOST_CHAINS[@]}; do
+    if [[ "$i" != "0" ]]; then sleep 20; fi
+    bash $SCRIPT_DIR/register_host.sh ${HOST_CHAINS[$i]} connection-${i} channel-${i} &
+    pids[${i}]=$!
+done
+for i in ${!pids[@]}; do
+    wait ${pids[$i]}
+    echo "${HOST_CHAINS[$i]} - Done"
+done
 
 $SCRIPT_DIR/create_logs.sh &
