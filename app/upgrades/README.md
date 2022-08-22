@@ -1,5 +1,12 @@
 # Upgrades
 
+## Increment Version 
+```go
+// cmd/strided/main.go
+...
+version.Version = "{newVersion}"
+```
+
 ## Create Upgrade Handler
 ```go
 // app/upgrades/{upgradeVersion}/upgrades.go
