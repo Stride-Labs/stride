@@ -17,7 +17,7 @@ func RegisterInvariants(ir sdk.InvariantRegistry, k Keeper) {
 	ir.RegisterRoute(types.ModuleName, redemptionRateInvariantName, RedemptionRateInvariant(k))
 }
 
-// AllInvariants runs all invariants of the gamm module
+// AllInvariants runs all invariants of the stakeibc module
 func AllInvariants(k Keeper) sdk.Invariant {
 	return func(ctx sdk.Context) (string, bool) {
 		msg, broke := RedemptionRateInvariant(k)(ctx)
@@ -30,16 +30,16 @@ func AllInvariants(k Keeper) sdk.Invariant {
 func RedemptionRateInvariant(k Keeper) sdk.Invariant {
 
 	// threshold is 0.9
-	THRESHOLD := sdk.NewDec(9).Quo(sdk.NewDec(10))
+	threshold := sdk.NewDec(9).Quo(sdk.NewDec(10))
 
 	return func(ctx sdk.Context) (string, bool) {
 		for _, hz := range k.GetAllHostZone(ctx) {
-			if hz.RedemptionRate.LT(THRESHOLD) {
+			if hz.RedemptionRate.LT(threshold) {
 				return sdk.FormatInvariant(types.ModuleName, redemptionRateInvariantName,
 					fmt.Sprintf("[INVARIANT BROKEN!!!] %s's RR is %s", hz.GetChainId(), hz.RedemptionRate.String())), true
 			}
 		}
 		return sdk.FormatInvariant(types.ModuleName, redemptionRateInvariantName,
-			fmt.Sprintf("All RR's are GT %s", THRESHOLD.String())), false
+			fmt.Sprintf("All RR's are GT %s", threshold.String())), false
 	}
 }
