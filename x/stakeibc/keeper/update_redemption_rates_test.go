@@ -15,13 +15,8 @@ import (
 )
 
 type UpdateRedemptionRatesTestCase struct {
-	hostZone         stakeibc.HostZone
-	redemptionRateT0 sdk.Dec
-	stakedBal        uint64
-	undelegatedBal   uint64
-	justDepositedBal uint64
-	stSupply         uint64
-	allRecords       []recordtypes.DepositRecord
+	hostZone   stakeibc.HostZone
+	allRecords []recordtypes.DepositRecord
 }
 
 func (s *KeeperTestSuite) SetupUpdateRedemptionRates(
@@ -67,13 +62,8 @@ func (s *KeeperTestSuite) SetupUpdateRedemptionRates(
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
 
 	return UpdateRedemptionRatesTestCase{
-		hostZone:         hostZone,
-		redemptionRateT0: redemptionRateT0,
-		stakedBal:        stakedBal,
-		undelegatedBal:   undelegatedBal,
-		justDepositedBal: justDepositedBal,
-		stSupply:         stSupply,
-		allRecords:       []recordtypes.DepositRecord{toBeStakedDepositRecord, toBeTransferedDepositRecord},
+		hostZone:   hostZone,
+		allRecords: []recordtypes.DepositRecord{toBeStakedDepositRecord, toBeTransferedDepositRecord},
 	}
 }
 
@@ -88,18 +78,17 @@ func (s *KeeperTestSuite) TestUpdateRedemptionRatesSuccessful() {
 	tc := s.SetupUpdateRedemptionRates(stakedBal, undelegatedBal, justDepositedBal, stSupply, redemptionRateT0)
 
 	// sanity check on inputs (check redemptionRate at genesis is 1)
-	s.Require().Equal(tc.redemptionRateT0, sdk.NewDec(1))
+	s.Require().Equal(redemptionRateT0, sdk.NewDec(1), "to rr")
 
 	records := tc.allRecords
 	s.App.StakeibcKeeper.UpdateRedemptionRates(s.Ctx, records)
 
 	hz, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, tc.hostZone.ChainId)
-	s.Require().True(found)
+	s.Require().True(found, "hz found")
 	rrNew := hz.RedemptionRate
 
 	expectedNewRate := sdk.NewDec(5 + 3 + 3).Quo(sdk.NewDec(10))
-	s.Require().Equal(rrNew, expectedNewRate)
-	s.Require().Equal(rrNew, sdk.NewDec(11).Quo(sdk.NewDec(10)))
+	s.Require().Equal(rrNew, expectedNewRate, "rr as expected")
 }
 
 func (s *KeeperTestSuite) TestUpdateRedemptionRatesRandomized() {
@@ -123,13 +112,13 @@ func (s *KeeperTestSuite) TestUpdateRedemptionRatesRandomized() {
 	tc := s.SetupUpdateRedemptionRates(stakedBal, undelegatedBal, justDepositedBal, stSupply, redemptionRateT0)
 
 	// sanity check on inputs (check redemptionRate at genesis is 1)
-	s.Require().Equal(tc.redemptionRateT0, sdk.NewDec(1))
+	s.Require().Equal(redemptionRateT0, sdk.NewDec(1), "t0 rr")
 
 	records := tc.allRecords
 	s.App.StakeibcKeeper.UpdateRedemptionRates(s.Ctx, records)
 
 	hz, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, tc.hostZone.ChainId)
-	s.Require().True(found)
+	s.Require().True(found, "hz found")
 	rrNew := hz.RedemptionRate
 
 	numerator := int64(stakedBal) + int64(undelegatedBal) + int64(justDepositedBal)
@@ -157,17 +146,17 @@ func (s *KeeperTestSuite) TestUpdateRedemptionRateZeroStAssets() {
 	tc := s.SetupUpdateRedemptionRates(stakedBal, undelegatedBal, justDepositedBal, stSupply, redemptionRateT0)
 
 	// sanity check on inputs (check redemptionRate at genesis is 1)
-	s.Require().Equal(tc.redemptionRateT0, sdk.NewDec(1))
+	s.Require().Equal(redemptionRateT0, sdk.NewDec(1), "t0 rr")
 
 	records := tc.allRecords
 	s.App.StakeibcKeeper.UpdateRedemptionRates(s.Ctx, records)
 
 	hz, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, tc.hostZone.ChainId)
-	s.Require().True(found)
+	s.Require().True(found, "hz found")
 	rrNew := hz.RedemptionRate
 
 	// RR should be unchanged
-	s.Require().Equal(rrNew, sdk.NewDec(1))
+	s.Require().Equal(rrNew, sdk.NewDec(1), "rr as expected")
 }
 
 func (s *KeeperTestSuite) TestUpdateRedemptionRateZeroNativeAssets() {
@@ -181,17 +170,17 @@ func (s *KeeperTestSuite) TestUpdateRedemptionRateZeroNativeAssets() {
 	tc := s.SetupUpdateRedemptionRates(stakedBal, undelegatedBal, justDepositedBal, stSupply, redemptionRateT0)
 
 	// sanity check on inputs (check redemptionRate at genesis is 1)
-	s.Require().Equal(tc.redemptionRateT0, sdk.NewDec(1))
+	s.Require().Equal(redemptionRateT0, sdk.NewDec(1), "t0 rr")
 
 	records := tc.allRecords
 	s.App.StakeibcKeeper.UpdateRedemptionRates(s.Ctx, records)
 
 	hz, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, tc.hostZone.ChainId)
-	s.Require().True(found)
+	s.Require().True(found, "hz found")
 	rrNew := hz.RedemptionRate
 
 	// RR should be 0
-	s.Require().Equal(rrNew, sdk.NewDec(0))
+	s.Require().Equal(rrNew, sdk.NewDec(0), "rr as expected")
 }
 
 func (s *KeeperTestSuite) TestUpdateRedemptionRateNoModuleAccountRecords() {
@@ -203,20 +192,20 @@ func (s *KeeperTestSuite) TestUpdateRedemptionRateNoModuleAccountRecords() {
 	redemptionRateT0 := sdk.NewDec(1)
 
 	tc := s.SetupUpdateRedemptionRates(stakedBal, undelegatedBal, justDepositedBal, stSupply, redemptionRateT0)
-	s.App.RecordsKeeper.RemoveDepositRecord(s.Ctx, 0)
 
 	// sanity check on inputs (check redemptionRate at genesis is 1)
-	s.Require().Equal(tc.redemptionRateT0, sdk.NewDec(1))
+	s.Require().Equal(redemptionRateT0, sdk.NewDec(1), "t0 rr")
 
-	records := tc.allRecords
+	// filter out the TRANSFER record from the records when updating the redemption rate
+	records := tc.allRecords[1:]
 	s.App.StakeibcKeeper.UpdateRedemptionRates(s.Ctx, records)
 
 	hz, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, tc.hostZone.ChainId)
-	s.Require().True(found)
+	s.Require().True(found, "hz found")
 	rrNew := hz.RedemptionRate
 
 	expectedNewRate := sdk.NewDec(5 + 3).Quo(sdk.NewDec(10))
-	s.Require().Equal(rrNew, expectedNewRate)
+	s.Require().Equal(rrNew, expectedNewRate, "rr as expected")
 }
 
 func (s *KeeperTestSuite) TestUpdateRedemptionRateNoStakeDepositRecords() {
@@ -228,51 +217,51 @@ func (s *KeeperTestSuite) TestUpdateRedemptionRateNoStakeDepositRecords() {
 	redemptionRateT0 := sdk.NewDec(1)
 
 	tc := s.SetupUpdateRedemptionRates(stakedBal, undelegatedBal, justDepositedBal, stSupply, redemptionRateT0)
-	s.App.RecordsKeeper.RemoveDepositRecord(s.Ctx, 1)
 
 	// sanity check on inputs (check redemptionRate at genesis is 1)
-	s.Require().Equal(tc.redemptionRateT0, sdk.NewDec(1))
+	s.Require().Equal(redemptionRateT0, sdk.NewDec(1), "t0 rr")
 
-	records := tc.allRecords
+	// filter out the STAKE record from the records when updating the redemption rate
+	records := tc.allRecords[:1]
 	s.App.StakeibcKeeper.UpdateRedemptionRates(s.Ctx, records)
 
 	hz, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, tc.hostZone.ChainId)
-	s.Require().True(found)
+	s.Require().True(found, "hz found")
 	rrNew := hz.RedemptionRate
 
 	numerator := int64(stakedBal) + int64(justDepositedBal)
 	denominator := int64(stSupply)
 	expectedNewRate := sdk.NewDec(numerator).Quo(sdk.NewDec(denominator))
-	s.Require().Equal(rrNew, expectedNewRate)
+	s.Require().Equal(rrNew, expectedNewRate, "rr as expected")
 }
 
 func (s *KeeperTestSuite) TestUpdateRedemptionRateNoStakedBal() {
 
-	stakedBal := uint64(5)
 	undelegatedBal := uint64(3)
 	justDepositedBal := uint64(3)
 	stSupply := uint64(10)
 	redemptionRateT0 := sdk.NewDec(1)
 
 	// SET HZ STAKED BAL TO 0
-	tc := s.SetupUpdateRedemptionRates(stakedBal, undelegatedBal, justDepositedBal, stSupply, redemptionRateT0)
+	tc := s.SetupUpdateRedemptionRates(0, undelegatedBal, justDepositedBal, stSupply, redemptionRateT0)
 
 	// sanity check on inputs (check redemptionRate at genesis is 1)
-	s.Require().Equal(tc.redemptionRateT0, sdk.NewDec(1))
+	s.Require().Equal(redemptionRateT0, sdk.NewDec(1))
 
 	records := tc.allRecords
 	s.App.StakeibcKeeper.UpdateRedemptionRates(s.Ctx, records)
 
 	hz, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, tc.hostZone.ChainId)
-	s.Require().True(found)
+	s.Require().True(found, "hz found")
 	rrNew := hz.RedemptionRate
 
 	expectedNewRate := sdk.NewDec(3 + 3).Quo(sdk.NewDec(10))
-	s.Require().Equal(rrNew, expectedNewRate)
+	s.Require().Equal(rrNew, expectedNewRate, "rr as expected")
 }
 
 func (s *KeeperTestSuite) TestUpdateRedemptionRateRandomRedemptionRateT0() {
 
+	stakedBal := uint64(5)
 	undelegatedBal := uint64(3)
 	justDepositedBal := uint64(3)
 	stSupply := uint64(10)
@@ -288,18 +277,15 @@ func (s *KeeperTestSuite) TestUpdateRedemptionRateRandomRedemptionRateT0() {
 	redemptionRateT0 := sdk.NewDec(genRandUintBelowMax(MAX)).Quo(sdk.NewDec(genRandUintBelowMax(MAX / 2)))
 
 	// SET HZ STAKED BAL TO 0
-	tc := s.SetupUpdateRedemptionRates(0, undelegatedBal, justDepositedBal, stSupply, redemptionRateT0)
-
-	// sanity check on inputs (check redemptionRate at genesis is 1)
-	s.Require().Equal(tc.redemptionRateT0, redemptionRateT0)
+	tc := s.SetupUpdateRedemptionRates(stakedBal, undelegatedBal, justDepositedBal, stSupply, redemptionRateT0)
 
 	records := tc.allRecords
 	s.App.StakeibcKeeper.UpdateRedemptionRates(s.Ctx, records)
 
 	hz, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, tc.hostZone.ChainId)
-	s.Require().True(found)
+	s.Require().True(found, "hz found")
 	rrNew := hz.RedemptionRate
 
 	expectedNewRate := sdk.NewDec(3 + 3 + 5).Quo(sdk.NewDec(10))
-	s.Require().Equal(rrNew, expectedNewRate)
+	s.Require().Equal(rrNew, expectedNewRate, "rr as expected")
 }
