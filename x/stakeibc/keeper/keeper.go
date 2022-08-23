@@ -206,3 +206,13 @@ func (k Keeper) IsWithinBufferWindow(ctx sdk.Context) (bool, error) {
 	}
 	return inWindow, nil
 }
+
+// return a list of valid bech32prefixes associted with registered host zones
+func (k Keeper) GetAllowedBech32Prefixes(ctx sdk.Context) []string {
+	hzs := k.GetAllHostZone(ctx)
+	prefixes := make([]string, len(hzs))
+	for _, hzs := range hzs {
+		prefixes = append(prefixes, hzs.Bech32Prefix)
+	}
+	return prefixes
+}
