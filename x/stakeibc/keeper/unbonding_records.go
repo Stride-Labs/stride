@@ -174,12 +174,6 @@ func (k Keeper) GetHostZoneUnbondingMsgs(ctx sdk.Context, hostZone types.HostZon
 		k.Logger(ctx).Error(err.Error())
 		return nil, 0, nil, sdkerrors.Wrap(sdkerrors.ErrNotFound, err.Error())
 	}
-	_, err = k.SubmitTxsDayEpoch(ctx, hostZone.GetConnectionId(), msgs, *delegationAccount, UNDELEGATE, marshalledCallbackArgs)
-	if err != nil {
-		errMsg := fmt.Sprintf("Error submitting unbonding tx: %s", err)
-		k.Logger(ctx).Error(errMsg)
-		return nil, 0, nil, sdkerrors.Wrap(sdkerrors.ErrNotFound, errMsg)
-	}
 
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
