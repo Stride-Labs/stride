@@ -19,6 +19,7 @@ type SendHostZoneUnbondingTestCase struct {
 	epochUnbondingRecords []recordtypes.EpochUnbondingRecord
 	hostZone              stakeibc.HostZone
 	lightClientTime       uint64
+	totalWgt              uint64
 }
 
 func (s *KeeperTestSuite) SetupSendHostZoneUnbonding() SendHostZoneUnbondingTestCase {
@@ -26,10 +27,11 @@ func (s *KeeperTestSuite) SetupSendHostZoneUnbonding() SendHostZoneUnbondingTest
 	hostVal2Addr := "cosmos_VALIDATOR_2"
 	delegationAddr := "cosmos_DELEGATION"
 	amtToUnbond := uint64(1_000_000)
-	amtVal1 := uint64(2_000_000)
-	amtVal2 := uint64(1_000_000)
-	wgtVal1 := uint64(2)
-	wgtVal2 := uint64(1)
+	amtVal1 := uint64(1_000_000)
+	amtVal2 := uint64(2_000_000)
+	wgtVal1 := uint64(1)
+	wgtVal2 := uint64(2)
+	totalWgt := uint64(3)
 	// 2022-08-12T19:51, a random time in the past
 	unbondingTime := uint64(1660348276)
 	lightClientTime := unbondingTime + 1
@@ -93,38 +95,34 @@ func (s *KeeperTestSuite) SetupSendHostZoneUnbonding() SendHostZoneUnbondingTest
 		hostZone:              hostZone,
 		epochUnbondingRecords: epochUnbondingRecords,
 		lightClientTime:       lightClientTime, // 2022-08-12T19:51.000001, 1ns after the unbonding time
+		totalWgt:              totalWgt,
 	}
 }
 
 func (s *KeeperTestSuite) TestSendHostZoneUnbonding_Successful() {
 	tc := s.SetupSendHostZoneUnbonding()
 
-	msgs, totalAmtToUnbond, _, err := s.App.StakeibcKeeper.GetHostZoneUnbondingMsgs(s.Ctx, tc.hostZone)
+	actualUnbondMsgs, actualAmtToUnbond, _, err := s.App.StakeibcKeeper.GetHostZoneUnbondingMsgs(s.Ctx, tc.hostZone)
 	s.Require().NoError(err)
 
 	// the number of unbonding messages should be (number of validators) * (records to unbond)
-	s.Require().Equal(len(tc.epochUnbondingRecords), len(msgs), "number of unbonding messages should be number of records to unbond")
+	s.Require().Equal(len(tc.epochUnbondingRecords), len(actualUnbondMsgs), "number of unbonding messages should be number of records to unbond")
 
-	s.Require().Equal(int64(totalAmtToUnbond), int64(tc.amtToUnbond)*int64(len(tc.epochUnbondingRecords)), "total amount to unbond should match input amtToUnbond")
+	s.Require().Equal(int64(actualAmtToUnbond), int64(tc.amtToUnbond)*int64(len(tc.epochUnbondingRecords)), "total amount to unbond should match input amtToUnbond")
 
-	// function to get total wgt of all validators on a host zone
-	getTotalWgt := func(hostZone stakeibc.HostZone) sdk.Dec {
-		totalWgt := sdk.ZeroDec()
-		for _, validator := range hostZone.Validators {
-			totalWgt = totalWgt.Add(sdk.NewDec(int64(validator.Weight)))
-		}
-		return totalWgt
-	}
-	totalWgt := getTotalWgt(tc.hostZone)
-	amtToUnbond := sdk.NewDec(int64(tc.amtToUnbond))
-	// due to erratic rounding and random validator ordering, we can only guarantee that at least one of the undelegation amounts is correct
-	//   at least one must be correct (rounding can go in one of two directions, but checking both guarantees that at least one is correct)
-	a := strings.Contains(msgs[1].String(), (sdk.NewDec(int64(tc.hostZone.Validators[1].Weight)).Quo(totalWgt).Mul(amtToUnbond)).TruncateInt().String())
-	b := strings.Contains(msgs[0].String(), (sdk.NewDec(int64(tc.hostZone.Validators[1].Weight)).Quo(totalWgt).Mul(amtToUnbond)).TruncateInt().String())
-	c := strings.Contains(msgs[1].String(), (sdk.NewDec(int64(tc.hostZone.Validators[0].Weight)).Quo(totalWgt).Mul(amtToUnbond)).TruncateInt().String())
-	d := strings.Contains(msgs[0].String(), (sdk.NewDec(int64(tc.hostZone.Validators[0].Weight)).Quo(totalWgt).Mul(amtToUnbond)).TruncateInt().String())
+	totalWgt := sdk.NewDec(int64(tc.totalWgt)) //getTotalWgt(tc.hostZone)
+	actualAmtToUnbondDec := sdk.NewDec(int64(actualAmtToUnbond))
+	actualUnbondMsg1 := actualUnbondMsgs[0].String()
+	actualUnbondMsg2 := actualUnbondMsgs[1].String()
+	val1Fraction := sdk.NewDec(int64(tc.hostZone.Validators[0].Weight)).Quo(totalWgt)
+	val2Fraction := sdk.NewDec(int64(tc.hostZone.Validators[1].Weight)).Quo(totalWgt)
+	val1UnbondAmt := val1Fraction.Mul(actualAmtToUnbondDec).TruncateInt().String()
+	val2UnbondAmt := val2Fraction.Mul(actualAmtToUnbondDec).TruncateInt().String()
 
-	s.Require().True(a || b || c || d, "at least one of the undelegation amounts should be correct")
+	val1Unbonded := strings.Contains(actualUnbondMsg1, val1UnbondAmt)
+	val2Unbonded := strings.Contains(actualUnbondMsg2, val2UnbondAmt)
+
+	s.Require().True(val1Unbonded || val2Unbonded)
 }
 
 func (s *KeeperTestSuite) TestSendHostZoneUnbonding_WrongChainId() {
@@ -170,6 +168,5 @@ func (s *KeeperTestSuite) TestSendHostZoneUnbonding_UnbondingTooMuch() {
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, tc.hostZone)
 
 	_, _, _, err := s.App.StakeibcKeeper.GetHostZoneUnbondingMsgs(s.Ctx, tc.hostZone)
-	// error should be nil -- we do NOT raise an error on a non-existent chain id, we simply do not send any messages
 	s.Require().EqualError(err, fmt.Sprintf("Could not unbond %d on Host Zone %s, unable to balance the unbond amount across validators: not found", tc.amtToUnbond*uint64(len(tc.epochUnbondingRecords)), tc.hostZone.ChainId))
 }
