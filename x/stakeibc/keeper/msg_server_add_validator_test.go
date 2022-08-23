@@ -1,6 +1,8 @@
 package keeper_test
 
 import (
+	"fmt"
+
 	_ "github.com/stretchr/testify/suite"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -10,54 +12,153 @@ import (
 )
 
 type AddValidatorTestCase struct {
-	initialValidators []*types.Validator
-	validMsg          types.MsgAddValidator
+	hostZone           types.HostZone
+	validMsgs          []types.MsgAddValidator
+	expectedValidators []*types.Validator
 }
 
 func (s *KeeperTestSuite) SetupAddValidator() AddValidatorTestCase {
 	hostZone := stakeibc.HostZone{
-		ChainId: "GAIA",
-		Validators: []*types.Validator{
-			{
-				Name:    "val1",
-				Address: "stride_VAL1",
-			},
+		ChainId:    "GAIA",
+		Validators: []*types.Validator{},
+	}
+
+	validMsgs := []types.MsgAddValidator{
+		{
+			Creator:    "stride_ADMIN",
+			HostZone:   "GAIA",
+			Name:       "val1",
+			Address:    "stride_VAL1",
+			Commission: 1,
+			Weight:     1,
+		},
+		{
+			Creator:    "stride_ADMIN",
+			HostZone:   "GAIA",
+			Name:       "val2",
+			Address:    "stride_VAL2",
+			Commission: 2,
+			Weight:     2,
+		},
+		{
+			Creator:    "stride_ADMIN",
+			HostZone:   "GAIA",
+			Name:       "val3",
+			Address:    "stride_VAL3",
+			Commission: 3,
+			Weight:     3,
+		},
+	}
+
+	expectedValidators := []*types.Validator{
+		{
+			Name:           "val1",
+			Address:        "stride_VAL1",
+			CommissionRate: 1,
+			Weight:         1,
+			Status:         types.Validator_Active,
+			DelegationAmt:  0,
+		},
+		{
+			Name:           "val2",
+			Address:        "stride_VAL2",
+			CommissionRate: 2,
+			Weight:         2,
+			Status:         types.Validator_Active,
+			DelegationAmt:  0,
+		},
+		{
+			Name:           "val3",
+			Address:        "stride_VAL3",
+			CommissionRate: 3,
+			Weight:         3,
+			Status:         types.Validator_Active,
+			DelegationAmt:  0,
 		},
 	}
 
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
 
 	return AddValidatorTestCase{
-		initialValidators: hostZone.Validators,
-		validMsg: types.MsgAddValidator{
-			Creator:    "stride_ADMIN",
-			HostZone:   "GAIA",
-			Name:       "val2",
-			Address:    "stride_VAL2",
-			Commission: 10,
-			Weight:     10,
-		},
+		hostZone:           hostZone,
+		validMsgs:          validMsgs,
+		expectedValidators: expectedValidators,
 	}
 }
 
-func (s *KeeperTestSuite) AddValidator_Successful() {
+func (s *KeeperTestSuite) TestAddValidator_Successful() {
 	tc := s.SetupAddValidator()
 
-	_, err := s.msgServer.AddValidator(sdk.WrapSDKContext(s.Ctx), &tc.validMsg)
+	// Add first validator
+	_, err := s.msgServer.AddValidator(sdk.WrapSDKContext(s.Ctx), &tc.validMsgs[0])
 	s.Require().NoError(err)
 
-	actualValidatorList1, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, "GAIA")
+	hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, "GAIA")
 	s.Require().True(found, "host zone found")
+	s.Require().Equal(1, len(hostZone.Validators), "number of validators should be 1")
+	s.Require().Equal(tc.expectedValidators[:1], hostZone.Validators)
+
+	// Add second validator
+	_, err = s.msgServer.AddValidator(sdk.WrapSDKContext(s.Ctx), &tc.validMsgs[1])
+	s.Require().NoError(err)
+
+	hostZone, found = s.App.StakeibcKeeper.GetHostZone(s.Ctx, "GAIA")
+	s.Require().True(found, "host zone found")
+	s.Require().Equal(2, len(hostZone.Validators), "number of validators should be 2")
+	s.Require().Equal(tc.expectedValidators[:2], hostZone.Validators)
+
+	// Add third validator
+	_, err = s.msgServer.AddValidator(sdk.WrapSDKContext(s.Ctx), &tc.validMsgs[2])
+	s.Require().NoError(err)
+
+	hostZone, found = s.App.StakeibcKeeper.GetHostZone(s.Ctx, "GAIA")
+	s.Require().True(found, "host zone found")
+	s.Require().Equal(3, len(hostZone.Validators), "number of validators should be 3")
+	s.Require().Equal(tc.expectedValidators, hostZone.Validators)
 }
 
-func (s *KeeperTestSuite) AddValidator_HostZoneNotFound() {
+func (s *KeeperTestSuite) TestAddValidator_HostZoneNotFound() {
+	tc := s.SetupAddValidator()
 
+	// Replace hostzone in msg to a host zone that doesn't exist
+	badHostZoneMsg := tc.validMsgs[0]
+	badHostZoneMsg.HostZone = "gaia"
+	_, err := s.msgServer.AddValidator(sdk.WrapSDKContext(s.Ctx), &badHostZoneMsg)
+	s.Require().EqualError(err, fmt.Sprintf("Host Zone (gaia) not found: host zone not found"))
 }
 
-func (s *KeeperTestSuite) AddValidator_AddressAlreadyExists() {
+func (s *KeeperTestSuite) TestAddValidator_AddressAlreadyExists() {
+	tc := s.SetupAddValidator()
 
+	// Update host zone so that val1 already exists and setup our message with val3
+	// With no other changes, you would expect this message to be successful
+	hostZone := tc.hostZone
+	hostZone.Validators = []*types.Validator{tc.expectedValidators[0]} // val1
+	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
+	validMsg := tc.validMsgs[2] // val3
+
+	// Change the validator address to val1 so that the message errors
+	badMsg := validMsg
+	badMsg.Address = "stride_VAL1"
+	_, err := s.msgServer.AddValidator(sdk.WrapSDKContext(s.Ctx), &badMsg)
+	expectedErrMsg := fmt.Sprintf("Validator address (stride_VAL1) already exists on Host Zone (GAIA): validator already exists")
+	s.Require().EqualError(err, expectedErrMsg)
 }
 
-func (s *KeeperTestSuite) AddValidator_NameAlreadyExists() {
+func (s *KeeperTestSuite) TestAddValidator_NameAlreadyExists() {
+	tc := s.SetupAddValidator()
 
+	// Update host zone so that val1 already exists and setup our message with val3
+	// With no other changes, you would expect this message to be successful
+	hostZone := tc.hostZone
+	hostZone.Validators = []*types.Validator{tc.expectedValidators[0]} // val1
+	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
+	validMsg := tc.validMsgs[2] // val3
+
+	// Change the validator name to val1 so that the message errors
+	badMsg := validMsg
+	badMsg.Name = "val1"
+	_, err := s.msgServer.AddValidator(sdk.WrapSDKContext(s.Ctx), &badMsg)
+	expectedErrMsg := fmt.Sprintf("Validator name (val1) already exists on Host Zone (GAIA): validator already exists")
+	s.Require().EqualError(err, expectedErrMsg)
 }
