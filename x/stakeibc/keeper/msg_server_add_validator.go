@@ -14,8 +14,8 @@ func (k msgServer) AddValidator(goCtx context.Context, msg *types.MsgAddValidato
 	// TODO TEST-129 restrict this to governance module. add gov module whitelist hooks more broadly
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	hostZone, host_zone_found := k.GetHostZone(ctx, msg.HostZone)
-	if !host_zone_found {
+	hostZone, found := k.GetHostZone(ctx, msg.HostZone)
+	if !found {
 		k.Logger(ctx).Error(fmt.Sprintf("Host Zone not found %s", msg.HostZone))
 		return nil, sdkerrors.Wrap(types.ErrHostZoneNotFound, msg.HostZone)
 	}
