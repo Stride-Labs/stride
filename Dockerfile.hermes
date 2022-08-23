@@ -4,7 +4,7 @@ RUN apt update && apt install git -y
 
 WORKDIR /app/src
 
-RUN git clone https://github.com/informalsystems/ibc-rs --branch v0.15.0
+RUN git clone https://github.com/informalsystems/ibc-rs --branch v1.0.0
 
 WORKDIR ibc-rs
 
