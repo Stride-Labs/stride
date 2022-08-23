@@ -101,9 +101,9 @@ func (k msgServer) RegisterHostZone(goCtx context.Context, msg *types.MsgRegiste
 	hostZoneUnbonding := &recordstypes.HostZoneUnbonding{
 		NativeTokenAmount: 0,
 		StTokenAmount:     0,
-		Denom:      zone.HostDenom,
-		HostZoneId: zone.ChainId,
-		Status:     recordstypes.HostZoneUnbonding_BONDED,
+		Denom:             zone.HostDenom,
+		HostZoneId:        zone.ChainId,
+		Status:            recordstypes.HostZoneUnbonding_BONDED,
 	}
 	updatedEpochUnbondingRecord, success := k.RecordsKeeper.AddHostZoneToEpochUnbondingRecord(ctx, epochUnbondingRecord.EpochNumber, chainId, hostZoneUnbonding)
 	if !success {

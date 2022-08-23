@@ -44,6 +44,8 @@ func (k Keeper) BeginBlocker(ctx sdk.Context) {
 
 		k.SetEpochInfo(ctx, epochInfo)
 
+		k.BeforeEpochStart(ctx, epochInfo)
+
 		ctx.EventManager().EmitEvent(
 			sdk.NewEvent(
 				types.EventTypeEpochStart,
@@ -51,8 +53,6 @@ func (k Keeper) BeginBlocker(ctx sdk.Context) {
 				sdk.NewAttribute(types.AttributeEpochStartTime, strconv.FormatInt(epochInfo.CurrentEpochStartTime.Unix(), 10)),
 			),
 		)
-
-		k.BeforeEpochStart(ctx, epochInfo)
 
 		return false
 	})

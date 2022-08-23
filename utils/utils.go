@@ -158,3 +158,13 @@ func AccAddressFromBech32(address string, bech32prefix string) (addr AccAddress,
 
 	return AccAddress(bz), nil
 }
+
+// check string array inclusion
+func ContainsString(s []string, e string) bool {
+	for _, a := range s {
+		if a == e {
+			return true
+		}
+	}
+	return false
+}
