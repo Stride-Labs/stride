@@ -97,7 +97,7 @@ func (s *KeeperTestSuite) SetupRedeemStake() RedeemStakeTestCase {
 	}
 }
 
-func (s *KeeperTestSuite) TestRedeemStakeSuccessful() {
+func (s *KeeperTestSuite) TestRedeemStake_Successful() {
 	tc := s.SetupRedeemStake()
 	initialState := tc.initialState
 
@@ -158,7 +158,7 @@ func (s *KeeperTestSuite) TestRedeemStakeSuccessful() {
 	s.Require().False(userRedemptionRecord.IsClaimable, "redemption record should be marked not claimable")
 }
 
-func (s *KeeperTestSuite) TestInvalidCreatorAddress() {
+func (s *KeeperTestSuite) TestRedeemStake_InvalidCreatorAddress() {
 	tc := s.SetupRedeemStake()
 	invalidMsg := tc.validMsg
 
@@ -183,7 +183,7 @@ func (s *KeeperTestSuite) TestInvalidCreatorAddress() {
 	s.Require().EqualError(err, fmt.Sprintf("creator address is invalid: %s. err: decoding bech32 failed: invalid character not part of charset: 98: invalid address", invalidMsg.Creator))
 }
 
-func (s *KeeperTestSuite) TestRedeemStakeHostZoneNotFound() {
+func (s *KeeperTestSuite) TestRedeemStake_HostZoneNotFound() {
 	tc := s.SetupRedeemStake()
 
 	invalidMsg := tc.validMsg
@@ -193,7 +193,7 @@ func (s *KeeperTestSuite) TestRedeemStakeHostZoneNotFound() {
 	s.Require().EqualError(err, "host zone is invalid: fake_host_zone: host zone not registered")
 }
 
-func (s *KeeperTestSuite) TestRedeemStakeRateAboveMaxThreshold() {
+func (s *KeeperTestSuite) TestRedeemStake_RateAboveMaxThreshold() {
 	tc := s.SetupRedeemStake()
 
 	hz := tc.hostZone
@@ -204,7 +204,7 @@ func (s *KeeperTestSuite) TestRedeemStakeRateAboveMaxThreshold() {
 	s.Require().Error(err)
 }
 
-func (s *KeeperTestSuite) TestInvalidReceiverAddress() {
+func (s *KeeperTestSuite) TestRedeemStake_InvalidReceiverAddress() {
 	tc := s.SetupRedeemStake()
 
 	invalidMsg := tc.validMsg
@@ -230,7 +230,7 @@ func (s *KeeperTestSuite) TestInvalidReceiverAddress() {
 	s.Require().EqualError(err, "invalid receiver address (decoding bech32 failed: invalid checksum (expected xp8ugp got xp8ufa)): invalid address")
 }
 
-func (s *KeeperTestSuite) TestRedeemStakeRedeemMoreThanStaked() {
+func (s *KeeperTestSuite) TestRedeemStake_RedeemMoreThanStaked() {
 	tc := s.SetupRedeemStake()
 
 	invalidMsg := tc.validMsg
@@ -240,7 +240,7 @@ func (s *KeeperTestSuite) TestRedeemStakeRedeemMoreThanStaked() {
 	s.Require().EqualError(err, fmt.Sprintf("cannot unstake an amount g.t. staked balance on host zone: %d: invalid amount", invalidMsg.Amount))
 }
 
-func (s *KeeperTestSuite) TestRedeemStakeNoEpochTrackerDay() {
+func (s *KeeperTestSuite) TestRedeemStake_NoEpochTrackerDay() {
 	tc := s.SetupRedeemStake()
 
 	invalidMsg := tc.validMsg
@@ -250,7 +250,7 @@ func (s *KeeperTestSuite) TestRedeemStakeNoEpochTrackerDay() {
 	s.Require().EqualError(err, "latest epoch unbonding record not found: epoch unbonding record not found")
 }
 
-func (s *KeeperTestSuite) TestRedeemStakeUserAlreadyRedeemedThisEpoch() {
+func (s *KeeperTestSuite) TestRedeemStake_UserAlreadyRedeemedThisEpoch() {
 	tc := s.SetupRedeemStake()
 
 	invalidMsg := tc.validMsg
@@ -260,7 +260,7 @@ func (s *KeeperTestSuite) TestRedeemStakeUserAlreadyRedeemedThisEpoch() {
 	s.Require().EqualError(err, fmt.Sprintf("user already redeemed this epoch: GAIA.1.%s: redemption record already exists", s.TestAccs[0]))
 }
 
-func (s *KeeperTestSuite) TestRedeemStakeHostZoneNoUnbondings() {
+func (s *KeeperTestSuite) TestRedeemStake_HostZoneNoUnbondings() {
 	tc := s.SetupRedeemStake()
 
 	invalidMsg := tc.validMsg
