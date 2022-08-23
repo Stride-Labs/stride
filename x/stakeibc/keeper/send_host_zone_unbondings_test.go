@@ -142,7 +142,7 @@ func (s *KeeperTestSuite) TestSendHostZoneUnbonding_NoEpochUnbondingRecords() {
 	tc := s.SetupSendHostZoneUnbonding()
 
 	// iterate epoch unbonding records and delete them
-	for i, _ := range tc.epochUnbondingRecords {
+	for i := range tc.epochUnbondingRecords {
 		s.App.RecordsKeeper.RemoveEpochUnbondingRecord(s.Ctx, uint64(i))
 	}
 
@@ -161,7 +161,7 @@ func (s *KeeperTestSuite) TestSendHostZoneUnbonding_UnbondingTooMuch() {
 	tc := s.SetupSendHostZoneUnbonding()
 
 	// iterate the validators and set all their delegated amounts to 0
-	for i, _ := range tc.hostZone.Validators {
+	for i := range tc.hostZone.Validators {
 		tc.hostZone.Validators[i].DelegationAmt = 0
 	}
 	// write the host zone with zero-delegation validators back to the store
