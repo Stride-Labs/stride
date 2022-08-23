@@ -5,7 +5,7 @@
 [submodule "deps/hermes"]
 	path = deps/hermes
 	url = git@github.com:informalsystems/ibc-rs.git
-	branch = 4e83aae8a
+	branch = ed4dd8c8b4ebd6
 [submodule "deps/gaia"]
 	path = deps/gaia
 	url = git@github.com:Stride-Labs/gaia.git
