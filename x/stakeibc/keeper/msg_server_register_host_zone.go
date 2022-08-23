@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/Stride-Labs/stride/utils"
 	recordstypes "github.com/Stride-Labs/stride/x/records/types"
 	"github.com/Stride-Labs/stride/x/stakeibc/types"
 
@@ -19,6 +20,13 @@ func (k msgServer) RegisterHostZone(goCtx context.Context, msg *types.MsgRegiste
 	chainId, err := k.GetChainID(ctx, msg.ConnectionId)
 	if err != nil {
 		return nil, fmt.Errorf("unable to obtain chain id: %w", err)
+	}
+
+	// bech32 prefix must exist on a registered host zone
+	allowedBech32Prefixes := k.GetAllowedBech32Prefixes(ctx)
+	valid := utils.ContainsString(allowedBech32Prefixes, msg.Bech32Prefix)
+	if !valid {
+		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "bech32 prefix must be valid")
 	}
 
 	// get zone
@@ -101,9 +109,9 @@ func (k msgServer) RegisterHostZone(goCtx context.Context, msg *types.MsgRegiste
 	hostZoneUnbonding := &recordstypes.HostZoneUnbonding{
 		NativeTokenAmount: 0,
 		StTokenAmount:     0,
-		Denom:      zone.HostDenom,
-		HostZoneId: zone.ChainId,
-		Status:     recordstypes.HostZoneUnbonding_BONDED,
+		Denom:             zone.HostDenom,
+		HostZoneId:        zone.ChainId,
+		Status:            recordstypes.HostZoneUnbonding_BONDED,
 	}
 	updatedEpochUnbondingRecord, success := k.RecordsKeeper.AddHostZoneToEpochUnbondingRecord(ctx, epochUnbondingRecord.EpochNumber, chainId, hostZoneUnbonding)
 	if !success {

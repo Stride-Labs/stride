@@ -12,8 +12,8 @@ const DefaultIndex uint64 = 1
 // DefaultGenesis returns the default Capability genesis state
 func DefaultGenesis() *GenesisState {
 	return &GenesisState{
-		ICAAccount:        nil,
-		EpochTrackerList:  []EpochTracker{},
+		ICAAccount:       nil,
+		EpochTrackerList: []EpochTracker{},
 		// this line is used by starport scaffolding # genesis/types/default
 		Params: DefaultParams(),
 		PortId: PortID,
@@ -26,6 +26,16 @@ func (gs GenesisState) Validate() error {
 	if err := host.PortIdentifierValidator(gs.PortId); err != nil {
 		return err
 	}
+
+	// Check for duplicated index in hostZoneList
+	hostZoneList := make(map[string]HostZone)
+	for _, hostZone := range gs.HostZoneList {
+		if _, ok := hostZoneList[hostZone.ChainId]; ok {
+			return fmt.Errorf("duplicated index in hostZoneList: %s", hostZone.ChainId)
+		}
+		hostZoneList[hostZone.ChainId] = hostZone
+	}
+
 	// Check for duplicated index in epochTracker
 	epochTrackerIndexMap := make(map[string]struct{})
 
