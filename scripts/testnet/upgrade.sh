@@ -26,5 +26,6 @@ git clone https://github.com/Stride-Labs/stride.git
 cd stride
 git checkout $UPGRADE_COMMIT_HASH 
 env GOOS=linux GOARCH=amd64 go build -mod=readonly -trimpath -o ${UPGRADE_DIR}/ ./... 
+cp ${UPGRADE_DIR}/strided /usr/local/bin/strided 
 cd .. 
 rm -rf stride go
