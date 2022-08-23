@@ -207,6 +207,30 @@ func (k Keeper) IsWithinBufferWindow(ctx sdk.Context) (bool, error) {
 	return inWindow, nil
 }
 
+func (k Keeper) GetICATimeoutNanos(ctx sdk.Context, epochType string) (uint64, error) {
+	epochTracker, found := k.GetEpochTracker(ctx, epochType)
+	if !found {
+		k.Logger(ctx).Error(fmt.Sprintf("Failed to get epoch tracker for %s", epochType))
+		return 0, sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "Failed to get epoch tracker for %s", epochType)
+	}
+	// BUFFER by 5% of the epoch length
+	bufferSizeParam := k.GetParam(ctx, types.KeyBufferSize)
+	bufferSize := epochTracker.Duration / bufferSizeParam
+	// buffer size should not be negative or longer than the epoch duration
+	if bufferSize > epochTracker.Duration {
+		k.Logger(ctx).Error(fmt.Sprintf("Invalid buffer size %d", bufferSize))
+		return 0, sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "Invalid buffer size %d", bufferSize)
+	}
+	timeoutNanos := epochTracker.NextEpochStartTime - bufferSize
+	timeoutNanosUint64, err := cast.ToUint64E(timeoutNanos)
+	if err != nil {
+		k.Logger(ctx).Error(fmt.Sprintf("Failed to convert timeoutNanos to uint64, error: %s", err.Error()))
+		return 0, sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "Failed to convert timeoutNanos to uint64, error: %s", err.Error())
+	}
+	k.Logger(ctx).Info(fmt.Sprintf("Submitting txs for epoch %s %d %d", epochTracker.EpochIdentifier, epochTracker.NextEpochStartTime, timeoutNanos))
+	return timeoutNanosUint64, nil
+}
+
 // return a list of valid bech32prefixes associted with registered host zones
 func (k Keeper) GetAllowedBech32Prefixes(ctx sdk.Context) []string {
 	hzs := k.GetAllHostZone(ctx)
