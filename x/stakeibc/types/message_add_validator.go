@@ -1,6 +1,8 @@
 package types
 
 import (
+	"strings"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
@@ -52,7 +54,7 @@ func (msg *MsgAddValidator) ValidateBasic() error {
 		return err
 	}
 	// name validation
-	if len(msg.Name) == 0 {
+	if len(strings.TrimSpace(msg.Name)) == 0 {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "name is required")
 	}
 	// commission validation

@@ -3,7 +3,6 @@ package keeper
 import (
 	"encoding/binary"
 	"fmt"
-	"strings"
 
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -58,10 +57,8 @@ func (k Keeper) GetHostZone(ctx sdk.Context, chain_id string) (val types.HostZon
 // GetHostZoneFromHostDenom returns a HostZone from a HostDenom
 func (k Keeper) GetHostZoneFromHostDenom(ctx sdk.Context, denom string) (*types.HostZone, error) {
 	var matchZone types.HostZone
-	inDenom := strings.ToUpper(denom)
 	k.IterateHostZones(ctx, func(ctx sdk.Context, index int64, zoneInfo types.HostZone) error {
-		zoneDenom := strings.ToUpper(zoneInfo.HostDenom)
-		if zoneDenom == inDenom {
+		if zoneInfo.HostDenom == denom {
 			matchZone = zoneInfo
 			return nil
 		}
