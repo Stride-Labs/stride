@@ -60,6 +60,10 @@ func (gs GenesisState) Validate() error {
 		if epoch.Duration == 0 {
 			return errors.New("epoch duration should NOT be 0")
 		}
+		// enforce EpochCountingStarted is false for all epochs
+		if epoch.EpochCountingStarted {
+			return errors.New("epoch counting should NOT be started at genesis")
+		}
 		epochIdentifiers[epoch.Identifier] = true
 	}
 	return nil
