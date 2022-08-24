@@ -14,8 +14,11 @@ cp ${SCRIPT_DIR}/config/hermes_config.toml $STATE/hermes/config.toml
 cp ${SCRIPT_DIR}/config/relayer_config.yaml $STATE/relayer/config/config.yaml
 
 echo "Adding Hermes keys"
-$HERMES_CMD keys restore --name rly1 --mnemonic "$HERMES_STRIDE_MNEMONIC" $STRIDE_CHAIN_ID 
-$HERMES_CMD keys restore --name rly2 --mnemonic "$HERMES_GAIA_MNEMONIC" $GAIA_CHAIN_ID
+echo "$HERMES_STRIDE_MNEMONIC" > mnemonic.txt 
+$HERMES_CMD keys add --key-name rly1 --chain $STRIDE_CHAIN_ID --mnemonic-file mnemonic.txt --overwrite
+echo "$HERMES_GAIA_MNEMONIC" > mnemonic.txt
+$HERMES_CMD keys add --key-name rly2 --chain $GAIA_CHAIN_ID --mnemonic-file mnemonic.txt --overwrite
+rm mnemonic.txt
 
 # echo "Adding Relayer keys"
 # $RELAYER_CMD keys restore stride rly1 "$RELAYER_STRIDE_MNEMONIC"

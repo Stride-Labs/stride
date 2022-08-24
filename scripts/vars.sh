@@ -62,7 +62,7 @@ GAIA_MNEMONIC_5="invite close edit quick effort mosquito ocean north term spread
 GAIA_VAL_MNEMONICS=("$GAIA_MNEMONIC_1" "$GAIA_MNEMONIC_2" "$GAIA_MNEMONIC_3" "$GAIA_MNEMONIC_4" "$GAIA_MNEMONIC_5")
 
 # define relayer vars
-HERMES_CMD="$SCRIPT_DIR/../build/hermes/release/hermes -c $STATE/hermes/config.toml"
+HERMES_CMD="$SCRIPT_DIR/../build/hermes/release/hermes --config $STATE/hermes/config.toml"
 HERMES_EXEC="docker-compose run --rm hermes hermes"
 
 HERMES_STRIDE_ACCT=rly1
