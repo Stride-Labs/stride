@@ -1,14 +1,19 @@
 package keeper_test
 
 import (
+	"encoding/json"
 	"fmt"
 	"testing"
 
+	"github.com/tendermint/tendermint/libs/log"
+
 	ibctesting "github.com/cosmos/ibc-go/v3/testing"
 	"github.com/stretchr/testify/suite"
+	dbm "github.com/tendermint/tm-db"
 
 	transfertypes "github.com/cosmos/ibc-go/v3/modules/apps/transfer/types"
 
+	"github.com/cosmos/cosmos-sdk/simapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 
@@ -21,6 +26,7 @@ import (
 	channeltypes "github.com/cosmos/ibc-go/v3/modules/core/04-channel/types"
 	host "github.com/cosmos/ibc-go/v3/modules/core/24-host"
 
+	"github.com/Stride-Labs/stride/app"
 	"github.com/Stride-Labs/stride/app/apptesting"
 	"github.com/Stride-Labs/stride/x/stakeibc/keeper"
 	"github.com/Stride-Labs/stride/x/stakeibc/types"
@@ -48,6 +54,24 @@ func (s *KeeperTestSuite) SetupTest() {
 
 func TestKeeperTestSuite(t *testing.T) {
 	suite.Run(t, new(KeeperTestSuite))
+}
+
+func SetupTestingApp() (ibctesting.TestingApp, map[string]json.RawMessage) {
+	config := sdk.GetConfig()
+	config.SetBech32PrefixForAccount("cosmos", "cosmos"+sdk.PrefixPublic)
+	db := dbm.NewMemDB()
+	testingApp := app.NewStrideApp(
+		log.NewNopLogger(),
+		db,
+		nil,
+		true,
+		map[int64]bool{},
+		app.DefaultNodeHome,
+		5,
+		app.MakeEncodingConfig(),
+		simapp.EmptyAppOptions{},
+	)
+	return testingApp, app.NewDefaultGenesisState()
 }
 
 type MultiChainKeeperTestSuite struct {
@@ -101,7 +125,7 @@ func RegisterInterchainAccount(endpoint *ibctesting.Endpoint, owner string) erro
 
 	channelSequence := endpoint.Chain.App.GetIBCKeeper().ChannelKeeper.GetNextChannelSequence(endpoint.Chain.GetContext())
 
-	if err := endpoint.Chain.GetSimApp().ICAControllerKeeper.RegisterInterchainAccount(endpoint.Chain.GetContext(), endpoint.ConnectionID, owner); err != nil {
+	if err := endpoint.Chain.App.(*app.StrideApp).ICAControllerKeeper.RegisterInterchainAccount(endpoint.Chain.GetContext(), endpoint.ConnectionID, owner); err != nil {
 		return err
 	}
 
@@ -139,9 +163,14 @@ func (s *MultiChainKeeperTestSuite) CreateICAChannel(owner string) error {
 }
 
 func (s *MultiChainKeeperTestSuite) SetupIbc() {
-	s.coordinator = ibctesting.NewCoordinator(s.T(), 2)
-	s.chainA = s.coordinator.GetChain(ibctesting.GetChainID(1))
-	s.chainB = s.coordinator.GetChain(ibctesting.GetChainID(2))
+	ibctesting.DefaultTestingAppInit = SetupTestingApp
+	s.coordinator = ibctesting.NewCoordinator(s.T(), 0)
+	s.chainA = ibctesting.NewTestChain(s.T(), s.coordinator, "STRIDE")
+	s.chainB = ibctesting.NewTestChain(s.T(), s.coordinator, "GAIA")
+	s.coordinator.Chains = map[string]*ibctesting.TestChain{
+		"STRIDE": s.chainA,
+		"GAIA":   s.chainB,
+	}
 	s.transferPath = NewTransferPath(s.chainA, s.chainB)
 	s.coordinator.Setup(s.transferPath)
 
@@ -165,7 +194,7 @@ func (s *MultiChainKeeperTestSuite) SetupIbc() {
 	err = s.CreateICAChannel("GAIA.WITHDRAWAL")
 	s.Require().NoError(err, "create withdrawal ICA")
 
-	channels := s.chainA.GetSimApp().IBCKeeper.ChannelKeeper.GetAllChannels(s.chainA.GetContext())
+	channels := s.chainA.App.(*app.StrideApp).IBCKeeper.ChannelKeeper.GetAllChannels(s.chainA.GetContext())
 	for _, channel := range channels {
 		fmt.Printf("%v\n", channel)
 	}
@@ -176,9 +205,9 @@ func (s *MultiChainKeeperTestSuite) SetupAccounts() (sdk.AccAddress, sdk.AccAddr
 	addr2 := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
 
 	coins := sdk.NewCoins(sdk.NewCoin("uatom", sdk.NewInt(1000)))
-	err := s.chainA.GetSimApp().BankKeeper.MintCoins(s.chainA.GetContext(), minttypes.ModuleName, coins)
+	err := s.chainA.App.(*app.StrideApp).BankKeeper.MintCoins(s.chainA.GetContext(), minttypes.ModuleName, coins)
 	s.Require().NoError(err)
-	err = s.chainA.GetSimApp().BankKeeper.SendCoinsFromModuleToAccount(s.chainA.GetContext(), minttypes.ModuleName, addr1, coins)
+	err = s.chainA.App.(*app.StrideApp).BankKeeper.SendCoinsFromModuleToAccount(s.chainA.GetContext(), minttypes.ModuleName, addr1, coins)
 	s.Require().NoError(err)
 
 	return addr1, addr2
@@ -189,11 +218,11 @@ func (s *MultiChainKeeperTestSuite) TestTransfer() {
 
 	addr1, addr2 := s.SetupAccounts()
 	fmt.Println(addr1.String())
-	fmt.Printf("%v\n", s.chainA.GetSimApp().BankKeeper.GetAllBalances(s.chainA.GetContext(), addr1))
+	fmt.Printf("%v\n", s.chainA.App.(*app.StrideApp).BankKeeper.GetAllBalances(s.chainA.GetContext(), addr1))
 	fmt.Println(addr2.String())
-	fmt.Printf("%v\n", s.chainB.GetSimApp().BankKeeper.GetAllBalances(s.chainB.GetContext(), addr2))
+	fmt.Printf("%v\n", s.chainB.App.(*app.StrideApp).BankKeeper.GetAllBalances(s.chainB.GetContext(), addr2))
 
-	s.chainA.GetSimApp().TransferKeeper.SendTransfer(
+	s.chainA.App.(*app.StrideApp).TransferKeeper.SendTransfer(
 		s.chainA.GetContext(),
 		"transfer",
 		"channel-0",
@@ -205,27 +234,27 @@ func (s *MultiChainKeeperTestSuite) TestTransfer() {
 	)
 
 	fmt.Println(addr1.String())
-	fmt.Printf("%v\n", s.chainA.GetSimApp().BankKeeper.GetAllBalances(s.chainA.GetContext(), addr1))
+	fmt.Printf("%v\n", s.chainA.App.(*app.StrideApp).BankKeeper.GetAllBalances(s.chainA.GetContext(), addr1))
 	fmt.Println(addr2.String())
-	fmt.Printf("%v\n", s.chainB.GetSimApp().BankKeeper.GetAllBalances(s.chainB.GetContext(), addr2))
+	fmt.Printf("%v\n", s.chainB.App.(*app.StrideApp).BankKeeper.GetAllBalances(s.chainB.GetContext(), addr2))
 }
 
 func (s *MultiChainKeeperTestSuite) TestIca() {
 	s.SetupIbc()
 
-	delegationAddress, found := s.chainA.GetSimApp().ICAControllerKeeper.GetInterchainAccountAddress(s.chainA.GetContext(), "connection-0", "icacontroller-GAIA.DELEGATION")
+	delegationAddress, found := s.chainA.App.(*app.StrideApp).ICAControllerKeeper.GetInterchainAccountAddress(s.chainA.GetContext(), "connection-0", "icacontroller-GAIA.DELEGATION")
 	s.Require().True(found)
 	fmt.Println("DELEGATION ADDRESS:", delegationAddress)
 
-	feeAddress, found := s.chainA.GetSimApp().ICAControllerKeeper.GetInterchainAccountAddress(s.chainA.GetContext(), "connection-0", "icacontroller-GAIA.FEE")
+	feeAddress, found := s.chainA.App.(*app.StrideApp).ICAControllerKeeper.GetInterchainAccountAddress(s.chainA.GetContext(), "connection-0", "icacontroller-GAIA.FEE")
 	s.Require().True(found)
 	fmt.Println("FEE ADDRESS:", feeAddress)
 
-	redemptionAddress, found := s.chainA.GetSimApp().ICAControllerKeeper.GetInterchainAccountAddress(s.chainA.GetContext(), "connection-0", "icacontroller-GAIA.REDEMPTION")
+	redemptionAddress, found := s.chainA.App.(*app.StrideApp).ICAControllerKeeper.GetInterchainAccountAddress(s.chainA.GetContext(), "connection-0", "icacontroller-GAIA.REDEMPTION")
 	s.Require().True(found)
 	fmt.Println("REDEMPTION ADDRESS:", redemptionAddress)
 
-	withdrawAddress, found := s.chainA.GetSimApp().ICAControllerKeeper.GetInterchainAccountAddress(s.chainA.GetContext(), "connection-0", "icacontroller-GAIA.WITHDRAWAL")
+	withdrawAddress, found := s.chainA.App.(*app.StrideApp).ICAControllerKeeper.GetInterchainAccountAddress(s.chainA.GetContext(), "connection-0", "icacontroller-GAIA.WITHDRAWAL")
 	s.Require().True(found)
 	fmt.Println("WITHDRAWAL ADDRESS:", withdrawAddress)
 
@@ -246,10 +275,10 @@ func (s *MultiChainKeeperTestSuite) TestIca() {
 		Data: data,
 	}
 
-	chanCap, found := s.chainA.GetSimApp().ScopedIBCKeeper.GetCapability(s.chainA.GetContext(), host.ChannelCapabilityPath("icacontroller-GAIA.DELEGATION", "channel-1"))
+	chanCap, found := s.chainA.App.(*app.StrideApp).ScopedIBCKeeper.GetCapability(s.chainA.GetContext(), host.ChannelCapabilityPath("icacontroller-GAIA.DELEGATION", "channel-1"))
 	s.Require().True(found)
 
-	seq, err := s.chainA.GetSimApp().ICAControllerKeeper.SendTx(s.chainA.GetContext(), chanCap, "connection-0", "icacontroller-GAIA.DELEGATION", packetData, timeoutTimestamp)
+	seq, err := s.chainA.App.(*app.StrideApp).ICAControllerKeeper.SendTx(s.chainA.GetContext(), chanCap, "connection-0", "icacontroller-GAIA.DELEGATION", packetData, timeoutTimestamp)
 	s.Require().NoError(err)
 	fmt.Println("SEQUENCE:", seq)
 }
