@@ -1,15 +1,11 @@
 package keeper_test
 
 import (
-	"encoding/json"
 	"fmt"
 	"testing"
 
-	"github.com/tendermint/tendermint/libs/log"
-
 	ibctesting "github.com/cosmos/ibc-go/v3/testing"
 	"github.com/stretchr/testify/suite"
-	dbm "github.com/tendermint/tm-db"
 
 	transfertypes "github.com/cosmos/ibc-go/v3/modules/apps/transfer/types"
 
@@ -54,22 +50,6 @@ func (s *KeeperTestSuite) SetupTest() {
 
 func TestKeeperTestSuite(t *testing.T) {
 	suite.Run(t, new(KeeperTestSuite))
-}
-
-func SetupStrideTestingApp() (ibctesting.TestingApp, map[string]json.RawMessage) {
-	db := dbm.NewMemDB()
-	testingApp := app.NewStrideApp(
-		log.NewNopLogger(),
-		db,
-		nil,
-		true,
-		map[int64]bool{},
-		app.DefaultNodeHome,
-		5,
-		app.MakeEncodingConfig(),
-		simapp.EmptyAppOptions{},
-	)
-	return testingApp, app.NewDefaultGenesisState()
 }
 
 type MultiChainKeeperTestSuite struct {
@@ -162,7 +142,7 @@ func (s *MultiChainKeeperTestSuite) CreateICAChannel(owner string) error {
 
 func (s *MultiChainKeeperTestSuite) SetupIbc() {
 	s.coordinator = ibctesting.NewCoordinator(s.T(), 0)
-	ibctesting.DefaultTestingAppInit = SetupStrideTestingApp
+	ibctesting.DefaultTestingAppInit = app.InitIBCTestingApp
 	s.chainA = ibctesting.NewTestChain(s.T(), s.coordinator, "STRIDE")
 
 	ibctesting.DefaultTestingAppInit = ibctesting.SetupTestingApp

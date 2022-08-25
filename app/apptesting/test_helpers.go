@@ -1,13 +1,14 @@
 package apptesting
 
 import (
-	"github.com/Stride-Labs/stride/app"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 	"github.com/stretchr/testify/suite"
 	"github.com/tendermint/tendermint/crypto/ed25519"
 	tmtypes "github.com/tendermint/tendermint/proto/tendermint/types"
+
+	"github.com/Stride-Labs/stride/app"
 )
 
 type AppTestHelper struct {
@@ -20,9 +21,8 @@ type AppTestHelper struct {
 }
 
 func (s *AppTestHelper) Setup() {
-	checkTx := false
-	s.App = app.InitTestApp(checkTx)
-	s.Ctx = s.App.BaseApp.NewContext(checkTx, tmtypes.Header{Height: 1, ChainID: "STRIDE"})
+	s.App = app.InitTestApp(true)
+	s.Ctx = s.App.BaseApp.NewContext(false, tmtypes.Header{Height: 1, ChainID: "STRIDE"})
 	s.QueryHelper = &baseapp.QueryServiceTestHelper{
 		GRPCQueryRouter: s.App.GRPCQueryRouter(),
 		Ctx:             s.Ctx,
