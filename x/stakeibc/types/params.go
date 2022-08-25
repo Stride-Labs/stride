@@ -19,11 +19,11 @@ var (
 	DefaultStrideCommission              uint64 = 10
 	DefaultValidatorRebalancingThreshold uint64 = 100 // divide by 10,000, so 100 = 1%
 	// 10 minutes
-	DefaultICATimeoutNanos  uint64 = 600000000000
-	DefaultBufferSize       uint64 = 5   // 1/5=20% of the epoch
-	DefaultIbcTimeoutBlocks uint64 = 300 // 300 blocks ~= 30 minutes
-	DefaultFeeTransferTimeoutNanos  uint64 = 600000000000 // 10 minutes
-
+	DefaultICATimeoutNanos         uint64 = 600000000000
+	DefaultBufferSize              uint64 = 5            // 1/5=20% of the epoch
+	DefaultIbcTimeoutBlocks        uint64 = 300          // 300 blocks ~= 30 minutes
+	DefaultFeeTransferTimeoutNanos uint64 = 600000000000 // 10 minutes
+	DefaultMaxICACallsPerEpoch     uint64 = 100
 
 	// KeyDepositInterval is store's key for the DepositInterval option
 	KeyDepositInterval               = []byte("DepositInterval")
@@ -37,6 +37,7 @@ var (
 	KeyFeeTransferTimeoutNanos       = []byte("FeeTransferTimeoutNanos")
 	KeyBufferSize                    = []byte("BufferSize")
 	KeyIbcTimeoutBlocks              = []byte("IBCTimeoutBlocks")
+	KeyMaxICACallsPerEpoch           = []byte("MaxICACallsPerEpoch")
 )
 
 var _ paramtypes.ParamSet = (*Params)(nil)
@@ -59,6 +60,7 @@ func NewParams(
 	buffer_size uint64,
 	ibc_timeout_blocks uint64,
 	fee_transfer_timeout_nanos uint64,
+	max_ica_calls_per_epoch uint64,
 ) Params {
 	return Params{
 		DepositInterval:               deposit_interval,
@@ -72,6 +74,7 @@ func NewParams(
 		BufferSize:                    buffer_size,
 		IbcTimeoutBlocks:              ibc_timeout_blocks,
 		FeeTransferTimeoutNanos:       fee_transfer_timeout_nanos,
+		MaxIcaCallsPerEpoch:           max_ica_calls_per_epoch,
 	}
 }
 
@@ -89,6 +92,7 @@ func DefaultParams() Params {
 		DefaultBufferSize,
 		DefaultIbcTimeoutBlocks,
 		DefaultFeeTransferTimeoutNanos,
+		DefaultMaxICACallsPerEpoch,
 	)
 }
 
@@ -106,6 +110,7 @@ func (p *Params) ParamSetPairs() paramtypes.ParamSetPairs {
 		paramtypes.NewParamSetPair(KeyBufferSize, &p.BufferSize, isPositive),
 		paramtypes.NewParamSetPair(KeyIbcTimeoutBlocks, &p.IbcTimeoutBlocks, isPositive),
 		paramtypes.NewParamSetPair(KeyFeeTransferTimeoutNanos, &p.FeeTransferTimeoutNanos, validTimeoutNanos),
+		paramtypes.NewParamSetPair(KeyMaxICACallsPerEpoch, &p.MaxIcaCallsPerEpoch, isPositive),
 	}
 }
 
