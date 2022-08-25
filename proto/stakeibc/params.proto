@@ -28,5 +28,5 @@ message Params {
   uint64 buffer_size = 10;
   uint64 ibc_timeout_blocks = 11;
   uint64 fee_transfer_timeout_nanos = 12;
-  uint64 max_ica_calls_per_epoch = 13;
+  uint64 max_stake_ica_calls_per_epoch = 13;
 }
