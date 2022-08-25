@@ -13,9 +13,9 @@ import (
 
 	transfertypes "github.com/cosmos/ibc-go/v3/modules/apps/transfer/types"
 
-	"github.com/cosmos/cosmos-sdk/simapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
+	"github.com/cosmos/ibc-go/v3/testing/simapp"
 
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	clienttypes "github.com/cosmos/ibc-go/v3/modules/core/02-client/types"
@@ -56,9 +56,7 @@ func TestKeeperTestSuite(t *testing.T) {
 	suite.Run(t, new(KeeperTestSuite))
 }
 
-func SetupTestingApp() (ibctesting.TestingApp, map[string]json.RawMessage) {
-	config := sdk.GetConfig()
-	config.SetBech32PrefixForAccount("cosmos", "cosmos"+sdk.PrefixPublic)
+func SetupStrideTestingApp() (ibctesting.TestingApp, map[string]json.RawMessage) {
 	db := dbm.NewMemDB()
 	testingApp := app.NewStrideApp(
 		log.NewNopLogger(),
@@ -163,10 +161,13 @@ func (s *MultiChainKeeperTestSuite) CreateICAChannel(owner string) error {
 }
 
 func (s *MultiChainKeeperTestSuite) SetupIbc() {
-	ibctesting.DefaultTestingAppInit = SetupTestingApp
 	s.coordinator = ibctesting.NewCoordinator(s.T(), 0)
+	ibctesting.DefaultTestingAppInit = SetupStrideTestingApp
 	s.chainA = ibctesting.NewTestChain(s.T(), s.coordinator, "STRIDE")
+
+	ibctesting.DefaultTestingAppInit = ibctesting.SetupTestingApp
 	s.chainB = ibctesting.NewTestChain(s.T(), s.coordinator, "GAIA")
+
 	s.coordinator.Chains = map[string]*ibctesting.TestChain{
 		"STRIDE": s.chainA,
 		"GAIA":   s.chainB,
@@ -220,7 +221,7 @@ func (s *MultiChainKeeperTestSuite) TestTransfer() {
 	fmt.Println(addr1.String())
 	fmt.Printf("%v\n", s.chainA.App.(*app.StrideApp).BankKeeper.GetAllBalances(s.chainA.GetContext(), addr1))
 	fmt.Println(addr2.String())
-	fmt.Printf("%v\n", s.chainB.App.(*app.StrideApp).BankKeeper.GetAllBalances(s.chainB.GetContext(), addr2))
+	fmt.Printf("%v\n", s.chainB.App.(*simapp.SimApp).BankKeeper.GetAllBalances(s.chainB.GetContext(), addr2))
 
 	s.chainA.App.(*app.StrideApp).TransferKeeper.SendTransfer(
 		s.chainA.GetContext(),
@@ -236,7 +237,7 @@ func (s *MultiChainKeeperTestSuite) TestTransfer() {
 	fmt.Println(addr1.String())
 	fmt.Printf("%v\n", s.chainA.App.(*app.StrideApp).BankKeeper.GetAllBalances(s.chainA.GetContext(), addr1))
 	fmt.Println(addr2.String())
-	fmt.Printf("%v\n", s.chainB.App.(*app.StrideApp).BankKeeper.GetAllBalances(s.chainB.GetContext(), addr2))
+	fmt.Printf("%v\n", s.chainB.App.(*simapp.SimApp).BankKeeper.GetAllBalances(s.chainB.GetContext(), addr2))
 }
 
 func (s *MultiChainKeeperTestSuite) TestIca() {
