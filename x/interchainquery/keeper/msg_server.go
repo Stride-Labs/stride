@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	clienttypes "github.com/cosmos/ibc-go/v3/modules/core/02-client/types"
 	commitmenttypes "github.com/cosmos/ibc-go/v3/modules/core/23-commitment/types"
 	tmclienttypes "github.com/cosmos/ibc-go/v3/modules/light-clients/07-tendermint/types"
@@ -46,7 +45,7 @@ func (k msgServer) SubmitQueryResponse(goCtx context.Context, msg *types.MsgSubm
 			errMsg := fmt.Sprintf("[ICQ Resp] aborting query callback due to ttl expiry! ttl is %d, time now %d for query of type %s with id %s, on chain %s", q.Ttl, ctx.BlockHeader().Time.UnixNano(), q.QueryType, q.ChainId, msg.QueryId)
 			k.DeleteQuery(ctx, msg.QueryId)
 			k.Logger(ctx).Error(errMsg)
-			return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, errMsg)
+			return &types.MsgSubmitQueryResponseResponse{}, nil
 		}
 
 		// PROCESS QUERY RESPONSE
