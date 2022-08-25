@@ -115,8 +115,8 @@ func (p *Params) ParamSetPairs() paramtypes.ParamSetPairs {
 		paramtypes.NewParamSetPair(KeyBufferSize, &p.BufferSize, isPositive),
 		paramtypes.NewParamSetPair(KeyIbcTimeoutBlocks, &p.IbcTimeoutBlocks, isPositive),
 		paramtypes.NewParamSetPair(KeyFeeTransferTimeoutNanos, &p.FeeTransferTimeoutNanos, validTimeoutNanos),
-		paramtypes.NewParamSetPair(KeySafetyMinRedemptionRateThreshold, &p.SafetyMinRedemptionRateThreshold, isPositive),
-		paramtypes.NewParamSetPair(KeySafetyMaxRedemptionRateThreshold, &p.SafetyMaxRedemptionRateThreshold, isPositive),
+		paramtypes.NewParamSetPair(KeySafetyMinRedemptionRateThreshold, &p.SafetyMinRedemptionRateThreshold, validMinRedemptionRateThreshold),
+		paramtypes.NewParamSetPair(KeySafetyMaxRedemptionRateThreshold, &p.SafetyMaxRedemptionRateThreshold, validMaxRedemptionRateThreshold),
 	}
 }
 
@@ -150,6 +150,36 @@ func validTimeoutNanos(i interface{}) error {
 	if ival > oneHour {
 		return fmt.Errorf("parameter must be less than %dns: %d", oneHour, ival)
 	}
+	return nil
+}
+
+func validMaxRedemptionRateThreshold(i interface{}) error {
+	ival, ok := i.(uint64)
+	if !ok {
+		return fmt.Errorf("parameter not accepted: %T", i)
+	}
+
+	maxVal := uint64(1000) // divide by 100, so 1000 => 10
+
+	if ival > maxVal {
+		return fmt.Errorf("parameter must be l.t. 1000: %d", ival)
+	}
+
+	return nil
+}
+
+func validMinRedemptionRateThreshold(i interface{}) error {
+	ival, ok := i.(uint64)
+	if !ok {
+		return fmt.Errorf("parameter not accepted: %T", i)
+	}
+
+	minVal := uint64(75) // divide by 100, so 75 => 0.75
+
+	if ival < minVal {
+		return fmt.Errorf("parameter must be g.t. 75: %d", ival)
+	}
+
 	return nil
 }
 
