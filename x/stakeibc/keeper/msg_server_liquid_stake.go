@@ -54,7 +54,8 @@ func (k msgServer) LiquidStake(goCtx context.Context, msg *types.MsgLiquidStake)
 	// safety check: redemption rate must be above safety threshold
 	rateIsSafe, error := k.IsRedemptionRateAboveMinSafetyThreshold(ctx, *hostZone)
 	if !rateIsSafe || (error != nil) {
-		errMsg := fmt.Sprintf("redemption rate is below minimum safety threshold. hostZone: %s, error: %s", hostZone.String(), error.Error())
+		errMsg := fmt.Sprintf("IsRedemptionRateAboveMinSafetyThreshold check failed. hostZone: %s, error: %s", hostZone.String(), error.Error())
+
 		return nil, sdkerrors.Wrapf(types.ErrRedemptionRateBelowThreshold, errMsg)
 	}
 
