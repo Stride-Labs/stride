@@ -34,6 +34,7 @@ func (k Keeper) EndBlocker(ctx sdk.Context) {
 			)
 
 			events = append(events, event)
+			k.Logger(ctx).Info(fmt.Sprintf("[MOOSE] Interchainquery event emitted %v", queryInfo))
 			queryInfo.LastHeight = sdk.NewInt(ctx.BlockHeight())
 			k.SetQuery(ctx, queryInfo)
 
