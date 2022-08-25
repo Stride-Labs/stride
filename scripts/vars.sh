@@ -3,79 +3,97 @@
 set -eu
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
-DEPENDENCIES="jq bats"
-
-# check and install dependencies
-echo "\nChecking dependencies... "
-deps=0
-for name in $DEPENDENCIES
-do
-    [[ $(type $name 2>/dev/null) ]] || { echo "\n    * $name is required to run this script;";deps=1; }
-done
-[[ $deps -ne 1 ]] && echo "OK\n" || { echo "\nInstall the missing dependencies and rerun this script...\n"; exit 1; }
-
-# define STRIDE vars
 STATE=$SCRIPT_DIR/state
-PORT_ID=26656  # 36564 
-MAIN_ID=0
+PEER_PORT=26656
+
+# DENOMS
+IBC_STRD_DENOM='ibc/FF6C2E86490C1C4FBBD24F55032831D2415B9D7882F85C3CC9C2401D79362BEA'
+IBC_ATOM_DENOM='ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2'
+ATOM_DENOM='uatom'
+STRD_DENOM='ustrd'
+STATOM_DENOM="stuatom"
+
 BLOCK_TIME='5s'
+DAY_EPOCH_INDEX=1
+DAY_EPOCH_DURATION="100s"
+STRIDE_EPOCH_INDEX=2
+STRIDE_EPOCH_DURATION="40s"
+UNBONDING_TIME="200s"
+MAX_DEPOSIT_PERIOD="30s"
+VOTING_PERIOD="30s"
 
-STRIDE_CHAIN=STRIDE
-STRIDE_NODE_NAMES=(stride1 stride2 stride3)
-STRIDE_MAIN_NODE=${STRIDE_NODE_NAMES[$MAIN_ID]}
+VAL_TOKENS=5000000000000
+STAKE_TOKENS=4500000000000
+ADMIN_TOKENS=1000000000
 
-STRIDE_VAL_ACCTS=(val1 val2 val3)
+# STRIDE vars
+STRIDE_CHAIN_ID=STRIDE
+STRIDE_NODE_PREFIX=stride
+STRIDE_NUM_NODES=3
+STRIDE_CMD="$SCRIPT_DIR/../build/strided"
+STRIDE_VAL_PREFIX=val
+STRIDE_DENOM=$STRD_DENOM
+STRIDE_RPC_PORT=26657
+STRIDE_ADMIN_ACCT=admin
+MAIN_STRIDE_CMD="$STRIDE_CMD --home $SCRIPT_DIR/state/stride1"
+
 STRIDE_MNEMONIC_1="close soup mirror crew erode defy knock trigger gather eyebrow tent farm gym gloom base lemon sleep weekend rich forget diagram hurt prize fly"
 STRIDE_MNEMONIC_2="timber vacant teach wedding disease fashion place merge poet produce promote renew sunny industry enforce heavy inch three call sustain deal flee athlete intact"
 STRIDE_MNEMONIC_3="enjoy dignity rule multiply kitchen arrange flight rocket kingdom domain motion fire wage viable enough comic cry motor memory fancy dish sing border among"
-STRIDE_VAL_KEYS=("$STRIDE_MNEMONIC_1" "$STRIDE_MNEMONIC_2" "$STRIDE_MNEMONIC_3")
+STRIDE_MNEMONIC_4="vacant margin wave rice brush drastic false rifle tape critic volcano worry tumble assist pulp swamp sheriff stairs decorate chaos empower already obvious caught"
+STRIDE_MNEMONIC_5="river spin follow make trash wreck clever increase dial divert meadow abuse victory able foot kid sell bench embody river income utility dismiss timber"
+STRIDE_VAL_MNEMONICS=("$STRIDE_MNEMONIC_1" "$STRIDE_MNEMONIC_2" "$STRIDE_MNEMONIC_3" "$STRIDE_MNEMONIC_4" "$STRIDE_MNEMONIC_5")
 
-stride_run=strided
-stride_exec="docker-compose --ansi never exec -T"
+# GAIA vars
+GAIA_CHAIN_ID=GAIA
+GAIA_NODE_PREFIX=gaia
+GAIA_NUM_NODES=3
+GAIA_CMD="$SCRIPT_DIR/../build/gaiad"
+GAIA_VAL_PREFIX=gval
+GAIA_DENOM=$ATOM_DENOM
+GAIA_RPC_PORT=26557
+MAIN_GAIA_CMD="$GAIA_CMD --home $SCRIPT_DIR/state/gaia1"
 
-STRIDE_RUN_CMDS=()
-for node_name in "${STRIDE_NODE_NAMES[@]}"; do
-  STRIDE_RUN_CMDS+=( "$stride_run --home $STATE/$node_name" )
-done
-STRIDE_MAIN_CMD=${STRIDE_RUN_CMDS[$MAIN_ID]}
-
-STRIDE1_EXEC="$stride_exec ${STRIDE_NODE_NAMES[0]} strided --home /stride/.strided --chain-id $STRIDE_CHAIN"
-STRIDE2_EXEC="$stride_exec ${STRIDE_NODE_NAMES[1]} strided --home /stride/.strided --chain-id $STRIDE_CHAIN"
-STRIDE3_EXEC="$stride_exec ${STRIDE_NODE_NAMES[2]} strided --home /stride/.strided --chain-id $STRIDE_CHAIN"
-
-
-# define GAIA vars
-GAIA_CHAIN=GAIA
-GAIA_NODE_NAMES=(gaia1 gaia2 gaia3)
-GAIA_MAIN_NODE=${GAIA_NODE_NAMES[$MAIN_ID]}
-
-GAIA_VAL_ACCTS=(gval1 gval2 gval3)
 GAIA_MNEMONIC_1="move next relief spatial resemble onion exhibit fitness major toss where square wrong exact infant skate dragon shift region over you gospel absorb double"
-GAIA_MNEMONIC_2="social smooth replace total room drip donor science wheel source scare hammer affair fade opinion injury mandate then orbit work worry exhaust diagram hotel"
-GAIA_MNEMONIC_3="spike expire grant chef cheese cave someone blue price juice crash field sell camera true wet card saddle oblige where inject process dismiss soft"
-GAIA_VAL_KEYS=("$GAIA_MNEMONIC_1" "$GAIA_MNEMONIC_2" "$GAIA_MNEMONIC_3")
-
-gaia_run="docker-compose --ansi never run --rm -T"
-gaia_exec="docker-compose --ansi never exec -T"
-
-GAIA_RUN_CMDS=()
-for node_name in "${GAIA_NODE_NAMES[@]}"; do
-  GAIA_RUN_CMDS+=( "$gaia_run $node_name gaiad --home=/gaia/.gaiad" )
-done
-GAIA_MAIN_CMD=${GAIA_RUN_CMDS[$MAIN_ID]}
-
-GAIA1_EXEC="$gaia_exec ${GAIA_NODE_NAMES[0]} gaiad --home /gaia/.gaiad"
-GAIA2_EXEC="$gaia_exec ${GAIA_NODE_NAMES[1]} gaiad --home /gaia/.gaiad"
-GAIA3_EXEC="$gaia_exec ${GAIA_NODE_NAMES[2]} gaiad --home /gaia/.gaiad"
+GAIA_MNEMONIC_2="guilt leader matrix lecture infant axis method grain diesel sting reflect brave estate surge october candy busy crash parade club practice sure gentle celery"
+GAIA_MNEMONIC_3="fire tape spread wing click winter awful ozone visa spray swear color table settle review rival meadow gauge speed tide timber disease float live"
+GAIA_MNEMONIC_4="curtain mom patrol rifle list lamp interest hard lock stairs display world disagree ten fantasy engine van explain chunk social smile detail initial typical"
+GAIA_MNEMONIC_5="invite close edit quick effort mosquito ocean north term spread dial throw human review west bike mandate learn cabin bubble remove unlock lab unique"
+GAIA_VAL_MNEMONICS=("$GAIA_MNEMONIC_1" "$GAIA_MNEMONIC_2" "$GAIA_MNEMONIC_3" "$GAIA_MNEMONIC_4" "$GAIA_MNEMONIC_5")
 
 # define relayer vars
-RLY_MNEMONIC_1="alter old invest friend relief slot swear pioneer syrup economy vendor tray focus hedgehog artist legend antenna hair almost donkey spice protect sustain increase"
-RLY_MNEMONIC_2="resemble accident lake amateur physical jewel taxi nut demand magnet person blanket trip entire awkward fiber usual current index limb lady lady depart train"
+HERMES_CMD="$SCRIPT_DIR/../build/hermes/release/hermes --config $STATE/hermes/config.toml"
+HERMES_EXEC="docker-compose run --rm hermes hermes"
 
-ICQ_RUN="docker-compose --ansi never run --rm -T icq interchain-queries"
+HERMES_STRIDE_ACCT=rly1
+HERMES_GAIA_ACCT=rly2
+HERMES_OSMOSIS_ACCT=rly3
 
-ICQ_STRIDE_KEY="helmet say goat special plug umbrella finger night flip axis resource tuna trigger angry shove essay point laundry horror eager forget depend siren alarm"
-ICQ_GAIA_KEY="capable later bamboo snow drive afraid cheese practice latin brush hand true visa drama mystery bird client nature jealous guess tank marriage volume fantasy"
+HERMES_STRIDE_MNEMONIC="alter old invest friend relief slot swear pioneer syrup economy vendor tray focus hedgehog artist legend antenna hair almost donkey spice protect sustain increase"
+HERMES_GAIA_MNEMONIC="resemble accident lake amateur physical jewel taxi nut demand magnet person blanket trip entire awkward fiber usual current index limb lady lady depart train"
+HERMES_OSMOSIS_MNEMONIC="artwork ranch dinosaur maple unhappy office bone vote rebel slot outside benefit innocent wrist certain cradle almost fat trial build chicken enroll strike milk"
+
+RELAYER_CMD="$SCRIPT_DIR/../build/relayer --home $STATE/relayer"
+RELAYER_EXEC="docker-compose run --rm relayer rly"
+
+RELAYER_STRIDE_ACCT=rly1
+RELAYER_GAIA_ACCT=rly2
+RELAYER_OSMOSIS_ACCT=rly3
+
+RELAYER_STRIDE_MNEMONIC="alter old invest friend relief slot swear pioneer syrup economy vendor tray focus hedgehog artist legend antenna hair almost donkey spice protect sustain increase"
+RELAYER_GAIA_MNEMONIC="resemble accident lake amateur physical jewel taxi nut demand magnet person blanket trip entire awkward fiber usual current index limb lady lady depart train"
+RELAYER_OSMOSIS_MNEMONIC="artwork ranch dinosaur maple unhappy office bone vote rebel slot outside benefit innocent wrist certain cradle almost fat trial build chicken enroll strike milk"
+
+ICQ_CMD="$SCRIPT_DIR/../build/interchain-queries --home $STATE/icq"
+ICQ_EXEC="docker-compose run --rm icq interchain-queries"
+
+ICQ_STRIDE_ACCT=icq1
+ICQ_GAIA_ACCT=icq2
+ICQ_OSMOSIS_ACCT=icq3
+
+ICQ_STRIDE_MNEMONIC="helmet say goat special plug umbrella finger night flip axis resource tuna trigger angry shove essay point laundry horror eager forget depend siren alarm"
+ICQ_GAIA_MNEMONIC="capable later bamboo snow drive afraid cheese practice latin brush hand true visa drama mystery bird client nature jealous guess tank marriage volume fantasy"
+ICQ_OSMOSIS_MNEMONIC="rival inch buzz slow high dynamic antique idle switch evolve math virus direct health simple capital place mutual air orphan champion prefer garage over"
 
 
 CSLEEP() {
@@ -84,6 +102,3 @@ CSLEEP() {
     printf "\r\t$(($1 - $i))s left..."
   done
 }
-
-# ICQ
-ICQ_RUN="docker-compose --ansi never run -T icq interchain-queries"

@@ -63,5 +63,13 @@ func (msg *MsgLiquidStake) ValidateBasic() error {
 	if msg.HostDenom == "" {
 		return sdkerrors.Wrapf(ErrRequiredFieldEmpty, "host denom cannot be empty")
 	}
+	// Math.MaxUint32 == 1<<32 - 1
+	if !(msg.Amount < (1<<32 - 1)) {
+		return sdkerrors.Wrapf(ErrInvalidAmount, "amount liquid staked must be less than %d", 1<<32-1)
+	}
+	// host denom must be a valid asset denom
+	if err := sdk.ValidateDenom(msg.HostDenom); err != nil {
+		return err
+	}
 	return nil
 }
