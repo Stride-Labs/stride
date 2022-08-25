@@ -17,7 +17,7 @@ GAIA_MAIN_ENDPOINT="gaia.${DEPLOYMENT_NAME}.${DOMAIN}"
 
 HERMES_STRIDE_ACCT=rly1
 HERMES_GAIA_ACCT=rly2
-HERMES_CMD="$SCRIPT_DIR/../../build/hermes/release/hermes -c $SCRIPT_DIR/hermes/config.toml"
+HERMES_CMD="$SCRIPT_DIR/../../build/hermes/release/hermes --config $SCRIPT_DIR/hermes/config.toml"
 
 ICQ_STRIDE_ACCT=icq1
 ICQ_GAIA_ACCT=icq2

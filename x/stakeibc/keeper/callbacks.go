@@ -52,7 +52,6 @@ func (c Callbacks) RegisterCallbacks() icqtypes.QueryCallbacks {
 		AddCallback("withdrawalbalance", Callback(WithdrawalBalanceCallback)).
 		AddCallback("delegation", Callback(DelegatorSharesCallback)).
 		AddCallback("validator", Callback(ValidatorExchangeRateCallback))
-
 }
 
 // -----------------------------------
