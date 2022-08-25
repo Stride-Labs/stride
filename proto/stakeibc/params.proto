@@ -6,7 +6,7 @@ import "gogoproto/gogo.proto";
 option go_package = "github.com/Stride-Labs/stride/x/stakeibc/types";
 
 // Params defines the parameters for the module.
-// next id: 13
+// next id: 14
 message Params {
   option (gogoproto.goproto_stringer) = false;
 
@@ -28,4 +28,5 @@ message Params {
   uint64 buffer_size = 10;
   uint64 ibc_timeout_blocks = 11;
   uint64 fee_transfer_timeout_nanos = 12;
+  uint64 safety_min_redemption_rate_threshold = 13;
 }

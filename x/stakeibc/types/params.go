@@ -19,24 +19,25 @@ var (
 	DefaultStrideCommission              uint64 = 10
 	DefaultValidatorRebalancingThreshold uint64 = 100 // divide by 10,000, so 100 = 1%
 	// 10 minutes
-	DefaultICATimeoutNanos  uint64 = 600000000000
-	DefaultBufferSize       uint64 = 5   // 1/5=20% of the epoch
-	DefaultIbcTimeoutBlocks uint64 = 300 // 300 blocks ~= 30 minutes
-	DefaultFeeTransferTimeoutNanos  uint64 = 600000000000 // 10 minutes
-
+	DefaultICATimeoutNanos                  uint64 = 600000000000
+	DefaultBufferSize                       uint64 = 5            // 1/5=20% of the epoch
+	DefaultIbcTimeoutBlocks                 uint64 = 300          // 300 blocks ~= 30 minutes
+	DefaultFeeTransferTimeoutNanos          uint64 = 600000000000 // 10 minutes
+	DefaultSafetyMinRedemptionRateThreshold uint64 = 90           // divide by 100, so 90 = 0.9
 
 	// KeyDepositInterval is store's key for the DepositInterval option
-	KeyDepositInterval               = []byte("DepositInterval")
-	KeyDelegateInterval              = []byte("DelegateInterval")
-	KeyReinvestInterval              = []byte("ReinvestInterval")
-	KeyRewardsInterval               = []byte("RewardsInterval")
-	KeyRedemptionRateInterval        = []byte("RedemptionRateInterval")
-	KeyStrideCommission              = []byte("StrideCommission")
-	KeyValidatorRebalancingThreshold = []byte("ValidatorRebalancingThreshold")
-	KeyICATimeoutNanos               = []byte("ICATimeoutNanos")
-	KeyFeeTransferTimeoutNanos       = []byte("FeeTransferTimeoutNanos")
-	KeyBufferSize                    = []byte("BufferSize")
-	KeyIbcTimeoutBlocks              = []byte("IBCTimeoutBlocks")
+	KeyDepositInterval                  = []byte("DepositInterval")
+	KeyDelegateInterval                 = []byte("DelegateInterval")
+	KeyReinvestInterval                 = []byte("ReinvestInterval")
+	KeyRewardsInterval                  = []byte("RewardsInterval")
+	KeyRedemptionRateInterval           = []byte("RedemptionRateInterval")
+	KeyStrideCommission                 = []byte("StrideCommission")
+	KeyValidatorRebalancingThreshold    = []byte("ValidatorRebalancingThreshold")
+	KeyICATimeoutNanos                  = []byte("ICATimeoutNanos")
+	KeyFeeTransferTimeoutNanos          = []byte("FeeTransferTimeoutNanos")
+	KeyBufferSize                       = []byte("BufferSize")
+	KeyIbcTimeoutBlocks                 = []byte("IBCTimeoutBlocks")
+	KeySafetyMinRedemptionRateThreshold = []byte("SafetyMinRedemptionRateThreshold")
 )
 
 var _ paramtypes.ParamSet = (*Params)(nil)
@@ -59,19 +60,21 @@ func NewParams(
 	buffer_size uint64,
 	ibc_timeout_blocks uint64,
 	fee_transfer_timeout_nanos uint64,
+	safety_min_redemption_rate_threshold uint64,
 ) Params {
 	return Params{
-		DepositInterval:               deposit_interval,
-		DelegateInterval:              delegate_interval,
-		RewardsInterval:               rewards_interval,
-		RedemptionRateInterval:        redemption_rate_interval,
-		StrideCommission:              stride_commission,
-		ReinvestInterval:              reinvest_interval,
-		ValidatorRebalancingThreshold: validator_rebalancing_threshold,
-		IcaTimeoutNanos:               ica_timeout_nanos,
-		BufferSize:                    buffer_size,
-		IbcTimeoutBlocks:              ibc_timeout_blocks,
-		FeeTransferTimeoutNanos:       fee_transfer_timeout_nanos,
+		DepositInterval:                  deposit_interval,
+		DelegateInterval:                 delegate_interval,
+		RewardsInterval:                  rewards_interval,
+		RedemptionRateInterval:           redemption_rate_interval,
+		StrideCommission:                 stride_commission,
+		ReinvestInterval:                 reinvest_interval,
+		ValidatorRebalancingThreshold:    validator_rebalancing_threshold,
+		IcaTimeoutNanos:                  ica_timeout_nanos,
+		BufferSize:                       buffer_size,
+		IbcTimeoutBlocks:                 ibc_timeout_blocks,
+		FeeTransferTimeoutNanos:          fee_transfer_timeout_nanos,
+		SafetyMinRedemptionRateThreshold: safety_min_redemption_rate_threshold,
 	}
 }
 
@@ -89,6 +92,7 @@ func DefaultParams() Params {
 		DefaultBufferSize,
 		DefaultIbcTimeoutBlocks,
 		DefaultFeeTransferTimeoutNanos,
+		DefaultSafetyMinRedemptionRateThreshold,
 	)
 }
 
@@ -106,6 +110,7 @@ func (p *Params) ParamSetPairs() paramtypes.ParamSetPairs {
 		paramtypes.NewParamSetPair(KeyBufferSize, &p.BufferSize, isPositive),
 		paramtypes.NewParamSetPair(KeyIbcTimeoutBlocks, &p.IbcTimeoutBlocks, isPositive),
 		paramtypes.NewParamSetPair(KeyFeeTransferTimeoutNanos, &p.FeeTransferTimeoutNanos, validTimeoutNanos),
+		paramtypes.NewParamSetPair(KeySafetyMinRedemptionRateThreshold, &p.SafetyMinRedemptionRateThreshold, isPositive),
 	}
 }
 
