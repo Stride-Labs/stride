@@ -18,8 +18,10 @@ TMP_MNEMONICS=${SCRIPT_DIR}/state/mnemonic.txt
 
 echo "$HERMES_STRIDE_MNEMONIC" > $TMP_MNEMONICS
 $HERMES_CMD keys add --key-name rly1 --chain $STRIDE_CHAIN_ID --mnemonic-file $TMP_MNEMONICS --overwrite
+
 echo "$HERMES_GAIA_MNEMONIC" > $TMP_MNEMONICS
 $HERMES_CMD keys add --key-name rly2 --chain $GAIA_CHAIN_ID --mnemonic-file $TMP_MNEMONICS --overwrite
+
 rm -f $TMP_MNEMONICS
 
 # echo "Adding Relayer keys"
