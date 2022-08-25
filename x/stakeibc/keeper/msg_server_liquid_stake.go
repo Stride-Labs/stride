@@ -51,6 +51,13 @@ func (k msgServer) LiquidStake(goCtx context.Context, msg *types.MsgLiquidStake)
 		return nil, sdkerrors.Wrapf(types.ErrInvalidToken, "denom is not an IBC token (%s)", ibcDenom)
 	}
 
+	// safety check: redemption rate must be above safety threshold
+	rateIsSafe, error := k.IsRedemptionRateAboveMinSafetyThreshold(ctx, *hostZone)
+	if !rateIsSafe || (error != nil) {
+		errMsg := fmt.Sprintf("redemption rate is below minimum safety threshold. hostZone: %s, error: %s", hostZone.String(), error.Error())
+		return nil, sdkerrors.Wrapf(types.ErrRedemptionRateBelowThreshold, errMsg)
+	}
+
 	err = k.bankKeeper.SendCoinsFromAccountToModule(ctx, sender, types.ModuleName, sdk.NewCoins(inCoin))
 	if err != nil {
 		k.Logger(ctx).Error("failed to send tokens from Account to Module")
