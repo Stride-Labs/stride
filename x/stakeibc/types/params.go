@@ -16,15 +16,15 @@ var (
 	DefaultRewardsInterval        uint64 = 3
 	DefaultRedemptionRateInterval uint64 = 3
 	// you apparantly cannot safely encode floats, so we make commission / 100
-	DefaultStrideCommission              uint64 = 10
-	DefaultValidatorRebalancingThreshold uint64 = 100 // divide by 10,000, so 100 = 1%
-	// 10 minutes
+	DefaultStrideCommission                 uint64 = 10
+	DefaultValidatorRebalancingThreshold    uint64 = 100 // divide by 10,000, so 100 = 1%
 	DefaultICATimeoutNanos                  uint64 = 600000000000
 	DefaultBufferSize                       uint64 = 5            // 1/5=20% of the epoch
 	DefaultIbcTimeoutBlocks                 uint64 = 300          // 300 blocks ~= 30 minutes
 	DefaultFeeTransferTimeoutNanos          uint64 = 600000000000 // 10 minutes
 	DefaultSafetyMinRedemptionRateThreshold uint64 = 90           // divide by 100, so 90 = 0.9
 	DefaultSafetyMaxRedemptionRateThreshold uint64 = 300          // divide by 100, so 300 = 3
+	DefaultMaxStakeICACallsPerEpoch         uint64 = 100
 
 	// KeyDepositInterval is store's key for the DepositInterval option
 	KeyDepositInterval                  = []byte("DepositInterval")
@@ -40,6 +40,7 @@ var (
 	KeyIbcTimeoutBlocks                 = []byte("IBCTimeoutBlocks")
 	KeySafetyMinRedemptionRateThreshold = []byte("SafetyMinRedemptionRateThreshold")
 	KeySafetyMaxRedemptionRateThreshold = []byte("SafetyMaxRedemptionRateThreshold")
+	KeyMaxStakeICACallsPerEpoch         = []byte("MaxStakeICACallsPerEpoch")
 )
 
 var _ paramtypes.ParamSet = (*Params)(nil)
@@ -62,6 +63,7 @@ func NewParams(
 	buffer_size uint64,
 	ibc_timeout_blocks uint64,
 	fee_transfer_timeout_nanos uint64,
+	max_stake_ica_calls_per_epoch uint64,
 	safety_min_redemption_rate_threshold uint64,
 	safety_max_redemption_rate_threshold uint64,
 ) Params {
@@ -77,6 +79,7 @@ func NewParams(
 		BufferSize:                       buffer_size,
 		IbcTimeoutBlocks:                 ibc_timeout_blocks,
 		FeeTransferTimeoutNanos:          fee_transfer_timeout_nanos,
+		MaxStakeIcaCallsPerEpoch:         max_stake_ica_calls_per_epoch,
 		SafetyMinRedemptionRateThreshold: safety_min_redemption_rate_threshold,
 		SafetyMaxRedemptionRateThreshold: safety_max_redemption_rate_threshold,
 	}
@@ -96,6 +99,7 @@ func DefaultParams() Params {
 		DefaultBufferSize,
 		DefaultIbcTimeoutBlocks,
 		DefaultFeeTransferTimeoutNanos,
+		DefaultMaxStakeICACallsPerEpoch,
 		DefaultSafetyMinRedemptionRateThreshold,
 		DefaultSafetyMaxRedemptionRateThreshold,
 	)
@@ -115,6 +119,7 @@ func (p *Params) ParamSetPairs() paramtypes.ParamSetPairs {
 		paramtypes.NewParamSetPair(KeyBufferSize, &p.BufferSize, isPositive),
 		paramtypes.NewParamSetPair(KeyIbcTimeoutBlocks, &p.IbcTimeoutBlocks, isPositive),
 		paramtypes.NewParamSetPair(KeyFeeTransferTimeoutNanos, &p.FeeTransferTimeoutNanos, validTimeoutNanos),
+		paramtypes.NewParamSetPair(KeyMaxStakeICACallsPerEpoch, &p.MaxStakeIcaCallsPerEpoch, isPositive),
 		paramtypes.NewParamSetPair(KeySafetyMinRedemptionRateThreshold, &p.SafetyMinRedemptionRateThreshold, validMinRedemptionRateThreshold),
 		paramtypes.NewParamSetPair(KeySafetyMaxRedemptionRateThreshold, &p.SafetyMaxRedemptionRateThreshold, validMaxRedemptionRateThreshold),
 	}
