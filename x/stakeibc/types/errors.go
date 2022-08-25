@@ -35,4 +35,5 @@ var (
 	ErrIntCast                      = sdkerrors.Register(ModuleName, 1525, "unable to cast to safe cast int")
 	ErrFeeAccountNotRegistered      = sdkerrors.Register(ModuleName, 1526, "fee account is not registered")
 	ErrRedemptionRateBelowThreshold = sdkerrors.Register(ModuleName, 1527, "redemption rate below threshold")
+	ErrRedemptionRateAboveThreshold = sdkerrors.Register(ModuleName, 1528, "redemption rate above threshold")
 )

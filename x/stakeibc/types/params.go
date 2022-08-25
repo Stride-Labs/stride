@@ -24,6 +24,7 @@ var (
 	DefaultIbcTimeoutBlocks                 uint64 = 300          // 300 blocks ~= 30 minutes
 	DefaultFeeTransferTimeoutNanos          uint64 = 600000000000 // 10 minutes
 	DefaultSafetyMinRedemptionRateThreshold uint64 = 90           // divide by 100, so 90 = 0.9
+	DefaultSafetyMaxRedemptionRateThreshold uint64 = 300          // divide by 100, so 300 = 3
 
 	// KeyDepositInterval is store's key for the DepositInterval option
 	KeyDepositInterval                  = []byte("DepositInterval")
@@ -38,6 +39,7 @@ var (
 	KeyBufferSize                       = []byte("BufferSize")
 	KeyIbcTimeoutBlocks                 = []byte("IBCTimeoutBlocks")
 	KeySafetyMinRedemptionRateThreshold = []byte("SafetyMinRedemptionRateThreshold")
+	KeySafetyMaxRedemptionRateThreshold = []byte("SafetyMaxRedemptionRateThreshold")
 )
 
 var _ paramtypes.ParamSet = (*Params)(nil)
@@ -61,6 +63,7 @@ func NewParams(
 	ibc_timeout_blocks uint64,
 	fee_transfer_timeout_nanos uint64,
 	safety_min_redemption_rate_threshold uint64,
+	safety_max_redemption_rate_threshold uint64,
 ) Params {
 	return Params{
 		DepositInterval:                  deposit_interval,
@@ -75,6 +78,7 @@ func NewParams(
 		IbcTimeoutBlocks:                 ibc_timeout_blocks,
 		FeeTransferTimeoutNanos:          fee_transfer_timeout_nanos,
 		SafetyMinRedemptionRateThreshold: safety_min_redemption_rate_threshold,
+		SafetyMaxRedemptionRateThreshold: safety_max_redemption_rate_threshold,
 	}
 }
 
@@ -93,6 +97,7 @@ func DefaultParams() Params {
 		DefaultIbcTimeoutBlocks,
 		DefaultFeeTransferTimeoutNanos,
 		DefaultSafetyMinRedemptionRateThreshold,
+		DefaultSafetyMaxRedemptionRateThreshold,
 	)
 }
 
@@ -111,6 +116,7 @@ func (p *Params) ParamSetPairs() paramtypes.ParamSetPairs {
 		paramtypes.NewParamSetPair(KeyIbcTimeoutBlocks, &p.IbcTimeoutBlocks, isPositive),
 		paramtypes.NewParamSetPair(KeyFeeTransferTimeoutNanos, &p.FeeTransferTimeoutNanos, validTimeoutNanos),
 		paramtypes.NewParamSetPair(KeySafetyMinRedemptionRateThreshold, &p.SafetyMinRedemptionRateThreshold, isPositive),
+		paramtypes.NewParamSetPair(KeySafetyMaxRedemptionRateThreshold, &p.SafetyMaxRedemptionRateThreshold, isPositive),
 	}
 }
 
