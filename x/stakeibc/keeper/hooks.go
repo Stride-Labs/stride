@@ -241,7 +241,11 @@ func (k Keeper) StakeExistingDepositsOnHostZones(ctx sdk.Context, epochNumber ui
 	stakeDepositRecords := utils.FilterDepositRecords(depositRecords, func(record recordstypes.DepositRecord) (condition bool) {
 		return record.Status == recordstypes.DepositRecord_STAKE
 	})
-	for _, depositRecord := range stakeDepositRecords {
+
+	// limit the number of staking deposits to process per epoch
+	MAX_TO_PROCESS := utils.Min(len(stakeDepositRecords), cast.ToInt(k.GetParam(ctx, types.KeyMaxStakeICACallsPerEpoch)))
+	k.Logger(ctx).Info(fmt.Sprintf("Staking %d out of %d deposit records", MAX_TO_PROCESS, len(stakeDepositRecords)))
+	for _, depositRecord := range stakeDepositRecords[:MAX_TO_PROCESS] {
 		if depositRecord.DepositEpochNumber < cast.ToUint64(epochNumber) {
 			pstr := fmt.Sprintf("\t[StakeExistingDepositsOnHostZones] Processing deposit ID:{%d} DENOM:{%s} AMT:{%d}", depositRecord.Id, depositRecord.Denom, depositRecord.Amount)
 			k.Logger(ctx).Info(pstr)
