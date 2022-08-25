@@ -28,9 +28,6 @@ func NewHandler(k keeper.Keeper) sdk.Handler {
 		case *types.MsgRegisterAccount:
 			res, err := msgServer.RegisterAccount(sdk.WrapSDKContext(ctx), msg)
 			return sdk.WrapServiceResult(ctx, res, err)
-		case *types.MsgSubmitTx:
-			res, err := msgServer.SubmitTx(sdk.WrapSDKContext(ctx), msg)
-			return sdk.WrapServiceResult(ctx, res, err)
 		case *types.MsgRegisterHostZone:
 			res, err := msgServer.RegisterHostZone(sdk.WrapSDKContext(ctx), msg)
 			return sdk.WrapServiceResult(ctx, res, err)
