@@ -94,8 +94,8 @@ func (k Keeper) GetAllHostZone(ctx sdk.Context) (list []types.HostZone) {
 
 func (k Keeper) AddDelegationToValidator(ctx sdk.Context, hostZone types.HostZone, valAddr string, amt int64) (success bool) {
 	for _, val := range hostZone.GetValidators() {
-		k.Logger(ctx).Info(fmt.Sprintf("Validator %s, Current Delegation: %d, Delegation Change: %d", val.GetAddress(), val.GetDelegationAmt(), amt))
 		if val.GetAddress() == valAddr {
+			k.Logger(ctx).Info(fmt.Sprintf("Validator %s, Current Delegation: %d, Delegation Change: %d", val.GetAddress(), val.GetDelegationAmt(), amt))
 			if amt >= 0 {
 				amt, err := cast.ToUint64E(amt)
 				if err != nil {

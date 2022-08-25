@@ -7,11 +7,7 @@ import (
 	channeltypes "github.com/cosmos/ibc-go/v3/modules/core/04-channel/types"
 )
 
-const DELEGATE = "delegate"
-const CLAIM = "claim"
-const UNDELEGATE = "undelegate"
-const REINVEST = "reinvest"
-const REDEMPTION = "redemption"
+const TRANSFER = "transfer"
 
 // ICACallbacks wrapper struct for stakeibc keeper
 type ICACallback func(Keeper, sdk.Context, channeltypes.Packet, *channeltypes.Acknowledgement, []byte) error
@@ -42,11 +38,6 @@ func (c ICACallbacks) AddICACallback(id string, fn interface{}) icacallbackstype
 }
 
 func (c ICACallbacks) RegisterICACallbacks() icacallbackstypes.ICACallbackHandler {
-	a := c.
-		AddICACallback(DELEGATE, ICACallback(DelegateCallback)).
-		AddICACallback(CLAIM, ICACallback(ClaimCallback)).
-		AddICACallback(UNDELEGATE, ICACallback(UndelegateCallback)).
-		AddICACallback(REINVEST, ICACallback(ReinvestCallback)).
-		AddICACallback(REDEMPTION, ICACallback(RedemptionCallback))
+	a := c.AddICACallback(TRANSFER, ICACallback(TransferCallback))
 	return a.(ICACallbacks)
 }

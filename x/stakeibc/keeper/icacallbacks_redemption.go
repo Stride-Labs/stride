@@ -3,6 +3,8 @@ package keeper
 import (
 	"fmt"
 
+	"github.com/Stride-Labs/stride/x/icacallbacks"
+	icacallbackstypes "github.com/Stride-Labs/stride/x/icacallbacks/types"
 	recordstypes "github.com/Stride-Labs/stride/x/records/types"
 	"github.com/Stride-Labs/stride/x/stakeibc/types"
 
@@ -30,15 +32,24 @@ func (k Keeper) UnmarshalRedemptionCallbackArgs(ctx sdk.Context, redemptionCallb
 	return unmarshalledRedemptionCallback, nil
 }
 
-func RedemptionCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, txMsgData *sdk.TxMsgData, args []byte) error {
-	logMsg := fmt.Sprintf("RedemptionCallback executing on packet: %d, source: %s %s, dest: %s %s",
+func RedemptionCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ack *channeltypes.Acknowledgement, args []byte) error {
+	logMsg := fmt.Sprintf("RedemptionCallback executing packet: %d, source: %s %s, dest: %s %s",
 		packet.Sequence, packet.SourceChannel, packet.SourcePort, packet.DestinationChannel, packet.DestinationPort)
 	k.Logger(ctx).Info(logMsg)
-
-	if txMsgData == nil {
-		k.Logger(ctx).Error(fmt.Sprintf("RedemptionCallback timeout, txMsgData is nil, packet %v", packet))
+	if ack == nil {
+		// handle timeout
+		k.Logger(ctx).Error(fmt.Sprintf("RedemptionCallback timeout, ack is nil, packet %v", packet))
 		return nil
-	} else if len(txMsgData.Data) == 0 {
+	}
+
+	txMsgData, err := icacallbacks.GetTxMsgData(ctx, *ack, k.Logger(ctx))
+	if err != nil {
+		k.Logger(ctx).Error(fmt.Sprintf("DelegateCallback timeout, ack is nil, packet %v", packet))
+		return sdkerrors.Wrap(icacallbackstypes.ErrTxMsgData, err.Error())
+	}
+
+	if len(txMsgData.Data) == 0 {
+		// handle tx failure
 		k.Logger(ctx).Error(fmt.Sprintf("RedemptionCallback tx failed, txMsgData is empty, ack error, packet %v", packet))
 		return nil
 	}
