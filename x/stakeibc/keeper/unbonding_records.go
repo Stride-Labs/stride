@@ -41,6 +41,11 @@ func (k Keeper) CreateEpochUnbondingRecord(ctx sdk.Context, epochNumber uint64) 
 	return true
 }
 
+// return:
+// - msgs to send to the host zone
+// - total amount to unbond
+// - marshalled callback args
+// - error
 func (k Keeper) GetHostZoneUnbondingMsgs(ctx sdk.Context, hostZone types.HostZone) ([]sdk.Msg, uint64, []byte, error) {
 	// this function goes and processes all unbonded records for this hostZone
 	// regardless of what epoch they belong to
@@ -187,6 +192,11 @@ func (k Keeper) GetHostZoneUnbondingMsgs(ctx sdk.Context, hostZone types.HostZon
 
 func (k Keeper) SubmitHostZoneUnbondingMsg(ctx sdk.Context, msgs []sdk.Msg, totalAmtToUnbond uint64, marshalledCallbackArgs []byte, hostZone types.HostZone) error {
 	delegationAccount := hostZone.GetDelegationAccount()
+
+	// safety check: if msgs is nil, error
+	if msgs == nil {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "no msgs to submit for host zone unbondings")
+	}
 
 	_, err := k.SubmitTxsDayEpoch(ctx, hostZone.GetConnectionId(), msgs, *delegationAccount, UNDELEGATE, marshalledCallbackArgs)
 	if err != nil {
