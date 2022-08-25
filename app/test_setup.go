@@ -21,8 +21,8 @@ func init() {
 	config.SetBech32PrefixForValidator(Bech32Prefix+valoper, Bech32Prefix+valoperpub)
 }
 
-// Setup initializes a new StrideApp
-func InitTestApp(initChain bool) *StrideApp {
+// Initializes a new StrideApp without IBC functionality
+func InitStrideTestApp(initChain bool) *StrideApp {
 	db := dbm.NewMemDB()
 	app := NewStrideApp(
 		log.NewNopLogger(),
@@ -54,7 +54,8 @@ func InitTestApp(initChain bool) *StrideApp {
 	return app
 }
 
-func InitIBCTestingApp() (ibctesting.TestingApp, map[string]json.RawMessage) {
-	app := InitTestApp(false)
+// Initializes a new Stride App casted as a TestingApp for IBC support
+func InitStrideIBCTestingApp() (ibctesting.TestingApp, map[string]json.RawMessage) {
+	app := InitStrideTestApp(false)
 	return app, NewDefaultGenesisState()
 }
