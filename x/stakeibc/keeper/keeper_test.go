@@ -27,8 +27,7 @@ import (
 )
 
 var (
-	TestOwnerAddress = "cosmos17dtl0mjt3t77kpuhg2edqzjpszulwhgzuj9ljs"
-	TestVersion      = string(icatypes.ModuleCdc.MustMarshalJSON(&icatypes.Metadata{
+	TestIcaVersion = string(icatypes.ModuleCdc.MustMarshalJSON(&icatypes.Metadata{
 		Version:                icatypes.Version,
 		ControllerConnectionId: ibctesting.FirstConnectionID,
 		HostConnectionId:       ibctesting.FirstConnectionID,
@@ -55,29 +54,124 @@ type MultiChainKeeperTestSuite struct {
 	apptesting.AppTestHelper
 	coordinator *ibctesting.Coordinator
 
-	chainA *ibctesting.TestChain
-	chainB *ibctesting.TestChain
-	path   *ibctesting.Path
+	chainA       *ibctesting.TestChain
+	chainB       *ibctesting.TestChain
+	transferPath *ibctesting.Path
 }
 
-func (s *MultiChainKeeperTestSuite) SetupTestIbc() {
+func NewTransferPath(chainA *ibctesting.TestChain, chainB *ibctesting.TestChain) *ibctesting.Path {
+	path := ibctesting.NewPath(chainA, chainB)
+	path.EndpointA.ChannelConfig.PortID = ibctesting.TransferPort
+	path.EndpointB.ChannelConfig.PortID = ibctesting.TransferPort
+	path.EndpointA.ChannelConfig.Order = channeltypes.UNORDERED
+	path.EndpointB.ChannelConfig.Order = channeltypes.UNORDERED
+	path.EndpointA.ChannelConfig.Version = transfertypes.Version
+	path.EndpointB.ChannelConfig.Version = transfertypes.Version
+	return path
+}
+
+func NewIcaPath(chainA *ibctesting.TestChain, chainB *ibctesting.TestChain) *ibctesting.Path {
+	path := ibctesting.NewPath(chainA, chainB)
+	path.EndpointA.ChannelConfig.PortID = icatypes.PortID
+	path.EndpointB.ChannelConfig.PortID = icatypes.PortID
+	path.EndpointA.ChannelConfig.Order = channeltypes.ORDERED
+	path.EndpointB.ChannelConfig.Order = channeltypes.ORDERED
+	path.EndpointA.ChannelConfig.Version = TestIcaVersion
+	path.EndpointB.ChannelConfig.Version = TestIcaVersion
+	return path
+}
+
+func CopyConnectionAndClientToPath(path *ibctesting.Path, pathToCopy *ibctesting.Path) *ibctesting.Path {
+	path.EndpointA.ClientID = pathToCopy.EndpointA.ClientID
+	path.EndpointB.ClientID = pathToCopy.EndpointB.ClientID
+	path.EndpointA.ConnectionID = pathToCopy.EndpointA.ConnectionID
+	path.EndpointB.ConnectionID = pathToCopy.EndpointB.ConnectionID
+	path.EndpointA.ClientConfig = pathToCopy.EndpointA.ClientConfig
+	path.EndpointB.ClientConfig = pathToCopy.EndpointB.ClientConfig
+	path.EndpointA.ConnectionConfig = pathToCopy.EndpointA.ConnectionConfig
+	path.EndpointB.ConnectionConfig = pathToCopy.EndpointB.ConnectionConfig
+	return path
+}
+
+func RegisterInterchainAccount(endpoint *ibctesting.Endpoint, owner string) error {
+	portID, err := icatypes.NewControllerPortID(owner)
+	if err != nil {
+		return err
+	}
+
+	channelSequence := endpoint.Chain.App.GetIBCKeeper().ChannelKeeper.GetNextChannelSequence(endpoint.Chain.GetContext())
+
+	if err := endpoint.Chain.GetSimApp().ICAControllerKeeper.RegisterInterchainAccount(endpoint.Chain.GetContext(), endpoint.ConnectionID, owner); err != nil {
+		return err
+	}
+
+	endpoint.Chain.App.Commit()
+	endpoint.Chain.NextBlock()
+
+	endpoint.ChannelID = channeltypes.FormatChannelIdentifier(channelSequence)
+	endpoint.ChannelConfig.PortID = portID
+
+	return nil
+}
+
+func (s *MultiChainKeeperTestSuite) CreateICAChannel(owner string) error {
+	// Create ICA Path and the copy over the client and connection from the transfer path
+	path := NewIcaPath(s.chainA, s.chainB)
+	path = CopyConnectionAndClientToPath(path, s.transferPath)
+
+	// Register the ICA
+	if err := RegisterInterchainAccount(path.EndpointA, owner); err != nil {
+		return err
+	}
+
+	// Complete the handshake
+	if err := path.EndpointB.ChanOpenTry(); err != nil {
+		return err
+	}
+	if err := path.EndpointA.ChanOpenAck(); err != nil {
+		return err
+	}
+	if err := path.EndpointB.ChanOpenConfirm(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *MultiChainKeeperTestSuite) SetupIbc() {
 	s.coordinator = ibctesting.NewCoordinator(s.T(), 2)
 	s.chainA = s.coordinator.GetChain(ibctesting.GetChainID(1))
 	s.chainB = s.coordinator.GetChain(ibctesting.GetChainID(2))
+	s.transferPath = NewTransferPath(s.chainA, s.chainB)
+	s.coordinator.Setup(s.transferPath)
 
-	s.path = ibctesting.NewPath(s.chainA, s.chainB)
-	s.path.EndpointA.ChannelConfig.PortID = ibctesting.TransferPort
-	s.path.EndpointB.ChannelConfig.PortID = ibctesting.TransferPort
-	s.path.EndpointA.ChannelConfig.Version = transfertypes.Version
-	s.path.EndpointB.ChannelConfig.Version = transfertypes.Version
+	s.Require().Equal("07-tendermint-0", s.transferPath.EndpointA.ClientID)
+	s.Require().Equal("connection-0", s.transferPath.EndpointA.ConnectionID)
+	s.Require().Equal("channel-0", s.transferPath.EndpointA.ChannelID)
 
-	s.coordinator.Setup(s.path)
-	s.Require().Equal("07-tendermint-0", s.path.EndpointA.ClientID)
-	s.Require().Equal("connection-0", s.path.EndpointA.ConnectionID)
-	s.Require().Equal("channel-0", s.path.EndpointA.ChannelID)
+	s.Require().Equal("07-tendermint-0", s.transferPath.EndpointB.ClientID)
+	s.Require().Equal("connection-0", s.transferPath.EndpointB.ConnectionID)
+	s.Require().Equal("channel-0", s.transferPath.EndpointB.ChannelID)
+
+	err := s.CreateICAChannel("GAIA.DELEGATION")
+	s.Require().NoError(err, "create delegation ICA")
+
+	err = s.CreateICAChannel("GAIA.FEE")
+	s.Require().NoError(err, "create fee ICA")
+
+	err = s.CreateICAChannel("GAIA.REDEMPTION")
+	s.Require().NoError(err, "create redemption ICA")
+
+	err = s.CreateICAChannel("GAIA.WITHDRAWAL")
+	s.Require().NoError(err, "create withdrawal ICA")
+
+	channels := s.chainA.GetSimApp().IBCKeeper.ChannelKeeper.GetAllChannels(s.chainA.GetContext())
+	for _, channel := range channels {
+		fmt.Printf("%v\n", channel)
+	}
 }
 
-func (s *MultiChainKeeperTestSuite) CreateAccounts() (sdk.AccAddress, sdk.AccAddress) {
+func (s *MultiChainKeeperTestSuite) SetupAccounts() (sdk.AccAddress, sdk.AccAddress) {
 	addr1 := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
 	addr2 := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
 
@@ -90,10 +184,10 @@ func (s *MultiChainKeeperTestSuite) CreateAccounts() (sdk.AccAddress, sdk.AccAdd
 	return addr1, addr2
 }
 
-func (s *MultiChainKeeperTestSuite) TestIbc() {
-	s.SetupTestIbc()
+func (s *MultiChainKeeperTestSuite) TestTransfer() {
+	s.SetupIbc()
 
-	addr1, addr2 := s.CreateAccounts()
+	addr1, addr2 := s.SetupAccounts()
 	fmt.Println(addr1.String())
 	fmt.Printf("%v\n", s.chainA.GetSimApp().BankKeeper.GetAllBalances(s.chainA.GetContext(), addr1))
 	fmt.Println(addr2.String())
@@ -116,92 +210,31 @@ func (s *MultiChainKeeperTestSuite) TestIbc() {
 	fmt.Printf("%v\n", s.chainB.GetSimApp().BankKeeper.GetAllBalances(s.chainB.GetContext(), addr2))
 }
 
-// RegisterInterchainAccount is a helper function for starting the channel handshake
-func RegisterInterchainAccount(endpoint *ibctesting.Endpoint, owner string) error {
-	portID, err := icatypes.NewControllerPortID(owner)
-	if err != nil {
-		return err
-	}
+func (s *MultiChainKeeperTestSuite) TestIca() {
+	s.SetupIbc()
 
-	channelSequence := endpoint.Chain.App.GetIBCKeeper().ChannelKeeper.GetNextChannelSequence(endpoint.Chain.GetContext())
-
-	if err := endpoint.Chain.GetSimApp().ICAControllerKeeper.RegisterInterchainAccount(endpoint.Chain.GetContext(), endpoint.ConnectionID, owner); err != nil {
-		return err
-	}
-
-	// commit state changes for proof verification
-	endpoint.Chain.App.Commit()
-	endpoint.Chain.NextBlock()
-
-	// update port/channel ids
-	endpoint.ChannelID = channeltypes.FormatChannelIdentifier(channelSequence)
-	endpoint.ChannelConfig.PortID = portID
-
-	return nil
-}
-
-func (s *MultiChainKeeperTestSuite) TestSetupIca() {
-	s.coordinator = ibctesting.NewCoordinator(s.T(), 2)
-	s.chainA = s.coordinator.GetChain(ibctesting.GetChainID(1))
-	s.chainB = s.coordinator.GetChain(ibctesting.GetChainID(2))
-
-	// transferPath := ibctesting.NewPath(s.chainA, s.chainB)
-	// transferPath.EndpointA.ChannelConfig.PortID = ibctesting.TransferPort
-	// transferPath.EndpointB.ChannelConfig.PortID = ibctesting.TransferPort
-	// transferPath.EndpointA.ChannelConfig.Version = transfertypes.Version
-	// transferPath.EndpointB.ChannelConfig.Version = transfertypes.Version
-
-	// s.coordinator.Setup(transferPath)
-	// s.Require().Equal("07-tendermint-0", transferPath.EndpointA.ClientID)
-	// s.Require().Equal("connection-0", transferPath.EndpointA.ConnectionID)
-	// s.Require().Equal("channel-0", transferPath.EndpointA.ChannelID)
-
-	path := ibctesting.NewPath(s.chainA, s.chainB)
-	path.EndpointA.ChannelConfig.PortID = icatypes.PortID
-	path.EndpointB.ChannelConfig.PortID = icatypes.PortID
-	path.EndpointA.ChannelConfig.Order = channeltypes.ORDERED
-	path.EndpointB.ChannelConfig.Order = channeltypes.ORDERED
-	path.EndpointA.ChannelConfig.Version = TestVersion
-	path.EndpointB.ChannelConfig.Version = TestVersion
-
-	s.coordinator.SetupConnections(path)
-
-	// err := s.chainA.GetSimApp().ICAControllerKeeper.RegisterInterchainAccount(s.chainA.GetContext(), "connection-0", "GAIA.DELEGATION")
-	err := RegisterInterchainAccount(path.EndpointA, "GAIA.DELEGATION")
-	s.Require().NoError(err)
-
-	channels := s.chainA.GetSimApp().IBCKeeper.ChannelKeeper.GetAllChannels(s.chainA.GetContext())
-	for _, channel := range channels {
-		fmt.Printf("%v\n", channel)
-	}
-
-	err = path.EndpointB.ChanOpenTry()
-	s.Require().NoError(err)
-
-	err = path.EndpointA.ChanOpenAck()
-	s.Require().NoError(err)
-
-	err = path.EndpointB.ChanOpenConfirm()
-	s.Require().NoError(err)
-
-	channels = s.chainA.GetSimApp().IBCKeeper.ChannelKeeper.GetAllChannels(s.chainA.GetContext())
-	for _, channel := range channels {
-		fmt.Printf("%v\n", channel)
-	}
-
-	icaAddress, found := s.chainA.GetSimApp().ICAControllerKeeper.GetInterchainAccountAddress(s.chainA.GetContext(), "connection-0", "icacontroller-GAIA.DELEGATION")
+	delegationAddress, found := s.chainA.GetSimApp().ICAControllerKeeper.GetInterchainAccountAddress(s.chainA.GetContext(), "connection-0", "icacontroller-GAIA.DELEGATION")
 	s.Require().True(found)
+	fmt.Println("DELEGATION ADDRESS:", delegationAddress)
 
-	fmt.Println(icaAddress)
+	feeAddress, found := s.chainA.GetSimApp().ICAControllerKeeper.GetInterchainAccountAddress(s.chainA.GetContext(), "connection-0", "icacontroller-GAIA.FEE")
+	s.Require().True(found)
+	fmt.Println("FEE ADDRESS:", feeAddress)
+
+	redemptionAddress, found := s.chainA.GetSimApp().ICAControllerKeeper.GetInterchainAccountAddress(s.chainA.GetContext(), "connection-0", "icacontroller-GAIA.REDEMPTION")
+	s.Require().True(found)
+	fmt.Println("REDEMPTION ADDRESS:", redemptionAddress)
+
+	withdrawAddress, found := s.chainA.GetSimApp().ICAControllerKeeper.GetInterchainAccountAddress(s.chainA.GetContext(), "connection-0", "icacontroller-GAIA.WITHDRAWAL")
+	s.Require().True(found)
+	fmt.Println("WITHDRAWAL ADDRESS:", withdrawAddress)
 
 	timeoutTimestamp := uint64(s.chainA.GetContext().BlockTime().UnixNano() + 100_000_000_000)
 
-	_, addr2 := s.CreateAccounts()
-
 	var msgs []sdk.Msg
 	msgs = append(msgs, &banktypes.MsgSend{
-		FromAddress: icaAddress,
-		ToAddress:   addr2.String(),
+		FromAddress: delegationAddress,
+		ToAddress:   feeAddress,
 		Amount:      sdk.NewCoins(sdk.NewCoin("uatom", sdk.NewInt(1000))),
 	})
 
@@ -212,9 +245,13 @@ func (s *MultiChainKeeperTestSuite) TestSetupIca() {
 		Type: icatypes.EXECUTE_TX,
 		Data: data,
 	}
-	chanCap, found := s.chainA.GetSimApp().ScopedIBCKeeper.GetCapability(s.chainA.GetContext(), host.ChannelCapabilityPath("icacontroller-GAIA.DELEGATION", "channel-0"))
+
+	chanCap, found := s.chainA.GetSimApp().ScopedIBCKeeper.GetCapability(s.chainA.GetContext(), host.ChannelCapabilityPath("icacontroller-GAIA.DELEGATION", "channel-1"))
 	s.Require().True(found)
-	s.chainA.GetSimApp().ICAControllerKeeper.SendTx(s.chainA.GetContext(), chanCap, "connection-0", "icacontroller-GAIA.DELEGATION", packetData, timeoutTimestamp)
+
+	seq, err := s.chainA.GetSimApp().ICAControllerKeeper.SendTx(s.chainA.GetContext(), chanCap, "connection-0", "icacontroller-GAIA.DELEGATION", packetData, timeoutTimestamp)
+	s.Require().NoError(err)
+	fmt.Println("SEQUENCE:", seq)
 }
 
 func TestMultiChainKeeperTestSuite(t *testing.T) {
