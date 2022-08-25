@@ -4,6 +4,7 @@ import (
 	"strings"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/types/address"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	ibctransfertypes "github.com/cosmos/ibc-go/v3/modules/apps/transfer/types"
 
@@ -103,4 +104,9 @@ func (msg *MsgRegisterHostZone) ValidateBasic() error {
 	}
 
 	return nil
+}
+
+func NewZoneAddress(chainId string) sdk.AccAddress {
+	key := append([]byte("zone"), []byte(chainId)...)
+	return address.Module(ModuleName, key)
 }

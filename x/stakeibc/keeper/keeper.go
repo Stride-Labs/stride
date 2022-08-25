@@ -19,12 +19,11 @@ import (
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	icacontrollerkeeper "github.com/cosmos/ibc-go/v3/modules/apps/27-interchain-accounts/controller/keeper"
-	ibctransferkeeper "github.com/cosmos/ibc-go/v3/modules/apps/transfer/keeper"
 	ibckeeper "github.com/cosmos/ibc-go/v3/modules/core/keeper"
 	ibctmtypes "github.com/cosmos/ibc-go/v3/modules/light-clients/07-tendermint/types"
 
 	epochstypes "github.com/Stride-Labs/stride/x/epochs/types"
-	icacallbacksmodulekeeper "github.com/Stride-Labs/stride/x/icacallbacks/keeper"
+	icacallbackskeeper "github.com/Stride-Labs/stride/x/icacallbacks/keeper"
 	recordsmodulekeeper "github.com/Stride-Labs/stride/x/records/keeper"
 )
 
@@ -38,12 +37,11 @@ type (
 		ICAControllerKeeper   icacontrollerkeeper.Keeper
 		IBCKeeper             ibckeeper.Keeper
 		scopedKeeper          capabilitykeeper.ScopedKeeper
-		TransferKeeper        ibctransferkeeper.Keeper
 		bankKeeper            bankkeeper.Keeper
 		InterchainQueryKeeper icqkeeper.Keeper
 		RecordsKeeper         recordsmodulekeeper.Keeper
 		StakingKeeper         stakingkeeper.Keeper
-		ICACallbacksKeeper    icacallbacksmodulekeeper.Keeper
+		ICACallbacksKeeper    icacallbackskeeper.Keeper
 
 		accountKeeper types.AccountKeeper
 	}
@@ -62,11 +60,10 @@ func NewKeeper(
 	icacontrollerkeeper icacontrollerkeeper.Keeper,
 	ibcKeeper ibckeeper.Keeper,
 	scopedKeeper capabilitykeeper.ScopedKeeper,
-	TransferKeeper ibctransferkeeper.Keeper,
 	interchainQueryKeeper icqkeeper.Keeper,
 	RecordsKeeper recordsmodulekeeper.Keeper,
 	StakingKeeper stakingkeeper.Keeper,
-	ICACallbacksKeeper icacallbacksmodulekeeper.Keeper,
+	ICACallbacksKeeper icacallbackskeeper.Keeper,
 ) Keeper {
 	// set KeyTable if it has not already been set
 	if !ps.HasKeyTable() {
@@ -83,7 +80,6 @@ func NewKeeper(
 		ICAControllerKeeper:   icacontrollerkeeper,
 		IBCKeeper:             ibcKeeper,
 		scopedKeeper:          scopedKeeper,
-		TransferKeeper:        TransferKeeper,
 		InterchainQueryKeeper: interchainQueryKeeper,
 		RecordsKeeper:         RecordsKeeper,
 		StakingKeeper:         StakingKeeper,

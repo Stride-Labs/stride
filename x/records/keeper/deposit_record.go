@@ -110,26 +110,3 @@ func (k Keeper) GetDepositRecordByEpochAndChain(ctx sdk.Context, epochNumber uin
 	}
 	return nil, false
 }
-
-func (k Keeper) GetTransferDepositRecordByAmount(ctx sdk.Context, amount int64) (val *types.DepositRecord, found bool) {
-	records := k.GetAllDepositRecord(ctx)
-	for _, depositRecord := range records {
-		amountsMatch := depositRecord.Amount == amount && depositRecord.Status == types.DepositRecord_TRANSFER
-		if amountsMatch {
-			return &depositRecord, true
-		}
-	}
-	return nil, false
-}
-
-func (k Keeper) GetStakeDepositRecordByAmount(ctx sdk.Context, amount int64, hostZoneId string) (val *types.DepositRecord, found bool) {
-	records := k.GetAllDepositRecord(ctx)
-	for _, depositRecord := range records {
-		amountsMatch := depositRecord.Amount == amount && depositRecord.Status == types.DepositRecord_STAKE
-		hostZoneMatches := depositRecord.HostZoneId == hostZoneId
-		if amountsMatch && hostZoneMatches {
-			return &depositRecord, true
-		}
-	}
-	return nil, false
-}
