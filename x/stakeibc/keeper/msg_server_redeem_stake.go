@@ -57,11 +57,11 @@ func (k msgServer) RedeemStake(goCtx context.Context, msg *types.MsgRedeemStake)
 		return nil, sdkerrors.Wrapf(types.ErrInvalidAmount, fmt.Sprintf("invalid amount: %s", err.Error()))
 	}
 
-	// safety check: redemption rate must be above safety threshold
-	rateIsSafe, error := k.IsRedemptionRateBelowMaxSafetyThreshold(ctx, hostZone)
-	if !rateIsSafe || (error != nil) {
-		errMsg := fmt.Sprintf("redemption rate is above maximum safety threshold. hostZone: %s, error: %s", hostZone.String(), error.Error())
-		return nil, sdkerrors.Wrapf(types.ErrRedemptionRateAboveThreshold, errMsg)
+	// safety check: redemption rate must be within safety bounds
+	rateIsSafe, err := k.IsRedemptionRateWithinSafetyBounds(ctx, hostZone)
+	if !rateIsSafe || (err != nil) {
+		errMsg := fmt.Sprintf("IsRedemptionRateWithinSafetyBounds check failed. hostZone: %s, err: %s", hostZone.String(), err.Error())
+		return nil, sdkerrors.Wrapf(types.ErrRedemptionRateOutsideSafetyBounds, errMsg)
 	}
 
 	// construct desired unstaking amount from host zone

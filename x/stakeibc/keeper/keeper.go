@@ -231,34 +231,21 @@ func (k Keeper) GetICATimeoutNanos(ctx sdk.Context, epochType string) (uint64, e
 	return timeoutNanosUint64, nil
 }
 
-// safety check: ensure the redemption rate is NOT below our min safety threshold on host zone
-func (k Keeper) IsRedemptionRateAboveMinSafetyThreshold(ctx sdk.Context, zone types.HostZone) (bool, error) {
+// safety check: ensure the redemption rate is NOT below our min safety threshold && NOT above our max safety threshold on host zone
+func (k Keeper) IsRedemptionRateWithinSafetyBounds(ctx sdk.Context, zone types.HostZone) (bool, error) {
 
 	minSafetyThresholdInt := k.GetParam(ctx, types.KeySafetyMinRedemptionRateThreshold)
 	minSafetyThreshold := sdk.NewDec(int64(minSafetyThresholdInt)).Quo(sdk.NewDec(100))
-
-	redemptionRate := zone.RedemptionRate
-
-	if redemptionRate.LT(minSafetyThreshold) {
-		errMsg := fmt.Sprintf("Redemption rate %s is below min safety threshold %s", redemptionRate.String(), minSafetyThreshold.String())
-		k.Logger(ctx).Error(errMsg)
-		return false, sdkerrors.Wrapf(types.ErrRedemptionRateBelowThreshold, errMsg)
-	}
-	return true, nil
-}
-
-// safety check: ensure the redemption rate is NOT above our max safety threshold on host zone
-func (k Keeper) IsRedemptionRateBelowMaxSafetyThreshold(ctx sdk.Context, zone types.HostZone) (bool, error) {
 
 	maxSafetyThresholdInt := k.GetParam(ctx, types.KeySafetyMaxRedemptionRateThreshold)
 	maxSafetyThreshold := sdk.NewDec(int64(maxSafetyThresholdInt)).Quo(sdk.NewDec(100))
 
 	redemptionRate := zone.RedemptionRate
 
-	if redemptionRate.GT(maxSafetyThreshold) {
-		errMsg := fmt.Sprintf("Redemption rate %s is above max safety threshold %s", redemptionRate.String(), maxSafetyThreshold.String())
+	if redemptionRate.LT(minSafetyThreshold) || redemptionRate.GT(maxSafetyThreshold) {
+		errMsg := fmt.Sprintf("IsRedemptionRateWithinSafetyBounds check failed %s is outside safety bounds [%s, %s]", redemptionRate.String(), minSafetyThreshold.String(), maxSafetyThreshold.String())
 		k.Logger(ctx).Error(errMsg)
-		return false, sdkerrors.Wrapf(types.ErrRedemptionRateAboveThreshold, errMsg)
+		return false, sdkerrors.Wrapf(types.ErrRedemptionRateOutsideSafetyBounds, errMsg)
 	}
 	return true, nil
 }
