@@ -55,15 +55,15 @@ func NewKeeper(
 	}
 
 	return &Keeper{
-		Cdc:           		Cdc,
-		storeKey:      		storeKey,
-		memKey:        		memKey,
-		paramstore:    		ps,	
-		scopedKeeper:  		scopedKeeper,
-		AccountKeeper: 		AccountKeeper,
-		TransferKeeper:		TransferKeeper,
-		IBCKeeper:			ibcKeeper,
-		ICACallbacksKeeper:    ICACallbacksKeeper,
+		Cdc:           			Cdc,
+		storeKey:      			storeKey,
+		memKey:        			memKey,
+		paramstore:    			ps,	
+		scopedKeeper:  			scopedKeeper,
+		AccountKeeper: 			AccountKeeper,
+		TransferKeeper:			TransferKeeper,
+		IBCKeeper:				ibcKeeper,
+		ICACallbacksKeeper:		ICACallbacksKeeper,
 	}
 }
 

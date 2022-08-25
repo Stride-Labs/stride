@@ -34,7 +34,7 @@ func (k Keeper) UnmarshalClaimCallbackArgs(ctx sdk.Context, claimCallback []byte
 func ClaimCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ack *channeltypes.Acknowledgement, args []byte) error {
 	if ack == nil {
 		// handle timeout
-		k.Logger(ctx).Error(fmt.Sprintf("ClaimCallback timeout, txMsgData is nil, packet %v", packet))
+		k.Logger(ctx).Error(fmt.Sprintf("ClaimCallback timeout, ack is nil, packet %v", packet))
 		return nil
 	}
 	

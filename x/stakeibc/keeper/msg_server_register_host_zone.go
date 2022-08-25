@@ -45,9 +45,6 @@ func (k msgServer) RegisterHostZone(goCtx context.Context, msg *types.MsgRegiste
 
 	// create and save the zones's module account to the account keeper
 	zoneAddress := types.NewZoneAddress(chainId)
-	if err != nil {
-		return nil, fmt.Errorf("unable to obtain delegator address: %w", err)
-	}
 	acc := k.accountKeeper.NewAccount(
 		ctx,
 		authtypes.NewModuleAccount(

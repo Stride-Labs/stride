@@ -50,7 +50,7 @@ func DelegateCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ack
 
 	if len(txMsgData.Data) == 0 {
 		// failed transaction
-		k.Logger(ctx).Error(fmt.Sprintf("DelegateCallback tx failed, txMsgData is empty (ack error), packet %v", packet))
+		k.Logger(ctx).Error(fmt.Sprintf("DelegateCallback tx failed, ack is empty (ack error), packet %v", packet))
 		return nil
 	}
 

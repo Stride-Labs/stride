@@ -39,7 +39,7 @@ func ReinvestCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ack
 	k.Logger(ctx).Info("ReinvestCallback executing", "packet", packet)
 	if ack == nil {
 		// handle timeout
-		k.Logger(ctx).Error(fmt.Sprintf("ReinvestCallback timeout, txMsgData is nil, packet %v", packet))
+		k.Logger(ctx).Error(fmt.Sprintf("ReinvestCallback timeout, ack is nil, packet %v", packet))
 		return nil
 	}
 
