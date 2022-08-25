@@ -126,7 +126,7 @@ GAIA_VAL_3_PUBKEY='{"@type":"/cosmos.crypto.secp256k1.PubKey","key":"A7X2X1v+pa0
 GAIA_HOME_3="$STATE/gaia3"
 GAIA_CMD_3="$SCRIPT_DIR/../build/gaia3/gaiad --home $GAIA_HOME_3"
 
-HERMES_CMD="$SCRIPT_DIR/../build/hermes/release/hermes -c $SCRIPT_DIR/hermes/config.toml"
+HERMES_CMD="$SCRIPT_DIR/../build/hermes/release/hermes --config $SCRIPT_DIR/hermes/config.toml"
 
 # define relayer vars
 HERMES_STRIDE_ACCT=rly1
