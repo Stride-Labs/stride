@@ -136,9 +136,9 @@ func (s *KeeperTestSuite) TestLiquidStakeDifferentRedemptionRates() {
 	user := tc.user
 	msg := tc.validMsg
 
-	// Loop over exchange rates: {0.2, 0.4, 0.6, ..., 2.0}
+	// Loop over exchange rates: {0.92, 0.94, ..., 1.2}
 	for i := -8; i <= 10; i += 2 {
-		redemptionDelta := sdk.NewDecWithPrec(1.0, 1).Mul(sdk.NewDec(int64(i))) // i = 2 => delta = 0.2
+		redemptionDelta := sdk.NewDecWithPrec(1.0, 1).Quo(sdk.NewDec(10)).Mul(sdk.NewDec(int64(i))) // i = 2 => delta = 0.02
 		newRedemptionRate := sdk.NewDec(1.0).Add(redemptionDelta)
 		redemptionRateFloat := newRedemptionRate.MustFloat64()
 
@@ -158,6 +158,19 @@ func (s *KeeperTestSuite) TestLiquidStakeDifferentRedemptionRates() {
 		testDescription := fmt.Sprintf("st atom balance for redemption rate: %v", redemptionRateFloat)
 		s.Require().Equal(expectedStAtomMinted, actualStAtomMinted, testDescription)
 	}
+}
+
+func (s *KeeperTestSuite) TestLiquidStake_RateBelowMinThreshold() {
+	tc := s.SetupLiquidStake()
+	msg := tc.validMsg
+
+	// Update rate in host zone to below min threshold
+	hz := tc.initialState.hostZone
+	hz.RedemptionRate = sdk.NewDec(8).Quo(sdk.NewDec(10))
+	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hz)
+
+	_, err := s.msgServer.LiquidStake(sdk.WrapSDKContext(s.Ctx), &msg)
+	s.Require().Error(err)
 }
 
 func (s *KeeperTestSuite) TestLiquidStakeHostZoneNotFound() {
