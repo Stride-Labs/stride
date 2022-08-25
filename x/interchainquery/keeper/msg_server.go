@@ -45,7 +45,7 @@ func (k msgServer) SubmitQueryResponse(goCtx context.Context, msg *types.MsgSubm
 		if q.Ttl < curT {
 			errMsg := fmt.Sprintf("[ICQ Resp] aborting query callback due to ttl expiry! ttl is %d, time now %d for query of type %s with id %s, on chain %s", q.Ttl, ctx.BlockHeader().Time.UnixNano(), q.QueryType, q.ChainId, msg.QueryId)
 			k.DeleteQuery(ctx, msg.QueryId)
-			k.Logger(ctx).Info(errMsg)
+			k.Logger(ctx).Error(errMsg)
 			return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, errMsg)
 		}
 
