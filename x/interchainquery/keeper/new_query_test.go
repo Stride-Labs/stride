@@ -8,7 +8,6 @@ import (
 )
 
 type NewQueryTestCase struct {
-	ctx          sdk.Context
 	module       string
 	connectionId string
 	chainId      string
@@ -20,35 +19,8 @@ type NewQueryTestCase struct {
 	height       int64
 }
 
-func (suite *KeeperTestSuite) SetupNewQuery(
-	ctx sdk.Context,
-	module string,
-	connectionId string,
-	chainId string,
-	queryType string,
-	request []byte,
-	period sdk.Int,
-	callbackId string,
-	ttl uint64,
-	height int64,
-) NewQueryTestCase {
+func (suite *KeeperTestSuite) SetupNewQuery() NewQueryTestCase {
 
-	return NewQueryTestCase{
-		ctx:          ctx,
-		module:       module,
-		connectionId: connectionId,
-		chainId:      chainId,
-		queryType:    queryType,
-		request:      request,
-		period:       period,
-		callbackId:   callbackId,
-		ttl:          ttl,
-		height:       height,
-	}
-}
-
-func (s *KeeperTestSuite) TestNewQuerySuccessful() {
-	ctx := s.Ctx
 	// module is the name of the module invoking the query, used to find the callback upon response
 	module := "stakeibc"
 	// connectionId of the target chain you're querying
@@ -71,10 +43,24 @@ func (s *KeeperTestSuite) TestNewQuerySuccessful() {
 	// height is the height at which you'd like the query to be executed on the host zone. height=0 means execute at the latest height
 	height := int64(0) // height always 0 (which means current height)
 
-	tc := s.SetupNewQuery(ctx, module, connectionId, chainId, queryType, request, period, callbackId, ttl, height)
+	return NewQueryTestCase{
+		module:       module,
+		connectionId: connectionId,
+		chainId:      chainId,
+		queryType:    queryType,
+		request:      request,
+		period:       period,
+		callbackId:   callbackId,
+		ttl:          ttl,
+		height:       height,
+	}
+}
+
+func (s *KeeperTestSuite) TestNewQuerySuccessful() {
+	tc := s.SetupNewQuery()
 
 	actualQuery := s.App.InterchainqueryKeeper.NewQuery(
-		tc.ctx,
+		s.Ctx,
 		tc.module,
 		tc.connectionId,
 		tc.chainId,
