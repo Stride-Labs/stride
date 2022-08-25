@@ -8,13 +8,13 @@ source ${SCRIPT_DIR}/vars.sh
 echo "Adding Hermes keys"
 TMP_MNEMONICS=${SCRIPT_DIR}/state/mnemonic.txt 
 
-echo "$HERMES_STRIDE_MNEMONIC" > mnemonic.txt 
-$HERMES_CMD keys add --key-name rly1 --chain $STRIDE_CHAIN_ID --mnemonic-file $TMP_MNEMONICS --overwrite >> $KEYS_LOGS 2>&1
-echo "$HERMES_GAIA_MNEMONIC" > mnemonic.txt 
+echo "$HERMES_STRIDE_MNEMONIC" > $TMP_MNEMONICS
+$HERMES_CMD keys add --key-name rly1 --chain $STRIDE_CHAIN --mnemonic-file $TMP_MNEMONICS --overwrite >> $KEYS_LOGS 2>&1
+echo "$HERMES_GAIA_MNEMONIC" > $TMP_MNEMONICS
 $HERMES_CMD keys add --key-name rly2 --chain $GAIA_CHAIN --mnemonic-file $TMP_MNEMONICS --overwrite >> $KEYS_LOGS 2>&1
-echo "$HERMES_JUNO_MNEMONIC" > mnemonic.txt 
+echo "$HERMES_JUNO_MNEMONIC" > $TMP_MNEMONICS
 $HERMES_CMD keys add --key-name rly3 --chain $JUNO_CHAIN --mnemonic-file $TMP_MNEMONICS --overwrite >> $KEYS_LOGS 2>&1
-echo "$HERMES_OSMO_MNEMONIC" > mnemonic.txt 
+echo "$HERMES_OSMO_MNEMONIC" > $TMP_MNEMONICS
 $HERMES_CMD keys add --key-name rly4 --chain $OSMO_CHAIN --mnemonic-file $TMP_MNEMONICS --overwrite >> $KEYS_LOGS 2>&1
 rm -f $TMP_MNEMONICS
 
