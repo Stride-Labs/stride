@@ -16,28 +16,31 @@ var (
 	DefaultRewardsInterval        uint64 = 3
 	DefaultRedemptionRateInterval uint64 = 3
 	// you apparantly cannot safely encode floats, so we make commission / 100
-	DefaultStrideCommission              uint64 = 10
-	DefaultValidatorRebalancingThreshold uint64 = 100 // divide by 10,000, so 100 = 1%
-	// 10 minutes
-	DefaultICATimeoutNanos          uint64 = 600000000000
-	DefaultBufferSize               uint64 = 5            // 1/5=20% of the epoch
-	DefaultIbcTimeoutBlocks         uint64 = 300          // 300 blocks ~= 30 minutes
-	DefaultFeeTransferTimeoutNanos  uint64 = 600000000000 // 10 minutes
-	DefaultMaxStakeICACallsPerEpoch uint64 = 100
+	DefaultStrideCommission                 uint64 = 10
+	DefaultValidatorRebalancingThreshold    uint64 = 100 // divide by 10,000, so 100 = 1%
+	DefaultICATimeoutNanos                  uint64 = 600000000000
+	DefaultBufferSize                       uint64 = 5            // 1/5=20% of the epoch
+	DefaultIbcTimeoutBlocks                 uint64 = 300          // 300 blocks ~= 30 minutes
+	DefaultFeeTransferTimeoutNanos          uint64 = 600000000000 // 10 minutes
+	DefaultSafetyMinRedemptionRateThreshold uint64 = 90           // divide by 100, so 90 = 0.9
+	DefaultSafetyMaxRedemptionRateThreshold uint64 = 300          // divide by 100, so 300 = 3
+	DefaultMaxStakeICACallsPerEpoch         uint64 = 100
 
 	// KeyDepositInterval is store's key for the DepositInterval option
-	KeyDepositInterval               = []byte("DepositInterval")
-	KeyDelegateInterval              = []byte("DelegateInterval")
-	KeyReinvestInterval              = []byte("ReinvestInterval")
-	KeyRewardsInterval               = []byte("RewardsInterval")
-	KeyRedemptionRateInterval        = []byte("RedemptionRateInterval")
-	KeyStrideCommission              = []byte("StrideCommission")
-	KeyValidatorRebalancingThreshold = []byte("ValidatorRebalancingThreshold")
-	KeyICATimeoutNanos               = []byte("ICATimeoutNanos")
-	KeyFeeTransferTimeoutNanos       = []byte("FeeTransferTimeoutNanos")
-	KeyBufferSize                    = []byte("BufferSize")
-	KeyIbcTimeoutBlocks              = []byte("IBCTimeoutBlocks")
-	KeyMaxStakeICACallsPerEpoch      = []byte("MaxStakeICACallsPerEpoch")
+	KeyDepositInterval                  = []byte("DepositInterval")
+	KeyDelegateInterval                 = []byte("DelegateInterval")
+	KeyReinvestInterval                 = []byte("ReinvestInterval")
+	KeyRewardsInterval                  = []byte("RewardsInterval")
+	KeyRedemptionRateInterval           = []byte("RedemptionRateInterval")
+	KeyStrideCommission                 = []byte("StrideCommission")
+	KeyValidatorRebalancingThreshold    = []byte("ValidatorRebalancingThreshold")
+	KeyICATimeoutNanos                  = []byte("ICATimeoutNanos")
+	KeyFeeTransferTimeoutNanos          = []byte("FeeTransferTimeoutNanos")
+	KeyBufferSize                       = []byte("BufferSize")
+	KeyIbcTimeoutBlocks                 = []byte("IBCTimeoutBlocks")
+	KeySafetyMinRedemptionRateThreshold = []byte("SafetyMinRedemptionRateThreshold")
+	KeySafetyMaxRedemptionRateThreshold = []byte("SafetyMaxRedemptionRateThreshold")
+	KeyMaxStakeICACallsPerEpoch         = []byte("MaxStakeICACallsPerEpoch")
 )
 
 var _ paramtypes.ParamSet = (*Params)(nil)
@@ -61,20 +64,24 @@ func NewParams(
 	ibc_timeout_blocks uint64,
 	fee_transfer_timeout_nanos uint64,
 	max_stake_ica_calls_per_epoch uint64,
+	safety_min_redemption_rate_threshold uint64,
+	safety_max_redemption_rate_threshold uint64,
 ) Params {
 	return Params{
-		DepositInterval:               deposit_interval,
-		DelegateInterval:              delegate_interval,
-		RewardsInterval:               rewards_interval,
-		RedemptionRateInterval:        redemption_rate_interval,
-		StrideCommission:              stride_commission,
-		ReinvestInterval:              reinvest_interval,
-		ValidatorRebalancingThreshold: validator_rebalancing_threshold,
-		IcaTimeoutNanos:               ica_timeout_nanos,
-		BufferSize:                    buffer_size,
-		IbcTimeoutBlocks:              ibc_timeout_blocks,
-		FeeTransferTimeoutNanos:       fee_transfer_timeout_nanos,
-		MaxStakeIcaCallsPerEpoch:      max_stake_ica_calls_per_epoch,
+		DepositInterval:                  deposit_interval,
+		DelegateInterval:                 delegate_interval,
+		RewardsInterval:                  rewards_interval,
+		RedemptionRateInterval:           redemption_rate_interval,
+		StrideCommission:                 stride_commission,
+		ReinvestInterval:                 reinvest_interval,
+		ValidatorRebalancingThreshold:    validator_rebalancing_threshold,
+		IcaTimeoutNanos:                  ica_timeout_nanos,
+		BufferSize:                       buffer_size,
+		IbcTimeoutBlocks:                 ibc_timeout_blocks,
+		FeeTransferTimeoutNanos:          fee_transfer_timeout_nanos,
+		MaxStakeIcaCallsPerEpoch:         max_stake_ica_calls_per_epoch,
+		SafetyMinRedemptionRateThreshold: safety_min_redemption_rate_threshold,
+		SafetyMaxRedemptionRateThreshold: safety_max_redemption_rate_threshold,
 	}
 }
 
@@ -93,6 +100,8 @@ func DefaultParams() Params {
 		DefaultIbcTimeoutBlocks,
 		DefaultFeeTransferTimeoutNanos,
 		DefaultMaxStakeICACallsPerEpoch,
+		DefaultSafetyMinRedemptionRateThreshold,
+		DefaultSafetyMaxRedemptionRateThreshold,
 	)
 }
 
@@ -111,6 +120,8 @@ func (p *Params) ParamSetPairs() paramtypes.ParamSetPairs {
 		paramtypes.NewParamSetPair(KeyIbcTimeoutBlocks, &p.IbcTimeoutBlocks, isPositive),
 		paramtypes.NewParamSetPair(KeyFeeTransferTimeoutNanos, &p.FeeTransferTimeoutNanos, validTimeoutNanos),
 		paramtypes.NewParamSetPair(KeyMaxStakeICACallsPerEpoch, &p.MaxStakeIcaCallsPerEpoch, isPositive),
+		paramtypes.NewParamSetPair(KeySafetyMinRedemptionRateThreshold, &p.SafetyMinRedemptionRateThreshold, validMinRedemptionRateThreshold),
+		paramtypes.NewParamSetPair(KeySafetyMaxRedemptionRateThreshold, &p.SafetyMaxRedemptionRateThreshold, validMaxRedemptionRateThreshold),
 	}
 }
 
@@ -144,6 +155,36 @@ func validTimeoutNanos(i interface{}) error {
 	if ival > oneHour {
 		return fmt.Errorf("parameter must be less than %dns: %d", oneHour, ival)
 	}
+	return nil
+}
+
+func validMaxRedemptionRateThreshold(i interface{}) error {
+	ival, ok := i.(uint64)
+	if !ok {
+		return fmt.Errorf("parameter not accepted: %T", i)
+	}
+
+	maxVal := uint64(1000) // divide by 100, so 1000 => 10
+
+	if ival > maxVal {
+		return fmt.Errorf("parameter must be l.t. 1000: %d", ival)
+	}
+
+	return nil
+}
+
+func validMinRedemptionRateThreshold(i interface{}) error {
+	ival, ok := i.(uint64)
+	if !ok {
+		return fmt.Errorf("parameter not accepted: %T", i)
+	}
+
+	minVal := uint64(75) // divide by 100, so 75 => 0.75
+
+	if ival < minVal {
+		return fmt.Errorf("parameter must be g.t. 75: %d", ival)
+	}
+
 	return nil
 }
 

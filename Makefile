@@ -54,14 +54,22 @@ test-integration-docker:
 ###                                DockerNet                                ###
 ###############################################################################
 
-init-docker:
-	sh scripts/init_main.sh -${build}
+build-docker: 
+	@sh scripts/build.sh -${build} ${BUILDDIR}
+	
+start-docker: build-docker
+	@sh scripts/start_network.sh 
 
 clean-docker: 
-	rm -rf scripts/state
 	@docker-compose stop
 	@docker-compose down
+	rm -rf scripts/state
 	docker image prune -a
+	
+stop-docker:
+	@pkill -f "docker-compose logs" || true
+	@pkill -f "/bin/bash.*create_logs.sh" || true
+	docker-compose down
 
 ###############################################################################
 ###                                LocalNet                                 ###
@@ -73,9 +81,9 @@ check-dependencies:
 build-local: 
 	@sh scripts-local/build.sh -${build} ${BUILDDIR}
 
-init-local: build-local
+start-local: build-local
 	@sh scripts-local/start_network.sh ${cache}
 
-stop:
-	@killall icq-startup.sh gaiad strided hermes interchain-queries junod osmosisd rly
-	@pkill -f "/bin/bash.*create_logs.sh"
+stop-local:
+	@killall gaiad strided hermes interchain-queries || true
+	@pkill -f "/bin/bash.*create_logs.sh" || true
