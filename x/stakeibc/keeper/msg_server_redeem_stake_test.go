@@ -20,6 +20,7 @@ type RedeemStakeState struct {
 type RedeemStakeTestCase struct {
 	user         Account
 	module       Account
+	hostZone     stakeibc.HostZone
 	initialState RedeemStakeState
 	validMsg     stakeibc.MsgRedeemStake
 }
@@ -74,8 +75,9 @@ func (suite *KeeperTestSuite) SetupRedeemStake() RedeemStakeTestCase {
 	suite.App.RecordsKeeper.SetEpochUnbondingRecord(suite.Ctx, epochUnbondingRecord)
 
 	return RedeemStakeTestCase{
-		user:   user,
-		module: module,
+		user:     user,
+		module:   module,
+		hostZone: hostZone,
 		initialState: RedeemStakeState{
 			epochNumber:                        epochTrackerDay.EpochNumber,
 			initialNativeEpochUnbondingAmount:  uint64(0),
@@ -186,6 +188,17 @@ func (suite *KeeperTestSuite) TestRedeemStakeHostZoneNotFound() {
 	suite.Require().EqualError(err, "host zone is invalid: fake_host_zone: host zone not registered")
 }
 
+func (suite *KeeperTestSuite) TestRedeemStakeRateAboveMaxThreshold() {
+	tc := suite.SetupRedeemStake()
+
+	hz := tc.hostZone
+	hz.RedemptionRate = sdk.NewDec(100)
+	suite.App.StakeibcKeeper.SetHostZone(suite.Ctx, hz)
+
+	_, err := suite.msgServer.RedeemStake(sdk.WrapSDKContext(suite.Ctx), &tc.validMsg)
+	suite.Require().Error(err)
+}
+
 func (suite *KeeperTestSuite) TestInvalidReceiverAddress() {
 	tc := suite.SetupRedeemStake()
 
@@ -253,10 +266,10 @@ func (suite *KeeperTestSuite) TestRedeemStakeHostZoneNoUnbondings() {
 	hostZoneUnbonding := &recordtypes.HostZoneUnbonding{
 		NativeTokenAmount: uint64(0),
 		Denom:             "uatom",
-		HostZoneId:		"NOT_GAIA",
+		HostZoneId:        "NOT_GAIA",
 	}
 	epochUnbondingRecord.HostZoneUnbondings = append(epochUnbondingRecord.HostZoneUnbondings, hostZoneUnbonding)
-	
+
 	suite.App.RecordsKeeper.SetEpochUnbondingRecord(suite.Ctx, epochUnbondingRecord)
 	_, err := suite.msgServer.RedeemStake(sdk.WrapSDKContext(suite.Ctx), &invalidMsg)
 
