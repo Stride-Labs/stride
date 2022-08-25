@@ -37,10 +37,10 @@ func (k msgServer) SubmitQueryResponse(goCtx context.Context, msg *types.MsgSubm
 		// ABORT PROCESSING QUERY RESPONSE IF WE EXCEEDED THE TTL
 		k.Logger(ctx).Info(fmt.Sprintf("[ICQ Resp] query %s with ttl: %d, resp time: %d.", msg.QueryId, q.Ttl, ctx.BlockHeader().Time.UnixNano()))
 		curT, err := cast.ToUint64E(ctx.BlockTime().UnixNano())
-
 		if err != nil {
 			return nil, err
 		}
+
 		if q.Ttl < curT {
 			errMsg := fmt.Sprintf("[ICQ Resp] aborting query callback due to ttl expiry! ttl is %d, time now %d for query of type %s with id %s, on chain %s", q.Ttl, ctx.BlockHeader().Time.UnixNano(), q.QueryType, q.ChainId, msg.QueryId)
 			k.DeleteQuery(ctx, msg.QueryId)
@@ -77,12 +77,12 @@ func (k msgServer) SubmitQueryResponse(goCtx context.Context, msg *types.MsgSubm
 
 			merkleProof, err := commitmenttypes.ConvertProofs(msg.ProofOps)
 			if err != nil {
-				k.Logger(ctx).Error("error converting proofs")
+				return nil, fmt.Errorf("error converting proofs")
 			}
 
 			tmclientstate, ok := clientState.(*tmclienttypes.ClientState)
 			if !ok {
-				k.Logger(ctx).Error(fmt.Sprintf("error unmarshaling client state %v", clientState))
+				return nil, fmt.Errorf("error unmarshaling client state %v", clientState)
 			}
 
 			if len(msg.Result) != 0 {
@@ -101,46 +101,29 @@ func (k msgServer) SubmitQueryResponse(goCtx context.Context, msg *types.MsgSubm
 			}
 		}
 
-		noDelete := false
-		// execute registered callbacks.
-
-		keys := []string{}
-		for k := range k.callbacks {
-			keys = append(keys, k)
+		moduleNames := []string{}
+		for moduleName := range k.callbacks {
+			moduleNames = append(moduleNames, moduleName)
 		}
+		sort.Strings(moduleNames)
 
-		sort.Strings(keys)
+		for _, module := range moduleNames {
+			k.Logger(ctx).Info(fmt.Sprintf("Executing callback for queryId (%s), module (%s)", q.Id, module))
+			moduleCallbackHandler := k.callbacks[module]
 
-		k.Logger(ctx).Info(fmt.Sprintf("Executing callbacks for queryId %s", q.Id))
-		for _, key := range keys {
-			k.Logger(ctx).Info(fmt.Sprintf("Executing callback for module %s", key))
-			module := k.callbacks[key]
-			if module.Has(q.CallbackId) {
-				err := module.Call(ctx, q.CallbackId, msg.Result, q)
-				k.Logger(ctx).Info(fmt.Sprintf("Callback %s executed", q.CallbackId))
+			if moduleCallbackHandler.Has(q.CallbackId) {
+				k.Logger(ctx).Info(fmt.Sprintf("ICQ Callback (%s) found for module (%s)", q.CallbackId, module))
+				err := moduleCallbackHandler.Call(ctx, q.CallbackId, msg.Result, q)
 				if err != nil {
-					k.Logger(ctx).Error(fmt.Sprintf("error executing callback %s: %v", q.CallbackId, err))
-					// handle edge case; callback has resent the same query!
-					// set noDelete to true and short circuit error handling!
-					if err == types.ErrSucceededNoDelete {
-						noDelete = true
-					} else {
-						k.Logger(ctx).Error(fmt.Sprintf("error in callback, error: %s, msg: %s, result: %v, type: %s, params: %v", err.Error(), msg.QueryId, msg.Result, q.QueryType, q.Request))
-						return nil, err
-					}
+					k.Logger(ctx).Error(fmt.Sprintf("error in ICQ callback, error: %s, msg: %s, result: %v, type: %s, params: %v", err.Error(), msg.QueryId, msg.Result, q.QueryType, q.Request))
+					return nil, err
 				}
 			} else {
-				k.Logger(ctx).Info(fmt.Sprintf("Callback not found for module %s", key))
+				k.Logger(ctx).Info(fmt.Sprintf("ICQ Callback not found for module (%s)", module))
 			}
 		}
 
-		if q.Period.IsNegative() {
-			if !noDelete {
-				k.DeleteQuery(ctx, msg.QueryId)
-			}
-		} else {
-			k.SetQuery(ctx, q)
-		}
+		k.DeleteQuery(ctx, msg.QueryId)
 
 	} else {
 		k.Logger(ctx).Info("Ignoring duplicate query")
