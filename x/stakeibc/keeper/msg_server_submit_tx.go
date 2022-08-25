@@ -109,7 +109,8 @@ func (k Keeper) DelegateOnHost(ctx sdk.Context, hostZone types.HostZone, amt sdk
 			msgs = append(msgs, &stakingTypes.MsgDelegate{
 				DelegatorAddress: delegationIca.GetAddress(),
 				ValidatorAddress: validator.GetAddress(),
-				Amount:           relAmt})
+				Amount:           relAmt,
+			})
 		}
 		splitDelegations = append(splitDelegations, &types.SplitDelegation{Validator: validator.GetAddress(), Amount: relAmt.Amount.Uint64()})
 	}
@@ -356,7 +357,6 @@ func (k Keeper) GetLightClientHeightSafely(ctx sdk.Context, connectionID string)
 		return 0, false
 	} else {
 		// TODO(TEST-119) get stAsset supply at SAME time as hostZone height
-		// TODO(TEST-112) check on safety of castng uint64 to int64
 		latestHeightHostZone, err := cast.ToUint64E(clientState.GetLatestHeight().GetRevisionHeight())
 		if err != nil {
 			k.Logger(ctx).Error(fmt.Sprintf("error casting latest height to int64: %s", err.Error()))
