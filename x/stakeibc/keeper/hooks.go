@@ -241,7 +241,11 @@ func (k Keeper) StakeExistingDepositsOnHostZones(ctx sdk.Context, epochNumber ui
 	stakeDepositRecords := utils.FilterDepositRecords(depositRecords, func(record recordstypes.DepositRecord) (condition bool) {
 		return record.Status == recordstypes.DepositRecord_STAKE
 	})
-	for _, depositRecord := range stakeDepositRecords {
+
+	// limit the number of staking deposits to process per epoch
+	MAX_TO_PROCESS := utils.Min(len(stakeDepositRecords), cast.ToInt(k.GetParam(ctx, types.KeyMaxStakeICACallsPerEpoch)))
+	k.Logger(ctx).Info(fmt.Sprintf("Staking %d out of %d deposit records", MAX_TO_PROCESS, len(stakeDepositRecords)))
+	for _, depositRecord := range stakeDepositRecords[:MAX_TO_PROCESS] {
 		if depositRecord.DepositEpochNumber < cast.ToUint64(epochNumber) {
 			pstr := fmt.Sprintf("\t[StakeExistingDepositsOnHostZones] Processing deposit ID:{%d} DENOM:{%s} AMT:{%d}", depositRecord.Id, depositRecord.Denom, depositRecord.Amount)
 			k.Logger(ctx).Info(pstr)
@@ -286,7 +290,6 @@ func (k Keeper) TransferExistingDepositsToHostZones(ctx sdk.Context, epochNumber
 		return record.Status == recordstypes.DepositRecord_TRANSFER
 	})
 	ibcTimeoutBlocks := k.GetParam(ctx, types.KeyIbcTimeoutBlocks)
-	addr := k.accountKeeper.GetModuleAccount(ctx, types.ModuleName).GetAddress().String()
 	var emptyRecords []uint64
 	for _, depositRecord := range transferDepositRecords {
 		if depositRecord.DepositEpochNumber < cast.ToUint64(epochNumber) {
@@ -305,6 +308,7 @@ func (k Keeper) TransferExistingDepositsToHostZones(ctx sdk.Context, epochNumber
 				k.Logger(ctx).Error(fmt.Sprintf("[TransferExistingDepositsToHostZones] Host zone not found for deposit record id %d", depositRecord.Id))
 				continue
 			}
+			addr := hostZone.GetAddress()
 			delegateAccount := hostZone.GetDelegationAccount()
 			if delegateAccount == nil || delegateAccount.GetAddress() == "" {
 				k.Logger(ctx).Error(fmt.Sprintf("[TransferExistingDepositsToHostZones] Zone %s is missing a delegation address!", hostZone.ChainId))
@@ -321,11 +325,10 @@ func (k Keeper) TransferExistingDepositsToHostZones(ctx sdk.Context, epochNumber
 			}
 			timeoutHeight := clienttypes.NewHeight(0, blockHeight+ibcTimeoutBlocks)
 			transferCoin := sdk.NewCoin(hostZone.GetIBCDenom(), sdk.NewInt(depositRecord.Amount))
-			goCtx := sdk.WrapSDKContext(ctx)
 
 			msg := ibctypes.NewMsgTransfer("transfer", hostZone.TransferChannelId, transferCoin, addr, delegateAddress, timeoutHeight, 0)
 			k.Logger(ctx).Info(fmt.Sprintf("TransferExistingDepositsToHostZones msg %v", msg))
-			_, err := k.TransferKeeper.Transfer(goCtx, msg)
+			err := k.RecordsKeeper.Transfer(ctx, msg, depositRecord.Id)
 			if err != nil {
 				k.Logger(ctx).Error(fmt.Sprintf("\t[TransferExistingDepositsToHostZones] ERROR WITH DEPOSIT RECEIPT %s %v %s %s %v", hostZone.TransferChannelId, transferCoin, addr, delegateAddress, timeoutHeight))
 				k.Logger(ctx).Error(fmt.Sprintf("\t[TransferExistingDepositsToHostZones] err {%s}", err.Error()))

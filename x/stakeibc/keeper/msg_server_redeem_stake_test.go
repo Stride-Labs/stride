@@ -9,6 +9,7 @@ import (
 
 	epochtypes "github.com/Stride-Labs/stride/x/epochs/types"
 	recordtypes "github.com/Stride-Labs/stride/x/records/types"
+	"github.com/Stride-Labs/stride/x/stakeibc/types"
 	stakeibc "github.com/Stride-Labs/stride/x/stakeibc/types"
 )
 
@@ -19,7 +20,8 @@ type RedeemStakeState struct {
 }
 type RedeemStakeTestCase struct {
 	user         Account
-	module       Account
+	hostZone     stakeibc.HostZone
+	zoneAccount  Account
 	initialState RedeemStakeState
 	validMsg     stakeibc.MsgRedeemStake
 }
@@ -34,21 +36,24 @@ func (suite *KeeperTestSuite) SetupRedeemStake() RedeemStakeTestCase {
 	suite.FundAccount(user.acc, user.atomBalance)
 	suite.FundAccount(user.acc, user.stAtomBalance)
 
-	module := Account{
-		acc:           suite.App.AccountKeeper.GetModuleAddress(stakeibc.ModuleName),
+	zoneAddress := types.NewZoneAddress(chainId)
+
+	zoneAccount := Account{
+		acc:           zoneAddress,
 		atomBalance:   sdk.NewInt64Coin("ibc/uatom", 10_000_000),
 		stAtomBalance: sdk.NewInt64Coin("stuatom", 10_000_000),
 	}
-	suite.FundModuleAccount(stakeibc.ModuleName, module.atomBalance)
-	suite.FundModuleAccount(stakeibc.ModuleName, module.stAtomBalance)
+	suite.FundAccount(zoneAccount.acc, zoneAccount.atomBalance)
+	suite.FundAccount(zoneAccount.acc, zoneAccount.stAtomBalance)
 
 	// TODO define the host zone with stakedBal and validators with staked amounts
 	hostZone := stakeibc.HostZone{
-		ChainId:        "GAIA",
+		ChainId:        chainId,
 		HostDenom:      "uatom",
 		Bech32Prefix:   "cosmos",
 		RedemptionRate: sdk.NewDec(1.0),
 		StakedBal:      1234567890,
+		Address: 		zoneAddress.String(),
 	}
 
 	epochTrackerDay := stakeibc.EpochTracker{
@@ -64,7 +69,7 @@ func (suite *KeeperTestSuite) SetupRedeemStake() RedeemStakeTestCase {
 	hostZoneUnbonding := &recordtypes.HostZoneUnbonding{
 		NativeTokenAmount: uint64(0),
 		Denom:             "uatom",
-		HostZoneId:        "GAIA",
+		HostZoneId:        chainId,
 		Status:            recordtypes.HostZoneUnbonding_BONDED,
 	}
 	epochUnbondingRecord.HostZoneUnbondings = append(epochUnbondingRecord.HostZoneUnbondings, hostZoneUnbonding)
@@ -74,8 +79,9 @@ func (suite *KeeperTestSuite) SetupRedeemStake() RedeemStakeTestCase {
 	suite.App.RecordsKeeper.SetEpochUnbondingRecord(suite.Ctx, epochUnbondingRecord)
 
 	return RedeemStakeTestCase{
-		user:   user,
-		module: module,
+		user:     user,
+		hostZone: hostZone,
+		zoneAccount: zoneAccount,
 		initialState: RedeemStakeState{
 			epochNumber:                        epochTrackerDay.EpochNumber,
 			initialNativeEpochUnbondingAmount:  uint64(0),
@@ -84,7 +90,7 @@ func (suite *KeeperTestSuite) SetupRedeemStake() RedeemStakeTestCase {
 		validMsg: stakeibc.MsgRedeemStake{
 			Creator:  user.acc.String(),
 			Amount:   redeemAmount,
-			HostZone: "GAIA",
+			HostZone: chainId,
 			// TODO set this dynamically through test helpers for host zone
 			Receiver: "cosmos1g6qdx6kdhpf000afvvpte7hp0vnpzapuyxp8uf",
 		},
@@ -118,7 +124,7 @@ func (suite *KeeperTestSuite) TestRedeemStakeSuccessful() {
 	suite.Require().True(found)
 	epochUnbondingRecord, found := suite.App.RecordsKeeper.GetEpochUnbondingRecord(suite.Ctx, epochTracker.EpochNumber)
 	suite.Require().True(found)
-	hostZoneUnbonding, found := suite.App.RecordsKeeper.GetHostZoneUnbondingByChainId(suite.Ctx, epochUnbondingRecord.EpochNumber, "GAIA")
+	hostZoneUnbonding, found := suite.App.RecordsKeeper.GetHostZoneUnbondingByChainId(suite.Ctx, epochUnbondingRecord.EpochNumber, chainId)
 	suite.Require().True(found)
 
 	hostZone, _ := suite.App.StakeibcKeeper.GetHostZone(suite.Ctx, msg.HostZone)
@@ -184,6 +190,17 @@ func (suite *KeeperTestSuite) TestRedeemStakeHostZoneNotFound() {
 	_, err := suite.msgServer.RedeemStake(sdk.WrapSDKContext(suite.Ctx), &invalidMsg)
 
 	suite.Require().EqualError(err, "host zone is invalid: fake_host_zone: host zone not registered")
+}
+
+func (suite *KeeperTestSuite) TestRedeemStakeRateAboveMaxThreshold() {
+	tc := suite.SetupRedeemStake()
+
+	hz := tc.hostZone
+	hz.RedemptionRate = sdk.NewDec(100)
+	suite.App.StakeibcKeeper.SetHostZone(suite.Ctx, hz)
+
+	_, err := suite.msgServer.RedeemStake(sdk.WrapSDKContext(suite.Ctx), &tc.validMsg)
+	suite.Require().Error(err)
 }
 
 func (suite *KeeperTestSuite) TestInvalidReceiverAddress() {
@@ -253,12 +270,24 @@ func (suite *KeeperTestSuite) TestRedeemStakeHostZoneNoUnbondings() {
 	hostZoneUnbonding := &recordtypes.HostZoneUnbonding{
 		NativeTokenAmount: uint64(0),
 		Denom:             "uatom",
-		HostZoneId:		"NOT_GAIA",
+		HostZoneId:        "NOT_GAIA",
 	}
 	epochUnbondingRecord.HostZoneUnbondings = append(epochUnbondingRecord.HostZoneUnbondings, hostZoneUnbonding)
-	
+
 	suite.App.RecordsKeeper.SetEpochUnbondingRecord(suite.Ctx, epochUnbondingRecord)
 	_, err := suite.msgServer.RedeemStake(sdk.WrapSDKContext(suite.Ctx), &invalidMsg)
 
 	suite.Require().EqualError(err, "host zone not found in unbondings: GAIA: host zone not registered")
+}
+
+func (s *KeeperTestSuite) TestRedeemStake_InvalidHostAddress() {
+	tc := s.SetupRedeemStake()
+
+	// Update hostzone with invalid address
+	badHostZone, _ := s.App.StakeibcKeeper.GetHostZone(s.Ctx, tc.validMsg.HostZone)
+	badHostZone.Address = "cosmosXXX"
+	s.App.StakeibcKeeper.SetHostZone(s.Ctx, badHostZone)
+
+	_, err := s.msgServer.RedeemStake(sdk.WrapSDKContext(s.Ctx), &tc.validMsg)
+	s.Require().EqualError(err, "could not bech32 decode address cosmosXXX of zone with id: GAIA")
 }

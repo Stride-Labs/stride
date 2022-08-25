@@ -19,12 +19,11 @@ import (
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	icacontrollerkeeper "github.com/cosmos/ibc-go/v3/modules/apps/27-interchain-accounts/controller/keeper"
-	ibctransferkeeper "github.com/cosmos/ibc-go/v3/modules/apps/transfer/keeper"
 	ibckeeper "github.com/cosmos/ibc-go/v3/modules/core/keeper"
 	ibctmtypes "github.com/cosmos/ibc-go/v3/modules/light-clients/07-tendermint/types"
 
 	epochstypes "github.com/Stride-Labs/stride/x/epochs/types"
-	icacallbacksmodulekeeper "github.com/Stride-Labs/stride/x/icacallbacks/keeper"
+	icacallbackskeeper "github.com/Stride-Labs/stride/x/icacallbacks/keeper"
 	recordsmodulekeeper "github.com/Stride-Labs/stride/x/records/keeper"
 )
 
@@ -38,12 +37,11 @@ type (
 		ICAControllerKeeper   icacontrollerkeeper.Keeper
 		IBCKeeper             ibckeeper.Keeper
 		scopedKeeper          capabilitykeeper.ScopedKeeper
-		TransferKeeper        ibctransferkeeper.Keeper
 		bankKeeper            bankkeeper.Keeper
 		InterchainQueryKeeper icqkeeper.Keeper
 		RecordsKeeper         recordsmodulekeeper.Keeper
 		StakingKeeper         stakingkeeper.Keeper
-		ICACallbacksKeeper    icacallbacksmodulekeeper.Keeper
+		ICACallbacksKeeper    icacallbackskeeper.Keeper
 
 		accountKeeper types.AccountKeeper
 	}
@@ -62,11 +60,10 @@ func NewKeeper(
 	icacontrollerkeeper icacontrollerkeeper.Keeper,
 	ibcKeeper ibckeeper.Keeper,
 	scopedKeeper capabilitykeeper.ScopedKeeper,
-	TransferKeeper ibctransferkeeper.Keeper,
 	interchainQueryKeeper icqkeeper.Keeper,
 	RecordsKeeper recordsmodulekeeper.Keeper,
 	StakingKeeper stakingkeeper.Keeper,
-	ICACallbacksKeeper icacallbacksmodulekeeper.Keeper,
+	ICACallbacksKeeper icacallbackskeeper.Keeper,
 ) Keeper {
 	// set KeyTable if it has not already been set
 	if !ps.HasKeyTable() {
@@ -83,7 +80,6 @@ func NewKeeper(
 		ICAControllerKeeper:   icacontrollerkeeper,
 		IBCKeeper:             ibcKeeper,
 		scopedKeeper:          scopedKeeper,
-		TransferKeeper:        TransferKeeper,
 		InterchainQueryKeeper: interchainQueryKeeper,
 		RecordsKeeper:         RecordsKeeper,
 		StakingKeeper:         StakingKeeper,
@@ -229,4 +225,23 @@ func (k Keeper) GetICATimeoutNanos(ctx sdk.Context, epochType string) (uint64, e
 	}
 	k.Logger(ctx).Info(fmt.Sprintf("Submitting txs for epoch %s %d %d", epochTracker.EpochIdentifier, epochTracker.NextEpochStartTime, timeoutNanos))
 	return timeoutNanosUint64, nil
+}
+
+// safety check: ensure the redemption rate is NOT below our min safety threshold && NOT above our max safety threshold on host zone
+func (k Keeper) IsRedemptionRateWithinSafetyBounds(ctx sdk.Context, zone types.HostZone) (bool, error) {
+
+	minSafetyThresholdInt := k.GetParam(ctx, types.KeySafetyMinRedemptionRateThreshold)
+	minSafetyThreshold := sdk.NewDec(int64(minSafetyThresholdInt)).Quo(sdk.NewDec(100))
+
+	maxSafetyThresholdInt := k.GetParam(ctx, types.KeySafetyMaxRedemptionRateThreshold)
+	maxSafetyThreshold := sdk.NewDec(int64(maxSafetyThresholdInt)).Quo(sdk.NewDec(100))
+
+	redemptionRate := zone.RedemptionRate
+
+	if redemptionRate.LT(minSafetyThreshold) || redemptionRate.GT(maxSafetyThreshold) {
+		errMsg := fmt.Sprintf("IsRedemptionRateWithinSafetyBounds check failed %s is outside safety bounds [%s, %s]", redemptionRate.String(), minSafetyThreshold.String(), maxSafetyThreshold.String())
+		k.Logger(ctx).Error(errMsg)
+		return false, sdkerrors.Wrapf(types.ErrRedemptionRateOutsideSafetyBounds, errMsg)
+	}
+	return true, nil
 }
