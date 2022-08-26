@@ -110,7 +110,7 @@ func (s *KeeperTestSuite) TestClaimUndelegatedTokens_Successful() {
 	// TODO: check callback data here
 }
 
-func (s *KeeperTestSuite) TestClaimUndelegatedTokens_SuccessfulTransferMessage() {
+func (s *KeeperTestSuite) TestClaimUndelegatedTokens_SuccessfulMsgSendICA() {
 	tc := s.SetupClaimUndelegatedTokens()
 	redemptionRecord := tc.initialState.redemptionRecord
 
