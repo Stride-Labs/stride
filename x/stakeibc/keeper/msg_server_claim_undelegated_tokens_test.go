@@ -7,6 +7,7 @@ import (
 
 	epochtypes "github.com/Stride-Labs/stride/x/epochs/types"
 	recordtypes "github.com/Stride-Labs/stride/x/records/types"
+	"github.com/Stride-Labs/stride/x/stakeibc/keeper"
 	stakeibckeeper "github.com/Stride-Labs/stride/x/stakeibc/keeper"
 	"github.com/Stride-Labs/stride/x/stakeibc/types"
 	stakeibc "github.com/Stride-Labs/stride/x/stakeibc/types"
@@ -25,6 +26,9 @@ type ClaimUndelegatedTestCase struct {
 }
 
 func (s *KeeperTestSuite) SetupClaimUndelegatedTokens() ClaimUndelegatedTestCase {
+	s.CreateICAChannel("GAIA.REDEMPTION")
+	s.msgServer = keeper.NewMsgServerImpl(s.App.StakeibcKeeper)
+
 	senderAddr := "stride_SENDER"
 	receiverAddr := "cosmos_RECEIVER"
 	redemptionAddr := "cosmos_REDEMPTION"
@@ -57,7 +61,7 @@ func (s *KeeperTestSuite) SetupClaimUndelegatedTokens() ClaimUndelegatedTestCase
 	epochTracker := stakeibc.EpochTracker{
 		EpochIdentifier:    epochtypes.STRIDE_EPOCH,
 		EpochNumber:        1,
-		NextEpochStartTime: 0,
+		NextEpochStartTime: uint64(s.Coordinator.CurrentTime.UnixNano() + 30_000_000_000),
 	}
 
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx(), hostZone)
@@ -90,20 +94,16 @@ func (s *KeeperTestSuite) SetupClaimUndelegatedTokens() ClaimUndelegatedTestCase
 }
 
 func (s *KeeperTestSuite) TestClaimUndelegatedTokens_Successful() {
-	s.T().Skip("fixing on redemption branch")
 	tc := s.SetupClaimUndelegatedTokens()
 	redemptionRecordId := tc.initialState.redemptionRecordId
-
-	userRedemptionRecord, err := s.App.StakeibcKeeper.GetClaimableRedemptionRecord(s.Ctx(), &tc.validMsg)
-	s.Require().NoError(err, "get redemptions record should not error")
-
-	actualTxMsg, err := s.App.StakeibcKeeper.GetRedemptionTransferMsg(s.Ctx(), userRedemptionRecord, tc.validMsg.HostZoneId)
-	s.Require().NoError(err, "get redemption transfer msg should not error")
-	s.Require().Equal(tc.expectedIcaMsg, *actualTxMsg, "redemption transfer message")
-
 	redemptionRecord, found := s.App.RecordsKeeper.GetUserRedemptionRecord(s.Ctx(), redemptionRecordId)
-	s.Require().True(found)
-	s.Require().False(redemptionRecord.IsClaimable)
+
+	_, err := s.msgServer.ClaimUndelegatedTokens(sdk.WrapSDKContext(s.Ctx()), &tc.validMsg)
+	s.Require().NoError(err, "claim undelegated tokens")
+
+	redemptionRecord, found = s.App.RecordsKeeper.GetUserRedemptionRecord(s.Ctx(), redemptionRecordId)
+	s.Require().True(found, "redemption record found")
+	s.Require().False(redemptionRecord.IsClaimable, "redemption record should not be claimable")
 
 	// TODO: check callback data here
 }

@@ -184,11 +184,14 @@ func (s *AppTestHelper) CreateICAChannel(owner string) {
 	icaPath.EndpointB.ChanOpenConfirm()
 	s.Require().NoError(err, "ChanOpenConfirm error")
 
-	// Finally, confirm the ICA channel was created properly
+	// Confirm the ICA channel was created properly
 	portID := icaPath.EndpointA.ChannelConfig.PortID
 	channelID := icaPath.EndpointA.ChannelID
 	_, found := s.App.IBCKeeper.ChannelKeeper.GetChannel(s.Ctx(), portID, channelID)
 	s.Require().True(found, fmt.Sprintf("Channel not found after creation, PortID: %s, ChannelID: %s", portID, channelID))
+
+	// Finally set the active channel
+	s.App.ICAControllerKeeper.SetActiveChannelID(s.Ctx(), ibctesting.FirstConnectionID, portID, channelID)
 }
 
 // Register's a new ICA account on the next channel available
