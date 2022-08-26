@@ -32,5 +32,5 @@ func setupConfig() {
 
 	version.AppName = "stride"
 	version.Name = "strided"
-	version.Version = "v0.3.1"
+	version.Version = "v0.4.1"
 }
