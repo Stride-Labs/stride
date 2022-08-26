@@ -37,23 +37,23 @@ func TestKeeperTestSuite(t *testing.T) {
 }
 
 func (s *KeeperTestSuite) TestTransfer() {
-	s.SetupIBC("GAIA")
+	s.CreateTransferChannel("GAIA")
 	addr1 := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
 	addr2 := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
 
 	coins := sdk.NewCoins(sdk.NewCoin("uatom", sdk.NewInt(1000)))
-	err := s.App.BankKeeper.MintCoins(s.StrideChain.GetContext(), minttypes.ModuleName, coins)
+	err := s.App.BankKeeper.MintCoins(s.Ctx(), minttypes.ModuleName, coins)
 	s.Require().NoError(err)
-	err = s.App.BankKeeper.SendCoinsFromModuleToAccount(s.StrideChain.GetContext(), minttypes.ModuleName, addr1, coins)
+	err = s.App.BankKeeper.SendCoinsFromModuleToAccount(s.Ctx(), minttypes.ModuleName, addr1, coins)
 	s.Require().NoError(err)
 
 	fmt.Println(addr1.String())
-	fmt.Printf("%v\n", s.App.BankKeeper.GetAllBalances(s.StrideChain.GetContext(), addr1))
+	fmt.Printf("%v\n", s.App.BankKeeper.GetAllBalances(s.Ctx(), addr1))
 	fmt.Println(addr2.String())
-	fmt.Printf("%v\n", s.HostChain.GetSimApp().BankKeeper.GetAllBalances(s.HostChain.GetContext(), addr2))
+	fmt.Printf("%v\n", s.HostChain.GetSimApp().BankKeeper.GetAllBalances(s.HostCtx(), addr2))
 
 	s.App.TransferKeeper.SendTransfer(
-		s.StrideChain.GetContext(),
+		s.Ctx(),
 		"transfer",
 		"channel-0",
 		sdk.NewCoin("uatom", sdk.NewInt(500)),
@@ -64,9 +64,9 @@ func (s *KeeperTestSuite) TestTransfer() {
 	)
 
 	fmt.Println(addr1.String())
-	fmt.Printf("%v\n", s.App.BankKeeper.GetAllBalances(s.StrideChain.GetContext(), addr1))
+	fmt.Printf("%v\n", s.App.BankKeeper.GetAllBalances(s.Ctx(), addr1))
 	fmt.Println(addr2.String())
-	fmt.Printf("%v\n", s.HostChain.GetSimApp().BankKeeper.GetAllBalances(s.HostChain.GetContext(), addr2))
+	fmt.Printf("%v\n", s.HostChain.GetSimApp().BankKeeper.GetAllBalances(s.HostCtx(), addr2))
 }
 
 func (s *KeeperTestSuite) TestCreateChannels() {
@@ -75,7 +75,7 @@ func (s *KeeperTestSuite) TestCreateChannels() {
 	s.CreateICAChannel("GAIA.REDEMPTION")
 	s.CreateICAChannel("GAIA.WITHDRAWAL")
 
-	channels := s.App.IBCKeeper.ChannelKeeper.GetAllChannels(s.StrideChain.GetContext())
+	channels := s.App.IBCKeeper.ChannelKeeper.GetAllChannels(s.Ctx())
 	for _, channel := range channels {
 		fmt.Printf("%v\n", channel)
 	}
@@ -87,23 +87,23 @@ func (s *KeeperTestSuite) TestIca() {
 	s.CreateICAChannel("GAIA.REDEMPTION")
 	s.CreateICAChannel("GAIA.WITHDRAWAL")
 
-	delegationAddress, found := s.App.ICAControllerKeeper.GetInterchainAccountAddress(s.StrideChain.GetContext(), "connection-0", "icacontroller-GAIA.DELEGATION")
+	delegationAddress, found := s.App.ICAControllerKeeper.GetInterchainAccountAddress(s.Ctx(), "connection-0", "icacontroller-GAIA.DELEGATION")
 	s.Require().True(found)
 	fmt.Println("DELEGATION ADDRESS:", delegationAddress)
 
-	feeAddress, found := s.App.ICAControllerKeeper.GetInterchainAccountAddress(s.StrideChain.GetContext(), "connection-0", "icacontroller-GAIA.FEE")
+	feeAddress, found := s.App.ICAControllerKeeper.GetInterchainAccountAddress(s.Ctx(), "connection-0", "icacontroller-GAIA.FEE")
 	s.Require().True(found)
 	fmt.Println("FEE ADDRESS:", feeAddress)
 
-	redemptionAddress, found := s.App.ICAControllerKeeper.GetInterchainAccountAddress(s.StrideChain.GetContext(), "connection-0", "icacontroller-GAIA.REDEMPTION")
+	redemptionAddress, found := s.App.ICAControllerKeeper.GetInterchainAccountAddress(s.Ctx(), "connection-0", "icacontroller-GAIA.REDEMPTION")
 	s.Require().True(found)
 	fmt.Println("REDEMPTION ADDRESS:", redemptionAddress)
 
-	withdrawAddress, found := s.App.ICAControllerKeeper.GetInterchainAccountAddress(s.StrideChain.GetContext(), "connection-0", "icacontroller-GAIA.WITHDRAWAL")
+	withdrawAddress, found := s.App.ICAControllerKeeper.GetInterchainAccountAddress(s.Ctx(), "connection-0", "icacontroller-GAIA.WITHDRAWAL")
 	s.Require().True(found)
 	fmt.Println("WITHDRAWAL ADDRESS:", withdrawAddress)
 
-	timeoutTimestamp := uint64(s.StrideChain.GetContext().BlockTime().UnixNano() + 100_000_000_000)
+	timeoutTimestamp := uint64(s.Ctx().BlockTime().UnixNano() + 100_000_000_000)
 
 	var msgs []sdk.Msg
 	msgs = append(msgs, &banktypes.MsgSend{
@@ -120,10 +120,10 @@ func (s *KeeperTestSuite) TestIca() {
 		Data: data,
 	}
 
-	chanCap, found := s.App.ScopedIBCKeeper.GetCapability(s.StrideChain.GetContext(), host.ChannelCapabilityPath("icacontroller-GAIA.DELEGATION", "channel-1"))
+	chanCap, found := s.App.ScopedIBCKeeper.GetCapability(s.Ctx(), host.ChannelCapabilityPath("icacontroller-GAIA.DELEGATION", "channel-1"))
 	s.Require().True(found)
 
-	seq, err := s.App.ICAControllerKeeper.SendTx(s.StrideChain.GetContext(), chanCap, "connection-0", "icacontroller-GAIA.DELEGATION", packetData, timeoutTimestamp)
+	seq, err := s.App.ICAControllerKeeper.SendTx(s.Ctx(), chanCap, "connection-0", "icacontroller-GAIA.DELEGATION", packetData, timeoutTimestamp)
 	s.Require().NoError(err)
 	fmt.Println("SEQUENCE:", seq)
 }
