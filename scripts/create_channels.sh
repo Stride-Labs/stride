@@ -17,4 +17,3 @@ for host_chain in ${HOST_CHAINS[@]}; do
     $HERMES_EXEC create channel --port-a transfer --port-b transfer $host_chain connection-0 | sed -r -u "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2})?)?[mGK]//g" >> $HERMES_LOGS 2>&1 
     echo "Done"
 done
-
