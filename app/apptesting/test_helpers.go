@@ -37,6 +37,7 @@ type AppTestHelper struct {
 	App     *app.StrideApp
 	HostApp *simapp.SimApp
 
+	IbcEnabled   bool
 	Coordinator  *ibctesting.Coordinator
 	StrideChain  *ibctesting.TestChain
 	HostChain    *ibctesting.TestChain
@@ -54,12 +55,13 @@ func (s *AppTestHelper) Setup() {
 		Ctx:             s.Ctx(),
 	}
 	s.TestAccs = CreateRandomAccounts(3)
+	s.IbcEnabled = false
 }
 
 // Dynamically gets the context of the Stride Chain
 func (s *AppTestHelper) Ctx() sdk.Context {
 	// If IBC support is enabled, return a dynamic context that updates with each block
-	if s.StrideChain != nil {
+	if s.IbcEnabled {
 		return s.StrideChain.GetContext()
 	}
 	// Otherwise return a mock context
@@ -123,12 +125,13 @@ func (s *AppTestHelper) SetupIBCChains(hostChainID string) {
 		StrideChainID: s.StrideChain,
 		hostChainID:   s.HostChain,
 	}
+	s.IbcEnabled = true
 }
 
 // Creates clients, connections, and a transfer channel between stride and a host chain
 func (s *AppTestHelper) CreateTransferChannel(hostChainID string) {
 	// If we have yet to create the host chain, do that here
-	if s.Coordinator == nil {
+	if !s.IbcEnabled {
 		s.SetupIBCChains(hostChainID)
 	}
 	s.Require().Equal(s.HostChain.ChainID, hostChainID,
@@ -143,20 +146,21 @@ func (s *AppTestHelper) CreateTransferChannel(hostChainID string) {
 	s.HostApp = s.HostChain.GetSimApp()
 
 	// Finally confirm the channel was setup properly
-	s.Require().Equal("07-tendermint-0", s.TransferPath.EndpointA.ClientID, "stride clientID")
-	s.Require().Equal("connection-0", s.TransferPath.EndpointA.ConnectionID, "stride connectionID")
-	s.Require().Equal("channel-0", s.TransferPath.EndpointA.ChannelID, "stride transfer channelID")
+	s.Require().Equal(ibctesting.FirstClientID, s.TransferPath.EndpointA.ClientID, "stride clientID")
+	s.Require().Equal(ibctesting.FirstConnectionID, s.TransferPath.EndpointA.ConnectionID, "stride connectionID")
+	s.Require().Equal(ibctesting.FirstChannelID, s.TransferPath.EndpointA.ChannelID, "stride transfer channelID")
 
-	s.Require().Equal("07-tendermint-0", s.TransferPath.EndpointB.ClientID, "host clientID")
-	s.Require().Equal("connection-0", s.TransferPath.EndpointB.ConnectionID, "host connectionID")
-	s.Require().Equal("channel-0", s.TransferPath.EndpointB.ChannelID, "host transfer channelID")
+	s.Require().Equal(ibctesting.FirstClientID, s.TransferPath.EndpointB.ClientID, "host clientID")
+	s.Require().Equal(ibctesting.FirstConnectionID, s.TransferPath.EndpointB.ConnectionID, "host connectionID")
+	s.Require().Equal(ibctesting.FirstChannelID, s.TransferPath.EndpointB.ChannelID, "host transfer channelID")
 }
 
 // Creates an ICA channel through ibctesting
 // Also creates a transfer channel is if hasn't been done yet
 func (s *AppTestHelper) CreateICAChannel(owner string) {
 	// If we have yet to create a client/connection (through creating a transfer channel), do that here
-	if s.TransferPath == nil {
+	_, transferChannelExists := s.App.IBCKeeper.ChannelKeeper.GetChannel(s.Ctx(), ibctesting.TransferPort, ibctesting.FirstChannelID)
+	if !transferChannelExists {
 		ownerSplit := strings.Split(owner, ".")
 		s.Require().Equal(2, len(ownerSplit), "owner should be of the form: {HostZone}.{AccountName}")
 

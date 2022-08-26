@@ -36,7 +36,7 @@ func TestKeeperTestSuite(t *testing.T) {
 	suite.Run(t, new(KeeperTestSuite))
 }
 
-func (s *KeeperTestSuite) TestTransfer() {
+func (s *KeeperTestSuite) TestLiquidStakeTransfer() {
 	s.CreateTransferChannel("GAIA")
 	addr1 := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
 	addr2 := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
@@ -79,6 +79,8 @@ func (s *KeeperTestSuite) TestCreateChannels() {
 	for _, channel := range channels {
 		fmt.Printf("%v\n", channel)
 	}
+
+	s.FundAccount(s.TestAccs[0], sdk.NewCoin("uatom", sdk.NewInt(500)))
 }
 
 func (s *KeeperTestSuite) TestIca() {
