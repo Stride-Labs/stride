@@ -117,7 +117,7 @@ OSMO_VAL_MNEMONIC_5="federal garden bundle rebel museum donor hello oak daring a
 OSMO_VAL_MNEMONICS=("$OSMO_VAL_MNEMONIC_1","$OSMO_VAL_MNEMONIC_2","$OSMO_VAL_MNEMONIC_3","$OSMO_VAL_MNEMONIC_4","$OSMO_VAL_MNEMONIC_5")
 
 # HERMES
-HERMES_CMD="$SCRIPT_DIR/../build/hermes/release/hermes -c $STATE/hermes/config.toml"
+HERMES_CMD="$SCRIPT_DIR/../build/hermes/release/hermes --config $STATE/hermes/config.toml"
 HERMES_EXEC="docker-compose run --rm hermes hermes"
 
 HERMES_STRIDE_ACCT=rly1
