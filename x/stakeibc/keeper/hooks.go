@@ -315,7 +315,6 @@ func (k Keeper) TransferExistingDepositsToHostZones(ctx sdk.Context, epochNumber
 				continue
 			}
 			delegateAddress := delegateAccount.GetAddress()
-			// TODO(TEST-90): why do we have two gaia LCs?
 			blockHeight, found := k.GetLightClientHeightSafely(ctx, hostZone.ConnectionId)
 			if !found {
 				k.Logger(ctx).Error(fmt.Sprintf("Could not find blockHeight for host zone %s, aborting transfers to host zone this epoch", hostZone.ConnectionId))
@@ -326,6 +325,7 @@ func (k Keeper) TransferExistingDepositsToHostZones(ctx sdk.Context, epochNumber
 			timeoutHeight := clienttypes.NewHeight(0, blockHeight+ibcTimeoutBlocks)
 			transferCoin := sdk.NewCoin(hostZone.GetIBCDenom(), sdk.NewInt(depositRecord.Amount))
 
+			// QUESTION: Is there a good place to store "tranfer" as a constant?
 			msg := ibctypes.NewMsgTransfer("transfer", hostZone.TransferChannelId, transferCoin, addr, delegateAddress, timeoutHeight, 0)
 			k.Logger(ctx).Info(fmt.Sprintf("TransferExistingDepositsToHostZones msg %v", msg))
 			err := k.RecordsKeeper.Transfer(ctx, msg, depositRecord.Id)

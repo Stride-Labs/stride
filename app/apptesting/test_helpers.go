@@ -262,7 +262,7 @@ func CopyConnectionAndClientToPath(path *ibctesting.Path, pathToCopy *ibctesting
 	return path
 }
 
-func  (s *AppTestHelper) ICAPacketAcknowledgement(msgs []sdk.Msg) channeltypes.Acknowledgement {
+func (s *AppTestHelper) ICAPacketAcknowledgement(msgs []sdk.Msg) channeltypes.Acknowledgement {
 	txMsgData := &sdk.TxMsgData{
 		Data: make([]*sdk.MsgData, len(msgs)),
 	}
@@ -278,4 +278,13 @@ func  (s *AppTestHelper) ICAPacketAcknowledgement(msgs []sdk.Msg) channeltypes.A
 	s.Require().NoError(err)
 	ack := channeltypes.NewResultAcknowledgement(marshalledTxMsgData)
 	return ack
+}
+
+// Get an IBC denom from it's native host denom
+// This assumes the transfer channel is channel-0
+func (s *AppTestHelper) GetIBCDenom(denom string) transfertypes.DenomTrace {
+	sourcePrefix := transfertypes.GetDenomPrefix(ibctesting.TransferPort, ibctesting.FirstChannelID)
+	prefixedDenom := sourcePrefix + denom
+
+	return transfertypes.ParseDenomTrace(prefixedDenom)
 }
