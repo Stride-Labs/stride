@@ -36,7 +36,7 @@ func (s *KeeperTestSuite) SetupRedeemStake() RedeemStakeTestCase {
 	s.FundAccount(user.acc, user.atomBalance)
 	s.FundAccount(user.acc, user.stAtomBalance)
 
-	zoneAddress := types.NewZoneAddress(chainId)
+	zoneAddress := types.NewZoneAddress(HostChainId)
 
 	zoneAccount := Account{
 		acc:           zoneAddress,
@@ -48,7 +48,7 @@ func (s *KeeperTestSuite) SetupRedeemStake() RedeemStakeTestCase {
 
 	// TODO define the host zone with stakedBal and validators with staked amounts
 	hostZone := stakeibc.HostZone{
-		ChainId:        chainId,
+		ChainId:        HostChainId,
 		HostDenom:      "uatom",
 		Bech32Prefix:   "cosmos",
 		RedemptionRate: sdk.NewDec(1.0),
@@ -69,7 +69,7 @@ func (s *KeeperTestSuite) SetupRedeemStake() RedeemStakeTestCase {
 	hostZoneUnbonding := &recordtypes.HostZoneUnbonding{
 		NativeTokenAmount: uint64(0),
 		Denom:             "uatom",
-		HostZoneId:        chainId,
+		HostZoneId:        HostChainId,
 		Status:            recordtypes.HostZoneUnbonding_BONDED,
 	}
 	epochUnbondingRecord.HostZoneUnbondings = append(epochUnbondingRecord.HostZoneUnbondings, hostZoneUnbonding)
@@ -90,7 +90,7 @@ func (s *KeeperTestSuite) SetupRedeemStake() RedeemStakeTestCase {
 		validMsg: stakeibc.MsgRedeemStake{
 			Creator:  user.acc.String(),
 			Amount:   redeemAmount,
-			HostZone: chainId,
+			HostZone: HostChainId,
 			// TODO set this dynamically through test helpers for host zone
 			Receiver: "cosmos1g6qdx6kdhpf000afvvpte7hp0vnpzapuyxp8uf",
 		},
@@ -124,7 +124,7 @@ func (s *KeeperTestSuite) TestRedeemStake_Successful() {
 	s.Require().True(found, "epoch tracker")
 	epochUnbondingRecord, found := s.App.RecordsKeeper.GetEpochUnbondingRecord(s.Ctx(), epochTracker.EpochNumber)
 	s.Require().True(found, "epoch unbonding record")
-	hostZoneUnbonding, found := s.App.RecordsKeeper.GetHostZoneUnbondingByChainId(s.Ctx(), epochUnbondingRecord.EpochNumber, chainId)
+	hostZoneUnbonding, found := s.App.RecordsKeeper.GetHostZoneUnbondingByChainId(s.Ctx(), epochUnbondingRecord.EpochNumber, HostChainId)
 	s.Require().True(found, "host zone unbondings by chain ID")
 	hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx(), msg.HostZone)
 	s.Require().True(found, "host zone")

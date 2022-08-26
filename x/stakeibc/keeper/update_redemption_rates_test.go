@@ -48,7 +48,7 @@ func (s *KeeperTestSuite) SetupUpdateRedemptionRates(
 	// set the stSupply by minting to a random user account
 	user := Account{
 		acc:           s.TestAccs[0],
-		stAtomBalance: sdk.NewInt64Coin(stAtom, int64(stSupply)),
+		stAtomBalance: sdk.NewInt64Coin(StAtom, int64(stSupply)),
 	}
 	s.FundAccount(user.acc, user.stAtomBalance)
 
