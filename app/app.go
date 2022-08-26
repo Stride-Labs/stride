@@ -342,8 +342,9 @@ func NewStrideApp(
 	app.AccountKeeper = authkeeper.NewAccountKeeper(
 		appCodec, keys[authtypes.StoreKey], app.GetSubspace(authtypes.ModuleName), authtypes.ProtoBaseAccount, maccPerms,
 	)
+	
 	app.BankKeeper = bankkeeper.NewBaseKeeper(
-		appCodec, keys[banktypes.StoreKey], app.AccountKeeper, app.GetSubspace(banktypes.ModuleName), app.ModuleAccountAddrs(),
+		appCodec, keys[banktypes.StoreKey], app.AccountKeeper, app.GetSubspace(banktypes.ModuleName), app.BlacklistedModuleAccountAddrs(),
 	)
 	stakingKeeper := stakingkeeper.NewKeeper(
 		appCodec, keys[stakingtypes.StoreKey], app.AccountKeeper, app.BankKeeper, app.GetSubspace(stakingtypes.ModuleName),
@@ -823,6 +824,20 @@ func (app *StrideApp) LoadHeight(height int64) error {
 func (app *StrideApp) ModuleAccountAddrs() map[string]bool {
 	modAccAddrs := make(map[string]bool)
 	for _, acc := range utils.StringToStringSliceMapKeys(maccPerms) {
+		modAccAddrs[authtypes.NewModuleAddress(acc).String()] = true
+	}
+
+	return modAccAddrs
+}
+
+// ModuleAccountAddrs returns all the app's module account addresses.
+func (app *StrideApp) BlacklistedModuleAccountAddrs() map[string]bool {
+	modAccAddrs := make(map[string]bool)
+	for _, acc := range utils.StringToStringSliceMapKeys(maccPerms) {
+		// don't blacklist stakeibc module account, so that it can ibc transfer tokens
+		if acc == "stakeibc" {
+			continue
+		}
 		modAccAddrs[authtypes.NewModuleAddress(acc).String()] = true
 	}
 
