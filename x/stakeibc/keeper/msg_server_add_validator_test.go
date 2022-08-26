@@ -88,7 +88,7 @@ func (s *KeeperTestSuite) TestAddValidator_Successful() {
 	tc := s.SetupAddValidator()
 
 	// Add first validator
-	_, err := s.msgServer.AddValidator(sdk.WrapSDKContext(s.Ctx()), &tc.validMsgs[0])
+	_, err := s.GetMsgServer().AddValidator(sdk.WrapSDKContext(s.Ctx()), &tc.validMsgs[0])
 	s.Require().NoError(err)
 
 	hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx(), "GAIA")
@@ -97,7 +97,7 @@ func (s *KeeperTestSuite) TestAddValidator_Successful() {
 	s.Require().Equal(tc.expectedValidators[:1], hostZone.Validators, "validators list after adding 1 validator")
 
 	// Add second validator
-	_, err = s.msgServer.AddValidator(sdk.WrapSDKContext(s.Ctx()), &tc.validMsgs[1])
+	_, err = s.GetMsgServer().AddValidator(sdk.WrapSDKContext(s.Ctx()), &tc.validMsgs[1])
 	s.Require().NoError(err)
 
 	hostZone, found = s.App.StakeibcKeeper.GetHostZone(s.Ctx(), "GAIA")
@@ -106,7 +106,7 @@ func (s *KeeperTestSuite) TestAddValidator_Successful() {
 	s.Require().Equal(tc.expectedValidators[:2], hostZone.Validators, "validators list after adding 2 validators")
 
 	// Add third validator
-	_, err = s.msgServer.AddValidator(sdk.WrapSDKContext(s.Ctx()), &tc.validMsgs[2])
+	_, err = s.GetMsgServer().AddValidator(sdk.WrapSDKContext(s.Ctx()), &tc.validMsgs[2])
 	s.Require().NoError(err)
 
 	hostZone, found = s.App.StakeibcKeeper.GetHostZone(s.Ctx(), "GAIA")
@@ -121,7 +121,7 @@ func (s *KeeperTestSuite) TestAddValidator_HostZoneNotFound() {
 	// Replace hostzone in msg to a host zone that doesn't exist
 	badHostZoneMsg := tc.validMsgs[0]
 	badHostZoneMsg.HostZone = "gaia"
-	_, err := s.msgServer.AddValidator(sdk.WrapSDKContext(s.Ctx()), &badHostZoneMsg)
+	_, err := s.GetMsgServer().AddValidator(sdk.WrapSDKContext(s.Ctx()), &badHostZoneMsg)
 	s.Require().EqualError(err, "Host Zone (gaia) not found: host zone not found")
 }
 
@@ -138,7 +138,7 @@ func (s *KeeperTestSuite) TestAddValidator_AddressAlreadyExists() {
 	// Change the validator address to val1 so that the message errors
 	badMsg := validMsg
 	badMsg.Address = "stride_VAL1"
-	_, err := s.msgServer.AddValidator(sdk.WrapSDKContext(s.Ctx()), &badMsg)
+	_, err := s.GetMsgServer().AddValidator(sdk.WrapSDKContext(s.Ctx()), &badMsg)
 	s.Require().EqualError(err, "Validator address (stride_VAL1) already exists on Host Zone (GAIA): validator already exists")
 }
 
@@ -155,6 +155,6 @@ func (s *KeeperTestSuite) TestAddValidator_NameAlreadyExists() {
 	// Change the validator name to val1 so that the message errors
 	badMsg := validMsg
 	badMsg.Name = "val1"
-	_, err := s.msgServer.AddValidator(sdk.WrapSDKContext(s.Ctx()), &badMsg)
+	_, err := s.GetMsgServer().AddValidator(sdk.WrapSDKContext(s.Ctx()), &badMsg)
 	s.Require().EqualError(err, "Validator name (val1) already exists on Host Zone (GAIA): validator already exists")
 }
