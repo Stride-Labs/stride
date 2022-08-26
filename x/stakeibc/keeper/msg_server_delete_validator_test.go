@@ -5,24 +5,23 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Stride-Labs/stride/x/stakeibc/types"
-	stakeibc "github.com/Stride-Labs/stride/x/stakeibc/types"
+	stakeibctypes "github.com/Stride-Labs/stride/x/stakeibc/types"
 )
 
 type DeleteValidatorTestCase struct {
-	hostZone          types.HostZone
-	initialValidators []*types.Validator
-	validMsgs         []types.MsgDeleteValidator
+	hostZone          stakeibctypes.HostZone
+	initialValidators []*stakeibctypes.Validator
+	validMsgs         []stakeibctypes.MsgDeleteValidator
 }
 
 func (s *KeeperTestSuite) SetupDeleteValidator() DeleteValidatorTestCase {
-	initialValidators := []*types.Validator{
+	initialValidators := []*stakeibctypes.Validator{
 		{
 			Name:           "val1",
 			Address:        "stride_VAL1",
 			CommissionRate: 1,
 			Weight:         0,
-			Status:         types.Validator_Active,
+			Status:         stakeibctypes.Validator_Active,
 			DelegationAmt:  0,
 		},
 		{
@@ -30,16 +29,16 @@ func (s *KeeperTestSuite) SetupDeleteValidator() DeleteValidatorTestCase {
 			Address:        "stride_VAL2",
 			CommissionRate: 2,
 			Weight:         0,
-			Status:         types.Validator_Active,
+			Status:         stakeibctypes.Validator_Active,
 			DelegationAmt:  0,
 		},
 	}
 
-	hostZone := stakeibc.HostZone{
+	hostZone := stakeibctypes.HostZone{
 		ChainId:    "GAIA",
 		Validators: initialValidators,
 	}
-	validMsgs := []types.MsgDeleteValidator{
+	validMsgs := []stakeibctypes.MsgDeleteValidator{
 		{
 			Creator:  "stride_ADDRESS",
 			HostZone: "GAIA",

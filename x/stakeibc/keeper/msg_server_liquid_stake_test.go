@@ -9,7 +9,7 @@ import (
 	epochtypes "github.com/Stride-Labs/stride/x/epochs/types"
 	recordtypes "github.com/Stride-Labs/stride/x/records/types"
 	"github.com/Stride-Labs/stride/x/stakeibc/types"
-	stakeibc "github.com/Stride-Labs/stride/x/stakeibc/types"
+	stakeibctypes "github.com/Stride-Labs/stride/x/stakeibc/types"
 )
 
 type Account struct {
@@ -27,7 +27,7 @@ type LiquidStakeTestCase struct {
 	user         Account
 	zoneAccount  Account
 	initialState LiquidStakeState
-	validMsg     stakeibc.MsgLiquidStake
+	validMsg     stakeibctypes.MsgLiquidStake
 }
 
 func (s *KeeperTestSuite) SetupLiquidStake() LiquidStakeTestCase {
@@ -50,7 +50,7 @@ func (s *KeeperTestSuite) SetupLiquidStake() LiquidStakeTestCase {
 	s.FundAccount(zoneAccount.acc, zoneAccount.atomBalance)
 	s.FundAccount(zoneAccount.acc, zoneAccount.stAtomBalance)
 
-	hostZone := stakeibc.HostZone{
+	hostZone := stakeibctypes.HostZone{
 		ChainId:        HostChainId,
 		HostDenom:      Atom,
 		IBCDenom:       IbcAtom,
@@ -58,7 +58,7 @@ func (s *KeeperTestSuite) SetupLiquidStake() LiquidStakeTestCase {
 		Address:        zoneAddress.String(),
 	}
 
-	epochTracker := stakeibc.EpochTracker{
+	epochTracker := stakeibctypes.EpochTracker{
 		EpochIdentifier: epochtypes.STRIDE_EPOCH,
 		EpochNumber:     1,
 	}
@@ -81,7 +81,7 @@ func (s *KeeperTestSuite) SetupLiquidStake() LiquidStakeTestCase {
 			depositRecordAmount: initialDepositAmount,
 			hostZone:            hostZone,
 		},
-		validMsg: stakeibc.MsgLiquidStake{
+		validMsg: stakeibctypes.MsgLiquidStake{
 			Creator:   user.acc.String(),
 			HostDenom: Atom,
 			Amount:    stakeAmount,

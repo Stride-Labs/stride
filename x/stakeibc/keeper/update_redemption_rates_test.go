@@ -10,12 +10,11 @@ import (
 
 	recordtypes "github.com/Stride-Labs/stride/x/records/types"
 
-	// "github.com/Stride-Labs/stride/x/stakeibc/types"
-	stakeibc "github.com/Stride-Labs/stride/x/stakeibc/types"
+	stakeibctypes "github.com/Stride-Labs/stride/x/stakeibc/types"
 )
 
 type UpdateRedemptionRatesTestCase struct {
-	hostZone   stakeibc.HostZone
+	hostZone   stakeibctypes.HostZone
 	allRecords []recordtypes.DepositRecord
 }
 
@@ -53,7 +52,7 @@ func (s *KeeperTestSuite) SetupUpdateRedemptionRates(
 	s.FundAccount(user.acc, user.stAtomBalance)
 
 	// set the staked balance on the host zone
-	hostZone := stakeibc.HostZone{
+	hostZone := stakeibctypes.HostZone{
 		ChainId:        "GAIA",
 		HostDenom:      "uatom",
 		StakedBal:      stakedBal,

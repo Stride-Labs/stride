@@ -5,23 +5,22 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Stride-Labs/stride/x/stakeibc/types"
-	stakeibc "github.com/Stride-Labs/stride/x/stakeibc/types"
+	stakeibctypes "github.com/Stride-Labs/stride/x/stakeibc/types"
 )
 
 type AddValidatorTestCase struct {
-	hostZone           types.HostZone
-	validMsgs          []types.MsgAddValidator
-	expectedValidators []*types.Validator
+	hostZone           stakeibctypes.HostZone
+	validMsgs          []stakeibctypes.MsgAddValidator
+	expectedValidators []*stakeibctypes.Validator
 }
 
 func (s *KeeperTestSuite) SetupAddValidator() AddValidatorTestCase {
-	hostZone := stakeibc.HostZone{
+	hostZone := stakeibctypes.HostZone{
 		ChainId:    "GAIA",
-		Validators: []*types.Validator{},
+		Validators: []*stakeibctypes.Validator{},
 	}
 
-	validMsgs := []types.MsgAddValidator{
+	validMsgs := []stakeibctypes.MsgAddValidator{
 		{
 			Creator:    "stride_ADMIN",
 			HostZone:   "GAIA",
@@ -48,13 +47,13 @@ func (s *KeeperTestSuite) SetupAddValidator() AddValidatorTestCase {
 		},
 	}
 
-	expectedValidators := []*types.Validator{
+	expectedValidators := []*stakeibctypes.Validator{
 		{
 			Name:           "val1",
 			Address:        "stride_VAL1",
 			CommissionRate: 1,
 			Weight:         1,
-			Status:         types.Validator_Active,
+			Status:         stakeibctypes.Validator_Active,
 			DelegationAmt:  0,
 		},
 		{
@@ -62,7 +61,7 @@ func (s *KeeperTestSuite) SetupAddValidator() AddValidatorTestCase {
 			Address:        "stride_VAL2",
 			CommissionRate: 2,
 			Weight:         2,
-			Status:         types.Validator_Active,
+			Status:         stakeibctypes.Validator_Active,
 			DelegationAmt:  0,
 		},
 		{
@@ -70,7 +69,7 @@ func (s *KeeperTestSuite) SetupAddValidator() AddValidatorTestCase {
 			Address:        "stride_VAL3",
 			CommissionRate: 3,
 			Weight:         3,
-			Status:         types.Validator_Active,
+			Status:         stakeibctypes.Validator_Active,
 			DelegationAmt:  0,
 		},
 	}
@@ -131,7 +130,7 @@ func (s *KeeperTestSuite) TestAddValidator_AddressAlreadyExists() {
 	// Update host zone so that val1 already exists and setup our message with val3
 	// With no other changes, you would expect this message to be successful
 	hostZone := tc.hostZone
-	hostZone.Validators = []*types.Validator{tc.expectedValidators[0]} // val1
+	hostZone.Validators = []*stakeibctypes.Validator{tc.expectedValidators[0]} // val1
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx(), hostZone)
 	validMsg := tc.validMsgs[2] // val3
 
@@ -148,7 +147,7 @@ func (s *KeeperTestSuite) TestAddValidator_NameAlreadyExists() {
 	// Update host zone so that val1 already exists and setup our message with val3
 	// With no other changes, you would expect this message to be successful
 	hostZone := tc.hostZone
-	hostZone.Validators = []*types.Validator{tc.expectedValidators[0]} // val1
+	hostZone.Validators = []*stakeibctypes.Validator{tc.expectedValidators[0]} // val1
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx(), hostZone)
 	validMsg := tc.validMsgs[2] // val3
 

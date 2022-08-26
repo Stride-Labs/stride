@@ -9,8 +9,7 @@ import (
 
 	epochtypes "github.com/Stride-Labs/stride/x/epochs/types"
 	recordtypes "github.com/Stride-Labs/stride/x/records/types"
-	"github.com/Stride-Labs/stride/x/stakeibc/types"
-	stakeibc "github.com/Stride-Labs/stride/x/stakeibc/types"
+	stakeibctypes "github.com/Stride-Labs/stride/x/stakeibc/types"
 )
 
 type RedeemStakeState struct {
@@ -20,10 +19,10 @@ type RedeemStakeState struct {
 }
 type RedeemStakeTestCase struct {
 	user         Account
-	hostZone     stakeibc.HostZone
+	hostZone     stakeibctypes.HostZone
 	zoneAccount  Account
 	initialState RedeemStakeState
-	validMsg     stakeibc.MsgRedeemStake
+	validMsg     stakeibctypes.MsgRedeemStake
 }
 
 func (s *KeeperTestSuite) SetupRedeemStake() RedeemStakeTestCase {
@@ -36,7 +35,7 @@ func (s *KeeperTestSuite) SetupRedeemStake() RedeemStakeTestCase {
 	s.FundAccount(user.acc, user.atomBalance)
 	s.FundAccount(user.acc, user.stAtomBalance)
 
-	zoneAddress := types.NewZoneAddress(HostChainId)
+	zoneAddress := stakeibctypes.NewZoneAddress(HostChainId)
 
 	zoneAccount := Account{
 		acc:           zoneAddress,
@@ -47,7 +46,7 @@ func (s *KeeperTestSuite) SetupRedeemStake() RedeemStakeTestCase {
 	s.FundAccount(zoneAccount.acc, zoneAccount.stAtomBalance)
 
 	// TODO define the host zone with stakedBal and validators with staked amounts
-	hostZone := stakeibc.HostZone{
+	hostZone := stakeibctypes.HostZone{
 		ChainId:        HostChainId,
 		HostDenom:      "uatom",
 		Bech32Prefix:   "cosmos",
@@ -56,7 +55,7 @@ func (s *KeeperTestSuite) SetupRedeemStake() RedeemStakeTestCase {
 		Address:        zoneAddress.String(),
 	}
 
-	epochTrackerDay := stakeibc.EpochTracker{
+	epochTrackerDay := stakeibctypes.EpochTracker{
 		EpochIdentifier: epochtypes.DAY_EPOCH,
 		EpochNumber:     1,
 	}
@@ -87,7 +86,7 @@ func (s *KeeperTestSuite) SetupRedeemStake() RedeemStakeTestCase {
 			initialNativeEpochUnbondingAmount:  uint64(0),
 			initialStTokenEpochUnbondingAmount: uint64(0),
 		},
-		validMsg: stakeibc.MsgRedeemStake{
+		validMsg: stakeibctypes.MsgRedeemStake{
 			Creator:  user.acc.String(),
 			Amount:   redeemAmount,
 			HostZone: HostChainId,
