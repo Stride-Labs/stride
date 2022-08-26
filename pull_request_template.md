@@ -27,10 +27,7 @@ Closes: #XXX
 
 I have...
 
-- [ ] Run and PASSED locally all integration tests on...
-    - [ ] GAIA
-    - [ ] JUNO
-    - [ ] OSMO
+- [ ] Run and PASSED locally all GAIA integration tests
 - [ ] If the change is contentful, I either:
     - [ ] Added a new unit test OR 
     - [ ] Added test cases to existinig unit tests
