@@ -32,7 +32,7 @@ type LiquidStakeState struct {
 
 type LiquidStakeTestCase struct {
 	user         Account
-	zoneAccount       Account
+	zoneAccount  Account
 	initialState LiquidStakeState
 	validMsg     stakeibc.MsgLiquidStake
 }
@@ -62,7 +62,7 @@ func (s *KeeperTestSuite) SetupLiquidStake() LiquidStakeTestCase {
 		HostDenom:      atom,
 		IBCDenom:       ibcAtom,
 		RedemptionRate: sdk.NewDec(1.0),
-		Address: 		zoneAddress.String(),
+		Address:        zoneAddress.String(),
 	}
 
 	epochTracker := stakeibc.EpochTracker{
@@ -82,7 +82,7 @@ func (s *KeeperTestSuite) SetupLiquidStake() LiquidStakeTestCase {
 	s.App.RecordsKeeper.SetDepositRecord(s.Ctx, initialDepositRecord)
 
 	return LiquidStakeTestCase{
-		user:   user,
+		user:        user,
 		zoneAccount: zoneAccount,
 		initialState: LiquidStakeState{
 			depositRecordAmount: initialDepositAmount,
@@ -96,7 +96,7 @@ func (s *KeeperTestSuite) SetupLiquidStake() LiquidStakeTestCase {
 	}
 }
 
-func (s *KeeperTestSuite) TestLiquidStakeSuccessful() {
+func (s *KeeperTestSuite) TestLiquidStake_Successful() {
 	tc := s.SetupLiquidStake()
 	user := tc.user
 	zoneAccount := tc.zoneAccount
@@ -135,7 +135,7 @@ func (s *KeeperTestSuite) TestLiquidStakeSuccessful() {
 	s.Require().Equal(expectedDepositRecordAmount, actualDepositRecordAmount, "deposit record amount")
 }
 
-func (s *KeeperTestSuite) TestLiquidStakeDifferentRedemptionRates() {
+func (s *KeeperTestSuite) TestLiquidStake_DifferentRedemptionRates() {
 	tc := s.SetupLiquidStake()
 	user := tc.user
 	msg := tc.validMsg
@@ -177,7 +177,7 @@ func (s *KeeperTestSuite) TestLiquidStake_RateBelowMinThreshold() {
 	s.Require().Error(err)
 }
 
-func (s *KeeperTestSuite) TestLiquidStakeHostZoneNotFound() {
+func (s *KeeperTestSuite) TestLiquidStake_HostZoneNotFound() {
 	tc := s.SetupLiquidStake()
 	// Update message with invalid denom
 	invalidMsg := tc.validMsg
@@ -187,7 +187,7 @@ func (s *KeeperTestSuite) TestLiquidStakeHostZoneNotFound() {
 	s.Require().EqualError(err, "no host zone found for denom (ufakedenom): host zone not registered")
 }
 
-func (s *KeeperTestSuite) TestLiquidStakeIbcCoinParseError() {
+func (s *KeeperTestSuite) TestLiquidStake_IbcCoinParseError() {
 	tc := s.SetupLiquidStake()
 	// Update hostzone with denom that can't be parsed
 	badHostZone := tc.initialState.hostZone
@@ -199,7 +199,7 @@ func (s *KeeperTestSuite) TestLiquidStakeIbcCoinParseError() {
 	s.Require().EqualError(err, fmt.Sprintf("failed to parse coin (%s): invalid decimal coin expression: %s", badCoin, badCoin))
 }
 
-func (s *KeeperTestSuite) TestLiquidStakeNotIbcDenom() {
+func (s *KeeperTestSuite) TestLiquidStake_NotIbcDenom() {
 	tc := s.SetupLiquidStake()
 	// Update hostzone with non-ibc denom
 	badDenom := "i/uatom"
@@ -213,7 +213,7 @@ func (s *KeeperTestSuite) TestLiquidStakeNotIbcDenom() {
 	s.Require().EqualError(err, fmt.Sprintf("denom is not an IBC token (%s): invalid token denom", badHostZone.IBCDenom))
 }
 
-func (s *KeeperTestSuite) TestLiquidStakeInsufficientBalance() {
+func (s *KeeperTestSuite) TestLiquidStake_InsufficientBalance() {
 	tc := s.SetupLiquidStake()
 	// Set liquid stake amount to value greater than account balance
 	invalidMsg := tc.validMsg
@@ -225,7 +225,7 @@ func (s *KeeperTestSuite) TestLiquidStakeInsufficientBalance() {
 	s.Require().EqualError(err, expectedErr)
 }
 
-func (s *KeeperTestSuite) TestLiquidStakeNoEpochTracker() {
+func (s *KeeperTestSuite) TestLiquidStake_NoEpochTracker() {
 	tc := s.SetupLiquidStake()
 	// Remove epoch tracker
 	s.App.StakeibcKeeper.RemoveEpochTracker(s.Ctx, epochtypes.STRIDE_EPOCH)
@@ -234,7 +234,7 @@ func (s *KeeperTestSuite) TestLiquidStakeNoEpochTracker() {
 	s.Require().EqualError(err, fmt.Sprintf("no epoch number for epoch (%s): not found", epochtypes.STRIDE_EPOCH))
 }
 
-func (s *KeeperTestSuite) TestLiquidStakeNoDepositRecord() {
+func (s *KeeperTestSuite) TestLiquidStake_NoDepositRecord() {
 	tc := s.SetupLiquidStake()
 	// Remove deposit record
 	s.App.RecordsKeeper.RemoveDepositRecord(s.Ctx, 1)

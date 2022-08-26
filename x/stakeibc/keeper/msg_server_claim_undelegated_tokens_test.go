@@ -89,7 +89,7 @@ func (s *KeeperTestSuite) SetupClaimUndelegatedTokens() ClaimUndelegatedTestCase
 	}
 }
 
-func (s *KeeperTestSuite) TestClaimUndelegatedTokensSuccessful() {
+func (s *KeeperTestSuite) TestClaimUndelegatedTokens_Successful() {
 	s.T().Skip("fixing on redemption branch")
 	tc := s.SetupClaimUndelegatedTokens()
 	redemptionRecordId := tc.initialState.redemptionRecordId
@@ -108,7 +108,7 @@ func (s *KeeperTestSuite) TestClaimUndelegatedTokensSuccessful() {
 	// TODO: check callback data here
 }
 
-func (s *KeeperTestSuite) TestClaimUndelegatedTokensNoUserRedemptionRecord() {
+func (s *KeeperTestSuite) TestClaimUndelegatedTokens_NoUserRedemptionRecord() {
 	tc := s.SetupClaimUndelegatedTokens()
 	// Remove the user redemption record
 	s.App.RecordsKeeper.RemoveUserRedemptionRecord(s.Ctx, tc.initialState.redemptionRecordId)
@@ -119,7 +119,7 @@ func (s *KeeperTestSuite) TestClaimUndelegatedTokensNoUserRedemptionRecord() {
 	s.Require().EqualError(err, expectedErr)
 }
 
-func (s *KeeperTestSuite) TestClaimUndelegatedTokensRecordNotClaimable() {
+func (s *KeeperTestSuite) TestClaimUndelegatedTokens_RecordNotClaimable() {
 	tc := s.SetupClaimUndelegatedTokens()
 	// Mark redemption record as not claimable
 	alreadyClaimedRedemptionRecord := tc.initialState.redemptionRecord
@@ -132,7 +132,7 @@ func (s *KeeperTestSuite) TestClaimUndelegatedTokensRecordNotClaimable() {
 	s.Require().EqualError(err, expectedErr)
 }
 
-func (s *KeeperTestSuite) TestClaimUndelegatedTokensHostZoneNotFound() {
+func (s *KeeperTestSuite) TestClaimUndelegatedTokens_HostZoneNotFound() {
 	tc := s.SetupClaimUndelegatedTokens()
 	// Change host zone in message
 	invalidMsg := tc.validMsg
@@ -144,7 +144,7 @@ func (s *KeeperTestSuite) TestClaimUndelegatedTokensHostZoneNotFound() {
 	s.Require().EqualError(err, expectedErr)
 }
 
-func (s *KeeperTestSuite) TestClaimUndelegatedTokensNoRedemptionAccount() {
+func (s *KeeperTestSuite) TestClaimUndelegatedTokens_NoRedemptionAccount() {
 	tc := s.SetupClaimUndelegatedTokens()
 	// Remove redemption account from host zone
 	hostZone := tc.initialState.hostZone
@@ -157,7 +157,7 @@ func (s *KeeperTestSuite) TestClaimUndelegatedTokensNoRedemptionAccount() {
 	s.Require().EqualError(err, expectedErr)
 }
 
-func (s *KeeperTestSuite) TestClaimUndelegatedTokensNoEpochTracker() {
+func (s *KeeperTestSuite) TestClaimUndelegatedTokens_NoEpochTracker() {
 	// Remove epoch tracker
 	tc := s.SetupClaimUndelegatedTokens()
 	s.App.StakeibcKeeper.RemoveEpochTracker(s.Ctx, epochtypes.STRIDE_EPOCH)
