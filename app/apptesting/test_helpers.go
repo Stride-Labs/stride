@@ -43,8 +43,9 @@ type AppTestHelper struct {
 	HostChain    *ibctesting.TestChain
 	TransferPath *ibctesting.Path
 
-	QueryHelper *baseapp.QueryServiceTestHelper
-	TestAccs    []sdk.AccAddress
+	QueryHelper  *baseapp.QueryServiceTestHelper
+	TestAccs     []sdk.AccAddress
+	IcaAddresses map[string]string
 }
 
 // AppTestHelper Constructor
@@ -56,6 +57,7 @@ func (s *AppTestHelper) Setup() {
 	}
 	s.TestAccs = CreateRandomAccounts(3)
 	s.IbcEnabled = false
+	s.IcaAddresses = make(map[string]string)
 }
 
 // Dynamically gets the context of the Stride Chain
@@ -189,6 +191,11 @@ func (s *AppTestHelper) CreateICAChannel(owner string) {
 	channelID := icaPath.EndpointA.ChannelID
 	_, found := s.App.IBCKeeper.ChannelKeeper.GetChannel(s.Ctx(), portID, channelID)
 	s.Require().True(found, fmt.Sprintf("Channel not found after creation, PortID: %s, ChannelID: %s", portID, channelID))
+
+	// Store the account address
+	icaAddress, found := s.App.ICAControllerKeeper.GetInterchainAccountAddress(s.Ctx(), ibctesting.FirstConnectionID, portID)
+	s.Require().True(found, "can't get ICA address")
+	s.IcaAddresses[owner] = icaAddress
 
 	// Finally set the active channel
 	s.App.ICAControllerKeeper.SetActiveChannelID(s.Ctx(), ibctesting.FirstConnectionID, portID, channelID)

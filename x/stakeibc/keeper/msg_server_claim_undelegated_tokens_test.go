@@ -1,8 +1,12 @@
 package keeper_test
 
 import (
+	"fmt"
+	"strings"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	ibctesting "github.com/cosmos/ibc-go/v3/testing"
 	_ "github.com/stretchr/testify/suite"
 
 	epochtypes "github.com/Stride-Labs/stride/x/epochs/types"
@@ -11,6 +15,10 @@ import (
 	stakeibckeeper "github.com/Stride-Labs/stride/x/stakeibc/keeper"
 	"github.com/Stride-Labs/stride/x/stakeibc/types"
 	stakeibc "github.com/Stride-Labs/stride/x/stakeibc/types"
+)
+
+var (
+	HostChainId = "GAIA"
 )
 
 type ClaimUndelegatedState struct {
@@ -26,15 +34,15 @@ type ClaimUndelegatedTestCase struct {
 }
 
 func (s *KeeperTestSuite) SetupClaimUndelegatedTokens() ClaimUndelegatedTestCase {
-	s.CreateICAChannel("GAIA.REDEMPTION")
+	redemptionIcaOwner := "GAIA.REDEMPTION"
+	s.CreateICAChannel(redemptionIcaOwner)
 	s.msgServer = keeper.NewMsgServerImpl(s.App.StakeibcKeeper)
 
+	epochNumber := uint64(1)
 	senderAddr := "stride_SENDER"
 	receiverAddr := "cosmos_RECEIVER"
-	redemptionAddr := "cosmos_REDEMPTION"
-	chainId := "GAIA"
-	redemptionRecordId := "GAIA.1.stride_SENDER"
-	connectionId := "connection-0"
+	redemptionAddr := s.IcaAddresses[redemptionIcaOwner]
+	redemptionRecordId := fmt.Sprintf("%s.%d.%s", HostChainId, epochNumber, senderAddr)
 
 	redemptionAccount := stakeibc.ICAAccount{
 		Address: redemptionAddr,
@@ -43,13 +51,13 @@ func (s *KeeperTestSuite) SetupClaimUndelegatedTokens() ClaimUndelegatedTestCase
 	hostZone := stakeibc.HostZone{
 		ChainId:           chainId,
 		RedemptionAccount: &redemptionAccount,
-		ConnectionId:      connectionId,
+		ConnectionId:      ibctesting.FirstConnectionID,
 	}
 
 	redemptionRecord := recordtypes.UserRedemptionRecord{
 		Id:          redemptionRecordId,
 		HostZoneId:  chainId,
-		EpochNumber: 1,
+		EpochNumber: epochNumber,
 		Sender:      senderAddr,
 		Receiver:    receiverAddr,
 		Denom:       "uatom",
@@ -71,7 +79,7 @@ func (s *KeeperTestSuite) SetupClaimUndelegatedTokens() ClaimUndelegatedTestCase
 	return ClaimUndelegatedTestCase{
 		validMsg: stakeibc.MsgClaimUndelegatedTokens{
 			Creator:    senderAddr,
-			HostZoneId: "GAIA",
+			HostZoneId: HostChainId,
 			Epoch:      1,
 			Sender:     senderAddr,
 		},
@@ -81,7 +89,6 @@ func (s *KeeperTestSuite) SetupClaimUndelegatedTokens() ClaimUndelegatedTestCase
 			redemptionRecord:   redemptionRecord,
 		},
 		expectedIcaMsg: stakeibckeeper.IcaTx{
-			ConnectionId: connectionId,
 			Msgs: []sdk.Msg{&banktypes.MsgSend{
 				FromAddress: redemptionAccount.Address,
 				ToAddress:   receiverAddr,
@@ -96,16 +103,27 @@ func (s *KeeperTestSuite) SetupClaimUndelegatedTokens() ClaimUndelegatedTestCase
 func (s *KeeperTestSuite) TestClaimUndelegatedTokens_Successful() {
 	tc := s.SetupClaimUndelegatedTokens()
 	redemptionRecordId := tc.initialState.redemptionRecordId
-	redemptionRecord, found := s.App.RecordsKeeper.GetUserRedemptionRecord(s.Ctx(), redemptionRecordId)
+	expectedRedemptionRecord := tc.initialState.redemptionRecord
 
 	_, err := s.msgServer.ClaimUndelegatedTokens(sdk.WrapSDKContext(s.Ctx()), &tc.validMsg)
 	s.Require().NoError(err, "claim undelegated tokens")
 
-	redemptionRecord, found = s.App.RecordsKeeper.GetUserRedemptionRecord(s.Ctx(), redemptionRecordId)
+	actualRedemptionRecord, found := s.App.RecordsKeeper.GetUserRedemptionRecord(s.Ctx(), redemptionRecordId)
 	s.Require().True(found, "redemption record found")
-	s.Require().False(redemptionRecord.IsClaimable, "redemption record should not be claimable")
-
+	s.Require().False(actualRedemptionRecord.IsClaimable, "redemption record should not be claimable")
+	s.Require().Equal(expectedRedemptionRecord.Amount, actualRedemptionRecord.Amount, "redemption record should not be claimable")
 	// TODO: check callback data here
+}
+
+func (s *KeeperTestSuite) TestClaimUndelegatedTokens_SuccessfulTransferMessage() {
+	tc := s.SetupClaimUndelegatedTokens()
+	redemptionRecord := tc.initialState.redemptionRecord
+
+	icaTx, err := s.App.StakeibcKeeper.GetRedemptionTransferMsg(s.Ctx(), &redemptionRecord, HostChainId)
+	msgs := icaTx.Msgs
+	s.Require().NoError(err, "get redemption transfer msgs error")
+	s.Require().Equal(1, len(msgs), "number of transfer messages")
+	s.Require().Equal(tc.expectedIcaMsg.Msgs, msgs, "transfer message")
 }
 
 func (s *KeeperTestSuite) TestClaimUndelegatedTokens_NoUserRedemptionRecord() {
@@ -132,7 +150,7 @@ func (s *KeeperTestSuite) TestClaimUndelegatedTokens_RecordNotClaimable() {
 	s.Require().EqualError(err, expectedErr)
 }
 
-func (s *KeeperTestSuite) TestClaimUndelegatedTokens_HostZoneNotFound() {
+func (s *KeeperTestSuite) TestClaimUndelegatedTokens_RecordNotFound() {
 	tc := s.SetupClaimUndelegatedTokens()
 	// Change host zone in message
 	invalidMsg := tc.validMsg
@@ -141,6 +159,22 @@ func (s *KeeperTestSuite) TestClaimUndelegatedTokens_HostZoneNotFound() {
 	_, err := s.msgServer.ClaimUndelegatedTokens(sdk.WrapSDKContext(s.Ctx()), &invalidMsg)
 	expectedErr := "unable to find claimable redemption record: "
 	expectedErr += "could not get user redemption record: fake_host_zone.1.stride_SENDER: user redemption record error"
+	s.Require().EqualError(err, expectedErr)
+}
+
+func (s *KeeperTestSuite) TestClaimUndelegatedTokens_HostZoneNotFound() {
+	tc := s.SetupClaimUndelegatedTokens()
+	// Change host zone in message
+	invalidMsg := tc.validMsg
+	invalidMsg.HostZoneId = "fake_host_zone"
+
+	badRedemptionRecordId := strings.Replace(tc.initialState.redemptionRecordId, "GAIA", "fake_host_zone", 1)
+	badRedemptionRecord := tc.initialState.redemptionRecord
+	badRedemptionRecord.Id = badRedemptionRecordId
+	s.App.RecordsKeeper.SetUserRedemptionRecord(s.Ctx(), badRedemptionRecord)
+
+	_, err := s.msgServer.ClaimUndelegatedTokens(sdk.WrapSDKContext(s.Ctx()), &invalidMsg)
+	expectedErr := "unable to build redemption transfer message: Host zone fake_host_zone not found: host zone not registered"
 	s.Require().EqualError(err, expectedErr)
 }
 
