@@ -2,7 +2,7 @@ package keeper_test
 
 import (
 	// "fmt"
-	"fmt"
+
 	"math/rand"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -123,7 +123,7 @@ func (s *KeeperTestSuite) TestUpdateRedemptionRatesRandomized() {
 	numerator := int64(stakedBal) + int64(undelegatedBal) + int64(justDepositedBal)
 	denominator := int64(stSupply)
 	expectedNewRate := sdk.NewDec(numerator).Quo(sdk.NewDec(denominator))
-	s.Require().Equal(rrNew, expectedNewRate, fmt.Sprintf("expectedNewRate: %v, rrNew: %v; inputs: SB: %d, UDB: %d, JDB: %d, STS: %d RRT0: %d", expectedNewRate, rrNew, stakedBal, undelegatedBal, justDepositedBal, stSupply, initialRedemptionRate))
+	s.Require().Equal(rrNew, expectedNewRate, "expectedNewRate: %v, rrNew: %v; inputs: SB: %d, UDB: %d, JDB: %d, STS: %d RRT0: %d", expectedNewRate, rrNew, stakedBal, undelegatedBal, justDepositedBal, stSupply, initialRedemptionRate)
 }
 
 func (s *KeeperTestSuite) TestUpdateRedemptionRatesRandomized_MultipleRuns() {

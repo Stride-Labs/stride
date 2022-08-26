@@ -1,7 +1,6 @@
 package apptesting
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
@@ -138,7 +137,7 @@ func (s *AppTestHelper) CreateTransferChannel(hostChainID string) {
 		s.SetupIBCChains(hostChainID)
 	}
 	s.Require().Equal(s.HostChain.ChainID, hostChainID,
-		fmt.Sprintf("The testing app has already been initialized with a different chainID (%s)", s.HostChain.ChainID))
+		"The testing app has already been initialized with a different chainID (%s)", s.HostChain.ChainID)
 
 	// Create clients, connections, and a transfer channel
 	s.TransferPath = NewTransferPath(s.StrideChain, s.HostChain)
@@ -191,7 +190,7 @@ func (s *AppTestHelper) CreateICAChannel(owner string) {
 	portID := icaPath.EndpointA.ChannelConfig.PortID
 	channelID := icaPath.EndpointA.ChannelID
 	_, found := s.App.IBCKeeper.ChannelKeeper.GetChannel(s.Ctx(), portID, channelID)
-	s.Require().True(found, fmt.Sprintf("Channel not found after creation, PortID: %s, ChannelID: %s", portID, channelID))
+	s.Require().True(found, "Channel not found after creation, PortID: %s, ChannelID: %s", portID, channelID)
 
 	// Store the account address
 	icaAddress, found := s.App.ICAControllerKeeper.GetInterchainAccountAddress(s.Ctx(), ibctesting.FirstConnectionID, portID)
