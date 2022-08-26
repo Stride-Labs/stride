@@ -12,7 +12,6 @@ import (
 
 type KeeperTestSuite struct {
 	apptesting.AppTestHelper
-	msgServer types.MsgServer
 }
 
 func (s *KeeperTestSuite) SetupTest() {

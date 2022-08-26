@@ -183,7 +183,7 @@ func (s *AppTestHelper) CreateICAChannel(owner string) {
 	err = icaPath.EndpointA.ChanOpenAck()
 	s.Require().NoError(err, "ChanOpenAck error")
 
-	icaPath.EndpointB.ChanOpenConfirm()
+	err = icaPath.EndpointB.ChanOpenConfirm()
 	s.Require().NoError(err, "ChanOpenConfirm error")
 
 	// Confirm the ICA channel was created properly
