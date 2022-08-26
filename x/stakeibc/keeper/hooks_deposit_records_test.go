@@ -23,13 +23,21 @@ import (
 //   |-- hooks_transfer_deposit_records_test.go // transfer tests
 //   |-- hooks_stake_deposit_records_test.go    // stake tests
 type TestDepositRecords struct {
-	emptyDepositRecords   []recordstypes.DepositRecord
+	emptyRecords          []recordstypes.DepositRecord
 	recordsToBeTransfered []recordstypes.DepositRecord
 	recordsToBeStaked     []recordstypes.DepositRecord
 	recordsInCurrentEpoch []recordstypes.DepositRecord
-	allDepositRecords     []recordstypes.DepositRecord
 	transferAmount        sdk.Int
 	stakeAmount           sdk.Int
+}
+
+func (r *TestDepositRecords) GetAllRecords() []recordstypes.DepositRecord {
+	allDepositRecords := []recordstypes.DepositRecord{}
+	allDepositRecords = append(allDepositRecords, r.emptyRecords...)
+	allDepositRecords = append(allDepositRecords, r.recordsToBeTransfered...)
+	allDepositRecords = append(allDepositRecords, r.recordsToBeStaked...)
+	allDepositRecords = append(allDepositRecords, r.recordsInCurrentEpoch...)
+	return allDepositRecords
 }
 
 type HooksDepositRecordsTestCase struct {
@@ -120,18 +128,11 @@ func (s *KeeperTestSuite) GetInitialDepositRecords(currentEpoch uint64) TestDepo
 		},
 	}
 
-	allDepositRecords := []recordstypes.DepositRecord{}
-	allDepositRecords = append(allDepositRecords, emptyDepositRecords...)
-	allDepositRecords = append(allDepositRecords, recordsToBeTransfered...)
-	allDepositRecords = append(allDepositRecords, recordsToBeStaked...)
-	allDepositRecords = append(allDepositRecords, recordsInCurrentEpoch...)
-
 	return TestDepositRecords{
-		emptyDepositRecords:   emptyDepositRecords,
+		emptyRecords:          emptyDepositRecords,
 		recordsToBeTransfered: recordsToBeTransfered,
 		recordsToBeStaked:     recordsToBeStaked,
 		recordsInCurrentEpoch: recordsInCurrentEpoch,
-		allDepositRecords:     allDepositRecords,
 		transferAmount:        transferAmount,
 		stakeAmount:           stakeAmount,
 	}
@@ -168,7 +169,7 @@ func (s *KeeperTestSuite) SetupHooksDepositRecords() HooksDepositRecordsTestCase
 	s.App.StakeibcKeeper.SetEpochTracker(s.Ctx(), strideEpochTracker)
 
 	initialDepositRecords := s.GetInitialDepositRecords(currentEpoch)
-	for _, depositRecord := range initialDepositRecords.allDepositRecords {
+	for _, depositRecord := range initialDepositRecords.GetAllRecords() {
 		s.App.RecordsKeeper.AppendDepositRecord(s.Ctx(), depositRecord)
 	}
 
@@ -181,69 +182,23 @@ func (s *KeeperTestSuite) SetupHooksDepositRecords() HooksDepositRecordsTestCase
 	}
 }
 
-func (s *KeeperTestSuite) TestTransferDepositRecords_Successful() {
-	tc := s.SetupHooksDepositRecords()
-
-	// Get tx seq number before transfer to confirm it incremented
-	transferPort := ibctesting.TransferPort
-	transferChannel := ibctesting.FirstChannelID
-	startSequence, found := s.App.IBCKeeper.ChannelKeeper.GetNextSequenceSend(s.Ctx(), transferPort, transferChannel)
-	s.Require().True(found, "get next sequence number not found")
-
-	// Transfer deposit records
-	s.App.StakeibcKeeper.TransferExistingDepositsToHostZones(s.Ctx(), tc.epochNumber, tc.initialDepositRecords.allDepositRecords)
-
-	// Confirm tx sequence was incremented
-	endSequence, found := s.App.IBCKeeper.ChannelKeeper.GetNextSequenceSend(s.Ctx(), transferPort, transferChannel)
-	numTransfers := uint64(len(tc.initialDepositRecords.recordsToBeTransfered))
-	s.Require().Equal(startSequence+numTransfers, endSequence, "tx sequence number after transfer")
-
-	// Confirm the callback data was stored for each transfer packet
-	numCallbacks := uint64(len(s.App.IcacallbacksKeeper.GetAllCallbackData(s.Ctx())))
-	s.Require().Equal(numTransfers, numCallbacks, "number of callback data's stored")
-	for i := range tc.initialDepositRecords.recordsToBeTransfered {
-		callbackKey := icacallbackstypes.PacketID(transferPort, transferChannel, startSequence+uint64(i))
-		actualCallbackData, found := s.App.IcacallbacksKeeper.GetCallbackData(s.Ctx(), callbackKey)
-		_ = actualCallbackData
-		s.Require().True(found, "callback data was not found for callback ID (%s)", callbackKey)
-	}
-
-	// Confirm the module account balance decreased
-	expectedModuleBalance := tc.initialModuleAccountBalance.SubAmount(tc.initialDepositRecords.transferAmount)
-	actualModuleBalance := s.App.BankKeeper.GetBalance(s.Ctx(), tc.hostModuleAddress, tc.hostZone.IBCDenom)
-	s.CompareCoins(expectedModuleBalance, actualModuleBalance, "host module balance")
-
-	// Confirm deposit records with 0 amount were removed
-	expectedNumDepositRecords := len(tc.initialDepositRecords.allDepositRecords) - len(tc.initialDepositRecords.emptyDepositRecords)
-	actualNumDepositRecords := len(s.App.RecordsKeeper.GetAllDepositRecord(s.Ctx()))
-	s.Require().Equal(expectedNumDepositRecords, actualNumDepositRecords)
-
-	for _, emptyRecord := range tc.initialDepositRecords.emptyDepositRecords {
-		_, found := s.App.RecordsKeeper.GetDepositRecord(s.Ctx(), emptyRecord.Id)
-		s.Require().False(found, "empty deposit record (%d) should be removed", emptyRecord.Id)
-	}
-}
-
-func (s *KeeperTestSuite) TestTransferDepositRecords_SuccessfulTransferMsg() {
-
-}
-
-// Helper function for the TransferDepositRecrods error cases
+// Helper function tp check the state after transfering deposit records
 // This confirms everything that's done in the success case,
 // but with the assumption that the the first X deposit records failed
-func (s *KeeperTestSuite) CheckStateWithFailedTransfers(tc HooksDepositRecordsTestCase, numberTransfersFailed int) {
+func (s *KeeperTestSuite) CheckStateAfterTransferDepositRecords(tc HooksDepositRecordsTestCase, numberTransfersFailed int) {
 	// Get tx seq number before transfer to confirm it incremented
 	transferPort := ibctesting.TransferPort
 	transferChannel := ibctesting.FirstChannelID
 	startSequence, found := s.App.IBCKeeper.ChannelKeeper.GetNextSequenceSend(s.Ctx(), transferPort, transferChannel)
-	s.Require().True(found, "get next sequence number not found")
+	s.Require().True(found, "get next sequence number not found before transfer")
 
 	// Transfer deposit records
-	s.App.StakeibcKeeper.TransferExistingDepositsToHostZones(s.Ctx(), tc.epochNumber, tc.initialDepositRecords.allDepositRecords)
+	s.App.StakeibcKeeper.TransferExistingDepositsToHostZones(s.Ctx(), tc.epochNumber, tc.initialDepositRecords.GetAllRecords())
 
 	// Confirm tx sequence was incremented
 	endSequence, found := s.App.IBCKeeper.ChannelKeeper.GetNextSequenceSend(s.Ctx(), transferPort, transferChannel)
 	numTransfers := uint64(len(tc.initialDepositRecords.recordsToBeTransfered) - numberTransfersFailed) // exclude failures
+	s.Require().True(found, "next sequence number not found after transfer")
 	s.Require().Equal(startSequence+numTransfers, endSequence, "tx sequence number after transfer")
 
 	// Confirm the callback data was stored for each transfer packet EXCLUDING the failed packets
@@ -251,8 +206,7 @@ func (s *KeeperTestSuite) CheckStateWithFailedTransfers(tc HooksDepositRecordsTe
 	s.Require().Equal(numTransfers, numCallbacks, "number of callback data's stored")
 	for i := range tc.initialDepositRecords.recordsToBeTransfered[numberTransfersFailed:] {
 		callbackKey := icacallbackstypes.PacketID(transferPort, transferChannel, startSequence+uint64(i))
-		actualCallbackData, found := s.App.IcacallbacksKeeper.GetCallbackData(s.Ctx(), callbackKey)
-		_ = actualCallbackData
+		_, found := s.App.IcacallbacksKeeper.GetCallbackData(s.Ctx(), callbackKey)
 		s.Require().True(found, "callback data was not found for callback ID (%s)", callbackKey)
 	}
 
@@ -266,14 +220,25 @@ func (s *KeeperTestSuite) CheckStateWithFailedTransfers(tc HooksDepositRecordsTe
 	s.CompareCoins(expectedModuleBalance, actualModuleBalance, "host module balance")
 
 	// Confirm deposit records with 0 amount were removed
-	expectedNumDepositRecords := len(tc.initialDepositRecords.allDepositRecords) - len(tc.initialDepositRecords.emptyDepositRecords)
+	expectedNumDepositRecords := len(tc.initialDepositRecords.GetAllRecords()) - len(tc.initialDepositRecords.emptyRecords)
 	actualNumDepositRecords := len(s.App.RecordsKeeper.GetAllDepositRecord(s.Ctx()))
 	s.Require().Equal(expectedNumDepositRecords, actualNumDepositRecords)
 
-	for _, emptyRecord := range tc.initialDepositRecords.emptyDepositRecords {
+	for _, emptyRecord := range tc.initialDepositRecords.emptyRecords {
 		_, found := s.App.RecordsKeeper.GetDepositRecord(s.Ctx(), emptyRecord.Id)
 		s.Require().False(found, "empty deposit record (%d) should be removed", emptyRecord.Id)
 	}
+}
+
+func (s *KeeperTestSuite) TestTransferDepositRecords_Successful() {
+	tc := s.SetupHooksDepositRecords()
+
+	numFailures := 0
+	s.CheckStateAfterTransferDepositRecords(tc, numFailures)
+}
+
+func (s *KeeperTestSuite) TestTransferDepositRecords_SuccessfulTransferMsg() {
+
 }
 
 func (s *KeeperTestSuite) TestTransferDepositRecords_HostZoneNotFound() {
@@ -281,18 +246,11 @@ func (s *KeeperTestSuite) TestTransferDepositRecords_HostZoneNotFound() {
 	// Replace first deposit record with a record that has a bad host zone
 	badRecord := tc.initialDepositRecords.recordsToBeTransfered[0]
 	badRecord.HostZoneId = "fake_host_zone"
+	tc.initialDepositRecords.recordsToBeTransfered[0] = badRecord
 	s.App.RecordsKeeper.SetDepositRecord(s.Ctx(), badRecord)
 
-	tc.initialDepositRecords.recordsToBeTransfered[0] = badRecord
-	for i, depositRecord := range tc.initialDepositRecords.allDepositRecords {
-		if depositRecord.Id == badRecord.Id {
-			tc.initialDepositRecords.allDepositRecords[i] = badRecord
-			break
-		}
-	}
-
 	numFailed := 1
-	s.CheckStateWithFailedTransfers(tc, numFailed)
+	s.CheckStateAfterTransferDepositRecords(tc, numFailed)
 }
 
 func (s *KeeperTestSuite) TestTransferDepositRecords_NoDelegationAccount() {
@@ -303,7 +261,7 @@ func (s *KeeperTestSuite) TestTransferDepositRecords_NoDelegationAccount() {
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx(), badHostZone)
 
 	numFailed := len(tc.initialDepositRecords.recordsToBeTransfered)
-	s.CheckStateWithFailedTransfers(tc, numFailed)
+	s.CheckStateAfterTransferDepositRecords(tc, numFailed)
 }
 
 func (s *KeeperTestSuite) TestTransferDepositRecords_NoDelegationAddress() {
@@ -314,18 +272,18 @@ func (s *KeeperTestSuite) TestTransferDepositRecords_NoDelegationAddress() {
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx(), badHostZone)
 
 	numFailed := len(tc.initialDepositRecords.recordsToBeTransfered)
-	s.CheckStateWithFailedTransfers(tc, numFailed)
+	s.CheckStateAfterTransferDepositRecords(tc, numFailed)
 }
 
-func (s *KeeperTestSuite) TestTransferDepositRecords_BlockHeightNotFound() {
+func (s *KeeperTestSuite) TestTransferDepositRecords_HostBlockHeightNotFound() {
 	tc := s.SetupHooksDepositRecords()
-	// Remove the connection ID from the host zone
+	// Remove the connection ID from the host zone so that it can't find the light client height
 	badHostZone := tc.hostZone
 	badHostZone.ConnectionId = ""
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx(), badHostZone)
 
 	numFailed := len(tc.initialDepositRecords.recordsToBeTransfered)
-	s.CheckStateWithFailedTransfers(tc, numFailed)
+	s.CheckStateAfterTransferDepositRecords(tc, numFailed)
 }
 
 func (s *KeeperTestSuite) TestStakeDepositRecords_Successful() {
