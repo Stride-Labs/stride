@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"encoding/binary"
+	"errors"
 	"fmt"
 
 	"github.com/cosmos/cosmos-sdk/store/prefix"
@@ -123,27 +124,29 @@ func (k Keeper) AddDelegationToValidator(ctx sdk.Context, hostZone types.HostZon
 	return false
 }
 
-func (k Keeper) RemoveValidatorFromHostZone(ctx sdk.Context, chainId string, validatorAddress string) (success bool) {
+func (k Keeper) RemoveValidatorFromHostZone(ctx sdk.Context, chainId string, validatorAddress string) error {
 	hostZone, found := k.GetHostZone(ctx, chainId)
 	if !found {
-		k.Logger(ctx).Error(fmt.Sprintf("HostZone not found %s", chainId))
-		return false
+		errMsg := fmt.Sprintf("HostZone (%s) not found", chainId)
+		k.Logger(ctx).Error(errMsg)
+		return sdkerrors.Wrapf(types.ErrHostZoneNotFound, errMsg)
 	}
 	for i, val := range hostZone.Validators {
 		if val.GetAddress() == validatorAddress {
 			if val.GetDelegationAmt() == 0 && val.GetWeight() == 0 {
 				hostZone.Validators = append(hostZone.Validators[:i], hostZone.Validators[i+1:]...)
-				return true
+				k.SetHostZone(ctx, hostZone)
+				return nil
 			} else {
-				k.Logger(ctx).Error(fmt.Sprintf("Validator %s has non-zero delegation (%d) or weight (%d)", validatorAddress, val.GetDelegationAmt(), val.GetWeight()))
-
-				return false
+				errMsg := fmt.Sprintf("Validator (%s) has non-zero delegation (%d) or weight (%d)", validatorAddress, val.GetDelegationAmt(), val.GetWeight())
+				k.Logger(ctx).Error(errMsg)
+				return errors.New(errMsg)
 			}
 		}
 	}
-	k.SetHostZone(ctx, hostZone)
-	k.Logger(ctx).Error(fmt.Sprintf("Validator %s not found on the host zone %s", validatorAddress, chainId))
-	return false
+	errMsg := fmt.Sprintf("Validator address (%s) not found on host zone (%s)", validatorAddress, chainId)
+	k.Logger(ctx).Error(errMsg)
+	return sdkerrors.Wrapf(types.ErrValidatorNotFound, errMsg)
 }
 
 // GetHostZoneFromIBCDenom returns a HostZone from a IBCDenom

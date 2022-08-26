@@ -60,5 +60,6 @@ func TransferCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ack
 	depositRecord.Status = types.DepositRecord_STAKE
 	k.SetDepositRecord(ctx, depositRecord)
 	k.Logger(ctx).Info(fmt.Sprintf("\t [IBC-TRANSFER] Deposit record updated: {%v}", depositRecord.Id))
+	k.Logger(ctx).Info(fmt.Sprintf("[IBC-TRANSFER] success to %s", depositRecord.HostZoneId))
 	return nil
 }

@@ -29,9 +29,9 @@ BLOCK_TIME="${BLOCK_TIME_SECONDS}s"
 # NOTE: If you add new epochs, these indexes will need to be updated
 DAY_EPOCH_INDEX=1
 INTERVAL_LEN=1
-DAY_EPOCH_LEN="40s"
+DAY_EPOCH_LEN="100s"
 STRIDE_EPOCH_INDEX=2
-STRIDE_EPOCH_LEN="20s"
+STRIDE_EPOCH_LEN="40s"
 IBC_TX_WAIT_SECONDS=30
 MAX_DEPOSIT_PERIOD="30s"
 VOTING_PERIOD="30s"
@@ -126,7 +126,7 @@ GAIA_VAL_3_PUBKEY='{"@type":"/cosmos.crypto.secp256k1.PubKey","key":"A7X2X1v+pa0
 GAIA_HOME_3="$STATE/gaia3"
 GAIA_CMD_3="$SCRIPT_DIR/../build/gaia3/gaiad --home $GAIA_HOME_3"
 
-HERMES_CMD="$SCRIPT_DIR/../build/hermes/release/hermes -c $SCRIPT_DIR/hermes/config.toml"
+HERMES_CMD="$SCRIPT_DIR/../build/hermes/release/hermes --config $SCRIPT_DIR/hermes/config.toml"
 
 # define relayer vars
 HERMES_STRIDE_ACCT=rly1
