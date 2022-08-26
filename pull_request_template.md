@@ -7,7 +7,7 @@ v    If your PR doesn't close an issue, that's OK!  Just remove the Closes: #XXX
 
 Closes: #XXX
 
-## What is the purpose of the change
+## Context and purpose of the change
 
 <!-- Add a description of the overall background and high level changes that this PR introduces
 
@@ -34,6 +34,7 @@ I have...
 - [ ] If the change is contentful, I either:
     - [ ] Added a new unit test OR 
     - [ ] Added test cases to existinig unit tests
+- [ ] OR this change is a trivial rework / code cleanup without any test coverage
 
 If skipped any of the tests above, explain.
 <!-- *(example:)*
@@ -42,7 +43,7 @@ If skipped any of the tests above, explain.
   - *Extended integration test for ...*
   - *Manually verified the change by ...* -->
 
-### Reviewers Checklist
+## Reviewers Checklist
 
 *All items are required. Please add a note if the item is not applicable and please add
 your handle next to the items reviewed if you only reviewed selected items.*
@@ -67,4 +68,4 @@ I have...
       - [ ] jira ticket `XXX` 
       - [ ] specification (`x/<module>/spec/`) 
       - [ ] README.md 
-      - [ ] not documented
+      - [ ] not documented <!-- because ... EXPLAIN WHY! -->
