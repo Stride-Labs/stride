@@ -9,9 +9,9 @@
 	url = git@github.com:informalsystems/ibc-rs.git
 # Commit: f56b9b6e5c9b8eaf6d4f93ee6497a3b1e13a9faf
 # Tag: v2.0.0
-[submodule "deps/relayer"]
-	path = deps/relayer
-	url = git@github.com:cosmos/relayer.git
+# [submodule "deps/relayer"]
+# 	path = deps/relayer
+# 	url = git@github.com:cosmos/relayer.git
 # Commit: 5b47714dd5607993a1a91f2b06a6d92cbb504721
 [submodule "deps/gaia"]
 	path = deps/gaia
