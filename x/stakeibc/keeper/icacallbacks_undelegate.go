@@ -6,6 +6,8 @@ import (
 
 	"github.com/spf13/cast"
 
+	"github.com/Stride-Labs/stride/x/icacallbacks"
+	icacallbackstypes "github.com/Stride-Labs/stride/x/icacallbacks/types"
 	recordstypes "github.com/Stride-Labs/stride/x/records/types"
 	"github.com/Stride-Labs/stride/x/stakeibc/types"
 
@@ -34,15 +36,24 @@ func (k Keeper) UnmarshalUndelegateCallbackArgs(ctx sdk.Context, undelegateCallb
 	return unmarshalledUndelegateCallback, nil
 }
 
-func UndelegateCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, txMsgData *sdk.TxMsgData, args []byte) error {
+func UndelegateCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ack *channeltypes.Acknowledgement, args []byte) error {
 	logMsg := fmt.Sprintf("UndelegateCallback executing packet: %d, source: %s %s, dest: %s %s",
 		packet.Sequence, packet.SourceChannel, packet.SourcePort, packet.DestinationChannel, packet.DestinationPort)
 	k.Logger(ctx).Info(logMsg)
-
-	if txMsgData == nil {
+	if ack == nil {
+		// handle timeout
 		k.Logger(ctx).Error(fmt.Sprintf("UndelegateCallback timeout, txMsgData is nil, packet %v", packet))
 		return nil
-	} else if len(txMsgData.Data) == 0 {
+	}
+
+	txMsgData, err := icacallbacks.GetTxMsgData(ctx, *ack, k.Logger(ctx))
+	if err != nil {
+		k.Logger(ctx).Error(fmt.Sprintf("failed to fetch txMsgData, packet %v", packet))
+		return sdkerrors.Wrap(icacallbackstypes.ErrTxMsgData, err.Error())
+	}
+
+	if len(txMsgData.Data) == 0 {
+		// handle tx failure
 		k.Logger(ctx).Error(fmt.Sprintf("UndelegateCallback tx failed, txMsgData is empty, ack error, packet %v", packet))
 		return nil
 	}
@@ -64,6 +75,7 @@ func UndelegateCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, t
 	// Redelegate to each validator and updated host zone staked balance if successful
 	for _, undelegation := range undelegateCallback.SplitDelegations {
 		undelegateAmt, err := cast.ToInt64E(undelegation.Amount)
+		k.Logger(ctx).Info(fmt.Sprintf("UndelegateCallback, Undelegation: %d, validator: %s", undelegateAmt, undelegation.Validator))
 		if err != nil {
 			errMsg := fmt.Sprintf("Could not convert undelegate amount to int64 in undelegation callback | %s", err.Error())
 			k.Logger(ctx).Error(errMsg)
@@ -144,6 +156,14 @@ func UndelegateCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, t
 	stCoin, err := sdk.ParseCoinNormalized(stCoinString)
 	if err != nil {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidCoins, "could not parse burnCoin: %s. err: %s", stCoinString, err.Error())
+	}
+	bech32ZoneAddress, err := sdk.AccAddressFromBech32(hostZone.Address)
+	if err != nil {
+		return fmt.Errorf("could not bech32 decode address %s of zone with id: %s", hostZone.Address, hostZone.ChainId)
+	}
+	err = k.bankKeeper.SendCoinsFromAccountToModule(ctx, bech32ZoneAddress, types.ModuleName, sdk.NewCoins(stCoin))
+	if err != nil {
+		return fmt.Errorf("could not send coins from account %s to module %s. err: %s", hostZone.Address, types.ModuleName, err.Error())
 	}
 	err = k.bankKeeper.BurnCoins(ctx, types.ModuleName, sdk.NewCoins(stCoin))
 	if err != nil {

@@ -342,8 +342,9 @@ func NewStrideApp(
 	app.AccountKeeper = authkeeper.NewAccountKeeper(
 		appCodec, keys[authtypes.StoreKey], app.GetSubspace(authtypes.ModuleName), authtypes.ProtoBaseAccount, maccPerms,
 	)
+	
 	app.BankKeeper = bankkeeper.NewBaseKeeper(
-		appCodec, keys[banktypes.StoreKey], app.AccountKeeper, app.GetSubspace(banktypes.ModuleName), app.ModuleAccountAddrs(),
+		appCodec, keys[banktypes.StoreKey], app.AccountKeeper, app.GetSubspace(banktypes.ModuleName), app.BlacklistedModuleAccountAddrs(),
 	)
 	stakingKeeper := stakingkeeper.NewKeeper(
 		appCodec, keys[stakingtypes.StoreKey], app.AccountKeeper, app.BankKeeper, app.GetSubspace(stakingtypes.ModuleName),
@@ -425,29 +426,12 @@ func NewStrideApp(
 	// monitoringModule := monitoringp.NewAppModule(appCodec, app.MonitoringKeeper)
 
 	// Note: must be above app.StakeibcKeeper
-
-	scopedRecordsKeeper := app.CapabilityKeeper.ScopeToModule(recordsmoduletypes.ModuleName)
-	app.ScopedRecordsKeeper = scopedRecordsKeeper
-
-	app.RecordsKeeper = *recordsmodulekeeper.NewKeeper(
-		appCodec,
-		keys[recordsmoduletypes.StoreKey],
-		keys[recordsmoduletypes.MemStoreKey],
-		app.GetSubspace(recordsmoduletypes.ModuleName),
-		scopedRecordsKeeper,
-		app.AccountKeeper,
-	)
-	recordsModule := recordsmodule.NewAppModule(appCodec, app.RecordsKeeper, app.AccountKeeper, app.BankKeeper)
-
 	app.ICAControllerKeeper = icacontrollerkeeper.NewKeeper(
 		appCodec, keys[icacontrollertypes.StoreKey], app.GetSubspace(icacontrollertypes.SubModuleName),
 		app.IBCKeeper.ChannelKeeper, // may be replaced with middleware such as ics29 fee
 		app.IBCKeeper.ChannelKeeper, &app.IBCKeeper.PortKeeper,
 		scopedICAControllerKeeper, app.MsgServiceRouter(),
 	)
-
-	app.InterchainqueryKeeper = interchainquerykeeper.NewKeeper(appCodec, keys[interchainquerytypes.StoreKey], app.IBCKeeper)
-	interchainQueryModule := interchainquery.NewAppModule(appCodec, app.InterchainqueryKeeper)
 
 	scopedIcacallbacksKeeper := app.CapabilityKeeper.ScopeToModule(icacallbacksmoduletypes.ModuleName)
 	app.ScopedIcacallbacksKeeper = scopedIcacallbacksKeeper
@@ -460,6 +444,26 @@ func NewStrideApp(
 		*app.IBCKeeper,
 		app.ICAControllerKeeper,
 	)
+
+	app.InterchainqueryKeeper = interchainquerykeeper.NewKeeper(appCodec, keys[interchainquerytypes.StoreKey], app.IBCKeeper)
+	interchainQueryModule := interchainquery.NewAppModule(appCodec, app.InterchainqueryKeeper)
+
+
+	scopedRecordsKeeper := app.CapabilityKeeper.ScopeToModule(recordsmoduletypes.ModuleName)
+	app.ScopedRecordsKeeper = scopedRecordsKeeper
+	app.RecordsKeeper = *recordsmodulekeeper.NewKeeper(
+		appCodec,
+		keys[recordsmoduletypes.StoreKey],
+		keys[recordsmoduletypes.MemStoreKey],
+		app.GetSubspace(recordsmoduletypes.ModuleName),
+		scopedRecordsKeeper,
+		app.AccountKeeper,
+		app.TransferKeeper,
+		*app.IBCKeeper,
+		app.IcacallbacksKeeper,
+	)
+	recordsModule := recordsmodule.NewAppModule(appCodec, app.RecordsKeeper, app.AccountKeeper, app.BankKeeper)
+
 
 	scopedStakeibcKeeper := app.CapabilityKeeper.ScopeToModule(stakeibcmoduletypes.ModuleName)
 	app.ScopedStakeibcKeeper = scopedStakeibcKeeper
@@ -475,7 +479,6 @@ func NewStrideApp(
 		app.ICAControllerKeeper,
 		*app.IBCKeeper,
 		scopedStakeibcKeeper,
-		app.TransferKeeper,
 		app.InterchainqueryKeeper,
 		app.RecordsKeeper,
 		app.StakingKeeper,
@@ -501,7 +504,13 @@ func NewStrideApp(
 
 	icacallbacksModule := icacallbacksmodule.NewAppModule(appCodec, app.IcacallbacksKeeper, app.AccountKeeper, app.BankKeeper)
 	// Register ICA calllbacks
+	// stakeibc
 	err = app.IcacallbacksKeeper.SetICACallbackHandler(stakeibcmoduletypes.ModuleName, app.StakeibcKeeper.ICACallbackHandler())
+	if err != nil {
+		return nil
+	}
+	// records
+	err = app.IcacallbacksKeeper.SetICACallbackHandler(recordsmoduletypes.ModuleName, app.RecordsKeeper.ICACallbackHandler())
 	if err != nil {
 		return nil
 	}
@@ -815,6 +824,20 @@ func (app *StrideApp) LoadHeight(height int64) error {
 func (app *StrideApp) ModuleAccountAddrs() map[string]bool {
 	modAccAddrs := make(map[string]bool)
 	for _, acc := range utils.StringToStringSliceMapKeys(maccPerms) {
+		modAccAddrs[authtypes.NewModuleAddress(acc).String()] = true
+	}
+
+	return modAccAddrs
+}
+
+// ModuleAccountAddrs returns all the app's module account addresses.
+func (app *StrideApp) BlacklistedModuleAccountAddrs() map[string]bool {
+	modAccAddrs := make(map[string]bool)
+	for _, acc := range utils.StringToStringSliceMapKeys(maccPerms) {
+		// don't blacklist stakeibc module account, so that it can ibc transfer tokens
+		if acc == "stakeibc" {
+			continue
+		}
 		modAccAddrs[authtypes.NewModuleAddress(acc).String()] = true
 	}
 

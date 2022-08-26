@@ -40,7 +40,9 @@ sed -i -e '1,/enable = false/ s/enable = false/enable = true/' "${STATE}/${OSMO_
 OSMO_CFG_TMP="${STATE}/${OSMO_NODE_NAME}/config/genesis.json"
 jq '.app_state.staking.params.unbonding_time = $newVal' --arg newVal "$UNBONDING_TIME" $OSMO_CFG_TMP > json.tmp && mv json.tmp $OSMO_CFG_TMP
 # day epoch is index 0
-jq '.app_state.epochs.epochs[$epochIndex].duration = $epochLen' --arg epochLen $DAY_EPOCH_LEN --argjson epochIndex 0  $OSMO_CFG_TMP > json.tmp && mv json.tmp $OSMO_CFG_TMP
+jq '(.app_state.epochs.epochs[] | select(.identifier=="day") ).duration = $epochLen' --arg epochLen $DAY_EPOCH_LEN $OSMO_CFG_TMP > json.tmp && mv json.tmp $OSMO_CFG_TMP
+jq '(.app_state.epochs.epochs[] | select(.identifier=="hour") ).duration = $epochLen' --arg epochLen $DAY_EPOCH_LEN $OSMO_CFG_TMP > json.tmp && mv json.tmp $OSMO_CFG_TMP
+jq '(.app_state.epochs.epochs[] | select(.identifier=="week") ).duration = $epochLen' --arg epochLen $DAY_EPOCH_LEN $OSMO_CFG_TMP > json.tmp && mv json.tmp $OSMO_CFG_TMP
 
 # add validator account
 echo $OSMO_VAL_MNEMONIC | $OSMO_CMD keys add $OSMO_VAL_ACCT --recover --keyring-backend=test >> $KEYS_LOGS 2>&1 

@@ -4,11 +4,12 @@ RUN apt update && apt install git -y
 
 WORKDIR /app/src
 
-RUN git clone https://github.com/informalsystems/ibc-rs --branch v1.0.0
+ENV COMMIT_HASH=ed4dd8c8b4ebd695730de2a1c69f3011cb179352
 
-WORKDIR /app/src/ibc-rs
-
-RUN cargo build --release
+RUN git clone https://github.com/informalsystems/ibc-rs \
+    && cd ibc-rs \
+    && git checkout $COMMIT_HASH \
+    && cargo build --release 
 
 FROM debian:bullseye-slim
 
