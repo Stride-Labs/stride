@@ -5,6 +5,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/simapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	ibctesting "github.com/cosmos/ibc-go/v3/testing"
 	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/libs/log"
 	dbm "github.com/tendermint/tm-db"
@@ -12,10 +13,16 @@ import (
 
 const Bech32Prefix = "stride"
 
-// Setup initializes a new StrideApp
-func InitTestApp(isCheckTx bool) *StrideApp {
+func init() {
 	config := sdk.GetConfig()
+	valoper := sdk.PrefixValidator + sdk.PrefixOperator
+	valoperpub := sdk.PrefixValidator + sdk.PrefixOperator + sdk.PrefixPublic
 	config.SetBech32PrefixForAccount(Bech32Prefix, Bech32Prefix+sdk.PrefixPublic)
+	config.SetBech32PrefixForValidator(Bech32Prefix+valoper, Bech32Prefix+valoperpub)
+}
+
+// Initializes a new StrideApp without IBC functionality
+func InitStrideTestApp(initChain bool) *StrideApp {
 	db := dbm.NewMemDB()
 	app := NewStrideApp(
 		log.NewNopLogger(),
@@ -28,7 +35,7 @@ func InitTestApp(isCheckTx bool) *StrideApp {
 		MakeEncodingConfig(),
 		simapp.EmptyAppOptions{},
 	)
-	if !isCheckTx {
+	if initChain {
 		genesisState := NewDefaultGenesisState()
 		stateBytes, err := json.MarshalIndent(genesisState, "", " ")
 		if err != nil {
@@ -45,4 +52,10 @@ func InitTestApp(isCheckTx bool) *StrideApp {
 	}
 
 	return app
+}
+
+// Initializes a new Stride App casted as a TestingApp for IBC support
+func InitStrideIBCTestingApp() (ibctesting.TestingApp, map[string]json.RawMessage) {
+	app := InitStrideTestApp(false)
+	return app, NewDefaultGenesisState()
 }
