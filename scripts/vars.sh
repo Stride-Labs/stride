@@ -159,6 +159,26 @@ ICQ_GAIA_MNEMONIC="capable later bamboo snow drive afraid cheese practice latin 
 ICQ_JUNO_MNEMONIC="divorce loop depth announce strategy goddess short cash private raise spatial parent deal acid casual love inner bind ozone picnic fee earn scene galaxy"
 ICQ_OSMO_MNEMONIC="mix deal extend cargo office intact illegal cage fabric must upset yellow put any shaft area use piece patrol tobacco village guilt iron program"
 
+DELEGATION_ICA_ADDR='cosmos1sy63lffevueudvvlvh2lf6s387xh9xq72n3fsy6n2gr5hm6u2szs2v0ujm'
+REDEMPTION_ICA_ADDR='cosmos1xmcwu75s8v7s54k79390wc5gwtgkeqhvzegpj0nm2tdwacv47tmqg9ut30'
+WITHDRAWAL_ICA_ADDR='cosmos1x5p8er7e2ne8l54tx33l560l8djuyapny55pksctuguzdc00dj7saqcw2l'
+REVENUE_EOA_ADDR='cosmos1wdplq6qjh2xruc7qqagma9ya665q6qhcwju3ng'
+FEE_ICA_ADDR='cosmos1lkgt5sfshn9shm7hd7chtytkq4mvwvswgmyl0hkacd4rmusu9wwq60cezx'
+GAIA_DELEGATE_VAL_1='cosmosvaloper1pcag0cj4ttxg8l7pcg0q4ksuglswuuedadj7ne'
+GAIA_DELEGATE_VAL_2='cosmosvaloper133lfs9gcpxqj6er3kx605e3v9lqp2pg5syhvsz'
+GAIA_RECEIVER_ACCT='cosmos1g6qdx6kdhpf000afvvpte7hp0vnpzapuyxp8uf'
+
+JUNO_DELEGATE_VAL='junovaloper1pcag0cj4ttxg8l7pcg0q4ksuglswuued3knlr0'
+JUNO_DELEGATION_ICA_ADDR='juno1xan7vt4nurz6c7x0lnqnvpmuc0lljz7rycqmuz2kk6wxv4k69d0sfats35'
+JUNO_REDEMPTION_ICA_ADDR='juno1y6haxdt03cgkc7aedxrlaleeteel7fgc0nvtu2kggee3hnrlvnvs4kw2v9'
+JUNO_WITHDRAWAL_ICA_ADDR='juno104n6h822n6n7psqjgjl7emd2uz67lptggp5cargh6mw0gxpch2gsk53qk5'
+JUNO_FEE_ICA_ADDR='juno1rp8qgfq64wmjg7exyhjqrehnvww0t9ev3f3p2ls82umz2fxgylqsz3vl9h'
+
+OSMO_DELEGATE_VAL='osmovaloper12ffkl30v0ghtyaezvedazquhtsf4q5ng8khuv4'
+OSMO_DELEGATION_ICA_ADDR='osmo1cx04p5974f8hzh2lqev48kjrjugdxsxy7mzrd0eyweycpr90vk8q8d6f3h'
+OSMO_REDEMPTION_ICA_ADDR='osmo1uy9p9g609676rflkjnnelaxatv8e4sd245snze7qsxzlk7dk7s8qrcjaez'
+OSMO_WITHDRAWAL_ICA_ADDR='osmo10arcf5r89cdmppntzkvulc7gfmw5lr66y2m25c937t6ccfzk0cqqz2l6xv'
+OSMO_FEE_ICA_ADDR='osmo1n4r77qsmu9chvchtmuqy9cv3s539q87r398l6ugf7dd2q5wgyg9su3wd4g'
 
 CSLEEP() {
   for i in $(seq $1); do
@@ -171,3 +191,44 @@ GET_VAR_VALUE() {
   var_name="$1"
   echo "${!var_name}"
 }
+
+WAIT_FOR_BLOCK () {
+  num_blocks="${2:-1}"
+  for i in $(seq $num_blocks); do
+    ( tail -f -n0 $1 & ) | grep -q "INF executed block height="
+  done
+}
+
+WAIT_FOR_NONEMPTY_BLOCK () {
+  ( tail -f -n0 $1 & ) | grep -q -E "num_valid_txs=[1-9]"
+}
+
+WAIT_FOR_STRING () {
+  ( tail -f -n0 $1 & ) | grep -q "$2"
+}
+
+WAIT_FOR_IBC_TRANSFER () {
+  success_string="packet_cmd{src_chain=(.*)port=transfer(.*): success"
+  ( tail -f -n0 $HERMES_LOGS & ) | grep -q -E "$success_string"
+  ( tail -f -n0 $HERMES_LOGS & ) | grep -q -E "$success_string"
+}
+
+STRIDE_STATE=$SCRIPT_DIR/state/stride
+STRIDE_LOGS=$SCRIPT_DIR/logs/stride.log
+STRIDE_LOGS_2=$SCRIPT_DIR/logs/stride2.log
+STRIDE_LOGS_3=$SCRIPT_DIR/logs/stride3.log
+STRIDE_LOGS_4=$SCRIPT_DIR/logs/stride4.log
+STRIDE_LOGS_5=$SCRIPT_DIR/logs/stride5.log
+GAIA_STATE=$SCRIPT_DIR/state/gaia
+GAIA_LOGS=$SCRIPT_DIR/logs/gaia.log
+GAIA_LOGS_2=$SCRIPT_DIR/logs/gaia2.log
+GAIA_LOGS_3=$SCRIPT_DIR/logs/gaia3.log
+HERMES_LOGS=$SCRIPT_DIR/logs/hermes.log
+RLY_GAIA_LOGS=$SCRIPT_DIR/logs/rly_gaia.log
+RLY_OSMO_LOGS=$SCRIPT_DIR/logs/rly_osmo.log
+RLY_JUNO_LOGS=$SCRIPT_DIR/logs/rly_juno.log
+ICQ_LOGS=$SCRIPT_DIR/logs/icq.log
+JUNO_LOGS=$SCRIPT_DIR/logs/juno.log
+OSMO_LOGS=$SCRIPT_DIR/logs/osmo.log
+TX_LOGS=$SCRIPT_DIR/logs/tx.log
+KEYS_LOGS=$SCRIPT_DIR/logs/keys.log
