@@ -189,7 +189,7 @@ func (s *KeeperTestSuite) TestLiquidStake_IbcCoinParseError() {
 	_, err := s.GetMsgServer().LiquidStake(sdk.WrapSDKContext(s.Ctx()), &tc.validMsg)
 
 	badCoin := fmt.Sprintf("%d%s", tc.validMsg.Amount, badHostZone.IBCDenom)
-	s.Require().EqualError(err, "failed to parse coin (%s): invalid decimal coin expression: %s", badCoin, badCoin)
+	s.Require().EqualError(err, fmt.Sprintf("failed to parse coin (%s): invalid decimal coin expression: %s", badCoin, badCoin))
 }
 
 func (s *KeeperTestSuite) TestLiquidStake_NotIbcDenom() {
@@ -203,7 +203,7 @@ func (s *KeeperTestSuite) TestLiquidStake_NotIbcDenom() {
 	s.FundAccount(tc.user.acc, sdk.NewInt64Coin(badDenom, 1000000000))
 	_, err := s.GetMsgServer().LiquidStake(sdk.WrapSDKContext(s.Ctx()), &tc.validMsg)
 
-	s.Require().EqualError(err, "denom is not an IBC token (%s): invalid token denom", badHostZone.IBCDenom)
+	s.Require().EqualError(err, fmt.Sprintf("denom is not an IBC token (%s): invalid token denom", badHostZone.IBCDenom))
 }
 
 func (s *KeeperTestSuite) TestLiquidStake_InsufficientBalance() {
@@ -224,7 +224,7 @@ func (s *KeeperTestSuite) TestLiquidStake_NoEpochTracker() {
 	s.App.StakeibcKeeper.RemoveEpochTracker(s.Ctx(), epochtypes.STRIDE_EPOCH)
 	_, err := s.GetMsgServer().LiquidStake(sdk.WrapSDKContext(s.Ctx()), &tc.validMsg)
 
-	s.Require().EqualError(err, "no epoch number for epoch (%s): not found", epochtypes.STRIDE_EPOCH)
+	s.Require().EqualError(err, fmt.Sprintf("no epoch number for epoch (%s): not found", epochtypes.STRIDE_EPOCH))
 }
 
 func (s *KeeperTestSuite) TestLiquidStake_NoDepositRecord() {
@@ -233,7 +233,7 @@ func (s *KeeperTestSuite) TestLiquidStake_NoDepositRecord() {
 	s.App.RecordsKeeper.RemoveDepositRecord(s.Ctx(), 1)
 	_, err := s.GetMsgServer().LiquidStake(sdk.WrapSDKContext(s.Ctx()), &tc.validMsg)
 
-	s.Require().EqualError(err, "no deposit record for epoch (%d): not found", 1)
+	s.Require().EqualError(err, fmt.Sprintf("no deposit record for epoch (%d): not found", 1))
 }
 
 func (s *KeeperTestSuite) TestLiquidStake_InvalidHostAddress() {

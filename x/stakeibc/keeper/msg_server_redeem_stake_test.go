@@ -1,6 +1,8 @@
 package keeper_test
 
 import (
+	"fmt"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/spf13/cast"
 	_ "github.com/stretchr/testify/suite"
@@ -162,22 +164,22 @@ func (s *KeeperTestSuite) TestRedeemStake_InvalidCreatorAddress() {
 	// cosmos instead of stride address
 	invalidMsg.Creator = "cosmos1g6qdx6kdhpf000afvvpte7hp0vnpzapuyxp8uf"
 	_, err := s.GetMsgServer().RedeemStake(sdk.WrapSDKContext(s.Ctx()), &invalidMsg)
-	s.Require().EqualError(err, "creator address is invalid: %s. err: invalid Bech32 prefix; expected stride, got cosmos: invalid address", invalidMsg.Creator)
+	s.Require().EqualError(err, fmt.Sprintf("creator address is invalid: %s. err: invalid Bech32 prefix; expected stride, got cosmos: invalid address", invalidMsg.Creator))
 
 	// invalid stride address
 	invalidMsg.Creator = "stride1g6qdx6kdhpf000afvvpte7hp0vnpzapuyxp8uf"
 	_, err = s.GetMsgServer().RedeemStake(sdk.WrapSDKContext(s.Ctx()), &invalidMsg)
-	s.Require().EqualError(err, "creator address is invalid: %s. err: decoding bech32 failed: invalid checksum (expected 8dpmg9 got yxp8uf): invalid address", invalidMsg.Creator)
+	s.Require().EqualError(err, fmt.Sprintf("creator address is invalid: %s. err: decoding bech32 failed: invalid checksum (expected 8dpmg9 got yxp8uf): invalid address", invalidMsg.Creator))
 
 	// empty address
 	invalidMsg.Creator = ""
 	_, err = s.GetMsgServer().RedeemStake(sdk.WrapSDKContext(s.Ctx()), &invalidMsg)
-	s.Require().EqualError(err, "creator address is invalid: %s. err: empty address string is not allowed: invalid address", invalidMsg.Creator)
+	s.Require().EqualError(err, fmt.Sprintf("creator address is invalid: %s. err: empty address string is not allowed: invalid address", invalidMsg.Creator))
 
 	// wrong len address
 	invalidMsg.Creator = "stride1g6qdx6kdhpf000afvvpte7hp0vnpzapuyxp8ufabc"
 	_, err = s.GetMsgServer().RedeemStake(sdk.WrapSDKContext(s.Ctx()), &invalidMsg)
-	s.Require().EqualError(err, "creator address is invalid: %s. err: decoding bech32 failed: invalid character not part of charset: 98: invalid address", invalidMsg.Creator)
+	s.Require().EqualError(err, fmt.Sprintf("creator address is invalid: %s. err: decoding bech32 failed: invalid character not part of charset: 98: invalid address", invalidMsg.Creator))
 }
 
 func (s *KeeperTestSuite) TestRedeemStake_HostZoneNotFound() {
@@ -234,7 +236,7 @@ func (s *KeeperTestSuite) TestRedeemStake_RedeemMoreThanStaked() {
 	invalidMsg.Amount = uint64(1_000_000_000_000_000)
 	_, err := s.GetMsgServer().RedeemStake(sdk.WrapSDKContext(s.Ctx()), &invalidMsg)
 
-	s.Require().EqualError(err, "cannot unstake an amount g.t. staked balance on host zone: %d: invalid amount", invalidMsg.Amount)
+	s.Require().EqualError(err, fmt.Sprintf("cannot unstake an amount g.t. staked balance on host zone: %d: invalid amount", invalidMsg.Amount))
 }
 
 func (s *KeeperTestSuite) TestRedeemStake_NoEpochTrackerDay() {
@@ -254,7 +256,7 @@ func (s *KeeperTestSuite) TestRedeemStake_UserAlreadyRedeemedThisEpoch() {
 	_, err := s.GetMsgServer().RedeemStake(sdk.WrapSDKContext(s.Ctx()), &invalidMsg)
 	s.Require().NoError(err)
 	_, err = s.GetMsgServer().RedeemStake(sdk.WrapSDKContext(s.Ctx()), &invalidMsg)
-	s.Require().EqualError(err, "user already redeemed this epoch: GAIA.1.%s: redemption record already exists", s.TestAccs[0])
+	s.Require().EqualError(err, fmt.Sprintf("user already redeemed this epoch: GAIA.1.%s: redemption record already exists", s.TestAccs[0]))
 }
 
 func (s *KeeperTestSuite) TestRedeemStake_HostZoneNoUnbondings() {
