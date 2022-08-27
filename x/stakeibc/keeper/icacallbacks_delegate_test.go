@@ -1,11 +1,10 @@
 package keeper_test
 
 import (
-	"math"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingTypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	channeltypes "github.com/cosmos/ibc-go/v3/modules/core/04-channel/types"
+	"github.com/gogo/protobuf/proto"
 	_ "github.com/stretchr/testify/suite"
 
 	recordtypes "github.com/Stride-Labs/stride/x/records/types"
@@ -43,17 +42,20 @@ func (s *KeeperTestSuite) SetupDelegateCallback() DelegateCallbackTestCase {
 	balanceToStake := int64(300_000)
 	val1RelAmt := int64(120_000)
 	val2RelAmt := int64(180_000)
+	delegatorAddress := "delegator_address"
 
 	val1 := types.Validator{
 		Name:          "val1",
 		Address:       "val1_address",
 		DelegationAmt: val1Bal,
 	}
+
 	val2 := types.Validator{
 		Name:          "val2",
 		Address:       "val2_address",
 		DelegationAmt: val2Bal,
 	}
+
 	hostZone := stakeibc.HostZone{
 		ChainId:        chainId,
 		HostDenom:      atom,
@@ -62,6 +64,7 @@ func (s *KeeperTestSuite) SetupDelegateCallback() DelegateCallbackTestCase {
 		Validators:     []*types.Validator{&val1, &val2},
 		StakedBal:      stakedBal,
 	}
+
 	depositRecord := recordtypes.DepositRecord{
 		Id:                 1,
 		DepositEpochNumber: 1,
@@ -69,13 +72,40 @@ func (s *KeeperTestSuite) SetupDelegateCallback() DelegateCallbackTestCase {
 		Amount:             balanceToStake,
 		Status:             recordtypes.DepositRecord_STAKE,
 	}
+
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx(), hostZone)
 	s.App.RecordsKeeper.SetDepositRecord(s.Ctx(), depositRecord)
 
 	packet := channeltypes.Packet{}
+
+	// serialize TxMsgData to get the acknowledgement
 	var msgs []sdk.Msg
-	msgs = append(msgs, &stakingTypes.MsgDelegate{}, &stakingTypes.MsgDelegate{})
-	ack := s.ICAPacketAcknowledgement(msgs)
+	msgs = append(msgs, &stakingTypes.MsgDelegate{
+		DelegatorAddress: delegatorAddress,
+		ValidatorAddress: val1.Address,
+		Amount:           sdk.NewCoin(atom, sdk.NewInt(val1RelAmt)),
+	})
+	msgs = append(msgs, &stakingTypes.MsgDelegate{
+		DelegatorAddress: delegatorAddress,
+		ValidatorAddress: val1.Address,
+		Amount:           sdk.NewCoin(atom, sdk.NewInt(val2RelAmt)),
+	})
+	txMsgData := &sdk.TxMsgData{
+		Data: make([]*sdk.MsgData, len(msgs)),
+	}
+	for i, msg := range msgs {
+		msgResponse := []byte("msg_response")
+		txMsgData.Data[i] = &sdk.MsgData{
+			MsgType: sdk.MsgTypeURL(msg),
+			Data:    msgResponse,
+		}
+
+	}
+	marshalledTxMsgData, err := proto.Marshal(txMsgData)
+	s.Require().NoError(err)
+	ack := channeltypes.NewResultAcknowledgement(marshalledTxMsgData)
+	s.Require().NoError(err)
+
 	val1SplitDelegation := types.SplitDelegation{
 		Validator: val1.Address,
 		Amount:    uint64(val1RelAmt),
@@ -133,100 +163,4 @@ func (s *KeeperTestSuite) TestDelegateCallback_Successful() {
 	// Confirm deposit record has been removed
 	records := s.App.RecordsKeeper.GetAllDepositRecord(s.Ctx())
 	s.Require().Len(records, 0, "number of deposit records")
-}
-
-func (s *KeeperTestSuite) checkStateIfCallbackFailed(tc DelegateCallbackTestCase) {
-	// Confirm stakedBal has not increased
-	hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx(), chainId)
-	s.Require().True(found)
-	s.Require().Equal(int64(tc.initialState.stakedBal), int64(hostZone.StakedBal), "stakedBal should not have increased")
-
-	// Confirm deposit record has NOT been removed
-	records := s.App.RecordsKeeper.GetAllDepositRecord(s.Ctx())
-	s.Require().Len(records, 1, "number of deposit records")
-	record := records[0]
-	s.Require().Equal(recordtypes.DepositRecord_STAKE, record.Status, "deposit record status should not have changed")
-}
-
-func (s *KeeperTestSuite) TestDelegateCallback_DelegateCallbackTimeout() {
-	tc := s.SetupDelegateCallback()
-	invalidArgs := tc.validArgs
-	// a nil ack means the request timed out
-	invalidArgs.ack = nil
-	err := stakeibckeeper.DelegateCallback(s.App.StakeibcKeeper, s.Ctx(), invalidArgs.packet, invalidArgs.ack, invalidArgs.args)
-	s.Require().NoError(err)
-	s.checkStateIfCallbackFailed(tc)
-}
-
-func (s *KeeperTestSuite) TestDelegateCallback_DelegateCallbackErrorOnHost() {
-	tc := s.SetupDelegateCallback()
-	invalidArgs := tc.validArgs
-	// an error ack means the tx failed on the host
-	fullAck := channeltypes.Acknowledgement{Response: &channeltypes.Acknowledgement_Error{Error: "error"}}
-	invalidArgs.ack = &fullAck
-
-	err := stakeibckeeper.DelegateCallback(s.App.StakeibcKeeper, s.Ctx(), invalidArgs.packet, invalidArgs.ack, invalidArgs.args)
-	s.Require().NoError(err)
-	s.checkStateIfCallbackFailed(tc)
-}
-
-func (s *KeeperTestSuite) TestDelegateCallback_WrongCallbackArgs() {
-	tc := s.SetupDelegateCallback()
-	invalidArgs := tc.validArgs
-
-	err := stakeibckeeper.DelegateCallback(s.App.StakeibcKeeper, s.Ctx(), invalidArgs.packet, invalidArgs.ack, []byte("random bytes"))
-	s.Require().EqualError(err, "unexpected EOF")
-	s.checkStateIfCallbackFailed(tc)
-}
-
-func (s *KeeperTestSuite) TestDelegateCallback_HostNotFound() {
-	tc := s.SetupDelegateCallback()
-	invalidArgs := tc.validArgs
-	s.App.StakeibcKeeper.RemoveHostZone(s.Ctx(), chainId)
-	err := stakeibckeeper.DelegateCallback(s.App.StakeibcKeeper, s.Ctx(), invalidArgs.packet, invalidArgs.ack, invalidArgs.args)
-	s.Require().EqualError(err, "host zone not found GAIA: invalid request")
-
-	// Confirm deposit record has NOT been removed
-	records := s.App.RecordsKeeper.GetAllDepositRecord(s.Ctx())
-	s.Require().Len(records, 1, "number of deposit records")
-	record := records[0]
-	s.Require().Equal(recordtypes.DepositRecord_STAKE, record.Status, "deposit record status should not have changed")
-}
-
-func (s *KeeperTestSuite) TestDelegateCallback_BigAmount() {
-	tc := s.SetupDelegateCallback()
-	invalidArgs := tc.validArgs
-	badSplitDelegation := types.SplitDelegation{
-		Validator: "address",
-		Amount:    math.MaxUint64,
-	}
-	callbackArgs := types.DelegateCallback{
-		HostZoneId:       chainId,
-		DepositRecordId:  1,
-		SplitDelegations: []*types.SplitDelegation{&badSplitDelegation},
-	}
-	args, err := s.App.StakeibcKeeper.MarshalDelegateCallbackArgs(s.Ctx(), callbackArgs)
-	s.Require().NoError(err)
-	err = stakeibckeeper.DelegateCallback(s.App.StakeibcKeeper, s.Ctx(), invalidArgs.packet, invalidArgs.ack, args)
-	s.Require().EqualError(err, "overflow: unable to cast 18446744073709551615 of type uint64 to int64")
-	s.checkStateIfCallbackFailed(tc)
-}
-
-func (s *KeeperTestSuite) TestDelegateCallback_MissingValidator() {
-	tc := s.SetupDelegateCallback()
-	invalidArgs := tc.validArgs
-	badSplitDelegation := types.SplitDelegation{
-		Validator: "address_dne",
-		Amount:    1234,
-	}
-	callbackArgs := types.DelegateCallback{
-		HostZoneId:       chainId,
-		DepositRecordId:  1,
-		SplitDelegations: []*types.SplitDelegation{&badSplitDelegation},
-	}
-	args, err := s.App.StakeibcKeeper.MarshalDelegateCallbackArgs(s.Ctx(), callbackArgs)
-	s.Require().NoError(err)
-	err = stakeibckeeper.DelegateCallback(s.App.StakeibcKeeper, s.Ctx(), invalidArgs.packet, invalidArgs.ack, args)
-	s.Require().EqualError(err, "Failed to add delegation to validator: can't change delegation on validator")
-	s.checkStateIfCallbackFailed(tc)
 }
