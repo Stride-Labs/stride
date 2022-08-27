@@ -260,18 +260,13 @@ func (k Keeper) StakeExistingDepositsOnHostZones(ctx sdk.Context, epochNumber ui
 				continue
 			}
 			k.Logger(ctx).Info(fmt.Sprintf("\tdelegation staking on %s", hostZone.HostDenom))
-			processAmount := utils.Int64ToCoinString(depositRecord.Amount, hostZone.HostDenom)
-			amt, err := sdk.ParseCoinNormalized(processAmount)
+			stakeAmount := sdk.NewCoin(hostZone.HostDenom, sdk.NewInt(depositRecord.Amount))
+			err := k.DelegateOnHost(ctx, hostZone, stakeAmount, depositRecord.Id)
 			if err != nil {
-				k.Logger(ctx).Error(fmt.Sprintf("Could not process coin %v: %v", hostZone.HostDenom, err.Error()))
-				return
-			}
-			err = k.DelegateOnHost(ctx, hostZone, amt, depositRecord.Id)
-			if err != nil {
-				k.Logger(ctx).Error(fmt.Sprintf("Did not stake %s on %s | err: %s", processAmount, hostZone.ChainId, err.Error()))
-				return
+				k.Logger(ctx).Error(fmt.Sprintf("Did not stake %s on %s | err: %s", stakeAmount.String(), hostZone.ChainId, err.Error()))
+				continue
 			} else {
-				k.Logger(ctx).Info(fmt.Sprintf("Successfully submitted stake for %s on %s", processAmount, hostZone.ChainId))
+				k.Logger(ctx).Info(fmt.Sprintf("Successfully submitted stake for %s on %s", stakeAmount.String(), hostZone.ChainId))
 			}
 
 			ctx.EventManager().EmitEvent(
@@ -299,6 +294,7 @@ func (k Keeper) TransferExistingDepositsToHostZones(ctx sdk.Context, epochNumber
 			// skip empty records
 			if depositRecord.Amount <= 0 {
 				k.Logger(ctx).Info("[TransferExistingDepositsToHostZones] Empty deposit record! Skipping")
+				// QUESTION: Was there any reason for assembling these into an array instead of just removing them here?
 				emptyRecords = append(emptyRecords, depositRecord.Id)
 				continue
 			}
@@ -324,7 +320,6 @@ func (k Keeper) TransferExistingDepositsToHostZones(ctx sdk.Context, epochNumber
 			}
 			timeoutHeight := clienttypes.NewHeight(0, blockHeight+ibcTimeoutBlocks)
 			transferCoin := sdk.NewCoin(hostZone.GetIBCDenom(), sdk.NewInt(depositRecord.Amount))
-
 			// QUESTION: Is there a good place to store "tranfer" as a constant?
 			msg := ibctypes.NewMsgTransfer("transfer", hostZone.TransferChannelId, transferCoin, addr, delegateAddress, timeoutHeight, 0)
 			k.Logger(ctx).Info(fmt.Sprintf("TransferExistingDepositsToHostZones msg %v", msg))
@@ -332,7 +327,7 @@ func (k Keeper) TransferExistingDepositsToHostZones(ctx sdk.Context, epochNumber
 			if err != nil {
 				k.Logger(ctx).Error(fmt.Sprintf("\t[TransferExistingDepositsToHostZones] ERROR WITH DEPOSIT RECEIPT %s %v %s %s %v", hostZone.TransferChannelId, transferCoin, addr, delegateAddress, timeoutHeight))
 				k.Logger(ctx).Error(fmt.Sprintf("\t[TransferExistingDepositsToHostZones] err {%s}", err.Error()))
-				return
+				continue
 			}
 		}
 	}
