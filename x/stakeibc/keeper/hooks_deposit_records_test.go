@@ -215,6 +215,89 @@ func (s *KeeperTestSuite) SetupDepositRecords() DepositRecordsTestCase {
 	}
 }
 
+func (s *KeeperTestSuite) TestCreateDepositRecordsForEpoch_Successful() {
+	// Set host zones
+	hostZones := []stakeibctypes.HostZone{
+		{
+			ChainId:   "HOST1",
+			HostDenom: "denom1",
+		},
+		{
+			ChainId:   "HOST2",
+			HostDenom: "denom2",
+		},
+		{
+			ChainId:   "HOST3",
+			HostDenom: "denom3",
+		},
+	}
+	for _, hostZone := range hostZones {
+		s.App.StakeibcKeeper.SetHostZone(s.Ctx(), hostZone)
+	}
+
+	// Create depoist records for two epochs
+	s.App.StakeibcKeeper.CreateDepositRecordsForEpoch(s.Ctx(), 1)
+	s.App.StakeibcKeeper.CreateDepositRecordsForEpoch(s.Ctx(), 2)
+
+	expectedDepositRecords := []recordstypes.DepositRecord{
+		// Epoch 1
+		{
+			Id:                 0,
+			Amount:             0,
+			Denom:              "denom1",
+			HostZoneId:         "HOST1",
+			Status:             recordstypes.DepositRecord_TRANSFER,
+			DepositEpochNumber: 1,
+		},
+		{
+			Id:                 1,
+			Amount:             0,
+			Denom:              "denom2",
+			HostZoneId:         "HOST2",
+			Status:             recordstypes.DepositRecord_TRANSFER,
+			DepositEpochNumber: 1,
+		},
+		{
+			Id:                 2,
+			Amount:             0,
+			Denom:              "denom3",
+			HostZoneId:         "HOST3",
+			Status:             recordstypes.DepositRecord_TRANSFER,
+			DepositEpochNumber: 1,
+		},
+		// Epoch 2
+		{
+			Id:                 3,
+			Amount:             0,
+			Denom:              "denom1",
+			HostZoneId:         "HOST1",
+			Status:             recordstypes.DepositRecord_TRANSFER,
+			DepositEpochNumber: 2,
+		},
+		{
+			Id:                 4,
+			Amount:             0,
+			Denom:              "denom2",
+			HostZoneId:         "HOST2",
+			Status:             recordstypes.DepositRecord_TRANSFER,
+			DepositEpochNumber: 2,
+		},
+		{
+			Id:                 5,
+			Amount:             0,
+			Denom:              "denom3",
+			HostZoneId:         "HOST3",
+			Status:             recordstypes.DepositRecord_TRANSFER,
+			DepositEpochNumber: 2,
+		},
+	}
+
+	// Confirm deposit records
+	actualDepositRecords := s.App.RecordsKeeper.GetAllDepositRecord(s.Ctx())
+	s.Require().Equal(len(expectedDepositRecords), len(actualDepositRecords), "number of deposit records")
+	s.Require().Equal(expectedDepositRecords, actualDepositRecords, "deposit records")
+}
+
 // Helper function to check the state after transferring deposit records
 // This assumes the last X transfers failed
 func (s *KeeperTestSuite) CheckStateAfterTransferringDepositRecords(tc DepositRecordsTestCase, numTransfersFailed int) {
@@ -222,7 +305,7 @@ func (s *KeeperTestSuite) CheckStateAfterTransferringDepositRecords(tc DepositRe
 	transferPortID := tc.TransferChannel.PortID
 	transferChannelID := tc.TransferChannel.ChannelID
 	startSequence, found := s.App.IBCKeeper.ChannelKeeper.GetNextSequenceSend(s.Ctx(), transferPortID, transferChannelID)
-	s.Require().True(found, "get next sequence number not found before transfer")
+	s.Require().True(found, "sequence number not found before transfer")
 
 	// Transfer deposit records
 	s.App.StakeibcKeeper.TransferExistingDepositsToHostZones(s.Ctx(), tc.epochNumber, tc.initialDepositRecords.GetAllRecords())
@@ -232,7 +315,7 @@ func (s *KeeperTestSuite) CheckStateAfterTransferringDepositRecords(tc DepositRe
 	numSuccessfulTransfers := uint64(numTransferAttempts - numTransfersFailed)
 
 	endSequence, found := s.App.IBCKeeper.ChannelKeeper.GetNextSequenceSend(s.Ctx(), transferPortID, transferChannelID)
-	s.Require().True(found, "next sequence number not found after transfer")
+	s.Require().True(found, "sequence number not found after transfer")
 	s.Require().Equal(startSequence+numSuccessfulTransfers, endSequence, "tx sequence number after transfer")
 
 	// Confirm the callback data was stored for each transfer packet EXCLUDING the failed packets
@@ -329,11 +412,11 @@ func (s *KeeperTestSuite) TestTransferDepositRecords_HostBlockHeightNotFound() {
 // Helper function to check the state after staking deposit records
 // This assumes the last X delegations failed
 func (s *KeeperTestSuite) CheckStateAfterStakingDepositRecords(tc DepositRecordsTestCase, numDelegationsFailed int) {
-	// Get tx seq number before transfer to confirm it incremented
+	// Get tx seq number before delegation to confirm it incremented
 	delegationPortID := tc.DelegationChannel.PortID
 	delegationChannelID := tc.DelegationChannel.ChannelID
 	startSequence, found := s.App.IBCKeeper.ChannelKeeper.GetNextSequenceSend(s.Ctx(), delegationPortID, delegationChannelID)
-	s.Require().True(found, "get next sequence number not found before transfer")
+	s.Require().True(found, "sequence number not found before delegation")
 
 	// Stake deposit records
 	s.App.StakeibcKeeper.StakeExistingDepositsOnHostZones(s.Ctx(), tc.epochNumber, tc.initialDepositRecords.GetAllRecords())
@@ -343,12 +426,12 @@ func (s *KeeperTestSuite) CheckStateAfterStakingDepositRecords(tc DepositRecords
 	numSuccessfulDelegations := uint64(numDelegationAttempts - numDelegationsFailed)
 
 	endSequence, found := s.App.IBCKeeper.ChannelKeeper.GetNextSequenceSend(s.Ctx(), delegationPortID, delegationChannelID)
-	s.Require().True(found, "next sequence number not found after delegation")
+	s.Require().True(found, "sequence number not found after delegation")
 	s.Require().Equal(startSequence+numSuccessfulDelegations, endSequence, "tx sequence number after delegation")
 
-	// Confirm the callback data was stored for each transfer packet EXCLUDING the failed packets
+	// Confirm the callback data was stored for each delegation packet EXCLUDING the failed packets
 	numCallbacks := uint64(len(s.App.IcacallbacksKeeper.GetAllCallbackData(s.Ctx())))
-	s.Require().Equal(numSuccessfulDelegations, numCallbacks, "number of callback data's stored")
+	s.Require().Equal(numSuccessfulDelegations, numCallbacks, "number of callback's stored")
 
 	recordsSuccessfullyStaked := tc.initialDepositRecords.recordsToBeStaked[:numSuccessfulDelegations]
 	for i := range recordsSuccessfullyStaked {
