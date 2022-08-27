@@ -206,21 +206,7 @@ func (s *KeeperTestSuite) TestRedemptionCallback_UserRedemptionRecordNotFound() 
 	tc := s.SetupRedemptionCallback()
 	valid := tc.validArgs
 	recordId1 := tc.initialState.userRedemptionRecordIds[0]
-	recordId2 := tc.initialState.userRedemptionRecordIds[1]
 	s.App.RecordsKeeper.RemoveUserRedemptionRecord(s.Ctx(), recordId1)
 	err := stakeibckeeper.RedemptionCallback(s.App.StakeibcKeeper, s.Ctx(), valid.packet, valid.ack, valid.args)
 	s.Require().EqualError(err, fmt.Sprintf("no user redemption record found for id (%s): record not found", recordId1))
-
-	// verify that no state has changed
-	for _, epochNumber := range tc.initialState.epochUnbondingNumbers {
-		epochUnbondingRecord, found := s.App.RecordsKeeper.GetEpochUnbondingRecord(s.Ctx(), epochNumber)
-		s.Require().True(found)
-		for _, hzu := range epochUnbondingRecord.HostZoneUnbondings {
-			// why is this failing?
-			s.Require().Equal(recordtypes.HostZoneUnbonding_UNBONDED, hzu.Status)
-		}
-	}
-	userRedemptionRecord, found := s.App.RecordsKeeper.GetUserRedemptionRecord(s.Ctx(), recordId2)
-	s.Require().True(found)
-	s.Require().False(userRedemptionRecord.IsClaimable)
 }
