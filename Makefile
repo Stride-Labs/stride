@@ -85,6 +85,7 @@ start-local: build-local
 	@sh scripts-local/start_network.sh ${cache}
 
 stop-local:
-	@killall gaiad strided junod osmosisd rly hermes interchain-queries || true
-	@pkill -f "/bin/bash.*create_logs.sh" || true
-	@pkill -f "sh.*start_network.sh" || true
+	@killall gaiad strided junod osmosisd rly hermes interchain-queries || true  >/dev/null
+	@pkill -f "/bin/bash.*create_logs.sh" || true  >/dev/null
+	@pkill -f "sh.*start_network.sh" || true  >/dev/null
+ 
