@@ -1,5 +1,4 @@
 package keeper_test
-package keeper_test
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -102,7 +101,6 @@ func (s *KeeperTestSuite) TestRedemptionCallback_Successful() {
 
 	// check that hostZoneUnbonding.Status = recordstypes.HostZoneUnbonding_TRANSFERRED for the epochs in the callbackArgs.UnbondingEpochNumbers
 	// check that userRedemptionRecord.IsClaimable = true
-	//
 }
 
 func (s *KeeperTestSuite) checkRedemptionStateIfCallbackFailed(tc RedemptionCallbackTestCase) {
