@@ -15,20 +15,20 @@ import (
 )
 
 type ReinvestCallbackState struct {
-	reinvestAmt	int64
-	callbackArgs	types.ReinvestCallback
-	depositRecord	recordtypes.DepositRecord
+	reinvestAmt   int64
+	callbackArgs  types.ReinvestCallback
+	depositRecord recordtypes.DepositRecord
 }
 
 type ReinvestCallbackArgs struct {
-	packet		channeltypes.Packet
-	ack			*channeltypes.Acknowledgement
-	args		[]byte
+	packet channeltypes.Packet
+	ack    *channeltypes.Acknowledgement
+	args   []byte
 }
 
 type ReinvestCallbackTestCase struct {
-	initialState	ReinvestCallbackState
-	validArgs		ReinvestCallbackArgs
+	initialState ReinvestCallbackState
+	validArgs    ReinvestCallbackArgs
 }
 
 func (s *KeeperTestSuite) SetupReinvestCallback() ReinvestCallbackTestCase {
@@ -45,7 +45,7 @@ func (s *KeeperTestSuite) SetupReinvestCallback() ReinvestCallbackTestCase {
 		DepositEpochNumber: 1,
 		HostZoneId:         chainId,
 		Amount:             reinvestAmt,
-		Status:				recordtypes.DepositRecord_STAKE,
+		Status:             recordtypes.DepositRecord_STAKE,
 		Source:             recordtypes.DepositRecord_WITHDRAWAL_ICA,
 	}
 	epochTracker := stakeibc.EpochTracker{
@@ -60,22 +60,22 @@ func (s *KeeperTestSuite) SetupReinvestCallback() ReinvestCallbackTestCase {
 	msgs = append(msgs, &banktypes.MsgSend{}, &banktypes.MsgSend{})
 	ack := s.ICAPacketAcknowledgement(msgs)
 	callbackArgs := types.ReinvestCallback{
-		HostZoneId:				chainId,
-		ReinvestAmount: 		sdk.NewCoin(atom, sdk.NewInt(reinvestAmt)),
+		HostZoneId:     chainId,
+		ReinvestAmount: sdk.NewCoin(atom, sdk.NewInt(reinvestAmt)),
 	}
 	args, err := s.App.StakeibcKeeper.MarshalReinvestCallbackArgs(s.Ctx(), callbackArgs)
 	s.Require().NoError(err)
 
 	return ReinvestCallbackTestCase{
 		initialState: ReinvestCallbackState{
-			reinvestAmt:	reinvestAmt,
-			callbackArgs:	callbackArgs,
-			depositRecord:  expectedNewDepositRecord, 
+			reinvestAmt:   reinvestAmt,
+			callbackArgs:  callbackArgs,
+			depositRecord: expectedNewDepositRecord,
 		},
 		validArgs: ReinvestCallbackArgs{
-			packet:   packet,
-			ack: 	  &ack,
-			args:     args,
+			packet: packet,
+			ack:    &ack,
+			args:   args,
 		},
 	}
 }
@@ -88,7 +88,7 @@ func (s *KeeperTestSuite) TestReinvestCallback_Successful() {
 
 	err := stakeibckeeper.ReinvestCallback(s.App.StakeibcKeeper, s.Ctx(), validArgs.packet, validArgs.ack, validArgs.args)
 	s.Require().NoError(err)
-	
+
 	// Confirm deposit record has been added
 	records := s.App.RecordsKeeper.GetAllDepositRecord(s.Ctx())
 	s.Require().Len(records, 1, "number of deposit records")
@@ -103,18 +103,21 @@ func (s *KeeperTestSuite) TestReinvestCallback_Successful() {
 	s.Require().Equal(int64(expectedRecord.DepositEpochNumber), int64(record.DepositEpochNumber), "deposit record DepositEpochNumber")
 }
 
+func (s *KeeperTestSuite) checkReinvestStateIfCallbackFailed(tc ReinvestCallbackTestCase) {
+	// Confirm deposit record has not been added
+	records := s.App.RecordsKeeper.GetAllDepositRecord(s.Ctx())
+	s.Require().Len(records, 0, "number of deposit records")
+}
+
 func (s *KeeperTestSuite) TestReinvestCallback_ReinvestCallbackTimeout() {
 	tc := s.SetupReinvestCallback()
 	validArgs := tc.validArgs
 	// a nil ack means the request timed out
 	validArgs.ack = nil
-	
+
 	err := stakeibckeeper.ReinvestCallback(s.App.StakeibcKeeper, s.Ctx(), validArgs.packet, validArgs.ack, validArgs.args)
 	s.Require().NoError(err)
-	
-	// Confirm deposit record has not been added
-	records := s.App.RecordsKeeper.GetAllDepositRecord(s.Ctx())
-	s.Require().Len(records, 0, "number of deposit records")
+	s.checkReinvestStateIfCallbackFailed(tc)
 }
 
 func (s *KeeperTestSuite) TestReinvestCallback_ReinvestCallbackErrorOnHost() {
@@ -126,22 +129,16 @@ func (s *KeeperTestSuite) TestReinvestCallback_ReinvestCallbackErrorOnHost() {
 
 	err := stakeibckeeper.ReinvestCallback(s.App.StakeibcKeeper, s.Ctx(), validArgs.packet, validArgs.ack, validArgs.args)
 	s.Require().NoError(err)
-	
-	// Confirm deposit record has not been added
-	records := s.App.RecordsKeeper.GetAllDepositRecord(s.Ctx())
-	s.Require().Len(records, 0, "number of deposit records")
+	s.checkReinvestStateIfCallbackFailed(tc)
 }
 
 func (s *KeeperTestSuite) TestReinvestCallback_WrongCallbackArgs() {
 	tc := s.SetupReinvestCallback()
 	validArgs := tc.validArgs
-	
+
 	err := stakeibckeeper.ReinvestCallback(s.App.StakeibcKeeper, s.Ctx(), validArgs.packet, validArgs.ack, []byte("random bytes"))
 	s.Require().EqualError(err, "unexpected EOF")
-	
-	// Confirm deposit record has not been added
-	records := s.App.RecordsKeeper.GetAllDepositRecord(s.Ctx())
-	s.Require().Len(records, 0, "number of deposit records")
+	s.checkReinvestStateIfCallbackFailed(tc)
 }
 
 func (s *KeeperTestSuite) TestReinvestCallback_MissingEpoch() {
@@ -150,11 +147,8 @@ func (s *KeeperTestSuite) TestReinvestCallback_MissingEpoch() {
 
 	// Remove epoch tracker
 	s.App.StakeibcKeeper.RemoveEpochTracker(s.Ctx(), epochtypes.STRIDE_EPOCH)
-	
+
 	err := stakeibckeeper.ReinvestCallback(s.App.StakeibcKeeper, s.Ctx(), validArgs.packet, validArgs.ack, validArgs.args)
 	s.Require().ErrorContains(err, "no number for epoch (stride_epoch)")
-	
-	// Confirm deposit record has not been added
-	records := s.App.RecordsKeeper.GetAllDepositRecord(s.Ctx())
-	s.Require().Len(records, 0, "number of deposit records")
+	s.checkReinvestStateIfCallbackFailed(tc)
 }
