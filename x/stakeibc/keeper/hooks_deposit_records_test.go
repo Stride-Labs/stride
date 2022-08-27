@@ -159,16 +159,14 @@ func (s *KeeperTestSuite) SetupDepositRecords() DepositRecordsTestCase {
 
 	validators := []*stakeibctypes.Validator{
 		{
-			Name:          "val1",
-			Address:       "gaia_VAL1",
-			Weight:        1,
-			DelegationAmt: 1000,
+			Name:    "val1",
+			Address: "gaia_VAL1",
+			Weight:  1,
 		},
 		{
-			Name:          "val2",
-			Address:       "gaia_VAL2",
-			Weight:        4,
-			DelegationAmt: 2000,
+			Name:    "val2",
+			Address: "gaia_VAL2",
+			Weight:  4,
 		},
 	}
 
@@ -494,9 +492,12 @@ func (s *KeeperTestSuite) TestStakeDepositRecords_SuccessfulCapped() {
 func (s *KeeperTestSuite) TestStakeDepositRecords_HostZoneNotFound() {
 	tc := s.SetupDepositRecords()
 	// Replace first deposit record with a record that has a bad host zone
-	badRecord := tc.initialDepositRecords.recordsToBeStaked[0]
+	recordsToBeStaked := tc.initialDepositRecords.recordsToBeStaked
+	lastRecordIndex := len(recordsToBeStaked) - 1
+
+	badRecord := tc.initialDepositRecords.recordsToBeStaked[lastRecordIndex]
 	badRecord.HostZoneId = "fake_host_zone"
-	tc.initialDepositRecords.recordsToBeStaked[0] = badRecord
+	tc.initialDepositRecords.recordsToBeStaked[lastRecordIndex] = badRecord
 	s.App.RecordsKeeper.SetDepositRecord(s.Ctx(), badRecord)
 
 	numFailed := 1
