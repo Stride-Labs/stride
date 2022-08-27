@@ -111,44 +111,44 @@ func (s *KeeperTestSuite) checkReinvestStateIfCallbackFailed(tc ReinvestCallback
 
 func (s *KeeperTestSuite) TestReinvestCallback_ReinvestCallbackTimeout() {
 	tc := s.SetupReinvestCallback()
-	validArgs := tc.validArgs
+	invalidArgs := tc.validArgs
 	// a nil ack means the request timed out
-	validArgs.ack = nil
+	invalidArgs.ack = nil
 
-	err := stakeibckeeper.ReinvestCallback(s.App.StakeibcKeeper, s.Ctx(), validArgs.packet, validArgs.ack, validArgs.args)
+	err := stakeibckeeper.ReinvestCallback(s.App.StakeibcKeeper, s.Ctx(), invalidArgs.packet, invalidArgs.ack, invalidArgs.args)
 	s.Require().NoError(err)
 	s.checkReinvestStateIfCallbackFailed(tc)
 }
 
 func (s *KeeperTestSuite) TestReinvestCallback_ReinvestCallbackErrorOnHost() {
 	tc := s.SetupReinvestCallback()
-	validArgs := tc.validArgs
+	invalidArgs := tc.validArgs
 	// an error ack means the tx failed on the host
 	fullAck := channeltypes.Acknowledgement{Response: &channeltypes.Acknowledgement_Error{Error: "error"}}
-	validArgs.ack = &fullAck
+	invalidArgs.ack = &fullAck
 
-	err := stakeibckeeper.ReinvestCallback(s.App.StakeibcKeeper, s.Ctx(), validArgs.packet, validArgs.ack, validArgs.args)
+	err := stakeibckeeper.ReinvestCallback(s.App.StakeibcKeeper, s.Ctx(), invalidArgs.packet, invalidArgs.ack, invalidArgs.args)
 	s.Require().NoError(err)
 	s.checkReinvestStateIfCallbackFailed(tc)
 }
 
 func (s *KeeperTestSuite) TestReinvestCallback_WrongCallbackArgs() {
 	tc := s.SetupReinvestCallback()
-	validArgs := tc.validArgs
+	invalidArgs := tc.validArgs
 
-	err := stakeibckeeper.ReinvestCallback(s.App.StakeibcKeeper, s.Ctx(), validArgs.packet, validArgs.ack, []byte("random bytes"))
+	err := stakeibckeeper.ReinvestCallback(s.App.StakeibcKeeper, s.Ctx(), invalidArgs.packet, invalidArgs.ack, []byte("random bytes"))
 	s.Require().EqualError(err, "unexpected EOF")
 	s.checkReinvestStateIfCallbackFailed(tc)
 }
 
 func (s *KeeperTestSuite) TestReinvestCallback_MissingEpoch() {
 	tc := s.SetupReinvestCallback()
-	validArgs := tc.validArgs
+	invalidArgs := tc.validArgs
 
 	// Remove epoch tracker
 	s.App.StakeibcKeeper.RemoveEpochTracker(s.Ctx(), epochtypes.STRIDE_EPOCH)
 
-	err := stakeibckeeper.ReinvestCallback(s.App.StakeibcKeeper, s.Ctx(), validArgs.packet, validArgs.ack, validArgs.args)
+	err := stakeibckeeper.ReinvestCallback(s.App.StakeibcKeeper, s.Ctx(), invalidArgs.packet, invalidArgs.ack, invalidArgs.args)
 	s.Require().ErrorContains(err, "no number for epoch (stride_epoch)")
 	s.checkReinvestStateIfCallbackFailed(tc)
 }
