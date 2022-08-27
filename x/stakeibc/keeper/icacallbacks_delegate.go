@@ -41,13 +41,13 @@ func DelegateCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ack
 		k.Logger(ctx).Error(fmt.Sprintf("DelegateCallback timeout, ack is nil, packet %v", packet))
 		return nil
 	}
-	
+
 	txMsgData, err := icacallbacks.GetTxMsgData(ctx, *ack, k.Logger(ctx))
 	if err != nil {
 		k.Logger(ctx).Error(fmt.Sprintf("failed to fetch txMsgData, packet %v", packet))
 		return sdkerrors.Wrap(icacallbackstypes.ErrTxMsgData, err.Error())
 	}
-	
+
 	if len(txMsgData.Data) == 0 {
 		// failed transaction
 		k.Logger(ctx).Error(fmt.Sprintf("DelegateCallback tx failed, ack is empty (ack error), packet %v", packet))
@@ -82,7 +82,6 @@ func DelegateCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ack
 		}
 		k.SetHostZone(ctx, zone)
 	}
-
 
 	k.RecordsKeeper.RemoveDepositRecord(ctx, cast.ToUint64(recordId))
 	k.Logger(ctx).Info(fmt.Sprintf("[DELEGATION] success on %s", hostZone))
