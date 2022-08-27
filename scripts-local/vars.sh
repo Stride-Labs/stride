@@ -39,7 +39,7 @@ UNBONDING_TIME="120s"
 
 # define STRIDE vars
 STRIDE_PORT_ID=26657  # 36564
-STRIDE_CHAIN=STRIDE
+STRIDE_CHAIN=STRIDE-TESTNET-4
 STRIDE_NODE_NAME=stride
 STRIDE_VAL_ACCT=val1
 STRIDE_VAL_MNEMONIC="close soup mirror crew erode defy knock trigger gather eyebrow tent farm gym gloom base lemon sleep weekend rich forget diagram hurt prize fly"
