@@ -28,7 +28,6 @@ import (
 )
 
 func (k Keeper) DelegateOnHost(ctx sdk.Context, hostZone types.HostZone, amt sdk.Coin, depositRecordId uint64) error {
-	_ = ctx
 	var msgs []sdk.Msg
 
 	// the relevant ICA is the delegate account

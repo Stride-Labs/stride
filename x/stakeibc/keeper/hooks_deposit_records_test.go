@@ -167,7 +167,7 @@ func (s *KeeperTestSuite) SetupDepositRecords() DepositRecordsTestCase {
 		{
 			Name:          "val2",
 			Address:       "gaia_VAL2",
-			Weight:        2,
+			Weight:        4,
 			DelegationAmt: 2000,
 		},
 	}
@@ -323,11 +323,17 @@ func (s *KeeperTestSuite) CheckStateAfterTransferringDepositRecords(tc DepositRe
 	s.Require().Equal(numSuccessfulTransfers, numCallbacks, "number of callbacks")
 
 	recordsSuccessfullyTransferred := tc.initialDepositRecords.recordsToBeTransfered[:numSuccessfulTransfers]
-	for i := range recordsSuccessfullyTransferred {
+	for i, depositRecord := range recordsSuccessfullyTransferred {
+		// Confirm callback record
 		callbackKey := icacallbackstypes.PacketID(transferPortID, transferChannelID, startSequence+uint64(i))
 		callbackData, found := s.App.IcacallbacksKeeper.GetCallbackData(s.Ctx(), callbackKey)
 		s.Require().True(found, "callback data was not found for callback key (%s)", callbackKey)
 		s.Require().Equal("transfer", callbackData.CallbackId, "callback ID")
+
+		// Confirm callback args
+		callbackArgs, err := s.App.RecordsKeeper.UnmarshalTransferCallbackArgs(s.Ctx(), callbackData.CallbackArgs)
+		s.Require().NoError(err, "unmarshalling callback args error for callback key (%s)", callbackKey)
+		s.Require().Equal(depositRecord.Id, callbackArgs.DepositRecordId, "deposit record ID in callback args (%s)", callbackKey)
 	}
 
 	// Confirm the module account balance decreased
@@ -355,10 +361,6 @@ func (s *KeeperTestSuite) TestTransferDepositRecords_Successful() {
 
 	numFailures := 0
 	s.CheckStateAfterTransferringDepositRecords(tc, numFailures)
-}
-
-func (s *KeeperTestSuite) TestTransferDepositRecords_SuccessfulTransferMsg() {
-
 }
 
 func (s *KeeperTestSuite) TestTransferDepositRecords_HostZoneNotFound() {
@@ -434,11 +436,38 @@ func (s *KeeperTestSuite) CheckStateAfterStakingDepositRecords(tc DepositRecords
 	s.Require().Equal(numSuccessfulDelegations, numCallbacks, "number of callback's stored")
 
 	recordsSuccessfullyStaked := tc.initialDepositRecords.recordsToBeStaked[:numSuccessfulDelegations]
-	for i := range recordsSuccessfullyStaked {
+	for i, depositRecord := range recordsSuccessfullyStaked {
+		// Confirm callback record
 		callbackKey := icacallbackstypes.PacketID(delegationPortID, delegationChannelID, startSequence+uint64(i))
 		callbackData, found := s.App.IcacallbacksKeeper.GetCallbackData(s.Ctx(), callbackKey)
 		s.Require().True(found, "callback data was not found for callback key (%s)", callbackKey)
 		s.Require().Equal("delegate", callbackData.CallbackId, "callback ID")
+
+		// Confirm callback args
+		callbackArgs, err := s.App.StakeibcKeeper.UnmarshalDelegateCallbackArgs(s.Ctx(), callbackData.CallbackArgs)
+		s.Require().NoError(err, "unmarshalling callback args error for callback key (%s)", callbackKey)
+		s.Require().Equal(depositRecord.Id, callbackArgs.DepositRecordId, "deposit record ID in callback args (%s)", callbackKey)
+		s.Require().Equal(tc.hostZone.ChainId, callbackArgs.HostZoneId, "host zone in callback args (%s)", callbackKey)
+
+		// Confirm expected delegations
+		val1 := tc.hostZone.Validators[0]
+		val2 := tc.hostZone.Validators[1]
+		totalWeight := val1.Weight + val2.Weight
+
+		val1Delegation := uint64(depositRecord.Amount) * val1.Weight / totalWeight
+		val2Delegation := uint64(depositRecord.Amount) * val2.Weight / totalWeight
+
+		expectedDelegations := []*stakeibctypes.SplitDelegation{
+			{Validator: val1.Address, Amount: val1Delegation},
+			{Validator: val2.Address, Amount: val2Delegation},
+		}
+
+		s.Require().Equal(len(tc.hostZone.Validators), len(callbackArgs.SplitDelegations), "number of redelegations")
+		for i := range expectedDelegations {
+			s.Require().Equal(expectedDelegations[i], callbackArgs.SplitDelegations[i],
+				"split delegations in callback args (%s), val (%s)", callbackKey, expectedDelegations[i].Validator)
+		}
+
 	}
 }
 
@@ -460,10 +489,6 @@ func (s *KeeperTestSuite) TestStakeDepositRecords_SuccessfulCapped() {
 	// The cap should cause the last record to not get processed
 	numFailures := 1
 	s.CheckStateAfterStakingDepositRecords(tc, numFailures)
-}
-
-func (s *KeeperTestSuite) TestStakeDepositRecords_SuccessfulDelegationMsg() {
-
 }
 
 func (s *KeeperTestSuite) TestStakeDepositRecords_HostZoneNotFound() {
