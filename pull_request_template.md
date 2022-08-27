@@ -28,7 +28,7 @@ _(Please pick one of the following options)_
 - [ ] Run and PASSED locally all GAIA integration tests
 - [ ] If the change is contentful, I either:
     - [ ] Added a new unit test OR 
-    - [ ] Added test cases to existinig unit tests
+    - [ ] Added test cases to existing unit tests
 - [ ] OR this change is a trivial rework / code cleanup without any test coverage
 
 _(or)_
