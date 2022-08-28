@@ -227,7 +227,23 @@ func (s *KeeperTestSuite) TestUndelegateCallback_HostNotFound() {
 	s.Require().EqualError(err, "Host zone not found: GAIA: key not found")
 }
 
-// Test updateDelegationBalances
-// Test getLatestCompletionTime
-// Test updateHostZoneUnbondings
-// Test burnTokens
+// Test UpdateDelegationBalances
+// Test success case - validator amounts decrease
+// Test failure case - amount is too big
+
+// Test GetLatestCompletionTime
+// Test success case - given a list of completion times, pick the latest
+// Test failure case - latest completion time is zero
+
+// Test UpdateHostZoneUnbondings
+// Test success case - update unbonding records and get tokens to burn
+// Test failure case - epoch unbonding record DNE
+// Test failure case - HostZoneUnbonding DNE
+// Test failure case - Amount too big
+
+// Test BurnTokens
+// Test success case - tokens are burned
+// Test failure case - could not parse coin
+// Test failure case - could not decode address
+// Test failure case - could not send coins from account to module
+// Test failure case, could not burn coins (too few coins to burn)
