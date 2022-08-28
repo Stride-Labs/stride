@@ -1,6 +1,8 @@
 package keeper_test
 
 import (
+	"time"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingTypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	channeltypes "github.com/cosmos/ibc-go/v3/modules/core/04-channel/types"
@@ -28,20 +30,14 @@ type UndelegateCallbackTestCase struct {
 }
 
 func (s *KeeperTestSuite) SetupUndelegateCallback() UndelegateCallbackTestCase {
+	// Set up host zone and validator state
 	stakedBal := uint64(1_000_000)
 	val1Bal := uint64(400_000)
 	val2Bal := uint64(stakedBal) - val1Bal
-	balanceToStake := int64(300_000)
+	balanceToUnstake := int64(300_000)
 	val1RelAmt := int64(120_000)
-	val2RelAmt := int64(180_000)
-
-	// STATE
-	// host zone
-	// Validators (2)
-	// EpochUnbondingRecord (1)
-	// HZU (1)
-	// Account with tokens
-
+	val2RelAmt := balanceToUnstake - val1RelAmt
+	epochNumber := uint64(1)
 	val1 := types.Validator{
 		Name:          "val1",
 		Address:       "val1_address",
@@ -52,6 +48,11 @@ func (s *KeeperTestSuite) SetupUndelegateCallback() UndelegateCallbackTestCase {
 		Address:       "val2_address",
 		DelegationAmt: val2Bal,
 	}
+	zoneAddress := types.NewZoneAddress(chainId)
+	zoneAccount := Account{
+		acc:           zoneAddress,
+		stAtomBalance: sdk.NewInt64Coin(stAtom, balanceToUnstake),
+	}
 	hostZone := stakeibc.HostZone{
 		ChainId:        chainId,
 		HostDenom:      atom,
@@ -59,22 +60,29 @@ func (s *KeeperTestSuite) SetupUndelegateCallback() UndelegateCallbackTestCase {
 		RedemptionRate: sdk.NewDec(1.0),
 		Validators:     []*types.Validator{&val1, &val2},
 		StakedBal:      stakedBal,
-	}
-	depositRecord := recordtypes.DepositRecord{
-		Id:                 1,
-		DepositEpochNumber: 1,
-		HostZoneId:         chainId,
-		Amount:             balanceToStake,
-		Status:             recordtypes.DepositRecord_STAKE,
+		Address:        zoneAddress.String(),
 	}
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx(), hostZone)
-	s.App.RecordsKeeper.SetDepositRecord(s.Ctx(), depositRecord)
+
+	// Set up EpochUnbondingRecord, HostZoneUnbonding and token state
+	hostZoneUnbonding := recordtypes.HostZoneUnbonding{
+		HostZoneId: chainId,
+		Status:     recordtypes.HostZoneUnbonding_UNBONDED,
+	}
+	epochUnbondingRecord := recordtypes.EpochUnbondingRecord{
+		EpochNumber:        epochNumber,
+		HostZoneUnbondings: []*recordtypes.HostZoneUnbonding{&hostZoneUnbonding},
+	}
+	s.App.RecordsKeeper.SetEpochUnbondingRecord(s.Ctx(), epochUnbondingRecord)
+	// mint stTokens to the zone account, to be burned
+	s.FundAccount(zoneAccount.acc, zoneAccount.stAtomBalance)
 
 	packet := channeltypes.Packet{}
 	var msgs []sdk.Msg
-	// add
 	msgs = append(msgs, &stakingTypes.MsgUndelegate{}, &stakingTypes.MsgUndelegate{})
-	ack := s.ICAPacketAcknowledgement(msgs)
+	// TODO add an unbonding time to the response
+	msgUndelegateResponse := &stakingTypes.MsgUndelegateResponse{CompletionTime: time.Now()}
+	ack := s.ICAPacketAcknowledgement(msgs, &msgUndelegateResponse)
 	val1SplitDelegation := types.SplitDelegation{
 		Validator: val1.Address,
 		Amount:    uint64(val1RelAmt),
@@ -86,7 +94,7 @@ func (s *KeeperTestSuite) SetupUndelegateCallback() UndelegateCallbackTestCase {
 	callbackArgs := types.UndelegateCallback{
 		HostZoneId:              chainId,
 		SplitDelegations:        []*types.SplitDelegation{&val1SplitDelegation, &val2SplitDelegation},
-		EpochUnbondingRecordIds: []uint64{1, 2},
+		EpochUnbondingRecordIds: []uint64{epochNumber},
 	}
 	args, err := s.App.StakeibcKeeper.MarshalUndelegateCallbackArgs(s.Ctx(), callbackArgs)
 	s.Require().NoError(err)
@@ -105,7 +113,7 @@ func (s *KeeperTestSuite) SetupUndelegateCallback() UndelegateCallbackTestCase {
 
 func (s *KeeperTestSuite) TestUndelegateCallback_Successful() {
 	tc := s.SetupUndelegateCallback()
-	initialState := tc.initialState
+	// initialState := tc.initialState
 	validArgs := tc.validArgs
 
 	err := stakeibckeeper.UndelegateCallback(s.App.StakeibcKeeper, s.Ctx(), validArgs.packet, validArgs.ack, validArgs.args)
@@ -120,16 +128,12 @@ func (s *KeeperTestSuite) TestUndelegateCallback_Successful() {
 }
 
 func (s *KeeperTestSuite) checkStateIfUndelegateCallbackFailed(tc UndelegateCallbackTestCase) {
-	// Confirm stakedBal has not increased
-	hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx(), chainId)
-	s.Require().True(found)
-	s.Require().Equal(int64(tc.initialState.stakedBal), int64(hostZone.StakedBal), "stakedBal should not have increased")
-
-	// Confirm deposit record has NOT been removed
-	records := s.App.RecordsKeeper.GetAllDepositRecord(s.Ctx())
-	s.Require().Len(records, 1, "number of deposit records")
-	record := records[0]
-	s.Require().Equal(recordtypes.DepositRecord_STAKE, record.Status, "deposit record status should not have changed")
+	// Check that stakedBal has not decreased
+	// Check that Delegations on validators have not decreased
+	// Check that hzu are not updated correctly
+	// -- Check that the completion time is not set on the hzu
+	// -- Check that the hzu status is set to UNBONDING
+	// Check that tokens are not burned
 }
 
 func (s *KeeperTestSuite) TestUndelegateCallback_UndelegateCallbackTimeout() {
