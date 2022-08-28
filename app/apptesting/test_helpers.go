@@ -3,6 +3,8 @@ package apptesting
 import (
 	"strings"
 
+	ibctransfertypes "github.com/cosmos/ibc-go/v3/modules/apps/transfer/types"
+
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
@@ -289,4 +291,15 @@ func (s *AppTestHelper) GetIBCDenomTrace(denom string) transfertypes.DenomTrace 
 	prefixedDenom := sourcePrefix + denom
 
 	return transfertypes.ParseDenomTrace(prefixedDenom)
+}
+
+func (s *AppTestHelper) MarshalledICS20PacketData() sdk.AccAddress {
+	data := ibctransfertypes.FungibleTokenPacketData{}
+	return data.GetBytes()
+}
+
+func (s *AppTestHelper) ICS20PacketAcknowledgement() channeltypes.Acknowledgement {
+	// see: https://github.com/cosmos/ibc-go/blob/8de555db76d0320842dacaa32e5500e1fd55e667/modules/apps/transfer/keeper/relay.go#L151
+	ack := channeltypes.NewResultAcknowledgement(s.MarshalledICS20PacketData())
+	return ack
 }

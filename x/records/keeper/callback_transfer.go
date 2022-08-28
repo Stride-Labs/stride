@@ -33,6 +33,10 @@ func (k Keeper) UnmarshalTransferCallbackArgs(ctx sdk.Context, delegateCallback 
 
 func TransferCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ack *channeltypes.Acknowledgement, args []byte) error {
 	k.Logger(ctx).Info("TransferCallback executing", "packet", packet)
+	if ack.GetError() != "" {
+		k.Logger(ctx).Error(fmt.Sprintf("TransferCallback does not handle errors %s", ack.GetError()))
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "TransferCallback does not handle errors: %s", ack.GetError())
+	}
 	if ack == nil {
 		// timeout
 		k.Logger(ctx).Error(fmt.Sprintf("TransferCallback timeout, ack is nil, packet %v", packet))
