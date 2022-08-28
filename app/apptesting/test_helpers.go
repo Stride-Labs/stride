@@ -2,9 +2,6 @@ package apptesting
 
 import (
 	"strings"
-	"time"
-
-	stakingTypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -274,7 +271,6 @@ func (s *AppTestHelper) ICAPacketAcknowledgement(msgs []sdk.Msg, msgResponse *pr
 	for i, msg := range msgs {
 		var data []byte
 		var err error
-		msgResponse = &stakingTypes.MsgUndelegateResponse{CompletionTime: time.Now()}.(proto.Message)
 		if msgResponse != nil {
 			// see: https://github.com/cosmos/cosmos-sdk/blob/1dee068932d32ba2a87ba67fc399ae96203ec76d/types/result.go#L246
 			data, err = proto.Marshal(*msgResponse)
