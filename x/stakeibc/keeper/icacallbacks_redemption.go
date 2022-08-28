@@ -66,7 +66,7 @@ func RedemptionCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, a
 	hostZoneId := redemptionCallback.HostZoneId
 
 	// Loop through all the epoch numbers that were stored with the callback (that identify the unbonding records)
-	for _, epochNumber := range redemptionCallback.UnbondingEpochNumbers {
+	for _, epochNumber := range redemptionCallback.EpochUnbondingRecordIds {
 		epochUnbondingRecord, found := k.RecordsKeeper.GetEpochUnbondingRecord(ctx, epochNumber)
 		if !found {
 			errMsg := fmt.Sprintf("Epoch unbonding record not found for epoch #%d", epochNumber)

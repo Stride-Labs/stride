@@ -74,8 +74,8 @@ func (s *KeeperTestSuite) SetupRedemptionCallback() RedemptionCallbackTestCase {
 	msgs = append(msgs, &banktypes.MsgSend{})
 	ack := s.ICAPacketAcknowledgement(msgs)
 	callbackArgs := types.RedemptionCallback{
-		HostZoneId:            chainId,
-		UnbondingEpochNumbers: []uint64{epochNumber},
+		HostZoneId:              chainId,
+		EpochUnbondingRecordIds: []uint64{epochNumber},
 	}
 	args, err := s.App.StakeibcKeeper.MarshalRedemptionCallbackArgs(s.Ctx(), callbackArgs)
 	s.Require().NoError(err)
@@ -177,8 +177,8 @@ func (s *KeeperTestSuite) TestRedemptionCallback_EpochUnbondingRecordNotFound() 
 	tc := s.SetupRedemptionCallback()
 	invalidArgs := tc.validArgs
 	callbackArgs := types.RedemptionCallback{
-		HostZoneId:            chainId,
-		UnbondingEpochNumbers: []uint64{tc.initialState.epochNumber + 1},
+		HostZoneId:              chainId,
+		EpochUnbondingRecordIds: []uint64{tc.initialState.epochNumber + 1},
 	}
 	args, err := s.App.StakeibcKeeper.MarshalRedemptionCallbackArgs(s.Ctx(), callbackArgs)
 	s.Require().NoError(err)
