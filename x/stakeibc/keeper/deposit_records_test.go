@@ -19,9 +19,9 @@ import (
 // but it's growing pretty large
 // Also not married to the filename if anyone has a better suggestion!
 // Another option:
-//   |-- hooks_deposit_records_test.go          // setup one
-//   |-- hooks_transfer_deposit_records_test.go // transfer tests
-//   |-- hooks_stake_deposit_records_test.go    // stake tests
+//   |-- deposit_records_test.go          // setup one
+//   |-- transfer_deposit_records_test.go // transfer tests
+//   |-- stake_deposit_records_test.go    // stake tests
 type TestDepositRecords struct {
 	emptyRecords          []recordstypes.DepositRecord
 	recordsToBeTransfered []recordstypes.DepositRecord
