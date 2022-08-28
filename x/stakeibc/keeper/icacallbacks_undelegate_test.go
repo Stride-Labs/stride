@@ -1,8 +1,6 @@
 package keeper_test
 
 import (
-	"time"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingTypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	channeltypes "github.com/cosmos/ibc-go/v3/modules/core/04-channel/types"
@@ -81,8 +79,8 @@ func (s *KeeperTestSuite) SetupUndelegateCallback() UndelegateCallbackTestCase {
 	var msgs []sdk.Msg
 	msgs = append(msgs, &stakingTypes.MsgUndelegate{}, &stakingTypes.MsgUndelegate{})
 	// TODO add an unbonding time to the response
-	msgUndelegateResponse := &stakingTypes.MsgUndelegateResponse{CompletionTime: time.Now()}
-	ack := s.ICAPacketAcknowledgement(msgs, &msgUndelegateResponse)
+	// msgUndelegateResponse := &stakingTypes.MsgUndelegateResponse{CompletionTime: time.Now()}
+	ack := s.ICAPacketAcknowledgement(msgs, nil)
 	val1SplitDelegation := types.SplitDelegation{
 		Validator: val1.Address,
 		Amount:    uint64(val1RelAmt),
