@@ -163,29 +163,29 @@ func (s *KeeperTestSuite) TestUndelegateCallback_Successful() {
 }
 
 func (s *KeeperTestSuite) checkStateIfUndelegateCallbackFailed(tc UndelegateCallbackTestCase) {
-	// initialState := tc.initialState
+	initialState := tc.initialState
 
-	// // Check that stakedBal has NOT decreased on the host zone
-	// hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx(), chainId)
-	// s.Require().True(found)
-	// s.Require().Equal(int64(hostZone.StakedBal), initialState.stakedBal)
+	// Check that stakedBal has NOT decreased on the host zone
+	hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx(), chainId)
+	s.Require().True(found)
+	s.Require().Equal(int64(hostZone.StakedBal), int64(initialState.stakedBal))
 
-	// // Check that Delegations on validators have NOT decreased
-	// s.Require().True(len(hostZone.Validators) == 2, "Expected 2 validators")
-	// val1 := hostZone.Validators[0]
-	// s.Require().Equal(int64(val1.DelegationAmt), int64(initialState.val1Bal))
-	// val2 := hostZone.Validators[1]
-	// s.Require().Equal(int64(val2.DelegationAmt), int64(initialState.val2Bal))
+	// Check that Delegations on validators have NOT decreased
+	s.Require().True(len(hostZone.Validators) == 2, "Expected 2 validators")
+	val1 := hostZone.Validators[0]
+	s.Require().Equal(int64(val1.DelegationAmt), int64(initialState.val1Bal))
+	val2 := hostZone.Validators[1]
+	s.Require().Equal(int64(val2.DelegationAmt), int64(initialState.val2Bal))
 
-	// epochUnbondingRecord, found := s.App.RecordsKeeper.GetEpochUnbondingRecord(s.Ctx(), initialState.epochNumber)
-	// s.Require().True(found)
-	// s.Require().Equal(len(epochUnbondingRecord.HostZoneUnbondings), 1)
-	// hzu := epochUnbondingRecord.HostZoneUnbondings[0]
-	// s.Require().Equal(int64(hzu.UnbondingTime), 0, "completion time is NOT set on the hzu")
-	// s.Require().Equal(hzu.Status, recordtypes.HostZoneUnbonding_BONDED, "hzu status is set to BONDED")
-	// zoneAccount, err := sdk.AccAddressFromBech32(hostZone.Address)
-	// s.Require().NoError(err)
-	// s.Require().Equal(s.App.BankKeeper.GetBalance(s.Ctx(), zoneAccount, stAtom).Amount.Int64(), initialState.balanceToUnstake, "tokens are NOT burned")
+	epochUnbondingRecord, found := s.App.RecordsKeeper.GetEpochUnbondingRecord(s.Ctx(), initialState.epochNumber)
+	s.Require().True(found)
+	s.Require().Equal(len(epochUnbondingRecord.HostZoneUnbondings), 1)
+	hzu := epochUnbondingRecord.HostZoneUnbondings[0]
+	s.Require().Equal(int64(hzu.UnbondingTime), int64(0), "completion time is NOT set on the hzu")
+	s.Require().Equal(hzu.Status, recordtypes.HostZoneUnbonding_BONDED, "hzu status is set to BONDED")
+	zoneAccount, err := sdk.AccAddressFromBech32(hostZone.Address)
+	s.Require().NoError(err)
+	s.Require().Equal(s.App.BankKeeper.GetBalance(s.Ctx(), zoneAccount, stAtom).Amount.Int64(), initialState.balanceToUnstake+int64(10), "tokens are NOT burned")
 }
 
 func (s *KeeperTestSuite) TestUndelegateCallback_UndelegateCallbackTimeout() {
