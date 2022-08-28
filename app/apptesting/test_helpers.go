@@ -12,6 +12,7 @@ import (
 	channeltypes "github.com/cosmos/ibc-go/v3/modules/core/04-channel/types"
 	ibctesting "github.com/cosmos/ibc-go/v3/testing"
 	"github.com/cosmos/ibc-go/v3/testing/simapp"
+	"github.com/gogo/protobuf/proto"
 	"github.com/stretchr/testify/suite"
 	"github.com/tendermint/tendermint/crypto/ed25519"
 	tmtypes "github.com/tendermint/tendermint/proto/tendermint/types"
@@ -260,4 +261,22 @@ func CopyConnectionAndClientToPath(path *ibctesting.Path, pathToCopy *ibctesting
 	path.EndpointA.ConnectionConfig = pathToCopy.EndpointA.ConnectionConfig
 	path.EndpointB.ConnectionConfig = pathToCopy.EndpointB.ConnectionConfig
 	return path
+}
+
+func  (s *AppTestHelper) ICAPacketAcknowledgement(msgs []sdk.Msg) channeltypes.Acknowledgement {
+	txMsgData := &sdk.TxMsgData{
+		Data: make([]*sdk.MsgData, len(msgs)),
+	}
+	for i, msg := range msgs {
+		msgResponse := []byte("msg_response")
+		txMsgData.Data[i] = &sdk.MsgData{
+			MsgType: sdk.MsgTypeURL(msg),
+			Data:    msgResponse,
+		}
+
+	}
+	marshalledTxMsgData, err := proto.Marshal(txMsgData)
+	s.Require().NoError(err)
+	ack := channeltypes.NewResultAcknowledgement(marshalledTxMsgData)
+	return ack
 }
