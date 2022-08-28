@@ -4,7 +4,7 @@
 # loop three times in bash
 echo "Killing previous networks..."
 for i in {1..5}; do
-    make stop &> /dev/null
+    make stop-local &> /dev/null
     sleep 1
 done
 
@@ -98,11 +98,11 @@ nohup $HERMES_CMD start >> $HERMES_LOGS 2>&1 &
 ( tail -f -n0 $HERMES_LOGS & ) | grep -q -E "Hermes has started"
 echo "Done"
 
-# Start ICQ in the background
-printf '%s' "Starting ICQ...     "
-source $SCRIPT_DIR/icq_startup.sh &
-sleep 5
-echo "Done"
+# # Start ICQ in the background
+# printf '%s' "Starting ICQ...     "
+# source $SCRIPT_DIR/icq_startup.sh &
+# sleep 5
+# echo "Done"
 
 # Create a copy of the state that can be used for the "cache" option
 echo "Network is ready for transactions!\n"
