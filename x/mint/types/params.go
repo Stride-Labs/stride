@@ -50,10 +50,10 @@ func NewParams(
 func DefaultParams() Params {
 	return Params{
 		MintDenom:               "ustrd",
-		GenesisEpochProvisions:  sdk.NewDec(6_700_000_000_000),
-		EpochIdentifier:         "day",                     // 1 day
-		ReductionPeriodInEpochs: 365,                       // 1 years
-		ReductionFactor:         sdk.NewDec(3).QuoInt64(4), // 3/4
+		GenesisEpochProvisions:  sdk.NewDec(10), //sdk.NewDec(2_500_000_000_000).Quo(sdk.NewDec(365)).Quo(sdk.NewDec(24 * 60)), // 2.5M ST first year, broken into minutes ~= 4.75 ST per minute
+		EpochIdentifier:         "day",
+		ReductionPeriodInEpochs: 365,
+		ReductionFactor:         sdk.NewDec(3).QuoInt64(4),
 		DistributionProportions: DistributionProportions{
 			Staking:              sdk.MustNewDecFromStr("0.9"), // 1
 			PoolIncentives:       sdk.MustNewDecFromStr("0.0"), // 0
