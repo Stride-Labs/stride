@@ -44,7 +44,7 @@ func RedemptionCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, a
 
 	txMsgData, err := icacallbacks.GetTxMsgData(ctx, *ack, k.Logger(ctx))
 	if err != nil {
-		k.Logger(ctx).Error(fmt.Sprintf("DelegateCallback timeout, ack is nil, packet %v", packet))
+		k.Logger(ctx).Error(fmt.Sprintf("RedemptionCallback timeout, ack is nil, packet %v", packet))
 		return sdkerrors.Wrap(icacallbackstypes.ErrTxMsgData, err.Error())
 	}
 
