@@ -218,3 +218,16 @@ func (s *KeeperTestSuite) TestUndelegateCallback_WrongCallbackArgs() {
 	s.Require().EqualError(err, "Unable to unmarshal undelegate callback args | unexpected EOF: unable to unmarshal data structure")
 	s.checkStateIfUndelegateCallbackFailed(tc)
 }
+
+func (s *KeeperTestSuite) TestUndelegateCallback_HostNotFound() {
+	tc := s.SetupUndelegateCallback()
+	valid := tc.validArgs
+	s.App.StakeibcKeeper.RemoveHostZone(s.Ctx(), chainId)
+	err := stakeibckeeper.UndelegateCallback(s.App.StakeibcKeeper, s.Ctx(), valid.packet, valid.ack, valid.args)
+	s.Require().EqualError(err, "Host zone not found: GAIA: key not found")
+}
+
+// Test updateDelegationBalances
+// Test getLatestCompletionTime
+// Test updateHostZoneUnbondings
+// Test burnTokens
