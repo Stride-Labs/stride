@@ -179,14 +179,16 @@ func (k Keeper) DistributeMintedCoin(ctx sdk.Context, mintedCoin sdk.Coin) error
 	// k.bankKeeper.AddSupplyOffset(ctx, mintedCoin.Denom, developerAccountBalance.Amount.Neg())
 
 	// subtract from original provision to ensure no coins left over after the allocations
-	communityPoolCoins := sdk.NewCoins(mintedCoin).Sub(stakingIncentivesCoins).Sub(poolIncentivesCoins).Sub(participationRewardCoins)
-	err = k.distrKeeper.FundCommunityPool(ctx, communityPoolCoins, k.accountKeeper.GetModuleAddress(types.ModuleName))
-	if err != nil {
-		return err
-	}
+	// communityPoolCoins := sdk.NewCoins(mintedCoin).Sub(stakingIncentivesCoins).Sub(poolIncentivesCoins).Sub(participationRewardCoins)
+	// acctAddr := k.accountKeeper.GetModuleAddress(types.ModuleName)
+	// err = k.distrKeeper.FundCommunityPool(ctx, communityPoolCoins, acctAddr)
+	// if err != nil {
+	// 	return err
+	// }
 
 	// call an hook after the minting and distribution of new coins
-	k.hooks.AfterDistributeMintedCoin(ctx, mintedCoin)
+	// see osmosis' pool incentives hooks.go for an example
+	// k.hooks.AfterDistributeMintedCoin(ctx, mintedCoin)
 
 	return err
 }
