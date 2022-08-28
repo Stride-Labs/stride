@@ -30,75 +30,91 @@ var _ types.MsgServer = msgServer{}
 
 func (k msgServer) SubmitQueryResponse(goCtx context.Context, msg *types.MsgSubmitQueryResponse) (*types.MsgSubmitQueryResponseResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	k.Logger(ctx).Info(fmt.Sprintf("MOOSE... ICQ FROM GO RELAYER HAS MSG: %#v", msg))
+
 	q, found := k.GetQuery(ctx, msg.QueryId)
+	if !found {
+		k.Logger(ctx).Info("Ignoring duplicate query")
+		return &types.MsgSubmitQueryResponseResponse{}, nil // technically this is an error, but will cause the entire tx to fail if we have one 'bad' message, so we can just no-op here.
+	}
 
-	if found {
+	// ABORT PROCESSING QUERY RESPONSE IF WE EXCEEDED THE TTL
+	k.Logger(ctx).Info(fmt.Sprintf("[ICQ Resp] q: %#v.", q))
+	k.Logger(ctx).Info(fmt.Sprintf("[ICQ Resp] query %s with ttl: %d, resp time: %d.", msg.QueryId, q.Ttl, ctx.BlockHeader().Time.UnixNano()))
+	curT, err := cast.ToUint64E(ctx.BlockTime().UnixNano())
+	if err != nil {
+		k.Logger(ctx).Info(fmt.Sprintf("[ICQ Resp] erroe!"))
+		return nil, err
+	}
 
-		// ABORT PROCESSING QUERY RESPONSE IF WE EXCEEDED THE TTL
-		k.Logger(ctx).Info(fmt.Sprintf("[ICQ Resp] query %s with ttl: %d, resp time: %d.", msg.QueryId, q.Ttl, ctx.BlockHeader().Time.UnixNano()))
-		curT, err := cast.ToUint64E(ctx.BlockTime().UnixNano())
+	if q.Ttl < curT {
+		errMsg := fmt.Sprintf("[ICQ Resp] aborting query callback due to ttl expiry! ttl is %d, time now %d for query of type %s with id %s, on chain %s", q.Ttl, ctx.BlockHeader().Time.UnixNano(), q.QueryType, q.ChainId, msg.QueryId)
+		k.DeleteQuery(ctx, msg.QueryId)
+		k.Logger(ctx).Error(errMsg)
+		return &types.MsgSubmitQueryResponseResponse{}, nil
+	}
+
+	// PROCESS QUERY RESPONSE
+	pathParts := strings.Split(q.QueryType, "/")
+
+	// verify the query results are valid by checking the assocaited proof
+	if pathParts[len(pathParts)-1] == "key" {
+		k.Logger(ctx).Info(fmt.Sprintf("[ICQ Resp] key query...!"))
+		if msg.ProofOps == nil {
+			return nil, fmt.Errorf("unable to validate proof. No proof submitted")
+		}
+		connection, _ := k.IBCKeeper.ConnectionKeeper.GetConnection(ctx, q.ConnectionId)
+		k.Logger(ctx).Info(fmt.Sprintf("[ICQ Resp] 68!"))
+
+		msgHeight, err := cast.ToUint64E(msg.Height)
 		if err != nil {
 			return nil, err
 		}
+		k.Logger(ctx).Info(fmt.Sprintf("[ICQ Resp] 74!"))
 
-		if q.Ttl < curT {
-			errMsg := fmt.Sprintf("[ICQ Resp] aborting query callback due to ttl expiry! ttl is %d, time now %d for query of type %s with id %s, on chain %s", q.Ttl, ctx.BlockHeader().Time.UnixNano(), q.QueryType, q.ChainId, msg.QueryId)
-			k.DeleteQuery(ctx, msg.QueryId)
-			k.Logger(ctx).Error(errMsg)
-			return &types.MsgSubmitQueryResponseResponse{}, nil
+		height := clienttypes.NewHeight(clienttypes.ParseChainID(q.ChainId), msgHeight+1)
+		consensusState, found := k.IBCKeeper.ClientKeeper.GetClientConsensusState(ctx, connection.ClientId, height)
+		k.Logger(ctx).Info(fmt.Sprintf("[ICQ Resp] 68!"))
+
+		if !found {
+			return nil, fmt.Errorf("unable to fetch consensus state")
+		}
+		k.Logger(ctx).Info(fmt.Sprintf("[ICQ Resp] 83!"))
+
+		clientState, found := k.IBCKeeper.ClientKeeper.GetClientState(ctx, connection.ClientId)
+		if !found {
+			return nil, fmt.Errorf("unable to fetch client state")
+		}
+		path := commitmenttypes.NewMerklePath([]string{pathParts[1], url.PathEscape(string(q.Request))}...)
+		k.Logger(ctx).Info(fmt.Sprintf("[ICQ Resp] 90!"))
+
+		merkleProof, err := commitmenttypes.ConvertProofs(msg.ProofOps)
+		if err != nil {
+			return nil, fmt.Errorf("error converting proofs")
+		}
+		k.Logger(ctx).Info(fmt.Sprintf("[ICQ Resp] 96!"))
+
+		tmclientstate, ok := clientState.(*tmclienttypes.ClientState)
+		if !ok {
+			return nil, fmt.Errorf("error unmarshaling client state %v", clientState)
 		}
 
-		// PROCESS QUERY RESPONSE
-		pathParts := strings.Split(q.QueryType, "/")
+		k.Logger(ctx).Info(fmt.Sprintf("[ICQ Resp] key checking len...!"))
 
-		// verify the query results are valid by checking the assocaited proof
-		if pathParts[len(pathParts)-1] == "key" {
-			if msg.ProofOps == nil {
-				return nil, fmt.Errorf("unable to validate proof. No proof submitted")
+		if len(msg.Result) != 0 {
+			// if we got a non-nil response, verify inclusion proof.
+			if err := merkleProof.VerifyMembership(tmclientstate.ProofSpecs, consensusState.GetRoot(), path, msg.Result); err != nil {
+				return nil, fmt.Errorf("unable to verify proof: %s", err)
 			}
-			connection, _ := k.IBCKeeper.ConnectionKeeper.GetConnection(ctx, q.ConnectionId)
+			k.Logger(ctx).Info(fmt.Sprintf("Proof validated! module: %s, queryId %s", types.ModuleName, q.Id))
 
-			msgHeight, err := cast.ToUint64E(msg.Height)
-			if err != nil {
-				return nil, err
+		} else {
+			// if we got a nil response, verify non inclusion proof.
+			if err := merkleProof.VerifyNonMembership(tmclientstate.ProofSpecs, consensusState.GetRoot(), path); err != nil {
+				return nil, fmt.Errorf("unable to verify proof: %s", err)
 			}
-			height := clienttypes.NewHeight(clienttypes.ParseChainID(q.ChainId), msgHeight+1)
-			consensusState, found := k.IBCKeeper.ClientKeeper.GetClientConsensusState(ctx, connection.ClientId, height)
-
-			if !found {
-				return nil, fmt.Errorf("unable to fetch consensus state")
-			}
-
-			clientState, found := k.IBCKeeper.ClientKeeper.GetClientState(ctx, connection.ClientId)
-			if !found {
-				return nil, fmt.Errorf("unable to fetch client state")
-			}
-			path := commitmenttypes.NewMerklePath([]string{pathParts[1], url.PathEscape(string(q.Request))}...)
-
-			merkleProof, err := commitmenttypes.ConvertProofs(msg.ProofOps)
-			if err != nil {
-				return nil, fmt.Errorf("error converting proofs")
-			}
-
-			tmclientstate, ok := clientState.(*tmclienttypes.ClientState)
-			if !ok {
-				return nil, fmt.Errorf("error unmarshaling client state %v", clientState)
-			}
-
-			if len(msg.Result) != 0 {
-				// if we got a non-nil response, verify inclusion proof.
-				if err := merkleProof.VerifyMembership(tmclientstate.ProofSpecs, consensusState.GetRoot(), path, msg.Result); err != nil {
-					return nil, fmt.Errorf("unable to verify proof: %s", err)
-				}
-				k.Logger(ctx).Info(fmt.Sprintf("Proof validated! module: %s, queryId %s", types.ModuleName, q.Id))
-
-			} else {
-				// if we got a nil response, verify non inclusion proof.
-				if err := merkleProof.VerifyNonMembership(tmclientstate.ProofSpecs, consensusState.GetRoot(), path); err != nil {
-					return nil, fmt.Errorf("unable to verify proof: %s", err)
-				}
-				k.Logger(ctx).Info(fmt.Sprintf("Non-inclusion Proof validated! module: %s, queryId %s", types.ModuleName, q.Id))
-			}
+			k.Logger(ctx).Info(fmt.Sprintf("Non-inclusion Proof validated! module: %s, queryId %s", types.ModuleName, q.Id))
 		}
 
 		moduleNames := []string{}
@@ -124,19 +140,17 @@ func (k msgServer) SubmitQueryResponse(goCtx context.Context, msg *types.MsgSubm
 		}
 
 		k.DeleteQuery(ctx, msg.QueryId)
-
-	} else {
-		k.Logger(ctx).Info("Ignoring duplicate query")
-		return &types.MsgSubmitQueryResponseResponse{}, nil // technically this is an error, but will cause the entire tx to fail if we have one 'bad' message, so we can just no-op here.
 	}
 
-	ctx.EventManager().EmitEvents(sdk.Events{
-		sdk.NewEvent(
-			sdk.EventTypeMessage,
-			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
-			sdk.NewAttribute(types.AttributeKeyQueryId, q.Id),
-		),
-	})
+	// ctx.EventManager().EmitEvents(sdk.Events{
+	// 	sdk.NewEvent(
+	// 		sdk.EventTypeMessage,
+	// 		sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
+	// 		sdk.NewAttribute(types.AttributeKeyQueryId, q.Id),
+	// 	),
+	// })
+	k.Logger(ctx).Info(fmt.Sprintf("[ICQ Resp2] q: %#v.", q))
+	k.DeleteQuery(ctx, msg.QueryId)
 
 	return &types.MsgSubmitQueryResponseResponse{}, nil
 }

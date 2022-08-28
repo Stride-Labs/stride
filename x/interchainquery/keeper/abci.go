@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/spf13/cast"
+
 	"github.com/cosmos/cosmos-sdk/telemetry"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -18,27 +20,40 @@ func (k Keeper) EndBlocker(ctx sdk.Context) {
 	events := sdk.Events{}
 	// emit events for periodic queries
 	k.IterateQueries(ctx, func(_ int64, queryInfo types.Query) (stop bool) {
-		if queryInfo.LastHeight.Equal(sdk.ZeroInt()) || queryInfo.LastHeight.Add(queryInfo.Period).Equal(sdk.NewInt(ctx.BlockHeight())) {
-			k.Logger(ctx).Info(fmt.Sprintf("Interchainquery event emitted %s", queryInfo.Id))
-			event := sdk.NewEvent(
-				sdk.EventTypeMessage,
-				sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
-				sdk.NewAttribute(sdk.AttributeKeyAction, types.AttributeValueQuery),
-				sdk.NewAttribute(types.AttributeKeyQueryId, queryInfo.Id),
-				sdk.NewAttribute(types.AttributeKeyChainId, queryInfo.ChainId),
-				sdk.NewAttribute(types.AttributeKeyConnectionId, queryInfo.ConnectionId),
-				sdk.NewAttribute(types.AttributeKeyType, queryInfo.QueryType),
-				// TODO: add height to request type
-				sdk.NewAttribute(types.AttributeKeyHeight, "0"),
-				sdk.NewAttribute(types.AttributeKeyRequest, hex.EncodeToString(queryInfo.Request)),
-			)
 
-			events = append(events, event)
-			queryInfo.LastHeight = sdk.NewInt(ctx.BlockHeight())
-			k.SetQuery(ctx, queryInfo)
-
+		// Clean up expired queries
+		curT, err := cast.ToUint64E(ctx.BlockTime().UnixNano())
+		if err != nil {
+			return false
 		}
-		return false
+		if queryInfo.Ttl < curT {
+			k.DeleteQuery(ctx, queryInfo.Id)
+			return false
+
+			// if the query is not yet expired, emit events to kick it off!
+		} else {
+			if queryInfo.LastHeight.Equal(sdk.ZeroInt()) || queryInfo.LastHeight.Add(queryInfo.Period).Equal(sdk.NewInt(ctx.BlockHeight())) {
+				k.Logger(ctx).Info(fmt.Sprintf("Interchainquery event emitted %s", queryInfo.Id))
+				event := sdk.NewEvent(
+					sdk.EventTypeMessage,
+					sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
+					sdk.NewAttribute(sdk.AttributeKeyAction, types.AttributeValueQuery),
+					sdk.NewAttribute(types.AttributeKeyQueryId, queryInfo.Id),
+					sdk.NewAttribute(types.AttributeKeyChainId, queryInfo.ChainId),
+					sdk.NewAttribute(types.AttributeKeyConnectionId, queryInfo.ConnectionId),
+					sdk.NewAttribute(types.AttributeKeyType, queryInfo.QueryType),
+					// TODO: add height to request type
+					sdk.NewAttribute(types.AttributeKeyHeight, "0"),
+					sdk.NewAttribute(types.AttributeKeyRequest, hex.EncodeToString(queryInfo.Request)),
+				)
+
+				events = append(events, event)
+				queryInfo.LastHeight = sdk.NewInt(ctx.BlockHeight())
+				k.SetQuery(ctx, queryInfo)
+
+			}
+			return false
+		}
 	})
 
 	if len(events) > 0 {
