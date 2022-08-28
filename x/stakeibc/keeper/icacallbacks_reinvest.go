@@ -3,8 +3,6 @@ package keeper
 import (
 	"fmt"
 
-	"github.com/spf13/cast"
-
 	epochtypes "github.com/Stride-Labs/stride/x/epochs/types"
 	"github.com/Stride-Labs/stride/x/icacallbacks"
 	icacallbackstypes "github.com/Stride-Labs/stride/x/icacallbacks/types"
@@ -71,13 +69,8 @@ func ReinvestCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ack
 	}
 	epochNumber := strideEpochTracker.EpochNumber
 	// create a new record so that rewards are reinvested
-	amt, err := cast.ToInt64E(amount.Int64())
-	if err != nil {
-		k.Logger(ctx).Error(fmt.Sprintf("failed to convert amount %v", err.Error()))
-		return err
-	}
 	record := recordstypes.DepositRecord{
-		Amount:             amt,
+		Amount:             amount.Int64(),
 		Denom:              denom,
 		HostZoneId:         reinvestCallback.HostZoneId,
 		Status:             recordstypes.DepositRecord_STAKE,
