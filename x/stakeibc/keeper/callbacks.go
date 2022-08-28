@@ -61,24 +61,34 @@ func (c Callbacks) RegisterCallbacks() icqtypes.QueryCallbacks {
 // WithdrawalBalanceCallback is a callback handler for WithdrawalBalance queries.
 func WithdrawalBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query icqtypes.Query) error {
 	// NOTE(TEST-112) for now, to get proofs in your ICQs, you need to query the entire store on the host zone! e.g. "store/bank/key"
-	k.Logger(ctx).Error(fmt.Sprintf("WithdrawalBalanceCallback: %v", query))
+	k.Logger(ctx).Info(fmt.Sprintf("WithdrawalBalanceCallback executing, QueryId: %vs, Host: %s, QueryType: %s, Height: %d, Connection: %s",
+		query.Id, query.ChainId, query.QueryType, query.Height, query.ConnectionId))
 
 	zone, found := k.GetHostZone(ctx, query.GetChainId())
 	if !found {
-		return fmt.Errorf("no registered zone for chain id: %s", query.GetChainId())
+		errMsg := fmt.Sprintf("no registered zone for queried chain ID (%s)", query.GetChainId())
+		k.Logger(ctx).Error(errMsg)
+		return sdkerrors.Wrapf(types.ErrHostZoneNotFound, errMsg)
 	}
+
+	// Query request is a byte array of the form:
+	// [ {balancesPrefix} {address} {denom} ]
+	// {balancePrefix} is only a single byte - and it must be removed before calling AddressFromBalancesStore
 	balancesStore := query.Request[1:]
 	accAddr, err := banktypes.AddressFromBalancesStore(balancesStore)
 	if err != nil {
-		return err
+		errMsg := fmt.Sprintf("unable to derive queried address from request byte array")
+		k.Logger(ctx).Error(errMsg)
+		return sdkerrors.Wrapf(err, errMsg)
 	}
 
 	//TODO(TEST-112) revisit this code, it's not vetted
 	coin := sdk.Coin{}
 	err = k.cdc.Unmarshal(args, &coin)
 	if err != nil {
-		k.Logger(ctx).Error(fmt.Sprintf("unable to unmarshal balance info for zone: %s, err: %s", zone.ChainId, err.Error()))
-		return err
+		errMsg := fmt.Sprintf("unable to unmarshal balance in callback args for zone: %s, err: %s", zone.ChainId, err.Error())
+		k.Logger(ctx).Error(errMsg)
+		return sdkerrors.Wrapf(types.ErrMarshalFailure, errMsg)
 	}
 
 	if coin.IsNil() {
@@ -101,14 +111,6 @@ func WithdrawalBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query icq
 		return nil
 	}
 
-	// Set withdrawal balance as attribute on HostZone's withdrawal ICA account
-	wa := zone.GetWithdrawalAccount()
-	if err != nil {
-		k.Logger(ctx).Error(fmt.Sprintf("host zone (%s) does not have a withdrawal account, err %s", zone.ChainId, err.Error()))
-		return err
-	}
-	zone.WithdrawalAccount = wa
-	k.SetHostZone(ctx, zone)
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
 			sdk.EventTypeMessage,
@@ -122,18 +124,21 @@ func WithdrawalBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query icq
 
 	withdrawalAccount := zone.GetWithdrawalAccount()
 	if withdrawalAccount == nil {
-		k.Logger(ctx).Error(fmt.Sprintf("WithdrawalBalanceCallback: no withdrawal account found for zone: %s", zone.ChainId))
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, fmt.Sprintf("WithdrawalBalanceCallback: no withdrawal account found for zone: %s", zone.ChainId))
+		errMsg := fmt.Sprintf("WithdrawalBalanceCallback: no withdrawal account found for zone: %s", zone.ChainId)
+		k.Logger(ctx).Error(errMsg)
+		return sdkerrors.Wrapf(types.ErrICAAccountNotFound, errMsg)
 	}
 	delegationAccount := zone.GetDelegationAccount()
 	if delegationAccount == nil {
-		k.Logger(ctx).Error(fmt.Sprintf("WithdrawalBalanceCallback: no delegation account found for zone: %s", zone.ChainId))
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, fmt.Sprintf("WithdrawalBalanceCallback: no delegation account found for zone: %s", zone.ChainId))
+		errMsg := fmt.Sprintf("WithdrawalBalanceCallback: no delegation account found for zone: %s", zone.ChainId)
+		k.Logger(ctx).Error(errMsg)
+		return sdkerrors.Wrapf(types.ErrICAAccountNotFound, errMsg)
 	}
 	feeAccount := zone.GetFeeAccount()
 	if feeAccount == nil {
-		k.Logger(ctx).Error(fmt.Sprintf("WithdrawalBalanceCallback: no fee account found for zone: %s", zone.ChainId))
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, fmt.Sprintf("WithdrawalBalanceCallback: no fee account found for zone: %s", zone.ChainId))
+		errMsg := fmt.Sprintf("WithdrawalBalanceCallback: no fee account found for zone: %s", zone.ChainId)
+		k.Logger(ctx).Error(errMsg)
+		return sdkerrors.Wrapf(types.ErrICAAccountNotFound, errMsg)
 	}
 
 	params := k.GetParams(ctx)
@@ -188,8 +193,9 @@ func WithdrawalBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query icq
 	// Send the transaction through SubmitTx
 	_, err = k.SubmitTxsStrideEpoch(ctx, zone.ConnectionId, msgs, *withdrawalAccount, REINVEST, marshalledCallbackArgs)
 	if err != nil {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest,
-			"Failed to SubmitTxs for %s, %s, %s | err: %s", zone.ConnectionId, zone.ChainId, msgs, err.Error())
+		errMsg := fmt.Sprintf("Failed to SubmitTxs for %s - %s, Messages: %v | err: %s", zone.ChainId, zone.ConnectionId, msgs, err.Error())
+		k.Logger(ctx).Error(errMsg)
+		return sdkerrors.Wrapf(types.ErrICATxFailed, errMsg)
 	}
 
 	return nil
