@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"strings"
 
+	ibctransfertypes "github.com/cosmos/ibc-go/v3/modules/apps/transfer/types"
+
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
@@ -263,7 +265,7 @@ func CopyConnectionAndClientToPath(path *ibctesting.Path, pathToCopy *ibctesting
 	return path
 }
 
-func  (s *AppTestHelper) ICAPacketAcknowledgement(msgs []sdk.Msg) channeltypes.Acknowledgement {
+func (s *AppTestHelper) ICAPacketAcknowledgement(msgs []sdk.Msg) channeltypes.Acknowledgement {
 	txMsgData := &sdk.TxMsgData{
 		Data: make([]*sdk.MsgData, len(msgs)),
 	}
@@ -278,5 +280,16 @@ func  (s *AppTestHelper) ICAPacketAcknowledgement(msgs []sdk.Msg) channeltypes.A
 	marshalledTxMsgData, err := proto.Marshal(txMsgData)
 	s.Require().NoError(err)
 	ack := channeltypes.NewResultAcknowledgement(marshalledTxMsgData)
+	return ack
+}
+
+func (s *AppTestHelper) MarshalledICS20PacketData() sdk.AccAddress {
+	data := ibctransfertypes.FungibleTokenPacketData{}
+	return data.GetBytes()
+}
+
+func (s *AppTestHelper) ICS20PacketAcknowledgement() channeltypes.Acknowledgement {
+	// see: https://github.com/cosmos/ibc-go/blob/8de555db76d0320842dacaa32e5500e1fd55e667/modules/apps/transfer/keeper/relay.go#L151
+	ack := channeltypes.NewResultAcknowledgement(s.MarshalledICS20PacketData())
 	return ack
 }
