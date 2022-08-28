@@ -135,7 +135,7 @@ func (s *KeeperTestSuite) TestDelegateCallback_Successful() {
 	s.Require().Len(records, 0, "number of deposit records")
 }
 
-func (s *KeeperTestSuite) checkStateIfCallbackFailed(tc DelegateCallbackTestCase) {
+func (s *KeeperTestSuite) checkDelegateStateIfCallbackFailed(tc DelegateCallbackTestCase) {
 	// Confirm stakedBal has not increased
 	hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx(), chainId)
 	s.Require().True(found)
@@ -155,7 +155,7 @@ func (s *KeeperTestSuite) TestDelegateCallback_DelegateCallbackTimeout() {
 	invalidArgs.ack = nil
 	err := stakeibckeeper.DelegateCallback(s.App.StakeibcKeeper, s.Ctx(), invalidArgs.packet, invalidArgs.ack, invalidArgs.args)
 	s.Require().NoError(err)
-	s.checkStateIfCallbackFailed(tc)
+	s.checkDelegateStateIfCallbackFailed(tc)
 }
 
 func (s *KeeperTestSuite) TestDelegateCallback_DelegateCallbackErrorOnHost() {
@@ -167,7 +167,7 @@ func (s *KeeperTestSuite) TestDelegateCallback_DelegateCallbackErrorOnHost() {
 
 	err := stakeibckeeper.DelegateCallback(s.App.StakeibcKeeper, s.Ctx(), invalidArgs.packet, invalidArgs.ack, invalidArgs.args)
 	s.Require().NoError(err)
-	s.checkStateIfCallbackFailed(tc)
+	s.checkDelegateStateIfCallbackFailed(tc)
 }
 
 func (s *KeeperTestSuite) TestDelegateCallback_WrongCallbackArgs() {
@@ -176,7 +176,7 @@ func (s *KeeperTestSuite) TestDelegateCallback_WrongCallbackArgs() {
 
 	err := stakeibckeeper.DelegateCallback(s.App.StakeibcKeeper, s.Ctx(), invalidArgs.packet, invalidArgs.ack, []byte("random bytes"))
 	s.Require().EqualError(err, "unexpected EOF")
-	s.checkStateIfCallbackFailed(tc)
+	s.checkDelegateStateIfCallbackFailed(tc)
 }
 
 func (s *KeeperTestSuite) TestDelegateCallback_HostNotFound() {
@@ -209,7 +209,7 @@ func (s *KeeperTestSuite) TestDelegateCallback_BigAmount() {
 	s.Require().NoError(err)
 	err = stakeibckeeper.DelegateCallback(s.App.StakeibcKeeper, s.Ctx(), invalidArgs.packet, invalidArgs.ack, args)
 	s.Require().EqualError(err, "overflow: unable to cast 18446744073709551615 of type uint64 to int64")
-	s.checkStateIfCallbackFailed(tc)
+	s.checkDelegateStateIfCallbackFailed(tc)
 }
 
 func (s *KeeperTestSuite) TestDelegateCallback_MissingValidator() {
@@ -228,5 +228,5 @@ func (s *KeeperTestSuite) TestDelegateCallback_MissingValidator() {
 	s.Require().NoError(err)
 	err = stakeibckeeper.DelegateCallback(s.App.StakeibcKeeper, s.Ctx(), invalidArgs.packet, invalidArgs.ack, args)
 	s.Require().EqualError(err, "Failed to add delegation to validator: can't change delegation on validator")
-	s.checkStateIfCallbackFailed(tc)
+	s.checkDelegateStateIfCallbackFailed(tc)
 }
