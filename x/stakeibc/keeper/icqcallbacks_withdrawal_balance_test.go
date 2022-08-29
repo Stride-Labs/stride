@@ -126,27 +126,22 @@ func (s *KeeperTestSuite) TestWithdrawalBalanceCallback_Successful() {
 	startSequence, found := s.App.IBCKeeper.ChannelKeeper.GetNextSequenceSend(s.Ctx(), withdrawalPortId, withdrawalChannelId)
 	s.Require().True(found, "sequence number not found before reinvestment")
 
+	// Call the ICQ callback
 	err := stakeibckeeper.WithdrawalBalanceCallback(s.App.StakeibcKeeper, s.Ctx(), tc.validArgs.callbackArgs, tc.validArgs.query)
 	s.Require().NoError(err)
 
-	// Confirm callback data was stored
+	// Confirm ICA reinvestment callback data was stored
 	s.Require().Len(s.App.IcacallbacksKeeper.GetAllCallbackData(s.Ctx()), 1, "number of callbacks found")
 	callbackKey := icacallbackstypes.PacketID(withdrawalPortId, withdrawalChannelId, startSequence)
 	callbackData, found := s.App.IcacallbacksKeeper.GetCallbackData(s.Ctx(), callbackKey)
 	s.Require().True(found, "callback data was not found for callback key (%s)", callbackKey)
 	s.Require().Equal("reinvest", callbackData.CallbackId, "callback ID")
 
-	// Confirm callback args
+	// Confirm reinvestment callback args
 	callbackArgs, err := s.App.StakeibcKeeper.UnmarshalReinvestCallbackArgs(s.Ctx(), callbackData.CallbackArgs)
 	s.Require().NoError(err, "unmarshalling callback args error for callback key (%s)", callbackKey)
 	s.Require().Equal(tc.initialState.hostZone.ChainId, callbackArgs.HostZoneId, "host zone in callback args (%s)", callbackKey)
 	s.Require().Equal(tc.expectedReinvestment, callbackArgs.ReinvestAmount, "reinvestment coin in callback args (%s)", callbackKey)
-}
-
-// Since a zero balance query returns successful, but early, we want to confirm the callback short circuited
-func (s *KeeperTestSuite) checkStateAfterZeroBalanceQuery(tc WithdrawalBalanceCallbackTestCase) {
-	// Confirm callback was not created
-	s.Require().Len(s.App.IcacallbacksKeeper.GetAllCallbackData(s.Ctx()), 0, "number of callbacks found")
 }
 
 func (s *KeeperTestSuite) TestWithdrawalBalanceCallback_ZeroBalance() {
@@ -154,7 +149,12 @@ func (s *KeeperTestSuite) TestWithdrawalBalanceCallback_ZeroBalance() {
 
 	// Replace the query response with a coin that has a nil amount
 	tc.validArgs.callbackArgs = s.CreateBalanceQueryResponse(0, Atom)
-	s.checkStateAfterZeroBalanceQuery(tc)
+
+	err := stakeibckeeper.WithdrawalBalanceCallback(s.App.StakeibcKeeper, s.Ctx(), tc.validArgs.callbackArgs, tc.validArgs.query)
+	s.Require().NoError(err)
+
+	// Confirm revinvestment callback was not created
+	s.Require().Len(s.App.IcacallbacksKeeper.GetAllCallbackData(s.Ctx()), 0, "number of callbacks found")
 }
 
 func (s *KeeperTestSuite) TestWithdrawalBalanceCallback_ZeroBalanceImplied() {
@@ -164,7 +164,13 @@ func (s *KeeperTestSuite) TestWithdrawalBalanceCallback_ZeroBalanceImplied() {
 	coin := sdk.Coin{Denom: Atom}
 	coinBz := s.App.RecordsKeeper.Cdc.MustMarshal(&coin)
 	tc.validArgs.callbackArgs = coinBz
-	s.checkStateAfterZeroBalanceQuery(tc)
+	fmt.Println(coinBz)
+
+	err := stakeibckeeper.WithdrawalBalanceCallback(s.App.StakeibcKeeper, s.Ctx(), tc.validArgs.callbackArgs, tc.validArgs.query)
+	s.Require().NoError(err)
+
+	// Confirm revinvestment callback was not created
+	s.Require().Len(s.App.IcacallbacksKeeper.GetAllCallbackData(s.Ctx()), 0, "number of callbacks found")
 }
 
 func (s *KeeperTestSuite) TestWithdrawalBalanceCallback_HostZoneNotFound() {
@@ -180,7 +186,7 @@ func (s *KeeperTestSuite) TestWithdrawalBalanceCallback_HostZoneNotFound() {
 func (s *KeeperTestSuite) TestWithdrawalBalanceCallback_InvalidBalancesStore() {
 	tc := s.SetupWithdrawalBalanceCallbackTest()
 
-	// Reduce the byte slice to 1 length so that the callback is unable to derrive the queried address
+	// Reduce the byte slice to one element so that the callback is unable to deserialize the queried address
 	invalidQuery := tc.validArgs.query
 	invalidQuery.Request = invalidQuery.Request[:1]
 
@@ -203,6 +209,7 @@ func (s *KeeperTestSuite) TestWithdrawalBalanceCallback_InvalidArgs() {
 func (s *KeeperTestSuite) TestWithdrawalBalanceCallback_NoWithdrawalAccount() {
 	tc := s.SetupWithdrawalBalanceCallbackTest()
 
+	// Remove the withdrawal account
 	badHostZone := tc.initialState.hostZone
 	badHostZone.WithdrawalAccount = nil
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx(), badHostZone)
@@ -216,6 +223,7 @@ func (s *KeeperTestSuite) TestWithdrawalBalanceCallback_NoWithdrawalAccount() {
 func (s *KeeperTestSuite) TestWithdrawalBalanceCallback_NoDelegationAccount() {
 	tc := s.SetupWithdrawalBalanceCallbackTest()
 
+	// Remove the delegation account
 	badHostZone := tc.initialState.hostZone
 	badHostZone.DelegationAccount = nil
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx(), badHostZone)
@@ -229,6 +237,7 @@ func (s *KeeperTestSuite) TestWithdrawalBalanceCallback_NoDelegationAccount() {
 func (s *KeeperTestSuite) TestWithdrawalBalanceCallback_NoFeeAccount() {
 	tc := s.SetupWithdrawalBalanceCallbackTest()
 
+	// Remove the fee account
 	badHostZone := tc.initialState.hostZone
 	badHostZone.FeeAccount = nil
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx(), badHostZone)
