@@ -310,56 +310,126 @@ func (s *KeeperTestSuite) TestGetLatestCompletionTime_Failure() {
 }
 
 // UpdateHostZoneUnbondings tests
-// WIP
-// func (s *KeeperTestSuite) TestUpdateHostZoneUnbondings_Success() {
-// 	tc := s.SetupUndelegateCallback()
-// 	hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx(), chainId)
-// 	s.Require().True(found)
+func (s *KeeperTestSuite) TestUpdateHostZoneUnbondings_Success() {
+	hostZone := stakeibc.HostZone{
+		ChainId: chainId,
+	}
+	totalBalance := 1_500_000
+	stAmtHzu1 := 600_000
+	stAmtHzu2 := 700_000
+	stAmtHzu3 := 200_000
+	s.Require().Equal(int64(totalBalance), int64(stAmtHzu1)+int64(stAmtHzu2)+int64(stAmtHzu3), "total balance is correct")
+	// Set up EpochUnbondingRecord, HostZoneUnbonding and token state
+	hostZoneUnbonding := recordtypes.HostZoneUnbonding{
+		HostZoneId:    chainId,
+		Status:        recordtypes.HostZoneUnbonding_BONDED,
+		StTokenAmount: uint64(stAmtHzu1),
+	}
+	hostZoneUnbonding2 := recordtypes.HostZoneUnbonding{
+		HostZoneId:    "not_gaia",
+		Status:        recordtypes.HostZoneUnbonding_BONDED,
+		StTokenAmount: uint64(stAmtHzu2),
+	}
+	hostZoneUnbonding3 := recordtypes.HostZoneUnbonding{
+		HostZoneId:    chainId,
+		Status:        recordtypes.HostZoneUnbonding_BONDED,
+		StTokenAmount: uint64(stAmtHzu3),
+	}
+	// Create two epoch unbonding records (status BONDED, completion time unset)
+	epochUnbondingRecord := recordtypes.EpochUnbondingRecord{
+		EpochNumber:        1,
+		HostZoneUnbondings: []*recordtypes.HostZoneUnbonding{&hostZoneUnbonding, &hostZoneUnbonding2},
+	}
+	epochUnbondingRecord2 := recordtypes.EpochUnbondingRecord{
+		EpochNumber:        2,
+		HostZoneUnbondings: []*recordtypes.HostZoneUnbonding{&hostZoneUnbonding3},
+	}
+	s.App.RecordsKeeper.SetEpochUnbondingRecord(s.Ctx(), epochUnbondingRecord)
+	s.App.RecordsKeeper.SetEpochUnbondingRecord(s.Ctx(), epochUnbondingRecord2)
+	callbackArgs := types.UndelegateCallback{
+		EpochUnbondingRecordIds: []uint64{1, 2},
+	}
+	completionTime := time.Now().Add(time.Second * time.Duration(10))
+	burnAmount, err := s.App.StakeibcKeeper.UpdateHostZoneUnbondings(s.Ctx(), completionTime, hostZone, callbackArgs)
+	s.Require().NoError(err)
+	s.Require().Equal(int64(stAmtHzu1+stAmtHzu3), int64(burnAmount), "burn amount is correct")
 
-// 	totalBalance := 1_500_000
-// 	hzu1 := 600_000
-// 	hzu2 := 700_000
-// 	hzu3 := 200_000
+	// Verify that 2 hzus have status UNBONDED, while the third has status BONDED
+	// Verify that 2 hzus have completion time set, while the third has no completion time
+	epochUnbondingRecord, found := s.App.RecordsKeeper.GetEpochUnbondingRecord(s.Ctx(), 1)
+	s.Require().True(found)
+	epochUnbondingRecord2, found = s.App.RecordsKeeper.GetEpochUnbondingRecord(s.Ctx(), 2)
+	s.Require().True(found)
+	hzu1 := epochUnbondingRecord.HostZoneUnbondings[0]
+	s.Require().Equal(recordtypes.HostZoneUnbonding_UNBONDED, hzu1.Status, "hzu1 status is UNBONDED")
+	s.Require().Equal(completionTime.Unix(), int64(hzu1.UnbondingTime), "hzu1 completion time is set")
+
+	hzu2 := epochUnbondingRecord.HostZoneUnbondings[1]
+	s.Require().Equal(recordtypes.HostZoneUnbonding_BONDED, hzu2.Status, "hzu2 status is BONDED")
+	s.Require().Equal(0, int64(hzu2.UnbondingTime), "hzu2 completion time is NOT set")
+
+	hzu3 := epochUnbondingRecord2.HostZoneUnbondings[0]
+	s.Require().Equal(recordtypes.HostZoneUnbonding_UNBONDED, hzu3.Status, "hzu3 status is UNBONDED")
+	s.Require().Equal(completionTime.Unix(), int64(hzu3.UnbondingTime), "hzu3 completion time is set")
+}
+
+// Test failure case - epoch unbonding record DNE
+func (s *KeeperTestSuite) TestUpdateHostZoneUnbondings_EpochUnbondingRecordDNE() {
+	hostZone := stakeibc.HostZone{
+		ChainId: chainId,
+	}
+	callbackArgs := types.UndelegateCallback{
+		EpochUnbondingRecordIds: []uint64{1},
+	}
+	completionTime := s.Ctx().BlockTime()
+	_, err := s.App.StakeibcKeeper.UpdateHostZoneUnbondings(s.Ctx(), completionTime, hostZone, callbackArgs)
+	s.Require().EqualError(err, "Unable to find epoch unbonding record for epoch: 1: key not found")
+}
+
+// Test failure case - HostZoneUnbonding DNE
+func (s *KeeperTestSuite) TestUpdateHostZoneUnbondings_HostZoneUnbondingDNE() {
+	hostZone := stakeibc.HostZone{
+		ChainId: chainId,
+	}
+	epochUnbondingRecord := recordtypes.EpochUnbondingRecord{
+		EpochNumber: 1,
+		// No hzu!
+		HostZoneUnbondings: []*recordtypes.HostZoneUnbonding{},
+	}
+	s.App.RecordsKeeper.SetEpochUnbondingRecord(s.Ctx(), epochUnbondingRecord)
+	callbackArgs := types.UndelegateCallback{
+		EpochUnbondingRecordIds: []uint64{1},
+	}
+	completionTime := s.Ctx().BlockTime()
+	_, err := s.App.StakeibcKeeper.UpdateHostZoneUnbondings(s.Ctx(), completionTime, hostZone, callbackArgs)
+	s.Require().EqualError(err, "Host zone unbondingnot found (GAIA) in epoch unbonding record: 1: key not found")
+}
+
+// Test failure case - Amount too big
+
+// func (s *KeeperTestSuite) TestUpdateHostZoneUnbondings_Success() {
+// 	hostZone := stakeibc.HostZone{
+// 		ChainId: chainId,
+// 	}
+// 	stAmtHzu1 := math.MaxUint64
 // 	// Set up EpochUnbondingRecord, HostZoneUnbonding and token state
 // 	hostZoneUnbonding := recordtypes.HostZoneUnbonding{
 // 		HostZoneId:    chainId,
 // 		Status:        recordtypes.HostZoneUnbonding_BONDED,
-// 		StTokenAmount: uint64(hzu1),
-// 	}
-// 	hostZoneUnbonding := recordtypes.HostZoneUnbonding{
-// 		HostZoneId:    chainId,
-// 		Status:        recordtypes.HostZoneUnbonding_BONDED,
-// 		StTokenAmount: uint64(hzu2),
-// 	}
-// 	hostZoneUnbonding := recordtypes.HostZoneUnbonding{
-// 		HostZoneId:    chainId,
-// 		Status:        recordtypes.HostZoneUnbonding_BONDED,
-// 		StTokenAmount: uint64(hzu3),
+// 		StTokenAmount: stAmtHzu1,
 // 	}
 // 	// Create two epoch unbonding records (status BONDED, completion time unset)
 // 	epochUnbondingRecord := recordtypes.EpochUnbondingRecord{
-// 		EpochNumber:        epochNumber,
-// 		HostZoneUnbondings: []*recordtypes.HostZoneUnbonding{&hostZoneUnbonding},
+// 		EpochNumber:        1,
+// 		HostZoneUnbondings: []*recordtypes.HostZoneUnbonding{&hostZoneUnbonding, &hostZoneUnbonding2},
 // 	}
-// 	// Save them
-
-// 	err := s.App.StakeibcKeeper.UpdateHostZoneUnbondings(s.Ctx(), hostZone, tc.initialState.callbackArgs)
-// 	s.Require().NoError(err)
-
-// 	updatedHostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx(), chainId)
-// 	s.Require().True(found)
-
-// 	// Verify that 2 hzus have status UNBONDED, while the third has status BONDED
-// 	// Verify that 2 hzus have completion time set, while the third has no completion time
-
-// 	// verify that the stTokenBurnAmount is what we expect, based on the validators on the hzu
+// 	s.App.RecordsKeeper.SetEpochUnbondingRecord(s.Ctx(), epochUnbondingRecord)
+// 	callbackArgs := types.UndelegateCallback{
+// 		EpochUnbondingRecordIds: []uint64{1, 2},
+// 	}
+// 	completionTime := time.Now().Add(time.Second * time.Duration(10))
+// 	burnAmount, err := s.App.StakeibcKeeper.UpdateHostZoneUnbondings(s.Ctx(), completionTime, hostZone, callbackArgs)
 // }
-
-// TODO: BELOW TESTS
-// Test success case - update unbonding records and get tokens to burn
-// Test failure case - epoch unbonding record DNE
-// Test failure case - HostZoneUnbonding DNE
-// Test failure case - Amount too big
 
 // BurnTokens Tests
 func (s *KeeperTestSuite) TestBurnTokens_Success() {

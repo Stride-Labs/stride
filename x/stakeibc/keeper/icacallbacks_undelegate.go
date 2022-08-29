@@ -149,7 +149,9 @@ func (k Keeper) UpdateHostZoneUnbondings(
 	zone types.HostZone,
 	undelegateCallback types.UndelegateCallback,
 ) (stTokenBurnAmount int64, err error) {
-	// Update the status and time of each hostZoneUnbonding on each epochUnbondingRecord and grab the number of stTokens that need to be burned
+	// UpdateHostZoneUnbondings does two things:
+	// 		1. Update the status and time of each hostZoneUnbonding on each epochUnbondingRecord
+	// 		2. Return the number of stTokens that need to be burned
 	for _, epochNumber := range undelegateCallback.EpochUnbondingRecordIds {
 		epochUnbondingRecord, found := k.RecordsKeeper.GetEpochUnbondingRecord(ctx, epochNumber)
 		if !found {
