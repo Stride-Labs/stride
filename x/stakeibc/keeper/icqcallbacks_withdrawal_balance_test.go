@@ -15,20 +15,20 @@ import (
 	stakeibctypes "github.com/Stride-Labs/stride/x/stakeibc/types"
 )
 
-type WithdrawalBalanceCallbackState struct {
+type WithdrawalBalanceICQCallbackState struct {
 	hostZone          stakeibctypes.HostZone
 	withdrawalChannel Channel
 	withdrawalBalance int64
 }
 
-type WithdrawalBalanceCallbackArgs struct {
+type WithdrawalBalanceICQCallbackArgs struct {
 	query        icqtypes.Query
 	callbackArgs []byte
 }
 
-type WithdrawalBalanceCallbackTestCase struct {
-	initialState         WithdrawalBalanceCallbackState
-	validArgs            WithdrawalBalanceCallbackArgs
+type WithdrawalBalanceICQCallbackTestCase struct {
+	initialState         WithdrawalBalanceICQCallbackState
+	validArgs            WithdrawalBalanceICQCallbackArgs
 	expectedReinvestment sdk.Coin
 }
 
@@ -47,7 +47,7 @@ func (s *KeeperTestSuite) CreateBalanceQueryResponse(amount int64, denom string)
 	return coinBz
 }
 
-func (s *KeeperTestSuite) SetupWithdrawalBalanceCallbackTest() WithdrawalBalanceCallbackTestCase {
+func (s *KeeperTestSuite) SetupWithdrawalBalanceCallbackTest() WithdrawalBalanceICQCallbackTestCase {
 	delegationAccountOwner := fmt.Sprintf("%s.%s", HostChainId, "DELEGATION")
 	s.CreateICAChannel(delegationAccountOwner)
 	delegationAddress := s.IcaAddresses[delegationAccountOwner]
@@ -94,8 +94,8 @@ func (s *KeeperTestSuite) SetupWithdrawalBalanceCallbackTest() WithdrawalBalance
 	queryRequest := s.CreateBalanceQueryRequest(withdrawalAddress, Atom)
 	queryResponse := s.CreateBalanceQueryResponse(withdrawalBalance, Atom)
 
-	return WithdrawalBalanceCallbackTestCase{
-		initialState: WithdrawalBalanceCallbackState{
+	return WithdrawalBalanceICQCallbackTestCase{
+		initialState: WithdrawalBalanceICQCallbackState{
 			hostZone: hostZone,
 			withdrawalChannel: Channel{
 				PortID:    "icacontroller-" + withdrawalAccountOwner,
@@ -103,7 +103,7 @@ func (s *KeeperTestSuite) SetupWithdrawalBalanceCallbackTest() WithdrawalBalance
 			},
 			withdrawalBalance: withdrawalBalance,
 		},
-		validArgs: WithdrawalBalanceCallbackArgs{
+		validArgs: WithdrawalBalanceICQCallbackArgs{
 			query: icqtypes.Query{
 				Id:      "0",
 				ChainId: HostChainId,
