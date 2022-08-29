@@ -30,7 +30,7 @@ type ClaimCallbackTestCase struct {
 
 func (s *KeeperTestSuite) SetupClaimCallback() ClaimCallbackTestCase {
 	epochNumber := uint64(1)
-	recordId := recordtypes.UserRedemptionRecordKeyFormatter(chainId, epochNumber, "sender")
+	recordId := recordtypes.UserRedemptionRecordKeyFormatter(HostChainId, epochNumber, "sender")
 	userRedemptionRecord := recordtypes.UserRedemptionRecord{
 		Id: recordId,
 		// after a user calls ClaimUndelegatedTokens, the record is set to isClaimable = false
