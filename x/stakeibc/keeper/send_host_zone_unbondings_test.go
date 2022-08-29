@@ -83,10 +83,10 @@ func (s *KeeperTestSuite) SetupSendHostZoneUnbonding() SendHostZoneUnbondingTest
 			Status:            recordtypes.HostZoneUnbonding_BONDED,
 		}
 		epochUnbondingRecord.HostZoneUnbondings = append(epochUnbondingRecord.HostZoneUnbondings, hostZoneUnbonding)
-		s.App.RecordsKeeper.SetEpochUnbondingRecord(s.Ctx, epochUnbondingRecord)
+		s.App.RecordsKeeper.SetEpochUnbondingRecord(s.Ctx(), epochUnbondingRecord)
 	}
 
-	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
+	s.App.StakeibcKeeper.SetHostZone(s.Ctx(), hostZone)
 
 	return SendHostZoneUnbondingTestCase{
 		amtToUnbond:           amtToUnbond,
@@ -100,13 +100,13 @@ func (s *KeeperTestSuite) SetupSendHostZoneUnbonding() SendHostZoneUnbondingTest
 func (s *KeeperTestSuite) TestSendHostZoneUnbonding_Successful() {
 	tc := s.SetupSendHostZoneUnbonding()
 
-	actualUnbondMsgs, actualAmtToUnbond, actualCallbackArgs, err := s.App.StakeibcKeeper.GetHostZoneUnbondingMsgs(s.Ctx, tc.hostZone)
+	actualUnbondMsgs, actualAmtToUnbond, actualCallbackArgs, err := s.App.StakeibcKeeper.GetHostZoneUnbondingMsgs(s.Ctx(), tc.hostZone)
 	s.Require().NoError(err)
 
 	// verify the callback args are as expected
 	expectedCallbackArgs := []byte{0xa, 0x4, 0x47, 0x41, 0x49, 0x41, 0x12, 0x18, 0xa, 0x12, 0x63, 0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x5f, 0x56, 0x41, 0x4c, 0x49, 0x44, 0x41, 0x54, 0x4f, 0x52, 0x5f, 0x31, 0x10, 0xaa, 0xd8, 0x28, 0x12, 0x18, 0xa, 0x12, 0x63, 0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x5f, 0x56, 0x41, 0x4c, 0x49, 0x44, 0x41, 0x54, 0x4f, 0x52, 0x5f, 0x32, 0x10, 0xd6, 0xb0, 0x51, 0x1a, 0x2, 0x0, 0x1}
 	s.Require().Equal(actualCallbackArgs, expectedCallbackArgs)
-	actualCallbackResult, err := s.App.StakeibcKeeper.UnmarshalUndelegateCallbackArgs(s.Ctx, actualCallbackArgs)
+	actualCallbackResult, err := s.App.StakeibcKeeper.UnmarshalUndelegateCallbackArgs(s.Ctx(), actualCallbackArgs)
 	s.Require().NoError(err)
 	s.Require().Equal(len(actualCallbackResult.SplitDelegations), len(tc.hostZone.Validators))
 	s.Require().Equal(actualCallbackResult.HostZoneId, tc.hostZone.ChainId)
@@ -135,7 +135,7 @@ func (s *KeeperTestSuite) TestSendHostZoneUnbonding_WrongChainId() {
 	tc := s.SetupSendHostZoneUnbonding()
 
 	tc.hostZone.ChainId = "nonExistentChainId"
-	msgs, totalAmtToUnbond, _, err := s.App.StakeibcKeeper.GetHostZoneUnbondingMsgs(s.Ctx, tc.hostZone)
+	msgs, totalAmtToUnbond, _, err := s.App.StakeibcKeeper.GetHostZoneUnbondingMsgs(s.Ctx(), tc.hostZone)
 	// error should be nil -- we do NOT raise an error on a non-existent chain id, we simply do not send any messages
 	s.Require().Nil(err, "error should be nil -- we do NOT raise an error on a non-existent chain id, we simply do not send any messages")
 	// no messages should be sent
@@ -149,12 +149,12 @@ func (s *KeeperTestSuite) TestSendHostZoneUnbonding_NoEpochUnbondingRecords() {
 
 	// iterate epoch unbonding records and delete them
 	for i := range tc.epochUnbondingRecords {
-		s.App.RecordsKeeper.RemoveEpochUnbondingRecord(s.Ctx, uint64(i))
+		s.App.RecordsKeeper.RemoveEpochUnbondingRecord(s.Ctx(), uint64(i))
 	}
 
-	s.Require().Equal(0, len(s.App.RecordsKeeper.GetAllEpochUnbondingRecord(s.Ctx)), "number of epoch unbonding records should be 0 after deletion")
+	s.Require().Equal(0, len(s.App.RecordsKeeper.GetAllEpochUnbondingRecord(s.Ctx())), "number of epoch unbonding records should be 0 after deletion")
 
-	msgs, totalAmtToUnbond, _, err := s.App.StakeibcKeeper.GetHostZoneUnbondingMsgs(s.Ctx, tc.hostZone)
+	msgs, totalAmtToUnbond, _, err := s.App.StakeibcKeeper.GetHostZoneUnbondingMsgs(s.Ctx(), tc.hostZone)
 	// error should be nil -- we do NOT raise an error on a non-existent chain id, we simply do not send any messages
 	s.Require().Nil(err, "error should be nil -- we do NOT raise an error when no records exist, we simply do not send any messages")
 	// no messages should be sent
@@ -171,8 +171,8 @@ func (s *KeeperTestSuite) TestSendHostZoneUnbonding_UnbondingTooMuch() {
 		tc.hostZone.Validators[i].DelegationAmt = 0
 	}
 	// write the host zone with zero-delegation validators back to the store
-	s.App.StakeibcKeeper.SetHostZone(s.Ctx, tc.hostZone)
+	s.App.StakeibcKeeper.SetHostZone(s.Ctx(), tc.hostZone)
 
-	_, _, _, err := s.App.StakeibcKeeper.GetHostZoneUnbondingMsgs(s.Ctx, tc.hostZone)
+	_, _, _, err := s.App.StakeibcKeeper.GetHostZoneUnbondingMsgs(s.Ctx(), tc.hostZone)
 	s.Require().EqualError(err, fmt.Sprintf("Could not unbond %d on Host Zone %s, unable to balance the unbond amount across validators: not found", tc.amtToUnbond*uint64(len(tc.epochUnbondingRecords)), tc.hostZone.ChainId))
 }

@@ -4,7 +4,7 @@
 # loop three times in bash
 echo "Killing previous networks..."
 for i in {1..5}; do
-    make stop &> /dev/null
+    make stop-local &> /dev/null
     sleep 1
 done
 
