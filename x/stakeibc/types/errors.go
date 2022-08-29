@@ -38,4 +38,5 @@ var (
 	ErrTxMsgDataInvalid                  = sdkerrors.Register(ModuleName, 1528, "TxMsgData invalid")
 	ErrICAAccountNotFound                = sdkerrors.Register(ModuleName, 1529, "ICA acccount not found on host zone")
 	ErrICATxFailed                       = sdkerrors.Register(ModuleName, 1530, "failed to submit ICA transaction")
+	ErrICQFailed                         = sdkerrors.Register(ModuleName, 1531, "failed to submit ICQ")
 )

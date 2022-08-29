@@ -201,6 +201,14 @@ func getValidator(validators []*types.Validator, address string) (types.Validato
 }
 
 // ValidatorCallback is a callback handler for validator queries.
+//
+// In an attempt to get the ICA's delegation amount on a given validator, we have to query:
+//     1) the validator's internal exchange rate
+//     2) the Delegation ICA's delegated shares
+//  And apply the following equation:
+//     num_tokens = exchange_rate * num_shares
+//
+// This callback from query #1
 func ValidatorExchangeRateCallback(k Keeper, ctx sdk.Context, args []byte, query icqtypes.Query) error {
 	zone, found := k.GetHostZone(ctx, query.GetChainId())
 	if !found {
@@ -233,7 +241,11 @@ func ValidatorExchangeRateCallback(k Keeper, ctx sdk.Context, args []byte, query
 		k.Logger(ctx).Error("failed to find stride epoch")
 		return sdkerrors.Wrapf(sdkerrors.ErrNotFound, "no epoch number for epoch (%s)", epochtypes.STRIDE_EPOCH)
 	}
-	// converting 1.0 gives us the exchange rate to later use in the next CB
+	// We want the validator's internal exchange rate which is held internally behind `validator.TokensFromShares`
+	//  Since,
+	//     exchange_rate = num_tokens / num_shares
+	//  We can use `validator.TokensFromShares`, plug in 1.0 for the number of shares,
+	//    and the returned number of tokens will be equal to the internal exchange rate
 	v.InternalExchangeRate = &types.ValidatorExchangeRate{
 		InternalTokensToSharesRate: queriedValidator.TokensFromShares(sdk.NewDec(1.0)),
 		EpochNumber:                strideEpochTracker.GetEpochNumber(),
@@ -246,13 +258,22 @@ func ValidatorExchangeRateCallback(k Keeper, ctx sdk.Context, args []byte, query
 	// armed with the exch rate, we can now query the (val,del) delegation
 	err = k.QueryDelegationsIcq(ctx, zone, queriedValidator.OperatorAddress)
 	if err != nil {
-		k.Logger(ctx).Error(fmt.Sprintf("ValidatorCallback: failed to query delegation, zone %s, err: %s", zone.ChainId, err.Error()))
-		return err
+		errMsg := fmt.Sprintf("ValidatorCallback: failed to query delegation, zone %s, err: %s", zone.ChainId, err.Error())
+		k.Logger(ctx).Error(errMsg)
+		return sdkerrors.Wrapf(types.ErrICQFailed, errMsg)
 	}
 	return nil
 }
 
 // DelegationCallback is a callback handler for UpdateValidatorSharesExchRate queries.
+//
+// In an attempt to get the ICA's delegation amount on a given validator, we have to query:
+//     1) the validator's internal exchange rate
+//     2) the Delegation ICA's delegated shares
+//  And apply the following equation:
+//     num_tokens = exchange_rate * num_shares
+//
+// This callback from query #2
 func DelegatorSharesCallback(k Keeper, ctx sdk.Context, args []byte, query icqtypes.Query) error {
 	// NOTE(TEST-112) for now, to get proofs in your ICQs, you need to query the entire store on the host zone! e.g. "store/bank/key"
 
