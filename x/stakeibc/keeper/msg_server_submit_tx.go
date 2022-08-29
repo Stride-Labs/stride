@@ -366,22 +366,24 @@ func (k Keeper) GetLightClientHeightSafely(ctx sdk.Context, connectionID string)
 	}
 }
 
-func (k Keeper) GetLightClientTimeSafely(ctx sdk.Context, connectionID string) (uint64, bool) {
+func (k Keeper) GetLightClientTimeSafely(ctx sdk.Context, connectionID string) (uint64, error) {
 
 	// get light client's latest height
 	conn, found := k.IBCKeeper.ConnectionKeeper.GetConnection(ctx, connectionID)
 	if !found {
-		k.Logger(ctx).Error(fmt.Sprintf("invalid connection id, \"%s\" not found", connectionID))
-		return 0, false
+		errMsg := fmt.Sprintf("invalid connection id, \"%s\" not found", connectionID)
+		k.Logger(ctx).Error(errMsg)
+		return 0, fmt.Errorf(errMsg)
 	}
 	//TODO(TEST-112) make sure to update host LCs here!
 	latestConsensusClientState, found := k.IBCKeeper.ClientKeeper.GetLatestClientConsensusState(ctx, conn.ClientId)
 	if !found {
-		k.Logger(ctx).Error(fmt.Sprintf("client id \"%s\" not found for connection \"%s\"", conn.ClientId, connectionID))
-		return 0, false
+		errMsg := fmt.Sprintf("client id \"%s\" not found for connection \"%s\"", conn.ClientId, connectionID)
+		k.Logger(ctx).Error(errMsg)
+		return 0, fmt.Errorf(errMsg)
 	} else {
 		latestTime := latestConsensusClientState.GetTimestamp()
-		return latestTime, true
+		return latestTime, nil
 	}
 }
 
