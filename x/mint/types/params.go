@@ -50,7 +50,7 @@ func NewParams(
 func DefaultParams() Params {
 	return Params{
 		MintDenom:               "ustrd",
-		GenesisEpochProvisions:  sdk.NewDec(10),
+		GenesisEpochProvisions:  sdk.NewDec(10_000_000),
 		EpochIdentifier:         "day",                     // 1 day
 		ReductionPeriodInEpochs: 365,                       // 1 years
 		ReductionFactor:         sdk.NewDec(3).QuoInt64(4), // 3/4
