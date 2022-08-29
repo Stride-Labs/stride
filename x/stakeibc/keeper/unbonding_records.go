@@ -243,9 +243,8 @@ func (k Keeper) InitiateAllHostZoneUnbondings(ctx sdk.Context, dayNumber uint64)
 
 func (k Keeper) CleanupEpochUnbondingRecords(ctx sdk.Context, epochNumber uint64) bool {
 	// this function goes through each EpochUnbondingRecord
-	// and deletes those with 0 balances, meaning all tokens on that epoch unbonding
-	// record have been claimed
-	for _, epochUnbondingRecord := range k.RecordsKeeper.GetAllPreviousEpochUnbondingRecords(ctx, epochNumber) {
+	// if any of them don't have any unprocessed hostZoneUnbondings, then it deletes the record
+	for _, epochUnbondingRecord := range k.RecordsKeeper.GetAllEpochUnbondingRecord(ctx) {
 		k.Logger(ctx).Info(fmt.Sprintf("Cleaning up epoch unbondings for epoch unbonding record from epoch %d", epochUnbondingRecord.GetEpochNumber()))
 		shouldDeleteEpochUnbondingRecord := true
 		hostZoneUnbondings := epochUnbondingRecord.GetHostZoneUnbondings()
