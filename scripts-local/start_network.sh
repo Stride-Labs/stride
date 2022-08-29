@@ -87,7 +87,7 @@ if [ "$CACHE" != "true" ]; then
 
         printf '%s' "Creating Hermes Channel $i...    "
         # continuation of logs from above command
-        ( tail -f -n0 $HERMES_LOGS & ) | grep -q "Success: Channel"
+        ( tail -f -n0 $HERMES_LOGS & ) | grep -q "SUCCESS Channel"
         echo "Done"
     done
 fi

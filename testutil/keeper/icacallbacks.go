@@ -12,10 +12,9 @@ import (
 )
 
 func IcacallbacksKeeper(t testing.TB) (*keeper.Keeper, sdk.Context) {
-	checkTx := false
-	app := strideapp.InitTestApp(checkTx)
+	app := strideapp.InitStrideTestApp(true)
 	icacallbackskeeper := app.IcacallbacksKeeper
-	ctx := app.BaseApp.NewContext(checkTx, tmproto.Header{Height: 1, ChainID: "stride-1", Time: time.Now().UTC()})
+	ctx := app.BaseApp.NewContext(false, tmproto.Header{Height: 1, ChainID: "stride-1", Time: time.Now().UTC()})
 
 	return &icacallbackskeeper, ctx
 }

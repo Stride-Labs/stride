@@ -61,7 +61,7 @@ func (app *StrideApp) setupUpgradeHandlers() {
     ...
 ```
 
-# Migrations (Only Required if the state changed)
+# Migrations (Only required if the state changed)
 ## Store Old Proto Types
 ```go
 // x/{moduleName}/migrations/{oldVersion}/types/{data_type}.pb.go
@@ -70,7 +70,23 @@ func (app *StrideApp) setupUpgradeHandlers() {
 ## Increment the Module's Consensus Version
 ```go
 // x/{moduleName}/module.go
-func (AppModule) ConsensusVersion() uint64 { return {NewVersion} }
+func (AppModule) ConsensusVersion() uint64 { return 2 }
+```
+
+## Specify the Migration in the Upgrade Handler
+```go
+// app/upgrades/{upgradeVersion}/upgrades.go
+
+// CreateUpgradeHandler creates an SDK upgrade handler for {upgradeVersion}
+func CreateUpgradeHandler(
+	mm *module.Manager,
+	configurator module.Configurator,
+) upgradetypes.UpgradeHandler {
+	return func(ctx sdk.Context, _ upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
+		vm[{moduleName}] = 2 // <- ADD THIS
+		return mm.RunMigrations(ctx, configurator, vm)
+	}
+}
 ```
 
 ## Add Migration Handler

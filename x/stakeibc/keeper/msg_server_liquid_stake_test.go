@@ -9,13 +9,7 @@ import (
 	epochtypes "github.com/Stride-Labs/stride/x/epochs/types"
 	recordtypes "github.com/Stride-Labs/stride/x/records/types"
 	"github.com/Stride-Labs/stride/x/stakeibc/types"
-	stakeibc "github.com/Stride-Labs/stride/x/stakeibc/types"
-)
-
-const (
-	atom    = "uatom"
-	stAtom  = "stuatom"
-	ibcAtom = "ibc/uatom"
+	stakeibctypes "github.com/Stride-Labs/stride/x/stakeibc/types"
 )
 
 type Account struct {
@@ -31,9 +25,9 @@ type LiquidStakeState struct {
 
 type LiquidStakeTestCase struct {
 	user         Account
-	module       Account
+	zoneAccount  Account
 	initialState LiquidStakeState
-	validMsg     stakeibc.MsgLiquidStake
+	validMsg     stakeibctypes.MsgLiquidStake
 }
 
 func (s *KeeperTestSuite) SetupLiquidStake() LiquidStakeTestCase {
@@ -41,27 +35,30 @@ func (s *KeeperTestSuite) SetupLiquidStake() LiquidStakeTestCase {
 	initialDepositAmount := int64(1_000_000)
 	user := Account{
 		acc:           s.TestAccs[0],
-		atomBalance:   sdk.NewInt64Coin(ibcAtom, 10_000_000),
-		stAtomBalance: sdk.NewInt64Coin(stAtom, 0),
+		atomBalance:   sdk.NewInt64Coin(IbcAtom, 10_000_000),
+		stAtomBalance: sdk.NewInt64Coin(StAtom, 0),
 	}
 	s.FundAccount(user.acc, user.atomBalance)
 
-	module := Account{
-		acc:           s.App.AccountKeeper.GetModuleAddress(stakeibc.ModuleName),
-		atomBalance:   sdk.NewInt64Coin(ibcAtom, 10_000_000),
-		stAtomBalance: sdk.NewInt64Coin(stAtom, 10_000_000),
-	}
-	s.FundModuleAccount(stakeibc.ModuleName, module.atomBalance)
-	s.FundModuleAccount(stakeibc.ModuleName, module.stAtomBalance)
+	zoneAddress := types.NewZoneAddress(HostChainId)
 
-	hostZone := stakeibc.HostZone{
-		ChainId:        "GAIA",
-		HostDenom:      atom,
-		IBCDenom:       ibcAtom,
+	zoneAccount := Account{
+		acc:           zoneAddress,
+		atomBalance:   sdk.NewInt64Coin(IbcAtom, 10_000_000),
+		stAtomBalance: sdk.NewInt64Coin(StAtom, 10_000_000),
+	}
+	s.FundAccount(zoneAccount.acc, zoneAccount.atomBalance)
+	s.FundAccount(zoneAccount.acc, zoneAccount.stAtomBalance)
+
+	hostZone := stakeibctypes.HostZone{
+		ChainId:        HostChainId,
+		HostDenom:      Atom,
+		IBCDenom:       IbcAtom,
 		RedemptionRate: sdk.NewDec(1.0),
+		Address:        zoneAddress.String(),
 	}
 
-	epochTracker := stakeibc.EpochTracker{
+	epochTracker := stakeibctypes.EpochTracker{
 		EpochIdentifier: epochtypes.STRIDE_EPOCH,
 		EpochNumber:     1,
 	}
@@ -73,57 +70,57 @@ func (s *KeeperTestSuite) SetupLiquidStake() LiquidStakeTestCase {
 		Amount:             initialDepositAmount,
 	}
 
-	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
-	s.App.StakeibcKeeper.SetEpochTracker(s.Ctx, epochTracker)
-	s.App.RecordsKeeper.SetDepositRecord(s.Ctx, initialDepositRecord)
+	s.App.StakeibcKeeper.SetHostZone(s.Ctx(), hostZone)
+	s.App.StakeibcKeeper.SetEpochTracker(s.Ctx(), epochTracker)
+	s.App.RecordsKeeper.SetDepositRecord(s.Ctx(), initialDepositRecord)
 
 	return LiquidStakeTestCase{
-		user:   user,
-		module: module,
+		user:        user,
+		zoneAccount: zoneAccount,
 		initialState: LiquidStakeState{
 			depositRecordAmount: initialDepositAmount,
 			hostZone:            hostZone,
 		},
-		validMsg: stakeibc.MsgLiquidStake{
+		validMsg: stakeibctypes.MsgLiquidStake{
 			Creator:   user.acc.String(),
-			HostDenom: atom,
+			HostDenom: Atom,
 			Amount:    stakeAmount,
 		},
 	}
 }
 
-func (s *KeeperTestSuite) TestLiquidStakeSuccessful() {
+func (s *KeeperTestSuite) TestLiquidStake_Successful() {
 	tc := s.SetupLiquidStake()
 	user := tc.user
-	module := tc.module
+	zoneAccount := tc.zoneAccount
 	msg := tc.validMsg
 	stakeAmount := sdk.NewInt(int64(msg.Amount))
-	initialStAtomSupply := s.App.BankKeeper.GetSupply(s.Ctx, stAtom)
+	initialStAtomSupply := s.App.BankKeeper.GetSupply(s.Ctx(), StAtom)
 
-	_, err := s.msgServer.LiquidStake(sdk.WrapSDKContext(s.Ctx), &msg)
+	_, err := s.GetMsgServer().LiquidStake(sdk.WrapSDKContext(s.Ctx()), &msg)
 	s.Require().NoError(err)
 
 	// Confirm balances
 	// User IBC/UATOM balance should have DECREASED by the size of the stake
 	expectedUserAtomBalance := user.atomBalance.SubAmount(stakeAmount)
-	actualUserAtomBalance := s.App.BankKeeper.GetBalance(s.Ctx, user.acc, ibcAtom)
-	// Module IBC/UATOM balance should have INCREASED by the size of the stake
-	expectedModuleAtomBalance := module.atomBalance.AddAmount(stakeAmount)
-	actualModuleAtomBalance := s.App.BankKeeper.GetBalance(s.Ctx, module.acc, ibcAtom)
+	actualUserAtomBalance := s.App.BankKeeper.GetBalance(s.Ctx(), user.acc, IbcAtom)
+	// zoneAccount IBC/UATOM balance should have INCREASED by the size of the stake
+	expectedzoneAccountAtomBalance := zoneAccount.atomBalance.AddAmount(stakeAmount)
+	actualzoneAccountAtomBalance := s.App.BankKeeper.GetBalance(s.Ctx(), zoneAccount.acc, IbcAtom)
 	// User STUATOM balance should have INCREASED by the size of the stake
 	expectedUserStAtomBalance := user.stAtomBalance.AddAmount(stakeAmount)
-	actualUserStAtomBalance := s.App.BankKeeper.GetBalance(s.Ctx, user.acc, stAtom)
+	actualUserStAtomBalance := s.App.BankKeeper.GetBalance(s.Ctx(), user.acc, StAtom)
 	// Bank supply of STUATOM should have INCREASED by the size of the stake
 	expectedBankSupply := initialStAtomSupply.AddAmount(stakeAmount)
-	actualBankSupply := s.App.BankKeeper.GetSupply(s.Ctx, stAtom)
+	actualBankSupply := s.App.BankKeeper.GetSupply(s.Ctx(), StAtom)
 
 	s.CompareCoins(expectedUserStAtomBalance, actualUserStAtomBalance, "user stuatom balance")
 	s.CompareCoins(expectedUserAtomBalance, actualUserAtomBalance, "user ibc/uatom balance")
-	s.CompareCoins(expectedModuleAtomBalance, actualModuleAtomBalance, "module ibc/uatom balance")
+	s.CompareCoins(expectedzoneAccountAtomBalance, actualzoneAccountAtomBalance, "zoneAccount ibc/uatom balance")
 	s.CompareCoins(expectedBankSupply, actualBankSupply, "bank stuatom supply")
 
 	// Confirm deposit record adjustment
-	records := s.App.RecordsKeeper.GetAllDepositRecord(s.Ctx)
+	records := s.App.RecordsKeeper.GetAllDepositRecord(s.Ctx())
 	s.Require().Len(records, 1, "number of deposit records")
 
 	expectedDepositRecordAmount := tc.initialState.depositRecordAmount + stakeAmount.Int64()
@@ -131,27 +128,27 @@ func (s *KeeperTestSuite) TestLiquidStakeSuccessful() {
 	s.Require().Equal(expectedDepositRecordAmount, actualDepositRecordAmount, "deposit record amount")
 }
 
-func (s *KeeperTestSuite) TestLiquidStakeDifferentRedemptionRates() {
+func (s *KeeperTestSuite) TestLiquidStake_DifferentRedemptionRates() {
 	tc := s.SetupLiquidStake()
 	user := tc.user
 	msg := tc.validMsg
 
-	// Loop over exchange rates: {0.2, 0.4, 0.6, ..., 2.0}
+	// Loop over exchange rates: {0.92, 0.94, ..., 1.2}
 	for i := -8; i <= 10; i += 2 {
-		redemptionDelta := sdk.NewDecWithPrec(1.0, 1).Mul(sdk.NewDec(int64(i))) // i = 2 => delta = 0.2
+		redemptionDelta := sdk.NewDecWithPrec(1.0, 1).Quo(sdk.NewDec(10)).Mul(sdk.NewDec(int64(i))) // i = 2 => delta = 0.02
 		newRedemptionRate := sdk.NewDec(1.0).Add(redemptionDelta)
 		redemptionRateFloat := newRedemptionRate.MustFloat64()
 
 		// Update rate in host zone
 		hz := tc.initialState.hostZone
 		hz.RedemptionRate = newRedemptionRate
-		s.App.StakeibcKeeper.SetHostZone(s.Ctx, hz)
+		s.App.StakeibcKeeper.SetHostZone(s.Ctx(), hz)
 
 		// Liquid stake for each balance and confirm stAtom minted
-		startingStAtomBalance := s.App.BankKeeper.GetBalance(s.Ctx, user.acc, stAtom).Amount.Int64()
-		_, err := s.msgServer.LiquidStake(sdk.WrapSDKContext(s.Ctx), &msg)
+		startingStAtomBalance := s.App.BankKeeper.GetBalance(s.Ctx(), user.acc, StAtom).Amount.Int64()
+		_, err := s.GetMsgServer().LiquidStake(sdk.WrapSDKContext(s.Ctx()), &msg)
 		s.Require().NoError(err)
-		endingStAtomBalance := s.App.BankKeeper.GetBalance(s.Ctx, user.acc, stAtom).Amount.Int64()
+		endingStAtomBalance := s.App.BankKeeper.GetBalance(s.Ctx(), user.acc, StAtom).Amount.Int64()
 		actualStAtomMinted := endingStAtomBalance - startingStAtomBalance
 
 		expectedStAtomMinted := int64(float64(msg.Amount) / redemptionRateFloat)
@@ -160,68 +157,93 @@ func (s *KeeperTestSuite) TestLiquidStakeDifferentRedemptionRates() {
 	}
 }
 
-func (s *KeeperTestSuite) TestLiquidStakeHostZoneNotFound() {
+func (s *KeeperTestSuite) TestLiquidStake_RateBelowMinThreshold() {
+	tc := s.SetupLiquidStake()
+	msg := tc.validMsg
+
+	// Update rate in host zone to below min threshold
+	hz := tc.initialState.hostZone
+	hz.RedemptionRate = sdk.NewDec(8).Quo(sdk.NewDec(10))
+	s.App.StakeibcKeeper.SetHostZone(s.Ctx(), hz)
+
+	_, err := s.GetMsgServer().LiquidStake(sdk.WrapSDKContext(s.Ctx()), &msg)
+	s.Require().Error(err)
+}
+
+func (s *KeeperTestSuite) TestLiquidStake_HostZoneNotFound() {
 	tc := s.SetupLiquidStake()
 	// Update message with invalid denom
 	invalidMsg := tc.validMsg
 	invalidMsg.HostDenom = "ufakedenom"
-	_, err := s.msgServer.LiquidStake(sdk.WrapSDKContext(s.Ctx), &invalidMsg)
+	_, err := s.GetMsgServer().LiquidStake(sdk.WrapSDKContext(s.Ctx()), &invalidMsg)
 
 	s.Require().EqualError(err, "no host zone found for denom (ufakedenom): host zone not registered")
 }
 
-func (s *KeeperTestSuite) TestLiquidStakeIbcCoinParseError() {
+func (s *KeeperTestSuite) TestLiquidStake_IbcCoinParseError() {
 	tc := s.SetupLiquidStake()
 	// Update hostzone with denom that can't be parsed
 	badHostZone := tc.initialState.hostZone
 	badHostZone.IBCDenom = "ibc.0atom"
-	s.App.StakeibcKeeper.SetHostZone(s.Ctx, badHostZone)
-	_, err := s.msgServer.LiquidStake(sdk.WrapSDKContext(s.Ctx), &tc.validMsg)
+	s.App.StakeibcKeeper.SetHostZone(s.Ctx(), badHostZone)
+	_, err := s.GetMsgServer().LiquidStake(sdk.WrapSDKContext(s.Ctx()), &tc.validMsg)
 
 	badCoin := fmt.Sprintf("%d%s", tc.validMsg.Amount, badHostZone.IBCDenom)
 	s.Require().EqualError(err, fmt.Sprintf("failed to parse coin (%s): invalid decimal coin expression: %s", badCoin, badCoin))
 }
 
-func (s *KeeperTestSuite) TestLiquidStakeNotIbcDenom() {
+func (s *KeeperTestSuite) TestLiquidStake_NotIbcDenom() {
 	tc := s.SetupLiquidStake()
 	// Update hostzone with non-ibc denom
 	badDenom := "i/uatom"
 	badHostZone := tc.initialState.hostZone
 	badHostZone.IBCDenom = badDenom
-	s.App.StakeibcKeeper.SetHostZone(s.Ctx, badHostZone)
+	s.App.StakeibcKeeper.SetHostZone(s.Ctx(), badHostZone)
 	// Fund the user with the non-ibc denom
 	s.FundAccount(tc.user.acc, sdk.NewInt64Coin(badDenom, 1000000000))
-	_, err := s.msgServer.LiquidStake(sdk.WrapSDKContext(s.Ctx), &tc.validMsg)
+	_, err := s.GetMsgServer().LiquidStake(sdk.WrapSDKContext(s.Ctx()), &tc.validMsg)
 
 	s.Require().EqualError(err, fmt.Sprintf("denom is not an IBC token (%s): invalid token denom", badHostZone.IBCDenom))
 }
 
-func (s *KeeperTestSuite) TestLiquidStakeInsufficientBalance() {
+func (s *KeeperTestSuite) TestLiquidStake_InsufficientBalance() {
 	tc := s.SetupLiquidStake()
 	// Set liquid stake amount to value greater than account balance
 	invalidMsg := tc.validMsg
 	balance := tc.user.atomBalance.Amount.Int64()
 	invalidMsg.Amount = uint64(balance + 1000)
-	_, err := s.msgServer.LiquidStake(sdk.WrapSDKContext(s.Ctx), &invalidMsg)
+	_, err := s.GetMsgServer().LiquidStake(sdk.WrapSDKContext(s.Ctx()), &invalidMsg)
 
 	expectedErr := fmt.Sprintf("balance is lower than staking amount. staking amount: %d, balance: %d: insufficient funds", balance+1000, balance)
 	s.Require().EqualError(err, expectedErr)
 }
 
-func (s *KeeperTestSuite) TestLiquidStakeNoEpochTracker() {
+func (s *KeeperTestSuite) TestLiquidStake_NoEpochTracker() {
 	tc := s.SetupLiquidStake()
 	// Remove epoch tracker
-	s.App.StakeibcKeeper.RemoveEpochTracker(s.Ctx, epochtypes.STRIDE_EPOCH)
-	_, err := s.msgServer.LiquidStake(sdk.WrapSDKContext(s.Ctx), &tc.validMsg)
+	s.App.StakeibcKeeper.RemoveEpochTracker(s.Ctx(), epochtypes.STRIDE_EPOCH)
+	_, err := s.GetMsgServer().LiquidStake(sdk.WrapSDKContext(s.Ctx()), &tc.validMsg)
 
 	s.Require().EqualError(err, fmt.Sprintf("no epoch number for epoch (%s): not found", epochtypes.STRIDE_EPOCH))
 }
 
-func (s *KeeperTestSuite) TestLiquidStakeNoDepositRecord() {
+func (s *KeeperTestSuite) TestLiquidStake_NoDepositRecord() {
 	tc := s.SetupLiquidStake()
 	// Remove deposit record
-	s.App.RecordsKeeper.RemoveDepositRecord(s.Ctx, 1)
-	_, err := s.msgServer.LiquidStake(sdk.WrapSDKContext(s.Ctx), &tc.validMsg)
+	s.App.RecordsKeeper.RemoveDepositRecord(s.Ctx(), 1)
+	_, err := s.GetMsgServer().LiquidStake(sdk.WrapSDKContext(s.Ctx()), &tc.validMsg)
 
 	s.Require().EqualError(err, fmt.Sprintf("no deposit record for epoch (%d): not found", 1))
+}
+
+func (s *KeeperTestSuite) TestLiquidStake_InvalidHostAddress() {
+	tc := s.SetupLiquidStake()
+
+	// Update hostzone with invalid address
+	badHostZone := tc.initialState.hostZone
+	badHostZone.Address = "cosmosXXX"
+	s.App.StakeibcKeeper.SetHostZone(s.Ctx(), badHostZone)
+
+	_, err := s.GetMsgServer().LiquidStake(sdk.WrapSDKContext(s.Ctx()), &tc.validMsg)
+	s.Require().EqualError(err, "could not bech32 decode address cosmosXXX of zone with id: GAIA")
 }

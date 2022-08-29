@@ -3,6 +3,8 @@ package keeper
 import (
 	"fmt"
 
+	"github.com/Stride-Labs/stride/x/icacallbacks"
+	icacallbackstypes "github.com/Stride-Labs/stride/x/icacallbacks/types"
 	"github.com/Stride-Labs/stride/x/stakeibc/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -29,8 +31,21 @@ func (k Keeper) UnmarshalClaimCallbackArgs(ctx sdk.Context, claimCallback []byte
 	return &unmarshalledDelegateCallback, nil
 }
 
-func ClaimCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, txMsgData *sdk.TxMsgData, args []byte) error {
+func ClaimCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ack *channeltypes.Acknowledgement, args []byte) error {
+	if ack == nil {
+		// handle timeout
+		k.Logger(ctx).Error(fmt.Sprintf("ClaimCallback timeout, ack is nil, packet %v", packet))
+		return nil
+	}
+	
+	txMsgData, err := icacallbacks.GetTxMsgData(ctx, *ack, k.Logger(ctx))
+	if err != nil {
+		k.Logger(ctx).Error(fmt.Sprintf("failed to fetch txMsgData, packet %v", packet))
+		return sdkerrors.Wrap(icacallbackstypes.ErrTxMsgData, err.Error())
+	}
 	k.Logger(ctx).Info("ClaimCallback executing", "packet", packet, "txMsgData", txMsgData, "args", args)
+
+	
 	// deserialize the args
 	claimCallback, err := k.UnmarshalClaimCallbackArgs(ctx, args)
 	if err != nil {
@@ -42,8 +57,8 @@ func ClaimCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, txMsgD
 		return sdkerrors.Wrapf(types.ErrRecordNotFound, "user redemption record not found %s", claimCallback.GetUserRedemptionRecordId())
 	}
 
-	if txMsgData == nil || len(txMsgData.Data) == 0 {
-		k.Logger(ctx).Error(fmt.Sprintf("ClaimCallback failed or timed out, txMsgData is nil or empty, packet %v", packet))
+	if len(txMsgData.Data) == 0 {
+		k.Logger(ctx).Error(fmt.Sprintf("ClaimCallback failed, packet %v", packet))
 		// transaction on the host chain failed
 		// set UserClaimRecord as claimable
 		userClaimRecord.IsClaimable = true

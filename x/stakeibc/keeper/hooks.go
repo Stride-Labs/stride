@@ -2,11 +2,8 @@ package keeper
 
 import (
 	"fmt"
-	"strconv"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	ibctypes "github.com/cosmos/ibc-go/v3/modules/apps/transfer/types"
-	clienttypes "github.com/cosmos/ibc-go/v3/modules/core/02-client/types"
 	"github.com/spf13/cast"
 
 	"github.com/Stride-Labs/stride/utils"
@@ -202,26 +199,6 @@ func (h Hooks) AfterEpochEnd(ctx sdk.Context, epochInfo epochstypes.EpochInfo) {
 }
 
 // -------------------- helper functions --------------------
-func (k Keeper) CreateDepositRecordsForEpoch(ctx sdk.Context, epochNumber uint64) {
-	// Create one new deposit record / host zone for the next epoch
-	createDepositRecords := func(ctx sdk.Context, index int64, zoneInfo types.HostZone) error {
-		k.Logger(ctx).Info(fmt.Sprintf("createDepositRecords, index: %d, zoneInfo: %s", index, zoneInfo.ConnectionId))
-		// create a deposit record / host zone
-		depositRecord := recordstypes.DepositRecord{
-			Id:                 0,
-			Amount:             0,
-			Denom:              zoneInfo.HostDenom,
-			HostZoneId:         zoneInfo.ChainId,
-			Status:             recordstypes.DepositRecord_TRANSFER,
-			DepositEpochNumber: epochNumber,
-		}
-		k.RecordsKeeper.AppendDepositRecord(ctx, depositRecord)
-		return nil
-	}
-	// Iterate the zones and apply icaReinvest
-	k.IterateHostZones(ctx, createDepositRecords)
-}
-
 func (k Keeper) SetWithdrawalAddress(ctx sdk.Context) {
 	setWithdrawalAddresses := func(ctx sdk.Context, index int64, zoneInfo types.HostZone) error {
 		k.Logger(ctx).Info(fmt.Sprintf("\tsetting withdrawal address for index %v, zoneInfo %v", index, zoneInfo))
@@ -235,109 +212,6 @@ func (k Keeper) SetWithdrawalAddress(ctx sdk.Context) {
 		return nil
 	}
 	k.IterateHostZones(ctx, setWithdrawalAddresses)
-}
-
-func (k Keeper) StakeExistingDepositsOnHostZones(ctx sdk.Context, epochNumber uint64, depositRecords []recordstypes.DepositRecord) {
-	stakeDepositRecords := utils.FilterDepositRecords(depositRecords, func(record recordstypes.DepositRecord) (condition bool) {
-		return record.Status == recordstypes.DepositRecord_STAKE
-	})
-	for _, depositRecord := range stakeDepositRecords {
-		if depositRecord.DepositEpochNumber < cast.ToUint64(epochNumber) {
-			pstr := fmt.Sprintf("\t[StakeExistingDepositsOnHostZones] Processing deposit ID:{%d} DENOM:{%s} AMT:{%d}", depositRecord.Id, depositRecord.Denom, depositRecord.Amount)
-			k.Logger(ctx).Info(pstr)
-			hostZone, hostZoneFound := k.GetHostZone(ctx, depositRecord.HostZoneId)
-			if !hostZoneFound {
-				k.Logger(ctx).Error(fmt.Sprintf("[StakeExistingDepositsOnHostZones] Host zone not found for deposit record {%d}", depositRecord.Id))
-				continue
-			}
-			delegateAccount := hostZone.GetDelegationAccount()
-			if delegateAccount == nil || delegateAccount.GetAddress() == "" {
-				k.Logger(ctx).Error(fmt.Sprintf("[StakeExistingDepositsOnHostZones] Zone %s is missing a delegation address!", hostZone.ChainId))
-				continue
-			}
-			k.Logger(ctx).Info(fmt.Sprintf("\tdelegation staking on %s", hostZone.HostDenom))
-			processAmount := utils.Int64ToCoinString(depositRecord.Amount, hostZone.HostDenom)
-			amt, err := sdk.ParseCoinNormalized(processAmount)
-			if err != nil {
-				k.Logger(ctx).Error(fmt.Sprintf("Could not process coin %v: %v", hostZone.HostDenom, err.Error()))
-				return
-			}
-			err = k.DelegateOnHost(ctx, hostZone, amt, depositRecord.Id)
-			if err != nil {
-				k.Logger(ctx).Error(fmt.Sprintf("Did not stake %s on %s | err: %s", processAmount, hostZone.ChainId, err.Error()))
-				return
-			} else {
-				k.Logger(ctx).Info(fmt.Sprintf("Successfully submitted stake for %s on %s", processAmount, hostZone.ChainId))
-			}
-
-			ctx.EventManager().EmitEvent(
-				sdk.NewEvent(
-					sdk.EventTypeMessage,
-					sdk.NewAttribute("hostZone", hostZone.ChainId),
-					sdk.NewAttribute("newAmountStaked", strconv.FormatInt(depositRecord.Amount, 10)),
-				),
-			)
-		}
-	}
-}
-
-func (k Keeper) TransferExistingDepositsToHostZones(ctx sdk.Context, epochNumber uint64, depositRecords []recordstypes.DepositRecord) {
-	transferDepositRecords := utils.FilterDepositRecords(depositRecords, func(record recordstypes.DepositRecord) (condition bool) {
-		return record.Status == recordstypes.DepositRecord_TRANSFER
-	})
-	ibcTimeoutBlocks := k.GetParam(ctx, types.KeyIbcTimeoutBlocks)
-	addr := k.accountKeeper.GetModuleAccount(ctx, types.ModuleName).GetAddress().String()
-	var emptyRecords []uint64
-	for _, depositRecord := range transferDepositRecords {
-		if depositRecord.DepositEpochNumber < cast.ToUint64(epochNumber) {
-			pstr := fmt.Sprintf("\t[TransferExistingDepositsToHostZones] Processing deposits {%d} {%s} {%d}", depositRecord.Id, depositRecord.Denom, depositRecord.Amount)
-			k.Logger(ctx).Info(pstr)
-
-			// skip empty records
-			if depositRecord.Amount <= 0 {
-				k.Logger(ctx).Info("[TransferExistingDepositsToHostZones] Empty deposit record! Skipping")
-				emptyRecords = append(emptyRecords, depositRecord.Id)
-				continue
-			}
-
-			hostZone, hostZoneFound := k.GetHostZone(ctx, depositRecord.HostZoneId)
-			if !hostZoneFound {
-				k.Logger(ctx).Error(fmt.Sprintf("[TransferExistingDepositsToHostZones] Host zone not found for deposit record id %d", depositRecord.Id))
-				continue
-			}
-			delegateAccount := hostZone.GetDelegationAccount()
-			if delegateAccount == nil || delegateAccount.GetAddress() == "" {
-				k.Logger(ctx).Error(fmt.Sprintf("[TransferExistingDepositsToHostZones] Zone %s is missing a delegation address!", hostZone.ChainId))
-				continue
-			}
-			delegateAddress := delegateAccount.GetAddress()
-			// TODO(TEST-90): why do we have two gaia LCs?
-			blockHeight, found := k.GetLightClientHeightSafely(ctx, hostZone.ConnectionId)
-			if !found {
-				k.Logger(ctx).Error(fmt.Sprintf("Could not find blockHeight for host zone %s, aborting transfers to host zone this epoch", hostZone.ConnectionId))
-				continue
-			} else {
-				k.Logger(ctx).Info(fmt.Sprintf("Found blockHeight for host zone %s: %d", hostZone.ConnectionId, blockHeight))
-			}
-			timeoutHeight := clienttypes.NewHeight(0, blockHeight+ibcTimeoutBlocks)
-			transferCoin := sdk.NewCoin(hostZone.GetIBCDenom(), sdk.NewInt(depositRecord.Amount))
-			goCtx := sdk.WrapSDKContext(ctx)
-
-			msg := ibctypes.NewMsgTransfer("transfer", hostZone.TransferChannelId, transferCoin, addr, delegateAddress, timeoutHeight, 0)
-			k.Logger(ctx).Info(fmt.Sprintf("TransferExistingDepositsToHostZones msg %v", msg))
-			_, err := k.TransferKeeper.Transfer(goCtx, msg)
-			if err != nil {
-				k.Logger(ctx).Error(fmt.Sprintf("\t[TransferExistingDepositsToHostZones] ERROR WITH DEPOSIT RECEIPT %s %v %s %s %v", hostZone.TransferChannelId, transferCoin, addr, delegateAddress, timeoutHeight))
-				k.Logger(ctx).Error(fmt.Sprintf("\t[TransferExistingDepositsToHostZones] err {%s}", err.Error()))
-				return
-			}
-		}
-	}
-	// clear empty records
-	for _, recordId := range emptyRecords {
-		k.Logger(ctx).Info(fmt.Sprintf("\t[TransferExistingDepositsToHostZones] clear empty deposit record record %v", recordId))
-		k.RecordsKeeper.RemoveDepositRecord(ctx, recordId)
-	}
 }
 
 func (k Keeper) UpdateRedemptionRates(ctx sdk.Context, depositRecords []recordstypes.DepositRecord) {

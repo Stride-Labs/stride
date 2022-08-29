@@ -1,20 +1,33 @@
-FROM golang:1.17-alpine3.15 AS golang
+# syntax = docker/dockerfile:1
+FROM golang:1.18-alpine3.15 AS golang
 
-WORKDIR /src/app/
-COPY go.mod go.sum* ./
+WORKDIR /src/
+
+RUN apk add --no-cache make git gcc musl-dev openssl-dev linux-headers
+
+COPY go.mod .
+COPY go.sum .
+COPY Makefile .
 RUN go mod download
-COPY . .
 
-RUN apk add --no-cache make git gcc musl-dev openssl-dev linux-headers \
-    && make build
+COPY app /src/app
+COPY cmd /src/cmd
+COPY proto /src/proto
+COPY testutil /src/testutil
+COPY utils /src/utils
+COPY x /src/x
+
+RUN --mount=type=cache,target=/root/.cache/go-build make build
 
 # Add to a distroless container
 FROM alpine:3.15
-COPY --from=golang /src/app/build/strided /usr/local/bin/strided
+COPY --from=golang /src/build/strided /usr/local/bin/strided
 RUN addgroup -g 1000 stride \
-    && adduser -S -h /stride -D stride -u 1000 -G stride
-USER stride
+    && adduser -S -h /home/stride -D stride -u 1000 -G stride
 
-RUN strided init test
-EXPOSE 1317
-CMD ["strided", "start", "--home", "/stride/.strided"]
+USER stride
+WORKDIR /home/stride
+
+EXPOSE 26657 26656 1317 9090
+
+CMD ["strided", "start"]

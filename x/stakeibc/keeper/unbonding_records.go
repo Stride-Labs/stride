@@ -224,7 +224,7 @@ func (k Keeper) SweepAllUnbondedTokens(ctx sdk.Context) {
 
 		epochUnbondingRecords := k.RecordsKeeper.GetAllEpochUnbondingRecord(ctx)
 		totalAmtTransferToRedemptionAcct := int64(0)
-		unbondingEpochNumbers := []uint64{}
+		epochUnbondingRecordIds := []uint64{}
 		for _, epochUnbondingRecord := range epochUnbondingRecords {
 			k.Logger(ctx).Info(fmt.Sprintf("processing epochUnbondingRecord %v", epochUnbondingRecord.EpochNumber))
 
@@ -261,7 +261,7 @@ func (k Keeper) SweepAllUnbondedTokens(ctx sdk.Context) {
 					return sdkerrors.Wrapf(types.ErrIntCast, errMsg)
 				}
 				totalAmtTransferToRedemptionAcct += nativeTokenAmount
-				unbondingEpochNumbers = append(unbondingEpochNumbers, epochUnbondingRecord.EpochNumber)
+				epochUnbondingRecordIds = append(epochUnbondingRecordIds, epochUnbondingRecord.EpochNumber)
 			}
 		}
 		// if we have any amount to sweep, then we can send the ICA call to sweep them
@@ -294,8 +294,8 @@ func (k Keeper) SweepAllUnbondedTokens(ctx sdk.Context) {
 
 				// store the epoch numbers in the callback to identify the epoch unbonding records
 				redemptionCallback := types.RedemptionCallback{
-					HostZoneId:            hostZone.ChainId,
-					UnbondingEpochNumbers: unbondingEpochNumbers,
+					HostZoneId:              hostZone.ChainId,
+					EpochUnbondingRecordIds: epochUnbondingRecordIds,
 				}
 
 				marshalledCallbackArgs, err := k.MarshalRedemptionCallbackArgs(ctx, redemptionCallback)

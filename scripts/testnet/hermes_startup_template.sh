@@ -13,9 +13,9 @@ done
 sleep 60
 
 echo "Creating connection STRIDE <> GAIA"
-hermes create connection STRIDE_CHAIN_ID GAIA
+hermes create connection --a-chain STRIDE_CHAIN_ID --b-chain GAIA
 
 echo "Creating transfer channel"
-hermes create channel --port-a transfer --port-b transfer GAIA connection-0 
+hermes create channel --a-chain GAIA --a-connection connection-0 --a-port transfer --b-port transfer
 
 hermes start 
