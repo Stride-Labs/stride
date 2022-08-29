@@ -9,14 +9,7 @@ import (
 	epochtypes "github.com/Stride-Labs/stride/x/epochs/types"
 	recordtypes "github.com/Stride-Labs/stride/x/records/types"
 	"github.com/Stride-Labs/stride/x/stakeibc/types"
-	stakeibc "github.com/Stride-Labs/stride/x/stakeibc/types"
-)
-
-const (
-	atom    = "uatom"
-	stAtom  = "stuatom"
-	ibcAtom = "ibc/uatom"
-	chainId = "GAIA"
+	stakeibctypes "github.com/Stride-Labs/stride/x/stakeibc/types"
 )
 
 type Account struct {
@@ -34,7 +27,7 @@ type LiquidStakeTestCase struct {
 	user         Account
 	zoneAccount  Account
 	initialState LiquidStakeState
-	validMsg     stakeibc.MsgLiquidStake
+	validMsg     stakeibctypes.MsgLiquidStake
 }
 
 func (s *KeeperTestSuite) SetupLiquidStake() LiquidStakeTestCase {
@@ -42,30 +35,30 @@ func (s *KeeperTestSuite) SetupLiquidStake() LiquidStakeTestCase {
 	initialDepositAmount := int64(1_000_000)
 	user := Account{
 		acc:           s.TestAccs[0],
-		atomBalance:   sdk.NewInt64Coin(ibcAtom, 10_000_000),
-		stAtomBalance: sdk.NewInt64Coin(stAtom, 0),
+		atomBalance:   sdk.NewInt64Coin(IbcAtom, 10_000_000),
+		stAtomBalance: sdk.NewInt64Coin(StAtom, 0),
 	}
 	s.FundAccount(user.acc, user.atomBalance)
 
-	zoneAddress := types.NewZoneAddress(chainId)
+	zoneAddress := types.NewZoneAddress(HostChainId)
 
 	zoneAccount := Account{
 		acc:           zoneAddress,
-		atomBalance:   sdk.NewInt64Coin(ibcAtom, 10_000_000),
-		stAtomBalance: sdk.NewInt64Coin(stAtom, 10_000_000),
+		atomBalance:   sdk.NewInt64Coin(IbcAtom, 10_000_000),
+		stAtomBalance: sdk.NewInt64Coin(StAtom, 10_000_000),
 	}
 	s.FundAccount(zoneAccount.acc, zoneAccount.atomBalance)
 	s.FundAccount(zoneAccount.acc, zoneAccount.stAtomBalance)
 
-	hostZone := stakeibc.HostZone{
-		ChainId:        chainId,
-		HostDenom:      atom,
-		IBCDenom:       ibcAtom,
+	hostZone := stakeibctypes.HostZone{
+		ChainId:        HostChainId,
+		HostDenom:      Atom,
+		IBCDenom:       IbcAtom,
 		RedemptionRate: sdk.NewDec(1.0),
 		Address:        zoneAddress.String(),
 	}
 
-	epochTracker := stakeibc.EpochTracker{
+	epochTracker := stakeibctypes.EpochTracker{
 		EpochIdentifier: epochtypes.STRIDE_EPOCH,
 		EpochNumber:     1,
 	}
@@ -88,9 +81,9 @@ func (s *KeeperTestSuite) SetupLiquidStake() LiquidStakeTestCase {
 			depositRecordAmount: initialDepositAmount,
 			hostZone:            hostZone,
 		},
-		validMsg: stakeibc.MsgLiquidStake{
+		validMsg: stakeibctypes.MsgLiquidStake{
 			Creator:   user.acc.String(),
-			HostDenom: atom,
+			HostDenom: Atom,
 			Amount:    stakeAmount,
 		},
 	}
@@ -102,7 +95,7 @@ func (s *KeeperTestSuite) TestLiquidStake_Successful() {
 	zoneAccount := tc.zoneAccount
 	msg := tc.validMsg
 	stakeAmount := sdk.NewInt(int64(msg.Amount))
-	initialStAtomSupply := s.App.BankKeeper.GetSupply(s.Ctx(), stAtom)
+	initialStAtomSupply := s.App.BankKeeper.GetSupply(s.Ctx(), StAtom)
 
 	_, err := s.GetMsgServer().LiquidStake(sdk.WrapSDKContext(s.Ctx()), &msg)
 	s.Require().NoError(err)
@@ -110,16 +103,16 @@ func (s *KeeperTestSuite) TestLiquidStake_Successful() {
 	// Confirm balances
 	// User IBC/UATOM balance should have DECREASED by the size of the stake
 	expectedUserAtomBalance := user.atomBalance.SubAmount(stakeAmount)
-	actualUserAtomBalance := s.App.BankKeeper.GetBalance(s.Ctx(), user.acc, ibcAtom)
+	actualUserAtomBalance := s.App.BankKeeper.GetBalance(s.Ctx(), user.acc, IbcAtom)
 	// zoneAccount IBC/UATOM balance should have INCREASED by the size of the stake
 	expectedzoneAccountAtomBalance := zoneAccount.atomBalance.AddAmount(stakeAmount)
-	actualzoneAccountAtomBalance := s.App.BankKeeper.GetBalance(s.Ctx(), zoneAccount.acc, ibcAtom)
+	actualzoneAccountAtomBalance := s.App.BankKeeper.GetBalance(s.Ctx(), zoneAccount.acc, IbcAtom)
 	// User STUATOM balance should have INCREASED by the size of the stake
 	expectedUserStAtomBalance := user.stAtomBalance.AddAmount(stakeAmount)
-	actualUserStAtomBalance := s.App.BankKeeper.GetBalance(s.Ctx(), user.acc, stAtom)
+	actualUserStAtomBalance := s.App.BankKeeper.GetBalance(s.Ctx(), user.acc, StAtom)
 	// Bank supply of STUATOM should have INCREASED by the size of the stake
 	expectedBankSupply := initialStAtomSupply.AddAmount(stakeAmount)
-	actualBankSupply := s.App.BankKeeper.GetSupply(s.Ctx(), stAtom)
+	actualBankSupply := s.App.BankKeeper.GetSupply(s.Ctx(), StAtom)
 
 	s.CompareCoins(expectedUserStAtomBalance, actualUserStAtomBalance, "user stuatom balance")
 	s.CompareCoins(expectedUserAtomBalance, actualUserAtomBalance, "user ibc/uatom balance")
@@ -152,10 +145,10 @@ func (s *KeeperTestSuite) TestLiquidStake_DifferentRedemptionRates() {
 		s.App.StakeibcKeeper.SetHostZone(s.Ctx(), hz)
 
 		// Liquid stake for each balance and confirm stAtom minted
-		startingStAtomBalance := s.App.BankKeeper.GetBalance(s.Ctx(), user.acc, stAtom).Amount.Int64()
+		startingStAtomBalance := s.App.BankKeeper.GetBalance(s.Ctx(), user.acc, StAtom).Amount.Int64()
 		_, err := s.GetMsgServer().LiquidStake(sdk.WrapSDKContext(s.Ctx()), &msg)
 		s.Require().NoError(err)
-		endingStAtomBalance := s.App.BankKeeper.GetBalance(s.Ctx(), user.acc, stAtom).Amount.Int64()
+		endingStAtomBalance := s.App.BankKeeper.GetBalance(s.Ctx(), user.acc, StAtom).Amount.Int64()
 		actualStAtomMinted := endingStAtomBalance - startingStAtomBalance
 
 		expectedStAtomMinted := int64(float64(msg.Amount) / redemptionRateFloat)

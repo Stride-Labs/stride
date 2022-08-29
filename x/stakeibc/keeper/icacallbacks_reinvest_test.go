@@ -35,15 +35,15 @@ func (s *KeeperTestSuite) SetupReinvestCallback() ReinvestCallbackTestCase {
 	reinvestAmt := int64(1_000)
 
 	hostZone := stakeibc.HostZone{
-		ChainId:        chainId,
-		HostDenom:      atom,
-		IBCDenom:       ibcAtom,
+		ChainId:        HostChainId,
+		HostDenom:      Atom,
+		IBCDenom:       IbcAtom,
 		RedemptionRate: sdk.NewDec(1.0),
 	}
 	expectedNewDepositRecord := recordtypes.DepositRecord{
 		Id:                 0,
 		DepositEpochNumber: 1,
-		HostZoneId:         chainId,
+		HostZoneId:         HostChainId,
 		Amount:             reinvestAmt,
 		Status:             recordtypes.DepositRecord_STAKE,
 		Source:             recordtypes.DepositRecord_WITHDRAWAL_ICA,
@@ -60,8 +60,8 @@ func (s *KeeperTestSuite) SetupReinvestCallback() ReinvestCallbackTestCase {
 	msgs = append(msgs, &banktypes.MsgSend{}, &banktypes.MsgSend{})
 	ack := s.ICAPacketAcknowledgement(msgs)
 	callbackArgs := types.ReinvestCallback{
-		HostZoneId:     chainId,
-		ReinvestAmount: sdk.NewCoin(atom, sdk.NewInt(reinvestAmt)),
+		HostZoneId:     HostChainId,
+		ReinvestAmount: sdk.NewCoin(Atom, sdk.NewInt(reinvestAmt)),
 	}
 	args, err := s.App.StakeibcKeeper.MarshalReinvestCallbackArgs(s.Ctx(), callbackArgs)
 	s.Require().NoError(err)
