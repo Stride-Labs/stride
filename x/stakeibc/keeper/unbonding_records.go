@@ -243,14 +243,18 @@ func (k Keeper) InitiateAllHostZoneUnbondings(ctx sdk.Context, dayNumber uint64)
 
 func (k Keeper) CleanupEpochUnbondingRecords(ctx sdk.Context) bool {
 	// this function goes through each EpochUnbondingRecord
-	// if any of them don't have any hostZones, then it deletes the record
+	// if any of them don't have any unprocessed hostZoneUnbondings, then it deletes the record
 	for _, epochUnbondingRecord := range k.RecordsKeeper.GetAllEpochUnbondingRecord(ctx) {
 		k.Logger(ctx).Info(fmt.Sprintf("Cleaning up epoch unbondings for epoch unbonding record from epoch %d", epochUnbondingRecord.GetEpochNumber()))
 		shouldDeleteRecord := true
 		hostZoneUnbondings := epochUnbondingRecord.GetHostZoneUnbondings()
 		for _, hostZoneUnbonding := range hostZoneUnbondings {
 			k.Logger(ctx).Info(fmt.Sprintf("processing hostZoneUnbonding %v", hostZoneUnbonding))
-			if (hostZoneUnbonding.Status != recordstypes.HostZoneUnbonding_TRANSFERRED) && (hostZoneUnbonding.GetNativeTokenAmount() != 0) {
+			// do NOT delete this record if
+			// 1. A nonzero amount of tokens were redeemed in this epoch AND
+			// 2. The tokens haven't been transferred yet
+			// i.e. this epochUnbondingRecord is relevant if both of the above are true
+			if (hostZoneUnbonding.GetNativeTokenAmount() != 0) && (hostZoneUnbonding.Status != recordstypes.HostZoneUnbonding_TRANSFERRED) {
 				shouldDeleteRecord = false
 				break
 			}
