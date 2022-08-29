@@ -45,7 +45,7 @@ func (k Keeper) TransferExistingDepositsToHostZones(ctx sdk.Context, epochNumber
 		pstr := fmt.Sprintf("\t[TransferExistingDepositsToHostZones] Processing deposits {%d} {%s} {%d}", depositRecord.Id, depositRecord.Denom, depositRecord.Amount)
 		k.Logger(ctx).Info(pstr)
 
-		// skip empty records
+		// if a TRANSFER record has 0 balance and was created in the previous epoch, it's safe to remove since it will never be updated or used"
 		if depositRecord.Amount <= 0 {
 			k.Logger(ctx).Info("[TransferExistingDepositsToHostZones] Empty deposit record (ID: %s)! Removing.", depositRecord.Id)
 			k.RecordsKeeper.RemoveDepositRecord(ctx, depositRecord.Id)

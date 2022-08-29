@@ -8,20 +8,14 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	ibctesting "github.com/cosmos/ibc-go/v3/testing"
 
+	icatypes "github.com/cosmos/ibc-go/v3/modules/apps/27-interchain-accounts/types"
+
 	epochtypes "github.com/Stride-Labs/stride/x/epochs/types"
 	icacallbackstypes "github.com/Stride-Labs/stride/x/icacallbacks/types"
 	recordstypes "github.com/Stride-Labs/stride/x/records/types"
 	stakeibctypes "github.com/Stride-Labs/stride/x/stakeibc/types"
 )
 
-// QUESTION: Does anyone have a better suggestion for the file organization of these two tests?
-// They share the same setup so I originally thought it made sense to put them in the same file,
-// but it's growing pretty large
-// Also not married to the filename if anyone has a better suggestion!
-// Another option:
-//   |-- deposit_records_test.go          // setup one
-//   |-- transfer_deposit_records_test.go // transfer tests
-//   |-- stake_deposit_records_test.go    // stake tests
 type TestDepositRecords struct {
 	emptyRecords          []recordstypes.DepositRecord
 	recordsToBeTransfered []recordstypes.DepositRecord
@@ -207,7 +201,7 @@ func (s *KeeperTestSuite) SetupDepositRecords() DepositRecordsTestCase {
 			ChannelID: ibctesting.FirstChannelID,
 		},
 		DelegationChannel: Channel{
-			PortID:    "icacontroller-" + delegationAccountOwner,
+			PortID:    icatypes.PortPrefix + delegationAccountOwner,
 			ChannelID: delegationChannelID,
 		},
 	}
