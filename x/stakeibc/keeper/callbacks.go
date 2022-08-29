@@ -190,16 +190,6 @@ func WithdrawalBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query icq
 	return nil
 }
 
-// get a validator and its index from a list of validators, by address
-func getValidator(validators []*types.Validator, address string) (types.Validator, int64, bool) {
-	for i, v := range validators {
-		if v.Address == address {
-			return *v, int64(i), true
-		}
-	}
-	return types.Validator{}, 0, false
-}
-
 // ValidatorCallback is a callback handler for validator queries.
 //
 // In an attempt to get the ICA's delegation amount on a given validator, we have to query:
@@ -210,7 +200,7 @@ func getValidator(validators []*types.Validator, address string) (types.Validato
 //
 // This callback from query #1
 func ValidatorExchangeRateCallback(k Keeper, ctx sdk.Context, args []byte, query icqtypes.Query) error {
-	zone, found := k.GetHostZone(ctx, query.GetChainId())
+	hostZone, found := k.GetHostZone(ctx, query.GetChainId())
 	if !found {
 		errMsg := fmt.Sprintf("no registered zone for queried chain ID (%s)", query.GetChainId())
 		k.Logger(ctx).Error(errMsg)
@@ -219,25 +209,25 @@ func ValidatorExchangeRateCallback(k Keeper, ctx sdk.Context, args []byte, query
 	queriedValidator := stakingtypes.Validator{}
 	err := k.cdc.Unmarshal(args, &queriedValidator)
 	if err != nil {
-		errMsg := fmt.Sprintf("unable to unmarshal queriedValidator info for zone %s, err: %s", zone.ChainId, err.Error())
+		errMsg := fmt.Sprintf("unable to unmarshal queriedValidator info for zone %s, err: %s", hostZone.ChainId, err.Error())
 		k.Logger(ctx).Error(errMsg)
 		return sdkerrors.Wrapf(types.ErrMarshalFailure, errMsg)
 	}
-	k.Logger(ctx).Info(fmt.Sprintf("ValidatorCallback: zone %v queriedValidator %v", zone.ChainId, queriedValidator))
+	k.Logger(ctx).Info(fmt.Sprintf("ValidatorCallback: zone %v queriedValidator %v", hostZone.ChainId, queriedValidator))
 
 	// ensure ICQ can be issued now! else fail the callback
-	valid, err := k.IsWithinBufferWindow(ctx)
+	withinBufferWindow, err := k.IsWithinBufferWindow(ctx)
 	if err != nil {
 		// QUESTION: this is the case where the user submitted the query within the buffer window,
 		// but by the time it got back, we were outside of the window
 		// Is there anything we should do differently here. Not a great UX for the TX to look successful but fail under the hood
 		return err
-	} else if !valid {
+	} else if !withinBufferWindow {
 		return nil
 	}
 
 	// set the validator's conversion rate
-	v, i, found := getValidator(zone.Validators, queriedValidator.OperatorAddress)
+	validator, valIndex, found := GetValidatorFromAddress(hostZone.Validators, queriedValidator.OperatorAddress)
 	if !found {
 		errMsg := fmt.Sprintf("no registered validator for address (%s)", queriedValidator.OperatorAddress)
 		k.Logger(ctx).Error(errMsg)
@@ -254,19 +244,20 @@ func ValidatorExchangeRateCallback(k Keeper, ctx sdk.Context, args []byte, query
 	//     exchange_rate = num_tokens / num_shares
 	//  We can use `validator.TokensFromShares`, plug in 1.0 for the number of shares,
 	//    and the returned number of tokens will be equal to the internal exchange rate
-	v.InternalExchangeRate = &types.ValidatorExchangeRate{
+	validator.InternalExchangeRate = &types.ValidatorExchangeRate{
 		InternalTokensToSharesRate: queriedValidator.TokensFromShares(sdk.NewDec(1.0)),
 		EpochNumber:                strideEpochTracker.GetEpochNumber(),
 	}
-	k.Logger(ctx).Info(fmt.Sprintf("ValidatorCallback: zone %s validator %v tokensFromShares %v", zone.ChainId, v.Address, v.InternalExchangeRate.InternalTokensToSharesRate))
-	// write back to state and break
-	zone.Validators[i] = &v
-	k.SetHostZone(ctx, zone)
+	hostZone.Validators[valIndex] = &validator
+	k.SetHostZone(ctx, hostZone)
+
+	k.Logger(ctx).Info(fmt.Sprintf("ValidatorCallback: zone %s validator %v tokensFromShares %v",
+		hostZone.ChainId, validator.Address, validator.InternalExchangeRate.InternalTokensToSharesRate))
 
 	// armed with the exch rate, we can now query the (val,del) delegation
-	err = k.QueryDelegationsIcq(ctx, zone, queriedValidator.OperatorAddress)
+	err = k.QueryDelegationsIcq(ctx, hostZone, queriedValidator.OperatorAddress)
 	if err != nil {
-		errMsg := fmt.Sprintf("ValidatorCallback: failed to query delegation, zone %s, err: %s", zone.ChainId, err.Error())
+		errMsg := fmt.Sprintf("ValidatorCallback: failed to query delegation, zone %s, err: %s", hostZone.ChainId, err.Error())
 		k.Logger(ctx).Error(errMsg)
 		return sdkerrors.Wrapf(types.ErrICQFailed, errMsg)
 	}
