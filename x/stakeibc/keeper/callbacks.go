@@ -212,19 +212,25 @@ func getValidator(validators []*types.Validator, address string) (types.Validato
 func ValidatorExchangeRateCallback(k Keeper, ctx sdk.Context, args []byte, query icqtypes.Query) error {
 	zone, found := k.GetHostZone(ctx, query.GetChainId())
 	if !found {
-		return fmt.Errorf("no registered zone for chain id: %s", query.GetChainId())
+		errMsg := fmt.Sprintf("no registered zone for queried chain ID (%s)", query.GetChainId())
+		k.Logger(ctx).Error(errMsg)
+		return sdkerrors.Wrapf(types.ErrHostZoneNotFound, errMsg)
 	}
 	queriedValidator := stakingtypes.Validator{}
 	err := k.cdc.Unmarshal(args, &queriedValidator)
 	if err != nil {
-		k.Logger(ctx).Error(fmt.Sprintf("unable to unmarshal queriedValidator info for zone %s, err: %s", zone.ChainId, err.Error()))
-		return err
+		errMsg := fmt.Sprintf("unable to unmarshal queriedValidator info for zone %s, err: %s", zone.ChainId, err.Error())
+		k.Logger(ctx).Error(errMsg)
+		return sdkerrors.Wrapf(types.ErrMarshalFailure, errMsg)
 	}
 	k.Logger(ctx).Info(fmt.Sprintf("ValidatorCallback: zone %v queriedValidator %v", zone.ChainId, queriedValidator))
 
 	// ensure ICQ can be issued now! else fail the callback
 	valid, err := k.IsWithinBufferWindow(ctx)
 	if err != nil {
+		// QUESTION: this is the case where the user submitted the query within the buffer window,
+		// but by the time it got back, we were outside of the window
+		// Is there anything we should do differently here. Not a great UX for the TX to look successful but fail under the hood
 		return err
 	} else if !valid {
 		return nil
@@ -233,7 +239,9 @@ func ValidatorExchangeRateCallback(k Keeper, ctx sdk.Context, args []byte, query
 	// set the validator's conversion rate
 	v, i, found := getValidator(zone.Validators, queriedValidator.OperatorAddress)
 	if !found {
-		return fmt.Errorf("no registered validator for address: %s", queriedValidator.OperatorAddress)
+		errMsg := fmt.Sprintf("no registered validator for address (%s)", queriedValidator.OperatorAddress)
+		k.Logger(ctx).Error(errMsg)
+		return sdkerrors.Wrapf(types.ErrValidatorNotFound, errMsg)
 	}
 	// get the stride epoch number
 	strideEpochTracker, found := k.GetEpochTracker(ctx, epochtypes.STRIDE_EPOCH)
