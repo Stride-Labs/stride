@@ -1,6 +1,7 @@
 package keeper_test
 
 import (
+	"math"
 	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -227,23 +228,185 @@ func (s *KeeperTestSuite) TestUndelegateCallback_HostNotFound() {
 	s.Require().EqualError(err, "Host zone not found: GAIA: key not found")
 }
 
-// Test UpdateDelegationBalances
-// Test success case - validator amounts decrease
-// Test failure case - amount is too big
+// UpdateDelegationBalances tests
+func (s *KeeperTestSuite) TestUpdateDelegationBalances_Success() {
+	tc := s.SetupUndelegateCallback()
+	// Check that stakedBal has NOT decreased on the host zone
+	hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx(), chainId)
+	s.Require().True(found)
+	err := s.App.StakeibcKeeper.UpdateDelegationBalances(s.Ctx(), hostZone, tc.initialState.callbackArgs)
+	s.Require().NoError(err)
 
-// Test GetLatestCompletionTime
-// Test success case - given a list of completion times, pick the latest
-// Test failure case - latest completion time is zero
+	updatedHostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx(), chainId)
+	s.Require().True(found)
 
-// Test UpdateHostZoneUnbondings
+	// Check that Delegations on validators have decreased
+	s.Require().True(len(updatedHostZone.Validators) == 2, "Expected 2 validators")
+	val1 := updatedHostZone.Validators[0]
+	s.Require().Equal(int64(val1.DelegationAmt), int64(tc.initialState.val1Bal)-tc.initialState.val1RelAmt)
+	val2 := updatedHostZone.Validators[1]
+	s.Require().Equal(int64(val2.DelegationAmt), int64(tc.initialState.val2Bal)-tc.initialState.val2RelAmt)
+}
+
+func (s *KeeperTestSuite) TestUpdateDelegationBalances_BigDelegation() {
+	_ = s.SetupUndelegateCallback()
+	hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx(), chainId)
+	s.Require().True(found)
+	splitDelegation := types.SplitDelegation{
+		Amount: math.MaxUint64,
+	}
+	invalidCallbackArgs := types.UndelegateCallback{
+		HostZoneId:              chainId,
+		SplitDelegations:        []*types.SplitDelegation{&splitDelegation},
+		EpochUnbondingRecordIds: []uint64{},
+	}
+	err := s.App.StakeibcKeeper.UpdateDelegationBalances(s.Ctx(), hostZone, invalidCallbackArgs)
+	s.Require().EqualError(err, "Could not convert undelegate amount to int64 in undelegation callback | overflow: unable to cast 18446744073709551615 of type uint64 to int64: unable to cast to safe cast int")
+}
+
+// GetLatestCompletionTime tests
+func (s *KeeperTestSuite) TestGetLatestCompletionTime_Success() {
+	_ = s.SetupUndelegateCallback()
+	// Construct TxMsgData
+	firstCompletionTime := time.Now().Add(time.Second * time.Duration(10))
+	secondCompletionTime := time.Now().Add(time.Second * time.Duration(20))
+	txMsgData := &sdk.TxMsgData{
+		Data: make([]*sdk.MsgData, 2),
+	}
+	data, err := proto.Marshal(&stakingTypes.MsgUndelegateResponse{CompletionTime: firstCompletionTime})
+	s.Require().NoError(err, "marshal error")
+	txMsgData.Data[0] = &sdk.MsgData{
+		MsgType: sdk.MsgTypeURL(&stakingTypes.MsgUndelegate{}),
+		Data:    data,
+	}
+	data, err = proto.Marshal(&stakingTypes.MsgUndelegateResponse{CompletionTime: secondCompletionTime})
+	s.Require().NoError(err, "marshal error")
+	txMsgData.Data[1] = &sdk.MsgData{
+		MsgType: sdk.MsgTypeURL(&stakingTypes.MsgUndelegate{}),
+		Data:    data,
+	}
+	// Check that the second completion time (the later of the two) is returned
+	latestCompletionTime, err := s.App.StakeibcKeeper.GetLatestCompletionTime(s.Ctx(), txMsgData)
+	s.Require().NoError(err)
+	s.Require().Equal(secondCompletionTime.Unix(), latestCompletionTime.Unix())
+}
+
+func (s *KeeperTestSuite) TestGetLatestCompletionTime_Failure() {
+	_ = s.SetupUndelegateCallback()
+	txMsgData := &sdk.TxMsgData{
+		Data: make([]*sdk.MsgData, 2),
+	}
+	// Check that the second completion time (the later of the two) is returned
+	_, err := s.App.StakeibcKeeper.GetLatestCompletionTime(s.Ctx(), txMsgData)
+	s.Require().EqualError(err, "msgResponseBytes or msgResponseBytes.Data is nil: TxMsgData invalid")
+
+	txMsgData = &sdk.TxMsgData{}
+	// Check that the second completion time (the later of the two) is returned
+	_, err = s.App.StakeibcKeeper.GetLatestCompletionTime(s.Ctx(), txMsgData)
+	s.Require().EqualError(err, "invalid packet completion time")
+}
+
+// UpdateHostZoneUnbondings tests
+// WIP
+// func (s *KeeperTestSuite) TestUpdateHostZoneUnbondings_Success() {
+// 	tc := s.SetupUndelegateCallback()
+// 	hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx(), chainId)
+// 	s.Require().True(found)
+
+// 	totalBalance := 1_500_000
+// 	hzu1 := 600_000
+// 	hzu2 := 700_000
+// 	hzu3 := 200_000
+// 	// Set up EpochUnbondingRecord, HostZoneUnbonding and token state
+// 	hostZoneUnbonding := recordtypes.HostZoneUnbonding{
+// 		HostZoneId:    chainId,
+// 		Status:        recordtypes.HostZoneUnbonding_BONDED,
+// 		StTokenAmount: uint64(hzu1),
+// 	}
+// 	hostZoneUnbonding := recordtypes.HostZoneUnbonding{
+// 		HostZoneId:    chainId,
+// 		Status:        recordtypes.HostZoneUnbonding_BONDED,
+// 		StTokenAmount: uint64(hzu2),
+// 	}
+// 	hostZoneUnbonding := recordtypes.HostZoneUnbonding{
+// 		HostZoneId:    chainId,
+// 		Status:        recordtypes.HostZoneUnbonding_BONDED,
+// 		StTokenAmount: uint64(hzu3),
+// 	}
+// 	// Create two epoch unbonding records (status BONDED, completion time unset)
+// 	epochUnbondingRecord := recordtypes.EpochUnbondingRecord{
+// 		EpochNumber:        epochNumber,
+// 		HostZoneUnbondings: []*recordtypes.HostZoneUnbonding{&hostZoneUnbonding},
+// 	}
+// 	// Save them
+
+// 	err := s.App.StakeibcKeeper.UpdateHostZoneUnbondings(s.Ctx(), hostZone, tc.initialState.callbackArgs)
+// 	s.Require().NoError(err)
+
+// 	updatedHostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx(), chainId)
+// 	s.Require().True(found)
+
+// 	// Verify that 2 hzus have status UNBONDED, while the third has status BONDED
+// 	// Verify that 2 hzus have completion time set, while the third has no completion time
+
+// 	// verify that the stTokenBurnAmount is what we expect, based on the validators on the hzu
+// }
+
+// TODO: BELOW TESTS
 // Test success case - update unbonding records and get tokens to burn
 // Test failure case - epoch unbonding record DNE
 // Test failure case - HostZoneUnbonding DNE
 // Test failure case - Amount too big
 
-// Test BurnTokens
-// Test success case - tokens are burned
+// BurnTokens Tests
+func (s *KeeperTestSuite) TestBurnTokens_Success() {
+	_ = s.SetupUndelegateCallback()
+
+	hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx(), chainId)
+	s.Require().True(found)
+
+	zoneAccount, err := sdk.AccAddressFromBech32(hostZone.Address)
+	s.Require().NoError(err)
+	s.Require().Equal(s.App.BankKeeper.GetBalance(s.Ctx(), zoneAccount, stAtom).Amount.Int64(), int64(300_010), "initial token balance is 300_010")
+
+	err = s.App.StakeibcKeeper.BurnTokens(s.Ctx(), hostZone, int64(123456))
+	s.Require().NoError(err)
+
+	s.Require().Equal(s.App.BankKeeper.GetBalance(s.Ctx(), zoneAccount, stAtom).Amount.Int64(), int64(176_554), "post burn amount is 176_554")
+}
+
 // Test failure case - could not parse coin
+func (s *KeeperTestSuite) TestBurnTokens_CouldNotParseCoin() {
+	_ = s.SetupUndelegateCallback()
+
+	hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx(), chainId)
+	s.Require().True(found)
+	hostZone.HostDenom = ":"
+
+	err := s.App.StakeibcKeeper.BurnTokens(s.Ctx(), hostZone, int64(123456))
+	s.Require().EqualError(err, "could not parse burnCoin: 123456.000000000000000000st:. err: invalid decimal coin expression: 123456.000000000000000000st:: invalid coins")
+}
+
 // Test failure case - could not decode address
+func (s *KeeperTestSuite) TestBurnTokens_CouldNotParseAddress() {
+	_ = s.SetupUndelegateCallback()
+
+	hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx(), chainId)
+	s.Require().True(found)
+	hostZone.Address = "invalid"
+
+	err := s.App.StakeibcKeeper.BurnTokens(s.Ctx(), hostZone, int64(123456))
+	s.Require().EqualError(err, "could not bech32 decode address invalid of zone with id: GAIA")
+}
+
 // Test failure case - could not send coins from account to module
-// Test failure case, could not burn coins (too few coins to burn)
+func (s *KeeperTestSuite) TestBurnTokens_CouldNotSendCoinsFromAccountToModule() {
+	_ = s.SetupUndelegateCallback()
+
+	hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx(), chainId)
+	s.Require().True(found)
+	hostZone.HostDenom = "coinDNE"
+
+	err := s.App.StakeibcKeeper.BurnTokens(s.Ctx(), hostZone, int64(123456))
+	s.Require().EqualError(err, "could not send coins from account stride1755g4dkhpw73gz9h9nwhlcefc6sdf8kcmvcwrk4rxfrz8xpxxjms7savm8 to module stakeibc. err: 0stcoinDNE is smaller than 123456stcoinDNE: insufficient funds")
+}

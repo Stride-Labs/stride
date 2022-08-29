@@ -72,22 +72,22 @@ func UndelegateCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, a
 	}
 
 	// core callback logic
-	err = k.updateDelegationBalances(ctx, zone, undelegateCallback)
+	err = k.UpdateDelegationBalances(ctx, zone, undelegateCallback)
 	if err != nil {
 		k.Logger(ctx).Error(fmt.Sprintf("UndelegateCallback | %s", err.Error()))
 		return err
 	}
-	latestCompletionTime, err := k.getLatestCompletionTime(ctx, txMsgData)
+	latestCompletionTime, err := k.GetLatestCompletionTime(ctx, txMsgData)
 	if err != nil {
 		k.Logger(ctx).Error(fmt.Sprintf("UndelegateCallback | %s", err.Error()))
 		return err
 	}
-	stTokenBurnAmount, err := k.updateHostZoneUnbondings(ctx, *latestCompletionTime, zone, undelegateCallback)
+	stTokenBurnAmount, err := k.UpdateHostZoneUnbondings(ctx, *latestCompletionTime, zone, undelegateCallback)
 	if err != nil {
 		k.Logger(ctx).Error(fmt.Sprintf("UndelegateCallback | %s", err.Error()))
 		return err
 	}
-	err = k.burnTokens(ctx, zone, stTokenBurnAmount)
+	err = k.BurnTokens(ctx, zone, stTokenBurnAmount)
 	if err != nil {
 		k.Logger(ctx).Error(fmt.Sprintf("UndelegateCallback | %s", err.Error()))
 		return err
@@ -96,7 +96,7 @@ func UndelegateCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, a
 	return nil
 }
 
-func (k Keeper) updateDelegationBalances(ctx sdk.Context, zone types.HostZone, undelegateCallback types.UndelegateCallback) error {
+func (k Keeper) UpdateDelegationBalances(ctx sdk.Context, zone types.HostZone, undelegateCallback types.UndelegateCallback) error {
 	// Undelegate from each validator and update host zone staked balance, if successful
 	for _, undelegation := range undelegateCallback.SplitDelegations {
 		undelegateAmt, err := cast.ToInt64E(undelegation.Amount)
@@ -117,11 +117,14 @@ func (k Keeper) updateDelegationBalances(ctx sdk.Context, zone types.HostZone, u
 	return nil
 }
 
-func (k Keeper) getLatestCompletionTime(ctx sdk.Context, txMsgData *sdk.TxMsgData) (*time.Time, error) {
+func (k Keeper) GetLatestCompletionTime(ctx sdk.Context, txMsgData *sdk.TxMsgData) (*time.Time, error) {
 	// Update the completion time using the latest completion time across each message within the transaction
 	latestCompletionTime := time.Time{}
 	for _, msgResponseBytes := range txMsgData.Data {
 		var undelegateResponse stakingtypes.MsgUndelegateResponse
+		if msgResponseBytes == nil || msgResponseBytes.Data == nil {
+			return nil, sdkerrors.Wrap(types.ErrTxMsgDataInvalid, "msgResponseBytes or msgResponseBytes.Data is nil")
+		}
 		err := proto.Unmarshal(msgResponseBytes.Data, &undelegateResponse)
 		if err != nil {
 			errMsg := fmt.Sprintf("Unable to unmarshal undelegation tx response | %s", err)
@@ -140,8 +143,8 @@ func (k Keeper) getLatestCompletionTime(ctx sdk.Context, txMsgData *sdk.TxMsgDat
 	return &latestCompletionTime, nil
 }
 
-func (k Keeper) updateHostZoneUnbondings(ctx sdk.Context, latestCompletionTime time.Time, zone types.HostZone, undelegateCallback types.UndelegateCallback) (stTokenBurnAmount int64, err error) {
-	// Update the status and time of each epoch unbonding record and grab the number of stTokens that need to be burned
+func (k Keeper) UpdateHostZoneUnbondings(ctx sdk.Context, latestCompletionTime time.Time, zone types.HostZone, undelegateCallback types.UndelegateCallback) (stTokenBurnAmount int64, err error) {
+	// Update the status and time of each hostZoneUnbonding on each epochUnbondingRecord and grab the number of stTokens that need to be burned
 	for _, epochNumber := range undelegateCallback.EpochUnbondingRecordIds {
 		epochUnbondingRecord, found := k.RecordsKeeper.GetEpochUnbondingRecord(ctx, epochNumber)
 		if !found {
@@ -182,7 +185,7 @@ func (k Keeper) updateHostZoneUnbondings(ctx sdk.Context, latestCompletionTime t
 	return stTokenBurnAmount, nil
 }
 
-func (k Keeper) burnTokens(ctx sdk.Context, zone types.HostZone, stTokenBurnAmount int64) error {
+func (k Keeper) BurnTokens(ctx sdk.Context, zone types.HostZone, stTokenBurnAmount int64) error {
 	stCoinDenom := types.StAssetDenomFromHostZoneDenom(zone.HostDenom)
 	stCoinString := sdk.NewDec(stTokenBurnAmount).String() + stCoinDenom
 	stCoin, err := sdk.ParseCoinNormalized(stCoinString)
