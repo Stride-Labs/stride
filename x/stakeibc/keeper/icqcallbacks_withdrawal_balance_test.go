@@ -8,6 +8,8 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	ibctesting "github.com/cosmos/ibc-go/v3/testing"
 
+	icatypes "github.com/cosmos/ibc-go/v3/modules/apps/27-interchain-accounts/types"
+
 	epochtypes "github.com/Stride-Labs/stride/x/epochs/types"
 	icacallbackstypes "github.com/Stride-Labs/stride/x/icacallbacks/types"
 	icqtypes "github.com/Stride-Labs/stride/x/interchainquery/types"
@@ -98,7 +100,7 @@ func (s *KeeperTestSuite) SetupWithdrawalBalanceCallbackTest() WithdrawalBalance
 		initialState: WithdrawalBalanceICQCallbackState{
 			hostZone: hostZone,
 			withdrawalChannel: Channel{
-				PortID:    "icacontroller-" + withdrawalAccountOwner,
+				PortID:    icatypes.PortPrefix + withdrawalAccountOwner,
 				ChannelID: withdrawalChannelId,
 			},
 			withdrawalBalance: withdrawalBalance,
