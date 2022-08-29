@@ -35,12 +35,12 @@ func (s *KeeperTestSuite) SetupRedemptionCallback() RedemptionCallbackTestCase {
 	epochNumber := uint64(1)
 
 	// userRedemptionRecords should NOT be claimable until after the callback is called
-	recordId1 := recordtypes.UserRedemptionRecordKeyFormatter(chainId, epochNumber, "sender")
+	recordId1 := recordtypes.UserRedemptionRecordKeyFormatter(HostChainId, epochNumber, "sender")
 	userRedemptionRecord1 := recordtypes.UserRedemptionRecord{
 		Id:          recordId1,
 		IsClaimable: false,
 	}
-	recordId2 := recordtypes.UserRedemptionRecordKeyFormatter(chainId, epochNumber, "other_sender")
+	recordId2 := recordtypes.UserRedemptionRecordKeyFormatter(HostChainId, epochNumber, "other_sender")
 	userRedemptionRecord2 := recordtypes.UserRedemptionRecord{
 		Id:          recordId2,
 		IsClaimable: false,
@@ -49,7 +49,7 @@ func (s *KeeperTestSuite) SetupRedemptionCallback() RedemptionCallbackTestCase {
 	// the hostZoneUnbonding should have HostZoneUnbonding_UNBONDED - meaning unbonding has completed, but the tokens
 	// have not yet been transferred to the redemption account
 	hostZoneUnbonding := recordtypes.HostZoneUnbonding{
-		HostZoneId:            chainId,
+		HostZoneId:            HostChainId,
 		Status:                recordtypes.HostZoneUnbonding_UNBONDED,
 		UserRedemptionRecords: []string{recordId1, recordId2},
 	}
@@ -59,9 +59,9 @@ func (s *KeeperTestSuite) SetupRedemptionCallback() RedemptionCallbackTestCase {
 		HostZoneUnbondings: []*recordtypes.HostZoneUnbonding{&hostZoneUnbonding},
 	}
 	hostZone := stakeibc.HostZone{
-		ChainId:        chainId,
-		HostDenom:      atom,
-		IBCDenom:       ibcAtom,
+		ChainId:        HostChainId,
+		HostDenom:      Atom,
+		IBCDenom:       IbcAtom,
 		RedemptionRate: sdk.NewDec(1.0),
 	}
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx(), hostZone)
@@ -74,7 +74,7 @@ func (s *KeeperTestSuite) SetupRedemptionCallback() RedemptionCallbackTestCase {
 	msgs = append(msgs, &banktypes.MsgSend{})
 	ack := s.ICAPacketAcknowledgement(msgs)
 	callbackArgs := types.RedemptionCallback{
-		HostZoneId:              chainId,
+		HostZoneId:              HostChainId,
 		EpochUnbondingRecordIds: []uint64{epochNumber},
 	}
 	args, err := s.App.StakeibcKeeper.MarshalRedemptionCallbackArgs(s.Ctx(), callbackArgs)
@@ -108,7 +108,7 @@ func (s *KeeperTestSuite) TestRedemptionCallback_Successful() {
 		s.Require().True(found)
 		for _, hzu := range epochUnbondingRecord.HostZoneUnbondings {
 			// check that the status is transferred
-			if hzu.HostZoneId == chainId {
+			if hzu.HostZoneId == HostChainId {
 				s.Require().Equal(recordtypes.HostZoneUnbonding_TRANSFERRED, hzu.Status)
 			}
 		}
@@ -177,7 +177,7 @@ func (s *KeeperTestSuite) TestRedemptionCallback_EpochUnbondingRecordNotFound() 
 	tc := s.SetupRedemptionCallback()
 	invalidArgs := tc.validArgs
 	callbackArgs := types.RedemptionCallback{
-		HostZoneId:              chainId,
+		HostZoneId:              HostChainId,
 		EpochUnbondingRecordIds: []uint64{tc.initialState.epochNumber + 1},
 	}
 	args, err := s.App.StakeibcKeeper.MarshalRedemptionCallbackArgs(s.Ctx(), callbackArgs)
