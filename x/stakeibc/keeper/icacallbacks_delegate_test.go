@@ -55,9 +55,9 @@ func (s *KeeperTestSuite) SetupDelegateCallback() DelegateCallbackTestCase {
 		DelegationAmt: val2Bal,
 	}
 	hostZone := stakeibc.HostZone{
-		ChainId:        chainId,
-		HostDenom:      atom,
-		IBCDenom:       ibcAtom,
+		ChainId:        HostChainId,
+		HostDenom:      Atom,
+		IBCDenom:       IbcAtom,
 		RedemptionRate: sdk.NewDec(1.0),
 		Validators:     []*types.Validator{&val1, &val2},
 		StakedBal:      stakedBal,
@@ -65,7 +65,7 @@ func (s *KeeperTestSuite) SetupDelegateCallback() DelegateCallbackTestCase {
 	depositRecord := recordtypes.DepositRecord{
 		Id:                 1,
 		DepositEpochNumber: 1,
-		HostZoneId:         chainId,
+		HostZoneId:         HostChainId,
 		Amount:             balanceToStake,
 		Status:             recordtypes.DepositRecord_STAKE,
 	}
@@ -85,7 +85,7 @@ func (s *KeeperTestSuite) SetupDelegateCallback() DelegateCallbackTestCase {
 		Amount:    uint64(val2RelAmt),
 	}
 	callbackArgs := types.DelegateCallback{
-		HostZoneId:       chainId,
+		HostZoneId:       HostChainId,
 		DepositRecordId:  depositRecord.Id,
 		SplitDelegations: []*types.SplitDelegation{&val1SplitDelegation, &val2SplitDelegation},
 	}
@@ -120,7 +120,7 @@ func (s *KeeperTestSuite) TestDelegateCallback_Successful() {
 	s.Require().NoError(err)
 
 	// Confirm stakedBal has increased
-	hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx(), chainId)
+	hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx(), HostChainId)
 	s.Require().True(found)
 	s.Require().Equal(int64(initialState.stakedBal)+initialState.balanceToStake, int64(hostZone.StakedBal), "stakedBal should have increased")
 
@@ -137,7 +137,7 @@ func (s *KeeperTestSuite) TestDelegateCallback_Successful() {
 
 func (s *KeeperTestSuite) checkDelegateStateIfCallbackFailed(tc DelegateCallbackTestCase) {
 	// Confirm stakedBal has not increased
-	hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx(), chainId)
+	hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx(), HostChainId)
 	s.Require().True(found)
 	s.Require().Equal(int64(tc.initialState.stakedBal), int64(hostZone.StakedBal), "stakedBal should not have increased")
 
@@ -182,7 +182,7 @@ func (s *KeeperTestSuite) TestDelegateCallback_WrongCallbackArgs() {
 func (s *KeeperTestSuite) TestDelegateCallback_HostNotFound() {
 	tc := s.SetupDelegateCallback()
 	invalidArgs := tc.validArgs
-	s.App.StakeibcKeeper.RemoveHostZone(s.Ctx(), chainId)
+	s.App.StakeibcKeeper.RemoveHostZone(s.Ctx(), HostChainId)
 	err := stakeibckeeper.DelegateCallback(s.App.StakeibcKeeper, s.Ctx(), invalidArgs.packet, invalidArgs.ack, invalidArgs.args)
 	s.Require().EqualError(err, "host zone not found GAIA: invalid request")
 
@@ -201,7 +201,7 @@ func (s *KeeperTestSuite) TestDelegateCallback_BigAmount() {
 		Amount:    math.MaxUint64,
 	}
 	callbackArgs := types.DelegateCallback{
-		HostZoneId:       chainId,
+		HostZoneId:       HostChainId,
 		DepositRecordId:  1,
 		SplitDelegations: []*types.SplitDelegation{&badSplitDelegation},
 	}
@@ -220,7 +220,7 @@ func (s *KeeperTestSuite) TestDelegateCallback_MissingValidator() {
 		Amount:    1234,
 	}
 	callbackArgs := types.DelegateCallback{
-		HostZoneId:       chainId,
+		HostZoneId:       HostChainId,
 		DepositRecordId:  1,
 		SplitDelegations: []*types.SplitDelegation{&badSplitDelegation},
 	}

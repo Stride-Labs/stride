@@ -10,6 +10,13 @@ import (
 	"github.com/Stride-Labs/stride/x/stakeibc/types"
 )
 
+const (
+	Atom        = "uatom"
+	StAtom      = "stuatom"
+	IbcAtom     = "ibc/uatom"
+	HostChainId = "GAIA"
+)
+
 type KeeperTestSuite struct {
 	apptesting.AppTestHelper
 }
