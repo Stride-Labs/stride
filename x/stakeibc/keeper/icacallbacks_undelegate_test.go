@@ -17,15 +17,13 @@ import (
 )
 
 type UndelegateCallbackState struct {
-	stakedBal        uint64
-	balanceToUnstake int64
-	val1Bal          uint64
-	val2Bal          uint64
-	val1RelAmt       int64
-	val2RelAmt       int64
-	epochNumber      uint64
-	completionTime   time.Time
-	callbackArgs     types.UndelegateCallback
+	stakedBal          uint64
+	val1Bal            uint64
+	val2Bal            uint64
+	epochNumber        uint64
+	completionTime     time.Time
+	callbackArgs       types.UndelegateCallback
+	zoneAccountBalance int64
 }
 
 type UndelegateCallbackArgs struct {
@@ -35,8 +33,11 @@ type UndelegateCallbackArgs struct {
 }
 
 type UndelegateCallbackTestCase struct {
-	initialState UndelegateCallbackState
-	validArgs    UndelegateCallbackArgs
+	initialState           UndelegateCallbackState
+	validArgs              UndelegateCallbackArgs
+	val1UndelegationAmount int64
+	val2UndelegationAmount int64
+	balanceToUnstake       int64
 }
 
 func (s *KeeperTestSuite) SetupUndelegateCallback() UndelegateCallbackTestCase {
@@ -45,8 +46,8 @@ func (s *KeeperTestSuite) SetupUndelegateCallback() UndelegateCallbackTestCase {
 	val1Bal := uint64(400_000)
 	val2Bal := uint64(stakedBal) - val1Bal
 	balanceToUnstake := int64(300_000)
-	val1RelAmt := int64(120_000)
-	val2RelAmt := balanceToUnstake - val1RelAmt
+	val1UndelegationAmount := int64(120_000)
+	val2UndelegationAmount := balanceToUnstake - val1UndelegationAmount
 	epochNumber := uint64(1)
 	val1 := types.Validator{
 		Name:          "val1",
@@ -59,9 +60,10 @@ func (s *KeeperTestSuite) SetupUndelegateCallback() UndelegateCallbackTestCase {
 		DelegationAmt: val2Bal,
 	}
 	zoneAddress := types.NewZoneAddress(chainId)
+	zoneAccountBalance := balanceToUnstake + 10
 	zoneAccount := Account{
 		acc:           zoneAddress,
-		stAtomBalance: sdk.NewInt64Coin(stAtom, balanceToUnstake+10), // Add a few extra tokens to make the test more robust
+		stAtomBalance: sdk.NewInt64Coin(stAtom, zoneAccountBalance), // Add a few extra tokens to make the test more robust
 	}
 	hostZone := stakeibc.HostZone{
 		ChainId:        chainId,
@@ -97,11 +99,11 @@ func (s *KeeperTestSuite) SetupUndelegateCallback() UndelegateCallbackTestCase {
 	ack := s.ICAPacketAcknowledgement(msgs, &protoMsgUndelegateResponse)
 	val1SplitDelegation := types.SplitDelegation{
 		Validator: val1.Address,
-		Amount:    uint64(val1RelAmt),
+		Amount:    uint64(val1UndelegationAmount),
 	}
 	val2SplitDelegation := types.SplitDelegation{
 		Validator: val2.Address,
-		Amount:    uint64(val2RelAmt),
+		Amount:    uint64(val2UndelegationAmount),
 	}
 	callbackArgs := types.UndelegateCallback{
 		HostZoneId:              chainId,
@@ -112,16 +114,17 @@ func (s *KeeperTestSuite) SetupUndelegateCallback() UndelegateCallbackTestCase {
 	s.Require().NoError(err)
 
 	return UndelegateCallbackTestCase{
+		val1UndelegationAmount: val1UndelegationAmount,
+		val2UndelegationAmount: val2UndelegationAmount,
+		balanceToUnstake:       balanceToUnstake,
 		initialState: UndelegateCallbackState{
-			callbackArgs:     callbackArgs,
-			stakedBal:        stakedBal,
-			balanceToUnstake: balanceToUnstake,
-			val1Bal:          val1Bal,
-			val2Bal:          val2Bal,
-			val1RelAmt:       val1RelAmt,
-			val2RelAmt:       val2RelAmt,
-			epochNumber:      epochNumber,
-			completionTime:   completionTime,
+			callbackArgs:       callbackArgs,
+			stakedBal:          stakedBal,
+			val1Bal:            val1Bal,
+			val2Bal:            val2Bal,
+			epochNumber:        epochNumber,
+			completionTime:     completionTime,
+			zoneAccountBalance: zoneAccountBalance,
 		},
 		validArgs: UndelegateCallbackArgs{
 			packet: packet,
@@ -143,14 +146,15 @@ func (s *KeeperTestSuite) TestUndelegateCallback_Successful() {
 	// Check that stakedBal has decreased on the host zone
 	hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx(), chainId)
 	s.Require().True(found)
-	s.Require().Equal(int64(hostZone.StakedBal), int64(initialState.stakedBal)-initialState.balanceToUnstake)
+	s.Require().Equal(int64(hostZone.StakedBal), int64(initialState.stakedBal)-tc.balanceToUnstake)
 
 	// Check that Delegations on validators have decreased
 	s.Require().True(len(hostZone.Validators) == 2, "Expected 2 validators")
 	val1 := hostZone.Validators[0]
-	s.Require().Equal(int64(val1.DelegationAmt), int64(initialState.val1Bal)-initialState.val1RelAmt)
+	s.Require().Equal(int64(val1.DelegationAmt), int64(initialState.val1Bal)-tc.val1UndelegationAmount)
 	val2 := hostZone.Validators[1]
-	s.Require().Equal(int64(val2.DelegationAmt), int64(initialState.val2Bal)-initialState.val2RelAmt)
+	// Check that the host zone unbonding records have been updated
+	s.Require().Equal(int64(val2.DelegationAmt), int64(initialState.val2Bal)-tc.val2UndelegationAmount)
 
 	epochUnbondingRecord, found := s.App.RecordsKeeper.GetEpochUnbondingRecord(s.Ctx(), initialState.epochNumber)
 	s.Require().True(found)
@@ -160,7 +164,7 @@ func (s *KeeperTestSuite) TestUndelegateCallback_Successful() {
 	s.Require().Equal(hzu.Status, recordtypes.HostZoneUnbonding_UNBONDED, "hzu status is set to UNBONDED")
 	zoneAccount, err := sdk.AccAddressFromBech32(hostZone.Address)
 	s.Require().NoError(err)
-	s.Require().Equal(s.App.BankKeeper.GetBalance(s.Ctx(), zoneAccount, stAtom).Amount.Int64(), int64(10), "tokens are burned")
+	s.Require().Equal(tc.balanceToUnstake, initialState.zoneAccountBalance-s.App.BankKeeper.GetBalance(s.Ctx(), zoneAccount, stAtom).Amount.Int64(), "tokens are burned")
 }
 
 func (s *KeeperTestSuite) checkStateIfUndelegateCallbackFailed(tc UndelegateCallbackTestCase) {
@@ -176,6 +180,7 @@ func (s *KeeperTestSuite) checkStateIfUndelegateCallbackFailed(tc UndelegateCall
 	val1 := hostZone.Validators[0]
 	s.Require().Equal(int64(val1.DelegationAmt), int64(initialState.val1Bal))
 	val2 := hostZone.Validators[1]
+	// Check that the host zone unbonding records have not been updated
 	s.Require().Equal(int64(val2.DelegationAmt), int64(initialState.val2Bal))
 
 	epochUnbondingRecord, found := s.App.RecordsKeeper.GetEpochUnbondingRecord(s.Ctx(), initialState.epochNumber)
@@ -186,7 +191,7 @@ func (s *KeeperTestSuite) checkStateIfUndelegateCallbackFailed(tc UndelegateCall
 	s.Require().Equal(hzu.Status, recordtypes.HostZoneUnbonding_BONDED, "hzu status is set to BONDED")
 	zoneAccount, err := sdk.AccAddressFromBech32(hostZone.Address)
 	s.Require().NoError(err)
-	s.Require().Equal(s.App.BankKeeper.GetBalance(s.Ctx(), zoneAccount, stAtom).Amount.Int64(), initialState.balanceToUnstake+int64(10), "tokens are NOT burned")
+	s.Require().Equal(initialState.zoneAccountBalance, s.App.BankKeeper.GetBalance(s.Ctx(), zoneAccount, stAtom).Amount.Int64(), "tokens are NOT burned")
 }
 
 func (s *KeeperTestSuite) TestUndelegateCallback_UndelegateCallbackTimeout() {
@@ -243,9 +248,9 @@ func (s *KeeperTestSuite) TestUpdateDelegationBalances_Success() {
 	// Check that Delegations on validators have decreased
 	s.Require().True(len(updatedHostZone.Validators) == 2, "Expected 2 validators")
 	val1 := updatedHostZone.Validators[0]
-	s.Require().Equal(int64(val1.DelegationAmt), int64(tc.initialState.val1Bal)-tc.initialState.val1RelAmt)
+	s.Require().Equal(int64(val1.DelegationAmt), int64(tc.initialState.val1Bal)-tc.val1UndelegationAmount)
 	val2 := updatedHostZone.Validators[1]
-	s.Require().Equal(int64(val2.DelegationAmt), int64(tc.initialState.val2Bal)-tc.initialState.val2RelAmt)
+	s.Require().Equal(int64(val2.DelegationAmt), int64(tc.initialState.val2Bal)-tc.val2UndelegationAmount)
 }
 
 func (s *KeeperTestSuite) TestUpdateDelegationBalances_BigDelegation() {
@@ -296,12 +301,10 @@ func (s *KeeperTestSuite) TestGetLatestCompletionTime_Failure() {
 	txMsgData := &sdk.TxMsgData{
 		Data: make([]*sdk.MsgData, 2),
 	}
-	// Check that the second completion time (the later of the two) is returned
 	_, err := s.App.StakeibcKeeper.GetLatestCompletionTime(s.Ctx(), txMsgData)
 	s.Require().EqualError(err, "msgResponseBytes or msgResponseBytes.Data is nil: TxMsgData invalid")
 
 	txMsgData = &sdk.TxMsgData{}
-	// Check that the second completion time (the later of the two) is returned
 	_, err = s.App.StakeibcKeeper.GetLatestCompletionTime(s.Ctx(), txMsgData)
 	s.Require().EqualError(err, "invalid packet completion time")
 }

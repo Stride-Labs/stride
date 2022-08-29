@@ -143,7 +143,12 @@ func (k Keeper) GetLatestCompletionTime(ctx sdk.Context, txMsgData *sdk.TxMsgDat
 	return &latestCompletionTime, nil
 }
 
-func (k Keeper) UpdateHostZoneUnbondings(ctx sdk.Context, latestCompletionTime time.Time, zone types.HostZone, undelegateCallback types.UndelegateCallback) (stTokenBurnAmount int64, err error) {
+func (k Keeper) UpdateHostZoneUnbondings(
+	ctx sdk.Context,
+	latestCompletionTime time.Time,
+	zone types.HostZone,
+	undelegateCallback types.UndelegateCallback,
+) (stTokenBurnAmount int64, err error) {
 	// Update the status and time of each hostZoneUnbonding on each epochUnbondingRecord and grab the number of stTokens that need to be burned
 	for _, epochNumber := range undelegateCallback.EpochUnbondingRecordIds {
 		epochUnbondingRecord, found := k.RecordsKeeper.GetEpochUnbondingRecord(ctx, epochNumber)
