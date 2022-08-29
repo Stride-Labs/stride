@@ -34,6 +34,9 @@ type WithdrawalBalanceICQCallbackTestCase struct {
 	expectedReinvestment sdk.Coin
 }
 
+// Given an address and denom, this creates the ICQ request which consists
+// of a byte array of the format [ {balancePrefix} {address} {denom} ] that can
+// be used to access the addresses balance directly from the store
 func (s *KeeperTestSuite) CreateBalanceQueryRequest(address string, denom string) []byte {
 	_, addressBz, err := bech32.DecodeAndConvert(address)
 	s.Require().NoError(err)
@@ -43,6 +46,8 @@ func (s *KeeperTestSuite) CreateBalanceQueryRequest(address string, denom string
 	return append(balancePrefix, denomBz...)
 }
 
+// The response from the WithdrawalBalance ICQ is a serialized sdk.Coin containing
+// the address' balance. This function creates the serialized response
 func (s *KeeperTestSuite) CreateBalanceQueryResponse(amount int64, denom string) []byte {
 	coin := sdk.NewCoin(denom, sdk.NewInt(amount))
 	coinBz := s.App.RecordsKeeper.Cdc.MustMarshal(&coin)
@@ -144,6 +149,11 @@ func (s *KeeperTestSuite) TestWithdrawalBalanceCallback_Successful() {
 	s.Require().NoError(err, "unmarshalling callback args error for callback key (%s)", callbackKey)
 	s.Require().Equal(tc.initialState.hostZone.ChainId, callbackArgs.HostZoneId, "host zone in callback args (%s)", callbackKey)
 	s.Require().Equal(tc.expectedReinvestment, callbackArgs.ReinvestAmount, "reinvestment coin in callback args (%s)", callbackKey)
+
+	// Confirm the sequence number was incremented
+	endSequence, found := s.App.IBCKeeper.ChannelKeeper.GetNextSequenceSend(s.Ctx(), withdrawalPortId, withdrawalChannelId)
+	s.Require().True(found, "sequence number not found after reinvestment")
+	s.Require().Equal(endSequence, startSequence+1, "sequence number after reinvestment")
 }
 
 func (s *KeeperTestSuite) TestWithdrawalBalanceCallback_ZeroBalance() {
