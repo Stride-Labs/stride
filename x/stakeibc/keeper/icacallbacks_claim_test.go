@@ -69,25 +69,22 @@ func (s *KeeperTestSuite) TestClaimCallback_Successful() {
 	err := stakeibckeeper.ClaimCallback(s.App.StakeibcKeeper, s.Ctx(), validArgs.packet, validArgs.ack, validArgs.args)
 	s.Require().NoError(err)
 
-	// Confirm record has been deleted
 	_, found := s.App.RecordsKeeper.GetUserRedemptionRecord(s.Ctx(), initialState.callbackArgs.UserRedemptionRecordId)
-	s.Require().False(found)
+	s.Require().False(found, "record has been deleted")
 }
 
 func (s *KeeperTestSuite) checkClaimStateIfCallbackFailed(tc ClaimCallbackTestCase) {
-	// Confirm record is set to isClaimable = true (if the callback failed, it should be reset to true so that users can retry the claim)
 	record, found := s.App.RecordsKeeper.GetUserRedemptionRecord(s.Ctx(), tc.initialState.callbackArgs.UserRedemptionRecordId)
 	s.Require().True(found)
-	s.Require().True(record.IsClaimable)
+	s.Require().True(record.IsClaimable, "record is set to isClaimable = true (if the callback failed, it should be reset to true so that users can retry the claim)")
 }
 
 func (s *KeeperTestSuite) TestClaimCallback_ClaimCallbackTimeout() {
 	tc := s.SetupClaimCallback()
 	invalidArgs := tc.validArgs
-	// a nil ack means the request timed out
 	invalidArgs.ack = nil
 	err := stakeibckeeper.ClaimCallback(s.App.StakeibcKeeper, s.Ctx(), invalidArgs.packet, invalidArgs.ack, invalidArgs.args)
-	s.Require().NoError(err)
+	s.Require().NoError(err, "timeout successfully proccessed")
 	s.checkClaimStateIfCallbackFailed(tc)
 }
 
@@ -99,7 +96,7 @@ func (s *KeeperTestSuite) TestClaimCallback_ClaimCallbackErrorOnHost() {
 	invalidArgs.ack = &fullAck
 
 	err := stakeibckeeper.ClaimCallback(s.App.StakeibcKeeper, s.Ctx(), invalidArgs.packet, invalidArgs.ack, invalidArgs.args)
-	s.Require().NoError(err)
+	s.Require().NoError(err, "error ack successfully proccessed")
 	s.checkClaimStateIfCallbackFailed(tc)
 }
 
