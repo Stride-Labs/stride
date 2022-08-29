@@ -12,8 +12,6 @@ import (
 	stakeibctypes "github.com/Stride-Labs/stride/x/stakeibc/types"
 )
 
-var HostChainId = "GAIA"
-
 type ValidatorICQCallbackState struct {
 	hostZone           stakeibctypes.HostZone
 	strideEpochTracker stakeibctypes.EpochTracker
