@@ -284,7 +284,7 @@ func (s *AppTestHelper) ICAPacketAcknowledgement(msgs []sdk.Msg) channeltypes.Ac
 
 // Get an IBC denom from it's native host denom
 // This assumes the transfer channel is channel-0
-func (s *AppTestHelper) GetIBCDenom(denom string) transfertypes.DenomTrace {
+func (s *AppTestHelper) GetIBCDenomTrace(denom string) transfertypes.DenomTrace {
 	sourcePrefix := transfertypes.GetDenomPrefix(ibctesting.TransferPort, ibctesting.FirstChannelID)
 	prefixedDenom := sourcePrefix + denom
 

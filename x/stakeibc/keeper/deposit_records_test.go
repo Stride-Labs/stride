@@ -144,7 +144,7 @@ func (s *KeeperTestSuite) SetupDepositRecords() DepositRecordsTestCase {
 	delegationChannelID := s.CreateICAChannel(delegationAccountOwner)
 	delegationAddress := s.IcaAddresses[delegationAccountOwner]
 
-	ibcDenomTrace := s.GetIBCDenom(Atom) // we need a true IBC denom here
+	ibcDenomTrace := s.GetIBCDenomTrace(Atom) // we need a true IBC denom here
 	hostModuleAddress := stakeibctypes.NewZoneAddress(HostChainId)
 	s.App.TransferKeeper.SetDenomTrace(s.Ctx(), ibcDenomTrace)
 
