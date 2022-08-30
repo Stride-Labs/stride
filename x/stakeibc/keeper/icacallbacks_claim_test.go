@@ -42,7 +42,7 @@ func (s *KeeperTestSuite) SetupClaimCallback() ClaimCallbackTestCase {
 	packet := channeltypes.Packet{}
 	var msgs []sdk.Msg
 	msgs = append(msgs, &banktypes.MsgSend{})
-	ack := s.ICAPacketAcknowledgement(msgs)
+	ack := s.ICAPacketAcknowledgement(msgs, nil)
 	callbackArgs := types.ClaimCallback{
 		UserRedemptionRecordId: recordId,
 	}
