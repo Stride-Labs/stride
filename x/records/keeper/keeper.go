@@ -26,15 +26,15 @@ import (
 type (
 	Keeper struct {
 		// *cosmosibckeeper.Keeper
-		Cdc           codec.BinaryCodec
-		storeKey      sdk.StoreKey
-		memKey        sdk.StoreKey
-		paramstore    paramtypes.Subspace
-		scopedKeeper  capabilitykeeper.ScopedKeeper
-		AccountKeeper types.AccountKeeper
-		TransferKeeper        ibctransferkeeper.Keeper
-		IBCKeeper             ibckeeper.Keeper
-		ICACallbacksKeeper    icacallbackskeeper.Keeper
+		Cdc                codec.BinaryCodec
+		storeKey           sdk.StoreKey
+		memKey             sdk.StoreKey
+		paramstore         paramtypes.Subspace
+		scopedKeeper       capabilitykeeper.ScopedKeeper
+		AccountKeeper      types.AccountKeeper
+		TransferKeeper     ibctransferkeeper.Keeper
+		IBCKeeper          ibckeeper.Keeper
+		ICACallbacksKeeper icacallbackskeeper.Keeper
 	}
 )
 
@@ -55,15 +55,15 @@ func NewKeeper(
 	}
 
 	return &Keeper{
-		Cdc:           			Cdc,
-		storeKey:      			storeKey,
-		memKey:        			memKey,
-		paramstore:    			ps,	
-		scopedKeeper:  			scopedKeeper,
-		AccountKeeper: 			AccountKeeper,
-		TransferKeeper:			TransferKeeper,
-		IBCKeeper:				ibcKeeper,
-		ICACallbacksKeeper:		ICACallbacksKeeper,
+		Cdc:                Cdc,
+		storeKey:           storeKey,
+		memKey:             memKey,
+		paramstore:         ps,
+		scopedKeeper:       scopedKeeper,
+		AccountKeeper:      AccountKeeper,
+		TransferKeeper:     TransferKeeper,
+		IBCKeeper:          ibcKeeper,
+		ICACallbacksKeeper: ICACallbacksKeeper,
 	}
 }
 
@@ -78,7 +78,6 @@ func (k *Keeper) ClaimCapability(ctx sdk.Context, cap *capabilitytypes.Capabilit
 
 func (k Keeper) Transfer(ctx sdk.Context, msg *ibctypes.MsgTransfer, depositRecordId uint64) error {
 	goCtx := sdk.WrapSDKContext(ctx)
-
 
 	// because TransferKeeper.Transfer doesn't return a sequence number, we need to fetch it manually
 	// the sequence number isn't actually incremented here, that happens in `SendPacket`, which is triggered
