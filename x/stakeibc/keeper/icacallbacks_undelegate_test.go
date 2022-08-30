@@ -320,7 +320,7 @@ func (s *KeeperTestSuite) TestUpdateHostZoneUnbondings_Success() {
 	stAmtHzu3 := 200_000
 	s.Require().Equal(int64(totalBalance), int64(stAmtHzu1)+int64(stAmtHzu2)+int64(stAmtHzu3), "total balance is correct")
 	// Set up EpochUnbondingRecord, HostZoneUnbonding and token state
-	hostZoneUnbonding := recordtypes.HostZoneUnbonding{
+	hostZoneUnbonding1 := recordtypes.HostZoneUnbonding{
 		HostZoneId:    chainId,
 		Status:        recordtypes.HostZoneUnbonding_BONDED,
 		StTokenAmount: uint64(stAmtHzu1),
@@ -338,7 +338,7 @@ func (s *KeeperTestSuite) TestUpdateHostZoneUnbondings_Success() {
 	// Create two epoch unbonding records (status BONDED, completion time unset)
 	epochUnbondingRecord := recordtypes.EpochUnbondingRecord{
 		EpochNumber:        1,
-		HostZoneUnbondings: []*recordtypes.HostZoneUnbonding{&hostZoneUnbonding, &hostZoneUnbonding2},
+		HostZoneUnbondings: []*recordtypes.HostZoneUnbonding{&hostZoneUnbonding1, &hostZoneUnbonding2},
 	}
 	epochUnbondingRecord2 := recordtypes.EpochUnbondingRecord{
 		EpochNumber:        2,
@@ -432,36 +432,38 @@ func (s *KeeperTestSuite) TestUpdateHostZoneUnbondings_AmountTooBig() {
 
 // BurnTokens Tests
 func (s *KeeperTestSuite) TestBurnTokens_Success() {
-	_ = s.SetupUndelegateCallback()
+	tc := s.SetupUndelegateCallback()
 
 	hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx(), chainId)
 	s.Require().True(found, "host zone found")
 
 	zoneAccount, err := sdk.AccAddressFromBech32(hostZone.Address)
 	s.Require().NoError(err, "zoneAccount is valid")
-	s.Require().Equal(s.App.BankKeeper.GetBalance(s.Ctx(), zoneAccount, stAtom).Amount.Int64(), int64(300_010), "initial token balance is 300_010")
+	s.Require().Equal(tc.initialState.zoneAccountBalance, s.App.BankKeeper.GetBalance(s.Ctx(), zoneAccount, stAtom).Amount.Int64(), "initial token balance is 300_010")
 
-	err = s.App.StakeibcKeeper.BurnTokens(s.Ctx(), hostZone, int64(123456))
+	burnAmt := int64(123456)
+	err = s.App.StakeibcKeeper.BurnTokens(s.Ctx(), hostZone, burnAmt)
 	s.Require().NoError(err)
 
-	s.Require().Equal(s.App.BankKeeper.GetBalance(s.Ctx(), zoneAccount, stAtom).Amount.Int64(), int64(176_554), "post burn amount is 176_554")
+	s.Require().Equal(tc.initialState.zoneAccountBalance-burnAmt, s.App.BankKeeper.GetBalance(s.Ctx(), zoneAccount, stAtom).Amount.Int64(), "post burn amount is 176_554")
 }
 
 // Test failure case - could not parse coin
 func (s *KeeperTestSuite) TestBurnTokens_CouldNotParseCoin() {
-	_ = s.SetupUndelegateCallback()
+	s.SetupUndelegateCallback()
 
 	hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx(), chainId)
 	s.Require().True(found, "host zone found")
 	hostZone.HostDenom = ":"
 
-	err := s.App.StakeibcKeeper.BurnTokens(s.Ctx(), hostZone, int64(123456))
+	burnAmt := int64(123456)
+	err := s.App.StakeibcKeeper.BurnTokens(s.Ctx(), hostZone, burnAmt)
 	s.Require().EqualError(err, "could not parse burnCoin: 123456.000000000000000000st:. err: invalid decimal coin expression: 123456.000000000000000000st:: invalid coins")
 }
 
 // Test failure case - could not decode address
 func (s *KeeperTestSuite) TestBurnTokens_CouldNotParseAddress() {
-	_ = s.SetupUndelegateCallback()
+	s.SetupUndelegateCallback()
 
 	hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx(), chainId)
 	s.Require().True(found, "host zone found")
@@ -473,7 +475,7 @@ func (s *KeeperTestSuite) TestBurnTokens_CouldNotParseAddress() {
 
 // Test failure case - could not send coins from account to module
 func (s *KeeperTestSuite) TestBurnTokens_CouldNotSendCoinsFromAccountToModule() {
-	_ = s.SetupUndelegateCallback()
+	s.SetupUndelegateCallback()
 
 	hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx(), chainId)
 	s.Require().True(found, "host zone found")
