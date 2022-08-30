@@ -282,113 +282,121 @@ func ValidatorExchangeRateCallback(k Keeper, ctx sdk.Context, args []byte, query
 //     num_tokens = exchange_rate * num_shares
 //
 // This callback from query #2
+//
+// NOTE(TEST-112) for now, to get proofs in your ICQs, you need to query the entire store on the host zone! e.g. "store/bank/key"
 func DelegatorSharesCallback(k Keeper, ctx sdk.Context, args []byte, query icqtypes.Query) error {
-	// NOTE(TEST-112) for now, to get proofs in your ICQs, you need to query the entire store on the host zone! e.g. "store/bank/key"
-
-	zone, found := k.GetHostZone(ctx, query.GetChainId())
+	hostZone, found := k.GetHostZone(ctx, query.GetChainId())
 	if !found {
 		errMsg := fmt.Sprintf("no registered zone for queried chain ID (%s)", query.GetChainId())
 		k.Logger(ctx).Error(errMsg)
 		return sdkerrors.Wrapf(types.ErrHostZoneNotFound, errMsg)
 	}
 
-	// ensure ICQ can be issued now! else fail the callback
-	valid, err := k.IsWithinBufferWindow(ctx)
+	// Unmarshal the query response which returns a delegation object for the delegator/validator pair
+	queriedDelgation := stakingtypes.Delegation{}
+	err := k.cdc.Unmarshal(args, &queriedDelgation)
 	if err != nil {
-		errMsg := fmt.Sprintf("delegator shares callback is outside ICQ window, err: %s", err.Error())
-		k.Logger(ctx).Error(errMsg)
-		return sdkerrors.Wrapf(types.ErrOutsideIcqWindow, errMsg)
-	} else if !valid {
-		return nil
-	}
-
-	qdel := stakingtypes.Delegation{}
-	err = k.cdc.Unmarshal(args, &qdel)
-	if err != nil {
-		errMsg := fmt.Sprintf("unable to unmarshal queried delegation info for zone %s, err: %s", zone.ChainId, err.Error())
+		errMsg := fmt.Sprintf("unable to unmarshal queried delegation info for zone %s, err: %s", hostZone.ChainId, err.Error())
 		k.Logger(ctx).Error(errMsg)
 		return sdkerrors.Wrapf(types.ErrMarshalFailure, errMsg)
 	}
-	k.Logger(ctx).Info(fmt.Sprintf("DelegationCallback: zone %s qdel %v", zone.ChainId, qdel))
+	k.Logger(ctx).Info(fmt.Sprintf("DelegationCallback: HostZone: %s, Queried Delegation: %v", hostZone.ChainId, queriedDelgation))
 
-	// get tokens using the validator's conversion rate
-	for i, v := range zone.Validators {
-		k.Logger(ctx).Info(fmt.Sprintf("DELCB %s", v.Address))
-		if v.Address == qdel.ValidatorAddress {
-			delAmtInt64, err := cast.ToInt64E(v.DelegationAmt)
-			if err != nil {
-				errMsg := fmt.Sprintf("unable to convert validator delegation amount to uint64, err: %s", err.Error())
-				k.Logger(ctx).Error(errMsg)
-				return sdkerrors.Wrapf(types.ErrIntCast, errMsg)
-			}
-
-			// convert shares to tokens using the exchange rate
-
-			// get the validator's internal exchange rate, aborting if it hasn't been updated this epoch
-			strideEpochTracker, found := k.GetEpochTracker(ctx, epochtypes.STRIDE_EPOCH)
-			if !found {
-				k.Logger(ctx).Error("failed to find stride epoch")
-				return sdkerrors.Wrapf(sdkerrors.ErrNotFound, "no epoch number for epoch (%s)", epochtypes.STRIDE_EPOCH)
-			}
-			if v.InternalExchangeRate.EpochNumber != strideEpochTracker.GetEpochNumber() {
-				errMsg := fmt.Sprintf("DelegationCallback: validator (%s) internal exchange rate has not been updated this epoch (epoch #%d)",
-					v.Address, strideEpochTracker.GetEpochNumber())
-				k.Logger(ctx).Error(errMsg)
-				return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, errMsg)
-			}
-			// TODO: make sure conversion math precision matches the sdk's staking module's version (we did it slightly differently)
-			// note: truncateInt per https://github.com/cosmos/cosmos-sdk/blob/cb31043d35bad90c4daa923bb109f38fd092feda/x/staking/types/validator.go#L431
-			qNumTokens := qdel.Shares.Mul(v.InternalExchangeRate.InternalTokensToSharesRate).TruncateInt()
-			k.Logger(ctx).Info(fmt.Sprintf("DelegationCallback: zone %s validator %s prevNtokens %v qNumTokens %v", zone.ChainId, v.Address, v.DelegationAmt, qNumTokens))
-			if qNumTokens.Uint64() < v.DelegationAmt {
-				// TODO(TESTS-171) add some safety checks here (e.g. we could query the slashing module to confirm the decr in tokens was due to slash)
-				// update our records of the total stakedbal and of the validator's delegation amt
-				// NOTE:  we assume any decrease in delegation amt that's not tracked via records is a slash
-				slashAmt := v.DelegationAmt - qNumTokens.Uint64()
-				slashAmtInt64, err := cast.ToInt64E(slashAmt)
-				if err != nil {
-					errMsg := fmt.Sprintf("unable to convert validator slash amount to uint64, err: %s", err.Error())
-					k.Logger(ctx).Error(errMsg)
-					return sdkerrors.Wrapf(types.ErrIntCast, errMsg)
-				}
-				weightInt64, err := cast.ToInt64E(v.Weight)
-				if err != nil {
-					errMsg := fmt.Sprintf("unable to convert validator weight to uint64, err: %s", err.Error())
-					k.Logger(ctx).Error(errMsg)
-					return sdkerrors.Wrapf(types.ErrIntCast, errMsg)
-				}
-
-				slashPct := sdk.NewDec(slashAmtInt64).Quo(sdk.NewDec(delAmtInt64))
-				k.Logger(ctx).Info(fmt.Sprintf("ICQ'd delAmt mismatch zone %s validator %s delegator %s records was %d icq shows %d slashAmt %d slashPct %d... UPDATING!",
-					zone.ChainId, v.Address, qdel.DelegatorAddress, v.DelegationAmt, qNumTokens, slashAmt, slashPct))
-				// TODO(TEST-172): move rate limiting logic to new rate limiting module
-
-				if slashPct.GT(sdk.NewDec(10).Quo(sdk.NewDec(100))) {
-					errMsg := fmt.Sprintf("DelegationCallback: Validator (%s) slashed but ABORTING update, slash is greater than 0.10 (%d)", v.Address, slashPct)
-					k.Logger(ctx).Error(errMsg)
-					return sdkerrors.Wrapf(types.ErrSlashGtTenPct, errMsg)
-				}
-				// slash the validator's weight
-				weightMul := sdk.NewDec(qNumTokens.Int64()).Quo(sdk.NewDec(delAmtInt64))
-
-				zone.StakedBal -= slashAmt
-				v.DelegationAmt -= slashAmt
-				v.Weight = sdk.NewDec(weightInt64).Mul(weightMul).TruncateInt().Uint64()
-
-				// write back to state and break
-				zone.Validators[i] = v
-				k.Logger(ctx).Info(fmt.Sprintf("SLASHING! val to update to: %v", zone.Validators[i].String()))
-				k.SetHostZone(ctx, zone)
-
-				zone, found = k.GetHostZone(ctx, zone.ChainId)
-				if !found {
-					k.Logger(ctx).Error(fmt.Sprintf("failed to find zone %s", zone.ChainId))
-					return sdkerrors.Wrapf(sdkerrors.ErrNotFound, "no zone %s", zone.ChainId)
-				}
-				k.Logger(ctx).Info(fmt.Sprintf("SLASHED! val updated: %v", zone.Validators[i].String()))
-				break
-			}
-		}
+	// ensure ICQ can be issued now! else fail the callback
+	isWithinWindow, err := k.IsWithinBufferWindow(ctx)
+	if err != nil {
+		errMsg := fmt.Sprintf("unable to determine if ICQ callback is inside buffer window, err: %s", err.Error())
+		k.Logger(ctx).Error(errMsg)
+		return sdkerrors.Wrapf(types.ErrOutsideIcqWindow, errMsg)
+	} else if !isWithinWindow {
+		k.Logger(ctx).Error("delegator shares callback is outside ICQ window")
+		return nil
 	}
+
+	// Grab the validator object form the hostZone using the address returned from the query
+	validator, valIndex, found := getValidator(hostZone.Validators, queriedDelgation.ValidatorAddress)
+	if !found {
+		errMsg := fmt.Sprintf("no registered validator for address (%s)", queriedDelgation.ValidatorAddress)
+		k.Logger(ctx).Error(errMsg)
+		return sdkerrors.Wrapf(types.ErrValidatorNotFound, errMsg)
+	}
+
+	// get the validator's internal exchange rate, aborting if it hasn't been updated this epoch
+	strideEpochTracker, found := k.GetEpochTracker(ctx, epochtypes.STRIDE_EPOCH)
+	if !found {
+		k.Logger(ctx).Error("failed to find stride epoch")
+		return sdkerrors.Wrapf(sdkerrors.ErrNotFound, "no epoch number for epoch (%s)", epochtypes.STRIDE_EPOCH)
+	}
+	if validator.InternalExchangeRate.EpochNumber != strideEpochTracker.GetEpochNumber() {
+		errMsg := fmt.Sprintf("DelegationCallback: validator (%s) internal exchange rate has not been updated this epoch (epoch #%d)",
+			validator.Address, strideEpochTracker.GetEpochNumber())
+		k.Logger(ctx).Error(errMsg)
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, errMsg)
+	}
+
+	// TODO: make sure conversion math precision matches the sdk's staking module's version (we did it slightly differently)
+	// note: truncateInt per https://github.com/cosmos/cosmos-sdk/blob/cb31043d35bad90c4daa923bb109f38fd092feda/x/staking/types/validator.go#L431
+	validatorTokens := queriedDelgation.Shares.Mul(validator.InternalExchangeRate.InternalTokensToSharesRate).TruncateInt()
+	k.Logger(ctx).Info(fmt.Sprintf("DelegationCallback: HostZone: %s, Validator: %s, Previous NumTokens: %d, Current NumTokens: %d",
+		hostZone.ChainId, validator.Address, validator.DelegationAmt, validatorTokens.Int64()))
+
+	// Confirm the validator has actually been slashed
+	if validatorTokens.Uint64() == validator.DelegationAmt {
+		k.Logger(ctx).Info(fmt.Sprintf("DelegationCallback: Validator (%s) was not slashed", validator.Address))
+		return nil
+	} else if validatorTokens.Uint64() > validator.DelegationAmt {
+		errMsg := fmt.Sprintf("DelegationCallback: Validator (%s) tokens returned from query is greater than the DelegationAmt", validator.Address)
+		k.Logger(ctx).Error(errMsg)
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, errMsg)
+	}
+
+	// TODO(TESTS-171) add some safety checks here (e.g. we could query the slashing module to confirm the decr in tokens was due to slash)
+	// update our records of the total stakedbal and of the validator's delegation amt
+	// NOTE:  we assume any decrease in delegation amt that's not tracked via records is a slash
+
+	// Get slash percentage
+	delegationAmount, err := cast.ToInt64E(validator.DelegationAmt)
+	if err != nil {
+		errMsg := fmt.Sprintf("unable to convert validator delegation amount to uint64, err: %s", err.Error())
+		k.Logger(ctx).Error(errMsg)
+		return sdkerrors.Wrapf(types.ErrIntCast, errMsg)
+	}
+	slashAmountUInt := validator.DelegationAmt - validatorTokens.Uint64()
+	slashAmount, err := cast.ToInt64E(slashAmountUInt)
+	if err != nil {
+		errMsg := fmt.Sprintf("unable to convert validator slash amount to uint64, err: %s", err.Error())
+		k.Logger(ctx).Error(errMsg)
+		return sdkerrors.Wrapf(types.ErrIntCast, errMsg)
+	}
+	weight, err := cast.ToInt64E(validator.Weight)
+	if err != nil {
+		errMsg := fmt.Sprintf("unable to convert validator weight to uint64, err: %s", err.Error())
+		k.Logger(ctx).Error(errMsg)
+		return sdkerrors.Wrapf(types.ErrIntCast, errMsg)
+	}
+
+	slashPct := sdk.NewDec(slashAmount).Quo(sdk.NewDec(delegationAmount))
+	k.Logger(ctx).Info(fmt.Sprintf("ICQ'd delAmt mismatch zone %s validator %s delegator %s records was %d icq shows %d slashAmt %d slashPct %d... UPDATING!",
+		hostZone.ChainId, validator.Address, queriedDelgation.DelegatorAddress, validator.DelegationAmt, validatorTokens, slashAmount, slashPct))
+
+	// Abort if the slash was greater than 10%
+	tenPercent := sdk.NewDec(10).Quo(sdk.NewDec(100))
+	if slashPct.GT(tenPercent) {
+		errMsg := fmt.Sprintf("DelegationCallback: Validator (%s) slashed but ABORTING update, slash is greater than 0.10 (%d)", validator.Address, slashPct)
+		k.Logger(ctx).Error(errMsg)
+		return sdkerrors.Wrapf(types.ErrSlashGtTenPct, errMsg)
+	}
+
+	// Update the host zone and validator to reflect the weight and delegation change
+	weightAdjustment := sdk.NewDec(validatorTokens.Int64()).Quo(sdk.NewDec(delegationAmount))
+	validator.Weight = sdk.NewDec(weight).Mul(weightAdjustment).TruncateInt().Uint64()
+	validator.DelegationAmt -= slashAmountUInt
+
+	hostZone.StakedBal -= slashAmountUInt
+	hostZone.Validators[valIndex] = &validator
+	k.SetHostZone(ctx, hostZone)
+
+	k.Logger(ctx).Info(fmt.Sprintf("Validator (%s) slashed! Delegation updated to: %v", validator.Address, validator.DelegationAmt))
+
 	return nil
 }

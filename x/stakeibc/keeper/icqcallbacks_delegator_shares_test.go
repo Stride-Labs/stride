@@ -188,7 +188,7 @@ func (s *KeeperTestSuite) TestDelegatorSharesCallback_BufferWindowError() {
 	s.App.StakeibcKeeper.SetEpochTracker(s.Ctx(), epochTracker)
 
 	err := stakeibckeeper.DelegatorSharesCallback(s.App.StakeibcKeeper, s.Ctx(), tc.validArgs.callbackArgs, tc.validArgs.query)
-	s.Require().ErrorContains(err, "delegator shares callback is outside ICQ window")
+	s.Require().ErrorContains(err, "unable to determine if ICQ callback is inside buffer window")
 	s.Require().ErrorContains(err, "Current block time")
 	s.Require().ErrorContains(err, "not within current epoch")
 }
@@ -216,9 +216,7 @@ func (s *KeeperTestSuite) TestDelegatorSharesCallback_ValidatorNotFound() {
 	// Update the callback args to contain a validator address that doesn't exist
 	badCallbackArgs := s.CreateDelegatorSharesQueryResponse("fake_val", 1000) // 1000 is aribtrary
 	err := stakeibckeeper.DelegatorSharesCallback(s.App.StakeibcKeeper, s.Ctx(), badCallbackArgs, tc.validArgs.query)
-	_ = err
-	// TODO: Revisit after refactor
-	// s.Require().EqualError(err, "no registered validator for address (fake_val): validator not found")
+	s.Require().EqualError(err, "no registered validator for address (fake_val): validator not found")
 }
 
 func (s *KeeperTestSuite) TestDelegatorSharesCallback_ExchangeRateNotFound() {
@@ -237,16 +235,32 @@ func (s *KeeperTestSuite) TestDelegatorSharesCallback_NoSlashOccurred() {
 	tc := s.SetupDelegatorSharesICQCallback()
 
 	// Update the delegator shares query response so that it shows that there was no slash
-	valAddress := tc.initialState.hostZone.Validators[tc.valIndexQueried].Address
 	// shares_after_slash = (100% - slash_percentage) * share_if_not_slashed
 	//    => share_if_not_slashed = shares_after_slash / (100% - slash_percentage)
 	validatorSharesIfNotSlashed := uint64(float64(tc.numShares) / (1.0 - tc.slashPercentage))
+	valAddress := tc.initialState.hostZone.Validators[tc.valIndexQueried].Address
 	queryResponse := s.CreateDelegatorSharesQueryResponse(valAddress, validatorSharesIfNotSlashed)
 
 	err := stakeibckeeper.DelegatorSharesCallback(s.App.StakeibcKeeper, s.Ctx(), queryResponse, tc.validArgs.query)
 	s.Require().NoError(err, "delegator shares callback callback error")
 
 	s.checkStateIfValidatorNotSlashed(tc)
+}
+
+func (s *KeeperTestSuite) TestDelegatorSharesCallback_InvalidNumTokens() {
+	tc := s.SetupDelegatorSharesICQCallback()
+
+	// Update the delegator shares query response so that it shows that there are more tokens delegated
+	// that were tracked in state (which shouldn't be possible)
+	// Any large number of shares will work here so we'll use 10_000
+	valAddress := tc.initialState.hostZone.Validators[tc.valIndexQueried].Address
+	numShares := uint64(10_000)
+
+	badCallbackArgs := s.CreateDelegatorSharesQueryResponse(valAddress, numShares)
+	err := stakeibckeeper.DelegatorSharesCallback(s.App.StakeibcKeeper, s.Ctx(), badCallbackArgs, tc.validArgs.query)
+
+	expectedErrMsg := "DelegationCallback: Validator (valoper2) tokens returned from query is greater than the DelegationAmt: invalid request"
+	s.Require().EqualError(err, expectedErrMsg)
 }
 
 func (s *KeeperTestSuite) TestDelegatorSharesCallback_DelegationAmtOverfow() {
