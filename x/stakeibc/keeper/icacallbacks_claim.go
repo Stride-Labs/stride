@@ -5,6 +5,7 @@ import (
 
 	"github.com/Stride-Labs/stride/x/icacallbacks"
 	icacallbackstypes "github.com/Stride-Labs/stride/x/icacallbacks/types"
+	recordstypes "github.com/Stride-Labs/stride/x/records/types"
 	"github.com/Stride-Labs/stride/x/stakeibc/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -38,7 +39,7 @@ func ClaimCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ack *c
 		return err
 	}
 	k.Logger(ctx).Info(fmt.Sprintf("ClaimCallback %v", claimCallback))
-	userClaimRecord, found := k.RecordsKeeper.GetUserRedemptionRecord(ctx, claimCallback.GetUserRedemptionRecordId())
+	userRedemptionRecord, found := k.RecordsKeeper.GetUserRedemptionRecord(ctx, claimCallback.GetUserRedemptionRecordId())
 	if !found {
 		return sdkerrors.Wrapf(types.ErrRecordNotFound, "user redemption record not found %s", claimCallback.GetUserRedemptionRecordId())
 	}
@@ -46,8 +47,9 @@ func ClaimCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ack *c
 	// handle timeout
 	if ack == nil {
 		k.Logger(ctx).Error(fmt.Sprintf("ClaimCallback timeout, ack is nil, packet %v", packet))
-		userClaimRecord.IsClaimable = true
-		k.RecordsKeeper.SetUserRedemptionRecord(ctx, userClaimRecord)
+		// after a timeout, a user should be able to retry the claim
+		userRedemptionRecord.IsClaimable = true
+		k.RecordsKeeper.SetUserRedemptionRecord(ctx, userRedemptionRecord)
 		return nil
 	}
 
@@ -61,13 +63,37 @@ func ClaimCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ack *c
 	// handle failed tx on host chain
 	if len(txMsgData.Data) == 0 {
 		k.Logger(ctx).Error(fmt.Sprintf("ClaimCallback failed, packet %v", packet))
-		userClaimRecord.IsClaimable = true
-		k.RecordsKeeper.SetUserRedemptionRecord(ctx, userClaimRecord)
+		// after an error, a user should be able to retry the claim
+		userRedemptionRecord.IsClaimable = true
+		k.RecordsKeeper.SetUserRedemptionRecord(ctx, userRedemptionRecord)
 		return nil
 	}
 
 	// claim successfully processed
+	// remove the record and decrement the hzu
 	k.RecordsKeeper.RemoveUserRedemptionRecord(ctx, claimCallback.GetUserRedemptionRecordId())
-	k.Logger(ctx).Info(fmt.Sprintf("[CLAIM] success on %s", userClaimRecord.GetHostZoneId()))
+	err = k.DecrementHostZoneUnbonding(ctx, userRedemptionRecord, *claimCallback)
+	if err != nil {
+		k.Logger(ctx).Error(fmt.Sprintf("ClaimCallback failed (DecrementHostZoneUnbonding), packet %v, err: %s", packet, err.Error()))
+		return err
+	}
+	k.Logger(ctx).Info(fmt.Sprintf("[CLAIM] success on %s", userRedemptionRecord.GetHostZoneId()))
+	return nil
+}
+
+func (k Keeper) DecrementHostZoneUnbonding(ctx sdk.Context, userRedemptionRecord recordstypes.UserRedemptionRecord, callbackArgs types.ClaimCallback) error {
+	// fetch the hzu associated with the user unbonding record
+	hostZoneUnbonding, found := k.RecordsKeeper.GetHostZoneUnbondingByChainId(ctx, callbackArgs.EpochNumber, callbackArgs.ChainId)
+	if !found {
+		return sdkerrors.Wrapf(types.ErrRecordNotFound, "host zone unbonding not found %s", callbackArgs.ChainId)
+	}
+	// decrement the hzu by the amount claimed
+	hostZoneUnbonding.NativeTokenAmount = hostZoneUnbonding.NativeTokenAmount - userRedemptionRecord.Amount
+	// save the updated hzu on the epoch unbonding record
+	epochUnbondingRecord, success := k.RecordsKeeper.AddHostZoneToEpochUnbondingRecord(ctx, callbackArgs.EpochNumber, callbackArgs.ChainId, hostZoneUnbonding)
+	if !success {
+		return sdkerrors.Wrapf(types.ErrRecordNotFound, "epoch unbonding record not found %s", callbackArgs.ChainId)
+	}
+	k.RecordsKeeper.SetEpochUnbondingRecord(ctx, *epochUnbondingRecord)
 	return nil
 }

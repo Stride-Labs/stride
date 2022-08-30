@@ -28,7 +28,8 @@ func (k msgServer) ClaimUndelegatedTokens(goCtx context.Context, msg *types.MsgC
 	k.Logger(ctx).Info(fmt.Sprintf("ClaimUndelegatedTokens %v", msg))
 	userRedemptionRecord, err := k.GetClaimableRedemptionRecord(ctx, msg)
 	if err != nil {
-		return nil, sdkerrors.Wrapf(err, "unable to find claimable redemption record")
+		k.Logger(ctx).Error("unable to find claimable redemption record")
+		return nil, err
 	}
 
 	icaTx, err := k.GetRedemptionTransferMsg(ctx, userRedemptionRecord, msg.HostZoneId)
@@ -39,6 +40,8 @@ func (k msgServer) ClaimUndelegatedTokens(goCtx context.Context, msg *types.MsgC
 	// add callback data
 	claimCallback := types.ClaimCallback{
 		UserRedemptionRecordId: userRedemptionRecord.Id,
+		ChainId:                msg.HostZoneId,
+		EpochNumber:            msg.Epoch,
 	}
 	marshalledCallbackArgs, err := k.MarshalClaimCallbackArgs(ctx, claimCallback)
 	if err != nil {
@@ -50,7 +53,7 @@ func (k msgServer) ClaimUndelegatedTokens(goCtx context.Context, msg *types.MsgC
 		return nil, sdkerrors.Wrapf(err, "unable to submit ICA redemption tx")
 	}
 
-	// Set isClaimable to false, so that the record can't be claimed again
+	// Set isClaimable to false, so that the record can't be double claimed
 	userRedemptionRecord.IsClaimable = false
 	k.RecordsKeeper.SetUserRedemptionRecord(ctx, *userRedemptionRecord)
 
@@ -84,7 +87,7 @@ func (k Keeper) GetClaimableRedemptionRecord(ctx sdk.Context, msg *types.MsgClai
 	if !userRedemptionRecord.IsClaimable {
 		errMsg := fmt.Sprintf("User redemption record %s is not claimable, pending ack", userRedemptionRecord.Id)
 		k.Logger(ctx).Error(errMsg)
-		return nil, sdkerrors.Wrapf(types.ErrInvalidUserRedemptionRecord, "user redemption record is not claimable: %s, pending ack", userRedemptionRecordKey, hostZoneUnbonding.Status)
+		return nil, sdkerrors.Wrapf(types.ErrInvalidUserRedemptionRecord, "user redemption record is not claimable: %s, pending ack", userRedemptionRecordKey)
 	}
 	return &userRedemptionRecord, nil
 }

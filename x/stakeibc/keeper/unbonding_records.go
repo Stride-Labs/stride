@@ -241,21 +241,24 @@ func (k Keeper) InitiateAllHostZoneUnbondings(ctx sdk.Context, dayNumber uint64)
 	return true
 }
 
-func (k Keeper) CleanupEpochUnbondingRecords(ctx sdk.Context) bool {
+func (k Keeper) CleanupEpochUnbondingRecords(ctx sdk.Context, epochNumber uint64) bool {
 	// this function goes through each EpochUnbondingRecord
-	// if any of them don't have any hostZones, then it deletes the record
-	for _, epochUnbondingRecord := range k.RecordsKeeper.GetAllEpochUnbondingRecord(ctx) {
+	// and deletes those with 0 balances, meaning all tokens on that epoch unbonding
+	// record have been claimed
+	for _, epochUnbondingRecord := range k.RecordsKeeper.GetAllPreviousEpochUnbondingRecord(ctx, epochNumber) {
 		k.Logger(ctx).Info(fmt.Sprintf("Cleaning up epoch unbondings for epoch unbonding record from epoch %d", epochUnbondingRecord.GetEpochNumber()))
-		shouldDeleteRecord := true
+		shouldDeleteEpochUnbondingRecord := true
 		hostZoneUnbondings := epochUnbondingRecord.GetHostZoneUnbondings()
 		for _, hostZoneUnbonding := range hostZoneUnbondings {
 			k.Logger(ctx).Info(fmt.Sprintf("processing hostZoneUnbonding %v", hostZoneUnbonding))
-			if (hostZoneUnbonding.Status != recordstypes.HostZoneUnbonding_TRANSFERRED) && (hostZoneUnbonding.GetNativeTokenAmount() != 0) {
-				shouldDeleteRecord = false
+			// if an EpochUnbondingRecord has any HostZoneUnbonding with non-zero balances, we don't delete the EpochUnbondingRecord
+			// because it has outstanding tokens that need to be claimed
+			if hostZoneUnbonding.GetNativeTokenAmount() != 0 {
+				shouldDeleteEpochUnbondingRecord = false
 				break
 			}
 		}
-		if shouldDeleteRecord {
+		if shouldDeleteEpochUnbondingRecord {
 			k.Logger(ctx).Info(fmt.Sprintf("removing EpochUnbondingRecord %v", epochUnbondingRecord.GetEpochNumber()))
 			k.RecordsKeeper.RemoveEpochUnbondingRecord(ctx, epochUnbondingRecord.GetEpochNumber())
 		}
