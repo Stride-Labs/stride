@@ -287,13 +287,17 @@ func DelegatorSharesCallback(k Keeper, ctx sdk.Context, args []byte, query icqty
 
 	zone, found := k.GetHostZone(ctx, query.GetChainId())
 	if !found {
-		return fmt.Errorf("no registered zone for chain id: %s", query.GetChainId())
+		errMsg := fmt.Sprintf("no registered zone for queried chain ID (%s)", query.GetChainId())
+		k.Logger(ctx).Error(errMsg)
+		return sdkerrors.Wrapf(types.ErrHostZoneNotFound, errMsg)
 	}
 
 	// ensure ICQ can be issued now! else fail the callback
 	valid, err := k.IsWithinBufferWindow(ctx)
 	if err != nil {
-		return err
+		errMsg := fmt.Sprintf("delegator shares callback is outside ICQ window, err: %s", err.Error())
+		k.Logger(ctx).Error(errMsg)
+		return sdkerrors.Wrapf(types.ErrOutsideIcqWindow, errMsg)
 	} else if !valid {
 		return nil
 	}
@@ -301,8 +305,9 @@ func DelegatorSharesCallback(k Keeper, ctx sdk.Context, args []byte, query icqty
 	qdel := stakingtypes.Delegation{}
 	err = k.cdc.Unmarshal(args, &qdel)
 	if err != nil {
-		k.Logger(ctx).Error(fmt.Sprintf("unable to unmarshal qdel info for zone %s, err: %s", zone.ChainId, err.Error()))
-		return err
+		errMsg := fmt.Sprintf("unable to unmarshal queried delegation info for zone %s, err: %s", zone.ChainId, err.Error())
+		k.Logger(ctx).Error(errMsg)
+		return sdkerrors.Wrapf(types.ErrMarshalFailure, errMsg)
 	}
 	k.Logger(ctx).Info(fmt.Sprintf("DelegationCallback: zone %s qdel %v", zone.ChainId, qdel))
 
@@ -312,8 +317,9 @@ func DelegatorSharesCallback(k Keeper, ctx sdk.Context, args []byte, query icqty
 		if v.Address == qdel.ValidatorAddress {
 			delAmtInt64, err := cast.ToInt64E(v.DelegationAmt)
 			if err != nil {
-				k.Logger(ctx).Error(fmt.Sprintf("unable to convert delegationAmt to uint64, err: %s", err.Error()))
-				return err
+				errMsg := fmt.Sprintf("unable to convert validator delegation amount to uint64, err: %s", err.Error())
+				k.Logger(ctx).Error(errMsg)
+				return sdkerrors.Wrapf(types.ErrIntCast, errMsg)
 			}
 
 			// convert shares to tokens using the exchange rate
@@ -325,8 +331,10 @@ func DelegatorSharesCallback(k Keeper, ctx sdk.Context, args []byte, query icqty
 				return sdkerrors.Wrapf(sdkerrors.ErrNotFound, "no epoch number for epoch (%s)", epochtypes.STRIDE_EPOCH)
 			}
 			if v.InternalExchangeRate.EpochNumber != strideEpochTracker.GetEpochNumber() {
-				k.Logger(ctx).Error(fmt.Sprintf("delegation callback: validator %s internalExchRate has not been updated this epoch", v.Address))
-				return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "validator %s internalExchRate  has not been updated this epoch", v.Address)
+				errMsg := fmt.Sprintf("DelegationCallback: validator (%s) internal exchange rate has not been updated this epoch (epoch #%d)",
+					v.Address, strideEpochTracker.GetEpochNumber())
+				k.Logger(ctx).Error(errMsg)
+				return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, errMsg)
 			}
 			// TODO: make sure conversion math precision matches the sdk's staking module's version (we did it slightly differently)
 			// note: truncateInt per https://github.com/cosmos/cosmos-sdk/blob/cb31043d35bad90c4daa923bb109f38fd092feda/x/staking/types/validator.go#L431
@@ -339,13 +347,15 @@ func DelegatorSharesCallback(k Keeper, ctx sdk.Context, args []byte, query icqty
 				slashAmt := v.DelegationAmt - qNumTokens.Uint64()
 				slashAmtInt64, err := cast.ToInt64E(slashAmt)
 				if err != nil {
-					k.Logger(ctx).Error(fmt.Sprintf("unable to convert slashAmt to uint64, err: %s", err.Error()))
-					return err
+					errMsg := fmt.Sprintf("unable to convert validator slash amount to uint64, err: %s", err.Error())
+					k.Logger(ctx).Error(errMsg)
+					return sdkerrors.Wrapf(types.ErrIntCast, errMsg)
 				}
 				weightInt64, err := cast.ToInt64E(v.Weight)
 				if err != nil {
-					k.Logger(ctx).Error(fmt.Sprintf("unable to convert weight to uint64, err: %s", err.Error()))
-					return err
+					errMsg := fmt.Sprintf("unable to convert validator weight to uint64, err: %s", err.Error())
+					k.Logger(ctx).Error(errMsg)
+					return sdkerrors.Wrapf(types.ErrIntCast, errMsg)
 				}
 
 				slashPct := sdk.NewDec(slashAmtInt64).Quo(sdk.NewDec(delAmtInt64))
@@ -354,8 +364,9 @@ func DelegatorSharesCallback(k Keeper, ctx sdk.Context, args []byte, query icqty
 				// TODO(TEST-172): move rate limiting logic to new rate limiting module
 
 				if slashPct.GT(sdk.NewDec(10).Quo(sdk.NewDec(100))) {
-					k.Logger(ctx).Error(fmt.Sprintf("DELCB | slashed but ABORTING bc slash GT10pct: query shows slash of %v", slashPct))
-					return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "DELCB | slashed but ABORTING bc slash GT10pct: query shows slash of %v", slashPct)
+					errMsg := fmt.Sprintf("DelegationCallback: Validator (%s) slashed but ABORTING update, slash is greater than 0.10 (%d)", v.Address, slashPct)
+					k.Logger(ctx).Error(errMsg)
+					return sdkerrors.Wrapf(types.ErrSlashGtTenPct, errMsg)
 				}
 				// slash the validator's weight
 				weightMul := sdk.NewDec(qNumTokens.Int64()).Quo(sdk.NewDec(delAmtInt64))

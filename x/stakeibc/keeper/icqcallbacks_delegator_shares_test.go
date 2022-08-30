@@ -1,6 +1,8 @@
 package keeper_test
 
 import (
+	"math"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
@@ -21,9 +23,11 @@ type DelegatorSharesICQCallbackArgs struct {
 }
 
 type DelegatorSharesICQCallbackTestCase struct {
-	valIndex                 int
+	valIndexQueried          int
 	initialState             DelegatorSharesICQCallbackState
 	validArgs                DelegatorSharesICQCallbackArgs
+	numShares                uint64
+	slashPercentage          float64
 	expectedDelegationAmount uint64
 	expectedSlashAmount      uint64
 	expectedWeight           uint64
@@ -45,7 +49,7 @@ func (s *KeeperTestSuite) SetupDelegatorSharesICQCallback() DelegatorSharesICQCa
 	s.CreateTransferChannel(HostChainId)
 
 	valAddress := "valoper2"
-	valIndex := 1
+	valIndexQueried := 1
 	tokensBeforeSlash := uint64(1000)
 	internalExchangeRate := sdk.NewDec(1).Quo(sdk.NewDec(2)) // 0.5
 	numShares := uint64(1900)
@@ -55,13 +59,14 @@ func (s *KeeperTestSuite) SetupDelegatorSharesICQCallback() DelegatorSharesICQCa
 	// 50 slash tokens / 1000 initial tokens = 5% slash
 	expectedTokensAfterSlash := uint64(950)
 	expectedSlashAmount := tokensBeforeSlash - expectedTokensAfterSlash
+	slashPercentage := float64(0.05)
 	weightBeforeSlash := uint64(20)
 	expectedWeightAfterSlash := uint64(19)
 	stakedBal := uint64(10_000)
 
 	s.Require().Equal(numShares, expectedTokensAfterSlash*2, "tokens, shares, and exchange rate aligned")
-	s.Require().Equal(0.05, float64(expectedSlashAmount)/float64(tokensBeforeSlash), "expected slash percentage")
-	s.Require().Equal(0.05, float64(weightBeforeSlash-expectedWeightAfterSlash)/float64(weightBeforeSlash), "weight reduction")
+	s.Require().Equal(slashPercentage, float64(expectedSlashAmount)/float64(tokensBeforeSlash), "expected slash percentage")
+	s.Require().Equal(slashPercentage, float64(weightBeforeSlash-expectedWeightAfterSlash)/float64(weightBeforeSlash), "weight reduction")
 
 	currentEpoch := uint64(1)
 	hostZone := stakeibctypes.HostZone{
@@ -102,7 +107,7 @@ func (s *KeeperTestSuite) SetupDelegatorSharesICQCallback() DelegatorSharesICQCa
 	queryResponse := s.CreateDelegatorSharesQueryResponse(valAddress, numShares)
 
 	return DelegatorSharesICQCallbackTestCase{
-		valIndex: valIndex,
+		valIndexQueried: valIndexQueried,
 		initialState: DelegatorSharesICQCallbackState{
 			hostZone:           hostZone,
 			strideEpochTracker: strideEpochTracker,
@@ -113,6 +118,8 @@ func (s *KeeperTestSuite) SetupDelegatorSharesICQCallback() DelegatorSharesICQCa
 			},
 			callbackArgs: queryResponse,
 		},
+		numShares:                numShares,
+		slashPercentage:          slashPercentage,
 		expectedDelegationAmount: expectedTokensAfterSlash,
 		expectedSlashAmount:      expectedSlashAmount,
 		expectedWeight:           expectedWeightAfterSlash,
@@ -132,51 +139,157 @@ func (s *KeeperTestSuite) TestDelegatorSharesCallback_Successful() {
 	s.Require().Equal(tc.expectedSlashAmount, tc.initialState.hostZone.StakedBal-hostZone.StakedBal)
 
 	// Confirm the validator's weight and delegation amount were reduced
-	validator := hostZone.Validators[tc.valIndex]
+	validator := hostZone.Validators[tc.valIndexQueried]
 	s.Require().Equal(tc.expectedWeight, validator.Weight, "validator weight")
 	s.Require().Equal(tc.expectedDelegationAmount, validator.DelegationAmt, "validator delegation amount")
 }
 
-func (s *KeeperTestSuite) TestDelegatorSharesCallback_HostZoneNotFound() {
+func (s *KeeperTestSuite) checkStateIfValidatorNotSlashed(tc DelegatorSharesICQCallbackTestCase) {
+	// Confirm validator on host zone did not update
+	hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx(), tc.initialState.hostZone.ChainId)
+	s.Require().True(found, "host zone found")
 
+	initialValidator := tc.initialState.hostZone.Validators[tc.valIndexQueried]
+	finalValidator := hostZone.Validators[tc.valIndexQueried]
+	s.Require().Equal(initialValidator.Weight, finalValidator.Weight, "validator weight should not have updated")
+	s.Require().Equal(initialValidator.DelegationAmt, finalValidator.DelegationAmt, "validator delegation amount should not have updated")
+}
+
+func (s *KeeperTestSuite) TestDelegatorSharesCallback_HostZoneNotFound() {
+	tc := s.SetupDelegatorSharesICQCallback()
+
+	// Set an incorrect host zone in the query
+	badQuery := tc.validArgs.query
+	badQuery.ChainId = "fake_host_zone"
+
+	err := stakeibckeeper.DelegatorSharesCallback(s.App.StakeibcKeeper, s.Ctx(), tc.validArgs.callbackArgs, badQuery)
+	s.Require().EqualError(err, "no registered zone for queried chain ID (fake_host_zone): host zone not found")
 }
 
 func (s *KeeperTestSuite) TestDelegatorSharesCallback_InvalidCallbackArgs() {
+	tc := s.SetupDelegatorSharesICQCallback()
 
+	// Submit callback with invalid callback args (so that it can't unmarshal into a validator)
+	invalidArgs := []byte("random bytes")
+	err := stakeibckeeper.DelegatorSharesCallback(s.App.StakeibcKeeper, s.Ctx(), invalidArgs, tc.validArgs.query)
+
+	expectedErrMsg := "unable to unmarshal queried delegation info for zone GAIA, "
+	expectedErrMsg += "err: unexpected EOF: unable to marshal data structure"
+	s.Require().EqualError(err, expectedErrMsg)
 }
 
 func (s *KeeperTestSuite) TestDelegatorSharesCallback_BufferWindowError() {
+	tc := s.SetupDelegatorSharesICQCallback()
 
+	// update epoch tracker so that we're in the middle of an epoch
+	epochTracker := tc.initialState.strideEpochTracker
+	epochTracker.Duration = 0 // duration of 0 will make the epoch start time equal to the epoch end time
+
+	s.App.StakeibcKeeper.SetEpochTracker(s.Ctx(), epochTracker)
+
+	err := stakeibckeeper.DelegatorSharesCallback(s.App.StakeibcKeeper, s.Ctx(), tc.validArgs.callbackArgs, tc.validArgs.query)
+	s.Require().ErrorContains(err, "delegator shares callback is outside ICQ window")
+	s.Require().ErrorContains(err, "Current block time")
+	s.Require().ErrorContains(err, "not within current epoch")
 }
 
 func (s *KeeperTestSuite) TestDelegatorSharesCallback_OutsideBufferWindow() {
+	tc := s.SetupDelegatorSharesICQCallback()
 
+	// update epoch tracker so that we're in the middle of an epoch
+	epochTracker := tc.initialState.strideEpochTracker
+	epochTracker.Duration = 10_000_000_000                                                         // 10 second epochs
+	epochTracker.NextEpochStartTime = uint64(s.Coordinator.CurrentTime.UnixNano() + 5_000_000_000) // epoch ends in 5 second
+
+	s.App.StakeibcKeeper.SetEpochTracker(s.Ctx(), epochTracker)
+
+	// In this case, we should return success instead of error, but we should exit early before updating the validator's state
+	err := stakeibckeeper.DelegatorSharesCallback(s.App.StakeibcKeeper, s.Ctx(), tc.validArgs.callbackArgs, tc.validArgs.query)
+	s.Require().NoError(err, "delegator shares callback callback error")
+
+	s.checkStateIfValidatorNotSlashed(tc)
 }
 
 func (s *KeeperTestSuite) TestDelegatorSharesCallback_ValidatorNotFound() {
+	tc := s.SetupDelegatorSharesICQCallback()
 
-}
-
-func (s *KeeperTestSuite) TestDelegatorSharesCallback_EpochNotFound() {
-
+	// Update the callback args to contain a validator address that doesn't exist
+	badCallbackArgs := s.CreateDelegatorSharesQueryResponse("fake_val", 1000) // 1000 is aribtrary
+	err := stakeibckeeper.DelegatorSharesCallback(s.App.StakeibcKeeper, s.Ctx(), badCallbackArgs, tc.validArgs.query)
+	_ = err
+	// TODO: Revisit after refactor
+	// s.Require().EqualError(err, "no registered validator for address (fake_val): validator not found")
 }
 
 func (s *KeeperTestSuite) TestDelegatorSharesCallback_ExchangeRateNotFound() {
+	tc := s.SetupDelegatorSharesICQCallback()
 
+	// Increment the epoch number so that we're in an epoch that has not queried the validator's exchange rate
+	epochTracker := tc.initialState.strideEpochTracker
+	epochTracker.EpochNumber += 1
+	s.App.StakeibcKeeper.SetEpochTracker(s.Ctx(), epochTracker)
+
+	err := stakeibckeeper.DelegatorSharesCallback(s.App.StakeibcKeeper, s.Ctx(), tc.validArgs.callbackArgs, tc.validArgs.query)
+	s.Require().EqualError(err, "DelegationCallback: validator (valoper2) internal exchange rate has not been updated this epoch (epoch #2): invalid request")
 }
 
 func (s *KeeperTestSuite) TestDelegatorSharesCallback_NoSlashOccurred() {
+	tc := s.SetupDelegatorSharesICQCallback()
 
+	// Update the delegator shares query response so that it shows that there was no slash
+	valAddress := tc.initialState.hostZone.Validators[tc.valIndexQueried].Address
+	// shares_after_slash = (100% - slash_percentage) * share_if_not_slashed
+	//    => share_if_not_slashed = shares_after_slash / (100% - slash_percentage)
+	validatorSharesIfNotSlashed := uint64(float64(tc.numShares) / (1.0 - tc.slashPercentage))
+	queryResponse := s.CreateDelegatorSharesQueryResponse(valAddress, validatorSharesIfNotSlashed)
+
+	err := stakeibckeeper.DelegatorSharesCallback(s.App.StakeibcKeeper, s.Ctx(), queryResponse, tc.validArgs.query)
+	s.Require().NoError(err, "delegator shares callback callback error")
+
+	s.checkStateIfValidatorNotSlashed(tc)
 }
 
-func (s *KeeperTestSuite) TestDelegatorSharesCallback_SlashOverfow() {
+func (s *KeeperTestSuite) TestDelegatorSharesCallback_DelegationAmtOverfow() {
+	tc := s.SetupDelegatorSharesICQCallback()
 
+	// Update the delegation amount to max int so it overflows when casted
+	hostZone := tc.initialState.hostZone
+	validator := hostZone.Validators[tc.valIndexQueried]
+	validator.DelegationAmt = math.MaxUint64
+	hostZone.Validators[tc.valIndexQueried] = validator
+	s.App.StakeibcKeeper.SetHostZone(s.Ctx(), hostZone)
+
+	err := stakeibckeeper.DelegatorSharesCallback(s.App.StakeibcKeeper, s.Ctx(), tc.validArgs.callbackArgs, tc.validArgs.query)
+	expectedErrMsg := "unable to convert validator delegation amount to uint64, err: overflow: "
+	expectedErrMsg += "unable to cast 18446744073709551615 of type uint64 to int64: unable to cast to safe cast int"
+	s.Require().EqualError(err, expectedErrMsg)
 }
 
 func (s *KeeperTestSuite) TestDelegatorSharesCallback_WeightOverfow() {
+	tc := s.SetupDelegatorSharesICQCallback()
 
+	// Update the validator weight to max int so it overflows when casted
+	hostZone := tc.initialState.hostZone
+	validator := hostZone.Validators[tc.valIndexQueried]
+	validator.Weight = math.MaxUint64
+	hostZone.Validators[tc.valIndexQueried] = validator
+	s.App.StakeibcKeeper.SetHostZone(s.Ctx(), hostZone)
+
+	err := stakeibckeeper.DelegatorSharesCallback(s.App.StakeibcKeeper, s.Ctx(), tc.validArgs.callbackArgs, tc.validArgs.query)
+	expectedErrMsg := "unable to convert validator weight to uint64, err: overflow: "
+	expectedErrMsg += "unable to cast 18446744073709551615 of type uint64 to int64: unable to cast to safe cast int"
+	s.Require().EqualError(err, expectedErrMsg)
 }
 
 func (s *KeeperTestSuite) TestDelegatorSharesCallback_SlashGtTenPercent() {
+	tc := s.SetupDelegatorSharesICQCallback()
 
+	// Update the callback args to contain a number of shares that would imply a slash greater than 10%
+	valAddress := tc.initialState.hostZone.Validators[tc.valIndexQueried].Address
+	badCallbackArgs := s.CreateDelegatorSharesQueryResponse(valAddress, 1600)
+
+	err := stakeibckeeper.DelegatorSharesCallback(s.App.StakeibcKeeper, s.Ctx(), badCallbackArgs, tc.validArgs.query)
+	expectedErrMsg := "DelegationCallback: Validator (valoper2) slashed but ABORTING update, "
+	expectedErrMsg += "slash is greater than 0.10 (0.200000000000000000): slash is greater than 10 percent"
+	s.Require().EqualError(err, expectedErrMsg)
 }
