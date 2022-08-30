@@ -14,6 +14,7 @@ const (
 	Atom        = "uatom"
 	StAtom      = "stuatom"
 	IbcAtom     = "ibc/uatom"
+	GaiaPrefix  = "cosmos"
 	HostChainId = "GAIA"
 )
 
