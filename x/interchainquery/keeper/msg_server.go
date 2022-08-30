@@ -81,7 +81,7 @@ func (k Keeper) VerifyKeyProof(ctx sdk.Context, msg *types.MsgSubmitQueryRespons
 			if err := merkleProof.VerifyNonMembership(tmclientstate.ProofSpecs, consensusState.GetRoot(), path); err != nil {
 				return fmt.Errorf("unable to verify proof: %s", err)
 			}
-			k.Logger(ctx).Info(fmt.Sprintf("Non-inclusion Proof validated! module: %s, queryId %s", types.ModuleName, q.Id))
+			k.Logger(ctx).Info(fmt.Sprintf("Non-inclusion Proof validated, stopping here! module: %s, queryId %s", types.ModuleName, q.Id))
 		}
 	}
 	return nil
@@ -154,13 +154,20 @@ func (k msgServer) SubmitQueryResponse(goCtx context.Context, msg *types.MsgSubm
 			return nil, err
 		}
 
-		// 4. call the query's associated callback function
+		// 4. if the query is contentless, remove it from store and end
+		if len(msg.Result) == 0 {
+			k.Logger(ctx).Info(fmt.Sprintf("[ICQ Resp] query %s is contentless, removing from store.", msg.QueryId))
+			k.DeleteQuery(ctx, msg.QueryId)
+			return &types.MsgSubmitQueryResponseResponse{}, nil
+		}
+
+		// 5. call the query's associated callback function
 		err = k.FindAndInvokeCallback(ctx, msg, q)
 		if err != nil {
 			return nil, err
 		}
 
-		// 5. delete the query from the store once it's been processed
+		// 6. delete the query from the store once it's been processed
 		k.DeleteQuery(ctx, msg.QueryId)
 
 	} else {
