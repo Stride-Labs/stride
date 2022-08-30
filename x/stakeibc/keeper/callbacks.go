@@ -70,30 +70,26 @@ func WithdrawalBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query icq
 		return sdkerrors.Wrapf(types.ErrHostZoneNotFound, errMsg)
 	}
 
-	// Query request is a byte array of the form:
-	// [ {balancesPrefix} {address} {denom} ]
-	// {balancePrefix} is only a single byte - and it must be removed before calling AddressFromBalancesStore
-	balancesStoreKey := query.Request[1:]
-	queriedAddress, err := banktypes.AddressFromBalancesStore(balancesStoreKey)
-	if err != nil {
-		errMsg := "unable to derive queried address from request byte array"
-		k.Logger(ctx).Error(errMsg)
-		return sdkerrors.Wrapf(err, errMsg)
-	}
-
 	// Unmarshal the CB args into a coin type
 	withdrawalBalanceCoin := sdk.Coin{}
-	err = k.cdc.Unmarshal(args, &withdrawalBalanceCoin)
+	err := k.cdc.Unmarshal(args, &withdrawalBalanceCoin)
 	if err != nil {
 		errMsg := fmt.Sprintf("unable to unmarshal balance in callback args for zone: %s, err: %s", hostZone.ChainId, err.Error())
 		k.Logger(ctx).Error(errMsg)
 		return sdkerrors.Wrapf(types.ErrMarshalFailure, errMsg)
 	}
 
-	// sanity check, do not transfer if we have 0 balance!
+	// Check if the coin is nil (which would indicate the account never had a balance)
+	if withdrawalBalanceCoin.IsNil() || withdrawalBalanceCoin.Amount.IsNil() {
+		k.Logger(ctx).Info(fmt.Sprintf("WithdrawalBalanceCallback: balance query returned a nil coin for address %s on %s, meaning the account has never had a balance on the host",
+			hostZone.WithdrawalAccount.Address, hostZone.ChainId))
+		return nil
+	}
+
+	// Confirm the balance is greater than zero
 	if withdrawalBalanceCoin.Amount.Int64() <= 0 {
 		k.Logger(ctx).Info(fmt.Sprintf("WithdrawalBalanceCallback: no balance to transfer for zone: %s, accAddr: %v, coin: %v",
-			hostZone.ChainId, queriedAddress.String(), withdrawalBalanceCoin.String()))
+			hostZone.ChainId, hostZone.WithdrawalAccount.Address, withdrawalBalanceCoin.String()))
 		return nil
 	}
 

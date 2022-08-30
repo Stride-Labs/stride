@@ -4,8 +4,6 @@ import (
 	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/types/bech32"
-	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	ibctesting "github.com/cosmos/ibc-go/v3/testing"
 
 	icatypes "github.com/cosmos/ibc-go/v3/modules/apps/27-interchain-accounts/types"
@@ -32,18 +30,6 @@ type WithdrawalBalanceICQCallbackTestCase struct {
 	initialState         WithdrawalBalanceICQCallbackState
 	validArgs            WithdrawalBalanceICQCallbackArgs
 	expectedReinvestment sdk.Coin
-}
-
-// Given an address and denom, this creates the ICQ request which consists
-// of a byte array of the format [ {balancePrefix} {address} {denom} ] that can
-// be used to access the addresses balance directly from the store
-func (s *KeeperTestSuite) CreateBalanceQueryRequest(address string, denom string) []byte {
-	_, addressBz, err := bech32.DecodeAndConvert(address)
-	s.Require().NoError(err)
-
-	denomBz := []byte(denom)
-	balancePrefix := banktypes.CreateAccountBalancesPrefix(addressBz)
-	return append(balancePrefix, denomBz...)
 }
 
 // The response from the WithdrawalBalance ICQ is a serialized sdk.Coin containing
@@ -98,7 +84,6 @@ func (s *KeeperTestSuite) SetupWithdrawalBalanceCallbackTest() WithdrawalBalance
 	params := s.App.StakeibcKeeper.GetParams(s.Ctx())
 	params.StrideCommission = uint64(commission)
 
-	queryRequest := s.CreateBalanceQueryRequest(withdrawalAddress, Atom)
 	queryResponse := s.CreateBalanceQueryResponse(withdrawalBalance, Atom)
 
 	return WithdrawalBalanceICQCallbackTestCase{
@@ -114,7 +99,6 @@ func (s *KeeperTestSuite) SetupWithdrawalBalanceCallbackTest() WithdrawalBalance
 			query: icqtypes.Query{
 				Id:      "0",
 				ChainId: HostChainId,
-				Request: queryRequest,
 			},
 			callbackArgs: queryResponse,
 		},
@@ -156,6 +140,19 @@ func (s *KeeperTestSuite) TestWithdrawalBalanceCallback_Successful() {
 	s.Require().Equal(endSequence, startSequence+1, "sequence number after reinvestment")
 }
 
+func (s *KeeperTestSuite) TestWithdrawalBalanceCallback_EmptyCallbackArgs() {
+	tc := s.SetupWithdrawalBalanceCallbackTest()
+
+	// Replace the query response an empty byte array (this happens when the account has not been registered yet)
+	emptyCallbackArgs := []byte{}
+
+	err := stakeibckeeper.WithdrawalBalanceCallback(s.App.StakeibcKeeper, s.Ctx(), emptyCallbackArgs, tc.validArgs.query)
+	s.Require().NoError(err)
+
+	// Confirm revinvestment callback was not created
+	s.Require().Len(s.App.IcacallbacksKeeper.GetAllCallbackData(s.Ctx()), 0, "number of callbacks found")
+}
+
 func (s *KeeperTestSuite) TestWithdrawalBalanceCallback_ZeroBalance() {
 	tc := s.SetupWithdrawalBalanceCallbackTest()
 
@@ -192,17 +189,6 @@ func (s *KeeperTestSuite) TestWithdrawalBalanceCallback_HostZoneNotFound() {
 	invalidQuery.ChainId = "fake_host_zone"
 	err := stakeibckeeper.WithdrawalBalanceCallback(s.App.StakeibcKeeper, s.Ctx(), tc.validArgs.callbackArgs, invalidQuery)
 	s.Require().EqualError(err, "no registered zone for queried chain ID (fake_host_zone): host zone not found")
-}
-
-func (s *KeeperTestSuite) TestWithdrawalBalanceCallback_InvalidBalancesStore() {
-	tc := s.SetupWithdrawalBalanceCallbackTest()
-
-	// Reduce the byte slice to one element so that the callback is unable to deserialize the queried address
-	invalidQuery := tc.validArgs.query
-	invalidQuery.Request = invalidQuery.Request[:1]
-
-	err := stakeibckeeper.WithdrawalBalanceCallback(s.App.StakeibcKeeper, s.Ctx(), tc.validArgs.callbackArgs, invalidQuery)
-	s.Require().EqualError(err, "unable to derive queried address from request byte array: invalid key")
 }
 
 func (s *KeeperTestSuite) TestWithdrawalBalanceCallback_InvalidArgs() {
