@@ -66,8 +66,8 @@ func (k Keeper) TransferExistingDepositsToHostZones(ctx sdk.Context, epochNumber
 		}
 		delegateAddress := delegateAccount.GetAddress()
 
-		blockHeight, found := k.GetLightClientHeightSafely(ctx, hostZone.ConnectionId)
-		if !found {
+		blockHeight, err := k.GetLightClientHeightSafely(ctx, hostZone.ConnectionId)
+		if err != nil {
 			k.Logger(ctx).Error(fmt.Sprintf("Could not find blockHeight for host zone %s, aborting transfers to host zone this epoch", hostZone.ConnectionId))
 			continue
 		} else {
@@ -80,7 +80,7 @@ func (k Keeper) TransferExistingDepositsToHostZones(ctx sdk.Context, epochNumber
 		msg := ibctypes.NewMsgTransfer("transfer", hostZone.TransferChannelId, transferCoin, hostZoneModuleAddress, delegateAddress, timeoutHeight, 0)
 		k.Logger(ctx).Info(fmt.Sprintf("TransferExistingDepositsToHostZones msg %v", msg))
 
-		err := k.RecordsKeeper.Transfer(ctx, msg, depositRecord.Id)
+		err = k.RecordsKeeper.Transfer(ctx, msg, depositRecord.Id)
 		if err != nil {
 			k.Logger(ctx).Error(fmt.Sprintf("\t[TransferExistingDepositsToHostZones] ERROR WITH DEPOSIT RECEIPT %s %v %s %s %v", hostZone.TransferChannelId, transferCoin, hostZoneModuleAddress, delegateAddress, timeoutHeight))
 			k.Logger(ctx).Error(fmt.Sprintf("\t[TransferExistingDepositsToHostZones] err {%s}", err.Error()))

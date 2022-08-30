@@ -145,15 +145,15 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochInfo epochstypes.EpochInf
 				withdrawalIca := hz.GetWithdrawalAccount()
 				if withdrawalIca != nil {
 					// read clock time on host zone
-					blockTime, found := k.GetLightClientTimeSafely(ctx, hz.ConnectionId)
-					if !found {
-						k.Logger(ctx).Error(fmt.Sprintf("Could not find blockTime for host zone %s", hz.ConnectionId))
+					blockTime, err := k.GetLightClientTimeSafely(ctx, hz.ConnectionId)
+					if err != nil {
+						k.Logger(ctx).Error(fmt.Sprintf("Could not find blockTime for host zone %s, err: %s", hz.ConnectionId, err.Error()))
 						continue
 					} else {
 						k.Logger(ctx).Info(fmt.Sprintf("Found blockTime for host zone %s: %d", hz.ConnectionId, blockTime))
 					}
 
-					err := k.UpdateWithdrawalBalance(ctx, hz)
+					err = k.UpdateWithdrawalBalance(ctx, hz)
 					if err != nil {
 						k.Logger(ctx).Error(fmt.Sprintf("Error updating withdrawal balance for host zone %s: %s", hz.ConnectionId, err.Error()))
 						continue
