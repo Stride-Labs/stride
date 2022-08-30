@@ -142,51 +142,47 @@ func (k Keeper) GetConnectionId(ctx sdk.Context, portId string) (string, error) 
 
 // helper to get what share of the curr epoch we're through
 func (k Keeper) GetStrideEpochElapsedShare(ctx sdk.Context) (sdk.Dec, error) {
-	epochType := epochstypes.STRIDE_EPOCH
-	epochTracker, found := k.GetEpochTracker(ctx, epochType)
+	// Get the current stride epoch
+	epochTracker, found := k.GetEpochTracker(ctx, epochstypes.STRIDE_EPOCH)
 	if !found {
-		errMsg := fmt.Sprintf("failed to get epoch tracker for %s", epochType)
+		errMsg := fmt.Sprintf("Failed to get epoch tracker for %s", epochstypes.STRIDE_EPOCH)
 		k.Logger(ctx).Error(errMsg)
 		return sdk.ZeroDec(), sdkerrors.Wrapf(sdkerrors.ErrNotFound, errMsg)
 	}
-	durationInt64, err := cast.ToInt64E(epochTracker.Duration)
+
+	// Get epoch start time, end time, and duration
+	epochDuration, err := cast.ToInt64E(epochTracker.Duration)
 	if err != nil {
 		errMsg := fmt.Sprintf("unable to convert epoch duration to int64, err: %s", err.Error())
 		k.Logger(ctx).Error(errMsg)
 		return sdk.ZeroDec(), sdkerrors.Wrapf(types.ErrIntCast, errMsg)
 	}
-	// log epoch length
-	k.Logger(ctx).Info(fmt.Sprintf("Epoch length: %d", durationInt64))
-	nextEpochStartTimeInt64, err := cast.ToInt64E(epochTracker.NextEpochStartTime)
+	epochEndTime, err := cast.ToInt64E(epochTracker.NextEpochStartTime)
 	if err != nil {
 		errMsg := fmt.Sprintf("unable to convert next epoch start time to int64, err: %s", err.Error())
 		k.Logger(ctx).Error(errMsg)
 		return sdk.ZeroDec(), sdkerrors.Wrapf(types.ErrIntCast, errMsg)
 	}
-	currEpochStartTime := nextEpochStartTimeInt64 - durationInt64
+	epochStartTime := epochEndTime - epochDuration
+
+	// Confirm the current block time is inside the current epoch's start and end times
 	currBlockTime := ctx.BlockTime().UnixNano()
-	currBlockTimeUint64, err := cast.ToUint64E(currBlockTime)
-	if err != nil {
-		errMsg := fmt.Sprintf("unable to convert current block time to uint64, err: %s", err.Error())
-		k.Logger(ctx).Error(errMsg)
-		return sdk.ZeroDec(), sdkerrors.Wrapf(types.ErrIntCast, errMsg)
-	}
-	// sanity check: current block time is:
-	//     * GT time of start of current epoch
-	//     * LT time of end of current epoch
-	if currBlockTime < currEpochStartTime || currBlockTimeUint64 > epochTracker.NextEpochStartTime {
+	if currBlockTime < epochStartTime || currBlockTime > epochEndTime {
 		errMsg := fmt.Sprintf("current block time %d is not within current epoch (ending at %d)", currBlockTime, epochTracker.NextEpochStartTime)
 		k.Logger(ctx).Error(errMsg)
 		return sdk.ZeroDec(), sdkerrors.Wrapf(types.ErrInvalidEpoch, errMsg)
 	}
-	elapsedShare := sdk.NewDec(currBlockTime - currEpochStartTime).Quo(sdk.NewDec(durationInt64))
-	// sanity check: elapsed share is \in (0,1)
+
+	// Get elapsed share
+	elapsedTime := currBlockTime - epochStartTime
+	elapsedShare := sdk.NewDec(elapsedTime).Quo(sdk.NewDec(epochDuration))
 	if elapsedShare.LT(sdk.ZeroDec()) || elapsedShare.GT(sdk.OneDec()) {
 		errMsg := fmt.Sprintf("elapsed share (%s) for epoch is not between 0 and 1", elapsedShare)
 		k.Logger(ctx).Error(errMsg)
 		return sdk.ZeroDec(), sdkerrors.Wrapf(types.ErrInvalidEpoch, errMsg)
 	}
-	k.Logger(ctx).Info(fmt.Sprintf("epochTracker.NextEpochStartTime %v epochTracker.Duration %v currEpochStartTime %v", epochTracker.NextEpochStartTime, epochTracker.Duration, currEpochStartTime))
+
+	k.Logger(ctx).Info(fmt.Sprintf("Epoch elapsed share: %v (Block Time: %d, Epoch End Time: %d)", elapsedShare, currBlockTime, epochEndTime))
 	return elapsedShare, nil
 }
 

@@ -71,7 +71,7 @@ func (s *KeeperTestSuite) TestEpochElapsedShare_Successful_EndOfEpoch() {
 func (s *KeeperTestSuite) TestEpochElapsedShare_Failed_EpochNotFound() {
 	// We skip the setup step her so an epoch tracker is never created
 	_, err := s.App.StakeibcKeeper.GetStrideEpochElapsedShare(s.Ctx())
-	s.Require().EqualError(err, "failed to get epoch tracker for stride_epoch: not found")
+	s.Require().EqualError(err, "Failed to get epoch tracker for stride_epoch: not found")
 }
 
 func (s *KeeperTestSuite) TestEpochElapsedShare_Failed_DurationOverflow() {
