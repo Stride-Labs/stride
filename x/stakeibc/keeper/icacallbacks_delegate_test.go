@@ -75,7 +75,7 @@ func (s *KeeperTestSuite) SetupDelegateCallback() DelegateCallbackTestCase {
 	packet := channeltypes.Packet{}
 	var msgs []sdk.Msg
 	msgs = append(msgs, &stakingTypes.MsgDelegate{}, &stakingTypes.MsgDelegate{})
-	ack := s.ICAPacketAcknowledgement(msgs)
+	ack := s.ICAPacketAcknowledgement(msgs, nil)
 	val1SplitDelegation := types.SplitDelegation{
 		Validator: val1.Address,
 		Amount:    uint64(val1RelAmt),

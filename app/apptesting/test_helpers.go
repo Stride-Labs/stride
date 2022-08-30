@@ -264,15 +264,23 @@ func CopyConnectionAndClientToPath(path *ibctesting.Path, pathToCopy *ibctesting
 	return path
 }
 
-func (s *AppTestHelper) ICAPacketAcknowledgement(msgs []sdk.Msg) channeltypes.Acknowledgement {
+func (s *AppTestHelper) ICAPacketAcknowledgement(msgs []sdk.Msg, msgResponse *proto.Message) channeltypes.Acknowledgement {
 	txMsgData := &sdk.TxMsgData{
 		Data: make([]*sdk.MsgData, len(msgs)),
 	}
 	for i, msg := range msgs {
-		msgResponse := []byte("msg_response")
+		var data []byte
+		var err error
+		if msgResponse != nil {
+			// see: https://github.com/cosmos/cosmos-sdk/blob/1dee068932d32ba2a87ba67fc399ae96203ec76d/types/result.go#L246
+			data, err = proto.Marshal(*msgResponse)
+			s.Require().NoError(err, "marshal error")
+		} else {
+			data = []byte("msg_response")
+		}
 		txMsgData.Data[i] = &sdk.MsgData{
 			MsgType: sdk.MsgTypeURL(msg),
-			Data:    msgResponse,
+			Data:    data,
 		}
 
 	}
