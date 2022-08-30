@@ -65,7 +65,7 @@ func WithdrawalBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query icq
 
 	zone, found := k.GetHostZone(ctx, query.GetChainId())
 	if !found {
-		return fmt.Errorf("no registered zone for chain id: %s", query.GetChainId())
+		return fmt.Errorf("WithdrawalBalanceCallback: no registered zone for chain id: %s", query.GetChainId())
 	}
 	balancesStore := query.Request[1:]
 	accAddr, err := banktypes.AddressFromBalancesStore(balancesStore)
