@@ -81,7 +81,6 @@ func WithdrawalBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query icq
 		return sdkerrors.Wrapf(err, errMsg)
 	}
 
-	//TODO(TEST-112) revisit this code, it's not vetted
 	// Unmarshal the CB args into a coin type
 	withdrawalBalanceCoin := sdk.Coin{}
 	err = k.cdc.Unmarshal(args, &withdrawalBalanceCoin)
@@ -91,24 +90,12 @@ func WithdrawalBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query icq
 		return sdkerrors.Wrapf(types.ErrMarshalFailure, errMsg)
 	}
 
-	// SOMEONE DOUBLE CHECK ME ON THIS
-	// It looks unmarshalling a nil coin amount converts it to zero, which would mean this removed branch should be impossible
-	// See test TestWithdrawalBalanceCallback_ZeroBalanceImplied
-
 	// sanity check, do not transfer if we have 0 balance!
 	if withdrawalBalanceCoin.Amount.Int64() <= 0 {
 		k.Logger(ctx).Info(fmt.Sprintf("WithdrawalBalanceCallback: no balance to transfer for zone: %s, accAddr: %v, coin: %v",
 			hostZone.ChainId, queriedAddress.String(), withdrawalBalanceCoin.String()))
 		return nil
 	}
-
-	ctx.EventManager().EmitEvent(
-		sdk.NewEvent(
-			sdk.EventTypeMessage,
-			sdk.NewAttribute("hostZone", hostZone.ChainId),
-			sdk.NewAttribute("totalWithdrawalBalance", withdrawalBalanceCoin.Amount.String()),
-		),
-	)
 
 	// Sweep the withdrawal account balance, to the commission and the delegation accounts
 	k.Logger(ctx).Info(fmt.Sprintf("ICA Bank Sending %d%s from withdrawalAddr to delegationAddr.",
@@ -195,6 +182,14 @@ func WithdrawalBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query icq
 		k.Logger(ctx).Error(errMsg)
 		return sdkerrors.Wrapf(types.ErrICATxFailed, errMsg)
 	}
+
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			sdk.EventTypeMessage,
+			sdk.NewAttribute("hostZone", hostZone.ChainId),
+			sdk.NewAttribute("totalWithdrawalBalance", withdrawalBalanceCoin.Amount.String()),
+		),
+	)
 
 	return nil
 }
