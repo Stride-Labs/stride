@@ -31,7 +31,7 @@ var _ types.MsgServer = msgServer{}
 func (k msgServer) SubmitQueryResponse(goCtx context.Context, msg *types.MsgSubmitQueryResponse) (*types.MsgSubmitQueryResponseResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	k.Logger(ctx).Info(fmt.Sprintf("MOOSE... ICQ FROM GO RELAYER HAS MSG: %#v", msg))
+	k.Logger(ctx).Info(fmt.Sprintf("[ICQ Resp]... ICQ FROM GO RELAYER HAS MSG: %#v", msg))
 
 	q, found := k.GetQuery(ctx, msg.QueryId)
 	if !found {
@@ -142,13 +142,13 @@ func (k msgServer) SubmitQueryResponse(goCtx context.Context, msg *types.MsgSubm
 		k.DeleteQuery(ctx, msg.QueryId)
 	}
 
-	// ctx.EventManager().EmitEvents(sdk.Events{
-	// 	sdk.NewEvent(
-	// 		sdk.EventTypeMessage,
-	// 		sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
-	// 		sdk.NewAttribute(types.AttributeKeyQueryId, q.Id),
-	// 	),
-	// })
+	ctx.EventManager().EmitEvents(sdk.Events{
+		sdk.NewEvent(
+			sdk.EventTypeMessage,
+			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
+			sdk.NewAttribute(types.AttributeKeyQueryId, q.Id),
+		),
+	})
 	k.Logger(ctx).Info(fmt.Sprintf("[ICQ Resp2] q: %#v.", q))
 	k.DeleteQuery(ctx, msg.QueryId)
 
