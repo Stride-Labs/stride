@@ -68,10 +68,17 @@ func (k Keeper) GetClaimableRedemptionRecord(ctx sdk.Context, msg *types.MsgClai
 	}
 
 	// check that the record is claimable
-	if !userRedemptionRecord.GetIsClaimable() {
-		errMsg := fmt.Sprintf("User redemption record %s is not claimable", userRedemptionRecord.Id)
+	hostZoneUnbonding, found := k.RecordsKeeper.GetHostZoneUnbondingByChainId(ctx, userRedemptionRecord.EpochNumber, msg.HostZoneId)
+	if !found {
+		errMsg := fmt.Sprintf("Host zone unbonding record %s not found on host zone %s", userRedemptionRecordKey, msg.HostZoneId)
 		k.Logger(ctx).Error(errMsg)
-		return nil, sdkerrors.Wrapf(types.ErrInvalidUserRedemptionRecord, "user redemption record is not claimable: %s", userRedemptionRecordKey)
+		return nil, sdkerrors.Wrapf(types.ErrInvalidUserRedemptionRecord, "could not get host zone unbonding record: %s", userRedemptionRecordKey)
+	}
+	// records associated with host zone unbondings are claimable after the host zone unbonding tokens have been transferred to the redemption account
+	if hostZoneUnbonding.Status != recordstypes.HostZoneUnbonding_TRANSFERRED {
+		errMsg := fmt.Sprintf("User redemption record %s is not claimable, host zone unbonding has status: %s, requires status TRANSFERRED", userRedemptionRecord.Id, hostZoneUnbonding.Status)
+		k.Logger(ctx).Error(errMsg)
+		return nil, sdkerrors.Wrapf(types.ErrInvalidUserRedemptionRecord, "user redemption record is not claimable: %s, host zone unbonding has status: %s, requires status TRANSFERRED", userRedemptionRecordKey, hostZoneUnbonding.Status)
 	}
 	return &userRedemptionRecord, nil
 }

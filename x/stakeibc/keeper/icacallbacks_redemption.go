@@ -87,22 +87,6 @@ func RedemptionCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, a
 			return sdkerrors.Wrapf(types.ErrEpochNotFound, "couldn't set host zone epoch unbonding record. err: %s", err.Error())
 		}
 		k.RecordsKeeper.SetEpochUnbondingRecord(ctx, *updatedEpochUnbondingRecord)
-
-		// Mark the redemption records claimable
-		userRedemptionRecords := hostZoneUnbonding.UserRedemptionRecords
-		for _, recordId := range userRedemptionRecords {
-			userRedemptionRecord, found := k.RecordsKeeper.GetUserRedemptionRecord(ctx, recordId)
-			if !found {
-				k.Logger(ctx).Error("failed to find user redemption record")
-				return sdkerrors.Wrapf(types.ErrRecordNotFound, "no user redemption record found for id (%s)", recordId)
-			}
-			if userRedemptionRecord.IsClaimable {
-				k.Logger(ctx).Info("user redemption record is already claimable")
-				continue
-			}
-			userRedemptionRecord.IsClaimable = true
-			k.RecordsKeeper.SetUserRedemptionRecord(ctx, userRedemptionRecord)
-		}
 	}
 	k.Logger(ctx).Info(fmt.Sprintf("[REDEMPTION] completed on %s", hostZoneId))
 	return nil
