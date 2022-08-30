@@ -91,7 +91,7 @@ func WithdrawalBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query icq
 	}
 
 	// sanity check, do not transfer if we have 0 balance!
-	if withdrawalBalanceCoin.Amount.Int64() <= 0 {
+	if withdrawalBalanceCoin.Amount.IsNil() || withdrawalBalanceCoin.Amount.Int64() <= 0 {
 		k.Logger(ctx).Info(fmt.Sprintf("WithdrawalBalanceCallback: no balance to transfer for zone: %s, accAddr: %v, coin: %v",
 			hostZone.ChainId, queriedAddress.String(), withdrawalBalanceCoin.String()))
 		return nil
