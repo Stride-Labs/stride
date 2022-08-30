@@ -73,7 +73,7 @@ func (s *KeeperTestSuite) SetupSweepUnbondedTokens() SweepUnbondedTokensTestCase
 		},
 	}
 	// 2022-08-12T19:51, a random time in the past
-	unbondingTime := uint64(1660348276)
+	unbondingTime := uint64(10)
 	lightClientTime := unbondingTime + 1
 	// list of epoch unbonding records
 	epochUnbondingRecords := []recordtypes.EpochUnbondingRecord{
@@ -152,6 +152,7 @@ func (s *KeeperTestSuite) TestSweepUnbondedTokens_Successful() {
 }
 
 func (s *KeeperTestSuite) TestSweepUnbondedTokens_HostZoneUnbondingMissing() {
+	// If Osmo is missing, make sure that the function still succeeds
 	s.SetupSweepUnbondedTokens()
 	epochUnbondingRecords := s.App.RecordsKeeper.GetAllEpochUnbondingRecord(s.Ctx())
 	for _, epochUnbonding := range epochUnbondingRecords {
@@ -161,13 +162,11 @@ func (s *KeeperTestSuite) TestSweepUnbondedTokens_HostZoneUnbondingMissing() {
 		s.App.RecordsKeeper.SetEpochUnbondingRecord(s.Ctx(), epochUnbonding)
 	}
 	success, successfulSweeps, sweepAmounts, failedSweeps := s.App.StakeibcKeeper.SweepAllUnbondedTokens(s.Ctx())
-	s.Require().False(success, "sweep all tokens failed if osmo missing")
-	s.Require().Len(successfulSweeps, 1, "sweep all tokens succeeds for 1 host zone")
-	s.Require().Equal("GAIA", successfulSweeps[0], "sweep all tokens succeeds for gaia")
-	s.Require().Len(sweepAmounts, 1, "sweep all tokens succeeds for 1 host zone")
-	s.Require().Len(failedSweeps, 1, "sweep all tokens fails for 1 host zone")
-	s.Require().Equal("OSMO", failedSweeps[0], "sweep all tokens fails for osmo")
-	s.Require().Equal([]int64{2_000_000}, sweepAmounts, "correct amount of tokens swept for each host zone")
+	s.Require().True(success, "sweep all tokens succeeded if osmo missing")
+	s.Require().Len(successfulSweeps, 2, "sweep all tokens succeeds for 2 host zones")
+	s.Require().Len(sweepAmounts, 2, "sweep all tokens succeeds for 2 host zone")
+	s.Require().Len(failedSweeps, 0, "sweep all tokens fails for 0 host zone")
+	s.Require().Equal([]int64{2_000_000, 0}, sweepAmounts, "correct amount of tokens swept for each host zone")
 }
 
 func (s *KeeperTestSuite) TestSweepUnbondedTokens_RedemptionAccountMissing() {
