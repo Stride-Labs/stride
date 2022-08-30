@@ -36,4 +36,6 @@ var (
 	ErrFeeAccountNotRegistered           = sdkerrors.Register(ModuleName, 1526, "fee account is not registered")
 	ErrRedemptionRateOutsideSafetyBounds = sdkerrors.Register(ModuleName, 1527, "redemption rate outside safety bounds")
 	ErrTxMsgDataInvalid                  = sdkerrors.Register(ModuleName, 1528, "TxMsgData invalid")
+	ErrICAAccountNotFound                = sdkerrors.Register(ModuleName, 1529, "ICA acccount not found on host zone")
+	ErrICATxFailed                       = sdkerrors.Register(ModuleName, 1530, "failed to submit ICA transaction")
 )

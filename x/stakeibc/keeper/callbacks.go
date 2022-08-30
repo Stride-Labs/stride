@@ -1,7 +1,6 @@
 package keeper
 
 import (
-	"bytes"
 	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -59,125 +58,116 @@ func (c Callbacks) RegisterCallbacks() icqtypes.QueryCallbacks {
 // -----------------------------------
 
 // WithdrawalBalanceCallback is a callback handler for WithdrawalBalance queries.
+// Note: for now, to get proofs in your ICQs, you need to query the entire store on the host zone! e.g. "store/bank/key"
 func WithdrawalBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query icqtypes.Query) error {
-	// NOTE(TEST-112) for now, to get proofs in your ICQs, you need to query the entire store on the host zone! e.g. "store/bank/key"
-	k.Logger(ctx).Error(fmt.Sprintf("WithdrawalBalanceCallback: %v", query))
+	k.Logger(ctx).Info(fmt.Sprintf("WithdrawalBalanceCallback executing, QueryId: %vs, Host: %s, QueryType: %s, Height: %d, Connection: %s",
+		query.Id, query.ChainId, query.QueryType, query.Height, query.ConnectionId))
 
-	zone, found := k.GetHostZone(ctx, query.GetChainId())
+	hostZone, found := k.GetHostZone(ctx, query.GetChainId())
 	if !found {
-		return fmt.Errorf("no registered zone for chain id: %s", query.GetChainId())
+		errMsg := fmt.Sprintf("no registered zone for queried chain ID (%s)", query.GetChainId())
+		k.Logger(ctx).Error(errMsg)
+		return sdkerrors.Wrapf(types.ErrHostZoneNotFound, errMsg)
 	}
-	balancesStore := query.Request[1:]
-	accAddr, err := banktypes.AddressFromBalancesStore(balancesStore)
+
+	// Query request is a byte array of the form:
+	// [ {balancesPrefix} {address} {denom} ]
+	// {balancePrefix} is only a single byte - and it must be removed before calling AddressFromBalancesStore
+	balancesStoreKey := query.Request[1:]
+	queriedAddress, err := banktypes.AddressFromBalancesStore(balancesStoreKey)
 	if err != nil {
-		return err
+		errMsg := "unable to derive queried address from request byte array"
+		k.Logger(ctx).Error(errMsg)
+		return sdkerrors.Wrapf(err, errMsg)
 	}
 
-	//TODO(TEST-112) revisit this code, it's not vetted
-	coin := sdk.Coin{}
-	err = k.cdc.Unmarshal(args, &coin)
+	// Unmarshal the CB args into a coin type
+	withdrawalBalanceCoin := sdk.Coin{}
+	err = k.cdc.Unmarshal(args, &withdrawalBalanceCoin)
 	if err != nil {
-		k.Logger(ctx).Error(fmt.Sprintf("unable to unmarshal balance info for zone: %s, err: %s", zone.ChainId, err.Error()))
-		return err
-	}
-
-	if coin.IsNil() {
-		denom := ""
-
-		for i := 0; i < len(query.Request)-len(accAddr); i++ {
-			if bytes.Equal(query.Request[i:i+len(accAddr)], accAddr) {
-				denom = string(query.Request[i+len(accAddr):])
-				break
-			}
-
-		}
-		// if balance is nil, the response sent back is nil, so we don't receive the denom. Override that now.
-		coin = sdk.NewCoin(denom, sdk.ZeroInt())
+		errMsg := fmt.Sprintf("unable to unmarshal balance in callback args for zone: %s, err: %s", hostZone.ChainId, err.Error())
+		k.Logger(ctx).Error(errMsg)
+		return sdkerrors.Wrapf(types.ErrMarshalFailure, errMsg)
 	}
 
 	// sanity check, do not transfer if we have 0 balance!
-	if coin.Amount.Int64() <= 0 {
-		k.Logger(ctx).Info(fmt.Sprintf("WithdrawalBalanceCallback: no balance to transfer for zone: %s, accAddr: %v, coin: %v", zone.ChainId, accAddr.String(), coin))
+	if withdrawalBalanceCoin.Amount.Int64() <= 0 {
+		k.Logger(ctx).Info(fmt.Sprintf("WithdrawalBalanceCallback: no balance to transfer for zone: %s, accAddr: %v, coin: %v",
+			hostZone.ChainId, queriedAddress.String(), withdrawalBalanceCoin.String()))
 		return nil
 	}
 
-	// Set withdrawal balance as attribute on HostZone's withdrawal ICA account
-	wa := zone.GetWithdrawalAccount()
-	if err != nil {
-		k.Logger(ctx).Error(fmt.Sprintf("unable to convert amount to uint64, zone %s, err %s", zone.ChainId, err.Error()))
-		return err
-	}
-	zone.WithdrawalAccount = wa
-	k.SetHostZone(ctx, zone)
-	ctx.EventManager().EmitEvent(
-		sdk.NewEvent(
-			sdk.EventTypeMessage,
-			sdk.NewAttribute("hostZone", zone.ChainId),
-			sdk.NewAttribute("totalWithdrawalBalance", coin.Amount.String()),
-		),
-	)
-
 	// Sweep the withdrawal account balance, to the commission and the delegation accounts
-	k.Logger(ctx).Info(fmt.Sprintf("ICA Bank Sending %d%s from withdrawalAddr to delegationAddr.", coin.Amount.Int64(), coin.Denom))
+	k.Logger(ctx).Info(fmt.Sprintf("ICA Bank Sending %d%s from withdrawalAddr to delegationAddr.",
+		withdrawalBalanceCoin.Amount.Int64(), withdrawalBalanceCoin.Denom))
 
-	withdrawalAccount := zone.GetWithdrawalAccount()
+	withdrawalAccount := hostZone.GetWithdrawalAccount()
 	if withdrawalAccount == nil {
-		k.Logger(ctx).Error(fmt.Sprintf("WithdrawalBalanceCallback: no withdrawal account found for zone: %s", zone.ChainId))
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, fmt.Sprintf("WithdrawalBalanceCallback: no withdrawal account found for zone: %s", zone.ChainId))
+		errMsg := fmt.Sprintf("WithdrawalBalanceCallback: no withdrawal account found for zone: %s", hostZone.ChainId)
+		k.Logger(ctx).Error(errMsg)
+		return sdkerrors.Wrapf(types.ErrICAAccountNotFound, errMsg)
 	}
-	delegationAccount := zone.GetDelegationAccount()
+	delegationAccount := hostZone.GetDelegationAccount()
 	if delegationAccount == nil {
-		k.Logger(ctx).Error(fmt.Sprintf("WithdrawalBalanceCallback: no delegation account found for zone: %s", zone.ChainId))
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, fmt.Sprintf("WithdrawalBalanceCallback: no delegation account found for zone: %s", zone.ChainId))
+		errMsg := fmt.Sprintf("WithdrawalBalanceCallback: no delegation account found for zone: %s", hostZone.ChainId)
+		k.Logger(ctx).Error(errMsg)
+		return sdkerrors.Wrapf(types.ErrICAAccountNotFound, errMsg)
 	}
-	feeAccount := zone.GetFeeAccount()
+	feeAccount := hostZone.GetFeeAccount()
 	if feeAccount == nil {
-		k.Logger(ctx).Error(fmt.Sprintf("WithdrawalBalanceCallback: no fee account found for zone: %s", zone.ChainId))
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, fmt.Sprintf("WithdrawalBalanceCallback: no fee account found for zone: %s", zone.ChainId))
+		errMsg := fmt.Sprintf("WithdrawalBalanceCallback: no fee account found for zone: %s", hostZone.ChainId)
+		k.Logger(ctx).Error(errMsg)
+		return sdkerrors.Wrapf(types.ErrICAAccountNotFound, errMsg)
 	}
 
 	params := k.GetParams(ctx)
-	stCommission, err := cast.ToInt64E(params.GetStrideCommission())
+	strideCommissionInt, err := cast.ToInt64E(params.GetStrideCommission())
 	if err != nil {
 		return err
 	}
-	strideCommission := sdk.NewDec(stCommission).Quo(sdk.NewDec(100))
+
 	// check that stride commission is between 0 and 1
+	strideCommission := sdk.NewDec(strideCommissionInt).Quo(sdk.NewDec(100))
 	if strideCommission.LT(sdk.ZeroDec()) || strideCommission.GT(sdk.OneDec()) {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "Aborting reinvestment callback -- Stride commission must be between 0 and 1!")
 	}
-	withdrawalBalance := sdk.NewDec(coin.Amount.Int64())
-	// TODO(TEST-112) don't perform unsafe uint64 to int64 conversion
-	strideClaim := strideCommission.Mul(withdrawalBalance)
+
+	withdrawalBalanceAmount := withdrawalBalanceCoin.Amount
+	strideClaim := strideCommission.Mul(withdrawalBalanceAmount.ToDec())
 	strideClaimFloored := strideClaim.TruncateInt()
 
 	// back the reinvestment amount out of the total less the commission
-	reinvestAmountCeil := sdk.NewInt(coin.Amount.Int64()).Sub(strideClaimFloored)
+	reinvestAmountCeil := sdk.NewInt(withdrawalBalanceAmount.Int64()).Sub(strideClaimFloored)
 
 	// TODO(TEST-112) safety check, balances should add to original amount
-	if (strideClaimFloored.Int64() + reinvestAmountCeil.Int64()) != coin.Amount.Int64() {
-		ctx.Logger().Error(fmt.Sprintf("Error with withdraw logic: %d, Fee portion: %d, reinvestPortion %d", coin.Amount.Int64(), strideClaimFloored.Int64(), reinvestAmountCeil.Int64()))
+	if (strideClaimFloored.Int64() + reinvestAmountCeil.Int64()) != withdrawalBalanceAmount.Int64() {
+		ctx.Logger().Error(fmt.Sprintf("Error with withdraw logic: %d, Fee portion: %d, reinvestPortion %d", withdrawalBalanceAmount.Int64(), strideClaimFloored.Int64(), reinvestAmountCeil.Int64()))
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "Failed to subdivide rewards to feeAccount and delegationAccount")
 	}
-	strideCoin := sdk.NewCoin(coin.Denom, strideClaimFloored)
-	reinvestCoin := sdk.NewCoin(coin.Denom, reinvestAmountCeil)
+	strideCoin := sdk.NewCoin(withdrawalBalanceCoin.Denom, strideClaimFloored)
+	reinvestCoin := sdk.NewCoin(withdrawalBalanceCoin.Denom, reinvestAmountCeil)
 
 	var msgs []sdk.Msg
-	// construct the msg
 	if strideCoin.Amount.Int64() > 0 {
-		msgs = append(msgs, &banktypes.MsgSend{FromAddress: withdrawalAccount.GetAddress(),
-			ToAddress: feeAccount.GetAddress(), Amount: sdk.NewCoins(strideCoin)})
+		msgs = append(msgs, &banktypes.MsgSend{
+			FromAddress: withdrawalAccount.GetAddress(),
+			ToAddress:   feeAccount.GetAddress(),
+			Amount:      sdk.NewCoins(strideCoin),
+		})
 	}
 	if reinvestCoin.Amount.Int64() > 0 {
-		msgs = append(msgs, &banktypes.MsgSend{FromAddress: withdrawalAccount.GetAddress(),
-			ToAddress: delegationAccount.GetAddress(), Amount: sdk.NewCoins(reinvestCoin)})
+		msgs = append(msgs, &banktypes.MsgSend{
+			FromAddress: withdrawalAccount.GetAddress(),
+			ToAddress:   delegationAccount.GetAddress(),
+			Amount:      sdk.NewCoins(reinvestCoin),
+		})
 	}
 	ctx.Logger().Info(fmt.Sprintf("Submitting withdrawal sweep messages for: %v", msgs))
 
 	// add callback data
 	reinvestCallback := types.ReinvestCallback{
 		ReinvestAmount: reinvestCoin,
-		HostZoneId:     zone.ChainId,
+		HostZoneId:     hostZone.ChainId,
 	}
 	k.Logger(ctx).Info(fmt.Sprintf("Marshalling ReinvestCallback args: %v", reinvestCallback))
 	marshalledCallbackArgs, err := k.MarshalReinvestCallbackArgs(ctx, reinvestCallback)
@@ -186,10 +176,20 @@ func WithdrawalBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query icq
 	}
 
 	// Send the transaction through SubmitTx
-	_, err = k.SubmitTxsStrideEpoch(ctx, zone.ConnectionId, msgs, *withdrawalAccount, REINVEST, marshalledCallbackArgs)
+	_, err = k.SubmitTxsStrideEpoch(ctx, hostZone.ConnectionId, msgs, *withdrawalAccount, REINVEST, marshalledCallbackArgs)
 	if err != nil {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "Failed to SubmitTxs for %s, %s, %s", zone.ConnectionId, zone.ChainId, msgs)
+		errMsg := fmt.Sprintf("Failed to SubmitTxs for %s - %s, Messages: %v | err: %s", hostZone.ChainId, hostZone.ConnectionId, msgs, err.Error())
+		k.Logger(ctx).Error(errMsg)
+		return sdkerrors.Wrapf(types.ErrICATxFailed, errMsg)
 	}
+
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			sdk.EventTypeMessage,
+			sdk.NewAttribute("hostZone", hostZone.ChainId),
+			sdk.NewAttribute("totalWithdrawalBalance", withdrawalBalanceCoin.Amount.String()),
+		),
+	)
 
 	return nil
 }
