@@ -79,7 +79,7 @@ func WithdrawalBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query icq
 		return sdkerrors.Wrapf(types.ErrMarshalFailure, errMsg)
 	}
 
-	// Confirm the coin is not nil (which would indicate the account never had a balance)
+	// Check if the coin is nil (which would indicate the account never had a balance)
 	if withdrawalBalanceCoin.IsNil() || withdrawalBalanceCoin.Amount.IsNil() {
 		k.Logger(ctx).Info(fmt.Sprintf("WithdrawalBalanceCallback: balance query returned a nil coin for address %s on %s, meaning the account has never had a balance on the host",
 			hostZone.WithdrawalAccount.Address, hostZone.ChainId))
