@@ -161,7 +161,7 @@ func (k Keeper) UpdateHostZoneUnbondings(
 		}
 		hostZoneUnbonding, found := k.RecordsKeeper.GetHostZoneUnbondingByChainId(ctx, epochUnbondingRecord.EpochNumber, zone.ChainId)
 		if !found {
-			errMsg := fmt.Sprintf("Host zone not found (%s) in epoch unbonding record: %d", zone.ChainId, epochNumber)
+			errMsg := fmt.Sprintf("Host zone unbonding not found (%s) in epoch unbonding record: %d", zone.ChainId, epochNumber)
 			k.Logger(ctx).Error(errMsg)
 			return 0, sdkerrors.Wrapf(sdkerrors.ErrKeyNotFound, errMsg)
 		}
