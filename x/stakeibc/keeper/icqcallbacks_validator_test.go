@@ -152,6 +152,7 @@ func (s *KeeperTestSuite) TestValidatorExchangeRateCallback_BufferWindowError() 
 	s.App.StakeibcKeeper.SetEpochTracker(s.Ctx(), epochTracker)
 
 	err := stakeibckeeper.ValidatorExchangeRateCallback(s.App.StakeibcKeeper, s.Ctx(), tc.validArgs.callbackArgs, tc.validArgs.query)
+	s.Require().ErrorContains(err, "validator exchange rate callback is outside ICQ window")
 	s.Require().ErrorContains(err, "Current block time")
 	s.Require().ErrorContains(err, "not within current epoch")
 }
