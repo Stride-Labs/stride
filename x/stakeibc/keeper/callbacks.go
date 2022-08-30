@@ -357,20 +357,20 @@ func DelegatorSharesCallback(k Keeper, ctx sdk.Context, args []byte, query icqty
 	// Get slash percentage
 	delegationAmount, err := cast.ToInt64E(validator.DelegationAmt)
 	if err != nil {
-		errMsg := fmt.Sprintf("unable to convert validator delegation amount to uint64, err: %s", err.Error())
+		errMsg := fmt.Sprintf("unable to convert validator delegation amount to int64, err: %s", err.Error())
 		k.Logger(ctx).Error(errMsg)
 		return sdkerrors.Wrapf(types.ErrIntCast, errMsg)
 	}
 	slashAmountUInt := validator.DelegationAmt - validatorTokens.Uint64()
 	slashAmount, err := cast.ToInt64E(slashAmountUInt)
 	if err != nil {
-		errMsg := fmt.Sprintf("unable to convert validator slash amount to uint64, err: %s", err.Error())
+		errMsg := fmt.Sprintf("unable to convert validator slash amount to int64, err: %s", err.Error())
 		k.Logger(ctx).Error(errMsg)
 		return sdkerrors.Wrapf(types.ErrIntCast, errMsg)
 	}
 	weight, err := cast.ToInt64E(validator.Weight)
 	if err != nil {
-		errMsg := fmt.Sprintf("unable to convert validator weight to uint64, err: %s", err.Error())
+		errMsg := fmt.Sprintf("unable to convert validator weight to int64, err: %s", err.Error())
 		k.Logger(ctx).Error(errMsg)
 		return sdkerrors.Wrapf(types.ErrIntCast, errMsg)
 	}
