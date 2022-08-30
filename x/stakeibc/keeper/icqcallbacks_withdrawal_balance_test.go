@@ -173,10 +173,9 @@ func (s *KeeperTestSuite) TestWithdrawalBalanceCallback_ZeroBalanceImplied() {
 	tc := s.SetupWithdrawalBalanceCallbackTest()
 
 	// Replace the query response with a coin that has a nil amount
-	coin := sdk.Coin{Denom: Atom}
+	coin := sdk.Coin{}
 	coinBz := s.App.RecordsKeeper.Cdc.MustMarshal(&coin)
 	tc.validArgs.callbackArgs = coinBz
-	fmt.Println(coinBz)
 
 	err := stakeibckeeper.WithdrawalBalanceCallback(s.App.StakeibcKeeper, s.Ctx(), tc.validArgs.callbackArgs, tc.validArgs.query)
 	s.Require().NoError(err)

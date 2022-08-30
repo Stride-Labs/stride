@@ -58,8 +58,8 @@ func (c Callbacks) RegisterCallbacks() icqtypes.QueryCallbacks {
 // -----------------------------------
 
 // WithdrawalBalanceCallback is a callback handler for WithdrawalBalance queries.
+// Note: for now, to get proofs in your ICQs, you need to query the entire store on the host zone! e.g. "store/bank/key"
 func WithdrawalBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query icqtypes.Query) error {
-	// NOTE(TEST-112) for now, to get proofs in your ICQs, you need to query the entire store on the host zone! e.g. "store/bank/key"
 	k.Logger(ctx).Info(fmt.Sprintf("WithdrawalBalanceCallback executing, QueryId: %vs, Host: %s, QueryType: %s, Height: %d, Connection: %s",
 		query.Id, query.ChainId, query.QueryType, query.Height, query.ConnectionId))
 
