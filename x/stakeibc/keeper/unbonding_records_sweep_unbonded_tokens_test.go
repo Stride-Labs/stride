@@ -16,7 +16,7 @@ type SweepUnbondedTokensTestCase struct {
 }
 
 func (s *KeeperTestSuite) SetupSweepUnbondedTokens() SweepUnbondedTokensTestCase {
-	s.CreateICAChannel("icacontroller-GAIA.DELEGATION")
+	s.CreateICAChannel("GAIA.DELEGATION")
 	//  define the host zone with stakedBal and validators with staked amounts
 	gaiaValidators := []*stakeibc.Validator{
 		{
@@ -50,9 +50,9 @@ func (s *KeeperTestSuite) SetupSweepUnbondedTokens() SweepUnbondedTokensTestCase
 	}
 	hostZones := []stakeibc.HostZone{
 		{
-			ChainId:            "GAIA",
-			HostDenom:          "uatom",
-			Bech32Prefix:       "cosmos",
+			ChainId:            HostChainId,
+			HostDenom:          Atom,
+			Bech32Prefix:       GaiaPrefix,
 			UnbondingFrequency: 3,
 			Validators:         gaiaValidators,
 			DelegationAccount:  &gaiaDelegationAccount,
@@ -61,9 +61,9 @@ func (s *KeeperTestSuite) SetupSweepUnbondedTokens() SweepUnbondedTokensTestCase
 			ConnectionId:       ibctesting.FirstConnectionID,
 		},
 		{
-			ChainId:            "OSMO",
-			HostDenom:          "uosmo",
-			Bech32Prefix:       "osmo",
+			ChainId:            OsmoChainId,
+			HostDenom:          Osmo,
+			Bech32Prefix:       OsmoPrefix,
 			UnbondingFrequency: 4,
 			Validators:         osmoValidators,
 			DelegationAccount:  &osmoDelegationAccount,
@@ -81,13 +81,13 @@ func (s *KeeperTestSuite) SetupSweepUnbondedTokens() SweepUnbondedTokensTestCase
 			EpochNumber: 0,
 			HostZoneUnbondings: []*recordtypes.HostZoneUnbonding{
 				{
-					HostZoneId:        "GAIA",
+					HostZoneId:        HostChainId,
 					NativeTokenAmount: 1_000_000,
 					Status:            recordtypes.HostZoneUnbonding_BONDED,
 					UnbondingTime:     unbondingTime,
 				},
 				{
-					HostZoneId:        "OSMO",
+					HostZoneId:        OsmoChainId,
 					NativeTokenAmount: 1_000_000,
 					Status:            recordtypes.HostZoneUnbonding_UNBONDED,
 					UnbondingTime:     unbondingTime,
@@ -98,12 +98,12 @@ func (s *KeeperTestSuite) SetupSweepUnbondedTokens() SweepUnbondedTokensTestCase
 			EpochNumber: 1,
 			HostZoneUnbondings: []*recordtypes.HostZoneUnbonding{
 				{
-					HostZoneId:        "GAIA",
+					HostZoneId:        HostChainId,
 					NativeTokenAmount: 2_000_000,
 					Status:            recordtypes.HostZoneUnbonding_UNBONDED,
 				},
 				{
-					HostZoneId:        "OSMO",
+					HostZoneId:        OsmoChainId,
 					NativeTokenAmount: 2_000_000,
 					Status:            recordtypes.HostZoneUnbonding_UNBONDED,
 				},
@@ -113,12 +113,12 @@ func (s *KeeperTestSuite) SetupSweepUnbondedTokens() SweepUnbondedTokensTestCase
 			EpochNumber: 2,
 			HostZoneUnbondings: []*recordtypes.HostZoneUnbonding{
 				{
-					HostZoneId:        "GAIA",
+					HostZoneId:        HostChainId,
 					NativeTokenAmount: 5_000_000,
 					Status:            recordtypes.HostZoneUnbonding_TRANSFERRED,
 				},
 				{
-					HostZoneId:        "OSMO",
+					HostZoneId:        OsmoChainId,
 					NativeTokenAmount: 5_000_000,
 					Status:            recordtypes.HostZoneUnbonding_BONDED,
 				},
@@ -143,17 +143,16 @@ func (s *KeeperTestSuite) SetupSweepUnbondedTokens() SweepUnbondedTokensTestCase
 func (s *KeeperTestSuite) TestSweepUnbondedTokens_Successful() {
 	tc := s.SetupSweepUnbondedTokens()
 	_ = tc
-	success, successful_sweeps, sweep_amounts, failed_sweeps := s.App.StakeibcKeeper.SweepAllUnbondedTokens(s.Ctx())
-	s.Require().Equal(success, true, "sweep all tokens succeeds")
-	s.Require().Equal(len(successful_sweeps), 2, "sweep all tokens succeeds for 2 host zones")
-	s.Require().Equal(len(sweep_amounts), 2, "sweep all tokens succeeds for 2 host zones")
-	s.Require().Equal(len(failed_sweeps), 0, "sweep all tokens fails for no host zone")
-	s.Require().Equal(sweep_amounts, []int64{2_000_000, 3_000_000}, "correct amount of tokens swept for each host zone")
+	success, successfulSweeps, sweepAmounts, failedSweeps := s.App.StakeibcKeeper.SweepAllUnbondedTokens(s.Ctx())
+	s.Require().True(success, "sweep all tokens succeeds")
+	s.Require().Len(successfulSweeps, 2, "sweep all tokens succeeds for 2 host zones")
+	s.Require().Len(sweepAmounts, 2, "sweep all tokens succeeds for 2 host zones")
+	s.Require().Len(failedSweeps, 0, "sweep all tokens fails for no host zone")
+	s.Require().Equal([]int64{2_000_000, 3_000_000}, sweepAmounts, "correct amount of tokens swept for each host zone")
 }
 
 func (s *KeeperTestSuite) TestSweepUnbondedTokens_HostZoneUnbondingMissing() {
-	tc := s.SetupSweepUnbondedTokens()
-	_ = tc
+	s.SetupSweepUnbondedTokens()
 	epochUnbondingRecords := s.App.RecordsKeeper.GetAllEpochUnbondingRecord(s.Ctx())
 	for _, epochUnbonding := range epochUnbondingRecords {
 		epochUnbonding.HostZoneUnbondings = []*recordtypes.HostZoneUnbonding{
@@ -161,44 +160,42 @@ func (s *KeeperTestSuite) TestSweepUnbondedTokens_HostZoneUnbondingMissing() {
 		}
 		s.App.RecordsKeeper.SetEpochUnbondingRecord(s.Ctx(), epochUnbonding)
 	}
-	success, successful_sweeps, sweep_amounts, failed_sweeps := s.App.StakeibcKeeper.SweepAllUnbondedTokens(s.Ctx())
-	s.Require().Equal(success, false, "sweep all tokens failed if osmo missing")
-	s.Require().Equal(len(successful_sweeps), 1, "sweep all tokens succeeds for 1 host zone")
-	s.Require().Equal(successful_sweeps[0], "GAIA", "sweep all tokens succeeds for gaia")
-	s.Require().Equal(len(sweep_amounts), 1, "sweep all tokens succeeds for 1 host zone")
-	s.Require().Equal(len(failed_sweeps), 1, "sweep all tokens fails for 1 host zone")
-	s.Require().Equal(failed_sweeps[0], "OSMO", "sweep all tokens fails for osmo")
-	s.Require().Equal(sweep_amounts, []int64{2_000_000}, "correct amount of tokens swept for each host zone")
+	success, successfulSweeps, sweepAmounts, failedSweeps := s.App.StakeibcKeeper.SweepAllUnbondedTokens(s.Ctx())
+	s.Require().False(success, "sweep all tokens failed if osmo missing")
+	s.Require().Len(successfulSweeps, 1, "sweep all tokens succeeds for 1 host zone")
+	s.Require().Equal("GAIA", successfulSweeps[0], "sweep all tokens succeeds for gaia")
+	s.Require().Len(sweepAmounts, 1, "sweep all tokens succeeds for 1 host zone")
+	s.Require().Len(failedSweeps, 1, "sweep all tokens fails for 1 host zone")
+	s.Require().Equal("OSMO", failedSweeps[0], "sweep all tokens fails for osmo")
+	s.Require().Equal([]int64{2_000_000}, sweepAmounts, "correct amount of tokens swept for each host zone")
 }
 
 func (s *KeeperTestSuite) TestSweepUnbondedTokens_RedemptionAccountMissing() {
-	tc := s.SetupSweepUnbondedTokens()
-	_ = tc
+	s.SetupSweepUnbondedTokens()
 	hostZone, _ := s.App.StakeibcKeeper.GetHostZone(s.Ctx(), "GAIA")
 	hostZone.RedemptionAccount = nil
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx(), hostZone)
-	success, successful_sweeps, sweep_amounts, failed_sweeps := s.App.StakeibcKeeper.SweepAllUnbondedTokens(s.Ctx())
+	success, successfulSweeps, sweepAmounts, failedSweeps := s.App.StakeibcKeeper.SweepAllUnbondedTokens(s.Ctx())
 	s.Require().Equal(success, false, "sweep all tokens failed if osmo missing")
-	s.Require().Equal(len(successful_sweeps), 1, "sweep all tokens succeeds for 1 host zone")
-	s.Require().Equal(successful_sweeps[0], "OSMO", "sweep all tokens succeeds for osmo")
-	s.Require().Equal(len(sweep_amounts), 1, "sweep all tokens succeeds for 1 host zone")
-	s.Require().Equal(len(failed_sweeps), 1, "sweep all tokens fails for 1 host zone")
-	s.Require().Equal(failed_sweeps[0], "GAIA", "sweep all tokens fails for gaia")
-	s.Require().Equal(sweep_amounts, []int64{3_000_000}, "correct amount of tokens swept for each host zone")
+	s.Require().Len(successfulSweeps, 1, "sweep all tokens succeeds for 1 host zone")
+	s.Require().Equal("OSMO", successfulSweeps[0], "sweep all tokens succeeds for osmo")
+	s.Require().Len(sweepAmounts, 1, "sweep all tokens succeeds for 1 host zone")
+	s.Require().Len(failedSweeps, 1, "sweep all tokens fails for 1 host zone")
+	s.Require().Equal("GAIA", failedSweeps[0], "sweep all tokens fails for gaia")
+	s.Require().Equal([]int64{3_000_000}, sweepAmounts, "correct amount of tokens swept for each host zone")
 }
 
 func (s *KeeperTestSuite) TestSweepUnbondedTokens_DelegationAccountAddressMissing() {
-	tc := s.SetupSweepUnbondedTokens()
-	_ = tc
+	s.SetupSweepUnbondedTokens()
 	hostZone, _ := s.App.StakeibcKeeper.GetHostZone(s.Ctx(), "OSMO")
 	hostZone.DelegationAccount.Address = ""
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx(), hostZone)
-	success, successful_sweeps, sweep_amounts, failed_sweeps := s.App.StakeibcKeeper.SweepAllUnbondedTokens(s.Ctx())
-	s.Require().Equal(success, false, "sweep all tokens failed if gaia missing")
-	s.Require().Equal(len(successful_sweeps), 1, "sweep all tokens succeeds for 1 host zone")
-	s.Require().Equal(successful_sweeps[0], "GAIA", "sweep all tokens succeeds for gaia")
-	s.Require().Equal(len(sweep_amounts), 1, "sweep all tokens succeeds for 1 host zone")
-	s.Require().Equal(len(failed_sweeps), 1, "sweep all tokens fails for 1 host zone")
-	s.Require().Equal(failed_sweeps[0], "OSMO", "sweep all tokens fails for osmo")
-	s.Require().Equal(sweep_amounts, []int64{2_000_000}, "correct amount of tokens swept for each host zone")
+	success, successfulSweeps, sweepAmounts, failedSweeps := s.App.StakeibcKeeper.SweepAllUnbondedTokens(s.Ctx())
+	s.Require().False(success, "sweep all tokens failed if gaia missing")
+	s.Require().Len(successfulSweeps, 1, "sweep all tokens succeeds for 1 host zone")
+	s.Require().Equal("GAIA", successfulSweeps[0], "sweep all tokens succeeds for gaia")
+	s.Require().Len(sweepAmounts, 1, "sweep all tokens succeeds for 1 host zone")
+	s.Require().Len(failedSweeps, 1, "sweep all tokens fails for 1 host zone")
+	s.Require().Equal("OSMO", failedSweeps[0], "sweep all tokens fails for osmo")
+	s.Require().Equal([]int64{2_000_000}, sweepAmounts, "correct amount of tokens swept for each host zone")
 }

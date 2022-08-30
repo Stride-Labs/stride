@@ -16,14 +16,14 @@ type CleanupEpochUnbondingRecordsTestCase struct {
 func (s *KeeperTestSuite) SetupCleanupEpochUnbondingRecords() CleanupEpochUnbondingRecordsTestCase {
 	hostZones := []stakeibc.HostZone{
 		{
-			ChainId:      "GAIA",
-			HostDenom:    "uatom",
-			Bech32Prefix: "cosmos",
+			ChainId:      HostChainId,
+			HostDenom:    Atom,
+			Bech32Prefix: GaiaPrefix,
 		},
 		{
-			ChainId:      "OSMO",
-			HostDenom:    "uosmo",
-			Bech32Prefix: "osmo",
+			ChainId:      OsmoChainId,
+			HostDenom:    Osmo,
+			Bech32Prefix: OsmoPrefix,
 		},
 	}
 	// list of epoch unbonding records
@@ -32,12 +32,12 @@ func (s *KeeperTestSuite) SetupCleanupEpochUnbondingRecords() CleanupEpochUnbond
 			EpochNumber: 0,
 			HostZoneUnbondings: []*recordtypes.HostZoneUnbonding{
 				{
-					HostZoneId:        "GAIA",
+					HostZoneId:        HostChainId,
 					NativeTokenAmount: 1_000_000,
 					Status:            recordtypes.HostZoneUnbonding_TRANSFERRED,
 				},
 				{
-					HostZoneId:        "OSMO",
+					HostZoneId:        OsmoChainId,
 					NativeTokenAmount: 1_000_000,
 					Status:            recordtypes.HostZoneUnbonding_UNBONDED,
 				},
@@ -47,27 +47,27 @@ func (s *KeeperTestSuite) SetupCleanupEpochUnbondingRecords() CleanupEpochUnbond
 			EpochNumber: 1,
 			HostZoneUnbondings: []*recordtypes.HostZoneUnbonding{
 				{
-					HostZoneId:        "GAIA",
+					HostZoneId:        HostChainId,
 					NativeTokenAmount: 0,
-					Status:            recordtypes.HostZoneUnbonding_UNBONDED,
+					Status:            recordtypes.HostZoneUnbonding_BONDED,
 				},
 				{
-					HostZoneId:        "OSMO",
+					HostZoneId:        OsmoChainId,
 					NativeTokenAmount: 1_000_000,
 					Status:            recordtypes.HostZoneUnbonding_TRANSFERRED,
 				},
 			},
 		},
 		{
-			EpochNumber: 1,
+			EpochNumber: 2,
 			HostZoneUnbondings: []*recordtypes.HostZoneUnbonding{
 				{
-					HostZoneId:        "GAIA",
+					HostZoneId:        HostChainId,
 					NativeTokenAmount: 0,
 					Status:            recordtypes.HostZoneUnbonding_UNBONDED,
 				},
 				{
-					HostZoneId:        "OSMO",
+					HostZoneId:        OsmoChainId,
 					NativeTokenAmount: 0,
 					Status:            recordtypes.HostZoneUnbonding_BONDED,
 				},
@@ -89,11 +89,12 @@ func (s *KeeperTestSuite) SetupCleanupEpochUnbondingRecords() CleanupEpochUnbond
 }
 
 func (s *KeeperTestSuite) SetupCleanupEpochUnbondingRecords_Successful() {
+	// successfully clean up epoch unbonding records
 	tc := s.SetupSendHostZoneUnbonding()
 	success := s.App.StakeibcKeeper.CleanupEpochUnbondingRecords(s.Ctx())
-	s.Require().Equal(success, true, "cleanup unbonding records returns true")
+	s.Require().True(success, "cleanup unbonding records returns true")
 	epochUnbondings := tc.epochUnbondingRecords
-	s.Require().Equal(len(epochUnbondings), 1, "only one epoch unbonding record should be left")
+	s.Require().Len(epochUnbondings, 1, "only one epoch unbonding record should be left")
 	epochUnbonding := epochUnbondings[0]
-	s.Require().Equal(epochUnbonding.EpochNumber, 1, "correct unbonding record remains unprocessed")
+	s.Require().Equal(1, epochUnbonding.EpochNumber, "correct unbonding record remains unprocessed")
 }
