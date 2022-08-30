@@ -50,7 +50,6 @@ func (k Keeper) GetAllEpochUnbondingRecord(ctx sdk.Context) (list []types.EpochU
 }
 
 // GetAllPreviousEpochUnbondingRecord returns all epochUnbondingRecords prior to a given epoch
-// TODO: test this
 func (k Keeper) GetAllPreviousEpochUnbondingRecord(ctx sdk.Context, epochNumber uint64) (list []types.EpochUnbondingRecord) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.EpochUnbondingRecordKey))
 	iterator := sdk.KVStorePrefixIterator(store, []byte{})
