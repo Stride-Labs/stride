@@ -11,10 +11,11 @@ import (
 )
 
 const (
-	Atom        = "uatom"
-	StAtom      = "stuatom"
-	IbcAtom     = "ibc/uatom"
-	HostChainId = "GAIA"
+	Atom         = "uatom"
+	StAtom       = "stuatom"
+	IbcAtom      = "ibc/uatom"
+	HostChainId  = "GAIA"
+	Bech32Prefix = "cosmos"
 )
 
 type KeeperTestSuite struct {

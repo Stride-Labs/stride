@@ -362,8 +362,9 @@ func (k Keeper) QueryValidatorExchangeRate(ctx sdk.Context, msg *types.MsgUpdate
 
 	hostZone, found := k.GetHostZone(ctx, msg.ChainId)
 	if !found {
-		k.Logger(ctx).Error(fmt.Sprintf("Host Zone not found for denom (%s)", msg.ChainId))
-		return nil, sdkerrors.Wrapf(types.ErrInvalidHostZone, "no host zone found for denom (%s)", msg.ChainId)
+		errMsg := fmt.Sprintf("Host zone not found (%s)", msg.ChainId)
+		k.Logger(ctx).Error(errMsg)
+		return nil, sdkerrors.Wrapf(types.ErrInvalidHostZone, errMsg)
 	}
 
 	// check that the validator address matches the bech32 prefix of the hz
@@ -420,8 +421,9 @@ func (k Keeper) QueryDelegationsIcq(ctx sdk.Context, hostZone types.HostZone, va
 
 	delegationIca := hostZone.GetDelegationAccount()
 	if delegationIca == nil || delegationIca.GetAddress() == "" {
-		k.Logger(ctx).Error(fmt.Sprintf("Zone %s is missing a delegation address!", hostZone.ChainId))
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, fmt.Sprintf("Invalid delegation account (%s)", err))
+		errMsg := fmt.Sprintf("Zone %s is missing a delegation address!", hostZone.ChainId)
+		k.Logger(ctx).Error(errMsg)
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, errMsg)
 	}
 	delegationAcctAddr := delegationIca.GetAddress()
 	_, valAddr, _ := bech32.DecodeAndConvert(valoper)
