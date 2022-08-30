@@ -119,6 +119,8 @@ $SCRIPT_DIR/create_logs_gaia.sh &
 $SCRIPT_DIR/create_logs_osmo.sh &
 $SCRIPT_DIR/create_logs_juno.sh &
 
+$SCRIPT_DIR/test-utils/fund_icqd_acct.sh
+
 echo "Done! Go get em.\n\n"
 
 # bash $SCRIPT_DIR/tests/run_all_tests.sh

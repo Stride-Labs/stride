@@ -31,7 +31,7 @@ var _ types.MsgServer = msgServer{}
 func (k msgServer) SubmitQueryResponse(goCtx context.Context, msg *types.MsgSubmitQueryResponse) (*types.MsgSubmitQueryResponseResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	k.Logger(ctx).Info(fmt.Sprintf("MOOSE... ICQ FROM GO RELAYER HAS MSG: %#v", msg))
+	k.Logger(ctx).Info(fmt.Sprintf("[ICQ Resp]... ICQ FROM GO RELAYER HAS MSG: %#v", msg))
 
 	q, found := k.GetQuery(ctx, msg.QueryId)
 	if !found {
@@ -44,7 +44,7 @@ func (k msgServer) SubmitQueryResponse(goCtx context.Context, msg *types.MsgSubm
 	k.Logger(ctx).Info(fmt.Sprintf("[ICQ Resp] query %s with ttl: %d, resp time: %d.", msg.QueryId, q.Ttl, ctx.BlockHeader().Time.UnixNano()))
 	curT, err := cast.ToUint64E(ctx.BlockTime().UnixNano())
 	if err != nil {
-		k.Logger(ctx).Info(fmt.Sprintf("[ICQ Resp] erroe!"))
+		k.Logger(ctx).Info(fmt.Sprintf("[ICQ Resp] error gathering block time!"))
 		return nil, err
 	}
 
@@ -62,7 +62,8 @@ func (k msgServer) SubmitQueryResponse(goCtx context.Context, msg *types.MsgSubm
 	if pathParts[len(pathParts)-1] == "key" {
 		k.Logger(ctx).Info(fmt.Sprintf("[ICQ Resp] key query...!"))
 		if msg.ProofOps == nil {
-			return nil, fmt.Errorf("unable to validate proof. No proof submitted")
+			errMsg := "unable to validate proof. No proof submitted"
+			return nil, fmt.Errorf(errMsg)
 		}
 		connection, _ := k.IBCKeeper.ConnectionKeeper.GetConnection(ctx, q.ConnectionId)
 		k.Logger(ctx).Info(fmt.Sprintf("[ICQ Resp] 68!"))
@@ -142,13 +143,13 @@ func (k msgServer) SubmitQueryResponse(goCtx context.Context, msg *types.MsgSubm
 		k.DeleteQuery(ctx, msg.QueryId)
 	}
 
-	// ctx.EventManager().EmitEvents(sdk.Events{
-	// 	sdk.NewEvent(
-	// 		sdk.EventTypeMessage,
-	// 		sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
-	// 		sdk.NewAttribute(types.AttributeKeyQueryId, q.Id),
-	// 	),
-	// })
+	ctx.EventManager().EmitEvents(sdk.Events{
+		sdk.NewEvent(
+			sdk.EventTypeMessage,
+			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
+			sdk.NewAttribute(types.AttributeKeyQueryId, q.Id),
+		),
+	})
 	k.Logger(ctx).Info(fmt.Sprintf("[ICQ Resp2] q: %#v.", q))
 	k.DeleteQuery(ctx, msg.QueryId)
 
