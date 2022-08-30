@@ -58,7 +58,7 @@ func (s *KeeperTestSuite) SetupReinvestCallback() ReinvestCallbackTestCase {
 	packet := channeltypes.Packet{}
 	var msgs []sdk.Msg
 	msgs = append(msgs, &banktypes.MsgSend{}, &banktypes.MsgSend{})
-	ack := s.ICAPacketAcknowledgement(msgs)
+	ack := s.ICAPacketAcknowledgement(msgs, nil)
 	callbackArgs := types.ReinvestCallback{
 		HostZoneId:     HostChainId,
 		ReinvestAmount: sdk.NewCoin(Atom, sdk.NewInt(reinvestAmt)),
