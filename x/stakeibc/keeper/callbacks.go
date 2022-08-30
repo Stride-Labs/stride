@@ -218,15 +218,12 @@ func ValidatorExchangeRateCallback(k Keeper, ctx sdk.Context, args []byte, query
 	// ensure ICQ can be issued now! else fail the callback
 	withinBufferWindow, err := k.IsWithinBufferWindow(ctx)
 	if err != nil {
-		// QUESTION: this is the case where the user submitted the query within the buffer window,
-		// but by the time it got back, we were outside of the window
-		// Is there anything we should do differently here. Not a great UX for the TX to look successful but fail under the hood
 		return err
 	} else if !withinBufferWindow {
 		return nil
 	}
 
-	// set the validator's conversion rate
+	// get the validator from the host zone
 	validator, valIndex, found := GetValidatorFromAddress(hostZone.Validators, queriedValidator.OperatorAddress)
 	if !found {
 		errMsg := fmt.Sprintf("no registered validator for address (%s)", queriedValidator.OperatorAddress)
@@ -239,6 +236,15 @@ func ValidatorExchangeRateCallback(k Keeper, ctx sdk.Context, args []byte, query
 		k.Logger(ctx).Error("failed to find stride epoch")
 		return sdkerrors.Wrapf(sdkerrors.ErrNotFound, "no epoch number for epoch (%s)", epochtypes.STRIDE_EPOCH)
 	}
+
+	// If the validator's delegation amount is 0, we'll get a division by zero error when trying to get the exchange rate
+	// Because
+	if queriedValidator.DelegatorShares.IsZero() {
+		errMsg := fmt.Sprintf("can't calculate validator internal exchange rate because delegation amount is 0 (validator: %s)", validator.Address)
+		k.Logger(ctx).Error(errMsg)
+		return sdkerrors.Wrapf(types.ErrDivisionByZero, errMsg)
+	}
+
 	// We want the validator's internal exchange rate which is held internally behind `validator.TokensFromShares`
 	//  Since,
 	//     exchange_rate = num_tokens / num_shares

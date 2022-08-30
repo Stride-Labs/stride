@@ -25,7 +25,6 @@ type ValidatorICQCallbackArgs struct {
 type ValidatorICQCallbackTestCase struct {
 	initialState         ValidatorICQCallbackState
 	validArgs            ValidatorICQCallbackArgs
-	valAddress           string
 	valIndexQueried      int
 	expectedExchangeRate sdk.Dec
 }
@@ -187,6 +186,18 @@ func (s *KeeperTestSuite) TestValidatorExchangeRateCallback_ValidatorNotFound() 
 	badCallbackArgs := s.CreateValidatorQueryResponse("fake_val", 0, 0)
 	err := stakeibckeeper.ValidatorExchangeRateCallback(s.App.StakeibcKeeper, s.Ctx(), badCallbackArgs, tc.validArgs.query)
 	s.Require().EqualError(err, "no registered validator for address (fake_val): validator not found")
+}
+
+func (s *KeeperTestSuite) TestValidatorExchangeRateCallback_DelegatorSharesZero() {
+	tc := s.SetupValidatorICQCallback()
+
+	// Set the delegator shares to 0, which cause division by zero in `validator.TokensFromShares`
+	valAddress := tc.initialState.hostZone.Validators[tc.valIndexQueried].Address
+	badCallbackArgs := s.CreateValidatorQueryResponse(valAddress, 1000, 0) // the 1000 is arbitrary, the zero here is what matters
+	err := stakeibckeeper.ValidatorExchangeRateCallback(s.App.StakeibcKeeper, s.Ctx(), badCallbackArgs, tc.validArgs.query)
+
+	expectedErrMsg := "can't calculate validator internal exchange rate because delegation amount is 0 (validator: valoper1): division by zero"
+	s.Require().EqualError(err, expectedErrMsg)
 }
 
 func (s *KeeperTestSuite) TestValidatorExchangeRateCallback_DelegationQueryFailed() {
