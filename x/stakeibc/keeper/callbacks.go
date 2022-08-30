@@ -76,7 +76,7 @@ func WithdrawalBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query icq
 	balancesStoreKey := query.Request[1:]
 	queriedAddress, err := banktypes.AddressFromBalancesStore(balancesStoreKey)
 	if err != nil {
-		errMsg := fmt.Sprintf("unable to derive queried address from request byte array")
+		errMsg := "unable to derive queried address from request byte array"
 		k.Logger(ctx).Error(errMsg)
 		return sdkerrors.Wrapf(err, errMsg)
 	}
