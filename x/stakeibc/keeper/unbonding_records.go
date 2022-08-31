@@ -271,10 +271,9 @@ func (k Keeper) CleanupEpochUnbondingRecords(ctx sdk.Context) bool {
 	return true
 }
 
-func (k Keeper) SweepAllUnbondedTokensForHostZone(ctx sdk.Context, hostZone types.HostZone) (success bool, sweepAmount int64) {
+func (k Keeper) SweepAllUnbondedTokensForHostZone(ctx sdk.Context, hostZone types.HostZone, epochUnbondingRecords []recordstypes.EpochUnbondingRecord) (success bool, sweepAmount int64) {
 	k.Logger(ctx).Info(fmt.Sprintf("sweepUnbondedTokens for host zone %s", hostZone.ChainId))
 
-	epochUnbondingRecords := k.RecordsKeeper.GetAllEpochUnbondingRecord(ctx)
 	totalAmtTransferToRedemptionAcct := int64(0)
 	epochUnbondingRecordIds := []uint64{}
 	for _, epochUnbondingRecord := range epochUnbondingRecords {
@@ -342,7 +341,7 @@ func (k Keeper) SweepAllUnbondedTokensForHostZone(ctx sdk.Context, hostZone type
 				ToAddress:   redemptionAccount.GetAddress(),
 				Amount:      sdk.NewCoins(sweepCoin),
 			})
-			ctx.Logger().Info(fmt.Sprintf("Bank sending unbonded tokens batch, from delegation to redemption account. Msg: %v", msgs))
+			k.Logger(ctx).Info(fmt.Sprintf("Bank sending unbonded tokens batch, from delegation to redemption account. Msg: %v", msgs))
 
 			// store the epoch numbers in the callback to identify the epoch unbonding records
 			redemptionCallback := types.RedemptionCallback{
@@ -359,9 +358,9 @@ func (k Keeper) SweepAllUnbondedTokensForHostZone(ctx sdk.Context, hostZone type
 			// Send the transaction through SubmitTx
 			_, err = k.SubmitTxsDayEpoch(ctx, hostZone.ConnectionId, msgs, *delegationAccount, REDEMPTION, marshalledCallbackArgs)
 			if err != nil {
-				ctx.Logger().Info(fmt.Sprintf("Failed to SubmitTxs, transfer to redemption account on %s", hostZone.ChainId))
+				k.Logger(ctx).Info(fmt.Sprintf("Failed to SubmitTxs, transfer to redemption account on %s", hostZone.ChainId))
 			}
-			ctx.Logger().Info(fmt.Sprintf("Successfully completed unbonded token sweep ICA call for %s, %s, %v", hostZone.ConnectionId, hostZone.ChainId, msgs))
+			k.Logger(ctx).Info(fmt.Sprintf("Successfully completed unbonded token sweep ICA call for %s, %s, %v", hostZone.ConnectionId, hostZone.ChainId, msgs))
 		} else {
 			k.Logger(ctx).Info(fmt.Sprintf("\tNot sweeping tokens for host zone %s because redemption/delegation accounts aren't registered", hostZone.ChainId))
 			return false, 0
@@ -380,8 +379,9 @@ func (k Keeper) SweepAllUnbondedTokens(ctx sdk.Context) (success bool, successfu
 	sweepAmounts = []int64{}
 	failedSweeps = []string{}
 	hostZones := k.GetAllHostZone(ctx)
+	epochUnbondingRecords := k.RecordsKeeper.GetAllEpochUnbondingRecord(ctx)
 	for _, hostZone := range hostZones {
-		hostZoneSuccess, sweepAmount := k.SweepAllUnbondedTokensForHostZone(ctx, hostZone)
+		hostZoneSuccess, sweepAmount := k.SweepAllUnbondedTokensForHostZone(ctx, hostZone, epochUnbondingRecords)
 		if hostZoneSuccess {
 			successfulSweeps = append(successfulSweeps, hostZone.ChainId)
 			sweepAmounts = append(sweepAmounts, sweepAmount)
