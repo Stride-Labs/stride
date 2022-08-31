@@ -288,8 +288,8 @@ func (k Keeper) SweepAllUnbondedTokensForHostZone(ctx sdk.Context, hostZone type
 		k.Logger(ctx).Info(fmt.Sprintf("\tProcessing batch SweepAllUnbondedTokens for host zone %s", hostZone.ChainId))
 
 		// get latest blockTime from light client
-		blockTime, found := k.GetLightClientTimeSafely(ctx, hostZone.ConnectionId)
-		if !found {
+		blockTime, err := k.GetLightClientTimeSafely(ctx, hostZone.ConnectionId)
+		if err != nil {
 			errMsg := fmt.Sprintf("\tCould not find blockTime for host zone %s", hostZone.ChainId)
 			k.Logger(ctx).Error(errMsg)
 			continue
