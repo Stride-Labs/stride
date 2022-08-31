@@ -50,11 +50,10 @@ func NewParams(
 func DefaultParams() Params {
 	return Params{
 		MintDenom:               sdk.DefaultBondDenom,
-		GenesisEpochProvisions:  sdk.NewDec(1_000_000_000), //sdk.NewDec(2_500_000_000_000).Quo(sdk.NewDec(365)).Quo(sdk.NewDec(24 * 60)), // 2.5M ST first year, broken into minutes ~= 4.75 ST per minute
-		EpochIdentifier:         "day",
-		EpochInterval:           1,
-		ReductionPeriodInEpochs: 365,
-		ReductionFactor:         sdk.NewDec(3).QuoInt64(4),
+		GenesisEpochProvisions:  sdk.NewDec(2_500_000).Mul(sdk.NewDec(1_000_000)).Quo(sdk.NewDec(24 * 365)), // 2.5MST first year, broken into hours ~= 285ST / hour
+		EpochIdentifier:         "mint",                                                                     // 1 hour
+		ReductionPeriodInEpochs: 24 * 365,                                                                   // 24hrs*365d = 8760
+		ReductionFactor:         sdk.NewDec(1).QuoInt64(2),
 		DistributionProportions: DistributionProportions{
 			Staking:                     sdk.MustNewDecFromStr("0.2764"),
 			CommunityPoolGrowth:         sdk.MustNewDecFromStr("0.1860"),
@@ -87,9 +86,6 @@ func (p Params) Validate() error {
 		return err
 	}
 	if err := validateMintingRewardsDistributionStartEpoch(p.MintingRewardsDistributionStartEpoch); err != nil {
-		return err
-	}
-	if err := validateEpochInterval(p.EpochInterval); err != nil {
 		return err
 	}
 
@@ -213,19 +209,6 @@ func validateMintingRewardsDistributionStartEpoch(i interface{}) error {
 
 	if v < 0 {
 		return fmt.Errorf("start epoch must be non-negative")
-	}
-
-	return nil
-}
-
-func validateEpochInterval(i interface{}) error {
-	v, ok := i.(uint64)
-	if !ok {
-		return fmt.Errorf("invalid parameter type: %T", i)
-	}
-
-	if v <= 0 {
-		return fmt.Errorf("epoch interval must be non-negative")
 	}
 
 	return nil
