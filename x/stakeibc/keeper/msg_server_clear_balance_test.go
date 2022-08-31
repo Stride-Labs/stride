@@ -14,6 +14,7 @@ import (
 
 type ClearBalanceState struct {
 	feeChannel Channel
+	hz         stakeibctypes.HostZone
 }
 
 type ClearBalanceTestCase struct {
@@ -51,6 +52,7 @@ func (s *KeeperTestSuite) SetupClearBalance() ClearBalanceTestCase {
 
 	return ClearBalanceTestCase{
 		initialState: ClearBalanceState{
+			hz: hostZone,
 			feeChannel: Channel{
 				PortID:    icatypes.PortPrefix + feeAccountOwner,
 				ChannelID: feeChannelID,
@@ -74,15 +76,15 @@ func (s *KeeperTestSuite) TestClearBalance_Successful() {
 	feeChannelId := feeChannel.ChannelID
 
 	startSequence, found := s.App.IBCKeeper.ChannelKeeper.GetNextSequenceSend(s.Ctx(), feePortId, feeChannelId)
-	s.Require().True(found, "sequence number not found before reinvestment")
+	s.Require().True(found, "sequence number not found before clear balance")
 
 	_, err := s.GetMsgServer().ClearBalance(sdk.WrapSDKContext(s.Ctx()), &tc.validMsg)
 	s.Require().NoError(err, "balance clears")
 
 	// Confirm the sequence number was incremented
 	endSequence, found := s.App.IBCKeeper.ChannelKeeper.GetNextSequenceSend(s.Ctx(), feePortId, feeChannelId)
-	s.Require().True(found, "sequence number not found after reinvestment")
-	s.Require().Equal(endSequence, startSequence+1, "sequence number after reinvestment")
+	s.Require().True(found, "sequence number not found after clear balance")
+	s.Require().Equal(endSequence, startSequence+1, "sequence number after clear balance")
 }
 
 func (s *KeeperTestSuite) TestClearBalance_HostChainMissing() {
@@ -95,22 +97,18 @@ func (s *KeeperTestSuite) TestClearBalance_HostChainMissing() {
 
 func (s *KeeperTestSuite) TestClearBalance_FeeAccountMissing() {
 	tc := s.SetupClearBalance()
-	// remove the fee account from the host zone
-	hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx(), HostChainId)
-	s.Require().True(found, "host zone not found")
-	hostZone.FeeAccount = nil
-	s.App.StakeibcKeeper.SetHostZone(s.Ctx(), hostZone)
+	// no fee account
+	tc.initialState.hz.FeeAccount = nil
+	s.App.StakeibcKeeper.SetHostZone(s.Ctx(), tc.initialState.hz)
 	_, err := s.GetMsgServer().ClearBalance(sdk.WrapSDKContext(s.Ctx()), &tc.validMsg)
 	s.Require().EqualError(err, "chainId: GAIA: fee account is not registered")
 }
 
 func (s *KeeperTestSuite) TestClearBalance_ParseCoinError() {
 	tc := s.SetupClearBalance()
-	// set invalid denom on host zone
-	hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx(), HostChainId)
-	s.Require().True(found, "host zone not found")
-	hostZone.HostDenom = ":"
-	s.App.StakeibcKeeper.SetHostZone(s.Ctx(), hostZone)
+	// invalid denom
+	tc.initialState.hz.HostDenom = ":"
+	s.App.StakeibcKeeper.SetHostZone(s.Ctx(), tc.initialState.hz)
 	_, err := s.GetMsgServer().ClearBalance(sdk.WrapSDKContext(s.Ctx()), &tc.validMsg)
 	s.Require().EqualError(err, "failed to parse coin (1000000:): invalid decimal coin expression: 1000000:")
 }
