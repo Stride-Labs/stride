@@ -3,7 +3,11 @@ SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 # import dependencies
 source ${SCRIPT_DIR}/../account_vars.sh
 
-$STRIDE_CMD q bank balances stride1uk4ze0x4nvh4fk0xm4jdud58eqn4yxhrt52vv7
+# balances
+# $STRIDE_CMD q bank balances stride1uk4ze0x4nvh4fk0xm4jdud58eqn4yxhrt52vv7
+# exit
+
+$STRIDE_CMD q staking validators
 exit
 
 # Test 0
