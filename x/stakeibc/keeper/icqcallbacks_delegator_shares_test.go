@@ -189,7 +189,7 @@ func (s *KeeperTestSuite) TestDelegatorSharesCallback_BufferWindowError() {
 
 	err := stakeibckeeper.DelegatorSharesCallback(s.App.StakeibcKeeper, s.Ctx(), tc.validArgs.callbackArgs, tc.validArgs.query)
 	s.Require().ErrorContains(err, "unable to determine if ICQ callback is inside buffer window")
-	s.Require().ErrorContains(err, "Current block time")
+	s.Require().ErrorContains(err, "current block time")
 	s.Require().ErrorContains(err, "not within current epoch")
 }
 
@@ -274,9 +274,9 @@ func (s *KeeperTestSuite) TestDelegatorSharesCallback_DelegationAmtOverfow() {
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx(), hostZone)
 
 	err := stakeibckeeper.DelegatorSharesCallback(s.App.StakeibcKeeper, s.Ctx(), tc.validArgs.callbackArgs, tc.validArgs.query)
-	expectedErrMsg := "unable to convert validator delegation amount to int64, err: overflow: "
-	expectedErrMsg += "unable to cast 18446744073709551615 of type uint64 to int64: unable to cast to safe cast int"
-	s.Require().EqualError(err, expectedErrMsg)
+	expectedErrMsg := `unable to convert validator delegation amount to int64, err: overflow: `
+	expectedErrMsg += `unable to cast \d+ of type uint64 to int64: unable to cast to safe cast int`
+	s.Require().Regexp(expectedErrMsg, err.Error())
 }
 
 func (s *KeeperTestSuite) TestDelegatorSharesCallback_WeightOverfow() {
@@ -290,9 +290,9 @@ func (s *KeeperTestSuite) TestDelegatorSharesCallback_WeightOverfow() {
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx(), hostZone)
 
 	err := stakeibckeeper.DelegatorSharesCallback(s.App.StakeibcKeeper, s.Ctx(), tc.validArgs.callbackArgs, tc.validArgs.query)
-	expectedErrMsg := "unable to convert validator weight to int64, err: overflow: "
-	expectedErrMsg += "unable to cast 18446744073709551615 of type uint64 to int64: unable to cast to safe cast int"
-	s.Require().EqualError(err, expectedErrMsg)
+	expectedErrMsg := `unable to convert validator weight to int64, err: overflow: `
+	expectedErrMsg += `unable to cast \d+ of type uint64 to int64: unable to cast to safe cast int`
+	s.Require().Regexp(expectedErrMsg, err.Error())
 }
 
 func (s *KeeperTestSuite) TestDelegatorSharesCallback_SlashGtTenPercent() {
