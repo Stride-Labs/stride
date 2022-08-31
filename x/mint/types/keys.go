@@ -28,4 +28,5 @@ const (
 	// submodule names
 	CommunityGrowthSubmoduleName         = "community-growth"
 	CommunitySecurityBudgetSubmoduleName = "community-security-budget"
+	CommunityUsageSubmoduleName          = "community-usage"
 )

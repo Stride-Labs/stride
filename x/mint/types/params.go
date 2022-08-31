@@ -49,16 +49,17 @@ func NewParams(
 // minting params
 func DefaultParams() Params {
 	return Params{
-		MintDenom:               "ustrd",
-		GenesisEpochProvisions:  sdk.NewDec(10), //sdk.NewDec(2_500_000_000_000).Quo(sdk.NewDec(365)).Quo(sdk.NewDec(24 * 60)), // 2.5M ST first year, broken into minutes ~= 4.75 ST per minute
+		MintDenom:               sdk.DefaultBondDenom,
+		GenesisEpochProvisions:  sdk.NewDec(1_000_000_000), //sdk.NewDec(2_500_000_000_000).Quo(sdk.NewDec(365)).Quo(sdk.NewDec(24 * 60)), // 2.5M ST first year, broken into minutes ~= 4.75 ST per minute
 		EpochIdentifier:         "day",
+		EpochInterval:           1,
 		ReductionPeriodInEpochs: 365,
 		ReductionFactor:         sdk.NewDec(3).QuoInt64(4),
 		DistributionProportions: DistributionProportions{
 			Staking:                     sdk.MustNewDecFromStr("0.2764"),
 			CommunityPoolGrowth:         sdk.MustNewDecFromStr("0.1860"),
 			StrategicReserve:            sdk.MustNewDecFromStr("0.4205"),
-			CommunityPoolSecurityBudget: sdk.MustNewDecFromStr("0.1169"),
+			CommunityPoolSecurityBudget: sdk.MustNewDecFromStr("0.1171"),
 		},
 		StrategicReserveAddress:              "stride1jx4jra5mwealhpgu9f40k5n2fz7f9cv7q0sz0r", // TODO this is a placeholder, change it!
 		MintingRewardsDistributionStartEpoch: 0,
@@ -86,6 +87,9 @@ func (p Params) Validate() error {
 		return err
 	}
 	if err := validateMintingRewardsDistributionStartEpoch(p.MintingRewardsDistributionStartEpoch); err != nil {
+		return err
+	}
+	if err := validateEpochInterval(p.EpochInterval); err != nil {
 		return err
 	}
 
@@ -180,24 +184,22 @@ func validateDistributionProportions(i interface{}) error {
 		return errors.New("staking distribution ratio should not be negative")
 	}
 
-	if v.PoolIncentives.IsNegative() {
-		return errors.New("pool incentives distribution ratio should not be negative")
+	if v.CommunityPoolGrowth.IsNegative() {
+		return errors.New("community pool growth distribution ratio should not be negative")
 	}
 
-	// TODO: Maybe we should allow this :joy:, lets you burn osmo from community pool
-	// for new chains
-	if v.CommunityPool.IsNegative() {
-		return errors.New("community pool distribution ratio should not be negative")
+	if v.CommunityPoolSecurityBudget.IsNegative() {
+		return errors.New("community pool growth distribution ratio should not be negative")
 	}
 
-	if v.ParticipationRewards.IsNegative() {
-		return errors.New("participation rewards distribution ratio should not be negative")
+	if v.StrategicReserve.IsNegative() {
+		return errors.New("community pool growth distribution ratio should not be negative")
 	}
 
-	totalProportions := v.Staking.Add(v.PoolIncentives).Add(v.CommunityPool).Add(v.ParticipationRewards)
+	totalProportions := v.Staking.Add(v.CommunityPoolGrowth).Add(v.CommunityPoolSecurityBudget).Add(v.StrategicReserve)
 
 	if !totalProportions.Equal(sdk.NewDec(1)) {
-		return errors.New("total distributions ratio should be 1")
+		return fmt.Errorf(fmt.Sprintf("total distributions ratio should be 1, instead got %s", totalProportions.String()))
 	}
 
 	return nil
@@ -211,6 +213,19 @@ func validateMintingRewardsDistributionStartEpoch(i interface{}) error {
 
 	if v < 0 {
 		return fmt.Errorf("start epoch must be non-negative")
+	}
+
+	return nil
+}
+
+func validateEpochInterval(i interface{}) error {
+	v, ok := i.(uint64)
+	if !ok {
+		return fmt.Errorf("invalid parameter type: %T", i)
+	}
+
+	if v < 0 {
+		return fmt.Errorf("epoch interval must be non-negative")
 	}
 
 	return nil

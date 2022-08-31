@@ -1,6 +1,8 @@
 package keeper
 
 import (
+	"fmt"
+
 	"github.com/spf13/cast"
 	"github.com/tendermint/tendermint/libs/log"
 
@@ -162,25 +164,26 @@ func (k Keeper) DistributeMintedCoin(ctx sdk.Context, mintedCoin sdk.Coin) error
 	}
 
 	// allocate pool allocation ratio to community growth pool
+	communityGrowthPoolAddress := k.GetSubmoduleAddress(types.CommunityGrowthSubmoduleName)
 	communityPoolGrowthProportion := k.GetProportions(ctx, mintedCoin, proportions.CommunityPoolGrowth)
 	communityPoolGrowthCoins := sdk.NewCoins(communityPoolGrowthProportion)
-	err = k.bankKeeper.SendCoinsFromModuleToModule(ctx, types.ModuleName, types.ModuleName, communityPoolGrowthCoins)
+	err = k.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, communityGrowthPoolAddress, communityPoolGrowthCoins)
 	if err != nil {
 		return err
 	}
 
 	// allocate pool allocation ratio to security budget pool
+	communitySecurityBudgetPoolAddress := k.GetSubmoduleAddress(types.CommunitySecurityBudgetSubmoduleName)
 	communityPoolSecurityBudgetProportion := k.GetProportions(ctx, mintedCoin, proportions.CommunityPoolSecurityBudget)
 	communityPoolSecurityBudgetCoins := sdk.NewCoins(communityPoolSecurityBudgetProportion)
-	err = k.bankKeeper.SendCoinsFromModuleToModule(ctx, types.ModuleName, types.ModuleName, communityPoolSecurityBudgetCoins)
+	err = k.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, communitySecurityBudgetPoolAddress, communityPoolSecurityBudgetCoins)
 	if err != nil {
 		return err
 	}
 
-	// sweep any remaining tokens to the community pool (this should not happen, barring rounding imprecision)
+	// sweep any remaining tokens to the community growth pool (this should NEVER happen, barring rounding imprecision)
 	remainingCoins := sdk.NewCoins(mintedCoin).Sub(stakingIncentivesCoins).Sub(strategicReserveCoins).Sub(communityPoolGrowthCoins).Sub(communityPoolSecurityBudgetCoins)
-	acctAddr := k.accountKeeper.GetModuleAddress(types.ModuleName)
-	err = k.distrKeeper.FundCommunityPool(ctx, remainingCoins, acctAddr)
+	err = k.distrKeeper.FundCommunityPool(ctx, remainingCoins, communityGrowthPoolAddress)
 	if err != nil {
 		return err
 	}
@@ -206,6 +209,7 @@ func (k Keeper) SetupNewModuleAccount(ctx sdk.Context, submoduleName string) {
 			zoneAddress.String(),
 		),
 	)
+	k.Logger(ctx).Info(fmt.Sprintf("Created new %s.%s module account %s!", types.ModuleName, submoduleName, acc.GetAddress().String()))
 	k.accountKeeper.SetAccount(ctx, acc)
 }
 

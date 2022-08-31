@@ -20,6 +20,7 @@ func InitGenesis(ctx sdk.Context, keeper keeper.Keeper, ak types.AccountKeeper, 
 	// set up new module accounts
 	keeper.SetupNewModuleAccount(ctx, types.CommunityGrowthSubmoduleName)
 	keeper.SetupNewModuleAccount(ctx, types.CommunitySecurityBudgetSubmoduleName)
+	keeper.SetupNewModuleAccount(ctx, types.CommunityUsageSubmoduleName)
 
 	keeper.SetLastReductionEpochNum(ctx, data.ReductionStartedEpoch)
 }
