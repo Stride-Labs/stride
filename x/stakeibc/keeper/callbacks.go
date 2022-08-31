@@ -240,8 +240,8 @@ func ValidatorExchangeRateCallback(k Keeper, ctx sdk.Context, args []byte, query
 		return sdkerrors.Wrapf(sdkerrors.ErrNotFound, "no epoch number for epoch (%s)", epochtypes.STRIDE_EPOCH)
 	}
 
-	// If the validator's delegation amount is 0, we'll get a division by zero error when trying to get the exchange rate
-	// Because
+	// If the validator's delegation shares is 0, we'll get a division by zero error when trying to get the exchange rate
+	//  because `validator.TokensFromShares` uses delegation shares in the denominator
 	if queriedValidator.DelegatorShares.IsZero() {
 		errMsg := fmt.Sprintf("can't calculate validator internal exchange rate because delegation amount is 0 (validator: %s)", validator.Address)
 		k.Logger(ctx).Error(errMsg)
