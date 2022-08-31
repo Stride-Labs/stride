@@ -21,4 +21,11 @@ const (
 	// Query endpoints supported by the minting querier.
 	QueryParameters      = "parameters"
 	QueryEpochProvisions = "epoch_provisions"
+
+	// key for creating a new module account
+	SubmoduleAccountKey = "submodule"
+
+	// submodule names
+	CommunityGrowthSubmoduleName         = "community-growth"
+	CommunitySecurityBudgetSubmoduleName = "community-security-budget"
 )
