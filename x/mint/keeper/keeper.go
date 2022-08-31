@@ -206,8 +206,6 @@ func (k Keeper) DistributeMintedCoin(ctx sdk.Context, mintedCoin sdk.Coin) error
 	return nil
 }
 
-// ========================== GENERATE NEW MODULE ACCOUNTS =================================
-
 // set up a new module account address
 func (k Keeper) SetupNewModuleAccount(ctx sdk.Context, submoduleName string) {
 

@@ -30,4 +30,5 @@ func (suite *KeeperTestSuite) TestEpochLifeCycle() {
 	suite.Require().Equal(allEpochs[1].Identifier, "monthly")
 	suite.Require().Equal(allEpochs[2].Identifier, "stride_epoch")
 	suite.Require().Equal(allEpochs[3].Identifier, "week")
+	suite.Require().Equal(allEpochs[4].Identifier, "mint")
 }
