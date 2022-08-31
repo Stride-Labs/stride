@@ -392,17 +392,6 @@ func (s *KeeperTestSuite) TestTransferDepositRecords_NoDelegationAddress() {
 	s.CheckStateAfterTransferringDepositRecords(tc, numFailed)
 }
 
-func (s *KeeperTestSuite) TestTransferDepositRecords_HostBlockHeightNotFound() {
-	tc := s.SetupDepositRecords()
-	// Remove the connection ID from the host zone so that it's unable to find the light client height
-	badHostZone := tc.hostZone
-	badHostZone.ConnectionId = ""
-	s.App.StakeibcKeeper.SetHostZone(s.Ctx(), badHostZone)
-
-	numFailed := len(tc.initialDepositRecords.recordsToBeTransfered)
-	s.CheckStateAfterTransferringDepositRecords(tc, numFailed)
-}
-
 // Helper function to check the state after staking deposit records
 // This assumes the last X delegations failed
 func (s *KeeperTestSuite) CheckStateAfterStakingDepositRecords(tc DepositRecordsTestCase, numDelegationsFailed int) {
