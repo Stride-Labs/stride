@@ -12,6 +12,10 @@ import (
 	"github.com/Stride-Labs/stride/x/interchainquery/types"
 )
 
+const (
+	HostChainId = "GAIA"
+)
+
 type MsgSubmitQueryResponseTestCase struct {
 	validMsg types.MsgSubmitQueryResponse
 	goCtx    context.Context
@@ -21,13 +25,14 @@ type MsgSubmitQueryResponseTestCase struct {
 func (s *KeeperTestSuite) SetupMsgSubmitQueryResponse() MsgSubmitQueryResponseTestCase {
 
 	// set up IBC
-	hostChainId := "GAIA"
-	s.CreateTransferChannel(hostChainId)
+	s.CreateTransferChannel(HostChainId)
 
 	// define the query
 	goCtx := sdk.WrapSDKContext(s.Ctx())
-	height := int64(s.HostCtx().BlockHeight()) // start at the current height, we modify this on a per-test basis at times
-	result := []byte{0x01, 0x02, 0x03}
+	h, found := s.App.StakeibcKeeper.GetLightClientHeightSafely(s.Ctx(), s.TransferPath.EndpointA.ConnectionID)
+	s.Require().True(found)
+	height := int64(h - 1) // start at the (LC height) - 1  height, which is the height the query executes at!
+	result := []byte("result-example")
 	proofOps := crypto.ProofOps{}
 	fromAddress := s.TestAccs[0].String()
 	expectedId := "9792c1d779a3846a8de7ae82f31a74d308b279a521fa9e0d5c4f08917117bf3e"
@@ -38,20 +43,19 @@ func (s *KeeperTestSuite) SetupMsgSubmitQueryResponse() MsgSubmitQueryResponseTe
 	query := types.Query{
 		Id:           expectedId,
 		ConnectionId: s.TransferPath.EndpointA.ConnectionID,
-		ChainId:      hostChainId,
+		ChainId:      HostChainId,
 		QueryType:    types.BANK_STORE_QUERY_WITH_PROOF,
-		Request:      append(data, []byte(hostChainId)...),
+		Request:      append(data, []byte(HostChainId)...),
 		Period:       sdk.NewInt(0),
 		LastHeight:   sdk.NewInt(height),
 		CallbackId:   "withdrawalbalance",
-		// Ttl:          uint64(2545444772), // August, 2050,
-		Ttl:    uint64(1), // August, 2050,
-		Height: height,
+		Ttl:          uint64(12545592938) * uint64(1000000000), // set ttl to August 2050, mult by nano conversion factor
+		Height:       height,
 	}
 
 	return MsgSubmitQueryResponseTestCase{
 		validMsg: types.MsgSubmitQueryResponse{
-			ChainId:     hostChainId,
+			ChainId:     HostChainId,
 			QueryId:     expectedId,
 			Result:      result,
 			ProofOps:    &proofOps,
@@ -63,25 +67,53 @@ func (s *KeeperTestSuite) SetupMsgSubmitQueryResponse() MsgSubmitQueryResponseTe
 	}
 }
 
-func (s *KeeperTestSuite) TestMsgSubmitQueryResponse_Successful() {
+func (s *KeeperTestSuite) TestMsgSubmitQueryResponse_WrongProof() {
 	tc := s.SetupMsgSubmitQueryResponse()
 
 	s.App.InterchainqueryKeeper.SetQuery(s.Ctx(), tc.query)
 
 	resp, err := s.GetMsgServer().SubmitQueryResponse(tc.goCtx, &tc.validMsg)
-	s.Require().NoError(err)
-	s.Require().NotNil(resp)
-	s.Require().Equal(&types.MsgSubmitQueryResponseResponse{}, resp)
+	s.Require().ErrorContains(err, "unable to verify membership proof: proof cannot be empty")
+	s.Require().Nil(resp)
+}
 
-	// check that the query is not in the store anymore, as it should be deleted
+func (s *KeeperTestSuite) TestMsgSubmitQueryResponse_SuccessfulQueryRemoval() {
+	tc := s.SetupMsgSubmitQueryResponse()
+
+	s.App.InterchainqueryKeeper.SetQuery(s.Ctx(), tc.query)
+
+	_, err := s.GetMsgServer().SubmitQueryResponse(tc.goCtx, &tc.validMsg)
+	s.Require().ErrorContains(err, "unable to verify membership proof: proof cannot be empty")
+
+	// check that the query is not in the store anymore
 	_, found := s.App.InterchainqueryKeeper.GetQuery(s.Ctx(), tc.query.Id)
-	s.Require().False(found)
+	s.Require().False(found, "query should have been removed from store once processed")
+}
+
+func (s *KeeperTestSuite) TestMsgSubmitQueryResponse_DuplicateResponseSubmissionWillNoop() {
+	tc := s.SetupMsgSubmitQueryResponse()
+
+	s.App.InterchainqueryKeeper.SetQuery(s.Ctx(), tc.query)
+
+	_, err := s.GetMsgServer().SubmitQueryResponse(tc.goCtx, &tc.validMsg)
+	s.Require().ErrorContains(err, "unable to verify membership proof: proof cannot be empty")
+
+	// check that the query is not in the store anymore
+	_, found := s.App.InterchainqueryKeeper.GetQuery(s.Ctx(), tc.query.Id)
+	s.Require().False(found, "query should have been removed from store once processed")
+
+	// re-submit the same response
+	resp, err := s.GetMsgServer().SubmitQueryResponse(tc.goCtx, &tc.validMsg)
+	s.Require().NoError(err, "second submission should be a noop, not an error")
+	s.Require().NotNil(resp, "second submission should be a noop, not an error")
+	s.Require().Equal(&types.MsgSubmitQueryResponseResponse{}, resp, "second submission should be a noop, not an error")
+
 }
 
 func (s *KeeperTestSuite) TestMsgSubmitQueryResponse_UnknownId() {
 	tc := s.SetupMsgSubmitQueryResponse()
 
-	tc.query.Id += "INVALID_SUFFIX" // create an invalid query id
+	tc.query.Id = tc.query.Id + "INVALID_SUFFIX" // create an invalid query id
 	s.App.InterchainqueryKeeper.SetQuery(s.Ctx(), tc.query)
 
 	resp, err := s.GetMsgServer().SubmitQueryResponse(tc.goCtx, &tc.validMsg)
@@ -111,7 +143,7 @@ func (s *KeeperTestSuite) TestMsgSubmitQueryResponse_ExceededTtl() {
 func (s *KeeperTestSuite) TestMsgSubmitQueryResponse_NotExceededTtl() {
 	tc := s.SetupMsgSubmitQueryResponse()
 
-	tc.query.Ttl = uint64(2545450064) * uint64(1000000000) // set ttl to August 2050, mult by nano conversion factor
+	tc.query.Ttl = uint64(2545450064) * uint64(1000000000) // for test clarity, re-set ttl to August 2050, mult by nano conversion factor
 	s.App.InterchainqueryKeeper.SetQuery(s.Ctx(), tc.query)
 	exceeded, err := s.App.InterchainqueryKeeper.HasQueryExceededTtl(s.Ctx(), &tc.validMsg, tc.query)
 	s.Require().NoError(err)
@@ -122,14 +154,14 @@ func (s *KeeperTestSuite) TestMsgSubmitQueryResponse_NotExceededTtl() {
 	s.Require().True(found)
 }
 
-func (s *KeeperTestSuite) TestMsgSubmitQueryResponse_FindAndInvokeCallback_Success() {
+func (s *KeeperTestSuite) TestMsgSubmitQueryResponse_FindAndInvokeCallback_WrongHostZone() {
 	tc := s.SetupMsgSubmitQueryResponse()
 
 	s.App.InterchainqueryKeeper.SetQuery(s.Ctx(), tc.query)
 
 	// rather than testing by executing the callback in its entirety,
 	//   check by invoking it without a registered host zone and catching the appropriate error
-	err := s.App.InterchainqueryKeeper.FindAndInvokeCallback(s.Ctx(), &tc.validMsg, tc.query)
+	err := s.App.InterchainqueryKeeper.InvokeCallback(s.Ctx(), &tc.validMsg, tc.query)
 	s.Require().ErrorContains(err, "WithdrawalBalanceCallback: no registered zone for chain id", "callback was invoked")
 
 }

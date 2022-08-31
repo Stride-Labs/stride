@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	clienttypes "github.com/cosmos/ibc-go/v3/modules/core/02-client/types"
 	commitmenttypes "github.com/cosmos/ibc-go/v3/modules/core/23-commitment/types"
 	tmclienttypes "github.com/cosmos/ibc-go/v3/modules/light-clients/07-tendermint/types"
@@ -38,7 +39,9 @@ func (k Keeper) VerifyKeyProof(ctx sdk.Context, msg *types.MsgSubmitQueryRespons
 	} else {
 		// the query is a "key" proof query -- verify the results are valid by checking the proof!
 		if msg.ProofOps == nil {
-			return fmt.Errorf("unable to validate proof. No proof submitted")
+			errMsg := fmt.Sprintf("[ICQ Resp] for query %s, unable to validate proof. No proof submitted", q.Id)
+			k.Logger(ctx).Error(errMsg)
+			return sdkerrors.Wrapf(types.ErrInvalidICQProof, errMsg)
 		}
 		connection, _ := k.IBCKeeper.ConnectionKeeper.GetConnection(ctx, q.ConnectionId)
 
@@ -46,40 +49,53 @@ func (k Keeper) VerifyKeyProof(ctx sdk.Context, msg *types.MsgSubmitQueryRespons
 		if err != nil {
 			return err
 		}
+		fmt.Println("msgHeight: ", msgHeight)
+		// msgHeight = uint64(15)
 		height := clienttypes.NewHeight(clienttypes.ParseChainID(q.ChainId), msgHeight+1)
 		consensusState, found := k.IBCKeeper.ClientKeeper.GetClientConsensusState(ctx, connection.ClientId, height)
 		if !found {
-			return fmt.Errorf("unable to fetch consensus state")
+			errMsg := fmt.Sprintf("[ICQ Resp] for query %s, consensus state not found for client %s and height %d", q.Id, connection.ClientId, height)
+			k.Logger(ctx).Error(errMsg)
+			return sdkerrors.Wrapf(types.ErrInvalidICQProof, errMsg)
 		}
 
 		clientState, found := k.IBCKeeper.ClientKeeper.GetClientState(ctx, connection.ClientId)
 		if !found {
-			return fmt.Errorf("unable to fetch client state")
+			errMsg := fmt.Sprintf("[ICQ Resp] for query %s, unable to fetch client state for client %s and height %d", q.Id, connection.ClientId, height)
+			k.Logger(ctx).Error(errMsg)
+			return sdkerrors.Wrapf(types.ErrInvalidICQProof, errMsg)
 		}
 		path := commitmenttypes.NewMerklePath([]string{pathParts[1], url.PathEscape(string(q.Request))}...)
 
-		k.Logger(ctx).Info(fmt.Sprintf("[MOOSE] proof is %#v", msg.ProofOps))
 		merkleProof, err := commitmenttypes.ConvertProofs(msg.ProofOps)
 		if err != nil {
-			return fmt.Errorf("error converting proofs")
+			errMsg := fmt.Sprintf("[ICQ Resp] for query %s, error converting proofs", q.Id)
+			k.Logger(ctx).Error(errMsg)
+			return sdkerrors.Wrapf(types.ErrInvalidICQProof, errMsg)
 		}
 
 		tmclientstate, ok := clientState.(*tmclienttypes.ClientState)
 		if !ok {
-			return fmt.Errorf("error unmarshaling client state %v", clientState)
+			errMsg := fmt.Sprintf("[ICQ Resp] for query %s, error unmarshaling client state %v", q.Id, clientState)
+			k.Logger(ctx).Error(errMsg)
+			return sdkerrors.Wrapf(types.ErrInvalidICQProof, errMsg)
 		}
 
 		if len(msg.Result) != 0 {
 			// if we got a non-nil response, verify inclusion proof.
 			if err := merkleProof.VerifyMembership(tmclientstate.ProofSpecs, consensusState.GetRoot(), path, msg.Result); err != nil {
-				return fmt.Errorf("unable to verify proof: %s", err)
+				errMsg := fmt.Sprintf("[ICQ Resp] for query %s, unable to verify membership proof: %s", q.Id, err)
+				k.Logger(ctx).Error(errMsg)
+				return sdkerrors.Wrapf(types.ErrInvalidICQProof, errMsg)
 			}
 			k.Logger(ctx).Info(fmt.Sprintf("Proof validated! module: %s, queryId %s", types.ModuleName, q.Id))
 
 		} else {
 			// if we got a nil response, verify non inclusion proof.
 			if err := merkleProof.VerifyNonMembership(tmclientstate.ProofSpecs, consensusState.GetRoot(), path); err != nil {
-				return fmt.Errorf("unable to verify proof: %s", err)
+				errMsg := fmt.Sprintf("[ICQ Resp] for query %s, unable to verify non-membership proof: %s", q.Id, err)
+				k.Logger(ctx).Error(errMsg)
+				return sdkerrors.Wrapf(types.ErrInvalidICQProof, errMsg)
 			}
 			k.Logger(ctx).Info(fmt.Sprintf("Non-inclusion Proof validated, stopping here! module: %s, queryId %s", types.ModuleName, q.Id))
 		}
@@ -88,7 +104,7 @@ func (k Keeper) VerifyKeyProof(ctx sdk.Context, msg *types.MsgSubmitQueryRespons
 }
 
 // call the query's associated callback function
-func (k Keeper) FindAndInvokeCallback(ctx sdk.Context, msg *types.MsgSubmitQueryResponse, q types.Query) error {
+func (k Keeper) InvokeCallback(ctx sdk.Context, msg *types.MsgSubmitQueryResponse, q types.Query) error {
 	// get all the stored queries and sort them for determinism
 	moduleNames := []string{}
 	for moduleName := range k.callbacks {
@@ -96,36 +112,36 @@ func (k Keeper) FindAndInvokeCallback(ctx sdk.Context, msg *types.MsgSubmitQuery
 	}
 	sort.Strings(moduleNames)
 
-	for _, module := range moduleNames {
-		k.Logger(ctx).Info(fmt.Sprintf("Executing callback for queryId (%s), module (%s)", q.Id, module))
-		moduleCallbackHandler := k.callbacks[module]
+	for _, moduleName := range moduleNames {
+		k.Logger(ctx).Info(fmt.Sprintf("[ICQ Resp] executing callback for queryId (%s), module (%s)", q.Id, moduleName))
+		moduleCallbackHandler := k.callbacks[moduleName]
 
 		if moduleCallbackHandler.Has(q.CallbackId) {
-			k.Logger(ctx).Info(fmt.Sprintf("ICQ Callback (%s) found for module (%s)", q.CallbackId, module))
+			k.Logger(ctx).Info(fmt.Sprintf("[ICQ Resp] callback (%s) found for module (%s)", q.CallbackId, moduleName))
 			// call the correct callback function
 			err := moduleCallbackHandler.Call(ctx, q.CallbackId, msg.Result, q)
 			if err != nil {
-				k.Logger(ctx).Error(fmt.Sprintf("error in ICQ callback, error: %s, msg: %s, result: %v, type: %s, params: %v", err.Error(), msg.QueryId, msg.Result, q.QueryType, q.Request))
+				k.Logger(ctx).Error(fmt.Sprintf("[ICQ Resp] error in ICQ callback, error: %s, msg: %s, result: %v, type: %s, params: %v", err.Error(), msg.QueryId, msg.Result, q.QueryType, q.Request))
 				return err
 			}
 		} else {
-			k.Logger(ctx).Info(fmt.Sprintf("ICQ Callback not found for module (%s)", module))
+			k.Logger(ctx).Info(fmt.Sprintf("[ICQ Resp] callback not found for module (%s)", moduleName))
 		}
 	}
 	return nil
 }
 
 // verify the query has not exceeded its ttl
-func (k Keeper) HasQueryExceededTtl(ctx sdk.Context, msg *types.MsgSubmitQueryResponse, q types.Query) (bool, error) {
-	k.Logger(ctx).Info(fmt.Sprintf("[ICQ Resp] query %s with ttl: %d, resp time: %d.", msg.QueryId, q.Ttl, ctx.BlockHeader().Time.UnixNano()))
-	curT, err := cast.ToUint64E(ctx.BlockTime().UnixNano())
+func (k Keeper) HasQueryExceededTtl(ctx sdk.Context, msg *types.MsgSubmitQueryResponse, query types.Query) (bool, error) {
+	k.Logger(ctx).Info(fmt.Sprintf("[ICQ Resp] query %s with ttl: %d, resp time: %d.", msg.QueryId, query.Ttl, ctx.BlockHeader().Time.UnixNano()))
+	currBlockTime, err := cast.ToUint64E(ctx.BlockTime().UnixNano())
 	if err != nil {
 		return false, err
 	}
 
-	if q.Ttl < curT {
+	if query.Ttl < currBlockTime {
 		errMsg := fmt.Sprintf("[ICQ Resp] aborting query callback due to ttl expiry! ttl is %d, time now %d for query of type %s with id %s, on chain %s",
-			q.Ttl, ctx.BlockHeader().Time.UnixNano(), q.QueryType, q.ChainId, msg.QueryId)
+			query.Ttl, ctx.BlockTime().UnixNano(), query.QueryType, query.ChainId, msg.QueryId)
 		k.DeleteQuery(ctx, msg.QueryId)
 		k.Logger(ctx).Error(errMsg)
 		return true, nil
@@ -136,15 +152,20 @@ func (k Keeper) HasQueryExceededTtl(ctx sdk.Context, msg *types.MsgSubmitQueryRe
 func (k msgServer) SubmitQueryResponse(goCtx context.Context, msg *types.MsgSubmitQueryResponse) (*types.MsgSubmitQueryResponseResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	// 1. check if the response has an associated query stored on stride
+	// check if the response has an associated query stored on stride
 	q, found := k.GetQuery(ctx, msg.QueryId)
 	if found {
+
+		// 1. immediately delete the query so it cannot process again
+		k.DeleteQuery(ctx, msg.QueryId)
+
 		// 2. verify the query's ttl is unexpired
-		exceeded, err := k.HasQueryExceededTtl(ctx, msg, q)
+		ttlEexceeded, err := k.HasQueryExceededTtl(ctx, msg, q)
 		if err != nil {
 			return nil, err
 		}
-		if exceeded {
+		if ttlEexceeded {
+			k.Logger(ctx).Info(fmt.Sprintf("[ICQ Resp] %s's ttl exceeded: %d < %d.", msg.QueryId, q.Ttl, ctx.BlockHeader().Time.UnixNano()))
 			return &types.MsgSubmitQueryResponseResponse{}, nil
 		}
 
@@ -162,16 +183,13 @@ func (k msgServer) SubmitQueryResponse(goCtx context.Context, msg *types.MsgSubm
 		}
 
 		// 5. call the query's associated callback function
-		err = k.FindAndInvokeCallback(ctx, msg, q)
+		err = k.InvokeCallback(ctx, msg, q)
 		if err != nil {
 			return nil, err
 		}
 
-		// 6. delete the query from the store once it's been processed
-		k.DeleteQuery(ctx, msg.QueryId)
-
 	} else {
-		k.Logger(ctx).Info("Ignoring duplicate or nonexistent query")
+		k.Logger(ctx).Info("[ICQ Resp] ignoring non-existent query response (note: duplicate responses are nonexistent)")
 		return &types.MsgSubmitQueryResponseResponse{}, nil // technically this is an error, but will cause the entire tx to fail if we have one 'bad' message, so we can just no-op here.
 	}
 
