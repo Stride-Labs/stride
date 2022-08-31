@@ -41,4 +41,5 @@ var (
 	ErrICQFailed                         = sdkerrors.Register(ModuleName, 1531, "failed to submit ICQ")
 	ErrDivisionByZero                    = sdkerrors.Register(ModuleName, 1532, "division by zero")
 	ErrSlashGtTenPct                     = sdkerrors.Register(ModuleName, 1533, "slash is greater than 10 percent")
+	ErrInvalidEpoch                      = sdkerrors.Register(ModuleName, 1534, "invalid epoch tracker")
 )
