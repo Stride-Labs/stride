@@ -274,7 +274,7 @@ func (s *KeeperTestSuite) TestDelegatorSharesCallback_DelegationAmtOverfow() {
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx(), hostZone)
 
 	err := stakeibckeeper.DelegatorSharesCallback(s.App.StakeibcKeeper, s.Ctx(), tc.validArgs.callbackArgs, tc.validArgs.query)
-	expectedErrMsg := "unable to convert validator delegation amount to uint64, err: overflow: "
+	expectedErrMsg := "unable to convert validator delegation amount to int64, err: overflow: "
 	expectedErrMsg += "unable to cast 18446744073709551615 of type uint64 to int64: unable to cast to safe cast int"
 	s.Require().EqualError(err, expectedErrMsg)
 }
@@ -290,7 +290,7 @@ func (s *KeeperTestSuite) TestDelegatorSharesCallback_WeightOverfow() {
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx(), hostZone)
 
 	err := stakeibckeeper.DelegatorSharesCallback(s.App.StakeibcKeeper, s.Ctx(), tc.validArgs.callbackArgs, tc.validArgs.query)
-	expectedErrMsg := "unable to convert validator weight to uint64, err: overflow: "
+	expectedErrMsg := "unable to convert validator weight to int64, err: overflow: "
 	expectedErrMsg += "unable to cast 18446744073709551615 of type uint64 to int64: unable to cast to safe cast int"
 	s.Require().EqualError(err, expectedErrMsg)
 }

@@ -423,7 +423,7 @@ func (k Keeper) QueryDelegationsIcq(ctx sdk.Context, hostZone types.HostZone, va
 	if delegationIca == nil || delegationIca.GetAddress() == "" {
 		errMsg := fmt.Sprintf("Zone %s is missing a delegation address!", hostZone.ChainId)
 		k.Logger(ctx).Error(errMsg)
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, errMsg)
+		return sdkerrors.Wrapf(types.ErrICAAccountNotFound, errMsg)
 	}
 	delegationAcctAddr := delegationIca.GetAddress()
 	_, valAddr, _ := bech32.DecodeAndConvert(valoper)
