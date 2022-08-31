@@ -213,7 +213,8 @@ func ValidatorExchangeRateCallback(k Keeper, ctx sdk.Context, args []byte, query
 		k.Logger(ctx).Error(errMsg)
 		return sdkerrors.Wrapf(types.ErrMarshalFailure, errMsg)
 	}
-	k.Logger(ctx).Info(fmt.Sprintf("ValidatorCallback: zone %v queriedValidator %v", hostZone.ChainId, queriedValidator))
+	k.Logger(ctx).Info(fmt.Sprintf("ValidatorCallback: HostZone %s, Queried Validator %v, Jailed: %v, Tokens: %v, Shares: %v",
+		hostZone.ChainId, queriedValidator.OperatorAddress, queriedValidator.Jailed, queriedValidator.Tokens, queriedValidator.DelegatorShares))
 
 	// ensure ICQ can be issued now! else fail the callback
 	withinBufferWindow, err := k.IsWithinBufferWindow(ctx)
@@ -260,7 +261,7 @@ func ValidatorExchangeRateCallback(k Keeper, ctx sdk.Context, args []byte, query
 	hostZone.Validators[valIndex] = &validator
 	k.SetHostZone(ctx, hostZone)
 
-	k.Logger(ctx).Info(fmt.Sprintf("ValidatorCallback: zone %s validator %v tokensFromShares %v",
+	k.Logger(ctx).Info(fmt.Sprintf("ValidatorCallback: HostZone %s, Validator %v, tokensFromShares %v",
 		hostZone.ChainId, validator.Address, validator.InternalExchangeRate.InternalTokensToSharesRate))
 
 	// armed with the exch rate, we can now query the (val,del) delegation
@@ -300,7 +301,8 @@ func DelegatorSharesCallback(k Keeper, ctx sdk.Context, args []byte, query icqty
 		k.Logger(ctx).Error(errMsg)
 		return sdkerrors.Wrapf(types.ErrMarshalFailure, errMsg)
 	}
-	k.Logger(ctx).Info(fmt.Sprintf("DelegationCallback: HostZone: %s, Queried Delegation: %v", hostZone.ChainId, queriedDelgation))
+	k.Logger(ctx).Info(fmt.Sprintf("DelegationCallback: HostZone: %s, Delegator: %s, Validator: %s, Shares: %v",
+		hostZone.ChainId, queriedDelgation.DelegatorAddress, queriedDelgation.ValidatorAddress, queriedDelgation.Shares))
 
 	// ensure ICQ can be issued now! else fail the callback
 	isWithinWindow, err := k.IsWithinBufferWindow(ctx)
@@ -337,8 +339,8 @@ func DelegatorSharesCallback(k Keeper, ctx sdk.Context, args []byte, query icqty
 	// TODO: make sure conversion math precision matches the sdk's staking module's version (we did it slightly differently)
 	// note: truncateInt per https://github.com/cosmos/cosmos-sdk/blob/cb31043d35bad90c4daa923bb109f38fd092feda/x/staking/types/validator.go#L431
 	validatorTokens := queriedDelgation.Shares.Mul(validator.InternalExchangeRate.InternalTokensToSharesRate).TruncateInt()
-	k.Logger(ctx).Info(fmt.Sprintf("DelegationCallback: HostZone: %s, Validator: %s, Previous NumTokens: %d, Current NumTokens: %d",
-		hostZone.ChainId, validator.Address, validator.DelegationAmt, validatorTokens.Int64()))
+	k.Logger(ctx).Info(fmt.Sprintf("DelegationCallback: HostZone: %s, Validator: %s, Previous NumTokens: %d, Current NumTokens: %v",
+		hostZone.ChainId, validator.Address, validator.DelegationAmt, validatorTokens))
 
 	// Confirm the validator has actually been slashed
 	if validatorTokens.Uint64() == validator.DelegationAmt {
@@ -376,7 +378,7 @@ func DelegatorSharesCallback(k Keeper, ctx sdk.Context, args []byte, query icqty
 	}
 
 	slashPct := sdk.NewDec(slashAmount).Quo(sdk.NewDec(delegationAmount))
-	k.Logger(ctx).Info(fmt.Sprintf("ICQ'd delAmt mismatch zone %s validator %s delegator %s records was %d icq shows %d slashAmt %d slashPct %d... UPDATING!",
+	k.Logger(ctx).Info(fmt.Sprintf("ICQ'd Delegation Amoount Mismatch, HostZone: %s, Validator: %s, Delegator: %s, Records Tokens: %d, Tokens from ICQ %v, Slash Amount: %d, Slash Pct: %v!",
 		hostZone.ChainId, validator.Address, queriedDelgation.DelegatorAddress, validator.DelegationAmt, validatorTokens, slashAmount, slashPct))
 
 	// Abort if the slash was greater than 10%
