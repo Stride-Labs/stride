@@ -24,7 +24,7 @@ STOSMO_DENOM="stuosmo"
 # WARNING: CHANGES TO THESE PARAMS COULD BREAK INTEGRATION TESTS
 # **************************************************************************
 # CHAIN PARAMS
-BLOCK_TIME_SECONDS=1
+BLOCK_TIME_SECONDS=15
 BLOCK_TIME="${BLOCK_TIME_SECONDS}s"
 # NOTE: If you add new epochs, these indexes will need to be updated
 DAY_EPOCH_INDEX=1
@@ -258,12 +258,12 @@ GAIA_STATE=$SCRIPT_DIR/state/gaia
 GAIA_LOGS=$SCRIPT_DIR/logs/gaia.log
 GAIA_LOGS_2=$SCRIPT_DIR/logs/gaia2.log
 GAIA_LOGS_3=$SCRIPT_DIR/logs/gaia3.log
-HERMES_LOGS=$SCRIPT_DIR/logs/hermes.log
-RLY_GAIA_LOGS=$SCRIPT_DIR/logs/rly_gaia.log
-RLY_OSMO_LOGS=$SCRIPT_DIR/logs/rly_osmo.log
-RLY_JUNO_LOGS=$SCRIPT_DIR/logs/rly_juno.log
-ICQ_LOGS=$SCRIPT_DIR/logs/icq.log
-JUNO_LOGS=$SCRIPT_DIR/logs/juno.log
-OSMO_LOGS=$SCRIPT_DIR/logs/osmo.log
-TX_LOGS=$SCRIPT_DIR/logs/tx.log
-KEYS_LOGS=$SCRIPT_DIR/logs/keys.log
+# HERMES_LOGS=$SCRIPT_DIR/logs/hermes.log
+# RLY_GAIA_LOGS=$SCRIPT_DIR/logs/rly_gaia.log
+# RLY_OSMO_LOGS=$SCRIPT_DIR/logs/rly_osmo.log
+# RLY_JUNO_LOGS=$SCRIPT_DIR/logs/rly_juno.log
+# ICQ_LOGS=$SCRIPT_DIR/logs/icq.log
+# JUNO_LOGS=$SCRIPT_DIR/logs/juno.log
+# OSMO_LOGS=$SCRIPT_DIR/logs/osmo.log
+# TX_LOGS=$SCRIPT_DIR/logs/tx.log
+# KEYS_LOGS=$SCRIPT_DIR/logs/keys.log
