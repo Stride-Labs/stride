@@ -18,6 +18,7 @@ message Minter {
   ];
 }
 
+// next id: 5
 message DistributionProportions {
   // staking defines the proportion of the minted minted_denom that is to be
   // allocated as staking rewards.
@@ -26,30 +27,23 @@ message DistributionProportions {
     (gogoproto.moretags) = "yaml:\"staking\"",
     (gogoproto.nullable) = false
   ];
-  // pool_incentives defines the proportion of the minted minted_denom that is
-  // to be allocated as pool incentives.
-  string pool_incentives = 2 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
-    (gogoproto.moretags) = "yaml:\"pool_incentives\"",
-    (gogoproto.nullable) = false
-  ];
-  // participation_rewards defines the proportion of the minted minted_denom that is
-  // to be allocated to participation rewards address.
-  string participation_rewards = 3 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
-    (gogoproto.moretags) = "yaml:\"participation_rewards\"",
-    (gogoproto.nullable) = false
-  ];
   // community_pool defines the proportion of the minted mint_denom that is
   // to be allocated to the community pool: growth.
-  string community_pool_growth = 4 [
+  string community_pool_growth = 2 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.moretags) = "yaml:\"community_pool\"",
     (gogoproto.nullable) = false
   ];
   // community_pool defines the proportion of the minted mint_denom that is
   // to be allocated to the community pool: security budget.
-  string community_pool_security_budget = 5 [
+  string community_pool_security_budget = 3 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.moretags) = "yaml:\"community_pool\"",
+    (gogoproto.nullable) = false
+  ];
+   // strategic_reserve defines the proportion of the minted mint_denom that is
+  // to be allocated to the pool: strategic reserve.
+  string strategic_reserve = 4 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.moretags) = "yaml:\"community_pool\"",
     (gogoproto.nullable) = false
@@ -71,6 +65,8 @@ message Params {
   // mint epoch identifier
   string epoch_identifier = 3
       [ (gogoproto.moretags) = "yaml:\"epoch_identifier\"" ];
+  // mint rewards evert epoch_interval epochs
+  uint64 epoch_interval = 9;
   // number of epochs take to reduce rewards
   int64 reduction_period_in_epochs = 4
       [ (gogoproto.moretags) = "yaml:\"reduction_period_in_epochs\"" ];
@@ -88,4 +84,5 @@ message Params {
   int64 minting_rewards_distribution_start_epoch = 7
       [ (gogoproto.moretags) =
             "yaml:\"minting_rewards_distribution_start_epoch\"" ];
+  string strategic_reserve_address = 8 [ (gogoproto.moretags) = "yaml:\"address\"" ];
 }

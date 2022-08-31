@@ -147,8 +147,11 @@ func (k Keeper) DistributeMintedCoin(ctx sdk.Context, mintedCoin sdk.Coin) error
 	params := k.GetParams(ctx)
 	proportions := params.DistributionProportions
 
-	// allocate staking incentives into fee collector account to be moved to on next begin blocker by staking module
+	k.Logger(ctx).Info(fmt.Sprintf("MOOSE distributing minted coin %s with proportions %s", mintedCoin, proportions))
+
+	// // allocate staking incentives into fee collector account to be moved to on next begin blocker by staking module
 	stakingIncentivesCoins := sdk.NewCoins(k.GetProportions(ctx, mintedCoin, proportions.Staking))
+	k.Logger(ctx).Info(fmt.Sprintf("MOOSE distributing staking incentives %s", stakingIncentivesCoins))
 	err := k.bankKeeper.SendCoinsFromModuleToModule(ctx, types.ModuleName, k.feeCollectorName, stakingIncentivesCoins)
 	if err != nil {
 		return err
@@ -158,6 +161,7 @@ func (k Keeper) DistributeMintedCoin(ctx sdk.Context, mintedCoin sdk.Coin) error
 	strategicReserveAddress := sdk.AccAddress(params.StrategicReserveAddress)
 	strategicReserveProportion := k.GetProportions(ctx, mintedCoin, proportions.StrategicReserve)
 	strategicReserveCoins := sdk.NewCoins(strategicReserveProportion)
+	k.Logger(ctx).Info(fmt.Sprintf("MOOSE distributing strategic reserve %s", strategicReserveCoins))
 	err = k.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, strategicReserveAddress, strategicReserveCoins)
 	if err != nil {
 		return err
@@ -167,6 +171,7 @@ func (k Keeper) DistributeMintedCoin(ctx sdk.Context, mintedCoin sdk.Coin) error
 	communityGrowthPoolAddress := k.GetSubmoduleAddress(types.CommunityGrowthSubmoduleName)
 	communityPoolGrowthProportion := k.GetProportions(ctx, mintedCoin, proportions.CommunityPoolGrowth)
 	communityPoolGrowthCoins := sdk.NewCoins(communityPoolGrowthProportion)
+	k.Logger(ctx).Info(fmt.Sprintf("MOOSE distributing community pool growth %s", communityPoolGrowthCoins))
 	err = k.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, communityGrowthPoolAddress, communityPoolGrowthCoins)
 	if err != nil {
 		return err
@@ -176,14 +181,20 @@ func (k Keeper) DistributeMintedCoin(ctx sdk.Context, mintedCoin sdk.Coin) error
 	communitySecurityBudgetPoolAddress := k.GetSubmoduleAddress(types.CommunitySecurityBudgetSubmoduleName)
 	communityPoolSecurityBudgetProportion := k.GetProportions(ctx, mintedCoin, proportions.CommunityPoolSecurityBudget)
 	communityPoolSecurityBudgetCoins := sdk.NewCoins(communityPoolSecurityBudgetProportion)
+	k.Logger(ctx).Info(fmt.Sprintf("MOOSE distributing community pool security budget %s", communityPoolSecurityBudgetCoins))
 	err = k.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, communitySecurityBudgetPoolAddress, communityPoolSecurityBudgetCoins)
 	if err != nil {
 		return err
 	}
 
 	// sweep any remaining tokens to the community growth pool (this should NEVER happen, barring rounding imprecision)
-	remainingCoins := sdk.NewCoins(mintedCoin).Sub(stakingIncentivesCoins).Sub(strategicReserveCoins).Sub(communityPoolGrowthCoins).Sub(communityPoolSecurityBudgetCoins)
-	err = k.distrKeeper.FundCommunityPool(ctx, remainingCoins, communityGrowthPoolAddress)
+	remainingCoins := sdk.NewCoins(mintedCoin).
+		Sub(stakingIncentivesCoins).
+		Sub(strategicReserveCoins).
+		Sub(communityPoolGrowthCoins).
+		Sub(communityPoolSecurityBudgetCoins)
+	k.Logger(ctx).Info(fmt.Sprintf("MOOSE distributing remaining coins %s", remainingCoins))
+	err = k.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, communityGrowthPoolAddress, remainingCoins)
 	if err != nil {
 		return err
 	}
@@ -192,28 +203,28 @@ func (k Keeper) DistributeMintedCoin(ctx sdk.Context, mintedCoin sdk.Coin) error
 	// see osmosis' pool incentives hooks.go for an example
 	// k.hooks.AfterDistributeMintedCoin(ctx, mintedCoin)
 
-	return err
+	return nil
 }
 
 // ========================== GENERATE NEW MODULE ACCOUNTS =================================
 
-// func to set up a new module account address
+// set up a new module account address
 func (k Keeper) SetupNewModuleAccount(ctx sdk.Context, submoduleName string) {
 
 	// create and save the module account to the account keeper
-	zoneAddress := k.GetSubmoduleAddress(submoduleName)
+	acctAddress := k.GetSubmoduleAddress(submoduleName)
 	acc := k.accountKeeper.NewAccount(
 		ctx,
 		authtypes.NewModuleAccount(
-			authtypes.NewBaseAccountWithAddress(zoneAddress),
-			zoneAddress.String(),
+			authtypes.NewBaseAccountWithAddress(acctAddress),
+			acctAddress.String(),
 		),
 	)
 	k.Logger(ctx).Info(fmt.Sprintf("Created new %s.%s module account %s!", types.ModuleName, submoduleName, acc.GetAddress().String()))
 	k.accountKeeper.SetAccount(ctx, acc)
 }
 
-// helper to get the address of a submodule
+// helper: get the address of a submodule
 func (k Keeper) GetSubmoduleAddress(submoduleName string) sdk.AccAddress {
 	key := append([]byte(types.SubmoduleAccountKey), []byte(submoduleName)...)
 	return address.Module(types.ModuleName, key)
