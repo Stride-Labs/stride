@@ -189,7 +189,7 @@ func (s *KeeperTestSuite) TestDelegatorSharesCallback_BufferWindowError() {
 
 	err := stakeibckeeper.DelegatorSharesCallback(s.App.StakeibcKeeper, s.Ctx(), tc.validArgs.callbackArgs, tc.validArgs.query)
 	s.Require().ErrorContains(err, "unable to determine if ICQ callback is inside buffer window")
-	s.Require().ErrorContains(err, "Current block time")
+	s.Require().ErrorContains(err, "current block time")
 	s.Require().ErrorContains(err, "not within current epoch")
 }
 
