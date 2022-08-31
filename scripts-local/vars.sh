@@ -24,12 +24,12 @@ STOSMO_DENOM="stuosmo"
 # WARNING: CHANGES TO THESE PARAMS COULD BREAK INTEGRATION TESTS
 # **************************************************************************
 # CHAIN PARAMS
-BLOCK_TIME_SECONDS=15
+BLOCK_TIME_SECONDS=1
 BLOCK_TIME="${BLOCK_TIME_SECONDS}s"
 # NOTE: If you add new epochs, these indexes will need to be updated
 DAY_EPOCH_INDEX=1
 INTERVAL_LEN=1
-DAY_EPOCH_LEN="10s"
+DAY_EPOCH_LEN="100s"
 STRIDE_EPOCH_INDEX=2
 STRIDE_EPOCH_LEN="40s"
 IBC_TX_WAIT_SECONDS=30
@@ -39,7 +39,7 @@ UNBONDING_TIME="120s"
 
 # define STRIDE vars
 STRIDE_PORT_ID=26657  # 36564
-STRIDE_CHAIN=STRIDE-TESTNET-4
+STRIDE_CHAIN=STRIDE
 STRIDE_NODE_NAME=stride
 STRIDE_VAL_ACCT=val1
 STRIDE_VAL_MNEMONIC="close soup mirror crew erode defy knock trigger gather eyebrow tent farm gym gloom base lemon sleep weekend rich forget diagram hurt prize fly"

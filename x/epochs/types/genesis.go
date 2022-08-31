@@ -18,7 +18,7 @@ func DefaultGenesis() *GenesisState {
 		{
 			Identifier:              "week",
 			StartTime:               time.Time{},
-			Duration:                time.Minute * 7,
+			Duration:                time.Hour * 24 * 7,
 			CurrentEpoch:            0,
 			CurrentEpochStartHeight: 0,
 			CurrentEpochStartTime:   time.Time{},
@@ -27,7 +27,7 @@ func DefaultGenesis() *GenesisState {
 		{
 			Identifier:              DAY_EPOCH,
 			StartTime:               time.Time{},
-			Duration:                time.Minute * 1,
+			Duration:                time.Hour * 24,
 			CurrentEpoch:            0,
 			CurrentEpochStartHeight: 0,
 			CurrentEpochStartTime:   time.Time{},
