@@ -378,7 +378,7 @@ func (k Keeper) QueryValidatorExchangeRate(ctx sdk.Context, msg *types.MsgUpdate
 	data := stakingtypes.GetValidatorKey(valAddr)
 
 	// get ttl
-	ttl, err := k.GetStartTimeNextEpoch(ctx, epochstypes.DAY_EPOCH)
+	ttl, err := k.GetStartTimeNextEpoch(ctx, epochstypes.STRIDE_EPOCH)
 	if err != nil {
 		errMsg := fmt.Sprintf("could not get start time for next epoch: %s", err.Error())
 		k.Logger(ctx).Error(errMsg)
@@ -429,7 +429,7 @@ func (k Keeper) QueryDelegationsIcq(ctx sdk.Context, hostZone types.HostZone, va
 	data := stakingtypes.GetDelegationKey(delAddr, valAddr)
 
 	// get ttl
-	ttl, err := k.GetStartTimeNextEpoch(ctx, epochstypes.DAY_EPOCH)
+	ttl, err := k.GetStartTimeNextEpoch(ctx, epochstypes.STRIDE_EPOCH)
 	if err != nil {
 		errMsg := fmt.Sprintf("could not get start time for next epoch: %s", err.Error())
 		k.Logger(ctx).Error(errMsg)
