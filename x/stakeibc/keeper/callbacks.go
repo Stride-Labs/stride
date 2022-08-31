@@ -314,7 +314,7 @@ func DelegatorSharesCallback(k Keeper, ctx sdk.Context, args []byte, query icqty
 	}
 
 	// Grab the validator object form the hostZone using the address returned from the query
-	validator, valIndex, found := getValidator(hostZone.Validators, queriedDelgation.ValidatorAddress)
+	validator, valIndex, found := GetValidatorFromAddress(hostZone.Validators, queriedDelgation.ValidatorAddress)
 	if !found {
 		errMsg := fmt.Sprintf("no registered validator for address (%s)", queriedDelgation.ValidatorAddress)
 		k.Logger(ctx).Error(errMsg)
