@@ -2,6 +2,7 @@ package keeper_test
 
 import (
 	"math"
+	"regexp"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -81,9 +82,9 @@ func (s *KeeperTestSuite) TestEpochElapsedShare_Failed_DurationOverflow() {
 
 	_, err := s.App.StakeibcKeeper.GetStrideEpochElapsedShare(s.Ctx())
 
-	expectedErrMsg := "unable to convert epoch duration to int64, err: overflow: "
-	expectedErrMsg += "unable to cast 18446744072999999488 of type uint64 to int64: unable to cast to safe cast int"
-	s.Require().EqualError(err, expectedErrMsg)
+	expectedErrMsg := `unable to convert epoch duration to int64, err: overflow: `
+	expectedErrMsg += `unable to cast \d+ of type uint64 to int64: unable to cast to safe cast int`
+	s.Require().Regexp(regexp.MustCompile(expectedErrMsg), err.Error())
 }
 
 func (s *KeeperTestSuite) TestEpochElapsedShare_Failed_NextStartTimeOverflow() {
@@ -92,9 +93,9 @@ func (s *KeeperTestSuite) TestEpochElapsedShare_Failed_NextStartTimeOverflow() {
 	s.SetupEpochElapsedShares(DefaultEpochDurationSeconds, maxNextStartTimeSeconds)
 
 	_, err := s.App.StakeibcKeeper.GetStrideEpochElapsedShare(s.Ctx())
-	expectedErrMsg := "unable to convert next epoch start time to int64, err: overflow: "
-	expectedErrMsg += "unable to cast 18446744073709551615 of type uint64 to int64: unable to cast to safe cast int"
-	s.Require().EqualError(err, expectedErrMsg)
+	expectedErrMsg := `unable to convert next epoch start time to int64, err: overflow: `
+	expectedErrMsg += `unable to cast \d+ of type uint64 to int64: unable to cast to safe cast int`
+	s.Require().Regexp(regexp.MustCompile(expectedErrMsg), err.Error())
 }
 
 func (s *KeeperTestSuite) TestEpochElapsedShare_Failed_CurrentBlockTimeOverflow() {
@@ -103,9 +104,9 @@ func (s *KeeperTestSuite) TestEpochElapsedShare_Failed_CurrentBlockTimeOverflow(
 	s.SetupEpochElapsedShares(DefaultEpochDurationSeconds, maxNextStartTimeSeconds)
 
 	_, err := s.App.StakeibcKeeper.GetStrideEpochElapsedShare(s.Ctx())
-	expectedErrMsg := "unable to convert next epoch start time to int64, err: overflow: "
-	expectedErrMsg += "unable to cast 18446744073709551615 of type uint64 to int64: unable to cast to safe cast int"
-	s.Require().EqualError(err, expectedErrMsg)
+	expectedErrMsg := `unable to convert next epoch start time to int64, err: overflow: `
+	expectedErrMsg += `unable to cast \d+ of type uint64 to int64: unable to cast to safe cast int`
+	s.Require().Regexp(regexp.MustCompile(expectedErrMsg), err.Error())
 }
 
 func (s *KeeperTestSuite) TestEpochElapsedShare_Failed_BlockTimeOutsideEpoch() {

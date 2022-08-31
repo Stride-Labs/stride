@@ -2,6 +2,7 @@ package keeper_test
 
 import (
 	"math"
+	"regexp"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingTypes "github.com/cosmos/cosmos-sdk/x/staking/types"
@@ -207,8 +208,10 @@ func (s *KeeperTestSuite) TestDelegateCallback_BigAmount() {
 	}
 	args, err := s.App.StakeibcKeeper.MarshalDelegateCallbackArgs(s.Ctx(), callbackArgs)
 	s.Require().NoError(err)
+
 	err = stakeibckeeper.DelegateCallback(s.App.StakeibcKeeper, s.Ctx(), invalidArgs.packet, invalidArgs.ack, args)
-	s.Require().EqualError(err, "overflow: unable to cast 18446744073709551615 of type uint64 to int64")
+	s.Require().Regexp(regexp.MustCompile(`overflow: unable to cast \d+ of type uint64 to int64`), err.Error())
+
 	s.checkDelegateStateIfCallbackFailed(tc)
 }
 

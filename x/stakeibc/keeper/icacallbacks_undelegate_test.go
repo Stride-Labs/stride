@@ -265,8 +265,11 @@ func (s *KeeperTestSuite) TestUpdateDelegationBalances_BigDelegation() {
 		SplitDelegations:        []*types.SplitDelegation{&splitDelegation},
 		EpochUnbondingRecordIds: []uint64{},
 	}
+
 	err := s.App.StakeibcKeeper.UpdateDelegationBalances(s.Ctx(), hostZone, invalidCallbackArgs)
-	s.Require().EqualError(err, "Could not convert undelegate amount to int64 in undelegation callback | overflow: unable to cast 18446744073709551615 of type uint64 to int64: unable to cast to safe cast int")
+	expectedErrMsg := `Could not convert undelegate amount to int64 in undelegation callback | `
+	expectedErrMsg += `overflow: unable to cast \d+ of type uint64 to int64: unable to cast to safe cast int`
+	s.Require().Regexp(expectedErrMsg, err.Error())
 }
 
 // GetLatestCompletionTime tests
@@ -426,8 +429,11 @@ func (s *KeeperTestSuite) TestUpdateHostZoneUnbondings_AmountTooBig() {
 		EpochUnbondingRecordIds: []uint64{1, 2},
 	}
 	completionTime := time.Now().Add(time.Second * time.Duration(10))
+
 	_, err := s.App.StakeibcKeeper.UpdateHostZoneUnbondings(s.Ctx(), completionTime, hostZone, callbackArgs)
-	s.Require().EqualError(err, "Could not convert stTokenAmount to int64 in redeem stake | overflow: unable to cast 18446744073709551615 of type uint64 to int64: unable to cast to safe cast int")
+	expectedErrMsg := `Could not convert stTokenAmount to int64 in redeem stake | `
+	expectedErrMsg += `overflow: unable to cast \d+ of type uint64 to int64: unable to cast to safe cast int`
+	s.Require().Regexp(expectedErrMsg, err.Error())
 }
 
 // BurnTokens Tests
