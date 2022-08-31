@@ -19,12 +19,13 @@ var (
 	DefaultStrideCommission                 uint64 = 10
 	DefaultValidatorRebalancingThreshold    uint64 = 100 // divide by 10,000, so 100 = 1%
 	DefaultICATimeoutNanos                  uint64 = 600000000000
-	DefaultBufferSize                       uint64 = 5            // 1/5=20% of the epoch
-	DefaultIbcTimeoutBlocks                 uint64 = 300          // 300 blocks ~= 30 minutes
-	DefaultFeeTransferTimeoutNanos          uint64 = 600000000000 // 10 minutes
-	DefaultSafetyMinRedemptionRateThreshold uint64 = 90           // divide by 100, so 90 = 0.9
-	DefaultSafetyMaxRedemptionRateThreshold uint64 = 300          // divide by 100, so 300 = 3
+	DefaultBufferSize                       uint64 = 5             // 1/5=20% of the epoch
+	DefaultIbcTimeoutBlocks                 uint64 = 300           // 300 blocks ~= 30 minutes
+	DefaultFeeTransferTimeoutNanos          uint64 = 1800000000000 // 30 minutes
+	DefaultSafetyMinRedemptionRateThreshold uint64 = 90            // divide by 100, so 90 = 0.9
+	DefaultSafetyMaxRedemptionRateThreshold uint64 = 300           // divide by 100, so 300 = 3
 	DefaultMaxStakeICACallsPerEpoch         uint64 = 100
+	DefaultIBCTransferTimeoutNanos          uint64 = 1800000000000 // 30 minutes
 
 	// KeyDepositInterval is store's key for the DepositInterval option
 	KeyDepositInterval                  = []byte("DepositInterval")
@@ -41,6 +42,7 @@ var (
 	KeySafetyMinRedemptionRateThreshold = []byte("SafetyMinRedemptionRateThreshold")
 	KeySafetyMaxRedemptionRateThreshold = []byte("SafetyMaxRedemptionRateThreshold")
 	KeyMaxStakeICACallsPerEpoch         = []byte("MaxStakeICACallsPerEpoch")
+	KeyIBCTransferTimeoutNanos          = []byte("IBCTransferTimeoutNanos")
 )
 
 var _ paramtypes.ParamSet = (*Params)(nil)
@@ -66,6 +68,7 @@ func NewParams(
 	max_stake_ica_calls_per_epoch uint64,
 	safety_min_redemption_rate_threshold uint64,
 	safety_max_redemption_rate_threshold uint64,
+	ibc_transfer_timeout_nanos uint64,
 ) Params {
 	return Params{
 		DepositInterval:                  deposit_interval,
@@ -82,6 +85,7 @@ func NewParams(
 		MaxStakeIcaCallsPerEpoch:         max_stake_ica_calls_per_epoch,
 		SafetyMinRedemptionRateThreshold: safety_min_redemption_rate_threshold,
 		SafetyMaxRedemptionRateThreshold: safety_max_redemption_rate_threshold,
+		IbcTransferTimeoutNanos:          ibc_transfer_timeout_nanos,
 	}
 }
 
@@ -102,6 +106,7 @@ func DefaultParams() Params {
 		DefaultMaxStakeICACallsPerEpoch,
 		DefaultSafetyMinRedemptionRateThreshold,
 		DefaultSafetyMaxRedemptionRateThreshold,
+		DefaultIBCTransferTimeoutNanos,
 	)
 }
 
@@ -122,6 +127,7 @@ func (p *Params) ParamSetPairs() paramtypes.ParamSetPairs {
 		paramtypes.NewParamSetPair(KeyMaxStakeICACallsPerEpoch, &p.MaxStakeIcaCallsPerEpoch, isPositive),
 		paramtypes.NewParamSetPair(KeySafetyMinRedemptionRateThreshold, &p.SafetyMinRedemptionRateThreshold, validMinRedemptionRateThreshold),
 		paramtypes.NewParamSetPair(KeySafetyMaxRedemptionRateThreshold, &p.SafetyMaxRedemptionRateThreshold, validMaxRedemptionRateThreshold),
+		paramtypes.NewParamSetPair(KeyIBCTransferTimeoutNanos, &p.IbcTransferTimeoutNanos, validTimeoutNanos),
 	}
 }
 
