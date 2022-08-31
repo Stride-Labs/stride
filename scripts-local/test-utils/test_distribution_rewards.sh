@@ -275,5 +275,3 @@ sleep 15
 # 23017500
 # 23017500
 # 6:23PM ERR CONSENSUS FAILURE!!! err="negative coin amount"
-# Why are coins negative?
-# on whiteboard
