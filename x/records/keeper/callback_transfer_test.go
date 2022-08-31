@@ -104,7 +104,7 @@ func (s *KeeperTestSuite) TestTransferCallback_WrongCallbackArgs() {
 	invalidArgs := tc.validArgs
 
 	err := recordskeeper.TransferCallback(s.App.RecordsKeeper, s.Ctx(), invalidArgs.packet, invalidArgs.ack, []byte("random bytes"))
-	s.Require().EqualError(err, "unexpected EOF")
+	s.Require().EqualError(err, "cannot unmarshal transfer callback args: unexpected EOF: cannot unmarshal")
 	s.checkTransferStateIfCallbackFailed(tc)
 }
 

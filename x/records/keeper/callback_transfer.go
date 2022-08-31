@@ -53,7 +53,7 @@ func TransferCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ack
 	// deserialize the args
 	transferCallbackData, err := k.UnmarshalTransferCallbackArgs(ctx, args)
 	if err != nil {
-		return err
+		return sdkerrors.Wrapf(types.ErrUnmarshalFailure, "cannot unmarshal transfer callback args: %s", err.Error())
 	}
 	k.Logger(ctx).Info(fmt.Sprintf("TransferCallback %v", transferCallbackData))
 	depositRecord, found := k.GetDepositRecord(ctx, transferCallbackData.DepositRecordId)
