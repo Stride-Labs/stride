@@ -77,19 +77,6 @@ func (s *KeeperTestSuite) TestMsgSubmitQueryResponse_WrongProof() {
 	s.Require().Nil(resp)
 }
 
-func (s *KeeperTestSuite) TestMsgSubmitQueryResponse_SuccessfulQueryRemoval() {
-	tc := s.SetupMsgSubmitQueryResponse()
-
-	s.App.InterchainqueryKeeper.SetQuery(s.Ctx(), tc.query)
-
-	_, err := s.GetMsgServer().SubmitQueryResponse(tc.goCtx, &tc.validMsg)
-	s.Require().ErrorContains(err, "unable to verify membership proof: proof cannot be empty")
-
-	// check that the query is not in the store anymore
-	_, found := s.App.InterchainqueryKeeper.GetQuery(s.Ctx(), tc.query.Id)
-	s.Require().False(found, "query should have been removed from store once processed")
-}
-
 func (s *KeeperTestSuite) TestMsgSubmitQueryResponse_UnknownId() {
 	tc := s.SetupMsgSubmitQueryResponse()
 

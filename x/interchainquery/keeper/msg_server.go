@@ -50,7 +50,6 @@ func (k Keeper) VerifyKeyProof(ctx sdk.Context, msg *types.MsgSubmitQueryRespons
 		if err != nil {
 			return err
 		}
-		fmt.Println("msgHeight: ", msgHeight)
 		height := clienttypes.NewHeight(clienttypes.ParseChainID(q.ChainId), msgHeight+1)
 		consensusState, found := k.IBCKeeper.ClientKeeper.GetClientConsensusState(ctx, connection.ClientId, height)
 		if !found {
