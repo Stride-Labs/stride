@@ -113,11 +113,11 @@ func (k msgServer) RegisterHostZone(goCtx context.Context, msg *types.MsgRegiste
 	// for this host zone until the following day
 	epochTracker, found := k.GetEpochTracker(ctx, epochtypes.DAY_EPOCH)
 	if !found {
-		return nil, sdkerrors.Wrapf(types.ErrEpochNotFound, "epoch tracker not found: %s", "day")
+		return nil, sdkerrors.Wrapf(types.ErrEpochNotFound, "epoch tracker not found, %s", "day")
 	}
 	epochUnbondingRecord, found := k.RecordsKeeper.GetEpochUnbondingRecord(ctx, epochTracker.EpochNumber)
 	if !found {
-		errMsg := "unable to add host zone to latest epoch unbonding record"
+		errMsg := "unable to find latest epoch unbonding record"
 		k.Logger(ctx).Error(errMsg)
 		return nil, sdkerrors.Wrapf(recordstypes.ErrEpochUnbondingRecordNotFound, errMsg)
 	}

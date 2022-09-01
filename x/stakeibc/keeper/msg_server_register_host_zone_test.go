@@ -109,3 +109,47 @@ func (s *KeeperTestSuite) TestRegisterHostZone_RegisterTwiceFails() {
 	expectedErrMsg := fmt.Sprintf("invalid chain id, zone for %s already registered", tc.atomHostZoneChainId)
 	s.Require().EqualError(err, expectedErrMsg, "registering host zone twice should fail")
 }
+
+func (s *KeeperTestSuite) TestRegisterHostZone_RegisterSameConnectionIdFails() {
+	// tests for a failure if we register the same host zone twice
+	tc := s.SetupRegisterHostZone()
+	msg := tc.validMsg
+
+	_, err := s.GetMsgServer().RegisterHostZone(sdk.WrapSDKContext(s.Ctx()), &msg)
+	s.Require().NoError(err, "able to successfully register host zone once")
+
+	// now all attributes are different, EXCEPT the connection ID
+	msg.Bech32Prefix = "cosmos-different" // a different Bech32 prefix
+	msg.HostDenom = "atom-different"      // a different host denom
+	msg.IbcDenom = "ibc-atom-different"   // a different IBC denom
+
+	_, err = s.GetMsgServer().RegisterHostZone(sdk.WrapSDKContext(s.Ctx()), &msg)
+	expectedErrMsg := fmt.Sprintf("invalid chain id, zone for %s already registered", tc.atomHostZoneChainId)
+	s.Require().EqualError(err, expectedErrMsg, "registering host zone twice should fail")
+}
+
+func (s *KeeperTestSuite) TestRegisterHostZone_CannotFindEpochTracker() {
+	// tests for a failure if we register the same host zone twice
+	tc := s.SetupRegisterHostZone()
+	msg := tc.validMsg
+
+	// delete the epoch tracker
+	s.App.StakeibcKeeper.RemoveEpochTracker(s.Ctx(), epochtypes.DAY_EPOCH)
+
+	_, err := s.GetMsgServer().RegisterHostZone(sdk.WrapSDKContext(s.Ctx()), &msg)
+	expectedErrMsg := "epoch tracker not found, day: epoch not found"
+	s.Require().EqualError(err, expectedErrMsg, "epoch tracker not found")
+}
+
+func (s *KeeperTestSuite) TestRegisterHostZone_CannotFindEpochUnbondingRecord() {
+	// tests for a failure if we register the same host zone twice
+	tc := s.SetupRegisterHostZone()
+	msg := tc.validMsg
+
+	// delete the epoch unbonding record
+	s.App.StakeibcKeeper.RecordsKeeper.RemoveEpochUnbondingRecord(s.Ctx(), tc.epochUnbondingRecordNumber)
+
+	_, err := s.GetMsgServer().RegisterHostZone(sdk.WrapSDKContext(s.Ctx()), &msg)
+	expectedErrMsg := "unable to find latest epoch unbonding record: epoch unbonding record not found"
+	s.Require().EqualError(err, expectedErrMsg, " epoch unbonding record not found")
+}
