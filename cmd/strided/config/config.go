@@ -67,7 +67,8 @@ func RegisterDenoms() {
 	}
 }
 
-// SetAddressPrefixes builds the Config with Bech32 addressPrefix and publKeyPrefix for accounts, validators, and consensus nodes and verifies that addreeses have correct format.
+// SetAddressPrefixes builds the Config with Bech32 addressPrefix and publKeyPrefix for accounts, validators, and consensus nodes and verifies that addresses have correct format.
+
 func SetAddressPrefixes(config *sdk.Config) {
 	// This is copied from the cosmos sdk v0.43.0-beta1
 	// source: https://github.com/cosmos/cosmos-sdk/blob/v0.43.0-beta1/types/address.go#L141
