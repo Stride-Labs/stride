@@ -6,6 +6,7 @@ import (
 
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 
+	epochtypes "github.com/Stride-Labs/stride/x/epochs/types"
 	recordstypes "github.com/Stride-Labs/stride/x/records/types"
 	"github.com/Stride-Labs/stride/x/stakeibc/types"
 
@@ -66,7 +67,7 @@ func (k msgServer) RegisterHostZone(goCtx context.Context, msg *types.MsgRegiste
 		RedemptionRate:     sdk.NewDec(1),
 		LastRedemptionRate: sdk.NewDec(1),
 		UnbondingFrequency: msg.UnbondingFrequency,
-		Address: 			zoneAddress.String(),
+		Address:            zoneAddress.String(),
 	}
 	// write the zone back to the store
 	k.SetHostZone(ctx, zone)
@@ -102,7 +103,7 @@ func (k msgServer) RegisterHostZone(goCtx context.Context, msg *types.MsgRegiste
 
 	// add this host zone to unbonding hostZones, otherwise users won't be able to unbond
 	// for this host zone until the following day
-	epochTracker, found := k.GetEpochTracker(ctx, "day")
+	epochTracker, found := k.GetEpochTracker(ctx, epochtypes.DAY_EPOCH)
 	if !found {
 		return nil, sdkerrors.Wrapf(types.ErrEpochNotFound, "epoch tracker not found: %s", "day")
 	}
