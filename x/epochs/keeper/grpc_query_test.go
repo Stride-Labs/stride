@@ -29,7 +29,7 @@ func (suite *KeeperTestSuite) TestQueryEpochInfos() {
 	suite.Require().Equal(epochInfosResponse.Epochs[0].EpochCountingStarted, false)
 	suite.Require().Equal(epochInfosResponse.Epochs[1].Identifier, "mint")
 	suite.Require().Equal(epochInfosResponse.Epochs[1].StartTime, chainStartTime)
-	suite.Require().Equal(epochInfosResponse.Epochs[1].Duration, time.Minute*1) // TODO(mainnet) change to 1hr
+	suite.Require().Equal(epochInfosResponse.Epochs[1].Duration, time.Minute*60)
 	suite.Require().Equal(epochInfosResponse.Epochs[1].CurrentEpoch, int64(0))
 	suite.Require().Equal(epochInfosResponse.Epochs[1].CurrentEpochStartTime, chainStartTime)
 	suite.Require().Equal(epochInfosResponse.Epochs[1].EpochCountingStarted, false)

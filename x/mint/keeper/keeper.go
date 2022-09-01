@@ -181,21 +181,21 @@ func (k Keeper) DistributeMintedCoin(ctx sdk.Context, mintedCoin sdk.Coin) error
 	}
 
 	// allocate pool allocation ratio to community growth pool
-	communityGrowthPoolAddress := k.GetSubmoduleAddress(types.CommunityGrowthSubmoduleName)
+	communityPoolGrowthAddress := k.GetSubmoduleAddress(types.CommunityGrowthSubmoduleName)
 	communityPoolGrowthProportion := k.GetProportions(ctx, mintedCoin, proportions.CommunityPoolGrowth)
 	communityPoolGrowthCoins := sdk.NewCoins(communityPoolGrowthProportion)
-	k.Logger(ctx).Info(fmt.Sprintf("\t\t\t...community growth: %d to %s", communityPoolGrowthProportion.Amount.Int64(), communityGrowthPoolAddress))
-	err = k.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, communityGrowthPoolAddress, communityPoolGrowthCoins)
+	k.Logger(ctx).Info(fmt.Sprintf("\t\t\t...community growth: %d to %s", communityPoolGrowthProportion.Amount.Int64(), communityPoolGrowthAddress))
+	err = k.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, communityPoolGrowthAddress, communityPoolGrowthCoins)
 	if err != nil {
 		return err
 	}
 
 	// allocate pool allocation ratio to security budget pool
-	communitySecurityBudgetPoolAddress := k.GetSubmoduleAddress(types.CommunitySecurityBudgetSubmoduleName)
+	communityPoolSecurityBudgetAddress := k.GetSubmoduleAddress(types.CommunitySecurityBudgetSubmoduleName)
 	communityPoolSecurityBudgetProportion := k.GetProportions(ctx, mintedCoin, proportions.CommunityPoolSecurityBudget)
 	communityPoolSecurityBudgetCoins := sdk.NewCoins(communityPoolSecurityBudgetProportion)
-	k.Logger(ctx).Info(fmt.Sprintf("\t\t\t...community growth: %d to %s", communityPoolSecurityBudgetProportion.Amount.Int64(), communitySecurityBudgetPoolAddress))
-	err = k.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, communitySecurityBudgetPoolAddress, communityPoolSecurityBudgetCoins)
+	k.Logger(ctx).Info(fmt.Sprintf("\t\t\t...community security budget: %d to %s", communityPoolSecurityBudgetProportion.Amount.Int64(), communityPoolSecurityBudgetAddress))
+	err = k.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, communityPoolSecurityBudgetAddress, communityPoolSecurityBudgetCoins)
 	if err != nil {
 		return err
 	}
@@ -206,7 +206,7 @@ func (k Keeper) DistributeMintedCoin(ctx sdk.Context, mintedCoin sdk.Coin) error
 		Sub(strategicReserveCoins).
 		Sub(communityPoolGrowthCoins).
 		Sub(communityPoolSecurityBudgetCoins)
-	err = k.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, communityGrowthPoolAddress, remainingCoins)
+	err = k.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, communityPoolGrowthAddress, remainingCoins)
 	if err != nil {
 		return err
 	}

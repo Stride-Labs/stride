@@ -46,7 +46,7 @@ func DefaultGenesis() *GenesisState {
 		{
 			Identifier:              MINT_EPOCH,
 			StartTime:               time.Time{},
-			Duration:                time.Minute * 1,
+			Duration:                time.Minute * 60,
 			CurrentEpoch:            0,
 			CurrentEpochStartHeight: 0,
 			CurrentEpochStartTime:   time.Time{},
