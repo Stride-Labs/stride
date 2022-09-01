@@ -50,15 +50,15 @@ func NewParams(
 func DefaultParams() Params {
 	return Params{
 		MintDenom:               sdk.DefaultBondDenom,
-		GenesisEpochProvisions:  sdk.NewDec(6_700_000_000_000),
-		EpochIdentifier:         "day",                     // 1 day
-		ReductionPeriodInEpochs: 365,                       // 1 years
-		ReductionFactor:         sdk.NewDec(3).QuoInt64(4), // 3/4
+		GenesisEpochProvisions:  sdk.NewDec(2_500_000).Mul(sdk.NewDec(1_000_000)).Quo(sdk.NewDec(24 * 365)), // 2.5MST first year, broken into hours ~= 285ST / hour
+		EpochIdentifier:         "mint",                                                                     // 1 hour
+		ReductionPeriodInEpochs: 24 * 365,                                                                   // 24hrs*365d = 8760
+		ReductionFactor:         sdk.NewDec(1).QuoInt64(2),
 		DistributionProportions: DistributionProportions{
-			Staking:              sdk.MustNewDecFromStr("0.9"), // 1
-			PoolIncentives:       sdk.MustNewDecFromStr("0.0"), // 0
-			ParticipationRewards: sdk.MustNewDecFromStr("0.0"), // 0
-			CommunityPool:        sdk.MustNewDecFromStr("0.1"), // 0
+			Staking:                     sdk.MustNewDecFromStr("0.2764"),
+			CommunityPoolGrowth:         sdk.MustNewDecFromStr("0.1860"),
+			StrategicReserve:            sdk.MustNewDecFromStr("0.4205"),
+			CommunityPoolSecurityBudget: sdk.MustNewDecFromStr("0.1171"),
 		},
 		MintingRewardsDistributionStartEpoch: 0,
 	}
@@ -179,24 +179,22 @@ func validateDistributionProportions(i interface{}) error {
 		return errors.New("staking distribution ratio should not be negative")
 	}
 
-	if v.PoolIncentives.IsNegative() {
-		return errors.New("pool incentives distribution ratio should not be negative")
+	if v.CommunityPoolGrowth.IsNegative() {
+		return errors.New("community pool growth distribution ratio should not be negative")
 	}
 
-	// TODO: Maybe we should allow this :joy:, lets you burn osmo from community pool
-	// for new chains
-	if v.CommunityPool.IsNegative() {
-		return errors.New("community pool distribution ratio should not be negative")
+	if v.CommunityPoolSecurityBudget.IsNegative() {
+		return errors.New("community pool growth distribution ratio should not be negative")
 	}
 
-	if v.ParticipationRewards.IsNegative() {
-		return errors.New("participation rewards distribution ratio should not be negative")
+	if v.StrategicReserve.IsNegative() {
+		return errors.New("community pool growth distribution ratio should not be negative")
 	}
 
-	totalProportions := v.Staking.Add(v.PoolIncentives).Add(v.CommunityPool).Add(v.ParticipationRewards)
+	totalProportions := v.Staking.Add(v.CommunityPoolGrowth).Add(v.CommunityPoolSecurityBudget).Add(v.StrategicReserve)
 
 	if !totalProportions.Equal(sdk.NewDec(1)) {
-		return errors.New("total distributions ratio should be 1")
+		return fmt.Errorf(fmt.Sprintf("total distributions ratio should be 1, instead got %s", totalProportions.String()))
 	}
 
 	return nil
