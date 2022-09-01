@@ -21,6 +21,9 @@ type SendHostZoneUnbondingTestCase struct {
 }
 
 func (s *KeeperTestSuite) SetupSendHostZoneUnbonding() SendHostZoneUnbondingTestCase {
+	delegationAccountOwner := fmt.Sprintf("%s.%s", HostChainId, "DELEGATION")
+	s.CreateICAChannel(delegationAccountOwner)
+
 	hostVal1Addr := "cosmos_VALIDATOR_1"
 	hostVal2Addr := "cosmos_VALIDATOR_2"
 	delegationAddr := "cosmos_DELEGATION"
@@ -105,7 +108,7 @@ func (s *KeeperTestSuite) TestSendHostZoneUnbonding_Successful() {
 
 	// verify the callback args are as expected
 	expectedCallbackArgs := []byte{0xa, 0x4, 0x47, 0x41, 0x49, 0x41, 0x12, 0x18, 0xa, 0x12, 0x63, 0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x5f, 0x56, 0x41, 0x4c, 0x49, 0x44, 0x41, 0x54, 0x4f, 0x52, 0x5f, 0x31, 0x10, 0xaa, 0xd8, 0x28, 0x12, 0x18, 0xa, 0x12, 0x63, 0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x5f, 0x56, 0x41, 0x4c, 0x49, 0x44, 0x41, 0x54, 0x4f, 0x52, 0x5f, 0x32, 0x10, 0xd6, 0xb0, 0x51, 0x1a, 0x2, 0x0, 0x1}
-	s.Require().Equal(actualCallbackArgs, expectedCallbackArgs)
+	s.Require().Equal(expectedCallbackArgs, actualCallbackArgs)
 	actualCallbackResult, err := s.App.StakeibcKeeper.UnmarshalUndelegateCallbackArgs(s.Ctx(), actualCallbackArgs)
 	s.Require().NoError(err)
 	s.Require().Equal(len(actualCallbackResult.SplitDelegations), len(tc.hostZone.Validators))
