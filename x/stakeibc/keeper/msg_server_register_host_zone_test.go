@@ -1,8 +1,6 @@
 package keeper_test
 
 import (
-	"fmt"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	ibctesting "github.com/cosmos/ibc-go/v3/testing"
 	_ "github.com/stretchr/testify/suite"
@@ -10,11 +8,11 @@ import (
 	epochtypes "github.com/Stride-Labs/stride/x/epochs/types"
 	recordstypes "github.com/Stride-Labs/stride/x/records/types"
 	recordtypes "github.com/Stride-Labs/stride/x/records/types"
-	stakeibc "github.com/Stride-Labs/stride/x/stakeibc/types"
+	stakeibctypes "github.com/Stride-Labs/stride/x/stakeibc/types"
 )
 
 type RegisterHostZoneTestCase struct {
-	validMsg                   stakeibc.MsgRegisterHostZone
+	validMsg                   stakeibctypes.MsgRegisterHostZone
 	epochUnbondingRecordNumber uint64
 	unbondingFrequency         uint64
 	defaultRedemptionRate      sdk.Dec
@@ -29,7 +27,7 @@ func (s *KeeperTestSuite) SetupRegisterHostZone() RegisterHostZoneTestCase {
 
 	s.CreateTransferChannel(HostChainId)
 
-	s.App.StakeibcKeeper.SetEpochTracker(s.Ctx(), stakeibc.EpochTracker{
+	s.App.StakeibcKeeper.SetEpochTracker(s.Ctx(), stakeibctypes.EpochTracker{
 		EpochIdentifier: epochtypes.DAY_EPOCH,
 		EpochNumber:     epochUnbondingRecordNumber,
 	})
@@ -40,7 +38,7 @@ func (s *KeeperTestSuite) SetupRegisterHostZone() RegisterHostZoneTestCase {
 	}
 	s.App.RecordsKeeper.SetEpochUnbondingRecord(s.Ctx(), epochUnbondingRecord)
 
-	defaultMsg := stakeibc.MsgRegisterHostZone{
+	defaultMsg := stakeibctypes.MsgRegisterHostZone{
 		ConnectionId:       ibctesting.FirstConnectionID,
 		Bech32Prefix:       GaiaPrefix,
 		HostDenom:          Atom,
@@ -55,6 +53,27 @@ func (s *KeeperTestSuite) SetupRegisterHostZone() RegisterHostZoneTestCase {
 		unbondingFrequency:         unbondingFrequency,
 		defaultRedemptionRate:      defaultRedemptionRate,
 		atomHostZoneChainId:        atomHostZoneChainId,
+	}
+}
+
+// Helper function to test registering a duplicate host zone
+// If there's a duplicate connection ID, register_host_zone will error before checking other fields for duplicates
+// In order to test those cases, we need to first create a new host zone,
+//    and then attempt to register with duplicate fields in the message
+// This function 1) creates a new host zone and 2) returns what would be a successful register message
+func (s *KeeperTestSuite) createNewHostZoneMessage(chainID string, denom string, prefix string) stakeibctypes.MsgRegisterHostZone {
+	// Create a new test chain and connection ID
+	osmoChain := ibctesting.NewTestChain(s.T(), s.Coordinator, chainID)
+	path := ibctesting.NewPath(s.StrideChain, osmoChain)
+	s.Coordinator.SetupConnections(path)
+	connectionId := path.EndpointA.ConnectionID
+
+	// Build what would be a successful message to register the host zone
+	// Note: this is purposefully missing fields because it is used in failure cases that short circuit
+	return stakeibctypes.MsgRegisterHostZone{
+		ConnectionId: connectionId,
+		Bech32Prefix: prefix,
+		HostDenom:    denom,
 	}
 }
 
@@ -83,35 +102,22 @@ func (s *KeeperTestSuite) TestRegisterHostZone_Success() {
 	s.Require().Equal(HostChainId, hostZoneUnbonding.HostZoneId, "host zone unbonding set for this host zone")
 	s.Require().Equal(uint64(0), hostZoneUnbonding.NativeTokenAmount, "host zone unbonding set to 0 tokens")
 	s.Require().Equal(recordstypes.HostZoneUnbonding_BONDED, hostZoneUnbonding.Status, "host zone unbonding set to bonded")
-
 }
 
-func (s *KeeperTestSuite) TestRegisterHostZone_WrongConnectionid() {
-	// tests for a failure if we register with an invalid connection id
+func (s *KeeperTestSuite) TestRegisterHostZone_InvalidConnectionId() {
 	tc := s.SetupRegisterHostZone()
 	msg := tc.validMsg
 	msg.ConnectionId = "connection-10" // an invalid connection ID
 
 	_, err := s.GetMsgServer().RegisterHostZone(sdk.WrapSDKContext(s.Ctx()), &msg)
-	expectedErrMsg := fmt.Sprintf("unable to obtain chain id: invalid connection id, %s not found", msg.ConnectionId)
+	expectedErrMsg := "unable to obtain chain id from connection connection-10, "
+	expectedErrMsg += "err: invalid connection id, connection-10 not found: failed to register host zone"
 	s.Require().EqualError(err, expectedErrMsg, "expected error when registering with an invalid connection id")
 }
 
-func (s *KeeperTestSuite) TestRegisterHostZone_RegisterTwiceFails() {
+func (s *KeeperTestSuite) TestRegisterHostZone_DuplicateConnectionIdInIBCState() {
 	// tests for a failure if we register the same host zone twice
-	tc := s.SetupRegisterHostZone()
-	msg := tc.validMsg
-
-	_, err := s.GetMsgServer().RegisterHostZone(sdk.WrapSDKContext(s.Ctx()), &msg)
-	s.Require().NoError(err, "able to successfully register host zone once")
-
-	_, err = s.GetMsgServer().RegisterHostZone(sdk.WrapSDKContext(s.Ctx()), &msg)
-	expectedErrMsg := fmt.Sprintf("invalid chain id, zone for %s already registered", tc.atomHostZoneChainId)
-	s.Require().EqualError(err, expectedErrMsg, "registering host zone twice should fail")
-}
-
-func (s *KeeperTestSuite) TestRegisterHostZone_RegisterSameConnectionIdFails() {
-	// tests for a failure if we register the same host zone twice
+	// (with a duplicate connectionId stored in the IBCKeeper's state)
 	tc := s.SetupRegisterHostZone()
 	msg := tc.validMsg
 
@@ -124,12 +130,82 @@ func (s *KeeperTestSuite) TestRegisterHostZone_RegisterSameConnectionIdFails() {
 	msg.IbcDenom = "ibc-atom-different"   // a different IBC denom
 
 	_, err = s.GetMsgServer().RegisterHostZone(sdk.WrapSDKContext(s.Ctx()), &msg)
-	expectedErrMsg := fmt.Sprintf("invalid chain id, zone for %s already registered", tc.atomHostZoneChainId)
-	s.Require().EqualError(err, expectedErrMsg, "registering host zone twice should fail")
+	expectedErrMsg := "invalid chain id, zone for GAIA already registered: "
+	expectedErrMsg += "failed to register host zone"
+	s.Require().EqualError(err, expectedErrMsg, "registering host zone with duplicate connection ID should fail")
+}
+
+func (s *KeeperTestSuite) TestRegisterHostZone_DuplicateConnectionIdInStakeibcState() {
+	// tests for a failure if we register the same host zone twice
+	// (with a duplicate connectionId stored in a different host zone in stakeibc)
+	tc := s.SetupRegisterHostZone()
+	msg := tc.validMsg
+
+	_, err := s.GetMsgServer().RegisterHostZone(sdk.WrapSDKContext(s.Ctx()), &msg)
+	s.Require().NoError(err, "able to successfully register host zone once")
+
+	// Create the message for a brand new host zone
+	// (without modifications, you would expect this to be successful)
+	newHostZoneMsg := s.createNewHostZoneMessage("OSMO", "osmo", "osmo")
+
+	// Add a different host zone with the same connection Id as OSMO
+	newHostZone := stakeibctypes.HostZone{
+		ChainId:      "JUNO",
+		ConnectionId: newHostZoneMsg.ConnectionId,
+	}
+	s.App.StakeibcKeeper.SetHostZone(s.Ctx(), newHostZone)
+
+	// Registering should fail with a duplicate connection ID
+	_, err = s.GetMsgServer().RegisterHostZone(sdk.WrapSDKContext(s.Ctx()), &newHostZoneMsg)
+	expectedErrMsg := "connectionId connection-1 already registered: "
+	expectedErrMsg += "failed to register host zone"
+	s.Require().EqualError(err, expectedErrMsg, "registering host zone with duplicate connection ID should fail")
+}
+
+func (s *KeeperTestSuite) TestRegisterHostZone_DuplicateHostDenom() {
+	// tests for a failure if we register the same host zone twice (with a duplicate host denom)
+	tc := s.SetupRegisterHostZone()
+
+	// Register host zones successfully
+	_, err := s.GetMsgServer().RegisterHostZone(sdk.WrapSDKContext(s.Ctx()), &tc.validMsg)
+	s.Require().NoError(err, "able to successfully register host zone once")
+
+	// Create the message for a brand new host zone
+	// (without modifications, you would expect this to be successful)
+	newHostZoneMsg := s.createNewHostZoneMessage("OSMO", "osmo", "osmo")
+
+	// Try to register with a duplicate host denom - it should fail
+	invalidMsg := newHostZoneMsg
+	invalidMsg.HostDenom = tc.validMsg.HostDenom
+
+	_, err = s.GetMsgServer().RegisterHostZone(sdk.WrapSDKContext(s.Ctx()), &invalidMsg)
+	expectedErrMsg := "host denom uatom already registered: failed to register host zone"
+	s.Require().EqualError(err, expectedErrMsg, "registering host zone with duplicate host denom should fail")
+}
+
+func (s *KeeperTestSuite) TestRegisterHostZone_DuplicateBech32Prefix() {
+	// tests for a failure if we register the same host zone twice (with a duplicate bech32 prefix)
+	tc := s.SetupRegisterHostZone()
+
+	// Register host zones successfully
+	_, err := s.GetMsgServer().RegisterHostZone(sdk.WrapSDKContext(s.Ctx()), &tc.validMsg)
+	s.Require().NoError(err, "able to successfully register host zone once")
+
+	// Create the message for a brand new host zone
+	// (without modifications, you would expect this to be successful)
+	newHostZoneMsg := s.createNewHostZoneMessage("OSMO", "osmo", "osmo")
+
+	// Try to register with a duplicate bech32prefix - it should fail
+	invalidMsg := newHostZoneMsg
+	invalidMsg.Bech32Prefix = tc.validMsg.Bech32Prefix
+
+	_, err = s.GetMsgServer().RegisterHostZone(sdk.WrapSDKContext(s.Ctx()), &invalidMsg)
+	expectedErrMsg := "bech32prefix cosmos already registered: failed to register host zone"
+	s.Require().EqualError(err, expectedErrMsg, "registering host zone with duplicate bech32 prefix should fail")
 }
 
 func (s *KeeperTestSuite) TestRegisterHostZone_CannotFindEpochTracker() {
-	// tests for a failure if we register the same host zone twice
+	// tests for a failure if the epoch tracker cannot be found
 	tc := s.SetupRegisterHostZone()
 	msg := tc.validMsg
 
@@ -142,7 +218,7 @@ func (s *KeeperTestSuite) TestRegisterHostZone_CannotFindEpochTracker() {
 }
 
 func (s *KeeperTestSuite) TestRegisterHostZone_CannotFindEpochUnbondingRecord() {
-	// tests for a failure if we register the same host zone twice
+	// tests for a failure if the epoch unbonding record cannot be found
 	tc := s.SetupRegisterHostZone()
 	msg := tc.validMsg
 
