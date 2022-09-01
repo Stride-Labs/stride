@@ -1,31 +1,41 @@
 package keeper_test
 
 import (
+	"fmt"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	ibctesting "github.com/cosmos/ibc-go/v3/testing"
 	_ "github.com/stretchr/testify/suite"
 
+	epochtypes "github.com/Stride-Labs/stride/x/epochs/types"
 	recordstypes "github.com/Stride-Labs/stride/x/records/types"
 	recordtypes "github.com/Stride-Labs/stride/x/records/types"
 	stakeibc "github.com/Stride-Labs/stride/x/stakeibc/types"
 )
 
 type RegisterHostZoneTestCase struct {
-	validMsg stakeibc.MsgRegisterHostZone
+	validMsg                   stakeibc.MsgRegisterHostZone
+	epochUnbondingRecordNumber uint64
+	unbondingFrequency         uint64
+	defaultRedemptionRate      sdk.Dec
+	atomHostZoneChainId        string
 }
 
 func (s *KeeperTestSuite) SetupRegisterHostZone() RegisterHostZoneTestCase {
+	epochUnbondingRecordNumber := uint64(3)
+	unbondingFrequency := uint64(3)
+	defaultRedemptionRate := sdk.NewDec(1)
+	atomHostZoneChainId := "GAIA"
+
 	s.CreateTransferChannel(HostChainId)
 
 	s.App.StakeibcKeeper.SetEpochTracker(s.Ctx(), stakeibc.EpochTracker{
-		EpochIdentifier:    "day",
-		EpochNumber:        3,
-		NextEpochStartTime: uint64(2661750006000000000), // arbitrary time in the future, year 2056 I believe
-		Duration:           uint64(1000000000000),       // 16 min 40 sec
+		EpochIdentifier: epochtypes.DAY_EPOCH,
+		EpochNumber:     epochUnbondingRecordNumber,
 	})
 
 	epochUnbondingRecord := recordtypes.EpochUnbondingRecord{
-		EpochNumber:        3,
+		EpochNumber:        epochUnbondingRecordNumber,
 		HostZoneUnbondings: []*recordtypes.HostZoneUnbonding{},
 	}
 	s.App.RecordsKeeper.SetEpochUnbondingRecord(s.Ctx(), epochUnbondingRecord)
@@ -35,33 +45,45 @@ func (s *KeeperTestSuite) SetupRegisterHostZone() RegisterHostZoneTestCase {
 		Bech32Prefix:       GaiaPrefix,
 		HostDenom:          Atom,
 		IbcDenom:           IbcAtom,
-		Creator:            "stride159atdlc3ksl50g0659w5tq42wwer334ajl7xnq",
 		TransferChannelId:  ibctesting.FirstChannelID,
-		UnbondingFrequency: 3,
+		UnbondingFrequency: unbondingFrequency,
 	}
 
 	return RegisterHostZoneTestCase{
-		validMsg: defaultMsg,
+		validMsg:                   defaultMsg,
+		epochUnbondingRecordNumber: epochUnbondingRecordNumber,
+		unbondingFrequency:         unbondingFrequency,
+		defaultRedemptionRate:      defaultRedemptionRate,
+		atomHostZoneChainId:        atomHostZoneChainId,
 	}
 }
 
 func (s *KeeperTestSuite) TestRegisterHostZone_Success() {
 	tc := s.SetupRegisterHostZone()
 	msg := tc.validMsg
+
+	// Register host zone
 	_, err := s.GetMsgServer().RegisterHostZone(sdk.WrapSDKContext(s.Ctx()), &msg)
 	s.Require().NoError(err, "able to successfully register host zone")
-	epochUnbondingRecord, found := s.App.RecordsKeeper.GetEpochUnbondingRecord(s.Ctx(), 3)
+
+	// Confirm host zone unbonding was added
+	hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx(), HostChainId)
+	s.Require().True(found, "host zone found")
+	s.Require().Equal(tc.defaultRedemptionRate, hostZone.RedemptionRate, "redemption rate set to default: 1")
+	s.Require().Equal(tc.defaultRedemptionRate, hostZone.LastRedemptionRate, "last redemption rate set to default: 1")
+	s.Require().Equal(tc.unbondingFrequency, hostZone.UnbondingFrequency, "unbonding frequency set to default: 3")
+
+	// Confirm host zone unbonding record was created
+	epochUnbondingRecord, found := s.App.RecordsKeeper.GetEpochUnbondingRecord(s.Ctx(), tc.epochUnbondingRecordNumber)
 	s.Require().True(found, "epoch unbonding record found")
 	s.Require().Len(epochUnbondingRecord.HostZoneUnbondings, 1, "host zone unbonding record has one entry")
+
+	// Confirm host zone unbonding was added
 	hostZoneUnbonding := epochUnbondingRecord.HostZoneUnbondings[0]
 	s.Require().Equal(HostChainId, hostZoneUnbonding.HostZoneId, "host zone unbonding set for this host zone")
 	s.Require().Equal(uint64(0), hostZoneUnbonding.NativeTokenAmount, "host zone unbonding set to 0 tokens")
 	s.Require().Equal(recordstypes.HostZoneUnbonding_BONDED, hostZoneUnbonding.Status, "host zone unbonding set to bonded")
-	hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx(), HostChainId)
-	s.Require().True(found, "host zone found")
-	s.Require().Equal(sdk.NewDec(1), hostZone.RedemptionRate, "redemption rate set to 1")
-	s.Require().Equal(sdk.NewDec(1), hostZone.LastRedemptionRate, "last redemption rate set to 1")
-	s.Require().Equal(uint64(3), hostZone.UnbondingFrequency, "unbonding frequency set to 3")
+
 }
 
 func (s *KeeperTestSuite) TestRegisterHostZone_WrongConnectionid() {
@@ -71,15 +93,19 @@ func (s *KeeperTestSuite) TestRegisterHostZone_WrongConnectionid() {
 	msg.ConnectionId = "connection-10" // an invalid connection ID
 
 	_, err := s.GetMsgServer().RegisterHostZone(sdk.WrapSDKContext(s.Ctx()), &msg)
-	s.Require().Error(err, "expected error when registering with an invalid connection id")
+	expectedErrMsg := fmt.Sprintf("unable to obtain chain id: invalid connection id, %s not found", msg.ConnectionId)
+	s.Require().EqualError(err, expectedErrMsg, "expected error when registering with an invalid connection id")
 }
 
 func (s *KeeperTestSuite) TestRegisterHostZone_RegisterTwiceFails() {
 	// tests for a failure if we register the same host zone twice
 	tc := s.SetupRegisterHostZone()
 	msg := tc.validMsg
+
 	_, err := s.GetMsgServer().RegisterHostZone(sdk.WrapSDKContext(s.Ctx()), &msg)
 	s.Require().NoError(err, "able to successfully register host zone once")
+
 	_, err = s.GetMsgServer().RegisterHostZone(sdk.WrapSDKContext(s.Ctx()), &msg)
-	s.Require().Error(err, "registering host zone twice should fail")
+	expectedErrMsg := fmt.Sprintf("invalid chain id, zone for %s already registered", tc.atomHostZoneChainId)
+	s.Require().EqualError(err, expectedErrMsg, "registering host zone twice should fail")
 }

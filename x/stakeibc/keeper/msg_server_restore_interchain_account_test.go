@@ -1,6 +1,8 @@
 package keeper_test
 
 import (
+	"fmt"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	ibctesting "github.com/cosmos/ibc-go/v3/testing"
 	_ "github.com/stretchr/testify/suite"
@@ -17,8 +19,6 @@ func (s *KeeperTestSuite) SetupRestoreInterchainAccount() RestoreInterchainAccou
 
 	hostZone := stakeibc.HostZone{
 		ChainId:      HostChainId,
-		HostDenom:    Atom,
-		Bech32Prefix: GaiaPrefix,
 		ConnectionId: ibctesting.FirstConnectionID,
 	}
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx(), hostZone)
@@ -46,7 +46,8 @@ func (s *KeeperTestSuite) TestRestoreInterchainAccount_FailsForIncorrectHostZone
 	msg := tc.validMsg
 	msg.ChainId = "incorrectchainid"
 	_, err := s.GetMsgServer().RestoreInterchainAccount(sdk.WrapSDKContext(s.Ctx()), &msg)
-	s.Require().Error(err, "registered ica account fails for incorrect host zone")
+	expectedErrMsg := "host zone not registered"
+	s.Require().EqualError(err, expectedErrMsg, "registered ica account fails for incorrect host zone")
 }
 
 func (s *KeeperTestSuite) TestRestoreInterchainAccount_FailsIfAccountExists() {
@@ -54,7 +55,12 @@ func (s *KeeperTestSuite) TestRestoreInterchainAccount_FailsIfAccountExists() {
 	s.CreateICAChannel("GAIA.DELEGATION")
 	msg := tc.validMsg
 	_, err := s.GetMsgServer().RestoreInterchainAccount(sdk.WrapSDKContext(s.Ctx()), &msg)
-	s.Require().Error(err, "registered ica account fails when account already exists")
+	expectedErrMsg := fmt.Sprintf("existing active channel channel-1 for portID icacontroller-%s.DELEGATION on connection %s for owner %s.DELEGATION: active channel already set for this owner",
+		tc.validMsg.ChainId,
+		s.TransferPath.EndpointB.ConnectionID,
+		tc.validMsg.ChainId,
+	)
+	s.Require().EqualError(err, expectedErrMsg, "registered ica account fails when account already exists")
 }
 
 func (s *KeeperTestSuite) TestRestoreInterchainAccount_SucceedsIfOtherAccountExists() {
@@ -62,5 +68,6 @@ func (s *KeeperTestSuite) TestRestoreInterchainAccount_SucceedsIfOtherAccountExi
 	s.CreateICAChannel("GAIA.WITHDRAWAL")
 	msg := tc.validMsg
 	_, err := s.GetMsgServer().RestoreInterchainAccount(sdk.WrapSDKContext(s.Ctx()), &msg)
-	s.Require().NoError(err, "registered ica account fails when account already exists")
+	expectedErrMsg := "registered ica account fails when account already exists"
+	s.Require().EqualError(err, expectedErrMsg, "registered ica account fails when account already exists")
 }
