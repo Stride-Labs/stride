@@ -245,7 +245,7 @@ func (k Keeper) CleanupEpochUnbondingRecords(ctx sdk.Context, epochNumber uint64
 	// this function goes through each EpochUnbondingRecord
 	// and deletes those with 0 balances, meaning all tokens on that epoch unbonding
 	// record have been claimed
-	for _, epochUnbondingRecord := range k.RecordsKeeper.GetAllPreviousEpochUnbondingRecord(ctx, epochNumber) {
+	for _, epochUnbondingRecord := range k.RecordsKeeper.GetAllPreviousEpochUnbondingRecords(ctx, epochNumber) {
 		k.Logger(ctx).Info(fmt.Sprintf("Cleaning up epoch unbondings for epoch unbonding record from epoch %d", epochUnbondingRecord.GetEpochNumber()))
 		shouldDeleteEpochUnbondingRecord := true
 		hostZoneUnbondings := epochUnbondingRecord.GetHostZoneUnbondings()

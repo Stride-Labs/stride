@@ -37,13 +37,11 @@ func (s *KeeperTestSuite) SetupRedemptionCallback() RedemptionCallbackTestCase {
 	// individual userRedemptionRecords should be claimable, as long as the host zone unbonding allows for claims
 	recordId1 := recordtypes.UserRedemptionRecordKeyFormatter(HostChainId, epochNumber, "sender")
 	userRedemptionRecord1 := recordtypes.UserRedemptionRecord{
-		Id:          recordId1,
-		IsClaimable: true,
+		Id: recordId1,
 	}
 	recordId2 := recordtypes.UserRedemptionRecordKeyFormatter(HostChainId, epochNumber, "other_sender")
 	userRedemptionRecord2 := recordtypes.UserRedemptionRecord{
-		Id:          recordId2,
-		IsClaimable: true,
+		Id: recordId2,
 	}
 
 	// the hostZoneUnbonding should have HostZoneUnbonding_UNBONDED - meaning unbonding has completed, but the tokens
@@ -113,14 +111,6 @@ func (s *KeeperTestSuite) TestRedemptionCallback_Successful() {
 			}
 		}
 	}
-
-	// verify user redemption records are claimable
-	for _, userRedemptionRecordId := range initialState.userRedemptionRecordIds {
-		userRedemptionRecord, found := s.App.RecordsKeeper.GetUserRedemptionRecord(s.Ctx(), userRedemptionRecordId)
-		s.Require().True(found, "user redemption record found")
-		s.Require().True(userRedemptionRecord.IsClaimable, "user redemption record is claimable")
-	}
-
 }
 
 func (s *KeeperTestSuite) checkRedemptionStateIfCallbackFailed(tc RedemptionCallbackTestCase) {
@@ -133,13 +123,6 @@ func (s *KeeperTestSuite) checkRedemptionStateIfCallbackFailed(tc RedemptionCall
 			// check that the status is NOT transferred
 			s.Require().Equal(recordtypes.HostZoneUnbonding_UNBONDED, hzu.Status, "host zone unbonding status is NOT TRANSFERRED (UNBONDED)")
 		}
-	}
-
-	// verify user redemption records are claimable
-	for _, userRedemptionRecordIds := range initialState.userRedemptionRecordIds {
-		userRedemptionRecord, found := s.App.RecordsKeeper.GetUserRedemptionRecord(s.Ctx(), userRedemptionRecordIds)
-		s.Require().True(found)
-		s.Require().True(userRedemptionRecord.IsClaimable)
 	}
 }
 
