@@ -43,7 +43,6 @@ func NewParams(
 		ReductionFactor:                      ReductionFactor,
 		DistributionProportions:              distrProportions,
 		MintingRewardsDistributionStartEpoch: mintingRewardsDistributionStartEpoch,
-		StrategicReserveAddress:              "stride1vytsydmkkmkndlrkeqkqad7zkx4gpgmn50vmjn", // TODO this is a placeholder, change it!
 	}
 }
 
@@ -61,7 +60,6 @@ func DefaultParams() Params {
 			StrategicReserve:            sdk.MustNewDecFromStr("0.4205"),
 			CommunityPoolSecurityBudget: sdk.MustNewDecFromStr("0.1171"),
 		},
-		StrategicReserveAddress:              "stride1vytsydmkkmkndlrkeqkqad7zkx4gpgmn50vmjn", // TODO this is a placeholder, change it!
 		MintingRewardsDistributionStartEpoch: 0,
 	}
 }

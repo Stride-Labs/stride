@@ -82,5 +82,4 @@ message Params {
   int64 minting_rewards_distribution_start_epoch = 7
       [ (gogoproto.moretags) =
             "yaml:\"minting_rewards_distribution_start_epoch\"" ];
-  string strategic_reserve_address = 8 [ (gogoproto.moretags) = "yaml:\"address\"" ];
 }
