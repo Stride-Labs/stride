@@ -42,4 +42,6 @@ var (
 	ErrDivisionByZero                    = sdkerrors.Register(ModuleName, 1532, "division by zero")
 	ErrSlashGtTenPct                     = sdkerrors.Register(ModuleName, 1533, "slash is greater than 10 percent")
 	ErrInvalidEpoch                      = sdkerrors.Register(ModuleName, 1534, "invalid epoch tracker")
+	ErrHostZoneICAAccountNotFound        = sdkerrors.Register(ModuleName, 1535, "host zone's ICA account not found")
+	ErrNoValidatorAmts                   = sdkerrors.Register(ModuleName, 1536, "could not fetch validator amts")
 )

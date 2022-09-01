@@ -108,18 +108,18 @@ func (s *KeeperTestSuite) TestSendHostZoneUnbonding_Successful() {
 
 	// verify the callback args are as expected
 	expectedCallbackArgs := []byte{0xa, 0x4, 0x47, 0x41, 0x49, 0x41, 0x12, 0x18, 0xa, 0x12, 0x63, 0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x5f, 0x56, 0x41, 0x4c, 0x49, 0x44, 0x41, 0x54, 0x4f, 0x52, 0x5f, 0x31, 0x10, 0xaa, 0xd8, 0x28, 0x12, 0x18, 0xa, 0x12, 0x63, 0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x5f, 0x56, 0x41, 0x4c, 0x49, 0x44, 0x41, 0x54, 0x4f, 0x52, 0x5f, 0x32, 0x10, 0xd6, 0xb0, 0x51, 0x1a, 0x2, 0x0, 0x1}
-	s.Require().Equal(expectedCallbackArgs, actualCallbackArgs)
+	s.Require().Equal(expectedCallbackArgs, actualCallbackArgs, "callback args in success unbonding case")
 	actualCallbackResult, err := s.App.StakeibcKeeper.UnmarshalUndelegateCallbackArgs(s.Ctx(), actualCallbackArgs)
-	s.Require().NoError(err)
-	s.Require().Equal(len(actualCallbackResult.SplitDelegations), len(tc.hostZone.Validators))
-	s.Require().Equal(actualCallbackResult.HostZoneId, tc.hostZone.ChainId)
+	s.Require().NoError(err, "could unmarshal undelegation callback args")
+	s.Require().Equal(len(tc.hostZone.Validators), len(actualCallbackResult.SplitDelegations), "number of split delegations in success unbonding case")
+	s.Require().Equal(tc.hostZone.ChainId, actualCallbackResult.HostZoneId, "host zone id in success unbonding case")
 
 	// the number of unbonding messages should be (number of validators) * (records to unbond)
 	s.Require().Equal(len(tc.epochUnbondingRecords), len(actualUnbondMsgs), "number of unbonding messages should be number of records to unbond")
 
-	s.Require().Equal(int64(actualAmtToUnbond), int64(tc.amtToUnbond)*int64(len(tc.epochUnbondingRecords)), "total amount to unbond should match input amtToUnbond")
+	s.Require().Equal(int64(tc.amtToUnbond)*int64(len(tc.epochUnbondingRecords)), int64(actualAmtToUnbond), "total amount to unbond should match input amtToUnbond")
 
-	totalWgt := sdk.NewDec(int64(tc.totalWgt)) //getTotalWgt(tc.hostZone)
+	totalWgt := sdk.NewDec(int64(tc.totalWgt))
 	actualAmtToUnbondDec := sdk.NewDec(int64(actualAmtToUnbond))
 	actualUnbondMsg1 := actualUnbondMsgs[0].String()
 	actualUnbondMsg2 := actualUnbondMsgs[1].String()
@@ -131,7 +131,7 @@ func (s *KeeperTestSuite) TestSendHostZoneUnbonding_Successful() {
 	val1Unbonded := strings.Contains(actualUnbondMsg1, val1UnbondAmt)
 	val2Unbonded := strings.Contains(actualUnbondMsg2, val2UnbondAmt)
 
-	s.Require().True(val1Unbonded || val2Unbonded)
+	s.Require().True(val1Unbonded || val2Unbonded, "unbonding amt should be the correct amount")
 }
 
 func (s *KeeperTestSuite) TestSendHostZoneUnbonding_WrongChainId() {

@@ -71,7 +71,7 @@ func (k Keeper) GetHostZoneUnbondingMsgs(ctx sdk.Context, hostZone types.HostZon
 	if delegationAccount == nil || delegationAccount.GetAddress() == "" {
 		errMsg := fmt.Sprintf("Zone %s is missing a delegation address!", hostZone.ChainId)
 		k.Logger(ctx).Error(errMsg)
-		return nil, 0, nil, sdkerrors.Wrap(sdkerrors.ErrNotFound, errMsg)
+		return nil, 0, nil, sdkerrors.Wrap(types.ErrHostZoneICAAccountNotFound, errMsg)
 	}
 	validators := hostZone.GetValidators()
 	if totalAmtToUnbond == 0 {
@@ -82,7 +82,7 @@ func (k Keeper) GetHostZoneUnbondingMsgs(ctx sdk.Context, hostZone types.HostZon
 	if err != nil {
 		errMsg := fmt.Sprintf("Error getting target val amts for host zone %s %d: %s", hostZone.ChainId, totalAmtToUnbond, err)
 		k.Logger(ctx).Error(errMsg)
-		return nil, 0, nil, sdkerrors.Wrap(sdkerrors.ErrNotFound, errMsg)
+		return nil, 0, nil, sdkerrors.Wrap(types.ErrNoValidatorAmts, errMsg)
 	}
 	valAddrToUnbondAmt := make(map[string]int64)
 	overflowAmt := uint64(0)
@@ -91,9 +91,9 @@ func (k Keeper) GetHostZoneUnbondingMsgs(ctx sdk.Context, hostZone types.HostZon
 		valUnbondAmt := newUnbondingToValidator[valAddr]
 		currentAmtStaked := validator.GetDelegationAmt()
 		if err != nil {
-			errMsg := fmt.Sprintf("Error casting validator staked amount %d: %s", validator.GetDelegationAmt(), err.Error())
+			errMsg := fmt.Sprintf("Error fetching validator staked amount %d: %s", currentAmtStaked, err.Error())
 			k.Logger(ctx).Error(errMsg)
-			return nil, 0, nil, sdkerrors.Wrap(sdkerrors.ErrNotFound, errMsg)
+			return nil, 0, nil, sdkerrors.Wrap(types.ErrNoValidatorAmts, errMsg)
 		}
 		if valUnbondAmt > currentAmtStaked { // if we don't have enough assets to unbond
 			overflowAmt += valUnbondAmt - currentAmtStaked
@@ -103,7 +103,7 @@ func (k Keeper) GetHostZoneUnbondingMsgs(ctx sdk.Context, hostZone types.HostZon
 		if err != nil {
 			errMsg := fmt.Sprintf("Error casting validator staked amount %d: %s", validator.GetDelegationAmt(), err.Error())
 			k.Logger(ctx).Error(errMsg)
-			return nil, 0, nil, sdkerrors.Wrap(sdkerrors.ErrNotFound, errMsg)
+			return nil, 0, nil, sdkerrors.Wrap(types.ErrIntCast, errMsg)
 		}
 		valAddrToUnbondAmt[valAddr] = valUnbondAmtInt64
 	}
@@ -114,7 +114,7 @@ func (k Keeper) GetHostZoneUnbondingMsgs(ctx sdk.Context, hostZone types.HostZon
 			if err != nil {
 				errMsg := fmt.Sprintf("Error casting validator staked amount %d: %s", validator.GetDelegationAmt(), err.Error())
 				k.Logger(ctx).Error(errMsg)
-				return nil, 0, nil, sdkerrors.Wrap(sdkerrors.ErrNotFound, errMsg)
+				return nil, 0, nil, sdkerrors.Wrap(types.ErrIntCast, errMsg)
 			}
 			currentAmtStaked := validator.GetDelegationAmt()
 			// store how many more tokens we could unbond, if needed
@@ -126,7 +126,7 @@ func (k Keeper) GetHostZoneUnbondingMsgs(ctx sdk.Context, hostZone types.HostZon
 					if err != nil {
 						errMsg := fmt.Sprintf("Error casting overflow amount %d: %s", overflowAmt, err.Error())
 						k.Logger(ctx).Error(errMsg)
-						return nil, 0, nil, sdkerrors.Wrap(sdkerrors.ErrNotFound, errMsg)
+						return nil, 0, nil, sdkerrors.Wrap(types.ErrIntCast, errMsg)
 					}
 					valAddrToUnbondAmt[valAddr] += overflowAmtInt64
 					overflowAmt = 0
@@ -136,7 +136,7 @@ func (k Keeper) GetHostZoneUnbondingMsgs(ctx sdk.Context, hostZone types.HostZon
 					if err != nil {
 						errMsg := fmt.Sprintf("Error casting overflow amount %d: %s", amtToPotentiallyUnbond, err.Error())
 						k.Logger(ctx).Error(errMsg)
-						return nil, 0, nil, sdkerrors.Wrap(sdkerrors.ErrNotFound, errMsg)
+						return nil, 0, nil, sdkerrors.Wrap(types.ErrIntCast, errMsg)
 					}
 					valAddrToUnbondAmt[valAddr] += amtToPotentiallyUnbondInt64
 					overflowAmt -= amtToPotentiallyUnbond
