@@ -134,10 +134,6 @@ func (s *KeeperTestSuite) TestMsgSubmitQueryResponse_ExceededTtl() {
 	exceeded, err := s.App.InterchainqueryKeeper.HasQueryExceededTtl(s.Ctx(), &tc.validMsg, tc.query)
 	s.Require().NoError(err)
 	s.Require().True(exceeded)
-
-	// check that the query is not in the store anymore, as it should be deleted
-	_, found := s.App.InterchainqueryKeeper.GetQuery(s.Ctx(), tc.query.Id)
-	s.Require().False(found)
 }
 
 func (s *KeeperTestSuite) TestMsgSubmitQueryResponse_NotExceededTtl() {

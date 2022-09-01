@@ -51,7 +51,6 @@ func (k Keeper) VerifyKeyProof(ctx sdk.Context, msg *types.MsgSubmitQueryRespons
 			return err
 		}
 		fmt.Println("msgHeight: ", msgHeight)
-		// msgHeight = uint64(15)
 		height := clienttypes.NewHeight(clienttypes.ParseChainID(q.ChainId), msgHeight+1)
 		consensusState, found := k.IBCKeeper.ClientKeeper.GetClientConsensusState(ctx, connection.ClientId, height)
 		if !found {
@@ -143,7 +142,7 @@ func (k Keeper) HasQueryExceededTtl(ctx sdk.Context, msg *types.MsgSubmitQueryRe
 	if query.Ttl < currBlockTime {
 		errMsg := fmt.Sprintf("[ICQ Resp] aborting query callback due to ttl expiry! ttl is %d, time now %d for query of type %s with id %s, on chain %s",
 			query.Ttl, ctx.BlockTime().UnixNano(), query.QueryType, query.ChainId, msg.QueryId)
-		k.DeleteQuery(ctx, msg.QueryId)
+		fmt.Println(errMsg)
 		k.Logger(ctx).Error(errMsg)
 		return true, nil
 	}
@@ -155,43 +154,39 @@ func (k msgServer) SubmitQueryResponse(goCtx context.Context, msg *types.MsgSubm
 
 	// check if the response has an associated query stored on stride
 	q, found := k.GetQuery(ctx, msg.QueryId)
-	if found {
-
-		// 1. immediately delete the query so it cannot process again
-		k.DeleteQuery(ctx, msg.QueryId)
-
-		// 2. verify the query's ttl is unexpired
-		ttlEexceeded, err := k.HasQueryExceededTtl(ctx, msg, q)
-		if err != nil {
-			return nil, err
-		}
-		if ttlEexceeded {
-			k.Logger(ctx).Info(fmt.Sprintf("[ICQ Resp] %s's ttl exceeded: %d < %d.", msg.QueryId, q.Ttl, ctx.BlockHeader().Time.UnixNano()))
-			return &types.MsgSubmitQueryResponseResponse{}, nil
-		}
-
-		// 3. verify the response's proof, if one exists
-		err = k.VerifyKeyProof(ctx, msg, q)
-		if err != nil {
-			return nil, err
-		}
-
-		// 4. if the query is contentless, remove it from store and end
-		if len(msg.Result) == 0 {
-			k.Logger(ctx).Info(fmt.Sprintf("[ICQ Resp] query %s is contentless, removing from store.", msg.QueryId))
-			k.DeleteQuery(ctx, msg.QueryId)
-			return &types.MsgSubmitQueryResponseResponse{}, nil
-		}
-
-		// 5. call the query's associated callback function
-		err = k.InvokeCallback(ctx, msg, q)
-		if err != nil {
-			return nil, err
-		}
-
-	} else {
+	if !found {
 		k.Logger(ctx).Info("[ICQ Resp] ignoring non-existent query response (note: duplicate responses are nonexistent)")
 		return &types.MsgSubmitQueryResponseResponse{}, nil // technically this is an error, but will cause the entire tx to fail if we have one 'bad' message, so we can just no-op here.
+	}
+
+	// 1. verify the response's proof, if one exists
+	err := k.VerifyKeyProof(ctx, msg, q)
+	if err != nil {
+		return nil, err
+	}
+	// 2. immediately delete the query so it cannot process again
+	k.DeleteQuery(ctx, q.Id)
+
+	// 3. verify the query's ttl is unexpired
+	ttlExceeded, err := k.HasQueryExceededTtl(ctx, msg, q)
+	if err != nil {
+		return nil, err
+	}
+	if ttlExceeded {
+		k.Logger(ctx).Info(fmt.Sprintf("[ICQ Resp] %s's ttl exceeded: %d < %d.", msg.QueryId, q.Ttl, ctx.BlockHeader().Time.UnixNano()))
+		return &types.MsgSubmitQueryResponseResponse{}, nil
+	}
+
+	// 4. if the query is contentless, end
+	if len(msg.Result) == 0 {
+		k.Logger(ctx).Info(fmt.Sprintf("[ICQ Resp] query %s is contentless, removing from store.", msg.QueryId))
+		return &types.MsgSubmitQueryResponseResponse{}, nil
+	}
+
+	// 5. call the query's associated callback function
+	err = k.InvokeCallback(ctx, msg, q)
+	if err != nil {
+		return nil, err
 	}
 
 	ctx.EventManager().EmitEvents(sdk.Events{
