@@ -53,3 +53,14 @@ func TestEpochUnbondingRecordGetAll(t *testing.T) {
 		nullify.Fill(keeper.GetAllEpochUnbondingRecord(ctx)),
 	)
 }
+
+func TestGetAllPreviousEpochUnbondingRecords(t *testing.T) {
+	keeper, ctx := keepertest.RecordsKeeper(t)
+	items := createNEpochUnbondingRecord(keeper, ctx, 10)
+	currentEpoch := uint64(8)
+	fetchedItems := items[:currentEpoch]
+	require.ElementsMatch(t,
+		nullify.Fill(fetchedItems),
+		nullify.Fill(keeper.GetAllPreviousEpochUnbondingRecords(ctx, currentEpoch)),
+	)
+}

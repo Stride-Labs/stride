@@ -302,45 +302,50 @@ func (k Keeper) SubmitTxs(
 	return sequence, nil
 }
 
-func (k Keeper) GetLightClientHeightSafely(ctx sdk.Context, connectionID string) (uint64, bool) {
+func (k Keeper) GetLightClientHeightSafely(ctx sdk.Context, connectionID string) (uint64, error) {
 	// get light client's latest height
 	conn, found := k.IBCKeeper.ConnectionKeeper.GetConnection(ctx, connectionID)
 	if !found {
-		k.Logger(ctx).Error(fmt.Sprintf("invalid connection id, \"%s\" not found", connectionID))
-		return 0, false
+		errMsg := fmt.Sprintf("invalid connection id, \"%s\" not found", connectionID)
+		k.Logger(ctx).Error(errMsg)
+		return 0, fmt.Errorf(errMsg)
 	}
 	//TODO(TEST-112) make sure to update host LCs here!
 	clientState, found := k.IBCKeeper.ClientKeeper.GetClientState(ctx, conn.ClientId)
 	if !found {
-		k.Logger(ctx).Error(fmt.Sprintf("client id \"%s\" not found for connection \"%s\"", conn.ClientId, connectionID))
-		return 0, false
+		errMsg := fmt.Sprintf("client id \"%s\" not found for connection \"%s\"", conn.ClientId, connectionID)
+		k.Logger(ctx).Error(errMsg)
+		return 0, fmt.Errorf(errMsg)
 	} else {
 		// TODO(TEST-119) get stAsset supply at SAME time as hostZone height
 		latestHeightHostZone, err := cast.ToUint64E(clientState.GetLatestHeight().GetRevisionHeight())
 		if err != nil {
-			k.Logger(ctx).Error(fmt.Sprintf("error casting latest height to int64: %s", err.Error()))
-			return 0, false
+			errMsg := fmt.Sprintf("error casting latest height to int64: %s", err.Error())
+			k.Logger(ctx).Error(errMsg)
+			return 0, fmt.Errorf(errMsg)
 		}
-		return latestHeightHostZone, true
+		return latestHeightHostZone, nil
 	}
 }
 
-func (k Keeper) GetLightClientTimeSafely(ctx sdk.Context, connectionID string) (uint64, bool) {
+func (k Keeper) GetLightClientTimeSafely(ctx sdk.Context, connectionID string) (uint64, error) {
 
 	// get light client's latest height
 	conn, found := k.IBCKeeper.ConnectionKeeper.GetConnection(ctx, connectionID)
 	if !found {
-		k.Logger(ctx).Error(fmt.Sprintf("invalid connection id, \"%s\" not found", connectionID))
-		return 0, false
+		errMsg := fmt.Sprintf("invalid connection id, \"%s\" not found", connectionID)
+		k.Logger(ctx).Error(errMsg)
+		return 0, fmt.Errorf(errMsg)
 	}
 	//TODO(TEST-112) make sure to update host LCs here!
 	latestConsensusClientState, found := k.IBCKeeper.ClientKeeper.GetLatestClientConsensusState(ctx, conn.ClientId)
 	if !found {
-		k.Logger(ctx).Error(fmt.Sprintf("client id \"%s\" not found for connection \"%s\"", conn.ClientId, connectionID))
-		return 0, false
+		errMsg := fmt.Sprintf("client id \"%s\" not found for connection \"%s\"", conn.ClientId, connectionID)
+		k.Logger(ctx).Error(errMsg)
+		return 0, fmt.Errorf(errMsg)
 	} else {
 		latestTime := latestConsensusClientState.GetTimestamp()
-		return latestTime, true
+		return latestTime, nil
 	}
 }
 
@@ -357,8 +362,9 @@ func (k Keeper) QueryValidatorExchangeRate(ctx sdk.Context, msg *types.MsgUpdate
 
 	hostZone, found := k.GetHostZone(ctx, msg.ChainId)
 	if !found {
-		k.Logger(ctx).Error(fmt.Sprintf("Host Zone not found for denom (%s)", msg.ChainId))
-		return nil, sdkerrors.Wrapf(types.ErrInvalidHostZone, "no host zone found for denom (%s)", msg.ChainId)
+		errMsg := fmt.Sprintf("Host zone not found (%s)", msg.ChainId)
+		k.Logger(ctx).Error(errMsg)
+		return nil, sdkerrors.Wrapf(types.ErrInvalidHostZone, errMsg)
 	}
 
 	// check that the validator address matches the bech32 prefix of the hz
@@ -373,14 +379,14 @@ func (k Keeper) QueryValidatorExchangeRate(ctx sdk.Context, msg *types.MsgUpdate
 	data := stakingtypes.GetValidatorKey(valAddr)
 
 	// get ttl
-	ttl, err := k.GetStartTimeNextEpoch(ctx, epochstypes.DAY_EPOCH)
+	ttl, err := k.GetStartTimeNextEpoch(ctx, epochstypes.STRIDE_EPOCH)
 	if err != nil {
 		errMsg := fmt.Sprintf("could not get start time for next epoch: %s", err.Error())
 		k.Logger(ctx).Error(errMsg)
 		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, errMsg)
 	}
 
-	k.Logger(ctx).Info(fmt.Sprintf("Querying validator %v key %v denom %v", valAddr, icqtypes.STAKING_STORE_QUERY_WITH_PROOF, hostZone.HostDenom))
+	k.Logger(ctx).Info(fmt.Sprintf("Querying validator %v, key %v, denom %v", msg.Valoper, icqtypes.STAKING_STORE_QUERY_WITH_PROOF, hostZone.ChainId))
 	err = k.InterchainQueryKeeper.MakeRequest(
 		ctx,
 		hostZone.ConnectionId,
@@ -415,8 +421,9 @@ func (k Keeper) QueryDelegationsIcq(ctx sdk.Context, hostZone types.HostZone, va
 
 	delegationIca := hostZone.GetDelegationAccount()
 	if delegationIca == nil || delegationIca.GetAddress() == "" {
-		k.Logger(ctx).Error(fmt.Sprintf("Zone %s is missing a delegation address!", hostZone.ChainId))
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, fmt.Sprintf("Invalid delegation account (%s)", err))
+		errMsg := fmt.Sprintf("Zone %s is missing a delegation address!", hostZone.ChainId)
+		k.Logger(ctx).Error(errMsg)
+		return sdkerrors.Wrapf(types.ErrICAAccountNotFound, errMsg)
 	}
 	delegationAcctAddr := delegationIca.GetAddress()
 	_, valAddr, _ := bech32.DecodeAndConvert(valoper)
@@ -424,14 +431,14 @@ func (k Keeper) QueryDelegationsIcq(ctx sdk.Context, hostZone types.HostZone, va
 	data := stakingtypes.GetDelegationKey(delAddr, valAddr)
 
 	// get ttl
-	ttl, err := k.GetStartTimeNextEpoch(ctx, epochstypes.DAY_EPOCH)
+	ttl, err := k.GetStartTimeNextEpoch(ctx, epochstypes.STRIDE_EPOCH)
 	if err != nil {
 		errMsg := fmt.Sprintf("could not get start time for next epoch: %s", err.Error())
 		k.Logger(ctx).Error(errMsg)
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, errMsg)
 	}
 
-	k.Logger(ctx).Info(fmt.Sprintf("Querying delegation for %s on %s", delAddr, valoper))
+	k.Logger(ctx).Info(fmt.Sprintf("Querying delegation for %s on %s", delegationAcctAddr, valoper))
 	err = k.InterchainQueryKeeper.MakeRequest(
 		ctx,
 		hostZone.ConnectionId,

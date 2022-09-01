@@ -28,30 +28,34 @@ func (k msgServer) ClaimUndelegatedTokens(goCtx context.Context, msg *types.MsgC
 	k.Logger(ctx).Info(fmt.Sprintf("ClaimUndelegatedTokens %v", msg))
 	userRedemptionRecord, err := k.GetClaimableRedemptionRecord(ctx, msg)
 	if err != nil {
-		return nil, sdkerrors.Wrapf(err, "unable to find claimable redemption record")
+		errMsg := fmt.Sprintf("unable to find claimable redemption record for msg: %v, error %s", msg, err.Error())
+		k.Logger(ctx).Error(errMsg)
+		return nil, sdkerrors.Wrap(types.ErrRecordNotFound, errMsg)
 	}
 
 	icaTx, err := k.GetRedemptionTransferMsg(ctx, userRedemptionRecord, msg.HostZoneId)
 	if err != nil {
-		return nil, sdkerrors.Wrapf(err, "unable to build redemption transfer message")
+		return nil, sdkerrors.Wrap(err, "unable to build redemption transfer message")
 	}
 
 	// add callback data
 	claimCallback := types.ClaimCallback{
 		UserRedemptionRecordId: userRedemptionRecord.Id,
+		ChainId:                msg.HostZoneId,
+		EpochNumber:            msg.Epoch,
 	}
 	marshalledCallbackArgs, err := k.MarshalClaimCallbackArgs(ctx, claimCallback)
 	if err != nil {
-		return nil, sdkerrors.Wrapf(err, "unable to marshal claim callback args")
+		return nil, sdkerrors.Wrap(err, "unable to marshal claim callback args")
 	}
 	_, err = k.SubmitTxs(ctx, icaTx.ConnectionId, icaTx.Msgs, icaTx.Account, icaTx.Timeout, CLAIM, marshalledCallbackArgs)
 	if err != nil {
 		k.Logger(ctx).Error(fmt.Sprintf("Submit tx error: %s", err.Error()))
-		return nil, sdkerrors.Wrapf(err, "unable to submit ICA redemption tx")
+		return nil, sdkerrors.Wrap(err, "unable to submit ICA redemption tx")
 	}
 
-	// Set isClaimable to false, so that the record can't be claimed again
-	userRedemptionRecord.IsClaimable = false
+	// Set claimIsPending to true, so that the record can't be double claimed
+	userRedemptionRecord.ClaimIsPending = true
 	k.RecordsKeeper.SetUserRedemptionRecord(ctx, *userRedemptionRecord)
 
 	return &types.MsgClaimUndelegatedTokensResponse{}, nil
@@ -64,14 +68,27 @@ func (k Keeper) GetClaimableRedemptionRecord(ctx sdk.Context, msg *types.MsgClai
 	if !found {
 		errMsg := fmt.Sprintf("User redemption record %s not found on host zone %s", userRedemptionRecordKey, msg.HostZoneId)
 		k.Logger(ctx).Error(errMsg)
-		return nil, sdkerrors.Wrapf(types.ErrInvalidUserRedemptionRecord, "could not get user redemption record: %s", userRedemptionRecordKey)
+		return nil, sdkerrors.Wrap(types.ErrInvalidUserRedemptionRecord, errMsg)
 	}
 
 	// check that the record is claimable
-	if !userRedemptionRecord.GetIsClaimable() {
-		errMsg := fmt.Sprintf("User redemption record %s is not claimable", userRedemptionRecord.Id)
+	hostZoneUnbonding, found := k.RecordsKeeper.GetHostZoneUnbondingByChainId(ctx, userRedemptionRecord.EpochNumber, msg.HostZoneId)
+	if !found {
+		errMsg := fmt.Sprintf("Host zone unbonding record %s not found on host zone %s", userRedemptionRecordKey, msg.HostZoneId)
 		k.Logger(ctx).Error(errMsg)
-		return nil, sdkerrors.Wrapf(types.ErrInvalidUserRedemptionRecord, "user redemption record is not claimable: %s", userRedemptionRecordKey)
+		return nil, sdkerrors.Wrapf(types.ErrInvalidUserRedemptionRecord, errMsg)
+	}
+	// records associated with host zone unbondings are claimable after the host zone unbonding tokens have been transferred to the redemption account
+	if hostZoneUnbonding.Status != recordstypes.HostZoneUnbonding_TRANSFERRED {
+		errMsg := fmt.Sprintf("User redemption record %s is not claimable, host zone unbonding has status: %s, requires status TRANSFERRED", userRedemptionRecord.Id, hostZoneUnbonding.Status)
+		k.Logger(ctx).Error(errMsg)
+		return nil, sdkerrors.Wrapf(types.ErrInvalidUserRedemptionRecord, errMsg)
+	}
+	// records that have claimIsPending set to True have already been claimed (and are pending an ack)
+	if userRedemptionRecord.ClaimIsPending {
+		errMsg := fmt.Sprintf("User redemption record %s is not claimable, pending ack", userRedemptionRecord.Id)
+		k.Logger(ctx).Error(errMsg)
+		return nil, sdkerrors.Wrapf(types.ErrInvalidUserRedemptionRecord, errMsg)
 	}
 	return &userRedemptionRecord, nil
 }

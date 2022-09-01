@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"strconv"
 
+	ibctransfertypes "github.com/cosmos/ibc-go/v3/modules/apps/transfer/types"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	ibctypes "github.com/cosmos/ibc-go/v3/modules/apps/transfer/types"
 	clienttypes "github.com/cosmos/ibc-go/v3/modules/core/02-client/types"
@@ -39,7 +41,7 @@ func (k Keeper) TransferExistingDepositsToHostZones(ctx sdk.Context, epochNumber
 		return isTransferRecord && isBeforeCurrentEpoch
 	})
 
-	ibcTimeoutBlocks := k.GetParam(ctx, types.KeyIbcTimeoutBlocks)
+	ibcTransferTimeoutNanos := k.GetParam(ctx, types.KeyIBCTransferTimeoutNanos)
 
 	for _, depositRecord := range transferDepositRecords {
 		pstr := fmt.Sprintf("\t[TransferExistingDepositsToHostZones] Processing deposits {%d} {%s} {%d}", depositRecord.Id, depositRecord.Denom, depositRecord.Amount)
@@ -66,23 +68,20 @@ func (k Keeper) TransferExistingDepositsToHostZones(ctx sdk.Context, epochNumber
 		}
 		delegateAddress := delegateAccount.GetAddress()
 
-		blockHeight, found := k.GetLightClientHeightSafely(ctx, hostZone.ConnectionId)
-		if !found {
-			k.Logger(ctx).Error(fmt.Sprintf("Could not find blockHeight for host zone %s, aborting transfers to host zone this epoch", hostZone.ConnectionId))
-			continue
-		} else {
-			k.Logger(ctx).Info(fmt.Sprintf("Found blockHeight for host zone %s: %d", hostZone.ConnectionId, blockHeight))
-		}
-
-		timeoutHeight := clienttypes.NewHeight(0, blockHeight+ibcTimeoutBlocks)
 		transferCoin := sdk.NewCoin(hostZone.GetIBCDenom(), sdk.NewInt(depositRecord.Amount))
-		// QUESTION: Is there a good place to store "tranfer" as a constant?
-		msg := ibctypes.NewMsgTransfer("transfer", hostZone.TransferChannelId, transferCoin, hostZoneModuleAddress, delegateAddress, timeoutHeight, 0)
+		// timeout 30 min in the future
+		// NOTE: this assumes no clock drift between chains, which tendermint guarantees
+		// if we onboard non-tendermint chains, we need to use the time on the host chain to
+		// calculate the timeout
+		// https://github.com/tendermint/tendermint/blob/v0.34.x/spec/consensus/bft-time.md
+		timeoutTimestamp := uint64(ctx.BlockTime().UnixNano()) + ibcTransferTimeoutNanos
+		msg := ibctypes.NewMsgTransfer(ibctransfertypes.PortID, hostZone.TransferChannelId, transferCoin, hostZoneModuleAddress, delegateAddress, clienttypes.Height{}, timeoutTimestamp)
 		k.Logger(ctx).Info(fmt.Sprintf("TransferExistingDepositsToHostZones msg %v", msg))
 
 		err := k.RecordsKeeper.Transfer(ctx, msg, depositRecord.Id)
 		if err != nil {
-			k.Logger(ctx).Error(fmt.Sprintf("\t[TransferExistingDepositsToHostZones] ERROR WITH DEPOSIT RECEIPT %s %v %s %s %v", hostZone.TransferChannelId, transferCoin, hostZoneModuleAddress, delegateAddress, timeoutHeight))
+			k.Logger(ctx).Error(fmt.Sprintf("\t[TransferExistingDepositsToHostZones] Failed to initiate IBC transfer to host zone, HostZone: %v, Channel: %v, Amount: %v, ModuleAddress: %v, DelegateAddress: %v, Timeout: %v",
+				hostZone.ChainId, hostZone.TransferChannelId, transferCoin, hostZoneModuleAddress, delegateAddress, timeoutTimestamp))
 			k.Logger(ctx).Error(fmt.Sprintf("\t[TransferExistingDepositsToHostZones] err {%s}", err.Error()))
 			continue
 		}

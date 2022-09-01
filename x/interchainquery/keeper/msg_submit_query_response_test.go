@@ -29,8 +29,8 @@ func (s *KeeperTestSuite) SetupMsgSubmitQueryResponse() MsgSubmitQueryResponseTe
 
 	// define the query
 	goCtx := sdk.WrapSDKContext(s.Ctx())
-	h, found := s.App.StakeibcKeeper.GetLightClientHeightSafely(s.Ctx(), s.TransferPath.EndpointA.ConnectionID)
-	s.Require().True(found)
+	h, err := s.App.StakeibcKeeper.GetLightClientHeightSafely(s.Ctx(), s.TransferPath.EndpointA.ConnectionID)
+	s.Require().NoError(err)
 	height := int64(h - 1) // start at the (LC height) - 1  height, which is the height the query executes at!
 	result := []byte("result-example")
 	proofOps := crypto.ProofOps{}
@@ -162,7 +162,7 @@ func (s *KeeperTestSuite) TestMsgSubmitQueryResponse_FindAndInvokeCallback_Wrong
 	// rather than testing by executing the callback in its entirety,
 	//   check by invoking it without a registered host zone and catching the appropriate error
 	err := s.App.InterchainqueryKeeper.InvokeCallback(s.Ctx(), &tc.validMsg, tc.query)
-	s.Require().ErrorContains(err, "WithdrawalBalanceCallback: no registered zone for chain id", "callback was invoked")
+	s.Require().ErrorContains(err, "no registered zone for queried chain ID", "callback was invoked")
 
 }
 
