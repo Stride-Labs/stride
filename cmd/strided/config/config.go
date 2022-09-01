@@ -26,9 +26,9 @@ const (
 )
 
 const (
-	HumanCoinUnit    = "Stride"
-	BaseCoinUnit     = "strd"
-	DefaultBondDenom = BaseCoinUnit
+	HumanReadableCoinUnit = "STRD"
+	BaseCoinUnit          = "strd"
+	DefaultBondDenom      = BaseCoinUnit
 )
 
 func SetupConfig() {
@@ -58,7 +58,7 @@ func SetBip44CoinType(config *sdk.Config) {
 
 // RegisterDenoms registers the base and display denominations to the SDK.
 func RegisterDenoms() {
-	if err := sdk.RegisterDenom(HumanCoinUnit, sdk.OneDec()); err != nil {
+	if err := sdk.RegisterDenom(HumanReadableCoinUnit, sdk.OneDec()); err != nil {
 		panic(err)
 	}
 

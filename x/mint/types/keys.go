@@ -22,11 +22,11 @@ const (
 	QueryParameters      = "parameters"
 	QueryEpochProvisions = "epoch_provisions"
 
-	// key for creating a new module account
-	SubmoduleAccountKey = "submodule"
+	// submodule account types
+	CommunityGrowthSubmoduleName         = "growth"
+	CommunitySecurityBudgetSubmoduleName = "security-budget"
+	CommunityUsageSubmoduleName          = "usage"
 
-	// submodule names
-	CommunityGrowthSubmoduleName         = "community-growth"
-	CommunitySecurityBudgetSubmoduleName = "community-security-budget"
-	CommunityUsageSubmoduleName          = "community-usage"
+	// key for creating a new module namespace of type "community"
+	SubmoduleCommunityNamespaceKey = "commmunity"
 )

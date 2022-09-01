@@ -185,8 +185,9 @@ var (
 
 	// module account permissions
 	maccPerms = map[string][]string{
-		authtypes.FeeCollectorName:      nil,
-		distrtypes.ModuleName:           nil,
+		authtypes.FeeCollectorName: nil,
+		distrtypes.ModuleName:      nil,
+		// mint module needs burn access to remove excess validator tokens (it overallocates, then burns)
 		minttypes.ModuleName:            {authtypes.Minter, authtypes.Burner},
 		stakingtypes.BondedPoolName:     {authtypes.Burner, authtypes.Staking},
 		stakingtypes.NotBondedPoolName:  {authtypes.Burner, authtypes.Staking},

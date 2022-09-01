@@ -17,10 +17,10 @@ func InitGenesis(ctx sdk.Context, keeper keeper.Keeper, ak types.AccountKeeper, 
 		ak.GetModuleAccount(ctx, types.ModuleName)
 	}
 
-	// set up new module accounts
-	keeper.SetupNewModuleAccount(ctx, types.CommunityGrowthSubmoduleName)
-	keeper.SetupNewModuleAccount(ctx, types.CommunitySecurityBudgetSubmoduleName)
-	keeper.SetupNewModuleAccount(ctx, types.CommunityUsageSubmoduleName)
+	// set up new community module accounts
+	keeper.SetupNewModuleAccount(ctx, types.CommunityGrowthSubmoduleName, types.SubmoduleCommunityNamespaceKey)
+	keeper.SetupNewModuleAccount(ctx, types.CommunitySecurityBudgetSubmoduleName, types.SubmoduleCommunityNamespaceKey)
+	keeper.SetupNewModuleAccount(ctx, types.CommunityUsageSubmoduleName, types.SubmoduleCommunityNamespaceKey)
 
 	keeper.SetLastReductionEpochNum(ctx, data.ReductionStartedEpoch)
 }
