@@ -99,15 +99,21 @@ func (k *Keeper) ClaimCapability(ctx sdk.Context, cap *capabilitytypes.Capabilit
 func (k Keeper) GetChainID(ctx sdk.Context, connectionID string) (string, error) {
 	conn, found := k.IBCKeeper.ConnectionKeeper.GetConnection(ctx, connectionID)
 	if !found {
-		return "", fmt.Errorf("invalid connection id, \"%s\" not found", connectionID)
+		errMsg := fmt.Sprintf("invalid connection id, %s not found", connectionID)
+		k.Logger(ctx).Error(errMsg)
+		return "", fmt.Errorf(errMsg)
 	}
 	clientState, found := k.IBCKeeper.ClientKeeper.GetClientState(ctx, conn.ClientId)
 	if !found {
-		return "", fmt.Errorf("client id \"%s\" not found for connection \"%s\"", conn.ClientId, connectionID)
+		errMsg := fmt.Sprintf("client id %s not found for connection %s", conn.ClientId, connectionID)
+		k.Logger(ctx).Error(errMsg)
+		return "", fmt.Errorf(errMsg)
 	}
 	client, ok := clientState.(*ibctmtypes.ClientState)
 	if !ok {
-		return "", fmt.Errorf("invalid client state for client \"%s\" on connection \"%s\"", conn.ClientId, connectionID)
+		errMsg := fmt.Sprintf("invalid client state for client %s on connection %s", conn.ClientId, connectionID)
+		k.Logger(ctx).Error(errMsg)
+		return "", fmt.Errorf(errMsg)
 	}
 
 	return client.ChainId, nil
@@ -116,15 +122,21 @@ func (k Keeper) GetChainID(ctx sdk.Context, connectionID string) (string, error)
 func (k Keeper) GetCounterpartyChainId(ctx sdk.Context, connectionID string) (string, error) {
 	conn, found := k.IBCKeeper.ConnectionKeeper.GetConnection(ctx, connectionID)
 	if !found {
-		return "", fmt.Errorf("invalid connection id, \"%s\" not found", connectionID)
+		errMsg := fmt.Sprintf("invalid connection id, %s not found", connectionID)
+		k.Logger(ctx).Error(errMsg)
+		return "", fmt.Errorf(errMsg)
 	}
 	counterPartyClientState, found := k.IBCKeeper.ClientKeeper.GetClientState(ctx, conn.Counterparty.ClientId)
 	if !found {
-		return "", fmt.Errorf("counterparty client id \"%s\" not found for connection \"%s\"", conn.Counterparty.ClientId, connectionID)
+		errMsg := fmt.Sprintf("counterparty client id %s not found for connection %s", conn.Counterparty.ClientId, connectionID)
+		k.Logger(ctx).Error(errMsg)
+		return "", fmt.Errorf(errMsg)
 	}
 	counterpartyClient, ok := counterPartyClientState.(*ibctmtypes.ClientState)
 	if !ok {
-		return "", fmt.Errorf("invalid client state for client \"%s\" on connection \"%s\"", conn.Counterparty.ClientId, connectionID)
+		errMsg := fmt.Sprintf("invalid client state for client %s on connection %s", conn.Counterparty.ClientId, connectionID)
+		k.Logger(ctx).Error(errMsg)
+		return "", fmt.Errorf(errMsg)
 	}
 
 	return counterpartyClient.ChainId, nil
@@ -137,7 +149,9 @@ func (k Keeper) GetConnectionId(ctx sdk.Context, portId string) (string, error) 
 			return ica.ConnectionId, nil
 		}
 	}
-	return "", fmt.Errorf("portId %s has no associated connectionId", portId)
+	errMsg := fmt.Sprintf("portId %s has no associated connectionId", portId)
+	k.Logger(ctx).Error(errMsg)
+	return "", fmt.Errorf(errMsg)
 }
 
 // helper to get what share of the curr epoch we're through

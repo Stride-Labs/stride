@@ -27,20 +27,28 @@ func (k msgServer) RegisterHostZone(goCtx context.Context, msg *types.MsgRegiste
 	// get zone
 	_, found := k.GetHostZone(ctx, chainId)
 	if found {
-		return nil, fmt.Errorf("invalid chain id, zone for \"%s\" already registered", chainId)
+		errMsg := fmt.Sprintf("invalid chain id, zone for %s already registered", chainId)
+		k.Logger(ctx).Error(errMsg)
+		return nil, fmt.Errorf(errMsg)
 	}
 
 	// check the denom is not already registered
 	hostZones := k.GetAllHostZone(ctx)
 	for _, hostZone := range hostZones {
 		if hostZone.HostDenom == msg.HostDenom {
-			return nil, fmt.Errorf("host denom \"%s\" already registered", msg.HostDenom)
+			errMsg := fmt.Sprintf("host denom %s already registered", msg.HostDenom)
+			k.Logger(ctx).Error(errMsg)
+			return nil, fmt.Errorf(errMsg)
 		}
 		if hostZone.ConnectionId == msg.ConnectionId {
-			return nil, fmt.Errorf("connectionId \"%s\" already registered", msg.HostDenom)
+			errMsg := fmt.Sprintf("connectionId %s already registered", msg.ConnectionId)
+			k.Logger(ctx).Error(errMsg)
+			return nil, fmt.Errorf(errMsg)
 		}
 		if hostZone.Bech32Prefix == msg.Bech32Prefix {
-			return nil, fmt.Errorf("host denom \"%s\" already registered", msg.HostDenom)
+			errMsg := fmt.Sprintf("bech32prefix %s already registered", msg.Bech32Prefix)
+			k.Logger(ctx).Error(errMsg)
+			return nil, fmt.Errorf(errMsg)
 		}
 	}
 
@@ -122,8 +130,9 @@ func (k msgServer) RegisterHostZone(goCtx context.Context, msg *types.MsgRegiste
 	}
 	updatedEpochUnbondingRecord, success := k.RecordsKeeper.AddHostZoneToEpochUnbondingRecord(ctx, epochUnbondingRecord.EpochNumber, chainId, hostZoneUnbonding)
 	if !success {
-		k.Logger(ctx).Error(fmt.Sprintf("Failed to set host zone epoch unbonding record: epochNumber %d, chainId %s, hostZoneUnbonding %v", epochUnbondingRecord.EpochNumber, chainId, hostZoneUnbonding))
-		return nil, sdkerrors.Wrapf(types.ErrEpochNotFound, "couldn't set host zone epoch unbonding record. err: %s", err.Error())
+		errMsg := fmt.Sprintf("Failed to set host zone epoch unbonding record: epochNumber %d, chainId %s, hostZoneUnbonding %v. Err: %s", epochUnbondingRecord.EpochNumber, chainId, hostZoneUnbonding, err.Error())
+		k.Logger(ctx).Error(errMsg)
+		return nil, sdkerrors.Wrapf(types.ErrEpochNotFound, errMsg)
 	}
 	k.RecordsKeeper.SetEpochUnbondingRecord(ctx, *updatedEpochUnbondingRecord)
 
