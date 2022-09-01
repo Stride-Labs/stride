@@ -185,9 +185,10 @@ var (
 
 	// module account permissions
 	maccPerms = map[string][]string{
-		authtypes.FeeCollectorName:      nil,
-		distrtypes.ModuleName:           nil,
-		minttypes.ModuleName:            {authtypes.Minter},
+		authtypes.FeeCollectorName: nil,
+		distrtypes.ModuleName:      nil,
+		// mint module needs burn access to remove excess validator tokens (it overallocates, then burns)
+		minttypes.ModuleName:            {authtypes.Minter, authtypes.Burner},
 		stakingtypes.BondedPoolName:     {authtypes.Burner, authtypes.Staking},
 		stakingtypes.NotBondedPoolName:  {authtypes.Burner, authtypes.Staking},
 		govtypes.ModuleName:             {authtypes.Burner},
@@ -496,6 +497,7 @@ func NewStrideApp(
 	app.EpochsKeeper = *epochsKeeper.SetHooks(
 		epochsmoduletypes.NewMultiEpochHooks(
 			app.StakeibcKeeper.Hooks(),
+			app.MintKeeper.Hooks(),
 		),
 	)
 	epochsModule := epochsmodule.NewAppModule(appCodec, app.EpochsKeeper)
