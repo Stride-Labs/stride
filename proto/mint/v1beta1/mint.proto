@@ -18,6 +18,7 @@ message Minter {
   ];
 }
 
+// next id: 5
 message DistributionProportions {
   // staking defines the proportion of the minted minted_denom that is to be
   // allocated as staking rewards.
@@ -26,23 +27,23 @@ message DistributionProportions {
     (gogoproto.moretags) = "yaml:\"staking\"",
     (gogoproto.nullable) = false
   ];
-  // pool_incentives defines the proportion of the minted minted_denom that is
-  // to be allocated as pool incentives.
-  string pool_incentives = 2 [
+  // community_pool defines the proportion of the minted mint_denom that is
+  // to be allocated to the community pool: growth.
+  string community_pool_growth = 2 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
-    (gogoproto.moretags) = "yaml:\"pool_incentives\"",
+    (gogoproto.moretags) = "yaml:\"community_pool\"",
     (gogoproto.nullable) = false
   ];
-  // participation_rewards defines the proportion of the minted minted_denom that is
-  // to be allocated to participation rewards address.
-  string participation_rewards = 3 [
+  // community_pool defines the proportion of the minted mint_denom that is
+  // to be allocated to the community pool: security budget.
+  string community_pool_security_budget = 3 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
-    (gogoproto.moretags) = "yaml:\"participation_rewards\"",
+    (gogoproto.moretags) = "yaml:\"community_pool\"",
     (gogoproto.nullable) = false
   ];
-  // community_pool defines the proportion of the minted minted_denom that is
-  // to be allocated to the community pool.
-  string community_pool = 4 [
+   // strategic_reserve defines the proportion of the minted mint_denom that is
+  // to be allocated to the pool: strategic reserve.
+  string strategic_reserve = 4 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.moretags) = "yaml:\"community_pool\"",
     (gogoproto.nullable) = false
