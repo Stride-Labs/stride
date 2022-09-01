@@ -156,7 +156,7 @@ func (s *KeeperTestSuite) TestClaimCallback_Successful() {
 func (s *KeeperTestSuite) checkClaimStateIfCallbackFailed(tc ClaimCallbackTestCase) {
 	record, found := s.App.RecordsKeeper.GetUserRedemptionRecord(s.Ctx(), tc.initialState.callbackArgs.UserRedemptionRecordId)
 	s.Require().True(found)
-	s.Require().True(record.ClaimIsPending, "record is set to claimIsPending = false (if the callback failed, it should be reset to false so that users can retry the claim)")
+	s.Require().False(record.ClaimIsPending, "record is set to claimIsPending = false (if the callback failed, it should be reset to false so that users can retry the claim)")
 }
 
 func (s *KeeperTestSuite) TestClaimCallback_ClaimCallbackTimeout() {
