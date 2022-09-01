@@ -139,7 +139,7 @@ func (s *KeeperTestSuite) TestRedeemStake_Successful() {
 	s.Require().Equal(expectedHostZoneUnbondingNativeAmount, actualHostZoneUnbondingNativeAmount, "host zone native unbonding amount")
 	s.Require().Equal(expectedHostZoneUnbondingStTokenAmount, actualHostZoneUnbondingStTokenAmount, "host zone stToken burn amount")
 
-	// UserRedemptionRecord should have been created with correct amount, sender, receiver, host zone, isClaimable
+	// UserRedemptionRecord should have been created with correct amount, sender, receiver, host zone, claimIsPending
 	userRedemptionRecords := hostZoneUnbonding.UserRedemptionRecords
 	s.Require().Equal(len(userRedemptionRecords), 1)
 	userRedemptionRecordId := userRedemptionRecords[0]
@@ -153,8 +153,8 @@ func (s *KeeperTestSuite) TestRedeemStake_Successful() {
 	s.Require().Equal(msg.Receiver, userRedemptionRecord.Receiver, "redemption record receiver")
 	// check host zone
 	s.Require().Equal(msg.HostZone, userRedemptionRecord.HostZoneId, "redemption record host zone")
-	// check isClaimable
-	s.Require().True(userRedemptionRecord.IsClaimable, "redemption record should be marked claimable")
+	// check claimIsPending
+	s.Require().False(userRedemptionRecord.claimIsPending, "redemption record should be marked claimable")
 	s.Require().NotEqual(hostZoneUnbonding.Status, recordtypes.HostZoneUnbonding_TRANSFERRED, "host zone unbonding should NOT be marked as TRANSFERRED")
 }
 

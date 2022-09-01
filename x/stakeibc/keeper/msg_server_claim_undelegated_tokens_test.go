@@ -48,14 +48,14 @@ func (s *KeeperTestSuite) SetupClaimUndelegatedTokens() ClaimUndelegatedTestCase
 	}
 
 	redemptionRecord := recordtypes.UserRedemptionRecord{
-		Id:          redemptionRecordId,
-		HostZoneId:  HostChainId,
-		EpochNumber: epochNumber,
-		Sender:      senderAddr,
-		Receiver:    receiverAddr,
-		Denom:       "uatom",
-		IsClaimable: true,
-		Amount:      1000,
+		Id:             redemptionRecordId,
+		HostZoneId:     HostChainId,
+		EpochNumber:    epochNumber,
+		Sender:         senderAddr,
+		Receiver:       receiverAddr,
+		Denom:          "uatom",
+		claimIsPending: false,
+		Amount:         1000,
 	}
 	redemptionAmount := sdk.NewCoins(sdk.NewInt64Coin(redemptionRecord.Denom, int64(redemptionRecord.Amount)))
 
@@ -115,7 +115,7 @@ func (s *KeeperTestSuite) TestClaimUndelegatedTokens_Successful() {
 
 	actualRedemptionRecord, found := s.App.RecordsKeeper.GetUserRedemptionRecord(s.Ctx(), redemptionRecordId)
 	s.Require().True(found, "redemption record found")
-	s.Require().False(actualRedemptionRecord.IsClaimable, "redemption record should not be claimable")
+	s.Require().True(actualRedemptionRecord.claimIsPending, "redemption record should not be claimable")
 	s.Require().Equal(expectedRedemptionRecord.Amount, actualRedemptionRecord.Amount, "redemption record should not be claimable")
 	// TODO: check callback data here
 }
@@ -144,7 +144,7 @@ func (s *KeeperTestSuite) TestClaimUndelegatedTokens_RecordNotClaimable() {
 	tc := s.SetupClaimUndelegatedTokens()
 	// Mark redemption record as not claimable
 	alreadyClaimedRedemptionRecord := tc.initialState.redemptionRecord
-	alreadyClaimedRedemptionRecord.IsClaimable = false
+	alreadyClaimedRedemptionRecord.claimIsPending = true
 	s.App.RecordsKeeper.SetUserRedemptionRecord(s.Ctx(), alreadyClaimedRedemptionRecord)
 
 	_, err := s.GetMsgServer().ClaimUndelegatedTokens(sdk.WrapSDKContext(s.Ctx()), &tc.validMsg)

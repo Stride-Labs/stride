@@ -17,7 +17,7 @@ message UserRedemptionRecord {
   string denom = 5; 
   string hostZoneId = 6; 
   uint64 epochNumber = 7; 
-  bool isClaimable = 8;   
+  bool claimIsPending = 8;   
 }
 
 

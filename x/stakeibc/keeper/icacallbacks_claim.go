@@ -48,7 +48,7 @@ func ClaimCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ack *c
 	if ack == nil {
 		k.Logger(ctx).Error(fmt.Sprintf("ClaimCallback timeout, ack is nil, packet %v", packet))
 		// after a timeout, a user should be able to retry the claim
-		userRedemptionRecord.IsClaimable = true
+		userRedemptionRecord.claimIsPending = false
 		k.RecordsKeeper.SetUserRedemptionRecord(ctx, userRedemptionRecord)
 		return nil
 	}
@@ -64,7 +64,7 @@ func ClaimCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ack *c
 	if len(txMsgData.Data) == 0 {
 		k.Logger(ctx).Error(fmt.Sprintf("ClaimCallback failed, packet %v", packet))
 		// after an error, a user should be able to retry the claim
-		userRedemptionRecord.IsClaimable = true
+		userRedemptionRecord.claimIsPending = false
 		k.RecordsKeeper.SetUserRedemptionRecord(ctx, userRedemptionRecord)
 		return nil
 	}

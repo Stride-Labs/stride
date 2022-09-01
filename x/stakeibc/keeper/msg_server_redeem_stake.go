@@ -94,8 +94,8 @@ func (k msgServer) RedeemStake(goCtx context.Context, msg *types.MsgRedeemStake)
 		Denom:       hostZone.HostDenom,
 		HostZoneId:  hostZone.ChainId,
 		EpochNumber: epochTracker.EpochNumber,
-		// isClaimable represents whether a redemption is claimable, contingent on the host zone unbonding having status TRANSFERRED
-		IsClaimable: true,
+		// claimIsPending represents whether a redemption is claimable, contingent on the host zone unbonding having status TRANSFERRED
+		claimIsPending: false,
 	}
 	// then add undelegation amount to epoch unbonding records
 	epochUnbondingRecord, found := k.RecordsKeeper.GetEpochUnbondingRecord(ctx, epochTracker.EpochNumber)
