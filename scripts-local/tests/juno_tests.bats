@@ -195,14 +195,14 @@ setup() {
   # TODO(optimize tests) extra sleep just in case
   SENDER_ACCT=$STRIDE_VAL_ADDR
   old_sender_bal=$($JUNO_CMD q bank balances $JUNO_RECEIVER_ACCT --denom ujuno | GETBAL)
-  # TODO check that the UserRedemptionRecord has isClaimable = true
+  # TODO check that the UserRedemptionRecord has claimIsPending = false
   # grab the epoch number for the first deposit record in the list od DRs
   EPOCH=$(strided q records list-user-redemption-record  | grep -Fiw 'epochNumber' | head -n 1 | grep -o -E '[0-9]+')
   # claim the record
   $STRIDE_CMD tx stakeibc claim-undelegated-tokens JUNO $EPOCH $SENDER_ACCT --from val1 --keyring-backend test --chain-id STRIDE -y
   WAIT_FOR_STRING $STRIDE_LOGS '\[CLAIM\] success on JUNO'
   WAIT_FOR_BLOCK $STRIDE_LOGS 2
-  # TODO check that UserRedemptionRecord has isClaimable = false
+  # TODO check that UserRedemptionRecord has claimIsPending = true
   # check that the tokens were transferred to the sender account
   new_sender_bal=$($JUNO_CMD q bank balances $JUNO_RECEIVER_ACCT --denom ujuno | GETBAL)
   # check that the undelegated tokens were transfered to the sender account

@@ -34,16 +34,14 @@ type RedemptionCallbackTestCase struct {
 func (s *KeeperTestSuite) SetupRedemptionCallback() RedemptionCallbackTestCase {
 	epochNumber := uint64(1)
 
-	// userRedemptionRecords should NOT be claimable until after the callback is called
+	// individual userRedemptionRecords should be claimable, as long as the host zone unbonding allows for claims
 	recordId1 := recordtypes.UserRedemptionRecordKeyFormatter(HostChainId, epochNumber, "sender")
 	userRedemptionRecord1 := recordtypes.UserRedemptionRecord{
-		Id:          recordId1,
-		IsClaimable: false,
+		Id: recordId1,
 	}
 	recordId2 := recordtypes.UserRedemptionRecordKeyFormatter(HostChainId, epochNumber, "other_sender")
 	userRedemptionRecord2 := recordtypes.UserRedemptionRecord{
-		Id:          recordId2,
-		IsClaimable: false,
+		Id: recordId2,
 	}
 
 	// the hostZoneUnbonding should have HostZoneUnbonding_UNBONDED - meaning unbonding has completed, but the tokens
@@ -100,27 +98,19 @@ func (s *KeeperTestSuite) TestRedemptionCallback_Successful() {
 	validArgs := tc.validArgs
 
 	err := stakeibckeeper.RedemptionCallback(s.App.StakeibcKeeper, s.Ctx(), validArgs.packet, validArgs.ack, validArgs.args)
-	s.Require().NoError(err)
+	s.Require().NoError(err, "redemption callback succeeded")
 
 	for _, epochNumber := range initialState.epochUnbondingNumbers {
 		// fetch the epoch unbonding record
 		epochUnbondingRecord, found := s.App.RecordsKeeper.GetEpochUnbondingRecord(s.Ctx(), epochNumber)
-		s.Require().True(found)
+		s.Require().True(found, "epoch unbonding record found")
 		for _, hzu := range epochUnbondingRecord.HostZoneUnbondings {
 			// check that the status is transferred
 			if hzu.HostZoneId == HostChainId {
-				s.Require().Equal(recordtypes.HostZoneUnbonding_TRANSFERRED, hzu.Status)
+				s.Require().Equal(recordtypes.HostZoneUnbonding_TRANSFERRED, hzu.Status, "host zone unbonding status is TRANSFERRED")
 			}
 		}
 	}
-
-	// verify user redemption records are claimable
-	for _, userRedemptionRecordId := range initialState.userRedemptionRecordIds {
-		userRedemptionRecord, found := s.App.RecordsKeeper.GetUserRedemptionRecord(s.Ctx(), userRedemptionRecordId)
-		s.Require().True(found)
-		s.Require().True(userRedemptionRecord.IsClaimable)
-	}
-
 }
 
 func (s *KeeperTestSuite) checkRedemptionStateIfCallbackFailed(tc RedemptionCallbackTestCase) {
@@ -128,18 +118,11 @@ func (s *KeeperTestSuite) checkRedemptionStateIfCallbackFailed(tc RedemptionCall
 	for _, epochNumber := range initialState.epochUnbondingNumbers {
 		// fetch the epoch unbonding record
 		epochUnbondingRecord, found := s.App.RecordsKeeper.GetEpochUnbondingRecord(s.Ctx(), epochNumber)
-		s.Require().True(found)
+		s.Require().True(found, "epoch unbonding record found")
 		for _, hzu := range epochUnbondingRecord.HostZoneUnbondings {
 			// check that the status is NOT transferred
-			s.Require().Equal(recordtypes.HostZoneUnbonding_UNBONDED, hzu.Status)
+			s.Require().Equal(recordtypes.HostZoneUnbonding_UNBONDED, hzu.Status, "host zone unbonding status is NOT TRANSFERRED (UNBONDED)")
 		}
-	}
-
-	// verify user redemption records are NOT claimable
-	for _, userRedemptionRecordIds := range initialState.userRedemptionRecordIds {
-		userRedemptionRecord, found := s.App.RecordsKeeper.GetUserRedemptionRecord(s.Ctx(), userRedemptionRecordIds)
-		s.Require().True(found)
-		s.Require().False(userRedemptionRecord.IsClaimable)
 	}
 }
 
@@ -200,13 +183,4 @@ func (s *KeeperTestSuite) TestRedemptionCallback_HostZoneUnbondingNotFound() {
 	err := stakeibckeeper.RedemptionCallback(s.App.StakeibcKeeper, s.Ctx(), valid.packet, valid.ack, valid.args)
 	s.Require().EqualError(err, fmt.Sprintf("Could not find host zone unbonding %d for host zone GAIA: not found", tc.initialState.epochNumber))
 	s.checkRedemptionStateIfCallbackFailed(tc)
-}
-
-func (s *KeeperTestSuite) TestRedemptionCallback_UserRedemptionRecordNotFound() {
-	tc := s.SetupRedemptionCallback()
-	valid := tc.validArgs
-	recordId1 := tc.initialState.userRedemptionRecordIds[0]
-	s.App.RecordsKeeper.RemoveUserRedemptionRecord(s.Ctx(), recordId1)
-	err := stakeibckeeper.RedemptionCallback(s.App.StakeibcKeeper, s.Ctx(), valid.packet, valid.ack, valid.args)
-	s.Require().EqualError(err, fmt.Sprintf("no user redemption record found for id (%s): record not found", recordId1))
 }
