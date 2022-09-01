@@ -23,7 +23,7 @@ var (
 	DefaultIbcTimeoutBlocks                 uint64 = 300           // 300 blocks ~= 30 minutes
 	DefaultFeeTransferTimeoutNanos          uint64 = 1800000000000 // 30 minutes
 	DefaultSafetyMinRedemptionRateThreshold uint64 = 90            // divide by 100, so 90 = 0.9
-	DefaultSafetyMaxRedemptionRateThreshold uint64 = 300           // divide by 100, so 300 = 3
+	DefaultSafetyMaxRedemptionRateThreshold uint64 = 150           // divide by 100, so 150 = 1.5
 	DefaultMaxStakeICACallsPerEpoch         uint64 = 100
 	DefaultIBCTransferTimeoutNanos          uint64 = 1800000000000 // 30 minutes
 
