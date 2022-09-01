@@ -11,7 +11,7 @@ Closes: #XXX
 
 <!-- Add a description of the overall background and high level changes that this PR introduces
 
-*(E.g.: This pull request improves documation of area A by adding ....* -->
+*(E.g.: This pull request improves documentation of area A by adding ....* -->
 
 
 ## Brief Changelog
@@ -30,7 +30,7 @@ I have...
 - [ ] Run and PASSED locally all GAIA integration tests
 - [ ] If the change is contentful, I either:
     - [ ] Added a new unit test OR 
-    - [ ] Added test cases to existinig unit tests
+    - [ ] Added test cases to existing unit tests
 - [ ] OR this change is a trivial rework / code cleanup without any test coverage
 
 If skipped any of the tests above, explain.

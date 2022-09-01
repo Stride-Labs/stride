@@ -2,7 +2,7 @@ package keeper_test
 
 import (
 	// "fmt"
-	"fmt"
+
 	"math/rand"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -10,12 +10,11 @@ import (
 
 	recordtypes "github.com/Stride-Labs/stride/x/records/types"
 
-	// "github.com/Stride-Labs/stride/x/stakeibc/types"
-	stakeibc "github.com/Stride-Labs/stride/x/stakeibc/types"
+	stakeibctypes "github.com/Stride-Labs/stride/x/stakeibc/types"
 )
 
 type UpdateRedemptionRatesTestCase struct {
-	hostZone   stakeibc.HostZone
+	hostZone   stakeibctypes.HostZone
 	allRecords []recordtypes.DepositRecord
 }
 
@@ -48,12 +47,12 @@ func (s *KeeperTestSuite) SetupUpdateRedemptionRates(
 	// set the stSupply by minting to a random user account
 	user := Account{
 		acc:           s.TestAccs[0],
-		stAtomBalance: sdk.NewInt64Coin(stAtom, int64(stSupply)),
+		stAtomBalance: sdk.NewInt64Coin(StAtom, int64(stSupply)),
 	}
 	s.FundAccount(user.acc, user.stAtomBalance)
 
 	// set the staked balance on the host zone
-	hostZone := stakeibc.HostZone{
+	hostZone := stakeibctypes.HostZone{
 		ChainId:        "GAIA",
 		HostDenom:      "uatom",
 		StakedBal:      stakedBal,
@@ -124,7 +123,7 @@ func (s *KeeperTestSuite) TestUpdateRedemptionRatesRandomized() {
 	numerator := int64(stakedBal) + int64(undelegatedBal) + int64(justDepositedBal)
 	denominator := int64(stSupply)
 	expectedNewRate := sdk.NewDec(numerator).Quo(sdk.NewDec(denominator))
-	s.Require().Equal(rrNew, expectedNewRate, fmt.Sprintf("expectedNewRate: %v, rrNew: %v; inputs: SB: %d, UDB: %d, JDB: %d, STS: %d RRT0: %d", expectedNewRate, rrNew, stakedBal, undelegatedBal, justDepositedBal, stSupply, initialRedemptionRate))
+	s.Require().Equal(rrNew, expectedNewRate, "expectedNewRate: %v, rrNew: %v; inputs: SB: %d, UDB: %d, JDB: %d, STS: %d RRT0: %d", expectedNewRate, rrNew, stakedBal, undelegatedBal, justDepositedBal, stSupply, initialRedemptionRate)
 }
 
 func (s *KeeperTestSuite) TestUpdateRedemptionRatesRandomized_MultipleRuns() {

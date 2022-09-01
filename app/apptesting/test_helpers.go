@@ -1,8 +1,9 @@
 package apptesting
 
 import (
-	"fmt"
 	"strings"
+
+	ibctransfertypes "github.com/cosmos/ibc-go/v3/modules/apps/transfer/types"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -12,6 +13,7 @@ import (
 	channeltypes "github.com/cosmos/ibc-go/v3/modules/core/04-channel/types"
 	ibctesting "github.com/cosmos/ibc-go/v3/testing"
 	"github.com/cosmos/ibc-go/v3/testing/simapp"
+	"github.com/gogo/protobuf/proto"
 	"github.com/stretchr/testify/suite"
 	"github.com/tendermint/tendermint/crypto/ed25519"
 	tmtypes "github.com/tendermint/tendermint/proto/tendermint/types"
@@ -137,7 +139,7 @@ func (s *AppTestHelper) CreateTransferChannel(hostChainID string) {
 		s.SetupIBCChains(hostChainID)
 	}
 	s.Require().Equal(s.HostChain.ChainID, hostChainID,
-		fmt.Sprintf("The testing app has already been initialized with a different chainID (%s)", s.HostChain.ChainID))
+		"The testing app has already been initialized with a different chainID (%s)", s.HostChain.ChainID)
 
 	// Create clients, connections, and a transfer channel
 	s.TransferPath = NewTransferPath(s.StrideChain, s.HostChain)
@@ -159,7 +161,7 @@ func (s *AppTestHelper) CreateTransferChannel(hostChainID string) {
 
 // Creates an ICA channel through ibctesting
 // Also creates a transfer channel is if hasn't been done yet
-func (s *AppTestHelper) CreateICAChannel(owner string) {
+func (s *AppTestHelper) CreateICAChannel(owner string) string {
 	// If we have yet to create a client/connection (through creating a transfer channel), do that here
 	_, transferChannelExists := s.App.IBCKeeper.ChannelKeeper.GetChannel(s.Ctx(), ibctesting.TransferPort, ibctesting.FirstChannelID)
 	if !transferChannelExists {
@@ -190,7 +192,7 @@ func (s *AppTestHelper) CreateICAChannel(owner string) {
 	portID := icaPath.EndpointA.ChannelConfig.PortID
 	channelID := icaPath.EndpointA.ChannelID
 	_, found := s.App.IBCKeeper.ChannelKeeper.GetChannel(s.Ctx(), portID, channelID)
-	s.Require().True(found, fmt.Sprintf("Channel not found after creation, PortID: %s, ChannelID: %s", portID, channelID))
+	s.Require().True(found, "Channel not found after creation, PortID: %s, ChannelID: %s", portID, channelID)
 
 	// Store the account address
 	icaAddress, found := s.App.ICAControllerKeeper.GetInterchainAccountAddress(s.Ctx(), ibctesting.FirstConnectionID, portID)
@@ -199,6 +201,8 @@ func (s *AppTestHelper) CreateICAChannel(owner string) {
 
 	// Finally set the active channel
 	s.App.ICAControllerKeeper.SetActiveChannelID(s.Ctx(), ibctesting.FirstConnectionID, portID, channelID)
+
+	return channelID
 }
 
 // Register's a new ICA account on the next channel available
@@ -260,4 +264,50 @@ func CopyConnectionAndClientToPath(path *ibctesting.Path, pathToCopy *ibctesting
 	path.EndpointA.ConnectionConfig = pathToCopy.EndpointA.ConnectionConfig
 	path.EndpointB.ConnectionConfig = pathToCopy.EndpointB.ConnectionConfig
 	return path
+}
+
+func (s *AppTestHelper) ICAPacketAcknowledgement(msgs []sdk.Msg, msgResponse *proto.Message) channeltypes.Acknowledgement {
+	txMsgData := &sdk.TxMsgData{
+		Data: make([]*sdk.MsgData, len(msgs)),
+	}
+	for i, msg := range msgs {
+		var data []byte
+		var err error
+		if msgResponse != nil {
+			// see: https://github.com/cosmos/cosmos-sdk/blob/1dee068932d32ba2a87ba67fc399ae96203ec76d/types/result.go#L246
+			data, err = proto.Marshal(*msgResponse)
+			s.Require().NoError(err, "marshal error")
+		} else {
+			data = []byte("msg_response")
+		}
+		txMsgData.Data[i] = &sdk.MsgData{
+			MsgType: sdk.MsgTypeURL(msg),
+			Data:    data,
+		}
+
+	}
+	marshalledTxMsgData, err := proto.Marshal(txMsgData)
+	s.Require().NoError(err)
+	ack := channeltypes.NewResultAcknowledgement(marshalledTxMsgData)
+	return ack
+}
+
+// Get an IBC denom from it's native host denom
+// This assumes the transfer channel is channel-0
+func (s *AppTestHelper) GetIBCDenomTrace(denom string) transfertypes.DenomTrace {
+	sourcePrefix := transfertypes.GetDenomPrefix(ibctesting.TransferPort, ibctesting.FirstChannelID)
+	prefixedDenom := sourcePrefix + denom
+
+	return transfertypes.ParseDenomTrace(prefixedDenom)
+}
+
+func (s *AppTestHelper) MarshalledICS20PacketData() sdk.AccAddress {
+	data := ibctransfertypes.FungibleTokenPacketData{}
+	return data.GetBytes()
+}
+
+func (s *AppTestHelper) ICS20PacketAcknowledgement() channeltypes.Acknowledgement {
+	// see: https://github.com/cosmos/ibc-go/blob/8de555db76d0320842dacaa32e5500e1fd55e667/modules/apps/transfer/keeper/relay.go#L151
+	ack := channeltypes.NewResultAcknowledgement(s.MarshalledICS20PacketData())
+	return ack
 }

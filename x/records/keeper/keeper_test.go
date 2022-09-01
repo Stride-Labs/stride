@@ -6,16 +6,8 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	"github.com/Stride-Labs/stride/app/apptesting"
-	"github.com/Stride-Labs/stride/x/stakeibc/keeper"
-	"github.com/Stride-Labs/stride/x/stakeibc/types"
-)
-
-const (
-	Atom         = "uatom"
-	StAtom       = "stuatom"
-	IbcAtom      = "ibc/uatom"
-	HostChainId  = "GAIA"
-	Bech32Prefix = "cosmos"
+	"github.com/Stride-Labs/stride/x/records/keeper"
+	"github.com/Stride-Labs/stride/x/records/types"
 )
 
 type KeeperTestSuite struct {
@@ -27,7 +19,7 @@ func (s *KeeperTestSuite) SetupTest() {
 }
 
 func (s *KeeperTestSuite) GetMsgServer() types.MsgServer {
-	return keeper.NewMsgServerImpl(s.App.StakeibcKeeper)
+	return keeper.NewMsgServerImpl(s.App.RecordsKeeper)
 }
 
 func TestKeeperTestSuite(t *testing.T) {
