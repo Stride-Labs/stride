@@ -43,13 +43,14 @@ func NewParams(
 		ReductionFactor:                      ReductionFactor,
 		DistributionProportions:              distrProportions,
 		MintingRewardsDistributionStartEpoch: mintingRewardsDistributionStartEpoch,
+		StrategicReserveAddress:              "stride1vytsydmkkmkndlrkeqkqad7zkx4gpgmn50vmjn", // TODO this is a placeholder, change it!
 	}
 }
 
 // minting params
 func DefaultParams() Params {
 	return Params{
-		MintDenom:               sdk.DefaultBondDenom,
+		MintDenom:               "ustrd",
 		GenesisEpochProvisions:  sdk.NewDec(2_500_000).Mul(sdk.NewDec(1_000_000)).Quo(sdk.NewDec(24 * 365)), // 2.5MST first year, broken into hours ~= 285ST / hour
 		EpochIdentifier:         "mint",                                                                     // 1 hour
 		ReductionPeriodInEpochs: 24 * 365,                                                                   // 24hrs*365d = 8760
@@ -60,7 +61,7 @@ func DefaultParams() Params {
 			StrategicReserve:            sdk.MustNewDecFromStr("0.4205"),
 			CommunityPoolSecurityBudget: sdk.MustNewDecFromStr("0.1171"),
 		},
-		StrategicReserveAddress:              "stride1jx4jra5mwealhpgu9f40k5n2fz7f9cv7q0sz0r", // TODO this is a placeholder, change it!
+		StrategicReserveAddress:              "stride1vytsydmkkmkndlrkeqkqad7zkx4gpgmn50vmjn", // TODO this is a placeholder, change it!
 		MintingRewardsDistributionStartEpoch: 0,
 	}
 }

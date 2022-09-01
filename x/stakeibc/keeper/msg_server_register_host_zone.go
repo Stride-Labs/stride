@@ -66,7 +66,7 @@ func (k msgServer) RegisterHostZone(goCtx context.Context, msg *types.MsgRegiste
 		RedemptionRate:     sdk.NewDec(1),
 		LastRedemptionRate: sdk.NewDec(1),
 		UnbondingFrequency: msg.UnbondingFrequency,
-		Address: 			zoneAddress.String(),
+		Address:            zoneAddress.String(),
 	}
 	// write the zone back to the store
 	k.SetHostZone(ctx, zone)

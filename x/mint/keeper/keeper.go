@@ -6,6 +6,7 @@ import (
 	"github.com/spf13/cast"
 	"github.com/tendermint/tendermint/libs/log"
 
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 
 	"github.com/Stride-Labs/stride/x/mint/types"
@@ -142,26 +143,38 @@ func (k Keeper) GetProportions(ctx sdk.Context, mintedCoin sdk.Coin, ratio sdk.D
 	return sdk.NewCoin(mintedCoin.Denom, mintedCoin.Amount.ToDec().Mul(ratio).TruncateInt())
 }
 
+const (
+	// TODO (set this!)
+	// strategic reserve address
+	StrategicReserveAddress = "stride1vytsydmkkmkndlrkeqkqad7zkx4gpgmn50vmjn"
+)
+
 // DistributeMintedCoins implements distribution of minted coins from mint to external modules.
 func (k Keeper) DistributeMintedCoin(ctx sdk.Context, mintedCoin sdk.Coin) error {
 	params := k.GetParams(ctx)
 	proportions := params.DistributionProportions
 
-	k.Logger(ctx).Info(fmt.Sprintf("MOOSE distributing minted coin %s with proportions %s", mintedCoin, proportions))
+	k.Logger(ctx).Info(fmt.Sprintf("Distributing minted x/mint rewards: %d coins...", mintedCoin.Amount.Int64()))
 
 	// // allocate staking incentives into fee collector account to be moved to on next begin blocker by staking module
-	stakingIncentivesCoins := sdk.NewCoins(k.GetProportions(ctx, mintedCoin, proportions.Staking))
-	k.Logger(ctx).Info(fmt.Sprintf("MOOSE distributing staking incentives %s", stakingIncentivesCoins))
+	stakingIncentivesProportions := k.GetProportions(ctx, mintedCoin, proportions.Staking)
+	stakingIncentivesCoins := sdk.NewCoins(stakingIncentivesProportions)
+	k.Logger(ctx).Info(fmt.Sprintf("\t\t\t...staking rewards: %d to %s", stakingIncentivesProportions.Amount.Int64(), k.feeCollectorName))
 	err := k.bankKeeper.SendCoinsFromModuleToModule(ctx, types.ModuleName, k.feeCollectorName, stakingIncentivesCoins)
 	if err != nil {
 		return err
 	}
 
 	// allocate pool allocation ratio to strategic reserve
-	strategicReserveAddress := sdk.AccAddress(params.StrategicReserveAddress)
+	strategicReserveAddress, err := sdk.AccAddressFromBech32(StrategicReserveAddress)
+	if err != nil {
+		errMsg := fmt.Sprintf("invalid strategic reserve address: %s", params.StrategicReserveAddress)
+		k.Logger(ctx).Error(errMsg)
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, errMsg)
+	}
 	strategicReserveProportion := k.GetProportions(ctx, mintedCoin, proportions.StrategicReserve)
 	strategicReserveCoins := sdk.NewCoins(strategicReserveProportion)
-	k.Logger(ctx).Info(fmt.Sprintf("MOOSE distributing strategic reserve %s", strategicReserveCoins))
+	k.Logger(ctx).Info(fmt.Sprintf("\t\t\t...strategic reserve: %d to %s", strategicReserveProportion.Amount.Int64(), strategicReserveAddress))
 	err = k.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, strategicReserveAddress, strategicReserveCoins)
 	if err != nil {
 		return err
@@ -171,7 +184,7 @@ func (k Keeper) DistributeMintedCoin(ctx sdk.Context, mintedCoin sdk.Coin) error
 	communityGrowthPoolAddress := k.GetSubmoduleAddress(types.CommunityGrowthSubmoduleName)
 	communityPoolGrowthProportion := k.GetProportions(ctx, mintedCoin, proportions.CommunityPoolGrowth)
 	communityPoolGrowthCoins := sdk.NewCoins(communityPoolGrowthProportion)
-	k.Logger(ctx).Info(fmt.Sprintf("MOOSE distributing community pool growth %s", communityPoolGrowthCoins))
+	k.Logger(ctx).Info(fmt.Sprintf("\t\t\t...community growth: %d to %s", communityPoolGrowthProportion.Amount.Int64(), communityGrowthPoolAddress))
 	err = k.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, communityGrowthPoolAddress, communityPoolGrowthCoins)
 	if err != nil {
 		return err
@@ -181,7 +194,7 @@ func (k Keeper) DistributeMintedCoin(ctx sdk.Context, mintedCoin sdk.Coin) error
 	communitySecurityBudgetPoolAddress := k.GetSubmoduleAddress(types.CommunitySecurityBudgetSubmoduleName)
 	communityPoolSecurityBudgetProportion := k.GetProportions(ctx, mintedCoin, proportions.CommunityPoolSecurityBudget)
 	communityPoolSecurityBudgetCoins := sdk.NewCoins(communityPoolSecurityBudgetProportion)
-	k.Logger(ctx).Info(fmt.Sprintf("MOOSE distributing community pool security budget %s", communityPoolSecurityBudgetCoins))
+	k.Logger(ctx).Info(fmt.Sprintf("\t\t\t...community growth: %d to %s", communityPoolSecurityBudgetProportion.Amount.Int64(), communitySecurityBudgetPoolAddress))
 	err = k.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, communitySecurityBudgetPoolAddress, communityPoolSecurityBudgetCoins)
 	if err != nil {
 		return err
@@ -193,7 +206,6 @@ func (k Keeper) DistributeMintedCoin(ctx sdk.Context, mintedCoin sdk.Coin) error
 		Sub(strategicReserveCoins).
 		Sub(communityPoolGrowthCoins).
 		Sub(communityPoolSecurityBudgetCoins)
-	k.Logger(ctx).Info(fmt.Sprintf("MOOSE distributing remaining coins %s", remainingCoins))
 	err = k.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, communityGrowthPoolAddress, remainingCoins)
 	if err != nil {
 		return err
@@ -218,7 +230,7 @@ func (k Keeper) SetupNewModuleAccount(ctx sdk.Context, submoduleName string) {
 			acctAddress.String(),
 		),
 	)
-	k.Logger(ctx).Info(fmt.Sprintf("Created new %s.%s module account %s!", types.ModuleName, submoduleName, acc.GetAddress().String()))
+	k.Logger(ctx).Info(fmt.Sprintf("Created new %s.%s module account %s", types.ModuleName, submoduleName, acc.GetAddress().String()))
 	k.accountKeeper.SetAccount(ctx, acc)
 }
 
