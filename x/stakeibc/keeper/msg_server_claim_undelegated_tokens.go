@@ -84,7 +84,7 @@ func (k Keeper) GetClaimableRedemptionRecord(ctx sdk.Context, msg *types.MsgClai
 		k.Logger(ctx).Error(errMsg)
 		return nil, sdkerrors.Wrapf(types.ErrInvalidUserRedemptionRecord, errMsg)
 	}
-	// records that have claimIsPending set to False have already been claimed (and are pending an ack)
+	// records that have claimIsPending set to True have already been claimed (and are pending an ack)
 	if userRedemptionRecord.ClaimIsPending {
 		errMsg := fmt.Sprintf("User redemption record %s is not claimable, pending ack", userRedemptionRecord.Id)
 		k.Logger(ctx).Error(errMsg)

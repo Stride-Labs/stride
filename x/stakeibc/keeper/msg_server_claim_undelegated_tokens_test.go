@@ -115,8 +115,8 @@ func (s *KeeperTestSuite) TestClaimUndelegatedTokens_Successful() {
 
 	actualRedemptionRecord, found := s.App.RecordsKeeper.GetUserRedemptionRecord(s.Ctx(), redemptionRecordId)
 	s.Require().True(found, "redemption record found")
-	s.Require().True(actualRedemptionRecord.ClaimIsPending, "redemption record should not be claimable")
-	s.Require().Equal(expectedRedemptionRecord.Amount, actualRedemptionRecord.Amount, "redemption record should not be claimable")
+	s.Require().True(actualRedemptionRecord.ClaimIsPending, "redemption record should be pending")
+	s.Require().Equal(expectedRedemptionRecord.Amount, actualRedemptionRecord.Amount, "record has expected amount")
 	// TODO: check callback data here
 }
 
