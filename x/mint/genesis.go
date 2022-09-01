@@ -1,10 +1,10 @@
 package mint
 
 import (
+	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	"github.com/Stride-Labs/stride/x/mint/keeper"
 	"github.com/Stride-Labs/stride/x/mint/types"
-
-	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // InitGenesis new mint genesis.
@@ -16,6 +16,11 @@ func InitGenesis(ctx sdk.Context, keeper keeper.Keeper, ak types.AccountKeeper, 
 	if !ak.HasAccount(ctx, ak.GetModuleAddress(types.ModuleName)) {
 		ak.GetModuleAccount(ctx, types.ModuleName)
 	}
+
+	// set up new community module accounts
+	keeper.SetupNewModuleAccount(ctx, types.CommunityGrowthSubmoduleName, types.SubmoduleCommunityNamespaceKey)
+	keeper.SetupNewModuleAccount(ctx, types.CommunitySecurityBudgetSubmoduleName, types.SubmoduleCommunityNamespaceKey)
+	keeper.SetupNewModuleAccount(ctx, types.CommunityUsageSubmoduleName, types.SubmoduleCommunityNamespaceKey)
 
 	keeper.SetLastReductionEpochNum(ctx, data.ReductionStartedEpoch)
 }
