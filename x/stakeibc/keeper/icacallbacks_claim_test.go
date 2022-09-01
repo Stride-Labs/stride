@@ -36,19 +36,19 @@ func (s *KeeperTestSuite) SetupClaimCallback() ClaimCallbackTestCase {
 	recordId1 := recordtypes.UserRedemptionRecordKeyFormatter(HostChainId, epochNumber, "sender")
 	userRedemptionRecord1 := recordtypes.UserRedemptionRecord{
 		Id: recordId1,
-		// after a user calls ClaimUndelegatedTokens, the record is set to isClaimable = false
+		// after a user calls ClaimUndelegatedTokens, the record is set to claimIsPending = true
 		// to prevent double claims
-		IsClaimable: false,
+		ClaimIsPending: true,
 	}
 	recordId2 := recordtypes.UserRedemptionRecordKeyFormatter(HostChainId, epochNumber, "other_sender")
 	userRedemptionRecord2 := recordtypes.UserRedemptionRecord{
-		Id:          recordId2,
-		IsClaimable: true,
+		Id:             recordId2,
+		ClaimIsPending: false,
 	}
 	recordId3 := recordtypes.UserRedemptionRecordKeyFormatter("not_gaia", epochNumber, "sender")
 	userRedemptionRecord3 := recordtypes.UserRedemptionRecord{
-		Id:          recordId3,
-		IsClaimable: true,
+		Id:             recordId3,
+		ClaimIsPending: false,
 	}
 	s.App.RecordsKeeper.SetUserRedemptionRecord(s.Ctx(), userRedemptionRecord1)
 	s.App.RecordsKeeper.SetUserRedemptionRecord(s.Ctx(), userRedemptionRecord2)
@@ -156,7 +156,7 @@ func (s *KeeperTestSuite) TestClaimCallback_Successful() {
 func (s *KeeperTestSuite) checkClaimStateIfCallbackFailed(tc ClaimCallbackTestCase) {
 	record, found := s.App.RecordsKeeper.GetUserRedemptionRecord(s.Ctx(), tc.initialState.callbackArgs.UserRedemptionRecordId)
 	s.Require().True(found)
-	s.Require().True(record.IsClaimable, "record is set to isClaimable = true (if the callback failed, it should be reset to true so that users can retry the claim)")
+	s.Require().True(record.ClaimIsPending, "record is set to claimIsPending = false (if the callback failed, it should be reset to false so that users can retry the claim)")
 }
 
 func (s *KeeperTestSuite) TestClaimCallback_ClaimCallbackTimeout() {

@@ -55,7 +55,7 @@ func (k msgServer) ClaimUndelegatedTokens(goCtx context.Context, msg *types.MsgC
 	}
 
 	// Set claimIsPending to true, so that the record can't be double claimed
-	userRedemptionRecord.claimIsPending = true
+	userRedemptionRecord.ClaimIsPending = true
 	k.RecordsKeeper.SetUserRedemptionRecord(ctx, *userRedemptionRecord)
 
 	return &types.MsgClaimUndelegatedTokensResponse{}, nil
@@ -85,7 +85,7 @@ func (k Keeper) GetClaimableRedemptionRecord(ctx sdk.Context, msg *types.MsgClai
 		return nil, sdkerrors.Wrapf(types.ErrInvalidUserRedemptionRecord, errMsg)
 	}
 	// records that have claimIsPending set to False have already been claimed (and are pending an ack)
-	if userRedemptionRecord.claimIsPending {
+	if userRedemptionRecord.ClaimIsPending {
 		errMsg := fmt.Sprintf("User redemption record %s is not claimable, pending ack", userRedemptionRecord.Id)
 		k.Logger(ctx).Error(errMsg)
 		return nil, sdkerrors.Wrapf(types.ErrInvalidUserRedemptionRecord, errMsg)

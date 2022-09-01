@@ -154,7 +154,7 @@ func (s *KeeperTestSuite) TestRedeemStake_Successful() {
 	// check host zone
 	s.Require().Equal(msg.HostZone, userRedemptionRecord.HostZoneId, "redemption record host zone")
 	// check claimIsPending
-	s.Require().False(userRedemptionRecord.claimIsPending, "redemption record should be marked claimable")
+	s.Require().False(userRedemptionRecord.ClaimIsPending, "redemption record should be marked claimable")
 	s.Require().NotEqual(hostZoneUnbonding.Status, recordtypes.HostZoneUnbonding_TRANSFERRED, "host zone unbonding should NOT be marked as TRANSFERRED")
 }
 
