@@ -18,9 +18,9 @@ func BeginBlocker(ctx sdk.Context, k keeper.Keeper, bk types.BankKeeper, ak type
 
 	// Iterate over all host zones and verify redemption rate
 	for _, hz := range k.GetAllHostZone(ctx) {
-		rrSafe, _ := k.IsRedemptionRateWithinSafetyBounds(ctx, hz)
+		rrSafe, err := k.IsRedemptionRateWithinSafetyBounds(ctx, hz)
 		if !rrSafe {
-			panic(fmt.Sprintf("[INVARIANT BROKEN!!!] %s's RR is %s", hz.GetChainId(), hz.RedemptionRate.String()))
+			panic(fmt.Sprintf("[INVARIANT BROKEN!!!] %s's RR is %s. ERR: %v", hz.GetChainId(), hz.RedemptionRate.String(), err.Error()))
 		}
 	}
 }
