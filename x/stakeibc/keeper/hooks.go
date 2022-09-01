@@ -66,7 +66,7 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochInfo epochstypes.EpochInf
 		k.SweepAllUnbondedTokens(ctx)
 		// then we cleanup any records that are no longer needed
 		k.Logger(ctx).Info("CleanupEpochUnbondingRecords")
-		k.CleanupEpochUnbondingRecords(ctx)
+		k.CleanupEpochUnbondingRecords(ctx, epochNumber)
 		// lastly we create an empty unbonding record for this epoch
 		k.Logger(ctx).Info("CreateEpochUnbondingRecord")
 		k.CreateEpochUnbondingRecord(ctx, epochNumber)
