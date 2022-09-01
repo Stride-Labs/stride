@@ -50,7 +50,7 @@ func NewParams(
 // minting params
 func DefaultParams() Params {
 	return Params{
-		MintDenom:               "ustrd",
+		MintDenom:               sdk.DefaultBondDenom,
 		GenesisEpochProvisions:  sdk.NewDec(2_500_000).Mul(sdk.NewDec(1_000_000)).Quo(sdk.NewDec(24 * 365)), // 2.5MST first year, broken into hours ~= 285ST / hour
 		EpochIdentifier:         "mint",                                                                     // 1 hour
 		ReductionPeriodInEpochs: 24 * 365,                                                                   // 24hrs*365d = 8760
