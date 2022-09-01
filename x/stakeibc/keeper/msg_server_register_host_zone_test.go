@@ -1,9 +1,15 @@
 package keeper_test
 
 import (
+	"fmt"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	ibctesting "github.com/cosmos/ibc-go/v3/testing"
 	_ "github.com/stretchr/testify/suite"
+
+	icatypes "github.com/cosmos/ibc-go/v3/modules/apps/27-interchain-accounts/types"
+
+	channeltypes "github.com/cosmos/ibc-go/v3/modules/core/04-channel/types"
 
 	epochtypes "github.com/Stride-Labs/stride/x/epochs/types"
 	recordstypes "github.com/Stride-Labs/stride/x/records/types"
@@ -75,6 +81,18 @@ func (s *KeeperTestSuite) createNewHostZoneMessage(chainID string, denom string,
 		Bech32Prefix: prefix,
 		HostDenom:    denom,
 	}
+}
+
+// Helper function to assist in testing a failure to create an ICA account
+// This function will occupy one of the specified port with the specified channel
+//  so that the registration fails
+func (s *KeeperTestSuite) createActiveChannelOnICAPort(accountName string, channelID string) {
+	portID := fmt.Sprintf("%s%s.%s", icatypes.PortPrefix, HostChainId, accountName)
+	openChannel := channeltypes.Channel{State: channeltypes.OPEN}
+
+	// The channel ID doesn't matter here - all that matters is that theres an open channel on the port
+	s.App.IBCKeeper.ChannelKeeper.SetChannel(s.Ctx(), portID, channelID, openChannel)
+	s.App.ICAControllerKeeper.SetActiveChannelID(s.Ctx(), ibctesting.FirstConnectionID, portID, channelID)
 }
 
 func (s *KeeperTestSuite) TestRegisterHostZone_Success() {
@@ -228,4 +246,60 @@ func (s *KeeperTestSuite) TestRegisterHostZone_CannotFindEpochUnbondingRecord() 
 	_, err := s.GetMsgServer().RegisterHostZone(sdk.WrapSDKContext(s.Ctx()), &msg)
 	expectedErrMsg := "unable to find latest epoch unbonding record: epoch unbonding record not found"
 	s.Require().EqualError(err, expectedErrMsg, " epoch unbonding record not found")
+}
+
+func (s *KeeperTestSuite) TestRegisterHostZone_CannotRegisterDelegationAccount() {
+	// tests for a failure if the epoch unbonding record cannot be found
+	tc := s.SetupRegisterHostZone()
+
+	// Create channel on delegation port
+	s.createActiveChannelOnICAPort("DELEGATION", "channel-1")
+
+	_, err := s.GetMsgServer().RegisterHostZone(sdk.WrapSDKContext(s.Ctx()), &tc.validMsg)
+	expectedErrMsg := "unable to register delegation account, err: existing active channel channel-1 for portID icacontroller-GAIA.DELEGATION "
+	expectedErrMsg += "on connection connection-0 for owner GAIA.DELEGATION: active channel already set for this owner: "
+	expectedErrMsg += "failed to register host zone"
+	s.Require().EqualError(err, expectedErrMsg, "can't register delegation account")
+}
+
+func (s *KeeperTestSuite) TestRegisterHostZone_CannotRegisterFeeAccount() {
+	// tests for a failure if the epoch unbonding record cannot be found
+	tc := s.SetupRegisterHostZone()
+
+	// Create channel on fee port
+	s.createActiveChannelOnICAPort("FEE", "channel-1")
+
+	_, err := s.GetMsgServer().RegisterHostZone(sdk.WrapSDKContext(s.Ctx()), &tc.validMsg)
+	expectedErrMsg := "unable to register fee account, err: existing active channel channel-1 for portID icacontroller-GAIA.FEE "
+	expectedErrMsg += "on connection connection-0 for owner GAIA.FEE: active channel already set for this owner: "
+	expectedErrMsg += "failed to register host zone"
+	s.Require().EqualError(err, expectedErrMsg, "can't register redemption account")
+}
+
+func (s *KeeperTestSuite) TestRegisterHostZone_CannotRegisterWithdrawalAccount() {
+	// tests for a failure if the epoch unbonding record cannot be found
+	tc := s.SetupRegisterHostZone()
+
+	// Create channel on withdrawal port
+	s.createActiveChannelOnICAPort("WITHDRAWAL", "channel-1")
+
+	_, err := s.GetMsgServer().RegisterHostZone(sdk.WrapSDKContext(s.Ctx()), &tc.validMsg)
+	expectedErrMsg := "unable to register withdrawal account, err: existing active channel channel-1 for portID icacontroller-GAIA.WITHDRAWAL "
+	expectedErrMsg += "on connection connection-0 for owner GAIA.WITHDRAWAL: active channel already set for this owner: "
+	expectedErrMsg += "failed to register host zone"
+	s.Require().EqualError(err, expectedErrMsg, "can't register redemption account")
+}
+
+func (s *KeeperTestSuite) TestRegisterHostZone_CannotRegisterRedemptionAccount() {
+	// tests for a failure if the epoch unbonding record cannot be found
+	tc := s.SetupRegisterHostZone()
+
+	// Create channel on redemption port
+	s.createActiveChannelOnICAPort("REDEMPTION", "channel-1")
+
+	_, err := s.GetMsgServer().RegisterHostZone(sdk.WrapSDKContext(s.Ctx()), &tc.validMsg)
+	expectedErrMsg := "unable to register redemption account, err: existing active channel channel-1 for portID icacontroller-GAIA.REDEMPTION "
+	expectedErrMsg += "on connection connection-0 for owner GAIA.REDEMPTION: active channel already set for this owner: "
+	expectedErrMsg += "failed to register host zone"
+	s.Require().EqualError(err, expectedErrMsg, "can't register redemption account")
 }
