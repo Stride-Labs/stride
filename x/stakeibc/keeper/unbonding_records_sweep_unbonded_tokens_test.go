@@ -101,11 +101,13 @@ func (s *KeeperTestSuite) SetupSweepUnbondedTokens() SweepUnbondedTokensTestCase
 					HostZoneId:        HostChainId,
 					NativeTokenAmount: 2_000_000,
 					Status:            recordtypes.HostZoneUnbonding_UNBONDED,
+					UnbondingTime:     unbondingTime,
 				},
 				{
 					HostZoneId:        OsmoChainId,
 					NativeTokenAmount: 2_000_000,
 					Status:            recordtypes.HostZoneUnbonding_UNBONDED,
+					UnbondingTime:     unbondingTime,
 				},
 			},
 		},
