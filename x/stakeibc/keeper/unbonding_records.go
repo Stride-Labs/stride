@@ -298,7 +298,11 @@ func (k Keeper) SweepAllUnbondedTokensForHostZone(ctx sdk.Context, hostZone type
 		k.Logger(ctx).Info(fmt.Sprintf("\tUnbonding time:  %d blockTime %d, shouldProcess %v", hostZoneUnbonding.UnbondingTime, blockTime, shouldProcess))
 
 		// if the unbonding period has elapsed, then we can send the ICA call to sweep this hostZone's unbondings to the redemption account (in a batch)
-		if (hostZoneUnbonding.UnbondingTime < blockTime) && shouldProcess {
+		// verify
+		// 1. the unbonding time is set (g.t. 0)
+		// 2. the unbonding time is less than the current block time
+		// 3. the host zone is in the UNBONDED state, meaning it's ready to be transferred
+		if (hostZoneUnbonding.UnbondingTime > 0 && hostZoneUnbonding.UnbondingTime < blockTime) && shouldProcess {
 			// we have a match, so we can process this unbonding
 			logMsg := fmt.Sprintf("\t\tAdding %d to amt to batch transfer from delegation acct to rewards acct for host zone %s, epoch %v",
 				hostZoneUnbonding.NativeTokenAmount, hostZone.ChainId, epochUnbondingRecord.EpochNumber)

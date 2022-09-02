@@ -217,7 +217,7 @@ setup() {
   WAIT_FOR_BLOCK $STRIDE_LOGS 2
   # wait four days (transfers, stake, move rewards, reinvest rewards)
   epoch_duration=$($STRIDE_CMD q epochs epoch-infos | grep -Fiw -B 2 'stride_epoch' | head -n 1 | grep -o -E '[0-9]+')
-  sleep $(($epoch_duration * 4))
+  sleep $(($epoch_duration * 6))
   # simple check that number of tokens staked increases
   NEW_STAKED_BAL=$($OSMO_CMD q staking delegation $OSMO_DELEGATION_ICA_ADDR $OSMO_DELEGATE_VAL | GETSTAKE)
   EXPECTED_STAKED_BAL=667
