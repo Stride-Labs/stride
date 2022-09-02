@@ -70,3 +70,19 @@ func (s *KeeperTestSuite) TestRestoreInterchainAccount_SucceedsIfOtherAccountExi
 	_, err := s.GetMsgServer().RestoreInterchainAccount(sdk.WrapSDKContext(s.Ctx()), &msg)
 	s.Require().NoError(err, "registered ica account successfully")
 }
+
+// func (s *KeeperTestSuite) TestRestoreInterchainAccount_RestoresChannelFromClosedState() {
+// 	tc := s.SetupRestoreInterchainAccount()
+// 	msg := tc.validMsg
+
+// 	// ensure the channel is open, then close it and ensure it is closed
+// 	s.Require().Equal(channeltypes.OPEN, s.TransferPath.EndpointA.GetChannel().State, "channel shoud begin in open state")
+// 	err := s.TransferPath.EndpointA.SetChannelClosed()
+// 	s.Require().NoError(err, "set channel to closed")
+// 	s.Require().Equal(channeltypes.CLOSED, s.TransferPath.EndpointA.GetChannel().State, "channel shoud be closed after closing it")
+
+// 	_, err = s.GetMsgServer().RestoreInterchainAccount(sdk.WrapSDKContext(s.Ctx()), &msg)
+// 	s.Require().NoError(err, "restored ica account successfully")
+
+// 	s.Require().Equal(channeltypes.OPEN, s.TransferPath.EndpointA.GetChannel().State, "channel should have re-opened!")
+// }
