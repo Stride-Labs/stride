@@ -51,5 +51,12 @@ func (msg *MsgClaimUndelegatedTokens) ValidateBasic() error {
 	if err != nil {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid sender address (%s)", err)
 	}
+	// validate host denom is not empty
+	if msg.HostZoneId == "" {
+		return sdkerrors.Wrapf(ErrRequiredFieldEmpty, "host zone id cannot be empty")
+	}
+	if !(msg.Epoch < (1<<63 - 1)) {
+		return sdkerrors.Wrapf(ErrInvalidAmount, "epoch must be less than math.MaxInt64 %d", 1<<63-1)
+	}
 	return nil
 }
