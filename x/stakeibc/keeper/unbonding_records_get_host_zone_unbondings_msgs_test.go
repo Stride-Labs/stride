@@ -12,7 +12,7 @@ import (
 	stakeibc "github.com/Stride-Labs/stride/x/stakeibc/types"
 )
 
-type SendHostZoneUnbondingTestCase struct {
+type GetHostZoneUnbondingMsgsTestCase struct {
 	amtToUnbond           uint64
 	epochUnbondingRecords []recordtypes.EpochUnbondingRecord
 	hostZone              stakeibc.HostZone
@@ -20,7 +20,10 @@ type SendHostZoneUnbondingTestCase struct {
 	totalWgt              uint64
 }
 
-func (s *KeeperTestSuite) SetupSendHostZoneUnbonding() SendHostZoneUnbondingTestCase {
+func (s *KeeperTestSuite) SetupGetHostZoneUnbondingMsgs() GetHostZoneUnbondingMsgsTestCase {
+	delegationAccountOwner := fmt.Sprintf("%s.%s", HostChainId, "DELEGATION")
+	s.CreateICAChannel(delegationAccountOwner)
+
 	hostVal1Addr := "cosmos_VALIDATOR_1"
 	hostVal2Addr := "cosmos_VALIDATOR_2"
 	delegationAddr := "cosmos_DELEGATION"
@@ -88,7 +91,7 @@ func (s *KeeperTestSuite) SetupSendHostZoneUnbonding() SendHostZoneUnbondingTest
 
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx(), hostZone)
 
-	return SendHostZoneUnbondingTestCase{
+	return GetHostZoneUnbondingMsgsTestCase{
 		amtToUnbond:           amtToUnbond,
 		hostZone:              hostZone,
 		epochUnbondingRecords: epochUnbondingRecords,
@@ -97,26 +100,26 @@ func (s *KeeperTestSuite) SetupSendHostZoneUnbonding() SendHostZoneUnbondingTest
 	}
 }
 
-func (s *KeeperTestSuite) TestSendHostZoneUnbonding_Successful() {
-	tc := s.SetupSendHostZoneUnbonding()
+func (s *KeeperTestSuite) TestGetHostZoneUnbondingMsgs_Successful() {
+	tc := s.SetupGetHostZoneUnbondingMsgs()
 
 	actualUnbondMsgs, actualAmtToUnbond, actualCallbackArgs, err := s.App.StakeibcKeeper.GetHostZoneUnbondingMsgs(s.Ctx(), tc.hostZone)
 	s.Require().NoError(err)
 
-	// verify the callback args are as expected
-	expectedCallbackArgs := []byte{0xa, 0x4, 0x47, 0x41, 0x49, 0x41, 0x12, 0x18, 0xa, 0x12, 0x63, 0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x5f, 0x56, 0x41, 0x4c, 0x49, 0x44, 0x41, 0x54, 0x4f, 0x52, 0x5f, 0x31, 0x10, 0xaa, 0xd8, 0x28, 0x12, 0x18, 0xa, 0x12, 0x63, 0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x5f, 0x56, 0x41, 0x4c, 0x49, 0x44, 0x41, 0x54, 0x4f, 0x52, 0x5f, 0x32, 0x10, 0xd6, 0xb0, 0x51, 0x1a, 0x2, 0x0, 0x1}
-	s.Require().Equal(actualCallbackArgs, expectedCallbackArgs)
+	// verify the callback attributes are as expected
 	actualCallbackResult, err := s.App.StakeibcKeeper.UnmarshalUndelegateCallbackArgs(s.Ctx(), actualCallbackArgs)
-	s.Require().NoError(err)
-	s.Require().Equal(len(actualCallbackResult.SplitDelegations), len(tc.hostZone.Validators))
-	s.Require().Equal(actualCallbackResult.HostZoneId, tc.hostZone.ChainId)
+	s.Require().NoError(err, "could unmarshal undelegation callback args")
+	s.Require().Equal(len(tc.hostZone.Validators), len(actualCallbackResult.SplitDelegations), "number of split delegations in success unbonding case")
+	s.Require().Equal(tc.hostZone.ChainId, actualCallbackResult.HostZoneId, "host zone id in success unbonding case")
+
+	// TODO add case that checks the *marshaled* callback args against expectations
 
 	// the number of unbonding messages should be (number of validators) * (records to unbond)
 	s.Require().Equal(len(tc.epochUnbondingRecords), len(actualUnbondMsgs), "number of unbonding messages should be number of records to unbond")
 
-	s.Require().Equal(int64(actualAmtToUnbond), int64(tc.amtToUnbond)*int64(len(tc.epochUnbondingRecords)), "total amount to unbond should match input amtToUnbond")
+	s.Require().Equal(int64(tc.amtToUnbond)*int64(len(tc.epochUnbondingRecords)), int64(actualAmtToUnbond), "total amount to unbond should match input amtToUnbond")
 
-	totalWgt := sdk.NewDec(int64(tc.totalWgt)) //getTotalWgt(tc.hostZone)
+	totalWgt := sdk.NewDec(int64(tc.totalWgt))
 	actualAmtToUnbondDec := sdk.NewDec(int64(actualAmtToUnbond))
 	actualUnbondMsg1 := actualUnbondMsgs[0].String()
 	actualUnbondMsg2 := actualUnbondMsgs[1].String()
@@ -128,11 +131,13 @@ func (s *KeeperTestSuite) TestSendHostZoneUnbonding_Successful() {
 	val1Unbonded := strings.Contains(actualUnbondMsg1, val1UnbondAmt)
 	val2Unbonded := strings.Contains(actualUnbondMsg2, val2UnbondAmt)
 
-	s.Require().True(val1Unbonded || val2Unbonded)
+	// there's rounding in the logic that distributes stake amongst validators, so one or the other of the balances will be correct, depending on the rounding
+	// at least one will be correct, and the other will be off by 1 by rounding, so we check and OR condition
+	s.Require().True(val1Unbonded || val2Unbonded, "unbonding amt should be the correct amount")
 }
 
-func (s *KeeperTestSuite) TestSendHostZoneUnbonding_WrongChainId() {
-	tc := s.SetupSendHostZoneUnbonding()
+func (s *KeeperTestSuite) TestGetHostZoneUnbondingMsgs_WrongChainId() {
+	tc := s.SetupGetHostZoneUnbondingMsgs()
 
 	tc.hostZone.ChainId = "nonExistentChainId"
 	msgs, totalAmtToUnbond, _, err := s.App.StakeibcKeeper.GetHostZoneUnbondingMsgs(s.Ctx(), tc.hostZone)
@@ -144,8 +149,8 @@ func (s *KeeperTestSuite) TestSendHostZoneUnbonding_WrongChainId() {
 	s.Require().Equal(int64(0), int64(totalAmtToUnbond), "no value should be unbonded")
 }
 
-func (s *KeeperTestSuite) TestSendHostZoneUnbonding_NoEpochUnbondingRecords() {
-	tc := s.SetupSendHostZoneUnbonding()
+func (s *KeeperTestSuite) TestGetHostZoneUnbondingMsgs_NoEpochUnbondingRecords() {
+	tc := s.SetupGetHostZoneUnbondingMsgs()
 
 	// iterate epoch unbonding records and delete them
 	for i := range tc.epochUnbondingRecords {
@@ -163,8 +168,8 @@ func (s *KeeperTestSuite) TestSendHostZoneUnbonding_NoEpochUnbondingRecords() {
 	s.Require().Equal(int64(0), int64(totalAmtToUnbond), "no value should be unbonded")
 }
 
-func (s *KeeperTestSuite) TestSendHostZoneUnbonding_UnbondingTooMuch() {
-	tc := s.SetupSendHostZoneUnbonding()
+func (s *KeeperTestSuite) TestGetHostZoneUnbondingMsgs_UnbondingTooMuch() {
+	tc := s.SetupGetHostZoneUnbondingMsgs()
 
 	// iterate the validators and set all their delegated amounts to 0
 	for i := range tc.hostZone.Validators {

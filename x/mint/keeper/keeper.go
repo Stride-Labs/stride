@@ -1,13 +1,19 @@
 package keeper
 
 import (
+	"fmt"
+
 	"github.com/spf13/cast"
 	"github.com/tendermint/tendermint/libs/log"
+
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 
 	"github.com/Stride-Labs/stride/x/mint/types"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/types/address"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 )
 
@@ -137,56 +143,109 @@ func (k Keeper) GetProportions(ctx sdk.Context, mintedCoin sdk.Coin, ratio sdk.D
 	return sdk.NewCoin(mintedCoin.Denom, mintedCoin.Amount.ToDec().Mul(ratio).TruncateInt())
 }
 
+const (
+	// TODO (set this!)
+	// strategic reserve address
+	StrategicReserveAddress = "stride1vytsydmkkmkndlrkeqkqad7zkx4gpgmn50vmjn"
+)
+
 // DistributeMintedCoins implements distribution of minted coins from mint to external modules.
 func (k Keeper) DistributeMintedCoin(ctx sdk.Context, mintedCoin sdk.Coin) error {
 	params := k.GetParams(ctx)
 	proportions := params.DistributionProportions
 
+	k.Logger(ctx).Info(fmt.Sprintf("Distributing minted x/mint rewards: %d coins...", mintedCoin.Amount.Int64()))
+
 	// allocate staking incentives into fee collector account to be moved to on next begin blocker by staking module
-	stakingIncentivesCoins := sdk.NewCoins(k.GetProportions(ctx, mintedCoin, proportions.Staking))
-	err := k.bankKeeper.SendCoinsFromModuleToModule(ctx, types.ModuleName, k.feeCollectorName, stakingIncentivesCoins)
+	stakingIncentivesProportions := k.GetProportions(ctx, mintedCoin, proportions.Staking)
+	stakingIncentivesCoins := sdk.NewCoins(stakingIncentivesProportions)
+	k.Logger(ctx).Info(fmt.Sprintf("\t\t\t...staking rewards: %d to %s", stakingIncentivesProportions.Amount.Int64(), k.feeCollectorName))
+
+	// allocate pool allocation ratio to strategic reserve
+	strategicReserveAddress, err := sdk.AccAddressFromBech32(StrategicReserveAddress)
+	if err != nil {
+		errMsg := fmt.Sprintf("invalid strategic reserve address: %s", StrategicReserveAddress)
+		k.Logger(ctx).Error(errMsg)
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, errMsg)
+	}
+	strategicReserveProportion := k.GetProportions(ctx, mintedCoin, proportions.StrategicReserve)
+	strategicReserveCoins := sdk.NewCoins(strategicReserveProportion)
+	k.Logger(ctx).Info(fmt.Sprintf("\t\t\t...strategic reserve: %d to %s", strategicReserveProportion.Amount.Int64(), strategicReserveAddress))
+
+	// allocate pool allocation ratio to community growth pool
+	communityPoolGrowthAddress := k.GetSubmoduleAddress(types.CommunityGrowthSubmoduleName, types.SubmoduleCommunityNamespaceKey)
+	communityPoolGrowthProportion := k.GetProportions(ctx, mintedCoin, proportions.CommunityPoolGrowth)
+	communityPoolGrowthCoins := sdk.NewCoins(communityPoolGrowthProportion)
+	k.Logger(ctx).Info(fmt.Sprintf("\t\t\t...community growth: %d to %s", communityPoolGrowthProportion.Amount.Int64(), communityPoolGrowthAddress))
+
+	// allocate pool allocation ratio to security budget pool
+	communityPoolSecurityBudgetAddress := k.GetSubmoduleAddress(types.CommunitySecurityBudgetSubmoduleName, types.SubmoduleCommunityNamespaceKey)
+	communityPoolSecurityBudgetProportion := k.GetProportions(ctx, mintedCoin, proportions.CommunityPoolSecurityBudget)
+	communityPoolSecurityBudgetCoins := sdk.NewCoins(communityPoolSecurityBudgetProportion)
+	k.Logger(ctx).Info(fmt.Sprintf("\t\t\t...community security budget: %d to %s", communityPoolSecurityBudgetProportion.Amount.Int64(), communityPoolSecurityBudgetAddress))
+
+	// remaining tokens to the community growth pool (this should NEVER happen, barring rounding imprecision)
+	remainingCoins := sdk.NewCoins(mintedCoin).
+		Sub(stakingIncentivesCoins).
+		Sub(strategicReserveCoins).
+		Sub(communityPoolGrowthCoins).
+		Sub(communityPoolSecurityBudgetCoins)
+
+	// check: remaining coins should be less than 5% of minted coins
+	remainingBal := remainingCoins.AmountOf(sdk.DefaultBondDenom)
+	thresh := sdk.NewDec(5).Quo(sdk.NewDec(100))
+	if remainingBal.ToDec().Quo(mintedCoin.Amount.ToDec()).GT(thresh) {
+		errMsg := fmt.Sprintf("Failed to divvy up mint module rewards fully -- remaining coins should be LT 5pct of total, instead are %#v/%#v", remainingCoins, remainingBal)
+		k.Logger(ctx).Error(errMsg)
+		return sdkerrors.Wrapf(sdkerrors.ErrInsufficientFunds, errMsg)
+	}
+
+	err = k.bankKeeper.SendCoinsFromModuleToModule(ctx, types.ModuleName, k.feeCollectorName, stakingIncentivesCoins)
+	if err != nil {
+		return err
+	}
+	err = k.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, strategicReserveAddress, strategicReserveCoins)
+	if err != nil {
+		return err
+	}
+	err = k.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, communityPoolGrowthAddress, communityPoolGrowthCoins)
+	if err != nil {
+		return err
+	}
+	err = k.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, communityPoolSecurityBudgetAddress, communityPoolSecurityBudgetCoins)
+	if err != nil {
+		return err
+	}
+	err = k.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, communityPoolGrowthAddress, remainingCoins)
 	if err != nil {
 		return err
 	}
 
-	// allocate pool allocation ratio to pool-incentives module account account
-	poolIncentivesCoins := sdk.NewCoins(k.GetProportions(ctx, mintedCoin, proportions.PoolIncentives))
-	// temporary until we have incentives pool sorted :)
-	err = k.bankKeeper.BurnCoins(ctx, types.ModuleName, poolIncentivesCoins)
-	if err != nil {
-		return err
-	}
+	// call a hook after the minting and distribution of new coins
+	// see osmosis' pool incentives hooks.go for an example
+	// k.hooks.AfterDistributeMintedCoin(ctx, mintedCoin)
 
-	// err = k.bankKeeper.SendCoinsFromModuleToModule(ctx, types.ModuleName, poolincentivestypes.ModuleName, poolIncentivesCoins)
-	// if err != nil {
-	// 	return err
-	// }
+	return nil
+}
 
-	participationRewardCoin := k.GetProportions(ctx, mintedCoin, proportions.ParticipationRewards)
-	participationRewardCoins := sdk.NewCoins(participationRewardCoin)
-	err = k.bankKeeper.BurnCoins(ctx, types.ModuleName, participationRewardCoins)
-	if err != nil {
-		return err
-	}
+// set up a new module account address
+func (k Keeper) SetupNewModuleAccount(ctx sdk.Context, submoduleName string, submoduleNamespace string) {
 
-	// Take the current balance of the developer rewards pool and remove it from the supply offset
-	// We re-introduce the new supply at the end, in order to avoid any rounding discrepancies.
-	// developerAccountBalance := k.bankKeeper.GetBalance(ctx, k.accountKeeper.GetModuleAddress(types.DeveloperVestingModuleAcctName), mintedCoin.Denom)
-	// k.bankKeeper.AddSupplyOffset(ctx, mintedCoin.Denom, developerAccountBalance.Amount)
+	// create and save the module account to the account keeper
+	acctAddress := k.GetSubmoduleAddress(submoduleName, submoduleNamespace)
+	acc := k.accountKeeper.NewAccount(
+		ctx,
+		authtypes.NewModuleAccount(
+			authtypes.NewBaseAccountWithAddress(acctAddress),
+			acctAddress.String(),
+		),
+	)
+	k.Logger(ctx).Info(fmt.Sprintf("Created new %s.%s module account %s", types.ModuleName, submoduleName, acc.GetAddress().String()))
+	k.accountKeeper.SetAccount(ctx, acc)
+}
 
-	// // Take the new balance of the developer rewards pool and add it back to the supply offset deduction
-	// developerAccountBalance = k.bankKeeper.GetBalance(ctx, k.accountKeeper.GetModuleAddress(types.DeveloperVestingModuleAcctName), mintedCoin.Denom)
-	// k.bankKeeper.AddSupplyOffset(ctx, mintedCoin.Denom, developerAccountBalance.Amount.Neg())
-
-	// subtract from original provision to ensure no coins left over after the allocations
-	communityPoolCoins := sdk.NewCoins(mintedCoin).Sub(stakingIncentivesCoins).Sub(poolIncentivesCoins).Sub(participationRewardCoins)
-	err = k.distrKeeper.FundCommunityPool(ctx, communityPoolCoins, k.accountKeeper.GetModuleAddress(types.ModuleName))
-	if err != nil {
-		return err
-	}
-
-	// call an hook after the minting and distribution of new coins
-	k.hooks.AfterDistributeMintedCoin(ctx, mintedCoin)
-
-	return err
+// helper: get the address of a submodule
+func (k Keeper) GetSubmoduleAddress(submoduleName string, submoduleNamespace string) sdk.AccAddress {
+	key := append([]byte(submoduleNamespace), []byte(submoduleName)...)
+	return address.Module(types.ModuleName, key)
 }

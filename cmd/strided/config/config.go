@@ -2,6 +2,9 @@ package types
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/types/address"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	"github.com/cosmos/cosmos-sdk/version"
 )
 
 const (
@@ -23,11 +26,22 @@ const (
 )
 
 const (
-	// DisplayDenom defines the denomination displayed to users in client applications.
-	DisplayDenom = "Stride"
-	// StrideDenom defines to the default denomination used in Stride (staking, EVN, governance, etc)
-	StrideDenom = "strd"
+	HumanReadableCoinUnit = "STRD"
+	BaseCoinUnit          = "strd"
+	DefaultBondDenom      = BaseCoinUnit
 )
+
+func SetupConfig() {
+	config := sdk.GetConfig()
+	SetBech32Prefixes(config)
+	SetBip44CoinType(config)
+	SetAddressPrefixes(config)
+	config.Seal()
+
+	version.AppName = "stride"
+	version.Name = "strided"
+	version.Version = "v0.4.1"
+}
 
 // SetBech32Prefixes sets the global prefixes to be used when serializing addresses and public keys to Bech32 strings.
 func SetBech32Prefixes(config *sdk.Config) {
@@ -44,11 +58,34 @@ func SetBip44CoinType(config *sdk.Config) {
 
 // RegisterDenoms registers the base and display denominations to the SDK.
 func RegisterDenoms() {
-	if err := sdk.RegisterDenom(DisplayDenom, sdk.OneDec()); err != nil {
+	if err := sdk.RegisterDenom(HumanReadableCoinUnit, sdk.OneDec()); err != nil {
 		panic(err)
 	}
 
-	if err := sdk.RegisterDenom(StrideDenom, sdk.NewDecWithPrec(1, 6)); err != nil {
+	if err := sdk.RegisterDenom(BaseCoinUnit, sdk.NewDecWithPrec(1, 6)); err != nil {
 		panic(err)
 	}
+}
+
+// SetAddressPrefixes builds the Config with Bech32 addressPrefix and publKeyPrefix for accounts, validators, and consensus nodes and verifies that addresses have correct format.
+
+func SetAddressPrefixes(config *sdk.Config) {
+	// This is copied from the cosmos sdk v0.43.0-beta1
+	// source: https://github.com/cosmos/cosmos-sdk/blob/v0.43.0-beta1/types/address.go#L141
+	config.SetAddressVerifier(func(bytes []byte) error {
+		if len(bytes) == 0 {
+			return sdkerrors.Wrap(sdkerrors.ErrUnknownAddress, "addresses cannot be empty")
+		}
+
+		if len(bytes) > address.MaxAddrLen {
+			return sdkerrors.Wrapf(sdkerrors.ErrUnknownAddress, "address max length is %d, got %d", address.MaxAddrLen, len(bytes))
+		}
+
+		// TODO: Do we want to allow addresses of lengths other than 20 and 32 bytes?
+		if len(bytes) != 20 && len(bytes) != 32 {
+			return sdkerrors.Wrapf(sdkerrors.ErrUnknownAddress, "address length must be 20 or 32 bytes, got %d", len(bytes))
+		}
+
+		return nil
+	})
 }

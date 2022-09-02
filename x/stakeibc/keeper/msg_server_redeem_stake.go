@@ -17,6 +17,7 @@ import (
 
 func (k msgServer) RedeemStake(goCtx context.Context, msg *types.MsgRedeemStake) (*types.MsgRedeemStakeResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
+	k.Logger(ctx).Info(fmt.Sprintf("redeem stake: %s", msg.String()))
 
 	// get our addresses, make sure they're valid
 	sender, err := sdk.AccAddressFromBech32(msg.Creator)
@@ -149,5 +150,6 @@ func (k msgServer) RedeemStake(goCtx context.Context, msg *types.MsgRedeemStake)
 	}
 	k.RecordsKeeper.SetEpochUnbondingRecord(ctx, *updatedEpochUnbondingRecord)
 
+	k.Logger(ctx).Info(fmt.Sprintf("executed redeem stake: %s", msg.String()))
 	return &types.MsgRedeemStakeResponse{}, nil
 }
