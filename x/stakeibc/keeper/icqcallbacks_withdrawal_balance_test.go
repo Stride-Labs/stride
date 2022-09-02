@@ -255,5 +255,5 @@ func (s *KeeperTestSuite) TestWithdrawalBalanceCallback_FailedSubmitTx() {
 
 	err := stakeibckeeper.WithdrawalBalanceCallback(s.App.StakeibcKeeper, s.Ctx(), tc.validArgs.callbackArgs, tc.validArgs.query)
 	s.Require().ErrorContains(err, "Failed to SubmitTxs for GAIA - connection-X")
-	s.Require().ErrorContains(err, "invalid connection id, \"connection-X\" not found")
+	s.Require().ErrorContains(err, "invalid connection id, connection-X not found")
 }
