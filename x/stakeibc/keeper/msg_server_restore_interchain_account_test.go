@@ -21,8 +21,9 @@ func (s *KeeperTestSuite) SetupRestoreInterchainAccount() RestoreInterchainAccou
 	s.CreateTransferChannel(HostChainId)
 
 	hostZone := stakeibc.HostZone{
-		ChainId:      HostChainId,
-		ConnectionId: ibctesting.FirstConnectionID,
+		ChainId:        HostChainId,
+		ConnectionId:   ibctesting.FirstConnectionID,
+		RedemptionRate: sdk.OneDec(), // if not yet, the beginblocker invariant panics
 	}
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx(), hostZone)
 
