@@ -106,9 +106,7 @@ func (s *KeeperTestSuite) TestGetHostZoneUnbondingMsgs_Successful() {
 	actualUnbondMsgs, actualAmtToUnbond, actualCallbackArgs, err := s.App.StakeibcKeeper.GetHostZoneUnbondingMsgs(s.Ctx(), tc.hostZone)
 	s.Require().NoError(err)
 
-	// verify the callback args are as expected
-	expectedCallbackArgs := []byte{0xa, 0x4, 0x47, 0x41, 0x49, 0x41, 0x12, 0x18, 0xa, 0x12, 0x63, 0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x5f, 0x56, 0x41, 0x4c, 0x49, 0x44, 0x41, 0x54, 0x4f, 0x52, 0x5f, 0x31, 0x10, 0xaa, 0xd8, 0x28, 0x12, 0x18, 0xa, 0x12, 0x63, 0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x5f, 0x56, 0x41, 0x4c, 0x49, 0x44, 0x41, 0x54, 0x4f, 0x52, 0x5f, 0x32, 0x10, 0xd6, 0xb0, 0x51, 0x1a, 0x2, 0x0, 0x1}
-	s.Require().Equal(expectedCallbackArgs, actualCallbackArgs, "callback args in success unbonding case")
+	// verify the callback attributes are as expected
 	actualCallbackResult, err := s.App.StakeibcKeeper.UnmarshalUndelegateCallbackArgs(s.Ctx(), actualCallbackArgs)
 	s.Require().NoError(err, "could unmarshal undelegation callback args")
 	s.Require().Equal(len(tc.hostZone.Validators), len(actualCallbackResult.SplitDelegations), "number of split delegations in success unbonding case")
@@ -131,6 +129,8 @@ func (s *KeeperTestSuite) TestGetHostZoneUnbondingMsgs_Successful() {
 	val1Unbonded := strings.Contains(actualUnbondMsg1, val1UnbondAmt)
 	val2Unbonded := strings.Contains(actualUnbondMsg2, val2UnbondAmt)
 
+	// there's rounding in the logic that distributes stake amongst validators, so one or the other of the balances will be correct, depending on the rounding
+	// at least one will be correct, and the other will be off by 1 by rounding, so we check and OR condition
 	s.Require().True(val1Unbonded || val2Unbonded, "unbonding amt should be the correct amount")
 }
 
