@@ -15,11 +15,6 @@ service Msg {
   rpc LiquidStake(MsgLiquidStake) returns (MsgLiquidStakeResponse);
   rpc RedeemStake(MsgRedeemStake) returns (MsgRedeemStakeResponse);
   // TODO(TEST-53): Remove this pre-launch (no need for clients to create / interact with ICAs)
-  // Register defines a rpc handler for MsgRegisterAccount
-  rpc RegisterAccount(MsgRegisterAccount) returns (MsgRegisterAccountResponse);
-  // TODO(TEST-53): Remove this pre-launch (no need for clients to create / interact with ICAs)
-  rpc SubmitTx(MsgSubmitTx) returns (MsgSubmitTxResponse);
-  // TODO(TEST-53): Remove this pre-launch (no need for clients to create / interact with ICAs)
   rpc RegisterHostZone(MsgRegisterHostZone) returns (MsgRegisterHostZoneResponse);
   rpc ClaimUndelegatedTokens(MsgClaimUndelegatedTokens) returns (MsgClaimUndelegatedTokensResponse);
   rpc RebalanceValidators(MsgRebalanceValidators) returns (MsgRebalanceValidatorsResponse);
@@ -59,34 +54,6 @@ message MsgRedeemStake {
 }
 
 message MsgRedeemStakeResponse {}
-
-// TODO(TEST-53): Remove this pre-launch (no need for clients to create / interact with ICAs)
-// MsgRegisterAccount defines the payload for Msg/RegisterAccount
-message MsgRegisterAccount {
-  option (gogoproto.equal)           = false;
-  option (gogoproto.goproto_getters) = false;
-
-  string owner                      = 1;
-  string connection_id              = 2 [(gogoproto.moretags) = "yaml:\"connection_id\""];
-}
-// TODO(TEST-53): Remove this pre-launch (no need for clients to create / interact with ICAs)
-// MsgRegisterAccountResponse defines the response for Msg/RegisterAccount
-message MsgRegisterAccountResponse {}
-
-// TODO(TEST-53): Remove this pre-launch (no need for clients to create / interact with ICAs)
-// MsgSubmitTx defines the payload for Msg/SubmitTx
-message MsgSubmitTx {
-  option (gogoproto.equal)           = false;
-  option (gogoproto.goproto_getters) = false;
-
-  string owner                       = 1;
-  string connection_id = 2 [(gogoproto.moretags) = "yaml:\"connection_id\""];
-  google.protobuf.Any msg            = 3;
-}
-
-// TODO(TEST-53): Remove this pre-launch (no need for clients to create / interact with ICAs)
-// MsgSubmitTxResponse defines the response for Msg/SubmitTx
-message MsgSubmitTxResponse {}
 
 // next: 13
 message MsgRegisterHostZone{

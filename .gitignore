@@ -7,7 +7,9 @@
 
 scripts/testnet/state/keys.txt
 **state.json
+**test.py
 **test.sh
+**test.py
 # build
 launch.sh
 build/*

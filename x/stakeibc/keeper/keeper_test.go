@@ -3,20 +3,38 @@ package keeper_test
 import (
 	"testing"
 
+	"github.com/stretchr/testify/suite"
+
 	"github.com/Stride-Labs/stride/app/apptesting"
 	"github.com/Stride-Labs/stride/x/stakeibc/keeper"
 	"github.com/Stride-Labs/stride/x/stakeibc/types"
-	"github.com/stretchr/testify/suite"
+)
+
+const (
+	Atom         = "uatom"
+	StAtom       = "stuatom"
+	IbcAtom      = "ibc/uatom"
+	GaiaPrefix   = "cosmos"
+	HostChainId  = "GAIA"
+	Bech32Prefix = "cosmos"
+
+	Osmo        = "uosmo"
+	StOsmo      = "stuosmo"
+	IbcOsmo     = "ibc/uosmo"
+	OsmoPrefix  = "osmo"
+	OsmoChainId = "OSMO"
 )
 
 type KeeperTestSuite struct {
 	apptesting.AppTestHelper
-	msgServer types.MsgServer
 }
 
 func (s *KeeperTestSuite) SetupTest() {
 	s.Setup()
-	s.msgServer = keeper.NewMsgServerImpl(s.App.StakeibcKeeper)
+}
+
+func (s *KeeperTestSuite) GetMsgServer() types.MsgServer {
+	return keeper.NewMsgServerImpl(s.App.StakeibcKeeper)
 }
 
 func TestKeeperTestSuite(t *testing.T) {

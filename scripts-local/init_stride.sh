@@ -42,6 +42,7 @@ for NODE_NAME in stride stride2 stride3 stride4 stride5; do
     # NOTE: If you add new epochs, these indexes will need to be updated
     jq '.app_state.epochs.epochs[$epochIndex].duration = $epochLen' --arg epochLen $DAY_EPOCH_LEN --argjson epochIndex $DAY_EPOCH_INDEX  $main_config > json.tmp && mv json.tmp $main_config
     jq '.app_state.epochs.epochs[$epochIndex].duration = $epochLen' --arg epochLen $STRIDE_EPOCH_LEN --argjson epochIndex $STRIDE_EPOCH_INDEX $main_config > json.tmp && mv json.tmp $main_config
+    jq '.app_state.epochs.epochs[$epochIndex].duration = $epochLen' --arg epochLen $MINT_EPOCH_LEN --argjson epochIndex $MINT_EPOCH_INDEX $main_config > json.tmp && mv json.tmp $main_config
     jq '.app_state.stakeibc.params.rewards_interval = $interval' --arg interval $INTERVAL_LEN $main_config > json.tmp && mv json.tmp $main_config
     jq '.app_state.stakeibc.params.delegate_interval = $interval' --arg interval $INTERVAL_LEN $main_config > json.tmp && mv json.tmp $main_config
     jq '.app_state.stakeibc.params.deposit_interval = $interval' --arg interval $INTERVAL_LEN $main_config > json.tmp && mv json.tmp $main_config

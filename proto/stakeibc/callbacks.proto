@@ -20,6 +20,8 @@ message DelegateCallback {
 
 message ClaimCallback {
   string userRedemptionRecordId = 1;
+  string chainId = 2;
+  uint64 epochNumber = 3;
 }
 
 // ---------------------- Reinvest Callback ---------------------- //
@@ -41,5 +43,5 @@ message UndelegateCallback {
 // ---------------------- Redemption Callbacks ---------------------- //
 message RedemptionCallback {
   string hostZoneId = 1; 
-  repeated uint64 unbondingEpochNumbers = 2;
+  repeated uint64 epochUnbondingRecordIds = 2;
 }

@@ -44,7 +44,7 @@ func RedemptionCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, a
 
 	txMsgData, err := icacallbacks.GetTxMsgData(ctx, *ack, k.Logger(ctx))
 	if err != nil {
-		k.Logger(ctx).Error(fmt.Sprintf("DelegateCallback timeout, ack is nil, packet %v", packet))
+		k.Logger(ctx).Error(fmt.Sprintf("RedemptionCallback timeout, ack is nil, packet %v", packet))
 		return sdkerrors.Wrap(icacallbackstypes.ErrTxMsgData, err.Error())
 	}
 
@@ -66,7 +66,7 @@ func RedemptionCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, a
 	hostZoneId := redemptionCallback.HostZoneId
 
 	// Loop through all the epoch numbers that were stored with the callback (that identify the unbonding records)
-	for _, epochNumber := range redemptionCallback.UnbondingEpochNumbers {
+	for _, epochNumber := range redemptionCallback.EpochUnbondingRecordIds {
 		epochUnbondingRecord, found := k.RecordsKeeper.GetEpochUnbondingRecord(ctx, epochNumber)
 		if !found {
 			errMsg := fmt.Sprintf("Epoch unbonding record not found for epoch #%d", epochNumber)
@@ -87,22 +87,6 @@ func RedemptionCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, a
 			return sdkerrors.Wrapf(types.ErrEpochNotFound, "couldn't set host zone epoch unbonding record. err: %s", err.Error())
 		}
 		k.RecordsKeeper.SetEpochUnbondingRecord(ctx, *updatedEpochUnbondingRecord)
-
-		// Mark the redemption records claimable
-		userRedemptionRecords := hostZoneUnbonding.UserRedemptionRecords
-		for _, recordId := range userRedemptionRecords {
-			userRedemptionRecord, found := k.RecordsKeeper.GetUserRedemptionRecord(ctx, recordId)
-			if !found {
-				k.Logger(ctx).Error("failed to find user redemption record")
-				return sdkerrors.Wrapf(types.ErrRecordNotFound, "no user redemption record found for id (%s)", recordId)
-			}
-			if userRedemptionRecord.IsClaimable {
-				k.Logger(ctx).Info("user redemption record is already claimable")
-				continue
-			}
-			userRedemptionRecord.IsClaimable = true
-			k.RecordsKeeper.SetUserRedemptionRecord(ctx, userRedemptionRecord)
-		}
 	}
 	k.Logger(ctx).Info(fmt.Sprintf("[REDEMPTION] completed on %s", hostZoneId))
 	return nil
