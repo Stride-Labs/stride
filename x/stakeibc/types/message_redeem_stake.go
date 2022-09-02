@@ -44,6 +44,10 @@ func (msg *MsgRedeemStake) ValidateBasic() error {
 	if err != nil {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid creator address (%s)", err)
 	}
+	_, err = sdk.AccAddressFromBech32(msg.Receiver)
+	if err != nil {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid receiver address (%s)", err)
+	}
 	// ensure amount is a nonzero positive integer
 	if msg.Amount <= 0 {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "invalid amount (%d)", msg.Amount)
@@ -51,10 +55,6 @@ func (msg *MsgRedeemStake) ValidateBasic() error {
 	// validate host zone is not empty
 	if msg.HostZone == "" {
 		return sdkerrors.Wrapf(ErrRequiredFieldEmpty, "host zone cannot be empty")
-	}
-	// validate host zone is not empty
-	if msg.Receiver == "" {
-		return sdkerrors.Wrapf(ErrRequiredFieldEmpty, "receiver cannot be empty")
 	}
 	// math.MaxInt64 == 1<<63 - 1
 	if !(msg.Amount < (1<<63 - 1)) {
