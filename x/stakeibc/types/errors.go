@@ -36,6 +36,4 @@ var (
 	ErrFeeAccountNotRegistered           = sdkerrors.Register(ModuleName, 1526, "fee account is not registered")
 	ErrRedemptionRateOutsideSafetyBounds = sdkerrors.Register(ModuleName, 1527, "redemption rate outside safety bounds")
 	ErrTxMsgDataInvalid                  = sdkerrors.Register(ModuleName, 1528, "TxMsgData invalid")
-	ErrFailedToRegisterHostZone          = sdkerrors.Register(ModuleName, 1529, "failed to register host zone")
-	ErrInvalidInterchainAccountAddress   = sdkerrors.Register(ModuleName, 1530, "invalid interchain account address")
 )

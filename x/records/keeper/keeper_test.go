@@ -6,8 +6,8 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	"github.com/Stride-Labs/stride/app/apptesting"
-	"github.com/Stride-Labs/stride/x/interchainquery/keeper"
-	"github.com/Stride-Labs/stride/x/interchainquery/types"
+	"github.com/Stride-Labs/stride/x/records/keeper"
+	"github.com/Stride-Labs/stride/x/records/types"
 )
 
 type KeeperTestSuite struct {
@@ -19,7 +19,7 @@ func (s *KeeperTestSuite) SetupTest() {
 }
 
 func (s *KeeperTestSuite) GetMsgServer() types.MsgServer {
-	return keeper.NewMsgServerImpl(s.App.InterchainqueryKeeper)
+	return keeper.NewMsgServerImpl(s.App.RecordsKeeper)
 }
 
 func TestKeeperTestSuite(t *testing.T) {
