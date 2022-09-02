@@ -7,6 +7,9 @@ import (
 	ibctesting "github.com/cosmos/ibc-go/v3/testing"
 	_ "github.com/stretchr/testify/suite"
 
+	icatypes "github.com/cosmos/ibc-go/v3/modules/apps/27-interchain-accounts/types"
+	channeltypes "github.com/cosmos/ibc-go/v3/modules/core/04-channel/types"
+
 	stakeibc "github.com/Stride-Labs/stride/x/stakeibc/types"
 )
 
@@ -36,9 +39,38 @@ func (s *KeeperTestSuite) SetupRestoreInterchainAccount() RestoreInterchainAccou
 
 func (s *KeeperTestSuite) TestRestoreInterchainAccount_Success() {
 	tc := s.SetupRestoreInterchainAccount()
+	owner := "GAIA.DELEGATION"
+	channelID := s.CreateICAChannel(owner)
+	portID := icatypes.PortPrefix + owner
+
+	// Confirm there are two channels originally
+	channels := s.App.IBCKeeper.ChannelKeeper.GetAllChannels(s.Ctx())
+	s.Require().Len(channels, 2, "there should be 2 channels initially (transfer + delegate)")
+
+	// Close the delegation channel
+	channel, found := s.App.IBCKeeper.ChannelKeeper.GetChannel(s.Ctx(), portID, channelID)
+	s.Require().True(found, "delegation channel found")
+	channel.State = channeltypes.CLOSED
+	s.App.IBCKeeper.ChannelKeeper.SetChannel(s.Ctx(), portID, channelID, channel)
+
+	// Restore the channel
 	msg := tc.validMsg
 	_, err := s.GetMsgServer().RestoreInterchainAccount(sdk.WrapSDKContext(s.Ctx()), &msg)
 	s.Require().NoError(err, "registered ica account successfully")
+
+	// Confirm the new channel was created
+	channels = s.App.IBCKeeper.ChannelKeeper.GetAllChannels(s.Ctx())
+	s.Require().Len(channels, 3, "there should be 3 channels after restoring")
+
+	// Confirm the new channel is in state INIT
+	newChannelActive := false
+	for _, channel := range channels {
+		// The new channel should have the same port, a new channel ID and be in state INIT
+		if channel.PortId == portID && channel.ChannelId != channelID && channel.State == channeltypes.INIT {
+			newChannelActive = true
+		}
+	}
+	s.Require().True(newChannelActive, "a new channel should have been created")
 }
 
 func (s *KeeperTestSuite) TestRestoreInterchainAccount_FailsForIncorrectHostZone() {

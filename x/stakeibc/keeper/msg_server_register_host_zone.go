@@ -14,14 +14,15 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
-// TODO(TEST-53): Remove this pre-launch (no need for clients to create / interact with ICAs)
 func (k msgServer) RegisterHostZone(goCtx context.Context, msg *types.MsgRegisterHostZone) (*types.MsgRegisterHostZoneResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	// Get chain id from connection
 	chainId, err := k.GetChainID(ctx, msg.ConnectionId)
 	if err != nil {
-		return nil, fmt.Errorf("unable to obtain chain id: %w", err)
+		errMsg := fmt.Sprintf("unable to obtain chain id from connection %s, err: %s", msg.ConnectionId, err.Error())
+		k.Logger(ctx).Error(errMsg)
+		return nil, sdkerrors.Wrapf(types.ErrFailedToRegisterHostZone, errMsg)
 	}
 
 	// get zone
@@ -29,7 +30,7 @@ func (k msgServer) RegisterHostZone(goCtx context.Context, msg *types.MsgRegiste
 	if found {
 		errMsg := fmt.Sprintf("invalid chain id, zone for %s already registered", chainId)
 		k.Logger(ctx).Error(errMsg)
-		return nil, fmt.Errorf(errMsg)
+		return nil, sdkerrors.Wrapf(types.ErrFailedToRegisterHostZone, errMsg)
 	}
 
 	// check the denom is not already registered
@@ -38,17 +39,17 @@ func (k msgServer) RegisterHostZone(goCtx context.Context, msg *types.MsgRegiste
 		if hostZone.HostDenom == msg.HostDenom {
 			errMsg := fmt.Sprintf("host denom %s already registered", msg.HostDenom)
 			k.Logger(ctx).Error(errMsg)
-			return nil, fmt.Errorf(errMsg)
+			return nil, sdkerrors.Wrapf(types.ErrFailedToRegisterHostZone, errMsg)
 		}
 		if hostZone.ConnectionId == msg.ConnectionId {
 			errMsg := fmt.Sprintf("connectionId %s already registered", msg.ConnectionId)
 			k.Logger(ctx).Error(errMsg)
-			return nil, fmt.Errorf(errMsg)
+			return nil, sdkerrors.Wrapf(types.ErrFailedToRegisterHostZone, errMsg)
 		}
 		if hostZone.Bech32Prefix == msg.Bech32Prefix {
 			errMsg := fmt.Sprintf("bech32prefix %s already registered", msg.Bech32Prefix)
 			k.Logger(ctx).Error(errMsg)
-			return nil, fmt.Errorf(errMsg)
+			return nil, sdkerrors.Wrapf(types.ErrFailedToRegisterHostZone, errMsg)
 		}
 	}
 
@@ -84,29 +85,33 @@ func (k msgServer) RegisterHostZone(goCtx context.Context, msg *types.MsgRegiste
 	// NOTE: in the future, if we implement proxy governance, we'll need many more delegate accounts
 	delegateAccount := types.FormatICAAccountOwner(chainId, types.ICAAccountType_DELEGATION)
 	if err := k.ICAControllerKeeper.RegisterInterchainAccount(ctx, zone.ConnectionId, delegateAccount); err != nil {
-		k.Logger(ctx).Error(fmt.Sprintf("unable to register delegate account, err: %s", err.Error()))
-		return nil, err
+		errMsg := fmt.Sprintf("unable to register delegation account, err: %s", err.Error())
+		k.Logger(ctx).Error(errMsg)
+		return nil, sdkerrors.Wrapf(types.ErrFailedToRegisterHostZone, errMsg)
 	}
 
 	// generate fee account
 	feeAccount := types.FormatICAAccountOwner(chainId, types.ICAAccountType_FEE)
 	if err := k.ICAControllerKeeper.RegisterInterchainAccount(ctx, zone.ConnectionId, feeAccount); err != nil {
-		k.Logger(ctx).Error(fmt.Sprintf("unable to register fee account, err: %s", err.Error()))
-		return nil, err
+		errMsg := fmt.Sprintf("unable to register fee account, err: %s", err.Error())
+		k.Logger(ctx).Error(errMsg)
+		return nil, sdkerrors.Wrapf(types.ErrFailedToRegisterHostZone, errMsg)
 	}
 
 	// generate withdrawal account
 	withdrawalAccount := types.FormatICAAccountOwner(chainId, types.ICAAccountType_WITHDRAWAL)
 	if err := k.ICAControllerKeeper.RegisterInterchainAccount(ctx, zone.ConnectionId, withdrawalAccount); err != nil {
-		k.Logger(ctx).Error("unable to register withdrawal account, err: %s", err.Error())
-		return nil, err
+		errMsg := fmt.Sprintf("unable to register withdrawal account, err: %s", err.Error())
+		k.Logger(ctx).Error(errMsg)
+		return nil, sdkerrors.Wrapf(types.ErrFailedToRegisterHostZone, errMsg)
 	}
 
 	// generate redemption account
 	redemptionAccount := types.FormatICAAccountOwner(chainId, types.ICAAccountType_REDEMPTION)
 	if err := k.ICAControllerKeeper.RegisterInterchainAccount(ctx, zone.ConnectionId, redemptionAccount); err != nil {
-		k.Logger(ctx).Error(fmt.Sprintf("unable to register redemption account, err: %s", err.Error()))
-		return nil, err
+		errMsg := fmt.Sprintf("unable to register redemption account, err: %s", err.Error())
+		k.Logger(ctx).Error(errMsg)
+		return nil, sdkerrors.Wrapf(types.ErrFailedToRegisterHostZone, errMsg)
 	}
 
 	// add this host zone to unbonding hostZones, otherwise users won't be able to unbond
