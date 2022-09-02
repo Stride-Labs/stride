@@ -45,10 +45,10 @@ func (msg *MsgRedeemStake) ValidateBasic() error {
 	if err != nil {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid creator address (%s)", err)
 	}
-	// check valid receiver address
-	_, err = sdk.AccAddressFromBech32(msg.Receiver)
-	if err != nil {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid receiver address (%s)", err)
+	// validate host zone is not empty
+	// we check validity in the RedeemState function
+	if msg.Receiver == "" {
+		return sdkerrors.Wrapf(ErrRequiredFieldEmpty, "receiver cannot be empty")
 	}
 	// ensure amount is a nonzero positive integer
 	if msg.Amount <= 0 {
