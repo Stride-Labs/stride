@@ -73,6 +73,16 @@ func (s *KeeperTestSuite) TestRestoreInterchainAccount_Success() {
 	s.Require().True(newChannelActive, "a new channel should have been created")
 }
 
+func (s *KeeperTestSuite) TestRestoreInterchainAccount_CannotRestoreNonExistentAcct() {
+	tc := s.SetupRestoreInterchainAccount()
+	msg := tc.validMsg
+	msg.AccountType = stakeibc.ICAAccountType_WITHDRAWAL
+	_, err := s.GetMsgServer().RestoreInterchainAccount(sdk.WrapSDKContext(s.Ctx()), &msg)
+	expectedErrMSg := fmt.Sprintf("ICA controller account address not found: %s.WITHDRAWAL: invalid interchain account address",
+		tc.validMsg.ChainId)
+	s.Require().EqualError(err, expectedErrMSg, "registered ica account successfully")
+}
+
 func (s *KeeperTestSuite) TestRestoreInterchainAccount_FailsForIncorrectHostZone() {
 	tc := s.SetupRestoreInterchainAccount()
 	msg := tc.validMsg
@@ -94,27 +104,3 @@ func (s *KeeperTestSuite) TestRestoreInterchainAccount_FailsIfAccountExists() {
 	)
 	s.Require().EqualError(err, expectedErrMsg, "registered ica account fails when account already exists")
 }
-
-func (s *KeeperTestSuite) TestRestoreInterchainAccount_SucceedsIfOtherAccountExists() {
-	tc := s.SetupRestoreInterchainAccount()
-	s.CreateICAChannel("GAIA.WITHDRAWAL")
-	msg := tc.validMsg
-	_, err := s.GetMsgServer().RestoreInterchainAccount(sdk.WrapSDKContext(s.Ctx()), &msg)
-	s.Require().NoError(err, "registered ica account successfully")
-}
-
-// func (s *KeeperTestSuite) TestRestoreInterchainAccount_RestoresChannelFromClosedState() {
-// 	tc := s.SetupRestoreInterchainAccount()
-// 	msg := tc.validMsg
-
-// 	// ensure the channel is open, then close it and ensure it is closed
-// 	s.Require().Equal(channeltypes.OPEN, s.TransferPath.EndpointA.GetChannel().State, "channel shoud begin in open state")
-// 	err := s.TransferPath.EndpointA.SetChannelClosed()
-// 	s.Require().NoError(err, "set channel to closed")
-// 	s.Require().Equal(channeltypes.CLOSED, s.TransferPath.EndpointA.GetChannel().State, "channel shoud be closed after closing it")
-
-// 	_, err = s.GetMsgServer().RestoreInterchainAccount(sdk.WrapSDKContext(s.Ctx()), &msg)
-// 	s.Require().NoError(err, "restored ica account successfully")
-
-// 	s.Require().Equal(channeltypes.OPEN, s.TransferPath.EndpointA.GetChannel().State, "channel should have re-opened!")
-// }
