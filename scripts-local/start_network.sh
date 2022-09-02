@@ -119,6 +119,12 @@ sleep 1
 # $SCRIPT_DIR/create_logs_osmo.sh &
 # $SCRIPT_DIR/create_logs_juno.sh &
 
-echo "Done! Go get em.\n\n"
+# testing allocation
+echo "Staking 1_000_000ustrd from 1 blacklisted and 1 whitelisted delegator to stridevaloper1c5jnf370kaxnv009yhc3jt27f549l5u3edn747..."
+VALIDATOR_TO_STAKE_TO="stridevaloper1c5jnf370kaxnv009yhc3jt27f549l5u3edn747"
+$STRIDE_CMD tx staking delegate $VALIDATOR_TO_STAKE_TO 100000000000ustrd --from val1 -y
+$STRIDE_CMD tx staking delegate $VALIDATOR_TO_STAKE_TO 100000000000ustrd --from rly1 -y
+$STRIDE_CMD q staking validator $VALIDATOR_TO_STAKE_TO
 
+echo "Done! Go get em.\n\n"
 # bash $SCRIPT_DIR/tests/run_all_tests.sh
