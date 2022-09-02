@@ -48,11 +48,10 @@ func TestMsgRedeemStake_ValidateBasic(t *testing.T) {
 			name: "invalid receiver",
 			msg: MsgRedeemStake{
 				Creator:  sample.AccAddress(),
-				Receiver: "invalid_address",
 				HostZone: "GAIA",
 				Amount:   uint64(1),
 			},
-			err: sdkerrors.ErrInvalidAddress,
+			err: ErrRequiredFieldEmpty,
 		},
 		{
 			name: "amount max int",
