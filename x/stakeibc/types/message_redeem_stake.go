@@ -48,7 +48,7 @@ func (msg *MsgRedeemStake) ValidateBasic() error {
 	// check valid receiver address
 	_, err = sdk.AccAddressFromBech32(msg.Receiver)
 	if err != nil {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid reciever address (%s)", err)
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid receiver address (%s)", err)
 	}
 	// ensure amount is a nonzero positive integer
 	if msg.Amount <= 0 {
