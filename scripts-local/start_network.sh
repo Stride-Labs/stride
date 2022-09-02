@@ -38,10 +38,10 @@ done
 if [ "$CACHE" != "true" ]; then
     # If not caching, initialize state for Stride, Gaia, and relayers
     sh ${SCRIPT_DIR}/init_stride.sh
-    sh ${SCRIPT_DIR}/init_gaia.sh
-    sh ${SCRIPT_DIR}/init_relayers.sh
-    sh ${SCRIPT_DIR}/init_juno.sh
-    sh ${SCRIPT_DIR}/init_osmo.sh
+    # sh ${SCRIPT_DIR}/init_gaia.sh
+    # sh ${SCRIPT_DIR}/init_relayers.sh
+    # sh ${SCRIPT_DIR}/init_juno.sh
+    # sh ${SCRIPT_DIR}/init_osmo.sh
 else
     # Otherwise, restore from the backup file
     echo "Restoring state from cache..."
@@ -56,53 +56,53 @@ nohup $STRIDE_CMD_2 start | sed -r -u "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2})?)?[mGK]/
 nohup $STRIDE_CMD_3 start | sed -r -u "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2})?)?[mGK]//g" > $STRIDE_LOGS_3 2>&1 &
 nohup $STRIDE_CMD_4 start | sed -r -u "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2})?)?[mGK]//g" > $STRIDE_LOGS_4 2>&1 &
 nohup $STRIDE_CMD_5 start | sed -r -u "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2})?)?[mGK]//g" > $STRIDE_LOGS_5 2>&1 &
-nohup $GAIA_CMD start | sed -r -u "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2})?)?[mGK]//g" > $GAIA_LOGS 2>&1 &
-nohup $GAIA_CMD_2 start | sed -r -u "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2})?)?[mGK]//g" > $GAIA_LOGS_2 2>&1 &
-nohup $JUNO_CMD start | sed -r -u "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2})?)?[mGK]//g" > $JUNO_LOGS 2>&1 &
-nohup $OSMO_CMD start | sed -r -u "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2})?)?[mGK]//g" > $OSMO_LOGS 2>&1 &
+# nohup $GAIA_CMD start | sed -r -u "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2})?)?[mGK]//g" > $GAIA_LOGS 2>&1 &
+# nohup $GAIA_CMD_2 start | sed -r -u "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2})?)?[mGK]//g" > $GAIA_LOGS_2 2>&1 &
+# nohup $JUNO_CMD start | sed -r -u "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2})?)?[mGK]//g" > $JUNO_LOGS 2>&1 &
+# nohup $OSMO_CMD start | sed -r -u "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2})?)?[mGK]//g" > $OSMO_LOGS 2>&1 &
 
 ( tail -f -n0 $STRIDE_LOGS & ) | grep -q "finalizing commit of block"
 ( tail -f -n0 $STRIDE_LOGS_2 & ) | grep -q "finalizing commit of block"
 ( tail -f -n0 $STRIDE_LOGS_3 & ) | grep -q "finalizing commit of block"
 ( tail -f -n0 $STRIDE_LOGS_4 & ) | grep -q "finalizing commit of block"
 ( tail -f -n0 $STRIDE_LOGS_5 & ) | grep -q "finalizing commit of block"
-( tail -f -n0 $GAIA_LOGS & ) | grep -q "finalizing commit of block"
-( tail -f -n0 $GAIA_LOGS_2 & ) | grep -q "finalizing commit of block"
-( tail -f -n0 $JUNO_LOGS & ) | grep -q "finalizing commit of block"
-( tail -f -n0 $OSMO_LOGS & ) | grep -q "finalizing commit of block"
+# ( tail -f -n0 $GAIA_LOGS & ) | grep -q "finalizing commit of block"
+# ( tail -f -n0 $GAIA_LOGS_2 & ) | grep -q "finalizing commit of block"
+# ( tail -f -n0 $JUNO_LOGS & ) | grep -q "finalizing commit of block"
+# ( tail -f -n0 $OSMO_LOGS & ) | grep -q "finalizing commit of block"
 sleep 2
 echo "Done"
 
-if [ "$CACHE" != "true" ]; then
-    # If cache mode is disabled, create the hermes connection and channels, 
-    # Logs are piped to the hermes log file and the script is halted until:
-    #  1)  "Creating transfer channel" is printed (indicating the connection has been created)
-    #  2)  "Message ChanOpenInit" is printed (indicating the channnel has been created)
-    bash $SCRIPT_DIR/init_channel.sh >> $HERMES_LOGS 2>&1 &
-    for i in {1..3}
-    do
-        printf '%s' "Creating Hermes Connection $i... "
-        ( tail -f -n0 $HERMES_LOGS & ) | grep -q "Creating transfer channel"
-        echo "Done"
+# if [ "$CACHE" != "true" ]; then
+#     # If cache mode is disabled, create the hermes connection and channels, 
+#     # Logs are piped to the hermes log file and the script is halted until:
+#     #  1)  "Creating transfer channel" is printed (indicating the connection has been created)
+#     #  2)  "Message ChanOpenInit" is printed (indicating the channnel has been created)
+#     bash $SCRIPT_DIR/init_channel.sh >> $HERMES_LOGS 2>&1 &
+#     for i in {1..3}
+#     do
+#         printf '%s' "Creating Hermes Connection $i... "
+#         ( tail -f -n0 $HERMES_LOGS & ) | grep -q "Creating transfer channel"
+#         echo "Done"
 
-        printf '%s' "Creating Hermes Channel $i...    "
-        # continuation of logs from above command
-        ( tail -f -n0 $HERMES_LOGS & ) | grep -q "SUCCESS Channel"
-        echo "Done"
-    done
-fi
+#         printf '%s' "Creating Hermes Channel $i...    "
+#         # continuation of logs from above command
+#         ( tail -f -n0 $HERMES_LOGS & ) | grep -q "SUCCESS Channel"
+#         echo "Done"
+#     done
+# fi
 
-# Start hermes in the background and pause until the log message shows that it is up and running
-printf '%s' "Starting Hermes...            "
-nohup $HERMES_CMD start >> $HERMES_LOGS 2>&1 &
-( tail -f -n0 $HERMES_LOGS & ) | grep -q -E "Hermes has started"
-echo "Done"
+# # Start hermes in the background and pause until the log message shows that it is up and running
+# printf '%s' "Starting Hermes...            "
+# nohup $HERMES_CMD start >> $HERMES_LOGS 2>&1 &
+# ( tail -f -n0 $HERMES_LOGS & ) | grep -q -E "Hermes has started"
+# echo "Done"
 
-# Start ICQ in the background
-printf '%s' "Starting ICQ...     "
-source $SCRIPT_DIR/icq_startup.sh &
-sleep 5
-echo "Done"
+# # Start ICQ in the background
+# printf '%s' "Starting ICQ...     "
+# source $SCRIPT_DIR/icq_startup.sh &
+# sleep 5
+# echo "Done"
 
 # Create a copy of the state that can be used for the "cache" option
 echo "Network is ready for transactions!\n"
@@ -110,14 +110,14 @@ rm -rf $SCRIPT_DIR/.state.backup
 sleep 1
 # cp -r $SCRIPT_DIR/state $SCRIPT_DIR/.state.backup
 
-if [ "$CACHE" != "true" ]; then
-    bash $SCRIPT_DIR/register_host.sh
-fi
+# if [ "$CACHE" != "true" ]; then
+#     bash $SCRIPT_DIR/register_host.sh
+# fi
 
-# Add more detailed log files
-$SCRIPT_DIR/create_logs_gaia.sh &
-$SCRIPT_DIR/create_logs_osmo.sh &
-$SCRIPT_DIR/create_logs_juno.sh &
+# # Add more detailed log files
+# $SCRIPT_DIR/create_logs_gaia.sh &
+# $SCRIPT_DIR/create_logs_osmo.sh &
+# $SCRIPT_DIR/create_logs_juno.sh &
 
 echo "Done! Go get em.\n\n"
 
