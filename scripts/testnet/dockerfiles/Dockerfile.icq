@@ -1,7 +1,0 @@
-FROM gcr.io/stride-nodes/base-images/icq:latest
-
-COPY --chown=1000 "./state/icq_startup.sh" /icq/icq_startup.sh
-COPY --chown=1000 "./state/icq_config.yaml" /icq/.icq/config.yaml
-
-RUN ["chmod", "+x", "/icq/icq_startup.sh"]
-CMD ["sh", "/icq/icq_startup.sh"]
