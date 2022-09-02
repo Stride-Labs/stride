@@ -112,6 +112,8 @@ func (s *KeeperTestSuite) TestGetHostZoneUnbondingMsgs_Successful() {
 	s.Require().Equal(len(tc.hostZone.Validators), len(actualCallbackResult.SplitDelegations), "number of split delegations in success unbonding case")
 	s.Require().Equal(tc.hostZone.ChainId, actualCallbackResult.HostZoneId, "host zone id in success unbonding case")
 
+	// TODO add case that checks the *marshaled* callback args against expectations
+
 	// the number of unbonding messages should be (number of validators) * (records to unbond)
 	s.Require().Equal(len(tc.epochUnbondingRecords), len(actualUnbondMsgs), "number of unbonding messages should be number of records to unbond")
 
