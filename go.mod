@@ -136,6 +136,7 @@ replace (
 	// NOTE: If you need to bump the cosmos-sdk version, create a branch at the commit hash
 	// of the target version on github.com/Stride-Labs/cosmos-sdk, then remove the error redaction
 	// logic and push a new tag and the branch to github (use that tag below)
+	// github.com/cosmos/cosmos-sdk => ../cosmos-sdk-stride/cosmos-sdk //github.com/Stride-Labs/cosmos-sdk v0.45.4-debug-2
 	github.com/cosmos/cosmos-sdk => github.com/Stride-Labs/cosmos-sdk v0.45.4-debug-2
 	github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alpha.regen.1
 	github.com/ignite-hq/cli => github.com/ignite-hq/cli v0.21.0
