@@ -4,6 +4,8 @@ BUILDDIR ?= $(CURDIR)/build
 build=s
 cache=false
 
+ldflags := $(LDFLAGS)
+
 .PHONY: build
 
 all: lint check-dependencies build-local
@@ -14,7 +16,7 @@ all: lint check-dependencies build-local
 
 build:
 	mkdir -p $(BUILDDIR)/
-	go build -mod=readonly -trimpath -o $(BUILDDIR) ./...;
+	go build -mod=readonly -ldflags '$(ldflags)' -trimpath -o $(BUILDDIR) ./...;
 
 clean: 
 	rm -rf $(BUILDDIR)/* 
