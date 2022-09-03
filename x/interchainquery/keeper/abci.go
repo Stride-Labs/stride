@@ -35,7 +35,7 @@ func (k Keeper) EndBlocker(ctx sdk.Context) {
 
 			events = append(events, event)
 
-			event.Type = "query_response"
+			event.Type = "query_request"
 			events = append(events, event)
 
 			queryInfo.LastHeight = sdk.NewInt(ctx.BlockHeight())
