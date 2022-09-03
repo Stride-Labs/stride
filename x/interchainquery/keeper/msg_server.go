@@ -158,9 +158,23 @@ func (k msgServer) SubmitQueryResponse(goCtx context.Context, msg *types.MsgSubm
 		return &types.MsgSubmitQueryResponseResponse{}, nil // technically this is an error, but will cause the entire tx to fail if we have one 'bad' message, so we can just no-op here.
 	}
 
+	defer ctx.EventManager().EmitEvents(sdk.Events{
+		sdk.NewEvent(
+			sdk.EventTypeMessage,
+			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
+			sdk.NewAttribute(types.AttributeKeyQueryId, q.Id),
+		),
+		sdk.NewEvent(
+			"query_response",
+			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
+			sdk.NewAttribute(types.AttributeKeyQueryId, q.Id),
+		),
+	})
+
 	// 1. verify the response's proof, if one exists
 	err := k.VerifyKeyProof(ctx, msg, q)
 	if err != nil {
+		k.Logger(ctx).Error("[ICQ Resp] error verifying key proof: %v", err)
 		return nil, err
 	}
 	// 2. immediately delete the query so it cannot process again
@@ -169,6 +183,7 @@ func (k msgServer) SubmitQueryResponse(goCtx context.Context, msg *types.MsgSubm
 	// 3. verify the query's ttl is unexpired
 	ttlExceeded, err := k.HasQueryExceededTtl(ctx, msg, q)
 	if err != nil {
+		k.Logger(ctx).Error("[ICQ Resp] error checking ttl exceeded: %v", err)
 		return nil, err
 	}
 	if ttlExceeded {
@@ -185,16 +200,10 @@ func (k msgServer) SubmitQueryResponse(goCtx context.Context, msg *types.MsgSubm
 	// 5. call the query's associated callback function
 	err = k.InvokeCallback(ctx, msg, q)
 	if err != nil {
+		k.Logger(ctx).Error("[ICQ Resp] error invoking callback: %v", err)
 		return nil, err
 	}
 
-	ctx.EventManager().EmitEvents(sdk.Events{
-		sdk.NewEvent(
-			sdk.EventTypeMessage,
-			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
-			sdk.NewAttribute(types.AttributeKeyQueryId, q.Id),
-		),
-	})
-
+	k.Logger(ctx).Info("[ICQ Resp] successful query")
 	return &types.MsgSubmitQueryResponseResponse{}, nil
 }
