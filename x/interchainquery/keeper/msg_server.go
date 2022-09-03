@@ -168,6 +168,7 @@ func (k msgServer) SubmitQueryResponse(goCtx context.Context, msg *types.MsgSubm
 			"query_response",
 			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
 			sdk.NewAttribute(types.AttributeKeyQueryId, q.Id),
+			sdk.NewAttribute(types.AttributeKeyChainId, q.ChainId),
 		),
 	})
 
