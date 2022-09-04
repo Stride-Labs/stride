@@ -6,7 +6,6 @@ make build-local build=s
 ```
 bash scripts-local/start_network.sh
 ```
-* Fund hermes and ICQ addresses on GAIA via keplr
 * Create connections and channels
 ./build/hermes/release/hermes --config scripts-local/hermes/config.toml create connection --a-chain local-test-1 --b-chain cosmoshub-4
 ./build/hermes/release/hermes --config scripts-local/hermes/config.toml create channel --a-chain cosmoshub-4 --a-connection {CONNECTION-ID} --a-port transfer --b-port transfer
