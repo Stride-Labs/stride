@@ -98,7 +98,7 @@ STRIDE_CMD_5="$SCRIPT_DIR/../build/stride5/strided --home $STRIDE_HOME_5"
 STRIDE_CMD="$SCRIPT_DIR/../build/strided --home $STATE/stride"
 
 # define GAIA vars
-GAIA_CHAIN=GAIA
+GAIA_CHAIN=cosmoshub-4
 GAIA_PEER_PORT=26556
 GAIA_NODE_NAME=gaia
 GAIA_VAL_ACCT=gval1
