@@ -51,7 +51,7 @@ val_addr=$($OSMO_CMD keys show $OSMO_VAL_ACCT --keyring-backend test -a) > /dev/
 # add money for this validator account
 $OSMO_CMD add-genesis-account ${val_addr} 500000000000000uosmo
 # actually set this account as a validator
-$OSMO_CMD gentx $OSMO_VAL_ACCT 1000000uosmo --chain-id $OSMO_CHAIN --keyring-backend test 2> /dev/null
+$OSMO_CMD gentx $OSMO_VAL_ACCT 10000000000uosmo --chain-id $OSMO_CHAIN --keyring-backend test 2> /dev/null
 
 # Add hermes relayer account
 echo $HERMES_OSMO_MNEMONIC | $OSMO_CMD keys add $HERMES_OSMO_ACCT --recover --keyring-backend=test >> $KEYS_LOGS 2>&1 
