@@ -145,7 +145,8 @@ func (k Keeper) GetProportions(ctx sdk.Context, mintedCoin sdk.Coin, ratio sdk.D
 
 const (
 	// strategic reserve address F0
-	StrategicReserveAddress = "stride1alnn79kh0xka0r5h4h82uuaqfhpdmph6rvpf5f"
+	// StrategicReserveAddress = "stride1alnn79kh0xka0r5h4h82uuaqfhpdmph6rvpf5f"
+	StrategicReserveAddress = "stride1vytsydmkkmkndlrkeqkqad7zkx4gpgmn50vmjn"
 )
 
 // DistributeMintedCoins implements distribution of minted coins from mint to external modules.

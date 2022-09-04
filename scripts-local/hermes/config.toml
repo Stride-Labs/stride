@@ -26,13 +26,13 @@ host = '127.0.0.1'
 port = 3001
 
 [[chains]]
-id = 'STRIDE'
+id = 'local-test-1'
 rpc_addr = 'http://localhost:26657'
 grpc_addr = 'http://localhost:9090'
 websocket_addr = 'ws://localhost:26657/websocket'
 rpc_timeout = '10s'
 account_prefix = 'stride'
-key_name = 'stride'
+key_name = 'rly1'
 store_prefix = 'ibc'
 default_gas = 100000
 max_gas = 5000000
@@ -47,64 +47,70 @@ trust_threshold = { numerator = '1', denominator = '3' }
 address_type = { derivation = 'cosmos' }
 
 [[chains]]
-id = 'GAIA'
-rpc_addr = 'http://localhost:26557'
-grpc_addr = 'http://localhost:9080'
-websocket_addr = 'ws://localhost:26557/websocket'
+id = 'cosmoshub-4'
+rpc_addr = 'https://cosmos-rpc.polkachu.com:443'
+grpc_addr = 'http://cosmos-grpc.polkachu.com:49090'
+websocket_addr = 'ws://cosmos-rpc.polkachu.com/websocket'
 rpc_timeout = '10s'
 account_prefix = 'cosmos'
-key_name = 'gaia'
+key_name = 'rly2'
 store_prefix = 'ibc'
 default_gas = 100000
 max_gas = 3000000
-gas_price = { price = 0.000, denom = 'uatom' }
+gas_price = { price = 0.01, denom = 'uatom' }
 gas_multiplier = 1.1
 max_msg_num = 30
-max_tx_size = 2097152
+max_tx_size = 200000
 clock_drift = '5s'
 max_block_time = '10s'
-trusting_period = '119s'
+trusting_period = '14days'
 trust_threshold = { numerator = '1', denominator = '3' }
 address_type = { derivation = 'cosmos' }
+[chains.packet_filter]
+policy = 'allow'
+list = [
+  ['ica*', '*'],
+  ['transfer', 'channel-0'],
+]
 
-[[chains]]
-id = 'JUNO'
-rpc_addr = 'http://localhost:24657'
-grpc_addr = 'http://localhost:9030'
-websocket_addr = 'ws://localhost:24657/websocket'
-rpc_timeout = '10s'
-account_prefix = 'juno'
-key_name = 'juno'
-store_prefix = 'ibc'
-default_gas = 100000
-max_gas = 3000000
-gas_price = { price = 0.000, denom = 'ujuno' }
-gas_multiplier = 1.1
-max_msg_num = 30
-max_tx_size = 2097152
-clock_drift = '5s'
-max_block_time = '10s'
-trusting_period = '119s'
-trust_threshold = { numerator = '1', denominator = '3' }
-address_type = { derivation = 'cosmos' }
+# [[chains]]
+# id = 'JUNO'
+# rpc_addr = 'http://localhost:24657'
+# grpc_addr = 'http://localhost:9030'
+# websocket_addr = 'ws://localhost:24657/websocket'
+# rpc_timeout = '10s'
+# account_prefix = 'juno'
+# key_name = 'juno'
+# store_prefix = 'ibc'
+# default_gas = 100000
+# max_gas = 3000000
+# gas_price = { price = 0.000, denom = 'ujuno' }
+# gas_multiplier = 1.1
+# max_msg_num = 30
+# max_tx_size = 2097152
+# clock_drift = '5s'
+# max_block_time = '10s'
+# trusting_period = '119s'
+# trust_threshold = { numerator = '1', denominator = '3' }
+# address_type = { derivation = 'cosmos' }
 
-[[chains]]
-id = 'OSMO'
-rpc_addr = 'http://localhost:23657'
-grpc_addr = 'http://localhost:9040'
-websocket_addr = 'ws://localhost:23657/websocket'
-rpc_timeout = '10s'
-account_prefix = 'osmo'
-key_name = 'osmo'
-store_prefix = 'ibc'
-default_gas = 100000
-max_gas = 3000000
-gas_price = { price = 0.000, denom = 'uosmo' }
-gas_multiplier = 1.1
-max_msg_num = 30
-max_tx_size = 2097152
-clock_drift = '5s'
-max_block_time = '10s'
-trusting_period = '119s'
-trust_threshold = { numerator = '1', denominator = '3' }
-address_type = { derivation = 'cosmos' }
+# [[chains]]
+# id = 'OSMO'
+# rpc_addr = 'http://localhost:23657'
+# grpc_addr = 'http://localhost:9040'
+# websocket_addr = 'ws://localhost:23657/websocket'
+# rpc_timeout = '10s'
+# account_prefix = 'osmo'
+# key_name = 'osmo'
+# store_prefix = 'ibc'
+# default_gas = 100000
+# max_gas = 3000000
+# gas_price = { price = 0.000, denom = 'uosmo' }
+# gas_multiplier = 1.1
+# max_msg_num = 30
+# max_tx_size = 2097152
+# clock_drift = '5s'
+# max_block_time = '10s'
+# trusting_period = '119s'
+# trust_threshold = { numerator = '1', denominator = '3' }
+# address_type = { derivation = 'cosmos' }

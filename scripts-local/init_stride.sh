@@ -71,7 +71,7 @@ mkdir $STRIDE_HOME/config/gentx/
 echo $STRIDE_VAL_MNEMONIC_2 | $STRIDE_CMD_2 keys add $STRIDE_VAL_ACCT_2 --recover --keyring-backend=test >> $KEYS_LOGS 2>&1 
 $STRIDE_CMD_2 add-genesis-account $STRIDE_VAL_2_ADDR 500000000000000ustrd
 $STRIDE_CMD add-genesis-account $STRIDE_VAL_2_ADDR 500000000000000ustrd
-$STRIDE_CMD_2 gentx $STRIDE_VAL_ACCT_2 1000000000ustrd --chain-id $STRIDE_CHAIN --keyring-backend test --output-document=$STRIDE_HOME/config/gentx/val2.json >> $TX_LOGS 2>&1 
+# $STRIDE_CMD_2 gentx $STRIDE_VAL_ACCT_2 1000000000ustrd --chain-id $STRIDE_CHAIN --keyring-backend test --output-document=$STRIDE_HOME/config/gentx/val2.json >> $TX_LOGS 2>&1 
 
 
 # ================= MAP PORTS FOR NODE 3 SO IT DOESN'T CONFLICT WITH NODE 1 =================
@@ -91,7 +91,7 @@ sed -i -E 's|enable = true|enable = false|g' "${STATE}/stride3/config/app.toml"
 echo $STRIDE_VAL_MNEMONIC_3 | $STRIDE_CMD_3 keys add $STRIDE_VAL_ACCT_3 --recover --keyring-backend=test >> $KEYS_LOGS 2>&1 
 $STRIDE_CMD_3 add-genesis-account $STRIDE_VAL_3_ADDR 500000000000000ustrd
 $STRIDE_CMD add-genesis-account $STRIDE_VAL_3_ADDR 500000000000000ustrd
-$STRIDE_CMD_3 gentx $STRIDE_VAL_ACCT_3 1000000000ustrd --chain-id $STRIDE_CHAIN --keyring-backend test --output-document=$STRIDE_HOME/config/gentx/val3.json >> $TX_LOGS 2>&1 
+# $STRIDE_CMD_3 gentx $STRIDE_VAL_ACCT_3 1000000000ustrd --chain-id $STRIDE_CHAIN --keyring-backend test --output-document=$STRIDE_HOME/config/gentx/val3.json >> $TX_LOGS 2>&1 
 
 
 # ================= MAP PORTS FOR NODE 4 SO IT DOESN'T CONFLICT WITH NODE 1 =================
@@ -111,7 +111,7 @@ sed -i -E 's|enable = true|enable = false|g' "${STATE}/stride4/config/app.toml"
 echo $STRIDE_VAL_MNEMONIC_4 | $STRIDE_CMD_4 keys add $STRIDE_VAL_ACCT_4 --recover --keyring-backend=test >> $KEYS_LOGS 2>&1 
 $STRIDE_CMD_4 add-genesis-account $STRIDE_VAL_4_ADDR 500000000000000ustrd
 $STRIDE_CMD add-genesis-account $STRIDE_VAL_4_ADDR 500000000000000ustrd
-$STRIDE_CMD_4 gentx $STRIDE_VAL_ACCT_4 1000000000ustrd --chain-id $STRIDE_CHAIN --keyring-backend test --output-document=$STRIDE_HOME/config/gentx/val4.json >> $TX_LOGS 2>&1 
+# $STRIDE_CMD_4 gentx $STRIDE_VAL_ACCT_4 1000000000ustrd --chain-id $STRIDE_CHAIN --keyring-backend test --output-document=$STRIDE_HOME/config/gentx/val4.json >> $TX_LOGS 2>&1 
 
 
 # ================= MAP PORTS FOR NODE 5 SO IT DOESN'T CONFLICT WITH NODE 1 =================
@@ -131,7 +131,7 @@ sed -i -E 's|enable = true|enable = false|g' "${STATE}/stride5/config/app.toml"
 echo $STRIDE_VAL_MNEMONIC_5 | $STRIDE_CMD_5 keys add $STRIDE_VAL_ACCT_5 --recover --keyring-backend=test >> $KEYS_LOGS 2>&1 
 $STRIDE_CMD_5 add-genesis-account $STRIDE_VAL_5_ADDR 500000000000000ustrd
 $STRIDE_CMD add-genesis-account $STRIDE_VAL_5_ADDR 500000000000000ustrd
-$STRIDE_CMD_5 gentx $STRIDE_VAL_ACCT_5 1000000000ustrd --chain-id $STRIDE_CHAIN --keyring-backend test --output-document=$STRIDE_HOME/config/gentx/val5.json >> $TX_LOGS 2>&1 
+# $STRIDE_CMD_5 gentx $STRIDE_VAL_ACCT_5 1000000000ustrd --chain-id $STRIDE_CHAIN --keyring-backend test --output-document=$STRIDE_HOME/config/gentx/val5.json >> $TX_LOGS 2>&1 
 
 
 # add validator account

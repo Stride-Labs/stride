@@ -38,10 +38,10 @@ done
 if [ "$CACHE" != "true" ]; then
     # If not caching, initialize state for Stride, Gaia, and relayers
     sh ${SCRIPT_DIR}/init_stride.sh
-    sh ${SCRIPT_DIR}/init_gaia.sh
+    # sh ${SCRIPT_DIR}/init_gaia.sh
     sh ${SCRIPT_DIR}/init_relayers.sh
-    sh ${SCRIPT_DIR}/init_juno.sh
-    sh ${SCRIPT_DIR}/init_osmo.sh
+    # sh ${SCRIPT_DIR}/init_juno.sh
+    # sh ${SCRIPT_DIR}/init_osmo.sh
 else
     # Otherwise, restore from the backup file
     echo "Restoring state from cache..."
@@ -52,6 +52,10 @@ fi
 #  and halts the script until Stride/Gaia have each finalized a block
 printf '\n%s' "Starting Stride, Gaia, Osmo, and Juno...   "
 nohup $STRIDE_CMD start | sed -r -u "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2})?)?[mGK]//g" > $STRIDE_LOGS 2>&1 &
+
+echo "Done"
+exit 0
+
 nohup $STRIDE_CMD_2 start | sed -r -u "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2})?)?[mGK]//g" > $STRIDE_LOGS_2 2>&1 &
 nohup $STRIDE_CMD_3 start | sed -r -u "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2})?)?[mGK]//g" > $STRIDE_LOGS_3 2>&1 &
 nohup $STRIDE_CMD_4 start | sed -r -u "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2})?)?[mGK]//g" > $STRIDE_LOGS_4 2>&1 &

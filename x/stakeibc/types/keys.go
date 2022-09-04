@@ -29,7 +29,8 @@ const (
 	ICAAccountKey               = "ICAAccount-value-"
 
 	// fee account - F1
-	FeeAccount = "stride1czvrk3jkvtj8m27kqsqu2yrkhw3h3ykwj3rxh6"
+	// FeeAccount = "stride1czvrk3jkvtj8m27kqsqu2yrkhw3h3ykwj3rxh6"
+	FeeAccount = "stride19uvw0azm9u0k6vqe4e22cga6kteskdqq3ulj6q"
 )
 
 var (
