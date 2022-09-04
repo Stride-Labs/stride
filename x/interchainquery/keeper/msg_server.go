@@ -158,6 +158,20 @@ func (k msgServer) SubmitQueryResponse(goCtx context.Context, msg *types.MsgSubm
 		return &types.MsgSubmitQueryResponseResponse{}, nil // technically this is an error, but will cause the entire tx to fail if we have one 'bad' message, so we can just no-op here.
 	}
 
+	defer ctx.EventManager().EmitEvents(sdk.Events{
+		sdk.NewEvent(
+			sdk.EventTypeMessage,
+			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
+			sdk.NewAttribute(types.AttributeKeyQueryId, q.Id),
+		),
+		sdk.NewEvent(
+			"query_response",
+			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
+			sdk.NewAttribute(types.AttributeKeyQueryId, q.Id),
+			sdk.NewAttribute(types.AttributeKeyChainId, q.ChainId),
+		),
+	})
+
 	// 1. verify the response's proof, if one exists
 	err := k.VerifyKeyProof(ctx, msg, q)
 	if err != nil {
@@ -187,14 +201,6 @@ func (k msgServer) SubmitQueryResponse(goCtx context.Context, msg *types.MsgSubm
 	if err != nil {
 		return nil, err
 	}
-
-	ctx.EventManager().EmitEvents(sdk.Events{
-		sdk.NewEvent(
-			sdk.EventTypeMessage,
-			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
-			sdk.NewAttribute(types.AttributeKeyQueryId, q.Id),
-		),
-	})
 
 	return &types.MsgSubmitQueryResponseResponse{}, nil
 }
