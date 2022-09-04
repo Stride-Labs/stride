@@ -45,7 +45,7 @@ val_addr=$($JUNO_CMD keys show $JUNO_VAL_ACCT --keyring-backend test -a) > /dev/
 # add money for this validator account
 $JUNO_CMD add-genesis-account ${val_addr} 500000000000000ujuno
 # actually set this account as a validator
-$JUNO_CMD gentx $JUNO_VAL_ACCT 1000000ujuno --chain-id $JUNO_CHAIN --keyring-backend test 2> /dev/null
+$JUNO_CMD gentx $JUNO_VAL_ACCT 10000000000ujuno --chain-id $JUNO_CHAIN --keyring-backend test 2> /dev/null
 
 # Add hermes relayer account
 echo $HERMES_JUNO_MNEMONIC | $JUNO_CMD keys add $HERMES_JUNO_ACCT --recover --keyring-backend=test >> $KEYS_LOGS 2>&1 
