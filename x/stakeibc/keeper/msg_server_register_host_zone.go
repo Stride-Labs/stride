@@ -116,11 +116,11 @@ func (k msgServer) RegisterHostZone(goCtx context.Context, msg *types.MsgRegiste
 
 	// add this host zone to unbonding hostZones, otherwise users won't be able to unbond
 	// for this host zone until the following day
-	epochTracker, found := k.GetEpochTracker(ctx, epochtypes.DAY_EPOCH)
+	dayEpochTracker, found := k.GetEpochTracker(ctx, epochtypes.DAY_EPOCH)
 	if !found {
-		return nil, sdkerrors.Wrapf(types.ErrEpochNotFound, "epoch tracker not found, %s", "day")
+		return nil, sdkerrors.Wrapf(types.ErrEpochNotFound, "epoch tracker (%s) not found", epochtypes.DAY_EPOCH)
 	}
-	epochUnbondingRecord, found := k.RecordsKeeper.GetEpochUnbondingRecord(ctx, epochTracker.EpochNumber)
+	epochUnbondingRecord, found := k.RecordsKeeper.GetEpochUnbondingRecord(ctx, dayEpochTracker.EpochNumber)
 	if !found {
 		errMsg := "unable to find latest epoch unbonding record"
 		k.Logger(ctx).Error(errMsg)
@@ -140,6 +140,21 @@ func (k msgServer) RegisterHostZone(goCtx context.Context, msg *types.MsgRegiste
 		return nil, sdkerrors.Wrapf(types.ErrEpochNotFound, errMsg)
 	}
 	k.RecordsKeeper.SetEpochUnbondingRecord(ctx, *updatedEpochUnbondingRecord)
+
+	// create an empty deposit record for the host zone
+	strideEpochTracker, found := k.GetEpochTracker(ctx, epochtypes.STRIDE_EPOCH)
+	if !found {
+		return nil, sdkerrors.Wrapf(types.ErrEpochNotFound, "epoch tracker (%s) not found", epochtypes.STRIDE_EPOCH)
+	}
+	depositRecord := recordstypes.DepositRecord{
+		Id:                 0,
+		Amount:             0,
+		Denom:              zone.HostDenom,
+		HostZoneId:         zone.ChainId,
+		Status:             recordstypes.DepositRecord_TRANSFER,
+		DepositEpochNumber: strideEpochTracker.EpochNumber,
+	}
+	k.RecordsKeeper.AppendDepositRecord(ctx, depositRecord)
 
 	// emit events
 	ctx.EventManager().EmitEvent(
