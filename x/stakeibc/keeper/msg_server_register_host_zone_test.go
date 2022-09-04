@@ -20,6 +20,7 @@ import (
 type RegisterHostZoneTestCase struct {
 	validMsg                   stakeibctypes.MsgRegisterHostZone
 	epochUnbondingRecordNumber uint64
+	strideEpochNumber          uint64
 	unbondingFrequency         uint64
 	defaultRedemptionRate      sdk.Dec
 	atomHostZoneChainId        string
@@ -27,6 +28,7 @@ type RegisterHostZoneTestCase struct {
 
 func (s *KeeperTestSuite) SetupRegisterHostZone() RegisterHostZoneTestCase {
 	epochUnbondingRecordNumber := uint64(3)
+	strideEpochNumber := uint64(4)
 	unbondingFrequency := uint64(3)
 	defaultRedemptionRate := sdk.NewDec(1)
 	atomHostZoneChainId := "GAIA"
@@ -36,6 +38,11 @@ func (s *KeeperTestSuite) SetupRegisterHostZone() RegisterHostZoneTestCase {
 	s.App.StakeibcKeeper.SetEpochTracker(s.Ctx(), stakeibctypes.EpochTracker{
 		EpochIdentifier: epochtypes.DAY_EPOCH,
 		EpochNumber:     epochUnbondingRecordNumber,
+	})
+
+	s.App.StakeibcKeeper.SetEpochTracker(s.Ctx(), stakeibctypes.EpochTracker{
+		EpochIdentifier: epochtypes.STRIDE_EPOCH,
+		EpochNumber:     strideEpochNumber,
 	})
 
 	epochUnbondingRecord := recordtypes.EpochUnbondingRecord{
@@ -56,6 +63,7 @@ func (s *KeeperTestSuite) SetupRegisterHostZone() RegisterHostZoneTestCase {
 	return RegisterHostZoneTestCase{
 		validMsg:                   defaultMsg,
 		epochUnbondingRecordNumber: epochUnbondingRecordNumber,
+		strideEpochNumber:          strideEpochNumber,
 		unbondingFrequency:         unbondingFrequency,
 		defaultRedemptionRate:      defaultRedemptionRate,
 		atomHostZoneChainId:        atomHostZoneChainId,
@@ -126,6 +134,20 @@ func (s *KeeperTestSuite) TestRegisterHostZone_Success() {
 	s.Require().NoError(err, "converting module address to account")
 	acc := s.App.AccountKeeper.GetAccount(s.Ctx(), hostZoneModuleAccount)
 	s.Require().NotNil(acc, "host zone module account found in account keeper")
+
+	// Confirm an empty deposit record was created
+	expectedDepositRecord := recordstypes.DepositRecord{
+		Id:                 uint64(0),
+		Amount:             int64(0),
+		HostZoneId:         hostZone.ChainId,
+		Denom:              hostZone.HostDenom,
+		Status:             recordstypes.DepositRecord_TRANSFER,
+		DepositEpochNumber: tc.strideEpochNumber,
+	}
+
+	depositRecords := s.App.RecordsKeeper.GetAllDepositRecord(s.Ctx())
+	s.Require().Len(depositRecords, 1, "number of deposit records")
+	s.Require().Equal(expectedDepositRecord, depositRecords[0], "deposit record")
 }
 
 func (s *KeeperTestSuite) TestRegisterHostZone_InvalidConnectionId() {
@@ -228,7 +250,7 @@ func (s *KeeperTestSuite) TestRegisterHostZone_DuplicateBech32Prefix() {
 	s.Require().EqualError(err, expectedErrMsg, "registering host zone with duplicate bech32 prefix should fail")
 }
 
-func (s *KeeperTestSuite) TestRegisterHostZone_CannotFindEpochTracker() {
+func (s *KeeperTestSuite) TestRegisterHostZone_CannotFindDayEpochTracker() {
 	// tests for a failure if the epoch tracker cannot be found
 	tc := s.SetupRegisterHostZone()
 	msg := tc.validMsg
@@ -237,8 +259,21 @@ func (s *KeeperTestSuite) TestRegisterHostZone_CannotFindEpochTracker() {
 	s.App.StakeibcKeeper.RemoveEpochTracker(s.Ctx(), epochtypes.DAY_EPOCH)
 
 	_, err := s.GetMsgServer().RegisterHostZone(sdk.WrapSDKContext(s.Ctx()), &msg)
-	expectedErrMsg := "epoch tracker not found, day: epoch not found"
-	s.Require().EqualError(err, expectedErrMsg, "epoch tracker not found")
+	expectedErrMsg := "epoch tracker (day) not found: epoch not found"
+	s.Require().EqualError(err, expectedErrMsg, "day epoch tracker not found")
+}
+
+func (s *KeeperTestSuite) TestRegisterHostZone_CannotFindStrideEpochTracker() {
+	// tests for a failure if the epoch tracker cannot be found
+	tc := s.SetupRegisterHostZone()
+	msg := tc.validMsg
+
+	// delete the epoch tracker
+	s.App.StakeibcKeeper.RemoveEpochTracker(s.Ctx(), epochtypes.STRIDE_EPOCH)
+
+	_, err := s.GetMsgServer().RegisterHostZone(sdk.WrapSDKContext(s.Ctx()), &msg)
+	expectedErrMsg := "epoch tracker (stride_epoch) not found: epoch not found"
+	s.Require().EqualError(err, expectedErrMsg, "stride epoch tracker not found")
 }
 
 func (s *KeeperTestSuite) TestRegisterHostZone_CannotFindEpochUnbondingRecord() {
