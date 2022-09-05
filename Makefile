@@ -3,6 +3,7 @@
 BUILDDIR ?= $(CURDIR)/build
 build=s
 cache=false
+COMMIT := $(shell git log -1 --format='%H')
 
 # process build tags
 
