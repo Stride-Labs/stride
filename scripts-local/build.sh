@@ -9,7 +9,7 @@ BUILDDIR="$2"
 while getopts sghijo flag; do
     case "${flag}" in
         s) printf '%s' "Building Stride... ";
-           go build -mod=readonly -trimpath -o $BUILDDIR ./...;
+           go build -mod=readonly -trimpath -tags "ledger" -ldflags '-X "github.com/cosmos/cosmos-sdk/version.BuildTags=ledger" -w -s' -o $BUILDDIR ./...; # having a build with ledger is convenient
            mkdir -p $BUILDDIR/stride2
            go build -mod=readonly -trimpath -o $BUILDDIR/stride2 ./... 2>&1 | grep -v -E "deprecated|keychain" || true; 
            mkdir -p $BUILDDIR/stride3

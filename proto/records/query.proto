@@ -25,6 +25,11 @@ service Query {
 		option (google.api.http).get = "/Stride-Labs/stride/records/user_redemption_record";
 	}
 
+	// Queries a list of UserRedemptionRecord items by chainId / userId pair.
+	rpc UserRedemptionRecordForUser(QueryAllUserRedemptionRecordForUserRequest) returns (QueryAllUserRedemptionRecordForUserResponse) {
+		option (google.api.http).get = "/Stride-Labs/stride/records/user_redemption_record_for_user/{chainId}/{day}/{address}/{limit}";
+	}
+
 // Queries a EpochUnbondingRecord by id.
 	rpc EpochUnbondingRecord(QueryGetEpochUnbondingRecordRequest) returns (QueryGetEpochUnbondingRecordResponse) {
 		option (google.api.http).get = "/Stride-Labs/stride/records/epoch_unbonding_record/{epochNumber}";
@@ -89,6 +94,20 @@ message QueryAllUserRedemptionRecordRequest {
 }
 
 message QueryAllUserRedemptionRecordResponse {
+	repeated UserRedemptionRecord UserRedemptionRecord = 1 [(gogoproto.nullable) = false];
+	cosmos.base.query.v1beta1.PageResponse pagination = 2;
+}
+
+// Query UserRedemptionRecords by chainId / userId pair
+message QueryAllUserRedemptionRecordForUserRequest {
+	string chainId = 1;
+	uint64 day = 2;
+	string address = 3;
+	uint64 limit = 4;
+	cosmos.base.query.v1beta1.PageRequest pagination = 5;
+}
+
+message QueryAllUserRedemptionRecordForUserResponse {
 	repeated UserRedemptionRecord UserRedemptionRecord = 1 [(gogoproto.nullable) = false];
 	cosmos.base.query.v1beta1.PageResponse pagination = 2;
 }
