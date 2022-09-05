@@ -67,7 +67,7 @@ func (k Keeper) GetTargetValAmtsForHostZone(ctx sdk.Context, hostZone types.Host
 		return validators[i].Weight < validators[j].Weight
 	})
 
-	for i, validator := range hostZone.Validators {
+	for i, validator := range validators {
 		if i == len(hostZone.Validators)-1 {
 			// for the last element, we need to make sure that the allocatedAmt is equal to the finalDelegation
 			targetAmount[validator.GetAddress()] = finalDelegation - allocatedAmt
