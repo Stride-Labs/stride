@@ -11,13 +11,6 @@ import (
 	"github.com/Stride-Labs/stride/x/records/types"
 )
 
-func max(a, b uint64) uint64 {
-	if a < b {
-		return b
-	}
-	return a
-}
-
 func (k Keeper) UserRedemptionRecordForUser(c context.Context, req *types.QueryAllUserRedemptionRecordForUserRequest) (*types.QueryAllUserRedemptionRecordForUserResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "invalid request")
