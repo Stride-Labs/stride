@@ -48,9 +48,9 @@ address_type = { derivation = 'cosmos' }
 
 [[chains]]
 id = 'cosmoshub-4'
-rpc_addr = 'https://cosmos-rpc.polkachu.com:443'
-grpc_addr = 'http://cosmos-grpc.polkachu.com:49090'
-websocket_addr = 'ws://cosmos-rpc.polkachu.com/websocket'
+rpc_addr = 'http://gaia-fleet-direct.frontend.stridenet.co:26657'
+grpc_addr = 'http://gaia-fleet-direct.frontend.stridenet.co:9090'
+websocket_addr = 'ws://gaia-fleet-direct.frontend.stridenet.co:26657/websocket'
 rpc_timeout = '10s'
 account_prefix = 'cosmos'
 key_name = 'rly2'
@@ -70,7 +70,7 @@ address_type = { derivation = 'cosmos' }
 policy = 'allow'
 list = [
   ['ica*', '*'],
-  ['transfer', 'channel-0'],
+  ['transfer', 'channel-386'],
 ]
 
 # [[chains]]

@@ -17,8 +17,8 @@ chains:
   gaia:
     key: icq2
     chain-id: cosmoshub-4
-    rpc-addr: https://cosmoshub-4--rpc--full.datahub.figment.io:443/apikey/8dc427b6e0678d0ce615c03137db61a0
-    grpc-addr: http://cosmos-grpc.polkachu.com:49090
+    rpc-addr: http://gaia-fleet-direct.frontend.stridenet.co:26657
+    grpc-addr: http://gaia-fleet-direct.frontend.stridenet.co:9090
     account-prefix: cosmos
     keyring-backend: test
     gas-adjustment: 1.2
