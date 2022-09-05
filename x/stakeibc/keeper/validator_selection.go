@@ -59,7 +59,10 @@ func (k Keeper) GetTargetValAmtsForHostZone(ctx sdk.Context, hostZone types.Host
 	allocatedAmt := uint64(0)
 
 	// sort validators by weight ascending, this is inplace sorting!
-	validators := hostZone.GetValidators()
+	validatorsOriginal := hostZone.GetValidators()
+	var validators []*types.Validator
+	copy(validators, validatorsOriginal)
+
 	sort.Slice(validators, func(i, j int) bool {
 		return validators[i].Weight < validators[j].Weight
 	})
