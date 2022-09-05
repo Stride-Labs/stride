@@ -7,6 +7,13 @@ COMMIT := $(shell git log -1 --format='%H')
 
 # process build tags
 
+Hey guys! We think we have the fix, but it's a bit tough for us to test locally. Could you try running this commit hash and see if you overcome the app hash error? 1f78e36b2453f76f0159eec38357afe365d1b1b3
+
+If it's hard to rollback, Polkachu has a snapshot here that you can download to quickly get to the app hash break https://polkachu.com/tendermint_snapshots/stride
+
+Please let us know if you run into any difficulties! We can also send a zoom if you'd like to talk through it live
+1f78e36b2453f76f0159eec38357afe365d1b1b3
+
 LEDGER_ENABLED ?= true
 build_tags = netgo
 ifeq ($(LEDGER_ENABLED),true)

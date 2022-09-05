@@ -59,15 +59,17 @@ func (k Keeper) GetTargetValAmtsForHostZone(ctx sdk.Context, hostZone types.Host
 	allocatedAmt := uint64(0)
 
 	// sort validators by weight ascending, this is inplace sorting!
-	validatorsOriginal := hostZone.GetValidators()
-	var validators []*types.Validator
-	copy(validators, validatorsOriginal)
+	validators := hostZone.GetValidators()
 
-	sort.Slice(validators, func(i, j int) bool {
+	for i, j := 0, len(validators)-1; i < j; i, j = i+1, j-1 {
+		validators[i], validators[j] = validators[j], validators[i]
+	}
+
+	sort.SliceStable(validators, func(i, j int) bool {
 		return validators[i].Weight < validators[j].Weight
 	})
 
-	for i, validator := range validators {
+	for i, validator := range hostZone.Validators {
 		if i == len(hostZone.Validators)-1 {
 			// for the last element, we need to make sure that the allocatedAmt is equal to the finalDelegation
 			targetAmount[validator.GetAddress()] = finalDelegation - allocatedAmt
