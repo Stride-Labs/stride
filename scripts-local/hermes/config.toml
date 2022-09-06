@@ -47,30 +47,30 @@ trust_threshold = { numerator = '1', denominator = '3' }
 address_type = { derivation = 'cosmos' }
 
 [[chains]]
-id = 'cosmoshub-4'
-rpc_addr = 'http://gaia-fleet-direct.frontend.stridenet.co:26657'
-grpc_addr = 'http://gaia-fleet-direct.frontend.stridenet.co:9090'
-websocket_addr = 'ws://gaia-fleet-direct.frontend.stridenet.co:26657/websocket'
+id = 'osmosis-1'
+rpc_addr = 'https://rpc.osmosis.zone'
+grpc_addr = 'http://grpc.osmosis.zone:9090'
+websocket_addr = 'wss://rpc.osmosis.zone/websocket'
 rpc_timeout = '10s'
-account_prefix = 'cosmos'
+account_prefix = 'osmo'
 key_name = 'rly2'
 store_prefix = 'ibc'
 default_gas = 100000
 max_gas = 3000000
-gas_price = { price = 0.01, denom = 'uatom' }
+gas_price = { price = 0.01, denom = 'uosmo' }
 gas_multiplier = 1.1
 max_msg_num = 30
 max_tx_size = 200000
 clock_drift = '5s'
 max_block_time = '10s'
-trusting_period = '14days'
+trusting_period = '12days'
 trust_threshold = { numerator = '1', denominator = '3' }
 address_type = { derivation = 'cosmos' }
 [chains.packet_filter]
 policy = 'allow'
 list = [
   ['ica*', '*'],
-  ['transfer', 'channel-386'],
+  ['transfer', 'channel-*'],
 ]
 
 # [[chains]]

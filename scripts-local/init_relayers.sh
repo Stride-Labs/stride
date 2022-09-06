@@ -10,12 +10,12 @@ TMP_MNEMONICS=${SCRIPT_DIR}/state/mnemonic.txt
 
 echo "$HERMES_STRIDE_MNEMONIC" > $TMP_MNEMONICS
 $HERMES_CMD keys add --key-name rly1 --chain $STRIDE_CHAIN --mnemonic-file $TMP_MNEMONICS --overwrite >> $KEYS_LOGS 2>&1
-echo "$HERMES_GAIA_MNEMONIC" > $TMP_MNEMONICS
-$HERMES_CMD keys add --key-name rly2 --chain $GAIA_CHAIN --mnemonic-file $TMP_MNEMONICS --overwrite >> $KEYS_LOGS 2>&1
+# echo "$HERMES_GAIA_MNEMONIC" > $TMP_MNEMONICS
+# $HERMES_CMD keys add --key-name rly2 --chain $GAIA_CHAIN --mnemonic-file $TMP_MNEMONICS --overwrite >> $KEYS_LOGS 2>&1
 # echo "$HERMES_JUNO_MNEMONIC" > $TMP_MNEMONICS
 # $HERMES_CMD keys add --key-name rly3 --chain $JUNO_CHAIN --mnemonic-file $TMP_MNEMONICS --overwrite >> $KEYS_LOGS 2>&1
-# echo "$HERMES_OSMO_MNEMONIC" > $TMP_MNEMONICS
-# $HERMES_CMD keys add --key-name rly4 --chain $OSMO_CHAIN --mnemonic-file $TMP_MNEMONICS --overwrite >> $KEYS_LOGS 2>&1
+echo "$HERMES_OSMO_MNEMONIC" > $TMP_MNEMONICS
+$HERMES_CMD keys add --key-name rly2 --chain $OSMO_CHAIN --mnemonic-file $TMP_MNEMONICS --overwrite >> $KEYS_LOGS 2>&1
 rm -f $TMP_MNEMONICS
 
 echo "Adding ICQ keys"
@@ -23,7 +23,7 @@ echo "Adding ICQ keys"
 mkdir -p $SCRIPT_DIR/state/icq
 cp $SCRIPT_DIR/icq/config.yaml $SCRIPT_DIR/state/icq/config.yaml
 echo $ICQ_STRIDE_MNEMONIC | $ICQ_CMD keys restore icq1 --chain stride >> $KEYS_LOGS 2>&1
-echo $ICQ_GAIA_MNEMONIC | $ICQ_CMD keys restore icq2 --chain gaia >> $KEYS_LOGS 2>&1
+echo $ICQ_GAIA_MNEMONIC | $ICQ_CMD keys restore icq2 --chain osmo >> $KEYS_LOGS 2>&1
 # echo $ICQ_JUNO_MNEMONIC | $ICQ_CMD keys restore junokey --chain juno-local --local >> $KEYS_LOGS 2>&1
 # echo $ICQ_OSMO_MNEMONIC | $ICQ_CMD keys restore osmokey --chain osmo-local --local >> $KEYS_LOGS 2>&1
 

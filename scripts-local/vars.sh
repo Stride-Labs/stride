@@ -216,7 +216,7 @@ JUNO_DELEGATE_VAL='junovaloper1pcag0cj4ttxg8l7pcg0q4ksuglswuued3knlr0'
 JUNO_RECEIVER_ACCT='juno1sy0q0jpaw4t3hnf6k5wdd4384g0syzlp7rrtsg'
 
 # define OSMO vars
-OSMO_CHAIN=OSMO
+OSMO_CHAIN=osmosis-1
 OSMO_PEER_PORT=23656
 OSMO_NODE_NAME=OSMO
 OSMO_VAL_ACCT=oval1

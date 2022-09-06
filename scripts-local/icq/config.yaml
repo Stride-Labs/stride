@@ -14,11 +14,11 @@ chains:
     block-timeout: ""
     output-format: json
     sign-mode: direct
-  gaia:
+  osmo:
     key: icq2
-    chain-id: cosmoshub-4
-    rpc-addr: http://gaia-fleet-direct.frontend.stridenet.co:26657
-    grpc-addr: http://gaia-fleet-direct.frontend.stridenet.co:9090
+    chain-id: osmosis-1
+    rpc-addr: https://rpc.osmosis.zone:443
+    grpc-addr: http://grpc.osmosis.zone:9090
     account-prefix: cosmos
     keyring-backend: test
     gas-adjustment: 1.2
