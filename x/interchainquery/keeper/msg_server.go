@@ -33,6 +33,8 @@ var _ types.MsgServer = msgServer{}
 func (k Keeper) VerifyKeyProof(ctx sdk.Context, msg *types.MsgSubmitQueryResponse, q types.Query) error {
 	pathParts := strings.Split(q.QueryType, "/")
 
+	fmt.Println("VERIFYING PROOF")
+
 	// the query does NOT have an associated proof, so no need to verify it.
 	if pathParts[len(pathParts)-1] != "key" {
 		return nil
@@ -50,7 +52,10 @@ func (k Keeper) VerifyKeyProof(ctx sdk.Context, msg *types.MsgSubmitQueryRespons
 		if err != nil {
 			return err
 		}
-		height := clienttypes.NewHeight(clienttypes.ParseChainID(q.ChainId), msgHeight+1)
+		height := clienttypes.NewHeight(clienttypes.ParseChainID(q.ChainId), msgHeight)
+
+		fmt.Println("HEIGHT", msgHeight)
+		fmt.Printf("HEIGHT: %v\n", height)
 		consensusState, found := k.IBCKeeper.ClientKeeper.GetClientConsensusState(ctx, connection.ClientId, height)
 		if !found {
 			errMsg := fmt.Sprintf("[ICQ Resp] for query %s, consensus state not found for client %s and height %d", q.Id, connection.ClientId, height)
@@ -186,7 +191,7 @@ func (k msgServer) SubmitQueryResponse(goCtx context.Context, msg *types.MsgSubm
 		return nil, err
 	}
 	if ttlExceeded {
-		k.Logger(ctx).Info(fmt.Sprintf("[ICQ Resp] %s's ttl exceeded: %d < %d.", msg.QueryId, q.Ttl, ctx.BlockHeader().Time.UnixNano()))
+		k.Logger(ctx).Info(fmt.Sprintf("[ICQ Resp] %s's ttl exceeded: %d < %d.", msg.QueryId, q.Ttl, ctx.BlockHeader().Time.UnixNano()))
 		return &types.MsgSubmitQueryResponseResponse{}, nil
 	}
 

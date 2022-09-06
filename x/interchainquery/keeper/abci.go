@@ -20,6 +20,9 @@ func (k Keeper) EndBlocker(ctx sdk.Context) {
 	k.IterateQueries(ctx, func(_ int64, queryInfo types.Query) (stop bool) {
 		if queryInfo.LastHeight.Equal(sdk.ZeroInt()) || queryInfo.LastHeight.Add(queryInfo.Period).Equal(sdk.NewInt(ctx.BlockHeight())) {
 			k.Logger(ctx).Info(fmt.Sprintf("Interchainquery event emitted %s", queryInfo.Id))
+
+			fmt.Println("EMITTING QUERY EVENT")
+
 			event := sdk.NewEvent(
 				sdk.EventTypeMessage,
 				sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
@@ -41,6 +44,7 @@ func (k Keeper) EndBlocker(ctx sdk.Context) {
 			queryInfo.LastHeight = sdk.NewInt(ctx.BlockHeight())
 			k.SetQuery(ctx, queryInfo)
 
+			fmt.Println("EVENT EMITTED")
 		}
 		return false
 	})

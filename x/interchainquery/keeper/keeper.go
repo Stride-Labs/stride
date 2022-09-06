@@ -86,6 +86,8 @@ func (k *Keeper) MakeRequest(ctx sdk.Context, connection_id string, chain_id str
 	// ======================================================================================================================
 
 	key := GenerateQueryHash(connection_id, chain_id, query_type, request, module, height)
+	fmt.Println("QUERY ID:", key)
+
 	existingQuery, found := k.GetQuery(ctx, key)
 	if !found {
 		if module != "" {

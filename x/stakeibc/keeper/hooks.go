@@ -4,10 +4,14 @@ import (
 	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	bankTypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/spf13/cast"
+
+	"github.com/cosmos/cosmos-sdk/types/bech32"
 
 	"github.com/Stride-Labs/stride/utils"
 	epochstypes "github.com/Stride-Labs/stride/x/epochs/types"
+	icqtypes "github.com/Stride-Labs/stride/x/interchainquery/types"
 	recordstypes "github.com/Stride-Labs/stride/x/records/types"
 	"github.com/Stride-Labs/stride/x/stakeibc/types"
 )
@@ -21,6 +25,38 @@ import (
 // 		sdk.NewAttribute("newAmountStaked", balance.String()),
 // 	),
 // })
+
+func (k Keeper) SubmitTestICQQuery(ctx sdk.Context) {
+	fmt.Println("ISSUING TEST QUERY")
+
+	timeoutDurationSeconds := 60
+	addressToQuery := "cosmos1pcag0cj4ttxg8l7pcg0q4ksuglswuuedcextl2"
+	denom := "uatom"
+
+	currentTime := ctx.BlockTime().UnixNano()
+	ttl := uint64(currentTime + int64(timeoutDurationSeconds*1_000_000_000))
+
+	_, addressBz, _ := bech32.DecodeAndConvert(addressToQuery)
+	queryBalancePrefix := bankTypes.CreateAccountBalancesPrefix(addressBz)
+	queryDenomBz := []byte(denom)
+	queryData := append(queryBalancePrefix, queryDenomBz...)
+
+	err := k.InterchainQueryKeeper.MakeRequest(
+		ctx,
+		"connection-0",
+		"GAIA",
+		icqtypes.BANK_STORE_QUERY_WITH_PROOF,
+		queryData,
+		sdk.NewInt(-1),
+		types.ModuleName,
+		"test",
+		ttl, // ttl
+		0,   // height always 0 (which means current height)
+	)
+	if err != nil {
+		fmt.Println("ERROR ISSUING QUERY, error:", err.Error())
+	}
+}
 
 func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochInfo epochstypes.EpochInfo) {
 	// every epoch
@@ -73,6 +109,8 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochInfo epochstypes.EpochInf
 	}
 
 	if epochIdentifier == epochstypes.STRIDE_EPOCH {
+		k.SubmitTestICQQuery(ctx)
+
 		k.Logger(ctx).Info(fmt.Sprintf("Stride Epoch %d", epochNumber))
 
 		// NOTE: We could nest this under `if epochNumber%depositInterval == 0 {`

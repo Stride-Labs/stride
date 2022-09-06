@@ -50,12 +50,27 @@ func (c Callbacks) RegisterCallbacks() icqtypes.QueryCallbacks {
 	return c.
 		AddCallback("withdrawalbalance", Callback(WithdrawalBalanceCallback)).
 		AddCallback("delegation", Callback(DelegatorSharesCallback)).
-		AddCallback("validator", Callback(ValidatorExchangeRateCallback))
+		AddCallback("validator", Callback(ValidatorExchangeRateCallback)).
+		AddCallback("test", Callback(TestQueryCallback))
 }
 
 // -----------------------------------
 // Callback Handlers
 // -----------------------------------
+
+func TestQueryCallback(k Keeper, ctx sdk.Context, args []byte, query icqtypes.Query) error {
+	fmt.Printf("IN QUERY CALLBACK | ID: %s, Type: %s\n", query.Id, query.QueryType)
+
+	coin := sdk.Coin{}
+	err := k.cdc.Unmarshal(args, &coin)
+	if err != nil {
+		fmt.Println("UNABLE TO UNMARSHAL QUERY RESPONSE, error:", err.Error())
+		return err
+	}
+
+	fmt.Printf("COIN FROM QUERY: %v\n", coin)
+	return nil
+}
 
 // WithdrawalBalanceCallback is a callback handler for WithdrawalBalance queries.
 // Note: for now, to get proofs in your ICQs, you need to query the entire store on the host zone! e.g. "store/bank/key"

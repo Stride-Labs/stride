@@ -65,7 +65,7 @@ mkdir $GAIA_HOME/config/gentx/
 echo $GAIA_VAL_MNEMONIC_2 | $GAIA_CMD_2 keys add $GAIA_VAL_ACCT_2 --recover --keyring-backend=test >> $KEYS_LOGS 2>&1 &
 $GAIA_CMD_2 add-genesis-account $GAIA_VAL_2_ADDR 500000000000000uatom
 $GAIA_CMD add-genesis-account $GAIA_VAL_2_ADDR 500000000000000uatom
-$GAIA_CMD_2 gentx $GAIA_VAL_ACCT_2 5000000000uatom --chain-id $GAIA_CHAIN --output-document=$GAIA_HOME/config/gentx/gval2.json
+# $GAIA_CMD_2 gentx $GAIA_VAL_ACCT_2 5000000000uatom --chain-id $GAIA_CHAIN --output-document=$GAIA_HOME/config/gentx/gval2.json
 
 # ============================== SETUP CHAIN 3 ======================================
 # echo $GAIA_VAL_MNEMONIC_3 | $GAIA_CMD_3 keys add $GAIA_VAL_ACCT_3 --recover --keyring-backend=test >> $KEYS_LOGS 2>&1 &
