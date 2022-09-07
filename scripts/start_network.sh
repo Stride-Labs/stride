@@ -33,15 +33,16 @@ docker-compose logs -f icq | sed -r -u "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2})?)?[mGK]
 ( tail -f -n0 $HERMES_LOGS & ) | grep -q -E "Hermes has started"
 
 # Register all host zones in parallel
-pids=()
-for i in ${!HOST_CHAINS[@]}; do
-    if [[ "$i" != "0" ]]; then sleep 20; fi
-    bash $SCRIPT_DIR/register_host.sh ${HOST_CHAINS[$i]} connection-${i} channel-${i} &
-    pids[${i}]=$!
-done
-for i in ${!pids[@]}; do
-    wait ${pids[$i]}
-    echo "${HOST_CHAINS[$i]} - Done"
-done
+bash $SCRIPT_DIR/register_host.sh GAIA connection-0 channel-0
+# pids=()
+# for i in ${!HOST_CHAINS[@]}; do
+#     if [[ "$i" != "0" ]]; then sleep 20; fi
+#     bash $SCRIPT_DIR/register_host.sh ${HOST_CHAINS[$i]} connection-${i} channel-${i} &
+#     pids[${i}]=$!
+# done
+# for i in ${!pids[@]}; do
+#     wait ${pids[$i]}
+#     echo "${HOST_CHAINS[$i]} - Done"
+# done
 
 $SCRIPT_DIR/create_logs.sh &
