@@ -65,6 +65,7 @@ func (k Keeper) GetTargetValAmtsForHostZone(ctx sdk.Context, hostZone types.Host
 		validators[i], validators[j] = validators[j], validators[i]
 	}
 
+	// Do not use `Slice` here, it is stochastic
 	sort.SliceStable(validators, func(i, j int) bool {
 		return validators[i].Weight < validators[j].Weight
 	})
