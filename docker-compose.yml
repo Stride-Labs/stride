@@ -120,7 +120,7 @@ services:
     restart: always
 
   icq:
-    image: stridezone:interchain-queries
+    image: stridezone:icq
     volumes:
       - ./scripts/state/icq:/home/icq/.icq
     restart: always
