@@ -2,10 +2,12 @@ FROM golang:1.18-alpine3.15 AS builder
 
 WORKDIR /src/
 
+ENV COMMIT_HASH=f3d869fd53ade5665f097ce39d5a905e1d28d6c5
+
 RUN apk add --update git make gcc linux-headers libc-dev eudev-dev 
 RUN git clone https://github.com/cosmos/relayer.git \
     && cd relayer \
-    && git checkout v2.0.0 \
+    && git checkout $COMMIT_HASH \
     && make install
 
 FROM alpine:3.15
@@ -15,4 +17,3 @@ RUN adduser -S -h /home/relayer -D relayer -u 1000
 USER relayer
 WORKDIR /home/relayer
 
-CMD ["rly", "start", "stride-gaia"]
