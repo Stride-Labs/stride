@@ -60,7 +60,13 @@ func (k Keeper) GetTargetValAmtsForHostZone(ctx sdk.Context, hostZone types.Host
 
 	// sort validators by weight ascending, this is inplace sorting!
 	validators := hostZone.GetValidators()
-	sort.Slice(validators, func(i, j int) bool {
+
+	for i, j := 0, len(validators)-1; i < j; i, j = i+1, j-1 {
+		validators[i], validators[j] = validators[j], validators[i]
+	}
+
+	// Do not use `Slice` here, it is stochastic
+	sort.SliceStable(validators, func(i, j int) bool {
 		return validators[i].Weight < validators[j].Weight
 	})
 
