@@ -7,38 +7,26 @@ source ${SCRIPT_DIR}/../account_vars.sh
 # transfer tokens to stride
 # $GAIA_CMD q tx F382BB9C7B9970C41F0BE5F04CB59B85A68CF360949A97C599DFA92A80CAD5D0
 # exit
-# $GAIA_CMD tx ibc-transfer transfer transfer channel-0 stride1uk4ze0x4nvh4fk0xm4jdud58eqn4yxhrt52vv7 333uatom --from gval1 --chain-id GAIA -y --keyring-backend test
+# $GAIA_CMD tx ibc-transfer transfer transfer channel-0 stride1uk4ze0x4nvh4fk0xm4jdud58eqn4yxhrt52vv7 10000uatom --from gval1 --chain-id GAIA -y --keyring-backend test
 # exit
 
-# $STRIDE_CMD q stakeibc show-host-zone OSMO
-# $OSMO_CMD q bank balances osmo1cx04p5974f8hzh2lqev48kjrjugdxsxy7mzrd0eyweycpr90vk8q8d6f3h
+# check val1 balances
+# $STRIDE_CMD keys list
 # exit
 
-# $STRIDE_CMD q ibc channel channels
+# $STRIDE_CMD q bank balances stride1uk4ze0x4nvh4fk0xm4jdud58eqn4yxhrt52vv7
 # exit
-
-# $STRIDE_CMD q stakeibc list-host-zone
-# exit
-# $STRIDE_CMD tx stakeibc liquid-stake 10 uatom --keyring-backend test --from val1 -y --chain-id $STRIDE_CHAIN
-# exit
-$STRIDE_CMD q bank balances stride1755g4dkhpw73gz9h9nwhlcefc6sdf8kcmvcwrk4rxfrz8xpxxjms7savm8
-exit
-
 
 # liquid stake
-# $STRIDE_CMD tx stakeibc liquid-stake 100000 uatom --keyring-backend test --from val1 -y --chain-id $STRIDE_CHAIN
+# $STRIDE_CMD tx stakeibc liquid-stake 10000 uatom --keyring-backend test --from val1 -y --chain-id $STRIDE_CHAIN
 # exit
-
-# clear balances
-$STRIDE_CMD tx stakeibc clear-balance GAIA 66 channel-0 --keyring-backend test --from val1 --chain-id $STRIDE_CHAIN
-exit
 
 # redeem stake
-# amt_to_redeem=5
-# $STRIDE_CMD tx stakeibc redeem-stake $amt_to_redeem GAIA $GAIA_RECEIVER_ACCT \
-#     --from val1 --keyring-backend test --chain-id $STRIDE_CHAIN -y
+# $STRIDE_CMD q tx B3C8E62837FCF9835EB131386A5F7FDE92A20AF4AB0C46E5495B3CDB9F6CF3C1
 # exit
 
-EPOCH=9
-SENDER_ACCT=stride1uk4ze0x4nvh4fk0xm4jdud58eqn4yxhrt52vv7
-$STRIDE_CMD tx stakeibc claim-undelegated-tokens GAIA $EPOCH $SENDER_ACCT --from val1 --keyring-backend test --chain-id $STRIDE_CHAIN -y
+amt_to_redeem=3
+$STRIDE_CMD tx stakeibc redeem-stake $amt_to_redeem GAIA $GAIA_RECEIVER_ACCT \
+    --from val1 --keyring-backend test --chain-id $STRIDE_CHAIN -y
+
+exit

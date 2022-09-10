@@ -481,6 +481,143 @@ func (m *QueryAllUserRedemptionRecordResponse) GetPagination() *query.PageRespon
 	return nil
 }
 
+// Query UserRedemptionRecords by chainId / userId pair
+type QueryAllUserRedemptionRecordForUserRequest struct {
+	ChainId    string             `protobuf:"bytes,1,opt,name=chainId,proto3" json:"chainId,omitempty"`
+	Day        uint64             `protobuf:"varint,2,opt,name=day,proto3" json:"day,omitempty"`
+	Address    string             `protobuf:"bytes,3,opt,name=address,proto3" json:"address,omitempty"`
+	Limit      uint64             `protobuf:"varint,4,opt,name=limit,proto3" json:"limit,omitempty"`
+	Pagination *query.PageRequest `protobuf:"bytes,5,opt,name=pagination,proto3" json:"pagination,omitempty"`
+}
+
+func (m *QueryAllUserRedemptionRecordForUserRequest) Reset() {
+	*m = QueryAllUserRedemptionRecordForUserRequest{}
+}
+func (m *QueryAllUserRedemptionRecordForUserRequest) String() string {
+	return proto.CompactTextString(m)
+}
+func (*QueryAllUserRedemptionRecordForUserRequest) ProtoMessage() {}
+func (*QueryAllUserRedemptionRecordForUserRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_f871b183106cf451, []int{10}
+}
+func (m *QueryAllUserRedemptionRecordForUserRequest) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *QueryAllUserRedemptionRecordForUserRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_QueryAllUserRedemptionRecordForUserRequest.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *QueryAllUserRedemptionRecordForUserRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryAllUserRedemptionRecordForUserRequest.Merge(m, src)
+}
+func (m *QueryAllUserRedemptionRecordForUserRequest) XXX_Size() int {
+	return m.Size()
+}
+func (m *QueryAllUserRedemptionRecordForUserRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryAllUserRedemptionRecordForUserRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_QueryAllUserRedemptionRecordForUserRequest proto.InternalMessageInfo
+
+func (m *QueryAllUserRedemptionRecordForUserRequest) GetChainId() string {
+	if m != nil {
+		return m.ChainId
+	}
+	return ""
+}
+
+func (m *QueryAllUserRedemptionRecordForUserRequest) GetDay() uint64 {
+	if m != nil {
+		return m.Day
+	}
+	return 0
+}
+
+func (m *QueryAllUserRedemptionRecordForUserRequest) GetAddress() string {
+	if m != nil {
+		return m.Address
+	}
+	return ""
+}
+
+func (m *QueryAllUserRedemptionRecordForUserRequest) GetLimit() uint64 {
+	if m != nil {
+		return m.Limit
+	}
+	return 0
+}
+
+func (m *QueryAllUserRedemptionRecordForUserRequest) GetPagination() *query.PageRequest {
+	if m != nil {
+		return m.Pagination
+	}
+	return nil
+}
+
+type QueryAllUserRedemptionRecordForUserResponse struct {
+	UserRedemptionRecord []UserRedemptionRecord `protobuf:"bytes,1,rep,name=UserRedemptionRecord,proto3" json:"UserRedemptionRecord"`
+	Pagination           *query.PageResponse    `protobuf:"bytes,2,opt,name=pagination,proto3" json:"pagination,omitempty"`
+}
+
+func (m *QueryAllUserRedemptionRecordForUserResponse) Reset() {
+	*m = QueryAllUserRedemptionRecordForUserResponse{}
+}
+func (m *QueryAllUserRedemptionRecordForUserResponse) String() string {
+	return proto.CompactTextString(m)
+}
+func (*QueryAllUserRedemptionRecordForUserResponse) ProtoMessage() {}
+func (*QueryAllUserRedemptionRecordForUserResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_f871b183106cf451, []int{11}
+}
+func (m *QueryAllUserRedemptionRecordForUserResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *QueryAllUserRedemptionRecordForUserResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_QueryAllUserRedemptionRecordForUserResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *QueryAllUserRedemptionRecordForUserResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryAllUserRedemptionRecordForUserResponse.Merge(m, src)
+}
+func (m *QueryAllUserRedemptionRecordForUserResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *QueryAllUserRedemptionRecordForUserResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryAllUserRedemptionRecordForUserResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_QueryAllUserRedemptionRecordForUserResponse proto.InternalMessageInfo
+
+func (m *QueryAllUserRedemptionRecordForUserResponse) GetUserRedemptionRecord() []UserRedemptionRecord {
+	if m != nil {
+		return m.UserRedemptionRecord
+	}
+	return nil
+}
+
+func (m *QueryAllUserRedemptionRecordForUserResponse) GetPagination() *query.PageResponse {
+	if m != nil {
+		return m.Pagination
+	}
+	return nil
+}
+
 type QueryGetEpochUnbondingRecordRequest struct {
 	EpochNumber uint64 `protobuf:"varint,1,opt,name=epochNumber,proto3" json:"epochNumber,omitempty"`
 }
@@ -489,7 +626,7 @@ func (m *QueryGetEpochUnbondingRecordRequest) Reset()         { *m = QueryGetEpo
 func (m *QueryGetEpochUnbondingRecordRequest) String() string { return proto.CompactTextString(m) }
 func (*QueryGetEpochUnbondingRecordRequest) ProtoMessage()    {}
 func (*QueryGetEpochUnbondingRecordRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_f871b183106cf451, []int{10}
+	return fileDescriptor_f871b183106cf451, []int{12}
 }
 func (m *QueryGetEpochUnbondingRecordRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -533,7 +670,7 @@ func (m *QueryGetEpochUnbondingRecordResponse) Reset()         { *m = QueryGetEp
 func (m *QueryGetEpochUnbondingRecordResponse) String() string { return proto.CompactTextString(m) }
 func (*QueryGetEpochUnbondingRecordResponse) ProtoMessage()    {}
 func (*QueryGetEpochUnbondingRecordResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_f871b183106cf451, []int{11}
+	return fileDescriptor_f871b183106cf451, []int{13}
 }
 func (m *QueryGetEpochUnbondingRecordResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -577,7 +714,7 @@ func (m *QueryAllEpochUnbondingRecordRequest) Reset()         { *m = QueryAllEpo
 func (m *QueryAllEpochUnbondingRecordRequest) String() string { return proto.CompactTextString(m) }
 func (*QueryAllEpochUnbondingRecordRequest) ProtoMessage()    {}
 func (*QueryAllEpochUnbondingRecordRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_f871b183106cf451, []int{12}
+	return fileDescriptor_f871b183106cf451, []int{14}
 }
 func (m *QueryAllEpochUnbondingRecordRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -622,7 +759,7 @@ func (m *QueryAllEpochUnbondingRecordResponse) Reset()         { *m = QueryAllEp
 func (m *QueryAllEpochUnbondingRecordResponse) String() string { return proto.CompactTextString(m) }
 func (*QueryAllEpochUnbondingRecordResponse) ProtoMessage()    {}
 func (*QueryAllEpochUnbondingRecordResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_f871b183106cf451, []int{13}
+	return fileDescriptor_f871b183106cf451, []int{15}
 }
 func (m *QueryAllEpochUnbondingRecordResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -676,6 +813,8 @@ func init() {
 	proto.RegisterType((*QueryGetUserRedemptionRecordResponse)(nil), "Stridelabs.stride.records.QueryGetUserRedemptionRecordResponse")
 	proto.RegisterType((*QueryAllUserRedemptionRecordRequest)(nil), "Stridelabs.stride.records.QueryAllUserRedemptionRecordRequest")
 	proto.RegisterType((*QueryAllUserRedemptionRecordResponse)(nil), "Stridelabs.stride.records.QueryAllUserRedemptionRecordResponse")
+	proto.RegisterType((*QueryAllUserRedemptionRecordForUserRequest)(nil), "Stridelabs.stride.records.QueryAllUserRedemptionRecordForUserRequest")
+	proto.RegisterType((*QueryAllUserRedemptionRecordForUserResponse)(nil), "Stridelabs.stride.records.QueryAllUserRedemptionRecordForUserResponse")
 	proto.RegisterType((*QueryGetEpochUnbondingRecordRequest)(nil), "Stridelabs.stride.records.QueryGetEpochUnbondingRecordRequest")
 	proto.RegisterType((*QueryGetEpochUnbondingRecordResponse)(nil), "Stridelabs.stride.records.QueryGetEpochUnbondingRecordResponse")
 	proto.RegisterType((*QueryAllEpochUnbondingRecordRequest)(nil), "Stridelabs.stride.records.QueryAllEpochUnbondingRecordRequest")
@@ -685,55 +824,64 @@ func init() {
 func init() { proto.RegisterFile("records/query.proto", fileDescriptor_f871b183106cf451) }
 
 var fileDescriptor_f871b183106cf451 = []byte{
-	// 765 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xb4, 0x97, 0x4f, 0x6f, 0xd3, 0x3e,
-	0x18, 0xc7, 0xeb, 0x6e, 0xbf, 0x49, 0x3f, 0x4f, 0x20, 0xe4, 0x0d, 0x01, 0xd5, 0x28, 0x5b, 0x86,
-	0x60, 0x4c, 0x2c, 0xd6, 0x0a, 0xa8, 0xc0, 0x81, 0xb1, 0x09, 0x28, 0x07, 0x84, 0x46, 0x61, 0x1c,
-	0xb8, 0x4c, 0x49, 0x63, 0xb2, 0x48, 0x69, 0x9c, 0xc5, 0x09, 0x62, 0x42, 0x5c, 0xb8, 0x70, 0xe5,
-	0xcf, 0xab, 0x41, 0x48, 0x9c, 0x77, 0x9c, 0x84, 0x84, 0x26, 0x0e, 0x08, 0x36, 0x5e, 0x08, 0xaa,
-	0xed, 0x6e, 0x0d, 0x73, 0x9c, 0xac, 0x2b, 0xb7, 0xca, 0x7e, 0xfe, 0x7d, 0x9e, 0xef, 0x63, 0x3b,
-	0x85, 0x63, 0x11, 0x69, 0xd1, 0xc8, 0x61, 0x78, 0x3d, 0x21, 0xd1, 0x86, 0x19, 0x46, 0x34, 0xa6,
-	0xe8, 0xcc, 0xe3, 0x38, 0xf2, 0x1c, 0xe2, 0x5b, 0x36, 0x33, 0x19, 0xff, 0x69, 0x4a, 0xb3, 0xca,
-	0xb8, 0x4b, 0x5d, 0xca, 0xad, 0x70, 0xe7, 0x97, 0x70, 0xa8, 0x4c, 0xb8, 0x94, 0xba, 0x3e, 0xc1,
-	0x56, 0xe8, 0x61, 0x2b, 0x08, 0x68, 0x6c, 0xc5, 0x1e, 0x0d, 0x98, 0xdc, 0x9d, 0x6d, 0x51, 0xd6,
-	0xa6, 0x0c, 0xdb, 0x16, 0x23, 0x22, 0x0f, 0x7e, 0x31, 0x6f, 0x93, 0xd8, 0x9a, 0xc7, 0xa1, 0xe5,
-	0x7a, 0x01, 0x37, 0x96, 0xb6, 0x27, 0xbb, 0xf5, 0xb8, 0x24, 0x20, 0xcc, 0x93, 0x21, 0x8c, 0x71,
-	0x88, 0x1e, 0x75, 0x1c, 0x97, 0xad, 0xc8, 0x6a, 0xb3, 0x26, 0x59, 0x4f, 0x08, 0x8b, 0x8d, 0xa7,
-	0x70, 0x2c, 0xb5, 0xca, 0x42, 0x1a, 0x30, 0x82, 0x16, 0xe0, 0x48, 0xc8, 0x57, 0x4e, 0x83, 0x49,
-	0x30, 0x33, 0x5a, 0x9b, 0x32, 0x33, 0x79, 0x4c, 0xe1, 0xba, 0x34, 0xbc, 0xf9, 0xe3, 0x5c, 0xa9,
-	0x29, 0xdd, 0x0c, 0x13, 0x4e, 0xf0, 0xb8, 0x0d, 0x12, 0xdf, 0x21, 0x21, 0x65, 0x5e, 0xdc, 0xe4,
-	0xe6, 0x32, 0x2f, 0x3a, 0x0e, 0xcb, 0x9e, 0xc3, 0x83, 0x0f, 0x37, 0xcb, 0x9e, 0x63, 0x24, 0xf0,
-	0x6c, 0x86, 0xbd, 0xac, 0xe8, 0x09, 0x3c, 0x96, 0xda, 0x90, 0x85, 0xcd, 0x68, 0x0a, 0x4b, 0xd9,
-	0xcb, 0xfa, 0xd2, 0x41, 0x8c, 0xe7, 0xb2, 0xcc, 0x45, 0xdf, 0x57, 0x96, 0x79, 0x0f, 0xc2, 0xfd,
-	0xfe, 0xca, 0x94, 0x17, 0x4c, 0x21, 0x86, 0xd9, 0x11, 0xc3, 0x14, 0xa2, 0x4b, 0x31, 0xcc, 0x65,
-	0xcb, 0x25, 0xd2, 0xb7, 0xd9, 0xe3, 0x69, 0x7c, 0x01, 0x92, 0xef, 0x60, 0xa2, 0x6c, 0xbe, 0xa1,
-	0x23, 0xf3, 0xa1, 0x46, 0xaa, 0xfe, 0x32, 0xaf, 0xff, 0x62, 0x6e, 0xfd, 0xa2, 0xa4, 0x14, 0xc0,
-	0x35, 0x38, 0xdd, 0xd5, 0x67, 0x85, 0x91, 0xa8, 0x49, 0x1c, 0xd2, 0x0e, 0x3b, 0x3b, 0x59, 0xb2,
-	0xfe, 0xcf, 0x65, 0x7d, 0x0f, 0xe0, 0x79, 0xbd, 0x9f, 0xc4, 0xf7, 0xe0, 0xb8, 0x6a, 0x5f, 0xb6,
-	0x1c, 0x6b, 0xba, 0xa0, 0x72, 0x93, 0xcd, 0x50, 0x86, 0x34, 0xda, 0x12, 0x65, 0xd1, 0xf7, 0x75,
-	0x28, 0x83, 0x92, 0xfe, 0x7b, 0xb7, 0x05, 0x99, 0xf9, 0x72, 0x5b, 0x30, 0x34, 0xe0, 0x16, 0x0c,
-	0x6e, 0x2c, 0x1a, 0xfb, 0x63, 0x71, 0x37, 0xa4, 0xad, 0xb5, 0x95, 0xc0, 0xa6, 0x81, 0xe3, 0x05,
-	0x6e, 0xba, 0x97, 0x93, 0x70, 0x94, 0x74, 0xb6, 0x1f, 0x26, 0x6d, 0x9b, 0x44, 0xf2, 0xd8, 0xf7,
-	0x2e, 0xa5, 0x06, 0x45, 0x1d, 0x69, 0xbf, 0x4b, 0xaa, 0xfd, 0x02, 0x83, 0xa2, 0x72, 0xeb, 0x76,
-	0x49, 0xb5, 0xd7, 0x3b, 0x28, 0x3a, 0xb8, 0x7f, 0x31, 0x28, 0x7d, 0xb6, 0x60, 0x68, 0xc0, 0x2d,
-	0x18, 0xd8, 0xa0, 0xd4, 0xde, 0x8e, 0xc2, 0xff, 0x38, 0x1c, 0xfa, 0x00, 0xe0, 0x88, 0x78, 0x32,
-	0xd0, 0x9c, 0xa6, 0xd4, 0x83, 0x6f, 0x55, 0xc5, 0x2c, 0x6a, 0x2e, 0xf2, 0x1b, 0x97, 0xde, 0x7c,
-	0xfd, 0xfd, 0xb1, 0x3c, 0x8d, 0xa6, 0xb0, 0xf0, 0x7b, 0x60, 0xd9, 0x0c, 0x0b, 0x3f, 0xdc, 0x7d,
-	0x23, 0xc5, 0x73, 0x85, 0xb6, 0x81, 0xfa, 0xf0, 0xa1, 0x5b, 0x79, 0x39, 0xf5, 0x17, 0x62, 0x65,
-	0xa1, 0x6f, 0x7f, 0x09, 0xb1, 0xc0, 0x21, 0x6e, 0xa0, 0xba, 0x84, 0x98, 0x53, 0x51, 0x24, 0x8c,
-	0x44, 0xab, 0xd1, 0x5e, 0x88, 0x55, 0xb1, 0x8e, 0x5f, 0x79, 0xce, 0x6b, 0xf4, 0x0d, 0xc0, 0x53,
-	0xaa, 0x0c, 0x8b, 0xbe, 0x9f, 0x4f, 0xa7, 0xbf, 0x23, 0xf3, 0xe9, 0x72, 0xee, 0x3c, 0xe3, 0x26,
-	0xa7, 0xbb, 0x8a, 0x6a, 0x87, 0xa7, 0x43, 0xbf, 0x80, 0xfa, 0x1c, 0x14, 0xd2, 0x4c, 0x73, 0xa0,
-	0x0b, 0x69, 0xa6, 0x3b, 0xa0, 0xc6, 0x7d, 0x4e, 0xb5, 0x84, 0x6e, 0xeb, 0xa8, 0xf8, 0xed, 0xb7,
-	0x9a, 0x74, 0x43, 0xec, 0x69, 0xd6, 0x73, 0x2b, 0x0a, 0xf1, 0x54, 0xa9, 0x8a, 0x8a, 0x77, 0x24,
-	0xcc, 0x9c, 0x7b, 0xa8, 0x98, 0x78, 0x6a, 0x4c, 0xf4, 0x19, 0xfc, 0xf5, 0xbd, 0x83, 0xea, 0x05,
-	0xba, 0xae, 0xfa, 0x46, 0xab, 0x5c, 0x3f, 0xbc, 0xa3, 0x04, 0xa8, 0x73, 0x80, 0x79, 0x84, 0x75,
-	0x00, 0x8e, 0x70, 0x4d, 0x9d, 0xa9, 0x4f, 0x00, 0x9e, 0x48, 0x85, 0xec, 0xe8, 0x51, 0x2f, 0xd0,
-	0xcf, 0xfe, 0x00, 0xb2, 0x3e, 0x1a, 0x8d, 0x1a, 0x07, 0xb8, 0x8c, 0x66, 0x8b, 0x03, 0x2c, 0x35,
-	0x36, 0x77, 0xaa, 0x60, 0x6b, 0xa7, 0x0a, 0x7e, 0xee, 0x54, 0xc1, 0xbb, 0xdd, 0x6a, 0x69, 0x6b,
-	0xb7, 0x5a, 0xda, 0xde, 0xad, 0x96, 0x9e, 0xcd, 0xb9, 0x5e, 0xbc, 0x96, 0xd8, 0x66, 0x8b, 0xb6,
-	0x55, 0xf1, 0x5e, 0xee, 0x45, 0x8c, 0x37, 0x42, 0xc2, 0xec, 0x11, 0xfe, 0xbf, 0xe2, 0xca, 0x9f,
-	0x00, 0x00, 0x00, 0xff, 0xff, 0x8f, 0xdd, 0xa7, 0xe0, 0x00, 0x0d, 0x00, 0x00,
+	// 905 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xd4, 0x97, 0xdf, 0x4f, 0xdb, 0x46,
+	0x1c, 0xc0, 0xe3, 0x24, 0x30, 0xed, 0x10, 0x13, 0x3a, 0x32, 0x2d, 0xcb, 0x58, 0x06, 0x66, 0xda,
+	0x18, 0x1b, 0x3e, 0x91, 0x6d, 0xca, 0xb6, 0x87, 0x31, 0xd0, 0x20, 0x9b, 0x34, 0x4d, 0x2c, 0x2b,
+	0x7d, 0xa8, 0x54, 0x45, 0x76, 0x7c, 0x18, 0x4b, 0x8e, 0xcf, 0xf8, 0x9c, 0xaa, 0x51, 0x94, 0x97,
+	0xfe, 0x05, 0x6d, 0x79, 0xee, 0x1f, 0x52, 0x55, 0xea, 0x33, 0x8f, 0x48, 0x95, 0x2a, 0xd4, 0x87,
+	0xaa, 0x40, 0xff, 0x90, 0xca, 0x77, 0x67, 0x88, 0xe1, 0xe2, 0x98, 0x90, 0x3e, 0xf4, 0xcd, 0xbe,
+	0xfb, 0xfe, 0xfa, 0x7c, 0xbf, 0xdf, 0xbb, 0xaf, 0x0d, 0x66, 0x7d, 0xdc, 0x24, 0xbe, 0x49, 0xd1,
+	0x7e, 0x1b, 0xfb, 0x1d, 0xcd, 0xf3, 0x49, 0x40, 0xe0, 0xe7, 0xff, 0x07, 0xbe, 0x6d, 0x62, 0x47,
+	0x37, 0xa8, 0x46, 0xd9, 0xa3, 0x26, 0xc4, 0x4a, 0x05, 0x8b, 0x58, 0x84, 0x49, 0xa1, 0xf0, 0x89,
+	0x2b, 0x94, 0xe6, 0x2c, 0x42, 0x2c, 0x07, 0x23, 0xdd, 0xb3, 0x91, 0xee, 0xba, 0x24, 0xd0, 0x03,
+	0x9b, 0xb8, 0x54, 0xec, 0x2e, 0x37, 0x09, 0x6d, 0x11, 0x8a, 0x0c, 0x9d, 0x62, 0xee, 0x07, 0xdd,
+	0x5b, 0x35, 0x70, 0xa0, 0xaf, 0x22, 0x4f, 0xb7, 0x6c, 0x97, 0x09, 0x0b, 0xd9, 0x4f, 0xa3, 0x78,
+	0x2c, 0xec, 0x62, 0x6a, 0x0b, 0x13, 0x6a, 0x01, 0xc0, 0xff, 0x42, 0xc5, 0x6d, 0xdd, 0xd7, 0x5b,
+	0xb4, 0x8e, 0xf7, 0xdb, 0x98, 0x06, 0xea, 0x6d, 0x30, 0x1b, 0x5b, 0xa5, 0x1e, 0x71, 0x29, 0x86,
+	0x6b, 0x60, 0xd2, 0x63, 0x2b, 0x45, 0x65, 0x5e, 0x59, 0x9a, 0xaa, 0x2c, 0x68, 0x03, 0x79, 0x34,
+	0xae, 0xba, 0x91, 0x3f, 0x7c, 0xfd, 0x55, 0xa6, 0x2e, 0xd4, 0x54, 0x0d, 0xcc, 0x31, 0xbb, 0x35,
+	0x1c, 0xfc, 0x89, 0x3d, 0x42, 0xed, 0xa0, 0xce, 0xc4, 0x85, 0x5f, 0xf8, 0x09, 0xc8, 0xda, 0x26,
+	0x33, 0x9e, 0xaf, 0x67, 0x6d, 0x53, 0x6d, 0x83, 0x2f, 0x07, 0xc8, 0x8b, 0x88, 0x6e, 0x81, 0xe9,
+	0xd8, 0x86, 0x08, 0x6c, 0x29, 0x21, 0xb0, 0x98, 0xbc, 0x88, 0x2f, 0x6e, 0x44, 0xdd, 0x15, 0x61,
+	0xae, 0x3b, 0x8e, 0x34, 0xcc, 0x2d, 0x00, 0x2e, 0xf2, 0x2b, 0x5c, 0x7e, 0xa3, 0xf1, 0x62, 0x68,
+	0x61, 0x31, 0x34, 0x5e, 0x74, 0x51, 0x0c, 0x6d, 0x5b, 0xb7, 0xb0, 0xd0, 0xad, 0xf7, 0x69, 0xaa,
+	0xcf, 0x15, 0xc1, 0x77, 0xd5, 0xd1, 0x60, 0xbe, 0xdc, 0x8d, 0xf9, 0x60, 0x2d, 0x16, 0x7f, 0x96,
+	0xc5, 0xff, 0xed, 0xd0, 0xf8, 0x79, 0x48, 0x31, 0x80, 0x9f, 0xc1, 0x62, 0x54, 0x9f, 0x1d, 0x8a,
+	0xfd, 0x3a, 0x36, 0x71, 0xcb, 0x0b, 0x77, 0x06, 0x95, 0xf5, 0x63, 0x56, 0xd6, 0x47, 0x0a, 0xf8,
+	0x3a, 0x59, 0x4f, 0xe0, 0xdb, 0xa0, 0x20, 0xdb, 0x17, 0x29, 0x47, 0x09, 0x59, 0x90, 0xa9, 0x89,
+	0x64, 0x48, 0x4d, 0xaa, 0x2d, 0x81, 0xb2, 0xee, 0x38, 0x49, 0x28, 0xe3, 0x2a, 0xfd, 0xab, 0x28,
+	0x05, 0x03, 0xfd, 0x0d, 0x4d, 0x41, 0x6e, 0xcc, 0x29, 0x18, 0x5f, 0x5b, 0x1c, 0x29, 0x60, 0x39,
+	0x09, 0x6e, 0x8b, 0xf8, 0x7c, 0x99, 0xe7, 0xb4, 0x08, 0x3e, 0x6a, 0xee, 0xe9, 0xb6, 0xfb, 0x77,
+	0xd4, 0x23, 0xd1, 0x2b, 0x9c, 0x01, 0x39, 0x53, 0xef, 0xb0, 0x50, 0xf2, 0xf5, 0xf0, 0x31, 0x94,
+	0xd5, 0x4d, 0xd3, 0xc7, 0x94, 0x16, 0x73, 0x5c, 0x56, 0xbc, 0xc2, 0x02, 0x98, 0x70, 0xec, 0x96,
+	0x1d, 0x14, 0xf3, 0x4c, 0x9a, 0xbf, 0x5c, 0xaa, 0xd7, 0xc4, 0xc8, 0xf5, 0x3a, 0x51, 0xc0, 0xf7,
+	0xa9, 0x90, 0x3e, 0xe0, 0xb2, 0xd5, 0x2e, 0x4e, 0xf3, 0xa6, 0x47, 0x9a, 0x7b, 0x3b, 0xae, 0x41,
+	0x5c, 0xd3, 0x76, 0xad, 0xf8, 0x11, 0x98, 0x07, 0x53, 0x38, 0xdc, 0xfe, 0xb7, 0xdd, 0x32, 0xb0,
+	0x2f, 0x6e, 0xeb, 0xfe, 0xa5, 0xd8, 0xf9, 0x96, 0x5b, 0xba, 0xc8, 0x92, 0x6c, 0x3f, 0xc5, 0xf9,
+	0x96, 0xa9, 0x45, 0x59, 0x92, 0xed, 0xf5, 0x9f, 0xef, 0x24, 0xb8, 0xf7, 0x71, 0xbe, 0x47, 0x4c,
+	0x41, 0x6e, 0xcc, 0x29, 0x18, 0x5b, 0xa3, 0x54, 0x9e, 0x4c, 0x83, 0x09, 0x06, 0x07, 0x1f, 0x2b,
+	0x60, 0x92, 0x4f, 0x7a, 0xb8, 0x92, 0x10, 0xea, 0xd5, 0x4f, 0x8c, 0x92, 0x96, 0x56, 0x9c, 0xfb,
+	0x57, 0xbf, 0x7b, 0xf0, 0xe2, 0xed, 0x41, 0x76, 0x11, 0x2e, 0x20, 0xae, 0xf7, 0x8f, 0x6e, 0x50,
+	0xc4, 0xf5, 0x50, 0xf4, 0x69, 0xc3, 0xbf, 0x32, 0xe0, 0xb1, 0x22, 0x3f, 0x7c, 0xf0, 0xf7, 0x61,
+	0x3e, 0x93, 0xe7, 0x58, 0x69, 0x6d, 0x64, 0x7d, 0x01, 0xb1, 0xc6, 0x20, 0x7e, 0x85, 0x55, 0x01,
+	0xb1, 0x22, 0xa3, 0x68, 0x53, 0xec, 0x37, 0xfc, 0x73, 0x13, 0x0d, 0xbe, 0x8e, 0xba, 0xb6, 0xd9,
+	0x83, 0x2f, 0x15, 0xf0, 0x99, 0xcc, 0xc3, 0xba, 0xe3, 0x0c, 0xa7, 0x4b, 0x1e, 0x6d, 0xc3, 0xe9,
+	0x86, 0x8c, 0x2a, 0xf5, 0x37, 0x46, 0xf7, 0x13, 0xac, 0x5c, 0x9f, 0x0e, 0x1e, 0x64, 0xc1, 0x17,
+	0x09, 0xf7, 0x2a, 0xdc, 0x1c, 0x31, 0xb8, 0xf8, 0xa8, 0x29, 0x6d, 0xdd, 0xd4, 0x8c, 0x40, 0xc5,
+	0x0c, 0xb5, 0x01, 0xef, 0x5e, 0x1f, 0xb5, 0xb1, 0x4b, 0xfc, 0x46, 0xb8, 0x85, 0xba, 0x62, 0xcc,
+	0xf5, 0x50, 0xd7, 0xd4, 0x3b, 0x3d, 0xd4, 0x15, 0xa3, 0xac, 0x87, 0xba, 0x6c, 0x78, 0xf5, 0xe0,
+	0x89, 0x22, 0xbf, 0x1d, 0x52, 0x75, 0x72, 0xc2, 0x35, 0x97, 0xaa, 0x93, 0x93, 0xae, 0x2d, 0xf5,
+	0x2f, 0x96, 0x80, 0x0d, 0xf8, 0x47, 0x52, 0x02, 0xd8, 0x4c, 0x68, 0xb4, 0x23, 0x13, 0xe7, 0x9d,
+	0xdc, 0x37, 0x2b, 0x78, 0x4b, 0xcb, 0x5c, 0xa5, 0x6d, 0xe9, 0x1b, 0x61, 0x0e, 0xb9, 0x9d, 0xd3,
+	0xb5, 0xb4, 0x1c, 0x13, 0x3e, 0x53, 0x2e, 0x7d, 0xbc, 0xc3, 0x6a, 0x8a, 0xac, 0xcb, 0x7e, 0x38,
+	0x4a, 0xbf, 0x5c, 0x5f, 0x51, 0x00, 0x54, 0x19, 0xc0, 0x2a, 0x44, 0x49, 0x00, 0x26, 0x57, 0x8d,
+	0xdd, 0x34, 0x4f, 0x15, 0x30, 0x13, 0x33, 0x19, 0xd6, 0xa3, 0x9a, 0x22, 0x9f, 0xa3, 0x01, 0x0c,
+	0xfa, 0x03, 0x52, 0x2b, 0x0c, 0xe0, 0x07, 0xb8, 0x9c, 0x1e, 0x60, 0xa3, 0x76, 0x78, 0x5a, 0x56,
+	0x8e, 0x4e, 0xcb, 0xca, 0x9b, 0xd3, 0xb2, 0xf2, 0xf0, 0xac, 0x9c, 0x39, 0x3a, 0x2b, 0x67, 0x8e,
+	0xcf, 0xca, 0x99, 0x3b, 0x2b, 0x96, 0x1d, 0xec, 0xb5, 0x0d, 0xad, 0x49, 0x5a, 0x32, 0x7b, 0xf7,
+	0xcf, 0x2d, 0x06, 0x1d, 0x0f, 0x53, 0x63, 0x92, 0xfd, 0x24, 0xff, 0xf8, 0x2e, 0x00, 0x00, 0xff,
+	0xff, 0xbd, 0xfc, 0xa3, 0xbb, 0xcd, 0x0f, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -754,6 +902,8 @@ type QueryClient interface {
 	UserRedemptionRecord(ctx context.Context, in *QueryGetUserRedemptionRecordRequest, opts ...grpc.CallOption) (*QueryGetUserRedemptionRecordResponse, error)
 	// Queries a list of UserRedemptionRecord items.
 	UserRedemptionRecordAll(ctx context.Context, in *QueryAllUserRedemptionRecordRequest, opts ...grpc.CallOption) (*QueryAllUserRedemptionRecordResponse, error)
+	// Queries a list of UserRedemptionRecord items by chainId / userId pair.
+	UserRedemptionRecordForUser(ctx context.Context, in *QueryAllUserRedemptionRecordForUserRequest, opts ...grpc.CallOption) (*QueryAllUserRedemptionRecordForUserResponse, error)
 	// Queries a EpochUnbondingRecord by id.
 	EpochUnbondingRecord(ctx context.Context, in *QueryGetEpochUnbondingRecordRequest, opts ...grpc.CallOption) (*QueryGetEpochUnbondingRecordResponse, error)
 	// Queries a list of EpochUnbondingRecord items.
@@ -793,6 +943,15 @@ func (c *queryClient) UserRedemptionRecord(ctx context.Context, in *QueryGetUser
 func (c *queryClient) UserRedemptionRecordAll(ctx context.Context, in *QueryAllUserRedemptionRecordRequest, opts ...grpc.CallOption) (*QueryAllUserRedemptionRecordResponse, error) {
 	out := new(QueryAllUserRedemptionRecordResponse)
 	err := c.cc.Invoke(ctx, "/Stridelabs.stride.records.Query/UserRedemptionRecordAll", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *queryClient) UserRedemptionRecordForUser(ctx context.Context, in *QueryAllUserRedemptionRecordForUserRequest, opts ...grpc.CallOption) (*QueryAllUserRedemptionRecordForUserResponse, error) {
+	out := new(QueryAllUserRedemptionRecordForUserResponse)
+	err := c.cc.Invoke(ctx, "/Stridelabs.stride.records.Query/UserRedemptionRecordForUser", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -843,6 +1002,8 @@ type QueryServer interface {
 	UserRedemptionRecord(context.Context, *QueryGetUserRedemptionRecordRequest) (*QueryGetUserRedemptionRecordResponse, error)
 	// Queries a list of UserRedemptionRecord items.
 	UserRedemptionRecordAll(context.Context, *QueryAllUserRedemptionRecordRequest) (*QueryAllUserRedemptionRecordResponse, error)
+	// Queries a list of UserRedemptionRecord items by chainId / userId pair.
+	UserRedemptionRecordForUser(context.Context, *QueryAllUserRedemptionRecordForUserRequest) (*QueryAllUserRedemptionRecordForUserResponse, error)
 	// Queries a EpochUnbondingRecord by id.
 	EpochUnbondingRecord(context.Context, *QueryGetEpochUnbondingRecordRequest) (*QueryGetEpochUnbondingRecordResponse, error)
 	// Queries a list of EpochUnbondingRecord items.
@@ -865,6 +1026,9 @@ func (*UnimplementedQueryServer) UserRedemptionRecord(ctx context.Context, req *
 }
 func (*UnimplementedQueryServer) UserRedemptionRecordAll(ctx context.Context, req *QueryAllUserRedemptionRecordRequest) (*QueryAllUserRedemptionRecordResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UserRedemptionRecordAll not implemented")
+}
+func (*UnimplementedQueryServer) UserRedemptionRecordForUser(ctx context.Context, req *QueryAllUserRedemptionRecordForUserRequest) (*QueryAllUserRedemptionRecordForUserResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UserRedemptionRecordForUser not implemented")
 }
 func (*UnimplementedQueryServer) EpochUnbondingRecord(ctx context.Context, req *QueryGetEpochUnbondingRecordRequest) (*QueryGetEpochUnbondingRecordResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method EpochUnbondingRecord not implemented")
@@ -933,6 +1097,24 @@ func _Query_UserRedemptionRecordAll_Handler(srv interface{}, ctx context.Context
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(QueryServer).UserRedemptionRecordAll(ctx, req.(*QueryAllUserRedemptionRecordRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Query_UserRedemptionRecordForUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryAllUserRedemptionRecordForUserRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(QueryServer).UserRedemptionRecordForUser(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/Stridelabs.stride.records.Query/UserRedemptionRecordForUser",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(QueryServer).UserRedemptionRecordForUser(ctx, req.(*QueryAllUserRedemptionRecordForUserRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -1024,6 +1206,10 @@ var _Query_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "UserRedemptionRecordAll",
 			Handler:    _Query_UserRedemptionRecordAll_Handler,
+		},
+		{
+			MethodName: "UserRedemptionRecordForUser",
+			Handler:    _Query_UserRedemptionRecordForUser_Handler,
 		},
 		{
 			MethodName: "EpochUnbondingRecord",
@@ -1394,6 +1580,114 @@ func (m *QueryAllUserRedemptionRecordResponse) MarshalToSizedBuffer(dAtA []byte)
 	return len(dAtA) - i, nil
 }
 
+func (m *QueryAllUserRedemptionRecordForUserRequest) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *QueryAllUserRedemptionRecordForUserRequest) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *QueryAllUserRedemptionRecordForUserRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.Pagination != nil {
+		{
+			size, err := m.Pagination.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintQuery(dAtA, i, uint64(size))
+		}
+		i--
+		dAtA[i] = 0x2a
+	}
+	if m.Limit != 0 {
+		i = encodeVarintQuery(dAtA, i, uint64(m.Limit))
+		i--
+		dAtA[i] = 0x20
+	}
+	if len(m.Address) > 0 {
+		i -= len(m.Address)
+		copy(dAtA[i:], m.Address)
+		i = encodeVarintQuery(dAtA, i, uint64(len(m.Address)))
+		i--
+		dAtA[i] = 0x1a
+	}
+	if m.Day != 0 {
+		i = encodeVarintQuery(dAtA, i, uint64(m.Day))
+		i--
+		dAtA[i] = 0x10
+	}
+	if len(m.ChainId) > 0 {
+		i -= len(m.ChainId)
+		copy(dAtA[i:], m.ChainId)
+		i = encodeVarintQuery(dAtA, i, uint64(len(m.ChainId)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *QueryAllUserRedemptionRecordForUserResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *QueryAllUserRedemptionRecordForUserResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *QueryAllUserRedemptionRecordForUserResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.Pagination != nil {
+		{
+			size, err := m.Pagination.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintQuery(dAtA, i, uint64(size))
+		}
+		i--
+		dAtA[i] = 0x12
+	}
+	if len(m.UserRedemptionRecord) > 0 {
+		for iNdEx := len(m.UserRedemptionRecord) - 1; iNdEx >= 0; iNdEx-- {
+			{
+				size, err := m.UserRedemptionRecord[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				if err != nil {
+					return 0, err
+				}
+				i -= size
+				i = encodeVarintQuery(dAtA, i, uint64(size))
+			}
+			i--
+			dAtA[i] = 0xa
+		}
+	}
+	return len(dAtA) - i, nil
+}
+
 func (m *QueryGetEpochUnbondingRecordRequest) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
@@ -1663,6 +1957,52 @@ func (m *QueryAllUserRedemptionRecordRequest) Size() (n int) {
 }
 
 func (m *QueryAllUserRedemptionRecordResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if len(m.UserRedemptionRecord) > 0 {
+		for _, e := range m.UserRedemptionRecord {
+			l = e.Size()
+			n += 1 + l + sovQuery(uint64(l))
+		}
+	}
+	if m.Pagination != nil {
+		l = m.Pagination.Size()
+		n += 1 + l + sovQuery(uint64(l))
+	}
+	return n
+}
+
+func (m *QueryAllUserRedemptionRecordForUserRequest) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.ChainId)
+	if l > 0 {
+		n += 1 + l + sovQuery(uint64(l))
+	}
+	if m.Day != 0 {
+		n += 1 + sovQuery(uint64(m.Day))
+	}
+	l = len(m.Address)
+	if l > 0 {
+		n += 1 + l + sovQuery(uint64(l))
+	}
+	if m.Limit != 0 {
+		n += 1 + sovQuery(uint64(m.Limit))
+	}
+	if m.Pagination != nil {
+		l = m.Pagination.Size()
+		n += 1 + l + sovQuery(uint64(l))
+	}
+	return n
+}
+
+func (m *QueryAllUserRedemptionRecordForUserResponse) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -2511,6 +2851,314 @@ func (m *QueryAllUserRedemptionRecordResponse) Unmarshal(dAtA []byte) error {
 		}
 		if fieldNum <= 0 {
 			return fmt.Errorf("proto: QueryAllUserRedemptionRecordResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field UserRedemptionRecord", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.UserRedemptionRecord = append(m.UserRedemptionRecord, UserRedemptionRecord{})
+			if err := m.UserRedemptionRecord[len(m.UserRedemptionRecord)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Pagination", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.Pagination == nil {
+				m.Pagination = &query.PageResponse{}
+			}
+			if err := m.Pagination.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipQuery(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *QueryAllUserRedemptionRecordForUserRequest) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowQuery
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: QueryAllUserRedemptionRecordForUserRequest: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: QueryAllUserRedemptionRecordForUserRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ChainId", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.ChainId = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Day", wireType)
+			}
+			m.Day = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.Day |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Address", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Address = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 4:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Limit", wireType)
+			}
+			m.Limit = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.Limit |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 5:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Pagination", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.Pagination == nil {
+				m.Pagination = &query.PageRequest{}
+			}
+			if err := m.Pagination.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipQuery(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *QueryAllUserRedemptionRecordForUserResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowQuery
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: QueryAllUserRedemptionRecordForUserResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: QueryAllUserRedemptionRecordForUserResponse: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:

@@ -70,7 +70,7 @@ func (k msgServer) RebalanceValidators(goCtx context.Context, msg *types.MsgReba
 	lessFunc := func(i, j int) bool {
 		return valDeltaList[i].deltaAmt < valDeltaList[j].deltaAmt
 	}
-	sort.Slice(valDeltaList, lessFunc)
+	sort.SliceStable(valDeltaList, lessFunc)
 	// now varDeltaList is sorted by deltaAmt
 	overWeightIndex := 0
 	underWeightIndex := len(valDeltaList) - 1
