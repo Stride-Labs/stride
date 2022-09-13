@@ -8,7 +8,7 @@
 	path = deps/hermes
 	url = git@github.com:informalsystems/ibc-rs.git
 [submodule "deps/relayer"]
-	# Commit: f3d869fd53ade5665f097ce39d5a905e1d28d6c5
+	# Commit: 0b5608572f202b10f8be263849f8091f09c4d56b
 	# Branch: andrew/client_icq
 	path = deps/relayer
 	url = git@github.com:cosmos/relayer.git

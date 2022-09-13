@@ -4,7 +4,13 @@ set -eu
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
 STATE=$SCRIPT_DIR/state
+LOGS=$SCRIPT_DIR/logs
 PEER_PORT=26656
+
+# Logs
+STRIDE_LOGS=$LOGS/stride.log
+TX_LOGS=$SCRIPT_DIR/logs/tx.log
+KEYS_LOGS=$SCRIPT_DIR/logs/keys.log
 
 # DENOMS
 IBC_STRD_DENOM='ibc/FF6C2E86490C1C4FBBD24F55032831D2415B9D7882F85C3CC9C2401D79362BEA'
@@ -117,47 +123,28 @@ OSMO_VAL_MNEMONIC_4="ridge round key spawn address anchor file local athlete pio
 OSMO_VAL_MNEMONIC_5="federal garden bundle rebel museum donor hello oak daring argue talk sing chief burst rigid corn zone gather tell opera nominee desk select shine"
 OSMO_VAL_MNEMONICS=("$OSMO_VAL_MNEMONIC_1","$OSMO_VAL_MNEMONIC_2","$OSMO_VAL_MNEMONIC_3","$OSMO_VAL_MNEMONIC_4","$OSMO_VAL_MNEMONIC_5")
 
-# HERMES
-HERMES_CMD="$SCRIPT_DIR/../build/hermes/release/hermes --config $STATE/hermes/config.toml"
-HERMES_EXEC="docker-compose run --rm hermes hermes"
-
-HERMES_STRIDE_ACCT=rly1
-HERMES_GAIA_ACCT=rly2
-HERMES_JUNO_ACCT=rly3
-HERMES_OSMO_ACCT=rly4
-
-HERMES_STRIDE_MNEMONIC="alter old invest friend relief slot swear pioneer syrup economy vendor tray focus hedgehog artist legend antenna hair almost donkey spice protect sustain increase"
-HERMES_GAIA_MNEMONIC="resemble accident lake amateur physical jewel taxi nut demand magnet person blanket trip entire awkward fiber usual current index limb lady lady depart train"
-HERMES_JUNO_MNEMONIC="uphold decorate moon memory taste century work pride force genius width ripple myself year steel ivory type sweet tree ignore danger pudding owner discover"
-HERMES_OSMO_MNEMONIC="lawn inside color february double myth depart invite miracle nest silver spider spray recall theme loan exotic puzzle uncover dial young earn disagree fee"
-
 # RELAYER
 RELAYER_CMD="$SCRIPT_DIR/../build/relayer --home $STATE/relayer"
-RELAYER_EXEC="docker-compose run --rm relayer rly"
+RELAYER_GAIA_EXEC="docker-compose run --rm relayer-gaia rly"
+RELAYER_JUNO_EXEC="docker-compose run --rm relayer-juno rly"
+RELAYER_OSMO_EXEC="docker-compose run --rm relayer-osmo rly"
 
 RELAYER_STRIDE_ACCT=rly1
 RELAYER_GAIA_ACCT=rly2
 RELAYER_JUNO_ACCT=rly3
 RELAYER_OSMO_ACCT=rly4
 
-RELAYER_STRIDE_MNEMONIC="pride narrow breeze fitness sign bounce dose smart squirrel spell length federal replace coral lunar thunder vital push nuclear crouch fun accident hood need"
-RELAYER_GAIA_MNEMONIC="fiction perfect rapid steel bundle giant blade grain eagle wing cannon fever must humble dance kitchen lazy episode museum faith off notable rate flavor"
-RELAYER_JUNO_MNEMONIC="kiwi betray topple van vapor flag decorate cement crystal fee family clown cry story gain frost strong year blanket remain grass pig hen empower"
-RELAYER_OSMO_MNEMONIC="unaware wine ramp february bring trust leaf beyond fever inside option dilemma save know captain endless salute radio humble chicken property culture foil taxi"
+RELAYER_STRIDE_MNEMONIC="alter old invest friend relief slot swear pioneer syrup economy vendor tray focus hedgehog artist legend antenna hair almost donkey spice protect sustain increase"
+RELAYER_GAIA_MNEMONIC="resemble accident lake amateur physical jewel taxi nut demand magnet person blanket trip entire awkward fiber usual current index limb lady lady depart train"
+RELAYER_JUNO_MNEMONIC="uphold decorate moon memory taste century work pride force genius width ripple myself year steel ivory type sweet tree ignore danger pudding owner discover"
+RELAYER_OSMO_MNEMONIC="lawn inside color february double myth depart invite miracle nest silver spider spray recall theme loan exotic puzzle uncover dial young earn disagree fee"
 
-# ICQ
-ICQ_CMD="$SCRIPT_DIR/../build/interchain-queries --home $STATE/icq"
-ICQ_EXEC="docker-compose run --rm icq interchain-queries"
-
-ICQ_STRIDE_ACCT=icq1
-ICQ_GAIA_ACCT=icq2
-ICQ_JUNO_ACCT=icq3
-ICQ_OSMO_ACCT=icq4
-
-ICQ_STRIDE_MNEMONIC="helmet say goat special plug umbrella finger night flip axis resource tuna trigger angry shove essay point laundry horror eager forget depend siren alarm"
-ICQ_GAIA_MNEMONIC="capable later bamboo snow drive afraid cheese practice latin brush hand true visa drama mystery bird client nature jealous guess tank marriage volume fantasy"
-ICQ_JUNO_MNEMONIC="divorce loop depth announce strategy goddess short cash private raise spatial parent deal acid casual love inner bind ozone picnic fee earn scene galaxy"
-ICQ_OSMO_MNEMONIC="mix deal extend cargo office intact illegal cage fabric must upset yellow put any shaft area use piece patrol tobacco village guilt iron program"
+# LIGHT CLIENT REFRESHER (remove once relayer is updated)
+REFRESH_CMD="$SCRIPT_DIR/../build/relayer --home $STATE/refresh-clients"
+REFRESH_STRIDE_MNEMONIC="stereo tunnel inflict book snow deal safe number pipe drink scare defense mercy topple slam million tackle mail labor nothing early access smart infant"
+REFRESH_GAIA_MNEMONIC="retire luggage wasp maid conduct flight cheese escape scare rural grant van false attack trophy green pottery quote priority decide step young seed decrease"
+REFRESH_JUNO_MNEMONIC="forest endorse delay core carbon dog buddy egg next palm betray hospital treat report icon damage hobby effort satoshi few industry acoustic sweet water"
+REFRESH_OSMO_MNEMONIC="harvest clump theory zebra car fiber glimpse carbon grunt pill destroy ticket basic engine lounge garage ozone banner congress illegal path loyal market cube"
 
 DELEGATION_ICA_ADDR='cosmos1sy63lffevueudvvlvh2lf6s387xh9xq72n3fsy6n2gr5hm6u2szs2v0ujm'
 REDEMPTION_ICA_ADDR='cosmos1xmcwu75s8v7s54k79390wc5gwtgkeqhvzegpj0nm2tdwacv47tmqg9ut30'
@@ -180,55 +167,18 @@ OSMO_REDEMPTION_ICA_ADDR='osmo1uy9p9g609676rflkjnnelaxatv8e4sd245snze7qsxzlk7dk7
 OSMO_WITHDRAWAL_ICA_ADDR='osmo10arcf5r89cdmppntzkvulc7gfmw5lr66y2m25c937t6ccfzk0cqqz2l6xv'
 OSMO_FEE_ICA_ADDR='osmo1n4r77qsmu9chvchtmuqy9cv3s539q87r398l6ugf7dd2q5wgyg9su3wd4g'
 
-CSLEEP() {
-  for i in $(seq $1); do
-    sleep 1
-    printf "\r\t$(($1 - $i))s left..."
-  done
-}
-
 GET_VAR_VALUE() {
   var_name="$1"
   echo "${!var_name}"
 }
 
-WAIT_FOR_BLOCK () {
+WAIT_FOR_BLOCK() {
   num_blocks="${2:-1}"
   for i in $(seq $num_blocks); do
     ( tail -f -n0 $1 & ) | grep -q "INF executed block height="
   done
 }
 
-WAIT_FOR_NONEMPTY_BLOCK () {
-  ( tail -f -n0 $1 & ) | grep -q -E "num_valid_txs=[1-9]"
-}
-
-WAIT_FOR_STRING () {
+WAIT_FOR_STRING() {
   ( tail -f -n0 $1 & ) | grep -q "$2"
 }
-
-WAIT_FOR_IBC_TRANSFER () {
-  success_string="packet_cmd{src_chain=(.*)port=transfer(.*): success"
-  ( tail -f -n0 $HERMES_LOGS & ) | grep -q -E "$success_string"
-  ( tail -f -n0 $HERMES_LOGS & ) | grep -q -E "$success_string"
-}
-
-STRIDE_STATE=$SCRIPT_DIR/state/stride
-STRIDE_LOGS=$SCRIPT_DIR/logs/stride.log
-STRIDE_LOGS_2=$SCRIPT_DIR/logs/stride2.log
-STRIDE_LOGS_3=$SCRIPT_DIR/logs/stride3.log
-STRIDE_LOGS_4=$SCRIPT_DIR/logs/stride4.log
-STRIDE_LOGS_5=$SCRIPT_DIR/logs/stride5.log
-GAIA_STATE=$SCRIPT_DIR/state/gaia
-GAIA_LOGS=$SCRIPT_DIR/logs/gaia.log
-GAIA_LOGS_2=$SCRIPT_DIR/logs/gaia2.log
-GAIA_LOGS_3=$SCRIPT_DIR/logs/gaia3.log
-HERMES_LOGS=$SCRIPT_DIR/logs/hermes.log
-RLY_GAIA_LOGS=$SCRIPT_DIR/logs/rly_gaia.log
-RLY_OSMO_LOGS=$SCRIPT_DIR/logs/rly_osmo.log
-RLY_JUNO_LOGS=$SCRIPT_DIR/logs/rly_juno.log
-ICQ_LOGS=$SCRIPT_DIR/logs/icq.log
-JUNO_LOGS=$SCRIPT_DIR/logs/juno.log
-OSMO_LOGS=$SCRIPT_DIR/logs/osmo.log
-TX_LOGS=$SCRIPT_DIR/logs/tx.log
-KEYS_LOGS=$SCRIPT_DIR/logs/keys.log

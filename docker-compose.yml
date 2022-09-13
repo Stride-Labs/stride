@@ -106,21 +106,37 @@ services:
     volumes:
       - ./scripts/state/osmo5:/home/osmosis/.osmosisd
 
-  hermes:
-    image: stridezone:hermes
-    volumes:
-      - ~/.hermes:/home/hermes/.hermes
-      - ./scripts/state/hermes/config.toml:/home/hermes/.hermes/config.toml
-    restart: always
-
-  relayer:
+  relayer-gaia:
     image: stridezone:relayer
     volumes:
       - ./scripts/state/relayer:/home/relayer/.relayer
     restart: always
+    command: [ "bash", "start.sh", "stride-gaia" ]
 
-  icq:
-    image: stridezone:icq
+  relayer-juno:
+    image: stridezone:relayer
     volumes:
-      - ./scripts/state/icq:/home/icq/.icq
+      - ./scripts/state/relayer:/home/relayer/.relayer
     restart: always
+    command: [ "bash", "start.sh", "stride-juno" ]
+
+  relayer-osmo:
+    image: stridezone:relayer
+    volumes:
+      - ./scripts/state/relayer:/home/relayer/.relayer
+    restart: always
+    command: [ "bash", "start.sh", "stride-osmo" ]
+
+  refresh-clients:
+    image: stridezone:relayer
+    volumes:
+      - ./scripts/state/refresh-clients:/home/relayer/.relayer
+    restart: always
+    command:
+      [
+        "bash",
+        "refresh-clients.sh",
+        "stride-gaia",
+        "stride-juno",
+        "stride-osmo"
+      ]

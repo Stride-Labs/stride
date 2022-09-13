@@ -18,10 +18,9 @@ VAL_PREFIX=$(GET_VAR_VALUE  ${CHAIN_ID}_VAL_PREFIX)
 VAL_MNEMONICS_VAR=${CHAIN_ID}_VAL_MNEMONICS
 IFS=',' read -r -a VAL_MNEMONICS <<< "${!VAL_MNEMONICS_VAR}"
 
-HERMES_ACCT=$(GET_VAR_VALUE     HERMES_${CHAIN_ID}_ACCT)
-HERMES_MNEMONIC=$(GET_VAR_VALUE HERMES_${CHAIN_ID}_MNEMONIC)
-ICQ_ACCT=$(GET_VAR_VALUE        ICQ_${CHAIN_ID}_ACCT)
-ICQ_MNEMONIC=$(GET_VAR_VALUE    ICQ_${CHAIN_ID}_MNEMONIC)
+RELAYER_ACCT=$(GET_VAR_VALUE     RELAYER_${CHAIN_ID}_ACCT)
+RELAYER_MNEMONIC=$(GET_VAR_VALUE RELAYER_${CHAIN_ID}_MNEMONIC)
+REFRESH_MNEMONIC=$(GET_VAR_VALUE REFRESH_${CHAIN_ID}_MNEMONIC)
 
 REV_ACCT_VAR=${CHAIN_ID}_REV_ACCT
 REV_MNEMONIC_VAR=${CHAIN_ID}_REV_MNEMONIC
@@ -126,15 +125,15 @@ for (( i=1; i <= $NUM_NODES; i++ )); do
     fi
 done
 
-# add Hermes and ICQ relayer accounts on Stride
-echo "$HERMES_MNEMONIC" | $MAIN_NODE_CMD keys add $HERMES_ACCT --recover --keyring-backend=test >> $KEYS_LOGS 2>&1
-echo "$ICQ_MNEMONIC" | $MAIN_NODE_CMD keys add $ICQ_ACCT --recover --keyring-backend=test >> $KEYS_LOGS 2>&1
-HERMES_ADDRESS=$($MAIN_NODE_CMD keys show $HERMES_ACCT --keyring-backend test -a)
-ICQ_ADDRESS=$($MAIN_NODE_CMD keys show $ICQ_ACCT --keyring-backend test -a)
+# add relayer accounts 
+echo "$RELAYER_MNEMONIC" | $MAIN_NODE_CMD keys add $RELAYER_ACCT --recover --keyring-backend=test >> $KEYS_LOGS 2>&1
+RELAYER_ADDRESS=$($MAIN_NODE_CMD keys show $RELAYER_ACCT --keyring-backend test -a)
+echo "$REFRESH_MNEMONIC" | $MAIN_NODE_CMD keys add ${RELAYER_ACCT}-refresh --recover --keyring-backend=test >> $KEYS_LOGS 2>&1
+REFRESH_ADDRESS=$($MAIN_NODE_CMD keys show ${RELAYER_ACCT}-refresh --keyring-backend test -a)
 
 # give relayer accounts token balances
-$MAIN_NODE_CMD add-genesis-account ${HERMES_ADDRESS} ${VAL_TOKENS}${DENOM}
-$MAIN_NODE_CMD add-genesis-account ${ICQ_ADDRESS} ${VAL_TOKENS}${DENOM}
+$MAIN_NODE_CMD add-genesis-account ${RELAYER_ADDRESS} ${VAL_TOKENS}${DENOM}
+$MAIN_NODE_CMD add-genesis-account ${REFRESH_ADDRESS} ${VAL_TOKENS}${DENOM}
 
 if [ "$CHAIN_ID" == "$STRIDE_CHAIN_ID" ]; then 
     # add the stride admin account

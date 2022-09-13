@@ -9,9 +9,6 @@ docker-compose down
 rm -rf $SCRIPT_DIR/state $SCRIPT_DIR/logs/*.log $SCRIPT_DIR/logs/temp
 mkdir -p $SCRIPT_DIR/logs
 
-HERMES_LOGS=$SCRIPT_DIR/logs/hermes.log
-ICQ_LOGS=$SCRIPT_DIR/logs/icq.log
-
 # Initialize the state for stride/gaia and relayers
 sh ${SCRIPT_DIR}/init_chain.sh STRIDE
 sh ${SCRIPT_DIR}/init_chain.sh GAIA
@@ -20,29 +17,20 @@ sh ${SCRIPT_DIR}/init_chain.sh OSMO
 
 HOST_CHAINS=(GAIA JUNO OSMO)
 sh ${SCRIPT_DIR}/start_chain.sh STRIDE ${HOST_CHAINS[@]}
-sh ${SCRIPT_DIR}/init_relayers.sh STRIDE ${HOST_CHAINS[@]}
-sh ${SCRIPT_DIR}/create_channels.sh ${HOST_CHAINS[@]}
+sh ${SCRIPT_DIR}/start_relayers.sh ${HOST_CHAINS[@]} 
 
-echo "Starting relayers"
-docker-compose up -d hermes icq
-
-docker-compose logs -f hermes | sed -r -u "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2})?)?[mGK]//g" >> $HERMES_LOGS 2>&1 &
-docker-compose logs -f icq | sed -r -u "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2})?)?[mGK]//g" > $ICQ_LOGS 2>&1 &
-
-# Wait for hermes to start
-( tail -f -n0 $HERMES_LOGS & ) | grep -q -E "Hermes has started"
+exit 0
 
 # Register all host zones in parallel
-bash $SCRIPT_DIR/register_host.sh GAIA connection-0 channel-0
-# pids=()
-# for i in ${!HOST_CHAINS[@]}; do
-#     if [[ "$i" != "0" ]]; then sleep 20; fi
-#     bash $SCRIPT_DIR/register_host.sh ${HOST_CHAINS[$i]} connection-${i} channel-${i} &
-#     pids[${i}]=$!
-# done
-# for i in ${!pids[@]}; do
-#     wait ${pids[$i]}
-#     echo "${HOST_CHAINS[$i]} - Done"
-# done
+pids=()
+for i in ${!HOST_CHAINS[@]}; do
+    if [[ "$i" != "0" ]]; then sleep 20; fi
+    bash $SCRIPT_DIR/register_host.sh ${HOST_CHAINS[$i]} connection-${i} channel-${i} &
+    pids[${i}]=$!
+done
+for i in ${!pids[@]}; do
+    wait ${pids[$i]}
+    echo "${HOST_CHAINS[$i]} - Done"
+done
 
 $SCRIPT_DIR/create_logs.sh &

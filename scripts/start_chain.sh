@@ -7,6 +7,10 @@ source ${SCRIPT_DIR}/vars.sh
 
 # Pass the CHAIN_ID's of the chains to start
 CHAINS="$@"
+if [[ "$CHAINS" == "" ]]; then
+    echo "ERROR: Please specify chain IDs to start"
+    exit 1
+fi
 
 for chain_id in ${CHAINS[@]}; do
     num_nodes=$(GET_VAR_VALUE ${chain_id}_NUM_NODES)

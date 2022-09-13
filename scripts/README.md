@@ -26,6 +26,15 @@
     volumes:
       - ./scripts/state/{new-host-zone}5:/home/{new-host-zone}/.{new-host-zone}
 ```
+* Add the corresponding relayer
+```
+  relayer-{new-host-zone}:
+    image: stridezone:relayer
+    volumes:
+      - ./scripts/state/relayer:/home/relayer/.relayer
+    restart: always
+    command: [ "bash", "start.sh", "stride-{new-host-zone}" ]
+```
 * Add the host zone as a submodule in `deps`
 * Add the build command for that host zone in `scripts/build.sh`
 ```
@@ -56,11 +65,9 @@ while getopts sgojhir{n} flag; do
 {CHAIN_ID}_VAL_MNEMONICS=("${CHAIN_ID}_VAL_MNEMONIC_1","${CHAIN_ID}_VAL_MNEMONIC_2","${CHAIN_ID}_VAL_MNEMONIC_3","${CHAIN_ID}_VAL_MNEMONIC_4","${CHAIN_ID}_VAL_MNEMONIC_5")
 
 
-HERMES_${CHAIN_ID}_ACCT=rly{add one since the account from the last host zone}
-HERMES_${CHAIN_ID}_MNEMONIC=""
-
-ICQ_${CHAIN_ID}_ACCT=rly{add one since the account from the last host zone}
-ICQ_${CHAIN_ID}_MNEMONIC=""
+RELAYER_${CHAIN_ID}_ACCT=rly{add one since the account from the last host zone}
+RELAYER_${CHAIN_ID}_MNEMONIC=""
+RELAYER_${CHAIN_ID}_EXEC="docker-compose run --rm relayer-{host-chain-name} rly"
 ```
 * Finally add the execution of the `init_chain` script for this host zone in `scripts/start_network.sh`, and add it to the array of `HOST_CHAINS`
 ```

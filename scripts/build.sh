@@ -23,21 +23,12 @@ build_local_and_docker() {
 }
 
 # build docker images and local binaries
-while getopts sgojhir flag; do
+while getopts sgojr flag; do
    case "${flag}" in
       s) build_local_and_docker stride . ;;
       g) build_local_and_docker gaia deps/gaia ;;
       j) build_local_and_docker juno deps/juno ;;
       o) build_local_and_docker osmo deps/osmosis ;;
-      i) build_local_and_docker icq deps/interchain-queries ;;
       r) build_local_and_docker relayer deps/relayer ;;  
-      h) echo "Building Hermes Docker... ";
-         docker build --tag stridezone:hermes -f Dockerfile.hermes . ;
-
-         printf '%s' "Building Hermes Locally... ";
-         cd deps/hermes; 
-         cargo build --release --target-dir $BUILDDIR/hermes; 
-         cd ../..
-         echo "Done" ;;
    esac
 done
