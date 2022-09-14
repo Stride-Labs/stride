@@ -65,7 +65,7 @@ mkdir $GAIA_HOME/config/gentx/
 echo $GAIA_VAL_MNEMONIC_2 | $GAIA_CMD_2 keys add $GAIA_VAL_ACCT_2 --recover --keyring-backend=test >> $KEYS_LOGS 2>&1 &
 $GAIA_CMD_2 add-genesis-account $GAIA_VAL_2_ADDR 500000000000000uatom
 $GAIA_CMD add-genesis-account $GAIA_VAL_2_ADDR 500000000000000uatom
-$GAIA_CMD_2 gentx $GAIA_VAL_ACCT_2 5000000000uatom --chain-id $GAIA_CHAIN --output-document=$GAIA_HOME/config/gentx/gval2.json
+$GAIA_CMD_2 gentx $GAIA_VAL_ACCT_2 5000000000uatom --chain-id $GAIA_CHAIN --output-document=$GAIA_HOME/config/gentx/gval2.json 2> /dev/null
 
 # ============================== SETUP CHAIN 3 ======================================
 # echo $GAIA_VAL_MNEMONIC_3 | $GAIA_CMD_3 keys add $GAIA_VAL_ACCT_3 --recover --keyring-backend=test >> $KEYS_LOGS 2>&1 &
@@ -112,7 +112,7 @@ rev_addr=$($GAIA_CMD keys show $GAIA_REV_ACCT -a) > /dev/null
 $GAIA_CMD collect-gentxs 2> /dev/null
 
 ## add the message types ICA should allow to the host chain
-ALLOW_MESSAGES='\"/cosmos.bank.v1beta1.MsgSend\", \"/cosmos.bank.v1beta1.MsgMultiSend\", \"/cosmos.staking.v1beta1.MsgDelegate\", \"/cosmos.staking.v1beta1.MsgUndelegate\", \"/cosmos.staking.v1beta1.MsgRedeemTokensforShares\", \"/cosmos.staking.v1beta1.MsgTokenizeShares\", \"/cosmos.distribution.v1beta1.MsgWithdrawDelegatorReward\", \"/cosmos.distribution.v1beta1.MsgSetWithdrawAddress\", \"/ibc.applications.transfer.v1.MsgTransfer\"'
+ALLOW_MESSAGES='\"/cosmos.bank.v1beta1.MsgSend\", \"/cosmos.bank.v1beta1.MsgMultiSend\", \"/cosmos.staking.v1beta1.MsgDelegate\", \"/cosmos.staking.v1beta1.MsgUndelegate\", \"/cosmos.staking.v1beta1.MsgBeginRedelegate\", \"/cosmos.staking.v1beta1.MsgRedeemTokensforShares\", \"/cosmos.staking.v1beta1.MsgTokenizeShares\", \"/cosmos.distribution.v1beta1.MsgWithdrawDelegatorReward\", \"/cosmos.distribution.v1beta1.MsgSetWithdrawAddress\", \"/ibc.applications.transfer.v1.MsgTransfer\"'
 sed -i -E "s|\"allow_messages\": \[\]|\"allow_messages\": \[${ALLOW_MESSAGES}\]|g" "${STATE}/${GAIA_NODE_NAME}/config/genesis.json"
 
 cp $GAIA_HOME/config/genesis.json $GAIA_HOME_2/config/genesis.json

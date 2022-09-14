@@ -13,6 +13,7 @@ SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 source $SCRIPT_DIR/vars.sh
 
 mkdir -p $SCRIPT_DIR/logs
+mkdir -p $SCRIPT_DIR/logs/rly
 
 CACHE="${1:-false}"
 

@@ -2,8 +2,10 @@ package keeper
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"sort"
+	"strings"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -35,6 +37,32 @@ func floatmax(a, b float64) float64 {
 	return b
 }
 
+func ValAddressFromBech32CusomPrefix(address string, bech32PrefixValAddr string) (addr sdk.ValAddress, err error) {
+	if len(strings.TrimSpace(address)) == 0 {
+		return sdk.ValAddress{}, errors.New("empty address string is not allowed")
+	}
+
+	bz, err := sdk.GetFromBech32(address, bech32PrefixValAddr)
+	if err != nil {
+		return nil, err
+	}
+
+	return sdk.ValAddress(bz), nil
+}
+
+func AccAddressFromBech32CustomPrefix(address string, bech32PrefixAccAddr string) (addr sdk.AccAddress, err error) {
+	if len(strings.TrimSpace(address)) == 0 {
+		return sdk.AccAddress{}, errors.New("empty address string is not allowed")
+	}
+
+	bz, err := sdk.GetFromBech32(address, bech32PrefixAccAddr)
+	if err != nil {
+		return nil, err
+	}
+
+	return sdk.AccAddress(bz), nil
+}
+
 func (k msgServer) RebalanceValidators(goCtx context.Context, msg *types.MsgRebalanceValidators) (*types.MsgRebalanceValidatorsResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
@@ -58,13 +86,14 @@ func (k msgServer) RebalanceValidators(goCtx context.Context, msg *types.MsgReba
 	// we convert the above map into a list of tuples
 	type valPair struct {
 		deltaAmt int64
-		valAddr  sdk.ValAddress
+		valAddr  string
 	}
 	valDeltaList := make([]valPair, 0)
 	for _, valAddr := range utils.StringToIntMapKeys(validatorDeltas) {
 		deltaAmt := validatorDeltas[valAddr]
 		k.Logger(ctx).Info(fmt.Sprintf("Adding deltaAmt: %d to validator: %s", deltaAmt, valAddr))
-		valDeltaList = append(valDeltaList, valPair{deltaAmt, sdk.ValAddress(valAddr)})
+		valDeltaList = append(valDeltaList, valPair{deltaAmt, valAddr})
+		// valDeltaList = append(valDeltaList, valPair{deltaAmt, sdk.ValAddress(valAddr)})
 	}
 	// now we sort that list
 	lessFunc := func(i, j int) bool {
@@ -97,8 +126,13 @@ func (k msgServer) RebalanceValidators(goCtx context.Context, msg *types.MsgReba
 		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "Invalid delegation account")
 	}
 
-	delegatorAddressStr := delegationIca.GetAddress()
-	delegatorAddress := sdk.AccAddress(delegatorAddressStr)
+	delegatorAddress := delegationIca.GetAddress()
+
+	// start construction callback
+	rebalanceCallback := types.RebalanceCallback{
+		HostZoneId:   hostZone.ChainId,
+		Rebalancings: []*types.Rebalancing{},
+	}
 
 	for i := 1; i < maxNumRebalance; i++ {
 		underWeightElem := valDeltaList[underWeightIndex]
@@ -117,45 +151,62 @@ func (k msgServer) RebalanceValidators(goCtx context.Context, msg *types.MsgReba
 			underWeightElem.deltaAmt -= abs(overWeightElem.deltaAmt)
 			overWeightIndex += 1
 			// issue an ICA call to the host zone to rebalance the validator
-			redelagateMsg := stakingTypes.NewMsgBeginRedelegate(
-				delegatorAddress,
-				overWeightElem.valAddr,
-				underWeightElem.valAddr,
-				sdk.NewInt64Coin(hostZone.HostDenom, abs(overWeightElem.deltaAmt)))
-			msgs = append(msgs, redelagateMsg)
+			redelegateMsg := &stakingTypes.MsgBeginRedelegate{
+				DelegatorAddress:    delegatorAddress,
+				ValidatorSrcAddress: overWeightElem.valAddr,
+				ValidatorDstAddress: underWeightElem.valAddr,
+				Amount:              sdk.NewInt64Coin(hostZone.HostDenom, abs(overWeightElem.deltaAmt))}
+			k.Logger(ctx).Info(fmt.Sprintf("[MOOSE] CASE 1: %v", redelegateMsg))
+			msgs = append(msgs, redelegateMsg)
 			overWeightElem.deltaAmt = 0
 		} else if abs(underWeightElem.deltaAmt) < abs(overWeightElem.deltaAmt) {
 			// if the overweight element is more overweight than the underweight element
 			overWeightElem.deltaAmt += underWeightElem.deltaAmt
 			underWeightIndex -= 1
 			// issue an ICA call to the host zone to rebalance the validator
-			redelagateMsg := stakingTypes.NewMsgBeginRedelegate(
-				delegatorAddress,
-				overWeightElem.valAddr,
-				underWeightElem.valAddr,
-				sdk.NewInt64Coin(hostZone.HostDenom, abs(underWeightElem.deltaAmt)))
-			msgs = append(msgs, redelagateMsg)
+			redelegateMsg := &stakingTypes.MsgBeginRedelegate{
+				DelegatorAddress:    delegatorAddress,
+				ValidatorSrcAddress: overWeightElem.valAddr,
+				ValidatorDstAddress: underWeightElem.valAddr,
+				Amount:              sdk.NewInt64Coin(hostZone.HostDenom, abs(underWeightElem.deltaAmt))}
+			k.Logger(ctx).Info(fmt.Sprintf("[MOOSE] CASE 2: %v", redelegateMsg))
+			msgs = append(msgs, redelegateMsg)
 			underWeightElem.deltaAmt = 0
 		} else {
 			// if the two elements are equal, we increment both slices
 			underWeightIndex -= 1
 			overWeightIndex += 1
 			// issue an ICA call to the host zone to rebalance the validator
-			redelagateMsg := stakingTypes.NewMsgBeginRedelegate(
-				delegatorAddress,
-				underWeightElem.valAddr,
-				overWeightElem.valAddr,
-				sdk.NewInt64Coin(hostZone.HostDenom, abs(underWeightElem.deltaAmt)))
-			msgs = append(msgs, redelagateMsg)
+			redelegateMsg := &stakingTypes.MsgBeginRedelegate{
+				DelegatorAddress:    delegatorAddress,
+				ValidatorSrcAddress: overWeightElem.valAddr,
+				ValidatorDstAddress: underWeightElem.valAddr,
+				Amount:              sdk.NewInt64Coin(hostZone.HostDenom, abs(underWeightElem.deltaAmt))}
+			k.Logger(ctx).Info(fmt.Sprintf("[MOOSE] CASE 3: %v", redelegateMsg))
+			msgs = append(msgs, redelegateMsg)
 			overWeightElem.deltaAmt = 0
 			underWeightElem.deltaAmt = 0
 		}
+		lastMsg := (msgs[len(msgs)-1]).(*stakingTypes.MsgBeginRedelegate)
+		rebalanceCallback.Rebalancings = append(rebalanceCallback.Rebalancings, &types.Rebalancing{
+			SrcValidator: lastMsg.ValidatorSrcAddress,
+			DstValidator: lastMsg.ValidatorDstAddress,
+			Amt:          lastMsg.Amount.Amount.Uint64(),
+		})
+	}
+
+	// marshall the callback
+	marshalledCallbackArgs, err := k.MarshalRebalanceCallbackArgs(ctx, rebalanceCallback)
+	if err != nil {
+		k.Logger(ctx).Error(err.Error())
+		return nil, err
 	}
 
 	connectionId := hostZone.GetConnectionId()
-	_, err = k.SubmitTxsStrideEpoch(ctx, connectionId, msgs, *delegationIca, "", nil)
+	// QUESTION: what should the timeouts be for these function calls?
+	_, err = k.SubmitTxsStrideEpoch(ctx, connectionId, msgs, *hostZone.GetDelegationAccount(), REBALANCE, marshalledCallbackArgs)
 	if err != nil {
-		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "Failed to SubmitTxs for %s, %s, %s", connectionId, hostZone.ChainId, msgs)
+		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "Failed to SubmitTxs for %s, %s, %s, %v", connectionId, hostZone.ChainId, msgs, err)
 	}
 
 	return &types.MsgRebalanceValidatorsResponse{}, nil

@@ -12,6 +12,7 @@ const CLAIM = "claim"
 const UNDELEGATE = "undelegate"
 const REINVEST = "reinvest"
 const REDEMPTION = "redemption"
+const REBALANCE = "rebalance"
 
 // ICACallbacks wrapper struct for stakeibc keeper
 type ICACallback func(Keeper, sdk.Context, channeltypes.Packet, *channeltypes.Acknowledgement, []byte) error
@@ -47,6 +48,7 @@ func (c ICACallbacks) RegisterICACallbacks() icacallbackstypes.ICACallbackHandle
 		AddICACallback(CLAIM, ICACallback(ClaimCallback)).
 		AddICACallback(UNDELEGATE, ICACallback(UndelegateCallback)).
 		AddICACallback(REINVEST, ICACallback(ReinvestCallback)).
-		AddICACallback(REDEMPTION, ICACallback(RedemptionCallback))
+		AddICACallback(REDEMPTION, ICACallback(RedemptionCallback)).
+		AddICACallback(REBALANCE, ICACallback(RebalanceCallback))
 	return a.(ICACallbacks)
 }
