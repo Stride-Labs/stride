@@ -2,7 +2,6 @@ version: "3.8"
 services:
   stride1:
     image: stridezone:stride
-    hostname: stride
     volumes:
       - ./scripts/state/stride1:/home/stride/.stride
     ports:
@@ -12,48 +11,100 @@ services:
 
   stride2:
     image: stridezone:stride
-    hostname: stride
     volumes:
       - ./scripts/state/stride2:/home/stride/.stride
 
   stride3:
     image: stridezone:stride
-    hostname: stride
     volumes:
       - ./scripts/state/stride3:/home/stride/.stride
 
   gaia1:
     image: stridezone:gaia
-    hostname: stride
     volumes:
       - ./scripts/state/gaia1:/home/gaia/.gaia
     ports:
       - "26557:26657"
       - "1307:1317"
       - "9080:9090"
+
   gaia2:
     image: stridezone:gaia
-    hostname: stride
     volumes:
       - ./scripts/state/gaia2:/home/gaia/.gaia
 
   gaia3:
     image: stridezone:gaia
-    hostname: stride
     volumes:
       - ./scripts/state/gaia3:/home/gaia/.gaia
 
   gaia4:
     image: stridezone:gaia
-    hostname: stride
     volumes:
       - ./scripts/state/gaia4:/home/gaia/.gaia
 
   gaia5:
     image: stridezone:gaia
-    hostname: stride
     volumes:
       - ./scripts/state/gaia5:/home/gaia/.gaia
+
+  juno1:
+    image: stridezone:juno
+    volumes:
+      - ./scripts/state/juno1:/home/juno/.juno
+    ports:
+      - "26457:26657"
+      - "1297:1317"
+      - "9070:9090"
+
+  juno2:
+    image: stridezone:juno
+    volumes:
+      - ./scripts/state/juno2:/home/juno/.juno
+
+  juno3:
+    image: stridezone:juno
+    volumes:
+      - ./scripts/state/juno3:/home/juno/.juno
+
+  juno4:
+    image: stridezone:juno
+    volumes:
+      - ./scripts/state/juno4:/home/juno/.juno
+
+  juno5:
+    image: stridezone:juno
+    volumes:
+      - ./scripts/state/juno5:/home/juno/.juno
+
+  osmo1:
+    image: stridezone:osmo
+    volumes:
+      - ./scripts/state/osmo1:/home/osmosis/.osmosisd
+    ports:
+      - "26357:26657"
+      - "1287:1317"
+      - "9060:9090"
+
+  osmo2:
+    image: stridezone:osmo
+    volumes:
+      - ./scripts/state/osmo2:/home/osmosis/.osmosisd
+
+  osmo3:
+    image: stridezone:osmo
+    volumes:
+      - ./scripts/state/osmo3:/home/osmosis/.osmosisd
+
+  osmo4:
+    image: stridezone:osmo
+    volumes:
+      - ./scripts/state/osmo4:/home/osmosis/.osmosisd
+
+  osmo5:
+    image: stridezone:osmo
+    volumes:
+      - ./scripts/state/osmo5:/home/osmosis/.osmosisd
 
   hermes:
     image: stridezone:hermes
@@ -69,7 +120,7 @@ services:
     restart: always
 
   icq:
-    image: stridezone:interchain-queries
+    image: stridezone:icq
     volumes:
       - ./scripts/state/icq:/home/icq/.icq
     restart: always
