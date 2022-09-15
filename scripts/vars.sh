@@ -4,7 +4,13 @@ set -eu
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
 STATE=$SCRIPT_DIR/state
+LOGS=$SCRIPT_DIR/logs
 PEER_PORT=26656
+
+# Logs
+STRIDE_LOGS=$LOGS/stride.log
+TX_LOGS=$SCRIPT_DIR/logs/tx.log
+KEYS_LOGS=$SCRIPT_DIR/logs/keys.log
 
 # DENOMS
 IBC_STRD_DENOM='ibc/FF6C2E86490C1C4FBBD24F55032831D2415B9D7882F85C3CC9C2401D79362BEA'
@@ -33,7 +39,7 @@ MAX_DEPOSIT_PERIOD="30s"
 VOTING_PERIOD="30s"
 
 VAL_TOKENS=5000000000000
-STAKE_TOKENS=3000000000000
+STAKE_TOKENS=5000000000
 ADMIN_TOKENS=1000000000
 
 # STRIDE 
@@ -48,10 +54,10 @@ STRIDE_ADMIN_ACCT=admin
 STRIDE_MAIN_CMD="$STRIDE_CMD --home $SCRIPT_DIR/state/${STRIDE_NODE_PREFIX}1"
 
 STRIDE_MNEMONIC_1="close soup mirror crew erode defy knock trigger gather eyebrow tent farm gym gloom base lemon sleep weekend rich forget diagram hurt prize fly"
-STRIDE_MNEMONIC_2="timber vacant teach wedding disease fashion place merge poet produce promote renew sunny industry enforce heavy inch three call sustain deal flee athlete intact"
-STRIDE_MNEMONIC_3="enjoy dignity rule multiply kitchen arrange flight rocket kingdom domain motion fire wage viable enough comic cry motor memory fancy dish sing border among"
-STRIDE_MNEMONIC_4="vacant margin wave rice brush drastic false rifle tape critic volcano worry tumble assist pulp swamp sheriff stairs decorate chaos empower already obvious caught"
-STRIDE_MNEMONIC_5="river spin follow make trash wreck clever increase dial divert meadow abuse victory able foot kid sell bench embody river income utility dismiss timber"
+STRIDE_MNEMONIC_2="turkey miss hurry unable embark hospital kangaroo nuclear outside term toy fall buffalo book opinion such moral meadow wing olive camp sad metal banner"
+STRIDE_MNEMONIC_3="tenant neck ask season exist hill churn rice convince shock modify evidence armor track army street stay light program harvest now settle feed wheat"
+STRIDE_MNEMONIC_4="tail forward era width glory magnet knock shiver cup broken turkey upgrade cigar story agent lake transfer misery sustain fragile parrot also air document"
+STRIDE_MNEMONIC_5="crime lumber parrot enforce chimney turtle wing iron scissors jealous indicate peace empty game host protect juice submit motor cause second picture nuclear area"
 STRIDE_VAL_MNEMONICS=("$STRIDE_MNEMONIC_1","$STRIDE_MNEMONIC_2","$STRIDE_MNEMONIC_3","$STRIDE_MNEMONIC_4","$STRIDE_MNEMONIC_5")
 
 # GAIA 
@@ -110,7 +116,7 @@ OSMO_RPC_PORT=26357
 OSMO_MAIN_CMD="$OSMO_CMD --home $SCRIPT_DIR/state/${OSMO_NODE_PREFIX}1"
 
 OSMO_REV_MNEMONIC="furnace spell ring dinosaur paper thank sketch social mystery tissue upgrade voice advice peasant quote surge meat december level broom clock hurdle portion predict"
-OSMO_VAL_MNEMONIC_1="hand cheese heavy recall nose toss west finger concert crop rich disorder miss torch photo sport door sausage creek dentist movie course wasp brand"
+OSMO_VAL_MNEMONIC_1="badge thumb upper scrap gift prosper milk whale journey term indicate risk acquire afford awake margin venture penalty simple fancy fluid review enrich ozone"
 OSMO_VAL_MNEMONIC_2="tattoo fade gloom boring review actual pluck wrestle desk update mandate grow spawn people blush gym inner voice reform glue shiver screen train august"
 OSMO_VAL_MNEMONIC_3="immune acid hurry impose mechanic forward bitter square curtain busy couple hollow calm pole flush deer bird one normal fish loyal upgrade town rail"
 OSMO_VAL_MNEMONIC_4="ridge round key spawn address anchor file local athlete pioneer eyebrow flush chase visa awake claim test device chimney roast tent excess profit gaze"
@@ -192,43 +198,13 @@ GET_VAR_VALUE() {
   echo "${!var_name}"
 }
 
-WAIT_FOR_BLOCK () {
+WAIT_FOR_BLOCK() {
   num_blocks="${2:-1}"
   for i in $(seq $num_blocks); do
     ( tail -f -n0 $1 & ) | grep -q "INF executed block height="
   done
 }
 
-WAIT_FOR_NONEMPTY_BLOCK () {
-  ( tail -f -n0 $1 & ) | grep -q -E "num_valid_txs=[1-9]"
-}
-
-WAIT_FOR_STRING () {
+WAIT_FOR_STRING() {
   ( tail -f -n0 $1 & ) | grep -q "$2"
 }
-
-WAIT_FOR_IBC_TRANSFER () {
-  success_string="packet_cmd{src_chain=(.*)port=transfer(.*): success"
-  ( tail -f -n0 $HERMES_LOGS & ) | grep -q -E "$success_string"
-  ( tail -f -n0 $HERMES_LOGS & ) | grep -q -E "$success_string"
-}
-
-STRIDE_STATE=$SCRIPT_DIR/state/stride
-STRIDE_LOGS=$SCRIPT_DIR/logs/stride.log
-STRIDE_LOGS_2=$SCRIPT_DIR/logs/stride2.log
-STRIDE_LOGS_3=$SCRIPT_DIR/logs/stride3.log
-STRIDE_LOGS_4=$SCRIPT_DIR/logs/stride4.log
-STRIDE_LOGS_5=$SCRIPT_DIR/logs/stride5.log
-GAIA_STATE=$SCRIPT_DIR/state/gaia
-GAIA_LOGS=$SCRIPT_DIR/logs/gaia.log
-GAIA_LOGS_2=$SCRIPT_DIR/logs/gaia2.log
-GAIA_LOGS_3=$SCRIPT_DIR/logs/gaia3.log
-HERMES_LOGS=$SCRIPT_DIR/logs/hermes.log
-RLY_GAIA_LOGS=$SCRIPT_DIR/logs/rly_gaia.log
-RLY_OSMO_LOGS=$SCRIPT_DIR/logs/rly_osmo.log
-RLY_JUNO_LOGS=$SCRIPT_DIR/logs/rly_juno.log
-ICQ_LOGS=$SCRIPT_DIR/logs/icq.log
-JUNO_LOGS=$SCRIPT_DIR/logs/juno.log
-OSMO_LOGS=$SCRIPT_DIR/logs/osmo.log
-TX_LOGS=$SCRIPT_DIR/logs/tx.log
-KEYS_LOGS=$SCRIPT_DIR/logs/keys.log

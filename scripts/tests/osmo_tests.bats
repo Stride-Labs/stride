@@ -61,9 +61,6 @@ setup() {
   assert_equal $STRIDE_ADDRESS "stride1uk4ze0x4nvh4fk0xm4jdud58eqn4yxhrt52vv7"
   assert_equal $GAIA_ADDRESS "cosmos1pcag0cj4ttxg8l7pcg0q4ksuglswuuedcextl2"
 
-  assert_equal $HERMES_STRIDE_ADDRESS "stride1ft20pydau82pgesyl9huhhux307s9h3078692y"
-  assert_equal $ICQ_STRIDE_ADDRESS "stride12vfkpj7lpqg0n4j68rr5kyffc6wu55dzqewda4"
-
   assert_equal $DELEGATION_ICA_ADDR "cosmos1sy63lffevueudvvlvh2lf6s387xh9xq72n3fsy6n2gr5hm6u2szs2v0ujm"
   assert_equal $REDEMPTION_ICA_ADDR "cosmos1xmcwu75s8v7s54k79390wc5gwtgkeqhvzegpj0nm2tdwacv47tmqg9ut30"
   assert_equal $WITHDRAWAL_ICA_ADDR "cosmos1x5p8er7e2ne8l54tx33l560l8djuyapny55pksctuguzdc00dj7saqcw2l"
