@@ -73,7 +73,9 @@ func (s *KeeperTestSuite) SetupRegisterHostZone() RegisterHostZoneTestCase {
 // Helper function to test registering a duplicate host zone
 // If there's a duplicate connection ID, register_host_zone will error before checking other fields for duplicates
 // In order to test those cases, we need to first create a new host zone,
-//    and then attempt to register with duplicate fields in the message
+//
+//	and then attempt to register with duplicate fields in the message
+//
 // This function 1) creates a new host zone and 2) returns what would be a successful register message
 func (s *KeeperTestSuite) createNewHostZoneMessage(chainID string, denom string, prefix string) stakeibctypes.MsgRegisterHostZone {
 	// Create a new test chain and connection ID
@@ -93,7 +95,8 @@ func (s *KeeperTestSuite) createNewHostZoneMessage(chainID string, denom string,
 
 // Helper function to assist in testing a failure to create an ICA account
 // This function will occupy one of the specified port with the specified channel
-//  so that the registration fails
+//
+//	so that the registration fails
 func (s *KeeperTestSuite) createActiveChannelOnICAPort(accountName string, channelID string) {
 	portID := fmt.Sprintf("%s%s.%s", icatypes.PortPrefix, HostChainId, accountName)
 	openChannel := channeltypes.Channel{State: channeltypes.OPEN}

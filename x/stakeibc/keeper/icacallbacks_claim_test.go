@@ -150,7 +150,6 @@ func (s *KeeperTestSuite) TestClaimCallback_Successful() {
 	s.Require().Equal(hzu3.Status, recordtypes.HostZoneUnbonding_UNBONDED, "hzu3 status set to transferred")
 	s.Require().Equal(hzu4.NativeTokenAmount, hzu4.NativeTokenAmount, "hzu4 amount unchanged")
 	s.Require().Equal(hzu4.Status, recordtypes.HostZoneUnbonding_UNBONDED, "hzu4 status set to transferred")
-
 }
 
 func (s *KeeperTestSuite) checkClaimStateIfCallbackFailed(tc ClaimCallbackTestCase) {

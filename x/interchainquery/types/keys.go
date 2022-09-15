@@ -22,7 +22,7 @@ const (
 
 // keys for proof queries to various stores, note: there's an implicit assumption here that
 // the stores on the counterparty chain are prefixed with the standard cosmos-sdk module names
-// this might not be true for all IBC chains, and is something we should verify before onboarding a 
+// this might not be true for all IBC chains, and is something we should verify before onboarding a
 // new chain
 
 const (

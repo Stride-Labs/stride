@@ -23,7 +23,6 @@ type MsgSubmitQueryResponseTestCase struct {
 }
 
 func (s *KeeperTestSuite) SetupMsgSubmitQueryResponse() MsgSubmitQueryResponseTestCase {
-
 	// set up IBC
 	s.CreateTransferChannel(HostChainId)
 
@@ -126,7 +125,6 @@ func (s *KeeperTestSuite) TestMsgSubmitQueryResponse_FindAndInvokeCallback_Wrong
 	//   check by invoking it without a registered host zone and catching the appropriate error
 	err := s.App.InterchainqueryKeeper.InvokeCallback(s.Ctx(), &tc.validMsg, tc.query)
 	s.Require().ErrorContains(err, "no registered zone for queried chain ID", "callback was invoked")
-
 }
 
 // To write this test, we need to write data to Gaia, then get the proof for that data and check it using the LC
