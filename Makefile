@@ -102,7 +102,7 @@ test-unit:
 test-cover:
 	@go test -mod=readonly -race -coverprofile=coverage.out -covermode=atomic ./x/$(module)/...
 
-test-integration:
+test-integration-local:
 	sh scripts-local/tests/run_all_tests.sh
 
 test-integration-docker:

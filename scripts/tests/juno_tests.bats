@@ -108,16 +108,16 @@ setup() {
 @test "[INTEGRATION-BASIC-JUNO] ibc transfer updates all balances" {
   # get initial balances
   str1_balance=$($STRIDE_MAIN_CMD q bank balances $STRIDE_ADDRESS --denom ustrd | GETBAL)
-  juno1_balance=$($JUNO_MAIN_CMD q bank balances $JUNO_ADDRESS --denom $IBC_STRD_DENOM_JUNO | GETBAL)
+  juno1_balance=$($JUNO_MAIN_CMD q bank balances $JUNO_ADDRESS --denom $IBC_STRD_DENOM | GETBAL)
   str1_balance_juno=$($STRIDE_MAIN_CMD q bank balances $STRIDE_ADDRESS --denom $IBC_JUNO_DENOM | GETBAL)
   juno1_balance_juno=$($JUNO_MAIN_CMD q bank balances $JUNO_ADDRESS --denom ujuno | GETBAL)
   # do IBC transfer
-  $STRIDE_MAIN_CMD tx ibc-transfer transfer transfer channel-2 $JUNO_ADDRESS 100000000ustrd --from val1 --chain-id STRIDE -y --keyring-backend test
+  $STRIDE_MAIN_CMD tx ibc-transfer transfer transfer channel-1 $JUNO_ADDRESS 100000000ustrd --from val1 --chain-id STRIDE -y --keyring-backend test
   $JUNO_MAIN_CMD tx ibc-transfer transfer transfer channel-0 $STRIDE_ADDRESS 100000000ujuno --from jval1 --chain-id JUNO -y --keyring-backend test
   WAIT_FOR_BLOCK $STRIDE_LOGS 8
   # get new balances
   str1_balance_new=$($STRIDE_MAIN_CMD q bank balances $STRIDE_ADDRESS --denom ustrd | GETBAL)
-  juno1_balance_new=$($JUNO_MAIN_CMD q bank balances $JUNO_ADDRESS --denom $IBC_STRD_DENOM_JUNO | GETBAL)
+  juno1_balance_new=$($JUNO_MAIN_CMD q bank balances $JUNO_ADDRESS --denom $IBC_STRD_DENOM | GETBAL)
   str1_balance_juno_new=$($STRIDE_MAIN_CMD q bank balances $STRIDE_ADDRESS --denom $IBC_JUNO_DENOM | GETBAL)
   juno1_balance_juno_new=$($JUNO_MAIN_CMD q bank balances $JUNO_ADDRESS --denom ujuno | GETBAL)
   # get all STRD balance diffs
@@ -180,7 +180,7 @@ setup() {
   sleep 5
   old_redemption_ica_bal=$($JUNO_MAIN_CMD q bank balances $JUNO_REDEMPTION_ICA_ADDR --denom ujuno | GETBAL)
   # call redeem-stake
-  amt_to_redeem=5
+  amt_to_redeem=100
   $STRIDE_MAIN_CMD tx stakeibc redeem-stake $amt_to_redeem JUNO $JUNO_RECEIVER_ACCT \
       --from val1 --keyring-backend test --chain-id $STRIDE_CHAIN_ID -y
   WAIT_FOR_STRING $STRIDE_LOGS '\[REDEMPTION] completed on JUNO'
@@ -212,8 +212,9 @@ setup() {
 
 # check that a second liquid staking call kicks off reinvestment
 @test "[INTEGRATION-BASIC-JUNO] rewards are being reinvested, exchange rate updating" {
-  # read the exchange rate
+  # read the exchange rate and current delegations
   RR1=$($STRIDE_MAIN_CMD q stakeibc show-host-zone JUNO | grep -Fiw 'RedemptionRate' | grep -Eo '[+-]?[0-9]+([.][0-9]+)?')
+  OLD_STAKED_BAL=$($JUNO_MAIN_CMD q staking delegation $JUNO_DELEGATION_ICA_ADDR $JUNO_DELEGATE_VAL | GETSTAKE)
   # liquid stake again to kickstart the reinvestment process
   $STRIDE_MAIN_CMD tx stakeibc liquid-stake 1000 ujuno --keyring-backend test --from val1 -y --chain-id $STRIDE_CHAIN_ID
   WAIT_FOR_BLOCK $STRIDE_LOGS 2
@@ -222,8 +223,7 @@ setup() {
   sleep $(($epoch_duration * 4))
   # simple check that number of tokens staked increases
   NEW_STAKED_BAL=$($JUNO_MAIN_CMD q staking delegation $JUNO_DELEGATION_ICA_ADDR $JUNO_DELEGATE_VAL | GETSTAKE)
-  EXPECTED_STAKED_BAL=667000
-  STAKED_BAL_INCREASED=$(($NEW_STAKED_BAL > $EXPECTED_STAKED_BAL))
+  STAKED_BAL_INCREASED=$(($NEW_STAKED_BAL > $OLD_STAKED_BAL))
   assert_equal "$STAKED_BAL_INCREASED" "1"
 
   RR2=$($STRIDE_MAIN_CMD q stakeibc show-host-zone JUNO | grep -Fiw 'RedemptionRate' | grep -Eo '[+-]?[0-9]+([.][0-9]+)?')

@@ -109,16 +109,16 @@ setup() {
 @test "[INTEGRATION-BASIC-OSMO] ibc transfer updates all balances" {
   # get initial balances
   str1_balance=$($STRIDE_MAIN_CMD q bank balances $STRIDE_ADDRESS --denom ustrd | GETBAL)
-  osmo1_balance=$($OSMO_MAIN_CMD q bank balances $OSMO_ADDRESS --denom $IBC_STRD_DENOM_OSMO | GETBAL)
+  osmo1_balance=$($OSMO_MAIN_CMD q bank balances $OSMO_ADDRESS --denom $IBC_STRD_DENOM | GETBAL)
   str1_balance_osmo=$($STRIDE_MAIN_CMD q bank balances $STRIDE_ADDRESS --denom $IBC_OSMO_DENOM | GETBAL)
   osmo1_balance_osmo=$($OSMO_MAIN_CMD q bank balances $OSMO_ADDRESS --denom uosmo | GETBAL)
   # do IBC transfer
-  $STRIDE_MAIN_CMD tx ibc-transfer transfer transfer channel-1 $OSMO_ADDRESS 3000000000ustrd --from val1 --chain-id STRIDE -y --keyring-backend test &
+  $STRIDE_MAIN_CMD tx ibc-transfer transfer transfer channel-2 $OSMO_ADDRESS 3000000000ustrd --from val1 --chain-id STRIDE -y --keyring-backend test &
   $OSMO_MAIN_CMD tx ibc-transfer transfer transfer channel-0 $STRIDE_ADDRESS 3000000000uosmo --from oval1 --chain-id OSMO -y --keyring-backend test &
   WAIT_FOR_BLOCK $STRIDE_LOGS 8
   # get new balances
   str1_balance_new=$($STRIDE_MAIN_CMD q bank balances $STRIDE_ADDRESS --denom ustrd | GETBAL)
-  osmo1_balance_new=$($OSMO_MAIN_CMD q bank balances $OSMO_ADDRESS --denom $IBC_STRD_DENOM_OSMO | GETBAL)
+  osmo1_balance_new=$($OSMO_MAIN_CMD q bank balances $OSMO_ADDRESS --denom $IBC_STRD_DENOM | GETBAL)
   str1_balance_osmo_new=$($STRIDE_MAIN_CMD q bank balances $STRIDE_ADDRESS --denom $IBC_OSMO_DENOM | GETBAL)
   osmo1_balance_osmo_new=$($OSMO_MAIN_CMD q bank balances $OSMO_ADDRESS --denom uosmo | GETBAL)
   # get all STRD balance diffs
@@ -178,7 +178,7 @@ setup() {
   sleep 5
   old_redemption_ica_bal=$($OSMO_MAIN_CMD q bank balances $OSMO_REDEMPTION_ICA_ADDR --denom uosmo | GETBAL)
   # call redeem-stake
-  amt_to_redeem=5
+  amt_to_redeem=100
   $STRIDE_MAIN_CMD tx stakeibc redeem-stake $amt_to_redeem OSMO $OSMO_RECEIVER_ACCT \
       --from val1 --keyring-backend test --chain-id $STRIDE_CHAIN_ID -y
   WAIT_FOR_STRING $STRIDE_LOGS '\[REDEMPTION] completed on OSMO'
@@ -198,7 +198,6 @@ setup() {
   # claim the record
   $STRIDE_MAIN_CMD tx stakeibc claim-undelegated-tokens OSMO $EPOCH $SENDER_ACCT --from val1 --keyring-backend test --chain-id STRIDE -y
   WAIT_FOR_STRING $STRIDE_LOGS '\[CLAIM\] success on OSMO'
-  # TODO check that UserRedemptionRecord has isClaimable = false
 
   # check that the tokens were transferred to the sender account
   new_sender_bal=$($OSMO_MAIN_CMD q bank balances $OSMO_RECEIVER_ACCT --denom uosmo | GETBAL)
@@ -210,8 +209,9 @@ setup() {
 
 # check that a second liquid staking call kicks off reinvestment
 @test "[INTEGRATION-BASIC-OSMO] rewards are being reinvested, exchange rate updating" {
-  # read the exchange rate
+  # read the exchange rate and current delegations
   RR1=$($STRIDE_MAIN_CMD q stakeibc show-host-zone OSMO | grep -Fiw 'RedemptionRate' | grep -Eo '[+-]?[0-9]+([.][0-9]+)?')
+  OLD_STAKED_BAL=$($OSMO_MAIN_CMD q staking delegation $OSMO_DELEGATION_ICA_ADDR $OSMO_DELEGATE_VAL | GETSTAKE)
   # liquid stake again to kickstart the reinvestment process
   $STRIDE_MAIN_CMD tx stakeibc liquid-stake 1000 uosmo --keyring-backend test --from val1 -y --chain-id $STRIDE_CHAIN_ID
   WAIT_FOR_BLOCK $STRIDE_LOGS 2
@@ -220,8 +220,7 @@ setup() {
   sleep $(($epoch_duration * 4))
   # simple check that number of tokens staked increases
   NEW_STAKED_BAL=$($OSMO_MAIN_CMD q staking delegation $OSMO_DELEGATION_ICA_ADDR $OSMO_DELEGATE_VAL | GETSTAKE)
-  EXPECTED_STAKED_BAL=667
-  STAKED_BAL_INCREASED=$(($NEW_STAKED_BAL > $EXPECTED_STAKED_BAL))
+  STAKED_BAL_INCREASED=$(($NEW_STAKED_BAL > $OLD_STAKED_BAL))
   assert_equal "$STAKED_BAL_INCREASED" "1"
 
   RR2=$($STRIDE_MAIN_CMD q stakeibc show-host-zone OSMO | grep -Fiw 'RedemptionRate' | grep -Eo '[+-]?[0-9]+([.][0-9]+)?')

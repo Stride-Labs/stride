@@ -181,7 +181,7 @@ setup() {
 @test "[INTEGRATION-BASIC-GAIA] redemption works" {
   old_redemption_ica_bal=$($GAIA_MAIN_CMD q bank balances $REDEMPTION_ICA_ADDR --denom uatom | GETBAL)
   # call redeem-stake
-  amt_to_redeem=5
+  amt_to_redeem=100
   $STRIDE_MAIN_CMD tx stakeibc redeem-stake $amt_to_redeem GAIA $GAIA_RECEIVER_ACCT \
       --from val1 --keyring-backend test --chain-id $STRIDE_CHAIN_ID -y
   WAIT_FOR_STRING $STRIDE_LOGS '\[REDEMPTION] completed on GAIA'
@@ -204,7 +204,6 @@ setup() {
   $STRIDE_MAIN_CMD tx stakeibc claim-undelegated-tokens GAIA $EPOCH $SENDER_ACCT --from val1 --keyring-backend test --chain-id STRIDE -y
   WAIT_FOR_STRING $STRIDE_LOGS '\[CLAIM\] success on GAIA'
   WAIT_FOR_BLOCK $STRIDE_LOGS 2
-  # TODO check that UserRedemptionRecord has isClaimable = false
 
   # check that the tokens were transferred to the sender account
   new_sender_bal=$($GAIA_MAIN_CMD q bank balances $GAIA_RECEIVER_ACCT --denom uatom | GETBAL)
@@ -217,8 +216,9 @@ setup() {
 
 # check that a second liquid staking call kicks off reinvestment
 @test "[INTEGRATION-BASIC-GAIA] rewards are being reinvested, exchange rate updating" {
-  # read the exchange rate
+  # read the exchange rate and current delegations
   RR1=$($STRIDE_MAIN_CMD q stakeibc show-host-zone GAIA | grep -Fiw 'RedemptionRate' | grep -Eo '[+-]?[0-9]+([.][0-9]+)?')
+  OLD_STAKED_BAL=$($GAIA_MAIN_CMD q staking delegation $DELEGATION_ICA_ADDR $GAIA_DELEGATE_VAL_1 | GETSTAKE)
   # liquid stake again to kickstart the reinvestment process
   $STRIDE_MAIN_CMD tx stakeibc liquid-stake 1000 uatom --keyring-backend test --from val1 -y --chain-id $STRIDE_CHAIN_ID
   WAIT_FOR_BLOCK $STRIDE_LOGS 2
@@ -227,8 +227,7 @@ setup() {
   sleep $(($epoch_duration * 4))
   # simple check that number of tokens staked increases
   NEW_STAKED_BAL=$($GAIA_MAIN_CMD q staking delegation $DELEGATION_ICA_ADDR $GAIA_DELEGATE_VAL_1 | GETSTAKE)
-  EXPECTED_STAKED_BAL=667
-  STAKED_BAL_INCREASED=$(($NEW_STAKED_BAL > $EXPECTED_STAKED_BAL))
+  STAKED_BAL_INCREASED=$(($NEW_STAKED_BAL > $OLD_STAKED_BAL))
   assert_equal "$STAKED_BAL_INCREASED" "1"
 
   RR2=$($STRIDE_MAIN_CMD q stakeibc show-host-zone GAIA | grep -Fiw 'RedemptionRate' | grep -Eo '[+-]?[0-9]+([.][0-9]+)?')
@@ -241,31 +240,3 @@ setup() {
 # TODO check that the correct amount is being reinvested and the correct amount is flowing to the rev EOA
 @test "[NOT-IMPLEMENTED] reinvestment and revenue amounts are correct" {
 }
-
-# @test "[INTEGRATION-BASIC-JUNO] ibc transfer updates all balances" {
-#   # get initial balances
-#   str1_balance=$($STRIDE_MAIN_CMD q bank balances $STRIDE_ADDRESS --denom ustrd | GETBAL)
-#   juno1_balance=$($JUNO_CMD q bank balances $JUNO_ADDRESS --denom $IBC_STRD_DENOM | GETBAL)
-#   str1_balance_juno=$($STRIDE_MAIN_CMD q bank balances $STRIDE_ADDRESS --denom $IBC_JUNO_DENOM | GETBAL)
-#   juno1_balance_juno=$($JUNO_CMD q bank balances $JUNO_ADDRESS --denom ujuno | GETBAL)
-#   # do IBC transfer
-#   $STRIDE_MAIN_CMD tx ibc-transfer transfer transfer channel-1 $JUNO_ADDRESS 3000ustrd --from val1 --chain-id STRIDE -y --keyring-backend test &
-#   $JUNO_CMD tx ibc-transfer transfer transfer channel-0 $STRIDE_ADDRESS 3000ujuno --from jval1 --chain-id JUNO -y --keyring-backend test &
-#   WAIT_FOR_IBC_TRANSFER
-#   WAIT_FOR_IBC_TRANSFER
-#   # get new balances
-#   str1_balance_new=$($STRIDE_MAIN_CMD q bank balances $STRIDE_ADDRESS --denom ustrd | GETBAL)
-#   juno1_balance_new=$($JUNO_CMD q bank balances $JUNO_ADDRESS --denom $IBC_STRD_DENOM_JUNO | GETBAL)
-#   str1_balance_juno_new=$($STRIDE_MAIN_CMD q bank balances $STRIDE_ADDRESS --denom $IBC_JUNO_DENOM | GETBAL)
-#   juno1_balance_juno_new=$($JUNO_CMD q bank balances $JUNO_ADDRESS --denom ujuno | GETBAL)
-#   # get all STRD balance diffs
-#   str1_diff=$(($str1_balance - $str1_balance_new))
-#   juno1_diff=$(($juno1_balance - $juno1_balance_new))
-#   assert_equal "$str1_diff" '3000'
-#   assert_equal "$juno1_diff" '-3000'
-#   # get all JUNO_DENOM balance diffs
-#   str1_diff=$(($str1_balance_juno - $str1_balance_juno_new))
-#   juno1_diff=$(($juno1_balance_juno - $juno1_balance_juno_new))
-#   assert_equal "$str1_diff" '-3000'
-#   assert_equal "$juno1_diff" '3000'
-# }

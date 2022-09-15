@@ -31,14 +31,14 @@ for chain_id in ${CHAINS[@]}; do
 done
 rm -f $TMP_MNEMONICS
 
-# echo "Adding Relayer keys"
-# for chain_id in ${chains[@]}; do
-#     account_name=$(GET_VAR_VALUE RELAYER_${chain_id}_ACCT)
-#     mnemonic=$(GET_VAR_VALUE     RELAYER_${chain_id}_MNEMONIC)
-#     chain_name=$(printf "$chain_id" | awk '{ print tolower($0) }')
+echo "Adding Relayer keys"
+for chain_id in ${CHAINS[@]}; do
+    account_name=$(GET_VAR_VALUE RELAYER_${chain_id}_ACCT)
+    mnemonic=$(GET_VAR_VALUE     RELAYER_${chain_id}_MNEMONIC)
+    chain_name=$(printf "$chain_id" | awk '{ print tolower($0) }')
 
-#     $RELAYER_CMD keys restore $chain_name $account_name "$mnemonic" 
-# done
+    $RELAYER_CMD keys restore $chain_name $account_name "$mnemonic" 
+done
 
 echo "Adding ICQ keys"
 for chain_id in ${CHAINS[@]}; do
