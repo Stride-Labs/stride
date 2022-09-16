@@ -15,10 +15,12 @@ ICQ_LOGS=$SCRIPT_DIR/logs/icq.log
 # Initialize the state for stride/gaia and relayers
 sh ${SCRIPT_DIR}/init_chain.sh STRIDE
 sh ${SCRIPT_DIR}/init_chain.sh GAIA
-sh ${SCRIPT_DIR}/init_chain.sh JUNO
-sh ${SCRIPT_DIR}/init_chain.sh OSMO
+# sh ${SCRIPT_DIR}/init_chain.sh JUNO
+# sh ${SCRIPT_DIR}/init_chain.sh OSMO
+sh ${SCRIPT_DIR}/init_chain.sh STARS
 
-HOST_CHAINS=(GAIA JUNO OSMO)
+# HOST_CHAINS=(GAIA JUNO OSMO STARS)
+HOST_CHAINS=(GAIA STARS)
 sh ${SCRIPT_DIR}/start_chain.sh STRIDE ${HOST_CHAINS[@]}
 sh ${SCRIPT_DIR}/init_relayers.sh STRIDE ${HOST_CHAINS[@]}
 sh ${SCRIPT_DIR}/create_channels.sh ${HOST_CHAINS[@]}
