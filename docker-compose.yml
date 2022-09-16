@@ -106,6 +106,35 @@ services:
     volumes:
       - ./scripts/state/osmo5:/home/osmosis/.osmosisd
 
+  stars1:
+    image: stridezone:stars
+    volumes:
+      - ./scripts/state/stars1:/home/stars/.starsd
+    ports:
+      - "26257:26657"
+      - "1277:1317"
+      - "9050:9090"
+
+  stars2:
+    image: stridezone:stars
+    volumes:
+      - ./scripts/state/stars2:/home/stars/.starsd
+
+  stars3:
+    image: stridezone:stars
+    volumes:
+      - ./scripts/state/stars3:/home/stars/.starsd
+
+  stars4:
+    image: stridezone:stars
+    volumes:
+      - ./scripts/state/stars4:/home/stars/.starsd
+
+  stars5:
+    image: stridezone:stars
+    volumes:
+      - ./scripts/state/stars5:/home/stars/.starsd
+
   hermes:
     image: stridezone:hermes
     volumes:

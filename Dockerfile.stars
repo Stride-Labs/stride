@@ -1,14 +1,16 @@
-FROM golang:1.19-alpine3.15 AS builder
+FROM golang:1.18.5-alpine3.15 AS builder
 
-WORKDIR /opt/
+WORKDIR /opt
 
-RUN set -eux; apk add --no-cache ca-certificates build-base git;
+RUN apk add --update ca-certificates build-base git
 
-RUN git clone https://github.com/CosmosContracts/juno.git \
-    && cd juno \
-    && git checkout 9558920 
+ENV COMMIT_HASH=b0bea28fc695a2a5c567e56a37b289a5b75830cc
 
-WORKDIR /opt/juno
+RUN git clone https://github.com/public-awesome/stargaze \
+    && cd stargaze \
+    && git checkout $COMMIT_HASH 
+
+WORKDIR /opt/stargaze
 
 ADD https://github.com/CosmWasm/wasmvm/releases/download/v1.0.0/libwasmvm_muslc.aarch64.a /lib/libwasmvm_muslc.aarch64.a
 ADD https://github.com/CosmWasm/wasmvm/releases/download/v1.0.0/libwasmvm_muslc.x86_64.a /lib/libwasmvm_muslc.x86_64.a
@@ -19,12 +21,13 @@ RUN cp /lib/libwasmvm_muslc.$(uname -m).a /lib/libwasmvm_muslc.a
 RUN LEDGER_ENABLED=false BUILD_TAGS=muslc LINK_STATICALLY=true make build
 
 FROM alpine:3.15
-COPY --from=builder /opt/juno/bin/junod /usr/local/bin/
-RUN adduser -S -h /home/juno -D juno -u 1000
+COPY --from=builder /opt/stargaze/bin/starsd /usr/local/bin/
+RUN apk add --update bash vim ca-certificates \
+    && adduser -S -h /home/stars -D stars -u 1000
 
-USER juno
-WORKDIR /home/juno
+USER stars
+WORKDIR /home/stars
 
 EXPOSE 26657 26656 1317 9090
 
-CMD ["junod", "start"]
+CMD ["starsd", "start"]

@@ -3,6 +3,24 @@
 ## Dockernet
 ### Adding a new host zone
 * Create a new dockerfile at the root level (`Dockerfile.{new-host-zone})
+* Add the repo as a submodule
+```
+git submodule add {repo-url} deps/{new-host-zone}
+```
+* Update the commit hash
+```
+cd deps/{new-host-zone}
+git checkout {commit-hash}
+cd ..
+```
+* Add a comment to `.gitmodules` with the commit hash
+* Add the build command for that host zone in `scripts/build.sh`
+```
+while getopts sgojhir{n} flag; do
+   case "${flag}" in
+   ...
+   n) build_local_and_docker {new-host-zone} deps/{new-host-zone} ;;  
+```
 * Add the host zone to the docker compose file at the root level. Add the port forwarding to the first node. Add 5 nodes here. Drop the RPC port number by 100, and the API/gRPC port by 10 since the last host zone.
 ```
   {new-host-zone}1:
@@ -25,14 +43,6 @@
     image: stridezone:{new-host-zone}
     volumes:
       - ./scripts/state/{new-host-zone}5:/home/{new-host-zone}/.{new-host-zone}
-```
-* Add the host zone as a submodule in `deps`
-* Add the build command for that host zone in `scripts/build.sh`
-```
-while getopts sgojhir{n} flag; do
-   case "${flag}" in
-   ...
-   n) build_local_and_docker {new-host-zone} deps/{new-host-zone} ;;  
 ```
 * Add the following parameters to `scripts/vars.sh`, where `CHAIN_ID` is the ID of the new host zone
 ```
@@ -61,6 +71,36 @@ HERMES_${CHAIN_ID}_MNEMONIC=""
 
 ICQ_${CHAIN_ID}_ACCT=rly{add one since the account from the last host zone}
 ICQ_${CHAIN_ID}_MNEMONIC=""
+```
+* Add a section to the `scripts/config/relayer_config.yaml`
+```
+chains:
+  ...
+  {new-host-zone}:
+    type: cosmos
+    value:
+      key: rly{N}
+      chain-id: {CHAIN_ID}
+      rpc-addr: http://{NODE_PREFIX}1:26657
+      account-prefix: {ACCOUNT_PREFIX}
+      keyring-backend: test
+      gas-adjustment: 1.2
+      gas-prices: 0.01{DENOM}
+      debug: false
+      timeout: 20s
+      output-format: json
+      sign-mode: direct
+  ...
+paths:
+  ...
+    stride-{new-host-zone}:
+    src:
+      chain-id: STRIDE
+    dst:
+      chain-id: {CHAIN_ID}
+    src-channel-filter:
+      rule: ""
+      channel-list: []
 ```
 * Finally add the execution of the `init_chain` script for this host zone in `scripts/start_network.sh`, and add it to the array of `HOST_CHAINS`
 ```

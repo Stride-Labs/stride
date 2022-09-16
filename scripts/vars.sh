@@ -16,14 +16,17 @@ KEYS_LOGS=$SCRIPT_DIR/logs/keys.log
 IBC_STRD_DENOM='ibc/FF6C2E86490C1C4FBBD24F55032831D2415B9D7882F85C3CC9C2401D79362BEA'
 IBC_ATOM_DENOM='ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2'
 IBC_JUNO_DENOM='ibc/EFF323CC632EC4F747C61BCE238A758EFDB7699C3226565F7C20DA06509D59A5' 
-IBC_OSMO_DENOM='ibc/13B2C536BB057AC79D5616B8EA1B9540EC1F2170718CAFF6F0083C966FFFED0B'  
+IBC_OSMO_DENOM='ibc/13B2C536BB057AC79D5616B8EA1B9540EC1F2170718CAFF6F0083C966FFFED0B'
+IBC_STARS_DENOM='ibc/9222203B0B37D076F07B3CAC716533C80E7C4239499B6306CD9921A15D308F12' 
 ATOM_DENOM='uatom'
 JUNO_DENOM='ujuno'
 OSMO_DENOM='uosmo'
 STRD_DENOM='ustrd'
+STARS_DENOM='ustars'
 STATOM_DENOM="stuatom"
 STJUNO_DENOM="stujuno"
 STOSMO_DENOM="stuosmo"
+STSTARS_DENOM="stustars"
 
 # CHAIN PARAMS
 BLOCK_TIME='1s'
@@ -121,6 +124,26 @@ OSMO_VAL_MNEMONIC_4="ridge round key spawn address anchor file local athlete pio
 OSMO_VAL_MNEMONIC_5="federal garden bundle rebel museum donor hello oak daring argue talk sing chief burst rigid corn zone gather tell opera nominee desk select shine"
 OSMO_VAL_MNEMONICS=("$OSMO_VAL_MNEMONIC_1","$OSMO_VAL_MNEMONIC_2","$OSMO_VAL_MNEMONIC_3","$OSMO_VAL_MNEMONIC_4","$OSMO_VAL_MNEMONIC_5")
 
+# STARS
+STARS_CHAIN_ID=STARS
+STARS_NODE_PREFIX=stars
+STARS_NUM_NODES=3
+STARS_CMD="$SCRIPT_DIR/../build/starsd"
+STARS_VAL_PREFIX=sgval
+STARS_REV_ACCT=sgrev1
+STARS_DENOM=$STARS_DENOM
+STARS_IBC_DENOM=$IBC_STARS_DENOM
+STARS_RPC_PORT=26257
+STARS_MAIN_CMD="$STARS_CMD --home $SCRIPT_DIR/state/${STARS_NODE_PREFIX}1"
+
+STARS_REV_MNEMONIC="furnace spell ring dinosaur paper thank sketch social mystery tissue upgrade voice advice peasant quote surge meat december level broom clock hurdle portion predict"
+STARS_VAL_MNEMONIC_1="badge thumb upper scrap gift prosper milk whale journey term indicate risk acquire afford awake margin venture penalty simple fancy fluid review enrich ozone"
+STARS_VAL_MNEMONIC_2="tattoo fade gloom boring review actual pluck wrestle desk update mandate grow spawn people blush gym inner voice reform glue shiver screen train august"
+STARS_VAL_MNEMONIC_3="immune acid hurry impose mechanic forward bitter square curtain busy couple hollow calm pole flush deer bird one normal fish loyal upgrade town rail"
+STARS_VAL_MNEMONIC_4="ridge round key spawn address anchor file local athlete pioneer eyebrow flush chase visa awake claim test device chimney roast tent excess profit gaze"
+STARS_VAL_MNEMONIC_5="federal garden bundle rebel museum donor hello oak daring argue talk sing chief burst rigid corn zone gather tell opera nominee desk select shine"
+STARS_VAL_MNEMONICS=("$STARS_VAL_MNEMONIC_1","$STARS_VAL_MNEMONIC_2","$STARS_VAL_MNEMONIC_3","$STARS_VAL_MNEMONIC_4","$STARS_VAL_MNEMONIC_5")
+
 # HERMES
 HERMES_CMD="$SCRIPT_DIR/../build/hermes/release/hermes --config $STATE/hermes/config.toml"
 HERMES_EXEC="docker-compose run --rm hermes hermes"
@@ -129,11 +152,13 @@ HERMES_STRIDE_ACCT=rly1
 HERMES_GAIA_ACCT=rly2
 HERMES_JUNO_ACCT=rly3
 HERMES_OSMO_ACCT=rly4
+HERMES_STARS_ACCT=rly5
 
 HERMES_STRIDE_MNEMONIC="alter old invest friend relief slot swear pioneer syrup economy vendor tray focus hedgehog artist legend antenna hair almost donkey spice protect sustain increase"
 HERMES_GAIA_MNEMONIC="resemble accident lake amateur physical jewel taxi nut demand magnet person blanket trip entire awkward fiber usual current index limb lady lady depart train"
 HERMES_JUNO_MNEMONIC="uphold decorate moon memory taste century work pride force genius width ripple myself year steel ivory type sweet tree ignore danger pudding owner discover"
 HERMES_OSMO_MNEMONIC="lawn inside color february double myth depart invite miracle nest silver spider spray recall theme loan exotic puzzle uncover dial young earn disagree fee"
+HERMES_STARS_MNEMONIC="inherit shallow bargain explain fence vocal fury perfect jeans figure festival abstract soldier entry bubble ketchup swim useless doctor thing imitate can shock coin"
 
 # RELAYER
 RELAYER_CMD="$SCRIPT_DIR/../build/relayer --home $STATE/relayer"
@@ -143,11 +168,13 @@ RELAYER_STRIDE_ACCT=rly1
 RELAYER_GAIA_ACCT=rly2
 RELAYER_JUNO_ACCT=rly3
 RELAYER_OSMO_ACCT=rly4
+RELAYER_STARS_ACCT=rly5
 
 RELAYER_STRIDE_MNEMONIC="pride narrow breeze fitness sign bounce dose smart squirrel spell length federal replace coral lunar thunder vital push nuclear crouch fun accident hood need"
 RELAYER_GAIA_MNEMONIC="fiction perfect rapid steel bundle giant blade grain eagle wing cannon fever must humble dance kitchen lazy episode museum faith off notable rate flavor"
 RELAYER_JUNO_MNEMONIC="kiwi betray topple van vapor flag decorate cement crystal fee family clown cry story gain frost strong year blanket remain grass pig hen empower"
 RELAYER_OSMO_MNEMONIC="unaware wine ramp february bring trust leaf beyond fever inside option dilemma save know captain endless salute radio humble chicken property culture foil taxi"
+RELAYER_STARS_MNEMONIC="inherit shallow bargain explain fence vocal fury perfect jeans figure festival abstract soldier entry bubble ketchup swim useless doctor thing imitate can shock coin"
 
 # ICQ
 ICQ_CMD="$SCRIPT_DIR/../build/interchain-queries --home $STATE/icq"
@@ -157,11 +184,13 @@ ICQ_STRIDE_ACCT=icq1
 ICQ_GAIA_ACCT=icq2
 ICQ_JUNO_ACCT=icq3
 ICQ_OSMO_ACCT=icq4
+ICQ_STARS_ACCT=icq5
 
 ICQ_STRIDE_MNEMONIC="helmet say goat special plug umbrella finger night flip axis resource tuna trigger angry shove essay point laundry horror eager forget depend siren alarm"
 ICQ_GAIA_MNEMONIC="capable later bamboo snow drive afraid cheese practice latin brush hand true visa drama mystery bird client nature jealous guess tank marriage volume fantasy"
 ICQ_JUNO_MNEMONIC="divorce loop depth announce strategy goddess short cash private raise spatial parent deal acid casual love inner bind ozone picnic fee earn scene galaxy"
 ICQ_OSMO_MNEMONIC="mix deal extend cargo office intact illegal cage fabric must upset yellow put any shaft area use piece patrol tobacco village guilt iron program"
+ICQ_STARS_MNEMONIC="absurd uncle wrestle paper cream sample wreck job couch brother antique resist napkin easily deliver arrest original iron rough puppy solid false next section"
 
 DELEGATION_ICA_ADDR='cosmos1sy63lffevueudvvlvh2lf6s387xh9xq72n3fsy6n2gr5hm6u2szs2v0ujm'
 REDEMPTION_ICA_ADDR='cosmos1xmcwu75s8v7s54k79390wc5gwtgkeqhvzegpj0nm2tdwacv47tmqg9ut30'
