@@ -59,6 +59,8 @@ message DepositRecord {
     TRANSFER = 0;
     // pending staking on delegate account
     STAKE = 1;
+    // ICA call is pending
+    PENDING = 2;
   }
   enum Source {
     STRIDE = 0;
@@ -80,6 +82,8 @@ message HostZoneUnbonding {
     UNBONDED = 1;
     // transfer success
     TRANSFERRED = 2;
+    // ICA call is pending
+    PENDING = 3;
   }
   uint64 stTokenAmount = 1;
   uint64 nativeTokenAmount = 2;
