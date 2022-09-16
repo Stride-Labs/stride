@@ -131,6 +131,7 @@ STARS_NUM_NODES=3
 STARS_CMD="$SCRIPT_DIR/../build/starsd"
 STARS_VAL_PREFIX=sgval
 STARS_REV_ACCT=sgrev1
+STARS_ADDRESS_PREFIX=stars
 STARS_DENOM=$STARS_DENOM
 STARS_IBC_DENOM=$IBC_STARS_DENOM
 STARS_RPC_PORT=26257
@@ -148,11 +149,11 @@ STARS_VAL_MNEMONICS=("$STARS_VAL_MNEMONIC_1","$STARS_VAL_MNEMONIC_2","$STARS_VAL
 HERMES_CMD="$SCRIPT_DIR/../build/hermes/release/hermes --config $STATE/hermes/config.toml"
 HERMES_EXEC="docker-compose run --rm hermes hermes"
 
-HERMES_STRIDE_ACCT=rly1
-HERMES_GAIA_ACCT=rly2
-HERMES_JUNO_ACCT=rly3
-HERMES_OSMO_ACCT=rly4
-HERMES_STARS_ACCT=rly5
+HERMES_STRIDE_ACCT=hrly1
+HERMES_GAIA_ACCT=hrly2
+HERMES_JUNO_ACCT=hrly3
+HERMES_OSMO_ACCT=hrly4
+HERMES_STARS_ACCT=hrly5
 
 HERMES_STRIDE_MNEMONIC="alter old invest friend relief slot swear pioneer syrup economy vendor tray focus hedgehog artist legend antenna hair almost donkey spice protect sustain increase"
 HERMES_GAIA_MNEMONIC="resemble accident lake amateur physical jewel taxi nut demand magnet person blanket trip entire awkward fiber usual current index limb lady lady depart train"
@@ -174,7 +175,7 @@ RELAYER_STRIDE_MNEMONIC="pride narrow breeze fitness sign bounce dose smart squi
 RELAYER_GAIA_MNEMONIC="fiction perfect rapid steel bundle giant blade grain eagle wing cannon fever must humble dance kitchen lazy episode museum faith off notable rate flavor"
 RELAYER_JUNO_MNEMONIC="kiwi betray topple van vapor flag decorate cement crystal fee family clown cry story gain frost strong year blanket remain grass pig hen empower"
 RELAYER_OSMO_MNEMONIC="unaware wine ramp february bring trust leaf beyond fever inside option dilemma save know captain endless salute radio humble chicken property culture foil taxi"
-RELAYER_STARS_MNEMONIC="inherit shallow bargain explain fence vocal fury perfect jeans figure festival abstract soldier entry bubble ketchup swim useless doctor thing imitate can shock coin"
+RELAYER_STARS_MNEMONIC="deposit dawn erosion talent old broom flip recipe pill hammer animal hill nice ten target metal gas shoe visual nephew soda harbor child simple"
 
 # ICQ
 ICQ_CMD="$SCRIPT_DIR/../build/interchain-queries --home $STATE/icq"

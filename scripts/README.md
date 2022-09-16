@@ -51,6 +51,7 @@ while getopts sgojhir{n} flag; do
 {CHAIN_ID}_NUM_NODES=3
 {CHAIN_ID}_CMD="$SCRIPT_DIR/../build/{new-host-zone}d"
 {CHAIN_ID}_VAL_PREFIX={n}val
+{CHAIN_ID}_ADDRESS_PREFIX=stars
 {CHAIN_ID}_REV_ACCT={n}rev1
 {CHAIN_ID}_DENOM=
 {CHAIN_ID}_IBC_DENOM=
@@ -107,4 +108,5 @@ paths:
 sh ${SCRIPT_DIR}/init_chain.sh {NEW-HOST-ZONE}
 HOST_CHAINS=(GAIA JUNO OSMO ... {NEW-HOST-ZONE})
 ```
+* You'll have to run through once in order to get the IBC denom that you can use for the register host zone script 
 * And that's it! Just start the network as normal, and make sure to rebuild the new host zone when running for the first time.  

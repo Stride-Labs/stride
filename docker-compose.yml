@@ -142,11 +142,19 @@ services:
       - ./scripts/state/hermes/config.toml:/home/hermes/.hermes/config.toml
     restart: always
 
-  relayer:
+  relayer-gaia:
     image: stridezone:relayer
     volumes:
       - ./scripts/state/relayer:/home/relayer/.relayer
     restart: always
+    command: [ "bash", "start.sh", "stride-gaia" ]
+
+  relayer-stars:
+    image: stridezone:relayer
+    volumes:
+      - ./scripts/state/relayer:/home/relayer/.relayer
+    restart: always
+    command: [ "bash", "start.sh", "stride-stars" ]
 
   icq:
     image: stridezone:icq
