@@ -26,7 +26,7 @@ sh ${SCRIPT_DIR}/init_relayers.sh STRIDE ${HOST_CHAINS[@]}
 sh ${SCRIPT_DIR}/create_channels.sh ${HOST_CHAINS[@]}
 
 echo "Starting relayers"
-docker-compose up -d hermes icq
+docker-compose up -d hermes # icq
 
 docker-compose logs -f hermes | sed -r -u "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2})?)?[mGK]//g" >> $HERMES_LOGS 2>&1 &
 docker-compose logs -f icq | sed -r -u "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2})?)?[mGK]//g" > $ICQ_LOGS 2>&1 &
@@ -44,6 +44,12 @@ done
 for i in ${!pids[@]}; do
     wait ${pids[$i]}
     echo "${HOST_CHAINS[$i]} - Done"
+done
+
+# Start go relayers
+for chain_name in gaia stars; do 
+    docker-compose up -d relayer-${chain_name}
+    docker-compose logs -f relayer-${chain_name} | sed -r -u "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2})?)?[mGK]//g" >> ${LOGS}/relayer-${chain_name}.log 2>&1 &
 done
 
 $SCRIPT_DIR/create_logs.sh &
