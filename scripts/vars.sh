@@ -223,6 +223,8 @@ STARS_DELEGATION_ICA_ADDR="stars1kl6wa99e6hf97xr90m2n04rl0smv842pj9utqyvgyrksrm9
 STARS_REDEMPTION_ICA_ADDR="stars1x07hv0hxujj6l0mfyynwyuccf8fl27vjup0y8dmyajy9ugae22hqfvmv4e"
 STARS_WITHDRAWAL_ICA_ADDR="stars1x5ndl5p9tjy376a9xmqhw79gz0s678480759cdgaretcgm36akvs0a78tj"
 STARS_FEE_ICA_ADDR="stars1v09y993sku5djvm0rffq0nfsk5rzke4d2vzvny5e6vmq7dz0dehqnwl4ay"
+STARS_RECEIVER_ACCT='stars15dywcmy6gzsc8wfefkrx0c9czlwvwrjenqthyq'
+
 
 CSLEEP() {
   for i in $(seq $1); do
