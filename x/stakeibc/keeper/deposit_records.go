@@ -79,15 +79,15 @@ func (k Keeper) TransferExistingDepositsToHostZones(ctx sdk.Context, epochNumber
 		k.Logger(ctx).Info(fmt.Sprintf("TransferExistingDepositsToHostZones msg %v", msg))
 
 		err := k.RecordsKeeper.Transfer(ctx, msg, depositRecord.Id)
-		// update the record state to PENDING
-		depositRecord.Status = recordstypes.DepositRecord_PENDING
-		k.RecordsKeeper.SetDepositRecord(ctx, depositRecord)
 		if err != nil {
 			k.Logger(ctx).Error(fmt.Sprintf("\t[TransferExistingDepositsToHostZones] Failed to initiate IBC transfer to host zone, HostZone: %v, Channel: %v, Amount: %v, ModuleAddress: %v, DelegateAddress: %v, Timeout: %v",
 				hostZone.ChainId, hostZone.TransferChannelId, transferCoin, hostZoneModuleAddress, delegateAddress, timeoutTimestamp))
 			k.Logger(ctx).Error(fmt.Sprintf("\t[TransferExistingDepositsToHostZones] err {%s}", err.Error()))
 			continue
 		}
+		// update the record state to PENDING
+		depositRecord.Status = recordstypes.DepositRecord_PENDING
+		k.RecordsKeeper.SetDepositRecord(ctx, depositRecord)
 	}
 }
 
@@ -128,6 +128,9 @@ func (k Keeper) StakeExistingDepositsOnHostZones(ctx sdk.Context, epochNumber ui
 		} else {
 			k.Logger(ctx).Info(fmt.Sprintf("Successfully submitted stake for %s on %s", stakeAmount.String(), hostZone.ChainId))
 		}
+		// update the record state to PENDING
+		depositRecord.Status = recordstypes.DepositRecord_PENDING
+		k.RecordsKeeper.SetDepositRecord(ctx, depositRecord)
 
 		ctx.EventManager().EmitEvent(
 			sdk.NewEvent(
