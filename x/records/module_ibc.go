@@ -179,17 +179,18 @@ func (im IBCModule) OnAcknowledgementPacket(
 	// Custom ack logic only applies to ibc transfers initiated from the `stakeibc` module account
 	// NOTE: if the `stakeibc` module account IBC transfers tokens for some other reason in the future,
 	// this will need to be updated
+	err := im.keeper.ICACallbacksKeeper.CallRegisteredICACallback(ctx, packet, &ack)
+	if err != nil {
+		errMsg := fmt.Sprintf("Unable to call registered callback from records OnAcknowledgePacket | Sequence %d, from %s %s, to %s %s | Error %s",
+			packet.Sequence, packet.SourceChannel, packet.SourcePort, packet.DestinationChannel, packet.DestinationPort, err.Error())
+		im.keeper.Logger(ctx).Error(errMsg)
+		return sdkerrors.Wrapf(icacallbacktypes.ErrCallbackFailed, errMsg)
+	}
+
+	// log the ack type
 	switch resp := ack.Response.(type) {
 	case *channeltypes.Acknowledgement_Result:
 		im.keeper.Logger(ctx).Info(fmt.Sprintf("\t [IBC-TRANSFER] Acknowledgement_Result {%s}", string(resp.Result)))
-		// callback
-		err := im.keeper.ICACallbacksKeeper.CallRegisteredICACallback(ctx, packet, &ack)
-		if err != nil {
-			errMsg := fmt.Sprintf("Unable to call registered callback from records OnAcknowledgePacket | Sequence %d, from %s %s, to %s %s | Error %s",
-				packet.Sequence, packet.SourceChannel, packet.SourcePort, packet.DestinationChannel, packet.DestinationPort, err.Error())
-			im.keeper.Logger(ctx).Error(errMsg)
-			return sdkerrors.Wrapf(icacallbacktypes.ErrCallbackFailed, errMsg)
-		}
 	case *channeltypes.Acknowledgement_Error:
 		im.keeper.Logger(ctx).Error(fmt.Sprintf("\t [IBC-TRANSFER] Acknowledgement_Error {%s}", resp.Error))
 	default:

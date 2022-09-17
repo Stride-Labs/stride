@@ -33,22 +33,6 @@ func (k Keeper) UnmarshalTransferCallbackArgs(ctx sdk.Context, delegateCallback 
 
 func TransferCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ack *channeltypes.Acknowledgement, args []byte) error {
 	k.Logger(ctx).Info("TransferCallback executing", "packet", packet)
-	if ack.GetError() != "" {
-		k.Logger(ctx).Error(fmt.Sprintf("TransferCallback does not handle errors %s", ack.GetError()))
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "TransferCallback does not handle errors: %s", ack.GetError())
-	}
-	if ack == nil {
-		// timeout
-		k.Logger(ctx).Error(fmt.Sprintf("TransferCallback timeout, ack is nil, packet %v", packet))
-		return nil
-	}
-
-	var data ibctransfertypes.FungibleTokenPacketData
-	if err := ibctransfertypes.ModuleCdc.UnmarshalJSON(packet.GetData(), &data); err != nil {
-		k.Logger(ctx).Error(fmt.Sprintf("Error unmarshalling packet  %v", err.Error()))
-		return sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "cannot unmarshal ICS-20 transfer packet data: %s", err.Error())
-	}
-	k.Logger(ctx).Info(fmt.Sprintf("TransferCallback unmarshalled FungibleTokenPacketData %v", data))
 
 	// deserialize the args
 	transferCallbackData, err := k.UnmarshalTransferCallbackArgs(ctx, args)
@@ -61,6 +45,35 @@ func TransferCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ack
 		k.Logger(ctx).Error(fmt.Sprintf("TransferCallback deposit record not found, packet %v", packet))
 		return sdkerrors.Wrapf(types.ErrUnknownDepositRecord, "deposit record not found %d", transferCallbackData.DepositRecordId)
 	}
+
+	// which method to use for error handling?
+	// if ack.Response.(type) == *channeltypes.Acknowledgement_Error {
+	// 	// handle error
+	// }
+	if ack.GetError() != "" {
+		// error on host chain
+		// reset the deposit record to status TRANSFER
+		depositRecord.Status = types.DepositRecord_TRANSFER
+		k.SetDepositRecord(ctx, depositRecord)
+		k.Logger(ctx).Error(fmt.Sprintf("Error  %s", ack.GetError()))
+		return nil
+	}
+	if ack == nil {
+		// timeout
+		// reset the deposit record to status TRANSFER
+		depositRecord.Status = types.DepositRecord_TRANSFER
+		k.SetDepositRecord(ctx, depositRecord)
+		k.Logger(ctx).Error(fmt.Sprintf("TransferCallback timeout, ack is nil, packet %v", packet))
+		return nil
+	}
+
+	var data ibctransfertypes.FungibleTokenPacketData
+	if err := ibctransfertypes.ModuleCdc.UnmarshalJSON(packet.GetData(), &data); err != nil {
+		k.Logger(ctx).Error(fmt.Sprintf("Error unmarshalling packet  %v", err.Error()))
+		return sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "cannot unmarshal ICS-20 transfer packet data: %s", err.Error())
+	}
+	k.Logger(ctx).Info(fmt.Sprintf("TransferCallback unmarshalled FungibleTokenPacketData %v", data))
+
 	depositRecord.Status = types.DepositRecord_STAKE
 	k.SetDepositRecord(ctx, depositRecord)
 	k.Logger(ctx).Info(fmt.Sprintf("\t [IBC-TRANSFER] Deposit record updated: {%v}", depositRecord.Id))

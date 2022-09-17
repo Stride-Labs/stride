@@ -79,6 +79,9 @@ func (k Keeper) TransferExistingDepositsToHostZones(ctx sdk.Context, epochNumber
 		k.Logger(ctx).Info(fmt.Sprintf("TransferExistingDepositsToHostZones msg %v", msg))
 
 		err := k.RecordsKeeper.Transfer(ctx, msg, depositRecord.Id)
+		// update the record state to PENDING
+		depositRecord.Status = recordstypes.DepositRecord_PENDING
+		k.RecordsKeeper.SetDepositRecord(ctx, depositRecord)
 		if err != nil {
 			k.Logger(ctx).Error(fmt.Sprintf("\t[TransferExistingDepositsToHostZones] Failed to initiate IBC transfer to host zone, HostZone: %v, Channel: %v, Amount: %v, ModuleAddress: %v, DelegateAddress: %v, Timeout: %v",
 				hostZone.ChainId, hostZone.TransferChannelId, transferCoin, hostZoneModuleAddress, delegateAddress, timeoutTimestamp))
