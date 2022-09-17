@@ -112,13 +112,12 @@ setup() {
 
 @test "[INTEGRATION-BASIC-STARS] ibc transfer updates all balances" {
   # get initial balances
-
   str1_balance=$($STRIDE_MAIN_CMD q bank balances $STRIDE_ADDRESS --denom ustrd | GETBAL)
   stars1_balance=$($STARS_MAIN_CMD q bank balances $STARS_ADDRESS --denom $IBC_STRD_DENOM | GETBAL)
   str1_balance_stars=$($STRIDE_MAIN_CMD q bank balances $STRIDE_ADDRESS --denom $IBC_STARS_DENOM | GETBAL)
   stars1_balance_stars=$($STARS_MAIN_CMD q bank balances $STARS_ADDRESS --denom ustars | GETBAL)
   # do IBC transfer
-  $STRIDE_MAIN_CMD tx ibc-transfer transfer transfer channel-0 $STARS_ADDRESS 3000ustrd --from val1 --chain-id STRIDE -y --keyring-backend test #&
+  $STRIDE_MAIN_CMD tx ibc-transfer transfer transfer channel-1 $STARS_ADDRESS 3000ustrd --from val1 --chain-id STRIDE -y --keyring-backend test #&
   $STARS_MAIN_CMD tx ibc-transfer transfer transfer channel-0 $STRIDE_ADDRESS 3000ustars --from sgval1 --chain-id STARS -y --keyring-backend test #&
   WAIT_FOR_BLOCK $STRIDE_LOGS 8
   # get new balances
@@ -138,110 +137,111 @@ setup() {
   assert_equal "$stars1_diff" '3000'
 }
 
-# @test "[INTEGRATION-BASIC-STARS] liquid stake mints stSTARS" {
-#   # get module address
-#   MODADDR=$($STRIDE_MAIN_CMD q stakeibc module-address stakeibc | awk '{print $NF}')
-#   # get initial balances
-#   mod_balance_atom=$($STRIDE_MAIN_CMD q bank balances $MODADDR --denom $IBC_ATOM_DENOM | GETBAL)
-#   str1_balance_atom=$($STRIDE_MAIN_CMD q bank balances $STRIDE_ADDRESS --denom $IBC_ATOM_DENOM | GETBAL)
-#   str1_balance_statom=$($STRIDE_MAIN_CMD q bank balances $STRIDE_ADDRESS --denom $STATOM_DENOM | GETBAL)
-#   # liquid stake
-#   $STRIDE_MAIN_CMD tx stakeibc liquid-stake 1000 uatom --keyring-backend test --from val1 -y --chain-id $STRIDE_CHAIN_ID
-#   # sleep two block for the tx to settle on stride
-#   WAIT_FOR_STRING $STRIDE_LOGS '\[MINT ST ASSET\] success on GAIA'
-#   WAIT_FOR_BLOCK $STRIDE_LOGS 2
-#   # make sure IBC_ATOM_DENOM went down
-#   str1_balance_atom_new=$($STRIDE_MAIN_CMD q bank balances $STRIDE_ADDRESS --denom $IBC_ATOM_DENOM | GETBAL)
-#   str1_atom_diff=$(($str1_balance_atom - $str1_balance_atom_new))
-#   assert_equal "$str1_atom_diff" '1000'
-#   # make sure STATOM went up
-#   str1_balance_statom_new=$($STRIDE_MAIN_CMD q bank balances $STRIDE_ADDRESS --denom $STATOM_DENOM | GETBAL)
-#   str1_statom_diff=$(($str1_balance_statom_new-$str1_balance_statom))
-#   assert_equal "$str1_statom_diff" "1000"
-# }
+@test "[INTEGRATION-BASIC-STARS] liquid stake mints stSTARS" {
+  # get module address
+  MODADDR=$($STRIDE_MAIN_CMD q stakeibc module-address stakeibc | awk '{print $NF}')
+  # get initial balances
+  mod_balance_stars=$($STRIDE_MAIN_CMD q bank balances $MODADDR --denom $IBC_STARS_DENOM | GETBAL)
+  str1_balance_stars=$($STRIDE_MAIN_CMD q bank balances $STRIDE_ADDRESS --denom $IBC_STARS_DENOM | GETBAL)
+  str1_balance_ststars=$($STRIDE_MAIN_CMD q bank balances $STRIDE_ADDRESS --denom $STSTARS_DENOM | GETBAL)
+  # liquid stake
+  $STRIDE_MAIN_CMD tx stakeibc liquid-stake 1000 ustars --keyring-backend test --from val1 -y --chain-id $STRIDE_CHAIN_ID
+  # sleep two block for the tx to settle on stride
+  WAIT_FOR_STRING $STRIDE_LOGS '\[MINT ST ASSET\] success on STARS'
+  WAIT_FOR_BLOCK $STRIDE_LOGS 2
+  # make sure IBC_STARS_DENOM went down
+  str1_balance_stars_new=$($STRIDE_MAIN_CMD q bank balances $STRIDE_ADDRESS --denom $IBC_STARS_DENOM | GETBAL)
+  str1_stars_diff=$(($str1_balance_stars - $str1_balance_stars_new))
+  assert_equal "$str1_stars_diff" '1000'
+  # make sure STSTARS went up
+  str1_balance_ststars_new=$($STRIDE_MAIN_CMD q bank balances $STRIDE_ADDRESS --denom $STSTARS_DENOM | GETBAL)
+  str1_ststars_diff=$(($str1_balance_ststars_new-$str1_balance_ststars))
+  assert_equal "$str1_ststars_diff" "1000"
+}
 
-# # check that tokens were transferred to GAIA
-# @test "[INTEGRATION-BASIC-GAIA] tokens were transferred to GAIA after liquid staking" {
-#   # initial balance of delegation ICA
-#   initial_delegation_ica_bal=$($GAIA_MAIN_CMD q bank balances $DELEGATION_ICA_ADDR --denom uatom | GETBAL)
-#   WAIT_FOR_STRING $STRIDE_LOGS '\[IBC-TRANSFER\] success to GAIA'
-#   WAIT_FOR_BLOCK $STRIDE_LOGS 2
-#   # get the new delegation ICA balance
-#   post_delegation_ica_bal=$($GAIA_MAIN_CMD q bank balances $DELEGATION_ICA_ADDR --denom uatom | GETBAL)
-#   diff=$(($post_delegation_ica_bal - $initial_delegation_ica_bal))
-#   assert_equal "$diff" '1000'
-# }
+# check that tokens were transferred to STARS
+@test "[INTEGRATION-BASIC-STARS] tokens were transferred to STARS after liquid staking" {
+  # initial balance of delegation ICA
+  initial_delegation_ica_bal=$($STARS_MAIN_CMD q bank balances $STARS_DELEGATION_ICA_ADDR --denom ustars | GETBAL)
+  WAIT_FOR_STRING $STRIDE_LOGS '\[IBC-TRANSFER\] success to STARS'
+  WAIT_FOR_BLOCK $STRIDE_LOGS 2
+  # get the new delegation ICA balance
+  post_delegation_ica_bal=$($STARS_MAIN_CMD q bank balances $STARS_DELEGATION_ICA_ADDR --denom ustars | GETBAL)
+  diff=$(($post_delegation_ica_bal - $initial_delegation_ica_bal))
+  assert_equal "$diff" '1000'
+}
 
-# # check that tokens on GAIA are staked
-# @test "[INTEGRATION-BASIC-GAIA] tokens on GAIA were staked" {
-#   # wait for another epoch to pass so that tokens are staked
-#   WAIT_FOR_STRING $STRIDE_LOGS '\[DELEGATION\] success on GAIA'
-#   WAIT_FOR_BLOCK $STRIDE_LOGS 2
-#   # check staked tokens
-#   NEW_STAKE=$($GAIA_MAIN_CMD q staking delegation $DELEGATION_ICA_ADDR $GAIA_DELEGATE_VAL_1 | GETSTAKE)
-#   stake_diff=$(($NEW_STAKE > 0))
-#   assert_equal "$stake_diff" "1"
-# }
+# check that tokens on STARS are staked
+@test "[INTEGRATION-BASIC-STARS] tokens on STARS were staked" {
+  # wait for another epoch to pass so that tokens are staked
+  WAIT_FOR_STRING $STRIDE_LOGS '\[DELEGATION\] success on STARS'
+  WAIT_FOR_BLOCK $STRIDE_LOGS 2
+  # check staked tokens
+  NEW_STAKE=$($STARS_MAIN_CMD q staking delegation $STARS_DELEGATION_ICA_ADDR $STARS_DELEGATE_VAL | GETSTAKE)
+  stake_diff=$(($NEW_STAKE > 0))
+  assert_equal "$stake_diff" "1"
+}
 
 # # check that redemptions and claims work
-# @test "[INTEGRATION-BASIC-GAIA] redemption works" {
-#   old_redemption_ica_bal=$($GAIA_MAIN_CMD q bank balances $REDEMPTION_ICA_ADDR --denom uatom | GETBAL)
-#   # call redeem-stake
-#   amt_to_redeem=100
-#   $STRIDE_MAIN_CMD tx stakeibc redeem-stake $amt_to_redeem GAIA $GAIA_RECEIVER_ACCT \
-#       --from val1 --keyring-backend test --chain-id $STRIDE_CHAIN_ID -y
-#   WAIT_FOR_STRING $STRIDE_LOGS '\[REDEMPTION] completed on GAIA'
-#   WAIT_FOR_BLOCK $STRIDE_LOGS 2
-#   # check that the tokens were transferred to the redemption account
-#   new_redemption_ica_bal=$($GAIA_MAIN_CMD q bank balances $REDEMPTION_ICA_ADDR --denom uatom | GETBAL)
-#   diff_positive=$(($new_redemption_ica_bal > $old_redemption_ica_bal))
-#   assert_equal "$diff_positive" "1"
-# }
+@test "[INTEGRATION-BASIC-STARS] redemption works" {
+  old_redemption_ica_bal=$($STARS_MAIN_CMD q bank balances $STARS_REDEMPTION_ICA_ADDR --denom ustars | GETBAL)
+  # call redeem-stake
+  amt_to_redeem=100
+  $STRIDE_MAIN_CMD tx stakeibc redeem-stake $amt_to_redeem STARS $STARS_RECEIVER_ACCT \
+      --from val1 --keyring-backend test --chain-id $STRIDE_CHAIN_ID -y
+  WAIT_FOR_STRING $STRIDE_LOGS '\[REDEMPTION] completed on STARS'
+  WAIT_FOR_BLOCK $STRIDE_LOGS 2
+  # check that the tokens were transferred to the redemption account
+  new_redemption_ica_bal=$($STARS_MAIN_CMD q bank balances $STARS_REDEMPTION_ICA_ADDR --denom ustars | GETBAL)
+  diff_positive=$(($new_redemption_ica_bal > $old_redemption_ica_bal))
+  assert_equal "$diff_positive" "1"
+}
 
-# @test "[INTEGRATION-BASIC-GAIA] claimed tokens are properly distributed" {
-#   # TODO(optimize tests) extra sleep just in case
-#   SENDER_ACCT=$STRIDE_ADDRESS
-#   old_sender_bal=$($GAIA_MAIN_CMD q bank balances $GAIA_RECEIVER_ACCT --denom uatom | GETBAL)
-#   # TODO check that the UserRedemptionRecord has isClaimable = true
+@test "[INTEGRATION-BASIC-STARS] claimed tokens are properly distributed" {
+  # TODO(optimize tests) extra sleep just in case
+  SENDER_ACCT=$STRIDE_ADDRESS
+  old_sender_bal=$($STARS_MAIN_CMD q bank balances $STARS_RECEIVER_ACCT --denom ustars | GETBAL)
+  # TODO check that the UserRedemptionRecord has isClaimable = true
 
-#   # grab the epoch number for the first deposit record in the list od DRs
-#   EPOCH=$(strided q records list-user-redemption-record  | grep -Fiw 'epochNumber' | head -n 1 | grep -o -E '[0-9]+')
-#   # claim the record
-#   $STRIDE_MAIN_CMD tx stakeibc claim-undelegated-tokens GAIA $EPOCH $SENDER_ACCT --from val1 --keyring-backend test --chain-id STRIDE -y
-#   WAIT_FOR_STRING $STRIDE_LOGS '\[CLAIM\] success on GAIA'
-#   WAIT_FOR_BLOCK $STRIDE_LOGS 2
+  # grab the epoch number for the first deposit record in the list od DRs
+  EPOCH=$(strided q records list-user-redemption-record  | grep -Fiw 'epochNumber' | head -n 1 | grep -o -E '[0-9]+')
+  # claim the record
+  $STRIDE_MAIN_CMD tx stakeibc claim-undelegated-tokens STARS $EPOCH $SENDER_ACCT --from val1 --keyring-backend test --chain-id STRIDE -y
+  WAIT_FOR_STRING $STRIDE_LOGS '\[CLAIM\] success on STARS'
+  WAIT_FOR_BLOCK $STRIDE_LOGS 2
 
-#   # check that the tokens were transferred to the sender account
-#   new_sender_bal=$($GAIA_MAIN_CMD q bank balances $GAIA_RECEIVER_ACCT --denom uatom | GETBAL)
+  # check that the tokens were transferred to the sender account
+  new_sender_bal=$($STARS_MAIN_CMD q bank balances $STARS_RECEIVER_ACCT --denom ustars | GETBAL)
 
-#   # check that the undelegated tokens were transfered to the sender account
-#   diff_positive=$(($new_sender_bal > $old_sender_bal))
-#   assert_equal "$diff_positive" "1"
-# }
+  # check that the undelegated tokens were transfered to the sender account
+  diff_positive=$(($new_sender_bal > $old_sender_bal))
+  assert_equal "$diff_positive" "1"
+}
 
 
-# # check that a second liquid staking call kicks off reinvestment
-# @test "[INTEGRATION-BASIC-GAIA] rewards are being reinvested, exchange rate updating" {
-#   # read the exchange rate and current delegations
-#   RR1=$($STRIDE_MAIN_CMD q stakeibc show-host-zone GAIA | grep -Fiw 'RedemptionRate' | grep -Eo '[+-]?[0-9]+([.][0-9]+)?')
-#   OLD_STAKED_BAL=$($GAIA_MAIN_CMD q staking delegation $DELEGATION_ICA_ADDR $GAIA_DELEGATE_VAL_1 | GETSTAKE)
-#   # liquid stake again to kickstart the reinvestment process
-#   $STRIDE_MAIN_CMD tx stakeibc liquid-stake 1000 uatom --keyring-backend test --from val1 -y --chain-id $STRIDE_CHAIN_ID
-#   WAIT_FOR_BLOCK $STRIDE_LOGS 2
-#   # wait four days (transfers, stake, move rewards, reinvest rewards)
-#   epoch_duration=$($STRIDE_MAIN_CMD q epochs epoch-infos | grep -Fiw -B 2 'stride_epoch' | head -n 1 | grep -o -E '[0-9]+')
-#   sleep $(($epoch_duration * 4))
-#   # simple check that number of tokens staked increases
-#   NEW_STAKED_BAL=$($GAIA_MAIN_CMD q staking delegation $DELEGATION_ICA_ADDR $GAIA_DELEGATE_VAL_1 | GETSTAKE)
-#   STAKED_BAL_INCREASED=$(($NEW_STAKED_BAL > $OLD_STAKED_BAL))
-#   assert_equal "$STAKED_BAL_INCREASED" "1"
+# check that a second liquid staking call kicks off reinvestment
+@test "[INTEGRATION-BASIC-STARS] rewards are being reinvested, exchange rate updating" {
+  # read the exchange rate and current delegations
+  RR1=$($STRIDE_MAIN_CMD q stakeibc show-host-zone STARS | grep -Fiw 'RedemptionRate' | grep -Eo '[+-]?[0-9]+([.][0-9]+)?')
+  OLD_STAKED_BAL=$($STARS_MAIN_CMD q staking delegation $STARS_DELEGATION_ICA_ADDR $STARS_DELEGATE_VAL | GETSTAKE)
+  # liquid stake again to kickstart the reinvestment process
+  WAIT_FOR_BLOCK $STRIDE_LOGS 100
+  $STRIDE_MAIN_CMD tx stakeibc liquid-stake 1000 ustars --keyring-backend test --from val1 -y --chain-id $STRIDE_CHAIN_ID
+  WAIT_FOR_BLOCK $STRIDE_LOGS 2
+  # wait four days (transfers, stake, move rewards, reinvest rewards)
+  epoch_duration=$($STRIDE_MAIN_CMD q epochs epoch-infos | grep -Fiw -B 2 'stride_epoch' | head -n 1 | grep -o -E '[0-9]+')
+  sleep $(($epoch_duration * 4))
+  # simple check that number of tokens staked increases
+  NEW_STAKED_BAL=$($STARS_MAIN_CMD q staking delegation $STARS_DELEGATION_ICA_ADDR $STARS_DELEGATE_VAL | GETSTAKE)
+  STAKED_BAL_INCREASED=$(($NEW_STAKED_BAL > $OLD_STAKED_BAL))
+  assert_equal "$STAKED_BAL_INCREASED" "1"
 
-#   RR2=$($STRIDE_MAIN_CMD q stakeibc show-host-zone GAIA | grep -Fiw 'RedemptionRate' | grep -Eo '[+-]?[0-9]+([.][0-9]+)?')
-#   # check that the exchange rate has increased
-#   MULT=1000000
-#   RR_INCREASED=$(( $(FLOOR $(DECMUL $RR2 $MULT)) > $(FLOOR $(DECMUL $RR1 $MULT))))
-#   assert_equal "$RR_INCREASED" "1"
-# }
+  RR2=$($STRIDE_MAIN_CMD q stakeibc show-host-zone STARS | grep -Fiw 'RedemptionRate' | grep -Eo '[+-]?[0-9]+([.][0-9]+)?')
+  # check that the exchange rate has increased
+  MULT=1000000
+  RR_INCREASED=$(( $(FLOOR $(DECMUL $RR2 $MULT)) > $(FLOOR $(DECMUL $RR1 $MULT))))
+  assert_equal "$RR_INCREASED" "1"
+}
 
 # # TODO check that the correct amount is being reinvested and the correct amount is flowing to the rev EOA
 # @test "[NOT-IMPLEMENTED] reinvestment and revenue amounts are correct" {
