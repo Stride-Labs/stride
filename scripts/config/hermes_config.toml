@@ -42,7 +42,7 @@ max_msg_num = 30
 max_tx_size = 2097152
 clock_drift = '5s'
 max_block_time = '10s'
-trusting_period = '180s'
+trusting_period = '119s'
 trust_threshold = { numerator = '1', denominator = '3' }
 address_type = { derivation = 'cosmos' }
 
@@ -63,6 +63,48 @@ max_msg_num = 30
 max_tx_size = 2097152
 clock_drift = '5s'
 max_block_time = '10s'
-trusting_period = '180s'
+trusting_period = '119s'
+trust_threshold = { numerator = '1', denominator = '3' }
+address_type = { derivation = 'cosmos' }
+
+[[chains]]
+id = 'JUNO'
+rpc_addr = 'http://juno1:26657'
+grpc_addr = 'http://juno1:9090'
+websocket_addr = 'ws://juno1:26657/websocket'
+rpc_timeout = '10s'
+account_prefix = 'juno'
+key_name = 'rly3'
+store_prefix = 'ibc'
+default_gas = 100000
+max_gas = 3000000
+gas_price = { price = 0.000, denom = 'ujuno' }
+gas_multiplier = 1.1
+max_msg_num = 30
+max_tx_size = 2097152
+clock_drift = '5s'
+max_block_time = '10s'
+trusting_period = '119s'
+trust_threshold = { numerator = '1', denominator = '3' }
+address_type = { derivation = 'cosmos' }
+
+[[chains]]
+id = 'OSMO'
+rpc_addr = 'http://osmo1:26657'
+grpc_addr = 'http://osmo1:9090'
+websocket_addr = 'ws://osmo1:26657/websocket'
+rpc_timeout = '10s'
+account_prefix = 'osmo'
+key_name = 'rly4'
+store_prefix = 'ibc'
+default_gas = 100000
+max_gas = 3000000
+gas_price = { price = 0.000, denom = 'uosmo' }
+gas_multiplier = 1.1
+max_msg_num = 30
+max_tx_size = 2097152
+clock_drift = '5s'
+max_block_time = '10s'
+trusting_period = '119s'
 trust_threshold = { numerator = '1', denominator = '3' }
 address_type = { derivation = 'cosmos' }
