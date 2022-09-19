@@ -4,10 +4,10 @@ package stride.icacallbacks;
 option go_package = "github.com/Stride-Labs/stride/x/icacallbacks/types";
 
 message CallbackData {
-  string callbackKey = 1;
-  string portId = 2;
-  string channelId = 3;
+  string callback_key = 1;
+  string port_id = 2;
+  string channel_id = 3;
   uint64 sequence = 4;
-  string callbackId = 5;
-  bytes callbackArgs = 6;
+  string callback_id = 5;
+  bytes callback_args = 6;
 }

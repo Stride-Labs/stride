@@ -18,14 +18,14 @@ service Query {
   }
   // Queries a CallbackData by index.
   rpc CallbackData(QueryGetCallbackDataRequest)
-      returns (QueryGetCallbackDataResponse) {
+      returns (QueryCallbackDataResponse) {
     option (google.api.http).get =
-        "/Stride-Labs/stride/icacallbacks/callback_data/{callbackKey}";
+        "/Stride-Labs/stride/icacallbacks/callback_data/{callback_key}";
   }
 
   // Queries a list of CallbackData items.
   rpc CallbackDataAll(QueryAllCallbackDataRequest)
-      returns (QueryAllCallbackDataResponse) {
+      returns (QueryCallbackDataAllResponse) {
     option (google.api.http).get =
         "/Stride-Labs/stride/icacallbacks/callback_data";
   }
@@ -42,18 +42,18 @@ message QueryParamsResponse {
   Params params = 1 [ (gogoproto.nullable) = false ];
 }
 
-message QueryGetCallbackDataRequest { string callbackKey = 1; }
+message QueryGetCallbackDataRequest { string callback_key = 1; }
 
-message QueryGetCallbackDataResponse {
-  CallbackData callbackData = 1 [ (gogoproto.nullable) = false ];
+message QueryCallbackDataResponse {
+  CallbackData callback_data = 1 [ (gogoproto.nullable) = false ];
 }
 
 message QueryAllCallbackDataRequest {
   cosmos.base.query.v1beta1.PageRequest pagination = 1;
 }
 
-message QueryAllCallbackDataResponse {
-  repeated CallbackData callbackData = 1 [ (gogoproto.nullable) = false ];
+message QueryCallbackDataAllResponse {
+  repeated CallbackData callback_data = 1 [ (gogoproto.nullable) = false ];
   cosmos.base.query.v1beta1.PageResponse pagination = 2;
 }
 
