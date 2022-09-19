@@ -63,7 +63,8 @@ This release includes...
 
 ## [v1.0.2](https://github.com/Stride-Labs/stride/releases/tag/v1.0.2) - 2022-09-06
 
-This release improves the CLI UX of creating and querying gauges.
+* Fix stochastic sorting issue
+* Add new query
 
 ## [v1.0.0](https://github.com/Stride-Labs/stride/releases/tag/v1.0.0) - 2022-09-04
 
