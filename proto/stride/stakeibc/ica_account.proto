@@ -7,10 +7,10 @@ import "cosmos_proto/cosmos.proto";
 option go_package = "github.com/Stride-Labs/stride/x/stakeibc/types";
 
 enum ICAAccountType {
-  DELEGATION = 0;
-  FEE = 1;
-  WITHDRAWAL = 2;
-  REDEMPTION = 3;
+  ICA_ACCOUNT_TYPE_DELEGATION_UNSPECIFIED = 0;
+  ICA_ACCOUNT_TYPE_FEE = 1;
+  ICA_ACCOUNT_TYPE_WITHDRAWAL = 2;
+  ICA_ACCOUNT_TYPE_REDEMPTION = 3;
 }
 
 // TODO(TEST-XX): Update these fields to be more useful (e.g. balances should be

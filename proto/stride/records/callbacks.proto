@@ -3,4 +3,4 @@ package stride.records;
 option go_package = "github.com/Stride-Labs/stride/x/records/types";
 
 // ---------------------- Transfer Callback ---------------------- //
-message TransferCallback { uint64 depositRecordId = 1; }
+message TransferCallback { uint64 deposit_record_id = 1; }

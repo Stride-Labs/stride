@@ -2,7 +2,6 @@ syntax = "proto3";
 package stride.records;
 
 import "gogoproto/gogo.proto";
-import "google/protobuf/timestamp.proto";
 
 // this line is used by starport scaffolding # genesis/proto/import
 
@@ -14,9 +13,9 @@ message UserRedemptionRecord {
   string receiver = 3;
   uint64 amount = 4;
   string denom = 5;
-  string hostZoneId = 6;
-  uint64 epochNumber = 7;
-  bool claimIsPending = 8;
+  string host_zone_id = 6;
+  uint64 epoch_number = 7;
+  bool claim_is_pending = 8;
 }
 
 // Msg defines the Msg service.
@@ -31,7 +30,7 @@ message Params { option (gogoproto.goproto_stringer) = false; }
 
 message RecordsPacketData {
   oneof packet {
-    NoData noData = 1;
+    NoData no_data = 1;
     // this line is used by starport scaffolding # ibc/packet/proto/field
   }
 }
@@ -44,19 +43,19 @@ message DepositRecord {
   uint64 id = 1;
   int64 amount = 2;
   string denom = 3;
-  string hostZoneId = 4;
+  string host_zone_id = 4;
   enum Status {
     // pending transfer to delegate account
-    TRANSFER = 0;
+    STATUS_TRANSFER_UNSPECIFIED = 0;
     // pending staking on delegate account
-    STAKE = 1;
+    STATUS_STAKE = 1;
   }
   enum Source {
-    STRIDE = 0;
-    WITHDRAWAL_ICA = 1;
+    SOURCE_STRIDE_UNSPECIFIED = 0;
+    SOURCE_WITHDRAWAL_ICA = 1;
   }
   Status status = 6;
-  uint64 depositEpochNumber = 7;
+  uint64 deposit_epoch_number = 7;
   Source source = 8;
 
   reserved 5;
@@ -65,24 +64,24 @@ message DepositRecord {
 message HostZoneUnbonding {
   enum Status {
     // tokens bonded on delegate account
-    BONDED = 0;
+    STATUS_BONDED_UNSPECIFIED = 0;
     // unbonding completed on delegate account
-    UNBONDED = 1;
+    STATUS_UNBONDED = 1;
     // transfer success
-    TRANSFERRED = 2;
+    STATUS_TRANSFERRED = 2;
   }
-  uint64 stTokenAmount = 1;
-  uint64 nativeTokenAmount = 2;
+  uint64 st_token_amount = 1;
+  uint64 native_token_amount = 2;
   string denom = 3;
-  string hostZoneId = 4;
-  uint64 unbondingTime = 5;
+  string host_zone_id = 4;
+  uint64 unbonding_time = 5;
   Status status = 6;
-  repeated string userRedemptionRecords = 7;
+  repeated string user_redemption_records = 7;
 }
 
 message EpochUnbondingRecord {
-  uint64 epochNumber = 1;
-  repeated HostZoneUnbonding hostZoneUnbondings = 3;
+  uint64 epoch_number = 1;
+  repeated HostZoneUnbonding host_zone_unbondings = 3;
   reserved 2;
 }
 
@@ -91,12 +90,12 @@ message EpochUnbondingRecord {
 message GenesisState {
   Params params = 1 [ (gogoproto.nullable) = false ];
   string port_id = 2;
-  repeated UserRedemptionRecord userRedemptionRecordList = 3
+  repeated UserRedemptionRecord user_redemption_record_list = 3
       [ (gogoproto.nullable) = false ];
-  uint64 userRedemptionRecordCount = 4;
-  repeated EpochUnbondingRecord epochUnbondingRecordList = 5
+  uint64 user_redemption_record_count = 4;
+  repeated EpochUnbondingRecord epoch_unbonding_record_list = 5
       [ (gogoproto.nullable) = false ];
-  repeated DepositRecord depositRecordList = 7 [ (gogoproto.nullable) = false ];
-  uint64 depositRecordCount = 8;
+  repeated DepositRecord deposit_record_rist = 7 [ (gogoproto.nullable) = false ];
+  uint64 deposit_record_count = 8;
   // this line is used by starport scaffolding # genesis/proto/state
 }

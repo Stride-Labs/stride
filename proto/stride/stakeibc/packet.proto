@@ -7,7 +7,7 @@ option go_package = "github.com/Stride-Labs/stride/x/stakeibc/types";
 
 message StakeibcPacketData {
   oneof packet {
-    NoData noData = 1;
+    NoData no_data = 1;
     // this line is used by starport scaffolding # ibc/packet/proto/field
   }
 }
