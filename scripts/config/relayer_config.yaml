@@ -8,12 +8,12 @@ chains:
     type: cosmos
     value:
       key: rly1
-      chain-id: STRIDE
+      chain-id: local-test-3
       rpc-addr: http://stride1:26657
       account-prefix: stride
       keyring-backend: test
       gas-adjustment: 1.2
-      gas-prices: 0.01ustrd
+      gas-prices: 0.00ustrd
       debug: false
       timeout: 20s
       output-format: json
@@ -64,8 +64,8 @@ chains:
     type: cosmos
     value:
       key: rly5
-      chain-id: STARS
-      rpc-addr: http://stars1:26657
+      chain-id: stargaze-1
+      rpc-addr: https://stargaze-rpc.polkachu.com:443
       account-prefix: stars
       keyring-backend: test
       gas-adjustment: 1.2
@@ -101,9 +101,9 @@ paths:
       channel-list: []
   stride-stars:
     src:
-      chain-id: STRIDE
+      chain-id: local-test-3
     dst:
-      chain-id: STARS
+      chain-id: stargaze-1
     src-channel-filter:
       rule: ""
       channel-list: []

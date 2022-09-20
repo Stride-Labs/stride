@@ -14,21 +14,24 @@ ICQ_LOGS=$SCRIPT_DIR/logs/icq.log
 
 # Initialize the state for stride/gaia and relayers
 sh ${SCRIPT_DIR}/init_chain.sh STRIDE
-sh ${SCRIPT_DIR}/init_chain.sh GAIA
+# sh ${SCRIPT_DIR}/init_chain.sh GAIA
 # sh ${SCRIPT_DIR}/init_chain.sh JUNO
 # sh ${SCRIPT_DIR}/init_chain.sh OSMO
-sh ${SCRIPT_DIR}/init_chain.sh STARS
+# sh ${SCRIPT_DIR}/init_chain.sh STARS
 
-HOST_CHAINS=(GAIA STARS) #JUNO OSMO 
-sh ${SCRIPT_DIR}/start_chain.sh STRIDE ${HOST_CHAINS[@]}
+HOST_CHAINS=(STARS) #JUNO OSMO 
+sh ${SCRIPT_DIR}/start_chain.sh STRIDE # ${HOST_CHAINS[@]}
 sh ${SCRIPT_DIR}/init_relayers.sh STRIDE ${HOST_CHAINS[@]}
-sh ${SCRIPT_DIR}/create_channels.sh ${HOST_CHAINS[@]}
+# sh ${SCRIPT_DIR}/create_channels.sh ${HOST_CHAINS[@]}
+
+echo "Done"
+exit 0
 
 echo "Starting relayers"
 docker-compose up -d hermes 
 
 docker-compose logs -f hermes | sed -r -u "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2})?)?[mGK]//g" >> $HERMES_LOGS 2>&1 &
-docker-compose logs -f icq | sed -r -u "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2})?)?[mGK]//g" > $ICQ_LOGS 2>&1 &
+# docker-compose logs -f icq | sed -r -u "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2})?)?[mGK]//g" > $ICQ_LOGS 2>&1 &
 
 # Wait for hermes to start
 ( tail -f -n0 $HERMES_LOGS & ) | grep -q -E "Hermes has started"
