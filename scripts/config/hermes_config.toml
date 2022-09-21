@@ -26,7 +26,7 @@ host = '0.0.0.0'
 port = 3001
 
 [[chains]]
-id = 'local-test-3'
+id = 'local-test-10'
 rpc_addr = 'http://stride1:26657'
 grpc_addr = 'http://stride1:9090'
 websocket_addr = 'ws://stride1:26657/websocket'
@@ -42,9 +42,10 @@ max_msg_num = 30
 max_tx_size = 2097152
 clock_drift = '5s'
 max_block_time = '10s'
-trusting_period = '119s'
+trusting_period = '10days'
 trust_threshold = { numerator = '1', denominator = '3' }
 address_type = { derivation = 'cosmos' }
+sequential_batch_tx = false
 
 # [[chains]]
 # id = 'GAIA'
@@ -111,9 +112,9 @@ address_type = { derivation = 'cosmos' }
 
 [[chains]]
 id = 'stargaze-1'
-rpc_addr = 'http://stars1:26657'
-grpc_addr = 'http://stars1:9090'
-websocket_addr = 'ws://stars1:26657/websocket'
+rpc_addr = 'http://stars-fleet-direct.frontend.stridenet.co:26657'
+grpc_addr = 'http://stars-fleet-direct.frontend.stridenet.co:9090'
+websocket_addr = 'ws:///stars-fleet-direct.frontend.stridenet.co:26657/websocket'
 rpc_timeout = '10s'
 account_prefix = 'stars'
 key_name = 'hrly5'
@@ -129,6 +130,7 @@ max_block_time = '10s'
 trusting_period = '12days'
 trust_threshold = { numerator = '1', denominator = '3' }
 address_type = { derivation = 'cosmos' }
+sequential_batch_tx = false
 [chains.packet_filter]
 policy = 'allow'
 list = [
