@@ -3,12 +3,11 @@
 	path = deps/interchain-queries
 	url = git@github.com:Stride-Labs/interchain-queries.git
 [submodule "deps/hermes"]
-	# Commit: ed4dd8c8b4ebd695730de2a1c69f3011cb179352
-	# Tag: v1.0.0
+	# Commit: fd92eb6d17342bc83003f2067d6a9cd8261f2884
 	path = deps/hermes
 	url = git@github.com:informalsystems/ibc-rs.git
 [submodule "deps/relayer"]
-	# Commit: 65d6065e8016e420c0ddaf9141b5c834e01804c0
+	# Commit: 5a34802a485282cb18095fcf23e5de1c6da4ff66
 	# Branch: andrew/client_icq
 	path = deps/relayer
 	url = git@github.com:cosmos/relayer.git
