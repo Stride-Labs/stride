@@ -53,8 +53,7 @@ while getopts sgojhir{n} flag; do
 {CHAIN_ID}_VAL_PREFIX={n}val
 {CHAIN_ID}_ADDRESS_PREFIX=stars
 {CHAIN_ID}_REV_ACCT={n}rev1
-{CHAIN_ID}_DENOM=
-{CHAIN_ID}_IBC_DENOM=
+{CHAIN_ID}_DENOM={add denom as a constant at the top of the script and then reference here}
 {CHAIN_ID}_RPC_PORT={the one included in the docker-compose above}
 {CHAIN_ID}_MAIN_CMD="${CHAIN_ID}_CMD --home $SCRIPT_DIR/state/${${CHAIN_ID}_NODE_PREFIX}1"
 
@@ -72,6 +71,21 @@ HERMES_${CHAIN_ID}_MNEMONIC=""
 
 ICQ_${CHAIN_ID}_ACCT=rly{add one since the account from the last host zone}
 ICQ_${CHAIN_ID}_MNEMONIC=""
+```
+* Add the IBC denom's for the host zone across each channel. You can use the following code block (just temporarily throw it in any of the test files and run it)
+```
+import transfertypes "github.com/cosmos/ibc-go/v3/modules/apps/transfer/types"
+
+func (s *KeeperTestSuite) TestIBCDenom() {
+	chainId := {CHAIN_ID}
+	denom := {DENOM}
+	for i := 0; i < 4; i++ {
+		sourcePrefix := transfertypes.GetDenomPrefix("transfer", fmt.Sprintf("channel-%d", i))
+		prefixedDenom := sourcePrefix + denom
+
+		fmt.Printf("IBC_%s_CHANNEL_%d_DENOM='%s'\n", chainId, i, transfertypes.ParseDenomTrace(prefixedDenom).IBCDenom())
+	}
+}
 ```
 * Add a section to the `scripts/config/relayer_config.yaml`
 ```
@@ -108,5 +122,4 @@ paths:
 sh ${SCRIPT_DIR}/init_chain.sh {NEW-HOST-ZONE}
 HOST_CHAINS=(GAIA JUNO OSMO ... {NEW-HOST-ZONE})
 ```
-* You'll have to run through once in order to get the IBC denom that you can use for the register host zone script 
 * And that's it! Just start the network as normal, and make sure to rebuild the new host zone when running for the first time.  

@@ -13,12 +13,6 @@ TX_LOGS=$SCRIPT_DIR/logs/tx.log
 KEYS_LOGS=$SCRIPT_DIR/logs/keys.log
 
 # DENOMS
-# TODO: Set this dynamically after a channel is created
-IBC_STRD_DENOM='ibc/FF6C2E86490C1C4FBBD24F55032831D2415B9D7882F85C3CC9C2401D79362BEA'  # must be channel-0
-IBC_ATOM_DENOM='ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2'  # must be channel-0
-IBC_JUNO_DENOM='ibc/EFF323CC632EC4F747C61BCE238A758EFDB7699C3226565F7C20DA06509D59A5'  # must be channel-1
-IBC_OSMO_DENOM='ibc/13B2C536BB057AC79D5616B8EA1B9540EC1F2170718CAFF6F0083C966FFFED0B'  # must be channel-2
-IBC_STARS_DENOM='ibc/9222203B0B37D076F07B3CAC716533C80E7C4239499B6306CD9921A15D308F12' # must be channel-1
 ATOM_DENOM='uatom'
 JUNO_DENOM='ujuno'
 OSMO_DENOM='uosmo'
@@ -28,6 +22,34 @@ STATOM_DENOM="stuatom"
 STJUNO_DENOM="stujuno"
 STOSMO_DENOM="stuosmo"
 STSTARS_DENOM="stustars"
+
+IBC_STRD_CHANNEL_0_DENOM='ibc/FF6C2E86490C1C4FBBD24F55032831D2415B9D7882F85C3CC9C2401D79362BEA'  
+
+IBC_GAIA_CHANNEL_0_DENOM='ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2'
+IBC_GAIA_CHANNEL_1_DENOM='ibc/C4CFF46FD6DE35CA4CF4CE031E643C8FDC9BA4B99AE598E9B0ED98FE3A2319F9'
+IBC_GAIA_CHANNEL_2_DENOM='ibc/9117A26BA81E29FA4F78F57DC2BD90CD3D26848101BA880445F119B22A1E254E'
+IBC_GAIA_CHANNEL_3_DENOM='ibc/A4DB47A9D3CF9A068D454513891B526702455D3EF08FB9EB558C561F9DC2B701'
+
+IBC_JUNO_CHANNEL_0_DENOM='ibc/04F5F501207C3626A2C14BFEF654D51C2E0B8F7CA578AB8ED272A66FE4E48097' 
+IBC_JUNO_CHANNEL_1_DENOM='ibc/EFF323CC632EC4F747C61BCE238A758EFDB7699C3226565F7C20DA06509D59A5' 
+IBC_JUNO_CHANNEL_2_DENOM='ibc/4CD525F166D32B0132C095F353F4C6F033B0FF5C49141470D1EFDA1D63303D04'
+IBC_JUNO_CHANNEL_3_DENOM='ibc/C814F0B662234E24248AE3B2FE2C1B54BBAF12934B757F6E7BC5AEC119963895' 
+
+IBC_OSMO_CHANNEL_0_DENOM='ibc/ED07A3391A112B175915CD8FAF43A2DA8E4790EDE12566649D0C2F97716B8518'
+IBC_OSMO_CHANNEL_1_DENOM='ibc/0471F1C4E7AFD3F07702BEF6DC365268D64570F7C1FDC98EA6098DD6DE59817B'
+IBC_OSMO_CHANNEL_2_DENOM='ibc/13B2C536BB057AC79D5616B8EA1B9540EC1F2170718CAFF6F0083C966FFFED0B'
+IBC_OSMO_CHANNEL_3_DENOM='ibc/47BD209179859CDE4A2806763D7189B6E6FE13A17880FE2B42DE1E6C1E329E23'
+
+IBC_STARS_CHANNEL_0_DENOM='ibc/49BAE4CD2172833F14000627DA87ED8024AD46A38D6ED33F6239F22B5832F958'
+IBC_STARS_CHANNEL_1_DENOM='ibc/9222203B0B37D076F07B3CAC716533C80E7C4239499B6306CD9921A15D308F12'
+IBC_STARS_CHANNEL_2_DENOM='ibc/C6469BA9DC791E65B3C1596CD2005941324C00659E2DF90D5E08D86B82E7E08B'
+IBC_STARS_CHANNEL_3_DENOM='ibc/482A30C07803B0455B1492BAF94EC3D600E862D52A814F25A34BCCAAA132FEE9'
+
+# INTEGRATION TEST IBC DENOM
+IBC_ATOM_DENOM=$IBC_GAIA_CHANNEL_0_DENOM
+IBC_JUNO_DENOM=$IBC_JUNO_CHANNEL_1_DENOM
+IBC_OSMO_DENOM=$IBC_OSMO_CHANNEL_2_DENOM
+IBC_STARS_DENOM=$IBC_STARS_CHANNEL_3_DENOM
 
 # CHAIN PARAMS
 BLOCK_TIME='1s'
@@ -54,6 +76,7 @@ STRIDE_VAL_PREFIX=val
 STRIDE_DENOM=$STRD_DENOM
 STRIDE_RPC_PORT=26657
 STRIDE_ADMIN_ACCT=admin
+STRIDE_ADMIN_ADDRESS=stride1u20df3trc2c2zdhm8qvh2hdjx9ewh00sv6eyy8
 STRIDE_MAIN_CMD="$STRIDE_CMD --home $SCRIPT_DIR/state/${STRIDE_NODE_PREFIX}1"
 
 STRIDE_MNEMONIC_1="close soup mirror crew erode defy knock trigger gather eyebrow tent farm gym gloom base lemon sleep weekend rich forget diagram hurt prize fly"
@@ -72,7 +95,6 @@ GAIA_VAL_PREFIX=gval
 GAIA_REV_ACCT=grev1
 GAIA_ADDRESS_PREFIX=cosmos
 GAIA_DENOM=$ATOM_DENOM
-GAIA_IBC_DENOM=$IBC_ATOM_DENOM
 GAIA_RPC_PORT=26557
 GAIA_MAIN_CMD="$GAIA_CMD --home $SCRIPT_DIR/state/${GAIA_NODE_PREFIX}1"
 
@@ -93,7 +115,6 @@ JUNO_VAL_PREFIX=jval
 JUNO_REV_ACCT=jrev1
 JUNO_ADDRESS_PREFIX=juno
 JUNO_DENOM=$JUNO_DENOM
-JUNO_IBC_DENOM=$IBC_JUNO_DENOM
 JUNO_RPC_PORT=26457
 JUNO_MAIN_CMD="$JUNO_CMD --home $SCRIPT_DIR/state/${JUNO_NODE_PREFIX}1"
 
@@ -114,7 +135,6 @@ OSMO_VAL_PREFIX=oval
 OSMO_REV_ACCT=orev1
 OSMO_ADDRESS_PREFIX=osmo
 OSMO_DENOM=$OSMO_DENOM
-OSMO_IBC_DENOM=$IBC_OSMO_DENOM
 OSMO_RPC_PORT=26357
 OSMO_MAIN_CMD="$OSMO_CMD --home $SCRIPT_DIR/state/${OSMO_NODE_PREFIX}1"
 
@@ -135,7 +155,6 @@ STARS_VAL_PREFIX=sgval
 STARS_REV_ACCT=sgrev1
 STARS_ADDRESS_PREFIX=stars
 STARS_DENOM=$STARS_DENOM
-STARS_IBC_DENOM=$IBC_STARS_DENOM
 STARS_RPC_PORT=26257
 STARS_MAIN_CMD="$STARS_CMD --home $SCRIPT_DIR/state/${STARS_NODE_PREFIX}1"
 
@@ -153,14 +172,14 @@ HERMES_EXEC="docker-compose run --rm hermes hermes"
 
 HERMES_STRIDE_ACCT=hrly1
 HERMES_GAIA_ACCT=hrly2
-# HERMES_JUNO_ACCT=hrly3
-# HERMES_OSMO_ACCT=hrly4
+HERMES_JUNO_ACCT=hrly3
+HERMES_OSMO_ACCT=hrly4
 HERMES_STARS_ACCT=hrly5
 
 HERMES_STRIDE_MNEMONIC="alter old invest friend relief slot swear pioneer syrup economy vendor tray focus hedgehog artist legend antenna hair almost donkey spice protect sustain increase"
 HERMES_GAIA_MNEMONIC="resemble accident lake amateur physical jewel taxi nut demand magnet person blanket trip entire awkward fiber usual current index limb lady lady depart train"
-# HERMES_JUNO_MNEMONIC="uphold decorate moon memory taste century work pride force genius width ripple myself year steel ivory type sweet tree ignore danger pudding owner discover"
-# HERMES_OSMO_MNEMONIC="lawn inside color february double myth depart invite miracle nest silver spider spray recall theme loan exotic puzzle uncover dial young earn disagree fee"
+HERMES_JUNO_MNEMONIC="uphold decorate moon memory taste century work pride force genius width ripple myself year steel ivory type sweet tree ignore danger pudding owner discover"
+HERMES_OSMO_MNEMONIC="lawn inside color february double myth depart invite miracle nest silver spider spray recall theme loan exotic puzzle uncover dial young earn disagree fee"
 HERMES_STARS_MNEMONIC="inherit shallow bargain explain fence vocal fury perfect jeans figure festival abstract soldier entry bubble ketchup swim useless doctor thing imitate can shock coin"
 
 # RELAYER
@@ -195,13 +214,11 @@ ICQ_JUNO_MNEMONIC="divorce loop depth announce strategy goddess short cash priva
 ICQ_OSMO_MNEMONIC="mix deal extend cargo office intact illegal cage fabric must upset yellow put any shaft area use piece patrol tobacco village guilt iron program"
 ICQ_STARS_MNEMONIC="absurd uncle wrestle paper cream sample wreck job couch brother antique resist napkin easily deliver arrest original iron rough puppy solid false next section"
 
-DELEGATION_ICA_ADDR='cosmos1sy63lffevueudvvlvh2lf6s387xh9xq72n3fsy6n2gr5hm6u2szs2v0ujm'
-REDEMPTION_ICA_ADDR='cosmos1xmcwu75s8v7s54k79390wc5gwtgkeqhvzegpj0nm2tdwacv47tmqg9ut30'
-WITHDRAWAL_ICA_ADDR='cosmos1x5p8er7e2ne8l54tx33l560l8djuyapny55pksctuguzdc00dj7saqcw2l'
-REVENUE_EOA_ADDR='cosmos1wdplq6qjh2xruc7qqagma9ya665q6qhcwju3ng'
-FEE_ICA_ADDR='cosmos1lkgt5sfshn9shm7hd7chtytkq4mvwvswgmyl0hkacd4rmusu9wwq60cezx'
-GAIA_DELEGATE_VAL_1='cosmosvaloper1pcag0cj4ttxg8l7pcg0q4ksuglswuuedadj7ne'
-GAIA_DELEGATE_VAL_2='cosmosvaloper133lfs9gcpxqj6er3kx605e3v9lqp2pg5syhvsz'
+GAIA_DELEGATE_VAL='cosmosvaloper1pcag0cj4ttxg8l7pcg0q4ksuglswuuedadj7ne'
+GAIA_DELEGATION_ICA_ADDR='cosmos1sy63lffevueudvvlvh2lf6s387xh9xq72n3fsy6n2gr5hm6u2szs2v0ujm'
+GAIA_REDEMPTION_ICA_ADDR='cosmos1xmcwu75s8v7s54k79390wc5gwtgkeqhvzegpj0nm2tdwacv47tmqg9ut30'
+GAIA_WITHDRAWAL_ICA_ADDR='cosmos1x5p8er7e2ne8l54tx33l560l8djuyapny55pksctuguzdc00dj7saqcw2l'
+GAIA_FEE_ICA_ADDR='cosmos1lkgt5sfshn9shm7hd7chtytkq4mvwvswgmyl0hkacd4rmusu9wwq60cezx'
 GAIA_RECEIVER_ACCT='cosmos1g6qdx6kdhpf000afvvpte7hp0vnpzapuyxp8uf'
 
 JUNO_DELEGATE_VAL='junovaloper1pcag0cj4ttxg8l7pcg0q4ksuglswuued3knlr0'
@@ -218,7 +235,6 @@ OSMO_WITHDRAWAL_ICA_ADDR='osmo10arcf5r89cdmppntzkvulc7gfmw5lr66y2m25c937t6ccfzk0
 OSMO_FEE_ICA_ADDR='osmo1n4r77qsmu9chvchtmuqy9cv3s539q87r398l6ugf7dd2q5wgyg9su3wd4g'
 OSMO_RECEIVER_ACCT='osmo1w6wdc2684g9h3xl8nhgwr282tcxx4kl06n4sjl'
 
-
 STARS_DELEGATE_VAL='starsvaloper12ffkl30v0ghtyaezvedazquhtsf4q5ng2c0xaf'
 STARS_DELEGATION_ICA_ADDR="stars1kl6wa99e6hf97xr90m2n04rl0smv842pj9utqyvgyrksrm9aacdqyfc3en"
 STARS_REDEMPTION_ICA_ADDR="stars1x07hv0hxujj6l0mfyynwyuccf8fl27vjup0y8dmyajy9ugae22hqfvmv4e"
@@ -226,6 +242,21 @@ STARS_WITHDRAWAL_ICA_ADDR="stars1x5ndl5p9tjy376a9xmqhw79gz0s678480759cdgaretcgm3
 STARS_FEE_ICA_ADDR="stars1v09y993sku5djvm0rffq0nfsk5rzke4d2vzvny5e6vmq7dz0dehqnwl4ay"
 STARS_RECEIVER_ACCT='stars15dywcmy6gzsc8wfefkrx0c9czlwvwrjenqthyq'
 
+STRIDE_ADDRESS() { 
+  $STRIDE_MAIN_CMD keys show ${STRIDE_VAL_PREFIX}1 --keyring-backend test -a 
+}
+GAIA_ADDRESS() { 
+  $GAIA_MAIN_CMD keys show ${GAIA_VAL_PREFIX}1 --keyring-backend test -a 
+}
+JUNO_ADDRESS() { 
+  $JUNO_MAIN_CMD keys show ${JUNO_VAL_PREFIX}1 --keyring-backend test -a 
+}
+OSMO_ADDRESS() { 
+  $OSMO_MAIN_CMD keys show ${OSMO_VAL_PREFIX}1 --keyring-backend test -a 
+}
+STARS_ADDRESS() { 
+  $STARS_MAIN_CMD keys show ${STARS_VAL_PREFIX}1 --keyring-backend test -a 
+}
 
 CSLEEP() {
   for i in $(seq $1); do

@@ -149,6 +149,20 @@ services:
     restart: always
     command: [ "bash", "start.sh", "stride-gaia" ]
 
+  relayer-juno:
+    image: stridezone:relayer
+    volumes:
+      - ./scripts/state/relayer:/home/relayer/.relayer
+    restart: always
+    command: [ "bash", "start.sh", "stride-juno" ]
+
+  relayer-osmo:
+    image: stridezone:relayer
+    volumes:
+      - ./scripts/state/relayer:/home/relayer/.relayer
+    restart: always
+    command: [ "bash", "start.sh", "stride-osmo" ]
+
   relayer-stars:
     image: stridezone:relayer
     volumes:
