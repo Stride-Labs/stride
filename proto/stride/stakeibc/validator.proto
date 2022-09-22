@@ -18,7 +18,7 @@ message Validator {
   string address = 2 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
 
   enum ValidatorStatus {
-    VALIDATOR_STATUS_ACTIVE_UNSPECIFIED = 0;
+    VALIDATOR_STATUS_ACTIVE = 0;
     VALIDATOR_STATUS_INACTIVE = 1;
   }
 

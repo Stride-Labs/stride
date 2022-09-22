@@ -87,19 +87,19 @@ func (im IBCModule) OnChanOpenAck(
 	ctx.Logger().Info(fmt.Sprintf("Found matching address for chain: %s, address %s, port %s", zoneInfo.ChainId, address, portID))
 
 	// addresses
-	withdrawalAddress, err := icatypes.NewControllerPortID(types.FormatICAAccountOwner(hostChainId, types.ICAAccountType_WITHDRAWAL))
+	withdrawalAddress, err := icatypes.NewControllerPortID(types.FormatICAAccountOwner(hostChainId, types.ICAAccountType_ICA_ACCOUNT_TYPE_WITHDRAWAL))
 	if err != nil {
 		return err
 	}
-	feeAddress, err := icatypes.NewControllerPortID(types.FormatICAAccountOwner(hostChainId, types.ICAAccountType_FEE))
+	feeAddress, err := icatypes.NewControllerPortID(types.FormatICAAccountOwner(hostChainId, types.ICAAccountType_ICA_ACCOUNT_TYPE_FEE))
 	if err != nil {
 		return err
 	}
-	delegationAddress, err := icatypes.NewControllerPortID(types.FormatICAAccountOwner(hostChainId, types.ICAAccountType_DELEGATION))
+	delegationAddress, err := icatypes.NewControllerPortID(types.FormatICAAccountOwner(hostChainId, types.ICAAccountType_ICA_ACCOUNT_TYPE_DELEGATION))
 	if err != nil {
 		return err
 	}
-	redemptionAddress, err := icatypes.NewControllerPortID(types.FormatICAAccountOwner(hostChainId, types.ICAAccountType_REDEMPTION))
+	redemptionAddress, err := icatypes.NewControllerPortID(types.FormatICAAccountOwner(hostChainId, types.ICAAccountType_ICA_ACCOUNT_TYPE_REDEMPTION))
 	if err != nil {
 		return err
 	}
@@ -108,15 +108,15 @@ func (im IBCModule) OnChanOpenAck(
 	switch {
 	// withdrawal address
 	case portID == withdrawalAddress:
-		zoneInfo.WithdrawalAccount = &types.ICAAccount{Address: address, Target: types.ICAAccountType_WITHDRAWAL}
+		zoneInfo.WithdrawalAccount = &types.ICAAccount{Address: address, Target: types.ICAAccountType_ICA_ACCOUNT_TYPE_WITHDRAWAL}
 	// fee address
 	case portID == feeAddress:
-		zoneInfo.FeeAccount = &types.ICAAccount{Address: address, Target: types.ICAAccountType_FEE}
+		zoneInfo.FeeAccount = &types.ICAAccount{Address: address, Target: types.ICAAccountType_ICA_ACCOUNT_TYPE_FEE}
 	// delegation address
 	case portID == delegationAddress:
-		zoneInfo.DelegationAccount = &types.ICAAccount{Address: address, Target: types.ICAAccountType_DELEGATION}
+		zoneInfo.DelegationAccount = &types.ICAAccount{Address: address, Target: types.ICAAccountType_ICA_ACCOUNT_TYPE_DELEGATION}
 	case portID == redemptionAddress:
-		zoneInfo.RedemptionAccount = &types.ICAAccount{Address: address, Target: types.ICAAccountType_REDEMPTION}
+		zoneInfo.RedemptionAccount = &types.ICAAccount{Address: address, Target: types.ICAAccountType_ICA_ACCOUNT_TYPE_REDEMPTION}
 	default:
 		ctx.Logger().Error(fmt.Sprintf("Missing portId: %s", portID))
 	}

@@ -16,37 +16,37 @@ service Query {
     option (google.api.http).get = "/StrideLabs/stride/records/params";
   }
   // Queries a UserRedemptionRecord by id.
-  rpc UserRedemptionRecord(QueryUserRedemptionRecordRequest)
-      returns (QueryUserRedemptionRecordResponse) {
+  rpc UserRedemptionRecord(QueryGetUserRedemptionRecordRequest)
+      returns (QueryGetUserRedemptionRecordResponse) {
     option (google.api.http).get =
         "/Stride-Labs/stride/records/user_redemption_record/{id}";
   }
 
   // Queries a list of UserRedemptionRecord items.
-  rpc UserRedemptionRecordAll(QueryUserRedemptionRecordAllRequest)
-      returns (QueryUserRedemptionRecordAllResponse) {
+  rpc UserRedemptionRecordAll(QueryAllUserRedemptionRecordRequest)
+      returns (QueryAllUserRedemptionRecordResponse) {
     option (google.api.http).get =
         "/Stride-Labs/stride/records/user_redemption_record";
   }
 
   // Queries a list of UserRedemptionRecord items by chainId / userId pair.
-  rpc UserRedemptionRecordForUser(QueryUserRedemptionRecordForUserRequest)
-      returns (QueryUserRedemptionRecordForUserResponse) {
+  rpc UserRedemptionRecordForUser(QueryAllUserRedemptionRecordForUserRequest)
+      returns (QueryAllUserRedemptionRecordForUserResponse) {
     option (google.api.http).get =
-        "/Stride-Labs/stride/records/user_redemption_record_for_user/{chainId}/"
-        "{day}/{address}/{limit}";
+        "/Stride-Labs/stride/records/user_redemption_record_for_user/"
+        "{chain_id}/{day}/{address}/{limit}";
   }
 
   // Queries a EpochUnbondingRecord by id.
-  rpc EpochUnbondingRecord(QueryEpochUnbondingRecordRequest)
-      returns (QueryEpochUnbondingRecordResponse) {
+  rpc EpochUnbondingRecord(QueryGetEpochUnbondingRecordRequest)
+      returns (QueryGetEpochUnbondingRecordResponse) {
     option (google.api.http).get =
-        "/Stride-Labs/stride/records/epoch_unbonding_record/{epochNumber}";
+        "/Stride-Labs/stride/records/epoch_unbonding_record/{epoch_number}";
   }
 
   // Queries a list of EpochUnbondingRecord items.
-  rpc EpochUnbondingRecordAll(QueryEpochUnbondingRecordAllRequest)
-      returns (QueryEpochUnbondingRecordAllResponse) {
+  rpc EpochUnbondingRecordAll(QueryAllEpochUnbondingRecordRequest)
+      returns (QueryAllEpochUnbondingRecordResponse) {
     option (google.api.http).get =
         "/Stride-Labs/stride/records/epoch_unbonding_record";
   }
@@ -54,15 +54,15 @@ service Query {
   // this line is used by starport scaffolding # 2
 
   // Queries a DepositRecord by id.
-  rpc DepositRecord(QueryDepositRecordRequest)
-      returns (QueryDepositRecordResponse) {
+  rpc DepositRecord(QueryGetDepositRecordRequest)
+      returns (QueryGetDepositRecordResponse) {
     option (google.api.http).get =
         "/Stride-Labs/stride/records/deposit_record/{id}";
   }
 
   // Queries a list of DepositRecord items.
-  rpc DepositRecordAll(QueryDepositRecordAllRequest)
-      returns (QueryDepositRecordAllResponse) {
+  rpc DepositRecordAll(QueryAllDepositRecordRequest)
+      returns (QueryAllDepositRecordResponse) {
     option (google.api.http).get = "/Stride-Labs/stride/records/deposit_record";
   }
   // this line is used by starport scaffolding # 2
@@ -77,40 +77,40 @@ message QueryParamsResponse {
   Params params = 1 [ (gogoproto.nullable) = false ];
 }
 
-message QueryDepositRecordRequest { uint64 id = 1; }
+message QueryGetDepositRecordRequest { uint64 id = 1; }
 
-message QueryDepositRecordResponse {
+message QueryGetDepositRecordResponse {
   DepositRecord deposit_record = 1 [ (gogoproto.nullable) = false ];
 }
 
-message QueryDepositRecordAllRequest {
+message QueryAllDepositRecordRequest {
   cosmos.base.query.v1beta1.PageRequest pagination = 1;
 }
 
-message QueryDepositRecordAllResponse {
+message QueryAllDepositRecordResponse {
   repeated DepositRecord deposit_record = 1 [ (gogoproto.nullable) = false ];
   cosmos.base.query.v1beta1.PageResponse pagination = 2;
 }
 
-message QueryUserRedemptionRecordRequest { string id = 1; }
+message QueryGetUserRedemptionRecordRequest { string id = 1; }
 
-message QueryUserRedemptionRecordResponse {
+message QueryGetUserRedemptionRecordResponse {
   UserRedemptionRecord user_redemption_record = 1
       [ (gogoproto.nullable) = false ];
 }
 
-message QueryUserRedemptionRecordAllRequest {
+message QueryAllUserRedemptionRecordRequest {
   cosmos.base.query.v1beta1.PageRequest pagination = 1;
 }
 
-message QueryUserRedemptionRecordAllResponse {
+message QueryAllUserRedemptionRecordResponse {
   repeated UserRedemptionRecord user_redemption_record = 1
       [ (gogoproto.nullable) = false ];
   cosmos.base.query.v1beta1.PageResponse pagination = 2;
 }
 
 // Query UserRedemptionRecords by chainId / userId pair
-message QueryUserRedemptionRecordForUserRequest {
+message QueryAllUserRedemptionRecordForUserRequest {
   string chain_id = 1;
   uint64 day = 2;
   string address = 3;
@@ -118,27 +118,25 @@ message QueryUserRedemptionRecordForUserRequest {
   cosmos.base.query.v1beta1.PageRequest pagination = 5;
 }
 
-message QueryUserRedemptionRecordForUserResponse {
+message QueryAllUserRedemptionRecordForUserResponse {
   repeated UserRedemptionRecord user_redemption_record = 1
       [ (gogoproto.nullable) = false ];
   cosmos.base.query.v1beta1.PageResponse pagination = 2;
 }
 
-message QueryEpochUnbondingRecordRequest { uint64 epoch_number = 1; }
+message QueryGetEpochUnbondingRecordRequest { uint64 epoch_number = 1; }
 
-message QueryEpochUnbondingRecordResponse {
+message QueryGetEpochUnbondingRecordResponse {
   EpochUnbondingRecord epoch_unbonding_record = 1
       [ (gogoproto.nullable) = false ];
 }
 
-message QueryEpochUnbondingRecordAllRequest {
+message QueryAllEpochUnbondingRecordRequest {
   cosmos.base.query.v1beta1.PageRequest pagination = 1;
 }
 
-message QueryEpochUnbondingRecordAllResponse {
+message QueryAllEpochUnbondingRecordResponse {
   repeated EpochUnbondingRecord epoch_unbonding_record = 1
       [ (gogoproto.nullable) = false ];
   cosmos.base.query.v1beta1.PageResponse pagination = 2;
 }
-
-// this line is used by starport scaffolding # 3

@@ -27,11 +27,11 @@ func (s *KeeperTestSuite) SetupSweepUnbondedTokens() SweepUnbondedTokensTestCase
 	}
 	gaiaDelegationAccount := stakeibc.ICAAccount{
 		Address: "cosmos_DELEGATION",
-		Target:  stakeibc.ICAAccountType_DELEGATION,
+		Target:  stakeibc.ICAAccountType_ICA_ACCOUNT_TYPE_DELEGATION,
 	}
 	gaiaRedemptionAccount := stakeibc.ICAAccount{
 		Address: "cosmos_REDEMPTION",
-		Target:  stakeibc.ICAAccountType_REDEMPTION,
+		Target:  stakeibc.ICAAccountType_ICA_ACCOUNT_TYPE_REDEMPTION,
 	}
 	osmoValidators := []*stakeibc.Validator{
 		{
@@ -42,11 +42,11 @@ func (s *KeeperTestSuite) SetupSweepUnbondedTokens() SweepUnbondedTokensTestCase
 	}
 	osmoDelegationAccount := stakeibc.ICAAccount{
 		Address: "osmo_DELEGATION",
-		Target:  stakeibc.ICAAccountType_DELEGATION,
+		Target:  stakeibc.ICAAccountType_ICA_ACCOUNT_TYPE_DELEGATION,
 	}
 	osmoRedemptionAccount := stakeibc.ICAAccount{
 		Address: "osmo_REDEMPTION",
-		Target:  stakeibc.ICAAccountType_REDEMPTION,
+		Target:  stakeibc.ICAAccountType_ICA_ACCOUNT_TYPE_REDEMPTION,
 	}
 	hostZones := []stakeibc.HostZone{
 		{
@@ -83,13 +83,13 @@ func (s *KeeperTestSuite) SetupSweepUnbondedTokens() SweepUnbondedTokensTestCase
 				{
 					HostZoneId:        HostChainId,
 					NativeTokenAmount: 1_000_000,
-					Status:            recordtypes.HostZoneUnbonding_BONDED,
+					Status:            recordtypes.HostZoneUnbonding_STATUS_BONDED,
 					UnbondingTime:     unbondingTime,
 				},
 				{
 					HostZoneId:        OsmoChainId,
 					NativeTokenAmount: 1_000_000,
-					Status:            recordtypes.HostZoneUnbonding_UNBONDED,
+					Status:            recordtypes.HostZoneUnbonding_STATUS_UNBONDED,
 					UnbondingTime:     unbondingTime,
 				},
 			},
@@ -100,13 +100,13 @@ func (s *KeeperTestSuite) SetupSweepUnbondedTokens() SweepUnbondedTokensTestCase
 				{
 					HostZoneId:        HostChainId,
 					NativeTokenAmount: 2_000_000,
-					Status:            recordtypes.HostZoneUnbonding_UNBONDED,
+					Status:            recordtypes.HostZoneUnbonding_STATUS_UNBONDED,
 					UnbondingTime:     unbondingTime,
 				},
 				{
 					HostZoneId:        OsmoChainId,
 					NativeTokenAmount: 2_000_000,
-					Status:            recordtypes.HostZoneUnbonding_UNBONDED,
+					Status:            recordtypes.HostZoneUnbonding_STATUS_UNBONDED,
 					UnbondingTime:     unbondingTime,
 				},
 			},
@@ -117,12 +117,12 @@ func (s *KeeperTestSuite) SetupSweepUnbondedTokens() SweepUnbondedTokensTestCase
 				{
 					HostZoneId:        HostChainId,
 					NativeTokenAmount: 5_000_000,
-					Status:            recordtypes.HostZoneUnbonding_TRANSFERRED,
+					Status:            recordtypes.HostZoneUnbonding_STATUS_TRANSFERRED,
 				},
 				{
 					HostZoneId:        OsmoChainId,
 					NativeTokenAmount: 5_000_000,
-					Status:            recordtypes.HostZoneUnbonding_BONDED,
+					Status:            recordtypes.HostZoneUnbonding_STATUS_BONDED,
 				},
 			},
 		},

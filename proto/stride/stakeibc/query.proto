@@ -20,24 +20,24 @@ service Query {
     option (google.api.http).get = "/Stridelabs/stride/stakeibc/params";
   }
   // Queries a Validator by host zone.
-  rpc Validators(QueryValidatorsRequest)
-      returns (QueryValidatorsResponse) {
+  rpc Validators(QueryGetValidatorsRequest)
+      returns (QueryGetValidatorsResponse) {
     option (google.api.http).get =
         "/Stride-Labs/stride/stakeibc/validators/{chain_id}";
   }
   // Queries a ICAAccount by index.
-  rpc ICAAccount(QueryICAAccountRequest)
-      returns (QueryICAAccountResponse) {
+  rpc ICAAccount(QueryGetICAAccountRequest)
+      returns (QueryGetICAAccountResponse) {
     option (google.api.http).get = "/Stride-Labs/stride/stakeibc/ica_account";
   }
   // Queries a HostZone by id.
-  rpc HostZone(QueryHostZoneRequest) returns (QueryHostZoneResponse) {
+  rpc HostZone(QueryGetHostZoneRequest) returns (QueryGetHostZoneResponse) {
     option (google.api.http).get =
         "/Stride-Labs/stride/stakeibc/host_zone/{chain_id}";
   }
 
   // Queries a list of HostZone items.
-  rpc HostZoneAll(QueryHostZoneAllRequest) returns (QueryHostZoneAllResponse) {
+  rpc HostZoneAll(QueryAllHostZoneRequest) returns (QueryAllHostZoneResponse) {
     option (google.api.http).get = "/Stride-Labs/stride/stakeibc/host_zone";
   }
 
@@ -53,15 +53,15 @@ service Query {
       returns (QueryInterchainAccountFromAddressResponse);
 
   // Queries a EpochTracker by index.
-  rpc EpochTracker(QueryEpochTrackerRequest)
-      returns (QueryEpochTrackerResponse) {
+  rpc EpochTracker(QueryGetEpochTrackerRequest)
+      returns (QueryGetEpochTrackerResponse) {
     option (google.api.http).get =
-        "/Stride-Labs/stride/stakeibc/epoch_tracker/{epochIdentifier}";
+        "/Stride-Labs/stride/stakeibc/epoch_tracker/{epoch_identifier}";
   }
 
   // Queries a list of EpochTracker items.
-  rpc EpochTrackerAll(QueryEpochTrackerAllRequest)
-      returns (QueryEpochTrackerAllResponse) {
+  rpc EpochTrackerAll(QueryAllEpochTrackerRequest)
+      returns (QueryAllEpochTrackerResponse) {
     option (google.api.http).get = "/Stride-Labs/stride/stakeibc/epoch_tracker";
   }
 
@@ -91,26 +91,26 @@ message QueryParamsResponse {
   Params params = 1 [ (gogoproto.nullable) = false ];
 }
 
-message QueryValidatorsRequest { string chain_id = 1; }
+message QueryGetValidatorsRequest { string chain_id = 1; }
 
-message QueryValidatorsResponse { repeated Validator validators = 1; }
+message QueryGetValidatorsResponse { repeated Validator validators = 1; }
 
-message QueryICAAccountRequest {}
+message QueryGetICAAccountRequest {}
 
-message QueryICAAccountResponse {
+message QueryGetICAAccountResponse {
   ICAAccount ica_account = 1 [ (gogoproto.nullable) = false ];
 }
-message QueryHostZoneRequest { string chain_id = 1; }
+message QueryGetHostZoneRequest { string chain_id = 1; }
 
-message QueryHostZoneResponse {
+message QueryGetHostZoneResponse {
   HostZone host_zone = 1 [ (gogoproto.nullable) = false ];
 }
 
-message QueryHostZoneAllRequest {
+message QueryAllHostZoneRequest {
   cosmos.base.query.v1beta1.PageRequest pagination = 1;
 }
 
-message QueryHostZoneAllResponse {
+message QueryAllHostZoneResponse {
   repeated HostZone host_zone = 1 [ (gogoproto.nullable) = false ];
   cosmos.base.query.v1beta1.PageResponse pagination = 2;
 }
@@ -119,17 +119,17 @@ message QueryModuleAddressRequest { string name = 1; }
 
 message QueryModuleAddressResponse { string addr = 1; }
 
-message QueryEpochTrackerRequest { string epoch_identifier = 1; }
+message QueryGetEpochTrackerRequest { string epoch_identifier = 1; }
 
-message QueryEpochTrackerResponse {
+message QueryGetEpochTrackerResponse {
   EpochTracker epoch_tracker = 1 [ (gogoproto.nullable) = false ];
 }
 
-message QueryEpochTrackerAllRequest {
+message QueryAllEpochTrackerRequest {
   cosmos.base.query.v1beta1.PageRequest pagination = 1;
 }
 
-message QueryEpochTrackerAllResponse {
+message QueryAllEpochTrackerResponse {
   repeated EpochTracker epoch_tracker = 1 [ (gogoproto.nullable) = false ];
   cosmos.base.query.v1beta1.PageResponse pagination = 2;
 }

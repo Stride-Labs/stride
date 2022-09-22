@@ -56,15 +56,15 @@ func (s *KeeperTestSuite) SetupWithdrawalBalanceCallbackTest() WithdrawalBalance
 		ConnectionId: ibctesting.FirstConnectionID,
 		DelegationAccount: &stakeibctypes.ICAAccount{
 			Address: delegationAddress,
-			Target:  stakeibctypes.ICAAccountType_DELEGATION,
+			Target:  stakeibctypes.ICAAccountType_ICA_ACCOUNT_TYPE_DELEGATION,
 		},
 		WithdrawalAccount: &stakeibctypes.ICAAccount{
 			Address: withdrawalAddress,
-			Target:  stakeibctypes.ICAAccountType_WITHDRAWAL,
+			Target:  stakeibctypes.ICAAccountType_ICA_ACCOUNT_TYPE_WITHDRAWAL,
 		},
 		FeeAccount: &stakeibctypes.ICAAccount{
 			Address: feeAddress,
-			Target:  stakeibctypes.ICAAccountType_FEE,
+			Target:  stakeibctypes.ICAAccountType_ICA_ACCOUNT_TYPE_FEE,
 		},
 	}
 

@@ -58,7 +58,7 @@ func (s *KeeperTestSuite) SetupValidatorICQCallback() ValidatorICQCallbackTestCa
 		ConnectionId: ibctesting.FirstConnectionID,
 		DelegationAccount: &stakeibctypes.ICAAccount{
 			Address: "cosmos_DELEGATION",
-			Target:  stakeibctypes.ICAAccountType_DELEGATION,
+			Target:  stakeibctypes.ICAAccountType_ICA_ACCOUNT_TYPE_DELEGATION,
 		},
 		Validators: []*stakeibctypes.Validator{
 			{

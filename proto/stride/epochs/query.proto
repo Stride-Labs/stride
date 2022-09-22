@@ -11,7 +11,7 @@ option go_package = "github.com/Stride-Labs/stride/x/epochs/types";
 // Query defines the gRPC querier service.
 service Query {
   // EpochInfos provide running epochInfos
-  rpc EpochInfos(QueryEpochInfosRequest) returns (QueryEpochInfosResponse) {
+  rpc EpochInfos(QueryEpochsInfoRequest) returns (QueryEpochsInfoResponse) {
     option (google.api.http).get = "/Stridelabs/stride/epochs";
   }
   // CurrentEpoch provide current epoch of specified identifier
@@ -25,11 +25,11 @@ service Query {
   }
 }
 
-message QueryEpochInfosRequest {
+message QueryEpochsInfoRequest {
   cosmos.base.query.v1beta1.PageRequest pagination = 1;
 }
 
-message QueryEpochInfosResponse {
+message QueryEpochsInfoResponse {
   repeated EpochInfo epochs = 1 [ (gogoproto.nullable) = false ];
   cosmos.base.query.v1beta1.PageResponse pagination = 2;
 }

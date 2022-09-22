@@ -37,7 +37,7 @@ func (s *KeeperTestSuite) SetupReinvestCallback() ReinvestCallbackTestCase {
 	hostZone := stakeibc.HostZone{
 		ChainId:        HostChainId,
 		HostDenom:      Atom,
-		IBCDenom:       IbcAtom,
+		IbcDenom:       IbcAtom,
 		RedemptionRate: sdk.NewDec(1.0),
 	}
 	expectedNewDepositRecord := recordtypes.DepositRecord{
@@ -45,8 +45,8 @@ func (s *KeeperTestSuite) SetupReinvestCallback() ReinvestCallbackTestCase {
 		DepositEpochNumber: 1,
 		HostZoneId:         HostChainId,
 		Amount:             reinvestAmt,
-		Status:             recordtypes.DepositRecord_STAKE,
-		Source:             recordtypes.DepositRecord_WITHDRAWAL_ICA,
+		Status:             recordtypes.DepositRecord_STATUS_STAKE,
+		Source:             recordtypes.DepositRecord_SOURCE_WITHDRAWAL_ICA,
 	}
 	epochTracker := stakeibc.EpochTracker{
 		EpochIdentifier: epochtypes.STRIDE_EPOCH,

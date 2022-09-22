@@ -34,12 +34,12 @@ func (s *KeeperTestSuite) SetupCleanupEpochUnbondingRecords() CleanupEpochUnbond
 				{
 					HostZoneId:        HostChainId,
 					NativeTokenAmount: 1_000_000,
-					Status:            recordtypes.HostZoneUnbonding_TRANSFERRED,
+					Status:            recordtypes.HostZoneUnbonding_STATUS_TRANSFERRED,
 				},
 				{
 					HostZoneId:        OsmoChainId,
 					NativeTokenAmount: 1_000_000,
-					Status:            recordtypes.HostZoneUnbonding_UNBONDED,
+					Status:            recordtypes.HostZoneUnbonding_STATUS_UNBONDED,
 				},
 			},
 		},
@@ -49,12 +49,12 @@ func (s *KeeperTestSuite) SetupCleanupEpochUnbondingRecords() CleanupEpochUnbond
 				{
 					HostZoneId:        HostChainId,
 					NativeTokenAmount: 0,
-					Status:            recordtypes.HostZoneUnbonding_BONDED,
+					Status:            recordtypes.HostZoneUnbonding_STATUS_BONDED,
 				},
 				{
 					HostZoneId:        OsmoChainId,
 					NativeTokenAmount: 1_000_000,
-					Status:            recordtypes.HostZoneUnbonding_TRANSFERRED,
+					Status:            recordtypes.HostZoneUnbonding_STATUS_TRANSFERRED,
 				},
 			},
 		},
@@ -64,12 +64,12 @@ func (s *KeeperTestSuite) SetupCleanupEpochUnbondingRecords() CleanupEpochUnbond
 				{
 					HostZoneId:        HostChainId,
 					NativeTokenAmount: 0,
-					Status:            recordtypes.HostZoneUnbonding_UNBONDED,
+					Status:            recordtypes.HostZoneUnbonding_STATUS_UNBONDED,
 				},
 				{
 					HostZoneId:        OsmoChainId,
 					NativeTokenAmount: 0,
-					Status:            recordtypes.HostZoneUnbonding_BONDED,
+					Status:            recordtypes.HostZoneUnbonding_STATUS_BONDED,
 				},
 			},
 		},

@@ -69,7 +69,7 @@ func (k msgServer) RegisterHostZone(goCtx context.Context, msg *types.MsgRegiste
 		ChainId:           chainId,
 		ConnectionId:      msg.ConnectionId,
 		Bech32Prefix:      msg.Bech32Prefix,
-		IBCDenom:          msg.IbcDenom,
+		IbcDenom:          msg.IbcDenom,
 		HostDenom:         msg.HostDenom,
 		TransferChannelId: msg.TransferChannelId,
 		// Start exchange rate at 1 upon registration
@@ -83,7 +83,7 @@ func (k msgServer) RegisterHostZone(goCtx context.Context, msg *types.MsgRegiste
 
 	// generate delegate account
 	// NOTE: in the future, if we implement proxy governance, we'll need many more delegate accounts
-	delegateAccount := types.FormatICAAccountOwner(chainId, types.ICAAccountType_DELEGATION)
+	delegateAccount := types.FormatICAAccountOwner(chainId, types.ICAAccountType_ICA_ACCOUNT_TYPE_DELEGATION)
 	if err := k.ICAControllerKeeper.RegisterInterchainAccount(ctx, zone.ConnectionId, delegateAccount); err != nil {
 		errMsg := fmt.Sprintf("unable to register delegation account, err: %s", err.Error())
 		k.Logger(ctx).Error(errMsg)
@@ -91,7 +91,7 @@ func (k msgServer) RegisterHostZone(goCtx context.Context, msg *types.MsgRegiste
 	}
 
 	// generate fee account
-	feeAccount := types.FormatICAAccountOwner(chainId, types.ICAAccountType_FEE)
+	feeAccount := types.FormatICAAccountOwner(chainId, types.ICAAccountType_ICA_ACCOUNT_TYPE_FEE)
 	if err := k.ICAControllerKeeper.RegisterInterchainAccount(ctx, zone.ConnectionId, feeAccount); err != nil {
 		errMsg := fmt.Sprintf("unable to register fee account, err: %s", err.Error())
 		k.Logger(ctx).Error(errMsg)
@@ -99,7 +99,7 @@ func (k msgServer) RegisterHostZone(goCtx context.Context, msg *types.MsgRegiste
 	}
 
 	// generate withdrawal account
-	withdrawalAccount := types.FormatICAAccountOwner(chainId, types.ICAAccountType_WITHDRAWAL)
+	withdrawalAccount := types.FormatICAAccountOwner(chainId, types.ICAAccountType_ICA_ACCOUNT_TYPE_WITHDRAWAL)
 	if err := k.ICAControllerKeeper.RegisterInterchainAccount(ctx, zone.ConnectionId, withdrawalAccount); err != nil {
 		errMsg := fmt.Sprintf("unable to register withdrawal account, err: %s", err.Error())
 		k.Logger(ctx).Error(errMsg)
@@ -107,7 +107,7 @@ func (k msgServer) RegisterHostZone(goCtx context.Context, msg *types.MsgRegiste
 	}
 
 	// generate redemption account
-	redemptionAccount := types.FormatICAAccountOwner(chainId, types.ICAAccountType_REDEMPTION)
+	redemptionAccount := types.FormatICAAccountOwner(chainId, types.ICAAccountType_ICA_ACCOUNT_TYPE_REDEMPTION)
 	if err := k.ICAControllerKeeper.RegisterInterchainAccount(ctx, zone.ConnectionId, redemptionAccount); err != nil {
 		errMsg := fmt.Sprintf("unable to register redemption account, err: %s", err.Error())
 		k.Logger(ctx).Error(errMsg)
@@ -131,7 +131,7 @@ func (k msgServer) RegisterHostZone(goCtx context.Context, msg *types.MsgRegiste
 		StTokenAmount:     0,
 		Denom:             zone.HostDenom,
 		HostZoneId:        zone.ChainId,
-		Status:            recordstypes.HostZoneUnbonding_BONDED,
+		Status:            recordstypes.HostZoneUnbonding_STATUS_BONDED,
 	}
 	updatedEpochUnbondingRecord, success := k.RecordsKeeper.AddHostZoneToEpochUnbondingRecord(ctx, epochUnbondingRecord.EpochNumber, chainId, hostZoneUnbonding)
 	if !success {
@@ -151,7 +151,7 @@ func (k msgServer) RegisterHostZone(goCtx context.Context, msg *types.MsgRegiste
 		Amount:             0,
 		Denom:              zone.HostDenom,
 		HostZoneId:         zone.ChainId,
-		Status:             recordstypes.DepositRecord_TRANSFER,
+		Status:             recordstypes.DepositRecord_STATUS_TRANSFER,
 		DepositEpochNumber: strideEpochTracker.EpochNumber,
 	}
 	k.RecordsKeeper.AppendDepositRecord(ctx, depositRecord)

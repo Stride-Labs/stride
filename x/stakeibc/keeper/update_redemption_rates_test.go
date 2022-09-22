@@ -31,7 +31,7 @@ func (s *KeeperTestSuite) SetupUpdateRedemptionRates(
 	toBeStakedDepositRecord := recordtypes.DepositRecord{
 		HostZoneId: "GAIA",
 		Amount:     int64(undelegatedBal),
-		Status:     recordtypes.DepositRecord_STAKE,
+		Status:     recordtypes.DepositRecord_STATUS_STAKE,
 	}
 	s.App.RecordsKeeper.AppendDepositRecord(s.Ctx(), toBeStakedDepositRecord)
 
@@ -40,7 +40,7 @@ func (s *KeeperTestSuite) SetupUpdateRedemptionRates(
 	toBeTransferedDepositRecord := recordtypes.DepositRecord{
 		HostZoneId: "GAIA",
 		Amount:     int64(justDepositedBal),
-		Status:     recordtypes.DepositRecord_TRANSFER,
+		Status:     recordtypes.DepositRecord_STATUS_TRANSFER,
 	}
 	s.App.RecordsKeeper.AppendDepositRecord(s.Ctx(), toBeTransferedDepositRecord)
 

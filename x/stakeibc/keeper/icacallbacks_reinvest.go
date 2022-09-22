@@ -73,8 +73,8 @@ func ReinvestCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ack
 		Amount:             amount.Int64(),
 		Denom:              denom,
 		HostZoneId:         reinvestCallback.HostZoneId,
-		Status:             recordstypes.DepositRecord_STAKE,
-		Source:             recordstypes.DepositRecord_WITHDRAWAL_ICA,
+		Status:             recordstypes.DepositRecord_STATUS_STAKE,
+		Source:             recordstypes.DepositRecord_SOURCE_WITHDRAWAL_ICA,
 		DepositEpochNumber: epochNumber,
 	}
 	k.RecordsKeeper.AppendDepositRecord(ctx, record)

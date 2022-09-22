@@ -30,7 +30,7 @@ func (k msgServer) LiquidStake(goCtx context.Context, msg *types.MsgLiquidStake)
 	sender, _ := sdk.AccAddressFromBech32(msg.Creator)
 	// get the coins to send, they need to be in the format {amount}{denom}
 	// is safe. The converse is not true.
-	ibcDenom := hostZone.GetIBCDenom()
+	ibcDenom := hostZone.GetIbcDenom()
 	coinString := cast.ToString(msg.Amount) + ibcDenom
 	inCoin, err := sdk.ParseCoinNormalized(coinString)
 	if err != nil {

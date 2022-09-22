@@ -44,11 +44,11 @@ func (s *KeeperTestSuite) SetupRedemptionCallback() RedemptionCallbackTestCase {
 		Id: recordId2,
 	}
 
-	// the hostZoneUnbonding should have HostZoneUnbonding_UNBONDED - meaning unbonding has completed, but the tokens
+	// the hostZoneUnbonding should have HostZoneUnbonding_STATUS_UNBONDED - meaning unbonding has completed, but the tokens
 	// have not yet been transferred to the redemption account
 	hostZoneUnbonding := recordtypes.HostZoneUnbonding{
 		HostZoneId:            HostChainId,
-		Status:                recordtypes.HostZoneUnbonding_UNBONDED,
+		Status:                recordtypes.HostZoneUnbonding_STATUS_UNBONDED,
 		UserRedemptionRecords: []string{recordId1, recordId2},
 	}
 
@@ -59,7 +59,7 @@ func (s *KeeperTestSuite) SetupRedemptionCallback() RedemptionCallbackTestCase {
 	hostZone := stakeibc.HostZone{
 		ChainId:        HostChainId,
 		HostDenom:      Atom,
-		IBCDenom:       IbcAtom,
+		IbcDenom:       IbcAtom,
 		RedemptionRate: sdk.NewDec(1.0),
 	}
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx(), hostZone)
@@ -107,7 +107,7 @@ func (s *KeeperTestSuite) TestRedemptionCallback_Successful() {
 		for _, hzu := range epochUnbondingRecord.HostZoneUnbondings {
 			// check that the status is transferred
 			if hzu.HostZoneId == HostChainId {
-				s.Require().Equal(recordtypes.HostZoneUnbonding_TRANSFERRED, hzu.Status, "host zone unbonding status is TRANSFERRED")
+				s.Require().Equal(recordtypes.HostZoneUnbonding_STATUS_TRANSFERRED, hzu.Status, "host zone unbonding status is TRANSFERRED")
 			}
 		}
 	}
@@ -121,7 +121,7 @@ func (s *KeeperTestSuite) checkRedemptionStateIfCallbackFailed(tc RedemptionCall
 		s.Require().True(found, "epoch unbonding record found")
 		for _, hzu := range epochUnbondingRecord.HostZoneUnbondings {
 			// check that the status is NOT transferred
-			s.Require().Equal(recordtypes.HostZoneUnbonding_UNBONDED, hzu.Status, "host zone unbonding status is NOT TRANSFERRED (UNBONDED)")
+			s.Require().Equal(recordtypes.HostZoneUnbonding_STATUS_UNBONDED, hzu.Status, "host zone unbonding status is NOT TRANSFERRED (UNBONDED)")
 		}
 	}
 }

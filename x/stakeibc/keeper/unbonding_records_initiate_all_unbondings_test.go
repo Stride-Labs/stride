@@ -36,7 +36,7 @@ func (s *KeeperTestSuite) SetupInitiateAllHostZoneUnbondings() InitiateAllHostZo
 	}
 	gaiaDelegationAccount := stakeibc.ICAAccount{
 		Address: gaiaDelegationAddr,
-		Target:  stakeibc.ICAAccountType_DELEGATION,
+		Target:  stakeibc.ICAAccountType_ICA_ACCOUNT_TYPE_DELEGATION,
 	}
 	osmoValidators := []*stakeibc.Validator{
 		{
@@ -47,7 +47,7 @@ func (s *KeeperTestSuite) SetupInitiateAllHostZoneUnbondings() InitiateAllHostZo
 	}
 	osmoDelegationAccount := stakeibc.ICAAccount{
 		Address: osmoDelegationAddr,
-		Target:  stakeibc.ICAAccountType_DELEGATION,
+		Target:  stakeibc.ICAAccountType_ICA_ACCOUNT_TYPE_DELEGATION,
 	}
 	hostZones := []stakeibc.HostZone{
 		{
@@ -78,14 +78,14 @@ func (s *KeeperTestSuite) SetupInitiateAllHostZoneUnbondings() InitiateAllHostZo
 			StTokenAmount:     1_900_000,
 			NativeTokenAmount: 2_000_000,
 			Denom:             Atom,
-			Status:            recordtypes.HostZoneUnbonding_BONDED,
+			Status:            recordtypes.HostZoneUnbonding_STATUS_BONDED,
 		},
 		{
 			HostZoneId:        OsmoChainId,
 			StTokenAmount:     2_800_000,
 			NativeTokenAmount: 3_000_000,
 			Denom:             Osmo,
-			Status:            recordtypes.HostZoneUnbonding_BONDED,
+			Status:            recordtypes.HostZoneUnbonding_STATUS_BONDED,
 		},
 	}
 	epochUnbondingRecords := []recordtypes.EpochUnbondingRecord{}
