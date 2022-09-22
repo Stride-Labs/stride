@@ -12,7 +12,7 @@ mkdir -p $SCRIPT_DIR/logs
 HERMES_LOGS=$SCRIPT_DIR/logs/hermes.log
 ICQ_LOGS=$SCRIPT_DIR/logs/icq.log
 
-HOST_CHAINS=(JUNO)
+HOST_CHAINS=(GAIA)
 
 # Initialize the state for each chain
 for chain_id in STRIDE ${HOST_CHAINS[@]}; do
@@ -51,4 +51,4 @@ for chain_id in ${HOST_CHAINS[@]}; do
     docker-compose logs -f relayer-${chain_name} | sed -r -u "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2})?)?[mGK]//g" >> ${LOGS}/relayer-${chain_name}.log 2>&1 &
 done
 
-$SCRIPT_DIR/create_logs.sh &
+$SCRIPT_DIR/create_logs.sh ${HOST_CHAINS[@]} &

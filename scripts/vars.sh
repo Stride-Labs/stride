@@ -280,3 +280,18 @@ WAIT_FOR_BLOCK() {
 WAIT_FOR_STRING() {
   ( tail -f -n0 $1 & ) | grep -q "$2"
 }
+
+GET_VAL_ADDR() {
+  chain_id=$1
+  val_index=$2
+
+  MAIN_CMD=$(GET_VAR_VALUE ${chain_id}_MAIN_CMD)
+  $MAIN_CMD q staking validators | grep ${chain_id}_${val_index} -A 5 | grep operator | awk '{print $2}'
+}
+
+GET_ICA_ADDR() {
+  chain_id="$1"
+  ica_type="$2" #delegation, fee, redemption, or withdrawal
+
+  $STRIDE_MAIN_CMD q stakeibc show-host-zone $chain_id | grep ${ica_type}Account -A 1 | grep address | awk '{print $2}'
+}
