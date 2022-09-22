@@ -15,11 +15,10 @@ ICQ_LOGS=$SCRIPT_DIR/logs/icq.log
 # Initialize the state for stride/gaia and relayers
 sh ${SCRIPT_DIR}/init_chain.sh STRIDE
 sh ${SCRIPT_DIR}/init_chain.sh GAIA
-# sh ${SCRIPT_DIR}/init_chain.sh JUNO
-# sh ${SCRIPT_DIR}/init_chain.sh OSMO
-sh ${SCRIPT_DIR}/init_chain.sh STARS
+sh ${SCRIPT_DIR}/init_chain.sh JUNO
+sh ${SCRIPT_DIR}/init_chain.sh OSMO
 
-HOST_CHAINS=(GAIA STARS) #JUNO OSMO 
+HOST_CHAINS=(GAIA JUNO OSMO)
 sh ${SCRIPT_DIR}/start_chain.sh STRIDE ${HOST_CHAINS[@]}
 sh ${SCRIPT_DIR}/init_relayers.sh STRIDE ${HOST_CHAINS[@]}
 sh ${SCRIPT_DIR}/create_channels.sh ${HOST_CHAINS[@]}
@@ -48,6 +47,7 @@ done
 echo "Starting go relayers..."
 for chain_id in ${HOST_CHAINS[@]}; do
     chain_name=$(printf "$chain_id" | awk '{ print tolower($0) }')
+    
     docker-compose up -d relayer-${chain_name}
     docker-compose logs -f relayer-${chain_name} | sed -r -u "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2})?)?[mGK]//g" >> ${LOGS}/relayer-${chain_name}.log 2>&1 &
 done
