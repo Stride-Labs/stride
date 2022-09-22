@@ -240,6 +240,15 @@ func (k Keeper) InitiateAllHostZoneUnbondings(ctx sdk.Context, dayNumber uint64)
 				continue
 			}
 			successfulUnbondings = append(successfulUnbondings, hostZone.ChainId)
+			// mark the HZU as PENDING
+			hostZoneUnbonding.Status = recordstypes.HostZoneUnbonding_PENDING
+			// save the updated hzu on the epoch unbonding record
+			epochUnbondingRecord, success := k.RecordsKeeper.AddHostZoneToEpochUnbondingRecord(ctx, epochUnbondingRecord.EpochNumber, hostZone.ChainId, hostZoneUnbonding)
+			if !success {
+				errMsg := fmt.Sprintf("Could not add host zone to epoch unbonding record | %s", err.Error())
+				k.Logger(ctx).Error(errMsg)
+				continue
+			}
 		}
 	}
 	return success, successfulUnbondings, failedUnbondings
@@ -311,6 +320,16 @@ func (k Keeper) SweepAllUnbondedTokensForHostZone(ctx sdk.Context, hostZone type
 			nativeTokenAmount, err := cast.ToInt64E(hostZoneUnbonding.NativeTokenAmount)
 			if err != nil {
 				errMsg := fmt.Sprintf("Could not convert native token amount to int64 | %s", err.Error())
+				k.Logger(ctx).Error(errMsg)
+				continue
+			}
+			// TODO: should we move this down to the ICA call site?
+			// mark the HZU as PENDING
+			hostZoneUnbonding.Status = recordstypes.HostZoneUnbonding_PENDING
+			// save the updated hzu on the epoch unbonding record
+			epochUnbondingRecord, success := k.RecordsKeeper.AddHostZoneToEpochUnbondingRecord(ctx, epochUnbondingRecord.EpochNumber, hostZone.ChainId, hostZoneUnbonding)
+			if !success {
+				errMsg := fmt.Sprintf("Could not add host zone to epoch unbonding record | %s", err.Error())
 				k.Logger(ctx).Error(errMsg)
 				continue
 			}
