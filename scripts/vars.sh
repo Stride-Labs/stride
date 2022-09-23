@@ -184,7 +184,10 @@ HERMES_STARS_MNEMONIC="inherit shallow bargain explain fence vocal fury perfect 
 
 # RELAYER
 RELAYER_CMD="$SCRIPT_DIR/../build/relayer --home $STATE/relayer"
-RELAYER_EXEC="docker-compose run --rm relayer rly"
+RELAYER_GAIA_EXEC="docker-compose run --rm relayer-gaia"
+RELAYER_JUNO_EXEC="docker-compose run --rm relayer-juno"
+RELAYER_OSMO_EXEC="docker-compose run --rm relayer-osmo"
+RELAYER_STARS_EXEC="docker-compose run --rm relayer-stars"
 
 RELAYER_STRIDE_ACCT=rly1
 RELAYER_GAIA_ACCT=rly2

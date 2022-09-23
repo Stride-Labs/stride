@@ -18,7 +18,7 @@ mkdir -p $STATE/relayer/config
 
 cp ${SCRIPT_DIR}/config/icq_config.yaml $STATE/icq/config.yaml
 cp ${SCRIPT_DIR}/config/hermes_config.toml $STATE/hermes/config.toml
-cp ${SCRIPT_DIR}/config/relayer_config_with_channels.yaml $STATE/relayer/config/config.yaml
+cp ${SCRIPT_DIR}/config/relayer_config.yaml $STATE/relayer/config/config.yaml
 
 echo "Adding Hermes keys"
 TMP_MNEMONICS=${SCRIPT_DIR}/state/mnemonic.txt 
