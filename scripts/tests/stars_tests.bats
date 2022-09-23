@@ -95,7 +95,7 @@ setup() {
   str1_balance_stars=$($STRIDE_MAIN_CMD q bank balances $(STRIDE_ADDRESS) --denom $IBC_STARS_DENOM | GETBAL)
   stars1_balance_stars=$($STARS_MAIN_CMD q bank balances $(STARS_ADDRESS) --denom ustars | GETBAL)
   # do IBC transfer
-  $STRIDE_MAIN_CMD tx ibc-transfer transfer transfer channel-1 $(STARS_ADDRESS) 3000ustrd --from val1 --chain-id STRIDE -y --keyring-backend test #&
+  $STRIDE_MAIN_CMD tx ibc-transfer transfer transfer channel-3 $(STARS_ADDRESS) 3000ustrd --from val1 --chain-id STRIDE -y --keyring-backend test #&
   $STARS_MAIN_CMD tx ibc-transfer transfer transfer channel-0 $(STRIDE_ADDRESS) 3000ustars --from sgval1 --chain-id STARS -y --keyring-backend test #&
   WAIT_FOR_BLOCK $STRIDE_LOGS 8
   # get new balances
@@ -140,7 +140,7 @@ setup() {
 # check that tokens were transferred to STARS
 @test "[INTEGRATION-BASIC-STARS] tokens were transferred to STARS after liquid staking" {
   # initial balance of delegation ICA
-  initial_delegation_ica_bal=$($STARS_MAIN_CMD q bank balances $() --denom ustars | GETBAL)
+  initial_delegation_ica_bal=$($STARS_MAIN_CMD q bank balances $(GET_ICA_ADDR STARS delegation) --denom ustars | GETBAL)
   WAIT_FOR_STRING $STRIDE_LOGS '\[IBC-TRANSFER\] success to STARS'
   WAIT_FOR_BLOCK $STRIDE_LOGS 2
   # get the new delegation ICA balance
