@@ -99,6 +99,7 @@ func (s *KeeperTestSuite) createNewHostZoneMessage(chainID string, denom string,
 //	so that the registration fails
 func (s *KeeperTestSuite) createActiveChannelOnICAPort(accountName string, channelID string) {
 	portID := fmt.Sprintf("%s%s.%s", icatypes.PortPrefix, HostChainId, accountName)
+	fmt.Printf("portId = %v \n", portID)
 	openChannel := channeltypes.Channel{State: channeltypes.OPEN}
 
 	// The channel ID doesn't matter here - all that matters is that theres an open channel on the port
@@ -297,11 +298,11 @@ func (s *KeeperTestSuite) TestRegisterHostZone_CannotRegisterDelegationAccount()
 	tc := s.SetupRegisterHostZone()
 
 	// Create channel on delegation port
-	s.createActiveChannelOnICAPort("DELEGATION", "channel-1")
+	s.createActiveChannelOnICAPort("ICA_ACCOUNT_TYPE_DELEGATION", "channel-1")
 
 	_, err := s.GetMsgServer().RegisterHostZone(sdk.WrapSDKContext(s.Ctx()), &tc.validMsg)
-	expectedErrMsg := "unable to register delegation account, err: existing active channel channel-1 for portID icacontroller-GAIA.DELEGATION "
-	expectedErrMsg += "on connection connection-0 for owner GAIA.DELEGATION: active channel already set for this owner: "
+	expectedErrMsg := "unable to register delegation account, err: existing active channel channel-1 for portID icacontroller-GAIA.ICA_ACCOUNT_TYPE_DELEGATION "
+	expectedErrMsg += "on connection connection-0 for owner GAIA.ICA_ACCOUNT_TYPE_DELEGATION: active channel already set for this owner: "
 	expectedErrMsg += "failed to register host zone"
 	s.Require().EqualError(err, expectedErrMsg, "can't register delegation account")
 }
@@ -311,11 +312,11 @@ func (s *KeeperTestSuite) TestRegisterHostZone_CannotRegisterFeeAccount() {
 	tc := s.SetupRegisterHostZone()
 
 	// Create channel on fee port
-	s.createActiveChannelOnICAPort("FEE", "channel-1")
+	s.createActiveChannelOnICAPort("ICA_ACCOUNT_TYPE_FEE", "channel-1")
 
 	_, err := s.GetMsgServer().RegisterHostZone(sdk.WrapSDKContext(s.Ctx()), &tc.validMsg)
-	expectedErrMsg := "unable to register fee account, err: existing active channel channel-1 for portID icacontroller-GAIA.FEE "
-	expectedErrMsg += "on connection connection-0 for owner GAIA.FEE: active channel already set for this owner: "
+	expectedErrMsg := "unable to register fee account, err: existing active channel channel-1 for portID icacontroller-GAIA.ICA_ACCOUNT_TYPE_FEE "
+	expectedErrMsg += "on connection connection-0 for owner GAIA.ICA_ACCOUNT_TYPE_FEE: active channel already set for this owner: "
 	expectedErrMsg += "failed to register host zone"
 	s.Require().EqualError(err, expectedErrMsg, "can't register redemption account")
 }
@@ -325,11 +326,11 @@ func (s *KeeperTestSuite) TestRegisterHostZone_CannotRegisterWithdrawalAccount()
 	tc := s.SetupRegisterHostZone()
 
 	// Create channel on withdrawal port
-	s.createActiveChannelOnICAPort("WITHDRAWAL", "channel-1")
+	s.createActiveChannelOnICAPort("ICA_ACCOUNT_TYPE_WITHDRAWAL", "channel-1")
 
 	_, err := s.GetMsgServer().RegisterHostZone(sdk.WrapSDKContext(s.Ctx()), &tc.validMsg)
-	expectedErrMsg := "unable to register withdrawal account, err: existing active channel channel-1 for portID icacontroller-GAIA.WITHDRAWAL "
-	expectedErrMsg += "on connection connection-0 for owner GAIA.WITHDRAWAL: active channel already set for this owner: "
+	expectedErrMsg := "unable to register withdrawal account, err: existing active channel channel-1 for portID icacontroller-GAIA.ICA_ACCOUNT_TYPE_WITHDRAWAL "
+	expectedErrMsg += "on connection connection-0 for owner GAIA.ICA_ACCOUNT_TYPE_WITHDRAWAL: active channel already set for this owner: "
 	expectedErrMsg += "failed to register host zone"
 	s.Require().EqualError(err, expectedErrMsg, "can't register redemption account")
 }
@@ -339,11 +340,11 @@ func (s *KeeperTestSuite) TestRegisterHostZone_CannotRegisterRedemptionAccount()
 	tc := s.SetupRegisterHostZone()
 
 	// Create channel on redemption port
-	s.createActiveChannelOnICAPort("REDEMPTION", "channel-1")
+	s.createActiveChannelOnICAPort("ICA_ACCOUNT_TYPE_REDEMPTION", "channel-1")
 
 	_, err := s.GetMsgServer().RegisterHostZone(sdk.WrapSDKContext(s.Ctx()), &tc.validMsg)
-	expectedErrMsg := "unable to register redemption account, err: existing active channel channel-1 for portID icacontroller-GAIA.REDEMPTION "
-	expectedErrMsg += "on connection connection-0 for owner GAIA.REDEMPTION: active channel already set for this owner: "
+	expectedErrMsg := "unable to register redemption account, err: existing active channel channel-1 for portID icacontroller-GAIA.ICA_ACCOUNT_TYPE_REDEMPTION "
+	expectedErrMsg += "on connection connection-0 for owner GAIA.ICA_ACCOUNT_TYPE_REDEMPTION: active channel already set for this owner: "
 	expectedErrMsg += "failed to register host zone"
 	s.Require().EqualError(err, expectedErrMsg, "can't register redemption account")
 }

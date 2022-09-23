@@ -44,9 +44,9 @@ connection-2 $JUNO_DENOM juno $IBC_JUNO_DENOM channel-2 1 \
 WAIT_FOR_BLOCK $STRIDE_LOGS 2
 
 # sleep a while longer to wait for ICA accounts to set up
-GAIA_CONFIRM="GAIA.WITHDRAWAL:STRIDE->GAIA}: channel handshake step completed with events: OpenConfirmChannel"
-JUNO_CONFIRM="JUNO.WITHDRAWAL:STRIDE->JUNO}: channel handshake step completed with events: OpenConfirmChannel"
-OSMO_CONFIRM="OSMO.WITHDRAWAL:STRIDE->OSMO}: channel handshake step completed with events: OpenConfirmChannel"
+GAIA_CONFIRM="GAIA.ICA_ACCOUNT_TYPE_WITHDRAWAL:STRIDE->GAIA}: channel handshake step completed with events: OpenConfirmChannel"
+JUNO_CONFIRM="JUNO.ICA_ACCOUNT_TYPE_WITHDRAWAL:STRIDE->JUNO}: channel handshake step completed with events: OpenConfirmChannel"
+OSMO_CONFIRM="OSMO.ICA_ACCOUNT_TYPE_WITHDRAWAL:STRIDE->OSMO}: channel handshake step completed with events: OpenConfirmChannel"
 ( tail -f -n3000 $HERMES_LOGS & ) | grep -q "$GAIA_CONFIRM"
 ( tail -f -n3000 $HERMES_LOGS & ) | grep -q "$JUNO_CONFIRM"
 ( tail -f -n3000 $HERMES_LOGS & ) | grep -q "$OSMO_CONFIRM"

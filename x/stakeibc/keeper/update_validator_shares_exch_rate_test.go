@@ -145,7 +145,7 @@ func (s *KeeperTestSuite) SetupQueryDelegationsIcq() QueryDelegationsIcqTestCase
 	// set up IBC
 	s.CreateTransferChannel(HostChainId)
 
-	delegationAccountOwner := fmt.Sprintf("%s.%s", HostChainId, "DELEGATION")
+	delegationAccountOwner := fmt.Sprintf("%s.%s", HostChainId, "ICA_ACCOUNT_TYPE_DELEGATION")
 	s.CreateICAChannel(delegationAccountOwner)
 	delegationAddress := s.IcaAddresses[delegationAccountOwner]
 

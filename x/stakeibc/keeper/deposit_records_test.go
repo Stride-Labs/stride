@@ -140,7 +140,7 @@ func (s *KeeperTestSuite) GetInitialDepositRecords(currentEpoch uint64) TestDepo
 }
 
 func (s *KeeperTestSuite) SetupDepositRecords() DepositRecordsTestCase {
-	delegationAccountOwner := fmt.Sprintf("%s.%s", HostChainId, "DELEGATION")
+	delegationAccountOwner := fmt.Sprintf("%s.%s", HostChainId, "ICA_ACCOUNT_TYPE_DELEGATION")
 	delegationChannelID := s.CreateICAChannel(delegationAccountOwner)
 	delegationAddress := s.IcaAddresses[delegationAccountOwner]
 

@@ -41,11 +41,11 @@ func (s *KeeperTestSuite) CreateBalanceQueryResponse(amount int64, denom string)
 }
 
 func (s *KeeperTestSuite) SetupWithdrawalBalanceCallbackTest() WithdrawalBalanceICQCallbackTestCase {
-	delegationAccountOwner := fmt.Sprintf("%s.%s", HostChainId, "DELEGATION")
+	delegationAccountOwner := fmt.Sprintf("%s.%s", HostChainId, "ICA_ACCOUNT_TYPE_DELEGATION")
 	s.CreateICAChannel(delegationAccountOwner)
 	delegationAddress := s.IcaAddresses[delegationAccountOwner]
 
-	withdrawalAccountOwner := fmt.Sprintf("%s.%s", HostChainId, "WITHDRAWAL")
+	withdrawalAccountOwner := fmt.Sprintf("%s.%s", HostChainId, "ICA_ACCOUNT_TYPE_WITHDRAWAL")
 	withdrawalChannelId := s.CreateICAChannel(withdrawalAccountOwner)
 	withdrawalAddress := s.IcaAddresses[withdrawalAccountOwner]
 

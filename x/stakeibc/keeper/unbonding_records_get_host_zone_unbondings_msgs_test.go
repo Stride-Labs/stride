@@ -22,7 +22,7 @@ type GetHostZoneUnbondingMsgsTestCase struct {
 }
 
 func (s *KeeperTestSuite) SetupGetHostZoneUnbondingMsgs() GetHostZoneUnbondingMsgsTestCase {
-	delegationAccountOwner := fmt.Sprintf("%s.%s", HostChainId, "DELEGATION")
+	delegationAccountOwner := fmt.Sprintf("%s.%s", HostChainId, "ICA_ACCOUNT_TYPE_DELEGATION")
 	s.CreateICAChannel(delegationAccountOwner)
 
 	hostVal1Addr := "cosmos_VALIDATOR_1"

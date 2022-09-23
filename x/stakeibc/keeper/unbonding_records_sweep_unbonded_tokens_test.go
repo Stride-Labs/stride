@@ -16,7 +16,7 @@ type SweepUnbondedTokensTestCase struct {
 }
 
 func (s *KeeperTestSuite) SetupSweepUnbondedTokens() SweepUnbondedTokensTestCase {
-	s.CreateICAChannel("GAIA.DELEGATION")
+	s.CreateICAChannel("GAIA.ICA_ACCOUNT_TYPE_DELEGATION")
 	//  define the host zone with stakedBal and validators with staked amounts
 	gaiaValidators := []*stakeibc.Validator{
 		{

@@ -15,7 +15,7 @@ type InitiateAllHostZoneUnbondingsTestCase struct {
 }
 
 func (s *KeeperTestSuite) SetupInitiateAllHostZoneUnbondings() InitiateAllHostZoneUnbondingsTestCase {
-	s.CreateICAChannel("GAIA.DELEGATION")
+	s.CreateICAChannel("GAIA.ICA_ACCOUNT_TYPE_DELEGATION")
 
 	gaiaValAddr := "cosmos_VALIDATOR"
 	osmoValAddr := "osmo_VALIDATOR"
