@@ -20,7 +20,7 @@ USER relayer
 WORKDIR /home/relayer
 
 # Create startup script that takes a path as a parameter
-RUN echo 'nohup rly start $1 -p events --debug' > start.sh
+RUN echo 'nohup rly start $1 -p events' > start.sh
 
 # Create a script to updates the light clients so they don't expire
 # Wont be necessary once https://github.com/cosmos/relayer/pull/861 is merged

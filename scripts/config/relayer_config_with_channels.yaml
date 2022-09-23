@@ -87,25 +87,25 @@ paths:
     src-channel-filter:
       rule: ""
       channel-list: []
-  stride-osmo:
+  stride-juno:
     src:
       chain-id: STRIDE
       client-id: 07-tendermint-1
       connection-id: connection-1
     dst:
-      chain-id: OSMO
+      chain-id: JUNO
       client-id: 07-tendermint-0
       connection-id: connection-0
     src-channel-filter:
       rule: ""
       channel-list: []
-  stride-juno:
+  stride-osmo:
     src:
       chain-id: STRIDE
       client-id: 07-tendermint-2
       connection-id: connection-2
     dst:
-      chain-id: JUNO
+      chain-id: OSMO
       client-id: 07-tendermint-0
       connection-id: connection-0
     src-channel-filter:
@@ -114,8 +114,8 @@ paths:
   stride-stars:
     src:
       chain-id: STRIDE
-      client-id: 07-tendermint-1
-      connection-id: connection-1
+      client-id: 07-tendermint-3
+      connection-id: connection-3
     dst:
       chain-id: STARS
       client-id: 07-tendermint-0

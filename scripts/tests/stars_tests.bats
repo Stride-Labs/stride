@@ -60,11 +60,11 @@ setup() {
 @test "[INTEGRATION-BASIC] address names are correct" {
   assert_equal $(STRIDE_ADDRESS) "stride1uk4ze0x4nvh4fk0xm4jdud58eqn4yxhrt52vv7"
 
-  assert_equal $STARS_DELEGATE_VAL 'starsvaloper12ffkl30v0ghtyaezvedazquhtsf4q5ng2c0xaf'
-  assert_equal $STARS_DELEGATION_ICA_ADDR "stars1kl6wa99e6hf97xr90m2n04rl0smv842pj9utqyvgyrksrm9aacdqyfc3en"
-  assert_equal $STARS_REDEMPTION_ICA_ADDR "stars1x07hv0hxujj6l0mfyynwyuccf8fl27vjup0y8dmyajy9ugae22hqfvmv4e"
-  assert_equal $STARS_WITHDRAWAL_ICA_ADDR "stars1x5ndl5p9tjy376a9xmqhw79gz0s678480759cdgaretcgm36akvs0a78tj"
-  assert_equal $STARS_FEE_ICA_ADDR "stars1v09y993sku5djvm0rffq0nfsk5rzke4d2vzvny5e6vmq7dz0dehqnwl4ay"
+  assert_equal $(GET_VAL_ADDR STARS 1) 'starsvaloper12ffkl30v0ghtyaezvedazquhtsf4q5ng2c0xaf'
+  assert_equal $(GET_ICA_ADDR STARS delegation) "stars1kl6wa99e6hf97xr90m2n04rl0smv842pj9utqyvgyrksrm9aacdqyfc3en"
+  assert_equal $(GET_ICA_ADDR STARS redemption) "stars1x07hv0hxujj6l0mfyynwyuccf8fl27vjup0y8dmyajy9ugae22hqfvmv4e"
+  assert_equal $(GET_ICA_ADDR STARS withdrawal) "stars1x5ndl5p9tjy376a9xmqhw79gz0s678480759cdgaretcgm36akvs0a78tj"
+  assert_equal $(GET_ICA_ADDR STARS fee) "stars1v09y993sku5djvm0rffq0nfsk5rzke4d2vzvny5e6vmq7dz0dehqnwl4ay"
 }
 
 # # add test to register host zone
@@ -140,11 +140,11 @@ setup() {
 # check that tokens were transferred to STARS
 @test "[INTEGRATION-BASIC-STARS] tokens were transferred to STARS after liquid staking" {
   # initial balance of delegation ICA
-  initial_delegation_ica_bal=$($STARS_MAIN_CMD q bank balances $STARS_DELEGATION_ICA_ADDR --denom ustars | GETBAL)
+  initial_delegation_ica_bal=$($STARS_MAIN_CMD q bank balances $() --denom ustars | GETBAL)
   WAIT_FOR_STRING $STRIDE_LOGS '\[IBC-TRANSFER\] success to STARS'
   WAIT_FOR_BLOCK $STRIDE_LOGS 2
   # get the new delegation ICA balance
-  post_delegation_ica_bal=$($STARS_MAIN_CMD q bank balances $STARS_DELEGATION_ICA_ADDR --denom ustars | GETBAL)
+  post_delegation_ica_bal=$($STARS_MAIN_CMD q bank balances $(GET_ICA_ADDR STARS delegation) --denom ustars | GETBAL)
   diff=$(($post_delegation_ica_bal - $initial_delegation_ica_bal))
   assert_equal "$diff" '1000'
 }
@@ -155,14 +155,14 @@ setup() {
   WAIT_FOR_STRING $STRIDE_LOGS '\[DELEGATION\] success on STARS'
   WAIT_FOR_BLOCK $STRIDE_LOGS 2
   # check staked tokens
-  NEW_STAKE=$($STARS_MAIN_CMD q staking delegation $STARS_DELEGATION_ICA_ADDR $STARS_DELEGATE_VAL | GETSTAKE)
+  NEW_STAKE=$($STARS_MAIN_CMD q staking delegation $(GET_ICA_ADDR STARS delegation) $(GET_VAL_ADDR STARS 1) | GETSTAKE)
   stake_diff=$(($NEW_STAKE > 0))
   assert_equal "$stake_diff" "1"
 }
 
 # # check that redemptions and claims work
 @test "[INTEGRATION-BASIC-STARS] redemption works" {
-  old_redemption_ica_bal=$($STARS_MAIN_CMD q bank balances $STARS_REDEMPTION_ICA_ADDR --denom ustars | GETBAL)
+  old_redemption_ica_bal=$($STARS_MAIN_CMD q bank balances $(GET_ICA_ADDR STARS redemption) --denom ustars | GETBAL)
   # call redeem-stake
   amt_to_redeem=100
   $STRIDE_MAIN_CMD tx stakeibc redeem-stake $amt_to_redeem STARS $STARS_RECEIVER_ACCT \
@@ -170,7 +170,7 @@ setup() {
   WAIT_FOR_STRING $STRIDE_LOGS '\[REDEMPTION] completed on STARS'
   WAIT_FOR_BLOCK $STRIDE_LOGS 2
   # check that the tokens were transferred to the redemption account
-  new_redemption_ica_bal=$($STARS_MAIN_CMD q bank balances $STARS_REDEMPTION_ICA_ADDR --denom ustars | GETBAL)
+  new_redemption_ica_bal=$($STARS_MAIN_CMD q bank balances $(GET_ICA_ADDR STARS redemption) --denom ustars | GETBAL)
   diff_positive=$(($new_redemption_ica_bal > $old_redemption_ica_bal))
   assert_equal "$diff_positive" "1"
 }
@@ -201,7 +201,7 @@ setup() {
 @test "[INTEGRATION-BASIC-STARS] rewards are being reinvested, exchange rate updating" {
   # read the exchange rate and current delegations
   RR1=$($STRIDE_MAIN_CMD q stakeibc show-host-zone STARS | grep -Fiw 'RedemptionRate' | grep -Eo '[+-]?[0-9]+([.][0-9]+)?')
-  OLD_STAKED_BAL=$($STARS_MAIN_CMD q staking delegation $STARS_DELEGATION_ICA_ADDR $STARS_DELEGATE_VAL | GETSTAKE)
+  OLD_STAKED_BAL=$($STARS_MAIN_CMD q staking delegation $(GET_ICA_ADDR STARS delegation) $(GET_VAL_ADDR STARS 1) | GETSTAKE)
   # liquid stake again to kickstart the reinvestment process
   $STRIDE_MAIN_CMD tx stakeibc liquid-stake 1000 ustars --keyring-backend test --from val1 -y --chain-id $STRIDE_CHAIN_ID
   WAIT_FOR_BLOCK $STRIDE_LOGS 2
@@ -209,7 +209,7 @@ setup() {
   epoch_duration=$($STRIDE_MAIN_CMD q epochs epoch-infos | grep -Fiw -B 2 'stride_epoch' | head -n 1 | grep -o -E '[0-9]+')
   sleep $(($epoch_duration * 4))
   # simple check that number of tokens staked increases
-  NEW_STAKED_BAL=$($STARS_MAIN_CMD q staking delegation $STARS_DELEGATION_ICA_ADDR $STARS_DELEGATE_VAL | GETSTAKE)
+  NEW_STAKED_BAL=$($STARS_MAIN_CMD q staking delegation $(GET_ICA_ADDR STARS delegation) $(GET_VAL_ADDR STARS 1) | GETSTAKE)
   STAKED_BAL_INCREASED=$(($NEW_STAKED_BAL > $OLD_STAKED_BAL))
   assert_equal "$STAKED_BAL_INCREASED" "1"
 
