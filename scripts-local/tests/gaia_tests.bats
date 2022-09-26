@@ -5,7 +5,7 @@ setup_file() {
   SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
   PATH="$SCRIPT_DIR/../../:$PATH"
 
-  set allows us to export all variables in account_vars
+  # set allows us to export all variables in account_vars
   set -a
   source scripts-local/account_vars.sh
 

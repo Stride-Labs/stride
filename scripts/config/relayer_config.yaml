@@ -60,6 +60,20 @@ chains:
       timeout: 20s
       output-format: json
       sign-mode: direct
+  stars:
+    type: cosmos
+    value:
+      key: rly5
+      chain-id: STARS
+      rpc-addr: http://stars1:26657
+      account-prefix: stars
+      keyring-backend: test
+      gas-adjustment: 1.2
+      gas-prices: 0.01ustars
+      debug: false
+      timeout: 20s
+      output-format: json
+      sign-mode: direct
 paths:
   stride-gaia:
     src:
@@ -82,6 +96,14 @@ paths:
       chain-id: STRIDE
     dst:
       chain-id: JUNO
+    src-channel-filter:
+      rule: ""
+      channel-list: []
+  stride-stars:
+    src:
+      chain-id: STRIDE
+    dst:
+      chain-id: STARS
     src-channel-filter:
       rule: ""
       channel-list: []
