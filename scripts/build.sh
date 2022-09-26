@@ -23,7 +23,7 @@ build_local_and_docker() {
 }
 
 # build docker images and local binaries
-while getopts sgojthir flag; do
+while getopts sgojtchir flag; do
    case "${flag}" in
       # For stride, we need to update the admin address to one that we have the seed phrase for
       s) cp utils/utils.go utils/utils.go.main
@@ -35,6 +35,18 @@ while getopts sgojthir flag; do
       j) build_local_and_docker juno deps/juno ;;
       o) build_local_and_docker osmo deps/osmosis ;;
       t) build_local_and_docker stars deps/stargaze ;;
+      c) echo "Building SecretNetwork Docker...  "
+         docker build --tag stridezone:secret -f Dockerfile.secret .
+         echo "Done"
+         
+         printf '%s' "Building SecretNetwork Locally...  "
+         cd deps/SecretNetwork 
+         make build_cli &> /dev/null
+         cp secretcli $BUILDDIR/ 
+         cd ../.. 
+         echo "Done"
+         ;;
+
       r) build_local_and_docker relayer deps/relayer ;;  
       h) echo "Building Hermes Docker... ";
          docker build --tag stridezone:hermes -f Dockerfile.hermes . ;
@@ -43,6 +55,7 @@ while getopts sgojthir flag; do
          cd deps/hermes; 
          cargo build --release --target-dir $BUILDDIR/hermes; 
          cd ../..
-         echo "Done" ;;
+         echo "Done" 
+         ;;
    esac
 done

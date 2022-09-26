@@ -135,6 +135,35 @@ services:
     volumes:
       - ./scripts/state/stars5:/home/stars/.starsd
 
+  secret1:
+    image: stridezone:secret
+    volumes:
+      - ./scripts/state/secret1:/home/secret/.secretd
+    ports:
+      - "26157:26657"
+      - "1267:1317"
+      - "9040:9090"
+
+  secret2:
+    image: stridezone:secret
+    volumes:
+      - ./scripts/state/secret2:/home/secret/.secretd
+
+  secret3:
+    image: stridezone:secret
+    volumes:
+      - ./scripts/state/secret3:/home/secret/.secretd
+
+  secret4:
+    image: stridezone:secret
+    volumes:
+      - ./scripts/state/secret4:/home/secret/.secretd
+
+  secret5:
+    image: stridezone:secret
+    volumes:
+      - ./scripts/state/secret5:/home/secret/.secretd
+
   hermes:
     image: stridezone:hermes
     volumes:
@@ -169,3 +198,10 @@ services:
       - ./scripts/state/relayer:/home/relayer/.relayer
     restart: always
     command: [ "bash", "start.sh", "stride-stars" ]
+
+  relayer-secret:
+    image: stridezone:relayer
+    volumes:
+      - ./scripts/state/relayer:/home/relayer/.relayer
+    restart: always
+    command: [ "bash", "start.sh", "stride-secret" ]
