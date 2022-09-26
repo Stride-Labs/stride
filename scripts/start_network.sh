@@ -4,15 +4,14 @@ set -eu
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 source ${SCRIPT_DIR}/vars.sh
 
+HOST_CHAINS=(GAIA JUNO OSMO STARS)
+
 # cleanup any stale state
 docker-compose down
 rm -rf $SCRIPT_DIR/state $SCRIPT_DIR/logs/*.log $SCRIPT_DIR/logs/temp
 mkdir -p $SCRIPT_DIR/logs
 
 HERMES_LOGS=$SCRIPT_DIR/logs/hermes.log
-ICQ_LOGS=$SCRIPT_DIR/logs/icq.log
-
-HOST_CHAINS=(GAIA JUNO OSMO STARS)
 
 # Initialize the state for each chain
 for chain_id in STRIDE ${HOST_CHAINS[@]}; do

@@ -68,9 +68,6 @@ while getopts sgojhir{n} flag; do
 
 HERMES_${CHAIN_ID}_ACCT=rly{add one since the account from the last host zone}
 HERMES_${CHAIN_ID}_MNEMONIC=""
-
-ICQ_${CHAIN_ID}_ACCT=rly{add one since the account from the last host zone}
-ICQ_${CHAIN_ID}_MNEMONIC=""
 ```
 * Add the IBC denom's for the host zone across each channel. You can use the following code block (just temporarily throw it in any of the test files and run it)
 ```
