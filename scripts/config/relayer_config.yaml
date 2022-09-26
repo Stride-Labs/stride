@@ -74,6 +74,20 @@ chains:
       timeout: 20s
       output-format: json
       sign-mode: direct
+  secret:
+    type: cosmos
+    value:
+      key: rly6
+      chain-id: SECRET
+      rpc-addr: http://secret1:26657
+      account-prefix: secret
+      keyring-backend: test
+      gas-adjustment: 1.2
+      gas-prices: 0.01uscrt
+      debug: false
+      timeout: 20s
+      output-format: json
+      sign-mode: direct
 paths:
   stride-gaia:
     src:
@@ -104,6 +118,14 @@ paths:
       chain-id: STRIDE
     dst:
       chain-id: STARS
+    src-channel-filter:
+      rule: ""
+      channel-list: []
+  stride-secret:
+    src:
+      chain-id: STRIDE
+    dst:
+      chain-id: SECRET
     src-channel-filter:
       rule: ""
       channel-list: []

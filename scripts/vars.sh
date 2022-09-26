@@ -45,6 +45,11 @@ IBC_STARS_CHANNEL_1_DENOM='ibc/9222203B0B37D076F07B3CAC716533C80E7C4239499B6306C
 IBC_STARS_CHANNEL_2_DENOM='ibc/C6469BA9DC791E65B3C1596CD2005941324C00659E2DF90D5E08D86B82E7E08B'
 IBC_STARS_CHANNEL_3_DENOM='ibc/482A30C07803B0455B1492BAF94EC3D600E862D52A814F25A34BCCAAA132FEE9'
 
+IBC_SECRET_CHANNEL_0_DENOM='ibc/834829648E6B51B21713C76E0C1836727DCE221CE3DC8B3AA7BB11F55428887A'
+IBC_SECRET_CHANNEL_1_DENOM='ibc/02A8520F7084F9B99666C69CB6FDFAB3B94C6FEB221D88E70AD108063C516919'
+IBC_SECRET_CHANNEL_2_DENOM='ibc/BCEFD8175B8C47D712FB639034128CB43776364B79E3251F073CB3A2A32582A0'
+IBC_SECRET_CHANNEL_3_DENOM='ibc/10BD6ED30BA132AB96F146D71A23B46B2FC19E7D79F52707DC91F2F3A45040AD'
+
 # INTEGRATION TEST IBC DENOM
 IBC_ATOM_DENOM=$IBC_GAIA_CHANNEL_0_DENOM
 IBC_JUNO_DENOM=$IBC_JUNO_CHANNEL_1_DENOM
@@ -67,6 +72,15 @@ VAL_TOKENS=5000000000000
 STAKE_TOKENS=5000000000
 ADMIN_TOKENS=1000000000
 
+# CHAIN MNEMONICS
+VAL_MNEMONIC_1="close soup mirror crew erode defy knock trigger gather eyebrow tent farm gym gloom base lemon sleep weekend rich forget diagram hurt prize fly"
+VAL_MNEMONIC_2="turkey miss hurry unable embark hospital kangaroo nuclear outside term toy fall buffalo book opinion such moral meadow wing olive camp sad metal banner"
+VAL_MNEMONIC_3="tenant neck ask season exist hill churn rice convince shock modify evidence armor track army street stay light program harvest now settle feed wheat"
+VAL_MNEMONIC_4="tail forward era width glory magnet knock shiver cup broken turkey upgrade cigar story agent lake transfer misery sustain fragile parrot also air document"
+VAL_MNEMONIC_5="crime lumber parrot enforce chimney turtle wing iron scissors jealous indicate peace empty game host protect juice submit motor cause second picture nuclear area"
+VAL_MNEMONICS=("$VAL_MNEMONIC_1","$VAL_MNEMONIC_2","$VAL_MNEMONIC_3","$VAL_MNEMONIC_4","$VAL_MNEMONIC_5")
+REV_MNEMONIC="tonight bonus finish chaos orchard plastic view nurse salad regret pause awake link bacon process core talent whale million hope luggage sauce card weasel"
+
 # STRIDE 
 STRIDE_CHAIN_ID=STRIDE
 STRIDE_NODE_PREFIX=stride
@@ -78,13 +92,6 @@ STRIDE_RPC_PORT=26657
 STRIDE_ADMIN_ACCT=admin
 STRIDE_ADMIN_ADDRESS=stride1u20df3trc2c2zdhm8qvh2hdjx9ewh00sv6eyy8
 STRIDE_MAIN_CMD="$STRIDE_CMD --home $SCRIPT_DIR/state/${STRIDE_NODE_PREFIX}1"
-
-STRIDE_MNEMONIC_1="close soup mirror crew erode defy knock trigger gather eyebrow tent farm gym gloom base lemon sleep weekend rich forget diagram hurt prize fly"
-STRIDE_MNEMONIC_2="turkey miss hurry unable embark hospital kangaroo nuclear outside term toy fall buffalo book opinion such moral meadow wing olive camp sad metal banner"
-STRIDE_MNEMONIC_3="tenant neck ask season exist hill churn rice convince shock modify evidence armor track army street stay light program harvest now settle feed wheat"
-STRIDE_MNEMONIC_4="tail forward era width glory magnet knock shiver cup broken turkey upgrade cigar story agent lake transfer misery sustain fragile parrot also air document"
-STRIDE_MNEMONIC_5="crime lumber parrot enforce chimney turtle wing iron scissors jealous indicate peace empty game host protect juice submit motor cause second picture nuclear area"
-STRIDE_VAL_MNEMONICS=("$STRIDE_MNEMONIC_1","$STRIDE_MNEMONIC_2","$STRIDE_MNEMONIC_3","$STRIDE_MNEMONIC_4","$STRIDE_MNEMONIC_5")
 
 # GAIA 
 GAIA_CHAIN_ID=GAIA
@@ -98,14 +105,6 @@ GAIA_DENOM=$ATOM_DENOM
 GAIA_RPC_PORT=26557
 GAIA_MAIN_CMD="$GAIA_CMD --home $SCRIPT_DIR/state/${GAIA_NODE_PREFIX}1"
 
-GAIA_REV_MNEMONIC="tonight bonus finish chaos orchard plastic view nurse salad regret pause awake link bacon process core talent whale million hope luggage sauce card weasel"
-GAIA_VAL_MNEMONIC_1="move next relief spatial resemble onion exhibit fitness major toss where square wrong exact infant skate dragon shift region over you gospel absorb double"
-GAIA_VAL_MNEMONIC_2="guilt leader matrix lecture infant axis method grain diesel sting reflect brave estate surge october candy busy crash parade club practice sure gentle celery"
-GAIA_VAL_MNEMONIC_3="fire tape spread wing click winter awful ozone visa spray swear color table settle review rival meadow gauge speed tide timber disease float live"
-GAIA_VAL_MNEMONIC_4="curtain mom patrol rifle list lamp interest hard lock stairs display world disagree ten fantasy engine van explain chunk social smile detail initial typical"
-GAIA_VAL_MNEMONIC_5="invite close edit quick effort mosquito ocean north term spread dial throw human review west bike mandate learn cabin bubble remove unlock lab unique"
-GAIA_VAL_MNEMONICS=("$GAIA_VAL_MNEMONIC_1","$GAIA_VAL_MNEMONIC_2","$GAIA_VAL_MNEMONIC_3","$GAIA_VAL_MNEMONIC_4","$GAIA_VAL_MNEMONIC_5")
-
 # JUNO 
 JUNO_CHAIN_ID=JUNO
 JUNO_NODE_PREFIX=juno
@@ -117,14 +116,6 @@ JUNO_ADDRESS_PREFIX=juno
 JUNO_DENOM=$JUNO_DENOM
 JUNO_RPC_PORT=26457
 JUNO_MAIN_CMD="$JUNO_CMD --home $SCRIPT_DIR/state/${JUNO_NODE_PREFIX}1"
-
-JUNO_REV_MNEMONIC="tonight bonus finish chaos orchard plastic view nurse salad regret pause awake link bacon process core talent whale million hope luggage sauce card weasel"
-JUNO_VAL_MNEMONIC_1="move next relief spatial resemble onion exhibit fitness major toss where square wrong exact infant skate dragon shift region over you gospel absorb double"
-JUNO_VAL_MNEMONIC_2="acoustic prize donkey space pitch visa labor enable sting sort safe conduct key name electric toddler disagree abandon impose chest marine three try sense"
-JUNO_VAL_MNEMONIC_3="almost east skate high judge that marriage below slush olympic exercise medal utility recall meadow control siren deliver umbrella bid biology input common item"
-JUNO_VAL_MNEMONIC_4="language planet neck gold garment day foam bomb roof crystal marble office they hospital party bargain horror disease enforce icon fruit describe sorry universe"
-JUNO_VAL_MNEMONIC_5="embrace possible empower remove arrest escape stadium behave bulb bright time drum casual seminar remind science feel absurd isolate beef hidden peace usage sort"
-JUNO_VAL_MNEMONICS=("$JUNO_VAL_MNEMONIC_1","$JUNO_VAL_MNEMONIC_2","$JUNO_VAL_MNEMONIC_3","$JUNO_VAL_MNEMONIC_4","$JUNO_VAL_MNEMONIC_5")
 
 # OSMO 
 OSMO_CHAIN_ID=OSMO
@@ -138,14 +129,6 @@ OSMO_DENOM=$OSMO_DENOM
 OSMO_RPC_PORT=26357
 OSMO_MAIN_CMD="$OSMO_CMD --home $SCRIPT_DIR/state/${OSMO_NODE_PREFIX}1"
 
-OSMO_REV_MNEMONIC="furnace spell ring dinosaur paper thank sketch social mystery tissue upgrade voice advice peasant quote surge meat december level broom clock hurdle portion predict"
-OSMO_VAL_MNEMONIC_1="badge thumb upper scrap gift prosper milk whale journey term indicate risk acquire afford awake margin venture penalty simple fancy fluid review enrich ozone"
-OSMO_VAL_MNEMONIC_2="tattoo fade gloom boring review actual pluck wrestle desk update mandate grow spawn people blush gym inner voice reform glue shiver screen train august"
-OSMO_VAL_MNEMONIC_3="immune acid hurry impose mechanic forward bitter square curtain busy couple hollow calm pole flush deer bird one normal fish loyal upgrade town rail"
-OSMO_VAL_MNEMONIC_4="ridge round key spawn address anchor file local athlete pioneer eyebrow flush chase visa awake claim test device chimney roast tent excess profit gaze"
-OSMO_VAL_MNEMONIC_5="federal garden bundle rebel museum donor hello oak daring argue talk sing chief burst rigid corn zone gather tell opera nominee desk select shine"
-OSMO_VAL_MNEMONICS=("$OSMO_VAL_MNEMONIC_1","$OSMO_VAL_MNEMONIC_2","$OSMO_VAL_MNEMONIC_3","$OSMO_VAL_MNEMONIC_4","$OSMO_VAL_MNEMONIC_5")
-
 # STARS
 STARS_CHAIN_ID=STARS
 STARS_NODE_PREFIX=stars
@@ -158,13 +141,17 @@ STARS_DENOM=$STARS_DENOM
 STARS_RPC_PORT=26257
 STARS_MAIN_CMD="$STARS_CMD --home $SCRIPT_DIR/state/${STARS_NODE_PREFIX}1"
 
-STARS_REV_MNEMONIC="furnace spell ring dinosaur paper thank sketch social mystery tissue upgrade voice advice peasant quote surge meat december level broom clock hurdle portion predict"
-STARS_VAL_MNEMONIC_1="badge thumb upper scrap gift prosper milk whale journey term indicate risk acquire afford awake margin venture penalty simple fancy fluid review enrich ozone"
-STARS_VAL_MNEMONIC_2="tattoo fade gloom boring review actual pluck wrestle desk update mandate grow spawn people blush gym inner voice reform glue shiver screen train august"
-STARS_VAL_MNEMONIC_3="immune acid hurry impose mechanic forward bitter square curtain busy couple hollow calm pole flush deer bird one normal fish loyal upgrade town rail"
-STARS_VAL_MNEMONIC_4="ridge round key spawn address anchor file local athlete pioneer eyebrow flush chase visa awake claim test device chimney roast tent excess profit gaze"
-STARS_VAL_MNEMONIC_5="federal garden bundle rebel museum donor hello oak daring argue talk sing chief burst rigid corn zone gather tell opera nominee desk select shine"
-STARS_VAL_MNEMONICS=("$STARS_VAL_MNEMONIC_1","$STARS_VAL_MNEMONIC_2","$STARS_VAL_MNEMONIC_3","$STARS_VAL_MNEMONIC_4","$STARS_VAL_MNEMONIC_5")
+# SECRET 
+SECRET_CHAIN_ID=SECRET
+SECRET_NODE_PREFIX=secret
+SECRET_NUM_NODES=3
+SECRET_CMD="$SCRIPT_DIR/../build/secretcli"
+SECRET_VAL_PREFIX=secval
+SECRET_ADDRESS_PREFIX=secret
+SECRET_REV_ACCT=secrev1
+SECRET_DENOM=uscrt
+SECRET_RPC_PORT=26157
+SECRET_MAIN_CMD="$SECRET_CMD --home $SCRIPT_DIR/state/${SECRET_NODE_PREFIX}1"
 
 # HERMES
 HERMES_CMD="$SCRIPT_DIR/../build/hermes/release/hermes --config $STATE/hermes/config.toml"
@@ -175,12 +162,14 @@ HERMES_GAIA_ACCT=hrly2
 HERMES_JUNO_ACCT=hrly3
 HERMES_OSMO_ACCT=hrly4
 HERMES_STARS_ACCT=hrly5
+HERMES_SECRET_ACCT=hrly6
 
 HERMES_STRIDE_MNEMONIC="alter old invest friend relief slot swear pioneer syrup economy vendor tray focus hedgehog artist legend antenna hair almost donkey spice protect sustain increase"
 HERMES_GAIA_MNEMONIC="resemble accident lake amateur physical jewel taxi nut demand magnet person blanket trip entire awkward fiber usual current index limb lady lady depart train"
 HERMES_JUNO_MNEMONIC="uphold decorate moon memory taste century work pride force genius width ripple myself year steel ivory type sweet tree ignore danger pudding owner discover"
 HERMES_OSMO_MNEMONIC="lawn inside color february double myth depart invite miracle nest silver spider spray recall theme loan exotic puzzle uncover dial young earn disagree fee"
 HERMES_STARS_MNEMONIC="inherit shallow bargain explain fence vocal fury perfect jeans figure festival abstract soldier entry bubble ketchup swim useless doctor thing imitate can shock coin"
+HERMES_SECRET_MNEMONIC="mask boring legend rich start protect kid blossom suspect cactus bundle analyst carpet knee loud meadow salmon pudding disease quantum umbrella mushroom discover arch"
 
 # RELAYER
 RELAYER_CMD="$SCRIPT_DIR/../build/relayer --home $STATE/relayer"
@@ -194,12 +183,14 @@ RELAYER_GAIA_ACCT=rly2
 RELAYER_JUNO_ACCT=rly3
 RELAYER_OSMO_ACCT=rly4
 RELAYER_STARS_ACCT=rly5
+RELAYER_SECRET_ACCT=rly6
 
 RELAYER_STRIDE_MNEMONIC="pride narrow breeze fitness sign bounce dose smart squirrel spell length federal replace coral lunar thunder vital push nuclear crouch fun accident hood need"
 RELAYER_GAIA_MNEMONIC="fiction perfect rapid steel bundle giant blade grain eagle wing cannon fever must humble dance kitchen lazy episode museum faith off notable rate flavor"
 RELAYER_JUNO_MNEMONIC="kiwi betray topple van vapor flag decorate cement crystal fee family clown cry story gain frost strong year blanket remain grass pig hen empower"
 RELAYER_OSMO_MNEMONIC="unaware wine ramp february bring trust leaf beyond fever inside option dilemma save know captain endless salute radio humble chicken property culture foil taxi"
 RELAYER_STARS_MNEMONIC="deposit dawn erosion talent old broom flip recipe pill hammer animal hill nice ten target metal gas shoe visual nephew soda harbor child simple"
+RELAYER_SECRET_MNEMONIC="regular emotion cheap chuckle ginger welcome exile lazy sure police wrestle bacon menu auction pill body sphere script gossip cost pen pool slab myth"
 
 GAIA_DELEGATE_VAL='cosmosvaloper1pcag0cj4ttxg8l7pcg0q4ksuglswuuedadj7ne'
 GAIA_DELEGATION_ICA_ADDR='cosmos1sy63lffevueudvvlvh2lf6s387xh9xq72n3fsy6n2gr5hm6u2szs2v0ujm'
