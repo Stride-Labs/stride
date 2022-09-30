@@ -57,11 +57,12 @@ while getopts sgojhir{n} flag; do
 {CHAIN_ID}_RPC_PORT={the one included in the docker-compose above}
 {CHAIN_ID}_MAIN_CMD="${CHAIN_ID}_CMD --home $SCRIPT_DIR/state/${${CHAIN_ID}_NODE_PREFIX}1"
 
-HERMES_${CHAIN_ID}_ACCT=hrly{add one since the account from the last host zone}
-HERMES_${CHAIN_ID}_MNEMONIC=""
+HERMES_{CHAIN_ID}_ACCT=hrly{add one since the account from the last host zone}
+HERMES_{CHAIN_ID}_MNEMONIC=""
 
-RELAYER_${CHAIN_ID}_ACCT=rly{add one since the account from the last host zone}
-RELAYER_${CHAIN_ID}_MNEMONIC=""
+RELAYER_{CHAIN_ID}_EXEC="docker-compose run --rm relayer-{new-host-zone}"
+RELAYER_{CHAIN_ID}_ACCT=rly{add one since the account from the last host zone}
+RELAYER_{CHAIN_ID}_MNEMONIC=""
 ```
 * Add the IBC denom's for the host zone across each channel. You can use the following code block (just temporarily throw it in any of the test files and run it)
 ```

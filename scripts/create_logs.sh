@@ -43,11 +43,11 @@ while true; do
     for chain_id in ${HOST_CHAINS[@]}; do
         HOST_MAIN_CMD=$(GET_VAR_VALUE ${chain_id}_MAIN_CMD)
 
-        DELEGATION_ICA_ADDR=$(GET_VAR_VALUE ${chain_id}_DELEGATION_ICA_ADDR)
-        REDEMPTION_ICA_ADDR=$(GET_VAR_VALUE ${chain_id}_REDEMPTION_ICA_ADDR)
-        WITHDRAWAL_ICA_ADDR=$(GET_VAR_VALUE ${chain_id}_WITHDRAWAL_ICA_ADDR)
-        FEE_ICA_ADDR=$(GET_VAR_VALUE ${chain_id}_FEE_ICA_ADDR)
-
+        DELEGATION_ICA_ADDR=$(GET_ICA_ADDR $chain_id delegation)
+        REDEMPTION_ICA_ADDR=$(GET_ICA_ADDR $chain_id redemption)
+        WITHDRAWAL_ICA_ADDR=$(GET_ICA_ADDR $chain_id withdrawal)
+        FEE_ICA_ADDR=$(GET_ICA_ADDR $chain_id fee)
+        
         printf '\n%s\n' "==========================  $chain_id  =============================" >>$TEMP_LOGS_DIR/$BALANCES_LOG
 
         printf '\n%s\n' "BALANCES $chain_id (DELEGATION ACCT)" >>$TEMP_LOGS_DIR/$BALANCES_LOG
@@ -56,7 +56,7 @@ while true; do
         $HOST_MAIN_CMD q staking delegations $DELEGATION_ICA_ADDR >>$TEMP_LOGS_DIR/$BALANCES_LOG
         printf '\n%s\n' "UNBONDING-DELEGATIONS $chain_id (DELEGATION ACCT)" >>$TEMP_LOGS_DIR/$BALANCES_LOG
         $HOST_MAIN_CMD q staking unbonding-delegations $DELEGATION_ICA_ADDR >>$TEMP_LOGS_DIR/$BALANCES_LOG
-
+        
         printf '\n%s\n' "BALANCES $chain_id (REDEMPTION ACCT)" >>$TEMP_LOGS_DIR/$BALANCES_LOG
         $HOST_MAIN_CMD q bank balances $REDEMPTION_ICA_ADDR >>$TEMP_LOGS_DIR/$BALANCES_LOG
         printf '\n%s\n' "BALANCES $chain_id (FEE ACCT)" >>$TEMP_LOGS_DIR/$BALANCES_LOG

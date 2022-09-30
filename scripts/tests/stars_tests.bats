@@ -59,6 +59,7 @@ setup() {
 
 @test "[INTEGRATION-BASIC] address names are correct" {
   assert_equal $(STRIDE_ADDRESS) "stride1uk4ze0x4nvh4fk0xm4jdud58eqn4yxhrt52vv7"
+  assert_equal $(STARS_ADDRESS) "X"
 
   assert_equal $(GET_VAL_ADDR STARS 1) 'starsvaloper12ffkl30v0ghtyaezvedazquhtsf4q5ng2c0xaf'
   assert_equal $(GET_ICA_ADDR STARS delegation) "stars1kl6wa99e6hf97xr90m2n04rl0smv842pj9utqyvgyrksrm9aacdqyfc3en"

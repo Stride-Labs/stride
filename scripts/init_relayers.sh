@@ -26,8 +26,13 @@ for chain_id in ${CHAINS[@]}; do
     account_name=$(GET_VAR_VALUE HERMES_${chain_id}_ACCT)
     mnemonic=$(GET_VAR_VALUE     HERMES_${chain_id}_MNEMONIC)
 
+    derivation=""
+    if [[ "$chain_id" == "SECRET" ]]; then
+        derivation="--hd-path m/44'/529'/0'/0/0"
+    fi
+
     echo "$mnemonic" > $TMP_MNEMONICS
-    $HERMES_CMD keys add --key-name $account_name --chain $chain_id --mnemonic-file $TMP_MNEMONICS --overwrite
+    $HERMES_CMD keys add --key-name $account_name --chain $chain_id --mnemonic-file $TMP_MNEMONICS --overwrite $derivation
 done
 rm -f $TMP_MNEMONICS
 
@@ -37,5 +42,10 @@ for chain_id in ${CHAINS[@]}; do
     mnemonic=$(GET_VAR_VALUE     RELAYER_${chain_id}_MNEMONIC)
     chain_name=$(printf "$chain_id" | awk '{ print tolower($0) }')
 
-    $RELAYER_CMD keys restore $chain_name $account_name "$mnemonic" 
+    coin_type=""
+    if [[ "$chain_id" == "SECRET" ]]; then
+        coin_type="--coin-type 529"
+    fi
+
+    $RELAYER_CMD keys restore $chain_name $account_name "$mnemonic" $coin_type
 done

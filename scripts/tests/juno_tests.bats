@@ -57,31 +57,16 @@ setup() {
 ######                              SETUP TESTS                                         ######
 ##############################################################################################
 
-@test "[INTEGRATION-BASIC] address names are correct" {
-  assert_equal $(STRIDE_ADDRESS) "stride1uk4ze0x4nvh4fk0xm4jdud58eqn4yxhrt52vv7"
-
-  assert_equal $JUNO_DELEGATE_VAL "junovaloper1pcag0cj4ttxg8l7pcg0q4ksuglswuued3knlr0"
-  assert_equal $JUNO_DELEGATION_ICA_ADDR 'juno1xan7vt4nurz6c7x0lnqnvpmuc0lljz7rycqmuz2kk6wxv4k69d0sfats35'
-  assert_equal $JUNO_REDEMPTION_ICA_ADDR 'juno1y6haxdt03cgkc7aedxrlaleeteel7fgc0nvtu2kggee3hnrlvnvs4kw2v9'
-  assert_equal $JUNO_WITHDRAWAL_ICA_ADDR 'juno104n6h822n6n7psqjgjl7emd2uz67lptggp5cargh6mw0gxpch2gsk53qk5'
-  assert_equal $JUNO_FEE_ICA_ADDR 'juno1rp8qgfq64wmjg7exyhjqrehnvww0t9ev3f3p2ls82umz2fxgylqsz3vl9h'
-}
-
 # # add test to register host zone
 @test "[INTEGRATION-BASIC] host zones successfully registered" {
   run $STRIDE_MAIN_CMD q stakeibc show-host-zone JUNO
   assert_line '  HostDenom: ujuno'
   assert_line '  chainId: JUNO'
-  assert_line '  delegationAccount:'
-  assert_line '    address: juno1xan7vt4nurz6c7x0lnqnvpmuc0lljz7rycqmuz2kk6wxv4k69d0sfats35'
-  assert_line '  feeAccount:'
-  assert_line '    address: juno1rp8qgfq64wmjg7exyhjqrehnvww0t9ev3f3p2ls82umz2fxgylqsz3vl9h'
-  assert_line '  redemptionAccount:'
-  assert_line '    address: juno1y6haxdt03cgkc7aedxrlaleeteel7fgc0nvtu2kggee3hnrlvnvs4kw2v9'
-  assert_line '  withdrawalAccount:'
-  assert_line '    address: juno104n6h822n6n7psqjgjl7emd2uz67lptggp5cargh6mw0gxpch2gsk53qk5'
+  refute_line '  delegationAccount: null'
+  refute_line '  feeAccount: null'
+  refute_line '  redemptionAccount: null'
+  refute_line '  withdrawalAccount: null'
   assert_line '  unbondingFrequency: "1"'
-  assert_line '  RedemptionRate: "1.000000000000000000"'
 }
 
 
@@ -140,11 +125,11 @@ setup() {
 
 @test "[INTEGRATION-BASIC-JUNO] tokens were transferred to JUNO after liquid staking" {
   # initial balance of delegation ICA
-  initial_delegation_ica_bal=$($JUNO_MAIN_CMD q bank balances $JUNO_DELEGATION_ICA_ADDR --denom ujuno | GETBAL)
+  initial_delegation_ica_bal=$($JUNO_MAIN_CMD q bank balances $(GET_ICA_ADDR JUNO delegation) --denom ujuno | GETBAL)
   WAIT_FOR_STRING $STRIDE_LOGS '\[IBC-TRANSFER\] success to JUNO'
   WAIT_FOR_BLOCK $STRIDE_LOGS 2
   # get the new delegation ICA balance
-  post_delegation_ica_bal=$($JUNO_MAIN_CMD q bank balances $JUNO_DELEGATION_ICA_ADDR --denom ujuno | GETBAL)
+  post_delegation_ica_bal=$($JUNO_MAIN_CMD q bank balances $(GET_ICA_ADDR JUNO delegation) --denom ujuno | GETBAL)
   diff=$(($post_delegation_ica_bal - $initial_delegation_ica_bal))
   assert_equal "$diff" '10000000'
 }
@@ -154,7 +139,7 @@ setup() {
   WAIT_FOR_STRING $STRIDE_LOGS '\[DELEGATION\] success on JUNO'
   WAIT_FOR_BLOCK $STRIDE_LOGS 2
   # check staked tokens
-  NEW_STAKE=$($JUNO_MAIN_CMD q staking delegation $JUNO_DELEGATION_ICA_ADDR $JUNO_DELEGATE_VAL | GETSTAKE)
+  NEW_STAKE=$($JUNO_MAIN_CMD q staking delegation $(GET_ICA_ADDR JUNO delegation) $(GET_VAL_ADDR JUNO 1) | GETSTAKE)
   stake_diff=$(($NEW_STAKE > 0))
   assert_equal "$stake_diff" "1"
 }
@@ -162,7 +147,7 @@ setup() {
 # check that redemptions and claims work
 @test "[INTEGRATION-BASIC-JUNO] redemption works" {
   sleep 5
-  old_redemption_ica_bal=$($JUNO_MAIN_CMD q bank balances $JUNO_REDEMPTION_ICA_ADDR --denom ujuno | GETBAL)
+  old_redemption_ica_bal=$($JUNO_MAIN_CMD q bank balances $(GET_ICA_ADDR JUNO redemption) --denom ujuno | GETBAL)
   # call redeem-stake
   amt_to_redeem=100
   $STRIDE_MAIN_CMD tx stakeibc redeem-stake $amt_to_redeem JUNO $JUNO_RECEIVER_ACCT \
@@ -170,7 +155,7 @@ setup() {
   WAIT_FOR_STRING $STRIDE_LOGS '\[REDEMPTION] completed on JUNO'
   WAIT_FOR_BLOCK $STRIDE_LOGS 2
   # check that the tokens were transferred to the redemption account
-  new_redemption_ica_bal=$($JUNO_MAIN_CMD q bank balances $JUNO_REDEMPTION_ICA_ADDR --denom ujuno | GETBAL)
+  new_redemption_ica_bal=$($JUNO_MAIN_CMD q bank balances $(GET_ICA_ADDR JUNO redemption) --denom ujuno | GETBAL)
   diff_positive=$(($new_redemption_ica_bal > $old_redemption_ica_bal))
   assert_equal "$diff_positive" "1"
 }
@@ -198,7 +183,7 @@ setup() {
 @test "[INTEGRATION-BASIC-JUNO] rewards are being reinvested, exchange rate updating" {
   # read the exchange rate and current delegations
   RR1=$($STRIDE_MAIN_CMD q stakeibc show-host-zone JUNO | grep -Fiw 'RedemptionRate' | grep -Eo '[+-]?[0-9]+([.][0-9]+)?')
-  OLD_STAKED_BAL=$($JUNO_MAIN_CMD q staking delegation $JUNO_DELEGATION_ICA_ADDR $JUNO_DELEGATE_VAL | GETSTAKE)
+  OLD_STAKED_BAL=$($JUNO_MAIN_CMD q staking delegation $(GET_ICA_ADDR JUNO delegation) $(GET_VAL_ADDR JUNO 1) | GETSTAKE)
   # liquid stake again to kickstart the reinvestment process
   $STRIDE_MAIN_CMD tx stakeibc liquid-stake 1000 ujuno --keyring-backend test --from val1 -y --chain-id $STRIDE_CHAIN_ID
   WAIT_FOR_BLOCK $STRIDE_LOGS 2
@@ -206,7 +191,7 @@ setup() {
   epoch_duration=$($STRIDE_MAIN_CMD q epochs epoch-infos | grep -Fiw -B 2 'stride_epoch' | head -n 1 | grep -o -E '[0-9]+')
   sleep $(($epoch_duration * 4))
   # simple check that number of tokens staked increases
-  NEW_STAKED_BAL=$($JUNO_MAIN_CMD q staking delegation $JUNO_DELEGATION_ICA_ADDR $JUNO_DELEGATE_VAL | GETSTAKE)
+  NEW_STAKED_BAL=$($JUNO_MAIN_CMD q staking delegation $(GET_ICA_ADDR JUNO delegation) $(GET_VAL_ADDR JUNO 1) | GETSTAKE)
   STAKED_BAL_INCREASED=$(($NEW_STAKED_BAL > $OLD_STAKED_BAL))
   assert_equal "$STAKED_BAL_INCREASED" "1"
 

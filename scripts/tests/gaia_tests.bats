@@ -57,31 +57,15 @@ setup() {
 ######                              SETUP TESTS                                         ######
 ##############################################################################################
 
-@test "[INTEGRATION-BASIC] address names are correct" {
-  assert_equal $(STRIDE_ADDRESS) "stride1uk4ze0x4nvh4fk0xm4jdud58eqn4yxhrt52vv7"
-  assert_equal $(GAIA_ADDRESS) "cosmos1pcag0cj4ttxg8l7pcg0q4ksuglswuuedcextl2"
-
-  assert_equal $GAIA_DELEGATION_ICA_ADDR "cosmos1sy63lffevueudvvlvh2lf6s387xh9xq72n3fsy6n2gr5hm6u2szs2v0ujm"
-  assert_equal $GAIA_REDEMPTION_ICA_ADDR "cosmos1xmcwu75s8v7s54k79390wc5gwtgkeqhvzegpj0nm2tdwacv47tmqg9ut30"
-  assert_equal $GAIA_WITHDRAWAL_ICA_ADDR "cosmos1x5p8er7e2ne8l54tx33l560l8djuyapny55pksctuguzdc00dj7saqcw2l"
-  assert_equal $GAIA_FEE_ICA_ADDR "cosmos1lkgt5sfshn9shm7hd7chtytkq4mvwvswgmyl0hkacd4rmusu9wwq60cezx"
-  assert_equal $GAIA_DELEGATE_VAL "cosmosvaloper1pcag0cj4ttxg8l7pcg0q4ksuglswuuedadj7ne"
-  assert_equal $GAIA_RECEIVER_ACCT "cosmos1g6qdx6kdhpf000afvvpte7hp0vnpzapuyxp8uf"
-}
-
 # # add test to register host zone
 @test "[INTEGRATION-BASIC] host zones successfully registered" {
   run $STRIDE_MAIN_CMD q stakeibc show-host-zone GAIA
   assert_line '  HostDenom: uatom'
   assert_line '  chainId: GAIA'
-  assert_line '  delegationAccount:'
-  assert_line '    address: cosmos1sy63lffevueudvvlvh2lf6s387xh9xq72n3fsy6n2gr5hm6u2szs2v0ujm'
-  assert_line '  feeAccount:'
-  assert_line '    address: cosmos1lkgt5sfshn9shm7hd7chtytkq4mvwvswgmyl0hkacd4rmusu9wwq60cezx'
-  assert_line '  redemptionAccount:'
-  assert_line '    address: cosmos1xmcwu75s8v7s54k79390wc5gwtgkeqhvzegpj0nm2tdwacv47tmqg9ut30'
-  assert_line '  withdrawalAccount:'
-  assert_line '    address: cosmos1x5p8er7e2ne8l54tx33l560l8djuyapny55pksctuguzdc00dj7saqcw2l'
+  refute_line '  delegationAccount: null'
+  refute_line '  feeAccount: null'
+  refute_line '  redemptionAccount: null'
+  refute_line '  withdrawalAccount: null'
   assert_line '  unbondingFrequency: "1"'
 }
 
@@ -143,11 +127,11 @@ setup() {
 # check that tokens were transferred to GAIA
 @test "[INTEGRATION-BASIC-GAIA] tokens were transferred to GAIA after liquid staking" {
   # initial balance of delegation ICA
-  initial_delegation_ica_bal=$($GAIA_MAIN_CMD q bank balances $GAIA_DELEGATION_ICA_ADDR --denom uatom | GETBAL)
+  initial_delegation_ica_bal=$($GAIA_MAIN_CMD q bank balances $(GET_ICA_ADDR GAIA delegation) --denom uatom | GETBAL)
   WAIT_FOR_STRING $STRIDE_LOGS '\[IBC-TRANSFER\] success to GAIA'
   WAIT_FOR_BLOCK $STRIDE_LOGS 2
   # get the new delegation ICA balance
-  post_delegation_ica_bal=$($GAIA_MAIN_CMD q bank balances $GAIA_DELEGATION_ICA_ADDR --denom uatom | GETBAL)
+  post_delegation_ica_bal=$($GAIA_MAIN_CMD q bank balances $(GET_ICA_ADDR GAIA delegation) --denom uatom | GETBAL)
   diff=$(($post_delegation_ica_bal - $initial_delegation_ica_bal))
   assert_equal "$diff" '1000'
 }
@@ -158,14 +142,14 @@ setup() {
   WAIT_FOR_STRING $STRIDE_LOGS '\[DELEGATION\] success on GAIA'
   WAIT_FOR_BLOCK $STRIDE_LOGS 2
   # check staked tokens
-  NEW_STAKE=$($GAIA_MAIN_CMD q staking delegation $GAIA_DELEGATION_ICA_ADDR $GAIA_DELEGATE_VAL | GETSTAKE)
+  NEW_STAKE=$($GAIA_MAIN_CMD q staking delegation $(GET_ICA_ADDR GAIA delegation) $GAIA_DELEGATE_VAL | GETSTAKE)
   stake_diff=$(($NEW_STAKE > 0))
   assert_equal "$stake_diff" "1"
 }
 
 # check that redemptions and claims work
 @test "[INTEGRATION-BASIC-GAIA] redemption works" {
-  old_redemption_ica_bal=$($GAIA_MAIN_CMD q bank balances $GAIA_REDEMPTION_ICA_ADDR --denom uatom | GETBAL)
+  old_redemption_ica_bal=$($GAIA_MAIN_CMD q bank balances $(GET_ICA_ADDR GAIA redemption) --denom uatom | GETBAL)
   # call redeem-stake
   amt_to_redeem=100
   $STRIDE_MAIN_CMD tx stakeibc redeem-stake $amt_to_redeem GAIA $GAIA_RECEIVER_ACCT \
@@ -173,7 +157,7 @@ setup() {
   WAIT_FOR_STRING $STRIDE_LOGS '\[REDEMPTION] completed on GAIA'
   WAIT_FOR_BLOCK $STRIDE_LOGS 2
   # check that the tokens were transferred to the redemption account
-  new_redemption_ica_bal=$($GAIA_MAIN_CMD q bank balances $GAIA_REDEMPTION_ICA_ADDR --denom uatom | GETBAL)
+  new_redemption_ica_bal=$($GAIA_MAIN_CMD q bank balances $(GET_ICA_ADDR GAIA redemption) --denom uatom | GETBAL)
   diff_positive=$(($new_redemption_ica_bal > $old_redemption_ica_bal))
   assert_equal "$diff_positive" "1"
 }
@@ -204,7 +188,7 @@ setup() {
 @test "[INTEGRATION-BASIC-GAIA] rewards are being reinvested, exchange rate updating" {
   # read the exchange rate and current delegations
   RR1=$($STRIDE_MAIN_CMD q stakeibc show-host-zone GAIA | grep -Fiw 'RedemptionRate' | grep -Eo '[+-]?[0-9]+([.][0-9]+)?')
-  OLD_STAKED_BAL=$($GAIA_MAIN_CMD q staking delegation $GAIA_DELEGATION_ICA_ADDR $GAIA_DELEGATE_VAL | GETSTAKE)
+  OLD_STAKED_BAL=$($GAIA_MAIN_CMD q staking delegation $(GET_ICA_ADDR GAIA delegation) $(GET_VAL_ADDR GAIA 1) | GETSTAKE)
   # liquid stake again to kickstart the reinvestment process
   $STRIDE_MAIN_CMD tx stakeibc liquid-stake 1000 uatom --keyring-backend test --from val1 -y --chain-id $STRIDE_CHAIN_ID
   WAIT_FOR_BLOCK $STRIDE_LOGS 2
@@ -212,7 +196,7 @@ setup() {
   epoch_duration=$($STRIDE_MAIN_CMD q epochs epoch-infos | grep -Fiw -B 2 'stride_epoch' | head -n 1 | grep -o -E '[0-9]+')
   sleep $(($epoch_duration * 4))
   # simple check that number of tokens staked increases
-  NEW_STAKED_BAL=$($GAIA_MAIN_CMD q staking delegation $GAIA_DELEGATION_ICA_ADDR $GAIA_DELEGATE_VAL | GETSTAKE)
+  NEW_STAKED_BAL=$($GAIA_MAIN_CMD q staking delegation $(GET_ICA_ADDR GAIA delegation) $(GET_VAL_ADDR GAIA 1) | GETSTAKE)
   STAKED_BAL_INCREASED=$(($NEW_STAKED_BAL > $OLD_STAKED_BAL))
   assert_equal "$STAKED_BAL_INCREASED" "1"
 
