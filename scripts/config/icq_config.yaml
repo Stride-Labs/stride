@@ -28,3 +28,45 @@ chains:
     block-timeout: ""
     output-format: json
     sign-mode: direct
+  juno:
+    key: icq3
+    chain-id: JUNO
+    rpc-addr: http://juno1:26657
+    grpc-addr: http://juno1:9090
+    account-prefix: juno
+    keyring-backend: test
+    gas-adjustment: 1.2
+    gas-prices: 1ujuno
+    debug: false
+    timeout: 20s
+    block-timeout: ""
+    output-format: json
+    sign-mode: direct
+  osmo:
+    key: icq4
+    chain-id: OSMO
+    rpc-addr: http://osmo1:26657
+    grpc-addr: http://osmo1:9090
+    account-prefix: osmo
+    keyring-backend: test
+    gas-adjustment: 1.2
+    gas-prices: 1uosmo
+    debug: false
+    timeout: 20s
+    block-timeout: ""
+    output-format: json
+    sign-mode: direct
+  stars:
+    key: icq5
+    chain-id: STARS
+    rpc-addr: http://stars1:26657
+    grpc-addr: http://stars1:9090
+    account-prefix: stars
+    keyring-backend: test
+    gas-adjustment: 1.2
+    gas-prices: 1ustars
+    debug: false
+    timeout: 20s
+    block-timeout: ""
+    output-format: json
+    sign-mode: direct
