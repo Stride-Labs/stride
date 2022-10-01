@@ -8,12 +8,12 @@ chains:
     type: cosmos
     value:
       key: rly1
-      chain-id: STRIDE
+      chain-id: local-test-1
       rpc-addr: http://stride1:26657
       account-prefix: stride
       keyring-backend: test
       gas-adjustment: 1.2
-      gas-prices: 0.01ustrd
+      gas-prices: 0.00ustrd
       debug: false
       timeout: 20s
       output-format: json
@@ -35,9 +35,9 @@ chains:
   juno:
     type: cosmos
     value:
-      key: rly3
-      chain-id: JUNO
-      rpc-addr: http://juno1:26657
+      key: rly2
+      chain-id: juno-1
+      rpc-addr: http://{ENDPOINT}:26657
       account-prefix: juno
       keyring-backend: test
       gas-adjustment: 1.2

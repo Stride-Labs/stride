@@ -34,7 +34,7 @@ set_stride_genesis() {
     # update params
     jq '(.app_state.epochs.epochs[] | select(.identifier=="day") ).duration = $epochLen' --arg epochLen $STRIDE_DAY_EPOCH_DURATION $genesis_config > json.tmp && mv json.tmp $genesis_config
     jq '(.app_state.epochs.epochs[] | select(.identifier=="stride_epoch") ).duration = $epochLen' --arg epochLen $STRIDE_EPOCH_EPOCH_DURATION $genesis_config > json.tmp && mv json.tmp $genesis_config
-    jq '.app_state.staking.params.unbonding_time = $newVal' --arg newVal "$UNBONDING_TIME" $genesis_config > json.tmp && mv json.tmp $genesis_config
+    # jq '.app_state.staking.params.unbonding_time = $newVal' --arg newVal "$UNBONDING_TIME" $genesis_config > json.tmp && mv json.tmp $genesis_config
     jq '.app_state.gov.deposit_params.max_deposit_period = $newVal' --arg newVal "$MAX_DEPOSIT_PERIOD" $genesis_config > json.tmp && mv json.tmp $genesis_config
     jq '.app_state.gov.voting_params.voting_period = $newVal' --arg newVal "$VOTING_PERIOD" $genesis_config > json.tmp && mv json.tmp $genesis_config
 }
@@ -76,7 +76,7 @@ for (( i=1; i <= $NUM_NODES; i++ )); do
     # Create a state directory for the current node and initialize the chain
     mkdir -p $STATE/$node_name
     cmd="$CMD --home ${STATE}/$node_name"
-    $cmd init $moniker --chain-id $CHAIN_ID --overwrite &> /dev/null
+    $cmd init $moniker --chain-id $STRIDE_CHAIN_ID --overwrite &> /dev/null
 
     # Update node networking configuration 
     config_toml="${STATE}/${node_name}/config/config.toml"
@@ -93,7 +93,7 @@ for (( i=1; i <= $NUM_NODES; i++ )); do
     sed -i -E '/\[api\]/,/^enable = .*$/ s/^enable = .*$/enable = true/' $app_toml
     sed -i -E 's|unsafe-cors = .*|unsafe-cors = true|g' $app_toml
 
-    sed -i -E "s|chain-id = \"\"|chain-id = \"${CHAIN_ID}\"|g" $client_toml
+    sed -i -E "s|chain-id = \"\"|chain-id = \"${STRIDE_CHAIN_ID}\"|g" $client_toml
     sed -i -E "s|keyring-backend = \"os\"|keyring-backend = \"test\"|g" $client_toml
     sed -i -E "s|node = \".*\"|node = \"tcp://localhost:$RPC_PORT\"|g" $client_toml
 
@@ -111,7 +111,7 @@ for (( i=1; i <= $NUM_NODES; i++ )); do
     # Add this account to the current node
     $cmd add-genesis-account ${val_addr} ${VAL_TOKENS}${DENOM}
     # actually set this account as a validator on the current node 
-    $cmd gentx $val_acct ${STAKE_TOKENS}${DENOM} --chain-id $CHAIN_ID --keyring-backend test &> /dev/null
+    $cmd gentx $val_acct ${STAKE_TOKENS}${DENOM} --chain-id $STRIDE_CHAIN_ID --keyring-backend test &> /dev/null
 
     # Cleanup from seds
     rm -rf ${client_toml}-E
@@ -166,11 +166,7 @@ $MAIN_NODE_CMD collect-gentxs &> /dev/null
 sed -i -E "s|persistent_peers = .*|persistent_peers = \"\"|g" $MAIN_CONFIG
 
 # update chian-specific genesis settings
-if [ "$CHAIN_ID" == "$STRIDE_CHAIN_ID" ]; then 
-    set_stride_genesis $MAIN_GENESIS
-else
-    set_host_genesis $MAIN_GENESIS
-fi
+set_stride_genesis $MAIN_GENESIS
 
 # for all peer nodes....
 for (( i=2; i <= $NUM_NODES; i++ )); do

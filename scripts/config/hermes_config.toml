@@ -26,7 +26,7 @@ host = '0.0.0.0'
 port = 3001
 
 [[chains]]
-id = 'STRIDE'
+id = 'local-test-1'
 rpc_addr = 'http://stride1:26657'
 grpc_addr = 'http://stride1:9090'
 websocket_addr = 'ws://stride1:26657/websocket'
@@ -46,86 +46,93 @@ trusting_period = '119s'
 trust_threshold = { numerator = '1', denominator = '3' }
 address_type = { derivation = 'cosmos' }
 
-[[chains]]
-id = 'GAIA'
-rpc_addr = 'http://gaia1:26657'
-grpc_addr = 'http://gaia1:9090'
-websocket_addr = 'ws://gaia1:26657/websocket'
-rpc_timeout = '10s'
-account_prefix = 'cosmos'
-key_name = 'hrly2'
-store_prefix = 'ibc'
-default_gas = 100000
-max_gas = 3000000
-gas_price = { price = 0.000, denom = 'uatom' }
-gas_multiplier = 1.1
-max_msg_num = 30
-max_tx_size = 2097152
-clock_drift = '5s'
-max_block_time = '10s'
-trusting_period = '119s'
-trust_threshold = { numerator = '1', denominator = '3' }
-address_type = { derivation = 'cosmos' }
+# [[chains]]
+# id = 'GAIA'
+# rpc_addr = 'http://gaia1:26657'
+# grpc_addr = 'http://gaia1:9090'
+# websocket_addr = 'ws://gaia1:26657/websocket'
+# rpc_timeout = '10s'
+# account_prefix = 'cosmos'
+# key_name = 'hrly2'
+# store_prefix = 'ibc'
+# default_gas = 100000
+# max_gas = 3000000
+# gas_price = { price = 0.000, denom = 'uatom' }
+# gas_multiplier = 1.1
+# max_msg_num = 30
+# max_tx_size = 2097152
+# clock_drift = '5s'
+# max_block_time = '10s'
+# trusting_period = '119s'
+# trust_threshold = { numerator = '1', denominator = '3' }
+# address_type = { derivation = 'cosmos' }
 
 [[chains]]
-id = 'JUNO'
-rpc_addr = 'http://juno1:26657'
-grpc_addr = 'http://juno1:9090'
-websocket_addr = 'ws://juno1:26657/websocket'
+id = 'juno-1'
+rpc_addr = 'https://{ENDPOINT}'
+grpc_addr = 'http://{ENDPOINT}:9090'
+websocket_addr = 'ws://{ENDPOINT}/websocket'
 rpc_timeout = '10s'
 account_prefix = 'juno'
 key_name = 'hrly3'
 store_prefix = 'ibc'
 default_gas = 100000
 max_gas = 3000000
-gas_price = { price = 0.000, denom = 'ujuno' }
+gas_price = { price = 0.01, denom = 'ujuno' }
 gas_multiplier = 1.1
 max_msg_num = 30
-max_tx_size = 2097152
+max_tx_size = 200000
 clock_drift = '5s'
 max_block_time = '10s'
-trusting_period = '119s'
+trusting_period = '12days'
 trust_threshold = { numerator = '1', denominator = '3' }
 address_type = { derivation = 'cosmos' }
+sequential_batch_tx = false
+[chains.packet_filter]
+policy = 'allow'
+list = [
+  ['ica*', '*'],
+  ['transfer', 'channel-*'],
+]
 
-[[chains]]
-id = 'OSMO'
-rpc_addr = 'http://osmo1:26657'
-grpc_addr = 'http://osmo1:9090'
-websocket_addr = 'ws://osmo1:26657/websocket'
-rpc_timeout = '10s'
-account_prefix = 'osmo'
-key_name = 'hrly4'
-store_prefix = 'ibc'
-default_gas = 100000
-max_gas = 3000000
-gas_price = { price = 0.000, denom = 'uosmo' }
-gas_multiplier = 1.1
-max_msg_num = 30
-max_tx_size = 2097152
-clock_drift = '5s'
-max_block_time = '10s'
-trusting_period = '119s'
-trust_threshold = { numerator = '1', denominator = '3' }
-address_type = { derivation = 'cosmos' }
+# [[chains]]
+# id = 'OSMO'
+# rpc_addr = 'http://osmo1:26657'
+# grpc_addr = 'http://osmo1:9090'
+# websocket_addr = 'ws://osmo1:26657/websocket'
+# rpc_timeout = '10s'
+# account_prefix = 'osmo'
+# key_name = 'hrly4'
+# store_prefix = 'ibc'
+# default_gas = 100000
+# max_gas = 3000000
+# gas_price = { price = 0.000, denom = 'uosmo' }
+# gas_multiplier = 1.1
+# max_msg_num = 30
+# max_tx_size = 2097152
+# clock_drift = '5s'
+# max_block_time = '10s'
+# trusting_period = '119s'
+# trust_threshold = { numerator = '1', denominator = '3' }
+# address_type = { derivation = 'cosmos' }
 
-[[chains]]
-id = 'STARS'
-rpc_addr = 'http://stars1:26657'
-grpc_addr = 'http://stars1:9090'
-websocket_addr = 'ws://stars1:26657/websocket'
-rpc_timeout = '10s'
-account_prefix = 'stars'
-key_name = 'hrly5'
-store_prefix = 'ibc'
-default_gas = 100000
-max_gas = 3000000
-gas_price = { price = 0.000, denom = 'ustars' }
-gas_multiplier = 1.1
-max_msg_num = 30
-max_tx_size = 2097152
-clock_drift = '5s'
-max_block_time = '10s'
-trusting_period = '119s'
-trust_threshold = { numerator = '1', denominator = '3' }
-address_type = { derivation = 'cosmos' }
+# [[chains]]
+# id = 'STARS'
+# rpc_addr = 'http://stars1:26657'
+# grpc_addr = 'http://stars1:9090'
+# websocket_addr = 'ws://stars1:26657/websocket'
+# rpc_timeout = '10s'
+# account_prefix = 'stars'
+# key_name = 'hrly5'
+# store_prefix = 'ibc'
+# default_gas = 100000
+# max_gas = 3000000
+# gas_price = { price = 0.000, denom = 'ustars' }
+# gas_multiplier = 1.1
+# max_msg_num = 30
+# max_tx_size = 2097152
+# clock_drift = '5s'
+# max_block_time = '10s'
+# trusting_period = '119s'
+# trust_threshold = { numerator = '1', denominator = '3' }
+# address_type = { derivation = 'cosmos' }

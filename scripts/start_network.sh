@@ -12,7 +12,7 @@ mkdir -p $SCRIPT_DIR/logs
 HERMES_LOGS=$SCRIPT_DIR/logs/hermes.log
 ICQ_LOGS=$SCRIPT_DIR/logs/icq.log
 
-HOST_CHAINS=(GAIA JUNO OSMO STARS)
+HOST_CHAINS=()
 
 # Initialize the state for each chain
 for chain_id in STRIDE ${HOST_CHAINS[@]}; do
@@ -22,6 +22,10 @@ done
 # Start the chain and create the transfer channels
 sh ${SCRIPT_DIR}/start_chain.sh STRIDE ${HOST_CHAINS[@]}
 sh ${SCRIPT_DIR}/init_relayers.sh STRIDE ${HOST_CHAINS[@]}
+
+echo "Done"
+exit 0
+
 sh ${SCRIPT_DIR}/create_channels.sh ${HOST_CHAINS[@]}
 
 echo "Starting relayers"
