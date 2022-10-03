@@ -147,17 +147,10 @@ $MAIN_NODE_CMD add-genesis-account ${HERMES_ADDRESS} ${VAL_TOKENS}${DENOM}
 $MAIN_NODE_CMD add-genesis-account ${ICQ_ADDRESS} ${VAL_TOKENS}${DENOM}
 $MAIN_NODE_CMD add-genesis-account ${RELAYER_ADDRESS} ${VAL_TOKENS}${DENOM}
 
-if [ "$CHAIN_ID" == "$STRIDE_CHAIN_ID" ]; then 
-    # add the stride admin account
-    echo "$STRIDE_ADMIN_MNEMONIC" | $MAIN_NODE_CMD keys add $STRIDE_ADMIN_ACCT --recover --keyring-backend=test >> $KEYS_LOGS 2>&1
-    STRIDE_ADMIN_ADDRESS=$($MAIN_NODE_CMD keys show $STRIDE_ADMIN_ACCT --keyring-backend test -a)
-    $MAIN_NODE_CMD add-genesis-account ${STRIDE_ADMIN_ADDRESS} ${ADMIN_TOKENS}${DENOM}
-else 
-    # add a revenue account
-    REV_ACCT=${!REV_ACCT_VAR}
-    REV_MNEMONIC=${!REV_MNEMONIC_VAR}
-    echo $REV_MNEMONIC | $MAIN_NODE_CMD keys add $REV_ACCT --recover --keyring-backend=test >> $KEYS_LOGS 2>&1
-fi
+# add the stride admin account
+echo "$STRIDE_ADMIN_MNEMONIC" | $MAIN_NODE_CMD keys add $STRIDE_ADMIN_ACCT --recover --keyring-backend=test >> $KEYS_LOGS 2>&1
+STRIDE_ADMIN_ADDRESS=$($MAIN_NODE_CMD keys show $STRIDE_ADMIN_ACCT --keyring-backend test -a)
+$MAIN_NODE_CMD add-genesis-account ${STRIDE_ADMIN_ADDRESS} ${ADMIN_TOKENS}${DENOM}
 
 # now we process gentx txs on the main node
 $MAIN_NODE_CMD collect-gentxs &> /dev/null

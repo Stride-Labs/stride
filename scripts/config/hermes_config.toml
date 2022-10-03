@@ -42,7 +42,7 @@ max_msg_num = 30
 max_tx_size = 2097152
 clock_drift = '5s'
 max_block_time = '10s'
-trusting_period = '119s'
+trusting_period = '12days'
 trust_threshold = { numerator = '1', denominator = '3' }
 address_type = { derivation = 'cosmos' }
 
@@ -69,9 +69,9 @@ address_type = { derivation = 'cosmos' }
 
 [[chains]]
 id = 'juno-1'
-rpc_addr = 'https://{ENDPOINT}'
-grpc_addr = 'http://{ENDPOINT}:9090'
-websocket_addr = 'ws://{ENDPOINT}/websocket'
+rpc_addr = 'http://juno-fleet-direct.frontend.stridenet.co:26657'
+grpc_addr = 'http://juno-fleet-direct.frontend.stridenet.co:9090'
+websocket_addr = 'ws://juno-fleet-direct.frontend.stridenet.co:26657/websocket'
 rpc_timeout = '10s'
 account_prefix = 'juno'
 key_name = 'hrly3'

@@ -35,9 +35,9 @@ chains:
   juno:
     type: cosmos
     value:
-      key: rly2
+      key: rly3
       chain-id: juno-1
-      rpc-addr: http://{ENDPOINT}:26657
+      rpc-addr: http://juno-fleet-direct.frontend.stridenet.co:26657
       account-prefix: juno
       keyring-backend: test
       gas-adjustment: 1.2
@@ -93,9 +93,9 @@ paths:
       channel-list: []
   stride-juno:
     src:
-      chain-id: STRIDE
+      chain-id: local-test-1
     dst:
-      chain-id: JUNO
+      chain-id: juno-1
     src-channel-filter:
       rule: ""
       channel-list: []

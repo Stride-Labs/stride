@@ -1,14 +1,13 @@
-* Make host chains array empty in `start_network.sh` and exit before channel creation script is run
-* Update stride chain ID in vars.sh and set num nodes to 1
+# Connecting to Mainnet
+## Setup Scripts
+* Update stride and host chain IDs in vars.sh and set num nodes to 1
 * In `init_chain.sh`
     * Comment line that sets the unbonding time
-    * Replace chain specific genesis settings if statement with just `set_stride_genesis $MAIN_GENESIS`
-    * Only update str
-* In `init_relayers.sh`
-    * Get chain ID from vars and pass that into the hermes command
+    * Get rid of if branches on CHAIN_ID and keep just the stride logic
 * Update go relayer
-    * Update chain IDs
+    * Update stride and host chain IDs (in chains and paths sections)
     * Set stride gas price to 0
+    * Update endpoints for host
 * Update hermes 
     * Updated chain IDs
     * Comment out other hosts
@@ -28,19 +27,24 @@ list = [
   ['transfer', 'channel-*'],
 ]
 ```
-* Comment out all but juno in hermes
+* Comment out all but juno in hermes and the go relayer
+## Start Stride Local
 * Build
 ```
 make build-docker build=srh
 ```
 * Start stride
 ```
-bash scripts/start_network.sh
+bash scripts/start_local_to_main.sh
 ```
+## Create channels and start relayers
 * Fund go and hermes relayer addresses on host
 * Create connections and channels
 ```
 docker-compose run --rm relayer-juno rly transact link stride-juno > scripts/logs/relayer-juno.log 2>&1
+# Or if it's not working with go, use hermes
+docker-compose run --rm hermes hermes create connection --a-chain local-test-1 --b-chain juno-1
+docker-compose run --rm hermes hermes create channel --a-chain juno-1 --a-connection {CONNECTION-ID} --a-port transfer --b-port transfer
 ```
 * Get channel ID created on the host
 ```
@@ -63,6 +67,7 @@ src-channel-filter:
 docker-compose up -d relayer-juno
 docker-compose logs -f relayer-juno | sed -r -u "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2})?)?[mGK]//g" >> scripts/logs/relayer-juno.log 2>&1 &
 ```
+## Register Host
 * IBC Transfer from HOST to stride (from relayer account)
 ```
 # use one of the relayer mnemonics that has a juno balance
@@ -84,6 +89,7 @@ build/strided --home scripts/state/stride1 tx stakeibc register-host-zone \
 ```
 build/strided --home scripts/state/stride1 tx stakeibc add-validator juno-1 imperator junovaloper17n3w6v5q3n0tws4xv8upd9ul4qqes0nlg7q0xd 10 5 --chain-id local-test-1 --keyring-backend test --from admin -y
 ```
+## Go Through Flow
 * Liquid stake (then wait and LS again)
 ```
 build/strided --home scripts/state/stride1 tx stakeibc liquid-stake 50000000 ujuno --keyring-backend test --from admin -y --chain-id local-test-1 -y
