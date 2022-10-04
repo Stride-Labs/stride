@@ -43,7 +43,7 @@ $HERMES_CMD keys add --key-name $HERMES_HOST_ACCT --chain $HOST_CHAIN_ID --mnemo
 rm -f $TMP_MNEMONICS
 
 echo "Adding Relayer keys"
-$RELAYER_CMD keys restore stride $RELAYER_STRIDE_ACCT "$HOT_RELAYER_STRIDE" 
+$RELAYER_CMD keys restore stride $RELAYER_STRIDE_ACCT "$RELAYER_STRIDE_MNEMONIC" 
 $RELAYER_CMD keys restore $HOST_CHAIN_NAME $RELAYER_HOST_ACCT "$HOT_RELAYER_HOST" 
 
 echo "Done"

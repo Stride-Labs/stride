@@ -26,7 +26,7 @@ host = '0.0.0.0'
 port = 3001
 
 [[chains]]
-id = 'local-test-1'
+id = 'local-test-4'
 rpc_addr = 'http://stride1:26657'
 grpc_addr = 'http://stride1:9090'
 websocket_addr = 'ws://stride1:26657/websocket'
@@ -39,7 +39,7 @@ max_gas = 5000000
 gas_price = { price = 0.000, denom = 'ustrd' }
 gas_multiplier = 1.1
 max_msg_num = 30
-max_tx_size = 2097152
+max_tx_size = 200000
 clock_drift = '5s'
 max_block_time = '10s'
 trusting_period = '12days'

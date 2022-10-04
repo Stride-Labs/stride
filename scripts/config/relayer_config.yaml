@@ -8,7 +8,7 @@ chains:
     type: cosmos
     value:
       key: rly1
-      chain-id: local-test-1
+      chain-id: local-test-4
       rpc-addr: http://stride1:26657
       account-prefix: stride
       keyring-backend: test
@@ -93,7 +93,7 @@ paths:
       channel-list: []
   stride-juno:
     src:
-      chain-id: local-test-1
+      chain-id: local-test-4
     dst:
       chain-id: juno-1
     src-channel-filter:
