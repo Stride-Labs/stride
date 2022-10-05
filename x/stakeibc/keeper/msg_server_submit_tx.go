@@ -14,7 +14,6 @@ import (
 
 	bankTypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	distributiontypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
-	stakingTypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
@@ -62,7 +61,7 @@ func (k Keeper) DelegateOnHost(ctx sdk.Context, hostZone types.HostZone, amt sdk
 			k.Logger(ctx).Info(fmt.Sprintf("Appending MsgDelegate to msgs, DelegatorAddress: %s, ValidatorAddress: %s, relativeAmount: %v",
 				delegationIca.GetAddress(), validator.GetAddress(), relativeAmount))
 
-			msgs = append(msgs, &stakingTypes.MsgDelegate{
+			msgs = append(msgs, &stakingtypes.MsgDelegate{
 				DelegatorAddress: delegationIca.GetAddress(),
 				ValidatorAddress: validator.GetAddress(),
 				Amount:           relativeAmount,

@@ -25,7 +25,7 @@ func CmdRestoreInterchainAccount() *cobra.Command {
 
 			accountType, found := types.ICAAccountType_value[argAccountType]
 			if !found {
-				return errors.New("Invalid account type")
+				return errors.New("invalid account type")
 			}
 
 			clientCtx, err := client.GetClientTxContext(cmd)

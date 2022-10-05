@@ -7,7 +7,6 @@ import (
 
 	epochtypes "github.com/Stride-Labs/stride/x/epochs/types"
 	"github.com/Stride-Labs/stride/x/stakeibc/types"
-	stakeibctypes "github.com/Stride-Labs/stride/x/stakeibc/types"
 )
 
 // ================================ 1: QueryValidatorExchangeRate =============================================
@@ -154,7 +153,7 @@ func (s *KeeperTestSuite) SetupQueryDelegationsIcq() QueryDelegationsIcqTestCase
 		HostDenom:         Atom,
 		IBCDenom:          IbcAtom,
 		Bech32Prefix:      Bech32Prefix,
-		DelegationAccount: &stakeibctypes.ICAAccount{Address: delegationAddress},
+		DelegationAccount: &types.ICAAccount{Address: delegationAddress},
 	}
 
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx(), hostZone)

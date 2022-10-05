@@ -17,16 +17,14 @@ linters:
     - stylecheck # replacement of golint, subset of staticcheck binary.
     - unused # looks for unused variables, subset of staticcheck binary.
 
-
 issues:
   exclude-rules:
     - linters:
       - staticcheck
-      text: "SA1019: package github.com/golang/protobuf/proto is deprecated: Use the \"google.golang.org/protobuf/proto\" package instead."
+      text: "SA1019: \"github.com/golang/protobuf/proto\" is deprecated: Use the \"google.golang.org/protobuf/proto\" package instead."
     - linters:
       - staticcheck
       text: "SA1019: clientCtx.JSONCodec is deprecated: Codec codec will be changed to Codec: codec.Codec"
     - linters:
       - stylecheck
       text: "ST1003:" # requires identifiers with "id" to be "ID".
-

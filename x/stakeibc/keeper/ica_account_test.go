@@ -4,22 +4,22 @@ import (
 	"github.com/Stride-Labs/stride/x/stakeibc/types"
 )
 
-func (suite *KeeperTestSuite) createTestICAAccount() types.ICAAccount {
+func (s *KeeperTestSuite) createTestICAAccount() types.ICAAccount {
 	item := types.ICAAccount{}
-	suite.App.StakeibcKeeper.SetICAAccount(suite.Ctx(), item)
+	s.App.StakeibcKeeper.SetICAAccount(s.Ctx(), item)
 	return item
 }
 
-func (suite *KeeperTestSuite) TestICAAccountGet() {
-	item := suite.createTestICAAccount()
-	rst, found := suite.App.StakeibcKeeper.GetICAAccount(suite.Ctx())
-	suite.Require().True(found)
-	suite.Require().Equal(&item, &rst)
+func (s *KeeperTestSuite) TestICAAccountGet() {
+	item := s.createTestICAAccount()
+	rst, found := s.App.StakeibcKeeper.GetICAAccount(s.Ctx())
+	s.Require().True(found)
+	s.Require().Equal(&item, &rst)
 }
 
-func (suite *KeeperTestSuite) TestICAAccountRemove() {
-	suite.createTestICAAccount()
-	suite.App.StakeibcKeeper.RemoveICAAccount(suite.Ctx())
-	_, found := suite.App.StakeibcKeeper.GetICAAccount(suite.Ctx())
-	suite.Require().False(found)
+func (s *KeeperTestSuite) TestICAAccountRemove() {
+	s.createTestICAAccount()
+	s.App.StakeibcKeeper.RemoveICAAccount(s.Ctx())
+	_, found := s.App.StakeibcKeeper.GetICAAccount(s.Ctx())
+	s.Require().False(found)
 }

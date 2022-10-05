@@ -3,7 +3,7 @@ package keeper_test
 import (
 	"testing"
 
-	"github.com/stretchr/testify/suite"
+	s "github.com/stretchr/testify/suite"
 
 	"github.com/Stride-Labs/stride/app/apptesting"
 	"github.com/Stride-Labs/stride/x/interchainquery/keeper"
@@ -23,5 +23,5 @@ func (s *KeeperTestSuite) GetMsgServer() types.MsgServer {
 }
 
 func TestKeeperTestSuite(t *testing.T) {
-	suite.Run(t, new(KeeperTestSuite))
+	s.Run(t, new(KeeperTestSuite))
 }

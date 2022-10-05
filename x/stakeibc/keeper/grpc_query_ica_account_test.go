@@ -8,9 +8,9 @@ import (
 	"github.com/Stride-Labs/stride/x/stakeibc/types"
 )
 
-func (suite KeeperTestSuite) TestICAAccountQuery() {
-	item := suite.createTestICAAccount()
-	wctx := sdk.WrapSDKContext(suite.Ctx())
+func (s KeeperTestSuite) TestICAAccountQuery() {
+	item := s.createTestICAAccount()
+	wctx := sdk.WrapSDKContext(s.Ctx())
 	for _, tc := range []struct {
 		desc     string
 		request  *types.QueryGetICAAccountRequest
@@ -27,12 +27,12 @@ func (suite KeeperTestSuite) TestICAAccountQuery() {
 			err:  status.Error(codes.InvalidArgument, "invalid request"),
 		},
 	} {
-		response, err := suite.App.StakeibcKeeper.ICAAccount(wctx, tc.request)
+		response, err := s.App.StakeibcKeeper.ICAAccount(wctx, tc.request)
 		if tc.err != nil {
-			suite.Require().ErrorIs(err, tc.err)
+			s.Require().ErrorIs(err, tc.err)
 		} else {
-			suite.Require().NoError(err)
-			suite.Require().Equal(tc.response, response)
+			s.Require().NoError(err)
+			s.Require().Equal(tc.response, response)
 		}
 	}
 }

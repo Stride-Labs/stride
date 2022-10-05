@@ -12,7 +12,6 @@ import (
 	recordtypes "github.com/Stride-Labs/stride/x/records/types"
 	stakeibckeeper "github.com/Stride-Labs/stride/x/stakeibc/keeper"
 	"github.com/Stride-Labs/stride/x/stakeibc/types"
-	stakeibc "github.com/Stride-Labs/stride/x/stakeibc/types"
 )
 
 type DelegateCallbackState struct {
@@ -55,7 +54,7 @@ func (s *KeeperTestSuite) SetupDelegateCallback() DelegateCallbackTestCase {
 		Address:       "val2_address",
 		DelegationAmt: val2Bal,
 	}
-	hostZone := stakeibc.HostZone{
+	hostZone := types.HostZone{
 		ChainId:        HostChainId,
 		HostDenom:      Atom,
 		IBCDenom:       IbcAtom,

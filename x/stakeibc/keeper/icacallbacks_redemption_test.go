@@ -11,7 +11,6 @@ import (
 	recordtypes "github.com/Stride-Labs/stride/x/records/types"
 	stakeibckeeper "github.com/Stride-Labs/stride/x/stakeibc/keeper"
 	"github.com/Stride-Labs/stride/x/stakeibc/types"
-	stakeibc "github.com/Stride-Labs/stride/x/stakeibc/types"
 )
 
 type RedemptionCallbackState struct {
@@ -56,7 +55,7 @@ func (s *KeeperTestSuite) SetupRedemptionCallback() RedemptionCallbackTestCase {
 		EpochNumber:        epochNumber,
 		HostZoneUnbondings: []*recordtypes.HostZoneUnbonding{&hostZoneUnbonding},
 	}
-	hostZone := stakeibc.HostZone{
+	hostZone := types.HostZone{
 		ChainId:        HostChainId,
 		HostDenom:      Atom,
 		IBCDenom:       IbcAtom,

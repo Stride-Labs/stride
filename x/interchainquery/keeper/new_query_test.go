@@ -19,7 +19,7 @@ type NewQueryTestCase struct {
 	height       int64
 }
 
-func (suite *KeeperTestSuite) SetupNewQuery() NewQueryTestCase {
+func (s *KeeperTestSuite) SetupNewQuery() NewQueryTestCase {
 
 	// module is the name of the module invoking the query, used to find the callback upon response
 	module := "stakeibc"
