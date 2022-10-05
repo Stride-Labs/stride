@@ -147,3 +147,22 @@ stop-local:
 	@pkill -f "/bin/bash.*create_logs.sh" || true
 	@pkill -f "sh.*start_network.sh" || true
 
+localnet-keys:
+	. testutil/localstride/scripts/add_keys.sh
+
+localnet-init: localnet-clean localnet-build
+
+localnet-clean:
+	@rm -rfI $(HOME)/.stride/
+
+localnet-build:
+	@docker-compose -f testutil/localstride/docker-compose.yml build
+
+localnet-start:
+	@docker-compose -f testutil/localstride/docker-compose.yml up
+
+localnet-startd:
+	@docker-compose -f testutil/localstride/docker-compose.yml up -d
+
+localnet-stop:
+	@docker-compose -f testutil/localstride/docker-compose.yml down
