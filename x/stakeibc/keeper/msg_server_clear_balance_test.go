@@ -9,17 +9,16 @@ import (
 	_ "github.com/stretchr/testify/suite"
 
 	"github.com/Stride-Labs/stride/x/stakeibc/types"
-	stakeibctypes "github.com/Stride-Labs/stride/x/stakeibc/types"
 )
 
 type ClearBalanceState struct {
 	feeChannel Channel
-	hz         stakeibctypes.HostZone
+	hz         types.HostZone
 }
 
 type ClearBalanceTestCase struct {
 	initialState ClearBalanceState
-	validMsg     stakeibctypes.MsgClearBalance
+	validMsg     types.MsgClearBalance
 }
 
 func (s *KeeperTestSuite) SetupClearBalance() ClearBalanceTestCase {
@@ -29,16 +28,16 @@ func (s *KeeperTestSuite) SetupClearBalance() ClearBalanceTestCase {
 	feeAddress := s.IcaAddresses[feeAccountOwner]
 	// hz
 	zoneAddress := types.NewZoneAddress(HostChainId)
-	hostZone := stakeibctypes.HostZone{
+	hostZone := types.HostZone{
 		ChainId:        HostChainId,
 		ConnectionId:   ibctesting.FirstConnectionID,
 		HostDenom:      Atom,
 		IBCDenom:       IbcAtom,
 		RedemptionRate: sdk.NewDec(1.0),
 		Address:        zoneAddress.String(),
-		FeeAccount: &stakeibctypes.ICAAccount{
+		FeeAccount: &types.ICAAccount{
 			Address: feeAddress,
-			Target:  stakeibctypes.ICAAccountType_FEE,
+			Target:  types.ICAAccountType_FEE,
 		},
 	}
 
@@ -58,7 +57,7 @@ func (s *KeeperTestSuite) SetupClearBalance() ClearBalanceTestCase {
 				ChannelID: feeChannelID,
 			},
 		},
-		validMsg: stakeibctypes.MsgClearBalance{
+		validMsg: types.MsgClearBalance{
 			Creator: user.acc.String(),
 			ChainId: HostChainId,
 			Amount:  amount,

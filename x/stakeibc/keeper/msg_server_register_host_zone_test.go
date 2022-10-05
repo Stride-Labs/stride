@@ -13,7 +13,6 @@ import (
 
 	epochtypes "github.com/Stride-Labs/stride/x/epochs/types"
 	recordstypes "github.com/Stride-Labs/stride/x/records/types"
-	recordtypes "github.com/Stride-Labs/stride/x/records/types"
 	stakeibctypes "github.com/Stride-Labs/stride/x/stakeibc/types"
 )
 
@@ -45,9 +44,9 @@ func (s *KeeperTestSuite) SetupRegisterHostZone() RegisterHostZoneTestCase {
 		EpochNumber:     strideEpochNumber,
 	})
 
-	epochUnbondingRecord := recordtypes.EpochUnbondingRecord{
+	epochUnbondingRecord := recordstypes.EpochUnbondingRecord{
 		EpochNumber:        epochUnbondingRecordNumber,
-		HostZoneUnbondings: []*recordtypes.HostZoneUnbonding{},
+		HostZoneUnbondings: []*recordstypes.HostZoneUnbonding{},
 	}
 	s.App.RecordsKeeper.SetEpochUnbondingRecord(s.Ctx(), epochUnbondingRecord)
 

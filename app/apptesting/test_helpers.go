@@ -9,7 +9,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 	icatypes "github.com/cosmos/ibc-go/v3/modules/apps/27-interchain-accounts/types"
-	transfertypes "github.com/cosmos/ibc-go/v3/modules/apps/transfer/types"
 	channeltypes "github.com/cosmos/ibc-go/v3/modules/core/04-channel/types"
 	ibctesting "github.com/cosmos/ibc-go/v3/testing"
 	"github.com/cosmos/ibc-go/v3/testing/simapp"
@@ -234,8 +233,8 @@ func NewTransferPath(chainA *ibctesting.TestChain, chainB *ibctesting.TestChain)
 	path.EndpointB.ChannelConfig.PortID = ibctesting.TransferPort
 	path.EndpointA.ChannelConfig.Order = channeltypes.UNORDERED
 	path.EndpointB.ChannelConfig.Order = channeltypes.UNORDERED
-	path.EndpointA.ChannelConfig.Version = transfertypes.Version
-	path.EndpointB.ChannelConfig.Version = transfertypes.Version
+	path.EndpointA.ChannelConfig.Version = ibctransfertypes.Version
+	path.EndpointB.ChannelConfig.Version = ibctransfertypes.Version
 	return path
 }
 
@@ -294,11 +293,11 @@ func (s *AppTestHelper) ICAPacketAcknowledgement(msgs []sdk.Msg, msgResponse *pr
 
 // Get an IBC denom from it's native host denom
 // This assumes the transfer channel is channel-0
-func (s *AppTestHelper) GetIBCDenomTrace(denom string) transfertypes.DenomTrace {
-	sourcePrefix := transfertypes.GetDenomPrefix(ibctesting.TransferPort, ibctesting.FirstChannelID)
+func (s *AppTestHelper) GetIBCDenomTrace(denom string) ibctransfertypes.DenomTrace {
+	sourcePrefix := ibctransfertypes.GetDenomPrefix(ibctesting.TransferPort, ibctesting.FirstChannelID)
 	prefixedDenom := sourcePrefix + denom
 
-	return transfertypes.ParseDenomTrace(prefixedDenom)
+	return ibctransfertypes.ParseDenomTrace(prefixedDenom)
 }
 
 func (s *AppTestHelper) MarshalledICS20PacketData() sdk.AccAddress {

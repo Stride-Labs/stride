@@ -13,7 +13,6 @@ import (
 	recordtypes "github.com/Stride-Labs/stride/x/records/types"
 	stakeibckeeper "github.com/Stride-Labs/stride/x/stakeibc/keeper"
 	"github.com/Stride-Labs/stride/x/stakeibc/types"
-	stakeibc "github.com/Stride-Labs/stride/x/stakeibc/types"
 )
 
 type UndelegateCallbackState struct {
@@ -65,7 +64,7 @@ func (s *KeeperTestSuite) SetupUndelegateCallback() UndelegateCallbackTestCase {
 		acc:           zoneAddress,
 		stAtomBalance: sdk.NewInt64Coin(StAtom, zoneAccountBalance), // Add a few extra tokens to make the test more robust
 	}
-	hostZone := stakeibc.HostZone{
+	hostZone := types.HostZone{
 		ChainId:        HostChainId,
 		HostDenom:      Atom,
 		IBCDenom:       IbcAtom,
@@ -314,7 +313,7 @@ func (s *KeeperTestSuite) TestGetLatestCompletionTime_Failure() {
 
 // UpdateHostZoneUnbondings tests
 func (s *KeeperTestSuite) TestUpdateHostZoneUnbondings_Success() {
-	hostZone := stakeibc.HostZone{
+	hostZone := types.HostZone{
 		ChainId: HostChainId,
 	}
 	totalBalance := 1_500_000
@@ -378,7 +377,7 @@ func (s *KeeperTestSuite) TestUpdateHostZoneUnbondings_Success() {
 
 // Test failure case - epoch unbonding record DNE
 func (s *KeeperTestSuite) TestUpdateHostZoneUnbondings_EpochUnbondingRecordDNE() {
-	hostZone := stakeibc.HostZone{
+	hostZone := types.HostZone{
 		ChainId: HostChainId,
 	}
 	callbackArgs := types.UndelegateCallback{
@@ -391,7 +390,7 @@ func (s *KeeperTestSuite) TestUpdateHostZoneUnbondings_EpochUnbondingRecordDNE()
 
 // Test failure case - HostZoneUnbonding DNE
 func (s *KeeperTestSuite) TestUpdateHostZoneUnbondings_HostZoneUnbondingDNE() {
-	hostZone := stakeibc.HostZone{
+	hostZone := types.HostZone{
 		ChainId: HostChainId,
 	}
 	epochUnbondingRecord := recordtypes.EpochUnbondingRecord{
@@ -410,7 +409,7 @@ func (s *KeeperTestSuite) TestUpdateHostZoneUnbondings_HostZoneUnbondingDNE() {
 
 // Test failure case - Amount too big
 func (s *KeeperTestSuite) TestUpdateHostZoneUnbondings_AmountTooBig() {
-	hostZone := stakeibc.HostZone{
+	hostZone := types.HostZone{
 		ChainId: HostChainId,
 	}
 	// Set up EpochUnbondingRecord, HostZoneUnbonding and token state

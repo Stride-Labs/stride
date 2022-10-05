@@ -11,7 +11,6 @@ import (
 	recordtypes "github.com/Stride-Labs/stride/x/records/types"
 	stakeibckeeper "github.com/Stride-Labs/stride/x/stakeibc/keeper"
 	"github.com/Stride-Labs/stride/x/stakeibc/types"
-	stakeibc "github.com/Stride-Labs/stride/x/stakeibc/types"
 )
 
 type ReinvestCallbackState struct {
@@ -34,7 +33,7 @@ type ReinvestCallbackTestCase struct {
 func (s *KeeperTestSuite) SetupReinvestCallback() ReinvestCallbackTestCase {
 	reinvestAmt := int64(1_000)
 
-	hostZone := stakeibc.HostZone{
+	hostZone := types.HostZone{
 		ChainId:        HostChainId,
 		HostDenom:      Atom,
 		IBCDenom:       IbcAtom,
@@ -48,7 +47,7 @@ func (s *KeeperTestSuite) SetupReinvestCallback() ReinvestCallbackTestCase {
 		Status:             recordtypes.DepositRecord_STAKE,
 		Source:             recordtypes.DepositRecord_WITHDRAWAL_ICA,
 	}
-	epochTracker := stakeibc.EpochTracker{
+	epochTracker := types.EpochTracker{
 		EpochIdentifier: epochtypes.STRIDE_EPOCH,
 		EpochNumber:     1,
 	}

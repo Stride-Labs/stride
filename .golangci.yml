@@ -1,9 +1,32 @@
+linters:
+  # Disable all linters.
+  # Default: false
+  disable-all: true
+  # Enable specific linter
+  # https://golangci-lint.run/usage/linters/#enabled-by-default
+  enable:
+    - errcheck # enabled by default
+    - gosimple # enabled by default
+    - govet # enabled by default
+    - ineffassign # enabled by default
+    - staticcheck # enabled by default
+    - typecheck # enabled by default
+    - unused # enabled by default
+    - nilerr # finds code which returns nil even though it checks that error is not nil
+    - nilnil # checks that there is no simultaneous return of `nil` error and an invalid value.
+    - stylecheck # replacement of golint, subset of staticcheck binary.
+    - unused # looks for unused variables, subset of staticcheck binary.
+
+
 issues:
   exclude-rules:
-    - text: "SA1019: package github.com/golang/protobuf/proto is deprecated: Use the \"google.golang.org/protobuf/proto\" package instead."
-      linters:
-        - staticcheck
-    - text: "SA1019: clientCtx.JSONCodec is deprecated: Codec codec will be changed to Codec: codec.Codec"
-      linters:
-        - staticcheck
+    - linters:
+      - staticcheck
+      text: "SA1019: package github.com/golang/protobuf/proto is deprecated: Use the \"google.golang.org/protobuf/proto\" package instead."
+    - linters:
+      - staticcheck
+      text: "SA1019: clientCtx.JSONCodec is deprecated: Codec codec will be changed to Codec: codec.Codec"
+    - linters:
+      - stylecheck
+      text: "ST1003:" # requires identifiers with "id" to be "ID".
 
