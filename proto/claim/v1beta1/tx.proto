@@ -1,0 +1,24 @@
+syntax = "proto3";
+package Stridelabs.stride.claim.v1beta1;
+
+import "gogoproto/gogo.proto";
+import "cosmos/base/v1beta1/coin.proto";
+
+option go_package = "github.com/Stride-Labs/stride/x/claim/types";
+
+// Msg defines the Msg service.
+service Msg {
+  rpc DepositAirdrop(MsgDepositAirdrop) returns (MsgDepositAirdropResponse);
+}
+
+message MsgDepositAirdrop {
+  string distributor = 1;
+  repeated cosmos.base.v1beta1.Coin airdrop_amount = 2 [
+    (gogoproto.nullable) = false,
+    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
+  ];
+}
+
+message MsgDepositAirdropResponse {
+}
+
