@@ -32,7 +32,6 @@ func (k Keeper) HostZoneAll(c context.Context, req *types.QueryAllHostZoneReques
 		hostZones = append(hostZones, hostZone)
 		return nil
 	})
-
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
