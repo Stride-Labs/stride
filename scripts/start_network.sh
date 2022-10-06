@@ -12,22 +12,21 @@ mkdir -p $SCRIPT_DIR/logs
 HERMES_LOGS=$SCRIPT_DIR/logs/hermes.log
 ICQ_LOGS=$SCRIPT_DIR/logs/icq.log
 
-# Initialize the state for stride/gaia and relayers
-sh ${SCRIPT_DIR}/init_chain.sh STRIDE
-sh ${SCRIPT_DIR}/init_chain.sh GAIA
-sh ${SCRIPT_DIR}/init_chain.sh JUNO
-sh ${SCRIPT_DIR}/init_chain.sh OSMO
+HOST_CHAINS=(GAIA JUNO OSMO STARS)
 
-HOST_CHAINS=(GAIA JUNO OSMO)
+# Initialize the state for each chain
+for chain_id in STRIDE ${HOST_CHAINS[@]}; do
+    sh ${SCRIPT_DIR}/init_chain.sh $chain_id
+done
+
+# Start the chain and create the transfer channels
 sh ${SCRIPT_DIR}/start_chain.sh STRIDE ${HOST_CHAINS[@]}
 sh ${SCRIPT_DIR}/init_relayers.sh STRIDE ${HOST_CHAINS[@]}
 sh ${SCRIPT_DIR}/create_channels.sh ${HOST_CHAINS[@]}
 
 echo "Starting relayers"
-docker-compose up -d hermes icq
-
+docker-compose up -d hermes 
 docker-compose logs -f hermes | sed -r -u "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2})?)?[mGK]//g" >> $HERMES_LOGS 2>&1 &
-docker-compose logs -f icq | sed -r -u "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2})?)?[mGK]//g" > $ICQ_LOGS 2>&1 &
 
 # Wait for hermes to start
 ( tail -f -n0 $HERMES_LOGS & ) | grep -q -E "Hermes has started"
@@ -36,7 +35,7 @@ docker-compose logs -f icq | sed -r -u "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2})?)?[mGK]
 pids=()
 for i in ${!HOST_CHAINS[@]}; do
     if [[ "$i" != "0" ]]; then sleep 20; fi
-    bash $SCRIPT_DIR/register_host.sh ${HOST_CHAINS[$i]} connection-${i} channel-${i} &
+    bash $SCRIPT_DIR/register_host.sh ${HOST_CHAINS[$i]} $i &
     pids[${i}]=$!
 done
 for i in ${!pids[@]}; do
@@ -44,4 +43,12 @@ for i in ${!pids[@]}; do
     echo "${HOST_CHAINS[$i]} - Done"
 done
 
-$SCRIPT_DIR/create_logs.sh &
+echo "Starting go relayers..."
+for chain_id in ${HOST_CHAINS[@]}; do
+    chain_name=$(printf "$chain_id" | awk '{ print tolower($0) }')
+
+    docker-compose up -d relayer-${chain_name}
+    docker-compose logs -f relayer-${chain_name} | sed -r -u "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2})?)?[mGK]//g" >> ${LOGS}/relayer-${chain_name}.log 2>&1 &
+done
+
+$SCRIPT_DIR/create_logs.sh ${HOST_CHAINS[@]} &
