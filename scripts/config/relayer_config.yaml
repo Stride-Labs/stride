@@ -32,4 +32,78 @@ chains:
       timeout: 20s
       output-format: json
       sign-mode: direct
-paths: {}
+  juno:
+    type: cosmos
+    value:
+      key: rly3
+      chain-id: JUNO
+      rpc-addr: http://juno1:26657
+      account-prefix: juno
+      keyring-backend: test
+      gas-adjustment: 1.2
+      gas-prices: 0.01ujuno
+      debug: false
+      timeout: 20s
+      output-format: json
+      sign-mode: direct
+  osmo:
+    type: cosmos
+    value:
+      key: rly4
+      chain-id: OSMO
+      rpc-addr: http://osmo1:26657
+      account-prefix: osmo
+      keyring-backend: test
+      gas-adjustment: 1.2
+      gas-prices: 0.01uosmo
+      debug: false
+      timeout: 20s
+      output-format: json
+      sign-mode: direct
+  stars:
+    type: cosmos
+    value:
+      key: rly5
+      chain-id: STARS
+      rpc-addr: http://stars1:26657
+      account-prefix: stars
+      keyring-backend: test
+      gas-adjustment: 1.2
+      gas-prices: 0.01ustars
+      debug: false
+      timeout: 20s
+      output-format: json
+      sign-mode: direct
+paths:
+  stride-gaia:
+    src:
+      chain-id: STRIDE
+    dst:
+      chain-id: GAIA
+    src-channel-filter:
+      rule: ""
+      channel-list: []
+  stride-osmo:
+    src:
+      chain-id: STRIDE
+    dst:
+      chain-id: OSMO
+    src-channel-filter:
+      rule: ""
+      channel-list: []
+  stride-juno:
+    src:
+      chain-id: STRIDE
+    dst:
+      chain-id: JUNO
+    src-channel-filter:
+      rule: ""
+      channel-list: []
+  stride-stars:
+    src:
+      chain-id: STRIDE
+    dst:
+      chain-id: STARS
+    src-channel-filter:
+      rule: ""
+      channel-list: []
