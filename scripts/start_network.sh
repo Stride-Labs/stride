@@ -14,6 +14,23 @@ ICQ_LOGS=$SCRIPT_DIR/logs/icq.log
 
 HOST_CHAINS=(GAIA JUNO OSMO STARS)
 
+# If we're testing an upgrade, setup cosmovisor
+if [[ "$UPGRADE_NAME" != "" ]]; then
+    mkdir -p $SCRIPT_DIR/upgrades/cosmovisor/genesis/bin/
+    mkdir -p $SCRIPT_DIR/upgrades/cosmovisor/upgrades/$UPGRADE_NAME/bin/
+    mkdir -p $SCRIPT_DIR/state/stride/cosmovisor
+
+    rm -f $SCRIPT_DIR/upgrades/binaries/strided2
+    cp $SCRIPT_DIR/../build/strided $SCRIPT_DIR/upgrades/binaries/strided2
+    cp $SCRIPT_DIR/upgrades/binaries/strided1 $SCRIPT_DIR/upgrades/cosmovisor/genesis/bin/strided
+    cp $SCRIPT_DIR/upgrades/binaries/strided2 $SCRIPT_DIR/upgrades/cosmovisor/upgrades/$UPGRADE_NAME/bin/strided
+
+    # Build a cosmovisor image with the old binary and replace the stride docker image with a new one
+    #  that has both binaries and is running cosmovisor
+    docker build -t stridezone:cosmovisor --build-arg old_commit_hash=$UPGRADE_OLD_COMMIT_HASH -f ${SCRIPT_DIR}/upgrades/Dockerfile.cosmovisor .
+    docker build -t stridezone:stride -f ${SCRIPT_DIR}/upgrades/Dockerfile.stride .
+fi
+
 # Initialize the state for each chain
 for chain_id in STRIDE ${HOST_CHAINS[@]}; do
     sh ${SCRIPT_DIR}/init_chain.sh $chain_id
