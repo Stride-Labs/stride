@@ -27,7 +27,7 @@ for chain_id in ${CHAINS[@]}; do
     mnemonic=$(GET_VAR_VALUE     HERMES_${chain_id}_MNEMONIC)
 
     echo "$mnemonic" > $TMP_MNEMONICS
-    $HERMES_CMD keys add --key-name $account_name --chain $STRIDE_CHAIN_ID --mnemonic-file $TMP_MNEMONICS --overwrite
+    $HERMES_CMD keys add --key-name $account_name --chain $chain_id --mnemonic-file $TMP_MNEMONICS --overwrite
 done
 rm -f $TMP_MNEMONICS
 
