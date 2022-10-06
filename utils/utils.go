@@ -1,11 +1,10 @@
 package utils
 
 import (
+	"errors"
 	"fmt"
 	"sort"
 	"strconv"
-
-	"errors"
 	"strings"
 
 	"github.com/cosmos/cosmos-sdk/types/address"

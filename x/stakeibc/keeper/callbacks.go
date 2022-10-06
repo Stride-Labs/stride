@@ -31,7 +31,7 @@ func (k Keeper) CallbackHandler() Callbacks {
 	return Callbacks{k, make(map[string]Callback)}
 }
 
-//callback handler
+// callback handler
 func (c Callbacks) Call(ctx sdk.Context, id string, args []byte, query icqtypes.Query) error {
 	return c.callbacks[id](c.k, ctx, args, query)
 }
@@ -193,9 +193,9 @@ func WithdrawalBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query icq
 // ValidatorCallback is a callback handler for validator queries.
 //
 // In an attempt to get the ICA's delegation amount on a given validator, we have to query:
-//     1) the validator's internal exchange rate
-//     2) the Delegation ICA's delegated shares
-//  And apply the following equation:
+//  1. the validator's internal exchange rate
+//  2. the Delegation ICA's delegated shares
+//     And apply the following equation:
 //     num_tokens = exchange_rate * num_shares
 //
 // This callback from query #1
@@ -277,9 +277,9 @@ func ValidatorExchangeRateCallback(k Keeper, ctx sdk.Context, args []byte, query
 // DelegationCallback is a callback handler for UpdateValidatorSharesExchRate queries.
 //
 // In an attempt to get the ICA's delegation amount on a given validator, we have to query:
-//     1) the validator's internal exchange rate
-//     2) the Delegation ICA's delegated shares
-//  And apply the following equation:
+//  1. the validator's internal exchange rate
+//  2. the Delegation ICA's delegated shares
+//     And apply the following equation:
 //     num_tokens = exchange_rate * num_shares
 //
 // This callback from query #2

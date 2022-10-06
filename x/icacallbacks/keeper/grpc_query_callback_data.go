@@ -31,7 +31,6 @@ func (k Keeper) CallbackDataAll(c context.Context, req *types.QueryAllCallbackDa
 		callbackDatas = append(callbackDatas, callbackData)
 		return nil
 	})
-
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
