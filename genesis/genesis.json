@@ -1,0 +1,3342 @@
+{
+    "genesis_time": "2022-09-04T19:00:00.451745Z",
+    "chain_id": "stride-1",
+    "initial_height": "1",
+    "consensus_params": {
+      "block": {
+        "max_bytes": "22020096",
+        "max_gas": "-1",
+        "time_iota_ms": "1000"
+      },
+      "evidence": {
+        "max_age_num_blocks": "100000",
+        "max_age_duration": "172800000000000",
+        "max_bytes": "1048576"
+      },
+      "validator": {
+        "pub_key_types": [
+          "ed25519"
+        ]
+      },
+      "version": {}
+    },
+    "app_hash": "",
+    "app_state": {
+      "auth": {
+        "params": {
+          "max_memo_characters": "256",
+          "tx_sig_limit": "7",
+          "tx_size_cost_per_byte": "10",
+          "sig_verify_cost_ed25519": "590",
+          "sig_verify_cost_secp256k1": "1000"
+        },
+        "accounts": [
+          {
+            "@type": "/cosmos.auth.v1beta1.BaseAccount",
+            "address": "stride1tlxk4as9sgpqkh42cfaxqja0mdj6qculqshy0gg3glazmrnx3y8s8gsvqk",
+            "pub_key": null,
+            "account_number": "0",
+            "sequence": "0"
+          },
+          {
+            "@type": "/cosmos.auth.v1beta1.BaseAccount",
+            "address": "stride1yz3mp7c2m739nftfrv5r3h6j64aqp95f3degpf",
+            "pub_key": null,
+            "account_number": "0",
+            "sequence": "0"
+          },
+          {
+            "@type": "/cosmos.auth.v1beta1.BaseAccount",
+            "address": "stride1alnn79kh0xka0r5h4h82uuaqfhpdmph6rvpf5f",
+            "pub_key": null,
+            "account_number": "0",
+            "sequence": "0"
+          },
+          {
+            "@type": "/cosmos.auth.v1beta1.BaseAccount",
+            "address": "stride1w66lr45r2f4yqlp5zn2quldanatd5ktsl32nuz",
+            "pub_key": null,
+            "account_number": "0",
+            "sequence": "0"
+          },
+          {
+            "@type": "/cosmos.auth.v1beta1.BaseAccount",
+            "address": "stride106y6thy7gphzrsqq443hl69vfdvntgz2stfwh3",
+            "pub_key": null,
+            "account_number": "0",
+            "sequence": "0"
+          },
+          {
+            "@type": "/cosmos.auth.v1beta1.BaseAccount",
+            "address": "stride1md2j38ls8hg94vjfafu0a2p9htwlkjmhlnp9ef",
+            "pub_key": null,
+            "account_number": "0",
+            "sequence": "0"
+          },
+          {
+            "@type": "/cosmos.auth.v1beta1.BaseAccount",
+            "address": "stride1jj9z2xwxesuy65n90dujsak554eqkrr2ygyan2",
+            "pub_key": null,
+            "account_number": "0",
+            "sequence": "0"
+          },
+          {
+            "@type": "/cosmos.auth.v1beta1.BaseAccount",
+            "address": "stride1elqugvhgmn9esv47e2g56gkgzmydc5yt9veagw",
+            "pub_key": null,
+            "account_number": "0",
+            "sequence": "0"
+          },
+          {
+            "@type": "/cosmos.auth.v1beta1.BaseAccount",
+            "address": "stride19d8a9dr4kh85zcl5kq7fj64ad9r9dqfk8s43y9",
+            "pub_key": null,
+            "account_number": "0",
+            "sequence": "0"
+          },
+          {
+            "@type": "/cosmos.auth.v1beta1.BaseAccount",
+            "address": "stride1dtqsnk3mlqrcxgfvu39lm0jm3pyd0mkrcajj4a",
+            "pub_key": null,
+            "account_number": "0",
+            "sequence": "0"
+          },
+          {
+            "@type": "/cosmos.auth.v1beta1.BaseAccount",
+            "address": "stride1j8gkhtllnp252l6g6zwzea30e7pvzqttqs6xtk",
+            "pub_key": null,
+            "account_number": "0",
+            "sequence": "0"
+          },
+          {
+            "@type": "/cosmos.auth.v1beta1.BaseAccount",
+            "address": "stride140l6y2gp3gxvay6qtn70re7z2s0gn57z0jncjd",
+            "pub_key": null,
+            "account_number": "0",
+            "sequence": "0"
+          },
+          {
+            "@type": "/cosmos.auth.v1beta1.BaseAccount",
+            "address": "stride1dqpg0hfva0k0awzhxwarjpgzj82hlmvrsnm7ug",
+            "pub_key": null,
+            "account_number": "0",
+            "sequence": "0"
+          },
+          {
+            "@type": "/cosmos.auth.v1beta1.BaseAccount",
+            "address": "stride1gp957czryfgyvxwn3tfnyy2f0t9g2p4pxxdj7c",
+            "pub_key": null,
+            "account_number": "0",
+            "sequence": "0"
+          },
+          {
+            "@type": "/cosmos.auth.v1beta1.BaseAccount",
+            "address": "stride1hw06c3nsx4a577x45kc4ln5dzct3wk0q2sxyuj",
+            "pub_key": null,
+            "account_number": "0",
+            "sequence": "0"
+          },
+          {
+            "@type": "/cosmos.auth.v1beta1.BaseAccount",
+            "address": "stride169n80dfyqukc8m9uewsxs8h5yc0c80us4meepn",
+            "pub_key": null,
+            "account_number": "0",
+            "sequence": "0"
+          },
+          {
+            "@type": "/cosmos.auth.v1beta1.BaseAccount",
+            "address": "stride1mjr7m233g7yklzvfjp7jvtpsjm286dv2qdqh7h",
+            "pub_key": null,
+            "account_number": "0",
+            "sequence": "0"
+          },
+          {
+            "@type": "/cosmos.auth.v1beta1.BaseAccount",
+            "address": "stride16vxc4n67usd6cvtyrz0as0kegny2t5l7j33qhy",
+            "pub_key": null,
+            "account_number": "0",
+            "sequence": "0"
+          },
+          {
+            "@type": "/cosmos.auth.v1beta1.BaseAccount",
+            "address": "stride1dae4zycvmyd2qt5td9zzgdjdnwyawp79mp0q4a",
+            "pub_key": null,
+            "account_number": "0",
+            "sequence": "0"
+          },
+          {
+            "@type": "/cosmos.auth.v1beta1.BaseAccount",
+            "address": "stride1x0agh4jnvamn6y5ss94s6ktugwkljp6yf7jwrt",
+            "pub_key": null,
+            "account_number": "0",
+            "sequence": "0"
+          },
+          {
+            "@type": "/cosmos.auth.v1beta1.BaseAccount",
+            "address": "stride16a28swex9y3knnsls7ae072cu30sj6u56060d2",
+            "pub_key": null,
+            "account_number": "0",
+            "sequence": "0"
+          },
+          {
+            "@type": "/cosmos.auth.v1beta1.BaseAccount",
+            "address": "stride1ej2es5fjztqjcd4pwa0zyvaevtjd2y5wqe4vsj",
+            "pub_key": null,
+            "account_number": "0",
+            "sequence": "0"
+          },
+          {
+            "@type": "/cosmos.vesting.v1beta1.ContinuousVestingAccount",
+            "base_vesting_account": {
+              "base_account": {
+                "address": "stride1v94kmwygzft2tf69az0wlyvnkfst6tsuxq5we7",
+                "pub_key": null,
+                "account_number": "0",
+                "sequence": "0"
+              },
+              "original_vesting": [
+                {
+                  "denom": "ustrd",
+                  "amount": "4000000000000"
+                }
+              ],
+              "delegated_free": [],
+              "delegated_vesting": [],
+              "end_time": "1757008452"
+            },
+            "start_time": "1693800452"
+          },
+          {
+            "@type": "/cosmos.vesting.v1beta1.ContinuousVestingAccount",
+            "base_vesting_account": {
+              "base_account": {
+                "address": "stride1zg9pafkxf6mt6p9nlz0cggx8vssk6etfhwg2ew",
+                "pub_key": null,
+                "account_number": "0",
+                "sequence": "0"
+              },
+              "original_vesting": [
+                {
+                  "denom": "ustrd",
+                  "amount": "1500000000000"
+                }
+              ],
+              "delegated_free": [],
+              "delegated_vesting": [],
+              "end_time": "1757008452"
+            },
+            "start_time": "1693800452"
+          },
+          {
+            "@type": "/cosmos.vesting.v1beta1.ContinuousVestingAccount",
+            "base_vesting_account": {
+              "base_account": {
+                "address": "stride1rn64223uzw8lc7xn2l33cmm6jgxl3g8zmdfdu6",
+                "pub_key": null,
+                "account_number": "0",
+                "sequence": "0"
+              },
+              "original_vesting": [
+                {
+                  "denom": "ustrd",
+                  "amount": "666666666667"
+                }
+              ],
+              "delegated_free": [],
+              "delegated_vesting": [],
+              "end_time": "1757008452"
+            },
+            "start_time": "1693800452"
+          },
+          {
+            "@type": "/cosmos.vesting.v1beta1.ContinuousVestingAccount",
+            "base_vesting_account": {
+              "base_account": {
+                "address": "stride166zjj4a3fptl0szgagzxkv40hr0xpgap9zxn7v",
+                "pub_key": null,
+                "account_number": "0",
+                "sequence": "0"
+              },
+              "original_vesting": [
+                {
+                  "denom": "ustrd",
+                  "amount": "666666666667"
+                }
+              ],
+              "delegated_free": [],
+              "delegated_vesting": [],
+              "end_time": "1757008452"
+            },
+            "start_time": "1693800452"
+          },
+          {
+            "@type": "/cosmos.vesting.v1beta1.ContinuousVestingAccount",
+            "base_vesting_account": {
+              "base_account": {
+                "address": "stride1vm97kzwjllvpycllxwn5ajgllxqrpk0g87uknt",
+                "pub_key": null,
+                "account_number": "0",
+                "sequence": "0"
+              },
+              "original_vesting": [
+                {
+                  "denom": "ustrd",
+                  "amount": "646654500000"
+                }
+              ],
+              "delegated_free": [],
+              "delegated_vesting": [],
+              "end_time": "1757008452"
+            },
+            "start_time": "1693800452"
+          },
+          {
+            "@type": "/cosmos.vesting.v1beta1.ContinuousVestingAccount",
+            "base_vesting_account": {
+              "base_account": {
+                "address": "stride1ht8yryqejzpejhvgur793wawuedzhhysgvvsjy",
+                "pub_key": null,
+                "account_number": "0",
+                "sequence": "0"
+              },
+              "original_vesting": [
+                {
+                  "denom": "ustrd",
+                  "amount": "4000000000000"
+                }
+              ],
+              "delegated_free": [],
+              "delegated_vesting": [],
+              "end_time": "1757008452"
+            },
+            "start_time": "1693800452"
+          },
+          {
+            "@type": "/cosmos.vesting.v1beta1.ContinuousVestingAccount",
+            "base_vesting_account": {
+              "base_account": {
+                "address": "stride12x9hund9zux7ynft6sd7jsqdnmphp6gh7k5xrr",
+                "pub_key": null,
+                "account_number": "0",
+                "sequence": "0"
+              },
+              "original_vesting": [
+                {
+                  "denom": "ustrd",
+                  "amount": "1500000000000"
+                }
+              ],
+              "delegated_free": [],
+              "delegated_vesting": [],
+              "end_time": "1757008452"
+            },
+            "start_time": "1693800452"
+          },
+          {
+            "@type": "/cosmos.vesting.v1beta1.ContinuousVestingAccount",
+            "base_vesting_account": {
+              "base_account": {
+                "address": "stride177tk5kjemq5gnhkj6hqzswtq6psyfewa60ajgg",
+                "pub_key": null,
+                "account_number": "0",
+                "sequence": "0"
+              },
+              "original_vesting": [
+                {
+                  "denom": "ustrd",
+                  "amount": "666666666667"
+                }
+              ],
+              "delegated_free": [],
+              "delegated_vesting": [],
+              "end_time": "1757008452"
+            },
+            "start_time": "1693800452"
+          },
+          {
+            "@type": "/cosmos.vesting.v1beta1.ContinuousVestingAccount",
+            "base_vesting_account": {
+              "base_account": {
+                "address": "stride1d4xa3rr5rc5r3f4u8rhw2kqsxlne0kjtp5ywqc",
+                "pub_key": null,
+                "account_number": "0",
+                "sequence": "0"
+              },
+              "original_vesting": [
+                {
+                  "denom": "ustrd",
+                  "amount": "666666666667"
+                }
+              ],
+              "delegated_free": [],
+              "delegated_vesting": [],
+              "end_time": "1757008452"
+            },
+            "start_time": "1693800452"
+          },
+          {
+            "@type": "/cosmos.vesting.v1beta1.ContinuousVestingAccount",
+            "base_vesting_account": {
+              "base_account": {
+                "address": "stride1fh8fwp2sgc7rxe43cur89jm2hdrusfvu3hgamd",
+                "pub_key": null,
+                "account_number": "0",
+                "sequence": "0"
+              },
+              "original_vesting": [
+                {
+                  "denom": "ustrd",
+                  "amount": "646654500000"
+                }
+              ],
+              "delegated_free": [],
+              "delegated_vesting": [],
+              "end_time": "1757008452"
+            },
+            "start_time": "1693800452"
+          },
+          {
+            "@type": "/cosmos.vesting.v1beta1.ContinuousVestingAccount",
+            "base_vesting_account": {
+              "base_account": {
+                "address": "stride1mn22x7rzqt5rk6xtqkyterkwq3uwng83hmfk4j",
+                "pub_key": null,
+                "account_number": "0",
+                "sequence": "0"
+              },
+              "original_vesting": [
+                {
+                  "denom": "ustrd",
+                  "amount": "4000000000000"
+                }
+              ],
+              "delegated_free": [],
+              "delegated_vesting": [],
+              "end_time": "1757008452"
+            },
+            "start_time": "1693800452"
+          },
+          {
+            "@type": "/cosmos.vesting.v1beta1.ContinuousVestingAccount",
+            "base_vesting_account": {
+              "base_account": {
+                "address": "stride10cznnk39d8g4l255jc5vg6zv98taedxsv8vavl",
+                "pub_key": null,
+                "account_number": "0",
+                "sequence": "0"
+              },
+              "original_vesting": [
+                {
+                  "denom": "ustrd",
+                  "amount": "1500000000000"
+                }
+              ],
+              "delegated_free": [],
+              "delegated_vesting": [],
+              "end_time": "1757008452"
+            },
+            "start_time": "1693800452"
+          },
+          {
+            "@type": "/cosmos.vesting.v1beta1.ContinuousVestingAccount",
+            "base_vesting_account": {
+              "base_account": {
+                "address": "stride1dd27r9y2mfykl23z8lql55djjhzjytg6l74sgc",
+                "pub_key": null,
+                "account_number": "0",
+                "sequence": "0"
+              },
+              "original_vesting": [
+                {
+                  "denom": "ustrd",
+                  "amount": "666666666667"
+                }
+              ],
+              "delegated_free": [],
+              "delegated_vesting": [],
+              "end_time": "1757008452"
+            },
+            "start_time": "1693800452"
+          },
+          {
+            "@type": "/cosmos.vesting.v1beta1.ContinuousVestingAccount",
+            "base_vesting_account": {
+              "base_account": {
+                "address": "stride12v82w00a3w5w2thk62ncluphaerwq9uek6vear",
+                "pub_key": null,
+                "account_number": "0",
+                "sequence": "0"
+              },
+              "original_vesting": [
+                {
+                  "denom": "ustrd",
+                  "amount": "666666666667"
+                }
+              ],
+              "delegated_free": [],
+              "delegated_vesting": [],
+              "end_time": "1757008452"
+            },
+            "start_time": "1693800452"
+          },
+          {
+            "@type": "/cosmos.vesting.v1beta1.ContinuousVestingAccount",
+            "base_vesting_account": {
+              "base_account": {
+                "address": "stride1vtjzmtmywnlrer84fe40g36e5jq09cw0v86def",
+                "pub_key": null,
+                "account_number": "0",
+                "sequence": "0"
+              },
+              "original_vesting": [
+                {
+                  "denom": "ustrd",
+                  "amount": "646654500000"
+                }
+              ],
+              "delegated_free": [],
+              "delegated_vesting": [],
+              "end_time": "1757008452"
+            },
+            "start_time": "1693800452"
+          },
+          {
+            "@type": "/cosmos.vesting.v1beta1.ContinuousVestingAccount",
+            "base_vesting_account": {
+              "base_account": {
+                "address": "stride1nwyvkxm89yg8e3fyxgruyct4zp90mg4nlk87lg",
+                "pub_key": null,
+                "account_number": "0",
+                "sequence": "0"
+              },
+              "original_vesting": [
+                {
+                  "denom": "ustrd",
+                  "amount": "375000000000"
+                }
+              ],
+              "delegated_free": [],
+              "delegated_vesting": [],
+              "end_time": "1820016452"
+            },
+            "start_time": "1693800452"
+          },
+          {
+            "@type": "/cosmos.vesting.v1beta1.ContinuousVestingAccount",
+            "base_vesting_account": {
+              "base_account": {
+                "address": "stride1vpt20s6fthtnyxpd8cg6uak4w2vgakk4kfjtm9",
+                "pub_key": null,
+                "account_number": "0",
+                "sequence": "0"
+              },
+              "original_vesting": [
+                {
+                  "denom": "ustrd",
+                  "amount": "75000000000"
+                }
+              ],
+              "delegated_free": [],
+              "delegated_vesting": [],
+              "end_time": "1677848453"
+            },
+            "start_time": "1677848452"
+          },
+          {
+            "@type": "/cosmos.vesting.v1beta1.ContinuousVestingAccount",
+            "base_vesting_account": {
+              "base_account": {
+                "address": "stride15d5q3dtpepchaz6fl9gp7g6eeywtkr64j04ycx",
+                "pub_key": null,
+                "account_number": "0",
+                "sequence": "0"
+              },
+              "original_vesting": [
+                {
+                  "denom": "ustrd",
+                  "amount": "625000000000"
+                }
+              ],
+              "delegated_free": [],
+              "delegated_vesting": [],
+              "end_time": "1757008452"
+            },
+            "start_time": "1693800452"
+          },
+          {
+            "@type": "/cosmos.vesting.v1beta1.ContinuousVestingAccount",
+            "base_vesting_account": {
+              "base_account": {
+                "address": "stride12z83xmrkr7stjk4q2vn95c02n7jryj55gd3aq3",
+                "pub_key": null,
+                "account_number": "0",
+                "sequence": "0"
+              },
+              "original_vesting": [
+                {
+                  "denom": "ustrd",
+                  "amount": "187500000000"
+                }
+              ],
+              "delegated_free": [],
+              "delegated_vesting": [],
+              "end_time": "1788512452"
+            },
+            "start_time": "1693800452"
+          },
+          {
+            "@type": "/cosmos.vesting.v1beta1.ContinuousVestingAccount",
+            "base_vesting_account": {
+              "base_account": {
+                "address": "stride1tms6wx23gc9amksuutnlvz03e43wfzw2sya0nv",
+                "pub_key": null,
+                "account_number": "0",
+                "sequence": "0"
+              },
+              "original_vesting": [
+                {
+                  "denom": "ustrd",
+                  "amount": "1000000000000"
+                }
+              ],
+              "delegated_free": [],
+              "delegated_vesting": [],
+              "end_time": "1788512452"
+            },
+            "start_time": "1693800452"
+          },
+          {
+            "@type": "/cosmos.vesting.v1beta1.ContinuousVestingAccount",
+            "base_vesting_account": {
+              "base_account": {
+                "address": "stride12z8n5ckpp7yrgayum4249fwr9s0lz7rwll7f8h",
+                "pub_key": null,
+                "account_number": "0",
+                "sequence": "0"
+              },
+              "original_vesting": [
+                {
+                  "denom": "ustrd",
+                  "amount": "1057425000000"
+                }
+              ],
+              "delegated_free": [],
+              "delegated_vesting": [],
+              "end_time": "1757008452"
+            },
+            "start_time": "1693800452"
+          },
+          {
+            "@type": "/cosmos.vesting.v1beta1.ContinuousVestingAccount",
+            "base_vesting_account": {
+              "base_account": {
+                "address": "stride19uhy5tjzawshq5s03p0fgu60qxcymrj277s9xz",
+                "pub_key": null,
+                "account_number": "0",
+                "sequence": "0"
+              },
+              "original_vesting": [
+                {
+                  "denom": "ustrd",
+                  "amount": "124838000000"
+                }
+              ],
+              "delegated_free": [],
+              "delegated_vesting": [],
+              "end_time": "1757008452"
+            },
+            "start_time": "1693800452"
+          },
+          {
+            "@type": "/cosmos.vesting.v1beta1.ContinuousVestingAccount",
+            "base_vesting_account": {
+              "base_account": {
+                "address": "stride1mnuu7gj266avmqsallhkzjfy9r0fpqq95zswyw",
+                "pub_key": null,
+                "account_number": "0",
+                "sequence": "0"
+              },
+              "original_vesting": [
+                {
+                  "denom": "ustrd",
+                  "amount": "390413000000"
+                }
+              ],
+              "delegated_free": [],
+              "delegated_vesting": [],
+              "end_time": "1757008452"
+            },
+            "start_time": "1693800452"
+          },
+          {
+            "@type": "/cosmos.vesting.v1beta1.ContinuousVestingAccount",
+            "base_vesting_account": {
+              "base_account": {
+                "address": "stride1p8gh9f3s5q9yp6sn9cufw4c9pm06l277f2dlgy",
+                "pub_key": null,
+                "account_number": "0",
+                "sequence": "0"
+              },
+              "original_vesting": [
+                {
+                  "denom": "ustrd",
+                  "amount": "2177363000000"
+                }
+              ],
+              "delegated_free": [],
+              "delegated_vesting": [],
+              "end_time": "1757008452"
+            },
+            "start_time": "1693800452"
+          },
+          {
+            "@type": "/cosmos.vesting.v1beta1.ContinuousVestingAccount",
+            "base_vesting_account": {
+              "base_account": {
+                "address": "stride127guvy7uc7ey45ykgq2equs7xj2fhnmc9vvh79",
+                "pub_key": null,
+                "account_number": "0",
+                "sequence": "0"
+              },
+              "original_vesting": [
+                {
+                  "denom": "ustrd",
+                  "amount": "2500000000000"
+                }
+              ],
+              "delegated_free": [],
+              "delegated_vesting": [],
+              "end_time": "1757008452"
+            },
+            "start_time": "1693800452"
+          },
+          {
+            "@type": "/cosmos.vesting.v1beta1.ContinuousVestingAccount",
+            "base_vesting_account": {
+              "base_account": {
+                "address": "stride1hqtcyrjjw7vawaden5fmaymynxd3v6rdekzx0v",
+                "pub_key": null,
+                "account_number": "0",
+                "sequence": "0"
+              },
+              "original_vesting": [
+                {
+                  "denom": "ustrd",
+                  "amount": "2500000000000"
+                }
+              ],
+              "delegated_free": [],
+              "delegated_vesting": [],
+              "end_time": "1757008452"
+            },
+            "start_time": "1693800452"
+          },
+          {
+            "@type": "/cosmos.vesting.v1beta1.ContinuousVestingAccount",
+            "base_vesting_account": {
+              "base_account": {
+                "address": "stride1x0l3jhq4k0uv0qwatvzk97ktmk5uewclcjr9rp",
+                "pub_key": null,
+                "account_number": "0",
+                "sequence": "0"
+              },
+              "original_vesting": [
+                {
+                  "denom": "ustrd",
+                  "amount": "2500000000000"
+                }
+              ],
+              "delegated_free": [],
+              "delegated_vesting": [],
+              "end_time": "1757008452"
+            },
+            "start_time": "1693800452"
+          },
+          {
+            "@type": "/cosmos.vesting.v1beta1.ContinuousVestingAccount",
+            "base_vesting_account": {
+              "base_account": {
+                "address": "stride148gmz68qvmhls8f4e2h2tkjjt59vuad79e4dvc",
+                "pub_key": null,
+                "account_number": "0",
+                "sequence": "0"
+              },
+              "original_vesting": [
+                {
+                  "denom": "ustrd",
+                  "amount": "1250000000000"
+                }
+              ],
+              "delegated_free": [],
+              "delegated_vesting": [],
+              "end_time": "1757008452"
+            },
+            "start_time": "1693800452"
+          },
+          {
+            "@type": "/cosmos.vesting.v1beta1.ContinuousVestingAccount",
+            "base_vesting_account": {
+              "base_account": {
+                "address": "stride1nyh2lvp87e942ekm97lmeqtln2ym0htm4zyeau",
+                "pub_key": null,
+                "account_number": "0",
+                "sequence": "0"
+              },
+              "original_vesting": [
+                {
+                  "denom": "ustrd",
+                  "amount": "1000000000000"
+                }
+              ],
+              "delegated_free": [],
+              "delegated_vesting": [],
+              "end_time": "1757008452"
+            },
+            "start_time": "1693800452"
+          },
+          {
+            "@type": "/cosmos.vesting.v1beta1.ContinuousVestingAccount",
+            "base_vesting_account": {
+              "base_account": {
+                "address": "stride1cev3vxz9t0vcef68s4ghgm6yj9lxum9hstcj94",
+                "pub_key": null,
+                "account_number": "0",
+                "sequence": "0"
+              },
+              "original_vesting": [
+                {
+                  "denom": "ustrd",
+                  "amount": "750000000000"
+                }
+              ],
+              "delegated_free": [],
+              "delegated_vesting": [],
+              "end_time": "1757008452"
+            },
+            "start_time": "1693800452"
+          },
+          {
+            "@type": "/cosmos.vesting.v1beta1.ContinuousVestingAccount",
+            "base_vesting_account": {
+              "base_account": {
+                "address": "stride1h7rr5gv5qqexxnshqz28w0pe6qs5zrz4t784al",
+                "pub_key": null,
+                "account_number": "0",
+                "sequence": "0"
+              },
+              "original_vesting": [
+                {
+                  "denom": "ustrd",
+                  "amount": "375000000000"
+                }
+              ],
+              "delegated_free": [],
+              "delegated_vesting": [],
+              "end_time": "1757008452"
+            },
+            "start_time": "1693800452"
+          },
+          {
+            "@type": "/cosmos.vesting.v1beta1.ContinuousVestingAccount",
+            "base_vesting_account": {
+              "base_account": {
+                "address": "stride1f6a08xuz3594vrnsr8sdpaxsuyw2q5z5r8g2fn",
+                "pub_key": null,
+                "account_number": "0",
+                "sequence": "0"
+              },
+              "original_vesting": [
+                {
+                  "denom": "ustrd",
+                  "amount": "250000000000"
+                }
+              ],
+              "delegated_free": [],
+              "delegated_vesting": [],
+              "end_time": "1757008452"
+            },
+            "start_time": "1693800452"
+          },
+          {
+            "@type": "/cosmos.vesting.v1beta1.ContinuousVestingAccount",
+            "base_vesting_account": {
+              "base_account": {
+                "address": "stride1nqv23gzz5aurg4gvtflm97k4auwhk8w99mq7y4",
+                "pub_key": null,
+                "account_number": "0",
+                "sequence": "0"
+              },
+              "original_vesting": [
+                {
+                  "denom": "ustrd",
+                  "amount": "100000000000"
+                }
+              ],
+              "delegated_free": [],
+              "delegated_vesting": [],
+              "end_time": "1757008452"
+            },
+            "start_time": "1693800452"
+          },
+          {
+            "@type": "/cosmos.vesting.v1beta1.ContinuousVestingAccount",
+            "base_vesting_account": {
+              "base_account": {
+                "address": "stride1x0m7krfsfw7zaw5pjmkfgtwvegr26hxf9gyal3",
+                "pub_key": null,
+                "account_number": "0",
+                "sequence": "0"
+              },
+              "original_vesting": [
+                {
+                  "denom": "ustrd",
+                  "amount": "150000000000"
+                }
+              ],
+              "delegated_free": [],
+              "delegated_vesting": [],
+              "end_time": "1757008452"
+            },
+            "start_time": "1693800452"
+          },
+          {
+            "@type": "/cosmos.vesting.v1beta1.ContinuousVestingAccount",
+            "base_vesting_account": {
+              "base_account": {
+                "address": "stride1q6x0ndx0lcxstc844gcgnj9kc2wpgkrwrs4zfc",
+                "pub_key": null,
+                "account_number": "0",
+                "sequence": "0"
+              },
+              "original_vesting": [
+                {
+                  "denom": "ustrd",
+                  "amount": "250000000000"
+                }
+              ],
+              "delegated_free": [],
+              "delegated_vesting": [],
+              "end_time": "1757008452"
+            },
+            "start_time": "1693800452"
+          },
+          {
+            "@type": "/cosmos.vesting.v1beta1.ContinuousVestingAccount",
+            "base_vesting_account": {
+              "base_account": {
+                "address": "stride1s5rg3r3szdvj24hrcgv20hvl8wjkgk8ufgzw2q",
+                "pub_key": null,
+                "account_number": "0",
+                "sequence": "0"
+              },
+              "original_vesting": [
+                {
+                  "denom": "ustrd",
+                  "amount": "125000000000"
+                }
+              ],
+              "delegated_free": [],
+              "delegated_vesting": [],
+              "end_time": "1757008452"
+            },
+            "start_time": "1693800452"
+          },
+          {
+            "@type": "/cosmos.vesting.v1beta1.ContinuousVestingAccount",
+            "base_vesting_account": {
+              "base_account": {
+                "address": "stride1v5fl5ak90qxqs5af6e8ft4e0ekvsfuaz7npesz",
+                "pub_key": null,
+                "account_number": "0",
+                "sequence": "0"
+              },
+              "original_vesting": [
+                {
+                  "denom": "ustrd",
+                  "amount": "62500000000"
+                }
+              ],
+              "delegated_free": [],
+              "delegated_vesting": [],
+              "end_time": "1757008452"
+            },
+            "start_time": "1693800452"
+          },
+          {
+            "@type": "/cosmos.vesting.v1beta1.ContinuousVestingAccount",
+            "base_vesting_account": {
+              "base_account": {
+                "address": "stride18sl4lyq6armnrfmchr2jmzvttgg3p3a7r3gjnh",
+                "pub_key": null,
+                "account_number": "0",
+                "sequence": "0"
+              },
+              "original_vesting": [
+                {
+                  "denom": "ustrd",
+                  "amount": "56247500000"
+                }
+              ],
+              "delegated_free": [],
+              "delegated_vesting": [],
+              "end_time": "1757008452"
+            },
+            "start_time": "1693800452"
+          },
+          {
+            "@type": "/cosmos.vesting.v1beta1.ContinuousVestingAccount",
+            "base_vesting_account": {
+              "base_account": {
+                "address": "stride1x3rhderemr703f4lxktk2da99vl5crs2yhrdjn",
+                "pub_key": null,
+                "account_number": "0",
+                "sequence": "0"
+              },
+              "original_vesting": [
+                {
+                  "denom": "ustrd",
+                  "amount": "200000000000"
+                }
+              ],
+              "delegated_free": [],
+              "delegated_vesting": [],
+              "end_time": "1757008452"
+            },
+            "start_time": "1693800452"
+          },
+          {
+            "@type": "/cosmos.vesting.v1beta1.ContinuousVestingAccount",
+            "base_vesting_account": {
+              "base_account": {
+                "address": "stride1wnthelgm5mwf2e8w9dj90k5pckdqpp7k74v2ff",
+                "pub_key": null,
+                "account_number": "0",
+                "sequence": "0"
+              },
+              "original_vesting": [
+                {
+                  "denom": "ustrd",
+                  "amount": "62500000000"
+                }
+              ],
+              "delegated_free": [],
+              "delegated_vesting": [],
+              "end_time": "1757008452"
+            },
+            "start_time": "1693800452"
+          },
+          {
+            "@type": "/cosmos.vesting.v1beta1.ContinuousVestingAccount",
+            "base_vesting_account": {
+              "base_account": {
+                "address": "stride12wcmeclf98xz5m3af3fzztwz2m08epm5mz8llf",
+                "pub_key": null,
+                "account_number": "0",
+                "sequence": "0"
+              },
+              "original_vesting": [
+                {
+                  "denom": "ustrd",
+                  "amount": "12500000000"
+                }
+              ],
+              "delegated_free": [],
+              "delegated_vesting": [],
+              "end_time": "1757008452"
+            },
+            "start_time": "1693800452"
+          },
+          {
+            "@type": "/cosmos.vesting.v1beta1.ContinuousVestingAccount",
+            "base_vesting_account": {
+              "base_account": {
+                "address": "stride1u62plhe89w0ssau3w3uqwmch4dpmrmgdgwd4cd",
+                "pub_key": null,
+                "account_number": "0",
+                "sequence": "0"
+              },
+              "original_vesting": [
+                {
+                  "denom": "ustrd",
+                  "amount": "12500000000"
+                }
+              ],
+              "delegated_free": [],
+              "delegated_vesting": [],
+              "end_time": "1757008452"
+            },
+            "start_time": "1693800452"
+          },
+          {
+            "@type": "/cosmos.vesting.v1beta1.ContinuousVestingAccount",
+            "base_vesting_account": {
+              "base_account": {
+                "address": "stride1xy70vtrj5aetzgjkxshntft462lp5exr9uch8h",
+                "pub_key": null,
+                "account_number": "0",
+                "sequence": "0"
+              },
+              "original_vesting": [
+                {
+                  "denom": "ustrd",
+                  "amount": "12500000000"
+                }
+              ],
+              "delegated_free": [],
+              "delegated_vesting": [],
+              "end_time": "1757008452"
+            },
+            "start_time": "1693800452"
+          },
+          {
+            "@type": "/cosmos.vesting.v1beta1.ContinuousVestingAccount",
+            "base_vesting_account": {
+              "base_account": {
+                "address": "stride12hw9ymltjhqhtgm4tv4pfdydequ3xzxylvp4rc",
+                "pub_key": null,
+                "account_number": "0",
+                "sequence": "0"
+              },
+              "original_vesting": [
+                {
+                  "denom": "ustrd",
+                  "amount": "12500000000"
+                }
+              ],
+              "delegated_free": [],
+              "delegated_vesting": [],
+              "end_time": "1757008452"
+            },
+            "start_time": "1693800452"
+          },
+          {
+            "@type": "/cosmos.vesting.v1beta1.ContinuousVestingAccount",
+            "base_vesting_account": {
+              "base_account": {
+                "address": "stride196mzywj9mpjxklwc0gs8g9mdfgvr5tmp3r448l",
+                "pub_key": null,
+                "account_number": "0",
+                "sequence": "0"
+              },
+              "original_vesting": [
+                {
+                  "denom": "ustrd",
+                  "amount": "25000000000"
+                }
+              ],
+              "delegated_free": [],
+              "delegated_vesting": [],
+              "end_time": "1757008452"
+            },
+            "start_time": "1693800452"
+          },
+          {
+            "@type": "/cosmos.vesting.v1beta1.ContinuousVestingAccount",
+            "base_vesting_account": {
+              "base_account": {
+                "address": "stride1cj7nm75gjax0fu5xnq0w00aphwusmgtk8j89x9",
+                "pub_key": null,
+                "account_number": "0",
+                "sequence": "0"
+              },
+              "original_vesting": [
+                {
+                  "denom": "ustrd",
+                  "amount": "50000000000"
+                }
+              ],
+              "delegated_free": [],
+              "delegated_vesting": [],
+              "end_time": "1757008452"
+            },
+            "start_time": "1693800452"
+          },
+          {
+            "@type": "/cosmos.vesting.v1beta1.ContinuousVestingAccount",
+            "base_vesting_account": {
+              "base_account": {
+                "address": "stride1t703eyuhcfse27yzv7dw87pnylvnqxjs6khnd0",
+                "pub_key": null,
+                "account_number": "0",
+                "sequence": "0"
+              },
+              "original_vesting": [
+                {
+                  "denom": "ustrd",
+                  "amount": "18750000000"
+                }
+              ],
+              "delegated_free": [],
+              "delegated_vesting": [],
+              "end_time": "1757008452"
+            },
+            "start_time": "1693800452"
+          },
+          {
+            "@type": "/cosmos.vesting.v1beta1.ContinuousVestingAccount",
+            "base_vesting_account": {
+              "base_account": {
+                "address": "stride1r2sm4sg822ekdq7nyhjzx8zdj0j3672wfach3u",
+                "pub_key": null,
+                "account_number": "0",
+                "sequence": "0"
+              },
+              "original_vesting": [
+                {
+                  "denom": "ustrd",
+                  "amount": "500000000000"
+                }
+              ],
+              "delegated_free": [],
+              "delegated_vesting": [],
+              "end_time": "1757008452"
+            },
+            "start_time": "1693800452"
+          },
+          {
+            "@type": "/cosmos.vesting.v1beta1.ContinuousVestingAccount",
+            "base_vesting_account": {
+              "base_account": {
+                "address": "stride1hd7tqm5aalqfkw70fe2c65z64sllash73au57n",
+                "pub_key": null,
+                "account_number": "0",
+                "sequence": "0"
+              },
+              "original_vesting": [
+                {
+                  "denom": "ustrd",
+                  "amount": "25000000000"
+                }
+              ],
+              "delegated_free": [],
+              "delegated_vesting": [],
+              "end_time": "1757008452"
+            },
+            "start_time": "1693800452"
+          },
+          {
+            "@type": "/cosmos.vesting.v1beta1.ContinuousVestingAccount",
+            "base_vesting_account": {
+              "base_account": {
+                "address": "stride1zzx39pj7hkv6vpcdv5u947j8lu4q4f3ll9rjmz",
+                "pub_key": null,
+                "account_number": "0",
+                "sequence": "0"
+              },
+              "original_vesting": [
+                {
+                  "denom": "ustrd",
+                  "amount": "75000000000"
+                }
+              ],
+              "delegated_free": [],
+              "delegated_vesting": [],
+              "end_time": "1757008452"
+            },
+            "start_time": "1693800452"
+          },
+          {
+            "@type": "/cosmos.vesting.v1beta1.ContinuousVestingAccount",
+            "base_vesting_account": {
+              "base_account": {
+                "address": "stride1dwfp8tf50uk48fckm3c0rk3684ghdmu93xcatr",
+                "pub_key": null,
+                "account_number": "0",
+                "sequence": "0"
+              },
+              "original_vesting": [
+                {
+                  "denom": "ustrd",
+                  "amount": "187500000000"
+                }
+              ],
+              "delegated_free": [],
+              "delegated_vesting": [],
+              "end_time": "1757008452"
+            },
+            "start_time": "1693800452"
+          }
+        ]
+      },
+      "bank": {
+        "params": {
+          "send_enabled": [],
+          "default_send_enabled": true
+        },
+        "balances": [
+          {
+            "address": "stride1q6x0ndx0lcxstc844gcgnj9kc2wpgkrwrs4zfc",
+            "coins": [
+              {
+                "denom": "ustrd",
+                "amount": "250000000000"
+              }
+            ]
+          },
+          {
+            "address": "stride1p8gh9f3s5q9yp6sn9cufw4c9pm06l277f2dlgy",
+            "coins": [
+              {
+                "denom": "ustrd",
+                "amount": "2177363000000"
+              }
+            ]
+          },
+          {
+            "address": "stride1zzx39pj7hkv6vpcdv5u947j8lu4q4f3ll9rjmz",
+            "coins": [
+              {
+                "denom": "ustrd",
+                "amount": "75000000000"
+              }
+            ]
+          },
+          {
+            "address": "stride1zg9pafkxf6mt6p9nlz0cggx8vssk6etfhwg2ew",
+            "coins": [
+              {
+                "denom": "ustrd",
+                "amount": "1500000000000"
+              }
+            ]
+          },
+          {
+            "address": "stride1r2sm4sg822ekdq7nyhjzx8zdj0j3672wfach3u",
+            "coins": [
+              {
+                "denom": "ustrd",
+                "amount": "500000000000"
+              }
+            ]
+          },
+          {
+            "address": "stride1rn64223uzw8lc7xn2l33cmm6jgxl3g8zmdfdu6",
+            "coins": [
+              {
+                "denom": "ustrd",
+                "amount": "666666666667"
+              }
+            ]
+          },
+          {
+            "address": "stride1yz3mp7c2m739nftfrv5r3h6j64aqp95f3degpf",
+            "coins": [
+              {
+                "denom": "ustrd",
+                "amount": "14300000000000"
+              }
+            ]
+          },
+          {
+            "address": "stride19d8a9dr4kh85zcl5kq7fj64ad9r9dqfk8s43y9",
+            "coins": [
+              {
+                "denom": "ustrd",
+                "amount": "10000000"
+              }
+            ]
+          },
+          {
+            "address": "stride196mzywj9mpjxklwc0gs8g9mdfgvr5tmp3r448l",
+            "coins": [
+              {
+                "denom": "ustrd",
+                "amount": "25000000000"
+              }
+            ]
+          },
+          {
+            "address": "stride19uhy5tjzawshq5s03p0fgu60qxcymrj277s9xz",
+            "coins": [
+              {
+                "denom": "ustrd",
+                "amount": "124838000000"
+              }
+            ]
+          },
+          {
+            "address": "stride1xy70vtrj5aetzgjkxshntft462lp5exr9uch8h",
+            "coins": [
+              {
+                "denom": "ustrd",
+                "amount": "12500000000"
+              }
+            ]
+          },
+          {
+            "address": "stride1x0m7krfsfw7zaw5pjmkfgtwvegr26hxf9gyal3",
+            "coins": [
+              {
+                "denom": "ustrd",
+                "amount": "150000000000"
+              }
+            ]
+          },
+          {
+            "address": "stride1x0agh4jnvamn6y5ss94s6ktugwkljp6yf7jwrt",
+            "coins": [
+              {
+                "denom": "ustrd",
+                "amount": "10000000"
+              }
+            ]
+          },
+          {
+            "address": "stride1x0l3jhq4k0uv0qwatvzk97ktmk5uewclcjr9rp",
+            "coins": [
+              {
+                "denom": "ustrd",
+                "amount": "2500000000000"
+              }
+            ]
+          },
+          {
+            "address": "stride1x3rhderemr703f4lxktk2da99vl5crs2yhrdjn",
+            "coins": [
+              {
+                "denom": "ustrd",
+                "amount": "200000000000"
+              }
+            ]
+          },
+          {
+            "address": "stride18sl4lyq6armnrfmchr2jmzvttgg3p3a7r3gjnh",
+            "coins": [
+              {
+                "denom": "ustrd",
+                "amount": "56247500000"
+              }
+            ]
+          },
+          {
+            "address": "stride1gp957czryfgyvxwn3tfnyy2f0t9g2p4pxxdj7c",
+            "coins": [
+              {
+                "denom": "ustrd",
+                "amount": "10000000"
+              }
+            ]
+          },
+          {
+            "address": "stride1fh8fwp2sgc7rxe43cur89jm2hdrusfvu3hgamd",
+            "coins": [
+              {
+                "denom": "ustrd",
+                "amount": "646654500000"
+              }
+            ]
+          },
+          {
+            "address": "stride1f6a08xuz3594vrnsr8sdpaxsuyw2q5z5r8g2fn",
+            "coins": [
+              {
+                "denom": "ustrd",
+                "amount": "250000000000"
+              }
+            ]
+          },
+          {
+            "address": "stride12z83xmrkr7stjk4q2vn95c02n7jryj55gd3aq3",
+            "coins": [
+              {
+                "denom": "ustrd",
+                "amount": "187500000000"
+              }
+            ]
+          },
+          {
+            "address": "stride12z8n5ckpp7yrgayum4249fwr9s0lz7rwll7f8h",
+            "coins": [
+              {
+                "denom": "ustrd",
+                "amount": "1057425000000"
+              }
+            ]
+          },
+          {
+            "address": "stride12x9hund9zux7ynft6sd7jsqdnmphp6gh7k5xrr",
+            "coins": [
+              {
+                "denom": "ustrd",
+                "amount": "1500000000000"
+              }
+            ]
+          },
+          {
+            "address": "stride12v82w00a3w5w2thk62ncluphaerwq9uek6vear",
+            "coins": [
+              {
+                "denom": "ustrd",
+                "amount": "666666666667"
+              }
+            ]
+          },
+          {
+            "address": "stride12wcmeclf98xz5m3af3fzztwz2m08epm5mz8llf",
+            "coins": [
+              {
+                "denom": "ustrd",
+                "amount": "12500000000"
+              }
+            ]
+          },
+          {
+            "address": "stride12hw9ymltjhqhtgm4tv4pfdydequ3xzxylvp4rc",
+            "coins": [
+              {
+                "denom": "ustrd",
+                "amount": "12500000000"
+              }
+            ]
+          },
+          {
+            "address": "stride127guvy7uc7ey45ykgq2equs7xj2fhnmc9vvh79",
+            "coins": [
+              {
+                "denom": "ustrd",
+                "amount": "2500000000000"
+              }
+            ]
+          },
+          {
+            "address": "stride1tms6wx23gc9amksuutnlvz03e43wfzw2sya0nv",
+            "coins": [
+              {
+                "denom": "ustrd",
+                "amount": "1000000000000"
+              }
+            ]
+          },
+          {
+            "address": "stride1t703eyuhcfse27yzv7dw87pnylvnqxjs6khnd0",
+            "coins": [
+              {
+                "denom": "ustrd",
+                "amount": "18750000000"
+              }
+            ]
+          },
+          {
+            "address": "stride1tlxk4as9sgpqkh42cfaxqja0mdj6qculqshy0gg3glazmrnx3y8s8gsvqk",
+            "coins": [
+              {
+                "denom": "ustrd",
+                "amount": "23000000000000"
+              }
+            ]
+          },
+          {
+            "address": "stride1vpt20s6fthtnyxpd8cg6uak4w2vgakk4kfjtm9",
+            "coins": [
+              {
+                "denom": "ustrd",
+                "amount": "75000000000"
+              }
+            ]
+          },
+          {
+            "address": "stride1v94kmwygzft2tf69az0wlyvnkfst6tsuxq5we7",
+            "coins": [
+              {
+                "denom": "ustrd",
+                "amount": "4000000000000"
+              }
+            ]
+          },
+          {
+            "address": "stride1vtjzmtmywnlrer84fe40g36e5jq09cw0v86def",
+            "coins": [
+              {
+                "denom": "ustrd",
+                "amount": "646654500000"
+              }
+            ]
+          },
+          {
+            "address": "stride1v5fl5ak90qxqs5af6e8ft4e0ekvsfuaz7npesz",
+            "coins": [
+              {
+                "denom": "ustrd",
+                "amount": "62500000000"
+              }
+            ]
+          },
+          {
+            "address": "stride1vm97kzwjllvpycllxwn5ajgllxqrpk0g87uknt",
+            "coins": [
+              {
+                "denom": "ustrd",
+                "amount": "646654500000"
+              }
+            ]
+          },
+          {
+            "address": "stride1dqpg0hfva0k0awzhxwarjpgzj82hlmvrsnm7ug",
+            "coins": [
+              {
+                "denom": "ustrd",
+                "amount": "10000000"
+              }
+            ]
+          },
+          {
+            "address": "stride1dtqsnk3mlqrcxgfvu39lm0jm3pyd0mkrcajj4a",
+            "coins": [
+              {
+                "denom": "ustrd",
+                "amount": "10000000"
+              }
+            ]
+          },
+          {
+            "address": "stride1dd27r9y2mfykl23z8lql55djjhzjytg6l74sgc",
+            "coins": [
+              {
+                "denom": "ustrd",
+                "amount": "666666666667"
+              }
+            ]
+          },
+          {
+            "address": "stride1dwfp8tf50uk48fckm3c0rk3684ghdmu93xcatr",
+            "coins": [
+              {
+                "denom": "ustrd",
+                "amount": "187500000000"
+              }
+            ]
+          },
+          {
+            "address": "stride1d4xa3rr5rc5r3f4u8rhw2kqsxlne0kjtp5ywqc",
+            "coins": [
+              {
+                "denom": "ustrd",
+                "amount": "666666666667"
+              }
+            ]
+          },
+          {
+            "address": "stride1dae4zycvmyd2qt5td9zzgdjdnwyawp79mp0q4a",
+            "coins": [
+              {
+                "denom": "ustrd",
+                "amount": "10000000"
+              }
+            ]
+          },
+          {
+            "address": "stride1wnthelgm5mwf2e8w9dj90k5pckdqpp7k74v2ff",
+            "coins": [
+              {
+                "denom": "ustrd",
+                "amount": "62500000000"
+              }
+            ]
+          },
+          {
+            "address": "stride1w66lr45r2f4yqlp5zn2quldanatd5ktsl32nuz",
+            "coins": [
+              {
+                "denom": "ustrd",
+                "amount": "10000000"
+              }
+            ]
+          },
+          {
+            "address": "stride10cznnk39d8g4l255jc5vg6zv98taedxsv8vavl",
+            "coins": [
+              {
+                "denom": "ustrd",
+                "amount": "1500000000000"
+              }
+            ]
+          },
+          {
+            "address": "stride106y6thy7gphzrsqq443hl69vfdvntgz2stfwh3",
+            "coins": [
+              {
+                "denom": "ustrd",
+                "amount": "10000000"
+              }
+            ]
+          },
+          {
+            "address": "stride1s5rg3r3szdvj24hrcgv20hvl8wjkgk8ufgzw2q",
+            "coins": [
+              {
+                "denom": "ustrd",
+                "amount": "125000000000"
+              }
+            ]
+          },
+          {
+            "address": "stride1j8gkhtllnp252l6g6zwzea30e7pvzqttqs6xtk",
+            "coins": [
+              {
+                "denom": "ustrd",
+                "amount": "10000000"
+              }
+            ]
+          },
+          {
+            "address": "stride1jj9z2xwxesuy65n90dujsak554eqkrr2ygyan2",
+            "coins": [
+              {
+                "denom": "ustrd",
+                "amount": "10000000"
+              }
+            ]
+          },
+          {
+            "address": "stride1nqv23gzz5aurg4gvtflm97k4auwhk8w99mq7y4",
+            "coins": [
+              {
+                "denom": "ustrd",
+                "amount": "100000000000"
+              }
+            ]
+          },
+          {
+            "address": "stride1nyh2lvp87e942ekm97lmeqtln2ym0htm4zyeau",
+            "coins": [
+              {
+                "denom": "ustrd",
+                "amount": "1000000000000"
+              }
+            ]
+          },
+          {
+            "address": "stride1nwyvkxm89yg8e3fyxgruyct4zp90mg4nlk87lg",
+            "coins": [
+              {
+                "denom": "ustrd",
+                "amount": "375000000000"
+              }
+            ]
+          },
+          {
+            "address": "stride15d5q3dtpepchaz6fl9gp7g6eeywtkr64j04ycx",
+            "coins": [
+              {
+                "denom": "ustrd",
+                "amount": "625000000000"
+              }
+            ]
+          },
+          {
+            "address": "stride148gmz68qvmhls8f4e2h2tkjjt59vuad79e4dvc",
+            "coins": [
+              {
+                "denom": "ustrd",
+                "amount": "1250000000000"
+              }
+            ]
+          },
+          {
+            "address": "stride140l6y2gp3gxvay6qtn70re7z2s0gn57z0jncjd",
+            "coins": [
+              {
+                "denom": "ustrd",
+                "amount": "10000000"
+              }
+            ]
+          },
+          {
+            "address": "stride1hqtcyrjjw7vawaden5fmaymynxd3v6rdekzx0v",
+            "coins": [
+              {
+                "denom": "ustrd",
+                "amount": "2500000000000"
+              }
+            ]
+          },
+          {
+            "address": "stride1ht8yryqejzpejhvgur793wawuedzhhysgvvsjy",
+            "coins": [
+              {
+                "denom": "ustrd",
+                "amount": "4000000000000"
+              }
+            ]
+          },
+          {
+            "address": "stride1hd7tqm5aalqfkw70fe2c65z64sllash73au57n",
+            "coins": [
+              {
+                "denom": "ustrd",
+                "amount": "25000000000"
+              }
+            ]
+          },
+          {
+            "address": "stride1hw06c3nsx4a577x45kc4ln5dzct3wk0q2sxyuj",
+            "coins": [
+              {
+                "denom": "ustrd",
+                "amount": "10000000"
+              }
+            ]
+          },
+          {
+            "address": "stride1h7rr5gv5qqexxnshqz28w0pe6qs5zrz4t784al",
+            "coins": [
+              {
+                "denom": "ustrd",
+                "amount": "375000000000"
+              }
+            ]
+          },
+          {
+            "address": "stride1cj7nm75gjax0fu5xnq0w00aphwusmgtk8j89x9",
+            "coins": [
+              {
+                "denom": "ustrd",
+                "amount": "50000000000"
+              }
+            ]
+          },
+          {
+            "address": "stride1cev3vxz9t0vcef68s4ghgm6yj9lxum9hstcj94",
+            "coins": [
+              {
+                "denom": "ustrd",
+                "amount": "750000000000"
+              }
+            ]
+          },
+          {
+            "address": "stride1ej2es5fjztqjcd4pwa0zyvaevtjd2y5wqe4vsj",
+            "coins": [
+              {
+                "denom": "ustrd",
+                "amount": "10000000"
+              }
+            ]
+          },
+          {
+            "address": "stride1elqugvhgmn9esv47e2g56gkgzmydc5yt9veagw",
+            "coins": [
+              {
+                "denom": "ustrd",
+                "amount": "10000000"
+              }
+            ]
+          },
+          {
+            "address": "stride169n80dfyqukc8m9uewsxs8h5yc0c80us4meepn",
+            "coins": [
+              {
+                "denom": "ustrd",
+                "amount": "10000000"
+              }
+            ]
+          },
+          {
+            "address": "stride16vxc4n67usd6cvtyrz0as0kegny2t5l7j33qhy",
+            "coins": [
+              {
+                "denom": "ustrd",
+                "amount": "10000000"
+              }
+            ]
+          },
+          {
+            "address": "stride166zjj4a3fptl0szgagzxkv40hr0xpgap9zxn7v",
+            "coins": [
+              {
+                "denom": "ustrd",
+                "amount": "666666666667"
+              }
+            ]
+          },
+          {
+            "address": "stride16a28swex9y3knnsls7ae072cu30sj6u56060d2",
+            "coins": [
+              {
+                "denom": "ustrd",
+                "amount": "10000000"
+              }
+            ]
+          },
+          {
+            "address": "stride1md2j38ls8hg94vjfafu0a2p9htwlkjmhlnp9ef",
+            "coins": [
+              {
+                "denom": "ustrd",
+                "amount": "10000000"
+              }
+            ]
+          },
+          {
+            "address": "stride1mjr7m233g7yklzvfjp7jvtpsjm286dv2qdqh7h",
+            "coins": [
+              {
+                "denom": "ustrd",
+                "amount": "10000000"
+              }
+            ]
+          },
+          {
+            "address": "stride1mn22x7rzqt5rk6xtqkyterkwq3uwng83hmfk4j",
+            "coins": [
+              {
+                "denom": "ustrd",
+                "amount": "4000000000000"
+              }
+            ]
+          },
+          {
+            "address": "stride1mnuu7gj266avmqsallhkzjfy9r0fpqq95zswyw",
+            "coins": [
+              {
+                "denom": "ustrd",
+                "amount": "390413000000"
+              }
+            ]
+          },
+          {
+            "address": "stride1u62plhe89w0ssau3w3uqwmch4dpmrmgdgwd4cd",
+            "coins": [
+              {
+                "denom": "ustrd",
+                "amount": "12500000000"
+              }
+            ]
+          },
+          {
+            "address": "stride1alnn79kh0xka0r5h4h82uuaqfhpdmph6rvpf5f",
+            "coins": [
+              {
+                "denom": "ustrd",
+                "amount": "3000000000000"
+              }
+            ]
+          },
+          {
+            "address": "stride177tk5kjemq5gnhkj6hqzswtq6psyfewa60ajgg",
+            "coins": [
+              {
+                "denom": "ustrd",
+                "amount": "666666666667"
+              }
+            ]
+          }
+        ],
+        "supply": [],
+        "denom_metadata": []
+      },
+      "capability": {
+        "index": "1",
+        "owners": []
+      },
+      "crisis": {
+        "constant_fee": {
+          "denom": "ustrd",
+          "amount": "1000"
+        }
+      },
+      "distribution": {
+        "params": {
+          "community_tax": "0.020000000000000000",
+          "base_proposer_reward": "0.010000000000000000",
+          "bonus_proposer_reward": "0.040000000000000000",
+          "withdraw_addr_enabled": true
+        },
+        "fee_pool": {
+          "community_pool": []
+        },
+        "delegator_withdraw_infos": [],
+        "previous_proposer": "",
+        "outstanding_rewards": [],
+        "validator_accumulated_commissions": [],
+        "validator_historical_rewards": [],
+        "validator_current_rewards": [],
+        "delegator_starting_infos": [],
+        "validator_slash_events": []
+      },
+      "epochs": {
+        "epochs": [
+          {
+            "identifier": "week",
+            "start_time": "0001-01-01T00:00:00Z",
+            "duration": "604800s",
+            "current_epoch": "0",
+            "current_epoch_start_time": "0001-01-01T00:00:00Z",
+            "epoch_counting_started": false,
+            "current_epoch_start_height": "0"
+          },
+          {
+            "identifier": "day",
+            "start_time": "0001-01-01T00:00:00Z",
+            "duration": "86400s",
+            "current_epoch": "0",
+            "current_epoch_start_time": "0001-01-01T00:00:00Z",
+            "epoch_counting_started": false,
+            "current_epoch_start_height": "0"
+          },
+          {
+            "identifier": "stride_epoch",
+            "start_time": "0001-01-01T00:00:00Z",
+            "duration": "21600s",
+            "current_epoch": "0",
+            "current_epoch_start_time": "0001-01-01T00:00:00Z",
+            "epoch_counting_started": false,
+            "current_epoch_start_height": "0"
+          },
+          {
+            "identifier": "mint",
+            "start_time": "0001-01-01T00:00:00Z",
+            "duration": "3600s",
+            "current_epoch": "0",
+            "current_epoch_start_time": "0001-01-01T00:00:00Z",
+            "epoch_counting_started": false,
+            "current_epoch_start_height": "0"
+          }
+        ]
+      },
+      "evidence": {
+        "evidence": []
+      },
+      "feegrant": {
+        "allowances": []
+      },
+      "genutil": {
+        "gen_txs": [
+          {
+            "body": {
+              "messages": [
+                {
+                  "@type": "/cosmos.staking.v1beta1.MsgCreateValidator",
+                  "description": {
+                    "moniker": "Blockapsis",
+                    "identity": "55AE6F8C61BF4749",
+                    "website": "https://www.chainapsis.com/",
+                    "security_contact": "node-operator@chainapsis.com",
+                    "details": "Interchain infra. Apoapsis to the Periapsis."
+                  },
+                  "commission": {
+                    "rate": "0.100000000000000000",
+                    "max_rate": "1.000000000000000000",
+                    "max_change_rate": "1.000000000000000000"
+                  },
+                  "min_self_delegation": "1",
+                  "delegator_address": "stride1w66lr45r2f4yqlp5zn2quldanatd5ktsl32nuz",
+                  "validator_address": "stridevaloper1w66lr45r2f4yqlp5zn2quldanatd5ktsuyw0s8",
+                  "pubkey": {
+                    "@type": "/cosmos.crypto.ed25519.PubKey",
+                    "key": "0oQ8NC1Fji5bvMZ59SMDU1GGUlat2d6MnmHkCtwnzPg="
+                  },
+                  "value": {
+                    "denom": "ustrd",
+                    "amount": "10000000"
+                  }
+                }
+              ],
+              "memo": "dfc52f7dfe9b19d3bc72fc61f428b224716bb163@172.31.1.6:26656",
+              "timeout_height": "0",
+              "extension_options": [],
+              "non_critical_extension_options": []
+            },
+            "auth_info": {
+              "signer_infos": [
+                {
+                  "public_key": {
+                    "@type": "/cosmos.crypto.secp256k1.PubKey",
+                    "key": "A0FAd4gvracnfkE/jGp7iulUgGA5L/XEl6HG6ElM0N13"
+                  },
+                  "mode_info": {
+                    "single": {
+                      "mode": "SIGN_MODE_DIRECT"
+                    }
+                  },
+                  "sequence": "0"
+                }
+              ],
+              "fee": {
+                "amount": [],
+                "gas_limit": "200000",
+                "payer": "",
+                "granter": ""
+              }
+            },
+            "signatures": [
+              "uRvrxY9IimNDYRRQxRQUs0iojgw8fn/LuxZdkS/VeKZsJ/OtMBf8fiuspb8PJVTarpj44065aG8g8s4qje5j/w=="
+            ]
+          },
+          {
+            "body": {
+              "messages": [
+                {
+                  "@type": "/cosmos.staking.v1beta1.MsgCreateValidator",
+                  "description": {
+                    "moniker": "Chandra Station",
+                    "identity": "",
+                    "website": "",
+                    "security_contact": "",
+                    "details": ""
+                  },
+                  "commission": {
+                    "rate": "0.050000000000000000",
+                    "max_rate": "0.100000000000000000",
+                    "max_change_rate": "0.050000000000000000"
+                  },
+                  "min_self_delegation": "1",
+                  "delegator_address": "stride106y6thy7gphzrsqq443hl69vfdvntgz2stfwh3",
+                  "validator_address": "stridevaloper106y6thy7gphzrsqq443hl69vfdvntgz2n7djm5",
+                  "pubkey": {
+                    "@type": "/cosmos.crypto.ed25519.PubKey",
+                    "key": "o6UXua6miKw8236XjA1i4fUmhRr6edoN2r5WwKRtoUk="
+                  },
+                  "value": {
+                    "denom": "ustrd",
+                    "amount": "10000000"
+                  }
+                }
+              ],
+              "memo": "ffbb05de3bab5939d88ca85aa72b3098d6009fd2@192.168.50.68:26656",
+              "timeout_height": "0",
+              "extension_options": [],
+              "non_critical_extension_options": []
+            },
+            "auth_info": {
+              "signer_infos": [
+                {
+                  "public_key": {
+                    "@type": "/cosmos.crypto.secp256k1.PubKey",
+                    "key": "AnIoxWvSaykuRSw5MmO/MUt854J1FSi3aZsVPn458z8d"
+                  },
+                  "mode_info": {
+                    "single": {
+                      "mode": "SIGN_MODE_LEGACY_AMINO_JSON"
+                    }
+                  },
+                  "sequence": "0"
+                }
+              ],
+              "fee": {
+                "amount": [],
+                "gas_limit": "200000",
+                "payer": "",
+                "granter": ""
+              }
+            },
+            "signatures": [
+              "oUE1K1A/CL/rApEdK6XQ7suDlwIULY8Dka5pJhC1BlsyMlqRIt7+oTNE378mjJYJfBfTRRx/2nAu/9zoARZJ0A=="
+            ]
+          },
+          {
+            "body": {
+              "messages": [
+                {
+                  "@type": "/cosmos.staking.v1beta1.MsgCreateValidator",
+                  "description": {
+                    "moniker": "Citadel.one",
+                    "identity": "EBB03EB4BB4CFCA7",
+                    "website": "https://citadel.one",
+                    "security_contact": "",
+                    "details": "Citadel.one is a multi-asset non-custodial staking platform that lets anyone become a part of decentralized infrastructure and earn passive income. Stake with our nodes or any other validator across multiple networks in a few clicks"
+                  },
+                  "commission": {
+                    "rate": "0.050000000000000000",
+                    "max_rate": "0.200000000000000000",
+                    "max_change_rate": "0.030000000000000000"
+                  },
+                  "min_self_delegation": "1",
+                  "delegator_address": "stride1md2j38ls8hg94vjfafu0a2p9htwlkjmhlnp9ef",
+                  "validator_address": "stridevaloper1md2j38ls8hg94vjfafu0a2p9htwlkjmhux9e4v",
+                  "pubkey": {
+                    "@type": "/cosmos.crypto.ed25519.PubKey",
+                    "key": "bKK/CcpHj3Ynnh8Jv4CQ+5oR9r79ux+JeJ66chCJ1H8="
+                  },
+                  "value": {
+                    "denom": "ustrd",
+                    "amount": "10000000"
+                  }
+                }
+              ],
+              "memo": "eed404a63d9c446a494f1d6286a780b17812eac8@10.93.14.21:26656",
+              "timeout_height": "0",
+              "extension_options": [],
+              "non_critical_extension_options": []
+            },
+            "auth_info": {
+              "signer_infos": [
+                {
+                  "public_key": {
+                    "@type": "/cosmos.crypto.secp256k1.PubKey",
+                    "key": "A3rJYmYBSGI4l4UcA7PX18i1axD7Du7tWcwBiAW+SEeq"
+                  },
+                  "mode_info": {
+                    "single": {
+                      "mode": "SIGN_MODE_DIRECT"
+                    }
+                  },
+                  "sequence": "0"
+                }
+              ],
+              "fee": {
+                "amount": [],
+                "gas_limit": "200000",
+                "payer": "",
+                "granter": ""
+              }
+            },
+            "signatures": [
+              "BVCsBGzAb/6p4YKNMeTxB7MmD3m4PbYzs1g04tw4v15exOERyjCMY4tXTacf/aNXlfrIrq5K1bBZDeFHgVOdsg=="
+            ]
+          },
+          {
+            "body": {
+              "messages": [
+                {
+                  "@type": "/cosmos.staking.v1beta1.MsgCreateValidator",
+                  "description": {
+                    "moniker": "Cosmostation",
+                    "identity": "AE4C403A6E7AA1AC",
+                    "website": "https://www.cosmostation.io",
+                    "security_contact": "admin@stamper.network",
+                    "details": "Cosmostation validator node. Delegate your tokens and Start Earning Staking Rewards"
+                  },
+                  "commission": {
+                    "rate": "0.050000000000000000",
+                    "max_rate": "1.000000000000000000",
+                    "max_change_rate": "1.000000000000000000"
+                  },
+                  "min_self_delegation": "1",
+                  "delegator_address": "stride1jj9z2xwxesuy65n90dujsak554eqkrr2ygyan2",
+                  "validator_address": "stridevaloper1jj9z2xwxesuy65n90dujsak554eqkrr28aqpl0",
+                  "pubkey": {
+                    "@type": "/cosmos.crypto.ed25519.PubKey",
+                    "key": "1/7sl6WRQdIq1ypQXZxCLafMuoKKJKT+PlF5VKFAJao="
+                  },
+                  "value": {
+                    "denom": "ustrd",
+                    "amount": "10000000"
+                  }
+                }
+              ],
+              "memo": "b5f9fa874781f975687018ae559f0d952d3a2e24@0.0.0.0:26656",
+              "timeout_height": "0",
+              "extension_options": [],
+              "non_critical_extension_options": []
+            },
+            "auth_info": {
+              "signer_infos": [
+                {
+                  "public_key": {
+                    "@type": "/cosmos.crypto.secp256k1.PubKey",
+                    "key": "A7DF8BLk5EcqkOtKIhn95QU8aNtjw+EUQKhMDpJ+0Bo9"
+                  },
+                  "mode_info": {
+                    "single": {
+                      "mode": "SIGN_MODE_DIRECT"
+                    }
+                  },
+                  "sequence": "0"
+                }
+              ],
+              "fee": {
+                "amount": [],
+                "gas_limit": "200000",
+                "payer": "",
+                "granter": ""
+              }
+            },
+            "signatures": [
+              "NxBdjOoc3SCpZQV1d5swdPXBSWrQNNiLFOtqABv1e6lVdxhhGZQxMq1YdtORPfk1q07iuZWiA7BoxlRE4KJSRw=="
+            ]
+          },
+          {
+            "body": {
+              "messages": [
+                {
+                  "@type": "/cosmos.staking.v1beta1.MsgCreateValidator",
+                  "description": {
+                    "moniker": "Everstake",
+                    "identity": "EF5AC70C00BECEDC",
+                    "website": "https://everstake.one",
+                    "security_contact": "",
+                    "details": "Reliable and experienced staking service provider from Ukraine. Visit our website for more details."
+                  },
+                  "commission": {
+                    "rate": "0.100000000000000000",
+                    "max_rate": "0.200000000000000000",
+                    "max_change_rate": "0.010000000000000000"
+                  },
+                  "min_self_delegation": "1",
+                  "delegator_address": "stride1elqugvhgmn9esv47e2g56gkgzmydc5yt9veagw",
+                  "validator_address": "stridevaloper1elqugvhgmn9esv47e2g56gkgzmydc5ytxeapyt",
+                  "pubkey": {
+                    "@type": "/cosmos.crypto.ed25519.PubKey",
+                    "key": "7nNP9VVOfn+c0XCcGoVA/thFifDjDLIqVDuXWFTTtLI="
+                  },
+                  "value": {
+                    "denom": "ustrd",
+                    "amount": "10000000"
+                  }
+                }
+              ],
+              "memo": "3a6ea526f5f0857272c79448850abef71653d4df@0.0.0.0:26656",
+              "timeout_height": "0",
+              "extension_options": [],
+              "non_critical_extension_options": []
+            },
+            "auth_info": {
+              "signer_infos": [
+                {
+                  "public_key": {
+                    "@type": "/cosmos.crypto.secp256k1.PubKey",
+                    "key": "Ay08oqdcQjNwV5fcR02vhLb3Plhvp7TVqWmZMyWFmwKS"
+                  },
+                  "mode_info": {
+                    "single": {
+                      "mode": "SIGN_MODE_DIRECT"
+                    }
+                  },
+                  "sequence": "0"
+                }
+              ],
+              "fee": {
+                "amount": [],
+                "gas_limit": "200000",
+                "payer": "",
+                "granter": ""
+              }
+            },
+            "signatures": [
+              "EofyYsHA6a+HPUjLbPcB79D1HCrixZY1TKrD4NWp0MoXusPO+RpCI4ZpxRgtcoDUQAv74/mLf1NSp5BFSHbJRQ=="
+            ]
+          },
+          {
+            "body": {
+              "messages": [
+                {
+                  "@type": "/cosmos.staking.v1beta1.MsgCreateValidator",
+                  "description": {
+                    "moniker": "Forbole",
+                    "identity": "2861F5EE06627224",
+                    "website": "https://forbole.com",
+                    "security_contact": "security@forbole.com",
+                    "details": "Co-building the Interchain"
+                  },
+                  "commission": {
+                    "rate": "0.100000000000000000",
+                    "max_rate": "1.000000000000000000",
+                    "max_change_rate": "1.000000000000000000"
+                  },
+                  "min_self_delegation": "1",
+                  "delegator_address": "stride19d8a9dr4kh85zcl5kq7fj64ad9r9dqfk8s43y9",
+                  "validator_address": "stridevaloper19d8a9dr4kh85zcl5kq7fj64ad9r9dqfky93dgq",
+                  "pubkey": {
+                    "@type": "/cosmos.crypto.ed25519.PubKey",
+                    "key": "bVZ/Pqoj9ztW8hr+yD8Azf+y462DDM5XtQgm2A9WQBs="
+                  },
+                  "value": {
+                    "denom": "ustrd",
+                    "amount": "10000000"
+                  }
+                }
+              ],
+              "memo": "fbc05b4136a15b0b69a2b7f093731453f04ce2f4@192.168.50.57:26656",
+              "timeout_height": "0",
+              "extension_options": [],
+              "non_critical_extension_options": []
+            },
+            "auth_info": {
+              "signer_infos": [
+                {
+                  "public_key": {
+                    "@type": "/cosmos.crypto.secp256k1.PubKey",
+                    "key": "A/mHNPcePJqrAqzag8q+J767RuBNdzRLTxyv0poaAyL1"
+                  },
+                  "mode_info": {
+                    "single": {
+                      "mode": "SIGN_MODE_LEGACY_AMINO_JSON"
+                    }
+                  },
+                  "sequence": "0"
+                }
+              ],
+              "fee": {
+                "amount": [],
+                "gas_limit": "200000",
+                "payer": "",
+                "granter": ""
+              }
+            },
+            "signatures": [
+              "SVuDFpWGvlrS1jmCTA/CMEP33IqLak1yNPx+BEa4CCBrSWBUJ+414WMC3eo2xIgTC2bz3U8hm87oO08OelNpQQ=="
+            ]
+          },
+          {
+            "body": {
+              "messages": [
+                {
+                  "@type": "/cosmos.staking.v1beta1.MsgCreateValidator",
+                  "description": {
+                    "moniker": "Frens (🤝,🤝)",
+                    "identity": "C47845226662AF47",
+                    "website": "https://frens.army",
+                    "security_contact": "",
+                    "details": "Your friendly validator for cosmos chains"
+                  },
+                  "commission": {
+                    "rate": "0.050000000000000000",
+                    "max_rate": "0.500000000000000000",
+                    "max_change_rate": "0.100000000000000000"
+                  },
+                  "min_self_delegation": "1",
+                  "delegator_address": "stride1ej2es5fjztqjcd4pwa0zyvaevtjd2y5wqe4vsj",
+                  "validator_address": "stridevaloper1ej2es5fjztqjcd4pwa0zyvaevtjd2y5wrv3suh",
+                  "pubkey": {
+                    "@type": "/cosmos.crypto.ed25519.PubKey",
+                    "key": "HtzEbkGYhQd5rMyNvVnrRZVYwAoHwlB76S6n4/gErTc="
+                  },
+                  "value": {
+                    "denom": "ustrd",
+                    "amount": "10000000"
+                  }
+                }
+              ],
+              "memo": "6795c4cd27d6132a547888ed5b7996aee454a025@172.25.0.2:26656",
+              "timeout_height": "0",
+              "extension_options": [],
+              "non_critical_extension_options": []
+            },
+            "auth_info": {
+              "signer_infos": [
+                {
+                  "public_key": {
+                    "@type": "/cosmos.crypto.secp256k1.PubKey",
+                    "key": "AvYkNkfxIUrfRHXDurBpbDh/+8a1fO6kaKppIfanmwY5"
+                  },
+                  "mode_info": {
+                    "single": {
+                      "mode": "SIGN_MODE_DIRECT"
+                    }
+                  },
+                  "sequence": "0"
+                }
+              ],
+              "fee": {
+                "amount": [],
+                "gas_limit": "200000",
+                "payer": "",
+                "granter": ""
+              }
+            },
+            "signatures": [
+              "hmjEU6tXSQCQ4b6m8+avUmMzs8dtyy0RP6teaptG2+1Wt4SFxbDLJsuFUm1TdGmL1bo3rcLdm4Uz6+qtfvb2Zw=="
+            ]
+          },
+          {
+            "body": {
+              "messages": [
+                {
+                  "@type": "/cosmos.staking.v1beta1.MsgCreateValidator",
+                  "description": {
+                    "moniker": "Imperator.co",
+                    "identity": "0878BA6BE556C132",
+                    "website": "https://imperator.co/",
+                    "security_contact": "contact@imperator.co",
+                    "details": "100% refund on downtime slashing -- Professional Delegated Proof-of-Stake Network Validator"
+                  },
+                  "commission": {
+                    "rate": "0.030000000000000000",
+                    "max_rate": "0.200000000000000000",
+                    "max_change_rate": "0.100000000000000000"
+                  },
+                  "min_self_delegation": "1",
+                  "delegator_address": "stride1dtqsnk3mlqrcxgfvu39lm0jm3pyd0mkrcajj4a",
+                  "validator_address": "stridevaloper1dtqsnk3mlqrcxgfvu39lm0jm3pyd0mkrmgkwec",
+                  "pubkey": {
+                    "@type": "/cosmos.crypto.ed25519.PubKey",
+                    "key": "fwpN2mfLehF0K1H0aq4K1aLaN3q8qWsWLb8qknXqNgQ="
+                  },
+                  "value": {
+                    "denom": "ustrd",
+                    "amount": "10000000"
+                  }
+                }
+              ],
+              "memo": "34c52450d2f107b7c164eb103641df9e45a322d4@65.21.192.108:26656",
+              "timeout_height": "0",
+              "extension_options": [],
+              "non_critical_extension_options": []
+            },
+            "auth_info": {
+              "signer_infos": [
+                {
+                  "public_key": {
+                    "@type": "/cosmos.crypto.secp256k1.PubKey",
+                    "key": "AgXF7HAuG9W7TH5NAJD9P93MzuzHszWYd4DKmUAiiFM2"
+                  },
+                  "mode_info": {
+                    "single": {
+                      "mode": "SIGN_MODE_DIRECT"
+                    }
+                  },
+                  "sequence": "0"
+                }
+              ],
+              "fee": {
+                "amount": [],
+                "gas_limit": "200000",
+                "payer": "",
+                "granter": ""
+              }
+            },
+            "signatures": [
+              "nKB6UvweMgZxR5TrshwLMOF46MDcIkC2+zb1W44Q6AQiP/25rEcEdoQhHSUdv5CTN6NOj9GL5Gii0x+FNu1RPw=="
+            ]
+          },
+          {
+            "body": {
+              "messages": [
+                {
+                  "@type": "/cosmos.staking.v1beta1.MsgCreateValidator",
+                  "description": {
+                    "moniker": "kjnodes",
+                    "identity": "1C5ACD2EEF363C3A",
+                    "website": "http://kjnodes.com",
+                    "security_contact": "",
+                    "details": "Providing professional staking services with high performance and availability"
+                  },
+                  "commission": {
+                    "rate": "0.050000000000000000",
+                    "max_rate": "0.200000000000000000",
+                    "max_change_rate": "0.010000000000000000"
+                  },
+                  "min_self_delegation": "1",
+                  "delegator_address": "stride1j8gkhtllnp252l6g6zwzea30e7pvzqttqs6xtk",
+                  "validator_address": "stridevaloper1j8gkhtllnp252l6g6zwzea30e7pvzqttr9768n",
+                  "pubkey": {
+                    "@type": "/cosmos.crypto.ed25519.PubKey",
+                    "key": "0iSp6SZeKcGhvdXH2t2ijLwKkgT4cFQRy+dPWD2FpNU="
+                  },
+                  "value": {
+                    "denom": "ustrd",
+                    "amount": "10000000"
+                  }
+                }
+              ],
+              "memo": "681803f48d5e9ef9870918e8330551513eccb31c@78.47.51.53:26656",
+              "timeout_height": "0",
+              "extension_options": [],
+              "non_critical_extension_options": []
+            },
+            "auth_info": {
+              "signer_infos": [
+                {
+                  "public_key": {
+                    "@type": "/cosmos.crypto.secp256k1.PubKey",
+                    "key": "AlZAEGZ25oeOlOvNUgYGHYrjdmGxS8SIIx8n/y2MHNxt"
+                  },
+                  "mode_info": {
+                    "single": {
+                      "mode": "SIGN_MODE_DIRECT"
+                    }
+                  },
+                  "sequence": "0"
+                }
+              ],
+              "fee": {
+                "amount": [],
+                "gas_limit": "200000",
+                "payer": "",
+                "granter": ""
+              }
+            },
+            "signatures": [
+              "zI0qImp6ovbIh2MDQSrYJFanWBrTNA40p6b+1eYFCE4FXrdxOs2O1fKLqyl/jdeFab3LdBg5xvP3uUshXxtZpg=="
+            ]
+          },
+          {
+            "body": {
+              "messages": [
+                {
+                  "@type": "/cosmos.staking.v1beta1.MsgCreateValidator",
+                  "description": {
+                    "moniker": " Lavender.Five Nodes 🐝",
+                    "identity": "F87ADDB700C0CC94",
+                    "website": "https://www.lavenderfive.com/",
+                    "security_contact": "hello@lavenderfive.com",
+                    "details": "100% soft slash protected. We strive to make the cosmos a more holistically wholesome place. Come say Hi! https://twitter.com/lavender_five https://t.me/LavenderFive https://discord.gg/RsSvF8jjrz"
+                  },
+                  "commission": {
+                    "rate": "0.050000000000000000",
+                    "max_rate": "0.100000000000000000",
+                    "max_change_rate": "0.050000000000000000"
+                  },
+                  "min_self_delegation": "1",
+                  "delegator_address": "stride140l6y2gp3gxvay6qtn70re7z2s0gn57z0jncjd",
+                  "validator_address": "stridevaloper140l6y2gp3gxvay6qtn70re7z2s0gn57zv8hy7g",
+                  "pubkey": {
+                    "@type": "/cosmos.crypto.ed25519.PubKey",
+                    "key": "zNwkSx66rJsZ2zZrW0srhrmfpZ0nceGuo/qDLJaRfjU="
+                  },
+                  "value": {
+                    "denom": "ustrd",
+                    "amount": "10000000"
+                  }
+                }
+              ],
+              "memo": "75456db718bfa55f0840f700c74e27292acb7842@192.168.1.8:26656",
+              "timeout_height": "0",
+              "extension_options": [],
+              "non_critical_extension_options": []
+            },
+            "auth_info": {
+              "signer_infos": [
+                {
+                  "public_key": {
+                    "@type": "/cosmos.crypto.secp256k1.PubKey",
+                    "key": "AgAxffwFDTjrK5UoAmT9aVOuI7CGxe3T5Wsxx2kWWhJB"
+                  },
+                  "mode_info": {
+                    "single": {
+                      "mode": "SIGN_MODE_LEGACY_AMINO_JSON"
+                    }
+                  },
+                  "sequence": "0"
+                }
+              ],
+              "fee": {
+                "amount": [],
+                "gas_limit": "200000",
+                "payer": "",
+                "granter": ""
+              }
+            },
+            "signatures": [
+              "F/sPxJSCO8xzsGVfYdDMtFYoI6fxgVVIE0o/qNWax0tjJ3bIIJGYqcvr+1yQICF7QNFkoeV0NYLviXwe5lW+Wg=="
+            ]
+          },
+          {
+            "body": {
+              "messages": [
+                {
+                  "@type": "/cosmos.staking.v1beta1.MsgCreateValidator",
+                  "description": {
+                    "moniker": "NodeRun",
+                    "identity": "1E07FDDB3829270D",
+                    "website": "",
+                    "security_contact": "",
+                    "details": ""
+                  },
+                  "commission": {
+                    "rate": "0.100000000000000000",
+                    "max_rate": "0.200000000000000000",
+                    "max_change_rate": "0.010000000000000000"
+                  },
+                  "min_self_delegation": "1",
+                  "delegator_address": "stride1dqpg0hfva0k0awzhxwarjpgzj82hlmvrsnm7ug",
+                  "validator_address": "stridevaloper1dqpg0hfva0k0awzhxwarjpgzj82hlmvrnxlzsd",
+                  "pubkey": {
+                    "@type": "/cosmos.crypto.ed25519.PubKey",
+                    "key": "adzEHa8q+S8dBlujhvX2omeEptDJCPJ9eDCKbQL2Gn8="
+                  },
+                  "value": {
+                    "denom": "ustrd",
+                    "amount": "10000000"
+                  }
+                }
+              ],
+              "memo": "0f2d7f17589e6e31691649ec04fe19561c0d12a6@10.138.0.7:26656",
+              "timeout_height": "0",
+              "extension_options": [],
+              "non_critical_extension_options": []
+            },
+            "auth_info": {
+              "signer_infos": [
+                {
+                  "public_key": {
+                    "@type": "/cosmos.crypto.secp256k1.PubKey",
+                    "key": "AqkQAF5zgxWyusKU0TlauLST2L8FA2wl2eNldBd8zMsu"
+                  },
+                  "mode_info": {
+                    "single": {
+                      "mode": "SIGN_MODE_DIRECT"
+                    }
+                  },
+                  "sequence": "0"
+                }
+              ],
+              "fee": {
+                "amount": [],
+                "gas_limit": "200000",
+                "payer": "",
+                "granter": ""
+              }
+            },
+            "signatures": [
+              "dCI+2QqRlXoUFC726qhLiJHqpVTV0nw1rJVSmA/sDrhOi0MZ2FlzcYA10KaaefC2C68CHbCvkcv6pMTNP6mzvA=="
+            ]
+          },
+          {
+            "body": {
+              "messages": [
+                {
+                  "@type": "/cosmos.staking.v1beta1.MsgCreateValidator",
+                  "description": {
+                    "moniker": "polkachu.com",
+                    "identity": "0A6AF02D1557E5B4",
+                    "website": "https://polkachu.com",
+                    "security_contact": "hello@polkachu.com",
+                    "details": "Polkachu is the trusted staking service provider for blockchain projects. 100% refund for downtime slash. Contact us at hello@polkachu.com"
+                  },
+                  "commission": {
+                    "rate": "0.050000000000000000",
+                    "max_rate": "0.100000000000000000",
+                    "max_change_rate": "0.050000000000000000"
+                  },
+                  "min_self_delegation": "1",
+                  "delegator_address": "stride1gp957czryfgyvxwn3tfnyy2f0t9g2p4pxxdj7c",
+                  "validator_address": "stridevaloper1gp957czryfgyvxwn3tfnyy2f0t9g2p4p9nfwja",
+                  "pubkey": {
+                    "@type": "/cosmos.crypto.ed25519.PubKey",
+                    "key": "LIdoBWSBlJoo4EGrTHBDPf/hoAjnxbpXkDfpMDCaaQs="
+                  },
+                  "value": {
+                    "denom": "ustrd",
+                    "amount": "10000000"
+                  }
+                }
+              ],
+              "memo": "c5ca32da7fc9e0f57406b9ad7103e643bfd2953e@65.108.4.188:26656",
+              "timeout_height": "0",
+              "extension_options": [],
+              "non_critical_extension_options": []
+            },
+            "auth_info": {
+              "signer_infos": [
+                {
+                  "public_key": {
+                    "@type": "/cosmos.crypto.secp256k1.PubKey",
+                    "key": "A4310LXDV0oWV7oMJMIpS0k5/SoCBy0tVbCHS9lLYhx1"
+                  },
+                  "mode_info": {
+                    "single": {
+                      "mode": "SIGN_MODE_DIRECT"
+                    }
+                  },
+                  "sequence": "0"
+                }
+              ],
+              "fee": {
+                "amount": [],
+                "gas_limit": "200000",
+                "payer": "",
+                "granter": ""
+              }
+            },
+            "signatures": [
+              "olfM5CpmRkEAeeUfhrXGe5+yD85UwO6nlKtIqTD7JxNmaeb8xcE2tMAeB/nI883/mdBRGTgOOx+q42vThxLq8w=="
+            ]
+          },
+          {
+            "body": {
+              "messages": [
+                {
+                  "@type": "/cosmos.staking.v1beta1.MsgCreateValidator",
+                  "description": {
+                    "moniker": "Provalidator",
+                    "identity": "3A7D5C9B0B88BEA1",
+                    "website": "https://provalidator.com",
+                    "security_contact": "zenon@provalidator.com",
+                    "details": "Supporting Blockchain Infrastructure"
+                  },
+                  "commission": {
+                    "rate": "0.050000000000000000",
+                    "max_rate": "0.200000000000000000",
+                    "max_change_rate": "0.200000000000000000"
+                  },
+                  "min_self_delegation": "1",
+                  "delegator_address": "stride1hw06c3nsx4a577x45kc4ln5dzct3wk0q2sxyuj",
+                  "validator_address": "stridevaloper1hw06c3nsx4a577x45kc4ln5dzct3wk0qf9zcsh",
+                  "pubkey": {
+                    "@type": "/cosmos.crypto.ed25519.PubKey",
+                    "key": "VMYK7DXVOY2SlTIAvd5CeyA9YduaQ2cmegJcMagKalI="
+                  },
+                  "value": {
+                    "denom": "ustrd",
+                    "amount": "10000000"
+                  }
+                }
+              ],
+              "memo": "cb0b38aa612e8ac05f704d9b2feb7526607afb77@159.203.191.62:26656",
+              "timeout_height": "0",
+              "extension_options": [],
+              "non_critical_extension_options": []
+            },
+            "auth_info": {
+              "signer_infos": [
+                {
+                  "public_key": {
+                    "@type": "/cosmos.crypto.secp256k1.PubKey",
+                    "key": "ArUFI+KI2oMfTH0FtmMp6Sprxn6ERPENlRk0EwKJy9i4"
+                  },
+                  "mode_info": {
+                    "single": {
+                      "mode": "SIGN_MODE_DIRECT"
+                    }
+                  },
+                  "sequence": "0"
+                }
+              ],
+              "fee": {
+                "amount": [],
+                "gas_limit": "200000",
+                "payer": "",
+                "granter": ""
+              }
+            },
+            "signatures": [
+              "aTk7dlJSr7YMfRYpAGyLpwHwaNQoZaZQksS10U2ZZmkcs8337tFezSRZeHebhH2ecs2AudmwnzWnwlFz2BBvaw=="
+            ]
+          },
+          {
+            "body": {
+              "messages": [
+                {
+                  "@type": "/cosmos.staking.v1beta1.MsgCreateValidator",
+                  "description": {
+                    "moniker": "secretnodes.com",
+                    "identity": "",
+                    "website": "secretnodes.com",
+                    "security_contact": "security@secretnodes.org",
+                    "details": ""
+                  },
+                  "commission": {
+                    "rate": "0.100000000000000000",
+                    "max_rate": "0.200000000000000000",
+                    "max_change_rate": "0.010000000000000000"
+                  },
+                  "min_self_delegation": "1",
+                  "delegator_address": "stride169n80dfyqukc8m9uewsxs8h5yc0c80us4meepn",
+                  "validator_address": "stridevaloper169n80dfyqukc8m9uewsxs8h5yc0c80uskwa9dk",
+                  "pubkey": {
+                    "@type": "/cosmos.crypto.ed25519.PubKey",
+                    "key": "msv5ZDGweiuEy9ejgXZ6W4HO9KHeng+yAImpr1AN1lc="
+                  },
+                  "value": {
+                    "denom": "ustrd",
+                    "amount": "10000000"
+                  }
+                }
+              ],
+              "memo": "55b446443f2bd68e06200c3f294c735c333722b0@162.251.235.252:26656",
+              "timeout_height": "0",
+              "extension_options": [],
+              "non_critical_extension_options": []
+            },
+            "auth_info": {
+              "signer_infos": [
+                {
+                  "public_key": {
+                    "@type": "/cosmos.crypto.secp256k1.PubKey",
+                    "key": "A5qLaE9jHHK4c/F1lp5uOYrcj1IiJ82o8kFaNrRnsy7w"
+                  },
+                  "mode_info": {
+                    "single": {
+                      "mode": "SIGN_MODE_DIRECT"
+                    }
+                  },
+                  "sequence": "0"
+                }
+              ],
+              "fee": {
+                "amount": [],
+                "gas_limit": "200000",
+                "payer": "",
+                "granter": ""
+              }
+            },
+            "signatures": [
+              "4G1iMohGLMqShWgfz9gqCpaF2nrslaUJ7pVA/pa7v0pK2pEM/JHdBelD8SYs0VeVKWB1FDv+BxefQLwoOlHOSQ=="
+            ]
+          },
+          {
+            "body": {
+              "messages": [
+                {
+                  "@type": "/cosmos.staking.v1beta1.MsgCreateValidator",
+                  "description": {
+                    "moniker": "StakeLab",
+                    "identity": "F12B081334CBE0C6",
+                    "website": "https://www.stakelab.fr",
+                    "security_contact": "securite@stakelab.fr",
+                    "details": "Staking Hub for Cosmos ecosystem"
+                  },
+                  "commission": {
+                    "rate": "0.050000000000000000",
+                    "max_rate": "0.200000000000000000",
+                    "max_change_rate": "0.010000000000000000"
+                  },
+                  "min_self_delegation": "1",
+                  "delegator_address": "stride1mjr7m233g7yklzvfjp7jvtpsjm286dv2qdqh7h",
+                  "validator_address": "stridevaloper1mjr7m233g7yklzvfjp7jvtpsjm286dv2rcytjj",
+                  "pubkey": {
+                    "@type": "/cosmos.crypto.ed25519.PubKey",
+                    "key": "0Et15+28jcLBKbG+5Ju9QBBRus5YqNU/D+z8a7vfugY="
+                  },
+                  "value": {
+                    "denom": "ustrd",
+                    "amount": "10000000"
+                  }
+                }
+              ],
+              "memo": "68fb634620e00a5a18f606360b6ca6d989da8ce6@65.108.106.131:26656",
+              "timeout_height": "0",
+              "extension_options": [],
+              "non_critical_extension_options": []
+            },
+            "auth_info": {
+              "signer_infos": [
+                {
+                  "public_key": {
+                    "@type": "/cosmos.crypto.secp256k1.PubKey",
+                    "key": "A21XNAUa9J4sPJMC8P0DFSU5L+muNW/xkbh20U2oanq1"
+                  },
+                  "mode_info": {
+                    "single": {
+                      "mode": "SIGN_MODE_DIRECT"
+                    }
+                  },
+                  "sequence": "0"
+                }
+              ],
+              "fee": {
+                "amount": [],
+                "gas_limit": "200000",
+                "payer": "",
+                "granter": ""
+              }
+            },
+            "signatures": [
+              "OMXR3C52PWseRppEAos5sDznBcldfTD5ZwlXah4limJ/TLync5A4iV037xrGa3Quo9QCDS1mU4/WeyI9HgCINg=="
+            ]
+          },
+          {
+            "body": {
+              "messages": [
+                {
+                  "@type": "/cosmos.staking.v1beta1.MsgCreateValidator",
+                  "description": {
+                    "moniker": "Stakely.io",
+                    "identity": "55A5F88B4ED52D3E",
+                    "website": "https://stakely.io/",
+                    "security_contact": "admin@stakely.io",
+                    "details": "🔥 Professional validator highly experienced in PoS 🔥 Slashing protection & Eligible for airdrops | Learn with our staking guides, video tutorials and FAQs | Part of the commission of our nodes will go to our Multicoin Faucet funds and other tools 🌱 Carbon Neutral 🌱"
+                  },
+                  "commission": {
+                    "rate": "0.050000000000000000",
+                    "max_rate": "0.200000000000000000",
+                    "max_change_rate": "0.010000000000000000"
+                  },
+                  "min_self_delegation": "1",
+                  "delegator_address": "stride16vxc4n67usd6cvtyrz0as0kegny2t5l7j33qhy",
+                  "validator_address": "stridevaloper16vxc4n67usd6cvtyrz0as0kegny2t5l73y4ump",
+                  "pubkey": {
+                    "@type": "/cosmos.crypto.ed25519.PubKey",
+                    "key": "jeWIPjuDcYRbF+Oe2Mi2imrcH/UcYfpdFJSJHzGB6h8="
+                  },
+                  "value": {
+                    "denom": "ustrd",
+                    "amount": "10000000"
+                  }
+                }
+              ],
+              "memo": "f56ddd6af02efaac4c47cc8053685d11c1065996@0.0.0.0:26656",
+              "timeout_height": "0",
+              "extension_options": [],
+              "non_critical_extension_options": []
+            },
+            "auth_info": {
+              "signer_infos": [
+                {
+                  "public_key": {
+                    "@type": "/cosmos.crypto.secp256k1.PubKey",
+                    "key": "A36OzV2u1knxbS229rb4NnwLgimWsZHzebjjyLw3erhe"
+                  },
+                  "mode_info": {
+                    "single": {
+                      "mode": "SIGN_MODE_DIRECT"
+                    }
+                  },
+                  "sequence": "0"
+                }
+              ],
+              "fee": {
+                "amount": [],
+                "gas_limit": "200000",
+                "payer": "",
+                "granter": ""
+              }
+            },
+            "signatures": [
+              "aIKU4Iod3JdEYlJW2LMX+2XG+XCPOfqoNkk12LuFMpl5KYg77pqIrWc4QptLux354glMjmzYMT3i9cV7pUf4rA=="
+            ]
+          },
+          {
+            "body": {
+              "messages": [
+                {
+                  "@type": "/cosmos.staking.v1beta1.MsgCreateValidator",
+                  "description": {
+                    "moniker": "Staking Facilities",
+                    "identity": "6B0DF6793DE1FB1F",
+                    "website": "https://stakingfacilities.com/",
+                    "security_contact": "",
+                    "details": ""
+                  },
+                  "commission": {
+                    "rate": "0.080000000000000000",
+                    "max_rate": "0.200000000000000000",
+                    "max_change_rate": "0.050000000000000000"
+                  },
+                  "min_self_delegation": "1",
+                  "delegator_address": "stride1dae4zycvmyd2qt5td9zzgdjdnwyawp79mp0q4a",
+                  "validator_address": "stridevaloper1dae4zycvmyd2qt5td9zzgdjdnwyawp79c5tuec",
+                  "pubkey": {
+                    "@type": "/cosmos.crypto.ed25519.PubKey",
+                    "key": "bbDKcC459U0gv4AY/SYhBMi+9G74+sUXvdz9Z6RFLKA="
+                  },
+                  "value": {
+                    "denom": "ustrd",
+                    "amount": "10000000"
+                  }
+                }
+              ],
+              "memo": "f1721dd0324f29c108c1072b2e4fe9c64e63122d@192.168.86.25:26656",
+              "timeout_height": "0",
+              "extension_options": [],
+              "non_critical_extension_options": []
+            },
+            "auth_info": {
+              "signer_infos": [
+                {
+                  "public_key": {
+                    "@type": "/cosmos.crypto.secp256k1.PubKey",
+                    "key": "Aj8bv1MIfHHyqg0ImRyZjhd4EEjMAylZvrVcDXkMNCk5"
+                  },
+                  "mode_info": {
+                    "single": {
+                      "mode": "SIGN_MODE_LEGACY_AMINO_JSON"
+                    }
+                  },
+                  "sequence": "0"
+                }
+              ],
+              "fee": {
+                "amount": [],
+                "gas_limit": "200000",
+                "payer": "",
+                "granter": ""
+              }
+            },
+            "signatures": [
+              "LJgoJga2xSRhQLTE+yyF6AvgDyUxkRsaDpEio6W5+G87axJgVzyaHRC4+sO1aImUjEZJoRwlG5qnFfiklD3g3g=="
+            ]
+          },
+          {
+            "body": {
+              "messages": [
+                {
+                  "@type": "/cosmos.staking.v1beta1.MsgCreateValidator",
+                  "description": {
+                    "moniker": "Swiss Staking",
+                    "identity": "165F85FC0194320D",
+                    "website": "https://swiss-staking.ch",
+                    "security_contact": "",
+                    "details": "Experienced validator based in Switzerland. We offer a highly secure and stable staking infrastructure."
+                  },
+                  "commission": {
+                    "rate": "0.000000000000000000",
+                    "max_rate": "0.250000000000000000",
+                    "max_change_rate": "0.025000000000000000"
+                  },
+                  "min_self_delegation": "1",
+                  "delegator_address": "stride1x0agh4jnvamn6y5ss94s6ktugwkljp6yf7jwrt",
+                  "validator_address": "stridevaloper1x0agh4jnvamn6y5ss94s6ktugwkljp6y2tkj0w",
+                  "pubkey": {
+                    "@type": "/cosmos.crypto.ed25519.PubKey",
+                    "key": "kCXfrQ7ZHKc1jccVYVeuT2BYy2nvppz6+4HQYI1Ay7A="
+                  },
+                  "value": {
+                    "denom": "ustrd",
+                    "amount": "10000000"
+                  }
+                }
+              ],
+              "memo": "b2e657906fd56524468765210316c5d71e136786@172.24.6.10:26656",
+              "timeout_height": "0",
+              "extension_options": [],
+              "non_critical_extension_options": []
+            },
+            "auth_info": {
+              "signer_infos": [
+                {
+                  "public_key": {
+                    "@type": "/cosmos.crypto.secp256k1.PubKey",
+                    "key": "A7sc9CRdBla29P2kO27I14okWLGpIFrdRpTZ+yUGXbQh"
+                  },
+                  "mode_info": {
+                    "single": {
+                      "mode": "SIGN_MODE_DIRECT"
+                    }
+                  },
+                  "sequence": "0"
+                }
+              ],
+              "fee": {
+                "amount": [],
+                "gas_limit": "200000",
+                "payer": "",
+                "granter": ""
+              }
+            },
+            "signatures": [
+              "YdJxZw10Od8Bs9jqzmu0z9ImdFW+Bm3UbCSoi3cFMTcMpMor0Xv57tMS1AFOOBcATkEpTNQMi05Ls4oktfH26Q=="
+            ]
+          },
+          {
+            "body": {
+              "messages": [
+                {
+                  "@type": "/cosmos.staking.v1beta1.MsgCreateValidator",
+                  "description": {
+                    "moniker": " WhisperNode ????",
+                    "identity": "9C7571030BEF5157",
+                    "website": "https://REStake.WhisperNode.com/stride",
+                    "security_contact": "security@whispernode.com",
+                    "details": "WhisperNode operates robust, high up-time validators across the Cosmos ecosystem. Auto-compound your rewards with our REStake app. Join our Discord: https://discord.gg/4E5KZsRtjE / tweet @ https://twitter.com/WhisperNode ????"
+                  },
+                  "commission": {
+                    "rate": "0.050000000000000000",
+                    "max_rate": "0.200000000000000000",
+                    "max_change_rate": "0.010000000000000000"
+                  },
+                  "min_self_delegation": "1",
+                  "delegator_address": "stride16a28swex9y3knnsls7ae072cu30sj6u56060d2",
+                  "validator_address": "stridevaloper16a28swex9y3knnsls7ae072cu30sj6u5e67np0",
+                  "pubkey": {
+                    "@type": "/cosmos.crypto.ed25519.PubKey",
+                    "key": "nGWbpgoHGTYTgZo1jwJUIcs9pj6fKcEIYqQ52v5s/08="
+                  },
+                  "value": {
+                    "denom": "ustrd",
+                    "amount": "10000000"
+                  }
+                }
+              ],
+              "memo": "04ea9eceee16db90872fee3fbef9ac50a87702c5@185.248.24.29:26656",
+              "timeout_height": "0",
+              "extension_options": [],
+              "non_critical_extension_options": []
+            },
+            "auth_info": {
+              "signer_infos": [
+                {
+                  "public_key": {
+                    "@type": "/cosmos.crypto.secp256k1.PubKey",
+                    "key": "AmL1N/H5eNRh6FBq6fCyQcshGtMKI5LgJzPzHU27KY1x"
+                  },
+                  "mode_info": {
+                    "single": {
+                      "mode": "SIGN_MODE_DIRECT"
+                    }
+                  },
+                  "sequence": "0"
+                }
+              ],
+              "fee": {
+                "amount": [],
+                "gas_limit": "200000",
+                "payer": "",
+                "granter": ""
+              }
+            },
+            "signatures": [
+              "DfZ5Yuw7G6c0H4oWM0vN1bfNc7byUbjGFdqNFqqvLaBLU1kiQ7U79A7tKN91EMMf43BF0bxJnyvj4eDqz3XIvQ=="
+            ]
+          }
+        ]
+      },
+      "gov": {
+        "starting_proposal_id": "1",
+        "deposits": [],
+        "votes": [],
+        "proposals": [],
+        "deposit_params": {
+          "min_deposit": [
+            {
+              "denom": "ustrd",
+              "amount": "10000000"
+            }
+          ],
+          "max_deposit_period": "172800s"
+        },
+        "voting_params": {
+          "voting_period": "259200s"
+        },
+        "tally_params": {
+          "quorum": "0.334000000000000000",
+          "threshold": "0.500000000000000000",
+          "veto_threshold": "0.334000000000000000"
+        }
+      },
+      "ibc": {
+        "client_genesis": {
+          "clients": [],
+          "clients_consensus": [],
+          "clients_metadata": [],
+          "params": {
+            "allowed_clients": [
+              "06-solomachine",
+              "07-tendermint"
+            ]
+          },
+          "create_localhost": false,
+          "next_client_sequence": "0"
+        },
+        "connection_genesis": {
+          "connections": [],
+          "client_connection_paths": [],
+          "next_connection_sequence": "0",
+          "params": {
+            "max_expected_time_per_block": "30000000000"
+          }
+        },
+        "channel_genesis": {
+          "channels": [],
+          "acknowledgements": [],
+          "commitments": [],
+          "receipts": [],
+          "send_sequences": [],
+          "recv_sequences": [],
+          "ack_sequences": [],
+          "next_channel_sequence": "0"
+        }
+      },
+      "icacallbacks": {
+        "params": {},
+        "port_id": "icacallbacks",
+        "callbackDataList": []
+      },
+      "interchainaccounts": {
+        "controller_genesis_state": {
+          "active_channels": [],
+          "interchain_accounts": [],
+          "ports": [],
+          "params": {
+            "controller_enabled": true
+          }
+        },
+        "host_genesis_state": {
+          "active_channels": [],
+          "interchain_accounts": [],
+          "port": "icahost",
+          "params": {
+            "host_enabled": true,
+            "allow_messages": []
+          }
+        }
+      },
+      "interchainquery": null,
+      "mint": {
+        "minter": {
+          "epoch_provisions": "0.000000000000000000"
+        },
+        "params": {
+          "mint_denom": "ustrd",
+          "genesis_epoch_provisions": "285388127.853881278538812785",
+          "epoch_identifier": "mint",
+          "reduction_period_in_epochs": "8760",
+          "reduction_factor": "0.500000000000000000",
+          "distribution_proportions": {
+            "staking": "0.276400000000000000",
+            "community_pool_growth": "0.186000000000000000",
+            "community_pool_security_budget": "0.117100000000000000",
+            "strategic_reserve": "0.420500000000000000"
+          },
+          "minting_rewards_distribution_start_epoch": "0"
+        },
+        "reduction_started_epoch": "0"
+      },
+      "params": null,
+      "records": {
+        "params": {},
+        "port_id": "records",
+        "userRedemptionRecordList": [],
+        "userRedemptionRecordCount": "0",
+        "epochUnbondingRecordList": [],
+        "depositRecordList": [],
+        "depositRecordCount": "0"
+      },
+      "slashing": {
+        "params": {
+          "signed_blocks_window": "30000",
+          "min_signed_per_window": "0.05",
+          "downtime_jail_duration": "60s",
+          "slash_fraction_double_sign": "0.05",
+          "slash_fraction_downtime": "0.0001"
+        },
+        "signing_infos": [],
+        "missed_blocks": []
+      },
+      "stakeibc": {
+        "params": {
+          "rewards_interval": "1",
+          "delegate_interval": "1",
+          "deposit_interval": "1",
+          "redemption_rate_interval": "1",
+          "stride_commission": "10",
+          "zone_com_address": {},
+          "reinvest_interval": "1",
+          "validator_rebalancing_threshold": "100",
+          "ica_timeout_nanos": "600000000000",
+          "buffer_size": "5",
+          "ibc_timeout_blocks": "300",
+          "fee_transfer_timeout_nanos": "1800000000000",
+          "max_stake_ica_calls_per_epoch": "100",
+          "safety_min_redemption_rate_threshold": "90",
+          "safety_max_redemption_rate_threshold": "150",
+          "ibc_transfer_timeout_nanos": "1800000000000"
+        },
+        "port_id": "stakeibc",
+        "iCAAccount": null,
+        "hostZoneList": [],
+        "hostZoneCount": "0",
+        "denomToHostZone": {},
+        "epochTrackerList": []
+      },
+      "staking": {
+        "params": {
+          "unbonding_time": "1209600s",
+          "max_validators": 100,
+          "max_entries": 7,
+          "historical_entries": 10000,
+          "bond_denom": "ustrd"
+        },
+        "last_total_power": "0",
+        "last_validator_powers": [],
+        "validators": [],
+        "delegations": [],
+        "unbonding_delegations": [],
+        "redelegations": [],
+        "exported": false
+      },
+      "transfer": {
+        "port_id": "transfer",
+        "denom_traces": [],
+        "params": {
+          "send_enabled": true,
+          "receive_enabled": true
+        }
+      },
+      "upgrade": {},
+      "vesting": {}
+    }
+  }
+  
