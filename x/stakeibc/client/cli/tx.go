@@ -12,9 +12,7 @@ import (
 	"github.com/Stride-Labs/stride/x/stakeibc/types"
 )
 
-var (
-	DefaultRelativePacketTimeoutTimestamp = cast.ToUint64((time.Duration(10) * time.Minute).Nanoseconds())
-)
+var DefaultRelativePacketTimeoutTimestamp = cast.ToUint64((time.Duration(10) * time.Minute).Nanoseconds())
 
 // GetTxCmd returns the transaction commands for this module
 func GetTxCmd() *cobra.Command {

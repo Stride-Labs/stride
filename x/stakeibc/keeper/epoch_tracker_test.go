@@ -38,6 +38,7 @@ func TestEpochTrackerGet(t *testing.T) {
 		)
 	}
 }
+
 func TestEpochTrackerRemove(t *testing.T) {
 	keeper, ctx := keepertest.StakeibcKeeper(t)
 	items := createNEpochTracker(keeper, ctx, 10)
