@@ -3,14 +3,18 @@ package app_router
 import (
 	"fmt"
 
+	"cosmossdk.io/math"
+	"github.com/armon/go-metrics"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
 	ibctransfertypes "github.com/cosmos/ibc-go/v3/modules/apps/transfer/types"
+	transfertypes "github.com/cosmos/ibc-go/v3/modules/apps/transfer/types"
 	channeltypes "github.com/cosmos/ibc-go/v3/modules/core/04-channel/types"
 	porttypes "github.com/cosmos/ibc-go/v3/modules/core/05-port/types"
 
 	"github.com/Stride-Labs/stride/x/app_router/keeper"
+	"github.com/Stride-Labs/stride/x/app_router/types"
 
 	// "google.golang.org/protobuf/proto" <-- this breaks tx parsing
 
@@ -150,14 +154,74 @@ func (im IBCModule) OnRecvPacket(
 	packet channeltypes.Packet,
 	relayer sdk.AccAddress,
 ) ibcexported.Acknowledgement {
-	wrapperAck := channeltypes.NewResultAcknowledgement([]byte{byte(1)})
-	// handle(wrapperAck)
-	_ = wrapperAck
 	// NOTE: acknowledgement will be written synchronously during IBC handler execution.
-	// TODO: add routing
-	// parse the incoming packet
-	// route the packet accordingly
-	return im.app.OnRecvPacket(ctx, packet, relayer)
+	var data transfertypes.FungibleTokenPacketData
+	if err := transfertypes.ModuleCdc.UnmarshalJSON(packet.GetData(), &data); err != nil {
+		return channeltypes.NewErrorAcknowledgement(err.Error())
+	}
+
+	// parse out any forwarding info
+	parsedReceiver, err := types.ParseReceiverData(data.Receiver)
+	if err != nil {
+		return channeltypes.NewErrorAcknowledgement(err)
+	}
+
+	// move on to the next middleware
+	if !parsedReceiver.ShouldLiquidStake {
+		return im.app.OnRecvPacket(ctx, packet, relayer)
+	}
+
+	// Modify packet data to process packet transfer for this chain, omitting liquid staking info
+	newData := data
+	newData.Receiver = parsedReceiver.StrideAccAddress.String()
+	bz, err := transfertypes.ModuleCdc.MarshalJSON(&newData)
+	if err != nil {
+		return channeltypes.NewErrorAcknowledgement(err)
+	}
+	newPacket := packet
+	newPacket.Data = bz
+
+	// process the transfer receipt
+	// NOTE: this code is pulled from packet-forwarding-middleware
+	ack := im.app.OnRecvPacket(ctx, newPacket, relayer)
+	if ack.Success() {
+		// recalculate denom, skip checks that were already done in app.OnRecvPacket
+		var err error
+		// TODO put denom handling in separate function
+		var denom string
+		// in this case, we can't process a liquid staking transaction, because we're dealing with STRD tokens
+		if transfertypes.ReceiverChainIsSource(packet.GetSourcePort(), packet.GetSourceChannel(), newData.Denom) {
+			// remove prefix added by sender chain
+			voucherPrefix := transfertypes.GetDenomPrefix(packet.GetSourcePort(), packet.GetSourceChannel())
+			unprefixedDenom := newData.Denom[len(voucherPrefix):]
+
+			// coin denomination used in sending from the escrow address
+			denom = unprefixedDenom
+
+			// The denomination used to send the coins is either the native denom or the hash of the path
+			// if the denomination is not native.
+			denomTrace := transfertypes.ParseDenomTrace(unprefixedDenom)
+			if denomTrace.Path != "" {
+				denom = denomTrace.IBCDenom()
+			}
+			// TODO: can we just delete the above code?
+			return ack
+		} else {
+			prefixedDenom := transfertypes.GetDenomPrefix(packet.GetDestPort(), packet.GetDestChannel()) + newData.Denom
+			denom = transfertypes.ParseDenomTrace(prefixedDenom).IBCDenom()
+		}
+		unit, err := math.ParseUint(newData.Amount)
+		if err != nil {
+			channeltypes.NewErrorAcknowledgement(err.Error())
+		}
+		var token = sdk.NewCoin(denom, sdk.NewIntFromUint64(unit.Uint64()))
+
+		err = im.keeper.LiquidStakeTransferPacket(ctx, parsedReceiver, token, []metrics.Label{})
+		if err != nil {
+			ack = channeltypes.NewErrorAcknowledgement(err.Error())
+		}
+	}
+	return ack
 }
 
 // OnAcknowledgementPacket implements the IBCModule interface
