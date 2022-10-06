@@ -31,7 +31,6 @@ func (k Keeper) EpochTrackerAll(c context.Context, req *types.QueryAllEpochTrack
 		epochTrackers = append(epochTrackers, epochTracker)
 		return nil
 	})
-
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
