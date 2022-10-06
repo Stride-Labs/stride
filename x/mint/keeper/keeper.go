@@ -229,7 +229,6 @@ func (k Keeper) DistributeMintedCoin(ctx sdk.Context, mintedCoin sdk.Coin) error
 
 // set up a new module account address
 func (k Keeper) SetupNewModuleAccount(ctx sdk.Context, submoduleName string, submoduleNamespace string) {
-
 	// create and save the module account to the account keeper
 	acctAddress := k.GetSubmoduleAddress(submoduleName, submoduleNamespace)
 	acc := k.accountKeeper.NewAccount(

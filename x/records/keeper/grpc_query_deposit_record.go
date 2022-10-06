@@ -32,7 +32,6 @@ func (k Keeper) DepositRecordAll(c context.Context, req *types.QueryAllDepositRe
 		depositRecords = append(depositRecords, depositRecord)
 		return nil
 	})
-
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
