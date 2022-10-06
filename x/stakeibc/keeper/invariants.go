@@ -8,7 +8,6 @@ import (
 
 // RegisterInvariants registers all governance invariants.
 func RegisterInvariants(ir sdk.InvariantRegistry, k Keeper) {
-
 }
 
 // AllInvariants runs all invariants of the stakeibc module

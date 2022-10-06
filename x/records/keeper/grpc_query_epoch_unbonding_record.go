@@ -33,7 +33,6 @@ func (k Keeper) EpochUnbondingRecordAll(c context.Context, req *types.QueryAllEp
 		epochUnbondingRecords = append(epochUnbondingRecords, epochUnbondingRecord)
 		return nil
 	})
-
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}

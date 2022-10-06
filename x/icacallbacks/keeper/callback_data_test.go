@@ -39,6 +39,7 @@ func TestCallbackDataGet(t *testing.T) {
 		)
 	}
 }
+
 func TestCallbackDataRemove(t *testing.T) {
 	keeper, ctx := keepertest.IcacallbacksKeeper(t)
 	items := createNCallbackData(keeper, ctx, 10)

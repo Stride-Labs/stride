@@ -25,10 +25,8 @@ const (
 	PortID = "icacallbacks"
 )
 
-var (
-	// PortKey defines the key to store the port ID in store
-	PortKey = KeyPrefix("icacallbacks-port-")
-)
+// PortKey defines the key to store the port ID in store
+var PortKey = KeyPrefix("icacallbacks-port-")
 
 func KeyPrefix(p string) []byte {
 	return []byte(p)

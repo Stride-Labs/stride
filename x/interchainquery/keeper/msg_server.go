@@ -46,7 +46,6 @@ func (k Keeper) VerifyKeyProof(ctx sdk.Context, msg *types.MsgSubmitQueryRespons
 		connection, _ := k.IBCKeeper.ConnectionKeeper.GetConnection(ctx, q.ConnectionId)
 
 		msgHeight, err := cast.ToUint64E(msg.Height)
-
 		if err != nil {
 			return err
 		}
