@@ -1,10 +1,8 @@
 package keeper
 
 import (
-	"encoding/json"
 	"fmt"
-
-	"io/ioutil"
+	"strings"
 
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -13,20 +11,37 @@ import (
 	"github.com/Stride-Labs/stride/x/claim/types"
 )
 
-//Load user allocation data from json file
 func (k Keeper) LoadAllocationData(ctx sdk.Context) bool {
-	file, err := ioutil.ReadFile("./airdrop.json")
-	if err != nil {
-		return false
+	totalWeight := sdk.NewDec(0)
+	records := []types.ClaimRecord{}
+
+	lines := strings.Split(allocations, "\n")
+	for _, line := range lines {
+		data := strings.Split(line, ",")
+		if data[0] == "" || data[1] == "" {
+			continue
+		}
+
+		weight, err := sdk.NewDecFromStr(data[1])
+		if err != nil {
+			continue
+		}
+
+		_, err = sdk.AccAddressFromBech32(data[0])
+		if err != nil {
+			continue
+		}
+
+		records = append(records, types.ClaimRecord{
+			Address: data[0],
+			Weight:  weight,
+		})
+
+		totalWeight = weight
 	}
 
-	airdropFromFile := []types.ClaimRecord{}
-	err = json.Unmarshal([]byte(file), &airdropFromFile)
-	if err != nil {
-		return false
-	}
-
-	k.SetClaimRecords(ctx, airdropFromFile)
+	k.SetTotalWeight(ctx, totalWeight)
+	k.SetClaimRecords(ctx, records)
 	return true
 }
 
@@ -54,7 +69,7 @@ func (k Keeper) EndAirdrop(ctx sdk.Context) error {
 	ctx.Logger().Info("Clearing claims module state entries")
 	k.clearInitialClaimables(ctx)
 
-	ctx.Logger().Info("Beginning prop32 clawback")
+	ctx.Logger().Info("Beginning clawback")
 	err = k.ClawbackAirdrop(ctx)
 	if err != nil {
 		return err
@@ -83,8 +98,7 @@ func (k Keeper) SweepAirdrop(ctx sdk.Context) error {
 	return nil
 }
 
-// ClawbackAirdrop implements prop 32 by clawing back all the Stride coins from airdrop
-// recipient accounts with a sequence number of 0
+// ClawbackAirdrop claws back all the Stride coins from airdrop
 func (k Keeper) ClawbackAirdrop(ctx sdk.Context) error {
 	totalClawback := sdk.NewCoins()
 	for _, bechAddr := range types.AirdropAddrs {
@@ -184,6 +198,26 @@ func (k Keeper) GetClaimRecord(ctx sdk.Context, addr sdk.AccAddress) (types.Clai
 	return claimRecord, nil
 }
 
+// SetTotalWeight sets total sum of user weights in store
+func (k Keeper) SetTotalWeight(ctx sdk.Context, totalWeight sdk.Dec) {
+	store := ctx.KVStore(k.storeKey)
+	store.Set([]byte(types.TotalWeightKey), []byte(totalWeight.String()))
+}
+
+// GetTotalWeight gets total sum of user weights in store
+func (k Keeper) GetTotalWeight(ctx sdk.Context) (sdk.Dec, error) {
+	store := ctx.KVStore(k.storeKey)
+	b := store.Get([]byte(types.TotalWeightKey))
+	if b == nil {
+		return sdk.ZeroDec(), types.ErrTotalWeightNotSet
+	}
+	totalWeight, err := sdk.NewDecFromStr(string(b))
+	if err != nil {
+		return sdk.ZeroDec(), types.ErrTotalWeightParse
+	}
+	return totalWeight, nil
+}
+
 // SetClaimRecord sets a claim record for an address in store
 func (k Keeper) SetClaimRecord(ctx sdk.Context, claimRecord types.ClaimRecord) error {
 	store := ctx.KVStore(k.storeKey)
@@ -231,36 +265,31 @@ func (k Keeper) GetClaimableAmountForAction(ctx sdk.Context, addr sdk.AccAddress
 		return sdk.Coins{}, nil
 	}
 
-	InitialClaimablePerAction := sdk.Coins{}
-	for _, coin := range claimRecord.InitialClaimableAmount {
-		InitialClaimablePerAction = InitialClaimablePerAction.Add(
-			sdk.NewCoin(coin.Denom,
-				coin.Amount.QuoRaw(int64(len(types.Action_name))),
-			),
-		)
+	totalWeight, err := k.GetTotalWeight(ctx)
+	if err != nil {
+		return nil, types.ErrFailedToGetTotalWeight
 	}
+
+	poolBal := k.GetModuleAccountBalance(ctx)
+
+	percentageForAction := types.PercentageForFree
+	if action == types.ActionDelegateStake {
+		percentageForAction = types.PercentageForStake
+	} else if action == types.ActionLiquidStake {
+		percentageForAction = types.PercentageForLiquidStake
+	}
+
+	claimableAmount := poolBal.Amount.ToDec().
+		Mul(percentageForAction).
+		Mul(claimRecord.Weight).
+		Quo(totalWeight).RoundInt()
+	claimableCoins := sdk.NewCoins(sdk.NewCoin(params.ClaimDenom, claimableAmount))
 
 	elapsedAirdropTime := ctx.BlockTime().Sub(params.AirdropStartTime)
-	// Are we early enough in the airdrop s.t. theres no decay?
-	if elapsedAirdropTime <= params.DurationUntilDecay {
-		return InitialClaimablePerAction, nil
-	}
-
 	// The entire airdrop has completed
-	if elapsedAirdropTime > params.DurationUntilDecay+params.DurationOfDecay {
+	if elapsedAirdropTime > params.AirdropDuration {
 		return sdk.Coins{}, nil
 	}
-
-	// Positive, since goneTime > params.DurationUntilDecay
-	decayTime := elapsedAirdropTime - params.DurationUntilDecay
-	decayPercent := sdk.NewDec(decayTime.Nanoseconds()).QuoInt64(params.DurationOfDecay.Nanoseconds())
-	claimablePercent := sdk.OneDec().Sub(decayPercent)
-
-	claimableCoins := sdk.Coins{}
-	for _, coin := range InitialClaimablePerAction {
-		claimableCoins = claimableCoins.Add(sdk.NewCoin(coin.Denom, coin.Amount.ToDec().Mul(claimablePercent).RoundInt()))
-	}
-
 	return claimableCoins, nil
 }
 
@@ -302,9 +331,32 @@ func (k Keeper) ClaimCoinsForAction(ctx sdk.Context, addr sdk.AccAddress, action
 		return nil, err
 	}
 
-	err = k.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, addr, claimableAmount)
-	if err != nil {
-		return nil, err
+	if action == types.ActionFree {
+		err = k.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, addr, claimableAmount)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		// TODO: Following code works for only converting existing user account(non-vesting) to a vesting account.
+		// As we need to set multiple vesting period(staking, liquid staking) per each user,
+		// it can cause various problems.
+
+		// params, err := k.GetParams(ctx)
+		// if err != nil {
+		// 	return nil, err
+		// }
+		// baseAccount := k.accountKeeper.NewAccountWithAddress(ctx, addr)
+		// if _, ok := baseAccount.(*authtypes.BaseAccount); !ok {
+		// 	return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "invalid account type; expected: BaseAccount, got: %T", baseAccount)
+		// }
+		// baseVestingAccount := vestingtypes.NewBaseVestingAccount(baseAccount.(*authtypes.BaseAccount), claimableAmount.Sort(), params.AirdropStartTime.Unix()+int64(params.AirdropDuration))
+		// vestingAcc := vestingtypes.NewDelayedVestingAccountRaw(baseVestingAccount)
+		// k.accountKeeper.SetAccount(ctx, vestingAcc)
+
+		// err = k.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, addr, claimableAmount)
+		// if err != nil {
+		// 	return nil, err
+		// }
 	}
 
 	claimRecord.ActionCompleted[action] = true

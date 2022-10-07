@@ -334,7 +334,7 @@ func (m *QueryClaimableForActionRequest) GetAction() Action {
 	if m != nil {
 		return m.Action
 	}
-	return ActionLiquidStake
+	return ActionFree
 }
 
 type QueryClaimableForActionResponse struct {

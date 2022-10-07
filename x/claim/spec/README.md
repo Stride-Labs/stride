@@ -4,10 +4,8 @@
 
 The Stride claims module has users claim higher percentages as they perform certain tasks on-chain.
 Furthermore, these claimable assets 'expire' if not claimed.
-Users have two months (`DurationUntilDecay`) to claim their full airdrop amount.
-After two months, the reward amount available will decline over 4 months (`DurationOfDecay`) in real time, until it hits `0%` at 6 months from launch (`DurationUntilDecay + DurationOfDecay`).
-
-After 6 months from launch, all unclaimed tokens get sent to the community pool.
+Users have three months (`AirdropDuration`) to claim their full airdrop amount
+After three months from launch, all unclaimed tokens get sent to the community pool.
 
 ## Contents
 
@@ -51,15 +49,13 @@ So for example, `[true, true]` means that `ActionLiquidStake` and `ActionDelegat
 
 ```golang
 type ClaimRecord struct {
-    // address of claim user
-    Address string `protobuf:"bytes,1,opt,name=address,proto3" json:"address,omitempty" yaml:"address"`
-
-    // total initial claimable amount for the user
-    InitialClaimableAmount sdk.Coins
-    
-    // true if action is completed
-    // index of bool in array refers to action enum #
-    ActionCompleted []bool
+	// address of claim user
+	Address string
+	// weight that represent the portion from total allocation
+	Weight sdk.Dec
+	// true if action is completed
+	// index of bool in array refers to action enum #
+	ActionCompleted []bool
 }
 
 ```
@@ -74,9 +70,10 @@ type Params struct {
     // Time that marks the beginning of the airdrop disbursal,
     // should be set to chain launch time.
     AirdropStartTime   time.Time
-    DurationUntilDecay time.Duration
-    DurationOfDecay    time.Duration
+    AirdropDuration time.Duration
     // denom of claimable asset
     ClaimDenom string
+    // address of distributor account
+    DistributorAddress string
 }
 ```

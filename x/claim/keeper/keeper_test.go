@@ -27,10 +27,9 @@ func (suite *KeeperTestSuite) SetupTest() {
 	airdropStartTime := time.Now()
 
 	err := suite.app.ClaimKeeper.SetParams(suite.ctx, types.Params{
-		AirdropStartTime:   airdropStartTime,
-		DurationUntilDecay: types.DefaultDurationUntilDecay,
-		DurationOfDecay:    types.DefaultDurationOfDecay,
-		ClaimDenom:         sdk.DefaultBondDenom,
+		AirdropStartTime: airdropStartTime,
+		AirdropDuration:  types.DefaultAirdropDuration,
+		ClaimDenom:       sdk.DefaultBondDenom,
 	})
 	if err != nil {
 		panic(err)

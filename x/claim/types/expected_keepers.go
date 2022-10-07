@@ -20,6 +20,8 @@ type AccountKeeper interface {
 	GetModuleAddress(name string) sdk.AccAddress
 	SetModuleAccount(ctx sdk.Context, macc authtypes.ModuleAccountI)
 	GetAccount(sdk.Context, sdk.AccAddress) authtypes.AccountI
+	SetAccount(sdk.Context, authtypes.AccountI)
+	NewAccountWithAddress(sdk.Context, sdk.AccAddress) authtypes.AccountI
 	// Fetch the sequence of an account at a specified address.
 	GetSequence(sdk.Context, sdk.AccAddress) (uint64, error)
 }

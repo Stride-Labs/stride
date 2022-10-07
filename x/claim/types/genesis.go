@@ -20,9 +20,8 @@ func DefaultGenesis() *GenesisState {
 		ModuleAccountBalance: sdk.NewCoin(DefaultClaimDenom, sdk.ZeroInt()),
 		Params: Params{
 			AirdropStartTime:   time.Time{},
-			DurationUntilDecay: DefaultDurationUntilDecay, // 2 month
-			DurationOfDecay:    DefaultDurationOfDecay,    // 4 months
-			ClaimDenom:         DefaultClaimDenom,         // ustrd
+			AirdropDuration:    DefaultAirdropDuration, // 2 month
+			ClaimDenom:         DefaultClaimDenom,      // ustrd
 			DistributorAddress: "",
 		},
 		ClaimRecords: []ClaimRecord{},
@@ -44,16 +43,6 @@ func GetGenesisStateFromAppState(cdc codec.JSONCodec, appState map[string]json.R
 // Validate performs basic genesis state validation returning an error upon any
 // failure.
 func (gs GenesisState) Validate() error {
-	totalClaimable := sdk.Coins{}
-
-	for _, claimRecord := range gs.ClaimRecords {
-		totalClaimable = totalClaimable.Add(claimRecord.InitialClaimableAmount...)
-	}
-
-	if !totalClaimable.IsEqual(sdk.NewCoins(gs.ModuleAccountBalance)) {
-		return ErrIncorrectModuleAccountBalance
-	}
-
 	if gs.Params.ClaimDenom != gs.ModuleAccountBalance.Denom {
 		return fmt.Errorf("denom for module and claim does not match")
 	}

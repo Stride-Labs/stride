@@ -34,3 +34,33 @@ func (server msgServer) DepositAirdrop(goCtx context.Context, msg *types.MsgDepo
 	}
 	return &types.MsgDepositAirdropResponse{}, nil
 }
+
+func (server msgServer) SetAirdropAllocations(goCtx context.Context, msg *types.MsgSetAirdropAllocations) (*types.MsgSetAirdropAllocationsResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	for idx, user := range msg.Users {
+		record := types.ClaimRecord{
+			Address:         user,
+			Weight:          msg.Weights[idx],
+			ActionCompleted: []bool{false, false},
+		}
+		server.keeper.SetClaimRecord(ctx, record)
+	}
+
+	return &types.MsgSetAirdropAllocationsResponse{}, nil
+}
+
+func (server msgServer) ClaimFreeAmount(goCtx context.Context, msg *types.MsgClaimFreeAmount) (*types.MsgClaimFreeAmountResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	addr, err := sdk.AccAddressFromBech32(msg.User)
+	if err != nil {
+		return nil, err
+	}
+
+	coins, err := server.keeper.ClaimCoinsForAction(ctx, addr, types.ActionFree)
+	if err != nil {
+		return nil, err
+	}
+
+	return &types.MsgClaimFreeAmountResponse{ClaimedAmount: coins}, nil
+}

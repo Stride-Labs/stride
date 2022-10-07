@@ -5,7 +5,6 @@ import (
 )
 
 var (
-	DefaultClaimDenom         = "ustrd"
-	DefaultDurationUntilDecay = time.Hour
-	DefaultDurationOfDecay    = time.Hour * 5
+	DefaultClaimDenom      = "ustrd"
+	DefaultAirdropDuration = time.Hour
 )

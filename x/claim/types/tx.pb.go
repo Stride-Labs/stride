@@ -32,7 +32,7 @@ const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
 type MsgDepositAirdrop struct {
 	Distributor   string                                   `protobuf:"bytes,1,opt,name=distributor,proto3" json:"distributor,omitempty"`
-	AirdropAmount github_com_cosmos_cosmos_sdk_types.Coins `protobuf:"bytes,2,rep,name=airdropAmount,proto3,castrepeated=github.com/cosmos/cosmos-sdk/types.Coins" json:"airdropAmount"`
+	AirdropAmount github_com_cosmos_cosmos_sdk_types.Coins `protobuf:"bytes,2,rep,name=airdrop_amount,json=airdropAmount,proto3,castrepeated=github.com/cosmos/cosmos-sdk/types.Coins" json:"airdrop_amount"`
 }
 
 func (m *MsgDepositAirdrop) Reset()         { *m = MsgDepositAirdrop{} }
@@ -118,36 +118,228 @@ func (m *MsgDepositAirdropResponse) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_MsgDepositAirdropResponse proto.InternalMessageInfo
 
+type MsgSetAirdropAllocations struct {
+	Allocator string                                   `protobuf:"bytes,1,opt,name=allocator,proto3" json:"allocator,omitempty"`
+	Users     []string                                 `protobuf:"bytes,2,rep,name=users,proto3" json:"users,omitempty"`
+	Weights   []github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,3,rep,name=weights,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"weights" yaml:"weights"`
+}
+
+func (m *MsgSetAirdropAllocations) Reset()         { *m = MsgSetAirdropAllocations{} }
+func (m *MsgSetAirdropAllocations) String() string { return proto.CompactTextString(m) }
+func (*MsgSetAirdropAllocations) ProtoMessage()    {}
+func (*MsgSetAirdropAllocations) Descriptor() ([]byte, []int) {
+	return fileDescriptor_2477aa15a389ceb5, []int{2}
+}
+func (m *MsgSetAirdropAllocations) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *MsgSetAirdropAllocations) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_MsgSetAirdropAllocations.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *MsgSetAirdropAllocations) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgSetAirdropAllocations.Merge(m, src)
+}
+func (m *MsgSetAirdropAllocations) XXX_Size() int {
+	return m.Size()
+}
+func (m *MsgSetAirdropAllocations) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgSetAirdropAllocations.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MsgSetAirdropAllocations proto.InternalMessageInfo
+
+func (m *MsgSetAirdropAllocations) GetAllocator() string {
+	if m != nil {
+		return m.Allocator
+	}
+	return ""
+}
+
+func (m *MsgSetAirdropAllocations) GetUsers() []string {
+	if m != nil {
+		return m.Users
+	}
+	return nil
+}
+
+type MsgSetAirdropAllocationsResponse struct {
+}
+
+func (m *MsgSetAirdropAllocationsResponse) Reset()         { *m = MsgSetAirdropAllocationsResponse{} }
+func (m *MsgSetAirdropAllocationsResponse) String() string { return proto.CompactTextString(m) }
+func (*MsgSetAirdropAllocationsResponse) ProtoMessage()    {}
+func (*MsgSetAirdropAllocationsResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_2477aa15a389ceb5, []int{3}
+}
+func (m *MsgSetAirdropAllocationsResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *MsgSetAirdropAllocationsResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_MsgSetAirdropAllocationsResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *MsgSetAirdropAllocationsResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgSetAirdropAllocationsResponse.Merge(m, src)
+}
+func (m *MsgSetAirdropAllocationsResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *MsgSetAirdropAllocationsResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgSetAirdropAllocationsResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MsgSetAirdropAllocationsResponse proto.InternalMessageInfo
+
+type MsgClaimFreeAmount struct {
+	User string `protobuf:"bytes,1,opt,name=user,proto3" json:"user,omitempty"`
+}
+
+func (m *MsgClaimFreeAmount) Reset()         { *m = MsgClaimFreeAmount{} }
+func (m *MsgClaimFreeAmount) String() string { return proto.CompactTextString(m) }
+func (*MsgClaimFreeAmount) ProtoMessage()    {}
+func (*MsgClaimFreeAmount) Descriptor() ([]byte, []int) {
+	return fileDescriptor_2477aa15a389ceb5, []int{4}
+}
+func (m *MsgClaimFreeAmount) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *MsgClaimFreeAmount) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_MsgClaimFreeAmount.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *MsgClaimFreeAmount) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgClaimFreeAmount.Merge(m, src)
+}
+func (m *MsgClaimFreeAmount) XXX_Size() int {
+	return m.Size()
+}
+func (m *MsgClaimFreeAmount) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgClaimFreeAmount.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MsgClaimFreeAmount proto.InternalMessageInfo
+
+func (m *MsgClaimFreeAmount) GetUser() string {
+	if m != nil {
+		return m.User
+	}
+	return ""
+}
+
+type MsgClaimFreeAmountResponse struct {
+	ClaimedAmount github_com_cosmos_cosmos_sdk_types.Coins `protobuf:"bytes,3,rep,name=claimed_amount,json=claimedAmount,proto3,castrepeated=github.com/cosmos/cosmos-sdk/types.Coins" json:"claimed_amount"`
+}
+
+func (m *MsgClaimFreeAmountResponse) Reset()         { *m = MsgClaimFreeAmountResponse{} }
+func (m *MsgClaimFreeAmountResponse) String() string { return proto.CompactTextString(m) }
+func (*MsgClaimFreeAmountResponse) ProtoMessage()    {}
+func (*MsgClaimFreeAmountResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_2477aa15a389ceb5, []int{5}
+}
+func (m *MsgClaimFreeAmountResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *MsgClaimFreeAmountResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_MsgClaimFreeAmountResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *MsgClaimFreeAmountResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgClaimFreeAmountResponse.Merge(m, src)
+}
+func (m *MsgClaimFreeAmountResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *MsgClaimFreeAmountResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgClaimFreeAmountResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MsgClaimFreeAmountResponse proto.InternalMessageInfo
+
+func (m *MsgClaimFreeAmountResponse) GetClaimedAmount() github_com_cosmos_cosmos_sdk_types.Coins {
+	if m != nil {
+		return m.ClaimedAmount
+	}
+	return nil
+}
+
 func init() {
 	proto.RegisterType((*MsgDepositAirdrop)(nil), "Stridelabs.stride.claim.v1beta1.MsgDepositAirdrop")
 	proto.RegisterType((*MsgDepositAirdropResponse)(nil), "Stridelabs.stride.claim.v1beta1.MsgDepositAirdropResponse")
+	proto.RegisterType((*MsgSetAirdropAllocations)(nil), "Stridelabs.stride.claim.v1beta1.MsgSetAirdropAllocations")
+	proto.RegisterType((*MsgSetAirdropAllocationsResponse)(nil), "Stridelabs.stride.claim.v1beta1.MsgSetAirdropAllocationsResponse")
+	proto.RegisterType((*MsgClaimFreeAmount)(nil), "Stridelabs.stride.claim.v1beta1.MsgClaimFreeAmount")
+	proto.RegisterType((*MsgClaimFreeAmountResponse)(nil), "Stridelabs.stride.claim.v1beta1.MsgClaimFreeAmountResponse")
 }
 
 func init() { proto.RegisterFile("claim/v1beta1/tx.proto", fileDescriptor_2477aa15a389ceb5) }
 
 var fileDescriptor_2477aa15a389ceb5 = []byte{
-	// 321 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x94, 0x51, 0xbf, 0x4e, 0x32, 0x41,
-	0x10, 0xbf, 0xfd, 0x48, 0xbe, 0xc4, 0x25, 0x9a, 0x78, 0x31, 0x06, 0x30, 0x59, 0x08, 0x15, 0x89,
-	0x61, 0x57, 0xb0, 0xb3, 0x03, 0xb5, 0x93, 0x06, 0x3b, 0xbb, 0xdb, 0xbb, 0xcd, 0xb9, 0x91, 0xbb,
-	0x39, 0x6f, 0x16, 0x83, 0x9d, 0xa5, 0xa5, 0x8f, 0x61, 0x7c, 0x12, 0x4a, 0x4a, 0x2b, 0x35, 0xf0,
-	0x22, 0xe6, 0x76, 0xc1, 0xa0, 0x14, 0xc6, 0x6a, 0x27, 0x3b, 0xbf, 0x7f, 0x33, 0x43, 0xf7, 0xc3,
-	0x51, 0xa0, 0x13, 0x71, 0xd7, 0x91, 0xca, 0x04, 0x1d, 0x61, 0x26, 0x3c, 0xcb, 0xc1, 0x80, 0x5f,
-	0xbf, 0x34, 0xb9, 0x8e, 0xd4, 0x28, 0x90, 0xc8, 0xd1, 0x96, 0xdc, 0x22, 0xf9, 0x12, 0x59, 0xdb,
-	0x8b, 0x21, 0x06, 0x8b, 0x15, 0x45, 0xe5, 0x68, 0x35, 0x16, 0x02, 0x26, 0x80, 0x42, 0x06, 0xa8,
-	0xbe, 0x44, 0x43, 0xd0, 0xa9, 0xeb, 0x37, 0x9f, 0x09, 0xdd, 0x1d, 0x60, 0x7c, 0xa6, 0x32, 0x40,
-	0x6d, 0x7a, 0x3a, 0x8f, 0x72, 0xc8, 0xfc, 0x06, 0x2d, 0x47, 0xba, 0x70, 0x91, 0x63, 0x03, 0x79,
-	0x85, 0x34, 0x48, 0x6b, 0x6b, 0xb8, 0xfe, 0xe5, 0xdf, 0xd2, 0xed, 0xc0, 0x81, 0x7b, 0x09, 0x8c,
-	0x53, 0x53, 0xf9, 0xd7, 0x28, 0xb5, 0xca, 0xdd, 0x2a, 0x77, 0x7e, 0xbc, 0xf0, 0x5b, 0x45, 0xe3,
-	0xa7, 0xa0, 0xd3, 0xfe, 0xd1, 0xf4, 0xad, 0xee, 0xbd, 0xbc, 0xd7, 0x5b, 0xb1, 0x36, 0xd7, 0x63,
-	0xc9, 0x43, 0x48, 0xc4, 0x32, 0x9c, 0x7b, 0xda, 0x18, 0xdd, 0x08, 0x73, 0x9f, 0x29, 0xb4, 0x04,
-	0x1c, 0x7e, 0x77, 0x68, 0x1e, 0xd0, 0xea, 0x46, 0xd2, 0xa1, 0xc2, 0x0c, 0x52, 0x54, 0xdd, 0x47,
-	0x42, 0x4b, 0x03, 0x8c, 0xfd, 0x07, 0x42, 0x77, 0x7e, 0x0c, 0xd3, 0xe5, 0xbf, 0xac, 0x8e, 0x6f,
-	0xc8, 0xd6, 0x4e, 0xfe, 0xce, 0x59, 0x45, 0xe9, 0x9f, 0x4f, 0xe7, 0x8c, 0xcc, 0xe6, 0x8c, 0x7c,
-	0xcc, 0x19, 0x79, 0x5a, 0x30, 0x6f, 0xb6, 0x60, 0xde, 0xeb, 0x82, 0x79, 0x57, 0x87, 0x6b, 0xa3,
-	0x3b, 0xfd, 0xf6, 0x45, 0x20, 0x51, 0x38, 0x03, 0x31, 0x11, 0xee, 0xf6, 0x76, 0x07, 0xf2, 0xbf,
-	0x3d, 0xd0, 0xf1, 0x67, 0x00, 0x00, 0x00, 0xff, 0xff, 0xee, 0xe1, 0x01, 0x87, 0x11, 0x02, 0x00,
-	0x00,
+	// 508 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xb4, 0x54, 0x4d, 0x6e, 0xd3, 0x40,
+	0x14, 0xce, 0x10, 0x7e, 0x94, 0xa9, 0x08, 0x62, 0x54, 0x50, 0x6a, 0x90, 0x13, 0x79, 0x81, 0x22,
+	0xa1, 0x8e, 0x69, 0xba, 0xa2, 0x6c, 0x48, 0x5a, 0x58, 0x91, 0x8d, 0xbb, 0xeb, 0x06, 0x8d, 0xed,
+	0x91, 0x3b, 0xc2, 0xf6, 0x58, 0x7e, 0x13, 0x68, 0x77, 0x48, 0x5c, 0xa0, 0x1b, 0xae, 0x80, 0x44,
+	0x4f, 0xd2, 0x65, 0x97, 0x88, 0x45, 0x40, 0xc9, 0x0d, 0x38, 0x01, 0xf2, 0x8c, 0x6d, 0xaa, 0xa4,
+	0x88, 0x50, 0xa9, 0x2b, 0xcf, 0xcf, 0xfb, 0x7e, 0x9e, 0xbf, 0xa7, 0xc1, 0x0f, 0x83, 0x98, 0x89,
+	0xc4, 0x7d, 0xbf, 0xe5, 0x73, 0xc5, 0xb6, 0x5c, 0x75, 0x44, 0xb3, 0x5c, 0x2a, 0x49, 0xba, 0xfb,
+	0x2a, 0x17, 0x21, 0x8f, 0x99, 0x0f, 0x14, 0xf4, 0x92, 0xea, 0x4a, 0x5a, 0x56, 0x5a, 0xeb, 0x91,
+	0x8c, 0xa4, 0xae, 0x75, 0x8b, 0x95, 0x81, 0x59, 0x76, 0x20, 0x21, 0x91, 0xe0, 0xfa, 0x0c, 0x78,
+	0x4d, 0x1a, 0x48, 0x91, 0x9a, 0x7b, 0xe7, 0x2b, 0xc2, 0xf7, 0xc7, 0x10, 0xed, 0xf1, 0x4c, 0x82,
+	0x50, 0x43, 0x91, 0x87, 0xb9, 0xcc, 0x48, 0x0f, 0xaf, 0x85, 0xa2, 0x50, 0xf1, 0x27, 0x4a, 0xe6,
+	0x1d, 0xd4, 0x43, 0xfd, 0x96, 0x77, 0xf1, 0x88, 0xe4, 0xb8, 0xcd, 0x4c, 0xf1, 0x5b, 0x96, 0xc8,
+	0x49, 0xaa, 0x3a, 0x37, 0x7a, 0xcd, 0xfe, 0xda, 0x60, 0x83, 0x1a, 0x41, 0x5a, 0x08, 0x56, 0xde,
+	0xe8, 0xae, 0x14, 0xe9, 0xe8, 0xd9, 0xd9, 0xb4, 0xdb, 0x38, 0xfd, 0xd1, 0xed, 0x47, 0x42, 0x1d,
+	0x4e, 0x7c, 0x1a, 0xc8, 0xc4, 0x2d, 0xdd, 0x99, 0xcf, 0x26, 0x84, 0xef, 0x5c, 0x75, 0x9c, 0x71,
+	0xd0, 0x00, 0xf0, 0xee, 0x96, 0x12, 0x43, 0xad, 0xe0, 0x3c, 0xc2, 0x1b, 0x4b, 0x56, 0x3d, 0x0e,
+	0x99, 0x4c, 0x81, 0x3b, 0xa7, 0x08, 0x77, 0xc6, 0x10, 0xed, 0xf3, 0xea, 0x66, 0x18, 0xc7, 0x32,
+	0x60, 0x4a, 0xc8, 0x14, 0xc8, 0x63, 0xdc, 0x62, 0x66, 0x5b, 0x77, 0xf3, 0xe7, 0x80, 0xac, 0xe3,
+	0x5b, 0x13, 0xe0, 0x39, 0xe8, 0x16, 0x5a, 0x9e, 0xd9, 0x90, 0x03, 0x7c, 0xe7, 0x03, 0x17, 0xd1,
+	0xa1, 0x82, 0x4e, 0xb3, 0x38, 0x1f, 0xbd, 0x2c, 0xfc, 0x7f, 0x9f, 0x76, 0x9f, 0xac, 0xe0, 0x7f,
+	0x8f, 0x07, 0xbf, 0xa6, 0xdd, 0xf6, 0x31, 0x4b, 0xe2, 0x1d, 0xa7, 0xa4, 0x71, 0xbc, 0x8a, 0xd0,
+	0x71, 0x70, 0xef, 0x6f, 0x5e, 0xeb, 0x86, 0xfa, 0x98, 0x8c, 0x21, 0xda, 0x2d, 0x32, 0x7e, 0x9d,
+	0x73, 0x6e, 0xfe, 0x01, 0x21, 0xf8, 0x66, 0x61, 0xaf, 0x6c, 0x42, 0xaf, 0x9d, 0x13, 0x84, 0xad,
+	0xe5, 0xd2, 0x8a, 0xa8, 0x88, 0x4a, 0x4f, 0x0a, 0x0f, 0xab, 0xa8, 0x9a, 0xd7, 0x10, 0x55, 0x29,
+	0x61, 0xb4, 0x07, 0x5f, 0x9a, 0xb8, 0x39, 0x86, 0x88, 0x7c, 0x44, 0xb8, 0xbd, 0x30, 0x5b, 0x03,
+	0xfa, 0x8f, 0x49, 0xa6, 0x4b, 0x21, 0x5b, 0x3b, 0xff, 0x8f, 0xa9, 0xdb, 0xff, 0x8c, 0xf0, 0x83,
+	0xcb, 0xa7, 0xe2, 0xf9, 0x2a, 0xac, 0x97, 0x42, 0xad, 0xe1, 0x95, 0xa1, 0xb5, 0xaf, 0x4f, 0x08,
+	0xdf, 0x5b, 0x4c, 0x77, 0x7b, 0x15, 0xda, 0x05, 0x90, 0xf5, 0xe2, 0x0a, 0xa0, 0xca, 0xc5, 0xe8,
+	0xd5, 0xd9, 0xcc, 0x46, 0xe7, 0x33, 0x1b, 0xfd, 0x9c, 0xd9, 0xe8, 0x64, 0x6e, 0x37, 0xce, 0xe7,
+	0x76, 0xe3, 0xdb, 0xdc, 0x6e, 0x1c, 0x3c, 0xbd, 0x90, 0xbd, 0x11, 0xd8, 0x7c, 0xc3, 0x7c, 0x70,
+	0x8d, 0x82, 0x7b, 0xe4, 0x9a, 0x87, 0x4a, 0x0f, 0x81, 0x7f, 0x5b, 0xbf, 0x26, 0xdb, 0xbf, 0x03,
+	0x00, 0x00, 0xff, 0xff, 0x8c, 0xa8, 0xa1, 0xdf, 0xbe, 0x04, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -163,6 +355,8 @@ const _ = grpc.SupportPackageIsVersion4
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
 type MsgClient interface {
 	DepositAirdrop(ctx context.Context, in *MsgDepositAirdrop, opts ...grpc.CallOption) (*MsgDepositAirdropResponse, error)
+	SetAirdropAllocations(ctx context.Context, in *MsgSetAirdropAllocations, opts ...grpc.CallOption) (*MsgSetAirdropAllocationsResponse, error)
+	ClaimFreeAmount(ctx context.Context, in *MsgClaimFreeAmount, opts ...grpc.CallOption) (*MsgClaimFreeAmountResponse, error)
 }
 
 type msgClient struct {
@@ -182,9 +376,29 @@ func (c *msgClient) DepositAirdrop(ctx context.Context, in *MsgDepositAirdrop, o
 	return out, nil
 }
 
+func (c *msgClient) SetAirdropAllocations(ctx context.Context, in *MsgSetAirdropAllocations, opts ...grpc.CallOption) (*MsgSetAirdropAllocationsResponse, error) {
+	out := new(MsgSetAirdropAllocationsResponse)
+	err := c.cc.Invoke(ctx, "/Stridelabs.stride.claim.v1beta1.Msg/SetAirdropAllocations", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *msgClient) ClaimFreeAmount(ctx context.Context, in *MsgClaimFreeAmount, opts ...grpc.CallOption) (*MsgClaimFreeAmountResponse, error) {
+	out := new(MsgClaimFreeAmountResponse)
+	err := c.cc.Invoke(ctx, "/Stridelabs.stride.claim.v1beta1.Msg/ClaimFreeAmount", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // MsgServer is the server API for Msg service.
 type MsgServer interface {
 	DepositAirdrop(context.Context, *MsgDepositAirdrop) (*MsgDepositAirdropResponse, error)
+	SetAirdropAllocations(context.Context, *MsgSetAirdropAllocations) (*MsgSetAirdropAllocationsResponse, error)
+	ClaimFreeAmount(context.Context, *MsgClaimFreeAmount) (*MsgClaimFreeAmountResponse, error)
 }
 
 // UnimplementedMsgServer can be embedded to have forward compatible implementations.
@@ -193,6 +407,12 @@ type UnimplementedMsgServer struct {
 
 func (*UnimplementedMsgServer) DepositAirdrop(ctx context.Context, req *MsgDepositAirdrop) (*MsgDepositAirdropResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DepositAirdrop not implemented")
+}
+func (*UnimplementedMsgServer) SetAirdropAllocations(ctx context.Context, req *MsgSetAirdropAllocations) (*MsgSetAirdropAllocationsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SetAirdropAllocations not implemented")
+}
+func (*UnimplementedMsgServer) ClaimFreeAmount(ctx context.Context, req *MsgClaimFreeAmount) (*MsgClaimFreeAmountResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ClaimFreeAmount not implemented")
 }
 
 func RegisterMsgServer(s grpc1.Server, srv MsgServer) {
@@ -217,6 +437,42 @@ func _Msg_DepositAirdrop_Handler(srv interface{}, ctx context.Context, dec func(
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Msg_SetAirdropAllocations_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MsgSetAirdropAllocations)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MsgServer).SetAirdropAllocations(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/Stridelabs.stride.claim.v1beta1.Msg/SetAirdropAllocations",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MsgServer).SetAirdropAllocations(ctx, req.(*MsgSetAirdropAllocations))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Msg_ClaimFreeAmount_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MsgClaimFreeAmount)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MsgServer).ClaimFreeAmount(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/Stridelabs.stride.claim.v1beta1.Msg/ClaimFreeAmount",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MsgServer).ClaimFreeAmount(ctx, req.(*MsgClaimFreeAmount))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 var _Msg_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "Stridelabs.stride.claim.v1beta1.Msg",
 	HandlerType: (*MsgServer)(nil),
@@ -224,6 +480,14 @@ var _Msg_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "DepositAirdrop",
 			Handler:    _Msg_DepositAirdrop_Handler,
+		},
+		{
+			MethodName: "SetAirdropAllocations",
+			Handler:    _Msg_SetAirdropAllocations_Handler,
+		},
+		{
+			MethodName: "ClaimFreeAmount",
+			Handler:    _Msg_ClaimFreeAmount_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
@@ -297,6 +561,149 @@ func (m *MsgDepositAirdropResponse) MarshalToSizedBuffer(dAtA []byte) (int, erro
 	return len(dAtA) - i, nil
 }
 
+func (m *MsgSetAirdropAllocations) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *MsgSetAirdropAllocations) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *MsgSetAirdropAllocations) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.Weights) > 0 {
+		for iNdEx := len(m.Weights) - 1; iNdEx >= 0; iNdEx-- {
+			{
+				size := m.Weights[iNdEx].Size()
+				i -= size
+				if _, err := m.Weights[iNdEx].MarshalTo(dAtA[i:]); err != nil {
+					return 0, err
+				}
+				i = encodeVarintTx(dAtA, i, uint64(size))
+			}
+			i--
+			dAtA[i] = 0x1a
+		}
+	}
+	if len(m.Users) > 0 {
+		for iNdEx := len(m.Users) - 1; iNdEx >= 0; iNdEx-- {
+			i -= len(m.Users[iNdEx])
+			copy(dAtA[i:], m.Users[iNdEx])
+			i = encodeVarintTx(dAtA, i, uint64(len(m.Users[iNdEx])))
+			i--
+			dAtA[i] = 0x12
+		}
+	}
+	if len(m.Allocator) > 0 {
+		i -= len(m.Allocator)
+		copy(dAtA[i:], m.Allocator)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.Allocator)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *MsgSetAirdropAllocationsResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *MsgSetAirdropAllocationsResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *MsgSetAirdropAllocationsResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	return len(dAtA) - i, nil
+}
+
+func (m *MsgClaimFreeAmount) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *MsgClaimFreeAmount) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *MsgClaimFreeAmount) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.User) > 0 {
+		i -= len(m.User)
+		copy(dAtA[i:], m.User)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.User)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *MsgClaimFreeAmountResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *MsgClaimFreeAmountResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *MsgClaimFreeAmountResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.ClaimedAmount) > 0 {
+		for iNdEx := len(m.ClaimedAmount) - 1; iNdEx >= 0; iNdEx-- {
+			{
+				size, err := m.ClaimedAmount[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				if err != nil {
+					return 0, err
+				}
+				i -= size
+				i = encodeVarintTx(dAtA, i, uint64(size))
+			}
+			i--
+			dAtA[i] = 0x1a
+		}
+	}
+	return len(dAtA) - i, nil
+}
+
 func encodeVarintTx(dAtA []byte, offset int, v uint64) int {
 	offset -= sovTx(v)
 	base := offset
@@ -333,6 +740,68 @@ func (m *MsgDepositAirdropResponse) Size() (n int) {
 	}
 	var l int
 	_ = l
+	return n
+}
+
+func (m *MsgSetAirdropAllocations) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.Allocator)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
+	if len(m.Users) > 0 {
+		for _, s := range m.Users {
+			l = len(s)
+			n += 1 + l + sovTx(uint64(l))
+		}
+	}
+	if len(m.Weights) > 0 {
+		for _, e := range m.Weights {
+			l = e.Size()
+			n += 1 + l + sovTx(uint64(l))
+		}
+	}
+	return n
+}
+
+func (m *MsgSetAirdropAllocationsResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	return n
+}
+
+func (m *MsgClaimFreeAmount) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.User)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
+	return n
+}
+
+func (m *MsgClaimFreeAmountResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if len(m.ClaimedAmount) > 0 {
+		for _, e := range m.ClaimedAmount {
+			l = e.Size()
+			n += 1 + l + sovTx(uint64(l))
+		}
+	}
 	return n
 }
 
@@ -487,6 +956,372 @@ func (m *MsgDepositAirdropResponse) Unmarshal(dAtA []byte) error {
 			return fmt.Errorf("proto: MsgDepositAirdropResponse: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
+		default:
+			iNdEx = preIndex
+			skippy, err := skipTx(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthTx
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *MsgSetAirdropAllocations) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowTx
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: MsgSetAirdropAllocations: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: MsgSetAirdropAllocations: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Allocator", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Allocator = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Users", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Users = append(m.Users, string(dAtA[iNdEx:postIndex]))
+			iNdEx = postIndex
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Weights", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			var v github_com_cosmos_cosmos_sdk_types.Dec
+			m.Weights = append(m.Weights, v)
+			if err := m.Weights[len(m.Weights)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipTx(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthTx
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *MsgSetAirdropAllocationsResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowTx
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: MsgSetAirdropAllocationsResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: MsgSetAirdropAllocationsResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		default:
+			iNdEx = preIndex
+			skippy, err := skipTx(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthTx
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *MsgClaimFreeAmount) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowTx
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: MsgClaimFreeAmount: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: MsgClaimFreeAmount: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field User", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.User = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipTx(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthTx
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *MsgClaimFreeAmountResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowTx
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: MsgClaimFreeAmountResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: MsgClaimFreeAmountResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ClaimedAmount", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.ClaimedAmount = append(m.ClaimedAmount, types.Coin{})
+			if err := m.ClaimedAmount[len(m.ClaimedAmount)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
 			skippy, err := skipTx(dAtA[iNdEx:])

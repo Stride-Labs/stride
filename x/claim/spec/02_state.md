@@ -12,18 +12,13 @@ message ClaimRecord {
   // address of claim user
   string address = 1 [ (gogoproto.moretags) = "yaml:\"address\"" ];
 
-  // total initial claimable amount for the user
-  repeated cosmos.base.v1beta1.Coin initial_claimable_amount = 2 [
-    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins",
-    (gogoproto.nullable) = false,
-    (gogoproto.moretags) = "yaml:\"initial_claimable_amount\""
-  ];
+  // weight that represent the portion from total allocations
+  double weight = 2;
 
   // true if action is completed
   // index of bool in array refers to action enum #
   repeated bool action_completed = 3 [
-    (gogoproto.moretags) = "yaml:\"action_completed\"",
-    (gogoproto.nullable) = false
+    (gogoproto.moretags) = "yaml:\"action_completed\""
   ];
 }
 ```

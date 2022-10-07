@@ -16,7 +16,7 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) {
 
 	// End Airdrop
 	goneTime := ctx.BlockTime().Sub(params.AirdropStartTime)
-	if goneTime > params.DurationUntilDecay+params.DurationOfDecay {
+	if goneTime > params.AirdropDuration {
 		// airdrop time has passed
 		err := k.EndAirdrop(ctx)
 		if err != nil {
