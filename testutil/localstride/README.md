@@ -45,7 +45,7 @@ make localnet-start
 >
 > `make localnet-startd`
 
-4. (optional) Add your validator wallet and 9 other preloaded wallets automatically:
+4. (optional) Add your validator wallet and 10 other preloaded wallets automatically:
 
 ```bash
 make localnet-keys
@@ -71,8 +71,7 @@ make localnet-clean
 ## 2. LocalStride - With Mainnet State
 
 A few things to note before getting started. The below method will only work if you are using the same version as mainnet. In other words,
-if mainnet is on v8.0.0 and you try to do this on a v9.0.0 tag or on main, you will run into an error when initializing the genesis.
-(yes, it is possible to create a state exported testnet on a upcoming release, but that is out of the scope of this tutorial)
+if mainnet is on v8.0.0 and you try to do this on a v9.0.0 tag or on main, you will run into an error when initializing the genesis. What you can do though is run localstride on the mainnet version, then go through the upgrade process to ensure the upgrade with mainnet state goes smoothly.
 
 ### Create a mainnet state export
 
@@ -92,7 +91,7 @@ This will create a file called `state_export.json` which is a snapshot of the cu
 
 ### Use the state export in LocalStride
 
-1. Copy the `state_export.json` to the `LocalStride/state_export` folder within the stride repo
+1. Copy the `state_export.json` to the `localstride/state_export` folder within the stride repo
 
 ```sh
 cp $HOME/state_export.json $HOME/stride/testutil/localstride/state_export/
