@@ -6,7 +6,7 @@ services:
     image: local:stride
     build:
       context: ../../
-      dockerfile: Dockerfile.stride
+      dockerfile: Dockerfile.localstride
       args:
         RUNNER_IMAGE: alpine:3.15
         GO_VERSION: 1.18

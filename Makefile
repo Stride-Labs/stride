@@ -166,3 +166,19 @@ localnet-startd:
 
 localnet-stop:
 	@docker-compose -f testutil/localstride/docker-compose.yml down
+
+localnet-state-export-init: localnet-state-export-clean localnet-state-export-build
+
+localnet-state-export-build:
+	@DOCKER_BUILDKIT=1 COMPOSE_DOCKER_CLI_BUILD=1 docker-compose -f testutil/localstride/state_export/docker-compose.yml build
+
+localnet-state-export-start:
+	@docker-compose -f testutil/localstride/state_export/docker-compose.yml up
+
+localnet-state-export-startd:
+	@docker-compose -f testutil/localstride/state_export/docker-compose.yml up -d
+
+localnet-state-export-stop:
+	@docker-compose -f testutil/localstride/docker-compose.yml down
+
+localnet-state-export-clean: localnet-clean
