@@ -27,7 +27,6 @@ func CmdModuleAddress() *cobra.Command {
 			queryClient := types.NewQueryClient(clientCtx)
 
 			params := &types.QueryModuleAddressRequest{
-
 				Name: reqName,
 			}
 

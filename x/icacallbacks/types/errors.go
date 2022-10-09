@@ -14,6 +14,6 @@ var (
 	ErrCallbackHandlerNotFound = sdkerrors.Register(ModuleName, 1502, "icacallback handler not found")
 	ErrCallbackIdNotFound      = sdkerrors.Register(ModuleName, 1503, "icacallback ID not found")
 	ErrCallbackFailed          = sdkerrors.Register(ModuleName, 1504, "icacallback failed")
-	ErrCallbackDataNotFound	   = sdkerrors.Register(ModuleName, 1505, "icacallback data not found")
-	ErrTxMsgData			   = sdkerrors.Register(ModuleName, 1506, "txMsgData fetch failed")
+	ErrCallbackDataNotFound    = sdkerrors.Register(ModuleName, 1505, "icacallback data not found")
+	ErrTxMsgData               = sdkerrors.Register(ModuleName, 1506, "txMsgData fetch failed")
 )

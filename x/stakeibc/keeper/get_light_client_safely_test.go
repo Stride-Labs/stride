@@ -11,7 +11,6 @@ type GetLightClientSafelyTestCase struct {
 }
 
 func (s *KeeperTestSuite) SetupGetLightClientSafely() GetLightClientSafelyTestCase {
-
 	connectionId := "connection-0"
 	s.CreateTransferChannel("GAIA")
 
@@ -27,6 +26,7 @@ func (s *KeeperTestSuite) SetupGetLightClientSafely() GetLightClientSafelyTestCa
 		expectedLightClientHeight: expectedLightClientHeight,
 	}
 }
+
 func (s *KeeperTestSuite) TestGetLightClientTimeSafely_Successful() {
 	tc := s.SetupGetLightClientSafely()
 
