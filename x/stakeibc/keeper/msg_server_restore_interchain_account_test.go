@@ -30,7 +30,7 @@ func (s *KeeperTestSuite) SetupRestoreInterchainAccount() RestoreInterchainAccou
 	defaultMsg := stakeibc.MsgRestoreInterchainAccount{
 		Creator:     "creatoraddress",
 		ChainId:     HostChainId,
-		AccountType: stakeibc.ICAAccountType_ICA_ACCOUNT_TYPE_DELEGATION,
+		AccountType: stakeibc.ICAAccountType_DELEGATION,
 	}
 
 	return RestoreInterchainAccountTestCase{
@@ -77,7 +77,7 @@ func (s *KeeperTestSuite) TestRestoreInterchainAccount_Success() {
 func (s *KeeperTestSuite) TestRestoreInterchainAccount_CannotRestoreNonExistentAcct() {
 	tc := s.SetupRestoreInterchainAccount()
 	msg := tc.validMsg
-	msg.AccountType = stakeibc.ICAAccountType_ICA_ACCOUNT_TYPE_WITHDRAWAL
+	msg.AccountType = stakeibc.ICAAccountType_WITHDRAWAL
 	_, err := s.GetMsgServer().RestoreInterchainAccount(sdk.WrapSDKContext(s.Ctx()), &msg)
 	expectedErrMSg := fmt.Sprintf("ICA controller account address not found: %s.ICA_ACCOUNT_TYPE_WITHDRAWAL: invalid interchain account address",
 		tc.validMsg.ChainId)

@@ -46,13 +46,13 @@ message DepositRecord {
   string host_zone_id = 4;
   enum Status {
     // pending transfer to delegate account
-    STATUS_TRANSFER = 0;
+    TRANSFER = 0;
     // pending staking on delegate account
-    STATUS_STAKE = 1;
+    STAKE = 1;
   }
   enum Source {
-    SOURCE_STRIDE = 0;
-    SOURCE_WITHDRAWAL_ICA = 1;
+    STRIDE = 0;
+    WITHDRAWAL_ICA = 1;
   }
   Status status = 6;
   uint64 deposit_epoch_number = 7;
@@ -64,11 +64,11 @@ message DepositRecord {
 message HostZoneUnbonding {
   enum Status {
     // tokens bonded on delegate account
-    STATUS_BONDED = 0;
+    BONDED = 0;
     // unbonding completed on delegate account
-    STATUS_UNBONDED = 1;
+    UNBONDED = 1;
     // transfer success
-    STATUS_TRANSFERRED = 2;
+    TRANSFERRED = 2;
   }
   uint64 st_token_amount = 1;
   uint64 native_token_amount = 2;

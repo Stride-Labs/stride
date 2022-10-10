@@ -39,7 +39,7 @@ func (s *KeeperTestSuite) SetupClaimUndelegatedTokens() ClaimUndelegatedTestCase
 
 	redemptionAccount := stakeibctypes.ICAAccount{
 		Address: redemptionAddr,
-		Target:  stakeibctypes.ICAAccountType_ICA_ACCOUNT_TYPE_REDEMPTION,
+		Target:  stakeibctypes.ICAAccountType_REDEMPTION,
 	}
 	hostZone := stakeibctypes.HostZone{
 		ChainId:           HostChainId,
@@ -67,7 +67,7 @@ func (s *KeeperTestSuite) SetupClaimUndelegatedTokens() ClaimUndelegatedTestCase
 
 	hostZoneUnbonding1 := recordtypes.HostZoneUnbonding{
 		HostZoneId:            HostChainId,
-		Status:                recordtypes.HostZoneUnbonding_STATUS_TRANSFERRED,
+		Status:                recordtypes.HostZoneUnbonding_TRANSFERRED,
 		UserRedemptionRecords: []string{redemptionRecordId},
 		NativeTokenAmount:     uint64(1_000_000),
 	}
@@ -204,7 +204,7 @@ func (s *KeeperTestSuite) TestClaimUndelegatedTokens_HzuNotStatusTransferred() {
 	epochUnbondingRecord, found := s.App.RecordsKeeper.GetEpochUnbondingRecord(s.Ctx(), tc.validMsg.Epoch)
 	s.Require().True(found, "epoch unbonding record found")
 	updatedHzu := epochUnbondingRecord.HostZoneUnbondings[0]
-	updatedHzu.Status = recordtypes.HostZoneUnbonding_STATUS_UNBONDED
+	updatedHzu.Status = recordtypes.HostZoneUnbonding_UNBONDED
 	newEpochUnbondingRecord, success := s.App.RecordsKeeper.AddHostZoneToEpochUnbondingRecord(s.Ctx(), tc.validMsg.Epoch, tc.validMsg.HostZoneId, updatedHzu)
 	s.Require().True(success, "epoch unbonding record updated")
 	s.App.RecordsKeeper.SetEpochUnbondingRecord(s.Ctx(), *newEpochUnbondingRecord)

@@ -38,7 +38,7 @@ func (s *KeeperTestSuite) SetupClearBalance() ClearBalanceTestCase {
 		Address:        zoneAddress.String(),
 		FeeAccount: &stakeibctypes.ICAAccount{
 			Address: feeAddress,
-			Target:  stakeibctypes.ICAAccountType_ICA_ACCOUNT_TYPE_FEE,
+			Target:  stakeibctypes.ICAAccountType_FEE,
 		},
 	}
 

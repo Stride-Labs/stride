@@ -263,7 +263,7 @@ func (k Keeper) UpdateRedemptionRates(ctx sdk.Context, depositRecords []recordst
 func (k Keeper) GetUndelegatedBalance(hostZone types.HostZone, depositRecords []recordstypes.DepositRecord) (int64, error) {
 	// filter to only the deposit records for the host zone with status STAKE
 	UndelegatedDepositRecords := utils.FilterDepositRecords(depositRecords, func(record recordstypes.DepositRecord) (condition bool) {
-		return record.Status == recordstypes.DepositRecord_STATUS_STAKE && record.HostZoneId == hostZone.ChainId
+		return record.Status == recordstypes.DepositRecord_STAKE && record.HostZoneId == hostZone.ChainId
 	})
 
 	// sum the amounts of the deposit records
@@ -278,7 +278,7 @@ func (k Keeper) GetUndelegatedBalance(hostZone types.HostZone, depositRecords []
 func (k Keeper) GetModuleAccountBalance(hostZone types.HostZone, depositRecords []recordstypes.DepositRecord) (int64, error) {
 	// filter to only the deposit records for the host zone with status DELEGATION
 	ModuleAccountRecords := utils.FilterDepositRecords(depositRecords, func(record recordstypes.DepositRecord) (condition bool) {
-		return record.Status == recordstypes.DepositRecord_STATUS_TRANSFER && record.HostZoneId == hostZone.ChainId
+		return record.Status == recordstypes.DepositRecord_TRANSFER && record.HostZoneId == hostZone.ChainId
 	})
 
 	// sum the amounts of the deposit records

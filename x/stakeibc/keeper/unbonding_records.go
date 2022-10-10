@@ -24,7 +24,7 @@ func (k Keeper) CreateEpochUnbondingRecord(ctx sdk.Context, epochNumber uint64) 
 			StTokenAmount:     uint64(0),
 			Denom:             hostZone.HostDenom,
 			HostZoneId:        hostZone.ChainId,
-			Status:            recordstypes.HostZoneUnbonding_STATUS_BONDED,
+			Status:            recordstypes.HostZoneUnbonding_BONDED,
 		}
 		k.Logger(ctx).Info(fmt.Sprintf("Adding hostZoneUnbonding %v to %s", hostZoneUnbonding, hostZone.ChainId))
 		hostZoneUnbondings = append(hostZoneUnbondings, &hostZoneUnbonding)
@@ -60,7 +60,7 @@ func (k Keeper) GetHostZoneUnbondingMsgs(ctx sdk.Context, hostZone types.HostZon
 			continue
 		}
 		// mark the epoch unbonding record for processing if it's bonded and the host zone unbonding has an amount g.t. zero
-		if hostZoneRecord.Status == recordstypes.HostZoneUnbonding_STATUS_BONDED && hostZoneRecord.NativeTokenAmount > 0 {
+		if hostZoneRecord.Status == recordstypes.HostZoneUnbonding_BONDED && hostZoneRecord.NativeTokenAmount > 0 {
 			totalAmtToUnbond += hostZoneRecord.NativeTokenAmount
 			epochUnbondingRecordIds = append(epochUnbondingRecordIds, epochUnbonding.EpochNumber)
 			k.Logger(ctx).Info(fmt.Sprintf("[SendHostZoneUnbondings] Sending unbondings, host zone: %s, epochUnbonding: %v", hostZone.ChainId, epochUnbonding))
@@ -294,7 +294,7 @@ func (k Keeper) SweepAllUnbondedTokensForHostZone(ctx sdk.Context, hostZone type
 			continue
 		}
 
-		shouldProcess := hostZoneUnbonding.Status == recordstypes.HostZoneUnbonding_STATUS_UNBONDED
+		shouldProcess := hostZoneUnbonding.Status == recordstypes.HostZoneUnbonding_UNBONDED
 		k.Logger(ctx).Info(fmt.Sprintf("\tUnbonding time:  %d blockTime %d, shouldProcess %v", hostZoneUnbonding.UnbondingTime, blockTime, shouldProcess))
 
 		// if the unbonding period has elapsed, then we can send the ICA call to sweep this hostZone's unbondings to the redemption account (in a batch)

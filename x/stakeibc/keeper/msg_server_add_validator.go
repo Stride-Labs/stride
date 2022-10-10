@@ -38,7 +38,7 @@ func (k msgServer) AddValidator(goCtx context.Context, msg *types.MsgAddValidato
 	hostZone.Validators = append(validators, &types.Validator{
 		Name:           msg.Name,
 		Address:        msg.Address,
-		Status:         types.Validator_VALIDATOR_STATUS_ACTIVE,
+		Status:         types.Validator_ACTIVE,
 		CommissionRate: msg.Commission,
 		DelegationAmt:  0,
 		Weight:         msg.Weight,

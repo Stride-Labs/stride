@@ -25,7 +25,7 @@ func (k Keeper) CreateDepositRecordsForEpoch(ctx sdk.Context, epochNumber uint64
 			Amount:             0,
 			Denom:              zoneInfo.HostDenom,
 			HostZoneId:         zoneInfo.ChainId,
-			Status:             recordstypes.DepositRecord_STATUS_TRANSFER,
+			Status:             recordstypes.DepositRecord_TRANSFER,
 			DepositEpochNumber: epochNumber,
 		}
 		k.RecordsKeeper.AppendDepositRecord(ctx, depositRecord)
@@ -36,7 +36,7 @@ func (k Keeper) CreateDepositRecordsForEpoch(ctx sdk.Context, epochNumber uint64
 
 func (k Keeper) TransferExistingDepositsToHostZones(ctx sdk.Context, epochNumber uint64, depositRecords []recordstypes.DepositRecord) {
 	transferDepositRecords := utils.FilterDepositRecords(depositRecords, func(record recordstypes.DepositRecord) (condition bool) {
-		isTransferRecord := record.Status == recordstypes.DepositRecord_STATUS_TRANSFER
+		isTransferRecord := record.Status == recordstypes.DepositRecord_TRANSFER
 		isBeforeCurrentEpoch := record.DepositEpochNumber < epochNumber
 		return isTransferRecord && isBeforeCurrentEpoch
 	})
@@ -90,7 +90,7 @@ func (k Keeper) TransferExistingDepositsToHostZones(ctx sdk.Context, epochNumber
 
 func (k Keeper) StakeExistingDepositsOnHostZones(ctx sdk.Context, epochNumber uint64, depositRecords []recordstypes.DepositRecord) {
 	stakeDepositRecords := utils.FilterDepositRecords(depositRecords, func(record recordstypes.DepositRecord) (condition bool) {
-		isStakeRecord := record.Status == recordstypes.DepositRecord_STATUS_STAKE
+		isStakeRecord := record.Status == recordstypes.DepositRecord_STAKE
 		isBeforeCurrentEpoch := record.DepositEpochNumber < epochNumber
 		return isStakeRecord && isBeforeCurrentEpoch
 	})

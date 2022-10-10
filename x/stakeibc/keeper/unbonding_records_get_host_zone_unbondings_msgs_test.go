@@ -62,7 +62,7 @@ func (s *KeeperTestSuite) SetupGetHostZoneUnbondingMsgs() GetHostZoneUnbondingMs
 
 	delegationAccount := stakeibc.ICAAccount{
 		Address: delegationAddr,
-		Target:  stakeibc.ICAAccountType_ICA_ACCOUNT_TYPE_DELEGATION,
+		Target:  stakeibc.ICAAccountType_DELEGATION,
 	}
 
 	hostZone := stakeibc.HostZone{
@@ -92,7 +92,7 @@ func (s *KeeperTestSuite) SetupGetHostZoneUnbondingMsgs() GetHostZoneUnbondingMs
 			Denom:             "uatom",
 			HostZoneId:        "GAIA",
 			UnbondingTime:     unbondingTime, // 2022-08-12T19:52
-			Status:            recordtypes.HostZoneUnbonding_STATUS_BONDED,
+			Status:            recordtypes.HostZoneUnbonding_BONDED,
 		}
 		epochUnbondingRecord.HostZoneUnbondings = append(epochUnbondingRecord.HostZoneUnbondings, hostZoneUnbonding)
 		s.App.RecordsKeeper.SetEpochUnbondingRecord(s.Ctx(), epochUnbondingRecord)

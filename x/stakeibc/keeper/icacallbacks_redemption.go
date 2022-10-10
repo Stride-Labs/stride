@@ -80,7 +80,7 @@ func RedemptionCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, a
 			k.Logger(ctx).Error(fmt.Sprintf("Could not find host zone unbonding %d for host zone %s", epochUnbondingRecord.EpochNumber, hostZoneId))
 			return sdkerrors.Wrapf(sdkerrors.ErrNotFound, "Could not find host zone unbonding %d for host zone %s", epochUnbondingRecord.EpochNumber, hostZoneId)
 		}
-		hostZoneUnbonding.Status = recordstypes.HostZoneUnbonding_STATUS_TRANSFERRED
+		hostZoneUnbonding.Status = recordstypes.HostZoneUnbonding_TRANSFERRED
 		updatedEpochUnbondingRecord, success := k.RecordsKeeper.AddHostZoneToEpochUnbondingRecord(ctx, epochUnbondingRecord.EpochNumber, hostZoneId, hostZoneUnbonding)
 		if !success {
 			k.Logger(ctx).Error(fmt.Sprintf("Failed to set host zone epoch unbonding record: epochNumber %d, chainId %s, hostZoneUnbonding %v", epochUnbondingRecord.EpochNumber, hostZoneId, hostZoneUnbonding))

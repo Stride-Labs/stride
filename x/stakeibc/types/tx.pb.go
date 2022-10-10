@@ -994,7 +994,7 @@ func (m *MsgRestoreInterchainAccount) GetAccountType() ICAAccountType {
 	if m != nil {
 		return m.AccountType
 	}
-	return ICAAccountType_ICA_ACCOUNT_TYPE_DELEGATION
+	return ICAAccountType_DELEGATION
 }
 
 type MsgRestoreInterchainAccountResponse struct {
