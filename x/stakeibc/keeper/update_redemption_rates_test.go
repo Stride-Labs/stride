@@ -25,7 +25,6 @@ func (s *KeeperTestSuite) SetupUpdateRedemptionRates(
 	stSupply uint64,
 	initialRedemptionRate sdk.Dec,
 ) UpdateRedemptionRatesTestCase {
-
 	// add some deposit records with status STAKE
 	//    to comprise the undelegated delegation account balance i.e. "to be staked"
 	toBeStakedDepositRecord := recordtypes.DepositRecord{
@@ -67,7 +66,6 @@ func (s *KeeperTestSuite) SetupUpdateRedemptionRates(
 }
 
 func (s *KeeperTestSuite) TestUpdateRedemptionRatesSuccessful() {
-
 	stakedBal := uint64(5)
 	undelegatedBal := uint64(3)
 	justDepositedBal := uint64(3)
@@ -135,7 +133,6 @@ func (s *KeeperTestSuite) TestUpdateRedemptionRatesRandomized_MultipleRuns() {
 }
 
 func (s *KeeperTestSuite) TestUpdateRedemptionRateZeroStAssets() {
-
 	stakedBal := uint64(5)
 	undelegatedBal := uint64(3)
 	justDepositedBal := uint64(3)
@@ -159,7 +156,6 @@ func (s *KeeperTestSuite) TestUpdateRedemptionRateZeroStAssets() {
 }
 
 func (s *KeeperTestSuite) TestUpdateRedemptionRateZeroNativeAssets() {
-
 	stakedBal := uint64(0)
 	undelegatedBal := uint64(0)
 	justDepositedBal := uint64(0)
@@ -183,7 +179,6 @@ func (s *KeeperTestSuite) TestUpdateRedemptionRateZeroNativeAssets() {
 }
 
 func (s *KeeperTestSuite) TestUpdateRedemptionRateNoModuleAccountRecords() {
-
 	stakedBal := uint64(5)
 	undelegatedBal := uint64(3)
 	justDepositedBal := uint64(3)
@@ -208,7 +203,6 @@ func (s *KeeperTestSuite) TestUpdateRedemptionRateNoModuleAccountRecords() {
 }
 
 func (s *KeeperTestSuite) TestUpdateRedemptionRateNoStakeDepositRecords() {
-
 	stakedBal := uint64(5)
 	undelegatedBal := uint64(3)
 	justDepositedBal := uint64(3)
@@ -235,7 +229,6 @@ func (s *KeeperTestSuite) TestUpdateRedemptionRateNoStakeDepositRecords() {
 }
 
 func (s *KeeperTestSuite) TestUpdateRedemptionRateNoStakedBal() {
-
 	undelegatedBal := uint64(3)
 	justDepositedBal := uint64(3)
 	stSupply := uint64(10)
@@ -259,7 +252,6 @@ func (s *KeeperTestSuite) TestUpdateRedemptionRateNoStakedBal() {
 }
 
 func (s *KeeperTestSuite) TestUpdateRedemptionRateRandominitialRedemptionRate() {
-
 	stakedBal := uint64(5)
 	undelegatedBal := uint64(3)
 	justDepositedBal := uint64(3)

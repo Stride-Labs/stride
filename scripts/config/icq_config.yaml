@@ -56,3 +56,17 @@ chains:
     block-timeout: ""
     output-format: json
     sign-mode: direct
+  stars:
+    key: icq5
+    chain-id: STARS
+    rpc-addr: http://stars1:26657
+    grpc-addr: http://stars1:9090
+    account-prefix: stars
+    keyring-backend: test
+    gas-adjustment: 1.2
+    gas-prices: 1ustars
+    debug: false
+    timeout: 20s
+    block-timeout: ""
+    output-format: json
+    sign-mode: direct

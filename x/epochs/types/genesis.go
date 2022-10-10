@@ -9,9 +9,11 @@ func NewGenesisState(epochs []EpochInfo) *GenesisState {
 	return &GenesisState{Epochs: epochs}
 }
 
-var STRIDE_EPOCH = "stride_epoch"
-var DAY_EPOCH = "day"
-var MINT_EPOCH = "mint"
+var (
+	STRIDE_EPOCH = "stride_epoch"
+	DAY_EPOCH    = "day"
+	MINT_EPOCH   = "mint"
+)
 
 // DefaultGenesis returns the default Capability genesis state
 func DefaultGenesis() *GenesisState {

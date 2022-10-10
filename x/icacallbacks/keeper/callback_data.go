@@ -19,7 +19,6 @@ func (k Keeper) SetCallbackData(ctx sdk.Context, callbackData types.CallbackData
 func (k Keeper) GetCallbackData(
 	ctx sdk.Context,
 	callbackKey string,
-
 ) (val types.CallbackData, found bool) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.CallbackDataKeyPrefix))
 
@@ -38,7 +37,6 @@ func (k Keeper) GetCallbackData(
 func (k Keeper) RemoveCallbackData(
 	ctx sdk.Context,
 	callbackKey string,
-
 ) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.CallbackDataKeyPrefix))
 	store.Delete(types.CallbackDataKey(
