@@ -6,12 +6,12 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	"github.com/spf13/cast"
 
 	"github.com/Stride-Labs/stride/x/stakeibc/types"
 )
 
 func (k msgServer) AddValidator(goCtx context.Context, msg *types.MsgAddValidator) (*types.MsgAddValidatorResponse, error) {
-	// TODO TEST-129 restrict this to governance module. add gov module whitelist hooks more broadly
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	hostZone, found := k.GetHostZone(ctx, msg.HostZone)
@@ -22,6 +22,19 @@ func (k msgServer) AddValidator(goCtx context.Context, msg *types.MsgAddValidato
 	}
 	validators := hostZone.Validators
 	minWeight := ^uint64(0) >> 1
+
+	// get temp safety max num validators and make sure we don't exceed it
+	tempSafetyMaxNumVals, err := cast.ToIntE(k.GetParam(ctx, types.KeySafetyNumValidators)) 
+	if err != nil {
+		errMsg := fmt.Sprintf("Error getting safety max num validators | err: %s", err.Error())
+
+
+	if len(validators) >= tempSafetyMaxNumVals {
+		errMsg := fmt.Sprintf("Host Zone (%s) already has max number of validators (%d)", msg.HostZone, tempSafetyMaxNumVals)
+		k.Logger(ctx).Error(errMsg)
+		return nil, sdkerrors.Wrap(types.ErrMaxNumValidators, errMsg)
+	}
+	
 	// check that we don't already have this validator
 	for _, validator := range validators {
 		if validator.GetAddress() == msg.Address {

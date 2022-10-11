@@ -46,4 +46,5 @@ var (
 	ErrInvalidEpoch                      = sdkerrors.Register(ModuleName, 1536, "invalid epoch tracker")
 	ErrHostZoneICAAccountNotFound        = sdkerrors.Register(ModuleName, 1537, "host zone's ICA account not found")
 	ErrNoValidatorAmts                   = sdkerrors.Register(ModuleName, 1538, "could not fetch validator amts")
+	ErrMaxNumValidators                  = sdkerrors.Register(ModuleName, 1539, "max number of validators reached")
 )
