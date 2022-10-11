@@ -28,12 +28,6 @@ When a user get airdrop for his/her action, claim record is created to prevent d
 
 ```protobuf
 message GenesisState {
-  // balance of the claim module's account
-  cosmos.base.v1beta1.Coin module_account_balance = 1 [
-    (gogoproto.moretags) = "yaml:\"module_account_balance\"",
-    (gogoproto.nullable) = false
-  ];
-
   // params defines all the parameters of the module.
   Params params = 2 [
     (gogoproto.moretags) = "yaml:\"params\"",
@@ -48,4 +42,4 @@ message GenesisState {
 }
 ```
 
-Claim module's state consists of `params`, `claim_records`, and `module_account_balance`.
+Claim module's state consists of `params`, and `claim_records`.

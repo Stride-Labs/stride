@@ -45,7 +45,7 @@ func (k Keeper) LoadAllocationData(ctx sdk.Context) bool {
 	return true
 }
 
-// GetModuleAccountBalance gets the airdrop coin balance of module account
+// GetModuleAccountAddress gets the module account address
 func (k Keeper) GetModuleAccountAddress(ctx sdk.Context) sdk.AccAddress {
 	return k.accountKeeper.GetModuleAddress(types.ModuleName)
 }
@@ -100,37 +100,15 @@ func (k Keeper) SweepAirdrop(ctx sdk.Context) error {
 
 // ClawbackAirdrop claws back all the Stride coins from airdrop
 func (k Keeper) ClawbackAirdrop(ctx sdk.Context) error {
-	totalClawback := sdk.NewCoins()
-	for _, bechAddr := range types.AirdropAddrs {
-		addr, err := sdk.AccAddressFromBech32(bechAddr)
-		if err != nil {
-			return err
-		}
+	addr := k.GetModuleAccountAddress(ctx)
+	bal := k.GetModuleAccountBalance(ctx)
 
-		acc := k.accountKeeper.GetAccount(ctx, addr)
-		// if account is nil, do nothing.
-		if acc == nil {
-			continue
-		}
-		seq, err := k.accountKeeper.GetSequence(ctx, addr)
-		if err != nil {
-			return err
-		}
-		// 'Unclaimed' tokens are defined as being in wallets which have a Sequence Number = 0,
-		// which means the address has NOT performed a single action during the 6 month airdrop claim window.
-		// ******CLAWBACK PROPOSED FRAMEWORK******
-		// TLDR -- Send ALL unclaimed Stride back to the community pool
-		// and prune those inactive wallets from current state.
-		if seq == 0 {
-			strideBal := k.bankKeeper.GetBalance(ctx, addr, "ustrd")
-			clawbackCoins := sdk.NewCoins(strideBal)
-			totalClawback = totalClawback.Add(clawbackCoins...)
-			err = k.distrKeeper.FundCommunityPool(ctx, clawbackCoins, addr)
-			if err != nil {
-				return err
-			}
-		}
+	totalClawback := sdk.NewCoins(bal)
+	err := k.distrKeeper.FundCommunityPool(ctx, totalClawback, addr)
+	if err != nil {
+		return err
 	}
+
 	ctx.Logger().Info(fmt.Sprintf("clawed back %d ustrd into community pool", totalClawback.AmountOf("ustrd").Int64()))
 	return nil
 }

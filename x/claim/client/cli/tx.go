@@ -19,7 +19,8 @@ func GetTxCmd() *cobra.Command {
 		RunE:                       client.ValidateCmd,
 	}
 
-	claimTxCmd.AddCommand()
-
+	claimTxCmd.AddCommand(CmdDepositAirdrop())
+	claimTxCmd.AddCommand(CmdClaimFreeAmount())
+	claimTxCmd.AddCommand(CmdSetAirdropAllocations())
 	return claimTxCmd
 }

@@ -124,7 +124,7 @@ const TypeMsgClaimFreeAmount = "claim_free_amount"
 
 var _ sdk.Msg = &MsgClaimFreeAmount{}
 
-func NewMsgClaimFreeAmount(user string, allocationAmount sdk.Coins) *MsgClaimFreeAmount {
+func NewMsgClaimFreeAmount(user string) *MsgClaimFreeAmount {
 	return &MsgClaimFreeAmount{
 		User: user,
 	}
