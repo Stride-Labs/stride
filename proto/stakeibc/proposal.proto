@@ -1,0 +1,13 @@
+syntax = "proto3";
+package Stridelabs.stride.stakeibc;
+import "cosmos_proto/cosmos.proto";
+import "gogoproto/gogo.proto";
+option go_package = "github.com/Stride-Labs/stride/x/stakeibc/types";
+
+message AddValidatorProposal {
+  string Title = 1;
+  string Description = 2;
+  string host_zone = 3;
+  string validator_name = 4; 
+  string validator_address = 5 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+}

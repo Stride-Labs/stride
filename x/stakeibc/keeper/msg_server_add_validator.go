@@ -21,6 +21,7 @@ func (k msgServer) AddValidator(goCtx context.Context, msg *types.MsgAddValidato
 		return nil, sdkerrors.Wrap(types.ErrHostZoneNotFound, errMsg)
 	}
 	validators := hostZone.Validators
+	minWeight := ^uint64(0) >> 1
 	// check that we don't already have this validator
 	for _, validator := range validators {
 		if validator.GetAddress() == msg.Address {
@@ -33,6 +34,17 @@ func (k msgServer) AddValidator(goCtx context.Context, msg *types.MsgAddValidato
 			k.Logger(ctx).Error(errMsg)
 			return nil, sdkerrors.Wrap(types.ErrValidatorAlreadyExists, errMsg)
 		}
+		// calc the min weight to assign to new validator
+		if validator.Weight < minWeight {
+			minWeight = validator.Weight
+		}
+	}
+	// if the validator was added via governance, set it weight by default to the min val weight on the host zone
+	var wgt uint64
+	if msg.Creator == "GOV" {
+		wgt = minWeight
+	} else {
+		wgt = msg.Weight
 	}
 	// add the validator
 	hostZone.Validators = append(validators, &types.Validator{
@@ -41,7 +53,7 @@ func (k msgServer) AddValidator(goCtx context.Context, msg *types.MsgAddValidato
 		Status:         types.Validator_Active,
 		CommissionRate: msg.Commission,
 		DelegationAmt:  0,
-		Weight:         msg.Weight,
+		Weight:         wgt,
 	})
 	k.SetHostZone(ctx, hostZone)
 	return &types.MsgAddValidatorResponse{}, nil
