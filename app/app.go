@@ -387,7 +387,8 @@ func NewStrideApp(
 		AddRoute(distrtypes.RouterKey, distr.NewCommunityPoolSpendProposalHandler(app.DistrKeeper)).
 		AddRoute(upgradetypes.RouterKey, upgrade.NewSoftwareUpgradeProposalHandler(app.UpgradeKeeper)).
 		AddRoute(ibcclienttypes.RouterKey, ibcclient.NewClientProposalHandler(app.IBCKeeper.ClientKeeper)).
-		AddRoute(stakeibcmoduletypes.RouterKey, stakeibcmodule.NewAddValidatorProposalHandler(app.StakeibcKeeper))
+		AddRoute(stakeibcmoduletypes.RouterKey, stakeibcmodule.NewAddValidatorProposalHandler(app.StakeibcKeeper)).
+		AddRoute(stakeibcmoduletypes.RouterKey, stakeibcmodule.NewDeleteValidatorProposalHandler(app.StakeibcKeeper))
 
 	// Create Transfer Keepers
 	app.TransferKeeper = ibctransferkeeper.NewKeeper(

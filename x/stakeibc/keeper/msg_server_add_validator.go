@@ -11,6 +11,8 @@ import (
 	"github.com/Stride-Labs/stride/x/stakeibc/types"
 )
 
+// TODO(riley-stride): implement AddValidators([]types.Validator), for governance convenience
+
 func (k msgServer) AddValidator(goCtx context.Context, msg *types.MsgAddValidator) (*types.MsgAddValidatorResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
@@ -24,17 +26,19 @@ func (k msgServer) AddValidator(goCtx context.Context, msg *types.MsgAddValidato
 	minWeight := ^uint64(0) >> 1
 
 	// get temp safety max num validators and make sure we don't exceed it
-	tempSafetyMaxNumVals, err := cast.ToIntE(k.GetParam(ctx, types.KeySafetyNumValidators)) 
+	tempSafetyMaxNumVals, err := cast.ToIntE(k.GetParam(ctx, types.KeySafetyNumValidators))
 	if err != nil {
 		errMsg := fmt.Sprintf("Error getting safety max num validators | err: %s", err.Error())
-
+		k.Logger(ctx).Error(errMsg)
+		return nil, sdkerrors.Wrap(types.ErrMaxNumValidators, errMsg)
+	}
 
 	if len(validators) >= tempSafetyMaxNumVals {
 		errMsg := fmt.Sprintf("Host Zone (%s) already has max number of validators (%d)", msg.HostZone, tempSafetyMaxNumVals)
 		k.Logger(ctx).Error(errMsg)
 		return nil, sdkerrors.Wrap(types.ErrMaxNumValidators, errMsg)
 	}
-	
+
 	// check that we don't already have this validator
 	for _, validator := range validators {
 		if validator.GetAddress() == msg.Address {

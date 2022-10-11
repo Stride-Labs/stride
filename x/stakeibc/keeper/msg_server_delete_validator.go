@@ -24,13 +24,16 @@ func (k msgServer) DeleteValidator(goCtx context.Context, msg *types.MsgDeleteVa
 		return nil, err
 	}
 
-	err = k.RemoveValidatorFromHostZone(ctx, msg.HostZone, msg.ValAddr)
+	// for governance invoked DeleteValidator calls, stop after setting the weight to 0 (we need better governance UX before deleting the validator altogether)
+	if msg.Creator == "GOV" {
+		return &types.MsgDeleteValidatorResponse{}, nil
+	}
 
+	err = k.RemoveValidatorFromHostZone(ctx, msg.HostZone, msg.ValAddr)
 	if err != nil {
 		errMsg := fmt.Sprintf("Validator (%s) not removed from host zone (%s) | err: %s", msg.ValAddr, msg.HostZone, err.Error())
 		k.Logger(ctx).Error(errMsg)
 		return nil, sdkerrors.Wrapf(types.ErrValidatorNotRemoved, errMsg)
 	}
-
 	return &types.MsgDeleteValidatorResponse{}, nil
 }

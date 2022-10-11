@@ -84,3 +84,26 @@ func NewAddValidatorProposalHandler(k keeper.Keeper) govtypes.Handler {
 		}
 	}
 }
+
+// NewDeleteValidatorHandler creates a new governance Handler for a DeleteValidatorProposal
+func NewDeleteValidatorProposalHandler(k keeper.Keeper) govtypes.Handler {
+	msgServer := keeper.NewMsgServerImpl(k)
+
+	return func(ctx sdk.Context, content govtypes.Content) error {
+		switch c := content.(type) {
+		case *types.DeleteValidatorProposal:
+			_, err := msgServer.DeleteValidator(sdk.WrapSDKContext(ctx), &types.MsgDeleteValidator{
+				Creator:  "GOV",
+				HostZone: c.HostZone,
+				ValAddr:  c.ValidatorAddress,
+			})
+			if err != nil {
+				return err
+			}
+			return nil
+
+		default:
+			return sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "unrecognized DeleteValidator proposal content type: %T", c)
+		}
+	}
+}
