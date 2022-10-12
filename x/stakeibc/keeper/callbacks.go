@@ -129,7 +129,7 @@ func WithdrawalBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query icq
 	}
 
 	withdrawalBalanceAmount := withdrawalBalanceCoin.Amount
-	strideClaim := strideCommission.Mul(withdrawalBalanceAmount.ToDec())
+	strideClaim := strideCommission.Mul(sdk.NewDecFromInt(withdrawalBalanceAmount))
 	strideClaimFloored := strideClaim.TruncateInt()
 
 	// back the reinvestment amount out of the total less the commission
