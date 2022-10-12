@@ -8,7 +8,7 @@ const (
 	// ProposalTypeAddValidator defines the type for a CommunityPoolAddValidator
 	ProposalTypeAddValidator = "AddValidator"
 	// ProposalTypeDeleteValidator defines the type for a CommunityPoolDeleteValidator
-	ProposalTypeDeleteValidator = "AddValidator"
+	ProposalTypeDeleteValidator = "DeleteValidator"
 )
 
 // Assert AddValidatorProposal implements govtypes.Content at compile-time
@@ -54,7 +54,7 @@ func (avp *AddValidatorProposal) ValidateBasic() error {
 
 // NewDeleteValidatorProposal creates a new delete validator spend proposal.
 //nolint:interfacer
-func NewDeleteValidatorProposal(title string, description string, hostZone string, validatorName string, validatorAddress string) *DeleteValidatorProposal {
+func NewDeleteValidatorProposal(title string, description string, hostZone string, validatorAddress string) *DeleteValidatorProposal {
 	return &DeleteValidatorProposal{title, description, hostZone, validatorAddress}
 }
 
