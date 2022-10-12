@@ -8,7 +8,9 @@ const (
 	StoreKey = ModuleName
 
 	// RouterKey is the message route for slashing
-	RouterKey = ModuleName
+	RouterKey                = ModuleName
+	RouterKeyAddValidator    = "stakeibcaddvalidator"
+	RouterKeyDeleteValidator = "stakeibcdeletevalidator"
 
 	// QuerierRoute defines the module's query routing key
 	QuerierRoute = ModuleName
