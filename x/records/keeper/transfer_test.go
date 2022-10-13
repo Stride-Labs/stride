@@ -3,7 +3,9 @@ package keeper_test
 import (
 	_ "github.com/stretchr/testify/suite"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	ibctypes "github.com/cosmos/ibc-go/v3/modules/apps/transfer/types"
+	clienttypes "github.com/cosmos/ibc-go/v3/modules/core/02-client/types"
 
 	"github.com/Stride-Labs/stride/x/records/types"
 	recordtypes "github.com/Stride-Labs/stride/x/records/types"
@@ -25,7 +27,16 @@ func (s *KeeperTestSuite) SetupTransfer() TransferTestCase {
 		Status:             types.DepositRecord_TRANSFER_QUEUE,
 	}
 	s.App.RecordsKeeper.SetDepositRecord(s.Ctx(), depositRecord)
-	transferMsg := ibctypes.MsgTransfer{}
+	coin := sdk.NewCoin("tokens", sdk.NewInt(balanceToTransfer))
+	s.FundAccount(s.TestAccs[0], coin)
+	transferMsg := ibctypes.MsgTransfer{
+		SourcePort:    "transfer",
+		SourceChannel: "channel-0",
+		Token:         coin,
+		Sender:        s.TestAccs[0].String(),
+		Receiver:      s.TestAccs[1].String(),
+		TimeoutHeight: clienttypes.NewHeight(0, 100),
+	}
 
 	return TransferTestCase{
 		depositRecord: depositRecord,

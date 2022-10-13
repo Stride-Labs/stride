@@ -80,22 +80,25 @@ func (s *KeeperTestSuite) checkTransferStateIfCallbackFailed(tc TransferCallback
 
 func (s *KeeperTestSuite) TestTransferCallback_TransferCallbackTimeout() {
 	tc := s.SetupTransferCallback()
-	invalidArgs := tc.validArgs
+	timeoutArgs := tc.validArgs
 	// a nil ack means the request timed out
-	invalidArgs.ack = nil
-	err := recordskeeper.TransferCallback(s.App.RecordsKeeper, s.Ctx(), invalidArgs.packet, invalidArgs.ack, invalidArgs.args)
+	timeoutArgs.ack = nil
+	err := recordskeeper.TransferCallback(s.App.RecordsKeeper, s.Ctx(), timeoutArgs.packet, timeoutArgs.ack, timeoutArgs.args)
 	s.Require().NoError(err)
 	s.checkTransferStateIfCallbackFailed(tc)
 }
 
 func (s *KeeperTestSuite) TestTransferCallback_TransferCallbackErrorOnHost() {
 	tc := s.SetupTransferCallback()
-	invalidArgs := tc.validArgs
+	errorArgs := tc.validArgs
 	// an error ack means the tx failed on the host
 	errorAck := channeltypes.Acknowledgement{Response: &channeltypes.Acknowledgement_Error{Error: "error"}}
 
-	err := recordskeeper.TransferCallback(s.App.RecordsKeeper, s.Ctx(), invalidArgs.packet, &errorAck, invalidArgs.args)
-	s.Require().EqualError(err, "TransferCallback does not handle errors: error: invalid request")
+	err := recordskeeper.TransferCallback(s.App.RecordsKeeper, s.Ctx(), errorArgs.packet, &errorAck, errorArgs.args)
+	s.Require().NoError(err)
+	record, found := s.App.RecordsKeeper.GetDepositRecord(s.Ctx(), tc.initialState.callbackArgs.DepositRecordId)
+	s.Require().True(found)
+	s.Require().Equal(record.Status, types.DepositRecord_TRANSFER_QUEUE, "DepositRecord is put back in the TRANSFER_QUEUE after a failed transfer")
 	s.checkTransferStateIfCallbackFailed(tc)
 }
 
