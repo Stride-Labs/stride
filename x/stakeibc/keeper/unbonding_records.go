@@ -41,17 +41,9 @@ func (k Keeper) CreateEpochUnbondingRecord(ctx sdk.Context, epochNumber uint64) 
 	return true
 }
 
-// return:
-// - msgs to send to the host zone
-// - total amount to unbond
-// - marshalled callback args
-// - epochUnbondingRecordIds
-// - error
-func (k Keeper) GetHostZoneUnbondingMsgs(ctx sdk.Context, hostZone types.HostZone) ([]sdk.Msg, uint64, []byte, []uint64, error) {
+func (k Keeper) GetHostZoneUnbondingMsgs(ctx sdk.Context, hostZone types.HostZone) (msgs []sdk.Msg, totalAmtToUnbond uint64, marshalledCallbackArgs []byte, epochUnbondingRecordIds []uint64, err error) {
 	// this function goes and processes all unbonded records for this hostZone
 	// regardless of what epoch they belong to
-	totalAmtToUnbond := uint64(0)
-	epochUnbondingRecordIds := []uint64{}
 	for _, epochUnbonding := range k.RecordsKeeper.GetAllEpochUnbondingRecord(ctx) {
 		hostZoneRecord, found := k.RecordsKeeper.GetHostZoneUnbondingByChainId(ctx, epochUnbonding.EpochNumber, hostZone.ChainId)
 		if !found {
@@ -152,7 +144,6 @@ func (k Keeper) GetHostZoneUnbondingMsgs(ctx sdk.Context, hostZone types.HostZon
 		return nil, 0, nil, nil, sdkerrors.Wrap(sdkerrors.ErrNotFound, errMsg)
 	}
 	var splitDelegations []*types.SplitDelegation
-	var msgs []sdk.Msg
 	for _, valAddr := range utils.StringToIntMapKeys(valAddrToUnbondAmt) {
 		valUnbondAmt := valAddrToUnbondAmt[valAddr]
 		stakeAmt := sdk.NewInt64Coin(hostZone.HostDenom, valUnbondAmt)
@@ -175,7 +166,7 @@ func (k Keeper) GetHostZoneUnbondingMsgs(ctx sdk.Context, hostZone types.HostZon
 		EpochUnbondingRecordIds: epochUnbondingRecordIds,
 	}
 	k.Logger(ctx).Info(fmt.Sprintf("Marshalling UndelegateCallback args: %v", undelegateCallback))
-	marshalledCallbackArgs, err := k.MarshalUndelegateCallbackArgs(ctx, undelegateCallback)
+	marshalledCallbackArgs, err = k.MarshalUndelegateCallbackArgs(ctx, undelegateCallback)
 	if err != nil {
 		k.Logger(ctx).Error(err.Error())
 		return nil, 0, nil, nil, sdkerrors.Wrap(sdkerrors.ErrNotFound, err.Error())

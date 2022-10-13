@@ -18,7 +18,6 @@ import (
 var ADMINS = map[string]bool{
 	"stride1u20df3trc2c2zdhm8qvh2hdjx9ewh00sv6eyy8": true, // F5
 	"stride10d07y265gmmuvt4z0w9aw880jnsr700jefnezl": true, // gov module
-	"stride159atdlc3ksl50g0659w5tq42wwer334ajl7xnq": true, // local
 }
 
 func FilterDepositRecords(arr []recordstypes.DepositRecord, condition func(recordstypes.DepositRecord) bool) (ret []recordstypes.DepositRecord) {

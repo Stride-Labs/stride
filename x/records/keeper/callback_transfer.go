@@ -46,18 +46,23 @@ func TransferCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ack
 		return sdkerrors.Wrapf(types.ErrUnknownDepositRecord, "deposit record not found %d", transferCallbackData.DepositRecordId)
 	}
 
-	// which method to use for error handling?
-	// if ack.Response.(type) == *channeltypes.Acknowledgement_Error {
-	// 	// handle error
-	// }
-	if ack.GetError() != "" {
+	// ugly, but use type switch to check oneof type: https://developers.google.com/protocol-buffers/docs/reference/go-generated#oneof
+	// don't use ack.GetError() != "" because an error message might be empty
+	switch response := ack.Response.(type) {
+	case *channeltypes.Acknowledgement_Result:
+		// do nothing
+	case *channeltypes.Acknowledgement_Error:
+		k.Logger(ctx).Error(fmt.Sprintf("TransferCallback error %v", response.Error))
 		// error on host chain
 		// put record back in the TRANSFER_QUEUE
 		depositRecord.Status = types.DepositRecord_TRANSFER_QUEUE
 		k.SetDepositRecord(ctx, depositRecord)
 		k.Logger(ctx).Error(fmt.Sprintf("Error  %s", ack.GetError()))
 		return nil
+	default:
+		k.Logger(ctx).Error(fmt.Sprintf("TransferCallback unknown ack response type %v", response))
 	}
+
 	if ack == nil {
 		// timeout
 		// put record back in the TRANSFER_QUEUE
