@@ -46,6 +46,15 @@ func TransferCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ack
 		return sdkerrors.Wrapf(types.ErrUnknownDepositRecord, "deposit record not found %d", transferCallbackData.DepositRecordId)
 	}
 
+	if ack == nil {
+		// timeout
+		// put record back in the TRANSFER_QUEUE
+		depositRecord.Status = types.DepositRecord_TRANSFER_QUEUE
+		k.SetDepositRecord(ctx, depositRecord)
+		k.Logger(ctx).Error(fmt.Sprintf("TransferCallback timeout, ack is nil, packet %v", packet))
+		return nil
+	}
+
 	// ugly, but use type switch to check oneof type: https://developers.google.com/protocol-buffers/docs/reference/go-generated#oneof
 	// don't use ack.GetError() != "" because an error message might be empty
 	switch response := ack.Response.(type) {
@@ -61,15 +70,6 @@ func TransferCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ack
 		return nil
 	default:
 		k.Logger(ctx).Error(fmt.Sprintf("TransferCallback unknown ack response type %v", response))
-	}
-
-	if ack == nil {
-		// timeout
-		// put record back in the TRANSFER_QUEUE
-		depositRecord.Status = types.DepositRecord_TRANSFER_QUEUE
-		k.SetDepositRecord(ctx, depositRecord)
-		k.Logger(ctx).Error(fmt.Sprintf("TransferCallback timeout, ack is nil, packet %v", packet))
-		return nil
 	}
 
 	var data ibctransfertypes.FungibleTokenPacketData
