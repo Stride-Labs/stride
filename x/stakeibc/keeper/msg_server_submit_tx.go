@@ -10,6 +10,7 @@ import (
 
 	icacallbackstypes "github.com/Stride-Labs/stride/x/icacallbacks/types"
 
+	recordstypes "github.com/Stride-Labs/stride/x/records/types"
 	"github.com/Stride-Labs/stride/x/stakeibc/types"
 
 	bankTypes "github.com/cosmos/cosmos-sdk/x/bank/types"
@@ -27,7 +28,7 @@ import (
 	host "github.com/cosmos/ibc-go/v3/modules/core/24-host"
 )
 
-func (k Keeper) DelegateOnHost(ctx sdk.Context, hostZone types.HostZone, amt sdk.Coin, depositRecordId uint64) error {
+func (k Keeper) DelegateOnHost(ctx sdk.Context, hostZone types.HostZone, amt sdk.Coin, depositRecord recordstypes.DepositRecord) error {
 	var msgs []sdk.Msg
 
 	// the relevant ICA is the delegate account
@@ -77,7 +78,7 @@ func (k Keeper) DelegateOnHost(ctx sdk.Context, hostZone types.HostZone, amt sdk
 	// add callback data
 	delegateCallback := types.DelegateCallback{
 		HostZoneId:       hostZone.ChainId,
-		DepositRecordId:  depositRecordId,
+		DepositRecordId:  depositRecord.Id,
 		SplitDelegations: splitDelegations,
 	}
 	k.Logger(ctx).Info(fmt.Sprintf("Marshalling DelegateCallback args: %v", delegateCallback))
@@ -91,6 +92,9 @@ func (k Keeper) DelegateOnHost(ctx sdk.Context, hostZone types.HostZone, amt sdk
 	if err != nil {
 		return sdkerrors.Wrapf(err, "Failed to SubmitTxs for connectionId %s on %s. Messages: %s", connectionId, hostZone.ChainId, msgs)
 	}
+	// update the record state to DELEGATION_IN_PROGRESS
+	depositRecord.Status = recordstypes.DepositRecord_DELEGATION_IN_PROGRESS
+	k.RecordsKeeper.SetDepositRecord(ctx, depositRecord)
 	return nil
 }
 

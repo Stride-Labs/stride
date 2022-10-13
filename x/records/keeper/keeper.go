@@ -76,7 +76,7 @@ func (k *Keeper) ClaimCapability(ctx sdk.Context, cap *capabilitytypes.Capabilit
 	return k.scopedKeeper.ClaimCapability(ctx, cap, name)
 }
 
-func (k Keeper) Transfer(ctx sdk.Context, msg *ibctypes.MsgTransfer, depositRecordId uint64) error {
+func (k Keeper) Transfer(ctx sdk.Context, msg *ibctypes.MsgTransfer, depositRecord types.DepositRecord) error {
 	goCtx := sdk.WrapSDKContext(ctx)
 
 	// because TransferKeeper.Transfer doesn't return a sequence number, we need to fetch it manually
@@ -99,7 +99,7 @@ func (k Keeper) Transfer(ctx sdk.Context, msg *ibctypes.MsgTransfer, depositReco
 
 	// add callback data
 	transferCallback := types.TransferCallback{
-		DepositRecordId: depositRecordId,
+		DepositRecordId: depositRecord.Id,
 	}
 	k.Logger(ctx).Info(fmt.Sprintf("Marshalling TransferCallback args: %v", transferCallback))
 	marshalledCallbackArgs, err := k.MarshalTransferCallbackArgs(ctx, transferCallback)
@@ -117,5 +117,10 @@ func (k Keeper) Transfer(ctx sdk.Context, msg *ibctypes.MsgTransfer, depositReco
 	}
 	k.Logger(ctx).Info(fmt.Sprintf("Storing callback data: %v", callback))
 	k.ICACallbacksKeeper.SetCallbackData(ctx, callback)
+
+	// update the record state to TRANSFER_IN_PROGRESS
+	depositRecord.Status = types.DepositRecord_TRANSFER_IN_PROGRESS
+	k.SetDepositRecord(ctx, depositRecord)
+
 	return nil
 }

@@ -47,8 +47,8 @@ func (k Keeper) TransferExistingDepositsToHostZones(ctx sdk.Context, epochNumber
 		pstr := fmt.Sprintf("\t[TransferExistingDepositsToHostZones] Processing deposits {%d} {%s} {%d}", depositRecord.Id, depositRecord.Denom, depositRecord.Amount)
 		k.Logger(ctx).Info(pstr)
 
-		// if a TRANSFER_QUEUE record has 0 balance and was created in the previous epoch, it's safe to remove since it will never be updated or used"
-		if depositRecord.Amount <= 0 {
+		// if a TRANSFER_QUEUE record has 0 balance and was created in the previous epoch, it's safe to remove since it will never be updated or used
+		if depositRecord.Amount <= 0 && depositRecord.DepositEpochNumber < epochNumber {
 			k.Logger(ctx).Info("[TransferExistingDepositsToHostZones] Empty deposit record (ID: %s)! Removing.", depositRecord.Id)
 			k.RecordsKeeper.RemoveDepositRecord(ctx, depositRecord.Id)
 			continue
@@ -78,16 +78,14 @@ func (k Keeper) TransferExistingDepositsToHostZones(ctx sdk.Context, epochNumber
 		msg := ibctypes.NewMsgTransfer(ibctransfertypes.PortID, hostZone.TransferChannelId, transferCoin, hostZoneModuleAddress, delegateAddress, clienttypes.Height{}, timeoutTimestamp)
 		k.Logger(ctx).Info(fmt.Sprintf("TransferExistingDepositsToHostZones msg %v", msg))
 
-		err := k.RecordsKeeper.Transfer(ctx, msg, depositRecord.Id)
+		// transfer the deposit record and update its status to TRANSFER_IN_PROGRESS
+		err := k.RecordsKeeper.Transfer(ctx, msg, depositRecord)
 		if err != nil {
 			k.Logger(ctx).Error(fmt.Sprintf("\t[TransferExistingDepositsToHostZones] Failed to initiate IBC transfer to host zone, HostZone: %v, Channel: %v, Amount: %v, ModuleAddress: %v, DelegateAddress: %v, Timeout: %v",
 				hostZone.ChainId, hostZone.TransferChannelId, transferCoin, hostZoneModuleAddress, delegateAddress, timeoutTimestamp))
 			k.Logger(ctx).Error(fmt.Sprintf("\t[TransferExistingDepositsToHostZones] err {%s}", err.Error()))
 			continue
 		}
-		// update the record state to TRANSFER_IN_PROGRESS
-		depositRecord.Status = recordstypes.DepositRecord_TRANSFER_IN_PROGRESS
-		k.RecordsKeeper.SetDepositRecord(ctx, depositRecord)
 	}
 }
 
@@ -121,16 +119,13 @@ func (k Keeper) StakeExistingDepositsOnHostZones(ctx sdk.Context, epochNumber ui
 		k.Logger(ctx).Info(fmt.Sprintf("\t[StakeExistingDepositsOnHostZones] Staking %d on %s", depositRecord.Amount, hostZone.HostDenom))
 		stakeAmount := sdk.NewCoin(hostZone.HostDenom, sdk.NewInt(depositRecord.Amount))
 
-		err := k.DelegateOnHost(ctx, hostZone, stakeAmount, depositRecord.Id)
+		err := k.DelegateOnHost(ctx, hostZone, stakeAmount, depositRecord)
 		if err != nil {
 			k.Logger(ctx).Error(fmt.Sprintf("Did not stake %s on %s | err: %s", stakeAmount.String(), hostZone.ChainId, err.Error()))
 			continue
 		} else {
 			k.Logger(ctx).Info(fmt.Sprintf("Successfully submitted stake for %s on %s", stakeAmount.String(), hostZone.ChainId))
 		}
-		// update the record state to DELEGATION_IN_PROGRESS
-		depositRecord.Status = recordstypes.DepositRecord_DELEGATION_IN_PROGRESS
-		k.RecordsKeeper.SetDepositRecord(ctx, depositRecord)
 
 		ctx.EventManager().EmitEvent(
 			sdk.NewEvent(
