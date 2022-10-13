@@ -186,10 +186,10 @@ func (k Keeper) DistributeMintedCoin(ctx sdk.Context, mintedCoin sdk.Coin) error
 
 	// remaining tokens to the community growth pool (this should NEVER happen, barring rounding imprecision)
 	remainingCoins := sdk.NewCoins(mintedCoin).
-		Sub(stakingIncentivesCoins).
-		Sub(strategicReserveCoins).
-		Sub(communityPoolGrowthCoins).
-		Sub(communityPoolSecurityBudgetCoins)
+		Sub(stakingIncentivesCoins...).
+		Sub(strategicReserveCoins...).
+		Sub(communityPoolGrowthCoins...).
+		Sub(communityPoolSecurityBudgetCoins...)
 
 	// check: remaining coins should be less than 5% of minted coins
 	remainingBal := remainingCoins.AmountOf(sdk.DefaultBondDenom)
