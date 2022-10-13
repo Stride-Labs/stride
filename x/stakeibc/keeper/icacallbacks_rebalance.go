@@ -65,30 +65,26 @@ func RebalanceCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ac
 
 	// update the host zone
 	rebalancings := rebalanceCallback.GetRebalancings()
-
+	// assemble a map from validatorAddress -> validator
+	valAddrMap := make(map[string]*types.Validator)
+	for _, val := range zone.GetValidators() {
+		valAddrMap[val.GetAddress()] = val
+	}
 	for _, rebalancing := range rebalancings {
 		srcValidator := rebalancing.GetSrcValidator()
 		dstValidator := rebalancing.GetDstValidator()
 		amt := rebalancing.GetAmt()
+		if srcValidator 
 		srcFound := false
 		dstFound := false
-		for _, validator := range zone.GetValidators() {
-			if validator.GetAddress() == srcValidator {
-				validator.DelegationAmt -= amt
-				srcFound = true
-			}
-			if validator.GetAddress() == dstValidator {
-				validator.DelegationAmt += amt
-				dstFound = true
-			}
-			if srcFound && dstFound {
-				break
-			}
-		}
-		if !srcFound {
+		if _, valFound := valAddrMap[srcValidator]; valFound {
+			valAddrMap[srcValidator].DelegationAmt -= amt
+		} else {
 			return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "validator not found %s", srcValidator)
 		}
-		if !dstFound {
+		if _, valFound := valAddrMap[dstValidator]; valFound {
+			valAddrMap[dstValidator].DelegationAmt += amt
+		} else {
 			return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "validator not found %s", dstValidator)
 		}
 	}

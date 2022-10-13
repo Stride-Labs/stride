@@ -2,10 +2,8 @@ package keeper
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"sort"
-	"strings"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -37,34 +35,9 @@ func floatmax(a, b float64) float64 {
 	return b
 }
 
-func ValAddressFromBech32CusomPrefix(address string, bech32PrefixValAddr string) (addr sdk.ValAddress, err error) {
-	if len(strings.TrimSpace(address)) == 0 {
-		return sdk.ValAddress{}, errors.New("empty address string is not allowed")
-	}
-
-	bz, err := sdk.GetFromBech32(address, bech32PrefixValAddr)
-	if err != nil {
-		return nil, err
-	}
-
-	return sdk.ValAddress(bz), nil
-}
-
-func AccAddressFromBech32CustomPrefix(address string, bech32PrefixAccAddr string) (addr sdk.AccAddress, err error) {
-	if len(strings.TrimSpace(address)) == 0 {
-		return sdk.AccAddress{}, errors.New("empty address string is not allowed")
-	}
-
-	bz, err := sdk.GetFromBech32(address, bech32PrefixAccAddr)
-	if err != nil {
-		return nil, err
-	}
-
-	return sdk.AccAddress(bz), nil
-}
-
 func (k msgServer) RebalanceValidators(goCtx context.Context, msg *types.MsgRebalanceValidators) (*types.MsgRebalanceValidatorsResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
+	k.Logger(ctx).Info(fmt.Sprintf("RebalanceValidators executing %v", msg))
 
 	hostZone, found := k.GetHostZone(ctx, msg.HostZone)
 	if !found {
@@ -93,7 +66,6 @@ func (k msgServer) RebalanceValidators(goCtx context.Context, msg *types.MsgReba
 		deltaAmt := validatorDeltas[valAddr]
 		k.Logger(ctx).Info(fmt.Sprintf("Adding deltaAmt: %d to validator: %s", deltaAmt, valAddr))
 		valDeltaList = append(valDeltaList, valPair{deltaAmt, valAddr})
-		// valDeltaList = append(valDeltaList, valPair{deltaAmt, sdk.ValAddress(valAddr)})
 	}
 	// now we sort that list
 	lessFunc := func(i, j int) bool {
@@ -156,7 +128,6 @@ func (k msgServer) RebalanceValidators(goCtx context.Context, msg *types.MsgReba
 				ValidatorSrcAddress: overWeightElem.valAddr,
 				ValidatorDstAddress: underWeightElem.valAddr,
 				Amount:              sdk.NewInt64Coin(hostZone.HostDenom, abs(overWeightElem.deltaAmt))}
-			k.Logger(ctx).Info(fmt.Sprintf("[MOOSE] CASE 1: %v", redelegateMsg))
 			msgs = append(msgs, redelegateMsg)
 			overWeightElem.deltaAmt = 0
 		} else if abs(underWeightElem.deltaAmt) < abs(overWeightElem.deltaAmt) {
@@ -168,8 +139,7 @@ func (k msgServer) RebalanceValidators(goCtx context.Context, msg *types.MsgReba
 				DelegatorAddress:    delegatorAddress,
 				ValidatorSrcAddress: overWeightElem.valAddr,
 				ValidatorDstAddress: underWeightElem.valAddr,
-				Amount:              sdk.NewInt64Coin(hostZone.HostDenom, abs(underWeightElem.deltaAmt))}
-			k.Logger(ctx).Info(fmt.Sprintf("[MOOSE] CASE 2: %v", redelegateMsg))
+				Amount:              sdk.NewInt64Coin(hostZone.HostDenom, underWeightElem.deltaAmt)}
 			msgs = append(msgs, redelegateMsg)
 			underWeightElem.deltaAmt = 0
 		} else {
@@ -181,8 +151,7 @@ func (k msgServer) RebalanceValidators(goCtx context.Context, msg *types.MsgReba
 				DelegatorAddress:    delegatorAddress,
 				ValidatorSrcAddress: overWeightElem.valAddr,
 				ValidatorDstAddress: underWeightElem.valAddr,
-				Amount:              sdk.NewInt64Coin(hostZone.HostDenom, abs(underWeightElem.deltaAmt))}
-			k.Logger(ctx).Info(fmt.Sprintf("[MOOSE] CASE 3: %v", redelegateMsg))
+				Amount:              sdk.NewInt64Coin(hostZone.HostDenom, underWeightElem.deltaAmt)}
 			msgs = append(msgs, redelegateMsg)
 			overWeightElem.deltaAmt = 0
 			underWeightElem.deltaAmt = 0
@@ -206,7 +175,7 @@ func (k msgServer) RebalanceValidators(goCtx context.Context, msg *types.MsgReba
 	// QUESTION: what should the timeouts be for these function calls?
 	_, err = k.SubmitTxsStrideEpoch(ctx, connectionId, msgs, *hostZone.GetDelegationAccount(), REBALANCE, marshalledCallbackArgs)
 	if err != nil {
-		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "Failed to SubmitTxs for %s, %s, %s, %v", connectionId, hostZone.ChainId, msgs, err)
+		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "Failed to SubmitTxs for %s, %s, %s, %s", connectionId, hostZone.ChainId, msgs, err.Error())
 	}
 
 	return &types.MsgRebalanceValidatorsResponse{}, nil

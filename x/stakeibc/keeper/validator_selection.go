@@ -47,9 +47,6 @@ func (k Keeper) GetTargetValAmtsForHostZone(ctx sdk.Context, hostZone types.Host
 	// such that the total validator delegation is equal to the finalDelegation
 	// output key is ADDRESS not NAME
 
-	// log the validators
-	k.Logger(ctx).Info(fmt.Sprintf("[MOOSE] Validators for host zone %s", hostZone.GetValidators()))
-
 	totalWeight := k.GetTotalValidatorWeight(hostZone)
 	if totalWeight == 0 {
 		k.Logger(ctx).Error(fmt.Sprintf("No non-zero validators found for host zone %s", hostZone.ChainId))
