@@ -92,7 +92,7 @@ func (s *KeeperTestSuite) SetupGetHostZoneUnbondingMsgs() GetHostZoneUnbondingMs
 			Denom:             "uatom",
 			HostZoneId:        "GAIA",
 			UnbondingTime:     unbondingTime, // 2022-08-12T19:52
-			Status:            recordtypes.HostZoneUnbonding_BONDED,
+			Status:            recordtypes.HostZoneUnbonding_UNBONDING_QUEUE,
 		}
 		epochUnbondingRecord.HostZoneUnbondings = append(epochUnbondingRecord.HostZoneUnbondings, hostZoneUnbonding)
 		s.App.RecordsKeeper.SetEpochUnbondingRecord(s.Ctx(), epochUnbondingRecord)
@@ -113,7 +113,8 @@ func (s *KeeperTestSuite) SetupGetHostZoneUnbondingMsgs() GetHostZoneUnbondingMs
 func (s *KeeperTestSuite) TestGetHostZoneUnbondingMsgs_Successful() {
 	tc := s.SetupGetHostZoneUnbondingMsgs()
 
-	actualUnbondMsgs, actualAmtToUnbond, actualCallbackArgs, err := s.App.StakeibcKeeper.GetHostZoneUnbondingMsgs(s.Ctx(), tc.hostZone)
+	// TODO: check epoch unbonding record ids here
+	actualUnbondMsgs, actualAmtToUnbond, actualCallbackArgs, _, err := s.App.StakeibcKeeper.GetHostZoneUnbondingMsgs(s.Ctx(), tc.hostZone)
 	s.Require().NoError(err)
 
 	// verify the callback attributes are as expected
@@ -150,7 +151,8 @@ func (s *KeeperTestSuite) TestGetHostZoneUnbondingMsgs_WrongChainId() {
 	tc := s.SetupGetHostZoneUnbondingMsgs()
 
 	tc.hostZone.ChainId = "nonExistentChainId"
-	msgs, totalAmtToUnbond, _, err := s.App.StakeibcKeeper.GetHostZoneUnbondingMsgs(s.Ctx(), tc.hostZone)
+	// TODO: check epoch unbonding record ids here
+	msgs, totalAmtToUnbond, _, _, err := s.App.StakeibcKeeper.GetHostZoneUnbondingMsgs(s.Ctx(), tc.hostZone)
 	// error should be nil -- we do NOT raise an error on a non-existent chain id, we simply do not send any messages
 	s.Require().Nil(err, "error should be nil -- we do NOT raise an error on a non-existent chain id, we simply do not send any messages")
 	// no messages should be sent
@@ -169,7 +171,8 @@ func (s *KeeperTestSuite) TestGetHostZoneUnbondingMsgs_NoEpochUnbondingRecords()
 
 	s.Require().Equal(0, len(s.App.RecordsKeeper.GetAllEpochUnbondingRecord(s.Ctx())), "number of epoch unbonding records should be 0 after deletion")
 
-	msgs, totalAmtToUnbond, _, err := s.App.StakeibcKeeper.GetHostZoneUnbondingMsgs(s.Ctx(), tc.hostZone)
+	// TODO: check epoch unbonding record ids here
+	msgs, totalAmtToUnbond, _, _, err := s.App.StakeibcKeeper.GetHostZoneUnbondingMsgs(s.Ctx(), tc.hostZone)
 	// error should be nil -- we do NOT raise an error on a non-existent chain id, we simply do not send any messages
 	s.Require().Nil(err, "error should be nil -- we do NOT raise an error when no records exist, we simply do not send any messages")
 	// no messages should be sent
@@ -188,7 +191,8 @@ func (s *KeeperTestSuite) TestGetHostZoneUnbondingMsgs_UnbondingTooMuch() {
 	// write the host zone with zero-delegation validators back to the store
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx(), tc.hostZone)
 
-	_, _, _, err := s.App.StakeibcKeeper.GetHostZoneUnbondingMsgs(s.Ctx(), tc.hostZone)
+	// TODO: check epoch unbonding record ids here
+	_, _, _, _, err := s.App.StakeibcKeeper.GetHostZoneUnbondingMsgs(s.Ctx(), tc.hostZone)
 	s.Require().EqualError(err, fmt.Sprintf("Could not unbond %d on Host Zone %s, unable to balance the unbond amount across validators: not found", tc.amtToUnbond*uint64(len(tc.epochUnbondingRecords)), tc.hostZone.ChainId))
 }
 

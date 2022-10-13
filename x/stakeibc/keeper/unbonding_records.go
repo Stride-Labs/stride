@@ -24,7 +24,7 @@ func (k Keeper) CreateEpochUnbondingRecord(ctx sdk.Context, epochNumber uint64) 
 			StTokenAmount:     uint64(0),
 			Denom:             hostZone.HostDenom,
 			HostZoneId:        hostZone.ChainId,
-			Status:            recordstypes.HostZoneUnbonding_BONDED,
+			Status:            recordstypes.HostZoneUnbonding_UNBONDING_QUEUE,
 		}
 		k.Logger(ctx).Info(fmt.Sprintf("Adding hostZoneUnbonding %v to %s", hostZoneUnbonding, hostZone.ChainId))
 		hostZoneUnbondings = append(hostZoneUnbondings, &hostZoneUnbonding)
@@ -45,6 +45,7 @@ func (k Keeper) CreateEpochUnbondingRecord(ctx sdk.Context, epochNumber uint64) 
 // - msgs to send to the host zone
 // - total amount to unbond
 // - marshalled callback args
+// - epochUnbondingRecordIds
 // - error
 func (k Keeper) GetHostZoneUnbondingMsgs(ctx sdk.Context, hostZone types.HostZone) ([]sdk.Msg, uint64, []byte, []uint64, error) {
 	// this function goes and processes all unbonded records for this hostZone
@@ -60,7 +61,7 @@ func (k Keeper) GetHostZoneUnbondingMsgs(ctx sdk.Context, hostZone types.HostZon
 			continue
 		}
 		// mark the epoch unbonding record for processing if it's bonded and the host zone unbonding has an amount g.t. zero
-		if hostZoneRecord.Status == recordstypes.HostZoneUnbonding_BONDED && hostZoneRecord.NativeTokenAmount > 0 {
+		if hostZoneRecord.Status == recordstypes.HostZoneUnbonding_UNBONDING_QUEUE && hostZoneRecord.NativeTokenAmount > 0 {
 			totalAmtToUnbond += hostZoneRecord.NativeTokenAmount
 			epochUnbondingRecordIds = append(epochUnbondingRecordIds, epochUnbonding.EpochNumber)
 			k.Logger(ctx).Info(fmt.Sprintf("[SendHostZoneUnbondings] Sending unbondings, host zone: %s, epochUnbonding: %v", hostZone.ChainId, epochUnbonding))
@@ -248,8 +249,8 @@ func (k Keeper) InitiateAllHostZoneUnbondings(ctx sdk.Context, dayNumber uint64)
 					errMsg := fmt.Sprintf("Error fetching host zone unbonding record for epoch: %d, host zone: %s", epochUnbondingRecordId, hostZone.ChainId)
 					k.Logger(ctx).Error(errMsg)
 				}
-				// mark the HZU as PENDING
-				hostZoneUnbonding.Status = recordstypes.HostZoneUnbonding_PENDING
+				// mark the HZU as UNBONDING_IN_PROGRESS
+				hostZoneUnbonding.Status = recordstypes.HostZoneUnbonding_UNBONDING_IN_PROGRESS
 				// save the updated hzu on the epoch unbonding record
 				_, success := k.RecordsKeeper.AddHostZoneToEpochUnbondingRecord(ctx, epochUnbondingRecordId, hostZone.ChainId, hostZoneUnbonding)
 				if !success {
@@ -311,14 +312,14 @@ func (k Keeper) SweepAllUnbondedTokensForHostZone(ctx sdk.Context, hostZone type
 			continue
 		}
 
-		shouldProcess := hostZoneUnbonding.Status == recordstypes.HostZoneUnbonding_UNBONDED
+		shouldProcess := hostZoneUnbonding.Status == recordstypes.HostZoneUnbonding_EXIT_TRANSFER_QUEUE
 		k.Logger(ctx).Info(fmt.Sprintf("\tUnbonding time:  %d blockTime %d, shouldProcess %v", hostZoneUnbonding.UnbondingTime, blockTime, shouldProcess))
 
 		// if the unbonding period has elapsed, then we can send the ICA call to sweep this hostZone's unbondings to the redemption account (in a batch)
 		// verify
 		// 1. the unbonding time is set (g.t. 0)
 		// 2. the unbonding time is less than the current block time
-		// 3. the host zone is in the UNBONDED state, meaning it's ready to be transferred
+		// 3. the host zone is in the EXIT_TRANSFER_QUEUE state, meaning it's ready to be transferred
 		if (hostZoneUnbonding.UnbondingTime > 0 && hostZoneUnbonding.UnbondingTime < blockTime) && shouldProcess {
 			// we have a match, so we can process this unbonding
 			logMsg := fmt.Sprintf("\t\tAdding %d to amt to batch transfer from delegation acct to rewards acct for host zone %s, epoch %v",
@@ -332,8 +333,8 @@ func (k Keeper) SweepAllUnbondedTokensForHostZone(ctx sdk.Context, hostZone type
 				continue
 			}
 			// TODO: should we move this down to the ICA call site?
-			// mark the HZU as PENDING
-			hostZoneUnbonding.Status = recordstypes.HostZoneUnbonding_PENDING
+			// mark the HZU as EXIT_TRANSFER_IN_PROGRESS
+			hostZoneUnbonding.Status = recordstypes.HostZoneUnbonding_EXIT_TRANSFER_IN_PROGRESS
 			// save the updated hzu on the epoch unbonding record
 			epochUnbondingRecord, success := k.RecordsKeeper.AddHostZoneToEpochUnbondingRecord(ctx, epochUnbondingRecord.EpochNumber, hostZone.ChainId, hostZoneUnbonding)
 			if !success {
@@ -416,7 +417,7 @@ func (k Keeper) SweepAllUnbondedTokens(ctx sdk.Context) (success bool, successfu
 			successfulSweeps = append(successfulSweeps, hostZone.ChainId)
 			sweepAmounts = append(sweepAmounts, sweepAmount)
 			// TODO: make this a function
-			// update the epoch unbonding records to mark them as PENDING
+			// update the epoch unbonding records to mark them as EXIT_TRANSFER_IN_PROGRESS
 			for _, epochUnbondingRecordId := range epochUnbondingRecordIds {
 				k.Logger(ctx).Info(fmt.Sprintf("Updating host zone unbondings on EpochUnbondingRecord %d", epochUnbondingRecordId))
 				// fetch the host zone unbonding
@@ -425,8 +426,8 @@ func (k Keeper) SweepAllUnbondedTokens(ctx sdk.Context) (success bool, successfu
 					errMsg := fmt.Sprintf("Error fetching host zone unbonding record for epoch: %d, host zone: %s", epochUnbondingRecordId, hostZone.ChainId)
 					k.Logger(ctx).Error(errMsg)
 				}
-				// mark the HZU as PENDING
-				hostZoneUnbonding.Status = recordstypes.HostZoneUnbonding_PENDING
+				// mark the HZU as EXIT_TRANSFER_IN_PROGRESS
+				hostZoneUnbonding.Status = recordstypes.HostZoneUnbonding_EXIT_TRANSFER_IN_PROGRESS
 				// save the updated hzu on the epoch unbonding record
 				_, addHzuSuccess := k.RecordsKeeper.AddHostZoneToEpochUnbondingRecord(ctx, epochUnbondingRecordId, hostZone.ChainId, hostZoneUnbonding)
 				if !addHzuSuccess {

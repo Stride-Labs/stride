@@ -35,7 +35,7 @@ func (s *KeeperTestSuite) SetupTransferCallback() TransferCallbackTestCase {
 		DepositEpochNumber: 1,
 		HostZoneId:         chainId,
 		Amount:             balanceToStake,
-		Status:             recordtypes.DepositRecord_TRANSFER,
+		Status:             recordtypes.DepositRecord_TRANSFER_QUEUE,
 	}
 	s.App.RecordsKeeper.SetDepositRecord(s.Ctx(), depositRecord)
 	packet := channeltypes.Packet{Data: s.MarshalledICS20PacketData()}
@@ -66,16 +66,16 @@ func (s *KeeperTestSuite) TestTransferCallback_Successful() {
 	err := recordskeeper.TransferCallback(s.App.RecordsKeeper, s.Ctx(), validArgs.packet, validArgs.ack, validArgs.args)
 	s.Require().NoError(err)
 
-	// Confirm deposit record has been updated to STAKE
+	// Confirm deposit record has been updated to DELEGATION_QUEUE
 	record, found := s.App.RecordsKeeper.GetDepositRecord(s.Ctx(), initialState.callbackArgs.DepositRecordId)
 	s.Require().True(found)
-	s.Require().Equal(record.Status, recordtypes.DepositRecord_STAKE, "deposit record status should be STAKE")
+	s.Require().Equal(record.Status, recordtypes.DepositRecord_DELEGATION_QUEUE, "deposit record status should be DELEGATION_QUEUE")
 }
 
 func (s *KeeperTestSuite) checkTransferStateIfCallbackFailed(tc TransferCallbackTestCase) {
 	record, found := s.App.RecordsKeeper.GetDepositRecord(s.Ctx(), tc.initialState.callbackArgs.DepositRecordId)
 	s.Require().True(found)
-	s.Require().Equal(record.Status, recordtypes.DepositRecord_TRANSFER, "deposit record status should be TRANSFER")
+	s.Require().Equal(record.Status, recordtypes.DepositRecord_TRANSFER_QUEUE, "deposit record status should be TRANSFER_QUEUE")
 }
 
 func (s *KeeperTestSuite) TestTransferCallback_TransferCallbackTimeout() {

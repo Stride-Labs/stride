@@ -78,14 +78,14 @@ func (s *KeeperTestSuite) SetupInitiateAllHostZoneUnbondings() InitiateAllHostZo
 			StTokenAmount:     1_900_000,
 			NativeTokenAmount: 2_000_000,
 			Denom:             Atom,
-			Status:            recordtypes.HostZoneUnbonding_BONDED,
+			Status:            recordtypes.HostZoneUnbonding_UNBONDING_QUEUE,
 		},
 		{
 			HostZoneId:        OsmoChainId,
 			StTokenAmount:     2_800_000,
 			NativeTokenAmount: 3_000_000,
 			Denom:             Osmo,
-			Status:            recordtypes.HostZoneUnbonding_BONDED,
+			Status:            recordtypes.HostZoneUnbonding_UNBONDING_QUEUE,
 		},
 	}
 	epochUnbondingRecords := []recordtypes.EpochUnbondingRecord{}

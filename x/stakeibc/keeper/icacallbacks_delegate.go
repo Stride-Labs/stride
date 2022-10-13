@@ -57,7 +57,7 @@ func DelegateCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ack
 	if ack == nil {
 		// timeout
 		k.Logger(ctx).Error(fmt.Sprintf("DelegateCallback timeout, ack is nil, packet %v", packet))
-		depositRecord.Status = recordstypes.DepositRecord_STAKE
+		depositRecord.Status = recordstypes.DepositRecord_DELEGATION_QUEUE
 		k.RecordsKeeper.SetDepositRecord(ctx, depositRecord)
 		return nil
 	}
@@ -70,7 +70,7 @@ func DelegateCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ack
 
 	if len(txMsgData.Data) == 0 {
 		// failed transaction
-		depositRecord.Status = recordstypes.DepositRecord_STAKE
+		depositRecord.Status = recordstypes.DepositRecord_DELEGATION_QUEUE
 		k.RecordsKeeper.SetDepositRecord(ctx, depositRecord)
 		k.Logger(ctx).Error(fmt.Sprintf("DelegateCallback tx failed, ack is empty (ack error), packet %v", packet))
 		return nil

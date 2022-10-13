@@ -68,7 +68,7 @@ func (s *KeeperTestSuite) SetupDelegateCallback() DelegateCallbackTestCase {
 		DepositEpochNumber: 1,
 		HostZoneId:         HostChainId,
 		Amount:             balanceToStake,
-		Status:             recordtypes.DepositRecord_STAKE,
+		Status:             recordtypes.DepositRecord_DELEGATION_QUEUE,
 	}
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx(), hostZone)
 	s.App.RecordsKeeper.SetDepositRecord(s.Ctx(), depositRecord)
@@ -146,7 +146,7 @@ func (s *KeeperTestSuite) checkDelegateStateIfCallbackFailed(tc DelegateCallback
 	records := s.App.RecordsKeeper.GetAllDepositRecord(s.Ctx())
 	s.Require().Len(records, 1, "number of deposit records")
 	record := records[0]
-	s.Require().Equal(recordtypes.DepositRecord_STAKE, record.Status, "deposit record status should not have changed")
+	s.Require().Equal(recordtypes.DepositRecord_DELEGATION_QUEUE, record.Status, "deposit record status should not have changed")
 }
 
 func (s *KeeperTestSuite) TestDelegateCallback_DelegateCallbackTimeout() {
@@ -191,7 +191,7 @@ func (s *KeeperTestSuite) TestDelegateCallback_HostNotFound() {
 	records := s.App.RecordsKeeper.GetAllDepositRecord(s.Ctx())
 	s.Require().Len(records, 1, "number of deposit records")
 	record := records[0]
-	s.Require().Equal(recordtypes.DepositRecord_STAKE, record.Status, "deposit record status should not have changed")
+	s.Require().Equal(recordtypes.DepositRecord_DELEGATION_QUEUE, record.Status, "deposit record status should not have changed")
 }
 
 func (s *KeeperTestSuite) TestDelegateCallback_BigAmount() {

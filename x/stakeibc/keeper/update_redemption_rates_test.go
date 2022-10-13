@@ -30,7 +30,7 @@ func (s *KeeperTestSuite) SetupUpdateRedemptionRates(
 	toBeStakedDepositRecord := recordtypes.DepositRecord{
 		HostZoneId: "GAIA",
 		Amount:     int64(undelegatedBal),
-		Status:     recordtypes.DepositRecord_STAKE,
+		Status:     recordtypes.DepositRecord_DELEGATION_QUEUE,
 	}
 	s.App.RecordsKeeper.AppendDepositRecord(s.Ctx(), toBeStakedDepositRecord)
 
@@ -39,7 +39,7 @@ func (s *KeeperTestSuite) SetupUpdateRedemptionRates(
 	toBeTransferedDepositRecord := recordtypes.DepositRecord{
 		HostZoneId: "GAIA",
 		Amount:     int64(justDepositedBal),
-		Status:     recordtypes.DepositRecord_TRANSFER,
+		Status:     recordtypes.DepositRecord_TRANSFER_QUEUE,
 	}
 	s.App.RecordsKeeper.AppendDepositRecord(s.Ctx(), toBeTransferedDepositRecord)
 
@@ -190,7 +190,7 @@ func (s *KeeperTestSuite) TestUpdateRedemptionRateNoModuleAccountRecords() {
 	// sanity check on inputs (check redemptionRate at genesis is 1)
 	s.Require().Equal(initialRedemptionRate, sdk.NewDec(1), "t0 rr")
 
-	// filter out the TRANSFER record from the records when updating the redemption rate
+	// filter out the TRANSFER_QUEUE record from the records when updating the redemption rate
 	records := tc.allRecords[1:]
 	s.App.StakeibcKeeper.UpdateRedemptionRates(s.Ctx(), records)
 
@@ -214,7 +214,7 @@ func (s *KeeperTestSuite) TestUpdateRedemptionRateNoStakeDepositRecords() {
 	// sanity check on inputs (check redemptionRate at genesis is 1)
 	s.Require().Equal(initialRedemptionRate, sdk.NewDec(1), "t0 rr")
 
-	// filter out the STAKE record from the records when updating the redemption rate
+	// filter out the DELEGATION_QUEUE record from the records when updating the redemption rate
 	records := tc.allRecords[:1]
 	s.App.StakeibcKeeper.UpdateRedemptionRates(s.Ctx(), records)
 

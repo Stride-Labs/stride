@@ -53,15 +53,15 @@ func TransferCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ack
 	if ack.GetError() != "" {
 		// error on host chain
 		// reset the deposit record to status TRANSFER
-		depositRecord.Status = types.DepositRecord_TRANSFER
+		depositRecord.Status = types.DepositRecord_TRANSFER_QUEUE
 		k.SetDepositRecord(ctx, depositRecord)
 		k.Logger(ctx).Error(fmt.Sprintf("Error  %s", ack.GetError()))
 		return nil
 	}
 	if ack == nil {
 		// timeout
-		// reset the deposit record to status TRANSFER
-		depositRecord.Status = types.DepositRecord_TRANSFER
+		// reset the deposit record to status TRANSFER_QUEUE
+		depositRecord.Status = types.DepositRecord_TRANSFER_QUEUE
 		k.SetDepositRecord(ctx, depositRecord)
 		k.Logger(ctx).Error(fmt.Sprintf("TransferCallback timeout, ack is nil, packet %v", packet))
 		return nil
@@ -74,7 +74,7 @@ func TransferCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ack
 	}
 	k.Logger(ctx).Info(fmt.Sprintf("TransferCallback unmarshalled FungibleTokenPacketData %v", data))
 
-	depositRecord.Status = types.DepositRecord_STAKE
+	depositRecord.Status = types.DepositRecord_DELEGATION_QUEUE
 	k.SetDepositRecord(ctx, depositRecord)
 	k.Logger(ctx).Info(fmt.Sprintf("\t [IBC-TRANSFER] Deposit record updated: {%v}", depositRecord.Id))
 	k.Logger(ctx).Info(fmt.Sprintf("[IBC-TRANSFER] success to %s", depositRecord.HostZoneId))

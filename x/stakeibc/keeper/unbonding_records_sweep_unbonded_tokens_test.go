@@ -83,13 +83,13 @@ func (s *KeeperTestSuite) SetupSweepUnbondedTokens() SweepUnbondedTokensTestCase
 				{
 					HostZoneId:        HostChainId,
 					NativeTokenAmount: 1_000_000,
-					Status:            recordtypes.HostZoneUnbonding_BONDED,
+					Status:            recordtypes.HostZoneUnbonding_UNBONDING_QUEUE,
 					UnbondingTime:     unbondingTime,
 				},
 				{
 					HostZoneId:        OsmoChainId,
 					NativeTokenAmount: 1_000_000,
-					Status:            recordtypes.HostZoneUnbonding_UNBONDED,
+					Status:            recordtypes.HostZoneUnbonding_EXIT_TRANSFER_QUEUE,
 					UnbondingTime:     unbondingTime,
 				},
 			},
@@ -100,13 +100,13 @@ func (s *KeeperTestSuite) SetupSweepUnbondedTokens() SweepUnbondedTokensTestCase
 				{
 					HostZoneId:        HostChainId,
 					NativeTokenAmount: 2_000_000,
-					Status:            recordtypes.HostZoneUnbonding_UNBONDED,
+					Status:            recordtypes.HostZoneUnbonding_EXIT_TRANSFER_QUEUE,
 					UnbondingTime:     unbondingTime,
 				},
 				{
 					HostZoneId:        OsmoChainId,
 					NativeTokenAmount: 2_000_000,
-					Status:            recordtypes.HostZoneUnbonding_UNBONDED,
+					Status:            recordtypes.HostZoneUnbonding_EXIT_TRANSFER_QUEUE,
 					UnbondingTime:     unbondingTime,
 				},
 			},
@@ -117,12 +117,12 @@ func (s *KeeperTestSuite) SetupSweepUnbondedTokens() SweepUnbondedTokensTestCase
 				{
 					HostZoneId:        HostChainId,
 					NativeTokenAmount: 5_000_000,
-					Status:            recordtypes.HostZoneUnbonding_TRANSFERRED,
+					Status:            recordtypes.HostZoneUnbonding_CLAIMABLE,
 				},
 				{
 					HostZoneId:        OsmoChainId,
 					NativeTokenAmount: 5_000_000,
-					Status:            recordtypes.HostZoneUnbonding_BONDED,
+					Status:            recordtypes.HostZoneUnbonding_UNBONDING_QUEUE,
 				},
 			},
 		},

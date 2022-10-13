@@ -57,7 +57,7 @@ func (s *KeeperTestSuite) GetInitialDepositRecords(currentEpoch uint64) TestDepo
 			Amount:             0,
 			Denom:              Atom,
 			HostZoneId:         HostChainId,
-			Status:             recordstypes.DepositRecord_TRANSFER,
+			Status:             recordstypes.DepositRecord_TRANSFER_QUEUE,
 			DepositEpochNumber: priorEpoch,
 		},
 		{
@@ -65,7 +65,7 @@ func (s *KeeperTestSuite) GetInitialDepositRecords(currentEpoch uint64) TestDepo
 			Amount:             0,
 			Denom:              Atom,
 			HostZoneId:         HostChainId,
-			Status:             recordstypes.DepositRecord_TRANSFER,
+			Status:             recordstypes.DepositRecord_TRANSFER_QUEUE,
 			DepositEpochNumber: priorEpoch,
 		},
 	}
@@ -76,7 +76,7 @@ func (s *KeeperTestSuite) GetInitialDepositRecords(currentEpoch uint64) TestDepo
 			Amount:             3000,
 			Denom:              Atom,
 			HostZoneId:         HostChainId,
-			Status:             recordstypes.DepositRecord_TRANSFER,
+			Status:             recordstypes.DepositRecord_TRANSFER_QUEUE,
 			DepositEpochNumber: priorEpoch,
 		},
 		{
@@ -84,7 +84,7 @@ func (s *KeeperTestSuite) GetInitialDepositRecords(currentEpoch uint64) TestDepo
 			Amount:             4000,
 			Denom:              Atom,
 			HostZoneId:         HostChainId,
-			Status:             recordstypes.DepositRecord_TRANSFER,
+			Status:             recordstypes.DepositRecord_TRANSFER_QUEUE,
 			DepositEpochNumber: priorEpoch,
 		},
 	}
@@ -96,7 +96,7 @@ func (s *KeeperTestSuite) GetInitialDepositRecords(currentEpoch uint64) TestDepo
 			Amount:             5000,
 			Denom:              Atom,
 			HostZoneId:         HostChainId,
-			Status:             recordstypes.DepositRecord_STAKE,
+			Status:             recordstypes.DepositRecord_DELEGATION_QUEUE,
 			DepositEpochNumber: priorEpoch,
 		},
 		{
@@ -104,7 +104,7 @@ func (s *KeeperTestSuite) GetInitialDepositRecords(currentEpoch uint64) TestDepo
 			Amount:             6000,
 			Denom:              Atom,
 			HostZoneId:         HostChainId,
-			Status:             recordstypes.DepositRecord_STAKE,
+			Status:             recordstypes.DepositRecord_DELEGATION_QUEUE,
 			DepositEpochNumber: priorEpoch,
 		},
 	}
@@ -116,7 +116,7 @@ func (s *KeeperTestSuite) GetInitialDepositRecords(currentEpoch uint64) TestDepo
 			Amount:             7000,
 			Denom:              Atom,
 			HostZoneId:         HostChainId,
-			Status:             recordstypes.DepositRecord_STAKE,
+			Status:             recordstypes.DepositRecord_DELEGATION_QUEUE,
 			DepositEpochNumber: currentEpoch,
 		},
 		{
@@ -124,7 +124,7 @@ func (s *KeeperTestSuite) GetInitialDepositRecords(currentEpoch uint64) TestDepo
 			Amount:             8000,
 			Denom:              Atom,
 			HostZoneId:         HostChainId,
-			Status:             recordstypes.DepositRecord_STAKE,
+			Status:             recordstypes.DepositRecord_DELEGATION_QUEUE,
 			DepositEpochNumber: currentEpoch,
 		},
 	}
@@ -238,7 +238,7 @@ func (s *KeeperTestSuite) TestCreateDepositRecordsForEpoch_Successful() {
 			Amount:             0,
 			Denom:              "denom1",
 			HostZoneId:         "HOST1",
-			Status:             recordstypes.DepositRecord_TRANSFER,
+			Status:             recordstypes.DepositRecord_TRANSFER_QUEUE,
 			DepositEpochNumber: 1,
 		},
 		{
@@ -246,7 +246,7 @@ func (s *KeeperTestSuite) TestCreateDepositRecordsForEpoch_Successful() {
 			Amount:             0,
 			Denom:              "denom2",
 			HostZoneId:         "HOST2",
-			Status:             recordstypes.DepositRecord_TRANSFER,
+			Status:             recordstypes.DepositRecord_TRANSFER_QUEUE,
 			DepositEpochNumber: 1,
 		},
 		{
@@ -254,7 +254,7 @@ func (s *KeeperTestSuite) TestCreateDepositRecordsForEpoch_Successful() {
 			Amount:             0,
 			Denom:              "denom3",
 			HostZoneId:         "HOST3",
-			Status:             recordstypes.DepositRecord_TRANSFER,
+			Status:             recordstypes.DepositRecord_TRANSFER_QUEUE,
 			DepositEpochNumber: 1,
 		},
 		// Epoch 2
@@ -263,7 +263,7 @@ func (s *KeeperTestSuite) TestCreateDepositRecordsForEpoch_Successful() {
 			Amount:             0,
 			Denom:              "denom1",
 			HostZoneId:         "HOST1",
-			Status:             recordstypes.DepositRecord_TRANSFER,
+			Status:             recordstypes.DepositRecord_TRANSFER_QUEUE,
 			DepositEpochNumber: 2,
 		},
 		{
@@ -271,7 +271,7 @@ func (s *KeeperTestSuite) TestCreateDepositRecordsForEpoch_Successful() {
 			Amount:             0,
 			Denom:              "denom2",
 			HostZoneId:         "HOST2",
-			Status:             recordstypes.DepositRecord_TRANSFER,
+			Status:             recordstypes.DepositRecord_TRANSFER_QUEUE,
 			DepositEpochNumber: 2,
 		},
 		{
@@ -279,7 +279,7 @@ func (s *KeeperTestSuite) TestCreateDepositRecordsForEpoch_Successful() {
 			Amount:             0,
 			Denom:              "denom3",
 			HostZoneId:         "HOST3",
-			Status:             recordstypes.DepositRecord_TRANSFER,
+			Status:             recordstypes.DepositRecord_TRANSFER_QUEUE,
 			DepositEpochNumber: 2,
 		},
 	}

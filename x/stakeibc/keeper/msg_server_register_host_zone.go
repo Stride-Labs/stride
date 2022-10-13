@@ -131,7 +131,7 @@ func (k msgServer) RegisterHostZone(goCtx context.Context, msg *types.MsgRegiste
 		StTokenAmount:     0,
 		Denom:             zone.HostDenom,
 		HostZoneId:        zone.ChainId,
-		Status:            recordstypes.HostZoneUnbonding_BONDED,
+		Status:            recordstypes.HostZoneUnbonding_UNBONDING_QUEUE,
 	}
 	updatedEpochUnbondingRecord, success := k.RecordsKeeper.AddHostZoneToEpochUnbondingRecord(ctx, epochUnbondingRecord.EpochNumber, chainId, hostZoneUnbonding)
 	if !success {
@@ -151,7 +151,7 @@ func (k msgServer) RegisterHostZone(goCtx context.Context, msg *types.MsgRegiste
 		Amount:             0,
 		Denom:              zone.HostDenom,
 		HostZoneId:         zone.ChainId,
-		Status:             recordstypes.DepositRecord_TRANSFER,
+		Status:             recordstypes.DepositRecord_TRANSFER_QUEUE,
 		DepositEpochNumber: strideEpochTracker.EpochNumber,
 	}
 	k.RecordsKeeper.AppendDepositRecord(ctx, depositRecord)
