@@ -2,6 +2,7 @@ package records
 
 import (
 	"fmt"
+	"strings"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -51,7 +52,12 @@ func (im IBCModule) OnChanOpenInit(
 	// if err := im.keeper.ClaimCapability(ctx, channelCap, host.ChannelCapabilityPath(portID, channelID)); err != nil {
 	// 	return err
 	// }
-	_, appVersion := channeltypes.SplitChannelVersion(version)
+	var appVersion string
+	splitVersions := strings.Split(version, ":")
+	if len(splitVersions) == 1 {
+		appVersion = version
+	}
+	appVersion = strings.Join(splitVersions[1:], ":")
 	// doCustomLogic()
 	return im.app.OnChanOpenInit(
 		ctx,
@@ -78,7 +84,12 @@ func (im IBCModule) OnChanOpenTry(
 ) (string, error) {
 	// doCustomLogic()
 	// core/04-channel/types contains a helper function to split middleware and underlying app version
-	_, cpAppVersion := channeltypes.SplitChannelVersion(counterpartyVersion)
+	var cpAppVersion string
+	splitVersions := strings.Split(counterpartyVersion, ":")
+	if len(splitVersions) == 1 {
+		cpAppVersion = counterpartyVersion
+	}
+	cpAppVersion = strings.Join(splitVersions[1:], ":")
 
 	// call the underlying applications OnChanOpenTry callback
 	version, err := im.app.OnChanOpenTry(
