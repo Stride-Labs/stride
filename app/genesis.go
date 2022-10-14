@@ -2,6 +2,8 @@ package app
 
 import (
 	"encoding/json"
+
+	"github.com/cosmos/cosmos-sdk/simapp"
 )
 
 // The genesis state of the blockchain is represented here as a map of raw json
@@ -14,7 +16,7 @@ import (
 type GenesisState map[string]json.RawMessage
 
 // NewDefaultGenesisState generates the default state for the application.
-func NewDefaultGenesisState() GenesisState {
+func NewDefaultGenesisState() simapp.GenesisState {
 	encCfg := MakeEncodingConfig()
 	return ModuleBasics.DefaultGenesis(encCfg.Marshaler)
 }
