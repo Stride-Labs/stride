@@ -8,7 +8,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/cosmos/cosmos-sdk/client"
-	// "github.com/cosmos/cosmos-sdk/client/flags"
+
 	"github.com/Stride-Labs/stride/x/stakeibc/types"
 )
 
@@ -30,6 +30,7 @@ func GetTxCmd() *cobra.Command {
 	cmd.AddCommand(CmdClaimUndelegatedTokens())
 	cmd.AddCommand(CmdRebalanceValidators())
 	cmd.AddCommand(CmdAddValidator())
+	cmd.AddCommand(CmdAddValidatorProposal())
 	cmd.AddCommand(CmdChangeValidatorWeight())
 	cmd.AddCommand(CmdDeleteValidator())
 	cmd.AddCommand(CmdRestoreInterchainAccount())

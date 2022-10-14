@@ -118,6 +118,7 @@ import (
 	recordsmodulekeeper "github.com/Stride-Labs/stride/x/records/keeper"
 	recordsmoduletypes "github.com/Stride-Labs/stride/x/records/types"
 	stakeibcmodule "github.com/Stride-Labs/stride/x/stakeibc"
+	stakeibcclient "github.com/Stride-Labs/stride/x/stakeibc/client"
 	stakeibcmodulekeeper "github.com/Stride-Labs/stride/x/stakeibc/keeper"
 	stakeibcmoduletypes "github.com/Stride-Labs/stride/x/stakeibc/types"
 	// this line is used by starport scaffolding # stargate/app/moduleImport
@@ -142,6 +143,7 @@ func getGovProposalHandlers() []govclient.ProposalHandler {
 		upgradeclient.CancelProposalHandler,
 		ibcclientclient.UpdateClientProposalHandler,
 		ibcclientclient.UpgradeProposalHandler,
+		stakeibcclient.AddValidatorProposalHandler,
 		// this line is used by starport scaffolding # stargate/app/govProposalHandler
 	)
 
@@ -386,7 +388,8 @@ func NewStrideApp(
 		AddRoute(paramproposal.RouterKey, params.NewParamChangeProposalHandler(app.ParamsKeeper)).
 		AddRoute(distrtypes.RouterKey, distr.NewCommunityPoolSpendProposalHandler(app.DistrKeeper)).
 		AddRoute(upgradetypes.RouterKey, upgrade.NewSoftwareUpgradeProposalHandler(app.UpgradeKeeper)).
-		AddRoute(ibcclienttypes.RouterKey, ibcclient.NewClientProposalHandler(app.IBCKeeper.ClientKeeper))
+		AddRoute(ibcclienttypes.RouterKey, ibcclient.NewClientProposalHandler(app.IBCKeeper.ClientKeeper)).
+		AddRoute(stakeibcmoduletypes.RouterKey, stakeibcmodule.NewStakeibcProposalHandler(app.StakeibcKeeper))
 
 	// Create Transfer Keepers
 	app.TransferKeeper = ibctransferkeeper.NewKeeper(
