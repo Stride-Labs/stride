@@ -184,7 +184,7 @@ func (s *KeeperTestSuite) TestLiquidStake_IbcCoinParseError() {
 	tc := s.SetupLiquidStake()
 	// Update hostzone with denom that can't be parsed
 	badHostZone := tc.initialState.hostZone
-	badHostZone.IBCDenom = "ibc.0atom"
+	badHostZone.IBCDenom = " #$## ibc///.0atom"
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx(), badHostZone)
 	_, err := s.GetMsgServer().LiquidStake(sdk.WrapSDKContext(s.Ctx()), &tc.validMsg)
 

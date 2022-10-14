@@ -462,9 +462,9 @@ func (s *KeeperTestSuite) TestBurnTokens_CouldNotParseCoin() {
 	s.Require().True(found, "host zone found")
 	hostZone.HostDenom = ":"
 
-	burnAmt := int64(123456)
+	burnAmt := int64(-123456)
 	err := s.App.StakeibcKeeper.BurnTokens(s.Ctx(), hostZone, burnAmt)
-	s.Require().EqualError(err, "could not parse burnCoin: 123456.000000000000000000st:. err: invalid decimal coin expression: 123456.000000000000000000st:: invalid coins")
+	s.Require().EqualError(err, "could not parse burnCoin: -123456.000000000000000000st:. err: invalid decimal coin expression: -123456.000000000000000000st:: invalid coins")
 }
 
 // Test failure case - could not decode address
