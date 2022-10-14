@@ -231,24 +231,7 @@ func (k Keeper) InitiateAllHostZoneUnbondings(ctx sdk.Context, dayNumber uint64)
 				failedUnbondings = append(failedUnbondings, hostZone.ChainId)
 				continue
 			}
-			for _, epochUnbondingRecordId := range epochUnbondingRecordIds {
-				k.Logger(ctx).Info(fmt.Sprintf("Updating host zone unbondings on EpochUnbondingRecord %d", epochUnbondingRecordId))
-				// fetch the host zone unbonding
-				hostZoneUnbonding, found := k.RecordsKeeper.GetHostZoneUnbondingByChainId(ctx, epochUnbondingRecordId, hostZone.ChainId)
-				if !found {
-					errMsg := fmt.Sprintf("Error fetching host zone unbonding record for epoch: %d, host zone: %s", epochUnbondingRecordId, hostZone.ChainId)
-					k.Logger(ctx).Error(errMsg)
-				}
-				// mark the HZU as UNBONDING_IN_PROGRESS
-				hostZoneUnbonding.Status = recordstypes.HostZoneUnbonding_UNBONDING_IN_PROGRESS
-				// save the updated hzu on the epoch unbonding record
-				_, success := k.RecordsKeeper.AddHostZoneToEpochUnbondingRecord(ctx, epochUnbondingRecordId, hostZone.ChainId, hostZoneUnbonding)
-				if !success {
-					errMsg := fmt.Sprintf("Could not add host zone to epoch unbonding record | %s", err.Error())
-					k.Logger(ctx).Error(errMsg)
-					continue
-				}
-			}
+			k.RecordsKeeper.SetHostZoneUnbondings(ctx, hostZone, epochUnbondingRecordIds, recordstypes.HostZoneUnbonding_UNBONDING_IN_PROGRESS)
 			successfulUnbondings = append(successfulUnbondings, hostZone.ChainId)
 		}
 	}
@@ -372,23 +355,7 @@ func (k Keeper) SweepAllUnbondedTokensForHostZone(ctx sdk.Context, hostZone type
 			if err != nil {
 				k.Logger(ctx).Info(fmt.Sprintf("Failed to SubmitTxs, transfer to redemption account on %s", hostZone.ChainId))
 			}
-			// update the epoch unbonding records to mark them as EXIT_TRANSFER_IN_PROGRESS
-			for _, epochUnbondingRecordId := range epochUnbondingRecordIds {
-				k.Logger(ctx).Info(fmt.Sprintf("Updating host zone unbondings on EpochUnbondingRecord %d", epochUnbondingRecordId))
-				// fetch the host zone unbonding
-				hostZoneUnbonding, found := k.RecordsKeeper.GetHostZoneUnbondingByChainId(ctx, epochUnbondingRecordId, hostZone.ChainId)
-				if !found {
-					errMsg := fmt.Sprintf("Error fetching host zone unbonding record for epoch: %d, host zone: %s", epochUnbondingRecordId, hostZone.ChainId)
-					k.Logger(ctx).Error(errMsg)
-				}
-				// mark the HZU as EXIT_TRANSFER_IN_PROGRESS
-				hostZoneUnbonding.Status = recordstypes.HostZoneUnbonding_EXIT_TRANSFER_IN_PROGRESS
-				// save the updated hzu on the epoch unbonding record
-				_, addHzuSuccess := k.RecordsKeeper.AddHostZoneToEpochUnbondingRecord(ctx, epochUnbondingRecordId, hostZone.ChainId, hostZoneUnbonding)
-				if !addHzuSuccess {
-					k.Logger(ctx).Error("Could not add host zone to epoch unbonding record")
-				}
-			}
+			k.RecordsKeeper.SetHostZoneUnbondings(ctx, hostZone, epochUnbondingRecordIds, recordstypes.HostZoneUnbonding_EXIT_TRANSFER_IN_PROGRESS)
 			k.Logger(ctx).Info(fmt.Sprintf("Successfully completed unbonded token sweep ICA call for %s, %s, %v", hostZone.ConnectionId, hostZone.ChainId, msgs))
 		} else {
 			k.Logger(ctx).Info(fmt.Sprintf("\tNot sweeping tokens for host zone %s because redemption/delegation accounts aren't registered", hostZone.ChainId))

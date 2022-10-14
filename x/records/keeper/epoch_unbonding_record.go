@@ -2,9 +2,12 @@ package keeper
 
 import (
 	"encoding/binary"
+	"fmt"
 
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	stakeibctypes "github.com/Stride-Labs/stride/x/stakeibc/types"
 
 	"github.com/Stride-Labs/stride/x/records/types"
 )
@@ -113,4 +116,25 @@ func (k Keeper) AddHostZoneToEpochUnbondingRecord(ctx sdk.Context, epochNumber u
 		epochUnbondingRecord.HostZoneUnbondings = append(epochUnbondingRecord.HostZoneUnbondings, hzu)
 	}
 	return &epochUnbondingRecord, true
+}
+
+// TODO: unittest
+// TODO: what should this return?
+func (k Keeper) SetHostZoneUnbondings(ctx sdk.Context, zone stakeibctypes.HostZone, epochUnbondingRecordIds []uint64, status types.HostZoneUnbonding_Status) {
+	for _, epochUnbondingRecordId := range epochUnbondingRecordIds {
+		k.Logger(ctx).Info(fmt.Sprintf("Updating host zone unbondings on EpochUnbondingRecord %d", epochUnbondingRecordId))
+		// fetch the host zone unbonding
+		hostZoneUnbonding, found := k.GetHostZoneUnbondingByChainId(ctx, epochUnbondingRecordId, zone.ChainId)
+		if !found {
+			errMsg := fmt.Sprintf("Error fetching host zone unbonding record for epoch: %d, host zone: %s", epochUnbondingRecordId, zone.ChainId)
+			k.Logger(ctx).Error(errMsg)
+		}
+		hostZoneUnbonding.Status = status
+		// save the updated hzu on the epoch unbonding record
+		_, success := k.AddHostZoneToEpochUnbondingRecord(ctx, epochUnbondingRecordId, zone.ChainId, hostZoneUnbonding)
+		if !success {
+			k.Logger(ctx).Error("Could not add host zone to epoch unbonding record")
+			continue
+		}
+	}
 }

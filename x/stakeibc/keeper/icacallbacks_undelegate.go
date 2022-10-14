@@ -41,23 +41,6 @@ func UndelegateCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, a
 		packet.Sequence, packet.SourceChannel, packet.SourcePort, packet.DestinationChannel, packet.DestinationPort)
 	k.Logger(ctx).Info(logMsg)
 
-	// handle transaction failure cases
-	if ack == nil {
-		// handle timeout
-		k.Logger(ctx).Error(fmt.Sprintf("UndelegateCallback timeout, txMsgData is nil, packet %v", packet))
-		return nil
-	}
-	txMsgData, err := icacallbacks.GetTxMsgData(ctx, *ack, k.Logger(ctx))
-	if err != nil {
-		k.Logger(ctx).Error(fmt.Sprintf("failed to fetch txMsgData, packet %v", packet))
-		return sdkerrors.Wrap(icacallbackstypes.ErrTxMsgData, err.Error())
-	}
-	if len(txMsgData.Data) == 0 {
-		// handle tx failure
-		k.Logger(ctx).Error(fmt.Sprintf("UndelegateCallback tx failed, txMsgData is empty, ack error, packet %v", packet))
-		return nil
-	}
-
 	// fetch relevant state
 	undelegateCallback, err := k.UnmarshalUndelegateCallbackArgs(ctx, args)
 	if err != nil {
@@ -69,6 +52,27 @@ func UndelegateCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, a
 	zone, found := k.GetHostZone(ctx, undelegateCallback.HostZoneId)
 	if !found {
 		return sdkerrors.Wrapf(sdkerrors.ErrKeyNotFound, "Host zone not found: %s", undelegateCallback.HostZoneId)
+	}
+
+	// handle transaction failure cases
+	if ack == nil {
+		// handle timeout
+		// reset to UNBONDING_QUEUE
+		k.RecordsKeeper.SetHostZoneUnbondings(ctx, zone, undelegateCallback.EpochUnbondingRecordIds, recordstypes.HostZoneUnbonding_UNBONDING_QUEUE)
+		k.Logger(ctx).Error(fmt.Sprintf("UndelegateCallback timeout, txMsgData is nil, packet %v", packet))
+		return nil
+	}
+	txMsgData, err := icacallbacks.GetTxMsgData(ctx, *ack, k.Logger(ctx))
+	if err != nil {
+		k.Logger(ctx).Error(fmt.Sprintf("failed to fetch txMsgData, packet %v", packet))
+		return sdkerrors.Wrap(icacallbackstypes.ErrTxMsgData, err.Error())
+	}
+	if len(txMsgData.Data) == 0 {
+		// handle tx failure
+		// reset to UNBONDING_QUEUE
+		k.RecordsKeeper.SetHostZoneUnbondings(ctx, zone, undelegateCallback.EpochUnbondingRecordIds, recordstypes.HostZoneUnbonding_UNBONDING_QUEUE)
+		k.Logger(ctx).Error(fmt.Sprintf("UndelegateCallback tx failed, txMsgData is empty, ack error, packet %v", packet))
+		return nil
 	}
 
 	// core callback logic
@@ -92,6 +96,8 @@ func UndelegateCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, a
 		k.Logger(ctx).Error(fmt.Sprintf("UndelegateCallback | %s", err.Error()))
 		return err
 	}
+	// upon success, add host zone unbondings to the exit transfer queue
+	k.RecordsKeeper.SetHostZoneUnbondings(ctx, zone, undelegateCallback.EpochUnbondingRecordIds, recordstypes.HostZoneUnbonding_EXIT_TRANSFER_QUEUE)
 
 	return nil
 }
