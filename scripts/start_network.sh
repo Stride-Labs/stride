@@ -12,8 +12,7 @@ mkdir -p $SCRIPT_DIR/logs
 HERMES_LOGS=$SCRIPT_DIR/logs/hermes.log
 ICQ_LOGS=$SCRIPT_DIR/logs/icq.log
 
-# TODO: revert
-HOST_CHAINS=(GAIA) # JUNO OSMO STARS)
+HOST_CHAINS=(GAIA JUNO OSMO STARS)
 
 # Initialize the state for each chain
 for chain_id in STRIDE ${HOST_CHAINS[@]}; do

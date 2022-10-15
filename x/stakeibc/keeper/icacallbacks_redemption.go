@@ -54,7 +54,10 @@ func RedemptionCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, a
 	if ack == nil {
 		// handle timeout
 		k.Logger(ctx).Error(fmt.Sprintf("RedemptionCallback timeout, ack is nil, packet %v", packet))
-		k.RecordsKeeper.SetHostZoneUnbondings(ctx, zone, redemptionCallback.EpochUnbondingRecordIds, recordstypes.HostZoneUnbonding_EXIT_TRANSFER_QUEUE)
+		err = k.RecordsKeeper.SetHostZoneUnbondings(ctx, zone, redemptionCallback.EpochUnbondingRecordIds, recordstypes.HostZoneUnbonding_EXIT_TRANSFER_QUEUE)
+		if err != nil {
+			return err
+		}
 		return nil
 	}
 
@@ -67,11 +70,17 @@ func RedemptionCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, a
 	if len(txMsgData.Data) == 0 {
 		// handle tx failure
 		k.Logger(ctx).Error(fmt.Sprintf("RedemptionCallback tx failed, txMsgData is empty, ack error, packet %v", packet))
-		k.RecordsKeeper.SetHostZoneUnbondings(ctx, zone, redemptionCallback.EpochUnbondingRecordIds, recordstypes.HostZoneUnbonding_EXIT_TRANSFER_QUEUE)
+		err = k.RecordsKeeper.SetHostZoneUnbondings(ctx, zone, redemptionCallback.EpochUnbondingRecordIds, recordstypes.HostZoneUnbonding_EXIT_TRANSFER_QUEUE)
+		if err != nil {
+			return err
+		}
 		return nil
 	}
 
-	k.RecordsKeeper.SetHostZoneUnbondings(ctx, zone, redemptionCallback.EpochUnbondingRecordIds, recordstypes.HostZoneUnbonding_CLAIMABLE)
+	err = k.RecordsKeeper.SetHostZoneUnbondings(ctx, zone, redemptionCallback.EpochUnbondingRecordIds, recordstypes.HostZoneUnbonding_CLAIMABLE)
+	if err != nil {
+		return err
+	}
 	k.Logger(ctx).Info(fmt.Sprintf("[REDEMPTION] completed on %s", hostZoneId))
 	return nil
 }
