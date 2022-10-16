@@ -134,16 +134,14 @@ replace (
 
 	// dragonberry replkace line per: https://github.com/cosmos/cosmos-sdk/releases/tag/v0.45.9
 	github.com/confio/ics23/go => github.com/cosmos/cosmos-sdk/ics23/go v0.8.0
-	// TODO(TEST-54): Should we delete this replace statement and use the core cosmos-sdk for mainnet?
-	// NOTE: If you need to bump the cosmos-sdk version, create a branch at the commit hash
-	// of the target version on github.com/Stride-Labs/cosmos-sdk, then remove the error redaction
-	// logic and push a new tag and the branch to github (use that tag below)
+	// apply ICA patch
+	github.com/cosmos/cosmos-sdk => github.com/Stride-Labs/cosmos-sdk v0.45.9-dragonberry
 	github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alpha.regen.1
 	// Use a specific version of ignite cli
 	github.com/ignite-hq/cli => github.com/ignite-hq/cli v0.21.0
 	// Use the go-keychain
 	github.com/keybase/go-keychain => github.com/99designs/go-keychain v0.0.0-20191008050251-8e49817e8af4
-	// fork cast, not really sure why
+	// fork cast to add additional error checking
 	github.com/spf13/cast => github.com/Stride-Labs/cast v0.0.3
 	// use the version of grpc compatible with the regen networks protobufs.
 	google.golang.org/grpc => google.golang.org/grpc v1.33.2
