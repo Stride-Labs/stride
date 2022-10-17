@@ -6,16 +6,22 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	authvestingtypes "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
 	"github.com/gogo/protobuf/proto"
 
+	"github.com/Stride-Labs/stride/utils"
 	"github.com/Stride-Labs/stride/x/claim/types"
+	vestingtypes "github.com/Stride-Labs/stride/x/claim/vesting/types"
 )
 
-func (k Keeper) LoadAllocationData(ctx sdk.Context) bool {
+func (k Keeper) LoadAllocationData(ctx sdk.Context, allocationData string) bool {
 	totalWeight := sdk.NewDec(0)
 	records := []types.ClaimRecord{}
 
-	lines := strings.Split(allocations, "\n")
+	lines := strings.Split(allocationData, "\n")
+	allocatedFlags := map[string]bool{}
 	for _, line := range lines {
 		data := strings.Split(line, ",")
 		if data[0] == "" || data[1] == "" {
@@ -23,7 +29,7 @@ func (k Keeper) LoadAllocationData(ctx sdk.Context) bool {
 		}
 
 		weight, err := sdk.NewDecFromStr(data[1])
-		if err != nil {
+		if err != nil || allocatedFlags[data[0]] {
 			continue
 		}
 
@@ -33,11 +39,13 @@ func (k Keeper) LoadAllocationData(ctx sdk.Context) bool {
 		}
 
 		records = append(records, types.ClaimRecord{
-			Address: data[0],
-			Weight:  weight,
+			Address:         data[0],
+			Weight:          weight,
+			ActionCompleted: []bool{false, false, false},
 		})
 
-		totalWeight = weight
+		totalWeight = totalWeight.Add(weight)
+		allocatedFlags[data[0]] = true
 	}
 
 	k.SetTotalWeight(ctx, totalWeight)
@@ -215,6 +223,26 @@ func (k Keeper) SetClaimRecord(ctx sdk.Context, claimRecord types.ClaimRecord) e
 	return nil
 }
 
+// Get airdrop distributor address
+func (k Keeper) GetAirdropDistributor(ctx sdk.Context) (sdk.AccAddress, error) {
+	params, err := k.GetParams(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return sdk.AccAddressFromBech32(params.DistributorAddress)
+}
+
+// Get airdrop claim denom
+func (k Keeper) GetAirdropClaimDenom(ctx sdk.Context) (string, error) {
+	params, err := k.GetParams(ctx)
+	if err != nil {
+		return "", err
+	}
+
+	return params.ClaimDenom, nil
+}
+
 // GetClaimable returns claimable amount for a specific action done by an address
 func (k Keeper) GetClaimableAmountForAction(ctx sdk.Context, addr sdk.AccAddress, action types.Action) (sdk.Coins, error) {
 	claimRecord, err := k.GetClaimRecord(ctx, addr)
@@ -288,7 +316,9 @@ func (k Keeper) GetUserTotalClaimable(ctx sdk.Context, addr sdk.AccAddress) (sdk
 		if err != nil {
 			return sdk.Coins{}, err
 		}
-		totalClaimable = totalClaimable.Add(claimableForAction...)
+		if !claimableForAction.Empty() {
+			totalClaimable = totalClaimable.Add(claimableForAction...)
+		}
 	}
 	return totalClaimable, nil
 }
@@ -309,32 +339,49 @@ func (k Keeper) ClaimCoinsForAction(ctx sdk.Context, addr sdk.AccAddress, action
 		return nil, err
 	}
 
-	if action == types.ActionFree {
-		err = k.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, addr, claimableAmount)
-		if err != nil {
+	// Check if vesting tokens already exist for this account.
+	if claimRecord.ActionCompleted[types.ActionDelegateStake] || claimRecord.ActionCompleted[types.ActionLiquidStake] {
+		// Get user stride vesting account and grant a new vesting
+		acc := k.accountKeeper.GetAccount(ctx, addr)
+		vestingAcc, isVesting := acc.(*vestingtypes.StridePeriodicVestingAccount)
+		if !isVesting {
 			return nil, err
 		}
+
+		periodLength := utils.GetAirdropDurationForAction(action)
+		vestingAcc.AddNewGrant(vestingtypes.Period{
+			StartTime: ctx.BlockTime().Unix(),
+			Length:    periodLength,
+			Amount:    claimableAmount,
+		})
+
+		k.accountKeeper.SetAccount(ctx, vestingAcc)
 	} else {
-		// TODO: Following code works for only converting existing user account(non-vesting) to a vesting account.
-		// As we need to set multiple vesting period(staking, liquid staking) per each user,
-		// it can cause various problems.
+		// If the account is a default vesting account, don't convert it to stride vesting account.
+		acc := k.accountKeeper.GetAccount(ctx, addr)
+		_, isDefaultVestingAccount := acc.(*authvestingtypes.BaseVestingAccount)
+		if isDefaultVestingAccount {
+			return nil, err
+		}
 
-		// params, err := k.GetParams(ctx)
-		// if err != nil {
-		// 	return nil, err
-		// }
-		// baseAccount := k.accountKeeper.NewAccountWithAddress(ctx, addr)
-		// if _, ok := baseAccount.(*authtypes.BaseAccount); !ok {
-		// 	return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "invalid account type; expected: BaseAccount, got: %T", baseAccount)
-		// }
-		// baseVestingAccount := vestingtypes.NewBaseVestingAccount(baseAccount.(*authtypes.BaseAccount), claimableAmount.Sort(), params.AirdropStartTime.Unix()+int64(params.AirdropDuration))
-		// vestingAcc := vestingtypes.NewDelayedVestingAccountRaw(baseVestingAccount)
-		// k.accountKeeper.SetAccount(ctx, vestingAcc)
+		// Convert user account into stride veting account.
+		baseAccount := k.accountKeeper.NewAccountWithAddress(ctx, addr)
+		if _, ok := baseAccount.(*authtypes.BaseAccount); !ok {
+			return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "invalid account type; expected: BaseAccount, got: %T", baseAccount)
+		}
 
-		// err = k.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, addr, claimableAmount)
-		// if err != nil {
-		// 	return nil, err
-		// }
+		periodLength := utils.GetAirdropDurationForAction(action)
+		vestingAcc := vestingtypes.NewStridePeriodicVestingAccount(baseAccount.(*authtypes.BaseAccount), claimableAmount, []vestingtypes.Period{{
+			StartTime: ctx.BlockTime().Unix(),
+			Length:    periodLength,
+			Amount:    claimableAmount,
+		}})
+		k.accountKeeper.SetAccount(ctx, vestingAcc)
+	}
+
+	err = k.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, addr, claimableAmount)
+	if err != nil {
+		return nil, err
 	}
 
 	claimRecord.ActionCompleted[action] = true

@@ -54,6 +54,9 @@ import (
 	govkeeper "github.com/cosmos/cosmos-sdk/x/gov/keeper"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 
+	customvesting "github.com/Stride-Labs/stride/x/claim/vesting"
+	customvestingtypes "github.com/Stride-Labs/stride/x/claim/vesting/types"
+
 	"github.com/Stride-Labs/stride/x/mint"
 	mintkeeper "github.com/Stride-Labs/stride/x/mint/keeper"
 	minttypes "github.com/Stride-Labs/stride/x/mint/types"
@@ -176,6 +179,7 @@ var (
 		evidence.AppModuleBasic{},
 		transfer.AppModuleBasic{},
 		vesting.AppModuleBasic{},
+		customvesting.AppModuleBasic{},
 		// monitoringp.AppModuleBasic{},
 		stakeibcmodule.AppModuleBasic{},
 		epochsmodule.AppModuleBasic{},
@@ -589,6 +593,7 @@ func NewStrideApp(
 		),
 		auth.NewAppModule(appCodec, app.AccountKeeper, nil),
 		vesting.NewAppModule(app.AccountKeeper, app.BankKeeper),
+		customvesting.NewAppModule(app.AccountKeeper, app.BankKeeper),
 		bank.NewAppModule(appCodec, app.BankKeeper, app.AccountKeeper),
 		capability.NewAppModule(appCodec, *app.CapabilityKeeper),
 		feegrantmodule.NewAppModule(appCodec, app.AccountKeeper, app.BankKeeper, app.FeeGrantKeeper, app.interfaceRegistry),
@@ -627,6 +632,7 @@ func NewStrideApp(
 		evidencetypes.ModuleName,
 		stakingtypes.ModuleName,
 		vestingtypes.ModuleName,
+		customvestingtypes.ModuleName,
 		ibchost.ModuleName,
 		ibctransfertypes.ModuleName,
 		authtypes.ModuleName,
@@ -657,6 +663,7 @@ func NewStrideApp(
 		distrtypes.ModuleName,
 		slashingtypes.ModuleName,
 		vestingtypes.ModuleName,
+		customvestingtypes.ModuleName,
 		minttypes.ModuleName,
 		genutiltypes.ModuleName,
 		evidencetypes.ModuleName,
@@ -688,6 +695,7 @@ func NewStrideApp(
 		distrtypes.ModuleName,
 		stakingtypes.ModuleName,
 		vestingtypes.ModuleName,
+		customvestingtypes.ModuleName,
 		slashingtypes.ModuleName,
 		govtypes.ModuleName,
 		minttypes.ModuleName,

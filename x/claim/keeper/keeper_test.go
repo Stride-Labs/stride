@@ -10,6 +10,7 @@ import (
 
 	"github.com/Stride-Labs/stride/app"
 	"github.com/Stride-Labs/stride/x/claim/types"
+	minttypes "github.com/Stride-Labs/stride/x/mint/types"
 )
 
 type KeeperTestSuite struct {
@@ -23,6 +24,10 @@ type KeeperTestSuite struct {
 func (suite *KeeperTestSuite) SetupTest() {
 	suite.app = app.InitStrideTestApp(true)
 	suite.ctx = suite.app.BaseApp.NewContext(false, tmproto.Header{Height: 1, ChainID: "stride-1", Time: time.Now().UTC()})
+
+	// Mint coins to airdrop module
+	suite.app.BankKeeper.MintCoins(suite.ctx, minttypes.ModuleName, sdk.NewCoins(sdk.NewCoin("stake", sdk.NewInt(100000000))))
+	suite.app.BankKeeper.SendCoinsFromModuleToModule(suite.ctx, minttypes.ModuleName, types.ModuleName, sdk.NewCoins(sdk.NewCoin("stake", sdk.NewInt(100000000))))
 
 	airdropStartTime := time.Now()
 

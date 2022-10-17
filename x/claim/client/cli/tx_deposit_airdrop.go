@@ -17,16 +17,16 @@ func CmdDepositAirdrop() *cobra.Command {
 		Short: "Broadcast message deposit-airdrop",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
-			argAirdropAmount, ok := sdk.NewIntFromString(args[0])
-			if !ok {
-				return types.ErrFailedToParseDec
+			argAirdropAmount, err := sdk.ParseCoinsNormalized(args[0])
+			if err != nil {
+				return err
 			}
 
 			clientCtx, err := client.GetClientTxContext(cmd)
 
 			msg := types.NewMsgDepositAirdrop(
 				clientCtx.GetFromAddress().String(),
-				sdk.NewCoins(sdk.NewCoin("ustrd", argAirdropAmount)),
+				argAirdropAmount,
 			)
 
 			if err := msg.ValidateBasic(); err != nil {
