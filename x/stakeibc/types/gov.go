@@ -49,7 +49,13 @@ func (p *AddValidatorProposal) ValidateBasic() error {
 		return err
 	}
 
-	// TODO: Actually validate
+	// TODO: Add more checks?
+	if len(p.ValidatorAddress) == 0 {
+		return ErrRequiredFieldEmpty
+	}
+	if len(p.ValidatorName) == 0 {
+		return ErrRequiredFieldEmpty
+	}
 
 	return nil
 }
@@ -89,7 +95,10 @@ func (p *DeleteValidatorProposal) ValidateBasic() error {
 		return err
 	}
 
-	// TODO: Actually validate
+	// TODO: Add more checks?
+	if len(p.ValidatorAddress) == 0 {
+		return ErrRequiredFieldEmpty
+	}
 
 	return nil
 }
