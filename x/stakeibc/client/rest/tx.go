@@ -19,15 +19,3 @@ func newAddValidatorProposalHandler(clientCtx client.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 	}
 }
-
-func ProposalDeleteValidatorRESTHandler(clientCtx client.Context) govrest.ProposalRESTHandler {
-	return govrest.ProposalRESTHandler{
-		SubRoute: "delete-validator",
-		Handler:  newDeleteValidatorProposalHandler(clientCtx),
-	}
-}
-
-func newDeleteValidatorProposalHandler(clientCtx client.Context) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-	}
-}

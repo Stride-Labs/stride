@@ -16,9 +16,6 @@ func NewStakeibcProposalHandler(k keeper.Keeper) govtypes.Handler {
 		case *types.AddValidatorProposal:
 			return handleAddValidatorProposal(ctx, k, c)
 
-		case *types.DeleteValidatorProposal:
-			return handleDeleteValidatorProposal(ctx, k, c)
-
 		default:
 			return sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "unrecognized stakeibc proposal content type: %T", c)
 		}
@@ -27,8 +24,4 @@ func NewStakeibcProposalHandler(k keeper.Keeper) govtypes.Handler {
 
 func handleAddValidatorProposal(ctx sdk.Context, k keeper.Keeper, proposal *types.AddValidatorProposal) error {
 	return k.AddValidatorProposal(ctx, proposal)
-}
-
-func handleDeleteValidatorProposal(ctx sdk.Context, k keeper.Keeper, proposal *types.DeleteValidatorProposal) error {
-	return k.DeleteValidatorProposal(ctx, proposal)
 }

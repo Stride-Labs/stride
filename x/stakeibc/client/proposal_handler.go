@@ -8,6 +8,5 @@ import (
 )
 
 var (
-	AddValidatorProposalHandler    = govclient.NewProposalHandler(cli.CmdAddValidatorProposal, rest.ProposalAddValidatorRESTHandler)
-	DeleteValidatorProposalHandler = govclient.NewProposalHandler(cli.CmdDeleteValidatorProposal, rest.ProposalDeleteValidatorRESTHandler)
+	AddValidatorProposalHandler = govclient.NewProposalHandler(cli.CmdAddValidatorProposal, rest.ProposalAddValidatorRESTHandler)
 )
