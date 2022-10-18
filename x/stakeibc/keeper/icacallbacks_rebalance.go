@@ -74,9 +74,6 @@ func RebalanceCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ac
 		srcValidator := rebalancing.GetSrcValidator()
 		dstValidator := rebalancing.GetDstValidator()
 		amt := rebalancing.GetAmt()
-		if srcValidator 
-		srcFound := false
-		dstFound := false
 		if _, valFound := valAddrMap[srcValidator]; valFound {
 			valAddrMap[srcValidator].DelegationAmt -= amt
 		} else {
