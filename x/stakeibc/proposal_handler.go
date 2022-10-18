@@ -5,9 +5,7 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 
-	// "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	"github.com/Stride-Labs/stride/x/stakeibc/keeper"
-	"github.com/Stride-Labs/stride/x/stakeibc/keeper/gov"
 
 	"github.com/Stride-Labs/stride/x/stakeibc/types"
 )
@@ -26,6 +24,5 @@ func NewStakeibcProposalHandler(k keeper.Keeper) govtypes.Handler {
 }
 
 func handleAddValidatorProposal(ctx sdk.Context, k keeper.Keeper, proposal *types.AddValidatorProposal) error {
-	return gov.AddHostZoneExample(ctx, k, proposal)
-	// return gov.SendCoinsExample(ctx, k, proposal)
+	return k.AddValidatorProposal(ctx, proposal)
 }
