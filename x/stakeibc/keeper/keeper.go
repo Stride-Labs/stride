@@ -12,6 +12,8 @@ import (
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	capabilitykeeper "github.com/cosmos/cosmos-sdk/x/capability/keeper"
 	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
+	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
+	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
 	icqkeeper "github.com/Stride-Labs/stride/x/interchainquery/keeper"
 	"github.com/Stride-Labs/stride/x/stakeibc/types"
@@ -46,6 +48,8 @@ type (
 		accountKeeper types.AccountKeeper
 	}
 )
+
+var _ govtypes.StakingKeeper = (*Keeper)(nil)
 
 func NewKeeper(
 	cdc codec.BinaryCodec,
@@ -259,4 +263,21 @@ func (k Keeper) IsRedemptionRateWithinSafetyBounds(ctx sdk.Context, zone types.H
 		return false, sdkerrors.Wrapf(types.ErrRedemptionRateOutsideSafetyBounds, errMsg)
 	}
 	return true, nil
+}
+
+func (k Keeper) IterateBondedValidatorsByPower(ctx sdk.Context, fn func(int64, stakingtypes.ValidatorI) bool) {
+	k.StakingKeeper.IterateBondedValidatorsByPower(ctx, fn)
+}
+
+func (k Keeper) TotalBondedTokens(ctx sdk.Context) sdk.Int {
+	return k.StakingKeeper.TotalBondedTokens(ctx)
+}
+
+func (k Keeper) IterateDelegations(
+	ctx sdk.Context, delegator sdk.AccAddress,
+	fn func(index int64, delegation stakingtypes.DelegationI) (stop bool),
+) {
+	k.StakingKeeper.IterateDelegations(ctx, delegator, func(i int64, delegation stakingtypes.DelegationI) (stop bool) {
+		return fn(i, delegation)
+	})
 }
