@@ -1,7 +1,6 @@
 package keeper
 
 import (
-	"errors"
 	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -10,19 +9,13 @@ import (
 )
 
 func (k Keeper) AddValidatorProposal(ctx sdk.Context, msg *types.AddValidatorProposal) error {
-	fmt.Println("ABOUT TO ADD HOST ZONE")
-
-	hz, found := k.GetHostZone(ctx, "GAIA")
-	if !found {
-		return errors.New("not found")
+	addValMsg := &types.MsgAddValidator{
+		HostZone:   msg.HostZone,
+		Name:       msg.ValidatorName,
+		Address:    msg.ValidatorAddress,
+		Commission: 0, // TODO: Remove commission field from validator
 	}
-
-	hz.HostDenom = "fake-" + msg.HostZone
-
-	k.SetHostZone(ctx, hz)
-
-	fmt.Println("DONE ADDING HOST ZONE")
-	return nil
+	return k.AddValidatorToHostZone(ctx, addValMsg, true)
 }
 
 func (k Keeper) DeleteValidatorProposal(ctx sdk.Context, msg *types.DeleteValidatorProposal) error {
