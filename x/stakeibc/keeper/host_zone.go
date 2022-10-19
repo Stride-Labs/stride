@@ -135,11 +135,8 @@ func (k Keeper) AddValidatorToHostZone(ctx sdk.Context, msg *types.MsgAddValidat
 	}
 
 	// Get max number of validators and confirm we won't exceed it
-	hasSpace, err := k.ValSetHasSpace(ctx, hostZone.Validators)
+	err := k.ConfirmValSetHasSpace(ctx, hostZone.Validators)
 	if err != nil {
-		return err
-	}
-	if !hasSpace {
 		return sdkerrors.Wrap(types.ErrMaxNumValidators, "cannot add validator on host zone")
 	}
 

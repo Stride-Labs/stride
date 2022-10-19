@@ -25,11 +25,8 @@ func (k msgServer) ChangeValidatorWeight(goCtx context.Context, msg *types.MsgCh
 
 			// when changing a weight from 0 to non-zero, make sure we have space in the val set for this new validator
 			if validator.Weight == 0 && msg.Weight > 0 {
-				hasSpace, err := k.ValSetHasSpace(ctx, validators)
+				err := k.ConfirmValSetHasSpace(ctx, validators)
 				if err != nil {
-					return nil, err
-				}
-				if !hasSpace {
 					return nil, sdkerrors.Wrap(types.ErrMaxNumValidators, "cannot set val weight from zero to nonzero on host zone")
 				}
 			}
