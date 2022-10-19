@@ -135,16 +135,12 @@ func (k Keeper) AddValidatorToHostZone(ctx sdk.Context, msg *types.MsgAddValidat
 	}
 
 	// Get max number of validators and confirm we won't exceed it
-	maxNumVals, err := cast.ToIntE(k.GetParam(ctx, types.KeySafetyNumValidators))
+	hasSpace, err := k.ValSetHasSpace(ctx, hostZone.Validators)
 	if err != nil {
-		errMsg := fmt.Sprintf("Error getting safety max num validators | err: %s", err.Error())
-		k.Logger(ctx).Error(errMsg)
-		return sdkerrors.Wrap(types.ErrMaxNumValidators, errMsg)
+		return err
 	}
-	if len(hostZone.Validators) >= maxNumVals {
-		errMsg := fmt.Sprintf("Host Zone (%s) already has max number of validators (%d)", msg.HostZone, maxNumVals)
-		k.Logger(ctx).Error(errMsg)
-		return sdkerrors.Wrap(types.ErrMaxNumValidators, errMsg)
+	if !hasSpace {
+		return sdkerrors.Wrap(types.ErrMaxNumValidators, "cannot add validator on host zone")
 	}
 
 	// Check that we don't already have this validator
@@ -161,8 +157,8 @@ func (k Keeper) AddValidatorToHostZone(ctx sdk.Context, msg *types.MsgAddValidat
 			k.Logger(ctx).Error(errMsg)
 			return sdkerrors.Wrap(types.ErrValidatorAlreadyExists, errMsg)
 		}
-		// Store the min weight to assign to new validator added through governance
-		if validator.Weight < minWeight {
+		// Store the min weight to assign to new validator added through governance (ignore zero-weight validators)
+		if validator.Weight < minWeight && validator.Weight > 0 {
 			minWeight = validator.Weight
 		}
 	}

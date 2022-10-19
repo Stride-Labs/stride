@@ -26,7 +26,7 @@ var (
 	DefaultSafetyMaxRedemptionRateThreshold uint64 = 150           // divide by 100, so 150 = 1.5
 	DefaultMaxStakeICACallsPerEpoch         uint64 = 100
 	DefaultIBCTransferTimeoutNanos          uint64 = 1800000000000 // 30 minutes
-	DefaultSafetyNumValidators              uint64 = 30
+	DefaultSafetyNumValidators              uint64 = 35
 
 	// KeyDepositInterval is store's key for the DepositInterval option
 	KeyDepositInterval                  = []byte("DepositInterval")
