@@ -12,9 +12,12 @@ STRIDE_LOGS=$LOGS/stride.log
 TX_LOGS=$SCRIPT_DIR/logs/tx.log
 KEYS_LOGS=$SCRIPT_DIR/logs/keys.log
 
+# Host zones to start dockernet with
+HOST_CHAINS=(GAIA JUNO OSMO STARS)
+
 # Sets up upgrade if {UPGRADE_NAME} is non-empty
-UPGRADE_NAME="v2"
-UPGRADE_OLD_COMMIT_HASH="01a44aed8d855d5f2926cb8c70f7c9c00357ba36"
+UPGRADE_NAME=""
+UPGRADE_OLD_COMMIT_HASH=""
 
 # DENOMS
 ATOM_DENOM='uatom'

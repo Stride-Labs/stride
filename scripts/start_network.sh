@@ -12,8 +12,6 @@ mkdir -p $SCRIPT_DIR/logs
 HERMES_LOGS=$SCRIPT_DIR/logs/hermes.log
 ICQ_LOGS=$SCRIPT_DIR/logs/icq.log
 
-HOST_CHAINS=(GAIA JUNO OSMO STARS)
-
 # If we're testing an upgrade, setup cosmovisor
 if [[ "$UPGRADE_NAME" != "" ]]; then
     mkdir -p $SCRIPT_DIR/upgrades/cosmovisor/genesis/bin/
