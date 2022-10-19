@@ -12,7 +12,7 @@ const (
 
 func init() {
 	govtypes.RegisterProposalType(ProposalTypeAddValidator)
-	govtypes.RegisterProposalTypeCodec(&AddValidatorProposal{}, "stride/AddValidatorProposal")
+	govtypes.RegisterProposalTypeCodec(&AddValidatorProposal{}, "stakeibc/AddValidatorProposal")
 }
 
 var (
@@ -45,13 +45,19 @@ func (p *AddValidatorProposal) ValidateBasic() error {
 		return err
 	}
 
-	// TODO: Actually validate
+	// TODO: Add more checks?
+	if len(p.ValidatorAddress) == 0 {
+		return ErrRequiredFieldEmpty
+	}
+	if len(p.ValidatorName) == 0 {
+		return ErrRequiredFieldEmpty
+	}
 
 	return nil
 }
 
 func (p AddValidatorProposal) String() string {
-	return fmt.Sprintf(`Add Valdiator Proposal:
+	return fmt.Sprintf(`Add Validator Proposal:
 	Title:            %s
 	Description:      %s
 	HostZone:         %s

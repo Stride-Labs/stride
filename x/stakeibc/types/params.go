@@ -26,6 +26,7 @@ var (
 	DefaultSafetyMaxRedemptionRateThreshold uint64 = 150           // divide by 100, so 150 = 1.5
 	DefaultMaxStakeICACallsPerEpoch         uint64 = 100
 	DefaultIBCTransferTimeoutNanos          uint64 = 1800000000000 // 30 minutes
+	DefaultSafetyNumValidators              uint64 = 30
 
 	// KeyDepositInterval is store's key for the DepositInterval option
 	KeyDepositInterval                  = []byte("DepositInterval")
@@ -43,6 +44,7 @@ var (
 	KeySafetyMaxRedemptionRateThreshold = []byte("SafetyMaxRedemptionRateThreshold")
 	KeyMaxStakeICACallsPerEpoch         = []byte("MaxStakeICACallsPerEpoch")
 	KeyIBCTransferTimeoutNanos          = []byte("IBCTransferTimeoutNanos")
+	KeySafetyNumValidators              = []byte("SafetyNumValidators")
 )
 
 var _ paramtypes.ParamSet = (*Params)(nil)
@@ -69,6 +71,7 @@ func NewParams(
 	safety_min_redemption_rate_threshold uint64,
 	safety_max_redemption_rate_threshold uint64,
 	ibc_transfer_timeout_nanos uint64,
+	safety_num_validators uint64,
 ) Params {
 	return Params{
 		DepositInterval:                  deposit_interval,
@@ -86,6 +89,7 @@ func NewParams(
 		SafetyMinRedemptionRateThreshold: safety_min_redemption_rate_threshold,
 		SafetyMaxRedemptionRateThreshold: safety_max_redemption_rate_threshold,
 		IbcTransferTimeoutNanos:          ibc_transfer_timeout_nanos,
+		SafetyNumValidators:              safety_num_validators,
 	}
 }
 
@@ -107,6 +111,7 @@ func DefaultParams() Params {
 		DefaultSafetyMinRedemptionRateThreshold,
 		DefaultSafetyMaxRedemptionRateThreshold,
 		DefaultIBCTransferTimeoutNanos,
+		DefaultSafetyNumValidators,
 	)
 }
 
@@ -128,6 +133,7 @@ func (p *Params) ParamSetPairs() paramtypes.ParamSetPairs {
 		paramtypes.NewParamSetPair(KeySafetyMinRedemptionRateThreshold, &p.SafetyMinRedemptionRateThreshold, validMinRedemptionRateThreshold),
 		paramtypes.NewParamSetPair(KeySafetyMaxRedemptionRateThreshold, &p.SafetyMaxRedemptionRateThreshold, validMaxRedemptionRateThreshold),
 		paramtypes.NewParamSetPair(KeyIBCTransferTimeoutNanos, &p.IbcTransferTimeoutNanos, validTimeoutNanos),
+		paramtypes.NewParamSetPair(KeySafetyNumValidators, &p.SafetyNumValidators, isPositive),
 	}
 }
 
