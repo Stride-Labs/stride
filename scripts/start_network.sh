@@ -19,6 +19,7 @@ if [[ "$UPGRADE_NAME" != "" ]]; then
     printf "\n>>> UPGRADE ENABLED! ($UPGRADE_NAME)\n\n"
     
     # Update binary #2 with the binary that was just compiled
+    mkdir -p $SCRIPT_DIR/upgrades/binaries
     rm -f $SCRIPT_DIR/upgrades/binaries/strided2
     cp $SCRIPT_DIR/../build/strided $SCRIPT_DIR/upgrades/binaries/strided2
 
