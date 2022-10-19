@@ -2,7 +2,6 @@ package cli
 
 import (
 	"fmt"
-	"strconv"
 	"strings"
 
 	"github.com/cosmos/cosmos-sdk/client"
@@ -15,17 +14,15 @@ import (
 	"github.com/Stride-Labs/stride/x/stakeibc/types"
 )
 
-var _ = strconv.Itoa(0)
-
 func CmdAddValidatorProposal() *cobra.Command {
 
 	cmd := &cobra.Command{
-		Use:   "add-validator-proposal [host-zone] [name] [address] [deposit]",
+		Use:   "add-validator [host-zone] [name] [address] [deposit]",
 		Short: "Submit an add-validator proposal",
 		Long: strings.TrimSpace(
 			fmt.Sprintf(`Submit an add-validator proposal along with an initial deposit.
 Example:
-$ %s tx gov submit-proposal add-validator-proposal juno-1 imperator juno123... --from=<key_or_address>
+$ %s tx gov submit-proposal add-validator juno-1 imperator juno123... --from=<key_or_address>
 `, version.AppName),
 		),
 		Args: cobra.ExactArgs(4),
