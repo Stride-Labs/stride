@@ -54,7 +54,9 @@ func RebalanceCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ac
 	// deserialize the args
 	rebalanceCallback, err := k.UnmarshalRebalanceCallbackArgs(ctx, args)
 	if err != nil {
-		return err
+		errMsg := fmt.Sprintf("Unable to unmarshal rebalance callback args | %s", err.Error())
+		k.Logger(ctx).Error(errMsg)
+		return sdkerrors.Wrapf(types.ErrUnmarshalFailure, errMsg)
 	}
 	k.Logger(ctx).Info(fmt.Sprintf("RebalanceCallback %v", rebalanceCallback))
 	hostZone := rebalanceCallback.GetHostZoneId()
