@@ -75,12 +75,18 @@ ADMIN_TOKENS=1000000000
 STRIDE_CHAIN_ID=STRIDE
 STRIDE_NODE_PREFIX=stride
 STRIDE_NUM_NODES=3
-STRIDE_CMD="$SCRIPT_DIR/../build/strided"
 STRIDE_VAL_PREFIX=val
 STRIDE_DENOM=$STRD_DENOM
 STRIDE_RPC_PORT=26657
 STRIDE_ADMIN_ACCT=admin
 STRIDE_ADMIN_ADDRESS=stride1u20df3trc2c2zdhm8qvh2hdjx9ewh00sv6eyy8
+
+# Binaries are contigent on whether we're doing an upgrade or not
+if [[ "$UPGRADE_NAME" == "" ]]; then 
+  STRIDE_CMD="$SCRIPT_DIR/../build/strided"
+else
+  STRIDE_CMD="$SCRIPT_DIR/upgrades/binaries/strided1"
+fi
 STRIDE_MAIN_CMD="$STRIDE_CMD --home $SCRIPT_DIR/state/${STRIDE_NODE_PREFIX}1"
 
 STRIDE_MNEMONIC_1="close soup mirror crew erode defy knock trigger gather eyebrow tent farm gym gloom base lemon sleep weekend rich forget diagram hurt prize fly"
@@ -301,4 +307,8 @@ GET_ICA_ADDR() {
   ica_type="$2" #delegation, fee, redemption, or withdrawal
 
   $STRIDE_MAIN_CMD q stakeibc show-host-zone $chain_id | grep ${ica_type}Account -A 1 | grep address | awk '{print $2}'
+}
+
+TRIM_TX() {
+  grep -E "code:|txhash:" | sed 's/^/  /'
 }
