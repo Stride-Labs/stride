@@ -4,6 +4,8 @@ set -eu
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 source ${SCRIPT_DIR}/vars.sh
 
+HOST_CHAINS=(GAIA JUNO OSMO STARS)
+
 # cleanup any stale state
 make stop-docker
 rm -rf $SCRIPT_DIR/state $SCRIPT_DIR/logs/*.log $SCRIPT_DIR/logs/temp
@@ -14,17 +16,22 @@ ICQ_LOGS=$SCRIPT_DIR/logs/icq.log
 
 # If we're testing an upgrade, setup cosmovisor
 if [[ "$UPGRADE_NAME" != "" ]]; then
+    # Create cosmovisor directories
     mkdir -p $SCRIPT_DIR/upgrades/cosmovisor/genesis/bin/
     mkdir -p $SCRIPT_DIR/upgrades/cosmovisor/upgrades/$UPGRADE_NAME/bin/
     mkdir -p $SCRIPT_DIR/state/stride/cosmovisor
 
+    # Update binary2 with the binary that was just compiled
     rm -f $SCRIPT_DIR/upgrades/binaries/strided2
     cp $SCRIPT_DIR/../build/strided $SCRIPT_DIR/upgrades/binaries/strided2
+
+    # Place the two binaries in the appropriate cosmosvisor directory
     cp $SCRIPT_DIR/upgrades/binaries/strided1 $SCRIPT_DIR/upgrades/cosmovisor/genesis/bin/strided
     cp $SCRIPT_DIR/upgrades/binaries/strided2 $SCRIPT_DIR/upgrades/cosmovisor/upgrades/$UPGRADE_NAME/bin/strided
 
     # Build a cosmovisor image with the old binary and replace the stride docker image with a new one
     #  that has both binaries and is running cosmovisor
+    # The reason for having a separate cosmovisor image is so we can cache the building of cosmovisor and the old binary
     docker build -t stridezone:cosmovisor --build-arg old_commit_hash=$UPGRADE_OLD_COMMIT_HASH -f ${SCRIPT_DIR}/upgrades/Dockerfile.cosmovisor .
     docker build -t stridezone:stride -f ${SCRIPT_DIR}/upgrades/Dockerfile.stride .
 fi
