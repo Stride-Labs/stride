@@ -120,13 +120,14 @@ func (k msgServer) RebalanceValidators(goCtx context.Context, msg *types.MsgReba
 			// if overWeightElem is positive, we're done rebalancing
 			break
 		}
+		redelegateMsg := &stakingTypes.MsgBeginRedelegate{}
 		if abs(underWeightElem.deltaAmt) > abs(overWeightElem.deltaAmt) {
 			// if the underweight element is more off than the overweight element
 			// we transfer stake from the underweight element to the overweight element
 			underWeightElem.deltaAmt -= abs(overWeightElem.deltaAmt)
 			overWeightIndex += 1
 			// issue an ICA call to the host zone to rebalance the validator
-			redelegateMsg := &stakingTypes.MsgBeginRedelegate{
+			redelegateMsg = &stakingTypes.MsgBeginRedelegate{
 				DelegatorAddress:    delegatorAddress,
 				ValidatorSrcAddress: overWeightElem.valAddr,
 				ValidatorDstAddress: underWeightElem.valAddr,
@@ -138,7 +139,7 @@ func (k msgServer) RebalanceValidators(goCtx context.Context, msg *types.MsgReba
 			overWeightElem.deltaAmt += underWeightElem.deltaAmt
 			underWeightIndex -= 1
 			// issue an ICA call to the host zone to rebalance the validator
-			redelegateMsg := &stakingTypes.MsgBeginRedelegate{
+			redelegateMsg = &stakingTypes.MsgBeginRedelegate{
 				DelegatorAddress:    delegatorAddress,
 				ValidatorSrcAddress: overWeightElem.valAddr,
 				ValidatorDstAddress: underWeightElem.valAddr,
@@ -150,7 +151,7 @@ func (k msgServer) RebalanceValidators(goCtx context.Context, msg *types.MsgReba
 			underWeightIndex -= 1
 			overWeightIndex += 1
 			// issue an ICA call to the host zone to rebalance the validator
-			redelegateMsg := &stakingTypes.MsgBeginRedelegate{
+			redelegateMsg = &stakingTypes.MsgBeginRedelegate{
 				DelegatorAddress:    delegatorAddress,
 				ValidatorSrcAddress: overWeightElem.valAddr,
 				ValidatorDstAddress: underWeightElem.valAddr,
@@ -159,11 +160,13 @@ func (k msgServer) RebalanceValidators(goCtx context.Context, msg *types.MsgReba
 			overWeightElem.deltaAmt = 0
 			underWeightElem.deltaAmt = 0
 		}
-		lastMsg := (msgs[len(msgs)-1]).(*stakingTypes.MsgBeginRedelegate)
+		// add the rebalancing to the callback
+		// lastMsg grabs rebalanceMsg from above (due to the type, it's hard to )
+		// lastMsg := (msgs[len(msgs)-1]).(*stakingTypes.MsgBeginRedelegate)
 		rebalanceCallback.Rebalancings = append(rebalanceCallback.Rebalancings, &types.Rebalancing{
-			SrcValidator: lastMsg.ValidatorSrcAddress,
-			DstValidator: lastMsg.ValidatorDstAddress,
-			Amt:          lastMsg.Amount.Amount.Uint64(),
+			SrcValidator: redelegateMsg.ValidatorSrcAddress,
+			DstValidator: redelegateMsg.ValidatorDstAddress,
+			Amt:          redelegateMsg.Amount.Amount.Uint64(),
 		})
 	}
 	// marshall the callback
