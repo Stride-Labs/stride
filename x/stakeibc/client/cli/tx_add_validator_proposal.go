@@ -18,7 +18,7 @@ import (
 	"github.com/Stride-Labs/stride/x/stakeibc/types"
 )
 
-func parseAddValidatorProposalWithDepositWithDeposit(cdc codec.JSONCodec, proposalFile string) (types.AddValidatorProposalWithDeposit, error) {
+func parseAddValidatorProposalFile(cdc codec.JSONCodec, proposalFile string) (types.AddValidatorProposalWithDeposit, error) {
 
 	proposal := types.AddValidatorProposalWithDeposit{}
 
@@ -66,7 +66,7 @@ Where proposal.json contains:
 				return err
 			}
 
-			proposal, err := parseAddValidatorProposalWithDepositWithDeposit(clientCtx.Codec, args[0])
+			proposal, err := parseAddValidatorProposalFile(clientCtx.Codec, args[0])
 			if err != nil {
 				return err
 			}
