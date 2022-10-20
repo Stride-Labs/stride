@@ -26,4 +26,4 @@ jobs:
 
       - name: Run step admins.go changed
         if: steps.admin-go-changed.outputs.any_changed == 'true'
-        run: exit 1
+        run: echo "Admin file was changed" && exit 1
