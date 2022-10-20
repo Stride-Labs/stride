@@ -79,11 +79,10 @@ Where proposal.json contains:
 			}
 
 			// if deposit from flags is not empty, it overrides the deposit from proposal
-			depositStr := proposal.Deposit
 			if depositFromFlags != "" {
-				depositStr = depositFromFlags
+				proposal.Deposit = depositFromFlags
 			}
-			deposit, err := sdk.ParseCoinsNormalized(depositStr)
+			deposit, err := sdk.ParseCoinsNormalized(proposal.Deposit)
 			if err != nil {
 				return err
 			}
