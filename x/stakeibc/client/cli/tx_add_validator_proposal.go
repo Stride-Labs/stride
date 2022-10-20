@@ -2,50 +2,90 @@ package cli
 
 import (
 	"fmt"
+	"io/ioutil"
 	"strings"
+
+	"github.com/cosmos/cosmos-sdk/codec"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/version"
+	govcli "github.com/cosmos/cosmos-sdk/x/gov/client/cli"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	"github.com/spf13/cobra"
 
 	"github.com/Stride-Labs/stride/x/stakeibc/types"
 )
 
+// // Proposal flags.
+// const (
+// 	FlagValidatorAddress = "validator-address"
+// 	FlagHostZone         = "host-zone"
+// 	FlagValidatorName    = "validator-name"
+// )
+
+func parseAddValidatorProposalWithDepositWithDeposit(cdc codec.JSONCodec, proposalFile string) (types.AddValidatorProposalWithDeposit, error) {
+
+	proposal := types.AddValidatorProposalWithDeposit{}
+
+	contents, err := ioutil.ReadFile(proposalFile)
+	if err != nil {
+		return proposal, err
+	}
+
+	if err = cdc.UnmarshalJSON(contents, &proposal); err != nil {
+		return proposal, err
+	}
+
+	proposal.Title = fmt.Sprintf("Add %s validator %s (address: %s)",
+		proposal.HostZone, proposal.ValidatorName, proposal.ValidatorAddress)
+
+	return proposal, nil
+}
+
 func CmdAddValidatorProposal() *cobra.Command {
 
 	cmd := &cobra.Command{
-		Use:   "add-validator [host-zone] [name] [address] [deposit]",
+		Use:   "add-validator [proposal-file]",
 		Short: "Submit an add-validator proposal",
 		Long: strings.TrimSpace(
 			fmt.Sprintf(`Submit an add-validator proposal along with an initial deposit.
+The proposal details must be supplied via a JSON file.
+
 Example:
-$ %s tx gov submit-proposal add-validator juno-1 imperator juno123... --from=<key_or_address>
+$ %s tx gov submit-proposal add-validator <path/to/proposal.json> --from=<key_or_address>
+
+Where proposal.json contains:
+{
+    "description": "Proposal to add Imperator because they contribute in XYZ ways!",
+    "hostZone": "GAIA",
+    "validatorName": "Imperator",
+    "validatorAddress": "cosmosvaloper1v5y0tg0jllvxf5c3afml8s3awue0ymju89frut",
+    "deposit": "64000000ustrd"
+}
 `, version.AppName),
 		),
-		Args: cobra.ExactArgs(4),
+		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
-			argHostZone := args[0]
-			argName := args[1]
-			argAddress := args[2]
-			argDeposit := args[3] // non-standard way to take a deposit but should work
-
 			clientCtx, err := client.GetClientTxContext(cmd)
 			if err != nil {
 				return err
 			}
 
-			deposit, err := sdk.ParseCoinsNormalized(argDeposit)
+			proposal, err := parseAddValidatorProposalWithDepositWithDeposit(clientCtx.Codec, args[0])
 			if err != nil {
 				return err
 			}
+
 			from := clientCtx.GetFromAddress()
 
-			title := fmt.Sprintf("add-validator(%s) %s %s", argHostZone, argName, argAddress)
-			description := fmt.Sprintf("Proposal to add %s validator %s with address %s", argHostZone, argName, argAddress)
-			content := types.NewAddValidatorProposal(title, description, argHostZone, argName, argAddress)
+			deposit, err := sdk.ParseCoinsNormalized(proposal.Deposit)
+			if err != nil {
+				return err
+			}
+
+			content := types.NewAddValidatorProposal(proposal.Title, proposal.Description, proposal.HostZone, proposal.ValidatorName, proposal.ValidatorAddress)
 
 			msg, err := govtypes.NewMsgSubmitProposal(content, deposit, from)
 			if err != nil {
@@ -57,6 +97,8 @@ $ %s tx gov submit-proposal add-validator juno-1 imperator juno123... --from=<ke
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
 		},
 	}
+
+	cmd.Flags().String(govcli.FlagDeposit, "", "deposit of proposal")
 
 	return cmd
 }
