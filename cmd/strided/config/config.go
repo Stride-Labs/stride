@@ -27,7 +27,7 @@ const (
 
 const (
 	HumanReadableCoinUnit = "STRD"
-	BaseCoinUnit          = "strd"
+	BaseCoinUnit          = "ustrd"
 	DefaultBondDenom      = BaseCoinUnit
 )
 
