@@ -130,7 +130,7 @@ func (s *KeeperTestSuite) TestRegisterHostZone_Success() {
 	hostZoneUnbonding := epochUnbondingRecord.HostZoneUnbondings[0]
 	s.Require().Equal(HostChainId, hostZoneUnbonding.HostZoneId, "host zone unbonding set for this host zone")
 	s.Require().Equal(uint64(0), hostZoneUnbonding.NativeTokenAmount, "host zone unbonding set to 0 tokens")
-	s.Require().Equal(recordstypes.HostZoneUnbonding_BONDED, hostZoneUnbonding.Status, "host zone unbonding set to bonded")
+	s.Require().Equal(recordstypes.HostZoneUnbonding_UNBONDING_QUEUE, hostZoneUnbonding.Status, "host zone unbonding set to bonded")
 
 	// Confirm a module account was created
 	hostZoneModuleAccount, err := sdk.AccAddressFromBech32(hostZone.Address)
@@ -144,7 +144,7 @@ func (s *KeeperTestSuite) TestRegisterHostZone_Success() {
 		Amount:             int64(0),
 		HostZoneId:         hostZone.ChainId,
 		Denom:              hostZone.HostDenom,
-		Status:             recordstypes.DepositRecord_TRANSFER,
+		Status:             recordstypes.DepositRecord_TRANSFER_QUEUE,
 		DepositEpochNumber: tc.strideEpochNumber,
 	}
 
