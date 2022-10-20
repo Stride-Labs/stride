@@ -1,9 +1,12 @@
 package types
 
 import (
-	"github.com/Stride-Labs/stride/utils"
+	fmt "fmt"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+
+	"github.com/Stride-Labs/stride/utils"
 )
 
 const TypeMsgRebalanceValidators = "rebalance_validators"
@@ -46,6 +49,9 @@ func (msg *MsgRebalanceValidators) ValidateBasic() error {
 	}
 	if err := utils.ValidateAdminAddress(msg.Creator); err != nil {
 		return err
+	}
+	if (msg.NumRebalance < 1) || (msg.NumRebalance > 10) {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, fmt.Sprintf("invalid number of validators to rebalance (%d)", msg.NumRebalance))
 	}
 	return nil
 }

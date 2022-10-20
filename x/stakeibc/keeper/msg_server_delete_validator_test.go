@@ -93,7 +93,7 @@ func (s *KeeperTestSuite) TestDeleteValidator_HostZoneNotFound() {
 	s.Require().EqualError(err, errMsg)
 }
 
-func (s *KeeperTestSuite) TestAddValidator_AddressNotFound() {
+func (s *KeeperTestSuite) TestDeleteValidator_AddressNotFound() {
 	tc := s.SetupDeleteValidator()
 
 	// Build message with a validator address that does not exist
@@ -107,7 +107,7 @@ func (s *KeeperTestSuite) TestAddValidator_AddressNotFound() {
 	s.Require().EqualError(err, errMsg)
 }
 
-func (s *KeeperTestSuite) TestAddValidator_NonZeroDelegation() {
+func (s *KeeperTestSuite) TestDeleteValidator_NonZeroDelegation() {
 	tc := s.SetupDeleteValidator()
 
 	// Update val1 to have a non-zero delegation
@@ -122,7 +122,7 @@ func (s *KeeperTestSuite) TestAddValidator_NonZeroDelegation() {
 	s.Require().EqualError(err, errMsg)
 }
 
-func (s *KeeperTestSuite) TestAddValidator_NonZeroWeight() {
+func (s *KeeperTestSuite) TestDeleteValidator_NonZeroWeight() {
 	tc := s.SetupDeleteValidator()
 
 	// Update val1 to have a non-zero weight

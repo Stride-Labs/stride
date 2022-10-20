@@ -13,6 +13,7 @@ const (
 	UNDELEGATE = "undelegate"
 	REINVEST   = "reinvest"
 	REDEMPTION = "redemption"
+  REBALANCE = "rebalance"
 )
 
 // ICACallbacks wrapper struct for stakeibc keeper
@@ -49,6 +50,7 @@ func (c ICACallbacks) RegisterICACallbacks() icacallbackstypes.ICACallbackHandle
 		AddICACallback(CLAIM, ICACallback(ClaimCallback)).
 		AddICACallback(UNDELEGATE, ICACallback(UndelegateCallback)).
 		AddICACallback(REINVEST, ICACallback(ReinvestCallback)).
-		AddICACallback(REDEMPTION, ICACallback(RedemptionCallback))
+		AddICACallback(REDEMPTION, ICACallback(RedemptionCallback)).
+		AddICACallback(REBALANCE, ICACallback(RebalanceCallback))
 	return a.(ICACallbacks)
 }

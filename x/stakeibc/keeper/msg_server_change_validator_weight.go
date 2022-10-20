@@ -4,8 +4,10 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/Stride-Labs/stride/x/stakeibc/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+
+	"github.com/Stride-Labs/stride/x/stakeibc/types"
 )
 
 func (k msgServer) ChangeValidatorWeight(goCtx context.Context, msg *types.MsgChangeValidatorWeight) (*types.MsgChangeValidatorWeightResponse, error) {
@@ -16,12 +18,22 @@ func (k msgServer) ChangeValidatorWeight(goCtx context.Context, msg *types.MsgCh
 		k.Logger(ctx).Error(fmt.Sprintf("Host Zone %s not found", msg.HostZone))
 		return nil, types.ErrInvalidHostZone
 	}
+
 	validators := hostZone.Validators
 	for _, validator := range validators {
 		if validator.GetAddress() == msg.ValAddr {
+
+			// when changing a weight from 0 to non-zero, make sure we have space in the val set for this new validator
+			if validator.Weight == 0 && msg.Weight > 0 {
+				err := k.ConfirmValSetHasSpace(ctx, validators)
+				if err != nil {
+					return nil, sdkerrors.Wrap(types.ErrMaxNumValidators, "cannot set val weight from zero to nonzero on host zone")
+				}
+			}
 			validator.Weight = msg.Weight
 			k.SetHostZone(ctx, hostZone)
 			return &types.MsgChangeValidatorWeightResponse{}, nil
+
 		}
 	}
 
