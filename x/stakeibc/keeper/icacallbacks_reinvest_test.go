@@ -45,7 +45,7 @@ func (s *KeeperTestSuite) SetupReinvestCallback() ReinvestCallbackTestCase {
 		DepositEpochNumber: 1,
 		HostZoneId:         HostChainId,
 		Amount:             reinvestAmt,
-		Status:             recordtypes.DepositRecord_STAKE,
+		Status:             recordtypes.DepositRecord_DELEGATION_QUEUE,
 		Source:             recordtypes.DepositRecord_WITHDRAWAL_ICA,
 	}
 	epochTracker := stakeibc.EpochTracker{
