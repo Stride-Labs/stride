@@ -10,8 +10,7 @@ on:
 
 jobs:
   build:
-    
-runs-on: ubuntu-latest  
+    runs-on: ubuntu-latest
     name: Verify admins.go did not change
     steps:
       - uses: actions/checkout@v3
