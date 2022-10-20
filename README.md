@@ -65,7 +65,7 @@ You can optionally pass build arguments to specify which binary to rebuild
 2. `g` This will re-build the Gaia binary
 3. `j` This will re-build the Juno binary
 4. `o` This will re-build the Osmo binary
-5. `z` This will re-build the Stargaze binary
+5. `t` This will re-build the Stargaze binary
 6. `r` This will re-build the Go Relayer binary
 7. `h` This will re-build the Hermes binary
 8. `i` This will re-build the ICQ binary
