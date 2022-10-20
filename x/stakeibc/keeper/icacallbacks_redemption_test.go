@@ -44,11 +44,11 @@ func (s *KeeperTestSuite) SetupRedemptionCallback() RedemptionCallbackTestCase {
 		Id: recordId2,
 	}
 
-	// the hostZoneUnbonding should have HostZoneUnbonding_UNBONDED - meaning unbonding has completed, but the tokens
+	// the hostZoneUnbonding should have HostZoneUnbonding_EXIT_TRANSFER_QUEUE - meaning unbonding has completed, but the tokens
 	// have not yet been transferred to the redemption account
 	hostZoneUnbonding := recordtypes.HostZoneUnbonding{
 		HostZoneId:            HostChainId,
-		Status:                recordtypes.HostZoneUnbonding_UNBONDED,
+		Status:                recordtypes.HostZoneUnbonding_EXIT_TRANSFER_QUEUE,
 		UserRedemptionRecords: []string{recordId1, recordId2},
 	}
 
@@ -105,9 +105,9 @@ func (s *KeeperTestSuite) TestRedemptionCallback_Successful() {
 		epochUnbondingRecord, found := s.App.RecordsKeeper.GetEpochUnbondingRecord(s.Ctx(), epochNumber)
 		s.Require().True(found, "epoch unbonding record found")
 		for _, hzu := range epochUnbondingRecord.HostZoneUnbondings {
-			// check that the status is transferred
+			// check that the status is CLAIMABLE
 			if hzu.HostZoneId == HostChainId {
-				s.Require().Equal(recordtypes.HostZoneUnbonding_TRANSFERRED, hzu.Status, "host zone unbonding status is TRANSFERRED")
+				s.Require().Equal(recordtypes.HostZoneUnbonding_CLAIMABLE, hzu.Status, "host zone unbonding status is CLAIMABLE")
 			}
 		}
 	}
@@ -120,8 +120,8 @@ func (s *KeeperTestSuite) checkRedemptionStateIfCallbackFailed(tc RedemptionCall
 		epochUnbondingRecord, found := s.App.RecordsKeeper.GetEpochUnbondingRecord(s.Ctx(), epochNumber)
 		s.Require().True(found, "epoch unbonding record found")
 		for _, hzu := range epochUnbondingRecord.HostZoneUnbondings {
-			// check that the status is NOT transferred
-			s.Require().Equal(recordtypes.HostZoneUnbonding_UNBONDED, hzu.Status, "host zone unbonding status is NOT TRANSFERRED (UNBONDED)")
+			// check that the status is NOT CLAIMABLE
+			s.Require().Equal(recordtypes.HostZoneUnbonding_EXIT_TRANSFER_QUEUE, hzu.Status, "host zone unbonding status is NOT CLAIMABLE (EXIT_TRANSFER_QUEUE)")
 		}
 	}
 }
@@ -167,7 +167,7 @@ func (s *KeeperTestSuite) TestRedemptionCallback_EpochUnbondingRecordNotFound() 
 	s.Require().NoError(err)
 	invalidArgs.args = args
 	err = stakeibckeeper.RedemptionCallback(s.App.StakeibcKeeper, s.Ctx(), invalidArgs.packet, invalidArgs.ack, invalidArgs.args)
-	expectedErr := fmt.Sprintf("Epoch unbonding record not found for epoch #%d: key not found", tc.initialState.epochNumber+1)
+	expectedErr := fmt.Sprintf("Error fetching host zone unbonding record for epoch: %d, host zone: GAIA: host zone not found", tc.initialState.epochNumber+1)
 	s.Require().EqualError(err, expectedErr)
 	s.checkRedemptionStateIfCallbackFailed(tc)
 }
@@ -181,6 +181,6 @@ func (s *KeeperTestSuite) TestRedemptionCallback_HostZoneUnbondingNotFound() {
 	epochUnbondingRecord.HostZoneUnbondings = []*recordtypes.HostZoneUnbonding{}
 	s.App.RecordsKeeper.SetEpochUnbondingRecord(s.Ctx(), epochUnbondingRecord)
 	err := stakeibckeeper.RedemptionCallback(s.App.StakeibcKeeper, s.Ctx(), valid.packet, valid.ack, valid.args)
-	s.Require().EqualError(err, fmt.Sprintf("Could not find host zone unbonding %d for host zone GAIA: not found", tc.initialState.epochNumber))
+	s.Require().EqualError(err, fmt.Sprintf("Error fetching host zone unbonding record for epoch: %d, host zone: GAIA: host zone not found", tc.initialState.epochNumber))
 	s.checkRedemptionStateIfCallbackFailed(tc)
 }

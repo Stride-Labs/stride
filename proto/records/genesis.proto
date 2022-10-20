@@ -55,10 +55,14 @@ message DepositRecord {
   string denom = 3;
   string hostZoneId = 4; 
   enum Status {
-    // pending transfer to delegate account
-    TRANSFER = 0;
-    // pending staking on delegate account
-    STAKE = 1;
+    // in transfer queue to be sent to the delegation ICA
+    TRANSFER_QUEUE = 0;
+    // transfer in progress (IBC packet sent, ack not received)
+    TRANSFER_IN_PROGRESS = 2;
+    // in staking queue on delegation ICA
+    DELEGATION_QUEUE = 1;
+    // staking in progress (ICA packet sent, ack not received)
+    DELEGATION_IN_PROGRESS = 3;
   }
   enum Source {
     STRIDE = 0;
@@ -75,11 +79,13 @@ message DepositRecord {
 message HostZoneUnbonding {
   enum Status {
     // tokens bonded on delegate account
-    BONDED = 0;
+    UNBONDING_QUEUE = 0;
+    UNBONDING_IN_PROGRESS = 3;
     // unbonding completed on delegate account
-    UNBONDED = 1;
+    EXIT_TRANSFER_QUEUE = 1;
+    EXIT_TRANSFER_IN_PROGRESS = 4;
     // transfer success
-    TRANSFERRED = 2;
+    CLAIMABLE = 2;
   }
   uint64 stTokenAmount = 1;
   uint64 nativeTokenAmount = 2;
