@@ -1,0 +1,29 @@
+name: Verify no ADMINS change
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest  # windows-latest | macos-latest
+    name: Verify admins.go did not change
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0  # OR "2" -> To retrieve the preceding commit.
+
+      - name: Check if admins.go changed
+        id: admin-go-changed
+        uses: tj-actions/changed-files@v32
+        with:
+          files: |
+            utils/admins.go
+
+      - name: Run step admins.go changed
+        if: steps.admin-go-changed.outputs.any_changed == 'true'
+        run: exit 1

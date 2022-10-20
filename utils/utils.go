@@ -15,11 +15,6 @@ import (
 	recordstypes "github.com/Stride-Labs/stride/x/records/types"
 )
 
-var ADMINS = map[string]bool{
-	"stride1k8c2m5cn322akk5wy8lpt87dd2f4yh9azg7jlh": true, // F5
-	"stride10d07y265gmmuvt4z0w9aw880jnsr700jefnezl": true, // gov module
-}
-
 func FilterDepositRecords(arr []recordstypes.DepositRecord, condition func(recordstypes.DepositRecord) bool) (ret []recordstypes.DepositRecord) {
 	for _, elem := range arr {
 		if condition(elem) {
