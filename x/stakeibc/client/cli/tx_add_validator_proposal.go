@@ -2,7 +2,7 @@ package cli
 
 import (
 	"fmt"
-	"io/ioutil"
+	"os"
 	"strings"
 
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -22,7 +22,7 @@ func parseAddValidatorProposalWithDepositWithDeposit(cdc codec.JSONCodec, propos
 
 	proposal := types.AddValidatorProposalWithDeposit{}
 
-	contents, err := ioutil.ReadFile(proposalFile)
+	contents, err := os.ReadFile(proposalFile)
 	if err != nil {
 		return proposal, err
 	}
