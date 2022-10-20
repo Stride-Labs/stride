@@ -26,17 +26,17 @@ build_local_and_docker() {
    return $docker_build_succeeded && $local_build_succeeded
 }
 
-ADMIN_FILE=${SCRIPT_DIR}/../utils/admins.go
-ADMIN_FILE_BACKUP=${SCRIPT_DIR}/../utils/admins.go.main
+ADMINS_FILE=${SCRIPT_DIR}/../utils/admins.go
+ADMINS_FILE_BACKUP=${SCRIPT_DIR}/../utils/admins.go.main
 
 replace_admin_address() {
-   cp $ADMIN_FILE $ADMIN_FILE_BACKUP
-   sed -i -E "s|stride1k8c2m5cn322akk5wy8lpt87dd2f4yh9azg7jlh|$STRIDE_ADMIN_ADDRESS|g" $ADMIN_FILE
+   cp $ADMINS_FILE $ADMINS_FILE_BACKUP
+   sed -i -E "s|stride1k8c2m5cn322akk5wy8lpt87dd2f4yh9azg7jlh|$STRIDE_ADMIN_ADDRESS|g" $ADMINS_FILE
 }
 
 revert_admin_address() {
-   mv $ADMIN_FILE_BACKUP $ADMIN_FILE
-   rm -f ${ADMIN_FILE}-E
+   mv $ADMINS_FILE_BACKUP $ADMINS_FILE
+   rm -f ${ADMINS_FILE}-E
 }
 
 # build docker images and local binaries
