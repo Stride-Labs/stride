@@ -1,6 +1,6 @@
 # Stride modules
 
-Osmosis implements the following custom modules:
+Stride implements the following custom modules:
 * `epochs` - Makes on-chain timers which other modules can execute code during.
 * `mint` - Controls token supply emissions, and what modules they are directed to.
 * `interchainquery` - Issues queries between IBC chains, verifies state proof and executes callbacks.

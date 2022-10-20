@@ -4,55 +4,72 @@ set -eu
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 source ${SCRIPT_DIR}/vars.sh
 
+HOST_CHAINS=(GAIA JUNO OSMO STARS)
+
 # cleanup any stale state
 make stop-docker
 rm -rf $SCRIPT_DIR/state $SCRIPT_DIR/logs/*.log $SCRIPT_DIR/logs/temp
+mkdir -p $SCRIPT_DIR/logs
 
-STRIDE_LOGS=$SCRIPT_DIR/logs/stride.log
-GAIA_LOGS=$SCRIPT_DIR/logs/gaia.log
 HERMES_LOGS=$SCRIPT_DIR/logs/hermes.log
 ICQ_LOGS=$SCRIPT_DIR/logs/icq.log
 
-# Initialize the state for stride/gaia and relayers
-sh ${SCRIPT_DIR}/init_stride.sh
-sh ${SCRIPT_DIR}/init_gaia.sh
-sh ${SCRIPT_DIR}/init_relayers.sh
+# If we're testing an upgrade, setup cosmovisor
+if [[ "$UPGRADE_NAME" != "" ]]; then
+    printf "\n>>> UPGRADE ENABLED! ($UPGRADE_NAME)\n\n"
+    
+    # Update binary #2 with the binary that was just compiled
+    mkdir -p $SCRIPT_DIR/upgrades/binaries
+    rm -f $SCRIPT_DIR/upgrades/binaries/strided2
+    cp $SCRIPT_DIR/../build/strided $SCRIPT_DIR/upgrades/binaries/strided2
 
-echo "Starting STRIDE chain"
-stride_nodes=$(i=1; while [ $i -le $STRIDE_NUM_NODES ]; do printf "%s " stride$i; i=$(($i + 1)); done;)
-docker-compose up -d $stride_nodes
+    # Build a cosmovisor image with the old binary and replace the stride docker image with a new one
+    #  that has both binaries and is running cosmovisor
+    # The reason for having a separate cosmovisor image is so we can cache the building of cosmovisor and the old binary
+    echo "Building Cosmovisor..."
+    docker build -t stridezone:cosmovisor --build-arg old_commit_hash=$UPGRADE_OLD_COMMIT_HASH -f ${SCRIPT_DIR}/upgrades/Dockerfile.cosmovisor .
 
-echo "Starting GAIA chain"
-gaia_nodes=$(i=1; while [ $i -le $GAIA_NUM_NODES ]; do printf "%s " gaia$i; i=$(($i + 1)); done;)
-docker-compose up -d $gaia_nodes
+    echo "Re-Building Stride with Upgrade Support..."
+    docker build -t stridezone:stride -f ${SCRIPT_DIR}/upgrades/Dockerfile.stride .
 
-docker-compose logs -f stride1 | sed -r -u "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2})?)?[mGK]//g" > $STRIDE_LOGS 2>&1 &
-docker-compose logs -f gaia1 | sed -r -u "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2})?)?[mGK]//g" > $GAIA_LOGS 2>&1 &
+    echo "Done"
+fi
 
-printf "Waiting for STRIDE and GAIA to start..."
-( tail -f -n0 $STRIDE_LOGS & ) | grep -q "finalizing commit of block"
-( tail -f -n0 $GAIA_LOGS & ) | grep -q "finalizing commit of block"
-sleep 5
-echo "Done"
+# Initialize the state for each chain
+for chain_id in STRIDE ${HOST_CHAINS[@]}; do
+    sh ${SCRIPT_DIR}/init_chain.sh $chain_id
+done
 
-printf "Creating connection..."
-$HERMES_EXEC create connection --a-chain $STRIDE_CHAIN_ID --b-chain $GAIA_CHAIN_ID | sed -r -u "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2})?)?[mGK]//g" >> $HERMES_LOGS 2>&1 
-echo "Done"
-
-printf "Creating transfer channel..."
-$HERMES_EXEC create channel --a-chain $GAIA_CHAIN_ID --a-connection connection-0 --a-port transfer --b-port transfer | sed -r -u "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2})?)?[mGK]//g" >> $HERMES_LOGS 2>&1 
-echo "Done"
-
-# printf "Creating clients, connections, and transfer channel"
-# $RELAYER_EXEC transact link stride-gaia
-# echo "DONE"
+# Start the chain and create the transfer channels
+sh ${SCRIPT_DIR}/start_chain.sh STRIDE ${HOST_CHAINS[@]}
+sh ${SCRIPT_DIR}/init_relayers.sh STRIDE ${HOST_CHAINS[@]}
+sh ${SCRIPT_DIR}/create_channels.sh ${HOST_CHAINS[@]}
 
 echo "Starting relayers"
-docker-compose up -d hermes icq
-
+docker-compose up -d hermes 
 docker-compose logs -f hermes | sed -r -u "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2})?)?[mGK]//g" >> $HERMES_LOGS 2>&1 &
-docker-compose logs -f icq | sed -r -u "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2})?)?[mGK]//g" > $ICQ_LOGS 2>&1 &
 
-bash $SCRIPT_DIR/register_host.sh
+# Wait for hermes to start
+( tail -f -n0 $HERMES_LOGS & ) | grep -q -E "Hermes has started"
 
-$SCRIPT_DIR/create_logs.sh &
+# Register all host zones in parallel
+pids=()
+for i in ${!HOST_CHAINS[@]}; do
+    if [[ "$i" != "0" ]]; then sleep 20; fi
+    bash $SCRIPT_DIR/register_host.sh ${HOST_CHAINS[$i]} $i &
+    pids[${i}]=$!
+done
+for i in ${!pids[@]}; do
+    wait ${pids[$i]}
+    echo "${HOST_CHAINS[$i]} - Done"
+done
+
+echo "Starting go relayers..."
+for chain_id in ${HOST_CHAINS[@]}; do
+    chain_name=$(printf "$chain_id" | awk '{ print tolower($0) }')
+
+    docker-compose up -d relayer-${chain_name}
+    docker-compose logs -f relayer-${chain_name} | sed -r -u "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2})?)?[mGK]//g" >> ${LOGS}/relayer-${chain_name}.log 2>&1 &
+done
+
+$SCRIPT_DIR/create_logs.sh ${HOST_CHAINS[@]} &

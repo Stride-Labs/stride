@@ -6,53 +6,65 @@ SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &>/dev/null && pwd)
 
 source ${SCRIPT_DIR}/vars.sh
 
+HOST_CHAINS="$@"
+
 LOGS_DIR=$SCRIPT_DIR/logs
 TEMP_LOGS_DIR=$LOGS_DIR/temp
+
+STATE_LOG=state.log
+BALANCES_LOG=balances.log
+
 mkdir -p $TEMP_LOGS_DIR
 
 while true; do
-    # transactions logs
-    $MAIN_STRIDE_CMD q txs --events message.module=interchainquery --limit=100000 >$TEMP_LOGS_DIR/icq-events.log
-    $MAIN_STRIDE_CMD q txs --events message.module=stakeibc --limit=100000 >$TEMP_LOGS_DIR/stakeibc-events.log
+    N_VALIDATORS_STRIDE=$($STRIDE_MAIN_CMD q tendermint-validator-set | grep -o address | wc -l | tr -dc '0-9')
+    echo "STRIDE @ $($STRIDE_MAIN_CMD q tendermint-validator-set | head -n 1 | tr -dc '0-9') | $N_VALIDATORS_STRIDE VALS" >$TEMP_LOGS_DIR/$STATE_LOG
+    echo "STRIDE @ $($STRIDE_MAIN_CMD q tendermint-validator-set | head -n 1 | tr -dc '0-9') | $N_VALIDATORS_STRIDE VALS" >$TEMP_LOGS_DIR/$BALANCES_LOG
 
-    # accounts
-    GAIA_DELEGATE="cosmos1sy63lffevueudvvlvh2lf6s387xh9xq72n3fsy6n2gr5hm6u2szs2v0ujm"
-    GAIA_WITHDRAWAL="cosmos1x5p8er7e2ne8l54tx33l560l8djuyapny55pksctuguzdc00dj7saqcw2l"
-    GAIA_REDEMPTION="cosmos1xmcwu75s8v7s54k79390wc5gwtgkeqhvzegpj0nm2tdwacv47tmqg9ut30"
-    GAIA_REV="cosmos1wdplq6qjh2xruc7qqagma9ya665q6qhcwju3ng"
-    STRIDE_ADDRESS="stride1uk4ze0x4nvh4fk0xm4jdud58eqn4yxhrt52vv7"
+    for chain_id in ${HOST_CHAINS[@]}; do
+        HOST_MAIN_CMD=$(GET_VAR_VALUE ${chain_id}_MAIN_CMD)
+        N_VALIDATORS_HOST=$($HOST_MAIN_CMD q tendermint-validator-set | grep -o address | wc -l | tr -dc '0-9')
+        echo "$chain_id   @ $($HOST_MAIN_CMD q tendermint-validator-set | head -n 1 | tr -dc '0-9') | $N_VALIDATORS_HOST VALS" >>$TEMP_LOGS_DIR/$STATE_LOG
+        echo "$chain_id   @ $($HOST_MAIN_CMD q tendermint-validator-set | head -n 1 | tr -dc '0-9') | $N_VALIDATORS_HOST VALS" >>$TEMP_LOGS_DIR/$BALANCES_LOG
+    done
 
-    N_VALIDATORS_STRIDE=$($MAIN_STRIDE_CMD q tendermint-validator-set | grep -o address | wc -l | tr -dc '0-9')
-    N_VALIDATORS_GAIA=$($MAIN_GAIA_CMD q tendermint-validator-set | grep -o address | wc -l | tr -dc '0-9')
-    echo "STRIDE @ $($MAIN_STRIDE_CMD q tendermint-validator-set | head -n 1 | tr -dc '0-9') | $N_VALIDATORS_STRIDE VALS" >$TEMP_LOGS_DIR/accounts.log
-    echo "GAIA   @ $($MAIN_GAIA_CMD q tendermint-validator-set | head -n 1 | tr -dc '0-9') | $N_VALIDATORS_GAIA VALS" >>$TEMP_LOGS_DIR/accounts.log
+    printf '\n%s\n' "LIST-HOST-ZONES STRIDE" >>$TEMP_LOGS_DIR/$STATE_LOG
+    $STRIDE_MAIN_CMD q stakeibc list-host-zone >>$TEMP_LOGS_DIR/$STATE_LOG
+    printf '\n%s\n' "LIST-DEPOSIT-RECORDS" >>$TEMP_LOGS_DIR/$STATE_LOG
+    $STRIDE_MAIN_CMD q records list-deposit-record  >> $TEMP_LOGS_DIR/$STATE_LOG
+    printf '\n%s\n' "LIST-EPOCH-UNBONDING-RECORDS" >>$TEMP_LOGS_DIR/$STATE_LOG
+    $STRIDE_MAIN_CMD q records list-epoch-unbonding-record  >> $TEMP_LOGS_DIR/$STATE_LOG
+    printf '\n%s\n' "LIST-USER-REDEMPTION-RECORDS" >>$TEMP_LOGS_DIR/$STATE_LOG
+    $STRIDE_MAIN_CMD q records list-user-redemption-record >> $TEMP_LOGS_DIR/$STATE_LOG
 
-    printf '\n%s\n' "BALANCES STRIDE" >>$TEMP_LOGS_DIR/accounts.log
-    $MAIN_STRIDE_CMD q bank balances $STRIDE_ADDRESS >>$TEMP_LOGS_DIR/accounts.log
-    printf '\n%s\n' "BALANCES GAIA (DELEGATION ACCT)" >>$TEMP_LOGS_DIR/accounts.log
-    $MAIN_GAIA_CMD q bank balances $GAIA_DELEGATE >>$TEMP_LOGS_DIR/accounts.log
-    printf '\n%s\n' "DELEGATIONS GAIA (DELEGATION ACCT)" >>$TEMP_LOGS_DIR/accounts.log
-    $MAIN_GAIA_CMD q staking delegations $GAIA_DELEGATE >>$TEMP_LOGS_DIR/accounts.log
-    printf '\n%s\n' "UNBONDING-DELEGATIONS GAIA (DELEGATION ACCT)" >>$TEMP_LOGS_DIR/accounts.log
-    $MAIN_GAIA_CMD q staking unbonding-delegations $GAIA_DELEGATE >>$TEMP_LOGS_DIR/accounts.log
+    printf '\n%s\n' "BALANCES STRIDE" >>$TEMP_LOGS_DIR/$BALANCES_LOG
+    $STRIDE_MAIN_CMD q bank balances $(STRIDE_ADDRESS) >>$TEMP_LOGS_DIR/$BALANCES_LOG
 
-    printf '\n%s\n' "BALANCES GAIA (REDEMPTION ACCT)" >>$TEMP_LOGS_DIR/accounts.log
-    $MAIN_GAIA_CMD q bank balances $GAIA_REDEMPTION >>$TEMP_LOGS_DIR/accounts.log
-    printf '\n%s\n' "BALANCES GAIA (REVENUE ACCT)" >>$TEMP_LOGS_DIR/accounts.log
-    $MAIN_GAIA_CMD q bank balances $GAIA_REV >>$TEMP_LOGS_DIR/accounts.log
-    printf '\n%s\n' "BALANCES GAIA (WITHDRAWAL ACCT)" >>$TEMP_LOGS_DIR/accounts.log
-    $MAIN_GAIA_CMD q bank balances $GAIA_WITHDRAWAL >>$TEMP_LOGS_DIR/accounts.log
+    for chain_id in ${HOST_CHAINS[@]}; do
+        HOST_MAIN_CMD=$(GET_VAR_VALUE ${chain_id}_MAIN_CMD)
 
-    printf '\n%s\n' "LIST-HOST-ZONES STRIDE" >>$TEMP_LOGS_DIR/accounts.log
-    $MAIN_STRIDE_CMD q stakeibc list-host-zone | head -n 40 >>$TEMP_LOGS_DIR/accounts.log
-    printf '\n%s\n' "LIST-DEPOSIT-RECORDS" >>$TEMP_LOGS_DIR/accounts.log
-    $MAIN_STRIDE_CMD q records list-deposit-record  >> $TEMP_LOGS_DIR/accounts.log
-    printf '\n%s\n' "LIST-EPOCH-UNBONDING-RECORDS" >>$TEMP_LOGS_DIR/accounts.log
-    $MAIN_STRIDE_CMD q records list-epoch-unbonding-record  >> $TEMP_LOGS_DIR/accounts.log
+        DELEGATION_ICA_ADDR=$(GET_VAR_VALUE ${chain_id}_DELEGATION_ICA_ADDR)
+        REDEMPTION_ICA_ADDR=$(GET_VAR_VALUE ${chain_id}_REDEMPTION_ICA_ADDR)
+        WITHDRAWAL_ICA_ADDR=$(GET_VAR_VALUE ${chain_id}_WITHDRAWAL_ICA_ADDR)
+        FEE_ICA_ADDR=$(GET_VAR_VALUE ${chain_id}_FEE_ICA_ADDR)
 
-    printf '\n%s\n' "LIST-USER-REDEMPTION-RECORDS" >>$TEMP_LOGS_DIR/accounts.log
-    $MAIN_STRIDE_CMD q records list-user-redemption-record >> $TEMP_LOGS_DIR/accounts.log
-    
+        printf '\n%s\n' "==========================  $chain_id  =============================" >>$TEMP_LOGS_DIR/$BALANCES_LOG
+
+        printf '\n%s\n' "BALANCES $chain_id (DELEGATION ACCT)" >>$TEMP_LOGS_DIR/$BALANCES_LOG
+        $HOST_MAIN_CMD q bank balances $DELEGATION_ICA_ADDR >>$TEMP_LOGS_DIR/$BALANCES_LOG
+        printf '\n%s\n' "DELEGATIONS $chain_id (DELEGATION ACCT)" >>$TEMP_LOGS_DIR/$BALANCES_LOG
+        $HOST_MAIN_CMD q staking delegations $DELEGATION_ICA_ADDR >>$TEMP_LOGS_DIR/$BALANCES_LOG
+        printf '\n%s\n' "UNBONDING-DELEGATIONS $chain_id (DELEGATION ACCT)" >>$TEMP_LOGS_DIR/$BALANCES_LOG
+        $HOST_MAIN_CMD q staking unbonding-delegations $DELEGATION_ICA_ADDR >>$TEMP_LOGS_DIR/$BALANCES_LOG
+
+        printf '\n%s\n' "BALANCES $chain_id (REDEMPTION ACCT)" >>$TEMP_LOGS_DIR/$BALANCES_LOG
+        $HOST_MAIN_CMD q bank balances $REDEMPTION_ICA_ADDR >>$TEMP_LOGS_DIR/$BALANCES_LOG
+        printf '\n%s\n' "BALANCES $chain_id (FEE ACCT)" >>$TEMP_LOGS_DIR/$BALANCES_LOG
+        $HOST_MAIN_CMD q bank balances $FEE_ICA_ADDR >>$TEMP_LOGS_DIR/$BALANCES_LOG
+        printf '\n%s\n' "BALANCES $chain_id (WITHDRAWAL ACCT)" >>$TEMP_LOGS_DIR/$BALANCES_LOG
+        $HOST_MAIN_CMD q bank balances $WITHDRAWAL_ICA_ADDR >>$TEMP_LOGS_DIR/$BALANCES_LOG
+    done
+
     mv $TEMP_LOGS_DIR/*.log $LOGS_DIR
     sleep 3
 done

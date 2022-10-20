@@ -4,31 +4,38 @@ set -eu
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 source $SCRIPT_DIR/vars.sh
 
-# Get validator addresses
-GAIA_VAL_2_ADDR="$($MAIN_GAIA_CMD keys show gval2 -a)"
-GAIA_VAL_3_ADDR="$($MAIN_GAIA_CMD keys show gval3 -a)"
-GAIA_DELEGATE_VAL_1="$($MAIN_GAIA_CMD q staking validators | grep GAIA_1 -A 5 | grep operator | awk '{print $2}')"
-GAIA_DELEGATE_VAL_2="$($MAIN_GAIA_CMD q staking validators | grep GAIA_2 -A 5 | grep operator | awk '{print $2}')"
+CHAIN_ID="$1"
+HOST_ZONE_NUM="$2"
 
-# Submit a transaction on stride to register the gaia host zone
-printf "\nCreating host zone...\n"
-$MAIN_STRIDE_CMD tx stakeibc register-host-zone \
-    connection-0 $ATOM_DENOM cosmos $IBC_ATOM_DENOM channel-0 1 \
-    --from $STRIDE_ADMIN_ACCT --gas 1000000 --home $SCRIPT_DIR/state/stride1 -y
-CSLEEP 10
+CONNECTION="connection-$HOST_ZONE_NUM"
+CHANNEL="channel-$HOST_ZONE_NUM"
 
-printf "\nRegistering validators...\n"
-$MAIN_STRIDE_CMD tx stakeibc add-validator $GAIA_CHAIN_ID gval1 $GAIA_DELEGATE_VAL_1 10 5 --from $STRIDE_ADMIN_ACCT -y
-CSLEEP 10
-$MAIN_STRIDE_CMD tx stakeibc add-validator $GAIA_CHAIN_ID gval2 $GAIA_DELEGATE_VAL_2 10 10 --from $STRIDE_ADMIN_ACCT -y
-CSLEEP 10
+VAL_PREFIX=$(GET_VAR_VALUE     ${CHAIN_ID}_VAL_PREFIX)
+IBC_DENOM=$(GET_VAR_VALUE      IBC_${CHAIN_ID}_CHANNEL_${HOST_ZONE_NUM}_DENOM)
+HOST_DENOM=$(GET_VAR_VALUE     ${CHAIN_ID}_DENOM)
+ADDRESS_PREFIX=$(GET_VAR_VALUE ${CHAIN_ID}_ADDRESS_PREFIX)
+NUM_VALS=$(GET_VAR_VALUE       ${CHAIN_ID}_NUM_NODES)
 
-# sleep a while longer to wait for ICA accounts to set up
-printf "\nWaiting for ICA accounts on host..."
+echo "$CHAIN_ID - Registering host zone..."
+$STRIDE_MAIN_CMD tx stakeibc register-host-zone \
+    $CONNECTION $HOST_DENOM $ADDRESS_PREFIX $IBC_DENOM $CHANNEL 1 \
+    --gas 1000000 --from $STRIDE_ADMIN_ACCT --home $SCRIPT_DIR/state/stride1 -y | TRIM_TX
+sleep 4
+
+echo "$CHAIN_ID - Registering validators..."
+weights=(5 10 5 10 5) # alternate weights across vals
+for (( i=1; i <= $NUM_VALS; i++ )); do
+    delegate_val=$(GET_VAL_ADDR $CHAIN_ID $i)
+    weight=${weights[$i]}
+
+    $STRIDE_MAIN_CMD tx stakeibc add-validator $CHAIN_ID ${VAL_PREFIX}${i} $delegate_val 10 $weight \
+        --from $STRIDE_ADMIN_ACCT -y | TRIM_TX
+    sleep 4
+done
+
 while true; do
-    if ! $MAIN_STRIDE_CMD q stakeibc list-host-zone | grep Account | grep -q null; then
-        sleep 5
+    if ! $STRIDE_MAIN_CMD q stakeibc list-host-zone | grep Account | grep -q null; then
+        sleep 1
         break
     fi
 done
-echo "Done"

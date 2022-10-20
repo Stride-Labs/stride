@@ -102,7 +102,7 @@ test-unit:
 test-cover:
 	@go test -mod=readonly -race -coverprofile=coverage.out -covermode=atomic ./x/$(module)/...
 
-test-integration:
+test-integration-local:
 	sh scripts-local/tests/run_all_tests.sh
 
 test-integration-docker:
@@ -143,6 +143,7 @@ start-local: build-local
 	@sh scripts-local/start_network.sh ${cache}
 
 stop-local:
-	@killall gaiad strided junod osmosisd rly hermes interchain-queries || true
+	@killall gaiad strided junod osmosisd rly hermes interchain-queries icq-startup.sh || true
 	@pkill -f "/bin/bash.*create_logs.sh" || true
 	@pkill -f "sh.*start_network.sh" || true
+

@@ -20,7 +20,6 @@ type NewQueryTestCase struct {
 }
 
 func (suite *KeeperTestSuite) SetupNewQuery() NewQueryTestCase {
-
 	// module is the name of the module invoking the query, used to find the callback upon response
 	module := "stakeibc"
 	// connectionId of the target chain you're querying

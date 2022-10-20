@@ -5,6 +5,13 @@ SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
 source ${SCRIPT_DIR}/vars.sh
 
+# Pass chain IDs as arguments
+CHAINS="$@"
+if [[ "$CHAINS" == "" ]]; then
+    echo "ERROR: Please specify at least chain IDs that require a relayer connection"
+    exit 1
+fi
+
 mkdir -p $STATE/hermes
 mkdir -p $STATE/icq
 mkdir -p $STATE/relayer/config
@@ -15,20 +22,29 @@ cp ${SCRIPT_DIR}/config/relayer_config.yaml $STATE/relayer/config/config.yaml
 
 echo "Adding Hermes keys"
 TMP_MNEMONICS=${SCRIPT_DIR}/state/mnemonic.txt 
+for chain_id in ${CHAINS[@]}; do
+    account_name=$(GET_VAR_VALUE HERMES_${chain_id}_ACCT)
+    mnemonic=$(GET_VAR_VALUE     HERMES_${chain_id}_MNEMONIC)
 
-echo "$HERMES_STRIDE_MNEMONIC" > $TMP_MNEMONICS
-$HERMES_CMD keys add --key-name rly1 --chain $STRIDE_CHAIN_ID --mnemonic-file $TMP_MNEMONICS --overwrite
-
-echo "$HERMES_GAIA_MNEMONIC" > $TMP_MNEMONICS
-$HERMES_CMD keys add --key-name rly2 --chain $GAIA_CHAIN_ID --mnemonic-file $TMP_MNEMONICS --overwrite
-
+    echo "$mnemonic" > $TMP_MNEMONICS
+    $HERMES_CMD keys add --key-name $account_name --chain $chain_id --mnemonic-file $TMP_MNEMONICS --overwrite
+done
 rm -f $TMP_MNEMONICS
 
-# echo "Adding Relayer keys"
-# $RELAYER_CMD keys restore stride rly1 "$RELAYER_STRIDE_MNEMONIC"
-# $RELAYER_CMD keys restore gaia rly2 "$RELAYER_GAIA_MNEMONIC" 
-# $RELAYER_CMD paths new $STRIDE_CHAIN_ID $GAIA_CHAIN_ID stride-gaia
+echo "Adding Relayer keys"
+for chain_id in ${CHAINS[@]}; do
+    account_name=$(GET_VAR_VALUE RELAYER_${chain_id}_ACCT)
+    mnemonic=$(GET_VAR_VALUE     RELAYER_${chain_id}_MNEMONIC)
+    chain_name=$(printf "$chain_id" | awk '{ print tolower($0) }')
+
+    $RELAYER_CMD keys restore $chain_name $account_name "$mnemonic" 
+done
 
 echo "Adding ICQ keys"
-echo $ICQ_STRIDE_MNEMONIC | $ICQ_CMD keys restore icq1 --chain stride 
-echo $ICQ_GAIA_MNEMONIC | $ICQ_CMD keys restore icq2 --chain gaia 
+for chain_id in ${CHAINS[@]}; do
+    account_name=$(GET_VAR_VALUE ICQ_${chain_id}_ACCT)
+    mnemonic=$(GET_VAR_VALUE     ICQ_${chain_id}_MNEMONIC)
+    chain_name=$(printf "$chain_id" | awk '{ print tolower($0) }')
+
+    echo $mnemonic | $ICQ_CMD keys restore $account_name --chain $chain_name 
+done

@@ -245,7 +245,6 @@ func (k Keeper) GetICATimeoutNanos(ctx sdk.Context, epochType string) (uint64, e
 
 // safety check: ensure the redemption rate is NOT below our min safety threshold && NOT above our max safety threshold on host zone
 func (k Keeper) IsRedemptionRateWithinSafetyBounds(ctx sdk.Context, zone types.HostZone) (bool, error) {
-
 	minSafetyThresholdInt := k.GetParam(ctx, types.KeySafetyMinRedemptionRateThreshold)
 	minSafetyThreshold := sdk.NewDec(int64(minSafetyThresholdInt)).Quo(sdk.NewDec(100))
 

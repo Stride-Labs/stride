@@ -9,9 +9,7 @@ import (
 )
 
 func (suite *KeeperTestSuite) TestEpochInfoChangesBeginBlockerAndInitGenesis() {
-	var (
-		epochInfo types.EpochInfo
-	)
+	var epochInfo types.EpochInfo
 
 	now := time.Now()
 

@@ -20,4 +20,7 @@ USER icq
 
 WORKDIR /home/icq
 
-CMD ["interchain-queries", "run"]
+RUN echo "while true; do interchain-queries run; done" > /home/icq/start.sh
+
+CMD ["sh", "/home/icq/start.sh"]
+

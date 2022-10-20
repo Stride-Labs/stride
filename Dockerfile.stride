@@ -1,5 +1,5 @@
 # syntax = docker/dockerfile:1
-FROM golang:1.18-alpine3.15 AS golang
+FROM golang:1.18-alpine3.15 AS builder
 
 WORKDIR /src/
 
@@ -21,7 +21,7 @@ RUN --mount=type=cache,target=/root/.cache/go-build make build
 
 # Add to a distroless container
 FROM alpine:3.15
-COPY --from=golang /src/build/strided /usr/local/bin/strided
+COPY --from=builder /src/build/strided /usr/local/bin/strided
 RUN addgroup -g 1000 stride \
     && adduser -S -h /home/stride -D stride -u 1000 -G stride
 

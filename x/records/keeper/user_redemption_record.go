@@ -49,7 +49,8 @@ func (k Keeper) GetAllUserRedemptionRecord(ctx sdk.Context) (list []types.UserRe
 
 // IterateUserRedemptionRecords iterates zones
 func (k Keeper) IterateUserRedemptionRecords(ctx sdk.Context,
-	fn func(index int64, userRedemptionRecord types.UserRedemptionRecord) (stop bool)) {
+	fn func(index int64, userRedemptionRecord types.UserRedemptionRecord) (stop bool),
+) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.UserRedemptionRecordKey))
 
 	iterator := sdk.KVStorePrefixIterator(store, nil)
