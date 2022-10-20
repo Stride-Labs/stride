@@ -1,4 +1,4 @@
-name: Verify no ADMINS change
+name: Verify no Admins change
 
 on:
   push:
