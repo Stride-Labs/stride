@@ -45,7 +45,6 @@ func (p *AddValidatorProposal) ValidateBasic() error {
 		return err
 	}
 
-	// TODO: Add more checks?
 	if len(p.ValidatorAddress) == 0 {
 		return ErrRequiredFieldEmpty
 	}
