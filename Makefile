@@ -147,6 +147,11 @@ stop-local:
 	@pkill -f "/bin/bash.*create_logs.sh" || true
 	@pkill -f "sh.*start_network.sh" || true
 
+
+###############################################################################
+###                             LocalStride                                 ###
+###############################################################################
+
 localnet-keys:
 	. testutil/localstride/scripts/add_keys.sh
 
