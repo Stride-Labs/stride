@@ -208,6 +208,10 @@ func (im IBCModule) OnTimeoutPacket(
 ) error {
 	// doCustomLogic(packet)
 	im.keeper.Logger(ctx).Error(fmt.Sprintf("[IBC-TRANSFER] OnTimeoutPacket  %v", packet))
+	err := im.keeper.ICACallbacksKeeper.CallRegisteredICACallback(ctx, packet, nil)
+	if err != nil {
+		return err
+	}
 	return im.app.OnTimeoutPacket(ctx, packet, relayer)
 }
 

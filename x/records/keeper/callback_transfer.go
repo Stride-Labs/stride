@@ -55,21 +55,13 @@ func TransferCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ack
 		return nil
 	}
 
-	// ugly, but use type switch to check oneof type: https://developers.google.com/protocol-buffers/docs/reference/go-generated#oneof
-	// don't use ack.GetError() != "" because an error message might be empty
-	switch response := ack.Response.(type) {
-	case *channeltypes.Acknowledgement_Result:
-		// do nothing
-	case *channeltypes.Acknowledgement_Error:
-		k.Logger(ctx).Error(fmt.Sprintf("TransferCallback error %v", response.Error))
+	if _, ok := ack.Response.(*channeltypes.Acknowledgement_Error); ok {
 		// error on host chain
 		// put record back in the TRANSFER_QUEUE
 		depositRecord.Status = types.DepositRecord_TRANSFER_QUEUE
 		k.SetDepositRecord(ctx, depositRecord)
 		k.Logger(ctx).Error(fmt.Sprintf("Error  %s", ack.GetError()))
 		return nil
-	default:
-		k.Logger(ctx).Error(fmt.Sprintf("TransferCallback unknown ack response type %v", response))
 	}
 
 	var data ibctransfertypes.FungibleTokenPacketData
