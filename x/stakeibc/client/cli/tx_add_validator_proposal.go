@@ -18,9 +18,9 @@ import (
 	"github.com/Stride-Labs/stride/x/stakeibc/types"
 )
 
-func parseAddValidatorProposalFile(cdc codec.JSONCodec, proposalFile string) (types.AddValidatorProposalWithDeposit, error) {
+func parseAddValidatorProposalFile(cdc codec.JSONCodec, proposalFile string) (types.AddValidatorProposal, error) {
 
-	proposal := types.AddValidatorProposalWithDeposit{}
+	proposal := types.AddValidatorProposal{}
 
 	contents, err := os.ReadFile(proposalFile)
 	if err != nil {
@@ -73,9 +73,24 @@ Where proposal.json contains:
 
 			from := clientCtx.GetFromAddress()
 
-			deposit, err := sdk.ParseCoinsNormalized(proposal.Deposit)
+			depositFromProposal, err := sdk.ParseCoinsNormalized(proposal.Deposit)
 			if err != nil {
 				return err
+			}
+
+			depositFromFlagsStr, err := cmd.Flags().GetString(govcli.FlagDeposit)
+			if err != nil {
+				return err
+			}
+			depositFromFlags, err := sdk.ParseCoinsNormalized(depositFromFlagsStr)
+			if err != nil {
+				return err
+			}
+
+			// if deposit from flags is not empty, it overrides the deposit from proposal
+			deposit := depositFromProposal
+			if !depositFromFlags.IsZero() || depositFromFlags == nil {
+				deposit = depositFromFlags
 			}
 
 			content := types.NewAddValidatorProposal(proposal.Title, proposal.Description, proposal.HostZone, proposal.ValidatorName, proposal.ValidatorAddress)
