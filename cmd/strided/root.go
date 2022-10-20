@@ -136,6 +136,9 @@ func initAppConfig() (string, interface{}) {
 	srvCfg.API.EnableUnsafeCORS = true
 	srvCfg.GRPCWeb.EnableUnsafeCORS = true
 
+	// This ensures that upgraded nodes will use iavl fast node.
+	srvCfg.IAVLDisableFastNode = false
+
 	customAppConfig := CustomAppConfig{
 		Config: *srvCfg,
 		WASM: WASMConfig{
@@ -295,6 +298,8 @@ func (a appCreator) newApp(logger log.Logger, db dbm.DB, traceStore io.Writer, a
 		baseapp.SetSnapshotStore(snapshotStore),
 		baseapp.SetSnapshotInterval(cast.ToUint64(appOpts.Get(server.FlagStateSyncSnapshotInterval))),
 		baseapp.SetSnapshotKeepRecent(cast.ToUint32(appOpts.Get(server.FlagStateSyncSnapshotKeepRecent))),
+		baseapp.SetIAVLCacheSize(cast.ToInt(appOpts.Get(server.FlagIAVLCacheSize))),
+		baseapp.SetIAVLDisableFastNode(cast.ToBool(appOpts.Get(server.FlagIAVLFastNode))),
 	)
 }
 
