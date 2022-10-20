@@ -29125,27 +29125,28 @@ paths:
                           minted_denom that is to be
 
                           allocated as staking rewards.
-                      pool_incentives:
-                        type: string
-                        description: >-
-                          pool_incentives defines the proportion of the minted
-                          minted_denom that is
-
-                          to be allocated as pool incentives.
-                      participation_rewards:
-                        type: string
-                        description: >-
-                          participation_rewards defines the proportion of the
-                          minted minted_denom that is
-
-                          to be allocated to participation rewards address.
-                      community_pool:
+                      community_pool_growth:
                         type: string
                         description: >-
                           community_pool defines the proportion of the minted
-                          minted_denom that is
+                          mint_denom that is
 
-                          to be allocated to the community pool.
+                          to be allocated to the community pool: growth.
+                      community_pool_security_budget:
+                        type: string
+                        description: >-
+                          community_pool defines the proportion of the minted
+                          mint_denom that is
+
+                          to be allocated to the community pool: security
+                          budget.
+                      strategic_reserve:
+                        type: string
+                        description: >-
+                          strategic_reserve defines the proportion of the minted
+                          mint_denom that is
+
+                          to be allocated to the pool: strategic reserve.
                   minting_rewards_distribution_start_epoch:
                     type: string
                     format: int64
@@ -29596,6 +29597,7 @@ paths:
                       type: string
                     callbackArgs:
                       type: string
+                      format: byte
               pagination:
                 type: object
                 properties:
@@ -29723,6 +29725,7 @@ paths:
                     type: string
                   callbackArgs:
                     type: string
+                    format: byte
         default:
           description: An unexpected error response.
           schema:
@@ -30010,18 +30013,18 @@ paths:
                 items:
                   type: object
                   properties:
-                    id:
-                      type: string
-                      format: uint64
-                    unbondingEpochNumber:
+                    epochNumber:
                       type: string
                       format: uint64
                     hostZoneUnbondings:
-                      type: object
-                      additionalProperties:
+                      type: array
+                      items:
                         type: object
                         properties:
-                          amount:
+                          stTokenAmount:
+                            type: string
+                            format: uint64
+                          nativeTokenAmount:
                             type: string
                             format: uint64
                           denom:
@@ -30036,25 +30039,16 @@ paths:
                             enum:
                               - BONDED
                               - UNBONDED
-                              - PENDING_TRANSFER
                               - TRANSFERRED
                             default: BONDED
                             title: |-
                               - BONDED: tokens bonded on delegate account
                                - UNBONDED: unbonding completed on delegate account
-                               - PENDING_TRANSFER: transfer from delegate account to withdrawal account attempted
                                - TRANSFERRED: transfer success
                           userRedemptionRecords:
                             type: array
                             items:
                               type: string
-                            title: >-
-                              google.protobuf.Timestamp unbondingTime = 5
-                                  [(gogoproto.nullable) = false, (gogoproto.stdtime) = true, (gogoproto.moretags) = "yaml:\"unbonding_time\""];
-                              google.protobuf.Timestamp completionTime = 5
-                                  [(gogoproto.nullable) = false, (gogoproto.stdtime) = true, (gogoproto.moretags) = "yaml:\"unbonding_time\""];
-                              Index UserRedemptionRecords here (note: id is
-                              {chain_id}.{epoch}.{sender})
               pagination:
                 type: object
                 properties:
@@ -30156,7 +30150,7 @@ paths:
           type: boolean
       tags:
         - Query
-  '/Stride-Labs/stride/records/epoch_unbonding_record/{id}':
+  '/Stride-Labs/stride/records/epoch_unbonding_record/{epochNumber}':
     get:
       summary: Queries a EpochUnbondingRecord by id.
       operationId: StridelabsStrideRecordsEpochUnbondingRecord
@@ -30169,18 +30163,18 @@ paths:
               EpochUnbondingRecord:
                 type: object
                 properties:
-                  id:
-                    type: string
-                    format: uint64
-                  unbondingEpochNumber:
+                  epochNumber:
                     type: string
                     format: uint64
                   hostZoneUnbondings:
-                    type: object
-                    additionalProperties:
+                    type: array
+                    items:
                       type: object
                       properties:
-                        amount:
+                        stTokenAmount:
+                          type: string
+                          format: uint64
+                        nativeTokenAmount:
                           type: string
                           format: uint64
                         denom:
@@ -30195,25 +30189,16 @@ paths:
                           enum:
                             - BONDED
                             - UNBONDED
-                            - PENDING_TRANSFER
                             - TRANSFERRED
                           default: BONDED
                           title: |-
                             - BONDED: tokens bonded on delegate account
                              - UNBONDED: unbonding completed on delegate account
-                             - PENDING_TRANSFER: transfer from delegate account to withdrawal account attempted
                              - TRANSFERRED: transfer success
                         userRedemptionRecords:
                           type: array
                           items:
                             type: string
-                          title: >-
-                            google.protobuf.Timestamp unbondingTime = 5
-                                [(gogoproto.nullable) = false, (gogoproto.stdtime) = true, (gogoproto.moretags) = "yaml:\"unbonding_time\""];
-                            google.protobuf.Timestamp completionTime = 5
-                                [(gogoproto.nullable) = false, (gogoproto.stdtime) = true, (gogoproto.moretags) = "yaml:\"unbonding_time\""];
-                            Index UserRedemptionRecords here (note: id is
-                            {chain_id}.{epoch}.{sender})
         default:
           description: An unexpected error response.
           schema:
@@ -30233,7 +30218,7 @@ paths:
                       type: string
                   additionalProperties: {}
       parameters:
-        - name: id
+        - name: epochNumber
           in: path
           required: true
           type: string
@@ -30270,8 +30255,8 @@ paths:
                       type: string
                     epochNumber:
                       type: string
-                      format: int64
-                    isClaimable:
+                      format: uint64
+                    claimIsPending:
                       type: boolean
               pagination:
                 type: object
@@ -30402,8 +30387,8 @@ paths:
                     type: string
                   epochNumber:
                     type: string
-                    format: int64
-                  isClaimable:
+                    format: uint64
+                  claimIsPending:
                     type: boolean
         default:
           description: An unexpected error response.
@@ -30428,6 +30413,158 @@ paths:
           in: path
           required: true
           type: string
+      tags:
+        - Query
+  '/Stride-Labs/stride/records/user_redemption_record_for_user/{chainId}/{day}/{address}/{limit}':
+    get:
+      summary: Queries a list of UserRedemptionRecord items by chainId / userId pair.
+      operationId: StridelabsStrideRecordsUserRedemptionRecordForUser
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              UserRedemptionRecord:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                    sender:
+                      type: string
+                    receiver:
+                      type: string
+                    amount:
+                      type: string
+                      format: uint64
+                    denom:
+                      type: string
+                    hostZoneId:
+                      type: string
+                    epochNumber:
+                      type: string
+                      format: uint64
+                    claimIsPending:
+                      type: boolean
+              pagination:
+                type: object
+                properties:
+                  next_key:
+                    type: string
+                    format: byte
+                    title: |-
+                      next_key is the key to be passed to PageRequest.key to
+                      query the next page most efficiently
+                  total:
+                    type: string
+                    format: uint64
+                    title: >-
+                      total is total number of results available if
+                      PageRequest.count_total
+
+                      was set, its value is undefined otherwise
+                description: >-
+                  PageResponse is to be embedded in gRPC response messages where
+                  the
+
+                  corresponding request message has used PageRequest.
+
+                   message SomeResponse {
+                           repeated Bar results = 1;
+                           PageResponse page = 2;
+                   }
+        default:
+          description: An unexpected error response.
+          schema:
+            type: object
+            properties:
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    '@type':
+                      type: string
+                  additionalProperties: {}
+      parameters:
+        - name: chainId
+          in: path
+          required: true
+          type: string
+        - name: day
+          in: path
+          required: true
+          type: string
+          format: uint64
+        - name: address
+          in: path
+          required: true
+          type: string
+        - name: limit
+          in: path
+          required: true
+          type: string
+          format: uint64
+        - name: pagination.key
+          description: |-
+            key is a value returned in PageResponse.next_key to begin
+            querying the next page most efficiently. Only one of offset or key
+            should be set.
+          in: query
+          required: false
+          type: string
+          format: byte
+        - name: pagination.offset
+          description: >-
+            offset is a numeric offset that can be used when key is unavailable.
+
+            It is less efficient than using key. Only one of offset or key
+            should
+
+            be set.
+          in: query
+          required: false
+          type: string
+          format: uint64
+        - name: pagination.limit
+          description: >-
+            limit is the total number of results to be returned in the result
+            page.
+
+            If left empty it will default to a value to be set by each app.
+          in: query
+          required: false
+          type: string
+          format: uint64
+        - name: pagination.count_total
+          description: >-
+            count_total is set to true  to indicate that the result set should
+            include
+
+            a count of the total number of items available for pagination in
+            UIs.
+
+            count_total is only respected when offset is used. It is ignored
+            when key
+
+            is set.
+          in: query
+          required: false
+          type: boolean
+        - name: pagination.reverse
+          description: >-
+            reverse is set to true if results are to be returned in the
+            descending order.
+          in: query
+          required: false
+          type: boolean
       tags:
         - Query
   /StrideLabs/stride/records/params:
@@ -30488,10 +30625,10 @@ paths:
                       format: uint64
                     nextEpochStartTime:
                       type: string
-                      format: int64
+                      format: uint64
                     duration:
                       type: string
-                      format: int64
+                      format: uint64
               pagination:
                 type: object
                 properties:
@@ -30780,10 +30917,10 @@ paths:
                     format: uint64
                   nextEpochStartTime:
                     type: string
-                    format: int64
+                    format: uint64
                   duration:
                     type: string
-                    format: int64
+                    format: uint64
         default:
           description: An unexpected error response.
           schema:
@@ -31023,6 +31160,14 @@ paths:
                           weight:
                             type: string
                             format: uint64
+                          internalExchangeRate:
+                            type: object
+                            properties:
+                              internalTokensToSharesRate:
+                                type: string
+                              epochNumber:
+                                type: string
+                                format: uint64
                     blacklistedValidators:
                       type: array
                       items:
@@ -31047,6 +31192,14 @@ paths:
                           weight:
                             type: string
                             format: uint64
+                          internalExchangeRate:
+                            type: object
+                            properties:
+                              internalTokensToSharesRate:
+                                type: string
+                              epochNumber:
+                                type: string
+                                format: uint64
                     withdrawalAccount:
                       type: object
                       properties:
@@ -31081,6 +31234,14 @@ paths:
                                   weight:
                                     type: string
                                     format: uint64
+                                  internalExchangeRate:
+                                    type: object
+                                    properties:
+                                      internalTokensToSharesRate:
+                                        type: string
+                                      epochNumber:
+                                        type: string
+                                        format: uint64
                               amt:
                                 type: string
                                 format: int64
@@ -31092,10 +31253,6 @@ paths:
                             - WITHDRAWAL
                             - REDEMPTION
                           default: DELEGATION
-                        balance:
-                          type: string
-                          format: int64
-                          title: TODO(TEST-112) use cosmos dec for all balances
                       title: >-
                         TODO(TEST-XX): Update these fields to be more useful
                         (e.g. balances should be coins, maybe store port name
@@ -31134,6 +31291,14 @@ paths:
                                   weight:
                                     type: string
                                     format: uint64
+                                  internalExchangeRate:
+                                    type: object
+                                    properties:
+                                      internalTokensToSharesRate:
+                                        type: string
+                                      epochNumber:
+                                        type: string
+                                        format: uint64
                               amt:
                                 type: string
                                 format: int64
@@ -31145,10 +31310,6 @@ paths:
                             - WITHDRAWAL
                             - REDEMPTION
                           default: DELEGATION
-                        balance:
-                          type: string
-                          format: int64
-                          title: TODO(TEST-112) use cosmos dec for all balances
                       title: >-
                         TODO(TEST-XX): Update these fields to be more useful
                         (e.g. balances should be coins, maybe store port name
@@ -31187,6 +31348,14 @@ paths:
                                   weight:
                                     type: string
                                     format: uint64
+                                  internalExchangeRate:
+                                    type: object
+                                    properties:
+                                      internalTokensToSharesRate:
+                                        type: string
+                                      epochNumber:
+                                        type: string
+                                        format: uint64
                               amt:
                                 type: string
                                 format: int64
@@ -31198,10 +31367,6 @@ paths:
                             - WITHDRAWAL
                             - REDEMPTION
                           default: DELEGATION
-                        balance:
-                          type: string
-                          format: int64
-                          title: TODO(TEST-112) use cosmos dec for all balances
                       title: >-
                         TODO(TEST-XX): Update these fields to be more useful
                         (e.g. balances should be coins, maybe store port name
@@ -31240,6 +31405,14 @@ paths:
                                   weight:
                                     type: string
                                     format: uint64
+                                  internalExchangeRate:
+                                    type: object
+                                    properties:
+                                      internalTokensToSharesRate:
+                                        type: string
+                                      epochNumber:
+                                        type: string
+                                        format: uint64
                               amt:
                                 type: string
                                 format: int64
@@ -31251,10 +31424,6 @@ paths:
                             - WITHDRAWAL
                             - REDEMPTION
                           default: DELEGATION
-                        balance:
-                          type: string
-                          format: int64
-                          title: TODO(TEST-112) use cosmos dec for all balances
                       title: >-
                         TODO(TEST-XX): Update these fields to be more useful
                         (e.g. balances should be coins, maybe store port name
@@ -31282,9 +31451,11 @@ paths:
                         unbondings
                     stakedBal:
                       type: string
-                      format: int64
+                      format: uint64
                       title: TODO(TEST-101) int to dec
-                  title: 'next id: 18'
+                    address:
+                      type: string
+                  title: 'next id: 19'
               pagination:
                 type: object
                 properties:
@@ -31598,6 +31769,14 @@ paths:
                         weight:
                           type: string
                           format: uint64
+                        internalExchangeRate:
+                          type: object
+                          properties:
+                            internalTokensToSharesRate:
+                              type: string
+                            epochNumber:
+                              type: string
+                              format: uint64
                   blacklistedValidators:
                     type: array
                     items:
@@ -31622,6 +31801,14 @@ paths:
                         weight:
                           type: string
                           format: uint64
+                        internalExchangeRate:
+                          type: object
+                          properties:
+                            internalTokensToSharesRate:
+                              type: string
+                            epochNumber:
+                              type: string
+                              format: uint64
                   withdrawalAccount:
                     type: object
                     properties:
@@ -31656,6 +31843,14 @@ paths:
                                 weight:
                                   type: string
                                   format: uint64
+                                internalExchangeRate:
+                                  type: object
+                                  properties:
+                                    internalTokensToSharesRate:
+                                      type: string
+                                    epochNumber:
+                                      type: string
+                                      format: uint64
                             amt:
                               type: string
                               format: int64
@@ -31667,10 +31862,6 @@ paths:
                           - WITHDRAWAL
                           - REDEMPTION
                         default: DELEGATION
-                      balance:
-                        type: string
-                        format: int64
-                        title: TODO(TEST-112) use cosmos dec for all balances
                     title: >-
                       TODO(TEST-XX): Update these fields to be more useful (e.g.
                       balances should be coins, maybe store port name directly)
@@ -31708,6 +31899,14 @@ paths:
                                 weight:
                                   type: string
                                   format: uint64
+                                internalExchangeRate:
+                                  type: object
+                                  properties:
+                                    internalTokensToSharesRate:
+                                      type: string
+                                    epochNumber:
+                                      type: string
+                                      format: uint64
                             amt:
                               type: string
                               format: int64
@@ -31719,10 +31918,6 @@ paths:
                           - WITHDRAWAL
                           - REDEMPTION
                         default: DELEGATION
-                      balance:
-                        type: string
-                        format: int64
-                        title: TODO(TEST-112) use cosmos dec for all balances
                     title: >-
                       TODO(TEST-XX): Update these fields to be more useful (e.g.
                       balances should be coins, maybe store port name directly)
@@ -31760,6 +31955,14 @@ paths:
                                 weight:
                                   type: string
                                   format: uint64
+                                internalExchangeRate:
+                                  type: object
+                                  properties:
+                                    internalTokensToSharesRate:
+                                      type: string
+                                    epochNumber:
+                                      type: string
+                                      format: uint64
                             amt:
                               type: string
                               format: int64
@@ -31771,10 +31974,6 @@ paths:
                           - WITHDRAWAL
                           - REDEMPTION
                         default: DELEGATION
-                      balance:
-                        type: string
-                        format: int64
-                        title: TODO(TEST-112) use cosmos dec for all balances
                     title: >-
                       TODO(TEST-XX): Update these fields to be more useful (e.g.
                       balances should be coins, maybe store port name directly)
@@ -31812,6 +32011,14 @@ paths:
                                 weight:
                                   type: string
                                   format: uint64
+                                internalExchangeRate:
+                                  type: object
+                                  properties:
+                                    internalTokensToSharesRate:
+                                      type: string
+                                    epochNumber:
+                                      type: string
+                                      format: uint64
                             amt:
                               type: string
                               format: int64
@@ -31823,10 +32030,6 @@ paths:
                           - WITHDRAWAL
                           - REDEMPTION
                         default: DELEGATION
-                      balance:
-                        type: string
-                        format: int64
-                        title: TODO(TEST-112) use cosmos dec for all balances
                     title: >-
                       TODO(TEST-XX): Update these fields to be more useful (e.g.
                       balances should be coins, maybe store port name directly)
@@ -31853,9 +32056,11 @@ paths:
                       unbondings
                   stakedBal:
                     type: string
-                    format: int64
+                    format: uint64
                     title: TODO(TEST-101) int to dec
-                title: 'next id: 18'
+                  address:
+                    type: string
+                title: 'next id: 19'
         default:
           description: An unexpected error response.
           schema:
@@ -32092,6 +32297,14 @@ paths:
                             weight:
                               type: string
                               format: uint64
+                            internalExchangeRate:
+                              type: object
+                              properties:
+                                internalTokensToSharesRate:
+                                  type: string
+                                epochNumber:
+                                  type: string
+                                  format: uint64
                         amt:
                           type: string
                           format: int64
@@ -32103,10 +32316,6 @@ paths:
                       - WITHDRAWAL
                       - REDEMPTION
                     default: DELEGATION
-                  balance:
-                    type: string
-                    format: int64
-                    title: TODO(TEST-112) use cosmos dec for all balances
                 title: >-
                   TODO(TEST-XX): Update these fields to be more useful (e.g.
                   balances should be coins, maybe store port name directly)
@@ -32501,506 +32710,6 @@ paths:
           type: string
       tags:
         - Query
-  /Stride-Labs/stride/stakeibc/pending_claims:
-    get:
-      summary: Queries a list of PendingClaims items.
-      operationId: StridelabsStrideStakeibcPendingClaimsAll
-      responses:
-        '200':
-          description: A successful response.
-          schema:
-            type: object
-            properties:
-              pendingClaims:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    sequence:
-                      type: string
-                    userRedemptionRecordIds:
-                      type: array
-                      items:
-                        type: string
-              pagination:
-                type: object
-                properties:
-                  next_key:
-                    type: string
-                    format: byte
-                    title: |-
-                      next_key is the key to be passed to PageRequest.key to
-                      query the next page most efficiently
-                  total:
-                    type: string
-                    format: uint64
-                    title: >-
-                      total is total number of results available if
-                      PageRequest.count_total
-
-                      was set, its value is undefined otherwise
-                description: >-
-                  PageResponse is to be embedded in gRPC response messages where
-                  the
-
-                  corresponding request message has used PageRequest.
-
-                   message SomeResponse {
-                           repeated Bar results = 1;
-                           PageResponse page = 2;
-                   }
-        default:
-          description: An unexpected error response.
-          schema:
-            type: object
-            properties:
-              code:
-                type: integer
-                format: int32
-              message:
-                type: string
-              details:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    '@type':
-                      type: string
-                      description: >-
-                        A URL/resource name that uniquely identifies the type of
-                        the serialized
-
-                        protocol buffer message. This string must contain at
-                        least
-
-                        one "/" character. The last segment of the URL's path
-                        must represent
-
-                        the fully qualified name of the type (as in
-
-                        `path/google.protobuf.Duration`). The name should be in
-                        a canonical form
-
-                        (e.g., leading "." is not accepted).
-
-
-                        In practice, teams usually precompile into the binary
-                        all types that they
-
-                        expect it to use in the context of Any. However, for
-                        URLs which use the
-
-                        scheme `http`, `https`, or no scheme, one can optionally
-                        set up a type
-
-                        server that maps type URLs to message definitions as
-                        follows:
-
-
-                        * If no scheme is provided, `https` is assumed.
-
-                        * An HTTP GET on the URL must yield a
-                        [google.protobuf.Type][]
-                          value in binary format, or produce an error.
-                        * Applications are allowed to cache lookup results based
-                        on the
-                          URL, or have them precompiled into a binary to avoid any
-                          lookup. Therefore, binary compatibility needs to be preserved
-                          on changes to types. (Use versioned type names to manage
-                          breaking changes.)
-
-                        Note: this functionality is not currently available in
-                        the official
-
-                        protobuf release, and it is not used for type URLs
-                        beginning with
-
-                        type.googleapis.com.
-
-
-                        Schemes other than `http`, `https` (or the empty scheme)
-                        might be
-
-                        used with implementation specific semantics.
-                  additionalProperties: {}
-                  description: >-
-                    `Any` contains an arbitrary serialized protocol buffer
-                    message along with a
-
-                    URL that describes the type of the serialized message.
-
-
-                    Protobuf library provides support to pack/unpack Any values
-                    in the form
-
-                    of utility functions or additional generated methods of the
-                    Any type.
-
-
-                    Example 1: Pack and unpack a message in C++.
-
-                        Foo foo = ...;
-                        Any any;
-                        any.PackFrom(foo);
-                        ...
-                        if (any.UnpackTo(&foo)) {
-                          ...
-                        }
-
-                    Example 2: Pack and unpack a message in Java.
-
-                        Foo foo = ...;
-                        Any any = Any.pack(foo);
-                        ...
-                        if (any.is(Foo.class)) {
-                          foo = any.unpack(Foo.class);
-                        }
-
-                     Example 3: Pack and unpack a message in Python.
-
-                        foo = Foo(...)
-                        any = Any()
-                        any.Pack(foo)
-                        ...
-                        if any.Is(Foo.DESCRIPTOR):
-                          any.Unpack(foo)
-                          ...
-
-                     Example 4: Pack and unpack a message in Go
-
-                         foo := &pb.Foo{...}
-                         any, err := anypb.New(foo)
-                         if err != nil {
-                           ...
-                         }
-                         ...
-                         foo := &pb.Foo{}
-                         if err := any.UnmarshalTo(foo); err != nil {
-                           ...
-                         }
-
-                    The pack methods provided by protobuf library will by
-                    default use
-
-                    'type.googleapis.com/full.type.name' as the type URL and the
-                    unpack
-
-                    methods only use the fully qualified type name after the
-                    last '/'
-
-                    in the type URL, for example "foo.bar.com/x/y.z" will yield
-                    type
-
-                    name "y.z".
-
-
-
-                    JSON
-
-                    ====
-
-                    The JSON representation of an `Any` value uses the regular
-
-                    representation of the deserialized, embedded message, with
-                    an
-
-                    additional field `@type` which contains the type URL.
-                    Example:
-
-                        package google.profile;
-                        message Person {
-                          string first_name = 1;
-                          string last_name = 2;
-                        }
-
-                        {
-                          "@type": "type.googleapis.com/google.profile.Person",
-                          "firstName": <string>,
-                          "lastName": <string>
-                        }
-
-                    If the embedded message type is well-known and has a custom
-                    JSON
-
-                    representation, that representation will be embedded adding
-                    a field
-
-                    `value` which holds the custom JSON in addition to the
-                    `@type`
-
-                    field. Example (for message [google.protobuf.Duration][]):
-
-                        {
-                          "@type": "type.googleapis.com/google.protobuf.Duration",
-                          "value": "1.212s"
-                        }
-      parameters:
-        - name: pagination.key
-          description: |-
-            key is a value returned in PageResponse.next_key to begin
-            querying the next page most efficiently. Only one of offset or key
-            should be set.
-          in: query
-          required: false
-          type: string
-          format: byte
-        - name: pagination.offset
-          description: >-
-            offset is a numeric offset that can be used when key is unavailable.
-
-            It is less efficient than using key. Only one of offset or key
-            should
-
-            be set.
-          in: query
-          required: false
-          type: string
-          format: uint64
-        - name: pagination.limit
-          description: >-
-            limit is the total number of results to be returned in the result
-            page.
-
-            If left empty it will default to a value to be set by each app.
-          in: query
-          required: false
-          type: string
-          format: uint64
-        - name: pagination.count_total
-          description: >-
-            count_total is set to true  to indicate that the result set should
-            include
-
-            a count of the total number of items available for pagination in
-            UIs.
-
-            count_total is only respected when offset is used. It is ignored
-            when key
-
-            is set.
-          in: query
-          required: false
-          type: boolean
-        - name: pagination.reverse
-          description: >-
-            reverse is set to true if results are to be returned in the
-            descending order.
-          in: query
-          required: false
-          type: boolean
-      tags:
-        - Query
-  '/Stride-Labs/stride/stakeibc/pending_claims/{sequence}':
-    get:
-      summary: Queries a PendingClaims by index.
-      operationId: StridelabsStrideStakeibcPendingClaims
-      responses:
-        '200':
-          description: A successful response.
-          schema:
-            type: object
-            properties:
-              pendingClaims:
-                type: object
-                properties:
-                  sequence:
-                    type: string
-                  userRedemptionRecordIds:
-                    type: array
-                    items:
-                      type: string
-        default:
-          description: An unexpected error response.
-          schema:
-            type: object
-            properties:
-              code:
-                type: integer
-                format: int32
-              message:
-                type: string
-              details:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    '@type':
-                      type: string
-                      description: >-
-                        A URL/resource name that uniquely identifies the type of
-                        the serialized
-
-                        protocol buffer message. This string must contain at
-                        least
-
-                        one "/" character. The last segment of the URL's path
-                        must represent
-
-                        the fully qualified name of the type (as in
-
-                        `path/google.protobuf.Duration`). The name should be in
-                        a canonical form
-
-                        (e.g., leading "." is not accepted).
-
-
-                        In practice, teams usually precompile into the binary
-                        all types that they
-
-                        expect it to use in the context of Any. However, for
-                        URLs which use the
-
-                        scheme `http`, `https`, or no scheme, one can optionally
-                        set up a type
-
-                        server that maps type URLs to message definitions as
-                        follows:
-
-
-                        * If no scheme is provided, `https` is assumed.
-
-                        * An HTTP GET on the URL must yield a
-                        [google.protobuf.Type][]
-                          value in binary format, or produce an error.
-                        * Applications are allowed to cache lookup results based
-                        on the
-                          URL, or have them precompiled into a binary to avoid any
-                          lookup. Therefore, binary compatibility needs to be preserved
-                          on changes to types. (Use versioned type names to manage
-                          breaking changes.)
-
-                        Note: this functionality is not currently available in
-                        the official
-
-                        protobuf release, and it is not used for type URLs
-                        beginning with
-
-                        type.googleapis.com.
-
-
-                        Schemes other than `http`, `https` (or the empty scheme)
-                        might be
-
-                        used with implementation specific semantics.
-                  additionalProperties: {}
-                  description: >-
-                    `Any` contains an arbitrary serialized protocol buffer
-                    message along with a
-
-                    URL that describes the type of the serialized message.
-
-
-                    Protobuf library provides support to pack/unpack Any values
-                    in the form
-
-                    of utility functions or additional generated methods of the
-                    Any type.
-
-
-                    Example 1: Pack and unpack a message in C++.
-
-                        Foo foo = ...;
-                        Any any;
-                        any.PackFrom(foo);
-                        ...
-                        if (any.UnpackTo(&foo)) {
-                          ...
-                        }
-
-                    Example 2: Pack and unpack a message in Java.
-
-                        Foo foo = ...;
-                        Any any = Any.pack(foo);
-                        ...
-                        if (any.is(Foo.class)) {
-                          foo = any.unpack(Foo.class);
-                        }
-
-                     Example 3: Pack and unpack a message in Python.
-
-                        foo = Foo(...)
-                        any = Any()
-                        any.Pack(foo)
-                        ...
-                        if any.Is(Foo.DESCRIPTOR):
-                          any.Unpack(foo)
-                          ...
-
-                     Example 4: Pack and unpack a message in Go
-
-                         foo := &pb.Foo{...}
-                         any, err := anypb.New(foo)
-                         if err != nil {
-                           ...
-                         }
-                         ...
-                         foo := &pb.Foo{}
-                         if err := any.UnmarshalTo(foo); err != nil {
-                           ...
-                         }
-
-                    The pack methods provided by protobuf library will by
-                    default use
-
-                    'type.googleapis.com/full.type.name' as the type URL and the
-                    unpack
-
-                    methods only use the fully qualified type name after the
-                    last '/'
-
-                    in the type URL, for example "foo.bar.com/x/y.z" will yield
-                    type
-
-                    name "y.z".
-
-
-
-                    JSON
-
-                    ====
-
-                    The JSON representation of an `Any` value uses the regular
-
-                    representation of the deserialized, embedded message, with
-                    an
-
-                    additional field `@type` which contains the type URL.
-                    Example:
-
-                        package google.profile;
-                        message Person {
-                          string first_name = 1;
-                          string last_name = 2;
-                        }
-
-                        {
-                          "@type": "type.googleapis.com/google.profile.Person",
-                          "firstName": <string>,
-                          "lastName": <string>
-                        }
-
-                    If the embedded message type is well-known and has a custom
-                    JSON
-
-                    representation, that representation will be embedded adding
-                    a field
-
-                    `value` which holds the custom JSON in addition to the
-                    `@type`
-
-                    field. Example (for message [google.protobuf.Duration][]):
-
-                        {
-                          "@type": "type.googleapis.com/google.protobuf.Duration",
-                          "value": "1.212s"
-                        }
-      parameters:
-        - name: sequence
-          in: path
-          required: true
-          type: string
-      tags:
-        - Query
   '/Stride-Labs/stride/stakeibc/validators/{chain_id}':
     get:
       summary: Queries a Validator by host zone.
@@ -33035,6 +32744,14 @@ paths:
                     weight:
                       type: string
                       format: uint64
+                    internalExchangeRate:
+                      type: object
+                      properties:
+                        internalTokensToSharesRate:
+                          type: string
+                        epochNumber:
+                          type: string
+                          format: uint64
         default:
           description: An unexpected error response.
           schema:
@@ -33278,15 +32995,27 @@ paths:
                   buffer_size:
                     type: string
                     format: uint64
-                  icq_buffer_size:
+                  ibc_timeout_blocks:
                     type: string
                     format: uint64
-                  ibc_timeout_blocks:
+                  fee_transfer_timeout_nanos:
+                    type: string
+                    format: uint64
+                  max_stake_ica_calls_per_epoch:
+                    type: string
+                    format: uint64
+                  safety_min_redemption_rate_threshold:
+                    type: string
+                    format: uint64
+                  safety_max_redemption_rate_threshold:
+                    type: string
+                    format: uint64
+                  ibc_transfer_timeout_nanos:
                     type: string
                     format: uint64
                 title: |-
                   Params defines the parameters for the module.
-                  next id: 13
+                  next id: 16
             description: >-
               QueryParamsResponse is response type for the Query/Params RPC
               method.
@@ -53693,27 +53422,24 @@ definitions:
           be
 
           allocated as staking rewards.
-      pool_incentives:
+      community_pool_growth:
+        type: string
+        description: |-
+          community_pool defines the proportion of the minted mint_denom that is
+          to be allocated to the community pool: growth.
+      community_pool_security_budget:
+        type: string
+        description: |-
+          community_pool defines the proportion of the minted mint_denom that is
+          to be allocated to the community pool: security budget.
+      strategic_reserve:
         type: string
         description: >-
-          pool_incentives defines the proportion of the minted minted_denom that
+          strategic_reserve defines the proportion of the minted mint_denom that
           is
 
-          to be allocated as pool incentives.
-      participation_rewards:
-        type: string
-        description: >-
-          participation_rewards defines the proportion of the minted
-          minted_denom that is
-
-          to be allocated to participation rewards address.
-      community_pool:
-        type: string
-        description: >-
-          community_pool defines the proportion of the minted minted_denom that
-          is
-
-          to be allocated to the community pool.
+          to be allocated to the pool: strategic reserve.
+    title: 'next id: 5'
   stride.mint.v1beta1.Params:
     type: object
     properties:
@@ -53744,27 +53470,27 @@ definitions:
               to be
 
               allocated as staking rewards.
-          pool_incentives:
+          community_pool_growth:
             type: string
             description: >-
-              pool_incentives defines the proportion of the minted minted_denom
+              community_pool defines the proportion of the minted mint_denom
               that is
 
-              to be allocated as pool incentives.
-          participation_rewards:
+              to be allocated to the community pool: growth.
+          community_pool_security_budget:
             type: string
             description: >-
-              participation_rewards defines the proportion of the minted
-              minted_denom that is
-
-              to be allocated to participation rewards address.
-          community_pool:
-            type: string
-            description: >-
-              community_pool defines the proportion of the minted minted_denom
+              community_pool defines the proportion of the minted mint_denom
               that is
 
-              to be allocated to the community pool.
+              to be allocated to the community pool: security budget.
+          strategic_reserve:
+            type: string
+            description: >-
+              strategic_reserve defines the proportion of the minted mint_denom
+              that is
+
+              to be allocated to the pool: strategic reserve.
       minting_rewards_distribution_start_epoch:
         type: string
         format: int64
@@ -53816,27 +53542,27 @@ definitions:
                   is to be
 
                   allocated as staking rewards.
-              pool_incentives:
+              community_pool_growth:
                 type: string
                 description: >-
-                  pool_incentives defines the proportion of the minted
-                  minted_denom that is
+                  community_pool defines the proportion of the minted mint_denom
+                  that is
 
-                  to be allocated as pool incentives.
-              participation_rewards:
+                  to be allocated to the community pool: growth.
+              community_pool_security_budget:
                 type: string
                 description: >-
-                  participation_rewards defines the proportion of the minted
-                  minted_denom that is
+                  community_pool defines the proportion of the minted mint_denom
+                  that is
 
-                  to be allocated to participation rewards address.
-              community_pool:
+                  to be allocated to the community pool: security budget.
+              strategic_reserve:
                 type: string
                 description: >-
-                  community_pool defines the proportion of the minted
-                  minted_denom that is
+                  strategic_reserve defines the proportion of the minted
+                  mint_denom that is
 
-                  to be allocated to the community pool.
+                  to be allocated to the pool: strategic reserve.
           minting_rewards_distribution_start_epoch:
             type: string
             format: int64
@@ -53960,6 +53686,7 @@ definitions:
         type: string
       callbackArgs:
         type: string
+        format: byte
   stridelabs.stride.icacallbacks.Params:
     type: object
     description: Params defines the parameters for the module.
@@ -53984,6 +53711,7 @@ definitions:
               type: string
             callbackArgs:
               type: string
+              format: byte
       pagination:
         type: object
         properties:
@@ -54028,6 +53756,7 @@ definitions:
             type: string
           callbackArgs:
             type: string
+            format: byte
   stridelabs.stride.icacallbacks.QueryParamsResponse:
     type: object
     properties:
@@ -54084,18 +53813,18 @@ definitions:
   Stridelabs.stride.records.EpochUnbondingRecord:
     type: object
     properties:
-      id:
-        type: string
-        format: uint64
-      unbondingEpochNumber:
+      epochNumber:
         type: string
         format: uint64
       hostZoneUnbondings:
-        type: object
-        additionalProperties:
+        type: array
+        items:
           type: object
           properties:
-            amount:
+            stTokenAmount:
+              type: string
+              format: uint64
+            nativeTokenAmount:
               type: string
               format: uint64
             denom:
@@ -54110,29 +53839,23 @@ definitions:
               enum:
                 - BONDED
                 - UNBONDED
-                - PENDING_TRANSFER
                 - TRANSFERRED
               default: BONDED
               title: |-
                 - BONDED: tokens bonded on delegate account
                  - UNBONDED: unbonding completed on delegate account
-                 - PENDING_TRANSFER: transfer from delegate account to withdrawal account attempted
                  - TRANSFERRED: transfer success
             userRedemptionRecords:
               type: array
               items:
                 type: string
-              title: >-
-                google.protobuf.Timestamp unbondingTime = 5
-                    [(gogoproto.nullable) = false, (gogoproto.stdtime) = true, (gogoproto.moretags) = "yaml:\"unbonding_time\""];
-                google.protobuf.Timestamp completionTime = 5
-                    [(gogoproto.nullable) = false, (gogoproto.stdtime) = true, (gogoproto.moretags) = "yaml:\"unbonding_time\""];
-                Index UserRedemptionRecords here (note: id is
-                {chain_id}.{epoch}.{sender})
   Stridelabs.stride.records.HostZoneUnbonding:
     type: object
     properties:
-      amount:
+      stTokenAmount:
+        type: string
+        format: uint64
+      nativeTokenAmount:
         type: string
         format: uint64
       denom:
@@ -54147,37 +53870,26 @@ definitions:
         enum:
           - BONDED
           - UNBONDED
-          - PENDING_TRANSFER
           - TRANSFERRED
         default: BONDED
         title: |-
           - BONDED: tokens bonded on delegate account
            - UNBONDED: unbonding completed on delegate account
-           - PENDING_TRANSFER: transfer from delegate account to withdrawal account attempted
            - TRANSFERRED: transfer success
       userRedemptionRecords:
         type: array
         items:
           type: string
-        title: >-
-          google.protobuf.Timestamp unbondingTime = 5
-              [(gogoproto.nullable) = false, (gogoproto.stdtime) = true, (gogoproto.moretags) = "yaml:\"unbonding_time\""];
-          google.protobuf.Timestamp completionTime = 5
-              [(gogoproto.nullable) = false, (gogoproto.stdtime) = true, (gogoproto.moretags) = "yaml:\"unbonding_time\""];
-          Index UserRedemptionRecords here (note: id is
-          {chain_id}.{epoch}.{sender})
   Stridelabs.stride.records.HostZoneUnbonding.Status:
     type: string
     enum:
       - BONDED
       - UNBONDED
-      - PENDING_TRANSFER
       - TRANSFERRED
     default: BONDED
     title: |-
       - BONDED: tokens bonded on delegate account
        - UNBONDED: unbonding completed on delegate account
-       - PENDING_TRANSFER: transfer from delegate account to withdrawal account attempted
        - TRANSFERRED: transfer success
   Stridelabs.stride.records.Params:
     type: object
@@ -54251,18 +53963,18 @@ definitions:
         items:
           type: object
           properties:
-            id:
-              type: string
-              format: uint64
-            unbondingEpochNumber:
+            epochNumber:
               type: string
               format: uint64
             hostZoneUnbondings:
-              type: object
-              additionalProperties:
+              type: array
+              items:
                 type: object
                 properties:
-                  amount:
+                  stTokenAmount:
+                    type: string
+                    format: uint64
+                  nativeTokenAmount:
                     type: string
                     format: uint64
                   denom:
@@ -54277,25 +53989,67 @@ definitions:
                     enum:
                       - BONDED
                       - UNBONDED
-                      - PENDING_TRANSFER
                       - TRANSFERRED
                     default: BONDED
                     title: |-
                       - BONDED: tokens bonded on delegate account
                        - UNBONDED: unbonding completed on delegate account
-                       - PENDING_TRANSFER: transfer from delegate account to withdrawal account attempted
                        - TRANSFERRED: transfer success
                   userRedemptionRecords:
                     type: array
                     items:
                       type: string
-                    title: >-
-                      google.protobuf.Timestamp unbondingTime = 5
-                          [(gogoproto.nullable) = false, (gogoproto.stdtime) = true, (gogoproto.moretags) = "yaml:\"unbonding_time\""];
-                      google.protobuf.Timestamp completionTime = 5
-                          [(gogoproto.nullable) = false, (gogoproto.stdtime) = true, (gogoproto.moretags) = "yaml:\"unbonding_time\""];
-                      Index UserRedemptionRecords here (note: id is
-                      {chain_id}.{epoch}.{sender})
+      pagination:
+        type: object
+        properties:
+          next_key:
+            type: string
+            format: byte
+            title: |-
+              next_key is the key to be passed to PageRequest.key to
+              query the next page most efficiently
+          total:
+            type: string
+            format: uint64
+            title: >-
+              total is total number of results available if
+              PageRequest.count_total
+
+              was set, its value is undefined otherwise
+        description: |-
+          PageResponse is to be embedded in gRPC response messages where the
+          corresponding request message has used PageRequest.
+
+           message SomeResponse {
+                   repeated Bar results = 1;
+                   PageResponse page = 2;
+           }
+  Stridelabs.stride.records.QueryAllUserRedemptionRecordForUserResponse:
+    type: object
+    properties:
+      UserRedemptionRecord:
+        type: array
+        items:
+          type: object
+          properties:
+            id:
+              type: string
+            sender:
+              type: string
+            receiver:
+              type: string
+            amount:
+              type: string
+              format: uint64
+            denom:
+              type: string
+            hostZoneId:
+              type: string
+            epochNumber:
+              type: string
+              format: uint64
+            claimIsPending:
+              type: boolean
       pagination:
         type: object
         properties:
@@ -54344,8 +54098,8 @@ definitions:
               type: string
             epochNumber:
               type: string
-              format: int64
-            isClaimable:
+              format: uint64
+            claimIsPending:
               type: boolean
       pagination:
         type: object
@@ -54412,18 +54166,18 @@ definitions:
       EpochUnbondingRecord:
         type: object
         properties:
-          id:
-            type: string
-            format: uint64
-          unbondingEpochNumber:
+          epochNumber:
             type: string
             format: uint64
           hostZoneUnbondings:
-            type: object
-            additionalProperties:
+            type: array
+            items:
               type: object
               properties:
-                amount:
+                stTokenAmount:
+                  type: string
+                  format: uint64
+                nativeTokenAmount:
                   type: string
                   format: uint64
                 denom:
@@ -54438,25 +54192,16 @@ definitions:
                   enum:
                     - BONDED
                     - UNBONDED
-                    - PENDING_TRANSFER
                     - TRANSFERRED
                   default: BONDED
                   title: |-
                     - BONDED: tokens bonded on delegate account
                      - UNBONDED: unbonding completed on delegate account
-                     - PENDING_TRANSFER: transfer from delegate account to withdrawal account attempted
                      - TRANSFERRED: transfer success
                 userRedemptionRecords:
                   type: array
                   items:
                     type: string
-                  title: >-
-                    google.protobuf.Timestamp unbondingTime = 5
-                        [(gogoproto.nullable) = false, (gogoproto.stdtime) = true, (gogoproto.moretags) = "yaml:\"unbonding_time\""];
-                    google.protobuf.Timestamp completionTime = 5
-                        [(gogoproto.nullable) = false, (gogoproto.stdtime) = true, (gogoproto.moretags) = "yaml:\"unbonding_time\""];
-                    Index UserRedemptionRecords here (note: id is
-                    {chain_id}.{epoch}.{sender})
   Stridelabs.stride.records.QueryGetUserRedemptionRecordResponse:
     type: object
     properties:
@@ -54478,8 +54223,8 @@ definitions:
             type: string
           epochNumber:
             type: string
-            format: int64
-          isClaimable:
+            format: uint64
+          claimIsPending:
             type: boolean
   Stridelabs.stride.records.QueryParamsResponse:
     type: object
@@ -54506,8 +54251,8 @@ definitions:
         type: string
       epochNumber:
         type: string
-        format: int64
-      isClaimable:
+        format: uint64
+      claimIsPending:
         type: boolean
   Stridelabs.stride.stakeibc.Delegation:
     type: object
@@ -54536,6 +54281,14 @@ definitions:
           weight:
             type: string
             format: uint64
+          internalExchangeRate:
+            type: object
+            properties:
+              internalTokensToSharesRate:
+                type: string
+              epochNumber:
+                type: string
+                format: uint64
       amt:
         type: string
         format: int64
@@ -54549,10 +54302,10 @@ definitions:
         format: uint64
       nextEpochStartTime:
         type: string
-        format: int64
+        format: uint64
       duration:
         type: string
-        format: int64
+        format: uint64
   Stridelabs.stride.stakeibc.HostZone:
     type: object
     properties:
@@ -54588,6 +54341,14 @@ definitions:
             weight:
               type: string
               format: uint64
+            internalExchangeRate:
+              type: object
+              properties:
+                internalTokensToSharesRate:
+                  type: string
+                epochNumber:
+                  type: string
+                  format: uint64
       blacklistedValidators:
         type: array
         items:
@@ -54612,6 +54373,14 @@ definitions:
             weight:
               type: string
               format: uint64
+            internalExchangeRate:
+              type: object
+              properties:
+                internalTokensToSharesRate:
+                  type: string
+                epochNumber:
+                  type: string
+                  format: uint64
       withdrawalAccount:
         type: object
         properties:
@@ -54646,6 +54415,14 @@ definitions:
                     weight:
                       type: string
                       format: uint64
+                    internalExchangeRate:
+                      type: object
+                      properties:
+                        internalTokensToSharesRate:
+                          type: string
+                        epochNumber:
+                          type: string
+                          format: uint64
                 amt:
                   type: string
                   format: int64
@@ -54657,10 +54434,6 @@ definitions:
               - WITHDRAWAL
               - REDEMPTION
             default: DELEGATION
-          balance:
-            type: string
-            format: int64
-            title: TODO(TEST-112) use cosmos dec for all balances
         title: >-
           TODO(TEST-XX): Update these fields to be more useful (e.g. balances
           should be coins, maybe store port name directly)
@@ -54698,6 +54471,14 @@ definitions:
                     weight:
                       type: string
                       format: uint64
+                    internalExchangeRate:
+                      type: object
+                      properties:
+                        internalTokensToSharesRate:
+                          type: string
+                        epochNumber:
+                          type: string
+                          format: uint64
                 amt:
                   type: string
                   format: int64
@@ -54709,10 +54490,6 @@ definitions:
               - WITHDRAWAL
               - REDEMPTION
             default: DELEGATION
-          balance:
-            type: string
-            format: int64
-            title: TODO(TEST-112) use cosmos dec for all balances
         title: >-
           TODO(TEST-XX): Update these fields to be more useful (e.g. balances
           should be coins, maybe store port name directly)
@@ -54750,6 +54527,14 @@ definitions:
                     weight:
                       type: string
                       format: uint64
+                    internalExchangeRate:
+                      type: object
+                      properties:
+                        internalTokensToSharesRate:
+                          type: string
+                        epochNumber:
+                          type: string
+                          format: uint64
                 amt:
                   type: string
                   format: int64
@@ -54761,10 +54546,6 @@ definitions:
               - WITHDRAWAL
               - REDEMPTION
             default: DELEGATION
-          balance:
-            type: string
-            format: int64
-            title: TODO(TEST-112) use cosmos dec for all balances
         title: >-
           TODO(TEST-XX): Update these fields to be more useful (e.g. balances
           should be coins, maybe store port name directly)
@@ -54802,6 +54583,14 @@ definitions:
                     weight:
                       type: string
                       format: uint64
+                    internalExchangeRate:
+                      type: object
+                      properties:
+                        internalTokensToSharesRate:
+                          type: string
+                        epochNumber:
+                          type: string
+                          format: uint64
                 amt:
                   type: string
                   format: int64
@@ -54813,10 +54602,6 @@ definitions:
               - WITHDRAWAL
               - REDEMPTION
             default: DELEGATION
-          balance:
-            type: string
-            format: int64
-            title: TODO(TEST-112) use cosmos dec for all balances
         title: >-
           TODO(TEST-XX): Update these fields to be more useful (e.g. balances
           should be coins, maybe store port name directly)
@@ -54841,9 +54626,11 @@ definitions:
         title: stores how many days we should wait before issuing unbondings
       stakedBal:
         type: string
-        format: int64
+        format: uint64
         title: TODO(TEST-101) int to dec
-    title: 'next id: 18'
+      address:
+        type: string
+    title: 'next id: 19'
   Stridelabs.stride.stakeibc.ICAAccount:
     type: object
     properties:
@@ -54878,6 +54665,14 @@ definitions:
                 weight:
                   type: string
                   format: uint64
+                internalExchangeRate:
+                  type: object
+                  properties:
+                    internalTokensToSharesRate:
+                      type: string
+                    epochNumber:
+                      type: string
+                      format: uint64
             amt:
               type: string
               format: int64
@@ -54889,10 +54684,6 @@ definitions:
           - WITHDRAWAL
           - REDEMPTION
         default: DELEGATION
-      balance:
-        type: string
-        format: int64
-        title: TODO(TEST-112) use cosmos dec for all balances
     title: >-
       TODO(TEST-XX): Update these fields to be more useful (e.g. balances should
       be coins, maybe store port name directly)
@@ -54910,23 +54701,16 @@ definitions:
     type: object
   Stridelabs.stride.stakeibc.MsgClaimUndelegatedTokensResponse:
     type: object
+  Stridelabs.stride.stakeibc.MsgClearBalanceResponse:
+    type: object
   Stridelabs.stride.stakeibc.MsgDeleteValidatorResponse:
     type: object
   Stridelabs.stride.stakeibc.MsgLiquidStakeResponse:
-    type: object
-  Stridelabs.stride.stakeibc.MsgQueryDelegationResponse:
     type: object
   Stridelabs.stride.stakeibc.MsgRebalanceValidatorsResponse:
     type: object
   Stridelabs.stride.stakeibc.MsgRedeemStakeResponse:
     type: object
-  Stridelabs.stride.stakeibc.MsgRegisterAccountResponse:
-    type: object
-    title: >-
-      TODO(TEST-53): Remove this pre-launch (no need for clients to create /
-      interact with ICAs)
-
-      MsgRegisterAccountResponse defines the response for Msg/RegisterAccount
   Stridelabs.stride.stakeibc.MsgRegisterHostZoneResponse:
     type: object
     title: >-
@@ -54934,13 +54718,8 @@ definitions:
       interact with ICAs)
   Stridelabs.stride.stakeibc.MsgRestoreInterchainAccountResponse:
     type: object
-  Stridelabs.stride.stakeibc.MsgSubmitTxResponse:
+  Stridelabs.stride.stakeibc.MsgUpdateValidatorSharesExchRateResponse:
     type: object
-    title: >-
-      TODO(TEST-53): Remove this pre-launch (no need for clients to create /
-      interact with ICAs)
-
-      MsgSubmitTxResponse defines the response for Msg/SubmitTx
   Stridelabs.stride.stakeibc.Params:
     type: object
     properties:
@@ -54981,24 +54760,27 @@ definitions:
       buffer_size:
         type: string
         format: uint64
-      icq_buffer_size:
+      ibc_timeout_blocks:
         type: string
         format: uint64
-      ibc_timeout_blocks:
+      fee_transfer_timeout_nanos:
+        type: string
+        format: uint64
+      max_stake_ica_calls_per_epoch:
+        type: string
+        format: uint64
+      safety_min_redemption_rate_threshold:
+        type: string
+        format: uint64
+      safety_max_redemption_rate_threshold:
+        type: string
+        format: uint64
+      ibc_transfer_timeout_nanos:
         type: string
         format: uint64
     title: |-
       Params defines the parameters for the module.
-      next id: 13
-  Stridelabs.stride.stakeibc.PendingClaims:
-    type: object
-    properties:
-      sequence:
-        type: string
-      userRedemptionRecordIds:
-        type: array
-        items:
-          type: string
+      next id: 16
   Stridelabs.stride.stakeibc.QueryAllEpochTrackerResponse:
     type: object
     properties:
@@ -55014,10 +54796,10 @@ definitions:
               format: uint64
             nextEpochStartTime:
               type: string
-              format: int64
+              format: uint64
             duration:
               type: string
-              format: int64
+              format: uint64
       pagination:
         type: object
         properties:
@@ -55083,6 +54865,14 @@ definitions:
                   weight:
                     type: string
                     format: uint64
+                  internalExchangeRate:
+                    type: object
+                    properties:
+                      internalTokensToSharesRate:
+                        type: string
+                      epochNumber:
+                        type: string
+                        format: uint64
             blacklistedValidators:
               type: array
               items:
@@ -55107,6 +54897,14 @@ definitions:
                   weight:
                     type: string
                     format: uint64
+                  internalExchangeRate:
+                    type: object
+                    properties:
+                      internalTokensToSharesRate:
+                        type: string
+                      epochNumber:
+                        type: string
+                        format: uint64
             withdrawalAccount:
               type: object
               properties:
@@ -55141,6 +54939,14 @@ definitions:
                           weight:
                             type: string
                             format: uint64
+                          internalExchangeRate:
+                            type: object
+                            properties:
+                              internalTokensToSharesRate:
+                                type: string
+                              epochNumber:
+                                type: string
+                                format: uint64
                       amt:
                         type: string
                         format: int64
@@ -55152,10 +54958,6 @@ definitions:
                     - WITHDRAWAL
                     - REDEMPTION
                   default: DELEGATION
-                balance:
-                  type: string
-                  format: int64
-                  title: TODO(TEST-112) use cosmos dec for all balances
               title: >-
                 TODO(TEST-XX): Update these fields to be more useful (e.g.
                 balances should be coins, maybe store port name directly)
@@ -55193,6 +54995,14 @@ definitions:
                           weight:
                             type: string
                             format: uint64
+                          internalExchangeRate:
+                            type: object
+                            properties:
+                              internalTokensToSharesRate:
+                                type: string
+                              epochNumber:
+                                type: string
+                                format: uint64
                       amt:
                         type: string
                         format: int64
@@ -55204,10 +55014,6 @@ definitions:
                     - WITHDRAWAL
                     - REDEMPTION
                   default: DELEGATION
-                balance:
-                  type: string
-                  format: int64
-                  title: TODO(TEST-112) use cosmos dec for all balances
               title: >-
                 TODO(TEST-XX): Update these fields to be more useful (e.g.
                 balances should be coins, maybe store port name directly)
@@ -55245,6 +55051,14 @@ definitions:
                           weight:
                             type: string
                             format: uint64
+                          internalExchangeRate:
+                            type: object
+                            properties:
+                              internalTokensToSharesRate:
+                                type: string
+                              epochNumber:
+                                type: string
+                                format: uint64
                       amt:
                         type: string
                         format: int64
@@ -55256,10 +55070,6 @@ definitions:
                     - WITHDRAWAL
                     - REDEMPTION
                   default: DELEGATION
-                balance:
-                  type: string
-                  format: int64
-                  title: TODO(TEST-112) use cosmos dec for all balances
               title: >-
                 TODO(TEST-XX): Update these fields to be more useful (e.g.
                 balances should be coins, maybe store port name directly)
@@ -55297,6 +55107,14 @@ definitions:
                           weight:
                             type: string
                             format: uint64
+                          internalExchangeRate:
+                            type: object
+                            properties:
+                              internalTokensToSharesRate:
+                                type: string
+                              epochNumber:
+                                type: string
+                                format: uint64
                       amt:
                         type: string
                         format: int64
@@ -55308,10 +55126,6 @@ definitions:
                     - WITHDRAWAL
                     - REDEMPTION
                   default: DELEGATION
-                balance:
-                  type: string
-                  format: int64
-                  title: TODO(TEST-112) use cosmos dec for all balances
               title: >-
                 TODO(TEST-XX): Update these fields to be more useful (e.g.
                 balances should be coins, maybe store port name directly)
@@ -55336,48 +55150,11 @@ definitions:
               title: stores how many days we should wait before issuing unbondings
             stakedBal:
               type: string
-              format: int64
+              format: uint64
               title: TODO(TEST-101) int to dec
-          title: 'next id: 18'
-      pagination:
-        type: object
-        properties:
-          next_key:
-            type: string
-            format: byte
-            title: |-
-              next_key is the key to be passed to PageRequest.key to
-              query the next page most efficiently
-          total:
-            type: string
-            format: uint64
-            title: >-
-              total is total number of results available if
-              PageRequest.count_total
-
-              was set, its value is undefined otherwise
-        description: |-
-          PageResponse is to be embedded in gRPC response messages where the
-          corresponding request message has used PageRequest.
-
-           message SomeResponse {
-                   repeated Bar results = 1;
-                   PageResponse page = 2;
-           }
-  Stridelabs.stride.stakeibc.QueryAllPendingClaimsResponse:
-    type: object
-    properties:
-      pendingClaims:
-        type: array
-        items:
-          type: object
-          properties:
-            sequence:
+            address:
               type: string
-            userRedemptionRecordIds:
-              type: array
-              items:
-                type: string
+          title: 'next id: 19'
       pagination:
         type: object
         properties:
@@ -55416,10 +55193,10 @@ definitions:
             format: uint64
           nextEpochStartTime:
             type: string
-            format: int64
+            format: uint64
           duration:
             type: string
-            format: int64
+            format: uint64
   Stridelabs.stride.stakeibc.QueryGetHostZoneResponse:
     type: object
     properties:
@@ -55458,6 +55235,14 @@ definitions:
                 weight:
                   type: string
                   format: uint64
+                internalExchangeRate:
+                  type: object
+                  properties:
+                    internalTokensToSharesRate:
+                      type: string
+                    epochNumber:
+                      type: string
+                      format: uint64
           blacklistedValidators:
             type: array
             items:
@@ -55482,6 +55267,14 @@ definitions:
                 weight:
                   type: string
                   format: uint64
+                internalExchangeRate:
+                  type: object
+                  properties:
+                    internalTokensToSharesRate:
+                      type: string
+                    epochNumber:
+                      type: string
+                      format: uint64
           withdrawalAccount:
             type: object
             properties:
@@ -55516,6 +55309,14 @@ definitions:
                         weight:
                           type: string
                           format: uint64
+                        internalExchangeRate:
+                          type: object
+                          properties:
+                            internalTokensToSharesRate:
+                              type: string
+                            epochNumber:
+                              type: string
+                              format: uint64
                     amt:
                       type: string
                       format: int64
@@ -55527,10 +55328,6 @@ definitions:
                   - WITHDRAWAL
                   - REDEMPTION
                 default: DELEGATION
-              balance:
-                type: string
-                format: int64
-                title: TODO(TEST-112) use cosmos dec for all balances
             title: >-
               TODO(TEST-XX): Update these fields to be more useful (e.g.
               balances should be coins, maybe store port name directly)
@@ -55568,6 +55365,14 @@ definitions:
                         weight:
                           type: string
                           format: uint64
+                        internalExchangeRate:
+                          type: object
+                          properties:
+                            internalTokensToSharesRate:
+                              type: string
+                            epochNumber:
+                              type: string
+                              format: uint64
                     amt:
                       type: string
                       format: int64
@@ -55579,10 +55384,6 @@ definitions:
                   - WITHDRAWAL
                   - REDEMPTION
                 default: DELEGATION
-              balance:
-                type: string
-                format: int64
-                title: TODO(TEST-112) use cosmos dec for all balances
             title: >-
               TODO(TEST-XX): Update these fields to be more useful (e.g.
               balances should be coins, maybe store port name directly)
@@ -55620,6 +55421,14 @@ definitions:
                         weight:
                           type: string
                           format: uint64
+                        internalExchangeRate:
+                          type: object
+                          properties:
+                            internalTokensToSharesRate:
+                              type: string
+                            epochNumber:
+                              type: string
+                              format: uint64
                     amt:
                       type: string
                       format: int64
@@ -55631,10 +55440,6 @@ definitions:
                   - WITHDRAWAL
                   - REDEMPTION
                 default: DELEGATION
-              balance:
-                type: string
-                format: int64
-                title: TODO(TEST-112) use cosmos dec for all balances
             title: >-
               TODO(TEST-XX): Update these fields to be more useful (e.g.
               balances should be coins, maybe store port name directly)
@@ -55672,6 +55477,14 @@ definitions:
                         weight:
                           type: string
                           format: uint64
+                        internalExchangeRate:
+                          type: object
+                          properties:
+                            internalTokensToSharesRate:
+                              type: string
+                            epochNumber:
+                              type: string
+                              format: uint64
                     amt:
                       type: string
                       format: int64
@@ -55683,10 +55496,6 @@ definitions:
                   - WITHDRAWAL
                   - REDEMPTION
                 default: DELEGATION
-              balance:
-                type: string
-                format: int64
-                title: TODO(TEST-112) use cosmos dec for all balances
             title: >-
               TODO(TEST-XX): Update these fields to be more useful (e.g.
               balances should be coins, maybe store port name directly)
@@ -55711,9 +55520,11 @@ definitions:
             title: stores how many days we should wait before issuing unbondings
           stakedBal:
             type: string
-            format: int64
+            format: uint64
             title: TODO(TEST-101) int to dec
-        title: 'next id: 18'
+          address:
+            type: string
+        title: 'next id: 19'
   Stridelabs.stride.stakeibc.QueryGetICAAccountResponse:
     type: object
     properties:
@@ -55751,6 +55562,14 @@ definitions:
                     weight:
                       type: string
                       format: uint64
+                    internalExchangeRate:
+                      type: object
+                      properties:
+                        internalTokensToSharesRate:
+                          type: string
+                        epochNumber:
+                          type: string
+                          format: uint64
                 amt:
                   type: string
                   format: int64
@@ -55762,25 +55581,9 @@ definitions:
               - WITHDRAWAL
               - REDEMPTION
             default: DELEGATION
-          balance:
-            type: string
-            format: int64
-            title: TODO(TEST-112) use cosmos dec for all balances
         title: >-
           TODO(TEST-XX): Update these fields to be more useful (e.g. balances
           should be coins, maybe store port name directly)
-  Stridelabs.stride.stakeibc.QueryGetPendingClaimsResponse:
-    type: object
-    properties:
-      pendingClaims:
-        type: object
-        properties:
-          sequence:
-            type: string
-          userRedemptionRecordIds:
-            type: array
-            items:
-              type: string
   Stridelabs.stride.stakeibc.QueryGetValidatorsResponse:
     type: object
     properties:
@@ -55808,6 +55611,14 @@ definitions:
             weight:
               type: string
               format: uint64
+            internalExchangeRate:
+              type: object
+              properties:
+                internalTokensToSharesRate:
+                  type: string
+                epochNumber:
+                  type: string
+                  format: uint64
   Stridelabs.stride.stakeibc.QueryInterchainAccountFromAddressResponse:
     type: object
     properties:
@@ -55865,15 +55676,27 @@ definitions:
           buffer_size:
             type: string
             format: uint64
-          icq_buffer_size:
+          ibc_timeout_blocks:
             type: string
             format: uint64
-          ibc_timeout_blocks:
+          fee_transfer_timeout_nanos:
+            type: string
+            format: uint64
+          max_stake_ica_calls_per_epoch:
+            type: string
+            format: uint64
+          safety_min_redemption_rate_threshold:
+            type: string
+            format: uint64
+          safety_max_redemption_rate_threshold:
+            type: string
+            format: uint64
+          ibc_transfer_timeout_nanos:
             type: string
             format: uint64
         title: |-
           Params defines the parameters for the module.
-          next id: 13
+          next id: 16
     description: QueryParamsResponse is response type for the Query/Params RPC method.
   Stridelabs.stride.stakeibc.Validator:
     type: object
@@ -55897,9 +55720,25 @@ definitions:
       weight:
         type: string
         format: uint64
+      internalExchangeRate:
+        type: object
+        properties:
+          internalTokensToSharesRate:
+            type: string
+          epochNumber:
+            type: string
+            format: uint64
   Stridelabs.stride.stakeibc.Validator.ValidatorStatus:
     type: string
     enum:
       - Active
       - Inactive
     default: Active
+  Stridelabs.stride.stakeibc.ValidatorExchangeRate:
+    type: object
+    properties:
+      internalTokensToSharesRate:
+        type: string
+      epochNumber:
+        type: string
+        format: uint64
