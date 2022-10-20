@@ -26,11 +26,11 @@ build_local_and_docker() {
 while getopts sgojthir flag; do
    case "${flag}" in
       # For stride, we need to update the admin address to one that we have the seed phrase for
-      s) cp utils/utils.go utils/utils.go.main
-         sed -i -E "s|stride1k8c2m5cn322akk5wy8lpt87dd2f4yh9azg7jlh|$STRIDE_ADMIN_ADDRESS|g" utils/utils.go
+      s) cp utils/admins.go utils/admins.go.main
+         sed -i -E "s|stride1k8c2m5cn322akk5wy8lpt87dd2f4yh9azg7jlh|$STRIDE_ADMIN_ADDRESS|g" utils/admins.go
          build_local_and_docker stride . 
-         mv utils/utils.go.main utils/utils.go
-         rm -f utils/utils.go-E ;;
+         mv utils/admins.go.main utils/admins.go
+         rm -f utils/admins.go-E ;;
       g) build_local_and_docker gaia deps/gaia ;;
       j) build_local_and_docker juno deps/juno ;;
       o) build_local_and_docker osmo deps/osmosis ;;
