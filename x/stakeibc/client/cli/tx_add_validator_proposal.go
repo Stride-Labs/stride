@@ -18,13 +18,6 @@ import (
 	"github.com/Stride-Labs/stride/x/stakeibc/types"
 )
 
-// // Proposal flags.
-// const (
-// 	FlagValidatorAddress = "validator-address"
-// 	FlagHostZone         = "host-zone"
-// 	FlagValidatorName    = "validator-name"
-// )
-
 func parseAddValidatorProposalWithDepositWithDeposit(cdc codec.JSONCodec, proposalFile string) (types.AddValidatorProposalWithDeposit, error) {
 
 	proposal := types.AddValidatorProposalWithDeposit{}
