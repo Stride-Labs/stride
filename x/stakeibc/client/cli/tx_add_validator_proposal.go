@@ -73,29 +73,22 @@ Where proposal.json contains:
 
 			from := clientCtx.GetFromAddress()
 
-			depositFromProposal, err := sdk.ParseCoinsNormalized(proposal.Deposit)
-			if err != nil {
-				return err
-			}
-
-			depositFromFlagsStr, err := cmd.Flags().GetString(govcli.FlagDeposit)
-			if err != nil {
-				return err
-			}
-			depositFromFlags, err := sdk.ParseCoinsNormalized(depositFromFlagsStr)
+			depositFromFlags, err := cmd.Flags().GetString(govcli.FlagDeposit)
 			if err != nil {
 				return err
 			}
 
 			// if deposit from flags is not empty, it overrides the deposit from proposal
-			deposit := depositFromProposal
-			if !depositFromFlags.IsZero() || depositFromFlags == nil {
-				deposit = depositFromFlags
+			depositStr := proposal.Deposit
+			if depositFromFlags != "" {
+				depositStr = depositFromFlags
+			}
+			deposit, err := sdk.ParseCoinsNormalized(depositStr)
+			if err != nil {
+				return err
 			}
 
-			content := types.NewAddValidatorProposal(proposal.Title, proposal.Description, proposal.HostZone, proposal.ValidatorName, proposal.ValidatorAddress)
-
-			msg, err := govtypes.NewMsgSubmitProposal(content, deposit, from)
+			msg, err := govtypes.NewMsgSubmitProposal(&proposal, deposit, from)
 			if err != nil {
 				return err
 			}
