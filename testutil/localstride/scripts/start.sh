@@ -27,11 +27,12 @@ edit_genesis () {
     dasel put string -f $GENESIS '.app_state.gov.deposit_params.min_deposit.[0].denom' 'ustrd'
 
     # Update epochs module
-    dasel put string -f $GENESIS '.app_state.epochs.epochs.[1].duration' "60s"
+    dasel put string -f $GENESIS '.app_state.epochs.epochs.(.identifier=day).duration' '120s'
+    dasel put string -f $GENESIS '.app_state.epochs.epochs.(.identifier=stride_epoch).duration' '120s'
 
     # Update mint module
-    dasel put string -f $GENESIS '.app_state.mint.params.mint_denom' "ustrd"
-    dasel put string -f $GENESIS '.app_state.mint.params.epoch_identifier' "day"
+    dasel put string -f $GENESIS '.app_state.mint.params.mint_denom' 'ustrd'
+    dasel put string -f $GENESIS '.app_state.mint.params.epoch_identifier' 'mint'
 
 }
 

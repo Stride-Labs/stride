@@ -1,7 +1,8 @@
-import json
 import argparse
-from datetime import datetime
+import json
 from dataclasses import dataclass
+from datetime import datetime
+
 
 # Classes
 @dataclass
@@ -195,12 +196,17 @@ def main():
 
     # Update epochs module
     print("⌛ Update epochs module")
-    print("\tModify epoch_duration from {} to {}".format(
-            genesis['app_state']['epochs']['epochs'][0]['duration'],
-            config["epoch_duration"]))
+    print("\tModify epoch_duration")
     print("\tReset current_epoch_start_time")
-    genesis['app_state']['epochs']['epochs'][0]['duration'] = config["epoch_duration"]
-    genesis['app_state']['epochs']['epochs'][0]['current_epoch_start_time'] = datetime.now().isoformat() + 'Z'
+
+    for epoch in genesis['app_state']['epochs']['epochs']:
+        if epoch['identifier'] == "day": 
+            epoch['duration'] = config["epoch_day_duration"]
+
+        elif epoch['identifier'] == "stride_epoch":
+            epoch['duration'] = config["epoch_stride_duration"]
+
+        epoch['current_epoch_start_time'] = datetime.now().isoformat() + 'Z'
 
     # Prune IBC
     if args.prune_ibc:
