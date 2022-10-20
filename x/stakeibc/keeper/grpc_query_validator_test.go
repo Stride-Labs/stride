@@ -17,7 +17,7 @@ func TestValidatorQuery(t *testing.T) {
 	keeper, ctx := keepertest.StakeibcKeeper(t)
 	wctx := sdk.WrapSDKContext(ctx)
 
-	var validatorsByHostZone = make(map[string][]*types.Validator)
+	validatorsByHostZone := make(map[string][]*types.Validator)
 	validators := []*types.Validator{}
 	nullify.Fill(&validators)
 

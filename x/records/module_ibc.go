@@ -176,24 +176,25 @@ func (im IBCModule) OnAcknowledgementPacket(
 		return sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "cannot unmarshal ICS-20 transfer packet acknowledgement: %v", err)
 	}
 
-	// Custom ack logic only applies to ibc transfers initiated from the `stakeibc` module account
-	// NOTE: if the `stakeibc` module account IBC transfers tokens for some other reason in the future,
-	// this will need to be updated
+	// log the ack type
 	switch resp := ack.Response.(type) {
 	case *channeltypes.Acknowledgement_Result:
 		im.keeper.Logger(ctx).Info(fmt.Sprintf("\t [IBC-TRANSFER] Acknowledgement_Result {%s}", string(resp.Result)))
-		// callback
-		err := im.keeper.ICACallbacksKeeper.CallRegisteredICACallback(ctx, packet, &ack)
-		if err != nil {
-			errMsg := fmt.Sprintf("Unable to call registered callback from records OnAcknowledgePacket | Sequence %d, from %s %s, to %s %s | Error %s",
-				packet.Sequence, packet.SourceChannel, packet.SourcePort, packet.DestinationChannel, packet.DestinationPort, err.Error())
-			im.keeper.Logger(ctx).Error(errMsg)
-			return sdkerrors.Wrapf(icacallbacktypes.ErrCallbackFailed, errMsg)
-		}
 	case *channeltypes.Acknowledgement_Error:
 		im.keeper.Logger(ctx).Error(fmt.Sprintf("\t [IBC-TRANSFER] Acknowledgement_Error {%s}", resp.Error))
 	default:
 		im.keeper.Logger(ctx).Error(fmt.Sprintf("\t [IBC-TRANSFER] Unrecognized ack for packet {%v}", packet))
+	}
+
+	// Custom ack logic only applies to ibc transfers initiated from the `stakeibc` module account
+	// NOTE: if the `stakeibc` module account IBC transfers tokens for some other reason in the future,
+	// this will need to be updated
+	err := im.keeper.ICACallbacksKeeper.CallRegisteredICACallback(ctx, packet, &ack)
+	if err != nil {
+		errMsg := fmt.Sprintf("Unable to call registered callback from records OnAcknowledgePacket | Sequence %d, from %s %s, to %s %s | Error %s",
+			packet.Sequence, packet.SourceChannel, packet.SourcePort, packet.DestinationChannel, packet.DestinationPort, err.Error())
+		im.keeper.Logger(ctx).Error(errMsg)
+		return sdkerrors.Wrapf(icacallbacktypes.ErrCallbackFailed, errMsg)
 	}
 
 	return im.app.OnAcknowledgementPacket(ctx, packet, acknowledgement, relayer)
@@ -207,6 +208,10 @@ func (im IBCModule) OnTimeoutPacket(
 ) error {
 	// doCustomLogic(packet)
 	im.keeper.Logger(ctx).Error(fmt.Sprintf("[IBC-TRANSFER] OnTimeoutPacket  %v", packet))
+	err := im.keeper.ICACallbacksKeeper.CallRegisteredICACallback(ctx, packet, nil)
+	if err != nil {
+		return err
+	}
 	return im.app.OnTimeoutPacket(ctx, packet, relayer)
 }
 

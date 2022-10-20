@@ -73,7 +73,9 @@ func (s *KeeperTestSuite) SetupRegisterHostZone() RegisterHostZoneTestCase {
 // Helper function to test registering a duplicate host zone
 // If there's a duplicate connection ID, register_host_zone will error before checking other fields for duplicates
 // In order to test those cases, we need to first create a new host zone,
-//    and then attempt to register with duplicate fields in the message
+//
+//	and then attempt to register with duplicate fields in the message
+//
 // This function 1) creates a new host zone and 2) returns what would be a successful register message
 func (s *KeeperTestSuite) createNewHostZoneMessage(chainID string, denom string, prefix string) stakeibctypes.MsgRegisterHostZone {
 	// Create a new test chain and connection ID
@@ -93,7 +95,8 @@ func (s *KeeperTestSuite) createNewHostZoneMessage(chainID string, denom string,
 
 // Helper function to assist in testing a failure to create an ICA account
 // This function will occupy one of the specified port with the specified channel
-//  so that the registration fails
+//
+//	so that the registration fails
 func (s *KeeperTestSuite) createActiveChannelOnICAPort(accountName string, channelID string) {
 	portID := fmt.Sprintf("%s%s.%s", icatypes.PortPrefix, HostChainId, accountName)
 	openChannel := channeltypes.Channel{State: channeltypes.OPEN}
@@ -127,7 +130,7 @@ func (s *KeeperTestSuite) TestRegisterHostZone_Success() {
 	hostZoneUnbonding := epochUnbondingRecord.HostZoneUnbondings[0]
 	s.Require().Equal(HostChainId, hostZoneUnbonding.HostZoneId, "host zone unbonding set for this host zone")
 	s.Require().Equal(uint64(0), hostZoneUnbonding.NativeTokenAmount, "host zone unbonding set to 0 tokens")
-	s.Require().Equal(recordstypes.HostZoneUnbonding_BONDED, hostZoneUnbonding.Status, "host zone unbonding set to bonded")
+	s.Require().Equal(recordstypes.HostZoneUnbonding_UNBONDING_QUEUE, hostZoneUnbonding.Status, "host zone unbonding set to bonded")
 
 	// Confirm a module account was created
 	hostZoneModuleAccount, err := sdk.AccAddressFromBech32(hostZone.Address)
@@ -141,7 +144,7 @@ func (s *KeeperTestSuite) TestRegisterHostZone_Success() {
 		Amount:             int64(0),
 		HostZoneId:         hostZone.ChainId,
 		Denom:              hostZone.HostDenom,
-		Status:             recordstypes.DepositRecord_TRANSFER,
+		Status:             recordstypes.DepositRecord_TRANSFER_QUEUE,
 		DepositEpochNumber: tc.strideEpochNumber,
 	}
 

@@ -84,7 +84,6 @@ func (k Keeper) GetTargetValAmtsForHostZone(ctx sdk.Context, hostZone types.Host
 			allocatedAmt += delegateAmt
 			targetAmount[validator.GetAddress()] = delegateAmt
 		}
-
 	}
 	return targetAmount, nil
 }

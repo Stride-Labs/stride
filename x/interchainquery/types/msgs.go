@@ -10,9 +10,7 @@ const (
 	TypeMsgSubmitQueryResponse = "submitqueryresponse"
 )
 
-var (
-	_ sdk.Msg = &MsgSubmitQueryResponse{}
-)
+var _ sdk.Msg = &MsgSubmitQueryResponse{}
 
 // Route Implements Msg.
 func (msg MsgSubmitQueryResponse) Route() string { return RouterKey }

@@ -32,7 +32,6 @@ func (k Keeper) UserRedemptionRecordAll(c context.Context, req *types.QueryAllUs
 		userRedemptionRecords = append(userRedemptionRecords, userRedemptionRecord)
 		return nil
 	})
-
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}

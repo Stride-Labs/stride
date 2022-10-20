@@ -19,7 +19,6 @@ func (k Keeper) SetEpochTracker(ctx sdk.Context, epochTracker types.EpochTracker
 func (k Keeper) GetEpochTracker(
 	ctx sdk.Context,
 	epochIdentifier string,
-
 ) (val types.EpochTracker, found bool) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.EpochTrackerKeyPrefix))
 
@@ -38,7 +37,6 @@ func (k Keeper) GetEpochTracker(
 func (k Keeper) RemoveEpochTracker(
 	ctx sdk.Context,
 	epochIdentifier string,
-
 ) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.EpochTrackerKeyPrefix))
 	store.Delete(types.EpochTrackerKey(

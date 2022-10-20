@@ -30,7 +30,6 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) 
 
 	// Set depositRecord count
 	k.SetDepositRecordCount(ctx, genState.DepositRecordCount)
-
 }
 
 // ExportGenesis returns the capability module's exported genesis.

@@ -48,5 +48,4 @@ func (k Keeper) EndBlocker(ctx sdk.Context) {
 	if len(events) > 0 {
 		ctx.EventManager().EmitEvents(events)
 	}
-
 }
