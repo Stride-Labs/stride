@@ -120,7 +120,7 @@ func (k msgServer) RebalanceValidators(goCtx context.Context, msg *types.MsgReba
 			// if overWeightElem is positive, we're done rebalancing
 			break
 		}
-		redelegateMsg := &stakingTypes.MsgBeginRedelegate{}
+		var redelegateMsg *stakingTypes.MsgBeginRedelegate
 		if abs(underWeightElem.deltaAmt) > abs(overWeightElem.deltaAmt) {
 			// if the underweight element is more off than the overweight element
 			// we transfer stake from the underweight element to the overweight element
