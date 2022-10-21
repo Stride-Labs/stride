@@ -145,7 +145,7 @@ During this process, you may see only p2p logs and no blocks. This could be the 
 
 ```sh
 MNEMONIC="deer gaze swear marine one perfect hero twice turkey symbol mushroom hub escape accident prevent rifle horse arena secret endless panel equal rely payment"
-echo $MNEMONIC | strided keys add wallet --recover --keyring-backend test
+echo $MNEMONIC | strided keys add val --recover --keyring-backend test
 ```
 
 You now are running a validator with a majority of the voting power with the same state as mainnet state (at the time you took the snapshot)
@@ -159,7 +159,7 @@ strided status
 11. Here is an example command to ensure complete understanding:
 
 ```sh
-strided tx bank send wallet stride1qym804u6sa2gvxedfy96c0v9jc0ww7593uechw 10000000uosmo --chain-id testing1 --keyring-backend test
+strided tx bank send val stride1qym804u6sa2gvxedfy96c0v9jc0ww7593uechw 10000000ustrd --chain-id localstride --keyring-backend test
 ```
 
 12. You can stop chain, keeping the state with
