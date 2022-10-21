@@ -11,10 +11,6 @@ build_local_and_docker() {
    folder="$2"
    title=$(printf "$module" | awk '{ print toupper($0) }')
 
-   echo "Building $title Docker...  "
-   docker build --tag stridezone:$module -f Dockerfile.$module . 
-   docker_build_succeeded=$?
-
    printf '%s' "Building $title Locally...  "
    cwd=$PWD
    cd $folder
@@ -22,6 +18,10 @@ build_local_and_docker() {
    local_build_succeeded=$?
    cd $cwd
    echo "Done" 
+
+   echo "Building $title Docker...  "
+   docker build --tag stridezone:$module -f Dockerfile.$module . 
+   docker_build_succeeded=$?
 
    return $docker_build_succeeded && $local_build_succeeded
 }
