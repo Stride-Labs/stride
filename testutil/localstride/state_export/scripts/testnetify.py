@@ -23,7 +23,8 @@ BONDED_TOKENS_POOL_MODULE_ADDRESS = "stride1fl48vsnmsdzcv85q5d2q4z5ajdha8yu3ksfn
 
 config = {
     "governance_voting_period": "180s",
-    "epoch_duration": '21600s',
+    "epoch_day_duration": '3600s',
+    "epoch_stride_duration": "3600s",
 }
 
 def replace(d, old_value, new_value):
