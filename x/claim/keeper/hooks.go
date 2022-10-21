@@ -4,23 +4,25 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
+	epochstypes "github.com/Stride-Labs/stride/x/epochs/types"
 	stakingibctypes "github.com/Stride-Labs/stride/x/stakeibc/types"
 
 	"github.com/Stride-Labs/stride/x/claim/types"
 )
 
 func (k Keeper) AfterDelegationModified(ctx sdk.Context, delAddr sdk.AccAddress, valAddr sdk.ValAddress) {
-	_, err := k.ClaimCoinsForAction(ctx, delAddr, types.ActionDelegateStake)
-	if err != nil {
-		panic(err.Error())
-	}
+	k.ClaimCoinsForAction(ctx, delAddr, types.ActionDelegateStake, k.GetAirdropIdentifierForUser(ctx, delAddr))
 }
 
 func (k Keeper) AfterLiquidStake(ctx sdk.Context, addr sdk.AccAddress) {
-	_, err := k.ClaimCoinsForAction(ctx, addr, types.ActionLiquidStake)
-	if err != nil {
-		panic(err.Error())
-	}
+	k.ClaimCoinsForAction(ctx, addr, types.ActionLiquidStake, k.GetAirdropIdentifierForUser(ctx, addr))
+}
+
+func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochInfo epochstypes.EpochInfo) {
+}
+
+func (k Keeper) AfterEpochEnd(ctx sdk.Context, epochInfo epochstypes.EpochInfo) {
+	k.ClearClaimedStatus(ctx, epochInfo.Identifier)
 }
 
 // ________________________________________________________________________________________
@@ -32,6 +34,7 @@ type Hooks struct {
 
 var _ stakingtypes.StakingHooks = Hooks{}
 var _ stakingibctypes.StakeIBCHooks = Hooks{}
+var _ epochstypes.EpochHooks = Hooks{}
 
 // Return the wrapper struct
 func (k Keeper) Hooks() Hooks {
@@ -41,6 +44,15 @@ func (k Keeper) Hooks() Hooks {
 // ibcstaking hooks
 func (h Hooks) AfterLiquidStake(ctx sdk.Context, addr sdk.AccAddress) {
 	h.k.AfterLiquidStake(ctx, addr)
+}
+
+// epochs hooks
+func (h Hooks) BeforeEpochStart(ctx sdk.Context, epochInfo epochstypes.EpochInfo) {
+	h.k.BeforeEpochStart(ctx, epochInfo)
+}
+
+func (h Hooks) AfterEpochEnd(ctx sdk.Context, epochInfo epochstypes.EpochInfo) {
+	h.k.AfterEpochEnd(ctx, epochInfo)
 }
 
 // staking hooks

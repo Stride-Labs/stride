@@ -9,14 +9,12 @@ import (
 )
 
 func RegisterCodec(cdc *codec.LegacyAmino) {
-	cdc.RegisterConcrete(&MsgDepositAirdrop{}, "claim/DepositAirdrop", nil)
 	cdc.RegisterConcrete(&MsgSetAirdropAllocations{}, "claim/SetAirdropAllocation", nil)
 	cdc.RegisterConcrete(&MsgClaimFreeAmount{}, "claim/ClaimFreeAmount", nil)
 }
 
 func RegisterInterfaces(registry cdctypes.InterfaceRegistry) {
 	registry.RegisterImplementations((*sdk.Msg)(nil),
-		&MsgDepositAirdrop{},
 		&MsgSetAirdropAllocations{},
 		&MsgClaimFreeAmount{},
 	)

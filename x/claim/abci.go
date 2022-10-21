@@ -15,12 +15,14 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) {
 	}
 
 	// End Airdrop
-	goneTime := ctx.BlockTime().Sub(params.AirdropStartTime)
-	if goneTime > params.AirdropDuration {
-		// airdrop time has passed
-		err := k.EndAirdrop(ctx)
-		if err != nil {
-			panic(err)
+	for _, airdrop := range params.Airdrops {
+		goneTime := ctx.BlockTime().Sub(airdrop.AirdropStartTime)
+		if goneTime > airdrop.AirdropDuration {
+			// airdrop time has passed
+			err := k.EndAirdrop(ctx, airdrop.AirdropIdentifier)
+			if err != nil {
+				panic(err)
+			}
 		}
 	}
 }

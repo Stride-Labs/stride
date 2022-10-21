@@ -16,10 +16,15 @@ const DefaultIndex uint64 = 1
 func DefaultGenesis() *GenesisState {
 	return &GenesisState{
 		Params: Params{
-			AirdropStartTime:   time.Time{},
-			AirdropDuration:    DefaultAirdropDuration, // 2 month
-			ClaimDenom:         DefaultClaimDenom,      // ustrd
-			DistributorAddress: "",
+			Airdrops: []*Airdrop{
+				{
+					AirdropStartTime:   time.Time{},
+					AirdropDuration:    DefaultAirdropDuration, // 2 month
+					ClaimDenom:         DefaultClaimDenom,      // ustrd
+					DistributorAddress: "",
+					AirdropIdentifier:  DefaultAirdropIdentifier, //stride
+				},
+			},
 		},
 		ClaimRecords: []ClaimRecord{},
 	}

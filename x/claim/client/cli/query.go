@@ -24,7 +24,7 @@ func GetQueryCmd(queryRoute string) *cobra.Command {
 	}
 
 	claimQueryCmd.AddCommand(
-		GetCmdQueryModuleAccountBalance(),
+		GetCmdQueryDistributorAccountBalance(),
 		GetCmdQueryParams(),
 		GetCmdQueryClaimRecord(),
 		GetCmdQueryClaimableForAction(),
@@ -36,20 +36,23 @@ func GetQueryCmd(queryRoute string) *cobra.Command {
 
 // GetCmdQueryParams implements a command to return the current minting
 // parameters.
-func GetCmdQueryModuleAccountBalance() *cobra.Command {
+func GetCmdQueryDistributorAccountBalance() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "module-account-balance",
-		Short: "Query the current claim module's account balance",
-		Args:  cobra.NoArgs,
+		Use:   "distributor-account-balance [airdrop-identifier]",
+		Short: "Query the current distributor's account balance",
+		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
+			argAirdropIdentifier := args[0]
 			clientCtx, err := client.GetClientQueryContext(cmd)
 			if err != nil {
 				return err
 			}
 			queryClient := types.NewQueryClient(clientCtx)
 
-			req := &types.QueryModuleAccountBalanceRequest{}
-			res, err := queryClient.ModuleAccountBalance(context.Background(), req)
+			req := &types.QueryDistributorAccountBalanceRequest{
+				AirdropIdentifier: argAirdropIdentifier,
+			}
+			res, err := queryClient.DistributorAccountBalance(context.Background(), req)
 
 			if err != nil {
 				return err
@@ -97,8 +100,8 @@ func GetCmdQueryParams() *cobra.Command {
 // GetCmdQueryClaimRecord implements the query claim-records command.
 func GetCmdQueryClaimRecord() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "claim-record [address]",
-		Args:  cobra.ExactArgs(1),
+		Use:   "claim-record [airdrop-identifier] [address]",
+		Args:  cobra.ExactArgs(2),
 		Short: "Query the claim record for an account.",
 		Long: strings.TrimSpace(
 			fmt.Sprintf(`Query the claim record for an account.
@@ -116,8 +119,9 @@ $ %s query claim claim-record <address>
 				return err
 			}
 			queryClient := types.NewQueryClient(clientCtx)
+
 			// Query store
-			res, err := queryClient.ClaimRecord(context.Background(), &types.QueryClaimRecordRequest{Address: args[0]})
+			res, err := queryClient.ClaimRecord(context.Background(), &types.QueryClaimRecordRequest{AirdropIdentifier: args[0], Address: args[1]})
 			if err != nil {
 				return err
 			}

@@ -1,8 +1,6 @@
 package claim
 
 import (
-	"time"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/Stride-Labs/stride/x/claim/keeper"
@@ -13,10 +11,6 @@ import (
 // state.
 func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) {
 	// If its the chain genesis, set the airdrop start time to be now, and setup the needed module accounts.
-	if genState.Params.AirdropStartTime.Equal(time.Time{}) {
-		genState.Params.AirdropStartTime = ctx.BlockTime()
-	}
-
 	if err := k.SetParams(ctx, genState.Params); err != nil {
 		panic(err)
 	}
@@ -33,6 +27,6 @@ func ExportGenesis(ctx sdk.Context, k keeper.Keeper) *types.GenesisState {
 	}
 	genesis := types.DefaultGenesis()
 	genesis.Params = params
-	genesis.ClaimRecords = k.GetClaimRecords(ctx)
+	genesis.ClaimRecords = k.GetClaimRecords(ctx, "")
 	return genesis
 }

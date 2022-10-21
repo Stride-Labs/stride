@@ -11,8 +11,8 @@ option go_package = "github.com/Stride-Labs/stride/x/claim/types";
 
 // Query defines the gRPC querier service.
 service Query {
-  rpc ModuleAccountBalance(QueryModuleAccountBalanceRequest)
-      returns (QueryModuleAccountBalanceResponse) {
+  rpc DistributorAccountBalance(QueryDistributorAccountBalanceRequest)
+      returns (QueryDistributorAccountBalanceResponse) {
     option (google.api.http).get =
         "/claim/v1beta1/module_account_balance";
   }
@@ -36,12 +36,14 @@ service Query {
 }
 
 // QueryParamsRequest is the request type for the Query/Params RPC method.
-message QueryModuleAccountBalanceRequest {}
+message QueryDistributorAccountBalanceRequest {
+  string airdrop_identifier = 1 [(gogoproto.moretags)= "yaml:\"identifier\""];
+}
 
 // QueryParamsResponse is the response type for the Query/Params RPC method.
-message QueryModuleAccountBalanceResponse {
+message QueryDistributorAccountBalanceResponse {
   // params defines the parameters of the module.
-  repeated cosmos.base.v1beta1.Coin moduleAccountBalance = 1 [
+  repeated cosmos.base.v1beta1.Coin distributorAccountBalance = 1 [
     (gogoproto.moretags) = "yaml:\"coins\"",
     (gogoproto.nullable) = false,
     (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
@@ -58,7 +60,8 @@ message QueryParamsResponse {
 }
 
 message QueryClaimRecordRequest {
-  string address = 1 [ (gogoproto.moretags) = "yaml:\"sender\"" ];
+  string airdrop_identifier = 1 [ (gogoproto.moretags) = "yaml:\"identifier\"" ];
+  string address = 2 [ (gogoproto.moretags) = "yaml:\"sender\"" ];
 }
 
 message QueryClaimRecordResponse {
@@ -69,8 +72,9 @@ message QueryClaimRecordResponse {
 }
 
 message QueryClaimableForActionRequest {
-  string address = 1 [ (gogoproto.moretags) = "yaml:\"address\"" ];
-  Action action = 2 [ (gogoproto.moretags) = "yaml:\"action\"" ];
+  string airdrop_identifier = 1 [ (gogoproto.moretags) = "yaml:\"identifier\"" ];
+  string address = 2 [ (gogoproto.moretags) = "yaml:\"address\"" ];
+  Action action = 3 [ (gogoproto.moretags) = "yaml:\"action\"" ];
 }
 
 message QueryClaimableForActionResponse {
@@ -82,7 +86,8 @@ message QueryClaimableForActionResponse {
 }
 
 message QueryTotalClaimableRequest {
-  string address = 1 [ (gogoproto.moretags) = "yaml:\"address\"" ];
+  string airdrop_identifier = 1 [ (gogoproto.moretags) = "yaml:\"identifier\"" ];
+  string address = 2 [ (gogoproto.moretags) = "yaml:\"address\"" ];
 }
 
 message QueryTotalClaimableResponse {

@@ -15,12 +15,12 @@ import (
 
 func CmdSetAirdropAllocations() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "set-airdrop-allocations [user-addresses] [user-weights]",
+		Use:   "set-airdrop-allocations [airdrop-identifier] [user-addresses] [user-weights]",
 		Short: "Broadcast message set-airdrop-allocations",
-		Args:  cobra.ExactArgs(2),
+		Args:  cobra.ExactArgs(3),
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
-			argAddresses := strings.Split(args[0], ",")
-			argWeights := strings.Split(args[1], ",")
+			argAddresses := strings.Split(args[1], ",")
+			argWeights := strings.Split(args[2], ",")
 			weights := []sdk.Dec{}
 
 			for _, weight := range argWeights {
@@ -35,6 +35,7 @@ func CmdSetAirdropAllocations() *cobra.Command {
 
 			msg := types.NewMsgSetAirdropAllocations(
 				clientCtx.GetFromAddress().String(),
+				args[0],
 				argAddresses,
 				weights,
 			)

@@ -518,6 +518,7 @@ func NewStrideApp(
 		epochsmoduletypes.NewMultiEpochHooks(
 			app.StakeibcKeeper.Hooks(),
 			app.MintKeeper.Hooks(),
+			app.ClaimKeeper.Hooks(),
 		),
 	)
 	epochsModule := epochsmodule.NewAppModule(appCodec, app.EpochsKeeper)

@@ -5,62 +5,17 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
-// Msg type for MsgDepositAirdrop
-const TypeMsgDepositAirdrop = "deposit_airdrop"
-
-var _ sdk.Msg = &MsgDepositAirdrop{}
-
-func NewMsgDepositAirdrop(distributor string, airdropAmount sdk.Coins) *MsgDepositAirdrop {
-	return &MsgDepositAirdrop{
-		Distributor:   distributor,
-		AirdropAmount: airdropAmount,
-	}
-}
-
-func (msg *MsgDepositAirdrop) Route() string {
-	return RouterKey
-}
-
-func (msg *MsgDepositAirdrop) Type() string {
-	return TypeMsgDepositAirdrop
-}
-
-func (msg *MsgDepositAirdrop) GetSigners() []sdk.AccAddress {
-	distributor, err := sdk.AccAddressFromBech32(msg.Distributor)
-	if err != nil {
-		panic(err)
-	}
-	return []sdk.AccAddress{distributor}
-}
-
-func (msg *MsgDepositAirdrop) GetSignBytes() []byte {
-	bz := ModuleCdc.MustMarshalJSON(msg)
-	return sdk.MustSortJSON(bz)
-}
-
-func (msg *MsgDepositAirdrop) ValidateBasic() error {
-	_, err := sdk.AccAddressFromBech32(msg.Distributor)
-	if err != nil {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid distributor address (%s)", err)
-	}
-
-	if msg.AirdropAmount.Empty() {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "empty coin (%s)", err)
-	}
-
-	return nil
-}
-
 // Msg type for MsgSetAirdropAllocations
 const TypeMsgSetAirdropAllocations = "set_airdrop_allocation"
 
 var _ sdk.Msg = &MsgSetAirdropAllocations{}
 
-func NewMsgSetAirdropAllocations(allocator string, users []string, weights []sdk.Dec) *MsgSetAirdropAllocations {
+func NewMsgSetAirdropAllocations(allocator string, airdropIdentifier string, users []string, weights []sdk.Dec) *MsgSetAirdropAllocations {
 	return &MsgSetAirdropAllocations{
-		Allocator: allocator,
-		Users:     users,
-		Weights:   weights,
+		Allocator:         allocator,
+		AirdropIdentifier: airdropIdentifier,
+		Users:             users,
+		Weights:           weights,
 	}
 }
 
@@ -91,16 +46,20 @@ func (msg *MsgSetAirdropAllocations) ValidateBasic() error {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid allocator address (%s)", err)
 	}
 
+	if msg.AirdropIdentifier == "" {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "airdrop identifier not set")
+	}
+
 	if len(msg.Users) == 0 {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "empty users list (%s)", err)
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "empty users list")
 	}
 
 	if len(msg.Weights) == 0 {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "empty weights list (%s)", err)
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "empty weights list")
 	}
 
 	if len(msg.Users) != len(msg.Weights) {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "different length (%s)", err)
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "different length")
 	}
 
 	for _, user := range msg.Users {
@@ -112,7 +71,7 @@ func (msg *MsgSetAirdropAllocations) ValidateBasic() error {
 
 	for _, weight := range msg.Weights {
 		if weight.Equal(sdk.NewDec(0)) {
-			return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid user weight (%s)", err)
+			return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "invalid user weight")
 		}
 	}
 
@@ -124,9 +83,10 @@ const TypeMsgClaimFreeAmount = "claim_free_amount"
 
 var _ sdk.Msg = &MsgClaimFreeAmount{}
 
-func NewMsgClaimFreeAmount(user string) *MsgClaimFreeAmount {
+func NewMsgClaimFreeAmount(user string, airdropIdentifier string) *MsgClaimFreeAmount {
 	return &MsgClaimFreeAmount{
-		User: user,
+		User:              user,
+		AirdropIdentifier: airdropIdentifier,
 	}
 }
 
@@ -152,6 +112,10 @@ func (msg *MsgClaimFreeAmount) GetSignBytes() []byte {
 }
 
 func (msg *MsgClaimFreeAmount) ValidateBasic() error {
+	if msg.AirdropIdentifier == "" {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "airdrop identifier not set")
+	}
+
 	_, err := sdk.AccAddressFromBech32(msg.User)
 	if err != nil {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid user address (%s)", err)

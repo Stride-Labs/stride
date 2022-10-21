@@ -32,21 +32,22 @@ var _ = math.Inf
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
 // QueryParamsRequest is the request type for the Query/Params RPC method.
-type QueryModuleAccountBalanceRequest struct {
+type QueryDistributorAccountBalanceRequest struct {
+	AirdropIdentifier string `protobuf:"bytes,1,opt,name=airdrop_identifier,json=airdropIdentifier,proto3" json:"airdrop_identifier,omitempty" yaml:"identifier"`
 }
 
-func (m *QueryModuleAccountBalanceRequest) Reset()         { *m = QueryModuleAccountBalanceRequest{} }
-func (m *QueryModuleAccountBalanceRequest) String() string { return proto.CompactTextString(m) }
-func (*QueryModuleAccountBalanceRequest) ProtoMessage()    {}
-func (*QueryModuleAccountBalanceRequest) Descriptor() ([]byte, []int) {
+func (m *QueryDistributorAccountBalanceRequest) Reset()         { *m = QueryDistributorAccountBalanceRequest{} }
+func (m *QueryDistributorAccountBalanceRequest) String() string { return proto.CompactTextString(m) }
+func (*QueryDistributorAccountBalanceRequest) ProtoMessage()    {}
+func (*QueryDistributorAccountBalanceRequest) Descriptor() ([]byte, []int) {
 	return fileDescriptor_45c620aecc0f41bd, []int{0}
 }
-func (m *QueryModuleAccountBalanceRequest) XXX_Unmarshal(b []byte) error {
+func (m *QueryDistributorAccountBalanceRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *QueryModuleAccountBalanceRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *QueryDistributorAccountBalanceRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_QueryModuleAccountBalanceRequest.Marshal(b, m, deterministic)
+		return xxx_messageInfo_QueryDistributorAccountBalanceRequest.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -56,36 +57,45 @@ func (m *QueryModuleAccountBalanceRequest) XXX_Marshal(b []byte, deterministic b
 		return b[:n], nil
 	}
 }
-func (m *QueryModuleAccountBalanceRequest) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_QueryModuleAccountBalanceRequest.Merge(m, src)
+func (m *QueryDistributorAccountBalanceRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryDistributorAccountBalanceRequest.Merge(m, src)
 }
-func (m *QueryModuleAccountBalanceRequest) XXX_Size() int {
+func (m *QueryDistributorAccountBalanceRequest) XXX_Size() int {
 	return m.Size()
 }
-func (m *QueryModuleAccountBalanceRequest) XXX_DiscardUnknown() {
-	xxx_messageInfo_QueryModuleAccountBalanceRequest.DiscardUnknown(m)
+func (m *QueryDistributorAccountBalanceRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryDistributorAccountBalanceRequest.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_QueryModuleAccountBalanceRequest proto.InternalMessageInfo
+var xxx_messageInfo_QueryDistributorAccountBalanceRequest proto.InternalMessageInfo
+
+func (m *QueryDistributorAccountBalanceRequest) GetAirdropIdentifier() string {
+	if m != nil {
+		return m.AirdropIdentifier
+	}
+	return ""
+}
 
 // QueryParamsResponse is the response type for the Query/Params RPC method.
-type QueryModuleAccountBalanceResponse struct {
+type QueryDistributorAccountBalanceResponse struct {
 	// params defines the parameters of the module.
-	ModuleAccountBalance github_com_cosmos_cosmos_sdk_types.Coins `protobuf:"bytes,1,rep,name=moduleAccountBalance,proto3,castrepeated=github.com/cosmos/cosmos-sdk/types.Coins" json:"moduleAccountBalance" yaml:"coins"`
+	DistributorAccountBalance github_com_cosmos_cosmos_sdk_types.Coins `protobuf:"bytes,1,rep,name=distributorAccountBalance,proto3,castrepeated=github.com/cosmos/cosmos-sdk/types.Coins" json:"distributorAccountBalance" yaml:"coins"`
 }
 
-func (m *QueryModuleAccountBalanceResponse) Reset()         { *m = QueryModuleAccountBalanceResponse{} }
-func (m *QueryModuleAccountBalanceResponse) String() string { return proto.CompactTextString(m) }
-func (*QueryModuleAccountBalanceResponse) ProtoMessage()    {}
-func (*QueryModuleAccountBalanceResponse) Descriptor() ([]byte, []int) {
+func (m *QueryDistributorAccountBalanceResponse) Reset() {
+	*m = QueryDistributorAccountBalanceResponse{}
+}
+func (m *QueryDistributorAccountBalanceResponse) String() string { return proto.CompactTextString(m) }
+func (*QueryDistributorAccountBalanceResponse) ProtoMessage()    {}
+func (*QueryDistributorAccountBalanceResponse) Descriptor() ([]byte, []int) {
 	return fileDescriptor_45c620aecc0f41bd, []int{1}
 }
-func (m *QueryModuleAccountBalanceResponse) XXX_Unmarshal(b []byte) error {
+func (m *QueryDistributorAccountBalanceResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *QueryModuleAccountBalanceResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *QueryDistributorAccountBalanceResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_QueryModuleAccountBalanceResponse.Marshal(b, m, deterministic)
+		return xxx_messageInfo_QueryDistributorAccountBalanceResponse.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -95,21 +105,21 @@ func (m *QueryModuleAccountBalanceResponse) XXX_Marshal(b []byte, deterministic 
 		return b[:n], nil
 	}
 }
-func (m *QueryModuleAccountBalanceResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_QueryModuleAccountBalanceResponse.Merge(m, src)
+func (m *QueryDistributorAccountBalanceResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryDistributorAccountBalanceResponse.Merge(m, src)
 }
-func (m *QueryModuleAccountBalanceResponse) XXX_Size() int {
+func (m *QueryDistributorAccountBalanceResponse) XXX_Size() int {
 	return m.Size()
 }
-func (m *QueryModuleAccountBalanceResponse) XXX_DiscardUnknown() {
-	xxx_messageInfo_QueryModuleAccountBalanceResponse.DiscardUnknown(m)
+func (m *QueryDistributorAccountBalanceResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryDistributorAccountBalanceResponse.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_QueryModuleAccountBalanceResponse proto.InternalMessageInfo
+var xxx_messageInfo_QueryDistributorAccountBalanceResponse proto.InternalMessageInfo
 
-func (m *QueryModuleAccountBalanceResponse) GetModuleAccountBalance() github_com_cosmos_cosmos_sdk_types.Coins {
+func (m *QueryDistributorAccountBalanceResponse) GetDistributorAccountBalance() github_com_cosmos_cosmos_sdk_types.Coins {
 	if m != nil {
-		return m.ModuleAccountBalance
+		return m.DistributorAccountBalance
 	}
 	return nil
 }
@@ -198,7 +208,8 @@ func (m *QueryParamsResponse) GetParams() Params {
 }
 
 type QueryClaimRecordRequest struct {
-	Address string `protobuf:"bytes,1,opt,name=address,proto3" json:"address,omitempty" yaml:"sender"`
+	AirdropIdentifier string `protobuf:"bytes,1,opt,name=airdrop_identifier,json=airdropIdentifier,proto3" json:"airdrop_identifier,omitempty" yaml:"identifier"`
+	Address           string `protobuf:"bytes,2,opt,name=address,proto3" json:"address,omitempty" yaml:"sender"`
 }
 
 func (m *QueryClaimRecordRequest) Reset()         { *m = QueryClaimRecordRequest{} }
@@ -233,6 +244,13 @@ func (m *QueryClaimRecordRequest) XXX_DiscardUnknown() {
 }
 
 var xxx_messageInfo_QueryClaimRecordRequest proto.InternalMessageInfo
+
+func (m *QueryClaimRecordRequest) GetAirdropIdentifier() string {
+	if m != nil {
+		return m.AirdropIdentifier
+	}
+	return ""
+}
 
 func (m *QueryClaimRecordRequest) GetAddress() string {
 	if m != nil {
@@ -286,8 +304,9 @@ func (m *QueryClaimRecordResponse) GetClaimRecord() ClaimRecord {
 }
 
 type QueryClaimableForActionRequest struct {
-	Address string `protobuf:"bytes,1,opt,name=address,proto3" json:"address,omitempty" yaml:"address"`
-	Action  Action `protobuf:"varint,2,opt,name=action,proto3,enum=Stridelabs.stride.claim.v1beta1.Action" json:"action,omitempty" yaml:"action"`
+	AirdropIdentifier string `protobuf:"bytes,1,opt,name=airdrop_identifier,json=airdropIdentifier,proto3" json:"airdrop_identifier,omitempty" yaml:"identifier"`
+	Address           string `protobuf:"bytes,2,opt,name=address,proto3" json:"address,omitempty" yaml:"address"`
+	Action            Action `protobuf:"varint,3,opt,name=action,proto3,enum=Stridelabs.stride.claim.v1beta1.Action" json:"action,omitempty" yaml:"action"`
 }
 
 func (m *QueryClaimableForActionRequest) Reset()         { *m = QueryClaimableForActionRequest{} }
@@ -322,6 +341,13 @@ func (m *QueryClaimableForActionRequest) XXX_DiscardUnknown() {
 }
 
 var xxx_messageInfo_QueryClaimableForActionRequest proto.InternalMessageInfo
+
+func (m *QueryClaimableForActionRequest) GetAirdropIdentifier() string {
+	if m != nil {
+		return m.AirdropIdentifier
+	}
+	return ""
+}
 
 func (m *QueryClaimableForActionRequest) GetAddress() string {
 	if m != nil {
@@ -382,7 +408,8 @@ func (m *QueryClaimableForActionResponse) GetCoins() github_com_cosmos_cosmos_sd
 }
 
 type QueryTotalClaimableRequest struct {
-	Address string `protobuf:"bytes,1,opt,name=address,proto3" json:"address,omitempty" yaml:"address"`
+	AirdropIdentifier string `protobuf:"bytes,1,opt,name=airdrop_identifier,json=airdropIdentifier,proto3" json:"airdrop_identifier,omitempty" yaml:"identifier"`
+	Address           string `protobuf:"bytes,2,opt,name=address,proto3" json:"address,omitempty" yaml:"address"`
 }
 
 func (m *QueryTotalClaimableRequest) Reset()         { *m = QueryTotalClaimableRequest{} }
@@ -417,6 +444,13 @@ func (m *QueryTotalClaimableRequest) XXX_DiscardUnknown() {
 }
 
 var xxx_messageInfo_QueryTotalClaimableRequest proto.InternalMessageInfo
+
+func (m *QueryTotalClaimableRequest) GetAirdropIdentifier() string {
+	if m != nil {
+		return m.AirdropIdentifier
+	}
+	return ""
+}
 
 func (m *QueryTotalClaimableRequest) GetAddress() string {
 	if m != nil {
@@ -470,8 +504,8 @@ func (m *QueryTotalClaimableResponse) GetCoins() github_com_cosmos_cosmos_sdk_ty
 }
 
 func init() {
-	proto.RegisterType((*QueryModuleAccountBalanceRequest)(nil), "Stridelabs.stride.claim.v1beta1.QueryModuleAccountBalanceRequest")
-	proto.RegisterType((*QueryModuleAccountBalanceResponse)(nil), "Stridelabs.stride.claim.v1beta1.QueryModuleAccountBalanceResponse")
+	proto.RegisterType((*QueryDistributorAccountBalanceRequest)(nil), "Stridelabs.stride.claim.v1beta1.QueryDistributorAccountBalanceRequest")
+	proto.RegisterType((*QueryDistributorAccountBalanceResponse)(nil), "Stridelabs.stride.claim.v1beta1.QueryDistributorAccountBalanceResponse")
 	proto.RegisterType((*QueryParamsRequest)(nil), "Stridelabs.stride.claim.v1beta1.QueryParamsRequest")
 	proto.RegisterType((*QueryParamsResponse)(nil), "Stridelabs.stride.claim.v1beta1.QueryParamsResponse")
 	proto.RegisterType((*QueryClaimRecordRequest)(nil), "Stridelabs.stride.claim.v1beta1.QueryClaimRecordRequest")
@@ -485,55 +519,58 @@ func init() {
 func init() { proto.RegisterFile("claim/v1beta1/query.proto", fileDescriptor_45c620aecc0f41bd) }
 
 var fileDescriptor_45c620aecc0f41bd = []byte{
-	// 754 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xc4, 0x56, 0x4f, 0x4f, 0x13, 0x4f,
-	0x18, 0xee, 0xf0, 0xfb, 0x51, 0xe2, 0x14, 0x49, 0x1c, 0x6a, 0x28, 0x8b, 0x6e, 0xeb, 0x24, 0x86,
-	0x46, 0x60, 0x57, 0xc0, 0x18, 0xfc, 0x13, 0x85, 0x12, 0x38, 0x18, 0x4d, 0x74, 0xf5, 0x64, 0x4c,
-	0x9a, 0xd9, 0xed, 0x58, 0x37, 0x6e, 0x77, 0xca, 0xce, 0xd6, 0x48, 0x08, 0x17, 0x4f, 0xde, 0x24,
-	0xea, 0x27, 0xf0, 0xe8, 0xcd, 0x83, 0x07, 0x0f, 0xde, 0x39, 0x78, 0x20, 0xf1, 0xa0, 0xa7, 0x6a,
-	0xc0, 0x4f, 0xc0, 0x27, 0x30, 0x3b, 0x33, 0xfd, 0x07, 0xab, 0x2d, 0x35, 0xd1, 0x53, 0x37, 0x33,
-	0xef, 0xfb, 0xbc, 0xcf, 0xf3, 0xcc, 0xcc, 0x93, 0xc2, 0x71, 0xc7, 0x23, 0x6e, 0xc5, 0x7c, 0x32,
-	0x6b, 0xd3, 0x90, 0xcc, 0x9a, 0x6b, 0x35, 0x1a, 0xac, 0x1b, 0xd5, 0x80, 0x85, 0x0c, 0x65, 0xef,
-	0x86, 0x81, 0x5b, 0xa2, 0x1e, 0xb1, 0xb9, 0xc1, 0xc5, 0xa7, 0x21, 0x8a, 0x0d, 0x55, 0xac, 0xa5,
-	0xcb, 0xac, 0xcc, 0x44, 0xad, 0x19, 0x7d, 0xc9, 0x36, 0xed, 0x54, 0x99, 0xb1, 0xb2, 0x47, 0x4d,
-	0x52, 0x75, 0x4d, 0xe2, 0xfb, 0x2c, 0x24, 0xa1, 0xcb, 0x7c, 0xae, 0x76, 0x75, 0x87, 0xf1, 0x0a,
-	0xe3, 0xa6, 0x4d, 0x38, 0x6d, 0x4e, 0x75, 0x98, 0xeb, 0xab, 0xfd, 0x03, 0x7c, 0xe4, 0x40, 0xb9,
-	0xa5, 0x75, 0x6e, 0x55, 0x49, 0x40, 0x2a, 0x0a, 0x16, 0x63, 0x98, 0xbb, 0x13, 0x51, 0xbf, 0xc5,
-	0x4a, 0x35, 0x8f, 0x2e, 0x39, 0x0e, 0xab, 0xf9, 0x61, 0x81, 0x78, 0xc4, 0x77, 0xa8, 0x45, 0xd7,
-	0x6a, 0x94, 0x87, 0xf8, 0x3d, 0x80, 0x67, 0x7e, 0x53, 0xc4, 0xab, 0xcc, 0xe7, 0x14, 0xbd, 0x00,
-	0x30, 0x5d, 0x89, 0x29, 0xc8, 0x80, 0xdc, 0x7f, 0xf9, 0xd4, 0xdc, 0xb8, 0x21, 0x05, 0x18, 0x91,
-	0x80, 0x86, 0x13, 0xc6, 0x32, 0x73, 0xfd, 0xc2, 0xe2, 0x76, 0x3d, 0x9b, 0xd8, 0xaf, 0x67, 0x87,
-	0xd7, 0x49, 0xc5, 0xbb, 0x8c, 0x23, 0x51, 0x1c, 0xbf, 0xfd, 0x96, 0xcd, 0x97, 0xdd, 0xf0, 0x51,
-	0xcd, 0x36, 0x1c, 0x56, 0x31, 0x95, 0x7a, 0xf9, 0x33, 0xc3, 0x4b, 0x8f, 0xcd, 0x70, 0xbd, 0x4a,
-	0xb9, 0x00, 0xe0, 0x56, 0xec, 0x60, 0x9c, 0x86, 0x48, 0xd0, 0xbe, 0x2d, 0x04, 0x37, 0xd4, 0x3c,
-	0x80, 0xa3, 0x1d, 0xab, 0x8a, 0xfe, 0x0a, 0x4c, 0x4a, 0x63, 0x32, 0x20, 0x07, 0xf2, 0xa9, 0xb9,
-	0x49, 0xa3, 0xcb, 0x29, 0x1a, 0x12, 0xa0, 0xf0, 0x7f, 0xc4, 0xde, 0x52, 0xcd, 0x78, 0x15, 0x8e,
-	0x09, 0xf4, 0xe5, 0xa8, 0xd4, 0xa2, 0x0e, 0x0b, 0x4a, 0x6a, 0x30, 0x9a, 0x82, 0x43, 0xa4, 0x54,
-	0x0a, 0x28, 0x97, 0x23, 0x8e, 0x15, 0x4e, 0xec, 0xd7, 0xb3, 0xc7, 0xa5, 0x66, 0x4e, 0xfd, 0x12,
-	0x0d, 0xb0, 0xd5, 0xa8, 0xc0, 0xcf, 0x01, 0xcc, 0x1c, 0x06, 0x52, 0x5c, 0x3d, 0x38, 0x2c, 0xa8,
-	0x14, 0x03, 0xb1, 0xae, 0x18, 0x4f, 0x77, 0x65, 0xdc, 0x86, 0x55, 0x98, 0x50, 0xa6, 0x8f, 0x2a,
-	0xd3, 0xdb, 0xf0, 0xb0, 0x95, 0x72, 0x5a, 0x95, 0xf8, 0x0d, 0x80, 0x7a, 0x8b, 0x0a, 0xb1, 0x3d,
-	0xba, 0xca, 0x82, 0x25, 0x27, 0xba, 0x9c, 0x0d, 0x69, 0xd3, 0x07, 0xa5, 0xa1, 0xfd, 0x7a, 0x76,
-	0x44, 0x22, 0x37, 0x14, 0x35, 0xb5, 0x21, 0x0b, 0x26, 0x89, 0x68, 0xcf, 0x0c, 0xe4, 0x40, 0x7e,
-	0xa4, 0x07, 0xab, 0xe5, 0xb4, 0x76, 0xc3, 0x24, 0x00, 0xb6, 0x14, 0x12, 0x7e, 0x0d, 0x60, 0xf6,
-	0x97, 0x24, 0x95, 0x6d, 0x6b, 0x70, 0x50, 0xdc, 0xad, 0xbf, 0x71, 0x23, 0xe5, 0x24, 0x7c, 0x03,
-	0x6a, 0x82, 0xd5, 0x3d, 0x16, 0x12, 0xaf, 0x49, 0xad, 0x2f, 0xdb, 0xf0, 0x16, 0x80, 0x13, 0xb1,
-	0x60, 0xff, 0x4c, 0xde, 0xdc, 0x87, 0x21, 0x38, 0x28, 0x28, 0xa1, 0x4f, 0x00, 0xa6, 0xe3, 0xe2,
-	0x01, 0x2d, 0x75, 0x3d, 0xdc, 0x6e, 0xf9, 0xa3, 0x15, 0xfe, 0x04, 0x42, 0x9a, 0x83, 0x67, 0x9e,
-	0x7d, 0xfe, 0xf1, 0x6a, 0x60, 0x12, 0x9d, 0x35, 0x3b, 0xc3, 0x50, 0x06, 0x47, 0x91, 0xc8, 0xae,
-	0xa2, 0xad, 0x58, 0xbf, 0x04, 0x30, 0x29, 0xdf, 0x37, 0x9a, 0xef, 0x6d, 0x7a, 0x47, 0xc8, 0x68,
-	0x17, 0x8e, 0xd6, 0xa4, 0x48, 0x9e, 0x16, 0x24, 0xc7, 0xd0, 0x49, 0x33, 0x2e, 0xb1, 0xd1, 0x3b,
-	0x00, 0x53, 0x6d, 0x4f, 0x18, 0x2d, 0xf4, 0x36, 0xe4, 0x70, 0x14, 0x69, 0x97, 0xfa, 0xe8, 0xec,
-	0x62, 0x64, 0x7b, 0x80, 0x98, 0x1b, 0xea, 0xce, 0x6e, 0xa2, 0x2f, 0x00, 0xa2, 0xc3, 0x4f, 0x12,
-	0x5d, 0x3f, 0x02, 0x81, 0xb8, 0xc4, 0xd1, 0x16, 0xfb, 0x07, 0x50, 0x42, 0xae, 0x09, 0x21, 0x0b,
-	0xe8, 0x62, 0x9c, 0x90, 0xa8, 0xa5, 0xf8, 0x90, 0x05, 0x45, 0x19, 0x2f, 0x2d, 0x41, 0xe6, 0x86,
-	0x5c, 0xd9, 0x44, 0x1f, 0x01, 0x1c, 0xe9, 0x7c, 0x89, 0xe8, 0x4a, 0x6f, 0xa4, 0x62, 0xc3, 0x40,
-	0xbb, 0xda, 0x5f, 0xb3, 0x52, 0x73, 0x5e, 0xa8, 0x39, 0x87, 0xf2, 0x07, 0xd4, 0x84, 0x51, 0x79,
-	0xb1, 0xa9, 0xa9, 0x25, 0xa4, 0xb0, 0xb2, 0xbd, 0xab, 0x83, 0x9d, 0x5d, 0x1d, 0x7c, 0xdf, 0xd5,
-	0xc1, 0xd6, 0x9e, 0x9e, 0xd8, 0xd9, 0xd3, 0x13, 0x5f, 0xf7, 0xf4, 0xc4, 0xfd, 0xa9, 0xb6, 0x18,
-	0x90, 0x9c, 0x66, 0x6e, 0x12, 0x9b, 0x9b, 0x92, 0x94, 0xf9, 0x54, 0x8d, 0x10, 0x79, 0x60, 0x27,
-	0xc5, 0xff, 0x88, 0xf9, 0x9f, 0x01, 0x00, 0x00, 0xff, 0xff, 0x53, 0x5c, 0x30, 0x4b, 0x10, 0x09,
-	0x00, 0x00,
+	// 804 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xc4, 0x56, 0x4d, 0x4f, 0x14, 0x49,
+	0x18, 0x9e, 0x82, 0x65, 0xc8, 0xd6, 0xb0, 0x24, 0x14, 0x10, 0x66, 0x9a, 0xdd, 0x6e, 0xd2, 0x09,
+	0xcb, 0x64, 0x81, 0xee, 0x05, 0x8c, 0xc1, 0x8f, 0x28, 0x0e, 0x1f, 0xc6, 0xc4, 0x83, 0xb6, 0x9e,
+	0x8c, 0xc9, 0xa4, 0xba, 0xbb, 0x18, 0x3b, 0xf6, 0x74, 0x0d, 0x5d, 0x3d, 0x46, 0x42, 0xb8, 0x78,
+	0xf2, 0xe0, 0x81, 0xa8, 0x17, 0xff, 0x82, 0x37, 0x7f, 0x80, 0x37, 0x0f, 0x1c, 0x49, 0x3c, 0x68,
+	0x62, 0x32, 0x1a, 0xf0, 0xe0, 0x79, 0x7e, 0x81, 0xe9, 0xaa, 0x62, 0x3e, 0x60, 0x26, 0x33, 0x20,
+	0x91, 0x13, 0x93, 0xaa, 0xf7, 0x79, 0xdf, 0xe7, 0x79, 0xaa, 0xea, 0x69, 0x60, 0xc6, 0xf1, 0xb1,
+	0x57, 0x34, 0x9f, 0xcc, 0xd9, 0x24, 0xc2, 0x73, 0xe6, 0x46, 0x99, 0x84, 0x9b, 0x46, 0x29, 0xa4,
+	0x11, 0x45, 0xda, 0xbd, 0x28, 0xf4, 0x5c, 0xe2, 0x63, 0x9b, 0x19, 0x8c, 0xff, 0x34, 0x78, 0xb1,
+	0x21, 0x8b, 0x95, 0x91, 0x02, 0x2d, 0x50, 0x5e, 0x6b, 0xc6, 0xbf, 0x04, 0x4c, 0xf9, 0xbb, 0x40,
+	0x69, 0xc1, 0x27, 0x26, 0x2e, 0x79, 0x26, 0x0e, 0x02, 0x1a, 0xe1, 0xc8, 0xa3, 0x01, 0x93, 0xbb,
+	0xaa, 0x43, 0x59, 0x91, 0x32, 0xd3, 0xc6, 0x8c, 0xd4, 0xa6, 0x3a, 0xd4, 0x0b, 0xe4, 0xfe, 0x11,
+	0x3e, 0x62, 0xa0, 0xd8, 0x52, 0x9a, 0xb7, 0x4a, 0x38, 0xc4, 0x45, 0xd9, 0x56, 0x2f, 0xc2, 0xc9,
+	0xbb, 0x31, 0xf5, 0x15, 0x2f, 0x66, 0x6a, 0x97, 0x23, 0x1a, 0xde, 0x70, 0x1c, 0x5a, 0x0e, 0xa2,
+	0x1c, 0xf6, 0x71, 0xe0, 0x10, 0x8b, 0x6c, 0x94, 0x09, 0x8b, 0xd0, 0x0a, 0x44, 0xd8, 0x0b, 0xdd,
+	0x90, 0x96, 0xf2, 0x9e, 0x4b, 0x82, 0xc8, 0x5b, 0xf7, 0x48, 0x98, 0x06, 0x13, 0x20, 0xfb, 0x67,
+	0x6e, 0xb4, 0x5a, 0xd1, 0x86, 0x36, 0x71, 0xd1, 0xbf, 0xac, 0xd7, 0xf7, 0x74, 0x6b, 0x48, 0x02,
+	0x6e, 0xd5, 0xd7, 0x3e, 0x00, 0xf8, 0x6f, 0xa7, 0x79, 0xac, 0x44, 0x03, 0x46, 0xd0, 0x1b, 0x00,
+	0x33, 0x6e, 0xbb, 0xaa, 0x34, 0x98, 0xe8, 0xcd, 0xa6, 0xe6, 0x33, 0x86, 0x70, 0xc5, 0x88, 0x5d,
+	0x39, 0xb4, 0xd7, 0x58, 0xa6, 0x5e, 0x90, 0x5b, 0xda, 0xad, 0x68, 0x89, 0x6a, 0x45, 0x1b, 0x10,
+	0xbc, 0x62, 0xa7, 0x98, 0xfe, 0xf6, 0xab, 0x96, 0x2d, 0x78, 0xd1, 0xa3, 0xb2, 0x6d, 0x38, 0xb4,
+	0x68, 0x4a, 0x4b, 0xc5, 0x9f, 0x59, 0xe6, 0x3e, 0x36, 0xa3, 0xcd, 0x12, 0x61, 0xbc, 0x01, 0xb3,
+	0xda, 0x4f, 0xd7, 0x47, 0x20, 0xe2, 0x2a, 0xee, 0x70, 0x2b, 0xa5, 0x45, 0xfa, 0x43, 0x38, 0xdc,
+	0xb4, 0x2a, 0x85, 0xac, 0xc2, 0xa4, 0xb0, 0x9c, 0xbb, 0x95, 0x9a, 0x9f, 0x32, 0x3a, 0xdc, 0x0f,
+	0x43, 0x34, 0xc8, 0xfd, 0x11, 0x4b, 0xb0, 0x24, 0x58, 0x7f, 0x01, 0xe0, 0x18, 0x6f, 0xbf, 0x1c,
+	0xd7, 0x5a, 0xc4, 0xa1, 0xa1, 0x7b, 0xa6, 0x87, 0x83, 0xa6, 0x61, 0x3f, 0x76, 0xdd, 0x90, 0x30,
+	0x96, 0xee, 0xe1, 0xd0, 0xa1, 0x6a, 0x45, 0xfb, 0x4b, 0x40, 0x19, 0x09, 0xdc, 0x18, 0x76, 0x58,
+	0xa1, 0x3f, 0x07, 0x30, 0x7d, 0x9c, 0x8e, 0x94, 0xec, 0xc3, 0x01, 0xae, 0x28, 0x1f, 0xf2, 0x75,
+	0x29, 0x7c, 0xa6, 0xa3, 0xf0, 0x86, 0x5e, 0xb9, 0x71, 0x79, 0x80, 0xc3, 0xf2, 0x00, 0x1b, 0xfa,
+	0xe9, 0x56, 0xca, 0xa9, 0x57, 0xea, 0x3f, 0x00, 0x54, 0xeb, 0x54, 0xb0, 0xed, 0x93, 0xb5, 0xf8,
+	0xc4, 0xe2, 0xd7, 0x73, 0xb6, 0x06, 0xcd, 0x1c, 0x35, 0x08, 0x55, 0x2b, 0xda, 0xa0, 0x80, 0x1e,
+	0xfa, 0x52, 0x73, 0x08, 0x59, 0x30, 0x89, 0x39, 0x89, 0x74, 0xef, 0x04, 0xc8, 0x0e, 0x76, 0x71,
+	0xee, 0x82, 0x73, 0xa3, 0xed, 0xa2, 0x81, 0x6e, 0xc9, 0x4e, 0xfa, 0x6b, 0x00, 0xb5, 0xb6, 0x52,
+	0xa5, 0xf9, 0x1b, 0xb0, 0x8f, 0xdf, 0xf6, 0xdf, 0xf1, 0x46, 0xc4, 0x24, 0x7d, 0x07, 0x40, 0x85,
+	0xd3, 0xba, 0x4f, 0x23, 0xec, 0xd7, 0xb8, 0x9d, 0xa3, 0xfb, 0x31, 0xa5, 0xf1, 0x96, 0x94, 0xce,
+	0xcd, 0xa5, 0xf9, 0xdd, 0x7e, 0xd8, 0xc7, 0x29, 0xa1, 0x2f, 0x00, 0x66, 0xda, 0x26, 0x20, 0x5a,
+	0xeb, 0x78, 0x51, 0xba, 0x8a, 0x6c, 0xe5, 0xe6, 0x2f, 0xf7, 0x11, 0x5e, 0xe9, 0xb3, 0xcf, 0x3e,
+	0x7e, 0x7f, 0xd5, 0x33, 0x85, 0x26, 0xcd, 0xe6, 0x2f, 0x49, 0x91, 0xba, 0x65, 0x9f, 0xe4, 0xb1,
+	0x40, 0xe5, 0x6d, 0xc9, 0xff, 0x25, 0x80, 0x49, 0x11, 0x61, 0x68, 0xa1, 0x3b, 0x0a, 0x4d, 0x39,
+	0xaa, 0x5c, 0x38, 0x19, 0x48, 0x92, 0xfc, 0x87, 0x93, 0x1c, 0x43, 0xa3, 0x66, 0xab, 0xcf, 0x1d,
+	0x7a, 0x07, 0x60, 0xaa, 0x21, 0x5e, 0xd0, 0x62, 0x77, 0x43, 0x8e, 0x87, 0xad, 0x72, 0xe9, 0x14,
+	0xc8, 0x0e, 0x46, 0x36, 0x86, 0x9b, 0xb9, 0x25, 0xaf, 0xf0, 0x36, 0xfa, 0x04, 0x20, 0x3a, 0xfe,
+	0xd0, 0xd1, 0xf5, 0x13, 0x10, 0x68, 0x95, 0x86, 0xca, 0xd2, 0xe9, 0x1b, 0x48, 0x21, 0xd7, 0xb8,
+	0x90, 0x45, 0x74, 0xb1, 0x95, 0x90, 0x18, 0x92, 0x5f, 0xa7, 0x61, 0x5e, 0x84, 0x56, 0x5d, 0x90,
+	0xb9, 0x25, 0x56, 0xb6, 0xd1, 0x7b, 0x00, 0x07, 0x9b, 0x1f, 0x26, 0xba, 0xd2, 0x1d, 0xa9, 0x96,
+	0x09, 0xa3, 0x5c, 0x3d, 0x1d, 0x58, 0xaa, 0xf9, 0x9f, 0xab, 0xf9, 0x0f, 0x65, 0x8f, 0xa8, 0x89,
+	0xe2, 0xf2, 0x7c, 0x4d, 0x53, 0x5d, 0x48, 0x6e, 0x75, 0x77, 0x5f, 0x05, 0x7b, 0xfb, 0x2a, 0xf8,
+	0xb6, 0xaf, 0x82, 0x9d, 0x03, 0x35, 0xb1, 0x77, 0xa0, 0x26, 0x3e, 0x1f, 0xa8, 0x89, 0x07, 0xd3,
+	0x0d, 0xa9, 0x20, 0x38, 0xcd, 0xde, 0xc6, 0x36, 0x33, 0x05, 0x29, 0xf3, 0xa9, 0x1c, 0xc1, 0xe3,
+	0xc1, 0x4e, 0xf2, 0x7f, 0xc2, 0x16, 0x7e, 0x06, 0x00, 0x00, 0xff, 0xff, 0xfa, 0xa3, 0x9c, 0x23,
+	0x4d, 0x0a, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -548,7 +585,7 @@ const _ = grpc.SupportPackageIsVersion4
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
 type QueryClient interface {
-	ModuleAccountBalance(ctx context.Context, in *QueryModuleAccountBalanceRequest, opts ...grpc.CallOption) (*QueryModuleAccountBalanceResponse, error)
+	DistributorAccountBalance(ctx context.Context, in *QueryDistributorAccountBalanceRequest, opts ...grpc.CallOption) (*QueryDistributorAccountBalanceResponse, error)
 	Params(ctx context.Context, in *QueryParamsRequest, opts ...grpc.CallOption) (*QueryParamsResponse, error)
 	ClaimRecord(ctx context.Context, in *QueryClaimRecordRequest, opts ...grpc.CallOption) (*QueryClaimRecordResponse, error)
 	ClaimableForAction(ctx context.Context, in *QueryClaimableForActionRequest, opts ...grpc.CallOption) (*QueryClaimableForActionResponse, error)
@@ -563,9 +600,9 @@ func NewQueryClient(cc grpc1.ClientConn) QueryClient {
 	return &queryClient{cc}
 }
 
-func (c *queryClient) ModuleAccountBalance(ctx context.Context, in *QueryModuleAccountBalanceRequest, opts ...grpc.CallOption) (*QueryModuleAccountBalanceResponse, error) {
-	out := new(QueryModuleAccountBalanceResponse)
-	err := c.cc.Invoke(ctx, "/Stridelabs.stride.claim.v1beta1.Query/ModuleAccountBalance", in, out, opts...)
+func (c *queryClient) DistributorAccountBalance(ctx context.Context, in *QueryDistributorAccountBalanceRequest, opts ...grpc.CallOption) (*QueryDistributorAccountBalanceResponse, error) {
+	out := new(QueryDistributorAccountBalanceResponse)
+	err := c.cc.Invoke(ctx, "/Stridelabs.stride.claim.v1beta1.Query/DistributorAccountBalance", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -610,7 +647,7 @@ func (c *queryClient) TotalClaimable(ctx context.Context, in *QueryTotalClaimabl
 
 // QueryServer is the server API for Query service.
 type QueryServer interface {
-	ModuleAccountBalance(context.Context, *QueryModuleAccountBalanceRequest) (*QueryModuleAccountBalanceResponse, error)
+	DistributorAccountBalance(context.Context, *QueryDistributorAccountBalanceRequest) (*QueryDistributorAccountBalanceResponse, error)
 	Params(context.Context, *QueryParamsRequest) (*QueryParamsResponse, error)
 	ClaimRecord(context.Context, *QueryClaimRecordRequest) (*QueryClaimRecordResponse, error)
 	ClaimableForAction(context.Context, *QueryClaimableForActionRequest) (*QueryClaimableForActionResponse, error)
@@ -621,8 +658,8 @@ type QueryServer interface {
 type UnimplementedQueryServer struct {
 }
 
-func (*UnimplementedQueryServer) ModuleAccountBalance(ctx context.Context, req *QueryModuleAccountBalanceRequest) (*QueryModuleAccountBalanceResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ModuleAccountBalance not implemented")
+func (*UnimplementedQueryServer) DistributorAccountBalance(ctx context.Context, req *QueryDistributorAccountBalanceRequest) (*QueryDistributorAccountBalanceResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DistributorAccountBalance not implemented")
 }
 func (*UnimplementedQueryServer) Params(ctx context.Context, req *QueryParamsRequest) (*QueryParamsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Params not implemented")
@@ -641,20 +678,20 @@ func RegisterQueryServer(s grpc1.Server, srv QueryServer) {
 	s.RegisterService(&_Query_serviceDesc, srv)
 }
 
-func _Query_ModuleAccountBalance_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(QueryModuleAccountBalanceRequest)
+func _Query_DistributorAccountBalance_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryDistributorAccountBalanceRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(QueryServer).ModuleAccountBalance(ctx, in)
+		return srv.(QueryServer).DistributorAccountBalance(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/Stridelabs.stride.claim.v1beta1.Query/ModuleAccountBalance",
+		FullMethod: "/Stridelabs.stride.claim.v1beta1.Query/DistributorAccountBalance",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(QueryServer).ModuleAccountBalance(ctx, req.(*QueryModuleAccountBalanceRequest))
+		return srv.(QueryServer).DistributorAccountBalance(ctx, req.(*QueryDistributorAccountBalanceRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -736,8 +773,8 @@ var _Query_serviceDesc = grpc.ServiceDesc{
 	HandlerType: (*QueryServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "ModuleAccountBalance",
-			Handler:    _Query_ModuleAccountBalance_Handler,
+			MethodName: "DistributorAccountBalance",
+			Handler:    _Query_DistributorAccountBalance_Handler,
 		},
 		{
 			MethodName: "Params",
@@ -760,7 +797,7 @@ var _Query_serviceDesc = grpc.ServiceDesc{
 	Metadata: "claim/v1beta1/query.proto",
 }
 
-func (m *QueryModuleAccountBalanceRequest) Marshal() (dAtA []byte, err error) {
+func (m *QueryDistributorAccountBalanceRequest) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -770,20 +807,27 @@ func (m *QueryModuleAccountBalanceRequest) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *QueryModuleAccountBalanceRequest) MarshalTo(dAtA []byte) (int, error) {
+func (m *QueryDistributorAccountBalanceRequest) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *QueryModuleAccountBalanceRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *QueryDistributorAccountBalanceRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
+	if len(m.AirdropIdentifier) > 0 {
+		i -= len(m.AirdropIdentifier)
+		copy(dAtA[i:], m.AirdropIdentifier)
+		i = encodeVarintQuery(dAtA, i, uint64(len(m.AirdropIdentifier)))
+		i--
+		dAtA[i] = 0xa
+	}
 	return len(dAtA) - i, nil
 }
 
-func (m *QueryModuleAccountBalanceResponse) Marshal() (dAtA []byte, err error) {
+func (m *QueryDistributorAccountBalanceResponse) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -793,20 +837,20 @@ func (m *QueryModuleAccountBalanceResponse) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *QueryModuleAccountBalanceResponse) MarshalTo(dAtA []byte) (int, error) {
+func (m *QueryDistributorAccountBalanceResponse) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *QueryModuleAccountBalanceResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *QueryDistributorAccountBalanceResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
-	if len(m.ModuleAccountBalance) > 0 {
-		for iNdEx := len(m.ModuleAccountBalance) - 1; iNdEx >= 0; iNdEx-- {
+	if len(m.DistributorAccountBalance) > 0 {
+		for iNdEx := len(m.DistributorAccountBalance) - 1; iNdEx >= 0; iNdEx-- {
 			{
-				size, err := m.ModuleAccountBalance[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				size, err := m.DistributorAccountBalance[iNdEx].MarshalToSizedBuffer(dAtA[:i])
 				if err != nil {
 					return 0, err
 				}
@@ -901,6 +945,13 @@ func (m *QueryClaimRecordRequest) MarshalToSizedBuffer(dAtA []byte) (int, error)
 		copy(dAtA[i:], m.Address)
 		i = encodeVarintQuery(dAtA, i, uint64(len(m.Address)))
 		i--
+		dAtA[i] = 0x12
+	}
+	if len(m.AirdropIdentifier) > 0 {
+		i -= len(m.AirdropIdentifier)
+		copy(dAtA[i:], m.AirdropIdentifier)
+		i = encodeVarintQuery(dAtA, i, uint64(len(m.AirdropIdentifier)))
+		i--
 		dAtA[i] = 0xa
 	}
 	return len(dAtA) - i, nil
@@ -962,12 +1013,19 @@ func (m *QueryClaimableForActionRequest) MarshalToSizedBuffer(dAtA []byte) (int,
 	if m.Action != 0 {
 		i = encodeVarintQuery(dAtA, i, uint64(m.Action))
 		i--
-		dAtA[i] = 0x10
+		dAtA[i] = 0x18
 	}
 	if len(m.Address) > 0 {
 		i -= len(m.Address)
 		copy(dAtA[i:], m.Address)
 		i = encodeVarintQuery(dAtA, i, uint64(len(m.Address)))
+		i--
+		dAtA[i] = 0x12
+	}
+	if len(m.AirdropIdentifier) > 0 {
+		i -= len(m.AirdropIdentifier)
+		copy(dAtA[i:], m.AirdropIdentifier)
+		i = encodeVarintQuery(dAtA, i, uint64(len(m.AirdropIdentifier)))
 		i--
 		dAtA[i] = 0xa
 	}
@@ -1036,6 +1094,13 @@ func (m *QueryTotalClaimableRequest) MarshalToSizedBuffer(dAtA []byte) (int, err
 		copy(dAtA[i:], m.Address)
 		i = encodeVarintQuery(dAtA, i, uint64(len(m.Address)))
 		i--
+		dAtA[i] = 0x12
+	}
+	if len(m.AirdropIdentifier) > 0 {
+		i -= len(m.AirdropIdentifier)
+		copy(dAtA[i:], m.AirdropIdentifier)
+		i = encodeVarintQuery(dAtA, i, uint64(len(m.AirdropIdentifier)))
+		i--
 		dAtA[i] = 0xa
 	}
 	return len(dAtA) - i, nil
@@ -1089,23 +1154,27 @@ func encodeVarintQuery(dAtA []byte, offset int, v uint64) int {
 	dAtA[offset] = uint8(v)
 	return base
 }
-func (m *QueryModuleAccountBalanceRequest) Size() (n int) {
+func (m *QueryDistributorAccountBalanceRequest) Size() (n int) {
 	if m == nil {
 		return 0
 	}
 	var l int
 	_ = l
+	l = len(m.AirdropIdentifier)
+	if l > 0 {
+		n += 1 + l + sovQuery(uint64(l))
+	}
 	return n
 }
 
-func (m *QueryModuleAccountBalanceResponse) Size() (n int) {
+func (m *QueryDistributorAccountBalanceResponse) Size() (n int) {
 	if m == nil {
 		return 0
 	}
 	var l int
 	_ = l
-	if len(m.ModuleAccountBalance) > 0 {
-		for _, e := range m.ModuleAccountBalance {
+	if len(m.DistributorAccountBalance) > 0 {
+		for _, e := range m.DistributorAccountBalance {
 			l = e.Size()
 			n += 1 + l + sovQuery(uint64(l))
 		}
@@ -1139,6 +1208,10 @@ func (m *QueryClaimRecordRequest) Size() (n int) {
 	}
 	var l int
 	_ = l
+	l = len(m.AirdropIdentifier)
+	if l > 0 {
+		n += 1 + l + sovQuery(uint64(l))
+	}
 	l = len(m.Address)
 	if l > 0 {
 		n += 1 + l + sovQuery(uint64(l))
@@ -1163,6 +1236,10 @@ func (m *QueryClaimableForActionRequest) Size() (n int) {
 	}
 	var l int
 	_ = l
+	l = len(m.AirdropIdentifier)
+	if l > 0 {
+		n += 1 + l + sovQuery(uint64(l))
+	}
 	l = len(m.Address)
 	if l > 0 {
 		n += 1 + l + sovQuery(uint64(l))
@@ -1194,6 +1271,10 @@ func (m *QueryTotalClaimableRequest) Size() (n int) {
 	}
 	var l int
 	_ = l
+	l = len(m.AirdropIdentifier)
+	if l > 0 {
+		n += 1 + l + sovQuery(uint64(l))
+	}
 	l = len(m.Address)
 	if l > 0 {
 		n += 1 + l + sovQuery(uint64(l))
@@ -1222,7 +1303,7 @@ func sovQuery(x uint64) (n int) {
 func sozQuery(x uint64) (n int) {
 	return sovQuery(uint64((x << 1) ^ uint64((int64(x) >> 63))))
 }
-func (m *QueryModuleAccountBalanceRequest) Unmarshal(dAtA []byte) error {
+func (m *QueryDistributorAccountBalanceRequest) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -1245,12 +1326,44 @@ func (m *QueryModuleAccountBalanceRequest) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: QueryModuleAccountBalanceRequest: wiretype end group for non-group")
+			return fmt.Errorf("proto: QueryDistributorAccountBalanceRequest: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: QueryModuleAccountBalanceRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: QueryDistributorAccountBalanceRequest: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field AirdropIdentifier", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.AirdropIdentifier = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
 			skippy, err := skipQuery(dAtA[iNdEx:])
@@ -1272,7 +1385,7 @@ func (m *QueryModuleAccountBalanceRequest) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *QueryModuleAccountBalanceResponse) Unmarshal(dAtA []byte) error {
+func (m *QueryDistributorAccountBalanceResponse) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -1295,15 +1408,15 @@ func (m *QueryModuleAccountBalanceResponse) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: QueryModuleAccountBalanceResponse: wiretype end group for non-group")
+			return fmt.Errorf("proto: QueryDistributorAccountBalanceResponse: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: QueryModuleAccountBalanceResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: QueryDistributorAccountBalanceResponse: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field ModuleAccountBalance", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field DistributorAccountBalance", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -1330,8 +1443,8 @@ func (m *QueryModuleAccountBalanceResponse) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.ModuleAccountBalance = append(m.ModuleAccountBalance, types.Coin{})
-			if err := m.ModuleAccountBalance[len(m.ModuleAccountBalance)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+			m.DistributorAccountBalance = append(m.DistributorAccountBalance, types.Coin{})
+			if err := m.DistributorAccountBalance[len(m.DistributorAccountBalance)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
@@ -1520,6 +1633,38 @@ func (m *QueryClaimRecordRequest) Unmarshal(dAtA []byte) error {
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field AirdropIdentifier", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.AirdropIdentifier = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Address", wireType)
 			}
 			var stringLen uint64
@@ -1685,6 +1830,38 @@ func (m *QueryClaimableForActionRequest) Unmarshal(dAtA []byte) error {
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field AirdropIdentifier", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.AirdropIdentifier = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Address", wireType)
 			}
 			var stringLen uint64
@@ -1715,7 +1892,7 @@ func (m *QueryClaimableForActionRequest) Unmarshal(dAtA []byte) error {
 			}
 			m.Address = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
-		case 2:
+		case 3:
 			if wireType != 0 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Action", wireType)
 			}
@@ -1869,6 +2046,38 @@ func (m *QueryTotalClaimableRequest) Unmarshal(dAtA []byte) error {
 		}
 		switch fieldNum {
 		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field AirdropIdentifier", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.AirdropIdentifier = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Address", wireType)
 			}

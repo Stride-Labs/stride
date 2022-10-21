@@ -10,7 +10,7 @@ Claim module provides below GRPC queries to query claim status
 
 ```protobuf
 service Query {
-  rpc ModuleAccountBalance(QueryModuleAccountBalanceRequest) returns (QueryModuleAccountBalanceResponse) {}
+  rpc DistributorAccountBalance(QueryDistributorAccountBalanceRequest) returns (QueryDistributorAccountBalanceResponse) {}
   rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {}
   rpc ClaimRecord(QueryClaimRecordRequest) returns (QueryClaimRecordResponse) {}
   rpc ClaimableForAction(QueryClaimableForActionRequest) returns (QueryClaimableForActionResponse) {}

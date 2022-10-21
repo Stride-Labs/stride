@@ -13,11 +13,13 @@ import (
 var _ types.QueryServer = Keeper{}
 
 // Params returns balances of the mint module.
-func (k Keeper) ModuleAccountBalance(c context.Context, _ *types.QueryModuleAccountBalanceRequest) (*types.QueryModuleAccountBalanceResponse, error) {
+func (k Keeper) DistributorAccountBalance(c context.Context, req *types.QueryDistributorAccountBalanceRequest) (*types.QueryDistributorAccountBalanceResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
-	moduleAccBal := sdk.NewCoins(k.GetModuleAccountBalance(ctx))
-
-	return &types.QueryModuleAccountBalanceResponse{ModuleAccountBalance: moduleAccBal}, nil
+	bal, err := k.GetDistributorAccountBalance(ctx, req.AirdropIdentifier)
+	if err != nil {
+		return nil, err
+	}
+	return &types.QueryDistributorAccountBalanceResponse{DistributorAccountBalance: sdk.NewCoins(bal)}, nil
 }
 
 // Params returns params of the mint module.
@@ -47,7 +49,7 @@ func (k Keeper) ClaimRecord(
 		return nil, err
 	}
 
-	claimRecord, err := k.GetClaimRecord(ctx, addr)
+	claimRecord, err := k.GetClaimRecord(ctx, addr, req.AirdropIdentifier)
 	return &types.QueryClaimRecordResponse{ClaimRecord: claimRecord}, err
 }
 
@@ -66,7 +68,7 @@ func (k Keeper) ClaimableForAction(
 		return nil, err
 	}
 
-	coins, err := k.GetClaimableAmountForAction(ctx, addr, req.Action)
+	coins, err := k.GetClaimableAmountForAction(ctx, addr, req.Action, req.AirdropIdentifier)
 
 	return &types.QueryClaimableForActionResponse{
 		Coins: coins,
@@ -88,7 +90,7 @@ func (k Keeper) TotalClaimable(
 		return nil, err
 	}
 
-	coins, err := k.GetUserTotalClaimable(ctx, addr)
+	coins, err := k.GetUserTotalClaimable(ctx, addr, req.AirdropIdentifier)
 
 	return &types.QueryTotalClaimableResponse{
 		Coins: coins,

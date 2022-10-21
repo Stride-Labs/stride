@@ -13,19 +13,19 @@ import (
 // Test functionality for loading allocation data(csv)
 func (suite *KeeperTestSuite) TestLoadAllocationData() {
 	suite.SetupTest()
-	var allocations = `address,amount
-stride1g7yxhuppp5x3yqkah5mw29eqq5s4sv2f222xmk,0.5
-stride1h4astdfzjhcwahtfrh24qtvndzzh49xvqtfftk,0.3`
+	var allocations = `identifier,address,amount
+stride,stride1g7yxhuppp5x3yqkah5mw29eqq5s4sv2f222xmk,0.5
+stride,stride1h4astdfzjhcwahtfrh24qtvndzzh49xvqtfftk,0.3`
 
 	ok := suite.app.ClaimKeeper.LoadAllocationData(suite.ctx, allocations)
 	suite.Require().True(ok)
 
-	totalWeight, err := suite.app.ClaimKeeper.GetTotalWeight(suite.ctx)
+	totalWeight, err := suite.app.ClaimKeeper.GetTotalWeight(suite.ctx, "stride")
 	suite.Require().NoError(err)
 	suite.Require().True(totalWeight.Equal(sdk.MustNewDecFromStr("0.8")))
 
 	addr, _ := sdk.AccAddressFromBech32("stride1g7yxhuppp5x3yqkah5mw29eqq5s4sv2f222xmk")
-	claimRecord, err := suite.app.ClaimKeeper.GetClaimRecord(suite.ctx, addr)
+	claimRecord, err := suite.app.ClaimKeeper.GetClaimRecord(suite.ctx, addr, "stride")
 	suite.Require().Equal(claimRecord.Address, "stride1g7yxhuppp5x3yqkah5mw29eqq5s4sv2f222xmk")
 	suite.Require().True(claimRecord.Weight.Equal(sdk.MustNewDecFromStr("0.5")))
 	suite.Require().Equal(claimRecord.ActionCompleted, []bool{false, false, false})
@@ -40,7 +40,7 @@ func (suite *KeeperTestSuite) TestHookOfUnclaimableAccount() {
 	addr1 := sdk.AccAddress(pub1.Address())
 	suite.app.AccountKeeper.SetAccount(suite.ctx, authtypes.NewBaseAccount(addr1, nil, 0, 0))
 
-	claim, err := suite.app.ClaimKeeper.GetClaimRecord(suite.ctx, addr1)
+	claim, err := suite.app.ClaimKeeper.GetClaimRecord(suite.ctx, addr1, "stride")
 	suite.NoError(err)
 	suite.Equal(types.ClaimRecord{}, claim)
 
@@ -58,9 +58,15 @@ func (suite *KeeperTestSuite) TestHookBeforeAirdropStart() {
 	airdropStartTime := time.Now().Add(time.Hour)
 
 	err := suite.app.ClaimKeeper.SetParams(suite.ctx, types.Params{
-		AirdropStartTime: airdropStartTime,
-		AirdropDuration:  types.DefaultAirdropDuration,
-		ClaimDenom:       sdk.DefaultBondDenom,
+		Airdrops: []*types.Airdrop{
+			{
+				AirdropIdentifier:  types.DefaultAirdropIdentifier,
+				AirdropStartTime:   airdropStartTime,
+				AirdropDuration:    types.DefaultAirdropDuration,
+				ClaimDenom:         sdk.DefaultBondDenom,
+				DistributorAddress: distributors[types.DefaultAirdropIdentifier].String(),
+			},
+		},
 	})
 	suite.Require().NoError(err)
 
@@ -70,24 +76,25 @@ func (suite *KeeperTestSuite) TestHookBeforeAirdropStart() {
 
 	claimRecords := []types.ClaimRecord{
 		{
-			Address:         addr1.String(),
-			Weight:          sdk.NewDecWithPrec(50, 2), // 50%
-			ActionCompleted: []bool{false, false, false},
+			Address:           addr1.String(),
+			Weight:            sdk.NewDecWithPrec(50, 2), // 50%
+			ActionCompleted:   []bool{false, false, false},
+			AirdropIdentifier: types.DefaultAirdropIdentifier,
 		},
 	}
-	suite.app.ClaimKeeper.SetTotalWeight(suite.ctx, claimRecords[0].Weight)
+	suite.app.ClaimKeeper.SetTotalWeight(suite.ctx, claimRecords[0].Weight, "stride")
 
 	suite.app.AccountKeeper.SetAccount(suite.ctx, authtypes.NewBaseAccount(addr1, nil, 0, 0))
 
 	err = suite.app.ClaimKeeper.SetClaimRecords(suite.ctx, claimRecords)
 	suite.Require().NoError(err)
 
-	coins, err := suite.app.ClaimKeeper.GetUserTotalClaimable(suite.ctx, addr1)
+	coins, err := suite.app.ClaimKeeper.GetUserTotalClaimable(suite.ctx, addr1, "stride")
 	suite.NoError(err)
 	// Now, it is before starting air drop, so this value should return the empty coins
 	suite.True(coins.Empty())
 
-	coins, err = suite.app.ClaimKeeper.GetClaimableAmountForAction(suite.ctx, addr1, types.ActionFree)
+	coins, err = suite.app.ClaimKeeper.GetClaimableAmountForAction(suite.ctx, addr1, types.ActionFree, "stride")
 	suite.NoError(err)
 	// Now, it is before starting air drop, so this value should return the empty coins
 	suite.True(coins.Empty())
@@ -115,26 +122,27 @@ func (suite *KeeperTestSuite) TestAirdropFlow() {
 
 	claimRecords := []types.ClaimRecord{
 		{
-			Address:         addr1.String(),
-			Weight:          sdk.NewDecWithPrec(50, 2), // 50%
-			ActionCompleted: []bool{false, false, false},
+			Address:           addr1.String(),
+			Weight:            sdk.NewDecWithPrec(50, 2), // 50%
+			ActionCompleted:   []bool{false, false, false},
+			AirdropIdentifier: types.DefaultAirdropIdentifier,
 		},
 	}
 
-	suite.app.ClaimKeeper.SetTotalWeight(suite.ctx, claimRecords[0].Weight)
+	suite.app.ClaimKeeper.SetTotalWeight(suite.ctx, claimRecords[0].Weight, "stride")
 	err := suite.app.ClaimKeeper.SetClaimRecords(suite.ctx, claimRecords)
 	suite.Require().NoError(err)
 
-	coins, err := suite.app.ClaimKeeper.GetUserTotalClaimable(suite.ctx, addr1)
+	coins, err := suite.app.ClaimKeeper.GetUserTotalClaimable(suite.ctx, addr1, "stride")
 	suite.Require().NoError(err)
 	suite.Require().Equal(coins.String(), sdk.NewCoins(sdk.NewInt64Coin(sdk.DefaultBondDenom, 100000000)).String())
 
-	coins, err = suite.app.ClaimKeeper.GetUserTotalClaimable(suite.ctx, addr2)
+	coins, err = suite.app.ClaimKeeper.GetUserTotalClaimable(suite.ctx, addr2, "stride")
 	suite.Require().NoError(err)
 	suite.Require().Equal(coins, sdk.Coins{})
 
 	// get rewards amount for free
-	coins, err = suite.app.ClaimKeeper.ClaimCoinsForAction(suite.ctx, addr1, types.ActionFree)
+	coins, err = suite.app.ClaimKeeper.ClaimCoinsForAction(suite.ctx, addr1, types.ActionFree, "stride")
 	suite.Require().NoError(err)
 	claimableAmountForFree := sdk.NewDecWithPrec(20, 2).
 		Mul(sdk.NewDec(100000000)).
@@ -142,7 +150,7 @@ func (suite *KeeperTestSuite) TestAirdropFlow() {
 	suite.Require().Equal(coins.String(), sdk.NewCoins(sdk.NewInt64Coin(sdk.DefaultBondDenom, claimableAmountForFree)).String())
 
 	// get rewards amount for stake
-	coins, err = suite.app.ClaimKeeper.ClaimCoinsForAction(suite.ctx, addr1, types.ActionDelegateStake)
+	coins, err = suite.app.ClaimKeeper.ClaimCoinsForAction(suite.ctx, addr1, types.ActionDelegateStake, "stride")
 	suite.Require().NoError(err)
 	claimableAmountForStake := sdk.NewDecWithPrec(80, 2).
 		Mul(sdk.NewDecWithPrec(20, 2)).
@@ -151,7 +159,7 @@ func (suite *KeeperTestSuite) TestAirdropFlow() {
 	suite.Require().Equal(coins.String(), sdk.NewCoins(sdk.NewInt64Coin(sdk.DefaultBondDenom, claimableAmountForStake)).String())
 
 	// get rewards amount for liquid stake
-	coins, err = suite.app.ClaimKeeper.ClaimCoinsForAction(suite.ctx, addr1, types.ActionLiquidStake)
+	coins, err = suite.app.ClaimKeeper.ClaimCoinsForAction(suite.ctx, addr1, types.ActionLiquidStake, "stride")
 	suite.Require().NoError(err)
 	claimableAmountForLiquidStake := sdk.NewDecWithPrec(80, 2).
 		Mul(sdk.NewDecWithPrec(80, 2)).
@@ -164,7 +172,7 @@ func (suite *KeeperTestSuite) TestAirdropFlow() {
 	coins = suite.app.BankKeeper.GetAllBalances(suite.ctx, addr1)
 	suite.Require().Equal(coins.String(), sdk.NewCoins(sdk.NewInt64Coin(sdk.DefaultBondDenom, claimableAmountForFree+claimableAmountForStake+claimableAmountForLiquidStake)).String())
 
-	err = suite.app.ClaimKeeper.EndAirdrop(suite.ctx)
+	err = suite.app.ClaimKeeper.EndAirdrop(suite.ctx, "stride")
 	suite.Require().NoError(err)
 
 	// get module balances after airdrop ends
