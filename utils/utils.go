@@ -7,8 +7,11 @@ import (
 	"strconv"
 	"strings"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/address"
 	"github.com/cosmos/cosmos-sdk/types/bech32"
+
+	"github.com/Stride-Labs/stride/x/claim/types"
 
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
@@ -160,4 +163,64 @@ func ContainsString(s []string, e string) bool {
 		}
 	}
 	return false
+}
+
+//==============================  AIRDROP UTILS  ================================
+// max64 returns the maximum of its inputs.
+func Max64(i, j int64) int64 {
+	if i > j {
+		return i
+	}
+	return j
+}
+
+// Min64 returns the minimum of its inputs.
+func Min64(i, j int64) int64 {
+	if i < j {
+		return i
+	}
+	return j
+}
+
+// Insert a value in a slice at a given index
+// 0 <= index <= len(a)
+func Insert(a []interface{}, index int, value interface{}) []interface{} {
+	if len(a) == index { // nil or empty slice or after last element
+		return append(a, value)
+	}
+	a = append(a[:index+1], a[index:]...) // index < len(a)
+	a[index] = value
+	return a
+}
+
+// Compute coin amount for specific period using linear vesting calculation algorithm.
+func GetVestedCoinsAt(vAt int64, vStart int64, vLength int64, vCoins sdk.Coins) sdk.Coins {
+	var vestedCoins sdk.Coins
+
+	vEnd := vStart + vLength
+	if vAt <= vStart {
+		return sdk.Coins{}
+	} else if vAt >= vEnd {
+		return vCoins
+	}
+
+	// calculate the vesting scalar
+	portion := sdk.NewDec(vAt - vStart).Quo(sdk.NewDec(vLength))
+
+	for _, ovc := range vCoins {
+		vestedAmt := ovc.Amount.ToDec().Mul(portion).RoundInt()
+		vestedCoins = append(vestedCoins, sdk.NewCoin(ovc.Denom, vestedAmt))
+	}
+
+	return vestedCoins
+}
+
+// Get airdrop duration for action
+func GetAirdropDurationForAction(action types.Action) int64 {
+	if action == types.ActionDelegateStake {
+		return int64(types.DefaultVestingDurationForDelegateStake.Seconds())
+	} else if action == types.ActionLiquidStake {
+		return int64(types.DefaultVestingDurationForLiquidStake.Seconds())
+	}
+	return int64(0)
 }
