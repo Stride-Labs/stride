@@ -1,10 +1,9 @@
 package icacallbacks
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
-
-	"context"
 
 	"github.com/gorilla/mux"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"

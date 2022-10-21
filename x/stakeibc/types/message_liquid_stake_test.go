@@ -70,7 +70,6 @@ func TestMsgLiquidStake_ValidateBasic(t *testing.T) {
 			require.NoError(t, err)
 
 			// check msg_server
-
 		})
 	}
 }

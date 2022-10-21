@@ -5,6 +5,10 @@
 // cmd/strided/main.go
 ...
 version.Version = "{newVersion}"
+
+// app/app.go
+...
+Version = "{newVersion}"
 ```
 
 ## Create Upgrade Handler

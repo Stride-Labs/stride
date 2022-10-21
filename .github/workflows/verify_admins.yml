@@ -1,0 +1,29 @@
+name: Verify no Admins change
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    name: Verify admins.go did not change
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0 
+
+      - name: Check if admins.go changed
+        id: admin-go-changed
+        uses: tj-actions/changed-files@v32
+        with:
+          files: |
+            utils/admins.go
+
+      - name: Fail if admins.go changed
+        if: steps.admin-go-changed.outputs.any_changed == 'true'
+        run: echo "Admin file was changed" && exit 1

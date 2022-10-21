@@ -45,3 +45,16 @@ message RedemptionCallback {
   string hostZoneId = 1; 
   repeated uint64 epochUnbondingRecordIds = 2;
 }
+
+// ---------------------- Validator Rebalance Callbacks ---------------------- //
+
+message Rebalancing {
+  string srcValidator = 1;
+  string dstValidator = 2;
+  uint64 amt = 3;
+}
+
+message RebalanceCallback {
+  string hostZoneId = 1; 
+  repeated Rebalancing rebalancings = 2;
+}

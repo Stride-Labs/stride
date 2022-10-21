@@ -23,18 +23,18 @@ func (k Keeper) GetValidatorDelegationAmtDifferences(ctx sdk.Context, hostZone t
 	totalDelegatedAmt := k.GetTotalValidatorDelegations(hostZone)
 	targetDelegation, err := k.GetTargetValAmtsForHostZone(ctx, hostZone, totalDelegatedAmt)
 	if err != nil {
-		k.Logger(ctx).Error(fmt.Sprintf("Error getting target weights for host zone %s", hostZone.ChainId))
+		k.Logger(ctx).Error(fmt.Sprintf("Error getting target val amts for host zone %s", hostZone.ChainId))
 		return nil, err
 	}
 	for _, validator := range validators {
 		targetDelForVal, err := cast.ToInt64E(targetDelegation[validator.GetAddress()])
 		if err != nil {
-			k.Logger(ctx).Error(fmt.Sprintf("Error getting target weights for host zone %s", hostZone.ChainId))
+			k.Logger(ctx).Error(fmt.Sprintf("Error getting target weight for host zone %s, targetDelForVal: %d", hostZone.ChainId, targetDelForVal))
 			return nil, err
 		}
 		delAmt, err := cast.ToInt64E(validator.DelegationAmt)
 		if err != nil {
-			k.Logger(ctx).Error(fmt.Sprintf("Error getting target weights for host zone %s", hostZone.ChainId))
+			k.Logger(ctx).Error(fmt.Sprintf("Error getting target delAmt for host zone %s, amt: %d", hostZone.ChainId, delAmt))
 			return nil, err
 		}
 		delegationDelta[validator.GetAddress()] = targetDelForVal - delAmt
@@ -46,6 +46,7 @@ func (k Keeper) GetTargetValAmtsForHostZone(ctx sdk.Context, hostZone types.Host
 	// This will get the target validator delegation for the given hostZone
 	// such that the total validator delegation is equal to the finalDelegation
 	// output key is ADDRESS not NAME
+
 	totalWeight := k.GetTotalValidatorWeight(hostZone)
 	if totalWeight == 0 {
 		k.Logger(ctx).Error(fmt.Sprintf("No non-zero validators found for host zone %s", hostZone.ChainId))
@@ -83,7 +84,6 @@ func (k Keeper) GetTargetValAmtsForHostZone(ctx sdk.Context, hostZone types.Host
 			allocatedAmt += delegateAmt
 			targetAmount[validator.GetAddress()] = delegateAmt
 		}
-
 	}
 	return targetAmount, nil
 }
