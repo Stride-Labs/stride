@@ -15,6 +15,8 @@ import (
 	recordstypes "github.com/Stride-Labs/stride/x/records/types"
 )
 
+// CHANGE
+
 func FilterDepositRecords(arr []recordstypes.DepositRecord, condition func(recordstypes.DepositRecord) bool) (ret []recordstypes.DepositRecord) {
 	for _, elem := range arr {
 		if condition(elem) {
