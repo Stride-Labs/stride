@@ -135,8 +135,8 @@ $ %s query claim claim-record <address>
 // GetCmdQueryClaimableForAction implements the query claimable for action command.
 func GetCmdQueryClaimableForAction() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "claimable-for-action [address] [action]",
-		Args:  cobra.ExactArgs(2),
+		Use:   "claimable-for-action [airdrop-identifier] [address] [action]",
+		Args:  cobra.ExactArgs(3),
 		Short: "Query an address' claimable amount for a specific action",
 		Long: strings.TrimSpace(
 			fmt.Sprintf(`Query an address' claimable amount for a specific action
@@ -154,16 +154,17 @@ $ %s query claim claimable-for-action stride1h4astdfzjhcwahtfrh24qtvndzzh49xvqtf
 			}
 			queryClient := types.NewQueryClient(clientCtx)
 
-			action, ok := types.Action_value[args[1]]
+			action, ok := types.Action_value[args[2]]
 			if !ok {
-				return fmt.Errorf("invalid Action type: %s.  Valid actions are %s, %s", args[1],
+				return fmt.Errorf("invalid Action type: %s.  Valid actions are %s, %s", args[2],
 					types.ActionLiquidStake, types.ActionDelegateStake)
 			}
 
 			// Query store
 			res, err := queryClient.ClaimableForAction(context.Background(), &types.QueryClaimableForActionRequest{
-				Address: args[0],
-				Action:  types.Action(action),
+				AirdropIdentifier: args[0],
+				Address:           args[1],
+				Action:            types.Action(action),
 			})
 			if err != nil {
 				return err
@@ -178,8 +179,8 @@ $ %s query claim claimable-for-action stride1h4astdfzjhcwahtfrh24qtvndzzh49xvqtf
 // GetCmdQueryClaimable implements the query claimables command.
 func GetCmdQueryTotalClaimable() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "total-claimable [address]",
-		Args:  cobra.ExactArgs(1),
+		Use:   "total-claimable [airdrop-identifier] [address]",
+		Args:  cobra.ExactArgs(2),
 		Short: "Query the total claimable amount remaining for an account.",
 		Long: strings.TrimSpace(
 			fmt.Sprintf(`Query the total claimable amount remaining for an account.
@@ -197,7 +198,8 @@ $ %s query claim total-claimable stride1h4astdfzjhcwahtfrh24qtvndzzh49xvqtfftk
 			queryClient := types.NewQueryClient(clientCtx)
 			// Query store
 			res, err := queryClient.TotalClaimable(context.Background(), &types.QueryTotalClaimableRequest{
-				Address: args[0],
+				AirdropIdentifier: args[0],
+				Address:           args[1],
 			})
 			if err != nil {
 				return err

@@ -86,7 +86,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 		val.ClientCtx,
 		val.Address,
 		distributorAddr,
-		sdk.NewCoins(sdk.NewInt64Coin(s.cfg.BondDenom, 100000000)), fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
+		sdk.NewCoins(sdk.NewInt64Coin(s.cfg.BondDenom, 1010)), fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
 		fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
 		strideclitestutil.DefaultFeeString(s.cfg),
 	)
@@ -131,88 +131,89 @@ func (s *IntegrationTestSuite) TestCmdQueryClaimRecord() {
 	}
 }
 
-// func (s *IntegrationTestSuite) TestCmdTxSetAirdropAllocations() {
-// 	val := s.network.Validators[0]
+func (s *IntegrationTestSuite) TestCmdTxSetAirdropAllocations() {
+	val := s.network.Validators[0]
 
-// 	claimRecords := []claimtypes.ClaimRecord{
-// 		{
-// 			Address:           "stride1k8g9sagjpdwreqqf0qgqmd46l37595ea5ft9x6",
-// 			Weight:            sdk.NewDecWithPrec(50, 2), // 50%
-// 			ActionCompleted:   []bool{false, false, false},
-// 			AirdropIdentifier: claimtypes.DefaultAirdropIdentifier,
-// 		},
-// 		{
-// 			Address:           "stride1av5lwh0msnafn04xkhdyk6mrykxthrawy7uf3d",
-// 			Weight:            sdk.NewDecWithPrec(30, 2), // 30%
-// 			ActionCompleted:   []bool{false, false, false},
-// 			AirdropIdentifier: claimtypes.DefaultAirdropIdentifier,
-// 		},
-// 	}
+	claimRecords := []claimtypes.ClaimRecord{
+		{
+			Address:           "stride1k8g9sagjpdwreqqf0qgqmd46l37595ea5ft9x6",
+			Weight:            sdk.NewDecWithPrec(50, 2), // 50%
+			ActionCompleted:   []bool{false, false, false},
+			AirdropIdentifier: claimtypes.DefaultAirdropIdentifier,
+		},
+		{
+			Address:           "stride1av5lwh0msnafn04xkhdyk6mrykxthrawy7uf3d",
+			Weight:            sdk.NewDecWithPrec(30, 2), // 30%
+			ActionCompleted:   []bool{false, false, false},
+			AirdropIdentifier: claimtypes.DefaultAirdropIdentifier,
+		},
+	}
 
-// 	testCases := []struct {
-// 		name                string
-// 		args                []string
-// 		expClaimableAmounts []sdk.Coins
-// 	}{
-// 		{
-// 			"set-airdrop-allocations tx",
-// 			[]string{
-// 				claimtypes.DefaultAirdropIdentifier,
-// 				fmt.Sprintf("%s,%s", claimRecords[0].Address, claimRecords[1].Address),
-// 				fmt.Sprintf("%s,%s", claimRecords[0].Weight.String(), claimRecords[1].Weight.String()),
-// 				fmt.Sprintf("--%s=json", tmcli.OutputFlag),
-// 				fmt.Sprintf("--%s=%s", flags.FlagFrom, distributorAddr),
-// 				// common args
-// 				fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
-// 				fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
-// 				strideclitestutil.DefaultFeeString(s.cfg),
-// 			},
-// 			[]sdk.Coins{
-// 				sdk.NewCoins(sdk.NewCoin(s.cfg.BondDenom, sdk.NewInt(125))),
-// 				sdk.NewCoins(sdk.NewCoin(s.cfg.BondDenom, sdk.NewInt(75))),
-// 			},
-// 		},
-// 	}
+	testCases := []struct {
+		name                string
+		args                []string
+		expClaimableAmounts []sdk.Coins
+	}{
+		{
+			"set-airdrop-allocations tx",
+			[]string{
+				claimtypes.DefaultAirdropIdentifier,
+				fmt.Sprintf("%s,%s", claimRecords[0].Address, claimRecords[1].Address),
+				fmt.Sprintf("%s,%s", claimRecords[0].Weight.String(), claimRecords[1].Weight.String()),
+				fmt.Sprintf("--%s=json", tmcli.OutputFlag),
+				fmt.Sprintf("--%s=%s", flags.FlagFrom, distributorAddr),
+				// common args
+				fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
+				fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
+				strideclitestutil.DefaultFeeString(s.cfg),
+			},
+			[]sdk.Coins{
+				sdk.NewCoins(sdk.NewCoin(s.cfg.BondDenom, sdk.NewInt(125))),
+				sdk.NewCoins(sdk.NewCoin(s.cfg.BondDenom, sdk.NewInt(75))),
+			},
+		},
+	}
 
-// 	for _, tc := range testCases {
-// 		tc := tc
+	for _, tc := range testCases {
+		tc := tc
 
-// 		s.Run(tc.name, func() {
-// 			cmd := cli.CmdSetAirdropAllocations()
-// 			clientCtx := val.ClientCtx
+		s.Run(tc.name, func() {
+			cmd := cli.CmdSetAirdropAllocations()
+			clientCtx := val.ClientCtx
 
-// 			out, err := clitestutil.ExecTestCLICmd(clientCtx, cmd, tc.args)
-// 			s.Require().NoError(err)
+			out, err := clitestutil.ExecTestCLICmd(clientCtx, cmd, tc.args)
+			s.Require().NoError(err)
 
-// 			// Check if claim record is properly set
-// 			cmd = cli.GetCmdQueryClaimRecord()
-// 			out, err = clitestutil.ExecTestCLICmd(clientCtx, cmd, []string{
-// 				claimtypes.DefaultAirdropIdentifier,
-// 				claimRecords[0].Address,
-// 				fmt.Sprintf("--%s=json", tmcli.OutputFlag),
-// 			})
-// 			s.Require().NoError(err)
+			// Check if claim record is properly set
+			cmd = cli.GetCmdQueryClaimRecord()
+			out, err = clitestutil.ExecTestCLICmd(clientCtx, cmd, []string{
+				claimtypes.DefaultAirdropIdentifier,
+				claimRecords[1].Address,
+				fmt.Sprintf("--%s=json", tmcli.OutputFlag),
+			})
+			s.Require().NoError(err)
 
-// 			var result types.QueryClaimRecordResponse
-// 			s.Require().NoError(clientCtx.Codec.UnmarshalJSON(out.Bytes(), &result))
-// 			s.Require().Equal(result.ClaimRecord.String(), claimRecords[0].String())
+			var result types.QueryClaimRecordResponse
+			s.Require().NoError(clientCtx.Codec.UnmarshalJSON(out.Bytes(), &result))
+			s.Require().Equal(result.ClaimRecord.String(), claimRecords[1].String())
 
-// 			// Check if claimable amount for actions is correct
-// 			cmd = cli.GetCmdQueryClaimableForAction()
-// 			clientCtx = val.ClientCtx
+			// Check if claimable amount for actions is correct
+			cmd = cli.GetCmdQueryClaimableForAction()
+			clientCtx = val.ClientCtx
 
-// 			out, err = clitestutil.ExecTestCLICmd(clientCtx, cmd, []string{
-// 				claimRecords[0].Address,
-// 				types.ActionFree.String(),
-// 				fmt.Sprintf("--%s=json", tmcli.OutputFlag),
-// 			})
+			out, err = clitestutil.ExecTestCLICmd(clientCtx, cmd, []string{
+				claimtypes.DefaultAirdropIdentifier,
+				claimRecords[1].Address,
+				types.ActionFree.String(),
+				fmt.Sprintf("--%s=json", tmcli.OutputFlag),
+			})
 
-// 			var result1 types.QueryClaimableForActionResponse
-// 			s.Require().NoError(clientCtx.Codec.UnmarshalJSON(out.Bytes(), &result1))
-// 			s.Require().Equal(tc.expClaimableAmounts[0].String(), result1.Coins.String())
-// 		})
-// 	}
-// }
+			var result1 types.QueryClaimableForActionResponse
+			s.Require().NoError(clientCtx.Codec.UnmarshalJSON(out.Bytes(), &result1))
+			s.Require().Equal(tc.expClaimableAmounts[1].String(), result1.Coins.String())
+		})
+	}
+}
 
 func TestIntegrationTestSuite(t *testing.T) {
 	suite.Run(t, new(IntegrationTestSuite))
