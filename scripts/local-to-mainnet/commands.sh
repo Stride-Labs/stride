@@ -5,10 +5,13 @@
 #### SETUP HOT WALLET (Only needs to be run once)
 echo "$HOT_WALLET_1_MNEMONIC" | build/osmosisd keys add hot --recover --keyring-backend test 
 
-#### START RELAYERS
 
+#### START RELAYERS
 # Create connections and channels
-docker-compose run --rm relayer-host rly transact link stride-host > scripts/logs/relayer.log 2>&1
+docker-compose run --rm relayer-host rly transact link stride-host 
+# If the go relayer isn't working, use hermes
+docker-compose run --rm hermes create connection --a-chain osmosis-1 --b-chain local-test-3
+docker-compose run --rm hermes create channel --a-chain local-test-3 --a-connection connection-0 --a-port transfer --b-port transfer
 
 # Get channel ID created on the host
 build/strided --home scripts/state/stride1 q ibc channel channels 
@@ -40,37 +43,37 @@ build/strided --home scripts/state/stride1 tx stakeibc register-host-zone \
     --from admin --gas 1000000 -y
 
 # Add validator
-build/strided --home scripts/state/stride1 tx stakeibc add-validator osmosis-1 imperator osmovaloper1083svrca4t350mphfv9x45wq9asrs60c6rv0j5 10 5 --chain-id local-test-1 --keyring-backend test --from admin -y
+build/strided --home scripts/state/stride1 tx stakeibc add-validator osmosis-1 imperator osmovaloper1083svrca4t350mphfv9x45wq9asrs60c6rv0j5 10 5 --chain-id local-test-3 --keyring-backend test --from admin -y
 
 
 #### FLOW
 ## Go Through Flow
 # Liquid stake (then wait and LS again)
-build/strided --home scripts/state/stride1 tx stakeibc liquid-stake 1000000 uosmo --keyring-backend test --from admin -y --chain-id local-test-1 -y
+build/strided --home scripts/state/stride1 tx stakeibc liquid-stake 1000000 uosmo --keyring-backend test --from admin -y --chain-id local-test-3 -y
 
 # Confirm stTokens, StakedBal, and Redemption Rate
 build/strided --home scripts/state/stride1 q bank balances stride1u20df3trc2c2zdhm8qvh2hdjx9ewh00sv6eyy8
 build/strided --home scripts/state/stride1 q stakeibc list-host-zone
 
 # Redeem
-build/strided --home scripts/state/stride1 tx stakeibc redeem-stake 1000 osmosis-1 osmo1c37n9aywapx2v0s6vk2yedydkkhq65zz38jfnc --from admin --keyring-backend test --chain-id local-test-1 -y
+build/strided --home scripts/state/stride1 tx stakeibc redeem-stake 1000 osmosis-1 osmo1c37n9aywapx2v0s6vk2yedydkkhq65zz38jfnc --from admin --keyring-backend test --chain-id local-test-3 -y
 
 # Confirm stTokens and StakedBal
 build/strided --home scripts/state/stride1 q bank balances stride1u20df3trc2c2zdhm8qvh2hdjx9ewh00sv6eyy8
 build/strided --home scripts/state/stride1 q stakeibc list-host-zone
 
 # Add another validator
-build/strided --home scripts/state/stride1 tx stakeibc add-validator osmosis-1 imperator osmovaloper1083svrca4t350mphfv9x45wq9asrs60c6rv0j5 10 5 --chain-id local-test-1 --keyring-backend test --from admin -y
+build/strided --home scripts/state/stride1 tx stakeibc add-validator osmosis-1 imperator osmovaloper1083svrca4t350mphfv9x45wq9asrs60c6rv0j5 10 5 --chain-id local-test-3 --keyring-backend test --from admin -y
 
 # Liquid stake and confirm the stake was split 50/50 between the validators
-build/strided --home scripts/state/stride1 tx stakeibc liquid-stake 1000000 uosmo --keyring-backend test --from admin -y --chain-id local-test-1 -y
+build/strided --home scripts/state/stride1 tx stakeibc liquid-stake 1000000 uosmo --keyring-backend test --from admin -y --chain-id local-test-3 -y
 
 # Change validator weights
 build/strided --home scripts/state/stride1 tx stakeibc change-validator-weight osmosis-1 osmovaloper1t8qckan2yrygq7kl9apwhzfalwzgc2429p8f0s 1 --from admin -y
 build/strided --home scripts/state/stride1 tx stakeibc change-validator-weight osmosis-1-1 osmovaloper1083svrca4t350mphfv9x45wq9asrs60c6rv0j5 49 --from admin -y
 
 # LS and confirm delegation aligned with new weights
-build/strided --home scripts/state/stride1 tx stakeibc liquid-stake 1000000 ujuno --keyring-backend test --from admin -y --chain-id local-test-1 -y
+build/strided --home scripts/state/stride1 tx stakeibc liquid-stake 1000000 ujuno --keyring-backend test --from admin -y --chain-id local-test-3 -y
 
 #  (NOT FUNCTIONAL) Call rebalance to and confirm new delegations
 build/strided --home scripts/state/stride1 tx stakeibc rebalance-validators osmosis-1 5 --from admin

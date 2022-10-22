@@ -3,9 +3,9 @@
 set -eu 
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
-STRIDE_CHAIN_ID=local-test-1
+STRIDE_CHAIN_ID=local-test-3
 HOST_CHAIN_ID=osmosis-1
-HOST_ENDPOINT=osmo-fleet.frontend.stridenet.co
+HOST_ENDPOINT=osmo-fleet-direct.main.stridenet.co
 HOST_ACCOUNT_PREFIX=osmo
 HOST_DENOM=uosmo
 HOST_BINARY=build/osmosisd
@@ -22,7 +22,7 @@ HERMES_STRIDE_MNEMONIC="alter old invest friend relief slot swear pioneer syrup 
 RELAYER_STRIDE_MNEMONIC="pride narrow breeze fitness sign bounce dose smart squirrel spell length federal replace coral lunar thunder vital push nuclear crouch fun accident hood need"
 
 # cleanup any stale state
-docker-compose down
+make stop-docker
 rm -rf $STATE $SCRIPT_DIR/../logs/*.log $SCRIPT_DIR/../logs/temp
 mkdir -p $SCRIPT_DIR/../logs
 

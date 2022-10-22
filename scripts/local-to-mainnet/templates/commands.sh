@@ -4,7 +4,10 @@ echo "$HOT_WALLET_1_MNEMONIC" | HOST_BINARY keys add hot --recover --keyring-bac
 
 #### START RELAYERS
 # Create connections and channels
-docker-compose run --rm relayer-host rly transact link stride-host > scripts/logs/relayer.log 2>&1
+docker-compose run --rm relayer-host rly transact link stride-host 
+# If the go relayer isn't working, use hermes
+# docker-compose run --rm hermes hermes create connection --a-chain HOST_CHAIN_ID --b-chain STRIDE_CHAIN_ID
+# docker-compose run --rm hermes hermes create channel --a-chain STRIDE_CHAIN_ID --a-connection connection-0 --a-port transfer --b-port transfer
 
 # Get channel ID created on the host
 build/strided --home scripts/state/stride1 q ibc channel channels 
