@@ -1,4 +1,4 @@
-# Stride v2.0.0 Upgrade (v2)
+**# Stride v2.0.0 Upgrade (v2)**
 
 The Upgrade is scheduled for block `754,555`. A countdown clock is [here](https://www.mintscan.io/stride/blocks/754555)
 
@@ -12,7 +12,7 @@ git checkout v2.0.0
 make install
 ```
 
-# check the version
+**# Check version**
 
 ```bash
 # should be v2.0.0
@@ -21,14 +21,14 @@ strided version
 strided version --long
 ```
 
-# Make new directory and copy binary
+**# Make new directory and copy binary**
 
 ```bash
 mkdir -p $HOME/.stride/cosmovisor/upgrades/v2/bin
 cp $HOME/go/bin/strided $HOME/.stride/cosmovisor/upgrades/v2/bin
 ```
 
-# check the version again
+**# Check version again**
 
 ```bash
 # should be v2.0.0
