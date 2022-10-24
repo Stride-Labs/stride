@@ -9,9 +9,9 @@ echo "$HOT_WALLET_1_MNEMONIC" | build/osmosisd keys add hot --recover --keyring-
 #### START RELAYERS
 # Create connections and channels
 docker-compose run --rm relayer-host rly transact link stride-host 
-# If the go relayer isn't working, use hermes
-docker-compose run --rm hermes create connection --a-chain osmosis-1 --b-chain local-test-3
-docker-compose run --rm hermes create channel --a-chain local-test-3 --a-connection connection-0 --a-port transfer --b-port transfer
+# (OR) If the go relayer isn't working, use hermes (you'll have to add the connections to the relayer config though in `scripts/state/relayer`)
+# docker-compose run --rm hermes hermes create connection --a-chain osmosis-1 --b-chain local-test-7
+# docker-compose run --rm hermes hermes create channel --a-chain local-test-7 --a-connection connection-0 --a-port transfer --b-port transfer
 
 # Get channel ID created on the host
 build/strided --home scripts/state/stride1 q ibc channel channels 
@@ -22,7 +22,7 @@ docker-compose up -d hermes
 docker-compose logs -f hermes | sed -r -u "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2})?)?[mGK]//g" >> scripts/logs/hermes.log 2>&1 &
 
 # Configure the Go Relayer to only run ICQ
-sed -i -E "s|rule: \"\"|rule: allowlist|g" $config_toml
+sed -i -E "s|rule: \"\"|rule: allowlist|g" scripts/state/relayer/config/config.yaml
 
 # Start Go Relayer (for ICQ)
 docker-compose up -d relayer-host
@@ -31,7 +31,7 @@ docker-compose logs -f relayer-host | sed -r -u "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2}
 
 #### REGISTER HOST
 # IBC Transfer from HOST to stride (from relayer account)
-build/osmosisd tx ibc-transfer transfer transfer $transfer_channel stride1u20df3trc2c2zdhm8qvh2hdjx9ewh00sv6eyy8 4000000uosmo --from hot --chain-id osmosis-1 -y --keyring-backend test --node http://HOST_ENDPOINT:26657
+build/osmosisd tx ibc-transfer transfer transfer $transfer_channel stride1u20df3trc2c2zdhm8qvh2hdjx9ewh00sv6eyy8 4000000uosmo --from hot --chain-id osmosis-1 -y --keyring-backend test --node http://osmo-fleet-direct.main.stridenet.co:26657
 
 # Confirm funds were recieved on stride and get IBC denom
 build/strided --home scripts/state/stride1 q bank balances stride1u20df3trc2c2zdhm8qvh2hdjx9ewh00sv6eyy8
@@ -43,39 +43,39 @@ build/strided --home scripts/state/stride1 tx stakeibc register-host-zone \
     --from admin --gas 1000000 -y
 
 # Add validator
-build/strided --home scripts/state/stride1 tx stakeibc add-validator osmosis-1 imperator osmovaloper1083svrca4t350mphfv9x45wq9asrs60c6rv0j5 10 5 --chain-id local-test-3 --keyring-backend test --from admin -y
+build/strided --home scripts/state/stride1 tx stakeibc add-validator osmosis-1 imperator osmovaloper1083svrca4t350mphfv9x45wq9asrs60c6rv0j5 10 5 --chain-id local-test-7 --keyring-backend test --from admin -y
 
 
 #### FLOW
 ## Go Through Flow
 # Liquid stake (then wait and LS again)
-build/strided --home scripts/state/stride1 tx stakeibc liquid-stake 1000000 uosmo --keyring-backend test --from admin -y --chain-id local-test-3 -y
+build/strided --home scripts/state/stride1 tx stakeibc liquid-stake 1000000 uosmo --keyring-backend test --from admin -y --chain-id local-test-7 -y
 
 # Confirm stTokens, StakedBal, and Redemption Rate
 build/strided --home scripts/state/stride1 q bank balances stride1u20df3trc2c2zdhm8qvh2hdjx9ewh00sv6eyy8
 build/strided --home scripts/state/stride1 q stakeibc list-host-zone
 
 # Redeem
-build/strided --home scripts/state/stride1 tx stakeibc redeem-stake 1000 osmosis-1 osmo1c37n9aywapx2v0s6vk2yedydkkhq65zz38jfnc --from admin --keyring-backend test --chain-id local-test-3 -y
+build/strided --home scripts/state/stride1 tx stakeibc redeem-stake 1000 osmosis-1 osmo1c37n9aywapx2v0s6vk2yedydkkhq65zz38jfnc --from admin --keyring-backend test --chain-id local-test-7 -y
 
 # Confirm stTokens and StakedBal
 build/strided --home scripts/state/stride1 q bank balances stride1u20df3trc2c2zdhm8qvh2hdjx9ewh00sv6eyy8
 build/strided --home scripts/state/stride1 q stakeibc list-host-zone
 
 # Add another validator
-build/strided --home scripts/state/stride1 tx stakeibc add-validator osmosis-1 imperator osmovaloper1083svrca4t350mphfv9x45wq9asrs60c6rv0j5 10 5 --chain-id local-test-3 --keyring-backend test --from admin -y
+build/strided --home scripts/state/stride1 tx stakeibc add-validator osmosis-1 imperator osmovaloper1083svrca4t350mphfv9x45wq9asrs60c6rv0j5 10 5 --chain-id local-test-7 --keyring-backend test --from admin -y
 
 # Liquid stake and confirm the stake was split 50/50 between the validators
-build/strided --home scripts/state/stride1 tx stakeibc liquid-stake 1000000 uosmo --keyring-backend test --from admin -y --chain-id local-test-3 -y
+build/strided --home scripts/state/stride1 tx stakeibc liquid-stake 1000000 uosmo --keyring-backend test --from admin -y --chain-id local-test-7 -y
 
 # Change validator weights
 build/strided --home scripts/state/stride1 tx stakeibc change-validator-weight osmosis-1 osmovaloper1t8qckan2yrygq7kl9apwhzfalwzgc2429p8f0s 1 --from admin -y
 build/strided --home scripts/state/stride1 tx stakeibc change-validator-weight osmosis-1-1 osmovaloper1083svrca4t350mphfv9x45wq9asrs60c6rv0j5 49 --from admin -y
 
 # LS and confirm delegation aligned with new weights
-build/strided --home scripts/state/stride1 tx stakeibc liquid-stake 1000000 ujuno --keyring-backend test --from admin -y --chain-id local-test-3 -y
+build/strided --home scripts/state/stride1 tx stakeibc liquid-stake 1000000 ujuno --keyring-backend test --from admin -y --chain-id local-test-7 -y
 
-#  (NOT FUNCTIONAL) Call rebalance to and confirm new delegations
+# Call rebalance to and confirm new delegations
 build/strided --home scripts/state/stride1 tx stakeibc rebalance-validators osmosis-1 5 --from admin
 
 # Clear balances

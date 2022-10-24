@@ -34,17 +34,18 @@ rpc_timeout = '10s'
 account_prefix = 'stride'
 key_name = 'hrly1'
 store_prefix = 'ibc'
-default_gas = 100000
-max_gas = 5000000
+default_gas = 8000000
+max_gas = 9000000
 gas_price = { price = 0.000, denom = 'ustrd' }
 gas_multiplier = 1.1
-max_msg_num = 30
+max_msg_num = 1
 max_tx_size = 200000
 clock_drift = '5s'
 max_block_time = '10s'
 trusting_period = '12days'
 trust_threshold = { numerator = '1', denominator = '3' }
 address_type = { derivation = 'cosmos' }
+sequential_batch_tx = false
 
 [[chains]]
 id = 'HOST_CHAIN_ID'
@@ -55,11 +56,11 @@ rpc_timeout = '10s'
 account_prefix = 'HOST_ACCOUNT_PREFIX'
 key_name = 'hrly2'
 store_prefix = 'ibc'
-default_gas = 100000
-max_gas = 3000000
+default_gas = 8000000
+max_gas = 9000000
 gas_price = { price = 0.01, denom = 'HOST_DENOM' }
 gas_multiplier = 1.1
-max_msg_num = 30
+max_msg_num = 1
 max_tx_size = 200000
 clock_drift = '5s'
 max_block_time = '10s'

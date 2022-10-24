@@ -5,9 +5,22 @@ echo "$HOT_WALLET_1_MNEMONIC" | HOST_BINARY keys add hot --recover --keyring-bac
 #### START RELAYERS
 # Create connections and channels
 docker-compose run --rm relayer-host rly transact link stride-host 
-# If the go relayer isn't working, use hermes
+
+# (OR) If the go relayer isn't working, use hermes (you'll have to add the connections to the relayer config though in `scripts/state/relaye/config/config.yaml`)
 # docker-compose run --rm hermes hermes create connection --a-chain HOST_CHAIN_ID --b-chain STRIDE_CHAIN_ID
 # docker-compose run --rm hermes hermes create channel --a-chain STRIDE_CHAIN_ID --a-connection connection-0 --a-port transfer --b-port transfer
+
+# Ensure Relayer Config is updated (`scripts/state/relaye/config/config.yaml`)
+#    paths:
+#     stride-host:
+#       src:
+#         chain-id: stride-1
+#         client-id: 07-tendermint-0
+#         connection-id: connection-0
+#       dst:
+#         chain-id: cosmoshub-4
+#         client-id: {CLIENT-ID}
+#         connection-id: {CONNECTION-ID}
 
 # Get channel ID created on the host
 build/strided --home scripts/state/stride1 q ibc channel channels 
@@ -18,7 +31,7 @@ docker-compose up -d hermes
 docker-compose logs -f hermes | sed -r -u "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2})?)?[mGK]//g" >> scripts/logs/hermes.log 2>&1 &
 
 # Configure the Go Relayer to only run ICQ
-sed -i -E "s|rule: \"\"|rule: allowlist|g" $config_toml
+sed -i -E "s|rule: \"\"|rule: allowlist|g" scripts/state/relayer/config/config.yaml
 
 # Start Go Relayer (for ICQ)
 docker-compose up -d relayer-host
@@ -71,7 +84,7 @@ build/strided --home scripts/state/stride1 tx stakeibc change-validator-weight H
 # LS and confirm delegation aligned with new weights
 build/strided --home scripts/state/stride1 tx stakeibc liquid-stake 1000000 ujuno --keyring-backend test --from admin -y --chain-id STRIDE_CHAIN_ID -y
 
-#  (NOT FUNCTIONAL) Call rebalance to and confirm new delegations
+# Call rebalance to and confirm new delegations
 build/strided --home scripts/state/stride1 tx stakeibc rebalance-validators HOST_CHAIN_ID 5 --from admin
 
 # Clear balances
