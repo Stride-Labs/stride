@@ -54,6 +54,8 @@ build/strided --home scripts/state/stride1 tx stakeibc register-host-zone \
 # Add validator
 build/strided --home scripts/state/stride1 tx stakeibc add-validator HOST_CHAIN_ID HOST_VAL_NAME_1 HOST_VAL_ADDRESS_2 10 5 --chain-id STRIDE_CHAIN_ID --keyring-backend test --from admin -y
 
+# Confirm ICA channels were registered
+build/strided --home scripts/state/stride1 q stakeibc list-host-zone
 
 #### FLOW
 ## Go Through Flow
