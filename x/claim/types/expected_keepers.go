@@ -3,6 +3,8 @@ package types
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+
+	epochstypes "github.com/Stride-Labs/stride/x/epochs/types"
 )
 
 // BankKeeper defines the banking contract that must be fulfilled when
@@ -36,4 +38,11 @@ type DistrKeeper interface {
 type StakingKeeper interface {
 	// BondDenom - Bondable coin denomination
 	BondDenom(sdk.Context) string
+}
+
+// EpochsKeeper expected epoch keeper
+type EpochsKeeper interface {
+	SetEpochInfo(ctx sdk.Context, epoch epochstypes.EpochInfo)
+	DeleteEpochInfo(ctx sdk.Context, identifier string)
+	AllEpochInfos(ctx sdk.Context) []epochstypes.EpochInfo
 }

@@ -2,7 +2,6 @@ package types
 
 import (
 	"encoding/json"
-	"time"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 )
@@ -16,15 +15,7 @@ const DefaultIndex uint64 = 1
 func DefaultGenesis() *GenesisState {
 	return &GenesisState{
 		Params: Params{
-			Airdrops: []*Airdrop{
-				{
-					AirdropStartTime:   time.Time{},
-					AirdropDuration:    DefaultAirdropDuration, // 2 month
-					ClaimDenom:         DefaultClaimDenom,      // ustrd
-					DistributorAddress: "",
-					AirdropIdentifier:  DefaultAirdropIdentifier, //stride
-				},
-			},
+			Airdrops: []*Airdrop{},
 		},
 		ClaimRecords: []ClaimRecord{},
 	}

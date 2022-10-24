@@ -74,3 +74,44 @@ func (server msgServer) ClaimFreeAmount(goCtx context.Context, msg *types.MsgCla
 
 	return &types.MsgClaimFreeAmountResponse{ClaimedAmount: coins}, nil
 }
+
+func (server msgServer) CreateAirdrop(goCtx context.Context, msg *types.MsgCreateAirdrop) (*types.MsgCreateAirdropResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	_, err := sdk.AccAddressFromBech32(msg.Distributor)
+	if err != nil {
+		return nil, err
+	}
+
+	err = server.keeper.CreateAirdropAndEpoch(ctx, msg.Distributor, msg.Denom, msg.StartTime, msg.Duration, msg.Identifier)
+	if err != nil {
+		return nil, err
+	}
+
+	return &types.MsgCreateAirdropResponse{}, nil
+}
+
+func (server msgServer) DeleteAirdrop(goCtx context.Context, msg *types.MsgDeleteAirdrop) (*types.MsgDeleteAirdropResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	addr, err := sdk.AccAddressFromBech32(msg.Distributor)
+	if err != nil {
+		return nil, err
+	}
+
+	distributor, err := server.keeper.GetAirdropDistributor(ctx, msg.Identifier)
+	if err != nil {
+		return nil, err
+	}
+
+	if !addr.Equals(distributor) {
+		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid distributor address")
+	}
+
+	err = server.keeper.DeleteAirdropAndEpoch(ctx, msg.Identifier)
+	if err != nil {
+		return nil, err
+	}
+
+	return &types.MsgDeleteAirdropResponse{}, nil
+}

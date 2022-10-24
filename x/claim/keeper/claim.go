@@ -1,7 +1,9 @@
 package keeper
 
 import (
+	"fmt"
 	"strings"
+	"time"
 
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -13,6 +15,7 @@ import (
 	"github.com/Stride-Labs/stride/utils"
 	"github.com/Stride-Labs/stride/x/claim/types"
 	vestingtypes "github.com/Stride-Labs/stride/x/claim/vesting/types"
+	epochstypes "github.com/Stride-Labs/stride/x/epochs/types"
 )
 
 func (k Keeper) LoadAllocationData(ctx sdk.Context, allocationData string) bool {
@@ -91,7 +94,7 @@ func (k Keeper) GetDistributorAccountBalance(ctx sdk.Context, airdropIdentifier 
 func (k Keeper) EndAirdrop(ctx sdk.Context, airdropIdentifier string) error {
 	ctx.Logger().Info("Clearing claims module state entries")
 	k.clearInitialClaimables(ctx, airdropIdentifier)
-
+	k.epochsKeeper.DeleteEpochInfo(ctx, fmt.Sprintf("airdrop-%s", airdropIdentifier))
 	// ctx.Logger().Info("Beginning clawback")
 	// err := k.ClawbackAirdrop(ctx, airdropIdentifier)
 	// if err != nil {
@@ -118,8 +121,8 @@ func (k Keeper) EndAirdrop(ctx sdk.Context, airdropIdentifier string) error {
 // ClearClaimedStatus clear users' claimed status
 func (k Keeper) ClearClaimedStatus(ctx sdk.Context, airdropIdentifier string) {
 	records := k.GetClaimRecords(ctx, airdropIdentifier)
-	for _, record := range records {
-		record.ActionCompleted = []bool{false, false, false}
+	for idx := range records {
+		records[idx].ActionCompleted = []bool{false, false, false}
 	}
 
 	k.SetClaimRecords(ctx, records)
@@ -413,4 +416,50 @@ func (k Keeper) ClaimCoinsForAction(ctx sdk.Context, addr sdk.AccAddress, action
 	})
 
 	return claimableAmount, nil
+}
+
+// CreateAirdropAndEpoch creates a new airdrop and epoch for that.
+func (k Keeper) CreateAirdropAndEpoch(ctx sdk.Context, distributor string, denom string, startTime uint64, duration uint64, identifier string) error {
+	params, err := k.GetParams(ctx)
+	if err != nil {
+		panic(err)
+	}
+
+	airdrop := types.Airdrop{
+		AirdropIdentifier:  identifier,
+		AirdropDuration:    time.Duration(duration * uint64(time.Second)),
+		ClaimDenom:         denom,
+		DistributorAddress: distributor,
+		AirdropStartTime:   time.Unix(int64(startTime), 0),
+	}
+
+	params.Airdrops = append(params.Airdrops, &airdrop)
+	k.epochsKeeper.SetEpochInfo(ctx, epochstypes.EpochInfo{
+		Identifier:              fmt.Sprintf("airdrop-%s", identifier),
+		StartTime:               airdrop.AirdropStartTime.Add(time.Minute),
+		Duration:                time.Hour * 24 * 30,
+		CurrentEpoch:            0,
+		CurrentEpochStartHeight: 0,
+		CurrentEpochStartTime:   time.Time{},
+		EpochCountingStarted:    false,
+	})
+	return k.SetParams(ctx, params)
+}
+
+// DeleteAirdropAndEpoch deletes existing airdrop and corresponding epoch.
+func (k Keeper) DeleteAirdropAndEpoch(ctx sdk.Context, identifier string) error {
+	params, err := k.GetParams(ctx)
+	if err != nil {
+		panic(err)
+	}
+
+	newAirdrops := []*types.Airdrop{}
+	for _, airdrop := range params.Airdrops {
+		if airdrop.AirdropIdentifier != identifier {
+			newAirdrops = append(newAirdrops, airdrop)
+		}
+	}
+	params.Airdrops = newAirdrops
+	k.epochsKeeper.DeleteEpochInfo(ctx, fmt.Sprintf("airdrop-%s", identifier))
+	return k.SetParams(ctx, params)
 }

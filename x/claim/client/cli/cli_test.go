@@ -3,6 +3,7 @@ package cli_test
 import (
 	// "fmt"
 	"fmt"
+	"strconv"
 	"testing"
 	"time"
 
@@ -58,9 +59,6 @@ func (s *IntegrationTestSuite) SetupSuite() {
 
 	genState := app.ModuleBasics.DefaultGenesis(s.cfg.Codec)
 	claimGenState := claimtypes.DefaultGenesis()
-	claimGenState.Params.Airdrops[0].DistributorAddress = distributorAddr
-	claimGenState.Params.Airdrops[0].AirdropStartTime = time.Now()
-	claimGenState.Params.Airdrops[0].ClaimDenom = s.cfg.BondDenom
 	claimGenState.ClaimRecords = []types.ClaimRecord{
 		{
 			Address:           addr2.String(),
@@ -86,10 +84,29 @@ func (s *IntegrationTestSuite) SetupSuite() {
 		val.ClientCtx,
 		val.Address,
 		distributorAddr,
-		sdk.NewCoins(sdk.NewInt64Coin(s.cfg.BondDenom, 1010)), fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
+		sdk.NewCoins(sdk.NewInt64Coin(s.cfg.BondDenom, 1030)), fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
 		fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
 		strideclitestutil.DefaultFeeString(s.cfg),
 	)
+	s.Require().NoError(err)
+
+	// Create a new airdrop
+	cmd := cli.CmdCreateAirdrop()
+	clientCtx := val.ClientCtx
+
+	_, err = clitestutil.ExecTestCLICmd(clientCtx, cmd, []string{
+		claimtypes.DefaultAirdropIdentifier,
+		strconv.Itoa(int(time.Now().Unix())),
+		strconv.Itoa(int(claimtypes.DefaultAirdropDuration.Seconds())),
+		s.cfg.BondDenom,
+		fmt.Sprintf("--%s=json", tmcli.OutputFlag),
+		fmt.Sprintf("--%s=%s", flags.FlagFrom, distributorAddr),
+		// common args
+		fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
+		fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
+		strideclitestutil.DefaultFeeString(s.cfg),
+	})
+
 	s.Require().NoError(err)
 }
 
@@ -188,14 +205,14 @@ func (s *IntegrationTestSuite) TestCmdTxSetAirdropAllocations() {
 			cmd = cli.GetCmdQueryClaimRecord()
 			out, err = clitestutil.ExecTestCLICmd(clientCtx, cmd, []string{
 				claimtypes.DefaultAirdropIdentifier,
-				claimRecords[1].Address,
+				claimRecords[0].Address,
 				fmt.Sprintf("--%s=json", tmcli.OutputFlag),
 			})
 			s.Require().NoError(err)
 
 			var result types.QueryClaimRecordResponse
 			s.Require().NoError(clientCtx.Codec.UnmarshalJSON(out.Bytes(), &result))
-			s.Require().Equal(result.ClaimRecord.String(), claimRecords[1].String())
+			s.Require().Equal(result.ClaimRecord.String(), claimRecords[0].String())
 
 			// Check if claimable amount for actions is correct
 			cmd = cli.GetCmdQueryClaimableForAction()
@@ -203,14 +220,72 @@ func (s *IntegrationTestSuite) TestCmdTxSetAirdropAllocations() {
 
 			out, err = clitestutil.ExecTestCLICmd(clientCtx, cmd, []string{
 				claimtypes.DefaultAirdropIdentifier,
-				claimRecords[1].Address,
+				claimRecords[0].Address,
 				types.ActionFree.String(),
 				fmt.Sprintf("--%s=json", tmcli.OutputFlag),
 			})
 
 			var result1 types.QueryClaimableForActionResponse
 			s.Require().NoError(clientCtx.Codec.UnmarshalJSON(out.Bytes(), &result1))
-			s.Require().Equal(tc.expClaimableAmounts[1].String(), result1.Coins.String())
+			s.Require().Equal(tc.expClaimableAmounts[0].String(), result1.Coins.String())
+		})
+	}
+}
+
+func (s *IntegrationTestSuite) TestCmdTxCreateAirdrop() {
+	val := s.network.Validators[0]
+
+	airdrop := claimtypes.Airdrop{
+		AirdropIdentifier:  claimtypes.DefaultAirdropIdentifier,
+		AirdropStartTime:   time.Now(),
+		AirdropDuration:    claimtypes.DefaultAirdropDuration,
+		DistributorAddress: distributorAddr,
+		ClaimDenom:         claimtypes.DefaultClaimDenom,
+	}
+
+	testCases := []struct {
+		name       string
+		args       []string
+		expAirdrop claimtypes.Airdrop
+	}{
+		{
+			"create-airdrop tx",
+			[]string{
+				claimtypes.DefaultAirdropIdentifier,
+				strconv.Itoa(int(time.Now().Unix())),
+				strconv.Itoa(int(claimtypes.DefaultAirdropDuration.Seconds())),
+				s.cfg.BondDenom,
+				fmt.Sprintf("--%s=json", tmcli.OutputFlag),
+				fmt.Sprintf("--%s=%s", flags.FlagFrom, distributorAddr),
+				// common args
+				fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
+				fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
+				strideclitestutil.DefaultFeeString(s.cfg),
+			},
+			airdrop,
+		},
+	}
+
+	for _, tc := range testCases {
+		tc := tc
+
+		s.Run(tc.name, func() {
+			cmd := cli.CmdCreateAirdrop()
+			clientCtx := val.ClientCtx
+
+			out, err := clitestutil.ExecTestCLICmd(clientCtx, cmd, tc.args)
+			s.Require().NoError(err)
+
+			// Check if airdrop was created properly
+			cmd = cli.GetCmdQueryParams()
+			out, err = clitestutil.ExecTestCLICmd(clientCtx, cmd, []string{
+				fmt.Sprintf("--%s=json", tmcli.OutputFlag),
+			})
+			s.Require().NoError(err)
+
+			var result types.Params
+			s.Require().NoError(clientCtx.Codec.UnmarshalJSON(out.Bytes(), &result))
+			s.Require().Equal(tc.expAirdrop.AirdropDuration, result.Airdrops[1].AirdropDuration)
 		})
 	}
 }

@@ -19,10 +19,11 @@ type Keeper struct {
 	bankKeeper    types.BankKeeper
 	stakingKeeper types.StakingKeeper
 	distrKeeper   types.DistrKeeper
+	epochsKeeper  types.EpochsKeeper
 }
 
 // NewKeeper returns keeper
-func NewKeeper(cdc codec.Codec, storeKey sdk.StoreKey, ak types.AccountKeeper, bk types.BankKeeper, sk types.StakingKeeper, dk types.DistrKeeper) *Keeper {
+func NewKeeper(cdc codec.Codec, storeKey sdk.StoreKey, ak types.AccountKeeper, bk types.BankKeeper, sk types.StakingKeeper, dk types.DistrKeeper, ek types.EpochsKeeper) *Keeper {
 	return &Keeper{
 		cdc:           cdc,
 		storeKey:      storeKey,
@@ -30,6 +31,7 @@ func NewKeeper(cdc codec.Codec, storeKey sdk.StoreKey, ak types.AccountKeeper, b
 		bankKeeper:    bk,
 		stakingKeeper: sk,
 		distrKeeper:   dk,
+		epochsKeeper:  ek,
 	}
 }
 

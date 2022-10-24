@@ -10,6 +10,8 @@ option go_package = "github.com/Stride-Labs/stride/x/claim/types";
 service Msg {
   rpc SetAirdropAllocations(MsgSetAirdropAllocations) returns (MsgSetAirdropAllocationsResponse);
   rpc ClaimFreeAmount(MsgClaimFreeAmount) returns (MsgClaimFreeAmountResponse);
+  rpc CreateAirdrop(MsgCreateAirdrop) returns (MsgCreateAirdropResponse);
+  rpc DeleteAirdrop(MsgDeleteAirdrop) returns (MsgDeleteAirdropResponse);
 }
 
 message MsgSetAirdropAllocations {
@@ -36,3 +38,20 @@ message MsgClaimFreeAmountResponse {
     (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
   ];
 }
+
+message MsgCreateAirdrop {
+  string distributor = 1;
+  string identifier = 2;
+  uint64 start_time = 3;
+  uint64 duration = 4;
+  string denom = 5;
+}
+
+message MsgCreateAirdropResponse {}
+
+message MsgDeleteAirdrop {
+  string distributor = 1;
+  string identifier = 2;
+}
+
+message MsgDeleteAirdropResponse {}

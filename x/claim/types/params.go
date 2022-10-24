@@ -6,8 +6,8 @@ import (
 
 var (
 	DefaultClaimDenom                      = "ustrd"
-	DefaultAirdropDuration                 = time.Hour
-	DefaultVestingDurationForDelegateStake = time.Hour * 2
-	DefaultVestingDurationForLiquidStake   = time.Hour * 4
+	DefaultAirdropDuration                 = time.Hour * 24 * 30 * 12 * 3 // 3 years
+	DefaultVestingDurationForDelegateStake = time.Hour * 24 * 30 * 2      // 2 months
+	DefaultVestingDurationForLiquidStake   = time.Hour * 24 * 30 * 4      // 4 months
 	DefaultAirdropIdentifier               = "stride"
 )

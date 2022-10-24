@@ -1,14 +1,9 @@
-package claim
+package keeper
 
-import (
-	sdk "github.com/cosmos/cosmos-sdk/types"
+import sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Stride-Labs/stride/x/claim/keeper"
-)
-
-// EndBlocker called every block, process inflation, update validator set.
-func EndBlocker(ctx sdk.Context, k keeper.Keeper) {
-
+// Endblocker handler
+func (k Keeper) EndBlocker(ctx sdk.Context) {
 	params, err := k.GetParams(ctx)
 	if err != nil {
 		panic(err)

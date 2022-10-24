@@ -123,3 +123,104 @@ func (msg *MsgClaimFreeAmount) ValidateBasic() error {
 
 	return nil
 }
+
+// Msg type for MsgCreateAirdrop
+const TypeMsgCreateAirdrop = "create_airdrop"
+
+var _ sdk.Msg = &MsgCreateAirdrop{}
+
+func NewMsgCreateAirdrop(distributor string, identifier string, startTime uint64, duration uint64, denom string) *MsgCreateAirdrop {
+	return &MsgCreateAirdrop{
+		Distributor: distributor,
+		Identifier:  identifier,
+		StartTime:   startTime,
+		Duration:    duration,
+		Denom:       denom,
+	}
+}
+
+func (msg *MsgCreateAirdrop) Route() string {
+	return RouterKey
+}
+
+func (msg *MsgCreateAirdrop) Type() string {
+	return TypeMsgCreateAirdrop
+}
+
+func (msg *MsgCreateAirdrop) GetSigners() []sdk.AccAddress {
+	distributor, err := sdk.AccAddressFromBech32(msg.Distributor)
+	if err != nil {
+		panic(err)
+	}
+	return []sdk.AccAddress{distributor}
+}
+
+func (msg *MsgCreateAirdrop) GetSignBytes() []byte {
+	bz := ModuleCdc.MustMarshalJSON(msg)
+	return sdk.MustSortJSON(bz)
+}
+
+func (msg *MsgCreateAirdrop) ValidateBasic() error {
+	_, err := sdk.AccAddressFromBech32(msg.Distributor)
+	if err != nil {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid distributor address (%s)", err)
+	}
+
+	if msg.Identifier == "" {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "airdrop identifier not set")
+	}
+
+	if msg.StartTime == 0 {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "airdrop start time not set")
+	}
+
+	if msg.Duration == 0 {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "airdrop duration not set")
+	}
+	return nil
+}
+
+// Msg type for MsgDeleteAirdrop
+const TypeMsgDeleteAirdrop = "delete_airdrop"
+
+var _ sdk.Msg = &MsgDeleteAirdrop{}
+
+func NewMsgDeleteAirdrop(distributor string, identifier string) *MsgDeleteAirdrop {
+	return &MsgDeleteAirdrop{
+		Distributor: distributor,
+		Identifier:  identifier,
+	}
+}
+
+func (msg *MsgDeleteAirdrop) Route() string {
+	return RouterKey
+}
+
+func (msg *MsgDeleteAirdrop) Type() string {
+	return TypeMsgDeleteAirdrop
+}
+
+func (msg *MsgDeleteAirdrop) GetSigners() []sdk.AccAddress {
+	distributor, err := sdk.AccAddressFromBech32(msg.Distributor)
+	if err != nil {
+		panic(err)
+	}
+	return []sdk.AccAddress{distributor}
+}
+
+func (msg *MsgDeleteAirdrop) GetSignBytes() []byte {
+	bz := ModuleCdc.MustMarshalJSON(msg)
+	return sdk.MustSortJSON(bz)
+}
+
+func (msg *MsgDeleteAirdrop) ValidateBasic() error {
+	_, err := sdk.AccAddressFromBech32(msg.Distributor)
+	if err != nil {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid distributor address (%s)", err)
+	}
+
+	if msg.Identifier == "" {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "airdrop identifier not set")
+	}
+	return nil
+}
