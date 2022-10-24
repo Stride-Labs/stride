@@ -38,7 +38,7 @@ default_gas = 8000000
 max_gas = 9000000
 gas_price = { price = 0.000, denom = 'ustrd' }
 gas_multiplier = 1.1
-max_msg_num = 1
+max_msg_num = 30
 max_tx_size = 200000
 clock_drift = '5s'
 max_block_time = '10s'
@@ -60,7 +60,7 @@ default_gas = 8000000
 max_gas = 9000000
 gas_price = { price = 0.01, denom = 'HOST_DENOM' }
 gas_multiplier = 1.1
-max_msg_num = 1
+max_msg_num = 30
 max_tx_size = 200000
 clock_drift = '5s'
 max_block_time = '10s'
