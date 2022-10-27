@@ -52,7 +52,7 @@ build/strided --home scripts/state/stride1 tx stakeibc register-host-zone \
     --from admin --gas 1000000 -y
 
 # Add validator
-build/strided --home scripts/state/stride1 tx stakeibc add-validator HOST_CHAIN_ID HOST_VAL_NAME_1 HOST_VAL_ADDRESS_2 10 5 --chain-id STRIDE_CHAIN_ID --keyring-backend test --from admin -y
+build/strided --home scripts/state/stride1 tx stakeibc add-validator HOST_CHAIN_ID HOST_VAL_NAME_1 HOST_VAL_ADDRESS_1 10 5 --chain-id STRIDE_CHAIN_ID --keyring-backend test --from admin -y
 
 # Confirm ICA channels were registered
 build/strided --home scripts/state/stride1 q stakeibc list-host-zone
@@ -74,24 +74,24 @@ build/strided --home scripts/state/stride1 q bank balances stride1u20df3trc2c2zd
 build/strided --home scripts/state/stride1 q stakeibc list-host-zone
 
 # Add another validator
-build/strided --home scripts/state/stride1 tx stakeibc add-validator HOST_CHAIN_ID HOST_VAL_NAME_1 HOST_VAL_ADDRESS_2 10 5 --chain-id STRIDE_CHAIN_ID --keyring-backend test --from admin -y
+build/strided --home scripts/state/stride1 tx stakeibc add-validator HOST_CHAIN_ID HOST_VAL_NAME_2 HOST_VAL_ADDRESS_2 10 5 --chain-id STRIDE_CHAIN_ID --keyring-backend test --from admin -y
 
 # Liquid stake and confirm the stake was split 50/50 between the validators
 build/strided --home scripts/state/stride1 tx stakeibc liquid-stake 1000000 HOST_DENOM --keyring-backend test --from admin -y --chain-id STRIDE_CHAIN_ID -y
 
 # Change validator weights
 build/strided --home scripts/state/stride1 tx stakeibc change-validator-weight HOST_CHAIN_ID HOST_VAL_ADDRESS_1 1 --from admin -y
-build/strided --home scripts/state/stride1 tx stakeibc change-validator-weight HOST_CHAIN_ID-1 HOST_VAL_ADDRESS_2 49 --from admin -y
+build/strided --home scripts/state/stride1 tx stakeibc change-validator-weight HOST_CHAIN_ID HOST_VAL_ADDRESS_2 49 --from admin -y
 
 # LS and confirm delegation aligned with new weights
-build/strided --home scripts/state/stride1 tx stakeibc liquid-stake 1000000 ujuno --keyring-backend test --from admin -y --chain-id STRIDE_CHAIN_ID -y
+build/strided --home scripts/state/stride1 tx stakeibc liquid-stake 1000000 HOST_DENOM --keyring-backend test --from admin -y --chain-id STRIDE_CHAIN_ID -y
 
 # Call rebalance to and confirm new delegations
 build/strided --home scripts/state/stride1 tx stakeibc rebalance-validators HOST_CHAIN_ID 5 --from admin
 
 # Clear balances
 fee_address=$(build/strided --home scripts/state/stride1 q stakeibc show-host-zone osmosis-1 | grep feeAccount -A 1 | grep address | awk '{print $2}') && echo $fee_address
-balance=$(build/strided --home scripts/state/stride1 q bank balances $fee_address | grep amount | awk '{print $3}' | tr -d '"') && echo $balance
+balance=$(build/osmosisd --home scripts/state/stride1 q bank balances $fee_address | grep amount | awk '{print $3}' | tr -d '"') && echo $balance
 build/strided --home scripts/state/stride1 tx stakeibc clear-balance HOST_CHAIN_ID $balance $transfer_channel --from admin
 
 # Update delegations (just submit this query and confirm the ICQ callback displays in the stride logs)
