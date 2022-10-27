@@ -47,12 +47,14 @@ func (suite *KeeperTestSuite) SetupTest() {
 	suite.app.BankKeeper.SendCoinsFromModuleToAccount(suite.ctx, minttypes.ModuleName, addr1, sdk.NewCoins(sdk.NewCoin("stake", sdk.NewInt(100000000))))
 	suite.app.BankKeeper.SendCoinsFromModuleToAccount(suite.ctx, minttypes.ModuleName, addr2, sdk.NewCoins(sdk.NewCoin("stake", sdk.NewInt(100000000))))
 
+	// Stride airdrop
 	airdropStartTime := time.Now()
 	err := suite.app.ClaimKeeper.CreateAirdropAndEpoch(suite.ctx, addr1.String(), "stake", uint64(airdropStartTime.Unix()), uint64(types.DefaultAirdropDuration.Seconds()), types.DefaultAirdropIdentifier)
 	if err != nil {
 		panic(err)
 	}
 
+	// Juno airdrop
 	err = suite.app.ClaimKeeper.CreateAirdropAndEpoch(suite.ctx, addr2.String(), "stake", uint64(airdropStartTime.Add(time.Hour).Unix()), uint64(types.DefaultAirdropDuration.Seconds()), "juno")
 	if err != nil {
 		panic(err)

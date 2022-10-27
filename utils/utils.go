@@ -155,16 +155,6 @@ func AccAddressFromBech32(address string, bech32prefix string) (addr AccAddress,
 	return AccAddress(bz), nil
 }
 
-// check string array inclusion
-func ContainsString(s []string, e string) bool {
-	for _, a := range s {
-		if a == e {
-			return true
-		}
-	}
-	return false
-}
-
 //==============================  AIRDROP UTILS  ================================
 // max64 returns the maximum of its inputs.
 func Max64(i, j int64) int64 {
@@ -223,4 +213,14 @@ func GetAirdropDurationForAction(action types.Action) int64 {
 		return int64(types.DefaultVestingDurationForLiquidStake.Seconds())
 	}
 	return int64(0)
+}
+
+// check string array inclusion
+func ContainsString(s []string, e string) bool {
+	for _, a := range s {
+		if a == e {
+			return true
+		}
+	}
+	return false
 }

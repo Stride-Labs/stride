@@ -247,8 +247,15 @@ func (suite *KeeperTestSuite) TestMultiChainAirdropFlow() {
 	coins = suite.app.BankKeeper.GetAllBalances(suite.ctx, addr1)
 	suite.Require().Equal(coins.String(), sdk.NewCoins(sdk.NewInt64Coin(sdk.DefaultBondDenom, claimableAmountForFree+claimableAmountForStake+claimableAmountForLiquidStake)).String())
 
-	err = suite.app.ClaimKeeper.EndAirdrop(suite.ctx, "stride")
+	suite.app.ClaimKeeper.EndBlocker(suite.ctx.WithBlockTime(time.Now().Add(types.DefaultAirdropDuration)))
+	weight, err := suite.app.ClaimKeeper.GetTotalWeight(suite.ctx, types.DefaultAirdropIdentifier)
 	suite.Require().NoError(err)
+	suite.Require().Equal(weight, sdk.ZeroDec())
+
+	records := suite.app.ClaimKeeper.GetClaimRecords(suite.ctx, types.DefaultAirdropIdentifier)
+	suite.Require().Equal(0, len(records))
+
+	//*********************** End of Stride airdrop *************************
 
 	// claim airdrops for juno users after ending stride airdrop
 	// get rewards amount for free (juno user)
@@ -283,8 +290,6 @@ func (suite *KeeperTestSuite) TestMultiChainAirdropFlow() {
 	suite.Require().Equal(coins.String(), sdk.NewCoins(sdk.NewInt64Coin(sdk.DefaultBondDenom, claimableAmountForFree+claimableAmountForStake+claimableAmountForLiquidStake)).String())
 
 	// after 3 years, juno users should be still able to claim
-	suite.app.ClaimKeeper.EndBlocker(suite.ctx.WithBlockTime(time.Now().Add(types.DefaultAirdropDuration)))
-
 	suite.app.ClaimKeeper.ClearClaimedStatus(suite.ctx, "juno")
 	coins, err = suite.app.ClaimKeeper.ClaimCoinsForAction(suite.ctx.WithBlockTime(time.Now().Add(time.Hour)), addr2, types.ActionFree, "juno")
 	suite.Require().NoError(err)
@@ -303,4 +308,12 @@ func (suite *KeeperTestSuite) TestMultiChainAirdropFlow() {
 	coins, err = suite.app.ClaimKeeper.ClaimCoinsForAction(suite.ctx.WithBlockTime(time.Now().Add(time.Hour).Add(types.DefaultAirdropDuration)), addr2, types.ActionFree, "juno")
 	suite.Require().NoError(err)
 	suite.Require().Equal(coins.String(), sdk.NewCoins(sdk.NewInt64Coin(sdk.DefaultBondDenom, 0)).String())
+
+	weight, err = suite.app.ClaimKeeper.GetTotalWeight(suite.ctx, types.DefaultAirdropIdentifier)
+	suite.Require().NoError(err)
+	suite.Require().Equal(weight, sdk.ZeroDec())
+
+	records = suite.app.ClaimKeeper.GetClaimRecords(suite.ctx, types.DefaultAirdropIdentifier)
+	suite.Require().Equal(0, len(records))
+	//*********************** End of Juno airdrop *************************
 }

@@ -24,8 +24,11 @@ var _ types.MsgServer = msgServer{}
 
 func (server msgServer) SetAirdropAllocations(goCtx context.Context, msg *types.MsgSetAirdropAllocations) (*types.MsgSetAirdropAllocationsResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
-	totalWeight := sdk.NewDec(0)
 	records := []types.ClaimRecord{}
+	totalWeight, err := server.keeper.GetTotalWeight(ctx, msg.AirdropIdentifier)
+	if err != nil {
+		return nil, err
+	}
 
 	airdropDistributor, err := server.keeper.GetAirdropDistributor(ctx, msg.AirdropIdentifier)
 	if err != nil {
@@ -41,16 +44,17 @@ func (server msgServer) SetAirdropAllocations(goCtx context.Context, msg *types.
 		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid distributor address")
 	}
 
-	for idx, user := range msg.Users {
+	users, weights := server.keeper.RemoveDuplicatedAirdrops(ctx, msg.AirdropIdentifier, msg.Users, msg.Weights)
+	for idx, user := range users {
 		record := types.ClaimRecord{
 			Address:           user,
-			Weight:            msg.Weights[idx],
+			Weight:            weights[idx],
 			ActionCompleted:   []bool{false, false, false},
 			AirdropIdentifier: msg.AirdropIdentifier,
 		}
 
 		records = append(records, record)
-		totalWeight = totalWeight.Add(msg.Weights[idx])
+		totalWeight = totalWeight.Add(weights[idx])
 	}
 
 	server.keeper.SetTotalWeight(ctx, totalWeight, msg.AirdropIdentifier)

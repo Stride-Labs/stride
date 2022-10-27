@@ -58,6 +58,23 @@ func (k Keeper) LoadAllocationData(ctx sdk.Context, allocationData string) bool 
 	return true
 }
 
+func (k Keeper) RemoveDuplicatedAirdrops(ctx sdk.Context, identifier string, users []string, weights []sdk.Dec) ([]string, []sdk.Dec) {
+	store := ctx.KVStore(k.storeKey)
+	prefixStore := prefix.NewStore(store, append([]byte(types.ClaimRecordsStorePrefix), []byte(identifier)...))
+	newUsers := []string{}
+	newWeights := []sdk.Dec{}
+	for idx, user := range users {
+		addr, _ := sdk.AccAddressFromBech32(user)
+		// If new user, then append user and weight
+		if !prefixStore.Has(addr) {
+			newUsers = append(newUsers, user)
+			newWeights = append(newWeights, weights[idx])
+		}
+	}
+
+	return newUsers, newWeights
+}
+
 func (k Keeper) GetAirdropByIdentifier(ctx sdk.Context, airdropIdentifier string) *types.Airdrop {
 	params, err := k.GetParams(ctx)
 	if err != nil {
@@ -94,12 +111,8 @@ func (k Keeper) GetDistributorAccountBalance(ctx sdk.Context, airdropIdentifier 
 func (k Keeper) EndAirdrop(ctx sdk.Context, airdropIdentifier string) error {
 	ctx.Logger().Info("Clearing claims module state entries")
 	k.clearInitialClaimables(ctx, airdropIdentifier)
-	k.epochsKeeper.DeleteEpochInfo(ctx, fmt.Sprintf("airdrop-%s", airdropIdentifier))
-	// ctx.Logger().Info("Beginning clawback")
-	// err := k.ClawbackAirdrop(ctx, airdropIdentifier)
-	// if err != nil {
-	// 	return err
-	// }
+	k.SetTotalWeight(ctx, sdk.ZeroDec(), airdropIdentifier)
+	k.DeleteAirdropAndEpoch(ctx, airdropIdentifier)
 	return nil
 }
 
@@ -202,7 +215,7 @@ func (k Keeper) GetTotalWeight(ctx sdk.Context, airdropIdentifier string) (sdk.D
 	store := ctx.KVStore(k.storeKey)
 	b := store.Get(append([]byte(types.TotalWeightKey), []byte(airdropIdentifier)...))
 	if b == nil {
-		return sdk.ZeroDec(), types.ErrTotalWeightNotSet
+		return sdk.ZeroDec(), nil
 	}
 	totalWeight, err := sdk.NewDecFromStr(string(b))
 	if err != nil {
@@ -423,6 +436,12 @@ func (k Keeper) CreateAirdropAndEpoch(ctx sdk.Context, distributor string, denom
 	params, err := k.GetParams(ctx)
 	if err != nil {
 		panic(err)
+	}
+
+	for _, airdrop := range params.Airdrops {
+		if airdrop.AirdropIdentifier == identifier {
+			return types.ErrAirdropAlreadyExists
+		}
 	}
 
 	airdrop := types.Airdrop{
