@@ -14,7 +14,7 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) 
 	if err := k.SetParams(ctx, genState.Params); err != nil {
 		panic(err)
 	}
-	if err := k.SetClaimRecords(ctx, genState.ClaimRecords); err != nil {
+	if err := k.SetClaimRecordsWithWeights(ctx, genState.ClaimRecords); err != nil {
 		panic(err)
 	}
 }

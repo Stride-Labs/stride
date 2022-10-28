@@ -82,11 +82,8 @@ func (suite *KeeperTestSuite) TestHookBeforeAirdropStart() {
 			AirdropIdentifier: types.DefaultAirdropIdentifier,
 		},
 	}
-	suite.app.ClaimKeeper.SetTotalWeight(suite.ctx, claimRecords[0].Weight, "stride")
-
 	suite.app.AccountKeeper.SetAccount(suite.ctx, authtypes.NewBaseAccount(addr1, nil, 0, 0))
-
-	err = suite.app.ClaimKeeper.SetClaimRecords(suite.ctx, claimRecords)
+	err = suite.app.ClaimKeeper.SetClaimRecordsWithWeights(suite.ctx, claimRecords)
 	suite.Require().NoError(err)
 
 	coins, err := suite.app.ClaimKeeper.GetUserTotalClaimable(suite.ctx, addr1, "stride")
@@ -129,8 +126,7 @@ func (suite *KeeperTestSuite) TestAirdropFlow() {
 		},
 	}
 
-	suite.app.ClaimKeeper.SetTotalWeight(suite.ctx, claimRecords[0].Weight, "stride")
-	err := suite.app.ClaimKeeper.SetClaimRecords(suite.ctx, claimRecords)
+	err := suite.app.ClaimKeeper.SetClaimRecordsWithWeights(suite.ctx, claimRecords)
 	suite.Require().NoError(err)
 
 	coins, err := suite.app.ClaimKeeper.GetUserTotalClaimable(suite.ctx, addr1, "stride")
@@ -203,9 +199,7 @@ func (suite *KeeperTestSuite) TestMultiChainAirdropFlow() {
 		},
 	}
 
-	suite.app.ClaimKeeper.SetTotalWeight(suite.ctx, claimRecords[0].Weight, "stride")
-	suite.app.ClaimKeeper.SetTotalWeight(suite.ctx, claimRecords[1].Weight, "juno")
-	err := suite.app.ClaimKeeper.SetClaimRecords(suite.ctx, claimRecords)
+	err := suite.app.ClaimKeeper.SetClaimRecordsWithWeights(suite.ctx, claimRecords)
 	suite.Require().NoError(err)
 
 	coins, err := suite.app.ClaimKeeper.GetUserTotalClaimable(suite.ctx, addr1, "stride")

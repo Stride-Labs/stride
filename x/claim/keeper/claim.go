@@ -19,9 +19,7 @@ import (
 )
 
 func (k Keeper) LoadAllocationData(ctx sdk.Context, allocationData string) bool {
-	totalWeight := sdk.NewDec(0)
 	records := []types.ClaimRecord{}
-	airdropIdentifier := ""
 
 	lines := strings.Split(allocationData, "\n")
 	allocatedFlags := map[string]bool{}
@@ -48,16 +46,14 @@ func (k Keeper) LoadAllocationData(ctx sdk.Context, allocationData string) bool 
 			ActionCompleted:   []bool{false, false, false},
 		})
 
-		totalWeight = totalWeight.Add(weight)
 		allocatedFlags[data[1]] = true
-		airdropIdentifier = data[0]
 	}
 
-	k.SetTotalWeight(ctx, totalWeight, airdropIdentifier)
-	k.SetClaimRecords(ctx, records)
+	k.SetClaimRecordsWithWeights(ctx, records)
 	return true
 }
 
+// Remove duplicated airdrops for given params
 func (k Keeper) RemoveDuplicatedAirdrops(ctx sdk.Context, identifier string, users []string, weights []sdk.Dec) ([]string, []sdk.Dec) {
 	store := ctx.KVStore(k.storeKey)
 	prefixStore := prefix.NewStore(store, append([]byte(types.ClaimRecordsStorePrefix), []byte(identifier)...))
@@ -75,6 +71,27 @@ func (k Keeper) RemoveDuplicatedAirdrops(ctx sdk.Context, identifier string, use
 	return newUsers, newWeights
 }
 
+// Get airdrop by distributor
+func (k Keeper) GetAirdropByDistributor(ctx sdk.Context, distributor string) *types.Airdrop {
+	params, err := k.GetParams(ctx)
+	if err != nil {
+		panic(err)
+	}
+
+	if distributor == "" {
+		return nil
+	}
+
+	for _, airdrop := range params.Airdrops {
+		if airdrop.DistributorAddress == distributor {
+			return airdrop
+		}
+	}
+
+	return nil
+}
+
+// Get airdrop by identifier
 func (k Keeper) GetAirdropByIdentifier(ctx sdk.Context, airdropIdentifier string) *types.Airdrop {
 	params, err := k.GetParams(ctx)
 	if err != nil {
@@ -108,28 +125,14 @@ func (k Keeper) GetDistributorAccountBalance(ctx sdk.Context, airdropIdentifier 
 	return k.bankKeeper.GetBalance(ctx, addr, airdrop.ClaimDenom), nil
 }
 
+// EndAirdrop ends airdrop and clear all user claim records
 func (k Keeper) EndAirdrop(ctx sdk.Context, airdropIdentifier string) error {
 	ctx.Logger().Info("Clearing claims module state entries")
 	k.clearInitialClaimables(ctx, airdropIdentifier)
-	k.SetTotalWeight(ctx, sdk.ZeroDec(), airdropIdentifier)
+	k.DeleteTotalWeight(ctx, airdropIdentifier)
 	k.DeleteAirdropAndEpoch(ctx, airdropIdentifier)
 	return nil
 }
-
-// // ClawbackAirdrop claws back all the Stride coins from airdrop
-// func (k Keeper) ClawbackAirdrop(ctx sdk.Context, airdropIdentifier string) error {
-// 	addr, err := k.GetAirdropDistributor(ctx, airdropIdentifier)
-// 	bal := k.GetDistributorAccountBalance(ctx, airdropIdentifier)
-
-// 	totalClawback := sdk.NewCoins(bal)
-// 	err = k.distrKeeper.FundCommunityPool(ctx, totalClawback, addr)
-// 	if err != nil {
-// 		return err
-// 	}
-
-// 	ctx.Logger().Info(fmt.Sprintf("clawed back %d ustrd into community pool", totalClawback.AmountOf("ustrd").Int64()))
-// 	return nil
-// }
 
 // ClearClaimedStatus clear users' claimed status
 func (k Keeper) ClearClaimedStatus(ctx sdk.Context, airdropIdentifier string) {
@@ -152,7 +155,26 @@ func (k Keeper) clearInitialClaimables(ctx sdk.Context, airdropIdentifier string
 	}
 }
 
-// SetClaimables set claimable amount from balances object
+func (k Keeper) SetClaimRecordsWithWeights(ctx sdk.Context, claimRecords []types.ClaimRecord) error {
+	// Set total weights
+	weights := make(map[string]sdk.Dec)
+	for _, record := range claimRecords {
+		if weights[record.AirdropIdentifier].IsNil() {
+			weights[record.AirdropIdentifier] = sdk.ZeroDec()
+		}
+
+		weights[record.AirdropIdentifier] = weights[record.AirdropIdentifier].Add(record.Weight)
+	}
+
+	for identifier, weight := range weights {
+		k.SetTotalWeight(ctx, weight, identifier)
+	}
+
+	// Set claim records
+	return k.SetClaimRecords(ctx, claimRecords)
+}
+
+// SetClaimRecords set claim records and total weights
 func (k Keeper) SetClaimRecords(ctx sdk.Context, claimRecords []types.ClaimRecord) error {
 	for _, claimRecord := range claimRecords {
 		err := k.SetClaimRecord(ctx, claimRecord)
@@ -208,6 +230,12 @@ func (k Keeper) GetClaimRecord(ctx sdk.Context, addr sdk.AccAddress, airdropIden
 func (k Keeper) SetTotalWeight(ctx sdk.Context, totalWeight sdk.Dec, airdropIdentifier string) {
 	store := ctx.KVStore(k.storeKey)
 	store.Set(append([]byte(types.TotalWeightKey), []byte(airdropIdentifier)...), []byte(totalWeight.String()))
+}
+
+// DeleteTotalWeight deletes total weights for airdrop
+func (k Keeper) DeleteTotalWeight(ctx sdk.Context, airdropIdentifier string) {
+	store := ctx.KVStore(k.storeKey)
+	store.Delete(append([]byte(types.TotalWeightKey), []byte(airdropIdentifier)...))
 }
 
 // GetTotalWeight gets total sum of user weights in store

@@ -87,6 +87,11 @@ func (server msgServer) CreateAirdrop(goCtx context.Context, msg *types.MsgCreat
 		return nil, err
 	}
 
+	airdrop := server.keeper.GetAirdropByDistributor(ctx, msg.Distributor)
+	if airdrop != nil {
+		return nil, types.ErrDistributorAlreadyExists
+	}
+
 	err = server.keeper.CreateAirdropAndEpoch(ctx, msg.Distributor, msg.Denom, msg.StartTime, msg.Duration, msg.Identifier)
 	if err != nil {
 		return nil, err

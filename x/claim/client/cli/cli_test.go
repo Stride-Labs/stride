@@ -34,15 +34,22 @@ import (
 
 var addr1 sdk.AccAddress
 var addr2 sdk.AccAddress
-var distributorMnemonic string
-var distributorAddr string
+var distributorMnemonics []string
+var distributorAddrs []string
 
 func init() {
 	cmdcfg.SetupConfig()
 	addr1 = ed25519.GenPrivKey().PubKey().Address().Bytes()
 	addr2 = ed25519.GenPrivKey().PubKey().Address().Bytes()
-	distributorMnemonic = "chronic learn inflict great answer reward evidence stool open moon skate resource arch raccoon decade tell improve stay onion section blouse carry primary fabric"
-	distributorAddr = "stride1ajerf2nmxsg0u728ga7665fmlfguqxcd8e36vf"
+	distributorMnemonics = []string{
+		"chronic learn inflict great answer reward evidence stool open moon skate resource arch raccoon decade tell improve stay onion section blouse carry primary fabric",
+		"catalog govern other escape eye resemble dirt hundred birth build dirt jacket network blame credit palace similar carry knock auction exotic bus business machine",
+	}
+
+	distributorAddrs = []string{
+		"stride1ajerf2nmxsg0u728ga7665fmlfguqxcd8e36vf",
+		"stride1zkfk3q70ranm3han4lvutvcvetncxg829j972a",
+	}
 }
 
 type IntegrationTestSuite struct {
@@ -76,19 +83,21 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	_, err := s.network.WaitForHeight(1)
 	s.Require().NoError(err)
 
-	// Initiate distributor account
+	// Initiate distributor accounts
 	val := s.network.Validators[0]
-	info, _ := val.ClientCtx.Keyring.NewAccount("distributor", distributorMnemonic, keyring.DefaultBIP39Passphrase, sdk.FullFundraiserPath, hd.Secp256k1)
-	distributorAddr := sdk.AccAddress(info.GetPubKey().Address())
-	_, err = banktestutil.MsgSendExec(
-		val.ClientCtx,
-		val.Address,
-		distributorAddr,
-		sdk.NewCoins(sdk.NewInt64Coin(s.cfg.BondDenom, 1030)), fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
-		fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
-		strideclitestutil.DefaultFeeString(s.cfg),
-	)
-	s.Require().NoError(err)
+	for idx := range distributorMnemonics {
+		info, _ := val.ClientCtx.Keyring.NewAccount("distributor"+strconv.Itoa(idx), distributorMnemonics[idx], keyring.DefaultBIP39Passphrase, sdk.FullFundraiserPath, hd.Secp256k1)
+		distributorAddr := sdk.AccAddress(info.GetPubKey().Address())
+		_, err = banktestutil.MsgSendExec(
+			val.ClientCtx,
+			val.Address,
+			distributorAddr,
+			sdk.NewCoins(sdk.NewInt64Coin(s.cfg.BondDenom, 1020)), fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
+			fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
+			strideclitestutil.DefaultFeeString(s.cfg),
+		)
+		s.Require().NoError(err)
+	}
 
 	// Create a new airdrop
 	cmd := cli.CmdCreateAirdrop()
@@ -100,7 +109,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 		strconv.Itoa(int(claimtypes.DefaultAirdropDuration.Seconds())),
 		s.cfg.BondDenom,
 		fmt.Sprintf("--%s=json", tmcli.OutputFlag),
-		fmt.Sprintf("--%s=%s", flags.FlagFrom, distributorAddr),
+		fmt.Sprintf("--%s=%s", flags.FlagFrom, distributorAddrs[0]),
 		// common args
 		fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
 		fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
@@ -178,15 +187,15 @@ func (s *IntegrationTestSuite) TestCmdTxSetAirdropAllocations() {
 				fmt.Sprintf("%s,%s", claimRecords[0].Address, claimRecords[1].Address),
 				fmt.Sprintf("%s,%s", claimRecords[0].Weight.String(), claimRecords[1].Weight.String()),
 				fmt.Sprintf("--%s=json", tmcli.OutputFlag),
-				fmt.Sprintf("--%s=%s", flags.FlagFrom, distributorAddr),
+				fmt.Sprintf("--%s=%s", flags.FlagFrom, distributorAddrs[0]),
 				// common args
 				fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
 				fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
 				strideclitestutil.DefaultFeeString(s.cfg),
 			},
 			[]sdk.Coins{
-				sdk.NewCoins(sdk.NewCoin(s.cfg.BondDenom, sdk.NewInt(125))),
-				sdk.NewCoins(sdk.NewCoin(s.cfg.BondDenom, sdk.NewInt(75))),
+				sdk.NewCoins(sdk.NewCoin(s.cfg.BondDenom, sdk.NewInt(77))),
+				sdk.NewCoins(sdk.NewCoin(s.cfg.BondDenom, sdk.NewInt(46))),
 			},
 		},
 	}
@@ -236,10 +245,10 @@ func (s *IntegrationTestSuite) TestCmdTxCreateAirdrop() {
 	val := s.network.Validators[0]
 
 	airdrop := claimtypes.Airdrop{
-		AirdropIdentifier:  claimtypes.DefaultAirdropIdentifier,
+		AirdropIdentifier:  "stride-1",
 		AirdropStartTime:   time.Now(),
 		AirdropDuration:    claimtypes.DefaultAirdropDuration,
-		DistributorAddress: distributorAddr,
+		DistributorAddress: distributorAddrs[1],
 		ClaimDenom:         claimtypes.DefaultClaimDenom,
 	}
 
@@ -251,12 +260,12 @@ func (s *IntegrationTestSuite) TestCmdTxCreateAirdrop() {
 		{
 			"create-airdrop tx",
 			[]string{
-				claimtypes.DefaultAirdropIdentifier,
+				"stride-1",
 				strconv.Itoa(int(time.Now().Unix())),
 				strconv.Itoa(int(claimtypes.DefaultAirdropDuration.Seconds())),
 				s.cfg.BondDenom,
 				fmt.Sprintf("--%s=json", tmcli.OutputFlag),
-				fmt.Sprintf("--%s=%s", flags.FlagFrom, distributorAddr),
+				fmt.Sprintf("--%s=%s", flags.FlagFrom, distributorAddrs[1]),
 				// common args
 				fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
 				fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),

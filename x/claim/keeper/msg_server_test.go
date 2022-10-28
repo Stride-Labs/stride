@@ -1,6 +1,8 @@
 package keeper_test
 
 import (
+	"time"
+
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -112,4 +114,19 @@ func (suite *KeeperTestSuite) TestSetAirdropAllocationsForMultiAirdrops() {
 
 	claimRecords = suite.app.ClaimKeeper.GetClaimRecords(suite.ctx, "juno")
 	suite.Require().Equal(3, len(claimRecords))
+}
+
+func (suite *KeeperTestSuite) TestCreateAirdrop() {
+	suite.SetupTest()
+	msgServer := keeper.NewMsgServerImpl(suite.app.ClaimKeeper)
+
+	_, err := msgServer.CreateAirdrop(sdk.WrapSDKContext(suite.ctx), &types.MsgCreateAirdrop{
+		Distributor: distributors[types.DefaultAirdropIdentifier].String(),
+		Identifier:  "stride-1",
+		StartTime:   uint64(time.Now().Unix()),
+		Duration:    uint64(time.Hour),
+		Denom:       "stake",
+	})
+
+	suite.Require().Error(err)
 }

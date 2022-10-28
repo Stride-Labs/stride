@@ -18,4 +18,6 @@ var (
 		"failed to parse dec from str")
 	ErrAirdropAlreadyExists = sdkerrors.Register(ModuleName, 1106,
 		"airdrop with same identifier already exists")
+	ErrDistributorAlreadyExists = sdkerrors.Register(ModuleName, 1107,
+		"airdrop with same distributor already exists")
 )
