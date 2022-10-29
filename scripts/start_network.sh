@@ -27,10 +27,16 @@ if [[ "$UPGRADE_NAME" != "" ]]; then
     #  that has both binaries and is running cosmovisor
     # The reason for having a separate cosmovisor image is so we can cache the building of cosmovisor and the old binary
     echo "Building Cosmovisor..."
-    docker build -t stridezone:cosmovisor --build-arg old_commit_hash=$UPGRADE_OLD_COMMIT_HASH -f ${SCRIPT_DIR}/upgrades/Dockerfile.cosmovisor .
+    docker build \
+        -t stridezone:cosmovisor \
+        --build-arg old_commit_hash=$UPGRADE_OLD_COMMIT_HASH \
+        -f ${SCRIPT_DIR}/upgrades/Dockerfile.cosmovisor .
 
     echo "Re-Building Stride with Upgrade Support..."
-    docker build -t stridezone:stride -f ${SCRIPT_DIR}/upgrades/Dockerfile.stride .
+    docker build \
+        -t stridezone:stride \
+        --build-arg upgrade_name=$UPGRADE_NAME \
+        -f ${SCRIPT_DIR}/upgrades/Dockerfile.stride .
 
     echo "Done"
 fi
