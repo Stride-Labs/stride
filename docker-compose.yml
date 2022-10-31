@@ -142,6 +142,13 @@ services:
       - ./scripts/state/hermes/config.toml:/home/hermes/.hermes/config.toml
     restart: always
 
+  relayer-host:
+    image: stridezone:relayer
+    volumes:
+      - ./scripts/state/relayer:/home/relayer/.relayer
+    restart: always
+    command: [ "bash", "start.sh", "stride-host" ]
+
   relayer-gaia:
     image: stridezone:relayer
     volumes:
