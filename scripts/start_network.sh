@@ -28,7 +28,7 @@ if [[ "$UPGRADE_NAME" != "" ]]; then
     echo "Building Cosmovisor..."
     docker build \
         -t stridezone:cosmovisor \
-        --build-arg old_commit_hash=$UPGRADE_OLD_COMMIT_HASH \
+        --build-arg old_commit_hash=$UPGRADE_OLD_COMMIT_HASH STRIDE_ADMIN_ADDRESS=$STRIDE_ADMIN_ADDRESS\
         -f ${SCRIPT_DIR}/upgrades/Dockerfile.cosmovisor .
 
     echo "Re-Building Stride with Upgrade Support..."

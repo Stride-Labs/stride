@@ -40,13 +40,13 @@ docker-compose logs -f relayer-host | sed -r -u "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2}
 
 #### REGISTER HOST
 # IBC Transfer from HOST to stride (from relayer account)
-HOST_BINARY tx ibc-transfer transfer transfer $transfer_channel stride1u20df3trc2c2zdhm8qvh2hdjx9ewh00sv6eyy8 4000000HOST_DENOM --from hot --chain-id HOST_CHAIN_ID -y --keyring-backend test --node http://HOST_ENDPOINT:26657
+HOST_BINARY tx ibc-transfer transfer transfer $transfer_channel $STRIDE_ADMIN_ADDRESS 4000000HOST_DENOM --from hot --chain-id HOST_CHAIN_ID -y --keyring-backend test --node http://HOST_ENDPOINT:26657
 
 # Confirm funds were recieved on stride and get IBC denom
-build/strided --home scripts/state/stride1 q bank balances stride1u20df3trc2c2zdhm8qvh2hdjx9ewh00sv6eyy8
+build/strided --home scripts/state/stride1 q bank balances $STRIDE_ADMIN_ADDRESS
 
 # Register host zone
-IBC_DENOM=$(build/strided --home scripts/state/stride1 q bank balances stride1u20df3trc2c2zdhm8qvh2hdjx9ewh00sv6eyy8 | grep ibc | awk '{print $2}' | tr -d '"') && echo $IBC_DENOM
+IBC_DENOM=$(build/strided --home scripts/state/stride1 q bank balances $STRIDE_ADMIN_ADDRESS | grep ibc | awk '{print $2}' | tr -d '"') && echo $IBC_DENOM
 build/strided --home scripts/state/stride1 tx stakeibc register-host-zone \
     connection-0 HOST_DENOM HOST_ACCOUNT_PREFIX $IBC_DENOM channel-0 1 \
     --from admin --gas 1000000 -y
@@ -63,14 +63,14 @@ build/strided --home scripts/state/stride1 q stakeibc list-host-zone
 build/strided --home scripts/state/stride1 tx stakeibc liquid-stake 1000000 HOST_DENOM --keyring-backend test --from admin -y --chain-id STRIDE_CHAIN_ID -y
 
 # Confirm stTokens, StakedBal, and Redemption Rate
-build/strided --home scripts/state/stride1 q bank balances stride1u20df3trc2c2zdhm8qvh2hdjx9ewh00sv6eyy8
+build/strided --home scripts/state/stride1 q bank balances $STRIDE_ADMIN_ADDRESS
 build/strided --home scripts/state/stride1 q stakeibc list-host-zone
 
 # Redeem
 build/strided --home scripts/state/stride1 tx stakeibc redeem-stake 1000 HOST_CHAIN_ID HOT_WALLET_ADDRESS --from admin --keyring-backend test --chain-id STRIDE_CHAIN_ID -y
 
 # Confirm stTokens and StakedBal
-build/strided --home scripts/state/stride1 q bank balances stride1u20df3trc2c2zdhm8qvh2hdjx9ewh00sv6eyy8
+build/strided --home scripts/state/stride1 q bank balances $STRIDE_ADMIN_ADDRESS
 build/strided --home scripts/state/stride1 q stakeibc list-host-zone
 
 # Add another validator

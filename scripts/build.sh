@@ -10,17 +10,17 @@ build_local_and_docker() {
    module="$1"
    folder="$2"
    title=$(printf "$module" | awk '{ print toupper($0) }')
-
+   
    printf '%s' "Building $title Locally...  "
    cwd=$PWD
    cd $folder
-   go build -mod=readonly -trimpath -o $BUILDDIR ./... 2>&1 | grep -v -E "deprecated|keychain";
+   GOBIN=$BUILDDIR go install -mod=readonly -trimpath ./... 2>&1
    local_build_succeeded=$?
    cd $cwd
    echo "Done" 
 
    echo "Building $title Docker...  "
-   docker build --tag stridezone:$module -f Dockerfile.$module . 
+   DOCKER_BUILDKIT=1 docker build --tag stridezone:$module -f Dockerfile.$module . 
    docker_build_succeeded=$?
 
    return $docker_build_succeeded && $local_build_succeeded
@@ -44,7 +44,7 @@ while getopts sgojthr flag; do
    case "${flag}" in
       # For stride, we need to update the admin address to one that we have the seed phrase for
       s) replace_admin_address
-         if (build_local_and_docker stride .) ; then
+         if (build_local_and_docker stride . ./cmd/strided) ; then
             revert_admin_address
          else
             revert_admin_address
@@ -52,7 +52,7 @@ while getopts sgojthr flag; do
          fi
          ;;
       g) build_local_and_docker gaia deps/gaia ;;
-      j) build_local_and_docker juno deps/juno ;;
+      j) build_local_and_docker juno deps/juno bin/junod;;
       o) build_local_and_docker osmo deps/osmosis ;;
       t) build_local_and_docker stars deps/stargaze ;;
       r) build_local_and_docker relayer deps/relayer ;;  
