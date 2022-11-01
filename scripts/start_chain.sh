@@ -20,7 +20,6 @@ for chain_id in ${CHAINS[@]}; do
 
     echo "Starting $chain_id chain"
     nodes_names=$(i=1; while [ $i -le $num_nodes ]; do printf "%s " ${node_prefix}${i}; i=$(($i + 1)); done;)
-    echo $nodes_names
     docker-compose up -d $nodes_names
 
     docker-compose logs -f ${node_prefix}1 | sed -r -u "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2})?)?[mGK]//g" > $log_file 2>&1 &
