@@ -44,7 +44,7 @@ while getopts sgojthr flag; do
    case "${flag}" in
       # For stride, we need to update the admin address to one that we have the seed phrase for
       s) replace_admin_address
-         if (build_local_and_docker stride . ./cmd/strided) ; then
+         if (build_local_and_docker stride .) ; then
             revert_admin_address
          else
             revert_admin_address
