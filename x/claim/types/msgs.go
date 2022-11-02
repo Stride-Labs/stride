@@ -3,6 +3,8 @@ package types
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+
+	"github.com/Stride-Labs/stride/utils"
 )
 
 // Msg type for MsgSetAirdropAllocations
@@ -63,7 +65,12 @@ func (msg *MsgSetAirdropAllocations) ValidateBasic() error {
 	}
 
 	for _, user := range msg.Users {
-		_, err := sdk.AccAddressFromBech32(user)
+		strideAddr := utils.ConvertAddressToStrideAddress(user)
+		if strideAddr == "" {
+			return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid bech32 address")
+		}
+
+		_, err := sdk.AccAddressFromBech32(strideAddr)
 		if err != nil {
 			return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid user address (%s)", err)
 		}

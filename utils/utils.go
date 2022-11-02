@@ -11,10 +11,9 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/address"
 	"github.com/cosmos/cosmos-sdk/types/bech32"
 
-	"github.com/Stride-Labs/stride/x/claim/types"
-
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
+	config "github.com/Stride-Labs/stride/cmd/strided/config"
 	recordstypes "github.com/Stride-Labs/stride/x/records/types"
 )
 
@@ -205,16 +204,6 @@ func GetVestedCoinsAt(vAt int64, vStart int64, vLength int64, vCoins sdk.Coins) 
 	return vestedCoins
 }
 
-// Get airdrop duration for action
-func GetAirdropDurationForAction(action types.Action) int64 {
-	if action == types.ActionDelegateStake {
-		return int64(types.DefaultVestingDurationForDelegateStake.Seconds())
-	} else if action == types.ActionLiquidStake {
-		return int64(types.DefaultVestingDurationForLiquidStake.Seconds())
-	}
-	return int64(0)
-}
-
 // check string array inclusion
 func ContainsString(s []string, e string) bool {
 	for _, a := range s {
@@ -223,4 +212,19 @@ func ContainsString(s []string, e string) bool {
 		}
 	}
 	return false
+}
+
+// Convert any bech32 to stride address
+func ConvertAddressToStrideAddress(address string) string {
+	_, bz, err := bech32.DecodeAndConvert(address)
+	if err != nil {
+		return ""
+	}
+
+	bech32Addr, err := bech32.ConvertAndEncode(config.Bech32PrefixAccAddr, bz)
+	if err != nil {
+		return ""
+	}
+
+	return bech32Addr
 }

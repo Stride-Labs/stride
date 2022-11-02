@@ -29,7 +29,16 @@ func (k Keeper) LoadAllocationData(ctx sdk.Context, allocationData string) bool 
 			continue
 		}
 
+		data[1] = utils.ConvertAddressToStrideAddress(data[1])
+		if data[1] == "" {
+			continue
+		}
+
 		weight, err := sdk.NewDecFromStr(data[2])
+		if weight.IsNegative() || weight.IsZero() {
+			continue
+		}
+
 		if err != nil || allocatedFlags[data[1]] {
 			continue
 		}
@@ -60,7 +69,8 @@ func (k Keeper) RemoveDuplicatedAirdrops(ctx sdk.Context, identifier string, use
 	newUsers := []string{}
 	newWeights := []sdk.Dec{}
 	for idx, user := range users {
-		addr, _ := sdk.AccAddressFromBech32(user)
+		strideAddr := utils.ConvertAddressToStrideAddress(user)
+		addr, _ := sdk.AccAddressFromBech32(strideAddr)
 		// If new user, then append user and weight
 		if !prefixStore.Has(addr) {
 			newUsers = append(newUsers, user)
@@ -69,6 +79,16 @@ func (k Keeper) RemoveDuplicatedAirdrops(ctx sdk.Context, identifier string, use
 	}
 
 	return newUsers, newWeights
+}
+
+// Get airdrop duration for action
+func GetAirdropDurationForAction(action types.Action) int64 {
+	if action == types.ActionDelegateStake {
+		return int64(types.DefaultVestingDurationForDelegateStake.Seconds())
+	} else if action == types.ActionLiquidStake {
+		return int64(types.DefaultVestingDurationForLiquidStake.Seconds())
+	}
+	return int64(0)
 }
 
 // Get airdrop by distributor
@@ -413,7 +433,7 @@ func (k Keeper) ClaimCoinsForAction(ctx sdk.Context, addr sdk.AccAddress, action
 			return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "invalid account type; expected: BaseAccount, got: %T", baseAccount)
 		}
 
-		periodLength := utils.GetAirdropDurationForAction(action)
+		periodLength := GetAirdropDurationForAction(action)
 		vestingAcc := vestingtypes.NewStridePeriodicVestingAccount(baseAccount.(*authtypes.BaseAccount), claimableAmount, []vestingtypes.Period{{
 			StartTime: ctx.BlockTime().Unix(),
 			Length:    periodLength,
@@ -422,7 +442,7 @@ func (k Keeper) ClaimCoinsForAction(ctx sdk.Context, addr sdk.AccAddress, action
 		k.accountKeeper.SetAccount(ctx, vestingAcc)
 	} else {
 		// Grant a new vesting to the existing stride vesting account
-		periodLength := utils.GetAirdropDurationForAction(action)
+		periodLength := GetAirdropDurationForAction(action)
 		strideVestingAcc.AddNewGrant(vestingtypes.Period{
 			StartTime: ctx.BlockTime().Unix(),
 			Length:    periodLength,

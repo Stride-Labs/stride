@@ -14,18 +14,19 @@ import (
 func (suite *KeeperTestSuite) TestLoadAllocationData() {
 	suite.SetupTest()
 	var allocations = `identifier,address,weight
-stride,stride1g7yxhuppp5x3yqkah5mw29eqq5s4sv2f222xmk,0.5
-stride,stride1h4astdfzjhcwahtfrh24qtvndzzh49xvqtfftk,0.3`
+osmosis,osmo1g7yxhuppp5x3yqkah5mw29eqq5s4sv2fp6e2eg,0.5
+osmosis,osmo1h4astdfzjhcwahtfrh24qtvndzzh49xvtm69fg,0.3
+stride,stride1av5lwh0msnafn04xkhdyk6mrykxthrawy7uf3d,0.7`
 
 	ok := suite.app.ClaimKeeper.LoadAllocationData(suite.ctx, allocations)
 	suite.Require().True(ok)
 
-	totalWeight, err := suite.app.ClaimKeeper.GetTotalWeight(suite.ctx, "stride")
+	totalWeight, err := suite.app.ClaimKeeper.GetTotalWeight(suite.ctx, "osmosis")
 	suite.Require().NoError(err)
 	suite.Require().True(totalWeight.Equal(sdk.MustNewDecFromStr("0.8")))
 
-	addr, _ := sdk.AccAddressFromBech32("stride1g7yxhuppp5x3yqkah5mw29eqq5s4sv2f222xmk")
-	claimRecord, err := suite.app.ClaimKeeper.GetClaimRecord(suite.ctx, addr, "stride")
+	addr, _ := sdk.AccAddressFromBech32("stride1g7yxhuppp5x3yqkah5mw29eqq5s4sv2f222xmk") // hex(stride1g7yxhuppp5x3yqkah5mw29eqq5s4sv2f222xmk) = hex(osmo1g7yxhuppp5x3yqkah5mw29eqq5s4sv2fp6e2eg)
+	claimRecord, err := suite.app.ClaimKeeper.GetClaimRecord(suite.ctx, addr, "osmosis")
 	suite.Require().Equal(claimRecord.Address, "stride1g7yxhuppp5x3yqkah5mw29eqq5s4sv2f222xmk")
 	suite.Require().True(claimRecord.Weight.Equal(sdk.MustNewDecFromStr("0.5")))
 	suite.Require().Equal(claimRecord.ActionCompleted, []bool{false, false, false})
