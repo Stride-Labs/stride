@@ -51,7 +51,7 @@ Developers who wish to develop on Stride can easily spin up 3 Stride nodes, 3 Ga
 The fastest way to develop on Stride is local development mode.
 
 #### Set up local development mode 
-Install the required git submodule dependencies (gaia, hermes, interchain-queries). 
+Install the required git submodule dependencies (gaia, hermes). 
 ```
 git submodule update --init
 ```
@@ -68,7 +68,6 @@ You can optionally pass build arguments to specify which binary to rebuild
 5. `t` This will re-build the Stargaze binary
 6. `r` This will re-build the Go Relayer binary
 7. `h` This will re-build the Hermes binary
-8. `i` This will re-build the ICQ binary
 
 Example: `make start-docker build=sg`, this will:
 - Rebuild the Stride and Gaia binarys

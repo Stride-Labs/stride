@@ -12,7 +12,6 @@ rm -rf $SCRIPT_DIR/state $SCRIPT_DIR/logs/*.log $SCRIPT_DIR/logs/temp
 mkdir -p $SCRIPT_DIR/logs
 
 HERMES_LOGS=$SCRIPT_DIR/logs/hermes.log
-ICQ_LOGS=$SCRIPT_DIR/logs/icq.log
 
 # If we're testing an upgrade, setup cosmovisor
 if [[ "$UPGRADE_NAME" != "" ]]; then
