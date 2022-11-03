@@ -1,7 +1,3 @@
-[submodule "deps/interchain-queries"]
-	# Commit: c6609dfcfbf6f5b902fd6882bc7ce65a063cf837
-	path = deps/interchain-queries
-	url = git@github.com:Stride-Labs/interchain-queries.git
 [submodule "deps/hermes"]
 	# Commit: fd92eb6d17342bc83003f2067d6a9cd8261f2884
 	path = deps/hermes
