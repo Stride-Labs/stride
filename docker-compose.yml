@@ -176,9 +176,3 @@ services:
       - ./scripts/state/relayer:/home/relayer/.relayer
     restart: always
     command: [ "bash", "start.sh", "stride-stars" ]
-
-  icq:
-    image: stridezone:icq
-    volumes:
-      - ./scripts/state/icq:/home/icq/.icq
-    restart: always
