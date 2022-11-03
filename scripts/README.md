@@ -65,12 +65,13 @@ while getopts sgojhir{n} flag; do
 {CHAIN_ID}_VAL_MNEMONIC_5=""
 {CHAIN_ID}_VAL_MNEMONICS=("${CHAIN_ID}_VAL_MNEMONIC_1","${CHAIN_ID}_VAL_MNEMONIC_2","${CHAIN_ID}_VAL_MNEMONIC_3","${CHAIN_ID}_VAL_MNEMONIC_4","${CHAIN_ID}_VAL_MNEMONIC_5")
 
-
 HERMES_${CHAIN_ID}_ACCT=rly{add one since the account from the last host zone}
 HERMES_${CHAIN_ID}_MNEMONIC=""
 
-ICQ_${CHAIN_ID}_ACCT=rly{add one since the account from the last host zone}
-ICQ_${CHAIN_ID}_MNEMONIC=""
+RELAYER_{CHAIN_ID}_EXEC="docker-compose run --rm relayer-{new-host-zone}"
+RELAYER_{CHAIN_ID}_ACCT=rly{add one since the account from the last host zone}
+RELAYER_{CHAIN_ID}_MNEMONIC=""
+
 ```
 * Add the IBC denom's for the host zone across each channel. You can use the following code block (just temporarily throw it in any of the test files and run it)
 ```
@@ -116,6 +117,29 @@ paths:
     src-channel-filter:
       rule: ""
       channel-list: []
+```
+* Add a section to hermes
+```
+[[chains]]
+id = '{CHAIN_ID}'
+rpc_addr = 'http://{NODE_PREFIX}1:26657'
+grpc_addr = 'http://{NODE_PREFIX}1:9090'
+websocket_addr = 'ws://{NODE_PREFIX}:26657/websocket'
+rpc_timeout = '10s'
+account_prefix = '{ADDRESS_PREFIX}'
+key_name = 'hrly{next relayer ID}'
+store_prefix = 'ibc'
+default_gas = 100000
+max_gas = 3000000
+gas_price = { price = 0.000, denom = '{DENOM}' }
+gas_multiplier = 1.1
+max_msg_num = 30
+max_tx_size = 2097152
+clock_drift = '5s'
+max_block_time = '10s'
+trusting_period = '119s'
+trust_threshold = { numerator = '1', denominator = '3' }
+address_type = { derivation = 'cosmos' }
 ```
 * Finally add the execution of the `init_chain` script for this host zone in `scripts/start_network.sh`, and add it to the array of `HOST_CHAINS`
 ```
