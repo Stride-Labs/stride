@@ -14,6 +14,7 @@ import (
 const (
 	UpgradeName        = "v3"
 	airdropDistributor = ""
+	airdropIdentifier  = ""
 	airdropDuration    = time.Hour * 24 * 30 * 12 * 3 // 3 years
 )
 
@@ -24,7 +25,7 @@ func CreateUpgradeHandler(
 	ck claimKeeper.Keeper,
 ) upgradetypes.UpgradeHandler {
 	return func(ctx sdk.Context, _ upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
-		ck.CreateAirdropAndEpoch(ctx, airdropDistributor, claimTypes.DefaultClaimDenom, uint64(ctx.BlockTime().Unix()), uint64(airdropDuration.Seconds()), claimTypes.DefaultAirdropIdentifier)
+		ck.CreateAirdropAndEpoch(ctx, airdropDistributor, claimTypes.DefaultClaimDenom, uint64(ctx.BlockTime().Unix()), uint64(airdropDuration.Seconds()), airdropIdentifier)
 		ck.LoadAllocationData(ctx, allocations)
 		return mm.RunMigrations(ctx, configurator, vm)
 	}
