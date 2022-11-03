@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
@@ -34,7 +35,14 @@ func (k Keeper) LoadAllocationData(ctx sdk.Context, allocationData string) bool 
 			continue
 		}
 
-		weight, err := sdk.NewDecFromStr(data[2])
+		// Round weight value so that it always has 10 decimal places
+		weightFloat64, err := strconv.ParseFloat(data[2], 64)
+		if err != nil {
+			continue
+		}
+
+		weightStr := fmt.Sprintf("%.10f", weightFloat64)
+		weight, err := sdk.NewDecFromStr(weightStr)
 		if weight.IsNegative() || weight.IsZero() {
 			continue
 		}
