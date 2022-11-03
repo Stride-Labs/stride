@@ -1,0 +1,43 @@
+global:
+  api-listen-addr: :5183
+  timeout: 10s
+  memo: ""
+  light-cache-size: 20
+chains:
+  stride:
+    type: cosmos
+    value:
+      key: rly1
+      chain-id: STRIDE_CHAIN_ID
+      rpc-addr: http://stride1:26657
+      account-prefix: stride
+      keyring-backend: test
+      gas-adjustment: 1.2
+      gas-prices: 0.01ustrd
+      debug: false
+      timeout: 20s
+      output-format: json
+      sign-mode: direct
+  host:
+    type: cosmos
+    value:
+      key: rly2
+      chain-id: HOST_CHAIN_ID
+      rpc-addr: http://HOST_ENDPOINT:26657
+      account-prefix: HOST_ACCOUNT_PREFIX
+      keyring-backend: test
+      gas-adjustment: 1.2
+      gas-prices: 0.01HOST_DENOM
+      debug: false
+      timeout: 20s
+      output-format: json
+      sign-mode: direct
+paths:
+  stride-host:
+    src:
+      chain-id: STRIDE_CHAIN_ID
+    dst:
+      chain-id: HOST_CHAIN_ID
+    src-channel-filter:
+      rule: ""
+      channel-list: []
