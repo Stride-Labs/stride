@@ -1,0 +1,15 @@
+FROM alpine:3.15
+
+RUN wget https://github.com/InjectiveLabs/injective-chain-releases/releases/download/v1.7.0-1662223156/linux-amd64.zip \
+    && unzip linux-amd64.zip \
+    && mv peggo /usr/bin \
+    && mv injectived /usr/bin
+
+RUN adduser -S -h /home/injective -D injective -u 1000
+
+USER injective
+WORKDIR /home/injective
+
+EXPOSE 26657 26656 1317 9090
+
+CMD ["injectived", "start"]
