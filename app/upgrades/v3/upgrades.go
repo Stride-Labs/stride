@@ -11,6 +11,7 @@ import (
 	claimTypes "github.com/Stride-Labs/stride/x/claim/types"
 )
 
+// Note: ensure these values are properly set before running upgrade
 const (
 	UpgradeName        = "v3"
 	airdropDistributor = ""
@@ -25,6 +26,13 @@ func CreateUpgradeHandler(
 	ck claimKeeper.Keeper,
 ) upgradetypes.UpgradeHandler {
 	return func(ctx sdk.Context, _ upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
+		_, err := ck.GetParams(ctx)
+		if err != nil {
+			gen := claimTypes.DefaultGenesis()
+			ck.SetParams(ctx, gen.Params)
+			ck.SetClaimRecordsWithWeights(ctx, gen.ClaimRecords)
+		}
+
 		ck.CreateAirdropAndEpoch(ctx, airdropDistributor, claimTypes.DefaultClaimDenom, uint64(ctx.BlockTime().Unix()), uint64(airdropDuration.Seconds()), airdropIdentifier)
 		ck.LoadAllocationData(ctx, allocations)
 		return mm.RunMigrations(ctx, configurator, vm)
