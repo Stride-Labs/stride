@@ -75,6 +75,7 @@ for (( i=1; i <= $NUM_NODES; i++ )); do
     mkdir -p $STATE/$node_name
     cmd="$CMD --home ${STATE}/$node_name"
     $cmd init $moniker --chain-id $CHAIN_ID --overwrite &> /dev/null
+    chmod -R 777 $STATE/$node_name
 
     # Update node networking configuration 
     config_toml="${STATE}/${node_name}/config/config.toml"
