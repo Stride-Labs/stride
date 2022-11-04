@@ -24,7 +24,7 @@ build_local_and_docker() {
    DOCKER_BUILDKIT=1 docker build --tag stridezone:$module -f Dockerfile.$module . 
    docker_build_succeeded=$?
 
-   return $docker_build_succeeded && $local_build_succeeded
+   return $((docker_build_succeeded+local_build_succeeded))
 }
 
 ADMINS_FILE=${SCRIPT_DIR}/../utils/admins.go
