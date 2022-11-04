@@ -12,22 +12,8 @@ if [[ "$CHAINS" == "" ]]; then
     exit 1
 fi
 
-mkdir -p $STATE/hermes
 mkdir -p $STATE/relayer/config
-
-cp ${SCRIPT_DIR}/config/hermes_config.toml $STATE/hermes/config.toml
 cp ${SCRIPT_DIR}/config/relayer_config.yaml $STATE/relayer/config/config.yaml
-
-echo "Adding Hermes keys"
-TMP_MNEMONICS=${SCRIPT_DIR}/state/mnemonic.txt 
-for chain_id in ${CHAINS[@]}; do
-    account_name=$(GET_VAR_VALUE HERMES_${chain_id}_ACCT)
-    mnemonic=$(GET_VAR_VALUE     HERMES_${chain_id}_MNEMONIC)
-
-    echo "$mnemonic" > $TMP_MNEMONICS
-    $HERMES_CMD keys add --key-name $account_name --chain $chain_id --mnemonic-file $TMP_MNEMONICS --overwrite
-done
-rm -f $TMP_MNEMONICS
 
 echo "Adding Relayer keys"
 for chain_id in ${CHAINS[@]}; do
