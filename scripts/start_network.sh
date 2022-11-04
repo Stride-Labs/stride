@@ -58,16 +58,10 @@ for chain_id in ${HOST_CHAINS[@]}; do
     docker-compose logs -f relayer-${chain_name} | sed -r -u "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2})?)?[mGK]//g" >> ${LOGS}/relayer-${chain_name}.log 2>&1 &
 done
 
-# Register all host zones in parallel
+# Register all host zones 
 pids=()
 for i in ${!HOST_CHAINS[@]}; do
-    if [[ "$i" != "0" ]]; then sleep 20; fi
-    bash $SCRIPT_DIR/register_host.sh ${HOST_CHAINS[$i]} $i &
-    pids[${i}]=$!
-done
-for i in ${!pids[@]}; do
-    wait ${pids[$i]}
-    echo "${HOST_CHAINS[$i]} - Done"
+    bash $SCRIPT_DIR/register_host.sh ${HOST_CHAINS[$i]} $i 
 done
 
 $SCRIPT_DIR/create_logs.sh ${HOST_CHAINS[@]} &
