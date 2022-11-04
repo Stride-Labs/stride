@@ -33,9 +33,18 @@ for (( i=1; i <= $NUM_VALS; i++ )); do
     sleep 4
 done
 
+timeout=60
 while true; do
     if ! $STRIDE_MAIN_CMD q stakeibc list-host-zone | grep Account | grep -q null; then
-        sleep 1
         break
+    else
+        if [[ "$timeout" == "0" ]]; then 
+            echo "ERROR - Unable to register host zones."
+            exit 1
+        fi
+        timeout=$((timeout-1))
+        sleep 1
     fi
 done
+
+echo "Done"
