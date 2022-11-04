@@ -4,7 +4,7 @@ set -eu
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 source ${SCRIPT_DIR}/vars.sh
 
-HOST_CHAINS=(GAIA JUNO OSMO STARS)
+HOST_CHAINS=(GAIA JUNO OSMO)
 
 # cleanup any stale state
 make stop-docker
@@ -48,18 +48,9 @@ done
 # Start the chain and create the transfer channels
 bash ${SCRIPT_DIR}/start_chain.sh STRIDE ${HOST_CHAINS[@]}
 bash ${SCRIPT_DIR}/init_relayers.sh STRIDE ${HOST_CHAINS[@]}
-bash ${SCRIPT_DIR}/create_channels.sh ${HOST_CHAINS[@]}
-
-echo "Starting Relayers"
-for chain_id in ${HOST_CHAINS[@]}; do
-    chain_name=$(printf "$chain_id" | awk '{ print tolower($0) }')
-
-    docker-compose up -d relayer-${chain_name}
-    docker-compose logs -f relayer-${chain_name} | sed -r -u "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2})?)?[mGK]//g" >> ${LOGS}/relayer-${chain_name}.log 2>&1 &
-done
+bash ${SCRIPT_DIR}/start_relayers.sh ${HOST_CHAINS[@]}
 
 # Register all host zones 
-pids=()
 for i in ${!HOST_CHAINS[@]}; do
     bash $SCRIPT_DIR/register_host.sh ${HOST_CHAINS[$i]} $i 
 done
