@@ -28,7 +28,7 @@ if [[ "$UPGRADE_NAME" != "" ]]; then
     echo "Building Cosmovisor..."
     docker build \
         -t stridezone:cosmovisor \
-        --build-arg old_commit_hash=$UPGRADE_OLD_COMMIT_HASH \
+        --build-arg old_commit_hash=$UPGRADE_OLD_COMMIT_HASH stride_admin_address=$STRIDE_ADMIN_ADDRESS \
         -f ${SCRIPT_DIR}/upgrades/Dockerfile.cosmovisor .
 
     echo "Re-Building Stride with Upgrade Support..."
@@ -42,13 +42,13 @@ fi
 
 # Initialize the state for each chain
 for chain_id in STRIDE ${HOST_CHAINS[@]}; do
-    sh ${SCRIPT_DIR}/init_chain.sh $chain_id
+    bash ${SCRIPT_DIR}/init_chain.sh $chain_id
 done
 
 # Start the chain and create the transfer channels
-sh ${SCRIPT_DIR}/start_chain.sh STRIDE ${HOST_CHAINS[@]}
-sh ${SCRIPT_DIR}/init_relayers.sh STRIDE ${HOST_CHAINS[@]}
-sh ${SCRIPT_DIR}/create_channels.sh ${HOST_CHAINS[@]}
+bash ${SCRIPT_DIR}/start_chain.sh STRIDE ${HOST_CHAINS[@]}
+bash ${SCRIPT_DIR}/init_relayers.sh STRIDE ${HOST_CHAINS[@]}
+bash ${SCRIPT_DIR}/create_channels.sh ${HOST_CHAINS[@]}
 
 echo "Starting relayers"
 docker-compose up -d hermes 

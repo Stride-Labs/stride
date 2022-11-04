@@ -5,6 +5,7 @@ SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 source ${SCRIPT_DIR}/vars.sh
 
 BUILDDIR="$2"
+mkdir -p $BUILDDIR
 
 build_local_and_docker() {
    module="$1"
@@ -14,13 +15,13 @@ build_local_and_docker() {
    printf '%s' "Building $title Locally...  "
    cwd=$PWD
    cd $folder
-   go build -mod=readonly -trimpath -o $BUILDDIR ./... 2>&1 | grep -v -E "deprecated|keychain";
-   local_build_succeeded=$?
+   GOBIN=$BUILDDIR go install -mod=readonly -trimpath ./... 2>&1 | grep -v -E "deprecated|keychain" | true
+   local_build_succeeded=${PIPESTATUS[0]}
    cd $cwd
    echo "Done" 
 
    echo "Building $title Docker...  "
-   docker build --tag stridezone:$module -f Dockerfile.$module . 
+   DOCKER_BUILDKIT=1 docker build --tag stridezone:$module -f Dockerfile.$module . 
    docker_build_succeeded=$?
 
    return $docker_build_succeeded && $local_build_succeeded
