@@ -50,12 +50,13 @@ bash ${SCRIPT_DIR}/start_chain.sh STRIDE ${HOST_CHAINS[@]}
 bash ${SCRIPT_DIR}/init_relayers.sh STRIDE ${HOST_CHAINS[@]}
 bash ${SCRIPT_DIR}/create_channels.sh ${HOST_CHAINS[@]}
 
-echo "Starting relayers"
-docker-compose up -d hermes 
-docker-compose logs -f hermes | sed -r -u "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2})?)?[mGK]//g" >> $HERMES_LOGS 2>&1 &
+echo "Starting Relayers"
+for chain_id in ${HOST_CHAINS[@]}; do
+    chain_name=$(printf "$chain_id" | awk '{ print tolower($0) }')
 
-# Wait for hermes to start
-( tail -f -n0 $HERMES_LOGS & ) | grep -q -E "Hermes has started"
+    docker-compose up -d relayer-${chain_name}
+    docker-compose logs -f relayer-${chain_name} | sed -r -u "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2})?)?[mGK]//g" >> ${LOGS}/relayer-${chain_name}.log 2>&1 &
+done
 
 # Register all host zones in parallel
 pids=()
@@ -67,14 +68,6 @@ done
 for i in ${!pids[@]}; do
     wait ${pids[$i]}
     echo "${HOST_CHAINS[$i]} - Done"
-done
-
-echo "Starting go relayers..."
-for chain_id in ${HOST_CHAINS[@]}; do
-    chain_name=$(printf "$chain_id" | awk '{ print tolower($0) }')
-
-    docker-compose up -d relayer-${chain_name}
-    docker-compose logs -f relayer-${chain_name} | sed -r -u "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2})?)?[mGK]//g" >> ${LOGS}/relayer-${chain_name}.log 2>&1 &
 done
 
 $SCRIPT_DIR/create_logs.sh ${HOST_CHAINS[@]} &
