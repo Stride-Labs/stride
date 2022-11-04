@@ -1,4 +1,4 @@
-version: "3.8"
+version: "3"
 services:
   stride1:
     image: stridezone:stride
@@ -134,6 +134,15 @@ services:
     image: stridezone:stars
     volumes:
       - ./scripts/state/stars5:/home/stars/.starsd
+
+  injective1:
+    image: stridezone:injective
+    volumes:
+      - ./scripts/state/injective1:/home/injective/.{new-host-zone}
+    ports:
+      - "26257:26657"
+      - "1277:1317"
+      - "9050:9090"
 
   hermes:
     image: stridezone:hermes
