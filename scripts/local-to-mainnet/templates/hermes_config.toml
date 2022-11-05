@@ -49,9 +49,9 @@ sequential_batch_tx = false
 
 [[chains]]
 id = 'HOST_CHAIN_ID'
-rpc_addr = 'http://HOST_ENDPOINT:26657'
-grpc_addr = 'http://HOST_ENDPOINT:9090'
-websocket_addr = 'ws://HOST_ENDPOINT:26657/websocket'
+rpc_addr = 'http://HOST_HERMES_ENDPOINT:26657'
+grpc_addr = 'http://HOST_HERMES_ENDPOINT:9090'
+websocket_addr = 'ws://HOST_HERMES_ENDPOINT:26657/websocket'
 rpc_timeout = '10s'
 account_prefix = 'HOST_ACCOUNT_PREFIX'
 key_name = 'hrly2'

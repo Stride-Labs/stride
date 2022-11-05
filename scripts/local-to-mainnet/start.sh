@@ -3,17 +3,18 @@
 set -eu 
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
-STRIDE_CHAIN_ID=local-test-7
-HOST_CHAIN_ID=osmosis-1
-HOST_ENDPOINT=osmo-fleet-direct.main.stridenet.co
-HOST_ACCOUNT_PREFIX=osmo
-HOST_DENOM=uosmo
-HOST_BINARY=build/osmosisd
+STRIDE_CHAIN_ID=local-test-1
+HOST_CHAIN_ID=injective-1
+HOST_RPC_ENDPOINT=https://rpc-injective-ia.cosmosia.notional.ventures:443
+HOST_HERMES_ENDPOINT=injective-fleet-direct.main.stridenet.co
+HOST_ACCOUNT_PREFIX=inj
+HOST_DENOM=inj
+HOST_BINARY=HOST_BINARY
 HOST_VAL_NAME_1=imperator
-HOST_VAL_ADDRESS_1=osmovaloper1t8qckan2yrygq7kl9apwhzfalwzgc2429p8f0s
+HOST_VAL_ADDRESS_1=injvaloper1esud09zs5754g5nlkmrgxsfdj276xm64cgmd3w
 HOST_VAL_NAME_2=notional
-HOST_VAL_ADDRESS_2=osmovaloper1083svrca4t350mphfv9x45wq9asrs60c6rv0j5
-HOT_WALLET_ADDRESS=osmo1c37n9aywapx2v0s6vk2yedydkkhq65zz38jfnc
+HOST_VAL_ADDRESS_2=injvaloper16eg6wf2k6v0lzwu2vsrhxhe0tcycgr7jm98nyz
+HOT_WALLET_ADDRESS=inj150j956dh73crle9d49jl5mjm4xlss9p8s55x8x
 
 STATE=$SCRIPT_DIR/../state
 STRIDE_LOGS=$SCRIPT_DIR/../logs/stride.log
@@ -47,13 +48,13 @@ cp ${SCRIPT_DIR}/templates/relayer_config.yaml $RELAYER_CONFIG_FILE
 # Update relayer templates
 sed -i -E "s|STRIDE_CHAIN_ID|$STRIDE_CHAIN_ID|g" $HERMES_CONFIG_FILE
 sed -i -E "s|HOST_CHAIN_ID|$HOST_CHAIN_ID|g" $HERMES_CONFIG_FILE
-sed -i -E "s|HOST_ENDPOINT|$HOST_ENDPOINT|g" $HERMES_CONFIG_FILE
+sed -i -E "s|HOST_HERMES_ENDPOINT|$HOST_HERMES_ENDPOINT|g" $HERMES_CONFIG_FILE
 sed -i -E "s|HOST_ACCOUNT_PREFIX|$HOST_ACCOUNT_PREFIX|g" $HERMES_CONFIG_FILE
 sed -i -E "s|HOST_DENOM|$HOST_DENOM|g" $HERMES_CONFIG_FILE
 
 sed -i -E "s|STRIDE_CHAIN_ID|$STRIDE_CHAIN_ID|g" $RELAYER_CONFIG_FILE
 sed -i -E "s|HOST_CHAIN_ID|$HOST_CHAIN_ID|g" $RELAYER_CONFIG_FILE
-sed -i -E "s|HOST_ENDPOINT|$HOST_ENDPOINT|g" $RELAYER_CONFIG_FILE
+sed -i -E "s|HOST_RPC_ENDPOINT|$HOST_RPC_ENDPOINT|g" $RELAYER_CONFIG_FILE
 sed -i -E "s|HOST_ACCOUNT_PREFIX|$HOST_ACCOUNT_PREFIX|g" $RELAYER_CONFIG_FILE
 sed -i -E "s|HOST_DENOM|$HOST_DENOM|g" $RELAYER_CONFIG_FILE
 
@@ -69,7 +70,7 @@ rm -f $TMP_MNEMONICS
 echo "Adding Relayer keys"
 RELAYER_CMD="$SCRIPT_DIR/../../build/relayer --home $STATE/relayer"
 $RELAYER_CMD keys restore stride rly1 "$RELAYER_STRIDE_MNEMONIC" 
-$RELAYER_CMD keys restore host rly2 "$HOT_WALLET_3_MNEMONIC" 
+$RELAYER_CMD keys restore host rly2 "$HOT_WALLET_3_MNEMONIC" --coin-type 60
 
 # Update commands template
 COMMANDS_FILE=${SCRIPT_DIR}/commands.sh
@@ -80,7 +81,7 @@ sed -i -E "s|HOST_CHAIN_ID|$HOST_CHAIN_ID|g" $COMMANDS_FILE
 sed -i -E "s|HOST_BINARY|$HOST_BINARY|g" $COMMANDS_FILE
 sed -i -E "s|HOST_DENOM|$HOST_DENOM|g" $COMMANDS_FILE
 sed -i -E "s|HOST_ACCOUNT_PREFIX|$HOST_ACCOUNT_PREFIX|g" $COMMANDS_FILE
-sed -i -E "s|HOST_ENDPOINT|$HOST_ENDPOINT|g" $COMMANDS_FILE
+sed -i -E "s|HOST_RPC_ENDPOINT|$HOST_RPC_ENDPOINT|g" $COMMANDS_FILE
 sed -i -E "s|HOST_VAL_NAME_1|$HOST_VAL_NAME_1|g" $COMMANDS_FILE
 sed -i -E "s|HOST_VAL_NAME_2|$HOST_VAL_NAME_2|g" $COMMANDS_FILE
 sed -i -E "s|HOST_VAL_ADDRESS_1|$HOST_VAL_ADDRESS_1|g" $COMMANDS_FILE

@@ -23,7 +23,7 @@ chains:
     value:
       key: rly2
       chain-id: HOST_CHAIN_ID
-      rpc-addr: http://HOST_ENDPOINT:26657
+      rpc-addr: HOST_RPC_ENDPOINT
       account-prefix: HOST_ACCOUNT_PREFIX
       keyring-backend: test
       gas-adjustment: 1.2
