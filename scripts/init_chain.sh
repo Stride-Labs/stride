@@ -56,6 +56,14 @@ set_host_genesis() {
     jq "del(.app_state.interchain_accounts)" $genesis_config > json.tmp && mv json.tmp $genesis_config
     interchain_accts=$(cat $SCRIPT_DIR/config/ica.json)
     jq ".app_state += $interchain_accts" $genesis_config > json.tmp && mv json.tmp $genesis_config
+
+    # Optionally harshen slashing parameters
+    if [[ "$HARSHEN_SLASHING" == "true" ]]; then
+        sed -i -E 's|"signed_blocks_window": "100"|"signed_blocks_window": "10"|g' $genesis_config
+        sed -i -E 's|"min_signed_per_window": ""0.500000000000000000"|"min_signed_per_window": ""1.000000000000000000"|g' $genesis_config
+        sed -i -E 's|"downtime_jail_duration": "600s"|"downtime_jail_duration": "10s"|g' $genesis_config
+        sed -i -E 's|"slash_fraction_downtime": "0.010000000000000000"|"slash_fraction_downtime": "0.100000000000000000"|g' $genesis_config
+    fi
 }
 
 MAIN_ID=1 # Node responsible for genesis and persistent_peers
