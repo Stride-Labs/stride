@@ -80,8 +80,7 @@ STRIDE_DENOM=$STRD_DENOM
 STRIDE_RPC_PORT=26657
 STRIDE_ADMIN_ACCT=admin
 STRIDE_ADMIN_ADDRESS=stride1u20df3trc2c2zdhm8qvh2hdjx9ewh00sv6eyy8
-STRIDE_ADMIN_ADDRESS=stride1aj7yqqpxnrxwva4eh2w7u4mgsvfjl937v4d89s
-STRIDE_ADMIN_MNEMONIC="pink goose diesel cool private green aware dog coral fun coach prefer spice sword car gadget melt wish trust twelve saddle brain page man"
+STRIDE_ADMIN_MNEMONIC="tone cause tribe this switch near host damage idle fragile antique tail soda alien depth write wool they rapid unfold body scan pledge soft"
 
 # Binaries are contigent on whether we're doing an upgrade or not
 if [[ "$UPGRADE_NAME" == "" ]]; then 
