@@ -8,6 +8,7 @@ import (
 
 	v2 "github.com/Stride-Labs/stride/app/upgrades/v2"
 	v3 "github.com/Stride-Labs/stride/app/upgrades/v3"
+	claimtypes "github.com/Stride-Labs/stride/x/claim/types"
 )
 
 func (app *StrideApp) setupUpgradeHandlers() {
@@ -36,6 +37,10 @@ func (app *StrideApp) setupUpgradeHandlers() {
 
 	switch upgradeInfo.Name {
 	// no store upgrades
+	case "v3":
+		storeUpgrades = &storetypes.StoreUpgrades{
+			Added: []string{claimtypes.StoreKey},
+		}
 	}
 
 	if storeUpgrades != nil {

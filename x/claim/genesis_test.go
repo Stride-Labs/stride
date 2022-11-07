@@ -11,7 +11,6 @@ import (
 
 	keepertest "github.com/Stride-Labs/stride/testutil/keeper"
 	"github.com/Stride-Labs/stride/testutil/nullify"
-	"github.com/Stride-Labs/stride/x/claim"
 	"github.com/Stride-Labs/stride/x/claim/types"
 )
 
@@ -54,8 +53,8 @@ func TestGenesis(t *testing.T) {
 	}
 
 	k, ctx := keepertest.ClaimKeeper(t)
-	claim.InitGenesis(ctx, *k, genesisState)
-	got := claim.ExportGenesis(ctx, *k)
+	k.InitGenesis(ctx, genesisState)
+	got := k.ExportGenesis(ctx)
 	require.NotNil(t, got)
 
 	totalWeightStride, err := k.GetTotalWeight(ctx, types.DefaultAirdropIdentifier)
