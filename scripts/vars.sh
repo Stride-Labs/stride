@@ -211,22 +211,6 @@ RELAYER_JUNO_MNEMONIC="kiwi betray topple van vapor flag decorate cement crystal
 RELAYER_OSMO_MNEMONIC="unaware wine ramp february bring trust leaf beyond fever inside option dilemma save know captain endless salute radio humble chicken property culture foil taxi"
 RELAYER_STARS_MNEMONIC="deposit dawn erosion talent old broom flip recipe pill hammer animal hill nice ten target metal gas shoe visual nephew soda harbor child simple"
 
-# ICQ
-ICQ_CMD="$SCRIPT_DIR/../build/interchain-queries --home $STATE/icq"
-ICQ_EXEC="docker-compose run --rm icq interchain-queries"
-
-ICQ_STRIDE_ACCT=icq1
-ICQ_GAIA_ACCT=icq2
-ICQ_JUNO_ACCT=icq3
-ICQ_OSMO_ACCT=icq4
-ICQ_STARS_ACCT=icq5
-
-ICQ_STRIDE_MNEMONIC="helmet say goat special plug umbrella finger night flip axis resource tuna trigger angry shove essay point laundry horror eager forget depend siren alarm"
-ICQ_GAIA_MNEMONIC="capable later bamboo snow drive afraid cheese practice latin brush hand true visa drama mystery bird client nature jealous guess tank marriage volume fantasy"
-ICQ_JUNO_MNEMONIC="divorce loop depth announce strategy goddess short cash private raise spatial parent deal acid casual love inner bind ozone picnic fee earn scene galaxy"
-ICQ_OSMO_MNEMONIC="mix deal extend cargo office intact illegal cage fabric must upset yellow put any shaft area use piece patrol tobacco village guilt iron program"
-ICQ_STARS_MNEMONIC="absurd uncle wrestle paper cream sample wreck job couch brother antique resist napkin easily deliver arrest original iron rough puppy solid false next section"
-
 GAIA_DELEGATE_VAL='cosmosvaloper1pcag0cj4ttxg8l7pcg0q4ksuglswuuedadj7ne'
 GAIA_DELEGATION_ICA_ADDR='cosmos1sy63lffevueudvvlvh2lf6s387xh9xq72n3fsy6n2gr5hm6u2szs2v0ujm'
 GAIA_REDEMPTION_ICA_ADDR='cosmos1xmcwu75s8v7s54k79390wc5gwtgkeqhvzegpj0nm2tdwacv47tmqg9ut30'

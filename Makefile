@@ -129,21 +129,3 @@ stop-docker:
 	@pkill -f "/bin/bash.*create_logs.sh" || true
 	docker-compose down
 
-###############################################################################
-###                                LocalNet                                 ###
-###############################################################################
-
-check-dependencies:
-	sh scripts-local/check_dependencies.sh
-
-build-local: 
-	@sh scripts-local/build.sh -${build} ${BUILDDIR}
-
-start-local: build-local
-	@sh scripts-local/start_network.sh ${cache}
-
-stop-local:
-	@killall gaiad strided junod osmosisd rly hermes interchain-queries icq-startup.sh || true
-	@pkill -f "/bin/bash.*create_logs.sh" || true
-	@pkill -f "sh.*start_network.sh" || true
-
