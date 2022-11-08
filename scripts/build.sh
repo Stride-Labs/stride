@@ -52,7 +52,7 @@ while getopts sgojthr flag; do
          fi
          ;;
       g) build_local_and_docker gaia deps/gaia ;;
-      j) build_local_and_docker juno deps/juno bin/junod;;
+      j) build_local_and_docker juno deps/juno ;;
       o) build_local_and_docker osmo deps/osmosis ;;
       t) build_local_and_docker stars deps/stargaze ;;
       r) build_local_and_docker relayer deps/relayer ;;  

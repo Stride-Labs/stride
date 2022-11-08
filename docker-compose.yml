@@ -2,8 +2,10 @@ version: "3.8"
 services:
   stride1:
     image: stridezone:stride
+    user: root
     volumes:
       - ./scripts/state/stride1:/home/stride/.stride
+    command: strided start --home /home/stride/.stride
     ports:
       - "26657:26657"
       - "1317:1317"
@@ -11,18 +13,24 @@ services:
 
   stride2:
     image: stridezone:stride
+    user: root
     volumes:
       - ./scripts/state/stride2:/home/stride/.stride
+    command: strided start --home /home/stride/.stride
 
   stride3:
     image: stridezone:stride
+    user: root
     volumes:
       - ./scripts/state/stride3:/home/stride/.stride
+    command: strided start --home /home/stride/.stride
 
   gaia1:
     image: stridezone:gaia
+    user: root
     volumes:
       - ./scripts/state/gaia1:/home/gaia/.gaia
+    command: gaiad start --home /home/gaia/.gaia
     ports:
       - "26557:26657"
       - "1307:1317"
@@ -30,28 +38,38 @@ services:
 
   gaia2:
     image: stridezone:gaia
+    user: root
     volumes:
       - ./scripts/state/gaia2:/home/gaia/.gaia
+    command: gaiad start --home /home/gaia/.gaia
 
   gaia3:
     image: stridezone:gaia
+    user: root
     volumes:
       - ./scripts/state/gaia3:/home/gaia/.gaia
+    command: gaiad start --home /home/gaia/.gaia
 
   gaia4:
     image: stridezone:gaia
+    user: root
     volumes:
       - ./scripts/state/gaia4:/home/gaia/.gaia
+    command: gaiad start --home /home/gaia/.gaia
 
   gaia5:
     image: stridezone:gaia
+    user: root
     volumes:
       - ./scripts/state/gaia5:/home/gaia/.gaia
+    command: gaiad start --home /home/gaia/.gaia
 
   juno1:
     image: stridezone:juno
+    user: root
     volumes:
       - ./scripts/state/juno1:/home/juno/.juno
+    command: junod start --home /home/juno/.juno
     ports:
       - "26457:26657"
       - "1297:1317"
@@ -59,28 +77,38 @@ services:
 
   juno2:
     image: stridezone:juno
+    user: root
     volumes:
       - ./scripts/state/juno2:/home/juno/.juno
+    command: junod start --home /home/juno/.juno
 
   juno3:
     image: stridezone:juno
+    user: root
     volumes:
       - ./scripts/state/juno3:/home/juno/.juno
+    command: junod start --home /home/juno/.juno
 
   juno4:
     image: stridezone:juno
+    user: root
     volumes:
       - ./scripts/state/juno4:/home/juno/.juno
+    command: junod start --home /home/juno/.juno
 
   juno5:
     image: stridezone:juno
+    user: root
     volumes:
       - ./scripts/state/juno5:/home/juno/.juno
+    command: junod start --home /home/juno/.juno
 
   osmo1:
     image: stridezone:osmo
+    user: root
     volumes:
       - ./scripts/state/osmo1:/home/osmosis/.osmosisd
+    command: osmosisd start --home /home/osmosis/.osmosisd
     ports:
       - "26357:26657"
       - "1287:1317"
@@ -88,28 +116,38 @@ services:
 
   osmo2:
     image: stridezone:osmo
+    user: root
     volumes:
       - ./scripts/state/osmo2:/home/osmosis/.osmosisd
+    command: osmosisd start --home /home/osmosis/.osmosisd
 
   osmo3:
     image: stridezone:osmo
+    user: root
     volumes:
       - ./scripts/state/osmo3:/home/osmosis/.osmosisd
+    command: osmosisd start --home /home/osmosis/.osmosisd
 
   osmo4:
     image: stridezone:osmo
+    user: root
     volumes:
       - ./scripts/state/osmo4:/home/osmosis/.osmosisd
+    command: osmosisd start --home /home/osmosis/.osmosisd
 
   osmo5:
     image: stridezone:osmo
+    user: root
     volumes:
       - ./scripts/state/osmo5:/home/osmosis/.osmosisd
+    command: osmosisd start --home /home/osmosis/.osmosisd
 
   stars1:
     image: stridezone:stars
+    user: root
     volumes:
       - ./scripts/state/stars1:/home/stars/.starsd
+    command: starsd start --home /home/stars/.starsd
     ports:
       - "26257:26657"
       - "1277:1317"
@@ -117,26 +155,35 @@ services:
 
   stars2:
     image: stridezone:stars
+    user: root
     volumes:
       - ./scripts/state/stars2:/home/stars/.starsd
+    command: starsd start --home /home/stars/.starsd
 
   stars3:
     image: stridezone:stars
+    user: root
     volumes:
       - ./scripts/state/stars3:/home/stars/.starsd
+    command: starsd start --home /home/stars/.starsd
 
   stars4:
     image: stridezone:stars
+    user: root
     volumes:
       - ./scripts/state/stars4:/home/stars/.starsd
+    command: starsd start --home /home/stars/.starsd
 
   stars5:
     image: stridezone:stars
+    user: root
     volumes:
       - ./scripts/state/stars5:/home/stars/.starsd
+    command: starsd start --home /home/stars/.starsd
 
   hermes:
     image: stridezone:hermes
+    user: root
     volumes:
       - ~/.hermes:/home/hermes/.hermes
       - ./scripts/state/hermes/config.toml:/home/hermes/.hermes/config.toml
@@ -144,6 +191,7 @@ services:
 
   relayer-host:
     image: stridezone:relayer
+    user: root
     volumes:
       - ./scripts/state/relayer:/home/relayer/.relayer
     restart: always
@@ -151,6 +199,7 @@ services:
 
   relayer-gaia:
     image: stridezone:relayer
+    user: root
     volumes:
       - ./scripts/state/relayer:/home/relayer/.relayer
     restart: always
@@ -158,6 +207,7 @@ services:
 
   relayer-juno:
     image: stridezone:relayer
+    user: root
     volumes:
       - ./scripts/state/relayer:/home/relayer/.relayer
     restart: always
@@ -165,6 +215,7 @@ services:
 
   relayer-osmo:
     image: stridezone:relayer
+    user: root
     volumes:
       - ./scripts/state/relayer:/home/relayer/.relayer
     restart: always
@@ -172,7 +223,15 @@ services:
 
   relayer-stars:
     image: stridezone:relayer
+    user: root
     volumes:
       - ./scripts/state/relayer:/home/relayer/.relayer
     restart: always
     command: [ "bash", "start.sh", "stride-stars" ]
+
+  icq:
+    image: stridezone:icq
+    user: root
+    volumes:
+      - ./scripts/state/icq:/home/icq/.icq
+    restart: always
