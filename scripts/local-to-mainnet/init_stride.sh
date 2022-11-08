@@ -78,7 +78,7 @@ rm -rf ${client_toml}-E
 rm -rf ${genesis_json}-E
 rm -rf ${app_toml}-E
 
-# add Hermes and ICQ relayer accounts on Stride
+# add Hermes and relayer accounts on Stride
 echo "$HERMES_MNEMONIC" | $CMD keys add $HERMES_ACCT --recover --keyring-backend=test >> $KEYS_LOGS 2>&1
 echo "$RELAYER_MNEMONIC" | $CMD keys add $RELAYER_ACCT --recover --keyring-backend=test >> $KEYS_LOGS 2>&1
 HERMES_ADDRESS=$($CMD keys show $HERMES_ACCT --keyring-backend test -a)

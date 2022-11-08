@@ -40,7 +40,7 @@ revert_admin_address() {
 }
 
 # build docker images and local binaries
-while getopts sgojthir flag; do
+while getopts sgojthr flag; do
    case "${flag}" in
       # For stride, we need to update the admin address to one that we have the seed phrase for
       s) replace_admin_address
@@ -55,7 +55,6 @@ while getopts sgojthir flag; do
       j) build_local_and_docker juno deps/juno ;;
       o) build_local_and_docker osmo deps/osmosis ;;
       t) build_local_and_docker stars deps/stargaze ;;
-      i) build_local_and_docker icq deps/interchain-queries ;;
       r) build_local_and_docker relayer deps/relayer ;;  
       h) echo "Building Hermes Docker... ";
          docker build --tag stridezone:hermes -f Dockerfile.hermes . ;
