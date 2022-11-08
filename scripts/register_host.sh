@@ -33,9 +33,9 @@ for (( i=1; i <= $NUM_VALS; i++ )); do
     sleep 4
 done
 
-timeout=60
+timeout=100
 while true; do
-    if ! $STRIDE_MAIN_CMD q stakeibc list-host-zone | grep Account | grep -q null; then
+    if ! $STRIDE_MAIN_CMD q stakeibc list-host-zone | grep validators | grep -q null; then
         break
     else
         if [[ "$timeout" == "0" ]]; then 
