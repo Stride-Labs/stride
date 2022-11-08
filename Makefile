@@ -61,7 +61,7 @@ BUILD_FLAGS := -tags "$(build_tags)" -ldflags '$(ldflags)'
 
 .PHONY: build
 
-all: lint check-dependencies build-local
+all: lint build
 
 ###############################################################################
 ###                            Build & Clean                                ###
@@ -90,7 +90,8 @@ gosec:
 	gosec -exclude-dir=deps -severity=high ./...
 
 lint:
-	golangci-lint run
+	@go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.50.1
+	golangci-lint run ./...
 
 ###############################################################################
 ###                                Tests                                    ###
