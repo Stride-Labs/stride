@@ -31,13 +31,13 @@ docker-compose logs -f relayer-host | sed -r -u "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2}
 
 #### REGISTER HOST
 # IBC Transfer from HOST to stride (from relayer account)
-build/osmosisd tx ibc-transfer transfer transfer $transfer_channel $STRIDE_ADMIN_ADDRESS 4000000uosmo --from hot --chain-id osmosis-1 -y --keyring-backend test --node http://osmo-fleet-direct.main.stridenet.co:26657
+build/osmosisd tx ibc-transfer transfer transfer $transfer_channel stride1u20df3trc2c2zdhm8qvh2hdjx9ewh00sv6eyy8 4000000uosmo --from hot --chain-id osmosis-1 -y --keyring-backend test --node http://osmo-fleet-direct.main.stridenet.co:26657
 
 # Confirm funds were recieved on stride and get IBC denom
-build/strided --home scripts/state/stride1 q bank balances $STRIDE_ADMIN_ADDRESS
+build/strided --home scripts/state/stride1 q bank balances stride1u20df3trc2c2zdhm8qvh2hdjx9ewh00sv6eyy8
 
 # Register host zone
-IBC_DENOM=$(build/strided --home scripts/state/stride1 q bank balances $STRIDE_ADMIN_ADDRESS | grep ibc | awk '{print $2}' | tr -d '"') && echo $IBC_DENOM
+IBC_DENOM=$(build/strided --home scripts/state/stride1 q bank balances stride1u20df3trc2c2zdhm8qvh2hdjx9ewh00sv6eyy8 | grep ibc | awk '{print $2}' | tr -d '"') && echo $IBC_DENOM
 build/strided --home scripts/state/stride1 tx stakeibc register-host-zone \
     connection-0 uosmo osmo $IBC_DENOM channel-0 1 \
     --from admin --gas 1000000 -y
@@ -52,14 +52,14 @@ build/strided --home scripts/state/stride1 tx stakeibc add-validator osmosis-1 i
 build/strided --home scripts/state/stride1 tx stakeibc liquid-stake 1000000 uosmo --keyring-backend test --from admin -y --chain-id local-test-7 -y
 
 # Confirm stTokens, StakedBal, and Redemption Rate
-build/strided --home scripts/state/stride1 q bank balances $STRIDE_ADMIN_ADDRESS
+build/strided --home scripts/state/stride1 q bank balances stride1u20df3trc2c2zdhm8qvh2hdjx9ewh00sv6eyy8
 build/strided --home scripts/state/stride1 q stakeibc list-host-zone
 
 # Redeem
 build/strided --home scripts/state/stride1 tx stakeibc redeem-stake 1000 osmosis-1 osmo1c37n9aywapx2v0s6vk2yedydkkhq65zz38jfnc --from admin --keyring-backend test --chain-id local-test-7 -y
 
 # Confirm stTokens and StakedBal
-build/strided --home scripts/state/stride1 q bank balances $STRIDE_ADMIN_ADDRESS
+build/strided --home scripts/state/stride1 q bank balances stride1u20df3trc2c2zdhm8qvh2hdjx9ewh00sv6eyy8
 build/strided --home scripts/state/stride1 q stakeibc list-host-zone
 
 # Add another validator

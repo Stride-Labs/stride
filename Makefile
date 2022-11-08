@@ -113,10 +113,10 @@ test-integration-docker:
 ###############################################################################
 
 build-docker: 
-	@sh scripts/build.sh -${build} ${BUILDDIR}
+	@bash scripts/build.sh -${build} ${BUILDDIR}
 	
 start-docker: build-docker
-	@sh scripts/start_network.sh 
+	@bash scripts/start_network.sh
 
 clean-docker: 
 	@docker-compose stop
