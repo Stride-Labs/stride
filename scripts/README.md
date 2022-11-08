@@ -143,7 +143,6 @@ address_type = { derivation = 'cosmos' }
 ```
 * Finally add the execution of the `init_chain` script for this host zone in `scripts/start_network.sh`, and add it to the array of `HOST_CHAINS`
 ```
-sh ${SCRIPT_DIR}/init_chain.sh {NEW-HOST-ZONE}
 HOST_CHAINS=(GAIA JUNO OSMO ... {NEW-HOST-ZONE})
 ```
 * And that's it! Just start the network as normal, and make sure to rebuild the new host zone when running for the first time.  

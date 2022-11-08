@@ -135,6 +135,25 @@ services:
     volumes:
       - ./scripts/state/stars5:/home/stars/.starsd
 
+  injective1:
+    image: stridezone:injective
+    volumes:
+      - ./scripts/state/injective1:/home/injective/.injectived
+    ports:
+      - "26157:26657"
+      - "1267:1317"
+      - "9040:9090"
+
+  injective2:
+    image: stridezone:injective
+    volumes:
+      - ./scripts/state/injective2:/home/injective/.injectived
+
+  injective3:
+    image: stridezone:injective
+    volumes:
+      - ./scripts/state/injective3:/home/injective/.injectived
+
   hermes:
     image: stridezone:hermes
     volumes:

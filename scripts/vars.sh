@@ -49,6 +49,11 @@ IBC_STARS_CHANNEL_1_DENOM='ibc/9222203B0B37D076F07B3CAC716533C80E7C4239499B6306C
 IBC_STARS_CHANNEL_2_DENOM='ibc/C6469BA9DC791E65B3C1596CD2005941324C00659E2DF90D5E08D86B82E7E08B'
 IBC_STARS_CHANNEL_3_DENOM='ibc/482A30C07803B0455B1492BAF94EC3D600E862D52A814F25A34BCCAAA132FEE9'
 
+IBC_INJECTIVE_CHANNEL_0_DENOM='ibc/4457C4FE143DA253CBBE998681F090B51F67E0A6AFDC8D9347516DB519712C2F'
+IBC_INJECTIVE_CHANNEL_1_DENOM='ibc/DE63D8AC34B752FB7D4CAA7594145EDE1C9FC256AC6D4043D0F12310EB8FC255'
+IBC_INJECTIVE_CHANNEL_2_DENOM='ibc/8EC25D1E0297C50477D9A2FB586A005D1CC92CB21E685CE3344FF4DC03D787D2'
+IBC_INJECTIVE_CHANNEL_3_DENOM='ibc/1C2D8505A29823310B4484E4C63CFDCB08C0D3B57537A615A45F4E5D42CDC789'
+
 # INTEGRATION TEST IBC DENOM
 IBC_ATOM_DENOM=$IBC_GAIA_CHANNEL_0_DENOM
 IBC_JUNO_DENOM=$IBC_JUNO_CHANNEL_1_DENOM
@@ -176,6 +181,26 @@ STARS_VAL_MNEMONIC_4="ridge round key spawn address anchor file local athlete pi
 STARS_VAL_MNEMONIC_5="federal garden bundle rebel museum donor hello oak daring argue talk sing chief burst rigid corn zone gather tell opera nominee desk select shine"
 STARS_VAL_MNEMONICS=("$STARS_VAL_MNEMONIC_1","$STARS_VAL_MNEMONIC_2","$STARS_VAL_MNEMONIC_3","$STARS_VAL_MNEMONIC_4","$STARS_VAL_MNEMONIC_5")
 
+# INJECTIVE
+INJECTIVE_CHAIN_ID=injective-1
+INJECTIVE_NODE_PREFIX=injective
+INJECTIVE_NUM_NODES=1
+INJECTIVE_CMD="docker-compose run --rm injective1 injectived"
+INJECTIVE_VAL_PREFIX=injval
+INJECTIVE_ADDRESS_PREFIX=inj
+INJECTIVE_REV_ACCT=injrev1
+INJECTIVE_DENOM=inj
+INJECTIVE_RPC_PORT=26157
+INJECTIVE_MAIN_CMD="docker-compose run --rm injective1 injectived"
+
+INJECTIVE_REV_MNEMONIC="furnace spell ring dinosaur paper thank sketch social mystery tissue upgrade voice advice peasant quote surge meat december level broom clock hurdle portion predict"
+INJECTIVE_VAL_MNEMONIC_1="badge thumb upper scrap gift prosper milk whale journey term indicate risk acquire afford awake margin venture penalty simple fancy fluid review enrich ozone"
+INJECTIVE_VAL_MNEMONIC_2="tattoo fade gloom boring review actual pluck wrestle desk update mandate grow spawn people blush gym inner voice reform glue shiver screen train august"
+INJECTIVE_VAL_MNEMONIC_3="immune acid hurry impose mechanic forward bitter square curtain busy couple hollow calm pole flush deer bird one normal fish loyal upgrade town rail"
+INJECTIVE_VAL_MNEMONIC_4="ridge round key spawn address anchor file local athlete pioneer eyebrow flush chase visa awake claim test device chimney roast tent excess profit gaze"
+INJECTIVE_VAL_MNEMONIC_5="federal garden bundle rebel museum donor hello oak daring argue talk sing chief burst rigid corn zone gather tell opera nominee desk select shine"
+INJECTIVE_VAL_MNEMONICS=("$INJECTIVE_VAL_MNEMONIC_1","$INJECTIVE_VAL_MNEMONIC_2","$INJECTIVE_VAL_MNEMONIC_3","$INJECTIVE_VAL_MNEMONIC_4","$INJECTIVE_VAL_MNEMONIC_5")
+
 # HERMES
 HERMES_CMD="$SCRIPT_DIR/../build/hermes/release/hermes --config $STATE/hermes/config.toml"
 HERMES_EXEC="docker-compose run --rm hermes hermes"
@@ -185,12 +210,14 @@ HERMES_GAIA_ACCT=hrly2
 HERMES_JUNO_ACCT=hrly3
 HERMES_OSMO_ACCT=hrly4
 HERMES_STARS_ACCT=hrly5
+HERMES_INJECTIVE_ACCT=hrly6
 
 HERMES_STRIDE_MNEMONIC="alter old invest friend relief slot swear pioneer syrup economy vendor tray focus hedgehog artist legend antenna hair almost donkey spice protect sustain increase"
 HERMES_GAIA_MNEMONIC="resemble accident lake amateur physical jewel taxi nut demand magnet person blanket trip entire awkward fiber usual current index limb lady lady depart train"
 HERMES_JUNO_MNEMONIC="uphold decorate moon memory taste century work pride force genius width ripple myself year steel ivory type sweet tree ignore danger pudding owner discover"
 HERMES_OSMO_MNEMONIC="lawn inside color february double myth depart invite miracle nest silver spider spray recall theme loan exotic puzzle uncover dial young earn disagree fee"
 HERMES_STARS_MNEMONIC="inherit shallow bargain explain fence vocal fury perfect jeans figure festival abstract soldier entry bubble ketchup swim useless doctor thing imitate can shock coin"
+HERMES_INJECTIVE_MNEMONIC="upper stage elite valley outer pilot forum rude detail reopen level spray network ability crop acquire syrup century filter motion crouch camp resource can"
 
 # RELAYER
 RELAYER_CMD="$SCRIPT_DIR/../build/relayer --home $STATE/relayer"
@@ -198,18 +225,21 @@ RELAYER_GAIA_EXEC="docker-compose run --rm relayer-gaia"
 RELAYER_JUNO_EXEC="docker-compose run --rm relayer-juno"
 RELAYER_OSMO_EXEC="docker-compose run --rm relayer-osmo"
 RELAYER_STARS_EXEC="docker-compose run --rm relayer-stars"
+RELAYER_INJECTIVE_EXEC="docker-compose run --rm relayer-injective"
 
 RELAYER_STRIDE_ACCT=rly1
 RELAYER_GAIA_ACCT=rly2
 RELAYER_JUNO_ACCT=rly3
 RELAYER_OSMO_ACCT=rly4
 RELAYER_STARS_ACCT=rly5
+RELAYER_INJECTIVE_ACCT=rly6
 
 RELAYER_STRIDE_MNEMONIC="pride narrow breeze fitness sign bounce dose smart squirrel spell length federal replace coral lunar thunder vital push nuclear crouch fun accident hood need"
 RELAYER_GAIA_MNEMONIC="fiction perfect rapid steel bundle giant blade grain eagle wing cannon fever must humble dance kitchen lazy episode museum faith off notable rate flavor"
 RELAYER_JUNO_MNEMONIC="kiwi betray topple van vapor flag decorate cement crystal fee family clown cry story gain frost strong year blanket remain grass pig hen empower"
 RELAYER_OSMO_MNEMONIC="unaware wine ramp february bring trust leaf beyond fever inside option dilemma save know captain endless salute radio humble chicken property culture foil taxi"
 RELAYER_STARS_MNEMONIC="deposit dawn erosion talent old broom flip recipe pill hammer animal hill nice ten target metal gas shoe visual nephew soda harbor child simple"
+RELAYER_INJECTIVE_MNEMONIC="eagle nuclear popular aware bleak what doctor across siege avoid course just small track trap earn fame spend egg illness surface stool virus monitor"
 
 GAIA_DELEGATE_VAL='cosmosvaloper1pcag0cj4ttxg8l7pcg0q4ksuglswuuedadj7ne'
 GAIA_DELEGATION_ICA_ADDR='cosmos1sy63lffevueudvvlvh2lf6s387xh9xq72n3fsy6n2gr5hm6u2szs2v0ujm'

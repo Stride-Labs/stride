@@ -1,11 +1,13 @@
-FROM alpine:3.15
+FROM rust:1.63-buster as builder
+
+RUN apt-get update \
+    && adduser --system --home /home/injective --disabled-password --disabled-login injective -u 1000
 
 RUN wget https://github.com/InjectiveLabs/injective-chain-releases/releases/download/v1.7.0-1662223156/linux-amd64.zip \
     && unzip linux-amd64.zip \
-    && mv peggo /usr/bin \
-    && mv injectived /usr/bin
-
-RUN adduser -S -h /home/injective -D injective -u 1000
+    && mv peggo /usr/bin/ \
+    && mv injectived /usr/bin/ \
+    && mv libwasmvm.x86_64.so /lib/ 
 
 USER injective
 WORKDIR /home/injective
