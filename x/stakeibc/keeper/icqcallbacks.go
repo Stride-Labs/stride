@@ -6,36 +6,37 @@ import (
 	icqtypes "github.com/Stride-Labs/stride/x/interchainquery/types"
 )
 
-type Callback func(Keeper, sdk.Context, []byte, icqtypes.Query) error
+// ICQCallbacks wrapper struct for stakeibc keeper
+type ICQCallback func(Keeper, sdk.Context, []byte, icqtypes.Query) error
 
-type Callbacks struct {
+type ICQCallbacks struct {
 	k         Keeper
-	callbacks map[string]Callback
+	callbacks map[string]ICQCallback
 }
 
-var _ icqtypes.QueryCallbacks = Callbacks{}
+var _ icqtypes.QueryCallbacks = ICQCallbacks{}
 
-func (k Keeper) CallbackHandler() Callbacks {
-	return Callbacks{k, make(map[string]Callback)}
+func (k Keeper) ICQCallbackHandler() ICQCallbacks {
+	return ICQCallbacks{k, make(map[string]ICQCallback)}
 }
 
-func (c Callbacks) Call(ctx sdk.Context, id string, args []byte, query icqtypes.Query) error {
+func (c ICQCallbacks) CallICQCallback(ctx sdk.Context, id string, args []byte, query icqtypes.Query) error {
 	return c.callbacks[id](c.k, ctx, args, query)
 }
 
-func (c Callbacks) Has(id string) bool {
+func (c ICQCallbacks) HasICQCallback(id string) bool {
 	_, found := c.callbacks[id]
 	return found
 }
 
-func (c Callbacks) AddCallback(id string, fn interface{}) icqtypes.QueryCallbacks {
-	c.callbacks[id] = fn.(Callback)
+func (c ICQCallbacks) AddICQCallback(id string, fn interface{}) icqtypes.QueryCallbacks {
+	c.callbacks[id] = fn.(ICQCallback)
 	return c
 }
 
-func (c Callbacks) RegisterCallbacks() icqtypes.QueryCallbacks {
+func (c ICQCallbacks) RegisterICQCallbacks() icqtypes.QueryCallbacks {
 	return c.
-		AddCallback("withdrawalbalance", Callback(WithdrawalBalanceCallback)).
-		AddCallback("delegation", Callback(DelegatorSharesCallback)).
-		AddCallback("validator", Callback(ValidatorExchangeRateCallback))
+		AddICQCallback("withdrawalbalance", ICQCallback(WithdrawalBalanceCallback)).
+		AddICQCallback("delegation", ICQCallback(DelegatorSharesCallback)).
+		AddICQCallback("validator", ICQCallback(ValidatorExchangeRateCallback))
 }
