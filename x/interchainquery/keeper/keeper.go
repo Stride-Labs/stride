@@ -105,8 +105,8 @@ func (k *Keeper) MakeRequest(ctx sdk.Context, connection_id string, chain_id str
 		k.SetQuery(ctx, *newQuery)
 
 	} else {
-		// a re-request of an existing query triggers resetting of height to trigger immediately.
-		existingQuery.LastHeight = sdk.ZeroInt()
+		// a re-request of an existing query should reset the TTL
+		existingQuery.Ttl = ttl
 		k.SetQuery(ctx, existingQuery)
 	}
 	return nil
