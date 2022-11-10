@@ -6,6 +6,12 @@ import (
 	icqtypes "github.com/Stride-Labs/stride/x/interchainquery/types"
 )
 
+const (
+	ICQCallbackID_WithdrawalBalance = "withdrawalbalance"
+	ICQCallbackID_Delegation        = "delegation"
+	ICQCallbackID_Validator         = "validator"
+)
+
 // ICQCallbacks wrapper struct for stakeibc keeper
 type ICQCallback func(Keeper, sdk.Context, []byte, icqtypes.Query) error
 
@@ -36,7 +42,7 @@ func (c ICQCallbacks) AddICQCallback(id string, fn interface{}) icqtypes.QueryCa
 
 func (c ICQCallbacks) RegisterICQCallbacks() icqtypes.QueryCallbacks {
 	return c.
-		AddICQCallback("withdrawalbalance", ICQCallback(WithdrawalBalanceCallback)).
-		AddICQCallback("delegation", ICQCallback(DelegatorSharesCallback)).
-		AddICQCallback("validator", ICQCallback(ValidatorExchangeRateCallback))
+		AddICQCallback(ICQCallbackID_WithdrawalBalance, ICQCallback(WithdrawalBalanceCallback)).
+		AddICQCallback(ICQCallbackID_Delegation, ICQCallback(DelegatorSharesCallback)).
+		AddICQCallback(ICQCallbackID_Validator, ICQCallback(ValidatorExchangeRateCallback))
 }
