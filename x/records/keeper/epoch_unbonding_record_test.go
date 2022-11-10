@@ -50,7 +50,7 @@ func TestEpochUnbondingRecordGetAll(t *testing.T) {
 	items := createNEpochUnbondingRecord(keeper, ctx, 10)
 	require.ElementsMatch(t,
 		nullify.Fill(items),
-		nullify.Fill(keeper.GetAllEpochUnbondingRecord(ctx)),
+		nullify.Fill(keeper.GetAllEpochUnbondingRecords(ctx)),
 	)
 }
 

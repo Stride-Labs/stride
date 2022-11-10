@@ -37,11 +37,10 @@ func (k Keeper) RemoveEpochUnbondingRecord(ctx sdk.Context, epochNumber uint64) 
 	store.Delete(GetEpochUnbondingRecordIDBytes(epochNumber))
 }
 
-// GetAllEpochUnbondingRecord returns all epochUnbondingRecord
-func (k Keeper) GetAllEpochUnbondingRecord(ctx sdk.Context) (list []types.EpochUnbondingRecord) {
+// GetAllEpochUnbondingRecords returns all epochUnbondingRecord
+func (k Keeper) GetAllEpochUnbondingRecords(ctx sdk.Context) (list []types.EpochUnbondingRecord) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.EpochUnbondingRecordKey))
 	iterator := sdk.KVStorePrefixIterator(store, []byte{})
-
 	defer iterator.Close()
 
 	for ; iterator.Valid(); iterator.Next() {
@@ -49,8 +48,7 @@ func (k Keeper) GetAllEpochUnbondingRecord(ctx sdk.Context) (list []types.EpochU
 		k.Cdc.MustUnmarshal(iterator.Value(), &val)
 		list = append(list, val)
 	}
-
-	return
+	return list
 }
 
 // GetAllPreviousEpochUnbondingRecords returns all epochUnbondingRecords prior to a given epoch
@@ -96,7 +94,7 @@ func (k Keeper) GetHostZoneUnbondingByChainId(ctx sdk.Context, epochNumber uint6
 			return hzUnbondingRecord, true
 		}
 	}
-	return &types.HostZoneUnbonding{}, false
+	return nil, false
 }
 
 func (k Keeper) AddHostZoneToEpochUnbondingRecord(ctx sdk.Context, epochNumber uint64, chainId string, hzu *types.HostZoneUnbonding) (val *types.EpochUnbondingRecord, success bool) {

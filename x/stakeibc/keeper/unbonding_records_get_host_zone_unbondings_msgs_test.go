@@ -169,7 +169,7 @@ func (s *KeeperTestSuite) TestGetHostZoneUnbondingMsgs_NoEpochUnbondingRecords()
 		s.App.RecordsKeeper.RemoveEpochUnbondingRecord(s.Ctx(), uint64(i))
 	}
 
-	s.Require().Equal(0, len(s.App.RecordsKeeper.GetAllEpochUnbondingRecord(s.Ctx())), "number of epoch unbonding records should be 0 after deletion")
+	s.Require().Equal(0, len(s.App.RecordsKeeper.GetAllEpochUnbondingRecords(s.Ctx())), "number of epoch unbonding records should be 0 after deletion")
 
 	// TODO: check epoch unbonding record ids here
 	msgs, totalAmtToUnbond, _, _, err := s.App.StakeibcKeeper.GetHostZoneUnbondingMsgs(s.Ctx(), tc.hostZone)

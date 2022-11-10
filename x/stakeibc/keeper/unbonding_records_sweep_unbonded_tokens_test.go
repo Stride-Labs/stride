@@ -156,7 +156,7 @@ func (s *KeeperTestSuite) TestSweepUnbondedTokens_Successful() {
 func (s *KeeperTestSuite) TestSweepUnbondedTokens_HostZoneUnbondingMissing() {
 	// If Osmo is missing, make sure that the function still succeeds
 	s.SetupSweepUnbondedTokens()
-	epochUnbondingRecords := s.App.RecordsKeeper.GetAllEpochUnbondingRecord(s.Ctx())
+	epochUnbondingRecords := s.App.RecordsKeeper.GetAllEpochUnbondingRecords(s.Ctx())
 	for _, epochUnbonding := range epochUnbondingRecords {
 		epochUnbonding.HostZoneUnbondings = []*recordtypes.HostZoneUnbonding{
 			epochUnbonding.HostZoneUnbondings[0],
