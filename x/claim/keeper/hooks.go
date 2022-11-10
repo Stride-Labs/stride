@@ -11,11 +11,17 @@ import (
 )
 
 func (k Keeper) AfterDelegationModified(ctx sdk.Context, delAddr sdk.AccAddress, valAddr sdk.ValAddress) {
-	k.ClaimCoinsForAction(ctx, delAddr, types.ActionDelegateStake, k.GetAirdropIdentifierForUser(ctx, delAddr))
+	identifiers := k.GetAirdropIdentifiersForUser(ctx, delAddr)
+	for _, identifier := range identifiers {
+		k.ClaimCoinsForAction(ctx, delAddr, types.ActionDelegateStake, identifier)
+	}
 }
 
 func (k Keeper) AfterLiquidStake(ctx sdk.Context, addr sdk.AccAddress) {
-	k.ClaimCoinsForAction(ctx, addr, types.ActionLiquidStake, k.GetAirdropIdentifierForUser(ctx, addr))
+	identifiers := k.GetAirdropIdentifiersForUser(ctx, addr)
+	for _, identifier := range identifiers {
+		k.ClaimCoinsForAction(ctx, addr, types.ActionLiquidStake, identifier)
+	}
 }
 
 func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochInfo epochstypes.EpochInfo) {

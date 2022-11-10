@@ -16,7 +16,9 @@ func (suite *KeeperTestSuite) TestLoadAllocationData() {
 	var allocations = `identifier,address,weight
 osmosis,osmo1g7yxhuppp5x3yqkah5mw29eqq5s4sv2fp6e2eg,0.5
 osmosis,osmo1h4astdfzjhcwahtfrh24qtvndzzh49xvtm69fg,0.3
-stride,stride1av5lwh0msnafn04xkhdyk6mrykxthrawy7uf3d,0.7`
+stride,stride1av5lwh0msnafn04xkhdyk6mrykxthrawy7uf3d,0.7
+stride,stride1g7yxhuppp5x3yqkah5mw29eqq5s4sv2f222xmk,0.3
+stride,stride1g7yxhuppp5x3yqkah5mw29eqq5s4sv2f222xmk,0.5`
 
 	ok := suite.app.ClaimKeeper.LoadAllocationData(suite.ctx, allocations)
 	suite.Require().True(ok)
@@ -25,10 +27,18 @@ stride,stride1av5lwh0msnafn04xkhdyk6mrykxthrawy7uf3d,0.7`
 	suite.Require().NoError(err)
 	suite.Require().True(totalWeight.Equal(sdk.MustNewDecFromStr("0.8")))
 
+	totalWeight, err = suite.app.ClaimKeeper.GetTotalWeight(suite.ctx, "stride")
+	suite.Require().NoError(err)
+	suite.Require().True(totalWeight.Equal(sdk.MustNewDecFromStr("1")))
+
 	addr, _ := sdk.AccAddressFromBech32("stride1g7yxhuppp5x3yqkah5mw29eqq5s4sv2f222xmk") // hex(stride1g7yxhuppp5x3yqkah5mw29eqq5s4sv2f222xmk) = hex(osmo1g7yxhuppp5x3yqkah5mw29eqq5s4sv2fp6e2eg)
 	claimRecord, err := suite.app.ClaimKeeper.GetClaimRecord(suite.ctx, addr, "osmosis")
 	suite.Require().Equal(claimRecord.Address, "stride1g7yxhuppp5x3yqkah5mw29eqq5s4sv2f222xmk")
 	suite.Require().True(claimRecord.Weight.Equal(sdk.MustNewDecFromStr("0.5")))
+	suite.Require().Equal(claimRecord.ActionCompleted, []bool{false, false, false})
+
+	claimRecord, err = suite.app.ClaimKeeper.GetClaimRecord(suite.ctx, addr, "stride")
+	suite.Require().True(claimRecord.Weight.Equal(sdk.MustNewDecFromStr("0.3")))
 	suite.Require().Equal(claimRecord.ActionCompleted, []bool{false, false, false})
 }
 
@@ -198,6 +208,12 @@ func (suite *KeeperTestSuite) TestMultiChainAirdropFlow() {
 			ActionCompleted:   []bool{false, false, false},
 			AirdropIdentifier: "juno",
 		},
+		{
+			Address:           addr1.String(),
+			Weight:            sdk.NewDecWithPrec(30, 2), // 30%
+			ActionCompleted:   []bool{false, false, false},
+			AirdropIdentifier: "osmosis",
+		},
 	}
 
 	err := suite.app.ClaimKeeper.SetClaimRecordsWithWeights(suite.ctx, claimRecords)
@@ -211,38 +227,59 @@ func (suite *KeeperTestSuite) TestMultiChainAirdropFlow() {
 	suite.Require().NoError(err)
 	suite.Require().Equal(coins.String(), sdk.NewCoins(sdk.NewInt64Coin(sdk.DefaultBondDenom, 0)).String())
 
-	// get rewards amount for free (stride user)
+	identifiers := suite.app.ClaimKeeper.GetAirdropIdentifiersForUser(suite.ctx, addr1)
+	suite.Require().Equal(identifiers[0], types.DefaultAirdropIdentifier)
+	suite.Require().Equal(identifiers[1], "osmosis")
+
+	// get rewards amount for free (stride, osmosis addresses)
 	coins, err = suite.app.ClaimKeeper.ClaimCoinsForAction(suite.ctx, addr1, types.ActionFree, "stride")
 	suite.Require().NoError(err)
+
+	coins1, err := suite.app.ClaimKeeper.ClaimCoinsForAction(suite.ctx, addr1, types.ActionFree, "osmosis")
+	suite.Require().NoError(err)
+
 	claimableAmountForFree := sdk.NewDecWithPrec(20, 2).
 		Mul(sdk.NewDec(100_000_000)).
 		RoundInt64() // remaining balance is 100000000, claim 20% for free
 	suite.Require().Equal(coins.String(), sdk.NewCoins(sdk.NewInt64Coin(sdk.DefaultBondDenom, claimableAmountForFree)).String())
+	suite.Require().Equal(coins1.String(), sdk.NewCoins(sdk.NewInt64Coin(sdk.DefaultBondDenom, claimableAmountForFree)).String())
 
-	// get rewards amount for stake (stride user)
+	// get rewards amount for stake (stride, osmosis addresses)
 	coins, err = suite.app.ClaimKeeper.ClaimCoinsForAction(suite.ctx, addr1, types.ActionDelegateStake, "stride")
 	suite.Require().NoError(err)
+
+	coins1, err = suite.app.ClaimKeeper.ClaimCoinsForAction(suite.ctx, addr1, types.ActionDelegateStake, "osmosis")
+	suite.Require().NoError(err)
+
 	claimableAmountForStake := sdk.NewDecWithPrec(80, 2).
 		Mul(sdk.NewDecWithPrec(20, 2)).
 		Mul(sdk.NewDec(100_000_000)).
 		RoundInt64() // remaining balance is 100000000*(80/100), claim 20% for stake
 	suite.Require().Equal(coins.String(), sdk.NewCoins(sdk.NewInt64Coin(sdk.DefaultBondDenom, claimableAmountForStake)).String())
+	suite.Require().Equal(coins1.String(), sdk.NewCoins(sdk.NewInt64Coin(sdk.DefaultBondDenom, claimableAmountForStake)).String())
 
-	// get rewards amount for liquid stake (stride user)
+	// get rewards amount for liquid stake (stride, osmosis addresses)
 	coins, err = suite.app.ClaimKeeper.ClaimCoinsForAction(suite.ctx, addr1, types.ActionLiquidStake, "stride")
 	suite.Require().NoError(err)
+
+	coins1, err = suite.app.ClaimKeeper.ClaimCoinsForAction(suite.ctx, addr1, types.ActionLiquidStake, "osmosis")
+	suite.Require().NoError(err)
+
 	claimableAmountForLiquidStake := sdk.NewDecWithPrec(80, 2).
 		Mul(sdk.NewDecWithPrec(80, 2)).
 		Mul(sdk.NewDecWithPrec(60, 2)).
 		Mul(sdk.NewDec(100_000_000)).
 		RoundInt64() // remaining balance = 100000000*(80/100)*(80/100), claim 60% for liquid stake
 	suite.Require().Equal(coins.String(), sdk.NewCoins(sdk.NewInt64Coin(sdk.DefaultBondDenom, claimableAmountForLiquidStake)).String())
+	suite.Require().Equal(coins1.String(), sdk.NewCoins(sdk.NewInt64Coin(sdk.DefaultBondDenom, claimableAmountForLiquidStake)).String())
 
 	// get balance after all claim
 	coins = suite.app.BankKeeper.GetAllBalances(suite.ctx, addr1)
-	suite.Require().Equal(coins.String(), sdk.NewCoins(sdk.NewInt64Coin(sdk.DefaultBondDenom, claimableAmountForFree+claimableAmountForStake+claimableAmountForLiquidStake)).String())
+	suite.Require().Equal(coins.String(), sdk.NewCoins(sdk.NewInt64Coin(sdk.DefaultBondDenom, (claimableAmountForFree+claimableAmountForStake+claimableAmountForLiquidStake)*2)).String())
 
+	// check if stride and osmosis airdrops ended properly
 	suite.app.ClaimKeeper.EndBlocker(suite.ctx.WithBlockTime(time.Now().Add(types.DefaultAirdropDuration)))
+	// for stride
 	weight, err := suite.app.ClaimKeeper.GetTotalWeight(suite.ctx, types.DefaultAirdropIdentifier)
 	suite.Require().NoError(err)
 	suite.Require().Equal(weight, sdk.ZeroDec())
@@ -250,7 +287,15 @@ func (suite *KeeperTestSuite) TestMultiChainAirdropFlow() {
 	records := suite.app.ClaimKeeper.GetClaimRecords(suite.ctx, types.DefaultAirdropIdentifier)
 	suite.Require().Equal(0, len(records))
 
-	//*********************** End of Stride airdrop *************************
+	// for osmosis
+	weight, err = suite.app.ClaimKeeper.GetTotalWeight(suite.ctx, "osmosis")
+	suite.Require().NoError(err)
+	suite.Require().Equal(weight, sdk.ZeroDec())
+
+	records = suite.app.ClaimKeeper.GetClaimRecords(suite.ctx, "osmosis")
+	suite.Require().Equal(0, len(records))
+
+	//*********************** End of Stride, Osmosis airdrop *************************
 
 	// claim airdrops for juno users after ending stride airdrop
 	// get rewards amount for free (juno user)

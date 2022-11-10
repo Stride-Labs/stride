@@ -42,10 +42,17 @@ func (suite *KeeperTestSuite) SetupTest() {
 	suite.app.AccountKeeper.SetAccount(suite.ctx, authtypes.NewBaseAccount(addr2, nil, 0, 0))
 	distributors["juno"] = addr2
 
+	// Initiate a distributor account for juno user airdrop
+	pub3 := secp256k1.GenPrivKey().PubKey()
+	addr3 := sdk.AccAddress(pub3.Address())
+	suite.app.AccountKeeper.SetAccount(suite.ctx, authtypes.NewBaseAccount(addr3, nil, 0, 0))
+	distributors["osmosis"] = addr3
+
 	// Mint coins to airdrop module
-	suite.app.BankKeeper.MintCoins(suite.ctx, minttypes.ModuleName, sdk.NewCoins(sdk.NewCoin("stake", sdk.NewInt(200000000))))
+	suite.app.BankKeeper.MintCoins(suite.ctx, minttypes.ModuleName, sdk.NewCoins(sdk.NewCoin("stake", sdk.NewInt(300000000))))
 	suite.app.BankKeeper.SendCoinsFromModuleToAccount(suite.ctx, minttypes.ModuleName, addr1, sdk.NewCoins(sdk.NewCoin("stake", sdk.NewInt(100000000))))
 	suite.app.BankKeeper.SendCoinsFromModuleToAccount(suite.ctx, minttypes.ModuleName, addr2, sdk.NewCoins(sdk.NewCoin("stake", sdk.NewInt(100000000))))
+	suite.app.BankKeeper.SendCoinsFromModuleToAccount(suite.ctx, minttypes.ModuleName, addr3, sdk.NewCoins(sdk.NewCoin("stake", sdk.NewInt(100000000))))
 
 	// Stride airdrop
 	airdropStartTime := time.Now()
@@ -56,6 +63,12 @@ func (suite *KeeperTestSuite) SetupTest() {
 
 	// Juno airdrop
 	err = suite.app.ClaimKeeper.CreateAirdropAndEpoch(suite.ctx, addr2.String(), "stake", uint64(airdropStartTime.Add(time.Hour).Unix()), uint64(types.DefaultAirdropDuration.Seconds()), "juno")
+	if err != nil {
+		panic(err)
+	}
+
+	// Osmosis airdrop
+	err = suite.app.ClaimKeeper.CreateAirdropAndEpoch(suite.ctx, addr3.String(), "stake", uint64(airdropStartTime.Unix()), uint64(types.DefaultAirdropDuration.Seconds()), "osmosis")
 	if err != nil {
 		panic(err)
 	}

@@ -30,13 +30,17 @@ func (k Keeper) LoadAllocationData(ctx sdk.Context, allocationData string) bool 
 			continue
 		}
 
-		data[1] = utils.ConvertAddressToStrideAddress(data[1])
-		if data[1] == "" {
+		airdropIdentifier := data[0]
+		sourceChainAddr := data[1]
+		airdropWeight := data[2]
+		strideAddr := utils.ConvertAddressToStrideAddress(sourceChainAddr)
+		if strideAddr == "" {
 			continue
 		}
+		allocationIdentifier := airdropIdentifier + strideAddr
 
 		// Round weight value so that it always has 10 decimal places
-		weightFloat64, err := strconv.ParseFloat(data[2], 64)
+		weightFloat64, err := strconv.ParseFloat(airdropWeight, 64)
 		if err != nil {
 			continue
 		}
@@ -47,23 +51,23 @@ func (k Keeper) LoadAllocationData(ctx sdk.Context, allocationData string) bool 
 			continue
 		}
 
-		if err != nil || allocatedFlags[data[1]] {
+		if err != nil || allocatedFlags[allocationIdentifier] {
 			continue
 		}
 
-		_, err = sdk.AccAddressFromBech32(data[1])
+		_, err = sdk.AccAddressFromBech32(strideAddr)
 		if err != nil {
 			continue
 		}
 
 		records = append(records, types.ClaimRecord{
-			AirdropIdentifier: data[0],
-			Address:           data[1],
+			AirdropIdentifier: airdropIdentifier,
+			Address:           strideAddr,
 			Weight:            weight,
 			ActionCompleted:   []bool{false, false, false},
 		})
 
-		allocatedFlags[data[1]] = true
+		allocatedFlags[allocationIdentifier] = true
 	}
 
 	k.SetClaimRecordsWithWeights(ctx, records)
@@ -71,7 +75,7 @@ func (k Keeper) LoadAllocationData(ctx sdk.Context, allocationData string) bool 
 }
 
 // Remove duplicated airdrops for given params
-func (k Keeper) RemoveDuplicatedAirdrops(ctx sdk.Context, identifier string, users []string, weights []sdk.Dec) ([]string, []sdk.Dec) {
+func (k Keeper) GetUnAllocatedUsers(ctx sdk.Context, identifier string, users []string, weights []sdk.Dec) ([]string, []sdk.Dec) {
 	store := ctx.KVStore(k.storeKey)
 	prefixStore := prefix.NewStore(store, append([]byte(types.ClaimRecordsStorePrefix), []byte(identifier)...))
 	newUsers := []string{}
@@ -394,14 +398,21 @@ func (k Keeper) GetUserTotalClaimable(ctx sdk.Context, addr sdk.AccAddress, aird
 }
 
 // Get airdrop identifier corresponding to the user address
-func (k Keeper) GetAirdropIdentifierForUser(ctx sdk.Context, addr sdk.AccAddress) string {
-	records := k.GetClaimRecords(ctx, "")
-	for _, record := range records {
-		if record.Address == addr.String() {
-			return record.AirdropIdentifier
+func (k Keeper) GetAirdropIdentifiersForUser(ctx sdk.Context, addr sdk.AccAddress) []string {
+	store := ctx.KVStore(k.storeKey)
+	params, err := k.GetParams(ctx)
+	identifiers := []string{}
+	if err != nil {
+		return identifiers
+	}
+
+	for _, airdrop := range params.Airdrops {
+		prefixStore := prefix.NewStore(store, append([]byte(types.ClaimRecordsStorePrefix), []byte(airdrop.AirdropIdentifier)...))
+		if prefixStore.Has(addr) {
+			identifiers = append(identifiers, airdrop.AirdropIdentifier)
 		}
 	}
-	return ""
+	return identifiers
 }
 
 // ClaimCoins remove claimable amount entry and transfer it to user's account

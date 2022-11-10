@@ -44,7 +44,7 @@ func (server msgServer) SetAirdropAllocations(goCtx context.Context, msg *types.
 		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid distributor address")
 	}
 
-	users, weights := server.keeper.RemoveDuplicatedAirdrops(ctx, msg.AirdropIdentifier, msg.Users, msg.Weights)
+	users, weights := server.keeper.GetUnAllocatedUsers(ctx, msg.AirdropIdentifier, msg.Users, msg.Weights)
 	for idx, user := range users {
 		record := types.ClaimRecord{
 			Address:           user,
