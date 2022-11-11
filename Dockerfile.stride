@@ -25,7 +25,7 @@ COPY --from=builder /src/build/strided /usr/local/bin/strided
 RUN addgroup -g 1000 stride \
     && adduser -S -h /home/stride -D stride -u 1000 -G stride
 
-USER stride
+USER 1000
 WORKDIR /home/stride
 
 EXPOSE 26657 26656 1317 9090
