@@ -6,7 +6,7 @@ import "gogoproto/gogo.proto";
 option go_package = "github.com/Stride-Labs/stride/x/stakeibc/types";
 
 // Params defines the parameters for the module.
-// next id: 16
+// next id: 18
 message Params {
   option (gogoproto.goproto_stringer) = false;
 
