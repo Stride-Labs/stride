@@ -20,7 +20,7 @@ echo "$CHAIN_ID - Registering host zone..."
 $STRIDE_MAIN_CMD tx stakeibc register-host-zone \
     $CONNECTION $HOST_DENOM $ADDRESS_PREFIX $IBC_DENOM $CHANNEL 1 \
     --gas 1000000 --from $STRIDE_ADMIN_ACCT --home $SCRIPT_DIR/state/stride1 -y | TRIM_TX
-sleep 4
+sleep 10
 
 echo "$CHAIN_ID - Registering validators..."
 weights=(5 10 5 10 5) # alternate weights across vals
@@ -30,10 +30,10 @@ for (( i=1; i <= $NUM_VALS; i++ )); do
 
     $STRIDE_MAIN_CMD tx stakeibc add-validator $CHAIN_ID ${VAL_PREFIX}${i} $delegate_val 10 $weight \
         --from $STRIDE_ADMIN_ACCT -y | TRIM_TX
-    sleep 4
+    sleep 10
 done
 
-timeout=60
+timeout=100
 while true; do
     if ! $STRIDE_MAIN_CMD q stakeibc list-host-zone | grep Account | grep -q null; then
         break

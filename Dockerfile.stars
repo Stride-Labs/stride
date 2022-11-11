@@ -25,7 +25,7 @@ COPY --from=builder /opt/stargaze/bin/starsd /usr/local/bin/
 RUN apk add --update bash vim ca-certificates \
     && adduser -S -h /home/stars -D stars -u 1000
 
-USER stars
+USER 1000
 WORKDIR /home/stars
 
 EXPOSE 26657 26656 1317 9090

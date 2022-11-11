@@ -22,7 +22,7 @@ FROM alpine:3.15
 COPY --from=builder /opt/juno/bin/junod /usr/local/bin/
 RUN adduser -S -h /home/juno -D juno -u 1000
 
-USER juno
+USER 1000
 WORKDIR /home/juno
 
 EXPOSE 26657 26656 1317 9090
