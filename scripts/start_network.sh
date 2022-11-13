@@ -50,9 +50,4 @@ bash ${SCRIPT_DIR}/start_chain.sh STRIDE ${HOST_CHAINS[@]}
 bash ${SCRIPT_DIR}/init_relayers.sh STRIDE ${HOST_CHAINS[@]}
 bash ${SCRIPT_DIR}/start_relayers.sh ${HOST_CHAINS[@]}
 
-# Register all host zones 
-for i in ${!HOST_CHAINS[@]}; do
-    bash $SCRIPT_DIR/register_host.sh ${HOST_CHAINS[$i]} $i 
-done
-
 $SCRIPT_DIR/create_logs.sh ${HOST_CHAINS[@]} &

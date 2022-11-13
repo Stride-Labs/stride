@@ -6,9 +6,10 @@ SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 source ${SCRIPT_DIR}/vars.sh
 chmod -R a+rwx $STATE/relayer
 
-HOST_CHAINS="$@"
+HOST_CHAINS=($@)
 
-for chain_id in ${HOST_CHAINS[@]}; do
+for i in ${!HOST_CHAINS[@]}; do
+    chain_id=${HOST_CHAINS[$i]}
     relayer_exec=$(GET_VAR_VALUE RELAYER_${chain_id}_EXEC)
     chain_name=$(printf "$chain_id" | awk '{ print tolower($0) }')
     relayer_logs=${LOGS}/relayer-${chain_name}.log
@@ -19,4 +20,6 @@ for chain_id in ${HOST_CHAINS[@]}; do
 
     docker-compose up -d relayer-${chain_name}
     docker-compose logs -f relayer-${chain_name} | sed -r -u "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2})?)?[mGK]//g" >> $relayer_logs 2>&1 &
+
+    bash $SCRIPT_DIR/register_host.sh ${HOST_CHAINS[$i]} $i
 done
