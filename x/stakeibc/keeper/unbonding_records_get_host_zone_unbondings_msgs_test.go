@@ -209,6 +209,38 @@ func (s *KeeperTestSuite) TestGetHostZoneUnbondingMsgs() {
 			expectPass: false,
 			expectErr: sdkerrors.Wrap(sdkerrors.ErrNotFound, fmt.Sprintf("Could not unbond %d on Host Zone %s, unable to balance the unbond amount across validators", uint64(2_000_000), "GAIA")),
 		},
+		"No non-zero weight validator": {
+			epochUnbondingRecords:         []recordtypes.EpochUnbondingRecord{
+				{
+					EpochNumber:        0,
+					HostZoneUnbondings: []*recordtypes.HostZoneUnbonding{},
+				},
+				{
+					EpochNumber:        1,
+					HostZoneUnbondings: []*recordtypes.HostZoneUnbonding{},
+				},
+			},
+			chainId: "GAIA",
+			validators: []*stakeibc.Validator{
+				{
+					Address:       hostVal1Addr,
+					DelegationAmt: amtVal1,
+					Weight:        0,
+				},
+				{
+					Address:       hostVal2Addr,
+					DelegationAmt: amtVal2,
+					Weight:        0,
+				},
+				{
+					Address: hostVal3Addr,
+					DelegationAmt: amtVal2,
+					Weight:        0,
+				},
+			},
+			expectPass: false,
+			expectErr: sdkerrors.Wrap(types.ErrNoValidatorAmts, fmt.Sprintf("Error getting target val amts for host zone %s %d: no non-zero validator weights", "GAIA", uint64(2_000_000))),
+		},
 	}
 
 	for name, test := range testCases {
