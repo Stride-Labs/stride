@@ -61,18 +61,26 @@ func (k *Keeper) MakeRequest(ctx sdk.Context, connectionId string, chainId strin
 
 	// Only 0 height queries are currently supported
 	if height != 0 {
-		k.Logger(ctx).Error("[ICQ Validation Check] Failed! height for interchainquery must be 0 (we exclusively query at the latest height on the host zone)")
+		errMsg := "[ICQ Validation Check] Failed! height for interchainquery must be 0 (we exclusively query at the latest height on the host zone)"
+		k.Logger(ctx).Error(errMsg)
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, errMsg)
 	}
 
 	// Confirm the connectionId and chainId are valid
 	if connectionId == "" {
-		k.Logger(ctx).Error("[ICQ Validation Check] Failed! connection id cannot be empty")
+		errMsg := "[ICQ Validation Check] Failed! connection id cannot be empty"
+		k.Logger(ctx).Error(errMsg)
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, errMsg)
 	}
 	if !strings.HasPrefix(connectionId, "connection") {
-		k.Logger(ctx).Error("[ICQ Validation Check] Failed! connection id must begin with 'connection'")
+		errMsg := "[ICQ Validation Check] Failed! connection id must begin with 'connection'"
+		k.Logger(ctx).Error(errMsg)
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, errMsg)
 	}
 	if chainId == "" {
-		k.Logger(ctx).Error("[ICQ Validation Check] Failed! chain_id cannot be empty")
+		errMsg := "[ICQ Validation Check] Failed! chain_id cannot be empty"
+		k.Logger(ctx).Error(errMsg)
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, errMsg)
 	}
 
 	// Check to see if the query already exists
