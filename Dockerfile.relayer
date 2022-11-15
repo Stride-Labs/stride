@@ -20,17 +20,5 @@ USER 1000
 WORKDIR /home/relayer
 
 # Create startup script that takes a path as a parameter
-RUN echo 'nohup rly start $1 -p events' > start.sh
+RUN echo 'rly start $1 -p events' > start.sh
 
-# Create a script to updates the light clients so they don't expire
-# Wont be necessary once https://github.com/cosmos/relayer/pull/861 is merged
-RUN <<EOF cat > refresh-clients.sh
-RELAY_PATHS="\$@"
-while true; do
-    for path in \${RELAY_PATHS[@]}; do
-        echo "Updating \$path"
-        rly transact update-clients \$path
-    done
-    sleep 30
-done
-EOF
