@@ -16,7 +16,7 @@ COPY --from=builder /go/bin/rly /usr/local/bin/
 RUN apk add bash vim \
     && adduser -S -h /home/relayer -D relayer -u 1000
 
-USER relayer
+USER 1000
 WORKDIR /home/relayer
 
 # Create startup script that takes a path as a parameter
