@@ -20,7 +20,9 @@ RUN LEDGER_ENABLED=false BUILD_TAGS=muslc LINK_STATICALLY=true make build
 
 FROM alpine:3.15
 COPY --from=builder /opt/juno/bin/junod /usr/local/bin/
-RUN adduser -S -h /home/juno -D juno -u 1000
+RUN apk add bash vim \
+    && addgroup -g 1000 juno \
+    && adduser -S -h /home/juno -D juno -u 1000 -G juno
 
 USER 1000
 WORKDIR /home/juno
