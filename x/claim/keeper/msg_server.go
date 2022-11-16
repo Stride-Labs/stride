@@ -44,7 +44,7 @@ func (server msgServer) SetAirdropAllocations(goCtx context.Context, msg *types.
 		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid distributor address")
 	}
 
-	users, weights := server.keeper.GetUnAllocatedUsers(ctx, msg.AirdropIdentifier, msg.Users, msg.Weights)
+	users, weights := server.keeper.GetUnallocatedUsers(ctx, msg.AirdropIdentifier, msg.Users, msg.Weights)
 	for idx, user := range users {
 		record := types.ClaimRecord{
 			Address:           user,
@@ -58,7 +58,10 @@ func (server msgServer) SetAirdropAllocations(goCtx context.Context, msg *types.
 	}
 
 	server.keeper.SetTotalWeight(ctx, totalWeight, msg.AirdropIdentifier)
-	server.keeper.SetClaimRecords(ctx, records)
+	err = server.keeper.SetClaimRecords(ctx, records)
+	if err != nil {
+		return nil, err
+	}
 
 	return &types.MsgSetAirdropAllocationsResponse{}, nil
 }

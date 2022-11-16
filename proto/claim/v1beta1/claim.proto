@@ -18,7 +18,7 @@ enum Action {
 // A Claim Records is the metadata of claim data per address
 message ClaimRecord {
   // airdrop identifier
-  string airdrop_identifier = 1 [ (gogoproto.moretags) = "yaml:\"identifier\"" ];
+  string airdrop_identifier = 1 [ (gogoproto.moretags) = "yaml:\"airdrop_identifier\"" ];
 
   // address of claim user
   string address = 2 [ (gogoproto.moretags) = "yaml:\"address\"" ];

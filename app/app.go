@@ -54,8 +54,8 @@ import (
 	govkeeper "github.com/cosmos/cosmos-sdk/x/gov/keeper"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 
-	customvesting "github.com/Stride-Labs/stride/x/claim/vesting"
-	customvestingtypes "github.com/Stride-Labs/stride/x/claim/vesting/types"
+	claimvesting "github.com/Stride-Labs/stride/x/claim/vesting"
+	claimvestingtypes "github.com/Stride-Labs/stride/x/claim/vesting/types"
 
 	"github.com/Stride-Labs/stride/x/mint"
 	mintkeeper "github.com/Stride-Labs/stride/x/mint/keeper"
@@ -181,7 +181,7 @@ var (
 		evidence.AppModuleBasic{},
 		transfer.AppModuleBasic{},
 		vesting.AppModuleBasic{},
-		customvesting.AppModuleBasic{},
+		claimvesting.AppModuleBasic{},
 		// monitoringp.AppModuleBasic{},
 		stakeibcmodule.AppModuleBasic{},
 		epochsmodule.AppModuleBasic{},
@@ -597,7 +597,7 @@ func NewStrideApp(
 		),
 		auth.NewAppModule(appCodec, app.AccountKeeper, nil),
 		vesting.NewAppModule(app.AccountKeeper, app.BankKeeper),
-		customvesting.NewAppModule(app.AccountKeeper, app.BankKeeper),
+		claimvesting.NewAppModule(app.AccountKeeper, app.BankKeeper),
 		bank.NewAppModule(appCodec, app.BankKeeper, app.AccountKeeper),
 		capability.NewAppModule(appCodec, *app.CapabilityKeeper),
 		feegrantmodule.NewAppModule(appCodec, app.AccountKeeper, app.BankKeeper, app.FeeGrantKeeper, app.interfaceRegistry),
@@ -636,7 +636,7 @@ func NewStrideApp(
 		evidencetypes.ModuleName,
 		stakingtypes.ModuleName,
 		vestingtypes.ModuleName,
-		customvestingtypes.ModuleName,
+		claimvestingtypes.ModuleName,
 		ibchost.ModuleName,
 		ibctransfertypes.ModuleName,
 		authtypes.ModuleName,
@@ -667,7 +667,7 @@ func NewStrideApp(
 		distrtypes.ModuleName,
 		slashingtypes.ModuleName,
 		vestingtypes.ModuleName,
-		customvestingtypes.ModuleName,
+		claimvestingtypes.ModuleName,
 		minttypes.ModuleName,
 		genutiltypes.ModuleName,
 		evidencetypes.ModuleName,
@@ -699,7 +699,7 @@ func NewStrideApp(
 		distrtypes.ModuleName,
 		stakingtypes.ModuleName,
 		vestingtypes.ModuleName,
-		customvestingtypes.ModuleName,
+		claimvestingtypes.ModuleName,
 		slashingtypes.ModuleName,
 		govtypes.ModuleName,
 		minttypes.ModuleName,

@@ -70,12 +70,14 @@ func (k Keeper) LoadAllocationData(ctx sdk.Context, allocationData string) bool 
 		allocatedFlags[allocationIdentifier] = true
 	}
 
-	k.SetClaimRecordsWithWeights(ctx, records)
+	if err := k.SetClaimRecordsWithWeights(ctx, records); err != nil {
+		panic(err)
+	}
 	return true
 }
 
 // Remove duplicated airdrops for given params
-func (k Keeper) GetUnAllocatedUsers(ctx sdk.Context, identifier string, users []string, weights []sdk.Dec) ([]string, []sdk.Dec) {
+func (k Keeper) GetUnallocatedUsers(ctx sdk.Context, identifier string, users []string, weights []sdk.Dec) ([]string, []sdk.Dec) {
 	store := ctx.KVStore(k.storeKey)
 	prefixStore := prefix.NewStore(store, append([]byte(types.ClaimRecordsStorePrefix), []byte(identifier)...))
 	newUsers := []string{}
@@ -162,18 +164,31 @@ func (k Keeper) EndAirdrop(ctx sdk.Context, airdropIdentifier string) error {
 	ctx.Logger().Info("Clearing claims module state entries")
 	k.clearInitialClaimables(ctx, airdropIdentifier)
 	k.DeleteTotalWeight(ctx, airdropIdentifier)
-	k.DeleteAirdropAndEpoch(ctx, airdropIdentifier)
-	return nil
+	return k.DeleteAirdropAndEpoch(ctx, airdropIdentifier)
 }
 
-// ClearClaimedStatus clear users' claimed status
-func (k Keeper) ClearClaimedStatus(ctx sdk.Context, airdropIdentifier string) {
-	records := k.GetClaimRecords(ctx, airdropIdentifier)
-	for idx := range records {
-		records[idx].ActionCompleted = []bool{false, false, false}
+func (k Keeper) IsInitialPeriodPassed(ctx sdk.Context, airdropIdentifier string) bool {
+	airdrop := k.GetAirdropByIdentifier(ctx, airdropIdentifier)
+	if airdrop == nil {
+		return false
 	}
+	goneTime := ctx.BlockTime().Sub(airdrop.AirdropStartTime)
+	// Check if elapsed time since airdrop start is over the initial period of vesting
+	return goneTime.Seconds() >= types.DefaultVestingInitialPeriod.Seconds()
+}
 
-	k.SetClaimRecords(ctx, records)
+// ClearClaimedStatus clear users' claimed status only after initial period of vesting is passed
+func (k Keeper) ClearClaimedStatus(ctx sdk.Context, airdropIdentifier string) {
+	if k.IsInitialPeriodPassed(ctx, airdropIdentifier) {
+		records := k.GetClaimRecords(ctx, airdropIdentifier)
+		for idx := range records {
+			records[idx].ActionCompleted = []bool{false, false, false}
+		}
+
+		if err := k.SetClaimRecords(ctx, records); err != nil {
+			panic(err)
+		}
+	}
 }
 
 // ClearClaimables clear claimable amounts
@@ -417,6 +432,7 @@ func (k Keeper) GetAirdropIdentifiersForUser(ctx sdk.Context, addr sdk.AccAddres
 
 // ClaimCoins remove claimable amount entry and transfer it to user's account
 func (k Keeper) ClaimCoinsForAction(ctx sdk.Context, addr sdk.AccAddress, action types.Action, airdropIdentifier string) (sdk.Coins, error) {
+	isPassed := k.IsInitialPeriodPassed(ctx, airdropIdentifier)
 	if airdropIdentifier == "" {
 		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "invalid airdrop identifier: ClaimCoinsForAction")
 	}
@@ -442,32 +458,35 @@ func (k Keeper) ClaimCoinsForAction(ctx sdk.Context, addr sdk.AccAddress, action
 		return nil, err
 	}
 
-	acc = k.accountKeeper.GetAccount(ctx, addr)
-	strideVestingAcc, isStrideVestingAccount := acc.(*vestingtypes.StridePeriodicVestingAccount)
-	// Check if vesting tokens already exist for this account.
-	if !isStrideVestingAccount {
-		// Convert user account into stride veting account.
-		baseAccount := k.accountKeeper.NewAccountWithAddress(ctx, addr)
-		if _, ok := baseAccount.(*authtypes.BaseAccount); !ok {
-			return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "invalid account type; expected: BaseAccount, got: %T", baseAccount)
-		}
+	// Claims don't vest if action type is ActionFree or initial period of vesting is passed
+	if action != types.ActionFree && !isPassed {
+		acc = k.accountKeeper.GetAccount(ctx, addr)
+		strideVestingAcc, isStrideVestingAccount := acc.(*vestingtypes.StridePeriodicVestingAccount)
+		// Check if vesting tokens already exist for this account.
+		if !isStrideVestingAccount {
+			// Convert user account into stride veting account.
+			baseAccount := k.accountKeeper.NewAccountWithAddress(ctx, addr)
+			if _, ok := baseAccount.(*authtypes.BaseAccount); !ok {
+				return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "invalid account type; expected: BaseAccount, got: %T", baseAccount)
+			}
 
-		periodLength := GetAirdropDurationForAction(action)
-		vestingAcc := vestingtypes.NewStridePeriodicVestingAccount(baseAccount.(*authtypes.BaseAccount), claimableAmount, []vestingtypes.Period{{
-			StartTime: ctx.BlockTime().Unix(),
-			Length:    periodLength,
-			Amount:    claimableAmount,
-		}})
-		k.accountKeeper.SetAccount(ctx, vestingAcc)
-	} else {
-		// Grant a new vesting to the existing stride vesting account
-		periodLength := GetAirdropDurationForAction(action)
-		strideVestingAcc.AddNewGrant(vestingtypes.Period{
-			StartTime: ctx.BlockTime().Unix(),
-			Length:    periodLength,
-			Amount:    claimableAmount,
-		})
-		k.accountKeeper.SetAccount(ctx, strideVestingAcc)
+			periodLength := GetAirdropDurationForAction(action)
+			vestingAcc := vestingtypes.NewStridePeriodicVestingAccount(baseAccount.(*authtypes.BaseAccount), claimableAmount, []vestingtypes.Period{{
+				StartTime: ctx.BlockTime().Unix(),
+				Length:    periodLength,
+				Amount:    claimableAmount,
+			}})
+			k.accountKeeper.SetAccount(ctx, vestingAcc)
+		} else {
+			// Grant a new vesting to the existing stride vesting account
+			periodLength := GetAirdropDurationForAction(action)
+			strideVestingAcc.AddNewGrant(vestingtypes.Period{
+				StartTime: ctx.BlockTime().Unix(),
+				Length:    periodLength,
+				Amount:    claimableAmount,
+			})
+			k.accountKeeper.SetAccount(ctx, strideVestingAcc)
+		}
 	}
 
 	distributor, err := k.GetAirdropDistributor(ctx, airdropIdentifier)

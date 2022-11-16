@@ -32,6 +32,9 @@ func CmdSetAirdropAllocations() *cobra.Command {
 			}
 
 			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return err
+			}
 
 			msg := types.NewMsgSetAirdropAllocations(
 				clientCtx.GetFromAddress().String(),

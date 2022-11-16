@@ -1,6 +1,8 @@
 package keeper
 
 import (
+	"fmt"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
@@ -13,14 +15,26 @@ import (
 func (k Keeper) AfterDelegationModified(ctx sdk.Context, delAddr sdk.AccAddress, valAddr sdk.ValAddress) {
 	identifiers := k.GetAirdropIdentifiersForUser(ctx, delAddr)
 	for _, identifier := range identifiers {
-		k.ClaimCoinsForAction(ctx, delAddr, types.ActionDelegateStake, identifier)
+		cacheCtx, write := ctx.CacheContext()
+		_, err := k.ClaimCoinsForAction(cacheCtx, delAddr, types.ActionDelegateStake, identifier)
+		if err == nil {
+			write()
+		} else {
+			k.Logger(ctx).Error(fmt.Sprintf("Claim coins for %s for %s for staking failed!", delAddr.String(), identifier))
+		}
 	}
 }
 
 func (k Keeper) AfterLiquidStake(ctx sdk.Context, addr sdk.AccAddress) {
 	identifiers := k.GetAirdropIdentifiersForUser(ctx, addr)
 	for _, identifier := range identifiers {
-		k.ClaimCoinsForAction(ctx, addr, types.ActionLiquidStake, identifier)
+		cacheCtx, write := ctx.CacheContext()
+		_, err := k.ClaimCoinsForAction(cacheCtx, addr, types.ActionLiquidStake, identifier)
+		if err == nil {
+			write()
+		} else {
+			k.Logger(ctx).Error(fmt.Sprintf("Claim coins for %s for %s for liquid staking failed!", addr.String(), identifier))
+		}
 	}
 }
 

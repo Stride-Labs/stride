@@ -207,12 +207,12 @@ func (s *IntegrationTestSuite) TestCmdTxSetAirdropAllocations() {
 			cmd := cli.CmdSetAirdropAllocations()
 			clientCtx := val.ClientCtx
 
-			out, err := clitestutil.ExecTestCLICmd(clientCtx, cmd, tc.args)
+			_, err := clitestutil.ExecTestCLICmd(clientCtx, cmd, tc.args)
 			s.Require().NoError(err)
 
 			// Check if claim record is properly set
 			cmd = cli.GetCmdQueryClaimRecord()
-			out, err = clitestutil.ExecTestCLICmd(clientCtx, cmd, []string{
+			out, err := clitestutil.ExecTestCLICmd(clientCtx, cmd, []string{
 				claimtypes.DefaultAirdropIdentifier,
 				claimRecords[0].Address,
 				fmt.Sprintf("--%s=json", tmcli.OutputFlag),
@@ -233,6 +233,7 @@ func (s *IntegrationTestSuite) TestCmdTxSetAirdropAllocations() {
 				types.ActionFree.String(),
 				fmt.Sprintf("--%s=json", tmcli.OutputFlag),
 			})
+			s.Require().NoError(err)
 
 			var result1 types.QueryClaimableForActionResponse
 			s.Require().NoError(clientCtx.Codec.UnmarshalJSON(out.Bytes(), &result1))
@@ -282,12 +283,12 @@ func (s *IntegrationTestSuite) TestCmdTxCreateAirdrop() {
 			cmd := cli.CmdCreateAirdrop()
 			clientCtx := val.ClientCtx
 
-			out, err := clitestutil.ExecTestCLICmd(clientCtx, cmd, tc.args)
+			_, err := clitestutil.ExecTestCLICmd(clientCtx, cmd, tc.args)
 			s.Require().NoError(err)
 
 			// Check if airdrop was created properly
 			cmd = cli.GetCmdQueryParams()
-			out, err = clitestutil.ExecTestCLICmd(clientCtx, cmd, []string{
+			out, err := clitestutil.ExecTestCLICmd(clientCtx, cmd, []string{
 				fmt.Sprintf("--%s=json", tmcli.OutputFlag),
 			})
 			s.Require().NoError(err)

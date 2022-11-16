@@ -12,7 +12,7 @@ import (
 
 var _ types.QueryServer = Keeper{}
 
-// Params returns balances of the mint module.
+// Params returns balances of the distributor account
 func (k Keeper) DistributorAccountBalance(c context.Context, req *types.QueryDistributorAccountBalanceRequest) (*types.QueryDistributorAccountBalanceResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 	bal, err := k.GetDistributorAccountBalance(ctx, req.AirdropIdentifier)
@@ -22,7 +22,7 @@ func (k Keeper) DistributorAccountBalance(c context.Context, req *types.QueryDis
 	return &types.QueryDistributorAccountBalanceResponse{DistributorAccountBalance: sdk.NewCoins(bal)}, nil
 }
 
-// Params returns params of the mint module.
+// Params returns params of the claim module.
 func (k Keeper) Params(c context.Context, _ *types.QueryParamsRequest) (*types.QueryParamsResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 	params, err := k.GetParams(ctx)
@@ -33,7 +33,7 @@ func (k Keeper) Params(c context.Context, _ *types.QueryParamsRequest) (*types.Q
 	return &types.QueryParamsResponse{Params: params}, nil
 }
 
-// Claimable returns claimable amount per user
+// ClaimRecord returns user claim record by address and airdrop identifier
 func (k Keeper) ClaimRecord(
 	goCtx context.Context,
 	req *types.QueryClaimRecordRequest,
@@ -53,7 +53,7 @@ func (k Keeper) ClaimRecord(
 	return &types.QueryClaimRecordResponse{ClaimRecord: claimRecord}, err
 }
 
-// Activities returns activities
+// ClaimableForAction returns claimable amount per action
 func (k Keeper) ClaimableForAction(
 	goCtx context.Context,
 	req *types.QueryClaimableForActionRequest,
@@ -75,7 +75,7 @@ func (k Keeper) ClaimableForAction(
 	}, err
 }
 
-// Activities returns activities
+// TotalClaimable returns total claimable amount for user
 func (k Keeper) TotalClaimable(
 	goCtx context.Context,
 	req *types.QueryTotalClaimableRequest,

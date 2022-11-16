@@ -34,12 +34,13 @@ func (suite *KeeperTestSuite) TestSetAirdropAllocationsForMultiAirdrops() {
 	}
 
 	for _, record := range allocations {
-		msgServer.SetAirdropAllocations(sdk.WrapSDKContext(suite.ctx), &types.MsgSetAirdropAllocations{
+		_, err := msgServer.SetAirdropAllocations(sdk.WrapSDKContext(suite.ctx), &types.MsgSetAirdropAllocations{
 			Allocator:         distributors[record.AirdropIdentifier].String(),
 			AirdropIdentifier: record.AirdropIdentifier,
 			Users:             []string{record.Address},
 			Weights:           []sdk.Dec{record.Weight},
 		})
+		suite.Require().NoError(err)
 	}
 
 	// Set second allocations for each airdrop
@@ -62,12 +63,13 @@ func (suite *KeeperTestSuite) TestSetAirdropAllocationsForMultiAirdrops() {
 	}
 
 	for _, record := range allocations2 {
-		msgServer.SetAirdropAllocations(sdk.WrapSDKContext(suite.ctx), &types.MsgSetAirdropAllocations{
+		_, err := msgServer.SetAirdropAllocations(sdk.WrapSDKContext(suite.ctx), &types.MsgSetAirdropAllocations{
 			Allocator:         distributors[record.AirdropIdentifier].String(),
 			AirdropIdentifier: record.AirdropIdentifier,
 			Users:             []string{record.Address},
 			Weights:           []sdk.Dec{record.Weight},
 		})
+		suite.Require().NoError(err)
 	}
 
 	totalWeightStride, err := suite.app.ClaimKeeper.GetTotalWeight(suite.ctx, types.DefaultAirdropIdentifier)
@@ -101,12 +103,13 @@ func (suite *KeeperTestSuite) TestSetAirdropAllocationsForMultiAirdrops() {
 		},
 	}
 	for _, record := range allocations3 {
-		msgServer.SetAirdropAllocations(sdk.WrapSDKContext(suite.ctx), &types.MsgSetAirdropAllocations{
+		_, err := msgServer.SetAirdropAllocations(sdk.WrapSDKContext(suite.ctx), &types.MsgSetAirdropAllocations{
 			Allocator:         distributors[record.AirdropIdentifier].String(),
 			AirdropIdentifier: record.AirdropIdentifier,
 			Users:             []string{record.Address},
 			Weights:           []sdk.Dec{record.Weight},
 		})
+		suite.Require().NoError(err)
 	}
 
 	claimRecords = suite.app.ClaimKeeper.GetClaimRecords(suite.ctx, types.DefaultAirdropIdentifier)

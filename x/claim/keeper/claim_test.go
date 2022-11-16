@@ -33,11 +33,13 @@ stride,stride1g7yxhuppp5x3yqkah5mw29eqq5s4sv2f222xmk,0.5`
 
 	addr, _ := sdk.AccAddressFromBech32("stride1g7yxhuppp5x3yqkah5mw29eqq5s4sv2f222xmk") // hex(stride1g7yxhuppp5x3yqkah5mw29eqq5s4sv2f222xmk) = hex(osmo1g7yxhuppp5x3yqkah5mw29eqq5s4sv2fp6e2eg)
 	claimRecord, err := suite.app.ClaimKeeper.GetClaimRecord(suite.ctx, addr, "osmosis")
+	suite.Require().NoError(err)
 	suite.Require().Equal(claimRecord.Address, "stride1g7yxhuppp5x3yqkah5mw29eqq5s4sv2f222xmk")
 	suite.Require().True(claimRecord.Weight.Equal(sdk.MustNewDecFromStr("0.5")))
 	suite.Require().Equal(claimRecord.ActionCompleted, []bool{false, false, false})
 
 	claimRecord, err = suite.app.ClaimKeeper.GetClaimRecord(suite.ctx, addr, "stride")
+	suite.Require().NoError(err)
 	suite.Require().True(claimRecord.Weight.Equal(sdk.MustNewDecFromStr("0.3")))
 	suite.Require().Equal(claimRecord.ActionCompleted, []bool{false, false, false})
 }
@@ -121,6 +123,44 @@ func (suite *KeeperTestSuite) TestHookBeforeAirdropStart() {
 	suite.Require().Equal(balances.String(), sdk.NewCoins(sdk.NewInt64Coin(sdk.DefaultBondDenom, claimableAmountForLiquidStake)).String())
 }
 
+// Check original user balances after being converted into stride vesting account
+func (suite *KeeperTestSuite) TestBalancesAfterAccountConversion() {
+	suite.SetupTest()
+
+	// set a normal account
+	addr := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
+	suite.app.AccountKeeper.SetAccount(suite.ctx, authtypes.NewBaseAccount(addr, nil, 0, 0))
+
+	initialBal := int64(1000)
+	err := suite.app.BankKeeper.SendCoins(suite.ctx, distributors["stride"], addr, sdk.NewCoins(sdk.NewInt64Coin(sdk.DefaultBondDenom, initialBal)))
+	suite.Require().NoError(err)
+
+	claimRecords := []types.ClaimRecord{
+		{
+			Address:           addr.String(),
+			Weight:            sdk.NewDecWithPrec(50, 2), // 50%
+			ActionCompleted:   []bool{false, false, false},
+			AirdropIdentifier: types.DefaultAirdropIdentifier,
+		},
+	}
+
+	err = suite.app.ClaimKeeper.SetClaimRecordsWithWeights(suite.ctx, claimRecords)
+	suite.Require().NoError(err)
+
+	// check if original account tokens are not affected after stride vesting
+	_, err = suite.app.ClaimKeeper.ClaimCoinsForAction(suite.ctx, addr, types.ActionDelegateStake, "stride")
+	suite.Require().NoError(err)
+	claimableAmountForStake := sdk.NewDecWithPrec(20, 2).
+		Mul(sdk.NewDec(100_000_000 - initialBal)).
+		RoundInt64() // remaining balance is 100000000*(80/100), claim 20% for stake
+
+	coinsBal := suite.app.BankKeeper.GetAllBalances(suite.ctx, addr)
+	suite.Require().Equal(coinsBal.String(), sdk.NewCoins(sdk.NewInt64Coin(sdk.DefaultBondDenom, initialBal+claimableAmountForStake)).String())
+
+	spendableCoinsBal := suite.app.BankKeeper.SpendableCoins(suite.ctx, addr)
+	suite.Require().Equal(spendableCoinsBal.String(), sdk.NewCoins(sdk.NewInt64Coin(sdk.DefaultBondDenom, initialBal)).String())
+}
+
 // Run all airdrop flow
 func (suite *KeeperTestSuite) TestAirdropFlow() {
 	suite.SetupTest()
@@ -179,13 +219,31 @@ func (suite *KeeperTestSuite) TestAirdropFlow() {
 	coins = suite.app.BankKeeper.GetAllBalances(suite.ctx, addr1)
 	suite.Require().Equal(coins.String(), sdk.NewCoins(sdk.NewInt64Coin(sdk.DefaultBondDenom, claimableAmountForFree+claimableAmountForStake+claimableAmountForLiquidStake)).String())
 
+	// get spendable balances 3 months later
+	ctx := suite.ctx.WithBlockTime(time.Now().Add(types.DefaultVestingDurationForDelegateStake))
+	coinsSpendable := suite.app.BankKeeper.SpendableCoins(ctx, addr1)
+	suite.Require().Equal(coins.String(), coinsSpendable.String())
+
+	// check if claims don't vest after initial period of 3 months
+	suite.ctx = suite.ctx.WithBlockTime(time.Now().Add(types.DefaultVestingInitialPeriod))
+	suite.app.ClaimKeeper.ClearClaimedStatus(suite.ctx, "stride")
+	_, err = suite.app.ClaimKeeper.ClaimCoinsForAction(suite.ctx, addr1, types.ActionLiquidStake, "stride")
+	suite.Require().NoError(err)
+	claimableAmountForLiquidStake2 := sdk.NewDecWithPrec(80, 2).
+		Mul(sdk.NewDecWithPrec(80, 2)).
+		Mul(sdk.NewDecWithPrec(40, 2)).
+		Mul(sdk.NewDecWithPrec(60, 2)).
+		Mul(sdk.NewDec(100_000_000)).
+		RoundInt64() // remaining balance = 100000000*(80/100)*(80/100)*(40/100), claim 60% for liquid stake
+
+	coins = suite.app.BankKeeper.GetAllBalances(suite.ctx, addr1)
+	suite.Require().Equal(coins.String(), sdk.NewCoins(sdk.NewInt64Coin(sdk.DefaultBondDenom, claimableAmountForFree+claimableAmountForStake+claimableAmountForLiquidStake+claimableAmountForLiquidStake2)).String())
+	coinsSpendable = suite.app.BankKeeper.SpendableCoins(ctx, addr1)
+	suite.Require().Equal(coins.String(), coinsSpendable.String())
+
+	// end airdrop
 	err = suite.app.ClaimKeeper.EndAirdrop(suite.ctx, "stride")
 	suite.Require().NoError(err)
-
-	// get spendable balances 2 months later
-	ctx := suite.ctx.WithBlockTime(time.Now().Add(types.DefaultVestingDurationForDelegateStake))
-	coins = suite.app.BankKeeper.SpendableCoins(ctx, addr1)
-	suite.Require().Equal(coins.String(), sdk.NewCoins(sdk.NewInt64Coin(sdk.DefaultBondDenom, claimableAmountForFree+claimableAmountForStake+claimableAmountForLiquidStake/2)).String())
 }
 
 // Run multi chain airdrop flow
@@ -278,6 +336,7 @@ func (suite *KeeperTestSuite) TestMultiChainAirdropFlow() {
 	suite.Require().Equal(coins.String(), sdk.NewCoins(sdk.NewInt64Coin(sdk.DefaultBondDenom, (claimableAmountForFree+claimableAmountForStake+claimableAmountForLiquidStake)*2)).String())
 
 	// check if stride and osmosis airdrops ended properly
+	suite.ctx = suite.ctx.WithBlockHeight(1000)
 	suite.app.ClaimKeeper.EndBlocker(suite.ctx.WithBlockTime(time.Now().Add(types.DefaultAirdropDuration)))
 	// for stride
 	weight, err := suite.app.ClaimKeeper.GetTotalWeight(suite.ctx, types.DefaultAirdropIdentifier)
@@ -330,8 +389,9 @@ func (suite *KeeperTestSuite) TestMultiChainAirdropFlow() {
 	suite.Require().Equal(coins.String(), sdk.NewCoins(sdk.NewInt64Coin(sdk.DefaultBondDenom, claimableAmountForFree+claimableAmountForStake+claimableAmountForLiquidStake)).String())
 
 	// after 3 years, juno users should be still able to claim
+	suite.ctx = suite.ctx.WithBlockTime(time.Now().Add(types.DefaultAirdropDuration))
 	suite.app.ClaimKeeper.ClearClaimedStatus(suite.ctx, "juno")
-	coins, err = suite.app.ClaimKeeper.ClaimCoinsForAction(suite.ctx.WithBlockTime(time.Now().Add(time.Hour)), addr2, types.ActionFree, "juno")
+	coins, err = suite.app.ClaimKeeper.ClaimCoinsForAction(suite.ctx, addr2, types.ActionFree, "juno")
 	suite.Require().NoError(err)
 
 	claimableAmountForFree = sdk.NewDecWithPrec(80, 2).
@@ -343,7 +403,8 @@ func (suite *KeeperTestSuite) TestMultiChainAirdropFlow() {
 	suite.Require().Equal(coins.String(), sdk.NewCoins(sdk.NewInt64Coin(sdk.DefaultBondDenom, claimableAmountForFree)).String())
 
 	// after 3 years + 1 hour, juno users shouldn't be able to claim anymore
-	suite.app.ClaimKeeper.EndBlocker(suite.ctx.WithBlockTime(time.Now().Add(time.Hour).Add(types.DefaultAirdropDuration)))
+	suite.ctx = suite.ctx.WithBlockTime(time.Now().Add(time.Hour).Add(types.DefaultAirdropDuration))
+	suite.app.ClaimKeeper.EndBlocker(suite.ctx)
 	suite.app.ClaimKeeper.ClearClaimedStatus(suite.ctx, "juno")
 	coins, err = suite.app.ClaimKeeper.ClaimCoinsForAction(suite.ctx.WithBlockTime(time.Now().Add(time.Hour).Add(types.DefaultAirdropDuration)), addr2, types.ActionFree, "juno")
 	suite.Require().NoError(err)

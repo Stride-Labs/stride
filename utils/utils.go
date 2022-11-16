@@ -171,20 +171,13 @@ func Min64(i, j int64) int64 {
 	return j
 }
 
-// Insert a value in a slice at a given index
-// 0 <= index <= len(a)
-func Insert(a []interface{}, index int, value interface{}) []interface{} {
-	if len(a) == index { // nil or empty slice or after last element
-		return append(a, value)
-	}
-	a = append(a[:index+1], a[index:]...) // index < len(a)
-	a[index] = value
-	return a
-}
-
 // Compute coin amount for specific period using linear vesting calculation algorithm.
 func GetVestedCoinsAt(vAt int64, vStart int64, vLength int64, vCoins sdk.Coins) sdk.Coins {
 	var vestedCoins sdk.Coins
+
+	if vAt < 0 || vStart < 0 || vLength < 0 {
+		return sdk.Coins{}
+	}
 
 	vEnd := vStart + vLength
 	if vAt <= vStart {

@@ -16,7 +16,7 @@ service Msg {
 
 message MsgSetAirdropAllocations {
   string allocator = 1;
-  string airdrop_identifier = 2 [ (gogoproto.moretags) = "yaml:\"identifier\"" ];
+  string airdrop_identifier = 2 [ (gogoproto.moretags) = "yaml:\"airdrop_identifier\"" ];
   repeated string users = 3;
   repeated string weights = 4 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
@@ -29,7 +29,7 @@ message MsgSetAirdropAllocationsResponse {}
 
 message MsgClaimFreeAmount {
   string user = 1;
-  string airdrop_identifier = 2 [ (gogoproto.moretags) = "yaml:\"identifier\"" ];
+  string airdrop_identifier = 2 [ (gogoproto.moretags) = "yaml:\"airdrop_identifier\"" ];
 }
 
 message MsgClaimFreeAmountResponse {

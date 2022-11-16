@@ -42,9 +42,8 @@ type (
 		RecordsKeeper         recordsmodulekeeper.Keeper
 		StakingKeeper         stakingkeeper.Keeper
 		ICACallbacksKeeper    icacallbackskeeper.Keeper
-		// GovHooks
-		hooks         types.StakeIBCHooks
-		accountKeeper types.AccountKeeper
+		hooks                 types.StakeIBCHooks
+		accountKeeper         types.AccountKeeper
 	}
 )
 

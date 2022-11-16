@@ -37,14 +37,14 @@ service Query {
 
 // QueryParamsRequest is the request type for the Query/Params RPC method.
 message QueryDistributorAccountBalanceRequest {
-  string airdrop_identifier = 1 [(gogoproto.moretags)= "yaml:\"identifier\""];
+  string airdrop_identifier = 1 [ (gogoproto.moretags) = "yaml:\"airdrop_identifier\"" ];
 }
 
 // QueryParamsResponse is the response type for the Query/Params RPC method.
 message QueryDistributorAccountBalanceResponse {
   // params defines the parameters of the module.
-  repeated cosmos.base.v1beta1.Coin distributorAccountBalance = 1 [
-    (gogoproto.moretags) = "yaml:\"coins\"",
+  repeated cosmos.base.v1beta1.Coin distributor_account_balance = 1 [
+    (gogoproto.moretags) = "yaml:\"distributor_account_balance\"",
     (gogoproto.nullable) = false,
     (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
   ];
@@ -60,8 +60,8 @@ message QueryParamsResponse {
 }
 
 message QueryClaimRecordRequest {
-  string airdrop_identifier = 1 [ (gogoproto.moretags) = "yaml:\"identifier\"" ];
-  string address = 2 [ (gogoproto.moretags) = "yaml:\"sender\"" ];
+  string airdrop_identifier = 1 [ (gogoproto.moretags) = "yaml:\"airdrop_identifier\"" ];
+  string address = 2 [ (gogoproto.moretags) = "yaml:\"address\"" ];
 }
 
 message QueryClaimRecordResponse {
@@ -72,7 +72,7 @@ message QueryClaimRecordResponse {
 }
 
 message QueryClaimableForActionRequest {
-  string airdrop_identifier = 1 [ (gogoproto.moretags) = "yaml:\"identifier\"" ];
+  string airdrop_identifier = 1 [ (gogoproto.moretags) = "yaml:\"airdrop_identifier\"" ];
   string address = 2 [ (gogoproto.moretags) = "yaml:\"address\"" ];
   Action action = 3 [ (gogoproto.moretags) = "yaml:\"action\"" ];
 }
@@ -86,7 +86,7 @@ message QueryClaimableForActionResponse {
 }
 
 message QueryTotalClaimableRequest {
-  string airdrop_identifier = 1 [ (gogoproto.moretags) = "yaml:\"identifier\"" ];
+  string airdrop_identifier = 1 [ (gogoproto.moretags) = "yaml:\"airdrop_identifier\"" ];
   string address = 2 [ (gogoproto.moretags) = "yaml:\"address\"" ];
 }
 

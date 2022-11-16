@@ -16,6 +16,10 @@ func CmdDeleteAirdrop() *cobra.Command {
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
 			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return err
+			}
+
 			msg := types.NewMsgDeleteAirdrop(
 				clientCtx.GetFromAddress().String(),
 				args[0],
