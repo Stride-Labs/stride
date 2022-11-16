@@ -36,7 +36,7 @@ func (k *Keeper) SetCallbackHandler(module string, handler types.QueryCallbacks)
 	if found {
 		return fmt.Errorf("callback handler already set for %s", module)
 	}
-	k.callbacks[module] = handler.RegisterCallbacks()
+	k.callbacks[module] = handler.RegisterICQCallbacks()
 	return nil
 }
 
@@ -94,7 +94,7 @@ func (k *Keeper) MakeRequest(ctx sdk.Context, connection_id string, chain_id str
 				k.Logger(ctx).Error(err.Error())
 				return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "no callback handler registered for module")
 			}
-			if exists := k.callbacks[module].Has(callback_id); !exists {
+			if exists := k.callbacks[module].HasICQCallback(callback_id); !exists {
 				err := fmt.Errorf("no callback %s registered for module %s", callback_id, module)
 				k.Logger(ctx).Error(err.Error())
 				return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "no callback handler registered for module")
