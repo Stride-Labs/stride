@@ -36,8 +36,10 @@ setup() {
   SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
   PATH="$SCRIPT_DIR/../../:$PATH"
 
-
-
+  # if these extensions don't load properly, adjust the paths accoring to these instructions
+  TEST_BREW_PREFIX="$(brew --prefix)"
+  load "${TEST_BREW_PREFIX}/lib/bats-support/load.bash"
+  load "${TEST_BREW_PREFIX}/lib/bats-assert/load.bash"
 }
 
 ##############################################################################################
