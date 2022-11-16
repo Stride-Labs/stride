@@ -13,7 +13,7 @@ const (
 	UNDELEGATE = "undelegate"
 	REINVEST   = "reinvest"
 	REDEMPTION = "redemption"
-  REBALANCE = "rebalance"
+	REBALANCE  = "rebalance"
 )
 
 // ICACallbacks wrapper struct for stakeibc keeper
