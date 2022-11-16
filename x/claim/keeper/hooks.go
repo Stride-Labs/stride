@@ -20,7 +20,7 @@ func (k Keeper) AfterDelegationModified(ctx sdk.Context, delAddr sdk.AccAddress,
 		if err == nil {
 			write()
 		} else {
-			k.Logger(ctx).Error(fmt.Sprintf("Claim coins for %s for %s for staking failed!", delAddr.String(), identifier))
+			k.Logger(ctx).Error(fmt.Sprintf("airdrop claim failure for %s on delegation hook: %s", delAddr.String(), err.Error()))
 		}
 	}
 }
@@ -33,7 +33,7 @@ func (k Keeper) AfterLiquidStake(ctx sdk.Context, addr sdk.AccAddress) {
 		if err == nil {
 			write()
 		} else {
-			k.Logger(ctx).Error(fmt.Sprintf("Claim coins for %s for %s for liquid staking failed!", addr.String(), identifier))
+			k.Logger(ctx).Error(fmt.Sprintf("airdrop claim failure for %s on liquid staking hook: %s", addr.String(), err.Error()))
 		}
 	}
 }

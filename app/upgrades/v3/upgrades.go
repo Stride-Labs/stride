@@ -27,11 +27,14 @@ func CreateUpgradeHandler(
 ) upgradetypes.UpgradeHandler {
 	return func(ctx sdk.Context, _ upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
 		newVm, err := mm.RunMigrations(ctx, configurator, vm)
-		err1 := ck.CreateAirdropAndEpoch(ctx, airdropDistributor, claimtypes.DefaultClaimDenom, uint64(ctx.BlockTime().Unix()), uint64(airdropDuration.Seconds()), airdropIdentifier)
-		if err1 != nil {
-			panic(err1)
+		if err != nil {
+			return newVm, err
+		}
+		err = ck.CreateAirdropAndEpoch(ctx, airdropDistributor, claimtypes.DefaultClaimDenom, uint64(ctx.BlockTime().Unix()), uint64(airdropDuration.Seconds()), airdropIdentifier)
+		if err != nil {
+			return newVm, err
 		}
 		ck.LoadAllocationData(ctx, allocations)
-		return newVm, err
+		return newVm, nil
 	}
 }

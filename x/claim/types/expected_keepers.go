@@ -11,9 +11,7 @@ import (
 // creating a x/claim keeper.
 type BankKeeper interface {
 	SendCoins(ctx sdk.Context, fromAddr sdk.AccAddress, toAddr sdk.AccAddress, amt sdk.Coins) error
-	SendCoinsFromModuleToAccount(ctx sdk.Context, senderModule string, recipientAddr sdk.AccAddress, amt sdk.Coins) error
 	GetBalance(ctx sdk.Context, addr sdk.AccAddress, denom string) sdk.Coin
-	MintCoins(ctx sdk.Context, moduleName string, amt sdk.Coins) error
 }
 
 // AccountKeeper defines the expected account keeper used for simulations (noalias)
