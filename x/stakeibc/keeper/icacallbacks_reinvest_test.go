@@ -37,7 +37,7 @@ func (s *KeeperTestSuite) SetupReinvestCallback() ReinvestCallbackTestCase {
 	hostZone := stakeibc.HostZone{
 		ChainId:        HostChainId,
 		HostDenom:      Atom,
-		IBCDenom:       IbcAtom,
+		IbcDenom:       IbcAtom,
 		RedemptionRate: sdk.NewDec(1.0),
 	}
 	expectedNewDepositRecord := recordtypes.DepositRecord{

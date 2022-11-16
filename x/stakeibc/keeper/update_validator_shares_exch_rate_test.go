@@ -30,7 +30,7 @@ func (s *KeeperTestSuite) SetupQueryValidatorExchangeRate() QueryValidatorExchan
 	hostZone := types.HostZone{
 		ChainId:      HostChainId,
 		HostDenom:    Atom,
-		IBCDenom:     IbcAtom,
+		IbcDenom:     IbcAtom,
 		Bech32Prefix: Bech32Prefix,
 	}
 
@@ -152,7 +152,7 @@ func (s *KeeperTestSuite) SetupQueryDelegationsIcq() QueryDelegationsIcqTestCase
 	hostZone := types.HostZone{
 		ChainId:           HostChainId,
 		HostDenom:         Atom,
-		IBCDenom:          IbcAtom,
+		IbcDenom:          IbcAtom,
 		Bech32Prefix:      Bech32Prefix,
 		DelegationAccount: &stakeibctypes.ICAAccount{Address: delegationAddress},
 	}

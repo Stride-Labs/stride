@@ -33,7 +33,7 @@ func (s *KeeperTestSuite) SetupClearBalance() ClearBalanceTestCase {
 		ChainId:        HostChainId,
 		ConnectionId:   ibctesting.FirstConnectionID,
 		HostDenom:      Atom,
-		IBCDenom:       IbcAtom,
+		IbcDenom:       IbcAtom,
 		RedemptionRate: sdk.NewDec(1.0),
 		Address:        zoneAddress.String(),
 		FeeAccount: &stakeibctypes.ICAAccount{

@@ -69,7 +69,7 @@ func (k msgServer) RegisterHostZone(goCtx context.Context, msg *types.MsgRegiste
 		ChainId:           chainId,
 		ConnectionId:      msg.ConnectionId,
 		Bech32Prefix:      msg.Bech32Prefix,
-		IBCDenom:          msg.IbcDenom,
+		IbcDenom:          msg.IbcDenom,
 		HostDenom:         msg.HostDenom,
 		TransferChannelId: msg.TransferChannelId,
 		// Start exchange rate at 1 upon registration
