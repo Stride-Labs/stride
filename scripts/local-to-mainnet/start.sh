@@ -27,7 +27,7 @@ rm -rf $STATE $SCRIPT_DIR/../logs/*.log $SCRIPT_DIR/../logs/temp
 mkdir -p $SCRIPT_DIR/../logs
 
 # Start stride
-sh ${SCRIPT_DIR}/init_stride.sh $STRIDE_CHAIN_ID
+bash ${SCRIPT_DIR}/init_stride.sh $STRIDE_CHAIN_ID
 
 docker-compose up -d stride1
 docker-compose logs -f stride1 | sed -r -u "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2})?)?[mGK]//g" > $STRIDE_LOGS 2>&1 &
