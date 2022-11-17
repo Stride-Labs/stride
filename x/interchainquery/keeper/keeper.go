@@ -36,7 +36,7 @@ func (k *Keeper) SetCallbackHandler(module string, handler types.QueryCallbacks)
 	if found {
 		return fmt.Errorf("callback handler already set for %s", module)
 	}
-	k.callbacks[module] = handler.RegisterCallbacks()
+	k.callbacks[module] = handler.RegisterICQCallbacks()
 	return nil
 }
 
@@ -45,69 +45,73 @@ func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 	return ctx.Logger().With("module", fmt.Sprintf("x/%s", types.ModuleName))
 }
 
-func (k *Keeper) MakeRequest(ctx sdk.Context, connection_id string, chain_id string, query_type string, request []byte, period sdk.Int, module string, callback_id string, ttl uint64, height int64) error {
+func (k *Keeper) MakeRequest(ctx sdk.Context, connectionId string, chainId string, queryType string, request []byte, period sdk.Int, module string, callbackId string, ttl uint64, height int64) error {
 	k.Logger(ctx).Info(
 		"MakeRequest",
-		"connection_id", connection_id,
-		"chain_id", chain_id,
-		"query_type", query_type,
+		"connectionId", connectionId,
+		"chainId", chainId,
+		"queryType", queryType,
 		"request", request,
 		"period", period,
 		"module", module,
-		"callback", callback_id,
+		"callback", callbackId,
 		"ttl", ttl,
 		"height", height,
 	)
 
-	// ======================================================================================================================
-	// Perform basic validation on the query input
-
-	// today we only support queries at the latest block height on the host zone, specified by "height=0"
-
+	// Only 0 height queries are currently supported
 	if height != 0 {
-		return fmt.Errorf("ICQ query height must be 0! Found a query at non-zero height %d", height)
+		errMsg := "[ICQ Validation Check] Failed! height for interchainquery must be 0 (we exclusively query at the latest height on the host zone)"
+		k.Logger(ctx).Error(errMsg)
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, errMsg)
 	}
 
-	// connection id cannot be empty and must begin with "connection"
-	if connection_id == "" {
-		k.Logger(ctx).Error("[ICQ Validation Check] Failed! connection id cannot be empty")
+	// Confirm the connectionId and chainId are valid
+	if connectionId == "" {
+		errMsg := "[ICQ Validation Check] Failed! connection id cannot be empty"
+		k.Logger(ctx).Error(errMsg)
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, errMsg)
 	}
-	if !strings.HasPrefix(connection_id, "connection") {
-		k.Logger(ctx).Error("[ICQ Validation Check] Failed! connection id must begin with 'connection'")
+	if !strings.HasPrefix(connectionId, "connection") {
+		errMsg := "[ICQ Validation Check] Failed! connection id must begin with 'connection'"
+		k.Logger(ctx).Error(errMsg)
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, errMsg)
 	}
-	// height must be 0
-	if height != 0 {
-		k.Logger(ctx).Error("[ICQ Validation Check] Failed! height for interchainquery must be 0 (we exclusively query at the latest height on the host zone)")
+	if chainId == "" {
+		errMsg := "[ICQ Validation Check] Failed! chain_id cannot be empty"
+		k.Logger(ctx).Error(errMsg)
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, errMsg)
 	}
-	// chain_id cannot be empty
-	if chain_id == "" {
-		k.Logger(ctx).Error("[ICQ Validation Check] Failed! chain_id cannot be empty")
-	}
-	// ======================================================================================================================
 
-	key := GenerateQueryHash(connection_id, chain_id, query_type, request, module, height)
-	existingQuery, found := k.GetQuery(ctx, key)
-	if !found {
-		if module != "" {
-			if _, exists := k.callbacks[module]; !exists {
-				err := fmt.Errorf("no callback handler registered for module %s", module)
-				k.Logger(ctx).Error(err.Error())
-				return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "no callback handler registered for module")
-			}
-			if exists := k.callbacks[module].Has(callback_id); !exists {
-				err := fmt.Errorf("no callback %s registered for module %s", callback_id, module)
-				k.Logger(ctx).Error(err.Error())
-				return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "no callback handler registered for module")
-
-			}
+	// Confirm the module and callbackId exist
+	if module != "" {
+		if _, exists := k.callbacks[module]; !exists {
+			err := fmt.Errorf("no callback handler registered for module %s", module)
+			k.Logger(ctx).Error(err.Error())
+			return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "no callback handler registered for module")
 		}
-		newQuery := k.NewQuery(ctx, module, connection_id, chain_id, query_type, request, period, callback_id, ttl, height)
-		k.SetQuery(ctx, *newQuery)
-
-	} else {
-		// a re-request of an existing query triggers resetting of height to trigger immediately.
-		existingQuery.LastHeight = sdk.ZeroInt()
-		k.SetQuery(ctx, existingQuery)
+		if exists := k.callbacks[module].HasICQCallback(callbackId); !exists {
+			err := fmt.Errorf("no callback %s registered for module %s", callbackId, module)
+			k.Logger(ctx).Error(err.Error())
+			return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "no callback handler registered for module")
+		}
 	}
+
+	// Check to see if the query already exists
+	key := GenerateQueryHash(connectionId, chainId, queryType, request, module, height)
+	query, found := k.GetQuery(ctx, key)
+
+	// If this is a new query, build the query object
+	if !found {
+		query = *k.NewQuery(ctx, module, connectionId, chainId, queryType, request, period, callbackId, ttl, height)
+	} else {
+		// Otherwise, if the same query is re-requested - reset the TTL
+		k.Logger(ctx).Info("Query already exists - resetting TTL")
+		query.Ttl = ttl
+		query.LastHeight = sdk.ZeroInt() // allows query to be emitted again
+	}
+
+	// Save the query to the store
+	k.SetQuery(ctx, query)
 	return nil
 }

@@ -70,7 +70,10 @@ HERMES_${CHAIN_ID}_MNEMONIC=""
 
 RELAYER_{CHAIN_ID}_EXEC="docker-compose run --rm relayer-{new-host-zone}"
 RELAYER_{CHAIN_ID}_ACCT=rly{add one since the account from the last host zone}
+HOST_RELAYER_ACCTS=(... $RELAYER_{CHAIN_ID}_ACCT)
+
 RELAYER_{CHAIN_ID}_MNEMONIC=""
+RELAYER_MNEMONICS=(...,"$RELAYER_{CHAIN_ID}_MNEMONIC")
 
 ```
 * Add the IBC denom's for the host zone across each channel. You can use the following code block (just temporarily throw it in any of the test files and run it)
