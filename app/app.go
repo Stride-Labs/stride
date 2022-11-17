@@ -698,6 +698,7 @@ func NewStrideApp(
 		recordsmoduletypes.ModuleName,
 		icacallbacksmoduletypes.ModuleName,
 		claimtypes.ModuleName,
+		authz.ModuleName,
 		// this line is used by starport scaffolding # stargate/app/endBlockers
 	)
 
