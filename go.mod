@@ -129,7 +129,7 @@ replace (
 	// dragonberry replkace line per: https://github.com/cosmos/cosmos-sdk/releases/tag/v0.45.9
 	github.com/confio/ics23/go => github.com/cosmos/cosmos-sdk/ics23/go v0.8.0
 	// apply ICA patch
-	github.com/cosmos/cosmos-sdk => github.com/Stride-Labs/cosmos-sdk v0.45.9-dragonberry
+	// github.com/cosmos/cosmos-sdk => github.com/Stride-Labs/cosmos-sdk v0.45.9-dragonberry
 	github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alpha.regen.1
 	// Use a specific version of ignite cli
 	github.com/ignite-hq/cli => github.com/ignite-hq/cli v0.21.0

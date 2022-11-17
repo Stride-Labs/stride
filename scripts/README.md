@@ -75,7 +75,7 @@ RELAYER_{CHAIN_ID}_MNEMONIC=""
 ```
 * Add the IBC denom's for the host zone across each channel. You can use the following code block (just temporarily throw it in any of the test files and run it)
 ```
-import transfertypes "github.com/cosmos/ibc-go/v3/modules/apps/transfer/types"
+import transfertypes "github.com/cosmos/ibc-go/v5/modules/apps/transfer/types"
 
 func (s *KeeperTestSuite) TestIBCDenom() {
 	chainId := {CHAIN_ID}
