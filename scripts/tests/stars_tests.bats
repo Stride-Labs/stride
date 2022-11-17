@@ -69,17 +69,17 @@ setup() {
 # # add test to register host zone
 @test "[INTEGRATION-BASIC] host zones successfully registered" {
   run $STRIDE_MAIN_CMD q stakeibc show-host-zone STARS
-  assert_line '  HostDenom: ustars'
-  assert_line '  chainId: STARS'
-  assert_line '  delegationAccount:'
+  assert_line '  host_denom: ustars'
+  assert_line '  chain_id: STARS'
+  assert_line '  delegation_account:'
   assert_line '    address: stars1kl6wa99e6hf97xr90m2n04rl0smv842pj9utqyvgyrksrm9aacdqyfc3en'
-  assert_line '  feeAccount:'
+  assert_line '  fee_account:'
   assert_line '    address: stars1v09y993sku5djvm0rffq0nfsk5rzke4d2vzvny5e6vmq7dz0dehqnwl4ay'
-  assert_line '  redemptionAccount:'
+  assert_line '  redemption_account:'
   assert_line '    address: stars1x07hv0hxujj6l0mfyynwyuccf8fl27vjup0y8dmyajy9ugae22hqfvmv4e'
-  assert_line '  withdrawalAccount:'
+  assert_line '  withdrawal_account:'
   assert_line '    address: stars1x5ndl5p9tjy376a9xmqhw79gz0s678480759cdgaretcgm36akvs0a78tj'
-  assert_line '  unbondingFrequency: "1"'
+  assert_line '  unbonding_frequency: "1"'
 }
 
 ##############################################################################################
@@ -181,7 +181,7 @@ setup() {
   # TODO check that the UserRedemptionRecord has isClaimable = true
 
   # grab the epoch number for the first deposit record in the list od DRs
-  EPOCH=$(strided q records list-user-redemption-record  | grep -Fiw 'epochNumber' | head -n 1 | grep -o -E '[0-9]+')
+  EPOCH=$(strided q records list-user-redemption-record  | grep -Fiw 'epoch_number' | head -n 1 | grep -o -E '[0-9]+')
   # claim the record
   $STRIDE_MAIN_CMD tx stakeibc claim-undelegated-tokens STARS $EPOCH $SENDER_ACCT --from val1 --keyring-backend test --chain-id STRIDE -y
   WAIT_FOR_STRING $STRIDE_LOGS '\[CLAIM\] success on STARS'
@@ -199,7 +199,7 @@ setup() {
 # check that a second liquid staking call kicks off reinvestment
 @test "[INTEGRATION-BASIC-STARS] rewards are being reinvested, exchange rate updating" {
   # read the exchange rate and current delegations
-  RR1=$($STRIDE_MAIN_CMD q stakeibc show-host-zone STARS | grep -Fiw 'RedemptionRate' | grep -Eo '[+-]?[0-9]+([.][0-9]+)?')
+  RR1=$($STRIDE_MAIN_CMD q stakeibc show-host-zone STARS | grep -Fiw 'redemption_rate' | grep -Eo '[+-]?[0-9]+([.][0-9]+)?')
   OLD_STAKED_BAL=$($STARS_MAIN_CMD q staking delegation $(GET_ICA_ADDR STARS delegation) $(GET_VAL_ADDR STARS 1) | GETSTAKE)
   # liquid stake again to kickstart the reinvestment process
   $STRIDE_MAIN_CMD tx stakeibc liquid-stake 1000 ustars --keyring-backend test --from val1 -y --chain-id $STRIDE_CHAIN_ID
@@ -212,7 +212,7 @@ setup() {
   STAKED_BAL_INCREASED=$(($NEW_STAKED_BAL > $OLD_STAKED_BAL))
   assert_equal "$STAKED_BAL_INCREASED" "1"
 
-  RR2=$($STRIDE_MAIN_CMD q stakeibc show-host-zone STARS | grep -Fiw 'RedemptionRate' | grep -Eo '[+-]?[0-9]+([.][0-9]+)?')
+  RR2=$($STRIDE_MAIN_CMD q stakeibc show-host-zone STARS | grep -Fiw 'redemption_rate' | grep -Eo '[+-]?[0-9]+([.][0-9]+)?')
   # check that the exchange rate has increased
   MULT=1000000
   RR_INCREASED=$(( $(FLOOR $(DECMUL $RR2 $MULT)) > $(FLOOR $(DECMUL $RR1 $MULT))))
