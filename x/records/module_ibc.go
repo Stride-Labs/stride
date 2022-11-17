@@ -45,7 +45,7 @@ func (im IBCModule) OnChanOpenInit(
 	channelCap *capabilitytypes.Capability,
 	counterparty channeltypes.Counterparty,
 	version string,
-) error {
+) (string, error) {
 	// Note: The channel capability must be claimed by the authentication module in OnChanOpenInit otherwise the
 	// authentication module will not be able to send packets on the channel created for the associated interchain account.
 	// NOTE: unsure if we have to claim this here! CHECK ME
@@ -54,7 +54,7 @@ func (im IBCModule) OnChanOpenInit(
 	// }
 	_, appVersion := SplitChannelVersion(version)
 	// doCustomLogic()
-	_, err := im.app.OnChanOpenInit(
+	version, err := im.app.OnChanOpenInit(
 		ctx,
 		order,
 		connectionHops,
@@ -64,7 +64,7 @@ func (im IBCModule) OnChanOpenInit(
 		counterparty,
 		appVersion, // note we only pass app version here
 	)
-	return err
+	return version, err
 }
 
 // OnChanOpenTry implements the IBCModule interface.
@@ -255,8 +255,8 @@ func (am AppModule) OnChanOpenInit(
 	chanCap *capabilitytypes.Capability,
 	counterparty channeltypes.Counterparty,
 	version string,
-) error {
-	return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "UNIMPLEMENTED")
+) (string, error) {
+	return "", sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "UNIMPLEMENTED")
 }
 
 // OnChanOpenTry implements the IBCModule interface
