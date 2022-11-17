@@ -215,7 +215,10 @@ func (s *AppTestHelper) RegisterInterchainAccount(endpoint *ibctesting.Endpoint,
 	// Get the next channel available and register the ICA
 	channelSequence := s.App.IBCKeeper.ChannelKeeper.GetNextChannelSequence(s.Ctx())
 
-	err = s.App.ICAControllerKeeper.RegisterInterchainAccount(s.Ctx(), endpoint.ConnectionID, owner)
+	appVersion, found := s.App.ICAControllerKeeper.GetAppVersion(s.Ctx(), portID, endpoint.ChannelID)
+	s.Require().True(found)
+
+	err = s.App.ICAControllerKeeper.RegisterInterchainAccount(s.Ctx(), endpoint.ConnectionID, owner, appVersion)
 	s.Require().NoError(err, "register interchain account error")
 
 	// Commit the state

@@ -35,8 +35,14 @@ func (k msgServer) RestoreInterchainAccount(goCtx context.Context, msg *types.Ms
 		k.Logger(ctx).Error(errMsg)
 		return nil, sdkerrors.Wrapf(types.ErrInvalidInterchainAccountAddress, errMsg)
 	}
+	appVerSion, found := k.ICAControllerKeeper.GetAppVersion(ctx, portID, hostZone.TransferChannelId)
+	if !found {
+		errMsg := fmt.Sprintf("unable to get app version")
+		k.Logger(ctx).Error(errMsg)
+		return nil, sdkerrors.Wrapf(sdkerrors.ErrNotFound, errMsg)
+	}
 
-	if err := k.ICAControllerKeeper.RegisterInterchainAccount(ctx, hostZone.ConnectionId, owner); err != nil {
+	if err := k.ICAControllerKeeper.RegisterInterchainAccount(ctx, hostZone.ConnectionId, owner, appVerSion); err != nil {
 		k.Logger(ctx).Error(fmt.Sprintf("unable to register %s account : %s", msg.AccountType.String(), err))
 		return nil, err
 	}

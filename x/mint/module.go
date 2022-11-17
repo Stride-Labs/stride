@@ -18,7 +18,6 @@ import (
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
 
 	"github.com/Stride-Labs/stride/x/mint/client/cli"
-	"github.com/Stride-Labs/stride/x/mint/client/rest"
 	"github.com/Stride-Labs/stride/x/mint/keeper"
 
 	//"github.com/Stride-Labs/stride/x/mint/simulation"

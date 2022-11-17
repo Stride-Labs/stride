@@ -2,6 +2,7 @@ package records
 
 import (
 	"fmt"
+	"strings"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -51,9 +52,9 @@ func (im IBCModule) OnChanOpenInit(
 	// if err := im.keeper.ClaimCapability(ctx, channelCap, host.ChannelCapabilityPath(portID, channelID)); err != nil {
 	// 	return err
 	// }
-	_, appVersion := channeltypes.SplitChannelVersion(version)
+	_, appVersion := SplitChannelVersion(version)
 	// doCustomLogic()
-	return im.app.OnChanOpenInit(
+	_, err := im.app.OnChanOpenInit(
 		ctx,
 		order,
 		connectionHops,
@@ -63,6 +64,7 @@ func (im IBCModule) OnChanOpenInit(
 		counterparty,
 		appVersion, // note we only pass app version here
 	)
+	return err
 }
 
 // OnChanOpenTry implements the IBCModule interface.
@@ -78,7 +80,7 @@ func (im IBCModule) OnChanOpenTry(
 ) (string, error) {
 	// doCustomLogic()
 	// core/04-channel/types contains a helper function to split middleware and underlying app version
-	_, cpAppVersion := channeltypes.SplitChannelVersion(counterpartyVersion)
+	_, cpAppVersion := SplitChannelVersion(counterpartyVersion)
 
 	// call the underlying applications OnChanOpenTry callback
 	version, err := im.app.OnChanOpenTry(
@@ -348,4 +350,15 @@ func (am AppModule) NegotiateAppVersion(
 	proposedVersion string,
 ) (version string, err error) {
 	return proposedVersion, nil
+}
+
+func SplitChannelVersion(version string) (middlewareVersion, appVersion string) {
+	// only split out the first middleware version
+	splitVersions := strings.Split(version, ":")
+	if len(splitVersions) == 1 {
+		return "", version
+	}
+	middlewareVersion = splitVersions[0]
+	appVersion = strings.Join(splitVersions[1:], ":")
+	return
 }

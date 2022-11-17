@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	icatypes "github.com/cosmos/ibc-go/v5/modules/apps/27-interchain-accounts/types"
 
 	epochtypes "github.com/Stride-Labs/stride/x/epochs/types"
 	recordstypes "github.com/Stride-Labs/stride/x/records/types"
@@ -84,7 +85,14 @@ func (k msgServer) RegisterHostZone(goCtx context.Context, msg *types.MsgRegiste
 	// generate delegate account
 	// NOTE: in the future, if we implement proxy governance, we'll need many more delegate accounts
 	delegateAccount := types.FormatICAAccountOwner(chainId, types.ICAAccountType_DELEGATION)
-	if err := k.ICAControllerKeeper.RegisterInterchainAccount(ctx, zone.ConnectionId, delegateAccount); err != nil {
+	delegateAccountPortId, _ := icatypes.NewControllerPortID(delegateAccount)
+	appVerSion, found := k.ICAControllerKeeper.GetAppVersion(ctx, delegateAccountPortId, msg.TransferChannelId)
+	if !found {
+		errMsg := fmt.Sprintf("unable to get app version")
+		k.Logger(ctx).Error(errMsg)
+		return nil, sdkerrors.Wrapf(sdkerrors.ErrNotFound, errMsg)
+	}
+	if err := k.ICAControllerKeeper.RegisterInterchainAccount(ctx, zone.ConnectionId, delegateAccount, appVerSion); err != nil {
 		errMsg := fmt.Sprintf("unable to register delegation account, err: %s", err.Error())
 		k.Logger(ctx).Error(errMsg)
 		return nil, sdkerrors.Wrapf(types.ErrFailedToRegisterHostZone, errMsg)
@@ -92,7 +100,14 @@ func (k msgServer) RegisterHostZone(goCtx context.Context, msg *types.MsgRegiste
 
 	// generate fee account
 	feeAccount := types.FormatICAAccountOwner(chainId, types.ICAAccountType_FEE)
-	if err := k.ICAControllerKeeper.RegisterInterchainAccount(ctx, zone.ConnectionId, feeAccount); err != nil {
+	feeAccountPortId, _ := icatypes.NewControllerPortID(feeAccount)
+	appVerSion, found = k.ICAControllerKeeper.GetAppVersion(ctx, feeAccountPortId, msg.TransferChannelId)
+	if !found {
+		errMsg := fmt.Sprintf("unable to get app version")
+		k.Logger(ctx).Error(errMsg)
+		return nil, sdkerrors.Wrapf(sdkerrors.ErrNotFound, errMsg)
+	}
+	if err := k.ICAControllerKeeper.RegisterInterchainAccount(ctx, zone.ConnectionId, feeAccount, appVerSion); err != nil {
 		errMsg := fmt.Sprintf("unable to register fee account, err: %s", err.Error())
 		k.Logger(ctx).Error(errMsg)
 		return nil, sdkerrors.Wrapf(types.ErrFailedToRegisterHostZone, errMsg)
@@ -100,7 +115,14 @@ func (k msgServer) RegisterHostZone(goCtx context.Context, msg *types.MsgRegiste
 
 	// generate withdrawal account
 	withdrawalAccount := types.FormatICAAccountOwner(chainId, types.ICAAccountType_WITHDRAWAL)
-	if err := k.ICAControllerKeeper.RegisterInterchainAccount(ctx, zone.ConnectionId, withdrawalAccount); err != nil {
+	withdrawalAccountPortId, _ := icatypes.NewControllerPortID(feeAccount)
+	appVerSion, found = k.ICAControllerKeeper.GetAppVersion(ctx, withdrawalAccountPortId, msg.TransferChannelId)
+	if !found {
+		errMsg := fmt.Sprintf("unable to get app version")
+		k.Logger(ctx).Error(errMsg)
+		return nil, sdkerrors.Wrapf(sdkerrors.ErrNotFound, errMsg)
+	}
+	if err := k.ICAControllerKeeper.RegisterInterchainAccount(ctx, zone.ConnectionId, withdrawalAccount, appVerSion); err != nil {
 		errMsg := fmt.Sprintf("unable to register withdrawal account, err: %s", err.Error())
 		k.Logger(ctx).Error(errMsg)
 		return nil, sdkerrors.Wrapf(types.ErrFailedToRegisterHostZone, errMsg)
@@ -108,7 +130,14 @@ func (k msgServer) RegisterHostZone(goCtx context.Context, msg *types.MsgRegiste
 
 	// generate redemption account
 	redemptionAccount := types.FormatICAAccountOwner(chainId, types.ICAAccountType_REDEMPTION)
-	if err := k.ICAControllerKeeper.RegisterInterchainAccount(ctx, zone.ConnectionId, redemptionAccount); err != nil {
+	redemptionAccountPortId, _ := icatypes.NewControllerPortID(feeAccount)
+	appVerSion, found = k.ICAControllerKeeper.GetAppVersion(ctx, redemptionAccountPortId, msg.TransferChannelId)
+	if !found {
+		errMsg := fmt.Sprintf("unable to get app version")
+		k.Logger(ctx).Error(errMsg)
+		return nil, sdkerrors.Wrapf(sdkerrors.ErrNotFound, errMsg)
+	}
+	if err := k.ICAControllerKeeper.RegisterInterchainAccount(ctx, zone.ConnectionId, redemptionAccount, appVerSion); err != nil {
 		errMsg := fmt.Sprintf("unable to register redemption account, err: %s", err.Error())
 		k.Logger(ctx).Error(errMsg)
 		return nil, sdkerrors.Wrapf(types.ErrFailedToRegisterHostZone, errMsg)

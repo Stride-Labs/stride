@@ -43,8 +43,9 @@ func (im IBCModule) OnChanOpenInit(
 ) error {
 	// Note: The channel capability is claimed by the underlying app.
 	// call underlying app's OnChanOpenInit callback with the appVersion
-	return im.app.OnChanOpenInit(ctx, order, connectionHops, portID, channelID,
+	_, err := im.app.OnChanOpenInit(ctx, order, connectionHops, portID, channelID,
 		channelCap, counterparty, version)
+	return err
 }
 
 // OnChanOpenAck implements the IBCModule interface
