@@ -88,7 +88,7 @@ func (k Keeper) DelegateOnHost(ctx sdk.Context, hostZone types.HostZone, amt sdk
 	}
 
 	// Send the transaction through SubmitTx
-	_, err = k.SubmitTxsStrideEpoch(ctx, connectionId, msgs, *delegationIca, DELEGATE, marshalledCallbackArgs)
+	_, err = k.SubmitTxsStrideEpoch(ctx, connectionId, msgs, *delegationIca, ICACallbackID_Delegate, marshalledCallbackArgs)
 	if err != nil {
 		return sdkerrors.Wrapf(err, "Failed to SubmitTxs for connectionId %s on %s. Messages: %s", connectionId, hostZone.ChainId, msgs)
 	}
@@ -169,7 +169,7 @@ func (k Keeper) UpdateWithdrawalBalance(ctx sdk.Context, zoneInfo types.HostZone
 		append(data, []byte(zoneInfo.HostDenom)...),
 		sdk.NewInt(-1),
 		types.ModuleName,
-		"withdrawalbalance",
+		ICQCallbackID_WithdrawalBalance,
 		ttl, // ttl
 		0,   // height always 0 (which means current height)
 	)
@@ -397,7 +397,7 @@ func (k Keeper) QueryValidatorExchangeRate(ctx sdk.Context, msg *types.MsgUpdate
 		data,
 		sdk.NewInt(-1),
 		types.ModuleName,
-		"validator",
+		ICQCallbackID_Validator,
 		ttl, // ttl
 		0,   // height always 0 (which means current height)
 	)
@@ -448,7 +448,7 @@ func (k Keeper) QueryDelegationsIcq(ctx sdk.Context, hostZone types.HostZone, va
 		data,
 		sdk.NewInt(-1),
 		types.ModuleName,
-		"delegation",
+		ICQCallbackID_Delegation,
 		ttl, // ttl
 		0,   // height always 0 (which means current height)
 	)
