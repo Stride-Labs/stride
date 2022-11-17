@@ -23,7 +23,7 @@ Stride is a blockchain ("zone") that provides liquidity for staked assets. Using
 To install the latest version of Stride blockchain node binary, execute the following command on your machine:
 
 ```
-git clone https://github.com/Stride-Labs/stride
+git clone https://github.com/Stride-Labs/stride/v2
 ```
 
 Test your installation by navigating to the stride directory and executing: 
@@ -94,7 +94,7 @@ For example, adding a new message type and updating the logic of that message wo
 >>> git add . && git commit -m 'update loan list keeper method'
 ```
 
-An example of a PR using this strategy can be found [here](https://github.com/Stride-Labs/stride/pull/1). Notice, it's easy to differentiate between changes made by ignite and those made manually by reviewing commits. For example, in commit fd3e254bc0, it's easy to see that [a few lines were changes manually](https://github.com/Stride-Labs/stride/pull/1/commits/fd3e254bc0844fe65f5e98f12b366feef2a285f9) even though nearly ~300k LOC were scaffolded.
+An example of a PR using this strategy can be found [here](https://github.com/Stride-Labs/stride/v2/pull/1). Notice, it's easy to differentiate between changes made by ignite and those made manually by reviewing commits. For example, in commit fd3e254bc0, it's easy to see that [a few lines were changes manually](https://github.com/Stride-Labs/stride/v2/pull/1/commits/fd3e254bc0844fe65f5e98f12b366feef2a285f9) even though nearly ~300k LOC were scaffolded.
 
 #### Code review format
 Opening a pull request (PR) will automatically create Summary and Test plan fields in the description. In the summary, add a high-level summary of what the change entails. For pull requests that scaffold ignite code, include the ignite scaffold commands run.

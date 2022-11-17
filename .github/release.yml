@@ -2,7 +2,7 @@
 
 # 🔨 Build from source
 ```
-git clone https://github.com/Stride-Labs/stride
+git clone https://github.com/Stride-Labs/stride/v2
 cd stride && git checkout v1.0.0
 make build
 ```

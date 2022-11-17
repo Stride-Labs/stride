@@ -3,10 +3,10 @@ package icacallbacks_test
 import (
 	"testing"
 
-	keepertest "github.com/Stride-Labs/stride/testutil/keeper"
-	"github.com/Stride-Labs/stride/testutil/nullify"
-	"github.com/Stride-Labs/stride/x/icacallbacks"
-	"github.com/Stride-Labs/stride/x/icacallbacks/types"
+	keepertest "github.com/Stride-Labs/stride/v2/testutil/keeper"
+	"github.com/Stride-Labs/stride/v2/testutil/nullify"
+	"github.com/Stride-Labs/stride/v2/x/icacallbacks"
+	"github.com/Stride-Labs/stride/v2/x/icacallbacks/types"
 	"github.com/stretchr/testify/require"
 )
 

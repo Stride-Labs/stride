@@ -3,8 +3,8 @@ package mint
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Stride-Labs/stride/x/mint/keeper"
-	"github.com/Stride-Labs/stride/x/mint/types"
+	"github.com/Stride-Labs/stride/v2/x/mint/keeper"
+	"github.com/Stride-Labs/stride/v2/x/mint/types"
 )
 
 // InitGenesis new mint genesis.

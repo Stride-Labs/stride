@@ -11,9 +11,9 @@ import (
 	clienttypes "github.com/cosmos/ibc-go/v3/modules/core/02-client/types"
 	"github.com/spf13/cast"
 
-	"github.com/Stride-Labs/stride/utils"
-	recordstypes "github.com/Stride-Labs/stride/x/records/types"
-	"github.com/Stride-Labs/stride/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v2/utils"
+	recordstypes "github.com/Stride-Labs/stride/v2/x/records/types"
+	"github.com/Stride-Labs/stride/v2/x/stakeibc/types"
 )
 
 func (k Keeper) CreateDepositRecordsForEpoch(ctx sdk.Context, epochNumber uint64) {

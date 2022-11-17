@@ -7,9 +7,9 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	_ "github.com/stretchr/testify/suite"
 
-	recordtypes "github.com/Stride-Labs/stride/x/records/types"
+	recordtypes "github.com/Stride-Labs/stride/v2/x/records/types"
 
-	stakeibc "github.com/Stride-Labs/stride/x/stakeibc/types"
+	stakeibc "github.com/Stride-Labs/stride/v2/x/stakeibc/types"
 )
 
 type GetHostZoneUnbondingMsgsTestCase struct {

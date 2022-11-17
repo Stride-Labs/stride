@@ -1,7 +1,7 @@
 package types
 
 import (
-	"github.com/Stride-Labs/stride/utils"
+	"github.com/Stride-Labs/stride/v2/utils"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )

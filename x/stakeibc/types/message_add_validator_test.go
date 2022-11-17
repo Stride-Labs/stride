@@ -3,7 +3,7 @@ package types
 import (
 	"testing"
 
-	"github.com/Stride-Labs/stride/testutil/sample"
+	"github.com/Stride-Labs/stride/v2/testutil/sample"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/stretchr/testify/require"
 )

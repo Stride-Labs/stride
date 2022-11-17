@@ -12,10 +12,10 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/Stride-Labs/stride/testutil/network"
-	"github.com/Stride-Labs/stride/testutil/nullify"
-	"github.com/Stride-Labs/stride/x/records/client/cli"
-	"github.com/Stride-Labs/stride/x/records/types"
+	"github.com/Stride-Labs/stride/v2/testutil/network"
+	"github.com/Stride-Labs/stride/v2/testutil/nullify"
+	"github.com/Stride-Labs/stride/v2/x/records/client/cli"
+	"github.com/Stride-Labs/stride/v2/x/records/types"
 )
 
 func networkWithUserRedemptionRecordObjects(t *testing.T, n int) (*network.Network, []types.UserRedemptionRecord) {

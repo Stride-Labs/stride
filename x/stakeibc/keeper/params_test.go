@@ -3,8 +3,8 @@ package keeper_test
 import (
 	"testing"
 
-	testkeeper "github.com/Stride-Labs/stride/testutil/keeper"
-	"github.com/Stride-Labs/stride/x/stakeibc/types"
+	testkeeper "github.com/Stride-Labs/stride/v2/testutil/keeper"
+	"github.com/Stride-Labs/stride/v2/x/stakeibc/types"
 	"github.com/stretchr/testify/require"
 )
 

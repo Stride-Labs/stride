@@ -7,8 +7,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 
-	strideapp "github.com/Stride-Labs/stride/app"
-	"github.com/Stride-Labs/stride/x/stakeibc/keeper"
+	strideapp "github.com/Stride-Labs/stride/v2/app"
+	"github.com/Stride-Labs/stride/v2/x/stakeibc/keeper"
 )
 
 func StakeibcKeeper(t testing.TB) (*keeper.Keeper, sdk.Context) {

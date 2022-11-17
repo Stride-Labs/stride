@@ -3,9 +3,10 @@ package types
 import (
 	"testing"
 
-	"github.com/Stride-Labs/stride/testutil/sample"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/stretchr/testify/require"
+
+	"github.com/Stride-Labs/stride/v2/testutil/sample"
 )
 
 func TestMsgDeleteValidator_ValidateBasic(t *testing.T) {

@@ -13,8 +13,8 @@ import (
 	capabilitykeeper "github.com/cosmos/cosmos-sdk/x/capability/keeper"
 	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
 
-	icqkeeper "github.com/Stride-Labs/stride/x/interchainquery/keeper"
-	"github.com/Stride-Labs/stride/x/stakeibc/types"
+	icqkeeper "github.com/Stride-Labs/stride/v2/x/interchainquery/keeper"
+	"github.com/Stride-Labs/stride/v2/x/stakeibc/types"
 
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
@@ -22,9 +22,9 @@ import (
 	ibckeeper "github.com/cosmos/ibc-go/v3/modules/core/keeper"
 	ibctmtypes "github.com/cosmos/ibc-go/v3/modules/light-clients/07-tendermint/types"
 
-	epochstypes "github.com/Stride-Labs/stride/x/epochs/types"
-	icacallbackskeeper "github.com/Stride-Labs/stride/x/icacallbacks/keeper"
-	recordsmodulekeeper "github.com/Stride-Labs/stride/x/records/keeper"
+	epochstypes "github.com/Stride-Labs/stride/v2/x/epochs/types"
+	icacallbackskeeper "github.com/Stride-Labs/stride/v2/x/icacallbacks/keeper"
+	recordsmodulekeeper "github.com/Stride-Labs/stride/v2/x/records/keeper"
 )
 
 type (
@@ -263,8 +263,8 @@ func (k Keeper) IsRedemptionRateWithinSafetyBounds(ctx sdk.Context, zone types.H
 
 // Check the max number of validators to confirm we won't exceed it when adding a new validator
 // Types of additions:
-//	* change a weight from zero to non-zero
-//  * add a new validator with non-zero weight
+//   - change a weight from zero to non-zero
+//   - add a new validator with non-zero weight
 func (k Keeper) ConfirmValSetHasSpace(ctx sdk.Context, validators []*types.Validator) error {
 
 	// get max val parameter

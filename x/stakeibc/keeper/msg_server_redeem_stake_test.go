@@ -7,9 +7,9 @@ import (
 	"github.com/spf13/cast"
 	_ "github.com/stretchr/testify/suite"
 
-	epochtypes "github.com/Stride-Labs/stride/x/epochs/types"
-	recordtypes "github.com/Stride-Labs/stride/x/records/types"
-	stakeibctypes "github.com/Stride-Labs/stride/x/stakeibc/types"
+	epochtypes "github.com/Stride-Labs/stride/v2/x/epochs/types"
+	recordtypes "github.com/Stride-Labs/stride/v2/x/records/types"
+	stakeibctypes "github.com/Stride-Labs/stride/v2/x/stakeibc/types"
 )
 
 type RedeemStakeState struct {

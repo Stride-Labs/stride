@@ -11,9 +11,9 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/Stride-Labs/stride/testutil/network"
-	"github.com/Stride-Labs/stride/x/stakeibc/client/cli"
-	"github.com/Stride-Labs/stride/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v2/testutil/network"
+	"github.com/Stride-Labs/stride/v2/x/stakeibc/client/cli"
+	"github.com/Stride-Labs/stride/v2/x/stakeibc/types"
 )
 
 // Prevent strconv unused error

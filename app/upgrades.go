@@ -6,7 +6,7 @@ import (
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 
-	v2 "github.com/Stride-Labs/stride/app/upgrades/v2"
+	v2 "github.com/Stride-Labs/stride/v2/app/upgrades/v2"
 )
 
 func (app *StrideApp) setupUpgradeHandlers() {

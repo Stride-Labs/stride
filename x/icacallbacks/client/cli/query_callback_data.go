@@ -3,7 +3,7 @@ package cli
 import (
 	"context"
 
-	"github.com/Stride-Labs/stride/x/icacallbacks/types"
+	"github.com/Stride-Labs/stride/v2/x/icacallbacks/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/spf13/cobra"

@@ -3,10 +3,10 @@ package epochs_test
 import (
 	"testing"
 
-	keepertest "github.com/Stride-Labs/stride/testutil/keeper"
-	"github.com/Stride-Labs/stride/testutil/nullify"
-	"github.com/Stride-Labs/stride/x/epochs"
-	"github.com/Stride-Labs/stride/x/epochs/types"
+	keepertest "github.com/Stride-Labs/stride/v2/testutil/keeper"
+	"github.com/Stride-Labs/stride/v2/testutil/nullify"
+	"github.com/Stride-Labs/stride/v2/x/epochs"
+	"github.com/Stride-Labs/stride/v2/x/epochs/types"
 	"github.com/stretchr/testify/require"
 )
 

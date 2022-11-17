@@ -8,10 +8,10 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/spf13/cast"
 
-	icacallbackstypes "github.com/Stride-Labs/stride/x/icacallbacks/types"
+	icacallbackstypes "github.com/Stride-Labs/stride/v2/x/icacallbacks/types"
 
-	recordstypes "github.com/Stride-Labs/stride/x/records/types"
-	"github.com/Stride-Labs/stride/x/stakeibc/types"
+	recordstypes "github.com/Stride-Labs/stride/v2/x/records/types"
+	"github.com/Stride-Labs/stride/v2/x/stakeibc/types"
 
 	bankTypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	distributiontypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
@@ -19,8 +19,8 @@ import (
 
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
-	epochstypes "github.com/Stride-Labs/stride/x/epochs/types"
-	icqtypes "github.com/Stride-Labs/stride/x/interchainquery/types"
+	epochstypes "github.com/Stride-Labs/stride/v2/x/epochs/types"
+	icqtypes "github.com/Stride-Labs/stride/v2/x/interchainquery/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	icatypes "github.com/cosmos/ibc-go/v3/modules/apps/27-interchain-accounts/types"

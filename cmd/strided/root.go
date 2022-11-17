@@ -8,7 +8,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/snapshots"
 
-	"github.com/Stride-Labs/stride/utils"
+	"github.com/Stride-Labs/stride/v2/utils"
 
 	"github.com/spf13/cast"
 	"github.com/spf13/cobra"
@@ -36,8 +36,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/crisis"
 	genutilcli "github.com/cosmos/cosmos-sdk/x/genutil/client/cli"
 
-	"github.com/Stride-Labs/stride/app"
-	// "github.com/Stride-labs/stride/app/params"
+	"github.com/Stride-Labs/stride/v2/app"
+	// "github.com/Stride-Labs/stride/v2/app/params"
 	// this line is used by starport scaffolding # stargate/root/import
 )
 

@@ -8,8 +8,8 @@ import (
 
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 
-	"github.com/Stride-Labs/stride/x/stakeibc/keeper"
-	"github.com/Stride-Labs/stride/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v2/x/stakeibc/keeper"
+	"github.com/Stride-Labs/stride/v2/x/stakeibc/types"
 )
 
 // NewHandler ...

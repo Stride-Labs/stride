@@ -8,8 +8,8 @@ import (
 	ibctesting "github.com/cosmos/ibc-go/v3/testing"
 	_ "github.com/stretchr/testify/suite"
 
-	"github.com/Stride-Labs/stride/x/stakeibc/types"
-	stakeibctypes "github.com/Stride-Labs/stride/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v2/x/stakeibc/types"
+	stakeibctypes "github.com/Stride-Labs/stride/v2/x/stakeibc/types"
 )
 
 type ClearBalanceState struct {

@@ -3,9 +3,9 @@ package icacallbacks
 import (
 	"math/rand"
 
-	"github.com/Stride-Labs/stride/testutil/sample"
-	icacallbackssimulation "github.com/Stride-Labs/stride/x/icacallbacks/simulation"
-	"github.com/Stride-Labs/stride/x/icacallbacks/types"
+	"github.com/Stride-Labs/stride/v2/testutil/sample"
+	icacallbackssimulation "github.com/Stride-Labs/stride/v2/x/icacallbacks/simulation"
+	"github.com/Stride-Labs/stride/v2/x/icacallbacks/types"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	simappparams "github.com/cosmos/cosmos-sdk/simapp/params"
 	sdk "github.com/cosmos/cosmos-sdk/types"
