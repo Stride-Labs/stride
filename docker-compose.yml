@@ -1,4 +1,4 @@
-version: "3.8"
+version: "3"
 services:
   stride1:
     image: stridezone:stride
@@ -152,27 +152,27 @@ services:
   relayer-gaia:
     image: stridezone:relayer
     volumes:
-      - ./scripts/state/relayer:/home/relayer/.relayer
+      - ./scripts/state/relayer-gaia:/home/relayer/.relayer
     restart: always
     command: [ "bash", "start.sh", "stride-gaia" ]
 
   relayer-juno:
     image: stridezone:relayer
     volumes:
-      - ./scripts/state/relayer:/home/relayer/.relayer
+      - ./scripts/state/relayer-juno:/home/relayer/.relayer
     restart: always
     command: [ "bash", "start.sh", "stride-juno" ]
 
   relayer-osmo:
     image: stridezone:relayer
     volumes:
-      - ./scripts/state/relayer:/home/relayer/.relayer
+      - ./scripts/state/relayer-osmo:/home/relayer/.relayer
     restart: always
     command: [ "bash", "start.sh", "stride-osmo" ]
 
   relayer-stars:
     image: stridezone:relayer
     volumes:
-      - ./scripts/state/relayer:/home/relayer/.relayer
+      - ./scripts/state/relayer-stars:/home/relayer/.relayer
     restart: always
     command: [ "bash", "start.sh", "stride-stars" ]
