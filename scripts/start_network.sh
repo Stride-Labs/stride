@@ -47,7 +47,6 @@ done
 
 # Start the chain and create the transfer channels
 bash ${SCRIPT_DIR}/start_chain.sh STRIDE ${HOST_CHAINS[@]}
-bash ${SCRIPT_DIR}/init_relayers.sh STRIDE ${HOST_CHAINS[@]}
 bash ${SCRIPT_DIR}/start_relayers.sh ${HOST_CHAINS[@]}
 
 # Register all host zones 
