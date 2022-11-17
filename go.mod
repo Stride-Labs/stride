@@ -138,5 +138,5 @@ replace (
 	// fork cast to add additional error checking
 	github.com/spf13/cast => github.com/Stride-Labs/cast v0.0.3
 	// use the version of grpc compatible with the regen networks protobufs.
-	google.golang.org/grpc => google.golang.org/grpc v1.33.2
+	google.golang.org/grpc => google.golang.org/grpc v1.50.1
 )
