@@ -25,3 +25,12 @@ type BankKeeper interface {
 	SendCoinsFromAccountToModule(ctx sdk.Context, senderAddr sdk.AccAddress, recipientModule string, amt sdk.Coins) error
 	MintCoins(ctx sdk.Context, moduleName string, amt sdk.Coins) error
 }
+
+// Event Hooks
+// These can be utilized to communicate between a stakeibc keeper and another
+// keeper which must take particular actions when liquid staking happens
+
+// StakeIBCHooks event hooks for stakeibc
+type StakeIBCHooks interface {
+	AfterLiquidStake(ctx sdk.Context, addr sdk.AccAddress) // Must be called after liquid stake is completed
+}
