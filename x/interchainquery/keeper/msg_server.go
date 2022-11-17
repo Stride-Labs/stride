@@ -114,10 +114,10 @@ func (k Keeper) InvokeCallback(ctx sdk.Context, msg *types.MsgSubmitQueryRespons
 		k.Logger(ctx).Info(fmt.Sprintf("[ICQ Resp] executing callback for queryId (%s), module (%s)", q.Id, moduleName))
 		moduleCallbackHandler := k.callbacks[moduleName]
 
-		if moduleCallbackHandler.Has(q.CallbackId) {
+		if moduleCallbackHandler.HasICQCallback(q.CallbackId) {
 			k.Logger(ctx).Info(fmt.Sprintf("[ICQ Resp] callback (%s) found for module (%s)", q.CallbackId, moduleName))
 			// call the correct callback function
-			err := moduleCallbackHandler.Call(ctx, q.CallbackId, msg.Result, q)
+			err := moduleCallbackHandler.CallICQCallback(ctx, q.CallbackId, msg.Result, q)
 			if err != nil {
 				k.Logger(ctx).Error(fmt.Sprintf("[ICQ Resp] error in ICQ callback, error: %s, msg: %s, result: %v, type: %s, params: %v", err.Error(), msg.QueryId, msg.Result, q.QueryType, q.Request))
 				return err

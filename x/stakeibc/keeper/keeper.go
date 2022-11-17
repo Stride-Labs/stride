@@ -42,8 +42,8 @@ type (
 		RecordsKeeper         recordsmodulekeeper.Keeper
 		StakingKeeper         stakingkeeper.Keeper
 		ICACallbacksKeeper    icacallbackskeeper.Keeper
-
-		accountKeeper types.AccountKeeper
+		hooks                 types.StakeIBCHooks
+		accountKeeper         types.AccountKeeper
 	}
 )
 
@@ -89,6 +89,17 @@ func NewKeeper(
 
 func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 	return ctx.Logger().With("module", fmt.Sprintf("x/%s", types.ModuleName))
+}
+
+// SetHooks sets the hooks for ibc staking
+func (k *Keeper) SetHooks(gh types.StakeIBCHooks) *Keeper {
+	if k.hooks != nil {
+		panic("cannot set ibc staking hooks twice")
+	}
+
+	k.hooks = gh
+
+	return k
 }
 
 // ClaimCapability claims the channel capability passed via the OnOpenChanInit callback
