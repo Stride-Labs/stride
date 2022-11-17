@@ -108,6 +108,7 @@ func (k *Keeper) MakeRequest(ctx sdk.Context, connectionId string, chainId strin
 		// Otherwise, if the same query is re-requested - reset the TTL
 		k.Logger(ctx).Info("Query already exists - resetting TTL")
 		query.Ttl = ttl
+		query.LastHeight = sdk.ZeroInt() // allows query to be emitted again
 	}
 
 	// Save the query to the store
