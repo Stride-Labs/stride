@@ -90,7 +90,7 @@ func (k *Keeper) MakeRequest(ctx sdk.Context, connectionId string, chainId strin
 			k.Logger(ctx).Error(err.Error())
 			return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "no callback handler registered for module")
 		}
-		if exists := k.callbacks[module].Has(callbackId); !exists {
+		if exists := k.callbacks[module].HasICQCallback(callbackId); !exists {
 			err := fmt.Errorf("no callback %s registered for module %s", callbackId, module)
 			k.Logger(ctx).Error(err.Error())
 			return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "no callback handler registered for module")
