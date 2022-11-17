@@ -21,14 +21,15 @@ import (
 	icacallbackskeeper "github.com/Stride-Labs/stride/x/icacallbacks/keeper"
 
 	"github.com/Stride-Labs/stride/x/records/types"
+	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 )
 
 type (
 	Keeper struct {
 		// *cosmosibckeeper.Keeper
 		Cdc                codec.BinaryCodec
-		storeKey           sdk.StoreKey
-		memKey             sdk.StoreKey
+		storeKey           storetypes.StoreKey
+		memKey             storetypes.StoreKey
 		paramstore         paramtypes.Subspace
 		scopedKeeper       capabilitykeeper.ScopedKeeper
 		AccountKeeper      types.AccountKeeper
@@ -41,7 +42,7 @@ type (
 func NewKeeper(
 	Cdc codec.BinaryCodec,
 	storeKey,
-	memKey sdk.StoreKey,
+	memKey storetypes.StoreKey,
 	ps paramtypes.Subspace,
 	scopedKeeper capabilitykeeper.ScopedKeeper,
 	AccountKeeper types.AccountKeeper,

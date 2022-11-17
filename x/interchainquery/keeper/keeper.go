@@ -11,18 +11,19 @@ import (
 	"github.com/tendermint/tendermint/libs/log"
 
 	"github.com/Stride-Labs/stride/x/interchainquery/types"
+	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 )
 
 // Keeper of this module maintains collections of registered zones.
 type Keeper struct {
 	cdc       codec.Codec
-	storeKey  sdk.StoreKey
+	storeKey  storetypes.StoreKey
 	callbacks map[string]types.QueryCallbacks
 	IBCKeeper *ibckeeper.Keeper
 }
 
 // NewKeeper returns a new instance of zones Keeper
-func NewKeeper(cdc codec.Codec, storeKey sdk.StoreKey, ibckeeper *ibckeeper.Keeper) Keeper {
+func NewKeeper(cdc codec.Codec, storeKey storetypes.StoreKey, ibckeeper *ibckeeper.Keeper) Keeper {
 	return Keeper{
 		cdc:       cdc,
 		storeKey:  storeKey,

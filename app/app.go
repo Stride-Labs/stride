@@ -51,7 +51,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/gov"
 	govclient "github.com/cosmos/cosmos-sdk/x/gov/client"
 	govkeeper "github.com/cosmos/cosmos-sdk/x/gov/keeper"
-	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
+	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 
 	"github.com/Stride-Labs/stride/x/mint"
 	mintkeeper "github.com/Stride-Labs/stride/x/mint/keeper"
@@ -121,6 +121,7 @@ import (
 	stakeibcmodulekeeper "github.com/Stride-Labs/stride/x/stakeibc/keeper"
 	stakeibcmoduletypes "github.com/Stride-Labs/stride/x/stakeibc/types"
 	// this line is used by starport scaffolding # stargate/app/moduleImport
+	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 )
 
 const (
@@ -869,22 +870,22 @@ func (app *StrideApp) InterfaceRegistry() types.InterfaceRegistry {
 
 // GetKey returns the KVStoreKey for the provided store key.
 //
-// NOTE: This is solely to be used for testing purposes.
-func (app *StrideApp) GetKey(storeKey string) *sdk.KVStoreKey {
+// NOTE: This is solely to be used for testing purposes. 
+func (app *StrideApp) GetKey(storeKey string) *storetypes.KVStoreKey {
 	return app.keys[storeKey]
 }
 
 // GetTKey returns the TransientStoreKey for the provided store key.
 //
 // NOTE: This is solely to be used for testing purposes.
-func (app *StrideApp) GetTKey(storeKey string) *sdk.TransientStoreKey {
+func (app *StrideApp) GetTKey(storeKey string) *storetypes.TransientStoreKey {
 	return app.tkeys[storeKey]
 }
 
 // GetMemKey returns the MemStoreKey for the provided mem key.
 //
 // NOTE: This is solely used for testing purposes.
-func (app *StrideApp) GetMemKey(storeKey string) *sdk.MemoryStoreKey {
+func (app *StrideApp) GetMemKey(storeKey string) *storetypes.MemoryStoreKey {
 	return app.memKeys[storeKey]
 }
 
@@ -931,7 +932,7 @@ func GetMaccPerms() map[string][]string {
 }
 
 // initParamsKeeper init params keeper and its subspaces
-func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino, key, tkey sdk.StoreKey) paramskeeper.Keeper {
+func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino, key, tkey storetypes.StoreKey) paramskeeper.Keeper {
 	paramsKeeper := paramskeeper.NewKeeper(appCodec, legacyAmino, key, tkey)
 
 	paramsKeeper.Subspace(authtypes.ModuleName)
