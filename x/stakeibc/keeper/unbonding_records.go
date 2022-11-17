@@ -183,7 +183,7 @@ func (k Keeper) SubmitHostZoneUnbondingMsg(ctx sdk.Context, msgs []sdk.Msg, tota
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "no msgs to submit for host zone unbondings")
 	}
 
-	_, err := k.SubmitTxsDayEpoch(ctx, hostZone.GetConnectionId(), msgs, *delegationAccount, UNDELEGATE, marshalledCallbackArgs)
+	_, err := k.SubmitTxsDayEpoch(ctx, hostZone.GetConnectionId(), msgs, *delegationAccount, ICACallbackID_Undelegate, marshalledCallbackArgs)
 	if err != nil {
 		errMsg := fmt.Sprintf("Error submitting unbonding tx: %s", err)
 		k.Logger(ctx).Error(errMsg)
@@ -356,7 +356,7 @@ func (k Keeper) SweepAllUnbondedTokensForHostZone(ctx sdk.Context, hostZone type
 			}
 
 			// Send the transaction through SubmitTx
-			_, err = k.SubmitTxsDayEpoch(ctx, hostZone.ConnectionId, msgs, *delegationAccount, REDEMPTION, marshalledCallbackArgs)
+			_, err = k.SubmitTxsDayEpoch(ctx, hostZone.ConnectionId, msgs, *delegationAccount, ICACallbackID_Redemption, marshalledCallbackArgs)
 			if err != nil {
 				k.Logger(ctx).Info(fmt.Sprintf("Failed to SubmitTxs, transfer to redemption account on %s", hostZone.ChainId))
 			}
