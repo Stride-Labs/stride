@@ -7,8 +7,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 
-	strideapp "github.com/Stride-Labs/stride/app"
-	"github.com/Stride-Labs/stride/x/icacallbacks/keeper"
+	strideapp "github.com/Stride-Labs/stride/v3/app"
+	"github.com/Stride-Labs/stride/v3/x/icacallbacks/keeper"
 )
 
 func IcacallbacksKeeper(t testing.TB) (*keeper.Keeper, sdk.Context) {

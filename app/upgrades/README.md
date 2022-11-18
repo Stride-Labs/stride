@@ -105,7 +105,7 @@ package keeper
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-    {upgradeVersion} "github.com/Stride-Labs/stride/x/records/migrations/{upgradeVersion}"
+    {upgradeVersion} "github.com/Stride-Labs/stride/v3/x/records/migrations/{upgradeVersion}"
 )
 
 type Migrator struct {
@@ -128,7 +128,7 @@ package {upgradeVersion}
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	{oldVersion} "github.com/Stride-Labs/stride/x/records/migrations/{oldVersion}"
+	{oldVersion} "github.com/Stride-Labs/stride/v3/x/records/migrations/{oldVersion}"
 )
 
 // TODO: Add migration logic to deserialize with old protos and re-serialize with new ones

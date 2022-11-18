@@ -7,7 +7,7 @@ import "cosmos/base/v1beta1/coin.proto";
 import "claim/v1beta1/claim.proto";
 import "claim/v1beta1/params.proto";
 
-option go_package = "github.com/Stride-Labs/stride/x/claim/types";
+option go_package = "github.com/Stride-Labs/stride/v3/x/claim/types";
 
 // Query defines the gRPC querier service.
 service Query {
