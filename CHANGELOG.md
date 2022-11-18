@@ -56,16 +56,16 @@ This release includes...
 
 
 ### Bug Fixes
-* [#XXX](https://github.com/Stride-Labs/stride/v3) Link to fix
+* [#XXX](https://github.com/Stride-Labs/stride) Link to fix
 
 ### Improvements
 
 
-## [v1.0.2](https://github.com/Stride-Labs/stride/v3/releases/tag/v1.0.2) - 2022-09-06
+## [v1.0.2](https://github.com/Stride-Labs/stride/releases/tag/v1.0.2) - 2022-09-06
 
 * Fix stochastic sorting issue
 * Add new query
 
-## [v1.0.0](https://github.com/Stride-Labs/stride/v3/releases/tag/v1.0.0) - 2022-09-04
+## [v1.0.0](https://github.com/Stride-Labs/stride/releases/tag/v1.0.0) - 2022-09-04
 
 Initial Release!
