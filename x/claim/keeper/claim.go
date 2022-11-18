@@ -13,10 +13,10 @@ import (
 	authvestingtypes "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
 	"github.com/gogo/protobuf/proto"
 
-	"github.com/Stride-Labs/stride/utils"
-	"github.com/Stride-Labs/stride/x/claim/types"
-	vestingtypes "github.com/Stride-Labs/stride/x/claim/vesting/types"
-	epochstypes "github.com/Stride-Labs/stride/x/epochs/types"
+	"github.com/Stride-Labs/stride/v3/utils"
+	"github.com/Stride-Labs/stride/v3/x/claim/types"
+	vestingtypes "github.com/Stride-Labs/stride/v3/x/claim/vesting/types"
+	epochstypes "github.com/Stride-Labs/stride/v3/x/epochs/types"
 )
 
 func (k Keeper) LoadAllocationData(ctx sdk.Context, allocationData string) bool {
@@ -388,6 +388,17 @@ func (k Keeper) GetClaimableAmountForAction(ctx sdk.Context, addr sdk.AccAddress
 	return claimableCoins, nil
 }
 
+// GetUserVestings returns all vestings associated to the user account
+func (k Keeper) GetUserVestings(ctx sdk.Context, addr sdk.AccAddress) (vestingtypes.Periods, sdk.Coins) {
+	acc := k.accountKeeper.GetAccount(ctx, addr)
+	strideVestingAcc, isStrideVestingAccount := acc.(*vestingtypes.StridePeriodicVestingAccount)
+	if !isStrideVestingAccount {
+		return vestingtypes.Periods{}, sdk.Coins{}
+	} else {
+		return strideVestingAcc.VestingPeriods, strideVestingAcc.GetVestedCoins(ctx.BlockTime())
+	}
+}
+
 // GetClaimable returns claimable amount for a specific action done by an address
 func (k Keeper) GetUserTotalClaimable(ctx sdk.Context, addr sdk.AccAddress, airdropIdentifier string) (sdk.Coins, error) {
 	claimRecord, err := k.GetClaimRecord(ctx, addr, airdropIdentifier)
@@ -459,7 +470,7 @@ func (k Keeper) ClaimCoinsForAction(ctx sdk.Context, addr sdk.AccAddress, action
 	}
 
 	// Claims don't vest if action type is ActionFree or initial period of vesting is passed
-	if action != types.ActionFree && !isPassed {
+	if !isPassed {
 		acc = k.accountKeeper.GetAccount(ctx, addr)
 		strideVestingAcc, isStrideVestingAccount := acc.(*vestingtypes.StridePeriodicVestingAccount)
 		// Check if vesting tokens already exist for this account.
@@ -472,18 +483,20 @@ func (k Keeper) ClaimCoinsForAction(ctx sdk.Context, addr sdk.AccAddress, action
 
 			periodLength := GetAirdropDurationForAction(action)
 			vestingAcc := vestingtypes.NewStridePeriodicVestingAccount(baseAccount.(*authtypes.BaseAccount), claimableAmount, []vestingtypes.Period{{
-				StartTime: ctx.BlockTime().Unix(),
-				Length:    periodLength,
-				Amount:    claimableAmount,
+				StartTime:  ctx.BlockTime().Unix(),
+				Length:     periodLength,
+				Amount:     claimableAmount,
+				ActionType: int32(action),
 			}})
 			k.accountKeeper.SetAccount(ctx, vestingAcc)
 		} else {
 			// Grant a new vesting to the existing stride vesting account
 			periodLength := GetAirdropDurationForAction(action)
 			strideVestingAcc.AddNewGrant(vestingtypes.Period{
-				StartTime: ctx.BlockTime().Unix(),
-				Length:    periodLength,
-				Amount:    claimableAmount,
+				StartTime:  ctx.BlockTime().Unix(),
+				Length:     periodLength,
+				Amount:     claimableAmount,
+				ActionType: int32(action),
 			})
 			k.accountKeeper.SetAccount(ctx, strideVestingAcc)
 		}

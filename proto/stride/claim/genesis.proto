@@ -1,15 +1,15 @@
 syntax = "proto3";
-package Stridelabs.stride.claim.v1beta1;
+package stride.claim;
 
 import "gogoproto/gogo.proto";
 import "cosmos/base/v1beta1/coin.proto";
 import "cosmos/bank/v1beta1/genesis.proto";
 import "google/protobuf/duration.proto";
 import "google/protobuf/timestamp.proto";
-import "claim/v1beta1/claim.proto";
-import "claim/v1beta1/params.proto";
+import "stride/claim/claim.proto";
+import "stride/claim/params.proto";
 
-option go_package = "github.com/Stride-Labs/stride/x/claim/types";
+option go_package = "github.com/Stride-Labs/stride/v3/x/claim/types";
 
 // GenesisState defines the claim module's genesis state.
 message GenesisState {

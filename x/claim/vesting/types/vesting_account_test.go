@@ -11,7 +11,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 
-	"github.com/Stride-Labs/stride/x/claim/vesting/types"
+	"github.com/Stride-Labs/stride/v3/x/claim/vesting/types"
 )
 
 var (
@@ -243,7 +243,7 @@ func TestTrackUndelegationPeriodicVestingAcc(t *testing.T) {
 func TestStridePeriodicVestingAccountMarshal(t *testing.T) {
 	baseAcc, coins := initBaseAccount()
 	now := tmtime.Now()
-	acc := types.NewStridePeriodicVestingAccount(baseAcc, coins, types.Periods{types.Period{now.Unix(), 3600, coins}})
+	acc := types.NewStridePeriodicVestingAccount(baseAcc, coins, types.Periods{types.Period{now.Unix(), 3600, coins, 0}})
 
 	bz, err := app.AccountKeeper.MarshalAccount(acc)
 	require.Nil(t, err)

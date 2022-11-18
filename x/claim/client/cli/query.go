@@ -10,7 +10,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/version"
 	"github.com/spf13/cobra"
 
-	"github.com/Stride-Labs/stride/x/claim/types"
+	"github.com/Stride-Labs/stride/v3/x/claim/types"
 )
 
 // GetQueryCmd returns the cli query commands for this module
@@ -29,6 +29,7 @@ func GetQueryCmd(queryRoute string) *cobra.Command {
 		GetCmdQueryClaimRecord(),
 		GetCmdQueryClaimableForAction(),
 		GetCmdQueryTotalClaimable(),
+		GetCmdQueryUserVestings(),
 	)
 
 	return claimQueryCmd
@@ -185,7 +186,7 @@ func GetCmdQueryTotalClaimable() *cobra.Command {
 		Long: strings.TrimSpace(
 			fmt.Sprintf(`Query the total claimable amount remaining for an account.
 Example:
-$ %s query claim total-claimable stride1h4astdfzjhcwahtfrh24qtvndzzh49xvqtfftk
+$ %s query claim total-claimable stride stride1h4astdfzjhcwahtfrh24qtvndzzh49xvqtfftk
 `,
 				version.AppName,
 			),
@@ -200,6 +201,40 @@ $ %s query claim total-claimable stride1h4astdfzjhcwahtfrh24qtvndzzh49xvqtfftk
 			res, err := queryClient.TotalClaimable(context.Background(), &types.QueryTotalClaimableRequest{
 				AirdropIdentifier: args[0],
 				Address:           args[1],
+			})
+			if err != nil {
+				return err
+			}
+			return clientCtx.PrintObjectLegacy(res)
+		},
+	}
+	flags.AddQueryFlagsToCmd(cmd)
+	return cmd
+}
+
+// GetCmdQueryUserVestings implements the query user vestings command.
+func GetCmdQueryUserVestings() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "user-vestings [address]",
+		Args:  cobra.ExactArgs(1),
+		Short: "Query user vestings.",
+		Long: strings.TrimSpace(
+			fmt.Sprintf(`Query user vestings for an account.
+Example:
+$ %s query claim user-vestings stride1h4astdfzjhcwahtfrh24qtvndzzh49xvqtfftk
+`,
+				version.AppName,
+			),
+		),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientQueryContext(cmd)
+			if err != nil {
+				return err
+			}
+			queryClient := types.NewQueryClient(clientCtx)
+			// Query store
+			res, err := queryClient.UserVestings(context.Background(), &types.QueryUserVestingsRequest{
+				Address: args[0],
 			})
 			if err != nil {
 				return err
