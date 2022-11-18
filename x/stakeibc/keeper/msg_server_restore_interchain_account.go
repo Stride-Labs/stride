@@ -35,7 +35,9 @@ func (k msgServer) RestoreInterchainAccount(goCtx context.Context, msg *types.Ms
 		k.Logger(ctx).Error(errMsg)
 		return nil, sdkerrors.Wrapf(types.ErrInvalidInterchainAccountAddress, errMsg)
 	}
-	appVerSion, found := k.ICAControllerKeeper.GetAppVersion(ctx, portID, hostZone.TransferChannelId)
+
+	
+	appVerSion, found := k.ICAControllerKeeper.GetAppVersion(ctx, portID, hostZone.ConnectionId)
 	if !found {
 		errMsg := fmt.Sprintf("unable to get app version")
 		k.Logger(ctx).Error(errMsg)

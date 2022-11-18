@@ -86,7 +86,7 @@ func (k msgServer) RegisterHostZone(goCtx context.Context, msg *types.MsgRegiste
 	// NOTE: in the future, if we implement proxy governance, we'll need many more delegate accounts
 	delegateAccount := types.FormatICAAccountOwner(chainId, types.ICAAccountType_DELEGATION)
 	delegateAccountPortId, _ := icatypes.NewControllerPortID(delegateAccount)
-	appVerSion, found := k.ICAControllerKeeper.GetAppVersion(ctx, delegateAccountPortId, msg.TransferChannelId)
+	appVerSion, found := k.ICAControllerKeeper.GetAppVersion(ctx, delegateAccountPortId, msg.ConnectionId)
 	if !found {
 		errMsg := fmt.Sprintf("unable to get app version")
 		k.Logger(ctx).Error(errMsg)
@@ -101,7 +101,7 @@ func (k msgServer) RegisterHostZone(goCtx context.Context, msg *types.MsgRegiste
 	// generate fee account
 	feeAccount := types.FormatICAAccountOwner(chainId, types.ICAAccountType_FEE)
 	feeAccountPortId, _ := icatypes.NewControllerPortID(feeAccount)
-	appVerSion, found = k.ICAControllerKeeper.GetAppVersion(ctx, feeAccountPortId, msg.TransferChannelId)
+	appVerSion, found = k.ICAControllerKeeper.GetAppVersion(ctx, feeAccountPortId, msg.ConnectionId)
 	if !found {
 		errMsg := fmt.Sprintf("unable to get app version")
 		k.Logger(ctx).Error(errMsg)
@@ -116,7 +116,7 @@ func (k msgServer) RegisterHostZone(goCtx context.Context, msg *types.MsgRegiste
 	// generate withdrawal account
 	withdrawalAccount := types.FormatICAAccountOwner(chainId, types.ICAAccountType_WITHDRAWAL)
 	withdrawalAccountPortId, _ := icatypes.NewControllerPortID(feeAccount)
-	appVerSion, found = k.ICAControllerKeeper.GetAppVersion(ctx, withdrawalAccountPortId, msg.TransferChannelId)
+	appVerSion, found = k.ICAControllerKeeper.GetAppVersion(ctx, withdrawalAccountPortId, msg.ConnectionId)
 	if !found {
 		errMsg := fmt.Sprintf("unable to get app version")
 		k.Logger(ctx).Error(errMsg)
@@ -131,7 +131,7 @@ func (k msgServer) RegisterHostZone(goCtx context.Context, msg *types.MsgRegiste
 	// generate redemption account
 	redemptionAccount := types.FormatICAAccountOwner(chainId, types.ICAAccountType_REDEMPTION)
 	redemptionAccountPortId, _ := icatypes.NewControllerPortID(feeAccount)
-	appVerSion, found = k.ICAControllerKeeper.GetAppVersion(ctx, redemptionAccountPortId, msg.TransferChannelId)
+	appVerSion, found = k.ICAControllerKeeper.GetAppVersion(ctx, redemptionAccountPortId, msg.ConnectionId)
 	if !found {
 		errMsg := fmt.Sprintf("unable to get app version")
 		k.Logger(ctx).Error(errMsg)
