@@ -23,7 +23,7 @@ Stride is a blockchain ("zone") that provides liquidity for staked assets. Using
 To install the latest version of Stride blockchain node binary, execute the following command on your machine:
 
 ```
-git clone https://github.com/Stride-Labs/stride/v3
+git clone https://github.com/Stride-Labs/stride
 ```
 
 Test your installation by navigating to the stride directory and executing: 
