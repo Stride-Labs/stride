@@ -11,22 +11,20 @@ import (
 	"github.com/Stride-Labs/stride/v3/x/interchainquery/types"
 )
 
-func GenerateQueryHash(connection_id string, chain_id string, query_type string, request []byte, module string, height int64) string {
-	return fmt.Sprintf("%x", crypto.Sha256(append([]byte(module+connection_id+chain_id+query_type+strconv.FormatInt(height, 10)), request...)))
+func GenerateQueryHash(connectionId string, chainId string, queryType string, request []byte, module string, height int64) string {
+	return fmt.Sprintf("%x", crypto.Sha256(append([]byte(module+connectionId+chainId+queryType+strconv.FormatInt(height, 10)), request...)))
 }
 
-// ----------------------------------------------------------------
-
-func (k Keeper) NewQuery(ctx sdk.Context, module string, connection_id string, chain_id string, query_type string, request []byte, period sdk.Int, callback_id string, ttl uint64, height int64) *types.Query {
+func (k Keeper) NewQuery(ctx sdk.Context, module string, connectionId string, chainId string, queryType string, request []byte, period sdk.Int, callbackId string, ttl uint64, height int64) *types.Query {
 	return &types.Query{
-		Id:           GenerateQueryHash(connection_id, chain_id, query_type, request, module, height),
-		ConnectionId: connection_id,
-		ChainId:      chain_id,
-		QueryType:    query_type,
+		Id:           GenerateQueryHash(connectionId, chainId, queryType, request, module, height),
+		ConnectionId: connectionId,
+		ChainId:      chainId,
+		QueryType:    queryType,
 		Request:      request,
 		Period:       period,
 		LastHeight:   sdk.ZeroInt(),
-		CallbackId:   callback_id,
+		CallbackId:   callbackId,
 		Ttl:          ttl,
 		Height:       height,
 	}
