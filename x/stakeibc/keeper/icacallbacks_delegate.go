@@ -56,8 +56,6 @@ func DelegateCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ack
 
 	if ack == nil {
 		// timeout
-		depositRecord.Status = recordstypes.DepositRecord_DELEGATION_QUEUE
-		k.RecordsKeeper.SetDepositRecord(ctx, depositRecord)
 		k.Logger(ctx).Error(fmt.Sprintf("DelegateCallback timeout, ack is nil, packet %v", packet))
 		return nil
 	}

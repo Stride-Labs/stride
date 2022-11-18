@@ -11,8 +11,6 @@ import (
 	host "github.com/cosmos/ibc-go/v3/modules/core/24-host"
 	ibcexported "github.com/cosmos/ibc-go/v3/modules/core/exported"
 
-	recordtypes "github.com/Stride-Labs/stride/x/records/types"
-
 	icacallbacktypes "github.com/Stride-Labs/stride/x/icacallbacks/types"
 
 	"github.com/Stride-Labs/stride/x/stakeibc/keeper"
@@ -186,41 +184,12 @@ func (im IBCModule) OnChanCloseConfirm(
 	portID,
 	channelID string,
 ) error {
-	im.keeper.Logger(ctx).Info(fmt.Sprintf("OnChanCloseConfirm: portID %s, channelID %s", portID, channelID))
-	controllerConnectionId, err := im.keeper.GetConnectionId(ctx, portID)
-	if err != nil {
-		ctx.Logger().Error(fmt.Sprintf("Unable to get connection for port: %s", portID))
-	}
-	// get host chain id from connection
-	hostChainId, err := im.keeper.GetChainID(ctx, controllerConnectionId)
-	if err != nil {
-		ctx.Logger().Error(fmt.Sprintf("Unable to obtain counterparty chain for connection: %s, port: %s, err: %s", controllerConnectionId, portID, err.Error()))
-		return nil
-	}
-	delegationAddress, err := icatypes.NewControllerPortID(types.FormatICAAccountOwner(hostChainId, types.ICAAccountType_DELEGATION))
-	if err != nil {
-		return err
-	}
-	if portID != delegationAddress {
-		ctx.Logger().Info(fmt.Sprintf("Port %s is not a delegation port, skipping", portID))
-		return nil
-	}
-	//  get zone info
-	hostZone, found := im.keeper.GetHostZone(ctx, hostChainId)
-	if !found {
-		ctx.Logger().Error(fmt.Sprintf("Expected to find zone info for %v", hostChainId))
-		return nil
-	}
-	ctx.Logger().Info(fmt.Sprintf("Found matching address for chain: %s, port %s", hostZone.ChainId, portID))
-	depositRecords := im.keeper.RecordsKeeper.GetAllDepositRecord(ctx)
-	// revert DELEGATION_IN_PROGRESS records for the closed ICA channel (so that they can be staked)
-	for _, record := range depositRecords {
-		// only revert records for the select host zone
-		if record.HostZoneId == hostChainId && record.Status == recordtypes.DepositRecord_DELEGATION_IN_PROGRESS {
-			record.Status = recordtypes.DepositRecord_DELEGATION_QUEUE
-			im.keeper.RecordsKeeper.SetDepositRecord(ctx, record)
-		}
-	}
+
+	// WARNING: For some reason, in IBCv3 the ICA controller module does not call the underlying OnChanCloseConfirm (this function)
+	// So, we need to put logic that _should_ execute upon channel closure in the OnTimeoutPacket function
+	// This works because ORDERED channels are always closed when a timeout occurs, but if we migrate to using ORDERED channels that don't
+	// close on timeout, we will need to move this logic to the OnChanCloseConfirm function
+	// relevant IBCv3 code: https://github.com/cosmos/ibc-go/blob/5c0bf8b8a0f79643e36be98fb9883ea163d2d93a/modules/apps/27-interchain-accounts/controller/ibc_module.go#L123
 	return nil
 }
 
