@@ -1,6 +1,7 @@
 package v3
 
 import (
+	"fmt"
 	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -60,9 +61,12 @@ func CreateUpgradeHandler(
 			if found {
 				if (depositRecord.Status == recordstypes.DepositRecord_DELEGATION_IN_PROGRESS) && (depositRecord.HostZoneId == "juno-1") {
 					depositRecord.Status = recordstypes.DepositRecord_DELEGATION_QUEUE
+					rk.Logger(ctx).Info(fmt.Sprintf("[V3 UPGRADE] Reverting Juno Deposit Record %d", recordId))
 					rk.SetDepositRecord(ctx, depositRecord)
 				}
+				rk.Logger(ctx).Error(fmt.Sprintf("[V3 UPGRADE] Deposit Record %d Status Incorrect", recordId))
 			}
+			rk.Logger(ctx).Error(fmt.Sprintf("[V3 UPGRADE] Deposit Record %d Not Found", recordId))
 		}
 
 		return newVm, nil
