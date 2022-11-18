@@ -9,8 +9,8 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	keepertest "github.com/Stride-Labs/stride/testutil/keeper"
-	"github.com/Stride-Labs/stride/testutil/nullify"
+	keepertest "github.com/Stride-Labs/stride/v3/testutil/keeper"
+	"github.com/Stride-Labs/stride/v3/testutil/nullify"
 	"github.com/Stride-Labs/stride/v3/x/claim/types"
 )
 
