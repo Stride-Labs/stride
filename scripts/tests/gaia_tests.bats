@@ -181,7 +181,6 @@ setup() {
   # TODO(optimize tests) extra sleep just in case
   SENDER_ACCT=$(STRIDE_ADDRESS)
   old_sender_bal=$($GAIA_MAIN_CMD q bank balances $GAIA_RECEIVER_ACCT --denom uatom | GETBAL)
-  # TODO check that the UserRedemptionRecord has isClaimable = true
 
   # grab the epoch number for the first deposit record in the list od DRs
   EPOCH=$($STRIDE_MAIN_CMD q records list-user-redemption-record  | grep -Fiw 'epoch_number' | head -n 1 | grep -o -E '[0-9]+')
