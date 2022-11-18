@@ -21,7 +21,7 @@ func (s *KeeperTestSuite) SetupDeleteValidator() DeleteValidatorTestCase {
 			Address:        "stride_VAL1",
 			CommissionRate: 1,
 			Weight:         0,
-			Status:         stakeibctypes.Validator_Active,
+			Status:         stakeibctypes.Validator_ACTIVE,
 			DelegationAmt:  0,
 		},
 		{
@@ -29,7 +29,7 @@ func (s *KeeperTestSuite) SetupDeleteValidator() DeleteValidatorTestCase {
 			Address:        "stride_VAL2",
 			CommissionRate: 2,
 			Weight:         0,
-			Status:         stakeibctypes.Validator_Active,
+			Status:         stakeibctypes.Validator_ACTIVE,
 			DelegationAmt:  0,
 		},
 	}

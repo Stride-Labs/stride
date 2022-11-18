@@ -14,4 +14,5 @@ message AddValidatorProposal {
   string host_zone = 3;
   string validator_name = 4;
   string validator_address = 5 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+  string deposit = 6 [ (gogoproto.moretags) = "yaml:\"deposit\"" ];
 }
