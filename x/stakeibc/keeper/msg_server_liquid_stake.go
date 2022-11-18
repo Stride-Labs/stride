@@ -95,6 +95,7 @@ func (k msgServer) LiquidStake(goCtx context.Context, msg *types.MsgLiquidStake)
 	depositRecord.Amount += msgAmt
 	k.RecordsKeeper.SetDepositRecord(ctx, *depositRecord)
 
+	k.hooks.AfterLiquidStake(ctx, sender)
 	return &types.MsgLiquidStakeResponse{}, nil
 }
 
