@@ -6,10 +6,10 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
-	epochstypes "github.com/Stride-Labs/stride/x/epochs/types"
-	stakingibctypes "github.com/Stride-Labs/stride/x/stakeibc/types"
+	epochstypes "github.com/Stride-Labs/stride/v3/x/epochs/types"
+	stakingibctypes "github.com/Stride-Labs/stride/v3/x/stakeibc/types"
 
-	"github.com/Stride-Labs/stride/x/claim/types"
+	"github.com/Stride-Labs/stride/v3/x/claim/types"
 )
 
 func (k Keeper) AfterDelegationModified(ctx sdk.Context, delAddr sdk.AccAddress, valAddr sdk.ValAddress) {
