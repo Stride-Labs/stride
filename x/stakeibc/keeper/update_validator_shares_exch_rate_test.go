@@ -5,9 +5,9 @@ import (
 
 	_ "github.com/stretchr/testify/suite"
 
-	epochtypes "github.com/Stride-Labs/stride/v2/x/epochs/types"
-	"github.com/Stride-Labs/stride/v2/x/stakeibc/types"
-	stakeibctypes "github.com/Stride-Labs/stride/v2/x/stakeibc/types"
+	epochtypes "github.com/Stride-Labs/stride/v3/x/epochs/types"
+	"github.com/Stride-Labs/stride/v3/x/stakeibc/types"
+	stakeibctypes "github.com/Stride-Labs/stride/v3/x/stakeibc/types"
 )
 
 // ================================ 1: QueryValidatorExchangeRate =============================================

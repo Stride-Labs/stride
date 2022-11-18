@@ -6,10 +6,10 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
-	keepertest "github.com/Stride-Labs/stride/v2/testutil/keeper"
-	"github.com/Stride-Labs/stride/v2/testutil/nullify"
-	"github.com/Stride-Labs/stride/v2/x/stakeibc/keeper"
-	"github.com/Stride-Labs/stride/v2/x/stakeibc/types"
+	keepertest "github.com/Stride-Labs/stride/v3/testutil/keeper"
+	"github.com/Stride-Labs/stride/v3/testutil/nullify"
+	"github.com/Stride-Labs/stride/v3/x/stakeibc/keeper"
+	"github.com/Stride-Labs/stride/v3/x/stakeibc/types"
 )
 
 func createTestValidator(keeper *keeper.Keeper, ctx sdk.Context) types.Validator {

@@ -11,8 +11,8 @@ import (
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 
 	"github.com/Stride-Labs/stride/app"
-	"github.com/Stride-Labs/stride/v2/x/claim/types"
-	minttypes "github.com/Stride-Labs/stride/v2/x/mint/types"
+	"github.com/Stride-Labs/stride/v3/x/claim/types"
+	minttypes "github.com/Stride-Labs/stride/v3/x/mint/types"
 )
 
 type KeeperTestSuite struct {

@@ -4,7 +4,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	_ "github.com/stretchr/testify/suite"
 
-	icqtypes "github.com/Stride-Labs/stride/v2/x/interchainquery/types"
+	icqtypes "github.com/Stride-Labs/stride/v3/x/interchainquery/types"
 )
 
 type NewQueryTestCase struct {

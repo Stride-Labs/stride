@@ -24,12 +24,12 @@ import (
 
 	tmcli "github.com/tendermint/tendermint/libs/cli"
 
-	"github.com/Stride-Labs/stride/v2/x/claim/client/cli"
+	"github.com/Stride-Labs/stride/v3/x/claim/client/cli"
 
 	"github.com/Stride-Labs/stride/app"
 	cmdcfg "github.com/Stride-Labs/stride/cmd/strided/config"
-	"github.com/Stride-Labs/stride/v2/x/claim/types"
-	claimtypes "github.com/Stride-Labs/stride/v2/x/claim/types"
+	"github.com/Stride-Labs/stride/v3/x/claim/types"
+	claimtypes "github.com/Stride-Labs/stride/v3/x/claim/types"
 )
 
 var addr1 sdk.AccAddress

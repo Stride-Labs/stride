@@ -1,10 +1,11 @@
 package cli
 
 import (
-	"github.com/Stride-Labs/stride/v2/x/stakeibc/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/spf13/cobra"
+
+	"github.com/Stride-Labs/stride/v3/x/stakeibc/types"
 )
 
 func CmdShowInterchainAccount() *cobra.Command {

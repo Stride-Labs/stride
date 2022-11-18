@@ -1,9 +1,10 @@
 package types
 
 import (
-	"github.com/Stride-Labs/stride/v2/utils"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+
+	"github.com/Stride-Labs/stride/v3/utils"
 )
 
 const TypeMsgDeleteValidator = "delete_validator"

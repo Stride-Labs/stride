@@ -13,8 +13,8 @@ import (
 
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
-	config "github.com/Stride-Labs/stride/v2/cmd/strided/config"
-	recordstypes "github.com/Stride-Labs/stride/v2/x/records/types"
+	config "github.com/Stride-Labs/stride/v3/cmd/strided/config"
+	recordstypes "github.com/Stride-Labs/stride/v3/x/records/types"
 )
 
 func FilterDepositRecords(arr []recordstypes.DepositRecord, condition func(recordstypes.DepositRecord) bool) (ret []recordstypes.DepositRecord) {

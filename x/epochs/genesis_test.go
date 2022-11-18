@@ -3,11 +3,12 @@ package epochs_test
 import (
 	"testing"
 
-	keepertest "github.com/Stride-Labs/stride/v2/testutil/keeper"
-	"github.com/Stride-Labs/stride/v2/testutil/nullify"
-	"github.com/Stride-Labs/stride/v2/x/epochs"
-	"github.com/Stride-Labs/stride/v2/x/epochs/types"
 	"github.com/stretchr/testify/require"
+
+	keepertest "github.com/Stride-Labs/stride/v3/testutil/keeper"
+	"github.com/Stride-Labs/stride/v3/testutil/nullify"
+	"github.com/Stride-Labs/stride/v3/x/epochs"
+	"github.com/Stride-Labs/stride/v3/x/epochs/types"
 )
 
 func TestGenesis(t *testing.T) {

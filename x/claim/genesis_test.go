@@ -11,7 +11,7 @@ import (
 
 	keepertest "github.com/Stride-Labs/stride/testutil/keeper"
 	"github.com/Stride-Labs/stride/testutil/nullify"
-	"github.com/Stride-Labs/stride/v2/x/claim/types"
+	"github.com/Stride-Labs/stride/v3/x/claim/types"
 )
 
 func TestGenesis(t *testing.T) {
