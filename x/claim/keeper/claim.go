@@ -97,9 +97,9 @@ func (k Keeper) GetUnallocatedUsers(ctx sdk.Context, identifier string, users []
 
 // Get airdrop duration for action
 func GetAirdropDurationForAction(action types.Action) int64 {
-	if action == types.ActionDelegateStake {
+	if action == types.ACTION_DELEGATE_STAKE {
 		return int64(types.DefaultVestingDurationForDelegateStake.Seconds())
-	} else if action == types.ActionLiquidStake {
+	} else if action == types.ACTION_LIQUID_STAKE {
 		return int64(types.DefaultVestingDurationForLiquidStake.Seconds())
 	}
 	return int64(0)
@@ -363,9 +363,9 @@ func (k Keeper) GetClaimableAmountForAction(ctx sdk.Context, addr sdk.AccAddress
 	}
 
 	percentageForAction := types.PercentageForFree
-	if action == types.ActionDelegateStake {
+	if action == types.ACTION_DELEGATE_STAKE {
 		percentageForAction = types.PercentageForStake
-	} else if action == types.ActionLiquidStake {
+	} else if action == types.ACTION_LIQUID_STAKE {
 		percentageForAction = types.PercentageForLiquidStake
 	}
 
