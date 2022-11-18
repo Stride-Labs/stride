@@ -9,6 +9,8 @@ import (
 
 	claimkeeper "github.com/Stride-Labs/stride/v3/x/claim/keeper"
 	claimtypes "github.com/Stride-Labs/stride/v3/x/claim/types"
+	recordskeeper "github.com/Stride-Labs/stride/v3/x/records/keeper"
+	recordstypes "github.com/Stride-Labs/stride/v3/x/records/types"
 )
 
 // Note: ensure these values are properly set before running upgrade
@@ -30,6 +32,7 @@ func CreateUpgradeHandler(
 	mm *module.Manager,
 	configurator module.Configurator,
 	ck claimkeeper.Keeper,
+	rk recordskeeper.Keeper,
 ) upgradetypes.UpgradeHandler {
 	return func(ctx sdk.Context, _ upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
 		newVm, err := mm.RunMigrations(ctx, configurator, vm)
@@ -47,6 +50,21 @@ func CreateUpgradeHandler(
 			}
 		}
 		ck.LoadAllocationData(ctx, allocations)
+
+		// revert juno deposit records (currently stuck due to timeout)
+		badRecords := []uint64{848, 851, 860, 863, 902, 908, 914, 920, 927, 934, 940, 946, 952, 958, 965, 972, 979,
+			986, 992, 998, 1005, 1012, 1019, 1026, 1033, 1040, 1047, 1054, 1061, 1068, 1074, 1080,
+			1086, 1092, 1098, 1104, 1110, 1116, 1112, 1128, 1140, 1146, 1152, 1158, 1165, 1171, 1189, 1195, 1201, 1207, 1213, 1217, 1220, 1226, 1232, 1238, 1244}
+		for _, recordId := range badRecords {
+			depositRecord, found := rk.GetDepositRecord(ctx, recordId)
+			if found {
+				if (depositRecord.Status == recordstypes.DepositRecord_DELEGATION_IN_PROGRESS) && (depositRecord.HostZoneId == "juno-1") {
+					depositRecord.Status = recordstypes.DepositRecord_DELEGATION_QUEUE
+					rk.SetDepositRecord(ctx, depositRecord)
+				}
+			}
+		}
+
 		return newVm, nil
 	}
 }
