@@ -1,11 +1,12 @@
 syntax = "proto3";
-package Stridelabs.stride.claim.v1beta1;
+package stride.claim;
 
 import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
 import "cosmos/base/v1beta1/coin.proto";
-import "claim/v1beta1/claim.proto";
-import "claim/v1beta1/params.proto";
+import "stride/claim/claim.proto";
+import "stride/claim/params.proto";
+import "stride/vesting/vesting.proto";
 
 option go_package = "github.com/Stride-Labs/stride/x/claim/types";
 
@@ -14,24 +15,29 @@ service Query {
   rpc DistributorAccountBalance(QueryDistributorAccountBalanceRequest)
       returns (QueryDistributorAccountBalanceResponse) {
     option (google.api.http).get =
-        "/claim/v1beta1/module_account_balance";
+        "/claim/module_account_balance";
   }
   rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
-    option (google.api.http).get = "/claim/v1beta1/params";
+    option (google.api.http).get = "/claim/params";
   }
   rpc ClaimRecord(QueryClaimRecordRequest) returns (QueryClaimRecordResponse) {
     option (google.api.http).get =
-        "/claim/v1beta1/claim_record/{address}";
+        "/claim/claim_record/{address}";
   }
   rpc ClaimableForAction(QueryClaimableForActionRequest)
       returns (QueryClaimableForActionResponse) {
     option (google.api.http).get =
-        "/claim/v1beta1/claimable_for_action/{address}/{action}";
+        "/claim/claimable_for_action/{address}/{action}";
   }
   rpc TotalClaimable(QueryTotalClaimableRequest)
       returns (QueryTotalClaimableResponse) {
     option (google.api.http).get =
-        "/claim/v1beta1/total_claimable/{address}";
+        "/claim/total_claimable/{address}";
+  }
+  rpc UserVestings(QueryUserVestingsRequest)
+      returns (QueryUserVestingsResponse) {
+    option (google.api.http).get =
+        "/claim/user_vestings/{address}";
   }
 }
 
@@ -95,5 +101,21 @@ message QueryTotalClaimableResponse {
     (gogoproto.moretags) = "yaml:\"coins\"",
     (gogoproto.nullable) = false,
     (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
+  ];
+}
+
+message QueryUserVestingsRequest {
+  string address = 1 [ (gogoproto.moretags) = "yaml:\"address\"" ];
+}
+
+message QueryUserVestingsResponse {
+  repeated cosmos.base.v1beta1.Coin spendable_coins = 3 [
+    (gogoproto.moretags) = "yaml:\"spendable_coins\"",
+    (gogoproto.nullable) = false, 
+    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
+  ];
+  repeated stride.vesting.Period periods = 1 [
+    (gogoproto.moretags) = "yaml:\"periods\"",
+    (gogoproto.nullable) = false
   ];
 }

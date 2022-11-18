@@ -96,3 +96,26 @@ func (k Keeper) TotalClaimable(
 		Coins: coins,
 	}, err
 }
+
+// UserVestings returns all vestings for user
+func (k Keeper) UserVestings(
+	goCtx context.Context,
+	req *types.QueryUserVestingsRequest,
+) (*types.QueryUserVestingsResponse, error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "empty request")
+	}
+
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	addr, err := sdk.AccAddressFromBech32(req.Address)
+	if err != nil {
+		return nil, err
+	}
+
+	vestings, spendableCoins := k.GetUserVestings(ctx, addr)
+
+	return &types.QueryUserVestingsResponse{
+		SpendableCoins: spendableCoins,
+		Periods:        vestings,
+	}, err
+}

@@ -1,5 +1,5 @@
 syntax = "proto3";
-package Stridelabs.stride.vesting;
+package stride.vesting;
 
 import "gogoproto/gogo.proto";
 import "cosmos/base/v1beta1/coin.proto";
@@ -40,6 +40,7 @@ message Period {
   int64    length                          = 2;
   repeated cosmos.base.v1beta1.Coin amount = 3
       [(gogoproto.nullable) = false, (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"];
+  int32 action_type = 4;
 }
 
 // StridePeriodicVestingAccount implements the VestingAccount interface. It
