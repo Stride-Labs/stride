@@ -1,4 +1,4 @@
-version: "3.8"
+version: "3"
 services:
   stride1:
     image: stridezone:stride
@@ -106,6 +106,35 @@ services:
     volumes:
       - ./scripts/state/osmo5:/home/osmosis/.osmosisd
 
+  stars1:
+    image: stridezone:stars
+    volumes:
+      - ./scripts/state/stars1:/home/stars/.starsd
+    ports:
+      - "26257:26657"
+      - "1277:1317"
+      - "9050:9090"
+
+  stars2:
+    image: stridezone:stars
+    volumes:
+      - ./scripts/state/stars2:/home/stars/.starsd
+
+  stars3:
+    image: stridezone:stars
+    volumes:
+      - ./scripts/state/stars3:/home/stars/.starsd
+
+  stars4:
+    image: stridezone:stars
+    volumes:
+      - ./scripts/state/stars4:/home/stars/.starsd
+
+  stars5:
+    image: stridezone:stars
+    volumes:
+      - ./scripts/state/stars5:/home/stars/.starsd
+
   hermes:
     image: stridezone:hermes
     volumes:
@@ -113,14 +142,37 @@ services:
       - ./scripts/state/hermes/config.toml:/home/hermes/.hermes/config.toml
     restart: always
 
-  relayer:
+  relayer-host:
     image: stridezone:relayer
     volumes:
       - ./scripts/state/relayer:/home/relayer/.relayer
     restart: always
+    command: [ "bash", "start.sh", "stride-host" ]
 
-  icq:
-    image: stridezone:icq
+  relayer-gaia:
+    image: stridezone:relayer
     volumes:
-      - ./scripts/state/icq:/home/icq/.icq
+      - ./scripts/state/relayer-gaia:/home/relayer/.relayer
     restart: always
+    command: [ "bash", "start.sh", "stride-gaia" ]
+
+  relayer-juno:
+    image: stridezone:relayer
+    volumes:
+      - ./scripts/state/relayer-juno:/home/relayer/.relayer
+    restart: always
+    command: [ "bash", "start.sh", "stride-juno" ]
+
+  relayer-osmo:
+    image: stridezone:relayer
+    volumes:
+      - ./scripts/state/relayer-osmo:/home/relayer/.relayer
+    restart: always
+    command: [ "bash", "start.sh", "stride-osmo" ]
+
+  relayer-stars:
+    image: stridezone:relayer
+    volumes:
+      - ./scripts/state/relayer-stars:/home/relayer/.relayer
+    restart: always
+    command: [ "bash", "start.sh", "stride-stars" ]

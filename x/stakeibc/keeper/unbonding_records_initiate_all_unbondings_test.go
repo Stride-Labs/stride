@@ -4,9 +4,9 @@ import (
 	ibctesting "github.com/cosmos/ibc-go/v3/testing"
 	_ "github.com/stretchr/testify/suite"
 
-	recordtypes "github.com/Stride-Labs/stride/x/records/types"
+	recordtypes "github.com/Stride-Labs/stride/v3/x/records/types"
 
-	stakeibc "github.com/Stride-Labs/stride/x/stakeibc/types"
+	stakeibc "github.com/Stride-Labs/stride/v3/x/stakeibc/types"
 )
 
 type InitiateAllHostZoneUnbondingsTestCase struct {
@@ -78,14 +78,14 @@ func (s *KeeperTestSuite) SetupInitiateAllHostZoneUnbondings() InitiateAllHostZo
 			StTokenAmount:     1_900_000,
 			NativeTokenAmount: 2_000_000,
 			Denom:             Atom,
-			Status:            recordtypes.HostZoneUnbonding_BONDED,
+			Status:            recordtypes.HostZoneUnbonding_UNBONDING_QUEUE,
 		},
 		{
 			HostZoneId:        OsmoChainId,
 			StTokenAmount:     2_800_000,
 			NativeTokenAmount: 3_000_000,
 			Denom:             Osmo,
-			Status:            recordtypes.HostZoneUnbonding_BONDED,
+			Status:            recordtypes.HostZoneUnbonding_UNBONDING_QUEUE,
 		},
 	}
 	epochUnbondingRecords := []recordtypes.EpochUnbondingRecord{}

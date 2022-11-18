@@ -13,8 +13,8 @@ import (
 	capabilitykeeper "github.com/cosmos/cosmos-sdk/x/capability/keeper"
 	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
 
-	icqkeeper "github.com/Stride-Labs/stride/x/interchainquery/keeper"
-	"github.com/Stride-Labs/stride/x/stakeibc/types"
+	icqkeeper "github.com/Stride-Labs/stride/v3/x/interchainquery/keeper"
+	"github.com/Stride-Labs/stride/v3/x/stakeibc/types"
 
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
@@ -22,9 +22,9 @@ import (
 	ibckeeper "github.com/cosmos/ibc-go/v3/modules/core/keeper"
 	ibctmtypes "github.com/cosmos/ibc-go/v3/modules/light-clients/07-tendermint/types"
 
-	epochstypes "github.com/Stride-Labs/stride/x/epochs/types"
-	icacallbackskeeper "github.com/Stride-Labs/stride/x/icacallbacks/keeper"
-	recordsmodulekeeper "github.com/Stride-Labs/stride/x/records/keeper"
+	epochstypes "github.com/Stride-Labs/stride/v3/x/epochs/types"
+	icacallbackskeeper "github.com/Stride-Labs/stride/v3/x/icacallbacks/keeper"
+	recordsmodulekeeper "github.com/Stride-Labs/stride/v3/x/records/keeper"
 )
 
 type (
@@ -42,8 +42,8 @@ type (
 		RecordsKeeper         recordsmodulekeeper.Keeper
 		StakingKeeper         stakingkeeper.Keeper
 		ICACallbacksKeeper    icacallbackskeeper.Keeper
-
-		accountKeeper types.AccountKeeper
+		hooks                 types.StakeIBCHooks
+		accountKeeper         types.AccountKeeper
 	}
 )
 
@@ -89,6 +89,17 @@ func NewKeeper(
 
 func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 	return ctx.Logger().With("module", fmt.Sprintf("x/%s", types.ModuleName))
+}
+
+// SetHooks sets the hooks for ibc staking
+func (k *Keeper) SetHooks(gh types.StakeIBCHooks) *Keeper {
+	if k.hooks != nil {
+		panic("cannot set ibc staking hooks twice")
+	}
+
+	k.hooks = gh
+
+	return k
 }
 
 // ClaimCapability claims the channel capability passed via the OnOpenChanInit callback
@@ -245,7 +256,6 @@ func (k Keeper) GetICATimeoutNanos(ctx sdk.Context, epochType string) (uint64, e
 
 // safety check: ensure the redemption rate is NOT below our min safety threshold && NOT above our max safety threshold on host zone
 func (k Keeper) IsRedemptionRateWithinSafetyBounds(ctx sdk.Context, zone types.HostZone) (bool, error) {
-
 	minSafetyThresholdInt := k.GetParam(ctx, types.KeySafetyMinRedemptionRateThreshold)
 	minSafetyThreshold := sdk.NewDec(int64(minSafetyThresholdInt)).Quo(sdk.NewDec(100))
 
@@ -260,4 +270,36 @@ func (k Keeper) IsRedemptionRateWithinSafetyBounds(ctx sdk.Context, zone types.H
 		return false, sdkerrors.Wrapf(types.ErrRedemptionRateOutsideSafetyBounds, errMsg)
 	}
 	return true, nil
+}
+
+// Check the max number of validators to confirm we won't exceed it when adding a new validator
+// Types of additions:
+//   - change a weight from zero to non-zero
+//   - add a new validator with non-zero weight
+func (k Keeper) ConfirmValSetHasSpace(ctx sdk.Context, validators []*types.Validator) error {
+
+	// get max val parameter
+	maxNumVals, err := cast.ToIntE(k.GetParam(ctx, types.KeySafetyNumValidators))
+	if err != nil {
+		errMsg := fmt.Sprintf("Error getting safety max num validators | err: %s", err.Error())
+		k.Logger(ctx).Error(errMsg)
+		return sdkerrors.Wrap(types.ErrMaxNumValidators, errMsg)
+	}
+
+	// count up the number of validators with non-zero weights
+	numNonzeroWgtValidators := 0
+	for _, validator := range validators {
+		if validator.Weight > 0 {
+			numNonzeroWgtValidators++
+		}
+	}
+
+	// check if the number of validators with non-zero weights is below than the max
+	if numNonzeroWgtValidators >= maxNumVals {
+		errMsg := fmt.Sprintf("Attempting to add new validator but already reached max number of validators (%d)", maxNumVals)
+		k.Logger(ctx).Error(errMsg)
+		return sdkerrors.Wrap(types.ErrMaxNumValidators, errMsg)
+	}
+
+	return nil
 }

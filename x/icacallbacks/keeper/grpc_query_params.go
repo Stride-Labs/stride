@@ -3,10 +3,11 @@ package keeper
 import (
 	"context"
 
-	"github.com/Stride-Labs/stride/x/icacallbacks/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+
+	"github.com/Stride-Labs/stride/v3/x/icacallbacks/types"
 )
 
 func (k Keeper) Params(c context.Context, req *types.QueryParamsRequest) (*types.QueryParamsResponse, error) {

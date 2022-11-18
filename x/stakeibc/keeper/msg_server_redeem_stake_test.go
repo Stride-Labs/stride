@@ -7,9 +7,9 @@ import (
 	"github.com/spf13/cast"
 	_ "github.com/stretchr/testify/suite"
 
-	epochtypes "github.com/Stride-Labs/stride/x/epochs/types"
-	recordtypes "github.com/Stride-Labs/stride/x/records/types"
-	stakeibctypes "github.com/Stride-Labs/stride/x/stakeibc/types"
+	epochtypes "github.com/Stride-Labs/stride/v3/x/epochs/types"
+	recordtypes "github.com/Stride-Labs/stride/v3/x/records/types"
+	stakeibctypes "github.com/Stride-Labs/stride/v3/x/stakeibc/types"
 )
 
 type RedeemStakeState struct {
@@ -69,7 +69,7 @@ func (s *KeeperTestSuite) SetupRedeemStake() RedeemStakeTestCase {
 		NativeTokenAmount: uint64(0),
 		Denom:             "uatom",
 		HostZoneId:        HostChainId,
-		Status:            recordtypes.HostZoneUnbonding_BONDED,
+		Status:            recordtypes.HostZoneUnbonding_UNBONDING_QUEUE,
 	}
 	epochUnbondingRecord.HostZoneUnbondings = append(epochUnbondingRecord.HostZoneUnbondings, hostZoneUnbonding)
 
@@ -155,7 +155,7 @@ func (s *KeeperTestSuite) TestRedeemStake_Successful() {
 	s.Require().Equal(msg.HostZone, userRedemptionRecord.HostZoneId, "redemption record host zone")
 	// check claimIsPending
 	s.Require().False(userRedemptionRecord.ClaimIsPending, "redemption record is not claimable")
-	s.Require().NotEqual(hostZoneUnbonding.Status, recordtypes.HostZoneUnbonding_TRANSFERRED, "host zone unbonding should NOT be marked as TRANSFERRED")
+	s.Require().NotEqual(hostZoneUnbonding.Status, recordtypes.HostZoneUnbonding_CLAIMABLE, "host zone unbonding should NOT be marked as CLAIMABLE")
 }
 
 func (s *KeeperTestSuite) TestRedeemStake_InvalidCreatorAddress() {

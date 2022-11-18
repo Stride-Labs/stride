@@ -8,7 +8,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/telemetry"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Stride-Labs/stride/x/interchainquery/types"
+	"github.com/Stride-Labs/stride/v3/x/interchainquery/types"
 )
 
 // EndBlocker of interchainquery module
@@ -48,5 +48,4 @@ func (k Keeper) EndBlocker(ctx sdk.Context) {
 	if len(events) > 0 {
 		ctx.EventManager().EmitEvents(events)
 	}
-
 }

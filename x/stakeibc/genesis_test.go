@@ -3,11 +3,12 @@ package stakeibc_test
 import (
 	"testing"
 
-	keepertest "github.com/Stride-Labs/stride/testutil/keeper"
-	"github.com/Stride-Labs/stride/testutil/nullify"
-	"github.com/Stride-Labs/stride/x/stakeibc"
-	"github.com/Stride-Labs/stride/x/stakeibc/types"
 	"github.com/stretchr/testify/require"
+
+	keepertest "github.com/Stride-Labs/stride/v3/testutil/keeper"
+	"github.com/Stride-Labs/stride/v3/testutil/nullify"
+	"github.com/Stride-Labs/stride/v3/x/stakeibc"
+	"github.com/Stride-Labs/stride/v3/x/stakeibc/types"
 )
 
 func TestGenesis(t *testing.T) {

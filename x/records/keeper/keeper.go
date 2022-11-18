@@ -7,7 +7,7 @@ import (
 	ibckeeper "github.com/cosmos/ibc-go/v3/modules/core/keeper"
 	"github.com/tendermint/tendermint/libs/log"
 
-	icacallbackstypes "github.com/Stride-Labs/stride/x/icacallbacks/types"
+	icacallbackstypes "github.com/Stride-Labs/stride/v3/x/icacallbacks/types"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -18,9 +18,9 @@ import (
 	ibctransferkeeper "github.com/cosmos/ibc-go/v3/modules/apps/transfer/keeper"
 	ibctypes "github.com/cosmos/ibc-go/v3/modules/apps/transfer/types"
 
-	icacallbackskeeper "github.com/Stride-Labs/stride/x/icacallbacks/keeper"
+	icacallbackskeeper "github.com/Stride-Labs/stride/v3/x/icacallbacks/keeper"
 
-	"github.com/Stride-Labs/stride/x/records/types"
+	"github.com/Stride-Labs/stride/v3/x/records/types"
 )
 
 type (
@@ -76,7 +76,7 @@ func (k *Keeper) ClaimCapability(ctx sdk.Context, cap *capabilitytypes.Capabilit
 	return k.scopedKeeper.ClaimCapability(ctx, cap, name)
 }
 
-func (k Keeper) Transfer(ctx sdk.Context, msg *ibctypes.MsgTransfer, depositRecordId uint64) error {
+func (k Keeper) Transfer(ctx sdk.Context, msg *ibctypes.MsgTransfer, depositRecord types.DepositRecord) error {
 	goCtx := sdk.WrapSDKContext(ctx)
 
 	// because TransferKeeper.Transfer doesn't return a sequence number, we need to fetch it manually
@@ -99,7 +99,7 @@ func (k Keeper) Transfer(ctx sdk.Context, msg *ibctypes.MsgTransfer, depositReco
 
 	// add callback data
 	transferCallback := types.TransferCallback{
-		DepositRecordId: depositRecordId,
+		DepositRecordId: depositRecord.Id,
 	}
 	k.Logger(ctx).Info(fmt.Sprintf("Marshalling TransferCallback args: %v", transferCallback))
 	marshalledCallbackArgs, err := k.MarshalTransferCallbackArgs(ctx, transferCallback)
@@ -117,5 +117,10 @@ func (k Keeper) Transfer(ctx sdk.Context, msg *ibctypes.MsgTransfer, depositReco
 	}
 	k.Logger(ctx).Info(fmt.Sprintf("Storing callback data: %v", callback))
 	k.ICACallbacksKeeper.SetCallbackData(ctx, callback)
+
+	// update the record state to TRANSFER_IN_PROGRESS
+	depositRecord.Status = types.DepositRecord_TRANSFER_IN_PROGRESS
+	k.SetDepositRecord(ctx, depositRecord)
+
 	return nil
 }

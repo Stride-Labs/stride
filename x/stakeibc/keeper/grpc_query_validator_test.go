@@ -8,16 +8,16 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	keepertest "github.com/Stride-Labs/stride/testutil/keeper"
-	"github.com/Stride-Labs/stride/testutil/nullify"
-	"github.com/Stride-Labs/stride/x/stakeibc/types"
+	keepertest "github.com/Stride-Labs/stride/v3/testutil/keeper"
+	"github.com/Stride-Labs/stride/v3/testutil/nullify"
+	"github.com/Stride-Labs/stride/v3/x/stakeibc/types"
 )
 
 func TestValidatorQuery(t *testing.T) {
 	keeper, ctx := keepertest.StakeibcKeeper(t)
 	wctx := sdk.WrapSDKContext(ctx)
 
-	var validatorsByHostZone = make(map[string][]*types.Validator)
+	validatorsByHostZone := make(map[string][]*types.Validator)
 	validators := []*types.Validator{}
 	nullify.Fill(&validators)
 

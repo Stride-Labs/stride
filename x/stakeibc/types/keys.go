@@ -32,10 +32,8 @@ const (
 	FeeAccount = "stride1czvrk3jkvtj8m27kqsqu2yrkhw3h3ykwj3rxh6"
 )
 
-var (
-	// PortKey defines the key to store the port ID in store
-	PortKey = KeyPrefix("stakeibc-port-")
-)
+// PortKey defines the key to store the port ID in store
+var PortKey = KeyPrefix("stakeibc-port-")
 
 func KeyPrefix(p string) []byte {
 	return []byte(p)

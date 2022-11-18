@@ -10,9 +10,9 @@ import (
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
 	"github.com/cosmos/cosmos-sdk/x/simulation"
 
-	"github.com/Stride-Labs/stride/testutil/sample"
-	stakeibcsimulation "github.com/Stride-Labs/stride/x/stakeibc/simulation"
-	"github.com/Stride-Labs/stride/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v3/testutil/sample"
+	stakeibcsimulation "github.com/Stride-Labs/stride/v3/x/stakeibc/simulation"
+	"github.com/Stride-Labs/stride/v3/x/stakeibc/types"
 )
 
 // avoid unused import issue
@@ -56,7 +56,6 @@ func (AppModule) ProposalContents(_ module.SimulationState) []simtypes.WeightedP
 
 // RandomizedParams creates randomized  param changes for the simulator
 func (am AppModule) RandomizedParams(_ *rand.Rand) []simtypes.ParamChange {
-
 	return []simtypes.ParamChange{}
 }
 

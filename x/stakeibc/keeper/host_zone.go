@@ -4,13 +4,14 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
+	"math"
 
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/spf13/cast"
 
-	"github.com/Stride-Labs/stride/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v3/x/stakeibc/types"
 )
 
 // GetHostZoneCount get the total number of hostZone
@@ -122,6 +123,62 @@ func (k Keeper) AddDelegationToValidator(ctx sdk.Context, hostZone types.HostZon
 	}
 	k.Logger(ctx).Error(fmt.Sprintf("Could not find validator %s on host zone %s", valAddr, hostZone.GetChainId()))
 	return false
+}
+
+func (k Keeper) AddValidatorToHostZone(ctx sdk.Context, msg *types.MsgAddValidator, fromGovernance bool) error {
+	// Get the corresponding host zone
+	hostZone, found := k.GetHostZone(ctx, msg.HostZone)
+	if !found {
+		errMsg := fmt.Sprintf("Host Zone (%s) not found", msg.HostZone)
+		k.Logger(ctx).Error(errMsg)
+		return sdkerrors.Wrap(types.ErrHostZoneNotFound, errMsg)
+	}
+
+	// Get max number of validators and confirm we won't exceed it
+	err := k.ConfirmValSetHasSpace(ctx, hostZone.Validators)
+	if err != nil {
+		return sdkerrors.Wrap(types.ErrMaxNumValidators, "cannot add validator on host zone")
+	}
+
+	// Check that we don't already have this validator
+	// Grab the minimum weight in the process (to assign to validator's added through governance)
+	var minWeight uint64 = math.MaxUint64
+	for _, validator := range hostZone.Validators {
+		if validator.Address == msg.Address {
+			errMsg := fmt.Sprintf("Validator address (%s) already exists on Host Zone (%s)", msg.Address, msg.HostZone)
+			k.Logger(ctx).Error(errMsg)
+			return sdkerrors.Wrap(types.ErrValidatorAlreadyExists, errMsg)
+		}
+		if validator.Name == msg.Name {
+			errMsg := fmt.Sprintf("Validator name (%s) already exists on Host Zone (%s)", msg.Name, msg.HostZone)
+			k.Logger(ctx).Error(errMsg)
+			return sdkerrors.Wrap(types.ErrValidatorAlreadyExists, errMsg)
+		}
+		// Store the min weight to assign to new validator added through governance (ignore zero-weight validators)
+		if validator.Weight < minWeight && validator.Weight > 0 {
+			minWeight = validator.Weight
+		}
+	}
+
+	// If the validator was added via governance, set the weight to the min validator weight of the host zone
+	valWeight := msg.Weight
+	if fromGovernance {
+		valWeight = minWeight
+	}
+
+	// Finally, add the validator to the host
+	hostZone.Validators = append(hostZone.Validators, &types.Validator{
+		Name:           msg.Name,
+		Address:        msg.Address,
+		Status:         types.Validator_Active,
+		CommissionRate: msg.Commission,
+		DelegationAmt:  0,
+		Weight:         valWeight,
+	})
+
+	k.SetHostZone(ctx, hostZone)
+
+	return nil
 }
 
 func (k Keeper) RemoveValidatorFromHostZone(ctx sdk.Context, chainId string, validatorAddress string) error {

@@ -8,14 +8,14 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	"github.com/spf13/cobra"
 
-	"github.com/Stride-Labs/stride/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v3/x/stakeibc/types"
 )
 
 var _ = strconv.Itoa(0)
 
 func CmdRebalanceValidators() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "rebalance-validators [host-zone]",
+		Use:   "rebalance-validators [host-zone] [num-to-rebalance]",
 		Short: "Broadcast message rebalanceValidators",
 		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) (err error) {

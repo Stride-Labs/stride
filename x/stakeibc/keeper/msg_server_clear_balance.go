@@ -9,7 +9,7 @@ import (
 	ibctransfertypes "github.com/cosmos/ibc-go/v3/modules/apps/transfer/types"
 	"github.com/spf13/cast"
 
-	"github.com/Stride-Labs/stride/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v3/x/stakeibc/types"
 )
 
 func (k msgServer) ClearBalance(goCtx context.Context, msg *types.MsgClearBalance) (*types.MsgClearBalanceResponse, error) {
@@ -40,17 +40,17 @@ func (k msgServer) ClearBalance(goCtx context.Context, msg *types.MsgClearBalanc
 	timeoutTimestamp := cast.ToUint64(ctx.BlockTime().UnixNano()) + feeTransferTimeoutNanos
 	msgs := []sdk.Msg{
 		&ibctransfertypes.MsgTransfer{
-			SourcePort: sourcePort,
-			SourceChannel: sourceChannel,
-			Token: tokens,
-			Sender: sender,
-			Receiver: types.FeeAccount,
+			SourcePort:       sourcePort,
+			SourceChannel:    sourceChannel,
+			Token:            tokens,
+			Sender:           sender,
+			Receiver:         types.FeeAccount,
 			TimeoutTimestamp: timeoutTimestamp,
 		},
 	}
 
 	connectionId := zone.GetConnectionId()
-	
+
 	icaTimeoutNanos := k.GetParam(ctx, types.KeyICATimeoutNanos)
 	icaTimeoutNanos = cast.ToUint64(ctx.BlockTime().UnixNano()) + icaTimeoutNanos
 
@@ -60,4 +60,3 @@ func (k msgServer) ClearBalance(goCtx context.Context, msg *types.MsgClearBalanc
 	}
 	return &types.MsgClearBalanceResponse{}, nil
 }
-

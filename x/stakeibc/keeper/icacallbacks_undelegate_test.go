@@ -10,10 +10,10 @@ import (
 	"github.com/gogo/protobuf/proto"
 	_ "github.com/stretchr/testify/suite"
 
-	recordtypes "github.com/Stride-Labs/stride/x/records/types"
-	stakeibckeeper "github.com/Stride-Labs/stride/x/stakeibc/keeper"
-	"github.com/Stride-Labs/stride/x/stakeibc/types"
-	stakeibc "github.com/Stride-Labs/stride/x/stakeibc/types"
+	recordtypes "github.com/Stride-Labs/stride/v3/x/records/types"
+	stakeibckeeper "github.com/Stride-Labs/stride/v3/x/stakeibc/keeper"
+	"github.com/Stride-Labs/stride/v3/x/stakeibc/types"
+	stakeibc "github.com/Stride-Labs/stride/v3/x/stakeibc/types"
 )
 
 type UndelegateCallbackState struct {
@@ -79,7 +79,7 @@ func (s *KeeperTestSuite) SetupUndelegateCallback() UndelegateCallbackTestCase {
 	// Set up EpochUnbondingRecord, HostZoneUnbonding and token state
 	hostZoneUnbonding := recordtypes.HostZoneUnbonding{
 		HostZoneId:    HostChainId,
-		Status:        recordtypes.HostZoneUnbonding_BONDED,
+		Status:        recordtypes.HostZoneUnbonding_UNBONDING_QUEUE,
 		StTokenAmount: uint64(balanceToUnstake),
 	}
 	epochUnbondingRecord := recordtypes.EpochUnbondingRecord{
@@ -161,7 +161,7 @@ func (s *KeeperTestSuite) TestUndelegateCallback_Successful() {
 	s.Require().Equal(len(epochUnbondingRecord.HostZoneUnbondings), 1, "1 host zone unbonding found")
 	hzu := epochUnbondingRecord.HostZoneUnbondings[0]
 	s.Require().Equal(int64(hzu.UnbondingTime), initialState.completionTime.UnixNano(), "completion time is set on the hzu")
-	s.Require().Equal(hzu.Status, recordtypes.HostZoneUnbonding_UNBONDED, "hzu status is set to UNBONDED")
+	s.Require().Equal(hzu.Status, recordtypes.HostZoneUnbonding_EXIT_TRANSFER_QUEUE, "hzu status is set to EXIT_TRANSFER_QUEUE")
 	zoneAccount, err := sdk.AccAddressFromBech32(hostZone.Address)
 	s.Require().NoError(err, "zone account address is valid")
 	s.Require().Equal(tc.balanceToUnstake, initialState.zoneAccountBalance-s.App.BankKeeper.GetBalance(s.Ctx(), zoneAccount, StAtom).Amount.Int64(), "tokens are burned")
@@ -188,7 +188,7 @@ func (s *KeeperTestSuite) checkStateIfUndelegateCallbackFailed(tc UndelegateCall
 	s.Require().Equal(len(epochUnbondingRecord.HostZoneUnbondings), 1, "1 host zone unbonding found")
 	hzu := epochUnbondingRecord.HostZoneUnbondings[0]
 	s.Require().Equal(int64(hzu.UnbondingTime), int64(0), "completion time is NOT set on the hzu")
-	s.Require().Equal(hzu.Status, recordtypes.HostZoneUnbonding_BONDED, "hzu status is set to BONDED")
+	s.Require().Equal(hzu.Status, recordtypes.HostZoneUnbonding_UNBONDING_QUEUE, "hzu status is set to UNBONDING_QUEUE")
 	zoneAccount, err := sdk.AccAddressFromBech32(hostZone.Address)
 	s.Require().NoError(err, "zone account address is valid")
 	s.Require().Equal(initialState.zoneAccountBalance, s.App.BankKeeper.GetBalance(s.Ctx(), zoneAccount, StAtom).Amount.Int64(), "tokens are NOT burned")
@@ -325,20 +325,20 @@ func (s *KeeperTestSuite) TestUpdateHostZoneUnbondings_Success() {
 	// Set up EpochUnbondingRecord, HostZoneUnbonding and token state
 	hostZoneUnbonding1 := recordtypes.HostZoneUnbonding{
 		HostZoneId:    HostChainId,
-		Status:        recordtypes.HostZoneUnbonding_BONDED,
+		Status:        recordtypes.HostZoneUnbonding_UNBONDING_QUEUE,
 		StTokenAmount: uint64(stAmtHzu1),
 	}
 	hostZoneUnbonding2 := recordtypes.HostZoneUnbonding{
 		HostZoneId:    "not_gaia",
-		Status:        recordtypes.HostZoneUnbonding_BONDED,
+		Status:        recordtypes.HostZoneUnbonding_UNBONDING_QUEUE,
 		StTokenAmount: uint64(stAmtHzu2),
 	}
 	hostZoneUnbonding3 := recordtypes.HostZoneUnbonding{
 		HostZoneId:    HostChainId,
-		Status:        recordtypes.HostZoneUnbonding_BONDED,
+		Status:        recordtypes.HostZoneUnbonding_UNBONDING_QUEUE,
 		StTokenAmount: uint64(stAmtHzu3),
 	}
-	// Create two epoch unbonding records (status BONDED, completion time unset)
+	// Create two epoch unbonding records (status UNBONDING_QUEUE, completion time unset)
 	epochUnbondingRecord := recordtypes.EpochUnbondingRecord{
 		EpochNumber:        1,
 		HostZoneUnbondings: []*recordtypes.HostZoneUnbonding{&hostZoneUnbonding1, &hostZoneUnbonding2},
@@ -357,22 +357,22 @@ func (s *KeeperTestSuite) TestUpdateHostZoneUnbondings_Success() {
 	s.Require().NoError(err)
 	s.Require().Equal(int64(stAmtHzu1+stAmtHzu3), int64(burnAmount), "burn amount is correct")
 
-	// Verify that 2 hzus have status UNBONDED, while the third has status BONDED
+	// Verify that 2 hzus have status EXIT_TRANSFER_QUEUE, while the third has status UNBONDING_QUEUE
 	// Verify that 2 hzus have completion time set, while the third has no completion time
 	epochUnbondingRecord, found := s.App.RecordsKeeper.GetEpochUnbondingRecord(s.Ctx(), 1)
 	s.Require().True(found)
 	epochUnbondingRecord2, found = s.App.RecordsKeeper.GetEpochUnbondingRecord(s.Ctx(), 2)
 	s.Require().True(found)
 	hzu1 := epochUnbondingRecord.HostZoneUnbondings[0]
-	s.Require().Equal(recordtypes.HostZoneUnbonding_UNBONDED, hzu1.Status, "hzu1 status is UNBONDED")
+	s.Require().Equal(recordtypes.HostZoneUnbonding_EXIT_TRANSFER_QUEUE, hzu1.Status, "hzu1 status is EXIT_TRANSFER_QUEUE")
 	s.Require().Equal(completionTime.UnixNano(), int64(hzu1.UnbondingTime), "hzu1 completion time is set")
 
 	hzu2 := epochUnbondingRecord.HostZoneUnbondings[1]
-	s.Require().Equal(recordtypes.HostZoneUnbonding_BONDED, hzu2.Status, "hzu2 status is BONDED")
+	s.Require().Equal(recordtypes.HostZoneUnbonding_UNBONDING_QUEUE, hzu2.Status, "hzu2 status is UNBONDING_QUEUE")
 	s.Require().Equal(int64(0), int64(hzu2.UnbondingTime), "hzu2 completion time is NOT set")
 
 	hzu3 := epochUnbondingRecord2.HostZoneUnbondings[0]
-	s.Require().Equal(recordtypes.HostZoneUnbonding_UNBONDED, hzu3.Status, "hzu3 status is UNBONDED")
+	s.Require().Equal(recordtypes.HostZoneUnbonding_EXIT_TRANSFER_QUEUE, hzu3.Status, "hzu3 status is EXIT_TRANSFER_QUEUE")
 	s.Require().Equal(completionTime.UnixNano(), int64(hzu3.UnbondingTime), "hzu3 completion time is set")
 }
 
@@ -416,10 +416,10 @@ func (s *KeeperTestSuite) TestUpdateHostZoneUnbondings_AmountTooBig() {
 	// Set up EpochUnbondingRecord, HostZoneUnbonding and token state
 	hostZoneUnbonding := recordtypes.HostZoneUnbonding{
 		HostZoneId:    HostChainId,
-		Status:        recordtypes.HostZoneUnbonding_BONDED,
+		Status:        recordtypes.HostZoneUnbonding_UNBONDING_QUEUE,
 		StTokenAmount: math.MaxUint64,
 	}
-	// Create two epoch unbonding records (status BONDED, completion time unset)
+	// Create two epoch unbonding records (status UNBONDING_QUEUE, completion time unset)
 	epochUnbondingRecord := recordtypes.EpochUnbondingRecord{
 		EpochNumber:        1,
 		HostZoneUnbondings: []*recordtypes.HostZoneUnbonding{&hostZoneUnbonding, &hostZoneUnbonding},

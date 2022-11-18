@@ -2,6 +2,7 @@ package types
 
 import (
 	"fmt"
+
 	host "github.com/cosmos/ibc-go/v3/modules/core/24-host"
 )
 
