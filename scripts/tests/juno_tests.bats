@@ -7,7 +7,7 @@ setup_file() {
 
   # set allows us to export all variables in account_vars
   set -a
-  source scripts/account_vars.sh
+  source scripts/vars.sh
 
   GETBAL() {
     head -n 1 | grep -o -E '[0-9]+'
@@ -36,7 +36,6 @@ setup() {
   SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
   PATH="$SCRIPT_DIR/../../:$PATH"
 
-
   # if these extensions don't load properly, adjust the paths accoring to these instructions
   TEST_BREW_PREFIX="$(brew --prefix)"
   load "${TEST_BREW_PREFIX}/lib/bats-support/load.bash"
@@ -58,29 +57,13 @@ setup() {
 ##############################################################################################
 
 @test "[INTEGRATION-BASIC] address names are correct" {
-  assert_equal $STRIDE_ADDRESS "stride1uk4ze0x4nvh4fk0xm4jdud58eqn4yxhrt52vv7"
-  assert_equal $GAIA_ADDRESS "cosmos1pcag0cj4ttxg8l7pcg0q4ksuglswuuedcextl2"
-
-  assert_equal $DELEGATION_ICA_ADDR "cosmos1sy63lffevueudvvlvh2lf6s387xh9xq72n3fsy6n2gr5hm6u2szs2v0ujm"
-  assert_equal $REDEMPTION_ICA_ADDR "cosmos1xmcwu75s8v7s54k79390wc5gwtgkeqhvzegpj0nm2tdwacv47tmqg9ut30"
-  assert_equal $WITHDRAWAL_ICA_ADDR "cosmos1x5p8er7e2ne8l54tx33l560l8djuyapny55pksctuguzdc00dj7saqcw2l"
-  assert_equal $REVENUE_EOA_ADDR "cosmos1wdplq6qjh2xruc7qqagma9ya665q6qhcwju3ng"
-  assert_equal $FEE_ICA_ADDR "cosmos1lkgt5sfshn9shm7hd7chtytkq4mvwvswgmyl0hkacd4rmusu9wwq60cezx"
-  assert_equal $GAIA_DELEGATE_VAL_1 "cosmosvaloper1pcag0cj4ttxg8l7pcg0q4ksuglswuuedadj7ne"
-  assert_equal $GAIA_DELEGATE_VAL_2 "cosmosvaloper133lfs9gcpxqj6er3kx605e3v9lqp2pg5syhvsz"
-  assert_equal $GAIA_RECEIVER_ACCT "cosmos1g6qdx6kdhpf000afvvpte7hp0vnpzapuyxp8uf"
+  assert_equal $(STRIDE_ADDRESS) "stride1uk4ze0x4nvh4fk0xm4jdud58eqn4yxhrt52vv7"
 
   assert_equal $JUNO_DELEGATE_VAL "junovaloper1pcag0cj4ttxg8l7pcg0q4ksuglswuued3knlr0"
   assert_equal $JUNO_DELEGATION_ICA_ADDR 'juno1xan7vt4nurz6c7x0lnqnvpmuc0lljz7rycqmuz2kk6wxv4k69d0sfats35'
   assert_equal $JUNO_REDEMPTION_ICA_ADDR 'juno1y6haxdt03cgkc7aedxrlaleeteel7fgc0nvtu2kggee3hnrlvnvs4kw2v9'
   assert_equal $JUNO_WITHDRAWAL_ICA_ADDR 'juno104n6h822n6n7psqjgjl7emd2uz67lptggp5cargh6mw0gxpch2gsk53qk5'
   assert_equal $JUNO_FEE_ICA_ADDR 'juno1rp8qgfq64wmjg7exyhjqrehnvww0t9ev3f3p2ls82umz2fxgylqsz3vl9h'
-
-  assert_equal $OSMO_DELEGATE_VAL 'osmovaloper12ffkl30v0ghtyaezvedazquhtsf4q5ng8khuv4'
-  assert_equal $OSMO_DELEGATION_ICA_ADDR "osmo1cx04p5974f8hzh2lqev48kjrjugdxsxy7mzrd0eyweycpr90vk8q8d6f3h"
-  assert_equal $OSMO_REDEMPTION_ICA_ADDR "osmo1uy9p9g609676rflkjnnelaxatv8e4sd245snze7qsxzlk7dk7s8qrcjaez"
-  assert_equal $OSMO_WITHDRAWAL_ICA_ADDR "osmo10arcf5r89cdmppntzkvulc7gfmw5lr66y2m25c937t6ccfzk0cqqz2l6xv"
-  assert_equal $OSMO_FEE_ICA_ADDR "osmo1n4r77qsmu9chvchtmuqy9cv3s539q87r398l6ugf7dd2q5wgyg9su3wd4g"
 }
 
 # # add test to register host zone
@@ -107,19 +90,19 @@ setup() {
 
 @test "[INTEGRATION-BASIC-JUNO] ibc transfer updates all balances" {
   # get initial balances
-  str1_balance=$($STRIDE_MAIN_CMD q bank balances $STRIDE_ADDRESS --denom ustrd | GETBAL)
-  juno1_balance=$($JUNO_MAIN_CMD q bank balances $JUNO_ADDRESS --denom $IBC_STRD_DENOM | GETBAL)
-  str1_balance_juno=$($STRIDE_MAIN_CMD q bank balances $STRIDE_ADDRESS --denom $IBC_JUNO_DENOM | GETBAL)
-  juno1_balance_juno=$($JUNO_MAIN_CMD q bank balances $JUNO_ADDRESS --denom ujuno | GETBAL)
+  str1_balance=$($STRIDE_MAIN_CMD q bank balances $(STRIDE_ADDRESS) --denom ustrd | GETBAL)
+  juno1_balance=$($JUNO_MAIN_CMD q bank balances $(JUNO_ADDRESS) --denom $IBC_STRD_DENOM | GETBAL)
+  str1_balance_juno=$($STRIDE_MAIN_CMD q bank balances $(STRIDE_ADDRESS) --denom $IBC_JUNO_DENOM | GETBAL)
+  juno1_balance_juno=$($JUNO_MAIN_CMD q bank balances $(JUNO_ADDRESS) --denom ujuno | GETBAL)
   # do IBC transfer
-  $STRIDE_MAIN_CMD tx ibc-transfer transfer transfer channel-1 $JUNO_ADDRESS 100000000ustrd --from val1 --chain-id STRIDE -y --keyring-backend test
-  $JUNO_MAIN_CMD tx ibc-transfer transfer transfer channel-0 $STRIDE_ADDRESS 100000000ujuno --from jval1 --chain-id JUNO -y --keyring-backend test
+  $STRIDE_MAIN_CMD tx ibc-transfer transfer transfer channel-1 $(JUNO_ADDRESS) 100000000ustrd --from val1 --chain-id STRIDE -y --keyring-backend test
+  $JUNO_MAIN_CMD tx ibc-transfer transfer transfer channel-0 $(STRIDE_ADDRESS) 100000000ujuno --from jval1 --chain-id JUNO -y --keyring-backend test
   WAIT_FOR_BLOCK $STRIDE_LOGS 8
   # get new balances
-  str1_balance_new=$($STRIDE_MAIN_CMD q bank balances $STRIDE_ADDRESS --denom ustrd | GETBAL)
-  juno1_balance_new=$($JUNO_MAIN_CMD q bank balances $JUNO_ADDRESS --denom $IBC_STRD_DENOM | GETBAL)
-  str1_balance_juno_new=$($STRIDE_MAIN_CMD q bank balances $STRIDE_ADDRESS --denom $IBC_JUNO_DENOM | GETBAL)
-  juno1_balance_juno_new=$($JUNO_MAIN_CMD q bank balances $JUNO_ADDRESS --denom ujuno | GETBAL)
+  str1_balance_new=$($STRIDE_MAIN_CMD q bank balances $(STRIDE_ADDRESS) --denom ustrd | GETBAL)
+  juno1_balance_new=$($JUNO_MAIN_CMD q bank balances $(JUNO_ADDRESS) --denom $IBC_STRD_DENOM | GETBAL)
+  str1_balance_juno_new=$($STRIDE_MAIN_CMD q bank balances $(STRIDE_ADDRESS) --denom $IBC_JUNO_DENOM | GETBAL)
+  juno1_balance_juno_new=$($JUNO_MAIN_CMD q bank balances $(JUNO_ADDRESS) --denom ujuno | GETBAL)
   # get all STRD balance diffs
   str1_diff=$(($str1_balance - $str1_balance_new))
   juno1_diff=$(($juno1_balance - $juno1_balance_new))
@@ -137,19 +120,19 @@ setup() {
   MODADDR=$($STRIDE_MAIN_CMD q stakeibc module-address stakeibc | awk '{print $NF}')
   # get initial balances
   mod_balance_juno=$($STRIDE_MAIN_CMD q bank balances $MODADDR --denom $IBC_JUNO_DENOM | GETBAL)
-  str1_balance_juno=$($STRIDE_MAIN_CMD q bank balances $STRIDE_ADDRESS --denom $IBC_JUNO_DENOM | GETBAL)
-  str1_balance_stjuno=$($STRIDE_MAIN_CMD q bank balances $STRIDE_ADDRESS --denom $STJUNO_DENOM | GETBAL)
+  str1_balance_juno=$($STRIDE_MAIN_CMD q bank balances $(STRIDE_ADDRESS) --denom $IBC_JUNO_DENOM | GETBAL)
+  str1_balance_stjuno=$($STRIDE_MAIN_CMD q bank balances $(STRIDE_ADDRESS) --denom $STJUNO_DENOM | GETBAL)
   # liquid stake
   $STRIDE_MAIN_CMD tx stakeibc liquid-stake 10000000 ujuno --keyring-backend test --from val1 -y --chain-id $STRIDE_CHAIN_ID
   # sleep two block for the tx to settle on stride
   WAIT_FOR_STRING $STRIDE_LOGS '\[MINT ST ASSET\] success on JUNO'
   WAIT_FOR_BLOCK $STRIDE_LOGS 2
   # make sure IBC_JUNO_DENOM went down
-  str1_balance_juno_new=$($STRIDE_MAIN_CMD q bank balances $STRIDE_ADDRESS --denom $IBC_JUNO_DENOM | GETBAL)
+  str1_balance_juno_new=$($STRIDE_MAIN_CMD q bank balances $(STRIDE_ADDRESS) --denom $IBC_JUNO_DENOM | GETBAL)
   str1_juno_diff=$(($str1_balance_juno - $str1_balance_juno_new))
   assert_equal "$str1_juno_diff" '10000000'
   # make sure STJUNO went up
-  str1_balance_stjuno_new=$($STRIDE_MAIN_CMD q bank balances $STRIDE_ADDRESS --denom $STJUNO_DENOM | GETBAL)
+  str1_balance_stjuno_new=$($STRIDE_MAIN_CMD q bank balances $(STRIDE_ADDRESS) --denom $STJUNO_DENOM | GETBAL)
   str1_stjuno_diff=$(($str1_balance_stjuno_new-$str1_balance_stjuno))
   assert_equal "$str1_stjuno_diff" "10000000"
 }
@@ -193,7 +176,7 @@ setup() {
 
 @test "[INTEGRATION-BASIC-JUNO] claimed tokens are properly distributed" {
   # TODO(optimize tests) extra sleep just in case
-  SENDER_ACCT=$STRIDE_ADDRESS
+  SENDER_ACCT=$(STRIDE_ADDRESS)
   old_sender_bal=$($JUNO_MAIN_CMD q bank balances $JUNO_RECEIVER_ACCT --denom ujuno | GETBAL)
   # TODO check that the UserRedemptionRecord has isClaimable = true
   # grab the epoch number for the first deposit record in the list od DRs

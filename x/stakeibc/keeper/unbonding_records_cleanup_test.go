@@ -3,9 +3,9 @@ package keeper_test
 import (
 	_ "github.com/stretchr/testify/suite"
 
-	recordtypes "github.com/Stride-Labs/stride/x/records/types"
+	recordtypes "github.com/Stride-Labs/stride/v3/x/records/types"
 
-	stakeibc "github.com/Stride-Labs/stride/x/stakeibc/types"
+	stakeibc "github.com/Stride-Labs/stride/v3/x/stakeibc/types"
 )
 
 type CleanupEpochUnbondingRecordsTestCase struct {
@@ -34,12 +34,12 @@ func (s *KeeperTestSuite) SetupCleanupEpochUnbondingRecords() CleanupEpochUnbond
 				{
 					HostZoneId:        HostChainId,
 					NativeTokenAmount: 1_000_000,
-					Status:            recordtypes.HostZoneUnbonding_TRANSFERRED,
+					Status:            recordtypes.HostZoneUnbonding_CLAIMABLE,
 				},
 				{
 					HostZoneId:        OsmoChainId,
 					NativeTokenAmount: 1_000_000,
-					Status:            recordtypes.HostZoneUnbonding_UNBONDED,
+					Status:            recordtypes.HostZoneUnbonding_EXIT_TRANSFER_QUEUE,
 				},
 			},
 		},
@@ -49,12 +49,12 @@ func (s *KeeperTestSuite) SetupCleanupEpochUnbondingRecords() CleanupEpochUnbond
 				{
 					HostZoneId:        HostChainId,
 					NativeTokenAmount: 0,
-					Status:            recordtypes.HostZoneUnbonding_BONDED,
+					Status:            recordtypes.HostZoneUnbonding_UNBONDING_QUEUE,
 				},
 				{
 					HostZoneId:        OsmoChainId,
 					NativeTokenAmount: 1_000_000,
-					Status:            recordtypes.HostZoneUnbonding_TRANSFERRED,
+					Status:            recordtypes.HostZoneUnbonding_CLAIMABLE,
 				},
 			},
 		},
@@ -64,12 +64,12 @@ func (s *KeeperTestSuite) SetupCleanupEpochUnbondingRecords() CleanupEpochUnbond
 				{
 					HostZoneId:        HostChainId,
 					NativeTokenAmount: 0,
-					Status:            recordtypes.HostZoneUnbonding_UNBONDED,
+					Status:            recordtypes.HostZoneUnbonding_EXIT_TRANSFER_QUEUE,
 				},
 				{
 					HostZoneId:        OsmoChainId,
 					NativeTokenAmount: 0,
-					Status:            recordtypes.HostZoneUnbonding_BONDED,
+					Status:            recordtypes.HostZoneUnbonding_UNBONDING_QUEUE,
 				},
 			},
 		},

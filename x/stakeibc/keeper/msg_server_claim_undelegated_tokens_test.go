@@ -9,10 +9,10 @@ import (
 	ibctesting "github.com/cosmos/ibc-go/v3/testing"
 	_ "github.com/stretchr/testify/suite"
 
-	epochtypes "github.com/Stride-Labs/stride/x/epochs/types"
-	recordtypes "github.com/Stride-Labs/stride/x/records/types"
-	stakeibckeeper "github.com/Stride-Labs/stride/x/stakeibc/keeper"
-	stakeibctypes "github.com/Stride-Labs/stride/x/stakeibc/types"
+	epochtypes "github.com/Stride-Labs/stride/v3/x/epochs/types"
+	recordtypes "github.com/Stride-Labs/stride/v3/x/records/types"
+	stakeibckeeper "github.com/Stride-Labs/stride/v3/x/stakeibc/keeper"
+	stakeibctypes "github.com/Stride-Labs/stride/v3/x/stakeibc/types"
 )
 
 type ClaimUndelegatedState struct {
@@ -67,7 +67,7 @@ func (s *KeeperTestSuite) SetupClaimUndelegatedTokens() ClaimUndelegatedTestCase
 
 	hostZoneUnbonding1 := recordtypes.HostZoneUnbonding{
 		HostZoneId:            HostChainId,
-		Status:                recordtypes.HostZoneUnbonding_TRANSFERRED,
+		Status:                recordtypes.HostZoneUnbonding_CLAIMABLE,
 		UserRedemptionRecords: []string{redemptionRecordId},
 		NativeTokenAmount:     uint64(1_000_000),
 	}
@@ -204,11 +204,11 @@ func (s *KeeperTestSuite) TestClaimUndelegatedTokens_HzuNotStatusTransferred() {
 	epochUnbondingRecord, found := s.App.RecordsKeeper.GetEpochUnbondingRecord(s.Ctx(), tc.validMsg.Epoch)
 	s.Require().True(found, "epoch unbonding record found")
 	updatedHzu := epochUnbondingRecord.HostZoneUnbondings[0]
-	updatedHzu.Status = recordtypes.HostZoneUnbonding_UNBONDED
+	updatedHzu.Status = recordtypes.HostZoneUnbonding_EXIT_TRANSFER_QUEUE
 	newEpochUnbondingRecord, success := s.App.RecordsKeeper.AddHostZoneToEpochUnbondingRecord(s.Ctx(), tc.validMsg.Epoch, tc.validMsg.HostZoneId, updatedHzu)
 	s.Require().True(success, "epoch unbonding record updated")
 	s.App.RecordsKeeper.SetEpochUnbondingRecord(s.Ctx(), *newEpochUnbondingRecord)
 
 	_, err := s.GetMsgServer().ClaimUndelegatedTokens(sdk.WrapSDKContext(s.Ctx()), &tc.validMsg)
-	s.Require().EqualError(err, "unable to find claimable redemption record for msg: creator:\"stride_SENDER\" hostZoneId:\"GAIA\" epoch:1 sender:\"stride_SENDER\" , error User redemption record GAIA.1.stride_SENDER is not claimable, host zone unbonding has status: UNBONDED, requires status TRANSFERRED: user redemption record error: record not found")
+	s.Require().EqualError(err, "unable to find claimable redemption record for msg: creator:\"stride_SENDER\" hostZoneId:\"GAIA\" epoch:1 sender:\"stride_SENDER\" , error User redemption record GAIA.1.stride_SENDER is not claimable, host zone unbonding has status: EXIT_TRANSFER_QUEUE, requires status CLAIMABLE: user redemption record error: record not found")
 }

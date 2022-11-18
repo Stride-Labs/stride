@@ -14,7 +14,7 @@ import (
 	tmclienttypes "github.com/cosmos/ibc-go/v3/modules/light-clients/07-tendermint/types"
 	"github.com/spf13/cast"
 
-	"github.com/Stride-Labs/stride/x/interchainquery/types"
+	"github.com/Stride-Labs/stride/v3/x/interchainquery/types"
 )
 
 type msgServer struct {
@@ -46,7 +46,6 @@ func (k Keeper) VerifyKeyProof(ctx sdk.Context, msg *types.MsgSubmitQueryRespons
 		connection, _ := k.IBCKeeper.ConnectionKeeper.GetConnection(ctx, q.ConnectionId)
 
 		msgHeight, err := cast.ToUint64E(msg.Height)
-
 		if err != nil {
 			return err
 		}
@@ -115,10 +114,10 @@ func (k Keeper) InvokeCallback(ctx sdk.Context, msg *types.MsgSubmitQueryRespons
 		k.Logger(ctx).Info(fmt.Sprintf("[ICQ Resp] executing callback for queryId (%s), module (%s)", q.Id, moduleName))
 		moduleCallbackHandler := k.callbacks[moduleName]
 
-		if moduleCallbackHandler.Has(q.CallbackId) {
+		if moduleCallbackHandler.HasICQCallback(q.CallbackId) {
 			k.Logger(ctx).Info(fmt.Sprintf("[ICQ Resp] callback (%s) found for module (%s)", q.CallbackId, moduleName))
 			// call the correct callback function
-			err := moduleCallbackHandler.Call(ctx, q.CallbackId, msg.Result, q)
+			err := moduleCallbackHandler.CallICQCallback(ctx, q.CallbackId, msg.Result, q)
 			if err != nil {
 				k.Logger(ctx).Error(fmt.Sprintf("[ICQ Resp] error in ICQ callback, error: %s, msg: %s, result: %v, type: %s, params: %v", err.Error(), msg.QueryId, msg.Result, q.QueryType, q.Request))
 				return err
@@ -186,7 +185,7 @@ func (k msgServer) SubmitQueryResponse(goCtx context.Context, msg *types.MsgSubm
 		return nil, err
 	}
 	if ttlExceeded {
-		k.Logger(ctx).Info(fmt.Sprintf("[ICQ Resp] %s's ttl exceeded: %d < %d.", msg.QueryId, q.Ttl, ctx.BlockHeader().Time.UnixNano()))
+		k.Logger(ctx).Info(fmt.Sprintf("[ICQ Resp] %s's ttl exceeded: %d < %d.", msg.QueryId, q.Ttl, ctx.BlockHeader().Time.UnixNano()))
 		return &types.MsgSubmitQueryResponseResponse{}, nil
 	}
 

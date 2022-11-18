@@ -12,7 +12,7 @@ import (
 	"github.com/spf13/cast"
 	"github.com/spf13/cobra"
 
-	"github.com/Stride-Labs/stride/x/epochs/types"
+	"github.com/Stride-Labs/stride/v3/x/epochs/types"
 )
 
 // GetQueryCmd returns the cli query commands for this module
@@ -123,7 +123,6 @@ func GetCmdSecondsRemaining() *cobra.Command {
 		),
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-
 			clientCtx, err := client.GetClientQueryContext(cmd)
 			if err != nil {
 				return err

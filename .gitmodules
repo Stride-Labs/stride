@@ -1,21 +1,16 @@
-[submodule "deps/interchain-queries"]
-	# Commit: c6609dfcfbf6f5b902fd6882bc7ce65a063cf837
-	path = deps/interchain-queries
-	url = git@github.com:Stride-Labs/interchain-queries.git
 [submodule "deps/hermes"]
-	# Commit: ed4dd8c8b4ebd695730de2a1c69f3011cb179352
-	# Tag: v1.0.0
+	# Commit: fd92eb6d17342bc83003f2067d6a9cd8261f2884
 	path = deps/hermes
-	url = git@github.com:informalsystems/ibc-rs.git
+	url = https://github.com/informalsystems/ibc-rs.git
 [submodule "deps/relayer"]
-	# Commit: 65d6065e8016e420c0ddaf9141b5c834e01804c0
+	# Commit: d1dd961969867414c499e89091137710a582cb03
 	# Branch: andrew/client_icq
 	path = deps/relayer
-	url = git@github.com:cosmos/relayer.git
+	url = https://github.com/cosmos/relayer.git
 [submodule "deps/gaia"]
 	# Commit: 5b47714dd5607993a1a91f2b06a6d92cbb504721
 	path = deps/gaia
-	url = git@github.com:Stride-Labs/gaia.git
+	url = https://github.com/Stride-Labs/gaia.git
 [submodule "deps/juno"]
 	# Commit: 955892041359443fbb5addd34c0ab8b66bd8d75c
 	path = deps/juno
@@ -24,3 +19,7 @@
 	# Commit: 08669da8509059980dc964976ee1ca60c84f5c8a
 	path = deps/osmosis
 	url = https://github.com/osmosis-labs/osmosis.git
+[submodule "deps/stargaze"]
+	# Commit: b0bea28fc695a2a5c567e56a37b289a5b75830cc
+	path = deps/stargaze
+	url = https://github.com/public-awesome/stargaze.git

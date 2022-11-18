@@ -7,7 +7,7 @@ import (
 
 	porttypes "github.com/cosmos/ibc-go/v3/modules/core/05-port/types"
 
-	"github.com/Stride-Labs/stride/utils"
+	"github.com/Stride-Labs/stride/v3/utils"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
@@ -28,6 +28,9 @@ import (
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	"github.com/cosmos/cosmos-sdk/x/auth/vesting"
 	vestingtypes "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
+	"github.com/cosmos/cosmos-sdk/x/authz"
+	authzkeeper "github.com/cosmos/cosmos-sdk/x/authz/keeper"
+	authzmodule "github.com/cosmos/cosmos-sdk/x/authz/module"
 	"github.com/cosmos/cosmos-sdk/x/bank"
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
@@ -54,9 +57,12 @@ import (
 	govkeeper "github.com/cosmos/cosmos-sdk/x/gov/keeper"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 
-	"github.com/Stride-Labs/stride/x/mint"
-	mintkeeper "github.com/Stride-Labs/stride/x/mint/keeper"
-	minttypes "github.com/Stride-Labs/stride/x/mint/types"
+	claimvesting "github.com/Stride-Labs/stride/v3/x/claim/vesting"
+	claimvestingtypes "github.com/Stride-Labs/stride/v3/x/claim/vesting/types"
+
+	"github.com/Stride-Labs/stride/v3/x/mint"
+	mintkeeper "github.com/Stride-Labs/stride/v3/x/mint/keeper"
+	minttypes "github.com/Stride-Labs/stride/v3/x/mint/types"
 
 	"github.com/cosmos/cosmos-sdk/x/params"
 	paramsclient "github.com/cosmos/cosmos-sdk/x/params/client"
@@ -103,30 +109,34 @@ import (
 	// monitoringp "github.com/tendermint/spn/x/monitoringp"
 	// monitoringpkeeper "github.com/tendermint/spn/x/monitoringp/keeper"
 
-	epochsmodule "github.com/Stride-Labs/stride/x/epochs"
-	epochsmodulekeeper "github.com/Stride-Labs/stride/x/epochs/keeper"
-	epochsmoduletypes "github.com/Stride-Labs/stride/x/epochs/types"
+	epochsmodule "github.com/Stride-Labs/stride/v3/x/epochs"
+	epochsmodulekeeper "github.com/Stride-Labs/stride/v3/x/epochs/keeper"
+	epochsmoduletypes "github.com/Stride-Labs/stride/v3/x/epochs/types"
 
-	"github.com/Stride-Labs/stride/x/interchainquery"
-	interchainquerykeeper "github.com/Stride-Labs/stride/x/interchainquery/keeper"
-	interchainquerytypes "github.com/Stride-Labs/stride/x/interchainquery/types"
+	"github.com/Stride-Labs/stride/v3/x/interchainquery"
+	interchainquerykeeper "github.com/Stride-Labs/stride/v3/x/interchainquery/keeper"
+	interchainquerytypes "github.com/Stride-Labs/stride/v3/x/interchainquery/types"
 
-	icacallbacksmodule "github.com/Stride-Labs/stride/x/icacallbacks"
-	icacallbacksmodulekeeper "github.com/Stride-Labs/stride/x/icacallbacks/keeper"
-	icacallbacksmoduletypes "github.com/Stride-Labs/stride/x/icacallbacks/types"
-	recordsmodule "github.com/Stride-Labs/stride/x/records"
-	recordsmodulekeeper "github.com/Stride-Labs/stride/x/records/keeper"
-	recordsmoduletypes "github.com/Stride-Labs/stride/x/records/types"
-	stakeibcmodule "github.com/Stride-Labs/stride/x/stakeibc"
-	stakeibcmodulekeeper "github.com/Stride-Labs/stride/x/stakeibc/keeper"
-	stakeibcmoduletypes "github.com/Stride-Labs/stride/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v3/x/claim"
+	claimkeeper "github.com/Stride-Labs/stride/v3/x/claim/keeper"
+	claimtypes "github.com/Stride-Labs/stride/v3/x/claim/types"
+	icacallbacksmodule "github.com/Stride-Labs/stride/v3/x/icacallbacks"
+	icacallbacksmodulekeeper "github.com/Stride-Labs/stride/v3/x/icacallbacks/keeper"
+	icacallbacksmoduletypes "github.com/Stride-Labs/stride/v3/x/icacallbacks/types"
+	recordsmodule "github.com/Stride-Labs/stride/v3/x/records"
+	recordsmodulekeeper "github.com/Stride-Labs/stride/v3/x/records/keeper"
+	recordsmoduletypes "github.com/Stride-Labs/stride/v3/x/records/types"
+	stakeibcmodule "github.com/Stride-Labs/stride/v3/x/stakeibc"
+	stakeibcclient "github.com/Stride-Labs/stride/v3/x/stakeibc/client"
+	stakeibcmodulekeeper "github.com/Stride-Labs/stride/v3/x/stakeibc/keeper"
+	stakeibcmoduletypes "github.com/Stride-Labs/stride/v3/x/stakeibc/types"
 	// this line is used by starport scaffolding # stargate/app/moduleImport
 )
 
 const (
 	AccountAddressPrefix = "stride"
 	Name                 = "stride"
-	Version              = "1.0.0"
+	Version              = "3.0.0"
 )
 
 // this line is used by starport scaffolding # stargate/wasm/app/enabledProposals
@@ -142,6 +152,7 @@ func getGovProposalHandlers() []govclient.ProposalHandler {
 		upgradeclient.CancelProposalHandler,
 		ibcclientclient.UpdateClientProposalHandler,
 		ibcclientclient.UpgradeProposalHandler,
+		stakeibcclient.AddValidatorProposalHandler,
 		// this line is used by starport scaffolding # stargate/app/govProposalHandler
 	)
 
@@ -157,6 +168,7 @@ var (
 	// and genesis verification.
 	ModuleBasics = module.NewBasicManager(
 		auth.AppModuleBasic{},
+		authzmodule.AppModuleBasic{},
 		genutil.AppModuleBasic{},
 		bank.AppModuleBasic{},
 		capability.AppModuleBasic{},
@@ -173,6 +185,7 @@ var (
 		evidence.AppModuleBasic{},
 		transfer.AppModuleBasic{},
 		vesting.AppModuleBasic{},
+		claimvesting.AppModuleBasic{},
 		// monitoringp.AppModuleBasic{},
 		stakeibcmodule.AppModuleBasic{},
 		epochsmodule.AppModuleBasic{},
@@ -180,6 +193,7 @@ var (
 		ica.AppModuleBasic{},
 		recordsmodule.AppModuleBasic{},
 		icacallbacksmodule.AppModuleBasic{},
+		claim.AppModuleBasic{},
 		// this line is used by starport scaffolding # stargate/app/moduleBasic
 	)
 
@@ -194,6 +208,7 @@ var (
 		govtypes.ModuleName:             {authtypes.Burner},
 		ibctransfertypes.ModuleName:     {authtypes.Minter, authtypes.Burner},
 		stakeibcmoduletypes.ModuleName:  {authtypes.Minter, authtypes.Burner, authtypes.Staking},
+		claimtypes.ModuleName:           nil,
 		interchainquerytypes.ModuleName: nil,
 		icatypes.ModuleName:             nil,
 		// this line is used by starport scaffolding # stargate/app/maccPerms
@@ -233,6 +248,7 @@ type StrideApp struct {
 
 	// keepers
 	AccountKeeper    authkeeper.AccountKeeper
+	AuthzKeeper      authzkeeper.Keeper
 	BankKeeper       bankkeeper.Keeper
 	CapabilityKeeper *capabilitykeeper.Keeper
 	StakingKeeper    stakingkeeper.Keeper
@@ -267,6 +283,7 @@ type StrideApp struct {
 	RecordsKeeper            recordsmodulekeeper.Keeper
 	ScopedIcacallbacksKeeper capabilitykeeper.ScopedKeeper
 	IcacallbacksKeeper       icacallbacksmodulekeeper.Keeper
+	ClaimKeeper              claimkeeper.Keeper
 	// this line is used by starport scaffolding # stargate/app/keeperDeclaration
 
 	mm           *module.Manager
@@ -308,6 +325,8 @@ func NewStrideApp(
 		icacontrollertypes.StoreKey, icahosttypes.StoreKey,
 		recordsmoduletypes.StoreKey,
 		icacallbacksmoduletypes.StoreKey,
+		authzkeeper.StoreKey,
+		claimtypes.StoreKey,
 		// this line is used by starport scaffolding # stargate/app/storeKey
 	)
 	tkeys := sdk.NewTransientStoreKeys(paramstypes.TStoreKey)
@@ -344,12 +363,19 @@ func NewStrideApp(
 		appCodec, keys[authtypes.StoreKey], app.GetSubspace(authtypes.ModuleName), authtypes.ProtoBaseAccount, maccPerms,
 	)
 
+	app.AuthzKeeper = authzkeeper.NewKeeper(
+		keys[authzkeeper.StoreKey],
+		appCodec,
+		app.BaseApp.MsgServiceRouter(),
+	)
+
 	app.BankKeeper = bankkeeper.NewBaseKeeper(
 		appCodec, keys[banktypes.StoreKey], app.AccountKeeper, app.GetSubspace(banktypes.ModuleName), app.BlacklistedModuleAccountAddrs(),
 	)
 	stakingKeeper := stakingkeeper.NewKeeper(
 		appCodec, keys[stakingtypes.StoreKey], app.AccountKeeper, app.BankKeeper, app.GetSubspace(stakingtypes.ModuleName),
 	)
+	epochsKeeper := epochsmodulekeeper.NewKeeper(appCodec, keys[epochsmoduletypes.StoreKey])
 	app.MintKeeper = mintkeeper.NewKeeper(
 		appCodec, keys[minttypes.StoreKey], app.GetSubspace(minttypes.ModuleName), app.AccountKeeper, app.BankKeeper, app.DistrKeeper, app.EpochsKeeper, authtypes.FeeCollectorName,
 	)
@@ -364,13 +390,19 @@ func NewStrideApp(
 		app.GetSubspace(crisistypes.ModuleName), invCheckPeriod, app.BankKeeper, authtypes.FeeCollectorName,
 	)
 
+	app.ClaimKeeper = *claimkeeper.NewKeeper(
+		appCodec,
+		keys[claimtypes.StoreKey],
+		app.AccountKeeper,
+		app.BankKeeper, app.StakingKeeper, app.DistrKeeper, epochsKeeper)
+
 	app.FeeGrantKeeper = feegrantkeeper.NewKeeper(appCodec, keys[feegrant.StoreKey], app.AccountKeeper)
 	app.UpgradeKeeper = upgradekeeper.NewKeeper(skipUpgradeHeights, keys[upgradetypes.StoreKey], appCodec, homePath, app.BaseApp)
 
 	// register the staking hooks
 	// NOTE: stakingKeeper above is passed by reference, so that it will contain these hooks
 	app.StakingKeeper = *stakingKeeper.SetHooks(
-		stakingtypes.NewMultiStakingHooks(app.DistrKeeper.Hooks(), app.SlashingKeeper.Hooks()),
+		stakingtypes.NewMultiStakingHooks(app.DistrKeeper.Hooks(), app.SlashingKeeper.Hooks(), app.ClaimKeeper.Hooks()),
 	)
 
 	// ... other modules keepers
@@ -379,14 +411,6 @@ func NewStrideApp(
 	app.IBCKeeper = ibckeeper.NewKeeper(
 		appCodec, keys[ibchost.StoreKey], app.GetSubspace(ibchost.ModuleName), app.StakingKeeper, app.UpgradeKeeper, scopedIBCKeeper,
 	)
-
-	// register the proposal types
-	govRouter := govtypes.NewRouter()
-	govRouter.AddRoute(govtypes.RouterKey, govtypes.ProposalHandler).
-		AddRoute(paramproposal.RouterKey, params.NewParamChangeProposalHandler(app.ParamsKeeper)).
-		AddRoute(distrtypes.RouterKey, distr.NewCommunityPoolSpendProposalHandler(app.DistrKeeper)).
-		AddRoute(upgradetypes.RouterKey, upgrade.NewSoftwareUpgradeProposalHandler(app.UpgradeKeeper)).
-		AddRoute(ibcclienttypes.RouterKey, ibcclient.NewClientProposalHandler(app.IBCKeeper.ClientKeeper))
 
 	// Create Transfer Keepers
 	app.TransferKeeper = ibctransferkeeper.NewKeeper(
@@ -403,11 +427,6 @@ func NewStrideApp(
 	)
 	// If evidence needs to be handled for the app, set routes in router here and seal
 	app.EvidenceKeeper = *evidenceKeeper
-
-	app.GovKeeper = govkeeper.NewKeeper(
-		appCodec, keys[govtypes.StoreKey], app.GetSubspace(govtypes.ModuleName), app.AccountKeeper, app.BankKeeper,
-		&stakingKeeper, govRouter,
-	)
 
 	// TODO(TEST-20): look for all lines that include 'monitoring' in this file! there are a few places this
 	// is commented out
@@ -466,7 +485,7 @@ func NewStrideApp(
 
 	scopedStakeibcKeeper := app.CapabilityKeeper.ScopeToModule(stakeibcmoduletypes.ModuleName)
 	app.ScopedStakeibcKeeper = scopedStakeibcKeeper
-	app.StakeibcKeeper = stakeibcmodulekeeper.NewKeeper(
+	stakeibcKeeper := stakeibcmodulekeeper.NewKeeper(
 		appCodec,
 		keys[stakeibcmoduletypes.StoreKey],
 		keys[stakeibcmoduletypes.MemStoreKey],
@@ -483,21 +502,38 @@ func NewStrideApp(
 		app.StakingKeeper,
 		app.IcacallbacksKeeper,
 	)
+	app.StakeibcKeeper = *stakeibcKeeper.SetHooks(
+		stakeibcmoduletypes.NewMultiStakeIBCHooks(app.ClaimKeeper.Hooks()),
+	)
 
 	stakeibcModule := stakeibcmodule.NewAppModule(appCodec, app.StakeibcKeeper, app.AccountKeeper, app.BankKeeper)
 	stakeibcIBCModule := stakeibcmodule.NewIBCModule(app.StakeibcKeeper)
 
+	// Register Gov (must be registerd after stakeibc)
+	govRouter := govtypes.NewRouter()
+	govRouter.AddRoute(govtypes.RouterKey, govtypes.ProposalHandler).
+		AddRoute(paramproposal.RouterKey, params.NewParamChangeProposalHandler(app.ParamsKeeper)).
+		AddRoute(distrtypes.RouterKey, distr.NewCommunityPoolSpendProposalHandler(app.DistrKeeper)).
+		AddRoute(upgradetypes.RouterKey, upgrade.NewSoftwareUpgradeProposalHandler(app.UpgradeKeeper)).
+		AddRoute(ibcclienttypes.RouterKey, ibcclient.NewClientProposalHandler(app.IBCKeeper.ClientKeeper)).
+		AddRoute(stakeibcmoduletypes.RouterKey, stakeibcmodule.NewStakeibcProposalHandler(app.StakeibcKeeper))
+
+	app.GovKeeper = govkeeper.NewKeeper(
+		appCodec, keys[govtypes.StoreKey], app.GetSubspace(govtypes.ModuleName), app.AccountKeeper, app.BankKeeper,
+		&stakingKeeper, govRouter,
+	)
+
 	// Register ICQ callbacks
-	err := app.InterchainqueryKeeper.SetCallbackHandler(stakeibcmoduletypes.ModuleName, app.StakeibcKeeper.CallbackHandler())
+	err := app.InterchainqueryKeeper.SetCallbackHandler(stakeibcmoduletypes.ModuleName, app.StakeibcKeeper.ICQCallbackHandler())
 	if err != nil {
 		return nil
 	}
 
-	epochsKeeper := epochsmodulekeeper.NewKeeper(appCodec, keys[epochsmoduletypes.StoreKey])
 	app.EpochsKeeper = *epochsKeeper.SetHooks(
 		epochsmoduletypes.NewMultiEpochHooks(
 			app.StakeibcKeeper.Hooks(),
 			app.MintKeeper.Hooks(),
+			app.ClaimKeeper.Hooks(),
 		),
 	)
 	epochsModule := epochsmodule.NewAppModule(appCodec, app.EpochsKeeper)
@@ -561,7 +597,7 @@ func NewStrideApp(
 
 	// NOTE: we may consider parsing `appOpts` inside module constructors. For the moment
 	// we prefer to be more strict in what arguments the modules expect.
-	var skipGenesisInvariants = cast.ToBool(appOpts.Get(crisis.FlagSkipGenesisInvariants))
+	skipGenesisInvariants := cast.ToBool(appOpts.Get(crisis.FlagSkipGenesisInvariants))
 
 	// NOTE: Any module instantiated in the module manager that is later modified
 	// must be passed by reference here.
@@ -573,6 +609,7 @@ func NewStrideApp(
 		),
 		auth.NewAppModule(appCodec, app.AccountKeeper, nil),
 		vesting.NewAppModule(app.AccountKeeper, app.BankKeeper),
+		claimvesting.NewAppModule(app.AccountKeeper, app.BankKeeper),
 		bank.NewAppModule(appCodec, app.BankKeeper, app.AccountKeeper),
 		capability.NewAppModule(appCodec, *app.CapabilityKeeper),
 		feegrantmodule.NewAppModule(appCodec, app.AccountKeeper, app.BankKeeper, app.FeeGrantKeeper, app.interfaceRegistry),
@@ -586,6 +623,7 @@ func NewStrideApp(
 		evidence.NewAppModule(app.EvidenceKeeper),
 		ibc.NewAppModule(app.IBCKeeper),
 		params.NewAppModule(app.ParamsKeeper),
+		claim.NewAppModule(appCodec, app.ClaimKeeper),
 		transferModule,
 		// monitoringModule,
 		stakeibcModule,
@@ -594,6 +632,7 @@ func NewStrideApp(
 		icaModule,
 		recordsModule,
 		icacallbacksModule,
+		authzmodule.NewAppModule(appCodec, app.AuthzKeeper, app.AccountKeeper, app.BankKeeper, app.interfaceRegistry),
 		// this line is used by starport scaffolding # stargate/app/appModule
 	)
 
@@ -610,6 +649,7 @@ func NewStrideApp(
 		evidencetypes.ModuleName,
 		stakingtypes.ModuleName,
 		vestingtypes.ModuleName,
+		claimvestingtypes.ModuleName,
 		ibchost.ModuleName,
 		ibctransfertypes.ModuleName,
 		authtypes.ModuleName,
@@ -626,6 +666,8 @@ func NewStrideApp(
 		interchainquerytypes.ModuleName,
 		recordsmoduletypes.ModuleName,
 		icacallbacksmoduletypes.ModuleName,
+		claimtypes.ModuleName,
+		authz.ModuleName,
 		// this line is used by starport scaffolding # stargate/app/beginBlockers
 	)
 
@@ -639,6 +681,7 @@ func NewStrideApp(
 		distrtypes.ModuleName,
 		slashingtypes.ModuleName,
 		vestingtypes.ModuleName,
+		claimvestingtypes.ModuleName,
 		minttypes.ModuleName,
 		genutiltypes.ModuleName,
 		evidencetypes.ModuleName,
@@ -654,6 +697,8 @@ func NewStrideApp(
 		interchainquerytypes.ModuleName,
 		recordsmoduletypes.ModuleName,
 		icacallbacksmoduletypes.ModuleName,
+		claimtypes.ModuleName,
+		authz.ModuleName,
 		// this line is used by starport scaffolding # stargate/app/endBlockers
 	)
 
@@ -669,6 +714,7 @@ func NewStrideApp(
 		distrtypes.ModuleName,
 		stakingtypes.ModuleName,
 		vestingtypes.ModuleName,
+		claimvestingtypes.ModuleName,
 		slashingtypes.ModuleName,
 		govtypes.ModuleName,
 		minttypes.ModuleName,
@@ -687,6 +733,8 @@ func NewStrideApp(
 		interchainquerytypes.ModuleName,
 		recordsmoduletypes.ModuleName,
 		icacallbacksmoduletypes.ModuleName,
+		claimtypes.ModuleName,
+		authz.ModuleName,
 		// this line is used by starport scaffolding # stargate/app/initGenesis
 	)
 

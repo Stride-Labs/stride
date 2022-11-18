@@ -4,6 +4,8 @@ BUILDDIR ?= $(CURDIR)/build
 build=s
 cache=false
 COMMIT := $(shell git log -1 --format='%H')
+DOCKER := $(shell which docker)
+DOCKER_BUF := $(DOCKER) run --rm -v $(CURDIR):/workspace --workdir /workspace bufbuild/buf:1.7.0
 
 # process build tags
 
@@ -52,7 +54,7 @@ ldflags = -X github.com/cosmos/cosmos-sdk/version.Name=stride \
 		  -X "github.com/cosmos/cosmos-sdk/version.BuildTags=$(build_tags_comma_sep)"
 
 ifeq ($(LINK_STATICALLY),true)
-  ldflags += -linkmode=external -extldflags "-Wl,-z,muldefs -static"
+	ldflags += -linkmode=external -extldflags "-Wl,-z,muldefs -static"
 endif
 ldflags += $(LDFLAGS)
 ldflags := $(strip $(ldflags))
@@ -103,20 +105,20 @@ test-cover:
 	@go test -mod=readonly -race -coverprofile=coverage.out -covermode=atomic ./x/$(module)/...
 
 test-integration-local:
-	sh scripts-local/tests/run_all_tests.sh
+	bash scripts-local/tests/run_all_tests.sh
 
 test-integration-docker:
-	sh scripts/tests/run_all_tests.sh
+	bash scripts/tests/run_all_tests.sh
 
 ###############################################################################
 ###                                DockerNet                                ###
 ###############################################################################
 
 build-docker: 
-	@sh scripts/build.sh -${build} ${BUILDDIR}
+	@bash scripts/build.sh -${build} ${BUILDDIR}
 	
 start-docker: build-docker
-	@sh scripts/start_network.sh 
+	@bash scripts/start_network.sh 
 
 clean-docker: 
 	@docker-compose stop
@@ -125,25 +127,32 @@ clean-docker:
 	docker image prune -a
 	
 stop-docker:
-	@pkill -f "docker-compose logs" || true
-	@pkill -f "/bin/bash.*create_logs.sh" || true
+	@-pkill -f "docker-compose logs" 
+	@-pkill -f "/bin/bash.*create_logs.sh" 
 	docker-compose down
 
 ###############################################################################
-###                                LocalNet                                 ###
+###                                Protobuf                                 ###
 ###############################################################################
 
-check-dependencies:
-	sh scripts-local/check_dependencies.sh
+containerProtoVer=v0.7
+containerProtoImage=tendermintdev/sdk-proto-gen:$(containerProtoVer)
+containerProtoGen=cosmos-sdk-proto-gen-$(containerProtoVer)
+containerProtoGenSwagger=cosmos-sdk-proto-gen-swagger-$(containerProtoVer)
+containerProtoFmt=cosmos-sdk-proto-fmt-$(containerProtoVer)
 
-build-local: 
-	@sh scripts-local/build.sh -${build} ${BUILDDIR}
+proto-all: proto-format proto-lint proto-gen
 
-start-local: build-local
-	@sh scripts-local/start_network.sh ${cache}
+proto-gen:
+	@echo "Generating Protobuf files"
+	$(DOCKER) run --rm -v $(CURDIR):/workspace --workdir /workspace tendermintdev/sdk-proto-gen sh ./scripts/protocgen.sh
 
-stop-local:
-	@killall gaiad strided junod osmosisd rly hermes interchain-queries icq-startup.sh || true
-	@pkill -f "/bin/bash.*create_logs.sh" || true
-	@pkill -f "sh.*start_network.sh" || true
+proto-format:
+	@echo "Formatting Protobuf files"
+	@if docker ps -a --format '{{.Names}}' | grep -Eq "^${containerProtoFmt}$$"; then docker start -a $(containerProtoFmt); else docker run --name $(containerProtoFmt) -v $(CURDIR):/workspace --workdir /workspace tendermintdev/docker-build-proto \
+		find ./ -name "*.proto" -exec clang-format -i {} \; ; fi
 
+proto-lint:
+	@$(DOCKER_BUF) lint --error-format=json
+
+.PHONY: proto-all proto-gen proto-format proto-lint

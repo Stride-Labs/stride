@@ -1,0 +1,27 @@
+# syntax = docker/dockerfile:1
+FROM alpine:3.15
+
+ARG upgrade_name
+ENV UPGRADE_NAME=$upgrade_name
+
+ENV DAEMON_NAME=strided
+ENV DAEMON_HOME=/home/stride/.stride
+ENV DAEMON_RESTART_AFTER_UPGRADE=true
+ENV COSMOVISOR_HOME=/home/stride/cosmovisor
+
+RUN apk add --update vim bash \
+    && addgroup -g 1000 stride \
+    && adduser -S -h /home/stride -D stride -u 1000 -G stride
+
+COPY --from=stridezone:cosmovisor /opt/cosmos-sdk/cosmovisor/cosmovisor /usr/local/bin/cosmovisor
+COPY --from=stridezone:cosmovisor --chown=stride:stride /opt/build/strided1 ${COSMOVISOR_HOME}/genesis/bin/strided
+COPY --from=stridezone:stride --chown=stride:stride /usr/local/bin/strided ${COSMOVISOR_HOME}/upgrades/${UPGRADE_NAME}/bin/strided
+
+USER stride
+WORKDIR /home/stride
+
+EXPOSE 26657 26656 1317 9090
+
+RUN echo "mv ${COSMOVISOR_HOME} ${DAEMON_HOME}/cosmovisor && cosmovisor run start" > start.sh
+
+CMD ["bash", "start.sh" ]

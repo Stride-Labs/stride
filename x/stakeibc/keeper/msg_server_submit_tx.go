@@ -8,9 +8,10 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/spf13/cast"
 
-	icacallbackstypes "github.com/Stride-Labs/stride/x/icacallbacks/types"
+	icacallbackstypes "github.com/Stride-Labs/stride/v3/x/icacallbacks/types"
 
-	"github.com/Stride-Labs/stride/x/stakeibc/types"
+	recordstypes "github.com/Stride-Labs/stride/v3/x/records/types"
+	"github.com/Stride-Labs/stride/v3/x/stakeibc/types"
 
 	bankTypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	distributiontypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
@@ -18,8 +19,8 @@ import (
 
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
-	epochstypes "github.com/Stride-Labs/stride/x/epochs/types"
-	icqtypes "github.com/Stride-Labs/stride/x/interchainquery/types"
+	epochstypes "github.com/Stride-Labs/stride/v3/x/epochs/types"
+	icqtypes "github.com/Stride-Labs/stride/v3/x/interchainquery/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	icatypes "github.com/cosmos/ibc-go/v3/modules/apps/27-interchain-accounts/types"
@@ -27,7 +28,7 @@ import (
 	host "github.com/cosmos/ibc-go/v3/modules/core/24-host"
 )
 
-func (k Keeper) DelegateOnHost(ctx sdk.Context, hostZone types.HostZone, amt sdk.Coin, depositRecordId uint64) error {
+func (k Keeper) DelegateOnHost(ctx sdk.Context, hostZone types.HostZone, amt sdk.Coin, depositRecord recordstypes.DepositRecord) error {
 	var msgs []sdk.Msg
 
 	// the relevant ICA is the delegate account
@@ -77,7 +78,7 @@ func (k Keeper) DelegateOnHost(ctx sdk.Context, hostZone types.HostZone, amt sdk
 	// add callback data
 	delegateCallback := types.DelegateCallback{
 		HostZoneId:       hostZone.ChainId,
-		DepositRecordId:  depositRecordId,
+		DepositRecordId:  depositRecord.Id,
 		SplitDelegations: splitDelegations,
 	}
 	k.Logger(ctx).Info(fmt.Sprintf("Marshalling DelegateCallback args: %v", delegateCallback))
@@ -87,10 +88,13 @@ func (k Keeper) DelegateOnHost(ctx sdk.Context, hostZone types.HostZone, amt sdk
 	}
 
 	// Send the transaction through SubmitTx
-	_, err = k.SubmitTxsStrideEpoch(ctx, connectionId, msgs, *delegationIca, DELEGATE, marshalledCallbackArgs)
+	_, err = k.SubmitTxsStrideEpoch(ctx, connectionId, msgs, *delegationIca, ICACallbackID_Delegate, marshalledCallbackArgs)
 	if err != nil {
 		return sdkerrors.Wrapf(err, "Failed to SubmitTxs for connectionId %s on %s. Messages: %s", connectionId, hostZone.ChainId, msgs)
 	}
+	// update the record state to DELEGATION_IN_PROGRESS
+	depositRecord.Status = recordstypes.DepositRecord_DELEGATION_IN_PROGRESS
+	k.RecordsKeeper.SetDepositRecord(ctx, depositRecord)
 	return nil
 }
 
@@ -165,7 +169,7 @@ func (k Keeper) UpdateWithdrawalBalance(ctx sdk.Context, zoneInfo types.HostZone
 		append(data, []byte(zoneInfo.HostDenom)...),
 		sdk.NewInt(-1),
 		types.ModuleName,
-		"withdrawalbalance",
+		ICQCallbackID_WithdrawalBalance,
 		ttl, // ttl
 		0,   // height always 0 (which means current height)
 	)
@@ -327,7 +331,6 @@ func (k Keeper) GetLightClientHeightSafely(ctx sdk.Context, connectionID string)
 }
 
 func (k Keeper) GetLightClientTimeSafely(ctx sdk.Context, connectionID string) (uint64, error) {
-
 	// get light client's latest height
 	conn, found := k.IBCKeeper.ConnectionKeeper.GetConnection(ctx, connectionID)
 	if !found {
@@ -335,7 +338,7 @@ func (k Keeper) GetLightClientTimeSafely(ctx sdk.Context, connectionID string) (
 		k.Logger(ctx).Error(errMsg)
 		return 0, fmt.Errorf(errMsg)
 	}
-	//TODO(TEST-112) make sure to update host LCs here!
+	// TODO(TEST-112) make sure to update host LCs here!
 	latestConsensusClientState, found := k.IBCKeeper.ClientKeeper.GetLatestClientConsensusState(ctx, conn.ClientId)
 	if !found {
 		errMsg := fmt.Sprintf("client id %s not found for connection %s", conn.ClientId, connectionID)
@@ -349,7 +352,6 @@ func (k Keeper) GetLightClientTimeSafely(ctx sdk.Context, connectionID string) (
 
 // query and update validator exchange rate
 func (k Keeper) QueryValidatorExchangeRate(ctx sdk.Context, msg *types.MsgUpdateValidatorSharesExchRate) (*types.MsgUpdateValidatorSharesExchRateResponse, error) {
-
 	// ensure ICQ can be issued now! else fail the callback
 	valid, err := k.IsWithinBufferWindow(ctx)
 	if err != nil {
@@ -395,7 +397,7 @@ func (k Keeper) QueryValidatorExchangeRate(ctx sdk.Context, msg *types.MsgUpdate
 		data,
 		sdk.NewInt(-1),
 		types.ModuleName,
-		"validator",
+		ICQCallbackID_Validator,
 		ttl, // ttl
 		0,   // height always 0 (which means current height)
 	)
@@ -408,7 +410,6 @@ func (k Keeper) QueryValidatorExchangeRate(ctx sdk.Context, msg *types.MsgUpdate
 
 // to icq delegation amounts, this fn is executed after validator exch rates are icq'd
 func (k Keeper) QueryDelegationsIcq(ctx sdk.Context, hostZone types.HostZone, valoper string) error {
-
 	// ensure ICQ can be issued now! else fail the callback
 	valid, err := k.IsWithinBufferWindow(ctx)
 	if err != nil {
@@ -447,7 +448,7 @@ func (k Keeper) QueryDelegationsIcq(ctx sdk.Context, hostZone types.HostZone, va
 		data,
 		sdk.NewInt(-1),
 		types.ModuleName,
-		"delegation",
+		ICQCallbackID_Delegation,
 		ttl, // ttl
 		0,   // height always 0 (which means current height)
 	)

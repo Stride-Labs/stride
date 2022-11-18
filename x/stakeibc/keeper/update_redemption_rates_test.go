@@ -8,9 +8,9 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	_ "github.com/stretchr/testify/suite"
 
-	recordtypes "github.com/Stride-Labs/stride/x/records/types"
+	recordtypes "github.com/Stride-Labs/stride/v3/x/records/types"
 
-	stakeibctypes "github.com/Stride-Labs/stride/x/stakeibc/types"
+	stakeibctypes "github.com/Stride-Labs/stride/v3/x/stakeibc/types"
 )
 
 type UpdateRedemptionRatesTestCase struct {
@@ -25,13 +25,12 @@ func (s *KeeperTestSuite) SetupUpdateRedemptionRates(
 	stSupply uint64,
 	initialRedemptionRate sdk.Dec,
 ) UpdateRedemptionRatesTestCase {
-
 	// add some deposit records with status STAKE
 	//    to comprise the undelegated delegation account balance i.e. "to be staked"
 	toBeStakedDepositRecord := recordtypes.DepositRecord{
 		HostZoneId: "GAIA",
 		Amount:     int64(undelegatedBal),
-		Status:     recordtypes.DepositRecord_STAKE,
+		Status:     recordtypes.DepositRecord_DELEGATION_QUEUE,
 	}
 	s.App.RecordsKeeper.AppendDepositRecord(s.Ctx(), toBeStakedDepositRecord)
 
@@ -40,7 +39,7 @@ func (s *KeeperTestSuite) SetupUpdateRedemptionRates(
 	toBeTransferedDepositRecord := recordtypes.DepositRecord{
 		HostZoneId: "GAIA",
 		Amount:     int64(justDepositedBal),
-		Status:     recordtypes.DepositRecord_TRANSFER,
+		Status:     recordtypes.DepositRecord_TRANSFER_QUEUE,
 	}
 	s.App.RecordsKeeper.AppendDepositRecord(s.Ctx(), toBeTransferedDepositRecord)
 
@@ -67,7 +66,6 @@ func (s *KeeperTestSuite) SetupUpdateRedemptionRates(
 }
 
 func (s *KeeperTestSuite) TestUpdateRedemptionRatesSuccessful() {
-
 	stakedBal := uint64(5)
 	undelegatedBal := uint64(3)
 	justDepositedBal := uint64(3)
@@ -135,7 +133,6 @@ func (s *KeeperTestSuite) TestUpdateRedemptionRatesRandomized_MultipleRuns() {
 }
 
 func (s *KeeperTestSuite) TestUpdateRedemptionRateZeroStAssets() {
-
 	stakedBal := uint64(5)
 	undelegatedBal := uint64(3)
 	justDepositedBal := uint64(3)
@@ -159,7 +156,6 @@ func (s *KeeperTestSuite) TestUpdateRedemptionRateZeroStAssets() {
 }
 
 func (s *KeeperTestSuite) TestUpdateRedemptionRateZeroNativeAssets() {
-
 	stakedBal := uint64(0)
 	undelegatedBal := uint64(0)
 	justDepositedBal := uint64(0)
@@ -183,7 +179,6 @@ func (s *KeeperTestSuite) TestUpdateRedemptionRateZeroNativeAssets() {
 }
 
 func (s *KeeperTestSuite) TestUpdateRedemptionRateNoModuleAccountRecords() {
-
 	stakedBal := uint64(5)
 	undelegatedBal := uint64(3)
 	justDepositedBal := uint64(3)
@@ -195,7 +190,7 @@ func (s *KeeperTestSuite) TestUpdateRedemptionRateNoModuleAccountRecords() {
 	// sanity check on inputs (check redemptionRate at genesis is 1)
 	s.Require().Equal(initialRedemptionRate, sdk.NewDec(1), "t0 rr")
 
-	// filter out the TRANSFER record from the records when updating the redemption rate
+	// filter out the TRANSFER_QUEUE record from the records when updating the redemption rate
 	records := tc.allRecords[1:]
 	s.App.StakeibcKeeper.UpdateRedemptionRates(s.Ctx(), records)
 
@@ -208,7 +203,6 @@ func (s *KeeperTestSuite) TestUpdateRedemptionRateNoModuleAccountRecords() {
 }
 
 func (s *KeeperTestSuite) TestUpdateRedemptionRateNoStakeDepositRecords() {
-
 	stakedBal := uint64(5)
 	undelegatedBal := uint64(3)
 	justDepositedBal := uint64(3)
@@ -220,7 +214,7 @@ func (s *KeeperTestSuite) TestUpdateRedemptionRateNoStakeDepositRecords() {
 	// sanity check on inputs (check redemptionRate at genesis is 1)
 	s.Require().Equal(initialRedemptionRate, sdk.NewDec(1), "t0 rr")
 
-	// filter out the STAKE record from the records when updating the redemption rate
+	// filter out the DELEGATION_QUEUE record from the records when updating the redemption rate
 	records := tc.allRecords[:1]
 	s.App.StakeibcKeeper.UpdateRedemptionRates(s.Ctx(), records)
 
@@ -235,7 +229,6 @@ func (s *KeeperTestSuite) TestUpdateRedemptionRateNoStakeDepositRecords() {
 }
 
 func (s *KeeperTestSuite) TestUpdateRedemptionRateNoStakedBal() {
-
 	undelegatedBal := uint64(3)
 	justDepositedBal := uint64(3)
 	stSupply := uint64(10)
@@ -259,7 +252,6 @@ func (s *KeeperTestSuite) TestUpdateRedemptionRateNoStakedBal() {
 }
 
 func (s *KeeperTestSuite) TestUpdateRedemptionRateRandominitialRedemptionRate() {
-
 	stakedBal := uint64(5)
 	undelegatedBal := uint64(3)
 	justDepositedBal := uint64(3)

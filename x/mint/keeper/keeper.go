@@ -9,7 +9,7 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 
-	"github.com/Stride-Labs/stride/x/mint/types"
+	"github.com/Stride-Labs/stride/v3/x/mint/types"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -229,7 +229,6 @@ func (k Keeper) DistributeMintedCoin(ctx sdk.Context, mintedCoin sdk.Coin) error
 
 // set up a new module account address
 func (k Keeper) SetupNewModuleAccount(ctx sdk.Context, submoduleName string, submoduleNamespace string) {
-
 	// create and save the module account to the account keeper
 	acctAddress := k.GetSubmoduleAddress(submoduleName, submoduleNamespace)
 	acc := k.accountKeeper.NewAccount(

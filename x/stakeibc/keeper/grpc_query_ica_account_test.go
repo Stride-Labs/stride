@@ -5,10 +5,10 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/Stride-Labs/stride/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v3/x/stakeibc/types"
 )
 
-func (suite KeeperTestSuite) TestICAAccountQuery() {
+func (suite *KeeperTestSuite) TestICAAccountQuery() {
 	item := suite.createTestICAAccount()
 	wctx := sdk.WrapSDKContext(suite.Ctx())
 	for _, tc := range []struct {

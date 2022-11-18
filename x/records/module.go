@@ -1,10 +1,9 @@
 package records
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
-
-	"context"
 
 	"github.com/gorilla/mux"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
@@ -18,9 +17,9 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 
-	"github.com/Stride-Labs/stride/x/records/client/cli"
-	"github.com/Stride-Labs/stride/x/records/keeper"
-	"github.com/Stride-Labs/stride/x/records/types"
+	"github.com/Stride-Labs/stride/v3/x/records/client/cli"
+	"github.com/Stride-Labs/stride/v3/x/records/keeper"
+	"github.com/Stride-Labs/stride/v3/x/records/types"
 )
 
 var (

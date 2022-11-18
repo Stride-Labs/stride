@@ -3,16 +3,16 @@ package keeper
 import (
 	"fmt"
 
-	epochtypes "github.com/Stride-Labs/stride/x/epochs/types"
-	"github.com/Stride-Labs/stride/x/icacallbacks"
-	icacallbackstypes "github.com/Stride-Labs/stride/x/icacallbacks/types"
-	recordstypes "github.com/Stride-Labs/stride/x/records/types"
-	"github.com/Stride-Labs/stride/x/stakeibc/types"
+	epochtypes "github.com/Stride-Labs/stride/v3/x/epochs/types"
+	"github.com/Stride-Labs/stride/v3/x/icacallbacks"
+	icacallbackstypes "github.com/Stride-Labs/stride/v3/x/icacallbacks/types"
+	recordstypes "github.com/Stride-Labs/stride/v3/x/records/types"
+	"github.com/Stride-Labs/stride/v3/x/stakeibc/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	channeltypes "github.com/cosmos/ibc-go/v3/modules/core/04-channel/types"
-	"github.com/golang/protobuf/proto"
+	"github.com/golang/protobuf/proto" //nolint:staticcheck
 )
 
 func (k Keeper) MarshalReinvestCallbackArgs(ctx sdk.Context, reinvestCallback types.ReinvestCallback) ([]byte, error) {
@@ -73,7 +73,7 @@ func ReinvestCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ack
 		Amount:             amount.Int64(),
 		Denom:              denom,
 		HostZoneId:         reinvestCallback.HostZoneId,
-		Status:             recordstypes.DepositRecord_STAKE,
+		Status:             recordstypes.DepositRecord_DELEGATION_QUEUE,
 		Source:             recordstypes.DepositRecord_WITHDRAWAL_ICA,
 		DepositEpochNumber: epochNumber,
 	}

@@ -8,8 +8,8 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/spf13/cast"
 
-	epochtypes "github.com/Stride-Labs/stride/x/epochs/types"
-	"github.com/Stride-Labs/stride/x/stakeibc/types"
+	epochtypes "github.com/Stride-Labs/stride/v3/x/epochs/types"
+	"github.com/Stride-Labs/stride/v3/x/stakeibc/types"
 )
 
 func (k msgServer) LiquidStake(goCtx context.Context, msg *types.MsgLiquidStake) (*types.MsgLiquidStakeResponse, error) {
@@ -95,6 +95,7 @@ func (k msgServer) LiquidStake(goCtx context.Context, msg *types.MsgLiquidStake)
 	depositRecord.Amount += msgAmt
 	k.RecordsKeeper.SetDepositRecord(ctx, *depositRecord)
 
+	k.hooks.AfterLiquidStake(ctx, sender)
 	return &types.MsgLiquidStakeResponse{}, nil
 }
 

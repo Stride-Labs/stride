@@ -14,8 +14,8 @@ import (
 
 	ibckeeper "github.com/cosmos/ibc-go/v3/modules/core/keeper"
 
-	"github.com/Stride-Labs/stride/x/icacallbacks/types"
-	recordstypes "github.com/Stride-Labs/stride/x/records/types"
+	"github.com/Stride-Labs/stride/v3/x/icacallbacks/types"
+	recordstypes "github.com/Stride-Labs/stride/v3/x/records/types"
 
 	channeltypes "github.com/cosmos/ibc-go/v3/modules/core/04-channel/types"
 
@@ -121,7 +121,6 @@ func (k Keeper) GetICACallbackHandlerFromPacket(ctx sdk.Context, modulePacket ch
 	}
 	return &callbackHandler, nil
 }
-
 
 func (k Keeper) CallRegisteredICACallback(ctx sdk.Context, modulePacket channeltypes.Packet, ack *channeltypes.Acknowledgement) error {
 	callbackDataKey := types.PacketID(modulePacket.GetSourcePort(), modulePacket.GetSourceChannel(), modulePacket.Sequence)
