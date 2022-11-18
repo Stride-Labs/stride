@@ -176,7 +176,7 @@ setup() {
   SENDER_ACCT=$(STRIDE_ADDRESS)
   old_sender_bal=$($OSMO_MAIN_CMD q bank balances $OSMO_RECEIVER_ACCT --denom uosmo | GETBAL)
   # grab the epoch number for the first deposit record in the list od DRs
-  EPOCH=$(strided q records list-user-redemption-record  | grep -Fiw 'epoch_number' | head -n 1 | grep -o -E '[0-9]+')
+  EPOCH=$($STRIDE_MAIN_CMD q records list-user-redemption-record  | grep -Fiw 'epoch_number' | head -n 1 | grep -o -E '[0-9]+')
   # claim the record
   $STRIDE_MAIN_CMD tx stakeibc claim-undelegated-tokens OSMO $EPOCH $SENDER_ACCT --from val1 --keyring-backend test --chain-id STRIDE -y
   WAIT_FOR_STRING $STRIDE_LOGS '\[CLAIM\] success on OSMO'
