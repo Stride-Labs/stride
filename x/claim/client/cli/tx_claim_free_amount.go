@@ -11,9 +11,9 @@ import (
 
 func CmdClaimFreeAmount() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "claim-free-amount [airdrop-identifier]",
+		Use:   "claim-free-amount",
 		Short: "Broadcast message claim-free-amount",
-		Args:  cobra.ExactArgs(1),
+		Args:  cobra.ExactArgs(0),
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
 			clientCtx, err := client.GetClientTxContext(cmd)
 			if err != nil {
@@ -22,7 +22,6 @@ func CmdClaimFreeAmount() *cobra.Command {
 
 			msg := types.NewMsgClaimFreeAmount(
 				clientCtx.GetFromAddress().String(),
-				args[0],
 			)
 
 			if err := msg.ValidateBasic(); err != nil {
