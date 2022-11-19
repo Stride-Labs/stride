@@ -158,7 +158,7 @@ $ %s query claim claimable-for-action stride1h4astdfzjhcwahtfrh24qtvndzzh49xvqtf
 			action, ok := types.Action_value[args[2]]
 			if !ok {
 				return fmt.Errorf("invalid Action type: %s.  Valid actions are %s, %s, %s", args[2],
-					types.ActionFree, types.ActionLiquidStake, types.ActionDelegateStake)
+					types.ACTION_FREE, types.ACTION_LIQUID_STAKE, types.ACTION_DELEGATE_STAKE)
 			}
 
 			// Query store

@@ -68,7 +68,7 @@ func (k Keeper) TransferExistingDepositsToHostZones(ctx sdk.Context, epochNumber
 		}
 		delegateAddress := delegateAccount.GetAddress()
 
-		transferCoin := sdk.NewCoin(hostZone.GetIBCDenom(), sdk.NewInt(depositRecord.Amount))
+		transferCoin := sdk.NewCoin(hostZone.GetIbcDenom(), sdk.NewInt(depositRecord.Amount))
 		// timeout 30 min in the future
 		// NOTE: this assumes no clock drift between chains, which tendermint guarantees
 		// if we onboard non-tendermint chains, we need to use the time on the host chain to
