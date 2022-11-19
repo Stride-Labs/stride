@@ -62,9 +62,9 @@ func (s *KeeperTestSuite) TestNewQuerySuccessful() {
 
 	// this hash is testing `GenerateQueryHash`.
 	//  note: the module gets hashed in the `GenerateQueryHash` function, so hashes will be unique to each module
-	//  note: the queryID does NOT distinguish between two queries issued with the same (connection_id, chain_id, query_type, request, module, height, request)
-	//      practically the differentiator will be `request`, but it DOES mean that if we submit more than 1 automated query to the same value on the same host account simultaneously, we would get callback conflicts!
-	expectedId := "9792c1d779a3846a8de7ae82f31a74d308b279a521fa9e0d5c4f08917117bf3e"
+	//  note: the queryID is a has of (module, callbackId, chainId, connectionId, queryType, and request)
+	// .    meaning for a given query type, the ID will be identical across each epoch
+	expectedId := "e97f7bdad3c4c521165321f78a8329c54f35db23ee9cec7bddf5c60703ac9ba7"
 	s.Require().Equal(expectedId, actualQuery.Id)
 
 	// RequestSent should be false
