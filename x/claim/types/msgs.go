@@ -90,10 +90,9 @@ const TypeMsgClaimFreeAmount = "claim_free_amount"
 
 var _ sdk.Msg = &MsgClaimFreeAmount{}
 
-func NewMsgClaimFreeAmount(user string, airdropIdentifier string) *MsgClaimFreeAmount {
+func NewMsgClaimFreeAmount(user string) *MsgClaimFreeAmount {
 	return &MsgClaimFreeAmount{
-		User:              user,
-		AirdropIdentifier: airdropIdentifier,
+		User: user,
 	}
 }
 
@@ -119,9 +118,6 @@ func (msg *MsgClaimFreeAmount) GetSignBytes() []byte {
 }
 
 func (msg *MsgClaimFreeAmount) ValidateBasic() error {
-	if msg.AirdropIdentifier == "" {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "airdrop identifier not set")
-	}
 
 	_, err := sdk.AccAddressFromBech32(msg.User)
 	if err != nil {
