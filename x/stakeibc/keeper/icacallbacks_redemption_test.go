@@ -59,7 +59,7 @@ func (s *KeeperTestSuite) SetupRedemptionCallback() RedemptionCallbackTestCase {
 	hostZone := stakeibc.HostZone{
 		ChainId:        HostChainId,
 		HostDenom:      Atom,
-		IBCDenom:       IbcAtom,
+		IbcDenom:       IbcAtom,
 		RedemptionRate: sdk.NewDec(1.0),
 	}
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx(), hostZone)
