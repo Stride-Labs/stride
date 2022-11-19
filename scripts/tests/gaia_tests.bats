@@ -71,17 +71,17 @@ setup() {
 # # add test to register host zone
 @test "[INTEGRATION-BASIC] host zones successfully registered" {
   run $STRIDE_MAIN_CMD q stakeibc show-host-zone GAIA
-  assert_line '  HostDenom: uatom'
-  assert_line '  chainId: GAIA'
-  assert_line '  delegationAccount:'
+  assert_line '  host_denom: uatom'
+  assert_line '  chain_id: GAIA'
+  assert_line '  delegation_account:'
   assert_line '    address: cosmos1sy63lffevueudvvlvh2lf6s387xh9xq72n3fsy6n2gr5hm6u2szs2v0ujm'
-  assert_line '  feeAccount:'
+  assert_line '  fee_account:'
   assert_line '    address: cosmos1lkgt5sfshn9shm7hd7chtytkq4mvwvswgmyl0hkacd4rmusu9wwq60cezx'
-  assert_line '  redemptionAccount:'
+  assert_line '  redemption_account:'
   assert_line '    address: cosmos1xmcwu75s8v7s54k79390wc5gwtgkeqhvzegpj0nm2tdwacv47tmqg9ut30'
-  assert_line '  withdrawalAccount:'
+  assert_line '  withdrawal_account:'
   assert_line '    address: cosmos1x5p8er7e2ne8l54tx33l560l8djuyapny55pksctuguzdc00dj7saqcw2l'
-  assert_line '  unbondingFrequency: "1"'
+  assert_line '  unbonding_frequency: "1"'
 }
 
 
@@ -181,10 +181,9 @@ setup() {
   # TODO(optimize tests) extra sleep just in case
   SENDER_ACCT=$(STRIDE_ADDRESS)
   old_sender_bal=$($GAIA_MAIN_CMD q bank balances $GAIA_RECEIVER_ACCT --denom uatom | GETBAL)
-  # TODO check that the UserRedemptionRecord has isClaimable = true
 
   # grab the epoch number for the first deposit record in the list od DRs
-  EPOCH=$($STRIDE_MAIN_CMD q records list-user-redemption-record  | grep -Fiw 'epochNumber' | head -n 1 | grep -o -E '[0-9]+')
+  EPOCH=$($STRIDE_MAIN_CMD q records list-user-redemption-record  | grep -Fiw 'epoch_number' | head -n 1 | grep -o -E '[0-9]+')
   # claim the record
   $STRIDE_MAIN_CMD tx stakeibc claim-undelegated-tokens GAIA $EPOCH $SENDER_ACCT --from val1 --keyring-backend test --chain-id STRIDE -y
   WAIT_FOR_STRING $STRIDE_LOGS '\[CLAIM\] success on GAIA'
@@ -202,7 +201,7 @@ setup() {
 # check that a second liquid staking call kicks off reinvestment
 @test "[INTEGRATION-BASIC-GAIA] rewards are being reinvested, exchange rate updating" {
   # read the exchange rate and current delegations
-  RR1=$($STRIDE_MAIN_CMD q stakeibc show-host-zone GAIA | grep -Fiw 'RedemptionRate' | grep -Eo '[+-]?[0-9]+([.][0-9]+)?')
+  RR1=$($STRIDE_MAIN_CMD q stakeibc show-host-zone GAIA | grep -Fiw 'redemption_rate' | grep -Eo '[+-]?[0-9]+([.][0-9]+)?')
   OLD_STAKED_BAL=$($GAIA_MAIN_CMD q staking delegation $GAIA_DELEGATION_ICA_ADDR $GAIA_DELEGATE_VAL | GETSTAKE)
   # liquid stake again to kickstart the reinvestment process
   $STRIDE_MAIN_CMD tx stakeibc liquid-stake 1000 uatom --keyring-backend test --from val1 -y --chain-id $STRIDE_CHAIN_ID
@@ -215,7 +214,7 @@ setup() {
   STAKED_BAL_INCREASED=$(($NEW_STAKED_BAL > $OLD_STAKED_BAL))
   assert_equal "$STAKED_BAL_INCREASED" "1"
 
-  RR2=$($STRIDE_MAIN_CMD q stakeibc show-host-zone GAIA | grep -Fiw 'RedemptionRate' | grep -Eo '[+-]?[0-9]+([.][0-9]+)?')
+  RR2=$($STRIDE_MAIN_CMD q stakeibc show-host-zone GAIA | grep -Fiw 'redemption_rate' | grep -Eo '[+-]?[0-9]+([.][0-9]+)?')
   # check that the exchange rate has increased
   MULT=1000000
   RR_INCREASED=$(( $(FLOOR $(DECMUL $RR2 $MULT)) > $(FLOOR $(DECMUL $RR1 $MULT))))

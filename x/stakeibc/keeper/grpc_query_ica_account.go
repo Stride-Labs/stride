@@ -21,5 +21,5 @@ func (k Keeper) ICAAccount(c context.Context, req *types.QueryGetICAAccountReque
 		return nil, status.Error(codes.NotFound, "not found")
 	}
 
-	return &types.QueryGetICAAccountResponse{ICAAccount: val}, nil
+	return &types.QueryGetICAAccountResponse{IcaAccount: val}, nil
 }
