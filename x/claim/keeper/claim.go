@@ -178,7 +178,7 @@ func (k Keeper) IsInitialPeriodPassed(ctx sdk.Context, airdropIdentifier string)
 }
 
 // ResetClaimStatus clear users' claimed status only after initial period of vesting is passed
-func (k Keeper) ResetClaimStatus(ctx sdk.Context, airdropIdentifier string) {
+func (k Keeper) ResetClaimStatus(ctx sdk.Context, airdropIdentifier string) error {
 	if k.IsInitialPeriodPassed(ctx, airdropIdentifier) {
 		// first, reset the claim records
 		records := k.GetClaimRecords(ctx, airdropIdentifier)
@@ -187,11 +187,14 @@ func (k Keeper) ResetClaimStatus(ctx sdk.Context, airdropIdentifier string) {
 		}
 
 		if err := k.SetClaimRecords(ctx, records); err != nil {
-			panic(err)
+			return err
 		}
 		// then, reset the airdrop ClaimedSoFar
-		k.ResetClaimedSoFar(ctx)
+		if err := k.ResetClaimedSoFar(ctx); err != nil {
+			return err
+		}
 	}
+	return nil
 }
 
 // ClearClaimables clear claimable amounts
@@ -454,7 +457,10 @@ func (k Keeper) AfterClaim(ctx sdk.Context, airdropIdentifier string, claimAmoun
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "invalid airdrop identifier: AfterClaim")
 	}
 	// increment the claimed so far
-	k.IncrementClaimedSoFar(ctx, airdropIdentifier, claimAmount)
+	err := k.IncrementClaimedSoFar(ctx, airdropIdentifier, claimAmount)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -540,7 +546,10 @@ func (k Keeper) ClaimCoinsForAction(ctx sdk.Context, addr sdk.AccAddress, action
 	if airdrop == nil {
 		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "invalid airdrop identifier: ClaimCoinsForAction")
 	}
-	k.AfterClaim(ctx, airdropIdentifier, claimableAmount.AmountOf(airdrop.ClaimDenom).Int64())
+	err = k.AfterClaim(ctx, airdropIdentifier, claimableAmount.AmountOf(airdrop.ClaimDenom).Int64())
+	if err != nil {
+		return nil, err
+	}
 
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(
