@@ -12,7 +12,7 @@ git checkout {UPDATED_BRANCH}
 ```
 * Then switch the code back to the most recent version 
 * Enter the commit hash of the old binary (built above) as `UPGRADE_OLD_COMMIT_HASH` in `scripts/vars.sh`
-* Enter upgrade name as `UPGRADE_NAME` in `scripts/vars.sh` and `PROPOSAL_NAME` in `scripts/submit_upgrade.sh`
+* Enter upgrade name as `UPGRADE_NAME` in `scripts/vars.sh`
 * Then startup the chain as normal and rebuild stride
 ```
 make start-docker build=s
@@ -28,3 +28,12 @@ bash scripts/upgrades/submit_upgrade.sh
 ```
 * View the stride logs - you should notice an update occuring at the specified upgrade height.
 * After the upgrade has occured, check a post-upgrade condition using `scripts/upgrades/binaries/strided2`
+
+## Testing Upgrades with Integration Tests
+* Follow the instructions above to start the network but stop before submitting the proposal
+* Modify `vars.sh` to point to the **old** binary (`${SCRIPT_DIR}/upgrades/binaries/strided1`)
+* Run integration tests for GAIA and JUNO
+* Once the tests pass, grab the current block height, modify `scripts/upgrades/submit_upgrade.sh` to have an upgrade height ~50 blocks in the future, and run the script
+* Check the stride logs to confirm the upgrade passes successfully
+* Modify `vars.sh` to point to the **new** binary (`${SCRIPT_DIR}/upgrades/binaries/strided2`)
+* Finally, run integration tests for OSMO and STARS
