@@ -226,7 +226,7 @@ func (suite *KeeperTestSuite) TestAirdropFlow() {
 
 	// check if claims don't vest after initial period of 3 months
 	suite.ctx = suite.ctx.WithBlockTime(time.Now().Add(types.DefaultVestingInitialPeriod))
-	suite.app.ClaimKeeper.ClearClaimedStatus(suite.ctx, "stride")
+	suite.app.ClaimKeeper.ResetClaimStatus(suite.ctx, "stride")
 	_, err = suite.app.ClaimKeeper.ClaimCoinsForAction(suite.ctx, addr1, types.ACTION_LIQUID_STAKE, "stride")
 	suite.Require().NoError(err)
 	claimableAmountForLiquidStake2 := sdk.NewDecWithPrec(80, 2).
@@ -390,7 +390,7 @@ func (suite *KeeperTestSuite) TestMultiChainAirdropFlow() {
 
 	// after 3 years, juno users should be still able to claim
 	suite.ctx = suite.ctx.WithBlockTime(time.Now().Add(types.DefaultAirdropDuration))
-	suite.app.ClaimKeeper.ClearClaimedStatus(suite.ctx, "juno")
+	suite.app.ClaimKeeper.ResetClaimStatus(suite.ctx, "juno")
 	coins, err = suite.app.ClaimKeeper.ClaimCoinsForAction(suite.ctx, addr2, types.ACTION_FREE, "juno")
 	suite.Require().NoError(err)
 
@@ -405,7 +405,7 @@ func (suite *KeeperTestSuite) TestMultiChainAirdropFlow() {
 	// after 3 years + 1 hour, juno users shouldn't be able to claim anymore
 	suite.ctx = suite.ctx.WithBlockTime(time.Now().Add(time.Hour).Add(types.DefaultAirdropDuration))
 	suite.app.ClaimKeeper.EndBlocker(suite.ctx)
-	suite.app.ClaimKeeper.ClearClaimedStatus(suite.ctx, "juno")
+	suite.app.ClaimKeeper.ResetClaimStatus(suite.ctx, "juno")
 	coins, err = suite.app.ClaimKeeper.ClaimCoinsForAction(suite.ctx.WithBlockTime(time.Now().Add(time.Hour).Add(types.DefaultAirdropDuration)), addr2, types.ACTION_FREE, "juno")
 	suite.Require().NoError(err)
 	suite.Require().Equal(coins.String(), sdk.NewCoins(sdk.NewInt64Coin(sdk.DefaultBondDenom, 0)).String())

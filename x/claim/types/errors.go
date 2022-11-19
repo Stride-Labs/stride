@@ -20,4 +20,6 @@ var (
 		"airdrop with same identifier already exists")
 	ErrDistributorAlreadyExists = sdkerrors.Register(ModuleName, 1107,
 		"airdrop with same distributor already exists")
+	ErrInvalidAmount = sdkerrors.Register(ModuleName, 1108,
+		"cannot claim negative tokens")
 )

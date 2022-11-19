@@ -42,7 +42,7 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochInfo epochstypes.EpochInf
 }
 
 func (k Keeper) AfterEpochEnd(ctx sdk.Context, epochInfo epochstypes.EpochInfo) {
-	k.ClearClaimedStatus(ctx, epochInfo.Identifier)
+	k.ResetClaimStatus(ctx, epochInfo.Identifier)
 }
 
 // ________________________________________________________________________________________
