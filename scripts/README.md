@@ -57,17 +57,6 @@ while getopts sgojhir{n} flag; do
 {CHAIN_ID}_RPC_PORT={the one included in the docker-compose above}
 {CHAIN_ID}_MAIN_CMD="${CHAIN_ID}_CMD --home $SCRIPT_DIR/state/${${CHAIN_ID}_NODE_PREFIX}1"
 
-{CHAIN_ID}_REV_MNEMONIC=""
-{CHAIN_ID}_VAL_MNEMONIC_1=""
-{CHAIN_ID}_VAL_MNEMONIC_2=""
-{CHAIN_ID}_VAL_MNEMONIC_3=""
-{CHAIN_ID}_VAL_MNEMONIC_4=""
-{CHAIN_ID}_VAL_MNEMONIC_5=""
-{CHAIN_ID}_VAL_MNEMONICS=("${CHAIN_ID}_VAL_MNEMONIC_1","${CHAIN_ID}_VAL_MNEMONIC_2","${CHAIN_ID}_VAL_MNEMONIC_3","${CHAIN_ID}_VAL_MNEMONIC_4","${CHAIN_ID}_VAL_MNEMONIC_5")
-
-HERMES_${CHAIN_ID}_ACCT=rly{add one since the account from the last host zone}
-HERMES_${CHAIN_ID}_MNEMONIC=""
-
 RELAYER_{CHAIN_ID}_EXEC="docker-compose run --rm relayer-{new-host-zone}"
 RELAYER_{CHAIN_ID}_ACCT=rly{add one since the account from the last host zone}
 HOST_RELAYER_ACCTS=(... $RELAYER_{CHAIN_ID}_ACCT)
