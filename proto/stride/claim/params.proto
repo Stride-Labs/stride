@@ -8,12 +8,11 @@ import "google/protobuf/timestamp.proto";
 option go_package = "github.com/Stride-Labs/stride/v3/x/claim/types";
 
 // Params defines the claim module's parameters.
-message Params {
-  repeated Airdrop airdrops = 1;
-}
+message Params { repeated Airdrop airdrops = 1; }
 
 message Airdrop {
-  string airdrop_identifier = 1 [ (gogoproto.moretags) = "yaml:\"airdrop_identifier\"" ];
+  string airdrop_identifier = 1
+      [ (gogoproto.moretags) = "yaml:\"airdrop_identifier\"" ];
   // seconds
   google.protobuf.Timestamp airdrop_start_time = 2 [
     (gogoproto.stdtime) = true,
@@ -31,4 +30,6 @@ message Airdrop {
   string claim_denom = 4;
   // airdrop distribution account
   string distributor_address = 5;
+  // ustrd tokens claimed so far in the current period
+  int64 claimed_so_far = 6;
 }

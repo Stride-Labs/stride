@@ -16,7 +16,7 @@ func (k Keeper) AfterDelegationModified(ctx sdk.Context, delAddr sdk.AccAddress,
 	identifiers := k.GetAirdropIdentifiersForUser(ctx, delAddr)
 	for _, identifier := range identifiers {
 		cacheCtx, write := ctx.CacheContext()
-		_, err := k.ClaimCoinsForAction(cacheCtx, delAddr, types.ActionDelegateStake, identifier)
+		_, err := k.ClaimCoinsForAction(cacheCtx, delAddr, types.ACTION_DELEGATE_STAKE, identifier)
 		if err == nil {
 			write()
 		} else {
@@ -29,7 +29,7 @@ func (k Keeper) AfterLiquidStake(ctx sdk.Context, addr sdk.AccAddress) {
 	identifiers := k.GetAirdropIdentifiersForUser(ctx, addr)
 	for _, identifier := range identifiers {
 		cacheCtx, write := ctx.CacheContext()
-		_, err := k.ClaimCoinsForAction(cacheCtx, addr, types.ActionLiquidStake, identifier)
+		_, err := k.ClaimCoinsForAction(cacheCtx, addr, types.ACTION_LIQUID_STAKE, identifier)
 		if err == nil {
 			write()
 		} else {
@@ -42,7 +42,10 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochInfo epochstypes.EpochInf
 }
 
 func (k Keeper) AfterEpochEnd(ctx sdk.Context, epochInfo epochstypes.EpochInfo) {
-	k.ClearClaimedStatus(ctx, epochInfo.Identifier)
+	err := k.ResetClaimStatus(ctx, epochInfo.Identifier)
+	if err != nil {
+		k.Logger(ctx).Error(fmt.Sprintf("failed to reset claim status for epoch %s: %s", epochInfo.Identifier, err.Error()))
+	}
 }
 
 // ________________________________________________________________________________________
