@@ -12,6 +12,7 @@ import (
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	authvestingtypes "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
 	"github.com/gogo/protobuf/proto"
+	"github.com/spf13/cast"
 
 	"github.com/Stride-Labs/stride/v3/utils"
 	"github.com/Stride-Labs/stride/v3/x/claim/types"
@@ -369,10 +370,12 @@ func (k Keeper) GetClaimableAmountForAction(ctx sdk.Context, addr sdk.AccAddress
 		percentageForAction = types.PercentageForLiquidStake
 	}
 
-	poolBal, err := k.GetDistributorAccountBalance(ctx, airdropIdentifier)
+	distributorAccountBalance, err := k.GetDistributorAccountBalance(ctx, airdropIdentifier)
 	if err != nil {
 		return sdk.Coins{}, err
 	}
+
+	poolBal := distributorAccountBalance.AddAmount(sdk.NewInt(cast.ToInt64(airdrop.ClaimedSoFar)))
 
 	claimableAmount := poolBal.Amount.ToDec().
 		Mul(percentageForAction).
@@ -439,6 +442,18 @@ func (k Keeper) GetAirdropIdentifiersForUser(ctx sdk.Context, addr sdk.AccAddres
 		}
 	}
 	return identifiers
+}
+
+func (k Keeper) AfterClaim(ctx sdk.Context, airdropIdentifier string, claimAmount uint64) error {
+	// Increment ClaimedSoFar on the airdrop record
+	// fetch the airdrop
+	airdrop := k.GetAirdropByIdentifier(ctx, airdropIdentifier)
+	if airdrop == nil {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "invalid airdrop identifier: AfterClaim")
+	}
+	// increment the claimed so far
+	k.IncrementClaimedSoFar(ctx, airdropIdentifier, claimAmount)
+	return nil
 }
 
 // ClaimCoins remove claimable amount entry and transfer it to user's account
@@ -519,6 +534,12 @@ func (k Keeper) ClaimCoinsForAction(ctx sdk.Context, addr sdk.AccAddress, action
 		return claimableAmount, err
 	}
 
+	airdrop := k.GetAirdropByIdentifier(ctx, airdropIdentifier)
+	if airdrop == nil {
+		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "invalid airdrop identifier: ClaimCoinsForAction")
+	}
+	k.AfterClaim(ctx, airdropIdentifier, claimableAmount.AmountOf(airdrop.ClaimDenom).Uint64())
+
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(
 			types.EventTypeClaim,
@@ -561,6 +582,24 @@ func (k Keeper) CreateAirdropAndEpoch(ctx sdk.Context, distributor string, denom
 		CurrentEpochStartTime:   time.Time{},
 		EpochCountingStarted:    false,
 	})
+	return k.SetParams(ctx, params)
+}
+
+// IncrementClaimedSoFar increments ClaimedSoFar for a single airdrop
+func (k Keeper) IncrementClaimedSoFar(ctx sdk.Context, identifier string, amount uint64) error {
+	params, err := k.GetParams(ctx)
+	if err != nil {
+		panic(err)
+	}
+
+	newAirdrops := []*types.Airdrop{}
+	for _, airdrop := range params.Airdrops {
+		if airdrop.AirdropIdentifier == identifier {
+			airdrop.ClaimedSoFar += amount
+		}
+		newAirdrops = append(newAirdrops, airdrop)
+	}
+	params.Airdrops = newAirdrops
 	return k.SetParams(ctx, params)
 }
 
