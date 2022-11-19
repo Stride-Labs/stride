@@ -136,15 +136,16 @@ func (s *KeeperTestSuite) TestRestoreInterchainAccount_RevertDepositRecords_Fail
 		tc.validMsg.ChainId,
 	)
 	s.Require().EqualError(err, expectedErrMsg, "registered ica account fails when account already exists")
-	// Verify the deposit record state was reverted
+	// Verify the deposit record state was NOT reverted
 	for i := 0; i < 2; i++ {
 		depositRecord, found := s.App.RecordsKeeper.GetDepositRecord(s.Ctx(), uint64(i))
 		s.Require().True(found, "deposit record found")
-		s.Require().Equal(recordtypes.DepositRecord_DELEGATION_IN_PROGRESS, depositRecord.Status, "deposit record status should NOT nsg be reverted")
+		s.Require().Equal(recordtypes.DepositRecord_DELEGATION_IN_PROGRESS, depositRecord.Status, "deposit record status should NOT msg be reverted")
 	}
 }
 
 func (s *KeeperTestSuite) TestRestoreInterchainAccount_NoRecordChange_Success() {
+	// Here, we're closing and restoring the withdrawal channel so deposit records should not be reverted
 	tc := s.SetupRestoreInterchainAccount()
 	owner := "GAIA.WITHDRAWAL"
 	channelID := s.CreateICAChannel(owner)
@@ -152,11 +153,11 @@ func (s *KeeperTestSuite) TestRestoreInterchainAccount_NoRecordChange_Success() 
 
 	// Confirm there are two channels originally
 	channels := s.App.IBCKeeper.ChannelKeeper.GetAllChannels(s.Ctx())
-	s.Require().Len(channels, 2, "there should be 2 channels initially (transfer + delegate)")
+	s.Require().Len(channels, 2, "there should be 2 channels initially (transfer + withdrawal)")
 
-	// Close the delegation channel
+	// Close the withdrawal channel
 	channel, found := s.App.IBCKeeper.ChannelKeeper.GetChannel(s.Ctx(), portID, channelID)
-	s.Require().True(found, "delegation channel found")
+	s.Require().True(found, "withdrawal channel found")
 	channel.State = channeltypes.CLOSED
 	s.App.IBCKeeper.ChannelKeeper.SetChannel(s.Ctx(), portID, channelID, channel)
 
@@ -180,10 +181,10 @@ func (s *KeeperTestSuite) TestRestoreInterchainAccount_NoRecordChange_Success() 
 	}
 	s.Require().True(newChannelActive, "a new channel should have been created")
 
-	// Verify the deposit record state was reverted
+	// Verify the deposit record state was NOT reverted
 	for i := 0; i < 2; i++ {
 		depositRecord, found := s.App.RecordsKeeper.GetDepositRecord(s.Ctx(), uint64(i))
 		s.Require().True(found, "deposit record found")
-		s.Require().Equal(recordtypes.DepositRecord_DELEGATION_IN_PROGRESS, depositRecord.Status, "deposit record status should be reverted")
+		s.Require().Equal(recordtypes.DepositRecord_DELEGATION_IN_PROGRESS, depositRecord.Status, "deposit record status should NOT be reverted")
 	}
 }
