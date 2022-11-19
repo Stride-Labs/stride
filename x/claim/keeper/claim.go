@@ -12,7 +12,6 @@ import (
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	authvestingtypes "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
 	"github.com/gogo/protobuf/proto"
-	"github.com/spf13/cast"
 
 	"github.com/Stride-Labs/stride/v3/utils"
 	"github.com/Stride-Labs/stride/v3/x/claim/types"
@@ -375,7 +374,7 @@ func (k Keeper) GetClaimableAmountForAction(ctx sdk.Context, addr sdk.AccAddress
 		return sdk.Coins{}, err
 	}
 
-	poolBal := distributorAccountBalance.AddAmount(sdk.NewInt(cast.ToInt64(airdrop.ClaimedSoFar)))
+	poolBal := distributorAccountBalance.AddAmount(sdk.NewInt(airdrop.ClaimedSoFar))
 
 	claimableAmount := poolBal.Amount.ToDec().
 		Mul(percentageForAction).
