@@ -110,6 +110,7 @@ GAIA_ADDRESS_PREFIX=cosmos
 GAIA_DENOM=$ATOM_DENOM
 GAIA_RPC_PORT=26557
 GAIA_MAIN_CMD="$GAIA_CMD --home $SCRIPT_DIR/state/${GAIA_NODE_PREFIX}1"
+GAIA_RECEIVER_ADDRESS='cosmos1g6qdx6kdhpf000afvvpte7hp0vnpzapuyxp8uf'
 
 # JUNO 
 JUNO_CHAIN_ID=JUNO
@@ -122,6 +123,7 @@ JUNO_ADDRESS_PREFIX=juno
 JUNO_DENOM=$JUNO_DENOM
 JUNO_RPC_PORT=26457
 JUNO_MAIN_CMD="$JUNO_CMD --home $SCRIPT_DIR/state/${JUNO_NODE_PREFIX}1"
+JUNO_RECEIVER_ADDRESS='juno1sy0q0jpaw4t3hnf6k5wdd4384g0syzlp7rrtsg'
 
 # OSMO 
 OSMO_CHAIN_ID=OSMO
@@ -134,6 +136,7 @@ OSMO_ADDRESS_PREFIX=osmo
 OSMO_DENOM=$OSMO_DENOM
 OSMO_RPC_PORT=26357
 OSMO_MAIN_CMD="$OSMO_CMD --home $SCRIPT_DIR/state/${OSMO_NODE_PREFIX}1"
+OSMO_RECEIVER_ADDRESS='osmo1w6wdc2684g9h3xl8nhgwr282tcxx4kl06n4sjl'
 
 # STARS
 STARS_CHAIN_ID=STARS
@@ -146,6 +149,7 @@ STARS_ADDRESS_PREFIX=stars
 STARS_DENOM=$STARS_DENOM
 STARS_RPC_PORT=26257
 STARS_MAIN_CMD="$STARS_CMD --home $SCRIPT_DIR/state/${STARS_NODE_PREFIX}1"
+STARS_RECEIVER_ADDRESS='stars15dywcmy6gzsc8wfefkrx0c9czlwvwrjenqthyq'
 
 # HERMES
 HERMES_CMD="$SCRIPT_DIR/../build/hermes/release/hermes --config $STATE/hermes/config.toml"
@@ -182,34 +186,6 @@ RELAYER_JUNO_MNEMONIC="kiwi betray topple van vapor flag decorate cement crystal
 RELAYER_OSMO_MNEMONIC="unaware wine ramp february bring trust leaf beyond fever inside option dilemma save know captain endless salute radio humble chicken property culture foil taxi"
 RELAYER_STARS_MNEMONIC="deposit dawn erosion talent old broom flip recipe pill hammer animal hill nice ten target metal gas shoe visual nephew soda harbor child simple"
 RELAYER_MNEMONICS=("$RELAYER_GAIA_MNEMONIC","$RELAYER_JUNO_MNEMONIC","$RELAYER_OSMO_MNEMONIC","$RELAYER_STARS_MNEMONIC")
-
-GAIA_DELEGATE_VAL='cosmosvaloper1pcag0cj4ttxg8l7pcg0q4ksuglswuuedadj7ne'
-GAIA_DELEGATION_ICA_ADDR='cosmos1sy63lffevueudvvlvh2lf6s387xh9xq72n3fsy6n2gr5hm6u2szs2v0ujm'
-GAIA_REDEMPTION_ICA_ADDR='cosmos1xmcwu75s8v7s54k79390wc5gwtgkeqhvzegpj0nm2tdwacv47tmqg9ut30'
-GAIA_WITHDRAWAL_ICA_ADDR='cosmos1x5p8er7e2ne8l54tx33l560l8djuyapny55pksctuguzdc00dj7saqcw2l'
-GAIA_FEE_ICA_ADDR='cosmos1lkgt5sfshn9shm7hd7chtytkq4mvwvswgmyl0hkacd4rmusu9wwq60cezx'
-GAIA_RECEIVER_ACCT='cosmos1g6qdx6kdhpf000afvvpte7hp0vnpzapuyxp8uf'
-
-JUNO_DELEGATE_VAL='junovaloper1pcag0cj4ttxg8l7pcg0q4ksuglswuued3knlr0'
-JUNO_DELEGATION_ICA_ADDR='juno1xan7vt4nurz6c7x0lnqnvpmuc0lljz7rycqmuz2kk6wxv4k69d0sfats35'
-JUNO_REDEMPTION_ICA_ADDR='juno1y6haxdt03cgkc7aedxrlaleeteel7fgc0nvtu2kggee3hnrlvnvs4kw2v9'
-JUNO_WITHDRAWAL_ICA_ADDR='juno104n6h822n6n7psqjgjl7emd2uz67lptggp5cargh6mw0gxpch2gsk53qk5'
-JUNO_FEE_ICA_ADDR='juno1rp8qgfq64wmjg7exyhjqrehnvww0t9ev3f3p2ls82umz2fxgylqsz3vl9h'
-JUNO_RECEIVER_ACCT='juno1sy0q0jpaw4t3hnf6k5wdd4384g0syzlp7rrtsg'
-
-OSMO_DELEGATE_VAL='osmovaloper12ffkl30v0ghtyaezvedazquhtsf4q5ng8khuv4'
-OSMO_DELEGATION_ICA_ADDR='osmo1cx04p5974f8hzh2lqev48kjrjugdxsxy7mzrd0eyweycpr90vk8q8d6f3h'
-OSMO_REDEMPTION_ICA_ADDR='osmo1uy9p9g609676rflkjnnelaxatv8e4sd245snze7qsxzlk7dk7s8qrcjaez'
-OSMO_WITHDRAWAL_ICA_ADDR='osmo10arcf5r89cdmppntzkvulc7gfmw5lr66y2m25c937t6ccfzk0cqqz2l6xv'
-OSMO_FEE_ICA_ADDR='osmo1n4r77qsmu9chvchtmuqy9cv3s539q87r398l6ugf7dd2q5wgyg9su3wd4g'
-OSMO_RECEIVER_ACCT='osmo1w6wdc2684g9h3xl8nhgwr282tcxx4kl06n4sjl'
-
-STARS_DELEGATE_VAL='starsvaloper12ffkl30v0ghtyaezvedazquhtsf4q5ng2c0xaf'
-STARS_DELEGATION_ICA_ADDR="stars1kl6wa99e6hf97xr90m2n04rl0smv842pj9utqyvgyrksrm9aacdqyfc3en"
-STARS_REDEMPTION_ICA_ADDR="stars1x07hv0hxujj6l0mfyynwyuccf8fl27vjup0y8dmyajy9ugae22hqfvmv4e"
-STARS_WITHDRAWAL_ICA_ADDR="stars1x5ndl5p9tjy376a9xmqhw79gz0s678480759cdgaretcgm36akvs0a78tj"
-STARS_FEE_ICA_ADDR="stars1v09y993sku5djvm0rffq0nfsk5rzke4d2vzvny5e6vmq7dz0dehqnwl4ay"
-STARS_RECEIVER_ACCT='stars15dywcmy6gzsc8wfefkrx0c9czlwvwrjenqthyq'
 
 STRIDE_ADDRESS() { 
   $STRIDE_MAIN_CMD keys show ${STRIDE_VAL_PREFIX}1 --keyring-backend test -a 
