@@ -26,7 +26,7 @@ setup_file() {
   HOST_MAIN_CMD=$(GET_VAR_VALUE  ${CHAIN_NAME}_MAIN_CMD)
 
   HOST_VAL_ADDRESS=$(${CHAIN_NAME}_ADDRESS)
-  HOST_RECEIVER_ADDRESS=$(GET_VAR_VALUE  ${CHAIN_NAME}_RECEIVER_ADDRESS)
+  HOST_RECEIVER_ADDRESS=$(GET_VAR_VALUE ${CHAIN_NAME}_RECEIVER_ADDRESS)
 
   HOST_VAL="$(GET_VAR_VALUE ${CHAIN_NAME}_VAL_PREFIX)1"
   STRIDE_VAL=${STRIDE_VAL_PREFIX}1
@@ -34,8 +34,12 @@ setup_file() {
   STRIDE_TRANFER_CHANNEL="channel-${TRANSFER_CHANNEL_NUMBER}"
   HOST_TRANSFER_CHANNEL="channel-0"
 
+  TRANSFER_AMOUNT=500000
+  STAKE_AMOUNT=100000
+  REDEEM_AMOUNT=1000
+
   GETBAL() {
-    head -n 1 | grep -o -E '[0-9]+'
+    head -n 1 | grep -o -E '[0-9]+' || "0"
   }
   GETSTAKE() {
     tail -n 2 | head -n 1 | grep -o -E '[0-9]+' | head -n 1
@@ -106,8 +110,9 @@ setup() {
   hval_token_balance_start=$($HOST_MAIN_CMD   q bank balances $HOST_VAL_ADDRESS --denom $HOST_DENOM     | GETBAL)
 
   # do IBC transfer
-  $STRIDE_MAIN_CMD tx ibc-transfer transfer transfer $STRIDE_TRANFER_CHANNEL $HOST_VAL_ADDRESS 3000${STRIDE_DENOM} --from $STRIDE_VAL --chain-id $STRIDE_CHAIN_ID -y --keyring-backend test &
-  $HOST_MAIN_CMD   tx ibc-transfer transfer transfer $HOST_TRANSFER_CHANNEL  $(STRIDE_ADDRESS) 3000${HOST_DENOM}   --from $HOST_VAL   --chain-id $HOST_CHAIN_ID   -y --keyring-backend test &
+  $STRIDE_MAIN_CMD tx ibc-transfer transfer transfer $STRIDE_TRANFER_CHANNEL $HOST_VAL_ADDRESS ${TRANSFER_AMOUNT}${STRIDE_DENOM} --from $STRIDE_VAL -y &
+  $HOST_MAIN_CMD   tx ibc-transfer transfer transfer $HOST_TRANSFER_CHANNEL  $(STRIDE_ADDRESS) ${TRANSFER_AMOUNT}${HOST_DENOM} --from $HOST_VAL -y &
+
   WAIT_FOR_BLOCK $STRIDE_LOGS 8
 
   # get new balances
@@ -119,14 +124,14 @@ setup() {
   # get all STRD balance diffs
   sval_strd_balance_diff=$(($sval_strd_balance_start - $sval_strd_balance_end))
   hval_strd_balance_diff=$(($hval_strd_balance_start - $hval_strd_balance_end))
-  assert_equal "$sval_strd_balance_diff" '3000'
-  assert_equal "$hval_strd_balance_diff" '-3000'
+  assert_equal "$sval_strd_balance_diff" "$TRANSFER_AMOUNT"
+  assert_equal "$hval_strd_balance_diff" "-$TRANSFER_AMOUNT"
 
   # get all host balance diffs
   sval_token_balance_diff=$(($sval_token_balance_start - $sval_token_balance_end))
   hval_token_balance_diff=$(($hval_token_balance_start - $hval_token_balance_end))
-  assert_equal "$sval_token_balance_diff" '-3000'
-  assert_equal "$hval_token_balance_diff" '3000'
+  assert_equal "$sval_token_balance_diff" "-$TRANSFER_AMOUNT"
+  assert_equal "$hval_token_balance_diff" "$TRANSFER_AMOUNT"
 }
 
 @test "[INTEGRATION-BASIC-$CHAIN_NAME] liquid stake mints stToken" {
@@ -135,7 +140,7 @@ setup() {
   sttoken_balance_start=$($STRIDE_MAIN_CMD q bank balances $(STRIDE_ADDRESS) --denom st$HOST_DENOM   | GETBAL)
 
   # liquid stake
-  $STRIDE_MAIN_CMD tx stakeibc liquid-stake 1000 $HOST_DENOM --keyring-backend test --from $STRIDE_VAL -y --chain-id $STRIDE_CHAIN_ID
+  $STRIDE_MAIN_CMD tx stakeibc liquid-stake $STAKE_AMOUNT $HOST_DENOM --from $STRIDE_VAL -y 
 
   # sleep two block for the tx to settle on stride
   WAIT_FOR_STRING $STRIDE_LOGS "\[MINT ST ASSET\] success on $HOST_CHAIN_ID"
@@ -144,12 +149,12 @@ setup() {
   # make sure IBC_DENOM went down
   token_balance_end=$($STRIDE_MAIN_CMD q bank balances $(STRIDE_ADDRESS) --denom $HOST_IBC_DENOM | GETBAL)
   token_balance_diff=$(($token_balance_start - $token_balance_end))
-  assert_equal "$token_balance_diff" '1000'
+  assert_equal "$token_balance_diff" $STAKE_AMOUNT
 
   # make sure stToken went up
   sttoken_balance_end=$($STRIDE_MAIN_CMD q bank balances $(STRIDE_ADDRESS) --denom st$HOST_DENOM | GETBAL)
   sttoken_balance_diff=$(($sttoken_balance_end-$sttoken_balance_start))
-  assert_equal "$sttoken_balance_diff" "1000"
+  assert_equal "$sttoken_balance_diff" $STAKE_AMOUNT
 }
 
 # check that tokens were transferred to host after liquid stake
@@ -162,7 +167,7 @@ setup() {
   # get the new delegation ICA balance
   delegation_ica_balance_end=$($HOST_MAIN_CMD q bank balances $(GET_ICA_ADDR $HOST_CHAIN_ID delegation) --denom $HOST_DENOM | GETBAL)
   diff=$(($delegation_ica_balance_end - $delegation_ica_balance_start))
-  assert_equal "$diff" '1000'
+  assert_equal "$diff" $STAKE_AMOUNT
 }
 
 # check that tokens on the host are staked
@@ -183,8 +188,7 @@ setup() {
   redemption_ica_balance_start=$($HOST_MAIN_CMD q bank balances $(GET_ICA_ADDR $HOST_CHAIN_ID redemption) --denom $HOST_DENOM | GETBAL)
 
   # call redeem-stake
-  amt_to_redeem=100
-  $STRIDE_MAIN_CMD tx stakeibc redeem-stake $amt_to_redeem $HOST_CHAIN_ID $HOST_RECEIVER_ADDRESS \
+  $STRIDE_MAIN_CMD tx stakeibc redeem-stake $REDEEM_AMOUNT $HOST_CHAIN_ID $HOST_RECEIVER_ADDRESS \
       --from $STRIDE_VAL --keyring-backend test --chain-id $STRIDE_CHAIN_ID -y
 
   WAIT_FOR_STRING $STRIDE_LOGS "\[REDEMPTION] completed on $HOST_CHAIN_ID"
@@ -218,33 +222,33 @@ setup() {
   assert_equal "$diff_positive" "1"
 }
 
-
 # check that a second liquid staking call kicks off reinvestment
 @test "[INTEGRATION-BASIC-$CHAIN_NAME] rewards are being reinvested, exchange rate updating" {
-  # read the exchange rate and current delegations
-  redemption_rate_start=$($STRIDE_MAIN_CMD q stakeibc show-host-zone $HOST_CHAIN_ID | grep -Fiw 'redemption_rate' | grep -Eo '[+-]?[0-9]+([.][0-9]+)?')
-  staked_balance_start=$($HOST_MAIN_CMD q staking delegation $(GET_ICA_ADDR $HOST_CHAIN_ID delegation) $(GET_VAL_ADDR $HOST_CHAIN_ID 1) | GETSTAKE)
+  # QUESTION: I trimmed down this test a lot
+  # My thinking was that this test essentially tests: a) liquid stake again, and b) redemption rate increased
+  # We already test that liquid stake works in the tests above, and the redemption rate will increase by passive accounting 
+  #  after the redemption test (i.e. we don't need to liquid stake again in order to trigger it)
+  # That said, I think just checking that the redemption rate is greater than 1 gives us the same test coverage
+  # and speeds up this test A TON (8+ minutes faster, per host)
 
-  # liquid stake again to kickstart the reinvestment process
-  $STRIDE_MAIN_CMD tx stakeibc liquid-stake 1000 $HOST_DENOM --keyring-backend test --from $STRIDE_VAL -y --chain-id $STRIDE_CHAIN_ID
-  WAIT_FOR_BLOCK $STRIDE_LOGS 2
-
-  # wait four days (transfers, stake, move rewards, reinvest rewards)
-  epoch_duration=$($STRIDE_MAIN_CMD q epochs epoch-infos | grep -Fiw -B 2 'stride_epoch' | head -n 1 | grep -o -E '[0-9]+')
-  sleep $(($epoch_duration * 4))
-
-  # simple check that number of tokens staked increases
-  staked_balance_end=$($HOST_MAIN_CMD q staking delegation $(GET_ICA_ADDR $HOST_CHAIN_ID delegation) $(GET_VAL_ADDR $HOST_CHAIN_ID 1) | GETSTAKE)
-  staked_balance_increased=$(($staked_balance_end > $staked_balance_start))
-  assert_equal "$staked_balance_increased" "1"
-
-  # check that the exchange rate has increased
+  # check that the exchange rate has increased (i.e. redemption rate is greater than 1)
   MULT=1000000
-  redemption_rate_end=$($STRIDE_MAIN_CMD q stakeibc show-host-zone $HOST_CHAIN_ID | grep -Fiw 'redemption_rate' | grep -Eo '[+-]?[0-9]+([.][0-9]+)?')
-  redemption_rate_increased=$(( $(FLOOR $(DECMUL $redemption_rate_end $MULT)) > $(FLOOR $(DECMUL $redemption_rate_start $MULT))))
+  redemption_rate=$($STRIDE_MAIN_CMD q stakeibc show-host-zone $HOST_CHAIN_ID | grep -Fiw 'redemption_rate' | grep -Eo '[+-]?[0-9]+([.][0-9]+)?')
+  redemption_rate_increased=$(( $(FLOOR $(DECMUL $redemption_rate $MULT)) > $(FLOOR $(DECMUL 1.00000000000000000 $MULT))))
   assert_equal "$redemption_rate_increased" "1"
 }
 
-# TODO check that the correct amount is being reinvested and the correct amount is flowing to the rev EOA
-@test "[NOT-IMPLEMENTED] reinvestment and revenue amounts are correct" {
+@test "[INTEGRATION-BASIC-$CHAIN_NAME] revenue accrued, and clear-balance works" {
+  # confirm the fee account has accrued revenue
+  fee_ica_balance=$($HOST_MAIN_CMD q bank balances $(GET_ICA_ADDR $HOST_CHAIN_ID fee) --denom $HOST_DENOM | GETBAL)
+  fee_ica_balance_positive=$(($fee_ica_balance > 0))
+  assert_equal "$fee_ica_balance_positive" "1"
+
+  # call clear balance (with amount = 1)
+  $STRIDE_MAIN_CMD tx stakeibc clear-balance $HOST_CHAIN_ID 1 $HOST_TRANSFER_CHANNEL --from $STRIDE_ADMIN_ACCT -y
+  WAIT_FOR_BLOCK $STRIDE_LOGS 8
+
+  # check that balance went to revenue account
+  fee_stride_balance=$($STRIDE_MAIN_CMD q bank balances $STRIDE_FEE_ADDRESS --denom $HOST_IBC_DENOM | GETBAL)
+  assert_equal "$fee_stride_balance" "1"
 }
