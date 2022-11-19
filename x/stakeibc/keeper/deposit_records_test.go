@@ -171,7 +171,7 @@ func (s *KeeperTestSuite) SetupDepositRecords() DepositRecordsTestCase {
 		ConnectionId:      ibctesting.FirstConnectionID,
 		TransferChannelId: ibctesting.FirstChannelID,
 		HostDenom:         Atom,
-		IBCDenom:          ibcDenomTrace.IBCDenom(),
+		IbcDenom:          ibcDenomTrace.IBCDenom(),
 		Validators:        validators,
 	}
 
@@ -334,7 +334,7 @@ func (s *KeeperTestSuite) CheckStateAfterTransferringDepositRecords(tc DepositRe
 		expectedTransferAmount = expectedTransferAmount.AddRaw(depositRecord.Amount)
 	}
 	expectedModuleBalance := tc.initialModuleAccountBalance.SubAmount(expectedTransferAmount)
-	actualModuleBalance := s.App.BankKeeper.GetBalance(s.Ctx(), tc.hostModuleAddress, tc.hostZone.IBCDenom)
+	actualModuleBalance := s.App.BankKeeper.GetBalance(s.Ctx(), tc.hostModuleAddress, tc.hostZone.IbcDenom)
 	s.CompareCoins(expectedModuleBalance, actualModuleBalance, "host module balance")
 
 	// Confirm deposit records with 0 amount were removed

@@ -20,7 +20,7 @@ func (suite *KeeperTestSuite) TestICAAccountQuery() {
 		{
 			desc:     "First",
 			request:  &types.QueryGetICAAccountRequest{},
-			response: &types.QueryGetICAAccountResponse{ICAAccount: item},
+			response: &types.QueryGetICAAccountResponse{IcaAccount: item},
 		},
 		{
 			desc: "InvalidRequest",
