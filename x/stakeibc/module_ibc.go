@@ -184,6 +184,12 @@ func (im IBCModule) OnChanCloseConfirm(
 	portID,
 	channelID string,
 ) error {
+
+	// WARNING: For some reason, in IBCv3 the ICA controller module does not call the underlying OnChanCloseConfirm (this function)
+	// So, we need to put logic that _should_ execute upon channel closure in the OnTimeoutPacket function
+	// This works because ORDERED channels are always closed when a timeout occurs, but if we migrate to using ORDERED channels that don't
+	// close on timeout, we will need to move this logic to the OnChanCloseConfirm function
+	// relevant IBCv3 code: https://github.com/cosmos/ibc-go/blob/5c0bf8b8a0f79643e36be98fb9883ea163d2d93a/modules/apps/27-interchain-accounts/controller/ibc_module.go#L123
 	return nil
 }
 
