@@ -74,6 +74,7 @@ func (server msgServer) ClaimFreeAmount(goCtx context.Context, msg *types.MsgCla
 		return nil, err
 	}
 
+	// TODO: Add ClaimAllCoinsForAction function
 	coins, err := server.keeper.ClaimCoinsForAction(ctx, addr, types.ACTION_FREE, msg.AirdropIdentifier)
 	if err != nil {
 		return nil, err

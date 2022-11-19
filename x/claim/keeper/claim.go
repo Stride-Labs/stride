@@ -446,7 +446,7 @@ func (k Keeper) GetAirdropIdentifiersForUser(ctx sdk.Context, addr sdk.AccAddres
 	return identifiers
 }
 
-func (k Keeper) AfterClaim(ctx sdk.Context, airdropIdentifier string, claimAmount uint64) error {
+func (k Keeper) AfterClaim(ctx sdk.Context, airdropIdentifier string, claimAmount int64) error {
 	// Increment ClaimedSoFar on the airdrop record
 	// fetch the airdrop
 	airdrop := k.GetAirdropByIdentifier(ctx, airdropIdentifier)
@@ -540,7 +540,7 @@ func (k Keeper) ClaimCoinsForAction(ctx sdk.Context, addr sdk.AccAddress, action
 	if airdrop == nil {
 		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "invalid airdrop identifier: ClaimCoinsForAction")
 	}
-	k.AfterClaim(ctx, airdropIdentifier, claimableAmount.AmountOf(airdrop.ClaimDenom).Uint64())
+	k.AfterClaim(ctx, airdropIdentifier, claimableAmount.AmountOf(airdrop.ClaimDenom).Int64())
 
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(
@@ -588,10 +588,14 @@ func (k Keeper) CreateAirdropAndEpoch(ctx sdk.Context, distributor string, denom
 }
 
 // IncrementClaimedSoFar increments ClaimedSoFar for a single airdrop
-func (k Keeper) IncrementClaimedSoFar(ctx sdk.Context, identifier string, amount uint64) error {
+func (k Keeper) IncrementClaimedSoFar(ctx sdk.Context, identifier string, amount int64) error {
 	params, err := k.GetParams(ctx)
 	if err != nil {
 		panic(err)
+	}
+
+	if amount < 0 {
+		return types.ErrInvalidAmount
 	}
 
 	newAirdrops := []*types.Airdrop{}
