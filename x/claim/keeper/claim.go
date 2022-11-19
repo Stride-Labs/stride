@@ -464,6 +464,21 @@ func (k Keeper) AfterClaim(ctx sdk.Context, airdropIdentifier string, claimAmoun
 	return nil
 }
 
+func (k Keeper) ClaimAllCoinsForAction(ctx sdk.Context, addr sdk.AccAddress, action types.Action) (sdk.Coins, error) {
+	// get all airdrops for the user
+	airdropIdentifiers := k.GetAirdropIdentifiersForUser(ctx, addr)
+	// claim all coins for the action
+	totalClaimable := sdk.Coins{}
+	for _, airdropIdentifier := range airdropIdentifiers {
+		claimable, err := k.ClaimCoinsForAction(ctx, addr, action, airdropIdentifier)
+		if err != nil {
+			return sdk.Coins{}, err
+		}
+		totalClaimable = totalClaimable.Add(claimable...)
+	}
+	return totalClaimable, nil
+}
+
 // ClaimCoins remove claimable amount entry and transfer it to user's account
 func (k Keeper) ClaimCoinsForAction(ctx sdk.Context, addr sdk.AccAddress, action types.Action, airdropIdentifier string) (sdk.Coins, error) {
 	isPassed := k.IsInitialPeriodPassed(ctx, airdropIdentifier)
