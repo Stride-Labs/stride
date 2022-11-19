@@ -32,7 +32,7 @@ func (s *KeeperTestSuite) SetupQueryValidatorExchangeRate() QueryValidatorExchan
 		ChainId:      HostChainId,
 		ConnectionId: ibctesting.FirstConnectionID,
 		HostDenom:    Atom,
-		IBCDenom:     IbcAtom,
+		IbcDenom:     IbcAtom,
 		Bech32Prefix: Bech32Prefix,
 	}
 
@@ -166,7 +166,7 @@ func (s *KeeperTestSuite) SetupQueryDelegationsIcq() QueryDelegationsIcqTestCase
 		ChainId:           HostChainId,
 		ConnectionId:      ibctesting.FirstConnectionID,
 		HostDenom:         Atom,
-		IBCDenom:          IbcAtom,
+		IbcDenom:          IbcAtom,
 		Bech32Prefix:      Bech32Prefix,
 		DelegationAccount: &stakeibctypes.ICAAccount{Address: delegationAddress},
 	}
