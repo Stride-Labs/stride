@@ -230,7 +230,7 @@ func (s *IntegrationTestSuite) TestCmdTxSetAirdropAllocations() {
 			out, err = clitestutil.ExecTestCLICmd(clientCtx, cmd, []string{
 				claimtypes.DefaultAirdropIdentifier,
 				claimRecords[0].Address,
-				types.ActionFree.String(),
+				types.ACTION_FREE.String(),
 				fmt.Sprintf("--%s=json", tmcli.OutputFlag),
 			})
 			s.Require().NoError(err)
