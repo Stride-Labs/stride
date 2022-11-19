@@ -86,7 +86,7 @@ STRIDE_ADMIN_MNEMONIC="tone cause tribe this switch near host damage idle fragil
 if [[ "$UPGRADE_NAME" == "" ]]; then 
   STRIDE_CMD="$SCRIPT_DIR/../build/strided"
 else
-  STRIDE_CMD="$SCRIPT_DIR/upgrades/binaries/strided1"
+  STRIDE_CMD="$SCRIPT_DIR/upgrades/binaries/strided2"
 fi
 STRIDE_MAIN_CMD="$STRIDE_CMD --home $SCRIPT_DIR/state/${STRIDE_NODE_PREFIX}1"
 
@@ -100,7 +100,7 @@ STRIDE_VAL_MNEMONICS=("$STRIDE_MNEMONIC_1","$STRIDE_MNEMONIC_2","$STRIDE_MNEMONI
 # GAIA 
 GAIA_CHAIN_ID=GAIA
 GAIA_NODE_PREFIX=gaia
-GAIA_NUM_NODES=2
+GAIA_NUM_NODES=1
 GAIA_CMD="$SCRIPT_DIR/../build/gaiad"
 GAIA_VAL_PREFIX=gval
 GAIA_REV_ACCT=grev1

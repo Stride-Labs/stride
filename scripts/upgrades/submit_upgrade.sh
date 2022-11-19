@@ -4,7 +4,7 @@ set -eu
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 source ${SCRIPT_DIR}/../vars.sh
 
-UPGRADE_HEIGHT=250
+UPGRADE_HEIGHT=850
 
 printf "PROPOSAL\n"
 $STRIDE_MAIN_CMD tx gov submit-proposal software-upgrade $UPGRADE_NAME \

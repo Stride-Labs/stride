@@ -15,13 +15,11 @@ RUN git clone https://github.com/cosmos/cosmos-sdk \
     && git checkout cosmovisor/v1.1.0 
 RUN --mount=type=cache,target=/root/.cache/go-build cd /opt/cosmos-sdk && make cosmovisor 
 
-RUN echo $stride_admin_address > address.txt
-
 # Build the old binary
 RUN git clone https://github.com/Stride-Labs/stride.git \
     && cd stride \
     && git checkout $old_commit_hash \
-    && sed -i -E "s|stride1k8c2m5cn322akk5wy8lpt87dd2f4yh9azg7jlh|$stride_admin_address|g" utils/utils.go \
+    && sed -i -E "s|stride1k8c2m5cn322akk5wy8lpt87dd2f4yh9azg7jlh|$stride_admin_address|g" utils/admins.go \
     && env GOOS=linux GOARCH=amd64 go build -mod=readonly -trimpath -o /opt/build/ ./... \
     && mv /opt/build/strided /opt/build/strided1 
 RUN --mount=type=cache,target=/root/.cache/go-build cd /opt/stride && make build
