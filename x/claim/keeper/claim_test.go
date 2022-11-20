@@ -99,12 +99,12 @@ func (suite *KeeperTestSuite) TestHookBeforeAirdropStart() {
 	err = suite.app.ClaimKeeper.SetClaimRecordsWithWeights(suite.ctx, claimRecords)
 	suite.Require().NoError(err)
 
-	coins, err := suite.app.ClaimKeeper.GetUserTotalClaimable(suite.ctx, addr1, "stride")
+	coins, err := suite.app.ClaimKeeper.GetUserTotalClaimable(suite.ctx, addr1, "stride", false)
 	suite.NoError(err)
 	// Now, it is before starting air drop, so this value should return the empty coins
 	suite.True(coins.Empty())
 
-	coins, err = suite.app.ClaimKeeper.GetClaimableAmountForAction(suite.ctx, addr1, types.ACTION_FREE, "stride")
+	coins, err = suite.app.ClaimKeeper.GetClaimableAmountForAction(suite.ctx, addr1, types.ACTION_FREE, "stride", false)
 	suite.NoError(err)
 	// Now, it is before starting air drop, so this value should return the empty coins
 	suite.True(coins.Empty())
@@ -188,15 +188,15 @@ func (suite *KeeperTestSuite) TestAirdropFlow() {
 	err := suite.app.ClaimKeeper.SetClaimRecordsWithWeights(suite.ctx, claimRecords)
 	suite.Require().NoError(err)
 
-	coins, err := suite.app.ClaimKeeper.GetUserTotalClaimable(suite.ctx, addr1, "stride")
+	coins, err := suite.app.ClaimKeeper.GetUserTotalClaimable(suite.ctx, addr1, "stride", false)
 	suite.Require().NoError(err)
 	suite.Require().Equal(coins.String(), sdk.NewCoins(sdk.NewInt64Coin(sdk.DefaultBondDenom, 50_000_000)).String())
 
-	coins, err = suite.app.ClaimKeeper.GetUserTotalClaimable(suite.ctx, addr2, "stride")
+	coins, err = suite.app.ClaimKeeper.GetUserTotalClaimable(suite.ctx, addr2, "stride", false)
 	suite.Require().NoError(err)
 	suite.Require().Equal(coins.String(), sdk.NewCoins(sdk.NewInt64Coin(sdk.DefaultBondDenom, 50_000_000)).String())
 
-	coins, err = suite.app.ClaimKeeper.GetUserTotalClaimable(suite.ctx, addr3, "stride")
+	coins, err = suite.app.ClaimKeeper.GetUserTotalClaimable(suite.ctx, addr3, "stride", false)
 	suite.Require().NoError(err)
 	suite.Require().Equal(coins, sdk.Coins{})
 
@@ -288,11 +288,11 @@ func (suite *KeeperTestSuite) TestMultiChainAirdropFlow() {
 	err := suite.app.ClaimKeeper.SetClaimRecordsWithWeights(suite.ctx, claimRecords)
 	suite.Require().NoError(err)
 
-	coins, err := suite.app.ClaimKeeper.GetUserTotalClaimable(suite.ctx, addr1, "stride")
+	coins, err := suite.app.ClaimKeeper.GetUserTotalClaimable(suite.ctx, addr1, "stride", false)
 	suite.Require().NoError(err)
 	suite.Require().Equal(coins.String(), sdk.NewCoins(sdk.NewInt64Coin(sdk.DefaultBondDenom, 100_000_000)).String())
 
-	coins, err = suite.app.ClaimKeeper.GetUserTotalClaimable(suite.ctx, addr2, "juno")
+	coins, err = suite.app.ClaimKeeper.GetUserTotalClaimable(suite.ctx, addr2, "juno", false)
 	suite.Require().NoError(err)
 	suite.Require().Equal(coins.String(), sdk.NewCoins(sdk.NewInt64Coin(sdk.DefaultBondDenom, 0)).String())
 
