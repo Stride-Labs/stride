@@ -1,10 +1,9 @@
 #!/usr/bin/env bats
 
-setup_file() {
-  # get the containing directory of this file
-  SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
-  PATH="$SCRIPT_DIR/../../:$PATH"
+load "bats/bats-support/load.bash"
+load "bats/bats-assert/load.bash"
 
+setup_file() {
   _example_run_command="CHAIN_NAME=GAIA TRANSFER_CHANNEL_NUMBER=0 bats gaia_tests.bats"
   if [[ "$CHAIN_NAME" == "" ]]; then 
     echo "CHAIN_NAME variable must be set before running integration tests (e.g. $_example_run_command)" >&2
@@ -59,17 +58,6 @@ setup_file() {
   }
 
   set +a
-}
-
-setup() {
-  # get the containing directory of this file
-  SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
-  PATH="$SCRIPT_DIR/../../:$PATH"
-
-  # if these extensions don't load properly, adjust the paths accoring to these instructions
-  TEST_BREW_PREFIX="$(brew --prefix)"
-  load "${TEST_BREW_PREFIX}/lib/bats-support/load.bash"
-  load "${TEST_BREW_PREFIX}/lib/bats-assert/load.bash"
 }
 
 ##############################################################################################
