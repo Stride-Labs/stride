@@ -343,6 +343,14 @@ func (suite *KeeperTestSuite) TestMultiChainAirdropFlow() {
 	coins = suite.app.BankKeeper.GetAllBalances(suite.ctx, addr1)
 	suite.Require().Equal(coins.String(), sdk.NewCoins(sdk.NewInt64Coin(sdk.DefaultBondDenom, (claimableAmountForFree+claimableAmountForStake+claimableAmountForLiquidStake)*2)).String())
 
+	// Verify that the max claimable amount is unchanged, even after claims
+	maxCoins, err := suite.app.ClaimKeeper.GetUserTotalClaimable(suite.ctx, addr1, "stride", true)
+	suite.Require().NoError(err)
+	suite.Require().Equal(maxCoins.String(), sdk.NewCoins(sdk.NewInt64Coin(sdk.DefaultBondDenom, 100_000_000)).String())
+	claimableCoins, err := suite.app.ClaimKeeper.GetUserTotalClaimable(suite.ctx, addr1, "stride", false)
+	suite.Require().NoError(err)
+	suite.Require().Equal(claimableCoins.String(), sdk.NewCoins(sdk.NewInt64Coin(sdk.DefaultBondDenom, 0)).String())
+
 	// check if stride and osmosis airdrops ended properly
 	suite.ctx = suite.ctx.WithBlockHeight(1000)
 	suite.app.ClaimKeeper.EndBlocker(suite.ctx.WithBlockTime(time.Now().Add(types.DefaultAirdropDuration)))
