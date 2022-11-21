@@ -13,7 +13,8 @@ echo "barrel salmon half click confirm crunch sense defy salute process cart fis
 
 # airdrop-test address: stride1nf6v2paty9m22l3ecm7dpakq2c92ueyununayr
 # airdrop claimer mnemonic: royal auction state december october hip monster hotel south help bulk supreme history give deliver pigeon license gold carpet rabbit raw wool fatigue donate
-$STRIDE_MAIN_CMD keys add airdrop-test --recover
+echo "royal auction state december october hip monster hotel south help bulk supreme history give deliver pigeon license gold carpet rabbit raw wool fatigue donate" | \
+    $STRIDE_MAIN_CMD keys add airdrop-test --recover
 
 
 ## AIRDROP SETUP
