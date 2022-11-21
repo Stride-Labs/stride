@@ -68,7 +68,7 @@ func (k Keeper) ClaimableForAction(
 		return nil, err
 	}
 
-	coins, err := k.GetClaimableAmountForAction(ctx, addr, req.Action, req.AirdropIdentifier)
+	coins, err := k.GetClaimableAmountForAction(ctx, addr, req.Action, req.AirdropIdentifier, false)
 
 	return &types.QueryClaimableForActionResponse{
 		Coins: coins,
@@ -90,7 +90,7 @@ func (k Keeper) TotalClaimable(
 		return nil, err
 	}
 
-	coins, err := k.GetUserTotalClaimable(ctx, addr, req.AirdropIdentifier)
+	coins, err := k.GetUserTotalClaimable(ctx, addr, req.AirdropIdentifier, req.IncludeClaimed)
 
 	return &types.QueryTotalClaimableResponse{
 		Coins: coins,

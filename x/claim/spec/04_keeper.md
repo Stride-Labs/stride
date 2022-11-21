@@ -16,7 +16,7 @@ Claim keeper module provides utility functions to manage epochs.
   GetClaimRecords(ctx sdk.Context) []types.ClaimRecord
   SetClaimRecord(ctx sdk.Context, claimRecord types.ClaimRecord) error
   SetClaimRecords(ctx sdk.Context, claimRecords []types.ClaimRecord) error
-  GetClaimableAmountForAction(ctx sdk.Context, addr sdk.AccAddress, action types.Action) (sdk.Coins, error)
+  GetClaimableAmountForAction(ctx sdk.Context, addr sdk.AccAddress, action types.Action, includeClaimed bool) (sdk.Coins, error)
   GetUserTotalClaimable(ctx sdk.Context, addr sdk.AccAddress) (sdk.Coins, error)
   ClaimCoinsForAction(ctx sdk.Context, addr sdk.AccAddress, action types.Action) (sdk.Coins, error)
   clearInitialClaimables(ctx sdk.Context)
