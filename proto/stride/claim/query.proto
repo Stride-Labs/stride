@@ -94,6 +94,7 @@ message QueryTotalClaimableRequest {
   string airdrop_identifier = 1
       [ (gogoproto.moretags) = "yaml:\"airdrop_identifier\"" ];
   string address = 2 [ (gogoproto.moretags) = "yaml:\"address\"" ];
+  bool include_claimed = 3;
 }
 
 message QueryTotalClaimableResponse {
