@@ -300,8 +300,7 @@ func (k Keeper) GetTotalWeight(ctx sdk.Context, airdropIdentifier string) (sdk.D
 	}
 	totalWeight, err := sdk.NewDecFromStr(string(b))
 	if err != nil {
-		errorReturn := types.ErrTotalWeightParse{}
-		return sdk.ZeroDec(), errorReturn.Error()
+		return sdk.ZeroDec(), types.ErrTotalWeightParse{}.Error()
 	}
 	return totalWeight, nil
 }
@@ -366,8 +365,7 @@ func (k Keeper) GetClaimableAmountForAction(ctx sdk.Context, addr sdk.AccAddress
 
 	totalWeight, err := k.GetTotalWeight(ctx, airdropIdentifier)
 	if err != nil {
-		errorReturn := types.ErrFailedToGetTotalWeight{}
-		return nil, errorReturn.Error()
+		return nil, types.ErrFailedToGetTotalWeight{}.Error()
 	}
 
 	percentageForAction := types.PercentageForFree
@@ -588,8 +586,7 @@ func (k Keeper) CreateAirdropAndEpoch(ctx sdk.Context, distributor string, denom
 
 	for _, airdrop := range params.Airdrops {
 		if airdrop.AirdropIdentifier == identifier {
-			errorReturn := types.ErrAirdropAlreadyExists{}
-			return errorReturn.Error()
+			return types.ErrAirdropAlreadyExists{}.Error()
 		}
 	}
 
@@ -622,8 +619,7 @@ func (k Keeper) IncrementClaimedSoFar(ctx sdk.Context, identifier string, amount
 	}
 
 	if amount < 0 {
-		errorReturn := types.ErrInvalidAmount{}
-		return errorReturn.Error()
+		return types.ErrInvalidAmount{}.Error()
 	}
 
 	newAirdrops := []*types.Airdrop{}
