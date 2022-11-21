@@ -8,7 +8,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/snapshots"
 
-	"github.com/Stride-Labs/stride/utils"
+	"github.com/Stride-Labs/stride/v3/utils"
 
 	"github.com/spf13/cast"
 	"github.com/spf13/cobra"
@@ -27,6 +27,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/server"
 	serverconfig "github.com/cosmos/cosmos-sdk/server/config"
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
+	snapshottypes "github.com/cosmos/cosmos-sdk/snapshots/types"
 	"github.com/cosmos/cosmos-sdk/store"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authcmd "github.com/cosmos/cosmos-sdk/x/auth/client/cli"
@@ -35,12 +36,10 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/cosmos/cosmos-sdk/x/crisis"
 	genutilcli "github.com/cosmos/cosmos-sdk/x/genutil/client/cli"
-
-	snapshottypes "github.com/cosmos/cosmos-sdk/snapshots/types"
 	tmcfg "github.com/tendermint/tendermint/config"
 
-	"github.com/Stride-Labs/stride/app"
-	// "github.com/Stride-labs/stride/app/params"
+	"github.com/Stride-Labs/stride/v3/app"
+	// "github.com/Stride-Labs/stride/v3/app/params"
 	// this line is used by starport scaffolding # stargate/root/import
 )
 
@@ -343,7 +342,6 @@ func (a appCreator) appExport(
 			homePath,
 			uint(1),
 			a.encCfg,
-			// this line is used by starport scaffolding # stargate/root/exportArgument
 			appOpts,
 		)
 
@@ -360,7 +358,6 @@ func (a appCreator) appExport(
 			homePath,
 			uint(1),
 			a.encCfg,
-			// this line is used by starport scaffolding # stargate/root/noHeightExportArgument
 			appOpts,
 		)
 	}

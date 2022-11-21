@@ -5,7 +5,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	stakeibctypes "github.com/Stride-Labs/stride/x/stakeibc/types"
+	stakeibctypes "github.com/Stride-Labs/stride/v3/x/stakeibc/types"
 )
 
 type AddValidatorTestCase struct {
@@ -53,7 +53,7 @@ func (s *KeeperTestSuite) SetupAddValidator() AddValidatorTestCase {
 			Address:        "stride_VAL1",
 			CommissionRate: 1,
 			Weight:         1,
-			Status:         stakeibctypes.Validator_Active,
+			Status:         stakeibctypes.Validator_ACTIVE,
 			DelegationAmt:  0,
 		},
 		{
@@ -61,7 +61,7 @@ func (s *KeeperTestSuite) SetupAddValidator() AddValidatorTestCase {
 			Address:        "stride_VAL2",
 			CommissionRate: 2,
 			Weight:         2,
-			Status:         stakeibctypes.Validator_Active,
+			Status:         stakeibctypes.Validator_ACTIVE,
 			DelegationAmt:  0,
 		},
 		{
@@ -69,7 +69,7 @@ func (s *KeeperTestSuite) SetupAddValidator() AddValidatorTestCase {
 			Address:        "stride_VAL3",
 			CommissionRate: 3,
 			Weight:         3,
-			Status:         stakeibctypes.Validator_Active,
+			Status:         stakeibctypes.Validator_ACTIVE,
 			DelegationAmt:  0,
 		},
 	}

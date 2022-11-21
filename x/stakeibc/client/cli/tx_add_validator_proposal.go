@@ -16,7 +16,7 @@ import (
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 	"github.com/spf13/cobra"
 
-	"github.com/Stride-Labs/stride/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v3/x/stakeibc/types"
 )
 
 func parseAddValidatorProposalFile(cdc codec.JSONCodec, proposalFile string) (types.AddValidatorProposal, error) {

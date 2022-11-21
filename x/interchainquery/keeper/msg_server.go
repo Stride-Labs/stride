@@ -14,7 +14,7 @@ import (
 	tmclienttypes "github.com/cosmos/ibc-go/v5/modules/light-clients/07-tendermint/types"
 	"github.com/spf13/cast"
 
-	"github.com/Stride-Labs/stride/x/interchainquery/types"
+	"github.com/Stride-Labs/stride/v3/x/interchainquery/types"
 )
 
 type msgServer struct {
@@ -185,7 +185,7 @@ func (k msgServer) SubmitQueryResponse(goCtx context.Context, msg *types.MsgSubm
 		return nil, err
 	}
 	if ttlExceeded {
-		k.Logger(ctx).Info(fmt.Sprintf("[ICQ Resp] %s's ttl exceeded: %d < %d.", msg.QueryId, q.Ttl, ctx.BlockHeader().Time.UnixNano()))
+		k.Logger(ctx).Info(fmt.Sprintf("[ICQ Resp] %s's ttl exceeded: %d < %d.", msg.QueryId, q.Ttl, ctx.BlockHeader().Time.UnixNano()))
 		return &types.MsgSubmitQueryResponseResponse{}, nil
 	}
 

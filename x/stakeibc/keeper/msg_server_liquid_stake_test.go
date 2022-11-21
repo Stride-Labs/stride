@@ -6,10 +6,10 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	_ "github.com/stretchr/testify/suite"
 
-	epochtypes "github.com/Stride-Labs/stride/x/epochs/types"
-	recordtypes "github.com/Stride-Labs/stride/x/records/types"
-	"github.com/Stride-Labs/stride/x/stakeibc/types"
-	stakeibctypes "github.com/Stride-Labs/stride/x/stakeibc/types"
+	epochtypes "github.com/Stride-Labs/stride/v3/x/epochs/types"
+	recordtypes "github.com/Stride-Labs/stride/v3/x/records/types"
+	"github.com/Stride-Labs/stride/v3/x/stakeibc/types"
+	stakeibctypes "github.com/Stride-Labs/stride/v3/x/stakeibc/types"
 )
 
 type Account struct {
@@ -53,7 +53,7 @@ func (s *KeeperTestSuite) SetupLiquidStake() LiquidStakeTestCase {
 	hostZone := stakeibctypes.HostZone{
 		ChainId:        HostChainId,
 		HostDenom:      Atom,
-		IBCDenom:       IbcAtom,
+		IbcDenom:       IbcAtom,
 		RedemptionRate: sdk.NewDec(1.0),
 		Address:        zoneAddress.String(),
 	}
@@ -184,11 +184,11 @@ func (s *KeeperTestSuite) TestLiquidStake_IbcCoinParseError() {
 	tc := s.SetupLiquidStake()
 	// Update hostzone with denom that can't be parsed
 	badHostZone := tc.initialState.hostZone
-	badHostZone.IBCDenom = "ibc,0atom"
+	badHostZone.IbcDenom = "ibc,0atom"
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx(), badHostZone)
 	_, err := s.GetMsgServer().LiquidStake(sdk.WrapSDKContext(s.Ctx()), &tc.validMsg)
 
-	badCoin := fmt.Sprintf("%d%s", tc.validMsg.Amount, badHostZone.IBCDenom)
+	badCoin := fmt.Sprintf("%d%s", tc.validMsg.Amount, badHostZone.IbcDenom)
 	s.Require().EqualError(err, fmt.Sprintf("failed to parse coin (%s): invalid decimal coin expression: %s", badCoin, badCoin))
 }
 
@@ -197,13 +197,13 @@ func (s *KeeperTestSuite) TestLiquidStake_NotIbcDenom() {
 	// Update hostzone with non-ibc denom
 	badDenom := "i/uatom"
 	badHostZone := tc.initialState.hostZone
-	badHostZone.IBCDenom = badDenom
+	badHostZone.IbcDenom = badDenom
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx(), badHostZone)
 	// Fund the user with the non-ibc denom
 	s.FundAccount(tc.user.acc, sdk.NewInt64Coin(badDenom, 1000000000))
 	_, err := s.GetMsgServer().LiquidStake(sdk.WrapSDKContext(s.Ctx()), &tc.validMsg)
 
-	s.Require().EqualError(err, fmt.Sprintf("denom is not an IBC token (%s): invalid token denom", badHostZone.IBCDenom))
+	s.Require().EqualError(err, fmt.Sprintf("denom is not an IBC token (%s): invalid token denom", badHostZone.IbcDenom))
 }
 
 func (s *KeeperTestSuite) TestLiquidStake_InsufficientBalance() {

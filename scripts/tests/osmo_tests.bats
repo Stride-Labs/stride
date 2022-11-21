@@ -36,7 +36,6 @@ setup() {
   SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
   PATH="$SCRIPT_DIR/../../:$PATH"
 
-
   # if these extensions don't load properly, adjust the paths accoring to these instructions
   TEST_BREW_PREFIX="$(brew --prefix)"
   load "${TEST_BREW_PREFIX}/lib/bats-support/load.bash"
@@ -71,18 +70,18 @@ setup() {
 @test "[INTEGRATION-BASIC] host zones successfully registered" {
 
   run $STRIDE_MAIN_CMD q stakeibc show-host-zone OSMO
-  assert_line '  HostDenom: uosmo'
-  assert_line '  chainId: OSMO'
-  assert_line '  delegationAccount:'
+  assert_line '  host_denom: uosmo'
+  assert_line '  chain_id: OSMO'
+  assert_line '  delegation_account:'
   assert_line '    address: osmo1cx04p5974f8hzh2lqev48kjrjugdxsxy7mzrd0eyweycpr90vk8q8d6f3h'
-  assert_line '  feeAccount:'
+  assert_line '  fee_account:'
   assert_line '    address: osmo1n4r77qsmu9chvchtmuqy9cv3s539q87r398l6ugf7dd2q5wgyg9su3wd4g'
-  assert_line '  redemptionAccount:'
+  assert_line '  redemption_account:'
   assert_line '    address: osmo1uy9p9g609676rflkjnnelaxatv8e4sd245snze7qsxzlk7dk7s8qrcjaez'
-  assert_line '  withdrawalAccount:'
+  assert_line '  withdrawal_account:'
   assert_line '    address: osmo10arcf5r89cdmppntzkvulc7gfmw5lr66y2m25c937t6ccfzk0cqqz2l6xv'
-  assert_line '  unbondingFrequency: "1"'
-  assert_line '  RedemptionRate: "1.000000000000000000"'
+  assert_line '  unbonding_frequency: "1"'
+  assert_line '  redemption_rate: "1.000000000000000000"'
 }
 
 
@@ -176,9 +175,8 @@ setup() {
   # TODO(optimize tests) extra sleep just in case
   SENDER_ACCT=$(STRIDE_ADDRESS)
   old_sender_bal=$($OSMO_MAIN_CMD q bank balances $OSMO_RECEIVER_ACCT --denom uosmo | GETBAL)
-  # TODO check that the UserRedemptionRecord has isClaimable = true
   # grab the epoch number for the first deposit record in the list od DRs
-  EPOCH=$(strided q records list-user-redemption-record  | grep -Fiw 'epochNumber' | head -n 1 | grep -o -E '[0-9]+')
+  EPOCH=$($STRIDE_MAIN_CMD q records list-user-redemption-record  | grep -Fiw 'epoch_number' | head -n 1 | grep -o -E '[0-9]+')
   # claim the record
   $STRIDE_MAIN_CMD tx stakeibc claim-undelegated-tokens OSMO $EPOCH $SENDER_ACCT --from val1 --keyring-backend test --chain-id STRIDE -y
   WAIT_FOR_STRING $STRIDE_LOGS '\[CLAIM\] success on OSMO'
@@ -194,7 +192,7 @@ setup() {
 # check that a second liquid staking call kicks off reinvestment
 @test "[INTEGRATION-BASIC-OSMO] rewards are being reinvested, exchange rate updating" {
   # read the exchange rate and current delegations
-  RR1=$($STRIDE_MAIN_CMD q stakeibc show-host-zone OSMO | grep -Fiw 'RedemptionRate' | grep -Eo '[+-]?[0-9]+([.][0-9]+)?')
+  RR1=$($STRIDE_MAIN_CMD q stakeibc show-host-zone OSMO | grep -Fiw 'redemption_rate' | grep -Eo '[+-]?[0-9]+([.][0-9]+)?')
   OLD_STAKED_BAL=$($OSMO_MAIN_CMD q staking delegation $OSMO_DELEGATION_ICA_ADDR $OSMO_DELEGATE_VAL | GETSTAKE)
   # liquid stake again to kickstart the reinvestment process
   $STRIDE_MAIN_CMD tx stakeibc liquid-stake 1000 uosmo --keyring-backend test --from val1 -y --chain-id $STRIDE_CHAIN_ID
@@ -207,7 +205,7 @@ setup() {
   STAKED_BAL_INCREASED=$(($NEW_STAKED_BAL > $OLD_STAKED_BAL))
   assert_equal "$STAKED_BAL_INCREASED" "1"
 
-  RR2=$($STRIDE_MAIN_CMD q stakeibc show-host-zone OSMO | grep -Fiw 'RedemptionRate' | grep -Eo '[+-]?[0-9]+([.][0-9]+)?')
+  RR2=$($STRIDE_MAIN_CMD q stakeibc show-host-zone OSMO | grep -Fiw 'redemption_rate' | grep -Eo '[+-]?[0-9]+([.][0-9]+)?')
   # check that the exchange rate has increased
   MULT=1000000
   RR_INCREASED=$(( $(FLOOR $(DECMUL $RR2 $MULT)) > $(FLOOR $(DECMUL $RR1 $MULT))))
