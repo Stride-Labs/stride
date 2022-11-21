@@ -186,6 +186,7 @@ func (s *KeeperTestSuite) TestLiquidStake_IbcCoinParseError() {
 	badHostZone := tc.initialState.hostZone
 	badHostZone.IBCDenom = "ibc.0atom"
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx(), badHostZone)
+	fmt.Println(tc.validMsg)
 	_, err := s.GetMsgServer().LiquidStake(sdk.WrapSDKContext(s.Ctx()), &tc.validMsg)
 
 	badCoin := fmt.Sprintf("%d%s", tc.validMsg.Amount, badHostZone.IBCDenom)
