@@ -8,7 +8,8 @@ source ${SCRIPT_DIR}/vars.sh
 # NOTE: First, store the keys using the following mnemonics
 # distributor address: stride1z835j3j65nqr6ng257q0xkkc9gta72gf48txwl
 # distributor mnemonic: barrel salmon half click confirm crunch sense defy salute process cart fiscal sport clump weasel render private manage picture spell wreck hill frozen before
-$STRIDE_MAIN_CMD keys add distributor-test --recover
+echo "barrel salmon half click confirm crunch sense defy salute process cart fiscal sport clump weasel render private manage picture spell wreck hill frozen before" | \
+    $STRIDE_MAIN_CMD keys add distributor-test --recover
 
 # airdrop-test address: stride1nf6v2paty9m22l3ecm7dpakq2c92ueyununayr
 # airdrop claimer mnemonic: royal auction state december october hip monster hotel south help bulk supreme history give deliver pigeon license gold carpet rabbit raw wool fatigue donate
