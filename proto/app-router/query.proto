@@ -1,12 +1,12 @@
 syntax = "proto3";
-package stridelabs.stride.app_router;
+package Stridelabs.stride.app_router;
 
 import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
 import "cosmos/base/query/v1beta1/pagination.proto";
-import "app_router/params.proto";
+import "app-router/params.proto";
 
-option go_package = "github.com/Stride-Labs/stride/x/app_router/types";
+option go_package = "github.com/Stride-Labs/stride/v3/x/app-router/types";
 
 // Query defines the gRPC querier service.
 service Query {
@@ -22,5 +22,5 @@ message QueryParamsRequest {}
 // QueryParamsResponse is response type for the Query/Params RPC method.
 message QueryParamsResponse {
   // params holds all the parameters of this module.
-  Params params = 1 [(gogoproto.nullable) = false];
+  Params params = 1 [ (gogoproto.nullable) = false ];
 }
