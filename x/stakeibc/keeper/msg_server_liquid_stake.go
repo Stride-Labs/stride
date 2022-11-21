@@ -31,11 +31,8 @@ func (k msgServer) LiquidStake(goCtx context.Context, msg *types.MsgLiquidStake)
 	// get the coins to send, they need to be in the format {amount}{denom}
 	// is safe. The converse is not true.
 	ibcDenom := hostZone.GetIBCDenom()
-	fmt.Println("ibcDenom", ibcDenom)
 	coinString := cast.ToString(msg.Amount) + ibcDenom
-	fmt.Println("coinString", coinString)
 	inCoin, err := sdk.ParseCoinNormalized(coinString)
-	fmt.Println("inCoin", inCoin, err)
 	if err != nil {
 		k.Logger(ctx).Error(fmt.Sprintf("failed to parse coin (%s)", coinString))
 		return nil, sdkerrors.Wrapf(err, "failed to parse coin (%s)", coinString)
