@@ -101,16 +101,6 @@ func (im IBCModule) OnChanOpenTry(
 	return version, nil
 }
 
-// // OnChanOpenAck will error if the counterparty selected version string
-// // is invalid to abort the handshake. It may also perform custom ACK logic.
-// OnChanOpenAck(
-// 	ctx sdk.Context,
-// 	portID,
-// 	channelID string,
-// 	counterpartyChannelID string,
-// 	counterpartyVersion string,
-// ) error
-
 // OnChanOpenAck implements the IBCModule interface
 func (im IBCModule) OnChanOpenAck(
 	ctx sdk.Context,
