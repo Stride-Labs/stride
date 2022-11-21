@@ -10,6 +10,8 @@ import (
 
 	icatypes "github.com/cosmos/ibc-go/v5/modules/apps/27-interchain-accounts/types"
 
+	"cosmossdk.io/math"
+
 	epochtypes "github.com/Stride-Labs/stride/v3/x/epochs/types"
 	icacallbackstypes "github.com/Stride-Labs/stride/v3/x/icacallbacks/types"
 	recordstypes "github.com/Stride-Labs/stride/v3/x/records/types"
@@ -21,8 +23,8 @@ type TestDepositRecords struct {
 	recordsToBeTransfered []recordstypes.DepositRecord
 	recordsToBeStaked     []recordstypes.DepositRecord
 	recordsInCurrentEpoch []recordstypes.DepositRecord
-	transferAmount        sdk.Int
-	stakeAmount           sdk.Int
+	transferAmount        math.Int
+	stakeAmount           math.Int
 }
 
 func (r *TestDepositRecords) GetAllRecords() []recordstypes.DepositRecord {
