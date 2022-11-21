@@ -3,23 +3,59 @@ package types
 // DONTCOVER
 
 import (
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	"errors"
+	"fmt"
 )
 
-// x/claim module sentinel errors
-var (
-	ErrTotalWeightNotSet = sdkerrors.Register(ModuleName, 1101,
-		"total weight not set")
-	ErrTotalWeightParse = sdkerrors.Register(ModuleName, 1102,
-		"total weight parse error")
-	ErrFailedToGetTotalWeight = sdkerrors.Register(ModuleName, 1104,
-		"failed to get total weight")
-	ErrFailedToParseDec = sdkerrors.Register(ModuleName, 1105,
-		"failed to parse dec from str")
-	ErrAirdropAlreadyExists = sdkerrors.Register(ModuleName, 1106,
-		"airdrop with same identifier already exists")
-	ErrDistributorAlreadyExists = sdkerrors.Register(ModuleName, 1107,
-		"airdrop with same distributor already exists")
-	ErrInvalidAmount = sdkerrors.Register(ModuleName, 1108,
-		"cannot claim negative tokens")
-)
+type ErrorInterface interface {
+	Error() error
+}
+
+// ErrTotalWeightNotSet
+type ErrTotalWeightNotSet struct{}
+
+func (e ErrTotalWeightNotSet) Error() error {
+	return errors.Unwrap(fmt.Errorf("total weight not set"))
+}
+
+// ErrTotalWeightParse
+type ErrTotalWeightParse struct{}
+
+func (e ErrTotalWeightParse) Error() error {
+	return errors.Unwrap(fmt.Errorf("total weight parse error"))
+}
+
+// ErrFailedToGetTotalWeight
+type ErrFailedToGetTotalWeight struct{}
+
+func (e ErrFailedToGetTotalWeight) Error() error {
+	return errors.Unwrap(fmt.Errorf("failed to get total weight"))
+}
+
+// ErrFailedToParseDec
+type ErrFailedToParseDec struct{}
+
+func (e ErrFailedToParseDec) Error() error {
+	return errors.Unwrap(fmt.Errorf("failed to parse dec from str"))
+}
+
+// ErrAirdropAlreadyExists
+type ErrAirdropAlreadyExists struct{}
+
+func (e ErrAirdropAlreadyExists) Error() error {
+	return errors.Unwrap(fmt.Errorf("airdrop with same identifier already exists"))
+}
+
+// ErrDistributorAlreadyExists
+type ErrDistributorAlreadyExists struct{}
+
+func (e ErrDistributorAlreadyExists) Error() error {
+	return errors.Unwrap(fmt.Errorf("airdrop with same distributor already exists"))
+}
+
+// ErrInvalidAmount
+type ErrInvalidAmount struct{}
+
+func (e ErrInvalidAmount) Error() error {
+	return errors.Unwrap(fmt.Errorf("cannot claim negative tokens"))
+}

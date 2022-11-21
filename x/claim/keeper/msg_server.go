@@ -2,10 +2,9 @@ package keeper
 
 import (
 	"context"
+	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
 	"github.com/Stride-Labs/stride/v3/x/claim/types"
 )
@@ -41,7 +40,7 @@ func (server msgServer) SetAirdropAllocations(goCtx context.Context, msg *types.
 	}
 
 	if !addr.Equals(airdropDistributor) {
-		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid distributor address")
+		return nil, fmt.Errorf("Invalid distributor address: %s", addr)
 	}
 
 	users, weights := server.keeper.GetUnallocatedUsers(ctx, msg.AirdropIdentifier, msg.Users, msg.Weights)
@@ -92,7 +91,8 @@ func (server msgServer) CreateAirdrop(goCtx context.Context, msg *types.MsgCreat
 
 	airdrop := server.keeper.GetAirdropByDistributor(ctx, msg.Distributor)
 	if airdrop != nil {
-		return nil, types.ErrDistributorAlreadyExists
+		errorReturn := types.ErrDistributorAlreadyExists{}
+		return nil, errorReturn.Error()
 	}
 
 	err = server.keeper.CreateAirdropAndEpoch(ctx, msg.Distributor, msg.Denom, msg.StartTime, msg.Duration, msg.Identifier)
@@ -117,7 +117,7 @@ func (server msgServer) DeleteAirdrop(goCtx context.Context, msg *types.MsgDelet
 	}
 
 	if !addr.Equals(distributor) {
-		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid distributor address")
+		return nil, fmt.Errorf("Invalid distributor address: %s", addr)
 	}
 
 	err = server.keeper.DeleteAirdropAndEpoch(ctx, msg.Identifier)
