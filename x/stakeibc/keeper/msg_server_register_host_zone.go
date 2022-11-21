@@ -82,16 +82,17 @@ func (k msgServer) RegisterHostZone(goCtx context.Context, msg *types.MsgRegiste
 	// write the zone back to the store
 	k.SetHostZone(ctx, zone)
 
+	appVerSion := string(icatypes.ModuleCdc.MustMarshalJSON(&icatypes.Metadata{
+		Version:                icatypes.Version,
+		ControllerConnectionId: zone.ConnectionId,
+		HostConnectionId:       zone.ConnectionId,
+		Encoding:               icatypes.EncodingProtobuf,
+		TxType:                 icatypes.TxTypeSDKMultiMsg,
+	}))
+
 	// generate delegate account
 	// NOTE: in the future, if we implement proxy governance, we'll need many more delegate accounts
 	delegateAccount := types.FormatICAAccountOwner(chainId, types.ICAAccountType_DELEGATION)
-	delegateAccountPortId, _ := icatypes.NewControllerPortID(delegateAccount)
-	appVerSion, found := k.ICAControllerKeeper.GetAppVersion(ctx, delegateAccountPortId, msg.ConnectionId)
-	if !found {
-		errMsg := fmt.Sprintf("unable to get app version")
-		k.Logger(ctx).Error(errMsg)
-		return nil, sdkerrors.Wrapf(sdkerrors.ErrNotFound, errMsg)
-	}
 	if err := k.ICAControllerKeeper.RegisterInterchainAccount(ctx, zone.ConnectionId, delegateAccount, appVerSion); err != nil {
 		errMsg := fmt.Sprintf("unable to register delegation account, err: %s", err.Error())
 		k.Logger(ctx).Error(errMsg)
@@ -100,13 +101,6 @@ func (k msgServer) RegisterHostZone(goCtx context.Context, msg *types.MsgRegiste
 
 	// generate fee account
 	feeAccount := types.FormatICAAccountOwner(chainId, types.ICAAccountType_FEE)
-	feeAccountPortId, _ := icatypes.NewControllerPortID(feeAccount)
-	appVerSion, found = k.ICAControllerKeeper.GetAppVersion(ctx, feeAccountPortId, msg.ConnectionId)
-	if !found {
-		errMsg := fmt.Sprintf("unable to get app version")
-		k.Logger(ctx).Error(errMsg)
-		return nil, sdkerrors.Wrapf(sdkerrors.ErrNotFound, errMsg)
-	}
 	if err := k.ICAControllerKeeper.RegisterInterchainAccount(ctx, zone.ConnectionId, feeAccount, appVerSion); err != nil {
 		errMsg := fmt.Sprintf("unable to register fee account, err: %s", err.Error())
 		k.Logger(ctx).Error(errMsg)
@@ -115,13 +109,6 @@ func (k msgServer) RegisterHostZone(goCtx context.Context, msg *types.MsgRegiste
 
 	// generate withdrawal account
 	withdrawalAccount := types.FormatICAAccountOwner(chainId, types.ICAAccountType_WITHDRAWAL)
-	withdrawalAccountPortId, _ := icatypes.NewControllerPortID(feeAccount)
-	appVerSion, found = k.ICAControllerKeeper.GetAppVersion(ctx, withdrawalAccountPortId, msg.ConnectionId)
-	if !found {
-		errMsg := fmt.Sprintf("unable to get app version")
-		k.Logger(ctx).Error(errMsg)
-		return nil, sdkerrors.Wrapf(sdkerrors.ErrNotFound, errMsg)
-	}
 	if err := k.ICAControllerKeeper.RegisterInterchainAccount(ctx, zone.ConnectionId, withdrawalAccount, appVerSion); err != nil {
 		errMsg := fmt.Sprintf("unable to register withdrawal account, err: %s", err.Error())
 		k.Logger(ctx).Error(errMsg)
@@ -130,13 +117,6 @@ func (k msgServer) RegisterHostZone(goCtx context.Context, msg *types.MsgRegiste
 
 	// generate redemption account
 	redemptionAccount := types.FormatICAAccountOwner(chainId, types.ICAAccountType_REDEMPTION)
-	redemptionAccountPortId, _ := icatypes.NewControllerPortID(feeAccount)
-	appVerSion, found = k.ICAControllerKeeper.GetAppVersion(ctx, redemptionAccountPortId, msg.ConnectionId)
-	if !found {
-		errMsg := fmt.Sprintf("unable to get app version")
-		k.Logger(ctx).Error(errMsg)
-		return nil, sdkerrors.Wrapf(sdkerrors.ErrNotFound, errMsg)
-	}
 	if err := k.ICAControllerKeeper.RegisterInterchainAccount(ctx, zone.ConnectionId, redemptionAccount, appVerSion); err != nil {
 		errMsg := fmt.Sprintf("unable to register redemption account, err: %s", err.Error())
 		k.Logger(ctx).Error(errMsg)
