@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
 	channeltypes "github.com/cosmos/ibc-go/v3/modules/core/04-channel/types"
 	porttypes "github.com/cosmos/ibc-go/v3/modules/core/05-port/types"
@@ -96,12 +95,12 @@ func GetTxMsgData(ctx sdk.Context, ack channeltypes.Acknowledgement, logger log.
 	switch response := ack.Response.(type) {
 	case *channeltypes.Acknowledgement_Result:
 		if len(response.Result) == 0 {
-			return nil, sdkerrors.Wrapf(channeltypes.ErrInvalidAcknowledgement, "acknowledgement result cannot be empty")
+			return nil, fmt.Errorf(channeltypes.ErrInvalidAcknowledgement.Error(), "acknowledgement result cannot be empty")
 		}
 		err := proto.Unmarshal(ack.GetResult(), txMsgData)
 		if err != nil {
 			logger.Error(fmt.Sprintf("cannot unmarshal ICS-27 tx message data: %s", err.Error()))
-			return nil, sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "cannot unmarshal ICS-27 tx message data: %s", err.Error())
+			return nil, fmt.Errorf("Cannot unmarshal ICS-27 tx message data: %s", err.Error())
 		}
 		return txMsgData, nil
 	case *channeltypes.Acknowledgement_Error:
@@ -109,7 +108,7 @@ func GetTxMsgData(ctx sdk.Context, ack channeltypes.Acknowledgement, logger log.
 		return txMsgData, nil
 
 	default:
-		return nil, sdkerrors.Wrapf(channeltypes.ErrInvalidAcknowledgement, "unsupported acknowledgement response field type %T", response)
+		return nil, fmt.Errorf(channeltypes.ErrInvalidAcknowledgement.Error(), "unsupported acknowledgement response field type %T", response)
 	}
 }
 

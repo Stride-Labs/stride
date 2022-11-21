@@ -3,17 +3,66 @@ package types
 // DONTCOVER
 
 import (
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	"errors"
+	"fmt"
 )
 
-// x/icacallbacks module sentinel errors
-var (
-	ErrSample                  = sdkerrors.Register(ModuleName, 1100, "sample error")
-	ErrInvalidPacketTimeout    = sdkerrors.Register(ModuleName, 1500, "invalid packet timeout")
-	ErrInvalidVersion          = sdkerrors.Register(ModuleName, 1501, "invalid version")
-	ErrCallbackHandlerNotFound = sdkerrors.Register(ModuleName, 1502, "icacallback handler not found")
-	ErrCallbackIdNotFound      = sdkerrors.Register(ModuleName, 1503, "icacallback ID not found")
-	ErrCallbackFailed          = sdkerrors.Register(ModuleName, 1504, "icacallback failed")
-	ErrCallbackDataNotFound    = sdkerrors.Register(ModuleName, 1505, "icacallback data not found")
-	ErrTxMsgData               = sdkerrors.Register(ModuleName, 1506, "txMsgData fetch failed")
-)
+type ErrorInterface interface {
+	Error() error
+}
+
+// ErrTotaErrSamplelWeightNotSet
+type ErrSample struct{}
+
+func (e ErrSample) Error() error {
+	return errors.Unwrap(fmt.Errorf("Sample error"))
+}
+
+// ErrInvalidPacketTimeout
+type ErrInvalidPacketTimeout struct{}
+
+func (e ErrInvalidPacketTimeout) Error() error {
+	return errors.Unwrap(fmt.Errorf("Invalid packet timeout"))
+}
+
+// ErrInvalidVersion
+type ErrInvalidVersion struct{}
+
+func (e ErrInvalidVersion) Error() error {
+	return errors.Unwrap(fmt.Errorf("Invalid version"))
+}
+
+// ErrCallbackHandlerNotFound
+type ErrCallbackHandlerNotFound struct{}
+
+func (e ErrCallbackHandlerNotFound) Error() error {
+	return errors.Unwrap(fmt.Errorf("Icacallback handler not found"))
+}
+
+// ErrCallbackIdNotFound
+type ErrCallbackIdNotFound struct{}
+
+func (e ErrCallbackIdNotFound) Error() error {
+	return errors.Unwrap(fmt.Errorf("Icacallback ID not found"))
+}
+
+// ErrCallbackFailed
+type ErrCallbackFailed struct{}
+
+func (e ErrCallbackFailed) Error() error {
+	return errors.Unwrap(fmt.Errorf("Icacallback failed"))
+}
+
+// ErrCallbackDataNotFound
+type ErrCallbackDataNotFound struct{}
+
+func (e ErrCallbackDataNotFound) Error() error {
+	return errors.Unwrap(fmt.Errorf("Icacallback data not found"))
+}
+
+// ErrTxMsgData
+type ErrTxMsgData struct{}
+
+func (e ErrTxMsgData) Error() error {
+	return errors.Unwrap(fmt.Errorf("TxMsgData fetch failed"))
+}
