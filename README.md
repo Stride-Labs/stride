@@ -178,7 +178,7 @@ git submodule update --init
 
 Build executables, initialize state, and start the network with
 ```
-make start-docker build=sgjotrhi
+make start-docker build=sgjotr
 ```
 You can optionally pass build arguments to specify which binary to rebuild
 1. `s` This will re-build the Stride binary (default)
@@ -187,7 +187,6 @@ You can optionally pass build arguments to specify which binary to rebuild
 4. `o` This will re-build the Osmo binary
 5. `t` This will re-build the Stargaze binary
 6. `r` This will re-build the Go Relayer binary
-7. `h` This will re-build the Hermes binary
 
 Example: `make start-docker build=sg`, this will:
 - Rebuild the Stride and Gaia binarys

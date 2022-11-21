@@ -11,7 +11,7 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/spf13/cast"
 
-	"github.com/Stride-Labs/stride/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v3/x/stakeibc/types"
 )
 
 // GetHostZoneCount get the total number of hostZone
@@ -170,7 +170,7 @@ func (k Keeper) AddValidatorToHostZone(ctx sdk.Context, msg *types.MsgAddValidat
 	hostZone.Validators = append(hostZone.Validators, &types.Validator{
 		Name:           msg.Name,
 		Address:        msg.Address,
-		Status:         types.Validator_Active,
+		Status:         types.Validator_ACTIVE,
 		CommissionRate: msg.Commission,
 		DelegationAmt:  0,
 		Weight:         valWeight,
@@ -210,7 +210,7 @@ func (k Keeper) RemoveValidatorFromHostZone(ctx sdk.Context, chainId string, val
 func (k Keeper) GetHostZoneFromIBCDenom(ctx sdk.Context, denom string) (*types.HostZone, error) {
 	var matchZone types.HostZone
 	k.IterateHostZones(ctx, func(ctx sdk.Context, index int64, zoneInfo types.HostZone) error {
-		if zoneInfo.IBCDenom == denom {
+		if zoneInfo.IbcDenom == denom {
 			matchZone = zoneInfo
 			return nil
 		}
