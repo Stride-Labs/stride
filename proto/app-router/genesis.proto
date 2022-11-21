@@ -1,0 +1,16 @@
+syntax = "proto3";
+package Stridelabs.stride.app_router;
+
+import "gogoproto/gogo.proto";
+import "app-router/params.proto";
+
+option go_package = "github.com/Stride-Labs/stride/v3/x/app-router/types";
+
+// GenesisState defines the claim module's genesis state.
+message GenesisState {
+  // params defines all the parameters of the module.
+  Params params = 1 [
+    (gogoproto.moretags) = "yaml:\"params\"",
+    (gogoproto.nullable) = false
+  ];
+}

@@ -3,7 +3,7 @@ package Stridelabs.stride.app_router;
 
 import "gogoproto/gogo.proto";
 
-option go_package = "github.com/Stride-Labs/stride/x/app_router/types";
+option go_package = "github.com/Stride-Labs/stride/v3/x/app-router/types";
 
 // Params defines the parameters for the module.
 // next id: 1

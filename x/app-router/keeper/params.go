@@ -3,7 +3,7 @@ package keeper
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Stride-Labs/stride/x/app_router/types"
+	"github.com/Stride-Labs/stride/v3/x/app-router/types"
 )
 
 // GetParams get all parameters as types.Params

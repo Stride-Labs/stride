@@ -2,8 +2,8 @@ package app_router
 
 import (
 	"fmt"
+	"strconv"
 
-	"cosmossdk.io/math"
 	"github.com/armon/go-metrics"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -13,8 +13,8 @@ import (
 	channeltypes "github.com/cosmos/ibc-go/v3/modules/core/04-channel/types"
 	porttypes "github.com/cosmos/ibc-go/v3/modules/core/05-port/types"
 
-	"github.com/Stride-Labs/stride/x/app_router/keeper"
-	"github.com/Stride-Labs/stride/x/app_router/types"
+	"github.com/Stride-Labs/stride/v3/x/app-router/keeper"
+	"github.com/Stride-Labs/stride/v3/x/app-router/types"
 
 	// "google.golang.org/protobuf/proto" <-- this breaks tx parsing
 
@@ -35,6 +35,86 @@ func NewIBCModule(k keeper.Keeper, app porttypes.IBCModule) IBCModule {
 		app:    app,
 	}
 }
+
+// // OnChanOpenInit will verify that the relayer-chosen parameters are
+// // valid and perform any custom INIT logic.It may return an error if
+// // the chosen parameters are invalid in which case the handshake is aborted.
+// // OnChanOpenInit should return an error if the provided version is invalid.
+// OnChanOpenInit(
+// 	ctx sdk.Context,
+// 	order channeltypes.Order,
+// 	connectionHops []string,
+// 	portID string,
+// 	channelID string,
+// 	channelCap *capabilitytypes.Capability,
+// 	counterparty channeltypes.Counterparty,
+// 	version string,
+// ) error
+
+// // OnChanOpenTry will verify the relayer-chosen parameters along with the
+// // counterparty-chosen version string and perform custom TRY logic.
+// // If the relayer-chosen parameters are invalid, the callback must return
+// // an error to abort the handshake. If the counterparty-chosen version is not
+// // compatible with this modules supported versions, the callback must return
+// // an error to abort the handshake. If the versions are compatible, the try callback
+// // must select the final version string and return it to core IBC.
+// // OnChanOpenTry may also perform custom initialization logic
+// OnChanOpenTry(
+// 	ctx sdk.Context,
+// 	order channeltypes.Order,
+// 	connectionHops []string,
+// 	portID,
+// 	channelID string,
+// 	channelCap *capabilitytypes.Capability,
+// 	counterparty channeltypes.Counterparty,
+// 	counterpartyVersion string,
+// ) (version string, err error)
+
+// // OnChanOpenAck will error if the counterparty selected version string
+// // is invalid to abort the handshake. It may also perform custom ACK logic.
+// OnChanOpenAck(
+// 	ctx sdk.Context,
+// 	portID,
+// 	channelID string,
+// 	counterpartyChannelID string,
+// 	counterpartyVersion string,
+// ) error
+
+// // OnChanOpenConfirm will perform custom CONFIRM logic and may error to abort the handshake.
+// OnChanOpenConfirm(
+// 	ctx sdk.Context,
+// 	portID,
+// 	channelID string,
+// ) error
+
+// OnChanCloseInit(
+// 	ctx sdk.Context,
+// 	portID,
+// 	channelID string,
+// ) error
+
+// OnChanCloseConfirm(
+// 	ctx sdk.Context,
+// 	portID,
+// 	channelID string,
+// ) error
+
+// // OnRecvPacket must return an acknowledgement that implements the Acknowledgement interface.
+// // In the case of an asynchronous acknowledgement, nil should be returned.
+// // If the acknowledgement returned is successful, the state changes on callback are written,
+// // otherwise the application state changes are discarded. In either case the packet is received
+// // and the acknowledgement is written (in synchronous cases).
+// OnRecvPacket(
+// 	ctx sdk.Context,
+// 	packet channeltypes.Packet,
+// 	relayer sdk.AccAddress,
+// ) exported.Acknowledgement
+
+// OnTimeoutPacket(
+// 	ctx sdk.Context,
+// 	packet channeltypes.Packet,
+// 	relayer sdk.AccAddress,
+// ) error
 
 // OnChanOpenInit implements the IBCModule interface
 func (im IBCModule) OnChanOpenInit(
@@ -101,6 +181,16 @@ func (im IBCModule) OnChanOpenTry(
 	return version, nil
 }
 
+// // OnChanOpenAck will error if the counterparty selected version string
+// // is invalid to abort the handshake. It may also perform custom ACK logic.
+// OnChanOpenAck(
+// 	ctx sdk.Context,
+// 	portID,
+// 	channelID string,
+// 	counterpartyChannelID string,
+// 	counterpartyVersion string,
+// ) error
+
 // OnChanOpenAck implements the IBCModule interface
 func (im IBCModule) OnChanOpenAck(
 	ctx sdk.Context,
@@ -163,7 +253,7 @@ func (im IBCModule) OnRecvPacket(
 	// parse out any forwarding info
 	parsedReceiver, err := types.ParseReceiverData(data.Receiver)
 	if err != nil {
-		return channeltypes.NewErrorAcknowledgement(err)
+		return channeltypes.NewErrorAcknowledgement(err.Error())
 	}
 
 	// move on to the next middleware
@@ -176,7 +266,7 @@ func (im IBCModule) OnRecvPacket(
 	newData.Receiver = parsedReceiver.StrideAccAddress.String()
 	bz, err := transfertypes.ModuleCdc.MarshalJSON(&newData)
 	if err != nil {
-		return channeltypes.NewErrorAcknowledgement(err)
+		return channeltypes.NewErrorAcknowledgement(err.Error())
 	}
 	newPacket := packet
 	newPacket.Data = bz
@@ -210,11 +300,11 @@ func (im IBCModule) OnRecvPacket(
 			prefixedDenom := transfertypes.GetDenomPrefix(packet.GetDestPort(), packet.GetDestChannel()) + newData.Denom
 			denom = transfertypes.ParseDenomTrace(prefixedDenom).IBCDenom()
 		}
-		unit, err := math.ParseUint(newData.Amount)
+		unit, err := strconv.ParseUint(newData.Amount, 10, 64)
 		if err != nil {
 			channeltypes.NewErrorAcknowledgement(err.Error())
 		}
-		var token = sdk.NewCoin(denom, sdk.NewIntFromUint64(unit.Uint64()))
+		var token = sdk.NewCoin(denom, sdk.NewIntFromUint64(unit))
 
 		err = im.keeper.LiquidStakeTransferPacket(ctx, parsedReceiver, token, []metrics.Label{})
 		if err != nil {

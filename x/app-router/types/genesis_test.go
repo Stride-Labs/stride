@@ -5,7 +5,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/Stride-Labs/stride/x/app_router/types"
+	"github.com/Stride-Labs/stride/v3/x/app-router/types"
 )
 
 func TestGenesisState_Validate(t *testing.T) {
@@ -20,35 +20,16 @@ func TestGenesisState_Validate(t *testing.T) {
 			valid:    true,
 		},
 		{
-			desc: "valid genesis state",
+			desc:     "valid genesis state",
 			genState: &types.GenesisState{
-				PortId: types.PortID,
-				DepositRecordList: []types.DepositRecord{
-					{
-						Id: 0,
-					},
-					{
-						Id: 1,
-					},
-				},
-				DepositRecordCount: 2,
 				// this line is used by starport scaffolding # types/genesis/validField
 			},
 			valid: true,
 		},
 		{
-			desc: "duplicated depositRecord",
-			genState: &types.GenesisState{
-				DepositRecordList: []types.DepositRecord{
-					{
-						Id: 0,
-					},
-					{
-						Id: 0,
-					},
-				},
-			},
-			valid: false,
+			desc:     "duplicated depositRecord",
+			genState: &types.GenesisState{},
+			valid:    false,
 		},
 		// this line is used by starport scaffolding # types/genesis/testcase
 	} {
