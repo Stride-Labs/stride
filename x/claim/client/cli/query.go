@@ -186,7 +186,7 @@ func GetCmdQueryTotalClaimable() *cobra.Command {
 		Long: strings.TrimSpace(
 			fmt.Sprintf(`Query the total claimable amount remaining for an account.
 Example:
-$ %s query claim total-claimable stride stride1h4astdfzjhcwahtfrh24qtvndzzh49xvqtfftk
+$ %s query claim total-claimable stride stride1h4astdfzjhcwahtfrh24qtvndzzh49xvqtfftk true
 `,
 				version.AppName,
 			),
