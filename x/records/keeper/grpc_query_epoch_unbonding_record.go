@@ -2,10 +2,10 @@ package keeper
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/types/query"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -48,7 +48,7 @@ func (k Keeper) EpochUnbondingRecord(c context.Context, req *types.QueryGetEpoch
 	ctx := sdk.UnwrapSDKContext(c)
 	epochUnbondingRecord, found := k.GetEpochUnbondingRecord(ctx, req.EpochNumber)
 	if !found {
-		return nil, sdkerrors.ErrKeyNotFound
+		return nil, fmt.Errorf("Key not found")
 	}
 
 	return &types.QueryGetEpochUnbondingRecordResponse{EpochUnbondingRecord: epochUnbondingRecord}, nil

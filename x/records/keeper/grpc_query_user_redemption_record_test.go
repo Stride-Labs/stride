@@ -1,11 +1,11 @@
 package keeper_test
 
 import (
+	"fmt"
 	"strconv"
 	"testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/types/query"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/codes"
@@ -39,7 +39,7 @@ func TestUserRedemptionRecordQuerySingle(t *testing.T) {
 		{
 			desc:    "KeyNotFound",
 			request: &types.QueryGetUserRedemptionRecordRequest{Id: strconv.Itoa(len(msgs))},
-			err:     sdkerrors.ErrKeyNotFound,
+			err:     fmt.Errorf("Key not found"),
 		},
 		{
 			desc: "InvalidRequest",

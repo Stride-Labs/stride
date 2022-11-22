@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
 	ibctransfertypes "github.com/cosmos/ibc-go/v3/modules/apps/transfer/types"
 	channeltypes "github.com/cosmos/ibc-go/v3/modules/core/04-channel/types"
@@ -173,7 +172,7 @@ func (im IBCModule) OnAcknowledgementPacket(
 	var ack channeltypes.Acknowledgement
 	if err := ibctransfertypes.ModuleCdc.UnmarshalJSON(acknowledgement, &ack); err != nil {
 		im.keeper.Logger(ctx).Error(fmt.Sprintf("Error unmarshalling ack  %v", err.Error()))
-		return sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "cannot unmarshal ICS-20 transfer packet acknowledgement: %v", err)
+		return fmt.Errorf("cannot unmarshal ICS-20 transfer packet acknowledgement: %v", err)
 	}
 
 	// log the ack type
@@ -254,7 +253,7 @@ func (am AppModule) OnChanOpenInit(
 	counterparty channeltypes.Counterparty,
 	version string,
 ) error {
-	return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "UNIMPLEMENTED")
+	return fmt.Errorf("UNIMPLEMENTED")
 }
 
 // OnChanOpenTry implements the IBCModule interface
@@ -269,7 +268,7 @@ func (am AppModule) OnChanOpenTry(
 	version,
 	counterpartyVersion string,
 ) error {
-	return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "UNIMPLEMENTED")
+	return fmt.Errorf("UNIMPLEMENTED")
 }
 
 // OnChanOpenAck implements the IBCModule interface
@@ -279,7 +278,7 @@ func (am AppModule) OnChanOpenAck(
 	channelID string,
 	counterpartyVersion string,
 ) error {
-	return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "UNIMPLEMENTED")
+	return fmt.Errorf("UNIMPLEMENTED")
 }
 
 // OnChanOpenConfirm implements the IBCModule interface
@@ -288,7 +287,7 @@ func (am AppModule) OnChanOpenConfirm(
 	portID,
 	channelID string,
 ) error {
-	return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "UNIMPLEMENTED")
+	return fmt.Errorf("UNIMPLEMENTED")
 }
 
 // OnChanCloseInit implements the IBCModule interface
@@ -298,7 +297,7 @@ func (am AppModule) OnChanCloseInit(
 	channelID string,
 ) error {
 	// Disallow user-initiated channel closing for channels
-	return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "user cannot close channel")
+	return fmt.Errorf("user cannot close channel")
 }
 
 // OnChanCloseConfirm implements the IBCModule interface
@@ -307,7 +306,7 @@ func (am AppModule) OnChanCloseConfirm(
 	portID,
 	channelID string,
 ) error {
-	return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "UNIMPLEMENTED")
+	return fmt.Errorf("UNIMPLEMENTED")
 }
 
 // OnRecvPacket implements the IBCModule interface
@@ -327,7 +326,7 @@ func (am AppModule) OnAcknowledgementPacket(
 	acknowledgement []byte,
 	relayer sdk.AccAddress,
 ) error {
-	return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "UNIMPLEMENTED")
+	return fmt.Errorf("UNIMPLEMENTED")
 }
 
 // OnTimeoutPacket implements the IBCModule interface

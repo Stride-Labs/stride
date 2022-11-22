@@ -38,7 +38,7 @@ func (k msgServer) RedeemStake(goCtx context.Context, msg *types.MsgRedeemStake)
 	redemptionId := recordstypes.UserRedemptionRecordKeyFormatter(hostZone.ChainId, epochTracker.EpochNumber, senderAddr)
 	_, found = k.RecordsKeeper.GetUserRedemptionRecord(ctx, redemptionId)
 	if found {
-		return nil, sdkerrors.Wrapf(recordstypes.ErrRedemptionAlreadyExists, "user already redeemed this epoch: %s", redemptionId)
+		return nil, sdkerrors.Wrapf(recordstypes.ErrRedemptionAlreadyExists{}.Error(), "user already redeemed this epoch: %s", redemptionId)
 	}
 
 	// ensure the recipient address is a valid bech32 address on the hostZone
@@ -103,7 +103,7 @@ func (k msgServer) RedeemStake(goCtx context.Context, msg *types.MsgRedeemStake)
 	epochUnbondingRecord, found := k.RecordsKeeper.GetEpochUnbondingRecord(ctx, epochTracker.EpochNumber)
 	if !found {
 		k.Logger(ctx).Error("latest epoch unbonding record not found")
-		return nil, sdkerrors.Wrapf(recordstypes.ErrEpochUnbondingRecordNotFound, "latest epoch unbonding record not found")
+		return nil, sdkerrors.Wrapf(recordstypes.ErrEpochUnbondingRecordNotFound{}.Error(), "latest epoch unbonding record not found")
 	}
 	// get relevant host zone on this epoch unbonding record
 	hostZoneUnbonding, found := k.RecordsKeeper.GetHostZoneUnbondingByChainId(ctx, epochUnbondingRecord.EpochNumber, hostZone.ChainId)

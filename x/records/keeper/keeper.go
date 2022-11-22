@@ -3,7 +3,6 @@ package keeper
 import (
 	"fmt"
 
-	channeltypes "github.com/cosmos/ibc-go/v3/modules/core/04-channel/types"
 	ibckeeper "github.com/cosmos/ibc-go/v3/modules/core/keeper"
 	"github.com/tendermint/tendermint/libs/log"
 
@@ -11,7 +10,6 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	capabilitykeeper "github.com/cosmos/cosmos-sdk/x/capability/keeper"
 	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
@@ -85,10 +83,7 @@ func (k Keeper) Transfer(ctx sdk.Context, msg *ibctypes.MsgTransfer, depositReco
 	// see: https://github.com/cosmos/ibc-go/blob/48a6ae512b4ea42c29fdf6c6f5363f50645591a2/modules/core/04-channel/keeper/packet.go#L125
 	sequence, found := k.IBCKeeper.ChannelKeeper.GetNextSequenceSend(ctx, msg.SourcePort, msg.SourceChannel)
 	if !found {
-		return sdkerrors.Wrapf(
-			channeltypes.ErrSequenceSendNotFound,
-			"source port: %s, source channel: %s", msg.SourcePort, msg.SourceChannel,
-		)
+		return fmt.Errorf("source port: %s, source channel: %s", msg.SourcePort, msg.SourceChannel)
 	}
 
 	// trigger transfer

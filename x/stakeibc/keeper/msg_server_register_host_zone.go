@@ -124,7 +124,7 @@ func (k msgServer) RegisterHostZone(goCtx context.Context, msg *types.MsgRegiste
 	if !found {
 		errMsg := "unable to find latest epoch unbonding record"
 		k.Logger(ctx).Error(errMsg)
-		return nil, sdkerrors.Wrapf(recordstypes.ErrEpochUnbondingRecordNotFound, errMsg)
+		return nil, sdkerrors.Wrapf(recordstypes.ErrEpochUnbondingRecordNotFound{}.Error(), errMsg)
 	}
 	hostZoneUnbonding := &recordstypes.HostZoneUnbonding{
 		NativeTokenAmount: 0,
