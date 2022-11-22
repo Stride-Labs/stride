@@ -6,12 +6,12 @@ import (
 	channeltypes "github.com/cosmos/ibc-go/v3/modules/core/04-channel/types"
 	_ "github.com/stretchr/testify/suite"
 
-	epochtypes "github.com/Stride-Labs/stride/x/epochs/types"
+	epochtypes "github.com/Stride-Labs/stride/v3/x/epochs/types"
 
-	recordtypes "github.com/Stride-Labs/stride/x/records/types"
-	stakeibckeeper "github.com/Stride-Labs/stride/x/stakeibc/keeper"
-	"github.com/Stride-Labs/stride/x/stakeibc/types"
-	stakeibc "github.com/Stride-Labs/stride/x/stakeibc/types"
+	recordtypes "github.com/Stride-Labs/stride/v3/x/records/types"
+	stakeibckeeper "github.com/Stride-Labs/stride/v3/x/stakeibc/keeper"
+	"github.com/Stride-Labs/stride/v3/x/stakeibc/types"
+	stakeibc "github.com/Stride-Labs/stride/v3/x/stakeibc/types"
 )
 
 type ReinvestCallbackState struct {
@@ -37,7 +37,7 @@ func (s *KeeperTestSuite) SetupReinvestCallback() ReinvestCallbackTestCase {
 	hostZone := stakeibc.HostZone{
 		ChainId:        HostChainId,
 		HostDenom:      Atom,
-		IBCDenom:       IbcAtom,
+		IbcDenom:       IbcAtom,
 		RedemptionRate: sdk.NewDec(1.0),
 	}
 	expectedNewDepositRecord := recordtypes.DepositRecord{

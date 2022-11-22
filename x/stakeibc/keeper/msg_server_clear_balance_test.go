@@ -8,8 +8,8 @@ import (
 	ibctesting "github.com/cosmos/ibc-go/v3/testing"
 	_ "github.com/stretchr/testify/suite"
 
-	"github.com/Stride-Labs/stride/x/stakeibc/types"
-	stakeibctypes "github.com/Stride-Labs/stride/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v3/x/stakeibc/types"
+	stakeibctypes "github.com/Stride-Labs/stride/v3/x/stakeibc/types"
 )
 
 type ClearBalanceState struct {
@@ -33,7 +33,7 @@ func (s *KeeperTestSuite) SetupClearBalance() ClearBalanceTestCase {
 		ChainId:        HostChainId,
 		ConnectionId:   ibctesting.FirstConnectionID,
 		HostDenom:      Atom,
-		IBCDenom:       IbcAtom,
+		IbcDenom:       IbcAtom,
 		RedemptionRate: sdk.NewDec(1.0),
 		Address:        zoneAddress.String(),
 		FeeAccount: &stakeibctypes.ICAAccount{

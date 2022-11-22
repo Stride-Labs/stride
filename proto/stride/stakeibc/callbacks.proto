@@ -1,6 +1,6 @@
 syntax = "proto3";
 package stride.stakeibc;
-option go_package = "github.com/Stride-Labs/stride/x/stakeibc/types";
+option go_package = "github.com/Stride-Labs/stride/v3/x/stakeibc/types";
 import "gogoproto/gogo.proto";
 import "cosmos/base/v1beta1/coin.proto";
 
@@ -46,7 +46,7 @@ message RedemptionCallback {
   repeated uint64 epoch_unbonding_record_ids = 2;
 }
 
-// ---------------------- Validator Rebalance Callbacks ---------------------- //
+// ---------------- Validator Rebalance Callbacks ---------------------- //
 
 message Rebalancing {
   string src_validator = 1;
@@ -55,6 +55,6 @@ message Rebalancing {
 }
 
 message RebalanceCallback {
-  string host_zone_id = 1; 
+  string host_zone_id = 1;
   repeated Rebalancing rebalancings = 2;
 }

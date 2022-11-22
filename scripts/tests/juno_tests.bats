@@ -36,7 +36,6 @@ setup() {
   SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
   PATH="$SCRIPT_DIR/../../:$PATH"
 
-
   # if these extensions don't load properly, adjust the paths accoring to these instructions
   TEST_BREW_PREFIX="$(brew --prefix)"
   load "${TEST_BREW_PREFIX}/lib/bats-support/load.bash"
@@ -70,18 +69,18 @@ setup() {
 # # add test to register host zone
 @test "[INTEGRATION-BASIC] host zones successfully registered" {
   run $STRIDE_MAIN_CMD q stakeibc show-host-zone JUNO
-  assert_line '  HostDenom: ujuno'
-  assert_line '  chainId: JUNO'
-  assert_line '  delegationAccount:'
+  assert_line '  host_denom: ujuno'
+  assert_line '  chain_id: JUNO'
+  assert_line '  delegation_account:'
   assert_line '    address: juno1xan7vt4nurz6c7x0lnqnvpmuc0lljz7rycqmuz2kk6wxv4k69d0sfats35'
-  assert_line '  feeAccount:'
+  assert_line '  fee_account:'
   assert_line '    address: juno1rp8qgfq64wmjg7exyhjqrehnvww0t9ev3f3p2ls82umz2fxgylqsz3vl9h'
-  assert_line '  redemptionAccount:'
+  assert_line '  redemption_account:'
   assert_line '    address: juno1y6haxdt03cgkc7aedxrlaleeteel7fgc0nvtu2kggee3hnrlvnvs4kw2v9'
-  assert_line '  withdrawalAccount:'
+  assert_line '  withdrawal_account:'
   assert_line '    address: juno104n6h822n6n7psqjgjl7emd2uz67lptggp5cargh6mw0gxpch2gsk53qk5'
-  assert_line '  unbondingFrequency: "1"'
-  assert_line '  RedemptionRate: "1.000000000000000000"'
+  assert_line '  unbonding_frequency: "1"'
+  assert_line '  redemption_rate: "1.000000000000000000"'
 }
 
 
@@ -179,9 +178,8 @@ setup() {
   # TODO(optimize tests) extra sleep just in case
   SENDER_ACCT=$(STRIDE_ADDRESS)
   old_sender_bal=$($JUNO_MAIN_CMD q bank balances $JUNO_RECEIVER_ACCT --denom ujuno | GETBAL)
-  # TODO check that the UserRedemptionRecord has isClaimable = true
   # grab the epoch number for the first deposit record in the list od DRs
-  EPOCH=$(strided q records list-user-redemption-record  | grep -Fiw 'epochNumber' | head -n 1 | grep -o -E '[0-9]+')
+  EPOCH=$($STRIDE_MAIN_CMD q records list-user-redemption-record  | grep -Fiw 'epoch_number' | head -n 1 | grep -o -E '[0-9]+')
   # claim the record
   $STRIDE_MAIN_CMD tx stakeibc claim-undelegated-tokens JUNO $EPOCH $SENDER_ACCT --from val1 --keyring-backend test --chain-id STRIDE -y
   WAIT_FOR_STRING $STRIDE_LOGS '\[CLAIM\] success on JUNO'
@@ -197,7 +195,7 @@ setup() {
 # check that a second liquid staking call kicks off reinvestment
 @test "[INTEGRATION-BASIC-JUNO] rewards are being reinvested, exchange rate updating" {
   # read the exchange rate and current delegations
-  RR1=$($STRIDE_MAIN_CMD q stakeibc show-host-zone JUNO | grep -Fiw 'RedemptionRate' | grep -Eo '[+-]?[0-9]+([.][0-9]+)?')
+  RR1=$($STRIDE_MAIN_CMD q stakeibc show-host-zone JUNO | grep -Fiw 'redemption_rate' | grep -Eo '[+-]?[0-9]+([.][0-9]+)?')
   OLD_STAKED_BAL=$($JUNO_MAIN_CMD q staking delegation $JUNO_DELEGATION_ICA_ADDR $JUNO_DELEGATE_VAL | GETSTAKE)
   # liquid stake again to kickstart the reinvestment process
   $STRIDE_MAIN_CMD tx stakeibc liquid-stake 1000 ujuno --keyring-backend test --from val1 -y --chain-id $STRIDE_CHAIN_ID
@@ -210,7 +208,7 @@ setup() {
   STAKED_BAL_INCREASED=$(($NEW_STAKED_BAL > $OLD_STAKED_BAL))
   assert_equal "$STAKED_BAL_INCREASED" "1"
 
-  RR2=$($STRIDE_MAIN_CMD q stakeibc show-host-zone JUNO | grep -Fiw 'RedemptionRate' | grep -Eo '[+-]?[0-9]+([.][0-9]+)?')
+  RR2=$($STRIDE_MAIN_CMD q stakeibc show-host-zone JUNO | grep -Fiw 'redemption_rate' | grep -Eo '[+-]?[0-9]+([.][0-9]+)?')
   # check that the exchange rate has increased
   MULT=1000000
   RR_INCREASED=$(( $(FLOOR $(DECMUL $RR2 $MULT)) > $(FLOOR $(DECMUL $RR1 $MULT))))

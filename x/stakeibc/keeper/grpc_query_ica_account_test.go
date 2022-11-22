@@ -5,7 +5,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/Stride-Labs/stride/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v3/x/stakeibc/types"
 )
 
 func (suite *KeeperTestSuite) TestICAAccountQuery() {
@@ -20,7 +20,7 @@ func (suite *KeeperTestSuite) TestICAAccountQuery() {
 		{
 			desc:     "First",
 			request:  &types.QueryGetICAAccountRequest{},
-			response: &types.QueryGetICAAccountResponse{ICAAccount: item},
+			response: &types.QueryGetICAAccountResponse{IcaAccount: item},
 		},
 		{
 			desc: "InvalidRequest",

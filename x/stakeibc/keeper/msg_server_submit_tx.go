@@ -8,10 +8,10 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/spf13/cast"
 
-	icacallbackstypes "github.com/Stride-Labs/stride/x/icacallbacks/types"
+	icacallbackstypes "github.com/Stride-Labs/stride/v3/x/icacallbacks/types"
 
-	recordstypes "github.com/Stride-Labs/stride/x/records/types"
-	"github.com/Stride-Labs/stride/x/stakeibc/types"
+	recordstypes "github.com/Stride-Labs/stride/v3/x/records/types"
+	"github.com/Stride-Labs/stride/v3/x/stakeibc/types"
 
 	bankTypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	distributiontypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
@@ -19,8 +19,8 @@ import (
 
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
-	epochstypes "github.com/Stride-Labs/stride/x/epochs/types"
-	icqtypes "github.com/Stride-Labs/stride/x/interchainquery/types"
+	epochstypes "github.com/Stride-Labs/stride/v3/x/epochs/types"
+	icqtypes "github.com/Stride-Labs/stride/v3/x/interchainquery/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	icatypes "github.com/cosmos/ibc-go/v3/modules/apps/27-interchain-accounts/types"
@@ -88,7 +88,7 @@ func (k Keeper) DelegateOnHost(ctx sdk.Context, hostZone types.HostZone, amt sdk
 	}
 
 	// Send the transaction through SubmitTx
-	_, err = k.SubmitTxsStrideEpoch(ctx, connectionId, msgs, *delegationIca, DELEGATE, marshalledCallbackArgs)
+	_, err = k.SubmitTxsStrideEpoch(ctx, connectionId, msgs, *delegationIca, ICACallbackID_Delegate, marshalledCallbackArgs)
 	if err != nil {
 		return sdkerrors.Wrapf(err, "Failed to SubmitTxs for connectionId %s on %s. Messages: %s", connectionId, hostZone.ChainId, msgs)
 	}
@@ -169,7 +169,7 @@ func (k Keeper) UpdateWithdrawalBalance(ctx sdk.Context, zoneInfo types.HostZone
 		append(data, []byte(zoneInfo.HostDenom)...),
 		sdk.NewInt(-1),
 		types.ModuleName,
-		"withdrawalbalance",
+		ICQCallbackID_WithdrawalBalance,
 		ttl, // ttl
 		0,   // height always 0 (which means current height)
 	)
@@ -397,7 +397,7 @@ func (k Keeper) QueryValidatorExchangeRate(ctx sdk.Context, msg *types.MsgUpdate
 		data,
 		sdk.NewInt(-1),
 		types.ModuleName,
-		"validator",
+		ICQCallbackID_Validator,
 		ttl, // ttl
 		0,   // height always 0 (which means current height)
 	)
@@ -448,7 +448,7 @@ func (k Keeper) QueryDelegationsIcq(ctx sdk.Context, hostZone types.HostZone, va
 		data,
 		sdk.NewInt(-1),
 		types.ModuleName,
-		"delegation",
+		ICQCallbackID_Delegation,
 		ttl, // ttl
 		0,   // height always 0 (which means current height)
 	)
