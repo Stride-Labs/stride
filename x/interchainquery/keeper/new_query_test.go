@@ -4,6 +4,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	_ "github.com/stretchr/testify/suite"
 
+	"cosmossdk.io/math"
+
 	icqtypes "github.com/Stride-Labs/stride/v3/x/interchainquery/types"
 )
 
@@ -13,7 +15,7 @@ type NewQueryTestCase struct {
 	chainId      string
 	queryType    string
 	request      []byte
-	period       sdk.Int
+	period       math.Int
 	callbackId   string
 	ttl          uint64
 	height       int64
