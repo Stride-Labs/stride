@@ -40,7 +40,7 @@ mv genesis.json ~/.stride/config/genesis.json
 
 
 # Get "trust_hash" and "trust_height".
-INTERVAL=1000
+INTERVAL=100
 LATEST_HEIGHT=$(curl -s https://stride-rpc.polkachu.com/block | jq -r .result.block.header.height)
 BLOCK_HEIGHT=$(($LATEST_HEIGHT-$INTERVAL)) 
 TRUST_HASH=$(curl -s "https://stride-rpc.polkachu.com/block?height=$BLOCK_HEIGHT" | jq -r .result.block_id.hash)
@@ -60,4 +60,4 @@ export STRIDED_STATESYNC_TRUST_HASH=$TRUST_HASH
 export STRIDED_P2P_SEEDS=$(curl -s https://raw.githubusercontent.com/cosmos/chain-registry/master/stride/chain.json | jq -r '[foreach .peers.seeds[] as $item (""; "\($item.id)@\($item.address)")] | join(",")')
 
 # Start chain.
-strided start --x-crisis-skip-assert-invariants --db_backend pebbledb
+strided start --x-crisis-skip-assert-invariants 
