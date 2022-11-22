@@ -599,7 +599,7 @@ func NewStrideApp(
 	ibcRouter := ibcporttypes.NewRouter()
 	ibcRouter.
 		AddRoute(ibctransfertypes.ModuleName, recordsStack).
-		AddRoute(ibctransfertypes.ModuleName, routerIBCModule).
+		AddRoute(routertypes.ModuleName, routerIBCModule).
 		AddRoute(icacontrollertypes.SubModuleName, icamiddlewareStack).
 		AddRoute(icahosttypes.SubModuleName, icaHostIBCModule).
 		// Note, authentication module packets are routed to the top level of the middleware stack
