@@ -25,11 +25,6 @@ func (app *StrideApp) setupUpgradeHandlers() {
 		v3.CreateUpgradeHandler(app.mm, app.configurator, app.ClaimKeeper),
 	)
 
-	app.UpgradeKeeper.SetUpgradeHandler(
-		v4.UpgradeName,
-		v4.CreateUpgradeHandler(app.mm, app.configurator),
-	)
-
 	upgradeInfo, err := app.UpgradeKeeper.ReadUpgradeInfoFromDisk()
 	if err != nil {
 		panic(fmt.Errorf("Failed to read upgrade info from disk: %w", err))
