@@ -27,18 +27,20 @@ import (
 	"github.com/Stride-Labs/stride/v3/x/claim/client/cli"
 
 	"github.com/Stride-Labs/stride/v3/app"
-	cmdcfg "github.com/Stride-Labs/stride/v3/cmd/strided/config"
+	"github.com/Stride-Labs/stride/v3/cmd/strided/cmd"
 	"github.com/Stride-Labs/stride/v3/x/claim/types"
 	claimtypes "github.com/Stride-Labs/stride/v3/x/claim/types"
 )
 
-var addr1 sdk.AccAddress
-var addr2 sdk.AccAddress
-var distributorMnemonics []string
-var distributorAddrs []string
+var (
+	addr1                sdk.AccAddress
+	addr2                sdk.AccAddress
+	distributorMnemonics []string
+	distributorAddrs     []string
+)
 
 func init() {
-	cmdcfg.SetupConfig()
+	cmd.SetupConfig()
 	addr1 = ed25519.GenPrivKey().PubKey().Address().Bytes()
 	addr2 = ed25519.GenPrivKey().PubKey().Address().Bytes()
 	distributorMnemonics = []string{

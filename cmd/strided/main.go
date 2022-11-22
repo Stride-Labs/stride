@@ -5,16 +5,16 @@ import (
 
 	svrcmd "github.com/cosmos/cosmos-sdk/server/cmd"
 
-	"github.com/Stride-Labs/stride/v3/app"
+	"github.com/Stride-Labs/stride/v3/cmd/strided/cmd"
 
-	cmdcfg "github.com/Stride-Labs/stride/v3/cmd/strided/config"
+	"github.com/Stride-Labs/stride/v3/app"
 )
 
 func main() {
-	cmdcfg.SetupConfig()
-	cmdcfg.RegisterDenoms()
+	cmd.SetupConfig()
+	cmd.RegisterDenoms()
 
-	rootCmd, _ := NewRootCmd()
+	rootCmd, _ := cmd.NewRootCmd()
 	if err := svrcmd.Execute(rootCmd, app.DefaultNodeHome); err != nil {
 		os.Exit(1)
 	}

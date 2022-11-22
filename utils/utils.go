@@ -13,7 +13,7 @@ import (
 
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
-	config "github.com/Stride-Labs/stride/v3/cmd/strided/config"
+	"github.com/Stride-Labs/stride/v3/cmd/strided/cmd"
 	recordstypes "github.com/Stride-Labs/stride/v3/x/records/types"
 )
 
@@ -154,7 +154,7 @@ func AccAddressFromBech32(address string, bech32prefix string) (addr AccAddress,
 	return AccAddress(bz), nil
 }
 
-//==============================  AIRDROP UTILS  ================================
+// ==============================  AIRDROP UTILS  ================================
 // max64 returns the maximum of its inputs.
 func Max64(i, j int64) int64 {
 	if i > j {
@@ -214,7 +214,7 @@ func ConvertAddressToStrideAddress(address string) string {
 		return ""
 	}
 
-	bech32Addr, err := bech32.ConvertAndEncode(config.Bech32PrefixAccAddr, bz)
+	bech32Addr, err := bech32.ConvertAndEncode(cmd.Bech32PrefixAccAddr, bz)
 	if err != nil {
 		return ""
 	}
