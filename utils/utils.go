@@ -13,7 +13,7 @@ import (
 
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
-	"github.com/Stride-Labs/stride/v3/cmd/strided/cmd"
+	"github.com/Stride-Labs/stride/v3/cmd/strided/cmd/config"
 	recordstypes "github.com/Stride-Labs/stride/v3/x/records/types"
 )
 
@@ -214,7 +214,7 @@ func ConvertAddressToStrideAddress(address string) string {
 		return ""
 	}
 
-	bech32Addr, err := bech32.ConvertAndEncode(cmd.Bech32PrefixAccAddr, bz)
+	bech32Addr, err := bech32.ConvertAndEncode(config.Bech32PrefixAccAddr, bz)
 	if err != nil {
 		return ""
 	}

@@ -27,7 +27,8 @@ import (
 	"github.com/Stride-Labs/stride/v3/x/claim/client/cli"
 
 	"github.com/Stride-Labs/stride/v3/app"
-	"github.com/Stride-Labs/stride/v3/cmd/strided/cmd"
+	"github.com/Stride-Labs/stride/v3/cmd/strided/cmd/config"
+
 	"github.com/Stride-Labs/stride/v3/x/claim/types"
 	claimtypes "github.com/Stride-Labs/stride/v3/x/claim/types"
 )
@@ -40,7 +41,7 @@ var (
 )
 
 func init() {
-	cmd.SetupConfig()
+	config.SetupConfig()
 	addr1 = ed25519.GenPrivKey().PubKey().Address().Bytes()
 	addr2 = ed25519.GenPrivKey().PubKey().Address().Bytes()
 	distributorMnemonics = []string{
