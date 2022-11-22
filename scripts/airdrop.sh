@@ -2,9 +2,6 @@
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 source ${SCRIPT_DIR}/vars.sh
 
-$STRIDE_MAIN_CMD q bank balances stride1nf6v2paty9m22l3ecm7dpakq2c92ueyununayr
-exit
-
 # First, start the network with `make start-docker`
 # Then, run this script with `bash scripts/airdrop.sh`
 
@@ -54,16 +51,17 @@ $STRIDE_MAIN_CMD tx claim create-airdrop osmosis 1666792900 50000000 ustrd --fro
 sleep 5
 $STRIDE_MAIN_CMD tx claim set-airdrop-allocations osmosis stride1nf6v2paty9m22l3ecm7dpakq2c92ueyununayr 1 --from distributor-test-2 -y
 sleep 5
+# Create the JUNO airdrop
 $STRIDE_MAIN_CMD tx claim create-airdrop juno 1666792900 600000000 ustrd --from distributor-test-3 -y
 sleep 5
 $STRIDE_MAIN_CMD tx claim set-airdrop-allocations juno stride1nf6v2paty9m22l3ecm7dpakq2c92ueyununayr 1 --from distributor-test-3 -y
 sleep 5
-# OPTIONAL: Fund ledger
-# LEDGER=""
-# $STRIDE_MAIN_CMD tx bank send val1 $(LEDGER) 600000ustrd --from val1 -y
-# sleep 5
-# $STRIDE_MAIN_CMD tx claim set-airdrop-allocations stride $(LEDGER) 1 --from distributor-test -y
-# sleep 5
+OPTIONAL: Fund ledger
+LEDGER=""
+$STRIDE_MAIN_CMD tx bank send val1 $(LEDGER) 600000ustrd --from val1 -y
+sleep 5
+$STRIDE_MAIN_CMD tx claim set-airdrop-allocations stride $(LEDGER) 1 --from distributor-test -y
+sleep 5
 
 exit
 # AIRDROP CLAIMS
@@ -73,19 +71,19 @@ $STRIDE_MAIN_CMD query bank balances stride1nf6v2paty9m22l3ecm7dpakq2c92ueyununa
 # NOTE: You can claim here using the CLI, or from the frontend!
 # Claim 20% of the free tokens
 echo "Claiming fee amount..."
-$STRIDE_MAIN_CMD tx claim claim-free-amount --from airdrop-test --gas 400000
+$STRIDE_MAIN_CMD tx claim claim-free-amount --from airdrop-test --gas 500000
 sleep 5
 echo "Balance after claim:" 
 $STRIDE_MAIN_CMD query bank balances stride1nf6v2paty9m22l3ecm7dpakq2c92ueyununayr
 # Stake, to claim another 20%
 echo "Staking..."
-$STRIDE_MAIN_CMD tx staking delegate stridevaloper1nnurja9zt97huqvsfuartetyjx63tc5zrj5x9f 100ustrd --from airdrop-test --gas 400000
+$STRIDE_MAIN_CMD tx staking delegate stridevaloper1nnurja9zt97huqvsfuartetyjx63tc5zrj5x9f 100ustrd --from airdrop-test --gas 500000
 sleep 5
 echo "Balance after stake:" 
 $STRIDE_MAIN_CMD query bank balances stride1nf6v2paty9m22l3ecm7dpakq2c92ueyununayr
 # Liquid stake, to claim the final 60% of tokens
 echo "Liquid staking..."
-$STRIDE_MAIN_CMD tx stakeibc liquid-stake 1000 uatom --from airdrop-test --gas 400000
+$STRIDE_MAIN_CMD tx stakeibc liquid-stake 1000 uatom --from airdrop-test --gas 500000
 sleep 5
 echo "Balance after liquid stake:" 
 $STRIDE_MAIN_CMD query bank balances stride1nf6v2paty9m22l3ecm7dpakq2c92ueyununayr
