@@ -8,7 +8,6 @@ import (
 
 	v2 "github.com/Stride-Labs/stride/v3/app/upgrades/v2"
 	v3 "github.com/Stride-Labs/stride/v3/app/upgrades/v3"
-	v4 "github.com/Stride-Labs/stride/v3/app/upgrades/v4"
 	claimtypes "github.com/Stride-Labs/stride/v3/x/claim/types"
 	authzkeeper "github.com/cosmos/cosmos-sdk/x/authz/keeper"
 )
@@ -46,11 +45,7 @@ func (app *StrideApp) setupUpgradeHandlers() {
 	// no store upgrades
 	case "v3":
 		storeUpgrades = &storetypes.StoreUpgrades{
-			Added: []string{claimtypes.StoreKey},
-		}
-	case "v4":
-		storeUpgrades = &storetypes.StoreUpgrades{
-			Added: []string{authzkeeper.StoreKey},
+			Added: []string{claimtypes.StoreKey, authzkeeper.StoreKey},
 		}
 	}
 
