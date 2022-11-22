@@ -8,7 +8,9 @@ import (
 
 	v2 "github.com/Stride-Labs/stride/v3/app/upgrades/v2"
 	v3 "github.com/Stride-Labs/stride/v3/app/upgrades/v3"
+	v4 "github.com/Stride-Labs/stride/v3/app/upgrades/v4"
 	claimtypes "github.com/Stride-Labs/stride/v3/x/claim/types"
+	authzkeeper "github.com/cosmos/cosmos-sdk/x/authz/keeper"
 )
 
 func (app *StrideApp) setupUpgradeHandlers() {
@@ -22,6 +24,11 @@ func (app *StrideApp) setupUpgradeHandlers() {
 	app.UpgradeKeeper.SetUpgradeHandler(
 		v3.UpgradeName,
 		v3.CreateUpgradeHandler(app.mm, app.configurator, app.ClaimKeeper),
+	)
+
+	app.UpgradeKeeper.SetUpgradeHandler(
+		v4.UpgradeName,
+		v4.CreateUpgradeHandler(app.mm, app.configurator, &app.AuthzKeeper),
 	)
 
 	upgradeInfo, err := app.UpgradeKeeper.ReadUpgradeInfoFromDisk()
@@ -40,6 +47,10 @@ func (app *StrideApp) setupUpgradeHandlers() {
 	case "v3":
 		storeUpgrades = &storetypes.StoreUpgrades{
 			Added: []string{claimtypes.StoreKey},
+		}
+	case "v4":
+		storeUpgrades = &storetypes.StoreUpgrades{
+			Added: []string{authzkeeper.StoreKey},
 		}
 	}
 
