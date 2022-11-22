@@ -13,6 +13,8 @@ import (
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 
 	"github.com/Stride-Labs/stride/v3/x/interchainquery/types"
+
+	"cosmossdk.io/math"
 )
 
 // Keeper of this module maintains collections of registered zones.
@@ -47,7 +49,7 @@ func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 	return ctx.Logger().With("module", fmt.Sprintf("x/%s", types.ModuleName))
 }
 
-func (k *Keeper) MakeRequest(ctx sdk.Context, connectionId string, chainId string, queryType string, request []byte, period sdk.Int, module string, callbackId string, ttl uint64, height int64) error {
+func (k *Keeper) MakeRequest(ctx sdk.Context, connectionId string, chainId string, queryType string, request []byte, period math.Int, module string, callbackId string, ttl uint64, height int64) error {
 	k.Logger(ctx).Info(
 		"MakeRequest",
 		"connectionId", connectionId,
