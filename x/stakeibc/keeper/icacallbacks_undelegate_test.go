@@ -279,17 +279,17 @@ func (s *KeeperTestSuite) TestGetLatestCompletionTime_Success() {
 	firstCompletionTime := time.Now().Add(time.Second * time.Duration(10))
 	secondCompletionTime := time.Now().Add(time.Second * time.Duration(20))
 	txMsgData := &sdk.TxMsgData{
-		Data: make([]*sdk.MsgData, 2),
+		Data: make([]*sdk.MsgData, 2), //nolint:staticcheck
 	}
 	data, err := proto.Marshal(&stakingTypes.MsgUndelegateResponse{CompletionTime: firstCompletionTime})
 	s.Require().NoError(err, "marshal error")
-	txMsgData.Data[0] = &sdk.MsgData{
+	txMsgData.Data[0] = &sdk.MsgData{ //nolint:staticcheck
 		MsgType: sdk.MsgTypeURL(&stakingTypes.MsgUndelegate{}),
 		Data:    data,
 	}
 	data, err = proto.Marshal(&stakingTypes.MsgUndelegateResponse{CompletionTime: secondCompletionTime})
 	s.Require().NoError(err, "marshal error")
-	txMsgData.Data[1] = &sdk.MsgData{
+	txMsgData.Data[1] = &sdk.MsgData{ //nolint:staticcheck
 		MsgType: sdk.MsgTypeURL(&stakingTypes.MsgUndelegate{}),
 		Data:    data,
 	}
@@ -302,7 +302,7 @@ func (s *KeeperTestSuite) TestGetLatestCompletionTime_Success() {
 func (s *KeeperTestSuite) TestGetLatestCompletionTime_Failure() {
 	_ = s.SetupUndelegateCallback()
 	txMsgData := &sdk.TxMsgData{
-		Data: make([]*sdk.MsgData, 2),
+		Data: make([]*sdk.MsgData, 2), //nolint:staticcheck
 	}
 	_, err := s.App.StakeibcKeeper.GetLatestCompletionTime(s.Ctx(), txMsgData)
 	s.Require().EqualError(err, "msgResponseBytes or msgResponseBytes.Data is nil: TxMsgData invalid")

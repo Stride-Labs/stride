@@ -268,7 +268,7 @@ func CopyConnectionAndClientToPath(path *ibctesting.Path, pathToCopy *ibctesting
 
 func (s *AppTestHelper) ICAPacketAcknowledgement(msgs []sdk.Msg, msgResponse *proto.Message) channeltypes.Acknowledgement {
 	txMsgData := &sdk.TxMsgData{
-		Data: make([]*sdk.MsgData, len(msgs)),
+		Data: make([]*sdk.MsgData, len(msgs)), //nolint:staticcheck
 	}
 	for i, msg := range msgs {
 		var data []byte
@@ -280,7 +280,7 @@ func (s *AppTestHelper) ICAPacketAcknowledgement(msgs []sdk.Msg, msgResponse *pr
 		} else {
 			data = []byte("msg_response")
 		}
-		txMsgData.Data[i] = &sdk.MsgData{
+		txMsgData.Data[i] = &sdk.MsgData{ //nolint:staticcheck
 			MsgType: sdk.MsgTypeURL(msg),
 			Data:    data,
 		}
