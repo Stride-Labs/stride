@@ -28,7 +28,7 @@ func (app *StrideApp) setupUpgradeHandlers() {
 
 	app.UpgradeKeeper.SetUpgradeHandler(
 		v4.UpgradeName,
-		v4.CreateUpgradeHandler(app.mm, app.configurator, &app.AuthzKeeper),
+		v4.CreateUpgradeHandler(app.mm, app.configurator),
 	)
 
 	upgradeInfo, err := app.UpgradeKeeper.ReadUpgradeInfoFromDisk()
