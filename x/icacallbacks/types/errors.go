@@ -3,7 +3,6 @@ package types
 // DONTCOVER
 
 import (
-	"errors"
 	"fmt"
 )
 
