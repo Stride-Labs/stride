@@ -44,16 +44,31 @@ func (k msgServer) RestoreInterchainAccount(goCtx context.Context, msg *types.Ms
 
 	// If we're restoring a delegation account, we also have to reset record state
 	if msg.AccountType == types.ICAAccountType_DELEGATION {
-		depositRecords := k.RecordsKeeper.GetAllDepositRecord(ctx)
 		// revert DELEGATION_IN_PROGRESS records for the closed ICA channel (so that they can be staked)
-		for _, record := range depositRecords {
+		depositRecords := k.RecordsKeeper.GetAllDepositRecord(ctx)
+		for _, depositRecord := range depositRecords {
 			// only revert records for the select host zone
-			if record.HostZoneId == hostZone.ChainId && record.Status == recordtypes.DepositRecord_DELEGATION_IN_PROGRESS {
-				record.Status = recordtypes.DepositRecord_DELEGATION_QUEUE
-				k.Logger(ctx).Error(fmt.Sprintf("Setting DepositRecord %d to status DepositRecord_DELEGATION_IN_PROGRESS", record.Id))
-				k.RecordsKeeper.SetDepositRecord(ctx, record)
+			if depositRecord.HostZoneId == hostZone.ChainId && depositRecord.Status == recordtypes.DepositRecord_DELEGATION_IN_PROGRESS {
+				depositRecord.Status = recordtypes.DepositRecord_DELEGATION_QUEUE
+				k.Logger(ctx).Info(fmt.Sprintf("Setting DepositRecord %d to status DepositRecord_DELEGATION_IN_PROGRESS", depositRecord.Id))
+				k.RecordsKeeper.SetDepositRecord(ctx, depositRecord)
 			}
 		}
+
+		// revert EXIT_TRANSFER_IN_PROGRESS records for the closed ICA channel (so the transfer can be re-submitted)
+		epochUnbondingRecords := k.RecordsKeeper.GetAllEpochUnbondingRecord(ctx)
+		unbondingRecordToRevert := []uint64{}
+		for _, epochUnbondingRecord := range epochUnbondingRecords {
+			// only revert records for the select host zone
+			hostZoneUnbonding, found := k.RecordsKeeper.GetHostZoneUnbondingByChainId(ctx, epochUnbondingRecord.EpochNumber, hostZone.ChainId)
+			if found && hostZoneUnbonding.Status == recordtypes.HostZoneUnbonding_EXIT_TRANSFER_IN_PROGRESS {
+				k.Logger(ctx).Info(fmt.Sprintf("Setting %s HostZoneUnbonding at EpochNumber %d to status HostZoneUnbonding_EXIT_TRANSFER_QUEUE ",
+					hostZone.ChainId, epochUnbondingRecord.EpochNumber,
+				))
+				unbondingRecordToRevert = append(unbondingRecordToRevert, epochUnbondingRecord.EpochNumber)
+			}
+		}
+		k.RecordsKeeper.SetHostZoneUnbondings(ctx, hostZone, unbondingRecordToRevert, recordtypes.HostZoneUnbonding_EXIT_TRANSFER_QUEUE)
 	}
 
 	return &types.MsgRestoreInterchainAccountResponse{}, nil

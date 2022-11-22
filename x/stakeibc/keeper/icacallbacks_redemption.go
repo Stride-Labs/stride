@@ -54,10 +54,6 @@ func RedemptionCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, a
 	if ack == nil {
 		// handle timeout
 		k.Logger(ctx).Error(fmt.Sprintf("RedemptionCallback timeout, ack is nil, packet %v", packet))
-		err = k.RecordsKeeper.SetHostZoneUnbondings(ctx, zone, redemptionCallback.EpochUnbondingRecordIds, recordstypes.HostZoneUnbonding_EXIT_TRANSFER_QUEUE)
-		if err != nil {
-			return err
-		}
 		return nil
 	}
 
