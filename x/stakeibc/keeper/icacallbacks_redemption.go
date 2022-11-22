@@ -66,14 +66,14 @@ func RedemptionCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, a
 	if len(txMsgData.Data) == 0 {
 		// handle tx failure
 		k.Logger(ctx).Error(fmt.Sprintf("RedemptionCallback tx failed, txMsgData is empty, ack error, packet %v", packet))
-		err = k.RecordsKeeper.SetHostZoneUnbondings(ctx, zone, redemptionCallback.EpochUnbondingRecordIds, recordstypes.HostZoneUnbonding_EXIT_TRANSFER_QUEUE)
+		err = k.RecordsKeeper.SetHostZoneUnbondings(ctx, zone.ChainId, redemptionCallback.EpochUnbondingRecordIds, recordstypes.HostZoneUnbonding_EXIT_TRANSFER_QUEUE)
 		if err != nil {
 			return err
 		}
 		return nil
 	}
 
-	err = k.RecordsKeeper.SetHostZoneUnbondings(ctx, zone, redemptionCallback.EpochUnbondingRecordIds, recordstypes.HostZoneUnbonding_CLAIMABLE)
+	err = k.RecordsKeeper.SetHostZoneUnbondings(ctx, zone.ChainId, redemptionCallback.EpochUnbondingRecordIds, recordstypes.HostZoneUnbonding_CLAIMABLE)
 	if err != nil {
 		return err
 	}

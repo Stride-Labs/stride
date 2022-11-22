@@ -68,7 +68,7 @@ func (k msgServer) RestoreInterchainAccount(goCtx context.Context, msg *types.Ms
 				unbondingRecordToRevert = append(unbondingRecordToRevert, epochUnbondingRecord.EpochNumber)
 			}
 		}
-		k.RecordsKeeper.SetHostZoneUnbondings(ctx, hostZone, unbondingRecordToRevert, recordtypes.HostZoneUnbonding_EXIT_TRANSFER_QUEUE)
+		k.RecordsKeeper.SetHostZoneUnbondings(ctx, hostZone.ChainId, unbondingRecordToRevert, recordtypes.HostZoneUnbonding_EXIT_TRANSFER_QUEUE)
 	}
 
 	return &types.MsgRestoreInterchainAccountResponse{}, nil
