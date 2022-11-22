@@ -95,8 +95,8 @@ func (k Keeper) GetUnbondingAmountAndRecords(ctx sdk.Context, hostZone types.Hos
 	return totalAmtToUnbond, epochUnbondingRecordIds
 }
 
-func (k Keeper) DistributeUnbondingAmountToValidators(ctx sdk.Context, hostZone types.HostZone, totalAmtToUnbond uint64) (map[string]int64, error) {
-	valAddrToUnbondAmt := make(map[string]int64)
+func (k Keeper) DistributeUnbondingAmountToValidators(ctx sdk.Context, hostZone types.HostZone, totalAmtToUnbond uint64) (valAddrToUnbondAmt map[string]int64, err error) {
+	valAddrToUnbondAmt = make(map[string]int64)
 	validators := hostZone.GetValidators()
 	newUnbondingToValidator, err := k.GetTargetValAmtsForHostZone(ctx, hostZone, totalAmtToUnbond)
 	if err != nil {
@@ -104,7 +104,6 @@ func (k Keeper) DistributeUnbondingAmountToValidators(ctx sdk.Context, hostZone 
 		k.Logger(ctx).Error(errMsg)
 		return nil, sdkerrors.Wrap(types.ErrNoValidatorAmts, errMsg)
 	}
-	// valAddrToUnbondAmt := make(map[string]int64)
 	overflowAmt := uint64(0)
 	for _, validator := range validators {
 		valAddr := validator.GetAddress()
