@@ -57,11 +57,6 @@ func UndelegateCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, a
 	// handle transaction failure cases
 	if ack == nil {
 		// handle timeout
-		// reset to UNBONDING_QUEUE
-		err = k.RecordsKeeper.SetHostZoneUnbondings(ctx, zone.ChainId, undelegateCallback.EpochUnbondingRecordIds, recordstypes.HostZoneUnbonding_UNBONDING_QUEUE)
-		if err != nil {
-			return err
-		}
 		k.Logger(ctx).Error(fmt.Sprintf("UndelegateCallback timeout, txMsgData is nil, packet %v", packet))
 		return nil
 	}
