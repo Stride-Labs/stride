@@ -213,13 +213,6 @@ setup_file() {
 
 # check that a second liquid staking call kicks off reinvestment
 @test "[INTEGRATION-BASIC-$CHAIN_NAME] rewards are being reinvested, exchange rate updating" {
-  # QUESTION: I trimmed down this test a lot
-  # My thinking was that this test essentially tests: a) liquid stake again, and b) redemption rate increased
-  # We already test that liquid stake works in the tests above, and the redemption rate will increase by passive accounting 
-  #  after the redemption test (i.e. we don't need to liquid stake again in order to trigger it)
-  # That said, I think just checking that the redemption rate is greater than 1 gives us the same test coverage
-  # and speeds up this test A TON (8+ minutes faster, per host)
-
   # check that the exchange rate has increased (i.e. redemption rate is greater than 1)
   MULT=1000000
   redemption_rate=$($STRIDE_MAIN_CMD q stakeibc show-host-zone $HOST_CHAIN_ID | grep -Fiw 'redemption_rate' | grep -Eo '[+-]?[0-9]+([.][0-9]+)?')
