@@ -9,7 +9,6 @@ import (
 	recordstypes "github.com/Stride-Labs/stride/v3/x/records/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	bankTypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 
 	epochstypes "github.com/Stride-Labs/stride/v3/x/epochs/types"
@@ -30,12 +29,12 @@ func (k msgServer) ClaimUndelegatedTokens(goCtx context.Context, msg *types.MsgC
 	if err != nil {
 		errMsg := fmt.Sprintf("unable to find claimable redemption record for msg: %v, error %s", msg, err.Error())
 		k.Logger(ctx).Error(errMsg)
-		return nil, sdkerrors.Wrap(types.ErrRecordNotFound, errMsg)
+		return nil, fmt.Errorf(types.ErrRecordNotFound.Error(), errMsg)
 	}
 
 	icaTx, err := k.GetRedemptionTransferMsg(ctx, userRedemptionRecord, msg.HostZoneId)
 	if err != nil {
-		return nil, sdkerrors.Wrap(err, "unable to build redemption transfer message")
+		return nil, fmt.Errorf(err.Error(), "unable to build redemption transfer message")
 	}
 
 	// add callback data
@@ -46,12 +45,12 @@ func (k msgServer) ClaimUndelegatedTokens(goCtx context.Context, msg *types.MsgC
 	}
 	marshalledCallbackArgs, err := k.MarshalClaimCallbackArgs(ctx, claimCallback)
 	if err != nil {
-		return nil, sdkerrors.Wrap(err, "unable to marshal claim callback args")
+		return nil, fmt.Errorf(err.Error(), "unable to marshal claim callback args")
 	}
 	_, err = k.SubmitTxs(ctx, icaTx.ConnectionId, icaTx.Msgs, icaTx.Account, icaTx.Timeout, ICACallbackID_Claim, marshalledCallbackArgs)
 	if err != nil {
 		k.Logger(ctx).Error(fmt.Sprintf("Submit tx error: %s", err.Error()))
-		return nil, sdkerrors.Wrap(err, "unable to submit ICA redemption tx")
+		return nil, fmt.Errorf(err.Error(), "unable to submit ICA redemption tx")
 	}
 
 	// Set claimIsPending to true, so that the record can't be double claimed
@@ -68,7 +67,7 @@ func (k Keeper) GetClaimableRedemptionRecord(ctx sdk.Context, msg *types.MsgClai
 	if !found {
 		errMsg := fmt.Sprintf("User redemption record %s not found on host zone %s", userRedemptionRecordKey, msg.HostZoneId)
 		k.Logger(ctx).Error(errMsg)
-		return nil, sdkerrors.Wrap(types.ErrInvalidUserRedemptionRecord, errMsg)
+		return nil, fmt.Errorf(types.ErrInvalidUserRedemptionRecord.Error(), errMsg)
 	}
 
 	// check that the record is claimable
@@ -99,19 +98,19 @@ func (k Keeper) GetRedemptionTransferMsg(ctx sdk.Context, userRedemptionRecord *
 	if !found {
 		errMsg := fmt.Sprintf("Host zone %s not found", hostZoneId)
 		k.Logger(ctx).Error(errMsg)
-		return nil, sdkerrors.Wrap(types.ErrInvalidHostZone, errMsg)
+		return nil, fmt.Errorf(types.ErrInvalidHostZone.Error(), errMsg)
 	}
 	redemptionAccount, found := k.GetRedemptionAccount(ctx, hostZone)
 	if !found {
 		errMsg := fmt.Sprintf("Redemption account not found for host zone %s", hostZoneId)
 		k.Logger(ctx).Error(errMsg)
-		return nil, sdkerrors.Wrap(types.ErrInvalidHostZone, errMsg)
+		return nil, fmt.Errorf(types.ErrInvalidHostZone.Error(), errMsg)
 	}
 
 	var msgs []sdk.Msg
 	rrAmt, err := cast.ToInt64E(userRedemptionRecord.Amount)
 	if err != nil {
-		return nil, sdkerrors.Wrap(types.ErrInvalidUserRedemptionRecord, err.Error())
+		return nil, fmt.Errorf(types.ErrInvalidUserRedemptionRecord.Error(), err.Error())
 	}
 	msgs = append(msgs, &bankTypes.MsgSend{
 		FromAddress: redemptionAccount.Address,
@@ -124,7 +123,7 @@ func (k Keeper) GetRedemptionTransferMsg(ctx sdk.Context, userRedemptionRecord *
 	if !found {
 		errMsg := fmt.Sprintf("Epoch tracker not found for epoch %s", epochstypes.STRIDE_EPOCH)
 		k.Logger(ctx).Error(errMsg)
-		return nil, sdkerrors.Wrap(types.ErrEpochNotFound, errMsg)
+		return nil, fmt.Errorf(types.ErrEpochNotFound.Error(), errMsg)
 	}
 	icaTimeOutNanos := k.GetParam(ctx, types.KeyICATimeoutNanos)
 	nextEpochStarttime := epochTracker.NextEpochStartTime

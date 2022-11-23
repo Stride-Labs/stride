@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/spf13/cast"
 
 	epochtypes "github.com/Stride-Labs/stride/v3/x/epochs/types"
@@ -65,7 +64,7 @@ func (k msgServer) LiquidStake(goCtx context.Context, msg *types.MsgLiquidStake)
 	err = k.bankKeeper.SendCoins(ctx, sender, bech32ZoneAddress, sdk.NewCoins(inCoin))
 	if err != nil {
 		k.Logger(ctx).Error("failed to send tokens from Account to Module")
-		return nil, sdkerrors.Wrap(err, "failed to send tokens from Account to Module")
+		return nil, fmt.Errorf(err.Error(), "failed to send tokens from Account to Module")
 	}
 	// mint user `amount` of the corresponding stAsset
 	// NOTE: We should ensure that denoms are unique - we don't want anyone spoofing denoms

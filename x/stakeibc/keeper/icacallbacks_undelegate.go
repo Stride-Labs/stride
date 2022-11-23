@@ -12,7 +12,6 @@ import (
 	"github.com/Stride-Labs/stride/v3/x/stakeibc/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	channeltypes "github.com/cosmos/ibc-go/v3/modules/core/04-channel/types"
 	"github.com/golang/protobuf/proto" //nolint:staticcheck
@@ -137,7 +136,7 @@ func (k Keeper) GetLatestCompletionTime(ctx sdk.Context, txMsgData *sdk.TxMsgDat
 	for _, msgResponseBytes := range txMsgData.Data {
 		var undelegateResponse stakingtypes.MsgUndelegateResponse
 		if msgResponseBytes == nil || msgResponseBytes.Data == nil {
-			return nil, sdkerrors.Wrap(types.ErrTxMsgDataInvalid, "msgResponseBytes or msgResponseBytes.Data is nil")
+			return nil, fmt.Errorf(types.ErrTxMsgDataInvalid.Error(), "msgResponseBytes or msgResponseBytes.Data is nil")
 		}
 		err := proto.Unmarshal(msgResponseBytes.Data, &undelegateResponse)
 		if err != nil {

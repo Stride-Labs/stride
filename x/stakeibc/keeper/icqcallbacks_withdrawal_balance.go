@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/spf13/cast"
 
@@ -80,7 +79,7 @@ func WithdrawalBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query icq
 	// check that stride commission is between 0 and 1
 	strideCommission := sdk.NewDec(strideCommissionInt).Quo(sdk.NewDec(100))
 	if strideCommission.LT(sdk.ZeroDec()) || strideCommission.GT(sdk.OneDec()) {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "Aborting reinvestment callback -- Stride commission must be between 0 and 1!")
+		return fmt.Errorf("Aborting reinvestment callback -- Stride commission must be between 0 and 1!")
 	}
 
 	withdrawalBalanceAmount := withdrawalBalanceCoin.Amount
@@ -93,7 +92,7 @@ func WithdrawalBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query icq
 	// TODO(TEST-112) safety check, balances should add to original amount
 	if (strideClaimFloored.Int64() + reinvestAmountCeil.Int64()) != withdrawalBalanceAmount.Int64() {
 		ctx.Logger().Error(fmt.Sprintf("Error with withdraw logic: %d, Fee portion: %d, reinvestPortion %d", withdrawalBalanceAmount.Int64(), strideClaimFloored.Int64(), reinvestAmountCeil.Int64()))
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "Failed to subdivide rewards to feeAccount and delegationAccount")
+		return fmt.Errorf("Failed to subdivide rewards to feeAccount and delegationAccount")
 	}
 	strideCoin := sdk.NewCoin(withdrawalBalanceCoin.Denom, strideClaimFloored)
 	reinvestCoin := sdk.NewCoin(withdrawalBalanceCoin.Denom, reinvestAmountCeil)
