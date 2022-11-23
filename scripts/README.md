@@ -110,8 +110,8 @@ paths:
       rule: ""
       channel-list: []
 ```
-* Finally add the host zone to the `HOST_CHAINS` array in `scripts/start_network.sh`
+* To enable the the new host zone, include it in the `HOST_CHAINS` array in `scripts/start_network.sh`. **Note: You can only run up to 4 host zones at once.**
 ```
-HOST_CHAINS=(GAIA JUNO OSMO ... {NEW-HOST-ZONE})
+HOST_CHAINS=(GAIA {NEW-HOST-ZONE})
 ```
 * And that's it! Just start the network as normal, and make sure to rebuild the new host zone when running for the first time.  
