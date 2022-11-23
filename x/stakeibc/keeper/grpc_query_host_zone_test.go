@@ -1,8 +1,10 @@
 package keeper_test
 
 import (
+	// "errors"
 	"fmt"
 	"strconv"
+	// "strconv"
 	"testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -52,6 +54,8 @@ func TestHostZoneQuerySingle(t *testing.T) {
 		t.Run(tc.desc, func(t *testing.T) {
 			response, err := keeper.HostZone(wctx, tc.request)
 			if tc.err != nil {
+				x, ok := err.(interface{ Is(error) bool })
+				fmt.Println(x, ok)
 				require.ErrorIs(t, err, tc.err)
 			} else {
 				require.NoError(t, err)
