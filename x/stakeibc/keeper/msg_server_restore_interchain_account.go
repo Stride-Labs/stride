@@ -63,6 +63,7 @@ func (k msgServer) RestoreInterchainAccount(goCtx context.Context, msg *types.Ms
 			// only revert records for the select host zone
 			hostZoneUnbonding, found := k.RecordsKeeper.GetHostZoneUnbondingByChainId(ctx, epochUnbondingRecord.EpochNumber, hostZone.ChainId)
 			if !found {
+                                 k.Logger(ctx).Info(fmt.Sprintf("No HostZoneUnbonding found for chainId: %s, epoch: %d", hostZone.ChainId, epochUnbondingRecord.EpochNumber))
 				continue
 			}
 
