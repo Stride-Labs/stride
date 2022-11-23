@@ -68,6 +68,6 @@ func (s *KeeperTestSuite) TestSequence_Equal() {
 	checkSequence := msgTransferResponse.Sequence
 	s.Require().True(found)
 
-	// Confirm deposit record has been updated to TRANSFER_IN_PROGRESS
+	// Confirm msg sequence are equal to next sequence
 	s.Require().Equal(checkSequence, sequence, "sequence should be equal")
 }
