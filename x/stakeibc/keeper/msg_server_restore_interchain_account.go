@@ -57,7 +57,7 @@ func (k msgServer) RestoreInterchainAccount(goCtx context.Context, msg *types.Ms
 
 		// revert EXIT_TRANSFER_IN_PROGRESS records for the closed ICA channel (so the transfer can be re-submitted)
 		epochUnbondingRecords := k.RecordsKeeper.GetAllEpochUnbondingRecord(ctx)
-		unbondingRecordToRevert := []uint64{}
+		unbondingRecordsToRevert := []uint64{}
 		for _, epochUnbondingRecord := range epochUnbondingRecords {
 			// only revert records for the select host zone
 			hostZoneUnbonding, found := k.RecordsKeeper.GetHostZoneUnbondingByChainId(ctx, epochUnbondingRecord.EpochNumber, hostZone.ChainId)
@@ -65,10 +65,16 @@ func (k msgServer) RestoreInterchainAccount(goCtx context.Context, msg *types.Ms
 				k.Logger(ctx).Info(fmt.Sprintf("Setting %s HostZoneUnbonding at EpochNumber %d to status HostZoneUnbonding_EXIT_TRANSFER_QUEUE ",
 					hostZone.ChainId, epochUnbondingRecord.EpochNumber,
 				))
-				unbondingRecordToRevert = append(unbondingRecordToRevert, epochUnbondingRecord.EpochNumber)
+				unbondingRecordsToRevert = append(unbondingRecordsToRevert, epochUnbondingRecord.EpochNumber)
 			}
 		}
-		k.RecordsKeeper.SetHostZoneUnbondings(ctx, hostZone.ChainId, unbondingRecordToRevert, recordtypes.HostZoneUnbonding_EXIT_TRANSFER_QUEUE)
+		err := k.RecordsKeeper.SetHostZoneUnbondings(ctx, hostZone.ChainId, unbondingRecordsToRevert, recordtypes.HostZoneUnbonding_EXIT_TRANSFER_QUEUE)
+		if err != nil {
+			errMsg := fmt.Sprintf("unable to update host zone unbonding record status to %s for chainId: %s and epochUnbondingRecordIds: %v, err: %s",
+				recordtypes.HostZoneUnbonding_EXIT_TRANSFER_QUEUE.String(), hostZone.ChainId, unbondingRecordsToRevert, err)
+			k.Logger(ctx).Error(errMsg)
+			return nil, err
+		}
 	}
 
 	return &types.MsgRestoreInterchainAccountResponse{}, nil
