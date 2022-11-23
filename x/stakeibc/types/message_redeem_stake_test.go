@@ -1,10 +1,10 @@
 package types
 
 import (
+	"fmt"
 	"math"
 	"testing"
 
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/stretchr/testify/require"
 
 	"github.com/Stride-Labs/stride/v3/testutil/sample"
@@ -33,7 +33,7 @@ func TestMsgRedeemStake_ValidateBasic(t *testing.T) {
 				Receiver: sample.AccAddress(),
 				Amount:   uint64(1),
 			},
-			err: sdkerrors.ErrInvalidAddress,
+			err: fmt.Errorf("invalid address"),
 		},
 		{
 			name: "no host zone",

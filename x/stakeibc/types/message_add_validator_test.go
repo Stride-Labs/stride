@@ -1,9 +1,9 @@
 package types
 
 import (
+	fmt "fmt"
 	"testing"
 
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/stretchr/testify/require"
 
 	"github.com/Stride-Labs/stride/v3/testutil/sample"
@@ -20,13 +20,13 @@ func TestMsgAddValidator_ValidateBasic(t *testing.T) {
 			msg: MsgAddValidator{
 				Creator: "invalid_address",
 			},
-			err: sdkerrors.ErrInvalidAddress,
+			err: fmt.Errorf("invalid creator address"),
 		}, {
 			name: "valid but not whitelisted address",
 			msg: MsgAddValidator{
 				Creator: sample.AccAddress(),
 			},
-			err: sdkerrors.ErrInvalidAddress,
+			err: fmt.Errorf("invalid creator address"),
 		},
 	}
 	for _, tt := range tests {

@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	icatypes "github.com/cosmos/ibc-go/v3/modules/apps/27-interchain-accounts/types"
 
 	recordtypes "github.com/Stride-Labs/stride/v3/x/records/types"
@@ -34,7 +33,7 @@ func (k msgServer) RestoreInterchainAccount(goCtx context.Context, msg *types.Ms
 	if !exists {
 		errMsg := fmt.Sprintf("ICA controller account address not found: %s", owner)
 		k.Logger(ctx).Error(errMsg)
-		return nil, sdkerrors.Wrapf(types.ErrInvalidInterchainAccountAddress, errMsg)
+		return nil, fmt.Errorf(types.ErrInvalidInterchainAccountAddress.Error(), errMsg)
 	}
 
 	if err := k.ICAControllerKeeper.RegisterInterchainAccount(ctx, hostZone.ConnectionId, owner); err != nil {

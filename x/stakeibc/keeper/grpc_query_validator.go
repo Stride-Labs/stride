@@ -2,9 +2,9 @@ package keeper
 
 import (
 	"context"
+	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -19,7 +19,7 @@ func (k Keeper) Validators(c context.Context, req *types.QueryGetValidatorsReque
 
 	hostZone, found := k.GetHostZone(ctx, req.ChainId)
 	if !found {
-		return nil, sdkerrors.ErrKeyNotFound
+		return nil, fmt.Errorf("key not found")
 	}
 
 	return &types.QueryGetValidatorsResponse{Validators: hostZone.Validators}, nil

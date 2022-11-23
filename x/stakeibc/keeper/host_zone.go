@@ -69,7 +69,7 @@ func (k Keeper) GetHostZoneFromHostDenom(ctx sdk.Context, denom string) (*types.
 	if matchZone.ChainId != "" {
 		return &matchZone, nil
 	}
-	return nil, sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "No HostZone for %s found", denom)
+	return nil, fmt.Errorf("no HostZone for %s found", denom)
 }
 
 // RemoveHostZone removes a hostZone from the store
@@ -186,7 +186,7 @@ func (k Keeper) RemoveValidatorFromHostZone(ctx sdk.Context, chainId string, val
 	if !found {
 		errMsg := fmt.Sprintf("HostZone (%s) not found", chainId)
 		k.Logger(ctx).Error(errMsg)
-		return sdkerrors.Wrapf(types.ErrHostZoneNotFound, errMsg)
+		return fmt.Errorf(types.ErrHostZoneNotFound.Error(), errMsg)
 	}
 	for i, val := range hostZone.Validators {
 		if val.GetAddress() == validatorAddress {
@@ -203,7 +203,7 @@ func (k Keeper) RemoveValidatorFromHostZone(ctx sdk.Context, chainId string, val
 	}
 	errMsg := fmt.Sprintf("Validator address (%s) not found on host zone (%s)", validatorAddress, chainId)
 	k.Logger(ctx).Error(errMsg)
-	return sdkerrors.Wrapf(types.ErrValidatorNotFound, errMsg)
+	return fmt.Errorf(types.ErrValidatorNotFound.Error(), errMsg)
 }
 
 // GetHostZoneFromIBCDenom returns a HostZone from a IBCDenom
@@ -219,7 +219,7 @@ func (k Keeper) GetHostZoneFromIBCDenom(ctx sdk.Context, denom string) (*types.H
 	if matchZone.ChainId != "" {
 		return &matchZone, nil
 	}
-	return nil, sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "No HostZone for %s found", denom)
+	return nil, fmt.Errorf("no HostZone for %s found", denom)
 }
 
 // IterateHostZones iterates zones

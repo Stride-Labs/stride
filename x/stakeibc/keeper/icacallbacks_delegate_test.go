@@ -45,12 +45,12 @@ func (s *KeeperTestSuite) SetupDelegateCallback() DelegateCallbackTestCase {
 	val1RelAmt := int64(120_000)
 	val2RelAmt := int64(180_000)
 
-	val1 := types.Validator{
+	val1 := stakeibc.Validator{
 		Name:          "val1",
 		Address:       "val1_address",
 		DelegationAmt: val1Bal,
 	}
-	val2 := types.Validator{
+	val2 := stakeibc.Validator{
 		Name:          "val2",
 		Address:       "val2_address",
 		DelegationAmt: val2Bal,
@@ -77,18 +77,18 @@ func (s *KeeperTestSuite) SetupDelegateCallback() DelegateCallbackTestCase {
 	var msgs []sdk.Msg
 	msgs = append(msgs, &stakingTypes.MsgDelegate{}, &stakingTypes.MsgDelegate{})
 	ack := s.ICAPacketAcknowledgement(msgs, nil)
-	val1SplitDelegation := types.SplitDelegation{
+	val1SplitDelegation := stakeibc.SplitDelegation{
 		Validator: val1.Address,
 		Amount:    uint64(val1RelAmt),
 	}
-	val2SplitDelegation := types.SplitDelegation{
+	val2SplitDelegation := stakeibc.SplitDelegation{
 		Validator: val2.Address,
 		Amount:    uint64(val2RelAmt),
 	}
-	callbackArgs := types.DelegateCallback{
+	callbackArgs := stakeibc.DelegateCallback{
 		HostZoneId:       HostChainId,
 		DepositRecordId:  depositRecord.Id,
-		SplitDelegations: []*types.SplitDelegation{&val1SplitDelegation, &val2SplitDelegation},
+		SplitDelegations: []*stakeibc.SplitDelegation{&val1SplitDelegation, &val2SplitDelegation},
 	}
 	args, err := s.App.StakeibcKeeper.MarshalDelegateCallbackArgs(s.Ctx(), callbackArgs)
 	s.Require().NoError(err)
@@ -197,14 +197,14 @@ func (s *KeeperTestSuite) TestDelegateCallback_HostNotFound() {
 func (s *KeeperTestSuite) TestDelegateCallback_BigAmount() {
 	tc := s.SetupDelegateCallback()
 	invalidArgs := tc.validArgs
-	badSplitDelegation := types.SplitDelegation{
+	badSplitDelegation := stakeibc.SplitDelegation{
 		Validator: "address",
 		Amount:    math.MaxUint64,
 	}
-	callbackArgs := types.DelegateCallback{
+	callbackArgs := stakeibc.DelegateCallback{
 		HostZoneId:       HostChainId,
 		DepositRecordId:  1,
-		SplitDelegations: []*types.SplitDelegation{&badSplitDelegation},
+		SplitDelegations: []*stakeibc.SplitDelegation{&badSplitDelegation},
 	}
 	args, err := s.App.StakeibcKeeper.MarshalDelegateCallbackArgs(s.Ctx(), callbackArgs)
 	s.Require().NoError(err)
@@ -218,14 +218,14 @@ func (s *KeeperTestSuite) TestDelegateCallback_BigAmount() {
 func (s *KeeperTestSuite) TestDelegateCallback_MissingValidator() {
 	tc := s.SetupDelegateCallback()
 	invalidArgs := tc.validArgs
-	badSplitDelegation := types.SplitDelegation{
+	badSplitDelegation := stakeibc.SplitDelegation{
 		Validator: "address_dne",
 		Amount:    1234,
 	}
-	callbackArgs := types.DelegateCallback{
+	callbackArgs := stakeibc.DelegateCallback{
 		HostZoneId:       HostChainId,
 		DepositRecordId:  1,
-		SplitDelegations: []*types.SplitDelegation{&badSplitDelegation},
+		SplitDelegations: []*stakeibc.SplitDelegation{&badSplitDelegation},
 	}
 	args, err := s.App.StakeibcKeeper.MarshalDelegateCallbackArgs(s.Ctx(), callbackArgs)
 	s.Require().NoError(err)

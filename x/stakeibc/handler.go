@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 
@@ -56,8 +55,8 @@ func NewHandler(k keeper.Keeper) sdk.Handler {
 			return sdk.WrapServiceResult(ctx, res, err)
 			// this line is used by starport scaffolding # 1
 		default:
-			errMsg := fmt.Sprintf("unrecognized %s message type: %T", types.ModuleName, msg)
-			return nil, sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, errMsg)
+			errMsg := fmt.Sprintf("Unrecognized %s message type: %T", types.ModuleName, msg)
+			return nil, fmt.Errorf(errMsg)
 		}
 	}
 }
@@ -81,7 +80,7 @@ func NewAddValidatorProposalHandler(k keeper.Keeper) govtypes.Handler {
 			return nil
 
 		default:
-			return sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "unrecognized addValidator proposal content type: %T", c)
+			return fmt.Errorf("unrecognized addValidator proposal content type: %T", c)
 		}
 	}
 }

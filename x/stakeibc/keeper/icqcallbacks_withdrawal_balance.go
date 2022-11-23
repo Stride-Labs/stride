@@ -22,7 +22,7 @@ func WithdrawalBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query icq
 	if !found {
 		errMsg := fmt.Sprintf("no registered zone for queried chain ID (%s)", query.GetChainId())
 		k.Logger(ctx).Error(errMsg)
-		return sdkerrors.Wrapf(types.ErrHostZoneNotFound, errMsg)
+		return fmt.Errorf(types.ErrHostZoneNotFound.Error(), errMsg)
 	}
 
 	// Unmarshal the CB args into a coin type
@@ -31,7 +31,7 @@ func WithdrawalBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query icq
 	if err != nil {
 		errMsg := fmt.Sprintf("unable to unmarshal balance in callback args for zone: %s, err: %s", hostZone.ChainId, err.Error())
 		k.Logger(ctx).Error(errMsg)
-		return sdkerrors.Wrapf(types.ErrMarshalFailure, errMsg)
+		return fmt.Errorf(types.ErrMarshalFailure.Error(), errMsg)
 	}
 
 	// Check if the coin is nil (which would indicate the account never had a balance)
@@ -56,19 +56,19 @@ func WithdrawalBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query icq
 	if withdrawalAccount == nil {
 		errMsg := fmt.Sprintf("WithdrawalBalanceCallback: no withdrawal account found for zone: %s", hostZone.ChainId)
 		k.Logger(ctx).Error(errMsg)
-		return sdkerrors.Wrapf(types.ErrICAAccountNotFound, errMsg)
+		return fmt.Errorf(types.ErrICAAccountNotFound.Error(), errMsg)
 	}
 	delegationAccount := hostZone.GetDelegationAccount()
 	if delegationAccount == nil {
 		errMsg := fmt.Sprintf("WithdrawalBalanceCallback: no delegation account found for zone: %s", hostZone.ChainId)
 		k.Logger(ctx).Error(errMsg)
-		return sdkerrors.Wrapf(types.ErrICAAccountNotFound, errMsg)
+		return fmt.Errorf(types.ErrICAAccountNotFound.Error(), errMsg)
 	}
 	feeAccount := hostZone.GetFeeAccount()
 	if feeAccount == nil {
 		errMsg := fmt.Sprintf("WithdrawalBalanceCallback: no fee account found for zone: %s", hostZone.ChainId)
 		k.Logger(ctx).Error(errMsg)
-		return sdkerrors.Wrapf(types.ErrICAAccountNotFound, errMsg)
+		return fmt.Errorf(types.ErrICAAccountNotFound.Error(), errMsg)
 	}
 
 	params := k.GetParams(ctx)
@@ -131,7 +131,7 @@ func WithdrawalBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query icq
 	if err != nil {
 		errMsg := fmt.Sprintf("Failed to SubmitTxs for %s - %s, Messages: %v | err: %s", hostZone.ChainId, hostZone.ConnectionId, msgs, err.Error())
 		k.Logger(ctx).Error(errMsg)
-		return sdkerrors.Wrapf(types.ErrICATxFailed, errMsg)
+		return fmt.Errorf(types.ErrICATxFailed.Error(), errMsg)
 	}
 
 	ctx.EventManager().EmitEvent(
