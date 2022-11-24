@@ -61,12 +61,12 @@ func (s *KeeperTestSuite) TestSequence_Equal() {
 	goCtx := sdk.WrapSDKContext(s.Ctx())
 	sequence, found := s.App.IBCKeeper.ChannelKeeper.GetNextSequenceSend(s.Ctx(),
 		tc.transferMsg.SourcePort, tc.transferMsg.SourceChannel)
+	s.Require().True(found)
 
 	msgTransferResponse, err := s.App.TransferKeeper.Transfer(goCtx, &tc.transferMsg)
 	s.Require().NoError(err)
 
 	checkSequence := msgTransferResponse.Sequence
-	s.Require().True(found)
 
 	// Confirm msg sequence are equal to next sequence
 	s.Require().Equal(checkSequence, sequence, "sequence should be equal")
