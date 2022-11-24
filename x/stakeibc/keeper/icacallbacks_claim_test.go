@@ -192,7 +192,7 @@ func (s *KeeperTestSuite) TestClaimCallback_RecordNotFound() {
 	validArgs := tc.validArgs
 	s.App.RecordsKeeper.RemoveUserRedemptionRecord(s.Ctx(), tc.initialState.callbackArgs.UserRedemptionRecordId)
 	err := stakeibckeeper.ClaimCallback(s.App.StakeibcKeeper, s.Ctx(), validArgs.packet, validArgs.ack, validArgs.args)
-	s.Require().EqualError(err, fmt.Sprintf("user redemption record not found %s: record not found", tc.initialState.callbackArgs.UserRedemptionRecordId))
+	s.Require().EqualError(err, fmt.Sprintf("record not found%%!(EXTRA string=user redemption record not found, string=GAIA.1.sender)"))
 }
 
 // DecrementHostZoneUnbonding decreases the number of tokens claimed by a user on a particular hzu

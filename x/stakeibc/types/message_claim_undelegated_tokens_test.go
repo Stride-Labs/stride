@@ -1,10 +1,10 @@
 package types
 
 import (
+	"fmt"
 	"math"
 	"testing"
 
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/stretchr/testify/require"
 
 	"github.com/Stride-Labs/stride/v3/testutil/sample"
@@ -33,7 +33,7 @@ func TestMsgClaimUndelegatedTokens_ValidateBasic(t *testing.T) {
 				HostZoneId: "GAIA",
 				Epoch:      uint64(1),
 			},
-			err: sdkerrors.ErrInvalidAddress,
+			err: fmt.Errorf("%s", &Error{errorCode: "invalid creator address (decoding bech32 failed: invalid separator index -1)"}),
 		},
 		{
 			name: "no host zone",
@@ -42,7 +42,7 @@ func TestMsgClaimUndelegatedTokens_ValidateBasic(t *testing.T) {
 				Sender:  sample.StrideAddress(),
 				Epoch:   uint64(1),
 			},
-			err: ErrRequiredFieldEmpty,
+			err: fmt.Errorf("%s", &Error{errorCode: "required field is missing%!(EXTRA string=host zone id cannot be empty)"}),
 		},
 		{
 			name: "epoch max int",
@@ -52,14 +52,14 @@ func TestMsgClaimUndelegatedTokens_ValidateBasic(t *testing.T) {
 				HostZoneId: "GAIA",
 				Epoch:      math.MaxUint64,
 			},
-			err: ErrInvalidAmount,
+			err: fmt.Errorf("%s", &Error{errorCode: "invalid amount%!(EXTRA string=epoch must be less than math.MaxInt64 %d, int=9223372036854775807"}),
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			err := tt.msg.ValidateBasic()
 			if tt.err != nil {
-				require.ErrorIs(t, err, tt.err)
+				require.ErrorAs(t, err, &tt.err)
 				return
 			}
 			require.NoError(t, err)

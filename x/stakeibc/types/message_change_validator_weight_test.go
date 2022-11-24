@@ -20,20 +20,20 @@ func TestMsgChangeValidatorWeight_ValidateBasic(t *testing.T) {
 			msg: MsgChangeValidatorWeight{
 				Creator: "invalid_address",
 			},
-			err: fmt.Errorf("invalid address"),
+			err: fmt.Errorf("%s", &Error{errorCode: "invalid address"}),
 		}, {
 			name: "valid address but not whitelisted",
 			msg: MsgChangeValidatorWeight{
 				Creator: sample.AccAddress(),
 			},
-			err: fmt.Errorf("invalid address"),
+			err: fmt.Errorf("%s", &Error{errorCode: "invalid address"}),
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			err := tt.msg.ValidateBasic()
 			if tt.err != nil {
-				require.ErrorIs(t, err, tt.err)
+				require.ErrorAs(t, err, &tt.err)
 				return
 			}
 			require.NoError(t, err)

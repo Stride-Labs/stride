@@ -40,7 +40,7 @@ func ClaimCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ack *c
 	k.Logger(ctx).Info(fmt.Sprintf("ClaimCallback %v", claimCallback))
 	userRedemptionRecord, found := k.RecordsKeeper.GetUserRedemptionRecord(ctx, claimCallback.GetUserRedemptionRecordId())
 	if !found {
-		return fmt.Errorf(types.ErrRecordNotFound.Error(), "user redemption record not found %s", claimCallback.GetUserRedemptionRecordId())
+		return fmt.Errorf(types.ErrRecordNotFound.Error(), "user redemption record not found", claimCallback.GetUserRedemptionRecordId())
 	}
 
 	// handle timeout

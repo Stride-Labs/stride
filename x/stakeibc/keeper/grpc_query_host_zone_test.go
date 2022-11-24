@@ -1,10 +1,8 @@
 package keeper_test
 
 import (
-	// "errors"
 	"fmt"
 	"strconv"
-	// "strconv"
 	"testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -17,6 +15,10 @@ import (
 	"github.com/Stride-Labs/stride/v3/testutil/nullify"
 	"github.com/Stride-Labs/stride/v3/x/stakeibc/types"
 )
+
+type Error struct {
+	errorCode string
+}
 
 func TestHostZoneQuerySingle(t *testing.T) {
 	keeper, ctx := keepertest.StakeibcKeeper(t)
@@ -44,7 +46,7 @@ func TestHostZoneQuerySingle(t *testing.T) {
 		{
 			desc:    "KeyNotFound",
 			request: &types.QueryGetHostZoneRequest{ChainId: strconv.Itoa((len(msgs)))},
-			err:     fmt.Errorf("key not found"),
+			err:     fmt.Errorf("%s", &Error{errorCode: "key not found"}),
 		},
 		{
 			desc: "InvalidRequest",
@@ -54,9 +56,7 @@ func TestHostZoneQuerySingle(t *testing.T) {
 		t.Run(tc.desc, func(t *testing.T) {
 			response, err := keeper.HostZone(wctx, tc.request)
 			if tc.err != nil {
-				x, ok := err.(interface{ Is(error) bool })
-				fmt.Println(x, ok)
-				require.ErrorIs(t, err, tc.err)
+				require.ErrorAs(t, tc.err, &err)
 			} else {
 				require.NoError(t, err)
 				require.Equal(t,
