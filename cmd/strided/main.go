@@ -7,6 +7,7 @@ import (
 
 	"github.com/Stride-Labs/stride/v3/app"
 
+	cmd "github.com/Stride-Labs/stride/v3/cmd"
 	cmdcfg "github.com/Stride-Labs/stride/v3/cmd/strided/config"
 )
 
@@ -15,6 +16,8 @@ func main() {
 	cmdcfg.RegisterDenoms()
 
 	rootCmd, _ := NewRootCmd()
+	rootCmd.AddCommand(cmd.AddConsumerSectionCmd(app.DefaultNodeHome))
+
 	if err := svrcmd.Execute(rootCmd, app.DefaultNodeHome); err != nil {
 		os.Exit(1)
 	}
