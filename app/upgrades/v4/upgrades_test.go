@@ -8,14 +8,12 @@ import (
 	"github.com/stretchr/testify/suite"
 	abci "github.com/tendermint/tendermint/abci/types"
 
-	"github.com/Stride-Labs/stride/v3/app/apptesting"
 	authz "github.com/cosmos/cosmos-sdk/x/authz"
-)
-var (
-	airdropIdentifiers = []string{"stride", "gaia", "osmosis", "juno", "stars"}
-)
-const dummyUpgradeHeight = 5
 
+	"github.com/Stride-Labs/stride/v3/app/apptesting"
+)
+
+const dummyUpgradeHeight = 5
 
 type UpgradeTestSuite struct {
 	apptesting.AppTestHelper
@@ -46,12 +44,12 @@ func (suite *UpgradeTestSuite) TestUpgrade() {
 			func() {
 				// run upgrade
 				// TODO: Refactor this all into a helper fn
-				
+
 				suite.Context = suite.Context.WithBlockHeight(dummyUpgradeHeight - 1)
 				plan := upgradetypes.Plan{Name: "v4", Height: dummyUpgradeHeight}
 				err := suite.App.UpgradeKeeper.ScheduleUpgrade(suite.Ctx(), plan)
 				suite.Require().NoError(err)
-				plan, exists := suite.App.UpgradeKeeper.GetUpgradePlan(suite.Ctx())
+				_, exists := suite.App.UpgradeKeeper.GetUpgradePlan(suite.Ctx())
 				suite.Require().True(exists)
 
 				suite.Context = suite.Ctx().WithBlockHeight(dummyUpgradeHeight)
