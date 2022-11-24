@@ -1,7 +1,6 @@
 package keeper_test
 
 import (
-	"fmt"
 	"testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -38,7 +37,7 @@ func TestEpochUnbondingRecordQuerySingle(t *testing.T) {
 		{
 			desc:    "KeyNotFound",
 			request: &types.QueryGetEpochUnbondingRecordRequest{EpochNumber: uint64(len(msgs))},
-			err:     fmt.Errorf("Key not found"),
+			err:     status.Error(codes.NotFound, "Key not found"),
 		},
 		{
 			desc: "InvalidRequest",
