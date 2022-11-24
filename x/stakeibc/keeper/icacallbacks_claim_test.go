@@ -231,5 +231,5 @@ func (s *KeeperTestSuite) TestDecrementHostZoneUnbonding_HzuNotFound() {
 	s.Require().True(found, "record has been deleted")
 
 	err := s.App.StakeibcKeeper.DecrementHostZoneUnbonding(s.Ctx(), userRedemptionRecord, tc.initialState.callbackArgs)
-	s.Require().EqualError(err, "host zone unbonding not found GAIA: record not found")
+	s.Require().EqualError(err, "record not found%!(EXTRA string=host zone unbonding not found %s, string=GAIA)")
 }

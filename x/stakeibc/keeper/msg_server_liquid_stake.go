@@ -84,7 +84,7 @@ func (k msgServer) LiquidStake(goCtx context.Context, msg *types.MsgLiquidStake)
 	depositRecord, found := k.RecordsKeeper.GetDepositRecordByEpochAndChain(ctx, strideEpochTracker.EpochNumber, hostZone.ChainId)
 	if !found {
 		k.Logger(ctx).Error("failed to find deposit record")
-		return nil, fmt.Errorf(".Error()no deposit record for epoch (%d)", strideEpochTracker.EpochNumber)
+		return nil, fmt.Errorf("no deposit record for epoch (%d)", strideEpochTracker.EpochNumber)
 	}
 	msgAmt, err := cast.ToInt64E(msg.Amount)
 	if err != nil {

@@ -185,7 +185,7 @@ func (s *KeeperTestSuite) TestDelegateCallback_HostNotFound() {
 	invalidArgs := tc.validArgs
 	s.App.StakeibcKeeper.RemoveHostZone(s.Ctx(), HostChainId)
 	err := stakeibckeeper.DelegateCallback(s.App.StakeibcKeeper, s.Ctx(), invalidArgs.packet, invalidArgs.ack, invalidArgs.args)
-	s.Require().EqualError(err, "host zone not found GAIA: invalid request")
+	s.Require().EqualError(err, "host zone not found GAIA")
 
 	// Confirm deposit record has NOT been removed
 	records := s.App.RecordsKeeper.GetAllDepositRecord(s.Ctx())
@@ -230,6 +230,6 @@ func (s *KeeperTestSuite) TestDelegateCallback_MissingValidator() {
 	args, err := s.App.StakeibcKeeper.MarshalDelegateCallbackArgs(s.Ctx(), callbackArgs)
 	s.Require().NoError(err)
 	err = stakeibckeeper.DelegateCallback(s.App.StakeibcKeeper, s.Ctx(), invalidArgs.packet, invalidArgs.ack, args)
-	s.Require().EqualError(err, "Failed to add delegation to validator: can't change delegation on validator")
+	s.Require().EqualError(err, "can't change delegation on validator%!(EXTRA string=Failed to add delegation to validator)")
 	s.checkDelegateStateIfCallbackFailed(tc)
 }

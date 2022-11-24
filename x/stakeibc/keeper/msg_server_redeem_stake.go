@@ -48,7 +48,7 @@ func (k msgServer) RedeemStake(goCtx context.Context, msg *types.MsgRedeemStake)
 	}
 
 	if msg.Amount > hostZone.StakedBal {
-		return nil, fmt.Errorf(types.ErrInvalidAmount.Error(), "caan amount g.t. staked balance on hos zone: %d", msg.Amount)
+		return nil, fmt.Errorf(types.ErrInvalidAmount.Error(), "can amount g.t. staked balance on host zone: %d", msg.Amount)
 	}
 
 	amt, err := cast.ToInt64E(msg.Amount)
