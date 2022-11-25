@@ -2,10 +2,10 @@ package keeper
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/types/query"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -48,7 +48,7 @@ func (k Keeper) DepositRecord(c context.Context, req *types.QueryGetDepositRecor
 	ctx := sdk.UnwrapSDKContext(c)
 	depositRecord, found := k.GetDepositRecord(ctx, req.Id)
 	if !found {
-		return nil, sdkerrors.ErrKeyNotFound
+		return nil, fmt.Errorf("Key not found")
 	}
 
 	return &types.QueryGetDepositRecordResponse{DepositRecord: depositRecord}, nil

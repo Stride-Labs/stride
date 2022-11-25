@@ -3,6 +3,7 @@ package keeper
 import (
 	"fmt"
 
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/spf13/cast"
 	"github.com/tendermint/tendermint/libs/log"
 
@@ -299,6 +300,5 @@ func (k Keeper) ConfirmValSetHasSpace(ctx sdk.Context, validators []*types.Valid
 		k.Logger(ctx).Error(errMsg)
 		return fmt.Errorf(types.ErrMaxNumValidators.Error(), errMsg)
 	}
-
 	return nil
 }
