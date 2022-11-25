@@ -64,7 +64,7 @@ func RedemptionCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, a
 	txMsgData, err := icacallbacks.GetTxMsgData(ctx, *ack, k.Logger(ctx))
 	if err != nil {
 		k.Logger(ctx).Error(fmt.Sprintf("RedemptionCallback txMsgData could not be parsed, packet %v", packet))
-		return fmt.Errorf(icacallbackstypes.ErrTxMsgData{}.Error().Error(), err.Error())
+		return fmt.Errorf(icacallbackstypes.ErrTxMsgData.Error(), err.Error())
 	}
 
 	if len(txMsgData.Data) == 0 {

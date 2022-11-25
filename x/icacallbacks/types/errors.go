@@ -6,62 +6,73 @@ import (
 	"fmt"
 )
 
-type ErrorInterface interface {
-	Error() error
-}
+var (
+	ErrSample                  = fmt.Errorf("Sample error")
+	ErrInvalidPacketTimeout    = fmt.Errorf("Invalid packet timeout")
+	ErrInvalidVersion          = fmt.Errorf("Invalid version")
+	ErrCallbackHandlerNotFound = fmt.Errorf("Icacallback handler not found")
+	ErrCallbackIdNotFound      = fmt.Errorf("Icacallback ID not found")
+	ErrCallbackFailed          = fmt.Errorf("Icacallback failed")
+	ErrCallbackDataNotFound    = fmt.Errorf("Icacallback data not found")
+	ErrTxMsgData               = fmt.Errorf("TxMsgData fetch failed")
+)
 
-// ErrTotaErrSamplelWeightNotSet
-type ErrSample struct{}
+// type ErrorInterface interface {
+// 	Error() error
+// }
 
-func (e ErrSample) Error() error {
-	return fmt.Errorf("Sample error")
-}
+// // ErrTotaErrSamplelWeightNotSet
+// type ErrSample struct{}
+
+// func (e ErrSample) Error() error {
+// 	return fmt.Errorf("Sample error")
+// }
 
 // ErrInvalidPacketTimeout
-type ErrInvalidPacketTimeout struct{}
+// type ErrInvalidPacketTimeout struct{}
 
-func (e ErrInvalidPacketTimeout) Error() error {
-	return fmt.Errorf("Invalid packet timeout")
-}
+// func (e ErrInvalidPacketTimeout) Error() error {
+// 	return fmt.Errorf("Invalid packet timeout")
+// }
 
 // ErrInvalidVersion
-type ErrInvalidVersion struct{}
+// type ErrInvalidVersion struct{}
 
-func (e ErrInvalidVersion) Error() error {
-	return fmt.Errorf("Invalid version")
-}
+// func (e ErrInvalidVersion) Error() error {
+// 	return fmt.Errorf("Invalid version")
+// }
 
 // ErrCallbackHandlerNotFound
-type ErrCallbackHandlerNotFound struct{}
+// type ErrCallbackHandlerNotFound struct{}
 
-func (e ErrCallbackHandlerNotFound) Error() error {
-	return fmt.Errorf("Icacallback handler not found")
-}
+// func (e ErrCallbackHandlerNotFound) Error() error {
+// 	return fmt.Errorf("Icacallback handler not found")
+// }
 
 // ErrCallbackIdNotFound
-type ErrCallbackIdNotFound struct{}
+// type ErrCallbackIdNotFound struct{}
 
-func (e ErrCallbackIdNotFound) Error() error {
-	return fmt.Errorf("Icacallback ID not found")
-}
+// func (e ErrCallbackIdNotFound) Error() error {
+// 	return fmt.Errorf("Icacallback ID not found")
+// }
 
 // ErrCallbackFailed
-type ErrCallbackFailed struct{}
+// type ErrCallbackFailed struct{}
 
-func (e ErrCallbackFailed) Error() error {
-	return fmt.Errorf("Icacallback failed")
-}
+// func (e ErrCallbackFailed) Error() error {
+// 	return fmt.Errorf("Icacallback failed")
+// }
 
 // ErrCallbackDataNotFound
-type ErrCallbackDataNotFound struct{}
+// type ErrCallbackDataNotFound struct{}
 
-func (e ErrCallbackDataNotFound) Error() error {
-	return fmt.Errorf("Icacallback data not found")
-}
+// func (e ErrCallbackDataNotFound) Error() error {
+// 	return fmt.Errorf("Icacallback data not found")
+// }
 
 // ErrTxMsgData
-type ErrTxMsgData struct{}
+// type ErrTxMsgData struct{}
 
-func (e ErrTxMsgData) Error() error {
-	return fmt.Errorf("TxMsgData fetch failed")
-}
+// func (e ErrTxMsgData) Error() error {
+// 	return fmt.Errorf("TxMsgData fetch failed")
+// }

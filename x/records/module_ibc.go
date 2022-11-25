@@ -193,7 +193,7 @@ func (im IBCModule) OnAcknowledgementPacket(
 		errMsg := fmt.Sprintf("Unable to call registered callback from records OnAcknowledgePacket | Sequence %d, from %s %s, to %s %s | Error %s",
 			packet.Sequence, packet.SourceChannel, packet.SourcePort, packet.DestinationChannel, packet.DestinationPort, err.Error())
 		im.keeper.Logger(ctx).Error(errMsg)
-		return fmt.Errorf(icacallbacktypes.ErrCallbackFailed{}.Error().Error(), errMsg)
+		return fmt.Errorf(icacallbacktypes.ErrCallbackFailed.Error(), errMsg)
 	}
 
 	return im.app.OnAcknowledgementPacket(ctx, packet, acknowledgement, relayer)
