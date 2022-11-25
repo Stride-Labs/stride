@@ -286,7 +286,66 @@ func (s *KeeperTestSuite) TestGetHostZoneUnbondingMsgs() {
 
 	}
 }
+func (s *KeeperTestSuite) TestGetHostZoneUnbondingMsgs_WrongChainId() {
+	name := "Wrong chain id"
+	var test = GetHostZoneUnbondingMsgsTestCase{
+		epochUnbondingRecords: []recordtypes.EpochUnbondingRecord{
+			{
+				EpochNumber:        0,
+				HostZoneUnbondings: []*recordtypes.HostZoneUnbonding{},
+			},
+			{
+				EpochNumber:        1,
+				HostZoneUnbondings: []*recordtypes.HostZoneUnbonding{},
+			},
+		},
+		chainId:    "nonExistentChainId",
+		expectPass: false,
+	}
+	s.Run(name, func() {
+		s.Setup()
+		_, hostZone := s.SetupGetHostZoneUnbondingMsgs(test)
+		actualAmtToUnbond, actualUnbondRecords := s.App.StakeibcKeeper.GetUnbondingAmountAndRecords(s.Ctx(), hostZone)
+		// no messages should be sent
+		s.Require().Equal(0, len(actualUnbondRecords), "no messages should be sent")
+		// no value should be unbonded
+		s.Require().Equal(int64(0), int64(actualAmtToUnbond), "no value should be unbonded")
+	})
 
+}
+
+func (s *KeeperTestSuite) TestGetHostZoneUnbondingMsgs_Successful() {
+	name := "Successful"
+	var test = defaultUnbondingTestCase
+
+	s.Run(name, func() {
+		s.Setup()
+		_, hostZone := s.SetupGetHostZoneUnbondingMsgs(test)
+		actualAmtToUnbond, actualUnbondRecords := s.App.StakeibcKeeper.GetUnbondingAmountAndRecords(s.Ctx(), hostZone)
+		s.Require().Equal(int64(amtToUnbond)*int64(len(test.epochUnbondingRecords)), int64(actualAmtToUnbond), "total amount to unbond should match input amtToUnbond")
+		s.Require().Equal(len(test.epochUnbondingRecords), len(actualUnbondRecords))
+	})
+
+}
+func (s *KeeperTestSuite) TestGetHostZoneUnbondingMsg_NoEpochUnbondingRecords() {
+	name := "No Epoch Unbonding Records"
+	var test = GetHostZoneUnbondingMsgsTestCase{
+		epochUnbondingRecords: []recordtypes.EpochUnbondingRecord{},
+		chainId:               "GAIA",
+		expectPass:            false,
+	}
+
+	s.Run(name, func() {
+		s.Setup()
+		_, hostZone := s.SetupGetHostZoneUnbondingMsgs(test)
+		actualAmtToUnbond, actualUnbondRecords := s.App.StakeibcKeeper.GetUnbondingAmountAndRecords(s.Ctx(), hostZone)
+		// no messages should be sent
+		s.Require().Equal(0, len(actualUnbondRecords), "no messages should be sent")
+		// no value should be unbonded
+		s.Require().Equal(int64(0), int64(actualAmtToUnbond), "no value should be unbonded")
+	})
+
+}
 func (s *KeeperTestSuite) TestGetUnbondingAmountAndRecords() {
 	testCases := map[string]GetHostZoneUnbondingMsgsTestCase{
 		"Successful": defaultUnbondingTestCase,
@@ -330,7 +389,152 @@ func (s *KeeperTestSuite) TestGetUnbondingAmountAndRecords() {
 
 	}
 }
+func (s *KeeperTestSuite) TestDistributeUnbondingAmountToValidators_Successful() {
+	name := "Successful"
+	var test = defaultUnbondingTestCase
 
+	s.Run(name, func() {
+		s.Setup()
+		amtToUnbond, hostZone := s.SetupGetHostZoneUnbondingMsgs(test)
+		actualAmtToUnbond, err := s.App.StakeibcKeeper.DistributeUnbondingAmountToValidators(s.Ctx(), hostZone, amtToUnbond)
+		fmt.Println(actualAmtToUnbond)
+
+		s.Require().NoError(err)
+		totalWgt := sdk.NewDec(int64(test.totalWeight))
+		actualAmtToUnbondDec := sdk.NewDec(int64(amtToUnbond))
+
+		for _, validator := range test.validators {
+			valFraction := sdk.NewDec(int64(validator.Weight)).Quo(totalWgt)
+			valUnbondAmt := valFraction.Mul(actualAmtToUnbondDec).TruncateInt()
+			s.Require().Equal(valUnbondAmt, sdk.NewInt(actualAmtToUnbond[validator.Address]))
+		}
+	})
+
+}
+func (s *KeeperTestSuite) TestDistributeUnbondingAmountToValidators_EmptyValidators() {
+	name := "Empty validators"
+	var test = GetHostZoneUnbondingMsgsTestCase{
+		epochUnbondingRecords: []recordtypes.EpochUnbondingRecord{
+			{
+				EpochNumber:        0,
+				HostZoneUnbondings: []*recordtypes.HostZoneUnbonding{},
+			},
+			{
+				EpochNumber:        1,
+				HostZoneUnbondings: []*recordtypes.HostZoneUnbonding{},
+			},
+		},
+		chainId:    "GAIA",
+		validators: []*stakeibc.Validator{},
+		expectPass: false,
+		expectErr:  sdkerrors.Wrap(stakeibc.ErrNoValidatorAmts, fmt.Sprintf("Error getting target val amts for host zone %s %d: no non-zero validator weights", "GAIA", uint64(1_000_000))),
+	}
+
+	s.Run(name, func() {
+		s.Setup()
+		amtToUnbond, hostZone := s.SetupGetHostZoneUnbondingMsgs(test)
+		actualAmtToUnbond, err := s.App.StakeibcKeeper.DistributeUnbondingAmountToValidators(s.Ctx(), hostZone, amtToUnbond)
+		fmt.Println(actualAmtToUnbond)
+
+		s.Require().Error(err)
+		s.Require().EqualError(err, test.expectErr.Error())
+
+	})
+
+}
+func (s *KeeperTestSuite) TestDistributeUnbondingAmountToValidators_TotalWeightIsZero() {
+	name := "Total weight is zero"
+	var test = GetHostZoneUnbondingMsgsTestCase{
+		epochUnbondingRecords: []recordtypes.EpochUnbondingRecord{
+			{
+				EpochNumber:        0,
+				HostZoneUnbondings: []*recordtypes.HostZoneUnbonding{},
+			},
+			{
+				EpochNumber:        1,
+				HostZoneUnbondings: []*recordtypes.HostZoneUnbonding{},
+			},
+		},
+		chainId: "GAIA",
+		validators: []*stakeibc.Validator{
+			{
+				Address:       hostVal1Addr,
+				DelegationAmt: amtVal1,
+				Weight:        0,
+			},
+			{
+				Address:       hostVal2Addr,
+				DelegationAmt: amtVal2,
+				Weight:        0,
+			},
+			{
+				Address:       hostVal3Addr,
+				DelegationAmt: amtVal2,
+				Weight:        0,
+			},
+		},
+		expectPass: false,
+		expectErr:  sdkerrors.Wrap(stakeibc.ErrNoValidatorAmts, fmt.Sprintf("Error getting target val amts for host zone %s %d: no non-zero validator weights", "GAIA", uint64(1_000_000))),
+	}
+	s.Run(name, func() {
+		s.Setup()
+		amtToUnbond, hostZone := s.SetupGetHostZoneUnbondingMsgs(test)
+		actualAmtToUnbond, err := s.App.StakeibcKeeper.DistributeUnbondingAmountToValidators(s.Ctx(), hostZone, amtToUnbond)
+		fmt.Println(actualAmtToUnbond)
+
+		s.Require().Error(err)
+		s.Require().EqualError(err, test.expectErr.Error())
+
+	})
+
+}
+func (s *KeeperTestSuite) TestDistributeUnbondingAmountToValidators_UnbondingTooMuch() {
+	name := "Unbonding too much"
+	var test = GetHostZoneUnbondingMsgsTestCase{
+		epochUnbondingRecords: []recordtypes.EpochUnbondingRecord{
+			{
+				EpochNumber:        0,
+				HostZoneUnbondings: []*recordtypes.HostZoneUnbonding{},
+			},
+			{
+				EpochNumber:        1,
+				HostZoneUnbondings: []*recordtypes.HostZoneUnbonding{},
+			},
+		},
+		chainId: "GAIA",
+		validators: []*stakeibc.Validator{
+			{
+				Address:       hostVal1Addr,
+				DelegationAmt: 0,
+				Weight:        wgtVal1,
+			},
+			{
+				Address:       hostVal2Addr,
+				DelegationAmt: 0,
+				Weight:        wgtVal2,
+			},
+			{
+				Address: hostVal3Addr,
+				// DelegationAmt and Weight are the same as Val2, to test tie breaking
+				DelegationAmt: 0,
+				Weight:        wgtVal2,
+			},
+		},
+		expectPass: false,
+		expectErr:  sdkerrors.Wrap(sdkerrors.ErrNotFound, fmt.Sprintf("Could not unbond %d on Host Zone %s, unable to balance the unbond amount across validators", uint64(1_000_000), "GAIA")),
+	}
+	s.Run(name, func() {
+		s.Setup()
+		amtToUnbond, hostZone := s.SetupGetHostZoneUnbondingMsgs(test)
+		actualAmtToUnbond, err := s.App.StakeibcKeeper.DistributeUnbondingAmountToValidators(s.Ctx(), hostZone, amtToUnbond)
+		fmt.Println(actualAmtToUnbond)
+
+		s.Require().Error(err)
+		s.Require().EqualError(err, test.expectErr.Error())
+
+	})
+
+}
 func (s *KeeperTestSuite) TestDistributeUnbondingAmountToValidators() {
 	testCases := map[string]GetHostZoneUnbondingMsgsTestCase{
 		"Successful": defaultUnbondingTestCase,
@@ -450,6 +654,111 @@ type SplitDelegationMsgTestCase struct {
 	expectPass         bool
 }
 
+func (s *KeeperTestSuite) TestSplitDelegationMsg_Successful() {
+	name := "Successful"
+	var test = SplitDelegationMsgTestCase{
+		hostZone: stakeibc.HostZone{
+			ChainId:      "GAIA",
+			HostDenom:    "uatom",
+			Bech32Prefix: "cosmos",
+			Validators: []*stakeibc.Validator{
+				{
+					Address:       hostVal1Addr,
+					DelegationAmt: amtVal1,
+					Weight:        wgtVal1,
+				},
+				{
+					Address:       hostVal2Addr,
+					DelegationAmt: amtVal2,
+					Weight:        wgtVal2,
+				},
+				{
+					Address: hostVal3Addr,
+					// DelegationAmt and Weight are the same as Val2, to test tie breaking
+					DelegationAmt: amtVal2,
+					Weight:        wgtVal2,
+				},
+			},
+			DelegationAccount: &delegationAccount,
+		},
+		valAddrToUnbondAmt: map[string]int64{
+			"cosmos_VALIDATOR_1": 200000,
+			"cosmos_VALIDATOR_2": 400000,
+			"cosmos_VALIDATOR_3": 400000,
+		},
+		expectPass: true,
+	}
+
+	s.Run(name, func() {
+		s.Setup()
+		s.App.StakeibcKeeper.SetHostZone(s.Ctx(), test.hostZone)
+		msgs, splitDelegations, err := s.App.StakeibcKeeper.SplitDelegationMsg(s.Ctx(), test.valAddrToUnbondAmt, test.hostZone)
+		fmt.Println(err)
+
+		s.Require().NoError(err)
+
+		s.Require().Equal(len(test.hostZone.Validators), len(splitDelegations), "number of split delegations in success unbonding case")
+
+		// the number of unbonding messages should be (number of validators) * (records to unbond)
+		s.Require().Equal(len(test.hostZone.Validators), len(msgs), "number of unbonding messages should be number of records to unbond")
+
+		for i, validator := range test.hostZone.Validators {
+			actualUnbondMsg := msgs[i].String()
+			valUnbonded := strings.Contains(actualUnbondMsg, strconv.Itoa(int(test.valAddrToUnbondAmt[validator.Address])))
+			// there's rounding in the logic that distributes stake amongst validators, so one or the other of the balances will be correct, depending on the rounding
+			// at least one will be correct, and the other will be off by 1 by rounding, so we check and OR condition
+			s.Require().True(valUnbonded, "unbonding amt should be the correct amount")
+		}
+
+	})
+
+}
+func (s *KeeperTestSuite) TestSplitDelegationMsg_MissingADelegationAddress() {
+	name := "Missing a delegation address"
+	var test = SplitDelegationMsgTestCase{
+		hostZone: stakeibc.HostZone{
+			ChainId:      "GAIA",
+			HostDenom:    "uatom",
+			Bech32Prefix: "cosmos",
+			Validators: []*stakeibc.Validator{
+				{
+					Address:       hostVal1Addr,
+					DelegationAmt: amtVal1,
+					Weight:        wgtVal1,
+				},
+				{
+					Address:       hostVal2Addr,
+					DelegationAmt: amtVal2,
+					Weight:        wgtVal2,
+				},
+				{
+					Address: hostVal3Addr,
+					// DelegationAmt and Weight are the same as Val2, to test tie breaking
+					DelegationAmt: amtVal2,
+					Weight:        wgtVal2,
+				},
+			},
+			DelegationAccount: nil,
+		},
+		valAddrToUnbondAmt: map[string]int64{
+			"cosmos_VALIDATOR_1": 200000,
+			"cosmos_VALIDATOR_2": 400000,
+			"cosmos_VALIDATOR_3": 400000,
+		},
+		expectPass: false,
+	}
+
+	s.Run(name, func() {
+		s.Setup()
+		s.App.StakeibcKeeper.SetHostZone(s.Ctx(), test.hostZone)
+		_, _, err := s.App.StakeibcKeeper.SplitDelegationMsg(s.Ctx(), test.valAddrToUnbondAmt, test.hostZone)
+		fmt.Println(err)
+
+		s.Require().Error(err)
+
+	})
+
+}
 func (s *KeeperTestSuite) TestSplitDelegationMsg() {
 	testCases := map[string]SplitDelegationMsgTestCase{
 		"Successful": {
