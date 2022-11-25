@@ -208,7 +208,7 @@ func (im IBCModule) OnRecvPacket(
 			return ack
 		} else {
 			prefixedDenom := transfertypes.GetDenomPrefix(packet.GetDestPort(), packet.GetDestChannel()) + newData.Denom
-			denom = transfertypes.ParseDenomTrace(prefixedDenom).IBCDenom()
+			denom = transfertypes.ParseDenomTrace(prefixedDenom).BaseDenom
 		}
 		unit, err := strconv.ParseUint(newData.Amount, 10, 64)
 		if err != nil {

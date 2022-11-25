@@ -19,7 +19,6 @@ type ParsedReceiver struct {
 func ParseReceiverData(receiverData string) (*ParsedReceiver, error) {
 	parts := strings.Split(receiverData, "|")
 	addressPart := parts[0]
-	functionPart := parts[1]
 
 	// Standard address
 	if len(parts) == 1 && addressPart != "" {
@@ -28,6 +27,7 @@ func ParseReceiverData(receiverData string) (*ParsedReceiver, error) {
 		}, nil
 	}
 
+	functionPart := parts[1]
 	// verify the rightmost field is stakeibc/liquidstake
 	if functionPart != "stakeibc/liquidstake" || len(parts) != 2 {
 		return &ParsedReceiver{
