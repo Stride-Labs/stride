@@ -1,0 +1,80 @@
+package v3_test
+
+import (
+	"fmt"
+	"testing"
+
+	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
+	"github.com/stretchr/testify/suite"
+	abci "github.com/tendermint/tendermint/abci/types"
+
+	"github.com/Stride-Labs/stride/v3/app/apptesting"
+)
+
+var airdropIdentifiers = []string{"stride", "gaia", "osmosis", "juno", "stars"}
+
+const dummyUpgradeHeight = 5
+
+type UpgradeTestSuite struct {
+	apptesting.AppTestHelper
+}
+
+func (s *UpgradeTestSuite) SetupTest() {
+	s.Setup()
+}
+
+func TestKeeperTestSuite(t *testing.T) {
+	suite.Run(t, new(UpgradeTestSuite))
+}
+
+func (suite *UpgradeTestSuite) TestUpgrade() {
+	testCases := []struct {
+		msg         string
+		pre_update  func()
+		update      func()
+		post_update func()
+		expPass     bool
+	}{
+		{
+			"Test that upgrade does not panic",
+			func() {
+				// Create pool 1
+				suite.Setup()
+			},
+			func() {
+				// run upgrade
+				// TODO: Refactor this all into a helper fn
+
+				suite.Context = suite.Context.WithBlockHeight(dummyUpgradeHeight - 1)
+				plan := upgradetypes.Plan{Name: "v3", Height: dummyUpgradeHeight}
+				err := suite.App.UpgradeKeeper.ScheduleUpgrade(suite.Ctx(), plan)
+				suite.Require().NoError(err)
+				_, exists := suite.App.UpgradeKeeper.GetUpgradePlan(suite.Ctx())
+				suite.Require().True(exists)
+
+				suite.Context = suite.Ctx().WithBlockHeight(dummyUpgradeHeight)
+				suite.Require().NotPanics(func() {
+					beginBlockRequest := abci.RequestBeginBlock{}
+					suite.App.BeginBlocker(suite.Context, beginBlockRequest)
+				})
+
+				// make sure claim record was set
+				for _, identifier := range airdropIdentifiers {
+					claimRecords := suite.App.ClaimKeeper.GetClaimRecords(suite.Context, identifier)
+					suite.Require().NotEqual(0, len(claimRecords))
+				}
+			},
+			func() {
+			},
+			true,
+		},
+	}
+
+	for _, tc := range testCases {
+		suite.Run(fmt.Sprintf("Case %s", tc.msg), func() {
+			tc.pre_update()
+			tc.update()
+			tc.post_update()
+		})
+	}
+}
