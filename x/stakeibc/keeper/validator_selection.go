@@ -52,6 +52,8 @@ func (k Keeper) GetTargetValAmtsForHostZone(ctx sdk.Context, hostZone types.Host
 		k.Logger(ctx).Error(fmt.Sprintf("No non-zero validators found for host zone %s", hostZone.ChainId))
 		return nil, types.ErrNoValidatorWeights
 	}
+	k.Logger(ctx).Info(fmt.Sprintf("Total Validator Weight for %s: %d", hostZone.ChainId, totalWeight))
+
 	if finalDelegation == 0 {
 		k.Logger(ctx).Error(fmt.Sprintf("Cannot calculate target delegation if final amount is 0 %s", hostZone.ChainId))
 		return nil, types.ErrNoValidatorWeights
@@ -71,8 +73,8 @@ func (k Keeper) GetTargetValAmtsForHostZone(ctx sdk.Context, hostZone types.Host
 		return validators[i].Weight < validators[j].Weight
 	})
 
-	for i, validator := range hostZone.Validators {
-		if i == len(hostZone.Validators)-1 {
+	for i, validator := range validators {
+		if i == len(validators)-1 {
 			// for the last element, we need to make sure that the allocatedAmt is equal to the finalDelegation
 			targetAmount[validator.GetAddress()] = finalDelegation - allocatedAmt
 		} else {
