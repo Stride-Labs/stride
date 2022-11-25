@@ -2,7 +2,6 @@ package keeper
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -48,7 +47,7 @@ func (k Keeper) UserRedemptionRecord(c context.Context, req *types.QueryGetUserR
 	ctx := sdk.UnwrapSDKContext(c)
 	userRedemptionRecord, found := k.GetUserRedemptionRecord(ctx, req.Id)
 	if !found {
-		return nil, fmt.Errorf("Key not found")
+		return nil, status.Error(codes.NotFound, "Key not found")
 	}
 
 	return &types.QueryGetUserRedemptionRecordResponse{UserRedemptionRecord: userRedemptionRecord}, nil
