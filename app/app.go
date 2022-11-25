@@ -426,15 +426,6 @@ func NewStrideApp(
 	transferModule := transfer.NewAppModule(app.TransferKeeper)
 	transferIBCModule := transfer.NewIBCModule(app.TransferKeeper)
 
-	app.RouterKeeper = *routerkeeper.NewKeeper(
-		appCodec,
-		keys[routertypes.StoreKey],
-		app.GetSubspace(routertypes.ModuleName),
-		scopedIBCKeeper,
-		app.StakeibcKeeper)
-	routerModule := router.NewAppModule(appCodec, app.RouterKeeper, app.AccountKeeper, app.BankKeeper)
-	routerIBCModule := router.NewIBCModule(app.RouterKeeper, transferIBCModule)
-
 	// Create evidence Keeper for to register the IBC light client misbehaviour evidence route
 	evidenceKeeper := evidencekeeper.NewKeeper(
 		appCodec, keys[evidencetypes.StoreKey], &app.StakingKeeper, app.SlashingKeeper,
@@ -523,6 +514,13 @@ func NewStrideApp(
 	stakeibcModule := stakeibcmodule.NewAppModule(appCodec, app.StakeibcKeeper, app.AccountKeeper, app.BankKeeper)
 	stakeibcIBCModule := stakeibcmodule.NewIBCModule(app.StakeibcKeeper)
 
+	app.RouterKeeper = *routerkeeper.NewKeeper(
+		appCodec,
+		keys[routertypes.StoreKey],
+		app.GetSubspace(routertypes.ModuleName),
+		app.StakeibcKeeper)
+	routerModule := router.NewAppModule(appCodec, app.RouterKeeper, app.AccountKeeper, app.BankKeeper)
+
 	// Register Gov (must be registerd after stakeibc)
 	govRouter := govtypes.NewRouter()
 	govRouter.AddRoute(govtypes.RouterKey, govtypes.ProposalHandler).
@@ -594,12 +592,12 @@ func NewStrideApp(
 	// - transfer
 	// - base app
 	recordsStack := recordsmodule.NewIBCModule(app.RecordsKeeper, transferIBCModule)
+	routerIBCModule := router.NewIBCModule(app.RouterKeeper, recordsStack)
 
 	// Create static IBC router, add transfer route, then set and seal it
 	ibcRouter := ibcporttypes.NewRouter()
 	ibcRouter.
-		AddRoute(ibctransfertypes.ModuleName, recordsStack).
-		AddRoute(routertypes.ModuleName, routerIBCModule).
+		AddRoute(ibctransfertypes.ModuleName, routerIBCModule).
 		AddRoute(icacontrollertypes.SubModuleName, icamiddlewareStack).
 		AddRoute(icahosttypes.SubModuleName, icaHostIBCModule).
 		// Note, authentication module packets are routed to the top level of the middleware stack
