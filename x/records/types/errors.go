@@ -10,10 +10,10 @@ import (
 var (
 	ErrInvalidVersion               = fmt.Errorf("invalid version")
 	ErrRedemptionAlreadyExists      = fmt.Errorf("redemption record already exists")
-	ErrEpochUnbondingRecordNotFound = fmt.Errorf(ModuleName, 1503, "epoch unbonding record not found")
-	ErrUnknownDepositRecord         = fmt.Errorf(ModuleName, 1504, "unknown deposit record")
-	ErrUnmarshalFailure             = fmt.Errorf(ModuleName, 1505, "cannot unmarshal")
-	ErrAddingHostZone               = fmt.Errorf(ModuleName, 1506, "could not add hzu to epoch unbonding record")
+	ErrEpochUnbondingRecordNotFound = fmt.Errorf("epoch unbonding record not found")
+	ErrUnknownDepositRecord         = fmt.Errorf("unknown deposit record")
+	ErrUnmarshalFailure             = fmt.Errorf("cannot unmarshal")
+	ErrAddingHostZone               = fmt.Errorf("could not add hzu to epoch unbonding record")
 )
 
 // type ErrorInterface interface {
