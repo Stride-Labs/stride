@@ -139,7 +139,7 @@ When running this command for the first time, `local:stride` will:
 
 You will then go through the genesis initialization process and hit the first block (not block 1, but the block number after your snapshot was taken)
 
-During this process, you may see only p2p logs and no blocks. This could be the case for the next 15 minutes, but will eventually start hitting blocks.
+During this process, you may see only p2p logs and no blocks. **This could be the case for the next 30 minutes**, but will eventually start hitting blocks.
 
 9. On your host machine, add this specific wallet which holds a large amount of stride funds
 
