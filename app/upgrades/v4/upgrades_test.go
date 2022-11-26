@@ -11,9 +11,7 @@ import (
 	"github.com/Stride-Labs/stride/v3/app/apptesting"
 	authz "github.com/cosmos/cosmos-sdk/x/authz"
 )
-var (
-	airdropIdentifiers = []string{"stride", "gaia", "osmosis", "juno", "stars"}
-)
+
 const dummyUpgradeHeight = 5
 
 
