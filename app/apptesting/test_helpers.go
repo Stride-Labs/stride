@@ -2,6 +2,7 @@ package apptesting
 
 import (
 	"strings"
+	"time"
 
 	abci "github.com/tendermint/tendermint/abci/types"
 	ibctransfertypes "github.com/cosmos/ibc-go/v3/modules/apps/transfer/types"
@@ -38,6 +39,7 @@ var (
 type AppTestHelper struct {
 	suite.Suite
 
+	Context 	sdk.Context
 	App     *app.StrideApp
 	HostApp *simapp.SimApp
 
@@ -59,6 +61,7 @@ func (s *AppTestHelper) Setup() {
 		GRPCQueryRouter: s.App.GRPCQueryRouter(),
 		Ctx:             s.Ctx(),
 	}
+	s.Context = s.App.BaseApp.NewContext(false, tmtypes.Header{Height: 1, ChainID: StrideChainID, Time: time.Now().UTC()})
 	s.TestAccs = CreateRandomAccounts(3)
 	s.IbcEnabled = false
 	s.IcaAddresses = make(map[string]string)

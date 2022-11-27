@@ -6,8 +6,9 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/Stride-Labs/stride/v3/app/apptesting"
 	authz "github.com/cosmos/cosmos-sdk/x/authz"
+
+	"github.com/Stride-Labs/stride/v3/app/apptesting"
 )
 
 const dummyUpgradeHeight = 5
