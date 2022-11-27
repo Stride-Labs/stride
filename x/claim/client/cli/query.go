@@ -180,7 +180,7 @@ $ %s query claim claimable-for-action stride1h4astdfzjhcwahtfrh24qtvndzzh49xvqtf
 // GetCmdQueryClaimable implements the query claimables command.
 func GetCmdQueryTotalClaimable() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "total-claimable [airdrop-identifier] [address]",
+		Use:   "total-claimable [airdrop-identifier] [address] [include-claimed]",
 		Args:  cobra.ExactArgs(2),
 		Short: "Query the total claimable amount remaining for an account.",
 		Long: strings.TrimSpace(

@@ -29,9 +29,7 @@ message MsgSetAirdropAllocations {
 
 message MsgSetAirdropAllocationsResponse {}
 
-message MsgClaimFreeAmount {
-  string user = 1;
-}
+message MsgClaimFreeAmount { string user = 1; }
 
 message MsgClaimFreeAmountResponse {
   repeated cosmos.base.v1beta1.Coin claimed_amount = 3 [

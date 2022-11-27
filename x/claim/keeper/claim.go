@@ -343,7 +343,7 @@ func (k Keeper) GetAirdropClaimDenom(ctx sdk.Context, airdropIdentifier string) 
 }
 
 // GetClaimable returns claimable amount for a specific action done by an address
-func (k Keeper) GetClaimableAmountForAction(ctx sdk.Context, addr sdk.AccAddress, action types.Action, airdropIdentifier string) (sdk.Coins, error) {
+func (k Keeper) GetClaimableAmountForAction(ctx sdk.Context, addr sdk.AccAddress, action types.Action, airdropIdentifier string, includeClaimed bool) (sdk.Coins, error) {
 	claimRecord, err := k.GetClaimRecord(ctx, addr, airdropIdentifier)
 	if err != nil {
 		return nil, err
@@ -354,7 +354,7 @@ func (k Keeper) GetClaimableAmountForAction(ctx sdk.Context, addr sdk.AccAddress
 	}
 
 	// if action already completed, nothing is claimable
-	if claimRecord.ActionCompleted[action] {
+	if !includeClaimed && claimRecord.ActionCompleted[action] {
 		return sdk.Coins{}, nil
 	}
 
@@ -408,7 +408,7 @@ func (k Keeper) GetUserVestings(ctx sdk.Context, addr sdk.AccAddress) (vestingty
 }
 
 // GetClaimable returns claimable amount for a specific action done by an address
-func (k Keeper) GetUserTotalClaimable(ctx sdk.Context, addr sdk.AccAddress, airdropIdentifier string) (sdk.Coins, error) {
+func (k Keeper) GetUserTotalClaimable(ctx sdk.Context, addr sdk.AccAddress, airdropIdentifier string, includeClaimed bool) (sdk.Coins, error) {
 	claimRecord, err := k.GetClaimRecord(ctx, addr, airdropIdentifier)
 	if err != nil {
 		return sdk.Coins{}, err
@@ -420,7 +420,7 @@ func (k Keeper) GetUserTotalClaimable(ctx sdk.Context, addr sdk.AccAddress, aird
 	totalClaimable := sdk.Coins{}
 
 	for action := range types.Action_name {
-		claimableForAction, err := k.GetClaimableAmountForAction(ctx, addr, types.Action(action), airdropIdentifier)
+		claimableForAction, err := k.GetClaimableAmountForAction(ctx, addr, types.Action(action), airdropIdentifier, includeClaimed)
 		if err != nil {
 			return sdk.Coins{}, err
 		}
@@ -486,7 +486,7 @@ func (k Keeper) ClaimCoinsForAction(ctx sdk.Context, addr sdk.AccAddress, action
 		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "invalid airdrop identifier: ClaimCoinsForAction")
 	}
 
-	claimableAmount, err := k.GetClaimableAmountForAction(ctx, addr, action, airdropIdentifier)
+	claimableAmount, err := k.GetClaimableAmountForAction(ctx, addr, action, airdropIdentifier, false)
 	if err != nil {
 		return claimableAmount, err
 	}
