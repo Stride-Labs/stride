@@ -4,16 +4,13 @@ import (
 	"fmt"
 	"testing"
 
-	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 	"github.com/stretchr/testify/suite"
-	abci "github.com/tendermint/tendermint/abci/types"
 
 	"github.com/Stride-Labs/stride/v3/app/apptesting"
 	authz "github.com/cosmos/cosmos-sdk/x/authz"
 )
 
 const dummyUpgradeHeight = 5
-
 
 type UpgradeTestSuite struct {
 	apptesting.AppTestHelper
@@ -38,30 +35,15 @@ func (suite *UpgradeTestSuite) TestUpgrade() {
 		{
 			"Test that upgrade does not panic",
 			func() {
-				// Create pool 1
 				suite.Setup()
 			},
 			func() {
-				// run upgrade
-				// TODO: Refactor this all into a helper fn
-				
-				beforeCtx := suite.Ctx().WithBlockHeight(dummyUpgradeHeight - 1)
-				plan := upgradetypes.Plan{Name: "v4", Height: dummyUpgradeHeight}
-				err := suite.App.UpgradeKeeper.ScheduleUpgrade(beforeCtx, plan)
-				suite.Require().NoError(err)
-				plan, exists := suite.App.UpgradeKeeper.GetUpgradePlan(beforeCtx)
-				suite.Require().True(exists)
-
-				afterCtx := suite.Ctx().WithBlockHeight(dummyUpgradeHeight)
-				suite.Require().NotPanics(func() {
-					beginBlockRequest := abci.RequestBeginBlock{}
-					suite.App.BeginBlocker(afterCtx, beginBlockRequest)
-				})
+				suite.ConfirmUpgradeSucceededs("v4", dummyUpgradeHeight)
 
 				// make sure authz module was init
+				afterCtx := suite.Ctx().WithBlockHeight(dummyUpgradeHeight)
 				actGenState := suite.App.AuthzKeeper.ExportGenesis(afterCtx)
 				expGenState := authz.DefaultGenesisState()
-
 				suite.Require().NotNil(actGenState)
 				suite.Require().Equal(&expGenState, &actGenState)
 			},
