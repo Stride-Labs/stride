@@ -30,9 +30,9 @@ func TestKeeperTestSuite(t *testing.T) {
 func (suite *UpgradeTestSuite) TestUpgrade() {
 	testCases := []struct {
 		msg         string
-		pre_update  func()
+		preUpdate  func()
 		update      func()
-		post_update func()
+		postUpdate func()
 		expPass     bool
 	}{
 		{
@@ -73,9 +73,9 @@ func (suite *UpgradeTestSuite) TestUpgrade() {
 
 	for _, tc := range testCases {
 		suite.Run(fmt.Sprintf("Case %s", tc.msg), func() {
-			tc.pre_update()
+			tc.preUpdate()
 			tc.update()
-			tc.post_update()
+			tc.postUpdate()
 		})
 	}
 }
