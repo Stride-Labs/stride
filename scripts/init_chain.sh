@@ -15,13 +15,8 @@ NUM_NODES=$(GET_VAR_VALUE   ${CHAIN_ID}_NUM_NODES)
 NODE_PREFIX=$(GET_VAR_VALUE ${CHAIN_ID}_NODE_PREFIX)
 VAL_PREFIX=$(GET_VAR_VALUE  ${CHAIN_ID}_VAL_PREFIX)
 
-VAL_MNEMONICS_VAR=${CHAIN_ID}_VAL_MNEMONICS
-IFS=',' read -r -a VAL_MNEMONICS <<< "${!VAL_MNEMONICS_VAR}"
-
+IFS=',' read -r -a VAL_MNEMONICS <<< "${VAL_MNEMONICS}"
 IFS=',' read -r -a RELAYER_MNEMONICS <<< "${RELAYER_MNEMONICS}"
-
-REV_ACCT_VAR=${CHAIN_ID}_REV_ACCT
-REV_MNEMONIC_VAR=${CHAIN_ID}_REV_MNEMONIC
 
 set_stride_genesis() {
     genesis_config=$1
@@ -153,8 +148,8 @@ if [ "$CHAIN_ID" == "$STRIDE_CHAIN_ID" ]; then
     done
 else 
     # add a revenue account
+    REV_ACCT_VAR=${CHAIN_ID}_REV_ACCT
     REV_ACCT=${!REV_ACCT_VAR}
-    REV_MNEMONIC=${!REV_MNEMONIC_VAR}
     echo $REV_MNEMONIC | $MAIN_NODE_CMD keys add $REV_ACCT --recover --keyring-backend=test >> $KEYS_LOGS 2>&1
 
     # add a relayer account
