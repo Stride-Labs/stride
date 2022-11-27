@@ -45,21 +45,21 @@ func (suite *UpgradeTestSuite) TestUpgrade() {
 				// run upgrade
 				// TODO: Refactor this all into a helper fn
 				
-				suite.Context = suite.Context.WithBlockHeight(dummyUpgradeHeight - 1)
+				beforeCtx := suite.Ctx().WithBlockHeight(dummyUpgradeHeight - 1)
 				plan := upgradetypes.Plan{Name: "v4", Height: dummyUpgradeHeight}
-				err := suite.App.UpgradeKeeper.ScheduleUpgrade(suite.Ctx(), plan)
+				err := suite.App.UpgradeKeeper.ScheduleUpgrade(beforeCtx, plan)
 				suite.Require().NoError(err)
-				plan, exists := suite.App.UpgradeKeeper.GetUpgradePlan(suite.Ctx())
+				plan, exists := suite.App.UpgradeKeeper.GetUpgradePlan(beforeCtx)
 				suite.Require().True(exists)
 
-				suite.Context = suite.Ctx().WithBlockHeight(dummyUpgradeHeight)
+				afterCtx := suite.Ctx().WithBlockHeight(dummyUpgradeHeight)
 				suite.Require().NotPanics(func() {
 					beginBlockRequest := abci.RequestBeginBlock{}
-					suite.App.BeginBlocker(suite.Context, beginBlockRequest)
+					suite.App.BeginBlocker(afterCtx, beginBlockRequest)
 				})
 
 				// make sure authz module was init
-				actGenState := suite.App.AuthzKeeper.ExportGenesis(suite.Ctx())
+				actGenState := suite.App.AuthzKeeper.ExportGenesis(afterCtx)
 				expGenState := authz.DefaultGenesisState()
 
 				suite.Require().NotNil(actGenState)

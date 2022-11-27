@@ -46,22 +46,22 @@ func (suite *UpgradeTestSuite) TestUpgrade() {
 				// run upgrade
 				// TODO: Refactor this all into a helper fn
 				
-				suite.Context = suite.Context.WithBlockHeight(dummyUpgradeHeight - 1)
+				beforeCtx := suite.Ctx().WithBlockHeight(dummyUpgradeHeight - 1)
 				plan := upgradetypes.Plan{Name: "v3", Height: dummyUpgradeHeight}
-				err := suite.App.UpgradeKeeper.ScheduleUpgrade(suite.Ctx(), plan)
+				err := suite.App.UpgradeKeeper.ScheduleUpgrade(beforeCtx, plan)
 				suite.Require().NoError(err)
-				plan, exists := suite.App.UpgradeKeeper.GetUpgradePlan(suite.Ctx())
+				plan, exists := suite.App.UpgradeKeeper.GetUpgradePlan(beforeCtx)
 				suite.Require().True(exists)
 
-				suite.Context = suite.Ctx().WithBlockHeight(dummyUpgradeHeight)
+				afterCtx := suite.Ctx().WithBlockHeight(dummyUpgradeHeight)
 				suite.Require().NotPanics(func() {
 					beginBlockRequest := abci.RequestBeginBlock{}
-					suite.App.BeginBlocker(suite.Context, beginBlockRequest)
+					suite.App.BeginBlocker(afterCtx, beginBlockRequest)
 				})
 
 				// make sure claim record was set
 				for _, identifier := range(airdropIdentifiers) {
-					claimRecords := suite.App.ClaimKeeper.GetClaimRecords(suite.Context, identifier)
+					claimRecords := suite.App.ClaimKeeper.GetClaimRecords(afterCtx, identifier)
 					suite.Require().NotEqual(0, len(claimRecords))
 				}
 
