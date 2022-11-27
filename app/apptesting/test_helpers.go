@@ -3,11 +3,13 @@ package apptesting
 import (
 	"strings"
 
+	abci "github.com/tendermint/tendermint/abci/types"
 	ibctransfertypes "github.com/cosmos/ibc-go/v3/modules/apps/transfer/types"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
+	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 	icatypes "github.com/cosmos/ibc-go/v3/modules/apps/27-interchain-accounts/types"
 	transfertypes "github.com/cosmos/ibc-go/v3/modules/apps/transfer/types"
 	channeltypes "github.com/cosmos/ibc-go/v3/modules/core/04-channel/types"
@@ -311,3 +313,20 @@ func (s *AppTestHelper) ICS20PacketAcknowledgement() channeltypes.Acknowledgemen
 	ack := channeltypes.NewResultAcknowledgement(s.MarshalledICS20PacketData())
 	return ack
 }
+
+func (s *AppTestHelper) ConfirmUpgradeSucceededs(upgradeName string, upgradeHeight int64) {
+	contextBeforeUpgrade := s.Ctx().WithBlockHeight(upgradeHeight - 1)
+	contextAtUpgrade := s.Ctx().WithBlockHeight(upgradeHeight)
+ 
+	plan := upgradetypes.Plan{Name: upgradeName, Height: upgradeHeight}
+	err := s.App.UpgradeKeeper.ScheduleUpgrade(contextBeforeUpgrade, plan)
+	s.Require().NoError(err)
+ 
+	plan, exists := s.App.UpgradeKeeper.GetUpgradePlan(contextBeforeUpgrade)
+	s.Require().True(exists)
+ 
+	s.Require().NotPanics(func() {
+	 beginBlockRequest := abci.RequestBeginBlock{}
+	 s.App.BeginBlocker(contextAtUpgrade, beginBlockRequest)
+	})
+ }
