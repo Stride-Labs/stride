@@ -4,9 +4,7 @@ import (
 	"fmt"
 	"testing"
 
-	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 	"github.com/stretchr/testify/suite"
-	abci "github.com/tendermint/tendermint/abci/types"
 
 	authz "github.com/cosmos/cosmos-sdk/x/authz"
 
@@ -30,38 +28,23 @@ func TestKeeperTestSuite(t *testing.T) {
 func (suite *UpgradeTestSuite) TestUpgrade() {
 	testCases := []struct {
 		msg         string
-		pre_update  func()
+		preUpdate  func()
 		update      func()
-		post_update func()
+		postUpdate func()
 		expPass     bool
 	}{
 		{
 			"Test that upgrade does not panic",
 			func() {
-				// Create pool 1
 				suite.Setup()
 			},
 			func() {
-				// run upgrade
-				// TODO: Refactor this all into a helper fn
-
-				suite.Context = suite.Context.WithBlockHeight(dummyUpgradeHeight - 1)
-				plan := upgradetypes.Plan{Name: "v4", Height: dummyUpgradeHeight}
-				err := suite.App.UpgradeKeeper.ScheduleUpgrade(suite.Ctx(), plan)
-				suite.Require().NoError(err)
-				_, exists := suite.App.UpgradeKeeper.GetUpgradePlan(suite.Ctx())
-				suite.Require().True(exists)
-
-				suite.Context = suite.Ctx().WithBlockHeight(dummyUpgradeHeight)
-				suite.Require().NotPanics(func() {
-					beginBlockRequest := abci.RequestBeginBlock{}
-					suite.App.BeginBlocker(suite.Context, beginBlockRequest)
-				})
+				suite.ConfirmUpgradeSucceededs("v4", dummyUpgradeHeight)
 
 				// make sure authz module was init
-				actGenState := suite.App.AuthzKeeper.ExportGenesis(suite.Ctx())
+				afterCtx := suite.Ctx().WithBlockHeight(dummyUpgradeHeight)
+				actGenState := suite.App.AuthzKeeper.ExportGenesis(afterCtx)
 				expGenState := authz.DefaultGenesisState()
-
 				suite.Require().NotNil(actGenState)
 				suite.Require().Equal(&expGenState, &actGenState)
 			},
@@ -73,9 +56,9 @@ func (suite *UpgradeTestSuite) TestUpgrade() {
 
 	for _, tc := range testCases {
 		suite.Run(fmt.Sprintf("Case %s", tc.msg), func() {
-			tc.pre_update()
+			tc.preUpdate()
 			tc.update()
-			tc.post_update()
+			tc.postUpdate()
 		})
 	}
 }
