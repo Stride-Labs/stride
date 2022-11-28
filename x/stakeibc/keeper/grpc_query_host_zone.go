@@ -2,16 +2,20 @@ package keeper
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/types/query"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
 	"github.com/Stride-Labs/stride/v3/x/stakeibc/types"
 )
+
+type Error struct {
+	errorCode string
+}
 
 func (k Keeper) HostZoneAll(c context.Context, req *types.QueryAllHostZoneRequest) (*types.QueryAllHostZoneResponse, error) {
 	if req == nil {
@@ -48,7 +52,7 @@ func (k Keeper) HostZone(c context.Context, req *types.QueryGetHostZoneRequest) 
 	ctx := sdk.UnwrapSDKContext(c)
 	hostZone, found := k.GetHostZone(ctx, req.ChainId)
 	if !found {
-		return nil, sdkerrors.ErrKeyNotFound
+		return nil, fmt.Errorf("%s", &Error{errorCode: "key not found"})
 	}
 
 	return &types.QueryGetHostZoneResponse{HostZone: hostZone}, nil

@@ -128,7 +128,7 @@ func (s *KeeperTestSuite) TestRebalanceCallback_WrongCallbackArgs() {
 	invalidArgs := tc.validArgs
 
 	err := stakeibckeeper.RebalanceCallback(s.App.StakeibcKeeper, s.Ctx(), invalidArgs.packet, invalidArgs.ack, []byte("random bytes"))
-	s.Require().EqualError(err, "Unable to unmarshal rebalance callback args | unexpected EOF: unable to unmarshal data structure")
+	s.Require().EqualError(err, "unable to unmarshal data structure%!(EXTRA string=Unable to unmarshal rebalance callback args | unexpected EOF)")
 	s.checkDelegationStateIfCallbackFailed()
 }
 
@@ -172,10 +172,10 @@ func (s *KeeperTestSuite) TestRebalanceCallback_WrongValidator() {
 	s.Require().NoError(err)
 
 	err = stakeibckeeper.RebalanceCallback(s.App.StakeibcKeeper, s.Ctx(), tc.validArgs.packet, tc.validArgs.ack, invalidArgsOne)
-	s.Require().EqualError(err, "validator not found stride_VAL4_WRONG: invalid request")
+	s.Require().EqualError(err, "validator not found stride_VAL4_WRONG")
 	s.checkDelegationStateIfCallbackFailed()
 
 	err = stakeibckeeper.RebalanceCallback(s.App.StakeibcKeeper, s.Ctx(), tc.validArgs.packet, tc.validArgs.ack, invalidArgsTwo)
-	s.Require().EqualError(err, "validator not found stride_VAL1_WRONG: invalid request")
+	s.Require().EqualError(err, "validator not found stride_VAL1_WRONG")
 	s.checkDelegationStateIfCallbackFailed()
 }

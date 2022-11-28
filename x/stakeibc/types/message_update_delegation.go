@@ -1,10 +1,10 @@
 package types
 
 import (
+	"fmt"
 	"strings"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
 	"github.com/Stride-Labs/stride/v3/utils"
 )
@@ -45,21 +45,21 @@ func (msg *MsgUpdateValidatorSharesExchRate) GetSignBytes() []byte {
 func (msg *MsgUpdateValidatorSharesExchRate) ValidateBasic() error {
 	_, err := sdk.AccAddressFromBech32(msg.Creator)
 	if err != nil {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid creator address (%s)", err)
+		return fmt.Errorf("invalid creator address (%s)", err)
 	}
 	if err := utils.ValidateAdminAddress(msg.Creator); err != nil {
 		return err
 	}
 	// basic checks on host denom
 	if len(msg.ChainId) == 0 {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "chainid is required")
+		return fmt.Errorf("chainid is required")
 	}
 	// basic checks on host zone
 	if len(msg.Valoper) == 0 {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "valoper is required")
+		return fmt.Errorf("valoper is required")
 	}
 	if !strings.Contains(msg.Valoper, "valoper") {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "validator operator address must contrain 'valoper'")
+		return fmt.Errorf("validator operator address must contrain 'valoper'")
 	}
 
 	return nil

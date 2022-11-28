@@ -12,7 +12,6 @@ import (
 	"github.com/Stride-Labs/stride/v3/x/stakeibc/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	channeltypes "github.com/cosmos/ibc-go/v3/modules/core/04-channel/types"
 	"github.com/golang/protobuf/proto" //nolint:staticcheck
@@ -46,12 +45,12 @@ func UndelegateCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, a
 	if err != nil {
 		errMsg := fmt.Sprintf("Unable to unmarshal undelegate callback args | %s", err.Error())
 		k.Logger(ctx).Error(errMsg)
-		return sdkerrors.Wrapf(types.ErrUnmarshalFailure, errMsg)
+		return fmt.Errorf(types.ErrUnmarshalFailure.Error(), errMsg)
 	}
 	k.Logger(ctx).Info(fmt.Sprintf("UndelegateCallback, HostZone: %s", undelegateCallback.HostZoneId))
 	zone, found := k.GetHostZone(ctx, undelegateCallback.HostZoneId)
 	if !found {
-		return sdkerrors.Wrapf(sdkerrors.ErrKeyNotFound, "Host zone not found: %s", undelegateCallback.HostZoneId)
+		return fmt.Errorf("Host zone not found: %s", undelegateCallback.HostZoneId)
 	}
 
 	// handle transaction failure cases
@@ -118,12 +117,12 @@ func (k Keeper) UpdateDelegationBalances(ctx sdk.Context, zone types.HostZone, u
 		if err != nil {
 			errMsg := fmt.Sprintf("Could not convert undelegate amount to int64 in undelegation callback | %s", err.Error())
 			k.Logger(ctx).Error(errMsg)
-			return sdkerrors.Wrapf(types.ErrIntCast, errMsg)
+			return fmt.Errorf(types.ErrIntCast.Error(), errMsg)
 		}
 		undelegateVal := undelegation.Validator
 		success := k.AddDelegationToValidator(ctx, zone, undelegateVal, -undelegateAmt)
 		if !success {
-			return sdkerrors.Wrapf(types.ErrValidatorDelegationChg, "Failed to remove delegation to validator")
+			return fmt.Errorf(types.ErrValidatorDelegationChg.Error(), "Failed to remove delegation to validator")
 		}
 		zone.StakedBal -= undelegation.Amount
 	}
@@ -137,13 +136,13 @@ func (k Keeper) GetLatestCompletionTime(ctx sdk.Context, txMsgData *sdk.TxMsgDat
 	for _, msgResponseBytes := range txMsgData.Data {
 		var undelegateResponse stakingtypes.MsgUndelegateResponse
 		if msgResponseBytes == nil || msgResponseBytes.Data == nil {
-			return nil, sdkerrors.Wrap(types.ErrTxMsgDataInvalid, "msgResponseBytes or msgResponseBytes.Data is nil")
+			return nil, fmt.Errorf(types.ErrTxMsgDataInvalid.Error(), "msgResponseBytes or msgResponseBytes.Data is nil")
 		}
 		err := proto.Unmarshal(msgResponseBytes.Data, &undelegateResponse)
 		if err != nil {
 			errMsg := fmt.Sprintf("Unable to unmarshal undelegation tx response | %s", err)
 			k.Logger(ctx).Error(errMsg)
-			return nil, sdkerrors.Wrapf(types.ErrUnmarshalFailure, errMsg)
+			return nil, fmt.Errorf(types.ErrUnmarshalFailure.Error(), errMsg)
 		}
 		if undelegateResponse.CompletionTime.After(latestCompletionTime) {
 			latestCompletionTime = undelegateResponse.CompletionTime
@@ -171,13 +170,13 @@ func (k Keeper) UpdateHostZoneUnbondings(
 		if !found {
 			errMsg := fmt.Sprintf("Unable to find epoch unbonding record for epoch: %d", epochNumber)
 			k.Logger(ctx).Error(errMsg)
-			return 0, sdkerrors.Wrapf(sdkerrors.ErrKeyNotFound, errMsg)
+			return 0, fmt.Errorf(errMsg)
 		}
 		hostZoneUnbonding, found := k.RecordsKeeper.GetHostZoneUnbondingByChainId(ctx, epochUnbondingRecord.EpochNumber, zone.ChainId)
 		if !found {
 			errMsg := fmt.Sprintf("Host zone unbonding not found (%s) in epoch unbonding record: %d", zone.ChainId, epochNumber)
 			k.Logger(ctx).Error(errMsg)
-			return 0, sdkerrors.Wrapf(sdkerrors.ErrKeyNotFound, errMsg)
+			return 0, fmt.Errorf(errMsg)
 		}
 
 		// Keep track of the stTokens that need to be burned
@@ -185,7 +184,7 @@ func (k Keeper) UpdateHostZoneUnbondings(
 		if err != nil {
 			errMsg := fmt.Sprintf("Could not convert stTokenAmount to int64 in redeem stake | %s", err.Error())
 			k.Logger(ctx).Error(errMsg)
-			return 0, sdkerrors.Wrapf(types.ErrIntCast, errMsg)
+			return 0, fmt.Errorf(types.ErrIntCast.Error(), errMsg)
 		}
 		stTokenBurnAmount += stTokenAmount
 
@@ -195,7 +194,7 @@ func (k Keeper) UpdateHostZoneUnbondings(
 		updatedEpochUnbondingRecord, success := k.RecordsKeeper.AddHostZoneToEpochUnbondingRecord(ctx, epochUnbondingRecord.EpochNumber, zone.ChainId, hostZoneUnbonding)
 		if !success {
 			k.Logger(ctx).Error(fmt.Sprintf("Failed to set host zone epoch unbonding record: epochNumber %d, chainId %s, hostZoneUnbonding %v", epochUnbondingRecord.EpochNumber, zone.ChainId, hostZoneUnbonding))
-			return 0, sdkerrors.Wrapf(types.ErrEpochNotFound, "couldn't set host zone epoch unbonding record. err: %s", err.Error())
+			return 0, fmt.Errorf(types.ErrEpochNotFound.Error(), "couldn't set host zone epoch unbonding record. err: %s", err.Error())
 		}
 		k.RecordsKeeper.SetEpochUnbondingRecord(ctx, *updatedEpochUnbondingRecord)
 
@@ -211,7 +210,7 @@ func (k Keeper) BurnTokens(ctx sdk.Context, zone types.HostZone, stTokenBurnAmou
 	stCoinString := sdk.NewDec(stTokenBurnAmount).String() + stCoinDenom
 	stCoin, err := sdk.ParseCoinNormalized(stCoinString)
 	if err != nil {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidCoins, "could not parse burnCoin: %s. err: %s", stCoinString, err.Error())
+		return fmt.Errorf("could not parse burnCoin: %s. err: %s", stCoinString, err.Error())
 	}
 	bech32ZoneAddress, err := sdk.AccAddressFromBech32(zone.Address)
 	if err != nil {
@@ -224,7 +223,7 @@ func (k Keeper) BurnTokens(ctx sdk.Context, zone types.HostZone, stTokenBurnAmou
 	err = k.bankKeeper.BurnCoins(ctx, types.ModuleName, sdk.NewCoins(stCoin))
 	if err != nil {
 		k.Logger(ctx).Error(fmt.Sprintf("Failed to burn stAssets upon successful unbonding %s", err.Error()))
-		return sdkerrors.Wrapf(types.ErrInsufficientFunds, "couldn't burn %d %s tokens in module account. err: %s", stTokenBurnAmount, stCoinDenom, err.Error())
+		return fmt.Errorf(types.ErrInsufficientFunds.Error(), "couldn't burn %d %s tokens in module account. err: %s", stTokenBurnAmount, stCoinDenom, err.Error())
 	}
 	k.Logger(ctx).Info(fmt.Sprintf("Total supply %s", k.bankKeeper.GetSupply(ctx, stCoinDenom)))
 	return nil

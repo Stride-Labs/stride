@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	ibctransfertypes "github.com/cosmos/ibc-go/v3/modules/apps/transfer/types"
 	"github.com/spf13/cast"
 
@@ -17,11 +16,11 @@ func (k msgServer) ClearBalance(goCtx context.Context, msg *types.MsgClearBalanc
 
 	zone, found := k.GetHostZone(ctx, msg.ChainId)
 	if !found {
-		return nil, sdkerrors.Wrapf(types.ErrInvalidHostZone, "chainId: %s", msg.ChainId)
+		return nil, fmt.Errorf(types.ErrInvalidHostZone.Error(), "chainId: %s", msg.ChainId)
 	}
 	feeAccount := zone.GetFeeAccount()
 	if feeAccount == nil {
-		return nil, sdkerrors.Wrapf(types.ErrFeeAccountNotRegistered, "chainId: %s", msg.ChainId)
+		return nil, fmt.Errorf(types.ErrFeeAccountNotRegistered.Error(), "chainId: %s", msg.ChainId)
 	}
 
 	sourcePort := ibctransfertypes.PortID
@@ -32,7 +31,7 @@ func (k msgServer) ClearBalance(goCtx context.Context, msg *types.MsgClearBalanc
 	tokens, err := sdk.ParseCoinNormalized(coinString)
 	if err != nil {
 		k.Logger(ctx).Error(fmt.Sprintf("failed to parse coin (%s)", coinString))
-		return nil, sdkerrors.Wrapf(err, "failed to parse coin (%s)", coinString)
+		return nil, fmt.Errorf(err.Error(), "failed to parse coin (%s)", coinString)
 	}
 	sender := feeAccount.GetAddress()
 	// KeyICATimeoutNanos are for our Stride ICA calls, KeyFeeTransferTimeoutNanos is for the IBC transfer
@@ -56,7 +55,7 @@ func (k msgServer) ClearBalance(goCtx context.Context, msg *types.MsgClearBalanc
 
 	_, err = k.SubmitTxs(ctx, connectionId, msgs, *feeAccount, icaTimeoutNanos, "", nil)
 	if err != nil {
-		return nil, sdkerrors.Wrapf(err, "failed to submit txs")
+		return nil, fmt.Errorf(err.Error(), "failed to submit txs")
 	}
 	return &types.MsgClearBalanceResponse{}, nil
 }

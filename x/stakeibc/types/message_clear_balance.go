@@ -1,8 +1,9 @@
 package types
 
 import (
+	"fmt"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	channeltypes "github.com/cosmos/ibc-go/v3/modules/core/04-channel/types"
 
 	"github.com/Stride-Labs/stride/v3/utils"
@@ -45,20 +46,20 @@ func (msg *MsgClearBalance) GetSignBytes() []byte {
 func (msg *MsgClearBalance) ValidateBasic() error {
 	_, err := sdk.AccAddressFromBech32(msg.Creator)
 	if err != nil {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid creator address (%s)", err)
+		return fmt.Errorf("invalid creator address (%s)", err)
 	}
 	if err := utils.ValidateAdminAddress(msg.Creator); err != nil {
 		return err
 	}
 	// basic checks on host denom
 	if len(msg.ChainId) == 0 {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "chainid is required")
+		return fmt.Errorf("chainid is required")
 	}
 	if msg.Amount <= 0 {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "amount must be greater than 0")
+		return fmt.Errorf("amount must be greater than 0")
 	}
 	if isValid := channeltypes.IsValidChannelID(msg.Channel); !isValid {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "channel is invalid")
+		return fmt.Errorf("channel is invalid")
 	}
 	return nil
 }

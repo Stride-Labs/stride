@@ -1,7 +1,6 @@
 package keeper_test
 
 import (
-	"fmt"
 	"strconv"
 	"testing"
 
@@ -39,7 +38,7 @@ func TestUserRedemptionRecordQuerySingle(t *testing.T) {
 		{
 			desc:    "KeyNotFound",
 			request: &types.QueryGetUserRedemptionRecordRequest{Id: strconv.Itoa(len(msgs))},
-			err:     fmt.Errorf("Key not found"),
+			err:     status.Error(codes.NotFound, "Key not found"),
 		},
 		{
 			desc: "InvalidRequest",

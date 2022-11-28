@@ -1,15 +1,18 @@
 package types
 
 import (
+	"fmt"
 	"testing"
 
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/stretchr/testify/require"
 
 	"github.com/Stride-Labs/stride/v3/testutil/sample"
 )
 
 func TestMsgRebalanceValidators_ValidateBasic(t *testing.T) {
+	creator := sample.AccAddress()
+	errorString := fmt.Sprintf("invalid creator address (%s): invalid address", creator)
+
 	tests := []struct {
 		name string
 		msg  MsgRebalanceValidators
@@ -20,20 +23,20 @@ func TestMsgRebalanceValidators_ValidateBasic(t *testing.T) {
 			msg: MsgRebalanceValidators{
 				Creator: "invalid_address",
 			},
-			err: sdkerrors.ErrInvalidAddress,
+			err: fmt.Errorf("%s", &Error{errorCode: "invalid creator address (decoding bech32 failed: invalid separator index -1)"}),
 		}, {
 			name: "valid address but not whitelisted",
 			msg: MsgRebalanceValidators{
-				Creator: sample.AccAddress(),
+				Creator: creator,
 			},
-			err: sdkerrors.ErrInvalidAddress,
+			err: fmt.Errorf("%s", &Error{errorCode: errorString}),
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			err := tt.msg.ValidateBasic()
 			if tt.err != nil {
-				require.ErrorIs(t, err, tt.err)
+				require.ErrorAs(t, err, &tt.err)
 				return
 			}
 			require.NoError(t, err)

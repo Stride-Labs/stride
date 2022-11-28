@@ -11,7 +11,6 @@ import (
 	"github.com/Stride-Labs/stride/v3/x/stakeibc/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
 func (k msgServer) RegisterHostZone(goCtx context.Context, msg *types.MsgRegisterHostZone) (*types.MsgRegisterHostZoneResponse, error) {
@@ -22,7 +21,7 @@ func (k msgServer) RegisterHostZone(goCtx context.Context, msg *types.MsgRegiste
 	if err != nil {
 		errMsg := fmt.Sprintf("unable to obtain chain id from connection %s, err: %s", msg.ConnectionId, err.Error())
 		k.Logger(ctx).Error(errMsg)
-		return nil, sdkerrors.Wrapf(types.ErrFailedToRegisterHostZone, errMsg)
+		return nil, fmt.Errorf(types.ErrFailedToRegisterHostZone.Error(), errMsg)
 	}
 
 	// get zone
@@ -30,7 +29,7 @@ func (k msgServer) RegisterHostZone(goCtx context.Context, msg *types.MsgRegiste
 	if found {
 		errMsg := fmt.Sprintf("invalid chain id, zone for %s already registered", chainId)
 		k.Logger(ctx).Error(errMsg)
-		return nil, sdkerrors.Wrapf(types.ErrFailedToRegisterHostZone, errMsg)
+		return nil, fmt.Errorf(types.ErrFailedToRegisterHostZone.Error(), errMsg)
 	}
 
 	// check the denom is not already registered
@@ -39,17 +38,17 @@ func (k msgServer) RegisterHostZone(goCtx context.Context, msg *types.MsgRegiste
 		if hostZone.HostDenom == msg.HostDenom {
 			errMsg := fmt.Sprintf("host denom %s already registered", msg.HostDenom)
 			k.Logger(ctx).Error(errMsg)
-			return nil, sdkerrors.Wrapf(types.ErrFailedToRegisterHostZone, errMsg)
+			return nil, fmt.Errorf(types.ErrFailedToRegisterHostZone.Error(), errMsg)
 		}
 		if hostZone.ConnectionId == msg.ConnectionId {
 			errMsg := fmt.Sprintf("connectionId %s already registered", msg.ConnectionId)
 			k.Logger(ctx).Error(errMsg)
-			return nil, sdkerrors.Wrapf(types.ErrFailedToRegisterHostZone, errMsg)
+			return nil, fmt.Errorf(types.ErrFailedToRegisterHostZone.Error(), errMsg)
 		}
 		if hostZone.Bech32Prefix == msg.Bech32Prefix {
 			errMsg := fmt.Sprintf("bech32prefix %s already registered", msg.Bech32Prefix)
 			k.Logger(ctx).Error(errMsg)
-			return nil, sdkerrors.Wrapf(types.ErrFailedToRegisterHostZone, errMsg)
+			return nil, fmt.Errorf(types.ErrFailedToRegisterHostZone.Error(), errMsg)
 		}
 	}
 
@@ -87,7 +86,7 @@ func (k msgServer) RegisterHostZone(goCtx context.Context, msg *types.MsgRegiste
 	if err := k.ICAControllerKeeper.RegisterInterchainAccount(ctx, zone.ConnectionId, delegateAccount); err != nil {
 		errMsg := fmt.Sprintf("unable to register delegation account, err: %s", err.Error())
 		k.Logger(ctx).Error(errMsg)
-		return nil, sdkerrors.Wrapf(types.ErrFailedToRegisterHostZone, errMsg)
+		return nil, fmt.Errorf(types.ErrFailedToRegisterHostZone.Error(), errMsg)
 	}
 
 	// generate fee account
@@ -95,7 +94,7 @@ func (k msgServer) RegisterHostZone(goCtx context.Context, msg *types.MsgRegiste
 	if err := k.ICAControllerKeeper.RegisterInterchainAccount(ctx, zone.ConnectionId, feeAccount); err != nil {
 		errMsg := fmt.Sprintf("unable to register fee account, err: %s", err.Error())
 		k.Logger(ctx).Error(errMsg)
-		return nil, sdkerrors.Wrapf(types.ErrFailedToRegisterHostZone, errMsg)
+		return nil, fmt.Errorf(types.ErrFailedToRegisterHostZone.Error(), errMsg)
 	}
 
 	// generate withdrawal account
@@ -103,7 +102,7 @@ func (k msgServer) RegisterHostZone(goCtx context.Context, msg *types.MsgRegiste
 	if err := k.ICAControllerKeeper.RegisterInterchainAccount(ctx, zone.ConnectionId, withdrawalAccount); err != nil {
 		errMsg := fmt.Sprintf("unable to register withdrawal account, err: %s", err.Error())
 		k.Logger(ctx).Error(errMsg)
-		return nil, sdkerrors.Wrapf(types.ErrFailedToRegisterHostZone, errMsg)
+		return nil, fmt.Errorf(types.ErrFailedToRegisterHostZone.Error(), errMsg)
 	}
 
 	// generate redemption account
@@ -111,20 +110,20 @@ func (k msgServer) RegisterHostZone(goCtx context.Context, msg *types.MsgRegiste
 	if err := k.ICAControllerKeeper.RegisterInterchainAccount(ctx, zone.ConnectionId, redemptionAccount); err != nil {
 		errMsg := fmt.Sprintf("unable to register redemption account, err: %s", err.Error())
 		k.Logger(ctx).Error(errMsg)
-		return nil, sdkerrors.Wrapf(types.ErrFailedToRegisterHostZone, errMsg)
+		return nil, fmt.Errorf(types.ErrFailedToRegisterHostZone.Error(), errMsg)
 	}
 
 	// add this host zone to unbonding hostZones, otherwise users won't be able to unbond
 	// for this host zone until the following day
 	dayEpochTracker, found := k.GetEpochTracker(ctx, epochtypes.DAY_EPOCH)
 	if !found {
-		return nil, sdkerrors.Wrapf(types.ErrEpochNotFound, "epoch tracker (%s) not found", epochtypes.DAY_EPOCH)
+		return nil, fmt.Errorf(types.ErrEpochNotFound.Error(), "epoch tracker (%s) not found", epochtypes.DAY_EPOCH)
 	}
 	epochUnbondingRecord, found := k.RecordsKeeper.GetEpochUnbondingRecord(ctx, dayEpochTracker.EpochNumber)
 	if !found {
 		errMsg := "unable to find latest epoch unbonding record"
 		k.Logger(ctx).Error(errMsg)
-		return nil, sdkerrors.Wrapf(recordstypes.ErrEpochUnbondingRecordNotFound{}.Error(), errMsg)
+		return nil, fmt.Errorf(recordstypes.ErrEpochUnbondingRecordNotFound.Error(), errMsg)
 	}
 	hostZoneUnbonding := &recordstypes.HostZoneUnbonding{
 		NativeTokenAmount: 0,
@@ -137,14 +136,14 @@ func (k msgServer) RegisterHostZone(goCtx context.Context, msg *types.MsgRegiste
 	if !success {
 		errMsg := fmt.Sprintf("Failed to set host zone epoch unbonding record: epochNumber %d, chainId %s, hostZoneUnbonding %v. Err: %s", epochUnbondingRecord.EpochNumber, chainId, hostZoneUnbonding, err.Error())
 		k.Logger(ctx).Error(errMsg)
-		return nil, sdkerrors.Wrapf(types.ErrEpochNotFound, errMsg)
+		return nil, fmt.Errorf(types.ErrEpochNotFound.Error(), errMsg)
 	}
 	k.RecordsKeeper.SetEpochUnbondingRecord(ctx, *updatedEpochUnbondingRecord)
 
 	// create an empty deposit record for the host zone
 	strideEpochTracker, found := k.GetEpochTracker(ctx, epochtypes.STRIDE_EPOCH)
 	if !found {
-		return nil, sdkerrors.Wrapf(types.ErrEpochNotFound, "epoch tracker (%s) not found", epochtypes.STRIDE_EPOCH)
+		return nil, fmt.Errorf(types.ErrEpochNotFound.Error(), "epoch tracker (%s) not found", epochtypes.STRIDE_EPOCH)
 	}
 	depositRecord := recordstypes.DepositRecord{
 		Id:                 0,

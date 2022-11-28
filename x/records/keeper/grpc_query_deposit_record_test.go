@@ -1,7 +1,6 @@
 package keeper_test
 
 import (
-	"fmt"
 	"testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -48,7 +47,7 @@ func TestDepositRecordQuerySingle(t *testing.T) {
 		{
 			desc:    "KeyNotFound",
 			request: &types.QueryGetDepositRecordRequest{Id: uint64(len(msgs))},
-			err:     fmt.Errorf("Key not found"),
+			err:     status.Error(codes.NotFound, "Key not found"),
 		},
 		{
 			desc: "InvalidRequest",

@@ -149,6 +149,6 @@ func (s *KeeperTestSuite) TestReinvestCallback_MissingEpoch() {
 	s.App.StakeibcKeeper.RemoveEpochTracker(s.Ctx(), epochtypes.STRIDE_EPOCH)
 
 	err := stakeibckeeper.ReinvestCallback(s.App.StakeibcKeeper, s.Ctx(), invalidArgs.packet, invalidArgs.ack, invalidArgs.args)
-	s.Require().ErrorContains(err, "no number for epoch (stride_epoch)")
+	s.Require().ErrorContains(err, "no number for epoch (%s), string=stride_epoch)")
 	s.checkReinvestStateIfCallbackFailed(tc)
 }

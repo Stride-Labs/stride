@@ -1,8 +1,9 @@
 package types
 
 import (
+	"fmt"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
 const TypeMsgRedeemStake = "redeem_stake"
@@ -43,24 +44,24 @@ func (msg *MsgRedeemStake) ValidateBasic() error {
 	// check valid creator address
 	_, err := sdk.AccAddressFromBech32(msg.Creator)
 	if err != nil {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid creator address (%s)", err)
+		return fmt.Errorf("invalid creator address (%s)", err)
 	}
 	// validate host zone is not empty
 	// we check validity in the RedeemState function
 	if msg.Receiver == "" {
-		return sdkerrors.Wrapf(ErrRequiredFieldEmpty, "receiver cannot be empty")
+		return fmt.Errorf("receiver cannot be empty")
 	}
 	// ensure amount is a nonzero positive integer
 	if msg.Amount <= 0 {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "invalid amount (%d)", msg.Amount)
+		return fmt.Errorf("invalid amount (%d)", msg.Amount)
 	}
 	// validate host zone is not empty
 	if msg.HostZone == "" {
-		return sdkerrors.Wrapf(ErrRequiredFieldEmpty, "host zone cannot be empty")
+		return fmt.Errorf(ErrRequiredFieldEmpty.Error(), "host zone cannot be empty")
 	}
 	// math.MaxInt64 == 1<<63 - 1
 	if !(msg.Amount < (1<<63 - 1)) {
-		return sdkerrors.Wrapf(ErrInvalidAmount, "amount liquid staked must be less than math.MaxInt64 %d", 1<<63-1)
+		return fmt.Errorf(ErrInvalidAmount.Error(), "amount liquid staked must be less than math.MaxInt64 %d", 1<<63-1)
 	}
 	return nil
 }
