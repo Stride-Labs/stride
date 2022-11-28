@@ -26,14 +26,14 @@ func ValidatorExchangeRateCallback(k Keeper, ctx sdk.Context, args []byte, query
 	if !found {
 		errMsg := fmt.Sprintf("no registered zone for queried chain ID (%s)", query.GetChainId())
 		k.Logger(ctx).Error(errMsg)
-		return fmt.Errorf(errMsg, types.ErrHostZoneNotFound)
+		return fmt.Errorf(`%s: %s`, errMsg, types.ErrHostZoneNotFound.Error())
 	}
 	queriedValidator := stakingtypes.Validator{}
 	err := k.cdc.Unmarshal(args, &queriedValidator)
 	if err != nil {
 		errMsg := fmt.Sprintf("unable to unmarshal queriedValidator info for zone %s, err: %s", hostZone.ChainId, err.Error())
 		k.Logger(ctx).Error(errMsg)
-		return fmt.Errorf(errMsg, types.ErrMarshalFailure.Error())
+		return fmt.Errorf(`%s: %s`, errMsg, types.ErrMarshalFailure.Error())
 	}
 	k.Logger(ctx).Info(fmt.Sprintf("ValidatorCallback: HostZone %s, Queried Validator %v, Jailed: %v, Tokens: %v, Shares: %v",
 		hostZone.ChainId, queriedValidator.OperatorAddress, queriedValidator.Jailed, queriedValidator.Tokens, queriedValidator.DelegatorShares))
@@ -43,7 +43,7 @@ func ValidatorExchangeRateCallback(k Keeper, ctx sdk.Context, args []byte, query
 	if err != nil {
 		errMsg := fmt.Sprintf("unable to determine if ICQ callback is inside buffer window, err: %s", err.Error())
 		k.Logger(ctx).Error(errMsg)
-		return fmt.Errorf(errMsg, types.ErrOutsideIcqWindow.Error())
+		return fmt.Errorf(`%s: %s`, errMsg, types.ErrOutsideIcqWindow.Error())
 	} else if !withinBufferWindow {
 		k.Logger(ctx).Error("validator exchange rate callback is outside ICQ window")
 		return nil
@@ -54,7 +54,7 @@ func ValidatorExchangeRateCallback(k Keeper, ctx sdk.Context, args []byte, query
 	if !found {
 		errMsg := fmt.Sprintf("no registered validator for address (%s)", queriedValidator.OperatorAddress)
 		k.Logger(ctx).Error(errMsg)
-		return fmt.Errorf(errMsg, types.ErrValidatorNotFound.Error())
+		return fmt.Errorf(`%s: %s`, errMsg, types.ErrValidatorNotFound.Error())
 	}
 	// get the stride epoch number
 	strideEpochTracker, found := k.GetEpochTracker(ctx, epochtypes.STRIDE_EPOCH)
@@ -68,7 +68,7 @@ func ValidatorExchangeRateCallback(k Keeper, ctx sdk.Context, args []byte, query
 	if queriedValidator.DelegatorShares.IsZero() {
 		errMsg := fmt.Sprintf("can't calculate validator internal exchange rate because delegation amount is 0 (validator: %s)", validator.Address)
 		k.Logger(ctx).Error(errMsg)
-		return fmt.Errorf(errMsg, types.ErrDivisionByZero.Error())
+		return fmt.Errorf(`%s: %s`, errMsg, types.ErrDivisionByZero.Error())
 	}
 
 	// We want the validator's internal exchange rate which is held internally behind `validator.TokensFromShares`
@@ -91,7 +91,7 @@ func ValidatorExchangeRateCallback(k Keeper, ctx sdk.Context, args []byte, query
 	if err != nil {
 		errMsg := fmt.Sprintf("ValidatorCallback: failed to query delegation, zone %s, err: %s", hostZone.ChainId, err.Error())
 		k.Logger(ctx).Error(errMsg)
-		return fmt.Errorf(errMsg, types.ErrICQFailed.Error())
+		return fmt.Errorf(`%s: %s`, errMsg, types.ErrICQFailed.Error())
 	}
 	return nil
 }

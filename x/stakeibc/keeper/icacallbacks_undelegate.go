@@ -45,7 +45,7 @@ func UndelegateCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, a
 	if err != nil {
 		errMsg := fmt.Sprintf("Unable to unmarshal undelegate callback args | %s", err.Error())
 		k.Logger(ctx).Error(errMsg)
-		return fmt.Errorf(errMsg, types.ErrUnmarshalFailure.Error())
+		return fmt.Errorf(`%s: %s`, errMsg, types.ErrUnmarshalFailure.Error())
 	}
 	k.Logger(ctx).Info(fmt.Sprintf("UndelegateCallback, HostZone: %s", undelegateCallback.HostZoneId))
 	zone, found := k.GetHostZone(ctx, undelegateCallback.HostZoneId)
@@ -170,13 +170,13 @@ func (k Keeper) UpdateHostZoneUnbondings(
 		if !found {
 			errMsg := fmt.Sprintf("Unable to find epoch unbonding record for epoch: %d", epochNumber)
 			k.Logger(ctx).Error(errMsg)
-			return 0, fmt.Errorf(errMsg, "key not found")
+			return 0, fmt.Errorf(`%s: %s`, errMsg, "key not found")
 		}
 		hostZoneUnbonding, found := k.RecordsKeeper.GetHostZoneUnbondingByChainId(ctx, epochUnbondingRecord.EpochNumber, zone.ChainId)
 		if !found {
 			errMsg := fmt.Sprintf("Host zone unbonding not found (%s) in epoch unbonding record: %d", zone.ChainId, epochNumber)
 			k.Logger(ctx).Error(errMsg)
-			return 0, fmt.Errorf(errMsg, "key not found")
+			return 0, fmt.Errorf(`%s: %s`, errMsg, "key not found")
 		}
 
 		// Keep track of the stTokens that need to be burned

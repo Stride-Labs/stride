@@ -140,7 +140,7 @@ func (k Keeper) GetHostZoneUnbondingMsgs(ctx sdk.Context, hostZone types.HostZon
 		errMsg := fmt.Sprintf("Could not unbond %d on Host Zone %s, unable to balance the unbond amount across validators",
 			totalAmtToUnbond, hostZone.ChainId)
 		k.Logger(ctx).Error(errMsg)
-		return nil, 0, nil, nil, fmt.Errorf(errMsg, "not found")
+		return nil, 0, nil, nil, fmt.Errorf("%s: %s", errMsg, "not found")
 	}
 	var splitDelegations []*types.SplitDelegation
 	for _, valAddr := range utils.StringToIntMapKeys(valAddrToUnbondAmt) {

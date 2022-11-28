@@ -211,7 +211,7 @@ func (s *KeeperTestSuite) TestValidatorExchangeRateCallback_DelegationQueryFaile
 
 	err := stakeibckeeper.ValidatorExchangeRateCallback(s.App.StakeibcKeeper, s.Ctx(), tc.validArgs.callbackArgs, tc.validArgs.query)
 
-	expectedErrMsg := "ValidatorCallback: failed to query delegation, zone GAIA, err: Zone GAIA is missing a delegation address!: "
-	expectedErrMsg += "ICA acccount not found on host zone: failed to submit ICQ"
+	expectedErrMsg := "ValidatorCallback: failed to query delegation, zone GAIA, err: Zone GAIA is missing a delegation address!"
+	expectedErrMsg += "%!(EXTRA string=ICA acccount not found on host zone): failed to submit ICQ"
 	s.Require().EqualError(err, expectedErrMsg)
 }

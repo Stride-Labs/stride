@@ -41,7 +41,7 @@ func RedemptionCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, a
 	if err != nil {
 		errMsg := fmt.Sprintf("Unable to unmarshal redemption callback args | %s", err.Error())
 		k.Logger(ctx).Error(errMsg)
-		return fmt.Errorf(errMsg, types.ErrUnmarshalFailure)
+		return fmt.Errorf(`%s: %s`, errMsg, types.ErrUnmarshalFailure)
 	}
 	k.Logger(ctx).Info(fmt.Sprintf("RedemptionCallback, HostZone: %s", redemptionCallback.HostZoneId))
 	hostZoneId := redemptionCallback.HostZoneId
