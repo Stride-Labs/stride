@@ -8,7 +8,6 @@ import (
 	"github.com/Stride-Labs/stride/v3/x/stakeibc/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	channeltypes "github.com/cosmos/ibc-go/v3/modules/core/04-channel/types"
 	"github.com/golang/protobuf/proto" //nolint:staticcheck
 )
@@ -56,13 +55,13 @@ func RebalanceCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ac
 	if err != nil {
 		errMsg := fmt.Sprintf("Unable to unmarshal rebalance callback args | %s", err.Error())
 		k.Logger(ctx).Error(errMsg)
-		return sdkerrors.Wrapf(types.ErrUnmarshalFailure, errMsg)
+		return fmt.Errorf(`%s: %s`, errMsg, types.ErrUnmarshalFailure.Error())
 	}
 	k.Logger(ctx).Info(fmt.Sprintf("RebalanceCallback %v", rebalanceCallback))
 	hostZone := rebalanceCallback.GetHostZoneId()
 	zone, found := k.GetHostZone(ctx, hostZone)
 	if !found {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "host zone not found %s", hostZone)
+		return fmt.Errorf("host zone not found %s: invalid request", hostZone)
 	}
 
 	// update the host zone
@@ -79,12 +78,12 @@ func RebalanceCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ac
 		if _, valFound := valAddrMap[srcValidator]; valFound {
 			valAddrMap[srcValidator].DelegationAmt -= amt
 		} else {
-			return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "validator not found %s", srcValidator)
+			return fmt.Errorf("validator not found %s: invalid request", srcValidator)
 		}
 		if _, valFound := valAddrMap[dstValidator]; valFound {
 			valAddrMap[dstValidator].DelegationAmt += amt
 		} else {
-			return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "validator not found %s", dstValidator)
+			return fmt.Errorf("validator not found %s: invalid request", dstValidator)
 		}
 	}
 	k.SetHostZone(ctx, zone)

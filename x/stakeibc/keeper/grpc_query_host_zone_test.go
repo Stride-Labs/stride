@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/types/query"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/codes"
@@ -42,7 +41,7 @@ func TestHostZoneQuerySingle(t *testing.T) {
 		{
 			desc:    "KeyNotFound",
 			request: &types.QueryGetHostZoneRequest{ChainId: strconv.Itoa((len(msgs)))},
-			err:     sdkerrors.ErrKeyNotFound,
+			err:     types.ErrKeyNotFound,
 		},
 		{
 			desc: "InvalidRequest",

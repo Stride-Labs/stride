@@ -1,8 +1,9 @@
 package types
 
 import (
+	"fmt"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
 	"github.com/Stride-Labs/stride/v3/utils"
 )
@@ -44,19 +45,19 @@ func (msg *MsgClaimUndelegatedTokens) GetSignBytes() []byte {
 func (msg *MsgClaimUndelegatedTokens) ValidateBasic() error {
 	_, err := sdk.AccAddressFromBech32(msg.Creator)
 	if err != nil {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid creator address (%s)", err)
+		return fmt.Errorf("invalid creator address (%s): invalid address", err.Error())
 	}
 	// sender must be a valid stride address
 	_, err = utils.AccAddressFromBech32(msg.Sender, "stride")
 	if err != nil {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid sender address (%s)", err)
+		return fmt.Errorf("invalid sender address (%s): : invalid address", err.Error())
 	}
 	// validate host denom is not empty
 	if msg.HostZoneId == "" {
-		return sdkerrors.Wrapf(ErrRequiredFieldEmpty, "host zone id cannot be empty")
+		return fmt.Errorf("host zone id cannot be empty: required field is missing")
 	}
 	if !(msg.Epoch < (1<<63 - 1)) {
-		return sdkerrors.Wrapf(ErrInvalidAmount, "epoch must be less than math.MaxInt64 %d", 1<<63-1)
+		return fmt.Errorf("epoch must be less than math.MaxInt64 %d: invalid amount", 1<<63-1)
 	}
 	return nil
 }

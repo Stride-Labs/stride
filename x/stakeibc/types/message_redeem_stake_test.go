@@ -1,10 +1,10 @@
 package types
 
 import (
+	fmt "fmt"
 	"math"
 	"testing"
 
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/stretchr/testify/require"
 
 	"github.com/Stride-Labs/stride/v3/testutil/sample"
@@ -33,7 +33,7 @@ func TestMsgRedeemStake_ValidateBasic(t *testing.T) {
 				Receiver: sample.AccAddress(),
 				Amount:   uint64(1),
 			},
-			err: sdkerrors.ErrInvalidAddress,
+			err: fmt.Errorf("%s", &Error{errorCode: "invalid address"}),
 		},
 		{
 			name: "no host zone",
@@ -42,7 +42,7 @@ func TestMsgRedeemStake_ValidateBasic(t *testing.T) {
 				Receiver: sample.AccAddress(),
 				Amount:   uint64(1),
 			},
-			err: ErrRequiredFieldEmpty,
+			err: fmt.Errorf("%s", &Error{errorCode: `host zone cannot be empty: required field is missing`}),
 		},
 		{
 			name: "invalid receiver",
@@ -51,7 +51,7 @@ func TestMsgRedeemStake_ValidateBasic(t *testing.T) {
 				HostZone: "GAIA",
 				Amount:   uint64(1),
 			},
-			err: ErrRequiredFieldEmpty,
+			err: fmt.Errorf("%s", &Error{errorCode: `receiver cannot be empty:  required field is missing`}),
 		},
 		{
 			name: "amount max int",
@@ -61,14 +61,14 @@ func TestMsgRedeemStake_ValidateBasic(t *testing.T) {
 				Receiver: sample.AccAddress(),
 				Amount:   math.MaxUint64,
 			},
-			err: ErrInvalidAmount,
+			err: fmt.Errorf("%s", &Error{errorCode: `amount liquid staked must be less than math.MaxInt64 \d+: invalid amount`}),
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			err := tt.msg.ValidateBasic()
 			if tt.err != nil {
-				require.ErrorIs(t, err, tt.err)
+				require.ErrorAs(t, err, &tt.err)
 				return
 			}
 			require.NoError(t, err)

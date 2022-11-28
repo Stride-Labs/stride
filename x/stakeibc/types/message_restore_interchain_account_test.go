@@ -1,9 +1,9 @@
 package types
 
 import (
+	fmt "fmt"
 	"testing"
 
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/stretchr/testify/require"
 
 	"github.com/Stride-Labs/stride/v3/testutil/sample"
@@ -20,7 +20,7 @@ func TestMsgRestoreInterchainAccount_ValidateBasic(t *testing.T) {
 			msg: MsgRestoreInterchainAccount{
 				Creator: "invalid_address",
 			},
-			err: sdkerrors.ErrInvalidAddress,
+			err: fmt.Errorf("%s", &Error{errorCode: "invalid address"}),
 		}, {
 			name: "not admin address",
 			msg: MsgRestoreInterchainAccount{
@@ -32,7 +32,7 @@ func TestMsgRestoreInterchainAccount_ValidateBasic(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			err := tt.msg.ValidateBasic()
 			if tt.err != nil {
-				require.ErrorIs(t, err, tt.err)
+				require.ErrorAs(t, err, &tt.err)
 				return
 			}
 			require.NoError(t, err)

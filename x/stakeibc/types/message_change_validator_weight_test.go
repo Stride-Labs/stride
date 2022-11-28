@@ -1,9 +1,9 @@
 package types
 
 import (
+	fmt "fmt"
 	"testing"
 
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/stretchr/testify/require"
 
 	"github.com/Stride-Labs/stride/v3/testutil/sample"
@@ -20,20 +20,20 @@ func TestMsgChangeValidatorWeight_ValidateBasic(t *testing.T) {
 			msg: MsgChangeValidatorWeight{
 				Creator: "invalid_address",
 			},
-			err: sdkerrors.ErrInvalidAddress,
+			err: fmt.Errorf("%s", &Error{errorCode: "invalid creator address (decoding bech32 failed: invalid separator index -1): invalid address"}),
 		}, {
 			name: "valid address but not whitelisted",
 			msg: MsgChangeValidatorWeight{
 				Creator: sample.AccAddress(),
 			},
-			err: sdkerrors.ErrInvalidAddress,
+			err: fmt.Errorf("%s", &Error{errorCode: `invalid creator address (+\s): invalid address`}),
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			err := tt.msg.ValidateBasic()
 			if tt.err != nil {
-				require.ErrorIs(t, err, tt.err)
+				require.ErrorAs(t, err, &tt.err)
 				return
 			}
 			require.NoError(t, err)

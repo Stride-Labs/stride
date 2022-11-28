@@ -1,10 +1,10 @@
 package types
 
 import (
+	"fmt"
 	"strings"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
 const TypeMsgLiquidStake = "liquid_stake"
@@ -53,19 +53,19 @@ func (msg *MsgLiquidStake) GetSignBytes() []byte {
 func (msg *MsgLiquidStake) ValidateBasic() error {
 	_, err := sdk.AccAddressFromBech32(msg.Creator)
 	if err != nil {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid creator address (%s)", err)
+		return fmt.Errorf("invalid creator address (%s): invalid address", err.Error())
 	}
 	// validate amount is positive nonzero
 	if msg.Amount <= 0 {
-		return sdkerrors.Wrapf(ErrInvalidAmount, "amount liquid staked must be positive and nonzero")
+		return fmt.Errorf("amount liquid staked must be positive and nonzero: invalid amount")
 	}
 	// validate host denom is not empty
 	if msg.HostDenom == "" {
-		return sdkerrors.Wrapf(ErrRequiredFieldEmpty, "host denom cannot be empty")
+		return fmt.Errorf("host denom cannot be empty: %s", ErrRequiredFieldEmpty)
 	}
 	// math.MaxInt64 == 1<<63 - 1
 	if !(msg.Amount < (1<<63 - 1)) {
-		return sdkerrors.Wrapf(ErrInvalidAmount, "amount liquid staked must be less than math.MaxInt64 %d", 1<<63-1)
+		return fmt.Errorf("amount liquid staked must be less than math.MaxInt64 %d: %s", 1<<63-1, ErrInvalidAmount)
 	}
 	// host denom must be a valid asset denom
 	if err := sdk.ValidateDenom(msg.HostDenom); err != nil {

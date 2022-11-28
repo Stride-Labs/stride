@@ -1,9 +1,9 @@
 package types
 
 import (
+	fmt "fmt"
 	"testing"
 
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/stretchr/testify/require"
 
 	"github.com/Stride-Labs/stride/v3/testutil/sample"
@@ -22,7 +22,7 @@ func TestMsgLiquidStake_ValidateBasic(t *testing.T) {
 				Amount:    1,
 				HostDenom: "uatom",
 			},
-			err: sdkerrors.ErrInvalidAddress,
+			err: fmt.Errorf("%s", &Error{errorCode: "invalid address"}),
 		},
 		{
 			name: "invalid address: wrong chain's bech32prefix",
@@ -31,7 +31,7 @@ func TestMsgLiquidStake_ValidateBasic(t *testing.T) {
 				Amount:    1,
 				HostDenom: "uatom",
 			},
-			err: sdkerrors.ErrInvalidAddress,
+			err: fmt.Errorf("%s", &Error{errorCode: "invalid address"}),
 		},
 		{
 			name: "valid inputs",
@@ -57,7 +57,7 @@ func TestMsgLiquidStake_ValidateBasic(t *testing.T) {
 				Amount:    1,
 				HostDenom: "",
 			},
-			err: ErrRequiredFieldEmpty,
+			err: fmt.Errorf("%s", &Error{errorCode: "host denom cannot be empty: required field is missing"}),
 		},
 	}
 	for _, tt := range tests {
@@ -65,7 +65,7 @@ func TestMsgLiquidStake_ValidateBasic(t *testing.T) {
 			// check validatebasic()
 			err := tt.msg.ValidateBasic()
 			if tt.err != nil {
-				require.ErrorIs(t, err, tt.err)
+				require.ErrorAs(t, err, &tt.err)
 				return
 			}
 			require.NoError(t, err)

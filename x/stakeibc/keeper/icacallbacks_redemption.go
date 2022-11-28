@@ -9,7 +9,6 @@ import (
 	"github.com/Stride-Labs/stride/v3/x/stakeibc/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	channeltypes "github.com/cosmos/ibc-go/v3/modules/core/04-channel/types"
 	"github.com/golang/protobuf/proto" //nolint:staticcheck
 )
@@ -42,13 +41,13 @@ func RedemptionCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, a
 	if err != nil {
 		errMsg := fmt.Sprintf("Unable to unmarshal redemption callback args | %s", err.Error())
 		k.Logger(ctx).Error(errMsg)
-		return sdkerrors.Wrapf(types.ErrUnmarshalFailure, errMsg)
+		return fmt.Errorf(errMsg, types.ErrUnmarshalFailure)
 	}
 	k.Logger(ctx).Info(fmt.Sprintf("RedemptionCallback, HostZone: %s", redemptionCallback.HostZoneId))
 	hostZoneId := redemptionCallback.HostZoneId
 	zone, found := k.GetHostZone(ctx, hostZoneId)
 	if !found {
-		return sdkerrors.Wrapf(sdkerrors.ErrKeyNotFound, "Host zone not found: %s", hostZoneId)
+		return fmt.Errorf("Host zone not found: %s: key not found", hostZoneId)
 	}
 
 	if ack == nil {
