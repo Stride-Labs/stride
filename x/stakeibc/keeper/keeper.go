@@ -171,7 +171,7 @@ func (k Keeper) GetStrideEpochElapsedShare(ctx sdk.Context) (sdk.Dec, error) {
 	if !found {
 		errMsg := fmt.Sprintf("Failed to get epoch tracker for %s", epochstypes.STRIDE_EPOCH)
 		k.Logger(ctx).Error(errMsg)
-		return sdk.ZeroDec(), fmt.Errorf(errMsg, "not found")
+		return sdk.ZeroDec(), fmt.Errorf("%s: %s", errMsg, "not found")
 	}
 
 	// Get epoch start time, end time, and duration
@@ -179,13 +179,13 @@ func (k Keeper) GetStrideEpochElapsedShare(ctx sdk.Context) (sdk.Dec, error) {
 	if err != nil {
 		errMsg := fmt.Sprintf("unable to convert epoch duration to int64, err: %s", err.Error())
 		k.Logger(ctx).Error(errMsg)
-		return sdk.ZeroDec(), fmt.Errorf(errMsg, types.ErrIntCast.Error())
+		return sdk.ZeroDec(), fmt.Errorf("%s: %s", errMsg, types.ErrIntCast.Error())
 	}
 	epochEndTime, err := cast.ToInt64E(epochTracker.NextEpochStartTime)
 	if err != nil {
 		errMsg := fmt.Sprintf("unable to convert next epoch start time to int64, err: %s", err.Error())
 		k.Logger(ctx).Error(errMsg)
-		return sdk.ZeroDec(), fmt.Errorf(errMsg, types.ErrIntCast.Error())
+		return sdk.ZeroDec(), fmt.Errorf("%s: %s", errMsg, types.ErrIntCast.Error())
 	}
 	epochStartTime := epochEndTime - epochDuration
 
@@ -194,7 +194,7 @@ func (k Keeper) GetStrideEpochElapsedShare(ctx sdk.Context) (sdk.Dec, error) {
 	if currBlockTime < epochStartTime || currBlockTime > epochEndTime {
 		errMsg := fmt.Sprintf("current block time %d is not within current epoch (ending at %d)", currBlockTime, epochTracker.NextEpochStartTime)
 		k.Logger(ctx).Error(errMsg)
-		return sdk.ZeroDec(), fmt.Errorf(errMsg, types.ErrInvalidEpoch.Error())
+		return sdk.ZeroDec(), fmt.Errorf("%s: %s", errMsg, types.ErrInvalidEpoch.Error())
 	}
 
 	// Get elapsed share
@@ -203,7 +203,7 @@ func (k Keeper) GetStrideEpochElapsedShare(ctx sdk.Context) (sdk.Dec, error) {
 	if elapsedShare.LT(sdk.ZeroDec()) || elapsedShare.GT(sdk.OneDec()) {
 		errMsg := fmt.Sprintf("elapsed share (%s) for epoch is not between 0 and 1", elapsedShare)
 		k.Logger(ctx).Error(errMsg)
-		return sdk.ZeroDec(), fmt.Errorf(errMsg, types.ErrInvalidEpoch.Error())
+		return sdk.ZeroDec(), fmt.Errorf("%s: %s", errMsg, types.ErrInvalidEpoch.Error())
 	}
 
 	k.Logger(ctx).Info(fmt.Sprintf("Epoch elapsed share: %v (Block Time: %d, Epoch End Time: %d)", elapsedShare, currBlockTime, epochEndTime))

@@ -29,7 +29,7 @@ func DelegatorSharesCallback(k Keeper, ctx sdk.Context, args []byte, query icqty
 	if !found {
 		errMsg := fmt.Sprintf("no registered zone for queried chain ID (%s)", query.GetChainId())
 		k.Logger(ctx).Error(errMsg)
-		return fmt.Errorf(errMsg, types.ErrHostZoneNotFound.Error())
+		return fmt.Errorf("%s: %s", errMsg, types.ErrHostZoneNotFound.Error())
 	}
 
 	// Unmarshal the query response which returns a delegation object for the delegator/validator pair
@@ -38,7 +38,7 @@ func DelegatorSharesCallback(k Keeper, ctx sdk.Context, args []byte, query icqty
 	if err != nil {
 		errMsg := fmt.Sprintf("unable to unmarshal queried delegation info for zone %s, err: %s", hostZone.ChainId, err.Error())
 		k.Logger(ctx).Error(errMsg)
-		return fmt.Errorf(errMsg, types.ErrMarshalFailure.Error())
+		return fmt.Errorf("%s: %s", errMsg, types.ErrMarshalFailure.Error())
 	}
 	k.Logger(ctx).Info(fmt.Sprintf("DelegationCallback: HostZone: %s, Delegator: %s, Validator: %s, Shares: %v",
 		hostZone.ChainId, queriedDelgation.DelegatorAddress, queriedDelgation.ValidatorAddress, queriedDelgation.Shares))
@@ -59,7 +59,7 @@ func DelegatorSharesCallback(k Keeper, ctx sdk.Context, args []byte, query icqty
 	if !found {
 		errMsg := fmt.Sprintf("no registered validator for address (%s)", queriedDelgation.ValidatorAddress)
 		k.Logger(ctx).Error(errMsg)
-		return fmt.Errorf(errMsg, types.ErrValidatorNotFound.Error())
+		return fmt.Errorf("%s: %s", errMsg, types.ErrValidatorNotFound.Error())
 	}
 
 	// get the validator's internal exchange rate, aborting if it hasn't been updated this epoch
@@ -72,7 +72,7 @@ func DelegatorSharesCallback(k Keeper, ctx sdk.Context, args []byte, query icqty
 		errMsg := fmt.Sprintf("DelegationCallback: validator (%s) internal exchange rate has not been updated this epoch (epoch #%d)",
 			validator.Address, strideEpochTracker.GetEpochNumber())
 		k.Logger(ctx).Error(errMsg)
-		return fmt.Errorf(errMsg, "invalid request")
+		return fmt.Errorf("%s: %s", errMsg, "invalid request")
 	}
 
 	// TODO: make sure conversion math precision matches the sdk's staking module's version (we did it slightly differently)
@@ -100,14 +100,14 @@ func DelegatorSharesCallback(k Keeper, ctx sdk.Context, args []byte, query icqty
 	if err != nil {
 		errMsg := fmt.Sprintf("unable to convert validator delegation amount to int64, err: %s", err.Error())
 		k.Logger(ctx).Error(errMsg)
-		return fmt.Errorf(`%s: %s`, errMsg, types.ErrIntCast.Error())
+		return fmt.Errorf("%s: %s", errMsg, types.ErrIntCast.Error())
 	}
 	slashAmountUInt := validator.DelegationAmt - validatorTokens.Uint64()
 	slashAmount, err := cast.ToInt64E(slashAmountUInt)
 	if err != nil {
 		errMsg := fmt.Sprintf("unable to convert validator slash amount to int64, err: %s", err.Error())
 		k.Logger(ctx).Error(errMsg)
-		return fmt.Errorf(errMsg, types.ErrIntCast.Error())
+		return fmt.Errorf("%s: %s", errMsg, types.ErrIntCast.Error())
 	}
 	weight, err := cast.ToInt64E(validator.Weight)
 	if err != nil {
@@ -125,7 +125,7 @@ func DelegatorSharesCallback(k Keeper, ctx sdk.Context, args []byte, query icqty
 	if slashPct.GT(tenPercent) {
 		errMsg := fmt.Sprintf("DelegationCallback: Validator (%s) slashed but ABORTING update, slash is greater than 0.10 (%d)", validator.Address, slashPct)
 		k.Logger(ctx).Error(errMsg)
-		return fmt.Errorf(errMsg, types.ErrSlashGtTenPct)
+		return fmt.Errorf("%s: %s", errMsg, types.ErrSlashGtTenPct)
 	}
 
 	// Update the host zone and validator to reflect the weight and delegation change
