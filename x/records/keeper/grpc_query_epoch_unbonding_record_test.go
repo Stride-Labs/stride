@@ -18,7 +18,7 @@ import (
 func TestEpochUnbondingRecordQuerySingle(t *testing.T) {
 	keeper, ctx := keepertest.RecordsKeeper(t)
 	wctx := sdk.WrapSDKContext(ctx)
-	msgs := createNEpochUnbondingRecord(keeper, ctx, 2)
+	msgs, _ := createNEpochUnbondingRecord(keeper, ctx, 2)
 	for _, tc := range []struct {
 		desc     string
 		request  *types.QueryGetEpochUnbondingRecordRequest
@@ -63,7 +63,7 @@ func TestEpochUnbondingRecordQuerySingle(t *testing.T) {
 func TestEpochUnbondingRecordQueryPaginated(t *testing.T) {
 	keeper, ctx := keepertest.RecordsKeeper(t)
 	wctx := sdk.WrapSDKContext(ctx)
-	msgs := createNEpochUnbondingRecord(keeper, ctx, 5)
+	msgs, _ := createNEpochUnbondingRecord(keeper, ctx, 5)
 
 	request := func(next []byte, offset, limit uint64, total bool) *types.QueryAllEpochUnbondingRecordRequest {
 		return &types.QueryAllEpochUnbondingRecordRequest{
