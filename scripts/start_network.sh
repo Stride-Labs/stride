@@ -4,7 +4,7 @@ set -eu
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 source ${SCRIPT_DIR}/vars.sh
 
-HOST_CHAINS=(GAIA JUNO OSMO STARS)
+HOST_CHAINS=(GAIA)
 
 # cleanup any stale state
 make stop-docker

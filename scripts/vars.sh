@@ -13,8 +13,8 @@ TX_LOGS=$SCRIPT_DIR/logs/tx.log
 KEYS_LOGS=$SCRIPT_DIR/logs/keys.log
 
 # Sets up upgrade if {UPGRADE_NAME} is non-empty
-UPGRADE_NAME=""
-UPGRADE_OLD_COMMIT_HASH=""
+UPGRADE_NAME="v4"
+UPGRADE_OLD_COMMIT_HASH="v3.0.0"
 
 # DENOMS
 ATOM_DENOM='uatom'

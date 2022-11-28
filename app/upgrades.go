@@ -6,11 +6,12 @@ import (
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 
+	authzkeeper "github.com/cosmos/cosmos-sdk/x/authz/keeper"
+
 	v2 "github.com/Stride-Labs/stride/v3/app/upgrades/v2"
 	v3 "github.com/Stride-Labs/stride/v3/app/upgrades/v3"
 	v4 "github.com/Stride-Labs/stride/v3/app/upgrades/v4"
 	claimtypes "github.com/Stride-Labs/stride/v3/x/claim/types"
-	authzkeeper "github.com/cosmos/cosmos-sdk/x/authz/keeper"
 )
 
 func (app *StrideApp) setupUpgradeHandlers() {
@@ -50,6 +51,10 @@ func (app *StrideApp) setupUpgradeHandlers() {
 			Added: []string{claimtypes.StoreKey},
 		}
 	case "v4":
+		// Delete authz store and re-initialize
+		app.SetStoreLoader(upgradetypes.UpgradeStoreLoader(upgradeInfo.Height, &storetypes.StoreUpgrades{
+			Deleted: []string{authzkeeper.StoreKey},
+		}))
 		storeUpgrades = &storetypes.StoreUpgrades{
 			Added: []string{authzkeeper.StoreKey},
 		}
