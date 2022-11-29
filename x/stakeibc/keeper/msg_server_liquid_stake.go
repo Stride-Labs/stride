@@ -54,7 +54,7 @@ func (k msgServer) LiquidStake(goCtx context.Context, msg *types.MsgLiquidStake)
 	rateIsSafe, err := k.IsRedemptionRateWithinSafetyBounds(ctx, *hostZone)
 	if !rateIsSafe || (err != nil) {
 		errMsg := fmt.Sprintf("IsRedemptionRateWithinSafetyBounds check failed. hostZone: %s, err: %s", hostZone.String(), err.Error())
-		return nil, fmt.Errorf(errMsg, types.ErrRedemptionRateOutsideSafetyBounds.Error())
+		return nil, fmt.Errorf("%s: %s", errMsg, types.ErrRedemptionRateOutsideSafetyBounds.Error())
 	}
 
 	bech32ZoneAddress, err := sdk.AccAddressFromBech32(hostZone.Address)

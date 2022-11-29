@@ -117,7 +117,7 @@ func (k Keeper) UpdateDelegationBalances(ctx sdk.Context, zone types.HostZone, u
 		if err != nil {
 			errMsg := fmt.Sprintf("Could not convert undelegate amount to int64 in undelegation callback | %s", err.Error())
 			k.Logger(ctx).Error(errMsg)
-			return fmt.Errorf(errMsg, types.ErrIntCast.Error())
+			return fmt.Errorf("%s: %s", errMsg, types.ErrIntCast.Error())
 		}
 		undelegateVal := undelegation.Validator
 		success := k.AddDelegationToValidator(ctx, zone, undelegateVal, -undelegateAmt)
@@ -142,7 +142,7 @@ func (k Keeper) GetLatestCompletionTime(ctx sdk.Context, txMsgData *sdk.TxMsgDat
 		if err != nil {
 			errMsg := fmt.Sprintf("Unable to unmarshal undelegation tx response | %s", err)
 			k.Logger(ctx).Error(errMsg)
-			return nil, fmt.Errorf(errMsg, types.ErrUnmarshalFailure.Error())
+			return nil, fmt.Errorf("%s: %s", errMsg, types.ErrUnmarshalFailure.Error())
 		}
 		if undelegateResponse.CompletionTime.After(latestCompletionTime) {
 			latestCompletionTime = undelegateResponse.CompletionTime
@@ -170,13 +170,13 @@ func (k Keeper) UpdateHostZoneUnbondings(
 		if !found {
 			errMsg := fmt.Sprintf("Unable to find epoch unbonding record for epoch: %d", epochNumber)
 			k.Logger(ctx).Error(errMsg)
-			return 0, fmt.Errorf(`%s: %s`, errMsg, "key not found")
+			return 0, fmt.Errorf(`%s: %s`, errMsg, types.ErrKeyNotFound.Error())
 		}
 		hostZoneUnbonding, found := k.RecordsKeeper.GetHostZoneUnbondingByChainId(ctx, epochUnbondingRecord.EpochNumber, zone.ChainId)
 		if !found {
 			errMsg := fmt.Sprintf("Host zone unbonding not found (%s) in epoch unbonding record: %d", zone.ChainId, epochNumber)
 			k.Logger(ctx).Error(errMsg)
-			return 0, fmt.Errorf(`%s: %s`, errMsg, "key not found")
+			return 0, fmt.Errorf(`%s: %s`, errMsg, types.ErrKeyNotFound.Error())
 		}
 
 		// Keep track of the stTokens that need to be burned
@@ -184,7 +184,7 @@ func (k Keeper) UpdateHostZoneUnbondings(
 		if err != nil {
 			errMsg := fmt.Sprintf("Could not convert stTokenAmount to int64 in redeem stake | %s", err.Error())
 			k.Logger(ctx).Error(errMsg)
-			return 0, fmt.Errorf(errMsg, types.ErrIntCast.Error())
+			return 0, fmt.Errorf("%s: %s", errMsg, types.ErrIntCast.Error())
 		}
 		stTokenBurnAmount += stTokenAmount
 

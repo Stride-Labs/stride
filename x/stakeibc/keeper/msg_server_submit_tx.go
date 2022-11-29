@@ -154,7 +154,7 @@ func (k Keeper) UpdateWithdrawalBalance(ctx sdk.Context, zoneInfo types.HostZone
 	if err != nil {
 		errMsg := fmt.Sprintf("Failed to get ICA timeout nanos for epochType %s using param, error: %s", epochType, err.Error())
 		k.Logger(ctx).Error(errMsg)
-		return fmt.Errorf(errMsg, "invalid request")
+		return fmt.Errorf("%s: %s", errMsg, "invalid request")
 	}
 
 	k.Logger(ctx).Info("Querying for value", "key", icqtypes.BANK_STORE_QUERY_WITH_PROOF, "denom", zoneInfo.HostDenom)
@@ -363,7 +363,7 @@ func (k Keeper) QueryValidatorExchangeRate(ctx sdk.Context, msg *types.MsgUpdate
 	if !found {
 		errMsg := fmt.Sprintf("Host zone not found (%s)", msg.ChainId)
 		k.Logger(ctx).Error(errMsg)
-		return nil, fmt.Errorf(errMsg, types.ErrInvalidHostZone.Error())
+		return nil, fmt.Errorf("%s: %s", errMsg, types.ErrInvalidHostZone.Error())
 	}
 
 	// check that the validator address matches the bech32 prefix of the hz
@@ -382,7 +382,7 @@ func (k Keeper) QueryValidatorExchangeRate(ctx sdk.Context, msg *types.MsgUpdate
 	if err != nil {
 		errMsg := fmt.Sprintf("could not get start time for next epoch: %s", err.Error())
 		k.Logger(ctx).Error(errMsg)
-		return nil, fmt.Errorf(errMsg, "invalid request")
+		return nil, fmt.Errorf("%s: %s", errMsg, "invalid request")
 	}
 
 	k.Logger(ctx).Info(fmt.Sprintf("Querying validator %v, key %v, denom %v", msg.Valoper, icqtypes.STAKING_STORE_QUERY_WITH_PROOF, hostZone.ChainId))
@@ -421,7 +421,7 @@ func (k Keeper) QueryDelegationsIcq(ctx sdk.Context, hostZone types.HostZone, va
 	if delegationIca == nil || delegationIca.GetAddress() == "" {
 		errMsg := fmt.Sprintf("Zone %s is missing a delegation address!", hostZone.ChainId)
 		k.Logger(ctx).Error(errMsg)
-		return fmt.Errorf(errMsg, types.ErrICAAccountNotFound.Error())
+		return fmt.Errorf("%s: %s", errMsg, types.ErrICAAccountNotFound.Error())
 	}
 	delegationAcctAddr := delegationIca.GetAddress()
 	_, valAddr, _ := bech32.DecodeAndConvert(valoper)
@@ -433,7 +433,7 @@ func (k Keeper) QueryDelegationsIcq(ctx sdk.Context, hostZone types.HostZone, va
 	if err != nil {
 		errMsg := fmt.Sprintf("could not get start time for next epoch: %s", err.Error())
 		k.Logger(ctx).Error(errMsg)
-		return fmt.Errorf(errMsg, "invalid request")
+		return fmt.Errorf("%s: %s", errMsg, "invalid request")
 	}
 
 	k.Logger(ctx).Info(fmt.Sprintf("Querying delegation for %s on %s", delegationAcctAddr, valoper))

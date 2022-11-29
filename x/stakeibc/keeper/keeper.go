@@ -266,7 +266,7 @@ func (k Keeper) IsRedemptionRateWithinSafetyBounds(ctx sdk.Context, zone types.H
 	if redemptionRate.LT(minSafetyThreshold) || redemptionRate.GT(maxSafetyThreshold) {
 		errMsg := fmt.Sprintf("IsRedemptionRateWithinSafetyBounds check failed %s is outside safety bounds [%s, %s]", redemptionRate.String(), minSafetyThreshold.String(), maxSafetyThreshold.String())
 		k.Logger(ctx).Error(errMsg)
-		return false, fmt.Errorf(errMsg, types.ErrRedemptionRateOutsideSafetyBounds.Error())
+		return false, fmt.Errorf("%s: %s", errMsg, types.ErrRedemptionRateOutsideSafetyBounds.Error())
 	}
 	return true, nil
 }
@@ -282,7 +282,7 @@ func (k Keeper) ConfirmValSetHasSpace(ctx sdk.Context, validators []*types.Valid
 	if err != nil {
 		errMsg := fmt.Sprintf("Error getting safety max num validators | err: %s", err.Error())
 		k.Logger(ctx).Error(errMsg)
-		return fmt.Errorf(errMsg, types.ErrMaxNumValidators.Error())
+		return fmt.Errorf("%s: %s", errMsg, types.ErrMaxNumValidators.Error())
 	}
 
 	// count up the number of validators with non-zero weights
@@ -297,7 +297,7 @@ func (k Keeper) ConfirmValSetHasSpace(ctx sdk.Context, validators []*types.Valid
 	if numNonzeroWgtValidators >= maxNumVals {
 		errMsg := fmt.Sprintf("Attempting to add new validator but already reached max number of validators (%d)", maxNumVals)
 		k.Logger(ctx).Error(errMsg)
-		return fmt.Errorf(errMsg, types.ErrMaxNumValidators.Error())
+		return fmt.Errorf("%s: %s", errMsg, types.ErrMaxNumValidators.Error())
 	}
 
 	return nil

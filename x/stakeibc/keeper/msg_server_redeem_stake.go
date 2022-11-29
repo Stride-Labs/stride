@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/spf13/cast"
@@ -10,6 +11,8 @@ import (
 	"github.com/Stride-Labs/stride/v3/x/stakeibc/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
 	"github.com/Stride-Labs/stride/v3/utils"
 )
@@ -21,6 +24,11 @@ func (k msgServer) RedeemStake(goCtx context.Context, msg *types.MsgRedeemStake)
 	// get our addresses, make sure they're valid
 	sender, err := sdk.AccAddressFromBech32(msg.Creator)
 	if err != nil {
+		// Creator := "stride1g6qdx6kdhpf000afvvpte7hp0vnpzapuyxp8uf"
+		check1 := sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "creator address is invalid: %s. err: %s", msg.Creator, err.Error())
+		fmt.Println("check1", check1.Error())
+		check2 := errors.Unwrap(fmt.Errorf("creator address is invalid: %s. err: %s: invalid address", msg.Creator, err.Error())) // fmt.Errorf("creator address is invalid: %s. err: %s: invalid address", msg.Creator, err.Error())
+		fmt.Println("check2", check2.Error())
 		return nil, fmt.Errorf("creator address is invalid: %s. err: %s: invalid address", msg.Creator, err.Error())
 	}
 	// then make sure host zone is valid
@@ -61,7 +69,7 @@ func (k msgServer) RedeemStake(goCtx context.Context, msg *types.MsgRedeemStake)
 	rateIsSafe, err := k.IsRedemptionRateWithinSafetyBounds(ctx, hostZone)
 	if !rateIsSafe || (err != nil) {
 		errMsg := fmt.Sprintf("IsRedemptionRateWithinSafetyBounds check failed. hostZone: %s, err: %s", hostZone.String(), err.Error())
-		return nil, fmt.Errorf(errMsg, types.ErrRedemptionRateOutsideSafetyBounds.Error())
+		return nil, fmt.Errorf("%s: %s", errMsg, types.ErrRedemptionRateOutsideSafetyBounds.Error())
 	}
 
 	// construct desired unstaking amount from host zone
@@ -129,7 +137,7 @@ func (k msgServer) RedeemStake(goCtx context.Context, msg *types.MsgRedeemStake)
 	if err != nil {
 		errMsg := fmt.Sprintf("Could not convert redemption amount to int64 in redeem stake | %s", err.Error())
 		k.Logger(ctx).Error(errMsg)
-		return nil, fmt.Errorf(errMsg, types.ErrIntCast.Error())
+		return nil, fmt.Errorf("%s: %s", errMsg, types.ErrIntCast.Error())
 	}
 	hostZoneUnbonding.StTokenAmount += stTokenAmount
 

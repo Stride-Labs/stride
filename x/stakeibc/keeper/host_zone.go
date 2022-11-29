@@ -130,13 +130,13 @@ func (k Keeper) AddValidatorToHostZone(ctx sdk.Context, msg *types.MsgAddValidat
 	if !found {
 		errMsg := fmt.Sprintf("Host Zone (%s) not found", msg.HostZone)
 		k.Logger(ctx).Error(errMsg)
-		return fmt.Errorf(`%s: host zone not found`, errMsg)
+		return fmt.Errorf(`%s: %s`, errMsg, types.ErrHostZoneNotFound)
 	}
 
 	// Get max number of validators and confirm we won't exceed it
 	err := k.ConfirmValSetHasSpace(ctx, hostZone.Validators)
 	if err != nil {
-		return fmt.Errorf("cannot add validator on host zone: max number of validators reached")
+		return fmt.Errorf("%s: %s", err.Error(), types.ErrMaxNumValidators)
 	}
 
 	// Check that we don't already have this validator
@@ -146,12 +146,12 @@ func (k Keeper) AddValidatorToHostZone(ctx sdk.Context, msg *types.MsgAddValidat
 		if validator.Address == msg.Address {
 			errMsg := fmt.Sprintf("Validator address (%s) already exists on Host Zone (%s)", msg.Address, msg.HostZone)
 			k.Logger(ctx).Error(errMsg)
-			return fmt.Errorf(`%s: validator already exists`, errMsg)
+			return fmt.Errorf("%s: %s", errMsg, types.ErrValidatorAlreadyExists.Error())
 		}
 		if validator.Name == msg.Name {
 			errMsg := fmt.Sprintf("Validator name (%s) already exists on Host Zone (%s)", msg.Name, msg.HostZone)
 			k.Logger(ctx).Error(errMsg)
-			return fmt.Errorf(`%s: validator already exists`, errMsg)
+			return fmt.Errorf("%s: %s", errMsg, types.ErrValidatorAlreadyExists.Error())
 		}
 		// Store the min weight to assign to new validator added through governance (ignore zero-weight validators)
 		if validator.Weight < minWeight && validator.Weight > 0 {
@@ -185,7 +185,7 @@ func (k Keeper) RemoveValidatorFromHostZone(ctx sdk.Context, chainId string, val
 	if !found {
 		errMsg := fmt.Sprintf("HostZone (%s) not found", chainId)
 		k.Logger(ctx).Error(errMsg)
-		return fmt.Errorf(`%s: host zone not found`, errMsg)
+		return fmt.Errorf(`%s: %s`, errMsg, types.ErrHostZoneNotFound.Error())
 	}
 	for i, val := range hostZone.Validators {
 		if val.GetAddress() == validatorAddress {
@@ -202,7 +202,7 @@ func (k Keeper) RemoveValidatorFromHostZone(ctx sdk.Context, chainId string, val
 	}
 	errMsg := fmt.Sprintf("Validator address (%s) not found on host zone (%s)", validatorAddress, chainId)
 	k.Logger(ctx).Error(errMsg)
-	return fmt.Errorf(`%s: validator not found`, errMsg)
+	return fmt.Errorf(`%s: %s`, errMsg, types.ErrValidatorNotFound)
 }
 
 // GetHostZoneFromIBCDenom returns a HostZone from a IBCDenom

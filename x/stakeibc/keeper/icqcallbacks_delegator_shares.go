@@ -48,7 +48,7 @@ func DelegatorSharesCallback(k Keeper, ctx sdk.Context, args []byte, query icqty
 	if err != nil {
 		errMsg := fmt.Sprintf("unable to determine if ICQ callback is inside buffer window, err: %s", err.Error())
 		k.Logger(ctx).Error(errMsg)
-		return fmt.Errorf(errMsg, types.ErrOutsideIcqWindow.Error())
+		return fmt.Errorf("%s: %s", errMsg, types.ErrOutsideIcqWindow.Error())
 	} else if !isWithinWindow {
 		k.Logger(ctx).Error("delegator shares callback is outside ICQ window")
 		return nil

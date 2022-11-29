@@ -141,7 +141,7 @@ func (im IBCModule) OnAcknowledgementPacket(
 		errMsg := fmt.Sprintf("Unable to unmarshal ack from stakeibc OnAcknowledgePacket | Sequence %d, from %s %s, to %s %s",
 			modulePacket.Sequence, modulePacket.SourceChannel, modulePacket.SourcePort, modulePacket.DestinationChannel, modulePacket.DestinationPort)
 		im.keeper.Logger(ctx).Error(errMsg)
-		return fmt.Errorf(errMsg, types.ErrMarshalFailure.Error())
+		return fmt.Errorf("%s: %s", errMsg, types.ErrMarshalFailure.Error())
 	}
 	im.keeper.Logger(ctx).Info(fmt.Sprintf("Acknowledgement was successfully unmarshalled: ackInfo: %s", ackInfo))
 	eventType := "ack"
