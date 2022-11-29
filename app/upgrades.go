@@ -15,7 +15,6 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-
 )
 
 // AuthzHeightAdjustmentUpgradeStoreLoader is used to delete the authz store with the
@@ -35,6 +34,7 @@ func AuthzHeightAdjustmentUpgradeStoreLoader(upgradeHeight int64) baseapp.StoreL
 			if err != nil {
 				panic(err)
 			}
+			return nil
 		}
 		// Otherwise load default store loader
 		return baseapp.DefaultStoreLoader(ms)
