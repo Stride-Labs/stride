@@ -50,7 +50,7 @@ func (msg *MsgClaimUndelegatedTokens) ValidateBasic() error {
 	// sender must be a valid stride address
 	_, err = utils.AccAddressFromBech32(msg.Sender, "stride")
 	if err != nil {
-		return fmt.Errorf("invalid sender address (%s): : invalid address", err.Error())
+		return fmt.Errorf("invalid sender address (%s): invalid address", err.Error())
 	}
 	// validate host denom is not empty
 	if msg.HostZoneId == "" {

@@ -45,7 +45,7 @@ func (k Keeper) DelegateOnHost(ctx sdk.Context, hostZone types.HostZone, amt sdk
 	delegationIca := hostZone.GetDelegationAccount()
 	if delegationIca == nil || delegationIca.GetAddress() == "" {
 		k.Logger(ctx).Error(fmt.Sprintf("Zone %s is missing a delegation address!", hostZone.ChainId))
-		return fmt.Errorf("Invalid delegation account: : invalid address")
+		return fmt.Errorf("Invalid delegation account: invalid address")
 	}
 
 	// Construct the transaction

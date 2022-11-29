@@ -192,8 +192,8 @@ func (s *KeeperTestSuite) TestClaimUndelegatedTokens_NoEpochTracker() {
 	s.App.StakeibcKeeper.RemoveEpochTracker(s.Ctx(), epochtypes.STRIDE_EPOCH)
 
 	_, err := s.GetMsgServer().ClaimUndelegatedTokens(sdk.WrapSDKContext(s.Ctx()), &tc.validMsg)
-	expectedErr := "Epoch tracker not found for epoch stride_epoch: epoch not found: "
-	expectedErr += "unable to build redemption transfer message"
+	expectedErr := "unable to build redemption transfer message: "
+	expectedErr += "Epoch tracker not found for epoch stride_epoch: epoch not found"
 	s.Require().EqualError(err, expectedErr)
 }
 

@@ -34,7 +34,7 @@ func (k msgServer) ClaimUndelegatedTokens(goCtx context.Context, msg *types.MsgC
 
 	icaTx, err := k.GetRedemptionTransferMsg(ctx, userRedemptionRecord, msg.HostZoneId)
 	if err != nil {
-		return nil, fmt.Errorf("%s: %s", err.Error(), "unable to build redemption transfer message")
+		return nil, fmt.Errorf("%s: %s", "unable to build redemption transfer message", err.Error(),)
 	}
 
 	// add callback data
