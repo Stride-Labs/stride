@@ -6,10 +6,10 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/spf13/cast"
 
-	"github.com/Stride-Labs/stride/v3/utils"
-	epochstypes "github.com/Stride-Labs/stride/v3/x/epochs/types"
-	recordstypes "github.com/Stride-Labs/stride/v3/x/records/types"
-	"github.com/Stride-Labs/stride/v3/x/stakeibc/types"
+	"github.com/Stride-labs/stride/v4/utils"
+	epochstypes "github.com/Stride-labs/stride/v4/x/epochs/types"
+	recordstypes "github.com/Stride-labs/stride/v4/x/records/types"
+	"github.com/Stride-labs/stride/v4/x/stakeibc/types"
 )
 
 // TODO [TEST-127]: ensure all timeouts are less than the epoch length
