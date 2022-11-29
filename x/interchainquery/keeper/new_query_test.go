@@ -59,7 +59,7 @@ func (s *KeeperTestSuite) TestNewQuerySuccessful() {
 	tc := s.SetupNewQuery()
 
 	actualQuery := s.App.InterchainqueryKeeper.NewQuery(
-		s.Ctx(),
+		s.Ctx,
 		tc.module,
 		tc.connectionId,
 		tc.chainId,

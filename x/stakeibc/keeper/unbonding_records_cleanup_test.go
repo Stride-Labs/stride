@@ -75,11 +75,11 @@ func (s *KeeperTestSuite) SetupCleanupEpochUnbondingRecords() CleanupEpochUnbond
 		},
 	}
 	for _, epochUnbondingRecord := range epochUnbondingRecords {
-		s.App.RecordsKeeper.SetEpochUnbondingRecord(s.Ctx(), epochUnbondingRecord)
+		s.App.RecordsKeeper.SetEpochUnbondingRecord(s.Ctx, epochUnbondingRecord)
 	}
 
 	for _, hostZone := range hostZones {
-		s.App.StakeibcKeeper.SetHostZone(s.Ctx(), hostZone)
+		s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
 	}
 
 	return CleanupEpochUnbondingRecordsTestCase{
@@ -92,7 +92,7 @@ func (s *KeeperTestSuite) CleanupEpochUnbondingRecords_Successful() {
 	// successfully clean up epoch unbonding records
 	tc := s.SetupGetHostZoneUnbondingMsgs()
 	// clean up epoch unbonding record 0
-	success := s.App.StakeibcKeeper.CleanupEpochUnbondingRecords(s.Ctx(), 0)
+	success := s.App.StakeibcKeeper.CleanupEpochUnbondingRecords(s.Ctx, 0)
 	s.Require().True(success, "cleanup unbonding records returns true")
 	epochUnbondings := tc.epochUnbondingRecords
 	s.Require().Len(epochUnbondings, 1, "only one epoch unbonding record should be left")

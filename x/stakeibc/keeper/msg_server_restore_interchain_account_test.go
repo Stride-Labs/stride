@@ -26,7 +26,7 @@ func (s *KeeperTestSuite) SetupRestoreInterchainAccount() RestoreInterchainAccou
 		ConnectionId:   ibctesting.FirstConnectionID,
 		RedemptionRate: sdk.OneDec(), // if not yet, the beginblocker invariant panics
 	}
-	s.App.StakeibcKeeper.SetHostZone(s.Ctx(), hostZone)
+	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
 
 	// Store pending records
 	for i := 0; i < 2; i++ {
@@ -36,7 +36,7 @@ func (s *KeeperTestSuite) SetupRestoreInterchainAccount() RestoreInterchainAccou
 			HostZoneId:         HostChainId,
 			Status:             recordtypes.DepositRecord_DELEGATION_IN_PROGRESS,
 		}
-		s.App.RecordsKeeper.SetDepositRecord(s.Ctx(), depositRecord)
+		s.App.RecordsKeeper.SetDepositRecord(s.Ctx, depositRecord)
 	}
 
 	defaultMsg := stakeibc.MsgRestoreInterchainAccount{
@@ -57,22 +57,22 @@ func (s *KeeperTestSuite) TestRestoreInterchainAccount_Success() {
 	portID := icatypes.PortPrefix + owner
 
 	// Confirm there are two channels originally
-	channels := s.App.IBCKeeper.ChannelKeeper.GetAllChannels(s.Ctx())
+	channels := s.App.IBCKeeper.ChannelKeeper.GetAllChannels(s.Ctx)
 	s.Require().Len(channels, 2, "there should be 2 channels initially (transfer + delegate)")
 
 	// Close the delegation channel
-	channel, found := s.App.IBCKeeper.ChannelKeeper.GetChannel(s.Ctx(), portID, channelID)
+	channel, found := s.App.IBCKeeper.ChannelKeeper.GetChannel(s.Ctx, portID, channelID)
 	s.Require().True(found, "delegation channel found")
 	channel.State = channeltypes.CLOSED
-	s.App.IBCKeeper.ChannelKeeper.SetChannel(s.Ctx(), portID, channelID, channel)
+	s.App.IBCKeeper.ChannelKeeper.SetChannel(s.Ctx, portID, channelID, channel)
 
 	// Restore the channel
 	msg := tc.validMsg
-	_, err := s.GetMsgServer().RestoreInterchainAccount(sdk.WrapSDKContext(s.Ctx()), &msg)
+	_, err := s.GetMsgServer().RestoreInterchainAccount(sdk.WrapSDKContext(s.Ctx), &msg)
 	s.Require().NoError(err, "registered ica account successfully")
 
 	// Confirm the new channel was created
-	channels = s.App.IBCKeeper.ChannelKeeper.GetAllChannels(s.Ctx())
+	channels = s.App.IBCKeeper.ChannelKeeper.GetAllChannels(s.Ctx)
 	s.Require().Len(channels, 3, "there should be 3 channels after restoring")
 
 	// Confirm the new channel is in state INIT
@@ -87,7 +87,7 @@ func (s *KeeperTestSuite) TestRestoreInterchainAccount_Success() {
 
 	// Verify the deposit record state was reverted
 	for i := 0; i < 2; i++ {
-		depositRecord, found := s.App.RecordsKeeper.GetDepositRecord(s.Ctx(), uint64(i))
+		depositRecord, found := s.App.RecordsKeeper.GetDepositRecord(s.Ctx, uint64(i))
 		s.Require().True(found, "deposit record found")
 		s.Require().Equal(recordtypes.DepositRecord_DELEGATION_QUEUE, depositRecord.Status, "deposit record status should be reverted")
 	}
@@ -97,7 +97,7 @@ func (s *KeeperTestSuite) TestRestoreInterchainAccount_CannotRestoreNonExistentA
 	tc := s.SetupRestoreInterchainAccount()
 	msg := tc.validMsg
 	msg.AccountType = stakeibc.ICAAccountType_WITHDRAWAL
-	_, err := s.GetMsgServer().RestoreInterchainAccount(sdk.WrapSDKContext(s.Ctx()), &msg)
+	_, err := s.GetMsgServer().RestoreInterchainAccount(sdk.WrapSDKContext(s.Ctx), &msg)
 	expectedErrMSg := fmt.Sprintf("ICA controller account address not found: %s.WITHDRAWAL: invalid interchain account address",
 		tc.validMsg.ChainId)
 	s.Require().EqualError(err, expectedErrMSg, "registered ica account successfully")
@@ -107,7 +107,7 @@ func (s *KeeperTestSuite) TestRestoreInterchainAccount_FailsForIncorrectHostZone
 	tc := s.SetupRestoreInterchainAccount()
 	msg := tc.validMsg
 	msg.ChainId = "incorrectchainid"
-	_, err := s.GetMsgServer().RestoreInterchainAccount(sdk.WrapSDKContext(s.Ctx()), &msg)
+	_, err := s.GetMsgServer().RestoreInterchainAccount(sdk.WrapSDKContext(s.Ctx), &msg)
 	expectedErrMsg := "host zone not registered"
 	s.Require().EqualError(err, expectedErrMsg, "registered ica account fails for incorrect host zone")
 }
@@ -116,7 +116,7 @@ func (s *KeeperTestSuite) TestRestoreInterchainAccount_FailsIfAccountExists() {
 	tc := s.SetupRestoreInterchainAccount()
 	s.CreateICAChannel("GAIA.DELEGATION")
 	msg := tc.validMsg
-	_, err := s.GetMsgServer().RestoreInterchainAccount(sdk.WrapSDKContext(s.Ctx()), &msg)
+	_, err := s.GetMsgServer().RestoreInterchainAccount(sdk.WrapSDKContext(s.Ctx), &msg)
 	expectedErrMsg := fmt.Sprintf("existing active channel channel-1 for portID icacontroller-%s.DELEGATION on connection %s for owner %s.DELEGATION: active channel already set for this owner",
 		tc.validMsg.ChainId,
 		s.TransferPath.EndpointB.ConnectionID,
@@ -129,7 +129,7 @@ func (s *KeeperTestSuite) TestRestoreInterchainAccount_RevertDepositRecords_Fail
 	tc := s.SetupRestoreInterchainAccount()
 	s.CreateICAChannel("GAIA.DELEGATION")
 	msg := tc.validMsg
-	_, err := s.GetMsgServer().RestoreInterchainAccount(sdk.WrapSDKContext(s.Ctx()), &msg)
+	_, err := s.GetMsgServer().RestoreInterchainAccount(sdk.WrapSDKContext(s.Ctx), &msg)
 	expectedErrMsg := fmt.Sprintf("existing active channel channel-1 for portID icacontroller-%s.DELEGATION on connection %s for owner %s.DELEGATION: active channel already set for this owner",
 		tc.validMsg.ChainId,
 		s.TransferPath.EndpointB.ConnectionID,
@@ -138,7 +138,7 @@ func (s *KeeperTestSuite) TestRestoreInterchainAccount_RevertDepositRecords_Fail
 	s.Require().EqualError(err, expectedErrMsg, "registered ica account fails when account already exists")
 	// Verify the deposit record state was NOT reverted
 	for i := 0; i < 2; i++ {
-		depositRecord, found := s.App.RecordsKeeper.GetDepositRecord(s.Ctx(), uint64(i))
+		depositRecord, found := s.App.RecordsKeeper.GetDepositRecord(s.Ctx, uint64(i))
 		s.Require().True(found, "deposit record found")
 		s.Require().Equal(recordtypes.DepositRecord_DELEGATION_IN_PROGRESS, depositRecord.Status, "deposit record status should NOT msg be reverted")
 	}
@@ -152,23 +152,23 @@ func (s *KeeperTestSuite) TestRestoreInterchainAccount_NoRecordChange_Success() 
 	portID := icatypes.PortPrefix + owner
 
 	// Confirm there are two channels originally
-	channels := s.App.IBCKeeper.ChannelKeeper.GetAllChannels(s.Ctx())
+	channels := s.App.IBCKeeper.ChannelKeeper.GetAllChannels(s.Ctx)
 	s.Require().Len(channels, 2, "there should be 2 channels initially (transfer + withdrawal)")
 
 	// Close the withdrawal channel
-	channel, found := s.App.IBCKeeper.ChannelKeeper.GetChannel(s.Ctx(), portID, channelID)
+	channel, found := s.App.IBCKeeper.ChannelKeeper.GetChannel(s.Ctx, portID, channelID)
 	s.Require().True(found, "withdrawal channel found")
 	channel.State = channeltypes.CLOSED
-	s.App.IBCKeeper.ChannelKeeper.SetChannel(s.Ctx(), portID, channelID, channel)
+	s.App.IBCKeeper.ChannelKeeper.SetChannel(s.Ctx, portID, channelID, channel)
 
 	// Restore the channel
 	msg := tc.validMsg
 	msg.AccountType = stakeibc.ICAAccountType_WITHDRAWAL
-	_, err := s.GetMsgServer().RestoreInterchainAccount(sdk.WrapSDKContext(s.Ctx()), &msg)
+	_, err := s.GetMsgServer().RestoreInterchainAccount(sdk.WrapSDKContext(s.Ctx), &msg)
 	s.Require().NoError(err, "registered ica account successfully")
 
 	// Confirm the new channel was created
-	channels = s.App.IBCKeeper.ChannelKeeper.GetAllChannels(s.Ctx())
+	channels = s.App.IBCKeeper.ChannelKeeper.GetAllChannels(s.Ctx)
 	s.Require().Len(channels, 3, "there should be 3 channels after restoring")
 
 	// Confirm the new channel is in state INIT
@@ -183,7 +183,7 @@ func (s *KeeperTestSuite) TestRestoreInterchainAccount_NoRecordChange_Success() 
 
 	// Verify the deposit record state was NOT reverted
 	for i := 0; i < 2; i++ {
-		depositRecord, found := s.App.RecordsKeeper.GetDepositRecord(s.Ctx(), uint64(i))
+		depositRecord, found := s.App.RecordsKeeper.GetDepositRecord(s.Ctx, uint64(i))
 		s.Require().True(found, "deposit record found")
 		s.Require().Equal(recordtypes.DepositRecord_DELEGATION_IN_PROGRESS, depositRecord.Status, "deposit record status should NOT be reverted")
 	}

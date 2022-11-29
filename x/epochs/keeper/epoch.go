@@ -1,6 +1,9 @@
 package keeper
 
 import (
+	"fmt"
+	"time"
+
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -63,4 +66,25 @@ func (k Keeper) AllEpochInfos(ctx sdk.Context) []types.EpochInfo {
 		return false
 	})
 	return epochs
+}
+func (k Keeper) AddEpochInfo(ctx sdk.Context, epoch types.EpochInfo) error {
+	err := epoch.Validate()
+	if err != nil {
+		return err
+	}
+	// Check if identifier already exists
+	epochGet, _ := k.GetEpochInfo(ctx, epoch.Identifier)
+
+	if (epochGet != types.EpochInfo{}) {
+		return fmt.Errorf("epoch with identifier %s already exists", epoch.Identifier)
+	}
+
+	// Initialize empty and default epoch values
+	if epoch.StartTime.Equal(time.Time{}) {
+		epoch.StartTime = ctx.BlockTime()
+	}
+	epoch.CurrentEpochStartHeight = ctx.BlockHeight()
+
+	k.SetEpochInfo(ctx, epoch)
+	return nil
 }

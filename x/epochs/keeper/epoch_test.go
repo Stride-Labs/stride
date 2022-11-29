@@ -10,7 +10,7 @@ import (
 
 func (suite *KeeperTestSuite) TestEpochLifeCycle() {
 	suite.SetupTest()
-	ctx := suite.Ctx()
+	ctx := suite.Ctx
 
 	epochInfo := types.EpochInfo{
 		Identifier:            "monthly",
