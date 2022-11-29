@@ -1,7 +1,7 @@
 #!/usr/bin/env bats
 
-load "bats/bats-support/load.bash"
-load "bats/bats-assert/load.bash"
+load "bats/bats-support/load"
+load "bats/bats-assert/load"
 
 setup_file() {
   _example_run_command="CHAIN_NAME=GAIA TRANSFER_CHANNEL_NUMBER=0 bats gaia_tests.bats"
