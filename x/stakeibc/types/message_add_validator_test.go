@@ -24,7 +24,7 @@ func TestMsgAddValidator_ValidateBasic(t *testing.T) {
 			msg: MsgAddValidator{
 				Creator: "invalid_address",
 			},
-			err: fmt.Errorf("invalid creator address"),
+			err: fmt.Errorf("%s", &Error{errorCode: "invalid creator address"}),
 		}, {
 			name: "valid but not whitelisted address",
 			msg: MsgAddValidator{

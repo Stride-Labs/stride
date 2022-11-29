@@ -48,18 +48,18 @@ func (msg *MsgAddValidator) GetSignBytes() []byte {
 func (msg *MsgAddValidator) ValidateBasic() error {
 	_, err := sdk.AccAddressFromBech32(msg.Creator)
 	if err != nil {
-		return fmt.Errorf("invalid creator address")
+		return fmt.Errorf("invalid creator address (%s): invalid address", err.Error())
 	}
 	if err := utils.ValidateAdminAddress(msg.Creator); err != nil {
 		return fmt.Errorf("invalid creator address")
 	}
 	// name validation
 	if len(strings.TrimSpace(msg.Name)) == 0 {
-		return fmt.Errorf("name is required")
+		return fmt.Errorf("name is required: invalid address")
 	}
 	// commission validation
 	if msg.Commission > 100 {
-		return fmt.Errorf("commission must be between 0 and 100")
+		return fmt.Errorf("commission must be between 0 and 100: invalid address")
 	}
 
 	return nil

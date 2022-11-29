@@ -40,7 +40,7 @@ func ClaimCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ack *c
 	k.Logger(ctx).Info(fmt.Sprintf("ClaimCallback %v", claimCallback))
 	userRedemptionRecord, found := k.RecordsKeeper.GetUserRedemptionRecord(ctx, claimCallback.GetUserRedemptionRecordId())
 	if !found {
-		return fmt.Errorf(types.ErrRecordNotFound.Error(), "user redemption record not found", claimCallback.GetUserRedemptionRecordId())
+		return fmt.Errorf(`user redemption record not found %s: %s`, claimCallback.GetUserRedemptionRecordId(), types.ErrRecordNotFound.Error())
 	}
 
 	// handle timeout
@@ -84,14 +84,14 @@ func (k Keeper) DecrementHostZoneUnbonding(ctx sdk.Context, userRedemptionRecord
 	// fetch the hzu associated with the user unbonding record
 	hostZoneUnbonding, found := k.RecordsKeeper.GetHostZoneUnbondingByChainId(ctx, callbackArgs.EpochNumber, callbackArgs.ChainId)
 	if !found {
-		return fmt.Errorf(types.ErrRecordNotFound.Error(), "host zone unbonding not found %s", callbackArgs.ChainId)
+		return fmt.Errorf("host zone unbonding not found %s: %s", callbackArgs.ChainId, types.ErrRecordNotFound.Error())
 	}
 	// decrement the hzu by the amount claimed
 	hostZoneUnbonding.NativeTokenAmount = hostZoneUnbonding.NativeTokenAmount - userRedemptionRecord.Amount
 	// save the updated hzu on the epoch unbonding record
 	epochUnbondingRecord, success := k.RecordsKeeper.AddHostZoneToEpochUnbondingRecord(ctx, callbackArgs.EpochNumber, callbackArgs.ChainId, hostZoneUnbonding)
 	if !success {
-		return fmt.Errorf(types.ErrRecordNotFound.Error(), "epoch unbonding record not found %s", callbackArgs.ChainId)
+		return fmt.Errorf("epoch unbonding record not found %s: %s", callbackArgs.ChainId, types.ErrRecordNotFound.Error())
 	}
 	k.RecordsKeeper.SetEpochUnbondingRecord(ctx, *epochUnbondingRecord)
 	return nil

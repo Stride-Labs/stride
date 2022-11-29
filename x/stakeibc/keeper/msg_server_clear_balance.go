@@ -16,11 +16,11 @@ func (k msgServer) ClearBalance(goCtx context.Context, msg *types.MsgClearBalanc
 
 	zone, found := k.GetHostZone(ctx, msg.ChainId)
 	if !found {
-		return nil, fmt.Errorf(types.ErrInvalidHostZone.Error(), "chainId: %s", msg.ChainId)
+		return nil, fmt.Errorf("chainId: %s: %s", msg.ChainId, types.ErrInvalidHostZone.Error())
 	}
 	feeAccount := zone.GetFeeAccount()
 	if feeAccount == nil {
-		return nil, fmt.Errorf(types.ErrFeeAccountNotRegistered.Error(), "chainId: %s", msg.ChainId)
+		return nil, fmt.Errorf("chainId: %s: %s", msg.ChainId, types.ErrFeeAccountNotRegistered.Error())
 	}
 
 	sourcePort := ibctransfertypes.PortID
@@ -31,7 +31,7 @@ func (k msgServer) ClearBalance(goCtx context.Context, msg *types.MsgClearBalanc
 	tokens, err := sdk.ParseCoinNormalized(coinString)
 	if err != nil {
 		k.Logger(ctx).Error(fmt.Sprintf("failed to parse coin (%s)", coinString))
-		return nil, fmt.Errorf(err.Error(), "failed to parse coin (%s)", coinString)
+		return nil, fmt.Errorf("failed to parse coin (%s): %s", coinString, err.Error())
 	}
 	sender := feeAccount.GetAddress()
 	// KeyICATimeoutNanos are for our Stride ICA calls, KeyFeeTransferTimeoutNanos is for the IBC transfer
@@ -55,7 +55,7 @@ func (k msgServer) ClearBalance(goCtx context.Context, msg *types.MsgClearBalanc
 
 	_, err = k.SubmitTxs(ctx, connectionId, msgs, *feeAccount, icaTimeoutNanos, "", nil)
 	if err != nil {
-		return nil, fmt.Errorf(err.Error(), "failed to submit txs")
+		return nil, fmt.Errorf("failed to submit txs: %s", err.Error())
 	}
 	return &types.MsgClearBalanceResponse{}, nil
 }

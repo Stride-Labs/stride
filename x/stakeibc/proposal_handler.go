@@ -18,7 +18,7 @@ func NewStakeibcProposalHandler(k keeper.Keeper) govtypes.Handler {
 			return handleAddValidatorProposal(ctx, k, c)
 
 		default:
-			return fmt.Errorf("unrecognized stakeibc proposal content type: %T", c)
+			return fmt.Errorf("unrecognized stakeibc proposal content type: %T: unknown request", c)
 		}
 	}
 }

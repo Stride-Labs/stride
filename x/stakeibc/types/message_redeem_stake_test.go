@@ -33,7 +33,7 @@ func TestMsgRedeemStake_ValidateBasic(t *testing.T) {
 				Receiver: sample.AccAddress(),
 				Amount:   uint64(1),
 			},
-			err: fmt.Errorf("%s", &Error{errorCode: "invalid creator address (decoding bech32 failed: invalid separator index -1)"}),
+			err: fmt.Errorf("%s", &Error{errorCode: "invalid address"}),
 		},
 		{
 			name: "no host zone",
@@ -42,7 +42,7 @@ func TestMsgRedeemStake_ValidateBasic(t *testing.T) {
 				Receiver: sample.AccAddress(),
 				Amount:   uint64(1),
 			},
-			err: fmt.Errorf("%s", &Error{errorCode: "required field is missing%!(EXTRA string=host zone cannot be empty)"}),
+			err: fmt.Errorf("%s", &Error{errorCode: `host zone cannot be empty: required field is missing`}),
 		},
 		{
 			name: "invalid receiver",
@@ -51,7 +51,7 @@ func TestMsgRedeemStake_ValidateBasic(t *testing.T) {
 				HostZone: "GAIA",
 				Amount:   uint64(1),
 			},
-			err: fmt.Errorf("%s", &Error{errorCode: "receiver cannot be empty"}),
+			err: fmt.Errorf("%s", &Error{errorCode: `receiver cannot be empty:  required field is missing`}),
 		},
 		{
 			name: "amount max int",
@@ -61,7 +61,7 @@ func TestMsgRedeemStake_ValidateBasic(t *testing.T) {
 				Receiver: sample.AccAddress(),
 				Amount:   math.MaxUint64,
 			},
-			err: fmt.Errorf("%s", &Error{errorCode: "invalid amount%!(EXTRA string=amount liquid staked must be less than math.MaxInt64 %d, int=9223372036854775807)"}),
+			err: fmt.Errorf("%s", &Error{errorCode: `amount liquid staked must be less than math.MaxInt64 \d+: invalid amount`}),
 		},
 	}
 	for _, tt := range tests {

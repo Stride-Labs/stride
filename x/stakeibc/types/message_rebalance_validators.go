@@ -44,13 +44,13 @@ func (msg *MsgRebalanceValidators) GetSignBytes() []byte {
 func (msg *MsgRebalanceValidators) ValidateBasic() error {
 	_, err := sdk.AccAddressFromBech32(msg.Creator)
 	if err != nil {
-		return fmt.Errorf("invalid creator address (%s)", err)
+		return fmt.Errorf("invalid creator address (%s): invalid address", err)
 	}
 	if err := utils.ValidateAdminAddress(msg.Creator); err != nil {
 		return err
 	}
 	if (msg.NumRebalance < 1) || (msg.NumRebalance > 10) {
-		return fmt.Errorf("invalid number of validators to rebalance (%d)", msg.NumRebalance)
+		return fmt.Errorf(fmt.Sprintf("invalid number of validators to rebalance (%d): invalid request", msg.NumRebalance))
 	}
 	return nil
 }

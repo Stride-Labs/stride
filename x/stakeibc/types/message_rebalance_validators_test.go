@@ -10,9 +10,6 @@ import (
 )
 
 func TestMsgRebalanceValidators_ValidateBasic(t *testing.T) {
-	creator := sample.AccAddress()
-	errorString := fmt.Sprintf("invalid creator address (%s): invalid address", creator)
-
 	tests := []struct {
 		name string
 		msg  MsgRebalanceValidators
@@ -23,13 +20,13 @@ func TestMsgRebalanceValidators_ValidateBasic(t *testing.T) {
 			msg: MsgRebalanceValidators{
 				Creator: "invalid_address",
 			},
-			err: fmt.Errorf("%s", &Error{errorCode: "invalid creator address (decoding bech32 failed: invalid separator index -1)"}),
+			err: fmt.Errorf("%s", &Error{errorCode: "invalid creator address (decoding bech32 failed: invalid separator index -1): invalid address"}),
 		}, {
 			name: "valid address but not whitelisted",
 			msg: MsgRebalanceValidators{
-				Creator: creator,
+				Creator: sample.AccAddress(),
 			},
-			err: fmt.Errorf("%s", &Error{errorCode: errorString}),
+			err: fmt.Errorf("%s", &Error{errorCode: `invalid creator address (\+s): invalid address`}),
 		},
 	}
 	for _, tt := range tests {

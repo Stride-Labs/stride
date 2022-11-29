@@ -26,7 +26,7 @@ func (k msgServer) ChangeValidatorWeight(goCtx context.Context, msg *types.MsgCh
 			if validator.Weight == 0 && msg.Weight > 0 {
 				err := k.ConfirmValSetHasSpace(ctx, validators)
 				if err != nil {
-					return nil, fmt.Errorf(types.ErrMaxNumValidators.Error(), "cannot set val weight from zero to nonzero on host zone")
+					return nil, fmt.Errorf("cannot set val weight from zero to nonzero on host zone: %s", types.ErrMaxNumValidators.Error())
 				}
 			}
 			validator.Weight = msg.Weight

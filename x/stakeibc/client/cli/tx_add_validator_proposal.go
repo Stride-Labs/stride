@@ -93,7 +93,7 @@ Where proposal.json contains:
 			}
 
 			if len(deposit) != 1 || deposit.GetDenomByIndex(0) != strideDenom {
-				return fmt.Errorf("Deposit token denom must be %s", strideDenom)
+				return fmt.Errorf("Deposit token denom must be %s: invalid coins", strideDenom)
 			}
 
 			msg, err := govtypes.NewMsgSubmitProposal(&proposal, deposit, from)

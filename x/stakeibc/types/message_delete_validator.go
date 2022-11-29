@@ -5,7 +5,6 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-
 	"github.com/Stride-Labs/stride/v3/utils"
 )
 
@@ -45,7 +44,7 @@ func (msg *MsgDeleteValidator) GetSignBytes() []byte {
 func (msg *MsgDeleteValidator) ValidateBasic() error {
 	_, err := sdk.AccAddressFromBech32(msg.Creator)
 	if err != nil {
-		return fmt.Errorf("invalid creator address (%s)", err)
+		return fmt.Errorf("invalid creator address (%s): invalid address", err.Error())
 	}
 	if err := utils.ValidateAdminAddress(msg.Creator); err != nil {
 		return err

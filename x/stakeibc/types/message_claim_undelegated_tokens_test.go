@@ -33,7 +33,7 @@ func TestMsgClaimUndelegatedTokens_ValidateBasic(t *testing.T) {
 				HostZoneId: "GAIA",
 				Epoch:      uint64(1),
 			},
-			err: fmt.Errorf("%s", &Error{errorCode: "invalid creator address (decoding bech32 failed: invalid separator index -1)"}),
+			err: ErrInvalidAddress,
 		},
 		{
 			name: "no host zone",

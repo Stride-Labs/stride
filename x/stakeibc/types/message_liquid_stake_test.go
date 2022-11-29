@@ -31,7 +31,7 @@ func TestMsgLiquidStake_ValidateBasic(t *testing.T) {
 				Amount:    1,
 				HostDenom: "uatom",
 			},
-			err: fmt.Errorf("%s", &Error{errorCode: "invalid creator address (invalid Bech32 prefix; expected cosmos, got osmo)"}),
+			err: fmt.Errorf("%s", &Error{errorCode: "invalid address"}),
 		},
 		{
 			name: "valid inputs",
@@ -57,7 +57,7 @@ func TestMsgLiquidStake_ValidateBasic(t *testing.T) {
 				Amount:    1,
 				HostDenom: "",
 			},
-			err: fmt.Errorf("%s", &Error{errorCode: "required field is missing%!(EXTRA string=host denom cannot be empty)"}),
+			err: fmt.Errorf("%s", &Error{errorCode: "host denom cannot be empty: required field is missing"}),
 		},
 	}
 	for _, tt := range tests {

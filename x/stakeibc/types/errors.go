@@ -47,4 +47,6 @@ var (
 	ErrHostZoneICAAccountNotFound        = fmt.Errorf("host zone's ICA account not found")
 	ErrNoValidatorAmts                   = fmt.Errorf("could not fetch validator amts")
 	ErrMaxNumValidators                  = fmt.Errorf("max number of validators reached")
+	ErrKeyNotFound                       = fmt.Errorf("key not found")
+	ErrInvalidAddress                    = fmt.Errorf("invalid address")
 )

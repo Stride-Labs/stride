@@ -16,7 +16,7 @@ func (k msgServer) DeleteValidator(goCtx context.Context, msg *types.MsgDeleteVa
 	if err != nil {
 		errMsg := fmt.Sprintf("Validator (%s) not removed from host zone (%s) | err: %s", msg.ValAddr, msg.HostZone, err.Error())
 		k.Logger(ctx).Error(errMsg)
-		return nil, fmt.Errorf(types.ErrValidatorNotRemoved.Error(), errMsg)
+		return nil, fmt.Errorf("%s: %s", errMsg, types.ErrValidatorNotRemoved.Error())
 	}
 
 	return &types.MsgDeleteValidatorResponse{}, nil

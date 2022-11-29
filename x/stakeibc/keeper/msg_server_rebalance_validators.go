@@ -81,7 +81,7 @@ func (k msgServer) RebalanceValidators(goCtx context.Context, msg *types.MsgReba
 	// check if there is a large enough rebalance, if not, just exit
 	total_delegation := float64(k.GetTotalValidatorDelegations(hostZone))
 	if total_delegation == 0 {
-		return nil, fmt.Errorf("no validator delegations found for Host Zone %s, cannot rebalance 0 delegations!", hostZone.ChainId)
+		return nil, fmt.Errorf("no validator delegations found for Host Zone %s, cannot rebalance 0 delegations!: invalid request", hostZone.ChainId)
 	}
 
 	overweight_delta := floatabs(float64(valDeltaList[overWeightIndex].deltaAmt) / total_delegation)
@@ -97,7 +97,7 @@ func (k msgServer) RebalanceValidators(goCtx context.Context, msg *types.MsgReba
 	delegationIca := hostZone.GetDelegationAccount()
 	if delegationIca == nil || delegationIca.GetAddress() == "" {
 		k.Logger(ctx).Error(fmt.Sprintf("Zone %s is missing a delegation address!", hostZone.ChainId))
-		return nil, fmt.Errorf("Invalid delegation account")
+		return nil, fmt.Errorf("Invalid delegation account: invalid address")
 	}
 
 	delegatorAddress := delegationIca.GetAddress()
@@ -179,7 +179,7 @@ func (k msgServer) RebalanceValidators(goCtx context.Context, msg *types.MsgReba
 	// QUESTION: what should the timeouts be for these function calls?
 	_, err = k.SubmitTxsStrideEpoch(ctx, connectionId, msgs, *hostZone.GetDelegationAccount(), ICACallbackID_Rebalance, marshalledCallbackArgs)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to SubmitTxs for %s, %s, %s, %s", connectionId, hostZone.ChainId, msgs, err.Error())
+		return nil, fmt.Errorf("Failed to SubmitTxs for %s, %s, %s, %s: invalid request", connectionId, hostZone.ChainId, msgs, err.Error())
 	}
 
 	return &types.MsgRebalanceValidatorsResponse{}, nil

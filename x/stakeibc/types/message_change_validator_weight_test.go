@@ -20,13 +20,13 @@ func TestMsgChangeValidatorWeight_ValidateBasic(t *testing.T) {
 			msg: MsgChangeValidatorWeight{
 				Creator: "invalid_address",
 			},
-			err: fmt.Errorf("%s", &Error{errorCode: "invalid address"}),
+			err: fmt.Errorf("%s", &Error{errorCode: "invalid creator address (decoding bech32 failed: invalid separator index -1): invalid address"}),
 		}, {
 			name: "valid address but not whitelisted",
 			msg: MsgChangeValidatorWeight{
 				Creator: sample.AccAddress(),
 			},
-			err: fmt.Errorf("%s", &Error{errorCode: "invalid address"}),
+			err: fmt.Errorf("%s", &Error{errorCode: `invalid creator address (+\s): invalid address`}),
 		},
 	}
 	for _, tt := range tests {

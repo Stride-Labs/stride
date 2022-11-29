@@ -1,7 +1,6 @@
 package keeper_test
 
 import (
-	"fmt"
 	"strconv"
 	"testing"
 
@@ -16,9 +15,6 @@ import (
 	"github.com/Stride-Labs/stride/v3/x/stakeibc/types"
 )
 
-type Error struct {
-	errorCode string
-}
 
 func TestHostZoneQuerySingle(t *testing.T) {
 	keeper, ctx := keepertest.StakeibcKeeper(t)
@@ -46,7 +42,7 @@ func TestHostZoneQuerySingle(t *testing.T) {
 		{
 			desc:    "KeyNotFound",
 			request: &types.QueryGetHostZoneRequest{ChainId: strconv.Itoa((len(msgs)))},
-			err:     fmt.Errorf("%s", &Error{errorCode: "key not found"}),
+			err:     types.ErrKeyNotFound,
 		},
 		{
 			desc: "InvalidRequest",

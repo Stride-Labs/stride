@@ -41,13 +41,13 @@ func RedemptionCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, a
 	if err != nil {
 		errMsg := fmt.Sprintf("Unable to unmarshal redemption callback args | %s", err.Error())
 		k.Logger(ctx).Error(errMsg)
-		return fmt.Errorf(types.ErrUnmarshalFailure.Error(), errMsg)
+		return fmt.Errorf(`%s: %s`, errMsg, types.ErrUnmarshalFailure)
 	}
 	k.Logger(ctx).Info(fmt.Sprintf("RedemptionCallback, HostZone: %s", redemptionCallback.HostZoneId))
 	hostZoneId := redemptionCallback.HostZoneId
 	zone, found := k.GetHostZone(ctx, hostZoneId)
 	if !found {
-		return fmt.Errorf("Host zone not found: %s", hostZoneId)
+		return fmt.Errorf("Host zone not found: %s: key not found", hostZoneId)
 	}
 
 	if ack == nil {

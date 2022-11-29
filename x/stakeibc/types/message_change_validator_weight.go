@@ -45,7 +45,7 @@ func (msg *MsgChangeValidatorWeight) GetSignBytes() []byte {
 func (msg *MsgChangeValidatorWeight) ValidateBasic() error {
 	_, err := sdk.AccAddressFromBech32(msg.Creator)
 	if err != nil {
-		return fmt.Errorf("invalid address")
+		return fmt.Errorf("invalid creator address (%s): invalid address", err.Error())
 	}
 	if err := utils.ValidateAdminAddress(msg.Creator); err != nil {
 		return fmt.Errorf("invalid address")

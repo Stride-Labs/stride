@@ -46,20 +46,20 @@ func (msg *MsgClearBalance) GetSignBytes() []byte {
 func (msg *MsgClearBalance) ValidateBasic() error {
 	_, err := sdk.AccAddressFromBech32(msg.Creator)
 	if err != nil {
-		return fmt.Errorf("invalid creator address (%s)", err)
+		return fmt.Errorf("invalid creator address (%s): invalid address", err)
 	}
 	if err := utils.ValidateAdminAddress(msg.Creator); err != nil {
 		return err
 	}
 	// basic checks on host denom
 	if len(msg.ChainId) == 0 {
-		return fmt.Errorf("chainid is required")
+		return fmt.Errorf("chainid is required: invalid request")
 	}
 	if msg.Amount <= 0 {
-		return fmt.Errorf("amount must be greater than 0")
+		return fmt.Errorf("amount must be greater than 0: invalid request")
 	}
 	if isValid := channeltypes.IsValidChannelID(msg.Channel); !isValid {
-		return fmt.Errorf("channel is invalid")
+		return fmt.Errorf("channel is invalid: invalid request")
 	}
 	return nil
 }

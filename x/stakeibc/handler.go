@@ -55,8 +55,8 @@ func NewHandler(k keeper.Keeper) sdk.Handler {
 			return sdk.WrapServiceResult(ctx, res, err)
 			// this line is used by starport scaffolding # 1
 		default:
-			errMsg := fmt.Sprintf("Unrecognized %s message type: %T", types.ModuleName, msg)
-			return nil, fmt.Errorf(errMsg)
+			errMsg := fmt.Sprintf("unrecognized %s message type: %T", types.ModuleName, msg)
+			return nil, fmt.Errorf("%s: unknown request", errMsg)
 		}
 	}
 }
@@ -80,7 +80,7 @@ func NewAddValidatorProposalHandler(k keeper.Keeper) govtypes.Handler {
 			return nil
 
 		default:
-			return fmt.Errorf("unrecognized addValidator proposal content type: %T", c)
+			return fmt.Errorf("unrecognized addValidator proposal content type: %T: unknown request", c)
 		}
 	}
 }

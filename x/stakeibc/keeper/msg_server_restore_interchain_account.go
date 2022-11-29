@@ -33,7 +33,7 @@ func (k msgServer) RestoreInterchainAccount(goCtx context.Context, msg *types.Ms
 	if !exists {
 		errMsg := fmt.Sprintf("ICA controller account address not found: %s", owner)
 		k.Logger(ctx).Error(errMsg)
-		return nil, fmt.Errorf(types.ErrInvalidInterchainAccountAddress.Error(), errMsg)
+		return nil, fmt.Errorf(`%s: %s`,errMsg, types.ErrInvalidInterchainAccountAddress.Error())
 	}
 
 	if err := k.ICAControllerKeeper.RegisterInterchainAccount(ctx, hostZone.ConnectionId, owner); err != nil {

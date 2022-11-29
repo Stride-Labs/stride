@@ -45,12 +45,12 @@ func DelegateCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ack
 	hostZone := delegateCallback.GetHostZoneId()
 	zone, found := k.GetHostZone(ctx, hostZone)
 	if !found {
-		return fmt.Errorf("host zone not found %s", hostZone)
+		return fmt.Errorf("host zone not found %s: invalid request", hostZone)
 	}
 	recordId := delegateCallback.GetDepositRecordId()
 	depositRecord, found := k.RecordsKeeper.GetDepositRecord(ctx, recordId)
 	if !found {
-		return fmt.Errorf("deposit record not found %d", recordId)
+		return fmt.Errorf("deposit record not found %d: invalid request", recordId)
 	}
 
 	if ack == nil {
@@ -84,7 +84,7 @@ func DelegateCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ack
 		zone.StakedBal += splitDelegation.Amount
 		success := k.AddDelegationToValidator(ctx, zone, validator, amount)
 		if !success {
-			return fmt.Errorf(types.ErrValidatorDelegationChg.Error(), "Failed to add delegation to validator")
+			return fmt.Errorf(`Failed to add delegation to validator: %s`, types.ErrValidatorDelegationChg.Error())
 		}
 		k.SetHostZone(ctx, zone)
 	}

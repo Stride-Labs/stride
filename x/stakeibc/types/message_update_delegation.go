@@ -45,21 +45,21 @@ func (msg *MsgUpdateValidatorSharesExchRate) GetSignBytes() []byte {
 func (msg *MsgUpdateValidatorSharesExchRate) ValidateBasic() error {
 	_, err := sdk.AccAddressFromBech32(msg.Creator)
 	if err != nil {
-		return fmt.Errorf("invalid creator address (%s)", err)
+		return fmt.Errorf("invalid creator address (%s): invalid address", err.Error())
 	}
 	if err := utils.ValidateAdminAddress(msg.Creator); err != nil {
 		return err
 	}
 	// basic checks on host denom
 	if len(msg.ChainId) == 0 {
-		return fmt.Errorf("chainid is required")
+		return fmt.Errorf("chainid is required: invalid address")
 	}
 	// basic checks on host zone
 	if len(msg.Valoper) == 0 {
-		return fmt.Errorf("valoper is required")
+		return fmt.Errorf("valoper is required: invalid address")
 	}
 	if !strings.Contains(msg.Valoper, "valoper") {
-		return fmt.Errorf("validator operator address must contrain 'valoper'")
+		return fmt.Errorf("validator operator address must contrain 'valoper': invalid address")
 	}
 
 	return nil
