@@ -24,3 +24,12 @@
 	path = deps/stargaze
 	url = https://github.com/public-awesome/stargaze.git
 
+[submodule "scripts/tests/bats/bats-core"]
+	path = scripts/tests/bats/bats-core
+	url = https://github.com/bats-core/bats-core.git
+[submodule "scripts/tests/bats/bats-support"]
+	path = scripts/tests/bats/bats-support
+	url = https://github.com/bats-core/bats-support.git
+[submodule "scripts/tests/bats/bats-assert"]
+	path = scripts/tests/bats/bats-assert
+	url = https://github.com/bats-core/bats-assert.git
