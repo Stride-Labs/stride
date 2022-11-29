@@ -6,7 +6,7 @@ import (
 
 	_ "github.com/stretchr/testify/suite"
 
-	"github.com/Stride-labs/stride/v4/x/epochs/types"
+	"github.com/Stride-Labs/stride/v3/x/epochs/types"
 )
 
 func (suite *KeeperTestSuite) TestQueryEpochInfos() {

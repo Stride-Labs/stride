@@ -8,7 +8,7 @@ import (
 
 	authz "github.com/cosmos/cosmos-sdk/x/authz"
 
-	"github.com/Stride-labs/stride/v4/app/apptesting"
+	"github.com/Stride-Labs/stride/v3/app/apptesting"
 )
 
 const dummyUpgradeHeight = 5
