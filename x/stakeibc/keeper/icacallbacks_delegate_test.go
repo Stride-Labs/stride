@@ -12,7 +12,6 @@ import (
 	recordtypes "github.com/Stride-Labs/stride/v3/x/records/types"
 	stakeibckeeper "github.com/Stride-Labs/stride/v3/x/stakeibc/keeper"
 	"github.com/Stride-Labs/stride/v3/x/stakeibc/types"
-	stakeibc "github.com/Stride-Labs/stride/v3/x/stakeibc/types"
 )
 
 type DelegateCallbackState struct {
@@ -45,17 +44,17 @@ func (s *KeeperTestSuite) SetupDelegateCallback() DelegateCallbackTestCase {
 	val1RelAmt := int64(120_000)
 	val2RelAmt := int64(180_000)
 
-	val1 := stakeibc.Validator{
+	val1 := types.Validator{
 		Name:          "val1",
 		Address:       "val1_address",
 		DelegationAmt: val1Bal,
 	}
-	val2 := stakeibc.Validator{
+	val2 := types.Validator{
 		Name:          "val2",
 		Address:       "val2_address",
 		DelegationAmt: val2Bal,
 	}
-	hostZone := stakeibc.HostZone{
+	hostZone := types.HostZone{
 		ChainId:        HostChainId,
 		HostDenom:      Atom,
 		IbcDenom:       IbcAtom,
@@ -77,18 +76,18 @@ func (s *KeeperTestSuite) SetupDelegateCallback() DelegateCallbackTestCase {
 	var msgs []sdk.Msg
 	msgs = append(msgs, &stakingTypes.MsgDelegate{}, &stakingTypes.MsgDelegate{})
 	ack := s.ICAPacketAcknowledgement(msgs, nil)
-	val1SplitDelegation := stakeibc.SplitDelegation{
+	val1SplitDelegation := types.SplitDelegation{
 		Validator: val1.Address,
 		Amount:    uint64(val1RelAmt),
 	}
-	val2SplitDelegation := stakeibc.SplitDelegation{
+	val2SplitDelegation := types.SplitDelegation{
 		Validator: val2.Address,
 		Amount:    uint64(val2RelAmt),
 	}
-	callbackArgs := stakeibc.DelegateCallback{
+	callbackArgs := types.DelegateCallback{
 		HostZoneId:       HostChainId,
 		DepositRecordId:  depositRecord.Id,
-		SplitDelegations: []*stakeibc.SplitDelegation{&val1SplitDelegation, &val2SplitDelegation},
+		SplitDelegations: []*types.SplitDelegation{&val1SplitDelegation, &val2SplitDelegation},
 	}
 	args, err := s.App.StakeibcKeeper.MarshalDelegateCallbackArgs(s.Ctx(), callbackArgs)
 	s.Require().NoError(err)
@@ -185,7 +184,7 @@ func (s *KeeperTestSuite) TestDelegateCallback_HostNotFound() {
 	invalidArgs := tc.validArgs
 	s.App.StakeibcKeeper.RemoveHostZone(s.Ctx(), HostChainId)
 	err := stakeibckeeper.DelegateCallback(s.App.StakeibcKeeper, s.Ctx(), invalidArgs.packet, invalidArgs.ack, invalidArgs.args)
-	s.Require().EqualError(err, "host zone not found GAIA")
+	s.Require().EqualError(err, "host zone not found GAIA: invalid request")
 
 	// Confirm deposit record has NOT been removed
 	records := s.App.RecordsKeeper.GetAllDepositRecord(s.Ctx())
@@ -197,14 +196,14 @@ func (s *KeeperTestSuite) TestDelegateCallback_HostNotFound() {
 func (s *KeeperTestSuite) TestDelegateCallback_BigAmount() {
 	tc := s.SetupDelegateCallback()
 	invalidArgs := tc.validArgs
-	badSplitDelegation := stakeibc.SplitDelegation{
+	badSplitDelegation := types.SplitDelegation{
 		Validator: "address",
 		Amount:    math.MaxUint64,
 	}
-	callbackArgs := stakeibc.DelegateCallback{
+	callbackArgs := types.DelegateCallback{
 		HostZoneId:       HostChainId,
 		DepositRecordId:  1,
-		SplitDelegations: []*stakeibc.SplitDelegation{&badSplitDelegation},
+		SplitDelegations: []*types.SplitDelegation{&badSplitDelegation},
 	}
 	args, err := s.App.StakeibcKeeper.MarshalDelegateCallbackArgs(s.Ctx(), callbackArgs)
 	s.Require().NoError(err)
@@ -218,18 +217,18 @@ func (s *KeeperTestSuite) TestDelegateCallback_BigAmount() {
 func (s *KeeperTestSuite) TestDelegateCallback_MissingValidator() {
 	tc := s.SetupDelegateCallback()
 	invalidArgs := tc.validArgs
-	badSplitDelegation := stakeibc.SplitDelegation{
+	badSplitDelegation := types.SplitDelegation{
 		Validator: "address_dne",
 		Amount:    1234,
 	}
-	callbackArgs := stakeibc.DelegateCallback{
+	callbackArgs := types.DelegateCallback{
 		HostZoneId:       HostChainId,
 		DepositRecordId:  1,
-		SplitDelegations: []*stakeibc.SplitDelegation{&badSplitDelegation},
+		SplitDelegations: []*types.SplitDelegation{&badSplitDelegation},
 	}
 	args, err := s.App.StakeibcKeeper.MarshalDelegateCallbackArgs(s.Ctx(), callbackArgs)
 	s.Require().NoError(err)
 	err = stakeibckeeper.DelegateCallback(s.App.StakeibcKeeper, s.Ctx(), invalidArgs.packet, invalidArgs.ack, args)
-	s.Require().EqualError(err, "can't change delegation on validator%!(EXTRA string=Failed to add delegation to validator)")
+	s.Require().EqualError(err, "Failed to add delegation to validator: can't change delegation on validator")
 	s.checkDelegateStateIfCallbackFailed(tc)
 }

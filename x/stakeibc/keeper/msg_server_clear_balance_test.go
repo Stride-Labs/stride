@@ -92,7 +92,7 @@ func (s *KeeperTestSuite) TestClearBalance_HostChainMissing() {
 	// remove the host zone
 	s.App.StakeibcKeeper.RemoveHostZone(s.Ctx(), HostChainId)
 	_, err := s.GetMsgServer().ClearBalance(sdk.WrapSDKContext(s.Ctx()), &tc.validMsg)
-	s.Require().EqualError(err, "host zone not registered%!(EXTRA string=chainId: %s, string=GAIA)")
+	s.Require().EqualError(err, "chainId: GAIA: host zone not registered")
 }
 
 func (s *KeeperTestSuite) TestClearBalance_FeeAccountMissing() {
@@ -101,7 +101,7 @@ func (s *KeeperTestSuite) TestClearBalance_FeeAccountMissing() {
 	tc.initialState.hz.FeeAccount = nil
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx(), tc.initialState.hz)
 	_, err := s.GetMsgServer().ClearBalance(sdk.WrapSDKContext(s.Ctx()), &tc.validMsg)
-	s.Require().EqualError(err, "fee account is not registered%!(EXTRA string=chainId: %s, string=GAIA)")
+	s.Require().EqualError(err, "chainId: GAIA: fee account is not registered")
 }
 
 func (s *KeeperTestSuite) TestClearBalance_ParseCoinError() {
@@ -110,5 +110,5 @@ func (s *KeeperTestSuite) TestClearBalance_ParseCoinError() {
 	tc.initialState.hz.HostDenom = ":"
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx(), tc.initialState.hz)
 	_, err := s.GetMsgServer().ClearBalance(sdk.WrapSDKContext(s.Ctx()), &tc.validMsg)
-	s.Require().EqualError(err, "invalid decimal coin expression: 1000000:%!(EXTRA string=failed to parse coin (%s), string=1000000:)")
+	s.Require().EqualError(err, "failed to parse coin (1000000:): invalid decimal coin expression: 1000000:")
 }

@@ -221,7 +221,7 @@ func (s *KeeperTestSuite) TestUndelegateCallback_WrongCallbackArgs() {
 	invalidArgs := tc.validArgs
 
 	err := stakeibckeeper.UndelegateCallback(s.App.StakeibcKeeper, s.Ctx(), invalidArgs.packet, invalidArgs.ack, []byte("random bytes"))
-	s.Require().EqualError(err, "unable to unmarshal data structure%!(EXTRA string=Unable to unmarshal undelegate callback args | unexpected EOF)")
+	s.Require().EqualError(err, "Unable to unmarshal undelegate callback args | unexpected EOF: unable to unmarshal data structure")
 	s.checkStateIfUndelegateCallbackFailed(tc)
 }
 
@@ -230,7 +230,7 @@ func (s *KeeperTestSuite) TestUndelegateCallback_HostNotFound() {
 	valid := tc.validArgs
 	s.App.StakeibcKeeper.RemoveHostZone(s.Ctx(), HostChainId)
 	err := stakeibckeeper.UndelegateCallback(s.App.StakeibcKeeper, s.Ctx(), valid.packet, valid.ack, valid.args)
-	s.Require().EqualError(err, "Host zone not found: GAIA")
+	s.Require().EqualError(err, "Host zone not found: GAIA: key not found")
 }
 
 // UpdateDelegationBalances tests
@@ -305,7 +305,7 @@ func (s *KeeperTestSuite) TestGetLatestCompletionTime_Failure() {
 		Data: make([]*sdk.MsgData, 2),
 	}
 	_, err := s.App.StakeibcKeeper.GetLatestCompletionTime(s.Ctx(), txMsgData)
-	s.Require().EqualError(err, "TxMsgData invalid%!(EXTRA string=msgResponseBytes or msgResponseBytes.Data is nil)")
+	s.Require().EqualError(err, "msgResponseBytes or msgResponseBytes.Data is nil: TxMsgData invalid")
 
 	txMsgData = &sdk.TxMsgData{}
 	_, err = s.App.StakeibcKeeper.GetLatestCompletionTime(s.Ctx(), txMsgData)
@@ -386,7 +386,7 @@ func (s *KeeperTestSuite) TestUpdateHostZoneUnbondings_EpochUnbondingRecordDNE()
 	}
 	completionTime := s.Ctx().BlockTime()
 	_, err := s.App.StakeibcKeeper.UpdateHostZoneUnbondings(s.Ctx(), completionTime, hostZone, callbackArgs)
-	s.Require().EqualError(err, "Unable to find epoch unbonding record for epoch: 1")
+	s.Require().EqualError(err, "Unable to find epoch unbonding record for epoch: 1: key not found")
 }
 
 // Test failure case - HostZoneUnbonding DNE
@@ -405,7 +405,7 @@ func (s *KeeperTestSuite) TestUpdateHostZoneUnbondings_HostZoneUnbondingDNE() {
 	}
 	completionTime := s.Ctx().BlockTime()
 	_, err := s.App.StakeibcKeeper.UpdateHostZoneUnbondings(s.Ctx(), completionTime, hostZone, callbackArgs)
-	s.Require().EqualError(err, "Host zone unbonding not found (GAIA) in epoch unbonding record: 1")
+	s.Require().EqualError(err, "Host zone unbonding not found (GAIA) in epoch unbonding record: 1: key not found")
 }
 
 // Test failure case - Amount too big
@@ -464,7 +464,7 @@ func (s *KeeperTestSuite) TestBurnTokens_CouldNotParseCoin() {
 
 	burnAmt := int64(123456)
 	err := s.App.StakeibcKeeper.BurnTokens(s.Ctx(), hostZone, burnAmt)
-	s.Require().EqualError(err, "could not parse burnCoin: 123456.000000000000000000st:. err: invalid decimal coin expression: 123456.000000000000000000st:")
+	s.Require().EqualError(err, "could not parse burnCoin: 123456.000000000000000000st:. err: invalid decimal coin expression: 123456.000000000000000000st:: invalid coins")
 }
 
 // Test failure case - could not decode address

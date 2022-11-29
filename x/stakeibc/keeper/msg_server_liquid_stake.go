@@ -101,7 +101,8 @@ func (k msgServer) LiquidStake(goCtx context.Context, msg *types.MsgLiquidStake)
 func (k msgServer) MintStAsset(ctx sdk.Context, sender sdk.AccAddress, amount uint64, denom string) error {
 	stAssetDenom := types.StAssetDenomFromHostZoneDenom(denom)
 
-	// TODO(TEST-7): Add an exchange rate here! What object should we store the exchange , fmt.Errorf(// H.Error()ow can we ensure that the exchange rate is not manipulated?
+	// TODO(TEST-7): Add an exchange rate here! What object should we store the exchange rate on?
+	// How can we ensure that the exchange rate is not manipulated?
 	hz, _ := k.GetHostZoneFromHostDenom(ctx, denom)
 	amt, err := cast.ToInt64E(amount)
 	if err != nil {

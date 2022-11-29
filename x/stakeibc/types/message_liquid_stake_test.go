@@ -1,7 +1,6 @@
 package types
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -22,7 +21,7 @@ func TestMsgLiquidStake_ValidateBasic(t *testing.T) {
 				Amount:    1,
 				HostDenom: "uatom",
 			},
-			err: fmt.Errorf("%s", &Error{errorCode: "invalid creator address (decoding bech32 failed: invalid separator index -1)"}),
+			err: ErrInvalidAddress,
 		},
 		{
 			name: "invalid address: wrong chain's bech32prefix",
@@ -31,7 +30,7 @@ func TestMsgLiquidStake_ValidateBasic(t *testing.T) {
 				Amount:    1,
 				HostDenom: "uatom",
 			},
-			err: fmt.Errorf("%s", &Error{errorCode: "invalid address"}),
+			err: ErrInvalidAddress,
 		},
 		{
 			name: "valid inputs",
@@ -48,7 +47,7 @@ func TestMsgLiquidStake_ValidateBasic(t *testing.T) {
 				Amount:    0,
 				HostDenom: "uatom",
 			},
-			err: fmt.Errorf("%s", &Error{errorCode: "invalid amount%!(EXTRA string=amount liquid staked must be positive and nonzero)"}),
+			err: ErrInvalidAmount,
 		},
 		{
 			name: "empty host denom",
@@ -57,7 +56,7 @@ func TestMsgLiquidStake_ValidateBasic(t *testing.T) {
 				Amount:    1,
 				HostDenom: "",
 			},
-			err: fmt.Errorf("%s", &Error{errorCode: "host denom cannot be empty: required field is missing"}),
+			err: ErrRequiredFieldEmpty,
 		},
 	}
 	for _, tt := range tests {

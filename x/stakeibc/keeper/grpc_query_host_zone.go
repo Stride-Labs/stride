@@ -12,7 +12,6 @@ import (
 	"github.com/Stride-Labs/stride/v3/x/stakeibc/types"
 )
 
-
 func (k Keeper) HostZoneAll(c context.Context, req *types.QueryAllHostZoneRequest) (*types.QueryAllHostZoneResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "invalid request")

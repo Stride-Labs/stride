@@ -88,7 +88,8 @@ func (s *KeeperTestSuite) TestDeleteValidator_HostZoneNotFound() {
 	badHostZoneMsg := tc.validMsgs[0]
 	badHostZoneMsg.HostZone = "gaia"
 	_, err := s.GetMsgServer().DeleteValidator(sdk.WrapSDKContext(s.Ctx()), &badHostZoneMsg)
-	errMsg := "validator not removed%!(EXTRA string=Validator (stride_VAL1) not removed from host zone (gaia) | err: host zone not found%!(EXTRA string=HostZone (gaia) not found))"
+	errMsg := "Validator (stride_VAL1) not removed from host zone (gaia) "
+	errMsg += "| err: HostZone (gaia) not found: host zone not found: validator not removed"
 	s.Require().EqualError(err, errMsg)
 }
 
@@ -100,7 +101,9 @@ func (s *KeeperTestSuite) TestDeleteValidator_AddressNotFound() {
 	badAddressMsg.ValAddr = "stride_VAL5"
 	_, err := s.GetMsgServer().DeleteValidator(sdk.WrapSDKContext(s.Ctx()), &badAddressMsg)
 
-	errMsg := "validator not removed%!(EXTRA string=Validator (stride_VAL5) not removed from host zone (GAIA) | err: validator not found%!(EXTRA string=Validator address (stride_VAL5) not found on host zone (GAIA)))"
+	errMsg := "Validator (stride_VAL5) not removed from host zone (GAIA) "
+	errMsg += "| err: Validator address (stride_VAL5) not found on host zone (GAIA): "
+	errMsg += "validator not found: validator not removed"
 	s.Require().EqualError(err, errMsg)
 }
 
@@ -113,7 +116,9 @@ func (s *KeeperTestSuite) TestDeleteValidator_NonZeroDelegation() {
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx(), hostZone)
 
 	_, err := s.GetMsgServer().DeleteValidator(sdk.WrapSDKContext(s.Ctx()), &tc.validMsgs[0])
-	errMsg := "validator not removed%!(EXTRA string=Validator (stride_VAL1) not removed from host zone (GAIA) | err: Validator (stride_VAL1) has non-zero delegation (1) or weight (0))"
+	errMsg := "Validator (stride_VAL1) not removed from host zone (GAIA) "
+	errMsg += "| err: Validator (stride_VAL1) has non-zero delegation (1) or weight (0): "
+	errMsg += "validator not removed"
 	s.Require().EqualError(err, errMsg)
 }
 
@@ -126,6 +131,8 @@ func (s *KeeperTestSuite) TestDeleteValidator_NonZeroWeight() {
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx(), hostZone)
 
 	_, err := s.GetMsgServer().DeleteValidator(sdk.WrapSDKContext(s.Ctx()), &tc.validMsgs[0])
-	errMsg := "validator not removed%!(EXTRA string=Validator (stride_VAL1) not removed from host zone (GAIA) | err: Validator (stride_VAL1) has non-zero delegation (0) or weight (1))"
+	errMsg := "Validator (stride_VAL1) not removed from host zone (GAIA) "
+	errMsg += "| err: Validator (stride_VAL1) has non-zero delegation (0) or weight (1): "
+	errMsg += "validator not removed"
 	s.Require().EqualError(err, errMsg)
 }

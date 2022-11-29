@@ -98,7 +98,7 @@ func (s *KeeperTestSuite) TestRestoreInterchainAccount_CannotRestoreNonExistentA
 	msg := tc.validMsg
 	msg.AccountType = stakeibc.ICAAccountType_WITHDRAWAL
 	_, err := s.GetMsgServer().RestoreInterchainAccount(sdk.WrapSDKContext(s.Ctx()), &msg)
-	expectedErrMSg := fmt.Sprintf("invalid interchain account address%%!(EXTRA string=ICA controller account address not found: %s.WITHDRAWAL)",
+	expectedErrMSg := fmt.Sprintf("ICA controller account address not found: %s.WITHDRAWAL: invalid interchain account address",
 		tc.validMsg.ChainId)
 	s.Require().EqualError(err, expectedErrMSg, "registered ica account successfully")
 }

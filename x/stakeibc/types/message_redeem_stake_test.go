@@ -1,7 +1,6 @@
 package types
 
 import (
-	"fmt"
 	"math"
 	"testing"
 
@@ -33,7 +32,7 @@ func TestMsgRedeemStake_ValidateBasic(t *testing.T) {
 				Receiver: sample.AccAddress(),
 				Amount:   uint64(1),
 			},
-			err: fmt.Errorf("%s", &Error{errorCode: "invalid address"}),
+			err: ErrInvalidAddress,
 		},
 		{
 			name: "no host zone",
@@ -42,7 +41,7 @@ func TestMsgRedeemStake_ValidateBasic(t *testing.T) {
 				Receiver: sample.AccAddress(),
 				Amount:   uint64(1),
 			},
-			err: fmt.Errorf("%s", &Error{errorCode: `host zone cannot be empty: required field is missing`}),
+			err: ErrRequiredFieldEmpty,
 		},
 		{
 			name: "invalid receiver",
@@ -51,7 +50,7 @@ func TestMsgRedeemStake_ValidateBasic(t *testing.T) {
 				HostZone: "GAIA",
 				Amount:   uint64(1),
 			},
-			err: fmt.Errorf("%s", &Error{errorCode: `receiver cannot be empty:  required field is missing`}),
+			err: ErrRequiredFieldEmpty,
 		},
 		{
 			name: "amount max int",
@@ -61,7 +60,7 @@ func TestMsgRedeemStake_ValidateBasic(t *testing.T) {
 				Receiver: sample.AccAddress(),
 				Amount:   math.MaxUint64,
 			},
-			err: fmt.Errorf("%s", &Error{errorCode: `amount liquid staked must be less than math.MaxInt64 \d+: invalid amount`}),
+			err: ErrInvalidAmount,
 		},
 	}
 	for _, tt := range tests {

@@ -127,7 +127,7 @@ func (s *KeeperTestSuite) TestValidatorExchangeRateCallback_HostZoneNotFound() {
 	badQuery.ChainId = "fake_host_zone"
 
 	err := stakeibckeeper.ValidatorExchangeRateCallback(s.App.StakeibcKeeper, s.Ctx(), tc.validArgs.callbackArgs, badQuery)
-	s.Require().EqualError(err, "host zone not found%!(EXTRA string=no registered zone for queried chain ID (fake_host_zone))")
+	s.Require().EqualError(err, "no registered zone for queried chain ID (fake_host_zone): host zone not found")
 }
 
 func (s *KeeperTestSuite) TestValidatorExchangeRateCallback_InvalidCallbackArgs() {
@@ -137,7 +137,8 @@ func (s *KeeperTestSuite) TestValidatorExchangeRateCallback_InvalidCallbackArgs(
 	invalidArgs := []byte("random bytes")
 	err := stakeibckeeper.ValidatorExchangeRateCallback(s.App.StakeibcKeeper, s.Ctx(), invalidArgs, tc.validArgs.query)
 
-	expectedErrMsg := "unable to marshal data structure%!(EXTRA string=unable to unmarshal queriedValidator info for zone GAIA, err: unexpected EOF)"
+	expectedErrMsg := "unable to unmarshal queriedValidator info for zone GAIA, "
+	expectedErrMsg += "err: unexpected EOF: unable to marshal data structure"
 	s.Require().EqualError(err, expectedErrMsg)
 }
 
@@ -185,7 +186,7 @@ func (s *KeeperTestSuite) TestValidatorExchangeRateCallback_ValidatorNotFound() 
 	// Update the callback args to contain a validator address that doesn't exist
 	badCallbackArgs := s.CreateValidatorQueryResponse("fake_val", 0, 0)
 	err := stakeibckeeper.ValidatorExchangeRateCallback(s.App.StakeibcKeeper, s.Ctx(), badCallbackArgs, tc.validArgs.query)
-	s.Require().EqualError(err, "validator not found%!(EXTRA string=no registered validator for address (fake_val))")
+	s.Require().EqualError(err, "no registered validator for address (fake_val): validator not found")
 }
 
 func (s *KeeperTestSuite) TestValidatorExchangeRateCallback_DelegatorSharesZero() {
@@ -196,7 +197,7 @@ func (s *KeeperTestSuite) TestValidatorExchangeRateCallback_DelegatorSharesZero(
 	badCallbackArgs := s.CreateValidatorQueryResponse(valAddress, 1000, 0) // the 1000 is arbitrary, the zero here is what matters
 	err := stakeibckeeper.ValidatorExchangeRateCallback(s.App.StakeibcKeeper, s.Ctx(), badCallbackArgs, tc.validArgs.query)
 
-	expectedErrMsg := "division by zero%!(EXTRA string=can't calculate validator internal exchange rate because delegation amount is 0 (validator: valoper1))"
+	expectedErrMsg := "can't calculate validator internal exchange rate because delegation amount is 0 (validator: valoper1): division by zero"
 	s.Require().EqualError(err, expectedErrMsg)
 }
 
@@ -210,6 +211,7 @@ func (s *KeeperTestSuite) TestValidatorExchangeRateCallback_DelegationQueryFaile
 
 	err := stakeibckeeper.ValidatorExchangeRateCallback(s.App.StakeibcKeeper, s.Ctx(), tc.validArgs.callbackArgs, tc.validArgs.query)
 
-	expectedErrMsg := "failed to submit ICQ%!(EXTRA string=ValidatorCallback: failed to query delegation, zone GAIA, err: ICA acccount not found on host zone%!(EXTRA string=Zone GAIA is missing a delegation address!))"
+	expectedErrMsg := "ValidatorCallback: failed to query delegation, zone GAIA, err: Zone GAIA is missing a delegation address!: "
+	expectedErrMsg += "ICA acccount not found on host zone: failed to submit ICQ"
 	s.Require().EqualError(err, expectedErrMsg)
 }

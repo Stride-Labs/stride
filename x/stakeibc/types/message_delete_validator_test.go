@@ -1,7 +1,6 @@
 package types
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -20,13 +19,13 @@ func TestMsgDeleteValidator_ValidateBasic(t *testing.T) {
 			msg: MsgDeleteValidator{
 				Creator: "invalid_address",
 			},
-			err: fmt.Errorf("%s", &Error{errorCode: "invalid creator address (decoding bech32 failed: invalid separator index -1)"}),
+			err: ErrInvalidAddress,
 		}, {
 			name: "valid address but not whitelisted",
 			msg: MsgDeleteValidator{
 				Creator: sample.AccAddress(),
 			},
-			err: fmt.Errorf("%s", &Error{errorCode: "invalid creator address (decoding bech32 failed: invalid separator index -1)"}),
+			err: ErrInvalidAddress,
 		},
 	}
 	for _, tt := range tests {

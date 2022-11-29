@@ -48,7 +48,7 @@ func (msg *MsgChangeValidatorWeight) ValidateBasic() error {
 		return fmt.Errorf("invalid creator address (%s): invalid address", err.Error())
 	}
 	if err := utils.ValidateAdminAddress(msg.Creator); err != nil {
-		return fmt.Errorf("invalid address")
+		return err
 	}
 	return nil
 }

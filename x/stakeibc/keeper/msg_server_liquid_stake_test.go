@@ -177,7 +177,7 @@ func (s *KeeperTestSuite) TestLiquidStake_HostZoneNotFound() {
 	invalidMsg.HostDenom = "ufakedenom"
 	_, err := s.GetMsgServer().LiquidStake(sdk.WrapSDKContext(s.Ctx()), &invalidMsg)
 
-	s.Require().EqualError(err, "host zone not registered%!(EXTRA string=no host zone found for denom (%s), string=ufakedenom)")
+	s.Require().EqualError(err, "no host zone found for denom (ufakedenom): host zone not registered")
 }
 
 func (s *KeeperTestSuite) TestLiquidStake_IbcCoinParseError() {
@@ -189,7 +189,7 @@ func (s *KeeperTestSuite) TestLiquidStake_IbcCoinParseError() {
 	_, err := s.GetMsgServer().LiquidStake(sdk.WrapSDKContext(s.Ctx()), &tc.validMsg)
 
 	badCoin := fmt.Sprintf("%d%s", tc.validMsg.Amount, badHostZone.IbcDenom)
-	s.Require().EqualError(err, fmt.Sprintf("invalid decimal coin expression: %s%%!(EXTRA string=failed to parse coin (%%s), string=%s)", badCoin, badCoin))
+	s.Require().EqualError(err, fmt.Sprintf("failed to parse coin (%s): invalid decimal coin expression: %s", badCoin, badCoin))
 }
 
 func (s *KeeperTestSuite) TestLiquidStake_NotIbcDenom() {
@@ -203,7 +203,7 @@ func (s *KeeperTestSuite) TestLiquidStake_NotIbcDenom() {
 	s.FundAccount(tc.user.acc, sdk.NewInt64Coin(badDenom, 1000000000))
 	_, err := s.GetMsgServer().LiquidStake(sdk.WrapSDKContext(s.Ctx()), &tc.validMsg)
 
-	s.Require().EqualError(err, fmt.Sprintf("invalid token denom%%!(EXTRA string=denom is not an IBC token (%%s), string=%s)", badHostZone.IbcDenom))
+	s.Require().EqualError(err, fmt.Sprintf("denom is not an IBC token (%s): invalid token denom", badHostZone.IbcDenom))
 }
 
 func (s *KeeperTestSuite) TestLiquidStake_InsufficientBalance() {
@@ -214,7 +214,7 @@ func (s *KeeperTestSuite) TestLiquidStake_InsufficientBalance() {
 	invalidMsg.Amount = uint64(balance + 1000)
 	_, err := s.GetMsgServer().LiquidStake(sdk.WrapSDKContext(s.Ctx()), &invalidMsg)
 
-	expectedErr := fmt.Sprintf("balance is lower than staking amount. staking amount: %d, balance: %d", balance+1000, balance)
+	expectedErr := fmt.Sprintf("balance is lower than staking amount. staking amount: %d, balance: %d: insufficient funds", balance+1000, balance)
 	s.Require().EqualError(err, expectedErr)
 }
 
@@ -224,7 +224,7 @@ func (s *KeeperTestSuite) TestLiquidStake_NoEpochTracker() {
 	s.App.StakeibcKeeper.RemoveEpochTracker(s.Ctx(), epochtypes.STRIDE_EPOCH)
 	_, err := s.GetMsgServer().LiquidStake(sdk.WrapSDKContext(s.Ctx()), &tc.validMsg)
 
-	s.Require().EqualError(err, fmt.Sprintf("no epoch number for epoch (%s)", epochtypes.STRIDE_EPOCH))
+	s.Require().EqualError(err, fmt.Sprintf("no epoch number for epoch (%s): not found", epochtypes.STRIDE_EPOCH))
 }
 
 func (s *KeeperTestSuite) TestLiquidStake_NoDepositRecord() {
@@ -233,7 +233,7 @@ func (s *KeeperTestSuite) TestLiquidStake_NoDepositRecord() {
 	s.App.RecordsKeeper.RemoveDepositRecord(s.Ctx(), 1)
 	_, err := s.GetMsgServer().LiquidStake(sdk.WrapSDKContext(s.Ctx()), &tc.validMsg)
 
-	s.Require().EqualError(err, fmt.Sprintf("no deposit record for epoch (%d)", 1))
+	s.Require().EqualError(err, fmt.Sprintf("no deposit record for epoch (%d): not found", 1))
 }
 
 func (s *KeeperTestSuite) TestLiquidStake_InvalidHostAddress() {

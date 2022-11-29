@@ -1,7 +1,6 @@
 package types
 
 import (
-	"fmt"
 	"math"
 	"testing"
 
@@ -42,7 +41,7 @@ func TestMsgClaimUndelegatedTokens_ValidateBasic(t *testing.T) {
 				Sender:  sample.StrideAddress(),
 				Epoch:   uint64(1),
 			},
-			err: fmt.Errorf("%s", &Error{errorCode: "required field is missing%!(EXTRA string=host zone id cannot be empty)"}),
+			err: ErrRequiredFieldEmpty,
 		},
 		{
 			name: "epoch max int",
@@ -52,7 +51,7 @@ func TestMsgClaimUndelegatedTokens_ValidateBasic(t *testing.T) {
 				HostZoneId: "GAIA",
 				Epoch:      math.MaxUint64,
 			},
-			err: fmt.Errorf("%s", &Error{errorCode: "invalid amount%!(EXTRA string=epoch must be less than math.MaxInt64 %d, int=9223372036854775807"}),
+			err: ErrInvalidAmount,
 		},
 	}
 	for _, tt := range tests {

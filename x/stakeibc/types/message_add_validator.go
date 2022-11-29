@@ -51,7 +51,7 @@ func (msg *MsgAddValidator) ValidateBasic() error {
 		return fmt.Errorf("invalid creator address (%s): invalid address", err.Error())
 	}
 	if err := utils.ValidateAdminAddress(msg.Creator); err != nil {
-		return fmt.Errorf("invalid creator address")
+		return err
 	}
 	// name validation
 	if len(strings.TrimSpace(msg.Name)) == 0 {

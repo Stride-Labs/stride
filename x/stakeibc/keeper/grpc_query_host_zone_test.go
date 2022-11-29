@@ -15,7 +15,6 @@ import (
 	"github.com/Stride-Labs/stride/v3/x/stakeibc/types"
 )
 
-
 func TestHostZoneQuerySingle(t *testing.T) {
 	keeper, ctx := keepertest.StakeibcKeeper(t)
 	wctx := sdk.WrapSDKContext(ctx)
@@ -52,7 +51,7 @@ func TestHostZoneQuerySingle(t *testing.T) {
 		t.Run(tc.desc, func(t *testing.T) {
 			response, err := keeper.HostZone(wctx, tc.request)
 			if tc.err != nil {
-				require.ErrorAs(t, tc.err, &err)
+				require.ErrorIs(t, err, tc.err)
 			} else {
 				require.NoError(t, err)
 				require.Equal(t,

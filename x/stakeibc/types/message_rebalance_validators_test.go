@@ -1,7 +1,6 @@
 package types
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -20,13 +19,13 @@ func TestMsgRebalanceValidators_ValidateBasic(t *testing.T) {
 			msg: MsgRebalanceValidators{
 				Creator: "invalid_address",
 			},
-			err: fmt.Errorf("%s", &Error{errorCode: "invalid creator address (decoding bech32 failed: invalid separator index -1): invalid address"}),
+			err: ErrInvalidAddress,
 		}, {
 			name: "valid address but not whitelisted",
 			msg: MsgRebalanceValidators{
 				Creator: sample.AccAddress(),
 			},
-			err: fmt.Errorf("%s", &Error{errorCode: `invalid creator address (\+s): invalid address`}),
+			err: ErrInvalidAddress,
 		},
 	}
 	for _, tt := range tests {

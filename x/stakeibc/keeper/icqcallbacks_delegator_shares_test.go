@@ -163,7 +163,7 @@ func (s *KeeperTestSuite) TestDelegatorSharesCallback_HostZoneNotFound() {
 	badQuery.ChainId = "fake_host_zone"
 
 	err := stakeibckeeper.DelegatorSharesCallback(s.App.StakeibcKeeper, s.Ctx(), tc.validArgs.callbackArgs, badQuery)
-	s.Require().EqualError(err, "host zone not found%!(EXTRA string=no registered zone for queried chain ID (fake_host_zone))")
+	s.Require().EqualError(err, "no registered zone for queried chain ID (fake_host_zone): host zone not found")
 }
 
 func (s *KeeperTestSuite) TestDelegatorSharesCallback_InvalidCallbackArgs() {
@@ -173,7 +173,8 @@ func (s *KeeperTestSuite) TestDelegatorSharesCallback_InvalidCallbackArgs() {
 	invalidArgs := []byte("random bytes")
 	err := stakeibckeeper.DelegatorSharesCallback(s.App.StakeibcKeeper, s.Ctx(), invalidArgs, tc.validArgs.query)
 
-	expectedErrMsg := "unable to marshal data structure%!(EXTRA string=unable to unmarshal queried delegation info for zone GAIA, err: unexpected EOF)"
+	expectedErrMsg := "unable to unmarshal queried delegation info for zone GAIA, "
+	expectedErrMsg += "err: unexpected EOF: unable to marshal data structure"
 	s.Require().EqualError(err, expectedErrMsg)
 }
 
@@ -215,7 +216,7 @@ func (s *KeeperTestSuite) TestDelegatorSharesCallback_ValidatorNotFound() {
 	// Update the callback args to contain a validator address that doesn't exist
 	badCallbackArgs := s.CreateDelegatorSharesQueryResponse("fake_val", 1000) // 1000 is aribtrary
 	err := stakeibckeeper.DelegatorSharesCallback(s.App.StakeibcKeeper, s.Ctx(), badCallbackArgs, tc.validArgs.query)
-	s.Require().EqualError(err, "validator not found%!(EXTRA string=no registered validator for address (fake_val))")
+	s.Require().EqualError(err, "no registered validator for address (fake_val): validator not found")
 }
 
 func (s *KeeperTestSuite) TestDelegatorSharesCallback_ExchangeRateNotFound() {
@@ -227,7 +228,7 @@ func (s *KeeperTestSuite) TestDelegatorSharesCallback_ExchangeRateNotFound() {
 	s.App.StakeibcKeeper.SetEpochTracker(s.Ctx(), epochTracker)
 
 	err := stakeibckeeper.DelegatorSharesCallback(s.App.StakeibcKeeper, s.Ctx(), tc.validArgs.callbackArgs, tc.validArgs.query)
-	s.Require().EqualError(err, "DelegationCallback: validator (valoper2) internal exchange rate has not been updated this epoch (epoch #2)")
+	s.Require().EqualError(err, "DelegationCallback: validator (valoper2) internal exchange rate has not been updated this epoch (epoch #2): invalid request")
 }
 
 func (s *KeeperTestSuite) TestDelegatorSharesCallback_NoSlashOccurred() {
@@ -258,7 +259,7 @@ func (s *KeeperTestSuite) TestDelegatorSharesCallback_InvalidNumTokens() {
 	badCallbackArgs := s.CreateDelegatorSharesQueryResponse(valAddress, numShares)
 	err := stakeibckeeper.DelegatorSharesCallback(s.App.StakeibcKeeper, s.Ctx(), badCallbackArgs, tc.validArgs.query)
 
-	expectedErrMsg := "DelegationCallback: Validator (valoper2) tokens returned from query is greater than the DelegationAmt"
+	expectedErrMsg := "DelegationCallback: Validator (valoper2) tokens returned from query is greater than the DelegationAmt: invalid request"
 	s.Require().EqualError(err, expectedErrMsg)
 }
 
@@ -273,8 +274,9 @@ func (s *KeeperTestSuite) TestDelegatorSharesCallback_DelegationAmtOverfow() {
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx(), hostZone)
 
 	err := stakeibckeeper.DelegatorSharesCallback(s.App.StakeibcKeeper, s.Ctx(), tc.validArgs.callbackArgs, tc.validArgs.query)
-	expectedErrMsg := "unable to cast to safe cast int%!(EXTRA string=unable to convert validator delegation amount to int64, err: overflow: unable to cast 18446744073709551615 of type uint64 to int64)"
-	s.Require().EqualError(err, expectedErrMsg)
+	expectedErrMsg := `unable to convert validator delegation amount to int64, err: overflow: `
+	expectedErrMsg += `unable to cast \d+ of type uint64 to int64: unable to cast to safe cast int`
+	s.Require().Regexp(expectedErrMsg, err.Error())
 }
 
 func (s *KeeperTestSuite) TestDelegatorSharesCallback_WeightOverfow() {
@@ -288,8 +290,9 @@ func (s *KeeperTestSuite) TestDelegatorSharesCallback_WeightOverfow() {
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx(), hostZone)
 
 	err := stakeibckeeper.DelegatorSharesCallback(s.App.StakeibcKeeper, s.Ctx(), tc.validArgs.callbackArgs, tc.validArgs.query)
-	expectedErrMsg := "unable to cast to safe cast int%!(EXTRA string=unable to convert validator weight to int64, err: overflow: unable to cast 18446744073709551615 of type uint64 to int64)"
-	s.Require().EqualError(err, expectedErrMsg)
+	expectedErrMsg := `unable to convert validator weight to int64, err: overflow: `
+	expectedErrMsg += `unable to cast \d+ of type uint64 to int64: unable to cast to safe cast int`
+	s.Require().Regexp(expectedErrMsg, err.Error())
 }
 
 func (s *KeeperTestSuite) TestDelegatorSharesCallback_SlashGtTenPercent() {
@@ -300,6 +303,7 @@ func (s *KeeperTestSuite) TestDelegatorSharesCallback_SlashGtTenPercent() {
 	badCallbackArgs := s.CreateDelegatorSharesQueryResponse(valAddress, 1600)
 
 	err := stakeibckeeper.DelegatorSharesCallback(s.App.StakeibcKeeper, s.Ctx(), badCallbackArgs, tc.validArgs.query)
-	expectedErrMsg := "slash is greater than 10 percent%!(EXTRA string=DelegationCallback: Validator (valoper2) slashed but ABORTING update, slash is greater than 0.10 (0.200000000000000000))"
+	expectedErrMsg := "DelegationCallback: Validator (valoper2) slashed but ABORTING update, "
+	expectedErrMsg += "slash is greater than 0.10 (0.200000000000000000): slash is greater than 10 percent"
 	s.Require().EqualError(err, expectedErrMsg)
 }

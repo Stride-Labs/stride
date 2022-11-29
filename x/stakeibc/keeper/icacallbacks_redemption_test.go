@@ -152,7 +152,7 @@ func (s *KeeperTestSuite) TestRedemptionCallback_WrongCallbackArgs() {
 	invalidArgs := tc.validArgs
 
 	err := stakeibckeeper.RedemptionCallback(s.App.StakeibcKeeper, s.Ctx(), invalidArgs.packet, invalidArgs.ack, []byte("random bytes"))
-	s.Require().EqualError(err, "unable to unmarshal data structure%!(EXTRA string=Unable to unmarshal redemption callback args | unexpected EOF)")
+	s.Require().EqualError(err, "Unable to unmarshal redemption callback args | unexpected EOF: unable to unmarshal data structure")
 	s.checkRedemptionStateIfCallbackFailed(tc)
 }
 
@@ -167,7 +167,7 @@ func (s *KeeperTestSuite) TestRedemptionCallback_EpochUnbondingRecordNotFound() 
 	s.Require().NoError(err)
 	invalidArgs.args = args
 	err = stakeibckeeper.RedemptionCallback(s.App.StakeibcKeeper, s.Ctx(), invalidArgs.packet, invalidArgs.ack, invalidArgs.args)
-	expectedErr := fmt.Sprintf("Unknown request: Error fetching host zone unbonding record for epoch: %d, host zone: GAIA", tc.initialState.epochNumber+1)
+	expectedErr := fmt.Sprintf("Error fetching host zone unbonding record for epoch: %d, host zone: GAIA: host zone not found", tc.initialState.epochNumber+1)
 	s.Require().EqualError(err, expectedErr)
 	s.checkRedemptionStateIfCallbackFailed(tc)
 }
@@ -181,6 +181,6 @@ func (s *KeeperTestSuite) TestRedemptionCallback_HostZoneUnbondingNotFound() {
 	epochUnbondingRecord.HostZoneUnbondings = []*recordtypes.HostZoneUnbonding{}
 	s.App.RecordsKeeper.SetEpochUnbondingRecord(s.Ctx(), epochUnbondingRecord)
 	err := stakeibckeeper.RedemptionCallback(s.App.StakeibcKeeper, s.Ctx(), valid.packet, valid.ack, valid.args)
-	s.Require().EqualError(err, fmt.Sprintf("Unknown request: Error fetching host zone unbonding record for epoch: %d, host zone: GAIA", tc.initialState.epochNumber))
+	s.Require().EqualError(err, fmt.Sprintf("Error fetching host zone unbonding record for epoch: %d, host zone: GAIA: host zone not found", tc.initialState.epochNumber))
 	s.checkRedemptionStateIfCallbackFailed(tc)
 }

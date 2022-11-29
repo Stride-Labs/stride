@@ -1,7 +1,6 @@
 package types
 
 import (
-	fmt "fmt"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -20,7 +19,7 @@ func TestMsgRestoreInterchainAccount_ValidateBasic(t *testing.T) {
 			msg: MsgRestoreInterchainAccount{
 				Creator: "invalid_address",
 			},
-			err: fmt.Errorf("%s", &Error{errorCode: "invalid creator address (decoding bech32 failed: invalid separator index -1)"}),
+			err: ErrInvalidAddress,
 		}, {
 			name: "not admin address",
 			msg: MsgRestoreInterchainAccount{
