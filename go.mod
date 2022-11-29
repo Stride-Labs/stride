@@ -3,7 +3,6 @@ module github.com/Stride-Labs/stride/v3
 go 1.19
 
 require (
-	github.com/Stride-Labs/stride/v3 v3.0.1
 	github.com/cosmos/cosmos-proto v1.0.0-alpha8
 	github.com/cosmos/cosmos-sdk v0.45.11
 	github.com/cosmos/gogoproto v1.4.3
