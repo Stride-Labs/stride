@@ -29,3 +29,6 @@
 [submodule "scripts/tests/test_helper/bats-assert"]
 	path = scripts/tests/test_helper/bats-assert
 	url = https://github.com/bats-core/bats-assert.git
+[submodule "scripts/tests/bats"]
+	path = scripts/tests/bats
+	url = https://github.com/bats-core/bats-core.git
