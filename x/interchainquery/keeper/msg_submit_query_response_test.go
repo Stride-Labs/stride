@@ -41,15 +41,12 @@ func (s *KeeperTestSuite) SetupMsgSubmitQueryResponse() MsgSubmitQueryResponseTe
 	// save the query to Stride state, so it can be retrieved in the response
 	query := types.Query{
 		Id:           expectedId,
-		ConnectionId: s.TransferPath.EndpointA.ConnectionID,
+		CallbackId:   "withdrawalbalance",
 		ChainId:      HostChainId,
+		ConnectionId: s.TransferPath.EndpointA.ConnectionID,
 		QueryType:    types.BANK_STORE_QUERY_WITH_PROOF,
 		Request:      append(data, []byte(HostChainId)...),
-		Period:       sdk.NewInt(0),
-		LastHeight:   sdk.NewInt(height),
-		CallbackId:   "withdrawalbalance",
 		Ttl:          uint64(12545592938) * uint64(1000000000), // set ttl to August 2050, mult by nano conversion factor
-		Height:       height,
 	}
 
 	return MsgSubmitQueryResponseTestCase{

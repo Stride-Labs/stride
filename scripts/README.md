@@ -2,7 +2,7 @@
 
 ## Dockernet
 ### Adding a new host zone
-* Create a new dockerfile at the root level (`Dockerfile.{new-host-zone})
+* Create a new dockerfile at the root level (`Dockerfile.{new-host-zone}`). Use one of the other host zone's dockerfile's as a starting port to provide the certain boilerplate such as the package installs, adding user, exposing ports, etc. 
 * Add the repo as a submodule
 ```
 git submodule add {repo-url} deps/{new-host-zone}
@@ -14,23 +14,23 @@ git checkout {commit-hash}
 cd ..
 ```
 * Add a comment to `.gitmodules` with the commit hash
-* Add the build command for that host zone in `scripts/build.sh`
+* Add the build command for that host zone in `scripts/build.sh` (`n` is used as an example below - use the first letter of the host zone)
 ```
 while getopts sgojhir{n} flag; do
    case "${flag}" in
    ...
    n) build_local_and_docker {new-host-zone} deps/{new-host-zone} ;;  
 ```
-* Add the host zone to the docker compose file at the root level. Add the port forwarding to the first node. Add 5 nodes here. Drop the RPC port number by 100, and the API/gRPC port by 10 since the last host zone.
+* Add the host zone to the docker compose filein the root level of the stride directory. Add 5 nodes and add the port forwarding to the first node only. Drop the RPC port number by 100, and the API/gRPC port by 10, relative to the last host zone that was added.
 ```
   {new-host-zone}1:
     image: stridezone:{new-host-zone}
     volumes:
       - ./scripts/state/{new-host-zone}1:/home/{new-host-zone}/.{new-host-zone}
     ports:
-      - "26257:26657"
-      - "1277:1317"
-      - "9050:9090"
+      - "{rpc-port}:26657"
+      - "{api-port}:1317"
+      - "{grpc-port}:9090"
 
   {new-host-zone}2:
     image: stridezone:{new-host-zone}
@@ -57,17 +57,6 @@ while getopts sgojhir{n} flag; do
 {CHAIN_ID}_RPC_PORT={the one included in the docker-compose above}
 {CHAIN_ID}_MAIN_CMD="${CHAIN_ID}_CMD --home $SCRIPT_DIR/state/${${CHAIN_ID}_NODE_PREFIX}1"
 
-{CHAIN_ID}_REV_MNEMONIC=""
-{CHAIN_ID}_VAL_MNEMONIC_1=""
-{CHAIN_ID}_VAL_MNEMONIC_2=""
-{CHAIN_ID}_VAL_MNEMONIC_3=""
-{CHAIN_ID}_VAL_MNEMONIC_4=""
-{CHAIN_ID}_VAL_MNEMONIC_5=""
-{CHAIN_ID}_VAL_MNEMONICS=("${CHAIN_ID}_VAL_MNEMONIC_1","${CHAIN_ID}_VAL_MNEMONIC_2","${CHAIN_ID}_VAL_MNEMONIC_3","${CHAIN_ID}_VAL_MNEMONIC_4","${CHAIN_ID}_VAL_MNEMONIC_5")
-
-HERMES_${CHAIN_ID}_ACCT=rly{add one since the account from the last host zone}
-HERMES_${CHAIN_ID}_MNEMONIC=""
-
 RELAYER_{CHAIN_ID}_EXEC="docker-compose run --rm relayer-{new-host-zone}"
 RELAYER_{CHAIN_ID}_ACCT=rly{add one since the account from the last host zone}
 HOST_RELAYER_ACCTS=(... $RELAYER_{CHAIN_ID}_ACCT)
@@ -76,7 +65,7 @@ RELAYER_{CHAIN_ID}_MNEMONIC=""
 RELAYER_MNEMONICS=(...,"$RELAYER_{CHAIN_ID}_MNEMONIC")
 
 ```
-* Add the IBC denom's for the host zone across each channel. You can use the following code block (just temporarily throw it in any of the test files and run it)
+* Add the IBC denom's for the host zone across each channel to `vars.sh` (e.g. `IBC_{HOST}_CHANNEL_{N}_DENOM)`). You can use the following code block to generate the variables (just temporarily throw it in any of the test files, run it, and copy the output to `vars.sh`)
 ```
 import transfertypes "github.com/cosmos/ibc-go/v3/modules/apps/transfer/types"
 
@@ -121,32 +110,8 @@ paths:
       rule: ""
       channel-list: []
 ```
-* Add a section to hermes
+* To enable the the new host zone, include it in the `HOST_CHAINS` array in `scripts/start_network.sh`. **Note: You can only run up to 4 host zones at once.**
 ```
-[[chains]]
-id = '{CHAIN_ID}'
-rpc_addr = 'http://{NODE_PREFIX}1:26657'
-grpc_addr = 'http://{NODE_PREFIX}1:9090'
-websocket_addr = 'ws://{NODE_PREFIX}:26657/websocket'
-rpc_timeout = '10s'
-account_prefix = '{ADDRESS_PREFIX}'
-key_name = 'hrly{next relayer ID}'
-store_prefix = 'ibc'
-default_gas = 100000
-max_gas = 3000000
-gas_price = { price = 0.000, denom = '{DENOM}' }
-gas_multiplier = 1.1
-max_msg_num = 30
-max_tx_size = 2097152
-clock_drift = '5s'
-max_block_time = '10s'
-trusting_period = '119s'
-trust_threshold = { numerator = '1', denominator = '3' }
-address_type = { derivation = 'cosmos' }
-```
-* Finally add the execution of the `init_chain` script for this host zone in `scripts/start_network.sh`, and add it to the array of `HOST_CHAINS`
-```
-sh ${SCRIPT_DIR}/init_chain.sh {NEW-HOST-ZONE}
-HOST_CHAINS=(GAIA JUNO OSMO ... {NEW-HOST-ZONE})
+HOST_CHAINS=(GAIA {NEW-HOST-ZONE})
 ```
 * And that's it! Just start the network as normal, and make sure to rebuild the new host zone when running for the first time.  

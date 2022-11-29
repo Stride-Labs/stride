@@ -14,8 +14,20 @@ import (
 	stakeibc "github.com/Stride-Labs/stride/v3/x/stakeibc/types"
 )
 
+type DepositRecordStatusUpdate struct {
+	chainId        string
+	initialStatus  recordtypes.DepositRecord_Status
+	revertedStatus recordtypes.DepositRecord_Status
+}
+
+type HostZoneUnbondingStatusUpdate struct {
+	initialStatus  recordtypes.HostZoneUnbonding_Status
+	revertedStatus recordtypes.HostZoneUnbonding_Status
+}
 type RestoreInterchainAccountTestCase struct {
-	validMsg stakeibc.MsgRestoreInterchainAccount
+	validMsg                    stakeibc.MsgRestoreInterchainAccount
+	depositRecordStatusUpdates  []DepositRecordStatusUpdate
+	unbondingRecordStatusUpdate []HostZoneUnbondingStatusUpdate
 }
 
 func (s *KeeperTestSuite) SetupRestoreInterchainAccount() RestoreInterchainAccountTestCase {
@@ -28,15 +40,73 @@ func (s *KeeperTestSuite) SetupRestoreInterchainAccount() RestoreInterchainAccou
 	}
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
 
-	// Store pending records
-	for i := 0; i < 2; i++ {
-		depositRecord := recordtypes.DepositRecord{
-			Id:                 uint64(i),
-			DepositEpochNumber: uint64(i),
-			HostZoneId:         HostChainId,
-			Status:             recordtypes.DepositRecord_DELEGATION_IN_PROGRESS,
-		}
-		s.App.RecordsKeeper.SetDepositRecord(s.Ctx, depositRecord)
+	// Store deposit records with some in state pending
+	depositRecords := []DepositRecordStatusUpdate{
+		{
+			// Status doesn't change
+			chainId:        HostChainId,
+			initialStatus:  recordtypes.DepositRecord_TRANSFER_IN_PROGRESS,
+			revertedStatus: recordtypes.DepositRecord_TRANSFER_IN_PROGRESS,
+		},
+		{
+			// Status gets reverted from IN_PROGRESS to QUEUE
+			chainId:        HostChainId,
+			initialStatus:  recordtypes.DepositRecord_DELEGATION_IN_PROGRESS,
+			revertedStatus: recordtypes.DepositRecord_DELEGATION_QUEUE,
+		},
+		{
+			// Status doesn't get reveted because it's a different host zone
+			chainId:        "different_host_zone",
+			initialStatus:  recordtypes.DepositRecord_DELEGATION_IN_PROGRESS,
+			revertedStatus: recordtypes.DepositRecord_DELEGATION_IN_PROGRESS,
+		},
+	}
+	for i, depositRecord := range depositRecords {
+		s.App.RecordsKeeper.SetDepositRecord(s.Ctx, recordtypes.DepositRecord{
+			Id:         uint64(i),
+			HostZoneId: depositRecord.chainId,
+			Status:     depositRecord.initialStatus,
+		})
+	}
+
+	// Store epoch unbonding records with some in state pending
+	hostZoneUnbondingRecords := []HostZoneUnbondingStatusUpdate{
+		{
+			// Status doesn't change
+			initialStatus:  recordtypes.HostZoneUnbonding_UNBONDING_QUEUE,
+			revertedStatus: recordtypes.HostZoneUnbonding_UNBONDING_QUEUE,
+		},
+		{
+			// Status gets reverted from IN_PROGRESS to QUEUE
+			initialStatus:  recordtypes.HostZoneUnbonding_UNBONDING_IN_PROGRESS,
+			revertedStatus: recordtypes.HostZoneUnbonding_UNBONDING_QUEUE,
+		},
+		{
+			// Status doesn't change
+			initialStatus:  recordtypes.HostZoneUnbonding_EXIT_TRANSFER_QUEUE,
+			revertedStatus: recordtypes.HostZoneUnbonding_EXIT_TRANSFER_QUEUE,
+		},
+		{
+			// Status gets reverted from IN_PROGRESS to QUEUE
+			initialStatus:  recordtypes.HostZoneUnbonding_EXIT_TRANSFER_IN_PROGRESS,
+			revertedStatus: recordtypes.HostZoneUnbonding_EXIT_TRANSFER_QUEUE,
+		},
+	}
+	for i, hostZoneUnbonding := range hostZoneUnbondingRecords {
+		s.App.RecordsKeeper.SetEpochUnbondingRecord(s.Ctx, recordtypes.EpochUnbondingRecord{
+			EpochNumber: uint64(i),
+			HostZoneUnbondings: []*recordtypes.HostZoneUnbonding{
+				// The first unbonding record will get reverted, the other one will not
+				{
+					HostZoneId: HostChainId,
+					Status:     hostZoneUnbonding.initialStatus,
+				},
+				{
+					HostZoneId: "different_host_zone",
+					Status:     hostZoneUnbonding.initialStatus,
+				},
+			},
+		})
 	}
 
 	defaultMsg := stakeibc.MsgRestoreInterchainAccount{
@@ -46,7 +116,59 @@ func (s *KeeperTestSuite) SetupRestoreInterchainAccount() RestoreInterchainAccou
 	}
 
 	return RestoreInterchainAccountTestCase{
-		validMsg: defaultMsg,
+		validMsg:                    defaultMsg,
+		depositRecordStatusUpdates:  depositRecords,
+		unbondingRecordStatusUpdate: hostZoneUnbondingRecords,
+	}
+}
+
+func (s *KeeperTestSuite) RestoreChannelAndVerifySuccess(msg stakeibc.MsgRestoreInterchainAccount, portID string, channelID string) {
+	// Restore the channel
+	_, err := s.GetMsgServer().RestoreInterchainAccount(sdk.WrapSDKContext(s.Ctx), &msg)
+	s.Require().NoError(err, "registered ica account successfully")
+
+	// Confirm channel was created
+	channels := s.App.IBCKeeper.ChannelKeeper.GetAllChannels(s.Ctx)
+	s.Require().Len(channels, 3, "there should be 3 channels after restoring")
+
+	// Confirm the new channel is in state INIT
+	newChannelActive := false
+	for _, channel := range channels {
+		// The new channel should have the same port, a new channel ID and be in state INIT
+		if channel.PortId == portID && channel.ChannelId != channelID && channel.State == channeltypes.INIT {
+			newChannelActive = true
+		}
+	}
+	s.Require().True(newChannelActive, "a new channel should have been created")
+}
+
+func (s *KeeperTestSuite) VerifyDepositRecordsStatus(expectedDepositRecords []DepositRecordStatusUpdate, revert bool) {
+	for i, expectedDepositRecord := range expectedDepositRecords {
+		actualDepositRecord, found := s.App.RecordsKeeper.GetDepositRecord(s.Ctx, uint64(i))
+		s.Require().True(found, "deposit record found")
+
+		// Only revert records if the revert option is passed and the host zone matches
+		expectedStatus := expectedDepositRecord.initialStatus
+		if revert && actualDepositRecord.HostZoneId == HostChainId {
+			expectedStatus = expectedDepositRecord.revertedStatus
+		}
+		s.Require().Equal(expectedStatus.String(), actualDepositRecord.Status.String(), "deposit record %d status", i)
+	}
+}
+
+func (s *KeeperTestSuite) VerifyHostZoneUnbondingStatus(expectedUnbondingRecords []HostZoneUnbondingStatusUpdate, revert bool) {
+	for i, expectedUnbonding := range expectedUnbondingRecords {
+		epochUnbondingRecord, found := s.App.RecordsKeeper.GetEpochUnbondingRecord(s.Ctx, uint64(i))
+		s.Require().True(found, "epoch unbonding record found")
+
+		for _, actualUnbonding := range epochUnbondingRecord.HostZoneUnbondings {
+			// Only revert records if the revert option is passed and the host zone matches
+			expectedStatus := expectedUnbonding.initialStatus
+			if revert && actualUnbonding.HostZoneId == HostChainId {
+				expectedStatus = expectedUnbonding.revertedStatus
+			}
+			s.Require().Equal(expectedStatus.String(), actualUnbonding.Status.String(), "host zone unbonding for epoch %d record status", i)
+		}
 	}
 }
 
@@ -66,37 +188,19 @@ func (s *KeeperTestSuite) TestRestoreInterchainAccount_Success() {
 	channel.State = channeltypes.CLOSED
 	s.App.IBCKeeper.ChannelKeeper.SetChannel(s.Ctx, portID, channelID, channel)
 
-	// Restore the channel
-	msg := tc.validMsg
-	_, err := s.GetMsgServer().RestoreInterchainAccount(sdk.WrapSDKContext(s.Ctx), &msg)
-	s.Require().NoError(err, "registered ica account successfully")
-
 	// Confirm the new channel was created
-	channels = s.App.IBCKeeper.ChannelKeeper.GetAllChannels(s.Ctx)
-	s.Require().Len(channels, 3, "there should be 3 channels after restoring")
+	s.RestoreChannelAndVerifySuccess(tc.validMsg, portID, channelID)
 
-	// Confirm the new channel is in state INIT
-	newChannelActive := false
-	for _, channel := range channels {
-		// The new channel should have the same port, a new channel ID and be in state INIT
-		if channel.PortId == portID && channel.ChannelId != channelID && channel.State == channeltypes.INIT {
-			newChannelActive = true
-		}
-	}
-	s.Require().True(newChannelActive, "a new channel should have been created")
-
-	// Verify the deposit record state was reverted
-	for i := 0; i < 2; i++ {
-		depositRecord, found := s.App.RecordsKeeper.GetDepositRecord(s.Ctx, uint64(i))
-		s.Require().True(found, "deposit record found")
-		s.Require().Equal(recordtypes.DepositRecord_DELEGATION_QUEUE, depositRecord.Status, "deposit record status should be reverted")
-	}
+	// Verify the record status' were reverted
+	s.VerifyDepositRecordsStatus(tc.depositRecordStatusUpdates, true)
+	s.VerifyHostZoneUnbondingStatus(tc.unbondingRecordStatusUpdate, true)
 }
 
 func (s *KeeperTestSuite) TestRestoreInterchainAccount_CannotRestoreNonExistentAcct() {
 	tc := s.SetupRestoreInterchainAccount()
 	msg := tc.validMsg
 	msg.AccountType = stakeibc.ICAAccountType_WITHDRAWAL
+
 	_, err := s.GetMsgServer().RestoreInterchainAccount(sdk.WrapSDKContext(s.Ctx), &msg)
 	expectedErrMSg := fmt.Sprintf("ICA controller account address not found: %s.WITHDRAWAL: invalid interchain account address",
 		tc.validMsg.ChainId)
@@ -107,6 +211,7 @@ func (s *KeeperTestSuite) TestRestoreInterchainAccount_FailsForIncorrectHostZone
 	tc := s.SetupRestoreInterchainAccount()
 	msg := tc.validMsg
 	msg.ChainId = "incorrectchainid"
+
 	_, err := s.GetMsgServer().RestoreInterchainAccount(sdk.WrapSDKContext(s.Ctx), &msg)
 	expectedErrMsg := "host zone not registered"
 	s.Require().EqualError(err, expectedErrMsg, "registered ica account fails for incorrect host zone")
@@ -116,6 +221,7 @@ func (s *KeeperTestSuite) TestRestoreInterchainAccount_FailsIfAccountExists() {
 	tc := s.SetupRestoreInterchainAccount()
 	s.CreateICAChannel("GAIA.DELEGATION")
 	msg := tc.validMsg
+
 	_, err := s.GetMsgServer().RestoreInterchainAccount(sdk.WrapSDKContext(s.Ctx), &msg)
 	expectedErrMsg := fmt.Sprintf("existing active channel channel-1 for portID icacontroller-%s.DELEGATION on connection %s for owner %s.DELEGATION: active channel already set for this owner",
 		tc.validMsg.ChainId,
@@ -129,6 +235,7 @@ func (s *KeeperTestSuite) TestRestoreInterchainAccount_RevertDepositRecords_Fail
 	tc := s.SetupRestoreInterchainAccount()
 	s.CreateICAChannel("GAIA.DELEGATION")
 	msg := tc.validMsg
+
 	_, err := s.GetMsgServer().RestoreInterchainAccount(sdk.WrapSDKContext(s.Ctx), &msg)
 	expectedErrMsg := fmt.Sprintf("existing active channel channel-1 for portID icacontroller-%s.DELEGATION on connection %s for owner %s.DELEGATION: active channel already set for this owner",
 		tc.validMsg.ChainId,
@@ -136,16 +243,14 @@ func (s *KeeperTestSuite) TestRestoreInterchainAccount_RevertDepositRecords_Fail
 		tc.validMsg.ChainId,
 	)
 	s.Require().EqualError(err, expectedErrMsg, "registered ica account fails when account already exists")
-	// Verify the deposit record state was NOT reverted
-	for i := 0; i < 2; i++ {
-		depositRecord, found := s.App.RecordsKeeper.GetDepositRecord(s.Ctx, uint64(i))
-		s.Require().True(found, "deposit record found")
-		s.Require().Equal(recordtypes.DepositRecord_DELEGATION_IN_PROGRESS, depositRecord.Status, "deposit record status should NOT msg be reverted")
-	}
+
+	// Verify the record status' were NOT reverted
+	s.VerifyDepositRecordsStatus(tc.depositRecordStatusUpdates, false)
+	s.VerifyHostZoneUnbondingStatus(tc.unbondingRecordStatusUpdate, false)
 }
 
 func (s *KeeperTestSuite) TestRestoreInterchainAccount_NoRecordChange_Success() {
-	// Here, we're closing and restoring the withdrawal channel so deposit records should not be reverted
+	// Here, we're closing and restoring the withdrawal channel so records should not be reverted
 	tc := s.SetupRestoreInterchainAccount()
 	owner := "GAIA.WITHDRAWAL"
 	channelID := s.CreateICAChannel(owner)
@@ -164,27 +269,9 @@ func (s *KeeperTestSuite) TestRestoreInterchainAccount_NoRecordChange_Success() 
 	// Restore the channel
 	msg := tc.validMsg
 	msg.AccountType = stakeibc.ICAAccountType_WITHDRAWAL
-	_, err := s.GetMsgServer().RestoreInterchainAccount(sdk.WrapSDKContext(s.Ctx), &msg)
-	s.Require().NoError(err, "registered ica account successfully")
+	s.RestoreChannelAndVerifySuccess(msg, portID, channelID)
 
-	// Confirm the new channel was created
-	channels = s.App.IBCKeeper.ChannelKeeper.GetAllChannels(s.Ctx)
-	s.Require().Len(channels, 3, "there should be 3 channels after restoring")
-
-	// Confirm the new channel is in state INIT
-	newChannelActive := false
-	for _, channel := range channels {
-		// The new channel should have the same port, a new channel ID and be in state INIT
-		if channel.PortId == portID && channel.ChannelId != channelID && channel.State == channeltypes.INIT {
-			newChannelActive = true
-		}
-	}
-	s.Require().True(newChannelActive, "a new channel should have been created")
-
-	// Verify the deposit record state was NOT reverted
-	for i := 0; i < 2; i++ {
-		depositRecord, found := s.App.RecordsKeeper.GetDepositRecord(s.Ctx, uint64(i))
-		s.Require().True(found, "deposit record found")
-		s.Require().Equal(recordtypes.DepositRecord_DELEGATION_IN_PROGRESS, depositRecord.Status, "deposit record status should NOT be reverted")
-	}
+	// Verify the record status' were NOT reverted
+	s.VerifyDepositRecordsStatus(tc.depositRecordStatusUpdates, false)
+	s.VerifyHostZoneUnbondingStatus(tc.unbondingRecordStatusUpdate, false)
 }
