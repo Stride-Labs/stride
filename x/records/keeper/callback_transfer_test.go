@@ -108,7 +108,7 @@ func (s *KeeperTestSuite) TestTransferCallback_WrongCallbackArgs() {
 	///f
 	invalidArgs.ack = nil
 	err := recordskeeper.TransferCallback(s.App.RecordsKeeper, s.Ctx(), invalidArgs.packet, invalidArgs.ack, []byte("random bytes"))
-	s.Require().EqualError(err, "cannot unmarshal transfer callback args: unexpected EOF")
+	s.Require().EqualError(err, "cannot unmarshal transfer callback args: unexpected EOF: cannot unmarshal")
 	s.checkTransferStateIfCallbackFailed(tc)
 }
 
@@ -117,7 +117,7 @@ func (s *KeeperTestSuite) TestTransferCallback_DepositRecordNotFound() {
 	s.App.RecordsKeeper.RemoveDepositRecord(s.Ctx(), tc.initialState.callbackArgs.DepositRecordId)
 
 	err := recordskeeper.TransferCallback(s.App.RecordsKeeper, s.Ctx(), tc.validArgs.packet, tc.validArgs.ack, tc.validArgs.args)
-	s.Require().EqualError(err, fmt.Sprintf("deposit record not found %d", tc.initialState.callbackArgs.DepositRecordId))
+	s.Require().EqualError(err, fmt.Sprintf("deposit record not found %d: unknown deposit record", tc.initialState.callbackArgs.DepositRecordId))
 }
 
 func (s *KeeperTestSuite) TestTransferCallback_PacketUnmarshallingError() {
@@ -126,5 +126,5 @@ func (s *KeeperTestSuite) TestTransferCallback_PacketUnmarshallingError() {
 	invalidArgs.packet.Data = []byte("random bytes")
 
 	err := recordskeeper.TransferCallback(s.App.RecordsKeeper, s.Ctx(), invalidArgs.packet, invalidArgs.ack, invalidArgs.args)
-	s.Require().EqualError(err, "cannot unmarshal ICS-20 transfer packet data: invalid character 'r' looking for beginning of value")
+	s.Require().EqualError(err, "cannot unmarshal ICS-20 transfer packet data: invalid character 'r' looking for beginning of value: unknown request")
 }

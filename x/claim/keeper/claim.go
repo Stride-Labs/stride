@@ -6,16 +6,15 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Stride-Labs/stride/v3/utils"
+	"github.com/Stride-Labs/stride/v3/x/claim/types"
+	vestingtypes "github.com/Stride-Labs/stride/v3/x/claim/vesting/types"
+	epochstypes "github.com/Stride-Labs/stride/v3/x/epochs/types"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	authvestingtypes "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
 	"github.com/gogo/protobuf/proto"
-
-	"github.com/Stride-Labs/stride/v3/utils"
-	"github.com/Stride-Labs/stride/v3/x/claim/types"
-	vestingtypes "github.com/Stride-Labs/stride/v3/x/claim/vesting/types"
-	epochstypes "github.com/Stride-Labs/stride/v3/x/epochs/types"
 )
 
 func (k Keeper) LoadAllocationData(ctx sdk.Context, allocationData string) bool {
@@ -148,7 +147,7 @@ func (k Keeper) GetAirdropByIdentifier(ctx sdk.Context, airdropIdentifier string
 func (k Keeper) GetDistributorAccountBalance(ctx sdk.Context, airdropIdentifier string) (sdk.Coin, error) {
 	airdrop := k.GetAirdropByIdentifier(ctx, airdropIdentifier)
 	if airdrop == nil {
-		return sdk.Coin{}, fmt.Errorf("Invalid airdrop identifier: GetDistributorAccountBalance")
+		return sdk.Coin{}, fmt.Errorf("Invalid airdrop identifier: GetDistributorAccountBalance : invalid address")
 	}
 
 	addr, err := k.GetAirdropDistributor(ctx, airdropIdentifier)
@@ -337,7 +336,7 @@ func (k Keeper) GetAirdropDistributor(ctx sdk.Context, airdropIdentifier string)
 func (k Keeper) GetAirdropClaimDenom(ctx sdk.Context, airdropIdentifier string) (string, error) {
 	airdrop := k.GetAirdropByIdentifier(ctx, airdropIdentifier)
 	if airdrop == nil {
-		return "", fmt.Errorf("Invalid airdrop identifier: GetAirdropClaimDenom")
+		return "", fmt.Errorf("Invalid airdrop identifier: GetAirdropClaimDenom : invalid request")
 	}
 	return airdrop.ClaimDenom, nil
 }
@@ -454,7 +453,7 @@ func (k Keeper) AfterClaim(ctx sdk.Context, airdropIdentifier string, claimAmoun
 	// fetch the airdrop
 	airdrop := k.GetAirdropByIdentifier(ctx, airdropIdentifier)
 	if airdrop == nil {
-		return fmt.Errorf("Invalid airdrop identifier: AfterClaim")
+		return fmt.Errorf("Invalid airdrop identifier: AfterClaim: invalid request")
 	}
 	// increment the claimed so far
 	err := k.IncrementClaimedSoFar(ctx, airdropIdentifier, claimAmount)
@@ -483,7 +482,7 @@ func (k Keeper) ClaimAllCoinsForAction(ctx sdk.Context, addr sdk.AccAddress, act
 func (k Keeper) ClaimCoinsForAction(ctx sdk.Context, addr sdk.AccAddress, action types.Action, airdropIdentifier string) (sdk.Coins, error) {
 	isPassed := k.IsInitialPeriodPassed(ctx, airdropIdentifier)
 	if airdropIdentifier == "" {
-		return nil, fmt.Errorf("Invalid airdrop identifier: ClaimCoinsForAction")
+		return nil, fmt.Errorf("Invalid airdrop identifier: ClaimCoinsForAction: invalid request")
 	}
 
 	claimableAmount, err := k.GetClaimableAmountForAction(ctx, addr, action, airdropIdentifier)
@@ -516,7 +515,7 @@ func (k Keeper) ClaimCoinsForAction(ctx sdk.Context, addr sdk.AccAddress, action
 			// Convert user account into stride veting account.
 			baseAccount := k.accountKeeper.NewAccountWithAddress(ctx, addr)
 			if _, ok := baseAccount.(*authtypes.BaseAccount); !ok {
-				return nil, fmt.Errorf("Invalid account type; expected: BaseAccount, got: %T", baseAccount)
+				return nil, fmt.Errorf("Invalid account type; expected: BaseAccount, got: %T : invalid request", baseAccount)
 			}
 
 			periodLength := GetAirdropDurationForAction(action)
@@ -559,7 +558,7 @@ func (k Keeper) ClaimCoinsForAction(ctx sdk.Context, addr sdk.AccAddress, action
 
 	airdrop := k.GetAirdropByIdentifier(ctx, airdropIdentifier)
 	if airdrop == nil {
-		return nil, fmt.Errorf("Invalid airdrop identifier: ClaimCoinsForAction")
+		return nil, fmt.Errorf("Invalid airdrop identifier: ClaimCoinsForAction: invalid request")
 	}
 	err = k.AfterClaim(ctx, airdropIdentifier, claimableAmount.AmountOf(airdrop.ClaimDenom).Int64())
 	if err != nil {

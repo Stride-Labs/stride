@@ -46,29 +46,29 @@ func (msg *MsgSetAirdropAllocations) GetSignBytes() []byte {
 func (msg *MsgSetAirdropAllocations) ValidateBasic() error {
 	_, err := sdk.AccAddressFromBech32(msg.Allocator)
 	if err != nil {
-		return fmt.Errorf("Invalid allocator address (%s)", err)
+		return fmt.Errorf("Invalid allocator address (%s) : invalid address", err)
 	}
 
 	if msg.AirdropIdentifier == "" {
-		return fmt.Errorf("Airdrop identifier is not set")
+		return fmt.Errorf("Airdrop identifier is not set : invalid address")
 	}
 
 	if len(msg.Users) == 0 {
-		return fmt.Errorf("Empty users list")
+		return fmt.Errorf("Empty users list : invalid address")
 	}
 
 	if len(msg.Weights) == 0 {
-		return fmt.Errorf("Empty weights list")
+		return fmt.Errorf("Empty weights list : invalid address")
 	}
 
 	if len(msg.Users) != len(msg.Weights) {
-		return fmt.Errorf("Different length")
+		return fmt.Errorf("Different length : invalid address")
 	}
 
 	for _, user := range msg.Users {
 		strideAddr := utils.ConvertAddressToStrideAddress(user)
 		if strideAddr == "" {
-			return fmt.Errorf("Invalid bech32 address: Address is empty")
+			return fmt.Errorf("Invalid bech32 address : invalid address")
 		}
 
 		_, err := sdk.AccAddressFromBech32(strideAddr)
@@ -79,7 +79,7 @@ func (msg *MsgSetAirdropAllocations) ValidateBasic() error {
 
 	for _, weight := range msg.Weights {
 		if weight.Equal(sdk.NewDec(0)) {
-			return fmt.Errorf("Invalid user weight: %s", weight.String())
+			return fmt.Errorf("Invalid user weight : invalid request")
 		}
 	}
 
@@ -171,15 +171,15 @@ func (msg *MsgCreateAirdrop) ValidateBasic() error {
 	}
 
 	if msg.Identifier == "" {
-		return fmt.Errorf("Airdrop identifier not set")
+		return fmt.Errorf("Airdrop identifier not set : invalid request")
 	}
 
 	if msg.StartTime == 0 {
-		return fmt.Errorf("Airdrop start time not set")
+		return fmt.Errorf("Airdrop start time not set : invalid request")
 	}
 
 	if msg.Duration == 0 {
-		return fmt.Errorf("Airdrop duration not set")
+		return fmt.Errorf("Airdrop duration not set : invalid request")
 	}
 	return nil
 }
@@ -224,7 +224,7 @@ func (msg *MsgDeleteAirdrop) ValidateBasic() error {
 	}
 
 	if msg.Identifier == "" {
-		return fmt.Errorf("Airdrop identifier not set")
+		return fmt.Errorf("Airdrop identifier not set : invalid request")
 	}
 	return nil
 }

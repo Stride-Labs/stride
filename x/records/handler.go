@@ -21,7 +21,7 @@ func NewHandler(k keeper.Keeper) sdk.Handler {
 		// this line is used by starport scaffolding # 1
 		default:
 			errMsg := fmt.Sprintf("unrecognized %s message type: %T", types.ModuleName, msg)
-			return nil, fmt.Errorf(errMsg)
+			return nil, fmt.Errorf("%s: unknown request message", errMsg)
 		}
 	}
 }

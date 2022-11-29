@@ -30,7 +30,7 @@ func NewHandler(k keeper.Keeper) sdk.Handler {
 			return sdk.WrapServiceResult(ctx, res, err)
 		default:
 			errMsg := fmt.Sprintf("unrecognized %s message type: %T", types.ModuleName, msg)
-			return nil, fmt.Errorf("Unknown request message: %s", errMsg)
+			return nil, fmt.Errorf("%s: unknown request message", errMsg)
 		}
 	}
 }

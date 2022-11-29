@@ -19,7 +19,7 @@ func (k Keeper) UserRedemptionRecordForUser(c context.Context, req *types.QueryA
 	// validate the address
 	_, err := sdk.AccAddressFromBech32(req.Address)
 	if err != nil {
-		return nil, fmt.Errorf("Invalid address: %s", req.Address)
+		return nil, fmt.Errorf("%s: invalid address", req.Address)
 	}
 
 	var userRedemptionRecords []types.UserRedemptionRecord

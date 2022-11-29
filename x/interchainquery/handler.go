@@ -13,6 +13,6 @@ import (
 func NewHandler(k keeper.Keeper) sdk.Handler {
 	return func(_ sdk.Context, msg sdk.Msg) (*sdk.Result, error) {
 		errMsg := fmt.Sprintf("Unrecognized %s message type: %T", types.ModuleName, msg)
-		return nil, fmt.Errorf(errMsg)
+		return nil, fmt.Errorf("%s: unknown request message", errMsg)
 	}
 }

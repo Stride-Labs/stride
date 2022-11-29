@@ -28,7 +28,7 @@ func (msg MsgSubmitQueryResponse) ValidateBasic() error {
 	}
 	// check chain_id is not empty
 	if msg.ChainId == "" {
-		return fmt.Errorf("Chain_id cannot be empty in ICQ response")
+		return fmt.Errorf("Chain_id cannot be empty in ICQ response : invalid request")
 	}
 
 	return nil

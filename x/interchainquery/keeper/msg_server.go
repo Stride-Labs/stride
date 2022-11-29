@@ -40,7 +40,7 @@ func (k Keeper) VerifyKeyProof(ctx sdk.Context, msg *types.MsgSubmitQueryRespons
 		if msg.ProofOps == nil {
 			errMsg := fmt.Sprintf("[ICQ Resp] for query %s, unable to validate proof. No proof submitted", q.Id)
 			k.Logger(ctx).Error(errMsg)
-			return fmt.Errorf(types.ErrInvalidICQProof.Error(), errMsg)
+			return fmt.Errorf("%s: %s", errMsg, types.ErrInvalidICQProof.Error())
 		}
 		connection, _ := k.IBCKeeper.ConnectionKeeper.GetConnection(ctx, q.ConnectionId)
 
@@ -53,14 +53,14 @@ func (k Keeper) VerifyKeyProof(ctx sdk.Context, msg *types.MsgSubmitQueryRespons
 		if !found {
 			errMsg := fmt.Sprintf("[ICQ Resp] for query %s, consensus state not found for client %s and height %d", q.Id, connection.ClientId, height)
 			k.Logger(ctx).Error(errMsg)
-			return fmt.Errorf(types.ErrInvalidICQProof.Error(), errMsg)
+			return fmt.Errorf("%s: %s", errMsg, types.ErrInvalidICQProof.Error())
 		}
 
 		clientState, found := k.IBCKeeper.ClientKeeper.GetClientState(ctx, connection.ClientId)
 		if !found {
 			errMsg := fmt.Sprintf("[ICQ Resp] for query %s, unable to fetch client state for client %s and height %d", q.Id, connection.ClientId, height)
 			k.Logger(ctx).Error(errMsg)
-			return fmt.Errorf(types.ErrInvalidICQProof.Error(), errMsg)
+			return fmt.Errorf("%s: %s", errMsg, types.ErrInvalidICQProof.Error())
 		}
 		path := commitmenttypes.NewMerklePath([]string{pathParts[1], url.PathEscape(string(q.Request))}...)
 
@@ -68,14 +68,14 @@ func (k Keeper) VerifyKeyProof(ctx sdk.Context, msg *types.MsgSubmitQueryRespons
 		if err != nil {
 			errMsg := fmt.Sprintf("[ICQ Resp] for query %s, error converting proofs", q.Id)
 			k.Logger(ctx).Error(errMsg)
-			return fmt.Errorf(types.ErrInvalidICQProof.Error(), errMsg)
+			return fmt.Errorf("%s: %s", errMsg, types.ErrInvalidICQProof.Error())
 		}
 
 		tmclientstate, ok := clientState.(*tmclienttypes.ClientState)
 		if !ok {
 			errMsg := fmt.Sprintf("[ICQ Resp] for query %s, error unmarshaling client state %v", q.Id, clientState)
 			k.Logger(ctx).Error(errMsg)
-			return fmt.Errorf(types.ErrInvalidICQProof.Error(), errMsg)
+			return fmt.Errorf("%s: %s", errMsg, types.ErrInvalidICQProof.Error())
 		}
 
 		if len(msg.Result) != 0 {
@@ -83,7 +83,7 @@ func (k Keeper) VerifyKeyProof(ctx sdk.Context, msg *types.MsgSubmitQueryRespons
 			if err := merkleProof.VerifyMembership(tmclientstate.ProofSpecs, consensusState.GetRoot(), path, msg.Result); err != nil {
 				errMsg := fmt.Sprintf("[ICQ Resp] for query %s, unable to verify membership proof: %s", q.Id, err)
 				k.Logger(ctx).Error(errMsg)
-				return fmt.Errorf(types.ErrInvalidICQProof.Error(), errMsg)
+				return fmt.Errorf("%s: %s", errMsg, types.ErrInvalidICQProof.Error())
 			}
 			k.Logger(ctx).Info(fmt.Sprintf("Proof validated! module: %s, queryId %s", types.ModuleName, q.Id))
 
@@ -92,7 +92,7 @@ func (k Keeper) VerifyKeyProof(ctx sdk.Context, msg *types.MsgSubmitQueryRespons
 			if err := merkleProof.VerifyNonMembership(tmclientstate.ProofSpecs, consensusState.GetRoot(), path); err != nil {
 				errMsg := fmt.Sprintf("[ICQ Resp] for query %s, unable to verify non-membership proof: %s", q.Id, err)
 				k.Logger(ctx).Error(errMsg)
-				return fmt.Errorf(types.ErrInvalidICQProof.Error(), errMsg)
+				return fmt.Errorf("%s: %s", errMsg, types.ErrInvalidICQProof.Error())
 			}
 			k.Logger(ctx).Info(fmt.Sprintf("Non-inclusion Proof validated, stopping here! module: %s, queryId %s", types.ModuleName, q.Id))
 		}

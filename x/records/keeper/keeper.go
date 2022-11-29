@@ -3,6 +3,7 @@ package keeper
 import (
 	"fmt"
 
+	channeltypes "github.com/cosmos/ibc-go/v3/modules/core/04-channel/types"
 	ibckeeper "github.com/cosmos/ibc-go/v3/modules/core/keeper"
 	"github.com/tendermint/tendermint/libs/log"
 
@@ -83,7 +84,7 @@ func (k Keeper) Transfer(ctx sdk.Context, msg *ibctypes.MsgTransfer, depositReco
 	// see: https://github.com/cosmos/ibc-go/blob/48a6ae512b4ea42c29fdf6c6f5363f50645591a2/modules/core/04-channel/keeper/packet.go#L125
 	sequence, found := k.IBCKeeper.ChannelKeeper.GetNextSequenceSend(ctx, msg.SourcePort, msg.SourceChannel)
 	if !found {
-		return fmt.Errorf("source port: %s, source channel: %s", msg.SourcePort, msg.SourceChannel)
+		return fmt.Errorf("source port: %s, source channel: %s: %s", msg.SourcePort, msg.SourceChannel, channeltypes.ErrSequenceSendNotFound)
 	}
 
 	// trigger transfer

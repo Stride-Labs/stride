@@ -172,7 +172,7 @@ func (im IBCModule) OnAcknowledgementPacket(
 	var ack channeltypes.Acknowledgement
 	if err := ibctransfertypes.ModuleCdc.UnmarshalJSON(acknowledgement, &ack); err != nil {
 		im.keeper.Logger(ctx).Error(fmt.Sprintf("Error unmarshalling ack  %v", err.Error()))
-		return fmt.Errorf("cannot unmarshal ICS-20 transfer packet acknowledgement: %v", err)
+		return fmt.Errorf("cannot unmarshal ICS-20 transfer packet acknowledgement: %v: unknow request", err)
 	}
 
 	// log the ack type
@@ -193,7 +193,7 @@ func (im IBCModule) OnAcknowledgementPacket(
 		errMsg := fmt.Sprintf("Unable to call registered callback from records OnAcknowledgePacket | Sequence %d, from %s %s, to %s %s | Error %s",
 			packet.Sequence, packet.SourceChannel, packet.SourcePort, packet.DestinationChannel, packet.DestinationPort, err.Error())
 		im.keeper.Logger(ctx).Error(errMsg)
-		return fmt.Errorf(icacallbacktypes.ErrCallbackFailed.Error(), errMsg)
+		return fmt.Errorf("%s: %s", errMsg, icacallbacktypes.ErrCallbackFailed.Error())
 	}
 
 	return im.app.OnAcknowledgementPacket(ctx, packet, acknowledgement, relayer)
@@ -253,7 +253,7 @@ func (am AppModule) OnChanOpenInit(
 	counterparty channeltypes.Counterparty,
 	version string,
 ) error {
-	return fmt.Errorf("UNIMPLEMENTED")
+	return fmt.Errorf("UNIMPLEMENTED: invalid request")
 }
 
 // OnChanOpenTry implements the IBCModule interface
@@ -268,7 +268,7 @@ func (am AppModule) OnChanOpenTry(
 	version,
 	counterpartyVersion string,
 ) error {
-	return fmt.Errorf("UNIMPLEMENTED")
+	return fmt.Errorf("UNIMPLEMENTED: invalid request")
 }
 
 // OnChanOpenAck implements the IBCModule interface
@@ -278,7 +278,7 @@ func (am AppModule) OnChanOpenAck(
 	channelID string,
 	counterpartyVersion string,
 ) error {
-	return fmt.Errorf("UNIMPLEMENTED")
+	return fmt.Errorf("UNIMPLEMENTED: invalid request")
 }
 
 // OnChanOpenConfirm implements the IBCModule interface
@@ -287,7 +287,7 @@ func (am AppModule) OnChanOpenConfirm(
 	portID,
 	channelID string,
 ) error {
-	return fmt.Errorf("UNIMPLEMENTED")
+	return fmt.Errorf("UNIMPLEMENTED: invalid request")
 }
 
 // OnChanCloseInit implements the IBCModule interface
@@ -306,7 +306,7 @@ func (am AppModule) OnChanCloseConfirm(
 	portID,
 	channelID string,
 ) error {
-	return fmt.Errorf("UNIMPLEMENTED")
+	return fmt.Errorf("UNIMPLEMENTED: invalid request")
 }
 
 // OnRecvPacket implements the IBCModule interface
@@ -326,7 +326,7 @@ func (am AppModule) OnAcknowledgementPacket(
 	acknowledgement []byte,
 	relayer sdk.AccAddress,
 ) error {
-	return fmt.Errorf("UNIMPLEMENTED")
+	return fmt.Errorf("UNIMPLEMENTED: invalid request")
 }
 
 // OnTimeoutPacket implements the IBCModule interface

@@ -95,7 +95,7 @@ func GetTxMsgData(ctx sdk.Context, ack channeltypes.Acknowledgement, logger log.
 	switch response := ack.Response.(type) {
 	case *channeltypes.Acknowledgement_Result:
 		if len(response.Result) == 0 {
-			return nil, fmt.Errorf(channeltypes.ErrInvalidAcknowledgement.Error(), "acknowledgement result cannot be empty")
+			return nil, fmt.Errorf("acknowledgement result cannot be empty : %s", channeltypes.ErrInvalidAcknowledgement.Error())
 		}
 		err := proto.Unmarshal(ack.GetResult(), txMsgData)
 		if err != nil {
@@ -108,7 +108,7 @@ func GetTxMsgData(ctx sdk.Context, ack channeltypes.Acknowledgement, logger log.
 		return txMsgData, nil
 
 	default:
-		return nil, fmt.Errorf(channeltypes.ErrInvalidAcknowledgement.Error(), "unsupported acknowledgement response field type %T", response)
+		return nil, fmt.Errorf("unsupported acknowledgement response field type %T : %s", response, channeltypes.ErrInvalidAcknowledgement.Error())
 	}
 }
 

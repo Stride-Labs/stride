@@ -36,13 +36,13 @@ func TransferCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ack
 	// deserialize the args
 	transferCallbackData, err := k.UnmarshalTransferCallbackArgs(ctx, args)
 	if err != nil {
-		return fmt.Errorf("cannot unmarshal transfer callback args: %s", err.Error())
+		return fmt.Errorf("cannot unmarshal transfer callback args: %s: %s", err.Error(), types.ErrUnmarshalFailure)
 	}
 	k.Logger(ctx).Info(fmt.Sprintf("TransferCallback %v", transferCallbackData))
 	depositRecord, found := k.GetDepositRecord(ctx, transferCallbackData.DepositRecordId)
 	if !found {
 		k.Logger(ctx).Error(fmt.Sprintf("TransferCallback deposit record not found, packet %v", packet))
-		return fmt.Errorf("deposit record not found %d", transferCallbackData.DepositRecordId)
+		return fmt.Errorf("deposit record not found %d: %s", transferCallbackData.DepositRecordId, types.ErrUnknownDepositRecord)
 	}
 
 	if ack == nil {
@@ -66,7 +66,7 @@ func TransferCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ack
 	var data ibctransfertypes.FungibleTokenPacketData
 	if err := ibctransfertypes.ModuleCdc.UnmarshalJSON(packet.GetData(), &data); err != nil {
 		k.Logger(ctx).Error(fmt.Sprintf("Error unmarshalling packet  %v", err.Error()))
-		return fmt.Errorf("cannot unmarshal ICS-20 transfer packet data: %s", err.Error())
+		return fmt.Errorf("cannot unmarshal ICS-20 transfer packet data: %s: unknown request", err.Error())
 	}
 	k.Logger(ctx).Info(fmt.Sprintf("TransferCallback unmarshalled FungibleTokenPacketData %v", data))
 

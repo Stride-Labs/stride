@@ -116,7 +116,7 @@ func (k Keeper) GetICACallbackHandlerFromPacket(ctx sdk.Context, modulePacket ch
 	// fetch the callback function
 	callbackHandler, err := k.GetICACallbackHandler(module)
 	if err != nil {
-		return nil, fmt.Errorf(types.ErrCallbackHandlerNotFound.Error(), "Callback handler does not exist for module %s | err: %s", module, err.Error())
+		return nil, fmt.Errorf("Callback handler does not exist for module %s | err: %s: %s", module, err.Error(), types.ErrCallbackHandlerNotFound.Error())
 	}
 	return &callbackHandler, nil
 }
@@ -141,7 +141,7 @@ func (k Keeper) CallRegisteredICACallback(ctx sdk.Context, modulePacket channelt
 		if err != nil {
 			errMsg := fmt.Sprintf("Error occured while calling ICACallback (%s) | err: %s", callbackData.CallbackId, err.Error())
 			k.Logger(ctx).Error(errMsg)
-			return fmt.Errorf(types.ErrCallbackFailed.Error(), errMsg)
+			return fmt.Errorf("%s: %s", errMsg, types.ErrCallbackFailed.Error())
 		}
 	} else {
 		k.Logger(ctx).Error(fmt.Sprintf("Callback %v has no associated callback", callbackData))

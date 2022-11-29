@@ -127,7 +127,7 @@ func (k Keeper) SetHostZoneUnbondings(ctx sdk.Context, zone stakeibctypes.HostZo
 		if !found {
 			errMsg := fmt.Sprintf("Error fetching host zone unbonding record for epoch: %d, host zone: %s", epochUnbondingRecordId, zone.ChainId)
 			k.Logger(ctx).Error(errMsg)
-			return fmt.Errorf("Unknown request: %s", errMsg)
+			return fmt.Errorf("%s: %s", errMsg, stakeibctypes.ErrHostZoneNotFound)
 		}
 		hostZoneUnbonding.Status = status
 		// save the updated hzu on the epoch unbonding record
@@ -135,7 +135,7 @@ func (k Keeper) SetHostZoneUnbondings(ctx sdk.Context, zone stakeibctypes.HostZo
 		if !success {
 			errMsg := fmt.Sprintf("Error adding host zone unbonding record to epoch unbonding record: %d, host zone: %s", epochUnbondingRecordId, zone.ChainId)
 			k.Logger(ctx).Error(errMsg)
-			return fmt.Errorf("Unknown request: %s", errMsg)
+			return fmt.Errorf("%s: %s", errMsg, types.ErrAddingHostZone)
 		}
 		k.SetEpochUnbondingRecord(ctx, *updatedRecord)
 	}
