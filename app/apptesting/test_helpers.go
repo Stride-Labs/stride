@@ -143,6 +143,7 @@ func (s *AppTestHelper) SetupIBCChains(hostChainID string) {
 		hostChainID:   s.HostChain,
 	}
 	s.IbcEnabled = true
+	s.Ctx = s.StrideChain.GetContext()
 }
 
 // Creates clients, connections, and a transfer channel between stride and a host chain
