@@ -1,7 +1,6 @@
 package types
 
 import (
-	fmt "fmt"
 	"math"
 	"testing"
 
@@ -33,7 +32,7 @@ func TestMsgClaimUndelegatedTokens_ValidateBasic(t *testing.T) {
 				HostZoneId: "GAIA",
 				Epoch:      uint64(1),
 			},
-			err: fmt.Errorf("%s", &Error{errorCode: "invalid address"}),
+			err: ErrInvalidAddress,
 		},
 		{
 			name: "no host zone",
