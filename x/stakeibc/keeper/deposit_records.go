@@ -16,21 +16,26 @@ import (
 	"github.com/Stride-Labs/stride/v3/x/stakeibc/types"
 )
 
+// Create a new deposit record for each host zone for the given epoch
 func (k Keeper) CreateDepositRecordsForEpoch(ctx sdk.Context, epochNumber uint64) {
-	// Create one new deposit record / host zone for the next epoch
-	createDepositRecords := func(ctx sdk.Context, index int64, zoneInfo types.HostZone) error {
-		k.Logger(ctx).Info(fmt.Sprintf("createDepositRecords, index: %d, zoneInfo: %s", index, zoneInfo.ConnectionId))
+	k.Logger(ctx).Info(fmt.Sprintf("Creating Deposit Records for Epoch %d", epochNumber))
+
+	createDepositRecords := func(ctx sdk.Context, index int64, hostZone types.HostZone) error {
+		k.Logger(ctx).Info(fmt.Sprintf("\t%s - Creating Deposit Record...", hostZone.ChainId))
+
 		depositRecord := recordstypes.DepositRecord{
-			Id:                 0,
 			Amount:             0,
-			Denom:              zoneInfo.HostDenom,
-			HostZoneId:         zoneInfo.ChainId,
+			Denom:              hostZone.HostDenom,
+			HostZoneId:         hostZone.ChainId,
 			Status:             recordstypes.DepositRecord_TRANSFER_QUEUE,
 			DepositEpochNumber: epochNumber,
 		}
 		k.RecordsKeeper.AppendDepositRecord(ctx, depositRecord)
+
+		k.Logger(ctx).Info(fmt.Sprintf("\t%s - Successfully Created Deposit Record", hostZone.ChainId))
 		return nil
 	}
+
 	k.IterateHostZones(ctx, createDepositRecords)
 }
 

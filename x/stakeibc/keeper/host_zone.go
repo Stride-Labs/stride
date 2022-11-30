@@ -232,7 +232,7 @@ func (k Keeper) IterateHostZones(ctx sdk.Context, fn func(ctx sdk.Context, index
 	i := int64(0)
 
 	for ; iterator.Valid(); iterator.Next() {
-		k.Logger(ctx).Info(fmt.Sprintf("Iterating HostZone %d", i))
+		k.Logger(ctx).Debug(fmt.Sprintf("Iterating HostZone %d", i))
 		zone := types.HostZone{}
 		k.cdc.MustUnmarshal(iterator.Value(), &zone)
 

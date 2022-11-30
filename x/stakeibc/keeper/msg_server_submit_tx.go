@@ -99,9 +99,7 @@ func (k Keeper) DelegateOnHost(ctx sdk.Context, hostZone types.HostZone, amt sdk
 }
 
 func (k Keeper) SetWithdrawalAddressOnHost(ctx sdk.Context, hostZone types.HostZone) error {
-	_ = ctx
-	var msgs []sdk.Msg
-	// the relevant ICA is the delegate account
+	// The relevant ICA is the delegate account
 	owner := types.FormatICAAccountOwner(hostZone.ChainId, types.ICAAccountType_DELEGATION)
 	portID, err := icatypes.NewControllerPortID(owner)
 	if err != nil {
@@ -113,26 +111,34 @@ func (k Keeper) SetWithdrawalAddressOnHost(ctx sdk.Context, hostZone types.HostZ
 	}
 
 	// Fetch the relevant ICA
-	delegationIca := hostZone.GetDelegationAccount()
+	delegationIca := hostZone.DelegationAccount
 	if delegationIca == nil || delegationIca.Address == "" {
 		k.Logger(ctx).Error(fmt.Sprintf("Zone %s is missing a delegation address!", hostZone.ChainId))
 		return nil
 	}
-	withdrawalIca := hostZone.GetWithdrawalAccount()
+	withdrawalIca := hostZone.WithdrawalAccount
 	if withdrawalIca == nil || withdrawalIca.Address == "" {
 		k.Logger(ctx).Error(fmt.Sprintf("Zone %s is missing a withdrawal address!", hostZone.ChainId))
 		return nil
 	}
-	withdrawalIcaAddr := hostZone.GetWithdrawalAccount().GetAddress()
+	withdrawalIcaAddr := hostZone.WithdrawalAccount.Address
 
-	k.Logger(ctx).Info(fmt.Sprintf("Setting withdrawal address on host zone. DelegatorAddress: %s WithdrawAddress: %s ConnectionID: %s", delegationIca.GetAddress(), withdrawalIcaAddr, connectionId))
-	// construct the msg
-	msgs = append(msgs, &distributiontypes.MsgSetWithdrawAddress{DelegatorAddress: delegationIca.GetAddress(), WithdrawAddress: withdrawalIcaAddr})
-	// Send the transaction through SubmitTx
+	k.Logger(ctx).Info(fmt.Sprintf("\t%s - Withdrawal Address: %s | Delegator Address: %s", hostZone.ChainId, withdrawalIcaAddr, delegationIca.Address))
+
+	// Construct the ICA Message
+	msgs := []sdk.Msg{
+		&distributiontypes.MsgSetWithdrawAddress{
+			DelegatorAddress: delegationIca.Address,
+			WithdrawAddress:  withdrawalIcaAddr,
+		},
+	}
 	_, err = k.SubmitTxsStrideEpoch(ctx, connectionId, msgs, *delegationIca, "", nil)
 	if err != nil {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "Failed to SubmitTxs for %s, %s, %s", connectionId, hostZone.ChainId, msgs)
 	}
+
+	k.Logger(ctx).Info(fmt.Sprintf("\t%s - Successfully Set Withdrawal Address", hostZone.ChainId))
+
 	return nil
 }
 
@@ -196,7 +202,6 @@ func (k Keeper) SubmitTxsDayEpoch(
 	callbackId string,
 	callbackArgs []byte,
 ) (uint64, error) {
-	k.Logger(ctx).Info(fmt.Sprintf("SubmitTxsDayEpoch %v", msgs))
 	sequence, err := k.SubmitTxsEpoch(ctx, connectionId, msgs, account, epochstypes.DAY_EPOCH, callbackId, callbackArgs)
 	if err != nil {
 		return 0, err
@@ -212,7 +217,6 @@ func (k Keeper) SubmitTxsStrideEpoch(
 	callbackId string,
 	callbackArgs []byte,
 ) (uint64, error) {
-	k.Logger(ctx).Info(fmt.Sprintf("SubmitTxsStrideEpoch %v", msgs))
 	sequence, err := k.SubmitTxsEpoch(ctx, connectionId, msgs, account, epochstypes.STRIDE_EPOCH, callbackId, callbackArgs)
 	if err != nil {
 		return 0, err
@@ -238,7 +242,6 @@ func (k Keeper) SubmitTxsEpoch(
 	if err != nil {
 		return 0, err
 	}
-	k.Logger(ctx).Info(fmt.Sprintf("Submitted Txs, connectionId: %s, sequence: %d, block: %d", connectionId, sequence, ctx.BlockHeight()))
 	return sequence, nil
 }
 
@@ -252,16 +255,17 @@ func (k Keeper) SubmitTxs(
 	callbackId string,
 	callbackArgs []byte,
 ) (uint64, error) {
-	k.Logger(ctx).Info(fmt.Sprintf("SubmitTxs %v", msgs))
 	chainId, err := k.GetChainID(ctx, connectionId)
 	if err != nil {
 		return 0, err
 	}
-	owner := types.FormatICAAccountOwner(chainId, account.GetTarget())
+	owner := types.FormatICAAccountOwner(chainId, account.Target)
 	portID, err := icatypes.NewControllerPortID(owner)
 	if err != nil {
 		return 0, err
 	}
+
+	k.Logger(ctx).Info(fmt.Sprintf("%s - Submitting ICA Tx on %s, %s", chainId, portID, connectionId))
 
 	channelID, found := k.ICAControllerKeeper.GetActiveChannelID(ctx, connectionId, portID)
 	if !found {

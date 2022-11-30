@@ -75,19 +75,10 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochInfo epochstypes.EpochInf
 	if epochIdentifier == epochstypes.STRIDE_EPOCH {
 		k.Logger(ctx).Info(fmt.Sprintf("Stride Epoch %d", epochNumber))
 
-		// NOTE: We could nest this under `if epochNumber%depositInterval == 0 {`
-		// -- should we?
-		// e.g. CreateDepositRecordsForDepositInterval
-		// Imagine it will be slightly cleaner to track state by epoch, rather than
-		// by DepositInterval
-
 		// Create a new deposit record for each host zone for the upcoming epoch
-		k.Logger(ctx).Info("CreateDepositRecordsForEpoch")
 		k.CreateDepositRecordsForEpoch(ctx, epochNumber)
 
-		k.Logger(ctx).Info("SetWithdrawalAddress")
-		// TODO: move this to an external function that anyone can call, so that we don't have to call it every
-		// epoch
+		// TODO: move this to an external function that anyone can call, so that we don't have to call it every epoch
 		k.SetWithdrawalAddress(ctx)
 
 		depositRecords := k.RecordsKeeper.GetAllDepositRecord(ctx)
@@ -189,19 +180,18 @@ func (h Hooks) AfterEpochEnd(ctx sdk.Context, epochInfo epochstypes.EpochInfo) {
 	h.k.AfterEpochEnd(ctx, epochInfo)
 }
 
-// -------------------- helper functions --------------------
+// Set the withdrawal account address for each host zone
 func (k Keeper) SetWithdrawalAddress(ctx sdk.Context) {
-	setWithdrawalAddresses := func(ctx sdk.Context, index int64, zoneInfo types.HostZone) error {
-		k.Logger(ctx).Info(fmt.Sprintf("\tsetting withdrawal address for index %v, zoneInfo %v", index, zoneInfo))
-		err := k.SetWithdrawalAddressOnHost(ctx, zoneInfo)
+	k.Logger(ctx).Info("Setting Withdrawal Addresses...")
+
+	setWithdrawalAddresses := func(ctx sdk.Context, index int64, hostZone types.HostZone) error {
+		err := k.SetWithdrawalAddressOnHost(ctx, hostZone)
 		if err != nil {
-			k.Logger(ctx).Error(fmt.Sprintf("Did not set withdrawal address to %s on %s", zoneInfo.GetWithdrawalAccount().GetAddress(), zoneInfo.GetChainId()))
-			k.Logger(ctx).Error(fmt.Sprintf("Withdrawal address setting error: %v", err))
-		} else {
-			k.Logger(ctx).Info(fmt.Sprintf("Successfully set withdrawal address to %s on %s", zoneInfo.GetWithdrawalAccount().GetAddress(), zoneInfo.GetChainId()))
+			k.Logger(ctx).Error(fmt.Sprintf("Unable to set withdrawal address to %s on %s, err: %s", hostZone.WithdrawalAccount.Address, hostZone.ChainId, err))
 		}
 		return nil
 	}
+
 	k.IterateHostZones(ctx, setWithdrawalAddresses)
 }
 
