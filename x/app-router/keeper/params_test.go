@@ -10,7 +10,7 @@ import (
 )
 
 func TestGetParams(t *testing.T) {
-	k, ctx := testkeeper.RecordsKeeper(t)
+	k, ctx := testkeeper.AppRouterKeeper(t)
 	params := types.DefaultParams()
 
 	k.SetParams(ctx, params)

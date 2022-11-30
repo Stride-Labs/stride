@@ -13,9 +13,6 @@ const (
 	// QuerierRoute defines the module's query routing key
 	QuerierRoute = ModuleName
 
-	// MemStoreKey defines the in-memory store key
-	MemStoreKey = "mem_app_router"
-
 	// Version defines the current version the IBC module supports
 	Version = "app_router-1"
 

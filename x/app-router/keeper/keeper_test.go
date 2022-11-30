@@ -5,9 +5,7 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/Stride-Labs/stride/app/apptesting"
-	"github.com/Stride-Labs/stride/v3/x/app-router/keeper"
-	"github.com/Stride-Labs/stride/v3/x/app-router/types"
+	"github.com/Stride-Labs/stride/v3/app/apptesting"
 )
 
 type KeeperTestSuite struct {
@@ -16,10 +14,6 @@ type KeeperTestSuite struct {
 
 func (s *KeeperTestSuite) SetupTest() {
 	s.Setup()
-}
-
-func (s *KeeperTestSuite) GetMsgServer() types.MsgServer {
-	return keeper.NewMsgServerImpl(s.App.RecordsKeeper)
 }
 
 func TestKeeperTestSuite(t *testing.T) {

@@ -8,5 +8,5 @@ import (
 
 // x/app_router module sentinel errors
 var (
-	ErrInvalidVersion = sdkerrors.Register(ModuleName, 1501, "invalid version")
+	ErrInvalidReceiverData = sdkerrors.Register(ModuleName, 1501, "invalid receiver data")
 )
