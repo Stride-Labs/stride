@@ -8,6 +8,7 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/spf13/cast"
 
+	"github.com/Stride-Labs/stride/v3/utils"
 	icacallbackstypes "github.com/Stride-Labs/stride/v3/x/icacallbacks/types"
 
 	recordstypes "github.com/Stride-Labs/stride/v3/x/records/types"
@@ -123,7 +124,7 @@ func (k Keeper) SetWithdrawalAddressOnHost(ctx sdk.Context, hostZone types.HostZ
 	}
 	withdrawalIcaAddr := hostZone.WithdrawalAccount.Address
 
-	k.Logger(ctx).Info(fmt.Sprintf("\t%s - Withdrawal Address: %s | Delegator Address: %s", hostZone.ChainId, withdrawalIcaAddr, delegationIca.Address))
+	k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId, "Withdrawal Address: %s, Delegator Address: %s", withdrawalIcaAddr, delegationIca.Address))
 
 	// Construct the ICA Message
 	msgs := []sdk.Msg{
@@ -136,8 +137,6 @@ func (k Keeper) SetWithdrawalAddressOnHost(ctx sdk.Context, hostZone types.HostZ
 	if err != nil {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "Failed to SubmitTxs for %s, %s, %s", connectionId, hostZone.ChainId, msgs)
 	}
-
-	k.Logger(ctx).Info(fmt.Sprintf("\t%s - Successfully Set Withdrawal Address", hostZone.ChainId))
 
 	return nil
 }
@@ -265,7 +264,10 @@ func (k Keeper) SubmitTxs(
 		return 0, err
 	}
 
-	k.Logger(ctx).Info(fmt.Sprintf("%s - Submitting ICA Tx on %s, %s", chainId, portID, connectionId))
+	k.Logger(ctx).Info(utils.LogWithHostZone(chainId, "Submitting ICA Tx on %s, %s", portID, connectionId))
+	for _, msg := range msgs {
+		k.Logger(ctx).Info(utils.LogWithHostZone(chainId, "   Msg: %+v", msg))
+	}
 
 	channelID, found := k.ICAControllerKeeper.GetActiveChannelID(ctx, connectionId, portID)
 	if !found {

@@ -221,3 +221,9 @@ func ConvertAddressToStrideAddress(address string) string {
 
 	return bech32Addr
 }
+
+// Returns a log string with a tab and chainId as the prefix
+func LogWithHostZone(chainId string, s string, a ...any) string {
+	msg := fmt.Sprintf(s, a...)
+	return fmt.Sprintf("    %-16s | %s", chainId, msg)
+}

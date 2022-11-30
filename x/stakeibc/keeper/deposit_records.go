@@ -21,7 +21,7 @@ func (k Keeper) CreateDepositRecordsForEpoch(ctx sdk.Context, epochNumber uint64
 	k.Logger(ctx).Info(fmt.Sprintf("Creating Deposit Records for Epoch %d", epochNumber))
 
 	createDepositRecords := func(ctx sdk.Context, index int64, hostZone types.HostZone) error {
-		k.Logger(ctx).Info(fmt.Sprintf("\t%s - Creating Deposit Record...", hostZone.ChainId))
+		k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId, "Creating Deposit Record"))
 
 		depositRecord := recordstypes.DepositRecord{
 			Amount:             0,
@@ -31,8 +31,6 @@ func (k Keeper) CreateDepositRecordsForEpoch(ctx sdk.Context, epochNumber uint64
 			DepositEpochNumber: epochNumber,
 		}
 		k.RecordsKeeper.AppendDepositRecord(ctx, depositRecord)
-
-		k.Logger(ctx).Info(fmt.Sprintf("\t%s - Successfully Created Deposit Record", hostZone.ChainId))
 		return nil
 	}
 
