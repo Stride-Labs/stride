@@ -13,7 +13,7 @@ TX_LOGS=$SCRIPT_DIR/logs/tx.log
 KEYS_LOGS=$SCRIPT_DIR/logs/keys.log
 
 # List of hosts enabled 
-HOST_CHAINS=(GAIA JUNO OSMO)
+HOST_CHAINS=(GAIA EVMOS)
 
 # Sets up upgrade if {UPGRADE_NAME} is non-empty
 UPGRADE_NAME=""

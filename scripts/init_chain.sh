@@ -47,7 +47,12 @@ set_host_genesis() {
 
     # Add interchain accounts to the genesis set
     jq "del(.app_state.interchain_accounts)" $genesis_config > json.tmp && mv json.tmp $genesis_config
-    interchain_accts=$(cat $SCRIPT_DIR/config/ica.json)
+    # if else statement in bash
+    if [ "$CHAIN" = "EVMOS" ]; then
+        interchain_accts=$(cat $SCRIPT_DIR/config/evmos_ica.json)
+    else
+        interchain_accts=$(cat $SCRIPT_DIR/config/ica.json)
+    fi
     jq ".app_state += $interchain_accts" $genesis_config > json.tmp && mv json.tmp $genesis_config
 
     # Slightly harshen slashing parameters (if 5 blocks are missed, the validator will be slashed)
@@ -69,22 +74,11 @@ for (( i=1; i <= $NUM_NODES; i++ )); do
     node_name="${NODE_PREFIX}${i}"
     # Moniker is of the form: STRIDE_1
     moniker=$(printf "${NODE_PREFIX}_${i}" | awk '{ print toupper($0) }')
-    echo "${moniker}"
     # Create a state directory for the current node and initialize the chain
     mkdir -p $STATE/$node_name
-    echo "2"
     cmd="$CMD --home ${STATE}/$node_name"
-    echo "3"
-    if [ "$CHAIN_ID" == "EVMOS" ]; then
-        echo "Evmos"
-        $cmd init $moniker --chain-id "evmos_9001-2" --overwrite # &> /dev/null
-    else
-        echo "Not Evmos"
-        $cmd init $moniker --chain-id $CHAIN_ID --overwrite &> /dev/null
-    fi
-    echo "4"
+    $cmd init $moniker --chain-id $CHAIN_ID --overwrite &> /dev/null
     chmod -R 777 $STATE/$node_name
-    echo "5"
     # Update node networking configuration 
     config_toml="${STATE}/${node_name}/config/config.toml"
     client_toml="${STATE}/${node_name}/config/client.toml"

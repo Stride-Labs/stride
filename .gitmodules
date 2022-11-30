@@ -30,6 +30,6 @@
 	path = scripts/tests/bats/bats-assert
 	url = https://github.com/ztombol/bats-assert
 [submodule "deps/evmos"]
-	# Commit: b6aadb50d86fe36eff2d8283f295f418ff778ead
+	# Commit: a4f8cd88e4391872b3557fe0966969790365934e
 	path = deps/evmos
-	url = https://github.com/evmos/evmos
+	url = https://github.com/Stride-Labs/evmos
