@@ -225,5 +225,5 @@ func ConvertAddressToStrideAddress(address string) string {
 // Returns a log string with a tab and chainId as the prefix
 func LogWithHostZone(chainId string, s string, a ...any) string {
 	msg := fmt.Sprintf(s, a...)
-	return fmt.Sprintf("    %-16s | %s", chainId, msg)
+	return fmt.Sprintf("   %-13s | %s", chainId, msg)
 }

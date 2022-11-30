@@ -30,8 +30,6 @@ import (
 )
 
 func (k Keeper) DelegateOnHost(ctx sdk.Context, hostZone types.HostZone, amt sdk.Coin, depositRecord recordstypes.DepositRecord) error {
-	var msgs []sdk.Msg
-
 	// the relevant ICA is the delegate account
 	owner := types.FormatICAAccountOwner(hostZone.ChainId, types.ICAAccountType_DELEGATION)
 	portID, err := icatypes.NewControllerPortID(owner)
@@ -44,8 +42,8 @@ func (k Keeper) DelegateOnHost(ctx sdk.Context, hostZone types.HostZone, amt sdk
 	}
 
 	// Fetch the relevant ICA
-	delegationIca := hostZone.GetDelegationAccount()
-	if delegationIca == nil || delegationIca.GetAddress() == "" {
+	delegationIca := hostZone.DelegationAccount
+	if delegationIca == nil || delegationIca.Address == "" {
 		k.Logger(ctx).Error(fmt.Sprintf("Zone %s is missing a delegation address!", hostZone.ChainId))
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "Invalid delegation account")
 	}
@@ -58,20 +56,18 @@ func (k Keeper) DelegateOnHost(ctx sdk.Context, hostZone types.HostZone, amt sdk
 	}
 
 	var splitDelegations []*types.SplitDelegation
-	for _, validator := range hostZone.GetValidators() {
-		relativeAmount := sdk.NewCoin(amt.Denom, sdk.NewIntFromUint64(targetDelegatedAmts[validator.GetAddress()]))
+	var msgs []sdk.Msg
+	for _, validator := range hostZone.Validators {
+		relativeAmount := sdk.NewCoin(amt.Denom, sdk.NewIntFromUint64(targetDelegatedAmts[validator.Address]))
 		if relativeAmount.Amount.IsPositive() {
-			k.Logger(ctx).Info(fmt.Sprintf("Appending MsgDelegate to msgs, DelegatorAddress: %s, ValidatorAddress: %s, relativeAmount: %v",
-				delegationIca.GetAddress(), validator.GetAddress(), relativeAmount))
-
 			msgs = append(msgs, &stakingTypes.MsgDelegate{
-				DelegatorAddress: delegationIca.GetAddress(),
-				ValidatorAddress: validator.GetAddress(),
+				DelegatorAddress: delegationIca.Address,
+				ValidatorAddress: validator.Address,
 				Amount:           relativeAmount,
 			})
 		}
 		splitDelegations = append(splitDelegations, &types.SplitDelegation{
-			Validator: validator.GetAddress(),
+			Validator: validator.Address,
 			Amount:    relativeAmount.Amount.Uint64(),
 		})
 	}
@@ -82,7 +78,7 @@ func (k Keeper) DelegateOnHost(ctx sdk.Context, hostZone types.HostZone, amt sdk
 		DepositRecordId:  depositRecord.Id,
 		SplitDelegations: splitDelegations,
 	}
-	k.Logger(ctx).Info(fmt.Sprintf("Marshalling DelegateCallback args: %v", delegateCallback))
+	k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId, "Marshalling DelegateCallback args: %+v", delegateCallback))
 	marshalledCallbackArgs, err := k.MarshalDelegateCallbackArgs(ctx, delegateCallback)
 	if err != nil {
 		return err
@@ -126,7 +122,7 @@ func (k Keeper) SetWithdrawalAddressOnHost(ctx sdk.Context, hostZone types.HostZ
 
 	k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId, "Withdrawal Address: %s, Delegator Address: %s", withdrawalIcaAddr, delegationIca.Address))
 
-	// Construct the ICA Message
+	// Construct the ICA message
 	msgs := []sdk.Msg{
 		&distributiontypes.MsgSetWithdrawAddress{
 			DelegatorAddress: delegationIca.Address,
@@ -304,6 +300,7 @@ func (k Keeper) SubmitTxs(
 			CallbackId:   callbackId,
 			CallbackArgs: callbackArgs,
 		}
+		k.Logger(ctx).Info(utils.LogWithHostZone(chainId, "Storing callback data: %+v", callback))
 		k.ICACallbacksKeeper.SetCallbackData(ctx, callback)
 	}
 

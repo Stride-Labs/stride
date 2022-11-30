@@ -95,14 +95,11 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochInfo epochstypes.EpochInf
 
 		// Transfer deposited funds from the controller account to the delegation account on the host zone
 		if epochNumber%depositInterval == 0 {
-			// process previous deposit records
-			k.Logger(ctx).Info("TransferExistingDepositsToHostZones")
 			k.TransferExistingDepositsToHostZones(ctx, epochNumber, depositRecords)
 		}
 
 		// Delegate tokens from the delegation account
 		if epochNumber%delegationInterval == 0 {
-			k.Logger(ctx).Info("StakeExistingDepositsOnHostZones")
 			k.StakeExistingDepositsOnHostZones(ctx, epochNumber, depositRecords)
 		}
 
