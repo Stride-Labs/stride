@@ -1,8 +1,6 @@
 package keeper
 
 import (
-	"strconv"
-
 	"github.com/armon/go-metrics"
 	"github.com/cosmos/cosmos-sdk/telemetry"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -48,11 +46,11 @@ func (k Keeper) TryLiquidStaking(
 		prefixedDenom := transfertypes.GetDenomPrefix(packet.GetDestPort(), packet.GetDestChannel()) + newData.Denom
 		denom = transfertypes.ParseDenomTrace(prefixedDenom).BaseDenom
 	}
-	unit, err := strconv.ParseUint(newData.Amount, 10, 64)
-	if err != nil {
-		channeltypes.NewErrorAcknowledgement(err.Error())
+	amount, ok := sdk.NewIntFromString(newData.Amount)
+	if !ok {
+		channeltypes.NewErrorAcknowledgement("not a parsable amount field")
 	}
-	var token = sdk.NewCoin(denom, sdk.NewIntFromUint64(unit))
+	var token = sdk.NewCoin(denom, amount)
 
 	err = k.RunLiquidStake(ctx, parsedReceiver.StrideAccAddress, token, []metrics.Label{})
 	if err != nil {
