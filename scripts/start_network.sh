@@ -47,12 +47,12 @@ for chain_id in STRIDE ${HOST_CHAINS[@]}; do
 done
 
 # Start the chain and create the transfer channels
-bash ${SCRIPT_DIR}/start_chain.sh STRIDE ${HOST_CHAINS[@]}
-bash ${SCRIPT_DIR}/start_relayers.sh ${HOST_CHAINS[@]}
+bash ${SCRIPT_DIR}/start_chain.sh 
+bash ${SCRIPT_DIR}/start_relayers.sh 
 
 # Register all host zones 
 for i in ${!HOST_CHAINS[@]}; do
     bash $SCRIPT_DIR/register_host.sh ${HOST_CHAINS[$i]} $i 
 done
 
-$SCRIPT_DIR/create_logs.sh ${HOST_CHAINS[@]} &
+$SCRIPT_DIR/create_logs.sh &

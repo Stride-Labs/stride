@@ -12,6 +12,9 @@ STRIDE_LOGS=$LOGS/stride.log
 TX_LOGS=$SCRIPT_DIR/logs/tx.log
 KEYS_LOGS=$SCRIPT_DIR/logs/keys.log
 
+# List of hosts enabled 
+HOST_CHAINS=(GAIA JUNO OSMO)
+
 # Sets up upgrade if {UPGRADE_NAME} is non-empty
 UPGRADE_NAME=""
 UPGRADE_OLD_COMMIT_HASH=""
@@ -253,11 +256,11 @@ WAIT_FOR_STRING() {
 }
 
 GET_VAL_ADDR() {
-  chain_id=$1
+  chain=$1
   val_index=$2
 
-  MAIN_CMD=$(GET_VAR_VALUE ${chain_id}_MAIN_CMD)
-  $MAIN_CMD q staking validators | grep ${chain_id}_${val_index} -A 5 | grep operator | awk '{print $2}'
+  MAIN_CMD=$(GET_VAR_VALUE ${chain}_MAIN_CMD)
+  $MAIN_CMD q staking validators | grep ${chain}_${val_index} -A 5 | grep operator | awk '{print $2}'
 }
 
 GET_ICA_ADDR() {

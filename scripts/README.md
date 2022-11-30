@@ -44,33 +44,33 @@ while getopts sgojhir{n} flag; do
     volumes:
       - ./scripts/state/{new-host-zone}5:/home/{new-host-zone}/.{new-host-zone}
 ```
-* Add the following parameters to `scripts/vars.sh`, where `CHAIN_ID` is the ID of the new host zone. For the relayer, you can use the mnemonic below or create your own. Note: you'll have to add the variables in the right places in `scripts/vars.sh`, as noted below.
+* Add the following parameters to `scripts/vars.sh`, where `CHAIN` is the ID of the new host zone. For the relayer, you can use the mnemonic below or create your own. Note: you'll have to add the variables in the right places in `scripts/vars.sh`, as noted below.
 ```
 # Add at the top of vars.sh
-{CHAIN_ID}_DENOM="{min_denom}"
-ST{CHAIN_ID}_DENOM="st{min_denom}"
+{CHAIN}_DENOM="{min_denom}"
+ST{CHAIN}_DENOM="st{min_denom}"
 
 # Add below the final host zone
-{CHAIN_ID}_CHAIN_ID={NEW-HOST-ZONE}
-{CHAIN_ID}_NODE_PREFIX={new-host-zone}
-{CHAIN_ID}_NUM_NODES=3
-{CHAIN_ID}_CMD="$SCRIPT_DIR/../build/{new-host-zone}d"
-{CHAIN_ID}_VAL_PREFIX={n}val
-{CHAIN_ID}_ADDRESS_PREFIX=stars
-{CHAIN_ID}_REV_ACCT={n}rev1
-{CHAIN_ID}_DENOM=${CHAIN_ID}_DENOM
-{CHAIN_ID}_RPC_PORT={the one included in the docker-compose above}
-{CHAIN_ID}_MAIN_CMD="${CHAIN_ID}_CMD --home $SCRIPT_DIR/state/${${CHAIN_ID}_NODE_PREFIX}1"
+{CHAIN}_CHAIN_ID={NEW-HOST-ZONE}
+{CHAIN}_NODE_PREFIX={new-host-zone}
+{CHAIN}_NUM_NODES=3
+{CHAIN}_CMD="$SCRIPT_DIR/../build/{new-host-zone}d"
+{CHAIN}_VAL_PREFIX={n}val
+{CHAIN}_ADDRESS_PREFIX=stars
+{CHAIN}_REV_ACCT={n}rev1
+{CHAIN}_DENOM=${CHAIN}_DENOM
+{CHAIN}_RPC_PORT={the one included in the docker-compose above}
+{CHAIN}_MAIN_CMD="${CHAIN}_CMD --home $SCRIPT_DIR/state/${${CHAIN}_NODE_PREFIX}1"
 
 # Add *below* the RELAYER section!
-RELAYER_{CHAIN_ID}_EXEC="docker-compose run --rm relayer-{new-host-zone}"
-RELAYER_{CHAIN_ID}_ACCT=rly{add one since the account from the last host zone}
+RELAYER_{CHAIN}_EXEC="docker-compose run --rm relayer-{new-host-zone}"
+RELAYER_{CHAIN}_ACCT=rly{add one since the account from the last host zone}
 # NOTE: Update the HOST_RELAYER_ACCTS variable directly!
-HOST_RELAYER_ACCTS=(... $RELAYER_{CHAIN_ID}_ACCT)
+HOST_RELAYER_ACCTS=(... $RELAYER_{CHAIN}_ACCT)
 # stride1muwz5er4wq7svxnh5dgn2tssm92je5dwthxl7q
-RELAYER_{CHAIN_ID}_MNEMONIC="science depart where tell bus ski laptop follow child bronze rebel recall brief plug razor ship degree labor human series today embody fury harvest"
+RELAYER_{CHAIN}_MNEMONIC="science depart where tell bus ski laptop follow child bronze rebel recall brief plug razor ship degree labor human series today embody fury harvest"
 # NOTE: Update the RELAYER_MNEMONICS variable directly!
-RELAYER_MNEMONICS=(...,"$RELAYER_{CHAIN_ID}_MNEMONIC")
+RELAYER_MNEMONICS=(...,"$RELAYER_{CHAIN}_MNEMONIC")
 
 ```
 * Add the IBC denom's for the host zone across each channel to `vars.sh` (e.g. `IBC_{HOST}_CHANNEL_{N}_DENOM)`). You can generate the variables by uncommenting `x/stakeibc/keeper/get_denom_traces_test.go` and running `make test-unit`. Add the output to `scripts/vars.sh`. Note: You have to run the test using the "run test" button in VSCode, or pass in the `-v` flag and run the tests using `go test -mod=readonly ./x/stakeibc/...`, for the output to show up.
@@ -104,7 +104,7 @@ paths:
       rule: ""
       channel-list: []
 ```
-* To enable the the new host zone, include it in the `HOST_CHAINS` array in `scripts/start_network.sh`. **Note: You can only run up to 4 host zones at once. You can just run GAIA and the new host zone, for simplicity (see below).**
+* To enable the the new host zone, include it in the `HOST_CHAINS` array in `scripts/vars.sh`. **Note: You can only run up to 4 host zones at once. You can just run GAIA and the new host zone, for simplicity (see below).**
 ```
 HOST_CHAINS=(GAIA {NEW-HOST-ZONE})
 ```
