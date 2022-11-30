@@ -1,9 +1,9 @@
 # syntax = docker/dockerfile:1
-FROM golang:1.18-alpine3.15 AS builder
+FROM golang:1.19-alpine3.15 AS builder
 
 WORKDIR /src/
 
-ENV COMMIT_HASH=da271a9846619bebe4d8723a13c33f613da7562d
+ENV COMMIT_HASH=41722f36d9859dbd903bb13340de135283c6c82c
 
 RUN apk add --update git make gcc linux-headers libc-dev eudev-dev 
 RUN git clone https://github.com/cosmos/relayer.git \
@@ -14,23 +14,12 @@ RUN git clone https://github.com/cosmos/relayer.git \
 FROM alpine:3.15
 COPY --from=builder /go/bin/rly /usr/local/bin/
 RUN apk add bash vim \
-    && adduser -S -h /home/relayer -D relayer -u 1000
+    && addgroup -g 1000 relayer \
+    && adduser -S -h /home/relayer -D relayer -u 1000 -G relayer
 
-USER relayer
+USER 1000
 WORKDIR /home/relayer
 
 # Create startup script that takes a path as a parameter
-RUN echo 'nohup rly start $1 -p events' > start.sh
+RUN echo 'rly start $1 -p events' > start.sh
 
-# Create a script to updates the light clients so they don't expire
-# Wont be necessary once https://github.com/cosmos/relayer/pull/861 is merged
-RUN <<EOF cat > refresh-clients.sh
-RELAY_PATHS="\$@"
-while true; do
-    for path in \${RELAY_PATHS[@]}; do
-        echo "Updating \$path"
-        rly transact update-clients \$path
-    done
-    sleep 30
-done
-EOF

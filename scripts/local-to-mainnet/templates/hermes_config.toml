@@ -1,0 +1,76 @@
+[mode]
+[mode.clients]
+enabled = true
+refresh = true
+misbehaviour = true
+
+[mode.connections]
+enabled = true
+
+[mode.channels]
+enabled = true
+
+[mode.packets]
+enabled = true
+clear_interval = 100
+clear_on_start = true
+
+[rest]
+enabled = true
+host = '0.0.0.0'
+port = 3000
+
+[telemetry]
+enabled = true
+host = '0.0.0.0'
+port = 3001
+
+[[chains]]
+id = 'STRIDE_CHAIN_ID'
+rpc_addr = 'http://stride1:26657'
+grpc_addr = 'http://stride1:9090'
+websocket_addr = 'ws://stride1:26657/websocket'
+rpc_timeout = '10s'
+account_prefix = 'stride'
+key_name = 'hrly1'
+store_prefix = 'ibc'
+default_gas = 8000000
+max_gas = 9000000
+gas_price = { price = 0.000, denom = 'ustrd' }
+gas_multiplier = 1.1
+max_msg_num = 30
+max_tx_size = 200000
+clock_drift = '5s'
+max_block_time = '10s'
+trusting_period = '12days'
+trust_threshold = { numerator = '1', denominator = '3' }
+address_type = { derivation = 'cosmos' }
+sequential_batch_tx = false
+
+[[chains]]
+id = 'HOST_CHAIN_ID'
+rpc_addr = 'http://HOST_ENDPOINT:26657'
+grpc_addr = 'http://HOST_ENDPOINT:9090'
+websocket_addr = 'ws://HOST_ENDPOINT:26657/websocket'
+rpc_timeout = '10s'
+account_prefix = 'HOST_ACCOUNT_PREFIX'
+key_name = 'hrly2'
+store_prefix = 'ibc'
+default_gas = 8000000
+max_gas = 9000000
+gas_price = { price = 0.01, denom = 'HOST_DENOM' }
+gas_multiplier = 1.1
+max_msg_num = 30
+max_tx_size = 200000
+clock_drift = '5s'
+max_block_time = '10s'
+trusting_period = '12days'
+trust_threshold = { numerator = '1', denominator = '3' }
+address_type = { derivation = 'cosmos' }
+sequential_batch_tx = false
+[chains.packet_filter]
+policy = 'allow'
+list = [
+  ['ica*', '*'],
+  ['transfer', 'channel-*'],
+]

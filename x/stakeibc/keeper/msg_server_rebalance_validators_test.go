@@ -7,9 +7,9 @@ import (
 	icatypes "github.com/cosmos/ibc-go/v3/modules/apps/27-interchain-accounts/types"
 	ibctesting "github.com/cosmos/ibc-go/v3/testing"
 
-	epochtypes "github.com/Stride-Labs/stride/x/epochs/types"
-	icacallbackstypes "github.com/Stride-Labs/stride/x/icacallbacks/types"
-	stakeibctypes "github.com/Stride-Labs/stride/x/stakeibc/types"
+	epochtypes "github.com/Stride-Labs/stride/v3/x/epochs/types"
+	icacallbackstypes "github.com/Stride-Labs/stride/v3/x/icacallbacks/types"
+	stakeibctypes "github.com/Stride-Labs/stride/v3/x/stakeibc/types"
 )
 
 type RebalanceValidatorsTestCase struct {
@@ -41,7 +41,7 @@ func (s *KeeperTestSuite) SetupRebalanceValidators() RebalanceValidatorsTestCase
 			Address:        "stride_VAL1",
 			CommissionRate: 1,
 			Weight:         100,
-			Status:         stakeibctypes.Validator_Active,
+			Status:         stakeibctypes.Validator_ACTIVE,
 			DelegationAmt:  100,
 		},
 		{
@@ -49,7 +49,7 @@ func (s *KeeperTestSuite) SetupRebalanceValidators() RebalanceValidatorsTestCase
 			Address:        "stride_VAL2",
 			CommissionRate: 2,
 			Weight:         500,
-			Status:         stakeibctypes.Validator_Active,
+			Status:         stakeibctypes.Validator_ACTIVE,
 			DelegationAmt:  500,
 		},
 		{
@@ -57,7 +57,7 @@ func (s *KeeperTestSuite) SetupRebalanceValidators() RebalanceValidatorsTestCase
 			Address:        "stride_VAL3",
 			CommissionRate: 2,
 			Weight:         200,
-			Status:         stakeibctypes.Validator_Active,
+			Status:         stakeibctypes.Validator_ACTIVE,
 			DelegationAmt:  200,
 		},
 		{
@@ -65,7 +65,7 @@ func (s *KeeperTestSuite) SetupRebalanceValidators() RebalanceValidatorsTestCase
 			Address:        "stride_VAL4",
 			CommissionRate: 2,
 			Weight:         400,
-			Status:         stakeibctypes.Validator_Active,
+			Status:         stakeibctypes.Validator_ACTIVE,
 			DelegationAmt:  400,
 		},
 		{
@@ -73,7 +73,7 @@ func (s *KeeperTestSuite) SetupRebalanceValidators() RebalanceValidatorsTestCase
 			Address:        "stride_VAL5",
 			CommissionRate: 2,
 			Weight:         400,
-			Status:         stakeibctypes.Validator_Active,
+			Status:         stakeibctypes.Validator_ACTIVE,
 			DelegationAmt:  400,
 		},
 	}

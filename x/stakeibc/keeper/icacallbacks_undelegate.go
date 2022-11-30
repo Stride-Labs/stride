@@ -6,10 +6,10 @@ import (
 
 	"github.com/spf13/cast"
 
-	"github.com/Stride-Labs/stride/x/icacallbacks"
-	icacallbackstypes "github.com/Stride-Labs/stride/x/icacallbacks/types"
-	recordstypes "github.com/Stride-Labs/stride/x/records/types"
-	"github.com/Stride-Labs/stride/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v3/x/icacallbacks"
+	icacallbackstypes "github.com/Stride-Labs/stride/v3/x/icacallbacks/types"
+	recordstypes "github.com/Stride-Labs/stride/v3/x/records/types"
+	"github.com/Stride-Labs/stride/v3/x/stakeibc/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -57,11 +57,6 @@ func UndelegateCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, a
 	// handle transaction failure cases
 	if ack == nil {
 		// handle timeout
-		// reset to UNBONDING_QUEUE
-		err = k.RecordsKeeper.SetHostZoneUnbondings(ctx, zone, undelegateCallback.EpochUnbondingRecordIds, recordstypes.HostZoneUnbonding_UNBONDING_QUEUE)
-		if err != nil {
-			return err
-		}
 		k.Logger(ctx).Error(fmt.Sprintf("UndelegateCallback timeout, txMsgData is nil, packet %v", packet))
 		return nil
 	}
@@ -73,7 +68,7 @@ func UndelegateCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, a
 	if len(txMsgData.Data) == 0 {
 		// handle tx failure
 		// reset to UNBONDING_QUEUE
-		err = k.RecordsKeeper.SetHostZoneUnbondings(ctx, zone, undelegateCallback.EpochUnbondingRecordIds, recordstypes.HostZoneUnbonding_UNBONDING_QUEUE)
+		err = k.RecordsKeeper.SetHostZoneUnbondings(ctx, zone.ChainId, undelegateCallback.EpochUnbondingRecordIds, recordstypes.HostZoneUnbonding_UNBONDING_QUEUE)
 		if err != nil {
 			return err
 		}
@@ -103,7 +98,7 @@ func UndelegateCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, a
 		return err
 	}
 	// upon success, add host zone unbondings to the exit transfer queue
-	err = k.RecordsKeeper.SetHostZoneUnbondings(ctx, zone, undelegateCallback.EpochUnbondingRecordIds, recordstypes.HostZoneUnbonding_EXIT_TRANSFER_QUEUE)
+	err = k.RecordsKeeper.SetHostZoneUnbondings(ctx, zone.ChainId, undelegateCallback.EpochUnbondingRecordIds, recordstypes.HostZoneUnbonding_EXIT_TRANSFER_QUEUE)
 	if err != nil {
 		return err
 	}

@@ -1,9 +1,10 @@
 package keeper
 
 import (
-	"github.com/Stride-Labs/stride/x/stakeibc/types"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	"github.com/Stride-Labs/stride/v3/x/stakeibc/types"
 )
 
 // SetICAAccount set iCAAccount in the store

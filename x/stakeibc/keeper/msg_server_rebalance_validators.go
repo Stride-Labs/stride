@@ -10,8 +10,8 @@ import (
 	stakingTypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/spf13/cast"
 
-	"github.com/Stride-Labs/stride/utils"
-	"github.com/Stride-Labs/stride/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v3/utils"
+	"github.com/Stride-Labs/stride/v3/x/stakeibc/types"
 )
 
 func abs(n int64) int64 {
@@ -178,7 +178,7 @@ func (k msgServer) RebalanceValidators(goCtx context.Context, msg *types.MsgReba
 
 	connectionId := hostZone.GetConnectionId()
 	// QUESTION: what should the timeouts be for these function calls?
-	_, err = k.SubmitTxsStrideEpoch(ctx, connectionId, msgs, *hostZone.GetDelegationAccount(), REBALANCE, marshalledCallbackArgs)
+	_, err = k.SubmitTxsStrideEpoch(ctx, connectionId, msgs, *hostZone.GetDelegationAccount(), ICACallbackID_Rebalance, marshalledCallbackArgs)
 	if err != nil {
 		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "Failed to SubmitTxs for %s, %s, %s, %s", connectionId, hostZone.ChainId, msgs, err.Error())
 	}

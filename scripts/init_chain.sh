@@ -15,18 +15,8 @@ NUM_NODES=$(GET_VAR_VALUE   ${CHAIN_ID}_NUM_NODES)
 NODE_PREFIX=$(GET_VAR_VALUE ${CHAIN_ID}_NODE_PREFIX)
 VAL_PREFIX=$(GET_VAR_VALUE  ${CHAIN_ID}_VAL_PREFIX)
 
-VAL_MNEMONICS_VAR=${CHAIN_ID}_VAL_MNEMONICS
-IFS=',' read -r -a VAL_MNEMONICS <<< "${!VAL_MNEMONICS_VAR}"
-
-HERMES_ACCT=$(GET_VAR_VALUE      HERMES_${CHAIN_ID}_ACCT)
-HERMES_MNEMONIC=$(GET_VAR_VALUE  HERMES_${CHAIN_ID}_MNEMONIC)
-ICQ_ACCT=$(GET_VAR_VALUE         ICQ_${CHAIN_ID}_ACCT)
-ICQ_MNEMONIC=$(GET_VAR_VALUE     ICQ_${CHAIN_ID}_MNEMONIC)
-RELAYER_ACCT=$(GET_VAR_VALUE     RELAYER_${CHAIN_ID}_ACCT)
-RELAYER_MNEMONIC=$(GET_VAR_VALUE RELAYER_${CHAIN_ID}_MNEMONIC)
-
-REV_ACCT_VAR=${CHAIN_ID}_REV_ACCT
-REV_MNEMONIC_VAR=${CHAIN_ID}_REV_MNEMONIC
+IFS=',' read -r -a VAL_MNEMONICS <<< "${VAL_MNEMONICS}"
+IFS=',' read -r -a RELAYER_MNEMONICS <<< "${RELAYER_MNEMONICS}"
 
 set_stride_genesis() {
     genesis_config=$1
@@ -58,6 +48,12 @@ set_host_genesis() {
     jq "del(.app_state.interchain_accounts)" $genesis_config > json.tmp && mv json.tmp $genesis_config
     interchain_accts=$(cat $SCRIPT_DIR/config/ica.json)
     jq ".app_state += $interchain_accts" $genesis_config > json.tmp && mv json.tmp $genesis_config
+
+    # Slightly harshen slashing parameters (if 5 blocks are missed, the validator will be slashed)
+    # This makes it easier to test updating weights after a host zone validator is slashed
+    sed -i -E 's|"signed_blocks_window": "100"|"signed_blocks_window": "10"|g' $genesis_config
+    sed -i -E 's|"downtime_jail_duration": "600s"|"downtime_jail_duration": "10s"|g' $genesis_config
+    sed -i -E 's|"slash_fraction_downtime": "0.010000000000000000"|"slash_fraction_downtime": "0.100000000000000000"|g' $genesis_config
 }
 
 MAIN_ID=1 # Node responsible for genesis and persistent_peers
@@ -77,6 +73,7 @@ for (( i=1; i <= $NUM_NODES; i++ )); do
     mkdir -p $STATE/$node_name
     cmd="$CMD --home ${STATE}/$node_name"
     $cmd init $moniker --chain-id $CHAIN_ID --overwrite &> /dev/null
+    chmod -R 777 $STATE/$node_name
 
     # Update node networking configuration 
     config_toml="${STATE}/${node_name}/config/config.toml"
@@ -134,29 +131,34 @@ for (( i=1; i <= $NUM_NODES; i++ )); do
     fi
 done
 
-# add Hermes and ICQ relayer accounts on Stride
-echo "$HERMES_MNEMONIC" | $MAIN_NODE_CMD keys add $HERMES_ACCT --recover --keyring-backend=test >> $KEYS_LOGS 2>&1
-echo "$ICQ_MNEMONIC" | $MAIN_NODE_CMD keys add $ICQ_ACCT --recover --keyring-backend=test >> $KEYS_LOGS 2>&1
-echo "$RELAYER_MNEMONIC" | $MAIN_NODE_CMD keys add $RELAYER_ACCT --recover --keyring-backend=test >> $KEYS_LOGS 2>&1
-HERMES_ADDRESS=$($MAIN_NODE_CMD keys show $HERMES_ACCT --keyring-backend test -a)
-ICQ_ADDRESS=$($MAIN_NODE_CMD keys show $ICQ_ACCT --keyring-backend test -a)
-RELAYER_ADDRESS=$($MAIN_NODE_CMD keys show $RELAYER_ACCT --keyring-backend test -a)
-
-# give relayer accounts token balances
-$MAIN_NODE_CMD add-genesis-account ${HERMES_ADDRESS} ${VAL_TOKENS}${DENOM}
-$MAIN_NODE_CMD add-genesis-account ${ICQ_ADDRESS} ${VAL_TOKENS}${DENOM}
-$MAIN_NODE_CMD add-genesis-account ${RELAYER_ADDRESS} ${VAL_TOKENS}${DENOM}
-
 if [ "$CHAIN_ID" == "$STRIDE_CHAIN_ID" ]; then 
     # add the stride admin account
     echo "$STRIDE_ADMIN_MNEMONIC" | $MAIN_NODE_CMD keys add $STRIDE_ADMIN_ACCT --recover --keyring-backend=test >> $KEYS_LOGS 2>&1
     STRIDE_ADMIN_ADDRESS=$($MAIN_NODE_CMD keys show $STRIDE_ADMIN_ACCT --keyring-backend test -a)
     $MAIN_NODE_CMD add-genesis-account ${STRIDE_ADMIN_ADDRESS} ${ADMIN_TOKENS}${DENOM}
+
+    # add relayer accounts
+    for i in "${!HOST_RELAYER_ACCTS[@]}"; do
+        RELAYER_ACCT="${HOST_RELAYER_ACCTS[i]}"
+        RELAYER_MNEMONIC="${RELAYER_MNEMONICS[i]}"
+
+        echo "$RELAYER_MNEMONIC" | $MAIN_NODE_CMD keys add $RELAYER_ACCT --recover --keyring-backend=test >> $KEYS_LOGS 2>&1
+        RELAYER_ADDRESS=$($MAIN_NODE_CMD keys show $RELAYER_ACCT --keyring-backend test -a)
+        $MAIN_NODE_CMD add-genesis-account ${RELAYER_ADDRESS} ${VAL_TOKENS}${DENOM}
+    done
 else 
     # add a revenue account
+    REV_ACCT_VAR=${CHAIN_ID}_REV_ACCT
     REV_ACCT=${!REV_ACCT_VAR}
-    REV_MNEMONIC=${!REV_MNEMONIC_VAR}
     echo $REV_MNEMONIC | $MAIN_NODE_CMD keys add $REV_ACCT --recover --keyring-backend=test >> $KEYS_LOGS 2>&1
+
+    # add a relayer account
+    RELAYER_ACCT=$(GET_VAR_VALUE     RELAYER_${CHAIN_ID}_ACCT)
+    RELAYER_MNEMONIC=$(GET_VAR_VALUE RELAYER_${CHAIN_ID}_MNEMONIC)
+
+    echo "$RELAYER_MNEMONIC" | $MAIN_NODE_CMD keys add $RELAYER_ACCT --recover --keyring-backend=test >> $KEYS_LOGS 2>&1
+    RELAYER_ADDRESS=$($MAIN_NODE_CMD keys show $RELAYER_ACCT --keyring-backend test -a)
+    $MAIN_NODE_CMD add-genesis-account ${RELAYER_ADDRESS} ${VAL_TOKENS}${DENOM}
 fi
 
 # now we process gentx txs on the main node

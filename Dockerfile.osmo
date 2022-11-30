@@ -1,4 +1,4 @@
-FROM golang:1.18-alpine3.15 AS builder
+FROM golang:1.19-alpine3.15 AS builder
 
 WORKDIR /opt/
 
@@ -23,9 +23,11 @@ RUN BUILD_TAGS=muslc LINK_STATICALLY=true make build
 
 FROM alpine:3.15
 COPY --from=builder /opt/osmosis/build/osmosisd /usr/local/bin/
-RUN adduser -S -h /home/osmosis -D osmosis -u 1000
+RUN apk add bash vim \
+    && addgroup -g 1000 osmosis \
+    && adduser -S -h /home/osmosis -D osmosis -u 1000 -G osmosis
 
-USER osmosis
+USER 1000
 WORKDIR /home/osmosis
 
 EXPOSE 26657 26656 1317 9090

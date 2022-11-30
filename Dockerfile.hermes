@@ -16,7 +16,7 @@ COPY --from=builder /opt/ibc-rs/target/release/hermes /usr/local/bin/hermes
 RUN apt-get update \
     && adduser --system --home /home/hermes --disabled-password --disabled-login hermes -u 1000
 
-USER hermes
+USER 1000
 WORKDIR /home/hermes
 
 CMD ["hermes", "start"]

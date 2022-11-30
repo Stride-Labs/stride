@@ -5,6 +5,7 @@ SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 source ${SCRIPT_DIR}/vars.sh
 
 BUILDDIR="$2"
+mkdir -p $BUILDDIR
 
 build_local_and_docker() {
    module="$1"
@@ -14,16 +15,27 @@ build_local_and_docker() {
    printf '%s' "Building $title Locally...  "
    cwd=$PWD
    cd $folder
-   go build -mod=readonly -trimpath -o $BUILDDIR ./... 2>&1 | grep -v -E "deprecated|keychain";
-   local_build_succeeded=$?
+   GOBIN=$BUILDDIR go install -mod=readonly -trimpath ./... 2>&1 | grep -v -E "deprecated|keychain" | true
+   local_build_succeeded=${PIPESTATUS[0]}
    cd $cwd
-   echo "Done" 
+
+   if [[ "$local_build_succeeded" == "0" ]]; then
+      echo "Done" 
+   else
+      echo "Failed"
+      return $local_build_succeeded
+   fi
 
    echo "Building $title Docker...  "
-   docker build --tag stridezone:$module -f Dockerfile.$module . 
-   docker_build_succeeded=$?
+   DOCKER_BUILDKIT=1 docker build --tag stridezone:$module -f Dockerfile.$module . | true
+   docker_build_succeeded=${PIPESTATUS[0]}
 
-   return $docker_build_succeeded && $local_build_succeeded
+   if [[ "$docker_build_succeeded" == "0" ]]; then
+      echo "Done" 
+   else
+      echo "Failed"
+   fi
+   return $docker_build_succeeded
 }
 
 ADMINS_FILE=${SCRIPT_DIR}/../utils/admins.go
@@ -40,7 +52,7 @@ revert_admin_address() {
 }
 
 # build docker images and local binaries
-while getopts sgojthir flag; do
+while getopts sgojthr flag; do
    case "${flag}" in
       # For stride, we need to update the admin address to one that we have the seed phrase for
       s) replace_admin_address
@@ -55,7 +67,6 @@ while getopts sgojthir flag; do
       j) build_local_and_docker juno deps/juno ;;
       o) build_local_and_docker osmo deps/osmosis ;;
       t) build_local_and_docker stars deps/stargaze ;;
-      i) build_local_and_docker icq deps/interchain-queries ;;
       r) build_local_and_docker relayer deps/relayer ;;  
       h) echo "Building Hermes Docker... ";
          docker build --tag stridezone:hermes -f Dockerfile.hermes . ;

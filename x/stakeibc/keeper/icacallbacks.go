@@ -1,19 +1,19 @@
 package keeper
 
 import (
-	icacallbackstypes "github.com/Stride-Labs/stride/x/icacallbacks/types"
+	icacallbackstypes "github.com/Stride-Labs/stride/v3/x/icacallbacks/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	channeltypes "github.com/cosmos/ibc-go/v3/modules/core/04-channel/types"
 )
 
 const (
-	DELEGATE   = "delegate"
-	CLAIM      = "claim"
-	UNDELEGATE = "undelegate"
-	REINVEST   = "reinvest"
-	REDEMPTION = "redemption"
-  REBALANCE = "rebalance"
+	ICACallbackID_Delegate   = "delegate"
+	ICACallbackID_Claim      = "claim"
+	ICACallbackID_Undelegate = "undelegate"
+	ICACallbackID_Reinvest   = "reinvest"
+	ICACallbackID_Redemption = "redemption"
+	ICACallbackID_Rebalance  = "rebalance"
 )
 
 // ICACallbacks wrapper struct for stakeibc keeper
@@ -46,11 +46,11 @@ func (c ICACallbacks) AddICACallback(id string, fn interface{}) icacallbackstype
 
 func (c ICACallbacks) RegisterICACallbacks() icacallbackstypes.ICACallbackHandler {
 	a := c.
-		AddICACallback(DELEGATE, ICACallback(DelegateCallback)).
-		AddICACallback(CLAIM, ICACallback(ClaimCallback)).
-		AddICACallback(UNDELEGATE, ICACallback(UndelegateCallback)).
-		AddICACallback(REINVEST, ICACallback(ReinvestCallback)).
-		AddICACallback(REDEMPTION, ICACallback(RedemptionCallback)).
-		AddICACallback(REBALANCE, ICACallback(RebalanceCallback))
+		AddICACallback(ICACallbackID_Delegate, ICACallback(DelegateCallback)).
+		AddICACallback(ICACallbackID_Claim, ICACallback(ClaimCallback)).
+		AddICACallback(ICACallbackID_Undelegate, ICACallback(UndelegateCallback)).
+		AddICACallback(ICACallbackID_Reinvest, ICACallback(ReinvestCallback)).
+		AddICACallback(ICACallbackID_Redemption, ICACallback(RedemptionCallback)).
+		AddICACallback(ICACallbackID_Rebalance, ICACallback(RebalanceCallback))
 	return a.(ICACallbacks)
 }

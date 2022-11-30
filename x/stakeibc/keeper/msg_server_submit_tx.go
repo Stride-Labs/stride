@@ -8,10 +8,10 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/spf13/cast"
 
-	icacallbackstypes "github.com/Stride-Labs/stride/x/icacallbacks/types"
+	icacallbackstypes "github.com/Stride-Labs/stride/v3/x/icacallbacks/types"
 
-	recordstypes "github.com/Stride-Labs/stride/x/records/types"
-	"github.com/Stride-Labs/stride/x/stakeibc/types"
+	recordstypes "github.com/Stride-Labs/stride/v3/x/records/types"
+	"github.com/Stride-Labs/stride/v3/x/stakeibc/types"
 
 	bankTypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	distributiontypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
@@ -19,8 +19,8 @@ import (
 
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
-	epochstypes "github.com/Stride-Labs/stride/x/epochs/types"
-	icqtypes "github.com/Stride-Labs/stride/x/interchainquery/types"
+	epochstypes "github.com/Stride-Labs/stride/v3/x/epochs/types"
+	icqtypes "github.com/Stride-Labs/stride/v3/x/interchainquery/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	icatypes "github.com/cosmos/ibc-go/v3/modules/apps/27-interchain-accounts/types"
@@ -88,7 +88,7 @@ func (k Keeper) DelegateOnHost(ctx sdk.Context, hostZone types.HostZone, amt sdk
 	}
 
 	// Send the transaction through SubmitTx
-	_, err = k.SubmitTxsStrideEpoch(ctx, connectionId, msgs, *delegationIca, DELEGATE, marshalledCallbackArgs)
+	_, err = k.SubmitTxsStrideEpoch(ctx, connectionId, msgs, *delegationIca, ICACallbackID_Delegate, marshalledCallbackArgs)
 	if err != nil {
 		return sdkerrors.Wrapf(err, "Failed to SubmitTxs for connectionId %s on %s. Messages: %s", connectionId, hostZone.ChainId, msgs)
 	}
@@ -161,17 +161,15 @@ func (k Keeper) UpdateWithdrawalBalance(ctx sdk.Context, zoneInfo types.HostZone
 	k.Logger(ctx).Info("Querying for value", "key", icqtypes.BANK_STORE_QUERY_WITH_PROOF, "denom", zoneInfo.HostDenom)
 	err = k.InterchainQueryKeeper.MakeRequest(
 		ctx,
-		zoneInfo.ConnectionId,
+		types.ModuleName,
+		ICQCallbackID_WithdrawalBalance,
 		zoneInfo.ChainId,
+		zoneInfo.ConnectionId,
 		// use "bank" store to access acct balances which live in the bank module
 		// use "key" suffix to retrieve a proof alongside the query result
 		icqtypes.BANK_STORE_QUERY_WITH_PROOF,
 		append(data, []byte(zoneInfo.HostDenom)...),
-		sdk.NewInt(-1),
-		types.ModuleName,
-		"withdrawalbalance",
 		ttl, // ttl
-		0,   // height always 0 (which means current height)
 	)
 	if err != nil {
 		k.Logger(ctx).Error(fmt.Sprintf("Error querying for withdrawal balance, error: %s", err.Error()))
@@ -389,17 +387,15 @@ func (k Keeper) QueryValidatorExchangeRate(ctx sdk.Context, msg *types.MsgUpdate
 	k.Logger(ctx).Info(fmt.Sprintf("Querying validator %v, key %v, denom %v", msg.Valoper, icqtypes.STAKING_STORE_QUERY_WITH_PROOF, hostZone.ChainId))
 	err = k.InterchainQueryKeeper.MakeRequest(
 		ctx,
-		hostZone.ConnectionId,
+		types.ModuleName,
+		ICQCallbackID_Validator,
 		hostZone.ChainId,
+		hostZone.ConnectionId,
 		// use "staking" store to access validator which lives in the staking module
 		// use "key" suffix to retrieve a proof alongside the query result
 		icqtypes.STAKING_STORE_QUERY_WITH_PROOF,
 		data,
-		sdk.NewInt(-1),
-		types.ModuleName,
-		"validator",
 		ttl, // ttl
-		0,   // height always 0 (which means current height)
 	)
 	if err != nil {
 		k.Logger(ctx).Error(fmt.Sprintf("Error querying for validator, error %s", err.Error()))
@@ -440,17 +436,15 @@ func (k Keeper) QueryDelegationsIcq(ctx sdk.Context, hostZone types.HostZone, va
 	k.Logger(ctx).Info(fmt.Sprintf("Querying delegation for %s on %s", delegationAcctAddr, valoper))
 	err = k.InterchainQueryKeeper.MakeRequest(
 		ctx,
-		hostZone.ConnectionId,
+		types.ModuleName,
+		ICQCallbackID_Delegation,
 		hostZone.ChainId,
+		hostZone.ConnectionId,
 		// use "staking" store to access delegation which lives in the staking module
 		// use "key" suffix to retrieve a proof alongside the query result
 		icqtypes.STAKING_STORE_QUERY_WITH_PROOF,
 		data,
-		sdk.NewInt(-1),
-		types.ModuleName,
-		"delegation",
 		ttl, // ttl
-		0,   // height always 0 (which means current height)
 	)
 	if err != nil {
 		k.Logger(ctx).Error(fmt.Sprintf("Error querying for delegation, error : %s", err.Error()))

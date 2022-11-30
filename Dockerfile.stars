@@ -1,4 +1,4 @@
-FROM golang:1.18.5-alpine3.15 AS builder
+FROM golang:1.19-alpine3.15 AS builder
 
 WORKDIR /opt
 
@@ -23,9 +23,10 @@ RUN LEDGER_ENABLED=false BUILD_TAGS=muslc LINK_STATICALLY=true make build
 FROM alpine:3.15
 COPY --from=builder /opt/stargaze/bin/starsd /usr/local/bin/
 RUN apk add --update bash vim ca-certificates \
-    && adduser -S -h /home/stars -D stars -u 1000
+    && addgroup -g 1000 stars \
+    && adduser -S -h /home/stars -D stars -u 1000 -G stars
 
-USER stars
+USER 1000
 WORKDIR /home/stars
 
 EXPOSE 26657 26656 1317 9090

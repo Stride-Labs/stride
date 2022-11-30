@@ -7,8 +7,8 @@ import (
 	ibctypes "github.com/cosmos/ibc-go/v3/modules/apps/transfer/types"
 	clienttypes "github.com/cosmos/ibc-go/v3/modules/core/02-client/types"
 
-	"github.com/Stride-Labs/stride/x/records/types"
-	recordtypes "github.com/Stride-Labs/stride/x/records/types"
+	"github.com/Stride-Labs/stride/v3/x/records/types"
+	recordtypes "github.com/Stride-Labs/stride/v3/x/records/types"
 )
 
 type TransferTestCase struct {
@@ -54,4 +54,20 @@ func (s *KeeperTestSuite) TestTransfer_Successful() {
 	record, found := s.App.RecordsKeeper.GetDepositRecord(s.Ctx(), tc.depositRecord.Id)
 	s.Require().True(found)
 	s.Require().Equal(record.Status, recordtypes.DepositRecord_TRANSFER_IN_PROGRESS, "deposit record status should be TRANSFER_IN_PROGRESS")
+}
+
+func (s *KeeperTestSuite) TestSequence_Equal() {
+	tc := s.SetupTransfer()
+	goCtx := sdk.WrapSDKContext(s.Ctx())
+	sequence, found := s.App.IBCKeeper.ChannelKeeper.GetNextSequenceSend(s.Ctx(),
+		tc.transferMsg.SourcePort, tc.transferMsg.SourceChannel)
+	s.Require().True(found)
+
+	msgTransferResponse, err := s.App.TransferKeeper.Transfer(goCtx, &tc.transferMsg)
+	s.Require().NoError(err)
+
+	checkSequence := msgTransferResponse.Sequence
+
+	// Confirm msg sequence are equal to next sequence
+	s.Require().Equal(checkSequence, sequence, "sequence should be equal")
 }

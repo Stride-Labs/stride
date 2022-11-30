@@ -3,11 +3,12 @@ package keeper_test
 import (
 	"fmt"
 
+	ibctesting "github.com/cosmos/ibc-go/v3/testing"
 	_ "github.com/stretchr/testify/suite"
 
-	epochtypes "github.com/Stride-Labs/stride/x/epochs/types"
-	"github.com/Stride-Labs/stride/x/stakeibc/types"
-	stakeibctypes "github.com/Stride-Labs/stride/x/stakeibc/types"
+	epochtypes "github.com/Stride-Labs/stride/v3/x/epochs/types"
+	"github.com/Stride-Labs/stride/v3/x/stakeibc/types"
+	stakeibctypes "github.com/Stride-Labs/stride/v3/x/stakeibc/types"
 )
 
 // ================================ 1: QueryValidatorExchangeRate =============================================
@@ -29,8 +30,9 @@ func (s *KeeperTestSuite) SetupQueryValidatorExchangeRate() QueryValidatorExchan
 
 	hostZone := types.HostZone{
 		ChainId:      HostChainId,
+		ConnectionId: ibctesting.FirstConnectionID,
 		HostDenom:    Atom,
-		IBCDenom:     IbcAtom,
+		IbcDenom:     IbcAtom,
 		Bech32Prefix: Bech32Prefix,
 	}
 
@@ -129,6 +131,17 @@ func (s *KeeperTestSuite) TestQueryValidatorExchangeRate_BadValoperAddress() {
 	s.Require().Nil(resp, "response should be nil")
 }
 
+func (s *KeeperTestSuite) TestQueryValidatorExchangeRate_MissingConnectionId() {
+	tc := s.SetupQueryValidatorExchangeRate()
+
+	tc.hostZone.ConnectionId = ""
+	s.App.StakeibcKeeper.SetHostZone(s.Ctx(), tc.hostZone)
+
+	resp, err := s.App.StakeibcKeeper.QueryValidatorExchangeRate(s.Ctx(), &tc.msg)
+	s.Require().ErrorContains(err, "connection id cannot be empty")
+	s.Require().Nil(resp, "response should be nil")
+}
+
 // ================================== 2: QueryDelegationsIcq ==========================================
 
 type QueryDelegationsIcqTestCase struct {
@@ -151,8 +164,9 @@ func (s *KeeperTestSuite) SetupQueryDelegationsIcq() QueryDelegationsIcqTestCase
 
 	hostZone := types.HostZone{
 		ChainId:           HostChainId,
+		ConnectionId:      ibctesting.FirstConnectionID,
 		HostDenom:         Atom,
-		IBCDenom:          IbcAtom,
+		IbcDenom:          IbcAtom,
 		Bech32Prefix:      Bech32Prefix,
 		DelegationAccount: &stakeibctypes.ICAAccount{Address: delegationAddress},
 	}
@@ -233,4 +247,14 @@ func (s *KeeperTestSuite) TestQueryDelegationsIcq_MissingDelegationAddress() {
 
 	err := s.App.StakeibcKeeper.QueryDelegationsIcq(s.Ctx(), tc.hostZone, tc.valoperAddr)
 	s.Require().ErrorContains(err, "missing a delegation address")
+}
+
+func (s *KeeperTestSuite) TestQueryDelegationsIcq_MissingConnectionId() {
+	tc := s.SetupQueryDelegationsIcq()
+
+	tc.hostZone.ConnectionId = ""
+	s.App.StakeibcKeeper.SetHostZone(s.Ctx(), tc.hostZone)
+
+	err := s.App.StakeibcKeeper.QueryDelegationsIcq(s.Ctx(), tc.hostZone, tc.valoperAddr)
+	s.Require().ErrorContains(err, "connection id cannot be empty")
 }
