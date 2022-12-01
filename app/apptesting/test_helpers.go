@@ -39,6 +39,7 @@ type AppTestHelper struct {
 	App     *app.StrideApp
 	HostApp *simapp.SimApp
 
+	IbcEnabled   bool
 	Coordinator  *ibctesting.Coordinator
 	StrideChain  *ibctesting.TestChain
 	HostChain    *ibctesting.TestChain
@@ -59,6 +60,7 @@ func (s *AppTestHelper) Setup() {
 		Ctx:             s.Ctx,
 	}
 	s.TestAccs = CreateRandomAccounts(3)
+	s.IbcEnabled = false
 	s.IcaAddresses = make(map[string]string)
 
 }
@@ -111,12 +113,13 @@ func (s *AppTestHelper) SetupIBCChains(hostChainID string) {
 		StrideChainID: s.StrideChain,
 		hostChainID:   s.HostChain,
 	}
+	s.IbcEnabled = true
 }
 
 // Creates clients, connections, and a transfer channel between stride and a host chain
 func (s *AppTestHelper) CreateTransferChannel(hostChainID string) {
 	// If we have yet to create the host chain, do that here
-	if s.HostChain == nil {
+	if !s.IbcEnabled {
 		s.SetupIBCChains(hostChainID)
 	}
 	s.Require().Equal(s.HostChain.ChainID, hostChainID,
