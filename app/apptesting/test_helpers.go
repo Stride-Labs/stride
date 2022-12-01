@@ -53,36 +53,17 @@ type AppTestHelper struct {
 
 // AppTestHelper Constructor
 func (s *AppTestHelper) Setup() {
-
 	s.App = app.InitStrideTestApp(true)
-
 	s.Ctx = s.App.BaseApp.NewContext(false, tmtypes.Header{Height: 1, ChainID: StrideChainID})
-
 	s.QueryHelper = &baseapp.QueryServiceTestHelper{
 		GRPCQueryRouter: s.App.GRPCQueryRouter(),
 		Ctx:             s.Ctx,
 	}
-	// s.SetEpochStartTime()
-
 	s.TestAccs = CreateRandomAccounts(3)
 	s.IbcEnabled = false
 	s.IcaAddresses = make(map[string]string)
 
 }
-
-// func (s *AppTestHelper) SetEpochStartTime() {
-// 	epochsKeeper := s.App.EpochsKeeper
-
-// 	for _, epoch := range epochsKeeper.AllEpochInfos(s.Ctx) {
-// 		epoch.StartTime = s.Ctx.BlockTime()
-// 		epochsKeeper.DeleteEpochInfo(s.Ctx, epoch.Identifier)
-// 		err := epochsKeeper.AddEpochInfo(s.Ctx, epoch)
-// 		if err != nil {
-// 			panic(err)
-// 		}
-// 	}
-
-// }
 
 // Dynamically gets the context of the Host Chain
 func (s *AppTestHelper) HostCtx() sdk.Context {
