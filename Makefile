@@ -8,6 +8,9 @@ DOCKER := $(shell which docker)
 DOCKER_BUF := $(DOCKER) run --rm -v $(CURDIR):/workspace --workdir /workspace bufbuild/buf:1.7.0
 DOCKERNET_HOME=./dockernet
 DOCKERNET_COMPOSE_FILE=$(DOCKERNET_HOME)/docker-compose.yml
+LOCALSTRIDE_HOME=./testutil/localstride
+LOCALNET_COMPOSE_FILE=$(LOCALSTRIDE_HOME)/localnet/docker-compose.yml
+STATE_EXPORT_COMPOSE_FILE=$(LOCALSTRIDE_HOME)/state-export/docker-compose.yml
 
 # process build tags
 
@@ -160,7 +163,7 @@ proto-lint:
 ###############################################################################
 
 localnet-keys:
-	. testutil/localstride/scripts/add_keys.sh
+	. $(LOCALSTRIDE_HOME)/localnet/add_keys.sh
 
 localnet-init: localnet-clean localnet-build
 
@@ -168,29 +171,29 @@ localnet-clean:
 	@rm -rfI $(HOME)/.stride/
 
 localnet-build:
-	@docker-compose -f testutil/localstride/docker-compose.yml build
+	@docker-compose -f $(LOCALNET_COMPOSE_FILE) build
 
 localnet-start:
-	@docker-compose -f testutil/localstride/docker-compose.yml up
+	@docker-compose -f $(LOCALNET_COMPOSE_FILE) up
 
 localnet-startd:
-	@docker-compose -f testutil/localstride/docker-compose.yml up -d
+	@docker-compose -f $(LOCALNET_COMPOSE_FILE) up -d
 
 localnet-stop:
-	@docker-compose -f testutil/localstride/docker-compose.yml down
+	@docker-compose -f $(LOCALNET_COMPOSE_FILE) down
 
 localnet-state-export-init: localnet-state-export-clean localnet-state-export-build
 
 localnet-state-export-build:
-	@DOCKER_BUILDKIT=1 COMPOSE_DOCKER_CLI_BUILD=1 docker-compose -f testutil/localstride/state_export/docker-compose.yml build
+	@DOCKER_BUILDKIT=1 COMPOSE_DOCKER_CLI_BUILD=1 docker-compose -f $(STATE_EXPORT_COMPOSE_FILE) build
 
 localnet-state-export-start:
-	@docker-compose -f testutil/localstride/state_export/docker-compose.yml up
+	@docker-compose -f $(STATE_EXPORT_COMPOSE_FILE) up
 
 localnet-state-export-startd:
-	@docker-compose -f testutil/localstride/state_export/docker-compose.yml up -d
+	@docker-compose -f $(STATE_EXPORT_COMPOSE_FILE) up -d
 
 localnet-state-export-stop:
-	@docker-compose -f testutil/localstride/docker-compose.yml down
+	@docker-compose -f $(STATE_EXPORT_COMPOSE_FILE) down
 
 localnet-state-export-clean: localnet-clean

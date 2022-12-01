@@ -3,4 +3,6 @@
 build
 deps
 dockernet
-
+scripts
+genesis
+testutil/localstride

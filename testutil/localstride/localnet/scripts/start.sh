@@ -7,10 +7,6 @@ MONIKER=val
 
 MNEMONIC="deer gaze swear marine one perfect hero twice turkey symbol mushroom hub escape accident prevent rifle horse arena secret endless panel equal rely payment"
 
-install_prerequisites () {
-    apk add dasel
-}
-
 edit_genesis () {
 
     GENESIS=$CONFIG_FOLDER/genesis.json
@@ -67,7 +63,6 @@ edit_config () {
 if [[ ! -d $CONFIG_FOLDER ]]
 then
     echo $MNEMONIC | strided init -o --chain-id=$CHAIN_ID --home $STRIDE_HOME --recover $MONIKER
-    install_prerequisites
     edit_genesis
     add_genesis_accounts
     edit_config

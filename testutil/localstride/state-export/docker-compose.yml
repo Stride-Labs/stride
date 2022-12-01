@@ -3,7 +3,7 @@ version: "3"
 services:
 
   stride:
-    image: local:stride
+    image: stridezone:localstride
     build:
       context: ../../../
       args:

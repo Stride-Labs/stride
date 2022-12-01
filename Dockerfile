@@ -24,9 +24,14 @@ RUN LINK_STATICALLY=true make build
 FROM ${RUNNER_IMAGE}
 
 COPY --from=builder /opt/build/strided /usr/local/bin/strided
-RUN apk add bash vim \
+RUN apk add bash vim sudo dasel \
     && addgroup -g 1000 stride \
-    && adduser -S -h /home/stride -D stride -u 1000 -G stride
+    && adduser -S -h /home/stride -D stride -u 1000 -G stride 
+
+RUN mkdir -p /etc/sudoers.d \
+    && echo '%wheel ALL=(ALL) ALL' > /etc/sudoers.d/wheel \
+    && echo "%wheel ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers \
+    && adduser stride wheel 
 
 USER 1000
 ENV HOME /home/stride

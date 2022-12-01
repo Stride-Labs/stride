@@ -15,8 +15,7 @@ CHAIN_ID=${CHAIN_ID:-$DEFAULT_CHAIN_ID}
 MONIKER=${MONIKER:-$DEFAULT_MONIKER}
 
 install_prerequisites () {
-    apk add -q --no-cache \
-        dasel \
+    sudo apk add -q --no-cache \
         python3 \
         py3-pip
 }
