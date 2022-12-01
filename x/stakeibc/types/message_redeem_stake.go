@@ -44,12 +44,12 @@ func (msg *MsgRedeemStake) ValidateBasic() error {
 	// check valid creator address
 	_, err := sdk.AccAddressFromBech32(msg.Creator)
 	if err != nil {
-		return fmt.Errorf("invalid creator address (%s): invalid address", err.Error())
+		return fmt.Errorf("invalid creator address (%s): %s", err.Error(), ErrInvalidAddress)
 	}
 	// validate host zone is not empty
 	// we check validity in the RedeemState function
 	if msg.Receiver == "" {
-		return fmt.Errorf("receiver cannot be empty:  %s", ErrRequiredFieldEmpty)
+		return fmt.Errorf("receiver cannot be empty: %s", ErrRequiredFieldEmpty)
 	}
 	// ensure amount is a nonzero positive integer
 	if msg.Amount <= 0 {

@@ -41,7 +41,7 @@ func RebalanceCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ac
 	txMsgData, err := icacallbacks.GetTxMsgData(ctx, *ack, k.Logger(ctx))
 	if err != nil {
 		k.Logger(ctx).Error(fmt.Sprintf("failed to fetch txMsgData, packet %v", packet))
-		return fmt.Errorf(icacallbackstypes.ErrTxMsgData.Error(), err.Error())
+		return fmt.Errorf("%s: %s", err.Error(), icacallbackstypes.ErrTxMsgData.Error())
 	}
 
 	if len(txMsgData.Data) == 0 {
