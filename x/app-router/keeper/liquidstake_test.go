@@ -41,11 +41,25 @@ func (suite *KeeperTestSuite) TestTryLiquidStaking() {
 	strdIbcDenom := transfertypes.ParseDenomTrace(prefixedDenom).IBCDenom()
 
 	testCases := []struct {
-		recvDenom  string
-		packetData transfertypes.FungibleTokenPacketData
-		expNilAck  bool
+		forwardingActive bool
+		recvDenom        string
+		packetData       transfertypes.FungibleTokenPacketData
+		expNilAck        bool
 	}{
-		{
+		{ // params not enabled
+			forwardingActive: false,
+			packetData: transfertypes.FungibleTokenPacketData{
+				Denom:    "uatom",
+				Amount:   "1000000",
+				Sender:   "",
+				Receiver: "",
+				Memo:     "",
+			},
+			recvDenom: atomIbcDenom,
+			expNilAck: false,
+		},
+		{ // all okay
+			forwardingActive: true,
 			packetData: transfertypes.FungibleTokenPacketData{
 				Denom:    "uatom",
 				Amount:   "1000000",
@@ -56,7 +70,8 @@ func (suite *KeeperTestSuite) TestTryLiquidStaking() {
 			recvDenom: atomIbcDenom,
 			expNilAck: true,
 		},
-		{
+		{ // strd denom
+			forwardingActive: true,
 			packetData: transfertypes.FungibleTokenPacketData{
 				Denom:    strdIbcDenom,
 				Amount:   "1000000",
@@ -71,9 +86,10 @@ func (suite *KeeperTestSuite) TestTryLiquidStaking() {
 
 	for i, tc := range testCases {
 		suite.Run(fmt.Sprintf("Case %d", i), func() {
-			_ = tc
 			suite.SetupTest() // reset
 			ctx := suite.Ctx()
+
+			suite.App.RouterKeeper.SetParams(ctx, types.Params{Active: tc.forwardingActive})
 
 			addr1 := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address().Bytes())
 

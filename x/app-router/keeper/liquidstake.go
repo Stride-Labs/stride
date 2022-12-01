@@ -21,6 +21,10 @@ func (k Keeper) TryLiquidStaking(
 	parsedReceiver *types.ParsedReceiver,
 	ack ibcexported.Acknowledgement,
 ) ibcexported.Acknowledgement {
+	params := k.GetParams(ctx)
+	if !params.Active {
+		return channeltypes.NewErrorAcknowledgement("packet forwarding param is not active")
+	}
 	// recalculate denom, skip checks that were already done in app.OnRecvPacket
 	var denom string
 	// In this case, we can't process a liquid staking transaction, because we're dealing with STRD tokens

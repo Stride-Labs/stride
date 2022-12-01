@@ -12,6 +12,7 @@ import (
 func TestGetParams(t *testing.T) {
 	k, ctx := testkeeper.AppRouterKeeper(t)
 	params := types.DefaultParams()
+	params.Active = true
 
 	k.SetParams(ctx, params)
 
