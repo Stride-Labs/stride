@@ -180,17 +180,17 @@ func (k Keeper) SplitDelegationMsg(ctx sdk.Context, valAddrToUnbondAmt map[strin
 
 	for _, valAddr := range utils.StringToIntMapKeys(valAddrToUnbondAmt) {
 		valUnbondAmt := valAddrToUnbondAmt[valAddr]
-		stakeAmt := sdk.NewInt64Coin(hostZone.HostDenom, valUnbondAmt)
+		unstakeAmt := sdk.NewInt64Coin(hostZone.HostDenom, valUnbondAmt)
 
 		msgs = append(msgs, &stakingtypes.MsgUndelegate{
 			DelegatorAddress: delegationAccount.GetAddress(),
 			ValidatorAddress: valAddr,
-			Amount:           stakeAmt,
+			Amount:           unstakeAmt,
 		})
 
 		splitDelegations = append(splitDelegations, &types.SplitDelegation{
 			Validator: valAddr,
-			Amount:    stakeAmt.Amount.Uint64(),
+			Amount:    unstakeAmt.Amount.Uint64(),
 		})
 	}
 	return msgs, splitDelegations, nil
