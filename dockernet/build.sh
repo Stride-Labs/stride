@@ -27,7 +27,13 @@ build_local_and_docker() {
    fi
 
    echo "Building $title Docker...  "
-   DOCKER_BUILDKIT=1 docker build --tag stridezone:$module -f Dockerfile.$module . | true
+   if [[ "$module" == "stride" ]]; then
+      image=Dockerfile.stride
+   else
+      image=dockernet/dockerfiles/Dockerfile.$module
+   fi
+
+   DOCKER_BUILDKIT=1 docker build --tag stridezone:$module -f $image . | true
    docker_build_succeeded=${PIPESTATUS[0]}
 
    if [[ "$docker_build_succeeded" == "0" ]]; then
