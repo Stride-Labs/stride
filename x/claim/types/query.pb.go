@@ -6,7 +6,7 @@ package types
 import (
 	context "context"
 	fmt "fmt"
-	types1 "github.com/Stride-Labs/stride/v3/x/claim/vesting/types"
+	types1 "github.com/Stride-Labs/stride/v4/x/claim/vesting/types"
 	github_com_cosmos_cosmos_sdk_types "github.com/cosmos/cosmos-sdk/types"
 	types "github.com/cosmos/cosmos-sdk/types"
 	_ "github.com/cosmos/gogoproto/gogoproto"

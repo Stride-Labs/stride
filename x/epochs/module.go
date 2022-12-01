@@ -20,10 +20,10 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 
-	"github.com/Stride-Labs/stride/v3/x/epochs/client/cli"
-	"github.com/Stride-Labs/stride/v3/x/epochs/keeper"
-	"github.com/Stride-Labs/stride/v3/x/epochs/simulation"
-	"github.com/Stride-Labs/stride/v3/x/epochs/types"
+	"github.com/Stride-Labs/stride/v4/x/epochs/client/cli"
+	"github.com/Stride-Labs/stride/v4/x/epochs/keeper"
+	"github.com/Stride-Labs/stride/v4/x/epochs/simulation"
+	"github.com/Stride-Labs/stride/v4/x/epochs/types"
 )
 
 var (
