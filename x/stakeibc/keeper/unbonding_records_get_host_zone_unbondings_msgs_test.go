@@ -411,23 +411,24 @@ func (s *KeeperTestSuite) VerifyTestCase_TestSplitDelegationMsg(name string, tc 
 		s.Setup()
 		s.App.StakeibcKeeper.SetHostZone(s.Ctx(), tc.hostZone)
 		msgs, splitDelegations, err := s.App.StakeibcKeeper.SplitDelegationMsg(s.Ctx(), tc.valAddrToUnbondAmt, tc.hostZone)
-		fmt.Println(err)
+		if tc.expectPass {
+			s.Require().NoError(err)
 
-		s.Require().NoError(err)
+			s.Require().Equal(len(tc.hostZone.Validators), len(splitDelegations), "number of split delegations in success unbonding case")
 
-		s.Require().Equal(len(tc.hostZone.Validators), len(splitDelegations), "number of split delegations in success unbonding case")
+			// the number of unbonding messages should be (number of validators) * (records to unbond)
+			s.Require().Equal(len(tc.hostZone.Validators), len(msgs), "number of unbonding messages should be number of records to unbond")
 
-		// the number of unbonding messages should be (number of validators) * (records to unbond)
-		s.Require().Equal(len(tc.hostZone.Validators), len(msgs), "number of unbonding messages should be number of records to unbond")
-
-		for i, validator := range tc.hostZone.Validators {
-			actualUnbondMsg := msgs[i].String()
-			valUnbonded := strings.Contains(actualUnbondMsg, strconv.Itoa(int(tc.valAddrToUnbondAmt[validator.Address])))
-			// there's rounding in the logic that distributes stake amongst validators, so one or the other of the balances will be correct, depending on the rounding
-			// at least one will be correct, and the other will be off by 1 by rounding, so we check and OR condition
-			s.Require().True(valUnbonded, "unbonding amt should be the correct amount")
+			for i, validator := range tc.hostZone.Validators {
+				actualUnbondMsg := msgs[i].String()
+				valUnbonded := strings.Contains(actualUnbondMsg, strconv.Itoa(int(tc.valAddrToUnbondAmt[validator.Address])))
+				// there's rounding in the logic that distributes stake amongst validators, so one or the other of the balances will be correct, depending on the rounding
+				// at least one will be correct, and the other will be off by 1 by rounding, so we check and OR condition
+				s.Require().True(valUnbonded, "unbonding amt should be the correct amount")
+			}
+		} else {
+			s.Require().Error(err)
 		}
-
 	})
 }
 func (s *KeeperTestSuite) TestSplitDelegationMsg_Successful() {
