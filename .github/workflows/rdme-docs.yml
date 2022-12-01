@@ -16,7 +16,8 @@ jobs:
     steps:
       - name: Check out repo 📚
         uses: actions/checkout@v3
-
+      - name: Collect markdown files to flat folder
+        run: bash readme-docs/gather-docs.sh
       - name: Run `docs` command 🚀
         uses: readmeio/rdme@v8
         with:
