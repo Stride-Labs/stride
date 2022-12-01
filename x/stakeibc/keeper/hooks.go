@@ -105,31 +105,7 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochInfo epochstypes.EpochInf
 
 		// Reinvest staking rewards
 		if epochNumber%reinvestInterval == 0 { // allow a few blocks from UpdateUndelegatedBal to avoid conflicts
-			k.Logger(ctx).Info("Reinvesting tokens")
-			for _, hz := range k.GetAllHostZone(ctx) {
-				// only process host zones once withdrawal accounts are registered
-				withdrawalIca := hz.GetWithdrawalAccount()
-				if withdrawalIca != nil {
-					// read clock time on host zone
-					blockTime, err := k.GetLightClientTimeSafely(ctx, hz.ConnectionId)
-					if err != nil {
-						k.Logger(ctx).Error(fmt.Sprintf("Could not find blockTime for host zone %s, err: %s", hz.ConnectionId, err.Error()))
-						continue
-					} else {
-						k.Logger(ctx).Info(fmt.Sprintf("Found blockTime for host zone %s: %d", hz.ConnectionId, blockTime))
-					}
-
-					err = k.UpdateWithdrawalBalance(ctx, hz)
-					if err != nil {
-						k.Logger(ctx).Error(fmt.Sprintf("Error updating withdrawal balance for host zone %s: %s", hz.ConnectionId, err.Error()))
-						continue
-					} else {
-						k.Logger(ctx).Info(fmt.Sprintf("Updated withdrawal balance for host zone %s", hz.ConnectionId))
-					}
-				} else {
-					k.Logger(ctx).Info(fmt.Sprintf("Withdrawal account not registered for host zone %s", hz.ChainId))
-				}
-			}
+			k.ReinvestRewards(ctx)
 		}
 	}
 }
@@ -256,4 +232,32 @@ func (k Keeper) GetModuleAccountBalance(hostZone types.HostZone, depositRecords 
 	}
 
 	return totalAmount, nil
+}
+
+func (k Keeper) ReinvestRewards(ctx sdk.Context) {
+	k.Logger(ctx).Info("Reinvesting tokens...")
+
+	for _, hostZone := range k.GetAllHostZone(ctx) {
+		// only process host zones once withdrawal accounts are registered
+		withdrawalIca := hostZone.WithdrawalAccount
+		if withdrawalIca == nil {
+			k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId, "Withdrawal account not registered for host zone"))
+			continue
+		}
+
+		// read clock time on host zone
+		blockTime, err := k.GetLightClientTimeSafely(ctx, hostZone.ConnectionId)
+		if err != nil {
+			k.Logger(ctx).Error(fmt.Sprintf("Could not find blockTime for host zone %s, err: %s", hostZone.ConnectionId, err.Error()))
+			continue
+		}
+		k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId, "BlockTime for host zone: %d", blockTime))
+
+		err = k.UpdateWithdrawalBalance(ctx, hostZone)
+		if err != nil {
+			k.Logger(ctx).Error(fmt.Sprintf("Error updating withdrawal balance for host zone %s: %s", hostZone.ConnectionId, err.Error()))
+			continue
+		}
+		k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId, "Updated withdrawal balance"))
+	}
 }

@@ -138,16 +138,15 @@ func (k Keeper) SetWithdrawalAddressOnHost(ctx sdk.Context, hostZone types.HostZ
 }
 
 // Simple balance query helper using new ICQ module
-func (k Keeper) UpdateWithdrawalBalance(ctx sdk.Context, zoneInfo types.HostZone) error {
-	k.Logger(ctx).Info(fmt.Sprintf("\tUpdating withdrawal balances on %s", zoneInfo.ChainId))
+func (k Keeper) UpdateWithdrawalBalance(ctx sdk.Context, hostZone types.HostZone) error {
+	k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId, "Submitting ICQ for withdrawal account balance"))
 
-	withdrawalIca := zoneInfo.GetWithdrawalAccount()
+	withdrawalIca := hostZone.WithdrawalAccount
 	if withdrawalIca == nil || withdrawalIca.Address == "" {
-		k.Logger(ctx).Error(fmt.Sprintf("Zone %s is missing a withdrawal address!", zoneInfo.ChainId))
+		k.Logger(ctx).Error(fmt.Sprintf("Zone %s is missing a withdrawal address!", hostZone.ChainId))
 	}
-	k.Logger(ctx).Info(fmt.Sprintf("\tQuerying withdrawalBalances for %s", zoneInfo.ChainId))
 
-	_, addr, _ := bech32.DecodeAndConvert(withdrawalIca.GetAddress())
+	_, addr, _ := bech32.DecodeAndConvert(withdrawalIca.Address)
 	data := bankTypes.CreateAccountBalancesPrefix(addr)
 
 	// get ttl, the end of the ICA buffer window
@@ -159,17 +158,16 @@ func (k Keeper) UpdateWithdrawalBalance(ctx sdk.Context, zoneInfo types.HostZone
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, errMsg)
 	}
 
-	k.Logger(ctx).Info("Querying for value", "key", icqtypes.BANK_STORE_QUERY_WITH_PROOF, "denom", zoneInfo.HostDenom)
 	err = k.InterchainQueryKeeper.MakeRequest(
 		ctx,
 		types.ModuleName,
 		ICQCallbackID_WithdrawalBalance,
-		zoneInfo.ChainId,
-		zoneInfo.ConnectionId,
+		hostZone.ChainId,
+		hostZone.ConnectionId,
 		// use "bank" store to access acct balances which live in the bank module
 		// use "key" suffix to retrieve a proof alongside the query result
 		icqtypes.BANK_STORE_QUERY_WITH_PROOF,
-		append(data, []byte(zoneInfo.HostDenom)...),
+		append(data, []byte(hostZone.HostDenom)...),
 		ttl, // ttl
 	)
 	if err != nil {
@@ -260,7 +258,7 @@ func (k Keeper) SubmitTxs(
 		return 0, err
 	}
 
-	k.Logger(ctx).Info(utils.LogWithHostZone(chainId, "Submitting ICA Tx on %s, %s", portID, connectionId))
+	k.Logger(ctx).Info(utils.LogWithHostZone(chainId, "Submitting ICA Tx on %s, %s with TTL: %d", portID, connectionId, timeoutTimestamp))
 	for _, msg := range msgs {
 		k.Logger(ctx).Info(utils.LogWithHostZone(chainId, "   Msg: %+v", msg))
 	}
