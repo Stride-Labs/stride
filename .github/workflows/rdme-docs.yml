@@ -5,10 +5,10 @@ name: ReadMe GitHub Action 🦉
 on:
   push:
     branches:
-      # This workflow will run every time you push code to the following branch: `main`
+      # This workflow will run every time you push code to the following branch
       # Check out GitHub's docs for more info on configuring this:
       # https://docs.github.com/actions/using-workflows/events-that-trigger-workflows
-      - main
+      - readme-docs
 
 jobs:
   rdme-docs:
