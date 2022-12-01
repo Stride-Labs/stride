@@ -5,7 +5,10 @@ SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
 STATE=$SCRIPT_DIR/state
 LOGS=$SCRIPT_DIR/logs
+UPGRADES=$SCRIPT_DIR/upgrades
+SRC=$SCRIPT_DIR/src
 PEER_PORT=26656
+DOCKER_COMPOSE="docker-compose -f $SCRIPT_DIR/docker-compose.yml"
 
 # Logs
 STRIDE_LOGS=$LOGS/stride.log
@@ -99,7 +102,7 @@ STRIDE_FEE_ADDRESS=stride1czvrk3jkvtj8m27kqsqu2yrkhw3h3ykwj3rxh6
 if [[ "$UPGRADE_NAME" == "" ]]; then 
   STRIDE_CMD="$SCRIPT_DIR/../build/strided"
 else
-  STRIDE_CMD="$SCRIPT_DIR/upgrades/binaries/strided1"
+  STRIDE_CMD="$UPGRADES/binaries/strided1"
 fi
 STRIDE_MAIN_CMD="$STRIDE_CMD --home $SCRIPT_DIR/state/${STRIDE_NODE_PREFIX}1"
 
@@ -157,7 +160,7 @@ STARS_RECEIVER_ADDRESS='stars15dywcmy6gzsc8wfefkrx0c9czlwvwrjenqthyq'
 
 # HERMES
 HERMES_CMD="$SCRIPT_DIR/../build/hermes/release/hermes --config $STATE/hermes/config.toml"
-HERMES_EXEC="docker-compose run --rm hermes hermes"
+HERMES_EXEC="$DOCKER_COMPOSE run --rm hermes hermes"
 
 HERMES_STRIDE_ACCT=hrly1
 HERMES_GAIA_ACCT=hrly2
@@ -173,10 +176,10 @@ HERMES_STARS_MNEMONIC="inherit shallow bargain explain fence vocal fury perfect 
 
 # RELAYER
 RELAYER_CMD="$SCRIPT_DIR/../build/relayer --home $STATE/relayer"
-RELAYER_GAIA_EXEC="docker-compose run --rm relayer-gaia"
-RELAYER_JUNO_EXEC="docker-compose run --rm relayer-juno"
-RELAYER_OSMO_EXEC="docker-compose run --rm relayer-osmo"
-RELAYER_STARS_EXEC="docker-compose run --rm relayer-stars"
+RELAYER_GAIA_EXEC="$DOCKER_COMPOSE run --rm relayer-gaia"
+RELAYER_JUNO_EXEC="$DOCKER_COMPOSE run --rm relayer-juno"
+RELAYER_OSMO_EXEC="$DOCKER_COMPOSE run --rm relayer-osmo"
+RELAYER_STARS_EXEC="$DOCKER_COMPOSE run --rm relayer-stars"
 
 RELAYER_STRIDE_ACCT=rly1
 RELAYER_GAIA_ACCT=rly2

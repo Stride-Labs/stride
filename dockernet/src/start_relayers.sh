@@ -3,7 +3,7 @@
 set -eu 
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
-source ${SCRIPT_DIR}/config.sh
+source ${SCRIPT_DIR}/../config.sh
 
 for chain_id in ${HOST_CHAINS[@]}; do
     relayer_exec=$(GET_VAR_VALUE RELAYER_${chain_id}_EXEC)
@@ -26,6 +26,6 @@ for chain_id in ${HOST_CHAINS[@]}; do
     $relayer_exec rly transact link stride-${chain_name} >> $relayer_logs 2>&1
     echo "Done"
 
-    docker-compose up -d relayer-${chain_name}
-    docker-compose logs -f relayer-${chain_name} | sed -r -u "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2})?)?[mGK]//g" >> $relayer_logs 2>&1 &
+    $DOCKER_COMPOSE up -d relayer-${chain_name}
+    $DOCKER_COMPOSE logs -f relayer-${chain_name} | sed -r -u "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2})?)?[mGK]//g" >> $relayer_logs 2>&1 &
 done

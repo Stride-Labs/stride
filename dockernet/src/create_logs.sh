@@ -4,7 +4,7 @@
 set -eu
 SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &>/dev/null && pwd)
 
-source ${SCRIPT_DIR}/config.sh
+source ${SCRIPT_DIR}/../config.sh
 
 LOGS_DIR=$SCRIPT_DIR/logs
 TEMP_LOGS_DIR=$LOGS_DIR/temp

@@ -3,7 +3,7 @@
 set -eu 
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
-source ${SCRIPT_DIR}/config.sh
+source ${SCRIPT_DIR}/../config.sh
 
 for chain_id in STRIDE ${HOST_CHAINS[@]}; do
     num_nodes=$(GET_VAR_VALUE ${chain_id}_NUM_NODES)
@@ -13,9 +13,9 @@ for chain_id in STRIDE ${HOST_CHAINS[@]}; do
 
     echo "Starting $chain_id chain"
     nodes_names=$(i=1; while [ $i -le $num_nodes ]; do printf "%s " ${node_prefix}${i}; i=$(($i + 1)); done;)
-    docker-compose up -d $nodes_names
+    $DOCKER_COMPOSE up -d $nodes_names
 
-    docker-compose logs -f ${node_prefix}1 | sed -r -u "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2})?)?[mGK]//g" > $log_file 2>&1 &
+    $DOCKER_COMPOSE logs -f ${node_prefix}1 | sed -r -u "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2})?)?[mGK]//g" > $log_file 2>&1 &
 done
 
 for chain_id in STRIDE ${HOST_CHAINS[@]}; do

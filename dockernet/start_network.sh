@@ -6,19 +6,18 @@ source ${SCRIPT_DIR}/config.sh
 
 # cleanup any stale state
 make stop-docker
-rm -rf $SCRIPT_DIR/state $SCRIPT_DIR/logs/*.log $SCRIPT_DIR/logs/temp
-mkdir -p $SCRIPT_DIR/logs
-
-HERMES_LOGS=$SCRIPT_DIR/logs/hermes.log
+rm -rf $STATE $LOGS 
+mkdir -p $STATE
+mkdir -p $LOGS
 
 # If we're testing an upgrade, setup cosmovisor
 if [[ "$UPGRADE_NAME" != "" ]]; then
     printf "\n>>> UPGRADE ENABLED! ($UPGRADE_NAME)\n\n"
     
     # Update binary #2 with the binary that was just compiled
-    mkdir -p $SCRIPT_DIR/upgrades/binaries
-    rm -f $SCRIPT_DIR/upgrades/binaries/strided2
-    cp $SCRIPT_DIR/../build/strided $SCRIPT_DIR/upgrades/binaries/strided2
+    mkdir -p $UPGRADES/binaries
+    rm -f $UPGRADES/binaries/strided2
+    cp $SCRIPT_DIR/../build/strided $UPGRADES/binaries/strided2
 
     # Build a cosmovisor image with the old binary and replace the stride docker image with a new one
     #  that has both binaries and is running cosmovisor
@@ -28,29 +27,29 @@ if [[ "$UPGRADE_NAME" != "" ]]; then
         -t stridezone:cosmovisor \
         --build-arg old_commit_hash=$UPGRADE_OLD_COMMIT_HASH \
         --build-arg stride_admin_address=$STRIDE_ADMIN_ADDRESS \
-        -f ${SCRIPT_DIR}/upgrades/Dockerfile.cosmovisor .
+        -f $UPGRADES/Dockerfile.cosmovisor .
 
     echo "Re-Building Stride with Upgrade Support..."
     docker build \
         -t stridezone:stride \
         --build-arg upgrade_name=$UPGRADE_NAME \
-        -f ${SCRIPT_DIR}/upgrades/Dockerfile.stride .
+        -f $UPGRADES/Dockerfile.stride .
 
     echo "Done"
 fi
 
 # Initialize the state for each chain
 for chain_id in STRIDE ${HOST_CHAINS[@]}; do
-    bash ${SCRIPT_DIR}/init_chain.sh $chain_id
+    bash $SRC/init_chain.sh $chain_id
 done
 
 # Start the chain and create the transfer channels
-bash ${SCRIPT_DIR}/start_chain.sh 
-bash ${SCRIPT_DIR}/start_relayers.sh 
+bash $SRC/start_chain.sh 
+bash $SRC/start_relayers.sh 
 
 # Register all host zones 
 for i in ${!HOST_CHAINS[@]}; do
-    bash $SCRIPT_DIR/register_host.sh ${HOST_CHAINS[$i]} $i 
+    bash $SRC/register_host.sh ${HOST_CHAINS[$i]} $i 
 done
 
-$SCRIPT_DIR/create_logs.sh &
+$SRC/create_logs.sh &

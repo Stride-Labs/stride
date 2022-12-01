@@ -2,7 +2,7 @@
 
 set -eu
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
-source $SCRIPT_DIR/config.sh
+source $SCRIPT_DIR/../config.sh
 
 CHAIN="$1"
 HOST_ZONE_NUM="$2"

@@ -2,7 +2,7 @@
 
 ## Dockernet
 ### Adding a new host zone
-* Create a new dockerfile at the root level (`Dockerfile.{new-host-zone}`). Use one of the other host zone's dockerfile's as a starting port to provide the certain boilerplate such as the package installs, adding user, exposing ports, etc. 
+* Create a new dockerfile to `dockernet/dockerfiles` (named `Dockerfile.{new-host-zone}`). Use one of the other host zone's dockerfile's as a starting port to provide the certain boilerplate such as the package installs, adding user, exposing ports, etc. 
 * Add the repo as a submodule
 ```
 git submodule add {repo-url} deps/{new-host-zone}
@@ -21,7 +21,7 @@ while getopts sgojhir{n} flag; do
    ...
    n) build_local_and_docker {new-host-zone} deps/{new-host-zone} ;;  
 ```
-* Add the host zone to the docker compose filein the root level of the stride directory. Add 5 nodes and add the port forwarding to the first node only. Drop the RPC port number by 100, and the API/gRPC port by 10, relative to the last host zone that was added.
+* Add the host zone to the docker compose file. Add 5 nodes and add the port forwarding to the first node only. Drop the RPC port number by 100, and the API/gRPC port by 10, relative to the last host zone that was added.
 ```
   {new-host-zone}1:
     image: stridezone:{new-host-zone}

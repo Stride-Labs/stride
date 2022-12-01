@@ -7,6 +7,7 @@ COMMIT := $(shell git log -1 --format='%H')
 DOCKER := $(shell which docker)
 DOCKER_BUF := $(DOCKER) run --rm -v $(CURDIR):/workspace --workdir /workspace bufbuild/buf:1.7.0
 DOCKERNET_HOME=./dockernet
+DOCKERNET_COMPOSE_FILE=$(DOCKERNET_HOME)/docker-compose.yml
 
 # process build tags
 
@@ -116,15 +117,15 @@ start-docker: build-docker
 	@bash $(DOCKERNET_HOME)/start_network.sh 
 
 clean-docker: 
-	@docker-compose stop
-	@docker-compose down
+	@docker-compose -f $(DOCKERNET_COMPOSE_FILE) stop 
+	@docker-compose -f $(DOCKERNET_COMPOSE_FILE) down 
 	rm -rf $(DOCKERNET_HOME)/state
 	docker image prune -a
 	
 stop-docker:
-	@-pkill -f "docker-compose logs" 
+	@-pkill -f "docker-compose -f $(DOCKERNET_COMPOSE_FILE) logs" 
 	@-pkill -f "/bin/bash.*create_logs.sh" 
-	docker-compose down
+	docker-compose -f $(DOCKERNET_COMPOSE_FILE) down
 
 ###############################################################################
 ###                                Protobuf                                 ###
