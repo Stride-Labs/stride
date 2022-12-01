@@ -75,7 +75,7 @@ while getopts sgojthr flag; do
       t) build_local_and_docker stars deps/stargaze ;;
       r) build_local_and_docker relayer deps/relayer ;;  
       h) echo "Building Hermes Docker... ";
-         docker build --tag stridezone:hermes -f Dockerfile.hermes . ;
+         docker build --tag stridezone:hermes -f dockernet/dockerfiles/Dockerfile.hermes . ;
 
          printf '%s' "Building Hermes Locally... ";
          cd deps/hermes; 

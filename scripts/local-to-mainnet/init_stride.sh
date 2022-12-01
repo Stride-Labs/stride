@@ -8,9 +8,6 @@ STATE=$SCRIPT_DIR/../state
 LOGS=$SCRIPT_DIR/../logs
 KEYS_LOGS=$LOGS/keys.log
 
-mkdir -p $STATE
-mkdir -p $LOGS
-
 # CHAIN PARAMS
 BLOCK_TIME='5s'
 STRIDE_DAY_EPOCH_DURATION="120s"
