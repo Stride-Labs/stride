@@ -6,8 +6,6 @@ SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &>/dev/null && pwd)
 
 source ${SCRIPT_DIR}/vars.sh
 
-HOST_CHAINS="$@"
-
 LOGS_DIR=$SCRIPT_DIR/logs
 TEMP_LOGS_DIR=$LOGS_DIR/temp
 
