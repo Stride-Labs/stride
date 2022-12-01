@@ -57,7 +57,7 @@ then
     VALIDATOR_CONSENSUS_ADDRESS=$(strided tendermint show-address --home $STRIDE_HOME)
 
     python3 -u testnetify.py \
-    -i /stride/state_export.json \
+    -i /home/stride/state_export.json \
     -o $CONFIG_FOLDER/genesis.json \
     -c $CHAIN_ID \
     --validator-hex-address $VALIDATOR_HEX_ADDRESS \

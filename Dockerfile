@@ -1,14 +1,11 @@
 # syntax = docker/dockerfile:1
 
-ARG GO_VERSION="1.18"
-ARG RUNNER_IMAGE="gcr.io/distroless/static"
+ARG GO_VERSION="1.19"
+ARG RUNNER_IMAGE="alpine:3.16"
 
 FROM golang:${GO_VERSION}-alpine as builder
 
-ARG GIT_VERSION
-ARG GIT_COMMIT
-
-WORKDIR /stride
+WORKDIR /opt
 RUN apk add --no-cache make git gcc musl-dev openssl-dev linux-headers
 
 COPY go.mod .
@@ -26,11 +23,15 @@ RUN LINK_STATICALLY=true make build
 # Add to a distroless container
 FROM ${RUNNER_IMAGE}
 
-COPY --from=builder /stride/build/strided /bin/strided
+COPY --from=builder /opt/build/strided /usr/local/bin/strided
+RUN apk add bash vim \
+    && addgroup -g 1000 stride \
+    && adduser -S -h /home/stride -D stride -u 1000 -G stride
 
-ENV HOME /stride
+USER 1000
+ENV HOME /home/stride
 WORKDIR $HOME
 
 EXPOSE 26657 26656 1317 9090
 
-ENTRYPOINT ["strided"]
+CMD ["strided", "start"]

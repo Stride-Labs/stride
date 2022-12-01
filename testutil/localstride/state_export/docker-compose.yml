@@ -6,17 +6,16 @@ services:
     image: local:stride
     build:
       context: ../../../
-      dockerfile: Dockerfile.localstride
       args:
         RUNNER_IMAGE: alpine:3.16
-        GO_VERSION: 1.18
+        GO_VERSION: 1.19
     volumes:
-      - ./scripts/start.sh:/stride/start.sh
-      - ./scripts/testnetify.py:/stride/testnetify.py
-      - ./state_export.json:/stride/state_export.json
-      - $HOME/.stride/:/stride/.stride/
+      - ./scripts/start.sh:/home/stride/start.sh
+      - ./scripts/testnetify.py:/home/stride/testnetify.py
+      - ./state_export.json:/home/stride/state_export.json
+      - $HOME/.stride/:/home/stride/.stride/
     entrypoint:
-      - /stride/start.sh
+      - /home/stride/start.sh
     environment:
       - MONIKER=val
       - CHAIN_ID=localstride

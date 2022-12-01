@@ -28,7 +28,7 @@ build_local_and_docker() {
 
    echo "Building $title Docker...  "
    if [[ "$module" == "stride" ]]; then
-      image=Dockerfile.stride
+      image=Dockerfile
    else
       image=dockernet/dockerfiles/Dockerfile.$module
    fi
