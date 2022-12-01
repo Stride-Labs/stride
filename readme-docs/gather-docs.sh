@@ -1,4 +1,4 @@
-for f in $(find "./x" -type f -name "*.md" -not -path "deps/*" \
+for f in $(find "./x" -type f -name "*.md"  \ # -not -path "deps/*"
             -not -path "scripts/*" \
             -not -path "readme-docs/*"
         )
