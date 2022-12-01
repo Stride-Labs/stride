@@ -1,0 +1,6 @@
+.github
+.vscode
+build
+deps
+scripts
+scripts-local

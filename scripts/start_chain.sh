@@ -5,14 +5,7 @@ SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
 source ${SCRIPT_DIR}/vars.sh
 
-# Pass the CHAIN_ID's of the chains to start
-CHAINS="$@"
-if [[ "$CHAINS" == "" ]]; then
-    echo "ERROR: Please specify chain IDs to start"
-    exit 1
-fi
-
-for chain_id in ${CHAINS[@]}; do
+for chain_id in STRIDE ${HOST_CHAINS[@]}; do
     num_nodes=$(GET_VAR_VALUE ${chain_id}_NUM_NODES)
     node_prefix=$(GET_VAR_VALUE ${chain_id}_NODE_PREFIX)
 
@@ -25,7 +18,7 @@ for chain_id in ${CHAINS[@]}; do
     docker-compose logs -f ${node_prefix}1 | sed -r -u "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2})?)?[mGK]//g" > $log_file 2>&1 &
 done
 
-for chain_id in ${CHAINS[@]}; do
+for chain_id in STRIDE ${HOST_CHAINS[@]}; do
     printf "Waiting for $chain_id to start..."
 
     node_prefix=$(GET_VAR_VALUE ${chain_id}_NODE_PREFIX)

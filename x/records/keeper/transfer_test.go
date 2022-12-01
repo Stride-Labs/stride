@@ -55,3 +55,19 @@ func (s *KeeperTestSuite) TestTransfer_Successful() {
 	s.Require().True(found)
 	s.Require().Equal(record.Status, recordtypes.DepositRecord_TRANSFER_IN_PROGRESS, "deposit record status should be TRANSFER_IN_PROGRESS")
 }
+
+func (s *KeeperTestSuite) TestSequence_Equal() {
+	tc := s.SetupTransfer()
+	goCtx := sdk.WrapSDKContext(s.Ctx())
+	sequence, found := s.App.IBCKeeper.ChannelKeeper.GetNextSequenceSend(s.Ctx(),
+		tc.transferMsg.SourcePort, tc.transferMsg.SourceChannel)
+	s.Require().True(found)
+
+	msgTransferResponse, err := s.App.TransferKeeper.Transfer(goCtx, &tc.transferMsg)
+	s.Require().NoError(err)
+
+	checkSequence := msgTransferResponse.Sequence
+
+	// Confirm msg sequence are equal to next sequence
+	s.Require().Equal(checkSequence, sequence, "sequence should be equal")
+}
