@@ -6,6 +6,7 @@ cache=false
 COMMIT := $(shell git log -1 --format='%H')
 DOCKER := $(shell which docker)
 DOCKER_BUF := $(DOCKER) run --rm -v $(CURDIR):/workspace --workdir /workspace bufbuild/buf:1.7.0
+DOCKERNET_HOME=./dockernet
 
 # process build tags
 
@@ -79,9 +80,6 @@ install: go.sum
 clean: 
 	rm -rf $(BUILDDIR)/* 
 
-clean-state:
-	rm -rf scripts-local/state
-
 ###############################################################################
 ###                                CI                                       ###
 ###############################################################################
@@ -104,26 +102,23 @@ test-unit:
 test-cover:
 	@go test -mod=readonly -race -coverprofile=coverage.out -covermode=atomic ./x/$(module)/...
 
-test-integration-local:
-	bash scripts-local/tests/run_all_tests.sh
-
 test-integration-docker:
-	bash scripts/tests/run_all_tests.sh
+	bash $(DOCKERNET_HOME)/tests/run_all_tests.sh
 
 ###############################################################################
 ###                                DockerNet                                ###
 ###############################################################################
 
 build-docker: 
-	@bash scripts/build.sh -${build} ${BUILDDIR}
+	@bash $(DOCKERNET_HOME)/build.sh -${build} ${BUILDDIR}
 	
 start-docker: build-docker
-	@bash scripts/start_network.sh 
+	@bash $(DOCKERNET_HOME)/start_network.sh 
 
 clean-docker: 
 	@docker-compose stop
 	@docker-compose down
-	rm -rf scripts/state
+	rm -rf $(DOCKERNET_HOME)/state
 	docker image prune -a
 	
 stop-docker:

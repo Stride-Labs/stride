@@ -3,7 +3,7 @@ SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 source ${SCRIPT_DIR}/vars.sh
 
 # First, start the network with `make start-docker`
-# Then, run this script with `bash scripts/airdrop.sh`
+# Then, run this script with `bash dockernet/test-util/airdrop.sh`
 
 # NOTE: First, store the keys using the following mnemonics
 # distributor address: stride1z835j3j65nqr6ng257q0xkkc9gta72gf48txwl

@@ -1,4 +1,4 @@
-`/scripts` contains (unmaintained) infrastructure that was used for early testing and development of the Stride protocol. The scripts here support docker-image based testing, some of which are heavily inspired by those used by Osmosis and Quicksilver (although there have been deviations from the original implementations since). The relevant licenses are included here.
+`/dockernet` contains (unmaintained) infrastructure that was used for early testing and development of the Stride protocol. The scripts here support docker-image based testing, some of which are heavily inspired by those used by Osmosis and Quicksilver (although there have been deviations from the original implementations since). The relevant licenses are included here.
 
 ## Dockernet
 ### Adding a new host zone
@@ -14,7 +14,7 @@ git checkout {commit-hash}
 cd ..
 ```
 * Add a comment to `.gitmodules` with the commit hash
-* Add the build command for that host zone in `scripts/build.sh` (`n` is used as an example below - use the first letter of the host zone)
+* Add the build command for that host zone in `dockernet/build.sh` (`n` is used as an example below - use the first letter of the host zone)
 ```
 while getopts sgojhir{n} flag; do
    case "${flag}" in
@@ -26,7 +26,7 @@ while getopts sgojhir{n} flag; do
   {new-host-zone}1:
     image: stridezone:{new-host-zone}
     volumes:
-      - ./scripts/state/{new-host-zone}1:/home/{new-host-zone}/.{new-host-zone}
+      - ./dockernet/state/{new-host-zone}1:/home/{new-host-zone}/.{new-host-zone}
     ports:
       - "{rpc-port}:26657"
       - "{api-port}:1317"
@@ -35,16 +35,16 @@ while getopts sgojhir{n} flag; do
   {new-host-zone}2:
     image: stridezone:{new-host-zone}
     volumes:
-      - ./scripts/state/{new-host-zone}2:/home/{new-host-zone}/.{new-host-zone}
+      - ./dockernet/state/{new-host-zone}2:/home/{new-host-zone}/.{new-host-zone}
 
     ...
 
   {new-host-zone}5:
     image: stridezone:{new-host-zone}
     volumes:
-      - ./scripts/state/{new-host-zone}5:/home/{new-host-zone}/.{new-host-zone}
+      - ./dockernet/state/{new-host-zone}5:/home/{new-host-zone}/.{new-host-zone}
 ```
-* Add the following parameters to `scripts/vars.sh`, where `CHAIN` is the ID of the new host zone
+* Add the following parameters to `dockernet/vars.sh`, where `CHAIN` is the ID of the new host zone
 ```
 {CHAIN}_CHAIN_ID={NEW-HOST-ZONE}
 {CHAIN}_NODE_PREFIX={new-host-zone}
@@ -80,7 +80,7 @@ func (s *KeeperTestSuite) TestIBCDenom() {
 	}
 }
 ```
-* Add a section to the `scripts/config/relayer_config.yaml`
+* Add a section to the `dockernet/config/relayer_config.yaml`
 ```
 chains:
   ...
@@ -110,7 +110,7 @@ paths:
       rule: ""
       channel-list: []
 ```
-* To enable the the new host zone, include it in the `HOST_CHAINS` array in `scripts/vars.sh`. **Note: You can only run up to 4 host zones at once.**
+* To enable the the new host zone, include it in the `HOST_CHAINS` array in `dockernet/vars.sh`. **Note: You can only run up to 4 host zones at once.**
 ```
 HOST_CHAINS=(GAIA {NEW-HOST-ZONE})
 ```
