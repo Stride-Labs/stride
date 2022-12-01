@@ -17,7 +17,7 @@ setup_file() {
 
   # set allows us to export all variables in account_vars
   set -a
-  source scripts/vars.sh
+  source scripts/config.sh
 
   HOST_CHAIN_ID=$(GET_VAR_VALUE  ${CHAIN_NAME}_CHAIN_ID)
   HOST_DENOM=$(GET_VAR_VALUE     ${CHAIN_NAME}_DENOM)

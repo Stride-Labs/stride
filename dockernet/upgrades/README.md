@@ -11,8 +11,8 @@ cp build/strided dockernet/upgrades/binaries/strided1
 git checkout {UPDATED_BRANCH}
 ```
 * Then switch the code back to the most recent version 
-* Enter the commit hash of the old binary (built above) as `UPGRADE_OLD_COMMIT_HASH` in `dockernet/vars.sh`
-* Enter upgrade name as `UPGRADE_NAME` in `dockernet/vars.sh`
+* Enter the commit hash of the old binary (built above) as `UPGRADE_OLD_COMMIT_HASH` in `dockernet/config.sh`
+* Enter upgrade name as `UPGRADE_NAME` in `dockernet/config.sh`
 * Then startup the chain as normal and rebuild stride
 ```
 make start-docker build=s
@@ -35,5 +35,5 @@ bash dockernet/upgrades/submit_upgrade.sh
 * Run integration tests for GAIA and JUNO (comment out OSMO and STARS in `dockernet/tests/run_all_tests.sh`)
 * Once the tests pass, grab the current block height, modify `dockernet/upgrades/submit_upgrade.sh` to have an upgrade height ~50 blocks in the future, and run the script
 * Check the stride logs to confirm the upgrade passes successfully
-* Modify `STRIDE_CMD` in `vars.sh` to point to the **new** binary (`STRIDE_CMD="$SCRIPT_DIR/upgrades/binaries/strided2"`)
+* Modify `STRIDE_CMD` in `config.sh` to point to the **new** binary (`STRIDE_CMD="$SCRIPT_DIR/upgrades/binaries/strided2"`)
 * Finally, run integration tests for OSMO and STARS (comment out GAIA and JUNO in `dockernet/tests/run_all_tests.sh`)

@@ -1,7 +1,7 @@
 ### LIQ STAKE 
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
-source ${SCRIPT_DIR}/../vars.sh
+source ${SCRIPT_DIR}/../config.sh
 
 # check balances before claiming redeemed stake
 $GAIA_MAIN_CMD q bank balances $GAIA_RECEIVER_ACCT

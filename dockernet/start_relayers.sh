@@ -3,7 +3,7 @@
 set -eu 
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
-source ${SCRIPT_DIR}/vars.sh
+source ${SCRIPT_DIR}/config.sh
 
 for chain_id in ${HOST_CHAINS[@]}; do
     relayer_exec=$(GET_VAR_VALUE RELAYER_${chain_id}_EXEC)

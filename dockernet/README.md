@@ -44,7 +44,7 @@ while getopts sgojhir{n} flag; do
     volumes:
       - ./dockernet/state/{new-host-zone}5:/home/{new-host-zone}/.{new-host-zone}
 ```
-* Add the following parameters to `dockernet/vars.sh`, where `CHAIN` is the ID of the new host zone
+* Add the following parameters to `dockernet/config.sh`, where `CHAIN` is the ID of the new host zone
 ```
 {CHAIN}_CHAIN_ID={NEW-HOST-ZONE}
 {CHAIN}_NODE_PREFIX={new-host-zone}
@@ -65,7 +65,7 @@ RELAYER_{CHAIN}_MNEMONIC=""
 RELAYER_MNEMONICS=(...,"$RELAYER_{CHAIN}_MNEMONIC")
 
 ```
-* Add the IBC denom's for the host zone across each channel to `vars.sh` (e.g. `IBC_{HOST}_CHANNEL_{N}_DENOM)`). You can use the following code block to generate the variables (just temporarily throw it in any of the test files, run it, and copy the output to `vars.sh`)
+* Add the IBC denom's for the host zone across each channel to `config.sh` (e.g. `IBC_{HOST}_CHANNEL_{N}_DENOM)`). You can use the following code block to generate the variables (just temporarily throw it in any of the test files, run it, and copy the output to `config.sh`)
 ```
 import transfertypes "github.com/cosmos/ibc-go/v3/modules/apps/transfer/types"
 
@@ -110,7 +110,7 @@ paths:
       rule: ""
       channel-list: []
 ```
-* To enable the the new host zone, include it in the `HOST_CHAINS` array in `dockernet/vars.sh`. **Note: You can only run up to 4 host zones at once.**
+* To enable the the new host zone, include it in the `HOST_CHAINS` array in `dockernet/config.sh`. **Note: You can only run up to 4 host zones at once.**
 ```
 HOST_CHAINS=(GAIA {NEW-HOST-ZONE})
 ```
