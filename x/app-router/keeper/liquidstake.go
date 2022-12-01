@@ -22,37 +22,21 @@ func (k Keeper) TryLiquidStaking(
 	ack ibcexported.Acknowledgement,
 ) ibcexported.Acknowledgement {
 	// recalculate denom, skip checks that were already done in app.OnRecvPacket
-	var err error
-	// TODO put denom handling in separate function
 	var denom string
-	// in this case, we can't process a liquid staking transaction, because we're dealing with STRD tokens
+	// In this case, we can't process a liquid staking transaction, because we're dealing with STRD tokens
 	if transfertypes.ReceiverChainIsSource(packet.GetSourcePort(), packet.GetSourceChannel(), newData.Denom) {
-		// remove prefix added by sender chain
-		voucherPrefix := transfertypes.GetDenomPrefix(packet.GetSourcePort(), packet.GetSourceChannel())
-		unprefixedDenom := newData.Denom[len(voucherPrefix):]
-
-		// coin denomination used in sending from the escrow address
-		denom = unprefixedDenom
-
-		// The denomination used to send the coins is either the native denom or the hash of the path
-		// if the denomination is not native.
-		denomTrace := transfertypes.ParseDenomTrace(unprefixedDenom)
-		if denomTrace.Path != "" {
-			denom = denomTrace.IBCDenom()
-		}
-		// TODO: can we just delete the above code?
-		return ack
+		return channeltypes.NewErrorAcknowledgement("not a supported token for liquid staking")
 	} else {
 		prefixedDenom := transfertypes.GetDenomPrefix(packet.GetDestPort(), packet.GetDestChannel()) + newData.Denom
 		denom = transfertypes.ParseDenomTrace(prefixedDenom).BaseDenom
 	}
 	amount, ok := sdk.NewIntFromString(newData.Amount)
 	if !ok {
-		channeltypes.NewErrorAcknowledgement("not a parsable amount field")
+		return channeltypes.NewErrorAcknowledgement("not a parsable amount field")
 	}
 	var token = sdk.NewCoin(denom, amount)
 
-	err = k.RunLiquidStake(ctx, parsedReceiver.StrideAccAddress, token, []metrics.Label{})
+	err := k.RunLiquidStake(ctx, parsedReceiver.StrideAccAddress, token, []metrics.Label{})
 	if err != nil {
 		ack = channeltypes.NewErrorAcknowledgement(err.Error())
 	}
@@ -61,10 +45,6 @@ func (k Keeper) TryLiquidStaking(
 
 func (k Keeper) RunLiquidStake(ctx sdk.Context, addr sdk.AccAddress, token sdk.Coin, labels []metrics.Label) error {
 	msg := &stakeibctypes.MsgLiquidStake{
-		// TODO: do we need a creator here?
-		// we could use the recipient...
-		// it's a bit strange because this address didn't "create" the liquid stake transaction
-		// TODO: check that we don't have assumptions around the creator of a message
 		Creator:   addr.String(),
 		Amount:    token.Amount.Uint64(),
 		HostDenom: token.Denom,
