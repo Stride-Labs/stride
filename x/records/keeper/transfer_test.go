@@ -58,8 +58,8 @@ func (s *KeeperTestSuite) TestTransfer_Successful() {
 
 func (s *KeeperTestSuite) TestSequence_Equal() {
 	tc := s.SetupTransfer()
-	goCtx := sdk.WrapSDKContext(s.Ctx())
-	sequence, found := s.App.IBCKeeper.ChannelKeeper.GetNextSequenceSend(s.Ctx(),
+	goCtx := sdk.WrapSDKContext(s.Ctx)
+	sequence, found := s.App.IBCKeeper.ChannelKeeper.GetNextSequenceSend(s.Ctx,
 		tc.transferMsg.SourcePort, tc.transferMsg.SourceChannel)
 	s.Require().True(found)
 
