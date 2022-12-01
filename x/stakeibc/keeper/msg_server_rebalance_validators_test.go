@@ -32,7 +32,7 @@ func (s *KeeperTestSuite) SetupRebalanceValidators() RebalanceValidatorsTestCase
 		EpochNumber:        epochNumber,
 		NextEpochStartTime: uint64(s.Coordinator.CurrentTime.UnixNano() + 30_000_000_000), // dictates timeouts
 	}
-	s.App.StakeibcKeeper.SetEpochTracker(s.Ctx(), epochTracker)
+	s.App.StakeibcKeeper.SetEpochTracker(s.Ctx, epochTracker)
 
 	// define validators for host zone
 	initialValidators := []*stakeibctypes.Validator{
@@ -90,7 +90,7 @@ func (s *KeeperTestSuite) SetupRebalanceValidators() RebalanceValidatorsTestCase
 		},
 		HostDenom: "uatom",
 	}
-	s.App.StakeibcKeeper.SetHostZone(s.Ctx(), hostZone)
+	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
 
 	// base valid messages
 	validMsgs := []stakeibctypes.MsgRebalanceValidators{
@@ -117,18 +117,18 @@ func (s *KeeperTestSuite) SetupRebalanceValidators() RebalanceValidatorsTestCase
 func (s *KeeperTestSuite) TestRebalanceValidators_Successful() {
 	tc := s.SetupRebalanceValidators()
 
-	hz, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx(), "GAIA")
+	hz, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, "GAIA")
 	s.Require().True(found, "host zone should exist")
 	validators := hz.GetValidators()
 	s.Require().Equal(5, len(validators), "host zone should have 5 validators")
 	// modify weight to 25
 	validators[0].Weight = 250
 	validators[2].Weight = 100
-	s.App.StakeibcKeeper.SetHostZone(s.Ctx(), hz)
+	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hz)
 
 	// get sequence ID for callbacks
 	portId := icatypes.PortPrefix + "GAIA.DELEGATION"
-	startSequence, found := s.App.IBCKeeper.ChannelKeeper.GetNextSequenceSend(s.Ctx(), portId, tc.delegationChannel)
+	startSequence, found := s.App.IBCKeeper.ChannelKeeper.GetNextSequenceSend(s.Ctx, portId, tc.delegationChannel)
 	s.Require().True(found, "sequence number not found before rebalance")
 
 	// Rebalance one validator
@@ -137,15 +137,15 @@ func (s *KeeperTestSuite) TestRebalanceValidators_Successful() {
 		HostZone:     "GAIA",
 		NumRebalance: 2,
 	}
-	_, err := s.GetMsgServer().RebalanceValidators(sdk.WrapSDKContext(s.Ctx()), &badMsg_rightWeights)
+	_, err := s.GetMsgServer().RebalanceValidators(sdk.WrapSDKContext(s.Ctx), &badMsg_rightWeights)
 	s.Require().NoError(err, "rebalancing with 2 validators should succeed")
 
 	// get stored callback data
 	callbackKey := icacallbackstypes.PacketID(portId, tc.delegationChannel, startSequence)
-	callbackData, found := s.App.StakeibcKeeper.ICACallbacksKeeper.GetCallbackData(s.Ctx(), callbackKey)
+	callbackData, found := s.App.StakeibcKeeper.ICACallbacksKeeper.GetCallbackData(s.Ctx, callbackKey)
 	s.Require().True(found, "callback should exist")
 	s.Require().Equal("rebalance", callbackData.CallbackId, "callback key should be rebalance")
-	callbackArgs, err := s.App.StakeibcKeeper.UnmarshalRebalanceCallbackArgs(s.Ctx(), callbackData.CallbackArgs)
+	callbackArgs, err := s.App.StakeibcKeeper.UnmarshalRebalanceCallbackArgs(s.Ctx, callbackData.CallbackArgs)
 	s.Require().NoError(err, "unmarshalling callback args error for callback key (%s)", callbackKey)
 	s.Require().Equal("GAIA", callbackArgs.HostZoneId, "callback host zone id should be GAIA")
 
@@ -170,7 +170,7 @@ func (s *KeeperTestSuite) TestRebalanceValidators_InvalidNumValidators() {
 		HostZone:     "GAIA",
 		NumRebalance: 0,
 	}
-	_, err := s.GetMsgServer().RebalanceValidators(sdk.WrapSDKContext(s.Ctx()), &badMsg_tooFew)
+	_, err := s.GetMsgServer().RebalanceValidators(sdk.WrapSDKContext(s.Ctx), &badMsg_tooFew)
 	expectedErrMsg := "invalid number of validators"
 	s.Require().EqualError(err, expectedErrMsg, "rebalancing 0 validators should fail")
 
@@ -180,7 +180,7 @@ func (s *KeeperTestSuite) TestRebalanceValidators_InvalidNumValidators() {
 		HostZone:     "GAIA",
 		NumRebalance: 5,
 	}
-	_, err = s.GetMsgServer().RebalanceValidators(sdk.WrapSDKContext(s.Ctx()), &badMsg_tooMany)
+	_, err = s.GetMsgServer().RebalanceValidators(sdk.WrapSDKContext(s.Ctx), &badMsg_tooMany)
 	s.Require().EqualError(err, expectedErrMsg, "rebalancing 5 validators should fail")
 }
 
@@ -193,7 +193,7 @@ func (s *KeeperTestSuite) TestRebalanceValidators_InvalidNoChange() {
 		HostZone:     "GAIA",
 		NumRebalance: 1,
 	}
-	_, err := s.GetMsgServer().RebalanceValidators(sdk.WrapSDKContext(s.Ctx()), &badMsg_rightWeights)
+	_, err := s.GetMsgServer().RebalanceValidators(sdk.WrapSDKContext(s.Ctx), &badMsg_rightWeights)
 	expectedErrMsg := "validator weights haven't changed"
 	s.Require().EqualError(err, expectedErrMsg, "rebalancing with weights set properly should fail")
 }
@@ -201,10 +201,10 @@ func (s *KeeperTestSuite) TestRebalanceValidators_InvalidNoChange() {
 func (s *KeeperTestSuite) TestRebalanceValidators_InvalidNoValidators() {
 	s.SetupRebalanceValidators()
 
-	hz, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx(), "GAIA")
+	hz, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, "GAIA")
 	s.Require().True(found, "host zone should exist")
 	hz.Validators = []*stakeibctypes.Validator{}
-	s.App.StakeibcKeeper.SetHostZone(s.Ctx(), hz)
+	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hz)
 
 	// Rebalance with all weights properly set should fail
 	badMsg_noValidators := stakeibctypes.MsgRebalanceValidators{
@@ -212,7 +212,7 @@ func (s *KeeperTestSuite) TestRebalanceValidators_InvalidNoValidators() {
 		HostZone:     "GAIA",
 		NumRebalance: 2,
 	}
-	_, err := s.GetMsgServer().RebalanceValidators(sdk.WrapSDKContext(s.Ctx()), &badMsg_noValidators)
+	_, err := s.GetMsgServer().RebalanceValidators(sdk.WrapSDKContext(s.Ctx), &badMsg_noValidators)
 	expectedErrMsg := "no non-zero validator weights"
 	s.Require().EqualError(err, expectedErrMsg, "rebalancing with no validators should fail")
 }
@@ -220,13 +220,13 @@ func (s *KeeperTestSuite) TestRebalanceValidators_InvalidNoValidators() {
 func (s *KeeperTestSuite) TestRebalanceValidators_InvalidAllValidatorsNoWeight() {
 	s.SetupRebalanceValidators()
 
-	hz, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx(), "GAIA")
+	hz, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, "GAIA")
 	s.Require().True(found, "host zone should exist")
 	validators := hz.GetValidators()
 	for _, v := range validators {
 		v.Weight = 0
 	}
-	s.App.StakeibcKeeper.SetHostZone(s.Ctx(), hz)
+	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hz)
 
 	// Rebalance with all weights properly set should fail
 	badMsg_noValidators := stakeibctypes.MsgRebalanceValidators{
@@ -234,7 +234,7 @@ func (s *KeeperTestSuite) TestRebalanceValidators_InvalidAllValidatorsNoWeight()
 		HostZone:     "GAIA",
 		NumRebalance: 2,
 	}
-	_, err := s.GetMsgServer().RebalanceValidators(sdk.WrapSDKContext(s.Ctx()), &badMsg_noValidators)
+	_, err := s.GetMsgServer().RebalanceValidators(sdk.WrapSDKContext(s.Ctx), &badMsg_noValidators)
 	expectedErrMsg := "no non-zero validator weights"
 	s.Require().EqualError(err, expectedErrMsg, "rebalancing with no validators should fail")
 }
@@ -242,13 +242,13 @@ func (s *KeeperTestSuite) TestRebalanceValidators_InvalidAllValidatorsNoWeight()
 func (s *KeeperTestSuite) TestRebalanceValidators_InvalidNotEnoughDiff() {
 	s.SetupRebalanceValidators()
 
-	hz, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx(), "GAIA")
+	hz, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, "GAIA")
 	s.Require().True(found, "host zone should exist")
 	validators := hz.GetValidators()
 	s.Require().Equal(5, len(validators), "host zone should have 5 validators")
 	// modify weight to 25
 	validators[0].Weight = 101
-	s.App.StakeibcKeeper.SetHostZone(s.Ctx(), hz)
+	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hz)
 
 	// Rebalance without enough difference should fail
 	badMsg_noValidators := stakeibctypes.MsgRebalanceValidators{
@@ -256,7 +256,7 @@ func (s *KeeperTestSuite) TestRebalanceValidators_InvalidNotEnoughDiff() {
 		HostZone:     "GAIA",
 		NumRebalance: 2,
 	}
-	_, err := s.GetMsgServer().RebalanceValidators(sdk.WrapSDKContext(s.Ctx()), &badMsg_noValidators)
+	_, err := s.GetMsgServer().RebalanceValidators(sdk.WrapSDKContext(s.Ctx), &badMsg_noValidators)
 	expectedErrMsg := "validator weights haven't changed"
 	s.Require().EqualError(err, expectedErrMsg, "rebalancing without sufficient change should fail")
 }

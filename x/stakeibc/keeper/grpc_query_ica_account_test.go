@@ -10,7 +10,7 @@ import (
 
 func (suite *KeeperTestSuite) TestICAAccountQuery() {
 	item := suite.createTestICAAccount()
-	wctx := sdk.WrapSDKContext(suite.Ctx())
+	wctx := sdk.WrapSDKContext(suite.Ctx)
 	for _, tc := range []struct {
 		desc     string
 		request  *types.QueryGetICAAccountRequest
