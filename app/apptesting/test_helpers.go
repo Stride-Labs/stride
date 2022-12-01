@@ -63,15 +63,6 @@ func (s *AppTestHelper) Setup() {
 
 }
 
-// Dynamically gets the context of the Host Chain
-func (s *AppTestHelper) HostCtx() sdk.Context {
-	// Host context can only be used if IBC support has been enabled
-	s.Require().NotNil(s.HostChain, "HostChain must be initialzed before accessing a context. "+
-		"To initailze run `s.SetupIBCChains(chainID)`, `s.CreateTransferChannel(chainID)` or `s.CreateICAChannel(owner)`")
-
-	return s.HostChain.GetContext()
-}
-
 // Mints coins directly to a module account
 func (s *AppTestHelper) FundModuleAccount(moduleName string, amount sdk.Coin) {
 	err := s.App.BankKeeper.MintCoins(s.Ctx, moduleName, sdk.NewCoins(amount))
