@@ -182,23 +182,9 @@ func (s *KeeperTestSuite) TestGetHostZoneUnbondingMsgs_NoEpochUnbondingRecords()
 func (s *KeeperTestSuite) TestGetHostZoneUnbondingMsgs_UnbodingTooMuch() {
 	name := "Unbonding too much"
 	var test = defaultUnbondingTestCase
-	test.validators = []*stakeibc.Validator{
-		{
-			Address:       hostVal1Addr,
-			DelegationAmt: 0,
-			Weight:        wgtVal1,
-		},
-		{
-			Address:       hostVal2Addr,
-			DelegationAmt: 0,
-			Weight:        wgtVal2,
-		},
-		{
-			Address: hostVal3Addr,
-			// DelegationAmt and Weight are the same as Val2, to test tie breaking
-			DelegationAmt: 0,
-			Weight:        wgtVal2,
-		},
+
+	for _, validator := range test.validators {
+		validator.DelegationAmt = 0
 	}
 	test.expectPass = false
 	test.expectErr = sdkerrors.Wrap(sdkerrors.ErrNotFound, fmt.Sprintf("Could not unbond %d on Host Zone %s, unable to balance the unbond amount across validators", uint64(2_000_000), "GAIA"))
@@ -207,22 +193,9 @@ func (s *KeeperTestSuite) TestGetHostZoneUnbondingMsgs_UnbodingTooMuch() {
 func (s *KeeperTestSuite) TestGetHostZoneUnbondingMsgs_NoNonzeroWeightValidator() {
 	name := "No non-zero weight validator"
 	var test = defaultUnbondingTestCase
-	test.validators = []*stakeibc.Validator{
-		{
-			Address:       hostVal1Addr,
-			DelegationAmt: amtVal1,
-			Weight:        0,
-		},
-		{
-			Address:       hostVal2Addr,
-			DelegationAmt: amtVal2,
-			Weight:        0,
-		},
-		{
-			Address:       hostVal3Addr,
-			DelegationAmt: amtVal2,
-			Weight:        0,
-		},
+
+	for _, validator := range test.validators {
+		validator.Weight = 0
 	}
 	test.expectErr = sdkerrors.Wrap(stakeibc.ErrNoValidatorAmts, fmt.Sprintf("Error getting target val amts for host zone %s %d: no non-zero validator weights", "GAIA", uint64(2_000_000)))
 	test.expectPass = false
@@ -316,22 +289,9 @@ func (s *KeeperTestSuite) TestDistributeUnbondingAmountToValidators_EmptyValidat
 func (s *KeeperTestSuite) TestDistributeUnbondingAmountToValidators_TotalWeightIsZero() {
 	name := "Total weight is zero"
 	var test = defaultUnbondingTestCase
-	test.validators = []*stakeibc.Validator{
-		{
-			Address:       hostVal1Addr,
-			DelegationAmt: amtVal1,
-			Weight:        0,
-		},
-		{
-			Address:       hostVal2Addr,
-			DelegationAmt: amtVal2,
-			Weight:        0,
-		},
-		{
-			Address:       hostVal3Addr,
-			DelegationAmt: amtVal2,
-			Weight:        0,
-		},
+
+	for _, validator := range test.validators {
+		validator.Weight = 0
 	}
 	test.expectPass = false
 	test.expectErr = sdkerrors.Wrap(stakeibc.ErrNoValidatorAmts, fmt.Sprintf("Error getting target val amts for host zone %s %d: no non-zero validator weights", "GAIA", uint64(1_000_000)))
@@ -343,23 +303,8 @@ func (s *KeeperTestSuite) TestDistributeUnbondingAmountToValidators_UnbondingToo
 	name := "Unbonding too much"
 	var test = defaultUnbondingTestCase
 	test.expectPass = false
-	test.validators = []*stakeibc.Validator{
-		{
-			Address:       hostVal1Addr,
-			DelegationAmt: 0,
-			Weight:        wgtVal1,
-		},
-		{
-			Address:       hostVal2Addr,
-			DelegationAmt: 0,
-			Weight:        wgtVal2,
-		},
-		{
-			Address: hostVal3Addr,
-			// DelegationAmt and Weight are the same as Val2, to test tie breaking
-			DelegationAmt: 0,
-			Weight:        wgtVal2,
-		},
+	for _, validator := range test.validators {
+		validator.DelegationAmt = 0
 	}
 	test.expectErr = sdkerrors.Wrap(sdkerrors.ErrNotFound, fmt.Sprintf("Could not unbond %d on Host Zone %s, unable to balance the unbond amount across validators", uint64(1_000_000), "GAIA"))
 
