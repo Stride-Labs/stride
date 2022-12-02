@@ -57,7 +57,7 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochInfo epochstypes.EpochInf
 	// process redemption records
 	if epochIdentifier == epochstypes.DAY_EPOCH {
 		// here, we process everything we need to for redemptions
-		k.Logger(ctx).Info(fmt.Sprintf("DAY EPOCH %d", epochNumber))
+		k.Logger(ctx).Info(utils.LogHeader("DAY EPOCH %d", epochNumber))
 		// first we initiate unbondings from any hostZone where it's appropriate
 		k.Logger(ctx).Info("InitiateAllHostZoneUnbondings")
 		k.InitiateAllHostZoneUnbondings(ctx, epochNumber)
@@ -73,7 +73,7 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochInfo epochstypes.EpochInf
 	}
 
 	if epochIdentifier == epochstypes.STRIDE_EPOCH {
-		k.Logger(ctx).Info(fmt.Sprintf("STRIDE EPOCH %d", epochNumber))
+		k.Logger(ctx).Info(utils.LogHeader("STRIDE EPOCH %d", epochNumber))
 
 		// Get cadence intervals
 		redemptionRateInterval := k.GetParam(ctx, types.KeyRedemptionRateInterval)

@@ -258,9 +258,9 @@ func (k Keeper) SubmitTxs(
 		return 0, err
 	}
 
-	k.Logger(ctx).Info(utils.LogWithHostZone(chainId, "Submitting ICA Tx on %s, %s with TTL: %d", portID, connectionId, timeoutTimestamp))
+	k.Logger(ctx).Info(utils.LogWithHostZone(chainId, "  Submitting ICA Tx on %s, %s with TTL: %d", portID, connectionId, timeoutTimestamp))
 	for _, msg := range msgs {
-		k.Logger(ctx).Info(utils.LogWithHostZone(chainId, "   Msg: %+v", msg))
+		k.Logger(ctx).Info(utils.LogWithHostZone(chainId, "    Msg: %+v", msg))
 	}
 
 	channelID, found := k.ICAControllerKeeper.GetActiveChannelID(ctx, connectionId, portID)

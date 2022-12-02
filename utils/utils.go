@@ -223,7 +223,18 @@ func ConvertAddressToStrideAddress(address string) string {
 }
 
 // Returns a log string with a tab and chainId as the prefix
+// Ex:
+//   | cosmoshub-4   |   string
 func LogWithHostZone(chainId string, s string, a ...any) string {
 	msg := fmt.Sprintf(s, a...)
 	return fmt.Sprintf("|   %-13s |  %s", chainId, msg)
+}
+
+// Returns a log header string with a dash padding on either side
+// Ex:
+//  ------------------------------ string ------------------------------
+func LogHeader(s string, a ...any) string {
+	pad := strings.Repeat("-", 40)
+	header := fmt.Sprintf(s, a...)
+	return fmt.Sprintf("%s %s %s", pad, header, pad)
 }
