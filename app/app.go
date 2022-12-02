@@ -519,7 +519,7 @@ func NewStrideApp(
 		keys[routertypes.StoreKey],
 		app.GetSubspace(routertypes.ModuleName),
 		app.StakeibcKeeper)
-	routerModule := router.NewAppModule(appCodec, app.RouterKeeper, app.AccountKeeper, app.BankKeeper)
+	routerModule := router.NewAppModule(appCodec, app.RouterKeeper)
 
 	// Register Gov (must be registerd after stakeibc)
 	govRouter := govtypes.NewRouter()
@@ -1017,7 +1017,7 @@ func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino
 	paramsKeeper.Subspace(icahosttypes.SubModuleName)
 	paramsKeeper.Subspace(recordsmoduletypes.ModuleName)
 	paramsKeeper.Subspace(icacallbacksmoduletypes.ModuleName)
-	paramsKeeper.Subspace(routertypes.ModuleName).WithKeyTable(routertypes.ParamKeyTable())
+	paramsKeeper.Subspace(routertypes.ModuleName)
 	// this line is used by starport scaffolding # stargate/app/paramSubspace
 
 	return paramsKeeper

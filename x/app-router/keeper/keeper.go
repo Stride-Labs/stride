@@ -15,7 +15,6 @@ import (
 
 type (
 	Keeper struct {
-		// *cosmosibckeeper.Keeper
 		Cdc            codec.BinaryCodec
 		storeKey       sdk.StoreKey
 		paramstore     paramtypes.Subspace
