@@ -6,8 +6,6 @@ SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &>/dev/null && pwd)
 
 source ${SCRIPT_DIR}/vars.sh
 
-HOST_CHAINS="$@"
-
 LOGS_DIR=$SCRIPT_DIR/logs
 TEMP_LOGS_DIR=$LOGS_DIR/temp
 
@@ -43,10 +41,10 @@ while true; do
     for chain_id in ${HOST_CHAINS[@]}; do
         HOST_MAIN_CMD=$(GET_VAR_VALUE ${chain_id}_MAIN_CMD)
 
-        DELEGATION_ICA_ADDR=$(GET_VAR_VALUE ${chain_id}_DELEGATION_ICA_ADDR)
-        REDEMPTION_ICA_ADDR=$(GET_VAR_VALUE ${chain_id}_REDEMPTION_ICA_ADDR)
-        WITHDRAWAL_ICA_ADDR=$(GET_VAR_VALUE ${chain_id}_WITHDRAWAL_ICA_ADDR)
-        FEE_ICA_ADDR=$(GET_VAR_VALUE ${chain_id}_FEE_ICA_ADDR)
+        DELEGATION_ICA_ADDR=$(GET_ICA_ADDR $chain_id delegation)
+        REDEMPTION_ICA_ADDR=$(GET_ICA_ADDR $chain_id redemption)
+        WITHDRAWAL_ICA_ADDR=$(GET_ICA_ADDR $chain_id withdrawal)
+        FEE_ICA_ADDR=$(GET_ICA_ADDR $chain_id fee)
 
         printf '\n%s\n' "==========================  $chain_id  =============================" >>$TEMP_LOGS_DIR/$BALANCES_LOG
 

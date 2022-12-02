@@ -118,22 +118,21 @@ func (k Keeper) AddHostZoneToEpochUnbondingRecord(ctx sdk.Context, epochNumber u
 	return &epochUnbondingRecord, true
 }
 
-// TODO: unittest
-func (k Keeper) SetHostZoneUnbondings(ctx sdk.Context, zone stakeibctypes.HostZone, epochUnbondingRecordIds []uint64, status types.HostZoneUnbonding_Status) error {
+func (k Keeper) SetHostZoneUnbondings(ctx sdk.Context, chainId string, epochUnbondingRecordIds []uint64, status types.HostZoneUnbonding_Status) error {
 	for _, epochUnbondingRecordId := range epochUnbondingRecordIds {
 		k.Logger(ctx).Info(fmt.Sprintf("Updating host zone unbondings on EpochUnbondingRecord %d to status %s", epochUnbondingRecordId, status.String()))
 		// fetch the host zone unbonding
-		hostZoneUnbonding, found := k.GetHostZoneUnbondingByChainId(ctx, epochUnbondingRecordId, zone.ChainId)
+		hostZoneUnbonding, found := k.GetHostZoneUnbondingByChainId(ctx, epochUnbondingRecordId, chainId)
 		if !found {
-			errMsg := fmt.Sprintf("Error fetching host zone unbonding record for epoch: %d, host zone: %s", epochUnbondingRecordId, zone.ChainId)
+			errMsg := fmt.Sprintf("Error fetching host zone unbonding record for epoch: %d, host zone: %s", epochUnbondingRecordId, chainId)
 			k.Logger(ctx).Error(errMsg)
 			return fmt.Errorf("%s: %s", errMsg, stakeibctypes.ErrHostZoneNotFound)
 		}
 		hostZoneUnbonding.Status = status
 		// save the updated hzu on the epoch unbonding record
-		updatedRecord, success := k.AddHostZoneToEpochUnbondingRecord(ctx, epochUnbondingRecordId, zone.ChainId, hostZoneUnbonding)
+		updatedRecord, success := k.AddHostZoneToEpochUnbondingRecord(ctx, epochUnbondingRecordId, chainId, hostZoneUnbonding)
 		if !success {
-			errMsg := fmt.Sprintf("Error adding host zone unbonding record to epoch unbonding record: %d, host zone: %s", epochUnbondingRecordId, zone.ChainId)
+			errMsg := fmt.Sprintf("Error adding host zone unbonding record to epoch unbonding record: %d, host zone: %s", epochUnbondingRecordId, chainId)
 			k.Logger(ctx).Error(errMsg)
 			return fmt.Errorf("%s: %s", errMsg, types.ErrAddingHostZone)
 		}

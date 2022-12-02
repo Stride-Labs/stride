@@ -5,8 +5,6 @@ SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
 source ${SCRIPT_DIR}/vars.sh
 
-HOST_CHAINS="$@"
-
 for chain_id in ${HOST_CHAINS[@]}; do
     relayer_exec=$(GET_VAR_VALUE RELAYER_${chain_id}_EXEC)
     chain_name=$(printf "$chain_id" | awk '{ print tolower($0) }')

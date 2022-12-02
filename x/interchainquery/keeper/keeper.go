@@ -44,26 +44,17 @@ func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 	return ctx.Logger().With("module", fmt.Sprintf("x/%s", types.ModuleName))
 }
 
-func (k *Keeper) MakeRequest(ctx sdk.Context, connectionId string, chainId string, queryType string, request []byte, period sdk.Int, module string, callbackId string, ttl uint64, height int64) error {
+func (k *Keeper) MakeRequest(ctx sdk.Context, module string, callbackId string, chainId string, connectionId string, queryType string, request []byte, ttl uint64) error {
 	k.Logger(ctx).Info(
 		"MakeRequest",
-		"connectionId", connectionId,
+		"module", module,
+		"callbackId", callbackId,
 		"chainId", chainId,
+		"connectionId", connectionId,
 		"queryType", queryType,
 		"request", request,
-		"period", period,
-		"module", module,
-		"callback", callbackId,
 		"ttl", ttl,
-		"height", height,
 	)
-
-	// Only 0 height queries are currently supported
-	if height != 0 {
-		errMsg := "[ICQ Validation Check] Failed! height for interchainquery must be 0 (we exclusively query at the latest height on the host zone)"
-		k.Logger(ctx).Error(errMsg)
-		return fmt.Errorf("%s: invalid request", errMsg)
-	}
 
 	// Confirm the connectionId and chainId are valid
 	if connectionId == "" {
@@ -96,21 +87,11 @@ func (k *Keeper) MakeRequest(ctx sdk.Context, connectionId string, chainId strin
 		}
 	}
 
-	// Check to see if the query already exists
-	key := GenerateQueryHash(connectionId, chainId, queryType, request, module, height)
-	query, found := k.GetQuery(ctx, key)
-
-	// If this is a new query, build the query object
-	if !found {
-		query = *k.NewQuery(ctx, module, connectionId, chainId, queryType, request, period, callbackId, ttl, height)
-	} else {
-		// Otherwise, if the same query is re-requested - reset the TTL
-		k.Logger(ctx).Info("Query already exists - resetting TTL")
-		query.Ttl = ttl
-		query.LastHeight = sdk.ZeroInt() // allows query to be emitted again
-	}
-
 	// Save the query to the store
+	// If the same query is re-requested, it will get replace in the store with an updated TTL
+	//  and the RequestSent bool reset to false
+	query := k.NewQuery(ctx, module, callbackId, chainId, connectionId, queryType, request, ttl)
 	k.SetQuery(ctx, query)
+
 	return nil
 }

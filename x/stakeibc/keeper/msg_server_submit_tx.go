@@ -160,17 +160,15 @@ func (k Keeper) UpdateWithdrawalBalance(ctx sdk.Context, zoneInfo types.HostZone
 	k.Logger(ctx).Info("Querying for value", "key", icqtypes.BANK_STORE_QUERY_WITH_PROOF, "denom", zoneInfo.HostDenom)
 	err = k.InterchainQueryKeeper.MakeRequest(
 		ctx,
-		zoneInfo.ConnectionId,
+		types.ModuleName,
+		ICQCallbackID_WithdrawalBalance,
 		zoneInfo.ChainId,
+		zoneInfo.ConnectionId,
 		// use "bank" store to access acct balances which live in the bank module
 		// use "key" suffix to retrieve a proof alongside the query result
 		icqtypes.BANK_STORE_QUERY_WITH_PROOF,
 		append(data, []byte(zoneInfo.HostDenom)...),
-		sdk.NewInt(-1),
-		types.ModuleName,
-		ICQCallbackID_WithdrawalBalance,
 		ttl, // ttl
-		0,   // height always 0 (which means current height)
 	)
 	if err != nil {
 		k.Logger(ctx).Error(fmt.Sprintf("Error querying for withdrawal balance, error: %s", err.Error()))
@@ -388,17 +386,15 @@ func (k Keeper) QueryValidatorExchangeRate(ctx sdk.Context, msg *types.MsgUpdate
 	k.Logger(ctx).Info(fmt.Sprintf("Querying validator %v, key %v, denom %v", msg.Valoper, icqtypes.STAKING_STORE_QUERY_WITH_PROOF, hostZone.ChainId))
 	err = k.InterchainQueryKeeper.MakeRequest(
 		ctx,
-		hostZone.ConnectionId,
+		types.ModuleName,
+		ICQCallbackID_Validator,
 		hostZone.ChainId,
+		hostZone.ConnectionId,
 		// use "staking" store to access validator which lives in the staking module
 		// use "key" suffix to retrieve a proof alongside the query result
 		icqtypes.STAKING_STORE_QUERY_WITH_PROOF,
 		data,
-		sdk.NewInt(-1),
-		types.ModuleName,
-		ICQCallbackID_Validator,
 		ttl, // ttl
-		0,   // height always 0 (which means current height)
 	)
 	if err != nil {
 		k.Logger(ctx).Error(fmt.Sprintf("Error querying for validator, error %s", err.Error()))
@@ -439,17 +435,15 @@ func (k Keeper) QueryDelegationsIcq(ctx sdk.Context, hostZone types.HostZone, va
 	k.Logger(ctx).Info(fmt.Sprintf("Querying delegation for %s on %s", delegationAcctAddr, valoper))
 	err = k.InterchainQueryKeeper.MakeRequest(
 		ctx,
-		hostZone.ConnectionId,
+		types.ModuleName,
+		ICQCallbackID_Delegation,
 		hostZone.ChainId,
+		hostZone.ConnectionId,
 		// use "staking" store to access delegation which lives in the staking module
 		// use "key" suffix to retrieve a proof alongside the query result
 		icqtypes.STAKING_STORE_QUERY_WITH_PROOF,
 		data,
-		sdk.NewInt(-1),
-		types.ModuleName,
-		ICQCallbackID_Delegation,
 		ttl, // ttl
-		0,   // height always 0 (which means current height)
 	)
 	if err != nil {
 		k.Logger(ctx).Error(fmt.Sprintf("Error querying for delegation, error : %s", err.Error()))
