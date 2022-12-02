@@ -44,25 +44,25 @@ while getopts sgojhir{n} flag; do
     volumes:
       - ./scripts/state/{new-host-zone}5:/home/{new-host-zone}/.{new-host-zone}
 ```
-* Add the following parameters to `scripts/vars.sh`, where `CHAIN_ID` is the ID of the new host zone
+* Add the following parameters to `scripts/vars.sh`, where `CHAIN` is the ID of the new host zone
 ```
-{CHAIN_ID}_CHAIN_ID={NEW-HOST-ZONE}
-{CHAIN_ID}_NODE_PREFIX={new-host-zone}
-{CHAIN_ID}_NUM_NODES=3
-{CHAIN_ID}_CMD="$SCRIPT_DIR/../build/{new-host-zone}d"
-{CHAIN_ID}_VAL_PREFIX={n}val
-{CHAIN_ID}_ADDRESS_PREFIX=stars
-{CHAIN_ID}_REV_ACCT={n}rev1
-{CHAIN_ID}_DENOM={add denom as a constant at the top of the script and then reference here}
-{CHAIN_ID}_RPC_PORT={the one included in the docker-compose above}
-{CHAIN_ID}_MAIN_CMD="${CHAIN_ID}_CMD --home $SCRIPT_DIR/state/${${CHAIN_ID}_NODE_PREFIX}1"
+{CHAIN}_CHAIN_ID={NEW-HOST-ZONE}
+{CHAIN}_NODE_PREFIX={new-host-zone}
+{CHAIN}_NUM_NODES=3
+{CHAIN}_CMD="$SCRIPT_DIR/../build/{new-host-zone}d"
+{CHAIN}_VAL_PREFIX={n}val
+{CHAIN}_ADDRESS_PREFIX=stars
+{CHAIN}_REV_ACCT={n}rev1
+{CHAIN}_DENOM={add denom as a constant at the top of the script and then reference here}
+{CHAIN}_RPC_PORT={the one included in the docker-compose above}
+{CHAIN}_MAIN_CMD="${CHAIN}_CMD --home $SCRIPT_DIR/state/${${CHAIN}_NODE_PREFIX}1"
 
-RELAYER_{CHAIN_ID}_EXEC="docker-compose run --rm relayer-{new-host-zone}"
-RELAYER_{CHAIN_ID}_ACCT=rly{add one since the account from the last host zone}
-HOST_RELAYER_ACCTS=(... $RELAYER_{CHAIN_ID}_ACCT)
+RELAYER_{CHAIN}_EXEC="docker-compose run --rm relayer-{new-host-zone}"
+RELAYER_{CHAIN}_ACCT=rly{add one since the account from the last host zone}
+HOST_RELAYER_ACCTS=(... $RELAYER_{CHAIN}_ACCT)
 
-RELAYER_{CHAIN_ID}_MNEMONIC=""
-RELAYER_MNEMONICS=(...,"$RELAYER_{CHAIN_ID}_MNEMONIC")
+RELAYER_{CHAIN}_MNEMONIC=""
+RELAYER_MNEMONICS=(...,"$RELAYER_{CHAIN}_MNEMONIC")
 
 ```
 * Add the IBC denom's for the host zone across each channel to `vars.sh` (e.g. `IBC_{HOST}_CHANNEL_{N}_DENOM)`). You can use the following code block to generate the variables (just temporarily throw it in any of the test files, run it, and copy the output to `vars.sh`)
@@ -110,7 +110,7 @@ paths:
       rule: ""
       channel-list: []
 ```
-* To enable the the new host zone, include it in the `HOST_CHAINS` array in `scripts/start_network.sh`. **Note: You can only run up to 4 host zones at once.**
+* To enable the the new host zone, include it in the `HOST_CHAINS` array in `scripts/vars.sh`. **Note: You can only run up to 4 host zones at once.**
 ```
 HOST_CHAINS=(GAIA {NEW-HOST-ZONE})
 ```

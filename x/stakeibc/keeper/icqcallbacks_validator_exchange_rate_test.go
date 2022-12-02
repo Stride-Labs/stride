@@ -85,8 +85,8 @@ func (s *KeeperTestSuite) SetupValidatorICQCallback() ValidatorICQCallbackTestCa
 		NextEpochStartTime: uint64(s.Coordinator.CurrentTime.UnixNano() + 1_000_000_000), // epoch ends in 1 second
 	}
 
-	s.App.StakeibcKeeper.SetHostZone(s.Ctx(), hostZone)
-	s.App.StakeibcKeeper.SetEpochTracker(s.Ctx(), strideEpochTracker)
+	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
+	s.App.StakeibcKeeper.SetEpochTracker(s.Ctx, strideEpochTracker)
 
 	queryResponse := s.CreateValidatorQueryResponse(valAddress, numTokens, numShares)
 
@@ -109,11 +109,11 @@ func (s *KeeperTestSuite) SetupValidatorICQCallback() ValidatorICQCallbackTestCa
 func (s *KeeperTestSuite) TestValidatorExchangeRateCallback_Successful() {
 	tc := s.SetupValidatorICQCallback()
 
-	err := stakeibckeeper.ValidatorExchangeRateCallback(s.App.StakeibcKeeper, s.Ctx(), tc.validArgs.callbackArgs, tc.validArgs.query)
+	err := stakeibckeeper.ValidatorExchangeRateCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.callbackArgs, tc.validArgs.query)
 	s.Require().NoError(err, "validator exchange rate callback error")
 
 	// Confirm validator's exchange rate was update
-	hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx(), tc.initialState.hostZone.ChainId)
+	hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, tc.initialState.hostZone.ChainId)
 	s.Require().True(found, "host zone found")
 	s.Require().Equal(tc.expectedExchangeRate, hostZone.Validators[tc.valIndexQueried].InternalExchangeRate.InternalTokensToSharesRate,
 		"validator exchange rate updated")
@@ -126,7 +126,7 @@ func (s *KeeperTestSuite) TestValidatorExchangeRateCallback_HostZoneNotFound() {
 	badQuery := tc.validArgs.query
 	badQuery.ChainId = "fake_host_zone"
 
-	err := stakeibckeeper.ValidatorExchangeRateCallback(s.App.StakeibcKeeper, s.Ctx(), tc.validArgs.callbackArgs, badQuery)
+	err := stakeibckeeper.ValidatorExchangeRateCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.callbackArgs, badQuery)
 	s.Require().EqualError(err, "no registered zone for queried chain ID (fake_host_zone): host zone not found")
 }
 
@@ -135,7 +135,7 @@ func (s *KeeperTestSuite) TestValidatorExchangeRateCallback_InvalidCallbackArgs(
 
 	// Submit callback with invalid callback args (so that it can't unmarshal into a validator)
 	invalidArgs := []byte("random bytes")
-	err := stakeibckeeper.ValidatorExchangeRateCallback(s.App.StakeibcKeeper, s.Ctx(), invalidArgs, tc.validArgs.query)
+	err := stakeibckeeper.ValidatorExchangeRateCallback(s.App.StakeibcKeeper, s.Ctx, invalidArgs, tc.validArgs.query)
 
 	expectedErrMsg := "unable to unmarshal queriedValidator info for zone GAIA, "
 	expectedErrMsg += "err: unexpected EOF: unable to marshal data structure"
@@ -149,9 +149,9 @@ func (s *KeeperTestSuite) TestValidatorExchangeRateCallback_BufferWindowError() 
 	epochTracker := tc.initialState.strideEpochTracker
 	epochTracker.Duration = 0 // duration of 0 will make the epoch start time equal to the epoch end time
 
-	s.App.StakeibcKeeper.SetEpochTracker(s.Ctx(), epochTracker)
+	s.App.StakeibcKeeper.SetEpochTracker(s.Ctx, epochTracker)
 
-	err := stakeibckeeper.ValidatorExchangeRateCallback(s.App.StakeibcKeeper, s.Ctx(), tc.validArgs.callbackArgs, tc.validArgs.query)
+	err := stakeibckeeper.ValidatorExchangeRateCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.callbackArgs, tc.validArgs.query)
 	s.Require().ErrorContains(err, "unable to determine if ICQ callback is inside buffer window")
 	s.Require().ErrorContains(err, "current block time")
 	s.Require().ErrorContains(err, "not within current epoch")
@@ -165,14 +165,14 @@ func (s *KeeperTestSuite) TestValidatorExchangeRateCallback_OutsideBufferWindow(
 	epochTracker.Duration = 10_000_000_000                                                         // 10 second epochs
 	epochTracker.NextEpochStartTime = uint64(s.Coordinator.CurrentTime.UnixNano() + 5_000_000_000) // epoch ends in 5 second
 
-	s.App.StakeibcKeeper.SetEpochTracker(s.Ctx(), epochTracker)
+	s.App.StakeibcKeeper.SetEpochTracker(s.Ctx, epochTracker)
 
 	// In this case, we should return success instead of error, but we should exit early before updating the validator's exchange rate
-	err := stakeibckeeper.ValidatorExchangeRateCallback(s.App.StakeibcKeeper, s.Ctx(), tc.validArgs.callbackArgs, tc.validArgs.query)
+	err := stakeibckeeper.ValidatorExchangeRateCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.callbackArgs, tc.validArgs.query)
 	s.Require().NoError(err, "validator exchange rate callback error")
 
 	// Confirm validator's exchange rate did not update
-	hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx(), tc.initialState.hostZone.ChainId)
+	hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, tc.initialState.hostZone.ChainId)
 	s.Require().True(found, "host zone found")
 
 	initialExchangeRate := tc.initialState.hostZone.Validators[tc.valIndexQueried].InternalExchangeRate.InternalTokensToSharesRate
@@ -185,7 +185,7 @@ func (s *KeeperTestSuite) TestValidatorExchangeRateCallback_ValidatorNotFound() 
 
 	// Update the callback args to contain a validator address that doesn't exist
 	badCallbackArgs := s.CreateValidatorQueryResponse("fake_val", 0, 0)
-	err := stakeibckeeper.ValidatorExchangeRateCallback(s.App.StakeibcKeeper, s.Ctx(), badCallbackArgs, tc.validArgs.query)
+	err := stakeibckeeper.ValidatorExchangeRateCallback(s.App.StakeibcKeeper, s.Ctx, badCallbackArgs, tc.validArgs.query)
 	s.Require().EqualError(err, "no registered validator for address (fake_val): validator not found")
 }
 
@@ -195,7 +195,7 @@ func (s *KeeperTestSuite) TestValidatorExchangeRateCallback_DelegatorSharesZero(
 	// Set the delegator shares to 0, which cause division by zero in `validator.TokensFromShares`
 	valAddress := tc.initialState.hostZone.Validators[tc.valIndexQueried].Address
 	badCallbackArgs := s.CreateValidatorQueryResponse(valAddress, 1000, 0) // the 1000 is arbitrary, the zero here is what matters
-	err := stakeibckeeper.ValidatorExchangeRateCallback(s.App.StakeibcKeeper, s.Ctx(), badCallbackArgs, tc.validArgs.query)
+	err := stakeibckeeper.ValidatorExchangeRateCallback(s.App.StakeibcKeeper, s.Ctx, badCallbackArgs, tc.validArgs.query)
 
 	expectedErrMsg := "can't calculate validator internal exchange rate because delegation amount is 0 (validator: valoper1): division by zero"
 	s.Require().EqualError(err, expectedErrMsg)
@@ -207,9 +207,9 @@ func (s *KeeperTestSuite) TestValidatorExchangeRateCallback_DelegationQueryFaile
 	// Remove host zone delegation address so delegation query fails
 	badHostZone := tc.initialState.hostZone
 	badHostZone.DelegationAccount = nil
-	s.App.StakeibcKeeper.SetHostZone(s.Ctx(), badHostZone)
+	s.App.StakeibcKeeper.SetHostZone(s.Ctx, badHostZone)
 
-	err := stakeibckeeper.ValidatorExchangeRateCallback(s.App.StakeibcKeeper, s.Ctx(), tc.validArgs.callbackArgs, tc.validArgs.query)
+	err := stakeibckeeper.ValidatorExchangeRateCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.callbackArgs, tc.validArgs.query)
 
 	expectedErrMsg := "ValidatorCallback: failed to query delegation, zone GAIA, err: Zone GAIA is missing a delegation address!: "
 	expectedErrMsg += "ICA acccount not found on host zone: failed to submit ICQ"

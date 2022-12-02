@@ -5,15 +5,16 @@ SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
 source $SCRIPT_DIR/vars.sh
 
-CHAIN_ID="$1"
+CHAIN="$1"
 KEYS_LOGS=$SCRIPT_DIR/logs/keys.log
 
-CMD=$(GET_VAR_VALUE         ${CHAIN_ID}_CMD)
-DENOM=$(GET_VAR_VALUE       ${CHAIN_ID}_DENOM)
-RPC_PORT=$(GET_VAR_VALUE    ${CHAIN_ID}_RPC_PORT)
-NUM_NODES=$(GET_VAR_VALUE   ${CHAIN_ID}_NUM_NODES)
-NODE_PREFIX=$(GET_VAR_VALUE ${CHAIN_ID}_NODE_PREFIX)
-VAL_PREFIX=$(GET_VAR_VALUE  ${CHAIN_ID}_VAL_PREFIX)
+CHAIN_ID=$(GET_VAR_VALUE    ${CHAIN}_CHAIN_ID)
+CMD=$(GET_VAR_VALUE         ${CHAIN}_CMD)
+DENOM=$(GET_VAR_VALUE       ${CHAIN}_DENOM)
+RPC_PORT=$(GET_VAR_VALUE    ${CHAIN}_RPC_PORT)
+NUM_NODES=$(GET_VAR_VALUE   ${CHAIN}_NUM_NODES)
+NODE_PREFIX=$(GET_VAR_VALUE ${CHAIN}_NODE_PREFIX)
+VAL_PREFIX=$(GET_VAR_VALUE  ${CHAIN}_VAL_PREFIX)
 
 IFS=',' read -r -a VAL_MNEMONICS <<< "${VAL_MNEMONICS}"
 IFS=',' read -r -a RELAYER_MNEMONICS <<< "${RELAYER_MNEMONICS}"
@@ -62,7 +63,7 @@ MAIN_NODE_CMD=""
 MAIN_NODE_ID=""
 MAIN_CONFIG=""
 MAIN_GENESIS=""
-echo "Initializing $CHAIN_ID chain..."
+echo "Initializing $CHAIN chain..."
 for (( i=1; i <= $NUM_NODES; i++ )); do
     # Node names will be of the form: "stride-node1"
     node_name="${NODE_PREFIX}${i}"
@@ -132,7 +133,7 @@ for (( i=1; i <= $NUM_NODES; i++ )); do
     fi
 done
 
-if [ "$CHAIN_ID" == "$STRIDE_CHAIN_ID" ]; then 
+if [ "$CHAIN" == "STRIDE" ]; then 
     # add the stride admin account
     echo "$STRIDE_ADMIN_MNEMONIC" | $MAIN_NODE_CMD keys add $STRIDE_ADMIN_ACCT --recover --keyring-backend=test >> $KEYS_LOGS 2>&1
     STRIDE_ADMIN_ADDRESS=$($MAIN_NODE_CMD keys show $STRIDE_ADMIN_ACCT --keyring-backend test -a)
@@ -149,13 +150,13 @@ if [ "$CHAIN_ID" == "$STRIDE_CHAIN_ID" ]; then
     done
 else 
     # add a revenue account
-    REV_ACCT_VAR=${CHAIN_ID}_REV_ACCT
+    REV_ACCT_VAR=${CHAIN}_REV_ACCT
     REV_ACCT=${!REV_ACCT_VAR}
     echo $REV_MNEMONIC | $MAIN_NODE_CMD keys add $REV_ACCT --recover --keyring-backend=test >> $KEYS_LOGS 2>&1
 
     # add a relayer account
-    RELAYER_ACCT=$(GET_VAR_VALUE     RELAYER_${CHAIN_ID}_ACCT)
-    RELAYER_MNEMONIC=$(GET_VAR_VALUE RELAYER_${CHAIN_ID}_MNEMONIC)
+    RELAYER_ACCT=$(GET_VAR_VALUE     RELAYER_${CHAIN}_ACCT)
+    RELAYER_MNEMONIC=$(GET_VAR_VALUE RELAYER_${CHAIN}_MNEMONIC)
 
     echo "$RELAYER_MNEMONIC" | $MAIN_NODE_CMD keys add $RELAYER_ACCT --recover --keyring-backend=test >> $KEYS_LOGS 2>&1
     RELAYER_ADDRESS=$($MAIN_NODE_CMD keys show $RELAYER_ACCT --keyring-backend test -a)
@@ -169,7 +170,7 @@ $MAIN_NODE_CMD collect-gentxs &> /dev/null
 sed -i -E "s|persistent_peers = .*|persistent_peers = \"\"|g" $MAIN_CONFIG
 
 # update chain-specific genesis settings
-if [ "$CHAIN_ID" == "$STRIDE_CHAIN_ID" ]; then 
+if [ "$CHAIN" == "STRIDE" ]; then 
     set_stride_genesis $MAIN_GENESIS
 else
     set_host_genesis $MAIN_GENESIS
