@@ -25,17 +25,14 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochInfo epochstypes.EpochInf
 	// Day Epoch - Process Unbondings
 	if epochInfo.Identifier == epochstypes.DAY_EPOCH {
 		k.Logger(ctx).Info(utils.LogHeader("DAY EPOCH %d", epochNumber))
-		// first we initiate unbondings from any hostZone where it's appropriate
-		k.Logger(ctx).Info("InitiateAllHostZoneUnbondings")
+
+		// Initiate unbondings from any hostZone where it's appropriate
 		k.InitiateAllHostZoneUnbondings(ctx, epochNumber)
-		// then we check previous epochs to see if unbondings finished, and sweep the tokens if so
-		k.Logger(ctx).Info("SweepAllUnbondedTokens")
+		// Check previous epochs to see if unbondings finished, and sweep the tokens if so
 		k.SweepAllUnbondedTokens(ctx)
-		// then we cleanup any records that are no longer needed
-		k.Logger(ctx).Info("CleanupEpochUnbondingRecords")
+		// Cleanup any records that are no longer needed
 		k.CleanupEpochUnbondingRecords(ctx, epochNumber)
-		// lastly we create an empty unbonding record for this epoch
-		k.Logger(ctx).Info("CreateEpochUnbondingRecord")
+		// Create an empty unbonding record for this epoch
 		k.CreateEpochUnbondingRecord(ctx, epochNumber)
 	}
 
