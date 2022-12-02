@@ -12,51 +12,18 @@ import (
 	"github.com/Stride-Labs/stride/v4/x/stakeibc/types"
 )
 
-// TODO [TEST-127]: ensure all timeouts are less than the epoch length
-// TODO [TEST-126]: add events from event manager, e.g.
-// ctx.EventManager().EmitEvents(sdk.Events{
-// 	sdk.NewEvent(
-// 		sdk.EventTypeMessage,
-// 		sdk.NewAttribute("hostZone", zoneInfo.ChainId),
-// 		sdk.NewAttribute("newAmountStaked", balance.String()),
-// 	),
-// })
-
 func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochInfo epochstypes.EpochInfo) {
-	// every epoch
-	epochIdentifier := epochInfo.Identifier
-	epochNumber, err := cast.ToUint64E(epochInfo.CurrentEpoch)
+	k.Logger(ctx).Info(utils.LogHeader("EPOCH %d - %s", epochInfo.CurrentEpoch, epochInfo.CurrentEpochStartTime))
+
+	// Update the stakeibc epoch tracker
+	epochNumber, err := k.UpdateEpochTracker(ctx, epochInfo)
 	if err != nil {
-		k.Logger(ctx).Error(fmt.Sprintf("Could not convert epoch number to uint64: %v", err))
+		k.Logger(ctx).Error(fmt.Sprintf("Could update epoch tracker, err: %s", err.Error()))
 		return
 	}
 
-	k.Logger(ctx).Info(fmt.Sprintf("Handling epoch start %s %d", epochIdentifier, epochNumber))
-	k.Logger(ctx).Info(fmt.Sprintf("Epoch start time %d", epochInfo.GetCurrentEpochStartTime().UnixNano()))
-
-	ns, err := cast.ToUint64E(epochInfo.GetDuration().Nanoseconds())
-	if err != nil {
-		k.Logger(ctx).Error(fmt.Sprintf("Could not convert epoch duration to uint64: %v", err))
-		return
-	}
-	nextEpochStartTime, err := cast.ToUint64E(epochInfo.GetCurrentEpochStartTime().Add(epochInfo.GetDuration()).UnixNano())
-	if err != nil {
-		k.Logger(ctx).Error(fmt.Sprintf("Could not convert epoch duration to uint64: %v", err))
-		return
-	}
-	epochTracker := types.EpochTracker{
-		EpochIdentifier:    epochIdentifier,
-		EpochNumber:        epochNumber,
-		Duration:           ns,
-		NextEpochStartTime: nextEpochStartTime,
-	}
-	// deposit records *must* exist for this epoch
-	k.Logger(ctx).Info(fmt.Sprintf("Setting epochTracker %v", epochTracker))
-	k.SetEpochTracker(ctx, epochTracker)
-
-	// process redemption records
-	if epochIdentifier == epochstypes.DAY_EPOCH {
-		// here, we process everything we need to for redemptions
+	// Day Epoch - Process Unbondings
+	if epochInfo.Identifier == epochstypes.DAY_EPOCH {
 		k.Logger(ctx).Info(utils.LogHeader("DAY EPOCH %d", epochNumber))
 		// first we initiate unbondings from any hostZone where it's appropriate
 		k.Logger(ctx).Info("InitiateAllHostZoneUnbondings")
@@ -72,7 +39,8 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochInfo epochstypes.EpochInf
 		k.CreateEpochUnbondingRecord(ctx, epochNumber)
 	}
 
-	if epochIdentifier == epochstypes.STRIDE_EPOCH {
+	// Stride Epoch - Process Deposits and Delegations
+	if epochInfo.Identifier == epochstypes.STRIDE_EPOCH {
 		k.Logger(ctx).Info(utils.LogHeader("STRIDE EPOCH %d", epochNumber))
 
 		// Get cadence intervals
@@ -110,15 +78,7 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochInfo epochstypes.EpochInf
 	}
 }
 
-func (k Keeper) AfterEpochEnd(ctx sdk.Context, epochInfo epochstypes.EpochInfo) {
-	// every epoch
-	epochIdentifier := epochInfo.Identifier
-	epochNumber := epochInfo.CurrentEpoch
-	k.Logger(ctx).Info(fmt.Sprintf("Handling epoch end %s %d", epochIdentifier, epochNumber))
-	if epochIdentifier == "day" {
-		k.Logger(ctx).Info(fmt.Sprintf("Day %d Ending", epochNumber))
-	}
-}
+func (k Keeper) AfterEpochEnd(ctx sdk.Context, epochInfo epochstypes.EpochInfo) {}
 
 // Hooks wrapper struct for incentives keeper
 type Hooks struct {
@@ -138,6 +98,34 @@ func (h Hooks) BeforeEpochStart(ctx sdk.Context, epochInfo epochstypes.EpochInfo
 
 func (h Hooks) AfterEpochEnd(ctx sdk.Context, epochInfo epochstypes.EpochInfo) {
 	h.k.AfterEpochEnd(ctx, epochInfo)
+}
+
+// Update the epoch information in the stakeibc epoch tracker
+func (k Keeper) UpdateEpochTracker(ctx sdk.Context, epochInfo epochstypes.EpochInfo) (epochNumber uint64, err error) {
+	epochNumber, err = cast.ToUint64E(epochInfo.CurrentEpoch)
+	if err != nil {
+		k.Logger(ctx).Error(fmt.Sprintf("Could not convert epoch number to uint64: %v", err))
+		return 0, err
+	}
+	epochDurationNano, err := cast.ToUint64E(epochInfo.Duration.Nanoseconds())
+	if err != nil {
+		k.Logger(ctx).Error(fmt.Sprintf("Could not convert epoch duration to uint64: %v", err))
+		return 0, err
+	}
+	nextEpochStartTime, err := cast.ToUint64E(epochInfo.CurrentEpochStartTime.Add(epochInfo.Duration).UnixNano())
+	if err != nil {
+		k.Logger(ctx).Error(fmt.Sprintf("Could not convert epoch duration to uint64: %v", err))
+		return 0, err
+	}
+	epochTracker := types.EpochTracker{
+		EpochIdentifier:    epochInfo.Identifier,
+		EpochNumber:        epochNumber,
+		Duration:           epochDurationNano,
+		NextEpochStartTime: nextEpochStartTime,
+	}
+	k.SetEpochTracker(ctx, epochTracker)
+
+	return epochNumber, nil
 }
 
 // Set the withdrawal account address for each host zone
