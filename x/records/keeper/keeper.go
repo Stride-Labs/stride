@@ -6,6 +6,7 @@ import (
 	ibckeeper "github.com/cosmos/ibc-go/v3/modules/core/keeper"
 	"github.com/tendermint/tendermint/libs/log"
 
+	"github.com/Stride-Labs/stride/v3/utils"
 	icacallbackstypes "github.com/Stride-Labs/stride/v3/x/icacallbacks/types"
 
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -85,7 +86,7 @@ func (k Keeper) Transfer(ctx sdk.Context, msg *ibctypes.MsgTransfer, depositReco
 	transferCallback := types.TransferCallback{
 		DepositRecordId: depositRecord.Id,
 	}
-	k.Logger(ctx).Info(fmt.Sprintf("Marshalling TransferCallback args: %v", transferCallback))
+	k.Logger(ctx).Info(utils.LogWithHostZone(depositRecord.HostZoneId, "Marshalling TransferCallback args: %+v", transferCallback))
 	marshalledCallbackArgs, err := k.MarshalTransferCallbackArgs(ctx, transferCallback)
 	if err != nil {
 		return err
@@ -99,7 +100,7 @@ func (k Keeper) Transfer(ctx sdk.Context, msg *ibctypes.MsgTransfer, depositReco
 		CallbackId:   TRANSFER,
 		CallbackArgs: marshalledCallbackArgs,
 	}
-	k.Logger(ctx).Info(fmt.Sprintf("Storing callback data: %v", callback))
+	k.Logger(ctx).Info(utils.LogWithHostZone(depositRecord.HostZoneId, "Storing callback data: %+v", callback))
 	k.ICACallbacksKeeper.SetCallbackData(ctx, callback)
 
 	// update the record state to TRANSFER_IN_PROGRESS
