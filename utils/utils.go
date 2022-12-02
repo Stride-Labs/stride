@@ -11,8 +11,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/address"
 	"github.com/cosmos/cosmos-sdk/types/bech32"
 
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-
 	config "github.com/Stride-Labs/stride/v3/cmd/strided/config"
 	recordstypes "github.com/Stride-Labs/stride/v3/x/records/types"
 )
@@ -32,7 +30,7 @@ func Int64ToCoinString(amount int64, denom string) string {
 
 func ValidateAdminAddress(address string) error {
 	if !Admins[address] {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, fmt.Sprintf("invalid creator address (%s)", address))
+		return fmt.Errorf(fmt.Sprintf("invalid creator address (%s): invalid address", address))
 	}
 	return nil
 }
@@ -121,11 +119,11 @@ func VerifyAddressFormat(bz []byte) error {
 	}
 
 	if len(bz) == 0 {
-		return sdkerrors.Wrap(sdkerrors.ErrUnknownAddress, "addresses cannot be empty")
+		return fmt.Errorf("addresses cannot be empty: unknown address")
 	}
 
 	if len(bz) > address.MaxAddrLen {
-		return sdkerrors.Wrapf(sdkerrors.ErrUnknownAddress, "address max length is %d, got %d", address.MaxAddrLen, len(bz))
+		return fmt.Errorf("address max length is %d, got %d: unknown address", address.MaxAddrLen, len(bz))
 	}
 
 	return nil
@@ -154,7 +152,7 @@ func AccAddressFromBech32(address string, bech32prefix string) (addr AccAddress,
 	return AccAddress(bz), nil
 }
 
-//==============================  AIRDROP UTILS  ================================
+// ==============================  AIRDROP UTILS  ================================
 // max64 returns the maximum of its inputs.
 func Max64(i, j int64) int64 {
 	if i > j {
