@@ -279,13 +279,15 @@ func (k Keeper) SweepAllUnbondedTokensForHostZone(ctx sdk.Context, hostZone type
 	totalAmtTransferToRedemptionAcct := int64(0)
 	epochUnbondingRecordIds := []uint64{}
 	for _, epochUnbondingRecord := range epochUnbondingRecords {
+
+		// Get all the unbondings associated with the epoch + host zone pair
 		hostZoneUnbonding, found := k.RecordsKeeper.GetHostZoneUnbondingByChainId(ctx, epochUnbondingRecord.EpochNumber, hostZone.ChainId)
 		if !found {
 			k.Logger(ctx).Error(fmt.Sprintf("Could not find host zone unbonding %d for host zone %s", epochUnbondingRecord.EpochNumber, hostZone.ChainId))
 			continue
 		}
 
-		// get latest blockTime from light client
+		// Get latest blockTime from light client
 		blockTime, err := k.GetLightClientTimeSafely(ctx, hostZone.ConnectionId)
 		if err != nil {
 			k.Logger(ctx).Error(fmt.Sprintf("\tCould not find blockTime for host zone %s", hostZone.ChainId))
@@ -295,11 +297,12 @@ func (k Keeper) SweepAllUnbondedTokensForHostZone(ctx sdk.Context, hostZone type
 		k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId, "Epoch %d - Status: %s, Amount: %d, Unbonding Time: %d, Block Time: %d",
 			epochUnbondingRecord.EpochNumber, hostZoneUnbonding.Status.String(), hostZoneUnbonding.NativeTokenAmount, hostZoneUnbonding.UnbondingTime, blockTime))
 
-		// if the unbonding period has elapsed, then we can send the ICA call to sweep this hostZone's unbondings to the redemption account (in a batch)
-		// verify
-		// 1. the unbonding time is set (g.t. 0)
-		// 2. the unbonding time is less than the current block time
-		// 3. the host zone is in the EXIT_TRANSFER_QUEUE state, meaning it's ready to be transferred
+		// If the unbonding period has elapsed, then we can send the ICA call to sweep this
+		//   hostZone's unbondings to the redemption account (in a batch).
+		// Verify:
+		//      1. the unbonding time is set (g.t. 0)
+		//      2. the unbonding time is less than the current block time
+		//      3. the host zone is in the EXIT_TRANSFER_QUEUE state, meaning it's ready to be transferred
 		inTransferQueue := hostZoneUnbonding.Status == recordstypes.HostZoneUnbonding_EXIT_TRANSFER_QUEUE
 		validUnbondingTime := hostZoneUnbonding.UnbondingTime > 0 && hostZoneUnbonding.UnbondingTime < blockTime
 		if inTransferQueue && validUnbondingTime {
@@ -323,13 +326,7 @@ func (k Keeper) SweepAllUnbondedTokensForHostZone(ctx sdk.Context, hostZone type
 	}
 	k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId, "Batch transferring %d to host zone", totalAmtTransferToRedemptionAcct))
 
-	// Confirm withdrawal accounts are registered
-	if (&hostZone).DelegationAccount == nil || (&hostZone).RedemptionAccount == nil {
-		k.Logger(ctx).Error(fmt.Sprintf("Not sweeping tokens for host zone %s because redemption/delegation accounts aren't registered", hostZone.ChainId))
-		return false, 0
-	}
-
-	// Get the delegation account and redemptino account
+	// Get the delegation account and redemption account
 	delegationAccount := hostZone.DelegationAccount
 	if delegationAccount == nil || delegationAccount.Address == "" {
 		k.Logger(ctx).Error(fmt.Sprintf("Zone %s is missing a delegation address!", hostZone.ChainId))
