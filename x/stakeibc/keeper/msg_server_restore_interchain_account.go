@@ -8,8 +8,8 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	icatypes "github.com/cosmos/ibc-go/v3/modules/apps/27-interchain-accounts/types"
 
-	recordtypes "github.com/Stride-Labs/stride/v3/x/records/types"
-	"github.com/Stride-Labs/stride/v3/x/stakeibc/types"
+	recordtypes "github.com/Stride-Labs/stride/v4/x/records/types"
+	"github.com/Stride-Labs/stride/v4/x/stakeibc/types"
 )
 
 func (k msgServer) RestoreInterchainAccount(goCtx context.Context, msg *types.MsgRestoreInterchainAccount) (*types.MsgRestoreInterchainAccountResponse, error) {
@@ -63,7 +63,7 @@ func (k msgServer) RestoreInterchainAccount(goCtx context.Context, msg *types.Ms
 			// only revert records for the select host zone
 			hostZoneUnbonding, found := k.RecordsKeeper.GetHostZoneUnbondingByChainId(ctx, epochUnbondingRecord.EpochNumber, hostZone.ChainId)
 			if !found {
-                                 k.Logger(ctx).Info(fmt.Sprintf("No HostZoneUnbonding found for chainId: %s, epoch: %d", hostZone.ChainId, epochUnbondingRecord.EpochNumber))
+				k.Logger(ctx).Info(fmt.Sprintf("No HostZoneUnbonding found for chainId: %s, epoch: %d", hostZone.ChainId, epochUnbondingRecord.EpochNumber))
 				continue
 			}
 

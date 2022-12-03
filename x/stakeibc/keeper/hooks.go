@@ -6,10 +6,10 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/spf13/cast"
 
-	"github.com/Stride-Labs/stride/v3/utils"
-	epochstypes "github.com/Stride-Labs/stride/v3/x/epochs/types"
-	recordstypes "github.com/Stride-Labs/stride/v3/x/records/types"
-	"github.com/Stride-Labs/stride/v3/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v4/utils"
+	epochstypes "github.com/Stride-Labs/stride/v4/x/epochs/types"
+	recordstypes "github.com/Stride-Labs/stride/v4/x/records/types"
+	"github.com/Stride-Labs/stride/v4/x/stakeibc/types"
 )
 
 // TODO [TEST-127]: ensure all timeouts are less than the epoch length
@@ -55,9 +55,9 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochInfo epochstypes.EpochInf
 	k.SetEpochTracker(ctx, epochTracker)
 
 	// process redemption records
-	if epochIdentifier == "day" {
+	if epochIdentifier == epochstypes.DAY_EPOCH {
 		// here, we process everything we need to for redemptions
-		k.Logger(ctx).Info(fmt.Sprintf("Day %d Beginning", epochNumber))
+		k.Logger(ctx).Info(utils.LogHeader("DAY EPOCH %d", epochNumber))
 		// first we initiate unbondings from any hostZone where it's appropriate
 		k.Logger(ctx).Info("InitiateAllHostZoneUnbondings")
 		k.InitiateAllHostZoneUnbondings(ctx, epochNumber)
@@ -73,88 +73,39 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochInfo epochstypes.EpochInf
 	}
 
 	if epochIdentifier == epochstypes.STRIDE_EPOCH {
-		k.Logger(ctx).Info(fmt.Sprintf("Stride Epoch %d", epochNumber))
+		k.Logger(ctx).Info(utils.LogHeader("STRIDE EPOCH %d", epochNumber))
 
-		// NOTE: We could nest this under `if epochNumber%depositInterval == 0 {`
-		// -- should we?
-		// e.g. CreateDepositRecordsForDepositInterval
-		// Imagine it will be slightly cleaner to track state by epoch, rather than
-		// by DepositInterval
+		// Get cadence intervals
+		redemptionRateInterval := k.GetParam(ctx, types.KeyRedemptionRateInterval)
+		depositInterval := k.GetParam(ctx, types.KeyDepositInterval)
+		delegationInterval := k.GetParam(ctx, types.KeyDelegateInterval)
+		reinvestInterval := k.GetParam(ctx, types.KeyReinvestInterval)
 
-		// Create a new deposit record for each host zone for the upcoming epoch
-		k.Logger(ctx).Info("CreateDepositRecordsForEpoch")
+		// Create a new deposit record for each host zone and the grab all deposit records
 		k.CreateDepositRecordsForEpoch(ctx, epochNumber)
-
-		k.Logger(ctx).Info("SetWithdrawalAddress")
-		// TODO: move this to an external function that anyone can call, so that we don't have to call it every
-		// epoch
-		k.SetWithdrawalAddress(ctx)
-
 		depositRecords := k.RecordsKeeper.GetAllDepositRecord(ctx)
 
+		// TODO: move this to an external function that anyone can call, so that we don't have to call it every epoch
+		k.SetWithdrawalAddress(ctx)
+
 		// Update the redemption rate
-		redemptionRateInterval, err := cast.ToUint64E(k.GetParam(ctx, types.KeyRedemptionRateInterval))
-		if err != nil {
-			k.Logger(ctx).Error(fmt.Sprintf("Could not convert redemptionRateInterval to uint64: %v", err))
-			return
-		}
 		if epochNumber%redemptionRateInterval == 0 {
-			k.Logger(ctx).Info("Triggering update redemption rate")
 			k.UpdateRedemptionRates(ctx, depositRecords)
 		}
 
-		depositInterval, err := cast.ToUint64E(k.GetParam(ctx, types.KeyDepositInterval))
-		if err != nil {
-			k.Logger(ctx).Error(fmt.Sprintf("Could not convert depositInterval to int64: %v", err))
-			return
-		}
+		// Transfer deposited funds from the controller account to the delegation account on the host zone
 		if epochNumber%depositInterval == 0 {
-			// process previous deposit records
-			k.Logger(ctx).Info("TransferExistingDepositsToHostZones")
 			k.TransferExistingDepositsToHostZones(ctx, epochNumber, depositRecords)
 		}
 
-		delegationInterval, err := cast.ToUint64E(k.GetParam(ctx, types.KeyDelegateInterval))
-		if err != nil {
-			k.Logger(ctx).Error(fmt.Sprintf("Could not convert delegationInterval to int64: %v", err))
-			return
-		}
+		// Delegate tokens from the delegation account
 		if epochNumber%delegationInterval == 0 {
-			k.Logger(ctx).Info("StakeExistingDepositsOnHostZones")
 			k.StakeExistingDepositsOnHostZones(ctx, epochNumber, depositRecords)
 		}
 
-		reinvestInterval, err := cast.ToUint64E(k.GetParam(ctx, types.KeyReinvestInterval))
-		if err != nil {
-			k.Logger(ctx).Error(fmt.Sprintf("Could not convert reinvestInterval to int64: %v", err))
-			return
-		}
+		// Reinvest staking rewards
 		if epochNumber%reinvestInterval == 0 { // allow a few blocks from UpdateUndelegatedBal to avoid conflicts
-			k.Logger(ctx).Info("Reinvesting tokens")
-			for _, hz := range k.GetAllHostZone(ctx) {
-				// only process host zones once withdrawal accounts are registered
-				withdrawalIca := hz.GetWithdrawalAccount()
-				if withdrawalIca != nil {
-					// read clock time on host zone
-					blockTime, err := k.GetLightClientTimeSafely(ctx, hz.ConnectionId)
-					if err != nil {
-						k.Logger(ctx).Error(fmt.Sprintf("Could not find blockTime for host zone %s, err: %s", hz.ConnectionId, err.Error()))
-						continue
-					} else {
-						k.Logger(ctx).Info(fmt.Sprintf("Found blockTime for host zone %s: %d", hz.ConnectionId, blockTime))
-					}
-
-					err = k.UpdateWithdrawalBalance(ctx, hz)
-					if err != nil {
-						k.Logger(ctx).Error(fmt.Sprintf("Error updating withdrawal balance for host zone %s: %s", hz.ConnectionId, err.Error()))
-						continue
-					} else {
-						k.Logger(ctx).Info(fmt.Sprintf("Updated withdrawal balance for host zone %s", hz.ConnectionId))
-					}
-				} else {
-					k.Logger(ctx).Info(fmt.Sprintf("Withdrawal account not registered for host zone %s", hz.ChainId))
-				}
-			}
+			k.ReinvestRewards(ctx)
 		}
 	}
 }
@@ -189,66 +140,68 @@ func (h Hooks) AfterEpochEnd(ctx sdk.Context, epochInfo epochstypes.EpochInfo) {
 	h.k.AfterEpochEnd(ctx, epochInfo)
 }
 
-// -------------------- helper functions --------------------
+// Set the withdrawal account address for each host zone
 func (k Keeper) SetWithdrawalAddress(ctx sdk.Context) {
-	setWithdrawalAddresses := func(ctx sdk.Context, index int64, zoneInfo types.HostZone) error {
-		k.Logger(ctx).Info(fmt.Sprintf("\tsetting withdrawal address for index %v, zoneInfo %v", index, zoneInfo))
-		err := k.SetWithdrawalAddressOnHost(ctx, zoneInfo)
+	k.Logger(ctx).Info("Setting Withdrawal Addresses...")
+
+	setWithdrawalAddresses := func(ctx sdk.Context, index int64, hostZone types.HostZone) error {
+		err := k.SetWithdrawalAddressOnHost(ctx, hostZone)
 		if err != nil {
-			k.Logger(ctx).Error(fmt.Sprintf("Did not set withdrawal address to %s on %s", zoneInfo.GetWithdrawalAccount().GetAddress(), zoneInfo.GetChainId()))
-			k.Logger(ctx).Error(fmt.Sprintf("Withdrawal address setting error: %v", err))
-		} else {
-			k.Logger(ctx).Info(fmt.Sprintf("Successfully set withdrawal address to %s on %s", zoneInfo.GetWithdrawalAccount().GetAddress(), zoneInfo.GetChainId()))
+			k.Logger(ctx).Error(fmt.Sprintf("Unable to set withdrawal address to %s on %s, err: %s", hostZone.WithdrawalAccount.Address, hostZone.ChainId, err))
 		}
 		return nil
 	}
+
 	k.IterateHostZones(ctx, setWithdrawalAddresses)
 }
 
+// Updates the redemption rate for each host zone
+// The redemption rate equation is:
+//   (Unbonded Balance + Staked Balance + Module Account Balance) / (stToken Supply)
 func (k Keeper) UpdateRedemptionRates(ctx sdk.Context, depositRecords []recordstypes.DepositRecord) {
-	// Calc redemptionRate for each host zone
-	UpdateRedemptionRate := func(ctx sdk.Context, index int64, zoneInfo types.HostZone) error {
-		k.Logger(ctx).Info(fmt.Sprintf("index: %d, zoneInfo: %s", index, zoneInfo.ChainId))
+	k.Logger(ctx).Info("Updating Redemption Rates...")
 
-		undelegatedBalance, error := k.GetUndelegatedBalance(zoneInfo, depositRecords)
-		if error != nil {
-			k.Logger(ctx).Error(fmt.Sprintf("Could not get undelegated balance for host zone %s: %s", zoneInfo.ChainId, error.Error()))
-			return error
-		}
-		k.Logger(ctx).Info(fmt.Sprintf("undelegatedBalance: %d", undelegatedBalance))
-		stakedBalance, err := cast.ToInt64E(zoneInfo.GetStakedBal())
-		if err != nil {
-			k.Logger(ctx).Error(fmt.Sprintf("Could not get staked balance for host zone %s: %s", zoneInfo.ChainId, err.Error()))
-			return err
-		}
-		k.Logger(ctx).Info(fmt.Sprintf("stakedBalance: %d", stakedBalance))
-		moduleAcctBalance, error := k.GetModuleAccountBalance(zoneInfo, depositRecords)
-		if error != nil {
-			k.Logger(ctx).Error(fmt.Sprintf("Could not get module account balance for host zone %s: %s", zoneInfo.ChainId, error.Error()))
-			return error
-		}
-		k.Logger(ctx).Info(fmt.Sprintf("moduleAcctBalance: %d", moduleAcctBalance))
-		stSupply := k.bankKeeper.GetSupply(ctx, types.StAssetDenomFromHostZoneDenom(zoneInfo.HostDenom)).Amount.Int64()
+	updateRedemptionRate := func(ctx sdk.Context, index int64, hostZone types.HostZone) error {
+		// Gather redemption rate components
+		stSupply := k.bankKeeper.GetSupply(ctx, types.StAssetDenomFromHostZoneDenom(hostZone.HostDenom)).Amount.Int64()
 		if stSupply == 0 {
-			k.Logger(ctx).Info(fmt.Sprintf("stSupply: %d", stSupply))
+			k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId, "No st%s in circulation - redemption rate is unchanged", hostZone.HostDenom))
 			return nil
 		}
-		k.Logger(ctx).Info(fmt.Sprintf("stSupply: %d", stSupply))
+		undelegatedBalance, err := k.GetUndelegatedBalance(hostZone, depositRecords)
+		if err != nil {
+			k.Logger(ctx).Error(fmt.Sprintf("Could not get undelegated balance for host zone %s: %s", hostZone.ChainId, err.Error()))
+			return err
+		}
+		stakedBalance, err := cast.ToInt64E(hostZone.StakedBal)
+		if err != nil {
+			k.Logger(ctx).Error(fmt.Sprintf("Could not get staked balance for host zone %s: %s", hostZone.ChainId, err.Error()))
+			return err
+		}
+		moduleAcctBalance, err := k.GetModuleAccountBalance(hostZone, depositRecords)
+		if err != nil {
+			k.Logger(ctx).Error(fmt.Sprintf("Could not get module account balance for host zone %s: %s", hostZone.ChainId, err.Error()))
+			return err
+		}
 
-		// calc redemptionRate = (UB+SB+MA)/stSupply
-		k.Logger(ctx).Info(fmt.Sprintf("[REDEMPTION-RATE] undelegatedBalance: %d, stakedBalance: %d, moduleAcctBalance: %d, stSupply: %d", undelegatedBalance, stakedBalance, moduleAcctBalance, stSupply))
+		k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId,
+			"Redemption Rate Components - Undelegated Balance: %d, Staked Balance: %d, Module Account Balance: %d, stToken Supply: %d",
+			undelegatedBalance, stakedBalance, moduleAcctBalance, stSupply))
+
+		// Calculate the redemption rate
 		redemptionRate := (sdk.NewDec(undelegatedBalance).Add(sdk.NewDec(stakedBalance)).Add(sdk.NewDec(moduleAcctBalance))).Quo(sdk.NewDec(stSupply))
-		k.Logger(ctx).Info(fmt.Sprintf("[REDEMPTION-RATE] New Rate is %d (vs prev %d)", redemptionRate, zoneInfo.LastRedemptionRate))
+		k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId, "New Redemption Rate: %d (vs Prev Rate: %d)", redemptionRate, hostZone.RedemptionRate))
 
-		// set redemptionRate attribute for the hostZone (and update last RedemptionRate)
-		zoneInfo.LastRedemptionRate = zoneInfo.RedemptionRate
-		zoneInfo.RedemptionRate = redemptionRate
-		k.SetHostZone(ctx, zoneInfo)
+		// Update the host zone
+		hostZone.LastRedemptionRate = hostZone.RedemptionRate
+		hostZone.RedemptionRate = redemptionRate
+		k.SetHostZone(ctx, hostZone)
 
 		return nil
 	}
-	// Iterate the zones and apply icaReinvest
-	k.IterateHostZones(ctx, UpdateRedemptionRate)
+
+	// Iterate the zones and apply update the redemption rate for each
+	k.IterateHostZones(ctx, updateRedemptionRate)
 }
 
 func (k Keeper) GetUndelegatedBalance(hostZone types.HostZone, depositRecords []recordstypes.DepositRecord) (int64, error) {
@@ -279,4 +232,32 @@ func (k Keeper) GetModuleAccountBalance(hostZone types.HostZone, depositRecords 
 	}
 
 	return totalAmount, nil
+}
+
+func (k Keeper) ReinvestRewards(ctx sdk.Context) {
+	k.Logger(ctx).Info("Reinvesting tokens...")
+
+	for _, hostZone := range k.GetAllHostZone(ctx) {
+		// only process host zones once withdrawal accounts are registered
+		withdrawalIca := hostZone.WithdrawalAccount
+		if withdrawalIca == nil {
+			k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId, "Withdrawal account not registered for host zone"))
+			continue
+		}
+
+		// read clock time on host zone
+		blockTime, err := k.GetLightClientTimeSafely(ctx, hostZone.ConnectionId)
+		if err != nil {
+			k.Logger(ctx).Error(fmt.Sprintf("Could not find blockTime for host zone %s, err: %s", hostZone.ConnectionId, err.Error()))
+			continue
+		}
+		k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId, "BlockTime for host zone: %d", blockTime))
+
+		err = k.UpdateWithdrawalBalance(ctx, hostZone)
+		if err != nil {
+			k.Logger(ctx).Error(fmt.Sprintf("Error updating withdrawal balance for host zone %s: %s", hostZone.ConnectionId, err.Error()))
+			continue
+		}
+		k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId, "Updated withdrawal balance"))
+	}
 }

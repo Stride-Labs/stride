@@ -8,8 +8,8 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/spf13/cast"
 
-	icqtypes "github.com/Stride-Labs/stride/v3/x/interchainquery/types"
-	"github.com/Stride-Labs/stride/v3/x/stakeibc/types"
+	icqtypes "github.com/Stride-Labs/stride/v4/x/interchainquery/types"
+	"github.com/Stride-Labs/stride/v4/x/stakeibc/types"
 )
 
 // WithdrawalBalanceCallback is a callback handler for WithdrawalBalance queries.
