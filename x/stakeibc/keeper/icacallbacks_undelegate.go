@@ -123,7 +123,7 @@ func (k Keeper) UpdateDelegationBalances(ctx sdk.Context, zone types.HostZone, u
 		if undelegation.Amount > zone.StakedBal {
 			// handle incoming underflow
 			// Once we add a killswitch, we should also stop liquid staking on the zone here
-			return sdkerrors.Wrapf(types.ErrUndelegationAmount, "undelegation.Amount > zone.StakedBal, undelegation.Amount: %s, zone.StakedBal %s", undelegation.Amount, zone.StakedBal)
+			return sdkerrors.Wrapf(types.ErrUndelegationAmount, "undelegation.Amount > zone.StakedBal, undelegation.Amount: %d, zone.StakedBal %d", undelegation.Amount, zone.StakedBal)
 		} else {
 			zone.StakedBal -= undelegation.Amount
 		}
