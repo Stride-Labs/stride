@@ -6,14 +6,14 @@ import (
 
 	"github.com/spf13/cast"
 
-	recordstypes "github.com/Stride-Labs/stride/v3/x/records/types"
+	recordstypes "github.com/Stride-Labs/stride/v4/x/records/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	bankTypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 
-	epochstypes "github.com/Stride-Labs/stride/v3/x/epochs/types"
-	"github.com/Stride-Labs/stride/v3/x/stakeibc/types"
+	epochstypes "github.com/Stride-Labs/stride/v4/x/epochs/types"
+	"github.com/Stride-Labs/stride/v4/x/stakeibc/types"
 )
 
 type IcaTx struct {

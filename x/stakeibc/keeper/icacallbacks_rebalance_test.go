@@ -6,9 +6,9 @@ import (
 	channeltypes "github.com/cosmos/ibc-go/v3/modules/core/04-channel/types"
 	_ "github.com/stretchr/testify/suite"
 
-	stakeibckeeper "github.com/Stride-Labs/stride/v3/x/stakeibc/keeper"
-	"github.com/Stride-Labs/stride/v3/x/stakeibc/types"
-	stakeibctypes "github.com/Stride-Labs/stride/v3/x/stakeibc/types"
+	stakeibckeeper "github.com/Stride-Labs/stride/v4/x/stakeibc/keeper"
+	"github.com/Stride-Labs/stride/v4/x/stakeibc/types"
+	stakeibctypes "github.com/Stride-Labs/stride/v4/x/stakeibc/types"
 )
 
 type RebalanceCallbackState struct {
