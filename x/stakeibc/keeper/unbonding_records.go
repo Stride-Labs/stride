@@ -17,8 +17,13 @@ import (
 )
 
 func (k Keeper) CreateEpochUnbondingRecord(ctx sdk.Context, epochNumber uint64) bool {
+	k.Logger(ctx).Info(fmt.Sprintf("Creating Epoch Unbonding Records for Epoch %d", epochNumber))
+
 	hostZoneUnbondings := []*recordstypes.HostZoneUnbonding{}
-	addEpochUndelegation := func(ctx sdk.Context, index int64, hostZone types.HostZone) error {
+
+	for _, hostZone := range k.GetAllHostZone(ctx) {
+		k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId, "Creating Epoch Unbonding Record"))
+
 		hostZoneUnbonding := recordstypes.HostZoneUnbonding{
 			NativeTokenAmount: uint64(0),
 			StTokenAmount:     uint64(0),
@@ -28,15 +33,12 @@ func (k Keeper) CreateEpochUnbondingRecord(ctx sdk.Context, epochNumber uint64) 
 		}
 		k.Logger(ctx).Info(fmt.Sprintf("Adding hostZoneUnbonding %v to %s", hostZoneUnbonding, hostZone.ChainId))
 		hostZoneUnbondings = append(hostZoneUnbondings, &hostZoneUnbonding)
-		return nil
 	}
 
-	k.IterateHostZones(ctx, addEpochUndelegation)
 	epochUnbondingRecord := recordstypes.EpochUnbondingRecord{
 		EpochNumber:        cast.ToUint64(epochNumber),
 		HostZoneUnbondings: hostZoneUnbondings,
 	}
-	k.Logger(ctx).Info(fmt.Sprintf("AppendEpochUnbondingRecord %v", epochUnbondingRecord))
 	k.RecordsKeeper.SetEpochUnbondingRecord(ctx, epochUnbondingRecord)
 	return true
 }
