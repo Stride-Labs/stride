@@ -321,7 +321,7 @@ func (k Keeper) SweepAllUnbondedTokensForHostZone(ctx sdk.Context, hostZone type
 		k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId, "No unbonded tokens ready for sweep"))
 		return true, totalAmtTransferToRedemptionAcct
 	}
-	k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId, "Batch transfering %d to host zone", totalAmtTransferToRedemptionAcct))
+	k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId, "Batch transferring %d to host zone", totalAmtTransferToRedemptionAcct))
 
 	// Confirm withdrawal accounts are registered
 	if (&hostZone).DelegationAccount == nil || (&hostZone).RedemptionAccount == nil {
