@@ -161,28 +161,6 @@ func (s *KeeperTestSuite) TestRebalanceValidators_Successful() {
 	s.Require().Equal("stride_VAL4", secondRebal.SrcValidator, "second rebalance takes from val4")
 }
 
-func (s *KeeperTestSuite) TestRebalanceValidators_InvalidNumValidators() {
-	s.SetupRebalanceValidators()
-
-	// Rebalance with 0 validators should fail
-	badMsg_tooFew := stakeibctypes.MsgRebalanceValidators{
-		Creator:      "stride_ADDRESS",
-		HostZone:     "GAIA",
-		NumRebalance: 0,
-	}
-	_, err := s.GetMsgServer().RebalanceValidators(sdk.WrapSDKContext(s.Ctx), &badMsg_tooFew)
-	expectedErrMsg := "invalid number of validators"
-	s.Require().EqualError(err, expectedErrMsg, "rebalancing 0 validators should fail")
-
-	// Rebalance with 5 validators should fail
-	badMsg_tooMany := stakeibctypes.MsgRebalanceValidators{
-		Creator:      "stride_ADDRESS",
-		HostZone:     "GAIA",
-		NumRebalance: 5,
-	}
-	_, err = s.GetMsgServer().RebalanceValidators(sdk.WrapSDKContext(s.Ctx), &badMsg_tooMany)
-	s.Require().EqualError(err, expectedErrMsg, "rebalancing 5 validators should fail")
-}
 
 func (s *KeeperTestSuite) TestRebalanceValidators_InvalidNoChange() {
 	s.SetupRebalanceValidators()

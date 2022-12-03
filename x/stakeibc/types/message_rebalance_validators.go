@@ -10,6 +10,8 @@ import (
 )
 
 const TypeMsgRebalanceValidators = "rebalance_validators"
+const MIN_NUM_REBALANCE = 1
+const MAX_NUM_REBALANCE = 10
 
 var _ sdk.Msg = &MsgRebalanceValidators{}
 
