@@ -6,9 +6,6 @@ import (
 	ibckeeper "github.com/cosmos/ibc-go/v3/modules/core/keeper"
 	"github.com/tendermint/tendermint/libs/log"
 
-	"github.com/Stride-Labs/stride/v3/utils"
-	icacallbackstypes "github.com/Stride-Labs/stride/v3/x/icacallbacks/types"
-
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	capabilitykeeper "github.com/cosmos/cosmos-sdk/x/capability/keeper"
@@ -17,9 +14,11 @@ import (
 	ibctransferkeeper "github.com/cosmos/ibc-go/v3/modules/apps/transfer/keeper"
 	ibctypes "github.com/cosmos/ibc-go/v3/modules/apps/transfer/types"
 
-	icacallbackskeeper "github.com/Stride-Labs/stride/v3/x/icacallbacks/keeper"
+	"github.com/Stride-Labs/stride/v4/utils"
+	icacallbackskeeper "github.com/Stride-Labs/stride/v4/x/icacallbacks/keeper"
+	icacallbackstypes "github.com/Stride-Labs/stride/v4/x/icacallbacks/types"
 
-	"github.com/Stride-Labs/stride/v3/x/records/types"
+	"github.com/Stride-Labs/stride/v4/x/records/types"
 )
 
 type (

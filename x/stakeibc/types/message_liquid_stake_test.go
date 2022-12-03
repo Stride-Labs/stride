@@ -6,7 +6,7 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/stretchr/testify/require"
 
-	"github.com/Stride-Labs/stride/v3/testutil/sample"
+	"github.com/Stride-Labs/stride/v4/testutil/sample"
 )
 
 func TestMsgLiquidStake_ValidateBasic(t *testing.T) {
