@@ -18,7 +18,7 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochInfo epochstypes.EpochInf
 	// Update the stakeibc epoch tracker
 	epochNumber, err := k.UpdateEpochTracker(ctx, epochInfo)
 	if err != nil {
-		k.Logger(ctx).Error(fmt.Sprintf("Could update epoch tracker, err: %s", err.Error()))
+		k.Logger(ctx).Error(fmt.Sprintf("Unable to update epoch tracker, err: %s", err.Error()))
 		return
 	}
 
