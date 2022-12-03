@@ -10,8 +10,8 @@ import (
 	ibckeeper "github.com/cosmos/ibc-go/v3/modules/core/keeper"
 	"github.com/tendermint/tendermint/libs/log"
 
-	"github.com/Stride-Labs/stride/v3/utils"
-	"github.com/Stride-Labs/stride/v3/x/interchainquery/types"
+	"github.com/Stride-Labs/stride/v4/utils"
+	"github.com/Stride-Labs/stride/v4/x/interchainquery/types"
 )
 
 // Keeper of this module maintains collections of registered zones.
