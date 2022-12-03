@@ -1003,7 +1003,6 @@ func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino
 	// this line is used by starport scaffolding # stargate/app/paramSubspace
 
 	paramsKeeper.Subspace(claimtypes.ModuleName)
-	paramsKeeper.Subspace(authz.ModuleName)
 	return paramsKeeper
 }
 
