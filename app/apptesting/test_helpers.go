@@ -301,8 +301,8 @@ func (s *AppTestHelper) ICS20PacketAcknowledgement() channeltypes.Acknowledgemen
 }
 
 func (s *AppTestHelper) ConfirmUpgradeSucceededs(upgradeName string, upgradeHeight int64) {
-	contextBeforeUpgrade := s.Ctx().WithBlockHeight(upgradeHeight - 1)
-	contextAtUpgrade := s.Ctx().WithBlockHeight(upgradeHeight)
+	contextBeforeUpgrade := s.Ctx.WithBlockHeight(upgradeHeight - 1)
+	contextAtUpgrade := s.Ctx.WithBlockHeight(upgradeHeight)
 
 	plan := upgradetypes.Plan{Name: upgradeName, Height: upgradeHeight}
 	err := s.App.UpgradeKeeper.ScheduleUpgrade(contextBeforeUpgrade, plan)

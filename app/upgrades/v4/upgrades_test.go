@@ -6,9 +6,7 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	authz "github.com/cosmos/cosmos-sdk/x/authz"
-
-	"github.com/Stride-Labs/stride/v3/app/apptesting"
+	"github.com/Stride-Labs/stride/v4/app/apptesting"
 )
 
 const dummyUpgradeHeight = 5
@@ -27,11 +25,11 @@ func TestKeeperTestSuite(t *testing.T) {
 
 func (suite *UpgradeTestSuite) TestUpgrade() {
 	testCases := []struct {
-		msg         string
+		msg        string
 		preUpdate  func()
-		update      func()
+		update     func()
 		postUpdate func()
-		expPass     bool
+		expPass    bool
 	}{
 		{
 			"Test that upgrade does not panic",
@@ -40,13 +38,6 @@ func (suite *UpgradeTestSuite) TestUpgrade() {
 			},
 			func() {
 				suite.ConfirmUpgradeSucceededs("v4", dummyUpgradeHeight)
-
-				// make sure authz module was init
-				afterCtx := suite.Ctx().WithBlockHeight(dummyUpgradeHeight)
-				actGenState := suite.App.AuthzKeeper.ExportGenesis(afterCtx)
-				expGenState := authz.DefaultGenesisState()
-				suite.Require().NotNil(actGenState)
-				suite.Require().Equal(&expGenState, &actGenState)
 			},
 			func() {
 			},

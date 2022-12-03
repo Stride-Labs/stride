@@ -6,11 +6,13 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/Stride-Labs/stride/v3/app/apptesting"
+	"github.com/Stride-Labs/stride/v4/app/apptesting"
 )
+
 var (
 	airdropIdentifiers = []string{"stride", "gaia", "osmosis", "juno", "stars"}
 )
+
 const dummyUpgradeHeight = 5
 
 type UpgradeTestSuite struct {
@@ -27,11 +29,11 @@ func TestKeeperTestSuite(t *testing.T) {
 
 func (suite *UpgradeTestSuite) TestUpgrade() {
 	testCases := []struct {
-		msg         string
+		msg        string
 		preUpdate  func()
-		update      func()
+		update     func()
 		postUpdate func()
-		expPass     bool
+		expPass    bool
 	}{
 		{
 			"Test that upgrade does not panic",
@@ -42,8 +44,8 @@ func (suite *UpgradeTestSuite) TestUpgrade() {
 				suite.ConfirmUpgradeSucceededs("v3", dummyUpgradeHeight)
 
 				// make sure claim record was set
-				afterCtx := suite.Ctx().WithBlockHeight(dummyUpgradeHeight)
-				for _, identifier := range(airdropIdentifiers) {
+				afterCtx := suite.Ctx.WithBlockHeight(dummyUpgradeHeight)
+				for _, identifier := range airdropIdentifiers {
 					claimRecords := suite.App.ClaimKeeper.GetClaimRecords(afterCtx, identifier)
 					suite.Require().NotEqual(0, len(claimRecords))
 				}
