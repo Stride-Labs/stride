@@ -120,7 +120,13 @@ func (k Keeper) UpdateDelegationBalances(ctx sdk.Context, zone types.HostZone, u
 		if !success {
 			return sdkerrors.Wrapf(types.ErrValidatorDelegationChg, "Failed to remove delegation to validator")
 		}
-		zone.StakedBal -= undelegation.Amount
+		if undelegation.Amount > zone.StakedBal {
+			// handle incoming underflow
+			// Once we add a killswitch, we should also stop liquid staking on the zone here
+			return sdkerrors.Wrapf(types.ErrUndelegationAmount, "undelegation.Amount > zone.StakedBal, undelegation.Amount: %d, zone.StakedBal %d", undelegation.Amount, zone.StakedBal)
+		} else {
+			zone.StakedBal -= undelegation.Amount
+		}
 	}
 	k.SetHostZone(ctx, zone)
 	return nil

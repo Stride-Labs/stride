@@ -47,4 +47,5 @@ var (
 	ErrHostZoneICAAccountNotFound        = sdkerrors.Register(ModuleName, 1537, "host zone's ICA account not found")
 	ErrNoValidatorAmts                   = sdkerrors.Register(ModuleName, 1538, "could not fetch validator amts")
 	ErrMaxNumValidators                  = sdkerrors.Register(ModuleName, 1539, "max number of validators reached")
+	ErrUndelegationAmount                = sdkerrors.Register(ModuleName, 1540, "Undelegation amount is greater than stakedBal")
 )
