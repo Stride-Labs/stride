@@ -5,7 +5,6 @@
 *.so
 *.dylib
 
-scripts/testnet/state/keys.txt
 **state.json
 **test.py
 **test.sh
@@ -14,25 +13,14 @@ scripts/testnet/state/keys.txt
 launch.sh
 build/*
 state/*
-.state.backup
-scripts/state/*
-scripts/testnet/*/state/keys.txt
-scripts/testnet/state/*
-scripts/testnet/certs/**.pem
-
-scripts/logs/*.log
-scripts/logs/*/*.log
-scripts-local/state
-scripts-local/logs
-scripts-local/test-utils/state/
+scripts/state
+scripts/logs
+dockernet/state
+dockernet/logs
+dockernet/upgrades/binaries
+dockernet/upgrades/cosmovisor
+dockernet/temp.sh
 scripts/temp.sh
-scripts/testnet/*/state/keys.txt
-scripts/tests/validator_selection
-scripts/tests/local_tests.bats
-scripts-local/upgrades/binaries
-scripts-local/upgrades/cosmovisor
-scripts/upgrades/binaries
-scripts/upgrades/cosmovisor
 vue/*
 # Test binary, built with `go test -c`
 *.test

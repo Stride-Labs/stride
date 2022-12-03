@@ -5,7 +5,7 @@ import (
 
 	ibctransfertypes "github.com/cosmos/ibc-go/v3/modules/apps/transfer/types"
 
-	"github.com/Stride-Labs/stride/v3/x/records/types"
+	"github.com/Stride-Labs/stride/v4/x/records/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"

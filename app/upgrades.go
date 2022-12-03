@@ -6,9 +6,9 @@ import (
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 
-	v2 "github.com/Stride-Labs/stride/v3/app/upgrades/v2"
-	v3 "github.com/Stride-Labs/stride/v3/app/upgrades/v3"
-	claimtypes "github.com/Stride-Labs/stride/v3/x/claim/types"
+	v2 "github.com/Stride-Labs/stride/v4/app/upgrades/v2"
+	v3 "github.com/Stride-Labs/stride/v4/app/upgrades/v3"
+	claimtypes "github.com/Stride-Labs/stride/v4/x/claim/types"
 )
 
 func (app *StrideApp) setupUpgradeHandlers() {

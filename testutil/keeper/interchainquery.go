@@ -7,8 +7,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 
-	strideapp "github.com/Stride-Labs/stride/v3/app"
-	"github.com/Stride-Labs/stride/v3/x/interchainquery/keeper"
+	strideapp "github.com/Stride-Labs/stride/v4/app"
+	"github.com/Stride-Labs/stride/v4/x/interchainquery/keeper"
 )
 
 func InterchainqueryKeeper(t testing.TB) (*keeper.Keeper, sdk.Context) {

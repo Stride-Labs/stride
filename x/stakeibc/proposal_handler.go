@@ -5,9 +5,9 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 
-	"github.com/Stride-Labs/stride/v3/x/stakeibc/keeper"
+	"github.com/Stride-Labs/stride/v4/x/stakeibc/keeper"
 
-	"github.com/Stride-Labs/stride/v3/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v4/x/stakeibc/types"
 )
 
 func NewStakeibcProposalHandler(k keeper.Keeper) govtypes.Handler {

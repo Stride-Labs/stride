@@ -10,7 +10,8 @@ import (
 	ibckeeper "github.com/cosmos/ibc-go/v3/modules/core/keeper"
 	"github.com/tendermint/tendermint/libs/log"
 
-	"github.com/Stride-Labs/stride/v3/x/interchainquery/types"
+	"github.com/Stride-Labs/stride/v4/utils"
+	"github.com/Stride-Labs/stride/v4/x/interchainquery/types"
 )
 
 // Keeper of this module maintains collections of registered zones.
@@ -46,16 +47,8 @@ func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 }
 
 func (k *Keeper) MakeRequest(ctx sdk.Context, module string, callbackId string, chainId string, connectionId string, queryType string, request []byte, ttl uint64) error {
-	k.Logger(ctx).Info(
-		"MakeRequest",
-		"module", module,
-		"callbackId", callbackId,
-		"chainId", chainId,
-		"connectionId", connectionId,
-		"queryType", queryType,
-		"request", request,
-		"ttl", ttl,
-	)
+	k.Logger(ctx).Info(utils.LogWithHostZone(chainId,
+		"Submitting ICQ Request - module=%s, callbackId=%s, connectionId=%s, queryType=%s, ttl=%d", module, callbackId, connectionId, queryType, ttl))
 
 	// Confirm the connectionId and chainId are valid
 	if connectionId == "" {

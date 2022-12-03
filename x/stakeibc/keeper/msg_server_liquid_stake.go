@@ -8,8 +8,8 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/spf13/cast"
 
-	epochtypes "github.com/Stride-Labs/stride/v3/x/epochs/types"
-	"github.com/Stride-Labs/stride/v3/x/stakeibc/types"
+	epochtypes "github.com/Stride-Labs/stride/v4/x/epochs/types"
+	"github.com/Stride-Labs/stride/v4/x/stakeibc/types"
 )
 
 func (k msgServer) LiquidStake(goCtx context.Context, msg *types.MsgLiquidStake) (*types.MsgLiquidStakeResponse, error) {

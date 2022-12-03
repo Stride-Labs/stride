@@ -1,0 +1,21 @@
+version: "3"
+
+services:
+
+  strided:
+    image: stridezone:localstride
+    build:
+      context: ../../../
+      args:
+        RUNNER_IMAGE: alpine:3.15
+        GO_VERSION: 1.18
+    volumes:
+      - ./scripts/start.sh:/home/stride/start.sh
+      - $HOME/.stride/:/home/stride/.stride/
+    entrypoint:
+      - /home/stride/start.sh
+    ports:
+      - 26657:26657
+      - 1317:1317
+      - 9090:9090
+      - 9091:9091
