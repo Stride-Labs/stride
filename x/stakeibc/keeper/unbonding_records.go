@@ -31,7 +31,6 @@ func (k Keeper) CreateEpochUnbondingRecord(ctx sdk.Context, epochNumber uint64) 
 			HostZoneId:        hostZone.ChainId,
 			Status:            recordstypes.HostZoneUnbonding_UNBONDING_QUEUE,
 		}
-		k.Logger(ctx).Info(fmt.Sprintf("Adding hostZoneUnbonding %v to %s", hostZoneUnbonding, hostZone.ChainId))
 		hostZoneUnbondings = append(hostZoneUnbondings, &hostZoneUnbonding)
 	}
 
@@ -261,7 +260,7 @@ func (k Keeper) CleanupEpochUnbondingRecords(ctx sdk.Context, epochNumber uint64
 			}
 		}
 		if shouldDeleteEpochUnbondingRecord {
-			k.Logger(ctx).Info(fmt.Sprintf("  EpochUnbondingRecord %d - All unbondings claimed, removing records", epochUnbondingRecord.EpochNumber))
+			k.Logger(ctx).Info(fmt.Sprintf("  EpochUnbondingRecord %d - All unbondings claimed, removing record", epochUnbondingRecord.EpochNumber))
 			k.RecordsKeeper.RemoveEpochUnbondingRecord(ctx, epochUnbondingRecord.EpochNumber)
 		} else {
 			k.Logger(ctx).Info(fmt.Sprintf("  EpochUnbondingRecord %d - Has unclaimed unbondings", epochUnbondingRecord.EpochNumber))
@@ -320,8 +319,8 @@ func (k Keeper) SweepAllUnbondedTokensForHostZone(ctx sdk.Context, hostZone type
 	}
 
 	// If we have any amount to sweep, then we can send the ICA call to sweep them
-	if totalAmtTransferToRedemptionAcct == 0 {
-		k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId, "No unbonded tokens ready for sweep"))
+	if totalAmtTransferToRedemptionAcct <= 0 {
+		k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId, "Record not ready for sweep"))
 		return true, totalAmtTransferToRedemptionAcct
 	}
 	k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId, "Batch transferring %d to host zone", totalAmtTransferToRedemptionAcct))
