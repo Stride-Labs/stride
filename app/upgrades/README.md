@@ -69,7 +69,6 @@ func (app *StrideApp) setupUpgradeHandlers() {
 
 	// If adding a new module, add the new store keys
 	switch upgradeInfo.Name {
-	// no store upgrades
 	...
 	case {upgradeVersion}:
 		storeUpgrades = &storetypes.StoreUpgrades{
