@@ -234,7 +234,8 @@ func LogWithHostZone(chainId string, s string, a ...any) string {
 // Ex:
 //  ------------------------------ string ------------------------------
 func LogHeader(s string, a ...any) string {
-	pad := strings.Repeat("-", 40)
+	lineLength := 120
 	header := fmt.Sprintf(s, a...)
+	pad := strings.Repeat("-", (lineLength-len(header))/2)
 	return fmt.Sprintf("%s %s %s", pad, header, pad)
 }
