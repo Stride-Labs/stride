@@ -1,0 +1,26 @@
+version: "3"
+
+services:
+
+  stride:
+    image: stridezone:localstride
+    build:
+      context: ../../../
+      args:
+        RUNNER_IMAGE: alpine:3.16
+        GO_VERSION: 1.19
+    volumes:
+      - ./scripts/start.sh:/home/stride/start.sh
+      - ./scripts/testnetify.py:/home/stride/testnetify.py
+      - ./state_export.json:/home/stride/state_export.json
+      - $HOME/.stride/:/home/stride/.stride/
+    entrypoint:
+      - /home/stride/start.sh
+    environment:
+      - MONIKER=val
+      - CHAIN_ID=localstride
+    ports:
+      - 26657:26657
+      - 1317:1317
+      - 9090:9090
+      - 9091:9091
