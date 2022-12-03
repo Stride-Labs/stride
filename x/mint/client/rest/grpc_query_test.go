@@ -14,8 +14,8 @@ import (
 	"github.com/gogo/protobuf/proto"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/Stride-Labs/stride/v3/app"
-	minttypes "github.com/Stride-Labs/stride/v3/x/mint/types"
+	"github.com/Stride-Labs/stride/v4/app"
+	minttypes "github.com/Stride-Labs/stride/v4/x/mint/types"
 
 	"github.com/cosmos/cosmos-sdk/testutil/network"
 )

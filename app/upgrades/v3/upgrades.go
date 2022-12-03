@@ -7,8 +7,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/module"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 
-	claimkeeper "github.com/Stride-Labs/stride/v3/x/claim/keeper"
-	claimtypes "github.com/Stride-Labs/stride/v3/x/claim/types"
+	claimkeeper "github.com/Stride-Labs/stride/v4/x/claim/keeper"
+	claimtypes "github.com/Stride-Labs/stride/v4/x/claim/types"
 )
 
 // Note: ensure these values are properly set before running upgrade
