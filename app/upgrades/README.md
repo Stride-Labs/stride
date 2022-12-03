@@ -66,6 +66,15 @@ func (app *StrideApp) setupUpgradeHandlers() {
 		panic(fmt.Errorf("Failed to read upgrade info from disk: %w", err))
 	}
     ...
+
+	// If adding a new module, add the new store keys
+	switch upgradeInfo.Name {
+	...
+	case {upgradeVersion}:
+		storeUpgrades = &storetypes.StoreUpgrades{
+			Added: []string{newmoduletypes.StoreKey},
+		}
+	}
 ```
 
 # Migrations (Only required if the state changed)
