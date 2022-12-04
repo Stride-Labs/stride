@@ -106,7 +106,8 @@ func (k Keeper) AddDelegationToValidator(ctx sdk.Context, hostZone types.HostZon
 				}
 				val.DelegationAmt = val.GetDelegationAmt() + amt
 				return true
-			} else {
+			}
+			{
 				absAmt, err := cast.ToUint64E(-amt)
 				if err != nil {
 					k.Logger(ctx).Error(fmt.Sprintf("Error converting %d to uint64", amt))

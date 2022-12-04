@@ -20,10 +20,8 @@ func (k msgServer) RedeemStake(goCtx context.Context, msg *types.MsgRedeemStake)
 	k.Logger(ctx).Info(fmt.Sprintf("redeem stake: %s", msg.String()))
 
 	// get our addresses, make sure they're valid
-	sender, err := sdk.AccAddressFromBech32(msg.Creator)
-	if err != nil {
-		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "creator address is invalid: %s. err: %s", msg.Creator, err.Error())
-	}
+	sender, _ := sdk.AccAddressFromBech32(msg.Creator)
+
 	// then make sure host zone is valid
 	hostZone, found := k.GetHostZone(ctx, msg.HostZone)
 	if !found {
@@ -43,7 +41,7 @@ func (k msgServer) RedeemStake(goCtx context.Context, msg *types.MsgRedeemStake)
 
 	// ensure the recipient address is a valid bech32 address on the hostZone
 	// TODO(TEST-112) do we need to check the hostZone before this check? Would need access to keeper
-	_, err = utils.AccAddressFromBech32(msg.Receiver, hostZone.Bech32Prefix)
+	_, err := utils.AccAddressFromBech32(msg.Receiver, hostZone.Bech32Prefix)
 	if err != nil {
 		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid receiver address (%s)", err)
 	}
