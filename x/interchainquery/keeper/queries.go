@@ -18,7 +18,7 @@ func GenerateQueryHash(connectionId string, chainId string, queryType string, re
 
 func (k Keeper) NewQuery(ctx sdk.Context, module string, connectionId string, chainId string, queryType string, request []byte, period math.Int, callbackId string, ttl uint64, height int64) *types.Query {
 	return &types.Query{
-		Id:           GenerateQueryHash(connectionId, chainId, queryType, request, module, height),
+		Id:           GenerateQueryHash(connectionId, chainId, queryType, request, module, callbackId),
 		ConnectionId: connectionId,
 		ChainId:      chainId,
 		QueryType:    queryType,
