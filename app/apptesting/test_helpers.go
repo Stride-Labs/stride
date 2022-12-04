@@ -3,8 +3,8 @@ package apptesting
 import (
 	"strings"
 
-	"cosmossdk.io/api/tendermint/abci"
 	ibctransfertypes "github.com/cosmos/ibc-go/v5/modules/apps/transfer/types"
+	abci "github.com/tendermint/tendermint/abci/types"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
