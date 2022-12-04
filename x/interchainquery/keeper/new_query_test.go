@@ -2,9 +2,6 @@ package keeper_test
 
 import (
 	_ "github.com/stretchr/testify/suite"
-
-	"cosmossdk.io/math"
-
 	icqtypes "github.com/Stride-Labs/stride/v4/x/interchainquery/types"
 )
 
@@ -15,7 +12,6 @@ type NewQueryTestCase struct {
 	connectionId string
 	queryType    string
 	request      []byte
-	period       math.Int
 	ttl          uint64
 }
 
