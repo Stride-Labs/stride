@@ -58,8 +58,8 @@ func ReinvestCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ack
 	if err != nil {
 		return err
 	}
-	amount := reinvestCallback.ReinvestAmount.Amount
-	denom := reinvestCallback.ReinvestAmount.Denom
+	amount := reinvestCallback.ReinvestCoin.Amount
+	denom := reinvestCallback.ReinvestCoin.Denom
 
 	// fetch epoch
 	strideEpochTracker, found := k.GetEpochTracker(ctx, epochtypes.STRIDE_EPOCH)

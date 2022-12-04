@@ -60,8 +60,8 @@ func (s *KeeperTestSuite) SetupReinvestCallback() ReinvestCallbackTestCase {
 	msgs = append(msgs, &banktypes.MsgSend{}, &banktypes.MsgSend{})
 	ack := s.ICAPacketAcknowledgement(msgs, nil)
 	callbackArgs := types.ReinvestCallback{
-		HostZoneId:     HostChainId,
-		ReinvestAmount: sdk.NewCoin(Atom, sdk.NewInt(reinvestAmt)),
+		HostZoneId:   HostChainId,
+		ReinvestCoin: sdk.NewCoin(Atom, sdk.NewInt(reinvestAmt)),
 	}
 	args, err := s.App.StakeibcKeeper.MarshalReinvestCallbackArgs(s.Ctx, callbackArgs)
 	s.Require().NoError(err)

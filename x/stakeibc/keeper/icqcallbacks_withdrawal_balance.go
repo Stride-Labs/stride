@@ -117,8 +117,8 @@ func WithdrawalBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query icq
 
 	// add callback data
 	reinvestCallback := types.ReinvestCallback{
-		ReinvestAmount: reinvestCoin,
-		HostZoneId:     hostZone.ChainId,
+		ReinvestCoin: reinvestCoin,
+		HostZoneId:   hostZone.ChainId,
 	}
 	k.Logger(ctx).Info(fmt.Sprintf("Marshalling ReinvestCallback args: %v", reinvestCallback))
 	marshalledCallbackArgs, err := k.MarshalReinvestCallbackArgs(ctx, reinvestCallback)
