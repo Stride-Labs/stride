@@ -132,7 +132,7 @@ func (s *KeeperTestSuite) TestWithdrawalBalanceCallback_Successful() {
 	callbackArgs, err := s.App.StakeibcKeeper.UnmarshalReinvestCallbackArgs(s.Ctx, callbackData.CallbackArgs)
 	s.Require().NoError(err, "unmarshalling callback args error for callback key (%s)", callbackKey)
 	s.Require().Equal(tc.initialState.hostZone.ChainId, callbackArgs.HostZoneId, "host zone in callback args (%s)", callbackKey)
-	s.Require().Equal(tc.expectedReinvestment, callbackArgs.ReinvestAmount, "reinvestment coin in callback args (%s)", callbackKey)
+	s.Require().Equal(tc.expectedReinvestment, callbackArgs.ReinvestCoin, "reinvestment coin in callback args (%s)", callbackKey)
 
 	// Confirm the sequence number was incremented
 	endSequence, found := s.App.IBCKeeper.ChannelKeeper.GetNextSequenceSend(s.Ctx, withdrawalPortId, withdrawalChannelId)
