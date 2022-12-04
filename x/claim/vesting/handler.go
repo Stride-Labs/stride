@@ -6,7 +6,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth/keeper"
 
-	"github.com/Stride-Labs/stride/v3/x/claim/vesting/types"
+	"github.com/Stride-Labs/stride/v4/x/claim/vesting/types"
 )
 
 // NewHandler returns a handler for x/auth message types.

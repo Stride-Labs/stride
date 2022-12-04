@@ -27,6 +27,7 @@ var (
 	ErrInvalidNumValidator               = fmt.Errorf("invalid number of validators")
 	ErrValidatorNotRemoved               = fmt.Errorf("validator not removed")
 	ErrHostZoneNotFound                  = fmt.Errorf("host zone not found")
+	ErrUndelegationAmount                = fmt.Errorf("undelegation amount is invalid")
 	ErrOutsideIcqWindow                  = fmt.Errorf("outside time window that accepts icqs")
 	ErrParamNotFound                     = fmt.Errorf("param not found")
 	ErrUnmarshalFailure                  = fmt.Errorf("unable to unmarshal data structure")

@@ -11,7 +11,7 @@ import (
 	"github.com/gogo/protobuf/proto"
 	"github.com/tendermint/tendermint/libs/log"
 
-	"github.com/Stride-Labs/stride/v3/x/icacallbacks/keeper"
+	"github.com/Stride-Labs/stride/v4/x/icacallbacks/keeper"
 )
 
 // IBCModule implements the ICS26 interface for interchain accounts controller chains

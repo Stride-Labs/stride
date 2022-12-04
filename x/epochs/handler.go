@@ -3,9 +3,10 @@ package epochs
 import (
 	"fmt"
 
-	"github.com/Stride-Labs/stride/v3/x/epochs/keeper"
-	"github.com/Stride-Labs/stride/v3/x/epochs/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	"github.com/Stride-Labs/stride/v4/x/epochs/keeper"
+	"github.com/Stride-Labs/stride/v4/x/epochs/types"
 )
 
 // NewHandler returns a handler for epochs module messages

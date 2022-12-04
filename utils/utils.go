@@ -11,8 +11,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/address"
 	"github.com/cosmos/cosmos-sdk/types/bech32"
 
-	config "github.com/Stride-Labs/stride/v3/cmd/strided/config"
-	recordstypes "github.com/Stride-Labs/stride/v3/x/records/types"
+	config "github.com/Stride-Labs/stride/v4/cmd/strided/config"
+	recordstypes "github.com/Stride-Labs/stride/v4/x/records/types"
 )
 
 func FilterDepositRecords(arr []recordstypes.DepositRecord, condition func(recordstypes.DepositRecord) bool) (ret []recordstypes.DepositRecord) {
@@ -218,4 +218,24 @@ func ConvertAddressToStrideAddress(address string) string {
 	}
 
 	return bech32Addr
+}
+
+// Returns a log string with a tab and chainId as the prefix
+// Ex:
+//
+//	| COSMOSHUB-4   |   string
+func LogWithHostZone(chainId string, s string, a ...any) string {
+	msg := fmt.Sprintf(s, a...)
+	return fmt.Sprintf("|   %-13s |  %s", strings.ToUpper(chainId), msg)
+}
+
+// Returns a log header string with a dash padding on either side
+// Ex:
+//
+//	------------------------------ string ------------------------------
+func LogHeader(s string, a ...any) string {
+	lineLength := 120
+	header := fmt.Sprintf(s, a...)
+	pad := strings.Repeat("-", (lineLength-len(header))/2)
+	return fmt.Sprintf("%s %s %s", pad, header, pad)
 }
