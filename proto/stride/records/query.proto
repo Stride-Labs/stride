@@ -7,7 +7,7 @@ import "cosmos/base/query/v1beta1/pagination.proto";
 import "stride/records/genesis.proto";
 // this line is used by starport scaffolding # 1
 
-option go_package = "github.com/Stride-Labs/stride/v3/x/records/types";
+option go_package = "github.com/Stride-Labs/stride/v4/x/records/types";
 
 // Query defines the gRPC querier service.
 service Query {

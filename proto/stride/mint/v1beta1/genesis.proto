@@ -4,7 +4,7 @@ package stride.mint.v1beta1;
 import "gogoproto/gogo.proto";
 import "stride/mint/v1beta1/mint.proto";
 
-option go_package = "github.com/Stride-Labs/stride/v3/x/mint/types";
+option go_package = "github.com/Stride-Labs/stride/v4/x/mint/types";
 
 // GenesisState defines the mint module's genesis state.
 message GenesisState {
