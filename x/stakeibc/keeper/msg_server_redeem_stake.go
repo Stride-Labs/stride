@@ -130,13 +130,7 @@ func (k msgServer) RedeemStake(goCtx context.Context, msg *types.MsgRedeemStake)
 	}
 
 	// record the number of stAssets that should be burned after unbonding
-	stTokenAmount, err := cast.ToUint64E(msg.Amount)
-	if err != nil {
-		errMsg := fmt.Sprintf("Could not convert redemption amount to int64 in redeem stake | %s", err.Error())
-		k.Logger(ctx).Error(errMsg)
-		return nil, sdkerrors.Wrapf(types.ErrIntCast, errMsg)
-	}
-	hostZoneUnbonding.StTokenAmount += stTokenAmount
+	hostZoneUnbonding.StTokenAmount += msg.Amount
 
 	// Actually set the records, we wait until now to prevent any errors
 	k.RecordsKeeper.SetUserRedemptionRecord(ctx, userRedemptionRecord)
