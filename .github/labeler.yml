@@ -28,7 +28,7 @@
   - Makefile
   - Dockerfile
   - scripts/*
-  - scripts-local/*
+  - dockernet/*
 "T:CI":
   - .github/**/*.yml
   - .golangci.yml

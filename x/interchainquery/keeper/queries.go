@@ -2,7 +2,6 @@ package keeper
 
 import (
 	"fmt"
-	"strconv"
 
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -10,11 +9,11 @@ import (
 
 	"cosmossdk.io/math"
 
-	"github.com/Stride-Labs/stride/v3/x/interchainquery/types"
+	"github.com/Stride-Labs/stride/v4/x/interchainquery/types"
 )
 
-func GenerateQueryHash(connectionId string, chainId string, queryType string, request []byte, module string, height int64) string {
-	return fmt.Sprintf("%x", crypto.Sha256(append([]byte(module+connectionId+chainId+queryType+strconv.FormatInt(height, 10)), request...)))
+func GenerateQueryHash(connectionId string, chainId string, queryType string, request []byte, module string, callbackId string) string {
+	return fmt.Sprintf("%x", crypto.Sha256(append([]byte(module+connectionId+chainId+queryType+callbackId), request...)))
 }
 
 func (k Keeper) NewQuery(ctx sdk.Context, module string, connectionId string, chainId string, queryType string, request []byte, period math.Int, callbackId string, ttl uint64, height int64) *types.Query {
@@ -24,11 +23,9 @@ func (k Keeper) NewQuery(ctx sdk.Context, module string, connectionId string, ch
 		ChainId:      chainId,
 		QueryType:    queryType,
 		Request:      request,
-		Period:       period,
-		LastHeight:   sdk.ZeroInt(),
 		CallbackId:   callbackId,
 		Ttl:          ttl,
-		Height:       height,
+		RequestSent:  false,
 	}
 }
 

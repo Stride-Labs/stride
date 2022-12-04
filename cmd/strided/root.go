@@ -8,7 +8,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/snapshots"
 
-	"github.com/Stride-Labs/stride/v3/utils"
+	"github.com/Stride-Labs/stride/v4/utils"
 
 	tmDb "github.com/tendermint/tm-db"
 
@@ -40,8 +40,8 @@ import (
 	genutilcli "github.com/cosmos/cosmos-sdk/x/genutil/client/cli"
 	tmcfg "github.com/tendermint/tendermint/config"
 
-	"github.com/Stride-Labs/stride/v3/app"
-	// "github.com/Stride-Labs/stride/v3/app/params"
+	"github.com/Stride-Labs/stride/v4/app"
+	// "github.com/Stride-Labs/stride/v4/app/params"
 	// this line is used by starport scaffolding # stargate/root/import
 )
 

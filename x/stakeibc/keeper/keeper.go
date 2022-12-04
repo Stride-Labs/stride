@@ -13,8 +13,8 @@ import (
 	capabilitykeeper "github.com/cosmos/cosmos-sdk/x/capability/keeper"
 	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
 
-	icqkeeper "github.com/Stride-Labs/stride/v3/x/interchainquery/keeper"
-	"github.com/Stride-Labs/stride/v3/x/stakeibc/types"
+	icqkeeper "github.com/Stride-Labs/stride/v4/x/interchainquery/keeper"
+	"github.com/Stride-Labs/stride/v4/x/stakeibc/types"
 
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
@@ -24,9 +24,9 @@ import (
 
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 
-	epochstypes "github.com/Stride-Labs/stride/v3/x/epochs/types"
-	icacallbackskeeper "github.com/Stride-Labs/stride/v3/x/icacallbacks/keeper"
-	recordsmodulekeeper "github.com/Stride-Labs/stride/v3/x/records/keeper"
+	epochstypes "github.com/Stride-Labs/stride/v4/x/epochs/types"
+	icacallbackskeeper "github.com/Stride-Labs/stride/v4/x/icacallbacks/keeper"
+	recordsmodulekeeper "github.com/Stride-Labs/stride/v4/x/records/keeper"
 )
 
 type (
@@ -252,7 +252,6 @@ func (k Keeper) GetICATimeoutNanos(ctx sdk.Context, epochType string) (uint64, e
 		k.Logger(ctx).Error(fmt.Sprintf("Failed to convert timeoutNanos to uint64, error: %s", err.Error()))
 		return 0, sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "Failed to convert timeoutNanos to uint64, error: %s", err.Error())
 	}
-	k.Logger(ctx).Info(fmt.Sprintf("Submitting txs for epoch %s %d %d", epochTracker.EpochIdentifier, epochTracker.NextEpochStartTime, timeoutNanos))
 	return timeoutNanosUint64, nil
 }
 
