@@ -152,7 +152,7 @@ func AccAddressFromBech32(address string, bech32prefix string) (addr AccAddress,
 	return AccAddress(bz), nil
 }
 
-//==============================  AIRDROP UTILS  ================================
+// ==============================  AIRDROP UTILS  ================================
 // max64 returns the maximum of its inputs.
 func Max64(i, j int64) int64 {
 	if i > j {

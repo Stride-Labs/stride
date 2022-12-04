@@ -85,7 +85,7 @@ func SetAddressPrefixes(config *sdk.Config) {
 
 		// TODO: Do we want to allow addresses of lengths other than 20 and 32 bytes?
 		if len(bytes) != 20 && len(bytes) != 32 {
-			return fmt.Errorf("address length must be 20 or 32 bytes, got %d: unknown address", len(bytes))
+			return fmt.Errorf("address length must be 20 or 32 bytes, got %d: : unknown address", len(bytes))
 		}
 
 		return nil
