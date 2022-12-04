@@ -185,8 +185,8 @@ func (s *KeeperTestSuite) TestLiquidStake_IbcCoinParseError() {
 	// Update hostzone with denom that can't be parsed
 	badHostZone := tc.initialState.hostZone
 	badHostZone.IbcDenom = "ibc,0atom"
-	s.App.StakeibcKeeper.SetHostZone(s.Ctx(), badHostZone)
-	_, err := s.GetMsgServer().LiquidStake(sdk.WrapSDKContext(s.Ctx()), &tc.validMsg)
+	s.App.StakeibcKeeper.SetHostZone(s.Ctx, badHostZone)
+	_, err := s.GetMsgServer().LiquidStake(sdk.WrapSDKContext(s.Ctx), &tc.validMsg)
 
 	badCoin := fmt.Sprintf("%d%s", tc.validMsg.Amount, badHostZone.IbcDenom)
 	s.Require().EqualError(err, fmt.Sprintf("failed to parse coin (%s): invalid decimal coin expression: %s", badCoin, badCoin))
