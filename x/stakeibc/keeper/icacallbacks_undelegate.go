@@ -6,10 +6,10 @@ import (
 
 	"github.com/spf13/cast"
 
-	"github.com/Stride-Labs/stride/x/icacallbacks"
-	icacallbackstypes "github.com/Stride-Labs/stride/x/icacallbacks/types"
-	recordstypes "github.com/Stride-Labs/stride/x/records/types"
-	"github.com/Stride-Labs/stride/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v4/x/icacallbacks"
+	icacallbackstypes "github.com/Stride-Labs/stride/v4/x/icacallbacks/types"
+	recordstypes "github.com/Stride-Labs/stride/v4/x/records/types"
+	"github.com/Stride-Labs/stride/v4/x/stakeibc/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -41,6 +41,19 @@ func UndelegateCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, a
 		packet.Sequence, packet.SourceChannel, packet.SourcePort, packet.DestinationChannel, packet.DestinationPort)
 	k.Logger(ctx).Info(logMsg)
 
+	// fetch relevant state
+	undelegateCallback, err := k.UnmarshalUndelegateCallbackArgs(ctx, args)
+	if err != nil {
+		errMsg := fmt.Sprintf("Unable to unmarshal undelegate callback args | %s", err.Error())
+		k.Logger(ctx).Error(errMsg)
+		return sdkerrors.Wrapf(types.ErrUnmarshalFailure, errMsg)
+	}
+	k.Logger(ctx).Info(fmt.Sprintf("UndelegateCallback, HostZone: %s", undelegateCallback.HostZoneId))
+	zone, found := k.GetHostZone(ctx, undelegateCallback.HostZoneId)
+	if !found {
+		return sdkerrors.Wrapf(sdkerrors.ErrKeyNotFound, "Host zone not found: %s", undelegateCallback.HostZoneId)
+	}
+
 	// handle transaction failure cases
 	if ack == nil {
 		// handle timeout
@@ -54,21 +67,13 @@ func UndelegateCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, a
 	}
 	if len(txMsgData.Data) == 0 {
 		// handle tx failure
+		// reset to UNBONDING_QUEUE
+		err = k.RecordsKeeper.SetHostZoneUnbondings(ctx, zone.ChainId, undelegateCallback.EpochUnbondingRecordIds, recordstypes.HostZoneUnbonding_UNBONDING_QUEUE)
+		if err != nil {
+			return err
+		}
 		k.Logger(ctx).Error(fmt.Sprintf("UndelegateCallback tx failed, txMsgData is empty, ack error, packet %v", packet))
 		return nil
-	}
-
-	// fetch relevant state
-	undelegateCallback, err := k.UnmarshalUndelegateCallbackArgs(ctx, args)
-	if err != nil {
-		errMsg := fmt.Sprintf("Unable to unmarshal undelegate callback args | %s", err.Error())
-		k.Logger(ctx).Error(errMsg)
-		return sdkerrors.Wrapf(types.ErrUnmarshalFailure, errMsg)
-	}
-	k.Logger(ctx).Info(fmt.Sprintf("UndelegateCallback, HostZone: %s", undelegateCallback.HostZoneId))
-	zone, found := k.GetHostZone(ctx, undelegateCallback.HostZoneId)
-	if !found {
-		return sdkerrors.Wrapf(sdkerrors.ErrKeyNotFound, "Host zone not found: %s", undelegateCallback.HostZoneId)
 	}
 
 	// core callback logic
@@ -92,7 +97,11 @@ func UndelegateCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, a
 		k.Logger(ctx).Error(fmt.Sprintf("UndelegateCallback | %s", err.Error()))
 		return err
 	}
-
+	// upon success, add host zone unbondings to the exit transfer queue
+	err = k.RecordsKeeper.SetHostZoneUnbondings(ctx, zone.ChainId, undelegateCallback.EpochUnbondingRecordIds, recordstypes.HostZoneUnbonding_EXIT_TRANSFER_QUEUE)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -111,7 +120,13 @@ func (k Keeper) UpdateDelegationBalances(ctx sdk.Context, zone types.HostZone, u
 		if !success {
 			return sdkerrors.Wrapf(types.ErrValidatorDelegationChg, "Failed to remove delegation to validator")
 		}
-		zone.StakedBal -= undelegation.Amount
+		if undelegation.Amount > zone.StakedBal {
+			// handle incoming underflow
+			// Once we add a killswitch, we should also stop liquid staking on the zone here
+			return sdkerrors.Wrapf(types.ErrUndelegationAmount, "undelegation.Amount > zone.StakedBal, undelegation.Amount: %d, zone.StakedBal %d", undelegation.Amount, zone.StakedBal)
+		} else {
+			zone.StakedBal -= undelegation.Amount
+		}
 	}
 	k.SetHostZone(ctx, zone)
 	return nil
@@ -176,7 +191,7 @@ func (k Keeper) UpdateHostZoneUnbondings(
 		stTokenBurnAmount += stTokenAmount
 
 		// Update the bonded status and time
-		hostZoneUnbonding.Status = recordstypes.HostZoneUnbonding_UNBONDED
+		hostZoneUnbonding.Status = recordstypes.HostZoneUnbonding_EXIT_TRANSFER_QUEUE
 		hostZoneUnbonding.UnbondingTime = cast.ToUint64(latestCompletionTime.UnixNano())
 		updatedEpochUnbondingRecord, success := k.RecordsKeeper.AddHostZoneToEpochUnbondingRecord(ctx, epochUnbondingRecord.EpochNumber, zone.ChainId, hostZoneUnbonding)
 		if !success {

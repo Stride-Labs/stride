@@ -4,6 +4,13 @@ BUILDDIR ?= $(CURDIR)/build
 build=s
 cache=false
 COMMIT := $(shell git log -1 --format='%H')
+DOCKER := $(shell which docker)
+DOCKER_BUF := $(DOCKER) run --rm -v $(CURDIR):/workspace --workdir /workspace bufbuild/buf:1.7.0
+DOCKERNET_HOME=./dockernet
+DOCKERNET_COMPOSE_FILE=$(DOCKERNET_HOME)/docker-compose.yml
+LOCALSTRIDE_HOME=./testutil/localstride
+LOCALNET_COMPOSE_FILE=$(LOCALSTRIDE_HOME)/localnet/docker-compose.yml
+STATE_EXPORT_COMPOSE_FILE=$(LOCALSTRIDE_HOME)/state-export/docker-compose.yml
 
 # process build tags
 
@@ -52,7 +59,7 @@ ldflags = -X github.com/cosmos/cosmos-sdk/version.Name=stride \
 		  -X "github.com/cosmos/cosmos-sdk/version.BuildTags=$(build_tags_comma_sep)"
 
 ifeq ($(LINK_STATICALLY),true)
-  ldflags += -linkmode=external -extldflags "-Wl,-z,muldefs -static"
+	ldflags += -linkmode=external -extldflags "-Wl,-z,muldefs -static"
 endif
 ldflags += $(LDFLAGS)
 ldflags := $(strip $(ldflags))
@@ -77,9 +84,6 @@ install: go.sum
 clean: 
 	rm -rf $(BUILDDIR)/* 
 
-clean-state:
-	rm -rf scripts-local/state
-
 ###############################################################################
 ###                                CI                                       ###
 ###############################################################################
@@ -102,48 +106,111 @@ test-unit:
 test-cover:
 	@go test -mod=readonly -race -coverprofile=coverage.out -covermode=atomic ./x/$(module)/...
 
-test-integration-local:
-	sh scripts-local/tests/run_all_tests.sh
-
 test-integration-docker:
-	sh scripts/tests/run_all_tests.sh
+	bash $(DOCKERNET_HOME)/tests/run_all_tests.sh
 
 ###############################################################################
 ###                                DockerNet                                ###
 ###############################################################################
 
 build-docker: 
-	@sh scripts/build.sh -${build} ${BUILDDIR}
+	@bash $(DOCKERNET_HOME)/build.sh -${build} ${BUILDDIR}
 	
 start-docker: build-docker
-	@sh scripts/start_network.sh 
+	@bash $(DOCKERNET_HOME)/start_network.sh 
 
 clean-docker: 
-	@docker-compose stop
-	@docker-compose down
-	rm -rf scripts/state
+	@docker-compose -f $(DOCKERNET_COMPOSE_FILE) stop 
+	@docker-compose -f $(DOCKERNET_COMPOSE_FILE) down 
+	rm -rf $(DOCKERNET_HOME)/state
 	docker image prune -a
 	
 stop-docker:
-	@pkill -f "docker-compose logs" || true
-	@pkill -f "/bin/bash.*create_logs.sh" || true
-	docker-compose down
+	@pkill -f "docker-compose .*stride.* logs" | true
+	@pkill -f "/bin/bash.*create_logs.sh" | true
+	@pkill -f "tail .*.log" | true
+	docker-compose -f $(DOCKERNET_COMPOSE_FILE) down
 
 ###############################################################################
-###                                LocalNet                                 ###
+###                                Protobuf                                 ###
 ###############################################################################
 
-check-dependencies:
-	sh scripts-local/check_dependencies.sh
+protoVer=v0.7
+protoImageName=tendermintdev/sdk-proto-gen:$(protoVer)
+containerProtoGen=$(PROJECT_NAME)-proto-gen-$(protoVer)
+containerProtoGenAny=$(PROJECT_NAME)-proto-gen-any-$(protoVer)
+containerProtoGenSwagger=$(PROJECT_NAME)-proto-gen-swagger-$(protoVer)
+containerProtoFmt=$(PROJECT_NAME)-proto-fmt-$(protoVer)
 
-build-local: 
-	@sh scripts-local/build.sh -${build} ${BUILDDIR}
+proto-all: proto-format proto-lint proto-gen
 
-start-local: build-local
-	@sh scripts-local/start_network.sh ${cache}
+proto-gen:
+	@echo "Generating Protobuf files"
+	@if docker ps -a --format '{{.Names}}' | grep -Eq "^${containerProtoGen}$$"; then docker start -a $(containerProtoGen); else docker run --name $(containerProtoGen) -v $(CURDIR):/workspace --workdir /workspace $(protoImageName) \
+		sh ./scripts/protocgen.sh; fi
 
-stop-local:
-	@killall gaiad strided junod osmosisd rly hermes interchain-queries icq-startup.sh || true
-	@pkill -f "/bin/bash.*create_logs.sh" || true
-	@pkill -f "sh.*start_network.sh" || true
+# This generates the SDK's custom wrapper for google.protobuf.Any. It should only be run manually when needed
+proto-gen-any:
+	@echo "Generating Protobuf Any"
+	@if docker ps -a --format '{{.Names}}' | grep -Eq "^${containerProtoGenAny}$$"; then docker start -a $(containerProtoGenAny); else docker run --name $(containerProtoGenAny) -v $(CURDIR):/workspace --workdir /workspace $(protoImageName) \
+		sh ./scripts/protocgen-any.sh; fi
 
+proto-swagger-gen:
+	@echo "Generating Protobuf Swagger"
+	@if docker ps -a --format '{{.Names}}' | grep -Eq "^${containerProtoGenSwagger}$$"; then docker start -a $(containerProtoGenSwagger); else docker run --name $(containerProtoGenSwagger) -v $(CURDIR):/workspace --workdir /workspace $(protoImageName) \
+		sh ./scripts/protoc-swagger-gen.sh; fi
+
+proto-format:
+	@echo "Formatting Protobuf files"
+	@if docker ps -a --format '{{.Names}}' | grep -Eq "^${containerProtoFmt}$$"; then docker start -a $(containerProtoFmt); else docker run --name $(containerProtoFmt) -v $(CURDIR):/workspace --workdir /workspace tendermintdev/docker-build-proto \
+		find ./ -not -path "./third_party/*" -name "*.proto" -exec clang-format -i {} \; ; fi
+
+
+proto-lint:
+	@$(DOCKER_BUF) lint --error-format=json
+
+proto-check-breaking:
+	@$(DOCKER_BUF) breaking --against $(HTTPS_GIT)#branch=main
+
+.PHONY: proto-all proto-gen proto-format proto-lint
+
+
+###############################################################################
+###                             LocalStride                                 ###
+###############################################################################
+
+localnet-keys:
+	. $(LOCALSTRIDE_HOME)/localnet/add_keys.sh
+
+localnet-init: localnet-clean localnet-build
+
+localnet-clean:
+	@rm -rfI $(HOME)/.stride/
+
+localnet-build:
+	@docker-compose -f $(LOCALNET_COMPOSE_FILE) build
+
+localnet-start:
+	@docker-compose -f $(LOCALNET_COMPOSE_FILE) up
+
+localnet-startd:
+	@docker-compose -f $(LOCALNET_COMPOSE_FILE) up -d
+
+localnet-stop:
+	@docker-compose -f $(LOCALNET_COMPOSE_FILE) down
+
+localnet-state-export-init: localnet-state-export-clean localnet-state-export-build
+
+localnet-state-export-build:
+	@DOCKER_BUILDKIT=1 COMPOSE_DOCKER_CLI_BUILD=1 docker-compose -f $(STATE_EXPORT_COMPOSE_FILE) build
+
+localnet-state-export-start:
+	@docker-compose -f $(STATE_EXPORT_COMPOSE_FILE) up
+
+localnet-state-export-startd:
+	@docker-compose -f $(STATE_EXPORT_COMPOSE_FILE) up -d
+
+localnet-state-export-stop:
+	@docker-compose -f $(STATE_EXPORT_COMPOSE_FILE) down
+
+localnet-state-export-clean: localnet-clean

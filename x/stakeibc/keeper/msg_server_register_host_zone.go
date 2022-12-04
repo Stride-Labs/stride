@@ -7,9 +7,9 @@ import (
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	icatypes "github.com/cosmos/ibc-go/v5/modules/apps/27-interchain-accounts/types"
 
-	epochtypes "github.com/Stride-Labs/stride/x/epochs/types"
-	recordstypes "github.com/Stride-Labs/stride/x/records/types"
-	"github.com/Stride-Labs/stride/x/stakeibc/types"
+	epochtypes "github.com/Stride-Labs/stride/v4/x/epochs/types"
+	recordstypes "github.com/Stride-Labs/stride/v4/x/records/types"
+	"github.com/Stride-Labs/stride/v4/x/stakeibc/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -70,7 +70,7 @@ func (k msgServer) RegisterHostZone(goCtx context.Context, msg *types.MsgRegiste
 		ChainId:           chainId,
 		ConnectionId:      msg.ConnectionId,
 		Bech32Prefix:      msg.Bech32Prefix,
-		IBCDenom:          msg.IbcDenom,
+		IbcDenom:          msg.IbcDenom,
 		HostDenom:         msg.HostDenom,
 		TransferChannelId: msg.TransferChannelId,
 		// Start exchange rate at 1 upon registration
@@ -139,7 +139,7 @@ func (k msgServer) RegisterHostZone(goCtx context.Context, msg *types.MsgRegiste
 		StTokenAmount:     0,
 		Denom:             zone.HostDenom,
 		HostZoneId:        zone.ChainId,
-		Status:            recordstypes.HostZoneUnbonding_BONDED,
+		Status:            recordstypes.HostZoneUnbonding_UNBONDING_QUEUE,
 	}
 	updatedEpochUnbondingRecord, success := k.RecordsKeeper.AddHostZoneToEpochUnbondingRecord(ctx, epochUnbondingRecord.EpochNumber, chainId, hostZoneUnbonding)
 	if !success {
@@ -159,7 +159,7 @@ func (k msgServer) RegisterHostZone(goCtx context.Context, msg *types.MsgRegiste
 		Amount:             0,
 		Denom:              zone.HostDenom,
 		HostZoneId:         zone.ChainId,
-		Status:             recordstypes.DepositRecord_TRANSFER,
+		Status:             recordstypes.DepositRecord_TRANSFER_QUEUE,
 		DepositEpochNumber: strideEpochTracker.EpochNumber,
 	}
 	k.RecordsKeeper.AppendDepositRecord(ctx, depositRecord)

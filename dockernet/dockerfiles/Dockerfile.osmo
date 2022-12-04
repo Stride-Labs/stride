@@ -1,0 +1,35 @@
+FROM golang:1.19-alpine3.15 AS builder
+
+WORKDIR /opt/
+
+RUN set -eux; apk add --no-cache ca-certificates build-base; apk add git linux-headers
+
+ENV COMMIT_HASH=08669da8509059980dc964976ee1ca60c84f5c8a
+
+RUN git clone https://github.com/osmosis-labs/osmosis.git \
+    && cd osmosis \
+    && git checkout ${COMMIT_HASH} 
+
+WORKDIR /opt/osmosis
+
+# Cosmwasm - download correct libwasmvm version and verify checksum
+RUN WASMVM_VERSION=$(go list -m github.com/CosmWasm/wasmvm | cut -d ' ' -f 2) \
+    && wget https://github.com/CosmWasm/wasmvm/releases/download/$WASMVM_VERSION/libwasmvm_muslc.$(uname -m).a \
+    -O /lib/libwasmvm_muslc.a \
+    && wget https://github.com/CosmWasm/wasmvm/releases/download/v1.0.0/checksums.txt -O /tmp/checksums.txt \
+    && sha256sum /lib/libwasmvm_muslc.a | grep $(cat /tmp/checksums.txt | grep $(uname -m) | cut -d ' ' -f 1)
+
+RUN BUILD_TAGS=muslc LINK_STATICALLY=true make build
+
+FROM alpine:3.15
+COPY --from=builder /opt/osmosis/build/osmosisd /usr/local/bin/
+RUN apk add bash vim \
+    && addgroup -g 1000 osmosis \
+    && adduser -S -h /home/osmosis -D osmosis -u 1000 -G osmosis
+
+USER 1000
+WORKDIR /home/osmosis
+
+EXPOSE 26657 26656 1317 9090
+
+CMD ["osmosisd", "start"]

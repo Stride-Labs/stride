@@ -3,10 +3,11 @@ package keeper
 import (
 	"context"
 
-	"github.com/Stride-Labs/stride/x/stakeibc/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+
+	"github.com/Stride-Labs/stride/v4/x/stakeibc/types"
 )
 
 func (k Keeper) ICAAccount(c context.Context, req *types.QueryGetICAAccountRequest) (*types.QueryGetICAAccountResponse, error) {
@@ -20,5 +21,5 @@ func (k Keeper) ICAAccount(c context.Context, req *types.QueryGetICAAccountReque
 		return nil, status.Error(codes.NotFound, "not found")
 	}
 
-	return &types.QueryGetICAAccountResponse{ICAAccount: val}, nil
+	return &types.QueryGetICAAccountResponse{IcaAccount: val}, nil
 }

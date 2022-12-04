@@ -1,0 +1,22 @@
+syntax = "proto3";
+package stride.stakeibc;
+
+import "stride/stakeibc/delegation.proto";
+import "cosmos_proto/cosmos.proto";
+
+option go_package = "github.com/Stride-Labs/stride/v4/x/stakeibc/types";
+
+enum ICAAccountType {
+  DELEGATION = 0;
+  FEE = 1;
+  WITHDRAWAL = 2;
+  REDEMPTION = 3;
+}
+
+// TODO(TEST-XX): Update these fields to be more useful (e.g. balances should be
+// coins, maybe store port name directly)
+message ICAAccount {
+  string address = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+  repeated Delegation delegations = 2;
+  ICAAccountType target = 3;
+}

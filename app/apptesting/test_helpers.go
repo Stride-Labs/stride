@@ -3,6 +3,7 @@ package apptesting
 import (
 	"strings"
 
+	"cosmossdk.io/api/tendermint/abci"
 	ibctransfertypes "github.com/cosmos/ibc-go/v5/modules/apps/transfer/types"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
@@ -18,7 +19,7 @@ import (
 	"github.com/tendermint/tendermint/crypto/ed25519"
 	tmtypes "github.com/tendermint/tendermint/proto/tendermint/types"
 
-	"github.com/Stride-Labs/stride/app"
+	"github.com/Stride-Labs/stride/v4/app"
 )
 
 var (
@@ -48,51 +49,35 @@ type AppTestHelper struct {
 	QueryHelper  *baseapp.QueryServiceTestHelper
 	TestAccs     []sdk.AccAddress
 	IcaAddresses map[string]string
+	Ctx          sdk.Context
 }
 
 // AppTestHelper Constructor
 func (s *AppTestHelper) Setup() {
 	s.App = app.InitStrideTestApp(true)
+	s.Ctx = s.App.BaseApp.NewContext(false, tmtypes.Header{Height: 1, ChainID: StrideChainID})
 	s.QueryHelper = &baseapp.QueryServiceTestHelper{
 		GRPCQueryRouter: s.App.GRPCQueryRouter(),
-		Ctx:             s.Ctx(),
+		Ctx:             s.Ctx,
 	}
 	s.TestAccs = CreateRandomAccounts(3)
 	s.IbcEnabled = false
 	s.IcaAddresses = make(map[string]string)
-}
 
-// Dynamically gets the context of the Stride Chain
-func (s *AppTestHelper) Ctx() sdk.Context {
-	// If IBC support is enabled, return a dynamic context that updates with each block
-	if s.IbcEnabled {
-		return s.StrideChain.GetContext()
-	}
-	// Otherwise return a mock context
-	return s.App.BaseApp.NewContext(false, tmtypes.Header{Height: 1, ChainID: StrideChainID})
-}
-
-// Dynamically gets the context of the Host Chain
-func (s *AppTestHelper) HostCtx() sdk.Context {
-	// Host context can only be used if IBC support has been enabled
-	s.Require().NotNil(s.HostChain, "HostChain must be initialzed before accessing a context. "+
-		"To initailze run `s.SetupIBCChains(chainID)`, `s.CreateTransferChannel(chainID)` or `s.CreateICAChannel(owner)`")
-
-	return s.HostChain.GetContext()
 }
 
 // Mints coins directly to a module account
 func (s *AppTestHelper) FundModuleAccount(moduleName string, amount sdk.Coin) {
-	err := s.App.BankKeeper.MintCoins(s.Ctx(), moduleName, sdk.NewCoins(amount))
+	err := s.App.BankKeeper.MintCoins(s.Ctx, moduleName, sdk.NewCoins(amount))
 	s.Require().NoError(err)
 }
 
 // Mints and sends coins to a user account
 func (s *AppTestHelper) FundAccount(acc sdk.AccAddress, amount sdk.Coin) {
 	amountCoins := sdk.NewCoins(amount)
-	err := s.App.BankKeeper.MintCoins(s.Ctx(), minttypes.ModuleName, amountCoins)
+	err := s.App.BankKeeper.MintCoins(s.Ctx, minttypes.ModuleName, amountCoins)
 	s.Require().NoError(err)
-	err = s.App.BankKeeper.SendCoinsFromModuleToAccount(s.Ctx(), minttypes.ModuleName, acc, amountCoins)
+	err = s.App.BankKeeper.SendCoinsFromModuleToAccount(s.Ctx, minttypes.ModuleName, acc, amountCoins)
 	s.Require().NoError(err)
 }
 
@@ -148,7 +133,7 @@ func (s *AppTestHelper) CreateTransferChannel(hostChainID string) {
 	// Replace stride and host apps with those from TestingApp
 	s.App = s.StrideChain.App.(*app.StrideApp)
 	s.HostApp = s.HostChain.GetSimApp()
-
+	s.Ctx = s.StrideChain.GetContext()
 	// Finally confirm the channel was setup properly
 	s.Require().Equal(ibctesting.FirstClientID, s.TransferPath.EndpointA.ClientID, "stride clientID")
 	s.Require().Equal(ibctesting.FirstConnectionID, s.TransferPath.EndpointA.ConnectionID, "stride connectionID")
@@ -163,7 +148,7 @@ func (s *AppTestHelper) CreateTransferChannel(hostChainID string) {
 // Also creates a transfer channel is if hasn't been done yet
 func (s *AppTestHelper) CreateICAChannel(owner string) string {
 	// If we have yet to create a client/connection (through creating a transfer channel), do that here
-	_, transferChannelExists := s.App.IBCKeeper.ChannelKeeper.GetChannel(s.Ctx(), ibctesting.TransferPort, ibctesting.FirstChannelID)
+	_, transferChannelExists := s.App.IBCKeeper.ChannelKeeper.GetChannel(s.Ctx, ibctesting.TransferPort, ibctesting.FirstChannelID)
 	if !transferChannelExists {
 		ownerSplit := strings.Split(owner, ".")
 		s.Require().Equal(2, len(ownerSplit), "owner should be of the form: {HostZone}.{AccountName}")
@@ -177,6 +162,7 @@ func (s *AppTestHelper) CreateICAChannel(owner string) string {
 	icaPath = CopyConnectionAndClientToPath(icaPath, s.TransferPath)
 
 	// Register the ICA and complete the handshake
+
 	s.RegisterInterchainAccount(icaPath.EndpointA, owner)
 
 	err := icaPath.EndpointB.ChanOpenTry()
@@ -188,19 +174,20 @@ func (s *AppTestHelper) CreateICAChannel(owner string) string {
 	err = icaPath.EndpointB.ChanOpenConfirm()
 	s.Require().NoError(err, "ChanOpenConfirm error")
 
+	s.Ctx = s.StrideChain.GetContext()
 	// Confirm the ICA channel was created properly
 	portID := icaPath.EndpointA.ChannelConfig.PortID
 	channelID := icaPath.EndpointA.ChannelID
-	_, found := s.App.IBCKeeper.ChannelKeeper.GetChannel(s.Ctx(), portID, channelID)
+	_, found := s.App.IBCKeeper.ChannelKeeper.GetChannel(s.Ctx, portID, channelID)
 	s.Require().True(found, "Channel not found after creation, PortID: %s, ChannelID: %s", portID, channelID)
 
 	// Store the account address
-	icaAddress, found := s.App.ICAControllerKeeper.GetInterchainAccountAddress(s.Ctx(), ibctesting.FirstConnectionID, portID)
+	icaAddress, found := s.App.ICAControllerKeeper.GetInterchainAccountAddress(s.Ctx, ibctesting.FirstConnectionID, portID)
 	s.Require().True(found, "can't get ICA address")
 	s.IcaAddresses[owner] = icaAddress
 
 	// Finally set the active channel
-	s.App.ICAControllerKeeper.SetActiveChannelID(s.Ctx(), ibctesting.FirstConnectionID, portID, channelID)
+	s.App.ICAControllerKeeper.SetActiveChannelID(s.Ctx, ibctesting.FirstConnectionID, portID, channelID)
 
 	return channelID
 }
@@ -213,7 +200,7 @@ func (s *AppTestHelper) RegisterInterchainAccount(endpoint *ibctesting.Endpoint,
 	s.Require().NoError(err, "owner to portID error")
 
 	// Get the next channel available and register the ICA
-	channelSequence := s.App.IBCKeeper.ChannelKeeper.GetNextChannelSequence(s.Ctx())
+	channelSequence := s.App.IBCKeeper.ChannelKeeper.GetNextChannelSequence(s.Ctx)
 
 	version := string(icatypes.ModuleCdc.MustMarshalJSON(&icatypes.Metadata{
 		Version:                icatypes.Version,
@@ -316,4 +303,21 @@ func (s *AppTestHelper) ICS20PacketAcknowledgement() channeltypes.Acknowledgemen
 	// see: https://github.com/cosmos/ibc-go/blob/8de555db76d0320842dacaa32e5500e1fd55e667/modules/apps/transfer/keeper/relay.go#L151
 	ack := channeltypes.NewResultAcknowledgement(s.MarshalledICS20PacketData())
 	return ack
+}
+
+func (s *AppTestHelper) ConfirmUpgradeSucceededs(upgradeName string, upgradeHeight int64) {
+	contextBeforeUpgrade := s.Ctx.WithBlockHeight(upgradeHeight - 1)
+	contextAtUpgrade := s.Ctx.WithBlockHeight(upgradeHeight)
+
+	plan := upgradetypes.Plan{Name: upgradeName, Height: upgradeHeight}
+	err := s.App.UpgradeKeeper.ScheduleUpgrade(contextBeforeUpgrade, plan)
+	s.Require().NoError(err)
+
+	_, exists := s.App.UpgradeKeeper.GetUpgradePlan(contextBeforeUpgrade)
+	s.Require().True(exists)
+
+	s.Require().NotPanics(func() {
+		beginBlockRequest := abci.RequestBeginBlock{}
+		s.App.BeginBlocker(contextAtUpgrade, beginBlockRequest)
+	})
 }

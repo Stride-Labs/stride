@@ -6,10 +6,10 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
-	epochtypes "github.com/Stride-Labs/stride/x/epochs/types"
-	icqtypes "github.com/Stride-Labs/stride/x/interchainquery/types"
-	stakeibckeeper "github.com/Stride-Labs/stride/x/stakeibc/keeper"
-	stakeibctypes "github.com/Stride-Labs/stride/x/stakeibc/types"
+	epochtypes "github.com/Stride-Labs/stride/v4/x/epochs/types"
+	icqtypes "github.com/Stride-Labs/stride/v4/x/interchainquery/types"
+	stakeibckeeper "github.com/Stride-Labs/stride/v4/x/stakeibc/keeper"
+	stakeibctypes "github.com/Stride-Labs/stride/v4/x/stakeibc/types"
 )
 
 type DelegatorSharesICQCallbackState struct {
@@ -101,8 +101,8 @@ func (s *KeeperTestSuite) SetupDelegatorSharesICQCallback() DelegatorSharesICQCa
 		NextEpochStartTime: uint64(s.Coordinator.CurrentTime.UnixNano() + 1_000_000_000), // epoch ends in 1 second
 	}
 
-	s.App.StakeibcKeeper.SetHostZone(s.Ctx(), hostZone)
-	s.App.StakeibcKeeper.SetEpochTracker(s.Ctx(), strideEpochTracker)
+	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
+	s.App.StakeibcKeeper.SetEpochTracker(s.Ctx, strideEpochTracker)
 
 	queryResponse := s.CreateDelegatorSharesQueryResponse(valAddress, numShares)
 
@@ -130,11 +130,11 @@ func (s *KeeperTestSuite) TestDelegatorSharesCallback_Successful() {
 	tc := s.SetupDelegatorSharesICQCallback()
 
 	// Callback
-	err := stakeibckeeper.DelegatorSharesCallback(s.App.StakeibcKeeper, s.Ctx(), tc.validArgs.callbackArgs, tc.validArgs.query)
+	err := stakeibckeeper.DelegatorSharesCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.callbackArgs, tc.validArgs.query)
 	s.Require().NoError(err, "delegator shares callback error")
 
 	// Confirm the staked balance was decreased on the host
-	hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx(), tc.initialState.hostZone.ChainId)
+	hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, tc.initialState.hostZone.ChainId)
 	s.Require().True(found, "host zone found")
 	s.Require().Equal(tc.expectedSlashAmount, tc.initialState.hostZone.StakedBal-hostZone.StakedBal)
 
@@ -146,7 +146,7 @@ func (s *KeeperTestSuite) TestDelegatorSharesCallback_Successful() {
 
 func (s *KeeperTestSuite) checkStateIfValidatorNotSlashed(tc DelegatorSharesICQCallbackTestCase) {
 	// Confirm validator on host zone did not update
-	hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx(), tc.initialState.hostZone.ChainId)
+	hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, tc.initialState.hostZone.ChainId)
 	s.Require().True(found, "host zone found")
 
 	initialValidator := tc.initialState.hostZone.Validators[tc.valIndexQueried]
@@ -162,7 +162,7 @@ func (s *KeeperTestSuite) TestDelegatorSharesCallback_HostZoneNotFound() {
 	badQuery := tc.validArgs.query
 	badQuery.ChainId = "fake_host_zone"
 
-	err := stakeibckeeper.DelegatorSharesCallback(s.App.StakeibcKeeper, s.Ctx(), tc.validArgs.callbackArgs, badQuery)
+	err := stakeibckeeper.DelegatorSharesCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.callbackArgs, badQuery)
 	s.Require().EqualError(err, "no registered zone for queried chain ID (fake_host_zone): host zone not found")
 }
 
@@ -171,7 +171,7 @@ func (s *KeeperTestSuite) TestDelegatorSharesCallback_InvalidCallbackArgs() {
 
 	// Submit callback with invalid callback args (so that it can't unmarshal into a validator)
 	invalidArgs := []byte("random bytes")
-	err := stakeibckeeper.DelegatorSharesCallback(s.App.StakeibcKeeper, s.Ctx(), invalidArgs, tc.validArgs.query)
+	err := stakeibckeeper.DelegatorSharesCallback(s.App.StakeibcKeeper, s.Ctx, invalidArgs, tc.validArgs.query)
 
 	expectedErrMsg := "unable to unmarshal queried delegation info for zone GAIA, "
 	expectedErrMsg += "err: unexpected EOF: unable to marshal data structure"
@@ -185,9 +185,9 @@ func (s *KeeperTestSuite) TestDelegatorSharesCallback_BufferWindowError() {
 	epochTracker := tc.initialState.strideEpochTracker
 	epochTracker.Duration = 0 // duration of 0 will make the epoch start time equal to the epoch end time
 
-	s.App.StakeibcKeeper.SetEpochTracker(s.Ctx(), epochTracker)
+	s.App.StakeibcKeeper.SetEpochTracker(s.Ctx, epochTracker)
 
-	err := stakeibckeeper.DelegatorSharesCallback(s.App.StakeibcKeeper, s.Ctx(), tc.validArgs.callbackArgs, tc.validArgs.query)
+	err := stakeibckeeper.DelegatorSharesCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.callbackArgs, tc.validArgs.query)
 	s.Require().ErrorContains(err, "unable to determine if ICQ callback is inside buffer window")
 	s.Require().ErrorContains(err, "current block time")
 	s.Require().ErrorContains(err, "not within current epoch")
@@ -201,10 +201,10 @@ func (s *KeeperTestSuite) TestDelegatorSharesCallback_OutsideBufferWindow() {
 	epochTracker.Duration = 10_000_000_000                                                         // 10 second epochs
 	epochTracker.NextEpochStartTime = uint64(s.Coordinator.CurrentTime.UnixNano() + 5_000_000_000) // epoch ends in 5 second
 
-	s.App.StakeibcKeeper.SetEpochTracker(s.Ctx(), epochTracker)
+	s.App.StakeibcKeeper.SetEpochTracker(s.Ctx, epochTracker)
 
 	// In this case, we should return success instead of error, but we should exit early before updating the validator's state
-	err := stakeibckeeper.DelegatorSharesCallback(s.App.StakeibcKeeper, s.Ctx(), tc.validArgs.callbackArgs, tc.validArgs.query)
+	err := stakeibckeeper.DelegatorSharesCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.callbackArgs, tc.validArgs.query)
 	s.Require().NoError(err, "delegator shares callback callback error")
 
 	s.checkStateIfValidatorNotSlashed(tc)
@@ -215,7 +215,7 @@ func (s *KeeperTestSuite) TestDelegatorSharesCallback_ValidatorNotFound() {
 
 	// Update the callback args to contain a validator address that doesn't exist
 	badCallbackArgs := s.CreateDelegatorSharesQueryResponse("fake_val", 1000) // 1000 is aribtrary
-	err := stakeibckeeper.DelegatorSharesCallback(s.App.StakeibcKeeper, s.Ctx(), badCallbackArgs, tc.validArgs.query)
+	err := stakeibckeeper.DelegatorSharesCallback(s.App.StakeibcKeeper, s.Ctx, badCallbackArgs, tc.validArgs.query)
 	s.Require().EqualError(err, "no registered validator for address (fake_val): validator not found")
 }
 
@@ -225,9 +225,9 @@ func (s *KeeperTestSuite) TestDelegatorSharesCallback_ExchangeRateNotFound() {
 	// Increment the epoch number so that we're in an epoch that has not queried the validator's exchange rate
 	epochTracker := tc.initialState.strideEpochTracker
 	epochTracker.EpochNumber += 1
-	s.App.StakeibcKeeper.SetEpochTracker(s.Ctx(), epochTracker)
+	s.App.StakeibcKeeper.SetEpochTracker(s.Ctx, epochTracker)
 
-	err := stakeibckeeper.DelegatorSharesCallback(s.App.StakeibcKeeper, s.Ctx(), tc.validArgs.callbackArgs, tc.validArgs.query)
+	err := stakeibckeeper.DelegatorSharesCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.callbackArgs, tc.validArgs.query)
 	s.Require().EqualError(err, "DelegationCallback: validator (valoper2) internal exchange rate has not been updated this epoch (epoch #2): invalid request")
 }
 
@@ -241,7 +241,7 @@ func (s *KeeperTestSuite) TestDelegatorSharesCallback_NoSlashOccurred() {
 	valAddress := tc.initialState.hostZone.Validators[tc.valIndexQueried].Address
 	queryResponse := s.CreateDelegatorSharesQueryResponse(valAddress, validatorSharesIfNotSlashed)
 
-	err := stakeibckeeper.DelegatorSharesCallback(s.App.StakeibcKeeper, s.Ctx(), queryResponse, tc.validArgs.query)
+	err := stakeibckeeper.DelegatorSharesCallback(s.App.StakeibcKeeper, s.Ctx, queryResponse, tc.validArgs.query)
 	s.Require().NoError(err, "delegator shares callback callback error")
 
 	s.checkStateIfValidatorNotSlashed(tc)
@@ -257,7 +257,7 @@ func (s *KeeperTestSuite) TestDelegatorSharesCallback_InvalidNumTokens() {
 	numShares := uint64(10_000)
 
 	badCallbackArgs := s.CreateDelegatorSharesQueryResponse(valAddress, numShares)
-	err := stakeibckeeper.DelegatorSharesCallback(s.App.StakeibcKeeper, s.Ctx(), badCallbackArgs, tc.validArgs.query)
+	err := stakeibckeeper.DelegatorSharesCallback(s.App.StakeibcKeeper, s.Ctx, badCallbackArgs, tc.validArgs.query)
 
 	expectedErrMsg := "DelegationCallback: Validator (valoper2) tokens returned from query is greater than the DelegationAmt: invalid request"
 	s.Require().EqualError(err, expectedErrMsg)
@@ -271,9 +271,9 @@ func (s *KeeperTestSuite) TestDelegatorSharesCallback_DelegationAmtOverfow() {
 	validator := hostZone.Validators[tc.valIndexQueried]
 	validator.DelegationAmt = math.MaxUint64
 	hostZone.Validators[tc.valIndexQueried] = validator
-	s.App.StakeibcKeeper.SetHostZone(s.Ctx(), hostZone)
+	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
 
-	err := stakeibckeeper.DelegatorSharesCallback(s.App.StakeibcKeeper, s.Ctx(), tc.validArgs.callbackArgs, tc.validArgs.query)
+	err := stakeibckeeper.DelegatorSharesCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.callbackArgs, tc.validArgs.query)
 	expectedErrMsg := `unable to convert validator delegation amount to int64, err: overflow: `
 	expectedErrMsg += `unable to cast \d+ of type uint64 to int64: unable to cast to safe cast int`
 	s.Require().Regexp(expectedErrMsg, err.Error())
@@ -287,9 +287,9 @@ func (s *KeeperTestSuite) TestDelegatorSharesCallback_WeightOverfow() {
 	validator := hostZone.Validators[tc.valIndexQueried]
 	validator.Weight = math.MaxUint64
 	hostZone.Validators[tc.valIndexQueried] = validator
-	s.App.StakeibcKeeper.SetHostZone(s.Ctx(), hostZone)
+	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
 
-	err := stakeibckeeper.DelegatorSharesCallback(s.App.StakeibcKeeper, s.Ctx(), tc.validArgs.callbackArgs, tc.validArgs.query)
+	err := stakeibckeeper.DelegatorSharesCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.callbackArgs, tc.validArgs.query)
 	expectedErrMsg := `unable to convert validator weight to int64, err: overflow: `
 	expectedErrMsg += `unable to cast \d+ of type uint64 to int64: unable to cast to safe cast int`
 	s.Require().Regexp(expectedErrMsg, err.Error())
@@ -302,7 +302,7 @@ func (s *KeeperTestSuite) TestDelegatorSharesCallback_SlashGtTenPercent() {
 	valAddress := tc.initialState.hostZone.Validators[tc.valIndexQueried].Address
 	badCallbackArgs := s.CreateDelegatorSharesQueryResponse(valAddress, 1600)
 
-	err := stakeibckeeper.DelegatorSharesCallback(s.App.StakeibcKeeper, s.Ctx(), badCallbackArgs, tc.validArgs.query)
+	err := stakeibckeeper.DelegatorSharesCallback(s.App.StakeibcKeeper, s.Ctx, badCallbackArgs, tc.validArgs.query)
 	expectedErrMsg := "DelegationCallback: Validator (valoper2) slashed but ABORTING update, "
 	expectedErrMsg += "slash is greater than 0.10 (0.200000000000000000): slash is greater than 10 percent"
 	s.Require().EqualError(err, expectedErrMsg)

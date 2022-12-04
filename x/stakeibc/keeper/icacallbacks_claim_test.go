@@ -8,9 +8,9 @@ import (
 	channeltypes "github.com/cosmos/ibc-go/v5/modules/core/04-channel/types"
 	_ "github.com/stretchr/testify/suite"
 
-	recordtypes "github.com/Stride-Labs/stride/x/records/types"
-	stakeibckeeper "github.com/Stride-Labs/stride/x/stakeibc/keeper"
-	"github.com/Stride-Labs/stride/x/stakeibc/types"
+	recordtypes "github.com/Stride-Labs/stride/v4/x/records/types"
+	stakeibckeeper "github.com/Stride-Labs/stride/v4/x/stakeibc/keeper"
+	"github.com/Stride-Labs/stride/v4/x/stakeibc/types"
 )
 
 type ClaimCallbackState struct {
@@ -50,31 +50,31 @@ func (s *KeeperTestSuite) SetupClaimCallback() ClaimCallbackTestCase {
 		Id:             recordId3,
 		ClaimIsPending: false,
 	}
-	s.App.RecordsKeeper.SetUserRedemptionRecord(s.Ctx(), userRedemptionRecord1)
-	s.App.RecordsKeeper.SetUserRedemptionRecord(s.Ctx(), userRedemptionRecord2)
-	s.App.RecordsKeeper.SetUserRedemptionRecord(s.Ctx(), userRedemptionRecord3)
+	s.App.RecordsKeeper.SetUserRedemptionRecord(s.Ctx, userRedemptionRecord1)
+	s.App.RecordsKeeper.SetUserRedemptionRecord(s.Ctx, userRedemptionRecord2)
+	s.App.RecordsKeeper.SetUserRedemptionRecord(s.Ctx, userRedemptionRecord3)
 	// the hzu that we'll claim from
 	hostZoneUnbonding1 := recordtypes.HostZoneUnbonding{
 		HostZoneId:            HostChainId,
-		Status:                recordtypes.HostZoneUnbonding_TRANSFERRED,
+		Status:                recordtypes.HostZoneUnbonding_CLAIMABLE,
 		UserRedemptionRecords: []string{recordId1, recordId2},
 		NativeTokenAmount:     uint64(1_000_000),
 	}
 	hostZoneUnbonding2 := recordtypes.HostZoneUnbonding{
 		HostZoneId:            "not_gaia",
-		Status:                recordtypes.HostZoneUnbonding_UNBONDED,
+		Status:                recordtypes.HostZoneUnbonding_EXIT_TRANSFER_QUEUE,
 		UserRedemptionRecords: []string{recordId3},
 		NativeTokenAmount:     uint64(1_000_000),
 	}
 	// some other hzus in the future
 	hostZoneUnbonding3 := recordtypes.HostZoneUnbonding{
 		HostZoneId:        "not_gaia",
-		Status:            recordtypes.HostZoneUnbonding_UNBONDED,
+		Status:            recordtypes.HostZoneUnbonding_EXIT_TRANSFER_QUEUE,
 		NativeTokenAmount: uint64(1_000_000),
 	}
 	hostZoneUnbonding4 := recordtypes.HostZoneUnbonding{
 		HostZoneId:        HostChainId,
-		Status:            recordtypes.HostZoneUnbonding_UNBONDED,
+		Status:            recordtypes.HostZoneUnbonding_EXIT_TRANSFER_QUEUE,
 		NativeTokenAmount: uint64(1_000_000),
 	}
 	epochUnbondingRecord1 := recordtypes.EpochUnbondingRecord{
@@ -85,8 +85,8 @@ func (s *KeeperTestSuite) SetupClaimCallback() ClaimCallbackTestCase {
 		EpochNumber:        epochNumber + 1,
 		HostZoneUnbondings: []*recordtypes.HostZoneUnbonding{&hostZoneUnbonding3, &hostZoneUnbonding4},
 	}
-	s.App.RecordsKeeper.SetEpochUnbondingRecord(s.Ctx(), epochUnbondingRecord1)
-	s.App.RecordsKeeper.SetEpochUnbondingRecord(s.Ctx(), epochUnbondingRecord2)
+	s.App.RecordsKeeper.SetEpochUnbondingRecord(s.Ctx, epochUnbondingRecord1)
+	s.App.RecordsKeeper.SetEpochUnbondingRecord(s.Ctx, epochUnbondingRecord2)
 
 	packet := channeltypes.Packet{}
 	var msgs []sdk.Msg
@@ -97,7 +97,7 @@ func (s *KeeperTestSuite) SetupClaimCallback() ClaimCallbackTestCase {
 		ChainId:                HostChainId,
 		EpochNumber:            epochNumber,
 	}
-	args, err := s.App.StakeibcKeeper.MarshalClaimCallbackArgs(s.Ctx(), callbackArgs)
+	args, err := s.App.StakeibcKeeper.MarshalClaimCallbackArgs(s.Ctx, callbackArgs)
 	s.Require().NoError(err)
 
 	decrementAmount := userRedemptionRecord1.Amount
@@ -122,16 +122,16 @@ func (s *KeeperTestSuite) TestClaimCallback_Successful() {
 	initialState := tc.initialState
 	validArgs := tc.validArgs
 
-	err := stakeibckeeper.ClaimCallback(s.App.StakeibcKeeper, s.Ctx(), validArgs.packet, validArgs.ack, validArgs.args)
+	err := stakeibckeeper.ClaimCallback(s.App.StakeibcKeeper, s.Ctx, validArgs.packet, validArgs.ack, validArgs.args)
 	s.Require().NoError(err)
 
-	_, found := s.App.RecordsKeeper.GetUserRedemptionRecord(s.Ctx(), initialState.callbackArgs.UserRedemptionRecordId)
+	_, found := s.App.RecordsKeeper.GetUserRedemptionRecord(s.Ctx, initialState.callbackArgs.UserRedemptionRecordId)
 	s.Require().False(found, "record has been deleted")
 
 	// fetch the epoch unbonding record
-	epochUnbondingRecord1, found := s.App.RecordsKeeper.GetEpochUnbondingRecord(s.Ctx(), tc.initialState.epochNumber)
+	epochUnbondingRecord1, found := s.App.RecordsKeeper.GetEpochUnbondingRecord(s.Ctx, tc.initialState.epochNumber)
 	s.Require().True(found, "epoch unbonding record found")
-	epochUnbondingRecord2, found := s.App.RecordsKeeper.GetEpochUnbondingRecord(s.Ctx(), tc.initialState.epochNumber+1)
+	epochUnbondingRecord2, found := s.App.RecordsKeeper.GetEpochUnbondingRecord(s.Ctx, tc.initialState.epochNumber+1)
 	s.Require().True(found, "epoch unbonding record found")
 
 	// fetch the hzus
@@ -142,18 +142,18 @@ func (s *KeeperTestSuite) TestClaimCallback_Successful() {
 
 	// check that hzu1 has a decremented amount
 	s.Require().Equal(hzu1.NativeTokenAmount, tc.initialState.hzu1TokenAmount-tc.initialState.decrementAmount, "hzu1 amount decremented")
-	s.Require().Equal(hzu1.Status, recordtypes.HostZoneUnbonding_TRANSFERRED, "hzu1 status set to transferred")
+	s.Require().Equal(hzu1.Status, recordtypes.HostZoneUnbonding_CLAIMABLE, "hzu1 status set to transferred")
 	// verify the other hzus are unchanged
 	s.Require().Equal(hzu2.NativeTokenAmount, hzu2.NativeTokenAmount, "hzu2 amount unchanged")
-	s.Require().Equal(hzu2.Status, recordtypes.HostZoneUnbonding_UNBONDED, "hzu2 status set to transferred")
+	s.Require().Equal(hzu2.Status, recordtypes.HostZoneUnbonding_EXIT_TRANSFER_QUEUE, "hzu2 status set to transferred")
 	s.Require().Equal(hzu3.NativeTokenAmount, hzu3.NativeTokenAmount, "hzu3 amount unchanged")
-	s.Require().Equal(hzu3.Status, recordtypes.HostZoneUnbonding_UNBONDED, "hzu3 status set to transferred")
+	s.Require().Equal(hzu3.Status, recordtypes.HostZoneUnbonding_EXIT_TRANSFER_QUEUE, "hzu3 status set to transferred")
 	s.Require().Equal(hzu4.NativeTokenAmount, hzu4.NativeTokenAmount, "hzu4 amount unchanged")
-	s.Require().Equal(hzu4.Status, recordtypes.HostZoneUnbonding_UNBONDED, "hzu4 status set to transferred")
+	s.Require().Equal(hzu4.Status, recordtypes.HostZoneUnbonding_EXIT_TRANSFER_QUEUE, "hzu4 status set to transferred")
 }
 
 func (s *KeeperTestSuite) checkClaimStateIfCallbackFailed(tc ClaimCallbackTestCase) {
-	record, found := s.App.RecordsKeeper.GetUserRedemptionRecord(s.Ctx(), tc.initialState.callbackArgs.UserRedemptionRecordId)
+	record, found := s.App.RecordsKeeper.GetUserRedemptionRecord(s.Ctx, tc.initialState.callbackArgs.UserRedemptionRecordId)
 	s.Require().True(found)
 	s.Require().False(record.ClaimIsPending, "record is set to claimIsPending = false (if the callback failed, it should be reset to false so that users can retry the claim)")
 }
@@ -162,7 +162,7 @@ func (s *KeeperTestSuite) TestClaimCallback_ClaimCallbackTimeout() {
 	tc := s.SetupClaimCallback()
 	invalidArgs := tc.validArgs
 	invalidArgs.ack = nil
-	err := stakeibckeeper.ClaimCallback(s.App.StakeibcKeeper, s.Ctx(), invalidArgs.packet, invalidArgs.ack, invalidArgs.args)
+	err := stakeibckeeper.ClaimCallback(s.App.StakeibcKeeper, s.Ctx, invalidArgs.packet, invalidArgs.ack, invalidArgs.args)
 	s.Require().NoError(err, "timeout successfully proccessed")
 	s.checkClaimStateIfCallbackFailed(tc)
 }
@@ -174,7 +174,7 @@ func (s *KeeperTestSuite) TestClaimCallback_ClaimCallbackErrorOnHost() {
 	fullAck := channeltypes.Acknowledgement{Response: &channeltypes.Acknowledgement_Error{Error: "error"}}
 	invalidArgs.ack = &fullAck
 
-	err := stakeibckeeper.ClaimCallback(s.App.StakeibcKeeper, s.Ctx(), invalidArgs.packet, invalidArgs.ack, invalidArgs.args)
+	err := stakeibckeeper.ClaimCallback(s.App.StakeibcKeeper, s.Ctx, invalidArgs.packet, invalidArgs.ack, invalidArgs.args)
 	s.Require().NoError(err, "error ack successfully proccessed")
 	s.checkClaimStateIfCallbackFailed(tc)
 }
@@ -183,15 +183,15 @@ func (s *KeeperTestSuite) TestClaimCallback_WrongCallbackArgs() {
 	tc := s.SetupClaimCallback()
 	invalidArgs := tc.validArgs
 
-	err := stakeibckeeper.ClaimCallback(s.App.StakeibcKeeper, s.Ctx(), invalidArgs.packet, invalidArgs.ack, []byte("random bytes"))
+	err := stakeibckeeper.ClaimCallback(s.App.StakeibcKeeper, s.Ctx, invalidArgs.packet, invalidArgs.ack, []byte("random bytes"))
 	s.Require().EqualError(err, "unexpected EOF")
 }
 
 func (s *KeeperTestSuite) TestClaimCallback_RecordNotFound() {
 	tc := s.SetupClaimCallback()
 	validArgs := tc.validArgs
-	s.App.RecordsKeeper.RemoveUserRedemptionRecord(s.Ctx(), tc.initialState.callbackArgs.UserRedemptionRecordId)
-	err := stakeibckeeper.ClaimCallback(s.App.StakeibcKeeper, s.Ctx(), validArgs.packet, validArgs.ack, validArgs.args)
+	s.App.RecordsKeeper.RemoveUserRedemptionRecord(s.Ctx, tc.initialState.callbackArgs.UserRedemptionRecordId)
+	err := stakeibckeeper.ClaimCallback(s.App.StakeibcKeeper, s.Ctx, validArgs.packet, validArgs.ack, validArgs.args)
 	s.Require().EqualError(err, fmt.Sprintf("user redemption record not found %s: record not found", tc.initialState.callbackArgs.UserRedemptionRecordId))
 }
 
@@ -200,14 +200,14 @@ func (s *KeeperTestSuite) TestDecrementHostZoneUnbonding_Success() {
 	tc := s.SetupClaimCallback()
 	initialState := tc.initialState
 
-	userRedemptionRecord, found := s.App.RecordsKeeper.GetUserRedemptionRecord(s.Ctx(), initialState.callbackArgs.UserRedemptionRecordId)
+	userRedemptionRecord, found := s.App.RecordsKeeper.GetUserRedemptionRecord(s.Ctx, initialState.callbackArgs.UserRedemptionRecordId)
 	s.Require().True(found, "record has been deleted")
 
-	err := s.App.StakeibcKeeper.DecrementHostZoneUnbonding(s.Ctx(), userRedemptionRecord, tc.initialState.callbackArgs)
+	err := s.App.StakeibcKeeper.DecrementHostZoneUnbonding(s.Ctx, userRedemptionRecord, tc.initialState.callbackArgs)
 	s.Require().NoError(err, "host zone unbonding successfully decremented")
 
 	// fetch the epoch unbonding record
-	epochUnbondingRecord1, found := s.App.RecordsKeeper.GetEpochUnbondingRecord(s.Ctx(), tc.initialState.epochNumber)
+	epochUnbondingRecord1, found := s.App.RecordsKeeper.GetEpochUnbondingRecord(s.Ctx, tc.initialState.epochNumber)
 	s.Require().True(found, "epoch unbonding record found")
 
 	// fetch the hzus
@@ -222,14 +222,14 @@ func (s *KeeperTestSuite) TestDecrementHostZoneUnbonding_HzuNotFound() {
 	initialState := tc.initialState
 
 	// remove the hzus
-	epochUnbondingRecord, found := s.App.RecordsKeeper.GetEpochUnbondingRecord(s.Ctx(), tc.initialState.epochNumber)
+	epochUnbondingRecord, found := s.App.RecordsKeeper.GetEpochUnbondingRecord(s.Ctx, tc.initialState.epochNumber)
 	s.Require().True(found, "epoch unbonding record found")
 	epochUnbondingRecord.HostZoneUnbondings = []*recordtypes.HostZoneUnbonding{}
-	s.App.RecordsKeeper.SetEpochUnbondingRecord(s.Ctx(), epochUnbondingRecord)
+	s.App.RecordsKeeper.SetEpochUnbondingRecord(s.Ctx, epochUnbondingRecord)
 
-	userRedemptionRecord, found := s.App.RecordsKeeper.GetUserRedemptionRecord(s.Ctx(), initialState.callbackArgs.UserRedemptionRecordId)
+	userRedemptionRecord, found := s.App.RecordsKeeper.GetUserRedemptionRecord(s.Ctx, initialState.callbackArgs.UserRedemptionRecordId)
 	s.Require().True(found, "record has been deleted")
 
-	err := s.App.StakeibcKeeper.DecrementHostZoneUnbonding(s.Ctx(), userRedemptionRecord, tc.initialState.callbackArgs)
+	err := s.App.StakeibcKeeper.DecrementHostZoneUnbonding(s.Ctx, userRedemptionRecord, tc.initialState.callbackArgs)
 	s.Require().EqualError(err, "host zone unbonding not found GAIA: record not found")
 }

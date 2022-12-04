@@ -6,13 +6,13 @@ import (
 
 	"github.com/spf13/cast"
 
-	recordstypes "github.com/Stride-Labs/stride/x/records/types"
-	"github.com/Stride-Labs/stride/x/stakeibc/types"
+	recordstypes "github.com/Stride-Labs/stride/v4/x/records/types"
+	"github.com/Stride-Labs/stride/v4/x/stakeibc/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
-	"github.com/Stride-Labs/stride/utils"
+	"github.com/Stride-Labs/stride/v4/utils"
 )
 
 func (k msgServer) RedeemStake(goCtx context.Context, msg *types.MsgRedeemStake) (*types.MsgRedeemStakeResponse, error) {
@@ -48,14 +48,21 @@ func (k msgServer) RedeemStake(goCtx context.Context, msg *types.MsgRedeemStake)
 		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid receiver address (%s)", err)
 	}
 
-	if msg.Amount > hostZone.StakedBal {
-		return nil, sdkerrors.Wrapf(types.ErrInvalidAmount, "cannot unstake an amount g.t. staked balance on host zone: %d", msg.Amount)
-	}
-
+	// construct desired unstaking amount from host zone
 	amt, err := cast.ToInt64E(msg.Amount)
 	if err != nil {
 		k.Logger(ctx).Error(fmt.Sprintf("error casting RedeemStake msg.Amount to int64, err: %s", err.Error()))
 		return nil, sdkerrors.Wrapf(types.ErrInvalidAmount, fmt.Sprintf("invalid amount: %s", err.Error()))
+	}
+	stDenom := types.StAssetDenomFromHostZoneDenom(hostZone.HostDenom)
+	nativeAmount := sdk.NewDec(amt).Mul(hostZone.RedemptionRate).RoundInt()
+	stakedBal, err := cast.ToInt64E(hostZone.StakedBal)
+	if err != nil {
+		k.Logger(ctx).Error(fmt.Sprintf("error casting hostZone.StakedBal to int64, err: %s", err.Error()))
+		return nil, sdkerrors.Wrapf(types.ErrInvalidAmount, fmt.Sprintf("invalid amount: %s", err.Error()))
+	}
+	if nativeAmount.GT(sdk.NewInt(stakedBal)) {
+		return nil, sdkerrors.Wrapf(types.ErrInvalidAmount, "cannot unstake an amount g.t. staked balance on host zone: %d", msg.Amount)
 	}
 
 	// safety check: redemption rate must be within safety bounds
@@ -65,11 +72,8 @@ func (k msgServer) RedeemStake(goCtx context.Context, msg *types.MsgRedeemStake)
 		return nil, sdkerrors.Wrapf(types.ErrRedemptionRateOutsideSafetyBounds, errMsg)
 	}
 
-	// construct desired unstaking amount from host zone
-	coinDenom := types.StAssetDenomFromHostZoneDenom(hostZone.HostDenom)
-	nativeAmount := sdk.NewDec(amt).Mul(hostZone.RedemptionRate).RoundInt()
 	// TODO(TEST-112) bigint safety
-	coinString := nativeAmount.String() + coinDenom
+	coinString := nativeAmount.String() + stDenom
 	inCoin, err := sdk.ParseCoinNormalized(coinString)
 	if err != nil {
 		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidCoins, "could not parse inCoin: %s. err: %s", coinString, err.Error())
@@ -80,7 +84,7 @@ func (k msgServer) RedeemStake(goCtx context.Context, msg *types.MsgRedeemStake)
 		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidCoins, "amount must be greater than 0. found: %d", msg.Amount)
 	}
 	// 	- Creator owns at least "amount" stAssets
-	balance := k.bankKeeper.GetBalance(ctx, sender, coinDenom)
+	balance := k.bankKeeper.GetBalance(ctx, sender, stDenom)
 	k.Logger(ctx).Info(fmt.Sprintf("Redemption issuer IBCDenom balance: %v%s", balance.Amount, balance.Denom))
 	k.Logger(ctx).Info(fmt.Sprintf("Redemption requested redemotion amount: %v%s", inCoin.Amount, inCoin.Denom))
 	if balance.Amount.LT(sdk.NewInt(amt)) {
@@ -96,7 +100,7 @@ func (k msgServer) RedeemStake(goCtx context.Context, msg *types.MsgRedeemStake)
 		HostZoneId:  hostZone.ChainId,
 		EpochNumber: epochTracker.EpochNumber,
 		// claimIsPending represents whether a redemption is currently being claimed,
-		// contingent on the host zone unbonding having status TRANSFERRED
+		// contingent on the host zone unbonding having status CLAIMABLE
 		ClaimIsPending: false,
 	}
 	// then add undelegation amount to epoch unbonding records
@@ -114,7 +118,7 @@ func (k msgServer) RedeemStake(goCtx context.Context, msg *types.MsgRedeemStake)
 	hostZoneUnbonding.UserRedemptionRecords = append(hostZoneUnbonding.UserRedemptionRecords, userRedemptionRecord.Id)
 
 	// Escrow user's balance
-	redeemCoin := sdk.NewCoins(sdk.NewCoin(coinDenom, sdk.NewInt(amt)))
+	redeemCoin := sdk.NewCoins(sdk.NewCoin(stDenom, sdk.NewInt(amt)))
 	bech32ZoneAddress, err := sdk.AccAddressFromBech32(hostZone.Address)
 	if err != nil {
 		return nil, fmt.Errorf("could not bech32 decode address %s of zone with id: %s", hostZone.Address, hostZone.ChainId)

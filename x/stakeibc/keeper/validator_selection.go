@@ -7,34 +7,32 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/spf13/cast"
 
-	"github.com/Stride-Labs/stride/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v4/utils"
+	"github.com/Stride-Labs/stride/v4/x/stakeibc/types"
 )
 
+// This function returns a map from Validator Address to how many extra tokens need to be given to that validator
+//
+//   positive implies extra tokens need to be given,
+//   negative impleis tokens need to be taken away
 func (k Keeper) GetValidatorDelegationAmtDifferences(ctx sdk.Context, hostZone types.HostZone) (map[string]int64, error) {
-	/*
-		This function returns a map from Validator Address to how many extra tokens
-		need to be given to that validator
-
-		positive implies extra tokens need to be given,
-		negative impleis tokens need to be taken away
-	*/
 	validators := hostZone.GetValidators()
 	delegationDelta := make(map[string]int64)
 	totalDelegatedAmt := k.GetTotalValidatorDelegations(hostZone)
 	targetDelegation, err := k.GetTargetValAmtsForHostZone(ctx, hostZone, totalDelegatedAmt)
 	if err != nil {
-		k.Logger(ctx).Error(fmt.Sprintf("Error getting target weights for host zone %s", hostZone.ChainId))
+		k.Logger(ctx).Error(fmt.Sprintf("Error getting target val amts for host zone %s", hostZone.ChainId))
 		return nil, err
 	}
 	for _, validator := range validators {
 		targetDelForVal, err := cast.ToInt64E(targetDelegation[validator.GetAddress()])
 		if err != nil {
-			k.Logger(ctx).Error(fmt.Sprintf("Error getting target weights for host zone %s", hostZone.ChainId))
+			k.Logger(ctx).Error(fmt.Sprintf("Error getting target weight for host zone %s, targetDelForVal: %d", hostZone.ChainId, targetDelForVal))
 			return nil, err
 		}
 		delAmt, err := cast.ToInt64E(validator.DelegationAmt)
 		if err != nil {
-			k.Logger(ctx).Error(fmt.Sprintf("Error getting target weights for host zone %s", hostZone.ChainId))
+			k.Logger(ctx).Error(fmt.Sprintf("Error getting target delAmt for host zone %s, amt: %d", hostZone.ChainId, delAmt))
 			return nil, err
 		}
 		delegationDelta[validator.GetAddress()] = targetDelForVal - delAmt
@@ -42,15 +40,17 @@ func (k Keeper) GetValidatorDelegationAmtDifferences(ctx sdk.Context, hostZone t
 	return delegationDelta, nil
 }
 
+// This will get the target validator delegation for the given hostZone
+// such that the total validator delegation is equal to the finalDelegation
+// output key is ADDRESS not NAME
 func (k Keeper) GetTargetValAmtsForHostZone(ctx sdk.Context, hostZone types.HostZone, finalDelegation uint64) (map[string]uint64, error) {
-	// This will get the target validator delegation for the given hostZone
-	// such that the total validator delegation is equal to the finalDelegation
-	// output key is ADDRESS not NAME
 	totalWeight := k.GetTotalValidatorWeight(hostZone)
 	if totalWeight == 0 {
 		k.Logger(ctx).Error(fmt.Sprintf("No non-zero validators found for host zone %s", hostZone.ChainId))
 		return nil, types.ErrNoValidatorWeights
 	}
+	k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId, "Total Validator Weight: %d", totalWeight))
+
 	if finalDelegation == 0 {
 		k.Logger(ctx).Error(fmt.Sprintf("Cannot calculate target delegation if final amount is 0 %s", hostZone.ChainId))
 		return nil, types.ErrNoValidatorWeights
@@ -70,8 +70,8 @@ func (k Keeper) GetTargetValAmtsForHostZone(ctx sdk.Context, hostZone types.Host
 		return validators[i].Weight < validators[j].Weight
 	})
 
-	for i, validator := range hostZone.Validators {
-		if i == len(hostZone.Validators)-1 {
+	for i, validator := range validators {
+		if i == len(validators)-1 {
 			// for the last element, we need to make sure that the allocatedAmt is equal to the finalDelegation
 			targetAmount[validator.GetAddress()] = finalDelegation - allocatedAmt
 		} else {

@@ -5,10 +5,11 @@ import (
 
 	"github.com/spf13/cast"
 
-	"github.com/Stride-Labs/stride/x/icacallbacks"
-	"github.com/Stride-Labs/stride/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v4/x/icacallbacks"
+	recordstypes "github.com/Stride-Labs/stride/v4/x/records/types"
+	"github.com/Stride-Labs/stride/v4/x/stakeibc/types"
 
-	icacallbackstypes "github.com/Stride-Labs/stride/x/icacallbacks/types"
+	icacallbackstypes "github.com/Stride-Labs/stride/v4/x/icacallbacks/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -36,6 +37,23 @@ func (k Keeper) UnmarshalDelegateCallbackArgs(ctx sdk.Context, delegateCallback 
 
 func DelegateCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ack *channeltypes.Acknowledgement, args []byte) error {
 	k.Logger(ctx).Info("DelegateCallback executing", "packet", packet)
+	// deserialize the args
+	delegateCallback, err := k.UnmarshalDelegateCallbackArgs(ctx, args)
+	if err != nil {
+		return err
+	}
+	k.Logger(ctx).Info(fmt.Sprintf("DelegateCallback %v", delegateCallback))
+	hostZone := delegateCallback.GetHostZoneId()
+	zone, found := k.GetHostZone(ctx, hostZone)
+	if !found {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "host zone not found %s", hostZone)
+	}
+	recordId := delegateCallback.GetDepositRecordId()
+	depositRecord, found := k.RecordsKeeper.GetDepositRecord(ctx, recordId)
+	if !found {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "deposit record not found %d", recordId)
+	}
+
 	if ack == nil {
 		// timeout
 		k.Logger(ctx).Error(fmt.Sprintf("DelegateCallback timeout, ack is nil, packet %v", packet))
@@ -50,22 +68,11 @@ func DelegateCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ack
 
 	if len(txMsgData.Data) == 0 {
 		// failed transaction
+		depositRecord.Status = recordstypes.DepositRecord_DELEGATION_QUEUE
+		k.RecordsKeeper.SetDepositRecord(ctx, depositRecord)
 		k.Logger(ctx).Error(fmt.Sprintf("DelegateCallback tx failed, ack is empty (ack error), packet %v", packet))
 		return nil
 	}
-
-	// deserialize the args
-	delegateCallback, err := k.UnmarshalDelegateCallbackArgs(ctx, args)
-	if err != nil {
-		return err
-	}
-	k.Logger(ctx).Info(fmt.Sprintf("DelegateCallback %v", delegateCallback))
-	hostZone := delegateCallback.GetHostZoneId()
-	zone, found := k.GetHostZone(ctx, hostZone)
-	if !found {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "host zone not found %s", hostZone)
-	}
-	recordId := delegateCallback.GetDepositRecordId()
 
 	for _, splitDelegation := range delegateCallback.SplitDelegations {
 		amount, err := cast.ToInt64E(splitDelegation.Amount)

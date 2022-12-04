@@ -1,0 +1,27 @@
+# syntax = docker/dockerfile:1
+FROM golang:1.19-alpine3.15 AS builder
+
+ARG old_commit_hash
+ARG stride_admin_address
+RUN test -n "$old_commit_hash" && test -n "$stride_admin_address" 
+
+WORKDIR /opt/
+
+RUN apk add --no-cache make git gcc musl-dev openssl-dev linux-headers
+
+# Install cosmovisor
+RUN git clone https://github.com/cosmos/cosmos-sdk \
+    && cd cosmos-sdk \
+    && git checkout cosmovisor/v1.1.0 
+RUN --mount=type=cache,target=/root/.cache/go-build cd /opt/cosmos-sdk && make cosmovisor 
+
+# Build the old binary
+RUN git clone https://github.com/Stride-Labs/stride.git \
+    && cd stride \
+    && git checkout $old_commit_hash \
+    && sed -i -E "s|stride1k8c2m5cn322akk5wy8lpt87dd2f4yh9azg7jlh|$stride_admin_address|g" utils/admins.go \
+    && env GOOS=linux GOARCH=amd64 go build -mod=readonly -trimpath -o /opt/build/ ./... \
+    && mv /opt/build/strided /opt/build/strided1 
+RUN --mount=type=cache,target=/root/.cache/go-build cd /opt/stride && make build
+
+

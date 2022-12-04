@@ -3,8 +3,8 @@ package stakeibc
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Stride-Labs/stride/x/stakeibc/keeper"
-	"github.com/Stride-Labs/stride/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v4/x/stakeibc/keeper"
+	"github.com/Stride-Labs/stride/v4/x/stakeibc/types"
 )
 
 // InitGenesis initializes the capability module's state from a provided genesis
@@ -12,8 +12,8 @@ import (
 func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) {
 	// TODO: TEST-10
 	// Set if defined
-	if genState.ICAAccount != nil {
-		k.SetICAAccount(ctx, *genState.ICAAccount)
+	if genState.IcaAccount != nil {
+		k.SetICAAccount(ctx, *genState.IcaAccount)
 	}
 	// Set all the hostZone
 	for _, elem := range genState.HostZoneList {
@@ -48,7 +48,7 @@ func ExportGenesis(ctx sdk.Context, k keeper.Keeper) *types.GenesisState {
 	// Get all iCAAccount
 	iCAAccount, found := k.GetICAAccount(ctx)
 	if found {
-		genesis.ICAAccount = &iCAAccount
+		genesis.IcaAccount = &iCAAccount
 	}
 	genesis.EpochTrackerList = k.GetAllEpochTracker(ctx)
 	// this line is used by starport scaffolding # genesis/module/export

@@ -19,9 +19,9 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 
-	"github.com/Stride-Labs/stride/x/stakeibc/client/cli"
-	"github.com/Stride-Labs/stride/x/stakeibc/keeper"
-	"github.com/Stride-Labs/stride/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v4/x/stakeibc/client/cli"
+	"github.com/Stride-Labs/stride/v4/x/stakeibc/keeper"
+	"github.com/Stride-Labs/stride/v4/x/stakeibc/types"
 )
 
 var (

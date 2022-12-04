@@ -5,8 +5,8 @@ import (
 )
 
 type QueryCallbacks interface {
-	AddCallback(id string, fn interface{}) QueryCallbacks
-	RegisterCallbacks() QueryCallbacks
-	Call(ctx sdk.Context, id string, args []byte, query Query) error
-	Has(id string) bool
+	AddICQCallback(id string, fn interface{}) QueryCallbacks
+	RegisterICQCallbacks() QueryCallbacks
+	CallICQCallback(ctx sdk.Context, id string, args []byte, query Query) error
+	HasICQCallback(id string) bool
 }

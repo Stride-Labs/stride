@@ -1,0 +1,27 @@
+syntax = "proto3";
+package stride.stakeibc;
+
+import "gogoproto/gogo.proto";
+import "stride/stakeibc/params.proto";
+import "stride/stakeibc/ica_account.proto";
+import "stride/stakeibc/host_zone.proto";
+import "stride/stakeibc/epoch_tracker.proto";
+// this line is used by starport scaffolding # genesis/proto/import
+
+option go_package = "github.com/Stride-Labs/stride/v4/x/stakeibc/types";
+
+// GenesisState defines the stakeibc module's genesis state.
+message GenesisState {
+  Params params = 1 [ (gogoproto.nullable) = false ];
+  string port_id = 2;
+  // list of zones that are registered by the protocol
+  ICAAccount ica_account = 4;
+  repeated HostZone host_zone_list = 5 [ (gogoproto.nullable) = false ];
+  uint64 host_zone_count = 6;
+  // stores a map from hostZone base denom to hostZone
+  map<string, string> denom_to_host_zone = 9;
+  repeated EpochTracker epoch_tracker_list = 10
+      [ (gogoproto.nullable) = false ];
+  // this line is used by starport scaffolding # genesis/proto/state
+  reserved 3, 11;
+}

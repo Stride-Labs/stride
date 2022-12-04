@@ -5,7 +5,7 @@ import (
 
 	ibctransfertypes "github.com/cosmos/ibc-go/v5/modules/apps/transfer/types"
 
-	"github.com/Stride-Labs/stride/x/records/types"
+	"github.com/Stride-Labs/stride/v4/x/records/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -33,22 +33,6 @@ func (k Keeper) UnmarshalTransferCallbackArgs(ctx sdk.Context, delegateCallback 
 
 func TransferCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ack *channeltypes.Acknowledgement, args []byte) error {
 	k.Logger(ctx).Info("TransferCallback executing", "packet", packet)
-	if ack.GetError() != "" {
-		k.Logger(ctx).Error(fmt.Sprintf("TransferCallback does not handle errors %s", ack.GetError()))
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "TransferCallback does not handle errors: %s", ack.GetError())
-	}
-	if ack == nil {
-		// timeout
-		k.Logger(ctx).Error(fmt.Sprintf("TransferCallback timeout, ack is nil, packet %v", packet))
-		return nil
-	}
-
-	var data ibctransfertypes.FungibleTokenPacketData
-	if err := ibctransfertypes.ModuleCdc.UnmarshalJSON(packet.GetData(), &data); err != nil {
-		k.Logger(ctx).Error(fmt.Sprintf("Error unmarshalling packet  %v", err.Error()))
-		return sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "cannot unmarshal ICS-20 transfer packet data: %s", err.Error())
-	}
-	k.Logger(ctx).Info(fmt.Sprintf("TransferCallback unmarshalled FungibleTokenPacketData %v", data))
 
 	// deserialize the args
 	transferCallbackData, err := k.UnmarshalTransferCallbackArgs(ctx, args)
@@ -61,9 +45,36 @@ func TransferCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ack
 		k.Logger(ctx).Error(fmt.Sprintf("TransferCallback deposit record not found, packet %v", packet))
 		return sdkerrors.Wrapf(types.ErrUnknownDepositRecord, "deposit record not found %d", transferCallbackData.DepositRecordId)
 	}
-	depositRecord.Status = types.DepositRecord_STAKE
+
+	if ack == nil {
+		// timeout
+		// put record back in the TRANSFER_QUEUE
+		depositRecord.Status = types.DepositRecord_TRANSFER_QUEUE
+		k.SetDepositRecord(ctx, depositRecord)
+		k.Logger(ctx).Error(fmt.Sprintf("TransferCallback timeout, ack is nil, packet %v", packet))
+		return nil
+	}
+
+	if _, ok := ack.Response.(*channeltypes.Acknowledgement_Error); ok {
+		// error on host chain
+		// put record back in the TRANSFER_QUEUE
+		depositRecord.Status = types.DepositRecord_TRANSFER_QUEUE
+		k.SetDepositRecord(ctx, depositRecord)
+		k.Logger(ctx).Error(fmt.Sprintf("Error  %s", ack.GetError()))
+		return nil
+	}
+
+	var data ibctransfertypes.FungibleTokenPacketData
+	if err := ibctransfertypes.ModuleCdc.UnmarshalJSON(packet.GetData(), &data); err != nil {
+		k.Logger(ctx).Error(fmt.Sprintf("Error unmarshalling packet  %v", err.Error()))
+		return sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "cannot unmarshal ICS-20 transfer packet data: %s", err.Error())
+	}
+	k.Logger(ctx).Info(fmt.Sprintf("TransferCallback unmarshalled FungibleTokenPacketData %v", data))
+
+	// put the deposit record in the DELEGATION_QUEUE
+	depositRecord.Status = types.DepositRecord_DELEGATION_QUEUE
 	k.SetDepositRecord(ctx, depositRecord)
-	k.Logger(ctx).Info(fmt.Sprintf("\t [IBC-TRANSFER] Deposit record updated: {%v}", depositRecord.Id))
+	k.Logger(ctx).Info(fmt.Sprintf("\t [IBC-TRANSFER] Deposit record updated: {%v}, status: {%s}", depositRecord.Id, depositRecord.Status.String()))
 	k.Logger(ctx).Info(fmt.Sprintf("[IBC-TRANSFER] success to %s", depositRecord.HostZoneId))
 	return nil
 }

@@ -3,8 +3,9 @@ package types_test
 import (
 	"testing"
 
-	"github.com/Stride-Labs/stride/x/records/types"
 	"github.com/stretchr/testify/require"
+
+	"github.com/Stride-Labs/stride/v4/x/records/types"
 )
 
 func TestGenesisState_Validate(t *testing.T) {

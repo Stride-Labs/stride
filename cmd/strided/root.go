@@ -8,7 +8,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/snapshots"
 
-	"github.com/Stride-Labs/stride/utils"
+	"github.com/Stride-Labs/stride/v4/utils"
 
 	"github.com/spf13/cast"
 	"github.com/spf13/cobra"
@@ -39,8 +39,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/crisis"
 	genutilcli "github.com/cosmos/cosmos-sdk/x/genutil/client/cli"
 
-	"github.com/Stride-Labs/stride/app"
-	// "github.com/Stride-labs/stride/app/params"
+	"github.com/Stride-Labs/stride/v4/app"
+	// "github.com/Stride-Labs/stride/v4/app/params"
 	// this line is used by starport scaffolding # stargate/root/import
 )
 
@@ -139,6 +139,9 @@ func initAppConfig() (string, interface{}) {
 	srvCfg.API.Enable = true
 	srvCfg.API.EnableUnsafeCORS = true
 	srvCfg.GRPCWeb.EnableUnsafeCORS = true
+
+	// This ensures that upgraded nodes will use iavl fast node.
+	srvCfg.IAVLDisableFastNode = false
 
 	customAppConfig := CustomAppConfig{
 		Config: *srvCfg,
@@ -309,6 +312,8 @@ func (a appCreator) newApp(logger log.Logger, db dbm.DB, traceStore io.Writer, a
 		baseapp.SetTrace(cast.ToBool(appOpts.Get(server.FlagTrace))),
 		baseapp.SetIndexEvents(cast.ToStringSlice(appOpts.Get(server.FlagIndexEvents))),
 		baseapp.SetSnapshot(snapshotStore, snapshottypes.SnapshotOptions{Interval: cast.ToUint64(appOpts.Get(server.FlagStateSyncSnapshotInterval)), KeepRecent: cast.ToUint32(appOpts.Get(server.FlagStateSyncSnapshotKeepRecent))}),
+		baseapp.SetIAVLCacheSize(cast.ToInt(appOpts.Get(server.FlagIAVLCacheSize))),
+		baseapp.SetIAVLDisableFastNode(cast.ToBool(appOpts.Get(server.FlagDisableIAVLFastNode))),
 	)
 }
 
@@ -334,7 +339,6 @@ func (a appCreator) appExport(
 			homePath,
 			uint(1),
 			a.encCfg,
-			// this line is used by starport scaffolding # stargate/root/exportArgument
 			appOpts,
 		)
 
@@ -351,7 +355,6 @@ func (a appCreator) appExport(
 			homePath,
 			uint(1),
 			a.encCfg,
-			// this line is used by starport scaffolding # stargate/root/noHeightExportArgument
 			appOpts,
 		)
 	}
