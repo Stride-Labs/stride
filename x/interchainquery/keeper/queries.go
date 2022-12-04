@@ -7,8 +7,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/tendermint/tendermint/crypto"
 
-	"cosmossdk.io/math"
-
 	"github.com/Stride-Labs/stride/v4/x/interchainquery/types"
 )
 
@@ -16,7 +14,7 @@ func GenerateQueryHash(connectionId string, chainId string, queryType string, re
 	return fmt.Sprintf("%x", crypto.Sha256(append([]byte(module+connectionId+chainId+queryType+callbackId), request...)))
 }
 
-func (k Keeper) NewQuery(ctx sdk.Context, module string, connectionId string, chainId string, queryType string, request []byte, period math.Int, callbackId string, ttl uint64, height int64) *types.Query {
+func (k Keeper) NewQuery(ctx sdk.Context, module string, callbackId string, chainId string, connectionId string, queryType string, request []byte, ttl uint64) *types.Query {
 	return &types.Query{
 		Id:           GenerateQueryHash(connectionId, chainId, queryType, request, module, callbackId),
 		ConnectionId: connectionId,

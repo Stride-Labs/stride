@@ -87,7 +87,7 @@ func (k *Keeper) MakeRequest(ctx sdk.Context, module string, callbackId string, 
 	// If the same query is re-requested, it will get replace in the store with an updated TTL
 	//  and the RequestSent bool reset to false
 	query := k.NewQuery(ctx, module, callbackId, chainId, connectionId, queryType, request, ttl)
-	k.SetQuery(ctx, query)
+	k.SetQuery(ctx, *query)
 
 	return nil
 }
