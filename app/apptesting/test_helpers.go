@@ -4,12 +4,10 @@ import (
 	"strings"
 
 	ibctransfertypes "github.com/cosmos/ibc-go/v3/modules/apps/transfer/types"
-	abci "github.com/tendermint/tendermint/abci/types"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
-	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 	icatypes "github.com/cosmos/ibc-go/v3/modules/apps/27-interchain-accounts/types"
 	transfertypes "github.com/cosmos/ibc-go/v3/modules/apps/transfer/types"
 	channeltypes "github.com/cosmos/ibc-go/v3/modules/core/04-channel/types"
@@ -20,7 +18,7 @@ import (
 	"github.com/tendermint/tendermint/crypto/ed25519"
 	tmtypes "github.com/tendermint/tendermint/proto/tendermint/types"
 
-	"github.com/Stride-Labs/stride/v4/app"
+	"github.com/Stride-Labs/stride/v3/app"
 )
 
 var (
@@ -298,21 +296,4 @@ func (s *AppTestHelper) ICS20PacketAcknowledgement() channeltypes.Acknowledgemen
 	// see: https://github.com/cosmos/ibc-go/blob/8de555db76d0320842dacaa32e5500e1fd55e667/modules/apps/transfer/keeper/relay.go#L151
 	ack := channeltypes.NewResultAcknowledgement(s.MarshalledICS20PacketData())
 	return ack
-}
-
-func (s *AppTestHelper) ConfirmUpgradeSucceededs(upgradeName string, upgradeHeight int64) {
-	contextBeforeUpgrade := s.Ctx.WithBlockHeight(upgradeHeight - 1)
-	contextAtUpgrade := s.Ctx.WithBlockHeight(upgradeHeight)
-
-	plan := upgradetypes.Plan{Name: upgradeName, Height: upgradeHeight}
-	err := s.App.UpgradeKeeper.ScheduleUpgrade(contextBeforeUpgrade, plan)
-	s.Require().NoError(err)
-
-	_, exists := s.App.UpgradeKeeper.GetUpgradePlan(contextBeforeUpgrade)
-	s.Require().True(exists)
-
-	s.Require().NotPanics(func() {
-		beginBlockRequest := abci.RequestBeginBlock{}
-		s.App.BeginBlocker(contextAtUpgrade, beginBlockRequest)
-	})
 }

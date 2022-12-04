@@ -4,10 +4,9 @@ import (
 	ibctesting "github.com/cosmos/ibc-go/v3/testing"
 	_ "github.com/stretchr/testify/suite"
 
-	recordtypes "github.com/Stride-Labs/stride/v4/x/records/types"
+	recordtypes "github.com/Stride-Labs/stride/v3/x/records/types"
 
-	epochtypes "github.com/Stride-Labs/stride/v4/x/epochs/types"
-	stakeibc "github.com/Stride-Labs/stride/v4/x/stakeibc/types"
+	stakeibc "github.com/Stride-Labs/stride/v3/x/stakeibc/types"
 )
 
 type SweepUnbondedTokensTestCase struct {
@@ -73,12 +72,6 @@ func (s *KeeperTestSuite) SetupSweepUnbondedTokens() SweepUnbondedTokensTestCase
 			ConnectionId:       ibctesting.FirstConnectionID,
 		},
 	}
-	dayEpochTracker := stakeibc.EpochTracker{
-		EpochIdentifier:    epochtypes.DAY_EPOCH,
-		EpochNumber:        1,
-		NextEpochStartTime: uint64(s.Coordinator.CurrentTime.UnixNano() + 30_000_000_000), // dictates timeouts
-	}
-
 	// 2022-08-12T19:51, a random time in the past
 	unbondingTime := uint64(10)
 	lightClientTime := unbondingTime + 1
@@ -141,7 +134,6 @@ func (s *KeeperTestSuite) SetupSweepUnbondedTokens() SweepUnbondedTokensTestCase
 	for _, hostZone := range hostZones {
 		s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
 	}
-	s.App.StakeibcKeeper.SetEpochTracker(s.Ctx, dayEpochTracker)
 
 	return SweepUnbondedTokensTestCase{
 		epochUnbondingRecords: epochUnbondingRecords,
@@ -151,7 +143,8 @@ func (s *KeeperTestSuite) SetupSweepUnbondedTokens() SweepUnbondedTokensTestCase
 }
 
 func (s *KeeperTestSuite) TestSweepUnbondedTokens_Successful() {
-	s.SetupSweepUnbondedTokens()
+	tc := s.SetupSweepUnbondedTokens()
+	_ = tc
 	success, successfulSweeps, sweepAmounts, failedSweeps := s.App.StakeibcKeeper.SweepAllUnbondedTokens(s.Ctx)
 	s.Require().True(success, "sweep all tokens succeeds")
 	s.Require().Len(successfulSweeps, 2, "sweep all tokens succeeds for 2 host zones")

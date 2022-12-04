@@ -6,6 +6,8 @@ import (
 	ibckeeper "github.com/cosmos/ibc-go/v3/modules/core/keeper"
 	"github.com/tendermint/tendermint/libs/log"
 
+	icacallbackstypes "github.com/Stride-Labs/stride/v3/x/icacallbacks/types"
+
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	capabilitykeeper "github.com/cosmos/cosmos-sdk/x/capability/keeper"
@@ -14,11 +16,9 @@ import (
 	ibctransferkeeper "github.com/cosmos/ibc-go/v3/modules/apps/transfer/keeper"
 	ibctypes "github.com/cosmos/ibc-go/v3/modules/apps/transfer/types"
 
-	"github.com/Stride-Labs/stride/v4/utils"
-	icacallbackskeeper "github.com/Stride-Labs/stride/v4/x/icacallbacks/keeper"
-	icacallbackstypes "github.com/Stride-Labs/stride/v4/x/icacallbacks/types"
+	icacallbackskeeper "github.com/Stride-Labs/stride/v3/x/icacallbacks/keeper"
 
-	"github.com/Stride-Labs/stride/v4/x/records/types"
+	"github.com/Stride-Labs/stride/v3/x/records/types"
 )
 
 type (
@@ -85,7 +85,7 @@ func (k Keeper) Transfer(ctx sdk.Context, msg *ibctypes.MsgTransfer, depositReco
 	transferCallback := types.TransferCallback{
 		DepositRecordId: depositRecord.Id,
 	}
-	k.Logger(ctx).Info(utils.LogWithHostZone(depositRecord.HostZoneId, "Marshalling TransferCallback args: %+v", transferCallback))
+	k.Logger(ctx).Info(fmt.Sprintf("Marshalling TransferCallback args: %v", transferCallback))
 	marshalledCallbackArgs, err := k.MarshalTransferCallbackArgs(ctx, transferCallback)
 	if err != nil {
 		return err
@@ -99,7 +99,7 @@ func (k Keeper) Transfer(ctx sdk.Context, msg *ibctypes.MsgTransfer, depositReco
 		CallbackId:   TRANSFER,
 		CallbackArgs: marshalledCallbackArgs,
 	}
-	k.Logger(ctx).Info(utils.LogWithHostZone(depositRecord.HostZoneId, "Storing callback data: %+v", callback))
+	k.Logger(ctx).Info(fmt.Sprintf("Storing callback data: %v", callback))
 	k.ICACallbacksKeeper.SetCallbackData(ctx, callback)
 
 	// update the record state to TRANSFER_IN_PROGRESS

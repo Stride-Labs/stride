@@ -6,7 +6,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/Stride-Labs/stride/v4/testutil/sample"
+	"github.com/Stride-Labs/stride/v3/testutil/sample"
 )
 
 func TestMsgRedeemStake_ValidateBasic(t *testing.T) {

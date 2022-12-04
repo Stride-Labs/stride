@@ -7,11 +7,10 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/bech32"
 	"github.com/spf13/cast"
 
-	"github.com/Stride-Labs/stride/v4/utils"
-	icacallbackstypes "github.com/Stride-Labs/stride/v4/x/icacallbacks/types"
+	icacallbackstypes "github.com/Stride-Labs/stride/v3/x/icacallbacks/types"
 
-	recordstypes "github.com/Stride-Labs/stride/v4/x/records/types"
-	"github.com/Stride-Labs/stride/v4/x/stakeibc/types"
+	recordstypes "github.com/Stride-Labs/stride/v3/x/records/types"
+	"github.com/Stride-Labs/stride/v3/x/stakeibc/types"
 
 	bankTypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	distributiontypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
@@ -19,8 +18,8 @@ import (
 
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
-	epochstypes "github.com/Stride-Labs/stride/v4/x/epochs/types"
-	icqtypes "github.com/Stride-Labs/stride/v4/x/interchainquery/types"
+	epochstypes "github.com/Stride-Labs/stride/v3/x/epochs/types"
+	icqtypes "github.com/Stride-Labs/stride/v3/x/interchainquery/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	icatypes "github.com/cosmos/ibc-go/v3/modules/apps/27-interchain-accounts/types"
@@ -29,6 +28,8 @@ import (
 )
 
 func (k Keeper) DelegateOnHost(ctx sdk.Context, hostZone types.HostZone, amt sdk.Coin, depositRecord recordstypes.DepositRecord) error {
+	var msgs []sdk.Msg
+
 	// the relevant ICA is the delegate account
 	owner := types.FormatICAAccountOwner(hostZone.ChainId, types.ICAAccountType_DELEGATION)
 	portID, err := icatypes.NewControllerPortID(owner)
@@ -41,8 +42,8 @@ func (k Keeper) DelegateOnHost(ctx sdk.Context, hostZone types.HostZone, amt sdk
 	}
 
 	// Fetch the relevant ICA
-	delegationIca := hostZone.DelegationAccount
-	if delegationIca == nil || delegationIca.Address == "" {
+	delegationIca := hostZone.GetDelegationAccount()
+	if delegationIca == nil || delegationIca.GetAddress() == "" {
 		k.Logger(ctx).Error(fmt.Sprintf("Zone %s is missing a delegation address!", hostZone.ChainId))
 		return fmt.Errorf("Invalid delegation account: invalid address")
 	}
@@ -55,22 +56,23 @@ func (k Keeper) DelegateOnHost(ctx sdk.Context, hostZone types.HostZone, amt sdk
 	}
 
 	var splitDelegations []*types.SplitDelegation
-	var msgs []sdk.Msg
-	for _, validator := range hostZone.Validators {
-		relativeAmount := sdk.NewCoin(amt.Denom, sdk.NewIntFromUint64(targetDelegatedAmts[validator.Address]))
+	for _, validator := range hostZone.GetValidators() {
+		relativeAmount := sdk.NewCoin(amt.Denom, sdk.NewIntFromUint64(targetDelegatedAmts[validator.GetAddress()]))
 		if relativeAmount.Amount.IsPositive() {
+			k.Logger(ctx).Info(fmt.Sprintf("Appending MsgDelegate to msgs, DelegatorAddress: %s, ValidatorAddress: %s, relativeAmount: %v",
+				delegationIca.GetAddress(), validator.GetAddress(), relativeAmount))
+
 			msgs = append(msgs, &stakingTypes.MsgDelegate{
-				DelegatorAddress: delegationIca.Address,
-				ValidatorAddress: validator.Address,
+				DelegatorAddress: delegationIca.GetAddress(),
+				ValidatorAddress: validator.GetAddress(),
 				Amount:           relativeAmount,
 			})
 		}
 		splitDelegations = append(splitDelegations, &types.SplitDelegation{
-			Validator: validator.Address,
+			Validator: validator.GetAddress(),
 			Amount:    relativeAmount.Amount.Uint64(),
 		})
 	}
-	k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId, "Preparing MsgDelegates from the delegation account to each validator"))
 
 	// add callback data
 	delegateCallback := types.DelegateCallback{
@@ -78,7 +80,7 @@ func (k Keeper) DelegateOnHost(ctx sdk.Context, hostZone types.HostZone, amt sdk
 		DepositRecordId:  depositRecord.Id,
 		SplitDelegations: splitDelegations,
 	}
-	k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId, "Marshalling DelegateCallback args: %+v", delegateCallback))
+	k.Logger(ctx).Info(fmt.Sprintf("Marshalling DelegateCallback args: %v", delegateCallback))
 	marshalledCallbackArgs, err := k.MarshalDelegateCallbackArgs(ctx, delegateCallback)
 	if err != nil {
 		return err
@@ -89,17 +91,16 @@ func (k Keeper) DelegateOnHost(ctx sdk.Context, hostZone types.HostZone, amt sdk
 	if err != nil {
 		return fmt.Errorf("Failed to SubmitTxs for connectionId %s on %s. Messages: %s: %s", connectionId, hostZone.ChainId, msgs, err.Error())
 	}
-	k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId, "ICA MsgDelegates Successfully Sent"))
-
 	// update the record state to DELEGATION_IN_PROGRESS
 	depositRecord.Status = recordstypes.DepositRecord_DELEGATION_IN_PROGRESS
 	k.RecordsKeeper.SetDepositRecord(ctx, depositRecord)
-
 	return nil
 }
 
 func (k Keeper) SetWithdrawalAddressOnHost(ctx sdk.Context, hostZone types.HostZone) error {
-	// The relevant ICA is the delegate account
+	_ = ctx
+	var msgs []sdk.Msg
+	// the relevant ICA is the delegate account
 	owner := types.FormatICAAccountOwner(hostZone.ChainId, types.ICAAccountType_DELEGATION)
 	portID, err := icatypes.NewControllerPortID(owner)
 	if err != nil {
@@ -111,45 +112,40 @@ func (k Keeper) SetWithdrawalAddressOnHost(ctx sdk.Context, hostZone types.HostZ
 	}
 
 	// Fetch the relevant ICA
-	delegationIca := hostZone.DelegationAccount
+	delegationIca := hostZone.GetDelegationAccount()
 	if delegationIca == nil || delegationIca.Address == "" {
 		k.Logger(ctx).Error(fmt.Sprintf("Zone %s is missing a delegation address!", hostZone.ChainId))
 		return nil
 	}
-	withdrawalIca := hostZone.WithdrawalAccount
+	withdrawalIca := hostZone.GetWithdrawalAccount()
 	if withdrawalIca == nil || withdrawalIca.Address == "" {
 		k.Logger(ctx).Error(fmt.Sprintf("Zone %s is missing a withdrawal address!", hostZone.ChainId))
 		return nil
 	}
-	withdrawalIcaAddr := hostZone.WithdrawalAccount.Address
+	withdrawalIcaAddr := hostZone.GetWithdrawalAccount().GetAddress()
 
-	k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId, "Withdrawal Address: %s, Delegator Address: %s", withdrawalIcaAddr, delegationIca.Address))
-
-	// Construct the ICA message
-	msgs := []sdk.Msg{
-		&distributiontypes.MsgSetWithdrawAddress{
-			DelegatorAddress: delegationIca.Address,
-			WithdrawAddress:  withdrawalIcaAddr,
-		},
-	}
+	k.Logger(ctx).Info(fmt.Sprintf("Setting withdrawal address on host zone. DelegatorAddress: %s WithdrawAddress: %s ConnectionID: %s", delegationIca.GetAddress(), withdrawalIcaAddr, connectionId))
+	// construct the msg
+	msgs = append(msgs, &distributiontypes.MsgSetWithdrawAddress{DelegatorAddress: delegationIca.GetAddress(), WithdrawAddress: withdrawalIcaAddr})
+	// Send the transaction through SubmitTx
 	_, err = k.SubmitTxsStrideEpoch(ctx, connectionId, msgs, *delegationIca, "", nil)
 	if err != nil {
 		return fmt.Errorf("Failed to SubmitTxs for %s, %s, %s: invalid request", connectionId, hostZone.ChainId, msgs)
 	}
-
 	return nil
 }
 
 // Simple balance query helper using new ICQ module
-func (k Keeper) UpdateWithdrawalBalance(ctx sdk.Context, hostZone types.HostZone) error {
-	k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId, "Submitting ICQ for withdrawal account balance"))
+func (k Keeper) UpdateWithdrawalBalance(ctx sdk.Context, zoneInfo types.HostZone) error {
+	k.Logger(ctx).Info(fmt.Sprintf("\tUpdating withdrawal balances on %s", zoneInfo.ChainId))
 
-	withdrawalIca := hostZone.WithdrawalAccount
+	withdrawalIca := zoneInfo.GetWithdrawalAccount()
 	if withdrawalIca == nil || withdrawalIca.Address == "" {
-		k.Logger(ctx).Error(fmt.Sprintf("Zone %s is missing a withdrawal address!", hostZone.ChainId))
+		k.Logger(ctx).Error(fmt.Sprintf("Zone %s is missing a withdrawal address!", zoneInfo.ChainId))
 	}
+	k.Logger(ctx).Info(fmt.Sprintf("\tQuerying withdrawalBalances for %s", zoneInfo.ChainId))
 
-	_, addr, _ := bech32.DecodeAndConvert(withdrawalIca.Address)
+	_, addr, _ := bech32.DecodeAndConvert(withdrawalIca.GetAddress())
 	data := bankTypes.CreateAccountBalancesPrefix(addr)
 
 	// get ttl, the end of the ICA buffer window
@@ -161,16 +157,17 @@ func (k Keeper) UpdateWithdrawalBalance(ctx sdk.Context, hostZone types.HostZone
 		return fmt.Errorf("%s: %s", errMsg, "invalid request")
 	}
 
+	k.Logger(ctx).Info("Querying for value", "key", icqtypes.BANK_STORE_QUERY_WITH_PROOF, "denom", zoneInfo.HostDenom)
 	err = k.InterchainQueryKeeper.MakeRequest(
 		ctx,
 		types.ModuleName,
 		ICQCallbackID_WithdrawalBalance,
-		hostZone.ChainId,
-		hostZone.ConnectionId,
+		zoneInfo.ChainId,
+		zoneInfo.ConnectionId,
 		// use "bank" store to access acct balances which live in the bank module
 		// use "key" suffix to retrieve a proof alongside the query result
 		icqtypes.BANK_STORE_QUERY_WITH_PROOF,
-		append(data, []byte(hostZone.HostDenom)...),
+		append(data, []byte(zoneInfo.HostDenom)...),
 		ttl, // ttl
 	)
 	if err != nil {
@@ -198,6 +195,7 @@ func (k Keeper) SubmitTxsDayEpoch(
 	callbackId string,
 	callbackArgs []byte,
 ) (uint64, error) {
+	k.Logger(ctx).Info(fmt.Sprintf("SubmitTxsDayEpoch %v", msgs))
 	sequence, err := k.SubmitTxsEpoch(ctx, connectionId, msgs, account, epochstypes.DAY_EPOCH, callbackId, callbackArgs)
 	if err != nil {
 		return 0, err
@@ -213,6 +211,7 @@ func (k Keeper) SubmitTxsStrideEpoch(
 	callbackId string,
 	callbackArgs []byte,
 ) (uint64, error) {
+	k.Logger(ctx).Info(fmt.Sprintf("SubmitTxsStrideEpoch %v", msgs))
 	sequence, err := k.SubmitTxsEpoch(ctx, connectionId, msgs, account, epochstypes.STRIDE_EPOCH, callbackId, callbackArgs)
 	if err != nil {
 		return 0, err
@@ -238,6 +237,7 @@ func (k Keeper) SubmitTxsEpoch(
 	if err != nil {
 		return 0, err
 	}
+	k.Logger(ctx).Info(fmt.Sprintf("Submitted Txs, connectionId: %s, sequence: %d, block: %d", connectionId, sequence, ctx.BlockHeight()))
 	return sequence, nil
 }
 
@@ -251,19 +251,15 @@ func (k Keeper) SubmitTxs(
 	callbackId string,
 	callbackArgs []byte,
 ) (uint64, error) {
+	k.Logger(ctx).Info(fmt.Sprintf("SubmitTxs %v", msgs))
 	chainId, err := k.GetChainID(ctx, connectionId)
 	if err != nil {
 		return 0, err
 	}
-	owner := types.FormatICAAccountOwner(chainId, account.Target)
+	owner := types.FormatICAAccountOwner(chainId, account.GetTarget())
 	portID, err := icatypes.NewControllerPortID(owner)
 	if err != nil {
 		return 0, err
-	}
-
-	k.Logger(ctx).Info(utils.LogWithHostZone(chainId, "  Submitting ICA Tx on %s, %s with TTL: %d", portID, connectionId, timeoutTimestamp))
-	for _, msg := range msgs {
-		k.Logger(ctx).Info(utils.LogWithHostZone(chainId, "    Msg: %+v", msg))
 	}
 
 	channelID, found := k.ICAControllerKeeper.GetActiveChannelID(ctx, connectionId, portID)
@@ -301,7 +297,6 @@ func (k Keeper) SubmitTxs(
 			CallbackId:   callbackId,
 			CallbackArgs: callbackArgs,
 		}
-		k.Logger(ctx).Info(utils.LogWithHostZone(chainId, "Storing callback data: %+v", callback))
 		k.ICACallbacksKeeper.SetCallbackData(ctx, callback)
 	}
 

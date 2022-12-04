@@ -9,10 +9,9 @@ import (
 	channeltypes "github.com/cosmos/ibc-go/v3/modules/core/04-channel/types"
 	_ "github.com/stretchr/testify/suite"
 
-	recordtypes "github.com/Stride-Labs/stride/v4/x/records/types"
-	stakeibckeeper "github.com/Stride-Labs/stride/v4/x/stakeibc/keeper"
-	"github.com/Stride-Labs/stride/v4/x/stakeibc/types"
-	stakeibc "github.com/Stride-Labs/stride/v4/x/stakeibc/types"
+	recordtypes "github.com/Stride-Labs/stride/v3/x/records/types"
+	stakeibckeeper "github.com/Stride-Labs/stride/v3/x/stakeibc/keeper"
+	"github.com/Stride-Labs/stride/v3/x/stakeibc/types"
 )
 
 type DelegateCallbackState struct {
@@ -23,7 +22,7 @@ type DelegateCallbackState struct {
 	val1RelAmt     int64
 	val2RelAmt     int64
 	depositRecord  recordtypes.DepositRecord
-	callbackArgs   stakeibc.DelegateCallback
+	callbackArgs   types.DelegateCallback
 }
 
 type DelegateCallbackArgs struct {

@@ -5,8 +5,7 @@ SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
 STRIDE_CHAIN_ID="$1"
 STATE=$SCRIPT_DIR/../state
-LOGS=$SCRIPT_DIR/../logs
-KEYS_LOGS=$LOGS/keys.log
+KEYS_LOGS=$SCRIPT_DIR/../logs/keys.log
 
 # CHAIN PARAMS
 BLOCK_TIME='5s'

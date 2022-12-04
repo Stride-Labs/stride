@@ -6,10 +6,10 @@ import (
 
 	"github.com/spf13/cast"
 
-	"github.com/Stride-Labs/stride/v4/x/icacallbacks"
-	icacallbackstypes "github.com/Stride-Labs/stride/v4/x/icacallbacks/types"
-	recordstypes "github.com/Stride-Labs/stride/v4/x/records/types"
-	"github.com/Stride-Labs/stride/v4/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v3/x/icacallbacks"
+	icacallbackstypes "github.com/Stride-Labs/stride/v3/x/icacallbacks/types"
+	recordstypes "github.com/Stride-Labs/stride/v3/x/records/types"
+	"github.com/Stride-Labs/stride/v3/x/stakeibc/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
@@ -119,13 +119,7 @@ func (k Keeper) UpdateDelegationBalances(ctx sdk.Context, zone types.HostZone, u
 		if !success {
 			return fmt.Errorf(`Failed to remove delegation to validator: %s`, types.ErrValidatorDelegationChg.Error())
 		}
-		if undelegation.Amount > zone.StakedBal {
-			// handle incoming underflow
-			// Once we add a killswitch, we should also stop liquid staking on the zone here
-			return fmt.Errorf("undelegation.Amount > zone.StakedBal, undelegation.Amount: %d, zone.StakedBal %d", undelegation.Amount, zone.StakedBal, types.ErrUndelegationAmount.Error())
-		} else {
-			zone.StakedBal -= undelegation.Amount
-		}
+		zone.StakedBal -= undelegation.Amount
 	}
 	k.SetHostZone(ctx, zone)
 	return nil
