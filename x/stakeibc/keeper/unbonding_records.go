@@ -404,9 +404,12 @@ func (k Keeper) SweepAllUnbondedTokens(ctx sdk.Context) (success bool, successfu
             // If the sweep was successful, add the host zone and amount swept to the success lists
             successfulSweeps = append(successfulSweeps, hostZone.ChainId)
             sweepAmounts = append(sweepAmounts, sweepAmount)
+	    // mark as having succeeded
+	    success = true
         } else {
             // If the sweep was not successful, add the host zone to the failed list and set success to false
             failedSweeps = append(failedSweeps, hostZone.ChainId)
+	    // mark as having failed
             success = false
         }
     }
