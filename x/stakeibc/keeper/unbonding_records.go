@@ -384,25 +384,34 @@ func (k Keeper) SweepAllUnbondedTokensForHostZone(ctx sdk.Context, hostZone type
 //       * list of tokens swept
 //       * list of failed chains
 func (k Keeper) SweepAllUnbondedTokens(ctx sdk.Context) (success bool, successfulSweeps []string, sweepAmounts []int64, failedSweeps []string) {
-	k.Logger(ctx).Info("Sweeping All Unbonded Tokens...")
+    k.Logger(ctx).Info("Sweeping All Unbonded Tokens...")
 
-	success = true
-	successfulSweeps = []string{}
-	sweepAmounts = []int64{}
-	failedSweeps = []string{}
-	hostZones := k.GetAllHostZone(ctx)
+    // Initialize lists of successful and failed sweeps
+    successfulSweeps = []string{}
+    sweepAmounts = []int64{}
+    failedSweeps = []string{}
 
-	epochUnbondingRecords := k.RecordsKeeper.GetAllEpochUnbondingRecord(ctx)
-	for _, hostZone := range hostZones {
-		hostZoneSuccess, sweepAmount := k.SweepAllUnbondedTokensForHostZone(ctx, hostZone, epochUnbondingRecords)
-		if hostZoneSuccess {
-			successfulSweeps = append(successfulSweeps, hostZone.ChainId)
-			sweepAmounts = append(sweepAmounts, sweepAmount)
-		} else {
-			success = false
-			failedSweeps = append(failedSweeps, hostZone.ChainId)
-		}
-	}
+    // Get all host zones
+    hostZones := k.GetAllHostZone(ctx)
 
-	return success, successfulSweeps, sweepAmounts, failedSweeps
+    // Get all epoch unbonding records
+    epochUnbondingRecords := k.RecordsKeeper.GetAllEpochUnbondingRecord(ctx)
+
+    // Loop through each host zone and attempt to sweep unbonded tokens
+    for _, hostZone := range hostZones {
+        hostZoneSuccess, sweepAmount := k.SweepAllUnbondedTokensForHostZone(ctx, hostZone, epochUnbondingRecords)
+        if hostZoneSuccess {
+            // If the sweep was successful, add the host zone and amount swept to the success lists
+            successfulSweeps = append(successfulSweeps, hostZone.ChainId)
+            sweepAmounts = append(sweepAmounts, sweepAmount)
+        } else {
+            // If the sweep was not successful, add the host zone to the failed list and set success to false
+            failedSweeps = append(failedSweeps, hostZone.ChainId)
+            success = false
+        }
+    }
+
+    // Return the results of the sweep
+    return success, successfulSweeps, sweepAmounts, failedSweeps
 }
+
