@@ -42,24 +42,23 @@ Every action must be performed to claim the full amount.
 
 A claim record is a struct that contains data about the claims process of each airdrop recipient.
 
-It contains an address, the initial claimable airdrop amount, and an array of bools representing 
+It contains an address, the initial claimable airdrop amount, and an array of bools representing
 whether each action has been completed. The position in the array refers to enum number of the action.
 
 So for example, `[true, true]` means that `ActionLiquidStake` and `ActionDelegateStake` are completed.
 
 ```golang
 type ClaimRecord struct {
-	// address of claim user
-	Address string
-	// weight that represent the portion from total allocation
-	Weight sdk.Dec
-	// true if action is completed
-	// index of bool in array refers to action enum #
-	ActionCompleted []bool
+ // address of claim user
+ Address string
+ // weight that represent the portion from total allocation
+ Weight sdk.Dec
+ // true if action is completed
+ // index of bool in array refers to action enum #
+ ActionCompleted []bool
 }
 
 ```
-
 
 ## Params
 

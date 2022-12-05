@@ -3,14 +3,12 @@
 # Multichain Liquid Staking
 
 [Twitter](https://twitter.com/stride_zone) | [Discord](http://stride.zone/discord) | [Website](https://stride.zone/)
+
 ## What is Stride?
 
-
-Stride is a blockchain ("zone") that provides liquidity for staked assets. Using Stride, you can earn *both* staking *and* DeFi yields across the Cosmos IBC ecosystem. Read our ["Meet Stride" blog post](https://stride.zone/blog/meet-stride) to learn more about why we built Stride. 
+Stride is a blockchain ("zone") that provides liquidity for staked assets. Using Stride, you can earn *both* staking *and* DeFi yields across the Cosmos IBC ecosystem. Read our ["Meet Stride" blog post](https://stride.zone/blog/meet-stride) to learn more about why we built Stride.
 
 **Stride** is built using Cosmos SDK and Tendermint and created with [Ignite](https://ignite.com/). Stride allows users to liquid stake any IBC-compatible cosmos SDK native appchain token. Under the hood, Stride leverages the [Inter-Blockchain Communication protocol](https://ibc.cosmos.network/), [Interchain Accounts](https://blog.cosmos.network/interchain-accounts-take-cosmos-interoperability-to-the-next-level-39c9a8aad4ad) and [Interchain Queries](https://github.com/schnetzlerjoe/interchain-query-spec).
-
-
 
 ## How does Multichain Liquid Staking work?
 
@@ -26,7 +24,7 @@ To install the latest version of Stride blockchain node binary, execute the foll
 git clone https://github.com/Stride-Labs/stride
 ```
 
-Test your installation by navigating to the stride directory and executing: 
+Test your installation by navigating to the stride directory and executing:
 
 ```
 ignite chain serve
@@ -50,17 +48,22 @@ Developers who wish to develop on Stride can easily spin up 3 Stride nodes, 3 Ga
 
 The fastest way to develop on Stride is local development mode.
 
-#### Set up local development mode 
-Install the required git submodule dependencies (gaia, hermes). 
+#### Set up local development mode
+
+Install the required git submodule dependencies (gaia, hermes).
+
 ```
 git submodule update --init
 ```
 
 Build executables, initialize state, and start the network with
+
 ```
 make start-docker build=sgjotr
 ```
+
 You can optionally pass build arguments to specify which binary to rebuild
+
 1. `s` This will re-build the Stride binary (default)
 2. `g` This will re-build the Gaia binary
 3. `j` This will re-build the Juno binary
@@ -69,11 +72,13 @@ You can optionally pass build arguments to specify which binary to rebuild
 6. `r` This will re-build the Go Relayer binary
 
 Example: `make start-docker build=sg`, this will:
+
 - Rebuild the Stride and Gaia binarys
 - Start 1 Stride and 1 Gaia node in the docker
 - Start Relayers
 
 To bring down the chain, execute:
+
 ```
 make stop-docker
 ```
@@ -85,6 +90,7 @@ make stop-docker
 The easiest way to develop cosmos-sdk applications is by using the ignite cli to scaffold code. Ignite (developed by the core cosmos team at Tendermint) makes it possible to scaffold new chains, run relayers, build cosmos related proto files, add messages/queries, add new data structures and more. The drawback of creating thousands of lines of code using ignite is that it is difficult to discern which changes were made by the ignite cli and which changes were made manually by developers. To make it easier to review code written using ignite and to make it easier to retrace our steps if something breaks later, add a commit for each ignite command directly after executing it.
 
 For example, adding a new message type and updating the logic of that message would be two commits.
+
 ```
 // add the new data type
 >>> ignite scaffold list loan amount fee collateral deadline state borrower lender
@@ -96,9 +102,13 @@ For example, adding a new message type and updating the logic of that message wo
 An example of a PR using this strategy can be found [here](https://github.com/Stride-Labs/stride/pull/1). Notice, it's easy to differentiate between changes made by ignite and those made manually by reviewing commits. For example, in commit fd3e254bc0, it's easy to see that [a few lines were changes manually](https://github.com/Stride-Labs/stride/pull/1/commits/fd3e254bc0844fe65f5e98f12b366feef2a285f9) even though nearly ~300k LOC were scaffolded.
 
 #### Code review format
+
 Opening a pull request (PR) will automatically create Summary and Test plan fields in the description. In the summary, add a high-level summary of what the change entails. For pull requests that scaffold ignite code, include the ignite scaffold commands run.
+
 ###### Summary
+
 Add summary of the pull request here (*E.g. This pull request adds XYZ feature to the x/ABC module and associated unit tests.*)
+
 ###### Unit tests
 
 To run unit tests for the whole project, execute:
@@ -135,7 +145,7 @@ On the backend, Stride permissionly stakes these tokens on the host chain and co
 
 <img src="https://drive.google.com/uc?id=11kJZE93BdhNjkaNig3DGYnTnuSNClP8Y" width="900">
 
-Users can always redeem from Stride. When they select "redeeem" on the Stride website, Stride will initiate unbonding on the host zone. Once the unbonding period elapses, the users will receive native tokens in their wallets. 
+Users can always redeem from Stride. When they select "redeeem" on the Stride website, Stride will initiate unbonding on the host zone. Once the unbonding period elapses, the users will receive native tokens in their wallets.
 
 <img src="https://drive.google.com/uc?id=1rtFiUwziiKjeUkJcJ9YuT1AN3JUtSVVr" width="900">
 
@@ -146,11 +156,14 @@ Stride is proud to be an open-source project, and we welcome all other projects 
 We operate under the Apache 2.0 License, and have used the following modules from fellow Cosmos projects. Huge thank you to these projects!
 
 We use the following modules from [Osmosis](https://github.com/osmosis-labs/osmosis) provided  under [this License](https://github.com/osmosis-labs/osmosis/blob/main/LICENSE):
+
 ```
 x/epochs
 x/mint
 ```
-We use the following module (marketed as public infra) from [Quicksilver](https://github.com/ingenuity-build/quicksilver) provided under [this License](https://github.com/ingenuity-build/quicksilver/blob/main/LICENSE): 
+
+We use the following module (marketed as public infra) from [Quicksilver](https://github.com/ingenuity-build/quicksilver) provided under [this License](https://github.com/ingenuity-build/quicksilver/blob/main/LICENSE):
+
 ```
 x/interchainqueries
 ```

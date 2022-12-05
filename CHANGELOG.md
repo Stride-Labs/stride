@@ -41,7 +41,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [v4.0.0](https://github.com/Stride-Labs/stride/releases/tag/v4.0.0) - 2022-11-27
+
 ### On-Chain changes
+
 1. Dependency bumps ([384178b2c](https://github.com/Stride-Labs/stride/commit/384178b2cf98e9af0815ffaf3c29649f41784f3e)), ([0a2297ea](https://github.com/Stride-Labs/stride/commit/0a2297eabe287d38723ab8213d5256ce34d2bb2d)), ([802a1dee3](https://github.com/Stride-Labs/stride/commit/802a1dee380e02916f1e89a231d36365a026bb46)), ([f1d90c6a](https://github.com/Stride-Labs/stride/commit/f1d90c6aa50daf75d9608095cc39cbbbe3fac16c))
 2. Add max claimable tokens query ([613e8571](https://github.com/Stride-Labs/stride/commit/613e85711485d3bebeeb5777ba35e701cc795a43))
 3. Interchain query proto cleanup ([9d5e1f6d](https://github.com/Stride-Labs/stride/commit/9d5e1f6d9e24113afa5b7f21e72a736bc8059b7f))
@@ -53,20 +55,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Off-Chain changes
 
 These changes do not affect any on-chain functionality, but have been implemented since `v4.0.0`.
+
 1. Update Go Relayer to use Stride v3 ([faf3e7b2](https://github.com/Stride-Labs/stride/commit/faf3e7b21f4213b64a61bc2de5b400964cb61963))
 2. Generalized Integration Tests ([80e8e2a4](https://github.com/Stride-Labs/stride/commit/80e8e2a49c3d63d8deabf4235e8e00151fcd8747))
 3. Add localstride ([46a54f6c2](https://github.com/Stride-Labs/stride/commit/80e8e2a49c3d63d8deabf4235e8e00151fcd8747))
 4. Dockernet updates ([b903866c64](https://github.com/Stride-Labs/stride/commit/b903866c6493e7f569d1975dc5f8efd34bdcc24e)), ([df2fcea21c](https://github.com/Stride-Labs/stride/commit/df2fcea21ce89e85d756d2cf8cbdf7e45bec2b0e))
 5. Add ctx app test helper ([0e0238b3](https://github.com/Stride-Labs/stride/commit/0e0238b3dbddceaa7971e150649192e1f8be6982))
 
-
 ## [v3.0.0](https://github.com/Stride-Labs/stride/releases/tag/v3.0.0) - 2022-11-18
+
 ### On-Chain changes
 
-1. Airdrop module ([24224f7](https://github.com/Stride-Labs/stride/commit/9be3314f7bca7e91f099d27ca11177639b76b468), [24224f7](https://github.com/Stride-Labs/stride/commit/24224f7386e7ee56781e7d254f9a48fab60a3bed)). Adds support for airdrop claims, including vesting. 
-2. Proto reorganization ([8e3668a](https://github.com/Stride-Labs/stride/commit/8e3668a8e87381fb0f470ab60e4f0ba8590139cc)). This cleans up proto files to be more in-line with other Cosmos projects. 
+1. Airdrop module ([24224f7](https://github.com/Stride-Labs/stride/commit/9be3314f7bca7e91f099d27ca11177639b76b468), [24224f7](https://github.com/Stride-Labs/stride/commit/24224f7386e7ee56781e7d254f9a48fab60a3bed)). Adds support for airdrop claims, including vesting.
+2. Proto reorganization ([8e3668a](https://github.com/Stride-Labs/stride/commit/8e3668a8e87381fb0f470ab60e4f0ba8590139cc)). This cleans up proto files to be more in-line with other Cosmos projects.
 3. Add Authz support ([e59c98e](https://github.com/Stride-Labs/stride/commit/e59c98e7bce574fa53e6e70222a80b974d84db3b)).
-4. Cleanup ICQ Callbacks ([3ec6b8e](https://github.com/Stride-Labs/stride/commit/3ec6b8ebe9f4ba49aed3d671432a9d77e61b095a), [e747ac7](https://github.com/Stride-Labs/stride/commit/e747ac7bdd9385fdaa7d5cd6f2926f7efd519480)). Reorganizes ICQ Callbacks and errors self-heal faster. 
+4. Cleanup ICQ Callbacks ([3ec6b8e](https://github.com/Stride-Labs/stride/commit/3ec6b8ebe9f4ba49aed3d671432a9d77e61b095a), [e747ac7](https://github.com/Stride-Labs/stride/commit/e747ac7bdd9385fdaa7d5cd6f2926f7efd519480)). Reorganizes ICQ Callbacks and errors self-heal faster.
 5. Versioning ([78fd819](https://github.com/Stride-Labs/stride/commit/78fd81918fe8f763f10525770eba1fee0a6dbe25), [0dbbbd8](https://github.com/Stride-Labs/stride/commit/0dbbbd867ffad5b331d09c155dca53a3f581ad5c), [dd6c26](https://github.com/Stride-Labs/stride/commit/dd6c264ea09448130484f7289eb085eb8bdb5766), [f77eac1](https://github.com/Stride-Labs/stride/commit/f77eac106291a59fd839c128f6aa9adb974eb7ef), [24f4b44](https://github.com/Stride-Labs/stride/commit/24f4b44e85518c0e800605265486af5f55f02693)). Updating versions to v3, as well as updating some Go modules.
 
 ### Off-Chain changes
@@ -80,8 +83,9 @@ These changes do not affect any on-chain functionality, but have been implemente
 ## [v2.0.3](https://github.com/Stride-Labs/stride/releases/tag/v2.0.3) - 2022-10-25
 
 ### On-Chain Changes
-1. PENDING status for IBC/ICA function calls ([6660f60](https://github.com/Stride-Labs/stride/commit/6660f60094674b2e077f3775982ab4acc8a5ea96)). Added additional status field on internal accounting records to track when IBC/ICA calls are in flight and prevent re-submission. 
-2. Add Validator through Governance ([c757364](https://github.com/Stride-Labs/stride/commit/c757364c4f532a8f7b9d17531f189c41cde90b14)). Added governance proposal type to enable adding validator's through governance. 
+
+1. PENDING status for IBC/ICA function calls ([6660f60](https://github.com/Stride-Labs/stride/commit/6660f60094674b2e077f3775982ab4acc8a5ea96)). Added additional status field on internal accounting records to track when IBC/ICA calls are in flight and prevent re-submission.
+2. Add Validator through Governance ([c757364](https://github.com/Stride-Labs/stride/commit/c757364c4f532a8f7b9d17531f189c41cde90b14)). Added governance proposal type to enable adding validator's through governance.
 3. Validator Rebalancing ([725b991](https://github.com/Stride-Labs/stride/commit/725b9912073e4ff8c1fd5574ba4ebd68ec6aee88)). Added `rebalance-validators` transaction to redistribute delegations after validator weights are updated.
 
 ### Off-Chain changes

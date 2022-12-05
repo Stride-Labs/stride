@@ -8,6 +8,7 @@ parent:
 # Interchain Query
 
 ## Abstract
+
 Stride uses interchain queries and interchain accounts to perform multichain liquid staking. The `interchainquery` module creates a framework that allows other modules to query other appchains using IBC. The `interchainquery` module is used to make bank balance ICQ queries to withdrawal account every N. The callback triggers ICA bank sends for 90% of the rewards to the delegation account and 10% to the stride hostzone revenue account. The ICA bank send logic is in x/stakeibc/keeper/callbacks.go.
 
 ## Contents
@@ -15,17 +16,16 @@ Stride uses interchain queries and interchain accounts to perform multichain liq
 1. **[Concepts](#concepts)**
 2. **[State](#state)**
 3. **[Events](#events)**
-4. **[Keeper](#keeper)**   
+4. **[Keeper](#keeper)**
 5. **[Msgs](#msgs)**  
 
 ## Concepts
 
-Nearly all of Stride's functionality is built using interchain accounts (ICAs), which are a new functionality in Cosmos, and a critical component of IBC. ICAs allow accounts on Zone A to be controlled by Zone B. ICAs communicate with one another using Interchain Queries (ICQs), which involve Zone A querying Zone B for relevant information. 
+Nearly all of Stride's functionality is built using interchain accounts (ICAs), which are a new functionality in Cosmos, and a critical component of IBC. ICAs allow accounts on Zone A to be controlled by Zone B. ICAs communicate with one another using Interchain Queries (ICQs), which involve Zone A querying Zone B for relevant information.
 
 Two Zones communicate via a connection and channel. All communications between the Controller Zone (the chain that is querying) and the Host Zone (the chain that is being queried) is done through a dedicated IBC channel between the two chains, which is opened the first time the two chains interact.
 
 For context, ICS standards define that each channel is associated with a particular connection, and a connection may have any number of associated channels.
-
 
 ## State
 
@@ -60,23 +60,24 @@ The `interchainquery` module emits an event at the end of every 3 `stride_epoch`
 The purpose of this event is to send interchainqueries that query data about staking rewards, which Stride uses to reinvest (aka autocompound) staking rewards.
 
 ```go
-			event := sdk.NewEvent(
-				sdk.EventTypeMessage,
-				sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
-				sdk.NewAttribute(sdk.AttributeKeyAction, types.AttributeValueQuery),
-				sdk.NewAttribute(types.AttributeKeyQueryId, queryInfo.Id),
-				sdk.NewAttribute(types.AttributeKeyChainId, queryInfo.ChainId),
-				sdk.NewAttribute(types.AttributeKeyConnectionId, queryInfo.ConnectionId),
-				sdk.NewAttribute(types.AttributeKeyType, queryInfo.QueryType),
-				// TODO: add height to request type
-				sdk.NewAttribute(types.AttributeKeyHeight, "0"),
-				sdk.NewAttribute(types.AttributeKeyRequest, hex.EncodeToString(queryInfo.Request)),
-			)
+   event := sdk.NewEvent(
+    sdk.EventTypeMessage,
+    sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
+    sdk.NewAttribute(sdk.AttributeKeyAction, types.AttributeValueQuery),
+    sdk.NewAttribute(types.AttributeKeyQueryId, queryInfo.Id),
+    sdk.NewAttribute(types.AttributeKeyChainId, queryInfo.ChainId),
+    sdk.NewAttribute(types.AttributeKeyConnectionId, queryInfo.ConnectionId),
+    sdk.NewAttribute(types.AttributeKeyType, queryInfo.QueryType),
+    // TODO: add height to request type
+    sdk.NewAttribute(types.AttributeKeyHeight, "0"),
+    sdk.NewAttribute(types.AttributeKeyRequest, hex.EncodeToString(queryInfo.Request)),
+   )
 ```
 
 ## Keeper
 
 ### Keeper Functions
+
 `interchainquery/keeper/` module provides utility functions to manage ICQs
 
 ```go
@@ -94,7 +95,7 @@ AllQueries(ctx sdk.Context) []types.Query
 
 ## Msgs
 
-`interchainquery` has a `Msg` service that passes messages between chains. 
+`interchainquery` has a `Msg` service that passes messages between chains.
 
 ```protobuf
 service Msg {
@@ -102,4 +103,3 @@ service Msg {
   rpc SubmitQueryResponse(MsgSubmitQueryResponse) returns (MsgSubmitQueryResponseResponse)
 }
 ```
-
