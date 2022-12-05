@@ -33,25 +33,34 @@ func (im IBCModule) Hooks() keeper.Hooks {
 	return im.keeper.Hooks()
 }
 
+
+// OnChanOpenInit is called when a channel is opened. It logs the portID and channelID, claims the channel
+// capability, and logs that the channel capability has been claimed. It returns an error if the channel
+// capability cannot be claimed.
 func (im IBCModule) OnChanOpenInit(
-	ctx sdk.Context,
-	order channeltypes.Order,
-	connectionHops []string,
-	portID string,
-	channelID string,
-	channelCap *capabilitytypes.Capability,
-	counterparty channeltypes.Counterparty,
-	version string,
+    ctx sdk.Context,
+    order channeltypes.Order,
+    connectionHops []string,
+    portID string,
+    channelID string,
+    channelCap *capabilitytypes.Capability,
+    counterparty channeltypes.Counterparty,
+    version string,
 ) error {
-	im.keeper.Logger(ctx).Info(fmt.Sprintf("OnChanOpenAck: portID %s, channelID %s", portID, channelID))
-	// Note: The channel capability must be claimed by the authentication module in OnChanOpenInit otherwise the
-	// authentication module will not be able to send packets on the channel created for the associated interchain account.
-	if err := im.keeper.ClaimCapability(ctx, channelCap, host.ChannelCapabilityPath(portID, channelID)); err != nil {
-		return err
-	}
-	im.keeper.Logger(ctx).Info(fmt.Sprintf("%s claimed the channel capability %v", types.ModuleName, channelCap))
-	return nil
+    im.keeper.Logger(ctx).Info(fmt.Sprintf("OnChanOpenAck: portID %s, channelID %s", portID, channelID))
+
+    // Claim the channel capability
+    err := im.keeper.ClaimCapability(ctx, channelCap, host.ChannelCapabilityPath(portID, channelID))
+    if err != nil {
+        return err
+    }
+
+    // Log that the channel capability has been claimed
+    im.keeper.Logger(ctx).Info(fmt.Sprintf("%s claimed the channel capability %v", types.ModuleName, channelCap))
+
+    return nil
 }
+
 
 // OnChanOpenAck implements the IBCModule interface
 func (im IBCModule) OnChanOpenAck(
@@ -132,10 +141,12 @@ func (im IBCModule) OnAcknowledgementPacket(
 	acknowledgement []byte,
 	relayer sdk.AccAddress,
 ) error {
+	// Log information about the acknowledgement packet
 	im.keeper.Logger(ctx).Info(fmt.Sprintf("OnAcknowledgementPacket: packet %v, relayer %v", modulePacket, relayer))
 	ackInfo := fmt.Sprintf("sequence #%d, from %s %s, to %s %s",
 		modulePacket.Sequence, modulePacket.SourceChannel, modulePacket.SourcePort, modulePacket.DestinationChannel, modulePacket.DestinationPort)
 
+	// Unmarshal the acknowledgement
 	var ack channeltypes.Acknowledgement
 	err := channeltypes.SubModuleCdc.UnmarshalJSON(acknowledgement, &ack)
 	if err != nil {
@@ -144,39 +155,54 @@ func (im IBCModule) OnAcknowledgementPacket(
 		im.keeper.Logger(ctx).Error(errMsg)
 		return sdkerrors.Wrapf(types.ErrMarshalFailure, errMsg)
 	}
-	im.keeper.Logger(ctx).Info(fmt.Sprintf("Acknowledgement was successfully unmarshalled: ackInfo: %s", ackInfo))
-	eventType := "ack"
-	ctx.EventManager().EmitEvent(
-		sdk.NewEvent(
-			eventType,
-			sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
-			sdk.NewAttribute(types.AttributeKeyAck, fmt.Sprintf("%v", ackInfo)),
-		),
-	)
+	
+	
+	// Log the unmarshalled acknowledgement
+	im.keeper.Logger(ctx).Info(fmt.Sprintf("Acknowledgement was successfully unmarshalled: ackInfo: %s", ackInfo))	
+	
+// Emit an event
+eventType := "ack"
+ctx.EventManager().EmitEvent(
+    	sdk.NewEvent(
+        	eventType,
+        	sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
+        	sdk.NewAttribute(types.AttributeKeyAck, fmt.Sprintf("%v", ackInfo)),
+    ),
+)
 
-	err = im.keeper.ICACallbacksKeeper.CallRegisteredICACallback(ctx, modulePacket, &ack)
-	if err != nil {
-		errMsg := fmt.Sprintf("Unable to call registered callback from stakeibc OnAcknowledgePacket | Sequence %d, from %s %s, to %s %s",
-			modulePacket.Sequence, modulePacket.SourceChannel, modulePacket.SourcePort, modulePacket.DestinationChannel, modulePacket.DestinationPort)
-		im.keeper.Logger(ctx).Error(errMsg)
-		return sdkerrors.Wrapf(icacallbacktypes.ErrCallbackFailed, errMsg)
+
+// Call the registered callback function
+err = im.keeper.ICACallbacksKeeper.CallRegisteredICACallback(ctx, modulePacket, &ack)
+if err != nil {
+    	errMsg := fmt.Sprintf("Unable to call registered callback from stakeibc OnAcknowledgePacket | Sequence %d, from %s %s, to %s %s",
+        modulePacket.Sequence, modulePacket.SourceChannel, modulePacket.SourcePort, modulePacket.DestinationChannel, modulePacket.DestinationPort)
+    	im.keeper.Logger(ctx).Error(errMsg)
+    	return sdkerrors.Wrapf(icacallbacktypes.ErrCallbackFailed, errMsg)
 	}
-	return nil
+
+return nil
 }
 
-// OnTimeoutPacket implements the IBCModule interface
+// OnTimeoutPacket is called when a timeout packet is received. It logs the packet and relayer, calls the
+// CallRegisteredICACallback function with the packet and nil as arguments, and returns an error if calling the
+// CallRegisteredICACallback function fails.
 func (im IBCModule) OnTimeoutPacket(
-	ctx sdk.Context,
-	modulePacket channeltypes.Packet,
-	relayer sdk.AccAddress,
+    ctx sdk.Context,
+    modulePacket channeltypes.Packet,
+    relayer sdk.AccAddress,
 ) error {
-	im.keeper.Logger(ctx).Info(fmt.Sprintf("OnTimeoutPacket: packet %v, relayer %v", modulePacket, relayer))
-	err := im.keeper.ICACallbacksKeeper.CallRegisteredICACallback(ctx, modulePacket, nil)
-	if err != nil {
-		return err
-	}
-	return nil
+    // Log the packet and relayer
+    im.keeper.Logger(ctx).Info(fmt.Sprintf("OnTimeoutPacket: packet %v, relayer %v", modulePacket, relayer))
+
+    // Call the CallRegisteredICACallback function with the packet and nil as arguments
+    err := im.keeper.ICACallbacksKeeper.CallRegisteredICACallback(ctx, modulePacket, nil)
+    if err != nil {
+        return err
+    }
+
+    return nil
 }
+
 
 // OnChanCloseConfirm implements the IBCModule interface
 func (im IBCModule) OnChanCloseConfirm(
@@ -197,58 +223,69 @@ func (im IBCModule) OnChanCloseConfirm(
 // 	Helper functions
 // ###################################################################################
 
+// NegotiateAppVersion takes as input a channeltypes.Order, a connectionID, a portID, a channeltypes.Counterparty,
+// and a proposedVersion. It returns the proposedVersion and nil as the version and error values, respectively.
 func (im IBCModule) NegotiateAppVersion(
-	ctx sdk.Context,
-	order channeltypes.Order,
-	connectionID string,
-	portID string,
-	counterparty channeltypes.Counterparty,
-	proposedVersion string,
+    ctx sdk.Context,
+    order channeltypes.Order,
+    connectionID string,
+    portID string,
+    counterparty channeltypes.Counterparty,
+    proposedVersion string,
 ) (version string, err error) {
-	return proposedVersion, nil
+    // Return the proposed version and nil as the error value
+    return proposedVersion, nil
 }
+
 
 // ###################################################################################
 // 	Required functions to satisfy interface but not implemented for ICA auth modules
 // ###################################################################################
 
-// OnChanOpenTry implements the IBCModule interface
+// OnChanOpenTry is called when a channel open try is received. It panics with the message "UNIMPLEMENTED".
 func (im IBCModule) OnChanOpenTry(
-	ctx sdk.Context,
-	order channeltypes.Order,
-	connectionHops []string,
-	portID,
-	channelID string,
-	chanCap *capabilitytypes.Capability,
-	counterparty channeltypes.Counterparty,
-	counterpartyVersion string,
+    ctx sdk.Context,
+    order channeltypes.Order,
+    connectionHops []string,
+    portID,
+    channelID string,
+    chanCap *capabilitytypes.Capability,
+    counterparty channeltypes.Counterparty,
+    counterpartyVersion string,
 ) (string, error) {
-	panic("UNIMPLEMENTED")
+    // Panic with the message "UNIMPLEMENTED"
+    panic("UNIMPLEMENTED")
 }
 
-// OnChanOpenConfirm implements the IBCModule interface
+
+// OnChanOpenConfirm is called when a channel open confirmation is received. It panics with the message "UNIMPLEMENTED".
 func (im IBCModule) OnChanOpenConfirm(
-	ctx sdk.Context,
-	portID,
-	channelID string,
+    ctx sdk.Context,
+    portID,
+    channelID string,
 ) error {
-	panic("UNIMPLEMENTED")
+    // Panic with the message "UNIMPLEMENTED"
+    panic("UNIMPLEMENTED")
 }
 
-// OnChanCloseInit implements the IBCModule interface
+
+// OnChanCloseInit is called when a channel close initiation is received. It panics with the message "UNIMPLEMENTED".
 func (im IBCModule) OnChanCloseInit(
-	ctx sdk.Context,
-	portID,
-	channelID string,
+    ctx sdk.Context,
+    portID,
+    channelID string,
 ) error {
-	panic("UNIMPLEMENTED")
+    // Panic with the message "UNIMPLEMENTED"
+    panic("UNIMPLEMENTED")
 }
 
-// OnRecvPacket implements the IBCModule interface
+// OnRecvPacket is called when a packet is received. It panics with the message "UNIMPLEMENTED".
 func (im IBCModule) OnRecvPacket(
-	ctx sdk.Context,
-	modulePacket channeltypes.Packet,
-	relayer sdk.AccAddress,
+    ctx sdk.Context,
+    modulePacket channeltypes.Packet,
+    relayer sdk.AccAddress,
 ) ibcexported.Acknowledgement {
-	panic("UNIMPLEMENTED")
+    // Panic with the message "UNIMPLEMENTED"
+    panic("UNIMPLEMENTED")
 }
+
