@@ -1,0 +1,25 @@
+# syntax = docker/dockerfile:1
+FROM golang:1.19-alpine3.15 AS builder
+
+WORKDIR /src/
+
+ENV COMMIT_HASH=41722f36d9859dbd903bb13340de135283c6c82c
+
+RUN apk add --update git make gcc linux-headers libc-dev eudev-dev 
+RUN git clone https://github.com/cosmos/relayer.git \
+    && cd relayer \
+    && git checkout $COMMIT_HASH \
+    && make install
+
+FROM alpine:3.15
+COPY --from=builder /go/bin/rly /usr/local/bin/
+RUN apk add bash vim \
+    && addgroup -g 1000 relayer \
+    && adduser -S -h /home/relayer -D relayer -u 1000 -G relayer
+
+USER 1000
+WORKDIR /home/relayer
+
+# Create startup script that takes a path as a parameter
+RUN echo 'rly start $1 -p events' > start.sh
+

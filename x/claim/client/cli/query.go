@@ -10,7 +10,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/version"
 	"github.com/spf13/cobra"
 
-	"github.com/Stride-Labs/stride/v3/x/claim/types"
+	"github.com/Stride-Labs/stride/v4/x/claim/types"
 )
 
 // GetQueryCmd returns the cli query commands for this module
@@ -180,13 +180,13 @@ $ %s query claim claimable-for-action stride1h4astdfzjhcwahtfrh24qtvndzzh49xvqtf
 // GetCmdQueryClaimable implements the query claimables command.
 func GetCmdQueryTotalClaimable() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "total-claimable [airdrop-identifier] [address]",
-		Args:  cobra.ExactArgs(2),
+		Use:   "total-claimable [airdrop-identifier] [address] [include-claimed]",
+		Args:  cobra.ExactArgs(3),
 		Short: "Query the total claimable amount remaining for an account.",
 		Long: strings.TrimSpace(
 			fmt.Sprintf(`Query the total claimable amount remaining for an account.
 Example:
-$ %s query claim total-claimable stride stride1h4astdfzjhcwahtfrh24qtvndzzh49xvqtfftk
+$ %s query claim total-claimable stride stride1h4astdfzjhcwahtfrh24qtvndzzh49xvqtfftk true
 `,
 				version.AppName,
 			),
@@ -201,6 +201,7 @@ $ %s query claim total-claimable stride stride1h4astdfzjhcwahtfrh24qtvndzzh49xvq
 			res, err := queryClient.TotalClaimable(context.Background(), &types.QueryTotalClaimableRequest{
 				AirdropIdentifier: args[0],
 				Address:           args[1],
+				IncludeClaimed:    args[2] == "true",
 			})
 			if err != nil {
 				return err

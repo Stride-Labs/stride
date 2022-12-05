@@ -9,7 +9,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/Stride-Labs/stride/v3/x/epochs/types"
+	"github.com/Stride-Labs/stride/v4/x/epochs/types"
 )
 
 var _ types.QueryServer = Keeper{}
