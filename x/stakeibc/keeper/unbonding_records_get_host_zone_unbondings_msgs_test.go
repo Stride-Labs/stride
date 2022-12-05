@@ -11,6 +11,7 @@ import (
 
 	recordtypes "github.com/Stride-Labs/stride/v4/x/records/types"
 
+	"github.com/Stride-Labs/stride/v4/x/stakeibc/types"
 	stakeibc "github.com/Stride-Labs/stride/v4/x/stakeibc/types"
 )
 
@@ -130,47 +131,47 @@ func (s *KeeperTestSuite) SetupGetHostZoneUnbondingMsgs(tc GetHostZoneUnbondingM
 }
 
 func (s *KeeperTestSuite) VerifyTestCase_TestGetHostZoneUnbondingMsgs(name string, tc GetHostZoneUnbondingMsgsTestCase) {
-	s.Run(name, func() {
-		s.Setup()
-		amtToUnbond, hostZone := s.SetupGetHostZoneUnbondingMsgs(tc)
-		actualUnbondMsgs, actualAmtToUnbond, actualCallbackArgs, _, err := s.App.StakeibcKeeper.GetHostZoneUnbondingMsgs(s.Ctx, hostZone)
 
-		if tc.expectPass {
-			s.Require().NoError(err)
+	s.Setup()
+	amtToUnbond, hostZone := s.SetupGetHostZoneUnbondingMsgs(tc)
+	actualUnbondMsgs, actualAmtToUnbond, actualCallbackArgs, _, err := s.App.StakeibcKeeper.GetHostZoneUnbondingMsgs(s.Ctx, hostZone)
 
-			// verify the callback attributes are as expected
-			actualCallbackResult, err := s.App.StakeibcKeeper.UnmarshalUndelegateCallbackArgs(s.Ctx, actualCallbackArgs)
-			s.Require().NoError(err, "could unmarshal undelegation callback args")
-			s.Require().Equal(len(hostZone.Validators), len(actualCallbackResult.SplitDelegations), "number of split delegations in success unbonding case")
-			s.Require().Equal(hostZone.ChainId, actualCallbackResult.HostZoneId, "host zone id in success unbonding case")
+	if tc.expectPass {
+		s.Require().NoError(err)
 
-			// the number of unbonding messages should be (number of validators) * (records to unbond)
-			s.Require().Equal(len(tc.Validators), len(actualUnbondMsgs), "number of unbonding messages should be number of records to unbond")
+		// verify the callback attributes are as expected
+		actualCallbackResult, err := s.App.StakeibcKeeper.UnmarshalUndelegateCallbackArgs(s.Ctx, actualCallbackArgs)
+		s.Require().NoError(err, "could unmarshal undelegation callback args")
+		s.Require().Equal(len(hostZone.Validators), len(actualCallbackResult.SplitDelegations), "number of split delegations in success unbonding case")
+		s.Require().Equal(hostZone.ChainId, actualCallbackResult.HostZoneId, "host zone id in success unbonding case")
 
-			s.Require().Equal(int64(amtToUnbond)*int64(len(tc.epochUnbondingRecords)), int64(actualAmtToUnbond), "total amount to unbond should match input amtToUnbond")
+		// the number of unbonding messages should be (number of validators) * (records to unbond)
+		s.Require().Equal(len(tc.Validators), len(actualUnbondMsgs), "number of unbonding messages should be number of records to unbond")
 
-			totalWgt := sdk.NewDec(int64(tc.totalWeight))
-			actualAmtToUnbondDec := sdk.NewDec(int64(actualAmtToUnbond))
+		s.Require().Equal(int64(amtToUnbond)*int64(len(tc.epochUnbondingRecords)), int64(actualAmtToUnbond), "total amount to unbond should match input amtToUnbond")
 
-			for i, validator := range tc.Validators {
-				actualUnbondMsg := actualUnbondMsgs[i].String()
-				valFraction := sdk.NewDec(int64(validator.Weight)).Quo(totalWgt)
-				val1UnbondAmt := valFraction.Mul(actualAmtToUnbondDec).TruncateInt().String()
-				valUnbonded := strings.Contains(actualUnbondMsg, val1UnbondAmt)
-				// there's rounding in the logic that distributes stake amongst validators, so one or the other of the balances will be correct, depending on the rounding
-				// at least one will be correct, and the other will be off by 1 by rounding, so we check and OR condition
-				s.Require().True(valUnbonded, "unbonding amt should be the correct amount")
-			}
-		} else {
-			if tc.expectErr != nil {
-				s.Require().EqualError(err, tc.expectErr.Error())
-			}
-			// no messages should be sent
-			s.Require().Equal(0, len(actualUnbondMsgs), "no messages should be sent")
-			// no value should be unbonded
-			s.Require().Equal(int64(0), int64(actualAmtToUnbond), "no value should be unbonded")
+		totalWgt := sdk.NewDec(int64(tc.totalWeight))
+		actualAmtToUnbondDec := sdk.NewDec(int64(actualAmtToUnbond))
+
+		for i, validator := range tc.Validators {
+			actualUnbondMsg := actualUnbondMsgs[i].String()
+			valFraction := sdk.NewDec(int64(validator.Weight)).Quo(totalWgt)
+			val1UnbondAmt := valFraction.Mul(actualAmtToUnbondDec).TruncateInt().String()
+			valUnbonded := strings.Contains(actualUnbondMsg, val1UnbondAmt)
+			// there's rounding in the logic that distributes stake amongst validators, so one or the other of the balances will be correct, depending on the rounding
+			// at least one will be correct, and the other will be off by 1 by rounding, so we check and OR condition
+			s.Require().True(valUnbonded, "unbonding amt should be the correct amount")
 		}
-	})
+	} else {
+		if tc.expectErr != nil {
+			s.Require().EqualError(err, tc.expectErr.Error())
+		}
+		// no messages should be sent
+		s.Require().Equal(0, len(actualUnbondMsgs), "no messages should be sent")
+		// no value should be unbonded
+		s.Require().Equal(int64(0), int64(actualAmtToUnbond), "no value should be unbonded")
+	}
+
 }
 func (s *KeeperTestSuite) TestGetHostZoneUnbondingMsgs_Successful() {
 	name := "Successful"
@@ -200,7 +201,7 @@ func (s *KeeperTestSuite) TestGetHostZoneUnbondingMsgs_UnbodingTooMuch() {
 		validator.DelegationAmt = 0
 	}
 	test.expectPass = false
-	test.expectErr = sdkerrors.Wrap(sdkerrors.ErrNotFound, fmt.Sprintf("Could not unbond %d on Host Zone %s, unable to balance the unbond amount across validators", uint64(2_000_000), "GAIA"))
+	test.expectErr = sdkerrors.Wrap(types.ErrNoValidatorAmts, fmt.Sprintf("Error getting target val amts for host zone %s %d: no non-zero validator weights", "GAIA", uint64(2_000_000)))
 	s.VerifyTestCase_TestGetHostZoneUnbondingMsgs(name, test)
 }
 func (s *KeeperTestSuite) TestGetHostZoneUnbondingMsgs_NoNonzeroWeightValidator() {
@@ -276,6 +277,7 @@ func (s *KeeperTestSuite) VerifyTestCase_TestDistributeUnbondingAmountToValidato
 
 	} else {
 		s.Require().Error(err)
+
 		s.Require().EqualError(err, tc.expectErr.Error())
 	}
 
@@ -317,7 +319,7 @@ func (s *KeeperTestSuite) TestDistributeUnbondingAmountToValidators_UnbondingToo
 	for _, validator := range test.Validators {
 		validator.DelegationAmt = 0
 	}
-	test.expectErr = sdkerrors.Wrap(sdkerrors.ErrNotFound, fmt.Sprintf("Could not unbond %d on Host Zone %s, unable to balance the unbond amount across validators", uint64(1_000_000), "GAIA"))
+	test.expectErr = sdkerrors.Wrap(types.ErrNoValidatorAmts, fmt.Sprintf("Error getting target val amts for host zone %s %d: no non-zero validator weights", "GAIA", uint64(1_000_000)))
 
 	s.VerifyTestCase_TestDistributeUnbondingAmountToValidators(name, test)
 
@@ -325,15 +327,9 @@ func (s *KeeperTestSuite) TestDistributeUnbondingAmountToValidators_UnbondingToo
 
 func (s *KeeperTestSuite) VerifyTestCase_TestSplitDelegationMsg(name string, tc GetHostZoneUnbondingMsgsTestCase) {
 	s.Setup()
-	tcHostZone := stakeibc.HostZone{
-		ChainId:           tc.chainId,
-		HostDenom:         tc.HostDenom,
-		Bech32Prefix:      tc.Bech32Prefix,
-		Validators:        tc.Validators,
-		DelegationAccount: tc.DelegationAccount,
-	}
-	s.App.StakeibcKeeper.SetHostZone(s.Ctx, tcHostZone)
-	msgs, splitDelegations, err := s.App.StakeibcKeeper.SplitDelegationMsg(s.Ctx, tc.valAddrToUnbondAmt, tcHostZone)
+	_, hostZone := s.SetupGetHostZoneUnbondingMsgs(tc) //amtToUnbond
+	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
+	msgs, splitDelegations, err := s.App.StakeibcKeeper.SplitDelegationMsg(s.Ctx, tc.valAddrToUnbondAmt, hostZone)
 	if tc.expectPass {
 		s.Require().NoError(err)
 
@@ -350,6 +346,7 @@ func (s *KeeperTestSuite) VerifyTestCase_TestSplitDelegationMsg(name string, tc 
 		}
 	} else {
 		s.Require().Error(err)
+		s.Require().EqualError(err, tc.expectErr.Error())
 	}
 }
 func (s *KeeperTestSuite) TestSplitDelegationMsg_Successful() {
