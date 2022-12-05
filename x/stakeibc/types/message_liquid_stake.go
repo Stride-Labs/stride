@@ -11,7 +11,7 @@ const TypeMsgLiquidStake = "liquid_stake"
 
 var _ sdk.Msg = &MsgLiquidStake{}
 
-func NewMsgLiquidStake(creator string, amount uint64, hostDenom string) *MsgLiquidStake {
+func NewMsgLiquidStake(creator string, amount string, hostDenom string) *MsgLiquidStake {
 	return &MsgLiquidStake{
 		Creator:   creator,
 		Amount:    amount,
@@ -55,17 +55,18 @@ func (msg *MsgLiquidStake) ValidateBasic() error {
 	if err != nil {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid creator address (%s)", err)
 	}
+
+	amount, found := sdk.NewIntFromString(msg.Amount)
+	if !found {
+		return sdkerrors.Wrapf(ErrInvalidAmount, "can not cast amount")
+	}
 	// validate amount is positive nonzero
-	if msg.Amount <= 0 {
+	if amount.LTE(sdk.ZeroInt()) {
 		return sdkerrors.Wrapf(ErrInvalidAmount, "amount liquid staked must be positive and nonzero")
 	}
 	// validate host denom is not empty
 	if msg.HostDenom == "" {
 		return sdkerrors.Wrapf(ErrRequiredFieldEmpty, "host denom cannot be empty")
-	}
-	// math.MaxInt64 == 1<<63 - 1
-	if !(msg.Amount < (1<<63 - 1)) {
-		return sdkerrors.Wrapf(ErrInvalidAmount, "amount liquid staked must be less than math.MaxInt64 %d", 1<<63-1)
 	}
 	// host denom must be a valid asset denom
 	if err := sdk.ValidateDenom(msg.HostDenom); err != nil {

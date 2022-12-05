@@ -9,7 +9,7 @@ const TypeMsgRedeemStake = "redeem_stake"
 
 var _ sdk.Msg = &MsgRedeemStake{}
 
-func NewMsgRedeemStake(creator string, amount uint64, hostZone string, receiver string) *MsgRedeemStake {
+func NewMsgRedeemStake(creator string, amount string, hostZone string, receiver string) *MsgRedeemStake {
 	return &MsgRedeemStake{
 		Creator:  creator,
 		Amount:   amount,
@@ -50,17 +50,18 @@ func (msg *MsgRedeemStake) ValidateBasic() error {
 	if msg.Receiver == "" {
 		return sdkerrors.Wrapf(ErrRequiredFieldEmpty, "receiver cannot be empty")
 	}
+
+	amount, found := sdk.NewIntFromString(msg.Amount)
+	if !found {
+		return sdkerrors.Wrapf(ErrInvalidAmount, "can not cast amount")
+	}
 	// ensure amount is a nonzero positive integer
-	if msg.Amount <= 0 {
+	if amount.LTE(sdk.ZeroInt()) {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "invalid amount (%d)", msg.Amount)
 	}
 	// validate host zone is not empty
 	if msg.HostZone == "" {
 		return sdkerrors.Wrapf(ErrRequiredFieldEmpty, "host zone cannot be empty")
-	}
-	// math.MaxInt64 == 1<<63 - 1
-	if !(msg.Amount < (1<<63 - 1)) {
-		return sdkerrors.Wrapf(ErrInvalidAmount, "amount liquid staked must be less than math.MaxInt64 %d", 1<<63-1)
 	}
 	return nil
 }

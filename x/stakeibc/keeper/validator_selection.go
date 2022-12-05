@@ -43,7 +43,7 @@ func (k Keeper) GetValidatorDelegationAmtDifferences(ctx sdk.Context, hostZone t
 // This will get the target validator delegation for the given hostZone
 // such that the total validator delegation is equal to the finalDelegation
 // output key is ADDRESS not NAME
-func (k Keeper) GetTargetValAmtsForHostZone(ctx sdk.Context, hostZone types.HostZone, finalDelegation uint64) (map[string]uint64, error) {
+func (k Keeper) GetTargetValAmtsForHostZone(ctx sdk.Context, hostZone types.HostZone, finalDelegation sdk.Int) (map[string]sdk.Int, error) {
 	totalWeight := k.GetTotalValidatorWeight(hostZone)
 	if totalWeight == 0 {
 		k.Logger(ctx).Error(fmt.Sprintf("No non-zero validators found for host zone %s", hostZone.ChainId))
@@ -51,12 +51,12 @@ func (k Keeper) GetTargetValAmtsForHostZone(ctx sdk.Context, hostZone types.Host
 	}
 	k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId, "Total Validator Weight: %d", totalWeight))
 
-	if finalDelegation == 0 {
+	if finalDelegation == sdk.ZeroInt() {
 		k.Logger(ctx).Error(fmt.Sprintf("Cannot calculate target delegation if final amount is 0 %s", hostZone.ChainId))
 		return nil, types.ErrNoValidatorWeights
 	}
-	targetAmount := make(map[string]uint64)
-	allocatedAmt := uint64(0)
+	targetAmount := make(map[string]sdk.Int)
+	allocatedAmt := sdk.ZeroInt()
 
 	// sort validators by weight ascending, this is inplace sorting!
 	validators := hostZone.GetValidators()
@@ -73,25 +73,23 @@ func (k Keeper) GetTargetValAmtsForHostZone(ctx sdk.Context, hostZone types.Host
 	for i, validator := range validators {
 		if i == len(validators)-1 {
 			// for the last element, we need to make sure that the allocatedAmt is equal to the finalDelegation
-			targetAmount[validator.GetAddress()] = finalDelegation - allocatedAmt
+			targetAmount[validator.GetAddress()] = finalDelegation.Sub(allocatedAmt) 
 		} else {
-			delegateAmt, err := cast.ToUint64E(float64(validator.Weight*finalDelegation) / float64(totalWeight))
-			if err != nil {
-				k.Logger(ctx).Error(fmt.Sprintf("Error getting target weights for host zone %s", hostZone.ChainId))
-				return nil, err
-			}
-			allocatedAmt += delegateAmt
+			// delegateAmt, err := cast.ToUint64E(float64(validator.Weight*finalDelegation) / float64(totalWeight))
+			delegateAmt := sdk.NewIntFromUint64(validator.Weight).Mul(finalDelegation).Quo(sdk.NewIntFromUint64(totalWeight))
+			allocatedAmt = allocatedAmt.Add(delegateAmt)
 			targetAmount[validator.GetAddress()] = delegateAmt
 		}
 	}
 	return targetAmount, nil
 }
 
-func (k Keeper) GetTotalValidatorDelegations(hostZone types.HostZone) uint64 {
+func (k Keeper) GetTotalValidatorDelegations(hostZone types.HostZone) sdk.Int {
 	validators := hostZone.GetValidators()
-	total_delegation := uint64(0)
+	total_delegation := sdk.ZeroInt()
 	for _, validator := range validators {
-		total_delegation += validator.DelegationAmt
+		delegatonAmount, _ := sdk.NewIntFromString(validator.DelegationAmt)
+		total_delegation = total_delegation.Add(delegatonAmount) 
 	}
 	return total_delegation
 }
