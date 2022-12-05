@@ -9,9 +9,9 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	_ "github.com/stretchr/testify/suite"
 
-	recordtypes "github.com/Stride-Labs/stride/v3/x/records/types"
+	recordtypes "github.com/Stride-Labs/stride/v4/x/records/types"
 
-	stakeibc "github.com/Stride-Labs/stride/v3/x/stakeibc/types"
+	stakeibc "github.com/Stride-Labs/stride/v4/x/stakeibc/types"
 )
 
 const (
@@ -117,10 +117,10 @@ func (s *KeeperTestSuite) SetupGetHostZoneUnbondingMsgs(tc GetHostZoneUnbondingM
 			Status:            recordtypes.HostZoneUnbonding_UNBONDING_QUEUE,
 		}
 		epochUnbondingRecord.HostZoneUnbondings = append(epochUnbondingRecord.HostZoneUnbondings, hostZoneUnbonding)
-		s.App.RecordsKeeper.SetEpochUnbondingRecord(s.Ctx(), epochUnbondingRecord)
+		s.App.RecordsKeeper.SetEpochUnbondingRecord(s.Ctx, epochUnbondingRecord)
 	}
 
-	s.App.StakeibcKeeper.SetHostZone(s.Ctx(), hostZone)
+	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
 
 	if tc.chainId != "" {
 		hostZone.ChainId = tc.chainId
@@ -133,13 +133,13 @@ func (s *KeeperTestSuite) VerifyTestCase_TestGetHostZoneUnbondingMsgs(name strin
 	s.Run(name, func() {
 		s.Setup()
 		amtToUnbond, hostZone := s.SetupGetHostZoneUnbondingMsgs(tc)
-		actualUnbondMsgs, actualAmtToUnbond, actualCallbackArgs, _, err := s.App.StakeibcKeeper.GetHostZoneUnbondingMsgs(s.Ctx(), hostZone)
+		actualUnbondMsgs, actualAmtToUnbond, actualCallbackArgs, _, err := s.App.StakeibcKeeper.GetHostZoneUnbondingMsgs(s.Ctx, hostZone)
 
 		if tc.expectPass {
 			s.Require().NoError(err)
 
 			// verify the callback attributes are as expected
-			actualCallbackResult, err := s.App.StakeibcKeeper.UnmarshalUndelegateCallbackArgs(s.Ctx(), actualCallbackArgs)
+			actualCallbackResult, err := s.App.StakeibcKeeper.UnmarshalUndelegateCallbackArgs(s.Ctx, actualCallbackArgs)
 			s.Require().NoError(err, "could unmarshal undelegation callback args")
 			s.Require().Equal(len(hostZone.Validators), len(actualCallbackResult.SplitDelegations), "number of split delegations in success unbonding case")
 			s.Require().Equal(hostZone.ChainId, actualCallbackResult.HostZoneId, "host zone id in success unbonding case")
@@ -219,7 +219,7 @@ func (s *KeeperTestSuite) TestGetHostZoneUnbondingMsgs_NoNonzeroWeightValidator(
 func (s *KeeperTestSuite) VerifyTestCase_TestGetUnbondingAmountAndRecords(name string, tc GetHostZoneUnbondingMsgsTestCase) {
 	s.Setup()
 	amtToUnbond, hostZone := s.SetupGetHostZoneUnbondingMsgs(tc)
-	actualAmtToUnbond, actualUnbondRecords := s.App.StakeibcKeeper.GetUnbondingAmountAndRecords(s.Ctx(), hostZone)
+	actualAmtToUnbond, actualUnbondRecords := s.App.StakeibcKeeper.GetUnbondingAmountAndRecords(s.Ctx, hostZone)
 
 	if tc.expectPass {
 		s.Require().Equal(int64(amtToUnbond)*int64(len(tc.epochUnbondingRecords)), int64(actualAmtToUnbond), "total amount to unbond should match input amtToUnbond")
@@ -260,7 +260,7 @@ func (s *KeeperTestSuite) TestGetUnbondingAmountAndRecords_NoEpochUnbondingRecor
 func (s *KeeperTestSuite) VerifyTestCase_TestDistributeUnbondingAmountToValidators(name string, tc GetHostZoneUnbondingMsgsTestCase) {
 	s.Setup()
 	amtToUnbond, hostZone := s.SetupGetHostZoneUnbondingMsgs(tc)
-	actualAmtToUnbond, err := s.App.StakeibcKeeper.DistributeUnbondingAmountToValidators(s.Ctx(), hostZone, amtToUnbond)
+	actualAmtToUnbond, err := s.App.StakeibcKeeper.DistributeUnbondingAmountToValidators(s.Ctx, hostZone, amtToUnbond)
 	fmt.Println(actualAmtToUnbond)
 
 	if tc.expectPass {
@@ -332,8 +332,8 @@ func (s *KeeperTestSuite) VerifyTestCase_TestSplitDelegationMsg(name string, tc 
 		Validators:        tc.Validators,
 		DelegationAccount: tc.DelegationAccount,
 	}
-	s.App.StakeibcKeeper.SetHostZone(s.Ctx(), tcHostZone)
-	msgs, splitDelegations, err := s.App.StakeibcKeeper.SplitDelegationMsg(s.Ctx(), tc.valAddrToUnbondAmt, tcHostZone)
+	s.App.StakeibcKeeper.SetHostZone(s.Ctx, tcHostZone)
+	msgs, splitDelegations, err := s.App.StakeibcKeeper.SplitDelegationMsg(s.Ctx, tc.valAddrToUnbondAmt, tcHostZone)
 	if tc.expectPass {
 		s.Require().NoError(err)
 
@@ -372,7 +372,7 @@ func (s *KeeperTestSuite) TestGetTargetValAmtsForHostZone_Success() {
 
 	// verify the total amount is expected
 	unbond := uint64(1_000_000)
-	totalAmt, err := s.App.StakeibcKeeper.GetTargetValAmtsForHostZone(s.Ctx(), hostZone, unbond)
+	totalAmt, err := s.App.StakeibcKeeper.GetTargetValAmtsForHostZone(s.Ctx, hostZone, unbond)
 	s.Require().Nil(err)
 
 	// sum up totalAmt

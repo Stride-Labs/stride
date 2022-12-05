@@ -6,14 +6,14 @@ import (
 
 	_ "github.com/stretchr/testify/suite"
 
-	"github.com/Stride-Labs/stride/v3/x/epochs/types"
+	"github.com/Stride-Labs/stride/v4/x/epochs/types"
 )
 
 func (suite *KeeperTestSuite) TestQueryEpochInfos() {
 	suite.SetupTest()
 	queryClient := suite.queryClient
 
-	chainStartTime := suite.Ctx().BlockTime()
+	chainStartTime := suite.Ctx.BlockTime()
 
 	// Invalid param
 	epochInfosResponse, err := queryClient.EpochInfos(gocontext.Background(), &types.QueryEpochsInfoRequest{})

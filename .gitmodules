@@ -23,9 +23,12 @@
 	# Commit: b0bea28fc695a2a5c567e56a37b289a5b75830cc
 	path = deps/stargaze
 	url = https://github.com/public-awesome/stargaze.git
-[submodule "scripts/tests/bats/bats-support"]
-	path = scripts/tests/bats/bats-support
-	url = https://github.com/ztombol/bats-support
-[submodule "scripts/tests/bats/bats-assert"]
-	path = scripts/tests/bats/bats-assert
-	url = https://github.com/ztombol/bats-assert
+[submodule "dockernet/tests/bats/bats-core"]
+	path = dockernet/tests/bats/bats-core
+	url = https://github.com/bats-core/bats-core.git
+[submodule "dockernet/tests/bats/bats-assert"]
+	path = dockernet/tests/bats/bats-assert
+	url = https://github.com/bats-core/bats-assert.git
+[submodule "dockernet/tests/bats/bats-support"]
+	path = dockernet/tests/bats/bats-support
+	url = https://github.com/bats-core/bats-support.git

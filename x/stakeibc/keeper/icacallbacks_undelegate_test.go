@@ -10,10 +10,10 @@ import (
 	"github.com/gogo/protobuf/proto"
 	_ "github.com/stretchr/testify/suite"
 
-	recordtypes "github.com/Stride-Labs/stride/v3/x/records/types"
-	stakeibckeeper "github.com/Stride-Labs/stride/v3/x/stakeibc/keeper"
-	"github.com/Stride-Labs/stride/v3/x/stakeibc/types"
-	stakeibc "github.com/Stride-Labs/stride/v3/x/stakeibc/types"
+	recordtypes "github.com/Stride-Labs/stride/v4/x/records/types"
+	stakeibckeeper "github.com/Stride-Labs/stride/v4/x/stakeibc/keeper"
+	"github.com/Stride-Labs/stride/v4/x/stakeibc/types"
+	stakeibc "github.com/Stride-Labs/stride/v4/x/stakeibc/types"
 )
 
 type UndelegateCallbackState struct {
@@ -74,7 +74,7 @@ func (s *KeeperTestSuite) SetupUndelegateCallback() UndelegateCallbackTestCase {
 		StakedBal:      stakedBal,
 		Address:        zoneAddress.String(),
 	}
-	s.App.StakeibcKeeper.SetHostZone(s.Ctx(), hostZone)
+	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
 
 	// Set up EpochUnbondingRecord, HostZoneUnbonding and token state
 	hostZoneUnbonding := recordtypes.HostZoneUnbonding{
@@ -86,7 +86,7 @@ func (s *KeeperTestSuite) SetupUndelegateCallback() UndelegateCallbackTestCase {
 		EpochNumber:        epochNumber,
 		HostZoneUnbondings: []*recordtypes.HostZoneUnbonding{&hostZoneUnbonding},
 	}
-	s.App.RecordsKeeper.SetEpochUnbondingRecord(s.Ctx(), epochUnbondingRecord)
+	s.App.RecordsKeeper.SetEpochUnbondingRecord(s.Ctx, epochUnbondingRecord)
 	// mint stTokens to the zone account, to be burned
 	s.FundAccount(zoneAccount.acc, zoneAccount.stAtomBalance)
 
@@ -110,7 +110,7 @@ func (s *KeeperTestSuite) SetupUndelegateCallback() UndelegateCallbackTestCase {
 		SplitDelegations:        []*types.SplitDelegation{&val1SplitDelegation, &val2SplitDelegation},
 		EpochUnbondingRecordIds: []uint64{epochNumber},
 	}
-	args, err := s.App.StakeibcKeeper.MarshalUndelegateCallbackArgs(s.Ctx(), callbackArgs)
+	args, err := s.App.StakeibcKeeper.MarshalUndelegateCallbackArgs(s.Ctx, callbackArgs)
 	s.Require().NoError(err, "callback args unmarshalled")
 
 	return UndelegateCallbackTestCase{
@@ -140,11 +140,11 @@ func (s *KeeperTestSuite) TestUndelegateCallback_Successful() {
 	validArgs := tc.validArgs
 
 	// Callback
-	err := stakeibckeeper.UndelegateCallback(s.App.StakeibcKeeper, s.Ctx(), validArgs.packet, validArgs.ack, validArgs.args)
+	err := stakeibckeeper.UndelegateCallback(s.App.StakeibcKeeper, s.Ctx, validArgs.packet, validArgs.ack, validArgs.args)
 	s.Require().NoError(err, "undelegate callback succeeds")
 
 	// Check that stakedBal has decreased on the host zone
-	hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx(), HostChainId)
+	hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, HostChainId)
 	s.Require().True(found)
 	s.Require().Equal(int64(hostZone.StakedBal), int64(initialState.stakedBal)-tc.balanceToUnstake, "stakedBal has decreased on the host zone")
 
@@ -156,7 +156,7 @@ func (s *KeeperTestSuite) TestUndelegateCallback_Successful() {
 	// Check that the host zone unbonding records have been updated
 	s.Require().Equal(int64(val2.DelegationAmt), int64(initialState.val2Bal)-tc.val2UndelegationAmount, "val2 delegation has decreased")
 
-	epochUnbondingRecord, found := s.App.RecordsKeeper.GetEpochUnbondingRecord(s.Ctx(), initialState.epochNumber)
+	epochUnbondingRecord, found := s.App.RecordsKeeper.GetEpochUnbondingRecord(s.Ctx, initialState.epochNumber)
 	s.Require().True(found, "epoch unbonding record found")
 	s.Require().Equal(len(epochUnbondingRecord.HostZoneUnbondings), 1, "1 host zone unbonding found")
 	hzu := epochUnbondingRecord.HostZoneUnbondings[0]
@@ -164,14 +164,14 @@ func (s *KeeperTestSuite) TestUndelegateCallback_Successful() {
 	s.Require().Equal(hzu.Status, recordtypes.HostZoneUnbonding_EXIT_TRANSFER_QUEUE, "hzu status is set to EXIT_TRANSFER_QUEUE")
 	zoneAccount, err := sdk.AccAddressFromBech32(hostZone.Address)
 	s.Require().NoError(err, "zone account address is valid")
-	s.Require().Equal(tc.balanceToUnstake, initialState.zoneAccountBalance-s.App.BankKeeper.GetBalance(s.Ctx(), zoneAccount, StAtom).Amount.Int64(), "tokens are burned")
+	s.Require().Equal(tc.balanceToUnstake, initialState.zoneAccountBalance-s.App.BankKeeper.GetBalance(s.Ctx, zoneAccount, StAtom).Amount.Int64(), "tokens are burned")
 }
 
 func (s *KeeperTestSuite) checkStateIfUndelegateCallbackFailed(tc UndelegateCallbackTestCase) {
 	initialState := tc.initialState
 
 	// Check that stakedBal has NOT decreased on the host zone
-	hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx(), HostChainId)
+	hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, HostChainId)
 	s.Require().True(found, "host zone found")
 	s.Require().Equal(int64(hostZone.StakedBal), int64(initialState.stakedBal), "stakedBal has NOT decreased on the host zone")
 
@@ -183,7 +183,7 @@ func (s *KeeperTestSuite) checkStateIfUndelegateCallbackFailed(tc UndelegateCall
 	// Check that the host zone unbonding records have not been updated
 	s.Require().Equal(int64(val2.DelegationAmt), int64(initialState.val2Bal), "val2 delegation has NOT decreased")
 
-	epochUnbondingRecord, found := s.App.RecordsKeeper.GetEpochUnbondingRecord(s.Ctx(), initialState.epochNumber)
+	epochUnbondingRecord, found := s.App.RecordsKeeper.GetEpochUnbondingRecord(s.Ctx, initialState.epochNumber)
 	s.Require().True(found, "epoch unbonding record found")
 	s.Require().Equal(len(epochUnbondingRecord.HostZoneUnbondings), 1, "1 host zone unbonding found")
 	hzu := epochUnbondingRecord.HostZoneUnbondings[0]
@@ -191,7 +191,7 @@ func (s *KeeperTestSuite) checkStateIfUndelegateCallbackFailed(tc UndelegateCall
 	s.Require().Equal(hzu.Status, recordtypes.HostZoneUnbonding_UNBONDING_QUEUE, "hzu status is set to UNBONDING_QUEUE")
 	zoneAccount, err := sdk.AccAddressFromBech32(hostZone.Address)
 	s.Require().NoError(err, "zone account address is valid")
-	s.Require().Equal(initialState.zoneAccountBalance, s.App.BankKeeper.GetBalance(s.Ctx(), zoneAccount, StAtom).Amount.Int64(), "tokens are NOT burned")
+	s.Require().Equal(initialState.zoneAccountBalance, s.App.BankKeeper.GetBalance(s.Ctx, zoneAccount, StAtom).Amount.Int64(), "tokens are NOT burned")
 }
 
 func (s *KeeperTestSuite) TestUndelegateCallback_UndelegateCallbackTimeout() {
@@ -199,7 +199,7 @@ func (s *KeeperTestSuite) TestUndelegateCallback_UndelegateCallbackTimeout() {
 	invalidArgs := tc.validArgs
 	// a nil ack means the request timed out
 	invalidArgs.ack = nil
-	err := stakeibckeeper.UndelegateCallback(s.App.StakeibcKeeper, s.Ctx(), invalidArgs.packet, invalidArgs.ack, invalidArgs.args)
+	err := stakeibckeeper.UndelegateCallback(s.App.StakeibcKeeper, s.Ctx, invalidArgs.packet, invalidArgs.ack, invalidArgs.args)
 	s.Require().NoError(err, "undelegate callback succeeds on timeout")
 	s.checkStateIfUndelegateCallbackFailed(tc)
 }
@@ -211,7 +211,7 @@ func (s *KeeperTestSuite) TestUndelegateCallback_UndelegateCallbackErrorOnHost()
 	fullAck := channeltypes.Acknowledgement{Response: &channeltypes.Acknowledgement_Error{Error: "error"}}
 	invalidArgs.ack = &fullAck
 
-	err := stakeibckeeper.UndelegateCallback(s.App.StakeibcKeeper, s.Ctx(), invalidArgs.packet, invalidArgs.ack, invalidArgs.args)
+	err := stakeibckeeper.UndelegateCallback(s.App.StakeibcKeeper, s.Ctx, invalidArgs.packet, invalidArgs.ack, invalidArgs.args)
 	s.Require().NoError(err, "undelegate callback succeeds with error on host")
 	s.checkStateIfUndelegateCallbackFailed(tc)
 }
@@ -220,7 +220,7 @@ func (s *KeeperTestSuite) TestUndelegateCallback_WrongCallbackArgs() {
 	tc := s.SetupUndelegateCallback()
 	invalidArgs := tc.validArgs
 
-	err := stakeibckeeper.UndelegateCallback(s.App.StakeibcKeeper, s.Ctx(), invalidArgs.packet, invalidArgs.ack, []byte("random bytes"))
+	err := stakeibckeeper.UndelegateCallback(s.App.StakeibcKeeper, s.Ctx, invalidArgs.packet, invalidArgs.ack, []byte("random bytes"))
 	s.Require().EqualError(err, "Unable to unmarshal undelegate callback args | unexpected EOF: unable to unmarshal data structure")
 	s.checkStateIfUndelegateCallbackFailed(tc)
 }
@@ -228,8 +228,8 @@ func (s *KeeperTestSuite) TestUndelegateCallback_WrongCallbackArgs() {
 func (s *KeeperTestSuite) TestUndelegateCallback_HostNotFound() {
 	tc := s.SetupUndelegateCallback()
 	valid := tc.validArgs
-	s.App.StakeibcKeeper.RemoveHostZone(s.Ctx(), HostChainId)
-	err := stakeibckeeper.UndelegateCallback(s.App.StakeibcKeeper, s.Ctx(), valid.packet, valid.ack, valid.args)
+	s.App.StakeibcKeeper.RemoveHostZone(s.Ctx, HostChainId)
+	err := stakeibckeeper.UndelegateCallback(s.App.StakeibcKeeper, s.Ctx, valid.packet, valid.ack, valid.args)
 	s.Require().EqualError(err, "Host zone not found: GAIA: key not found")
 }
 
@@ -237,12 +237,12 @@ func (s *KeeperTestSuite) TestUndelegateCallback_HostNotFound() {
 func (s *KeeperTestSuite) TestUpdateDelegationBalances_Success() {
 	tc := s.SetupUndelegateCallback()
 	// Check that stakedBal has NOT decreased on the host zone
-	hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx(), HostChainId)
+	hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, HostChainId)
 	s.Require().True(found, "host zone found")
-	err := s.App.StakeibcKeeper.UpdateDelegationBalances(s.Ctx(), hostZone, tc.initialState.callbackArgs)
+	err := s.App.StakeibcKeeper.UpdateDelegationBalances(s.Ctx, hostZone, tc.initialState.callbackArgs)
 	s.Require().NoError(err, "update delegation balances succeeds")
 
-	updatedHostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx(), HostChainId)
+	updatedHostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, HostChainId)
 	s.Require().True(found, "host zone found")
 
 	// Check that Delegations on validators have decreased
@@ -255,7 +255,7 @@ func (s *KeeperTestSuite) TestUpdateDelegationBalances_Success() {
 
 func (s *KeeperTestSuite) TestUpdateDelegationBalances_BigDelegation() {
 	_ = s.SetupUndelegateCallback()
-	hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx(), HostChainId)
+	hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, HostChainId)
 	s.Require().True(found, "host zone found")
 	splitDelegation := types.SplitDelegation{
 		Amount: math.MaxUint64,
@@ -266,7 +266,7 @@ func (s *KeeperTestSuite) TestUpdateDelegationBalances_BigDelegation() {
 		EpochUnbondingRecordIds: []uint64{},
 	}
 
-	err := s.App.StakeibcKeeper.UpdateDelegationBalances(s.Ctx(), hostZone, invalidCallbackArgs)
+	err := s.App.StakeibcKeeper.UpdateDelegationBalances(s.Ctx, hostZone, invalidCallbackArgs)
 	expectedErrMsg := `Could not convert undelegate amount to int64 in undelegation callback | `
 	expectedErrMsg += `overflow: unable to cast \d+ of type uint64 to int64: unable to cast to safe cast int`
 	s.Require().Regexp(expectedErrMsg, err.Error())
@@ -294,7 +294,7 @@ func (s *KeeperTestSuite) TestGetLatestCompletionTime_Success() {
 		Data:    data,
 	}
 	// Check that the second completion time (the later of the two) is returned
-	latestCompletionTime, err := s.App.StakeibcKeeper.GetLatestCompletionTime(s.Ctx(), txMsgData)
+	latestCompletionTime, err := s.App.StakeibcKeeper.GetLatestCompletionTime(s.Ctx, txMsgData)
 	s.Require().NoError(err, "get latest completion time succeeds")
 	s.Require().Equal(secondCompletionTime.Unix(), latestCompletionTime.Unix(), "latest completion time is the second completion time")
 }
@@ -304,11 +304,11 @@ func (s *KeeperTestSuite) TestGetLatestCompletionTime_Failure() {
 	txMsgData := &sdk.TxMsgData{
 		Data: make([]*sdk.MsgData, 2),
 	}
-	_, err := s.App.StakeibcKeeper.GetLatestCompletionTime(s.Ctx(), txMsgData)
+	_, err := s.App.StakeibcKeeper.GetLatestCompletionTime(s.Ctx, txMsgData)
 	s.Require().EqualError(err, "msgResponseBytes or msgResponseBytes.Data is nil: TxMsgData invalid")
 
 	txMsgData = &sdk.TxMsgData{}
-	_, err = s.App.StakeibcKeeper.GetLatestCompletionTime(s.Ctx(), txMsgData)
+	_, err = s.App.StakeibcKeeper.GetLatestCompletionTime(s.Ctx, txMsgData)
 	s.Require().EqualError(err, "invalid packet completion time")
 }
 
@@ -347,21 +347,21 @@ func (s *KeeperTestSuite) TestUpdateHostZoneUnbondings_Success() {
 		EpochNumber:        2,
 		HostZoneUnbondings: []*recordtypes.HostZoneUnbonding{&hostZoneUnbonding3},
 	}
-	s.App.RecordsKeeper.SetEpochUnbondingRecord(s.Ctx(), epochUnbondingRecord)
-	s.App.RecordsKeeper.SetEpochUnbondingRecord(s.Ctx(), epochUnbondingRecord2)
+	s.App.RecordsKeeper.SetEpochUnbondingRecord(s.Ctx, epochUnbondingRecord)
+	s.App.RecordsKeeper.SetEpochUnbondingRecord(s.Ctx, epochUnbondingRecord2)
 	callbackArgs := types.UndelegateCallback{
 		EpochUnbondingRecordIds: []uint64{1, 2},
 	}
 	completionTime := time.Now().Add(time.Second * time.Duration(10))
-	burnAmount, err := s.App.StakeibcKeeper.UpdateHostZoneUnbondings(s.Ctx(), completionTime, hostZone, callbackArgs)
+	burnAmount, err := s.App.StakeibcKeeper.UpdateHostZoneUnbondings(s.Ctx, completionTime, hostZone, callbackArgs)
 	s.Require().NoError(err)
 	s.Require().Equal(int64(stAmtHzu1+stAmtHzu3), int64(burnAmount), "burn amount is correct")
 
 	// Verify that 2 hzus have status EXIT_TRANSFER_QUEUE, while the third has status UNBONDING_QUEUE
 	// Verify that 2 hzus have completion time set, while the third has no completion time
-	epochUnbondingRecord, found := s.App.RecordsKeeper.GetEpochUnbondingRecord(s.Ctx(), 1)
+	epochUnbondingRecord, found := s.App.RecordsKeeper.GetEpochUnbondingRecord(s.Ctx, 1)
 	s.Require().True(found)
-	epochUnbondingRecord2, found = s.App.RecordsKeeper.GetEpochUnbondingRecord(s.Ctx(), 2)
+	epochUnbondingRecord2, found = s.App.RecordsKeeper.GetEpochUnbondingRecord(s.Ctx, 2)
 	s.Require().True(found)
 	hzu1 := epochUnbondingRecord.HostZoneUnbondings[0]
 	s.Require().Equal(recordtypes.HostZoneUnbonding_EXIT_TRANSFER_QUEUE, hzu1.Status, "hzu1 status is EXIT_TRANSFER_QUEUE")
@@ -384,8 +384,8 @@ func (s *KeeperTestSuite) TestUpdateHostZoneUnbondings_EpochUnbondingRecordDNE()
 	callbackArgs := types.UndelegateCallback{
 		EpochUnbondingRecordIds: []uint64{1},
 	}
-	completionTime := s.Ctx().BlockTime()
-	_, err := s.App.StakeibcKeeper.UpdateHostZoneUnbondings(s.Ctx(), completionTime, hostZone, callbackArgs)
+	completionTime := s.Ctx.BlockTime()
+	_, err := s.App.StakeibcKeeper.UpdateHostZoneUnbondings(s.Ctx, completionTime, hostZone, callbackArgs)
 	s.Require().EqualError(err, "Unable to find epoch unbonding record for epoch: 1: key not found")
 }
 
@@ -399,12 +399,12 @@ func (s *KeeperTestSuite) TestUpdateHostZoneUnbondings_HostZoneUnbondingDNE() {
 		// No hzu!
 		HostZoneUnbondings: []*recordtypes.HostZoneUnbonding{},
 	}
-	s.App.RecordsKeeper.SetEpochUnbondingRecord(s.Ctx(), epochUnbondingRecord)
+	s.App.RecordsKeeper.SetEpochUnbondingRecord(s.Ctx, epochUnbondingRecord)
 	callbackArgs := types.UndelegateCallback{
 		EpochUnbondingRecordIds: []uint64{1},
 	}
-	completionTime := s.Ctx().BlockTime()
-	_, err := s.App.StakeibcKeeper.UpdateHostZoneUnbondings(s.Ctx(), completionTime, hostZone, callbackArgs)
+	completionTime := s.Ctx.BlockTime()
+	_, err := s.App.StakeibcKeeper.UpdateHostZoneUnbondings(s.Ctx, completionTime, hostZone, callbackArgs)
 	s.Require().EqualError(err, "Host zone unbonding not found (GAIA) in epoch unbonding record: 1: key not found")
 }
 
@@ -424,13 +424,13 @@ func (s *KeeperTestSuite) TestUpdateHostZoneUnbondings_AmountTooBig() {
 		EpochNumber:        1,
 		HostZoneUnbondings: []*recordtypes.HostZoneUnbonding{&hostZoneUnbonding, &hostZoneUnbonding},
 	}
-	s.App.RecordsKeeper.SetEpochUnbondingRecord(s.Ctx(), epochUnbondingRecord)
+	s.App.RecordsKeeper.SetEpochUnbondingRecord(s.Ctx, epochUnbondingRecord)
 	callbackArgs := types.UndelegateCallback{
 		EpochUnbondingRecordIds: []uint64{1, 2},
 	}
 	completionTime := time.Now().Add(time.Second * time.Duration(10))
 
-	_, err := s.App.StakeibcKeeper.UpdateHostZoneUnbondings(s.Ctx(), completionTime, hostZone, callbackArgs)
+	_, err := s.App.StakeibcKeeper.UpdateHostZoneUnbondings(s.Ctx, completionTime, hostZone, callbackArgs)
 	expectedErrMsg := `Could not convert stTokenAmount to int64 in redeem stake | `
 	expectedErrMsg += `overflow: unable to cast \d+ of type uint64 to int64: unable to cast to safe cast int`
 	s.Require().Regexp(expectedErrMsg, err.Error())
@@ -440,30 +440,30 @@ func (s *KeeperTestSuite) TestUpdateHostZoneUnbondings_AmountTooBig() {
 func (s *KeeperTestSuite) TestBurnTokens_Success() {
 	tc := s.SetupUndelegateCallback()
 
-	hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx(), HostChainId)
+	hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, HostChainId)
 	s.Require().True(found, "host zone found")
 
 	zoneAccount, err := sdk.AccAddressFromBech32(hostZone.Address)
 	s.Require().NoError(err, "zoneAccount is valid")
-	s.Require().Equal(tc.initialState.zoneAccountBalance, s.App.BankKeeper.GetBalance(s.Ctx(), zoneAccount, StAtom).Amount.Int64(), "initial token balance is 300_010")
+	s.Require().Equal(tc.initialState.zoneAccountBalance, s.App.BankKeeper.GetBalance(s.Ctx, zoneAccount, StAtom).Amount.Int64(), "initial token balance is 300_010")
 
 	burnAmt := int64(123456)
-	err = s.App.StakeibcKeeper.BurnTokens(s.Ctx(), hostZone, burnAmt)
+	err = s.App.StakeibcKeeper.BurnTokens(s.Ctx, hostZone, burnAmt)
 	s.Require().NoError(err)
 
-	s.Require().Equal(tc.initialState.zoneAccountBalance-burnAmt, s.App.BankKeeper.GetBalance(s.Ctx(), zoneAccount, StAtom).Amount.Int64(), "post burn amount is 176_554")
+	s.Require().Equal(tc.initialState.zoneAccountBalance-burnAmt, s.App.BankKeeper.GetBalance(s.Ctx, zoneAccount, StAtom).Amount.Int64(), "post burn amount is 176_554")
 }
 
 // Test failure case - could not parse coin
 func (s *KeeperTestSuite) TestBurnTokens_CouldNotParseCoin() {
 	s.SetupUndelegateCallback()
 
-	hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx(), HostChainId)
+	hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, HostChainId)
 	s.Require().True(found, "host zone found")
 	hostZone.HostDenom = ":"
 
 	burnAmt := int64(123456)
-	err := s.App.StakeibcKeeper.BurnTokens(s.Ctx(), hostZone, burnAmt)
+	err := s.App.StakeibcKeeper.BurnTokens(s.Ctx, hostZone, burnAmt)
 	s.Require().EqualError(err, "could not parse burnCoin: 123456.000000000000000000st:. err: invalid decimal coin expression: 123456.000000000000000000st:: invalid coins")
 }
 
@@ -471,11 +471,11 @@ func (s *KeeperTestSuite) TestBurnTokens_CouldNotParseCoin() {
 func (s *KeeperTestSuite) TestBurnTokens_CouldNotParseAddress() {
 	s.SetupUndelegateCallback()
 
-	hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx(), HostChainId)
+	hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, HostChainId)
 	s.Require().True(found, "host zone found")
 	hostZone.Address = "invalid"
 
-	err := s.App.StakeibcKeeper.BurnTokens(s.Ctx(), hostZone, int64(123456))
+	err := s.App.StakeibcKeeper.BurnTokens(s.Ctx, hostZone, int64(123456))
 	s.Require().EqualError(err, "could not bech32 decode address invalid of zone with id: GAIA")
 }
 
@@ -483,10 +483,10 @@ func (s *KeeperTestSuite) TestBurnTokens_CouldNotParseAddress() {
 func (s *KeeperTestSuite) TestBurnTokens_CouldNotSendCoinsFromAccountToModule() {
 	s.SetupUndelegateCallback()
 
-	hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx(), HostChainId)
+	hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, HostChainId)
 	s.Require().True(found, "host zone found")
 	hostZone.HostDenom = "coinDNE"
 
-	err := s.App.StakeibcKeeper.BurnTokens(s.Ctx(), hostZone, int64(123456))
+	err := s.App.StakeibcKeeper.BurnTokens(s.Ctx, hostZone, int64(123456))
 	s.Require().EqualError(err, "could not send coins from account stride1755g4dkhpw73gz9h9nwhlcefc6sdf8kcmvcwrk4rxfrz8xpxxjms7savm8 to module stakeibc. err: 0stcoinDNE is smaller than 123456stcoinDNE: insufficient funds")
 }

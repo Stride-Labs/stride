@@ -3,9 +3,9 @@ package keeper_test
 import (
 	_ "github.com/stretchr/testify/suite"
 
-	recordtypes "github.com/Stride-Labs/stride/v3/x/records/types"
+	recordtypes "github.com/Stride-Labs/stride/v4/x/records/types"
 
-	stakeibc "github.com/Stride-Labs/stride/v3/x/stakeibc/types"
+	stakeibc "github.com/Stride-Labs/stride/v4/x/stakeibc/types"
 )
 
 type CleanupEpochUnbondingRecordsTestCase struct {
@@ -75,11 +75,11 @@ func (s *KeeperTestSuite) SetupCleanupEpochUnbondingRecords() CleanupEpochUnbond
 		},
 	}
 	for _, epochUnbondingRecord := range epochUnbondingRecords {
-		s.App.RecordsKeeper.SetEpochUnbondingRecord(s.Ctx(), epochUnbondingRecord)
+		s.App.RecordsKeeper.SetEpochUnbondingRecord(s.Ctx, epochUnbondingRecord)
 	}
 
 	for _, hostZone := range hostZones {
-		s.App.StakeibcKeeper.SetHostZone(s.Ctx(), hostZone)
+		s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
 	}
 
 	return CleanupEpochUnbondingRecordsTestCase{
@@ -92,7 +92,7 @@ func (s *KeeperTestSuite) CleanupEpochUnbondingRecords_Successful() {
 	// successfully clean up epoch unbonding records
 	s.SetupGetHostZoneUnbondingMsgs(defaultUnbondingTestCase)
 	// clean up epoch unbonding record 0
-	success := s.App.StakeibcKeeper.CleanupEpochUnbondingRecords(s.Ctx(), 0)
+	success := s.App.StakeibcKeeper.CleanupEpochUnbondingRecords(s.Ctx, 0)
 	s.Require().True(success, "cleanup unbonding records returns true")
 	epochUnbondings := defaultUnbondingTestCase.epochUnbondingRecords
 	s.Require().Len(epochUnbondings, 1, "only one epoch unbonding record should be left")
