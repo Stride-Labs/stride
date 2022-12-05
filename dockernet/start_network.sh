@@ -39,8 +39,8 @@ if [[ "$UPGRADE_NAME" != "" ]]; then
 fi
 
 # Initialize the state for each chain
-for chain_id in STRIDE ${HOST_CHAINS[@]}; do
-    bash $SRC/init_chain.sh $chain_id
+for chain in STRIDE ${HOST_CHAINS[@]}; do
+    bash $SRC/init_chain.sh $chain
 done
 
 # Start the chain and create the transfer channels
