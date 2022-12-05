@@ -5,7 +5,7 @@ import "gogoproto/gogo.proto";
 
 // this line is used by starport scaffolding # genesis/proto/import
 
-option go_package = "github.com/Stride-Labs/stride/v3/x/records/types";
+option go_package = "github.com/Stride-Labs/stride/v4/x/records/types";
 
 message UserRedemptionRecord {
   string id = 1; // {chain_id}.{epoch}.{sender}
