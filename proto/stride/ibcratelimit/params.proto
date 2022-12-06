@@ -1,0 +1,11 @@
+syntax = "proto3";
+package stride.ibcratelimit;
+
+import "gogoproto/gogo.proto";
+
+option go_package = "github.com/Stride-Labs/stride/v3/x/ibcratelimit/types";
+
+// Params defines the ibcratelimit module's parameters.
+message Params {
+
+}

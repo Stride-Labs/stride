@@ -1,0 +1,65 @@
+syntax = "proto3";
+package stride.ibcratelimit;
+
+import "gogoproto/gogo.proto";
+
+option go_package = "github.com/Stride-Labs/stride/v3/x/ibcratelimit/types";
+
+enum PacketDirection {
+  option (gogoproto.goproto_enum_prefix) = false;
+
+  PACKET_SEND = 0;
+  PACKET_RECV = 1;
+}
+
+enum FlowDirection {
+  option (gogoproto.goproto_enum_prefix) = false;
+
+  FLOW_IN = 0;
+  FLOW_OUT = 1;
+}
+
+message Path {
+  // path identifier ({Denom}-{ChannelId})
+  string id = 1;
+
+  // path denom (native denom)
+  string denom = 2; 
+
+  // path channelid
+  string channel_id = 3;
+}
+
+message Quota {
+  // quota name
+  string name = 1;
+
+  // max percent for sending
+  uint64 max_percent_send = 2;
+
+  // max percent for receiving
+  uint64 max_percent_recv = 3;
+
+  // duration hours for time window
+  uint64 duration_hours = 4;
+
+  // period end (now + duration hours)
+  uint64 period_end = 5;
+}
+
+message Flow {
+  // incoming flow
+  uint64 in_flow = 1;
+  
+  // outgoing flow
+  uint64 out_flow = 2;
+
+  // channel value
+  uint64 channel_value = 3;
+}
+
+message RateLimit {
+  Path path = 1;
+  Flow flow = 2;
+  Quota quota = 3;
+}
