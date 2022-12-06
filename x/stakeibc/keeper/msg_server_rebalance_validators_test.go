@@ -260,3 +260,42 @@ func (s *KeeperTestSuite) TestRebalanceValidators_InvalidNotEnoughDiff() {
 	expectedErrMsg := "validator weights haven't changed"
 	s.Require().EqualError(err, expectedErrMsg, "rebalancing without sufficient change should fail")
 }
+
+func (s *KeeperTestSuite) TestRebalanceValidators_InvalidHostZone() {
+	s.SetupRebalanceValidators()
+	_, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, "superGAIA")
+	s.Require().False(found, "this host zone should not exist")
+
+	badMsg_noValidators := stakeibctypes.MsgRebalanceValidators{
+		Creator:      "stride_ADDRESS",
+		HostZone:     "superGAIA",
+		NumRebalance: 2,
+	}
+	_, err := s.GetMsgServer().RebalanceValidators(sdk.WrapSDKContext(s.Ctx), &badMsg_noValidators)
+	expectedErrMsg := "host zone not registered"
+	s.Require().EqualError(err, expectedErrMsg, "invalid host zone should fail")
+}
+
+func (s *KeeperTestSuite) TestRebalanceValidators_InvalidDelegationAmt() {
+	s.SetupRebalanceValidators()
+
+	hz, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, "GAIA")
+	s.Require().True(found, "host zone should exist")
+	validators := hz.GetValidators()
+	for _, v := range validators {
+		v.DelegationAmt = 0
+	}
+	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hz)
+	// Rebalance with all delegation amount equal to 0 should fail
+	badMsg_noValidators := stakeibctypes.MsgRebalanceValidators{
+		Creator:      "stride_ADDRESS",
+		HostZone:     "GAIA",
+		NumRebalance: 2,
+	}
+	_, err := s.GetMsgServer().RebalanceValidators(sdk.WrapSDKContext(s.Ctx), &badMsg_noValidators)
+	expectedErrMsg := "invalid request"
+	s.Require().EqualError(err, expectedErrMsg, "rebalancing with zero delegation amounts should fail")
+}
+
+func (s *KeeperTestSuite) TestRebalanceValidators_InvalidICAAddress() {
+}

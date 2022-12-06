@@ -53,6 +53,7 @@ func (k msgServer) RebalanceValidators(goCtx context.Context, msg *types.MsgReba
 		k.Logger(ctx).Error(fmt.Sprintf("Invalid number of validators to rebalance %d", maxNumRebalance))
 		return nil, types.ErrInvalidNumValidator
 	}
+	//get stuck here, not go in to check delegation amount
 	validatorDeltas, err := k.GetValidatorDelegationAmtDifferences(ctx, hostZone)
 	if err != nil {
 		k.Logger(ctx).Error(fmt.Sprintf("Error getting validator deltas for Host Zone %s: %s", hostZone.ChainId, err))
@@ -98,7 +99,7 @@ func (k msgServer) RebalanceValidators(goCtx context.Context, msg *types.MsgReba
 	delegationIca := hostZone.GetDelegationAccount()
 	if delegationIca == nil || delegationIca.GetAddress() == "" {
 		k.Logger(ctx).Error(fmt.Sprintf("Zone %s is missing a delegation address!", hostZone.ChainId))
-		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "Invalid delegation account")
+		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "Invalid delegation account") //need test for this
 	}
 
 	delegatorAddress := delegationIca.GetAddress()
