@@ -6,10 +6,10 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
-	keepertest "github.com/Stride-Labs/stride/v3/testutil/keeper"
-	"github.com/Stride-Labs/stride/v3/testutil/nullify"
-	"github.com/Stride-Labs/stride/v3/x/records/keeper"
-	"github.com/Stride-Labs/stride/v3/x/records/types"
+	keepertest "github.com/Stride-Labs/stride/v4/testutil/keeper"
+	"github.com/Stride-Labs/stride/v4/testutil/nullify"
+	"github.com/Stride-Labs/stride/v4/x/records/keeper"
+	"github.com/Stride-Labs/stride/v4/x/records/types"
 )
 
 func createNEpochUnbondingRecord(keeper *keeper.Keeper, ctx sdk.Context, n int) ([]types.EpochUnbondingRecord, map[string]types.HostZoneUnbonding) {
