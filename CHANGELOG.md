@@ -39,6 +39,8 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+## [v4.0.2](https://github.com/Stride-Labs/stride/releases/tag/v4.0.0) - 2022-12-05
+1. Rebuild protos, fix v3 reference ((9d83474e7)[https://github.com/Stride-Labs/stride/commit/9d83474e741c4f79ba3a4132d10881362f28ab7e])
 
 ## [v4.0.0](https://github.com/Stride-Labs/stride/releases/tag/v4.0.0) - 2022-11-27
 ### On-Chain changes
