@@ -5,8 +5,6 @@ import (
 	"os"
 	"path/filepath"
 
-	porttypes "github.com/cosmos/ibc-go/v3/modules/core/05-port/types"
-
 	"github.com/Stride-Labs/stride/v4/utils"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
@@ -561,35 +559,43 @@ func NewStrideApp(
 	)
 	icaModule := ica.NewAppModule(&app.ICAControllerKeeper, &app.ICAHostKeeper)
 
-	// Create the middleware stacks
-
-	// Stack one contains
+	// Define the IBC stacks
+	// Stack one (ICAHost Stack) contains:
 	// - IBC
-	// - ICA
-	// - icacallbacks
-	// - stakeibc
+	// - ICAHost
 	// - base app
-	var icamiddlewareStack porttypes.IBCModule
-	icamiddlewareStack = icacallbacksmodule.NewIBCModule(app.IcacallbacksKeeper, stakeibcIBCModule)
-	icamiddlewareStack = icacontroller.NewIBCModule(app.ICAControllerKeeper, icamiddlewareStack)
 	icaHostIBCModule := icahost.NewIBCModule(app.ICAHostKeeper)
 
-	// Stack two contains
+	// Stack two (ICAController Stack) contains
 	// - IBC
-	// - records
+	// - ICAController (middleware)
+	// - icacallbacks (middleware)
+	// - stakeibc
+	// - base app
+	icaCallbacksStack := icacallbacksmodule.NewIBCModule(app.IcacallbacksKeeper, stakeibcIBCModule)
+	icaControllerStack := icacontroller.NewIBCModule(app.ICAControllerKeeper, icaCallbacksStack)
+
+	// Stack three (Records Stack) contains
+	// - IBC
+	// - records (middleware)
 	// - transfer
 	// - base app
 	recordsStack := recordsmodule.NewIBCModule(app.RecordsKeeper, transferIBCModule)
 
 	// Create static IBC router, add transfer route, then set and seal it
+	// Note, authentication module packets are routed to the top level of the middleware stack
 	ibcRouter := ibcporttypes.NewRouter()
 	ibcRouter.
-		AddRoute(ibctransfertypes.ModuleName, recordsStack).
-		AddRoute(icacontrollertypes.SubModuleName, icamiddlewareStack).
+		// ICAHost Stack
 		AddRoute(icahosttypes.SubModuleName, icaHostIBCModule).
-		// Note, authentication module packets are routed to the top level of the middleware stack
-		AddRoute(stakeibcmoduletypes.ModuleName, icamiddlewareStack).
-		AddRoute(icacallbacksmoduletypes.ModuleName, icamiddlewareStack)
+		// ICAController Stack
+		AddRoute(icacontrollertypes.SubModuleName, icaControllerStack).
+		AddRoute(icacallbacksmoduletypes.ModuleName, icaControllerStack).
+		AddRoute(stakeibcmoduletypes.ModuleName, icaControllerStack).
+		// Records Stack
+		AddRoute(ibctransfertypes.ModuleName, recordsStack)
+		// QUESTION: Why don't we have a router for recordstypes.ModuleName -> recordsStack ?
+
 	// this line is used by starport scaffolding # ibc/app/router
 	app.IBCKeeper.SetRouter(ibcRouter)
 
