@@ -8,9 +8,9 @@ import (
 )
 
 const (
-	HumanCoinUnit = "osmo"
-	BaseCoinUnit  = "uosmo"
-	OsmoExponent  = 6
+	HumanCoinUnit = "strd"
+	BaseCoinUnit  = "ustrd"
+	StrideExponent  = 6
 
 	DefaultBondDenom = BaseCoinUnit
 
@@ -42,7 +42,7 @@ func RegisterDenoms() {
 	if err != nil {
 		panic(err)
 	}
-	err = sdk.RegisterDenom(BaseCoinUnit, sdk.NewDecWithPrec(1, OsmoExponent))
+	err = sdk.RegisterDenom(BaseCoinUnit, sdk.NewDecWithPrec(1, StrideExponent))
 	if err != nil {
 		panic(err)
 	}
