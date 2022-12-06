@@ -6,10 +6,15 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/stretchr/testify/require"
 
+	appParams "github.com/Stride-Labs/stride/v4/app/params"
 	"github.com/Stride-Labs/stride/v4/testutil/sample"
 )
 
 func TestMsgRebalanceValidators_ValidateBasic(t *testing.T) {
+
+	//set address prefixes to stride
+	appParams.SetAddressPrefixes()
+
 	tests := []struct {
 		name string
 		msg  MsgRebalanceValidators
@@ -30,7 +35,6 @@ func TestMsgRebalanceValidators_ValidateBasic(t *testing.T) {
 		}, {
 			name: "valid address and whitelisted but invalid number of validators to rebalance (minimum not meet)",
 			msg: MsgRebalanceValidators{
-				// github.com/cosmos/cosmos-sdk@v0.45.11/types/address.go this test require to change Bech32MainPrefix from cosmos to stride in order to pass
 				Creator:      "stride1k8c2m5cn322akk5wy8lpt87dd2f4yh9azg7jlh",
 				NumRebalance: 0,
 			},
@@ -38,7 +42,6 @@ func TestMsgRebalanceValidators_ValidateBasic(t *testing.T) {
 		}, {
 			name: "valid address and whitelisted but invalid number of validators to rebalance (too much)",
 			msg: MsgRebalanceValidators{
-				// github.com/cosmos/cosmos-sdk@v0.45.11/types/address.go this test require to change Bech32MainPrefix from cosmos to stride in order to pass
 				Creator:      "stride1k8c2m5cn322akk5wy8lpt87dd2f4yh9azg7jlh",
 				NumRebalance: 11,
 			},
@@ -47,7 +50,6 @@ func TestMsgRebalanceValidators_ValidateBasic(t *testing.T) {
 		{
 			name: "valid address and whitelisted",
 			msg: MsgRebalanceValidators{
-				// github.com/cosmos/cosmos-sdk@v0.45.11/types/address.go this test require to change Bech32MainPrefix from cosmos to stride in order to pass
 				Creator:      "stride1k8c2m5cn322akk5wy8lpt87dd2f4yh9azg7jlh",
 				NumRebalance: 10,
 			},
