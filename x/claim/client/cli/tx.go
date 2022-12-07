@@ -6,7 +6,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/spf13/cobra"
 
-	"github.com/Stride-Labs/stride/v3/x/claim/types"
+	"github.com/Stride-Labs/stride/v4/x/claim/types"
 )
 
 // GetTxCmd returns the transaction commands for this module
