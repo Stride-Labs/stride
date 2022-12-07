@@ -8,7 +8,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	keepertest "github.com/Stride-Labs/stride/v4/testutil/keeper"
-	"github.com/Stride-Labs/stride/v4/testutil/nullify"
 	"github.com/Stride-Labs/stride/v4/x/records/keeper"
 	"github.com/Stride-Labs/stride/v4/x/records/types"
 )
@@ -48,8 +47,6 @@ func TestUserRedemptionRecordRemove(t *testing.T) {
 func TestUserRedemptionRecordGetAll(t *testing.T) {
 	keeper, ctx := keepertest.RecordsKeeper(t)
 	items := createNUserRedemptionRecord(keeper, ctx, 10)
-	require.ElementsMatch(t,
-		nullify.Fill(items),
-		nullify.Fill(keeper.GetAllUserRedemptionRecord(ctx)),
-	)
+	actual := keeper.GetAllUserRedemptionRecord(ctx)
+	require.Equal(t, len(items), len(actual))
 }
