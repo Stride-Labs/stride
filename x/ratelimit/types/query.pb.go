@@ -197,6 +197,174 @@ func (m *QueryPathResponse) GetPath() *Path {
 	return nil
 }
 
+type QueryQuotasRequest struct {
+}
+
+func (m *QueryQuotasRequest) Reset()         { *m = QueryQuotasRequest{} }
+func (m *QueryQuotasRequest) String() string { return proto.CompactTextString(m) }
+func (*QueryQuotasRequest) ProtoMessage()    {}
+func (*QueryQuotasRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_97a373ef8fcef03b, []int{4}
+}
+func (m *QueryQuotasRequest) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *QueryQuotasRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_QueryQuotasRequest.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *QueryQuotasRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryQuotasRequest.Merge(m, src)
+}
+func (m *QueryQuotasRequest) XXX_Size() int {
+	return m.Size()
+}
+func (m *QueryQuotasRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryQuotasRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_QueryQuotasRequest proto.InternalMessageInfo
+
+type QueryQuotasResponse struct {
+	Quotas []Quota `protobuf:"bytes,1,rep,name=quotas,proto3" json:"quotas"`
+}
+
+func (m *QueryQuotasResponse) Reset()         { *m = QueryQuotasResponse{} }
+func (m *QueryQuotasResponse) String() string { return proto.CompactTextString(m) }
+func (*QueryQuotasResponse) ProtoMessage()    {}
+func (*QueryQuotasResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_97a373ef8fcef03b, []int{5}
+}
+func (m *QueryQuotasResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *QueryQuotasResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_QueryQuotasResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *QueryQuotasResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryQuotasResponse.Merge(m, src)
+}
+func (m *QueryQuotasResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *QueryQuotasResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryQuotasResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_QueryQuotasResponse proto.InternalMessageInfo
+
+func (m *QueryQuotasResponse) GetQuotas() []Quota {
+	if m != nil {
+		return m.Quotas
+	}
+	return nil
+}
+
+type QueryQuotaRequest struct {
+	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+}
+
+func (m *QueryQuotaRequest) Reset()         { *m = QueryQuotaRequest{} }
+func (m *QueryQuotaRequest) String() string { return proto.CompactTextString(m) }
+func (*QueryQuotaRequest) ProtoMessage()    {}
+func (*QueryQuotaRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_97a373ef8fcef03b, []int{6}
+}
+func (m *QueryQuotaRequest) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *QueryQuotaRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_QueryQuotaRequest.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *QueryQuotaRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryQuotaRequest.Merge(m, src)
+}
+func (m *QueryQuotaRequest) XXX_Size() int {
+	return m.Size()
+}
+func (m *QueryQuotaRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryQuotaRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_QueryQuotaRequest proto.InternalMessageInfo
+
+func (m *QueryQuotaRequest) GetName() string {
+	if m != nil {
+		return m.Name
+	}
+	return ""
+}
+
+type QueryQuotaResponse struct {
+	Quota *Quota `protobuf:"bytes,1,opt,name=quota,proto3" json:"quota,omitempty"`
+}
+
+func (m *QueryQuotaResponse) Reset()         { *m = QueryQuotaResponse{} }
+func (m *QueryQuotaResponse) String() string { return proto.CompactTextString(m) }
+func (*QueryQuotaResponse) ProtoMessage()    {}
+func (*QueryQuotaResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_97a373ef8fcef03b, []int{7}
+}
+func (m *QueryQuotaResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *QueryQuotaResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_QueryQuotaResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *QueryQuotaResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryQuotaResponse.Merge(m, src)
+}
+func (m *QueryQuotaResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *QueryQuotaResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryQuotaResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_QueryQuotaResponse proto.InternalMessageInfo
+
+func (m *QueryQuotaResponse) GetQuota() *Quota {
+	if m != nil {
+		return m.Quota
+	}
+	return nil
+}
+
 type QueryRateLimitsRequest struct {
 }
 
@@ -204,7 +372,7 @@ func (m *QueryRateLimitsRequest) Reset()         { *m = QueryRateLimitsRequest{}
 func (m *QueryRateLimitsRequest) String() string { return proto.CompactTextString(m) }
 func (*QueryRateLimitsRequest) ProtoMessage()    {}
 func (*QueryRateLimitsRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_97a373ef8fcef03b, []int{4}
+	return fileDescriptor_97a373ef8fcef03b, []int{8}
 }
 func (m *QueryRateLimitsRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -241,7 +409,7 @@ func (m *QueryRateLimitsResponse) Reset()         { *m = QueryRateLimitsResponse
 func (m *QueryRateLimitsResponse) String() string { return proto.CompactTextString(m) }
 func (*QueryRateLimitsResponse) ProtoMessage()    {}
 func (*QueryRateLimitsResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_97a373ef8fcef03b, []int{5}
+	return fileDescriptor_97a373ef8fcef03b, []int{9}
 }
 func (m *QueryRateLimitsResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -285,7 +453,7 @@ func (m *QueryRateLimitRequest) Reset()         { *m = QueryRateLimitRequest{} }
 func (m *QueryRateLimitRequest) String() string { return proto.CompactTextString(m) }
 func (*QueryRateLimitRequest) ProtoMessage()    {}
 func (*QueryRateLimitRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_97a373ef8fcef03b, []int{6}
+	return fileDescriptor_97a373ef8fcef03b, []int{10}
 }
 func (m *QueryRateLimitRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -329,7 +497,7 @@ func (m *QueryRateLimitResponse) Reset()         { *m = QueryRateLimitResponse{}
 func (m *QueryRateLimitResponse) String() string { return proto.CompactTextString(m) }
 func (*QueryRateLimitResponse) ProtoMessage()    {}
 func (*QueryRateLimitResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_97a373ef8fcef03b, []int{7}
+	return fileDescriptor_97a373ef8fcef03b, []int{11}
 }
 func (m *QueryRateLimitResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -370,6 +538,10 @@ func init() {
 	proto.RegisterType((*QueryPathsResponse)(nil), "stride.ratelimit.QueryPathsResponse")
 	proto.RegisterType((*QueryPathRequest)(nil), "stride.ratelimit.QueryPathRequest")
 	proto.RegisterType((*QueryPathResponse)(nil), "stride.ratelimit.QueryPathResponse")
+	proto.RegisterType((*QueryQuotasRequest)(nil), "stride.ratelimit.QueryQuotasRequest")
+	proto.RegisterType((*QueryQuotasResponse)(nil), "stride.ratelimit.QueryQuotasResponse")
+	proto.RegisterType((*QueryQuotaRequest)(nil), "stride.ratelimit.QueryQuotaRequest")
+	proto.RegisterType((*QueryQuotaResponse)(nil), "stride.ratelimit.QueryQuotaResponse")
 	proto.RegisterType((*QueryRateLimitsRequest)(nil), "stride.ratelimit.QueryRateLimitsRequest")
 	proto.RegisterType((*QueryRateLimitsResponse)(nil), "stride.ratelimit.QueryRateLimitsResponse")
 	proto.RegisterType((*QueryRateLimitRequest)(nil), "stride.ratelimit.QueryRateLimitRequest")
@@ -379,38 +551,45 @@ func init() {
 func init() { proto.RegisterFile("stride/ratelimit/query.proto", fileDescriptor_97a373ef8fcef03b) }
 
 var fileDescriptor_97a373ef8fcef03b = []byte{
-	// 494 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x8c, 0x94, 0x41, 0x6b, 0x13, 0x41,
-	0x14, 0xc7, 0xb3, 0x69, 0x52, 0xc9, 0x2b, 0x48, 0x7c, 0xb6, 0x49, 0x88, 0x71, 0x0d, 0x53, 0xd1,
-	0x28, 0x98, 0x91, 0xe8, 0xc9, 0x8b, 0x90, 0x93, 0x42, 0x0e, 0xba, 0x7a, 0x12, 0xa4, 0x6c, 0xdc,
-	0x61, 0x3b, 0x90, 0x64, 0xb6, 0x3b, 0x13, 0xb1, 0x94, 0x82, 0x78, 0xf0, 0x2c, 0xf8, 0xa5, 0x7a,
-	0x2c, 0x78, 0xf1, 0x24, 0x92, 0xf8, 0x01, 0xfc, 0x08, 0x32, 0xb3, 0x93, 0x69, 0xcc, 0xb6, 0x69,
-	0x6f, 0x93, 0x79, 0xff, 0xf7, 0xff, 0xfd, 0x1f, 0x6f, 0xb2, 0xd0, 0x92, 0x2a, 0xe5, 0x11, 0xa3,
-	0x69, 0xa8, 0xd8, 0x88, 0x8f, 0xb9, 0xa2, 0x07, 0x53, 0x96, 0x1e, 0x76, 0x93, 0x54, 0x28, 0x81,
-	0xd5, 0xac, 0xda, 0x75, 0xd5, 0x66, 0x3b, 0xa7, 0x77, 0xa7, 0xac, 0xa7, 0xd9, 0x8a, 0x85, 0x88,
-	0x47, 0x8c, 0x86, 0x09, 0xa7, 0xe1, 0x64, 0x22, 0x54, 0xa8, 0xb8, 0x98, 0x48, 0x5b, 0xdd, 0x8e,
-	0x45, 0x2c, 0xcc, 0x91, 0xea, 0x53, 0x76, 0x4b, 0x6e, 0xc2, 0x8d, 0xd7, 0x1a, 0xfb, 0x2a, 0x54,
-	0xfb, 0x32, 0x60, 0x07, 0x53, 0x26, 0x15, 0x79, 0x01, 0xb8, 0x7c, 0x29, 0x13, 0x31, 0x91, 0x0c,
-	0x7b, 0x50, 0x4e, 0xf4, 0x45, 0xc3, 0x6b, 0x6f, 0x74, 0xb6, 0x7a, 0xb5, 0xee, 0x6a, 0xc4, 0xae,
-	0xd6, 0xf7, 0x4b, 0x27, 0xbf, 0xee, 0x14, 0x82, 0x4c, 0x4a, 0x08, 0x54, 0x9d, 0x93, 0x75, 0xc7,
-	0xeb, 0x50, 0xe4, 0x51, 0xc3, 0x6b, 0x7b, 0x9d, 0x4a, 0x50, 0xe4, 0x11, 0x79, 0xbe, 0x14, 0xc1,
-	0xc1, 0x1e, 0x42, 0x49, 0x3b, 0x18, 0xd9, 0x85, 0xac, 0xc0, 0x68, 0x48, 0x03, 0x6a, 0xc6, 0x20,
-	0x08, 0x15, 0x1b, 0xe8, 0xa2, 0x1b, 0xe4, 0x3d, 0xd4, 0x73, 0x15, 0x0b, 0xe8, 0xc3, 0x96, 0x36,
-	0xdb, 0x33, 0x6e, 0x8b, 0x99, 0x6e, 0xe5, 0x39, 0xae, 0xd5, 0x0e, 0x06, 0xa9, 0xf3, 0x22, 0x8f,
-	0x61, 0xe7, 0x7f, 0xfb, 0xc5, 0x88, 0x75, 0xb8, 0xa6, 0x93, 0xed, 0xb9, 0x39, 0x37, 0xf5, 0xcf,
-	0x97, 0x11, 0x79, 0xbb, 0x1a, 0xd5, 0xe5, 0x79, 0x06, 0x70, 0x96, 0xc7, 0x8e, 0xbd, 0x2e, 0x4e,
-	0x50, 0x71, 0x41, 0x7a, 0x7f, 0x37, 0xa0, 0x6c, 0x6c, 0x71, 0x04, 0x65, 0xb3, 0x34, 0xdc, 0xcd,
-	0xb7, 0xe6, 0xf6, 0xdc, 0xbc, 0xbb, 0x5e, 0x94, 0x25, 0x23, 0x8d, 0x2f, 0x3f, 0xfe, 0x7c, 0x2f,
-	0x22, 0x56, 0x97, 0x9e, 0x9e, 0xd9, 0x2e, 0x8e, 0xa1, 0xa4, 0xa5, 0x48, 0xd6, 0xf8, 0x2c, 0x58,
-	0xbb, 0x6b, 0x35, 0x16, 0xd5, 0x32, 0xa8, 0x1a, 0x6e, 0xaf, 0xa0, 0xe8, 0x11, 0x8f, 0x8e, 0xf1,
-	0xb3, 0x07, 0x70, 0xb6, 0x49, 0xec, 0x5c, 0xe0, 0x98, 0x7b, 0x06, 0xcd, 0x07, 0x57, 0x50, 0xda,
-	0x04, 0xb7, 0x4d, 0x82, 0x3a, 0xee, 0x9c, 0xf7, 0x3f, 0x93, 0xf8, 0xd5, 0x83, 0x8a, 0xeb, 0xc2,
-	0xfb, 0x97, 0xf9, 0x2e, 0x02, 0x74, 0x2e, 0x17, 0x5a, 0xfe, 0x3d, 0xc3, 0x6f, 0xa3, 0x7f, 0x1e,
-	0x9f, 0x1e, 0xd9, 0x57, 0x75, 0xdc, 0x1f, 0x9c, 0xcc, 0x7c, 0xef, 0x74, 0xe6, 0x7b, 0xbf, 0x67,
-	0xbe, 0xf7, 0x6d, 0xee, 0x17, 0x4e, 0xe7, 0x7e, 0xe1, 0xe7, 0xdc, 0x2f, 0xbc, 0xeb, 0xc5, 0x5c,
-	0xed, 0x4f, 0x87, 0xdd, 0x0f, 0x62, 0x4c, 0xdf, 0x18, 0xea, 0xa3, 0x41, 0x38, 0x94, 0xd4, 0x7e,
-	0x3e, 0x3e, 0x3e, 0xa5, 0x9f, 0x96, 0x1c, 0xd5, 0x61, 0xc2, 0xe4, 0x70, 0xd3, 0x7c, 0x0c, 0x9e,
-	0xfc, 0x0b, 0x00, 0x00, 0xff, 0xff, 0xa3, 0x9c, 0x41, 0x1d, 0x94, 0x04, 0x00, 0x00,
+	// 608 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x8c, 0x94, 0xcf, 0x6f, 0x12, 0x41,
+	0x14, 0xc7, 0x59, 0x04, 0x0c, 0xaf, 0x89, 0xa1, 0x0f, 0x0a, 0x74, 0xc5, 0x2d, 0x99, 0x56, 0x8b,
+	0x26, 0x65, 0x0c, 0xea, 0xc5, 0x8b, 0x09, 0x5e, 0x34, 0xe1, 0x60, 0x57, 0x4f, 0x26, 0xa6, 0x59,
+	0x64, 0x43, 0x37, 0x01, 0x66, 0x61, 0x07, 0x63, 0x43, 0x48, 0x8c, 0x07, 0xcf, 0x26, 0xfe, 0x53,
+	0x3d, 0x36, 0xf1, 0xa0, 0x27, 0x63, 0xc0, 0x3f, 0xc4, 0xcc, 0xec, 0x30, 0x5d, 0x7e, 0xf7, 0x36,
+	0xcc, 0xfb, 0xce, 0xf7, 0xf3, 0x7d, 0xc3, 0xdb, 0x81, 0x52, 0xc0, 0x07, 0x5e, 0xcb, 0xa5, 0x03,
+	0x87, 0xbb, 0x1d, 0xaf, 0xeb, 0x71, 0xda, 0x1f, 0xba, 0x83, 0x8b, 0xaa, 0x3f, 0x60, 0x9c, 0x61,
+	0x26, 0xac, 0x56, 0x75, 0xd5, 0x2c, 0x2f, 0xe9, 0xf5, 0x2a, 0x3c, 0x63, 0x96, 0xda, 0x8c, 0xb5,
+	0x3b, 0x2e, 0x75, 0x7c, 0x8f, 0x3a, 0xbd, 0x1e, 0xe3, 0x0e, 0xf7, 0x58, 0x2f, 0x50, 0xd5, 0x5c,
+	0x9b, 0xb5, 0x99, 0x5c, 0x52, 0xb1, 0x0a, 0x77, 0x49, 0x16, 0x76, 0x4f, 0x05, 0xf6, 0x8d, 0xc3,
+	0xcf, 0x03, 0xdb, 0xed, 0x0f, 0xdd, 0x80, 0x93, 0x57, 0x80, 0xd1, 0xcd, 0xc0, 0x67, 0xbd, 0xc0,
+	0xc5, 0x1a, 0x24, 0x7d, 0xb1, 0x51, 0x34, 0xca, 0xb7, 0x2a, 0x3b, 0xb5, 0x7c, 0x75, 0x31, 0x62,
+	0x55, 0xe8, 0xeb, 0x89, 0xcb, 0x3f, 0x07, 0x31, 0x3b, 0x94, 0x12, 0x02, 0x19, 0xed, 0xa4, 0xdc,
+	0xf1, 0x0e, 0xc4, 0xbd, 0x56, 0xd1, 0x28, 0x1b, 0x95, 0xb4, 0x1d, 0xf7, 0x5a, 0xe4, 0x45, 0x24,
+	0x82, 0x86, 0x3d, 0x82, 0x84, 0x70, 0x90, 0xb2, 0xb5, 0x2c, 0x5b, 0x6a, 0x48, 0x4e, 0xc5, 0x3d,
+	0x1d, 0x32, 0xee, 0xe8, 0x26, 0x1a, 0x90, 0x9d, 0xdb, 0x55, 0xc6, 0xcf, 0x20, 0xd5, 0x97, 0x3b,
+	0xaa, 0x8d, 0xc2, 0xb2, 0xb5, 0x3c, 0xa1, 0xfa, 0x50, 0x62, 0x72, 0xac, 0x42, 0xca, 0xda, 0xac,
+	0x13, 0x84, 0x44, 0xcf, 0xe9, 0xba, 0xaa, 0x17, 0xb9, 0x26, 0x2f, 0xa3, 0x61, 0x34, 0xf5, 0x04,
+	0x92, 0xd2, 0x48, 0xf5, 0xb3, 0x0e, 0x6a, 0x87, 0x2a, 0x52, 0x84, 0xbc, 0x34, 0xb1, 0x1d, 0xee,
+	0x36, 0x44, 0x59, 0x77, 0xf5, 0x01, 0x0a, 0x4b, 0x15, 0xc5, 0xa8, 0xc3, 0x8e, 0xb0, 0x3b, 0x93,
+	0x7e, 0xb3, 0xf6, 0xee, 0x2e, 0x93, 0xf4, 0x51, 0xd5, 0x22, 0x0c, 0xb4, 0x17, 0x79, 0x0c, 0x7b,
+	0xf3, 0xf6, 0xb3, 0x56, 0x0b, 0x70, 0x5b, 0xdc, 0xf5, 0x99, 0xfe, 0xe7, 0x52, 0xe2, 0xe7, 0xeb,
+	0x16, 0x79, 0xb7, 0x18, 0x55, 0xe7, 0x79, 0x0e, 0x70, 0x9d, 0x47, 0x35, 0xbe, 0x29, 0x8e, 0x9d,
+	0xd6, 0x41, 0x6a, 0xbf, 0x92, 0x90, 0x94, 0xb6, 0xd8, 0x81, 0xa4, 0x1c, 0x43, 0x3c, 0x5c, 0x75,
+	0x67, 0x0b, 0x93, 0x6b, 0x1e, 0x6d, 0x16, 0x85, 0xc9, 0x48, 0xf1, 0xeb, 0xcf, 0x7f, 0x3f, 0xe2,
+	0x88, 0x99, 0xc8, 0xc7, 0x24, 0xe7, 0x15, 0xbb, 0x90, 0x10, 0x52, 0x24, 0x1b, 0x7c, 0x66, 0xac,
+	0xc3, 0x8d, 0x1a, 0x85, 0x2a, 0x49, 0x54, 0x1e, 0x73, 0x0b, 0x28, 0x3a, 0xf2, 0x5a, 0x63, 0xf4,
+	0x21, 0x15, 0x8e, 0x27, 0xae, 0x0b, 0x3e, 0x37, 0xd3, 0xe6, 0xfd, 0x2d, 0x2a, 0x05, 0xdd, 0x97,
+	0xd0, 0x2c, 0xee, 0xce, 0x3d, 0x2e, 0x92, 0x13, 0x88, 0x7b, 0x65, 0xdc, 0x59, 0x7b, 0x9d, 0xd1,
+	0x01, 0x37, 0x8f, 0x36, 0x8b, 0x14, 0xee, 0x40, 0xe2, 0xf6, 0xb1, 0xb0, 0x88, 0xa3, 0x23, 0xf1,
+	0x49, 0x8c, 0xf1, 0x8b, 0x01, 0x70, 0x3d, 0xb0, 0x58, 0x59, 0xe3, 0xba, 0x34, 0xed, 0xe6, 0xc3,
+	0x1b, 0x28, 0x55, 0x88, 0x7b, 0x32, 0x44, 0x01, 0xf7, 0x56, 0x3d, 0x90, 0x01, 0x7e, 0x33, 0x20,
+	0xad, 0x4f, 0xe1, 0xf1, 0x36, 0xdf, 0x59, 0x80, 0xca, 0x76, 0xa1, 0xe2, 0x3f, 0x90, 0xfc, 0x32,
+	0x5a, 0xab, 0xf8, 0x74, 0xa4, 0x3e, 0x9e, 0x71, 0xbd, 0x71, 0x39, 0xb1, 0x8c, 0xab, 0x89, 0x65,
+	0xfc, 0x9d, 0x58, 0xc6, 0xf7, 0xa9, 0x15, 0xbb, 0x9a, 0x5a, 0xb1, 0xdf, 0x53, 0x2b, 0xf6, 0xbe,
+	0xd6, 0xf6, 0xf8, 0xf9, 0xb0, 0x59, 0xfd, 0xc8, 0xba, 0xf4, 0xad, 0xa4, 0x9e, 0x34, 0x9c, 0x66,
+	0x40, 0xd5, 0xbb, 0xff, 0xe9, 0x29, 0xfd, 0x1c, 0x71, 0xe4, 0x17, 0xbe, 0x1b, 0x34, 0x53, 0xf2,
+	0x15, 0x7f, 0xf2, 0x3f, 0x00, 0x00, 0xff, 0xff, 0xc8, 0x2c, 0x87, 0x84, 0x4d, 0x06, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -427,6 +606,8 @@ const _ = grpc.SupportPackageIsVersion4
 type QueryClient interface {
 	Paths(ctx context.Context, in *QueryPathsRequest, opts ...grpc.CallOption) (*QueryPathsResponse, error)
 	Path(ctx context.Context, in *QueryPathRequest, opts ...grpc.CallOption) (*QueryPathResponse, error)
+	Quotas(ctx context.Context, in *QueryQuotasRequest, opts ...grpc.CallOption) (*QueryQuotasResponse, error)
+	Quota(ctx context.Context, in *QueryQuotaRequest, opts ...grpc.CallOption) (*QueryQuotaResponse, error)
 	RateLimits(ctx context.Context, in *QueryRateLimitsRequest, opts ...grpc.CallOption) (*QueryRateLimitsResponse, error)
 	RateLimit(ctx context.Context, in *QueryRateLimitRequest, opts ...grpc.CallOption) (*QueryRateLimitResponse, error)
 }
@@ -457,6 +638,24 @@ func (c *queryClient) Path(ctx context.Context, in *QueryPathRequest, opts ...gr
 	return out, nil
 }
 
+func (c *queryClient) Quotas(ctx context.Context, in *QueryQuotasRequest, opts ...grpc.CallOption) (*QueryQuotasResponse, error) {
+	out := new(QueryQuotasResponse)
+	err := c.cc.Invoke(ctx, "/stride.ratelimit.Query/Quotas", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *queryClient) Quota(ctx context.Context, in *QueryQuotaRequest, opts ...grpc.CallOption) (*QueryQuotaResponse, error) {
+	out := new(QueryQuotaResponse)
+	err := c.cc.Invoke(ctx, "/stride.ratelimit.Query/Quota", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *queryClient) RateLimits(ctx context.Context, in *QueryRateLimitsRequest, opts ...grpc.CallOption) (*QueryRateLimitsResponse, error) {
 	out := new(QueryRateLimitsResponse)
 	err := c.cc.Invoke(ctx, "/stride.ratelimit.Query/RateLimits", in, out, opts...)
@@ -479,6 +678,8 @@ func (c *queryClient) RateLimit(ctx context.Context, in *QueryRateLimitRequest, 
 type QueryServer interface {
 	Paths(context.Context, *QueryPathsRequest) (*QueryPathsResponse, error)
 	Path(context.Context, *QueryPathRequest) (*QueryPathResponse, error)
+	Quotas(context.Context, *QueryQuotasRequest) (*QueryQuotasResponse, error)
+	Quota(context.Context, *QueryQuotaRequest) (*QueryQuotaResponse, error)
 	RateLimits(context.Context, *QueryRateLimitsRequest) (*QueryRateLimitsResponse, error)
 	RateLimit(context.Context, *QueryRateLimitRequest) (*QueryRateLimitResponse, error)
 }
@@ -492,6 +693,12 @@ func (*UnimplementedQueryServer) Paths(ctx context.Context, req *QueryPathsReque
 }
 func (*UnimplementedQueryServer) Path(ctx context.Context, req *QueryPathRequest) (*QueryPathResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Path not implemented")
+}
+func (*UnimplementedQueryServer) Quotas(ctx context.Context, req *QueryQuotasRequest) (*QueryQuotasResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Quotas not implemented")
+}
+func (*UnimplementedQueryServer) Quota(ctx context.Context, req *QueryQuotaRequest) (*QueryQuotaResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Quota not implemented")
 }
 func (*UnimplementedQueryServer) RateLimits(ctx context.Context, req *QueryRateLimitsRequest) (*QueryRateLimitsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RateLimits not implemented")
@@ -536,6 +743,42 @@ func _Query_Path_Handler(srv interface{}, ctx context.Context, dec func(interfac
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(QueryServer).Path(ctx, req.(*QueryPathRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Query_Quotas_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryQuotasRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(QueryServer).Quotas(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/stride.ratelimit.Query/Quotas",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(QueryServer).Quotas(ctx, req.(*QueryQuotasRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Query_Quota_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryQuotaRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(QueryServer).Quota(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/stride.ratelimit.Query/Quota",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(QueryServer).Quota(ctx, req.(*QueryQuotaRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -587,6 +830,14 @@ var _Query_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Path",
 			Handler:    _Query_Path_Handler,
+		},
+		{
+			MethodName: "Quotas",
+			Handler:    _Query_Quotas_Handler,
+		},
+		{
+			MethodName: "Quota",
+			Handler:    _Query_Quota_Handler,
 		},
 		{
 			MethodName: "RateLimits",
@@ -714,6 +965,131 @@ func (m *QueryPathResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	if m.Path != nil {
 		{
 			size, err := m.Path.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintQuery(dAtA, i, uint64(size))
+		}
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *QueryQuotasRequest) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *QueryQuotasRequest) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *QueryQuotasRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	return len(dAtA) - i, nil
+}
+
+func (m *QueryQuotasResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *QueryQuotasResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *QueryQuotasResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.Quotas) > 0 {
+		for iNdEx := len(m.Quotas) - 1; iNdEx >= 0; iNdEx-- {
+			{
+				size, err := m.Quotas[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				if err != nil {
+					return 0, err
+				}
+				i -= size
+				i = encodeVarintQuery(dAtA, i, uint64(size))
+			}
+			i--
+			dAtA[i] = 0xa
+		}
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *QueryQuotaRequest) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *QueryQuotaRequest) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *QueryQuotaRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.Name) > 0 {
+		i -= len(m.Name)
+		copy(dAtA[i:], m.Name)
+		i = encodeVarintQuery(dAtA, i, uint64(len(m.Name)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *QueryQuotaResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *QueryQuotaResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *QueryQuotaResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.Quota != nil {
+		{
+			size, err := m.Quota.MarshalToSizedBuffer(dAtA[:i])
 			if err != nil {
 				return 0, err
 			}
@@ -907,6 +1283,56 @@ func (m *QueryPathResponse) Size() (n int) {
 	_ = l
 	if m.Path != nil {
 		l = m.Path.Size()
+		n += 1 + l + sovQuery(uint64(l))
+	}
+	return n
+}
+
+func (m *QueryQuotasRequest) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	return n
+}
+
+func (m *QueryQuotasResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if len(m.Quotas) > 0 {
+		for _, e := range m.Quotas {
+			l = e.Size()
+			n += 1 + l + sovQuery(uint64(l))
+		}
+	}
+	return n
+}
+
+func (m *QueryQuotaRequest) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.Name)
+	if l > 0 {
+		n += 1 + l + sovQuery(uint64(l))
+	}
+	return n
+}
+
+func (m *QueryQuotaResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.Quota != nil {
+		l = m.Quota.Size()
 		n += 1 + l + sovQuery(uint64(l))
 	}
 	return n
@@ -1246,6 +1672,308 @@ func (m *QueryPathResponse) Unmarshal(dAtA []byte) error {
 				m.Path = &Path{}
 			}
 			if err := m.Path.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipQuery(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *QueryQuotasRequest) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowQuery
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: QueryQuotasRequest: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: QueryQuotasRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		default:
+			iNdEx = preIndex
+			skippy, err := skipQuery(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *QueryQuotasResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowQuery
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: QueryQuotasResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: QueryQuotasResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Quotas", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Quotas = append(m.Quotas, Quota{})
+			if err := m.Quotas[len(m.Quotas)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipQuery(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *QueryQuotaRequest) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowQuery
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: QueryQuotaRequest: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: QueryQuotaRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Name", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Name = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipQuery(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *QueryQuotaResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowQuery
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: QueryQuotaResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: QueryQuotaResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Quota", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.Quota == nil {
+				m.Quota = &Quota{}
+			}
+			if err := m.Quota.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
