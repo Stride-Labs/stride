@@ -75,6 +75,18 @@ func (suite *KeeperTestSuite) TestOnRecvPacket() {
 			recvDenom:  atomIbcDenom,
 			expSuccess: true,
 		},
+		{ // all okay with no functional part
+			forwardingActive: true,
+			packetData: transfertypes.FungibleTokenPacketData{
+				Denom:    "uatom",
+				Amount:   "1000000",
+				Sender:   "cosmos16plylpsgxechajltx9yeseqexzdzut9g8vla4k",
+				Receiver: fmt.Sprintf("%s", addr1.String()),
+				Memo:     "",
+			},
+			recvDenom:  atomIbcDenom,
+			expSuccess: true,
+		},
 		{ // strd denom
 			forwardingActive: true,
 			packetData: transfertypes.FungibleTokenPacketData{
@@ -93,7 +105,19 @@ func (suite *KeeperTestSuite) TestOnRecvPacket() {
 				Denom:    strdIbcDenom,
 				Amount:   "1000000",
 				Sender:   "cosmos16plylpsgxechajltx9yeseqexzdzut9g8vla4k",
-				Receiver: "xxx",
+				Receiver: "xxx|stakeibc/LiquidStake",
+				Memo:     "",
+			},
+			recvDenom:  "ustrd",
+			expSuccess: false,
+		},
+		{ // invalid receiver liquid staking
+			forwardingActive: true,
+			packetData: transfertypes.FungibleTokenPacketData{
+				Denom:    strdIbcDenom,
+				Amount:   "1000000",
+				Sender:   "cosmos16plylpsgxechajltx9yeseqexzdzut9g8vla4k",
+				Receiver: "xxx|stakeibc/LiquidStake",
 				Memo:     "",
 			},
 			recvDenom:  "ustrd",
