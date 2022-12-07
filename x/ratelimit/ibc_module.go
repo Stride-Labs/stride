@@ -1,7 +1,7 @@
 package ratelimit
 
 import (
-	"github.com/Stride-Labs/stride/v3/x/ratelimit/keeper"
+	"github.com/Stride-Labs/stride/v4/x/ratelimit/keeper"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
