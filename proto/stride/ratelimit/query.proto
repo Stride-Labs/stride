@@ -1,0 +1,57 @@
+syntax = "proto3";
+package stride.ratelimit;
+
+import "stride/ratelimit/ratelimit.proto";
+import "google/api/annotations.proto";
+import "gogoproto/gogo.proto";
+
+option go_package = "github.com/Stride-Labs/stride/v3/x/ratelimit/types";
+
+// Query defines the gRPC querier service.
+service Query {
+  rpc Paths(QueryPathsRequest) returns (QueryPathsResponse) {
+    option (google.api.http).get = "/ratelimit/paths";
+  }
+  rpc Path(QueryPathRequest) returns (QueryPathResponse) {
+    option (google.api.http).get = "/ratelimit/path/{id}";
+  }
+
+  rpc RateLimits(QueryRateLimitsRequest) returns (QueryRateLimitsResponse) {
+    option (google.api.http).get = "/ratelimit/ratelimits";
+  }
+  rpc RateLimit(QueryRateLimitRequest) returns (QueryRateLimitResponse) {
+    option (google.api.http).get = "/ratelimit/ratelimit/{path_id}";
+  }
+}
+
+message QueryPathsRequest {}
+
+message QueryPathsResponse {
+  repeated Path paths = 1 [
+    (gogoproto.nullable) = false
+  ];
+}
+
+message QueryPathRequest {
+  string id = 1;
+}
+
+message QueryPathResponse {
+  Path path = 1;
+}
+
+message QueryRateLimitsRequest {}
+
+message QueryRateLimitsResponse {
+  repeated RateLimit rate_limits = 1 [
+    (gogoproto.nullable) = false
+  ];
+}
+
+message QueryRateLimitRequest {
+  string path_id = 1;
+}
+
+message QueryRateLimitResponse {
+  RateLimit rate_limit = 1;
+}

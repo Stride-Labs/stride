@@ -1,0 +1,11 @@
+syntax = "proto3";
+package stride.ratelimit;
+
+import "gogoproto/gogo.proto";
+
+option go_package = "github.com/Stride-Labs/stride/v3/x/ratelimit/types";
+
+// Params defines the ratelimit module's parameters.
+message Params {
+
+}
