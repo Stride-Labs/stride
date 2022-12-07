@@ -6,7 +6,7 @@ import "stride/stakeibc/ica_account.proto";
 import "gogoproto/gogo.proto";
 import "cosmos_proto/cosmos.proto";
 
-option go_package = "github.com/Stride-Labs/stride/v3/x/stakeibc/types";
+option go_package = "github.com/Stride-Labs/stride/v4/x/stakeibc/types";
 
 // next id: 19
 message HostZone {
