@@ -1,9 +1,6 @@
 package keeper_test
 
 import (
-	"math"
-	"regexp"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingTypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	channeltypes "github.com/cosmos/ibc-go/v3/modules/core/04-channel/types"
@@ -194,26 +191,28 @@ func (s *KeeperTestSuite) TestDelegateCallback_HostNotFound() {
 	s.Require().Equal(recordtypes.DepositRecord_DELEGATION_QUEUE, record.Status, "deposit record status should not have changed")
 }
 
-func (s *KeeperTestSuite) TestDelegateCallback_BigAmount() {
-	tc := s.SetupDelegateCallback()
-	invalidArgs := tc.validArgs
-	badSplitDelegation := types.SplitDelegation{
-		Validator: "address",
-		Amount:    sdk.NewIntFromUint64(math.MaxUint64),
-	}
-	callbackArgs := types.DelegateCallback{
-		HostZoneId:       HostChainId,
-		DepositRecordId:  1,
-		SplitDelegations: []*types.SplitDelegation{&badSplitDelegation},
-	}
-	args, err := s.App.StakeibcKeeper.MarshalDelegateCallbackArgs(s.Ctx, callbackArgs)
-	s.Require().NoError(err)
+// Not get this case anymore
 
-	err = stakeibckeeper.DelegateCallback(s.App.StakeibcKeeper, s.Ctx, invalidArgs.packet, invalidArgs.ack, args)
-	s.Require().Regexp(regexp.MustCompile(`overflow: unable to cast \d+ of type uint64 to int64`), err.Error())
+// func (s *KeeperTestSuite) TestDelegateCallback_BigAmount() {
+// 	tc := s.SetupDelegateCallback()
+// 	invalidArgs := tc.validArgs
+// 	badSplitDelegation := types.SplitDelegation{
+// 		Validator: "address",
+// 		Amount:    sdk.NewIntFromUint64(math.MaxUint64),
+// 	}
+// 	callbackArgs := types.DelegateCallback{
+// 		HostZoneId:       HostChainId,
+// 		DepositRecordId:  1,
+// 		SplitDelegations: []*types.SplitDelegation{&badSplitDelegation},
+// 	}
+// 	args, err := s.App.StakeibcKeeper.MarshalDelegateCallbackArgs(s.Ctx, callbackArgs)
+// 	s.Require().NoError(err)
 
-	s.checkDelegateStateIfCallbackFailed(tc)
-}
+// 	err = stakeibckeeper.DelegateCallback(s.App.StakeibcKeeper, s.Ctx, invalidArgs.packet, invalidArgs.ack, args)
+// 	s.Require().Regexp(regexp.MustCompile(`overflow: unable to cast \d+ of type uint64 to int64`), err.Error())
+
+// 	s.checkDelegateStateIfCallbackFailed(tc)
+// }
 
 func (s *KeeperTestSuite) TestDelegateCallback_MissingValidator() {
 	tc := s.SetupDelegateCallback()
