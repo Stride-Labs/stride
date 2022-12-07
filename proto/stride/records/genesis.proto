@@ -12,7 +12,8 @@ message UserRedemptionRecord {
   string sender = 2;
   string receiver = 3;
   string amount = 4 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int"
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
   ];
   string denom = 5;
   string host_zone_id = 6;
@@ -44,7 +45,8 @@ message NoData {}
 message DepositRecord {
   uint64 id = 1;
   string amount = 2 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int"
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
   ];
   string denom = 3;
   string host_zone_id = 4;
@@ -81,10 +83,12 @@ message HostZoneUnbonding {
     CLAIMABLE = 2;
   }
   string st_token_amount = 1 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int"
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
   ];
   string native_token_amount = 2 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int"
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
   ];
   string denom = 3;
   string host_zone_id = 4;

@@ -25,7 +25,8 @@ message Validator {
   ValidatorStatus status = 3;
   uint64 commission_rate = 4;
   string delegation_amt = 5 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int"
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
   ];
   uint64 weight = 6;
   ValidatorExchangeRate internal_exchange_rate = 7;

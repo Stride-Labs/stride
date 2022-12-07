@@ -40,7 +40,8 @@ message HostZone {
   uint64 unbonding_frequency = 14;
   // TODO(TEST-101) int to dec
   string staked_bal = 13 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int"
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
   ];
   string address = 18 [ (gogoproto.moretags) = "yaml:\"address\"" ];
   reserved 15;
