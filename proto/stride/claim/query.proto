@@ -8,7 +8,7 @@ import "stride/claim/claim.proto";
 import "stride/claim/params.proto";
 import "stride/vesting/vesting.proto";
 
-option go_package = "github.com/Stride-Labs/stride/v3/x/claim/types";
+option go_package = "github.com/Stride-Labs/stride/v4/x/claim/types";
 
 // Query defines the gRPC querier service.
 service Query {
