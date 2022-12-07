@@ -16,12 +16,12 @@ import (
 )
 
 type DelegateCallbackState struct {
-	stakedBal      uint64
-	balanceToStake int64
-	val1Bal        uint64
-	val2Bal        uint64
-	val1RelAmt     int64
-	val2RelAmt     int64
+	stakedBal      sdk.Int
+	val1Bal        sdk.Int
+	val2Bal        sdk.Int
+	val1RelAmt     sdk.Int
+	val2RelAmt     sdk.Int
+	balanceToStake sdk.Int
 	depositRecord  recordtypes.DepositRecord
 	callbackArgs   types.DelegateCallback
 }
@@ -38,12 +38,12 @@ type DelegateCallbackTestCase struct {
 }
 
 func (s *KeeperTestSuite) SetupDelegateCallback() DelegateCallbackTestCase {
-	stakedBal := uint64(1_000_000)
-	val1Bal := uint64(400_000)
-	val2Bal := uint64(stakedBal) - val1Bal
-	balanceToStake := int64(300_000)
-	val1RelAmt := int64(120_000)
-	val2RelAmt := int64(180_000)
+	stakedBal := sdk.NewInt(1_000_000)
+	val1Bal := sdk.NewInt(400_000)
+	val2Bal := stakedBal.Sub(val1Bal)
+	balanceToStake := sdk.NewInt(300_000)
+	val1RelAmt := sdk.NewInt(120_000)
+	val2RelAmt := sdk.NewInt(180_000)
 
 	val1 := types.Validator{
 		Name:          "val1",
@@ -79,11 +79,11 @@ func (s *KeeperTestSuite) SetupDelegateCallback() DelegateCallbackTestCase {
 	ack := s.ICAPacketAcknowledgement(msgs, nil)
 	val1SplitDelegation := types.SplitDelegation{
 		Validator: val1.Address,
-		Amount:    uint64(val1RelAmt),
+		Amount:    val1RelAmt,
 	}
 	val2SplitDelegation := types.SplitDelegation{
 		Validator: val2.Address,
-		Amount:    uint64(val2RelAmt),
+		Amount:    val2RelAmt,
 	}
 	callbackArgs := types.DelegateCallback{
 		HostZoneId:       HostChainId,
@@ -123,13 +123,13 @@ func (s *KeeperTestSuite) TestDelegateCallback_Successful() {
 	// Confirm stakedBal has increased
 	hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, HostChainId)
 	s.Require().True(found)
-	s.Require().Equal(int64(initialState.stakedBal)+initialState.balanceToStake, int64(hostZone.StakedBal), "stakedBal should have increased")
+	s.Require().Equal(initialState.stakedBal.Add(initialState.balanceToStake), hostZone.StakedBal, "stakedBal should have increased")
 
 	// Confirm delegations have been added to validators
 	val1 := hostZone.Validators[0]
 	val2 := hostZone.Validators[1]
-	s.Require().Equal(int64(initialState.val1Bal)+initialState.val1RelAmt, int64(val1.DelegationAmt), "val1 balance should have increased")
-	s.Require().Equal(int64(initialState.val2Bal)+initialState.val2RelAmt, int64(val2.DelegationAmt), "val2 balance should have increased")
+	s.Require().Equal(initialState.val1Bal.Add(initialState.val1RelAmt), val1.DelegationAmt, "val1 balance should have increased")
+	s.Require().Equal(initialState.val2Bal.Add(initialState.val2RelAmt), val2.DelegationAmt, "val2 balance should have increased")
 
 	// Confirm deposit record has been removed
 	records := s.App.RecordsKeeper.GetAllDepositRecord(s.Ctx)
@@ -140,7 +140,7 @@ func (s *KeeperTestSuite) checkDelegateStateIfCallbackFailed(tc DelegateCallback
 	// Confirm stakedBal has not increased
 	hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, HostChainId)
 	s.Require().True(found)
-	s.Require().Equal(int64(tc.initialState.stakedBal), int64(hostZone.StakedBal), "stakedBal should not have increased")
+	s.Require().Equal(tc.initialState.stakedBal, hostZone.StakedBal, "stakedBal should not have increased")
 
 	// Confirm deposit record has NOT been removed
 	records := s.App.RecordsKeeper.GetAllDepositRecord(s.Ctx)
@@ -199,7 +199,7 @@ func (s *KeeperTestSuite) TestDelegateCallback_BigAmount() {
 	invalidArgs := tc.validArgs
 	badSplitDelegation := types.SplitDelegation{
 		Validator: "address",
-		Amount:    math.MaxUint64,
+		Amount:    sdk.NewIntFromUint64(math.MaxUint64),
 	}
 	callbackArgs := types.DelegateCallback{
 		HostZoneId:       HostChainId,
@@ -220,7 +220,7 @@ func (s *KeeperTestSuite) TestDelegateCallback_MissingValidator() {
 	invalidArgs := tc.validArgs
 	badSplitDelegation := types.SplitDelegation{
 		Validator: "address_dne",
-		Amount:    1234,
+		Amount:    sdk.NewInt(1234),
 	}
 	callbackArgs := types.DelegateCallback{
 		HostZoneId:       HostChainId,

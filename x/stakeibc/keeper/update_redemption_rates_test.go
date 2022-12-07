@@ -29,7 +29,7 @@ func (s *KeeperTestSuite) SetupUpdateRedemptionRates(
 	//    to comprise the undelegated delegation account balance i.e. "to be staked"
 	toBeStakedDepositRecord := recordtypes.DepositRecord{
 		HostZoneId: "GAIA",
-		Amount:     undelegatedBal.String(),
+		Amount:     undelegatedBal,
 		Status:     recordtypes.DepositRecord_DELEGATION_QUEUE,
 	}
 	s.App.RecordsKeeper.AppendDepositRecord(s.Ctx, toBeStakedDepositRecord)
@@ -38,7 +38,7 @@ func (s *KeeperTestSuite) SetupUpdateRedemptionRates(
 	//    to comprise the stakeibc module account balance i.e. "to be transferred"
 	toBeTransferedDepositRecord := recordtypes.DepositRecord{
 		HostZoneId: "GAIA",
-		Amount:     justDepositedBal.String(),
+		Amount:     justDepositedBal,
 		Status:     recordtypes.DepositRecord_TRANSFER_QUEUE,
 	}
 	s.App.RecordsKeeper.AppendDepositRecord(s.Ctx, toBeTransferedDepositRecord)
@@ -54,7 +54,7 @@ func (s *KeeperTestSuite) SetupUpdateRedemptionRates(
 	hostZone := stakeibctypes.HostZone{
 		ChainId:        "GAIA",
 		HostDenom:      "uatom",
-		StakedBal:      stakedBal.String(),
+		StakedBal:      stakedBal,
 		RedemptionRate: initialRedemptionRate,
 	}
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)

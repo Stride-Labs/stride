@@ -141,7 +141,7 @@ func (s *KeeperTestSuite) TestRegisterHostZone_Success() {
 	// Confirm an empty deposit record was created
 	expectedDepositRecord := recordstypes.DepositRecord{
 		Id:                 uint64(0),
-		Amount:             int64(0),
+		Amount:             sdk.ZeroInt(),
 		HostZoneId:         hostZone.ChainId,
 		Denom:              hostZone.HostDenom,
 		Status:             recordstypes.DepositRecord_TRANSFER_QUEUE,

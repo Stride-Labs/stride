@@ -16,8 +16,8 @@ import (
 type ClaimCallbackState struct {
 	callbackArgs    types.ClaimCallback
 	epochNumber     uint64
-	decrementAmount uint64
-	hzu1TokenAmount uint64
+	decrementAmount sdk.Int
+	hzu1TokenAmount sdk.Int
 }
 
 type ClaimCallbackArgs struct {
@@ -58,24 +58,24 @@ func (s *KeeperTestSuite) SetupClaimCallback() ClaimCallbackTestCase {
 		HostZoneId:            HostChainId,
 		Status:                recordtypes.HostZoneUnbonding_CLAIMABLE,
 		UserRedemptionRecords: []string{recordId1, recordId2},
-		NativeTokenAmount:     uint64(1_000_000),
+		NativeTokenAmount:     sdk.NewInt(1_000_000),
 	}
 	hostZoneUnbonding2 := recordtypes.HostZoneUnbonding{
 		HostZoneId:            "not_gaia",
 		Status:                recordtypes.HostZoneUnbonding_EXIT_TRANSFER_QUEUE,
 		UserRedemptionRecords: []string{recordId3},
-		NativeTokenAmount:     uint64(1_000_000),
+		NativeTokenAmount:     sdk.NewInt(1_000_000),
 	}
 	// some other hzus in the future
 	hostZoneUnbonding3 := recordtypes.HostZoneUnbonding{
 		HostZoneId:        "not_gaia",
 		Status:            recordtypes.HostZoneUnbonding_EXIT_TRANSFER_QUEUE,
-		NativeTokenAmount: uint64(1_000_000),
+		NativeTokenAmount: sdk.NewInt(1_000_000),
 	}
 	hostZoneUnbonding4 := recordtypes.HostZoneUnbonding{
 		HostZoneId:        HostChainId,
 		Status:            recordtypes.HostZoneUnbonding_EXIT_TRANSFER_QUEUE,
-		NativeTokenAmount: uint64(1_000_000),
+		NativeTokenAmount: sdk.NewInt(1_000_000),
 	}
 	epochUnbondingRecord1 := recordtypes.EpochUnbondingRecord{
 		EpochNumber:        epochNumber,
@@ -141,7 +141,7 @@ func (s *KeeperTestSuite) TestClaimCallback_Successful() {
 	hzu4 := epochUnbondingRecord2.HostZoneUnbondings[1]
 
 	// check that hzu1 has a decremented amount
-	s.Require().Equal(hzu1.NativeTokenAmount, tc.initialState.hzu1TokenAmount-tc.initialState.decrementAmount, "hzu1 amount decremented")
+	s.Require().Equal(hzu1.NativeTokenAmount, tc.initialState.hzu1TokenAmount.Sub(tc.initialState.decrementAmount), "hzu1 amount decremented")
 	s.Require().Equal(hzu1.Status, recordtypes.HostZoneUnbonding_CLAIMABLE, "hzu1 status set to transferred")
 	// verify the other hzus are unchanged
 	s.Require().Equal(hzu2.NativeTokenAmount, hzu2.NativeTokenAmount, "hzu2 amount unchanged")
@@ -214,7 +214,7 @@ func (s *KeeperTestSuite) TestDecrementHostZoneUnbonding_Success() {
 	hzu1 := epochUnbondingRecord1.HostZoneUnbondings[0]
 
 	// check that hzu1 has a decremented amount
-	s.Require().Equal(hzu1.NativeTokenAmount-userRedemptionRecord.Amount, hzu1.NativeTokenAmount, "hzu1 amount decremented")
+	s.Require().Equal(hzu1.NativeTokenAmount.Sub(userRedemptionRecord.Amount), hzu1.NativeTokenAmount, "hzu1 amount decremented")
 }
 
 func (s *KeeperTestSuite) TestDecrementHostZoneUnbonding_HzuNotFound() {
