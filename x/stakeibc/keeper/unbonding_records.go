@@ -65,7 +65,7 @@ func (k Keeper) GetHostZoneUnbondingMsgs(ctx sdk.Context, hostZone types.HostZon
 		return nil, sdk.ZeroInt(), nil, nil, sdkerrors.Wrap(types.ErrHostZoneICAAccountNotFound, errMsg)
 	}
 	validators := hostZone.GetValidators()
-	if totalAmtToUnbond == sdk.ZeroInt() {
+	if totalAmtToUnbond.Equal(sdk.ZeroInt()) {
 		return nil, sdk.ZeroInt(), nil, nil, nil
 	}
 	// we distribute the unbonding based on our target weights
