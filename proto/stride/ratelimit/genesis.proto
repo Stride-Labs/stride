@@ -1,0 +1,16 @@
+syntax = "proto3";
+package stride.ratelimit;
+
+import "gogoproto/gogo.proto";
+import "stride/ratelimit/params.proto";
+
+option go_package = "github.com/Stride-Labs/stride/v3/x/ratelimit/types";
+
+// GenesisState defines the ratelimit module's genesis state.
+message GenesisState {
+  // params defines all the parameters of the module.
+  Params params = 1 [
+    (gogoproto.moretags) = "yaml:\"params\"",
+    (gogoproto.nullable) = false
+  ];
+}
