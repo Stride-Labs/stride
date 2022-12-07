@@ -559,7 +559,8 @@ func NewStrideApp(
 	)
 	icaModule := ica.NewAppModule(&app.ICAControllerKeeper, &app.ICAHostKeeper)
 
-	// Define the IBC stacks
+	
+// Define the IBC middleware stacks
 	// Stack one (ICAHost Stack) contains:
 	// - IBC
 	// - ICAHost
