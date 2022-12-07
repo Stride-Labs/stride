@@ -227,14 +227,95 @@ func (m *MsgAddQuotaResponse) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_MsgAddQuotaResponse proto.InternalMessageInfo
 
+type MsgRemoveQuota struct {
+	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+}
+
+func (m *MsgRemoveQuota) Reset()         { *m = MsgRemoveQuota{} }
+func (m *MsgRemoveQuota) String() string { return proto.CompactTextString(m) }
+func (*MsgRemoveQuota) ProtoMessage()    {}
+func (*MsgRemoveQuota) Descriptor() ([]byte, []int) {
+	return fileDescriptor_a571dec98d62cf94, []int{4}
+}
+func (m *MsgRemoveQuota) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *MsgRemoveQuota) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_MsgRemoveQuota.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *MsgRemoveQuota) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgRemoveQuota.Merge(m, src)
+}
+func (m *MsgRemoveQuota) XXX_Size() int {
+	return m.Size()
+}
+func (m *MsgRemoveQuota) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgRemoveQuota.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MsgRemoveQuota proto.InternalMessageInfo
+
+func (m *MsgRemoveQuota) GetName() string {
+	if m != nil {
+		return m.Name
+	}
+	return ""
+}
+
+type MsgRemoveQuotaResponse struct {
+}
+
+func (m *MsgRemoveQuotaResponse) Reset()         { *m = MsgRemoveQuotaResponse{} }
+func (m *MsgRemoveQuotaResponse) String() string { return proto.CompactTextString(m) }
+func (*MsgRemoveQuotaResponse) ProtoMessage()    {}
+func (*MsgRemoveQuotaResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_a571dec98d62cf94, []int{5}
+}
+func (m *MsgRemoveQuotaResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *MsgRemoveQuotaResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_MsgRemoveQuotaResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *MsgRemoveQuotaResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgRemoveQuotaResponse.Merge(m, src)
+}
+func (m *MsgRemoveQuotaResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *MsgRemoveQuotaResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgRemoveQuotaResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MsgRemoveQuotaResponse proto.InternalMessageInfo
+
 type MsgResetRateLimit struct {
+	PathId string `protobuf:"bytes,1,opt,name=path_id,json=pathId,proto3" json:"path_id,omitempty"`
 }
 
 func (m *MsgResetRateLimit) Reset()         { *m = MsgResetRateLimit{} }
 func (m *MsgResetRateLimit) String() string { return proto.CompactTextString(m) }
 func (*MsgResetRateLimit) ProtoMessage()    {}
 func (*MsgResetRateLimit) Descriptor() ([]byte, []int) {
-	return fileDescriptor_a571dec98d62cf94, []int{4}
+	return fileDescriptor_a571dec98d62cf94, []int{6}
 }
 func (m *MsgResetRateLimit) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -263,6 +344,13 @@ func (m *MsgResetRateLimit) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_MsgResetRateLimit proto.InternalMessageInfo
 
+func (m *MsgResetRateLimit) GetPathId() string {
+	if m != nil {
+		return m.PathId
+	}
+	return ""
+}
+
 type MsgResetRateLimitResponse struct {
 }
 
@@ -270,7 +358,7 @@ func (m *MsgResetRateLimitResponse) Reset()         { *m = MsgResetRateLimitResp
 func (m *MsgResetRateLimitResponse) String() string { return proto.CompactTextString(m) }
 func (*MsgResetRateLimitResponse) ProtoMessage()    {}
 func (*MsgResetRateLimitResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_a571dec98d62cf94, []int{5}
+	return fileDescriptor_a571dec98d62cf94, []int{7}
 }
 func (m *MsgResetRateLimitResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -300,13 +388,14 @@ func (m *MsgResetRateLimitResponse) XXX_DiscardUnknown() {
 var xxx_messageInfo_MsgResetRateLimitResponse proto.InternalMessageInfo
 
 type MsgRemoveRateLimit struct {
+	PathId string `protobuf:"bytes,1,opt,name=path_id,json=pathId,proto3" json:"path_id,omitempty"`
 }
 
 func (m *MsgRemoveRateLimit) Reset()         { *m = MsgRemoveRateLimit{} }
 func (m *MsgRemoveRateLimit) String() string { return proto.CompactTextString(m) }
 func (*MsgRemoveRateLimit) ProtoMessage()    {}
 func (*MsgRemoveRateLimit) Descriptor() ([]byte, []int) {
-	return fileDescriptor_a571dec98d62cf94, []int{6}
+	return fileDescriptor_a571dec98d62cf94, []int{8}
 }
 func (m *MsgRemoveRateLimit) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -335,6 +424,13 @@ func (m *MsgRemoveRateLimit) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_MsgRemoveRateLimit proto.InternalMessageInfo
 
+func (m *MsgRemoveRateLimit) GetPathId() string {
+	if m != nil {
+		return m.PathId
+	}
+	return ""
+}
+
 type MsgRemoveRateLimitResponse struct {
 }
 
@@ -342,7 +438,7 @@ func (m *MsgRemoveRateLimitResponse) Reset()         { *m = MsgRemoveRateLimitRe
 func (m *MsgRemoveRateLimitResponse) String() string { return proto.CompactTextString(m) }
 func (*MsgRemoveRateLimitResponse) ProtoMessage()    {}
 func (*MsgRemoveRateLimitResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_a571dec98d62cf94, []int{7}
+	return fileDescriptor_a571dec98d62cf94, []int{9}
 }
 func (m *MsgRemoveRateLimitResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -376,6 +472,8 @@ func init() {
 	proto.RegisterType((*MsgAddRateLimitResponse)(nil), "stride.ratelimit.MsgAddRateLimitResponse")
 	proto.RegisterType((*MsgAddQuota)(nil), "stride.ratelimit.MsgAddQuota")
 	proto.RegisterType((*MsgAddQuotaResponse)(nil), "stride.ratelimit.MsgAddQuotaResponse")
+	proto.RegisterType((*MsgRemoveQuota)(nil), "stride.ratelimit.MsgRemoveQuota")
+	proto.RegisterType((*MsgRemoveQuotaResponse)(nil), "stride.ratelimit.MsgRemoveQuotaResponse")
 	proto.RegisterType((*MsgResetRateLimit)(nil), "stride.ratelimit.MsgResetRateLimit")
 	proto.RegisterType((*MsgResetRateLimitResponse)(nil), "stride.ratelimit.MsgResetRateLimitResponse")
 	proto.RegisterType((*MsgRemoveRateLimit)(nil), "stride.ratelimit.MsgRemoveRateLimit")
@@ -385,34 +483,37 @@ func init() {
 func init() { proto.RegisterFile("stride/ratelimit/tx.proto", fileDescriptor_a571dec98d62cf94) }
 
 var fileDescriptor_a571dec98d62cf94 = []byte{
-	// 428 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x8c, 0x53, 0xdd, 0x6e, 0x94, 0x40,
-	0x14, 0x5e, 0xdc, 0xf5, 0xa7, 0x47, 0xd3, 0x5d, 0xa7, 0x35, 0xb2, 0x68, 0x89, 0xa2, 0x26, 0x6d,
-	0x54, 0x48, 0xaa, 0x2f, 0xa0, 0xd7, 0x8b, 0xa9, 0xf4, 0xce, 0x98, 0xe0, 0x00, 0x27, 0x94, 0xa4,
-	0x33, 0x83, 0xcc, 0x40, 0xf0, 0xce, 0x47, 0xf0, 0x11, 0x7c, 0x1c, 0x2f, 0x7b, 0xe9, 0xa5, 0xd9,
-	0x7d, 0x11, 0xd3, 0x41, 0xb0, 0x50, 0xd7, 0xee, 0x1d, 0xf3, 0xfd, 0x9c, 0xef, 0x70, 0x4e, 0x0e,
-	0xcc, 0xa5, 0x2a, 0xb2, 0x04, 0xbd, 0x82, 0x2a, 0x3c, 0xcd, 0x58, 0xa6, 0x3c, 0x55, 0xbb, 0x79,
-	0x21, 0x94, 0x20, 0xb3, 0x86, 0x72, 0x3b, 0xca, 0xf9, 0x04, 0x53, 0x5f, 0xa6, 0x6f, 0x92, 0x24,
-	0xa0, 0x0a, 0x17, 0xe7, 0x10, 0xd9, 0x85, 0xeb, 0x09, 0x72, 0xc1, 0x4c, 0xe3, 0x91, 0xb1, 0xbf,
-	0x15, 0x34, 0x0f, 0x62, 0xc2, 0xcd, 0xf8, 0x84, 0x72, 0x8e, 0xa7, 0xe6, 0x35, 0x8d, 0xb7, 0x4f,
-	0xb2, 0x07, 0xf0, 0xb9, 0x14, 0x8a, 0x86, 0x9c, 0x32, 0x34, 0xc7, 0x9a, 0xdc, 0xd2, 0xc8, 0x3b,
-	0xca, 0xd0, 0x99, 0xc3, 0xfd, 0x41, 0x42, 0x80, 0x32, 0x17, 0x5c, 0xa2, 0xf3, 0xdd, 0x80, 0xdb,
-	0x0d, 0xf7, 0xfe, 0x5c, 0x4e, 0x08, 0x4c, 0x74, 0x8d, 0x26, 0x58, 0x7f, 0x93, 0x7d, 0x98, 0x31,
-	0x5a, 0x87, 0x39, 0x16, 0x31, 0x72, 0x15, 0x4a, 0xe4, 0x89, 0x6e, 0x60, 0x12, 0x6c, 0x33, 0x5a,
-	0x1f, 0x35, 0xf0, 0x31, 0xf2, 0x64, 0xa8, 0x2c, 0x30, 0xae, 0x74, 0x37, 0x3d, 0x65, 0x80, 0x71,
-	0x45, 0x0e, 0x60, 0x96, 0x94, 0x05, 0x55, 0x99, 0xe0, 0x21, 0xcb, 0x78, 0xa9, 0x50, 0x9a, 0x13,
-	0xad, 0x9c, 0xb6, 0xb8, 0xdf, 0xc0, 0xce, 0x3d, 0xd8, 0xb9, 0xd0, 0x61, 0xd7, 0xf9, 0x0e, 0xdc,
-	0xf5, 0x65, 0x1a, 0xa0, 0x44, 0xd5, 0xfd, 0x96, 0xf3, 0x00, 0xe6, 0x97, 0xc0, 0xce, 0xb1, 0x0b,
-	0x44, 0x93, 0x4c, 0x54, 0xf8, 0xd7, 0xf2, 0x10, 0xac, 0xcb, 0x68, 0xeb, 0x39, 0xfc, 0x3a, 0x86,
-	0xb1, 0x2f, 0x53, 0xf2, 0x11, 0xee, 0xf4, 0x36, 0xf4, 0xd8, 0x1d, 0xee, 0xd1, 0x1d, 0x8c, 0xd8,
-	0x3a, 0xb8, 0x52, 0xd2, 0xa6, 0x90, 0x23, 0xb8, 0xd5, 0x6d, 0x60, 0x6f, 0x9d, 0x4d, 0xd3, 0xd6,
-	0xb3, 0xff, 0xd2, 0x5d, 0xc5, 0x08, 0xb6, 0xfb, 0x53, 0x20, 0x4f, 0xfe, 0x69, 0xec, 0x8b, 0xac,
-	0xe7, 0x1b, 0x88, 0xba, 0x0c, 0x84, 0xe9, 0x60, 0x6c, 0xe4, 0xe9, 0x1a, 0x7f, 0x4f, 0x65, 0xbd,
-	0xd8, 0x44, 0xd5, 0xc6, 0xbc, 0x5d, 0xfc, 0x58, 0xda, 0xc6, 0xd9, 0xd2, 0x36, 0x7e, 0x2d, 0x6d,
-	0xe3, 0xdb, 0xca, 0x1e, 0x9d, 0xad, 0xec, 0xd1, 0xcf, 0x95, 0x3d, 0xfa, 0x70, 0x98, 0x66, 0xea,
-	0xa4, 0x8c, 0xdc, 0x58, 0x30, 0xef, 0x58, 0x57, 0x7c, 0xb9, 0xa0, 0x91, 0xf4, 0xfe, 0x5c, 0x5f,
-	0xf5, 0xda, 0xab, 0x2f, 0x9e, 0xe0, 0x97, 0x1c, 0x65, 0x74, 0x43, 0x9f, 0xe1, 0xab, 0xdf, 0x01,
-	0x00, 0x00, 0xff, 0xff, 0x82, 0x26, 0x8b, 0xc6, 0xa3, 0x03, 0x00, 0x00,
+	// 476 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x8c, 0x94, 0xcf, 0x6e, 0xd3, 0x40,
+	0x10, 0xc6, 0x63, 0x12, 0x5a, 0x3a, 0x45, 0x49, 0x58, 0xfe, 0xd4, 0x31, 0xd4, 0x2a, 0xa6, 0x48,
+	0xa9, 0x68, 0x6d, 0xa9, 0xf0, 0x02, 0x70, 0x43, 0x4a, 0x50, 0x71, 0x4f, 0x20, 0x24, 0xb3, 0xb1,
+	0x47, 0x89, 0xa5, 0xee, 0xda, 0x78, 0x37, 0x51, 0x78, 0x0b, 0x1e, 0x81, 0xc7, 0xe1, 0xd8, 0x23,
+	0x12, 0x17, 0x94, 0xbc, 0x08, 0xca, 0xba, 0xde, 0x3a, 0x2e, 0x69, 0x72, 0xf3, 0xce, 0xf7, 0x9b,
+	0x6f, 0x3e, 0xad, 0x57, 0x03, 0x1d, 0x21, 0xb3, 0x38, 0x42, 0x2f, 0xa3, 0x12, 0x2f, 0x62, 0x16,
+	0x4b, 0x4f, 0x4e, 0xdd, 0x34, 0x4b, 0x64, 0x42, 0xda, 0xb9, 0xe4, 0x6a, 0xc9, 0xf9, 0x0a, 0xad,
+	0xbe, 0x18, 0xbe, 0x8d, 0x22, 0x9f, 0x4a, 0xec, 0x2d, 0x4a, 0xe4, 0x11, 0xdc, 0x8d, 0x90, 0x27,
+	0xcc, 0x34, 0x0e, 0x8c, 0xee, 0x8e, 0x9f, 0x1f, 0x88, 0x09, 0xdb, 0xe1, 0x88, 0x72, 0x8e, 0x17,
+	0xe6, 0x1d, 0x55, 0x2f, 0x8e, 0x64, 0x1f, 0xe0, 0xdb, 0x38, 0x91, 0x34, 0xe0, 0x94, 0xa1, 0x59,
+	0x57, 0xe2, 0x8e, 0xaa, 0x7c, 0xa0, 0x0c, 0x9d, 0x0e, 0xec, 0x55, 0x26, 0xf8, 0x28, 0xd2, 0x84,
+	0x0b, 0x74, 0x7e, 0x1a, 0xb0, 0x9b, 0x6b, 0x1f, 0x17, 0x38, 0x21, 0xd0, 0x50, 0x1e, 0xf9, 0x60,
+	0xf5, 0x4d, 0xba, 0xd0, 0x66, 0x74, 0x1a, 0xa4, 0x98, 0x85, 0xc8, 0x65, 0x20, 0x90, 0x47, 0x2a,
+	0x40, 0xc3, 0x6f, 0x32, 0x3a, 0x3d, 0xcb, 0xcb, 0xe7, 0xc8, 0xa3, 0x2a, 0x99, 0x61, 0x38, 0x51,
+	0x69, 0x96, 0x48, 0x1f, 0xc3, 0x09, 0x39, 0x82, 0x76, 0x34, 0xce, 0xa8, 0x8c, 0x13, 0x1e, 0xb0,
+	0x98, 0x8f, 0x25, 0x0a, 0xb3, 0xa1, 0xc8, 0x56, 0x51, 0xef, 0xe7, 0x65, 0xe7, 0x31, 0x3c, 0x2c,
+	0x25, 0xd4, 0xc9, 0x0f, 0xa1, 0xd9, 0x17, 0x43, 0x1f, 0x59, 0x32, 0xc1, 0x95, 0xd9, 0x1d, 0x13,
+	0x9e, 0x2c, 0x53, 0xba, 0xff, 0x18, 0x1e, 0x28, 0x45, 0xa0, 0xbc, 0xbe, 0xf8, 0x3d, 0xd8, 0x4e,
+	0xa9, 0x1c, 0x05, 0x71, 0x74, 0xe5, 0xb2, 0xb5, 0x38, 0xbe, 0x8f, 0x9c, 0xa7, 0xd0, 0xb9, 0x41,
+	0x6b, 0xab, 0x13, 0x20, 0x7a, 0xc8, 0x06, 0x5e, 0xcf, 0xc0, 0xba, 0x89, 0x17, 0x66, 0xa7, 0x7f,
+	0xea, 0x50, 0xef, 0x8b, 0x21, 0x39, 0x83, 0x7b, 0xfa, 0xaf, 0xec, 0xbb, 0xd5, 0x57, 0xe3, 0x96,
+	0xae, 0xc4, 0x7a, 0x79, 0xab, 0x5c, 0x38, 0x93, 0x2f, 0x70, 0x7f, 0xe9, 0x95, 0x3d, 0x5f, 0xd5,
+	0xa6, 0x11, 0xeb, 0x68, 0x2d, 0xa2, 0xdd, 0x3f, 0xc1, 0x6e, 0xf9, 0x67, 0x1c, 0xfc, 0xb7, 0xb3,
+	0x44, 0x58, 0xdd, 0x75, 0x84, 0xb6, 0x46, 0x68, 0x55, 0x2f, 0xf7, 0xf0, 0x96, 0xe6, 0xeb, 0xf8,
+	0xc7, 0x9b, 0x50, 0x7a, 0xcc, 0x00, 0x9a, 0x95, 0xe7, 0xf0, 0x62, 0x45, 0x7f, 0x19, 0xb2, 0x5e,
+	0x6d, 0x00, 0x15, 0x33, 0xde, 0xf5, 0x7e, 0xcd, 0x6c, 0xe3, 0x72, 0x66, 0x1b, 0x7f, 0x67, 0xb6,
+	0xf1, 0x63, 0x6e, 0xd7, 0x2e, 0xe7, 0x76, 0xed, 0xf7, 0xdc, 0xae, 0x7d, 0x3e, 0x1d, 0xc6, 0x72,
+	0x34, 0x1e, 0xb8, 0x61, 0xc2, 0xbc, 0x73, 0x65, 0x78, 0xd2, 0xa3, 0x03, 0xe1, 0x5d, 0xad, 0x92,
+	0xc9, 0x1b, 0x6f, 0x5a, 0xde, 0x27, 0xdf, 0x53, 0x14, 0x83, 0x2d, 0xb5, 0x53, 0x5e, 0xff, 0x0b,
+	0x00, 0x00, 0xff, 0xff, 0x88, 0xd0, 0xf2, 0x15, 0x70, 0x04, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -427,10 +528,11 @@ const _ = grpc.SupportPackageIsVersion4
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
 type MsgClient interface {
-	AddRateLimit(ctx context.Context, in *MsgAddRateLimit, opts ...grpc.CallOption) (*MsgAddRateLimitResponse, error)
 	AddQuota(ctx context.Context, in *MsgAddQuota, opts ...grpc.CallOption) (*MsgAddQuotaResponse, error)
-	ResetRateLimit(ctx context.Context, in *MsgResetRateLimit, opts ...grpc.CallOption) (*MsgResetRateLimitResponse, error)
+	AddRateLimit(ctx context.Context, in *MsgAddRateLimit, opts ...grpc.CallOption) (*MsgAddRateLimitResponse, error)
+	RemoveQuota(ctx context.Context, in *MsgRemoveQuota, opts ...grpc.CallOption) (*MsgRemoveQuotaResponse, error)
 	RemoveRateLimit(ctx context.Context, in *MsgRemoveRateLimit, opts ...grpc.CallOption) (*MsgRemoveRateLimitResponse, error)
+	ResetRateLimit(ctx context.Context, in *MsgResetRateLimit, opts ...grpc.CallOption) (*MsgResetRateLimitResponse, error)
 }
 
 type msgClient struct {
@@ -439,15 +541,6 @@ type msgClient struct {
 
 func NewMsgClient(cc grpc1.ClientConn) MsgClient {
 	return &msgClient{cc}
-}
-
-func (c *msgClient) AddRateLimit(ctx context.Context, in *MsgAddRateLimit, opts ...grpc.CallOption) (*MsgAddRateLimitResponse, error) {
-	out := new(MsgAddRateLimitResponse)
-	err := c.cc.Invoke(ctx, "/stride.ratelimit.Msg/AddRateLimit", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
 }
 
 func (c *msgClient) AddQuota(ctx context.Context, in *MsgAddQuota, opts ...grpc.CallOption) (*MsgAddQuotaResponse, error) {
@@ -459,9 +552,18 @@ func (c *msgClient) AddQuota(ctx context.Context, in *MsgAddQuota, opts ...grpc.
 	return out, nil
 }
 
-func (c *msgClient) ResetRateLimit(ctx context.Context, in *MsgResetRateLimit, opts ...grpc.CallOption) (*MsgResetRateLimitResponse, error) {
-	out := new(MsgResetRateLimitResponse)
-	err := c.cc.Invoke(ctx, "/stride.ratelimit.Msg/ResetRateLimit", in, out, opts...)
+func (c *msgClient) AddRateLimit(ctx context.Context, in *MsgAddRateLimit, opts ...grpc.CallOption) (*MsgAddRateLimitResponse, error) {
+	out := new(MsgAddRateLimitResponse)
+	err := c.cc.Invoke(ctx, "/stride.ratelimit.Msg/AddRateLimit", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *msgClient) RemoveQuota(ctx context.Context, in *MsgRemoveQuota, opts ...grpc.CallOption) (*MsgRemoveQuotaResponse, error) {
+	out := new(MsgRemoveQuotaResponse)
+	err := c.cc.Invoke(ctx, "/stride.ratelimit.Msg/RemoveQuota", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -477,51 +579,46 @@ func (c *msgClient) RemoveRateLimit(ctx context.Context, in *MsgRemoveRateLimit,
 	return out, nil
 }
 
+func (c *msgClient) ResetRateLimit(ctx context.Context, in *MsgResetRateLimit, opts ...grpc.CallOption) (*MsgResetRateLimitResponse, error) {
+	out := new(MsgResetRateLimitResponse)
+	err := c.cc.Invoke(ctx, "/stride.ratelimit.Msg/ResetRateLimit", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // MsgServer is the server API for Msg service.
 type MsgServer interface {
-	AddRateLimit(context.Context, *MsgAddRateLimit) (*MsgAddRateLimitResponse, error)
 	AddQuota(context.Context, *MsgAddQuota) (*MsgAddQuotaResponse, error)
-	ResetRateLimit(context.Context, *MsgResetRateLimit) (*MsgResetRateLimitResponse, error)
+	AddRateLimit(context.Context, *MsgAddRateLimit) (*MsgAddRateLimitResponse, error)
+	RemoveQuota(context.Context, *MsgRemoveQuota) (*MsgRemoveQuotaResponse, error)
 	RemoveRateLimit(context.Context, *MsgRemoveRateLimit) (*MsgRemoveRateLimitResponse, error)
+	ResetRateLimit(context.Context, *MsgResetRateLimit) (*MsgResetRateLimitResponse, error)
 }
 
 // UnimplementedMsgServer can be embedded to have forward compatible implementations.
 type UnimplementedMsgServer struct {
 }
 
-func (*UnimplementedMsgServer) AddRateLimit(ctx context.Context, req *MsgAddRateLimit) (*MsgAddRateLimitResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method AddRateLimit not implemented")
-}
 func (*UnimplementedMsgServer) AddQuota(ctx context.Context, req *MsgAddQuota) (*MsgAddQuotaResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AddQuota not implemented")
 }
-func (*UnimplementedMsgServer) ResetRateLimit(ctx context.Context, req *MsgResetRateLimit) (*MsgResetRateLimitResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ResetRateLimit not implemented")
+func (*UnimplementedMsgServer) AddRateLimit(ctx context.Context, req *MsgAddRateLimit) (*MsgAddRateLimitResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AddRateLimit not implemented")
+}
+func (*UnimplementedMsgServer) RemoveQuota(ctx context.Context, req *MsgRemoveQuota) (*MsgRemoveQuotaResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RemoveQuota not implemented")
 }
 func (*UnimplementedMsgServer) RemoveRateLimit(ctx context.Context, req *MsgRemoveRateLimit) (*MsgRemoveRateLimitResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RemoveRateLimit not implemented")
 }
+func (*UnimplementedMsgServer) ResetRateLimit(ctx context.Context, req *MsgResetRateLimit) (*MsgResetRateLimitResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ResetRateLimit not implemented")
+}
 
 func RegisterMsgServer(s grpc1.Server, srv MsgServer) {
 	s.RegisterService(&_Msg_serviceDesc, srv)
-}
-
-func _Msg_AddRateLimit_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(MsgAddRateLimit)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(MsgServer).AddRateLimit(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/stride.ratelimit.Msg/AddRateLimit",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(MsgServer).AddRateLimit(ctx, req.(*MsgAddRateLimit))
-	}
-	return interceptor(ctx, in, info, handler)
 }
 
 func _Msg_AddQuota_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -542,20 +639,38 @@ func _Msg_AddQuota_Handler(srv interface{}, ctx context.Context, dec func(interf
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Msg_ResetRateLimit_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(MsgResetRateLimit)
+func _Msg_AddRateLimit_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MsgAddRateLimit)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(MsgServer).ResetRateLimit(ctx, in)
+		return srv.(MsgServer).AddRateLimit(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/stride.ratelimit.Msg/ResetRateLimit",
+		FullMethod: "/stride.ratelimit.Msg/AddRateLimit",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(MsgServer).ResetRateLimit(ctx, req.(*MsgResetRateLimit))
+		return srv.(MsgServer).AddRateLimit(ctx, req.(*MsgAddRateLimit))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Msg_RemoveQuota_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MsgRemoveQuota)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MsgServer).RemoveQuota(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/stride.ratelimit.Msg/RemoveQuota",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MsgServer).RemoveQuota(ctx, req.(*MsgRemoveQuota))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -578,25 +693,47 @@ func _Msg_RemoveRateLimit_Handler(srv interface{}, ctx context.Context, dec func
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Msg_ResetRateLimit_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MsgResetRateLimit)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MsgServer).ResetRateLimit(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/stride.ratelimit.Msg/ResetRateLimit",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MsgServer).ResetRateLimit(ctx, req.(*MsgResetRateLimit))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 var _Msg_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "stride.ratelimit.Msg",
 	HandlerType: (*MsgServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "AddRateLimit",
-			Handler:    _Msg_AddRateLimit_Handler,
-		},
-		{
 			MethodName: "AddQuota",
 			Handler:    _Msg_AddQuota_Handler,
 		},
 		{
-			MethodName: "ResetRateLimit",
-			Handler:    _Msg_ResetRateLimit_Handler,
+			MethodName: "AddRateLimit",
+			Handler:    _Msg_AddRateLimit_Handler,
+		},
+		{
+			MethodName: "RemoveQuota",
+			Handler:    _Msg_RemoveQuota_Handler,
 		},
 		{
 			MethodName: "RemoveRateLimit",
 			Handler:    _Msg_RemoveRateLimit_Handler,
+		},
+		{
+			MethodName: "ResetRateLimit",
+			Handler:    _Msg_ResetRateLimit_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
@@ -738,6 +875,59 @@ func (m *MsgAddQuotaResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 
+func (m *MsgRemoveQuota) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *MsgRemoveQuota) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *MsgRemoveQuota) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.Name) > 0 {
+		i -= len(m.Name)
+		copy(dAtA[i:], m.Name)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.Name)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *MsgRemoveQuotaResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *MsgRemoveQuotaResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *MsgRemoveQuotaResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	return len(dAtA) - i, nil
+}
+
 func (m *MsgResetRateLimit) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
@@ -758,6 +948,13 @@ func (m *MsgResetRateLimit) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	_ = i
 	var l int
 	_ = l
+	if len(m.PathId) > 0 {
+		i -= len(m.PathId)
+		copy(dAtA[i:], m.PathId)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.PathId)))
+		i--
+		dAtA[i] = 0xa
+	}
 	return len(dAtA) - i, nil
 }
 
@@ -804,6 +1001,13 @@ func (m *MsgRemoveRateLimit) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	_ = i
 	var l int
 	_ = l
+	if len(m.PathId) > 0 {
+		i -= len(m.PathId)
+		copy(dAtA[i:], m.PathId)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.PathId)))
+		i--
+		dAtA[i] = 0xa
+	}
 	return len(dAtA) - i, nil
 }
 
@@ -902,12 +1106,38 @@ func (m *MsgAddQuotaResponse) Size() (n int) {
 	return n
 }
 
+func (m *MsgRemoveQuota) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.Name)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
+	return n
+}
+
+func (m *MsgRemoveQuotaResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	return n
+}
+
 func (m *MsgResetRateLimit) Size() (n int) {
 	if m == nil {
 		return 0
 	}
 	var l int
 	_ = l
+	l = len(m.PathId)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
 	return n
 }
 
@@ -926,6 +1156,10 @@ func (m *MsgRemoveRateLimit) Size() (n int) {
 	}
 	var l int
 	_ = l
+	l = len(m.PathId)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
 	return n
 }
 
@@ -1329,6 +1563,138 @@ func (m *MsgAddQuotaResponse) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
+func (m *MsgRemoveQuota) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowTx
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: MsgRemoveQuota: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: MsgRemoveQuota: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Name", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Name = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipTx(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthTx
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *MsgRemoveQuotaResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowTx
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: MsgRemoveQuotaResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: MsgRemoveQuotaResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		default:
+			iNdEx = preIndex
+			skippy, err := skipTx(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthTx
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
 func (m *MsgResetRateLimit) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -1358,6 +1724,38 @@ func (m *MsgResetRateLimit) Unmarshal(dAtA []byte) error {
 			return fmt.Errorf("proto: MsgResetRateLimit: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field PathId", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.PathId = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
 			skippy, err := skipTx(dAtA[iNdEx:])
@@ -1458,6 +1856,38 @@ func (m *MsgRemoveRateLimit) Unmarshal(dAtA []byte) error {
 			return fmt.Errorf("proto: MsgRemoveRateLimit: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field PathId", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.PathId = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
 			skippy, err := skipTx(dAtA[iNdEx:])
