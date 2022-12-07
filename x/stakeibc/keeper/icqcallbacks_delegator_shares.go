@@ -5,6 +5,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	"github.com/spf13/cast"
 
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
@@ -100,7 +101,13 @@ func DelegatorSharesCallback(k Keeper, ctx sdk.Context, args []byte, query icqty
 
 	// Get slash percentage
 	slashAmount := validator.DelegationAmt.Sub(validatorTokens)
-	weight := validator.Weight
+	
+	weight, err := cast.ToInt64E(validator.Weight)
+	if err != nil {
+		errMsg := fmt.Sprintf("unable to convert validator weight to int64, err: %s", err.Error())
+		k.Logger(ctx).Error(errMsg)
+		return sdkerrors.Wrapf(types.ErrIntCast, errMsg)
+	}
 
 	slashPct := sdk.NewDecFromInt(slashAmount).Quo(sdk.NewDecFromInt(validator.DelegationAmt))
 	k.Logger(ctx).Info(fmt.Sprintf("ICQ'd Delegation Amoount Mismatch, HostZone: %s, Validator: %s, Delegator: %s, Records Tokens: %d, Tokens from ICQ %v, Slash Amount: %d, Slash Pct: %v!",

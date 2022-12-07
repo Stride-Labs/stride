@@ -153,6 +153,7 @@ func (k Keeper) UpdateHostZoneUnbondings(
 	zone types.HostZone,
 	undelegateCallback types.UndelegateCallback,
 ) (stTokenBurnAmount sdk.Int, err error) {
+	stTokenBurnAmount = sdk.ZeroInt()
 	// UpdateHostZoneUnbondings does two things:
 	// 		1. Update the status and time of each hostZoneUnbonding on each epochUnbondingRecord
 	// 		2. Return the number of stTokens that need to be burned

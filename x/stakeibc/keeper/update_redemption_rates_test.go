@@ -217,7 +217,7 @@ func (s *KeeperTestSuite) TestUpdateRedemptionRateNoStakeDepositRecords() {
 
 	numerator := stakedBal.Add(justDepositedBal)
 	denominator := stSupply
-	expectedNewRate := sdk.NewDecFromInt(numerator.Quo(denominator))
+	expectedNewRate := sdk.NewDecFromInt(numerator).Quo(sdk.NewDecFromInt(denominator))
 	s.Require().Equal(rrNew, expectedNewRate, "rr as expected")
 }
 

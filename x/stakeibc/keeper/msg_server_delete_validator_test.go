@@ -1,6 +1,8 @@
 package keeper_test
 
 import (
+	"fmt"
+
 	_ "github.com/stretchr/testify/suite"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -116,6 +118,7 @@ func (s *KeeperTestSuite) TestDeleteValidator_NonZeroDelegation() {
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
 
 	_, err := s.GetMsgServer().DeleteValidator(sdk.WrapSDKContext(s.Ctx), &tc.validMsgs[0])
+	fmt.Println(err)
 	errMsg := "Validator (stride_VAL1) not removed from host zone (GAIA) "
 	errMsg += "| err: Validator (stride_VAL1) has non-zero delegation (1) or weight (0): "
 	errMsg += "validator not removed"

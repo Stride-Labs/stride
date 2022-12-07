@@ -40,8 +40,8 @@ func (k msgServer) LiquidStake(goCtx context.Context, msg *types.MsgLiquidStake)
 	// Creator owns at least "amount" of inCoin
 	balance := k.bankKeeper.GetBalance(ctx, sender, ibcDenom)
 	if balance.IsLT(inCoin) {
-		k.Logger(ctx).Error(fmt.Sprintf("balance is lower than staking amount. staking amount: %d, balance: %d", msg.Amount, balance.Amount.Int64()))
-		return nil, sdkerrors.Wrapf(sdkerrors.ErrInsufficientFunds, "balance is lower than staking amount. staking amount: %d, balance: %d", msg.Amount, balance.Amount.Int64())
+		k.Logger(ctx).Error(fmt.Sprintf("balance is lower than staking amount. staking amount: %v, balance: %v", msg.Amount, balance.Amount))
+		return nil, sdkerrors.Wrapf(sdkerrors.ErrInsufficientFunds, "balance is lower than staking amount. staking amount: %v, balance: %v", msg.Amount, balance.Amount)
 	}
 	// check that the token is an IBC token
 	isIbcToken := types.IsIBCToken(ibcDenom)

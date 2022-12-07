@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/spf13/cast"
 	_ "github.com/stretchr/testify/suite"
 
 	epochtypes "github.com/Stride-Labs/stride/v4/x/epochs/types"
@@ -102,14 +101,10 @@ func (s *KeeperTestSuite) TestRedeemStake_Successful() {
 
 	msg := tc.validMsg
 	user := tc.user
-	amt, err := cast.ToInt64E(msg.Amount)
-	if err != nil {
-		panic(err)
-	}
-	redeemAmount := sdk.NewInt(amt)
+	redeemAmount := msg.Amount
 
 	// get the initial unbonding amount *before* calling liquid stake, so we can use it to calc expected vs actual in diff space
-	_, err = s.GetMsgServer().RedeemStake(sdk.WrapSDKContext(s.Ctx), &msg)
+	_, err := s.GetMsgServer().RedeemStake(sdk.WrapSDKContext(s.Ctx), &msg)
 	s.Require().NoError(err)
 
 	// User STUATOM balance should have DECREASED by the amount to be redeemed
@@ -128,7 +123,7 @@ func (s *KeeperTestSuite) TestRedeemStake_Successful() {
 	hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, msg.HostZone)
 	s.Require().True(found, "host zone")
 
-	nativeRedemptionAmount := redeemAmount.Add(hostZone.RedemptionRate.TruncateInt())
+	nativeRedemptionAmount := redeemAmount.Mul(hostZone.RedemptionRate.TruncateInt())
 	stTokenBurnAmount := redeemAmount
 
 	expectedHostZoneUnbondingNativeAmount := initialState.initialNativeEpochUnbondingAmount.Add(nativeRedemptionAmount)

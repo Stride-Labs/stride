@@ -129,7 +129,7 @@ func (s *KeeperTestSuite) TestRegisterHostZone_Success() {
 	// Confirm host zone unbonding was added
 	hostZoneUnbonding := epochUnbondingRecord.HostZoneUnbondings[0]
 	s.Require().Equal(HostChainId, hostZoneUnbonding.HostZoneId, "host zone unbonding set for this host zone")
-	s.Require().Equal(uint64(0), hostZoneUnbonding.NativeTokenAmount, "host zone unbonding set to 0 tokens")
+	s.Require().Equal(sdk.ZeroInt(), hostZoneUnbonding.NativeTokenAmount, "host zone unbonding set to 0 tokens")
 	s.Require().Equal(recordstypes.HostZoneUnbonding_UNBONDING_QUEUE, hostZoneUnbonding.Status, "host zone unbonding set to bonded")
 
 	// Confirm a module account was created

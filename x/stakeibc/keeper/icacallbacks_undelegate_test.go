@@ -1,6 +1,7 @@
 package keeper_test
 
 import (
+	"fmt"
 	"math"
 	"time"
 
@@ -191,7 +192,7 @@ func (s *KeeperTestSuite) checkStateIfUndelegateCallbackFailed(tc UndelegateCall
 	s.Require().Equal(hzu.Status, recordtypes.HostZoneUnbonding_UNBONDING_QUEUE, "hzu status is set to UNBONDING_QUEUE")
 	zoneAccount, err := sdk.AccAddressFromBech32(hostZone.Address)
 	s.Require().NoError(err, "zone account address is valid")
-	s.Require().Equal(initialState.zoneAccountBalance, s.App.BankKeeper.GetBalance(s.Ctx, zoneAccount, StAtom).Amount.Int64(), "tokens are NOT burned")
+	s.Require().Equal(initialState.zoneAccountBalance, s.App.BankKeeper.GetBalance(s.Ctx, zoneAccount, StAtom).Amount, "tokens are NOT burned")
 }
 
 func (s *KeeperTestSuite) TestUndelegateCallback_UndelegateCallbackTimeout() {
@@ -253,24 +254,26 @@ func (s *KeeperTestSuite) TestUpdateDelegationBalances_Success() {
 	s.Require().Equal(val2.DelegationAmt, tc.initialState.val2Bal.Sub(tc.val2UndelegationAmount), "val2 delegation has decreased")
 }
 
-func (s *KeeperTestSuite) TestUpdateDelegationBalances_BigDelegation() {
-	_ = s.SetupUndelegateCallback()
-	hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, HostChainId)
-	s.Require().True(found, "host zone found")
-	splitDelegation := types.SplitDelegation{
-		Amount: sdk.NewIntFromUint64(math.MaxUint64),
-	}
-	invalidCallbackArgs := types.UndelegateCallback{
-		HostZoneId:              HostChainId,
-		SplitDelegations:        []*types.SplitDelegation{&splitDelegation},
-		EpochUnbondingRecordIds: []uint64{},
-	}
+// This case does got anymore
 
-	err := s.App.StakeibcKeeper.UpdateDelegationBalances(s.Ctx, hostZone, invalidCallbackArgs)
-	expectedErrMsg := `Could not convert undelegate amount to int64 in undelegation callback | `
-	expectedErrMsg += `overflow: unable to cast \d+ of type uint64 to int64: unable to cast to safe cast int`
-	s.Require().Regexp(expectedErrMsg, err.Error())
-}
+// func (s *KeeperTestSuite) TestUpdateDelegationBalances_BigDelegation() {
+// 	_ = s.SetupUndelegateCallback()
+// 	hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, HostChainId)
+// 	s.Require().True(found, "host zone found")
+// 	splitDelegation := types.SplitDelegation{
+// 		Amount: sdk.NewIntFromUint64(math.MaxUint64),
+// 	}
+// 	invalidCallbackArgs := types.UndelegateCallback{
+// 		HostZoneId:              HostChainId,
+// 		SplitDelegations:        []*types.SplitDelegation{&splitDelegation},
+// 		EpochUnbondingRecordIds: []uint64{},
+// 	}
+
+// 	err := s.App.StakeibcKeeper.UpdateDelegationBalances(s.Ctx, hostZone, invalidCallbackArgs)
+// 	expectedErrMsg := `Could not convert undelegate amount to int64 in undelegation callback | `
+// 	expectedErrMsg += `overflow: unable to cast \d+ of type uint64 to int64: unable to cast to safe cast int`
+// 	s.Require().Regexp(expectedErrMsg, err.Error())
+// }
 
 // GetLatestCompletionTime tests
 func (s *KeeperTestSuite) TestGetLatestCompletionTime_Success() {
@@ -409,6 +412,7 @@ func (s *KeeperTestSuite) TestUpdateHostZoneUnbondings_HostZoneUnbondingDNE() {
 }
 
 // Test failure case - Amount too big
+// Now this test not fail anymore, StTokenAmount is not limited by uint64
 func (s *KeeperTestSuite) TestUpdateHostZoneUnbondings_AmountTooBig() {
 	hostZone := stakeibc.HostZone{
 		ChainId: HostChainId,
@@ -426,14 +430,12 @@ func (s *KeeperTestSuite) TestUpdateHostZoneUnbondings_AmountTooBig() {
 	}
 	s.App.RecordsKeeper.SetEpochUnbondingRecord(s.Ctx, epochUnbondingRecord)
 	callbackArgs := types.UndelegateCallback{
-		EpochUnbondingRecordIds: []uint64{1, 2},
+		EpochUnbondingRecordIds: []uint64{1},
 	}
 	completionTime := time.Now().Add(time.Second * time.Duration(10))
 
 	_, err := s.App.StakeibcKeeper.UpdateHostZoneUnbondings(s.Ctx, completionTime, hostZone, callbackArgs)
-	expectedErrMsg := `Could not convert stTokenAmount to int64 in redeem stake | `
-	expectedErrMsg += `overflow: unable to cast \d+ of type uint64 to int64: unable to cast to safe cast int`
-	s.Require().Regexp(expectedErrMsg, err.Error())
+	s.Require().NoError(err)
 }
 
 // BurnTokens Tests
@@ -464,7 +466,8 @@ func (s *KeeperTestSuite) TestBurnTokens_CouldNotParseCoin() {
 
 	burnAmt := sdk.NewInt(123456)
 	err := s.App.StakeibcKeeper.BurnTokens(s.Ctx, hostZone, burnAmt)
-	s.Require().EqualError(err, "could not parse burnCoin: 123456.000000000000000000st:. err: invalid decimal coin expression: 123456.000000000000000000st:: invalid coins")
+	fmt.Println(err)
+	s.Require().EqualError(err, "could not parse burnCoin: 123456st:. err: invalid decimal coin expression: 123456st:: invalid coins")
 }
 
 // Test failure case - could not decode address

@@ -187,7 +187,7 @@ func (s *KeeperTestSuite) TestLiquidStake_IbcCoinParseError() {
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, badHostZone)
 	_, err := s.GetMsgServer().LiquidStake(sdk.WrapSDKContext(s.Ctx), &tc.validMsg)
 
-	badCoin := fmt.Sprintf("%d%s", tc.validMsg.Amount, badHostZone.IbcDenom)
+	badCoin := fmt.Sprintf("%v%s", tc.validMsg.Amount, badHostZone.IbcDenom)
 	s.Require().EqualError(err, fmt.Sprintf("failed to parse coin (%s): invalid decimal coin expression: %s", badCoin, badCoin))
 }
 
@@ -213,7 +213,8 @@ func (s *KeeperTestSuite) TestLiquidStake_InsufficientBalance() {
 	invalidMsg.Amount = balance.Add(sdk.NewInt(1000))
 	_, err := s.GetMsgServer().LiquidStake(sdk.WrapSDKContext(s.Ctx), &invalidMsg)
 
-	expectedErr := fmt.Sprintf("balance is lower than staking amount. staking amount: %d, balance: %d: insufficient funds", balance.Add(sdk.NewInt(1000)), balance)
+	fmt.Println(err)
+	expectedErr := fmt.Sprintf("balance is lower than staking amount. staking amount: %v, balance: %v: insufficient funds", balance.Add(sdk.NewInt(1000)), balance)
 	s.Require().EqualError(err, expectedErr)
 }
 
