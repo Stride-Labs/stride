@@ -17,6 +17,17 @@ func (k Keeper) Path(c context.Context, req *types.QueryPathRequest) (*types.Que
 	// TODO:
 	return &types.QueryPathResponse{}, nil
 }
+
+func (k Keeper) Quotas(c context.Context, req *types.QueryQuotasRequest) (*types.QueryQuotasResponse, error) {
+	// TODO:
+	return &types.QueryQuotasResponse{}, nil
+}
+
+func (k Keeper) Quota(c context.Context, req *types.QueryQuotaRequest) (*types.QueryQuotaResponse, error) {
+	// TODO:
+	return &types.QueryQuotaResponse{}, nil
+}
+
 func (k Keeper) RateLimits(c context.Context, req *types.QueryRateLimitsRequest) (*types.QueryRateLimitsResponse, error) {
 	// TODO:
 	return &types.QueryRateLimitsResponse{}, nil
