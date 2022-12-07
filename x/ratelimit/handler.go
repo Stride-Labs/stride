@@ -12,8 +12,6 @@ import (
 
 // NewHandler returns ratelimit module messages
 func NewHandler(k keeper.Keeper) sdk.Handler {
-	// this line is used by starport scaffolding # handler/msgServer
-
 	return func(ctx sdk.Context, msg sdk.Msg) (*sdk.Result, error) {
 		ctx = ctx.WithEventManager(sdk.NewEventManager())
 
