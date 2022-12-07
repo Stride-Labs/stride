@@ -29,7 +29,7 @@ func (k Keeper) TryLiquidStaking(
 	var denom string
 	// In this case, we can't process a liquid staking transaction, because we're dealing with STRD tokens
 	if transfertypes.ReceiverChainIsSource(packet.GetSourcePort(), packet.GetSourceChannel(), newData.Denom) {
-		return channeltypes.NewErrorAcknowledgement("not a supported token for liquid staking")
+		return channeltypes.NewErrorAcknowledgement("the native token is not supported for liquid staking")
 	} else {
 		prefixedDenom := transfertypes.GetDenomPrefix(packet.GetDestPort(), packet.GetDestChannel()) + newData.Denom
 		denom = transfertypes.ParseDenomTrace(prefixedDenom).BaseDenom
