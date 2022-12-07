@@ -13,27 +13,6 @@ import (
 	"github.com/Stride-Labs/stride/v4/x/stakeibc/types"
 )
 
-func abs(n int64) int64 {
-	if n < 0 {
-		return -n
-	}
-	return n
-}
-
-func floatabs(n float64) float64 {
-	if n < 0 {
-		return -n
-	}
-	return n
-}
-
-func floatmax(a, b float64) float64 {
-	if a > b {
-		return a
-	}
-	return b
-}
-
 func (k msgServer) RebalanceValidators(goCtx context.Context, msg *types.MsgRebalanceValidators) (*types.MsgRebalanceValidatorsResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	k.Logger(ctx).Info(fmt.Sprintf("RebalanceValidators executing %v", msg))
