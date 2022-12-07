@@ -1,9 +1,9 @@
 syntax = "proto3";
-package stride.ibcratelimit;
+package stride.ratelimit;
 
 import "gogoproto/gogo.proto";
 
-option go_package = "github.com/Stride-Labs/stride/v3/x/ibcratelimit/types";
+option go_package = "github.com/Stride-Labs/stride/v3/x/ratelimit/types";
 
 enum PacketDirection {
   option (gogoproto.goproto_enum_prefix) = false;
@@ -40,10 +40,10 @@ message Quota {
   // max percent for receiving
   uint64 max_percent_recv = 3;
 
-  // duration hours for time window
-  uint64 duration_hours = 4;
+  // duration minutes for time window
+  uint64 duration_minutes = 4;
 
-  // period end (now + duration hours)
+  // period end (now + duration_minutes, set as sec)
   uint64 period_end = 5;
 }
 

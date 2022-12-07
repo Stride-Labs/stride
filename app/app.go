@@ -120,12 +120,12 @@ import (
 	"github.com/Stride-Labs/stride/v3/x/claim"
 	claimkeeper "github.com/Stride-Labs/stride/v3/x/claim/keeper"
 	claimtypes "github.com/Stride-Labs/stride/v3/x/claim/types"
-	ibcratelimitmodule "github.com/Stride-Labs/stride/v3/x/ibcratelimit"
-	ibcratelimitmodulekeeper "github.com/Stride-Labs/stride/v3/x/ibcratelimit/keeper"
-	ibcratelimitmoduletypes "github.com/Stride-Labs/stride/v3/x/ibcratelimit/types"
 	icacallbacksmodule "github.com/Stride-Labs/stride/v3/x/icacallbacks"
 	icacallbacksmodulekeeper "github.com/Stride-Labs/stride/v3/x/icacallbacks/keeper"
 	icacallbacksmoduletypes "github.com/Stride-Labs/stride/v3/x/icacallbacks/types"
+	ratelimitmodule "github.com/Stride-Labs/stride/v3/x/ratelimit"
+	ratelimitmodulekeeper "github.com/Stride-Labs/stride/v3/x/ratelimit/keeper"
+	ratelimitmoduletypes "github.com/Stride-Labs/stride/v3/x/ratelimit/types"
 	recordsmodule "github.com/Stride-Labs/stride/v3/x/records"
 	recordsmodulekeeper "github.com/Stride-Labs/stride/v3/x/records/keeper"
 	recordsmoduletypes "github.com/Stride-Labs/stride/v3/x/records/types"
@@ -195,7 +195,7 @@ var (
 		interchainquery.AppModuleBasic{},
 		ica.AppModuleBasic{},
 		recordsmodule.AppModuleBasic{},
-		ibcratelimitmodule.AppModuleBasic{},
+		ratelimitmodule.AppModuleBasic{},
 		icacallbacksmodule.AppModuleBasic{},
 		claim.AppModuleBasic{},
 		// this line is used by starport scaffolding # stargate/app/moduleBasic
@@ -287,9 +287,9 @@ type StrideApp struct {
 	RecordsKeeper            recordsmodulekeeper.Keeper
 	ScopedIcacallbacksKeeper capabilitykeeper.ScopedKeeper
 	IcacallbacksKeeper       icacallbacksmodulekeeper.Keeper
-	ScopedIbcRateLimitKeeper capabilitykeeper.ScopedKeeper
-	IbcRateLimitKeeper       ibcratelimitmodulekeeper.Keeper
-	RateLimitingICS4Wrapper  *ibcratelimitmodule.ICS4Wrapper
+	ScopedratelimitKeeper    capabilitykeeper.ScopedKeeper
+	ratelimitKeeper          ratelimitmodulekeeper.Keeper
+	RateLimitingICS4Wrapper  *ratelimitmodule.ICS4Wrapper
 	ClaimKeeper              claimkeeper.Keeper
 	// this line is used by starport scaffolding # stargate/app/keeperDeclaration
 
@@ -331,7 +331,7 @@ func NewStrideApp(
 		interchainquerytypes.StoreKey,
 		icacontrollertypes.StoreKey, icahosttypes.StoreKey,
 		recordsmoduletypes.StoreKey,
-		ibcratelimitmoduletypes.StoreKey,
+		ratelimitmoduletypes.StoreKey,
 		icacallbacksmoduletypes.StoreKey,
 		authzkeeper.StoreKey,
 		claimtypes.StoreKey,
@@ -420,10 +420,10 @@ func NewStrideApp(
 		appCodec, keys[ibchost.StoreKey], app.GetSubspace(ibchost.ModuleName), app.StakingKeeper, app.UpgradeKeeper, scopedIBCKeeper,
 	)
 
-	// ChannelKeeper wrapper for rate limiting SendPacket(). The wasmKeeper needs to be added after it's created
-	rateLimitingParams := app.GetSubspace(ibcratelimitmoduletypes.ModuleName)
-	rateLimitingParams = rateLimitingParams.WithKeyTable(ibcratelimitmoduletypes.ParamKeyTable())
-	rateLimitingICS4Wrapper := ibcratelimitmodule.NewICS4Middleware(
+	// Create ICS4Wrapper middleware
+	rateLimitingParams := app.GetSubspace(ratelimitmoduletypes.ModuleName)
+	rateLimitingParams = rateLimitingParams.WithKeyTable(ratelimitmoduletypes.ParamKeyTable())
+	rateLimitingICS4Wrapper := ratelimitmodule.NewICS4Middleware(
 		app.IBCKeeper.ChannelKeeper,
 		rateLimitingParams,
 	)
@@ -500,14 +500,14 @@ func NewStrideApp(
 	)
 	recordsModule := recordsmodule.NewAppModule(appCodec, app.RecordsKeeper, app.AccountKeeper, app.BankKeeper)
 
-	scopedIbcRateLimitKeeper := app.CapabilityKeeper.ScopeToModule(ibcratelimitmoduletypes.ModuleName)
-	app.ScopedIbcRateLimitKeeper = scopedIbcRateLimitKeeper
-	app.IbcRateLimitKeeper = *ibcratelimitmodulekeeper.NewKeeper(
+	scopedratelimitKeeper := app.CapabilityKeeper.ScopeToModule(ratelimitmoduletypes.ModuleName)
+	app.ScopedratelimitKeeper = scopedratelimitKeeper
+	app.ratelimitKeeper = *ratelimitmodulekeeper.NewKeeper(
 		appCodec,
-		keys[ibcratelimitmoduletypes.StoreKey],
+		keys[ratelimitmoduletypes.StoreKey],
 		app.RateLimitingICS4Wrapper,
 	)
-	ibcratelimitModule := ibcratelimitmodule.NewAppModule(appCodec, app.IbcRateLimitKeeper)
+	ratelimitModule := ratelimitmodule.NewAppModule(appCodec, app.ratelimitKeeper)
 
 	scopedStakeibcKeeper := app.CapabilityKeeper.ScopeToModule(stakeibcmoduletypes.ModuleName)
 	app.ScopedStakeibcKeeper = scopedStakeibcKeeper
@@ -602,11 +602,12 @@ func NewStrideApp(
 
 	// Stack two contains
 	// - IBC
+	// - ratelimit
 	// - records
 	// - transfer
 	// - base app
 	recordsStack := recordsmodule.NewIBCModule(app.RecordsKeeper, transferIBCModule)
-	ratelimitStack := ibcratelimitmodule.NewIBCModule(recordsStack, app.IbcRateLimitKeeper)
+	ratelimitStack := ratelimitmodule.NewIBCModule(app.ratelimitKeeper, recordsStack)
 
 	// Create static IBC router, add transfer route, then set and seal it
 	ibcRouter := ibcporttypes.NewRouter()
@@ -658,7 +659,7 @@ func NewStrideApp(
 		interchainQueryModule,
 		icaModule,
 		recordsModule,
-		ibcratelimitModule,
+		ratelimitModule,
 		icacallbacksModule,
 		authzmodule.NewAppModule(appCodec, app.AuthzKeeper, app.AccountKeeper, app.BankKeeper, app.interfaceRegistry),
 		// this line is used by starport scaffolding # stargate/app/appModule
@@ -693,7 +694,7 @@ func NewStrideApp(
 		epochsmoduletypes.ModuleName,
 		interchainquerytypes.ModuleName,
 		recordsmoduletypes.ModuleName,
-		ibcratelimitmoduletypes.ModuleName,
+		ratelimitmoduletypes.ModuleName,
 		icacallbacksmoduletypes.ModuleName,
 		claimtypes.ModuleName,
 		authz.ModuleName,
@@ -725,7 +726,7 @@ func NewStrideApp(
 		epochsmoduletypes.ModuleName,
 		interchainquerytypes.ModuleName,
 		recordsmoduletypes.ModuleName,
-		ibcratelimitmoduletypes.ModuleName,
+		ratelimitmoduletypes.ModuleName,
 		icacallbacksmoduletypes.ModuleName,
 		claimtypes.ModuleName,
 		authz.ModuleName,
@@ -762,7 +763,7 @@ func NewStrideApp(
 		epochsmoduletypes.ModuleName,
 		interchainquerytypes.ModuleName,
 		recordsmoduletypes.ModuleName,
-		ibcratelimitmoduletypes.ModuleName,
+		ratelimitmoduletypes.ModuleName,
 		icacallbacksmoduletypes.ModuleName,
 		claimtypes.ModuleName,
 		authz.ModuleName,
@@ -1030,7 +1031,7 @@ func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino
 	paramsKeeper.Subspace(icacontrollertypes.SubModuleName)
 	paramsKeeper.Subspace(icahosttypes.SubModuleName)
 	paramsKeeper.Subspace(recordsmoduletypes.ModuleName)
-	paramsKeeper.Subspace(ibcratelimitmoduletypes.ModuleName)
+	paramsKeeper.Subspace(ratelimitmoduletypes.ModuleName)
 	paramsKeeper.Subspace(icacallbacksmoduletypes.ModuleName)
 	// this line is used by starport scaffolding # stargate/app/paramSubspace
 

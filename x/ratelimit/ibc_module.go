@@ -1,7 +1,7 @@
-package ibcratelimit
+package ratelimit
 
 import (
-	"github.com/Stride-Labs/stride/v3/x/ibcratelimit/keeper"
+	"github.com/Stride-Labs/stride/v3/x/ratelimit/keeper"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
@@ -15,7 +15,7 @@ type IBCModule struct {
 	keeper keeper.Keeper
 }
 
-func NewIBCModule(app porttypes.IBCModule, k keeper.Keeper) IBCModule {
+func NewIBCModule(k keeper.Keeper, app porttypes.IBCModule) IBCModule {
 	return IBCModule{
 		app:    app,
 		keeper: k,

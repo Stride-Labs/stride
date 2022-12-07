@@ -1,4 +1,4 @@
-package ibcratelimit
+package ratelimit
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"

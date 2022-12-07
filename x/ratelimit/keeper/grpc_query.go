@@ -3,7 +3,7 @@ package keeper
 import (
 	"context"
 
-	"github.com/Stride-Labs/stride/v3/x/ibcratelimit/types"
+	"github.com/Stride-Labs/stride/v3/x/ratelimit/types"
 )
 
 var _ types.QueryServer = Keeper{}

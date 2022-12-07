@@ -1,26 +1,26 @@
 syntax = "proto3";
-package stride.ibcratelimit;
+package stride.ratelimit;
 
-import "stride/ibcratelimit/ibcratelimit.proto";
+import "stride/ratelimit/ratelimit.proto";
 import "google/api/annotations.proto";
 import "gogoproto/gogo.proto";
 
-option go_package = "github.com/Stride-Labs/stride/v3/x/ibcratelimit/types";
+option go_package = "github.com/Stride-Labs/stride/v3/x/ratelimit/types";
 
 // Query defines the gRPC querier service.
 service Query {
   rpc Paths(QueryPathsRequest) returns (QueryPathsResponse) {
-    option (google.api.http).get = "/ibcratelimit/paths";
+    option (google.api.http).get = "/ratelimit/paths";
   }
   rpc Path(QueryPathRequest) returns (QueryPathResponse) {
-    option (google.api.http).get = "/ibcratelimit/path/{id}";
+    option (google.api.http).get = "/ratelimit/path/{id}";
   }
 
   rpc RateLimits(QueryRateLimitsRequest) returns (QueryRateLimitsResponse) {
-    option (google.api.http).get = "/ibcratelimit/ratelimits";
+    option (google.api.http).get = "/ratelimit/ratelimits";
   }
   rpc RateLimit(QueryRateLimitRequest) returns (QueryRateLimitResponse) {
-    option (google.api.http).get = "/ibcratelimit/ratelimit/{path_id}";
+    option (google.api.http).get = "/ratelimit/ratelimit/{path_id}";
   }
 }
 

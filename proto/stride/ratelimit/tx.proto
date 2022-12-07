@@ -1,10 +1,10 @@
 syntax = "proto3";
-package stride.ibcratelimit;
+package stride.ratelimit;
 
-import "stride/ibcratelimit/ibcratelimit.proto";
+import "stride/ratelimit/ratelimit.proto";
 import "gogoproto/gogo.proto";
 
-option go_package = "github.com/Stride-Labs/stride/v3/x/ibcratelimit/types";
+option go_package = "github.com/Stride-Labs/stride/v3/x/ratelimit/types";
 
 // Msg defines the Msg service.
 service Msg {
