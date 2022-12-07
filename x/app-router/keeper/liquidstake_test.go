@@ -50,6 +50,7 @@ func (suite *KeeperTestSuite) TestOnRecvPacket() {
 		recvDenom        string
 		packetData       transfertypes.FungibleTokenPacketData
 		expSuccess       bool
+		expLiquidStake   bool
 	}{
 		{ // params not enabled
 			forwardingActive: false,
@@ -60,8 +61,9 @@ func (suite *KeeperTestSuite) TestOnRecvPacket() {
 				Receiver: fmt.Sprintf("%s|stakeibc/LiquidStake", addr1.String()),
 				Memo:     "",
 			},
-			recvDenom:  atomIbcDenom,
-			expSuccess: false,
+			recvDenom:      atomIbcDenom,
+			expSuccess:     false,
+			expLiquidStake: false,
 		},
 		{ // strd denom
 			forwardingActive: true,
@@ -72,8 +74,9 @@ func (suite *KeeperTestSuite) TestOnRecvPacket() {
 				Receiver: fmt.Sprintf("%s|stakeibc/LiquidStake", addr1.String()),
 				Memo:     "",
 			},
-			recvDenom:  "ustrd",
-			expSuccess: false,
+			recvDenom:      "ustrd",
+			expSuccess:     false,
+			expLiquidStake: false,
 		},
 		{ // all okay
 			forwardingActive: true,
@@ -84,8 +87,22 @@ func (suite *KeeperTestSuite) TestOnRecvPacket() {
 				Receiver: fmt.Sprintf("%s|stakeibc/LiquidStake", addr1.String()),
 				Memo:     "",
 			},
-			recvDenom:  atomIbcDenom,
-			expSuccess: true,
+			recvDenom:      atomIbcDenom,
+			expSuccess:     true,
+			expLiquidStake: true,
+		},
+		{ // all okay with memo liquidstaking since ibc-go v5.1.0
+			forwardingActive: true,
+			packetData: transfertypes.FungibleTokenPacketData{
+				Denom:    "uatom",
+				Amount:   "1000000",
+				Sender:   "cosmos16plylpsgxechajltx9yeseqexzdzut9g8vla4k",
+				Receiver: fmt.Sprintf("%s", addr1.String()),
+				Memo:     "stakeibc/LiquidStake",
+			},
+			recvDenom:      atomIbcDenom,
+			expSuccess:     true,
+			expLiquidStake: true,
 		},
 		{ // all okay with no functional part
 			forwardingActive: true,
@@ -96,8 +113,9 @@ func (suite *KeeperTestSuite) TestOnRecvPacket() {
 				Receiver: fmt.Sprintf("%s", addr1.String()),
 				Memo:     "",
 			},
-			recvDenom:  atomIbcDenom,
-			expSuccess: true,
+			recvDenom:      atomIbcDenom,
+			expSuccess:     true,
+			expLiquidStake: false,
 		},
 		{ // invalid receiver
 			forwardingActive: true,
@@ -108,8 +126,9 @@ func (suite *KeeperTestSuite) TestOnRecvPacket() {
 				Receiver: "xxx|stakeibc/LiquidStake",
 				Memo:     "",
 			},
-			recvDenom:  atomIbcDenom,
-			expSuccess: false,
+			recvDenom:      atomIbcDenom,
+			expSuccess:     false,
+			expLiquidStake: false,
 		},
 		{ // invalid receiver liquid staking
 			forwardingActive: true,
@@ -120,8 +139,9 @@ func (suite *KeeperTestSuite) TestOnRecvPacket() {
 				Receiver: "xxx|stakeibc/LiquidStake",
 				Memo:     "",
 			},
-			recvDenom:  atomIbcDenom,
-			expSuccess: false,
+			recvDenom:      atomIbcDenom,
+			expSuccess:     false,
+			expLiquidStake: false,
 		},
 	}
 
@@ -186,6 +206,15 @@ func (suite *KeeperTestSuite) TestOnRecvPacket() {
 			)
 			if tc.expSuccess {
 				suite.Require().True(ack.Success(), string(ack.Acknowledgement()))
+
+				// check minted balance for liquid staking
+				allBalance := suite.App.BankKeeper.GetAllBalances(ctx, addr1)
+				liquidBalance := suite.App.BankKeeper.GetBalance(ctx, addr1, "stuatom")
+				if tc.expLiquidStake {
+					suite.Require().True(liquidBalance.Amount.IsPositive(), allBalance.String())
+				} else {
+					suite.Require().True(liquidBalance.Amount.IsZero(), allBalance.String())
+				}
 			} else {
 				suite.Require().False(ack.Success(), string(ack.Acknowledgement()))
 			}

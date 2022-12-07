@@ -158,6 +158,23 @@ func (im IBCModule) OnRecvPacket(
 		return channeltypes.NewErrorAcknowledgement(err.Error())
 	}
 
+	// to be utilized from ibc-go v5.1.0
+	if data.Memo == "stakeibc/LiquidStake" {
+		strideAccAddress, err := sdk.AccAddressFromBech32(data.Receiver)
+		if err != nil {
+			return channeltypes.NewErrorAcknowledgement(err.Error())
+		}
+
+		ack := im.app.OnRecvPacket(ctx, packet, relayer)
+		if ack.Success() {
+			return im.keeper.TryLiquidStaking(ctx, packet, data, &types.ParsedReceiver{
+				ShouldLiquidStake: true,
+				StrideAccAddress:  strideAccAddress,
+			}, ack)
+		}
+		return ack
+	}
+
 	// parse out any forwarding info
 	parsedReceiver, err := types.ParseReceiverData(data.Receiver)
 	if err != nil {
