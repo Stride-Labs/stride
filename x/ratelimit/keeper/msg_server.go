@@ -28,12 +28,17 @@ func (server msgServer) AddQuota(goCtx context.Context, msg *types.MsgAddQuota) 
 	return &types.MsgAddQuotaResponse{}, nil
 }
 
-func (server msgServer) ResetRateLimit(goCtx context.Context, msg *types.MsgResetRateLimit) (*types.MsgResetRateLimitResponse, error) {
+func (server msgServer) RemoveQuota(goCtx context.Context, msg *types.MsgRemoveQuota) (*types.MsgRemoveQuotaResponse, error) {
 	// TODO:
-	return &types.MsgResetRateLimitResponse{}, nil
+	return &types.MsgRemoveQuotaResponse{}, nil
 }
 
 func (server msgServer) RemoveRateLimit(goCtx context.Context, msg *types.MsgRemoveRateLimit) (*types.MsgRemoveRateLimitResponse, error) {
 	// TODO:
 	return &types.MsgRemoveRateLimitResponse{}, nil
+}
+
+func (server msgServer) ResetRateLimit(goCtx context.Context, msg *types.MsgResetRateLimit) (*types.MsgResetRateLimitResponse, error) {
+	// TODO:
+	return &types.MsgResetRateLimitResponse{}, nil
 }
