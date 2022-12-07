@@ -18,7 +18,7 @@ func init() {
 }
 
 func TestParseReceiverDataTransfer(t *testing.T) {
-	data := "stride10d07y265gmmuvt4z0w9aw880jnsr700jefnezl|stakeibc/liquidstake"
+	data := "stride10d07y265gmmuvt4z0w9aw880jnsr700jefnezl|stakeibc/LiquidStake"
 	pt, err := ParseReceiverData(data)
 
 	require.NoError(t, err)
@@ -51,7 +51,7 @@ func TestParseReceiverDataErrors(t *testing.T) {
 	require.False(t, pt.ShouldLiquidStake)
 
 	// invalid address
-	pt, err = ParseReceiverData("xxx|stakeibc/liquidstake")
-	require.Error(t, err)
+	pt, err = ParseReceiverData("xxx|stakeibc/LiquidStake")
+	require.EqualError(t, err, "decoding bech32 failed: invalid bech32 string length 3")
 	require.Nil(t, pt)
 }

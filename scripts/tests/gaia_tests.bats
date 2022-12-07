@@ -144,8 +144,8 @@ setup() {
   str1_balance_statom=$($STRIDE_MAIN_CMD q bank balances $(STRIDE_ADDRESS) --denom $STATOM_DENOM | GETBAL)
   # do IBC transfer
   echo "target address following"
-  echo $(STRIDE_ADDRESS)'|stakeibc/liquidstake'
-  $GAIA_MAIN_CMD tx ibc-transfer transfer transfer channel-0 $(STRIDE_ADDRESS)'|stakeibc/liquidstake' 3000uatom --from gval1 --chain-id GAIA -y --keyring-backend test &
+  echo $(STRIDE_ADDRESS)'|stakeibc/LiquidStake'
+  $GAIA_MAIN_CMD tx ibc-transfer transfer transfer channel-0 $(STRIDE_ADDRESS)'|stakeibc/LiquidStake' 3000uatom --from gval1 --chain-id GAIA -y --keyring-backend test &
   WAIT_FOR_BLOCK $STRIDE_LOGS 8
   # make sure stATOM balance increased
   str1_balance_statom_new=$($STRIDE_MAIN_CMD q bank balances $(STRIDE_ADDRESS) --denom $STATOM_DENOM | GETBAL)

@@ -2,7 +2,6 @@ package keeper
 
 import (
 	"github.com/armon/go-metrics"
-	"github.com/cosmos/cosmos-sdk/telemetry"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	transfertypes "github.com/cosmos/ibc-go/v3/modules/apps/transfer/types"
@@ -25,20 +24,19 @@ func (k Keeper) TryLiquidStaking(
 	if !params.Active {
 		return channeltypes.NewErrorAcknowledgement("packet forwarding param is not active")
 	}
-	// recalculate denom, skip checks that were already done in app.OnRecvPacket
-	var denom string
+
 	// In this case, we can't process a liquid staking transaction, because we're dealing with STRD tokens
 	if transfertypes.ReceiverChainIsSource(packet.GetSourcePort(), packet.GetSourceChannel(), newData.Denom) {
 		return channeltypes.NewErrorAcknowledgement("the native token is not supported for liquid staking")
-	} else {
-		prefixedDenom := transfertypes.GetDenomPrefix(packet.GetDestPort(), packet.GetDestChannel()) + newData.Denom
-		denom = transfertypes.ParseDenomTrace(prefixedDenom).BaseDenom
 	}
+
 	amount, ok := sdk.NewIntFromString(newData.Amount)
 	if !ok {
 		return channeltypes.NewErrorAcknowledgement("not a parsable amount field")
 	}
-	var token = sdk.NewCoin(denom, amount)
+
+	// Note: newData.denom is base denom e.g. uatom - not ibc/xxx
+	var token = sdk.NewCoin(newData.Denom, amount)
 
 	err := k.RunLiquidStake(ctx, parsedReceiver.StrideAccAddress, token, []metrics.Label{})
 	if err != nil {
@@ -66,19 +64,5 @@ func (k Keeper) RunLiquidStake(ctx sdk.Context, addr sdk.AccAddress, token sdk.C
 	if err != nil {
 		return sdkerrors.Wrapf(sdkerrors.ErrInsufficientFunds, err.Error())
 	}
-
-	defer func() {
-		telemetry.SetGaugeWithLabels(
-			[]string{"tx", "msg", "ibc", "transfer"},
-			float32(token.Amount.Int64()),
-			[]metrics.Label{telemetry.NewLabel("label_denom", token.Denom)},
-		)
-
-		telemetry.IncrCounterWithLabels(
-			[]string{"ibc", types.ModuleName, "send"},
-			1,
-			labels,
-		)
-	}()
 	return nil
 }
