@@ -1,9 +1,6 @@
 syntax = "proto3";
 package stride.ratelimit;
 
-import "stride/ratelimit/ratelimit.proto";
-import "gogoproto/gogo.proto";
-
 option go_package = "github.com/Stride-Labs/stride/v4/x/ratelimit/types";
 
 // Msg defines the Msg service.
@@ -22,11 +19,11 @@ message MsgAddRateLimit {
 
 message MsgAddRateLimitResponse {}
 
-message MsgAddQuota { 
-  string name = 1; 
-  uint64 max_percent_send = 2; 
-  uint64 max_percent_recv = 3; 
-  uint64 duration_minutes = 4; 
+message MsgAddQuota {
+  string name = 1;
+  uint64 max_percent_send = 2;
+  uint64 max_percent_recv = 3;
+  uint64 duration_minutes = 4;
 }
 
 message MsgAddQuotaResponse {}

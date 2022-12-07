@@ -27,31 +27,19 @@ service Query {
 message QueryPathsRequest {}
 
 message QueryPathsResponse {
-  repeated Path paths = 1 [
-    (gogoproto.nullable) = false
-  ];
+  repeated Path paths = 1 [ (gogoproto.nullable) = false ];
 }
 
-message QueryPathRequest {
-  string id = 1;
-}
+message QueryPathRequest { string id = 1; }
 
-message QueryPathResponse {
-  Path path = 1;
-}
+message QueryPathResponse { Path path = 1; }
 
 message QueryRateLimitsRequest {}
 
 message QueryRateLimitsResponse {
-  repeated RateLimit rate_limits = 1 [
-    (gogoproto.nullable) = false
-  ];
+  repeated RateLimit rate_limits = 1 [ (gogoproto.nullable) = false ];
 }
 
-message QueryRateLimitRequest {
-  string path_id = 1;
-}
+message QueryRateLimitRequest { string path_id = 1; }
 
-message QueryRateLimitResponse {
-  RateLimit rate_limit = 1;
-}
+message QueryRateLimitResponse { RateLimit rate_limit = 1; }
