@@ -4,7 +4,7 @@ package stride.ratelimit;
 import "stride/ratelimit/ratelimit.proto";
 import "gogoproto/gogo.proto";
 
-option go_package = "github.com/Stride-Labs/stride/v3/x/ratelimit/types";
+option go_package = "github.com/Stride-Labs/stride/v4/x/ratelimit/types";
 
 // Msg defines the Msg service.
 service Msg {

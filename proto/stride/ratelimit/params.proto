@@ -3,7 +3,7 @@ package stride.ratelimit;
 
 import "gogoproto/gogo.proto";
 
-option go_package = "github.com/Stride-Labs/stride/v3/x/ratelimit/types";
+option go_package = "github.com/Stride-Labs/stride/v4/x/ratelimit/types";
 
 // Params defines the ratelimit module's parameters.
 message Params {
