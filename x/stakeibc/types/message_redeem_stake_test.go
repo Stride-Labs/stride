@@ -54,6 +54,8 @@ func TestMsgRedeemStake_ValidateBasic(t *testing.T) {
 			},
 			err: ErrRequiredFieldEmpty,
 		},
+		// After moving to sdk.Int, no err anymore
+
 		{
 			name: "amount max int",
 			msg: MsgRedeemStake{
@@ -62,7 +64,7 @@ func TestMsgRedeemStake_ValidateBasic(t *testing.T) {
 				Receiver: sample.AccAddress(),
 				Amount:   sdk.NewIntFromUint64(math.MaxUint64),
 			},
-			err: ErrInvalidAmount,
+			err: nil,
 		},
 	}
 	for _, tt := range tests {
