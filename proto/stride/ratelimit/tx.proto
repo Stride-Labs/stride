@@ -26,7 +26,7 @@ message MsgAddQuota {
   string name = 1; 
   uint64 max_percent_send = 2; 
   uint64 max_percent_recv = 3; 
-  uint64 duration_hours = 4; 
+  uint64 duration_minutes = 4; 
 }
 
 message MsgAddQuotaResponse {}
