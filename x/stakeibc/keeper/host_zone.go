@@ -9,7 +9,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	"github.com/spf13/cast"
 
 	"github.com/Stride-Labs/stride/v4/x/stakeibc/types"
 )
@@ -94,29 +93,20 @@ func (k Keeper) GetAllHostZone(ctx sdk.Context) (list []types.HostZone) {
 	return
 }
 
-func (k Keeper) AddDelegationToValidator(ctx sdk.Context, hostZone types.HostZone, valAddr string, amt int64) (success bool) {
+func (k Keeper) AddDelegationToValidator(ctx sdk.Context, hostZone types.HostZone, valAddr string, amt sdk.Int) (success bool) {
 	for _, val := range hostZone.GetValidators() {
 		if val.GetAddress() == valAddr {
-			k.Logger(ctx).Info(fmt.Sprintf("Validator %s, Current Delegation: %d, Delegation Change: %d", val.GetAddress(), val.GetDelegationAmt(), amt))
-			if amt >= 0 {
-				amt, err := cast.ToUint64E(amt)
-				if err != nil {
-					k.Logger(ctx).Error(fmt.Sprintf("Error converting %d to uint64", amt))
-					return false
-				}
-				val.DelegationAmt = val.GetDelegationAmt() + amt
+			k.Logger(ctx).Info(fmt.Sprintf("Validator %s, Current Delegation: %d, Delegation Change: %d", val.GetAddress(), val.DelegationAmt, amt))
+			if amt.GTE(sdk.ZeroInt()) {
+				val.DelegationAmt = val.DelegationAmt.Add(amt)
 				return true
 			} else {
-				absAmt, err := cast.ToUint64E(-amt)
-				if err != nil {
-					k.Logger(ctx).Error(fmt.Sprintf("Error converting %d to uint64", amt))
+				absAmt := amt.Abs()
+				if absAmt.GT(val.DelegationAmt) {
+					k.Logger(ctx).Error(fmt.Sprintf("Delegation amount %d is greater than validator %s delegation amount %d", absAmt, valAddr, val.DelegationAmt))
 					return false
 				}
-				if absAmt > val.GetDelegationAmt() {
-					k.Logger(ctx).Error(fmt.Sprintf("Delegation amount %d is greater than validator %s delegation amount %d", absAmt, valAddr, val.GetDelegationAmt()))
-					return false
-				}
-				val.DelegationAmt = val.GetDelegationAmt() - absAmt
+				val.DelegationAmt = val.DelegationAmt.Sub(absAmt)
 				return true
 			}
 		}
@@ -172,7 +162,7 @@ func (k Keeper) AddValidatorToHostZone(ctx sdk.Context, msg *types.MsgAddValidat
 		Address:        msg.Address,
 		Status:         types.Validator_ACTIVE,
 		CommissionRate: msg.Commission,
-		DelegationAmt:  0,
+		DelegationAmt:  sdk.ZeroInt(),
 		Weight:         valWeight,
 	})
 
@@ -190,12 +180,12 @@ func (k Keeper) RemoveValidatorFromHostZone(ctx sdk.Context, chainId string, val
 	}
 	for i, val := range hostZone.Validators {
 		if val.GetAddress() == validatorAddress {
-			if val.GetDelegationAmt() == 0 && val.GetWeight() == 0 {
+			if val.DelegationAmt.Equal(sdk.ZeroInt()) && val.GetWeight() == 0 {
 				hostZone.Validators = append(hostZone.Validators[:i], hostZone.Validators[i+1:]...)
 				k.SetHostZone(ctx, hostZone)
 				return nil
 			} else {
-				errMsg := fmt.Sprintf("Validator (%s) has non-zero delegation (%d) or weight (%d)", validatorAddress, val.GetDelegationAmt(), val.GetWeight())
+				errMsg := fmt.Sprintf("Validator (%s) has non-zero delegation (%d) or weight (%d)", validatorAddress, val.DelegationAmt, val.GetWeight())
 				k.Logger(ctx).Error(errMsg)
 				return errors.New(errMsg)
 			}

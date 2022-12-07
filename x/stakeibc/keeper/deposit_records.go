@@ -2,7 +2,6 @@ package keeper
 
 import (
 	"fmt"
-	"strconv"
 
 	ibctransfertypes "github.com/cosmos/ibc-go/v3/modules/apps/transfer/types"
 
@@ -24,7 +23,7 @@ func (k Keeper) CreateDepositRecordsForEpoch(ctx sdk.Context, epochNumber uint64
 		k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId, "Creating Deposit Record"))
 
 		depositRecord := recordstypes.DepositRecord{
-			Amount:             0,
+			Amount:             sdk.ZeroInt(),
 			Denom:              hostZone.HostDenom,
 			HostZoneId:         hostZone.ChainId,
 			Status:             recordstypes.DepositRecord_TRANSFER_QUEUE,
@@ -54,7 +53,7 @@ func (k Keeper) TransferExistingDepositsToHostZones(ctx sdk.Context, epochNumber
 			"Processing deposit record %d: %d%s", depositRecord.Id, depositRecord.Amount, depositRecord.Denom))
 
 		// if a TRANSFER_QUEUE record has 0 balance and was created in the previous epoch, it's safe to remove since it will never be updated or used
-		if depositRecord.Amount <= 0 && depositRecord.DepositEpochNumber < epochNumber {
+		if depositRecord.Amount.LTE(sdk.ZeroInt()) && depositRecord.DepositEpochNumber < epochNumber {
 			k.Logger(ctx).Info(utils.LogWithHostZone(depositRecord.HostZoneId, "Empty deposit record - Removing."))
 			k.RecordsKeeper.RemoveDepositRecord(ctx, depositRecord.Id)
 			continue
@@ -75,7 +74,7 @@ func (k Keeper) TransferExistingDepositsToHostZones(ctx sdk.Context, epochNumber
 		delegateAddress := delegateAccount.Address
 
 		k.Logger(ctx).Info(utils.LogWithHostZone(depositRecord.HostZoneId, "Transferring %d%s", depositRecord.Amount, hostZone.HostDenom))
-		transferCoin := sdk.NewCoin(hostZone.IbcDenom, sdk.NewInt(depositRecord.Amount))
+		transferCoin := sdk.NewCoin(hostZone.IbcDenom, depositRecord.Amount)
 
 		// timeout 30 min in the future
 		// NOTE: this assumes no clock drift between chains, which tendermint guarantees
@@ -137,7 +136,7 @@ func (k Keeper) StakeExistingDepositsOnHostZones(ctx sdk.Context, epochNumber ui
 		}
 
 		k.Logger(ctx).Info(utils.LogWithHostZone(depositRecord.HostZoneId, "Staking %d%s", depositRecord.Amount, hostZone.HostDenom))
-		stakeAmount := sdk.NewCoin(hostZone.HostDenom, sdk.NewInt(depositRecord.Amount))
+		stakeAmount := sdk.NewCoin(hostZone.HostDenom, depositRecord.Amount)
 
 		err := k.DelegateOnHost(ctx, hostZone, stakeAmount, depositRecord)
 		if err != nil {
@@ -150,7 +149,7 @@ func (k Keeper) StakeExistingDepositsOnHostZones(ctx sdk.Context, epochNumber ui
 			sdk.NewEvent(
 				sdk.EventTypeMessage,
 				sdk.NewAttribute("hostZone", hostZone.ChainId),
-				sdk.NewAttribute("newAmountStaked", strconv.FormatInt(depositRecord.Amount, 10)),
+				sdk.NewAttribute("newAmountStaked", depositRecord.Amount.String()),
 			),
 		)
 	}

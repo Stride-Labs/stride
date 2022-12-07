@@ -9,7 +9,7 @@ const TypeMsgRedeemStake = "redeem_stake"
 
 var _ sdk.Msg = &MsgRedeemStake{}
 
-func NewMsgRedeemStake(creator string, amount string, hostZone string, receiver string) *MsgRedeemStake {
+func NewMsgRedeemStake(creator string, amount sdk.Int, hostZone string, receiver string) *MsgRedeemStake {
 	return &MsgRedeemStake{
 		Creator:  creator,
 		Amount:   amount,
@@ -50,13 +50,8 @@ func (msg *MsgRedeemStake) ValidateBasic() error {
 	if msg.Receiver == "" {
 		return sdkerrors.Wrapf(ErrRequiredFieldEmpty, "receiver cannot be empty")
 	}
-
-	amount, found := sdk.NewIntFromString(msg.Amount)
-	if !found {
-		return sdkerrors.Wrapf(ErrInvalidAmount, "can not cast amount")
-	}
 	// ensure amount is a nonzero positive integer
-	if amount.LTE(sdk.ZeroInt()) {
+	if msg.Amount.LTE(sdk.ZeroInt()) {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "invalid amount (%d)", msg.Amount)
 	}
 	// validate host zone is not empty

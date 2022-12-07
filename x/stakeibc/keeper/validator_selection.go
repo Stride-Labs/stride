@@ -5,7 +5,6 @@ import (
 	"sort"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/spf13/cast"
 
 	"github.com/Stride-Labs/stride/v4/utils"
 	"github.com/Stride-Labs/stride/v4/x/stakeibc/types"
@@ -15,9 +14,9 @@ import (
 //
 //   positive implies extra tokens need to be given,
 //   negative impleis tokens need to be taken away
-func (k Keeper) GetValidatorDelegationAmtDifferences(ctx sdk.Context, hostZone types.HostZone) (map[string]int64, error) {
+func (k Keeper) GetValidatorDelegationAmtDifferences(ctx sdk.Context, hostZone types.HostZone) (map[string]sdk.Int, error) {
 	validators := hostZone.GetValidators()
-	delegationDelta := make(map[string]int64)
+	delegationDelta := make(map[string]sdk.Int)
 	totalDelegatedAmt := k.GetTotalValidatorDelegations(hostZone)
 	targetDelegation, err := k.GetTargetValAmtsForHostZone(ctx, hostZone, totalDelegatedAmt)
 	if err != nil {
@@ -25,17 +24,8 @@ func (k Keeper) GetValidatorDelegationAmtDifferences(ctx sdk.Context, hostZone t
 		return nil, err
 	}
 	for _, validator := range validators {
-		targetDelForVal, err := cast.ToInt64E(targetDelegation[validator.GetAddress()])
-		if err != nil {
-			k.Logger(ctx).Error(fmt.Sprintf("Error getting target weight for host zone %s, targetDelForVal: %d", hostZone.ChainId, targetDelForVal))
-			return nil, err
-		}
-		delAmt, err := cast.ToInt64E(validator.DelegationAmt)
-		if err != nil {
-			k.Logger(ctx).Error(fmt.Sprintf("Error getting target delAmt for host zone %s, amt: %d", hostZone.ChainId, delAmt))
-			return nil, err
-		}
-		delegationDelta[validator.GetAddress()] = targetDelForVal - delAmt
+		targetDelForVal := targetDelegation[validator.GetAddress()]
+		delegationDelta[validator.GetAddress()] = targetDelForVal.Sub(validator.DelegationAmt)
 	}
 	return delegationDelta, nil
 }
@@ -88,8 +78,7 @@ func (k Keeper) GetTotalValidatorDelegations(hostZone types.HostZone) sdk.Int {
 	validators := hostZone.GetValidators()
 	total_delegation := sdk.ZeroInt()
 	for _, validator := range validators {
-		delegatonAmount, _ := sdk.NewIntFromString(validator.DelegationAmt)
-		total_delegation = total_delegation.Add(delegatonAmount) 
+		total_delegation = total_delegation.Add(validator.DelegationAmt) 
 	}
 	return total_delegation
 }

@@ -12,7 +12,7 @@ const TypeMsgClearBalance = "clear_balance"
 
 var _ sdk.Msg = &MsgClearBalance{}
 
-func NewMsgClearBalance(creator string, chainId string, amount string, channelId string) *MsgClearBalance {
+func NewMsgClearBalance(creator string, chainId string, amount sdk.Int, channelId string) *MsgClearBalance {
 	return &MsgClearBalance{
 		Creator: creator,
 		ChainId: chainId,
@@ -55,12 +55,7 @@ func (msg *MsgClearBalance) ValidateBasic() error {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "chainid is required")
 	}
 
-	amount, found := sdk.NewIntFromString(msg.Amount)
-	if !found {
-		return sdkerrors.Wrapf(ErrInvalidAmount, "can not cast amount")
-	}
-
-	if amount.LTE(sdk.ZeroInt()) {
+	if msg.Amount.LTE(sdk.ZeroInt()) {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "amount must be greater than 0")
 	}
 	if isValid := channeltypes.IsValidChannelID(msg.Channel); !isValid {
