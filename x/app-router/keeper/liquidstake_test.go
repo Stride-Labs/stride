@@ -4,13 +4,17 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/cosmos/ibc-go/v3/modules/apps/transfer"
 	transfertypes "github.com/cosmos/ibc-go/v3/modules/apps/transfer/types"
 	clienttypes "github.com/cosmos/ibc-go/v3/modules/core/02-client/types"
 	channeltypes "github.com/cosmos/ibc-go/v3/modules/core/04-channel/types"
 	"github.com/tendermint/tendermint/crypto/ed25519"
 
+	recordsmodule "github.com/Stride-Labs/stride/v3/x/records"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
+	router "github.com/Stride-Labs/stride/v3/x/app-router"
 	"github.com/Stride-Labs/stride/v3/x/app-router/types"
 	epochtypes "github.com/Stride-Labs/stride/v3/x/epochs/types"
 	minttypes "github.com/Stride-Labs/stride/v3/x/mint/types"
@@ -18,7 +22,7 @@ import (
 	stakeibctypes "github.com/Stride-Labs/stride/v3/x/stakeibc/types"
 )
 
-func (suite *KeeperTestSuite) TestTryLiquidStaking() {
+func (suite *KeeperTestSuite) TestOnRecvPacket() {
 	now := time.Now()
 
 	packet := channeltypes.Packet{
@@ -40,58 +44,71 @@ func (suite *KeeperTestSuite) TestTryLiquidStaking() {
 	prefixedDenom = transfertypes.GetPrefixedDenom(packet.GetSourcePort(), packet.GetSourceChannel(), strdDenom)
 	strdIbcDenom := transfertypes.ParseDenomTrace(prefixedDenom).IBCDenom()
 
+	addr1 := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address().Bytes())
 	testCases := []struct {
 		forwardingActive bool
 		recvDenom        string
 		packetData       transfertypes.FungibleTokenPacketData
-		expNilAck        bool
+		expSuccess       bool
 	}{
 		{ // params not enabled
 			forwardingActive: false,
 			packetData: transfertypes.FungibleTokenPacketData{
 				Denom:    "uatom",
 				Amount:   "1000000",
-				Sender:   "",
-				Receiver: "",
+				Sender:   "cosmos16plylpsgxechajltx9yeseqexzdzut9g8vla4k",
+				Receiver: fmt.Sprintf("%s|stakeibc/LiquidStake", addr1.String()),
 				Memo:     "",
 			},
-			recvDenom: atomIbcDenom,
-			expNilAck: false,
+			recvDenom:  atomIbcDenom,
+			expSuccess: false,
 		},
 		{ // all okay
 			forwardingActive: true,
 			packetData: transfertypes.FungibleTokenPacketData{
 				Denom:    "uatom",
 				Amount:   "1000000",
-				Sender:   "",
-				Receiver: "",
+				Sender:   "cosmos16plylpsgxechajltx9yeseqexzdzut9g8vla4k",
+				Receiver: fmt.Sprintf("%s|stakeibc/LiquidStake", addr1.String()),
 				Memo:     "",
 			},
-			recvDenom: atomIbcDenom,
-			expNilAck: true,
+			recvDenom:  atomIbcDenom,
+			expSuccess: true,
 		},
 		{ // strd denom
 			forwardingActive: true,
 			packetData: transfertypes.FungibleTokenPacketData{
 				Denom:    strdIbcDenom,
 				Amount:   "1000000",
-				Sender:   "",
-				Receiver: "",
+				Sender:   "cosmos16plylpsgxechajltx9yeseqexzdzut9g8vla4k",
+				Receiver: fmt.Sprintf("%s|stakeibc/LiquidStake", addr1.String()),
 				Memo:     "",
 			},
-			recvDenom: "ustrd",
-			expNilAck: false,
+			recvDenom:  "ustrd",
+			expSuccess: false,
+		},
+		{ // invalid receiver
+			forwardingActive: true,
+			packetData: transfertypes.FungibleTokenPacketData{
+				Denom:    strdIbcDenom,
+				Amount:   "1000000",
+				Sender:   "cosmos16plylpsgxechajltx9yeseqexzdzut9g8vla4k",
+				Receiver: "xxx",
+				Memo:     "",
+			},
+			recvDenom:  "ustrd",
+			expSuccess: false,
 		},
 	}
 
 	for i, tc := range testCases {
 		suite.Run(fmt.Sprintf("Case %d", i), func() {
+			packet.Data = transfertypes.ModuleCdc.MustMarshalJSON(&tc.packetData)
+
 			suite.SetupTest() // reset
 			ctx := suite.Ctx()
 
 			suite.App.RouterKeeper.SetParams(ctx, types.Params{Active: tc.forwardingActive})
-
-			addr1 := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address().Bytes())
 
 			// set epoch tracker for env
 			suite.App.StakeibcKeeper.SetEpochTracker(ctx, stakeibctypes.EpochTracker{
@@ -135,20 +152,18 @@ func (suite *KeeperTestSuite) TestTryLiquidStaking() {
 			err = suite.App.BankKeeper.SendCoinsFromModuleToAccount(ctx, minttypes.ModuleName, addr1, coins)
 			suite.Require().NoError(err)
 
-			ack := suite.App.RouterKeeper.TryLiquidStaking(
+			transferIBCModule := transfer.NewIBCModule(suite.App.TransferKeeper)
+			recordsStack := recordsmodule.NewIBCModule(suite.App.RecordsKeeper, transferIBCModule)
+			routerIBCModule := router.NewIBCModule(suite.App.RouterKeeper, recordsStack)
+			ack := routerIBCModule.OnRecvPacket(
 				ctx,
 				packet,
-				tc.packetData,
-				&types.ParsedReceiver{
-					ShouldLiquidStake: true,
-					StrideAccAddress:  addr1,
-				},
-				nil,
+				addr1,
 			)
-			if tc.expNilAck {
-				suite.Require().Nil(ack)
+			if tc.expSuccess {
+				suite.Require().True(ack.Success(), string(ack.Acknowledgement()))
 			} else {
-				suite.Require().NotNil(ack)
+				suite.Require().False(ack.Success(), string(ack.Acknowledgement()))
 			}
 		})
 	}
