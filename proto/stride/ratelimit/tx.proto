@@ -5,10 +5,11 @@ option go_package = "github.com/Stride-Labs/stride/v4/x/ratelimit/types";
 
 // Msg defines the Msg service.
 service Msg {
-  rpc AddRateLimit(MsgAddRateLimit) returns (MsgAddRateLimitResponse);
   rpc AddQuota(MsgAddQuota) returns (MsgAddQuotaResponse);
-  rpc ResetRateLimit(MsgResetRateLimit) returns (MsgResetRateLimitResponse);
+  rpc AddRateLimit(MsgAddRateLimit) returns (MsgAddRateLimitResponse);
+  rpc RemoveQuota(MsgRemoveQuota) returns (MsgRemoveQuotaResponse);
   rpc RemoveRateLimit(MsgRemoveRateLimit) returns (MsgRemoveRateLimitResponse);
+  rpc ResetRateLimit(MsgResetRateLimit) returns (MsgResetRateLimitResponse);
 }
 
 message MsgAddRateLimit {
@@ -16,7 +17,6 @@ message MsgAddRateLimit {
   string channel = 2;
   string quota_name = 3;
 }
-
 message MsgAddRateLimitResponse {}
 
 message MsgAddQuota {
@@ -25,13 +25,13 @@ message MsgAddQuota {
   uint64 max_percent_recv = 3;
   uint64 duration_minutes = 4;
 }
-
 message MsgAddQuotaResponse {}
 
-message MsgResetRateLimit {}
+message MsgRemoveQuota { string name = 1; }
+message MsgRemoveQuotaResponse {}
 
+message MsgResetRateLimit { string path_id = 1; }
 message MsgResetRateLimitResponse {}
 
-message MsgRemoveRateLimit {}
-
+message MsgRemoveRateLimit { string path_id = 1; }
 message MsgRemoveRateLimitResponse {}
