@@ -24,7 +24,7 @@ message Path {
   string id = 1;
 
   // path denom (native denom)
-  string denom = 2; 
+  string denom = 2;
 
   // path channelid
   string channel_id = 3;
@@ -50,7 +50,7 @@ message Quota {
 message Flow {
   // incoming flow
   uint64 in_flow = 1;
-  
+
   // outgoing flow
   uint64 out_flow = 2;
 
