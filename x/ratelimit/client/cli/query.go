@@ -7,7 +7,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/client"
 
-	"github.com/Stride-Labs/stride/v3/x/ratelimit/types"
+	"github.com/Stride-Labs/stride/v4/x/ratelimit/types"
 )
 
 // GetQueryCmd returns the cli query commands for this module.

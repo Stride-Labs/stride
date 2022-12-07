@@ -3,7 +3,7 @@ package keeper
 import (
 	"context"
 
-	"github.com/Stride-Labs/stride/v3/x/ratelimit/types"
+	"github.com/Stride-Labs/stride/v4/x/ratelimit/types"
 )
 
 type msgServer struct {
