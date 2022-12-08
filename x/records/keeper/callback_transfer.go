@@ -48,20 +48,8 @@ func TransferCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ack
 
 	if ack == nil {
 		// timeout
-		// put record back in the TRANSFER_QUEUE
-		depositRecord.Status = types.DepositRecord_TRANSFER_QUEUE
-		k.SetDepositRecord(ctx, depositRecord)
 		k.Logger(ctx).Error(fmt.Sprintf("TransferCallback timeout, ack is nil, packet %v", packet))
-		return nil
-	}
-
-	if _, ok := ack.Response.(*channeltypes.Acknowledgement_Error); ok {
-		// error on host chain
-		// put record back in the TRANSFER_QUEUE
-		depositRecord.Status = types.DepositRecord_TRANSFER_QUEUE
-		k.SetDepositRecord(ctx, depositRecord)
-		k.Logger(ctx).Error(fmt.Sprintf("Error  %s", ack.GetError()))
-		return nil
+		return sdkerrors.Wrapf(sdkerrors.ErrNotFound, "TransferCallback timeout, ack is nil, packet %v", packet)
 	}
 
 	var data ibctransfertypes.FungibleTokenPacketData
