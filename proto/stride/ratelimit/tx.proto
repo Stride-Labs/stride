@@ -13,25 +13,36 @@ service Msg {
 }
 
 message MsgAddRateLimit {
-  string denom = 1;
-  string channel = 2;
-  string quota_name = 3;
+  string creator = 1;
+  string denom = 2;
+  string channel = 3;
+  string quota_name = 4;
 }
 message MsgAddRateLimitResponse {}
 
 message MsgAddQuota {
-  string name = 1;
-  uint64 max_percent_send = 2;
-  uint64 max_percent_recv = 3;
-  uint64 duration_minutes = 4;
+  string creator = 1;
+  string name = 2;
+  uint64 max_percent_send = 3;
+  uint64 max_percent_recv = 4;
+  uint64 duration_minutes = 5;
 }
 message MsgAddQuotaResponse {}
 
-message MsgRemoveQuota { string name = 1; }
+message MsgRemoveQuota { 
+  string creator = 1;
+  string name = 2; 
+}
 message MsgRemoveQuotaResponse {}
 
-message MsgResetRateLimit { string path_id = 1; }
+message MsgResetRateLimit { 
+  string creator = 1;
+  string path_id = 2; 
+}
 message MsgResetRateLimitResponse {}
 
-message MsgRemoveRateLimit { string path_id = 1; }
+message MsgRemoveRateLimit { 
+  string creator = 1;
+  string path_id = 2; 
+}
 message MsgRemoveRateLimitResponse {}
