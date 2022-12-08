@@ -20,7 +20,7 @@ enum FlowDirection {
 }
 
 message Path {
-  // path identifier ({BaseDenom}-{ChannelId})
+  // path identifier ({BaseDenom}_{ChannelId})
   string id = 1;
 
   // path base_denom - represenets the underlying denom (ignoring ibc traces)

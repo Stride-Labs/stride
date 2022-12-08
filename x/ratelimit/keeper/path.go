@@ -14,9 +14,9 @@ import (
 	"github.com/Stride-Labs/stride/v4/x/ratelimit/types"
 )
 
-// Format the pathId as '{BaseDenom}-{ChannelId}
+// Format the pathId as '{BaseDenom}_{ChannelId}
 func FormatPathId(baseDenom string, channelId string) string {
-	return fmt.Sprintf("%s-%s", baseDenom, channelId)
+	return fmt.Sprintf("%s_%s", baseDenom, channelId)
 }
 
 // Add a new path to the store
@@ -42,7 +42,7 @@ func (k Keeper) AddPath(ctx sdk.Context, traceDenom string, channelId string) (p
 		baseDenom = denomTrace.BaseDenom
 	}
 
-	// pathId is of the form '{BaseDenom}-{ChannelId}'
+	// pathId is of the form '{BaseDenom}_{ChannelId}'
 	pathId = FormatPathId(baseDenom, channelId)
 	pathKey := types.KeyPrefix(pathId)
 
