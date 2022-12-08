@@ -33,6 +33,7 @@ type (
 		TransferKeeper     ibctransferkeeper.Keeper
 		IBCKeeper          ibckeeper.Keeper
 		ICACallbacksKeeper icacallbackskeeper.Keeper
+		BankKeeper         types.BankKeeper
 	}
 )
 
@@ -46,6 +47,7 @@ func NewKeeper(
 	TransferKeeper ibctransferkeeper.Keeper,
 	ibcKeeper ibckeeper.Keeper,
 	ICACallbacksKeeper icacallbackskeeper.Keeper,
+	BankKeeper types.BankKeeper,
 ) *Keeper {
 	// set KeyTable if it has not already been set
 	if !ps.HasKeyTable() {
@@ -62,6 +64,7 @@ func NewKeeper(
 		TransferKeeper:     TransferKeeper,
 		IBCKeeper:          ibcKeeper,
 		ICACallbacksKeeper: ICACallbacksKeeper,
+		BankKeeper:         BankKeeper,
 	}
 }
 

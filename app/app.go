@@ -480,6 +480,7 @@ func NewStrideApp(
 		app.TransferKeeper,
 		*app.IBCKeeper,
 		app.IcacallbacksKeeper,
+		app.BankKeeper,
 	)
 	recordsModule := recordsmodule.NewAppModule(appCodec, app.RecordsKeeper, app.AccountKeeper, app.BankKeeper)
 
