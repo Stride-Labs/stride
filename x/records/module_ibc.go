@@ -271,7 +271,11 @@ func (im IBCModule) OnTimeoutPacket(
 ) error {
 	// doCustomLogic(packet)
 	im.keeper.Logger(ctx).Error(fmt.Sprintf("[IBC-TRANSFER] OnTimeoutPacket  %v", packet))
-	err := im.keeper.ICACallbacksKeeper.CallRegisteredICACallback(ctx, packet, nil)
+	var data ibctransfertypes.FungibleTokenPacketData
+	if err := ibctransfertypes.ModuleCdc.UnmarshalJSON(packet.GetData(), &data); err != nil {
+		return sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "cannot unmarshal ICS-20 transfer packet data: %v", err)
+	}
+	err := im.refundPacketToken(ctx, packet, data)
 	if err != nil {
 		return err
 	}
