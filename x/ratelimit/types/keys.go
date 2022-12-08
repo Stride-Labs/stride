@@ -11,6 +11,9 @@ const (
 
 	// QuerierRoute defines the module's query routing key
 	QuerierRoute = ModuleName
+
+	// QuotaKey defines the store key for quotas
+	QuotaKeyPrefix = "quota"
 )
 
 func KeyPrefix(p string) []byte {
