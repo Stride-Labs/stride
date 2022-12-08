@@ -9,8 +9,9 @@ const TypeMsgAddQuota = "add_quota"
 
 var _ sdk.Msg = &MsgAddQuota{}
 
-func NewMsgAddQuota(name string, maxPercentSend uint64, maxPercentRecv uint64, durationMinutes uint64) *MsgAddQuota {
+func NewMsgAddQuota(creator string, name string, maxPercentSend uint64, maxPercentRecv uint64, durationMinutes uint64) *MsgAddQuota {
 	return &MsgAddQuota{
+		Creator:         creator,
 		Name:            name,
 		MaxPercentSend:  maxPercentSend,
 		MaxPercentRecv:  maxPercentRecv,
@@ -49,9 +50,10 @@ const TypeMsgRemoveQuota = "remove_quota"
 
 var _ sdk.Msg = &MsgRemoveQuota{}
 
-func NewMsgRemoveQuota(name string) *MsgRemoveQuota {
+func NewMsgRemoveQuota(creator string, name string) *MsgRemoveQuota {
 	return &MsgRemoveQuota{
-		Name: name,
+		Creator: creator,
+		Name:    name,
 	}
 }
 
@@ -86,8 +88,9 @@ const TypeMsgAddRateLimit = "add_rate_limit"
 
 var _ sdk.Msg = &MsgAddRateLimit{}
 
-func NewMsgAddRateLimit(denom string, channel string, quotaName string) *MsgAddRateLimit {
+func NewMsgAddRateLimit(creator string, denom string, channel string, quotaName string) *MsgAddRateLimit {
 	return &MsgAddRateLimit{
+		Creator:   creator,
 		Denom:     denom,
 		Channel:   channel,
 		QuotaName: quotaName,
@@ -125,9 +128,10 @@ const TypeMsgRemoveRateLimit = "remove_rate_limit"
 
 var _ sdk.Msg = &MsgRemoveRateLimit{}
 
-func NewMsgRemoveRateLimit(pathId string) *MsgRemoveRateLimit {
+func NewMsgRemoveRateLimit(creator string, pathId string) *MsgRemoveRateLimit {
 	return &MsgRemoveRateLimit{
-		PathId: pathId,
+		Creator: creator,
+		PathId:  pathId,
 	}
 }
 
@@ -162,9 +166,10 @@ const TypeMsgResetRateLimit = "reset_rate_limit"
 
 var _ sdk.Msg = &MsgResetRateLimit{}
 
-func NewMsgResetRateLimit(pathId string) *MsgResetRateLimit {
+func NewMsgResetRateLimit(creator string, pathId string) *MsgResetRateLimit {
 	return &MsgResetRateLimit{
-		PathId: pathId,
+		Creator: creator,
+		PathId:  pathId,
 	}
 }
 
