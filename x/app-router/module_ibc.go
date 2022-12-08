@@ -2,9 +2,7 @@ package app_router
 
 import (
 	"fmt"
-	"strconv"
 
-	"github.com/armon/go-metrics"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
@@ -160,6 +158,23 @@ func (im IBCModule) OnRecvPacket(
 		return channeltypes.NewErrorAcknowledgement(err.Error())
 	}
 
+	// to be utilized from ibc-go v5.1.0
+	if data.Memo == "stakeibc/LiquidStake" {
+		strideAccAddress, err := sdk.AccAddressFromBech32(data.Receiver)
+		if err != nil {
+			return channeltypes.NewErrorAcknowledgement(err.Error())
+		}
+
+		ack := im.app.OnRecvPacket(ctx, packet, relayer)
+		if ack.Success() {
+			return im.keeper.TryLiquidStaking(ctx, packet, data, &types.ParsedReceiver{
+				ShouldLiquidStake: true,
+				StrideAccAddress:  strideAccAddress,
+			}, ack)
+		}
+		return ack
+	}
+
 	// parse out any forwarding info
 	parsedReceiver, err := types.ParseReceiverData(data.Receiver)
 	if err != nil {
@@ -185,41 +200,7 @@ func (im IBCModule) OnRecvPacket(
 	// NOTE: this code is pulled from packet-forwarding-middleware
 	ack := im.app.OnRecvPacket(ctx, newPacket, relayer)
 	if ack.Success() {
-		// recalculate denom, skip checks that were already done in app.OnRecvPacket
-		var err error
-		// TODO put denom handling in separate function
-		var denom string
-		// in this case, we can't process a liquid staking transaction, because we're dealing with STRD tokens
-		if transfertypes.ReceiverChainIsSource(packet.GetSourcePort(), packet.GetSourceChannel(), newData.Denom) {
-			// remove prefix added by sender chain
-			voucherPrefix := transfertypes.GetDenomPrefix(packet.GetSourcePort(), packet.GetSourceChannel())
-			unprefixedDenom := newData.Denom[len(voucherPrefix):]
-
-			// coin denomination used in sending from the escrow address
-			denom = unprefixedDenom
-
-			// The denomination used to send the coins is either the native denom or the hash of the path
-			// if the denomination is not native.
-			denomTrace := transfertypes.ParseDenomTrace(unprefixedDenom)
-			if denomTrace.Path != "" {
-				denom = denomTrace.IBCDenom()
-			}
-			// TODO: can we just delete the above code?
-			return ack
-		} else {
-			prefixedDenom := transfertypes.GetDenomPrefix(packet.GetDestPort(), packet.GetDestChannel()) + newData.Denom
-			denom = transfertypes.ParseDenomTrace(prefixedDenom).BaseDenom
-		}
-		unit, err := strconv.ParseUint(newData.Amount, 10, 64)
-		if err != nil {
-			channeltypes.NewErrorAcknowledgement(err.Error())
-		}
-		var token = sdk.NewCoin(denom, sdk.NewIntFromUint64(unit))
-
-		err = im.keeper.LiquidStakeTransferPacket(ctx, parsedReceiver, token, []metrics.Label{})
-		if err != nil {
-			ack = channeltypes.NewErrorAcknowledgement(err.Error())
-		}
+		return im.keeper.TryLiquidStaking(ctx, packet, newData, parsedReceiver, ack)
 	}
 	return ack
 }
