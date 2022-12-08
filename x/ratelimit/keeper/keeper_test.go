@@ -6,8 +6,8 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	"github.com/Stride-Labs/stride/v4/app/apptesting"
-	"github.com/Stride-Labs/stride/v4/x/stakeibc/keeper"
-	"github.com/Stride-Labs/stride/v4/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v4/x/ratelimit/keeper"
+	"github.com/Stride-Labs/stride/v4/x/ratelimit/types"
 )
 
 type KeeperTestSuite struct {
@@ -19,7 +19,7 @@ func (s *KeeperTestSuite) SetupTest() {
 }
 
 func (s *KeeperTestSuite) GetMsgServer() types.MsgServer {
-	return keeper.NewMsgServerImpl(s.App.StakeibcKeeper)
+	return keeper.NewMsgServerImpl(s.App.RatelimitKeeper)
 }
 
 func TestKeeperTestSuite(t *testing.T) {
