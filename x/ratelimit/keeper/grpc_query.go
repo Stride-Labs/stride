@@ -26,13 +26,15 @@ func (k Keeper) Path(c context.Context, req *types.QueryPathRequest) (*types.Que
 }
 
 func (k Keeper) Quotas(c context.Context, req *types.QueryQuotasRequest) (*types.QueryQuotasResponse, error) {
-	// TODO:
-	return &types.QueryQuotasResponse{}, nil
+	ctx := sdk.UnwrapSDKContext(c)
+	quotas := k.GetAllQuotas(ctx)
+	return &types.QueryQuotasResponse{Quotas: quotas}, nil
 }
 
 func (k Keeper) Quota(c context.Context, req *types.QueryQuotaRequest) (*types.QueryQuotaResponse, error) {
-	// TODO:
-	return &types.QueryQuotaResponse{}, nil
+	ctx := sdk.UnwrapSDKContext(c)
+	quota := k.GetQuota(ctx, req.Name)
+	return &types.QueryQuotaResponse{Quota: &quota}, nil
 }
 
 func (k Keeper) RateLimits(c context.Context, req *types.QueryRateLimitsRequest) (*types.QueryRateLimitsResponse, error) {
