@@ -13,6 +13,7 @@ import (
 	icacallbacktypes "github.com/Stride-Labs/stride/v4/x/icacallbacks/types"
 
 	"github.com/Stride-Labs/stride/v4/x/records/keeper"
+	"github.com/Stride-Labs/stride/v4/x/records/types"
 
 	// "google.golang.org/protobuf/proto" <-- this breaks tx parsing
 
@@ -175,6 +176,10 @@ func (im IBCModule) OnAcknowledgementPacket(
 		im.keeper.Logger(ctx).Error(fmt.Sprintf("Error unmarshalling ack  %v", err.Error()))
 		return sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "cannot unmarshal ICS-20 transfer packet acknowledgement: %v", err)
 	}
+	var data ibctransfertypes.FungibleTokenPacketData
+	if err := ibctransfertypes.ModuleCdc.UnmarshalJSON(packet.GetData(), &data); err != nil {
+		return sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "cannot unmarshal ICS-20 transfer packet data: %v", err)
+	}
 
 	// log the ack type
 	switch resp := ack.Response.(type) {
@@ -182,6 +187,7 @@ func (im IBCModule) OnAcknowledgementPacket(
 		im.keeper.Logger(ctx).Info(fmt.Sprintf("\t [IBC-TRANSFER] Acknowledgement_Result {%s}", string(resp.Result)))
 	case *channeltypes.Acknowledgement_Error:
 		im.keeper.Logger(ctx).Error(fmt.Sprintf("\t [IBC-TRANSFER] Acknowledgement_Error {%s}", resp.Error))
+		return im.refundPacketToken(ctx, packet, data)
 	default:
 		im.keeper.Logger(ctx).Error(fmt.Sprintf("\t [IBC-TRANSFER] Unrecognized ack for packet {%v}", packet))
 	}
@@ -194,10 +200,67 @@ func (im IBCModule) OnAcknowledgementPacket(
 		errMsg := fmt.Sprintf("Unable to call registered callback from records OnAcknowledgePacket | Sequence %d, from %s %s, to %s %s | Error %s",
 			packet.Sequence, packet.SourceChannel, packet.SourcePort, packet.DestinationChannel, packet.DestinationPort, err.Error())
 		im.keeper.Logger(ctx).Error(errMsg)
-		return sdkerrors.Wrapf(icacallbacktypes.ErrCallbackFailed, errMsg)
+		return im.refundPacketToken(ctx, packet, data)
 	}
 
 	return im.app.OnAcknowledgementPacket(ctx, packet, acknowledgement, relayer)
+}
+
+func (im IBCModule) refundPacketToken(ctx sdk.Context, packet channeltypes.Packet, data ibctransfertypes.FungibleTokenPacketData) error {
+	callbackDataKey := icacallbacktypes.PacketID(packet.GetSourcePort(), packet.GetSourceChannel(), packet.Sequence)
+	callbackData, _ := im.keeper.ICACallbacksKeeper.GetCallbackDataFromPacket(ctx, packet, callbackDataKey)
+	transferCallback, _ := im.keeper.UnmarshalTransferCallbackArgs(ctx, callbackData.CallbackArgs)
+
+	// parse the denomination from the full denom path
+	trace := ibctransfertypes.ParseDenomTrace(data.Denom)
+
+	// parse the transfer amount
+	transferAmount, ok := sdk.NewIntFromString(data.Amount)
+	if !ok {
+		return sdkerrors.Wrapf(ibctransfertypes.ErrInvalidAmount, "unable to parse transfer amount (%s) into math.Int", data.Amount)
+	}
+	token := sdk.NewCoin(trace.IBCDenom(), transferAmount)
+
+	// decode the sender address
+	sender, err := sdk.AccAddressFromBech32(data.Sender)
+	if err != nil {
+		return err
+	}
+
+	if ibctransfertypes.SenderChainIsSource(packet.GetSourcePort(), packet.GetSourceChannel(), data.Denom) {
+		// unescrow tokens back to sender
+		escrowAddress := ibctransfertypes.GetEscrowAddress(packet.GetSourcePort(), packet.GetSourceChannel())
+		if err := im.keeper.BankKeeper.SendCoins(ctx, escrowAddress, sender, sdk.NewCoins(token)); err != nil {
+			// NOTE: this error is only expected to occur given an unexpected bug or a malicious
+			// counterparty module. The bug may occur in bank or any part of the code that allows
+			// the escrow address to be drained. A malicious counterparty module could drain the
+			// escrow address by allowing more tokens to be sent back then were escrowed.
+			return sdkerrors.Wrap(err, "unable to unescrow tokens, this may be caused by a malicious counterparty module or a bug: please open an issue on counterparty module")
+		}
+
+		return nil
+	}
+
+	// mint vouchers back to sender
+	if err := im.keeper.BankKeeper.MintCoins(
+		ctx, ibctransfertypes.ModuleName, sdk.NewCoins(token),
+	); err != nil {
+		return err
+	}
+
+	if err := im.keeper.BankKeeper.SendCoinsFromModuleToAccount(ctx, ibctransfertypes.ModuleName, sender, sdk.NewCoins(token)); err != nil {
+		panic(fmt.Sprintf("unable to send coins from module to account despite previously minting coins to module account: %v", err))
+	}
+
+	// update deposit record
+	depositRecord, found := im.keeper.GetDepositRecord(ctx, transferCallback.DepositRecordId)
+	if !found {
+		return sdkerrors.Wrapf(types.ErrUnknownDepositRecord, "deposit record not found %d", transferCallback.DepositRecordId)
+	}
+	depositRecord.Status = types.DepositRecord_TRANSFER_QUEUE
+	im.keeper.SetDepositRecord(ctx, depositRecord)
+
+	return nil
 }
 
 // OnTimeoutPacket implements the IBCModule interface
