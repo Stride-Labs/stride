@@ -3,19 +3,26 @@ package keeper
 import (
 	"context"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	"github.com/Stride-Labs/stride/v4/x/ratelimit/types"
 )
 
 var _ types.QueryServer = Keeper{}
 
 func (k Keeper) Paths(c context.Context, req *types.QueryPathsRequest) (*types.QueryPathsResponse, error) {
-	// TODO:
-	return &types.QueryPathsResponse{}, nil
+	ctx := sdk.UnwrapSDKContext(c)
+	paths := k.GetAllPaths(ctx)
+	return &types.QueryPathsResponse{Paths: paths}, nil
 }
 
 func (k Keeper) Path(c context.Context, req *types.QueryPathRequest) (*types.QueryPathResponse, error) {
-	// TODO:
-	return &types.QueryPathResponse{}, nil
+	ctx := sdk.UnwrapSDKContext(c)
+	path, found := k.GetPath(ctx, req.Id)
+	if !found {
+		return &types.QueryPathResponse{}, nil
+	}
+	return &types.QueryPathResponse{Path: &path}, nil
 }
 
 func (k Keeper) Quotas(c context.Context, req *types.QueryQuotasRequest) (*types.QueryQuotasResponse, error) {
