@@ -28,9 +28,10 @@ var _ = math.Inf
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
 type MsgAddRateLimit struct {
-	Denom     string `protobuf:"bytes,1,opt,name=denom,proto3" json:"denom,omitempty"`
-	Channel   string `protobuf:"bytes,2,opt,name=channel,proto3" json:"channel,omitempty"`
-	QuotaName string `protobuf:"bytes,3,opt,name=quota_name,json=quotaName,proto3" json:"quota_name,omitempty"`
+	Creator   string `protobuf:"bytes,1,opt,name=creator,proto3" json:"creator,omitempty"`
+	Denom     string `protobuf:"bytes,2,opt,name=denom,proto3" json:"denom,omitempty"`
+	Channel   string `protobuf:"bytes,3,opt,name=channel,proto3" json:"channel,omitempty"`
+	QuotaName string `protobuf:"bytes,4,opt,name=quota_name,json=quotaName,proto3" json:"quota_name,omitempty"`
 }
 
 func (m *MsgAddRateLimit) Reset()         { *m = MsgAddRateLimit{} }
@@ -65,6 +66,13 @@ func (m *MsgAddRateLimit) XXX_DiscardUnknown() {
 }
 
 var xxx_messageInfo_MsgAddRateLimit proto.InternalMessageInfo
+
+func (m *MsgAddRateLimit) GetCreator() string {
+	if m != nil {
+		return m.Creator
+	}
+	return ""
+}
 
 func (m *MsgAddRateLimit) GetDenom() string {
 	if m != nil {
@@ -124,10 +132,11 @@ func (m *MsgAddRateLimitResponse) XXX_DiscardUnknown() {
 var xxx_messageInfo_MsgAddRateLimitResponse proto.InternalMessageInfo
 
 type MsgAddQuota struct {
-	Name            string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
-	MaxPercentSend  uint64 `protobuf:"varint,2,opt,name=max_percent_send,json=maxPercentSend,proto3" json:"max_percent_send,omitempty"`
-	MaxPercentRecv  uint64 `protobuf:"varint,3,opt,name=max_percent_recv,json=maxPercentRecv,proto3" json:"max_percent_recv,omitempty"`
-	DurationMinutes uint64 `protobuf:"varint,4,opt,name=duration_minutes,json=durationMinutes,proto3" json:"duration_minutes,omitempty"`
+	Creator         string `protobuf:"bytes,1,opt,name=creator,proto3" json:"creator,omitempty"`
+	Name            string `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	MaxPercentSend  uint64 `protobuf:"varint,3,opt,name=max_percent_send,json=maxPercentSend,proto3" json:"max_percent_send,omitempty"`
+	MaxPercentRecv  uint64 `protobuf:"varint,4,opt,name=max_percent_recv,json=maxPercentRecv,proto3" json:"max_percent_recv,omitempty"`
+	DurationMinutes uint64 `protobuf:"varint,5,opt,name=duration_minutes,json=durationMinutes,proto3" json:"duration_minutes,omitempty"`
 }
 
 func (m *MsgAddQuota) Reset()         { *m = MsgAddQuota{} }
@@ -162,6 +171,13 @@ func (m *MsgAddQuota) XXX_DiscardUnknown() {
 }
 
 var xxx_messageInfo_MsgAddQuota proto.InternalMessageInfo
+
+func (m *MsgAddQuota) GetCreator() string {
+	if m != nil {
+		return m.Creator
+	}
+	return ""
+}
 
 func (m *MsgAddQuota) GetName() string {
 	if m != nil {
@@ -228,7 +244,8 @@ func (m *MsgAddQuotaResponse) XXX_DiscardUnknown() {
 var xxx_messageInfo_MsgAddQuotaResponse proto.InternalMessageInfo
 
 type MsgRemoveQuota struct {
-	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	Creator string `protobuf:"bytes,1,opt,name=creator,proto3" json:"creator,omitempty"`
+	Name    string `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
 }
 
 func (m *MsgRemoveQuota) Reset()         { *m = MsgRemoveQuota{} }
@@ -263,6 +280,13 @@ func (m *MsgRemoveQuota) XXX_DiscardUnknown() {
 }
 
 var xxx_messageInfo_MsgRemoveQuota proto.InternalMessageInfo
+
+func (m *MsgRemoveQuota) GetCreator() string {
+	if m != nil {
+		return m.Creator
+	}
+	return ""
+}
 
 func (m *MsgRemoveQuota) GetName() string {
 	if m != nil {
@@ -308,7 +332,8 @@ func (m *MsgRemoveQuotaResponse) XXX_DiscardUnknown() {
 var xxx_messageInfo_MsgRemoveQuotaResponse proto.InternalMessageInfo
 
 type MsgResetRateLimit struct {
-	PathId string `protobuf:"bytes,1,opt,name=path_id,json=pathId,proto3" json:"path_id,omitempty"`
+	Creator string `protobuf:"bytes,1,opt,name=creator,proto3" json:"creator,omitempty"`
+	PathId  string `protobuf:"bytes,2,opt,name=path_id,json=pathId,proto3" json:"path_id,omitempty"`
 }
 
 func (m *MsgResetRateLimit) Reset()         { *m = MsgResetRateLimit{} }
@@ -343,6 +368,13 @@ func (m *MsgResetRateLimit) XXX_DiscardUnknown() {
 }
 
 var xxx_messageInfo_MsgResetRateLimit proto.InternalMessageInfo
+
+func (m *MsgResetRateLimit) GetCreator() string {
+	if m != nil {
+		return m.Creator
+	}
+	return ""
+}
 
 func (m *MsgResetRateLimit) GetPathId() string {
 	if m != nil {
@@ -388,7 +420,8 @@ func (m *MsgResetRateLimitResponse) XXX_DiscardUnknown() {
 var xxx_messageInfo_MsgResetRateLimitResponse proto.InternalMessageInfo
 
 type MsgRemoveRateLimit struct {
-	PathId string `protobuf:"bytes,1,opt,name=path_id,json=pathId,proto3" json:"path_id,omitempty"`
+	Creator string `protobuf:"bytes,1,opt,name=creator,proto3" json:"creator,omitempty"`
+	PathId  string `protobuf:"bytes,2,opt,name=path_id,json=pathId,proto3" json:"path_id,omitempty"`
 }
 
 func (m *MsgRemoveRateLimit) Reset()         { *m = MsgRemoveRateLimit{} }
@@ -423,6 +456,13 @@ func (m *MsgRemoveRateLimit) XXX_DiscardUnknown() {
 }
 
 var xxx_messageInfo_MsgRemoveRateLimit proto.InternalMessageInfo
+
+func (m *MsgRemoveRateLimit) GetCreator() string {
+	if m != nil {
+		return m.Creator
+	}
+	return ""
+}
 
 func (m *MsgRemoveRateLimit) GetPathId() string {
 	if m != nil {
@@ -483,37 +523,38 @@ func init() {
 func init() { proto.RegisterFile("stride/ratelimit/tx.proto", fileDescriptor_a571dec98d62cf94) }
 
 var fileDescriptor_a571dec98d62cf94 = []byte{
-	// 476 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x8c, 0x94, 0xcf, 0x6e, 0xd3, 0x40,
-	0x10, 0xc6, 0x63, 0x12, 0x5a, 0x3a, 0x45, 0x49, 0x58, 0xfe, 0xd4, 0x31, 0xd4, 0x2a, 0xa6, 0x48,
-	0xa9, 0x68, 0x6d, 0xa9, 0xf0, 0x02, 0x70, 0x43, 0x4a, 0x50, 0x71, 0x4f, 0x20, 0x24, 0xb3, 0xb1,
-	0x47, 0x89, 0xa5, 0xee, 0xda, 0x78, 0x37, 0x51, 0x78, 0x0b, 0x1e, 0x81, 0xc7, 0xe1, 0xd8, 0x23,
-	0x12, 0x17, 0x94, 0xbc, 0x08, 0xca, 0xba, 0xde, 0x3a, 0x2e, 0x69, 0x72, 0xf3, 0xce, 0xf7, 0x9b,
-	0x6f, 0x3e, 0xad, 0x57, 0x03, 0x1d, 0x21, 0xb3, 0x38, 0x42, 0x2f, 0xa3, 0x12, 0x2f, 0x62, 0x16,
-	0x4b, 0x4f, 0x4e, 0xdd, 0x34, 0x4b, 0x64, 0x42, 0xda, 0xb9, 0xe4, 0x6a, 0xc9, 0xf9, 0x0a, 0xad,
-	0xbe, 0x18, 0xbe, 0x8d, 0x22, 0x9f, 0x4a, 0xec, 0x2d, 0x4a, 0xe4, 0x11, 0xdc, 0x8d, 0x90, 0x27,
-	0xcc, 0x34, 0x0e, 0x8c, 0xee, 0x8e, 0x9f, 0x1f, 0x88, 0x09, 0xdb, 0xe1, 0x88, 0x72, 0x8e, 0x17,
-	0xe6, 0x1d, 0x55, 0x2f, 0x8e, 0x64, 0x1f, 0xe0, 0xdb, 0x38, 0x91, 0x34, 0xe0, 0x94, 0xa1, 0x59,
-	0x57, 0xe2, 0x8e, 0xaa, 0x7c, 0xa0, 0x0c, 0x9d, 0x0e, 0xec, 0x55, 0x26, 0xf8, 0x28, 0xd2, 0x84,
-	0x0b, 0x74, 0x7e, 0x1a, 0xb0, 0x9b, 0x6b, 0x1f, 0x17, 0x38, 0x21, 0xd0, 0x50, 0x1e, 0xf9, 0x60,
-	0xf5, 0x4d, 0xba, 0xd0, 0x66, 0x74, 0x1a, 0xa4, 0x98, 0x85, 0xc8, 0x65, 0x20, 0x90, 0x47, 0x2a,
-	0x40, 0xc3, 0x6f, 0x32, 0x3a, 0x3d, 0xcb, 0xcb, 0xe7, 0xc8, 0xa3, 0x2a, 0x99, 0x61, 0x38, 0x51,
-	0x69, 0x96, 0x48, 0x1f, 0xc3, 0x09, 0x39, 0x82, 0x76, 0x34, 0xce, 0xa8, 0x8c, 0x13, 0x1e, 0xb0,
-	0x98, 0x8f, 0x25, 0x0a, 0xb3, 0xa1, 0xc8, 0x56, 0x51, 0xef, 0xe7, 0x65, 0xe7, 0x31, 0x3c, 0x2c,
-	0x25, 0xd4, 0xc9, 0x0f, 0xa1, 0xd9, 0x17, 0x43, 0x1f, 0x59, 0x32, 0xc1, 0x95, 0xd9, 0x1d, 0x13,
-	0x9e, 0x2c, 0x53, 0xba, 0xff, 0x18, 0x1e, 0x28, 0x45, 0xa0, 0xbc, 0xbe, 0xf8, 0x3d, 0xd8, 0x4e,
-	0xa9, 0x1c, 0x05, 0x71, 0x74, 0xe5, 0xb2, 0xb5, 0x38, 0xbe, 0x8f, 0x9c, 0xa7, 0xd0, 0xb9, 0x41,
-	0x6b, 0xab, 0x13, 0x20, 0x7a, 0xc8, 0x06, 0x5e, 0xcf, 0xc0, 0xba, 0x89, 0x17, 0x66, 0xa7, 0x7f,
-	0xea, 0x50, 0xef, 0x8b, 0x21, 0x39, 0x83, 0x7b, 0xfa, 0xaf, 0xec, 0xbb, 0xd5, 0x57, 0xe3, 0x96,
-	0xae, 0xc4, 0x7a, 0x79, 0xab, 0x5c, 0x38, 0x93, 0x2f, 0x70, 0x7f, 0xe9, 0x95, 0x3d, 0x5f, 0xd5,
-	0xa6, 0x11, 0xeb, 0x68, 0x2d, 0xa2, 0xdd, 0x3f, 0xc1, 0x6e, 0xf9, 0x67, 0x1c, 0xfc, 0xb7, 0xb3,
-	0x44, 0x58, 0xdd, 0x75, 0x84, 0xb6, 0x46, 0x68, 0x55, 0x2f, 0xf7, 0xf0, 0x96, 0xe6, 0xeb, 0xf8,
-	0xc7, 0x9b, 0x50, 0x7a, 0xcc, 0x00, 0x9a, 0x95, 0xe7, 0xf0, 0x62, 0x45, 0x7f, 0x19, 0xb2, 0x5e,
-	0x6d, 0x00, 0x15, 0x33, 0xde, 0xf5, 0x7e, 0xcd, 0x6c, 0xe3, 0x72, 0x66, 0x1b, 0x7f, 0x67, 0xb6,
-	0xf1, 0x63, 0x6e, 0xd7, 0x2e, 0xe7, 0x76, 0xed, 0xf7, 0xdc, 0xae, 0x7d, 0x3e, 0x1d, 0xc6, 0x72,
-	0x34, 0x1e, 0xb8, 0x61, 0xc2, 0xbc, 0x73, 0x65, 0x78, 0xd2, 0xa3, 0x03, 0xe1, 0x5d, 0xad, 0x92,
-	0xc9, 0x1b, 0x6f, 0x5a, 0xde, 0x27, 0xdf, 0x53, 0x14, 0x83, 0x2d, 0xb5, 0x53, 0x5e, 0xff, 0x0b,
-	0x00, 0x00, 0xff, 0xff, 0x88, 0xd0, 0xf2, 0x15, 0x70, 0x04, 0x00, 0x00,
+	// 494 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xa4, 0x94, 0xcf, 0x6e, 0xd3, 0x40,
+	0x10, 0xc6, 0x6b, 0x92, 0xb6, 0x74, 0x8a, 0x92, 0xb0, 0xfc, 0xa9, 0x63, 0xa8, 0x55, 0x0c, 0x48,
+	0xa9, 0x00, 0x5b, 0x2a, 0x9c, 0x91, 0xe0, 0x00, 0x42, 0x4a, 0x50, 0x71, 0x4f, 0x20, 0x24, 0x6b,
+	0x63, 0x8f, 0x12, 0x4b, 0xf5, 0xae, 0xf1, 0x6e, 0xa2, 0xc0, 0x53, 0xf0, 0x3c, 0x3c, 0x01, 0xc7,
+	0x1e, 0x91, 0xb8, 0xa0, 0xe4, 0x45, 0x50, 0xd6, 0xf1, 0xe2, 0xb8, 0x34, 0x8d, 0xe0, 0xe6, 0x99,
+	0xf9, 0xcd, 0xf7, 0x8d, 0x77, 0x57, 0x03, 0x6d, 0x21, 0xb3, 0x38, 0x42, 0x2f, 0xa3, 0x12, 0x4f,
+	0xe3, 0x24, 0x96, 0x9e, 0x9c, 0xb8, 0x69, 0xc6, 0x25, 0x27, 0xad, 0xbc, 0xe4, 0xea, 0x92, 0xf3,
+	0x05, 0x9a, 0x3d, 0x31, 0x78, 0x11, 0x45, 0x3e, 0x95, 0xd8, 0x9d, 0xa7, 0x88, 0x09, 0xdb, 0x61,
+	0x86, 0x54, 0xf2, 0xcc, 0x34, 0x0e, 0x8c, 0xce, 0x8e, 0x5f, 0x84, 0xe4, 0x26, 0x6c, 0x46, 0xc8,
+	0x78, 0x62, 0x5e, 0x51, 0xf9, 0x3c, 0x50, 0xfc, 0x90, 0x32, 0x86, 0xa7, 0x66, 0x6d, 0xc1, 0xe7,
+	0x21, 0xd9, 0x07, 0xf8, 0x34, 0xe2, 0x92, 0x06, 0x8c, 0x26, 0x68, 0xd6, 0x55, 0x71, 0x47, 0x65,
+	0xde, 0xd2, 0x04, 0x9d, 0x36, 0xec, 0x55, 0xbc, 0x7d, 0x14, 0x29, 0x67, 0x02, 0x9d, 0x6f, 0x06,
+	0xec, 0xe6, 0xb5, 0x77, 0x73, 0x7c, 0xc5, 0x4c, 0x04, 0xea, 0x4a, 0x3d, 0x1f, 0x49, 0x7d, 0x93,
+	0x0e, 0xb4, 0x12, 0x3a, 0x09, 0x52, 0xcc, 0x42, 0x64, 0x32, 0x10, 0xc8, 0x22, 0x35, 0x5a, 0xdd,
+	0x6f, 0x24, 0x74, 0x72, 0x9c, 0xa7, 0x4f, 0x90, 0x45, 0x55, 0x32, 0xc3, 0x70, 0xac, 0xe6, 0x5c,
+	0x22, 0x7d, 0x0c, 0xc7, 0xe4, 0x10, 0x5a, 0xd1, 0x28, 0xa3, 0x32, 0xe6, 0x2c, 0x48, 0x62, 0x36,
+	0x92, 0x28, 0xcc, 0x4d, 0x45, 0x36, 0x8b, 0x7c, 0x2f, 0x4f, 0x3b, 0xb7, 0xe0, 0x46, 0x69, 0x76,
+	0xfd, 0x4f, 0xcf, 0xa1, 0xd1, 0x13, 0x03, 0x1f, 0x13, 0x3e, 0xc6, 0x7f, 0xf8, 0x2b, 0xc7, 0x84,
+	0xdb, 0xcb, 0xfd, 0x5a, 0xf9, 0x15, 0x5c, 0x57, 0x15, 0x81, 0x72, 0x9d, 0x6b, 0xdc, 0x83, 0xed,
+	0x94, 0xca, 0x61, 0x10, 0x47, 0x0b, 0xfd, 0xad, 0x79, 0xf8, 0x26, 0x72, 0xee, 0x40, 0xfb, 0x9c,
+	0x8e, 0x36, 0x79, 0x0d, 0x44, 0xdb, 0xff, 0x97, 0xcb, 0x5d, 0xb0, 0xce, 0x0b, 0x15, 0x36, 0x47,
+	0x3f, 0x6b, 0x50, 0xeb, 0x89, 0x01, 0x39, 0x86, 0xab, 0xfa, 0xf6, 0xf7, 0xdd, 0xea, 0xbb, 0x75,
+	0x4b, 0x07, 0x6c, 0x3d, 0x5c, 0x59, 0x2e, 0x94, 0xc9, 0x47, 0xb8, 0xb6, 0xf4, 0xce, 0xef, 0x5d,
+	0xd4, 0xa6, 0x11, 0xeb, 0xf0, 0x52, 0x44, 0xab, 0xbf, 0x87, 0xdd, 0xf2, 0xd5, 0x1e, 0xfc, 0xb5,
+	0xb3, 0x44, 0x58, 0x9d, 0xcb, 0x08, 0x2d, 0x8d, 0xd0, 0xac, 0x1e, 0xfb, 0x83, 0x15, 0xcd, 0x7f,
+	0xc6, 0x7f, 0xbc, 0x0e, 0xa5, 0x6d, 0xfa, 0xd0, 0xa8, 0x3c, 0xa1, 0xfb, 0x17, 0xf4, 0x97, 0x21,
+	0xeb, 0xd1, 0x1a, 0x50, 0xe1, 0xf1, 0xb2, 0xfb, 0x7d, 0x6a, 0x1b, 0x67, 0x53, 0xdb, 0xf8, 0x35,
+	0xb5, 0x8d, 0xaf, 0x33, 0x7b, 0xe3, 0x6c, 0x66, 0x6f, 0xfc, 0x98, 0xd9, 0x1b, 0x1f, 0x8e, 0x06,
+	0xb1, 0x1c, 0x8e, 0xfa, 0x6e, 0xc8, 0x13, 0xef, 0x44, 0x09, 0x3e, 0xe9, 0xd2, 0xbe, 0xf0, 0x16,
+	0xcb, 0x6c, 0xfc, 0xcc, 0x9b, 0x94, 0x37, 0xda, 0xe7, 0x14, 0x45, 0x7f, 0x4b, 0x6d, 0xb5, 0xa7,
+	0xbf, 0x03, 0x00, 0x00, 0xff, 0xff, 0x0c, 0xca, 0xf5, 0x65, 0xf2, 0x04, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -765,19 +806,26 @@ func (m *MsgAddRateLimit) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 		copy(dAtA[i:], m.QuotaName)
 		i = encodeVarintTx(dAtA, i, uint64(len(m.QuotaName)))
 		i--
-		dAtA[i] = 0x1a
+		dAtA[i] = 0x22
 	}
 	if len(m.Channel) > 0 {
 		i -= len(m.Channel)
 		copy(dAtA[i:], m.Channel)
 		i = encodeVarintTx(dAtA, i, uint64(len(m.Channel)))
 		i--
-		dAtA[i] = 0x12
+		dAtA[i] = 0x1a
 	}
 	if len(m.Denom) > 0 {
 		i -= len(m.Denom)
 		copy(dAtA[i:], m.Denom)
 		i = encodeVarintTx(dAtA, i, uint64(len(m.Denom)))
+		i--
+		dAtA[i] = 0x12
+	}
+	if len(m.Creator) > 0 {
+		i -= len(m.Creator)
+		copy(dAtA[i:], m.Creator)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.Creator)))
 		i--
 		dAtA[i] = 0xa
 	}
@@ -830,22 +878,29 @@ func (m *MsgAddQuota) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	if m.DurationMinutes != 0 {
 		i = encodeVarintTx(dAtA, i, uint64(m.DurationMinutes))
 		i--
-		dAtA[i] = 0x20
+		dAtA[i] = 0x28
 	}
 	if m.MaxPercentRecv != 0 {
 		i = encodeVarintTx(dAtA, i, uint64(m.MaxPercentRecv))
 		i--
-		dAtA[i] = 0x18
+		dAtA[i] = 0x20
 	}
 	if m.MaxPercentSend != 0 {
 		i = encodeVarintTx(dAtA, i, uint64(m.MaxPercentSend))
 		i--
-		dAtA[i] = 0x10
+		dAtA[i] = 0x18
 	}
 	if len(m.Name) > 0 {
 		i -= len(m.Name)
 		copy(dAtA[i:], m.Name)
 		i = encodeVarintTx(dAtA, i, uint64(len(m.Name)))
+		i--
+		dAtA[i] = 0x12
+	}
+	if len(m.Creator) > 0 {
+		i -= len(m.Creator)
+		copy(dAtA[i:], m.Creator)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.Creator)))
 		i--
 		dAtA[i] = 0xa
 	}
@@ -900,6 +955,13 @@ func (m *MsgRemoveQuota) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 		copy(dAtA[i:], m.Name)
 		i = encodeVarintTx(dAtA, i, uint64(len(m.Name)))
 		i--
+		dAtA[i] = 0x12
+	}
+	if len(m.Creator) > 0 {
+		i -= len(m.Creator)
+		copy(dAtA[i:], m.Creator)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.Creator)))
+		i--
 		dAtA[i] = 0xa
 	}
 	return len(dAtA) - i, nil
@@ -952,6 +1014,13 @@ func (m *MsgResetRateLimit) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 		i -= len(m.PathId)
 		copy(dAtA[i:], m.PathId)
 		i = encodeVarintTx(dAtA, i, uint64(len(m.PathId)))
+		i--
+		dAtA[i] = 0x12
+	}
+	if len(m.Creator) > 0 {
+		i -= len(m.Creator)
+		copy(dAtA[i:], m.Creator)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.Creator)))
 		i--
 		dAtA[i] = 0xa
 	}
@@ -1006,6 +1075,13 @@ func (m *MsgRemoveRateLimit) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 		copy(dAtA[i:], m.PathId)
 		i = encodeVarintTx(dAtA, i, uint64(len(m.PathId)))
 		i--
+		dAtA[i] = 0x12
+	}
+	if len(m.Creator) > 0 {
+		i -= len(m.Creator)
+		copy(dAtA[i:], m.Creator)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.Creator)))
+		i--
 		dAtA[i] = 0xa
 	}
 	return len(dAtA) - i, nil
@@ -1051,6 +1127,10 @@ func (m *MsgAddRateLimit) Size() (n int) {
 	}
 	var l int
 	_ = l
+	l = len(m.Creator)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
 	l = len(m.Denom)
 	if l > 0 {
 		n += 1 + l + sovTx(uint64(l))
@@ -1081,6 +1161,10 @@ func (m *MsgAddQuota) Size() (n int) {
 	}
 	var l int
 	_ = l
+	l = len(m.Creator)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
 	l = len(m.Name)
 	if l > 0 {
 		n += 1 + l + sovTx(uint64(l))
@@ -1112,6 +1196,10 @@ func (m *MsgRemoveQuota) Size() (n int) {
 	}
 	var l int
 	_ = l
+	l = len(m.Creator)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
 	l = len(m.Name)
 	if l > 0 {
 		n += 1 + l + sovTx(uint64(l))
@@ -1134,6 +1222,10 @@ func (m *MsgResetRateLimit) Size() (n int) {
 	}
 	var l int
 	_ = l
+	l = len(m.Creator)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
 	l = len(m.PathId)
 	if l > 0 {
 		n += 1 + l + sovTx(uint64(l))
@@ -1156,6 +1248,10 @@ func (m *MsgRemoveRateLimit) Size() (n int) {
 	}
 	var l int
 	_ = l
+	l = len(m.Creator)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
 	l = len(m.PathId)
 	if l > 0 {
 		n += 1 + l + sovTx(uint64(l))
@@ -1209,6 +1305,38 @@ func (m *MsgAddRateLimit) Unmarshal(dAtA []byte) error {
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Creator", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Creator = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Denom", wireType)
 			}
 			var stringLen uint64
@@ -1239,7 +1367,7 @@ func (m *MsgAddRateLimit) Unmarshal(dAtA []byte) error {
 			}
 			m.Denom = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
-		case 2:
+		case 3:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Channel", wireType)
 			}
@@ -1271,7 +1399,7 @@ func (m *MsgAddRateLimit) Unmarshal(dAtA []byte) error {
 			}
 			m.Channel = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
-		case 3:
+		case 4:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field QuotaName", wireType)
 			}
@@ -1405,6 +1533,38 @@ func (m *MsgAddQuota) Unmarshal(dAtA []byte) error {
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Creator", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Creator = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Name", wireType)
 			}
 			var stringLen uint64
@@ -1435,7 +1595,7 @@ func (m *MsgAddQuota) Unmarshal(dAtA []byte) error {
 			}
 			m.Name = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
-		case 2:
+		case 3:
 			if wireType != 0 {
 				return fmt.Errorf("proto: wrong wireType = %d for field MaxPercentSend", wireType)
 			}
@@ -1454,7 +1614,7 @@ func (m *MsgAddQuota) Unmarshal(dAtA []byte) error {
 					break
 				}
 			}
-		case 3:
+		case 4:
 			if wireType != 0 {
 				return fmt.Errorf("proto: wrong wireType = %d for field MaxPercentRecv", wireType)
 			}
@@ -1473,7 +1633,7 @@ func (m *MsgAddQuota) Unmarshal(dAtA []byte) error {
 					break
 				}
 			}
-		case 4:
+		case 5:
 			if wireType != 0 {
 				return fmt.Errorf("proto: wrong wireType = %d for field DurationMinutes", wireType)
 			}
@@ -1593,6 +1753,38 @@ func (m *MsgRemoveQuota) Unmarshal(dAtA []byte) error {
 		}
 		switch fieldNum {
 		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Creator", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Creator = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Name", wireType)
 			}
@@ -1726,6 +1918,38 @@ func (m *MsgResetRateLimit) Unmarshal(dAtA []byte) error {
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Creator", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Creator = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field PathId", wireType)
 			}
 			var stringLen uint64
@@ -1857,6 +2081,38 @@ func (m *MsgRemoveRateLimit) Unmarshal(dAtA []byte) error {
 		}
 		switch fieldNum {
 		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Creator", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Creator = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field PathId", wireType)
 			}
