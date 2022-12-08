@@ -1,7 +1,7 @@
 package types
 
 const (
-	ModuleName = "rate-limited-ibc" // IBC at the end to avoid conflicts with the ibc prefix
+	ModuleName = "ratelimit" // IBC at the end to avoid conflicts with the ibc prefix
 
 	// StoreKey defines the primary module store key
 	StoreKey = ModuleName
