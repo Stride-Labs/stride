@@ -21,7 +21,7 @@ func (s *KeeperTestSuite) createPaths() []types.Path {
 }
 
 func (s *KeeperTestSuite) TestFormatPath() {
-	s.Require().Equal(keeper.FormatPathId("denom", "channel-0"), "denom_channel-0")
+	s.Require().Equal(keeper.FormatPathId("denom", "channel-0"), "denom/channel-0")
 }
 
 func (s *KeeperTestSuite) TestGetPath() {

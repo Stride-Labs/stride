@@ -10,9 +10,9 @@ import (
 	"github.com/Stride-Labs/stride/v4/x/ratelimit/types"
 )
 
-// Format the pathId as '{BaseDenom}_{ChannelId}
+// Format the pathId as '{BaseDenom}/{ChannelId}
 func FormatPathId(baseDenom string, channelId string) string {
-	return fmt.Sprintf("%s_%s", baseDenom, channelId)
+	return fmt.Sprintf("%s/%s", baseDenom, channelId)
 }
 
 // Stores/Updates a path object in the store

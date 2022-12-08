@@ -74,7 +74,7 @@ func (FlowDirection) EnumDescriptor() ([]byte, []int) {
 }
 
 type Path struct {
-	// path identifier ({BaseDenom}_{ChannelId})
+	// path identifier ({BaseDenom}/{ChannelId})
 	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	// path base_denom - represents the underlying denom (ignoring ibc traces)
 	BaseDenom string `protobuf:"bytes,2,opt,name=base_denom,json=baseDenom,proto3" json:"base_denom,omitempty"`
