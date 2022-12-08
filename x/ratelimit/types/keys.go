@@ -18,6 +18,5 @@ func KeyPrefix(p string) []byte {
 }
 
 const (
-	PathKey      = "Path-value-"
-	PathCountKey = "Path-count-"
+	PathKey = "path"
 )

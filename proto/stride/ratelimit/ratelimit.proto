@@ -23,14 +23,11 @@ message Path {
   // path identifier ({BaseDenom}_{ChannelId})
   string id = 1;
 
-  // path base_denom - represenets the underlying denom (ignoring ibc traces)
+  // path base_denom - represents the underlying denom (ignoring ibc traces)
   string base_denom = 2;
 
-  // path trace_denom - true denom (either ustrd or an ibc hash)
-  string trace_denom = 3;
-
   // path channelid
-  string channel_id = 4;
+  string channel_id = 3;
 }
 
 message Quota {
