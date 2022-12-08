@@ -19,4 +19,5 @@ func KeyPrefix(p string) []byte {
 
 var (
 	PathKeyPrefix = KeyPrefix("path")
+	RateLimitKey  = "rate-limit"
 )
