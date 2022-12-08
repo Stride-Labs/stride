@@ -507,7 +507,6 @@ func NewStrideApp(
 		appCodec,
 		keys[ratelimitmoduletypes.StoreKey],
 		app.RateLimitingICS4Wrapper,
-		app.TransferKeeper,
 	)
 	ratelimitModule := ratelimitmodule.NewAppModule(appCodec, app.RatelimitKeeper)
 
