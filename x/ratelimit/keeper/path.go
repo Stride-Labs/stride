@@ -40,12 +40,19 @@ func (k Keeper) AddPath(ctx sdk.Context, traceDenom string, channelId string) (p
 			return "", fmt.Errorf("Unable to determine denom trace from hash %s", traceDenom)
 		}
 		baseDenom = denomTrace.BaseDenom
+		if denomTrace.Path != "transfer/"+channelId {
+			return "", fmt.Errorf("ChannelID %s does not match channel derived from denom trace (%s)", channelId, denomTrace)
+		}
 	}
 
-	// pathId is of the form '{BaseDenom}_{ChannelId}'
+	// Confirm path does not already exist
 	pathId = FormatPathId(baseDenom, channelId)
-	pathKey := types.KeyPrefix(pathId)
+	if _, found := k.GetPath(ctx, pathId); found {
+		return "", fmt.Errorf("Path %s already exists", pathId)
+	}
 
+	// Add path to store
+	pathKey := types.KeyPrefix(pathId)
 	pathValue := k.cdc.MustMarshal(&types.Path{
 		Id:         pathId,
 		BaseDenom:  baseDenom,
