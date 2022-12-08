@@ -27,11 +27,11 @@ func (msg *MsgAddQuota) Type() string {
 }
 
 func (msg *MsgAddQuota) GetSigners() []sdk.AccAddress {
-	allocator, err := sdk.AccAddressFromBech32(msg.Creator)
+	creator, err := sdk.AccAddressFromBech32(msg.Creator)
 	if err != nil {
 		panic(err)
 	}
-	return []sdk.AccAddress{allocator}
+	return []sdk.AccAddress{creator}
 }
 
 func (msg *MsgAddQuota) GetSignBytes() []byte {
@@ -64,11 +64,11 @@ func (msg *MsgRemoveQuota) Type() string {
 }
 
 func (msg *MsgRemoveQuota) GetSigners() []sdk.AccAddress {
-	allocator, err := sdk.AccAddressFromBech32(msg.Creator)
+	creator, err := sdk.AccAddressFromBech32(msg.Creator)
 	if err != nil {
 		panic(err)
 	}
-	return []sdk.AccAddress{allocator}
+	return []sdk.AccAddress{creator}
 }
 
 func (msg *MsgRemoveQuota) GetSignBytes() []byte {
@@ -103,11 +103,11 @@ func (msg *MsgAddRateLimit) Type() string {
 }
 
 func (msg *MsgAddRateLimit) GetSigners() []sdk.AccAddress {
-	allocator, err := sdk.AccAddressFromBech32(msg.Creator)
+	creator, err := sdk.AccAddressFromBech32(msg.Creator)
 	if err != nil {
 		panic(err)
 	}
-	return []sdk.AccAddress{allocator}
+	return []sdk.AccAddress{creator}
 }
 
 func (msg *MsgAddRateLimit) GetSignBytes() []byte {
@@ -140,11 +140,11 @@ func (msg *MsgRemoveRateLimit) Type() string {
 }
 
 func (msg *MsgRemoveRateLimit) GetSigners() []sdk.AccAddress {
-	allocator, err := sdk.AccAddressFromBech32(msg.Creator)
+	creator, err := sdk.AccAddressFromBech32(msg.Creator)
 	if err != nil {
 		panic(err)
 	}
-	return []sdk.AccAddress{allocator}
+	return []sdk.AccAddress{creator}
 }
 
 func (msg *MsgRemoveRateLimit) GetSignBytes() []byte {
@@ -177,11 +177,11 @@ func (msg *MsgResetRateLimit) Type() string {
 }
 
 func (msg *MsgResetRateLimit) GetSigners() []sdk.AccAddress {
-	allocator, err := sdk.AccAddressFromBech32(msg.Creator)
+	creator, err := sdk.AccAddressFromBech32(msg.Creator)
 	if err != nil {
 		panic(err)
 	}
-	return []sdk.AccAddress{allocator}
+	return []sdk.AccAddress{creator}
 }
 
 func (msg *MsgResetRateLimit) GetSignBytes() []byte {
