@@ -44,7 +44,7 @@ func (s *KeeperTestSuite) TestRemovePath() {
 
 func (s *KeeperTestSuite) TestGetAllPaths() {
 	expectedPaths := s.createPaths()
-	allPathsActual := s.App.RatelimitKeeper.GetAllPaths(s.Ctx)
-	s.Require().Len(allPathsActual, len(expectedPaths))
-	s.Require().ElementsMatch(expectedPaths, allPathsActual, "all paths")
+	actualPaths := s.App.RatelimitKeeper.GetAllPaths(s.Ctx)
+	s.Require().Len(actualPaths, len(expectedPaths))
+	s.Require().ElementsMatch(expectedPaths, actualPaths, "all paths")
 }
