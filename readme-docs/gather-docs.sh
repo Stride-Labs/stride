@@ -5,4 +5,5 @@ for f in $(find "./x" -type f -name "*.md"  \ # -not -path "deps/*"
 do
         echo $f
         cp $f readme-docs/md
+        
 done
