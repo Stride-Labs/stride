@@ -5,13 +5,13 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
-// Msg type for MsgAddQuota
-const TypeMsgAddQuota = "add_quota"
+// Msg type for MsgSetQuota
+const TypeMsgSetQuota = "set_quota"
 
-var _ sdk.Msg = &MsgAddQuota{}
+var _ sdk.Msg = &MsgSetQuota{}
 
-func NewMsgAddQuota(creator string, name string, maxPercentSend uint64, maxPercentRecv uint64, durationMinutes uint64) *MsgAddQuota {
-	return &MsgAddQuota{
+func NewMsgSetQuota(creator string, name string, maxPercentSend uint64, maxPercentRecv uint64, durationMinutes uint64) *MsgSetQuota {
+	return &MsgSetQuota{
 		Creator:         creator,
 		Name:            name,
 		MaxPercentSend:  maxPercentSend,
@@ -20,15 +20,15 @@ func NewMsgAddQuota(creator string, name string, maxPercentSend uint64, maxPerce
 	}
 }
 
-func (msg *MsgAddQuota) Route() string {
+func (msg *MsgSetQuota) Route() string {
 	return RouterKey
 }
 
-func (msg *MsgAddQuota) Type() string {
-	return TypeMsgAddQuota
+func (msg *MsgSetQuota) Type() string {
+	return TypeMsgSetQuota
 }
 
-func (msg *MsgAddQuota) GetSigners() []sdk.AccAddress {
+func (msg *MsgSetQuota) GetSigners() []sdk.AccAddress {
 	creator, err := sdk.AccAddressFromBech32(msg.Creator)
 	if err != nil {
 		panic(err)
@@ -36,12 +36,12 @@ func (msg *MsgAddQuota) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{creator}
 }
 
-func (msg *MsgAddQuota) GetSignBytes() []byte {
+func (msg *MsgSetQuota) GetSignBytes() []byte {
 	bz := ModuleCdc.MustMarshalJSON(msg)
 	return sdk.MustSortJSON(bz)
 }
 
-func (msg *MsgAddQuota) ValidateBasic() error {
+func (msg *MsgSetQuota) ValidateBasic() error {
 	_, err := sdk.AccAddressFromBech32(msg.Creator)
 	if err != nil {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid creator address (%s)", err)
@@ -50,6 +50,15 @@ func (msg *MsgAddQuota) ValidateBasic() error {
 	if msg.Name == "" {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "quota name not set")
 	}
+
+	if msg.MaxPercentRecv == 0 && msg.MaxPercentSend == 0 {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "only one of recv and send percent can be zero")
+	}
+
+	if msg.DurationMinutes == 0 {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "duration can not be zero")
+	}
+
 	return nil
 }
 
