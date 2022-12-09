@@ -15,7 +15,7 @@ func CheckRateLimit(direction types.PacketDirection, packet exported.PacketI) er
 
 // Stores/Updates a rate limit object in the store
 func (k Keeper) SetRateLimit(ctx sdk.Context, rateLimit types.RateLimit) {
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.RateLimitKey))
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.RateLimitKeyPrefix)
 
 	rateLimitKey := types.KeyPrefix(rateLimit.Path.Id)
 	rateLimitValue := k.cdc.MustMarshal(&rateLimit)
@@ -25,14 +25,14 @@ func (k Keeper) SetRateLimit(ctx sdk.Context, rateLimit types.RateLimit) {
 
 // Removes a rate limit object from the store using the PathId
 func (k Keeper) RemoveRateLimit(ctx sdk.Context, pathId string) {
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.RateLimitKey))
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.RateLimitKeyPrefix)
 	rateLimitKey := types.KeyPrefix(pathId)
 	store.Delete(rateLimitKey)
 }
 
 // Grabs and returns a rate limit object from the store using the PathId
 func (k Keeper) GetRateLimit(ctx sdk.Context, pathId string) (rateLimit types.RateLimit, found bool) {
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.RateLimitKey))
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.RateLimitKeyPrefix)
 
 	rateLimitKey := types.KeyPrefix(pathId)
 	rateLimitValue := store.Get(rateLimitKey)
@@ -47,7 +47,7 @@ func (k Keeper) GetRateLimit(ctx sdk.Context, pathId string) (rateLimit types.Ra
 
 // Returns all rate limits stored
 func (k Keeper) GetAllRateLimits(ctx sdk.Context) []types.RateLimit {
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.RateLimitKey))
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.RateLimitKeyPrefix)
 
 	iterator := store.Iterator(nil, nil)
 	defer iterator.Close()
