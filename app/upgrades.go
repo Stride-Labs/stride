@@ -8,6 +8,7 @@ import (
 
 	v2 "github.com/Stride-Labs/stride/v4/app/upgrades/v2"
 	v3 "github.com/Stride-Labs/stride/v4/app/upgrades/v3"
+	v4 "github.com/Stride-Labs/stride/v4/app/upgrades/v4"
 	claimtypes "github.com/Stride-Labs/stride/v4/x/claim/types"
 )
 
@@ -24,6 +25,12 @@ func (app *StrideApp) setupUpgradeHandlers() {
 		v3.CreateUpgradeHandler(app.mm, app.configurator, app.ClaimKeeper),
 	)
 
+	// v4 upgrade handler
+	app.UpgradeKeeper.SetUpgradeHandler(
+		v4.UpgradeName,
+		v4.CreateUpgradeHandler(app.mm, app.configurator),
+	)
+
 	upgradeInfo, err := app.UpgradeKeeper.ReadUpgradeInfoFromDisk()
 	if err != nil {
 		panic(fmt.Errorf("Failed to read upgrade info from disk: %w", err))
@@ -36,7 +43,6 @@ func (app *StrideApp) setupUpgradeHandlers() {
 	var storeUpgrades *storetypes.StoreUpgrades
 
 	switch upgradeInfo.Name {
-	// no store upgrades
 	case "v3":
 		storeUpgrades = &storetypes.StoreUpgrades{
 			Added: []string{claimtypes.StoreKey},

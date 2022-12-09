@@ -136,7 +136,7 @@ import (
 const (
 	AccountAddressPrefix = "stride"
 	Name                 = "stride"
-	Version              = "3.0.0"
+	Version              = "4.0.2"
 )
 
 // this line is used by starport scaffolding # stargate/wasm/app/enabledProposals
@@ -1002,6 +1002,7 @@ func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino
 	paramsKeeper.Subspace(icacallbacksmoduletypes.ModuleName)
 	// this line is used by starport scaffolding # stargate/app/paramSubspace
 
+	paramsKeeper.Subspace(claimtypes.ModuleName)
 	return paramsKeeper
 }
 
