@@ -17,8 +17,8 @@ func NewHandler(k keeper.Keeper) sdk.Handler {
 		ctx = ctx.WithEventManager(sdk.NewEventManager())
 
 		switch msg := msg.(type) {
-		case *types.MsgAddQuota:
-			res, err := msgServer.AddQuota(sdk.WrapSDKContext(ctx), msg)
+		case *types.MsgSetQuota:
+			res, err := msgServer.SetQuota(sdk.WrapSDKContext(ctx), msg)
 			return sdk.WrapServiceResult(ctx, res, err)
 		case *types.MsgAddRateLimit:
 			res, err := msgServer.AddRateLimit(sdk.WrapSDKContext(ctx), msg)
