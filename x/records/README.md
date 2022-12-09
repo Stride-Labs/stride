@@ -70,5 +70,4 @@ Genesis
 - `AllEpochUnbondingRecord`
 
 ## Events
-
-`records` module emits does not currently emit any events. 
+The `records` module emits does not currently emit any events. 

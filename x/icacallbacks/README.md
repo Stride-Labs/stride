@@ -58,4 +58,4 @@ The middleware structure is as follows
 - `Callback`
 
 ## Events
-`icacallbacks` module does not currently emit any events. 
+The `icacallbacks` module does not currently emit any events. 
