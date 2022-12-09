@@ -54,12 +54,3 @@ func (k Keeper) GetAllQuotas(ctx sdk.Context) (list []types.Quota) {
 func (k Keeper) IsExpired(ctx sdk.Context, quota types.Quota) bool {
 	return ctx.BlockTime().Unix() > int64(quota.PeriodEnd)
 }
-
-// CheckExceedsQuota checks if new in/out flow is going to reach the max in/out or not
-func (k Keeper) CheckExceedsQuota(direction types.PacketDirection, amount uint64, totalValue uint64, quota types.Quota) bool {
-	if direction == types.PACKET_RECV {
-		return amount > totalValue*quota.MaxPercentRecv/100
-	}
-
-	return amount > totalValue*quota.MaxPercentSend/100
-}
