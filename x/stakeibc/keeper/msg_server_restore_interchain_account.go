@@ -12,33 +12,29 @@ import (
 	"github.com/Stride-Labs/stride/v4/x/stakeibc/types"
 )
 
+// 6 function, 2 for verify record after exec, 4 for test (1 success, 3 for failure)
 func (k msgServer) RestoreInterchainAccount(goCtx context.Context, msg *types.MsgRestoreInterchainAccount) (*types.MsgRestoreInterchainAccountResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	hostZone, found := k.GetHostZone(ctx, msg.ChainId)
 	if !found {
-		k.Logger(ctx).Error(fmt.Sprintf("Host Zone not found: %s", msg.ChainId))
+		k.Logger(ctx).Error(fmt.Sprintf("Host Zone not found: %s", msg.ChainId)) //done
 		return nil, types.ErrInvalidHostZone
 	}
 
 	owner := types.FormatICAAccountOwner(msg.ChainId, msg.AccountType)
 
 	// only allow restoring an account if it already exists
-	portID, err := icatypes.NewControllerPortID(owner)
-	if err != nil {
-		errMsg := fmt.Sprintf("could not create portID for ICA controller account address: %s", owner)
-		k.Logger(ctx).Error(errMsg)
-		return nil, err
-	}
+	portID, _ := icatypes.NewControllerPortID(owner)
 	_, exists := k.ICAControllerKeeper.GetInterchainAccountAddress(ctx, hostZone.ConnectionId, portID)
 	if !exists {
-		errMsg := fmt.Sprintf("ICA controller account address not found: %s", owner)
+		errMsg := fmt.Sprintf("ICA controller account address not found: %s", owner) //done
 		k.Logger(ctx).Error(errMsg)
 		return nil, sdkerrors.Wrapf(types.ErrInvalidInterchainAccountAddress, errMsg)
 	}
 
 	if err := k.ICAControllerKeeper.RegisterInterchainAccount(ctx, hostZone.ConnectionId, owner); err != nil {
-		k.Logger(ctx).Error(fmt.Sprintf("unable to register %s account : %s", msg.AccountType.String(), err))
+		k.Logger(ctx).Error(fmt.Sprintf("unable to register %s account : %s", msg.AccountType.String(), err)) //adding (already have, but still: missing 2 cases)
 		return nil, err
 	}
 
@@ -85,7 +81,7 @@ func (k msgServer) RestoreInterchainAccount(goCtx context.Context, msg *types.Ms
 		err := k.RecordsKeeper.SetHostZoneUnbondings(ctx, hostZone.ChainId, epochNumberForPendingUnbondingRecords, recordtypes.HostZoneUnbonding_UNBONDING_QUEUE)
 		if err != nil {
 			errMsg := fmt.Sprintf("unable to update host zone unbonding record status to %s for chainId: %s and epochUnbondingRecordIds: %v, err: %s",
-				recordtypes.HostZoneUnbonding_UNBONDING_QUEUE.String(), hostZone.ChainId, epochNumberForPendingUnbondingRecords, err)
+				recordtypes.HostZoneUnbonding_UNBONDING_QUEUE.String(), hostZone.ChainId, epochNumberForPendingUnbondingRecords, err) // adding
 			k.Logger(ctx).Error(errMsg)
 			return nil, err
 		}
@@ -94,7 +90,7 @@ func (k msgServer) RestoreInterchainAccount(goCtx context.Context, msg *types.Ms
 		err = k.RecordsKeeper.SetHostZoneUnbondings(ctx, hostZone.ChainId, epochNumberForPendingTransferRecords, recordtypes.HostZoneUnbonding_EXIT_TRANSFER_QUEUE)
 		if err != nil {
 			errMsg := fmt.Sprintf("unable to update host zone unbonding record status to %s for chainId: %s and epochUnbondingRecordIds: %v, err: %s",
-				recordtypes.HostZoneUnbonding_EXIT_TRANSFER_QUEUE.String(), hostZone.ChainId, epochNumberForPendingTransferRecords, err)
+				recordtypes.HostZoneUnbonding_EXIT_TRANSFER_QUEUE.String(), hostZone.ChainId, epochNumberForPendingTransferRecords, err) //adding
 			k.Logger(ctx).Error(errMsg)
 			return nil, err
 		}
