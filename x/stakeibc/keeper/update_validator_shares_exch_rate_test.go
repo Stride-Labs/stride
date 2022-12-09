@@ -77,7 +77,7 @@ func (s *KeeperTestSuite) TestQueryValidatorExchangeRate_Successful() {
 	s.Require().NotNil(resp, "response should not be nil")
 
 	// check a query was created (a simple test; details about queries are covered in makeRequest's test)
-	queries := s.App.InterchainqueryKeeper.GetAllQueries(s.Ctx)
+	queries := s.App.InterchainqueryKeeper.AllQueries(s.Ctx)
 	s.Require().Len(queries, 1, "one query should have been created")
 }
 
@@ -206,7 +206,7 @@ func (s *KeeperTestSuite) TestQueryDelegationsIcq_Successful() {
 	s.Require().NoError(err, "no error expected")
 
 	// check a query was created (a simple test; details about queries are covered in makeRequest's test)
-	queries := s.App.InterchainqueryKeeper.GetAllQueries(s.Ctx)
+	queries := s.App.InterchainqueryKeeper.AllQueries(s.Ctx)
 	s.Require().Len(queries, 1, "one query should have been created")
 
 	// querying twice with the same query should only create one query
@@ -214,7 +214,7 @@ func (s *KeeperTestSuite) TestQueryDelegationsIcq_Successful() {
 	s.Require().NoError(err, "no error expected")
 
 	// check a query was created (a simple test; details about queries are covered in makeRequest's test)
-	queries = s.App.InterchainqueryKeeper.GetAllQueries(s.Ctx)
+	queries = s.App.InterchainqueryKeeper.AllQueries(s.Ctx)
 	s.Require().Len(queries, 1, "querying twice with the same query should only create one query")
 
 	// querying with a different query should create a second query
@@ -223,7 +223,7 @@ func (s *KeeperTestSuite) TestQueryDelegationsIcq_Successful() {
 	s.Require().NoError(err, "no error expected")
 
 	// check a query was created (a simple test; details about queries are covered in makeRequest's test)
-	queries = s.App.InterchainqueryKeeper.GetAllQueries(s.Ctx)
+	queries = s.App.InterchainqueryKeeper.AllQueries(s.Ctx)
 	s.Require().Len(queries, 2, "querying with a different query should create a second query")
 }
 

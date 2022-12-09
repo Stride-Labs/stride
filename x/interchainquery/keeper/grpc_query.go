@@ -15,7 +15,7 @@ func (k Keeper) PendingQueries(c context.Context, req *types.QueryPendingQueries
 	ctx := sdk.UnwrapSDKContext(c)
 
 	pendingQueries := []types.Query{}
-	for _, query := range k.GetAllQueries(ctx) {
+	for _, query := range k.AllQueries(ctx) {
 		if query.RequestSent {
 			pendingQueries = append(pendingQueries, query)
 		}
