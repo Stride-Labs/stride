@@ -21,6 +21,7 @@ import (
 
 	"github.com/Stride-Labs/stride/v4/x/interchainquery/keeper"
 
+	"github.com/Stride-Labs/stride/v4/x/interchainquery/client/cli"
 	"github.com/Stride-Labs/stride/v4/x/interchainquery/types"
 )
 
@@ -92,7 +93,7 @@ func (a AppModuleBasic) GetTxCmd() *cobra.Command {
 
 // GetQueryCmd returns the capability module's root query command.
 func (AppModuleBasic) GetQueryCmd() *cobra.Command {
-	return nil
+	return cli.GetQueryCmd()
 }
 
 // ----------------------------------------------------------------------------

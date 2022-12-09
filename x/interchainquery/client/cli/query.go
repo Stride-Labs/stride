@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -25,39 +26,9 @@ func GetQueryCmd() *cobra.Command {
 		RunE:                       client.ValidateCmd,
 	}
 
-	return cmd
-}
-
-// GetCmdQueries provides a list of all query objects
-func GetCmdListQueries() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "list-queries",
-		Short: "Query all queries",
-		Example: strings.TrimSpace(
-			fmt.Sprintf(`$ %s query interchainquery list-queries`,
-				version.AppName,
-			),
-		),
-		Args: cobra.NoArgs,
-		RunE: func(cmd *cobra.Command, _ []string) error {
-			clientCtx, err := client.GetClientQueryContext(cmd)
-			if err != nil {
-				return err
-			}
-			queryClient := types.NewQueryServiceClient(clientCtx)
-
-			req := &types.QueryAllQueriesRequest{}
-
-			res, err := queryClient.AllQueries(cmd.Context(), req)
-			if err != nil {
-				return err
-			}
-
-			return clientCtx.PrintProto(res)
-		},
-	}
-
-	flags.AddQueryFlagsToCmd(cmd)
+	cmd.AddCommand(
+		GetCmdListPendingQueries(),
+	)
 
 	return cmd
 }
@@ -83,7 +54,7 @@ func GetCmdListPendingQueries() *cobra.Command {
 
 			req := &types.QueryPendingQueriesRequest{}
 
-			res, err := queryClient.PendingQueries(cmd.Context(), req)
+			res, err := queryClient.PendingQueries(context.Background(), req)
 			if err != nil {
 				return err
 			}
