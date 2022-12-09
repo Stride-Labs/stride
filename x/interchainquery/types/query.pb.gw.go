@@ -145,7 +145,7 @@ func RegisterQueryServiceHandlerClient(ctx context.Context, mux *runtime.ServeMu
 }
 
 var (
-	pattern_QueryService_PendingQueries_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"interchainquery", "pending_queries"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_QueryService_PendingQueries_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"Stride-Labs", "stride", "interchainquery", "pending_queries"}, "", runtime.AssumeColonVerbOpt(false)))
 )
 
 var (
