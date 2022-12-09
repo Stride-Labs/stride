@@ -7,5 +7,8 @@ for f in $(find "./x" \
         # )
 do
         echo $f
-        # cp $f readme-docs/md
+        start=$(echo $f | cut -d'/' -f3- | cut -d/ -f1)
+        filename=$(echo $f | cut -d'/' -f3- | cut -d/ -f2)
+        newfilename=$start"_"$filename
+        cp $f readme-docs/md/$newfilename
 done
