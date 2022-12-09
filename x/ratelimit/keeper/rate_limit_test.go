@@ -24,7 +24,7 @@ func (s *KeeperTestSuite) TestGetRateLimit() {
 	expectedRateLimit := rateLimits[0]
 
 	actualRateLimit, found := s.App.RatelimitKeeper.GetRateLimit(s.Ctx, expectedRateLimit.Path.Id)
-	s.Require().True(found, "element found")
+	s.Require().True(found, "element should have been found, but was not")
 	s.Require().Equal(expectedRateLimit, actualRateLimit)
 }
 
@@ -34,7 +34,7 @@ func (s *KeeperTestSuite) TestRemoveRateLimit() {
 
 	s.App.RatelimitKeeper.RemoveRateLimit(s.Ctx, idToRemove)
 	_, found := s.App.RatelimitKeeper.GetRateLimit(s.Ctx, idToRemove)
-	s.Require().False(found, "removed element found")
+	s.Require().False(found, "the removed element should not have been found, but it was")
 }
 
 func (s *KeeperTestSuite) TestGetAllRateLimits() {
