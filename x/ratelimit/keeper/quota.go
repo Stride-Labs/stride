@@ -7,21 +7,21 @@ import (
 	"github.com/Stride-Labs/stride/v4/x/ratelimit/types"
 )
 
-// Add new quota to the store
-func (k Keeper) AddQuota(ctx sdk.Context, quota types.Quota) {
+// Stores/Updates a quota object in the store
+func (k Keeper) SetQuota(ctx sdk.Context, quota types.Quota) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.QuotaKeyPrefix))
 
 	b := k.cdc.MustMarshal(&quota)
 	store.Set([]byte(quota.Name), b)
 }
 
-// Remove quota from the store
+// Removes a quota object from the store using quota name
 func (k Keeper) RemoveQuota(ctx sdk.Context, name string) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.QuotaKeyPrefix))
 	store.Delete([]byte(name))
 }
 
-// Get quota from the store
+// Get a quota from the store using quota name
 func (k Keeper) GetQuota(ctx sdk.Context, name string) (quota types.Quota) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.QuotaKeyPrefix))
 

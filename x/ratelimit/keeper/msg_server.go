@@ -25,10 +25,10 @@ func (server msgServer) AddRateLimit(goCtx context.Context, msg *types.MsgAddRat
 	return &types.MsgAddRateLimitResponse{}, nil
 }
 
-func (server msgServer) AddQuota(goCtx context.Context, msg *types.MsgAddQuota) (*types.MsgAddQuotaResponse, error) {
+func (server msgServer) SetQuota(goCtx context.Context, msg *types.MsgSetQuota) (*types.MsgSetQuotaResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	server.Keeper.AddQuota(ctx, types.Quota{
+	server.Keeper.SetQuota(ctx, types.Quota{
 		Name:            msg.Name,
 		MaxPercentSend:  msg.MaxPercentSend,
 		MaxPercentRecv:  msg.MaxPercentRecv,
@@ -36,7 +36,7 @@ func (server msgServer) AddQuota(goCtx context.Context, msg *types.MsgAddQuota) 
 		PeriodEnd:       uint64(ctx.BlockTime().Unix()) + msg.DurationMinutes*60,
 	})
 
-	return &types.MsgAddQuotaResponse{}, nil
+	return &types.MsgSetQuotaResponse{}, nil
 }
 
 func (server msgServer) RemoveQuota(goCtx context.Context, msg *types.MsgRemoveQuota) (*types.MsgRemoveQuotaResponse, error) {
