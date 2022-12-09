@@ -85,8 +85,8 @@ SetQuery(ctx sdk.Context, query types.Query)
 DeleteQuery(ctx sdk.Context, id string)
 // IterateQueries iterate through queries
 IterateQueries(ctx sdk.Context, fn func(index int64, queryInfo types.Query) (stop bool))
-// AllQueries returns every queryInfo in the store
-AllQueries(ctx sdk.Context) []types.Query
+// GetAllQueries returns every queryInfo in the store
+GetAllQueries(ctx sdk.Context) []types.Query
 ```
 
 ## Msgs

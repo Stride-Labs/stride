@@ -72,7 +72,7 @@ func (k Keeper) IterateQueries(ctx sdk.Context, fn func(index int64, queryInfo t
 }
 
 // AllQueries returns every queryInfo in the store
-func (k Keeper) AllQueries(ctx sdk.Context) []types.Query {
+func (k Keeper) GetAllQueries(ctx sdk.Context) []types.Query {
 	queries := []types.Query{}
 	k.IterateQueries(ctx, func(_ int64, queryInfo types.Query) (stop bool) {
 		queries = append(queries, queryInfo)
