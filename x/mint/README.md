@@ -1,5 +1,5 @@
 ---
-title: "Mint Module: Concepts"
+title: "The Mint Module"
 excerpt: ""
 category: 62c5c5ff03a5bf069004def2
 ---

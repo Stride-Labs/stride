@@ -1,5 +1,5 @@
 ---
-title: "Claim Module"
+title: "The Claim Module"
 excerpt: ""
 category: 62c5c5ff03a5bf069004def2
 ---
