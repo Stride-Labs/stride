@@ -17,7 +17,7 @@ func FormatPathId(baseDenom string, channelId string) string {
 
 // Stores/Updates a path object in the store
 func (k Keeper) SetPath(ctx sdk.Context, path types.Path) {
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.PathKey))
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.PathKeyPrefix)
 
 	pathKey := types.KeyPrefix(path.Id)
 	pathValue := k.cdc.MustMarshal(&path)
@@ -27,14 +27,14 @@ func (k Keeper) SetPath(ctx sdk.Context, path types.Path) {
 
 // Removes a path from the store using the Id
 func (k Keeper) RemovePath(ctx sdk.Context, pathId string) {
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.PathKey))
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.PathKeyPrefix)
 	pathKey := types.KeyPrefix(pathId)
 	store.Delete(pathKey)
 }
 
 // Grabs and returns a path from the store using the Id
 func (k Keeper) GetPath(ctx sdk.Context, pathId string) (path types.Path, found bool) {
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.PathKey))
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.PathKeyPrefix)
 
 	pathKey := types.KeyPrefix(pathId)
 	pathValue := store.Get(pathKey)
@@ -49,7 +49,7 @@ func (k Keeper) GetPath(ctx sdk.Context, pathId string) (path types.Path, found 
 
 // Returns all paths stored
 func (k Keeper) GetAllPaths(ctx sdk.Context) []types.Path {
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.PathKey))
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.PathKeyPrefix)
 
 	iterator := store.Iterator(nil, nil)
 	defer iterator.Close()

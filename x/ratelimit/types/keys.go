@@ -17,6 +17,6 @@ func KeyPrefix(p string) []byte {
 	return []byte(p)
 }
 
-const (
-	PathKey = "path"
+var (
+	PathKeyPrefix = KeyPrefix("path")
 )
