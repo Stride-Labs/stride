@@ -33,7 +33,10 @@ func (k Keeper) Quotas(c context.Context, req *types.QueryQuotasRequest) (*types
 
 func (k Keeper) Quota(c context.Context, req *types.QueryQuotaRequest) (*types.QueryQuotaResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
-	quota := k.GetQuota(ctx, req.Name)
+	quota, found := k.GetQuota(ctx, req.Name)
+	if !found {
+		return &types.QueryQuotaResponse{}, nil
+	}
 	return &types.QueryQuotaResponse{Quota: &quota}, nil
 }
 
