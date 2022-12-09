@@ -22,16 +22,16 @@ func (k Keeper) RemoveQuota(ctx sdk.Context, name string) {
 }
 
 // Get a quota from the store using quota name
-func (k Keeper) GetQuota(ctx sdk.Context, name string) (quota types.Quota) {
+func (k Keeper) GetQuota(ctx sdk.Context, name string) (quota types.Quota, found bool) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.QuotaKeyPrefix))
 
 	b := store.Get([]byte(name))
 	if b == nil {
-		return quota
+		return quota, false
 	}
 
 	k.cdc.MustUnmarshal(b, &quota)
-	return quota
+	return quota, true
 }
 
 // Get all quotas from the store
