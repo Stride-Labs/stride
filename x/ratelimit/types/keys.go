@@ -12,3 +12,11 @@ const (
 	// QuerierRoute defines the module's query routing key
 	QuerierRoute = ModuleName
 )
+
+func KeyPrefix(p string) []byte {
+	return []byte(p)
+}
+
+var (
+	PathKeyPrefix = KeyPrefix("path")
+)
