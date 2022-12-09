@@ -36,11 +36,16 @@ func (k Keeper) Quota(c context.Context, req *types.QueryQuotaRequest) (*types.Q
 }
 
 func (k Keeper) RateLimits(c context.Context, req *types.QueryRateLimitsRequest) (*types.QueryRateLimitsResponse, error) {
-	// TODO:
-	return &types.QueryRateLimitsResponse{}, nil
+	ctx := sdk.UnwrapSDKContext(c)
+	rateLimits := k.GetAllRateLimits(ctx)
+	return &types.QueryRateLimitsResponse{RateLimits: rateLimits}, nil
 }
 
 func (k Keeper) RateLimit(c context.Context, req *types.QueryRateLimitRequest) (*types.QueryRateLimitResponse, error) {
-	// TODO:
-	return &types.QueryRateLimitResponse{}, nil
+	ctx := sdk.UnwrapSDKContext(c)
+	rateLimit, found := k.GetRateLimit(ctx, req.PathId)
+	if !found {
+		return &types.QueryRateLimitResponse{}, nil
+	}
+	return &types.QueryRateLimitResponse{RateLimit: &rateLimit}, nil
 }
