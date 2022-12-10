@@ -22,6 +22,7 @@ $STRIDE_MAIN_CMD tx stakeibc register-host-zone \
     $CONNECTION $HOST_DENOM $ADDRESS_PREFIX $IBC_DENOM $CHANNEL 1 \
     --gas 1000000 --from $STRIDE_ADMIN_ACCT --home $SCRIPT_DIR/state/stride1 -y | TRIM_TX
 sleep 10
+# $STRIDE_MAIN_CMD q stakeibc list-host-zone
 
 echo "$CHAIN - Registering validators..."
 weights=(5 10 5 10 5) # alternate weights across vals
@@ -36,6 +37,8 @@ done
 
 timeout=100
 while true; do
+    echo "CHAIN ID IS"
+    echo $CHAIN_ID
     if ! $STRIDE_MAIN_CMD q stakeibc show-host-zone $CHAIN_ID | grep Account | grep -q null; then
         break
     else

@@ -180,6 +180,13 @@ services:
       - ./state/relayer-gaia:/home/relayer/.relayer
     restart: always
     command: [ "bash", "start.sh", "stride-gaia" ]
+  
+  relayer-evmos:
+    image: stridezone:relayer
+    volumes:
+      - ./state/relayer-evmos:/home/relayer/.relayer
+    restart: always
+    command: [ "bash", "start.sh", "stride-evmos" ]
 
   relayer-juno:
     image: stridezone:relayer

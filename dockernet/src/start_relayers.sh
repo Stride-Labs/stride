@@ -18,12 +18,21 @@ for chain_id in ${HOST_CHAINS[@]}; do
     cp ${SCRIPT_DIR}/config/relayer_config.yaml $relayer_config/config.yaml
 
     printf "STRIDE <> $chain_id - Adding relayer keys..."
-    $relayer_exec rly keys restore stride $RELAYER_STRIDE_ACCT "$mnemonic" >> $relayer_logs 2>&1
-    $relayer_exec rly keys restore $chain_name $account_name "$mnemonic" >> $relayer_logs 2>&1
+    echo "MOOSE 1"
+    $relayer_exec rly keys restore stride $RELAYER_STRIDE_ACCT "$mnemonic" >> $relayer_logs # 2>&1
+    echo "MOOSE 2"
+    echo $chain_id
+    if [[ "$chain_id" == "EVMOS" ]]; then
+        echo "EVMOS MATCH"
+        $relayer_exec rly keys restore $chain_name $account_name --coin-type 60 "$mnemonic" >> $relayer_logs # 2>&1
+    else
+        $relayer_exec rly keys restore $chain_name $account_name --coin-type 118 "$mnemonic" >> $relayer_logs # 2>&1
+    fi
+    echo "MOOSE 3"
     echo "Done"
 
     printf "STRIDE <> $chain_id - Creating client, connection, and transfer channel..." | tee -a $relayer_logs
-    $relayer_exec rly transact link stride-${chain_name} >> $relayer_logs 2>&1
+    $relayer_exec rly transact link stride-${chain_name} >> $relayer_logs # 2>&1
     echo "Done"
 
     $DOCKER_COMPOSE up -d relayer-${chain_name}

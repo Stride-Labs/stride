@@ -21,7 +21,7 @@ while getopts sgojhir{n} flag; do
    ...
    n) build_local_and_docker {new-host-zone} deps/{new-host-zone} ;;  
 ```
-* Add the host zone to `dockernet/docker-compose.yml`. Add 5 nodes, adding port forwarding to the first node only. Drop the RPC port number by 100, and the API/gRPC port by 10, relative to the last host zone that was added.
+* Add the host zone and relayer to `dockernet/docker-compose.yml`. Add 5 nodes, adding port forwarding to the first node only. Add the relayer. Drop the RPC port number by 100, and the API/gRPC port by 10, relative to the last host zone that was added.
 ```
   {new-host-zone}1:
     image: stridezone:{new-host-zone}
@@ -43,6 +43,13 @@ while getopts sgojhir{n} flag; do
     image: stridezone:{new-host-zone}
     volumes:
       - ./dockernet/state/{new-host-zone}5:/home/{new-host-zone}/.{new-host-zone}d
+  ...
+  relayer-{chain_id}:
+    image: stridezone:relayer
+    volumes:
+      - ./state/relayer-{chain_id}:/home/relayer/.relayer
+    restart: always
+    command: [ "bash", "start.sh", "stride-{chain_id}" ]
 ```
 * Add the following parameters to `dockernet/config.sh`, where `CHAIN` is the ID of the new host zone. For the relayer, you can use the mnemonic below or create your own. Note: you'll have to add the variables in the right places in `dockernet/config.sh`, as noted below.
 ```
@@ -72,6 +79,11 @@ HOST_RELAYER_ACCTS=(... $RELAYER_{CHAIN}_ACCT)
 RELAYER_{CHAIN}_MNEMONIC="science depart where tell bus ski laptop follow child bronze rebel recall brief plug razor ship degree labor human series today embody fury harvest"
 # NOTE: Update the RELAYER_MNEMONICS variable directly!
 RELAYER_MNEMONICS=(...,"$RELAYER_{CHAIN}_MNEMONIC")
+
+# Add the {CHAIN_ID}_ADDRESS function
+${CHAIN_ID}_ADDRESS() { 
+  $${CHAIN_ID}_MAIN_CMD keys show ${${CHAIN_ID}_VAL_PREFIX}1 --keyring-backend test -a 
+}
 
 ```
 * Add the IBC denom's for the host zone across each channel to `dockernet/config.sh` (e.g. `IBC_{HOST}_CHANNEL_{N}_DENOM)`). You can generate the variables by uncommenting `x/stakeibc/keeper/get_denom_traces_test.go` and running `make test-unit`. Add the output to `dockernet/config.sh`. Note: You have to run the test using the "run test" button in VSCode, or pass in the `-v` flag and run the tests using `go test -mod=readonly ./x/stakeibc/...`, for the output to show up.

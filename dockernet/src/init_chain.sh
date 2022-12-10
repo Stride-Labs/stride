@@ -16,9 +16,6 @@ NUM_NODES=$(GET_VAR_VALUE   ${CHAIN}_NUM_NODES)
 NODE_PREFIX=$(GET_VAR_VALUE ${CHAIN}_NODE_PREFIX)
 VAL_PREFIX=$(GET_VAR_VALUE  ${CHAIN}_VAL_PREFIX)
 
-IFS=',' read -r -a VAL_MNEMONICS <<< "${VAL_MNEMONICS}"
-IFS=',' read -r -a RELAYER_MNEMONICS <<< "${RELAYER_MNEMONICS}"
-
 set_stride_genesis() {
     genesis_config=$1
 
@@ -69,6 +66,15 @@ MAIN_NODE_ID=""
 MAIN_CONFIG=""
 MAIN_GENESIS=""
 echo "Initializing $CHAIN chain..."
+if [ "$CHAIN" = "EVMOS" ]; then
+    VAL_TOKENS=5000000000000000000000
+    STAKE_TOKENS=5000000000000000000000
+    ADMIN_TOKENS=1000000000000000000000
+else
+    VAL_TOKENS=5000000000000
+    STAKE_TOKENS=5000000000
+    ADMIN_TOKENS=1000000000
+fi
 for (( i=1; i <= $NUM_NODES; i++ )); do
     # Node names will be of the form: "stride-node1"
     node_name="${NODE_PREFIX}${i}"
@@ -145,6 +151,8 @@ if [ "$CHAIN" == "STRIDE" ]; then
     # add relayer accounts
     for i in "${!HOST_RELAYER_ACCTS[@]}"; do
         RELAYER_ACCT="${HOST_RELAYER_ACCTS[i]}"
+        echo $RELAYER_MNEMONICS
+        echo $i
         RELAYER_MNEMONIC="${RELAYER_MNEMONICS[i]}"
 
         echo "$RELAYER_MNEMONIC" | $MAIN_NODE_CMD keys add $RELAYER_ACCT --recover --keyring-backend=test >> $KEYS_LOGS 2>&1

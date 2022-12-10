@@ -98,7 +98,13 @@ VAL_MNEMONIC_2="turkey miss hurry unable embark hospital kangaroo nuclear outsid
 VAL_MNEMONIC_3="tenant neck ask season exist hill churn rice convince shock modify evidence armor track army street stay light program harvest now settle feed wheat"
 VAL_MNEMONIC_4="tail forward era width glory magnet knock shiver cup broken turkey upgrade cigar story agent lake transfer misery sustain fragile parrot also air document"
 VAL_MNEMONIC_5="crime lumber parrot enforce chimney turtle wing iron scissors jealous indicate peace empty game host protect juice submit motor cause second picture nuclear area"
-VAL_MNEMONICS=("$VAL_MNEMONIC_1","$VAL_MNEMONIC_2","$VAL_MNEMONIC_3","$VAL_MNEMONIC_4","$VAL_MNEMONIC_5")
+VAL_MNEMONICS=(
+    "$VAL_MNEMONIC_1"
+    "$VAL_MNEMONIC_2"
+    "$VAL_MNEMONIC_3"
+    "$VAL_MNEMONIC_4"
+    "$VAL_MNEMONIC_5"
+)
 REV_MNEMONIC="tonight bonus finish chaos orchard plastic view nurse salad regret pause awake link bacon process core talent whale million hope luggage sauce card weasel"
 
 # STRIDE 
@@ -176,10 +182,10 @@ STARS_RECEIVER_ADDRESS='stars15dywcmy6gzsc8wfefkrx0c9czlwvwrjenqthyq'
 # EVMOS
 EVMOS_CHAIN_ID=evmos_9001-2
 EVMOS_NODE_PREFIX=evmos
-EVMOS_NUM_NODES=3
+EVMOS_NUM_NODES=1
 EVMOS_CMD="$SCRIPT_DIR/../build/evmosd"
 EVMOS_VAL_PREFIX=nval
-EVMOS_ADDRESS_PREFIX=stars
+EVMOS_ADDRESS_PREFIX=evmos
 EVMOS_REV_ACCT=nrev1
 EVMOS_DENOM=$EVMOS_DENOM
 EVMOS_RPC_PORT=26157
@@ -215,15 +221,20 @@ RELAYER_JUNO_ACCT=rly3
 RELAYER_OSMO_ACCT=rly4
 RELAYER_STARS_ACCT=rly5
 RELAYER_EVMOS_ACCT=rly6
-HOST_RELAYER_ACCTS=($RELAYER_GAIA_ACCT $RELAYER_JUNO_ACCT $RELAYER_OSMO_ACCT $RELAYER_STARS_ACCT)
+HOST_RELAYER_ACCTS=($RELAYER_GAIA_ACCT $RELAYER_JUNO_ACCT $RELAYER_OSMO_ACCT $RELAYER_STARS_ACCT $RELAYER_EVMOS_ACCT)
 
 RELAYER_EVMOS_MNEMONIC="science depart where tell bus ski laptop follow child bronze rebel recall brief plug razor ship degree labor human series today embody fury harvest"
 RELAYER_GAIA_MNEMONIC="fiction perfect rapid steel bundle giant blade grain eagle wing cannon fever must humble dance kitchen lazy episode museum faith off notable rate flavor"
 RELAYER_JUNO_MNEMONIC="kiwi betray topple van vapor flag decorate cement crystal fee family clown cry story gain frost strong year blanket remain grass pig hen empower"
 RELAYER_OSMO_MNEMONIC="unaware wine ramp february bring trust leaf beyond fever inside option dilemma save know captain endless salute radio humble chicken property culture foil taxi"
 RELAYER_STARS_MNEMONIC="deposit dawn erosion talent old broom flip recipe pill hammer animal hill nice ten target metal gas shoe visual nephew soda harbor child simple"
-RELAYER_MNEMONICS=("$RELAYER_GAIA_MNEMONIC","$RELAYER_JUNO_MNEMONIC","$RELAYER_OSMO_MNEMONIC","$RELAYER_STARS_MNEMONIC", "$RELAYER_EVMOS_MNEMONIC", $RELAYER_EVMOS_ACCT)
-
+RELAYER_MNEMONICS=(
+  "$RELAYER_GAIA_MNEMONIC"
+  "$RELAYER_JUNO_MNEMONIC"
+  "$RELAYER_OSMO_MNEMONIC"
+  "$RELAYER_STARS_MNEMONIC"
+  "$RELAYER_EVMOS_MNEMONIC"
+)
 
 
 
@@ -241,6 +252,9 @@ OSMO_ADDRESS() {
 }
 STARS_ADDRESS() { 
   $STARS_MAIN_CMD keys show ${STARS_VAL_PREFIX}1 --keyring-backend test -a 
+}
+EVMOS_ADDRESS() { 
+  $EVMOS_MAIN_CMD keys show ${EVMOS_VAL_PREFIX}1 --keyring-backend test -a 
 }
 
 CSLEEP() {
