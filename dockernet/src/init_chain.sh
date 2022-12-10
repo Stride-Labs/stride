@@ -47,7 +47,12 @@ set_host_genesis() {
 
     # Add interchain accounts to the genesis set
     jq "del(.app_state.interchain_accounts)" $genesis_config > json.tmp && mv json.tmp $genesis_config
-    interchain_accts=$(cat $SCRIPT_DIR/config/ica.json)
+    # if else statement in bash
+    if [ "$CHAIN" = "EVMOS" ]; then
+        interchain_accts=$(cat $SCRIPT_DIR/config/evmos_ica.json)
+    else
+        interchain_accts=$(cat $SCRIPT_DIR/config/ica.json)
+    fi
     jq ".app_state += $interchain_accts" $genesis_config > json.tmp && mv json.tmp $genesis_config
 
     # Slightly harshen slashing parameters (if 5 blocks are missed, the validator will be slashed)
@@ -69,13 +74,11 @@ for (( i=1; i <= $NUM_NODES; i++ )); do
     node_name="${NODE_PREFIX}${i}"
     # Moniker is of the form: STRIDE_1
     moniker=$(printf "${NODE_PREFIX}_${i}" | awk '{ print toupper($0) }')
-
     # Create a state directory for the current node and initialize the chain
     mkdir -p $STATE/$node_name
     cmd="$CMD --home ${STATE}/$node_name"
     $cmd init $moniker --chain-id $CHAIN_ID --overwrite &> /dev/null
     chmod -R 777 $STATE/$node_name
-
     # Update node networking configuration 
     config_toml="${STATE}/${node_name}/config/config.toml"
     client_toml="${STATE}/${node_name}/config/client.toml"
@@ -97,7 +100,7 @@ for (( i=1; i <= $NUM_NODES; i++ )); do
     sed -i -E "s|node = \".*\"|node = \"tcp://localhost:$RPC_PORT\"|g" $client_toml
 
     sed -i -E "s|\"stake\"|\"${DENOM}\"|g" $genesis_json
-
+    
     # Get the endpoint and node ID
     node_id=$($cmd tendermint show-node-id)@$node_name:$PEER_PORT
     echo "Node #$i ID: $node_id"
@@ -111,12 +114,12 @@ for (( i=1; i <= $NUM_NODES; i++ )); do
     $cmd add-genesis-account ${val_addr} ${VAL_TOKENS}${DENOM}
     # actually set this account as a validator on the current node 
     $cmd gentx $val_acct ${STAKE_TOKENS}${DENOM} --chain-id $CHAIN_ID --keyring-backend test &> /dev/null
-
+   
     # Cleanup from seds
     rm -rf ${client_toml}-E
     rm -rf ${genesis_json}-E
     rm -rf ${app_toml}-E
-
+    
     if [ $i -eq $MAIN_ID ]; then
         MAIN_NODE_NAME=$node_name
         MAIN_NODE_CMD=$cmd
