@@ -8,8 +8,8 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/spf13/cast"
 
-	icqtypes "github.com/Stride-Labs/stride/v3/x/interchainquery/types"
-	"github.com/Stride-Labs/stride/v3/x/stakeibc/types"
+	icqtypes "github.com/Stride-Labs/stride/v4/x/interchainquery/types"
+	"github.com/Stride-Labs/stride/v4/x/stakeibc/types"
 )
 
 // WithdrawalBalanceCallback is a callback handler for WithdrawalBalance queries.
@@ -37,14 +37,14 @@ func WithdrawalBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query icq
 	// Check if the coin is nil (which would indicate the account never had a balance)
 	if withdrawalBalanceCoin.IsNil() || withdrawalBalanceCoin.Amount.IsNil() {
 		k.Logger(ctx).Info(fmt.Sprintf("WithdrawalBalanceCallback: balance query returned a nil coin for address %s on %s, meaning the account has never had a balance on the host",
-			hostZone.WithdrawalAccount.Address, hostZone.ChainId))
+			hostZone.WithdrawalAccount.GetAddress(), hostZone.ChainId))
 		return nil
 	}
 
 	// Confirm the balance is greater than zero
 	if withdrawalBalanceCoin.Amount.Int64() <= 0 {
 		k.Logger(ctx).Info(fmt.Sprintf("WithdrawalBalanceCallback: no balance to transfer for zone: %s, accAddr: %v, coin: %v",
-			hostZone.ChainId, hostZone.WithdrawalAccount.Address, withdrawalBalanceCoin.String()))
+			hostZone.ChainId, hostZone.WithdrawalAccount.GetAddress(), withdrawalBalanceCoin.String()))
 		return nil
 	}
 
