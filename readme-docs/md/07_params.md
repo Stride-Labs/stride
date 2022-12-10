@@ -8,7 +8,7 @@ category: 62c5c5ff03a5bf069004def2
 order: 7
 -->
 
-# Params :)
+# Params
 
 Claim module provides below params
 
