@@ -21,5 +21,9 @@ func GetQueryCmd() *cobra.Command {
 		RunE:                       client.ValidateCmd,
 	}
 
+	cmd.AddCommand(
+		GetCmdQueryQuota(),
+		GetCmdQueryQuotas(),
+	)
 	return cmd
 }
