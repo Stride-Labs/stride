@@ -20,5 +20,7 @@ func GetTxCmd() *cobra.Command {
 		RunE:                       client.ValidateCmd,
 	}
 
+	cmd.AddCommand(CmdSetQuota())
+	cmd.AddCommand(CmdRemoveQuota())
 	return cmd
 }
