@@ -1,0 +1,87 @@
+STRIDE @ 335 | 3 VALS
+GAIA   @ 515 | 1 VALS
+EVMOS   @ 515 | 1 VALS
+
+BALANCES STRIDE
+balances:
+- amount: "4995000000000"
+  denom: ustrd
+pagination:
+  next_key: null
+  total: "0"
+
+==========================  GAIA  =============================
+
+BALANCES GAIA (DELEGATION ACCT)
+balances: []
+pagination:
+  next_key: null
+  total: "0"
+
+DELEGATIONS GAIA (DELEGATION ACCT)
+delegation_responses: []
+pagination:
+  next_key: null
+  total: "0"
+
+UNBONDING-DELEGATIONS GAIA (DELEGATION ACCT)
+pagination:
+  next_key: null
+  total: "0"
+unbonding_responses: []
+
+BALANCES GAIA (REDEMPTION ACCT)
+balances: []
+pagination:
+  next_key: null
+  total: "0"
+
+BALANCES GAIA (FEE ACCT)
+balances: []
+pagination:
+  next_key: null
+  total: "0"
+
+BALANCES GAIA (WITHDRAWAL ACCT)
+balances: []
+pagination:
+  next_key: null
+  total: "0"
+
+==========================  EVMOS  =============================
+
+BALANCES EVMOS (DELEGATION ACCT)
+balances: []
+pagination:
+  next_key: null
+  total: "0"
+
+DELEGATIONS EVMOS (DELEGATION ACCT)
+delegation_responses: []
+pagination:
+  next_key: null
+  total: "0"
+
+UNBONDING-DELEGATIONS EVMOS (DELEGATION ACCT)
+pagination:
+  next_key: null
+  total: "0"
+unbonding_responses: []
+
+BALANCES EVMOS (REDEMPTION ACCT)
+balances: []
+pagination:
+  next_key: null
+  total: "0"
+
+BALANCES EVMOS (FEE ACCT)
+balances: []
+pagination:
+  next_key: null
+  total: "0"
+
+BALANCES EVMOS (WITHDRAWAL ACCT)
+balances: []
+pagination:
+  next_key: null
+  total: "0"

@@ -1,0 +1,209 @@
+STRIDE @ 359 | 3 VALS
+GAIA   @ 551 | 1 VALS
+EVMOS   @ 551 | 1 VALS
+
+LIST-HOST-ZONES STRIDE
+host_zone:
+- address: stride1755g4dkhpw73gz9h9nwhlcefc6sdf8kcmvcwrk4rxfrz8xpxxjms7savm8
+  bech32prefix: cosmos
+  blacklisted_validators: []
+  chain_id: GAIA
+  connection_id: connection-0
+  delegation_account:
+    address: cosmos1sy63lffevueudvvlvh2lf6s387xh9xq72n3fsy6n2gr5hm6u2szs2v0ujm
+    delegations: []
+    target: DELEGATION
+  fee_account:
+    address: cosmos1lkgt5sfshn9shm7hd7chtytkq4mvwvswgmyl0hkacd4rmusu9wwq60cezx
+    delegations: []
+    target: FEE
+  host_denom: uatom
+  ibc_denom: ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2
+  last_redemption_rate: "1.000000000000000000"
+  redemption_account:
+    address: cosmos1xmcwu75s8v7s54k79390wc5gwtgkeqhvzegpj0nm2tdwacv47tmqg9ut30
+    delegations: []
+    target: REDEMPTION
+  redemption_rate: "1.000000000000000000"
+  staked_bal: "0"
+  transfer_channel_id: channel-0
+  unbonding_frequency: "1"
+  validators:
+  - address: cosmosvaloper1uk4ze0x4nvh4fk0xm4jdud58eqn4yxhrdt795p
+    commission_rate: "10"
+    delegation_amt: "0"
+    internal_exchange_rate: null
+    name: gval1
+    status: ACTIVE
+    weight: "10"
+  withdrawal_account:
+    address: cosmos1x5p8er7e2ne8l54tx33l560l8djuyapny55pksctuguzdc00dj7saqcw2l
+    delegations: []
+    target: WITHDRAWAL
+- address: stride1edw3qz8h65es2h8se88fyvcg9d9j952y0f2gltdzzkk76xzc8zmsjlz7cx
+  bech32prefix: evmos
+  blacklisted_validators: []
+  chain_id: evmos_9001-2
+  connection_id: connection-1
+  delegation_account:
+    address: evmos1mtx4292rem9rke5wcy9lz263y82nlk56csskwur9g0vvs38c6srsn4ru09
+    delegations: []
+    target: DELEGATION
+  fee_account:
+    address: evmos195t7uvxtm7mc6ejwu6zec9vaded7un7pah5upyyk8pfumj8p3vtsg35jz5
+    delegations: []
+    target: FEE
+  host_denom: uevmos
+  ibc_denom: ibc/30BBB78A4C6497E076141E1CEB8D186819757C128D25B2F32D1FFDE715BB1326
+  last_redemption_rate: "1.000000000000000000"
+  redemption_account:
+    address: evmos1qmxe8mwgxqyzl3543nh2n7zkssy8gs0fpppr75gylvwkh09akecq3vul5c
+    delegations: []
+    target: REDEMPTION
+  redemption_rate: "1.000000000000000000"
+  staked_bal: "0"
+  transfer_channel_id: channel-1
+  unbonding_frequency: "1"
+  validators:
+  - address: evmosvaloper1e0ah3tdx555h2rx58qx2s7ct337nectadd4rp6
+    commission_rate: "10"
+    delegation_amt: "0"
+    internal_exchange_rate: null
+    name: nval1
+    status: ACTIVE
+    weight: "10"
+  withdrawal_account:
+    address: evmos1f9aydv8cwhvxld5fkv250g3avllmzshc3h7m683kyxm80dz4ljhsaw5uvp
+    delegations: []
+    target: WITHDRAWAL
+pagination:
+  next_key: null
+  total: "0"
+
+LIST-DEPOSIT-RECORDS
+deposit_record:
+- amount: "0"
+  denom: uatom
+  deposit_epoch_number: "15"
+  host_zone_id: GAIA
+  id: "25"
+  source: STRIDE
+  status: TRANSFER_QUEUE
+- amount: "0"
+  denom: uevmos
+  deposit_epoch_number: "15"
+  host_zone_id: evmos_9001-2
+  id: "26"
+  source: STRIDE
+  status: TRANSFER_QUEUE
+pagination:
+  next_key: null
+  total: "0"
+
+LIST-EPOCH-UNBONDING-RECORDS
+epoch_unbonding_record:
+- epoch_number: "1"
+  host_zone_unbondings:
+  - denom: uatom
+    host_zone_id: GAIA
+    native_token_amount: "0"
+    st_token_amount: "0"
+    status: UNBONDING_QUEUE
+    unbonding_time: "0"
+    user_redemption_records: []
+  - denom: uevmos
+    host_zone_id: evmos_9001-2
+    native_token_amount: "0"
+    st_token_amount: "0"
+    status: UNBONDING_QUEUE
+    unbonding_time: "0"
+    user_redemption_records: []
+- epoch_number: "2"
+  host_zone_unbondings:
+  - denom: uatom
+    host_zone_id: GAIA
+    native_token_amount: "0"
+    st_token_amount: "0"
+    status: UNBONDING_QUEUE
+    unbonding_time: "0"
+    user_redemption_records: []
+  - denom: uevmos
+    host_zone_id: evmos_9001-2
+    native_token_amount: "0"
+    st_token_amount: "0"
+    status: UNBONDING_QUEUE
+    unbonding_time: "0"
+    user_redemption_records: []
+- epoch_number: "3"
+  host_zone_unbondings:
+  - denom: uatom
+    host_zone_id: GAIA
+    native_token_amount: "0"
+    st_token_amount: "0"
+    status: UNBONDING_QUEUE
+    unbonding_time: "0"
+    user_redemption_records: []
+  - denom: uevmos
+    host_zone_id: evmos_9001-2
+    native_token_amount: "0"
+    st_token_amount: "0"
+    status: UNBONDING_QUEUE
+    unbonding_time: "0"
+    user_redemption_records: []
+- epoch_number: "4"
+  host_zone_unbondings:
+  - denom: uatom
+    host_zone_id: GAIA
+    native_token_amount: "0"
+    st_token_amount: "0"
+    status: UNBONDING_QUEUE
+    unbonding_time: "0"
+    user_redemption_records: []
+  - denom: uevmos
+    host_zone_id: evmos_9001-2
+    native_token_amount: "0"
+    st_token_amount: "0"
+    status: UNBONDING_QUEUE
+    unbonding_time: "0"
+    user_redemption_records: []
+- epoch_number: "5"
+  host_zone_unbondings:
+  - denom: uatom
+    host_zone_id: GAIA
+    native_token_amount: "0"
+    st_token_amount: "0"
+    status: UNBONDING_QUEUE
+    unbonding_time: "0"
+    user_redemption_records: []
+  - denom: uevmos
+    host_zone_id: evmos_9001-2
+    native_token_amount: "0"
+    st_token_amount: "0"
+    status: UNBONDING_QUEUE
+    unbonding_time: "0"
+    user_redemption_records: []
+- epoch_number: "6"
+  host_zone_unbondings:
+  - denom: uatom
+    host_zone_id: GAIA
+    native_token_amount: "0"
+    st_token_amount: "0"
+    status: UNBONDING_QUEUE
+    unbonding_time: "0"
+    user_redemption_records: []
+  - denom: uevmos
+    host_zone_id: evmos_9001-2
+    native_token_amount: "0"
+    st_token_amount: "0"
+    status: UNBONDING_QUEUE
+    unbonding_time: "0"
+    user_redemption_records: []
+pagination:
+  next_key: null
+  total: "0"
+
+LIST-USER-REDEMPTION-RECORDS
+pagination:
+  next_key: null
+  total: "0"
+user_redemption_record: []

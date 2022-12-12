@@ -190,6 +190,8 @@ EVMOS_REV_ACCT=nrev1
 EVMOS_DENOM=$EVMOS_DENOM
 EVMOS_RPC_PORT=26157
 EVMOS_MAIN_CMD="$EVMOS_CMD --home $SCRIPT_DIR/state/${EVMOS_NODE_PREFIX}1"
+# TODO: update README
+EVMOS_RECEIVER_ADDRESS='evmos1w6wdc2684g9h3xl8nhgwr282tcxx4kl0q6q2xu'
 
 # HERMES
 HERMES_CMD="$SCRIPT_DIR/../build/hermes/release/hermes --config $STATE/hermes/config.toml"
