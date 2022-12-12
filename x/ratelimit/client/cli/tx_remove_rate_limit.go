@@ -1,8 +1,6 @@
 package cli
 
 import (
-	"strconv"
-
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
@@ -11,38 +9,21 @@ import (
 	"github.com/Stride-Labs/stride/v4/x/ratelimit/types"
 )
 
-func CmdAddQuota() *cobra.Command {
+// Remove a rate limit
+func CmdRemoveRateLimit() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "add-quota [name] [max-percent-send] [max-percent-recv] [duration-minutes]",
-		Short: "Broadcast message add-quota",
-		Args:  cobra.ExactArgs(4),
+		Use:   "remove-rate-limit [path-id]",
+		Short: "Broadcast message remove-rate-limit",
+		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
-			argName := args[0]
-			argMaxPercentSend, err := strconv.Atoi(args[1])
-			if err != nil {
-				return err
-			}
-
-			argMaxPercentRecv, err := strconv.Atoi(args[2])
-			if err != nil {
-				return err
-			}
-
-			argDurationMinutes, err := strconv.Atoi(args[3])
-			if err != nil {
-				return err
-			}
-
+			pathId := args[0]
 			clientCtx, err := client.GetClientTxContext(cmd)
 			if err != nil {
 				return err
 			}
-			msg := types.NewMsgAddQuota(
+			msg := types.NewMsgRemoveRateLimit(
 				clientCtx.GetFromAddress().String(),
-				argName,
-				uint64(argMaxPercentSend),
-				uint64(argMaxPercentRecv),
-				uint64(argDurationMinutes),
+				pathId,
 			)
 
 			if err := msg.ValidateBasic(); err != nil {

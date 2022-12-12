@@ -6,7 +6,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/cosmos/cosmos-sdk/client"
-	// "github.com/cosmos/cosmos-sdk/client/flags"
+
 	"github.com/Stride-Labs/stride/v4/x/ratelimit/types"
 )
 
@@ -20,7 +20,7 @@ func GetTxCmd() *cobra.Command {
 		RunE:                       client.ValidateCmd,
 	}
 
-	cmd.AddCommand(CmdAddQuota())
-	cmd.AddCommand(CmdRemoveQuota())
+	cmd.AddCommand(CmdAddRateLimit())
+	cmd.AddCommand(CmdRemoveRateLimit())
 	return cmd
 }

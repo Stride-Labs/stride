@@ -112,12 +112,14 @@ const TypeMsgAddRateLimit = "add_rate_limit"
 
 var _ sdk.Msg = &MsgAddRateLimit{}
 
-func NewMsgAddRateLimit(creator string, denom string, channel string, quotaName string) *MsgAddRateLimit {
+func NewMsgAddRateLimit(creator string, denom string, channelId string, maxPercentSend uint64, maxPercentRecv uint64, durationHours uint64) *MsgAddRateLimit {
 	return &MsgAddRateLimit{
-		Creator:   creator,
-		Denom:     denom,
-		Channel:   channel,
-		QuotaName: quotaName,
+		Creator:        creator,
+		Denom:          denom,
+		ChannelId:      channelId,
+		MaxPercentSend: maxPercentSend,
+		MaxPercentRecv: maxPercentRecv,
+		DurationHours:  durationHours,
 	}
 }
 
