@@ -10,17 +10,17 @@ import (
 	"github.com/Stride-Labs/stride/v4/x/ratelimit/types"
 )
 
-func TestMsgSetQuota(t *testing.T) {
+func TestMsgAddQuota(t *testing.T) {
 	cmdcfg.SetupConfig()
 	validAddr, invalidAddr := apptesting.GenerateTestAddrs()
 	tests := []struct {
 		name       string
-		msg        types.MsgSetQuota
+		msg        types.MsgAddQuota
 		expectPass bool
 	}{
 		{
 			name: "proper msg",
-			msg: types.MsgSetQuota{
+			msg: types.MsgAddQuota{
 				Creator:         validAddr,
 				Name:            "quota",
 				MaxPercentSend:  10,
@@ -31,7 +31,7 @@ func TestMsgSetQuota(t *testing.T) {
 		},
 		{
 			name: "invalid creator",
-			msg: types.MsgSetQuota{
+			msg: types.MsgAddQuota{
 				Creator:         invalidAddr,
 				Name:            "quota",
 				MaxPercentSend:  10,
@@ -41,7 +41,7 @@ func TestMsgSetQuota(t *testing.T) {
 		},
 		{
 			name: "invalid name",
-			msg: types.MsgSetQuota{
+			msg: types.MsgAddQuota{
 				Creator:         validAddr,
 				Name:            "",
 				MaxPercentSend:  10,
@@ -51,17 +51,17 @@ func TestMsgSetQuota(t *testing.T) {
 		},
 		{
 			name: "invalid percent",
-			msg: types.MsgSetQuota{
+			msg: types.MsgAddQuota{
 				Creator:         validAddr,
 				Name:            "quota",
-				MaxPercentSend:  0,
-				MaxPercentRecv:  0,
+				MaxPercentSend:  101,
+				MaxPercentRecv:  101,
 				DurationMinutes: 60,
 			},
 		},
 		{
 			name: "invalid duration",
-			msg: types.MsgSetQuota{
+			msg: types.MsgAddQuota{
 				Creator:         validAddr,
 				Name:            "quota",
 				MaxPercentSend:  10,
@@ -76,7 +76,7 @@ func TestMsgSetQuota(t *testing.T) {
 			if test.expectPass {
 				require.NoError(t, test.msg.ValidateBasic(), "test: %v", test.name)
 				require.Equal(t, test.msg.Route(), types.RouterKey)
-				require.Equal(t, test.msg.Type(), "set_quota")
+				require.Equal(t, test.msg.Type(), "add_quota")
 				signers := test.msg.GetSigners()
 				require.Equal(t, len(signers), 1)
 				require.Equal(t, signers[0].String(), validAddr)
