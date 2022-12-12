@@ -12,6 +12,7 @@ import (
 	"github.com/Stride-Labs/stride/v4/x/stakeibc/types"
 )
 
+// 6 function, 2 for verify record after exec, 4 for test (1 success, 3 for failure)
 func (k msgServer) RestoreInterchainAccount(goCtx context.Context, msg *types.MsgRestoreInterchainAccount) (*types.MsgRestoreInterchainAccountResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
@@ -24,12 +25,7 @@ func (k msgServer) RestoreInterchainAccount(goCtx context.Context, msg *types.Ms
 	owner := types.FormatICAAccountOwner(msg.ChainId, msg.AccountType)
 
 	// only allow restoring an account if it already exists
-	portID, err := icatypes.NewControllerPortID(owner)
-	if err != nil {
-		errMsg := fmt.Sprintf("could not create portID for ICA controller account address: %s", owner)
-		k.Logger(ctx).Error(errMsg)
-		return nil, err
-	}
+	portID, _ := icatypes.NewControllerPortID(owner)
 	_, exists := k.ICAControllerKeeper.GetInterchainAccountAddress(ctx, hostZone.ConnectionId, portID)
 	if !exists {
 		errMsg := fmt.Sprintf("ICA controller account address not found: %s", owner)

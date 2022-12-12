@@ -63,6 +63,16 @@ func TestMsgRedeemStake_ValidateBasic(t *testing.T) {
 			},
 			err: ErrInvalidAmount,
 		},
+		{
+			name: "invalid amount",
+			msg: MsgRedeemStake{
+				Creator:  sample.AccAddress(),
+				HostZone: "GAIA",
+				Receiver: sample.AccAddress(),
+				Amount:   uint64(0),
+			},
+			err: sdkerrors.ErrInvalidRequest,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
