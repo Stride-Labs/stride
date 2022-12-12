@@ -10,13 +10,14 @@ import (
 )
 
 func TestMsgResetRateLimit(t *testing.T) {
+	apptesting.SetupConfig()
 	validAddr, invalidAddr := apptesting.GenerateTestAddrs()
 	validPathId := "denom/channel-0"
 
 	tests := []struct {
-		name       string
-		msg        types.MsgResetRateLimit
-		expectPass bool
+		name string
+		msg  types.MsgResetRateLimit
+		err  string
 	}{
 		{
 			name: "successful message",
@@ -24,7 +25,6 @@ func TestMsgResetRateLimit(t *testing.T) {
 				Creator: validAddr,
 				PathId:  validPathId,
 			},
-			expectPass: true,
 		},
 		{
 			name: "invalid creator",
@@ -32,7 +32,7 @@ func TestMsgResetRateLimit(t *testing.T) {
 				Creator: invalidAddr,
 				PathId:  validPathId,
 			},
-			expectPass: false,
+			err: "invalid creator address",
 		},
 		{
 			name: "empty path",
@@ -40,7 +40,7 @@ func TestMsgResetRateLimit(t *testing.T) {
 				Creator: validAddr,
 				PathId:  "",
 			},
-			expectPass: false,
+			err: "empty pathId",
 		},
 		{
 			name: "invalid path",
@@ -48,13 +48,13 @@ func TestMsgResetRateLimit(t *testing.T) {
 				Creator: validAddr,
 				PathId:  "denom_channel-0",
 			},
-			expectPass: false,
+			err: "invalid pathId",
 		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			if test.expectPass {
+			if test.err == "" {
 				require.NoError(t, test.msg.ValidateBasic(), "test: %v", test.name)
 				require.Equal(t, test.msg.Route(), types.RouterKey)
 				require.Equal(t, test.msg.Type(), "reset_rate_limit")
@@ -65,7 +65,7 @@ func TestMsgResetRateLimit(t *testing.T) {
 
 				require.Equal(t, test.msg.PathId, validPathId)
 			} else {
-				require.Error(t, test.msg.ValidateBasic(), "test: %v", test.name)
+				require.ErrorContains(t, test.msg.ValidateBasic(), test.err, "test: %v", test.name)
 			}
 		})
 	}

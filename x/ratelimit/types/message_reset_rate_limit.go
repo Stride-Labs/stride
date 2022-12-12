@@ -53,5 +53,6 @@ func (msg *MsgResetRateLimit) ValidateBasic() error {
 	if !strings.Contains(msg.PathId, "/") {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "invalid pathId")
 	}
+
 	return nil
 }

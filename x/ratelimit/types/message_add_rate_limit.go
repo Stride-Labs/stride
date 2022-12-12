@@ -69,5 +69,6 @@ func (msg *MsgAddRateLimit) ValidateBasic() error {
 	if msg.DurationHours == 0 {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "duration can not be zero")
 	}
+
 	return nil
 }

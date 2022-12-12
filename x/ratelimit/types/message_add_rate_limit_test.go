@@ -6,12 +6,11 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/Stride-Labs/stride/v4/app/apptesting"
-	cmdcfg "github.com/Stride-Labs/stride/v4/cmd/strided/config"
 	"github.com/Stride-Labs/stride/v4/x/ratelimit/types"
 )
 
 func TestMsgAddRateLimit(t *testing.T) {
-	cmdcfg.SetupConfig()
+	apptesting.SetupConfig()
 	validAddr, invalidAddr := apptesting.GenerateTestAddrs()
 
 	validDenom := "denom"
@@ -21,9 +20,9 @@ func TestMsgAddRateLimit(t *testing.T) {
 	validDurationHours := uint64(60)
 
 	tests := []struct {
-		name       string
-		msg        types.MsgAddRateLimit
-		expectPass bool
+		name string
+		msg  types.MsgAddRateLimit
+		err  string
 	}{
 		{
 			name: "successful msg",
@@ -35,7 +34,6 @@ func TestMsgAddRateLimit(t *testing.T) {
 				MaxPercentRecv: validMaxPercentRecv,
 				DurationHours:  validDurationHours,
 			},
-			expectPass: true,
 		},
 		{
 			name: "invalid creator",
@@ -47,6 +45,7 @@ func TestMsgAddRateLimit(t *testing.T) {
 				MaxPercentRecv: validMaxPercentRecv,
 				DurationHours:  validDurationHours,
 			},
+			err: "invalid creator address",
 		},
 		{
 			name: "invalid denom",
@@ -58,6 +57,7 @@ func TestMsgAddRateLimit(t *testing.T) {
 				MaxPercentRecv: validMaxPercentRecv,
 				DurationHours:  validDurationHours,
 			},
+			err: "invalid denom",
 		},
 		{
 			name: "invalid channel-id",
@@ -69,6 +69,7 @@ func TestMsgAddRateLimit(t *testing.T) {
 				MaxPercentRecv: validMaxPercentRecv,
 				DurationHours:  validDurationHours,
 			},
+			err: "invalid channel-id",
 		},
 		{
 			name: "invalid send percent",
@@ -80,6 +81,7 @@ func TestMsgAddRateLimit(t *testing.T) {
 				MaxPercentRecv: validMaxPercentRecv,
 				DurationHours:  validDurationHours,
 			},
+			err: "percent must be between 0 and 100",
 		},
 		{
 			name: "invalid receive percent",
@@ -91,6 +93,7 @@ func TestMsgAddRateLimit(t *testing.T) {
 				MaxPercentRecv: 101,
 				DurationHours:  validDurationHours,
 			},
+			err: "percent must be between 0 and 100",
 		},
 		{
 			name: "invalid send and receive percent",
@@ -102,6 +105,7 @@ func TestMsgAddRateLimit(t *testing.T) {
 				MaxPercentRecv: 0,
 				DurationHours:  validDurationHours,
 			},
+			err: "either the max send or max receive threshold must be greater than 0",
 		},
 		{
 			name: "invalid duration",
@@ -113,12 +117,13 @@ func TestMsgAddRateLimit(t *testing.T) {
 				MaxPercentRecv: validMaxPercentRecv,
 				DurationHours:  0,
 			},
+			err: "duration can not be zero",
 		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			if test.expectPass {
+			if test.err == "" {
 				require.NoError(t, test.msg.ValidateBasic(), "test: %v", test.name)
 				require.Equal(t, test.msg.Route(), types.RouterKey)
 				require.Equal(t, test.msg.Type(), "add_rate_limit")
@@ -127,13 +132,13 @@ func TestMsgAddRateLimit(t *testing.T) {
 				require.Equal(t, len(signers), 1)
 				require.Equal(t, signers[0].String(), validAddr)
 
-				require.Equal(t, test.msg.Denom, validDenom)
-				require.Equal(t, test.msg.ChannelId, validChannelId)
-				require.Equal(t, test.msg.MaxPercentSend, validMaxPercentSend)
-				require.Equal(t, test.msg.MaxPercentRecv, validMaxPercentRecv)
-				require.Equal(t, test.msg.DurationHours, validMaxPercentRecv)
+				require.Equal(t, test.msg.Denom, validDenom, "denom")
+				require.Equal(t, test.msg.ChannelId, validChannelId, "channel-id")
+				require.Equal(t, test.msg.MaxPercentSend, validMaxPercentSend, "maxPercentSend")
+				require.Equal(t, test.msg.MaxPercentRecv, validMaxPercentRecv, "maxPercentRecv")
+				require.Equal(t, test.msg.DurationHours, validDurationHours, "durationHours")
 			} else {
-				require.Error(t, test.msg.ValidateBasic(), "test: %v", test.name)
+				require.ErrorContains(t, test.msg.ValidateBasic(), test.err, "test: %v", test.name)
 			}
 		})
 	}

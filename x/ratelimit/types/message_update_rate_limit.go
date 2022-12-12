@@ -1,6 +1,8 @@
 package types
 
 import (
+	"strings"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
@@ -8,7 +10,7 @@ import (
 // Msg type for MsgUpdateRateLimit
 const TypeMsgUpdateRateLimit = "update_rate_limit"
 
-var _ sdk.Msg = &MsgAddRateLimit{}
+var _ sdk.Msg = &MsgUpdateRateLimit{}
 
 func NewMsgUpdateRateLimit(creator string, pathId string, maxPercentSend uint64, maxPercentRecv uint64, durationHours uint64) *MsgUpdateRateLimit {
 	return &MsgUpdateRateLimit{
@@ -48,6 +50,10 @@ func (msg *MsgUpdateRateLimit) ValidateBasic() error {
 	}
 
 	if msg.PathId == "" {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "empty pathId")
+	}
+
+	if !strings.Contains(msg.PathId, "/") {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "invalid pathId")
 	}
 
@@ -55,8 +61,13 @@ func (msg *MsgUpdateRateLimit) ValidateBasic() error {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "percent must be between 0 and 100 (inclusively)")
 	}
 
+	if msg.MaxPercentRecv == 0 && msg.MaxPercentSend == 0 {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "either the max send or max receive threshold must be greater than 0")
+	}
+
 	if msg.DurationHours == 0 {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "duration can not be zero")
 	}
+
 	return nil
 }
