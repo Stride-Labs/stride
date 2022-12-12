@@ -1,6 +1,8 @@
 package types
 
 import (
+	"strings"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
@@ -45,7 +47,12 @@ func (msg *MsgRemoveRateLimit) ValidateBasic() error {
 	}
 
 	if msg.PathId == "" {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "empty pathId")
+	}
+
+	if !strings.Contains(msg.PathId, "/") {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "invalid pathId")
 	}
+
 	return nil
 }

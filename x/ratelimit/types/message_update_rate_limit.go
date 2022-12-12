@@ -10,13 +10,13 @@ const TypeMsgUpdateRateLimit = "update_rate_limit"
 
 var _ sdk.Msg = &MsgAddRateLimit{}
 
-func NewMsgUpdateRateLimit(creator string, pathId string, maxPercentSend uint64, maxPercentRecv uint64, durationMinutes uint64) *MsgUpdateRateLimit {
+func NewMsgUpdateRateLimit(creator string, pathId string, maxPercentSend uint64, maxPercentRecv uint64, durationHours uint64) *MsgUpdateRateLimit {
 	return &MsgUpdateRateLimit{
-		Creator:         creator,
-		PathId:          pathId,
-		MaxPercentSend:  maxPercentSend,
-		MaxPercentRecv:  maxPercentRecv,
-		DurationMinutes: durationMinutes,
+		Creator:        creator,
+		PathId:         pathId,
+		MaxPercentSend: maxPercentSend,
+		MaxPercentRecv: maxPercentRecv,
+		DurationHours:  durationHours,
 	}
 }
 
@@ -55,7 +55,7 @@ func (msg *MsgUpdateRateLimit) ValidateBasic() error {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "percent must be between 0 and 100 (inclusively)")
 	}
 
-	if msg.DurationMinutes == 0 {
+	if msg.DurationHours == 0 {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "duration can not be zero")
 	}
 	return nil
