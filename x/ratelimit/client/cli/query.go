@@ -24,6 +24,8 @@ func GetQueryCmd() *cobra.Command {
 	cmd.AddCommand(
 		GetCmdQueryRateLimit(),
 		GetCmdQueryRateLimits(),
+		GetCmdQueryPath(),
+		GetCmdQueryPaths(),
 	)
 	return cmd
 }
