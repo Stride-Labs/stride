@@ -26,7 +26,7 @@ func (k Keeper) GetQuota(ctx sdk.Context, name string) (quota types.Quota, found
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.QuotaKeyPrefix))
 
 	b := store.Get([]byte(name))
-	if b == nil {
+	if b == nil || len(b) == 0 {
 		return quota, false
 	}
 

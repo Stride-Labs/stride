@@ -25,8 +25,13 @@ func (server msgServer) AddRateLimit(goCtx context.Context, msg *types.MsgAddRat
 	return &types.MsgAddRateLimitResponse{}, nil
 }
 
-func (server msgServer) SetQuota(goCtx context.Context, msg *types.MsgSetQuota) (*types.MsgSetQuotaResponse, error) {
+func (server msgServer) AddQuota(goCtx context.Context, msg *types.MsgAddQuota) (*types.MsgAddQuotaResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	_, found := server.Keeper.GetQuota(ctx, msg.Name)
+	if found {
+		return nil, types.ErrQuotaNameDuplicated
+	}
 
 	server.Keeper.SetQuota(ctx, types.Quota{
 		Name:            msg.Name,
@@ -36,7 +41,7 @@ func (server msgServer) SetQuota(goCtx context.Context, msg *types.MsgSetQuota) 
 		PeriodEnd:       uint64(ctx.BlockTime().Unix()) + msg.DurationMinutes*60,
 	})
 
-	return &types.MsgSetQuotaResponse{}, nil
+	return &types.MsgAddQuotaResponse{}, nil
 }
 
 func (server msgServer) RemoveQuota(goCtx context.Context, msg *types.MsgRemoveQuota) (*types.MsgRemoveQuotaResponse, error) {
