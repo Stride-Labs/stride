@@ -27,7 +27,7 @@ func (s *KeeperTestSuite) TestGetQuota() {
 	expectedQuota := quotas[0]
 
 	actualQuota, found := s.App.RatelimitKeeper.GetQuota(s.Ctx, "name-1")
-	s.Require().True(found, "element not found")
+	s.Require().True(found, "element should have been found, but was not")
 	s.Require().Equal(expectedQuota, actualQuota)
 }
 
@@ -37,7 +37,7 @@ func (s *KeeperTestSuite) TestRemoveQuota() {
 
 	s.App.RatelimitKeeper.RemoveQuota(s.Ctx, idToRemove)
 	_, found := s.App.RatelimitKeeper.GetQuota(s.Ctx, idToRemove)
-	s.Require().False(found, "removed element found")
+	s.Require().False(found, "element should have been removed, but was found")
 }
 
 func (s *KeeperTestSuite) TestGetAllQuotas() {
