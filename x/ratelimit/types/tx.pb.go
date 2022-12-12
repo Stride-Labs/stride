@@ -28,10 +28,12 @@ var _ = math.Inf
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
 type MsgAddRateLimit struct {
-	Creator   string `protobuf:"bytes,1,opt,name=creator,proto3" json:"creator,omitempty"`
-	Denom     string `protobuf:"bytes,2,opt,name=denom,proto3" json:"denom,omitempty"`
-	Channel   string `protobuf:"bytes,3,opt,name=channel,proto3" json:"channel,omitempty"`
-	QuotaName string `protobuf:"bytes,4,opt,name=quota_name,json=quotaName,proto3" json:"quota_name,omitempty"`
+	Creator        string `protobuf:"bytes,1,opt,name=creator,proto3" json:"creator,omitempty"`
+	Denom          string `protobuf:"bytes,2,opt,name=denom,proto3" json:"denom,omitempty"`
+	ChannelId      string `protobuf:"bytes,3,opt,name=channel_id,json=channelId,proto3" json:"channel_id,omitempty"`
+	MaxPercentSend uint64 `protobuf:"varint,4,opt,name=max_percent_send,json=maxPercentSend,proto3" json:"max_percent_send,omitempty"`
+	MaxPercentRecv uint64 `protobuf:"varint,5,opt,name=max_percent_recv,json=maxPercentRecv,proto3" json:"max_percent_recv,omitempty"`
+	DurationHours  uint64 `protobuf:"varint,6,opt,name=duration_hours,json=durationHours,proto3" json:"duration_hours,omitempty"`
 }
 
 func (m *MsgAddRateLimit) Reset()         { *m = MsgAddRateLimit{} }
@@ -81,18 +83,32 @@ func (m *MsgAddRateLimit) GetDenom() string {
 	return ""
 }
 
-func (m *MsgAddRateLimit) GetChannel() string {
+func (m *MsgAddRateLimit) GetChannelId() string {
 	if m != nil {
-		return m.Channel
+		return m.ChannelId
 	}
 	return ""
 }
 
-func (m *MsgAddRateLimit) GetQuotaName() string {
+func (m *MsgAddRateLimit) GetMaxPercentSend() uint64 {
 	if m != nil {
-		return m.QuotaName
+		return m.MaxPercentSend
 	}
-	return ""
+	return 0
+}
+
+func (m *MsgAddRateLimit) GetMaxPercentRecv() uint64 {
+	if m != nil {
+		return m.MaxPercentRecv
+	}
+	return 0
+}
+
+func (m *MsgAddRateLimit) GetDurationHours() uint64 {
+	if m != nil {
+		return m.DurationHours
+	}
+	return 0
 }
 
 type MsgAddRateLimitResponse struct {
@@ -131,26 +147,26 @@ func (m *MsgAddRateLimitResponse) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_MsgAddRateLimitResponse proto.InternalMessageInfo
 
-type MsgAddQuota struct {
+type MsgUpdateRateLimit struct {
 	Creator         string `protobuf:"bytes,1,opt,name=creator,proto3" json:"creator,omitempty"`
-	Name            string `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	PathId          string `protobuf:"bytes,2,opt,name=path_id,json=pathId,proto3" json:"path_id,omitempty"`
 	MaxPercentSend  uint64 `protobuf:"varint,3,opt,name=max_percent_send,json=maxPercentSend,proto3" json:"max_percent_send,omitempty"`
 	MaxPercentRecv  uint64 `protobuf:"varint,4,opt,name=max_percent_recv,json=maxPercentRecv,proto3" json:"max_percent_recv,omitempty"`
 	DurationMinutes uint64 `protobuf:"varint,5,opt,name=duration_minutes,json=durationMinutes,proto3" json:"duration_minutes,omitempty"`
 }
 
-func (m *MsgAddQuota) Reset()         { *m = MsgAddQuota{} }
-func (m *MsgAddQuota) String() string { return proto.CompactTextString(m) }
-func (*MsgAddQuota) ProtoMessage()    {}
-func (*MsgAddQuota) Descriptor() ([]byte, []int) {
+func (m *MsgUpdateRateLimit) Reset()         { *m = MsgUpdateRateLimit{} }
+func (m *MsgUpdateRateLimit) String() string { return proto.CompactTextString(m) }
+func (*MsgUpdateRateLimit) ProtoMessage()    {}
+func (*MsgUpdateRateLimit) Descriptor() ([]byte, []int) {
 	return fileDescriptor_a571dec98d62cf94, []int{2}
 }
-func (m *MsgAddQuota) XXX_Unmarshal(b []byte) error {
+func (m *MsgUpdateRateLimit) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *MsgAddQuota) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *MsgUpdateRateLimit) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_MsgAddQuota.Marshal(b, m, deterministic)
+		return xxx_messageInfo_MsgUpdateRateLimit.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -160,68 +176,68 @@ func (m *MsgAddQuota) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) 
 		return b[:n], nil
 	}
 }
-func (m *MsgAddQuota) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_MsgAddQuota.Merge(m, src)
+func (m *MsgUpdateRateLimit) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgUpdateRateLimit.Merge(m, src)
 }
-func (m *MsgAddQuota) XXX_Size() int {
+func (m *MsgUpdateRateLimit) XXX_Size() int {
 	return m.Size()
 }
-func (m *MsgAddQuota) XXX_DiscardUnknown() {
-	xxx_messageInfo_MsgAddQuota.DiscardUnknown(m)
+func (m *MsgUpdateRateLimit) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgUpdateRateLimit.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_MsgAddQuota proto.InternalMessageInfo
+var xxx_messageInfo_MsgUpdateRateLimit proto.InternalMessageInfo
 
-func (m *MsgAddQuota) GetCreator() string {
+func (m *MsgUpdateRateLimit) GetCreator() string {
 	if m != nil {
 		return m.Creator
 	}
 	return ""
 }
 
-func (m *MsgAddQuota) GetName() string {
+func (m *MsgUpdateRateLimit) GetPathId() string {
 	if m != nil {
-		return m.Name
+		return m.PathId
 	}
 	return ""
 }
 
-func (m *MsgAddQuota) GetMaxPercentSend() uint64 {
+func (m *MsgUpdateRateLimit) GetMaxPercentSend() uint64 {
 	if m != nil {
 		return m.MaxPercentSend
 	}
 	return 0
 }
 
-func (m *MsgAddQuota) GetMaxPercentRecv() uint64 {
+func (m *MsgUpdateRateLimit) GetMaxPercentRecv() uint64 {
 	if m != nil {
 		return m.MaxPercentRecv
 	}
 	return 0
 }
 
-func (m *MsgAddQuota) GetDurationMinutes() uint64 {
+func (m *MsgUpdateRateLimit) GetDurationMinutes() uint64 {
 	if m != nil {
 		return m.DurationMinutes
 	}
 	return 0
 }
 
-type MsgAddQuotaResponse struct {
+type MsgUpdateRateLimitResponse struct {
 }
 
-func (m *MsgAddQuotaResponse) Reset()         { *m = MsgAddQuotaResponse{} }
-func (m *MsgAddQuotaResponse) String() string { return proto.CompactTextString(m) }
-func (*MsgAddQuotaResponse) ProtoMessage()    {}
-func (*MsgAddQuotaResponse) Descriptor() ([]byte, []int) {
+func (m *MsgUpdateRateLimitResponse) Reset()         { *m = MsgUpdateRateLimitResponse{} }
+func (m *MsgUpdateRateLimitResponse) String() string { return proto.CompactTextString(m) }
+func (*MsgUpdateRateLimitResponse) ProtoMessage()    {}
+func (*MsgUpdateRateLimitResponse) Descriptor() ([]byte, []int) {
 	return fileDescriptor_a571dec98d62cf94, []int{3}
 }
-func (m *MsgAddQuotaResponse) XXX_Unmarshal(b []byte) error {
+func (m *MsgUpdateRateLimitResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *MsgAddQuotaResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *MsgUpdateRateLimitResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_MsgAddQuotaResponse.Marshal(b, m, deterministic)
+		return xxx_messageInfo_MsgUpdateRateLimitResponse.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -231,35 +247,35 @@ func (m *MsgAddQuotaResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte,
 		return b[:n], nil
 	}
 }
-func (m *MsgAddQuotaResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_MsgAddQuotaResponse.Merge(m, src)
+func (m *MsgUpdateRateLimitResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgUpdateRateLimitResponse.Merge(m, src)
 }
-func (m *MsgAddQuotaResponse) XXX_Size() int {
+func (m *MsgUpdateRateLimitResponse) XXX_Size() int {
 	return m.Size()
 }
-func (m *MsgAddQuotaResponse) XXX_DiscardUnknown() {
-	xxx_messageInfo_MsgAddQuotaResponse.DiscardUnknown(m)
+func (m *MsgUpdateRateLimitResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgUpdateRateLimitResponse.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_MsgAddQuotaResponse proto.InternalMessageInfo
+var xxx_messageInfo_MsgUpdateRateLimitResponse proto.InternalMessageInfo
 
-type MsgRemoveQuota struct {
+type MsgRemoveRateLimit struct {
 	Creator string `protobuf:"bytes,1,opt,name=creator,proto3" json:"creator,omitempty"`
-	Name    string `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	PathId  string `protobuf:"bytes,2,opt,name=path_id,json=pathId,proto3" json:"path_id,omitempty"`
 }
 
-func (m *MsgRemoveQuota) Reset()         { *m = MsgRemoveQuota{} }
-func (m *MsgRemoveQuota) String() string { return proto.CompactTextString(m) }
-func (*MsgRemoveQuota) ProtoMessage()    {}
-func (*MsgRemoveQuota) Descriptor() ([]byte, []int) {
+func (m *MsgRemoveRateLimit) Reset()         { *m = MsgRemoveRateLimit{} }
+func (m *MsgRemoveRateLimit) String() string { return proto.CompactTextString(m) }
+func (*MsgRemoveRateLimit) ProtoMessage()    {}
+func (*MsgRemoveRateLimit) Descriptor() ([]byte, []int) {
 	return fileDescriptor_a571dec98d62cf94, []int{4}
 }
-func (m *MsgRemoveQuota) XXX_Unmarshal(b []byte) error {
+func (m *MsgRemoveRateLimit) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *MsgRemoveQuota) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *MsgRemoveRateLimit) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_MsgRemoveQuota.Marshal(b, m, deterministic)
+		return xxx_messageInfo_MsgRemoveRateLimit.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -269,47 +285,47 @@ func (m *MsgRemoveQuota) XXX_Marshal(b []byte, deterministic bool) ([]byte, erro
 		return b[:n], nil
 	}
 }
-func (m *MsgRemoveQuota) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_MsgRemoveQuota.Merge(m, src)
+func (m *MsgRemoveRateLimit) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgRemoveRateLimit.Merge(m, src)
 }
-func (m *MsgRemoveQuota) XXX_Size() int {
+func (m *MsgRemoveRateLimit) XXX_Size() int {
 	return m.Size()
 }
-func (m *MsgRemoveQuota) XXX_DiscardUnknown() {
-	xxx_messageInfo_MsgRemoveQuota.DiscardUnknown(m)
+func (m *MsgRemoveRateLimit) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgRemoveRateLimit.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_MsgRemoveQuota proto.InternalMessageInfo
+var xxx_messageInfo_MsgRemoveRateLimit proto.InternalMessageInfo
 
-func (m *MsgRemoveQuota) GetCreator() string {
+func (m *MsgRemoveRateLimit) GetCreator() string {
 	if m != nil {
 		return m.Creator
 	}
 	return ""
 }
 
-func (m *MsgRemoveQuota) GetName() string {
+func (m *MsgRemoveRateLimit) GetPathId() string {
 	if m != nil {
-		return m.Name
+		return m.PathId
 	}
 	return ""
 }
 
-type MsgRemoveQuotaResponse struct {
+type MsgRemoveRateLimitResponse struct {
 }
 
-func (m *MsgRemoveQuotaResponse) Reset()         { *m = MsgRemoveQuotaResponse{} }
-func (m *MsgRemoveQuotaResponse) String() string { return proto.CompactTextString(m) }
-func (*MsgRemoveQuotaResponse) ProtoMessage()    {}
-func (*MsgRemoveQuotaResponse) Descriptor() ([]byte, []int) {
+func (m *MsgRemoveRateLimitResponse) Reset()         { *m = MsgRemoveRateLimitResponse{} }
+func (m *MsgRemoveRateLimitResponse) String() string { return proto.CompactTextString(m) }
+func (*MsgRemoveRateLimitResponse) ProtoMessage()    {}
+func (*MsgRemoveRateLimitResponse) Descriptor() ([]byte, []int) {
 	return fileDescriptor_a571dec98d62cf94, []int{5}
 }
-func (m *MsgRemoveQuotaResponse) XXX_Unmarshal(b []byte) error {
+func (m *MsgRemoveRateLimitResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *MsgRemoveQuotaResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *MsgRemoveRateLimitResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_MsgRemoveQuotaResponse.Marshal(b, m, deterministic)
+		return xxx_messageInfo_MsgRemoveRateLimitResponse.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -319,17 +335,17 @@ func (m *MsgRemoveQuotaResponse) XXX_Marshal(b []byte, deterministic bool) ([]by
 		return b[:n], nil
 	}
 }
-func (m *MsgRemoveQuotaResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_MsgRemoveQuotaResponse.Merge(m, src)
+func (m *MsgRemoveRateLimitResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgRemoveRateLimitResponse.Merge(m, src)
 }
-func (m *MsgRemoveQuotaResponse) XXX_Size() int {
+func (m *MsgRemoveRateLimitResponse) XXX_Size() int {
 	return m.Size()
 }
-func (m *MsgRemoveQuotaResponse) XXX_DiscardUnknown() {
-	xxx_messageInfo_MsgRemoveQuotaResponse.DiscardUnknown(m)
+func (m *MsgRemoveRateLimitResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgRemoveRateLimitResponse.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_MsgRemoveQuotaResponse proto.InternalMessageInfo
+var xxx_messageInfo_MsgRemoveRateLimitResponse proto.InternalMessageInfo
 
 type MsgResetRateLimit struct {
 	Creator string `protobuf:"bytes,1,opt,name=creator,proto3" json:"creator,omitempty"`
@@ -419,142 +435,50 @@ func (m *MsgResetRateLimitResponse) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_MsgResetRateLimitResponse proto.InternalMessageInfo
 
-type MsgRemoveRateLimit struct {
-	Creator string `protobuf:"bytes,1,opt,name=creator,proto3" json:"creator,omitempty"`
-	PathId  string `protobuf:"bytes,2,opt,name=path_id,json=pathId,proto3" json:"path_id,omitempty"`
-}
-
-func (m *MsgRemoveRateLimit) Reset()         { *m = MsgRemoveRateLimit{} }
-func (m *MsgRemoveRateLimit) String() string { return proto.CompactTextString(m) }
-func (*MsgRemoveRateLimit) ProtoMessage()    {}
-func (*MsgRemoveRateLimit) Descriptor() ([]byte, []int) {
-	return fileDescriptor_a571dec98d62cf94, []int{8}
-}
-func (m *MsgRemoveRateLimit) XXX_Unmarshal(b []byte) error {
-	return m.Unmarshal(b)
-}
-func (m *MsgRemoveRateLimit) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	if deterministic {
-		return xxx_messageInfo_MsgRemoveRateLimit.Marshal(b, m, deterministic)
-	} else {
-		b = b[:cap(b)]
-		n, err := m.MarshalToSizedBuffer(b)
-		if err != nil {
-			return nil, err
-		}
-		return b[:n], nil
-	}
-}
-func (m *MsgRemoveRateLimit) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_MsgRemoveRateLimit.Merge(m, src)
-}
-func (m *MsgRemoveRateLimit) XXX_Size() int {
-	return m.Size()
-}
-func (m *MsgRemoveRateLimit) XXX_DiscardUnknown() {
-	xxx_messageInfo_MsgRemoveRateLimit.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_MsgRemoveRateLimit proto.InternalMessageInfo
-
-func (m *MsgRemoveRateLimit) GetCreator() string {
-	if m != nil {
-		return m.Creator
-	}
-	return ""
-}
-
-func (m *MsgRemoveRateLimit) GetPathId() string {
-	if m != nil {
-		return m.PathId
-	}
-	return ""
-}
-
-type MsgRemoveRateLimitResponse struct {
-}
-
-func (m *MsgRemoveRateLimitResponse) Reset()         { *m = MsgRemoveRateLimitResponse{} }
-func (m *MsgRemoveRateLimitResponse) String() string { return proto.CompactTextString(m) }
-func (*MsgRemoveRateLimitResponse) ProtoMessage()    {}
-func (*MsgRemoveRateLimitResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_a571dec98d62cf94, []int{9}
-}
-func (m *MsgRemoveRateLimitResponse) XXX_Unmarshal(b []byte) error {
-	return m.Unmarshal(b)
-}
-func (m *MsgRemoveRateLimitResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	if deterministic {
-		return xxx_messageInfo_MsgRemoveRateLimitResponse.Marshal(b, m, deterministic)
-	} else {
-		b = b[:cap(b)]
-		n, err := m.MarshalToSizedBuffer(b)
-		if err != nil {
-			return nil, err
-		}
-		return b[:n], nil
-	}
-}
-func (m *MsgRemoveRateLimitResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_MsgRemoveRateLimitResponse.Merge(m, src)
-}
-func (m *MsgRemoveRateLimitResponse) XXX_Size() int {
-	return m.Size()
-}
-func (m *MsgRemoveRateLimitResponse) XXX_DiscardUnknown() {
-	xxx_messageInfo_MsgRemoveRateLimitResponse.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_MsgRemoveRateLimitResponse proto.InternalMessageInfo
-
 func init() {
 	proto.RegisterType((*MsgAddRateLimit)(nil), "stride.ratelimit.MsgAddRateLimit")
 	proto.RegisterType((*MsgAddRateLimitResponse)(nil), "stride.ratelimit.MsgAddRateLimitResponse")
-	proto.RegisterType((*MsgAddQuota)(nil), "stride.ratelimit.MsgAddQuota")
-	proto.RegisterType((*MsgAddQuotaResponse)(nil), "stride.ratelimit.MsgAddQuotaResponse")
-	proto.RegisterType((*MsgRemoveQuota)(nil), "stride.ratelimit.MsgRemoveQuota")
-	proto.RegisterType((*MsgRemoveQuotaResponse)(nil), "stride.ratelimit.MsgRemoveQuotaResponse")
-	proto.RegisterType((*MsgResetRateLimit)(nil), "stride.ratelimit.MsgResetRateLimit")
-	proto.RegisterType((*MsgResetRateLimitResponse)(nil), "stride.ratelimit.MsgResetRateLimitResponse")
+	proto.RegisterType((*MsgUpdateRateLimit)(nil), "stride.ratelimit.MsgUpdateRateLimit")
+	proto.RegisterType((*MsgUpdateRateLimitResponse)(nil), "stride.ratelimit.MsgUpdateRateLimitResponse")
 	proto.RegisterType((*MsgRemoveRateLimit)(nil), "stride.ratelimit.MsgRemoveRateLimit")
 	proto.RegisterType((*MsgRemoveRateLimitResponse)(nil), "stride.ratelimit.MsgRemoveRateLimitResponse")
+	proto.RegisterType((*MsgResetRateLimit)(nil), "stride.ratelimit.MsgResetRateLimit")
+	proto.RegisterType((*MsgResetRateLimitResponse)(nil), "stride.ratelimit.MsgResetRateLimitResponse")
 }
 
 func init() { proto.RegisterFile("stride/ratelimit/tx.proto", fileDescriptor_a571dec98d62cf94) }
 
 var fileDescriptor_a571dec98d62cf94 = []byte{
-	// 494 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xa4, 0x94, 0xcf, 0x6e, 0xd3, 0x40,
-	0x10, 0xc6, 0x6b, 0x92, 0xb6, 0x74, 0x8a, 0x92, 0xb0, 0xfc, 0xa9, 0x63, 0xa8, 0x55, 0x0c, 0x48,
-	0xa9, 0x00, 0x5b, 0x2a, 0x9c, 0x91, 0xe0, 0x00, 0x42, 0x4a, 0x50, 0x71, 0x4f, 0x20, 0x24, 0x6b,
-	0x63, 0x8f, 0x12, 0x4b, 0xf5, 0xae, 0xf1, 0x6e, 0xa2, 0xc0, 0x53, 0xf0, 0x3c, 0x3c, 0x01, 0xc7,
-	0x1e, 0x91, 0xb8, 0xa0, 0xe4, 0x45, 0x50, 0xd6, 0xf1, 0xe2, 0xb8, 0x34, 0x8d, 0xe0, 0xe6, 0x99,
-	0xf9, 0xcd, 0xf7, 0x8d, 0x77, 0x57, 0x03, 0x6d, 0x21, 0xb3, 0x38, 0x42, 0x2f, 0xa3, 0x12, 0x4f,
-	0xe3, 0x24, 0x96, 0x9e, 0x9c, 0xb8, 0x69, 0xc6, 0x25, 0x27, 0xad, 0xbc, 0xe4, 0xea, 0x92, 0xf3,
-	0x05, 0x9a, 0x3d, 0x31, 0x78, 0x11, 0x45, 0x3e, 0x95, 0xd8, 0x9d, 0xa7, 0x88, 0x09, 0xdb, 0x61,
-	0x86, 0x54, 0xf2, 0xcc, 0x34, 0x0e, 0x8c, 0xce, 0x8e, 0x5f, 0x84, 0xe4, 0x26, 0x6c, 0x46, 0xc8,
-	0x78, 0x62, 0x5e, 0x51, 0xf9, 0x3c, 0x50, 0xfc, 0x90, 0x32, 0x86, 0xa7, 0x66, 0x6d, 0xc1, 0xe7,
-	0x21, 0xd9, 0x07, 0xf8, 0x34, 0xe2, 0x92, 0x06, 0x8c, 0x26, 0x68, 0xd6, 0x55, 0x71, 0x47, 0x65,
-	0xde, 0xd2, 0x04, 0x9d, 0x36, 0xec, 0x55, 0xbc, 0x7d, 0x14, 0x29, 0x67, 0x02, 0x9d, 0x6f, 0x06,
-	0xec, 0xe6, 0xb5, 0x77, 0x73, 0x7c, 0xc5, 0x4c, 0x04, 0xea, 0x4a, 0x3d, 0x1f, 0x49, 0x7d, 0x93,
-	0x0e, 0xb4, 0x12, 0x3a, 0x09, 0x52, 0xcc, 0x42, 0x64, 0x32, 0x10, 0xc8, 0x22, 0x35, 0x5a, 0xdd,
-	0x6f, 0x24, 0x74, 0x72, 0x9c, 0xa7, 0x4f, 0x90, 0x45, 0x55, 0x32, 0xc3, 0x70, 0xac, 0xe6, 0x5c,
-	0x22, 0x7d, 0x0c, 0xc7, 0xe4, 0x10, 0x5a, 0xd1, 0x28, 0xa3, 0x32, 0xe6, 0x2c, 0x48, 0x62, 0x36,
-	0x92, 0x28, 0xcc, 0x4d, 0x45, 0x36, 0x8b, 0x7c, 0x2f, 0x4f, 0x3b, 0xb7, 0xe0, 0x46, 0x69, 0x76,
-	0xfd, 0x4f, 0xcf, 0xa1, 0xd1, 0x13, 0x03, 0x1f, 0x13, 0x3e, 0xc6, 0x7f, 0xf8, 0x2b, 0xc7, 0x84,
-	0xdb, 0xcb, 0xfd, 0x5a, 0xf9, 0x15, 0x5c, 0x57, 0x15, 0x81, 0x72, 0x9d, 0x6b, 0xdc, 0x83, 0xed,
-	0x94, 0xca, 0x61, 0x10, 0x47, 0x0b, 0xfd, 0xad, 0x79, 0xf8, 0x26, 0x72, 0xee, 0x40, 0xfb, 0x9c,
-	0x8e, 0x36, 0x79, 0x0d, 0x44, 0xdb, 0xff, 0x97, 0xcb, 0x5d, 0xb0, 0xce, 0x0b, 0x15, 0x36, 0x47,
-	0x3f, 0x6b, 0x50, 0xeb, 0x89, 0x01, 0x39, 0x86, 0xab, 0xfa, 0xf6, 0xf7, 0xdd, 0xea, 0xbb, 0x75,
-	0x4b, 0x07, 0x6c, 0x3d, 0x5c, 0x59, 0x2e, 0x94, 0xc9, 0x47, 0xb8, 0xb6, 0xf4, 0xce, 0xef, 0x5d,
-	0xd4, 0xa6, 0x11, 0xeb, 0xf0, 0x52, 0x44, 0xab, 0xbf, 0x87, 0xdd, 0xf2, 0xd5, 0x1e, 0xfc, 0xb5,
-	0xb3, 0x44, 0x58, 0x9d, 0xcb, 0x08, 0x2d, 0x8d, 0xd0, 0xac, 0x1e, 0xfb, 0x83, 0x15, 0xcd, 0x7f,
-	0xc6, 0x7f, 0xbc, 0x0e, 0xa5, 0x6d, 0xfa, 0xd0, 0xa8, 0x3c, 0xa1, 0xfb, 0x17, 0xf4, 0x97, 0x21,
-	0xeb, 0xd1, 0x1a, 0x50, 0xe1, 0xf1, 0xb2, 0xfb, 0x7d, 0x6a, 0x1b, 0x67, 0x53, 0xdb, 0xf8, 0x35,
-	0xb5, 0x8d, 0xaf, 0x33, 0x7b, 0xe3, 0x6c, 0x66, 0x6f, 0xfc, 0x98, 0xd9, 0x1b, 0x1f, 0x8e, 0x06,
-	0xb1, 0x1c, 0x8e, 0xfa, 0x6e, 0xc8, 0x13, 0xef, 0x44, 0x09, 0x3e, 0xe9, 0xd2, 0xbe, 0xf0, 0x16,
-	0xcb, 0x6c, 0xfc, 0xcc, 0x9b, 0x94, 0x37, 0xda, 0xe7, 0x14, 0x45, 0x7f, 0x4b, 0x6d, 0xb5, 0xa7,
-	0xbf, 0x03, 0x00, 0x00, 0xff, 0xff, 0x0c, 0xca, 0xf5, 0x65, 0xf2, 0x04, 0x00, 0x00,
+	// 461 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xa4, 0x94, 0xdf, 0x8a, 0xd3, 0x40,
+	0x14, 0xc6, 0x3b, 0xb6, 0xdb, 0x65, 0x0f, 0xda, 0xd6, 0x41, 0xd8, 0xb4, 0x6a, 0x58, 0xab, 0x42,
+	0x17, 0x35, 0x81, 0xd5, 0x17, 0xd0, 0x0b, 0xff, 0x40, 0x0b, 0x92, 0xc5, 0x1b, 0x11, 0xca, 0x34,
+	0x73, 0x68, 0x03, 0x9b, 0x99, 0x30, 0x33, 0x2d, 0xf5, 0x2d, 0xbc, 0xf1, 0x95, 0xc4, 0xcb, 0xbd,
+	0x14, 0xbc, 0x91, 0xf6, 0x45, 0xa4, 0x49, 0x13, 0xea, 0xb4, 0xc1, 0xc0, 0x5e, 0xce, 0x77, 0xbe,
+	0x9c, 0x8f, 0x5f, 0xce, 0xe1, 0x40, 0x57, 0x1b, 0x15, 0x71, 0xf4, 0x15, 0x33, 0x78, 0x15, 0xc5,
+	0x91, 0xf1, 0xcd, 0xd2, 0x4b, 0x94, 0x34, 0x92, 0x76, 0xb2, 0x92, 0x57, 0x94, 0xfa, 0xbf, 0x09,
+	0xb4, 0x47, 0x7a, 0xfa, 0x9a, 0xf3, 0x80, 0x19, 0x1c, 0x6e, 0x34, 0xea, 0xc0, 0x71, 0xa8, 0x90,
+	0x19, 0xa9, 0x1c, 0x72, 0x46, 0x06, 0x27, 0x41, 0xfe, 0xa4, 0xf7, 0xe0, 0x88, 0xa3, 0x90, 0xb1,
+	0x73, 0x2b, 0xd5, 0xb3, 0x07, 0x7d, 0x08, 0x10, 0xce, 0x98, 0x10, 0x78, 0x35, 0x8e, 0xb8, 0x53,
+	0x4f, 0x4b, 0x27, 0x5b, 0xe5, 0x03, 0xa7, 0x03, 0xe8, 0xc4, 0x6c, 0x39, 0x4e, 0x50, 0x85, 0x28,
+	0xcc, 0x58, 0xa3, 0xe0, 0x4e, 0xe3, 0x8c, 0x0c, 0x1a, 0x41, 0x2b, 0x66, 0xcb, 0x8f, 0x99, 0x7c,
+	0x89, 0x62, 0xcf, 0xa9, 0x30, 0x5c, 0x38, 0x47, 0xb6, 0x33, 0xc0, 0x70, 0x41, 0x9f, 0x42, 0x8b,
+	0xcf, 0x15, 0x33, 0x91, 0x14, 0xe3, 0x99, 0x9c, 0x2b, 0xed, 0x34, 0x53, 0xdf, 0x9d, 0x5c, 0x7d,
+	0xbf, 0x11, 0xfb, 0x5d, 0x38, 0xb5, 0xe0, 0x02, 0xd4, 0x89, 0x14, 0x1a, 0xfb, 0x3f, 0x08, 0xd0,
+	0x91, 0x9e, 0x7e, 0x4a, 0x38, 0x33, 0x58, 0x85, 0xfd, 0x14, 0x8e, 0x13, 0x66, 0x66, 0x1b, 0xc4,
+	0x8c, 0xbe, 0xb9, 0x79, 0x96, 0xf0, 0xd5, 0x2b, 0xf3, 0x35, 0x0e, 0xf2, 0x9d, 0x43, 0xa7, 0xe0,
+	0x8b, 0x23, 0x31, 0x37, 0xa8, 0xb7, 0x7f, 0xa2, 0x9d, 0xeb, 0xa3, 0x4c, 0xee, 0x3f, 0x80, 0xde,
+	0x3e, 0x47, 0x81, 0xf9, 0x2e, 0xa5, 0x0c, 0x30, 0x96, 0x8b, 0x1b, 0x51, 0x6e, 0x63, 0xac, 0x46,
+	0x45, 0xcc, 0x5b, 0xb8, 0x9b, 0x56, 0x35, 0x9a, 0x1b, 0xa5, 0xdc, 0x87, 0xee, 0x5e, 0x9f, 0x3c,
+	0xe4, 0xe2, 0x7b, 0x1d, 0xea, 0x23, 0x3d, 0xa5, 0x5f, 0xe0, 0xf6, 0x3f, 0xfb, 0xfa, 0xc8, 0xb3,
+	0xd7, 0xda, 0xb3, 0xa6, 0xde, 0x3b, 0xff, 0xaf, 0x25, 0x4f, 0xa1, 0x08, 0x6d, 0x7b, 0x29, 0x9e,
+	0x1c, 0xfc, 0xda, 0x72, 0xf5, 0x9e, 0x57, 0x71, 0xed, 0xc6, 0xd8, 0x53, 0x39, 0x1c, 0x63, 0xb9,
+	0x4a, 0x62, 0x4a, 0x06, 0x43, 0x27, 0xd0, 0xb2, 0xa6, 0xf2, 0xb8, 0xe4, 0xfb, 0x5d, 0x53, 0xef,
+	0x59, 0x05, 0x53, 0x9e, 0xf1, 0x66, 0xf8, 0x73, 0xe5, 0x92, 0xeb, 0x95, 0x4b, 0xfe, 0xac, 0x5c,
+	0xf2, 0x6d, 0xed, 0xd6, 0xae, 0xd7, 0x6e, 0xed, 0xd7, 0xda, 0xad, 0x7d, 0xbe, 0x98, 0x46, 0x66,
+	0x36, 0x9f, 0x78, 0xa1, 0x8c, 0xfd, 0xcb, 0xb4, 0xe1, 0x8b, 0x21, 0x9b, 0x68, 0x7f, 0x7b, 0xa1,
+	0x16, 0xaf, 0xfc, 0xe5, 0xee, 0x99, 0xfa, 0x9a, 0xa0, 0x9e, 0x34, 0xd3, 0x53, 0xf5, 0xf2, 0x6f,
+	0x00, 0x00, 0x00, 0xff, 0xff, 0x8d, 0x29, 0xea, 0xcf, 0xc7, 0x04, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -569,9 +493,8 @@ const _ = grpc.SupportPackageIsVersion4
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
 type MsgClient interface {
-	AddQuota(ctx context.Context, in *MsgAddQuota, opts ...grpc.CallOption) (*MsgAddQuotaResponse, error)
 	AddRateLimit(ctx context.Context, in *MsgAddRateLimit, opts ...grpc.CallOption) (*MsgAddRateLimitResponse, error)
-	RemoveQuota(ctx context.Context, in *MsgRemoveQuota, opts ...grpc.CallOption) (*MsgRemoveQuotaResponse, error)
+	UpdateRateLimit(ctx context.Context, in *MsgUpdateRateLimit, opts ...grpc.CallOption) (*MsgUpdateRateLimitResponse, error)
 	RemoveRateLimit(ctx context.Context, in *MsgRemoveRateLimit, opts ...grpc.CallOption) (*MsgRemoveRateLimitResponse, error)
 	ResetRateLimit(ctx context.Context, in *MsgResetRateLimit, opts ...grpc.CallOption) (*MsgResetRateLimitResponse, error)
 }
@@ -584,15 +507,6 @@ func NewMsgClient(cc grpc1.ClientConn) MsgClient {
 	return &msgClient{cc}
 }
 
-func (c *msgClient) AddQuota(ctx context.Context, in *MsgAddQuota, opts ...grpc.CallOption) (*MsgAddQuotaResponse, error) {
-	out := new(MsgAddQuotaResponse)
-	err := c.cc.Invoke(ctx, "/stride.ratelimit.Msg/AddQuota", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 func (c *msgClient) AddRateLimit(ctx context.Context, in *MsgAddRateLimit, opts ...grpc.CallOption) (*MsgAddRateLimitResponse, error) {
 	out := new(MsgAddRateLimitResponse)
 	err := c.cc.Invoke(ctx, "/stride.ratelimit.Msg/AddRateLimit", in, out, opts...)
@@ -602,9 +516,9 @@ func (c *msgClient) AddRateLimit(ctx context.Context, in *MsgAddRateLimit, opts 
 	return out, nil
 }
 
-func (c *msgClient) RemoveQuota(ctx context.Context, in *MsgRemoveQuota, opts ...grpc.CallOption) (*MsgRemoveQuotaResponse, error) {
-	out := new(MsgRemoveQuotaResponse)
-	err := c.cc.Invoke(ctx, "/stride.ratelimit.Msg/RemoveQuota", in, out, opts...)
+func (c *msgClient) UpdateRateLimit(ctx context.Context, in *MsgUpdateRateLimit, opts ...grpc.CallOption) (*MsgUpdateRateLimitResponse, error) {
+	out := new(MsgUpdateRateLimitResponse)
+	err := c.cc.Invoke(ctx, "/stride.ratelimit.Msg/UpdateRateLimit", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -631,9 +545,8 @@ func (c *msgClient) ResetRateLimit(ctx context.Context, in *MsgResetRateLimit, o
 
 // MsgServer is the server API for Msg service.
 type MsgServer interface {
-	AddQuota(context.Context, *MsgAddQuota) (*MsgAddQuotaResponse, error)
 	AddRateLimit(context.Context, *MsgAddRateLimit) (*MsgAddRateLimitResponse, error)
-	RemoveQuota(context.Context, *MsgRemoveQuota) (*MsgRemoveQuotaResponse, error)
+	UpdateRateLimit(context.Context, *MsgUpdateRateLimit) (*MsgUpdateRateLimitResponse, error)
 	RemoveRateLimit(context.Context, *MsgRemoveRateLimit) (*MsgRemoveRateLimitResponse, error)
 	ResetRateLimit(context.Context, *MsgResetRateLimit) (*MsgResetRateLimitResponse, error)
 }
@@ -642,14 +555,11 @@ type MsgServer interface {
 type UnimplementedMsgServer struct {
 }
 
-func (*UnimplementedMsgServer) AddQuota(ctx context.Context, req *MsgAddQuota) (*MsgAddQuotaResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method AddQuota not implemented")
-}
 func (*UnimplementedMsgServer) AddRateLimit(ctx context.Context, req *MsgAddRateLimit) (*MsgAddRateLimitResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AddRateLimit not implemented")
 }
-func (*UnimplementedMsgServer) RemoveQuota(ctx context.Context, req *MsgRemoveQuota) (*MsgRemoveQuotaResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method RemoveQuota not implemented")
+func (*UnimplementedMsgServer) UpdateRateLimit(ctx context.Context, req *MsgUpdateRateLimit) (*MsgUpdateRateLimitResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateRateLimit not implemented")
 }
 func (*UnimplementedMsgServer) RemoveRateLimit(ctx context.Context, req *MsgRemoveRateLimit) (*MsgRemoveRateLimitResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RemoveRateLimit not implemented")
@@ -660,24 +570,6 @@ func (*UnimplementedMsgServer) ResetRateLimit(ctx context.Context, req *MsgReset
 
 func RegisterMsgServer(s grpc1.Server, srv MsgServer) {
 	s.RegisterService(&_Msg_serviceDesc, srv)
-}
-
-func _Msg_AddQuota_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(MsgAddQuota)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(MsgServer).AddQuota(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/stride.ratelimit.Msg/AddQuota",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(MsgServer).AddQuota(ctx, req.(*MsgAddQuota))
-	}
-	return interceptor(ctx, in, info, handler)
 }
 
 func _Msg_AddRateLimit_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -698,20 +590,20 @@ func _Msg_AddRateLimit_Handler(srv interface{}, ctx context.Context, dec func(in
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Msg_RemoveQuota_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(MsgRemoveQuota)
+func _Msg_UpdateRateLimit_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MsgUpdateRateLimit)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(MsgServer).RemoveQuota(ctx, in)
+		return srv.(MsgServer).UpdateRateLimit(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/stride.ratelimit.Msg/RemoveQuota",
+		FullMethod: "/stride.ratelimit.Msg/UpdateRateLimit",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(MsgServer).RemoveQuota(ctx, req.(*MsgRemoveQuota))
+		return srv.(MsgServer).UpdateRateLimit(ctx, req.(*MsgUpdateRateLimit))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -757,16 +649,12 @@ var _Msg_serviceDesc = grpc.ServiceDesc{
 	HandlerType: (*MsgServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "AddQuota",
-			Handler:    _Msg_AddQuota_Handler,
-		},
-		{
 			MethodName: "AddRateLimit",
 			Handler:    _Msg_AddRateLimit_Handler,
 		},
 		{
-			MethodName: "RemoveQuota",
-			Handler:    _Msg_RemoveQuota_Handler,
+			MethodName: "UpdateRateLimit",
+			Handler:    _Msg_UpdateRateLimit_Handler,
 		},
 		{
 			MethodName: "RemoveRateLimit",
@@ -801,17 +689,25 @@ func (m *MsgAddRateLimit) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	_ = i
 	var l int
 	_ = l
-	if len(m.QuotaName) > 0 {
-		i -= len(m.QuotaName)
-		copy(dAtA[i:], m.QuotaName)
-		i = encodeVarintTx(dAtA, i, uint64(len(m.QuotaName)))
+	if m.DurationHours != 0 {
+		i = encodeVarintTx(dAtA, i, uint64(m.DurationHours))
 		i--
-		dAtA[i] = 0x22
+		dAtA[i] = 0x30
 	}
-	if len(m.Channel) > 0 {
-		i -= len(m.Channel)
-		copy(dAtA[i:], m.Channel)
-		i = encodeVarintTx(dAtA, i, uint64(len(m.Channel)))
+	if m.MaxPercentRecv != 0 {
+		i = encodeVarintTx(dAtA, i, uint64(m.MaxPercentRecv))
+		i--
+		dAtA[i] = 0x28
+	}
+	if m.MaxPercentSend != 0 {
+		i = encodeVarintTx(dAtA, i, uint64(m.MaxPercentSend))
+		i--
+		dAtA[i] = 0x20
+	}
+	if len(m.ChannelId) > 0 {
+		i -= len(m.ChannelId)
+		copy(dAtA[i:], m.ChannelId)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.ChannelId)))
 		i--
 		dAtA[i] = 0x1a
 	}
@@ -855,7 +751,7 @@ func (m *MsgAddRateLimitResponse) MarshalToSizedBuffer(dAtA []byte) (int, error)
 	return len(dAtA) - i, nil
 }
 
-func (m *MsgAddQuota) Marshal() (dAtA []byte, err error) {
+func (m *MsgUpdateRateLimit) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -865,12 +761,12 @@ func (m *MsgAddQuota) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *MsgAddQuota) MarshalTo(dAtA []byte) (int, error) {
+func (m *MsgUpdateRateLimit) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *MsgAddQuota) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *MsgUpdateRateLimit) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
@@ -890,126 +786,6 @@ func (m *MsgAddQuota) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 		i--
 		dAtA[i] = 0x18
 	}
-	if len(m.Name) > 0 {
-		i -= len(m.Name)
-		copy(dAtA[i:], m.Name)
-		i = encodeVarintTx(dAtA, i, uint64(len(m.Name)))
-		i--
-		dAtA[i] = 0x12
-	}
-	if len(m.Creator) > 0 {
-		i -= len(m.Creator)
-		copy(dAtA[i:], m.Creator)
-		i = encodeVarintTx(dAtA, i, uint64(len(m.Creator)))
-		i--
-		dAtA[i] = 0xa
-	}
-	return len(dAtA) - i, nil
-}
-
-func (m *MsgAddQuotaResponse) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalToSizedBuffer(dAtA[:size])
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *MsgAddQuotaResponse) MarshalTo(dAtA []byte) (int, error) {
-	size := m.Size()
-	return m.MarshalToSizedBuffer(dAtA[:size])
-}
-
-func (m *MsgAddQuotaResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
-	i := len(dAtA)
-	_ = i
-	var l int
-	_ = l
-	return len(dAtA) - i, nil
-}
-
-func (m *MsgRemoveQuota) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalToSizedBuffer(dAtA[:size])
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *MsgRemoveQuota) MarshalTo(dAtA []byte) (int, error) {
-	size := m.Size()
-	return m.MarshalToSizedBuffer(dAtA[:size])
-}
-
-func (m *MsgRemoveQuota) MarshalToSizedBuffer(dAtA []byte) (int, error) {
-	i := len(dAtA)
-	_ = i
-	var l int
-	_ = l
-	if len(m.Name) > 0 {
-		i -= len(m.Name)
-		copy(dAtA[i:], m.Name)
-		i = encodeVarintTx(dAtA, i, uint64(len(m.Name)))
-		i--
-		dAtA[i] = 0x12
-	}
-	if len(m.Creator) > 0 {
-		i -= len(m.Creator)
-		copy(dAtA[i:], m.Creator)
-		i = encodeVarintTx(dAtA, i, uint64(len(m.Creator)))
-		i--
-		dAtA[i] = 0xa
-	}
-	return len(dAtA) - i, nil
-}
-
-func (m *MsgRemoveQuotaResponse) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalToSizedBuffer(dAtA[:size])
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *MsgRemoveQuotaResponse) MarshalTo(dAtA []byte) (int, error) {
-	size := m.Size()
-	return m.MarshalToSizedBuffer(dAtA[:size])
-}
-
-func (m *MsgRemoveQuotaResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
-	i := len(dAtA)
-	_ = i
-	var l int
-	_ = l
-	return len(dAtA) - i, nil
-}
-
-func (m *MsgResetRateLimit) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalToSizedBuffer(dAtA[:size])
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *MsgResetRateLimit) MarshalTo(dAtA []byte) (int, error) {
-	size := m.Size()
-	return m.MarshalToSizedBuffer(dAtA[:size])
-}
-
-func (m *MsgResetRateLimit) MarshalToSizedBuffer(dAtA []byte) (int, error) {
-	i := len(dAtA)
-	_ = i
-	var l int
-	_ = l
 	if len(m.PathId) > 0 {
 		i -= len(m.PathId)
 		copy(dAtA[i:], m.PathId)
@@ -1027,7 +803,7 @@ func (m *MsgResetRateLimit) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 
-func (m *MsgResetRateLimitResponse) Marshal() (dAtA []byte, err error) {
+func (m *MsgUpdateRateLimitResponse) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -1037,12 +813,12 @@ func (m *MsgResetRateLimitResponse) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *MsgResetRateLimitResponse) MarshalTo(dAtA []byte) (int, error) {
+func (m *MsgUpdateRateLimitResponse) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *MsgResetRateLimitResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *MsgUpdateRateLimitResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
@@ -1110,6 +886,66 @@ func (m *MsgRemoveRateLimitResponse) MarshalToSizedBuffer(dAtA []byte) (int, err
 	return len(dAtA) - i, nil
 }
 
+func (m *MsgResetRateLimit) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *MsgResetRateLimit) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *MsgResetRateLimit) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.PathId) > 0 {
+		i -= len(m.PathId)
+		copy(dAtA[i:], m.PathId)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.PathId)))
+		i--
+		dAtA[i] = 0x12
+	}
+	if len(m.Creator) > 0 {
+		i -= len(m.Creator)
+		copy(dAtA[i:], m.Creator)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.Creator)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *MsgResetRateLimitResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *MsgResetRateLimitResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *MsgResetRateLimitResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	return len(dAtA) - i, nil
+}
+
 func encodeVarintTx(dAtA []byte, offset int, v uint64) int {
 	offset -= sovTx(v)
 	base := offset
@@ -1135,13 +971,18 @@ func (m *MsgAddRateLimit) Size() (n int) {
 	if l > 0 {
 		n += 1 + l + sovTx(uint64(l))
 	}
-	l = len(m.Channel)
+	l = len(m.ChannelId)
 	if l > 0 {
 		n += 1 + l + sovTx(uint64(l))
 	}
-	l = len(m.QuotaName)
-	if l > 0 {
-		n += 1 + l + sovTx(uint64(l))
+	if m.MaxPercentSend != 0 {
+		n += 1 + sovTx(uint64(m.MaxPercentSend))
+	}
+	if m.MaxPercentRecv != 0 {
+		n += 1 + sovTx(uint64(m.MaxPercentRecv))
+	}
+	if m.DurationHours != 0 {
+		n += 1 + sovTx(uint64(m.DurationHours))
 	}
 	return n
 }
@@ -1155,7 +996,7 @@ func (m *MsgAddRateLimitResponse) Size() (n int) {
 	return n
 }
 
-func (m *MsgAddQuota) Size() (n int) {
+func (m *MsgUpdateRateLimit) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -1165,7 +1006,7 @@ func (m *MsgAddQuota) Size() (n int) {
 	if l > 0 {
 		n += 1 + l + sovTx(uint64(l))
 	}
-	l = len(m.Name)
+	l = len(m.PathId)
 	if l > 0 {
 		n += 1 + l + sovTx(uint64(l))
 	}
@@ -1181,59 +1022,7 @@ func (m *MsgAddQuota) Size() (n int) {
 	return n
 }
 
-func (m *MsgAddQuotaResponse) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	return n
-}
-
-func (m *MsgRemoveQuota) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	l = len(m.Creator)
-	if l > 0 {
-		n += 1 + l + sovTx(uint64(l))
-	}
-	l = len(m.Name)
-	if l > 0 {
-		n += 1 + l + sovTx(uint64(l))
-	}
-	return n
-}
-
-func (m *MsgRemoveQuotaResponse) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	return n
-}
-
-func (m *MsgResetRateLimit) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	l = len(m.Creator)
-	if l > 0 {
-		n += 1 + l + sovTx(uint64(l))
-	}
-	l = len(m.PathId)
-	if l > 0 {
-		n += 1 + l + sovTx(uint64(l))
-	}
-	return n
-}
-
-func (m *MsgResetRateLimitResponse) Size() (n int) {
+func (m *MsgUpdateRateLimitResponse) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -1260,6 +1049,32 @@ func (m *MsgRemoveRateLimit) Size() (n int) {
 }
 
 func (m *MsgRemoveRateLimitResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	return n
+}
+
+func (m *MsgResetRateLimit) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.Creator)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
+	l = len(m.PathId)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
+	return n
+}
+
+func (m *MsgResetRateLimitResponse) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -1369,7 +1184,7 @@ func (m *MsgAddRateLimit) Unmarshal(dAtA []byte) error {
 			iNdEx = postIndex
 		case 3:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Channel", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field ChannelId", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -1397,13 +1212,13 @@ func (m *MsgAddRateLimit) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Channel = string(dAtA[iNdEx:postIndex])
+			m.ChannelId = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		case 4:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field QuotaName", wireType)
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field MaxPercentSend", wireType)
 			}
-			var stringLen uint64
+			m.MaxPercentSend = 0
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return ErrIntOverflowTx
@@ -1413,24 +1228,49 @@ func (m *MsgAddRateLimit) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
+				m.MaxPercentSend |= uint64(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthTx
+		case 5:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field MaxPercentRecv", wireType)
 			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthTx
+			m.MaxPercentRecv = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.MaxPercentRecv |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
 			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
+		case 6:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field DurationHours", wireType)
 			}
-			m.QuotaName = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
+			m.DurationHours = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.DurationHours |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
 		default:
 			iNdEx = preIndex
 			skippy, err := skipTx(dAtA[iNdEx:])
@@ -1502,7 +1342,7 @@ func (m *MsgAddRateLimitResponse) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *MsgAddQuota) Unmarshal(dAtA []byte) error {
+func (m *MsgUpdateRateLimit) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -1525,10 +1365,10 @@ func (m *MsgAddQuota) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: MsgAddQuota: wiretype end group for non-group")
+			return fmt.Errorf("proto: MsgUpdateRateLimit: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: MsgAddQuota: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: MsgUpdateRateLimit: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
@@ -1565,7 +1405,7 @@ func (m *MsgAddQuota) Unmarshal(dAtA []byte) error {
 			iNdEx = postIndex
 		case 2:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Name", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field PathId", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -1593,7 +1433,7 @@ func (m *MsgAddQuota) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Name = string(dAtA[iNdEx:postIndex])
+			m.PathId = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		case 3:
 			if wireType != 0 {
@@ -1673,7 +1513,7 @@ func (m *MsgAddQuota) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *MsgAddQuotaResponse) Unmarshal(dAtA []byte) error {
+func (m *MsgUpdateRateLimitResponse) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -1696,338 +1536,10 @@ func (m *MsgAddQuotaResponse) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: MsgAddQuotaResponse: wiretype end group for non-group")
+			return fmt.Errorf("proto: MsgUpdateRateLimitResponse: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: MsgAddQuotaResponse: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		default:
-			iNdEx = preIndex
-			skippy, err := skipTx(dAtA[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if (skippy < 0) || (iNdEx+skippy) < 0 {
-				return ErrInvalidLengthTx
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
-func (m *MsgRemoveQuota) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowTx
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= uint64(b&0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: MsgRemoveQuota: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: MsgRemoveQuota: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		case 1:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Creator", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowTx
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthTx
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthTx
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Creator = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		case 2:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Name", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowTx
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthTx
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthTx
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Name = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		default:
-			iNdEx = preIndex
-			skippy, err := skipTx(dAtA[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if (skippy < 0) || (iNdEx+skippy) < 0 {
-				return ErrInvalidLengthTx
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
-func (m *MsgRemoveQuotaResponse) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowTx
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= uint64(b&0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: MsgRemoveQuotaResponse: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: MsgRemoveQuotaResponse: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		default:
-			iNdEx = preIndex
-			skippy, err := skipTx(dAtA[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if (skippy < 0) || (iNdEx+skippy) < 0 {
-				return ErrInvalidLengthTx
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
-func (m *MsgResetRateLimit) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowTx
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= uint64(b&0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: MsgResetRateLimit: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: MsgResetRateLimit: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		case 1:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Creator", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowTx
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthTx
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthTx
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Creator = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		case 2:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field PathId", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowTx
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthTx
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthTx
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.PathId = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		default:
-			iNdEx = preIndex
-			skippy, err := skipTx(dAtA[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if (skippy < 0) || (iNdEx+skippy) < 0 {
-				return ErrInvalidLengthTx
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
-func (m *MsgResetRateLimitResponse) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowTx
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= uint64(b&0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: MsgResetRateLimitResponse: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: MsgResetRateLimitResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: MsgUpdateRateLimitResponse: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		default:
@@ -2192,6 +1704,170 @@ func (m *MsgRemoveRateLimitResponse) Unmarshal(dAtA []byte) error {
 		}
 		if fieldNum <= 0 {
 			return fmt.Errorf("proto: MsgRemoveRateLimitResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		default:
+			iNdEx = preIndex
+			skippy, err := skipTx(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthTx
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *MsgResetRateLimit) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowTx
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: MsgResetRateLimit: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: MsgResetRateLimit: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Creator", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Creator = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field PathId", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.PathId = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipTx(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthTx
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *MsgResetRateLimitResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowTx
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: MsgResetRateLimitResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: MsgResetRateLimitResponse: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		default:
