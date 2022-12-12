@@ -1,125 +1,25 @@
 package types
 
 import (
+	"strings"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
-
-// Msg type for MsgAddQuota
-const TypeMsgAddQuota = "add_quota"
-
-var _ sdk.Msg = &MsgAddQuota{}
-
-func NewMsgAddQuota(creator string, name string, maxPercentSend uint64, maxPercentRecv uint64, durationMinutes uint64) *MsgAddQuota {
-	return &MsgAddQuota{
-		Creator:         creator,
-		Name:            name,
-		MaxPercentSend:  maxPercentSend,
-		MaxPercentRecv:  maxPercentRecv,
-		DurationMinutes: durationMinutes,
-	}
-}
-
-func (msg *MsgAddQuota) Route() string {
-	return RouterKey
-}
-
-func (msg *MsgAddQuota) Type() string {
-	return TypeMsgAddQuota
-}
-
-func (msg *MsgAddQuota) GetSigners() []sdk.AccAddress {
-	creator, err := sdk.AccAddressFromBech32(msg.Creator)
-	if err != nil {
-		panic(err)
-	}
-	return []sdk.AccAddress{creator}
-}
-
-func (msg *MsgAddQuota) GetSignBytes() []byte {
-	bz := ModuleCdc.MustMarshalJSON(msg)
-	return sdk.MustSortJSON(bz)
-}
-
-func (msg *MsgAddQuota) ValidateBasic() error {
-	_, err := sdk.AccAddressFromBech32(msg.Creator)
-	if err != nil {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid creator address (%s)", err)
-	}
-
-	if msg.Name == "" {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "quota name not set")
-	}
-
-	if msg.MaxPercentRecv > 100 || msg.MaxPercentSend > 100 {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "percent must be less than or equal to 100")
-	}
-
-	if msg.DurationMinutes == 0 {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "duration can not be zero")
-	}
-
-	return nil
-}
-
-// Msg type for MsgRemoveQuota
-const TypeMsgRemoveQuota = "remove_quota"
-
-var _ sdk.Msg = &MsgRemoveQuota{}
-
-func NewMsgRemoveQuota(creator string, name string) *MsgRemoveQuota {
-	return &MsgRemoveQuota{
-		Creator: creator,
-		Name:    name,
-	}
-}
-
-func (msg *MsgRemoveQuota) Route() string {
-	return RouterKey
-}
-
-func (msg *MsgRemoveQuota) Type() string {
-	return TypeMsgRemoveQuota
-}
-
-func (msg *MsgRemoveQuota) GetSigners() []sdk.AccAddress {
-	creator, err := sdk.AccAddressFromBech32(msg.Creator)
-	if err != nil {
-		panic(err)
-	}
-	return []sdk.AccAddress{creator}
-}
-
-func (msg *MsgRemoveQuota) GetSignBytes() []byte {
-	bz := ModuleCdc.MustMarshalJSON(msg)
-	return sdk.MustSortJSON(bz)
-}
-
-func (msg *MsgRemoveQuota) ValidateBasic() error {
-	_, err := sdk.AccAddressFromBech32(msg.Creator)
-	if err != nil {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid creator address (%s)", err)
-	}
-
-	if msg.Name == "" {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "quota name not set")
-	}
-	return nil
-}
 
 // Msg type for MsgAddRateLimit
 const TypeMsgAddRateLimit = "add_rate_limit"
 
 var _ sdk.Msg = &MsgAddRateLimit{}
 
-func NewMsgAddRateLimit(creator string, denom string, channelId string, maxPercentSend uint64, maxPercentRecv uint64, durationHours uint64) *MsgAddRateLimit {
+func NewMsgAddRateLimit(creator string, denom string, channelId string, maxPercentSend uint64, maxPercentRecv uint64, durationMinutes uint64) *MsgAddRateLimit {
 	return &MsgAddRateLimit{
-		Creator:        creator,
-		Denom:          denom,
-		ChannelId:      channelId,
-		MaxPercentSend: maxPercentSend,
-		MaxPercentRecv: maxPercentRecv,
-		DurationHours:  durationHours,
+		Creator:         creator,
+		Denom:           denom,
+		ChannelId:       channelId,
+		MaxPercentSend:  maxPercentSend,
+		MaxPercentRecv:  maxPercentRecv,
+		DurationMinutes: durationMinutes,
 	}
 }
 
@@ -145,7 +45,82 @@ func (msg *MsgAddRateLimit) GetSignBytes() []byte {
 }
 
 func (msg *MsgAddRateLimit) ValidateBasic() error {
-	// TODO:
+	_, err := sdk.AccAddressFromBech32(msg.Creator)
+	if err != nil {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid creator address (%s)", err)
+	}
+
+	if msg.Denom == "" {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "invalid denom")
+	}
+
+	if !strings.HasPrefix(msg.ChannelId, "channel-") {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "invalid channel-id")
+	}
+
+	if msg.MaxPercentRecv > 100 || msg.MaxPercentSend > 100 {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "percent must be between 0 and 100 (inclusively)")
+	}
+
+	if msg.DurationMinutes == 0 {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "duration can not be zero")
+	}
+	return nil
+}
+
+// Msg type for MsgUpdateRateLimit
+const TypeMsgUpdateRateLimit = "update_rate_limit"
+
+var _ sdk.Msg = &MsgAddRateLimit{}
+
+func NewMsgUpdateRateLimit(creator string, pathId string, maxPercentSend uint64, maxPercentRecv uint64, durationMinutes uint64) *MsgUpdateRateLimit {
+	return &MsgUpdateRateLimit{
+		Creator:         creator,
+		PathId:          pathId,
+		MaxPercentSend:  maxPercentSend,
+		MaxPercentRecv:  maxPercentRecv,
+		DurationMinutes: durationMinutes,
+	}
+}
+
+func (msg *MsgUpdateRateLimit) Route() string {
+	return RouterKey
+}
+
+func (msg *MsgUpdateRateLimit) Type() string {
+	return TypeMsgUpdateRateLimit
+}
+
+func (msg *MsgUpdateRateLimit) GetSigners() []sdk.AccAddress {
+	creator, err := sdk.AccAddressFromBech32(msg.Creator)
+	if err != nil {
+		panic(err)
+	}
+	return []sdk.AccAddress{creator}
+}
+
+func (msg *MsgUpdateRateLimit) GetSignBytes() []byte {
+	bz := ModuleCdc.MustMarshalJSON(msg)
+	return sdk.MustSortJSON(bz)
+}
+
+func (msg *MsgUpdateRateLimit) ValidateBasic() error {
+	_, err := sdk.AccAddressFromBech32(msg.Creator)
+	if err != nil {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid creator address (%s)", err)
+	}
+
+	if msg.PathId == "" {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "invalid pathId")
+	}
+
+	if msg.MaxPercentRecv > 100 || msg.MaxPercentSend > 100 {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "percent must be between 0 and 100 (inclusively)")
+	}
+
+	if msg.DurationMinutes == 0 {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "duration can not be zero")
+	}
 	return nil
 }
 
@@ -183,7 +158,14 @@ func (msg *MsgRemoveRateLimit) GetSignBytes() []byte {
 }
 
 func (msg *MsgRemoveRateLimit) ValidateBasic() error {
-	// TODO:
+	_, err := sdk.AccAddressFromBech32(msg.Creator)
+	if err != nil {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid creator address (%s)", err)
+	}
+
+	if msg.PathId == "" {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "invalid pathId")
+	}
 	return nil
 }
 
@@ -221,6 +203,13 @@ func (msg *MsgResetRateLimit) GetSignBytes() []byte {
 }
 
 func (msg *MsgResetRateLimit) ValidateBasic() error {
-	// TODO:
+	_, err := sdk.AccAddressFromBech32(msg.Creator)
+	if err != nil {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid creator address (%s)", err)
+	}
+
+	if msg.PathId == "" {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "invalid pathId")
+	}
 	return nil
 }

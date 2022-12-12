@@ -17,7 +17,7 @@ message MsgAddRateLimit {
   string channel_id = 3;
   uint64 max_percent_send = 4;
   uint64 max_percent_recv = 5;
-  uint64 duration_hours = 6;
+  uint64 duration_minutes = 6;
 }
 message MsgAddRateLimitResponse {}
 

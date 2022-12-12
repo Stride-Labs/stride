@@ -16,13 +16,6 @@ service Query {
     option (google.api.http).get = "/ratelimit/path/{id}";
   }
 
-  rpc Quotas(QueryQuotasRequest) returns (QueryQuotasResponse) {
-    option (google.api.http).get = "/ratelimit/quotas";
-  }
-  rpc Quota(QueryQuotaRequest) returns (QueryQuotaResponse) {
-    option (google.api.http).get = "/ratelimit/quota/{name}";
-  }
-
   rpc RateLimits(QueryRateLimitsRequest) returns (QueryRateLimitsResponse) {
     option (google.api.http).get = "/ratelimit/ratelimits";
   }
@@ -38,14 +31,6 @@ message QueryPathsResponse {
 
 message QueryPathRequest { string id = 1; }
 message QueryPathResponse { Path path = 1; }
-
-message QueryQuotasRequest {}
-message QueryQuotasResponse {
-  repeated Quota quotas = 1 [ (gogoproto.nullable) = false ];
-}
-
-message QueryQuotaRequest { string name = 1; }
-message QueryQuotaResponse { Quota quota = 1; }
 
 message QueryRateLimitsRequest {}
 message QueryRateLimitsResponse {
