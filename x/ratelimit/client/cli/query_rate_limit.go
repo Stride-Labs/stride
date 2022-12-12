@@ -11,27 +11,31 @@ import (
 	"github.com/Stride-Labs/stride/v4/x/ratelimit/types"
 )
 
-// GetCmdQueryQuota implements a command to return all available quotas.
-func GetCmdQueryQuotas() *cobra.Command {
+// GetCmdQueryRateLimit implements a command to query a specific rate limit
+func GetCmdQueryRateLimit() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "quotas",
-		Short: "Query the quota by name",
-		Args:  cobra.NoArgs,
+		Use:   "rate-limit [path-id]",
+		Short: "Query the rate limit by path id",
+		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
+			pathId := args[0]
+
 			clientCtx, err := client.GetClientQueryContext(cmd)
 			if err != nil {
 				return err
 			}
 			queryClient := types.NewQueryClient(clientCtx)
 
-			quotasReq := &types.QueryQuotasRequest{}
-			res, err := queryClient.Quotas(context.Background(), quotasReq)
+			req := &types.QueryRateLimitRequest{
+				PathId: pathId,
+			}
+			res, err := queryClient.RateLimit(context.Background(), req)
 
 			if err != nil {
 				return err
 			}
 
-			return clientCtx.PrintObjectLegacy(res.Quotas)
+			return clientCtx.PrintProto(res.RateLimit)
 		},
 	}
 
