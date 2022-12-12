@@ -46,7 +46,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	s.Require().NoError(err)
 }
 
-func (s *IntegrationTestSuite) TestCmdTxSetQuota() {
+func (s *IntegrationTestSuite) TestCmdTxAddQuota() {
 	val := s.network.Validators[0]
 
 	quota := types.Quota{
@@ -62,7 +62,7 @@ func (s *IntegrationTestSuite) TestCmdTxSetQuota() {
 		expQuota types.Quota
 	}{
 		{
-			"set-quota tx",
+			"add-quota tx",
 			[]string{
 				"quota", // name
 				"10",    // maxPercentSend
@@ -83,7 +83,7 @@ func (s *IntegrationTestSuite) TestCmdTxSetQuota() {
 		tc := tc
 
 		s.Run(tc.name, func() {
-			cmd := cli.CmdSetQuota()
+			cmd := cli.CmdAddQuota()
 			clientCtx := val.ClientCtx
 
 			_, err := clitestutil.ExecTestCLICmd(clientCtx, cmd, tc.args)

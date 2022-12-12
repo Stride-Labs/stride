@@ -11,10 +11,10 @@ import (
 	"github.com/Stride-Labs/stride/v4/x/ratelimit/types"
 )
 
-func CmdSetQuota() *cobra.Command {
+func CmdAddQuota() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "set-quota [name] [max-percent-send] [max-percent-recv] [duration-minutes]",
-		Short: "Broadcast message set-quota",
+		Use:   "add-quota [name] [max-percent-send] [max-percent-recv] [duration-minutes]",
+		Short: "Broadcast message add-quota",
 		Args:  cobra.ExactArgs(4),
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
 			argName := args[0]
@@ -37,7 +37,7 @@ func CmdSetQuota() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			msg := types.NewMsgSetQuota(
+			msg := types.NewMsgAddQuota(
 				clientCtx.GetFromAddress().String(),
 				argName,
 				uint64(argMaxPercentSend),
