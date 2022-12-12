@@ -168,6 +168,7 @@ func (im IBCModule) OnAcknowledgementPacket(
 	acknowledgement []byte,
 	relayer sdk.AccAddress,
 ) error {
+	fmt.Println("di vao day")
 	im.keeper.Logger(ctx).Info(fmt.Sprintf("[IBC-TRANSFER] OnAcknowledgementPacket  %v", packet))
 	// doCustomLogic(packet, ack)
 	// ICS-20 ack
@@ -210,6 +211,13 @@ func (im IBCModule) refundPacketToken(ctx sdk.Context, packet channeltypes.Packe
 	callbackDataKey := icacallbacktypes.PacketID(packet.GetSourcePort(), packet.GetSourceChannel(), packet.Sequence)
 	callbackData, _ := im.keeper.ICACallbacksKeeper.GetCallbackDataFromPacket(ctx, packet, callbackDataKey)
 	transferCallback, _ := im.keeper.UnmarshalTransferCallbackArgs(ctx, callbackData.CallbackArgs)
+	// update deposit record
+	depositRecord, found := im.keeper.GetDepositRecord(ctx, transferCallback.DepositRecordId)
+	if !found {
+		return sdkerrors.Wrapf(types.ErrUnknownDepositRecord, "deposit record not found %d", transferCallback.DepositRecordId)
+	}
+	depositRecord.Status = types.DepositRecord_TRANSFER_QUEUE
+	im.keeper.SetDepositRecord(ctx, depositRecord)
 
 	// parse the denomination from the full denom path
 	trace := ibctransfertypes.ParseDenomTrace(data.Denom)
@@ -237,7 +245,6 @@ func (im IBCModule) refundPacketToken(ctx sdk.Context, packet channeltypes.Packe
 			// escrow address by allowing more tokens to be sent back then were escrowed.
 			return sdkerrors.Wrap(err, "unable to unescrow tokens, this may be caused by a malicious counterparty module or a bug: please open an issue on counterparty module")
 		}
-
 		return nil
 	}
 
@@ -251,15 +258,6 @@ func (im IBCModule) refundPacketToken(ctx sdk.Context, packet channeltypes.Packe
 	if err := im.keeper.BankKeeper.SendCoinsFromModuleToAccount(ctx, ibctransfertypes.ModuleName, sender, sdk.NewCoins(token)); err != nil {
 		panic(fmt.Sprintf("unable to send coins from module to account despite previously minting coins to module account: %v", err))
 	}
-
-	// update deposit record
-	depositRecord, found := im.keeper.GetDepositRecord(ctx, transferCallback.DepositRecordId)
-	if !found {
-		return sdkerrors.Wrapf(types.ErrUnknownDepositRecord, "deposit record not found %d", transferCallback.DepositRecordId)
-	}
-	depositRecord.Status = types.DepositRecord_TRANSFER_QUEUE
-	im.keeper.SetDepositRecord(ctx, depositRecord)
-
 	return nil
 }
 

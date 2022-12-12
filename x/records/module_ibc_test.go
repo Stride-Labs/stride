@@ -15,26 +15,15 @@ import (
 
 	"github.com/Stride-Labs/stride/v4/app/apptesting"
 	"github.com/Stride-Labs/stride/v4/x/records"
-	"github.com/Stride-Labs/stride/v4/x/records/types"
 	recordtypes "github.com/Stride-Labs/stride/v4/x/records/types"
 	clienttypes "github.com/cosmos/ibc-go/v3/modules/core/02-client/types"
 	transfertypes "github.com/cosmos/ibc-go/v3/modules/apps/transfer/types"
 	ibctesting "github.com/cosmos/ibc-go/v3/testing"
 )
 
-const chainId = "GAIA"
-
-type TransferCallbackState struct {
-	callbackArgs types.TransferCallback
-}
-
-type TransferCallbackArgs struct {
+type TransferCallbackTestCase struct {
 	packet channeltypes.Packet
 	ack    []byte
-}
-
-type TransferCallbackTestCase struct {
-	validArgs    TransferCallbackArgs
 }
 
 type ModuleTestSuite struct {
@@ -50,15 +39,14 @@ func TestModuleTestSuite(t *testing.T) {
 	suite.Run(t, new(ModuleTestSuite))
 }
 
-func (s *ModuleTestSuite) SetupTransferCallback() TransferCallbackTestCase {
+func (s *ModuleTestSuite) SetupTransferMsg() (transfertypes.MsgTransfer, recordtypes.DepositRecord) {
 	delegationAccountOwner := fmt.Sprintf("%s.%s", "GAIA", "DELEGATION")
 	s.CreateICAChannel(delegationAccountOwner)
-  
-	balanceToStake := sdk.NewInt(1_000_000)
+	balanceToStake := sdk.NewInt(1_000_000)  
 	depositRecord := recordtypes.DepositRecord{
 		Id:                 1,
 		DepositEpochNumber: 1,
-		HostZoneId:         chainId,
+		HostZoneId:         "GAIA",
 		Amount:             balanceToStake.Int64(),
 		Status:             recordtypes.DepositRecord_TRANSFER_QUEUE,
 	}
@@ -70,8 +58,13 @@ func (s *ModuleTestSuite) SetupTransferCallback() TransferCallbackTestCase {
 	accountFrom := s.StrideChain.SenderAccount.GetAddress().String()
 	timeoutHeight := clienttypes.NewHeight(0, 100)
 
-	msg := transfertypes.NewMsgTransfer(port, channel, coins, accountFrom, "INVALID", timeoutHeight, 0)
-	err := s.App.RecordsKeeper.Transfer(s.Ctx, msg, depositRecord)
+	msg := transfertypes.NewMsgTransfer(port, channel, coins, accountFrom, s.IcaAddresses[delegationAccountOwner], timeoutHeight, 0)
+
+	return *msg, depositRecord
+}
+
+func (s *ModuleTestSuite) GetPacketAndAck(msg transfertypes.MsgTransfer, depositRecord recordtypes.DepositRecord) TransferCallbackTestCase {
+	err := s.App.RecordsKeeper.Transfer(s.Ctx, &msg, depositRecord)
 	s.Require().NoError(err)
 
 	// Move forward one block
@@ -85,9 +78,8 @@ func (s *ModuleTestSuite) SetupTransferCallback() TransferCallbackTestCase {
 	err = s.TransferPath.EndpointB.UpdateClient()
 	s.Require().NoError(err)
 
-
 	packetData := transfertypes.NewFungibleTokenPacketData(
-		coins.Denom, coins.Amount.String(), msg.Sender, msg.Receiver,
+		msg.Token.Denom, msg.Token.Amount.String(), msg.Sender, msg.Receiver,
 	)
 
 	packet := channeltypes.NewPacket(
@@ -106,19 +98,28 @@ func (s *ModuleTestSuite) SetupTransferCallback() TransferCallbackTestCase {
 	ack, err := ibctesting.ParseAckFromEvents(res.GetEvents())
 	s.Require().NoError(err)
 
-	err = s.TransferPath.EndpointA.AcknowledgePacket(packet, ack)
-	s.Require().NoError(err)
-
 	return TransferCallbackTestCase{
-		validArgs: TransferCallbackArgs{
-			packet: packet,
-			ack:    ack,
-		},
+		packet: packet,
+		ack:    ack,
 	}
 }
 
 func (s *ModuleTestSuite) TestOnAcknowledgementPacket_Successful() {
-	s.SetupTransferCallback()
-	// err := s.IBCModule.OnAcknowledgementPacket(s.Ctx, tc.validArgs.packet, tc.validArgs.ack, nil)
-	// s.Require().NoError(err)
+	msg, depositRecord := s.SetupTransferMsg()
+	tc := s.GetPacketAndAck(msg, depositRecord)
+	err := s.TransferPath.EndpointA.AcknowledgePacket(tc.packet, tc.ack)
+	s.Require().NoError(err)
+}
+
+func (s *ModuleTestSuite) TestOnAcknowledgementPacket_AckErr() {
+	msg, depositRecord := s.SetupTransferMsg()
+	msg.Receiver = "INVALID"
+	tc := s.GetPacketAndAck(msg, depositRecord)
+	err := s.TransferPath.EndpointA.AcknowledgePacket(tc.packet, tc.ack)
+	s.Require().NoError(err) 
+
+	// check record after refund
+	record, found := s.App.RecordsKeeper.GetDepositRecord(s.Ctx, 1)
+	s.Require().True(found)
+	s.Require().Equal(record.Status, recordtypes.DepositRecord_TRANSFER_QUEUE)
 }
