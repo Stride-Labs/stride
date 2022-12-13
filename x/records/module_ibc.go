@@ -220,7 +220,7 @@ func (im IBCModule) OnTimeoutPacket(
 	}
 	err := im.revertRecordStatus(ctx, packet)
 	if err != nil {
-		return err
+		return im.refundPacketToken(ctx, packet, data)
 	}
 	return im.app.OnTimeoutPacket(ctx, packet, relayer)
 }
@@ -301,9 +301,7 @@ func (im IBCModule) revertRecordStatus(ctx sdk.Context, packet channeltypes.Pack
 	transferCallback, _ := im.keeper.UnmarshalTransferCallbackArgs(ctx, callbackData.CallbackArgs)
 	// update deposit record
 	depositRecord, found := im.keeper.GetDepositRecord(ctx, transferCallback.DepositRecordId)
-	fmt.Println(depositRecord)
 	if !found {
-		fmt.Println("khong thay deposit record")
 		return sdkerrors.Wrapf(types.ErrUnknownDepositRecord, "deposit record not found %d", transferCallback.DepositRecordId)
 	}
 	depositRecord.Status = types.DepositRecord_TRANSFER_QUEUE
@@ -314,7 +312,6 @@ func (im IBCModule) revertRecordStatus(ctx sdk.Context, packet channeltypes.Pack
 func (im IBCModule) revertSend(ctx sdk.Context, packet channeltypes.Packet, data ibctransfertypes.FungibleTokenPacketData) error {
 	err := im.revertRecordStatus(ctx, packet)
 	if err != nil {
-		fmt.Println("di vao day")
 		ctx.Logger().Info(fmt.Sprintf(err.Error()))
 		return im.refundPacketToken(ctx, packet, data)
 	}
