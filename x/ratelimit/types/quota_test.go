@@ -15,6 +15,10 @@ func TestCheckExceedsQuota(t *testing.T) {
 		DurationHours:  uint64(1),
 	}
 
+	totalValue := uint64(100)
+	amountUnderThreshold := uint64(5)
+	amountOverThreshold := uint64(15)
+
 	tests := []struct {
 		name       string
 		direction  types.PacketDirection
@@ -25,29 +29,29 @@ func TestCheckExceedsQuota(t *testing.T) {
 		{
 			name:       "inflow exceed",
 			direction:  types.PACKET_RECV,
-			amount:     200*quota.MaxPercentRecv/100 + 1,
-			totalValue: 200,
+			amount:     amountOverThreshold,
+			totalValue: totalValue,
 			exp:        true,
 		},
 		{
 			name:       "inflow not exceed",
 			direction:  types.PACKET_RECV,
-			amount:     200 * quota.MaxPercentRecv / 100,
-			totalValue: 200,
+			amount:     amountUnderThreshold,
+			totalValue: totalValue,
 			exp:        false,
 		},
 		{
 			name:       "outflow exceed",
 			direction:  types.PACKET_SEND,
-			amount:     200*quota.MaxPercentSend/100 + 1,
-			totalValue: 200,
+			amount:     amountOverThreshold,
+			totalValue: totalValue,
 			exp:        true,
 		},
 		{
 			name:       "outflow not exceed",
 			direction:  types.PACKET_SEND,
-			amount:     200 * quota.MaxPercentSend / 100,
-			totalValue: 200,
+			amount:     amountUnderThreshold,
+			totalValue: totalValue,
 			exp:        false,
 		},
 	}
