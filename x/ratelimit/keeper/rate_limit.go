@@ -47,7 +47,7 @@ func (k Keeper) GetRateLimit(ctx sdk.Context, denom string, channelId string) (r
 	rateLimitKey := GetRateLimitItemKey(denom, channelId)
 	rateLimitValue := store.Get(rateLimitKey)
 
-	if rateLimitValue == nil || len(rateLimitValue) == 0 {
+	if len(rateLimitValue) == 0 {
 		return rateLimit, false
 	}
 

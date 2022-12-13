@@ -1,6 +1,8 @@
 package keeper
 
 import (
+	"fmt"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	epochstypes "github.com/Stride-Labs/stride/v4/x/epochs/types"
@@ -14,7 +16,10 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochInfo epochstypes.EpochInf
 
 		for _, rateLimit := range k.GetAllRateLimits(ctx) {
 			if rateLimit.Quota.DurationHours%epochHour == 0 {
-				k.ResetRateLimit(ctx, rateLimit)
+				err := k.ResetRateLimit(ctx, rateLimit)
+				if err != nil {
+					k.Logger(ctx).Error(fmt.Sprintf("Unable to reset quota for Denom: %s, ChannelId: %s", rateLimit.Path.Denom, rateLimit.Path.ChannelId))
+				}
 			}
 		}
 	}
