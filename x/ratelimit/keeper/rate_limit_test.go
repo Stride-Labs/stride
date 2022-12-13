@@ -9,8 +9,9 @@ import (
 func (s *KeeperTestSuite) createRateLimits() []types.RateLimit {
 	rateLimits := []types.RateLimit{}
 	for i := 1; i <= 5; i++ {
+		suffix := strconv.Itoa(i)
 		rateLimit := types.RateLimit{
-			Path: &types.Path{Id: strconv.Itoa(i)},
+			Path: &types.Path{Denom: "denom-" + suffix, ChannelId: "channel-" + suffix},
 		}
 
 		rateLimits = append(rateLimits, rateLimit)
@@ -21,19 +22,25 @@ func (s *KeeperTestSuite) createRateLimits() []types.RateLimit {
 
 func (s *KeeperTestSuite) TestGetRateLimit() {
 	rateLimits := s.createRateLimits()
-	expectedRateLimit := rateLimits[0]
 
-	actualRateLimit, found := s.App.RatelimitKeeper.GetRateLimit(s.Ctx, expectedRateLimit.Path.Id)
+	expectedRateLimit := rateLimits[0]
+	denom := expectedRateLimit.Path.Denom
+	channelId := expectedRateLimit.Path.ChannelId
+
+	actualRateLimit, found := s.App.RatelimitKeeper.GetRateLimit(s.Ctx, denom, channelId)
 	s.Require().True(found, "element should have been found, but was not")
 	s.Require().Equal(expectedRateLimit, actualRateLimit)
 }
 
 func (s *KeeperTestSuite) TestRemoveRateLimit() {
 	rateLimits := s.createRateLimits()
-	idToRemove := rateLimits[0].Path.Id
 
-	s.App.RatelimitKeeper.RemoveRateLimit(s.Ctx, idToRemove)
-	_, found := s.App.RatelimitKeeper.GetRateLimit(s.Ctx, idToRemove)
+	rateLimitToRemove := rateLimits[0]
+	denomToRemove := rateLimitToRemove.Path.Denom
+	channelIdToRemove := rateLimitToRemove.Path.ChannelId
+
+	s.App.RatelimitKeeper.RemoveRateLimit(s.Ctx, denomToRemove, channelIdToRemove)
+	_, found := s.App.RatelimitKeeper.GetRateLimit(s.Ctx, denomToRemove, channelIdToRemove)
 	s.Require().False(found, "the removed element should not have been found, but it was")
 }
 

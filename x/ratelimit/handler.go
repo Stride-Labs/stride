@@ -17,14 +17,11 @@ func NewHandler(k keeper.Keeper) sdk.Handler {
 		ctx = ctx.WithEventManager(sdk.NewEventManager())
 
 		switch msg := msg.(type) {
-		case *types.MsgAddQuota:
-			res, err := msgServer.AddQuota(sdk.WrapSDKContext(ctx), msg)
-			return sdk.WrapServiceResult(ctx, res, err)
 		case *types.MsgAddRateLimit:
 			res, err := msgServer.AddRateLimit(sdk.WrapSDKContext(ctx), msg)
 			return sdk.WrapServiceResult(ctx, res, err)
-		case *types.MsgRemoveQuota:
-			res, err := msgServer.RemoveQuota(sdk.WrapSDKContext(ctx), msg)
+		case *types.MsgUpdateRateLimit:
+			res, err := msgServer.UpdateRateLimit(sdk.WrapSDKContext(ctx), msg)
 			return sdk.WrapServiceResult(ctx, res, err)
 		case *types.MsgRemoveRateLimit:
 			res, err := msgServer.RemoveRateLimit(sdk.WrapSDKContext(ctx), msg)
