@@ -1,7 +1,7 @@
 package types
 
 import (
-	"strings"
+	"regexp"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -48,11 +48,15 @@ func (msg *MsgResetRateLimit) ValidateBasic() error {
 	}
 
 	if msg.Denom == "" {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "invalid denom")
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "invalid denom (%s)", msg.Denom)
 	}
 
-	if !strings.HasPrefix(msg.ChannelId, "channel-") {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "invalid channel-id")
+	matched, err := regexp.MatchString(`^channel-\d+$`, msg.ChannelId)
+	if err != nil {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "unable to verify channel-id (%s)", msg.ChannelId)
+	}
+	if !matched {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "invalid channel-id (%s), must be of the format 'channel-{N}'", msg.ChannelId)
 	}
 
 	return nil

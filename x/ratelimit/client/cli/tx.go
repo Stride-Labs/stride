@@ -34,7 +34,7 @@ func CmdAddRateLimit() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "add-rate-limit [denom] [channel-id] [max-percent-send] [max-percent-recv] [duration-minutes]",
 		Short: "Broadcast message add-rate-limit",
-		Args:  cobra.ExactArgs(4),
+		Args:  cobra.ExactArgs(5),
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
 			denom := args[0]
 			channelId := args[1]
@@ -85,7 +85,7 @@ func CmdUpdateRateLimit() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "update-rate-limit [denom] [channel-id] [max-percent-send] [max-percet-recv] [duration-minutes]",
 		Short: "Broadcast message update-rate-limit",
-		Args:  cobra.ExactArgs(1),
+		Args:  cobra.ExactArgs(5),
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
 			denom := args[0]
 			channelId := args[1]
@@ -136,7 +136,7 @@ func CmdRemoveRateLimit() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "remove-rate-limit [denom] [channel-id]",
 		Short: "Broadcast message remove-rate-limit",
-		Args:  cobra.ExactArgs(1),
+		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
 			denom := args[0]
 			channelId := args[1]
@@ -169,7 +169,7 @@ func CmdResetRateLimit() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "reset-rate-limit [denom] [channel-id]",
 		Short: "Broadcast message reset-rate-limit",
-		Args:  cobra.ExactArgs(1),
+		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
 			denom := args[0]
 			channelId := args[1]

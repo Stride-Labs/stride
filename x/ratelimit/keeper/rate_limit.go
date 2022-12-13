@@ -8,7 +8,7 @@ import (
 	"github.com/Stride-Labs/stride/v4/x/ratelimit/types"
 )
 
-// QUESTION FOR REVIEWER: Is this the right way to do a composite key?
+// Get the rate limit byte key built from the denom and channelId
 func GetRateLimitItemKey(denom string, channelId string) []byte {
 	return append(types.KeyPrefix(denom), types.KeyPrefix(channelId)...)
 }
