@@ -9,15 +9,14 @@ import (
 )
 
 func TestCheckExceedsQuota(t *testing.T) {
+	totalValue := uint64(100)
+	amountUnderThreshold := uint64(5)
+	amountOverThreshold := uint64(15)
 	quota := types.Quota{
 		MaxPercentRecv: uint64(10),
 		MaxPercentSend: uint64(10),
 		DurationHours:  uint64(1),
 	}
-
-	totalValue := uint64(100)
-	amountUnderThreshold := uint64(5)
-	amountOverThreshold := uint64(15)
 
 	tests := []struct {
 		name       string
