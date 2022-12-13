@@ -38,14 +38,14 @@ func TestCheckExceedsQuota(t *testing.T) {
 		},
 		{
 			name:       "outflow exceed",
-			direction:  types.PACKET_RECV,
+			direction:  types.PACKET_SEND,
 			amount:     200*quota.MaxPercentSend/100 + 1,
 			totalValue: 200,
 			exp:        true,
 		},
 		{
 			name:       "outflow not exceed",
-			direction:  types.PACKET_RECV,
+			direction:  types.PACKET_SEND,
 			amount:     200 * quota.MaxPercentSend / 100,
 			totalValue: 200,
 			exp:        false,
