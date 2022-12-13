@@ -88,6 +88,8 @@ chains:
       timeout: 20s
       output-format: json
       sign-mode: direct
+      extra-codecs:
+        - ethermint
   # {new-host-zone}:
   #   type: cosmos
   #   value:
