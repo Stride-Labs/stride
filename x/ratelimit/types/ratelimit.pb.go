@@ -5,7 +5,7 @@ package types
 
 import (
 	fmt "fmt"
-	_ "github.com/gogo/protobuf/gogoproto"
+	_ "github.com/cosmos/gogoproto/gogoproto"
 	proto "github.com/gogo/protobuf/proto"
 	io "io"
 	math "math"
@@ -74,12 +74,9 @@ func (FlowDirection) EnumDescriptor() ([]byte, []int) {
 }
 
 type Path struct {
-	// path identifier ({BaseDenom}/{ChannelId})
-	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	// path base_denom - represents the underlying denom (ignoring ibc traces)
-	BaseDenom string `protobuf:"bytes,2,opt,name=base_denom,json=baseDenom,proto3" json:"base_denom,omitempty"`
-	// path channelid
-	ChannelId string `protobuf:"bytes,3,opt,name=channel_id,json=channelId,proto3" json:"channel_id,omitempty"`
+	Denom     string `protobuf:"bytes,1,opt,name=denom,proto3" json:"denom,omitempty"`
+	ChannelId string `protobuf:"bytes,2,opt,name=channel_id,json=channelId,proto3" json:"channel_id,omitempty"`
+	ChainId   string `protobuf:"bytes,3,opt,name=chain_id,json=chainId,proto3" json:"chain_id,omitempty"`
 }
 
 func (m *Path) Reset()         { *m = Path{} }
@@ -115,16 +112,9 @@ func (m *Path) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_Path proto.InternalMessageInfo
 
-func (m *Path) GetId() string {
+func (m *Path) GetDenom() string {
 	if m != nil {
-		return m.Id
-	}
-	return ""
-}
-
-func (m *Path) GetBaseDenom() string {
-	if m != nil {
-		return m.BaseDenom
+		return m.Denom
 	}
 	return ""
 }
@@ -136,17 +126,17 @@ func (m *Path) GetChannelId() string {
 	return ""
 }
 
+func (m *Path) GetChainId() string {
+	if m != nil {
+		return m.ChainId
+	}
+	return ""
+}
+
 type Quota struct {
-	// quota name
-	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
-	// max percent for sending
-	MaxPercentSend uint64 `protobuf:"varint,2,opt,name=max_percent_send,json=maxPercentSend,proto3" json:"max_percent_send,omitempty"`
-	// max percent for receiving
-	MaxPercentRecv uint64 `protobuf:"varint,3,opt,name=max_percent_recv,json=maxPercentRecv,proto3" json:"max_percent_recv,omitempty"`
-	// duration minutes for time window
-	DurationMinutes uint64 `protobuf:"varint,4,opt,name=duration_minutes,json=durationMinutes,proto3" json:"duration_minutes,omitempty"`
-	// period end (now + duration_minutes, set as sec)
-	PeriodEnd uint64 `protobuf:"varint,5,opt,name=period_end,json=periodEnd,proto3" json:"period_end,omitempty"`
+	MaxPercentSend uint64 `protobuf:"varint,1,opt,name=max_percent_send,json=maxPercentSend,proto3" json:"max_percent_send,omitempty"`
+	MaxPercentRecv uint64 `protobuf:"varint,2,opt,name=max_percent_recv,json=maxPercentRecv,proto3" json:"max_percent_recv,omitempty"`
+	DurationHours  uint64 `protobuf:"varint,3,opt,name=duration_hours,json=durationHours,proto3" json:"duration_hours,omitempty"`
 }
 
 func (m *Quota) Reset()         { *m = Quota{} }
@@ -182,13 +172,6 @@ func (m *Quota) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_Quota proto.InternalMessageInfo
 
-func (m *Quota) GetName() string {
-	if m != nil {
-		return m.Name
-	}
-	return ""
-}
-
 func (m *Quota) GetMaxPercentSend() uint64 {
 	if m != nil {
 		return m.MaxPercentSend
@@ -203,26 +186,16 @@ func (m *Quota) GetMaxPercentRecv() uint64 {
 	return 0
 }
 
-func (m *Quota) GetDurationMinutes() uint64 {
+func (m *Quota) GetDurationHours() uint64 {
 	if m != nil {
-		return m.DurationMinutes
-	}
-	return 0
-}
-
-func (m *Quota) GetPeriodEnd() uint64 {
-	if m != nil {
-		return m.PeriodEnd
+		return m.DurationHours
 	}
 	return 0
 }
 
 type Flow struct {
-	// incoming flow
-	InFlow uint64 `protobuf:"varint,1,opt,name=in_flow,json=inFlow,proto3" json:"in_flow,omitempty"`
-	// outgoing flow
-	OutFlow uint64 `protobuf:"varint,2,opt,name=out_flow,json=outFlow,proto3" json:"out_flow,omitempty"`
-	// channel value
+	Inflow       uint64 `protobuf:"varint,1,opt,name=inflow,proto3" json:"inflow,omitempty"`
+	Outflow      uint64 `protobuf:"varint,2,opt,name=outflow,proto3" json:"outflow,omitempty"`
 	ChannelValue uint64 `protobuf:"varint,3,opt,name=channel_value,json=channelValue,proto3" json:"channel_value,omitempty"`
 }
 
@@ -259,16 +232,16 @@ func (m *Flow) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_Flow proto.InternalMessageInfo
 
-func (m *Flow) GetInFlow() uint64 {
+func (m *Flow) GetInflow() uint64 {
 	if m != nil {
-		return m.InFlow
+		return m.Inflow
 	}
 	return 0
 }
 
-func (m *Flow) GetOutFlow() uint64 {
+func (m *Flow) GetOutflow() uint64 {
 	if m != nil {
-		return m.OutFlow
+		return m.Outflow
 	}
 	return 0
 }
@@ -282,8 +255,8 @@ func (m *Flow) GetChannelValue() uint64 {
 
 type RateLimit struct {
 	Path  *Path  `protobuf:"bytes,1,opt,name=path,proto3" json:"path,omitempty"`
-	Flow  *Flow  `protobuf:"bytes,2,opt,name=flow,proto3" json:"flow,omitempty"`
-	Quota *Quota `protobuf:"bytes,3,opt,name=quota,proto3" json:"quota,omitempty"`
+	Quota *Quota `protobuf:"bytes,2,opt,name=quota,proto3" json:"quota,omitempty"`
+	Flow  *Flow  `protobuf:"bytes,3,opt,name=flow,proto3" json:"flow,omitempty"`
 }
 
 func (m *RateLimit) Reset()         { *m = RateLimit{} }
@@ -326,16 +299,16 @@ func (m *RateLimit) GetPath() *Path {
 	return nil
 }
 
-func (m *RateLimit) GetFlow() *Flow {
+func (m *RateLimit) GetQuota() *Quota {
 	if m != nil {
-		return m.Flow
+		return m.Quota
 	}
 	return nil
 }
 
-func (m *RateLimit) GetQuota() *Quota {
+func (m *RateLimit) GetFlow() *Flow {
 	if m != nil {
-		return m.Quota
+		return m.Flow
 	}
 	return nil
 }
@@ -352,39 +325,37 @@ func init() {
 func init() { proto.RegisterFile("stride/ratelimit/ratelimit.proto", fileDescriptor_a3e00ee2c967d747) }
 
 var fileDescriptor_a3e00ee2c967d747 = []byte{
-	// 505 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x6c, 0x92, 0xc1, 0x6e, 0xd3, 0x30,
-	0x18, 0xc7, 0x93, 0x92, 0xae, 0xeb, 0xd7, 0x6d, 0x8d, 0x2c, 0xc4, 0xca, 0x24, 0xa2, 0xa9, 0x5c,
-	0x46, 0xa5, 0xb5, 0xa8, 0x70, 0xe1, 0x08, 0x6b, 0x27, 0x4d, 0x94, 0xad, 0xa4, 0x65, 0x48, 0x5c,
-	0x2c, 0x37, 0x36, 0xad, 0x45, 0x62, 0x87, 0xc4, 0xe9, 0xca, 0x1b, 0x70, 0x44, 0xbc, 0x02, 0x4f,
-	0xc1, 0x1b, 0x70, 0xdc, 0x91, 0x23, 0x6a, 0x5f, 0x04, 0xd9, 0x49, 0xb7, 0x31, 0x76, 0x73, 0x7e,
-	0xdf, 0xcf, 0xf9, 0xfe, 0xf2, 0xf7, 0xc1, 0x7e, 0xaa, 0x12, 0x4e, 0x59, 0x27, 0x21, 0x8a, 0x85,
-	0x3c, 0xe2, 0xea, 0xfa, 0xd4, 0x8e, 0x13, 0xa9, 0x24, 0x72, 0x73, 0xa3, 0x7d, 0xc5, 0xf7, 0xee,
-	0x4f, 0xe5, 0x54, 0x9a, 0x62, 0x47, 0x9f, 0x72, 0xaf, 0x39, 0x06, 0x67, 0x48, 0xd4, 0x0c, 0xed,
-	0x40, 0x89, 0xd3, 0x86, 0xbd, 0x6f, 0x1f, 0x54, 0xfd, 0x12, 0xa7, 0xe8, 0x11, 0xc0, 0x84, 0xa4,
-	0x0c, 0x53, 0x26, 0x64, 0xd4, 0x28, 0x19, 0x5e, 0xd5, 0xa4, 0xa7, 0x81, 0x2e, 0x07, 0x33, 0x22,
-	0x04, 0x0b, 0x31, 0xa7, 0x8d, 0x7b, 0x79, 0xb9, 0x20, 0x27, 0xb4, 0xf9, 0xd3, 0x86, 0xf2, 0xdb,
-	0x4c, 0x2a, 0x82, 0x10, 0x38, 0x82, 0x44, 0xac, 0xf8, 0xb3, 0x39, 0xa3, 0x03, 0x70, 0x23, 0xb2,
-	0xc0, 0x31, 0x4b, 0x02, 0x26, 0x14, 0x4e, 0x99, 0xa0, 0xa6, 0x83, 0xe3, 0xef, 0x44, 0x64, 0x31,
-	0xcc, 0xf1, 0x88, 0x09, 0x7a, 0xdb, 0x4c, 0x58, 0x30, 0x37, 0xcd, 0xfe, 0x31, 0x7d, 0x16, 0xcc,
-	0xd1, 0x13, 0x70, 0x69, 0x96, 0x10, 0xc5, 0xa5, 0xc0, 0x11, 0x17, 0x99, 0x62, 0x69, 0xc3, 0x31,
-	0x66, 0x7d, 0xcd, 0xdf, 0xe4, 0x58, 0x67, 0x8f, 0x59, 0xc2, 0x25, 0xc5, 0xba, 0x71, 0xd9, 0x48,
-	0xd5, 0x9c, 0xf4, 0x05, 0x6d, 0x62, 0x70, 0x8e, 0x43, 0x79, 0x81, 0x76, 0xa1, 0xc2, 0x05, 0xfe,
-	0x18, 0xca, 0x0b, 0x13, 0xde, 0xf1, 0x37, 0xb8, 0x30, 0x85, 0x87, 0xb0, 0x29, 0x33, 0x95, 0x57,
-	0xf2, 0xd8, 0x15, 0x99, 0x29, 0x53, 0x7a, 0x0c, 0xdb, 0xeb, 0x67, 0x99, 0x93, 0x30, 0x63, 0x45,
-	0xd8, 0xad, 0x02, 0x9e, 0x6b, 0xd6, 0xfc, 0x6e, 0x43, 0xd5, 0x27, 0x8a, 0x0d, 0xf4, 0x58, 0x50,
-	0x0b, 0x9c, 0x98, 0xa8, 0x99, 0xe9, 0x51, 0xeb, 0x3e, 0x68, 0xdf, 0x9e, 0x5b, 0x5b, 0x8f, 0xc7,
-	0x37, 0x8e, 0x76, 0xaf, 0xba, 0xde, 0xe9, 0xea, 0x10, 0xbe, 0x71, 0xd0, 0x21, 0x94, 0x3f, 0xeb,
-	0x09, 0x98, 0x08, 0xb5, 0xee, 0xee, 0xff, 0xb2, 0x19, 0x90, 0x9f, 0x5b, 0xad, 0x17, 0x50, 0x1f,
-	0x92, 0xe0, 0x13, 0x53, 0x3d, 0x9e, 0xb0, 0x40, 0x3f, 0x17, 0xaa, 0x43, 0x6d, 0xf8, 0xf2, 0xe8,
-	0x75, 0x7f, 0x8c, 0x47, 0xfd, 0xd3, 0x9e, 0x6b, 0xdd, 0x00, 0x7e, 0xff, 0xe8, 0xdc, 0xb5, 0xf7,
-	0x9c, 0xaf, 0x3f, 0x3c, 0xab, 0xf5, 0x14, 0xb6, 0x75, 0xdf, 0xeb, 0x8b, 0x35, 0xa8, 0x1c, 0x0f,
-	0xce, 0xde, 0xe3, 0x93, 0x53, 0xd7, 0x42, 0x5b, 0xb0, 0x69, 0x3e, 0xce, 0xde, 0x8d, 0xd7, 0x37,
-	0x5e, 0x0d, 0x7e, 0x2d, 0x3d, 0xfb, 0x72, 0xe9, 0xd9, 0x7f, 0x96, 0x9e, 0xfd, 0x6d, 0xe5, 0x59,
-	0x97, 0x2b, 0xcf, 0xfa, 0xbd, 0xf2, 0xac, 0x0f, 0xdd, 0x29, 0x57, 0xb3, 0x6c, 0xd2, 0x0e, 0x64,
-	0xd4, 0x19, 0x99, 0xc0, 0x87, 0x03, 0x32, 0x49, 0x3b, 0xc5, 0xbe, 0xcf, 0x9f, 0x77, 0x16, 0x37,
-	0x96, 0x5e, 0x7d, 0x89, 0x59, 0x3a, 0xd9, 0x30, 0x9b, 0xfc, 0xec, 0x6f, 0x00, 0x00, 0x00, 0xff,
-	0xff, 0x1d, 0x0f, 0xf5, 0x90, 0x15, 0x03, 0x00, 0x00,
+	// 475 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x74, 0x52, 0x4d, 0x6f, 0xd3, 0x30,
+	0x18, 0x4e, 0x58, 0xba, 0xae, 0x6f, 0xd7, 0x2d, 0xb2, 0xa6, 0x51, 0x26, 0x11, 0x4d, 0x45, 0x48,
+	0x53, 0xa5, 0x25, 0xa8, 0x70, 0xe1, 0x08, 0x5b, 0x27, 0x2a, 0xaa, 0xad, 0xb8, 0xa3, 0x48, 0x48,
+	0x28, 0x72, 0x13, 0xd3, 0x58, 0x24, 0x76, 0x49, 0x9c, 0xae, 0x5c, 0x39, 0x71, 0x44, 0xfc, 0x05,
+	0xfe, 0x0c, 0xc7, 0x1d, 0x39, 0xa2, 0xf6, 0x8f, 0x20, 0x3b, 0x29, 0x1b, 0x45, 0xdc, 0xf2, 0x7c,
+	0xf8, 0x7d, 0xec, 0x27, 0x2f, 0x1c, 0x66, 0x32, 0x65, 0x21, 0xf5, 0x52, 0x22, 0x69, 0xcc, 0x12,
+	0x26, 0x6f, 0xbe, 0xdc, 0x69, 0x2a, 0xa4, 0x40, 0x76, 0xe1, 0x70, 0xff, 0xf0, 0x07, 0x7b, 0x13,
+	0x31, 0x11, 0x5a, 0xf4, 0xd4, 0x57, 0xe1, 0x6b, 0x8d, 0xc0, 0x1a, 0x10, 0x19, 0xa1, 0x3d, 0xa8,
+	0x84, 0x94, 0x8b, 0xa4, 0x69, 0x1e, 0x9a, 0x47, 0x35, 0x5c, 0x00, 0x74, 0x1f, 0x20, 0x88, 0x08,
+	0xe7, 0x34, 0xf6, 0x59, 0xd8, 0xbc, 0xa3, 0xa5, 0x5a, 0xc9, 0xf4, 0x42, 0x74, 0x0f, 0xb6, 0x82,
+	0x88, 0x30, 0xae, 0xc4, 0x0d, 0x2d, 0x56, 0x35, 0xee, 0x85, 0xad, 0xcf, 0x26, 0x54, 0x5e, 0xe5,
+	0x42, 0x12, 0x74, 0x04, 0x76, 0x42, 0xe6, 0xfe, 0x94, 0xa6, 0x01, 0xe5, 0xd2, 0xcf, 0x28, 0x0f,
+	0x75, 0x88, 0x85, 0x77, 0x12, 0x32, 0x1f, 0x14, 0xf4, 0x90, 0xf2, 0x70, 0xdd, 0x99, 0xd2, 0x60,
+	0xa6, 0x33, 0xff, 0x72, 0x62, 0x1a, 0xcc, 0xd0, 0x43, 0xd8, 0x09, 0xf3, 0x94, 0x48, 0x26, 0xb8,
+	0x1f, 0x89, 0x3c, 0xcd, 0x74, 0xbc, 0x85, 0x1b, 0x2b, 0xf6, 0x85, 0x22, 0x5b, 0xef, 0xc0, 0x3a,
+	0x8b, 0xc5, 0x15, 0xda, 0x87, 0x4d, 0xc6, 0xdf, 0xc7, 0xe2, 0xaa, 0x0c, 0x2e, 0x11, 0x6a, 0x42,
+	0x55, 0xe4, 0x52, 0x0b, 0x45, 0xce, 0x0a, 0xa2, 0x07, 0xd0, 0x58, 0x3d, 0x7c, 0x46, 0xe2, 0x9c,
+	0x96, 0xf3, 0xb7, 0x4b, 0x72, 0xa4, 0xb8, 0xd6, 0x37, 0x13, 0x6a, 0x98, 0x48, 0xda, 0x57, 0xfd,
+	0xa2, 0x36, 0x58, 0x53, 0x22, 0x23, 0x1d, 0x51, 0xef, 0xec, 0xbb, 0xeb, 0x3f, 0xc0, 0x55, 0x3d,
+	0x63, 0xed, 0x41, 0xc7, 0x50, 0xf9, 0xa8, 0xca, 0xd1, 0xb1, 0xf5, 0xce, 0xdd, 0x7f, 0xcd, 0xba,
+	0x3b, 0x5c, 0xb8, 0xd4, 0x68, 0x7d, 0xc9, 0x8d, 0xff, 0x8d, 0x56, 0xaf, 0xc4, 0xda, 0xd3, 0x7e,
+	0x0a, 0xbb, 0x03, 0x12, 0x7c, 0xa0, 0xf2, 0x94, 0xa5, 0x34, 0x50, 0x5d, 0xa0, 0x5d, 0xa8, 0x0f,
+	0x9e, 0x9d, 0xbc, 0xec, 0x5e, 0xfa, 0xc3, 0xee, 0xf9, 0xa9, 0x6d, 0xdc, 0x22, 0x70, 0xf7, 0x64,
+	0x64, 0x9b, 0x07, 0xd6, 0x97, 0xef, 0x8e, 0xd1, 0x7e, 0x04, 0x0d, 0x35, 0xe8, 0xe6, 0x60, 0x1d,
+	0xaa, 0x67, 0xfd, 0x8b, 0x37, 0x7e, 0xef, 0xdc, 0x36, 0xd0, 0x36, 0x6c, 0x69, 0x70, 0xf1, 0xfa,
+	0x72, 0x75, 0xe2, 0x79, 0xff, 0xc7, 0xc2, 0x31, 0xaf, 0x17, 0x8e, 0xf9, 0x6b, 0xe1, 0x98, 0x5f,
+	0x97, 0x8e, 0x71, 0xbd, 0x74, 0x8c, 0x9f, 0x4b, 0xc7, 0x78, 0xdb, 0x99, 0x30, 0x19, 0xe5, 0x63,
+	0x37, 0x10, 0x89, 0x37, 0xd4, 0xd7, 0x3d, 0xee, 0x93, 0x71, 0xe6, 0x95, 0x8b, 0x3b, 0x7b, 0xe2,
+	0xcd, 0x6f, 0x6d, 0xaf, 0xfc, 0x34, 0xa5, 0xd9, 0x78, 0x53, 0xaf, 0xe4, 0xe3, 0xdf, 0x01, 0x00,
+	0x00, 0xff, 0xff, 0x47, 0x04, 0x76, 0xd3, 0xde, 0x02, 0x00, 0x00,
 }
 
 func (m *Path) Marshal() (dAtA []byte, err error) {
@@ -407,24 +378,24 @@ func (m *Path) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	_ = i
 	var l int
 	_ = l
+	if len(m.ChainId) > 0 {
+		i -= len(m.ChainId)
+		copy(dAtA[i:], m.ChainId)
+		i = encodeVarintRatelimit(dAtA, i, uint64(len(m.ChainId)))
+		i--
+		dAtA[i] = 0x1a
+	}
 	if len(m.ChannelId) > 0 {
 		i -= len(m.ChannelId)
 		copy(dAtA[i:], m.ChannelId)
 		i = encodeVarintRatelimit(dAtA, i, uint64(len(m.ChannelId)))
 		i--
-		dAtA[i] = 0x1a
-	}
-	if len(m.BaseDenom) > 0 {
-		i -= len(m.BaseDenom)
-		copy(dAtA[i:], m.BaseDenom)
-		i = encodeVarintRatelimit(dAtA, i, uint64(len(m.BaseDenom)))
-		i--
 		dAtA[i] = 0x12
 	}
-	if len(m.Id) > 0 {
-		i -= len(m.Id)
-		copy(dAtA[i:], m.Id)
-		i = encodeVarintRatelimit(dAtA, i, uint64(len(m.Id)))
+	if len(m.Denom) > 0 {
+		i -= len(m.Denom)
+		copy(dAtA[i:], m.Denom)
+		i = encodeVarintRatelimit(dAtA, i, uint64(len(m.Denom)))
 		i--
 		dAtA[i] = 0xa
 	}
@@ -451,32 +422,20 @@ func (m *Quota) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	_ = i
 	var l int
 	_ = l
-	if m.PeriodEnd != 0 {
-		i = encodeVarintRatelimit(dAtA, i, uint64(m.PeriodEnd))
+	if m.DurationHours != 0 {
+		i = encodeVarintRatelimit(dAtA, i, uint64(m.DurationHours))
 		i--
-		dAtA[i] = 0x28
-	}
-	if m.DurationMinutes != 0 {
-		i = encodeVarintRatelimit(dAtA, i, uint64(m.DurationMinutes))
-		i--
-		dAtA[i] = 0x20
+		dAtA[i] = 0x18
 	}
 	if m.MaxPercentRecv != 0 {
 		i = encodeVarintRatelimit(dAtA, i, uint64(m.MaxPercentRecv))
 		i--
-		dAtA[i] = 0x18
+		dAtA[i] = 0x10
 	}
 	if m.MaxPercentSend != 0 {
 		i = encodeVarintRatelimit(dAtA, i, uint64(m.MaxPercentSend))
 		i--
-		dAtA[i] = 0x10
-	}
-	if len(m.Name) > 0 {
-		i -= len(m.Name)
-		copy(dAtA[i:], m.Name)
-		i = encodeVarintRatelimit(dAtA, i, uint64(len(m.Name)))
-		i--
-		dAtA[i] = 0xa
+		dAtA[i] = 0x8
 	}
 	return len(dAtA) - i, nil
 }
@@ -506,13 +465,13 @@ func (m *Flow) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 		i--
 		dAtA[i] = 0x18
 	}
-	if m.OutFlow != 0 {
-		i = encodeVarintRatelimit(dAtA, i, uint64(m.OutFlow))
+	if m.Outflow != 0 {
+		i = encodeVarintRatelimit(dAtA, i, uint64(m.Outflow))
 		i--
 		dAtA[i] = 0x10
 	}
-	if m.InFlow != 0 {
-		i = encodeVarintRatelimit(dAtA, i, uint64(m.InFlow))
+	if m.Inflow != 0 {
+		i = encodeVarintRatelimit(dAtA, i, uint64(m.Inflow))
 		i--
 		dAtA[i] = 0x8
 	}
@@ -539,9 +498,9 @@ func (m *RateLimit) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	_ = i
 	var l int
 	_ = l
-	if m.Quota != nil {
+	if m.Flow != nil {
 		{
-			size, err := m.Quota.MarshalToSizedBuffer(dAtA[:i])
+			size, err := m.Flow.MarshalToSizedBuffer(dAtA[:i])
 			if err != nil {
 				return 0, err
 			}
@@ -551,9 +510,9 @@ func (m *RateLimit) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 		i--
 		dAtA[i] = 0x1a
 	}
-	if m.Flow != nil {
+	if m.Quota != nil {
 		{
-			size, err := m.Flow.MarshalToSizedBuffer(dAtA[:i])
+			size, err := m.Quota.MarshalToSizedBuffer(dAtA[:i])
 			if err != nil {
 				return 0, err
 			}
@@ -595,15 +554,15 @@ func (m *Path) Size() (n int) {
 	}
 	var l int
 	_ = l
-	l = len(m.Id)
-	if l > 0 {
-		n += 1 + l + sovRatelimit(uint64(l))
-	}
-	l = len(m.BaseDenom)
+	l = len(m.Denom)
 	if l > 0 {
 		n += 1 + l + sovRatelimit(uint64(l))
 	}
 	l = len(m.ChannelId)
+	if l > 0 {
+		n += 1 + l + sovRatelimit(uint64(l))
+	}
+	l = len(m.ChainId)
 	if l > 0 {
 		n += 1 + l + sovRatelimit(uint64(l))
 	}
@@ -616,21 +575,14 @@ func (m *Quota) Size() (n int) {
 	}
 	var l int
 	_ = l
-	l = len(m.Name)
-	if l > 0 {
-		n += 1 + l + sovRatelimit(uint64(l))
-	}
 	if m.MaxPercentSend != 0 {
 		n += 1 + sovRatelimit(uint64(m.MaxPercentSend))
 	}
 	if m.MaxPercentRecv != 0 {
 		n += 1 + sovRatelimit(uint64(m.MaxPercentRecv))
 	}
-	if m.DurationMinutes != 0 {
-		n += 1 + sovRatelimit(uint64(m.DurationMinutes))
-	}
-	if m.PeriodEnd != 0 {
-		n += 1 + sovRatelimit(uint64(m.PeriodEnd))
+	if m.DurationHours != 0 {
+		n += 1 + sovRatelimit(uint64(m.DurationHours))
 	}
 	return n
 }
@@ -641,11 +593,11 @@ func (m *Flow) Size() (n int) {
 	}
 	var l int
 	_ = l
-	if m.InFlow != 0 {
-		n += 1 + sovRatelimit(uint64(m.InFlow))
+	if m.Inflow != 0 {
+		n += 1 + sovRatelimit(uint64(m.Inflow))
 	}
-	if m.OutFlow != 0 {
-		n += 1 + sovRatelimit(uint64(m.OutFlow))
+	if m.Outflow != 0 {
+		n += 1 + sovRatelimit(uint64(m.Outflow))
 	}
 	if m.ChannelValue != 0 {
 		n += 1 + sovRatelimit(uint64(m.ChannelValue))
@@ -663,12 +615,12 @@ func (m *RateLimit) Size() (n int) {
 		l = m.Path.Size()
 		n += 1 + l + sovRatelimit(uint64(l))
 	}
-	if m.Flow != nil {
-		l = m.Flow.Size()
-		n += 1 + l + sovRatelimit(uint64(l))
-	}
 	if m.Quota != nil {
 		l = m.Quota.Size()
+		n += 1 + l + sovRatelimit(uint64(l))
+	}
+	if m.Flow != nil {
+		l = m.Flow.Size()
 		n += 1 + l + sovRatelimit(uint64(l))
 	}
 	return n
@@ -711,7 +663,7 @@ func (m *Path) Unmarshal(dAtA []byte) error {
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Id", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field Denom", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -739,41 +691,9 @@ func (m *Path) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Id = string(dAtA[iNdEx:postIndex])
+			m.Denom = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		case 2:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field BaseDenom", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowRatelimit
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthRatelimit
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthRatelimit
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.BaseDenom = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		case 3:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field ChannelId", wireType)
 			}
@@ -804,6 +724,38 @@ func (m *Path) Unmarshal(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			m.ChannelId = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ChainId", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowRatelimit
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthRatelimit
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthRatelimit
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.ChainId = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
@@ -856,38 +808,6 @@ func (m *Quota) Unmarshal(dAtA []byte) error {
 		}
 		switch fieldNum {
 		case 1:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Name", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowRatelimit
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthRatelimit
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthRatelimit
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Name = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		case 2:
 			if wireType != 0 {
 				return fmt.Errorf("proto: wrong wireType = %d for field MaxPercentSend", wireType)
 			}
@@ -906,7 +826,7 @@ func (m *Quota) Unmarshal(dAtA []byte) error {
 					break
 				}
 			}
-		case 3:
+		case 2:
 			if wireType != 0 {
 				return fmt.Errorf("proto: wrong wireType = %d for field MaxPercentRecv", wireType)
 			}
@@ -925,11 +845,11 @@ func (m *Quota) Unmarshal(dAtA []byte) error {
 					break
 				}
 			}
-		case 4:
+		case 3:
 			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field DurationMinutes", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field DurationHours", wireType)
 			}
-			m.DurationMinutes = 0
+			m.DurationHours = 0
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return ErrIntOverflowRatelimit
@@ -939,26 +859,7 @@ func (m *Quota) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				m.DurationMinutes |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-		case 5:
-			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field PeriodEnd", wireType)
-			}
-			m.PeriodEnd = 0
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowRatelimit
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				m.PeriodEnd |= uint64(b&0x7F) << shift
+				m.DurationHours |= uint64(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
@@ -1015,9 +916,9 @@ func (m *Flow) Unmarshal(dAtA []byte) error {
 		switch fieldNum {
 		case 1:
 			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field InFlow", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field Inflow", wireType)
 			}
-			m.InFlow = 0
+			m.Inflow = 0
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return ErrIntOverflowRatelimit
@@ -1027,16 +928,16 @@ func (m *Flow) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				m.InFlow |= uint64(b&0x7F) << shift
+				m.Inflow |= uint64(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
 		case 2:
 			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field OutFlow", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field Outflow", wireType)
 			}
-			m.OutFlow = 0
+			m.Outflow = 0
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return ErrIntOverflowRatelimit
@@ -1046,7 +947,7 @@ func (m *Flow) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				m.OutFlow |= uint64(b&0x7F) << shift
+				m.Outflow |= uint64(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
@@ -1158,42 +1059,6 @@ func (m *RateLimit) Unmarshal(dAtA []byte) error {
 			iNdEx = postIndex
 		case 2:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Flow", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowRatelimit
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				msglen |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if msglen < 0 {
-				return ErrInvalidLengthRatelimit
-			}
-			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthRatelimit
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			if m.Flow == nil {
-				m.Flow = &Flow{}
-			}
-			if err := m.Flow.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			iNdEx = postIndex
-		case 3:
-			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Quota", wireType)
 			}
 			var msglen int
@@ -1225,6 +1090,42 @@ func (m *RateLimit) Unmarshal(dAtA []byte) error {
 				m.Quota = &Quota{}
 			}
 			if err := m.Quota.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Flow", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowRatelimit
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthRatelimit
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthRatelimit
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.Flow == nil {
+				m.Flow = &Flow{}
+			}
+			if err := m.Flow.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
