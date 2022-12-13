@@ -8,7 +8,13 @@ LOGS=$SCRIPT_DIR/logs
 UPGRADES=$SCRIPT_DIR/upgrades
 SRC=$SCRIPT_DIR/src
 PEER_PORT=26656
-DOCKER_COMPOSE="docker-compose -f $SCRIPT_DIR/docker-compose.yml"
+
+if [[ "${DOCKER_DEBUG:-false}" == "true" ]]; then 
+  DOCKER_COMPOSE="docker-compose -f $SCRIPT_DIR/docker-compose-debug.yml"
+else
+  DOCKER_COMPOSE="docker-compose -f $SCRIPT_DIR/docker-compose.yml"
+fi
+
 
 # Logs
 STRIDE_LOGS=$LOGS/stride.log

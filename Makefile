@@ -116,11 +116,17 @@ test-integration-docker:
 build-docker: 
 	@bash $(DOCKERNET_HOME)/build.sh -${build} ${BUILDDIR}
 	
+build-docker-debug:
+	@bash $(DOCKERNET_HOME)/build.sh -${build}d ${BUILDDIR}
+
 start-docker: build-docker
 	@bash $(DOCKERNET_HOME)/start_network.sh 
 
 start-docker-all: build-docker
 	@ALL_HOST_CHAINS=true bash $(DOCKERNET_HOME)/start_network.sh 
+
+start-docker-debug: build-docker-debug
+	@DOCKER_DEBUG=true bash $(DOCKERNET_HOME)/start_network.sh
 
 clean-docker: 
 	@docker-compose -f $(DOCKERNET_COMPOSE_FILE) stop 

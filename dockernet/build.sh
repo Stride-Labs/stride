@@ -58,7 +58,7 @@ revert_admin_address() {
 }
 
 # build docker images and local binaries
-while getopts sgojthr flag; do
+while getopts sgojthrd flag; do
    case "${flag}" in
       # For stride, we need to update the admin address to one that we have the seed phrase for
       s) replace_admin_address
@@ -69,6 +69,7 @@ while getopts sgojthr flag; do
             exit 1
          fi
          ;;
+      d) build_local_and_docker stride-debug . ;;
       g) build_local_and_docker gaia deps/gaia ;;
       j) build_local_and_docker juno deps/juno ;;
       o) build_local_and_docker osmo deps/osmosis ;;
