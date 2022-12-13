@@ -53,7 +53,16 @@ func HostZoneUnbondingKeys(m map[string]*recordstypes.HostZoneUnbonding) []strin
 	return keys
 }
 
-func StringToIntMapKeys(m map[string]int64) []string {
+func StringToSdkIntMapKeys(m map[string]sdk.Int) []string {
+	keys := make([]string, 0, len(m))
+	for k := range m {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	return keys
+}
+
+func StringToSdkDecMapKeys(m map[string]sdk.Dec) []string {
 	keys := make([]string, 0, len(m))
 	for k := range m {
 		keys = append(keys, k)
@@ -77,6 +86,15 @@ func StringToStringSliceMapKeys(m map[string][]string) []string {
 		keys = append(keys, k)
 	}
 	sort.Strings(keys)
+	return keys
+}
+
+func Int32toStringMapKeys(m map[int32]string) []int32 {
+	keys := make([]int32, 0, len(m))
+	for k := range m {
+		keys = append(keys, k)
+	}
+	sort.Slice(keys, func(i, j int) bool { return keys[i] < keys[j] })
 	return keys
 }
 

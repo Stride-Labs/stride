@@ -219,7 +219,8 @@ func (k Keeper) SetClaimRecordsWithWeights(ctx sdk.Context, claimRecords []types
 		weights[record.AirdropIdentifier] = weights[record.AirdropIdentifier].Add(record.Weight)
 	}
 
-	for identifier, weight := range weights {
+	for _, identifier := range utils.StringToSdkDecMapKeys(weights) {
+		weight := weights[identifier]
 		k.SetTotalWeight(ctx, weight, identifier)
 	}
 
@@ -419,7 +420,7 @@ func (k Keeper) GetUserTotalClaimable(ctx sdk.Context, addr sdk.AccAddress, aird
 
 	totalClaimable := sdk.Coins{}
 
-	for action := range types.Action_name {
+	for action := range utils.Int32toStringMapKeys(types.Action_name) {
 		claimableForAction, err := k.GetClaimableAmountForAction(ctx, addr, types.Action(action), airdropIdentifier, includeClaimed)
 		if err != nil {
 			return sdk.Coins{}, err

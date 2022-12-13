@@ -10,6 +10,7 @@ import (
 	stakingTypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/spf13/cast"
 
+	"github.com/Stride-Labs/stride/v4/utils"
 	"github.com/Stride-Labs/stride/v4/x/stakeibc/types"
 )
 
@@ -43,7 +44,8 @@ func (k msgServer) RebalanceValidators(goCtx context.Context, msg *types.MsgReba
 		valAddr  string
 	}
 	valDeltaList := make([]valPair, 0)
-	for valAddr, deltaAmt := range validatorDeltas {
+	for _, valAddr := range utils.StringToSdkIntMapKeys(validatorDeltas) {
+		deltaAmt := validatorDeltas[valAddr]
 		k.Logger(ctx).Info(fmt.Sprintf("Adding deltaAmt: %v to validator: %s", deltaAmt, valAddr))
 		valDeltaList = append(valDeltaList, valPair{deltaAmt, valAddr})
 	}

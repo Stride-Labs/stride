@@ -122,7 +122,8 @@ func (k Keeper) GetHostZoneUnbondingMsgs(ctx sdk.Context, hostZone types.HostZon
 		return nil, sdk.ZeroInt(), nil, nil, sdkerrors.Wrap(sdkerrors.ErrNotFound, errMsg)
 	}
 	var splitDelegations []*types.SplitDelegation
-	for valAddr, valUnbondAmt := range valAddrToUnbondAmt {
+	for _, valAddr := range utils.StringToSdkIntMapKeys(valAddrToUnbondAmt) {
+		valUnbondAmt := valAddrToUnbondAmt[valAddr]
 		stakeAmt := sdk.NewCoin(hostZone.HostDenom, valUnbondAmt)
 
 		msgs = append(msgs, &stakingtypes.MsgUndelegate{

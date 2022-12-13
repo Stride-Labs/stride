@@ -882,6 +882,7 @@ func (app *StrideApp) ModuleAccountAddrs() map[string]bool {
 // ModuleAccountAddrs returns all the app's module account addresses.
 func (app *StrideApp) BlacklistedModuleAccountAddrs() map[string]bool {
 	modAccAddrs := make(map[string]bool)
+	// DO NOT REMOVE: StringToStringSliceMapKeys fixes non-deterministic map iteration
 	for _, acc := range utils.StringToStringSliceMapKeys(maccPerms) {
 		// don't blacklist stakeibc module account, so that it can ibc transfer tokens
 		if acc == "stakeibc" {
