@@ -13,6 +13,7 @@ var (
 	STRIDE_EPOCH = "stride_epoch"
 	DAY_EPOCH    = "day"
 	MINT_EPOCH   = "mint"
+	HOUR_EPOCH   = "hour"
 )
 
 // DefaultGenesis returns the default Capability genesis state

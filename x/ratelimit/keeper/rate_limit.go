@@ -18,6 +18,11 @@ func CheckRateLimit(direction types.PacketDirection, packet exported.PacketI) er
 	return nil
 }
 
+func (k Keeper) ResetRateLimit(ctx sdk.Context, rateLimit types.RateLimit) error {
+	// TODO
+	return nil
+}
+
 // Stores/Updates a rate limit object in the store
 func (k Keeper) SetRateLimit(ctx sdk.Context, rateLimit types.RateLimit) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.RateLimitKeyPrefix)
