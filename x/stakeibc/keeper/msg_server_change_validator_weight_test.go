@@ -8,13 +8,13 @@ import (
 	stakeibctypes "github.com/Stride-Labs/stride/v4/x/stakeibc/types"
 )
 
-type ChangeValidatorTestCase struct {
+type ChangeValidatorWeightTestCase struct {
 	hostZone          stakeibctypes.HostZone
 	validMsgs         stakeibctypes.MsgChangeValidatorWeight
 	initialValidators []*stakeibctypes.Validator
 }
 
-func (s *KeeperTestSuite) SetupChangeValidator() ChangeValidatorTestCase {
+func (s *KeeperTestSuite) SetupChangeValidatorWeight() ChangeValidatorWeightTestCase {
 	initialValidators := []*stakeibctypes.Validator{
 		{
 			Name:           "val1",
@@ -47,7 +47,7 @@ func (s *KeeperTestSuite) SetupChangeValidator() ChangeValidatorTestCase {
 		Weight:   1,
 	}
 
-	return ChangeValidatorTestCase{
+	return ChangeValidatorWeightTestCase{
 		hostZone:          hostZone,
 		validMsgs:         validMsgs,
 		initialValidators: initialValidators,
@@ -55,7 +55,7 @@ func (s *KeeperTestSuite) SetupChangeValidator() ChangeValidatorTestCase {
 }
 
 func (s *KeeperTestSuite) TestChangeValidatorWeight_Successful() {
-	tc := s.SetupChangeValidator()
+	tc := s.SetupChangeValidatorWeight()
 
 	_, err := s.GetMsgServer().ChangeValidatorWeight(sdk.WrapSDKContext(s.Ctx), &tc.validMsgs)
 	s.Require().NoError(err)
@@ -73,7 +73,7 @@ func (s *KeeperTestSuite) TestChangeValidatorWeight_Successful() {
 
 }
 func (s *KeeperTestSuite) TestChangeValidatorWeight_HostZoneNotFound() {
-	tc := s.SetupChangeValidator()
+	tc := s.SetupChangeValidatorWeight()
 
 	// Replace hostzone in msg to a host zone that doesn't exist
 	badHostZoneMsg := tc.validMsgs
@@ -82,7 +82,7 @@ func (s *KeeperTestSuite) TestChangeValidatorWeight_HostZoneNotFound() {
 	s.Require().EqualError(err, "host zone not registered")
 }
 func (s *KeeperTestSuite) TestChangeValidatorWeight_ValNoFound() {
-	tc := s.SetupChangeValidator()
+	tc := s.SetupChangeValidatorWeight()
 	tc.validMsgs.ValAddr = "stride_VAL3"
 	tc.validMsgs.Weight = 1
 
