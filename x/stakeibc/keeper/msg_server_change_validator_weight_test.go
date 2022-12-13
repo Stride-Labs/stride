@@ -54,14 +54,25 @@ func (s *KeeperTestSuite) SetupChangeValidator() ChangeValidatorTestCase {
 	}
 }
 
-func (s *KeeperTestSuite) TestChangeValidator_Successful() {
+func (s *KeeperTestSuite) TestChangeValidatorWeight_Successful() {
 	tc := s.SetupChangeValidator()
 
 	_, err := s.GetMsgServer().ChangeValidatorWeight(sdk.WrapSDKContext(s.Ctx), &tc.validMsgs)
 	s.Require().NoError(err)
 
+	HZ, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, "GAIA")
+	s.Require().True(found, "HostZone found")
+
+	var IsEqualWeight bool
+	for _, val := range HZ.Validators {
+		if val.Address == "stride_VAL1" {
+			IsEqualWeight = (val.Weight == 1)
+		}
+	}
+	s.Require().True(IsEqualWeight, "Change Successful")
+
 }
-func (s *KeeperTestSuite) TestChangeValidator_HostZoneNotFound() {
+func (s *KeeperTestSuite) TestChangeValidatorWeight_HostZoneNotFound() {
 	tc := s.SetupChangeValidator()
 
 	// Replace hostzone in msg to a host zone that doesn't exist
@@ -70,15 +81,11 @@ func (s *KeeperTestSuite) TestChangeValidator_HostZoneNotFound() {
 	_, err := s.GetMsgServer().ChangeValidatorWeight(sdk.WrapSDKContext(s.Ctx), &badHostZoneMsg)
 	s.Require().EqualError(err, "host zone not registered")
 }
-func (s *KeeperTestSuite) TestChangeValidator_ValNoFound() {
+func (s *KeeperTestSuite) TestChangeValidatorWeight_ValNoFound() {
 	tc := s.SetupChangeValidator()
 	tc.validMsgs.ValAddr = "stride_VAL3"
 	tc.validMsgs.Weight = 1
 
 	_, err := s.GetMsgServer().ChangeValidatorWeight(sdk.WrapSDKContext(s.Ctx), &tc.validMsgs)
 	s.Require().EqualError(err, "validator not found")
-}
-
-func (s *KeeperTestSuite) TestChangeValidator_SetValWeightFromZeroToNonzero() {
-	//because func ConfirmValSetHassSpace always return err = null, err not occur
 }
