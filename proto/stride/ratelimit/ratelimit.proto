@@ -20,46 +20,25 @@ enum FlowDirection {
 }
 
 message Path {
-  // path identifier ({BaseDenom}/{ChannelId})
-  string id = 1;
-
-  // path base_denom - represents the underlying denom (ignoring ibc traces)
-  string base_denom = 2;
-
-  // path channelid
-  string channel_id = 3;
+  string denom = 1;
+  string channel_id = 2;
+  string chain_id = 3;
 }
 
 message Quota {
-  // quota name
-  string name = 1;
-
-  // max percent for sending
-  uint64 max_percent_send = 2;
-
-  // max percent for receiving
-  uint64 max_percent_recv = 3;
-
-  // duration minutes for time window
-  uint64 duration_minutes = 4;
-
-  // period end (now + duration_minutes, set as sec)
-  uint64 period_end = 5;
+  uint64 max_percent_send = 1;
+  uint64 max_percent_recv = 2;
+  uint64 duration_hours = 3;
 }
 
 message Flow {
-  // incoming flow
-  uint64 in_flow = 1;
-
-  // outgoing flow
-  uint64 out_flow = 2;
-
-  // channel value
+  uint64 inflow = 1;
+  uint64 outflow = 2;
   uint64 channel_value = 3;
 }
 
 message RateLimit {
   Path path = 1;
-  Flow flow = 2;
-  Quota quota = 3;
+  Quota quota = 2;
+  Flow flow = 3;
 }
