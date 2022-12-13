@@ -168,7 +168,6 @@ func (im IBCModule) OnAcknowledgementPacket(
 	acknowledgement []byte,
 	relayer sdk.AccAddress,
 ) error {
-	fmt.Println("di vao day")
 	im.keeper.Logger(ctx).Info(fmt.Sprintf("[IBC-TRANSFER] OnAcknowledgementPacket  %v", packet))
 	// doCustomLogic(packet, ack)
 	// ICS-20 ack
@@ -188,7 +187,7 @@ func (im IBCModule) OnAcknowledgementPacket(
 		im.keeper.Logger(ctx).Info(fmt.Sprintf("\t [IBC-TRANSFER] Acknowledgement_Result {%s}", string(resp.Result)))
 	case *channeltypes.Acknowledgement_Error:
 		im.keeper.Logger(ctx).Error(fmt.Sprintf("\t [IBC-TRANSFER] Acknowledgement_Error {%s}", resp.Error))
-		return im.refundPacketToken(ctx, packet, data)
+		return im.revertSend(ctx, packet, data)
 	default:
 		im.keeper.Logger(ctx).Error(fmt.Sprintf("\t [IBC-TRANSFER] Unrecognized ack for packet {%v}", packet))
 	}
@@ -201,24 +200,13 @@ func (im IBCModule) OnAcknowledgementPacket(
 		errMsg := fmt.Sprintf("Unable to call registered callback from records OnAcknowledgePacket | Sequence %d, from %s %s, to %s %s | Error %s",
 			packet.Sequence, packet.SourceChannel, packet.SourcePort, packet.DestinationChannel, packet.DestinationPort, err.Error())
 		im.keeper.Logger(ctx).Error(errMsg)
-		return im.refundPacketToken(ctx, packet, data)
+		return im.revertSend(ctx, packet, data)
 	}
 
 	return im.app.OnAcknowledgementPacket(ctx, packet, acknowledgement, relayer)
 }
 
 func (im IBCModule) refundPacketToken(ctx sdk.Context, packet channeltypes.Packet, data ibctransfertypes.FungibleTokenPacketData) error {
-	callbackDataKey := icacallbacktypes.PacketID(packet.GetSourcePort(), packet.GetSourceChannel(), packet.Sequence)
-	callbackData, _ := im.keeper.ICACallbacksKeeper.GetCallbackDataFromPacket(ctx, packet, callbackDataKey)
-	transferCallback, _ := im.keeper.UnmarshalTransferCallbackArgs(ctx, callbackData.CallbackArgs)
-	// update deposit record
-	depositRecord, found := im.keeper.GetDepositRecord(ctx, transferCallback.DepositRecordId)
-	if !found {
-		return sdkerrors.Wrapf(types.ErrUnknownDepositRecord, "deposit record not found %d", transferCallback.DepositRecordId)
-	}
-	depositRecord.Status = types.DepositRecord_TRANSFER_QUEUE
-	im.keeper.SetDepositRecord(ctx, depositRecord)
-
 	// parse the denomination from the full denom path
 	trace := ibctransfertypes.ParseDenomTrace(data.Denom)
 
@@ -261,6 +249,32 @@ func (im IBCModule) refundPacketToken(ctx sdk.Context, packet channeltypes.Packe
 	return nil
 }
 
+func (im IBCModule) revertRecordStatus(ctx sdk.Context, packet channeltypes.Packet) error {
+	callbackDataKey := icacallbacktypes.PacketID(packet.GetSourcePort(), packet.GetSourceChannel(), packet.Sequence)
+	callbackData, _ := im.keeper.ICACallbacksKeeper.GetCallbackDataFromPacket(ctx, packet, callbackDataKey)
+	transferCallback, _ := im.keeper.UnmarshalTransferCallbackArgs(ctx, callbackData.CallbackArgs)
+	// update deposit record
+	depositRecord, found := im.keeper.GetDepositRecord(ctx, transferCallback.DepositRecordId)
+	fmt.Println(depositRecord)
+	if !found {
+		fmt.Println("khong thay deposit record")
+		return sdkerrors.Wrapf(types.ErrUnknownDepositRecord, "deposit record not found %d", transferCallback.DepositRecordId)
+	}
+	depositRecord.Status = types.DepositRecord_TRANSFER_QUEUE
+	im.keeper.SetDepositRecord(ctx, depositRecord)
+	return nil
+}
+
+func (im IBCModule) revertSend(ctx sdk.Context, packet channeltypes.Packet, data ibctransfertypes.FungibleTokenPacketData) error {
+	err := im.revertRecordStatus(ctx, packet)
+	if err != nil {
+		fmt.Println("di vao day")
+		ctx.Logger().Info(fmt.Sprintf(err.Error()))
+		return im.refundPacketToken(ctx, packet, data)
+	}
+	return im.refundPacketToken(ctx, packet, data)
+}
+
 // OnTimeoutPacket implements the IBCModule interface
 func (im IBCModule) OnTimeoutPacket(
 	ctx sdk.Context,
@@ -273,7 +287,7 @@ func (im IBCModule) OnTimeoutPacket(
 	if err := ibctransfertypes.ModuleCdc.UnmarshalJSON(packet.GetData(), &data); err != nil {
 		return sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "cannot unmarshal ICS-20 transfer packet data: %v", err)
 	}
-	err := im.refundPacketToken(ctx, packet, data)
+	err := im.revertSend(ctx, packet, data)
 	if err != nil {
 		return err
 	}

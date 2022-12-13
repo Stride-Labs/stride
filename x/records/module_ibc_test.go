@@ -50,7 +50,7 @@ func (s *ModuleTestSuite) SetupTransferMsg() (transfertypes.MsgTransfer, recordt
 		Amount:             balanceToStake.Int64(),
 		Status:             recordtypes.DepositRecord_TRANSFER_QUEUE,
 	}
-	s.App.RecordsKeeper.SetDepositRecord(s.Ctx, depositRecord)
+	s.App.RecordsKeeper.SetDepositRecord(s.TransferPath.EndpointA.Chain.GetContext(), depositRecord)
 
 	coins := sdk.NewCoin(sdk.DefaultBondDenom, balanceToStake)
 	port := s.TransferPath.EndpointA.ChannelConfig.PortID
@@ -64,13 +64,8 @@ func (s *ModuleTestSuite) SetupTransferMsg() (transfertypes.MsgTransfer, recordt
 }
 
 func (s *ModuleTestSuite) GetPacketAndAck(msg transfertypes.MsgTransfer, depositRecord recordtypes.DepositRecord) TransferCallbackTestCase {
-	err := s.App.RecordsKeeper.Transfer(s.Ctx, &msg, depositRecord)
+	err := s.App.RecordsKeeper.Transfer(s.TransferPath.EndpointA.Chain.GetContext(), &msg, depositRecord)
 	s.Require().NoError(err)
-
-	// Move forward one block
-	s.StrideChain.NextBlock()
-	s.StrideChain.SenderAccount.SetSequence(s.StrideChain.SenderAccount.GetSequence())
-	s.StrideChain.Coordinator.IncrementTime()
 
 	// Update both clients
 	err = s.TransferPath.EndpointA.UpdateClient()
@@ -107,19 +102,51 @@ func (s *ModuleTestSuite) GetPacketAndAck(msg transfertypes.MsgTransfer, deposit
 func (s *ModuleTestSuite) TestOnAcknowledgementPacket_Successful() {
 	msg, depositRecord := s.SetupTransferMsg()
 	tc := s.GetPacketAndAck(msg, depositRecord)
+	record, found := s.App.RecordsKeeper.GetDepositRecord(s.TransferPath.EndpointA.Chain.GetContext(), depositRecord.Id)
+	fmt.Println(record)
 	err := s.TransferPath.EndpointA.AcknowledgePacket(tc.packet, tc.ack)
 	s.Require().NoError(err)
+
+	// check record after refund
+	record, found = s.App.RecordsKeeper.GetDepositRecord(s.TransferPath.EndpointA.Chain.GetContext(), depositRecord.Id)
+	fmt.Println(record)
+	s.Require().True(found)
+	s.Require().Equal(record.Status, recordtypes.DepositRecord_DELEGATION_QUEUE)
 }
 
 func (s *ModuleTestSuite) TestOnAcknowledgementPacket_AckErr() {
 	msg, depositRecord := s.SetupTransferMsg()
 	msg.Receiver = "INVALID"
 	tc := s.GetPacketAndAck(msg, depositRecord)
+	balanceBefore := s.App.BankKeeper.SpendableCoins(s.TransferPath.EndpointA.Chain.GetContext(), sdk.MustAccAddressFromBech32(msg.Sender))
 	err := s.TransferPath.EndpointA.AcknowledgePacket(tc.packet, tc.ack)
 	s.Require().NoError(err) 
 
 	// check record after refund
-	record, found := s.App.RecordsKeeper.GetDepositRecord(s.Ctx, 1)
+	record, found := s.App.RecordsKeeper.GetDepositRecord(s.TransferPath.EndpointA.Chain.GetContext(), depositRecord.Id)
 	s.Require().True(found)
 	s.Require().Equal(record.Status, recordtypes.DepositRecord_TRANSFER_QUEUE)
+
+	// check balance
+	balanceAfter := s.App.BankKeeper.SpendableCoins(s.TransferPath.EndpointA.Chain.GetContext(), sdk.MustAccAddressFromBech32(msg.Sender))
+	s.Require().Equal(balanceBefore.Add(msg.Token), balanceAfter)
+}
+
+func (s *ModuleTestSuite) TestOnAcknowledgementPacket_ErrCallBack() {
+	msg, depositRecord := s.SetupTransferMsg()
+	tc := s.GetPacketAndAck(msg, depositRecord)
+
+	balanceBefore := s.App.BankKeeper.SpendableCoins(s.TransferPath.EndpointA.Chain.GetContext(), sdk.MustAccAddressFromBech32(msg.Sender))
+	s.App.RecordsKeeper.RemoveDepositRecord(s.TransferPath.EndpointA.Chain.GetContext(), depositRecord.Id)
+	
+	err := s.TransferPath.EndpointA.AcknowledgePacket(tc.packet, tc.ack)
+	s.Require().NoError(err) 
+
+	// check record after refund
+	_, found := s.App.RecordsKeeper.GetDepositRecord(s.TransferPath.EndpointA.Chain.GetContext(), depositRecord.Id)
+	s.Require().False(found)
+
+	// check balance
+	balanceAfter := s.App.BankKeeper.SpendableCoins(s.TransferPath.EndpointA.Chain.GetContext(), sdk.MustAccAddressFromBech32(msg.Sender))
+	s.Require().Equal(balanceBefore.Add(msg.Token), balanceAfter)
 }
