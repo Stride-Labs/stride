@@ -12,7 +12,9 @@ import (
 func TestMsgRemoveRateLimit(t *testing.T) {
 	apptesting.SetupConfig()
 	validAddr, invalidAddr := apptesting.GenerateTestAddrs()
-	validPathId := "denom/channel-0"
+
+	validDenom := "denom"
+	validChannelId := "channel-0"
 
 	tests := []struct {
 		name string
@@ -22,34 +24,38 @@ func TestMsgRemoveRateLimit(t *testing.T) {
 		{
 			name: "successful message",
 			msg: types.MsgRemoveRateLimit{
-				Creator: validAddr,
-				PathId:  validPathId,
+				Creator:   validAddr,
+				Denom:     validDenom,
+				ChannelId: validChannelId,
 			},
 			err: "",
 		},
 		{
 			name: "invalid creator",
 			msg: types.MsgRemoveRateLimit{
-				Creator: invalidAddr,
-				PathId:  validPathId,
+				Creator:   invalidAddr,
+				Denom:     validDenom,
+				ChannelId: validChannelId,
 			},
 			err: "invalid creator address",
 		},
 		{
-			name: "empty path",
+			name: "invalid denom",
 			msg: types.MsgRemoveRateLimit{
-				Creator: validAddr,
-				PathId:  "",
+				Creator:   validAddr,
+				Denom:     "",
+				ChannelId: validChannelId,
 			},
-			err: "empty pathId",
+			err: "invalid denom",
 		},
 		{
-			name: "invalid path",
+			name: "invalid channel-id",
 			msg: types.MsgRemoveRateLimit{
-				Creator: validAddr,
-				PathId:  "denom_channel-0",
+				Creator:   validAddr,
+				Denom:     validDenom,
+				ChannelId: "chan-1",
 			},
-			err: "invalid pathId",
+			err: "invalid channel-id",
 		},
 	}
 
@@ -64,7 +70,8 @@ func TestMsgRemoveRateLimit(t *testing.T) {
 				require.Equal(t, len(signers), 1)
 				require.Equal(t, signers[0].String(), validAddr)
 
-				require.Equal(t, test.msg.PathId, validPathId, "pathId")
+				require.Equal(t, test.msg.Denom, validDenom, "denom")
+				require.Equal(t, test.msg.ChannelId, validChannelId, "channelId")
 			} else {
 				require.ErrorContains(t, test.msg.ValidateBasic(), test.err, "test: %v", test.name)
 			}

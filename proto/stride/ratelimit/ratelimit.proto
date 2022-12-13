@@ -20,11 +20,9 @@ enum FlowDirection {
 }
 
 message Path {
-  // path identifier: ({Denom}/{ChannelId})
-  string id = 1;
-  string denom = 2;
-  string channel_id = 3;
-  string chain_id = 4;
+  string denom = 1;
+  string channel_id = 2;
+  string chain_id = 3;
 }
 
 message Quota {

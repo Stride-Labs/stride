@@ -13,7 +13,8 @@ func TestMsgUpdateRateLimit(t *testing.T) {
 	apptesting.SetupConfig()
 	validAddr, invalidAddr := apptesting.GenerateTestAddrs()
 
-	validPathId := "denom/channel-0"
+	validDenom := "denom"
+	validChannelId := "channel-0"
 	validMaxPercentSend := uint64(10)
 	validMaxPercentRecv := uint64(10)
 	validDurationHours := uint64(60)
@@ -27,7 +28,8 @@ func TestMsgUpdateRateLimit(t *testing.T) {
 			name: "successful msg",
 			msg: types.MsgUpdateRateLimit{
 				Creator:        validAddr,
-				PathId:         validPathId,
+				Denom:          validDenom,
+				ChannelId:      validChannelId,
 				MaxPercentSend: validMaxPercentSend,
 				MaxPercentRecv: validMaxPercentRecv,
 				DurationHours:  validDurationHours,
@@ -37,7 +39,8 @@ func TestMsgUpdateRateLimit(t *testing.T) {
 			name: "invalid creator",
 			msg: types.MsgUpdateRateLimit{
 				Creator:        invalidAddr,
-				PathId:         validPathId,
+				Denom:          validDenom,
+				ChannelId:      validChannelId,
 				MaxPercentSend: validMaxPercentSend,
 				MaxPercentRecv: validMaxPercentRecv,
 				DurationHours:  validDurationHours,
@@ -45,32 +48,35 @@ func TestMsgUpdateRateLimit(t *testing.T) {
 			err: "invalid creator address",
 		},
 		{
-			name: "empty pathId",
+			name: "invalid denom",
 			msg: types.MsgUpdateRateLimit{
 				Creator:        validAddr,
-				PathId:         "",
+				Denom:          "",
+				ChannelId:      validChannelId,
 				MaxPercentSend: validMaxPercentSend,
 				MaxPercentRecv: validMaxPercentRecv,
 				DurationHours:  validDurationHours,
 			},
-			err: "empty pathId",
+			err: "invalid denom",
 		},
 		{
-			name: "invalid pathId",
+			name: "invalid channel-id",
 			msg: types.MsgUpdateRateLimit{
 				Creator:        validAddr,
-				PathId:         "denom_channel-0",
+				Denom:          validDenom,
+				ChannelId:      "chan-0",
 				MaxPercentSend: validMaxPercentSend,
 				MaxPercentRecv: validMaxPercentRecv,
 				DurationHours:  validDurationHours,
 			},
-			err: "invalid pathId",
+			err: "invalid channel-id",
 		},
 		{
 			name: "invalid send percent",
 			msg: types.MsgUpdateRateLimit{
 				Creator:        validAddr,
-				PathId:         validPathId,
+				Denom:          validDenom,
+				ChannelId:      validChannelId,
 				MaxPercentSend: 101,
 				MaxPercentRecv: validMaxPercentRecv,
 				DurationHours:  validDurationHours,
@@ -81,7 +87,8 @@ func TestMsgUpdateRateLimit(t *testing.T) {
 			name: "invalid receive percent",
 			msg: types.MsgUpdateRateLimit{
 				Creator:        validAddr,
-				PathId:         validPathId,
+				Denom:          validDenom,
+				ChannelId:      validChannelId,
 				MaxPercentSend: validMaxPercentSend,
 				MaxPercentRecv: 101,
 				DurationHours:  validDurationHours,
@@ -92,7 +99,8 @@ func TestMsgUpdateRateLimit(t *testing.T) {
 			name: "invalid send and receive percent",
 			msg: types.MsgUpdateRateLimit{
 				Creator:        validAddr,
-				PathId:         validPathId,
+				Denom:          validDenom,
+				ChannelId:      validChannelId,
 				MaxPercentSend: 0,
 				MaxPercentRecv: 0,
 				DurationHours:  validDurationHours,
@@ -103,7 +111,8 @@ func TestMsgUpdateRateLimit(t *testing.T) {
 			name: "invalid duration",
 			msg: types.MsgUpdateRateLimit{
 				Creator:        validAddr,
-				PathId:         validPathId,
+				Denom:          validDenom,
+				ChannelId:      validChannelId,
 				MaxPercentSend: validMaxPercentSend,
 				MaxPercentRecv: validMaxPercentRecv,
 				DurationHours:  0,
@@ -123,7 +132,8 @@ func TestMsgUpdateRateLimit(t *testing.T) {
 				require.Equal(t, len(signers), 1)
 				require.Equal(t, signers[0].String(), validAddr)
 
-				require.Equal(t, test.msg.PathId, validPathId, "pathId")
+				require.Equal(t, test.msg.Denom, validDenom, "denom")
+				require.Equal(t, test.msg.ChannelId, validChannelId, "channelId")
 				require.Equal(t, test.msg.MaxPercentSend, validMaxPercentSend, "maxPercentSend")
 				require.Equal(t, test.msg.MaxPercentRecv, validMaxPercentRecv, "maxPercentRecv")
 				require.Equal(t, test.msg.DurationHours, validDurationHours, "durationHours")

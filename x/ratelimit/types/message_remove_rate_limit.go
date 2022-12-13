@@ -12,10 +12,11 @@ const TypeMsgRemoveRateLimit = "remove_rate_limit"
 
 var _ sdk.Msg = &MsgRemoveRateLimit{}
 
-func NewMsgRemoveRateLimit(creator string, pathId string) *MsgRemoveRateLimit {
+func NewMsgRemoveRateLimit(creator string, denom string, channelId string) *MsgRemoveRateLimit {
 	return &MsgRemoveRateLimit{
-		Creator: creator,
-		PathId:  pathId,
+		Creator:   creator,
+		Denom:     denom,
+		ChannelId: channelId,
 	}
 }
 
@@ -46,12 +47,12 @@ func (msg *MsgRemoveRateLimit) ValidateBasic() error {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid creator address (%s)", err)
 	}
 
-	if msg.PathId == "" {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "empty pathId")
+	if msg.Denom == "" {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "invalid denom")
 	}
 
-	if !strings.Contains(msg.PathId, "/") {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "invalid pathId")
+	if !strings.HasPrefix(msg.ChannelId, "channel-") {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "invalid channel-id")
 	}
 
 	return nil

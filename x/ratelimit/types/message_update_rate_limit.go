@@ -12,10 +12,11 @@ const TypeMsgUpdateRateLimit = "update_rate_limit"
 
 var _ sdk.Msg = &MsgUpdateRateLimit{}
 
-func NewMsgUpdateRateLimit(creator string, pathId string, maxPercentSend uint64, maxPercentRecv uint64, durationHours uint64) *MsgUpdateRateLimit {
+func NewMsgUpdateRateLimit(creator string, denom string, channelId string, maxPercentSend uint64, maxPercentRecv uint64, durationHours uint64) *MsgUpdateRateLimit {
 	return &MsgUpdateRateLimit{
 		Creator:        creator,
-		PathId:         pathId,
+		Denom:          denom,
+		ChannelId:      channelId,
 		MaxPercentSend: maxPercentSend,
 		MaxPercentRecv: maxPercentRecv,
 		DurationHours:  durationHours,
@@ -49,12 +50,12 @@ func (msg *MsgUpdateRateLimit) ValidateBasic() error {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid creator address (%s)", err)
 	}
 
-	if msg.PathId == "" {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "empty pathId")
+	if msg.Denom == "" {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "invalid denom")
 	}
 
-	if !strings.Contains(msg.PathId, "/") {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "invalid pathId")
+	if !strings.HasPrefix(msg.ChannelId, "channel-") {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "invalid channel-id")
 	}
 
 	if msg.MaxPercentRecv > 100 || msg.MaxPercentSend > 100 {

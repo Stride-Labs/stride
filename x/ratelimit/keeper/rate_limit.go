@@ -8,6 +8,11 @@ import (
 	"github.com/Stride-Labs/stride/v4/x/ratelimit/types"
 )
 
+// QUESTION FOR REVIEWER: Is this the right way to do a composite key?
+func GetRateLimitItemKey(denom string, channelId string) []byte {
+	return append(types.KeyPrefix(denom), types.KeyPrefix(channelId)...)
+}
+
 func CheckRateLimit(direction types.PacketDirection, packet exported.PacketI) error {
 	// TODO
 	return nil
@@ -17,24 +22,24 @@ func CheckRateLimit(direction types.PacketDirection, packet exported.PacketI) er
 func (k Keeper) SetRateLimit(ctx sdk.Context, rateLimit types.RateLimit) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.RateLimitKeyPrefix)
 
-	rateLimitKey := types.KeyPrefix(rateLimit.Path.Id)
+	rateLimitKey := GetRateLimitItemKey(rateLimit.Path.Denom, rateLimit.Path.ChannelId)
 	rateLimitValue := k.cdc.MustMarshal(&rateLimit)
 
 	store.Set(rateLimitKey, rateLimitValue)
 }
 
 // Removes a rate limit object from the store using the PathId
-func (k Keeper) RemoveRateLimit(ctx sdk.Context, pathId string) {
+func (k Keeper) RemoveRateLimit(ctx sdk.Context, denom string, channelId string) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.RateLimitKeyPrefix)
-	rateLimitKey := types.KeyPrefix(pathId)
+	rateLimitKey := GetRateLimitItemKey(denom, channelId)
 	store.Delete(rateLimitKey)
 }
 
 // Grabs and returns a rate limit object from the store using the PathId
-func (k Keeper) GetRateLimit(ctx sdk.Context, pathId string) (rateLimit types.RateLimit, found bool) {
+func (k Keeper) GetRateLimit(ctx sdk.Context, denom string, channelId string) (rateLimit types.RateLimit, found bool) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.RateLimitKeyPrefix)
 
-	rateLimitKey := types.KeyPrefix(pathId)
+	rateLimitKey := GetRateLimitItemKey(denom, channelId)
 	rateLimitValue := store.Get(rateLimitKey)
 
 	if rateLimitValue == nil || len(rateLimitValue) == 0 {

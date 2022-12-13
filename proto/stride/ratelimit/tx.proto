@@ -23,21 +23,24 @@ message MsgAddRateLimitResponse {}
 
 message MsgUpdateRateLimit {
   string creator = 1;
-  string path_id = 2;
-  uint64 max_percent_send = 3;
-  uint64 max_percent_recv = 4;
-  uint64 duration_hours = 5;
+  string denom = 2;
+  string channel_id = 3;
+  uint64 max_percent_send = 4;
+  uint64 max_percent_recv = 5;
+  uint64 duration_hours = 6;
 }
 message MsgUpdateRateLimitResponse {}
 
 message MsgRemoveRateLimit {
   string creator = 1;
-  string path_id = 2;
+  string denom = 2;
+  string channel_id = 3;
 }
 message MsgRemoveRateLimitResponse {}
 
 message MsgResetRateLimit {
   string creator = 1;
-  string path_id = 2;
+  string denom = 2;
+  string channel_id = 3;
 }
 message MsgResetRateLimitResponse {}

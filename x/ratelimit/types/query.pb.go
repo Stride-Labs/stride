@@ -29,174 +29,6 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
-type QueryPathsRequest struct {
-}
-
-func (m *QueryPathsRequest) Reset()         { *m = QueryPathsRequest{} }
-func (m *QueryPathsRequest) String() string { return proto.CompactTextString(m) }
-func (*QueryPathsRequest) ProtoMessage()    {}
-func (*QueryPathsRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_97a373ef8fcef03b, []int{0}
-}
-func (m *QueryPathsRequest) XXX_Unmarshal(b []byte) error {
-	return m.Unmarshal(b)
-}
-func (m *QueryPathsRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	if deterministic {
-		return xxx_messageInfo_QueryPathsRequest.Marshal(b, m, deterministic)
-	} else {
-		b = b[:cap(b)]
-		n, err := m.MarshalToSizedBuffer(b)
-		if err != nil {
-			return nil, err
-		}
-		return b[:n], nil
-	}
-}
-func (m *QueryPathsRequest) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_QueryPathsRequest.Merge(m, src)
-}
-func (m *QueryPathsRequest) XXX_Size() int {
-	return m.Size()
-}
-func (m *QueryPathsRequest) XXX_DiscardUnknown() {
-	xxx_messageInfo_QueryPathsRequest.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_QueryPathsRequest proto.InternalMessageInfo
-
-type QueryPathsResponse struct {
-	Paths []Path `protobuf:"bytes,1,rep,name=paths,proto3" json:"paths"`
-}
-
-func (m *QueryPathsResponse) Reset()         { *m = QueryPathsResponse{} }
-func (m *QueryPathsResponse) String() string { return proto.CompactTextString(m) }
-func (*QueryPathsResponse) ProtoMessage()    {}
-func (*QueryPathsResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_97a373ef8fcef03b, []int{1}
-}
-func (m *QueryPathsResponse) XXX_Unmarshal(b []byte) error {
-	return m.Unmarshal(b)
-}
-func (m *QueryPathsResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	if deterministic {
-		return xxx_messageInfo_QueryPathsResponse.Marshal(b, m, deterministic)
-	} else {
-		b = b[:cap(b)]
-		n, err := m.MarshalToSizedBuffer(b)
-		if err != nil {
-			return nil, err
-		}
-		return b[:n], nil
-	}
-}
-func (m *QueryPathsResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_QueryPathsResponse.Merge(m, src)
-}
-func (m *QueryPathsResponse) XXX_Size() int {
-	return m.Size()
-}
-func (m *QueryPathsResponse) XXX_DiscardUnknown() {
-	xxx_messageInfo_QueryPathsResponse.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_QueryPathsResponse proto.InternalMessageInfo
-
-func (m *QueryPathsResponse) GetPaths() []Path {
-	if m != nil {
-		return m.Paths
-	}
-	return nil
-}
-
-type QueryPathRequest struct {
-	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-}
-
-func (m *QueryPathRequest) Reset()         { *m = QueryPathRequest{} }
-func (m *QueryPathRequest) String() string { return proto.CompactTextString(m) }
-func (*QueryPathRequest) ProtoMessage()    {}
-func (*QueryPathRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_97a373ef8fcef03b, []int{2}
-}
-func (m *QueryPathRequest) XXX_Unmarshal(b []byte) error {
-	return m.Unmarshal(b)
-}
-func (m *QueryPathRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	if deterministic {
-		return xxx_messageInfo_QueryPathRequest.Marshal(b, m, deterministic)
-	} else {
-		b = b[:cap(b)]
-		n, err := m.MarshalToSizedBuffer(b)
-		if err != nil {
-			return nil, err
-		}
-		return b[:n], nil
-	}
-}
-func (m *QueryPathRequest) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_QueryPathRequest.Merge(m, src)
-}
-func (m *QueryPathRequest) XXX_Size() int {
-	return m.Size()
-}
-func (m *QueryPathRequest) XXX_DiscardUnknown() {
-	xxx_messageInfo_QueryPathRequest.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_QueryPathRequest proto.InternalMessageInfo
-
-func (m *QueryPathRequest) GetId() string {
-	if m != nil {
-		return m.Id
-	}
-	return ""
-}
-
-type QueryPathResponse struct {
-	Path *Path `protobuf:"bytes,1,opt,name=path,proto3" json:"path,omitempty"`
-}
-
-func (m *QueryPathResponse) Reset()         { *m = QueryPathResponse{} }
-func (m *QueryPathResponse) String() string { return proto.CompactTextString(m) }
-func (*QueryPathResponse) ProtoMessage()    {}
-func (*QueryPathResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_97a373ef8fcef03b, []int{3}
-}
-func (m *QueryPathResponse) XXX_Unmarshal(b []byte) error {
-	return m.Unmarshal(b)
-}
-func (m *QueryPathResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	if deterministic {
-		return xxx_messageInfo_QueryPathResponse.Marshal(b, m, deterministic)
-	} else {
-		b = b[:cap(b)]
-		n, err := m.MarshalToSizedBuffer(b)
-		if err != nil {
-			return nil, err
-		}
-		return b[:n], nil
-	}
-}
-func (m *QueryPathResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_QueryPathResponse.Merge(m, src)
-}
-func (m *QueryPathResponse) XXX_Size() int {
-	return m.Size()
-}
-func (m *QueryPathResponse) XXX_DiscardUnknown() {
-	xxx_messageInfo_QueryPathResponse.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_QueryPathResponse proto.InternalMessageInfo
-
-func (m *QueryPathResponse) GetPath() *Path {
-	if m != nil {
-		return m.Path
-	}
-	return nil
-}
-
 type QueryRateLimitsRequest struct {
 }
 
@@ -204,7 +36,7 @@ func (m *QueryRateLimitsRequest) Reset()         { *m = QueryRateLimitsRequest{}
 func (m *QueryRateLimitsRequest) String() string { return proto.CompactTextString(m) }
 func (*QueryRateLimitsRequest) ProtoMessage()    {}
 func (*QueryRateLimitsRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_97a373ef8fcef03b, []int{4}
+	return fileDescriptor_97a373ef8fcef03b, []int{0}
 }
 func (m *QueryRateLimitsRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -241,7 +73,7 @@ func (m *QueryRateLimitsResponse) Reset()         { *m = QueryRateLimitsResponse
 func (m *QueryRateLimitsResponse) String() string { return proto.CompactTextString(m) }
 func (*QueryRateLimitsResponse) ProtoMessage()    {}
 func (*QueryRateLimitsResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_97a373ef8fcef03b, []int{5}
+	return fileDescriptor_97a373ef8fcef03b, []int{1}
 }
 func (m *QueryRateLimitsResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -278,14 +110,15 @@ func (m *QueryRateLimitsResponse) GetRateLimits() []RateLimit {
 }
 
 type QueryRateLimitRequest struct {
-	PathId string `protobuf:"bytes,1,opt,name=path_id,json=pathId,proto3" json:"path_id,omitempty"`
+	Denom     string `protobuf:"bytes,1,opt,name=denom,proto3" json:"denom,omitempty"`
+	ChannelId string `protobuf:"bytes,2,opt,name=channel_id,json=channelId,proto3" json:"channel_id,omitempty"`
 }
 
 func (m *QueryRateLimitRequest) Reset()         { *m = QueryRateLimitRequest{} }
 func (m *QueryRateLimitRequest) String() string { return proto.CompactTextString(m) }
 func (*QueryRateLimitRequest) ProtoMessage()    {}
 func (*QueryRateLimitRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_97a373ef8fcef03b, []int{6}
+	return fileDescriptor_97a373ef8fcef03b, []int{2}
 }
 func (m *QueryRateLimitRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -314,9 +147,16 @@ func (m *QueryRateLimitRequest) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_QueryRateLimitRequest proto.InternalMessageInfo
 
-func (m *QueryRateLimitRequest) GetPathId() string {
+func (m *QueryRateLimitRequest) GetDenom() string {
 	if m != nil {
-		return m.PathId
+		return m.Denom
+	}
+	return ""
+}
+
+func (m *QueryRateLimitRequest) GetChannelId() string {
+	if m != nil {
+		return m.ChannelId
 	}
 	return ""
 }
@@ -329,7 +169,7 @@ func (m *QueryRateLimitResponse) Reset()         { *m = QueryRateLimitResponse{}
 func (m *QueryRateLimitResponse) String() string { return proto.CompactTextString(m) }
 func (*QueryRateLimitResponse) ProtoMessage()    {}
 func (*QueryRateLimitResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_97a373ef8fcef03b, []int{7}
+	return fileDescriptor_97a373ef8fcef03b, []int{3}
 }
 func (m *QueryRateLimitResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -366,10 +206,6 @@ func (m *QueryRateLimitResponse) GetRateLimit() *RateLimit {
 }
 
 func init() {
-	proto.RegisterType((*QueryPathsRequest)(nil), "stride.ratelimit.QueryPathsRequest")
-	proto.RegisterType((*QueryPathsResponse)(nil), "stride.ratelimit.QueryPathsResponse")
-	proto.RegisterType((*QueryPathRequest)(nil), "stride.ratelimit.QueryPathRequest")
-	proto.RegisterType((*QueryPathResponse)(nil), "stride.ratelimit.QueryPathResponse")
 	proto.RegisterType((*QueryRateLimitsRequest)(nil), "stride.ratelimit.QueryRateLimitsRequest")
 	proto.RegisterType((*QueryRateLimitsResponse)(nil), "stride.ratelimit.QueryRateLimitsResponse")
 	proto.RegisterType((*QueryRateLimitRequest)(nil), "stride.ratelimit.QueryRateLimitRequest")
@@ -379,38 +215,32 @@ func init() {
 func init() { proto.RegisterFile("stride/ratelimit/query.proto", fileDescriptor_97a373ef8fcef03b) }
 
 var fileDescriptor_97a373ef8fcef03b = []byte{
-	// 494 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x8c, 0x94, 0x41, 0x6b, 0x13, 0x41,
-	0x14, 0xc7, 0xb3, 0x69, 0x52, 0xc9, 0x2b, 0x48, 0x7c, 0xb6, 0x49, 0x88, 0x71, 0x0d, 0x53, 0xd1,
-	0x28, 0x98, 0x91, 0xe8, 0xc9, 0x8b, 0x90, 0x93, 0x42, 0x0e, 0xba, 0x7a, 0x12, 0xa4, 0x6c, 0xdc,
-	0x61, 0x3b, 0x90, 0x64, 0xb6, 0x3b, 0x13, 0xb1, 0x94, 0x82, 0x78, 0xf0, 0x2c, 0xf8, 0xa5, 0x7a,
-	0x2c, 0x78, 0xf1, 0x24, 0x92, 0xf8, 0x01, 0xfc, 0x08, 0x32, 0xb3, 0x93, 0x69, 0xcc, 0xb6, 0x69,
-	0x6f, 0x93, 0x79, 0xff, 0xf7, 0xff, 0xfd, 0x1f, 0x6f, 0xb2, 0xd0, 0x92, 0x2a, 0xe5, 0x11, 0xa3,
-	0x69, 0xa8, 0xd8, 0x88, 0x8f, 0xb9, 0xa2, 0x07, 0x53, 0x96, 0x1e, 0x76, 0x93, 0x54, 0x28, 0x81,
-	0xd5, 0xac, 0xda, 0x75, 0xd5, 0x66, 0x3b, 0xa7, 0x77, 0xa7, 0xac, 0xa7, 0xd9, 0x8a, 0x85, 0x88,
-	0x47, 0x8c, 0x86, 0x09, 0xa7, 0xe1, 0x64, 0x22, 0x54, 0xa8, 0xb8, 0x98, 0x48, 0x5b, 0xdd, 0x8e,
-	0x45, 0x2c, 0xcc, 0x91, 0xea, 0x53, 0x76, 0x4b, 0x6e, 0xc2, 0x8d, 0xd7, 0x1a, 0xfb, 0x2a, 0x54,
-	0xfb, 0x32, 0x60, 0x07, 0x53, 0x26, 0x15, 0x79, 0x01, 0xb8, 0x7c, 0x29, 0x13, 0x31, 0x91, 0x0c,
-	0x7b, 0x50, 0x4e, 0xf4, 0x45, 0xc3, 0x6b, 0x6f, 0x74, 0xb6, 0x7a, 0xb5, 0xee, 0x6a, 0xc4, 0xae,
-	0xd6, 0xf7, 0x4b, 0x27, 0xbf, 0xee, 0x14, 0x82, 0x4c, 0x4a, 0x08, 0x54, 0x9d, 0x93, 0x75, 0xc7,
-	0xeb, 0x50, 0xe4, 0x51, 0xc3, 0x6b, 0x7b, 0x9d, 0x4a, 0x50, 0xe4, 0x11, 0x79, 0xbe, 0x14, 0xc1,
-	0xc1, 0x1e, 0x42, 0x49, 0x3b, 0x18, 0xd9, 0x85, 0xac, 0xc0, 0x68, 0x48, 0x03, 0x6a, 0xc6, 0x20,
-	0x08, 0x15, 0x1b, 0xe8, 0xa2, 0x1b, 0xe4, 0x3d, 0xd4, 0x73, 0x15, 0x0b, 0xe8, 0xc3, 0x96, 0x36,
-	0xdb, 0x33, 0x6e, 0x8b, 0x99, 0x6e, 0xe5, 0x39, 0xae, 0xd5, 0x0e, 0x06, 0xa9, 0xf3, 0x22, 0x8f,
-	0x61, 0xe7, 0x7f, 0xfb, 0xc5, 0x88, 0x75, 0xb8, 0xa6, 0x93, 0xed, 0xb9, 0x39, 0x37, 0xf5, 0xcf,
-	0x97, 0x11, 0x79, 0xbb, 0x1a, 0xd5, 0xe5, 0x79, 0x06, 0x70, 0x96, 0xc7, 0x8e, 0xbd, 0x2e, 0x4e,
-	0x50, 0x71, 0x41, 0x7a, 0x7f, 0x37, 0xa0, 0x6c, 0x6c, 0x71, 0x04, 0x65, 0xb3, 0x34, 0xdc, 0xcd,
-	0xb7, 0xe6, 0xf6, 0xdc, 0xbc, 0xbb, 0x5e, 0x94, 0x25, 0x23, 0x8d, 0x2f, 0x3f, 0xfe, 0x7c, 0x2f,
-	0x22, 0x56, 0x97, 0x9e, 0x9e, 0xd9, 0x2e, 0x8e, 0xa1, 0xa4, 0xa5, 0x48, 0xd6, 0xf8, 0x2c, 0x58,
-	0xbb, 0x6b, 0x35, 0x16, 0xd5, 0x32, 0xa8, 0x1a, 0x6e, 0xaf, 0xa0, 0xe8, 0x11, 0x8f, 0x8e, 0xf1,
-	0xb3, 0x07, 0x70, 0xb6, 0x49, 0xec, 0x5c, 0xe0, 0x98, 0x7b, 0x06, 0xcd, 0x07, 0x57, 0x50, 0xda,
-	0x04, 0xb7, 0x4d, 0x82, 0x3a, 0xee, 0x9c, 0xf7, 0x3f, 0x93, 0xf8, 0xd5, 0x83, 0x8a, 0xeb, 0xc2,
-	0xfb, 0x97, 0xf9, 0x2e, 0x02, 0x74, 0x2e, 0x17, 0x5a, 0xfe, 0x3d, 0xc3, 0x6f, 0xa3, 0x7f, 0x1e,
-	0x9f, 0x1e, 0xd9, 0x57, 0x75, 0xdc, 0x1f, 0x9c, 0xcc, 0x7c, 0xef, 0x74, 0xe6, 0x7b, 0xbf, 0x67,
-	0xbe, 0xf7, 0x6d, 0xee, 0x17, 0x4e, 0xe7, 0x7e, 0xe1, 0xe7, 0xdc, 0x2f, 0xbc, 0xeb, 0xc5, 0x5c,
-	0xed, 0x4f, 0x87, 0xdd, 0x0f, 0x62, 0x4c, 0xdf, 0x18, 0xea, 0xa3, 0x41, 0x38, 0x94, 0xd4, 0x7e,
-	0x3e, 0x3e, 0x3e, 0xa5, 0x9f, 0x96, 0x1c, 0xd5, 0x61, 0xc2, 0xe4, 0x70, 0xd3, 0x7c, 0x0c, 0x9e,
-	0xfc, 0x0b, 0x00, 0x00, 0xff, 0xff, 0xa3, 0x9c, 0x41, 0x1d, 0x94, 0x04, 0x00, 0x00,
+	// 392 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x8c, 0x92, 0xc1, 0x4e, 0xf2, 0x40,
+	0x14, 0x85, 0x3b, 0xfc, 0x3f, 0x26, 0x1d, 0x36, 0x66, 0x02, 0xd2, 0x20, 0x54, 0xd2, 0x8d, 0x25,
+	0xc6, 0x4e, 0x44, 0x57, 0x2e, 0xd9, 0x99, 0x74, 0x63, 0x75, 0x65, 0x62, 0x48, 0xa1, 0x93, 0xd2,
+	0x04, 0x3a, 0xa5, 0x33, 0x18, 0x09, 0x21, 0x31, 0x3e, 0x81, 0xc6, 0xbd, 0xcf, 0xc3, 0x92, 0xc4,
+	0x8d, 0x2b, 0x63, 0xc0, 0x07, 0x31, 0x9d, 0xd6, 0xa2, 0x40, 0xc4, 0xdd, 0xed, 0x9c, 0x7b, 0xcf,
+	0xf9, 0x3a, 0x77, 0x60, 0x99, 0xf1, 0xd0, 0x73, 0x08, 0x0e, 0x6d, 0x4e, 0xba, 0x5e, 0xcf, 0xe3,
+	0xb8, 0x3f, 0x20, 0xe1, 0xd0, 0x08, 0x42, 0xca, 0x29, 0xda, 0x8e, 0x55, 0x23, 0x55, 0x4b, 0xd5,
+	0x95, 0xfe, 0xb4, 0x8a, 0x67, 0x4a, 0x65, 0x97, 0x52, 0xb7, 0x4b, 0xb0, 0x1d, 0x78, 0xd8, 0xf6,
+	0x7d, 0xca, 0x6d, 0xee, 0x51, 0x9f, 0x25, 0x6a, 0xde, 0xa5, 0x2e, 0x15, 0x25, 0x8e, 0xaa, 0xf8,
+	0x54, 0x53, 0xe0, 0xce, 0x79, 0x14, 0x6b, 0xd9, 0x9c, 0x98, 0x91, 0x17, 0xb3, 0x48, 0x7f, 0x40,
+	0x18, 0xd7, 0xae, 0x61, 0x71, 0x45, 0x61, 0x01, 0xf5, 0x19, 0x41, 0x0d, 0x98, 0x8b, 0xb2, 0x9b,
+	0x22, 0x9c, 0x29, 0xa0, 0xfa, 0x4f, 0xcf, 0xd5, 0x77, 0x8d, 0x65, 0x64, 0x23, 0x1d, 0x6d, 0xfc,
+	0x9f, 0xbc, 0xed, 0x49, 0x16, 0x0c, 0x53, 0x2f, 0xcd, 0x84, 0x85, 0x9f, 0xf6, 0x49, 0x2e, 0xca,
+	0xc3, 0xac, 0x43, 0x7c, 0xda, 0x53, 0x40, 0x15, 0xe8, 0xb2, 0x15, 0x7f, 0xa0, 0x0a, 0x84, 0xed,
+	0x8e, 0xed, 0xfb, 0xa4, 0xdb, 0xf4, 0x1c, 0x25, 0x23, 0x24, 0x39, 0x39, 0x39, 0x73, 0xb4, 0xcb,
+	0xe5, 0xdf, 0x48, 0x59, 0x4f, 0x21, 0x5c, 0xb0, 0x0a, 0xcf, 0xdf, 0x51, 0x2d, 0x39, 0x85, 0xac,
+	0x3f, 0x67, 0x60, 0x56, 0xd8, 0xa2, 0x3b, 0x00, 0xe1, 0xe2, 0x22, 0x90, 0xbe, 0x6a, 0xb0, 0xfe,
+	0x16, 0x4b, 0xb5, 0x3f, 0x74, 0xc6, 0xa4, 0x5a, 0xe5, 0xfe, 0xe5, 0xe3, 0x29, 0x53, 0x44, 0x85,
+	0x75, 0x2b, 0x66, 0xe8, 0x11, 0x40, 0x39, 0x9d, 0x42, 0xfb, 0x9b, 0x7c, 0xbf, 0x00, 0xf4, 0xcd,
+	0x8d, 0x49, 0xfe, 0x91, 0xc8, 0x3f, 0x40, 0xb5, 0x75, 0xf9, 0x78, 0x24, 0xf6, 0x30, 0xc6, 0xa3,
+	0xc5, 0x1a, 0xc6, 0x0d, 0x73, 0x32, 0x53, 0xc1, 0x74, 0xa6, 0x82, 0xf7, 0x99, 0x0a, 0x1e, 0xe6,
+	0xaa, 0x34, 0x9d, 0xab, 0xd2, 0xeb, 0x5c, 0x95, 0xae, 0xea, 0xae, 0xc7, 0x3b, 0x83, 0x96, 0xd1,
+	0xa6, 0x3d, 0x7c, 0x21, 0x00, 0x0e, 0x4d, 0xbb, 0xc5, 0x70, 0xf2, 0x88, 0x6f, 0x4e, 0xf0, 0xed,
+	0x37, 0x73, 0x3e, 0x0c, 0x08, 0x6b, 0x6d, 0x89, 0x27, 0x79, 0xfc, 0x19, 0x00, 0x00, 0xff, 0xff,
+	0x45, 0x6b, 0xdd, 0xf9, 0x1a, 0x03, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -425,8 +255,6 @@ const _ = grpc.SupportPackageIsVersion4
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
 type QueryClient interface {
-	Paths(ctx context.Context, in *QueryPathsRequest, opts ...grpc.CallOption) (*QueryPathsResponse, error)
-	Path(ctx context.Context, in *QueryPathRequest, opts ...grpc.CallOption) (*QueryPathResponse, error)
 	RateLimits(ctx context.Context, in *QueryRateLimitsRequest, opts ...grpc.CallOption) (*QueryRateLimitsResponse, error)
 	RateLimit(ctx context.Context, in *QueryRateLimitRequest, opts ...grpc.CallOption) (*QueryRateLimitResponse, error)
 }
@@ -437,24 +265,6 @@ type queryClient struct {
 
 func NewQueryClient(cc grpc1.ClientConn) QueryClient {
 	return &queryClient{cc}
-}
-
-func (c *queryClient) Paths(ctx context.Context, in *QueryPathsRequest, opts ...grpc.CallOption) (*QueryPathsResponse, error) {
-	out := new(QueryPathsResponse)
-	err := c.cc.Invoke(ctx, "/stride.ratelimit.Query/Paths", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *queryClient) Path(ctx context.Context, in *QueryPathRequest, opts ...grpc.CallOption) (*QueryPathResponse, error) {
-	out := new(QueryPathResponse)
-	err := c.cc.Invoke(ctx, "/stride.ratelimit.Query/Path", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
 }
 
 func (c *queryClient) RateLimits(ctx context.Context, in *QueryRateLimitsRequest, opts ...grpc.CallOption) (*QueryRateLimitsResponse, error) {
@@ -477,8 +287,6 @@ func (c *queryClient) RateLimit(ctx context.Context, in *QueryRateLimitRequest, 
 
 // QueryServer is the server API for Query service.
 type QueryServer interface {
-	Paths(context.Context, *QueryPathsRequest) (*QueryPathsResponse, error)
-	Path(context.Context, *QueryPathRequest) (*QueryPathResponse, error)
 	RateLimits(context.Context, *QueryRateLimitsRequest) (*QueryRateLimitsResponse, error)
 	RateLimit(context.Context, *QueryRateLimitRequest) (*QueryRateLimitResponse, error)
 }
@@ -487,12 +295,6 @@ type QueryServer interface {
 type UnimplementedQueryServer struct {
 }
 
-func (*UnimplementedQueryServer) Paths(ctx context.Context, req *QueryPathsRequest) (*QueryPathsResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Paths not implemented")
-}
-func (*UnimplementedQueryServer) Path(ctx context.Context, req *QueryPathRequest) (*QueryPathResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Path not implemented")
-}
 func (*UnimplementedQueryServer) RateLimits(ctx context.Context, req *QueryRateLimitsRequest) (*QueryRateLimitsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RateLimits not implemented")
 }
@@ -502,42 +304,6 @@ func (*UnimplementedQueryServer) RateLimit(ctx context.Context, req *QueryRateLi
 
 func RegisterQueryServer(s grpc1.Server, srv QueryServer) {
 	s.RegisterService(&_Query_serviceDesc, srv)
-}
-
-func _Query_Paths_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(QueryPathsRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(QueryServer).Paths(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/stride.ratelimit.Query/Paths",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(QueryServer).Paths(ctx, req.(*QueryPathsRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _Query_Path_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(QueryPathRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(QueryServer).Path(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/stride.ratelimit.Query/Path",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(QueryServer).Path(ctx, req.(*QueryPathRequest))
-	}
-	return interceptor(ctx, in, info, handler)
 }
 
 func _Query_RateLimits_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -581,14 +347,6 @@ var _Query_serviceDesc = grpc.ServiceDesc{
 	HandlerType: (*QueryServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "Paths",
-			Handler:    _Query_Paths_Handler,
-		},
-		{
-			MethodName: "Path",
-			Handler:    _Query_Path_Handler,
-		},
-		{
 			MethodName: "RateLimits",
 			Handler:    _Query_RateLimits_Handler,
 		},
@@ -599,131 +357,6 @@ var _Query_serviceDesc = grpc.ServiceDesc{
 	},
 	Streams:  []grpc.StreamDesc{},
 	Metadata: "stride/ratelimit/query.proto",
-}
-
-func (m *QueryPathsRequest) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalToSizedBuffer(dAtA[:size])
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *QueryPathsRequest) MarshalTo(dAtA []byte) (int, error) {
-	size := m.Size()
-	return m.MarshalToSizedBuffer(dAtA[:size])
-}
-
-func (m *QueryPathsRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
-	i := len(dAtA)
-	_ = i
-	var l int
-	_ = l
-	return len(dAtA) - i, nil
-}
-
-func (m *QueryPathsResponse) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalToSizedBuffer(dAtA[:size])
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *QueryPathsResponse) MarshalTo(dAtA []byte) (int, error) {
-	size := m.Size()
-	return m.MarshalToSizedBuffer(dAtA[:size])
-}
-
-func (m *QueryPathsResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
-	i := len(dAtA)
-	_ = i
-	var l int
-	_ = l
-	if len(m.Paths) > 0 {
-		for iNdEx := len(m.Paths) - 1; iNdEx >= 0; iNdEx-- {
-			{
-				size, err := m.Paths[iNdEx].MarshalToSizedBuffer(dAtA[:i])
-				if err != nil {
-					return 0, err
-				}
-				i -= size
-				i = encodeVarintQuery(dAtA, i, uint64(size))
-			}
-			i--
-			dAtA[i] = 0xa
-		}
-	}
-	return len(dAtA) - i, nil
-}
-
-func (m *QueryPathRequest) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalToSizedBuffer(dAtA[:size])
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *QueryPathRequest) MarshalTo(dAtA []byte) (int, error) {
-	size := m.Size()
-	return m.MarshalToSizedBuffer(dAtA[:size])
-}
-
-func (m *QueryPathRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
-	i := len(dAtA)
-	_ = i
-	var l int
-	_ = l
-	if len(m.Id) > 0 {
-		i -= len(m.Id)
-		copy(dAtA[i:], m.Id)
-		i = encodeVarintQuery(dAtA, i, uint64(len(m.Id)))
-		i--
-		dAtA[i] = 0xa
-	}
-	return len(dAtA) - i, nil
-}
-
-func (m *QueryPathResponse) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalToSizedBuffer(dAtA[:size])
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *QueryPathResponse) MarshalTo(dAtA []byte) (int, error) {
-	size := m.Size()
-	return m.MarshalToSizedBuffer(dAtA[:size])
-}
-
-func (m *QueryPathResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
-	i := len(dAtA)
-	_ = i
-	var l int
-	_ = l
-	if m.Path != nil {
-		{
-			size, err := m.Path.MarshalToSizedBuffer(dAtA[:i])
-			if err != nil {
-				return 0, err
-			}
-			i -= size
-			i = encodeVarintQuery(dAtA, i, uint64(size))
-		}
-		i--
-		dAtA[i] = 0xa
-	}
-	return len(dAtA) - i, nil
 }
 
 func (m *QueryRateLimitsRequest) Marshal() (dAtA []byte, err error) {
@@ -806,10 +439,17 @@ func (m *QueryRateLimitRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	_ = i
 	var l int
 	_ = l
-	if len(m.PathId) > 0 {
-		i -= len(m.PathId)
-		copy(dAtA[i:], m.PathId)
-		i = encodeVarintQuery(dAtA, i, uint64(len(m.PathId)))
+	if len(m.ChannelId) > 0 {
+		i -= len(m.ChannelId)
+		copy(dAtA[i:], m.ChannelId)
+		i = encodeVarintQuery(dAtA, i, uint64(len(m.ChannelId)))
+		i--
+		dAtA[i] = 0x12
+	}
+	if len(m.Denom) > 0 {
+		i -= len(m.Denom)
+		copy(dAtA[i:], m.Denom)
+		i = encodeVarintQuery(dAtA, i, uint64(len(m.Denom)))
 		i--
 		dAtA[i] = 0xa
 	}
@@ -862,56 +502,6 @@ func encodeVarintQuery(dAtA []byte, offset int, v uint64) int {
 	dAtA[offset] = uint8(v)
 	return base
 }
-func (m *QueryPathsRequest) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	return n
-}
-
-func (m *QueryPathsResponse) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	if len(m.Paths) > 0 {
-		for _, e := range m.Paths {
-			l = e.Size()
-			n += 1 + l + sovQuery(uint64(l))
-		}
-	}
-	return n
-}
-
-func (m *QueryPathRequest) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	l = len(m.Id)
-	if l > 0 {
-		n += 1 + l + sovQuery(uint64(l))
-	}
-	return n
-}
-
-func (m *QueryPathResponse) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	if m.Path != nil {
-		l = m.Path.Size()
-		n += 1 + l + sovQuery(uint64(l))
-	}
-	return n
-}
-
 func (m *QueryRateLimitsRequest) Size() (n int) {
 	if m == nil {
 		return 0
@@ -942,7 +532,11 @@ func (m *QueryRateLimitRequest) Size() (n int) {
 	}
 	var l int
 	_ = l
-	l = len(m.PathId)
+	l = len(m.Denom)
+	if l > 0 {
+		n += 1 + l + sovQuery(uint64(l))
+	}
+	l = len(m.ChannelId)
 	if l > 0 {
 		n += 1 + l + sovQuery(uint64(l))
 	}
@@ -967,308 +561,6 @@ func sovQuery(x uint64) (n int) {
 }
 func sozQuery(x uint64) (n int) {
 	return sovQuery(uint64((x << 1) ^ uint64((int64(x) >> 63))))
-}
-func (m *QueryPathsRequest) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowQuery
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= uint64(b&0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: QueryPathsRequest: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: QueryPathsRequest: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		default:
-			iNdEx = preIndex
-			skippy, err := skipQuery(dAtA[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if (skippy < 0) || (iNdEx+skippy) < 0 {
-				return ErrInvalidLengthQuery
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
-func (m *QueryPathsResponse) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowQuery
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= uint64(b&0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: QueryPathsResponse: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: QueryPathsResponse: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		case 1:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Paths", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowQuery
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				msglen |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if msglen < 0 {
-				return ErrInvalidLengthQuery
-			}
-			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthQuery
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Paths = append(m.Paths, Path{})
-			if err := m.Paths[len(m.Paths)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			iNdEx = postIndex
-		default:
-			iNdEx = preIndex
-			skippy, err := skipQuery(dAtA[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if (skippy < 0) || (iNdEx+skippy) < 0 {
-				return ErrInvalidLengthQuery
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
-func (m *QueryPathRequest) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowQuery
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= uint64(b&0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: QueryPathRequest: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: QueryPathRequest: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		case 1:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Id", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowQuery
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthQuery
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthQuery
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Id = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		default:
-			iNdEx = preIndex
-			skippy, err := skipQuery(dAtA[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if (skippy < 0) || (iNdEx+skippy) < 0 {
-				return ErrInvalidLengthQuery
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
-func (m *QueryPathResponse) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowQuery
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= uint64(b&0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: QueryPathResponse: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: QueryPathResponse: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		case 1:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Path", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowQuery
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				msglen |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if msglen < 0 {
-				return ErrInvalidLengthQuery
-			}
-			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthQuery
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			if m.Path == nil {
-				m.Path = &Path{}
-			}
-			if err := m.Path.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			iNdEx = postIndex
-		default:
-			iNdEx = preIndex
-			skippy, err := skipQuery(dAtA[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if (skippy < 0) || (iNdEx+skippy) < 0 {
-				return ErrInvalidLengthQuery
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
 }
 func (m *QueryRateLimitsRequest) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
@@ -1435,7 +727,7 @@ func (m *QueryRateLimitRequest) Unmarshal(dAtA []byte) error {
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field PathId", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field Denom", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -1463,7 +755,39 @@ func (m *QueryRateLimitRequest) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.PathId = string(dAtA[iNdEx:postIndex])
+			m.Denom = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ChannelId", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.ChannelId = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex

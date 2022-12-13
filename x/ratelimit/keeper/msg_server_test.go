@@ -16,18 +16,21 @@ var addRateLimitMsg = &types.MsgAddRateLimit{
 }
 
 var updateLimitMsg = &types.MsgUpdateRateLimit{
-	PathId:         "denom/channel-0",
+	Denom:          "denom",
+	ChannelId:      "channel-0",
 	MaxPercentRecv: 10,
 	MaxPercentSend: 20,
 	DurationHours:  30,
 }
 
 var removeRateLimitMsg = &types.MsgRemoveRateLimit{
-	PathId: "denom/channel-0",
+	Denom:     "denom",
+	ChannelId: "channel-0",
 }
 
 var resetRateLimitMsg = &types.MsgResetRateLimit{
-	PathId: "denom/channel-0",
+	Denom:     "denom",
+	ChannelId: "channel-0",
 }
 
 func (s *KeeperTestSuite) TestMsgServer_AddRateLimit() {
@@ -35,12 +38,17 @@ func (s *KeeperTestSuite) TestMsgServer_AddRateLimit() {
 	validAddr, _ := apptesting.GenerateTestAddrs()
 	addRateLimitMsg.Creator = validAddr
 
+	denom := addRateLimitMsg.Denom
+	channelId := addRateLimitMsg.ChannelId
+
 	// TODO: Uncomment once function is implemented
+	_ = denom
+	_ = channelId
 	// // Add a rate limit successfully
 	// _, err := s.GetMsgServer().AddRateLimit(sdk.WrapSDKContext(s.Ctx), addRateLimitMsg)
 	// s.Require().NoError(err)
 
-	// _, found := s.App.RatelimitKeeper.GetRateLimit(s.Ctx, "denom/channel-0")
+	// _, found := s.App.RatelimitKeeper.GetRateLimit(s.Ctx, denom, channelId)
 	// s.Require().True(found)
 
 	// // check for duplicate rate limit
@@ -54,10 +62,12 @@ func (s *KeeperTestSuite) TestMsgServer_RemoveRateLimit() {
 
 	addRateLimitMsg.Creator = validAddr
 	removeRateLimitMsg.Creator = validAddr
-	pathId := removeRateLimitMsg.PathId
+	denom := removeRateLimitMsg.Denom
+	channelId := removeRateLimitMsg.ChannelId
 
 	// TODO: Uncomment once function is implemented
-	_ = pathId
+	_ = denom
+	_ = channelId
 	// // Attempt to remove a rate limit that does not exist
 	// _, err := s.GetMsgServer().RemoveRateLimit(sdk.WrapSDKContext(s.Ctx), removeRateLimitMsg)
 	// s.Require().Error(err)
@@ -66,13 +76,13 @@ func (s *KeeperTestSuite) TestMsgServer_RemoveRateLimit() {
 	// _, err = s.GetMsgServer().AddRateLimit(sdk.WrapSDKContext(s.Ctx), addRateLimitMsg)
 	// s.Require().NoError(err)
 
-	// _, found := s.App.RatelimitKeeper.GetRateLimit(s.Ctx, pathId)
+	// _, found := s.App.RatelimitKeeper.GetRateLimit(s.Ctx, denom, channelId)
 	// s.Require().True(found)
 
 	// // Remove the rate limit
 	// _, err = s.GetMsgServer().RemoveRateLimit(sdk.WrapSDKContext(s.Ctx), removeRateLimitMsg)
 	// s.Require().NoError(err)
 
-	// _, found = s.App.RatelimitKeeper.GetRateLimit(s.Ctx, pathId)
+	// _, found = s.App.RatelimitKeeper.GetRateLimit(s.Ctx, denom, channelId)
 	// s.Require().False(found)
 }

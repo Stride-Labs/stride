@@ -10,21 +10,6 @@ import (
 
 var _ types.QueryServer = Keeper{}
 
-func (k Keeper) Paths(c context.Context, req *types.QueryPathsRequest) (*types.QueryPathsResponse, error) {
-	ctx := sdk.UnwrapSDKContext(c)
-	paths := k.GetAllPaths(ctx)
-	return &types.QueryPathsResponse{Paths: paths}, nil
-}
-
-func (k Keeper) Path(c context.Context, req *types.QueryPathRequest) (*types.QueryPathResponse, error) {
-	ctx := sdk.UnwrapSDKContext(c)
-	path, found := k.GetPath(ctx, req.Id)
-	if !found {
-		return &types.QueryPathResponse{}, nil
-	}
-	return &types.QueryPathResponse{Path: &path}, nil
-}
-
 func (k Keeper) RateLimits(c context.Context, req *types.QueryRateLimitsRequest) (*types.QueryRateLimitsResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 	rateLimits := k.GetAllRateLimits(ctx)
@@ -33,7 +18,7 @@ func (k Keeper) RateLimits(c context.Context, req *types.QueryRateLimitsRequest)
 
 func (k Keeper) RateLimit(c context.Context, req *types.QueryRateLimitRequest) (*types.QueryRateLimitResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
-	rateLimit, found := k.GetRateLimit(ctx, req.PathId)
+	rateLimit, found := k.GetRateLimit(ctx, req.Denom, req.ChannelId)
 	if !found {
 		return &types.QueryRateLimitResponse{}, nil
 	}
