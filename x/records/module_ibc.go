@@ -206,6 +206,52 @@ func (im IBCModule) OnAcknowledgementPacket(
 	return im.app.OnAcknowledgementPacket(ctx, packet, acknowledgement, relayer)
 }
 
+// OnTimeoutPacket implements the IBCModule interface
+func (im IBCModule) OnTimeoutPacket(
+	ctx sdk.Context,
+	packet channeltypes.Packet,
+	relayer sdk.AccAddress,
+) error {
+	// doCustomLogic(packet)
+	im.keeper.Logger(ctx).Error(fmt.Sprintf("[IBC-TRANSFER] OnTimeoutPacket  %v", packet))
+	var data ibctransfertypes.FungibleTokenPacketData
+	if err := ibctransfertypes.ModuleCdc.UnmarshalJSON(packet.GetData(), &data); err != nil {
+		return sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "cannot unmarshal ICS-20 transfer packet data: %v", err)
+	}
+	err := im.revertRecordStatus(ctx, packet)
+	if err != nil {
+		return err
+	}
+	return im.app.OnTimeoutPacket(ctx, packet, relayer)
+}
+
+// This is implemented by ICS4 and all middleware that are wrapping base application.
+// The base application will call `sendPacket` or `writeAcknowledgement` of the middleware directly above them
+// which will call the next middleware until it reaches the core IBC handler.
+// SendPacket implements the ICS4 Wrapper interface
+func (im IBCModule) SendPacket(
+	ctx sdk.Context,
+	chanCap *capabilitytypes.Capability,
+	packet ibcexported.PacketI,
+) error {
+	return nil
+}
+
+// WriteAcknowledgement implements the ICS4 Wrapper interface
+func (im IBCModule) WriteAcknowledgement(
+	ctx sdk.Context,
+	chanCap *capabilitytypes.Capability,
+	packet ibcexported.PacketI,
+	ack ibcexported.Acknowledgement,
+) error {
+	return nil
+}
+
+// GetAppVersion returns the interchain accounts metadata.
+func (im IBCModule) GetAppVersion(ctx sdk.Context, portID, channelID string) (string, bool) {
+	return ibctransfertypes.Version, true // im.keeper.GetAppVersion(ctx, portID, channelID)
+}
+
 func (im IBCModule) refundPacketToken(ctx sdk.Context, packet channeltypes.Packet, data ibctransfertypes.FungibleTokenPacketData) error {
 	// parse the denomination from the full denom path
 	trace := ibctransfertypes.ParseDenomTrace(data.Denom)
@@ -273,52 +319,6 @@ func (im IBCModule) revertSend(ctx sdk.Context, packet channeltypes.Packet, data
 		return im.refundPacketToken(ctx, packet, data)
 	}
 	return im.refundPacketToken(ctx, packet, data)
-}
-
-// OnTimeoutPacket implements the IBCModule interface
-func (im IBCModule) OnTimeoutPacket(
-	ctx sdk.Context,
-	packet channeltypes.Packet,
-	relayer sdk.AccAddress,
-) error {
-	// doCustomLogic(packet)
-	im.keeper.Logger(ctx).Error(fmt.Sprintf("[IBC-TRANSFER] OnTimeoutPacket  %v", packet))
-	var data ibctransfertypes.FungibleTokenPacketData
-	if err := ibctransfertypes.ModuleCdc.UnmarshalJSON(packet.GetData(), &data); err != nil {
-		return sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "cannot unmarshal ICS-20 transfer packet data: %v", err)
-	}
-	err := im.revertSend(ctx, packet, data)
-	if err != nil {
-		return err
-	}
-	return im.app.OnTimeoutPacket(ctx, packet, relayer)
-}
-
-// This is implemented by ICS4 and all middleware that are wrapping base application.
-// The base application will call `sendPacket` or `writeAcknowledgement` of the middleware directly above them
-// which will call the next middleware until it reaches the core IBC handler.
-// SendPacket implements the ICS4 Wrapper interface
-func (im IBCModule) SendPacket(
-	ctx sdk.Context,
-	chanCap *capabilitytypes.Capability,
-	packet ibcexported.PacketI,
-) error {
-	return nil
-}
-
-// WriteAcknowledgement implements the ICS4 Wrapper interface
-func (im IBCModule) WriteAcknowledgement(
-	ctx sdk.Context,
-	chanCap *capabilitytypes.Capability,
-	packet ibcexported.PacketI,
-	ack ibcexported.Acknowledgement,
-) error {
-	return nil
-}
-
-// GetAppVersion returns the interchain accounts metadata.
-func (im IBCModule) GetAppVersion(ctx sdk.Context, portID, channelID string) (string, bool) {
-	return ibctransfertypes.Version, true // im.keeper.GetAppVersion(ctx, portID, channelID)
 }
 
 // APP MODULE IMPLEMENTATION
