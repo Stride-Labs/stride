@@ -58,7 +58,7 @@ func (k msgServer) RebalanceValidators(goCtx context.Context, msg *types.MsgReba
 
 	// check if there is a large enough rebalance, if not, just exit
 	total_delegation := k.GetTotalValidatorDelegations(hostZone)
-	if total_delegation == sdk.ZeroInt() {
+	if total_delegation.IsZero() {
 		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "no validator delegations found for Host Zone %s, cannot rebalance 0 delegations!", hostZone.ChainId)
 	}
 

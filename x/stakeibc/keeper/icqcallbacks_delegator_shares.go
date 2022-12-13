@@ -63,9 +63,6 @@ func DelegatorSharesCallback(k Keeper, ctx sdk.Context, args []byte, query icqty
 		return sdkerrors.Wrapf(types.ErrValidatorNotFound, errMsg)
 	}
 
-	// delegationAmt, _ := sdk.NewIntFromString(validator.DelegationAmt)
-	// stakeBal, _ := sdk.NewIntFromString(hostZone.StakedBal)
-
 	// get the validator's internal exchange rate, aborting if it hasn't been updated this epoch
 	strideEpochTracker, found := k.GetEpochTracker(ctx, epochtypes.STRIDE_EPOCH)
 	if !found {

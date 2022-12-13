@@ -67,7 +67,7 @@ func (k Keeper) GetHostZoneUnbondingMsgs(ctx sdk.Context, hostZone types.HostZon
 		return nil, sdk.ZeroInt(), nil, nil, sdkerrors.Wrap(types.ErrHostZoneICAAccountNotFound, errMsg)
 	}
 	validators := hostZone.GetValidators()
-	if totalAmtToUnbond.Equal(sdk.ZeroInt()) {
+	if totalAmtToUnbond.IsZero() {
 		return nil, sdk.ZeroInt(), nil, nil, nil
 	}
 	// we distribute the unbonding based on our target weights
@@ -123,7 +123,6 @@ func (k Keeper) GetHostZoneUnbondingMsgs(ctx sdk.Context, hostZone types.HostZon
 	}
 	var splitDelegations []*types.SplitDelegation
 	for valAddr, valUnbondAmt := range valAddrToUnbondAmt {
-		fmt.Println("di vao day")
 		stakeAmt := sdk.NewCoin(hostZone.HostDenom, valUnbondAmt)
 
 		msgs = append(msgs, &stakingtypes.MsgUndelegate{

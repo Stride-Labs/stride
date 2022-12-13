@@ -1,14 +1,14 @@
 package types
 
 import (
-	"math"
 	"testing"
 
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/stretchr/testify/require"
 
-	"github.com/Stride-Labs/stride/v4/testutil/sample"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	"github.com/Stride-Labs/stride/v4/testutil/sample"
 )
 
 func TestMsgRedeemStake_ValidateBasic(t *testing.T) {
@@ -53,18 +53,6 @@ func TestMsgRedeemStake_ValidateBasic(t *testing.T) {
 				Amount:   sdk.NewInt(1),
 			},
 			err: ErrRequiredFieldEmpty,
-		},
-		// After moving to sdk.Int, no err anymore
-
-		{
-			name: "amount max int",
-			msg: MsgRedeemStake{
-				Creator:  sample.AccAddress(),
-				HostZone: "GAIA",
-				Receiver: sample.AccAddress(),
-				Amount:   sdk.NewIntFromUint64(math.MaxUint64),
-			},
-			err: nil,
 		},
 	}
 	for _, tt := range tests {

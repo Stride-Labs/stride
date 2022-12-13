@@ -65,7 +65,6 @@ func (k Keeper) GetTargetValAmtsForHostZone(ctx sdk.Context, hostZone types.Host
 			// for the last element, we need to make sure that the allocatedAmt is equal to the finalDelegation
 			targetAmount[validator.GetAddress()] = finalDelegation.Sub(allocatedAmt) 
 		} else {
-			// delegateAmt, err := cast.ToUint64E(float64(validator.Weight*finalDelegation) / float64(totalWeight))
 			delegateAmt := sdk.NewIntFromUint64(validator.Weight).Mul(finalDelegation).Quo(sdk.NewIntFromUint64(totalWeight))
 			allocatedAmt = allocatedAmt.Add(delegateAmt)
 			targetAmount[validator.GetAddress()] = delegateAmt

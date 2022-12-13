@@ -48,7 +48,6 @@ func (k msgServer) RedeemStake(goCtx context.Context, msg *types.MsgRedeemStake)
 
 	// construct desired unstaking amount from host zone
 	stDenom := types.StAssetDenomFromHostZoneDenom(hostZone.HostDenom)
-	fmt.Println("native dec", sdk.NewDecFromInt(msg.Amount).Mul(hostZone.RedemptionRate))
 	nativeAmount := sdk.NewDecFromInt(msg.Amount).Mul(hostZone.RedemptionRate).RoundInt()
 
 	if nativeAmount.GT(hostZone.StakedBal) {

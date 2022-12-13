@@ -111,7 +111,7 @@ func (k Keeper) UpdateDelegationBalances(ctx sdk.Context, zone types.HostZone, u
 		k.Logger(ctx).Info(fmt.Sprintf("UndelegateCallback, Undelegation: %d, validator: %s", undelegation.Amount, undelegation.Validator))
 
 		undelegateVal := undelegation.Validator
-		success := k.AddDelegationToValidator(ctx, zone, undelegateVal, undelegation.Amount.Mul(sdk.NewInt(-1)))
+		success := k.AddDelegationToValidator(ctx, zone, undelegateVal, undelegation.Amount.Neg())
 		if !success {
 			return sdkerrors.Wrapf(types.ErrValidatorDelegationChg, "Failed to remove delegation to validator")
 		}

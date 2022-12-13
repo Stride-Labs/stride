@@ -1,8 +1,6 @@
 package keeper_test
 
 import (
-	"fmt"
-	"math"
 	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -254,27 +252,6 @@ func (s *KeeperTestSuite) TestUpdateDelegationBalances_Success() {
 	s.Require().Equal(val2.DelegationAmt, tc.initialState.val2Bal.Sub(tc.val2UndelegationAmount), "val2 delegation has decreased")
 }
 
-// This case does got anymore
-
-// func (s *KeeperTestSuite) TestUpdateDelegationBalances_BigDelegation() {
-// 	_ = s.SetupUndelegateCallback()
-// 	hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, HostChainId)
-// 	s.Require().True(found, "host zone found")
-// 	splitDelegation := types.SplitDelegation{
-// 		Amount: sdk.NewIntFromUint64(math.MaxUint64),
-// 	}
-// 	invalidCallbackArgs := types.UndelegateCallback{
-// 		HostZoneId:              HostChainId,
-// 		SplitDelegations:        []*types.SplitDelegation{&splitDelegation},
-// 		EpochUnbondingRecordIds: []uint64{},
-// 	}
-
-// 	err := s.App.StakeibcKeeper.UpdateDelegationBalances(s.Ctx, hostZone, invalidCallbackArgs)
-// 	expectedErrMsg := `Could not convert undelegate amount to int64 in undelegation callback | `
-// 	expectedErrMsg += `overflow: unable to cast \d+ of type uint64 to int64: unable to cast to safe cast int`
-// 	s.Require().Regexp(expectedErrMsg, err.Error())
-// }
-
 // GetLatestCompletionTime tests
 func (s *KeeperTestSuite) TestGetLatestCompletionTime_Success() {
 	_ = s.SetupUndelegateCallback()
@@ -411,33 +388,6 @@ func (s *KeeperTestSuite) TestUpdateHostZoneUnbondings_HostZoneUnbondingDNE() {
 	s.Require().EqualError(err, "Host zone unbonding not found (GAIA) in epoch unbonding record: 1: key not found")
 }
 
-// Test failure case - Amount too big
-// Now this test not fail anymore, StTokenAmount is not limited by uint64
-func (s *KeeperTestSuite) TestUpdateHostZoneUnbondings_AmountTooBig() {
-	hostZone := stakeibc.HostZone{
-		ChainId: HostChainId,
-	}
-	// Set up EpochUnbondingRecord, HostZoneUnbonding and token state
-	hostZoneUnbonding := recordtypes.HostZoneUnbonding{
-		HostZoneId:    HostChainId,
-		Status:        recordtypes.HostZoneUnbonding_UNBONDING_QUEUE,
-		StTokenAmount: sdk.NewIntFromUint64(math.MaxUint64),
-	}
-	// Create two epoch unbonding records (status UNBONDING_QUEUE, completion time unset)
-	epochUnbondingRecord := recordtypes.EpochUnbondingRecord{
-		EpochNumber:        1,
-		HostZoneUnbondings: []*recordtypes.HostZoneUnbonding{&hostZoneUnbonding, &hostZoneUnbonding},
-	}
-	s.App.RecordsKeeper.SetEpochUnbondingRecord(s.Ctx, epochUnbondingRecord)
-	callbackArgs := types.UndelegateCallback{
-		EpochUnbondingRecordIds: []uint64{1},
-	}
-	completionTime := time.Now().Add(time.Second * time.Duration(10))
-
-	_, err := s.App.StakeibcKeeper.UpdateHostZoneUnbondings(s.Ctx, completionTime, hostZone, callbackArgs)
-	s.Require().NoError(err)
-}
-
 // BurnTokens Tests
 func (s *KeeperTestSuite) TestBurnTokens_Success() {
 	tc := s.SetupUndelegateCallback()
@@ -466,7 +416,6 @@ func (s *KeeperTestSuite) TestBurnTokens_CouldNotParseCoin() {
 
 	burnAmt := sdk.NewInt(123456)
 	err := s.App.StakeibcKeeper.BurnTokens(s.Ctx, hostZone, burnAmt)
-	fmt.Println(err)
 	s.Require().EqualError(err, "could not parse burnCoin: 123456st:. err: invalid decimal coin expression: 123456st:: invalid coins")
 }
 

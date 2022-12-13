@@ -213,7 +213,6 @@ func (s *KeeperTestSuite) TestLiquidStake_InsufficientBalance() {
 	invalidMsg.Amount = balance.Add(sdk.NewInt(1000))
 	_, err := s.GetMsgServer().LiquidStake(sdk.WrapSDKContext(s.Ctx), &invalidMsg)
 
-	fmt.Println(err)
 	expectedErr := fmt.Sprintf("balance is lower than staking amount. staking amount: %v, balance: %v: insufficient funds", balance.Add(sdk.NewInt(1000)), balance)
 	s.Require().EqualError(err, expectedErr)
 }

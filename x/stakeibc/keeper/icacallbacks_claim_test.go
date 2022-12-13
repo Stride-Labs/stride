@@ -142,7 +142,6 @@ func (s *KeeperTestSuite) TestClaimCallback_Successful() {
 	hzu4 := epochUnbondingRecord2.HostZoneUnbondings[1]
 
 	// check that hzu1 has a decremented amount
-	fmt.Println(hzu1.NativeTokenAmount, tc.initialState.hzu1TokenAmount, tc.initialState.decrementAmount)
 	s.Require().Equal(hzu1.NativeTokenAmount, tc.initialState.hzu1TokenAmount.Sub(tc.initialState.decrementAmount), "hzu1 amount decremented")
 	s.Require().Equal(hzu1.Status, recordtypes.HostZoneUnbonding_CLAIMABLE, "hzu1 status set to transferred")
 	// verify the other hzus are unchanged

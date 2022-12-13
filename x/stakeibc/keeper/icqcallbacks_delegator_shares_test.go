@@ -265,24 +265,6 @@ func (s *KeeperTestSuite) TestDelegatorSharesCallback_InvalidNumTokens() {
 	s.Require().EqualError(err, expectedErrMsg)
 }
 
-// No get anymore
-
-// func (s *KeeperTestSuite) TestDelegatorSharesCallback_DelegationAmtOverfow() {
-// 	tc := s.SetupDelegatorSharesICQCallback()
-
-// 	// Update the delegation amount to max int so it overflows when casted
-// 	hostZone := tc.initialState.hostZone
-// 	validator := hostZone.Validators[tc.valIndexQueried]
-// 	validator.DelegationAmt = sdk.NewIntFromUint64(math.MaxUint64)
-// 	hostZone.Validators[tc.valIndexQueried] = validator
-// 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
-
-// 	err := stakeibckeeper.DelegatorSharesCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.callbackArgs, tc.validArgs.query)
-// 	expectedErrMsg := `unable to convert validator delegation amount to int64, err: overflow: `
-// 	expectedErrMsg += `unable to cast \d+ of type uint64 to int64: unable to cast to safe cast int`
-// 	s.Require().Regexp(expectedErrMsg, err.Error())
-// }
-
 func (s *KeeperTestSuite) TestDelegatorSharesCallback_WeightOverfow() {
 	tc := s.SetupDelegatorSharesICQCallback()
 
