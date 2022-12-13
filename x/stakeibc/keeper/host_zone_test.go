@@ -29,12 +29,12 @@ func TestHostZoneGet(t *testing.T) {
 	keeper, ctx := keepertest.StakeibcKeeper(t)
 	items := createNHostZone(keeper, ctx, 10)
 	for _, item := range items {
-		_, found := keeper.GetHostZone(ctx, item.ChainId)
+		got, found := keeper.GetHostZone(ctx, item.ChainId)
 		require.True(t, found)
-		// require.Equal(t,
-		// 	nullify.Fill(&item),
-		// 	nullify.Fill(&got),
-		// )
+		require.Equal(t,
+			nullify.Fill(&item),
+			nullify.Fill(&got),
+		)
 	}
 }
 

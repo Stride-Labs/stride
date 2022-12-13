@@ -12,6 +12,7 @@ import (
 	"google.golang.org/grpc/status"
 
 	keepertest "github.com/Stride-Labs/stride/v4/testutil/keeper"
+	"github.com/Stride-Labs/stride/v4/testutil/nullify"
 	// "github.com/Stride-Labs/stride/v4/testutil/nullify"
 	"github.com/Stride-Labs/stride/v4/x/records/types"
 )
@@ -47,15 +48,15 @@ func TestUserRedemptionRecordQuerySingle(t *testing.T) {
 		},
 	} {
 		t.Run(tc.desc, func(t *testing.T) {
-			_, err := keeper.UserRedemptionRecord(wctx, tc.request)
+			response, err := keeper.UserRedemptionRecord(wctx, tc.request)
 			if tc.err != nil {
 				require.ErrorIs(t, err, tc.err)
 			} else {
 				require.NoError(t, err)
-				// require.Equal(t,
-				// 	nullify.Fill(tc.response),
-				// 	nullify.Fill(response),
-				// )
+				require.Equal(t,
+					nullify.Fill(tc.response),
+					nullify.Fill(response),
+				)
 			}
 		})
 	}

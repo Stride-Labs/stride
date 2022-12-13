@@ -158,7 +158,7 @@ func (s *KeeperTestSuite) TestRebalanceValidators_Successful() {
 	secondRebal := callbackArgs.Rebalancings[1]
 	s.Require().Equal(sdk.NewInt(13), secondRebal.Amt, "second rebalance should rebalance 13 ATOM")
 	s.Require().Equal("stride_VAL1", secondRebal.DstValidator, "second rebalance moves to val1")
-	s.Require().Equal("stride_VAL5", secondRebal.SrcValidator, "second rebalance takes from val5")
+	s.Require().Equal("stride_VAL4", secondRebal.SrcValidator, "second rebalance takes from val4")
 }
 
 func (s *KeeperTestSuite) TestRebalanceValidators_InvalidNumValidators() {

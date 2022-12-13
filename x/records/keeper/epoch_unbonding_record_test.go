@@ -58,12 +58,12 @@ func TestEpochUnbondingRecordGet(t *testing.T) {
 	keeper, ctx := keepertest.RecordsKeeper(t)
 	items, _ := createNEpochUnbondingRecord(keeper, ctx, 10)
 	for _, item := range items {
-		_, found := keeper.GetEpochUnbondingRecord(ctx, item.EpochNumber)
+		got, found := keeper.GetEpochUnbondingRecord(ctx, item.EpochNumber)
 		require.True(t, found)
-		// require.Equal(t,
-		// 	nullify.Fill(&item),
-		// 	nullify.Fill(&got),
-		// )
+		require.Equal(t,
+			nullify.Fill(&item),
+			nullify.Fill(&got),
+		)
 	}
 }
 
