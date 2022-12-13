@@ -64,7 +64,7 @@ func TestMsgUpdateRateLimit(t *testing.T) {
 			msg: types.MsgUpdateRateLimit{
 				Creator:        validAddr,
 				Denom:          validDenom,
-				ChannelId:      "chan-0",
+				ChannelId:      "channel-",
 				MaxPercentSend: validMaxPercentSend,
 				MaxPercentRecv: validMaxPercentRecv,
 				DurationHours:  validDurationHours,
