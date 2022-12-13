@@ -118,10 +118,10 @@ func TestListUserRedemptionRecord(t *testing.T) {
 			var resp types.QueryAllUserRedemptionRecordResponse
 			require.NoError(t, net.Config.Codec.UnmarshalJSON(out.Bytes(), &resp))
 			require.LessOrEqual(t, len(resp.UserRedemptionRecord), step)
-			// require.Subset(t,
-			// 	nullify.Fill(objs),
-			// 	nullify.Fill(resp.UserRedemptionRecord),
-			// )
+			require.Subset(t,
+				nullify.Fill(objs),
+				nullify.Fill(resp.UserRedemptionRecord),
+			)
 		}
 	})
 	t.Run("ByKey", func(t *testing.T) {
@@ -134,10 +134,10 @@ func TestListUserRedemptionRecord(t *testing.T) {
 			var resp types.QueryAllUserRedemptionRecordResponse
 			require.NoError(t, net.Config.Codec.UnmarshalJSON(out.Bytes(), &resp))
 			require.LessOrEqual(t, len(resp.UserRedemptionRecord), step)
-			// require.Subset(t,
-			// 	nullify.Fill(objs),
-			// 	nullify.Fill(resp.UserRedemptionRecord),
-			// )
+			require.Subset(t,
+				nullify.Fill(objs),
+				nullify.Fill(resp.UserRedemptionRecord),
+			)
 			next = resp.Pagination.NextKey
 		}
 	})
@@ -149,9 +149,9 @@ func TestListUserRedemptionRecord(t *testing.T) {
 		require.NoError(t, net.Config.Codec.UnmarshalJSON(out.Bytes(), &resp))
 		require.NoError(t, err)
 		require.Equal(t, len(objs), int(resp.Pagination.Total))
-		// require.ElementsMatch(t,
-		// 	nullify.Fill(objs),
-		// 	nullify.Fill(resp.UserRedemptionRecord),
-		// )
+		require.ElementsMatch(t,
+			nullify.Fill(objs),
+			nullify.Fill(resp.UserRedemptionRecord),
+		)
 	})
 }

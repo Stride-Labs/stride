@@ -44,7 +44,8 @@ func (k msgServer) RebalanceValidators(goCtx context.Context, msg *types.MsgReba
 		valAddr  string
 	}
 	valDeltaList := make([]valPair, 0)
-	for _, valAddr := range utils.StringToSdkIntMapKeys(validatorDeltas) {
+	// DO NOT REMOVE: StringMapKeys fixes non-deterministic map iteration
+	for _, valAddr := range utils.StringMapKeys(validatorDeltas) {
 		deltaAmt := validatorDeltas[valAddr]
 		k.Logger(ctx).Info(fmt.Sprintf("Adding deltaAmt: %v to validator: %s", deltaAmt, valAddr))
 		valDeltaList = append(valDeltaList, valPair{deltaAmt, valAddr})
