@@ -45,6 +45,7 @@ func (s *KeeperTestSuite) TestGetTargetValAmtsForHostZone_InvalidAmountOfDelegat
 	s.Require().EqualError(err, stakeibc.ErrNoValidatorWeights.Error(), "Delegate zero amount should fail")
 
 }
+
 func (s *KeeperTestSuite) TestGetTargetValAmtsForHostZone_ErrNoValidatorsWeight() {
 	tc := s.SetupGetHostZoneUnbondingMsgs()
 
@@ -60,7 +61,6 @@ func (s *KeeperTestSuite) TestGetTargetValAmtsForHostZone_ErrNoValidatorsWeight(
 	_, err := s.App.StakeibcKeeper.GetTargetValAmtsForHostZone(s.Ctx, tc.hostZone, unbond)
 	s.Require().EqualError(err, stakeibc.ErrNoValidatorWeights.Error(), "Delegate zero amount should fail")
 }
-
 
 func (s *KeeperTestSuite) SetupGetValidatorDelegationAmtDifferences(validators []*stakeibc.Validator) stakeibc.HostZone {
 	delegationAccountOwner := fmt.Sprintf("%s.%s", HostChainId, "DELEGATION")
