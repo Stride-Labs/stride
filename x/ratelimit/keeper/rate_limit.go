@@ -39,14 +39,14 @@ func (k Keeper) SetRateLimit(ctx sdk.Context, rateLimit types.RateLimit) {
 	store.Set(rateLimitKey, rateLimitValue)
 }
 
-// Removes a rate limit object from the store using the PathId
+// Removes a rate limit object from the store using denom and channel-id
 func (k Keeper) RemoveRateLimit(ctx sdk.Context, denom string, channelId string) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.RateLimitKeyPrefix)
 	rateLimitKey := GetRateLimitItemKey(denom, channelId)
 	store.Delete(rateLimitKey)
 }
 
-// Grabs and returns a rate limit object from the store using the PathId
+// Grabs and returns a rate limit object from the store using denom and channel-id
 func (k Keeper) GetRateLimit(ctx sdk.Context, denom string, channelId string) (rateLimit types.RateLimit, found bool) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.RateLimitKeyPrefix)
 
