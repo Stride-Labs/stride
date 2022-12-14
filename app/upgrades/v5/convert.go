@@ -4,6 +4,10 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	claimtypes "github.com/Stride-Labs/stride/v4/x/claim/types"
 	claimv1types "github.com/Stride-Labs/stride/v4/x/claim/types/v1"
+	recordtypes "github.com/Stride-Labs/stride/v4/x/records/types"
+	recordv1types "github.com/Stride-Labs/stride/v4/x/records/types/v1"
+	stakeibctypes "github.com/Stride-Labs/stride/v4/x/stakeibc/types"
+	stakeibcv1types "github.com/Stride-Labs/stride/v4/x/stakeibc/types/v1"
 )
 
 func convertToNewClaimParams(oldProp claimv1types.Params) claimtypes.Params {
@@ -20,4 +24,117 @@ func convertToNewClaimParams(oldProp claimv1types.Params) claimtypes.Params {
 		newParams.Airdrops = append(newParams.Airdrops, &newAirDrop)
 	}
 	return newParams
+}
+
+func convertToNewUserRedemptionRecord(oldProp recordv1types.UserRedemptionRecord) recordtypes.UserRedemptionRecord {
+	return recordtypes.UserRedemptionRecord{
+		Id: oldProp.Id,
+		Sender: oldProp.Sender,
+		Receiver: oldProp.Receiver,
+		Amount: sdk.NewIntFromUint64(oldProp.Amount),
+		Denom: oldProp.Denom,
+		HostZoneId: oldProp.HostZoneId,
+		EpochNumber: oldProp.EpochNumber,
+		ClaimIsPending: oldProp.ClaimIsPending,
+	}
+}
+
+func convertToNewDepositRecord(oldProp recordv1types.DepositRecord) recordtypes.DepositRecord {
+	return recordtypes.DepositRecord{
+		Id: oldProp.Id,
+		Amount: sdk.NewInt(oldProp.Amount),
+		Denom: oldProp.Denom,
+		HostZoneId: oldProp.HostZoneId,
+		Status: recordtypes.DepositRecord_Status(oldProp.Status),
+		DepositEpochNumber: oldProp.DepositEpochNumber,
+		Source: recordtypes.DepositRecord_Source(oldProp.Source),
+	}
+}
+
+func convertToNewEpochUnbondingRecord(oldProp recordv1types.EpochUnbondingRecord) recordtypes.EpochUnbondingRecord {
+	var epochUnbondingRecord recordtypes.EpochUnbondingRecord
+	for _, hz := range(oldProp.HostZoneUnbondings) {
+		newHz := recordtypes.HostZoneUnbonding{
+			StTokenAmount: sdk.NewIntFromUint64(hz.StTokenAmount),
+			NativeTokenAmount: sdk.NewIntFromUint64(hz.NativeTokenAmount),
+			Denom: hz.Denom,
+			HostZoneId: hz.HostZoneId,
+			UnbondingTime: hz.UnbondingTime,
+			Status: recordtypes.HostZoneUnbonding_Status(hz.Status),
+			UserRedemptionRecords: hz.UserRedemptionRecords,
+		}
+		epochUnbondingRecord.HostZoneUnbondings = append(epochUnbondingRecord.HostZoneUnbondings, &newHz)
+	}
+	return epochUnbondingRecord
+}
+
+func convertToNewDelegation(oldProp stakeibcv1types.Delegation) stakeibctypes.Delegation {
+	return stakeibctypes.Delegation{
+		DelegateAcctAddress: oldProp.DelegateAcctAddress,
+		Validator: &stakeibctypes.Validator{
+			Name: oldProp.Validator.Name,
+			Address: oldProp.Validator.Address,
+			Status: stakeibctypes.Validator_ValidatorStatus(oldProp.Validator.Status),
+			CommissionRate: oldProp.Validator.CommissionRate,
+			DelegationAmt: sdk.NewIntFromUint64(oldProp.Validator.DelegationAmt),
+			Weight: oldProp.Validator.Weight,
+			InternalExchangeRate: (*stakeibctypes.ValidatorExchangeRate)(oldProp.Validator.InternalExchangeRate),
+		},
+		Amt: sdk.NewInt(oldProp.Amt),
+	}
+}
+
+func convertToNewHostZone(oldProp stakeibcv1types.HostZone) stakeibctypes.HostZone {
+	var validators []*stakeibctypes.Validator
+	var blacklistValidator []*stakeibctypes.Validator
+
+	for _, val := range(oldProp.Validators) {
+		newVal := stakeibctypes.Validator{
+			Name: val.Name,
+			Address: val.Address,
+			Status: stakeibctypes.Validator_ValidatorStatus(val.Status),
+			CommissionRate: val.CommissionRate,
+			DelegationAmt: sdk.NewIntFromUint64(val.DelegationAmt),
+			Weight: val.Weight,
+			InternalExchangeRate: (*stakeibctypes.ValidatorExchangeRate)(val.InternalExchangeRate),
+		}
+		validators = append(validators, &newVal)
+	}
+
+	for _, val := range(oldProp.BlacklistedValidators) {
+		newVal := stakeibctypes.Validator{
+			Name: val.Name,
+			Address: val.Address,
+			Status: stakeibctypes.Validator_ValidatorStatus(val.Status),
+			CommissionRate: val.CommissionRate,
+			DelegationAmt: sdk.NewIntFromUint64(val.DelegationAmt),
+			Weight: val.Weight,
+			InternalExchangeRate: (*stakeibctypes.ValidatorExchangeRate)(val.InternalExchangeRate),
+		}
+		blacklistValidator = append(blacklistValidator, &newVal)
+	}
+	return stakeibctypes.HostZone{
+		ChainId: oldProp.ChainId,
+		ConnectionId: oldProp.ConnectionId,
+		Bech32Prefix: oldProp.Bech32Prefix,
+		TransferChannelId: oldProp.TransferChannelId,
+		Validators: validators,
+		BlacklistedValidators: blacklistValidator,
+		WithdrawalAccount: oldProp.WithdrawalAccount,
+		FeeAccount: oldProp.FeeAccount,
+		DelegationAccount: oldProp.DelegationAccount,
+		RedemptionAccount: oldProp.RedemptionAccount,
+	}
+}
+
+func convertToNewValidator(oldProp stakeibcv1types.Validator) stakeibctypes.Validator {
+	return stakeibctypes.Validator{
+		Name: oldProp.Name,
+		Address: oldProp.Address,
+		Status: stakeibctypes.Validator_ValidatorStatus(oldProp.Status),
+		CommissionRate: oldProp.CommissionRate,
+		DelegationAmt: sdk.NewIntFromUint64(oldProp.DelegationAmt),
+		Weight: oldProp.Weight,
+		InternalExchangeRate: (*stakeibctypes.ValidatorExchangeRate)(oldProp.InternalExchangeRate),
+	}
 }
