@@ -35,11 +35,11 @@ message DepositRecord {
     STRIDE = 0;
     WITHDRAWAL_ICA = 1;
   }
-  Status status = 6;
-  uint64 deposit_epoch_number = 7;
-  Source source = 8;
+  Status status = 5;
+  uint64 deposit_epoch_number = 6;
+  Source source = 7;
 
-  reserved 5;
+  // reserved 5;
 }
 
 message HostZoneUnbonding {
@@ -60,4 +60,10 @@ message HostZoneUnbonding {
   uint64 unbonding_time = 5;
   Status status = 6;
   repeated string user_redemption_records = 7;
+}
+
+message EpochUnbondingRecord {
+  uint64 epoch_number = 1;
+  repeated HostZoneUnbonding host_zone_unbondings = 3;
+  reserved 2;
 }
