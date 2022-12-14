@@ -6,7 +6,7 @@ import (
 
 // x/ratelimit module sentinel errors
 var (
-	ErrRateLimitKeyDuplicated = sdkerrors.Register(ModuleName, 1,
+	ErrRateLimitKeyAlreadyExists = sdkerrors.Register(ModuleName, 1,
 		"ratelimit key duplicated")
 	ErrRateLimitKeyNotFound = sdkerrors.Register(ModuleName, 2,
 		"ratelimit key not found")

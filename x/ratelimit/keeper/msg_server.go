@@ -39,7 +39,7 @@ func (server msgServer) AddRateLimit(goCtx context.Context, msg *types.MsgAddRat
 
 	_, found := server.Keeper.GetRateLimit(ctx, msg.Denom, msg.ChannelId)
 	if found {
-		return nil, types.ErrRateLimitKeyDuplicated
+		return nil, types.ErrRateLimitKeyAlreadyExists
 	}
 
 	server.Keeper.SetRateLimit(ctx, types.RateLimit{
@@ -102,8 +102,12 @@ func (server msgServer) ResetRateLimit(goCtx context.Context, msg *types.MsgRese
 		return nil, types.ErrRateLimitKeyNotFound
 	}
 
-	rateLimit.Flow.Inflow = 0
-	rateLimit.Flow.Outflow = 0
+	flow := types.Flow{
+		Inflow:       0,
+		Outflow:      0,
+		ChannelValue: server.Keeper.GetChannelValue(ctx, msg.Denom).Uint64(),
+	}
+	rateLimit.Flow = &flow
 
 	server.Keeper.SetRateLimit(ctx, rateLimit)
 	return &types.MsgResetRateLimitResponse{}, nil

@@ -4,6 +4,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/Stride-Labs/stride/v4/app/apptesting"
+	minttypes "github.com/Stride-Labs/stride/v4/x/mint/types"
 	"github.com/Stride-Labs/stride/v4/x/ratelimit/types"
 )
 
@@ -50,7 +51,7 @@ func (s *KeeperTestSuite) TestMsgServer_AddRateLimit() {
 
 	// Check for duplicate rate limit
 	_, err = s.GetMsgServer().AddRateLimit(sdk.WrapSDKContext(s.Ctx), addRateLimitMsg)
-	s.Require().Error(err)
+	s.Require().Equal(err, types.ErrRateLimitKeyAlreadyExists)
 }
 
 func (s *KeeperTestSuite) TestMsgServer_UpdateRateLimit() {
@@ -64,7 +65,7 @@ func (s *KeeperTestSuite) TestMsgServer_UpdateRateLimit() {
 
 	// Attempt to update a rate limit that does not exist
 	_, err := s.GetMsgServer().UpdateRateLimit(sdk.WrapSDKContext(s.Ctx), updateRateLimitMsg)
-	s.Require().Error(err)
+	s.Require().Equal(err, types.ErrRateLimitKeyNotFound)
 
 	// Add a rate limit successfully
 	_, err = s.GetMsgServer().AddRateLimit(sdk.WrapSDKContext(s.Ctx), addRateLimitMsg)
@@ -98,7 +99,7 @@ func (s *KeeperTestSuite) TestMsgServer_RemoveRateLimit() {
 
 	// Attempt to remove a rate limit that does not exist
 	_, err := s.GetMsgServer().RemoveRateLimit(sdk.WrapSDKContext(s.Ctx), removeRateLimitMsg)
-	s.Require().Error(err)
+	s.Require().Equal(err, types.ErrRateLimitKeyNotFound)
 
 	// Add a rate limit successfully
 	_, err = s.GetMsgServer().AddRateLimit(sdk.WrapSDKContext(s.Ctx), addRateLimitMsg)
@@ -123,10 +124,11 @@ func (s *KeeperTestSuite) TestMsgServer_ResetRateLimit() {
 
 	denom := resetRateLimitMsg.Denom
 	channelId := resetRateLimitMsg.ChannelId
+	channelValue := int64(100)
 
 	// Attempt to reset a rate limit that does not exist
 	_, err := s.GetMsgServer().ResetRateLimit(sdk.WrapSDKContext(s.Ctx), resetRateLimitMsg)
-	s.Require().Error(err)
+	s.Require().Equal(err, types.ErrRateLimitKeyNotFound)
 
 	// Add a rate limit successfully
 	_, err = s.GetMsgServer().AddRateLimit(sdk.WrapSDKContext(s.Ctx), addRateLimitMsg)
@@ -135,13 +137,19 @@ func (s *KeeperTestSuite) TestMsgServer_ResetRateLimit() {
 	_, found := s.App.RatelimitKeeper.GetRateLimit(s.Ctx, denom, channelId)
 	s.Require().True(found)
 
+	// Mint some tokens
+	s.App.BankKeeper.MintCoins(s.Ctx, minttypes.ModuleName, sdk.NewCoins(sdk.NewInt64Coin(resetRateLimitMsg.Denom, channelValue)))
+
 	// Reset the rate limit successfully
 	_, err = s.GetMsgServer().ResetRateLimit(sdk.WrapSDKContext(s.Ctx), resetRateLimitMsg)
 	s.Require().NoError(err)
 
-	// Check ratelimit quota is reset correctly
+	// Check ratelimit quota is flow correctly
 	resetRateLimit, found := s.App.RatelimitKeeper.GetRateLimit(s.Ctx, denom, channelId)
 	s.Require().True(found)
-	s.Require().Equal(resetRateLimit.Flow.Inflow, uint64(0))
-	s.Require().Equal(resetRateLimit.Flow.Outflow, uint64(0))
+	s.Require().Equal(resetRateLimit.Flow, &types.Flow{
+		Inflow:       0,
+		Outflow:      0,
+		ChannelValue: uint64(channelValue),
+	})
 }
