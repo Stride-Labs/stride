@@ -4,10 +4,11 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
 	porttypes "github.com/cosmos/ibc-go/v3/modules/core/05-port/types"
 	"github.com/cosmos/ibc-go/v3/modules/core/exported"
+
+	"github.com/Stride-Labs/stride/v4/x/ratelimit/types"
 )
 
 type (
@@ -16,7 +17,7 @@ type (
 		cdc      codec.BinaryCodec
 
 		ics4Wrapper porttypes.ICS4Wrapper
-		bankKeeper  bankkeeper.Keeper
+		bankKeeper  types.BankKeeper
 	}
 )
 
@@ -24,7 +25,7 @@ func NewKeeper(
 	cdc codec.BinaryCodec,
 	key storetypes.StoreKey,
 	ics4Wrapper porttypes.ICS4Wrapper,
-	bankKeeper bankkeeper.Keeper,
+	bankKeeper types.BankKeeper,
 ) *Keeper {
 	return &Keeper{
 		cdc:         cdc,
