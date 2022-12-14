@@ -9,8 +9,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 
-	"github.com/Stride-Labs/stride/v3/x/app-router/types"
-	stakeibckeeper "github.com/Stride-Labs/stride/v3/x/stakeibc/keeper"
+	"github.com/Stride-Labs/stride/v4/x/app-router/types"
+	stakeibckeeper "github.com/Stride-Labs/stride/v4/x/stakeibc/keeper"
 )
 
 type (

@@ -6,7 +6,7 @@ import "google/api/annotations.proto";
 import "cosmos/base/query/v1beta1/pagination.proto";
 import "app-router/params.proto";
 
-option go_package = "github.com/Stride-Labs/stride/v3/x/app-router/types";
+option go_package = "github.com/Stride-Labs/stride/v4/x/app-router/types";
 
 // Query defines the gRPC querier service.
 service Query {

@@ -11,8 +11,8 @@ import (
 	channeltypes "github.com/cosmos/ibc-go/v3/modules/core/04-channel/types"
 	porttypes "github.com/cosmos/ibc-go/v3/modules/core/05-port/types"
 
-	"github.com/Stride-Labs/stride/v3/x/app-router/keeper"
-	"github.com/Stride-Labs/stride/v3/x/app-router/types"
+	"github.com/Stride-Labs/stride/v4/x/app-router/keeper"
+	"github.com/Stride-Labs/stride/v4/x/app-router/types"
 
 	// "google.golang.org/protobuf/proto" <-- this breaks tx parsing
 

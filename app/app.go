@@ -117,9 +117,9 @@ import (
 	interchainquerykeeper "github.com/Stride-Labs/stride/v4/x/interchainquery/keeper"
 	interchainquerytypes "github.com/Stride-Labs/stride/v4/x/interchainquery/types"
 
-	router "github.com/Stride-Labs/stride/v3/x/app-router"
-	routerkeeper "github.com/Stride-Labs/stride/v3/x/app-router/keeper"
-	routertypes "github.com/Stride-Labs/stride/v3/x/app-router/types"
+	router "github.com/Stride-Labs/stride/v4/x/app-router"
+	routerkeeper "github.com/Stride-Labs/stride/v4/x/app-router/keeper"
+	routertypes "github.com/Stride-Labs/stride/v4/x/app-router/types"
 	"github.com/Stride-Labs/stride/v4/x/claim"
 	claimkeeper "github.com/Stride-Labs/stride/v4/x/claim/keeper"
 	claimtypes "github.com/Stride-Labs/stride/v4/x/claim/types"

@@ -3,8 +3,8 @@ package app_router
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Stride-Labs/stride/v3/x/app-router/keeper"
-	"github.com/Stride-Labs/stride/v3/x/app-router/types"
+	"github.com/Stride-Labs/stride/v4/x/app-router/keeper"
+	"github.com/Stride-Labs/stride/v4/x/app-router/types"
 )
 
 // TODO: update genesis file

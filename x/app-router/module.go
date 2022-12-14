@@ -18,9 +18,9 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 
-	"github.com/Stride-Labs/stride/v3/x/app-router/client/cli"
-	"github.com/Stride-Labs/stride/v3/x/app-router/keeper"
-	"github.com/Stride-Labs/stride/v3/x/app-router/types"
+	"github.com/Stride-Labs/stride/v4/x/app-router/client/cli"
+	"github.com/Stride-Labs/stride/v4/x/app-router/keeper"
+	"github.com/Stride-Labs/stride/v4/x/app-router/types"
 )
 
 var (

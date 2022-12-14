@@ -8,9 +8,9 @@ import (
 	channeltypes "github.com/cosmos/ibc-go/v3/modules/core/04-channel/types"
 	ibcexported "github.com/cosmos/ibc-go/v3/modules/core/exported"
 
-	"github.com/Stride-Labs/stride/v3/x/app-router/types"
-	stakeibckeeper "github.com/Stride-Labs/stride/v3/x/stakeibc/keeper"
-	stakeibctypes "github.com/Stride-Labs/stride/v3/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v4/x/app-router/types"
+	stakeibckeeper "github.com/Stride-Labs/stride/v4/x/stakeibc/keeper"
+	stakeibctypes "github.com/Stride-Labs/stride/v4/x/stakeibc/types"
 )
 
 func (k Keeper) TryLiquidStaking(
