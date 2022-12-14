@@ -26,28 +26,28 @@ func TestCheckExceedsQuota(t *testing.T) {
 		exp        bool
 	}{
 		{
-			name:       "inflow exceed",
+			name:       "inflow exceeded threshold",
 			direction:  types.PACKET_RECV,
 			amount:     amountOverThreshold,
 			totalValue: totalValue,
 			exp:        true,
 		},
 		{
-			name:       "inflow not exceed",
+			name:       "inflow did not exceed threshold",
 			direction:  types.PACKET_RECV,
 			amount:     amountUnderThreshold,
 			totalValue: totalValue,
 			exp:        false,
 		},
 		{
-			name:       "outflow exceed",
+			name:       "outflow exceeded threshold",
 			direction:  types.PACKET_SEND,
 			amount:     amountOverThreshold,
 			totalValue: totalValue,
 			exp:        true,
 		},
 		{
-			name:       "outflow not exceed",
+			name:       "outflow did not exceed threshold",
 			direction:  types.PACKET_SEND,
 			amount:     amountUnderThreshold,
 			totalValue: totalValue,
