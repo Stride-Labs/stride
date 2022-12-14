@@ -3,12 +3,9 @@ package keeper
 import (
 	"fmt"
 	"sort"
-	"strconv"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/spf13/cast"
-
-	"math"
 
 	"github.com/Stride-Labs/stride/v4/utils"
 	"github.com/Stride-Labs/stride/v4/x/stakeibc/types"
