@@ -217,7 +217,7 @@ func (s *KeeperTestSuite) TestDecrementHostZoneUnbonding_Success() {
 	s.Require().Equal(hzu1.NativeTokenAmount-userRedemptionRecord.Amount, hzu1.NativeTokenAmount, "hzu1 amount decremented")
 }
 
-func (s *KeeperTestSuite) TestDecrementHostZoneUnbonding_HzuNotFound() {
+func (s *KeeperTestSuite) TestDecrementHostZoneUnbonding_HostNotFound() {
 	tc := s.SetupClaimCallback()
 	initialState := tc.initialState
 
@@ -233,7 +233,7 @@ func (s *KeeperTestSuite) TestDecrementHostZoneUnbonding_HzuNotFound() {
 	err := s.App.StakeibcKeeper.DecrementHostZoneUnbonding(s.Ctx, userRedemptionRecord, tc.initialState.callbackArgs)
 	s.Require().EqualError(err, "host zone unbonding not found GAIA: record not found")
 }
-func (s *KeeperTestSuite) TestClaimCallback_FailedToUnmarshalTxMsgData() { //line 56 icacallbacks_claim.go
+func (s *KeeperTestSuite) TestClaimCallback_FailedToUnmarshalTxMsgData() {
 	tc := s.SetupClaimCallback()
 	invalidArgs := tc.validArgs
 	fullAck := channeltypes.Acknowledgement{Response: &channeltypes.Acknowledgement_Result{Result: []byte("")}}
@@ -241,7 +241,7 @@ func (s *KeeperTestSuite) TestClaimCallback_FailedToUnmarshalTxMsgData() { //lin
 	err := stakeibckeeper.ClaimCallback(s.App.StakeibcKeeper, s.Ctx, invalidArgs.packet, invalidArgs.ack, invalidArgs.args)
 	s.Require().EqualError(err, "acknowledgement result cannot be empty: invalid acknowledgement: txMsgData fetch failed")
 }
-func (s *KeeperTestSuite) TestClaimCallback_ClaimCallbackFailedDecrementHostZoneUnbonding() { //line 75 icacallbacks_claim.go
+func (s *KeeperTestSuite) TestClaimCallback_ClaimCallbackFailedDecrementHostZoneUnbonding() {
 	tc := s.SetupClaimCallback()
 	invalidArgs := tc.validArgs
 
