@@ -13,8 +13,6 @@ import (
 )
 
 func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochInfo epochstypes.EpochInfo) {
-	k.Logger(ctx).Info(utils.LogHeader("EPOCH %d - %s", epochInfo.CurrentEpoch, epochInfo.CurrentEpochStartTime))
-
 	// Update the stakeibc epoch tracker
 	epochNumber, err := k.UpdateEpochTracker(ctx, epochInfo)
 	if err != nil {
@@ -24,8 +22,6 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochInfo epochstypes.EpochInf
 
 	// Day Epoch - Process Unbondings
 	if epochInfo.Identifier == epochstypes.DAY_EPOCH {
-		k.Logger(ctx).Info(utils.LogHeader("DAY EPOCH %d", epochNumber))
-
 		// Initiate unbondings from any hostZone where it's appropriate
 		k.InitiateAllHostZoneUnbondings(ctx, epochNumber)
 		// Check previous epochs to see if unbondings finished, and sweep the tokens if so
@@ -38,8 +34,6 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochInfo epochstypes.EpochInf
 
 	// Stride Epoch - Process Deposits and Delegations
 	if epochInfo.Identifier == epochstypes.STRIDE_EPOCH {
-		k.Logger(ctx).Info(utils.LogHeader("STRIDE EPOCH %d", epochNumber))
-
 		// Get cadence intervals
 		redemptionRateInterval := k.GetParam(ctx, types.KeyRedemptionRateInterval)
 		depositInterval := k.GetParam(ctx, types.KeyDepositInterval)
