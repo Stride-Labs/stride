@@ -36,6 +36,7 @@ setup_file() {
   TRANSFER_AMOUNT=500000
   STAKE_AMOUNT=100000
   REDEEM_AMOUNT=1000
+  PACKET_FORWARD_STAKE_AMOUNT=3000
 
   GETBAL() {
     head -n 1 | grep -o -E '[0-9]+' || "0"
@@ -144,6 +145,20 @@ setup_file() {
   sttoken_balance_end=$($STRIDE_MAIN_CMD q bank balances $(STRIDE_ADDRESS) --denom st$HOST_DENOM | GETBAL)
   sttoken_balance_diff=$(($sttoken_balance_end-$sttoken_balance_start))
   assert_equal "$sttoken_balance_diff" $STAKE_AMOUNT
+}
+
+@test "[INTEGRATION-BASIC-$CHAIN_NAME] packet forwarding automatically liquid stake" {
+  # get initial balances
+  sttoken_balance_start=$($STRIDE_MAIN_CMD q bank balances $(STRIDE_ADDRESS) --denom st$HOST_DENOM | GETBAL)
+
+  # do IBC transfer
+  $HOST_MAIN_CMD tx ibc-transfer transfer transfer $HOST_TRANSFER_CHANNEL $(STRIDE_ADDRESS)'|stakeibc/LiquidStake' ${PACKET_FORWARD_STAKE_AMOUNT}${HOST_DENOM} --from $HOST_VAL -y &
+  WAIT_FOR_BLOCK $STRIDE_LOGS 8
+
+  # make sure stATOM balance increased
+  sttoken_balance_end=$($STRIDE_MAIN_CMD q bank balances $(STRIDE_ADDRESS) --denom st$HOST_DENOM | GETBAL)
+  sttoken_balance_diff=$(($sttoken_balance_end-$sttoken_balance_start))
+  assert_equal "$sttoken_balance_diff" "$PACKET_FORWARD_STAKE_AMOUNT"
 }
 
 # check that tokens were transferred to host after liquid stake
