@@ -9,7 +9,7 @@ services:
       - "1317:1317"
       - "9090:9090"
       - "2345:2345"
-    command: "--listen=:2345 --headless=true --log=true --log-output=debugger,debuglineerr,gdbwire,lldbout --accept-multiclient --api-version=2 exec /strided -- start"
+    command: "--listen=:2345 --headless=true --log=true --log-output=debugger,debuglineerr,gdbwire,lldbout --accept-multiclient --api-version=2 exec /usr/local/bin/strided -- start"
 
   stride2:
     image: stridezone:stride

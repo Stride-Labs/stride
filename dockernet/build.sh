@@ -15,7 +15,11 @@ build_local_and_docker() {
    printf '%s' "Building $title Locally...  "
    cwd=$PWD
    cd $folder
-   GOBIN=$BUILDDIR go install -mod=readonly -trimpath ./... 2>&1 | grep -v -E "deprecated|keychain" | true
+   if [[ "$module" == "stride" && "${DOCKER_DEBUG}" == "true" ]]; then
+      GOBIN=$BUILDDIR go install -mod=readonly -gcflags "all=-N -l" ./... 2>&1 | grep -v -E "deprecated|keychain" | true
+   else
+      GOBIN=$BUILDDIR go install -mod=readonly -trimpath ./... 2>&1 | grep -v -E "deprecated|keychain" | true
+   fi
    local_build_succeeded=${PIPESTATUS[0]}
    cd $cwd
 
@@ -29,6 +33,9 @@ build_local_and_docker() {
    echo "Building $title Docker...  "
    if [[ "$module" == "stride" ]]; then
       image=Dockerfile
+      if [[ ${DOCKER_DEBUG} == true ]]; then
+         DOCKER_BUILDKIT=1 docker build --tag stridezone:$module-debug -f $image.debug .
+      fi
    else
       image=dockernet/dockerfiles/Dockerfile.$module
    fi
@@ -58,7 +65,7 @@ revert_admin_address() {
 }
 
 # build docker images and local binaries
-while getopts sgojthrd flag; do
+while getopts sgojthr flag; do
    case "${flag}" in
       # For stride, we need to update the admin address to one that we have the seed phrase for
       s) replace_admin_address
@@ -69,7 +76,6 @@ while getopts sgojthrd flag; do
             exit 1
          fi
          ;;
-      d) build_local_and_docker stride-debug . ;;
       g) build_local_and_docker gaia deps/gaia ;;
       j) build_local_and_docker juno deps/juno ;;
       o) build_local_and_docker osmo deps/osmosis ;;

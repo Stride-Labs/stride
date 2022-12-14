@@ -7,7 +7,12 @@ COMMIT := $(shell git log -1 --format='%H')
 DOCKER := $(shell which docker)
 DOCKER_BUF := $(DOCKER) run --rm -v $(CURDIR):/workspace --workdir /workspace bufbuild/buf:1.7.0
 DOCKERNET_HOME=./dockernet
-DOCKERNET_COMPOSE_FILE=$(DOCKERNET_HOME)/docker-compose.yml
+DOCKER_DEBUG ?= false
+ifeq ($(DOCKER_DEBUG),true)
+	DOCKERNET_COMPOSE_FILE=$(DOCKERNET_HOME)/docker-compose-debug.yml
+else
+	DOCKERNET_COMPOSE_FILE=$(DOCKERNET_HOME)/docker-compose.yml
+endif
 LOCALSTRIDE_HOME=./testutil/localstride
 LOCALNET_COMPOSE_FILE=$(LOCALSTRIDE_HOME)/localnet/docker-compose.yml
 STATE_EXPORT_COMPOSE_FILE=$(LOCALSTRIDE_HOME)/state-export/docker-compose.yml
@@ -64,6 +69,10 @@ endif
 ldflags += $(LDFLAGS)
 ldflags := $(strip $(ldflags))
 
+ifeq ($(DOCKER_DEBUG),true)
+	gcflags += -gcflags "all=-N -l"
+endif
+
 BUILD_FLAGS := -tags "$(build_tags)" -ldflags '$(ldflags)'
 
 .PHONY: build
@@ -76,7 +85,7 @@ all: lint check-dependencies build-local
 
 build:
 	mkdir -p $(BUILDDIR)/
-	go build -mod=readonly -ldflags '$(ldflags)' -trimpath -o $(BUILDDIR) ./...;
+	go build -mod=readonly -ldflags '$(ldflags)' $(gcflags) -trimpath -o $(BUILDDIR) ./...;
 
 install: go.sum
 		go install $(BUILD_FLAGS) ./cmd/strided
@@ -107,26 +116,20 @@ test-cover:
 	@go test -mod=readonly -race -coverprofile=coverage.out -covermode=atomic ./x/$(module)/...
 
 test-integration-docker:
-	bash $(DOCKERNET_HOME)/tests/run_all_tests.sh
+	@DOCKER_DEBUG=$(DOCKER_DEBUG) bash $(DOCKERNET_HOME)/tests/run_all_tests.sh
 
 ###############################################################################
 ###                                DockerNet                                ###
 ###############################################################################
 
 build-docker: 
-	@bash $(DOCKERNET_HOME)/build.sh -${build} ${BUILDDIR}
+	@DOCKER_DEBUG=$(DOCKER_DEBUG) bash $(DOCKERNET_HOME)/build.sh -${build} ${BUILDDIR}
 	
-build-docker-debug:
-	@bash $(DOCKERNET_HOME)/build.sh -${build}d ${BUILDDIR}
-
 start-docker: build-docker
-	@bash $(DOCKERNET_HOME)/start_network.sh 
+	@DOCKER_DEBUG=$(DOCKER_DEBUG) bash $(DOCKERNET_HOME)/start_network.sh 
 
 start-docker-all: build-docker
-	@ALL_HOST_CHAINS=true bash $(DOCKERNET_HOME)/start_network.sh 
-
-start-docker-debug: build-docker-debug
-	@DOCKER_DEBUG=true bash $(DOCKERNET_HOME)/start_network.sh
+	@DOCKER_DEBUG=$(DOCKER_DEBUG) ALL_HOST_CHAINS=true bash $(DOCKERNET_HOME)/start_network.sh 
 
 clean-docker: 
 	@docker-compose -f $(DOCKERNET_COMPOSE_FILE) stop 
