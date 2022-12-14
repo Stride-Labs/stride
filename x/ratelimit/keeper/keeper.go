@@ -1,6 +1,10 @@
 package keeper
 
 import (
+	"fmt"
+
+	"github.com/tendermint/tendermint/libs/log"
+
 	"github.com/cosmos/cosmos-sdk/codec"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -33,6 +37,10 @@ func NewKeeper(
 		ics4Wrapper: ics4Wrapper,
 		bankKeeper:  bankKeeper,
 	}
+}
+
+func (k Keeper) Logger(ctx sdk.Context) log.Logger {
+	return ctx.Logger().With("module", fmt.Sprintf("x/%s", types.ModuleName))
 }
 
 func (k Keeper) SendPacket(ctx sdk.Context, chanCap *capabilitytypes.Capability, packet exported.PacketI) error {
