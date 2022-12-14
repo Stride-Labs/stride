@@ -150,7 +150,7 @@ func (suite *KeeperTestSuite) TestOnRecvPacket() {
 			packet.Data = transfertypes.ModuleCdc.MustMarshalJSON(&tc.packetData)
 
 			suite.SetupTest() // reset
-			ctx := suite.Ctx()
+			ctx := suite.Ctx
 
 			suite.App.RouterKeeper.SetParams(ctx, types.Params{Active: tc.forwardingActive})
 
@@ -164,7 +164,7 @@ func (suite *KeeperTestSuite) TestOnRecvPacket() {
 			// set deposit record for env
 			suite.App.RecordsKeeper.SetDepositRecord(ctx, recordstypes.DepositRecord{
 				Id:                 1,
-				Amount:             100,
+				Amount:             sdk.NewInt(100),
 				Denom:              atomIbcDenom,
 				HostZoneId:         "hub-1",
 				Status:             recordstypes.DepositRecord_TRANSFER_QUEUE,
@@ -183,7 +183,7 @@ func (suite *KeeperTestSuite) TestOnRecvPacket() {
 				FeeAccount:            nil,
 				DelegationAccount:     nil,
 				RedemptionAccount:     nil,
-				IBCDenom:              atomIbcDenom,
+				IbcDenom:              atomIbcDenom,
 				HostDenom:             atomHostDenom,
 				RedemptionRate:        sdk.NewDec(1),
 				Address:               addr1.String(),

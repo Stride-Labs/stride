@@ -48,7 +48,7 @@ func (k Keeper) TryLiquidStaking(
 func (k Keeper) RunLiquidStake(ctx sdk.Context, addr sdk.AccAddress, token sdk.Coin, labels []metrics.Label) error {
 	msg := &stakeibctypes.MsgLiquidStake{
 		Creator:   addr.String(),
-		Amount:    token.Amount.Uint64(),
+		Amount:    token.Amount,
 		HostDenom: token.Denom,
 	}
 

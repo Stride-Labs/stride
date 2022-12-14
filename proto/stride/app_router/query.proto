@@ -1,10 +1,9 @@
 syntax = "proto3";
-package Stridelabs.stride.app_router;
+package stride.app_router;
 
 import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
-import "cosmos/base/query/v1beta1/pagination.proto";
-import "app-router/params.proto";
+import "stride/app_router/params.proto";
 
 option go_package = "github.com/Stride-Labs/stride/v4/x/app-router/types";
 

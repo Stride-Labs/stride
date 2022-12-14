@@ -1,5 +1,5 @@
 syntax = "proto3";
-package Stridelabs.stride.app_router;
+package stride.app_router;
 
 import "gogoproto/gogo.proto";
 
