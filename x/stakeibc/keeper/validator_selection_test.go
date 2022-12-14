@@ -150,3 +150,29 @@ func (s *KeeperTestSuite) TestGetValidatorDelegationAmtDifferences_ErrorGetTarge
 	msgErr := fmt.Errorf("overflow: unable to cast %v of type %T to int64", targetDelForVal, targetDelForVal)
 	s.Require().Equal(err, msgErr)
 }
+
+func (s *KeeperTestSuite) TestGetTargetValAmtsForHostZone_ErrGetTargetWeightsForHostZoneWeight() {
+	tc := s.SetupGetHostZoneUnbondingMsgs()
+
+	// assign failed amount to validators's weights & Delegation amount
+	validators := []*stakeibc.Validator{
+		{
+			Address:       "cosmos_VALIDATOR_1",
+			DelegationAmt: 10000,
+			Weight:        uint64(1),
+		},
+		{
+			Address:       "cosmos_VALIDATOR_2",
+			DelegationAmt: math.MaxUint64,
+			Weight:        uint64(1),
+		},
+	}
+
+	tc.hostZone.Validators = validators
+
+	unbond := uint64(math.MaxUint64)
+
+	// ten times of MaxUint64 should fail but for some reason it won't fail ???
+	_, err := s.App.StakeibcKeeper.GetTargetValAmtsForHostZone(s.Ctx, tc.hostZone, unbond * 10)
+	s.Require().EqualError(err, stakeibc.ErrNoValidatorWeights.Error(), "Delegate zero amount should fail")
+}
