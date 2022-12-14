@@ -25,10 +25,11 @@ func (suite *KeeperTestSuite) TestEpochLifeCycle() {
 	suite.Require().Equal(epochInfo, epochInfoSaved)
 
 	allEpochs := suite.App.EpochsKeeper.AllEpochInfos(ctx)
-	suite.Require().Len(allEpochs, 5)
+	suite.Require().Len(allEpochs, 6)
 	suite.Require().Equal(allEpochs[0].Identifier, "day") // alphabetical order
-	suite.Require().Equal(allEpochs[1].Identifier, "mint")
-	suite.Require().Equal(allEpochs[2].Identifier, "monthly")
-	suite.Require().Equal(allEpochs[3].Identifier, "stride_epoch")
-	suite.Require().Equal(allEpochs[4].Identifier, "week")
+	suite.Require().Equal(allEpochs[1].Identifier, "hour")
+	suite.Require().Equal(allEpochs[2].Identifier, "mint")
+	suite.Require().Equal(allEpochs[3].Identifier, "monthly")
+	suite.Require().Equal(allEpochs[4].Identifier, "stride_epoch")
+	suite.Require().Equal(allEpochs[5].Identifier, "week")
 }
