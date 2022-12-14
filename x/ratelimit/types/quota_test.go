@@ -23,42 +23,49 @@ func TestCheckExceedsQuota(t *testing.T) {
 		direction  types.PacketDirection
 		amount     uint64
 		totalValue uint64
-		exp        bool
+		exceeded   bool
 	}{
 		{
 			name:       "inflow exceeded threshold",
 			direction:  types.PACKET_RECV,
 			amount:     amountOverThreshold,
 			totalValue: totalValue,
-			exp:        true,
+			exceeded:   true,
 		},
 		{
 			name:       "inflow did not exceed threshold",
 			direction:  types.PACKET_RECV,
 			amount:     amountUnderThreshold,
 			totalValue: totalValue,
-			exp:        false,
+			exceeded:   false,
 		},
 		{
 			name:       "outflow exceeded threshold",
 			direction:  types.PACKET_SEND,
 			amount:     amountOverThreshold,
 			totalValue: totalValue,
-			exp:        true,
+			exceeded:   true,
 		},
 		{
 			name:       "outflow did not exceed threshold",
 			direction:  types.PACKET_SEND,
 			amount:     amountUnderThreshold,
 			totalValue: totalValue,
-			exp:        false,
+			exceeded:   false,
+		},
+		{
+			name:       "zero channel value",
+			direction:  types.PACKET_SEND,
+			amount:     amountUnderThreshold,
+			totalValue: totalValue,
+			exceeded:   false,
 		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			res := quota.CheckExceedsQuota(test.direction, test.amount, test.totalValue)
-			require.Equal(t, res, test.exp)
+			require.Equal(t, res, test.exceeded, "test: %s", test.name)
 		})
 	}
 }
