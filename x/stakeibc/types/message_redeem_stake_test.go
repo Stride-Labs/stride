@@ -1,11 +1,12 @@
 package types
 
 import (
-	"math"
 	"testing"
 
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/stretchr/testify/require"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/Stride-Labs/stride/v4/testutil/sample"
 )
@@ -22,7 +23,7 @@ func TestMsgRedeemStake_ValidateBasic(t *testing.T) {
 				Creator:  sample.AccAddress(),
 				HostZone: "GAIA",
 				Receiver: sample.AccAddress(),
-				Amount:   uint64(1),
+				Amount:   sdk.NewInt(1),
 			},
 		},
 		{
@@ -31,7 +32,7 @@ func TestMsgRedeemStake_ValidateBasic(t *testing.T) {
 				Creator:  "invalid_address",
 				HostZone: "GAIA",
 				Receiver: sample.AccAddress(),
-				Amount:   uint64(1),
+				Amount:   sdk.NewInt(1),
 			},
 			err: sdkerrors.ErrInvalidAddress,
 		},
@@ -40,7 +41,7 @@ func TestMsgRedeemStake_ValidateBasic(t *testing.T) {
 			msg: MsgRedeemStake{
 				Creator:  sample.AccAddress(),
 				Receiver: sample.AccAddress(),
-				Amount:   uint64(1),
+				Amount:   sdk.NewInt(1),
 			},
 			err: ErrRequiredFieldEmpty,
 		},
@@ -49,19 +50,9 @@ func TestMsgRedeemStake_ValidateBasic(t *testing.T) {
 			msg: MsgRedeemStake{
 				Creator:  sample.AccAddress(),
 				HostZone: "GAIA",
-				Amount:   uint64(1),
+				Amount:   sdk.NewInt(1),
 			},
 			err: ErrRequiredFieldEmpty,
-		},
-		{
-			name: "amount max int",
-			msg: MsgRedeemStake{
-				Creator:  sample.AccAddress(),
-				HostZone: "GAIA",
-				Receiver: sample.AccAddress(),
-				Amount:   math.MaxUint64,
-			},
-			err: ErrInvalidAmount,
 		},
 	}
 	for _, tt := range tests {
