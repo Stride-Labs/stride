@@ -54,7 +54,7 @@ func (s *KeeperTestSuite) SetupAddValidator() AddValidatorTestCase {
 			CommissionRate: 1,
 			Weight:         1,
 			Status:         stakeibctypes.Validator_ACTIVE,
-			DelegationAmt:  0,
+			DelegationAmt:  sdk.ZeroInt(),
 		},
 		{
 			Name:           "val2",
@@ -62,7 +62,7 @@ func (s *KeeperTestSuite) SetupAddValidator() AddValidatorTestCase {
 			CommissionRate: 2,
 			Weight:         2,
 			Status:         stakeibctypes.Validator_ACTIVE,
-			DelegationAmt:  0,
+			DelegationAmt:  sdk.ZeroInt(),
 		},
 		{
 			Name:           "val3",
@@ -70,7 +70,7 @@ func (s *KeeperTestSuite) SetupAddValidator() AddValidatorTestCase {
 			CommissionRate: 3,
 			Weight:         3,
 			Status:         stakeibctypes.Validator_ACTIVE,
-			DelegationAmt:  0,
+			DelegationAmt:  sdk.ZeroInt(),
 		},
 	}
 

@@ -11,7 +11,10 @@ message UserRedemptionRecord {
   string id = 1; // {chain_id}.{epoch}.{sender}
   string sender = 2;
   string receiver = 3;
-  uint64 amount = 4;
+  string amount = 4 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
   string denom = 5;
   string host_zone_id = 6;
   uint64 epoch_number = 7;
@@ -41,7 +44,10 @@ message NoData {}
 
 message DepositRecord {
   uint64 id = 1;
-  int64 amount = 2;
+  string amount = 2 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
   string denom = 3;
   string host_zone_id = 4;
   enum Status {
@@ -76,8 +82,14 @@ message HostZoneUnbonding {
     // transfer success
     CLAIMABLE = 2;
   }
-  uint64 st_token_amount = 1;
-  uint64 native_token_amount = 2;
+  string st_token_amount = 1 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
+  string native_token_amount = 2 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
   string denom = 3;
   string host_zone_id = 4;
   uint64 unbonding_time = 5;
