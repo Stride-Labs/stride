@@ -15,7 +15,7 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochInfo epochstypes.EpochInf
 		epochHour := uint64(epochInfo.CurrentEpoch)
 
 		for _, rateLimit := range k.GetAllRateLimits(ctx) {
-			if rateLimit.Quota.DurationHours%epochHour == 0 {
+			if epochHour%rateLimit.Quota.DurationHours == 0 {
 				err := k.ResetRateLimit(ctx, rateLimit)
 				if err != nil {
 					k.Logger(ctx).Error(fmt.Sprintf("Unable to reset quota for Denom: %s, ChannelId: %s", rateLimit.Path.Denom, rateLimit.Path.ChannelId))
