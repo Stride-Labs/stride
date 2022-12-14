@@ -13,6 +13,12 @@ func GetRateLimitItemKey(denom string, channelId string) []byte {
 	return append(types.KeyPrefix(denom), types.KeyPrefix(channelId)...)
 }
 
+// The total value on a given path (aka, the denominator in the percentage calculation)
+// is the total supply of the given denom
+func (k Keeper) GetChannelValue(ctx sdk.Context, denom string) sdk.Int {
+	return k.bankKeeper.GetSupply(ctx, denom).Amount
+}
+
 func CheckRateLimit(direction types.PacketDirection, packet exported.PacketI) error {
 	// TODO
 	return nil
