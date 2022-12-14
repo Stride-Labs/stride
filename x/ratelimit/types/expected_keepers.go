@@ -5,7 +5,7 @@ import (
 )
 
 // BankKeeper defines the banking contract that must be fulfilled when
-// creating a x/claim keeper.
+// creating a x/ratelimit keeper.
 type BankKeeper interface {
 	GetSupply(ctx sdk.Context, denom string) sdk.Coin
 }
