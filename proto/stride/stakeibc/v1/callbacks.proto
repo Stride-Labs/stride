@@ -1,0 +1,17 @@
+syntax = "proto3";
+package stride.stakeibc.v1;
+option go_package = "github.com/Stride-Labs/stride/v4/x/stakeibc/types/v1";
+import "gogoproto/gogo.proto";
+import "cosmos/base/v1beta1/coin.proto";
+
+// ---------------------- Delegation Callbacks ---------------------- //
+message SplitDelegation {
+  string validator = 1;
+  uint64 amount = 2;
+}
+
+message Rebalancing {
+  string src_validator = 1;
+  string dst_validator = 2;
+  uint64 amt = 3;
+}
