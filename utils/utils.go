@@ -44,41 +44,24 @@ func Min(a int, b int) int {
 	return b
 }
 
-func HostZoneUnbondingKeys(m map[string]*recordstypes.HostZoneUnbonding) []string {
-	keys := make([]string, 0, len(m))
+func StringMapKeys[V any](m map[string]V) []string {
+    keys := make([]string, 0, len(m))
+    for k := range m {
+		keys = append(keys, k)
+    }
+    sort.Strings(keys)
+    return keys
+}
+
+func Int32MapKeys[V any](m map[int32]V) []int32 {
+	keys := make([]int32, 0, len(m))
 	for k := range m {
 		keys = append(keys, k)
 	}
-	sort.Strings(keys)
+	sort.Slice(keys, func(i, j int) bool { return keys[i] < keys[j] })
 	return keys
 }
 
-func StringToIntMapKeys(m map[string]int64) []string {
-	keys := make([]string, 0, len(m))
-	for k := range m {
-		keys = append(keys, k)
-	}
-	sort.Strings(keys)
-	return keys
-}
-
-func StringToStringMapKeys(m map[string]string) []string {
-	keys := make([]string, 0, len(m))
-	for k := range m {
-		keys = append(keys, k)
-	}
-	sort.Strings(keys)
-	return keys
-}
-
-func StringToStringSliceMapKeys(m map[string][]string) []string {
-	keys := make([]string, 0, len(m))
-	for k := range m {
-		keys = append(keys, k)
-	}
-	sort.Strings(keys)
-	return keys
-}
 
 //==============================  ADDRESS VERIFICATION UTILS  ================================
 // ref: https://github.com/cosmos/cosmos-sdk/blob/b75c2ebcfab1a6b535723f1ac2889a2fc2509520/types/address.go#L177

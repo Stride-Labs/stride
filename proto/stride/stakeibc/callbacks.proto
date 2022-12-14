@@ -7,7 +7,10 @@ import "cosmos/base/v1beta1/coin.proto";
 // ---------------------- Delegation Callbacks ---------------------- //
 message SplitDelegation {
   string validator = 1;
-  uint64 amount = 2;
+  string amount = 2 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
 }
 
 message DelegateCallback {
@@ -51,7 +54,10 @@ message RedemptionCallback {
 message Rebalancing {
   string src_validator = 1;
   string dst_validator = 2;
-  uint64 amt = 3;
+  string amt = 3 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
 }
 
 message RebalanceCallback {
