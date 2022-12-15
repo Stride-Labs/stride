@@ -18,7 +18,7 @@ KEYS_LOGS=$SCRIPT_DIR/logs/keys.log
 # List of hosts enabled 
 #  `start-docker` defaults to just GAIA if HOST_CHAINS is empty
 # `start-docker-all` always runs all hosts
-HOST_CHAINS=(GAIA) 
+HOST_CHAINS=(GAIA JUNO) 
 
 if [[ "${ALL_HOST_CHAINS:-false}" == "true" ]]; then 
   HOST_CHAINS=(GAIA JUNO OSMO STARS)
@@ -97,7 +97,7 @@ REV_MNEMONIC="tonight bonus finish chaos orchard plastic view nurse salad regret
 # STRIDE 
 STRIDE_CHAIN_ID=STRIDE
 STRIDE_NODE_PREFIX=stride
-STRIDE_NUM_NODES=3
+STRIDE_NUM_NODES=1
 STRIDE_VAL_PREFIX=val
 STRIDE_DENOM=$STRD_DENOM
 STRIDE_RPC_PORT=26657
@@ -117,7 +117,7 @@ STRIDE_MAIN_CMD="$STRIDE_CMD --home $SCRIPT_DIR/state/${STRIDE_NODE_PREFIX}1"
 # GAIA 
 GAIA_CHAIN_ID=GAIA
 GAIA_NODE_PREFIX=gaia
-GAIA_NUM_NODES=1
+GAIA_NUM_NODES=4
 GAIA_CMD="$SCRIPT_DIR/../build/gaiad"
 GAIA_VAL_PREFIX=gval
 GAIA_REV_ACCT=grev1
@@ -130,7 +130,7 @@ GAIA_RECEIVER_ADDRESS='cosmos1g6qdx6kdhpf000afvvpte7hp0vnpzapuyxp8uf'
 # JUNO 
 JUNO_CHAIN_ID=JUNO
 JUNO_NODE_PREFIX=juno
-JUNO_NUM_NODES=1
+JUNO_NUM_NODES=3
 JUNO_CMD="$SCRIPT_DIR/../build/junod"
 JUNO_VAL_PREFIX=jval
 JUNO_REV_ACCT=jrev1

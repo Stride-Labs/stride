@@ -114,7 +114,8 @@ func (s *KeeperTestSuite) TestUpdateRedemptionRatesRandomized() {
 	numerator := stakedBal.Add(undelegatedBal).Add(justDepositedBal)
 	denominator := stSupply
 	expectedNewRate := sdk.NewDecFromInt(numerator.Quo(denominator))
-	s.Require().Equal(rrNew, expectedNewRate, "expectedNewRate: %v, rrNew: %v; inputs: SB: %d, UDB: %d, JDB: %d, STS: %d RRT0: %d", expectedNewRate, rrNew, stakedBal, undelegatedBal, justDepositedBal, stSupply, initialRedemptionRate)
+	s.Require().Equal(rrNew, expectedNewRate, "expectedNewRate: %v, rrNew: %v; inputs: SB: %v, UDB: %v, JDB: %v, STS: %v RRT0: %v",
+		expectedNewRate, rrNew, stakedBal, undelegatedBal, justDepositedBal, stSupply, initialRedemptionRate)
 }
 
 func (s *KeeperTestSuite) TestUpdateRedemptionRatesRandomized_MultipleRuns() {

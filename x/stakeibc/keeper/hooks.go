@@ -159,12 +159,12 @@ func (k Keeper) UpdateRedemptionRates(ctx sdk.Context, depositRecords []recordst
 		}
 
 		k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId,
-			"Redemption Rate Components - Undelegated Balance: %d, Staked Balance: %d, Module Account Balance: %d, stToken Supply: %d",
+			"Redemption Rate Components - Undelegated Balance: %v, Staked Balance: %v, Module Account Balance: %v, stToken Supply: %v",
 			undelegatedBalance, stakedBalance, moduleAcctBalance, stSupply))
 
 		// Calculate the redemption rate
 		redemptionRate := (sdk.NewDecFromInt(undelegatedBalance).Add(sdk.NewDecFromInt(stakedBalance)).Add(sdk.NewDecFromInt(moduleAcctBalance))).Quo(sdk.NewDecFromInt(stSupply))
-		k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId, "New Redemption Rate: %d (vs Prev Rate: %d)", redemptionRate, hostZone.RedemptionRate))
+		k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId, "New Redemption Rate: %v (vs Prev Rate: %v)", redemptionRate, hostZone.RedemptionRate))
 
 		// Update the host zone
 		hostZone.LastRedemptionRate = hostZone.RedemptionRate

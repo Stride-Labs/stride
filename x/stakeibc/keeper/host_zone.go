@@ -93,28 +93,31 @@ func (k Keeper) GetAllHostZone(ctx sdk.Context) (list []types.HostZone) {
 	return
 }
 
-func (k Keeper) AddDelegationToValidator(ctx sdk.Context, hostZone types.HostZone, valAddr string, amt sdk.Int) (success bool) {
-	for _, val := range hostZone.GetValidators() {
-		if val.GetAddress() == valAddr {
-			k.Logger(ctx).Info(fmt.Sprintf("Validator %s, Current Delegation: %d, Delegation Change: %d", val.GetAddress(), val.DelegationAmt, amt))
-			if amt.GTE(sdk.ZeroInt()) {
-				val.DelegationAmt = val.DelegationAmt.Add(amt)
+func (k Keeper) AddDelegationToValidator(ctx sdk.Context, hostZone types.HostZone, validatorAddress string, amount sdk.Int) (success bool) {
+	for _, validator := range hostZone.Validators {
+		if validator.Address == validatorAddress {
+			k.Logger(ctx).Info(fmt.Sprintf("Validator %s, Current Delegation: %v, Delegation Change: %v", validator.Address, validator.DelegationAmt, amount))
+			if amount.GTE(sdk.ZeroInt()) {
+				validator.DelegationAmt = validator.DelegationAmt.Add(amount)
 				return true
 			} else {
-				absAmt := amt.Abs()
-				if absAmt.GT(val.DelegationAmt) {
-					k.Logger(ctx).Error(fmt.Sprintf("Delegation amount %d is greater than validator %s delegation amount %d", absAmt, valAddr, val.DelegationAmt))
+				absAmt := amount.Abs()
+				if absAmt.GT(validator.DelegationAmt) {
+					k.Logger(ctx).Error(fmt.Sprintf("Delegation amount %v is greater than validator %s delegation amount %v", absAmt, validatorAddress, validator.DelegationAmt))
 					return false
 				}
-				val.DelegationAmt = val.DelegationAmt.Sub(absAmt)
+				validator.DelegationAmt = validator.DelegationAmt.Sub(absAmt)
 				return true
 			}
 		}
 	}
-	k.Logger(ctx).Error(fmt.Sprintf("Could not find validator %s on host zone %s", valAddr, hostZone.GetChainId()))
+	k.Logger(ctx).Error(fmt.Sprintf("Could not find validator %s on host zone %s", validatorAddress, hostZone.ChainId))
 	return false
 }
 
+// Appends a validator to host zone (if the host zone is not already at capacity)
+// If the validator is added through governance, the weight is equal to the minimum weight across the set
+// If the validator is added through an admin transactions, the weight is specified in the message
 func (k Keeper) AddValidatorToHostZone(ctx sdk.Context, msg *types.MsgAddValidator, fromGovernance bool) error {
 	// Get the corresponding host zone
 	hostZone, found := k.GetHostZone(ctx, msg.HostZone)
@@ -171,6 +174,8 @@ func (k Keeper) AddValidatorToHostZone(ctx sdk.Context, msg *types.MsgAddValidat
 	return nil
 }
 
+// Removes a validator from a host zone
+// The validator must be zero-weight and have no delegations in order to be removed
 func (k Keeper) RemoveValidatorFromHostZone(ctx sdk.Context, chainId string, validatorAddress string) error {
 	hostZone, found := k.GetHostZone(ctx, chainId)
 	if !found {

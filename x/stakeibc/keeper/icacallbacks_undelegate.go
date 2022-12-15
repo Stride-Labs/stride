@@ -108,18 +108,18 @@ func UndelegateCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, a
 func (k Keeper) UpdateDelegationBalances(ctx sdk.Context, zone types.HostZone, undelegateCallback types.UndelegateCallback) error {
 	// Undelegate from each validator and update host zone staked balance, if successful
 	for _, undelegation := range undelegateCallback.SplitDelegations {
-		k.Logger(ctx).Info(fmt.Sprintf("UndelegateCallback, Undelegation: %d, validator: %s", undelegation.Amount, undelegation.Validator))
+		k.Logger(ctx).Info(fmt.Sprintf("UndelegateCallback, Undelegation: %v, validator: %s", undelegation.Amount, undelegation.Validator))
 
 		undelegateVal := undelegation.Validator
 		success := k.AddDelegationToValidator(ctx, zone, undelegateVal, undelegation.Amount.Neg())
 		if !success {
 			return sdkerrors.Wrapf(types.ErrValidatorDelegationChg, "Failed to remove delegation to validator")
 		}
-		
+
 		if undelegation.Amount.GT(zone.StakedBal) {
 			// handle incoming underflow
 			// Once we add a killswitch, we should also stop liquid staking on the zone here
-			return sdkerrors.Wrapf(types.ErrUndelegationAmount, "undelegation.Amount > zone.StakedBal, undelegation.Amount: %d, zone.StakedBal %d", undelegation.Amount, zone.StakedBal)
+			return sdkerrors.Wrapf(types.ErrUndelegationAmount, "undelegation.Amount > zone.StakedBal, undelegation.Amount: %v, zone.StakedBal %v", undelegation.Amount, zone.StakedBal)
 		} else {
 			zone.StakedBal = zone.StakedBal.Sub(undelegation.Amount)
 		}
@@ -154,6 +154,9 @@ func (k Keeper) GetLatestCompletionTime(ctx sdk.Context, txMsgData *sdk.TxMsgDat
 	return &latestCompletionTime, nil
 }
 
+// UpdateHostZoneUnbondings does two things:
+// 		1. Update the status and time of each hostZoneUnbonding on each epochUnbondingRecord
+// 		2. Return the number of stTokens that need to be burned
 func (k Keeper) UpdateHostZoneUnbondings(
 	ctx sdk.Context,
 	latestCompletionTime time.Time,
@@ -161,9 +164,6 @@ func (k Keeper) UpdateHostZoneUnbondings(
 	undelegateCallback types.UndelegateCallback,
 ) (stTokenBurnAmount sdk.Int, err error) {
 	stTokenBurnAmount = sdk.ZeroInt()
-	// UpdateHostZoneUnbondings does two things:
-	// 		1. Update the status and time of each hostZoneUnbonding on each epochUnbondingRecord
-	// 		2. Return the number of stTokens that need to be burned
 	for _, epochNumber := range undelegateCallback.EpochUnbondingRecordIds {
 		epochUnbondingRecord, found := k.RecordsKeeper.GetEpochUnbondingRecord(ctx, epochNumber)
 		if !found {
@@ -187,7 +187,7 @@ func (k Keeper) UpdateHostZoneUnbondings(
 		hostZoneUnbonding.UnbondingTime = cast.ToUint64(latestCompletionTime.UnixNano())
 		updatedEpochUnbondingRecord, success := k.RecordsKeeper.AddHostZoneToEpochUnbondingRecord(ctx, epochUnbondingRecord.EpochNumber, zone.ChainId, hostZoneUnbonding)
 		if !success {
-			k.Logger(ctx).Error(fmt.Sprintf("Failed to set host zone epoch unbonding record: epochNumber %d, chainId %s, hostZoneUnbonding %v", epochUnbondingRecord.EpochNumber, zone.ChainId, hostZoneUnbonding))
+			k.Logger(ctx).Error(fmt.Sprintf("Failed to set host zone epoch unbonding record: epochNumber %d, chainId %s, hostZoneUnbonding %+v", epochUnbondingRecord.EpochNumber, zone.ChainId, hostZoneUnbonding))
 			return sdk.ZeroInt(), sdkerrors.Wrapf(types.ErrEpochNotFound, "couldn't set host zone epoch unbonding record. err: %s", err.Error())
 		}
 		k.RecordsKeeper.SetEpochUnbondingRecord(ctx, *updatedEpochUnbondingRecord)
@@ -217,7 +217,7 @@ func (k Keeper) BurnTokens(ctx sdk.Context, zone types.HostZone, stTokenBurnAmou
 	err = k.bankKeeper.BurnCoins(ctx, types.ModuleName, sdk.NewCoins(stCoin))
 	if err != nil {
 		k.Logger(ctx).Error(fmt.Sprintf("Failed to burn stAssets upon successful unbonding %s", err.Error()))
-		return sdkerrors.Wrapf(types.ErrInsufficientFunds, "couldn't burn %d %s tokens in module account. err: %s", stTokenBurnAmount, stCoinDenom, err.Error())
+		return sdkerrors.Wrapf(types.ErrInsufficientFunds, "couldn't burn %v%s tokens in module account. err: %s", stTokenBurnAmount, stCoinDenom, err.Error())
 	}
 	k.Logger(ctx).Info(fmt.Sprintf("Total supply %s", k.bankKeeper.GetSupply(ctx, stCoinDenom)))
 	return nil
