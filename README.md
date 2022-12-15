@@ -16,7 +16,7 @@ Stride is a blockchain ("zone") that provides liquidity for staked assets. Using
 
 ![](https://drive.google.com/uc?id=1RuK2YeMH7O6P9-8ro_ybOg5n79ySwFjN)
 
-* Mainnet node
+# Mainnet node
 If you want to set up a node on the mainnet (using Linux), follow the instructions found below including the required files.
 
 ## Setting up a node
