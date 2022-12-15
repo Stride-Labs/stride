@@ -1,12 +1,19 @@
 package ratelimit
 
 import (
+	"encoding/json"
+	"strconv"
+
 	"github.com/Stride-Labs/stride/v4/x/ratelimit/keeper"
+	ratelimitkeeper "github.com/Stride-Labs/stride/v4/x/ratelimit/keeper"
+	"github.com/Stride-Labs/stride/v4/x/ratelimit/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
+	transfertypes "github.com/cosmos/ibc-go/v3/modules/apps/transfer/types"
 	channeltypes "github.com/cosmos/ibc-go/v3/modules/core/04-channel/types"
 	porttypes "github.com/cosmos/ibc-go/v3/modules/core/05-port/types"
+
 	"github.com/cosmos/ibc-go/v3/modules/core/exported"
 )
 
@@ -108,7 +115,30 @@ func (im IBCModule) OnRecvPacket(
 	packet channeltypes.Packet,
 	relayer sdk.AccAddress,
 ) exported.Acknowledgement {
-	// Run custom logic here
+	// For a recieve packet, the channel on stride is the "Destination" channel
+	// This is because the Source and Desination is defined from the perspective of a packet recipient
+	// Meaning, when this packet lands on a Stride, the "Destination" will show the Stride Channel
+	channelId := packet.GetDestChannel()
+
+	// Parse the amount and denom from the packet
+	var packetData transfertypes.FungibleTokenPacketData
+	if err := json.Unmarshal(packet.GetData(), &packetData); err != nil {
+		return channeltypes.NewErrorAcknowledgement(err.Error())
+	}
+
+	// TODO: Switch to type sdk.Int
+	amount, err := strconv.ParseUint(packetData.Amount, 10, 64)
+	if err != nil {
+		return channeltypes.NewErrorAcknowledgement(err.Error())
+	}
+
+	denom := ratelimitkeeper.ParseDenomFromRecvPacket(packet, packetData)
+
+	// Check whether the rate limit has been exceeded - and if it hasn't, send the packet
+	err = im.keeper.CheckRateLimit(ctx, types.PACKET_RECV, denom, channelId, amount)
+	if err != nil {
+		return channeltypes.NewErrorAcknowledgement(err.Error())
+	}
 	return im.app.OnRecvPacket(ctx, packet, relayer)
 }
 
@@ -134,20 +164,22 @@ func (im IBCModule) OnTimeoutPacket(
 }
 
 // SendPacket implements the ICS4 Wrapper interface
+// This is implemented by the ratelimit ICS4Wrapper
 func (im IBCModule) SendPacket(
 	ctx sdk.Context,
 	chanCap *capabilitytypes.Capability,
 	packet exported.PacketI,
 ) error {
-	return im.keeper.SendPacket(ctx, chanCap, packet)
+	return nil
 }
 
 // WriteAcknowledgement implements the ICS4 Wrapper interface
+// This is implemented by the ratelimit ICS4Wrapper
 func (im IBCModule) WriteAcknowledgement(
 	ctx sdk.Context,
 	chanCap *capabilitytypes.Capability,
 	packet exported.PacketI,
 	ack exported.Acknowledgement,
 ) error {
-	return im.keeper.WriteAcknowledgement(ctx, chanCap, packet, ack)
+	return nil
 }
