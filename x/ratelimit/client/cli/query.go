@@ -35,7 +35,7 @@ func GetCmdQueryRateLimit() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "rate-limit [denom] [channel-id]",
 		Short: "Query a specific rate limit",
-		Args:  cobra.ExactArgs(1),
+		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			denom := args[0]
 			channelId := args[1]

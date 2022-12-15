@@ -32,7 +32,7 @@ func GetTxCmd() *cobra.Command {
 // Adds a new rate limit
 func CmdAddRateLimit() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "add-rate-limit [denom] [channel-id] [max-percent-send] [max-percent-recv] [duration-minutes]",
+		Use:   "add-rate-limit [denom] [channel-id] [max-percent-send] [max-percent-recv] [duration-hours]",
 		Short: "Broadcast message add-rate-limit",
 		Args:  cobra.ExactArgs(5),
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
@@ -49,7 +49,7 @@ func CmdAddRateLimit() *cobra.Command {
 				return err
 			}
 
-			durationMinutes, err := strconv.Atoi(args[4])
+			durationHours, err := strconv.Atoi(args[4])
 			if err != nil {
 				return err
 			}
@@ -64,7 +64,7 @@ func CmdAddRateLimit() *cobra.Command {
 				channelId,
 				uint64(maxPercentSend),
 				uint64(maxPercentRecv),
-				uint64(durationMinutes),
+				uint64(durationHours),
 			)
 
 			if err := msg.ValidateBasic(); err != nil {
@@ -83,7 +83,7 @@ func CmdAddRateLimit() *cobra.Command {
 // Update a rate limit
 func CmdUpdateRateLimit() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "update-rate-limit [denom] [channel-id] [max-percent-send] [max-percet-recv] [duration-minutes]",
+		Use:   "update-rate-limit [denom] [channel-id] [max-percent-send] [max-percet-recv] [duration-hours]",
 		Short: "Broadcast message update-rate-limit",
 		Args:  cobra.ExactArgs(5),
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
@@ -100,7 +100,7 @@ func CmdUpdateRateLimit() *cobra.Command {
 				return err
 			}
 
-			durationMinutes, err := strconv.Atoi(args[4])
+			durationHours, err := strconv.Atoi(args[4])
 			if err != nil {
 				return err
 			}
@@ -115,7 +115,7 @@ func CmdUpdateRateLimit() *cobra.Command {
 				channelId,
 				uint64(maxPercentSend),
 				uint64(maxPercentRecv),
-				uint64(durationMinutes),
+				uint64(durationHours),
 			)
 
 			if err := msg.ValidateBasic(); err != nil {
