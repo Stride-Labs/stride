@@ -44,7 +44,7 @@ for chain in STRIDE ${HOST_CHAINS[@]}; do
 done
 
 # Start the chain and create the transfer channels
-DOCKER_DEBUG=$DOCKER_DEBUG bash $SRC/start_chain.sh
+bash $SRC/start_chain.sh
 bash $SRC/start_relayers.sh 
 
 # Register all host zones 

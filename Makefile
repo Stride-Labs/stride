@@ -7,11 +7,10 @@ COMMIT := $(shell git log -1 --format='%H')
 DOCKER := $(shell which docker)
 DOCKER_BUF := $(DOCKER) run --rm -v $(CURDIR):/workspace --workdir /workspace bufbuild/buf:1.7.0
 DOCKERNET_HOME=./dockernet
+DOCKERNET_COMPOSE_FILE_PARAM := -f $(DOCKERNET_HOME)/docker-compose.yml
 DOCKER_DEBUG ?= false
 ifeq ($(DOCKER_DEBUG),true)
-	DOCKERNET_COMPOSE_FILE=$(DOCKERNET_HOME)/docker-compose-debug.yml
-else
-	DOCKERNET_COMPOSE_FILE=$(DOCKERNET_HOME)/docker-compose.yml
+	DOCKERNET_COMPOSE_FILE_PARAM := $(DOCKERNET_COMPOSE_FILE_PARAM) -f $(DOCKERNET_HOME)/docker-compose-debug.yml
 endif
 LOCALSTRIDE_HOME=./testutil/localstride
 LOCALNET_COMPOSE_FILE=$(LOCALSTRIDE_HOME)/localnet/docker-compose.yml
@@ -132,8 +131,8 @@ start-docker-all: build-docker
 	@DOCKER_DEBUG=$(DOCKER_DEBUG) ALL_HOST_CHAINS=true bash $(DOCKERNET_HOME)/start_network.sh 
 
 clean-docker: 
-	@docker-compose -f $(DOCKERNET_COMPOSE_FILE) stop 
-	@docker-compose -f $(DOCKERNET_COMPOSE_FILE) down 
+	@docker-compose $(DOCKERNET_COMPOSE_FILE_PARAM) stop
+	@docker-compose $(DOCKERNET_COMPOSE_FILE_PARAM) down
 	rm -rf $(DOCKERNET_HOME)/state
 	docker image prune -a
 	
@@ -141,7 +140,7 @@ stop-docker:
 	@-pkill -f "docker-compose .*stride.* logs" | true
 	@-pkill -f "/bin/bash.*create_logs.sh" | true
 	@-pkill -f "tail .*.log" | true
-	docker-compose -f $(DOCKERNET_COMPOSE_FILE) down
+	docker-compose $(DOCKERNET_COMPOSE_FILE_PARAM) down
 
 ###############################################################################
 ###                                Protobuf                                 ###

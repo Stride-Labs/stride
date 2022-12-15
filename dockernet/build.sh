@@ -31,16 +31,19 @@ build_local_and_docker() {
    fi
 
    echo "Building $title Docker...  "
+   docker_target_param=""
    if [[ "$module" == "stride" ]]; then
       image=Dockerfile
       if [[ ${DOCKER_DEBUG} == true ]]; then
-         DOCKER_BUILDKIT=1 docker build --tag stridezone:$module-debug -f $image.debug .
+         docker_target_param="-t debug"
+      else
+         docker_target_param="-t production"
       fi
    else
       image=dockernet/dockerfiles/Dockerfile.$module
    fi
 
-   DOCKER_BUILDKIT=1 docker build --tag stridezone:$module -f $image . | true
+   DOCKER_BUILDKIT=1 docker build --tag stridezone:$module -f $image $docker_target_param . | true
    docker_build_succeeded=${PIPESTATUS[0]}
 
    if [[ "$docker_build_succeeded" == "0" ]]; then
