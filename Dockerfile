@@ -5,7 +5,6 @@ ARG RUNNER_IMAGE="alpine:3.16"
 
 FROM golang:${GO_VERSION}-alpine as builder-deps
 
-
 WORKDIR /opt
 RUN apk add --no-cache make git gcc musl-dev openssl-dev linux-headers
 
