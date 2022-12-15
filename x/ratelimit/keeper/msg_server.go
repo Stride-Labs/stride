@@ -36,6 +36,9 @@ func (server msgServer) AddRateLimit(goCtx context.Context, msg *types.MsgAddRat
 		Outflow:      0,
 		ChannelValue: server.Keeper.GetChannelValue(ctx, msg.Denom).Uint64(),
 	}
+	if flow.ChannelValue == 0 {
+		return nil, types.ErrZeroChannelValue
+	}
 
 	_, found := server.Keeper.GetRateLimit(ctx, msg.Denom, msg.ChannelId)
 	if found {
