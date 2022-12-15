@@ -35,7 +35,8 @@ func (k Keeper) BeginBlocker(ctx sdk.Context) {
 
 			// Capitalize the epoch identifier for the logs
 			epochAlias := strings.ToUpper(strings.ReplaceAll(epochInfo.Identifier, "_epoch", ""))
-			logger.Info(utils.LogHeader("%s EPOCH %d - %s", epochAlias, epochInfo.CurrentEpoch, epochInfo.CurrentEpochStartTime))
+			logger.Info(utils.LogHeader("%s EPOCH %d", epochAlias, epochInfo.CurrentEpoch))
+			logger.Info(utils.LogHeader("Epoch Start Time: %s", epochInfo.CurrentEpochStartTime))
 
 			ctx.EventManager().EmitEvent(
 				sdk.NewEvent(
