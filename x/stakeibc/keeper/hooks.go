@@ -146,9 +146,9 @@ func (k Keeper) UpdateRedemptionRates(ctx sdk.Context, depositRecords []recordst
 	// Update the redemption rate for each host zone
 	for _, hostZone := range k.GetAllHostZone(ctx) {
 
-		// Get the redemption rate components
-		stSupply := k.bankKeeper.GetSupply(ctx, types.StAssetDenomFromHostZoneDenom(hostZone.HostDenom)).Amount.Int64()
-		if stSupply == 0 {
+		// Gather redemption rate components
+		stSupply := k.bankKeeper.GetSupply(ctx, types.StAssetDenomFromHostZoneDenom(hostZone.HostDenom)).Amount
+		if stSupply.IsZero() {
 			k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId, "No st%s in circulation - redemption rate is unchanged", hostZone.HostDenom))
 			continue
 		}
@@ -157,11 +157,7 @@ func (k Keeper) UpdateRedemptionRates(ctx sdk.Context, depositRecords []recordst
 			k.Logger(ctx).Error(fmt.Sprintf("Could not get undelegated balance for host zone %s: %s", hostZone.ChainId, err.Error()))
 			return
 		}
-		stakedBalance, err := cast.ToInt64E(hostZone.StakedBal)
-		if err != nil {
-			k.Logger(ctx).Error(fmt.Sprintf("Could not get staked balance for host zone %s: %s", hostZone.ChainId, err.Error()))
-			return
-		}
+		stakedBalance := hostZone.StakedBal
 		moduleAcctBalance, err := k.GetModuleAccountBalance(hostZone, depositRecords)
 		if err != nil {
 			k.Logger(ctx).Error(fmt.Sprintf("Could not get module account balance for host zone %s: %s", hostZone.ChainId, err.Error()))
@@ -173,7 +169,7 @@ func (k Keeper) UpdateRedemptionRates(ctx sdk.Context, depositRecords []recordst
 			undelegatedBalance, stakedBalance, moduleAcctBalance, stSupply))
 
 		// Calculate the redemption rate
-		redemptionRate := (sdk.NewDec(undelegatedBalance).Add(sdk.NewDec(stakedBalance)).Add(sdk.NewDec(moduleAcctBalance))).Quo(sdk.NewDec(stSupply))
+		redemptionRate := (sdk.NewDecFromInt(undelegatedBalance).Add(sdk.NewDecFromInt(stakedBalance)).Add(sdk.NewDecFromInt(moduleAcctBalance))).Quo(sdk.NewDecFromInt(stSupply))
 		k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId, "New Redemption Rate: %d (vs Prev Rate: %d)", redemptionRate, hostZone.RedemptionRate))
 
 		// Update the host zone
@@ -183,31 +179,31 @@ func (k Keeper) UpdateRedemptionRates(ctx sdk.Context, depositRecords []recordst
 	}
 }
 
-func (k Keeper) GetUndelegatedBalance(hostZone types.HostZone, depositRecords []recordstypes.DepositRecord) (int64, error) {
+func (k Keeper) GetUndelegatedBalance(hostZone types.HostZone, depositRecords []recordstypes.DepositRecord) (sdk.Int, error) {
 	// filter to only the deposit records for the host zone with status DELEGATION_QUEUE
 	UndelegatedDepositRecords := utils.FilterDepositRecords(depositRecords, func(record recordstypes.DepositRecord) (condition bool) {
 		return ((record.Status == recordstypes.DepositRecord_DELEGATION_QUEUE || record.Status == recordstypes.DepositRecord_DELEGATION_IN_PROGRESS) && record.HostZoneId == hostZone.ChainId)
 	})
 
 	// sum the amounts of the deposit records
-	var totalAmount int64
+	totalAmount := sdk.ZeroInt()
 	for _, depositRecord := range UndelegatedDepositRecords {
-		totalAmount += depositRecord.Amount
+		totalAmount = totalAmount.Add(depositRecord.Amount)
 	}
 
 	return totalAmount, nil
 }
 
-func (k Keeper) GetModuleAccountBalance(hostZone types.HostZone, depositRecords []recordstypes.DepositRecord) (int64, error) {
+func (k Keeper) GetModuleAccountBalance(hostZone types.HostZone, depositRecords []recordstypes.DepositRecord) (sdk.Int, error) {
 	// filter to only the deposit records for the host zone with status DELEGATION
 	ModuleAccountRecords := utils.FilterDepositRecords(depositRecords, func(record recordstypes.DepositRecord) (condition bool) {
 		return (record.Status == recordstypes.DepositRecord_TRANSFER_QUEUE || record.Status == recordstypes.DepositRecord_TRANSFER_IN_PROGRESS) && record.HostZoneId == hostZone.ChainId
 	})
 
 	// sum the amounts of the deposit records
-	totalAmount := int64(0)
+	totalAmount := sdk.ZeroInt()
 	for _, depositRecord := range ModuleAccountRecords {
-		totalAmount += depositRecord.Amount
+		totalAmount = totalAmount.Add(depositRecord.Amount)
 	}
 
 	return totalAmount, nil
