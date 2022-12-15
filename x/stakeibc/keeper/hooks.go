@@ -227,6 +227,5 @@ func (k Keeper) ReinvestRewards(ctx sdk.Context) {
 			k.Logger(ctx).Error(fmt.Sprintf("Error updating withdrawal balance for host zone %s: %s", hostZone.ConnectionId, err.Error()))
 			continue
 		}
-		k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId, "Updated withdrawal balance"))
 	}
 }
