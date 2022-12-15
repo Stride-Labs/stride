@@ -7,6 +7,7 @@ category: 6392913957c533007128548e
 # The Claim Module
 
 Users are required participate in core network activities to claim their airdrop. An Airdrop recipient is given 20% of the airdrop amount which is not in vesting, and then they have to perform the following activities to get the rest:
+
 * 20% vesting over 3 months by staking
 * 60% vesting over 3 months by liquid staking
 
@@ -35,20 +36,20 @@ Every action must be performed to claim the full amount.
 
 A claim record is a struct that contains data about the claims process of each airdrop recipient.
 
-It contains an address, the initial claimable airdrop amount, and an array of bools representing 
+It contains an address, the initial claimable airdrop amount, and an array of bools representing
 whether each action has been completed. The position in the array refers to enum number of the action.
 
 So for example, `[true, true]` means that `ActionLiquidStake` and `ActionDelegateStake` are completed.
 
 ```golang
 type ClaimRecord struct {
-	// address of claim user
-	Address string
-	// weight that represent the portion from total allocation
-	Weight sdk.Dec
-	// true if action is completed
-	// index of bool in array refers to action enum #
-	ActionCompleted []bool
+ // address of claim user
+ Address string
+ // weight that represent the portion from total allocation
+ Weight sdk.Dec
+ // true if action is completed
+ // index of bool in array refers to action enum #
+ ActionCompleted []bool
 }
 
 ```
@@ -116,6 +117,7 @@ message ClaimRecord {
   ];
 }
 ```
+
 When a user get airdrop for his/her action, claim record is created to prevent duplicated actions on future actions.
 
 ### State
@@ -137,7 +139,6 @@ message GenesisState {
 ```
 
 Claim module's state consists of `params`, and `claim_records`.
-
 
 Claim module provides below params
 
@@ -214,4 +215,3 @@ strided query claim total-claimable $(strided keys show -a {your key name}) Acti
 | ----- | ------------- | --------------- |
 | claim | sender        | {receiver}      |
 | claim | amount        | {claim_amount}  |
-
