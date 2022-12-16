@@ -1,8 +1,6 @@
 package v5
 
 import (
-	"fmt"
-
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
@@ -25,7 +23,6 @@ func migrateClaimParams(store sdk.KVStore, cdc codec.Codec) error {
 		return err
 	}
 	newProp := convertToNewClaimParams(oldProp)
-	fmt.Println(newProp)
 	newBz, err := cdc.MarshalJSON(&newProp)
 	if err != nil {
 		return err
@@ -62,7 +59,6 @@ func migrateUserRedemptionRecord(store sdk.KVStore, cdc codec.Codec) error {
 }
 
 func migrateDepositRecord(store sdk.KVStore, cdc codec.Codec) error {
-	fmt.Println("di vao day")
 	paramsStore := prefix.NewStore(store, []byte(recordtypes.DepositRecordKey))
 
 	iter := paramsStore.Iterator(nil, nil)
@@ -74,11 +70,7 @@ func migrateDepositRecord(store sdk.KVStore, cdc codec.Codec) error {
 		if err != nil {
 			return err
 		}
-
-		fmt.Println(oldProp)
-
 		newProp := convertToNewDepositRecord(oldProp)
-		fmt.Println(newProp)
 		bz, err := cdc.Marshal(&newProp)
 		if err != nil {
 			return err

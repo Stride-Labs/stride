@@ -305,7 +305,7 @@ func (s *AppTestHelper) ConfirmUpgradeSucceededs(upgradeName string, upgradeHeig
 	plan := upgradetypes.Plan{Name: upgradeName, Height: upgradeHeight}
 	err := s.App.UpgradeKeeper.ScheduleUpgrade(s.Ctx, plan)
 	s.Require().NoError(err)
-	plan, exists := s.App.UpgradeKeeper.GetUpgradePlan(s.Ctx)
+	_, exists := s.App.UpgradeKeeper.GetUpgradePlan(s.Ctx)
 	s.Require().True(exists)
 
 	s.Ctx = s.Ctx.WithBlockHeight(upgradeHeight)
