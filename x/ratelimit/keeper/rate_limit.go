@@ -21,8 +21,6 @@ func (k Keeper) GetChannelValue(ctx sdk.Context, denom string) sdk.Int {
 	return k.bankKeeper.GetSupply(ctx, denom).Amount
 }
 
-// QUESTION FOR REVIEWER: Where should these two functions live?
-
 // Parse the denom from the Send Packet that will be used by the rate limit module
 // The denom that the rate limiter will use for a SEND packet depends on whether
 //    it was a NATIVE token (e.g. ustrd, stuatom, etc.) or NON-NATIVE token (e.g. ibc/...)...
@@ -48,7 +46,7 @@ func ParseDenomFromSendPacket(packet transfertypes.FungibleTokenPacketData) (den
 	return denom
 }
 
-// Parse the denom from the Send Packet that will be used by the rate limit module
+// Parse the denom from the Recv Packet that will be used by the rate limit module
 // The denom that the rate limiter will use for a RECIEVE packet depends on whether it was a source or sink
 // 		Source: The packet's is being recieved by a chain it was just sent from (i.e. the token has gone back and forth)
 //              (e.g. strd is sent -> to osmosis -> and then back to stride)
