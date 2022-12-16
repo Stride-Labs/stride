@@ -116,6 +116,6 @@ func (s *KeeperTestSuite) TestEpochElapsedShare_Failed_BlockTimeOutsideEpoch() {
 	s.SetupEpochElapsedShares(invalidDuration, DefaultNextStartTimeSeconds)
 
 	_, err := s.App.StakeibcKeeper.GetStrideEpochElapsedShare(s.Ctx())
-	expectedErrMsg := "current block time 1577923350000000000 is not within current epoch (ending at 1577923360000000000): invalid epoch tracker"
+	expectedErrMsg := "current block time 1577923355000000000 is not within current epoch (ending at 1577923365000000000): invalid epoch tracker"
 	s.Require().EqualError(err, expectedErrMsg)
 }

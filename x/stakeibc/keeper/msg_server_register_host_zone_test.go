@@ -2,6 +2,7 @@ package keeper_test
 
 import (
 	"fmt"
+	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	ibctesting "github.com/cosmos/ibc-go/v3/testing"
@@ -11,6 +12,9 @@ import (
 
 	channeltypes "github.com/cosmos/ibc-go/v3/modules/core/04-channel/types"
 
+	appProvider "github.com/cosmos/interchain-security/app/provider"
+
+	"github.com/Stride-Labs/stride/v3/app"
 	epochtypes "github.com/Stride-Labs/stride/v3/x/epochs/types"
 	recordstypes "github.com/Stride-Labs/stride/v3/x/records/types"
 	recordtypes "github.com/Stride-Labs/stride/v3/x/records/types"
@@ -79,8 +83,13 @@ func (s *KeeperTestSuite) SetupRegisterHostZone() RegisterHostZoneTestCase {
 // This function 1) creates a new host zone and 2) returns what would be a successful register message
 func (s *KeeperTestSuite) createNewHostZoneMessage(chainID string, denom string, prefix string) stakeibctypes.MsgRegisterHostZone {
 	// Create a new test chain and connection ID
-	osmoChain := ibctesting.NewTestChain(s.T(), s.Coordinator, chainID)
+	osmoChain := ibctesting.NewTestChain(s.T(), s.Coordinator, ibctesting.DefaultTestingAppInit, chainID)
 	path := ibctesting.NewPath(s.StrideChain, osmoChain)
+	trustingPeriodFraction := s.ProviderChain.App.(*appProvider.App).GetProviderKeeper().GetTrustingPeriodFraction(s.ProviderChain.GetContext())
+	consumerUnbondingPeriod := s.StrideChain.App.(*app.StrideApp).GetConsumerKeeper().GetUnbondingPeriod(path.EndpointA.Chain.GetContext())
+	path.EndpointB.ClientConfig.(*ibctesting.TendermintConfig).UnbondingPeriod = consumerUnbondingPeriod
+	path.EndpointB.ClientConfig.(*ibctesting.TendermintConfig).TrustingPeriod = consumerUnbondingPeriod / time.Duration(trustingPeriodFraction)
+
 	s.Coordinator.SetupConnections(path)
 	connectionId := path.EndpointA.ConnectionID
 
