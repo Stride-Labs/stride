@@ -98,6 +98,7 @@ func (suite *UpgradeTestSuite) SetUpOldStore() {
 
 	// set up record store
 	recordStore := suite.Ctx.KVStore(suite.App.GetKey(recordtypes.StoreKey))
+
 	depositRecordStore := prefix.NewStore(recordStore, recordtypes.KeyPrefix(recordtypes.DepositRecordKey))
 	depositRecord := recordv1types.DepositRecord{
 		Id: uint64(1),
@@ -112,6 +113,33 @@ func (suite *UpgradeTestSuite) SetUpOldStore() {
 	suite.Require().NoError(err)
 	depositRecordStore.Set(recordkeeper.GetDepositRecordIDBytes(depositRecord.Id), depositBz)
 
+	userRedemptionRecordStore := prefix.NewStore(recordStore, recordtypes.KeyPrefix(recordtypes.UserRedemptionRecordKey))
+	userRedemptionRecord := recordv1types.UserRedemptionRecord{
+		Id: "1",
+		Amount: uint64(1000000),
+		Denom: "ATOM",
+		HostZoneId: "GAIA",
+	}
+	userRedemptionBz, err := codec.Marshal(&userRedemptionRecord)
+	suite.Require().NoError(err)
+	userRedemptionRecordStore.Set([]byte(userRedemptionRecord.Id), userRedemptionBz)
+
+	epochUnbondingRecordStore := prefix.NewStore(recordStore, recordtypes.KeyPrefix(recordtypes.EpochUnbondingRecordKey))
+	epochUnbondingRecord := recordv1types.EpochUnbondingRecord{
+		EpochNumber: 1,
+		HostZoneUnbondings: []*recordv1types.HostZoneUnbonding{
+			{
+				HostZoneId: "GAIA",
+				NativeTokenAmount: uint64(1000000),
+				StTokenAmount: uint64(2000000),
+				Status: recordv1types.HostZoneUnbonding_CLAIMABLE,
+			},
+		},
+	}
+	epochUnbondingBz, err := codec.Marshal(&epochUnbondingRecord)
+	suite.Require().NoError(err)
+	epochUnbondingRecordStore.Set(recordkeeper.GetEpochUnbondingRecordIDBytes(epochUnbondingRecord.EpochNumber), epochUnbondingBz)
+
 }
 
 func (suite *UpgradeTestSuite) CheckStoreMigration() {
@@ -122,4 +150,14 @@ func (suite *UpgradeTestSuite) CheckStoreMigration() {
 	depositRecord, bool := suite.App.RecordsKeeper.GetDepositRecord(suite.Ctx, uint64(1))
 	suite.Require().True(bool)
 	suite.Require().Equal(depositRecord.Amount, sdk.NewInt(1000000))
+
+	userRedeemRecord, bool := suite.App.RecordsKeeper.GetUserRedemptionRecord(suite.Ctx, "1")
+	suite.Require().True(bool)
+	suite.Require().Equal(userRedeemRecord.Amount, sdk.NewInt(1000000))
+
+	epochUnbondingRecord, bool := suite.App.RecordsKeeper.GetEpochUnbondingRecord(suite.Ctx, 1)
+	suite.Require().True(bool)
+	suite.Require().Equal(epochUnbondingRecord.HostZoneUnbondings[0].StTokenAmount, sdk.NewInt(2000000))
+	suite.Require().Equal(epochUnbondingRecord.HostZoneUnbondings[0].NativeTokenAmount, sdk.NewInt(1000000))
+
 }
