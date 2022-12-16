@@ -158,6 +158,38 @@ func (suite *UpgradeTestSuite) SetUpOldStore() {
 	delegationBz, err := codec.Marshal(&delegation)
 	suite.Require().NoError(err)
 	delegationStore.Set([]byte{0}, delegationBz)
+
+	// set old hostzone
+	hostzoneStore := prefix.NewStore(stakeIbcStore, recordtypes.KeyPrefix(stakeibctypes.HostZoneKey))
+	hz := stakeibcv1types.HostZone{
+		ChainId: "GAIA",
+		Validators: []*stakeibcv1types.Validator{
+			{
+				DelegationAmt: uint64(1000000),
+			},
+		},
+		BlacklistedValidators: []*stakeibcv1types.Validator{
+			{
+				DelegationAmt: uint64(2000000),
+			},
+		},
+		StakedBal: uint64(3000000),
+		LastRedemptionRate: sdk.OneDec(),
+		RedemptionRate: sdk.OneDec(),
+	}
+	hzBz, err := codec.Marshal(&hz)
+	suite.Require().NoError(err)
+	hostzoneStore.Set([]byte(hz.ChainId), hzBz)
+
+	// set old validator
+	validatorStore := prefix.NewStore(stakeIbcStore, recordtypes.KeyPrefix(stakeibctypes.ValidatorKey))
+	validator := stakeibcv1types.Validator{
+		Address: "1",
+		DelegationAmt: uint64(10000000),
+	}
+	validatorBz, err := codec.Marshal(&validator)
+	suite.Require().NoError(err)
+	validatorStore.Set([]byte{0}, validatorBz)
 }
 
 func (suite *UpgradeTestSuite) CheckStoreMigration() {
@@ -182,4 +214,14 @@ func (suite *UpgradeTestSuite) CheckStoreMigration() {
 	suite.Require().True(bool)
 	suite.Require().Equal(delegation.Amt, sdk.NewInt(1000000))
 	suite.Require().Equal(delegation.Validator.DelegationAmt, sdk.NewInt(1000000))
+
+	hz, bool := suite.App.StakeibcKeeper.GetHostZone(suite.Ctx, "GAIA")
+	suite.Require().True(bool)
+	suite.Require().Equal(hz.StakedBal, sdk.NewInt(3000000))
+	suite.Require().Equal(hz.Validators[0].DelegationAmt, sdk.NewInt(1000000))
+	suite.Require().Equal(hz.BlacklistedValidators[0].DelegationAmt, sdk.NewInt(2000000))
+
+	validator, bool := suite.App.StakeibcKeeper.GetValidator(suite.Ctx)
+	suite.Require().True(bool)
+	suite.Require().Equal(validator.DelegationAmt, sdk.NewInt(10000000))
 }

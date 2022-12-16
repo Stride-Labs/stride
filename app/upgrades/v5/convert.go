@@ -124,6 +124,13 @@ func convertToNewHostZone(oldProp stakeibcv1types.HostZone) stakeibctypes.HostZo
 		FeeAccount: oldProp.FeeAccount,
 		DelegationAccount: oldProp.DelegationAccount,
 		RedemptionAccount: oldProp.RedemptionAccount,
+		IbcDenom: oldProp.IbcDenom,
+		HostDenom: oldProp.HostDenom,
+		LastRedemptionRate: oldProp.LastRedemptionRate,
+		RedemptionRate: oldProp.RedemptionRate,
+		UnbondingFrequency: oldProp.UnbondingFrequency,
+		StakedBal: sdk.NewIntFromUint64(oldProp.StakedBal),
+		Address: oldProp.Address,
 	}
 }
 
