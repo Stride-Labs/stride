@@ -17,8 +17,8 @@ import (
 	recordkeeper "github.com/Stride-Labs/stride/v4/x/records/keeper"
 	recordtypes "github.com/Stride-Labs/stride/v4/x/records/types"
 	recordv1types "github.com/Stride-Labs/stride/v4/x/records/types/v1"
-	// stakeibctypes "github.com/Stride-Labs/stride/v4/x/stakeibc/types"
-	// stakeibcv1types "github.com/Stride-Labs/stride/v4/x/stakeibc/types/v1"
+	stakeibctypes "github.com/Stride-Labs/stride/v4/x/stakeibc/types"
+	stakeibcv1types "github.com/Stride-Labs/stride/v4/x/stakeibc/types/v1"
 )
 
 const dummyUpgradeHeight = 5
@@ -99,6 +99,7 @@ func (suite *UpgradeTestSuite) SetUpOldStore() {
 	// set up record store
 	recordStore := suite.Ctx.KVStore(suite.App.GetKey(recordtypes.StoreKey))
 
+	// set old deposit record
 	depositRecordStore := prefix.NewStore(recordStore, recordtypes.KeyPrefix(recordtypes.DepositRecordKey))
 	depositRecord := recordv1types.DepositRecord{
 		Id: uint64(1),
@@ -113,6 +114,7 @@ func (suite *UpgradeTestSuite) SetUpOldStore() {
 	suite.Require().NoError(err)
 	depositRecordStore.Set(recordkeeper.GetDepositRecordIDBytes(depositRecord.Id), depositBz)
 
+	// set old user redemption record
 	userRedemptionRecordStore := prefix.NewStore(recordStore, recordtypes.KeyPrefix(recordtypes.UserRedemptionRecordKey))
 	userRedemptionRecord := recordv1types.UserRedemptionRecord{
 		Id: "1",
@@ -124,6 +126,7 @@ func (suite *UpgradeTestSuite) SetUpOldStore() {
 	suite.Require().NoError(err)
 	userRedemptionRecordStore.Set([]byte(userRedemptionRecord.Id), userRedemptionBz)
 
+	// set old epoch unbongding record
 	epochUnbondingRecordStore := prefix.NewStore(recordStore, recordtypes.KeyPrefix(recordtypes.EpochUnbondingRecordKey))
 	epochUnbondingRecord := recordv1types.EpochUnbondingRecord{
 		EpochNumber: 1,
@@ -140,6 +143,21 @@ func (suite *UpgradeTestSuite) SetUpOldStore() {
 	suite.Require().NoError(err)
 	epochUnbondingRecordStore.Set(recordkeeper.GetEpochUnbondingRecordIDBytes(epochUnbondingRecord.EpochNumber), epochUnbondingBz)
 
+	// set up stakeibc module store
+	stakeIbcStore := suite.Ctx.KVStore(suite.App.GetKey(stakeibctypes.StoreKey))
+
+	// set old delegation
+	delegationStore := prefix.NewStore(stakeIbcStore, recordtypes.KeyPrefix(stakeibctypes.DelegationKey))
+	delegation := stakeibcv1types.Delegation{
+		DelegateAcctAddress: "test addr",
+		Amt: 1000000,
+		Validator: &stakeibcv1types.Validator{
+			DelegationAmt: uint64(1000000),
+		},
+	}
+	delegationBz, err := codec.Marshal(&delegation)
+	suite.Require().NoError(err)
+	delegationStore.Set([]byte{0}, delegationBz)
 }
 
 func (suite *UpgradeTestSuite) CheckStoreMigration() {
@@ -160,4 +178,8 @@ func (suite *UpgradeTestSuite) CheckStoreMigration() {
 	suite.Require().Equal(epochUnbondingRecord.HostZoneUnbondings[0].StTokenAmount, sdk.NewInt(2000000))
 	suite.Require().Equal(epochUnbondingRecord.HostZoneUnbondings[0].NativeTokenAmount, sdk.NewInt(1000000))
 
+	delegation, bool := suite.App.StakeibcKeeper.GetDelegation(suite.Ctx)
+	suite.Require().True(bool)
+	suite.Require().Equal(delegation.Amt, sdk.NewInt(1000000))
+	suite.Require().Equal(delegation.Validator.DelegationAmt, sdk.NewInt(1000000))
 }
