@@ -90,10 +90,8 @@ func (k Keeper) DecrementHostZoneUnbonding(ctx sdk.Context, userRedemptionRecord
 	// decrement the hzu by the amount claimed
 	hostZoneUnbonding.NativeTokenAmount = hostZoneUnbonding.NativeTokenAmount - userRedemptionRecord.Amount
 	// save the updated hzu on the epoch unbonding record
-	epochUnbondingRecord, success := k.RecordsKeeper.AddHostZoneToEpochUnbondingRecord(ctx, callbackArgs.EpochNumber, callbackArgs.ChainId, hostZoneUnbonding)
-	if !success {
-		return sdkerrors.Wrapf(types.ErrRecordNotFound, "epoch unbonding record not found %s", callbackArgs.ChainId)
-	}
+	// only case for epochUnbondingRecord not being found is already been check at Hostzone, so no need to check for err here
+	epochUnbondingRecord, _ := k.RecordsKeeper.AddHostZoneToEpochUnbondingRecord(ctx, callbackArgs.EpochNumber, callbackArgs.ChainId, hostZoneUnbonding)
 	k.RecordsKeeper.SetEpochUnbondingRecord(ctx, *epochUnbondingRecord)
 	return nil
 }
