@@ -16,17 +16,17 @@ import (
 	stakeibcv1types "github.com/Stride-Labs/stride/v4/x/stakeibc/types/v1"
 )
 
-func migrateClaimParams(store sdk.KVStore, cdc codec.BinaryCodec) error {
+func migrateClaimParams(store sdk.KVStore, cdc codec.Codec) error {
 	// paramsStore := prefix.NewStore(store, []byte(claimtypes.ParamsKey))
 	oldBz := store.Get([]byte(claimtypes.ParamsKey))
 	var oldProp claimv1types.Params
-	err := cdc.Unmarshal(oldBz, &oldProp)
+	err := cdc.UnmarshalJSON(oldBz, &oldProp)
 	if err != nil {
 		return err
 	}
 	newProp := convertToNewClaimParams(oldProp)
 	fmt.Println(newProp)
-	newBz, err := cdc.Marshal(&newProp)
+	newBz, err := cdc.MarshalJSON(&newProp)
 	if err != nil {
 		return err
 	}
@@ -35,7 +35,7 @@ func migrateClaimParams(store sdk.KVStore, cdc codec.BinaryCodec) error {
 	return nil
 }
 
-func migrateUserRedemptionRecord(store sdk.KVStore, cdc codec.BinaryCodec) error {
+func migrateUserRedemptionRecord(store sdk.KVStore, cdc codec.Codec) error {
 	paramsStore := prefix.NewStore(store, []byte(recordtypes.UserRedemptionRecordKey))
 
 	iter := paramsStore.Iterator(nil, nil)
@@ -61,7 +61,7 @@ func migrateUserRedemptionRecord(store sdk.KVStore, cdc codec.BinaryCodec) error
 	return nil
 }
 
-func migrateDepositRecord(store sdk.KVStore, cdc codec.BinaryCodec) error {
+func migrateDepositRecord(store sdk.KVStore, cdc codec.Codec) error {
 	fmt.Println("di vao day")
 	paramsStore := prefix.NewStore(store, []byte(recordtypes.DepositRecordKey))
 
@@ -91,7 +91,7 @@ func migrateDepositRecord(store sdk.KVStore, cdc codec.BinaryCodec) error {
 	return nil
 }
 
-func migrateEpochUnbondingRecord(store sdk.KVStore, cdc codec.BinaryCodec) error {
+func migrateEpochUnbondingRecord(store sdk.KVStore, cdc codec.Codec) error {
 	paramsStore := prefix.NewStore(store, []byte(recordtypes.EpochUnbondingRecordKey))
 
 	iter := paramsStore.Iterator(nil, nil)
@@ -117,7 +117,7 @@ func migrateEpochUnbondingRecord(store sdk.KVStore, cdc codec.BinaryCodec) error
 	return nil
 }
 
-func migrateDelegation(store sdk.KVStore, cdc codec.BinaryCodec) error {
+func migrateDelegation(store sdk.KVStore, cdc codec.Codec) error {
 	paramsStore := prefix.NewStore(store, []byte(stakeibctypes.DelegationKey))
 
 	iter := paramsStore.Iterator(nil, nil)
@@ -143,7 +143,7 @@ func migrateDelegation(store sdk.KVStore, cdc codec.BinaryCodec) error {
 	return nil
 }
 
-func migrateHostZone(store sdk.KVStore, cdc codec.BinaryCodec) error {
+func migrateHostZone(store sdk.KVStore, cdc codec.Codec) error {
 	paramsStore := prefix.NewStore(store, []byte(stakeibctypes.HostZoneKey))
 
 	iter := paramsStore.Iterator(nil, nil)
@@ -169,7 +169,7 @@ func migrateHostZone(store sdk.KVStore, cdc codec.BinaryCodec) error {
 	return nil
 }
 
-func migrateValidator(store sdk.KVStore, cdc codec.BinaryCodec) error {
+func migrateValidator(store sdk.KVStore, cdc codec.Codec) error {
 	paramsStore := prefix.NewStore(store, []byte(stakeibctypes.ValidatorKey))
 
 	iter := paramsStore.Iterator(nil, nil)
@@ -195,7 +195,7 @@ func migrateValidator(store sdk.KVStore, cdc codec.BinaryCodec) error {
 	return nil
 }
 
-func MigrateStore(ctx sdk.Context, claimStoreKey storetypes.StoreKey, recordStoreKey storetypes.StoreKey, stakeibcStoreKey storetypes.StoreKey, cdc codec.BinaryCodec) error {
+func MigrateStore(ctx sdk.Context, claimStoreKey storetypes.StoreKey, recordStoreKey storetypes.StoreKey, stakeibcStoreKey storetypes.StoreKey, cdc codec.Codec) error {
 	
 	// Migrate claim module store
 	claimStore := ctx.KVStore(claimStoreKey)
@@ -210,7 +210,6 @@ func MigrateStore(ctx sdk.Context, claimStoreKey storetypes.StoreKey, recordStor
 	if err != nil {
 		return err
 	}
-	fmt.Println("co di vao day k")
 	err = migrateDepositRecord(recordStore, cdc)
 	if err != nil {
 		return err
