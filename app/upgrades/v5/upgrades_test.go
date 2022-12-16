@@ -7,9 +7,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/simapp"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 	"github.com/stretchr/testify/suite"
-	abci "github.com/tendermint/tendermint/abci/types"
 
 	"github.com/Stride-Labs/stride/v4/app/apptesting"
 	claimtypes "github.com/Stride-Labs/stride/v4/x/claim/types"
@@ -50,18 +48,7 @@ func (suite *UpgradeTestSuite) TestUpgrade() {
 				suite.SetUpOldStore()
 			},
 			func() {
-				suite.Ctx = suite.Ctx.WithBlockHeight(dummyUpgradeHeight - 1)
-				plan := upgradetypes.Plan{Name: "v5", Height: dummyUpgradeHeight}
-				err := suite.App.UpgradeKeeper.ScheduleUpgrade(suite.Ctx, plan)
-				suite.Require().NoError(err)
-				plan, exists := suite.App.UpgradeKeeper.GetUpgradePlan(suite.Ctx)
-				suite.Require().True(exists)
-
-				suite.Ctx = suite.Ctx.WithBlockHeight(dummyUpgradeHeight)
-				suite.Require().NotPanics(func() {
-					beginBlockRequest := abci.RequestBeginBlock{}
-					suite.App.BeginBlocker(suite.Ctx, beginBlockRequest)
-				})
+				suite.ConfirmUpgradeSucceededs("v5", dummyUpgradeHeight)
 			},
 			func() {
 				suite.CheckStoreMigration()
