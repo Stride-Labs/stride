@@ -1,14 +1,15 @@
 package v5_test
 
 import (
-	"fmt"
 	"testing"
 	"time"
 
 	"github.com/cosmos/cosmos-sdk/simapp"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 	"github.com/stretchr/testify/suite"
+	abci "github.com/tendermint/tendermint/abci/types"
 
 	"github.com/Stride-Labs/stride/v4/app/apptesting"
 	claimtypes "github.com/Stride-Labs/stride/v4/x/claim/types"
@@ -49,7 +50,18 @@ func (suite *UpgradeTestSuite) TestUpgrade() {
 				suite.SetUpOldStore()
 			},
 			func() {
-				suite.ConfirmUpgradeSucceededs("v5", dummyUpgradeHeight)
+				suite.Ctx = suite.Ctx.WithBlockHeight(dummyUpgradeHeight - 1)
+				plan := upgradetypes.Plan{Name: "v5", Height: dummyUpgradeHeight}
+				err := suite.App.UpgradeKeeper.ScheduleUpgrade(suite.Ctx, plan)
+				suite.Require().NoError(err)
+				plan, exists := suite.App.UpgradeKeeper.GetUpgradePlan(suite.Ctx)
+				suite.Require().True(exists)
+
+				suite.Ctx = suite.Ctx.WithBlockHeight(dummyUpgradeHeight)
+				suite.Require().NotPanics(func() {
+					beginBlockRequest := abci.RequestBeginBlock{}
+					suite.App.BeginBlocker(suite.Ctx, beginBlockRequest)
+				})
 			},
 			func() {
 				suite.CheckStoreMigration()
@@ -59,11 +71,9 @@ func (suite *UpgradeTestSuite) TestUpgrade() {
 	}
 
 	for _, tc := range testCases {
-		suite.Run(fmt.Sprintf("Case %s", tc.msg), func() {
-			tc.preUpdate()
-			tc.update()
-			tc.postUpdate()
-		})
+		tc.preUpdate()
+		tc.update()
+		tc.postUpdate()
 	}
 }
 
@@ -98,7 +108,7 @@ func (suite *UpgradeTestSuite) SetUpOldStore() {
 		Status: recordv1types.DepositRecord_DELEGATION_QUEUE,
 		Source: recordv1types.DepositRecord_STRIDE,
 	}
-	depositBz, err := codec.MarshalJSON(&depositRecord)
+	depositBz, err := codec.Marshal(&depositRecord)
 	suite.Require().NoError(err)
 	depositRecordStore.Set(recordkeeper.GetDepositRecordIDBytes(depositRecord.Id), depositBz)
 
