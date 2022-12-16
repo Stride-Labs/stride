@@ -10,4 +10,6 @@ var (
 		"ratelimit key duplicated")
 	ErrRateLimitKeyNotFound = sdkerrors.Register(ModuleName, 2,
 		"ratelimit key not found")
+	ErrZeroChannelValue = sdkerrors.Register(ModuleName, 3,
+		"channel value is zero")
 )
