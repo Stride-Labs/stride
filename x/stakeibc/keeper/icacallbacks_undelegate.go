@@ -119,14 +119,7 @@ func UndelegateCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, a
 func (k Keeper) UpdateDelegationBalances(ctx sdk.Context, zone types.HostZone, undelegateCallback types.UndelegateCallback) error {
 	// Undelegate from each validator and update host zone staked balance, if successful
 	for _, undelegation := range undelegateCallback.SplitDelegations {
-<<<<<<< HEAD
-		k.Logger(ctx).Info(fmt.Sprintf("UndelegateCallback, Undelegation: %v, validator: %s", undelegation.Amount, undelegation.Validator))
-
-		undelegateVal := undelegation.Validator
-		success := k.AddDelegationToValidator(ctx, zone, undelegateVal, undelegation.Amount.Neg())
-=======
 		success := k.AddDelegationToValidator(ctx, zone, undelegation.Validator, undelegation.Amount.Neg(), ICACallbackID_Undelegate)
->>>>>>> 3d4ab6ec (cleaned up delegate and undelegate callback logs)
 		if !success {
 			return sdkerrors.Wrapf(types.ErrValidatorDelegationChg, "Failed to remove delegation to validator")
 		}
