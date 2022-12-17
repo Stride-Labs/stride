@@ -217,7 +217,7 @@ func (k Keeper) UpdateHostZoneUnbondings(
 		k.RecordsKeeper.SetEpochUnbondingRecord(ctx, *updatedEpochUnbondingRecord)
 
 		k.Logger(ctx).Info(utils.LogCallbackWithHostZone(chainId, ICACallbackID_Undelegate,
-			"Epoch Unbonding Record: #%d - Seting unbonding time to %s", epochNumber, latestCompletionTime.String()))
+			"Epoch Unbonding Record: %d - Seting unbonding time to %s", epochNumber, latestCompletionTime.String()))
 	}
 	return stTokenBurnAmount, nil
 }

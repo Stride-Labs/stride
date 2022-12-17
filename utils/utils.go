@@ -214,10 +214,10 @@ func LogWithHostZone(chainId string, s string, a ...any) string {
 
 // Returns a log string with a chain Id and callback as a prefix
 // Ex:
-//   | COSMOSHUB-4   |  CALLBACK  |  DELEGATE  |  string
+//   | COSMOSHUB-4   |  DELEGATE CALLBACK  |  string
 func LogCallbackWithHostZone(chainId string, callbackId string, s string, a ...any) string {
 	msg := fmt.Sprintf(s, a...)
-	return fmt.Sprintf("|   %-13s |  CALLBACK  |  %s  | %s", strings.ToUpper(chainId), strings.ToUpper(callbackId), msg)
+	return fmt.Sprintf("|   %-13s |  %s CALLBACK  |  %s", strings.ToUpper(chainId), strings.ToUpper(callbackId), msg)
 }
 
 // Returns a log header string with a dash padding on either side
