@@ -83,7 +83,7 @@ func (k Keeper) GetHostZoneUnbondingMsgs(ctx sdk.Context, hostZone types.HostZon
 
 	// Check if each validator has enough current delegations to cover the target unbonded amount
 	// If it doesn't have enough, update the target to equal their total delegations and record the overflow amount
-	actualUnbondingsByValidator := make(map[string]sdk.Int)
+	finalUnbondingsByValidator := make(map[string]sdk.Int)
 	overflowAmount := sdk.ZeroInt()
 	for _, validator := range hostZone.Validators {
 
@@ -96,7 +96,7 @@ func (k Keeper) GetHostZoneUnbondingMsgs(ctx sdk.Context, hostZone types.HostZon
 			overflowAmount = overflowAmount.Add(targetUnbondAmount).Sub(validator.DelegationAmt)
 			targetUnbondAmount = validator.DelegationAmt
 		}
-		actualUnbondingsByValidator[validator.Address] = targetUnbondAmount
+		finalUnbondingsByValidator[validator.Address] = targetUnbondAmount
 	}
 
 	// If there was overflow (i.e. there was at least one validator without sufficient delegations to cover their unbondings)
@@ -106,7 +106,7 @@ func (k Keeper) GetHostZoneUnbondingMsgs(ctx sdk.Context, hostZone types.HostZon
 			"Expected validator undelegation amount on is greater than it's current delegations. Redistributing undelegations accordingly."))
 
 		for _, validator := range hostZone.Validators {
-			targetUnbondAmount := actualUnbondingsByValidator[validator.Address]
+			targetUnbondAmount := finalUnbondingsByValidator[validator.Address]
 
 			// Check if we can unbond more from this validator
 			validatorUnbondExtraCapacity := validator.DelegationAmt.Sub(targetUnbondAmount)
@@ -114,12 +114,12 @@ func (k Keeper) GetHostZoneUnbondingMsgs(ctx sdk.Context, hostZone types.HostZon
 
 				// If we can fully cover the unbonding, do so with this validator
 				if validatorUnbondExtraCapacity.GT(overflowAmount) {
-					actualUnbondingsByValidator[validator.Address] = actualUnbondingsByValidator[validator.Address].Add(overflowAmount)
+					finalUnbondingsByValidator[validator.Address] = finalUnbondingsByValidator[validator.Address].Add(overflowAmount)
 					overflowAmount = sdk.ZeroInt()
 					break
 				} else {
 					// If we can't, cover the unbondings, cover as much as we can and move onto the next validator
-					actualUnbondingsByValidator[validator.Address] = actualUnbondingsByValidator[validator.Address].Add(validatorUnbondExtraCapacity)
+					finalUnbondingsByValidator[validator.Address] = finalUnbondingsByValidator[validator.Address].Add(validatorUnbondExtraCapacity)
 					overflowAmount = overflowAmount.Sub(validatorUnbondExtraCapacity)
 				}
 			}
@@ -144,8 +144,8 @@ func (k Keeper) GetHostZoneUnbondingMsgs(ctx sdk.Context, hostZone types.HostZon
 
 	// Construct the MsgUndelegate transaction
 	var splitDelegations []*types.SplitDelegation
-	for _, validatorAddress := range utils.StringMapKeys(actualUnbondingsByValidator) { // DO NOT REMOVE: StringMapKeys fixes non-deterministic map iteration
-		undelegationAmount := sdk.NewCoin(hostZone.HostDenom, actualUnbondingsByValidator[validatorAddress])
+	for _, validatorAddress := range utils.StringMapKeys(finalUnbondingsByValidator) { // DO NOT REMOVE: StringMapKeys fixes non-deterministic map iteration
+		undelegationAmount := sdk.NewCoin(hostZone.HostDenom, finalUnbondingsByValidator[validatorAddress])
 
 		// Store the ICA transactions
 		msgs = append(msgs, &stakingtypes.MsgUndelegate{
