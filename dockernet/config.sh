@@ -18,7 +18,7 @@ KEYS_LOGS=$SCRIPT_DIR/logs/keys.log
 # List of hosts enabled 
 #  `start-docker` defaults to just GAIA if HOST_CHAINS is empty
 # `start-docker-all` always runs all hosts
-HOST_CHAINS=(GAIA) 
+HOST_CHAINS=() 
 
 if [[ "${ALL_HOST_CHAINS:-false}" == "true" ]]; then 
   HOST_CHAINS=(GAIA JUNO OSMO STARS)
