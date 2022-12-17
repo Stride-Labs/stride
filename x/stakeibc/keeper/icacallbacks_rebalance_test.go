@@ -6,6 +6,7 @@ import (
 	channeltypes "github.com/cosmos/ibc-go/v3/modules/core/04-channel/types"
 	_ "github.com/stretchr/testify/suite"
 
+	icacallbackstypes "github.com/Stride-Labs/stride/v4/x/icacallbacks/types"
 	stakeibckeeper "github.com/Stride-Labs/stride/v4/x/stakeibc/keeper"
 	"github.com/Stride-Labs/stride/v4/x/stakeibc/types"
 	stakeibctypes "github.com/Stride-Labs/stride/v4/x/stakeibc/types"
@@ -177,5 +178,43 @@ func (s *KeeperTestSuite) TestRebalanceCallback_WrongValidator() {
 
 	err = stakeibckeeper.RebalanceCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.packet, tc.validArgs.ack, invalidArgsTwo)
 	s.Require().EqualError(err, "validator not found stride_VAL1_WRONG: invalid request")
+	s.checkDelegationStateIfCallbackFailed()
+}
+
+func (s *KeeperTestSuite) TestRebalanceCallback_WrongHostzone() {
+	tc := s.SetupRebalanceCallback()
+
+	callbackArgs := types.RebalanceCallback{
+		HostZoneId: "superGaia",
+		Rebalancings: []*types.Rebalancing{
+			{
+				SrcValidator: "stride_VAL3",
+				DstValidator: "stride_VAL1",
+				Amt:          104,
+			},
+			{
+				SrcValidator: "stride_VAL4_WRONG",
+				DstValidator: "stride_VAL1",
+				Amt:          13,
+			},
+		},
+	}
+	invalidArgsOne, err := s.App.StakeibcKeeper.MarshalRebalanceCallbackArgs(s.Ctx, callbackArgs)
+	s.Require().NoError(err)
+
+	err = stakeibckeeper.RebalanceCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.packet, tc.validArgs.ack, invalidArgsOne)
+	s.Require().EqualError(err, "host zone not found superGaia: invalid request")
+	s.checkDelegationStateIfCallbackFailed()
+
+}
+
+func (s *KeeperTestSuite) TestRebalanceCallback_FailedToGetTxMsgData() {
+	tc := s.SetupRebalanceCallback()
+	invalidArgs := tc.validArgs
+	// provide invalid Args
+	invalidArgs.ack.Response = nil
+
+	err := stakeibckeeper.RebalanceCallback(s.App.StakeibcKeeper, s.Ctx, invalidArgs.packet, invalidArgs.ack, invalidArgs.args)
+	s.Require().ErrorIs(err, icacallbackstypes.ErrTxMsgData, "txMsgData fetch should failed")
 	s.checkDelegationStateIfCallbackFailed()
 }
