@@ -19,6 +19,7 @@ import (
 	"github.com/golang/protobuf/proto" //nolint:staticcheck
 )
 
+// Marshal undelegate callback args
 func (k Keeper) MarshalUndelegateCallbackArgs(ctx sdk.Context, undelegateCallback types.UndelegateCallback) ([]byte, error) {
 	out, err := proto.Marshal(&undelegateCallback)
 	if err != nil {
@@ -28,6 +29,7 @@ func (k Keeper) MarshalUndelegateCallbackArgs(ctx sdk.Context, undelegateCallbac
 	return out, nil
 }
 
+// Unmarshalls undelegate callback arguments into a UndelegateCallback struct
 func (k Keeper) UnmarshalUndelegateCallbackArgs(ctx sdk.Context, undelegateCallback []byte) (types.UndelegateCallback, error) {
 	unmarshalledUndelegateCallback := types.UndelegateCallback{}
 	if err := proto.Unmarshal(undelegateCallback, &unmarshalledUndelegateCallback); err != nil {
@@ -37,8 +39,17 @@ func (k Keeper) UnmarshalUndelegateCallbackArgs(ctx sdk.Context, undelegateCallb
 	return unmarshalledUndelegateCallback, nil
 }
 
+// ICA Callback after undelegating
+//   If successful:
+//      * Updates epoch unbonding record status
+// 		* Records delegation changes on the host zone and validators,
+//      * Burns stTokens
+//   If timeout:
+//      * Does nothing
+//   If failure:
+//		* Reverts epoch unbonding record status
 func UndelegateCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ack *channeltypes.Acknowledgement, args []byte) error {
-	// fetch relevant state
+	// Fetch callback args
 	undelegateCallback, err := k.UnmarshalUndelegateCallbackArgs(ctx, args)
 	if err != nil {
 		errMsg := fmt.Sprintf("Unable to unmarshal undelegate callback args | %s", err.Error())
@@ -61,7 +72,7 @@ func UndelegateCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, a
 	// Reset the unbonding record status upon failure
 	txMsgData, err := icacallbacks.GetTxMsgData(ctx, *ack, k.Logger(ctx))
 	if err != nil {
-		k.Logger(ctx).Error(fmt.Sprintf("failed to fetch txMsgData, packet %v", packet))
+		k.Logger(ctx).Error(fmt.Sprintf("UndelegateCallback failed to fetch txMsgData, packet %v", packet))
 		return sdkerrors.Wrap(icacallbackstypes.ErrTxMsgData, err.Error())
 	}
 	if len(txMsgData.Data) == 0 {
@@ -75,6 +86,8 @@ func UndelegateCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, a
 		}
 		return nil
 	}
+
+	k.Logger(ctx).Info(utils.LogCallbackWithHostZone(chainId, ICACallbackID_Undelegate, "SUCCESS, Packet: %+v", packet))
 
 	// Update delegation balances
 	hostZone, found := k.GetHostZone(ctx, undelegateCallback.HostZoneId)
