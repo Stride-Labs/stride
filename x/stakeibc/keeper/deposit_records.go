@@ -47,7 +47,7 @@ func (k Keeper) TransferExistingDepositsToHostZones(ctx sdk.Context, epochNumber
 
 	for _, depositRecord := range transferDepositRecords {
 		k.Logger(ctx).Info(utils.LogWithHostZone(depositRecord.HostZoneId,
-			"Processing deposit record %d: %d%s", depositRecord.Id, depositRecord.Amount, depositRecord.Denom))
+			"Processing deposit record %d: %v%s", depositRecord.Id, depositRecord.Amount, depositRecord.Denom))
 
 		// if a TRANSFER_QUEUE record has 0 balance and was created in the previous epoch, it's safe to remove since it will never be updated or used
 		if depositRecord.Amount.LTE(sdk.ZeroInt()) && depositRecord.DepositEpochNumber < epochNumber {
@@ -70,7 +70,7 @@ func (k Keeper) TransferExistingDepositsToHostZones(ctx sdk.Context, epochNumber
 		}
 		delegateAddress := delegateAccount.Address
 
-		k.Logger(ctx).Info(utils.LogWithHostZone(depositRecord.HostZoneId, "Transferring %d%s", depositRecord.Amount, hostZone.HostDenom))
+		k.Logger(ctx).Info(utils.LogWithHostZone(depositRecord.HostZoneId, "Transferring %v%s", depositRecord.Amount, hostZone.HostDenom))
 		transferCoin := sdk.NewCoin(hostZone.IbcDenom, depositRecord.Amount)
 
 		// timeout 30 min in the future
@@ -118,7 +118,7 @@ func (k Keeper) StakeExistingDepositsOnHostZones(ctx sdk.Context, epochNumber ui
 
 	for _, depositRecord := range stakeDepositRecords[:maxDepositRecordsToStake] {
 		k.Logger(ctx).Info(utils.LogWithHostZone(depositRecord.HostZoneId,
-			"Processing deposit record %d: %d%s", depositRecord.Id, depositRecord.Amount, depositRecord.Denom))
+			"Processing deposit record %d: %v%s", depositRecord.Id, depositRecord.Amount, depositRecord.Denom))
 
 		hostZone, hostZoneFound := k.GetHostZone(ctx, depositRecord.HostZoneId)
 		if !hostZoneFound {
@@ -132,7 +132,7 @@ func (k Keeper) StakeExistingDepositsOnHostZones(ctx sdk.Context, epochNumber ui
 			continue
 		}
 
-		k.Logger(ctx).Info(utils.LogWithHostZone(depositRecord.HostZoneId, "Staking %d%s", depositRecord.Amount, hostZone.HostDenom))
+		k.Logger(ctx).Info(utils.LogWithHostZone(depositRecord.HostZoneId, "Staking %v%s", depositRecord.Amount, hostZone.HostDenom))
 		stakeAmount := sdk.NewCoin(hostZone.HostDenom, depositRecord.Amount)
 
 		err := k.DelegateOnHost(ctx, hostZone, stakeAmount, depositRecord)

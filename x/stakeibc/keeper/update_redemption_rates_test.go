@@ -3,6 +3,7 @@ package keeper_test
 import (
 	// "fmt"
 
+	"fmt"
 	"math/rand"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -114,7 +115,13 @@ func (s *KeeperTestSuite) TestUpdateRedemptionRatesRandomized() {
 	numerator := stakedBal.Add(undelegatedBal).Add(justDepositedBal)
 	denominator := stSupply
 	expectedNewRate := sdk.NewDecFromInt(numerator.Quo(denominator))
-	s.Require().Equal(rrNew, expectedNewRate, "expectedNewRate: %v, rrNew: %v; inputs: SB: %d, UDB: %d, JDB: %d, STS: %d RRT0: %d", expectedNewRate, rrNew, stakedBal, undelegatedBal, justDepositedBal, stSupply, initialRedemptionRate)
+
+	componentDescription := fmt.Sprintf(
+		"Components - StakedBal: %v, UndelegateBalance: %v, JustDepositedBalance: %v, stSupply: %v, InitialRedemptionRate: %v",
+		stakedBal, undelegatedBal, justDepositedBal, stSupply, initialRedemptionRate)
+
+	s.Require().Equal(rrNew, expectedNewRate,
+		"ExpectedRedemptionRate: %v, ActualRedemptionRate: %v; %s", expectedNewRate, rrNew, componentDescription)
 }
 
 func (s *KeeperTestSuite) TestUpdateRedemptionRatesRandomized_MultipleRuns() {

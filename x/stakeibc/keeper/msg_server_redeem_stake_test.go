@@ -82,7 +82,7 @@ func (s *KeeperTestSuite) SetupRedeemStake() RedeemStakeTestCase {
 		zoneAccount: zoneAccount,
 		initialState: RedeemStakeState{
 			epochNumber:                        epochTrackerDay.EpochNumber,
-			initialNativeEpochUnbondingAmount: sdk.ZeroInt(),
+			initialNativeEpochUnbondingAmount:  sdk.ZeroInt(),
 			initialStTokenEpochUnbondingAmount: sdk.ZeroInt(),
 		},
 		validMsg: stakeibctypes.MsgRedeemStake{
@@ -230,7 +230,7 @@ func (s *KeeperTestSuite) TestRedeemStake_RedeemMoreThanStaked() {
 	invalidMsg.Amount = sdk.NewInt(1_000_000_000_000_000)
 	_, err := s.GetMsgServer().RedeemStake(sdk.WrapSDKContext(s.Ctx), &invalidMsg)
 
-	s.Require().EqualError(err, fmt.Sprintf("cannot unstake an amount g.t. staked balance on host zone: %d: invalid amount", invalidMsg.Amount))
+	s.Require().EqualError(err, fmt.Sprintf("cannot unstake an amount g.t. staked balance on host zone: %v: invalid amount", invalidMsg.Amount))
 }
 
 func (s *KeeperTestSuite) TestRedeemStake_NoEpochTrackerDay() {
