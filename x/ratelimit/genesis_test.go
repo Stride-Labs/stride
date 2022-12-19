@@ -6,7 +6,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	keepertest "github.com/Stride-Labs/stride/v4/testutil/keeper"
+	"github.com/Stride-Labs/stride/v4/app/apptesting"
 	"github.com/Stride-Labs/stride/v4/testutil/nullify"
 	"github.com/Stride-Labs/stride/v4/x/ratelimit"
 	"github.com/Stride-Labs/stride/v4/x/ratelimit/types"
@@ -33,9 +33,9 @@ func TestGenesis(t *testing.T) {
 		RateLimits: createRateLimits(),
 	}
 
-	k, ctx := keepertest.RatelimitKeeper(t)
-	ratelimit.InitGenesis(ctx, *k, genesisState)
-	got := ratelimit.ExportGenesis(ctx, *k)
+	s := apptesting.SetupSuitelessTestHelper()
+	ratelimit.InitGenesis(s.Ctx, s.App.RatelimitKeeper, genesisState)
+	got := ratelimit.ExportGenesis(s.Ctx, s.App.RatelimitKeeper)
 	require.NotNil(t, got)
 
 	nullify.Fill(&genesisState)
