@@ -12,4 +12,6 @@ var (
 		"ratelimit key not found")
 	ErrZeroChannelValue = sdkerrors.Register(ModuleName, 3,
 		"channel value is zero")
+	ErrQuotaExceeded = sdkerrors.Register(ModuleName, 4,
+		"quota exceeded")
 )
