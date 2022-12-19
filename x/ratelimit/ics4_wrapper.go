@@ -3,9 +3,10 @@ package ratelimit
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
-	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	porttypes "github.com/cosmos/ibc-go/v3/modules/core/05-port/types"
 	"github.com/cosmos/ibc-go/v3/modules/core/exported"
+
+	ratelimitkeeper "github.com/Stride-Labs/stride/v4/x/ratelimit/keeper"
 )
 
 var (
@@ -14,29 +15,24 @@ var (
 )
 
 type ICS4Wrapper struct {
-	channel    porttypes.ICS4Wrapper
-	paramSpace paramtypes.Subspace
+	channel         porttypes.ICS4Wrapper
+	rateLimitKeeper ratelimitkeeper.Keeper
 }
 
-func NewICS4Middleware(
-	channel porttypes.ICS4Wrapper, paramSpace paramtypes.Subspace,
-) ICS4Wrapper {
+func NewICS4Middleware(channel porttypes.ICS4Wrapper, ratelimitKeeper ratelimitkeeper.Keeper) ICS4Wrapper {
 	return ICS4Wrapper{
-		channel:    channel,
-		paramSpace: paramSpace,
+		channel:         channel,
+		rateLimitKeeper: ratelimitKeeper,
 	}
 }
 
 func (i *ICS4Wrapper) SendPacket(ctx sdk.Context, chanCap *capabilitytypes.Capability, packet exported.PacketI) error {
-	// TODO:
+	if err := SendRateLimitedPacket(ctx, i.rateLimitKeeper, packet); err != nil {
+		return err
+	}
 	return i.channel.SendPacket(ctx, chanCap, packet)
 }
 
 func (i *ICS4Wrapper) WriteAcknowledgement(ctx sdk.Context, chanCap *capabilitytypes.Capability, packet exported.PacketI, ack exported.Acknowledgement) error {
 	return i.channel.WriteAcknowledgement(ctx, chanCap, packet, ack)
-}
-
-func (i *ICS4Wrapper) GetParams(ctx sdk.Context) (contract string) {
-	i.paramSpace.GetIfExists(ctx, []byte("contract"), &contract)
-	return contract
 }

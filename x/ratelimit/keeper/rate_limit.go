@@ -3,7 +3,7 @@ package keeper
 import (
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/ibc-go/v3/modules/core/exported"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
 	"github.com/Stride-Labs/stride/v4/x/ratelimit/types"
 )
@@ -19,13 +19,41 @@ func (k Keeper) GetChannelValue(ctx sdk.Context, denom string) sdk.Int {
 	return k.bankKeeper.GetSupply(ctx, denom).Amount
 }
 
-func CheckRateLimit(direction types.PacketDirection, packet exported.PacketI) error {
-	// TODO
-	return nil
+// Checks whether the given packet will exceed the rate limit
+// Called by OnRecvPacket and OnSendPacket
+func (k Keeper) CheckRateLimit(ctx sdk.Context, direction types.PacketDirection, denom string, channelId string, amount uint64) error {
+	// If there's no rate limit yet for this denom, no action is necessary
+	rateLimit, found := k.GetRateLimit(ctx, denom, channelId)
+	if !found {
+		return nil
+	}
+
+	switch direction {
+	case types.PACKET_SEND:
+		return rateLimit.Flow.AddOutflow(amount, *rateLimit.Quota)
+	case types.PACKET_RECV:
+		return rateLimit.Flow.AddInflow(amount, *rateLimit.Quota)
+	default:
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "invalid packet direction (%s)", direction.String())
+	}
 }
 
-func (k Keeper) ResetRateLimit(ctx sdk.Context, rateLimit types.RateLimit) error {
-	// TODO
+// Reset the rate limit after expiration
+// The inflow and outflow should get reset to 1 and the channelValue should be updated
+func (k Keeper) ResetRateLimit(ctx sdk.Context, denom string, channelId string) error {
+	rateLimit, found := k.GetRateLimit(ctx, denom, channelId)
+	if !found {
+		return types.ErrRateLimitKeyNotFound
+	}
+
+	flow := types.Flow{
+		Inflow:       0,
+		Outflow:      0,
+		ChannelValue: k.GetChannelValue(ctx, denom).Uint64(),
+	}
+	rateLimit.Flow = &flow
+
+	k.SetRateLimit(ctx, rateLimit)
 	return nil
 }
 
