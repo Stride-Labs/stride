@@ -421,12 +421,23 @@ func NewStrideApp(
 		appCodec, keys[ibchost.StoreKey], app.GetSubspace(ibchost.ModuleName), app.StakingKeeper, app.UpgradeKeeper, scopedIBCKeeper,
 	)
 
+	// Create RateLimit Keeper
+	scopedratelimitKeeper := app.CapabilityKeeper.ScopeToModule(ratelimitmoduletypes.ModuleName)
+	app.ScopedratelimitKeeper = scopedratelimitKeeper
+	app.RatelimitKeeper = *ratelimitmodulekeeper.NewKeeper(
+		appCodec,
+		keys[ratelimitmoduletypes.StoreKey],
+		app.GetSubspace(ratelimitmoduletypes.ModuleName),
+		app.BankKeeper,
+	)
+	ratelimitModule := ratelimitmodule.NewAppModule(appCodec, app.RatelimitKeeper)
+
 	// Create ICS4Wrapper middleware
 	rateLimitingParams := app.GetSubspace(ratelimitmoduletypes.ModuleName)
 	rateLimitingParams = rateLimitingParams.WithKeyTable(ratelimitmoduletypes.ParamKeyTable())
 	rateLimitingICS4Wrapper := ratelimitmodule.NewICS4Middleware(
 		app.IBCKeeper.ChannelKeeper,
-		rateLimitingParams,
+		app.RatelimitKeeper,
 	)
 	app.RateLimitingICS4Wrapper = &rateLimitingICS4Wrapper
 
@@ -500,16 +511,6 @@ func NewStrideApp(
 		app.IcacallbacksKeeper,
 	)
 	recordsModule := recordsmodule.NewAppModule(appCodec, app.RecordsKeeper, app.AccountKeeper, app.BankKeeper)
-
-	scopedratelimitKeeper := app.CapabilityKeeper.ScopeToModule(ratelimitmoduletypes.ModuleName)
-	app.ScopedratelimitKeeper = scopedratelimitKeeper
-	app.RatelimitKeeper = *ratelimitmodulekeeper.NewKeeper(
-		appCodec,
-		keys[ratelimitmoduletypes.StoreKey],
-		app.RateLimitingICS4Wrapper,
-		app.BankKeeper,
-	)
-	ratelimitModule := ratelimitmodule.NewAppModule(appCodec, app.RatelimitKeeper)
 
 	scopedStakeibcKeeper := app.CapabilityKeeper.ScopeToModule(stakeibcmoduletypes.ModuleName)
 	app.ScopedStakeibcKeeper = scopedStakeibcKeeper

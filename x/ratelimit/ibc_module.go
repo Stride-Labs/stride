@@ -7,6 +7,7 @@ import (
 	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
 	channeltypes "github.com/cosmos/ibc-go/v3/modules/core/04-channel/types"
 	porttypes "github.com/cosmos/ibc-go/v3/modules/core/05-port/types"
+
 	"github.com/cosmos/ibc-go/v3/modules/core/exported"
 )
 
@@ -108,7 +109,9 @@ func (im IBCModule) OnRecvPacket(
 	packet channeltypes.Packet,
 	relayer sdk.AccAddress,
 ) exported.Acknowledgement {
-	// Run custom logic here
+	if err := RecieveRateLimitedPacket(ctx, im.keeper, packet); err != nil {
+		return channeltypes.NewErrorAcknowledgement(err.Error())
+	}
 	return im.app.OnRecvPacket(ctx, packet, relayer)
 }
 
@@ -134,20 +137,22 @@ func (im IBCModule) OnTimeoutPacket(
 }
 
 // SendPacket implements the ICS4 Wrapper interface
+// This is implemented by the ratelimit ICS4Wrapper
 func (im IBCModule) SendPacket(
 	ctx sdk.Context,
 	chanCap *capabilitytypes.Capability,
 	packet exported.PacketI,
 ) error {
-	return im.keeper.SendPacket(ctx, chanCap, packet)
+	return nil
 }
 
 // WriteAcknowledgement implements the ICS4 Wrapper interface
+// This is implemented by the ratelimit ICS4Wrapper
 func (im IBCModule) WriteAcknowledgement(
 	ctx sdk.Context,
 	chanCap *capabilitytypes.Capability,
 	packet exported.PacketI,
 	ack exported.Acknowledgement,
 ) error {
-	return im.keeper.WriteAcknowledgement(ctx, chanCap, packet, ack)
+	return nil
 }
