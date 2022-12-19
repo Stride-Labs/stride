@@ -268,7 +268,7 @@ func (s *IntegrationTestSuite) TestCmdTxRemoveRateLimit() {
 
 	rateLimit := types.RateLimit{}
 	denom := sdk.DefaultBondDenom
-	channelId := "channel-0"
+	channelId := "channel-3"
 
 	testCases := []struct {
 		name         string
@@ -295,10 +295,29 @@ func (s *IntegrationTestSuite) TestCmdTxRemoveRateLimit() {
 		tc := tc
 
 		s.Run(tc.name, func() {
-			cmd := cli.CmdRemoveRateLimit()
+			cmd := cli.CmdAddRateLimit()
 			clientCtx := val.ClientCtx
 
-			_, err := clitestutil.ExecTestCLICmd(clientCtx, cmd, tc.args)
+			// Add a new ratelimit
+			_, err := clitestutil.ExecTestCLICmd(clientCtx, cmd, []string{
+				sdk.DefaultBondDenom,  // denom
+				channelId,             // channelId
+				fmt.Sprintf("%d", 10), // maxPercentSend
+				fmt.Sprintf("%d", 10), // maxPercentRecv
+				fmt.Sprintf("%d", 1),  // durationHours
+				fmt.Sprintf("--%s=json", tmcli.OutputFlag),
+				fmt.Sprintf("--%s=%s", flags.FlagFrom, val.Address.String()),
+				// common args
+				fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
+				fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
+				strideclitestutil.DefaultFeeString(s.cfg),
+			})
+			s.Require().NoError(err)
+
+			// Remove the rate limit
+			cmd = cli.CmdRemoveRateLimit()
+
+			_, err = clitestutil.ExecTestCLICmd(clientCtx, cmd, tc.args)
 			s.Require().NoError(err)
 
 			// Check if ratelimit was removed properly
