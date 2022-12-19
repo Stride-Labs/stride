@@ -9,6 +9,7 @@ import (
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
+	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	porttypes "github.com/cosmos/ibc-go/v3/modules/core/05-port/types"
 	"github.com/cosmos/ibc-go/v3/modules/core/exported"
 
@@ -17,8 +18,9 @@ import (
 
 type (
 	Keeper struct {
-		storeKey storetypes.StoreKey
-		cdc      codec.BinaryCodec
+		storeKey   storetypes.StoreKey
+		cdc        codec.BinaryCodec
+		paramstore paramtypes.Subspace
 
 		ics4Wrapper porttypes.ICS4Wrapper
 		bankKeeper  types.BankKeeper
@@ -28,12 +30,14 @@ type (
 func NewKeeper(
 	cdc codec.BinaryCodec,
 	key storetypes.StoreKey,
+	ps paramtypes.Subspace,
 	ics4Wrapper porttypes.ICS4Wrapper,
 	bankKeeper types.BankKeeper,
 ) *Keeper {
 	return &Keeper{
 		cdc:         cdc,
 		storeKey:    key,
+		paramstore:  ps,
 		ics4Wrapper: ics4Wrapper,
 		bankKeeper:  bankKeeper,
 	}

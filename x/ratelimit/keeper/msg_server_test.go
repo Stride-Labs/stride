@@ -41,6 +41,10 @@ func (s *KeeperTestSuite) TestMsgServer_AddRateLimit() {
 
 	denom := addRateLimitMsg.Denom
 	channelId := addRateLimitMsg.ChannelId
+	channelValue := int64(100)
+
+	// Mint tokens for generating channel value
+	s.App.BankKeeper.MintCoins(s.Ctx, minttypes.ModuleName, sdk.NewCoins(sdk.NewInt64Coin(addRateLimitMsg.Denom, channelValue)))
 
 	// Add a rate limit successfully
 	_, err := s.GetMsgServer().AddRateLimit(sdk.WrapSDKContext(s.Ctx), addRateLimitMsg)
@@ -62,6 +66,10 @@ func (s *KeeperTestSuite) TestMsgServer_UpdateRateLimit() {
 
 	denom := updateRateLimitMsg.Denom
 	channelId := updateRateLimitMsg.ChannelId
+	channelValue := int64(100)
+
+	// Mint tokens for generating channel value
+	s.App.BankKeeper.MintCoins(s.Ctx, minttypes.ModuleName, sdk.NewCoins(sdk.NewInt64Coin(updateRateLimitMsg.Denom, channelValue)))
 
 	// Attempt to update a rate limit that does not exist
 	_, err := s.GetMsgServer().UpdateRateLimit(sdk.WrapSDKContext(s.Ctx), updateRateLimitMsg)
@@ -96,6 +104,10 @@ func (s *KeeperTestSuite) TestMsgServer_RemoveRateLimit() {
 	removeRateLimitMsg.Creator = validAddr
 	denom := removeRateLimitMsg.Denom
 	channelId := removeRateLimitMsg.ChannelId
+	channelValue := int64(100)
+
+	// Mint tokens for generating channel value
+	s.App.BankKeeper.MintCoins(s.Ctx, minttypes.ModuleName, sdk.NewCoins(sdk.NewInt64Coin(removeRateLimitMsg.Denom, channelValue)))
 
 	// Attempt to remove a rate limit that does not exist
 	_, err := s.GetMsgServer().RemoveRateLimit(sdk.WrapSDKContext(s.Ctx), removeRateLimitMsg)
@@ -126,6 +138,9 @@ func (s *KeeperTestSuite) TestMsgServer_ResetRateLimit() {
 	channelId := resetRateLimitMsg.ChannelId
 	channelValue := int64(100)
 
+	// Mint tokens for generating channel value
+	s.App.BankKeeper.MintCoins(s.Ctx, minttypes.ModuleName, sdk.NewCoins(sdk.NewInt64Coin(resetRateLimitMsg.Denom, channelValue)))
+
 	// Attempt to reset a rate limit that does not exist
 	_, err := s.GetMsgServer().ResetRateLimit(sdk.WrapSDKContext(s.Ctx), resetRateLimitMsg)
 	s.Require().Equal(err, types.ErrRateLimitKeyNotFound)
@@ -136,9 +151,6 @@ func (s *KeeperTestSuite) TestMsgServer_ResetRateLimit() {
 
 	_, found := s.App.RatelimitKeeper.GetRateLimit(s.Ctx, denom, channelId)
 	s.Require().True(found)
-
-	// Mint some tokens
-	s.App.BankKeeper.MintCoins(s.Ctx, minttypes.ModuleName, sdk.NewCoins(sdk.NewInt64Coin(resetRateLimitMsg.Denom, channelValue)))
 
 	// Reset the rate limit successfully
 	_, err = s.GetMsgServer().ResetRateLimit(sdk.WrapSDKContext(s.Ctx), resetRateLimitMsg)

@@ -506,6 +506,7 @@ func NewStrideApp(
 	app.RatelimitKeeper = *ratelimitmodulekeeper.NewKeeper(
 		appCodec,
 		keys[ratelimitmoduletypes.StoreKey],
+		app.GetSubspace(ratelimitmoduletypes.ModuleName),
 		app.RateLimitingICS4Wrapper,
 		app.BankKeeper,
 	)
