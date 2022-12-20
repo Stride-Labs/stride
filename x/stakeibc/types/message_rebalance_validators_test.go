@@ -1,4 +1,4 @@
-package types
+package types_test
 
 import (
 	"testing"
@@ -6,42 +6,41 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/stretchr/testify/require"
 
-	appParams "github.com/Stride-Labs/stride/v4/app/params"
+	types "github.com/Stride-Labs/stride/v4/x/stakeibc/types"
+	apptesting "github.com/Stride-Labs/stride/v4/app/apptesting"
 	"github.com/Stride-Labs/stride/v4/testutil/sample"
 )
 
 func TestMsgRebalanceValidators_ValidateBasic(t *testing.T) {
-
-	//set address prefixes to stride
-	appParams.SetAddressPrefixes()
+	apptesting.SetupConfig()
 
 	tests := []struct {
 		name string
-		msg  MsgRebalanceValidators
+		msg  types.MsgRebalanceValidators
 		err  error
 	}{
 		{
 			name: "invalid address",
-			msg: MsgRebalanceValidators{
+			msg: types.MsgRebalanceValidators{
 				Creator: "invalid_address",
 			},
 			err: sdkerrors.ErrInvalidAddress,
 		}, {
 			name: "valid address but not whitelisted",
-			msg: MsgRebalanceValidators{
+			msg: types.MsgRebalanceValidators{
 				Creator: sample.AccAddress(),
 			},
 			err: sdkerrors.ErrInvalidAddress,
 		}, {
 			name: "valid address and whitelisted but invalid number of validators to rebalance (minimum not meet)",
-			msg: MsgRebalanceValidators{
+			msg: types.MsgRebalanceValidators{
 				Creator:      "stride1k8c2m5cn322akk5wy8lpt87dd2f4yh9azg7jlh",
 				NumRebalance: 0,
 			},
 			err: sdkerrors.ErrInvalidRequest,
 		}, {
 			name: "valid address and whitelisted but invalid number of validators to rebalance (too much)",
-			msg: MsgRebalanceValidators{
+			msg: types.MsgRebalanceValidators{
 				Creator:      "stride1k8c2m5cn322akk5wy8lpt87dd2f4yh9azg7jlh",
 				NumRebalance: 11,
 			},
@@ -49,7 +48,7 @@ func TestMsgRebalanceValidators_ValidateBasic(t *testing.T) {
 		},
 		{
 			name: "valid address and whitelisted",
-			msg: MsgRebalanceValidators{
+			msg: types.MsgRebalanceValidators{
 				Creator:      "stride1k8c2m5cn322akk5wy8lpt87dd2f4yh9azg7jlh",
 				NumRebalance: 10,
 			},
