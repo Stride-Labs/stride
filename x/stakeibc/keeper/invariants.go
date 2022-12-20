@@ -5,8 +5,6 @@ package keeper
 import (
 	"fmt"
 
-	epochtypes "github.com/Stride-Labs/stride/v4/x/epochs/types"
-	recordstypes "github.com/Stride-Labs/stride/v4/x/records/types"
 	"github.com/Stride-Labs/stride/v4/x/stakeibc/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
@@ -14,6 +12,7 @@ import (
 // RegisterInvariants registers all governance invariants.
 func RegisterInvariants(ir sdk.InvariantRegistry, k Keeper) {
 	ir.RegisterRoute(types.ModuleName, "balance-stake-hostzone-invariant", BalanceStakeHostZoneInvariant(k))
+	ir.RegisterRoute(types.ModuleName, "amount-of-delagate-of-validator-invariant", AmountDelegateOfValidatorInvariant(k))
 }
 
 // AllInvariants runs all invariants of the stakeibc module
@@ -22,22 +21,20 @@ func AllInvariants(k Keeper) sdk.Invariant {
 		// msg, broke := RedemptionRateInvariant(k)(ctx)
 		// note: once we have >1 invariant here, follow the pattern from staking module invariants here: https://github.com/cosmos/cosmos-sdk/blob/v0.46.0/x/staking/keeper/invariants.go
 		// return "", false
-		msg, broke := BalanceStakeHostZoneInvariant(k)(ctx)
-		return msg, broke
+		res, stop := BalanceStakeHostZoneInvariant(k)(ctx)
+		if !stop {
+			return res, stop
+		}
+		return AmountDelegateOfValidatorInvariant(k)(ctx)
 
 	}
 }
-
-// func RedemptionRateInvariant(k Keeper) sdk.Invariant {
-// 	return func(ctx sdk.Context) (string, bool) {
-// 		listHostZone := k.GetAllHostZone(ctx)
-// 	}
-// }
 
 // BalanceStakeHostZoneInvariant ensure that balance stake of all host zone are equal to of validator's delegation
 func BalanceStakeHostZoneInvariant(k Keeper) sdk.Invariant {
 	return func(ctx sdk.Context) (string, bool) {
 		listHostZone := k.GetAllHostZone(ctx)
+
 		for _, host := range listHostZone {
 			balanceStake := host.StakedBal
 			totalDelegateOfVals := k.GetTotalValidatorDelegations(host)
@@ -52,41 +49,26 @@ func BalanceStakeHostZoneInvariant(k Keeper) sdk.Invariant {
 	}
 }
 
-// BalanceUnbondedTokensOfRedemptionAccountInvariant ensure that total unbonded tokens from the delegation account is equal to redemption account
-// func BalanceUnbondedTokensOfRedemptionAccountInvariant(k Keeper) sdk.Invariant {
-// 	return func(ctx sdk.Context) (string, bool) {
-// 		// listHostZone := k.GetAllHostZone(ctx)
-// 		// for _, host := range listHostZone {
+func AmountDelegateOfValidatorInvariant(k Keeper) sdk.Invariant {
+	return func(ctx sdk.Context) (string, bool) {
+		listHostZone := k.GetAllHostZone(ctx)
 
-// 		// }
-// 	}
-// }
-
-func getTotalUnbondedTokens(ctx sdk.Context, k Keeper, hostZone types.HostZone) (sdk.Int, bool) {
-
-	totalAmtTransferToRedemptionAcct := sdk.ZeroInt()
-
-	strideEpochTracker, found := k.GetEpochTracker(ctx, epochtypes.STRIDE_EPOCH)
-	if !found {
-		return sdk.ZeroInt(), false
+		for _, host := range listHostZone {
+			totalWeightOfHostZone := int64(k.GetTotalValidatorWeight(host))
+			totalDelegateOfVals := k.GetTotalValidatorDelegations(host)
+			for _, val := range host.Validators {
+				weightOfVal := int64(val.Weight)
+				amoutDelegateOfVal := val.DelegationAmt
+				// TODO: check Tolerance for calculation below
+				amoutDelegateOfValFromWeight := totalDelegateOfVals.Mul(sdk.NewInt(weightOfVal)).Quo(sdk.NewInt(totalWeightOfHostZone))
+				if !amoutDelegateOfValFromWeight.Equal(amoutDelegateOfVal) {
+					return sdk.FormatInvariant(types.ModuleName, "balance-stake-hostzone-invariant",
+						fmt.Sprintf("\tAmount of delegate of validator %s is not inconsistent with the ratio of weight \n\tAmount actually of delegate: %d\n\t Amount of delegate by ratio of weight: %d\n",
+							val.Name, val.DelegationAmt, amoutDelegateOfValFromWeight,
+						)), true
+				}
+			}
+		}
+		return sdk.FormatInvariant(types.ModuleName, "amount-of-delagate-of-validator-invariant", "All validators have amount of delegate inconsistent with the ratio of weight"), false
 	}
-	epochNumber := strideEpochTracker.GetEpochNumber()
-	epochUnbondingRecord, found := k.RecordsKeeper.GetEpochUnbondingRecord(ctx, epochNumber)
-	if !found {
-		return sdk.ZeroInt(), false
-	}
-	hostZoneUnbonding, found := k.RecordsKeeper.GetHostZoneUnbondingByChainId(ctx, epochUnbondingRecord.EpochNumber, hostZone.ChainId)
-	if !found {
-		return sdk.ZeroInt(), false
-	}
-	blockTime, err := k.GetLightClientTimeSafely(ctx, hostZone.ConnectionId)
-	if err != nil {
-		return sdk.ZeroInt(), false
-	}
-	inTransferQueue := hostZoneUnbonding.Status == recordstypes.HostZoneUnbonding_EXIT_TRANSFER_QUEUE
-	validUnbondingTime := hostZoneUnbonding.UnbondingTime > 0 && hostZoneUnbonding.UnbondingTime < blockTime
-	if inTransferQueue && validUnbondingTime {
-		totalAmtTransferToRedemptionAcct = hostZoneUnbonding.NativeTokenAmount
-	}
-	return totalAmtTransferToRedemptionAcct, true
 }
