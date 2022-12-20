@@ -54,9 +54,14 @@ func (s *KeeperTestSuite) TestMsgServer_AddRateLimit() {
 	_, found := s.App.RatelimitKeeper.GetRateLimit(s.Ctx, denom, channelId)
 	s.Require().True(found)
 
-	// Check for duplicate rate limit
+	// Try to add the same rate limit again - it should fail
 	_, err = s.GetMsgServer().AddRateLimit(sdk.WrapSDKContext(s.Ctx), addRateLimitMsg)
 	s.Require().Equal(err, types.ErrRateLimitKeyAlreadyExists)
+
+	// Try to add a rate limit with 0 channel value - it should fail
+	addRateLimitMsg.Denom = "fake"
+	_, err = s.GetMsgServer().AddRateLimit(sdk.WrapSDKContext(s.Ctx), addRateLimitMsg)
+	s.Require().Equal(err, types.ErrZeroChannelValue)
 }
 
 func (s *KeeperTestSuite) TestMsgServer_UpdateRateLimit() {
