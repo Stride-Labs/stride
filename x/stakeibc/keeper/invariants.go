@@ -51,6 +51,7 @@ func BalanceStakeHostZoneInvariant(k Keeper) sdk.Invariant {
 	}
 }
 
+// AmountDelegateOfValidatorInvariant check inconsistent between the real amount of delegate and weight of validator
 func AmountDelegateOfValidatorInvariant(k Keeper) sdk.Invariant {
 	return func(ctx sdk.Context) (string, bool) {
 		listHostZone := k.GetAllHostZone(ctx)
