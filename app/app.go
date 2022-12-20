@@ -290,7 +290,7 @@ type StrideApp struct {
 	IcacallbacksKeeper       icacallbacksmodulekeeper.Keeper
 	ScopedratelimitKeeper    capabilitykeeper.ScopedKeeper
 	RatelimitKeeper          ratelimitmodulekeeper.Keeper
-	RateLimitingICS4Wrapper  *ratelimitmodule.ICS4Wrapper
+	RatelimitICS4Wrapper     *ratelimitmodule.ICS4Wrapper
 	ClaimKeeper              claimkeeper.Keeper
 	// this line is used by starport scaffolding # stargate/app/keeperDeclaration
 
@@ -421,7 +421,7 @@ func NewStrideApp(
 		appCodec, keys[ibchost.StoreKey], app.GetSubspace(ibchost.ModuleName), app.StakingKeeper, app.UpgradeKeeper, scopedIBCKeeper,
 	)
 
-	// Create RateLimit Keeper
+	// Create Ratelimit Keeper
 	scopedratelimitKeeper := app.CapabilityKeeper.ScopeToModule(ratelimitmoduletypes.ModuleName)
 	app.ScopedratelimitKeeper = scopedratelimitKeeper
 	app.RatelimitKeeper = *ratelimitmodulekeeper.NewKeeper(
@@ -429,22 +429,23 @@ func NewStrideApp(
 		keys[ratelimitmoduletypes.StoreKey],
 		app.GetSubspace(ratelimitmoduletypes.ModuleName),
 		app.BankKeeper,
+		app.IBCKeeper.ChannelKeeper,
 	)
 	ratelimitModule := ratelimitmodule.NewAppModule(appCodec, app.RatelimitKeeper)
 
 	// Create ICS4Wrapper middleware
-	rateLimitingParams := app.GetSubspace(ratelimitmoduletypes.ModuleName)
-	rateLimitingParams = rateLimitingParams.WithKeyTable(ratelimitmoduletypes.ParamKeyTable())
-	rateLimitingICS4Wrapper := ratelimitmodule.NewICS4Middleware(
+	rateLimitParams := app.GetSubspace(ratelimitmoduletypes.ModuleName)
+	rateLimitParams = rateLimitParams.WithKeyTable(ratelimitmoduletypes.ParamKeyTable())
+	rateLimitICS4Wrapper := ratelimitmodule.NewICS4Middleware(
 		app.IBCKeeper.ChannelKeeper,
 		app.RatelimitKeeper,
 	)
-	app.RateLimitingICS4Wrapper = &rateLimitingICS4Wrapper
+	app.RatelimitICS4Wrapper = &rateLimitICS4Wrapper
 
 	// Create Transfer Keepers
 	app.TransferKeeper = ibctransferkeeper.NewKeeper(
 		appCodec, keys[ibctransfertypes.StoreKey], app.GetSubspace(ibctransfertypes.ModuleName),
-		app.RateLimitingICS4Wrapper, app.IBCKeeper.ChannelKeeper, &app.IBCKeeper.PortKeeper,
+		app.RatelimitICS4Wrapper, app.IBCKeeper.ChannelKeeper, &app.IBCKeeper.PortKeeper,
 		app.AccountKeeper, app.BankKeeper, scopedTransferKeeper,
 	)
 	transferModule := transfer.NewAppModule(app.TransferKeeper)

@@ -14,4 +14,6 @@ var (
 		"channel value is zero")
 	ErrQuotaExceeded = sdkerrors.Register(ModuleName, 4,
 		"quota exceeded")
+	ErrInvalidClientState = sdkerrors.Register(ModuleName, 5,
+		"unable to determine client state from channelId")
 )
