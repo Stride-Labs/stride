@@ -37,7 +37,6 @@ var (
 )
 
 func (s *KeeperTestSuite) TestMsgServer_AddRateLimit() {
-	s.SetupTest()
 	validAddr, _ := apptesting.GenerateTestAddrs()
 	addRateLimitMsg.Creator = validAddr
 
@@ -68,7 +67,6 @@ func (s *KeeperTestSuite) TestMsgServer_AddRateLimit() {
 }
 
 func (s *KeeperTestSuite) TestMsgServer_UpdateRateLimit() {
-	s.SetupTest()
 	validAddr, _ := apptesting.GenerateTestAddrs()
 	addRateLimitMsg.Creator = validAddr
 	updateRateLimitMsg.Creator = validAddr
@@ -107,7 +105,6 @@ func (s *KeeperTestSuite) TestMsgServer_UpdateRateLimit() {
 }
 
 func (s *KeeperTestSuite) TestMsgServer_RemoveRateLimit() {
-	s.SetupTest()
 	validAddr, _ := apptesting.GenerateTestAddrs()
 
 	addRateLimitMsg.Creator = validAddr
@@ -140,7 +137,6 @@ func (s *KeeperTestSuite) TestMsgServer_RemoveRateLimit() {
 }
 
 func (s *KeeperTestSuite) TestMsgServer_ResetRateLimit() {
-	s.SetupTest()
 	validAddr, _ := apptesting.GenerateTestAddrs()
 	addRateLimitMsg.Creator = validAddr
 	resetRateLimitMsg.Creator = validAddr
