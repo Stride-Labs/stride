@@ -17,6 +17,7 @@ The `x/distribution` module is responsible for allocating tokens to stakers, com
 The mint module uses time basis epochs from the `x/epochs` module.
 
 The `x/mint` module is designed by Osmosis. It is used to handle the regular printing of new tokens within a chain. Its core function is to:
+
 - Mint new tokens once per epoch (default one week)
 - Have a "Reductioning factor" every period, which reduces the amount of rewards per epoch.
     (default: period is 3 years, where a year is 52 epochs. The next period's rewards are 2/3 of the prior period's rewards)
@@ -32,9 +33,9 @@ type Params struct {
     EpochIdentifier         string                  // identifier of epoch
     ReductionPeriodInEpochs int64                   // number of epochs between reward reductions
     ReductionFactor         sdk.Dec                 // reduction multiplier to execute on each period
-	DistributionProportions DistributionProportions // distribution_proportions defines the proportion of the minted denom
-	WeightedDeveloperRewardsReceivers    []WeightedAddress // address to receive developer rewards
-	MintingRewardsDistributionStartEpoch int64             // start epoch to distribute minting rewards
+ DistributionProportions DistributionProportions // distribution_proportions defines the proportion of the minted denom
+ WeightedDeveloperRewardsReceivers    []WeightedAddress // address to receive developer rewards
+ MintingRewardsDistributionStartEpoch int64             // start epoch to distribute minting rewards
 }
 ```
 
@@ -54,8 +55,6 @@ The minting module contains the following parameters:
 | weighted_developer_rewards_receivers       | array        | [{"address": "osmoxx", "weight": "1"}] |
 | minting_rewards_distribution_start_epoch   | int64        | 10                                     |
 
-
-
 ## EpochProvision
 
 Calculate the provisions generated for each epoch based on current epoch provisions. The provisions are then minted by the `mint` module's `ModuleMinterAccount`. These rewards are transferred to a `FeeCollector`, which handles distributing the rewards per the chains needs. (See TODO.md for details) This fee collector is specified as the `auth` module's `FeeCollector` `ModuleAccount`.
@@ -68,6 +67,7 @@ func (m Minter) EpochProvision(params Params) sdk.Coin {
 ```
 
 **Notes**
+
 1. `mint_denom` defines denom for minting token - uosmo
 2. `genesis_epoch_provisions` provides minting tokens per epoch at genesis.
 3. `epoch_identifier` defines the epoch identifier to be used for mint module e.g. "weekly"
@@ -76,7 +76,6 @@ func (m Minter) EpochProvision(params Params) sdk.Coin {
 6. `distribution_proportions` defines distribution rules for minted tokens, when developer rewards address is empty, it distribute tokens to community pool.
 7. `weighted_developer_rewards_receivers` provides the addresses that receives developer rewards by weight
 8. `minting_rewards_distribution_start_epoch` defines the start epoch of minting to make sure minting start after initial pools are set
-
 
 ## Begin-Epoch
 
@@ -95,6 +94,7 @@ func (m Minter) NextEpochProvisions(params Params) sdk.Dec {
     return m.EpochProvisions.Mul(params.ReductionFactor)
 }
 ```
+
 ## Reductioning factor
 
 This is a generalization over the Bitcoin style halvenings.
@@ -118,7 +118,6 @@ The minting module emits the following events:
 | mint | epoch_number     | {epochNumber}     |
 | mint | epoch_provisions | {epochProvisions} |
 | mint | amount           | {amount}          |
-
 
 ## Minter
 

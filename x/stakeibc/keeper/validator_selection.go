@@ -34,6 +34,13 @@ func (k Keeper) GetValidatorDelegationAmtDifferences(ctx sdk.Context, hostZone t
 // such that the total validator delegation is equal to the finalDelegation
 // output key is ADDRESS not NAME
 func (k Keeper) GetTargetValAmtsForHostZone(ctx sdk.Context, hostZone types.HostZone, finalDelegation sdk.Int) (map[string]sdk.Int, error) {
+	// Confirm the expected delegation amount is greater than 0
+	if finalDelegation == sdk.ZeroInt() {
+		k.Logger(ctx).Error(fmt.Sprintf("Cannot calculate target delegation if final amount is 0 %s", hostZone.ChainId))
+		return nil, types.ErrNoValidatorWeights
+	}
+
+	// Sum the total weight across all validators
 	totalWeight := k.GetTotalValidatorWeight(hostZone)
 	if totalWeight == 0 {
 		k.Logger(ctx).Error(fmt.Sprintf("No non-zero validators found for host zone %s", hostZone.ChainId))
@@ -41,43 +48,39 @@ func (k Keeper) GetTargetValAmtsForHostZone(ctx sdk.Context, hostZone types.Host
 	}
 	k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId, "Total Validator Weight: %d", totalWeight))
 
-	if finalDelegation == sdk.ZeroInt() {
-		k.Logger(ctx).Error(fmt.Sprintf("Cannot calculate target delegation if final amount is 0 %s", hostZone.ChainId))
-		return nil, types.ErrNoValidatorWeights
-	}
-	targetAmount := make(map[string]sdk.Int)
-	allocatedAmt := sdk.ZeroInt()
-
 	// sort validators by weight ascending, this is inplace sorting!
-	validators := hostZone.GetValidators()
+	validators := hostZone.Validators
 
 	for i, j := 0, len(validators)-1; i < j; i, j = i+1, j-1 {
 		validators[i], validators[j] = validators[j], validators[i]
 	}
 
-	// Do not use `Slice` here, it is stochastic
-	sort.SliceStable(validators, func(i, j int) bool {
+	sort.SliceStable(validators, func(i, j int) bool { // Do not use `Slice` here, it is stochastic
 		return validators[i].Weight < validators[j].Weight
 	})
 
+	// Assign each validator their portion of the delegation (and give any overflow to the last validator)
+	targetUnbondingsByValidator := make(map[string]sdk.Int)
+	totalAllocated := sdk.ZeroInt()
 	for i, validator := range validators {
+		// For the last element, we need to make sure that the totalAllocated is equal to the finalDelegation
 		if i == len(validators)-1 {
-			// for the last element, we need to make sure that the allocatedAmt is equal to the finalDelegation
-			targetAmount[validator.GetAddress()] = finalDelegation.Sub(allocatedAmt) 
+			targetUnbondingsByValidator[validator.Address] = finalDelegation.Sub(totalAllocated)
 		} else {
 			delegateAmt := sdk.NewIntFromUint64(validator.Weight).Mul(finalDelegation).Quo(sdk.NewIntFromUint64(totalWeight))
-			allocatedAmt = allocatedAmt.Add(delegateAmt)
-			targetAmount[validator.GetAddress()] = delegateAmt
+			totalAllocated = totalAllocated.Add(delegateAmt)
+			targetUnbondingsByValidator[validator.Address] = delegateAmt
 		}
 	}
-	return targetAmount, nil
+
+	return targetUnbondingsByValidator, nil
 }
 
 func (k Keeper) GetTotalValidatorDelegations(hostZone types.HostZone) sdk.Int {
 	validators := hostZone.GetValidators()
 	total_delegation := sdk.ZeroInt()
 	for _, validator := range validators {
-		total_delegation = total_delegation.Add(validator.DelegationAmt) 
+		total_delegation = total_delegation.Add(validator.DelegationAmt)
 	}
 	return total_delegation
 }

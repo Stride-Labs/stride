@@ -14,6 +14,7 @@ parent:
 # Interchain Query
 
 ## Abstract
+
 Stride uses interchain queries and interchain accounts to perform multichain liquid staking. The `interchainquery` module creates a framework that allows other modules to query other appchains using IBC. The `interchainquery` module is used to make bank balance ICQ queries to withdrawal account every N. The callback triggers ICA bank sends for 90% of the rewards to the delegation account and 10% to the stride hostzone revenue account. The ICA bank send logic is in x/stakeibc/keeper/callbacks.go.
 
 ## Contents
@@ -21,7 +22,7 @@ Stride uses interchain queries and interchain accounts to perform multichain liq
 1. **[Concepts](#concepts)**
 2. **[State](#state)**
 3. **[Events](#events)**
-4. **[Keeper](#keeper)**   
+4. **[Keeper](#keeper)**
 5. **[Msgs](#msgs)**  
 6. **[Queries](#queries)**
 
@@ -56,22 +57,23 @@ The `interchainquery` module emits an event at the end of every `stride_epoch`s 
 The purpose of this event is to send interchainqueries that query data about staking rewards, which Stride uses to reinvest (aka autocompound) staking rewards.
 
 ```go
-			event := sdk.NewEvent(
-				sdk.EventTypeMessage,
-				sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
-				sdk.NewAttribute(sdk.AttributeKeyAction, types.AttributeValueQuery),
-				sdk.NewAttribute(types.AttributeKeyQueryId, queryInfo.Id),
-				sdk.NewAttribute(types.AttributeKeyChainId, queryInfo.ChainId),
-				sdk.NewAttribute(types.AttributeKeyConnectionId, queryInfo.ConnectionId),
-				sdk.NewAttribute(types.AttributeKeyType, queryInfo.QueryType),
-				sdk.NewAttribute(types.AttributeKeyHeight, "0"),
-				sdk.NewAttribute(types.AttributeKeyRequest, hex.EncodeToString(queryInfo.Request)),
-			)
+   event := sdk.NewEvent(
+    sdk.EventTypeMessage,
+    sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
+    sdk.NewAttribute(sdk.AttributeKeyAction, types.AttributeValueQuery),
+    sdk.NewAttribute(types.AttributeKeyQueryId, queryInfo.Id),
+    sdk.NewAttribute(types.AttributeKeyChainId, queryInfo.ChainId),
+    sdk.NewAttribute(types.AttributeKeyConnectionId, queryInfo.ConnectionId),
+    sdk.NewAttribute(types.AttributeKeyType, queryInfo.QueryType),
+    sdk.NewAttribute(types.AttributeKeyHeight, "0"),
+    sdk.NewAttribute(types.AttributeKeyRequest, hex.EncodeToString(queryInfo.Request)),
+   )
 ```
 
 ## Keeper
 
 ### Keeper Functions
+
 `interchainquery/keeper/` module provides utility functions to manage ICQs
 
 ```go
@@ -102,9 +104,9 @@ message MsgSubmitQueryResponse {
 ```
 
 ## Queries
+
 ```protobuf
 // Query PendingQueries lists all queries that have been requested (i.e. emitted)
 //  but have not had a response submitted yet
 message QueryPendingQueriesRequest {}
 ```
-
