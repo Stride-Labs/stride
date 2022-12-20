@@ -871,7 +871,8 @@ func (app *StrideApp) LoadHeight(height int64) error {
 // ModuleAccountAddrs returns all the app's module account addresses.
 func (app *StrideApp) ModuleAccountAddrs() map[string]bool {
 	modAccAddrs := make(map[string]bool)
-	for _, acc := range utils.StringToStringSliceMapKeys(maccPerms) {
+	// DO NOT REMOVE: StringMapKeys fixes non-deterministic map iteration
+	for _, acc := range utils.StringMapKeys(maccPerms) {
 		modAccAddrs[authtypes.NewModuleAddress(acc).String()] = true
 	}
 
@@ -881,7 +882,8 @@ func (app *StrideApp) ModuleAccountAddrs() map[string]bool {
 // ModuleAccountAddrs returns all the app's module account addresses.
 func (app *StrideApp) BlacklistedModuleAccountAddrs() map[string]bool {
 	modAccAddrs := make(map[string]bool)
-	for _, acc := range utils.StringToStringSliceMapKeys(maccPerms) {
+	// DO NOT REMOVE: StringMapKeys fixes non-deterministic map iteration
+	for _, acc := range utils.StringMapKeys(maccPerms) {
 		// don't blacklist stakeibc module account, so that it can ibc transfer tokens
 		if acc == "stakeibc" {
 			continue

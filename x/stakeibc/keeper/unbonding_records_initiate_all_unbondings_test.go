@@ -1,6 +1,7 @@
 package keeper_test
 
 import (
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	ibctesting "github.com/cosmos/ibc-go/v3/testing"
 	_ "github.com/stretchr/testify/suite"
 
@@ -25,12 +26,12 @@ func (s *KeeperTestSuite) SetupInitiateAllHostZoneUnbondings() InitiateAllHostZo
 	gaiaValidators := []*stakeibc.Validator{
 		{
 			Address:       gaiaValAddr,
-			DelegationAmt: uint64(5_000_000),
+			DelegationAmt: sdk.NewInt(5_000_000),
 			Weight:        uint64(10),
 		},
 		{
 			Address:       gaiaValAddr + "2",
-			DelegationAmt: uint64(3_000_000),
+			DelegationAmt: sdk.NewInt(3_000_000),
 			Weight:        uint64(6),
 		},
 	}
@@ -41,7 +42,7 @@ func (s *KeeperTestSuite) SetupInitiateAllHostZoneUnbondings() InitiateAllHostZo
 	osmoValidators := []*stakeibc.Validator{
 		{
 			Address:       osmoValAddr,
-			DelegationAmt: uint64(5_000_000),
+			DelegationAmt: sdk.NewInt(5_000_000),
 			Weight:        uint64(10),
 		},
 	}
@@ -57,7 +58,7 @@ func (s *KeeperTestSuite) SetupInitiateAllHostZoneUnbondings() InitiateAllHostZo
 			UnbondingFrequency: 3,
 			Validators:         gaiaValidators,
 			DelegationAccount:  &gaiaDelegationAccount,
-			StakedBal:          uint64(5_000_000),
+			StakedBal:          sdk.NewInt(5_000_000),
 			ConnectionId:       ibctesting.FirstConnectionID,
 		},
 		{
@@ -67,7 +68,7 @@ func (s *KeeperTestSuite) SetupInitiateAllHostZoneUnbondings() InitiateAllHostZo
 			UnbondingFrequency: 4,
 			Validators:         osmoValidators,
 			DelegationAccount:  &osmoDelegationAccount,
-			StakedBal:          uint64(5_000_000),
+			StakedBal:          sdk.NewInt(5_000_000),
 			ConnectionId:       ibctesting.FirstConnectionID,
 		},
 	}
@@ -75,15 +76,15 @@ func (s *KeeperTestSuite) SetupInitiateAllHostZoneUnbondings() InitiateAllHostZo
 	default_unbonding := []*recordtypes.HostZoneUnbonding{
 		{
 			HostZoneId:        HostChainId,
-			StTokenAmount:     1_900_000,
-			NativeTokenAmount: 2_000_000,
+			StTokenAmount:     sdk.NewInt(1_900_000),
+			NativeTokenAmount:  sdk.NewInt(2_000_000),
 			Denom:             Atom,
 			Status:            recordtypes.HostZoneUnbonding_UNBONDING_QUEUE,
 		},
 		{
 			HostZoneId:        OsmoChainId,
-			StTokenAmount:     2_800_000,
-			NativeTokenAmount: 3_000_000,
+			StTokenAmount:      sdk.NewInt(2_800_000),
+			NativeTokenAmount: sdk.NewInt(3),
 			Denom:             Osmo,
 			Status:            recordtypes.HostZoneUnbonding_UNBONDING_QUEUE,
 		},
@@ -161,7 +162,7 @@ func (s *KeeperTestSuite) TestInitiateAllHostZoneUnbondings_Failed() {
 	hostZone.Validators = []*stakeibc.Validator{
 		{
 			Address:       "cosmos_VALIDATOR",
-			DelegationAmt: uint64(1_000_000),
+			DelegationAmt: sdk.NewInt(1_000_000),
 			Weight:        uint64(10),
 		},
 	}

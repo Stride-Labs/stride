@@ -14,27 +14,6 @@ import (
 	"github.com/Stride-Labs/stride/v4/x/stakeibc/types"
 )
 
-func abs(n int64) int64 {
-	if n < 0 {
-		return -n
-	}
-	return n
-}
-
-func floatabs(n float64) float64 {
-	if n < 0 {
-		return -n
-	}
-	return n
-}
-
-func floatmax(a, b float64) float64 {
-	if a > b {
-		return a
-	}
-	return b
-}
-
 func (k msgServer) RebalanceValidators(goCtx context.Context, msg *types.MsgRebalanceValidators) (*types.MsgRebalanceValidatorsResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	k.Logger(ctx).Info(fmt.Sprintf("RebalanceValidators executing %v", msg))
@@ -54,18 +33,19 @@ func (k msgServer) RebalanceValidators(goCtx context.Context, msg *types.MsgReba
 
 	// we convert the above map into a list of tuples
 	type valPair struct {
-		deltaAmt int64
+		deltaAmt sdk.Int
 		valAddr  string
 	}
 	valDeltaList := make([]valPair, 0)
-	for _, valAddr := range utils.StringToIntMapKeys(validatorDeltas) {
+	// DO NOT REMOVE: StringMapKeys fixes non-deterministic map iteration
+	for _, valAddr := range utils.StringMapKeys(validatorDeltas) {
 		deltaAmt := validatorDeltas[valAddr]
-		k.Logger(ctx).Info(fmt.Sprintf("Adding deltaAmt: %d to validator: %s", deltaAmt, valAddr))
+		k.Logger(ctx).Info(fmt.Sprintf("Adding deltaAmt: %v to validator: %s", deltaAmt, valAddr))
 		valDeltaList = append(valDeltaList, valPair{deltaAmt, valAddr})
 	}
 	// now we sort that list
 	lessFunc := func(i, j int) bool {
-		return valDeltaList[i].deltaAmt < valDeltaList[j].deltaAmt
+		return valDeltaList[i].deltaAmt.LT(valDeltaList[j].deltaAmt)
 	}
 	sort.SliceStable(valDeltaList, lessFunc)
 	// now varDeltaList is sorted by deltaAmt
@@ -73,16 +53,16 @@ func (k msgServer) RebalanceValidators(goCtx context.Context, msg *types.MsgReba
 	underWeightIndex := len(valDeltaList) - 1
 
 	// check if there is a large enough rebalance, if not, just exit
-	total_delegation := float64(k.GetTotalValidatorDelegations(hostZone))
-	if total_delegation == 0 {
+	total_delegation := k.GetTotalValidatorDelegations(hostZone)
+	if total_delegation.IsZero() {
 		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "no validator delegations found for Host Zone %s, cannot rebalance 0 delegations!", hostZone.ChainId)
 	}
 
-	overweight_delta := floatabs(float64(valDeltaList[overWeightIndex].deltaAmt) / total_delegation)
-	underweight_delta := floatabs(float64(valDeltaList[underWeightIndex].deltaAmt) / total_delegation)
-	max_delta := floatmax(overweight_delta, underweight_delta)
-	rebalanceThreshold := float64(k.GetParam(ctx, types.KeyValidatorRebalancingThreshold)) / float64(10000)
-	if max_delta < rebalanceThreshold {
+	overweight_delta := sdk.NewDecFromInt(valDeltaList[overWeightIndex].deltaAmt).Quo(sdk.NewDecFromInt(total_delegation))
+	underweight_delta := sdk.NewDecFromInt(valDeltaList[underWeightIndex].deltaAmt).Quo(sdk.NewDecFromInt(total_delegation))
+	max_delta := sdk.MaxDec(overweight_delta, underweight_delta)
+	rebalanceThreshold := sdk.NewDec(int64(k.GetParam(ctx, types.KeyValidatorRebalancingThreshold))).Quo(sdk.NewDec(10000))
+	if max_delta.LT(rebalanceThreshold) {
 		k.Logger(ctx).Error("Not enough validator disruption to rebalance")
 		return nil, types.ErrWeightsNotDifferent
 	}
@@ -105,40 +85,40 @@ func (k msgServer) RebalanceValidators(goCtx context.Context, msg *types.MsgReba
 	for i := 1; i <= maxNumRebalance; i++ {
 		underWeightElem := valDeltaList[underWeightIndex]
 		overWeightElem := valDeltaList[overWeightIndex]
-		if underWeightElem.deltaAmt < 0 {
+		if underWeightElem.deltaAmt.LT(sdk.ZeroInt()) {
 			// if underWeightElem is negative, we're done rebalancing
 			break
 		}
-		if overWeightElem.deltaAmt > 0 {
+		if overWeightElem.deltaAmt.GT(sdk.ZeroInt()) {
 			// if overWeightElem is positive, we're done rebalancing
 			break
 		}
 		var redelegateMsg *stakingTypes.MsgBeginRedelegate
-		if abs(underWeightElem.deltaAmt) > abs(overWeightElem.deltaAmt) {
+		if underWeightElem.deltaAmt.Abs().GT(overWeightElem.deltaAmt) {
 			// if the underweight element is more off than the overweight element
 			// we transfer stake from the underweight element to the overweight element
-			underWeightElem.deltaAmt -= abs(overWeightElem.deltaAmt)
+			underWeightElem.deltaAmt = underWeightElem.deltaAmt.Sub(overWeightElem.deltaAmt.Abs())
 			overWeightIndex += 1
 			// issue an ICA call to the host zone to rebalance the validator
 			redelegateMsg = &stakingTypes.MsgBeginRedelegate{
 				DelegatorAddress:    delegatorAddress,
 				ValidatorSrcAddress: overWeightElem.valAddr,
 				ValidatorDstAddress: underWeightElem.valAddr,
-				Amount:              sdk.NewInt64Coin(hostZone.HostDenom, abs(overWeightElem.deltaAmt))}
+				Amount:              sdk.NewCoin(hostZone.HostDenom, overWeightElem.deltaAmt.Abs())}
 			msgs = append(msgs, redelegateMsg)
-			overWeightElem.deltaAmt = 0
-		} else if abs(underWeightElem.deltaAmt) < abs(overWeightElem.deltaAmt) {
+			overWeightElem.deltaAmt = sdk.ZeroInt()
+		} else if underWeightElem.deltaAmt.Abs().LT(overWeightElem.deltaAmt) {
 			// if the overweight element is more overweight than the underweight element
-			overWeightElem.deltaAmt += underWeightElem.deltaAmt
+			overWeightElem.deltaAmt = overWeightElem.deltaAmt.Add(underWeightElem.deltaAmt)
 			underWeightIndex -= 1
 			// issue an ICA call to the host zone to rebalance the validator
 			redelegateMsg = &stakingTypes.MsgBeginRedelegate{
 				DelegatorAddress:    delegatorAddress,
 				ValidatorSrcAddress: overWeightElem.valAddr,
 				ValidatorDstAddress: underWeightElem.valAddr,
-				Amount:              sdk.NewInt64Coin(hostZone.HostDenom, underWeightElem.deltaAmt)}
+				Amount:              sdk.NewCoin(hostZone.HostDenom, underWeightElem.deltaAmt)}
 			msgs = append(msgs, redelegateMsg)
-			underWeightElem.deltaAmt = 0
+			underWeightElem.deltaAmt = sdk.ZeroInt()
 		} else {
 			// if the two elements are equal, we increment both slices
 			underWeightIndex -= 1
@@ -148,10 +128,10 @@ func (k msgServer) RebalanceValidators(goCtx context.Context, msg *types.MsgReba
 				DelegatorAddress:    delegatorAddress,
 				ValidatorSrcAddress: overWeightElem.valAddr,
 				ValidatorDstAddress: underWeightElem.valAddr,
-				Amount:              sdk.NewInt64Coin(hostZone.HostDenom, underWeightElem.deltaAmt)}
+				Amount:              sdk.NewCoin(hostZone.HostDenom, underWeightElem.deltaAmt)}
 			msgs = append(msgs, redelegateMsg)
-			overWeightElem.deltaAmt = 0
-			underWeightElem.deltaAmt = 0
+			overWeightElem.deltaAmt = sdk.ZeroInt()
+			underWeightElem.deltaAmt = sdk.ZeroInt()
 		}
 		// add the rebalancing to the callback
 		// lastMsg grabs rebalanceMsg from above (due to the type, it's hard to )
@@ -159,7 +139,7 @@ func (k msgServer) RebalanceValidators(goCtx context.Context, msg *types.MsgReba
 		rebalanceCallback.Rebalancings = append(rebalanceCallback.Rebalancings, &types.Rebalancing{
 			SrcValidator: redelegateMsg.ValidatorSrcAddress,
 			DstValidator: redelegateMsg.ValidatorDstAddress,
-			Amt:          redelegateMsg.Amount.Amount.Uint64(),
+			Amt:          redelegateMsg.Amount.Amount,
 		})
 	}
 	// marshall the callback
