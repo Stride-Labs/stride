@@ -14,61 +14,6 @@ import (
 	"github.com/Stride-Labs/stride/v4/x/ratelimit/types"
 )
 
-// Middleware implementation for SendPacket with rate limiting
-func SendRateLimitedPacket(ctx sdk.Context, keeper ratelimitkeeper.Keeper, packet exported.PacketI) error {
-	// For a send packet, the channel on stride is the "Source" channel
-	//  This is because the Source and Desination are defined from the perspective of a packet recipient
-	//    i.e., when this packet lands on a the host chain, the "Source" will show the Stride Channel
-	channelId := packet.GetSourceChannel()
-
-	// Parse the packet data
-	var packetData transfertypes.FungibleTokenPacketData
-	if err := json.Unmarshal(packet.GetData(), &packetData); err != nil {
-		return err
-	}
-
-	amount, ok := sdk.NewIntFromString(packetData.Amount)
-	if !ok {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "Unable to cast packet amount to sdk.Int")
-	}
-
-	denom := ParseDenomFromSendPacket(packetData)
-
-	err := keeper.CheckRateLimit(ctx, types.PACKET_SEND, denom, channelId, amount)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-// Middleware implementation for RecvPacket with rate limiting
-func RecieveRateLimitedPacket(ctx sdk.Context, keeper ratelimitkeeper.Keeper, packet channeltypes.Packet) error {
-	// For a recieve packet, the channel on stride is the "Destination" channel
-	// This is because the Source and Desination is defined from the perspective of a packet recipient
-	// Meaning, when this packet lands on a Stride, the "Destination" will show the Stride Channel
-	channelId := packet.GetDestChannel()
-
-	// Parse the amount and denom from the packet
-	var packetData transfertypes.FungibleTokenPacketData
-	if err := json.Unmarshal(packet.GetData(), &packetData); err != nil {
-		return err
-	}
-
-	amount, ok := sdk.NewIntFromString(packetData.Amount)
-	if !ok {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "Unable to cast packet amount to sdk.Int")
-	}
-
-	denom := ParseDenomFromRecvPacket(packet, packetData)
-
-	// Check whether the rate limit has been exceeded - and if it hasn't, send the packet
-	err := keeper.CheckRateLimit(ctx, types.PACKET_RECV, denom, channelId, amount)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
 // Parse the denom from the Send Packet that will be used by the rate limit module
 // The denom that the rate limiter will use for a SEND packet depends on whether
 //    it was a NATIVE token (e.g. ustrd, stuatom, etc.) or NON-NATIVE token (e.g. ibc/...)...
@@ -150,4 +95,59 @@ func ParseDenomFromRecvPacket(packet channeltypes.Packet, packetData transfertyp
 	}
 
 	return denom
+}
+
+// Middleware implementation for SendPacket with rate limiting
+func SendRateLimitedPacket(ctx sdk.Context, keeper ratelimitkeeper.Keeper, packet exported.PacketI) error {
+	// For a send packet, the channel on stride is the "Source" channel
+	//  This is because the Source and Desination are defined from the perspective of a packet recipient
+	//    i.e., when this packet lands on a the host chain, the "Source" will show the Stride Channel
+	channelId := packet.GetSourceChannel()
+
+	// Parse the packet data
+	var packetData transfertypes.FungibleTokenPacketData
+	if err := json.Unmarshal(packet.GetData(), &packetData); err != nil {
+		return err
+	}
+
+	amount, ok := sdk.NewIntFromString(packetData.Amount)
+	if !ok {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "Unable to cast packet amount to sdk.Int")
+	}
+
+	denom := ParseDenomFromSendPacket(packetData)
+
+	err := keeper.CheckRateLimit(ctx, types.PACKET_SEND, denom, channelId, amount)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// Middleware implementation for RecvPacket with rate limiting
+func RecieveRateLimitedPacket(ctx sdk.Context, keeper ratelimitkeeper.Keeper, packet channeltypes.Packet) error {
+	// For a recieve packet, the channel on stride is the "Destination" channel
+	// This is because the Source and Desination is defined from the perspective of a packet recipient
+	// Meaning, when this packet lands on a Stride, the "Destination" will show the Stride Channel
+	channelId := packet.GetDestChannel()
+
+	// Parse the amount and denom from the packet
+	var packetData transfertypes.FungibleTokenPacketData
+	if err := json.Unmarshal(packet.GetData(), &packetData); err != nil {
+		return err
+	}
+
+	amount, ok := sdk.NewIntFromString(packetData.Amount)
+	if !ok {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "Unable to cast packet amount to sdk.Int")
+	}
+
+	denom := ParseDenomFromRecvPacket(packet, packetData)
+
+	// Check whether the rate limit has been exceeded - and if it hasn't, send the packet
+	err := keeper.CheckRateLimit(ctx, types.PACKET_RECV, denom, channelId, amount)
+	if err != nil {
+		return err
+	}
+	return nil
 }
