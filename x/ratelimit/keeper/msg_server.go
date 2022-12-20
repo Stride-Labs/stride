@@ -4,6 +4,7 @@ import (
 	"context"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	transfertypes "github.com/cosmos/ibc-go/v3/modules/apps/transfer/types"
 
 	"github.com/Stride-Labs/stride/v4/x/ratelimit/types"
 )
@@ -23,6 +24,26 @@ var _ types.MsgServer = msgServer{}
 // Adds a new rate limit. Fails if the rate limit already exists or the channel value is 0
 func (server msgServer) AddRateLimit(goCtx context.Context, msg *types.MsgAddRateLimit) (*types.MsgAddRateLimitResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	// Confirm the channel value is not zero
+	channelValue := server.Keeper.GetChannelValue(ctx, msg.Denom)
+	if channelValue.IsZero() {
+		return nil, types.ErrZeroChannelValue
+	}
+
+	// Confirm the rate limit does not already exist
+	_, found := server.Keeper.GetRateLimit(ctx, msg.Denom, msg.ChannelId)
+	if found {
+		return nil, types.ErrRateLimitKeyAlreadyExists
+	}
+
+	// Confirm the channel exists
+	_, found = server.Keeper.channelKeeper.GetChannel(ctx, transfertypes.PortID, msg.ChannelId)
+	if !found {
+		return nil, types.ErrChannelNotFound
+	}
+
+	// Create and store the rate limit object
 	path := types.Path{
 		Denom:     msg.Denom,
 		ChannelId: msg.ChannelId,
@@ -35,15 +56,7 @@ func (server msgServer) AddRateLimit(goCtx context.Context, msg *types.MsgAddRat
 	flow := types.Flow{
 		Inflow:       sdk.ZeroInt(),
 		Outflow:      sdk.ZeroInt(),
-		ChannelValue: server.Keeper.GetChannelValue(ctx, msg.Denom),
-	}
-	if flow.ChannelValue.IsZero() {
-		return nil, types.ErrZeroChannelValue
-	}
-
-	_, found := server.Keeper.GetRateLimit(ctx, msg.Denom, msg.ChannelId)
-	if found {
-		return nil, types.ErrRateLimitKeyAlreadyExists
+		ChannelValue: channelValue,
 	}
 
 	server.Keeper.SetRateLimit(ctx, types.RateLimit{
@@ -58,6 +71,15 @@ func (server msgServer) AddRateLimit(goCtx context.Context, msg *types.MsgAddRat
 // Updates an existing rate limit. Fails if the rate limit doesn't exist
 func (server msgServer) UpdateRateLimit(goCtx context.Context, msg *types.MsgUpdateRateLimit) (*types.MsgUpdateRateLimitResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	// Confirm the rate limit exists
+	_, found := server.Keeper.GetRateLimit(ctx, msg.Denom, msg.ChannelId)
+	if !found {
+		return nil, types.ErrRateLimitKeyNotFound
+	}
+
+	// Update the rate limit object with the new quota information
+	// The flow should also get reset to 0
 	path := types.Path{
 		Denom:     msg.Denom,
 		ChannelId: msg.ChannelId,
@@ -71,11 +93,6 @@ func (server msgServer) UpdateRateLimit(goCtx context.Context, msg *types.MsgUpd
 		Inflow:       sdk.ZeroInt(),
 		Outflow:      sdk.ZeroInt(),
 		ChannelValue: server.Keeper.GetChannelValue(ctx, msg.Denom),
-	}
-
-	_, found := server.Keeper.GetRateLimit(ctx, msg.Denom, msg.ChannelId)
-	if !found {
-		return nil, types.ErrRateLimitKeyNotFound
 	}
 
 	server.Keeper.SetRateLimit(ctx, types.RateLimit{

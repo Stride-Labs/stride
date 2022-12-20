@@ -16,4 +16,6 @@ var (
 		"quota exceeded")
 	ErrInvalidClientState = sdkerrors.Register(ModuleName, 5,
 		"unable to determine client state from channelId")
+	ErrChannelNotFound = sdkerrors.Register(ModuleName, 6,
+		"channel does not exist")
 )
