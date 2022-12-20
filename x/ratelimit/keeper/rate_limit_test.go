@@ -5,6 +5,8 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
+	minttypes "github.com/Stride-Labs/stride/v4/x/mint/types"
+	ratelimitkeeper "github.com/Stride-Labs/stride/v4/x/ratelimit/keeper"
 	"github.com/Stride-Labs/stride/v4/x/ratelimit/types"
 )
 
@@ -22,6 +24,24 @@ type checkRateLimitTestCase struct {
 	name          string
 	actions       []action
 	expectedError string
+}
+
+func (s *KeeperTestSuite) TestGetRateLimitItemKey() {
+	expected := append([]byte(denom), []byte(channelId)...)
+	actual := ratelimitkeeper.GetRateLimitItemKey(denom, channelId)
+	s.Require().Equal(expected, actual)
+}
+
+func (s *KeeperTestSuite) TestGetChannelValue() {
+	supply := sdk.NewInt(100)
+
+	// Mint coins to increase the supply, which will increase the channel value
+	err := s.App.BankKeeper.MintCoins(s.Ctx, minttypes.ModuleName, sdk.NewCoins(sdk.NewCoin(denom, supply)))
+	s.Require().NoError(err)
+
+	expected := supply
+	actual := s.App.RatelimitKeeper.GetChannelValue(s.Ctx, denom)
+	s.Require().Equal(expected, actual)
 }
 
 func (s *KeeperTestSuite) createRateLimits() []types.RateLimit {

@@ -19,11 +19,13 @@ import (
 )
 
 const (
-	transferPort = "transfer"
-	uosmo        = "uosmo"
-	ujuno        = "ujuno"
-	ustrd        = "ustrd"
-	stuatom      = "stuatom"
+	transferPort    = "transfer"
+	uosmo           = "uosmo"
+	ujuno           = "ujuno"
+	ustrd           = "ustrd"
+	stuatom         = "stuatom"
+	channelOnStride = "channel-0"
+	channelOnHost   = "channel-1"
 )
 
 func hashDenomTrace(denomTrace string) string {
@@ -147,44 +149,63 @@ func TestParseDenomFromRecvPacket(t *testing.T) {
 	}
 }
 
-func TestSendRateLimitedPacket(t *testing.T) {
-	s := apptesting.SetupSuitelessTestHelper()
+func createRateLimitCloseToQuota(s apptesting.AppTestHelper, denom string, channelId string, direction types.PacketDirection) {
+	channelValue := sdk.NewInt(100)
+	threshold := sdk.NewInt(10)
 
-	denom := "denom"
-	sourceChannel := "channel-0"
-	destinationChannel := "channel-1"
+	// Set inflow/outflow close to threshold, depending on which direction we're going in
+	inflow := sdk.ZeroInt()
+	outflow := sdk.ZeroInt()
+	if direction == types.PACKET_RECV {
+		inflow = sdk.NewInt(9)
+	} else {
+		outflow = sdk.NewInt(9)
+	}
 
-	// Create rate limit
+	// Store rate limit
 	s.App.RatelimitKeeper.SetRateLimit(s.Ctx, types.RateLimit{
 		Path: &types.Path{
 			Denom:     denom,
-			ChannelId: sourceChannel, // for send, use source channel
+			ChannelId: channelId,
 		},
 		Quota: &types.Quota{
-			MaxPercentSend: sdk.NewInt(10),
-			MaxPercentRecv: sdk.NewInt(10),
-			DurationHours:  uint64(10),
+			MaxPercentSend: threshold,
+			MaxPercentRecv: threshold,
 		},
 		Flow: &types.Flow{
-			Inflow:       sdk.NewInt(0),
-			Outflow:      sdk.NewInt(9), // outflow almost at threshold
-			ChannelValue: sdk.NewInt(100),
+			Inflow:       inflow,
+			Outflow:      outflow, // outflow almost at threshold
+			ChannelValue: channelValue,
 		},
 	})
+}
+
+func TestSendRateLimitedPacket(t *testing.T) {
+	s := apptesting.SetupSuitelessTestHelper()
+
+	// For send packets, the source will be stride and the destination will be the host
+	denom := ustrd
+	sourceChannel := channelOnStride
+	destinationChannel := channelOnHost
+	amountToExceed := "5"
+
+	// Create rate limit (for SEND, use SOURCE channel)
+	createRateLimitCloseToQuota(s, denom, sourceChannel, types.PACKET_SEND)
 
 	// This packet should cause an Outflow quota exceed error
-	data, err := json.Marshal(transfertypes.FungibleTokenPacketData{Denom: denom, Amount: "5"})
+	packetData, err := json.Marshal(transfertypes.FungibleTokenPacketData{Denom: denom, Amount: amountToExceed})
 	require.NoError(t, err)
-
-	// We check for a quota error because it doesn't appear until the end of the function
-	// We're avoiding checking for a success here because we can get a false positive if the rate limit doesn't exist
-	err = ratelimit.SendRateLimitedPacket(s.Ctx, s.App.RatelimitKeeper, channeltypes.Packet{
+	packet := channeltypes.Packet{
 		SourcePort:         transferPort,
 		SourceChannel:      sourceChannel,
 		DestinationPort:    transferPort,
 		DestinationChannel: destinationChannel,
-		Data:               data,
-	})
+		Data:               packetData,
+	}
+
+	// We check for a quota error because it doesn't appear until the end of the function
+	// We're avoiding checking for a success here because we can get a false positive if the rate limit doesn't exist
+	err = ratelimit.SendRateLimitedPacket(s.Ctx, s.App.RatelimitKeeper, packet)
 	require.ErrorIs(t, err, types.ErrQuotaExceeded, "error type")
 	require.ErrorContains(t, err, "Outflow exceeds quota", "error text")
 }
@@ -192,41 +213,33 @@ func TestSendRateLimitedPacket(t *testing.T) {
 func TestReceiveRateLimitedPacket(t *testing.T) {
 	s := apptesting.SetupSuitelessTestHelper()
 
-	denom := "denom"
-	sourceChannel := "channel-1"
-	destinationChannel := "channel-0"
+	// For receive packets, the source will be the host and the destination will be stride
+	packetDenom := uosmo
+	sourceChannel := channelOnHost
+	destinationChannel := channelOnStride
+	amountToExceed := "5"
 
-	// Create rate limit
-	s.App.RatelimitKeeper.SetRateLimit(s.Ctx, types.RateLimit{
-		Path: &types.Path{
-			Denom:     hashDenomTrace(fmt.Sprintf("%s/%s/%s", transferPort, destinationChannel, denom)),
-			ChannelId: destinationChannel, // for receive, use destination channel
-		},
-		Quota: &types.Quota{
-			MaxPercentSend: sdk.NewInt(10),
-			MaxPercentRecv: sdk.NewInt(10),
-			DurationHours:  uint64(10),
-		},
-		Flow: &types.Flow{
-			Inflow:       sdk.NewInt(9), // outflow almost at threshold
-			Outflow:      sdk.NewInt(0),
-			ChannelValue: sdk.NewInt(100),
-		},
-	})
+	// When the packet is recieved, the port and channel prefix will be added and the denom will be hashed
+	//  before the rate limit is found from the store
+	rateLimitDenom := hashDenomTrace(fmt.Sprintf("%s/%s/%s", transferPort, channelOnStride, packetDenom))
+
+	// Create rate limit (for RECV, use DESTINATION channel)
+	createRateLimitCloseToQuota(s, rateLimitDenom, destinationChannel, types.PACKET_RECV)
 
 	// This packet should cause an Outflow quota exceed error
-	data, err := json.Marshal(transfertypes.FungibleTokenPacketData{Denom: denom, Amount: "5"})
+	packetData, err := json.Marshal(transfertypes.FungibleTokenPacketData{Denom: packetDenom, Amount: amountToExceed})
 	require.NoError(t, err)
-
-	// We check for a quota error because it doesn't appear until the end of the function
-	// We're avoiding checking for a success here because we can get a false positive if the rate limit doesn't exist
-	err = ratelimit.ReceiveRateLimitedPacket(s.Ctx, s.App.RatelimitKeeper, channeltypes.Packet{
+	packet := channeltypes.Packet{
 		SourcePort:         transferPort,
 		SourceChannel:      sourceChannel,
 		DestinationPort:    transferPort,
 		DestinationChannel: destinationChannel,
-		Data:               data,
-	})
+		Data:               packetData,
+	}
+
+	// We check for a quota error because it doesn't appear until the end of the function
+	// We're avoiding checking for a success here because we can get a false positive if the rate limit doesn't exist
+	err = ratelimit.ReceiveRateLimitedPacket(s.Ctx, s.App.RatelimitKeeper, packet)
 	require.ErrorIs(t, err, types.ErrQuotaExceeded, "error type")
 	require.ErrorContains(t, err, "Inflow exceeds quota", "error text")
 }
