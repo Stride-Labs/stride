@@ -1,6 +1,8 @@
 package keeper_test
 
 import (
+	"fmt"
+
 	_ "github.com/stretchr/testify/suite"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -237,4 +239,22 @@ func (s *KeeperTestSuite) TestRebalanceValidators_InvalidNotEnoughDiff() {
 	_, err := s.GetMsgServer().RebalanceValidators(sdk.WrapSDKContext(s.Ctx), &badMsg_noValidators)
 	expectedErrMsg := "validator weights haven't changed"
 	s.Require().EqualError(err, expectedErrMsg, "rebalancing without sufficient change should fail")
+}
+
+func (s *KeeperTestSuite) TestRebalanceValidators_InvalidNumRebalance() {
+	s.SetupRebalanceValidators()
+
+	hz, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, "GAIA")
+	s.Require().True(found, "host zone should exist")
+	validators := hz.GetValidators()
+	s.Require().Equal(5, len(validators), "host zone should have 5 validators")
+	// Rebalance without enough difference should fail
+	badMsg_invalidNumRebalance := stakeibctypes.MsgRebalanceValidators{
+		Creator:      "stride_ADDRESS",
+		HostZone:     "GAIA",
+		NumRebalance: 11,
+	}
+	_, err := s.GetMsgServer().RebalanceValidators(sdk.WrapSDKContext(s.Ctx), &badMsg_invalidNumRebalance)
+	expectedErrMsg := fmt.Sprintf("invalid number of validators to rebalance (%d)", badMsg_invalidNumRebalance.NumRebalance)
+	s.Require().EqualError(err, expectedErrMsg, "rebalancing with invalid num rebalance should fail")
 }

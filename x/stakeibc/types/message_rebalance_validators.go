@@ -1,7 +1,6 @@
 package types
 
 import (
-	fmt "fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -10,8 +9,6 @@ import (
 )
 
 const TypeMsgRebalanceValidators = "rebalance_validators"
-const MIN_NUM_REBALANCE = 1
-const MAX_NUM_REBALANCE = 10
 
 var _ sdk.Msg = &MsgRebalanceValidators{}
 
@@ -51,9 +48,6 @@ func (msg *MsgRebalanceValidators) ValidateBasic() error {
 	}
 	if err := utils.ValidateAdminAddress(msg.Creator); err != nil {
 		return err
-	}
-	if (msg.NumRebalance < MIN_NUM_REBALANCE) || (msg.NumRebalance > MAX_NUM_REBALANCE) {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, fmt.Sprintf("invalid number of validators to rebalance (%d)", msg.NumRebalance))
 	}
 	return nil
 }

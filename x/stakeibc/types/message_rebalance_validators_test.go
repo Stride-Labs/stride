@@ -31,20 +31,6 @@ func TestMsgRebalanceValidators_ValidateBasic(t *testing.T) {
 				Creator: sample.AccAddress(),
 			},
 			err: sdkerrors.ErrInvalidAddress,
-		}, {
-			name: "valid address and whitelisted but invalid number of validators to rebalance (minimum not meet)",
-			msg: types.MsgRebalanceValidators{
-				Creator:      "stride1k8c2m5cn322akk5wy8lpt87dd2f4yh9azg7jlh",
-				NumRebalance: 0,
-			},
-			err: sdkerrors.ErrInvalidRequest,
-		}, {
-			name: "valid address and whitelisted but invalid number of validators to rebalance (too much)",
-			msg: types.MsgRebalanceValidators{
-				Creator:      "stride1k8c2m5cn322akk5wy8lpt87dd2f4yh9azg7jlh",
-				NumRebalance: 11,
-			},
-			err: sdkerrors.ErrInvalidRequest,
 		},
 		{
 			name: "valid address and whitelisted",

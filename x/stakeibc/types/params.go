@@ -27,6 +27,8 @@ var (
 	DefaultMaxStakeICACallsPerEpoch         uint64 = 100
 	DefaultIBCTransferTimeoutNanos          uint64 = 1800000000000 // 30 minutes
 	DefaultSafetyNumValidators              uint64 = 35
+	DefaultMinNumRebalance					uint64 = 1
+	DefaultMaxNumRebalance					uint64 = 10
 
 	// KeyDepositInterval is store's key for the DepositInterval option
 	KeyDepositInterval                  = []byte("DepositInterval")
@@ -45,6 +47,8 @@ var (
 	KeyMaxStakeICACallsPerEpoch         = []byte("MaxStakeICACallsPerEpoch")
 	KeyIBCTransferTimeoutNanos          = []byte("IBCTransferTimeoutNanos")
 	KeySafetyNumValidators              = []byte("SafetyNumValidators")
+	KeyMinNumRebalance					= []byte("MinNumRebalance")
+	KeyMaxNumRebalance					= []byte("MaxNumRebalance")
 )
 
 var _ paramtypes.ParamSet = (*Params)(nil)
@@ -72,6 +76,8 @@ func NewParams(
 	safety_max_redemption_rate_threshold uint64,
 	ibc_transfer_timeout_nanos uint64,
 	safety_num_validators uint64,
+	min_num_rebalance uint64,
+	max_num_rebalance uint64,
 ) Params {
 	return Params{
 		DepositInterval:                  deposit_interval,
@@ -90,6 +96,8 @@ func NewParams(
 		SafetyMaxRedemptionRateThreshold: safety_max_redemption_rate_threshold,
 		IbcTransferTimeoutNanos:          ibc_transfer_timeout_nanos,
 		SafetyNumValidators:              safety_num_validators,
+		MinNumRebalance: 				  min_num_rebalance,
+		MaxNumRebalance: 				  max_num_rebalance,		
 	}
 }
 
@@ -112,6 +120,8 @@ func DefaultParams() Params {
 		DefaultSafetyMaxRedemptionRateThreshold,
 		DefaultIBCTransferTimeoutNanos,
 		DefaultSafetyNumValidators,
+		DefaultMinNumRebalance,
+		DefaultMaxNumRebalance,
 	)
 }
 
@@ -134,6 +144,8 @@ func (p *Params) ParamSetPairs() paramtypes.ParamSetPairs {
 		paramtypes.NewParamSetPair(KeySafetyMaxRedemptionRateThreshold, &p.SafetyMaxRedemptionRateThreshold, validMaxRedemptionRateThreshold),
 		paramtypes.NewParamSetPair(KeyIBCTransferTimeoutNanos, &p.IbcTransferTimeoutNanos, validTimeoutNanos),
 		paramtypes.NewParamSetPair(KeySafetyNumValidators, &p.SafetyNumValidators, isPositive),
+		paramtypes.NewParamSetPair(KeyMinNumRebalance, &p.MinNumRebalance, isPositive),
+		paramtypes.NewParamSetPair(KeyMaxNumRebalance, &p.MaxNumRebalance, isPositive),
 	}
 }
 
