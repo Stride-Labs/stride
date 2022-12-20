@@ -8,31 +8,33 @@ import (
 	"github.com/Stride-Labs/stride/v4/x/ratelimit/types"
 )
 
-var addRateLimitMsg = &types.MsgAddRateLimit{
-	Denom:          "denom",
-	ChannelId:      "channel-0",
-	MaxPercentRecv: 10,
-	MaxPercentSend: 20,
-	DurationHours:  30,
-}
+var (
+	addRateLimitMsg = &types.MsgAddRateLimit{
+		Denom:          "denom",
+		ChannelId:      "channel-0",
+		MaxPercentRecv: 10,
+		MaxPercentSend: 20,
+		DurationHours:  30,
+	}
 
-var updateRateLimitMsg = &types.MsgUpdateRateLimit{
-	Denom:          "denom",
-	ChannelId:      "channel-0",
-	MaxPercentRecv: 20,
-	MaxPercentSend: 30,
-	DurationHours:  40,
-}
+	updateRateLimitMsg = &types.MsgUpdateRateLimit{
+		Denom:          "denom",
+		ChannelId:      "channel-0",
+		MaxPercentRecv: 20,
+		MaxPercentSend: 30,
+		DurationHours:  40,
+	}
 
-var removeRateLimitMsg = &types.MsgRemoveRateLimit{
-	Denom:     "denom",
-	ChannelId: "channel-0",
-}
+	removeRateLimitMsg = &types.MsgRemoveRateLimit{
+		Denom:     "denom",
+		ChannelId: "channel-0",
+	}
 
-var resetRateLimitMsg = &types.MsgResetRateLimit{
-	Denom:     "denom",
-	ChannelId: "channel-0",
-}
+	resetRateLimitMsg = &types.MsgResetRateLimit{
+		Denom:     "denom",
+		ChannelId: "channel-0",
+	}
+)
 
 func (s *KeeperTestSuite) TestMsgServer_AddRateLimit() {
 	s.SetupTest()
