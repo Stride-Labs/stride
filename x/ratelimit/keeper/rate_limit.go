@@ -19,15 +19,8 @@ func (k Keeper) GetChannelValue(ctx sdk.Context, denom string) sdk.Int {
 	return k.bankKeeper.GetSupply(ctx, denom).Amount
 }
 
-// Checks whether the given packet will exceed the rate limit
-// Called by OnRecvPacket and OnSendPacket
-func (k Keeper) CheckRateLimit(ctx sdk.Context, direction types.PacketDirection, denom string, channelId string, amount uint64) error {
-	// If there's no rate limit yet for this denom, no action is necessary
-	rateLimit, found := k.GetRateLimit(ctx, denom, channelId)
-	if !found {
-		return nil
-	}
-
+// Adds an amount to the flow in either the SEND or RECV direction
+func (k Keeper) UpdateFlow(rateLimit types.RateLimit, direction types.PacketDirection, amount sdk.Int) error {
 	switch direction {
 	case types.PACKET_SEND:
 		return rateLimit.Flow.AddOutflow(amount, *rateLimit.Quota)
@@ -36,6 +29,26 @@ func (k Keeper) CheckRateLimit(ctx sdk.Context, direction types.PacketDirection,
 	default:
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "invalid packet direction (%s)", direction.String())
 	}
+}
+
+// Checks whether the given packet will exceed the rate limit
+// Called by OnRecvPacket and OnSendPacket
+func (k Keeper) CheckRateLimit(ctx sdk.Context, direction types.PacketDirection, denom string, channelId string, amount sdk.Int) error {
+	// If there's no rate limit yet for this denom, no action is necessary
+	rateLimit, found := k.GetRateLimit(ctx, denom, channelId)
+	if !found {
+		return nil
+	}
+
+	// Update the flow object with the change in amount
+	if err := k.UpdateFlow(rateLimit, direction, amount); err != nil {
+		return err
+	}
+
+	// If there's no quota error, update the rate limit object in the store with the new flow
+	k.SetRateLimit(ctx, rateLimit)
+
+	return nil
 }
 
 // Reset the rate limit after expiration
@@ -47,9 +60,9 @@ func (k Keeper) ResetRateLimit(ctx sdk.Context, denom string, channelId string) 
 	}
 
 	flow := types.Flow{
-		Inflow:       0,
-		Outflow:      0,
-		ChannelValue: k.GetChannelValue(ctx, denom).Uint64(),
+		Inflow:       sdk.ZeroInt(),
+		Outflow:      sdk.ZeroInt(),
+		ChannelValue: k.GetChannelValue(ctx, denom),
 	}
 	rateLimit.Flow = &flow
 

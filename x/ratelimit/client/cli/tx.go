@@ -9,6 +9,9 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	"github.com/spf13/cobra"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+
 	"github.com/Stride-Labs/stride/v4/x/ratelimit/types"
 )
 
@@ -39,17 +42,17 @@ func CmdAddRateLimit() *cobra.Command {
 			denom := args[0]
 			channelId := args[1]
 
-			maxPercentSend, err := strconv.Atoi(args[2])
-			if err != nil {
-				return err
+			maxPercentSend, ok := sdk.NewIntFromString(args[2])
+			if !ok {
+				return sdkerrors.Wrap(sdkerrors.ErrInvalidType, "can not convert max-percent-send string to sdk.Int")
 			}
 
-			maxPercentRecv, err := strconv.Atoi(args[3])
-			if err != nil {
-				return err
+			maxPercentRecv, ok := sdk.NewIntFromString(args[3])
+			if !ok {
+				return sdkerrors.Wrap(sdkerrors.ErrInvalidType, "can not convert max-percent-recv string to sdk.Int")
 			}
 
-			durationHours, err := strconv.Atoi(args[4])
+			durationHours, err := strconv.ParseUint(args[4], 10, 64)
 			if err != nil {
 				return err
 			}
@@ -62,9 +65,9 @@ func CmdAddRateLimit() *cobra.Command {
 				clientCtx.GetFromAddress().String(),
 				denom,
 				channelId,
-				uint64(maxPercentSend),
-				uint64(maxPercentRecv),
-				uint64(durationHours),
+				maxPercentSend,
+				maxPercentRecv,
+				durationHours,
 			)
 
 			if err := msg.ValidateBasic(); err != nil {
@@ -90,17 +93,17 @@ func CmdUpdateRateLimit() *cobra.Command {
 			denom := args[0]
 			channelId := args[1]
 
-			maxPercentSend, err := strconv.Atoi(args[2])
-			if err != nil {
-				return err
+			maxPercentSend, ok := sdk.NewIntFromString(args[2])
+			if !ok {
+				return sdkerrors.Wrap(sdkerrors.ErrInvalidType, "can not convert max-percent-send string to sdk.Int")
 			}
 
-			maxPercentRecv, err := strconv.Atoi(args[3])
-			if err != nil {
-				return err
+			maxPercentRecv, ok := sdk.NewIntFromString(args[3])
+			if !ok {
+				return sdkerrors.Wrap(sdkerrors.ErrInvalidType, "can not convert max-percent-recv string to sdk.Int")
 			}
 
-			durationHours, err := strconv.Atoi(args[4])
+			durationHours, err := strconv.ParseUint(args[4], 10, 64)
 			if err != nil {
 				return err
 			}
@@ -113,9 +116,9 @@ func CmdUpdateRateLimit() *cobra.Command {
 				clientCtx.GetFromAddress().String(),
 				denom,
 				channelId,
-				uint64(maxPercentSend),
-				uint64(maxPercentRecv),
-				uint64(durationHours),
+				maxPercentSend,
+				maxPercentRecv,
+				durationHours,
 			)
 
 			if err := msg.ValidateBasic(); err != nil {

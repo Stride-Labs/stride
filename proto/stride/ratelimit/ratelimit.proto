@@ -12,13 +12,6 @@ enum PacketDirection {
   PACKET_RECV = 1;
 }
 
-enum FlowDirection {
-  option (gogoproto.goproto_enum_prefix) = false;
-
-  FLOW_IN = 0;
-  FLOW_OUT = 1;
-}
-
 message Path {
   string denom = 1;
   string channel_id = 2;
@@ -26,15 +19,30 @@ message Path {
 }
 
 message Quota {
-  uint64 max_percent_send = 1;
-  uint64 max_percent_recv = 2;
+  string max_percent_send = 1 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
+  string max_percent_recv = 2 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
   uint64 duration_hours = 3;
 }
 
 message Flow {
-  uint64 inflow = 1;
-  uint64 outflow = 2;
-  uint64 channel_value = 3;
+  string inflow = 1 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
+  string outflow = 2 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
+  string channel_value = 3 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
 }
 
 message RateLimit {

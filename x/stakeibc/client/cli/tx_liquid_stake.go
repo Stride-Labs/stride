@@ -23,7 +23,7 @@ func CmdLiquidStake() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
 			argAmount, found := sdk.NewIntFromString(args[0])
 			if !found {
-				return  sdkerrors.Wrap(sdkerrors.ErrInvalidType, "can not convert string to int")
+				return sdkerrors.Wrap(sdkerrors.ErrInvalidType, "can not convert string to int")
 			}
 			argHostDenom := args[1]
 

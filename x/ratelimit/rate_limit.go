@@ -2,9 +2,9 @@ package ratelimit
 
 import (
 	"encoding/json"
-	"strconv"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	transfertypes "github.com/cosmos/ibc-go/v3/modules/apps/transfer/types"
 	channeltypes "github.com/cosmos/ibc-go/v3/modules/core/04-channel/types"
 
@@ -27,15 +27,14 @@ func SendRateLimitedPacket(ctx sdk.Context, keeper ratelimitkeeper.Keeper, packe
 		return err
 	}
 
-	// TODO: Switch to type sdk.Int
-	amount, err := strconv.ParseUint(packetData.Amount, 10, 64)
-	if err != nil {
-		return err
+	amount, ok := sdk.NewIntFromString(packetData.Amount)
+	if !ok {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "Unable to cast packet amount to sdk.Int")
 	}
 
 	denom := ParseDenomFromSendPacket(packetData)
 
-	err = keeper.CheckRateLimit(ctx, types.PACKET_SEND, denom, channelId, amount)
+	err := keeper.CheckRateLimit(ctx, types.PACKET_SEND, denom, channelId, amount)
 	if err != nil {
 		return err
 	}
@@ -55,16 +54,15 @@ func RecieveRateLimitedPacket(ctx sdk.Context, keeper ratelimitkeeper.Keeper, pa
 		return err
 	}
 
-	// TODO: Switch to type sdk.Int
-	amount, err := strconv.ParseUint(packetData.Amount, 10, 64)
-	if err != nil {
-		return err
+	amount, ok := sdk.NewIntFromString(packetData.Amount)
+	if !ok {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "Unable to cast packet amount to sdk.Int")
 	}
 
 	denom := ParseDenomFromRecvPacket(packet, packetData)
 
 	// Check whether the rate limit has been exceeded - and if it hasn't, send the packet
-	err = keeper.CheckRateLimit(ctx, types.PACKET_RECV, denom, channelId, amount)
+	err := keeper.CheckRateLimit(ctx, types.PACKET_RECV, denom, channelId, amount)
 	if err != nil {
 		return err
 	}

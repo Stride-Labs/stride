@@ -12,16 +12,16 @@ var (
 	addRateLimitMsg = types.MsgAddRateLimit{
 		Denom:          "denom",
 		ChannelId:      "channel-0",
-		MaxPercentRecv: 10,
-		MaxPercentSend: 20,
+		MaxPercentRecv: sdk.NewInt(10),
+		MaxPercentSend: sdk.NewInt(20),
 		DurationHours:  30,
 	}
 
 	updateRateLimitMsg = types.MsgUpdateRateLimit{
 		Denom:          "denom",
 		ChannelId:      "channel-0",
-		MaxPercentRecv: 20,
-		MaxPercentSend: 30,
+		MaxPercentRecv: sdk.NewInt(20),
+		MaxPercentSend: sdk.NewInt(30),
 		DurationHours:  40,
 	}
 
@@ -143,10 +143,10 @@ func (s *KeeperTestSuite) TestMsgServer_ResetRateLimit() {
 
 	denom := resetRateLimitMsg.Denom
 	channelId := resetRateLimitMsg.ChannelId
-	channelValue := int64(100)
+	channelValue := sdk.NewInt(100)
 
 	// Mint tokens for generating channel value
-	err := s.App.BankKeeper.MintCoins(s.Ctx, minttypes.ModuleName, sdk.NewCoins(sdk.NewInt64Coin(resetRateLimitMsg.Denom, channelValue)))
+	err := s.App.BankKeeper.MintCoins(s.Ctx, minttypes.ModuleName, sdk.NewCoins(sdk.NewCoin(resetRateLimitMsg.Denom, channelValue)))
 	s.Require().NoError(err)
 
 	// Attempt to reset a rate limit that does not exist
@@ -168,8 +168,8 @@ func (s *KeeperTestSuite) TestMsgServer_ResetRateLimit() {
 	resetRateLimit, found := s.App.RatelimitKeeper.GetRateLimit(s.Ctx, denom, channelId)
 	s.Require().True(found)
 	s.Require().Equal(resetRateLimit.Flow, &types.Flow{
-		Inflow:       0,
-		Outflow:      0,
-		ChannelValue: uint64(channelValue),
+		Inflow:       sdk.ZeroInt(),
+		Outflow:      sdk.ZeroInt(),
+		ChannelValue: channelValue,
 	})
 }

@@ -12,7 +12,7 @@ const TypeMsgAddRateLimit = "add_rate_limit"
 
 var _ sdk.Msg = &MsgAddRateLimit{}
 
-func NewMsgAddRateLimit(creator string, denom string, channelId string, maxPercentSend uint64, maxPercentRecv uint64, durationHours uint64) *MsgAddRateLimit {
+func NewMsgAddRateLimit(creator string, denom string, channelId string, maxPercentSend sdk.Int, maxPercentRecv sdk.Int, durationHours uint64) *MsgAddRateLimit {
 	return &MsgAddRateLimit{
 		Creator:        creator,
 		Denom:          denom,
@@ -62,11 +62,15 @@ func (msg *MsgAddRateLimit) ValidateBasic() error {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "invalid channel-id (%s), must be of the format 'channel-{N}'", msg.ChannelId)
 	}
 
-	if msg.MaxPercentRecv > 100 || msg.MaxPercentSend > 100 {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "percent must be between 0 and 100 (inclusively), Provided: Send - %d, Recv - %d", msg.MaxPercentSend, msg.MaxPercentRecv)
+	if msg.MaxPercentSend.GT(sdk.NewInt(100)) || msg.MaxPercentSend.LT(sdk.ZeroInt()) {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "max-percent-send percent must be between 0 and 100 (inclusively), Provided: %v", msg.MaxPercentSend)
 	}
 
-	if msg.MaxPercentRecv == 0 && msg.MaxPercentSend == 0 {
+	if msg.MaxPercentRecv.GT(sdk.NewInt(100)) || msg.MaxPercentRecv.LT(sdk.ZeroInt()) {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "max-percent-recv percent must be between 0 and 100 (inclusively), Provided: %v", msg.MaxPercentRecv)
+	}
+
+	if msg.MaxPercentRecv.IsZero() && msg.MaxPercentSend.IsZero() {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "either the max send or max receive threshold must be greater than 0")
 	}
 

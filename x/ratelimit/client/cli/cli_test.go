@@ -38,20 +38,20 @@ var (
 	}
 
 	initialQuota = types.Quota{
-		MaxPercentSend: 10,
-		MaxPercentRecv: 20,
+		MaxPercentSend: sdk.NewInt(10),
+		MaxPercentRecv: sdk.NewInt(20),
 		DurationHours:  1,
 	}
 
 	initialFlow = types.Flow{
-		Inflow:       0,
-		Outflow:      0,
-		ChannelValue: 500000000, // channel value == the network initial supply
+		Inflow:       sdk.NewInt(0),
+		Outflow:      sdk.NewInt(0),
+		ChannelValue: sdk.NewInt(500000000), // channel value == the network initial supply
 	}
 
 	updatedQuota = types.Quota{
-		MaxPercentSend: 30,
-		MaxPercentRecv: 50,
+		MaxPercentSend: sdk.NewInt(30),
+		MaxPercentRecv: sdk.NewInt(50),
 		DurationHours:  2,
 	}
 )
@@ -79,8 +79,8 @@ func (s *IntegrationTestSuite) addRateLimit() {
 	args := []string{
 		path.Denom,     // denom
 		path.ChannelId, // channelId
-		fmt.Sprintf("%d", initialQuota.MaxPercentSend), // maxPercentSend
-		fmt.Sprintf("%d", initialQuota.MaxPercentRecv), // maxPercentRecv
+		fmt.Sprintf("%v", initialQuota.MaxPercentSend), // maxPercentSend
+		fmt.Sprintf("%v", initialQuota.MaxPercentRecv), // maxPercentRecv
 		fmt.Sprintf("%d", initialQuota.DurationHours),  // durationHours
 		fmt.Sprintf("--%s=json", tmcli.OutputFlag),
 		fmt.Sprintf("--%s=%s", flags.FlagFrom, s.val.Address.String()),
@@ -132,8 +132,8 @@ func (s *IntegrationTestSuite) TestCmdTxUpdateRateLimit() {
 	updateArgs := []string{
 		path.Denom,     // denom
 		path.ChannelId, // channelId
-		fmt.Sprintf("%d", updatedQuota.MaxPercentSend), // maxPercentSend
-		fmt.Sprintf("%d", updatedQuota.MaxPercentRecv), // maxPercentRecv
+		fmt.Sprintf("%v", updatedQuota.MaxPercentSend), // maxPercentSend
+		fmt.Sprintf("%v", updatedQuota.MaxPercentRecv), // maxPercentRecv
 		fmt.Sprintf("%d", updatedQuota.DurationHours),  // durationHours
 		fmt.Sprintf("--%s=json", tmcli.OutputFlag),
 		fmt.Sprintf("--%s=%s", flags.FlagFrom, s.val.Address.String()),
