@@ -63,6 +63,11 @@ func TestParseDenomFromSendPacket(t *testing.T) {
 }
 
 func TestParseDenomFromRecvPacket(t *testing.T) {
+	transferPort := "transfer"
+	uosmo := "uosmo"
+	ujuno := "ujuno"
+	ustrd := "ustrd"
+
 	osmoChannelOnStride := "channel-0"
 	strideChannelOnOsmo := "channel-100"
 	junoChannelOnOsmo := "channel-200"
@@ -83,24 +88,24 @@ func TestParseDenomFromRecvPacket(t *testing.T) {
 			packetDenomTrace:   "uosmo",
 			sourceChannel:      strideChannelOnOsmo,
 			destinationChannel: osmoChannelOnStride,
-			expectedDenom:      hashDenomTrace("transfer/" + osmoChannelOnStride + "/uosmo"),
+			expectedDenom:      hashDenomTrace(fmt.Sprintf("%s/%s/%s", transferPort, osmoChannelOnStride, uosmo)),
 		},
 		// Sink asset two hops away:
 		//   ujuno sent from Juno to Osmosis to Stride
 		//   -> tack on prefix and hash
 		{
 			name:               "sink_two_hops",
-			packetDenomTrace:   "transfer/" + junoChannelOnOsmo + "/ujuno",
+			packetDenomTrace:   fmt.Sprintf("%s/%s/%s", transferPort, junoChannelOnOsmo, ujuno),
 			sourceChannel:      strideChannelOnOsmo,
 			destinationChannel: osmoChannelOnStride,
-			expectedDenom:      hashDenomTrace("transfer/" + osmoChannelOnStride + "/transfer/" + junoChannelOnOsmo + "/ujuno"),
+			expectedDenom:      hashDenomTrace(fmt.Sprintf("%s/%s/%s/%s/%s", transferPort, osmoChannelOnStride, transferPort, junoChannelOnOsmo, ujuno)),
 		},
 		// Native source assets
 		//    ustrd sent from Stride to Osmosis and then back to Stride
 		//    -> remove prefix and leave as is
 		{
 			name:               "native_source",
-			packetDenomTrace:   "transfer/" + strideChannelOnOsmo + "/ustrd",
+			packetDenomTrace:   fmt.Sprintf("%s/%s/%s", transferPort, strideChannelOnOsmo, ustrd),
 			sourceChannel:      strideChannelOnOsmo,
 			destinationChannel: osmoChannelOnStride,
 			expectedDenom:      "ustrd",
@@ -110,10 +115,10 @@ func TestParseDenomFromRecvPacket(t *testing.T) {
 		//    -> remove prefix and hash
 		{
 			name:               "non_native_source",
-			packetDenomTrace:   "transfer/" + strideChannelOnOsmo + "/transfer/" + junoChannelOnStride + "/ujuno",
+			packetDenomTrace:   fmt.Sprintf("%s/%s/%s/%s/%s", transferPort, strideChannelOnOsmo, transferPort, junoChannelOnStride, ujuno),
 			sourceChannel:      strideChannelOnOsmo,
 			destinationChannel: osmoChannelOnStride,
-			expectedDenom:      hashDenomTrace("transfer/" + junoChannelOnStride + "/ujuno"),
+			expectedDenom:      hashDenomTrace(fmt.Sprintf("%s/%s/%s", transferPort, junoChannelOnStride, ujuno)),
 		},
 	}
 
