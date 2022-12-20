@@ -90,11 +90,11 @@ func (s *KeeperTestSuite) TestGetAllRateLimits() {
 }
 
 func (s *KeeperTestSuite) SetupCheckRateLimitTest() {
+	// Add rate limit to store
 	channelValue := sdk.NewInt(100)
 	maxPercentSend := sdk.NewInt(10)
 	maxPercentRecv := sdk.NewInt(10)
 
-	// Add rate limit
 	s.App.RatelimitKeeper.SetRateLimit(s.Ctx, types.RateLimit{
 		Path: &types.Path{
 			Denom:     denom,
