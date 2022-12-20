@@ -39,10 +39,12 @@ func BalanceStakeHostZoneInvariant(k Keeper) sdk.Invariant {
 			balanceStake := host.StakedBal
 			totalDelegateOfVals := k.GetTotalValidatorDelegations(host)
 			if !balanceStake.Equal(totalDelegateOfVals) {
-				return sdk.FormatInvariant(types.ModuleName, "balance-stake-hostzone-invariant",
-					fmt.Sprintf("\tBalance stake of hostzone %s is not equal to total of validator's delegations \n\tBalance stake actually: %d\n\t Total of validator's delegations: %d\n",
-						host.ChainId, host.StakedBal, totalDelegateOfVals,
-					)), true
+				return sdk.FormatInvariant(types.ModuleName, "balance-stake-hostzone-invariant", fmt.Sprintf(
+					"\tBalance stake of hostzone %s is not equal to total of validator's delegations \n"+
+						"\tBalance stake actually: %d\n"+
+						"\t Total of validator's delegations: %d\n",
+					host.ChainId, host.StakedBal, totalDelegateOfVals,
+				)), true
 			}
 		}
 		return sdk.FormatInvariant(types.ModuleName, "balance-stake-hostzone-invariant", "All host zones have balances stake is equal to total of validator's delegations"), false
@@ -62,10 +64,12 @@ func AmountDelegateOfValidatorInvariant(k Keeper) sdk.Invariant {
 				// TODO: check Tolerance for calculation below
 				amoutDelegateOfValFromWeight := totalDelegateOfVals.Mul(sdk.NewInt(weightOfVal)).Quo(sdk.NewInt(totalWeightOfHostZone))
 				if !amoutDelegateOfValFromWeight.Equal(amoutDelegateOfVal) {
-					return sdk.FormatInvariant(types.ModuleName, "balance-stake-hostzone-invariant",
-						fmt.Sprintf("\tAmount of delegate of validator %s is not inconsistent with the ratio of weight \n\tAmount actually of delegate: %d\n\t Amount of delegate by ratio of weight: %d\n",
-							val.Name, val.DelegationAmt, amoutDelegateOfValFromWeight,
-						)), true
+					return sdk.FormatInvariant(types.ModuleName, "balance-stake-hostzone-invariant", fmt.Sprintf(
+						"\tAmount of delegate of validator %s is not inconsistent with the ratio of weight \n"+
+							"\tAmount actually of delegate: %d\n"+
+							"\tAmount of delegate by ratio of weight: %d\n",
+						val.Name, val.DelegationAmt, amoutDelegateOfValFromWeight,
+					)), true
 				}
 			}
 		}
