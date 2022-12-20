@@ -28,6 +28,7 @@ type IntegrationTestSuite struct {
 
 	cfg     network.Config
 	network *network.Network
+	val     *network.Validator
 }
 
 func (s *IntegrationTestSuite) SetupSuite() {
@@ -45,291 +46,164 @@ func (s *IntegrationTestSuite) SetupSuite() {
 
 	_, err := s.network.WaitForHeight(1)
 	s.Require().NoError(err)
+
+	s.val = s.network.Validators[0]
+}
+
+var path = types.Path{
+	Denom:     sdk.DefaultBondDenom,
+	ChannelId: "channel-0",
+}
+
+var initialQuota = types.Quota{
+	MaxPercentSend: 10,
+	MaxPercentRecv: 20,
+	DurationHours:  1,
+}
+
+var initialFlow = types.Flow{
+	Inflow:       0,
+	Outflow:      0,
+	ChannelValue: 500000000, // channel value == the network initial supply
+}
+
+var updatedQuota = types.Quota{
+	MaxPercentSend: 30,
+	MaxPercentRecv: 50,
+	DurationHours:  2,
+}
+
+func (s *IntegrationTestSuite) addRateLimit() {
+	args := []string{
+		path.Denom,     // denom
+		path.ChannelId, // channelId
+		fmt.Sprintf("%d", initialQuota.MaxPercentSend), // maxPercentSend
+		fmt.Sprintf("%d", initialQuota.MaxPercentRecv), // maxPercentRecv
+		fmt.Sprintf("%d", initialQuota.DurationHours),  // durationHours
+		fmt.Sprintf("--%s=json", tmcli.OutputFlag),
+		fmt.Sprintf("--%s=%s", flags.FlagFrom, s.val.Address.String()),
+		// common args
+		fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
+		fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
+		strideclitestutil.DefaultFeeString(s.cfg),
+	}
+
+	cmd := cli.CmdAddRateLimit()
+	clientCtx := s.val.ClientCtx
+
+	_, err := clitestutil.ExecTestCLICmd(clientCtx, cmd, args)
+	s.Require().NoError(err)
+}
+
+func (s *IntegrationTestSuite) checkRateLimit(expectedQuota types.Quota, expectedFlow types.Flow) {
+	clientCtx := s.val.ClientCtx
+
+	cmd := cli.GetCmdQueryRateLimit()
+	out, err := clitestutil.ExecTestCLICmd(clientCtx, cmd, []string{
+		path.Denom,
+		path.ChannelId,
+		fmt.Sprintf("--%s=json", tmcli.OutputFlag),
+	})
+	s.Require().NoError(err)
+
+	var rateLimit types.RateLimit
+	s.Require().NoError(clientCtx.Codec.UnmarshalJSON(out.Bytes(), &rateLimit))
+	s.Require().Equal(path, *rateLimit.Path)
+	s.Require().Equal(expectedQuota, *rateLimit.Quota)
+	s.Require().Equal(expectedFlow, *rateLimit.Flow)
 }
 
 func (s *IntegrationTestSuite) TestCmdTxAddRateLimit() {
-	val := s.network.Validators[0]
-	quota := types.Quota{
-		MaxPercentSend: 10,
-		MaxPercentRecv: 20,
-		DurationHours:  1,
-	}
-	path := types.Path{
-		Denom:     sdk.DefaultBondDenom,
-		ChannelId: "channel-0",
-	}
+	// Add a rate limit
+	s.addRateLimit()
 
-	testCases := []struct {
-		name     string
-		args     []string
-		expQuota types.Quota
-	}{
-		{
-			"add-rate-limit tx",
-			[]string{
-				sdk.DefaultBondDenom,                    // denom
-				path.ChannelId,                          // channelId
-				fmt.Sprintf("%d", quota.MaxPercentSend), // maxPercentSend
-				fmt.Sprintf("%d", quota.MaxPercentRecv), // maxPercentRecv
-				fmt.Sprintf("%d", quota.DurationHours),  // durationHours
-				fmt.Sprintf("--%s=json", tmcli.OutputFlag),
-				fmt.Sprintf("--%s=%s", flags.FlagFrom, val.Address.String()),
-				// common args
-				fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
-				fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
-				strideclitestutil.DefaultFeeString(s.cfg),
-			},
-			quota,
-		},
-	}
-
-	for _, tc := range testCases {
-		tc := tc
-
-		s.Run(tc.name, func() {
-			cmd := cli.CmdAddRateLimit()
-			clientCtx := val.ClientCtx
-
-			_, err := clitestutil.ExecTestCLICmd(clientCtx, cmd, tc.args)
-			s.Require().NoError(err)
-
-			// Check if ratelimit was set properly
-			cmd = cli.GetCmdQueryRateLimit()
-			out, err := clitestutil.ExecTestCLICmd(clientCtx, cmd, []string{
-				path.Denom,
-				path.ChannelId,
-				fmt.Sprintf("--%s=json", tmcli.OutputFlag),
-			})
-			s.Require().NoError(err)
-
-			var result types.RateLimit
-			s.Require().NoError(clientCtx.Codec.UnmarshalJSON(out.Bytes(), &result))
-			s.Require().Equal(tc.expQuota, *result.Quota)
-		})
-	}
+	// Check that it was added properly
+	s.checkRateLimit(initialQuota, initialFlow)
 }
 
 func (s *IntegrationTestSuite) TestCmdTxUpdateRateLimit() {
-	val := s.network.Validators[0]
-	quota := types.Quota{
-		MaxPercentSend: 20,
-		MaxPercentRecv: 30,
-		DurationHours:  1,
-	}
-	path := types.Path{
-		Denom:     sdk.DefaultBondDenom,
-		ChannelId: "channel-1",
-	}
+	// Add a rate limit
+	s.addRateLimit()
+	s.checkRateLimit(initialQuota, initialFlow)
 
-	testCases := []struct {
-		name     string
-		args     []string
-		expQuota types.Quota
-	}{
-		{
-			"update-rate-limit tx",
-			[]string{
-				sdk.DefaultBondDenom,                    // denom
-				path.ChannelId,                          // channelId
-				fmt.Sprintf("%d", quota.MaxPercentSend), // maxPercentSend
-				fmt.Sprintf("%d", quota.MaxPercentRecv), // maxPercentRecv
-				fmt.Sprintf("%d", quota.DurationHours),  // durationHours
-				fmt.Sprintf("--%s=json", tmcli.OutputFlag),
-				fmt.Sprintf("--%s=%s", flags.FlagFrom, val.Address.String()),
-				// common args
-				fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
-				fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
-				strideclitestutil.DefaultFeeString(s.cfg),
-			},
-			quota,
-		},
+	// Then update the rate limit
+	updateArgs := []string{
+		path.Denom,     // denom
+		path.ChannelId, // channelId
+		fmt.Sprintf("%d", updatedQuota.MaxPercentSend), // maxPercentSend
+		fmt.Sprintf("%d", updatedQuota.MaxPercentRecv), // maxPercentRecv
+		fmt.Sprintf("%d", updatedQuota.DurationHours),  // durationHours
+		fmt.Sprintf("--%s=json", tmcli.OutputFlag),
+		fmt.Sprintf("--%s=%s", flags.FlagFrom, s.val.Address.String()),
+		// common args
+		fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
+		fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
+		strideclitestutil.DefaultFeeString(s.cfg),
 	}
 
-	for _, tc := range testCases {
-		tc := tc
+	cmd := cli.CmdUpdateRateLimit()
+	_, err := clitestutil.ExecTestCLICmd(s.val.ClientCtx, cmd, updateArgs)
+	s.Require().NoError(err)
 
-		s.Run(tc.name, func() {
-			cmd := cli.CmdAddRateLimit()
-			args := make([]string, len(tc.args))
-			copy(args, tc.args)
-			args[2] = "10"
-			args[3] = "20"
-			clientCtx := val.ClientCtx
-
-			// Add a new ratelimit
-			_, err := clitestutil.ExecTestCLICmd(clientCtx, cmd, args)
-			s.Require().NoError(err)
-
-			// Update the rate limit
-			cmd = cli.CmdUpdateRateLimit()
-			_, err = clitestutil.ExecTestCLICmd(clientCtx, cmd, tc.args)
-			s.Require().NoError(err)
-
-			// Check if ratelimit was updated properly
-			cmd = cli.GetCmdQueryRateLimit()
-			out, err := clitestutil.ExecTestCLICmd(clientCtx, cmd, []string{
-				path.Denom,
-				path.ChannelId,
-				fmt.Sprintf("--%s=json", tmcli.OutputFlag),
-			})
-			s.Require().NoError(err)
-
-			var result types.RateLimit
-			s.Require().NoError(clientCtx.Codec.UnmarshalJSON(out.Bytes(), &result))
-			s.Require().Equal(tc.expQuota, *result.Quota)
-		})
-	}
+	// Check if ratelimit was updated properly
+	s.checkRateLimit(updatedQuota, initialFlow)
 }
 
 func (s *IntegrationTestSuite) TestCmdTxResetRateLimit() {
-	val := s.network.Validators[0]
-	quota := types.Quota{
-		MaxPercentSend: 20,
-		MaxPercentRecv: 30,
-		DurationHours:  1,
-	}
-	path := types.Path{
-		Denom:     sdk.DefaultBondDenom,
-		ChannelId: "channel-2",
-	}
-	flow := types.Flow{
-		Inflow:       0,
-		Outflow:      0,
-		ChannelValue: s.cfg.StakingTokens.Uint64(),
-	}
+	// Add a rate limit
+	s.addRateLimit()
+	s.checkRateLimit(initialQuota, initialFlow)
 
-	testCases := []struct {
-		name    string
-		args    []string
-		expFlow types.Flow
-	}{
-		{
-			"reset-rate-limit tx",
-			[]string{
-				sdk.DefaultBondDenom, // denom
-				path.ChannelId,       // channelId
-				fmt.Sprintf("--%s=json", tmcli.OutputFlag),
-				fmt.Sprintf("--%s=%s", flags.FlagFrom, val.Address.String()),
-				// common args
-				fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
-				fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
-				strideclitestutil.DefaultFeeString(s.cfg),
-			},
-			flow,
-		},
+	// Then reset the rate limit
+	resetArgs := []string{
+		path.Denom,
+		path.ChannelId,
+		fmt.Sprintf("--%s=json", tmcli.OutputFlag),
+		fmt.Sprintf("--%s=%s", flags.FlagFrom, s.val.Address.String()),
+		// common args
+		fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
+		fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
+		strideclitestutil.DefaultFeeString(s.cfg),
 	}
 
-	for _, tc := range testCases {
-		tc := tc
+	// Reset the rate limit
+	cmd := cli.CmdResetRateLimit()
+	_, err := clitestutil.ExecTestCLICmd(s.val.ClientCtx, cmd, resetArgs)
+	s.Require().NoError(err)
 
-		s.Run(tc.name, func() {
-			cmd := cli.CmdAddRateLimit()
-			clientCtx := val.ClientCtx
-
-			// Add a new ratelimit
-			_, err := clitestutil.ExecTestCLICmd(clientCtx, cmd, []string{
-				sdk.DefaultBondDenom,                    // denom
-				path.ChannelId,                          // channelId
-				fmt.Sprintf("%d", quota.MaxPercentSend), // maxPercentSend
-				fmt.Sprintf("%d", quota.MaxPercentRecv), // maxPercentRecv
-				fmt.Sprintf("%d", quota.DurationHours),  // durationHours
-				fmt.Sprintf("--%s=json", tmcli.OutputFlag),
-				fmt.Sprintf("--%s=%s", flags.FlagFrom, val.Address.String()),
-				// common args
-				fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
-				fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
-				strideclitestutil.DefaultFeeString(s.cfg),
-			})
-			s.Require().NoError(err)
-
-			// Reset the rate limit
-			cmd = cli.CmdResetRateLimit()
-			_, err = clitestutil.ExecTestCLICmd(clientCtx, cmd, tc.args)
-			s.Require().NoError(err)
-
-			// Check if ratelimit was reset properly
-			cmd = cli.GetCmdQueryRateLimit()
-			out, err := clitestutil.ExecTestCLICmd(clientCtx, cmd, []string{
-				path.Denom,
-				path.ChannelId,
-				fmt.Sprintf("--%s=json", tmcli.OutputFlag),
-			})
-			s.Require().NoError(err)
-
-			var result types.RateLimit
-			s.Require().NoError(clientCtx.Codec.UnmarshalJSON(out.Bytes(), &result))
-			s.Require().Equal(tc.expFlow, *result.Flow)
-		})
-	}
+	// Check if ratelimit was reset properly
+	s.checkRateLimit(initialQuota, initialFlow)
 }
 
 func (s *IntegrationTestSuite) TestCmdTxRemoveRateLimit() {
-	val := s.network.Validators[0]
+	// Add a rate limit
+	s.addRateLimit()
+	s.checkRateLimit(initialQuota, initialFlow)
 
-	rateLimit := types.RateLimit{}
-	denom := sdk.DefaultBondDenom
-	channelId := "channel-3"
-
-	testCases := []struct {
-		name         string
-		args         []string
-		expRateLimit types.RateLimit
-	}{
-		{
-			"remove-ratelimit tx",
-			[]string{
-				denom,     // denom
-				channelId, // channel id
-				fmt.Sprintf("--%s=json", tmcli.OutputFlag),
-				fmt.Sprintf("--%s=%s", flags.FlagFrom, val.Address.String()),
-				// common args
-				fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
-				fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
-				strideclitestutil.DefaultFeeString(s.cfg),
-			},
-			rateLimit,
-		},
+	// Then remove the rate limit
+	removeArgs := []string{
+		path.Denom,
+		path.ChannelId,
+		fmt.Sprintf("--%s=json", tmcli.OutputFlag),
+		fmt.Sprintf("--%s=%s", flags.FlagFrom, s.val.Address.String()),
+		// common args
+		fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
+		fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
+		strideclitestutil.DefaultFeeString(s.cfg),
 	}
 
-	for _, tc := range testCases {
-		tc := tc
+	cmd := cli.CmdRemoveRateLimit()
+	_, err := clitestutil.ExecTestCLICmd(s.val.ClientCtx, cmd, removeArgs)
+	s.Require().NoError(err)
 
-		s.Run(tc.name, func() {
-			cmd := cli.CmdAddRateLimit()
-			clientCtx := val.ClientCtx
-
-			// Add a new ratelimit
-			_, err := clitestutil.ExecTestCLICmd(clientCtx, cmd, []string{
-				sdk.DefaultBondDenom,  // denom
-				channelId,             // channelId
-				fmt.Sprintf("%d", 10), // maxPercentSend
-				fmt.Sprintf("%d", 10), // maxPercentRecv
-				fmt.Sprintf("%d", 1),  // durationHours
-				fmt.Sprintf("--%s=json", tmcli.OutputFlag),
-				fmt.Sprintf("--%s=%s", flags.FlagFrom, val.Address.String()),
-				// common args
-				fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
-				fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
-				strideclitestutil.DefaultFeeString(s.cfg),
-			})
-			s.Require().NoError(err)
-
-			// Remove the rate limit
-			cmd = cli.CmdRemoveRateLimit()
-
-			_, err = clitestutil.ExecTestCLICmd(clientCtx, cmd, tc.args)
-			s.Require().NoError(err)
-
-			// Check if ratelimit was removed properly
-			cmd = cli.GetCmdQueryRateLimit()
-			_, err = clitestutil.ExecTestCLICmd(clientCtx, cmd, []string{
-				denom,
-				channelId,
-				fmt.Sprintf("--%s=json", tmcli.OutputFlag),
-			})
-			s.Require().Error(err)
-		})
-	}
+	// Check if ratelimit was removed properly (get command should error)
+	cmd = cli.GetCmdQueryRateLimit()
+	_, err = clitestutil.ExecTestCLICmd(s.val.ClientCtx, cmd, []string{
+		path.Denom,
+		path.ChannelId,
+		fmt.Sprintf("--%s=json", tmcli.OutputFlag),
+	})
+	s.Require().Error(err)
 }
 
 func TestIntegrationTestSuite(t *testing.T) {
