@@ -33,4 +33,6 @@ message Params {
   uint64 safety_max_redemption_rate_threshold = 15;
   uint64 ibc_transfer_timeout_nanos = 16;
   uint64 safety_num_validators = 17;
+  uint64 min_num_rebalance = 18;
+  uint64 max_num_rebalance = 19;
 }
