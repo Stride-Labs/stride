@@ -76,7 +76,7 @@ func DelegateCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ack
 
 	for _, splitDelegation := range delegateCallback.SplitDelegations {
 		validator := splitDelegation.Validator
-		k.Logger(ctx).Info(fmt.Sprintf("incrementing stakedBal %d on %s", splitDelegation.Amount, validator))
+		k.Logger(ctx).Info(fmt.Sprintf("incrementing stakedBal %v on %s", splitDelegation.Amount, validator))
 
 		zone.StakedBal = zone.StakedBal.Add(splitDelegation.Amount)
 		success := k.AddDelegationToValidator(ctx, zone, validator, splitDelegation.Amount)
