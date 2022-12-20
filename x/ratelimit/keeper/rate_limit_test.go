@@ -96,14 +96,31 @@ func (s *KeeperTestSuite) SetupCheckRateLimitTest() {
 func (s *KeeperTestSuite) ProcessCheckRateLimitTestCase(tc checkRateLimitTestCase) {
 	s.SetupCheckRateLimitTest()
 
+	expectedInflow := sdk.NewInt(0)
+	expectedOutflow := sdk.NewInt(0)
 	for i, action := range tc.actions {
-		err := s.App.RatelimitKeeper.CheckRateLimit(s.Ctx, action.direction, denom, channelId, sdk.NewInt(action.amount))
+		amount := sdk.NewInt(action.amount)
+		err := s.App.RatelimitKeeper.CheckRateLimit(s.Ctx, action.direction, denom, channelId, amount)
+
 		if i == len(tc.actions)-1 && tc.expectedError != "" {
 			s.Require().ErrorIs(err, types.ErrQuotaExceeded, tc.name+" - action: #%d - error type", i)
 			s.Require().ErrorContains(err, tc.expectedError, tc.name+"- action: #%d - error string", i)
 		} else {
-			s.Require().NoError(err, tc.name+"- action: #%d - no error ", i)
+			s.Require().NoError(err, tc.name+"- action: #%d - no error", i)
+
+			// Update expected flow
+			if action.direction == types.PACKET_RECV {
+				expectedInflow = expectedInflow.Add(amount)
+			} else {
+				expectedOutflow = expectedOutflow.Add(amount)
+			}
 		}
+
+		// Confirm flow is updated properly (or left as is if the theshold was exceeded)
+		rateLimit, found := s.App.RatelimitKeeper.GetRateLimit(s.Ctx, denom, channelId)
+		s.Require().True(found)
+		s.Require().Equal(expectedInflow, rateLimit.Flow.Inflow, tc.name+"- action: #%d - inflow", i)
+		s.Require().Equal(expectedOutflow, rateLimit.Flow.Outflow, tc.name+"- action: #%d - outflow", i)
 	}
 }
 

@@ -40,10 +40,10 @@ func ParseDenomFromSendPacket(packet transfertypes.FungibleTokenPacketData) (den
 }
 
 // Parse the denom from the Recv Packet that will be used by the rate limit module
-// The denom that the rate limiter will use for a RECIEVE packet depends on whether it was a source or sink
-// 		Source: The packet's is being recieved by a chain it was just sent from (i.e. the token has gone back and forth)
+// The denom that the rate limiter will use for a RECEIVE packet depends on whether it was a source or sink
+// 		Source: The packet's is being received by a chain it was just sent from (i.e. the token has gone back and forth)
 //              (e.g. strd is sent -> to osmosis -> and then back to stride)
-//      Sink:   The packet's is being recieved by a chain that either created it or previous recieved it from somewhere else
+//      Sink:   The packet's is being received by a chain that either created it or previous received it from somewhere else
 //              (e.g. atom is sent -> to stride) (e.g.2. atom is sent -> to osmosis -> which is then sent to stride)
 //
 //      If the chain is acting as a SINK:
@@ -125,8 +125,8 @@ func SendRateLimitedPacket(ctx sdk.Context, keeper ratelimitkeeper.Keeper, packe
 }
 
 // Middleware implementation for RecvPacket with rate limiting
-func RecieveRateLimitedPacket(ctx sdk.Context, keeper ratelimitkeeper.Keeper, packet channeltypes.Packet) error {
-	// For a recieve packet, the channel on stride is the "Destination" channel
+func ReceiveRateLimitedPacket(ctx sdk.Context, keeper ratelimitkeeper.Keeper, packet channeltypes.Packet) error {
+	// For a receive packet, the channel on stride is the "Destination" channel
 	// This is because the Source and Desination is defined from the perspective of a packet recipient
 	// Meaning, when this packet lands on a Stride, the "Destination" will show the Stride Channel
 	channelId := packet.GetDestChannel()

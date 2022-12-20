@@ -55,10 +55,17 @@ func TestCheckExceedsQuota(t *testing.T) {
 			exceeded:   false,
 		},
 		{
-			name:       "zero channel value",
+			name:       "zero channel value send",
 			direction:  types.PACKET_SEND,
-			amount:     amountUnderThreshold,
-			totalValue: totalValue,
+			amount:     amountOverThreshold,
+			totalValue: sdk.ZeroInt(),
+			exceeded:   false,
+		},
+		{
+			name:       "zero channel value recv",
+			direction:  types.PACKET_RECV,
+			amount:     amountOverThreshold,
+			totalValue: sdk.ZeroInt(),
 			exceeded:   false,
 		},
 	}

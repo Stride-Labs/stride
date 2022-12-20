@@ -2,16 +2,20 @@ package ratelimit_test
 
 import (
 	"crypto/sha256"
+	"encoding/json"
 	"fmt"
 	"testing"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	transfertypes "github.com/cosmos/ibc-go/v3/modules/apps/transfer/types"
 	channeltypes "github.com/cosmos/ibc-go/v3/modules/core/04-channel/types"
 	"github.com/stretchr/testify/require"
 
 	tmbytes "github.com/tendermint/tendermint/libs/bytes"
 
+	"github.com/Stride-Labs/stride/v4/app/apptesting"
 	ratelimit "github.com/Stride-Labs/stride/v4/x/ratelimit"
+	"github.com/Stride-Labs/stride/v4/x/ratelimit/types"
 )
 
 const (
@@ -84,8 +88,8 @@ func TestParseDenomFromRecvPacket(t *testing.T) {
 		expectedDenom      string
 	}{
 		// Sink asset one hop away:
-		//   uosmo sent from Osmosis to Stride (ustrd)
-		//   -> tack on prefix (transfer/channel-0/ustrd) and hash
+		//   uosmo sent from Osmosis to Stride (uosmo)
+		//   -> tack on prefix (transfer/channel-0/uosmo) and hash
 		{
 			name:               "sink_one_hop",
 			packetDenomTrace:   uosmo,
@@ -141,4 +145,88 @@ func TestParseDenomFromRecvPacket(t *testing.T) {
 			require.Equal(t, tc.expectedDenom, parsedDenom, tc.name)
 		})
 	}
+}
+
+func TestSendRateLimitedPacket(t *testing.T) {
+	s := apptesting.SetupSuitelessTestHelper()
+
+	denom := "denom"
+	sourceChannel := "channel-0"
+	destinationChannel := "channel-1"
+
+	// Create rate limit
+	s.App.RatelimitKeeper.SetRateLimit(s.Ctx, types.RateLimit{
+		Path: &types.Path{
+			Denom:     denom,
+			ChannelId: sourceChannel, // for send, use source channel
+		},
+		Quota: &types.Quota{
+			MaxPercentSend: sdk.NewInt(10),
+			MaxPercentRecv: sdk.NewInt(10),
+			DurationHours:  uint64(10),
+		},
+		Flow: &types.Flow{
+			Inflow:       sdk.NewInt(0),
+			Outflow:      sdk.NewInt(9), // outflow almost at threshold
+			ChannelValue: sdk.NewInt(100),
+		},
+	})
+
+	// This packet should cause an Outflow quota exceed error
+	data, err := json.Marshal(transfertypes.FungibleTokenPacketData{Denom: denom, Amount: "5"})
+	require.NoError(t, err)
+
+	// We check for a quota error because it doesn't appear until the end of the function
+	// We're avoiding checking for a success here because we can get a false positive if the rate limit doesn't exist
+	err = ratelimit.SendRateLimitedPacket(s.Ctx, s.App.RatelimitKeeper, channeltypes.Packet{
+		SourcePort:         transferPort,
+		SourceChannel:      sourceChannel,
+		DestinationPort:    transferPort,
+		DestinationChannel: destinationChannel,
+		Data:               data,
+	})
+	require.ErrorIs(t, err, types.ErrQuotaExceeded, "error type")
+	require.ErrorContains(t, err, "Outflow exceeds quota", "error text")
+}
+
+func TestReceiveRateLimitedPacket(t *testing.T) {
+	s := apptesting.SetupSuitelessTestHelper()
+
+	denom := "denom"
+	sourceChannel := "channel-1"
+	destinationChannel := "channel-0"
+
+	// Create rate limit
+	s.App.RatelimitKeeper.SetRateLimit(s.Ctx, types.RateLimit{
+		Path: &types.Path{
+			Denom:     hashDenomTrace(fmt.Sprintf("%s/%s/%s", transferPort, destinationChannel, denom)),
+			ChannelId: destinationChannel, // for receive, use destination channel
+		},
+		Quota: &types.Quota{
+			MaxPercentSend: sdk.NewInt(10),
+			MaxPercentRecv: sdk.NewInt(10),
+			DurationHours:  uint64(10),
+		},
+		Flow: &types.Flow{
+			Inflow:       sdk.NewInt(9), // outflow almost at threshold
+			Outflow:      sdk.NewInt(0),
+			ChannelValue: sdk.NewInt(100),
+		},
+	})
+
+	// This packet should cause an Outflow quota exceed error
+	data, err := json.Marshal(transfertypes.FungibleTokenPacketData{Denom: denom, Amount: "5"})
+	require.NoError(t, err)
+
+	// We check for a quota error because it doesn't appear until the end of the function
+	// We're avoiding checking for a success here because we can get a false positive if the rate limit doesn't exist
+	err = ratelimit.ReceiveRateLimitedPacket(s.Ctx, s.App.RatelimitKeeper, channeltypes.Packet{
+		SourcePort:         transferPort,
+		SourceChannel:      sourceChannel,
+		DestinationPort:    transferPort,
+		DestinationChannel: destinationChannel,
+		Data:               data,
+	})
+	require.ErrorIs(t, err, types.ErrQuotaExceeded, "error type")
+	require.ErrorContains(t, err, "Inflow exceeds quota", "error text")
 }
