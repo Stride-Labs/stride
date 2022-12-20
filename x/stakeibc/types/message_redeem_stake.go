@@ -52,7 +52,7 @@ func (msg *MsgRedeemStake) ValidateBasic() error {
 	}
 	// ensure amount is a nonzero positive integer
 	if msg.Amount.LTE(sdk.ZeroInt()) {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "invalid amount (%d)", msg.Amount)
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "invalid amount (%v)", msg.Amount)
 	}
 	// validate host zone is not empty
 	if msg.HostZone == "" {
