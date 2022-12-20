@@ -31,6 +31,31 @@ type IntegrationTestSuite struct {
 	val     *network.Validator
 }
 
+var (
+	path = types.Path{
+		Denom:     sdk.DefaultBondDenom,
+		ChannelId: "channel-0",
+	}
+
+	initialQuota = types.Quota{
+		MaxPercentSend: 10,
+		MaxPercentRecv: 20,
+		DurationHours:  1,
+	}
+
+	initialFlow = types.Flow{
+		Inflow:       0,
+		Outflow:      0,
+		ChannelValue: 500000000, // channel value == the network initial supply
+	}
+
+	updatedQuota = types.Quota{
+		MaxPercentSend: 30,
+		MaxPercentRecv: 50,
+		DurationHours:  2,
+	}
+)
+
 func (s *IntegrationTestSuite) SetupSuite() {
 	s.T().Log("setting up integration test suite")
 
@@ -48,29 +73,6 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	s.Require().NoError(err)
 
 	s.val = s.network.Validators[0]
-}
-
-var path = types.Path{
-	Denom:     sdk.DefaultBondDenom,
-	ChannelId: "channel-0",
-}
-
-var initialQuota = types.Quota{
-	MaxPercentSend: 10,
-	MaxPercentRecv: 20,
-	DurationHours:  1,
-}
-
-var initialFlow = types.Flow{
-	Inflow:       0,
-	Outflow:      0,
-	ChannelValue: 500000000, // channel value == the network initial supply
-}
-
-var updatedQuota = types.Quota{
-	MaxPercentSend: 30,
-	MaxPercentRecv: 50,
-	DurationHours:  2,
 }
 
 func (s *IntegrationTestSuite) addRateLimit() {
