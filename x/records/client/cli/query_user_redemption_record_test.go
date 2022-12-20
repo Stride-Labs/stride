@@ -5,6 +5,8 @@ import (
 	"strconv"
 	"testing"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	clitestutil "github.com/cosmos/cosmos-sdk/testutil/cli"
 	"github.com/stretchr/testify/require"
@@ -27,6 +29,7 @@ func networkWithUserRedemptionRecordObjects(t *testing.T, n int) (*network.Netwo
 	for i := 0; i < n; i++ {
 		userRedemptionRecord := types.UserRedemptionRecord{
 			Id: strconv.Itoa(i),
+			Amount: sdk.NewInt(int64(i)),
 		}
 		nullify.Fill(&userRedemptionRecord)
 		state.UserRedemptionRecordList = append(state.UserRedemptionRecordList, userRedemptionRecord)

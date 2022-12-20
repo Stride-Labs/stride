@@ -3,6 +3,7 @@ package keeper_test
 import (
 	"fmt"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	channeltypes "github.com/cosmos/ibc-go/v3/modules/core/04-channel/types"
 	_ "github.com/stretchr/testify/suite"
 
@@ -29,7 +30,7 @@ type TransferCallbackTestCase struct {
 }
 
 func (s *KeeperTestSuite) SetupTransferCallback() TransferCallbackTestCase {
-	balanceToStake := int64(1_000_000)
+	balanceToStake := sdk.NewInt(1_000_000)
 	depositRecord := recordtypes.DepositRecord{
 		Id:                 1,
 		DepositEpochNumber: 1,

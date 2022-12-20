@@ -40,12 +40,12 @@ func (s *KeeperTestSuite) SetupRebalanceCallback() RebalanceCallbackTestCase {
 			{
 				SrcValidator: "stride_VAL3",
 				DstValidator: "stride_VAL1",
-				Amt:          104,
+				Amt:          sdk.NewInt(104),
 			},
 			{
 				SrcValidator: "stride_VAL4",
 				DstValidator: "stride_VAL1",
-				Amt:          13,
+				Amt:          sdk.NewInt(13),
 			},
 		},
 	}
@@ -79,11 +79,11 @@ func (s *KeeperTestSuite) TestRebalanceCallback_Successful() {
 	validators := hz.GetValidators()
 	s.Require().Len(validators, 5, "host zone has 5 validators")
 
-	s.Require().Equal(217, int(validators[0].DelegationAmt), "validator 1 stake")
-	s.Require().Equal(500, int(validators[1].DelegationAmt), "validator 2 stake")
-	s.Require().Equal(96, int(validators[2].DelegationAmt), "validator 3 stake")
-	s.Require().Equal(387, int(validators[3].DelegationAmt), "validator 4 stake")
-	s.Require().Equal(400, int(validators[4].DelegationAmt), "validator 5 stake")
+	s.Require().Equal(sdk.NewInt(217), validators[0].DelegationAmt, "validator 1 stake")
+	s.Require().Equal(sdk.NewInt(500), validators[1].DelegationAmt, "validator 2 stake")
+	s.Require().Equal(sdk.NewInt(96), validators[2].DelegationAmt, "validator 3 stake")
+	s.Require().Equal(sdk.NewInt(387), validators[3].DelegationAmt, "validator 4 stake")
+	s.Require().Equal(sdk.NewInt(400), validators[4].DelegationAmt, "validator 5 stake")
 }
 
 func (s *KeeperTestSuite) checkDelegationStateIfCallbackFailed() {
@@ -93,11 +93,11 @@ func (s *KeeperTestSuite) checkDelegationStateIfCallbackFailed() {
 	validators := hz.GetValidators()
 	s.Require().Len(validators, 5, "host zone has 5 validators")
 
-	s.Require().Equal(100, int(validators[0].DelegationAmt), "validator 1 stake")
-	s.Require().Equal(500, int(validators[1].DelegationAmt), "validator 2 stake")
-	s.Require().Equal(200, int(validators[2].DelegationAmt), "validator 3 stake")
-	s.Require().Equal(400, int(validators[3].DelegationAmt), "validator 4 stake")
-	s.Require().Equal(400, int(validators[4].DelegationAmt), "validator 5 stake")
+	s.Require().Equal(sdk.NewInt(100), validators[0].DelegationAmt, "validator 1 stake")
+	s.Require().Equal(sdk.NewInt(500), validators[1].DelegationAmt, "validator 2 stake")
+	s.Require().Equal(sdk.NewInt(200), validators[2].DelegationAmt, "validator 3 stake")
+	s.Require().Equal(sdk.NewInt(400), validators[3].DelegationAmt, "validator 4 stake")
+	s.Require().Equal(sdk.NewInt(400), validators[4].DelegationAmt, "validator 5 stake")
 }
 
 func (s *KeeperTestSuite) TestRebalanceCallback_Timeout() {
@@ -141,12 +141,12 @@ func (s *KeeperTestSuite) TestRebalanceCallback_WrongValidator() {
 			{
 				SrcValidator: "stride_VAL3",
 				DstValidator: "stride_VAL1",
-				Amt:          104,
+				Amt:          sdk.NewInt(104),
 			},
 			{
 				SrcValidator: "stride_VAL4_WRONG",
 				DstValidator: "stride_VAL1",
-				Amt:          13,
+				Amt:          sdk.NewInt(13),
 			},
 		},
 	}
@@ -159,12 +159,12 @@ func (s *KeeperTestSuite) TestRebalanceCallback_WrongValidator() {
 			{
 				SrcValidator: "stride_VAL3",
 				DstValidator: "stride_VAL1_WRONG",
-				Amt:          104,
+				Amt:          sdk.NewInt(104),
 			},
 			{
 				SrcValidator: "stride_VAL4",
 				DstValidator: "stride_VAL1",
-				Amt:          13,
+				Amt:          sdk.NewInt(13),
 			},
 		},
 	}
