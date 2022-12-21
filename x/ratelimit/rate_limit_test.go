@@ -174,7 +174,7 @@ func createRateLimitCloseToQuota(s apptesting.AppTestHelper, denom string, chann
 		},
 		Flow: &types.Flow{
 			Inflow:       inflow,
-			Outflow:      outflow, // outflow almost at threshold
+			Outflow:      outflow,
 			ChannelValue: channelValue,
 		},
 	})

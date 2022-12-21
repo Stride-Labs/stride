@@ -33,7 +33,7 @@ func (k Keeper) UpdateFlow(rateLimit types.RateLimit, direction types.PacketDire
 
 // Checks whether the given packet will exceed the rate limit
 // Called by OnRecvPacket and OnSendPacket
-func (k Keeper) CheckRateLimit(ctx sdk.Context, direction types.PacketDirection, denom string, channelId string, amount sdk.Int) error {
+func (k Keeper) CheckRateLimitAndUpdateFlow(ctx sdk.Context, direction types.PacketDirection, denom string, channelId string, amount sdk.Int) error {
 	// If there's no rate limit yet for this denom, no action is necessary
 	rateLimit, found := k.GetRateLimit(ctx, denom, channelId)
 	if !found {

@@ -117,7 +117,7 @@ func SendRateLimitedPacket(ctx sdk.Context, keeper ratelimitkeeper.Keeper, packe
 
 	denom := ParseDenomFromSendPacket(packetData)
 
-	err := keeper.CheckRateLimit(ctx, types.PACKET_SEND, denom, channelId, amount)
+	err := keeper.CheckRateLimitAndUpdateFlow(ctx, types.PACKET_SEND, denom, channelId, amount)
 	if err != nil {
 		return err
 	}
@@ -145,7 +145,7 @@ func ReceiveRateLimitedPacket(ctx sdk.Context, keeper ratelimitkeeper.Keeper, pa
 	denom := ParseDenomFromRecvPacket(packet, packetData)
 
 	// Check whether the rate limit has been exceeded - and if it hasn't, send the packet
-	err := keeper.CheckRateLimit(ctx, types.PACKET_RECV, denom, channelId, amount)
+	err := keeper.CheckRateLimitAndUpdateFlow(ctx, types.PACKET_RECV, denom, channelId, amount)
 	if err != nil {
 		return err
 	}

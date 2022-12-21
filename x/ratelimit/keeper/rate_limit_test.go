@@ -113,7 +113,7 @@ func (s *KeeperTestSuite) ProcessCheckRateLimitTestCase(tc checkRateLimitTestCas
 	expectedOutflow := sdk.NewInt(0)
 	for i, action := range tc.actions {
 		amount := sdk.NewInt(action.amount)
-		err := s.App.RatelimitKeeper.CheckRateLimit(s.Ctx, action.direction, denom, channelId, amount)
+		err := s.App.RatelimitKeeper.CheckRateLimitAndUpdateFlow(s.Ctx, action.direction, denom, channelId, amount)
 
 		if i == len(tc.actions)-1 && tc.expectedError != "" {
 			s.Require().ErrorIs(err, types.ErrQuotaExceeded, tc.name+" - action: #%d - error type", i)
