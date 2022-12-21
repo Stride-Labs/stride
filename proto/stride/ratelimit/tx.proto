@@ -1,6 +1,8 @@
 syntax = "proto3";
 package stride.ratelimit;
 
+import "gogoproto/gogo.proto";
+
 option go_package = "github.com/Stride-Labs/stride/v4/x/ratelimit/types";
 
 // Msg defines the Msg service.
@@ -15,8 +17,14 @@ message MsgAddRateLimit {
   string creator = 1;
   string denom = 2;
   string channel_id = 3;
-  uint64 max_percent_send = 4;
-  uint64 max_percent_recv = 5;
+  string max_percent_send = 4 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
+  string max_percent_recv = 5 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
   uint64 duration_hours = 6;
 }
 message MsgAddRateLimitResponse {}
@@ -25,8 +33,14 @@ message MsgUpdateRateLimit {
   string creator = 1;
   string denom = 2;
   string channel_id = 3;
-  uint64 max_percent_send = 4;
-  uint64 max_percent_recv = 5;
+  string max_percent_send = 4 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
+  string max_percent_recv = 5 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
   uint64 duration_hours = 6;
 }
 message MsgUpdateRateLimitResponse {}

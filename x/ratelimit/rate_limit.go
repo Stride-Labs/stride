@@ -2,9 +2,9 @@ package ratelimit
 
 import (
 	"encoding/json"
-	"strconv"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	transfertypes "github.com/cosmos/ibc-go/v3/modules/apps/transfer/types"
 	channeltypes "github.com/cosmos/ibc-go/v3/modules/core/04-channel/types"
 
@@ -13,63 +13,6 @@ import (
 	ratelimitkeeper "github.com/Stride-Labs/stride/v4/x/ratelimit/keeper"
 	"github.com/Stride-Labs/stride/v4/x/ratelimit/types"
 )
-
-// Middleware implementation for SendPacket with rate limiting
-func SendRateLimitedPacket(ctx sdk.Context, keeper ratelimitkeeper.Keeper, packet exported.PacketI) error {
-	// For a send packet, the channel on stride is the "Source" channel
-	//  This is because the Source and Desination are defined from the perspective of a packet recipient
-	//    i.e., when this packet lands on a the host chain, the "Source" will show the Stride Channel
-	channelId := packet.GetSourceChannel()
-
-	// Parse the packet data
-	var packetData transfertypes.FungibleTokenPacketData
-	if err := json.Unmarshal(packet.GetData(), &packetData); err != nil {
-		return err
-	}
-
-	// TODO: Switch to type sdk.Int
-	amount, err := strconv.ParseUint(packetData.Amount, 10, 64)
-	if err != nil {
-		return err
-	}
-
-	denom := ParseDenomFromSendPacket(packetData)
-
-	err = keeper.CheckRateLimit(ctx, types.PACKET_SEND, denom, channelId, amount)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-// Middleware implementation for RecvPacket with rate limiting
-func RecieveRateLimitedPacket(ctx sdk.Context, keeper ratelimitkeeper.Keeper, packet channeltypes.Packet) error {
-	// For a recieve packet, the channel on stride is the "Destination" channel
-	// This is because the Source and Desination is defined from the perspective of a packet recipient
-	// Meaning, when this packet lands on a Stride, the "Destination" will show the Stride Channel
-	channelId := packet.GetDestChannel()
-
-	// Parse the amount and denom from the packet
-	var packetData transfertypes.FungibleTokenPacketData
-	if err := json.Unmarshal(packet.GetData(), &packetData); err != nil {
-		return err
-	}
-
-	// TODO: Switch to type sdk.Int
-	amount, err := strconv.ParseUint(packetData.Amount, 10, 64)
-	if err != nil {
-		return err
-	}
-
-	denom := ParseDenomFromRecvPacket(packet, packetData)
-
-	// Check whether the rate limit has been exceeded - and if it hasn't, send the packet
-	err = keeper.CheckRateLimit(ctx, types.PACKET_RECV, denom, channelId, amount)
-	if err != nil {
-		return err
-	}
-	return nil
-}
 
 // Parse the denom from the Send Packet that will be used by the rate limit module
 // The denom that the rate limiter will use for a SEND packet depends on whether
@@ -97,10 +40,10 @@ func ParseDenomFromSendPacket(packet transfertypes.FungibleTokenPacketData) (den
 }
 
 // Parse the denom from the Recv Packet that will be used by the rate limit module
-// The denom that the rate limiter will use for a RECIEVE packet depends on whether it was a source or sink
-// 		Source: The packet's is being recieved by a chain it was just sent from (i.e. the token has gone back and forth)
+// The denom that the rate limiter will use for a RECEIVE packet depends on whether it was a source or sink
+// 		Source: The packet's is being received by a chain it was just sent from (i.e. the token has gone back and forth)
 //              (e.g. strd is sent -> to osmosis -> and then back to stride)
-//      Sink:   The packet's is being recieved by a chain that either created it or previous recieved it from somewhere else
+//      Sink:   The packet's is being received by a chain that either created it or previous received it from somewhere else
 //              (e.g. atom is sent -> to stride) (e.g.2. atom is sent -> to osmosis -> which is then sent to stride)
 //
 //      If the chain is acting as a SINK:
@@ -152,4 +95,59 @@ func ParseDenomFromRecvPacket(packet channeltypes.Packet, packetData transfertyp
 	}
 
 	return denom
+}
+
+// Middleware implementation for SendPacket with rate limiting
+func SendRateLimitedPacket(ctx sdk.Context, keeper ratelimitkeeper.Keeper, packet exported.PacketI) error {
+	// For a send packet, the channel on stride is the "Source" channel
+	//  This is because the Source and Desination are defined from the perspective of a packet recipient
+	//    i.e., when this packet lands on a the host chain, the "Source" will show the Stride Channel
+	channelId := packet.GetSourceChannel()
+
+	// Parse the packet data
+	var packetData transfertypes.FungibleTokenPacketData
+	if err := json.Unmarshal(packet.GetData(), &packetData); err != nil {
+		return err
+	}
+
+	amount, ok := sdk.NewIntFromString(packetData.Amount)
+	if !ok {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "Unable to cast packet amount to sdk.Int")
+	}
+
+	denom := ParseDenomFromSendPacket(packetData)
+
+	err := keeper.CheckRateLimitAndUpdateFlow(ctx, types.PACKET_SEND, denom, channelId, amount)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// Middleware implementation for RecvPacket with rate limiting
+func ReceiveRateLimitedPacket(ctx sdk.Context, keeper ratelimitkeeper.Keeper, packet channeltypes.Packet) error {
+	// For a receive packet, the channel on stride is the "Destination" channel
+	// This is because the Source and Desination is defined from the perspective of a packet recipient
+	// Meaning, when this packet lands on a Stride, the "Destination" will show the Stride Channel
+	channelId := packet.GetDestChannel()
+
+	// Parse the amount and denom from the packet
+	var packetData transfertypes.FungibleTokenPacketData
+	if err := json.Unmarshal(packet.GetData(), &packetData); err != nil {
+		return err
+	}
+
+	amount, ok := sdk.NewIntFromString(packetData.Amount)
+	if !ok {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "Unable to cast packet amount to sdk.Int")
+	}
+
+	denom := ParseDenomFromRecvPacket(packet, packetData)
+
+	// Check whether the rate limit has been exceeded - and if it hasn't, send the packet
+	err := keeper.CheckRateLimitAndUpdateFlow(ctx, types.PACKET_RECV, denom, channelId, amount)
+	if err != nil {
+		return err
+	}
+	return nil
 }

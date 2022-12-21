@@ -3,6 +3,7 @@ package types_test
 import (
 	"testing"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
 	"github.com/Stride-Labs/stride/v4/app/apptesting"
@@ -15,8 +16,8 @@ func TestMsgUpdateRateLimit(t *testing.T) {
 
 	validDenom := "denom"
 	validChannelId := "channel-0"
-	validMaxPercentSend := uint64(10)
-	validMaxPercentRecv := uint64(10)
+	validMaxPercentSend := sdk.NewInt(10)
+	validMaxPercentRecv := sdk.NewInt(10)
 	validDurationHours := uint64(60)
 
 	tests := []struct {
@@ -72,25 +73,49 @@ func TestMsgUpdateRateLimit(t *testing.T) {
 			err: "invalid channel-id",
 		},
 		{
-			name: "invalid send percent",
+			name: "invalid send percent (lt 0)",
 			msg: types.MsgUpdateRateLimit{
 				Creator:        validAddr,
 				Denom:          validDenom,
 				ChannelId:      validChannelId,
-				MaxPercentSend: 101,
+				MaxPercentSend: sdk.NewInt(-1),
 				MaxPercentRecv: validMaxPercentRecv,
 				DurationHours:  validDurationHours,
 			},
 			err: "percent must be between 0 and 100",
 		},
 		{
-			name: "invalid receive percent",
+			name: "invalid send percent (gt 100)",
+			msg: types.MsgUpdateRateLimit{
+				Creator:        validAddr,
+				Denom:          validDenom,
+				ChannelId:      validChannelId,
+				MaxPercentSend: sdk.NewInt(101),
+				MaxPercentRecv: validMaxPercentRecv,
+				DurationHours:  validDurationHours,
+			},
+			err: "percent must be between 0 and 100",
+		},
+		{
+			name: "invalid receive percent (lt 0)",
 			msg: types.MsgUpdateRateLimit{
 				Creator:        validAddr,
 				Denom:          validDenom,
 				ChannelId:      validChannelId,
 				MaxPercentSend: validMaxPercentSend,
-				MaxPercentRecv: 101,
+				MaxPercentRecv: sdk.NewInt(-1),
+				DurationHours:  validDurationHours,
+			},
+			err: "percent must be between 0 and 100",
+		},
+		{
+			name: "invalid receive percent (gt 100)",
+			msg: types.MsgUpdateRateLimit{
+				Creator:        validAddr,
+				Denom:          validDenom,
+				ChannelId:      validChannelId,
+				MaxPercentSend: validMaxPercentSend,
+				MaxPercentRecv: sdk.NewInt(101),
 				DurationHours:  validDurationHours,
 			},
 			err: "percent must be between 0 and 100",
@@ -101,8 +126,8 @@ func TestMsgUpdateRateLimit(t *testing.T) {
 				Creator:        validAddr,
 				Denom:          validDenom,
 				ChannelId:      validChannelId,
-				MaxPercentSend: 0,
-				MaxPercentRecv: 0,
+				MaxPercentSend: sdk.ZeroInt(),
+				MaxPercentRecv: sdk.ZeroInt(),
 				DurationHours:  validDurationHours,
 			},
 			err: "either the max send or max receive threshold must be greater than 0",
