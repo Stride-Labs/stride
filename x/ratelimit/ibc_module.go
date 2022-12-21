@@ -109,7 +109,7 @@ func (im IBCModule) OnRecvPacket(
 	packet channeltypes.Packet,
 	relayer sdk.AccAddress,
 ) exported.Acknowledgement {
-	if err := RecieveRateLimitedPacket(ctx, im.keeper, packet); err != nil {
+	if err := ReceiveRateLimitedPacket(ctx, im.keeper, packet); err != nil {
 		return channeltypes.NewErrorAcknowledgement(err.Error())
 	}
 	return im.app.OnRecvPacket(ctx, packet, relayer)
