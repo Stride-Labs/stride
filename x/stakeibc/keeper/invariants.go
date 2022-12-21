@@ -12,7 +12,6 @@ import (
 // RegisterInvariants registers all governance invariants.
 func RegisterInvariants(ir sdk.InvariantRegistry, k Keeper) {
 	ir.RegisterRoute(types.ModuleName, "balance-stake-hostzone-invariant", k.BalanceStakeHostZoneInvariant())
-	ir.RegisterRoute(types.ModuleName, "amount-of-delagate-of-validator-invariant", k.AmountDelegateOfValidatorInvariant())
 }
 
 // AllInvariants runs all invariants of the stakeibc module
@@ -21,11 +20,7 @@ func AllInvariants(k Keeper) sdk.Invariant {
 		// msg, broke := RedemptionRateInvariant(k)(ctx)
 		// note: once we have >1 invariant here, follow the pattern from staking module invariants here: https://github.com/cosmos/cosmos-sdk/blob/v0.46.0/x/staking/keeper/invariants.go
 		// return "", false
-		res, stop := k.BalanceStakeHostZoneInvariant()(ctx)
-		if !stop {
-			return res, stop
-		}
-		return k.AmountDelegateOfValidatorInvariant()(ctx)
+		return k.BalanceStakeHostZoneInvariant()(ctx)
 
 	}
 }
@@ -48,32 +43,5 @@ func (k Keeper) BalanceStakeHostZoneInvariant() sdk.Invariant {
 			}
 		}
 		return sdk.FormatInvariant(types.ModuleName, "balance-stake-hostzone-invariant", "All host zones have balances stake is equal to total of validator's delegations"), false
-	}
-}
-
-// AmountDelegateOfValidatorInvariant check inconsistent between the real amount of delegate and weight of validator
-func (k Keeper) AmountDelegateOfValidatorInvariant() sdk.Invariant {
-	return func(ctx sdk.Context) (string, bool) {
-		listHostZone := k.GetAllHostZone(ctx)
-
-		for _, host := range listHostZone {
-			totalWeightOfHostZone := int64(k.GetTotalValidatorWeight(host))
-			totalDelegateOfVals := k.GetTotalValidatorDelegations(host)
-			for _, val := range host.Validators {
-				weightOfVal := int64(val.Weight)
-				amoutDelegateOfVal := val.DelegationAmt
-				// TODO: check Tolerance for calculation below
-				amoutDelegateOfValFromWeight := totalDelegateOfVals.Mul(sdk.NewInt(weightOfVal)).Quo(sdk.NewInt(totalWeightOfHostZone))
-				if !amoutDelegateOfValFromWeight.Equal(amoutDelegateOfVal) {
-					return sdk.FormatInvariant(types.ModuleName, "balance-stake-hostzone-invariant", fmt.Sprintf(
-						"\tAmount of delegate of validator %s is not inconsistent with the ratio of weight \n"+
-							"\tAmount actually of delegate: %d\n"+
-							"\tAmount of delegate by ratio of weight: %d\n",
-						val.Name, val.DelegationAmt, amoutDelegateOfValFromWeight,
-					)), true
-				}
-			}
-		}
-		return sdk.FormatInvariant(types.ModuleName, "amount-of-delagate-of-validator-invariant", "All validators have amount of delegate inconsistent with the ratio of weight"), false
 	}
 }

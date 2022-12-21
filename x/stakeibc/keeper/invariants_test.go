@@ -14,7 +14,7 @@ func (suite *KeeperTestSuite) TestBalanceStakeHostZoneInvariant() {
 		expectedStop bool
 	}{
 		{
-			name: "false case",
+			name: "unhappy case",
 			hostZone: types.HostZone{
 				ChainId: HostChainId,
 				Validators: []*stakeibctypes.Validator{
@@ -40,7 +40,7 @@ func (suite *KeeperTestSuite) TestBalanceStakeHostZoneInvariant() {
 			expectedStop: true,
 		},
 		{
-			name: "valid case",
+			name: "happy case",
 			hostZone: types.HostZone{
 				ChainId: HostChainId,
 				Validators: []*stakeibctypes.Validator{
