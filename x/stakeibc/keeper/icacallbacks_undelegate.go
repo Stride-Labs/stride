@@ -97,11 +97,6 @@ func UndelegateCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, a
 		k.Logger(ctx).Error(fmt.Sprintf("UndelegateCallback | %s", err.Error()))
 		return err
 	}
-	// upon success, add host zone unbondings to the exit transfer queue
-	err = k.RecordsKeeper.SetHostZoneUnbondings(ctx, zone.ChainId, undelegateCallback.EpochUnbondingRecordIds, recordstypes.HostZoneUnbonding_EXIT_TRANSFER_QUEUE)
-	if err != nil {
-		return err
-	}
 	return nil
 }
 
@@ -155,8 +150,8 @@ func (k Keeper) GetLatestCompletionTime(ctx sdk.Context, txMsgData *sdk.TxMsgDat
 }
 
 // UpdateHostZoneUnbondings does two things:
-// 		1. Update the status and time of each hostZoneUnbonding on each epochUnbondingRecord
-// 		2. Return the number of stTokens that need to be burned
+//  1. Update the status and time of each hostZoneUnbonding on each epochUnbondingRecord
+//  2. Return the number of stTokens that need to be burned
 func (k Keeper) UpdateHostZoneUnbondings(
 	ctx sdk.Context,
 	latestCompletionTime time.Time,
