@@ -11,8 +11,8 @@ import (
 
 // RegisterInvariants registers all governance invariants.
 func RegisterInvariants(ir sdk.InvariantRegistry, k Keeper) {
-	ir.RegisterRoute(types.ModuleName, "balance-stake-hostzone-invariant", BalanceStakeHostZoneInvariant(k))
-	ir.RegisterRoute(types.ModuleName, "amount-of-delagate-of-validator-invariant", AmountDelegateOfValidatorInvariant(k))
+	ir.RegisterRoute(types.ModuleName, "balance-stake-hostzone-invariant", k.BalanceStakeHostZoneInvariant())
+	ir.RegisterRoute(types.ModuleName, "amount-of-delagate-of-validator-invariant", k.AmountDelegateOfValidatorInvariant())
 }
 
 // AllInvariants runs all invariants of the stakeibc module
@@ -21,17 +21,17 @@ func AllInvariants(k Keeper) sdk.Invariant {
 		// msg, broke := RedemptionRateInvariant(k)(ctx)
 		// note: once we have >1 invariant here, follow the pattern from staking module invariants here: https://github.com/cosmos/cosmos-sdk/blob/v0.46.0/x/staking/keeper/invariants.go
 		// return "", false
-		res, stop := BalanceStakeHostZoneInvariant(k)(ctx)
+		res, stop := k.BalanceStakeHostZoneInvariant()(ctx)
 		if !stop {
 			return res, stop
 		}
-		return AmountDelegateOfValidatorInvariant(k)(ctx)
+		return k.AmountDelegateOfValidatorInvariant()(ctx)
 
 	}
 }
 
 // BalanceStakeHostZoneInvariant ensure that balance stake of all host zone are equal to of validator's delegation
-func BalanceStakeHostZoneInvariant(k Keeper) sdk.Invariant {
+func (k Keeper) BalanceStakeHostZoneInvariant() sdk.Invariant {
 	return func(ctx sdk.Context) (string, bool) {
 		listHostZone := k.GetAllHostZone(ctx)
 
@@ -52,7 +52,7 @@ func BalanceStakeHostZoneInvariant(k Keeper) sdk.Invariant {
 }
 
 // AmountDelegateOfValidatorInvariant check inconsistent between the real amount of delegate and weight of validator
-func AmountDelegateOfValidatorInvariant(k Keeper) sdk.Invariant {
+func (k Keeper) AmountDelegateOfValidatorInvariant() sdk.Invariant {
 	return func(ctx sdk.Context) (string, bool) {
 		listHostZone := k.GetAllHostZone(ctx)
 
