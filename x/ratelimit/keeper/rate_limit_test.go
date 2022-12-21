@@ -37,6 +37,7 @@ func (s *KeeperTestSuite) TestGetChannelValue() {
 	s.Require().Equal(expected, actual)
 }
 
+// Helper function to create 5 rate limit objects with various attributes
 func (s *KeeperTestSuite) createRateLimits() []types.RateLimit {
 	rateLimits := []types.RateLimit{}
 	for i := 1; i <= 5; i++ {
@@ -82,8 +83,8 @@ func (s *KeeperTestSuite) TestGetAllRateLimits() {
 	s.Require().ElementsMatch(expectedRateLimits, actualRateLimits, "all rate limits")
 }
 
-func (s *KeeperTestSuite) SetupCheckRateLimitTest() {
-	// Add rate limit to store
+// Adds a rate limit object to the store in preparation for the check rate limit tests
+func (s *KeeperTestSuite) SetupCheckRateLimitAndUpdatedFlowTest() {
 	channelValue := sdk.NewInt(100)
 	maxPercentSend := sdk.NewInt(10)
 	maxPercentRecv := sdk.NewInt(10)
@@ -106,8 +107,9 @@ func (s *KeeperTestSuite) SetupCheckRateLimitTest() {
 	})
 }
 
-func (s *KeeperTestSuite) ProcessCheckRateLimitTestCase(tc checkRateLimitTestCase) {
-	s.SetupCheckRateLimitTest()
+// Helper function to check the rate limit across a series of transfers
+func (s *KeeperTestSuite) processCheckRateLimitAndUpdateFlowTestCase(tc checkRateLimitTestCase) {
+	s.SetupCheckRateLimitAndUpdatedFlowTest()
 
 	expectedInflow := sdk.NewInt(0)
 	expectedOutflow := sdk.NewInt(0)
@@ -137,7 +139,7 @@ func (s *KeeperTestSuite) ProcessCheckRateLimitTestCase(tc checkRateLimitTestCas
 	}
 }
 
-func (s *KeeperTestSuite) TestCheckRateLimit_UnilateralFlow() {
+func (s *KeeperTestSuite) TestCheckRateLimitAndUpdateFlow_UnilateralFlow() {
 	testCases := []checkRateLimitTestCase{
 		{
 			name: "send_under_threshold",
@@ -173,12 +175,12 @@ func (s *KeeperTestSuite) TestCheckRateLimit_UnilateralFlow() {
 
 	for _, tc := range testCases {
 		s.Run(tc.name, func() {
-			s.ProcessCheckRateLimitTestCase(tc)
+			s.processCheckRateLimitAndUpdateFlowTestCase(tc)
 		})
 	}
 }
 
-func (s *KeeperTestSuite) TestCheckRateLimit_BidirectionalFlow() {
+func (s *KeeperTestSuite) TestCheckRateLimitAndUpdatedFlow_BidirectionalFlow() {
 	testCases := []checkRateLimitTestCase{
 		{
 			name: "send_then_recv_under_threshold",
@@ -248,7 +250,7 @@ func (s *KeeperTestSuite) TestCheckRateLimit_BidirectionalFlow() {
 
 	for _, tc := range testCases {
 		s.Run(tc.name, func() {
-			s.ProcessCheckRateLimitTestCase(tc)
+			s.processCheckRateLimitAndUpdateFlowTestCase(tc)
 		})
 	}
 }

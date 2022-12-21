@@ -14,12 +14,14 @@ import (
 
 var _ types.QueryServer = Keeper{}
 
+// Query a all rate limits
 func (k Keeper) RateLimits(c context.Context, req *types.QueryRateLimitsRequest) (*types.QueryRateLimitsResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 	rateLimits := k.GetAllRateLimits(ctx)
 	return &types.QueryRateLimitsResponse{RateLimits: rateLimits}, nil
 }
 
+// Query a rate limit by denom and channelId
 func (k Keeper) RateLimit(c context.Context, req *types.QueryRateLimitRequest) (*types.QueryRateLimitResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 	rateLimit, found := k.GetRateLimit(ctx, req.Denom, req.ChannelId)
@@ -29,6 +31,7 @@ func (k Keeper) RateLimit(c context.Context, req *types.QueryRateLimitRequest) (
 	return &types.QueryRateLimitResponse{RateLimit: &rateLimit}, nil
 }
 
+// Query all rate limits for a given channel
 func (k Keeper) RateLimitByChainId(c context.Context, req *types.QueryRateLimitsByChainIdRequest) (*types.QueryRateLimitsByChainIdResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 

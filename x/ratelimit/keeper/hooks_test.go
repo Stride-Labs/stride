@@ -11,7 +11,7 @@ import (
 
 // Store a rate limit with a non-zero flow for each duration
 func (s *KeeperTestSuite) resetRateLimits(denom string, durations []uint64, nonZeroFlow int64) {
-
+	// Add/reset rate limit with a quota duration hours for each duration in the list
 	for i, duration := range durations {
 		channelId := fmt.Sprintf("channel-%d", i)
 
