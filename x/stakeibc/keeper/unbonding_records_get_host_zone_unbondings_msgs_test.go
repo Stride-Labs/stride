@@ -7,9 +7,9 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	_ "github.com/stretchr/testify/suite"
 
-	recordtypes "github.com/Stride-Labs/stride/v4/x/records/types"
+	recordtypes "github.com/Stride-Labs/stride/v5/x/records/types"
 
-	stakeibc "github.com/Stride-Labs/stride/v4/x/stakeibc/types"
+	stakeibc "github.com/Stride-Labs/stride/v5/x/stakeibc/types"
 )
 
 type GetHostZoneUnbondingMsgsTestCase struct {
@@ -129,7 +129,7 @@ func (s *KeeperTestSuite) TestGetHostZoneUnbondingMsgs_Successful() {
 	s.Require().Equal(len(tc.valNames), len(actualUnbondMsgs), "number of unbonding messages should be number of records to unbond")
 
 	s.Require().Equal(tc.amtToUnbond.Mul(sdk.NewInt(int64(len(tc.epochUnbondingRecords)))), actualAmtToUnbond, "total amount to unbond should match input amtToUnbond")
-	
+
 	totalWgt := sdk.NewDec(int64(tc.totalWgt))
 	actualAmtToUnbondDec := sdk.NewDecFromInt(actualAmtToUnbond)
 	actualUnbondMsg1 := actualUnbondMsgs[0].String()

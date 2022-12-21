@@ -8,9 +8,9 @@ import (
 	channeltypes "github.com/cosmos/ibc-go/v3/modules/core/04-channel/types"
 	_ "github.com/stretchr/testify/suite"
 
-	recordtypes "github.com/Stride-Labs/stride/v4/x/records/types"
-	stakeibckeeper "github.com/Stride-Labs/stride/v4/x/stakeibc/keeper"
-	"github.com/Stride-Labs/stride/v4/x/stakeibc/types"
+	recordtypes "github.com/Stride-Labs/stride/v5/x/records/types"
+	stakeibckeeper "github.com/Stride-Labs/stride/v5/x/stakeibc/keeper"
+	"github.com/Stride-Labs/stride/v5/x/stakeibc/types"
 )
 
 type ClaimCallbackState struct {
@@ -39,7 +39,7 @@ func (s *KeeperTestSuite) SetupClaimCallback() ClaimCallbackTestCase {
 		// after a user calls ClaimUndelegatedTokens, the record is set to claimIsPending = true
 		// to prevent double claims
 		ClaimIsPending: true,
-		Amount: sdk.ZeroInt(),
+		Amount:         sdk.ZeroInt(),
 	}
 	recordId2 := recordtypes.UserRedemptionRecordKeyFormatter(HostChainId, epochNumber, "other_sender")
 	userRedemptionRecord2 := recordtypes.UserRedemptionRecord{

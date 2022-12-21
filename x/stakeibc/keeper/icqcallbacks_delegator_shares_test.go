@@ -6,10 +6,10 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
-	epochtypes "github.com/Stride-Labs/stride/v4/x/epochs/types"
-	icqtypes "github.com/Stride-Labs/stride/v4/x/interchainquery/types"
-	stakeibckeeper "github.com/Stride-Labs/stride/v4/x/stakeibc/keeper"
-	stakeibctypes "github.com/Stride-Labs/stride/v4/x/stakeibc/types"
+	epochtypes "github.com/Stride-Labs/stride/v5/x/epochs/types"
+	icqtypes "github.com/Stride-Labs/stride/v5/x/interchainquery/types"
+	stakeibckeeper "github.com/Stride-Labs/stride/v5/x/stakeibc/keeper"
+	stakeibctypes "github.com/Stride-Labs/stride/v5/x/stakeibc/types"
 )
 
 type DelegatorSharesICQCallbackState struct {
@@ -58,7 +58,7 @@ func (s *KeeperTestSuite) SetupDelegatorSharesICQCallback() DelegatorSharesICQCa
 	// 1000 tokens - 950 token = 50 tokens slashed
 	// 50 slash tokens / 1000 initial tokens = 5% slash
 	expectedTokensAfterSlash := sdk.NewInt(950)
-	expectedSlashAmount := tokensBeforeSlash.Sub(expectedTokensAfterSlash) 
+	expectedSlashAmount := tokensBeforeSlash.Sub(expectedTokensAfterSlash)
 	slashPercentage := sdk.MustNewDecFromStr("0.05")
 	weightBeforeSlash := uint64(20)
 	expectedWeightAfterSlash := uint64(19)
@@ -75,9 +75,9 @@ func (s *KeeperTestSuite) SetupDelegatorSharesICQCallback() DelegatorSharesICQCa
 		Validators: []*stakeibctypes.Validator{
 			// This validator isn't being queried
 			{
-				Name:    "val1",
-				Address: "valoper1",
-				Weight:  1,
+				Name:          "val1",
+				Address:       "valoper1",
+				Weight:        1,
 				DelegationAmt: sdk.ZeroInt(),
 			},
 			// This is the validator in question

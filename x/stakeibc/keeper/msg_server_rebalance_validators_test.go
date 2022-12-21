@@ -7,9 +7,9 @@ import (
 	icatypes "github.com/cosmos/ibc-go/v3/modules/apps/27-interchain-accounts/types"
 	ibctesting "github.com/cosmos/ibc-go/v3/testing"
 
-	epochtypes "github.com/Stride-Labs/stride/v4/x/epochs/types"
-	icacallbackstypes "github.com/Stride-Labs/stride/v4/x/icacallbacks/types"
-	stakeibctypes "github.com/Stride-Labs/stride/v4/x/stakeibc/types"
+	epochtypes "github.com/Stride-Labs/stride/v5/x/epochs/types"
+	icacallbackstypes "github.com/Stride-Labs/stride/v5/x/icacallbacks/types"
+	stakeibctypes "github.com/Stride-Labs/stride/v5/x/stakeibc/types"
 )
 
 type RebalanceValidatorsTestCase struct {
@@ -149,7 +149,7 @@ func (s *KeeperTestSuite) TestRebalanceValidators_Successful() {
 	s.Require().NoError(err, "unmarshalling callback args error for callback key (%s)", callbackKey)
 	s.Require().Equal("GAIA", callbackArgs.HostZoneId, "callback host zone id should be GAIA")
 
-		// verify callback rebalance is what we want
+	// verify callback rebalance is what we want
 	s.Require().Equal(2, len(callbackArgs.Rebalancings), "callback should have 2 rebalancing")
 	firstRebal := callbackArgs.Rebalancings[0]
 	s.Require().Equal(sdk.NewInt(104), firstRebal.Amt, "first rebalance should rebalance 104 ATOM")

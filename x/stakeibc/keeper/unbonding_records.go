@@ -9,9 +9,9 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/spf13/cast"
 
-	"github.com/Stride-Labs/stride/v4/utils"
-	recordstypes "github.com/Stride-Labs/stride/v4/x/records/types"
-	"github.com/Stride-Labs/stride/v4/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v5/utils"
+	recordstypes "github.com/Stride-Labs/stride/v5/x/records/types"
+	"github.com/Stride-Labs/stride/v5/x/stakeibc/types"
 )
 
 func (k Keeper) CreateEpochUnbondingRecord(ctx sdk.Context, epochNumber uint64) bool {
@@ -41,11 +41,14 @@ func (k Keeper) CreateEpochUnbondingRecord(ctx sdk.Context, epochNumber uint64) 
 }
 
 // Build the undelegation messages for each validator by summing the total amount to unbond across epoch unbonding record,
-//   and then splitting the undelegation amount across validators
+//
+//	and then splitting the undelegation amount across validators
+//
 // returns (1) MsgUndelegate messages
-//         (2) Total Amount to unbond across all validators
-//         (3) Marshalled Callback Args
-//         (4) Relevant EpochUnbondingRecords that contain HostZoneUnbondings that are ready for unbonding
+//
+//	(2) Total Amount to unbond across all validators
+//	(3) Marshalled Callback Args
+//	(4) Relevant EpochUnbondingRecords that contain HostZoneUnbondings that are ready for unbonding
 func (k Keeper) GetHostZoneUnbondingMsgs(ctx sdk.Context, hostZone types.HostZone) (msgs []sdk.Msg, totalAmountToUnbond sdk.Int, marshalledCallbackArgs []byte, epochUnbondingRecordIds []uint64, err error) {
 	k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId, "Preparing MsgUndelegates from the delegation account to each validator"))
 
@@ -207,8 +210,9 @@ func (k Keeper) SubmitHostZoneUnbondingMsg(ctx sdk.Context, msgs []sdk.Msg, tota
 // this function iterates each host zone, and if it's the right time to
 // initiate an unbonding, it attempts to unbond all outstanding records
 // returns (1) did all chains succeed
-//		   (2) list of strings of successful unbondings
-//		   (3) list of strings of failed unbondings
+//
+//	(2) list of strings of successful unbondings
+//	(3) list of strings of failed unbondings
 func (k Keeper) InitiateAllHostZoneUnbondings(ctx sdk.Context, dayNumber uint64) (success bool, successfulUnbondings []string, failedUnbondings []string) {
 	k.Logger(ctx).Info(fmt.Sprintf("Initiating all host zone unbondings for epoch %d...", dayNumber))
 
@@ -393,11 +397,12 @@ func (k Keeper) SweepAllUnbondedTokensForHostZone(ctx sdk.Context, hostZone type
 }
 
 // Sends all unbonded tokens to the redemption account
-//    returns:
-//       * success indicator if all chains succeeded
-//       * list of successful chains
-//       * list of tokens swept
-//       * list of failed chains
+//
+//	returns:
+//	   * success indicator if all chains succeeded
+//	   * list of successful chains
+//	   * list of tokens swept
+//	   * list of failed chains
 func (k Keeper) SweepAllUnbondedTokens(ctx sdk.Context) (success bool, successfulSweeps []string, sweepAmounts []sdk.Int, failedSweeps []string) {
 	// this function returns true if all chains succeeded, false otherwise
 	// it also returns a list of successful chains (arg 2), tokens swept (arg 3), and failed chains (arg 4)

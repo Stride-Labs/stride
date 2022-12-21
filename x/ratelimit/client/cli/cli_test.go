@@ -9,18 +9,18 @@ import (
 
 	clitestutil "github.com/cosmos/cosmos-sdk/testutil/cli"
 
-	strideclitestutil "github.com/Stride-Labs/stride/v4/testutil/cli"
+	strideclitestutil "github.com/Stride-Labs/stride/v5/testutil/cli"
 
-	"github.com/Stride-Labs/stride/v4/testutil/network"
+	"github.com/Stride-Labs/stride/v5/testutil/network"
 
 	"github.com/stretchr/testify/suite"
 
 	tmcli "github.com/tendermint/tendermint/libs/cli"
 
-	"github.com/Stride-Labs/stride/v4/x/ratelimit/client/cli"
+	"github.com/Stride-Labs/stride/v5/x/ratelimit/client/cli"
 
-	"github.com/Stride-Labs/stride/v4/app"
-	"github.com/Stride-Labs/stride/v4/x/ratelimit/types"
+	"github.com/Stride-Labs/stride/v5/app"
+	"github.com/Stride-Labs/stride/v5/x/ratelimit/types"
 )
 
 type IntegrationTestSuite struct {

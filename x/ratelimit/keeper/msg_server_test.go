@@ -3,9 +3,9 @@ package keeper_test
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Stride-Labs/stride/v4/app/apptesting"
-	minttypes "github.com/Stride-Labs/stride/v4/x/mint/types"
-	"github.com/Stride-Labs/stride/v4/x/ratelimit/types"
+	"github.com/Stride-Labs/stride/v5/app/apptesting"
+	minttypes "github.com/Stride-Labs/stride/v5/x/mint/types"
+	"github.com/Stride-Labs/stride/v5/x/ratelimit/types"
 )
 
 var (

@@ -7,7 +7,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 
-	"github.com/Stride-Labs/stride/v4/x/claim/types"
+	"github.com/Stride-Labs/stride/v5/x/claim/types"
 )
 
 // Test functionality for loading allocation data(csv)
@@ -64,7 +64,7 @@ func (suite *KeeperTestSuite) TestHookOfUnclaimableAccount() {
 	suite.Equal(sdk.Coins{}, balances)
 }
 
-//Check balances before and after airdrop starts
+// Check balances before and after airdrop starts
 func (suite *KeeperTestSuite) TestHookBeforeAirdropStart() {
 	suite.SetupTest()
 

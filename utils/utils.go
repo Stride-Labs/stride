@@ -13,8 +13,8 @@ import (
 
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
-	config "github.com/Stride-Labs/stride/v4/cmd/strided/config"
-	recordstypes "github.com/Stride-Labs/stride/v4/x/records/types"
+	config "github.com/Stride-Labs/stride/v5/cmd/strided/config"
+	recordstypes "github.com/Stride-Labs/stride/v5/x/records/types"
 )
 
 func FilterDepositRecords(arr []recordstypes.DepositRecord, condition func(recordstypes.DepositRecord) bool) (ret []recordstypes.DepositRecord) {
@@ -45,12 +45,12 @@ func Min(a int, b int) int {
 }
 
 func StringMapKeys[V any](m map[string]V) []string {
-    keys := make([]string, 0, len(m))
-    for k := range m {
+	keys := make([]string, 0, len(m))
+	for k := range m {
 		keys = append(keys, k)
-    }
-    sort.Strings(keys)
-    return keys
+	}
+	sort.Strings(keys)
+	return keys
 }
 
 func Int32MapKeys[V any](m map[int32]V) []int32 {
@@ -61,7 +61,6 @@ func Int32MapKeys[V any](m map[int32]V) []int32 {
 	sort.Slice(keys, func(i, j int) bool { return keys[i] < keys[j] })
 	return keys
 }
-
 
 //==============================  ADDRESS VERIFICATION UTILS  ================================
 // ref: https://github.com/cosmos/cosmos-sdk/blob/b75c2ebcfab1a6b535723f1ac2889a2fc2509520/types/address.go#L177
@@ -137,7 +136,7 @@ func AccAddressFromBech32(address string, bech32prefix string) (addr AccAddress,
 	return AccAddress(bz), nil
 }
 
-//==============================  AIRDROP UTILS  ================================
+// ==============================  AIRDROP UTILS  ================================
 // max64 returns the maximum of its inputs.
 func Max64(i, j int64) int64 {
 	if i > j {
@@ -207,7 +206,8 @@ func ConvertAddressToStrideAddress(address string) string {
 
 // Returns a log string with a tab and chainId as the prefix
 // Ex:
-//   | COSMOSHUB-4   |   string
+//
+//	| COSMOSHUB-4   |   string
 func LogWithHostZone(chainId string, s string, a ...any) string {
 	msg := fmt.Sprintf(s, a...)
 	return fmt.Sprintf("|   %-13s |  %s", strings.ToUpper(chainId), msg)
@@ -215,7 +215,8 @@ func LogWithHostZone(chainId string, s string, a ...any) string {
 
 // Returns a log header string with a dash padding on either side
 // Ex:
-//  ------------------------------ string ------------------------------
+//
+//	------------------------------ string ------------------------------
 func LogHeader(s string, a ...any) string {
 	lineLength := 120
 	header := fmt.Sprintf(s, a...)
