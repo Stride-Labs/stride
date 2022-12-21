@@ -294,9 +294,6 @@ func (s *KeeperTestSuite) TestGetLatestCompletionTime_Failure() {
 
 // UpdateHostZoneUnbondings tests
 func (s *KeeperTestSuite) TestUpdateHostZoneUnbondings_Success() {
-	hostZone := stakeibc.HostZone{
-		ChainId: HostChainId,
-	}
 	totalBalance := sdk.NewInt(1_500_000)
 	stAmtHzu1 := sdk.NewInt(600_000)
 	stAmtHzu2 := sdk.NewInt(700_000)
@@ -333,7 +330,7 @@ func (s *KeeperTestSuite) TestUpdateHostZoneUnbondings_Success() {
 		EpochUnbondingRecordIds: []uint64{1, 2},
 	}
 	completionTime := time.Now().Add(time.Second * time.Duration(10))
-	burnAmount, err := s.App.StakeibcKeeper.UpdateHostZoneUnbondings(s.Ctx, completionTime, hostZone, callbackArgs)
+	burnAmount, err := s.App.StakeibcKeeper.UpdateHostZoneUnbondings(s.Ctx, completionTime, HostChainId, callbackArgs)
 	s.Require().NoError(err)
 	s.Require().Equal(stAmtHzu1.Add(stAmtHzu3), burnAmount, "burn amount is correct")
 
@@ -358,22 +355,16 @@ func (s *KeeperTestSuite) TestUpdateHostZoneUnbondings_Success() {
 
 // Test failure case - epoch unbonding record DNE
 func (s *KeeperTestSuite) TestUpdateHostZoneUnbondings_EpochUnbondingRecordDNE() {
-	hostZone := stakeibc.HostZone{
-		ChainId: HostChainId,
-	}
 	callbackArgs := types.UndelegateCallback{
 		EpochUnbondingRecordIds: []uint64{1},
 	}
 	completionTime := s.Ctx.BlockTime()
-	_, err := s.App.StakeibcKeeper.UpdateHostZoneUnbondings(s.Ctx, completionTime, hostZone, callbackArgs)
+	_, err := s.App.StakeibcKeeper.UpdateHostZoneUnbondings(s.Ctx, completionTime, HostChainId, callbackArgs)
 	s.Require().EqualError(err, "Unable to find epoch unbonding record for epoch: 1: key not found")
 }
 
 // Test failure case - HostZoneUnbonding DNE
 func (s *KeeperTestSuite) TestUpdateHostZoneUnbondings_HostZoneUnbondingDNE() {
-	hostZone := stakeibc.HostZone{
-		ChainId: HostChainId,
-	}
 	epochUnbondingRecord := recordtypes.EpochUnbondingRecord{
 		EpochNumber: 1,
 		// No hzu!
@@ -384,7 +375,7 @@ func (s *KeeperTestSuite) TestUpdateHostZoneUnbondings_HostZoneUnbondingDNE() {
 		EpochUnbondingRecordIds: []uint64{1},
 	}
 	completionTime := s.Ctx.BlockTime()
-	_, err := s.App.StakeibcKeeper.UpdateHostZoneUnbondings(s.Ctx, completionTime, hostZone, callbackArgs)
+	_, err := s.App.StakeibcKeeper.UpdateHostZoneUnbondings(s.Ctx, completionTime, HostChainId, callbackArgs)
 	s.Require().EqualError(err, "Host zone unbonding not found (GAIA) in epoch unbonding record: 1: key not found")
 }
 
