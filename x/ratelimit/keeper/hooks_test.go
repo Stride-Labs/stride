@@ -5,8 +5,8 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	epochstypes "github.com/Stride-Labs/stride/v4/x/epochs/types"
-	"github.com/Stride-Labs/stride/v4/x/ratelimit/types"
+	epochstypes "github.com/Stride-Labs/stride/v5/x/epochs/types"
+	"github.com/Stride-Labs/stride/v5/x/ratelimit/types"
 )
 
 // Store a rate limit with a non-zero flow for each duration
