@@ -1,12 +1,15 @@
 package keeper
 
 import (
+	"fmt"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/cosmos/cosmos-sdk/telemetry"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
+	"github.com/Stride-Labs/stride/v4/utils"
 	"github.com/Stride-Labs/stride/v4/x/epochs/types"
 )
 
@@ -26,10 +29,15 @@ func (k Keeper) BeginBlocker(ctx sdk.Context) {
 		switch {
 		case shouldInitialEpochStart:
 			epochInfo = startInitialEpoch(epochInfo)
-			logger.Info("starting epoch", "identifier", epochInfo.Identifier)
+			logger.Info(fmt.Sprintf("initial %s epoch", epochInfo.Identifier))
 		case shouldEpochStart:
 			epochInfo = endEpoch(epochInfo)
-			logger.Info("ending epoch", "identifier", epochInfo.Identifier)
+
+			// Capitalize the epoch identifier for the logs
+			epochAlias := strings.ToUpper(strings.ReplaceAll(epochInfo.Identifier, "_epoch", ""))
+			logger.Info(utils.LogHeader("%s EPOCH %d", epochAlias, epochInfo.CurrentEpoch))
+			logger.Info(utils.LogHeader("Epoch Start Time: %s", epochInfo.CurrentEpochStartTime))
+
 			ctx.EventManager().EmitEvent(
 				sdk.NewEvent(
 					types.EventTypeEpochEnd,

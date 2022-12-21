@@ -6,7 +6,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
-	"github.com/spf13/cast"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/spf13/cobra"
 
 	"github.com/Stride-Labs/stride/v4/x/stakeibc/types"
@@ -20,9 +21,9 @@ func CmdLiquidStake() *cobra.Command {
 		Short: "Broadcast message liquid-stake",
 		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
-			argAmount, err := cast.ToUint64E(args[0])
-			if err != nil {
-				return err
+			argAmount, found := sdk.NewIntFromString(args[0])
+			if !found {
+				return  sdkerrors.Wrap(sdkerrors.ErrInvalidType, "can not convert string to int")
 			}
 			argHostDenom := args[1]
 

@@ -8,12 +8,13 @@ import (
 
 	keepertest "github.com/Stride-Labs/stride/v4/testutil/keeper"
 	"github.com/Stride-Labs/stride/v4/testutil/nullify"
+
 	"github.com/Stride-Labs/stride/v4/x/stakeibc/keeper"
 	"github.com/Stride-Labs/stride/v4/x/stakeibc/types"
 )
 
 func createTestValidator(keeper *keeper.Keeper, ctx sdk.Context) types.Validator {
-	item := types.Validator{}
+	item := types.Validator{DelegationAmt: sdk.NewInt(1)}
 	keeper.SetValidator(ctx, item)
 	return item
 }

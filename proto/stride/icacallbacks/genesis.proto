@@ -6,7 +6,7 @@ import "stride/icacallbacks/params.proto";
 import "stride/icacallbacks/callback_data.proto";
 // this line is used by starport scaffolding # genesis/proto/import
 
-option go_package = "github.com/Stride-Labs/stride/v3/x/icacallbacks/types";
+option go_package = "github.com/Stride-Labs/stride/v4/x/icacallbacks/types";
 
 // GenesisState defines the icacallbacks module's genesis state.
 message GenesisState {

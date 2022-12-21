@@ -8,7 +8,7 @@ import "stride/stakeibc/host_zone.proto";
 import "stride/stakeibc/epoch_tracker.proto";
 // this line is used by starport scaffolding # genesis/proto/import
 
-option go_package = "github.com/Stride-Labs/stride/v3/x/stakeibc/types";
+option go_package = "github.com/Stride-Labs/stride/v4/x/stakeibc/types";
 
 // GenesisState defines the stakeibc module's genesis state.
 message GenesisState {
