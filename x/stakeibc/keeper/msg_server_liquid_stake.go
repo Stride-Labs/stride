@@ -68,17 +68,10 @@ func (k msgServer) LiquidStake(goCtx context.Context, msg *types.MsgLiquidStake)
 	}
 	// mint user `amount` of the corresponding stAsset
 	// NOTE: We should ensure that denoms are unique - we don't want anyone spoofing denoms
-	stCoins, err := k.MintStAsset(ctx, sender, msg.Amount, msg.HostDenom)
+	err = k.MintStAssetAndTransfer(ctx, sender, msg.Amount, msg.HostDenom)
 	if err != nil {
 		k.Logger(ctx).Error("failed to send tokens from Account to Module")
 		return nil, sdkerrors.Wrapf(err, "failed to mint %s stAssets to user", msg.HostDenom)
-	}
-
-	// transfer those coins to the user
-	err = k.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, sender, stCoins)
-	if err != nil {
-		k.Logger(ctx).Error("Failed to send coins from module to account")
-		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "Failed to send %s from module to account", stCoins.GetDenomByIndex(0))
 	}
 
 	// create a deposit record of these tokens (pending transfer)
@@ -100,7 +93,7 @@ func (k msgServer) LiquidStake(goCtx context.Context, msg *types.MsgLiquidStake)
 	return &types.MsgLiquidStakeResponse{}, nil
 }
 
-func (k msgServer) MintStAsset(ctx sdk.Context, sender sdk.AccAddress, amount sdk.Int, denom string) (sdk.Coins, error) {
+func (k msgServer) MintStAssetAndTransfer(ctx sdk.Context, sender sdk.AccAddress, amount sdk.Int, denom string) error {
 	stAssetDenom := types.StAssetDenomFromHostZoneDenom(denom)
 
 	// TODO(TEST-7): Add an exchange rate here! What object should we store the exchange rate on?
@@ -111,7 +104,7 @@ func (k msgServer) MintStAsset(ctx sdk.Context, sender sdk.AccAddress, amount sd
 	stCoins, err := sdk.ParseCoinsNormalized(coinString)
 	if err != nil {
 		k.Logger(ctx).Error("Failed to parse coins")
-		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "Failed to parse coins %s", coinString)
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "Failed to parse coins %s", coinString)
 	}
 
 	// Mints coins to the module account, will error if the module account does not exist or is unauthorized.
@@ -119,9 +112,16 @@ func (k msgServer) MintStAsset(ctx sdk.Context, sender sdk.AccAddress, amount sd
 	err = k.bankKeeper.MintCoins(ctx, types.ModuleName, stCoins)
 	if err != nil {
 		k.Logger(ctx).Error("Failed to mint coins")
-		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "Failed to mint coins")
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "Failed to mint coins")
+	}
+
+	// transfer those coins to the user
+	err = k.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, sender, stCoins)
+	if err != nil {
+		k.Logger(ctx).Error("Failed to send coins from module to account")
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "Failed to send %s from module to account", stCoins.GetDenomByIndex(0))
 	}
 
 	k.Logger(ctx).Info(fmt.Sprintf("[MINT ST ASSET] success on %s.", hz.GetChainId()))
-	return stCoins, nil
+	return nil
 }
