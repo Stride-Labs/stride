@@ -139,7 +139,7 @@ func (s *KeeperTestSuite) processCheckRateLimitAndUpdateFlowTestCase(tc checkRat
 	}
 }
 
-func (s *KeeperTestSuite) TestCheckRateLimitAndUpdateFlow_UnilateralFlow() {
+func (s *KeeperTestSuite) TestCheckRateLimitAndUpdateFlow_UnidirectionalFlow() {
 	testCases := []checkRateLimitTestCase{
 		{
 			name: "send_under_threshold",
