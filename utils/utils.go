@@ -204,13 +204,22 @@ func ConvertAddressToStrideAddress(address string) string {
 	return bech32Addr
 }
 
-// Returns a log string with a tab and chainId as the prefix
+// Returns a log string with a chainId and tab as the prefix
 // Ex:
 //
 //	| COSMOSHUB-4   |   string
 func LogWithHostZone(chainId string, s string, a ...any) string {
 	msg := fmt.Sprintf(s, a...)
 	return fmt.Sprintf("|   %-13s |  %s", strings.ToUpper(chainId), msg)
+}
+
+// Returns a log string with a chain Id and callback as a prefix
+// Ex:
+//
+//	| COSMOSHUB-4   |  DELEGATE CALLBACK  |  string
+func LogCallbackWithHostZone(chainId string, callbackId string, s string, a ...any) string {
+	msg := fmt.Sprintf(s, a...)
+	return fmt.Sprintf("|   %-13s |  %s CALLBACK  |  %s", strings.ToUpper(chainId), strings.ToUpper(callbackId), msg)
 }
 
 // Returns a log header string with a dash padding on either side
