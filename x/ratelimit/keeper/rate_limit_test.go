@@ -44,6 +44,7 @@ func (s *KeeperTestSuite) createRateLimits() []types.RateLimit {
 		suffix := strconv.Itoa(i)
 		rateLimit := types.RateLimit{
 			Path: &types.Path{Denom: "denom-" + suffix, ChannelId: "channel-" + suffix},
+			Flow: &types.Flow{Inflow: sdk.NewInt(10), Outflow: sdk.NewInt(10)},
 		}
 
 		rateLimits = append(rateLimits, rateLimit)
@@ -74,6 +75,20 @@ func (s *KeeperTestSuite) TestRemoveRateLimit() {
 	s.App.RatelimitKeeper.RemoveRateLimit(s.Ctx, denomToRemove, channelIdToRemove)
 	_, found := s.App.RatelimitKeeper.GetRateLimit(s.Ctx, denomToRemove, channelIdToRemove)
 	s.Require().False(found, "the removed element should not have been found, but it was")
+}
+
+func (s *KeeperTestSuite) TestResetRateLimit() {
+	rateLimits := s.createRateLimits()
+
+	rateLimitToReset := rateLimits[0]
+	denomToRemove := rateLimitToReset.Path.Denom
+	channelIdToRemove := rateLimitToReset.Path.ChannelId
+
+	s.App.RatelimitKeeper.ResetRateLimit(s.Ctx, denomToRemove, channelIdToRemove)
+	rateLimit, found := s.App.RatelimitKeeper.GetRateLimit(s.Ctx, denomToRemove, channelIdToRemove)
+	s.Require().True(found, "element should have been found, but was not")
+	s.Require().Zero(rateLimit.Flow.Inflow.Int64(), "Inflow should have been reset to 0")
+	s.Require().Zero(rateLimit.Flow.Outflow.Int64(), "Outflow should have been reset to 0")
 }
 
 func (s *KeeperTestSuite) TestGetAllRateLimits() {

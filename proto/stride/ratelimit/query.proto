@@ -15,7 +15,7 @@ service Query {
   rpc RateLimit(QueryRateLimitRequest) returns (QueryRateLimitResponse) {
     option (google.api.http).get = "/ratelimit/ratelimit/{denom}/{channel_id}";
   }
-  rpc RateLimitByChainId(QueryRateLimitsByChainIdRequest)
+  rpc RateLimitsByChainId(QueryRateLimitsByChainIdRequest)
       returns (QueryRateLimitsByChainIdResponse) {
     option (google.api.http).get = "/ratelimit/ratelimits/{chain_id}";
   }

@@ -32,7 +32,7 @@ func (k Keeper) RateLimit(c context.Context, req *types.QueryRateLimitRequest) (
 }
 
 // Query all rate limits for a given channel
-func (k Keeper) RateLimitByChainId(c context.Context, req *types.QueryRateLimitsByChainIdRequest) (*types.QueryRateLimitsByChainIdResponse, error) {
+func (k Keeper) RateLimitsByChainId(c context.Context, req *types.QueryRateLimitsByChainIdRequest) (*types.QueryRateLimitsByChainIdResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 
 	rateLimits := []types.RateLimit{}

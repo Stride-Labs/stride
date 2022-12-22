@@ -114,7 +114,7 @@ func GetCmdQueryRateLimitsByChainId() *cobra.Command {
 			req := &types.QueryRateLimitsByChainIdRequest{
 				ChainId: chainId,
 			}
-			res, err := queryClient.RateLimitByChainId(context.Background(), req)
+			res, err := queryClient.RateLimitsByChainId(context.Background(), req)
 
 			if err != nil {
 				return err
