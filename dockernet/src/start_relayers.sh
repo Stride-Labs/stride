@@ -19,13 +19,7 @@ for chain_id in ${HOST_CHAINS[@]}; do
 
     printf "STRIDE <> $chain_id - Adding relayer keys..."
     $relayer_exec rly keys restore stride $RELAYER_STRIDE_ACCT "$mnemonic" >> $relayer_logs 2>&1
-    echo $chain_id
-    if [[ "$chain_id" == "EVMOS" ]]; then
-        echo "EVMOS MATCH"
-        $relayer_exec rly keys restore $chain_name $account_name --coin-type 60 "$mnemonic" >> $relayer_logs # 2>&1
-    else
-        $relayer_exec rly keys restore $chain_name $account_name --coin-type 118 "$mnemonic" >> $relayer_logs # 2>&1
-    fi
+    $relayer_exec rly keys restore $chain_name $account_name "$mnemonic" >> $relayer_logs 2>&1
     echo "Done restoring relayer keys"
 
     printf "STRIDE <> $chain_id - Creating client, connection, and transfer channel..." | tee -a $relayer_logs
