@@ -35,7 +35,10 @@ message QueryEpochsInfoResponse {
 }
 
 message QueryCurrentEpochRequest { string identifier = 1; }
-message QueryCurrentEpochResponse { int64 current_epoch = 1; }
+message QueryCurrentEpochResponse { string current_epoch = 1 [
+  (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+  (gogoproto.nullable) = false
+]; }
 
 message QueryEpochInfoRequest { string identifier = 1; }
 message QueryEpochInfoResponse {

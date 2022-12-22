@@ -11,26 +11,74 @@ message Params {
   option (gogoproto.goproto_stringer) = false;
 
   // define epoch lengths, in stride_epochs
-  uint64 rewards_interval = 1;
-  uint64 delegate_interval = 6;
-  uint64 deposit_interval = 2;
-  uint64 redemption_rate_interval = 3;
+  string rewards_interval = 1 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
+  string delegate_interval = 6 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
+  string deposit_interval = 2 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
+  string redemption_rate_interval = 3 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
 
-  uint64 stride_commission = 4;
+  string stride_commission = 4 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
   // zone_com_address stores which addresses to
   // send the Stride commission too, as well as what portion
   // of the fee each address is entitled to
   // TODO implement this
   map<string, string> zone_com_address = 5;
-  uint64 reinvest_interval = 7;
-  uint64 validator_rebalancing_threshold = 8;
-  uint64 ica_timeout_nanos = 9;
-  uint64 buffer_size = 10;
-  uint64 ibc_timeout_blocks = 11;
-  uint64 fee_transfer_timeout_nanos = 12;
-  uint64 max_stake_ica_calls_per_epoch = 13;
-  uint64 safety_min_redemption_rate_threshold = 14;
-  uint64 safety_max_redemption_rate_threshold = 15;
-  uint64 ibc_transfer_timeout_nanos = 16;
-  uint64 safety_num_validators = 17;
+  string reinvest_interval = 7 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
+  string validator_rebalancing_threshold = 8 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
+  string ica_timeout_nanos = 9 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
+  string buffer_size = 10 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
+  string ibc_timeout_blocks = 11 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
+  string fee_transfer_timeout_nanos = 12 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
+  string max_stake_ica_calls_per_epoch = 13 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
+  string safety_min_redemption_rate_threshold = 14 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
+  string safety_max_redemption_rate_threshold = 15 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
+  string ibc_transfer_timeout_nanos = 16 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
+  string safety_num_validators = 17 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
 }

@@ -5,6 +5,7 @@ package types
 
 import (
 	fmt "fmt"
+	github_com_cosmos_cosmos_sdk_types "github.com/cosmos/cosmos-sdk/types"
 	_ "github.com/cosmos/gogoproto/gogoproto"
 	proto "github.com/gogo/protobuf/proto"
 	io "io"
@@ -27,27 +28,27 @@ const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 // next id: 18
 type Params struct {
 	// define epoch lengths, in stride_epochs
-	RewardsInterval        uint64 `protobuf:"varint,1,opt,name=rewards_interval,json=rewardsInterval,proto3" json:"rewards_interval,omitempty"`
-	DelegateInterval       uint64 `protobuf:"varint,6,opt,name=delegate_interval,json=delegateInterval,proto3" json:"delegate_interval,omitempty"`
-	DepositInterval        uint64 `protobuf:"varint,2,opt,name=deposit_interval,json=depositInterval,proto3" json:"deposit_interval,omitempty"`
-	RedemptionRateInterval uint64 `protobuf:"varint,3,opt,name=redemption_rate_interval,json=redemptionRateInterval,proto3" json:"redemption_rate_interval,omitempty"`
-	StrideCommission       uint64 `protobuf:"varint,4,opt,name=stride_commission,json=strideCommission,proto3" json:"stride_commission,omitempty"`
+	RewardsInterval        github_com_cosmos_cosmos_sdk_types.Int `protobuf:"bytes,1,opt,name=rewards_interval,json=rewardsInterval,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Int" json:"rewards_interval"`
+	DelegateInterval       github_com_cosmos_cosmos_sdk_types.Int `protobuf:"bytes,6,opt,name=delegate_interval,json=delegateInterval,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Int" json:"delegate_interval"`
+	DepositInterval        github_com_cosmos_cosmos_sdk_types.Int `protobuf:"bytes,2,opt,name=deposit_interval,json=depositInterval,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Int" json:"deposit_interval"`
+	RedemptionRateInterval github_com_cosmos_cosmos_sdk_types.Int `protobuf:"bytes,3,opt,name=redemption_rate_interval,json=redemptionRateInterval,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Int" json:"redemption_rate_interval"`
+	StrideCommission       github_com_cosmos_cosmos_sdk_types.Int `protobuf:"bytes,4,opt,name=stride_commission,json=strideCommission,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Int" json:"stride_commission"`
 	// zone_com_address stores which addresses to
 	// send the Stride commission too, as well as what portion
 	// of the fee each address is entitled to
 	// TODO implement this
-	ZoneComAddress                   map[string]string `protobuf:"bytes,5,rep,name=zone_com_address,json=zoneComAddress,proto3" json:"zone_com_address,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
-	ReinvestInterval                 uint64            `protobuf:"varint,7,opt,name=reinvest_interval,json=reinvestInterval,proto3" json:"reinvest_interval,omitempty"`
-	ValidatorRebalancingThreshold    uint64            `protobuf:"varint,8,opt,name=validator_rebalancing_threshold,json=validatorRebalancingThreshold,proto3" json:"validator_rebalancing_threshold,omitempty"`
-	IcaTimeoutNanos                  uint64            `protobuf:"varint,9,opt,name=ica_timeout_nanos,json=icaTimeoutNanos,proto3" json:"ica_timeout_nanos,omitempty"`
-	BufferSize                       uint64            `protobuf:"varint,10,opt,name=buffer_size,json=bufferSize,proto3" json:"buffer_size,omitempty"`
-	IbcTimeoutBlocks                 uint64            `protobuf:"varint,11,opt,name=ibc_timeout_blocks,json=ibcTimeoutBlocks,proto3" json:"ibc_timeout_blocks,omitempty"`
-	FeeTransferTimeoutNanos          uint64            `protobuf:"varint,12,opt,name=fee_transfer_timeout_nanos,json=feeTransferTimeoutNanos,proto3" json:"fee_transfer_timeout_nanos,omitempty"`
-	MaxStakeIcaCallsPerEpoch         uint64            `protobuf:"varint,13,opt,name=max_stake_ica_calls_per_epoch,json=maxStakeIcaCallsPerEpoch,proto3" json:"max_stake_ica_calls_per_epoch,omitempty"`
-	SafetyMinRedemptionRateThreshold uint64            `protobuf:"varint,14,opt,name=safety_min_redemption_rate_threshold,json=safetyMinRedemptionRateThreshold,proto3" json:"safety_min_redemption_rate_threshold,omitempty"`
-	SafetyMaxRedemptionRateThreshold uint64            `protobuf:"varint,15,opt,name=safety_max_redemption_rate_threshold,json=safetyMaxRedemptionRateThreshold,proto3" json:"safety_max_redemption_rate_threshold,omitempty"`
-	IbcTransferTimeoutNanos          uint64            `protobuf:"varint,16,opt,name=ibc_transfer_timeout_nanos,json=ibcTransferTimeoutNanos,proto3" json:"ibc_transfer_timeout_nanos,omitempty"`
-	SafetyNumValidators              uint64            `protobuf:"varint,17,opt,name=safety_num_validators,json=safetyNumValidators,proto3" json:"safety_num_validators,omitempty"`
+	ZoneComAddress                   map[string]string                      `protobuf:"bytes,5,rep,name=zone_com_address,json=zoneComAddress,proto3" json:"zone_com_address,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
+	ReinvestInterval                 github_com_cosmos_cosmos_sdk_types.Int `protobuf:"bytes,7,opt,name=reinvest_interval,json=reinvestInterval,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Int" json:"reinvest_interval"`
+	ValidatorRebalancingThreshold    github_com_cosmos_cosmos_sdk_types.Int `protobuf:"bytes,8,opt,name=validator_rebalancing_threshold,json=validatorRebalancingThreshold,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Int" json:"validator_rebalancing_threshold"`
+	IcaTimeoutNanos                  github_com_cosmos_cosmos_sdk_types.Int `protobuf:"bytes,9,opt,name=ica_timeout_nanos,json=icaTimeoutNanos,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Int" json:"ica_timeout_nanos"`
+	BufferSize                       github_com_cosmos_cosmos_sdk_types.Int `protobuf:"bytes,10,opt,name=buffer_size,json=bufferSize,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Int" json:"buffer_size"`
+	IbcTimeoutBlocks                 github_com_cosmos_cosmos_sdk_types.Int `protobuf:"bytes,11,opt,name=ibc_timeout_blocks,json=ibcTimeoutBlocks,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Int" json:"ibc_timeout_blocks"`
+	FeeTransferTimeoutNanos          github_com_cosmos_cosmos_sdk_types.Int `protobuf:"bytes,12,opt,name=fee_transfer_timeout_nanos,json=feeTransferTimeoutNanos,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Int" json:"fee_transfer_timeout_nanos"`
+	MaxStakeIcaCallsPerEpoch         github_com_cosmos_cosmos_sdk_types.Int `protobuf:"bytes,13,opt,name=max_stake_ica_calls_per_epoch,json=maxStakeIcaCallsPerEpoch,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Int" json:"max_stake_ica_calls_per_epoch"`
+	SafetyMinRedemptionRateThreshold github_com_cosmos_cosmos_sdk_types.Int `protobuf:"bytes,14,opt,name=safety_min_redemption_rate_threshold,json=safetyMinRedemptionRateThreshold,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Int" json:"safety_min_redemption_rate_threshold"`
+	SafetyMaxRedemptionRateThreshold github_com_cosmos_cosmos_sdk_types.Int `protobuf:"bytes,15,opt,name=safety_max_redemption_rate_threshold,json=safetyMaxRedemptionRateThreshold,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Int" json:"safety_max_redemption_rate_threshold"`
+	IbcTransferTimeoutNanos          github_com_cosmos_cosmos_sdk_types.Int `protobuf:"bytes,16,opt,name=ibc_transfer_timeout_nanos,json=ibcTransferTimeoutNanos,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Int" json:"ibc_transfer_timeout_nanos"`
+	SafetyNumValidators              github_com_cosmos_cosmos_sdk_types.Int `protobuf:"bytes,17,opt,name=safety_num_validators,json=safetyNumValidators,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Int" json:"safety_num_validators"`
 }
 
 func (m *Params) Reset()      { *m = Params{} }
@@ -82,123 +83,11 @@ func (m *Params) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_Params proto.InternalMessageInfo
 
-func (m *Params) GetRewardsInterval() uint64 {
-	if m != nil {
-		return m.RewardsInterval
-	}
-	return 0
-}
-
-func (m *Params) GetDelegateInterval() uint64 {
-	if m != nil {
-		return m.DelegateInterval
-	}
-	return 0
-}
-
-func (m *Params) GetDepositInterval() uint64 {
-	if m != nil {
-		return m.DepositInterval
-	}
-	return 0
-}
-
-func (m *Params) GetRedemptionRateInterval() uint64 {
-	if m != nil {
-		return m.RedemptionRateInterval
-	}
-	return 0
-}
-
-func (m *Params) GetStrideCommission() uint64 {
-	if m != nil {
-		return m.StrideCommission
-	}
-	return 0
-}
-
 func (m *Params) GetZoneComAddress() map[string]string {
 	if m != nil {
 		return m.ZoneComAddress
 	}
 	return nil
-}
-
-func (m *Params) GetReinvestInterval() uint64 {
-	if m != nil {
-		return m.ReinvestInterval
-	}
-	return 0
-}
-
-func (m *Params) GetValidatorRebalancingThreshold() uint64 {
-	if m != nil {
-		return m.ValidatorRebalancingThreshold
-	}
-	return 0
-}
-
-func (m *Params) GetIcaTimeoutNanos() uint64 {
-	if m != nil {
-		return m.IcaTimeoutNanos
-	}
-	return 0
-}
-
-func (m *Params) GetBufferSize() uint64 {
-	if m != nil {
-		return m.BufferSize
-	}
-	return 0
-}
-
-func (m *Params) GetIbcTimeoutBlocks() uint64 {
-	if m != nil {
-		return m.IbcTimeoutBlocks
-	}
-	return 0
-}
-
-func (m *Params) GetFeeTransferTimeoutNanos() uint64 {
-	if m != nil {
-		return m.FeeTransferTimeoutNanos
-	}
-	return 0
-}
-
-func (m *Params) GetMaxStakeIcaCallsPerEpoch() uint64 {
-	if m != nil {
-		return m.MaxStakeIcaCallsPerEpoch
-	}
-	return 0
-}
-
-func (m *Params) GetSafetyMinRedemptionRateThreshold() uint64 {
-	if m != nil {
-		return m.SafetyMinRedemptionRateThreshold
-	}
-	return 0
-}
-
-func (m *Params) GetSafetyMaxRedemptionRateThreshold() uint64 {
-	if m != nil {
-		return m.SafetyMaxRedemptionRateThreshold
-	}
-	return 0
-}
-
-func (m *Params) GetIbcTransferTimeoutNanos() uint64 {
-	if m != nil {
-		return m.IbcTransferTimeoutNanos
-	}
-	return 0
-}
-
-func (m *Params) GetSafetyNumValidators() uint64 {
-	if m != nil {
-		return m.SafetyNumValidators
-	}
-	return 0
 }
 
 func init() {
@@ -209,47 +98,50 @@ func init() {
 func init() { proto.RegisterFile("stride/stakeibc/params.proto", fileDescriptor_5aeaab6a38c2b438) }
 
 var fileDescriptor_5aeaab6a38c2b438 = []byte{
-	// 636 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x7c, 0x54, 0x4f, 0x4f, 0xdb, 0x4e,
-	0x10, 0x4d, 0xf8, 0xf7, 0x83, 0xe5, 0x57, 0x48, 0x0c, 0x6d, 0xad, 0xa8, 0x04, 0x54, 0xf5, 0x00,
-	0xa5, 0x4d, 0x54, 0xda, 0x03, 0x82, 0x43, 0x05, 0x88, 0x4a, 0xa8, 0x2d, 0x42, 0x86, 0xf6, 0xc0,
-	0x65, 0x35, 0xb6, 0x27, 0xc9, 0x0a, 0x7b, 0xd7, 0xda, 0xdd, 0xa4, 0x49, 0x3e, 0x45, 0x7b, 0xeb,
-	0xb1, 0x1f, 0xa7, 0x47, 0x8e, 0x3d, 0x56, 0xf0, 0x45, 0x2a, 0xef, 0x3a, 0x36, 0x41, 0x69, 0x6f,
-	0xeb, 0xf7, 0xde, 0x3c, 0xcf, 0x3c, 0xcd, 0x2e, 0x79, 0xa2, 0xb4, 0x64, 0x21, 0x36, 0x95, 0x86,
-	0x2b, 0x64, 0x7e, 0xd0, 0x4c, 0x40, 0x42, 0xac, 0x1a, 0x89, 0x14, 0x5a, 0x38, 0xcb, 0x96, 0x6d,
-	0x8c, 0xd8, 0xda, 0x6a, 0x5b, 0xb4, 0x85, 0xe1, 0x9a, 0xe9, 0xc9, 0xca, 0x9e, 0x7e, 0x9b, 0x27,
-	0x73, 0x67, 0xa6, 0xce, 0xd9, 0x22, 0x15, 0x89, 0x5f, 0x40, 0x86, 0x8a, 0x32, 0xae, 0x51, 0xf6,
-	0x20, 0x72, 0xcb, 0x1b, 0xe5, 0xcd, 0x19, 0x6f, 0x39, 0xc3, 0x4f, 0x32, 0xd8, 0xd9, 0x26, 0xd5,
-	0x10, 0x23, 0x6c, 0x83, 0xc6, 0x42, 0x3b, 0x67, 0xb4, 0x95, 0x11, 0x91, 0x8b, 0xb7, 0x48, 0x25,
-	0xc4, 0x44, 0x28, 0xa6, 0x0b, 0xed, 0x94, 0xf5, 0xcd, 0xf0, 0x5c, 0xba, 0x4b, 0x5c, 0x89, 0x21,
-	0xc6, 0x89, 0x66, 0x82, 0x53, 0x39, 0x66, 0x3f, 0x6d, 0x4a, 0x1e, 0x15, 0xbc, 0x77, 0xf7, 0x27,
-	0xdb, 0xa4, 0x6a, 0x07, 0xa6, 0x81, 0x88, 0x63, 0xa6, 0x14, 0x13, 0xdc, 0x9d, 0xb1, 0x1d, 0x59,
-	0xe2, 0x28, 0xc7, 0x9d, 0x4f, 0xa4, 0x32, 0x14, 0xdc, 0x48, 0x29, 0x84, 0xa1, 0x44, 0xa5, 0xdc,
-	0xd9, 0x8d, 0xe9, 0xcd, 0xc5, 0x9d, 0xed, 0xc6, 0xbd, 0xd8, 0x1a, 0x36, 0x9c, 0xc6, 0xa5, 0xe0,
-	0xa9, 0xc3, 0x81, 0x55, 0x1f, 0x73, 0x2d, 0x07, 0xde, 0xd2, 0x70, 0x0c, 0x4c, 0x7b, 0x90, 0xc8,
-	0x78, 0x0f, 0xd5, 0x9d, 0x49, 0xff, 0xb3, 0x3d, 0x8c, 0x88, 0xbc, 0xe1, 0x77, 0x64, 0xbd, 0x07,
-	0x11, 0x0b, 0x41, 0x0b, 0x49, 0x25, 0xfa, 0x10, 0x01, 0x0f, 0x18, 0x6f, 0x53, 0xdd, 0x91, 0xa8,
-	0x3a, 0x22, 0x0a, 0xdd, 0x79, 0x53, 0xba, 0x96, 0xcb, 0xbc, 0x42, 0x75, 0x31, 0x12, 0x39, 0xcf,
-	0x49, 0x95, 0x05, 0x40, 0x35, 0x8b, 0x51, 0x74, 0x35, 0xe5, 0xc0, 0x85, 0x72, 0x17, 0x6c, 0xbc,
-	0x2c, 0x80, 0x0b, 0x8b, 0x9f, 0xa6, 0xb0, 0xb3, 0x4e, 0x16, 0xfd, 0x6e, 0xab, 0x85, 0x92, 0x2a,
-	0x36, 0x44, 0x97, 0x18, 0x15, 0xb1, 0xd0, 0x39, 0x1b, 0xa2, 0xf3, 0x82, 0x38, 0xcc, 0x0f, 0x72,
-	0x33, 0x3f, 0x12, 0xc1, 0x95, 0x72, 0x17, 0xed, 0x08, 0xcc, 0x0f, 0x32, 0xb7, 0x43, 0x83, 0x3b,
-	0xfb, 0xa4, 0xd6, 0x42, 0xa4, 0x5a, 0x02, 0x57, 0xa9, 0xe9, 0x78, 0x0f, 0xff, 0x9b, 0xaa, 0xc7,
-	0x2d, 0xc4, 0x8b, 0x4c, 0x30, 0xd6, 0xcb, 0x5b, 0xb2, 0x16, 0x43, 0x9f, 0x9a, 0x9c, 0x69, 0x3a,
-	0x41, 0x00, 0x51, 0xa4, 0x68, 0x82, 0x92, 0x62, 0x22, 0x82, 0x8e, 0xfb, 0xc0, 0xd4, 0xbb, 0x31,
-	0xf4, 0xcf, 0x53, 0xcd, 0x49, 0x00, 0x47, 0xa9, 0xe2, 0x0c, 0xe5, 0x71, 0xca, 0x3b, 0xa7, 0xe4,
-	0x99, 0x82, 0x16, 0xea, 0x01, 0x8d, 0x19, 0xa7, 0xf7, 0xd7, 0xa6, 0x48, 0x71, 0xc9, 0xf8, 0x6c,
-	0x58, 0xed, 0x47, 0xc6, 0xbd, 0xb1, 0x05, 0x2a, 0x82, 0xbc, 0xe3, 0x07, 0xfd, 0x7f, 0xf8, 0x2d,
-	0x8f, 0xf9, 0x41, 0xff, 0x6f, 0x7e, 0xfb, 0xa4, 0x66, 0xb2, 0x9c, 0x9c, 0x4e, 0xc5, 0xa6, 0x93,
-	0x66, 0x3a, 0x29, 0x9d, 0x1d, 0xf2, 0x30, 0x6b, 0x86, 0x77, 0x63, 0x9a, 0x6f, 0x80, 0x72, 0xab,
-	0xa6, 0x6e, 0xc5, 0x92, 0xa7, 0xdd, 0xf8, 0x73, 0x4e, 0xd5, 0x0e, 0xc8, 0xca, 0x84, 0x2d, 0x75,
-	0x2a, 0x64, 0xfa, 0x0a, 0x07, 0xe6, 0x26, 0x2f, 0x78, 0xe9, 0xd1, 0x59, 0x25, 0xb3, 0x3d, 0x88,
-	0xba, 0x68, 0x6e, 0xe1, 0x82, 0x67, 0x3f, 0xf6, 0xa6, 0x76, 0xcb, 0x7b, 0x33, 0xdf, 0x7f, 0xac,
-	0x97, 0x0e, 0xdf, 0xff, 0xbc, 0xa9, 0x97, 0xaf, 0x6f, 0xea, 0xe5, 0xdf, 0x37, 0xf5, 0xf2, 0xd7,
-	0xdb, 0x7a, 0xe9, 0xfa, 0xb6, 0x5e, 0xfa, 0x75, 0x5b, 0x2f, 0x5d, 0xbe, 0x6a, 0x33, 0xdd, 0xe9,
-	0xfa, 0x8d, 0x40, 0xc4, 0xcd, 0x73, 0x73, 0x51, 0x5e, 0x7e, 0x00, 0x5f, 0x35, 0xb3, 0x97, 0xa8,
-	0xf7, 0xa6, 0xd9, 0x2f, 0x9e, 0x23, 0x3d, 0x48, 0x50, 0xf9, 0x73, 0xe6, 0x9d, 0x79, 0xfd, 0x27,
-	0x00, 0x00, 0xff, 0xff, 0x84, 0x23, 0x51, 0x47, 0xae, 0x04, 0x00, 0x00,
+	// 682 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xa4, 0x95, 0xcb, 0x6e, 0xd3, 0x4e,
+	0x14, 0xc6, 0x93, 0xde, 0xfe, 0xff, 0x4e, 0xa1, 0x4d, 0xdc, 0x02, 0x56, 0x44, 0x93, 0x0a, 0x21,
+	0x54, 0x09, 0xd5, 0x16, 0x97, 0x05, 0xea, 0xae, 0xad, 0xba, 0xa8, 0x80, 0x52, 0xb9, 0x05, 0xa9,
+	0x2d, 0xd2, 0x68, 0x6c, 0x9f, 0x24, 0xa3, 0xd8, 0x33, 0xd6, 0xcc, 0x24, 0x24, 0x59, 0xf0, 0x0c,
+	0xb0, 0x63, 0xc9, 0xe3, 0x74, 0xd9, 0x25, 0x62, 0x51, 0xa1, 0xf6, 0x45, 0x90, 0x2f, 0xb1, 0x93,
+	0x2a, 0xb0, 0x18, 0x56, 0x71, 0x32, 0xce, 0xef, 0xfb, 0xe6, 0x9c, 0x6f, 0xe6, 0xa0, 0x87, 0x52,
+	0x09, 0xea, 0x83, 0x2d, 0x15, 0xe9, 0x00, 0x75, 0x3d, 0x3b, 0x22, 0x82, 0x84, 0xd2, 0x8a, 0x04,
+	0x57, 0xdc, 0x58, 0x49, 0x57, 0xad, 0xd1, 0x6a, 0x6d, 0xad, 0xc5, 0x5b, 0x3c, 0x59, 0xb3, 0xe3,
+	0xa7, 0xf4, 0xb5, 0x47, 0x5f, 0x97, 0xd1, 0xc2, 0x51, 0xf2, 0x3f, 0xe3, 0x14, 0x55, 0x04, 0x7c,
+	0x22, 0xc2, 0x97, 0x98, 0x32, 0x05, 0xa2, 0x47, 0x02, 0xb3, 0xbc, 0x51, 0xde, 0x5c, 0xdc, 0xb5,
+	0x2e, 0xae, 0x1a, 0xa5, 0x9f, 0x57, 0x8d, 0x27, 0x2d, 0xaa, 0xda, 0x5d, 0xd7, 0xf2, 0x78, 0x68,
+	0x7b, 0x5c, 0x86, 0x5c, 0x66, 0x1f, 0x5b, 0xd2, 0xef, 0xd8, 0x6a, 0x10, 0x81, 0xb4, 0x0e, 0x98,
+	0x72, 0x56, 0x32, 0xce, 0x41, 0x86, 0x31, 0xce, 0x51, 0xd5, 0x87, 0x00, 0x5a, 0x44, 0x41, 0xc1,
+	0x5e, 0xd0, 0x62, 0x57, 0x46, 0xa0, 0x1c, 0x7e, 0x8a, 0x2a, 0x3e, 0x44, 0x5c, 0x52, 0x55, 0xb0,
+	0x67, 0xf4, 0x7c, 0x67, 0x9c, 0x1c, 0xdd, 0x46, 0xa6, 0x00, 0x1f, 0xc2, 0x48, 0x51, 0xce, 0xb0,
+	0x98, 0xb0, 0x3f, 0xab, 0x25, 0x71, 0xbf, 0xe0, 0x39, 0xe3, 0x9b, 0x38, 0x47, 0xd5, 0xb4, 0x61,
+	0xd8, 0xe3, 0x61, 0x48, 0xa5, 0xa4, 0x9c, 0x99, 0x73, 0x7a, 0x15, 0x4a, 0x41, 0x7b, 0x39, 0xc7,
+	0x78, 0x8f, 0x2a, 0x43, 0xce, 0x12, 0x34, 0x26, 0xbe, 0x2f, 0x40, 0x4a, 0x73, 0x7e, 0x63, 0x76,
+	0x73, 0xe9, 0xf9, 0x53, 0xeb, 0x56, 0x4c, 0xac, 0x34, 0x0c, 0xd6, 0x19, 0x67, 0x31, 0x61, 0x27,
+	0x7d, 0x7b, 0x9f, 0x29, 0x31, 0x70, 0x96, 0x87, 0x13, 0x3f, 0xc6, 0x9e, 0x05, 0x50, 0xd6, 0x03,
+	0x39, 0x56, 0xf9, 0xff, 0xf4, 0x3c, 0x8f, 0x40, 0x79, 0x41, 0x7a, 0xa8, 0xd1, 0x23, 0x01, 0xf5,
+	0x89, 0xe2, 0x02, 0x0b, 0x70, 0x49, 0x40, 0x98, 0x47, 0x59, 0x0b, 0xab, 0xb6, 0x00, 0xd9, 0xe6,
+	0x81, 0x6f, 0xfe, 0xaf, 0x25, 0xb5, 0x9e, 0x63, 0x9d, 0x82, 0x7a, 0x32, 0x82, 0x1a, 0x67, 0xa8,
+	0x4a, 0x3d, 0x82, 0x15, 0x0d, 0x81, 0x77, 0x15, 0x66, 0x84, 0x71, 0x69, 0x2e, 0xea, 0xc5, 0x89,
+	0x7a, 0xe4, 0x24, 0xe5, 0x1c, 0xc6, 0x18, 0xe3, 0x1d, 0x5a, 0x72, 0xbb, 0xcd, 0x26, 0x08, 0x2c,
+	0xe9, 0x10, 0x4c, 0xa4, 0x45, 0x45, 0x29, 0xe2, 0x98, 0x0e, 0xc1, 0xf8, 0x88, 0x0c, 0xea, 0x7a,
+	0xb9, 0x59, 0x37, 0xe0, 0x5e, 0x47, 0x9a, 0x4b, 0x7a, 0x2d, 0xa0, 0xae, 0x97, 0xb9, 0xdd, 0x4d,
+	0x38, 0x46, 0x07, 0xd5, 0x9a, 0x00, 0x58, 0x09, 0xc2, 0x64, 0x6c, 0x7a, 0xb2, 0x26, 0x77, 0xb4,
+	0x54, 0x1e, 0x34, 0x01, 0x4e, 0x32, 0xe0, 0x44, 0x6d, 0x38, 0x5a, 0x0f, 0x49, 0x1f, 0x27, 0x39,
+	0xc4, 0x71, 0x07, 0x3c, 0x12, 0x04, 0x12, 0x47, 0x20, 0x30, 0x44, 0xdc, 0x6b, 0x9b, 0x77, 0xb5,
+	0xf4, 0xcc, 0x90, 0xf4, 0x8f, 0x63, 0xe6, 0x81, 0x47, 0xf6, 0x62, 0xe2, 0x11, 0x88, 0xfd, 0x98,
+	0x67, 0x7c, 0x46, 0x8f, 0x25, 0x69, 0x82, 0x1a, 0xe0, 0x90, 0x32, 0x7c, 0xfb, 0x98, 0x17, 0x29,
+	0x5b, 0xd6, 0xd2, 0xdd, 0x48, 0xd9, 0x6f, 0x29, 0x73, 0x26, 0x0e, 0x7c, 0x11, 0xb4, 0x31, 0x7d,
+	0xd2, 0xff, 0x8b, 0xfe, 0xca, 0x3f, 0xe9, 0x93, 0xfe, 0x9f, 0xf4, 0x3b, 0xa8, 0x96, 0x64, 0x67,
+	0x7a, 0x77, 0x2b, 0x7a, 0xdd, 0x8d, 0x33, 0x34, 0xad, 0xbb, 0x2e, 0xba, 0x97, 0x6d, 0x96, 0x75,
+	0x43, 0x9c, 0x9f, 0x40, 0x69, 0x56, 0xb5, 0x74, 0x56, 0x53, 0xd8, 0x61, 0x37, 0xfc, 0x90, 0xa3,
+	0x6a, 0x3b, 0x68, 0x75, 0xca, 0xad, 0x65, 0x54, 0xd0, 0x6c, 0x07, 0x06, 0xe9, 0x24, 0x73, 0xe2,
+	0x47, 0x63, 0x0d, 0xcd, 0xf7, 0x48, 0xd0, 0x85, 0x74, 0x4a, 0x38, 0xe9, 0x97, 0xed, 0x99, 0x57,
+	0xe5, 0xed, 0xb9, 0x6f, 0xdf, 0x1b, 0xa5, 0xdd, 0xd7, 0x17, 0xd7, 0xf5, 0xf2, 0xe5, 0x75, 0xbd,
+	0xfc, 0xeb, 0xba, 0x5e, 0xfe, 0x72, 0x53, 0x2f, 0x5d, 0xde, 0xd4, 0x4b, 0x3f, 0x6e, 0xea, 0xa5,
+	0xb3, 0x67, 0x63, 0xfe, 0x8e, 0x93, 0x8b, 0x73, 0xeb, 0x0d, 0x71, 0xa5, 0x9d, 0x4d, 0xe2, 0xde,
+	0x4b, 0xbb, 0x5f, 0x8c, 0xe3, 0xc4, 0xae, 0xbb, 0x90, 0xcc, 0xd9, 0x17, 0xbf, 0x03, 0x00, 0x00,
+	0xff, 0xff, 0x94, 0xa0, 0x36, 0x2d, 0xae, 0x07, 0x00, 0x00,
 }
 
 func (m *Params) Marshal() (dAtA []byte, err error) {
@@ -272,70 +164,130 @@ func (m *Params) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	_ = i
 	var l int
 	_ = l
-	if m.SafetyNumValidators != 0 {
-		i = encodeVarintParams(dAtA, i, uint64(m.SafetyNumValidators))
-		i--
-		dAtA[i] = 0x1
-		i--
-		dAtA[i] = 0x88
+	{
+		size := m.SafetyNumValidators.Size()
+		i -= size
+		if _, err := m.SafetyNumValidators.MarshalTo(dAtA[i:]); err != nil {
+			return 0, err
+		}
+		i = encodeVarintParams(dAtA, i, uint64(size))
 	}
-	if m.IbcTransferTimeoutNanos != 0 {
-		i = encodeVarintParams(dAtA, i, uint64(m.IbcTransferTimeoutNanos))
-		i--
-		dAtA[i] = 0x1
-		i--
-		dAtA[i] = 0x80
+	i--
+	dAtA[i] = 0x1
+	i--
+	dAtA[i] = 0x8a
+	{
+		size := m.IbcTransferTimeoutNanos.Size()
+		i -= size
+		if _, err := m.IbcTransferTimeoutNanos.MarshalTo(dAtA[i:]); err != nil {
+			return 0, err
+		}
+		i = encodeVarintParams(dAtA, i, uint64(size))
 	}
-	if m.SafetyMaxRedemptionRateThreshold != 0 {
-		i = encodeVarintParams(dAtA, i, uint64(m.SafetyMaxRedemptionRateThreshold))
-		i--
-		dAtA[i] = 0x78
+	i--
+	dAtA[i] = 0x1
+	i--
+	dAtA[i] = 0x82
+	{
+		size := m.SafetyMaxRedemptionRateThreshold.Size()
+		i -= size
+		if _, err := m.SafetyMaxRedemptionRateThreshold.MarshalTo(dAtA[i:]); err != nil {
+			return 0, err
+		}
+		i = encodeVarintParams(dAtA, i, uint64(size))
 	}
-	if m.SafetyMinRedemptionRateThreshold != 0 {
-		i = encodeVarintParams(dAtA, i, uint64(m.SafetyMinRedemptionRateThreshold))
-		i--
-		dAtA[i] = 0x70
+	i--
+	dAtA[i] = 0x7a
+	{
+		size := m.SafetyMinRedemptionRateThreshold.Size()
+		i -= size
+		if _, err := m.SafetyMinRedemptionRateThreshold.MarshalTo(dAtA[i:]); err != nil {
+			return 0, err
+		}
+		i = encodeVarintParams(dAtA, i, uint64(size))
 	}
-	if m.MaxStakeIcaCallsPerEpoch != 0 {
-		i = encodeVarintParams(dAtA, i, uint64(m.MaxStakeIcaCallsPerEpoch))
-		i--
-		dAtA[i] = 0x68
+	i--
+	dAtA[i] = 0x72
+	{
+		size := m.MaxStakeIcaCallsPerEpoch.Size()
+		i -= size
+		if _, err := m.MaxStakeIcaCallsPerEpoch.MarshalTo(dAtA[i:]); err != nil {
+			return 0, err
+		}
+		i = encodeVarintParams(dAtA, i, uint64(size))
 	}
-	if m.FeeTransferTimeoutNanos != 0 {
-		i = encodeVarintParams(dAtA, i, uint64(m.FeeTransferTimeoutNanos))
-		i--
-		dAtA[i] = 0x60
+	i--
+	dAtA[i] = 0x6a
+	{
+		size := m.FeeTransferTimeoutNanos.Size()
+		i -= size
+		if _, err := m.FeeTransferTimeoutNanos.MarshalTo(dAtA[i:]); err != nil {
+			return 0, err
+		}
+		i = encodeVarintParams(dAtA, i, uint64(size))
 	}
-	if m.IbcTimeoutBlocks != 0 {
-		i = encodeVarintParams(dAtA, i, uint64(m.IbcTimeoutBlocks))
-		i--
-		dAtA[i] = 0x58
+	i--
+	dAtA[i] = 0x62
+	{
+		size := m.IbcTimeoutBlocks.Size()
+		i -= size
+		if _, err := m.IbcTimeoutBlocks.MarshalTo(dAtA[i:]); err != nil {
+			return 0, err
+		}
+		i = encodeVarintParams(dAtA, i, uint64(size))
 	}
-	if m.BufferSize != 0 {
-		i = encodeVarintParams(dAtA, i, uint64(m.BufferSize))
-		i--
-		dAtA[i] = 0x50
+	i--
+	dAtA[i] = 0x5a
+	{
+		size := m.BufferSize.Size()
+		i -= size
+		if _, err := m.BufferSize.MarshalTo(dAtA[i:]); err != nil {
+			return 0, err
+		}
+		i = encodeVarintParams(dAtA, i, uint64(size))
 	}
-	if m.IcaTimeoutNanos != 0 {
-		i = encodeVarintParams(dAtA, i, uint64(m.IcaTimeoutNanos))
-		i--
-		dAtA[i] = 0x48
+	i--
+	dAtA[i] = 0x52
+	{
+		size := m.IcaTimeoutNanos.Size()
+		i -= size
+		if _, err := m.IcaTimeoutNanos.MarshalTo(dAtA[i:]); err != nil {
+			return 0, err
+		}
+		i = encodeVarintParams(dAtA, i, uint64(size))
 	}
-	if m.ValidatorRebalancingThreshold != 0 {
-		i = encodeVarintParams(dAtA, i, uint64(m.ValidatorRebalancingThreshold))
-		i--
-		dAtA[i] = 0x40
+	i--
+	dAtA[i] = 0x4a
+	{
+		size := m.ValidatorRebalancingThreshold.Size()
+		i -= size
+		if _, err := m.ValidatorRebalancingThreshold.MarshalTo(dAtA[i:]); err != nil {
+			return 0, err
+		}
+		i = encodeVarintParams(dAtA, i, uint64(size))
 	}
-	if m.ReinvestInterval != 0 {
-		i = encodeVarintParams(dAtA, i, uint64(m.ReinvestInterval))
-		i--
-		dAtA[i] = 0x38
+	i--
+	dAtA[i] = 0x42
+	{
+		size := m.ReinvestInterval.Size()
+		i -= size
+		if _, err := m.ReinvestInterval.MarshalTo(dAtA[i:]); err != nil {
+			return 0, err
+		}
+		i = encodeVarintParams(dAtA, i, uint64(size))
 	}
-	if m.DelegateInterval != 0 {
-		i = encodeVarintParams(dAtA, i, uint64(m.DelegateInterval))
-		i--
-		dAtA[i] = 0x30
+	i--
+	dAtA[i] = 0x3a
+	{
+		size := m.DelegateInterval.Size()
+		i -= size
+		if _, err := m.DelegateInterval.MarshalTo(dAtA[i:]); err != nil {
+			return 0, err
+		}
+		i = encodeVarintParams(dAtA, i, uint64(size))
 	}
+	i--
+	dAtA[i] = 0x32
 	if len(m.ZoneComAddress) > 0 {
 		for k := range m.ZoneComAddress {
 			v := m.ZoneComAddress[k]
@@ -355,26 +307,46 @@ func (m *Params) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 			dAtA[i] = 0x2a
 		}
 	}
-	if m.StrideCommission != 0 {
-		i = encodeVarintParams(dAtA, i, uint64(m.StrideCommission))
-		i--
-		dAtA[i] = 0x20
+	{
+		size := m.StrideCommission.Size()
+		i -= size
+		if _, err := m.StrideCommission.MarshalTo(dAtA[i:]); err != nil {
+			return 0, err
+		}
+		i = encodeVarintParams(dAtA, i, uint64(size))
 	}
-	if m.RedemptionRateInterval != 0 {
-		i = encodeVarintParams(dAtA, i, uint64(m.RedemptionRateInterval))
-		i--
-		dAtA[i] = 0x18
+	i--
+	dAtA[i] = 0x22
+	{
+		size := m.RedemptionRateInterval.Size()
+		i -= size
+		if _, err := m.RedemptionRateInterval.MarshalTo(dAtA[i:]); err != nil {
+			return 0, err
+		}
+		i = encodeVarintParams(dAtA, i, uint64(size))
 	}
-	if m.DepositInterval != 0 {
-		i = encodeVarintParams(dAtA, i, uint64(m.DepositInterval))
-		i--
-		dAtA[i] = 0x10
+	i--
+	dAtA[i] = 0x1a
+	{
+		size := m.DepositInterval.Size()
+		i -= size
+		if _, err := m.DepositInterval.MarshalTo(dAtA[i:]); err != nil {
+			return 0, err
+		}
+		i = encodeVarintParams(dAtA, i, uint64(size))
 	}
-	if m.RewardsInterval != 0 {
-		i = encodeVarintParams(dAtA, i, uint64(m.RewardsInterval))
-		i--
-		dAtA[i] = 0x8
+	i--
+	dAtA[i] = 0x12
+	{
+		size := m.RewardsInterval.Size()
+		i -= size
+		if _, err := m.RewardsInterval.MarshalTo(dAtA[i:]); err != nil {
+			return 0, err
+		}
+		i = encodeVarintParams(dAtA, i, uint64(size))
 	}
+	i--
+	dAtA[i] = 0xa
 	return len(dAtA) - i, nil
 }
 
@@ -395,18 +367,14 @@ func (m *Params) Size() (n int) {
 	}
 	var l int
 	_ = l
-	if m.RewardsInterval != 0 {
-		n += 1 + sovParams(uint64(m.RewardsInterval))
-	}
-	if m.DepositInterval != 0 {
-		n += 1 + sovParams(uint64(m.DepositInterval))
-	}
-	if m.RedemptionRateInterval != 0 {
-		n += 1 + sovParams(uint64(m.RedemptionRateInterval))
-	}
-	if m.StrideCommission != 0 {
-		n += 1 + sovParams(uint64(m.StrideCommission))
-	}
+	l = m.RewardsInterval.Size()
+	n += 1 + l + sovParams(uint64(l))
+	l = m.DepositInterval.Size()
+	n += 1 + l + sovParams(uint64(l))
+	l = m.RedemptionRateInterval.Size()
+	n += 1 + l + sovParams(uint64(l))
+	l = m.StrideCommission.Size()
+	n += 1 + l + sovParams(uint64(l))
 	if len(m.ZoneComAddress) > 0 {
 		for k, v := range m.ZoneComAddress {
 			_ = k
@@ -415,42 +383,30 @@ func (m *Params) Size() (n int) {
 			n += mapEntrySize + 1 + sovParams(uint64(mapEntrySize))
 		}
 	}
-	if m.DelegateInterval != 0 {
-		n += 1 + sovParams(uint64(m.DelegateInterval))
-	}
-	if m.ReinvestInterval != 0 {
-		n += 1 + sovParams(uint64(m.ReinvestInterval))
-	}
-	if m.ValidatorRebalancingThreshold != 0 {
-		n += 1 + sovParams(uint64(m.ValidatorRebalancingThreshold))
-	}
-	if m.IcaTimeoutNanos != 0 {
-		n += 1 + sovParams(uint64(m.IcaTimeoutNanos))
-	}
-	if m.BufferSize != 0 {
-		n += 1 + sovParams(uint64(m.BufferSize))
-	}
-	if m.IbcTimeoutBlocks != 0 {
-		n += 1 + sovParams(uint64(m.IbcTimeoutBlocks))
-	}
-	if m.FeeTransferTimeoutNanos != 0 {
-		n += 1 + sovParams(uint64(m.FeeTransferTimeoutNanos))
-	}
-	if m.MaxStakeIcaCallsPerEpoch != 0 {
-		n += 1 + sovParams(uint64(m.MaxStakeIcaCallsPerEpoch))
-	}
-	if m.SafetyMinRedemptionRateThreshold != 0 {
-		n += 1 + sovParams(uint64(m.SafetyMinRedemptionRateThreshold))
-	}
-	if m.SafetyMaxRedemptionRateThreshold != 0 {
-		n += 1 + sovParams(uint64(m.SafetyMaxRedemptionRateThreshold))
-	}
-	if m.IbcTransferTimeoutNanos != 0 {
-		n += 2 + sovParams(uint64(m.IbcTransferTimeoutNanos))
-	}
-	if m.SafetyNumValidators != 0 {
-		n += 2 + sovParams(uint64(m.SafetyNumValidators))
-	}
+	l = m.DelegateInterval.Size()
+	n += 1 + l + sovParams(uint64(l))
+	l = m.ReinvestInterval.Size()
+	n += 1 + l + sovParams(uint64(l))
+	l = m.ValidatorRebalancingThreshold.Size()
+	n += 1 + l + sovParams(uint64(l))
+	l = m.IcaTimeoutNanos.Size()
+	n += 1 + l + sovParams(uint64(l))
+	l = m.BufferSize.Size()
+	n += 1 + l + sovParams(uint64(l))
+	l = m.IbcTimeoutBlocks.Size()
+	n += 1 + l + sovParams(uint64(l))
+	l = m.FeeTransferTimeoutNanos.Size()
+	n += 1 + l + sovParams(uint64(l))
+	l = m.MaxStakeIcaCallsPerEpoch.Size()
+	n += 1 + l + sovParams(uint64(l))
+	l = m.SafetyMinRedemptionRateThreshold.Size()
+	n += 1 + l + sovParams(uint64(l))
+	l = m.SafetyMaxRedemptionRateThreshold.Size()
+	n += 1 + l + sovParams(uint64(l))
+	l = m.IbcTransferTimeoutNanos.Size()
+	n += 2 + l + sovParams(uint64(l))
+	l = m.SafetyNumValidators.Size()
+	n += 2 + l + sovParams(uint64(l))
 	return n
 }
 
@@ -490,10 +446,10 @@ func (m *Params) Unmarshal(dAtA []byte) error {
 		}
 		switch fieldNum {
 		case 1:
-			if wireType != 0 {
+			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field RewardsInterval", wireType)
 			}
-			m.RewardsInterval = 0
+			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return ErrIntOverflowParams
@@ -503,16 +459,31 @@ func (m *Params) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				m.RewardsInterval |= uint64(b&0x7F) << shift
+				stringLen |= uint64(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthParams
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthParams
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if err := m.RewardsInterval.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
 		case 2:
-			if wireType != 0 {
+			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field DepositInterval", wireType)
 			}
-			m.DepositInterval = 0
+			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return ErrIntOverflowParams
@@ -522,16 +493,31 @@ func (m *Params) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				m.DepositInterval |= uint64(b&0x7F) << shift
+				stringLen |= uint64(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthParams
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthParams
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if err := m.DepositInterval.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
 		case 3:
-			if wireType != 0 {
+			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field RedemptionRateInterval", wireType)
 			}
-			m.RedemptionRateInterval = 0
+			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return ErrIntOverflowParams
@@ -541,16 +527,31 @@ func (m *Params) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				m.RedemptionRateInterval |= uint64(b&0x7F) << shift
+				stringLen |= uint64(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthParams
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthParams
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if err := m.RedemptionRateInterval.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
 		case 4:
-			if wireType != 0 {
+			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field StrideCommission", wireType)
 			}
-			m.StrideCommission = 0
+			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return ErrIntOverflowParams
@@ -560,11 +561,26 @@ func (m *Params) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				m.StrideCommission |= uint64(b&0x7F) << shift
+				stringLen |= uint64(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthParams
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthParams
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if err := m.StrideCommission.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
 		case 5:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field ZoneComAddress", wireType)
@@ -693,10 +709,10 @@ func (m *Params) Unmarshal(dAtA []byte) error {
 			m.ZoneComAddress[mapkey] = mapvalue
 			iNdEx = postIndex
 		case 6:
-			if wireType != 0 {
+			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field DelegateInterval", wireType)
 			}
-			m.DelegateInterval = 0
+			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return ErrIntOverflowParams
@@ -706,16 +722,31 @@ func (m *Params) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				m.DelegateInterval |= uint64(b&0x7F) << shift
+				stringLen |= uint64(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthParams
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthParams
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if err := m.DelegateInterval.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
 		case 7:
-			if wireType != 0 {
+			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field ReinvestInterval", wireType)
 			}
-			m.ReinvestInterval = 0
+			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return ErrIntOverflowParams
@@ -725,16 +756,31 @@ func (m *Params) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				m.ReinvestInterval |= uint64(b&0x7F) << shift
+				stringLen |= uint64(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthParams
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthParams
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if err := m.ReinvestInterval.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
 		case 8:
-			if wireType != 0 {
+			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field ValidatorRebalancingThreshold", wireType)
 			}
-			m.ValidatorRebalancingThreshold = 0
+			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return ErrIntOverflowParams
@@ -744,16 +790,31 @@ func (m *Params) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				m.ValidatorRebalancingThreshold |= uint64(b&0x7F) << shift
+				stringLen |= uint64(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthParams
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthParams
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if err := m.ValidatorRebalancingThreshold.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
 		case 9:
-			if wireType != 0 {
+			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field IcaTimeoutNanos", wireType)
 			}
-			m.IcaTimeoutNanos = 0
+			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return ErrIntOverflowParams
@@ -763,16 +824,31 @@ func (m *Params) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				m.IcaTimeoutNanos |= uint64(b&0x7F) << shift
+				stringLen |= uint64(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthParams
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthParams
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if err := m.IcaTimeoutNanos.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
 		case 10:
-			if wireType != 0 {
+			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field BufferSize", wireType)
 			}
-			m.BufferSize = 0
+			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return ErrIntOverflowParams
@@ -782,16 +858,31 @@ func (m *Params) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				m.BufferSize |= uint64(b&0x7F) << shift
+				stringLen |= uint64(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthParams
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthParams
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if err := m.BufferSize.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
 		case 11:
-			if wireType != 0 {
+			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field IbcTimeoutBlocks", wireType)
 			}
-			m.IbcTimeoutBlocks = 0
+			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return ErrIntOverflowParams
@@ -801,16 +892,31 @@ func (m *Params) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				m.IbcTimeoutBlocks |= uint64(b&0x7F) << shift
+				stringLen |= uint64(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthParams
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthParams
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if err := m.IbcTimeoutBlocks.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
 		case 12:
-			if wireType != 0 {
+			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field FeeTransferTimeoutNanos", wireType)
 			}
-			m.FeeTransferTimeoutNanos = 0
+			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return ErrIntOverflowParams
@@ -820,16 +926,31 @@ func (m *Params) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				m.FeeTransferTimeoutNanos |= uint64(b&0x7F) << shift
+				stringLen |= uint64(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthParams
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthParams
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if err := m.FeeTransferTimeoutNanos.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
 		case 13:
-			if wireType != 0 {
+			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field MaxStakeIcaCallsPerEpoch", wireType)
 			}
-			m.MaxStakeIcaCallsPerEpoch = 0
+			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return ErrIntOverflowParams
@@ -839,16 +960,31 @@ func (m *Params) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				m.MaxStakeIcaCallsPerEpoch |= uint64(b&0x7F) << shift
+				stringLen |= uint64(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthParams
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthParams
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if err := m.MaxStakeIcaCallsPerEpoch.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
 		case 14:
-			if wireType != 0 {
+			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field SafetyMinRedemptionRateThreshold", wireType)
 			}
-			m.SafetyMinRedemptionRateThreshold = 0
+			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return ErrIntOverflowParams
@@ -858,16 +994,31 @@ func (m *Params) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				m.SafetyMinRedemptionRateThreshold |= uint64(b&0x7F) << shift
+				stringLen |= uint64(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthParams
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthParams
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if err := m.SafetyMinRedemptionRateThreshold.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
 		case 15:
-			if wireType != 0 {
+			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field SafetyMaxRedemptionRateThreshold", wireType)
 			}
-			m.SafetyMaxRedemptionRateThreshold = 0
+			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return ErrIntOverflowParams
@@ -877,16 +1028,31 @@ func (m *Params) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				m.SafetyMaxRedemptionRateThreshold |= uint64(b&0x7F) << shift
+				stringLen |= uint64(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthParams
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthParams
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if err := m.SafetyMaxRedemptionRateThreshold.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
 		case 16:
-			if wireType != 0 {
+			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field IbcTransferTimeoutNanos", wireType)
 			}
-			m.IbcTransferTimeoutNanos = 0
+			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return ErrIntOverflowParams
@@ -896,16 +1062,31 @@ func (m *Params) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				m.IbcTransferTimeoutNanos |= uint64(b&0x7F) << shift
+				stringLen |= uint64(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthParams
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthParams
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if err := m.IbcTransferTimeoutNanos.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
 		case 17:
-			if wireType != 0 {
+			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field SafetyNumValidators", wireType)
 			}
-			m.SafetyNumValidators = 0
+			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return ErrIntOverflowParams
@@ -915,11 +1096,26 @@ func (m *Params) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				m.SafetyNumValidators |= uint64(b&0x7F) << shift
+				stringLen |= uint64(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthParams
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthParams
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if err := m.SafetyNumValidators.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
 			skippy, err := skipParams(dAtA[iNdEx:])

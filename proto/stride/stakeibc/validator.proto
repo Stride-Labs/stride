@@ -10,7 +10,10 @@ message ValidatorExchangeRate {
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false
   ];
-  uint64 epoch_number = 2;
+  string epoch_number = 2 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
 }
 
 message Validator {
@@ -23,11 +26,17 @@ message Validator {
   }
 
   ValidatorStatus status = 3;
-  uint64 commission_rate = 4;
+  string commission_rate = 4 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
   string delegation_amt = 5 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
     (gogoproto.nullable) = false
   ];
-  uint64 weight = 6;
+  string weight = 6 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
   ValidatorExchangeRate internal_exchange_rate = 7;
 }

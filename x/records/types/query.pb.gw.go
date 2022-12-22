@@ -172,7 +172,7 @@ func request_Query_UserRedemptionRecordForUser_0(ctx context.Context, marshaler 
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "day")
 	}
 
-	protoReq.Day, err = runtime.Uint64(val)
+	protoReq.Day, err = runtime.String(val)
 
 	if err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "day", err)
@@ -194,7 +194,7 @@ func request_Query_UserRedemptionRecordForUser_0(ctx context.Context, marshaler 
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "limit")
 	}
 
-	protoReq.Limit, err = runtime.Uint64(val)
+	protoReq.Limit, err = runtime.String(val)
 
 	if err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "limit", err)
@@ -239,7 +239,7 @@ func local_request_Query_UserRedemptionRecordForUser_0(ctx context.Context, mars
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "day")
 	}
 
-	protoReq.Day, err = runtime.Uint64(val)
+	protoReq.Day, err = runtime.String(val)
 
 	if err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "day", err)
@@ -261,7 +261,7 @@ func local_request_Query_UserRedemptionRecordForUser_0(ctx context.Context, mars
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "limit")
 	}
 
-	protoReq.Limit, err = runtime.Uint64(val)
+	protoReq.Limit, err = runtime.String(val)
 
 	if err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "limit", err)
@@ -295,7 +295,7 @@ func request_Query_EpochUnbondingRecord_0(ctx context.Context, marshaler runtime
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "epoch_number")
 	}
 
-	protoReq.EpochNumber, err = runtime.Uint64(val)
+	protoReq.EpochNumber, err = runtime.String(val)
 
 	if err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "epoch_number", err)
@@ -322,7 +322,7 @@ func local_request_Query_EpochUnbondingRecord_0(ctx context.Context, marshaler r
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "epoch_number")
 	}
 
-	protoReq.EpochNumber, err = runtime.Uint64(val)
+	protoReq.EpochNumber, err = runtime.String(val)
 
 	if err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "epoch_number", err)
@@ -385,7 +385,7 @@ func request_Query_DepositRecord_0(ctx context.Context, marshaler runtime.Marsha
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "id")
 	}
 
-	protoReq.Id, err = runtime.Uint64(val)
+	protoReq.Id, err = runtime.String(val)
 
 	if err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "id", err)
@@ -412,7 +412,7 @@ func local_request_Query_DepositRecord_0(ctx context.Context, marshaler runtime.
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "id")
 	}
 
-	protoReq.Id, err = runtime.Uint64(val)
+	protoReq.Id, err = runtime.String(val)
 
 	if err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "id", err)

@@ -72,9 +72,9 @@ func (m *SplitDelegation) GetValidator() string {
 }
 
 type DelegateCallback struct {
-	HostZoneId       string             `protobuf:"bytes,1,opt,name=host_zone_id,json=hostZoneId,proto3" json:"host_zone_id,omitempty"`
-	DepositRecordId  uint64             `protobuf:"varint,2,opt,name=deposit_record_id,json=depositRecordId,proto3" json:"deposit_record_id,omitempty"`
-	SplitDelegations []*SplitDelegation `protobuf:"bytes,3,rep,name=split_delegations,json=splitDelegations,proto3" json:"split_delegations,omitempty"`
+	HostZoneId       string                                 `protobuf:"bytes,1,opt,name=host_zone_id,json=hostZoneId,proto3" json:"host_zone_id,omitempty"`
+	DepositRecordId  github_com_cosmos_cosmos_sdk_types.Int `protobuf:"bytes,2,opt,name=deposit_record_id,json=depositRecordId,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Int" json:"deposit_record_id"`
+	SplitDelegations []*SplitDelegation                     `protobuf:"bytes,3,rep,name=split_delegations,json=splitDelegations,proto3" json:"split_delegations,omitempty"`
 }
 
 func (m *DelegateCallback) Reset()         { *m = DelegateCallback{} }
@@ -117,13 +117,6 @@ func (m *DelegateCallback) GetHostZoneId() string {
 	return ""
 }
 
-func (m *DelegateCallback) GetDepositRecordId() uint64 {
-	if m != nil {
-		return m.DepositRecordId
-	}
-	return 0
-}
-
 func (m *DelegateCallback) GetSplitDelegations() []*SplitDelegation {
 	if m != nil {
 		return m.SplitDelegations
@@ -132,9 +125,9 @@ func (m *DelegateCallback) GetSplitDelegations() []*SplitDelegation {
 }
 
 type ClaimCallback struct {
-	UserRedemptionRecordId string `protobuf:"bytes,1,opt,name=user_redemption_record_id,json=userRedemptionRecordId,proto3" json:"user_redemption_record_id,omitempty"`
-	ChainId                string `protobuf:"bytes,2,opt,name=chain_id,json=chainId,proto3" json:"chain_id,omitempty"`
-	EpochNumber            uint64 `protobuf:"varint,3,opt,name=epoch_number,json=epochNumber,proto3" json:"epoch_number,omitempty"`
+	UserRedemptionRecordId string                                 `protobuf:"bytes,1,opt,name=user_redemption_record_id,json=userRedemptionRecordId,proto3" json:"user_redemption_record_id,omitempty"`
+	ChainId                string                                 `protobuf:"bytes,2,opt,name=chain_id,json=chainId,proto3" json:"chain_id,omitempty"`
+	EpochNumber            github_com_cosmos_cosmos_sdk_types.Int `protobuf:"bytes,3,opt,name=epoch_number,json=epochNumber,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Int" json:"epoch_number"`
 }
 
 func (m *ClaimCallback) Reset()         { *m = ClaimCallback{} }
@@ -182,13 +175,6 @@ func (m *ClaimCallback) GetChainId() string {
 		return m.ChainId
 	}
 	return ""
-}
-
-func (m *ClaimCallback) GetEpochNumber() uint64 {
-	if m != nil {
-		return m.EpochNumber
-	}
-	return 0
 }
 
 // ---------------------- Reinvest Callback ---------------------- //
@@ -246,9 +232,9 @@ func (m *ReinvestCallback) GetHostZoneId() string {
 
 // ---------------------- Undelegation Callbacks ---------------------- //
 type UndelegateCallback struct {
-	HostZoneId              string             `protobuf:"bytes,1,opt,name=host_zone_id,json=hostZoneId,proto3" json:"host_zone_id,omitempty"`
-	SplitDelegations        []*SplitDelegation `protobuf:"bytes,2,rep,name=split_delegations,json=splitDelegations,proto3" json:"split_delegations,omitempty"`
-	EpochUnbondingRecordIds []uint64           `protobuf:"varint,3,rep,packed,name=epoch_unbonding_record_ids,json=epochUnbondingRecordIds,proto3" json:"epoch_unbonding_record_ids,omitempty"`
+	HostZoneId              string                                   `protobuf:"bytes,1,opt,name=host_zone_id,json=hostZoneId,proto3" json:"host_zone_id,omitempty"`
+	SplitDelegations        []*SplitDelegation                       `protobuf:"bytes,2,rep,name=split_delegations,json=splitDelegations,proto3" json:"split_delegations,omitempty"`
+	EpochUnbondingRecordIds []github_com_cosmos_cosmos_sdk_types.Int `protobuf:"bytes,3,rep,name=epoch_unbonding_record_ids,json=epochUnbondingRecordIds,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Int" json:"epoch_unbonding_record_ids"`
 }
 
 func (m *UndelegateCallback) Reset()         { *m = UndelegateCallback{} }
@@ -298,17 +284,10 @@ func (m *UndelegateCallback) GetSplitDelegations() []*SplitDelegation {
 	return nil
 }
 
-func (m *UndelegateCallback) GetEpochUnbondingRecordIds() []uint64 {
-	if m != nil {
-		return m.EpochUnbondingRecordIds
-	}
-	return nil
-}
-
 // ---------------------- Redemption Callbacks ---------------------- //
 type RedemptionCallback struct {
-	HostZoneId              string   `protobuf:"bytes,1,opt,name=host_zone_id,json=hostZoneId,proto3" json:"host_zone_id,omitempty"`
-	EpochUnbondingRecordIds []uint64 `protobuf:"varint,2,rep,packed,name=epoch_unbonding_record_ids,json=epochUnbondingRecordIds,proto3" json:"epoch_unbonding_record_ids,omitempty"`
+	HostZoneId              string                                   `protobuf:"bytes,1,opt,name=host_zone_id,json=hostZoneId,proto3" json:"host_zone_id,omitempty"`
+	EpochUnbondingRecordIds []github_com_cosmos_cosmos_sdk_types.Int `protobuf:"bytes,2,rep,name=epoch_unbonding_record_ids,json=epochUnbondingRecordIds,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Int" json:"epoch_unbonding_record_ids"`
 }
 
 func (m *RedemptionCallback) Reset()         { *m = RedemptionCallback{} }
@@ -349,13 +328,6 @@ func (m *RedemptionCallback) GetHostZoneId() string {
 		return m.HostZoneId
 	}
 	return ""
-}
-
-func (m *RedemptionCallback) GetEpochUnbondingRecordIds() []uint64 {
-	if m != nil {
-		return m.EpochUnbondingRecordIds
-	}
-	return nil
 }
 
 type Rebalancing struct {
@@ -477,47 +449,47 @@ func init() {
 func init() { proto.RegisterFile("stride/stakeibc/callbacks.proto", fileDescriptor_f41c99b09b96a5ac) }
 
 var fileDescriptor_f41c99b09b96a5ac = []byte{
-	// 630 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x9c, 0x94, 0x4f, 0x4f, 0x13, 0x41,
-	0x18, 0xc6, 0xbb, 0x94, 0xa0, 0xbc, 0x2d, 0x16, 0x36, 0x46, 0x0b, 0x21, 0xdb, 0xba, 0x24, 0x4a,
-	0x4c, 0xd8, 0x0d, 0xe8, 0xc5, 0x78, 0x41, 0x30, 0x26, 0x8d, 0x7f, 0x0e, 0x4b, 0xf0, 0xc0, 0x65,
-	0x33, 0xbb, 0x33, 0x69, 0x27, 0xec, 0xce, 0x34, 0xfb, 0x4e, 0x8b, 0xfa, 0x09, 0x3c, 0x7a, 0xf5,
-	0x23, 0xe8, 0xc5, 0xef, 0xe0, 0x89, 0x23, 0x47, 0xe3, 0x01, 0x0d, 0xfd, 0x22, 0x66, 0xf6, 0x4f,
-	0xb7, 0x14, 0x43, 0xac, 0xa7, 0xb6, 0xef, 0xfb, 0x4c, 0xdf, 0xe7, 0x99, 0xdf, 0xcc, 0x40, 0x0b,
-	0x55, 0xc2, 0x29, 0x73, 0x51, 0x91, 0x63, 0xc6, 0x83, 0xd0, 0x0d, 0x49, 0x14, 0x05, 0x24, 0x3c,
-	0x46, 0xa7, 0x9f, 0x48, 0x25, 0xcd, 0x46, 0x26, 0x70, 0x0a, 0xc1, 0xda, 0xed, 0xae, 0xec, 0xca,
-	0xb4, 0xe7, 0xea, 0x6f, 0x99, 0x6c, 0xcd, 0x0a, 0x25, 0xc6, 0x12, 0xdd, 0x80, 0x20, 0x73, 0x87,
-	0xdb, 0x01, 0x53, 0x64, 0xdb, 0x0d, 0x25, 0x17, 0x59, 0xdf, 0x3e, 0x81, 0xc6, 0x41, 0x3f, 0xe2,
-	0xea, 0x39, 0x8b, 0x58, 0x97, 0x28, 0x2e, 0x85, 0xb9, 0x0e, 0x8b, 0x43, 0x12, 0x71, 0x4a, 0x94,
-	0x4c, 0x9a, 0x46, 0xdb, 0xd8, 0x5c, 0xf4, 0xca, 0x82, 0xf9, 0x02, 0x16, 0x48, 0x2c, 0x07, 0x42,
-	0x35, 0xe7, 0x74, 0x6b, 0xcf, 0x39, 0x3d, 0x6f, 0x55, 0x7e, 0x9e, 0xb7, 0xee, 0x77, 0xb9, 0xea,
-	0x0d, 0x02, 0x27, 0x94, 0xb1, 0x9b, 0xcf, 0xcc, 0x3e, 0xb6, 0x90, 0x1e, 0xbb, 0xea, 0x7d, 0x9f,
-	0xa1, 0xd3, 0x11, 0xca, 0xcb, 0x57, 0xdb, 0xdf, 0x0c, 0x58, 0xce, 0x87, 0xb2, 0xfd, 0x3c, 0x9b,
-	0xd9, 0x86, 0x7a, 0x4f, 0xa2, 0xf2, 0x3f, 0x48, 0xc1, 0x7c, 0x4e, 0xf3, 0xe9, 0xa0, 0x6b, 0x47,
-	0x52, 0xb0, 0x0e, 0x35, 0x1f, 0xc2, 0x0a, 0x65, 0x7d, 0x89, 0x5c, 0xf9, 0x09, 0x0b, 0x65, 0x42,
-	0xb5, 0x4c, 0x3b, 0x99, 0xf7, 0x1a, 0x79, 0xc3, 0x4b, 0xeb, 0x1d, 0x6a, 0xbe, 0x86, 0x15, 0xd4,
-	0xd9, 0x7c, 0x3a, 0x0e, 0x87, 0xcd, 0x6a, 0xbb, 0xba, 0x59, 0xdb, 0x69, 0x3b, 0x53, 0xdb, 0xe7,
-	0x4c, 0xed, 0x82, 0xb7, 0x8c, 0x97, 0x0b, 0x68, 0x7f, 0x34, 0x60, 0x69, 0x3f, 0x22, 0x3c, 0x1e,
-	0xdb, 0x7d, 0x02, 0xab, 0x03, 0x64, 0x89, 0x9f, 0x30, 0xca, 0xe2, 0xbe, 0x56, 0x4d, 0x98, 0xca,
-	0xbc, 0xdf, 0xd1, 0x02, 0x6f, 0xdc, 0x1f, 0x7b, 0x5b, 0x85, 0x9b, 0x61, 0x8f, 0x70, 0x51, 0xd8,
-	0x5f, 0xf4, 0x6e, 0xa4, 0xbf, 0x3b, 0xd4, 0xbc, 0x07, 0x75, 0xd6, 0x97, 0x61, 0xcf, 0x17, 0x83,
-	0x38, 0x60, 0x49, 0xb3, 0x9a, 0xa6, 0xab, 0xa5, 0xb5, 0x37, 0x69, 0xc9, 0xfe, 0x62, 0xc0, 0xb2,
-	0xc7, 0xb8, 0x18, 0x32, 0x54, 0x63, 0x37, 0x08, 0x8d, 0x24, 0xaf, 0xf9, 0x39, 0x22, 0xed, 0xa1,
-	0xb6, 0xb3, 0xea, 0x64, 0x24, 0x1c, 0x7d, 0x08, 0x9c, 0xfc, 0x10, 0x38, 0xfb, 0x92, 0x8b, 0x3d,
-	0x57, 0xd3, 0xfb, 0xfa, 0xab, 0xf5, 0xe0, 0x1f, 0xe8, 0xe9, 0x05, 0xde, 0xad, 0x62, 0xc4, 0xb3,
-	0x74, 0xc2, 0x15, 0x62, 0xd5, 0x69, 0x62, 0xf6, 0x77, 0x03, 0xcc, 0x43, 0x41, 0x67, 0x47, 0xfd,
-	0x57, 0x7c, 0x73, 0xff, 0x8b, 0xcf, 0x7c, 0x0a, 0x6b, 0xd9, 0xb6, 0x0e, 0x44, 0x20, 0x05, 0xe5,
-	0xa2, 0x5b, 0xc2, 0xca, 0x8e, 0xc5, 0xbc, 0x77, 0x37, 0x55, 0x1c, 0x16, 0x82, 0x82, 0x16, 0xda,
-	0x08, 0x66, 0x09, 0x71, 0x86, 0x0c, 0xd7, 0x0f, 0x9d, 0xbb, 0x7e, 0xe8, 0x67, 0x03, 0x6a, 0x1e,
-	0x0b, 0x48, 0x44, 0x44, 0xc8, 0x45, 0xd7, 0xdc, 0x80, 0x25, 0x4c, 0x42, 0x7f, 0xfa, 0x72, 0xd6,
-	0x31, 0x09, 0xdf, 0x8e, 0xef, 0xe7, 0x06, 0x2c, 0x51, 0x54, 0x13, 0xa2, 0xec, 0x74, 0xd5, 0x29,
-	0xaa, 0x52, 0xb4, 0x0b, 0x55, 0x12, 0xab, 0x0c, 0xd6, 0xcc, 0x37, 0x58, 0x2f, 0xb5, 0x4f, 0x60,
-	0xa5, 0xb0, 0x36, 0x0b, 0xd3, 0x5d, 0xa8, 0x27, 0x65, 0xa2, 0x02, 0xe7, 0xfa, 0x15, 0x9c, 0x13,
-	0xb1, 0xbd, 0x4b, 0x2b, 0xf6, 0x5e, 0x9e, 0x5e, 0x58, 0xc6, 0xd9, 0x85, 0x65, 0xfc, 0xbe, 0xb0,
-	0x8c, 0x4f, 0x23, 0xab, 0x72, 0x36, 0xb2, 0x2a, 0x3f, 0x46, 0x56, 0xe5, 0x68, 0x7b, 0xc2, 0xff,
-	0x41, 0xfa, 0x7f, 0x5b, 0xaf, 0x48, 0x80, 0x6e, 0xfe, 0x92, 0x0e, 0x1f, 0xbb, 0xef, 0xca, 0xe7,
-	0x34, 0x8d, 0x13, 0x2c, 0xa4, 0x8f, 0xe0, 0xa3, 0x3f, 0x01, 0x00, 0x00, 0xff, 0xff, 0xb3, 0x78,
-	0x86, 0x63, 0x6e, 0x05, 0x00, 0x00,
+	// 632 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xac, 0x55, 0xcf, 0x6e, 0xd3, 0x30,
+	0x1c, 0x6e, 0x56, 0x69, 0xb0, 0x5f, 0x3b, 0xba, 0x45, 0x08, 0xba, 0x69, 0x4a, 0xab, 0x4c, 0x82,
+	0x5d, 0x96, 0x68, 0x83, 0x0b, 0xb7, 0xb1, 0x21, 0xa4, 0x8a, 0x3f, 0x12, 0x99, 0xc6, 0x61, 0x97,
+	0xc8, 0xb1, 0xad, 0xd6, 0x6a, 0x62, 0x57, 0xb6, 0xdb, 0x01, 0x4f, 0xc1, 0x95, 0x33, 0x27, 0x78,
+	0x02, 0x1e, 0x61, 0xc7, 0x1d, 0x11, 0x87, 0x0d, 0x6d, 0x6f, 0xc0, 0x13, 0x20, 0x27, 0x69, 0xd2,
+	0x75, 0x08, 0xd1, 0x8a, 0x53, 0x1b, 0xfb, 0xf3, 0xf7, 0xfb, 0xbe, 0xdf, 0xef, 0x93, 0x0d, 0x2d,
+	0xa5, 0x25, 0x23, 0xd4, 0x57, 0x1a, 0xf5, 0x29, 0x8b, 0xb0, 0x8f, 0x51, 0x1c, 0x47, 0x08, 0xf7,
+	0x95, 0x37, 0x90, 0x42, 0x0b, 0xbb, 0x91, 0x01, 0xbc, 0x31, 0x60, 0xfd, 0x6e, 0x57, 0x74, 0x45,
+	0xba, 0xe7, 0x9b, 0x7f, 0x19, 0x6c, 0xdd, 0xc1, 0x42, 0x25, 0x42, 0xf9, 0x11, 0x52, 0xd4, 0x1f,
+	0xed, 0x44, 0x54, 0xa3, 0x1d, 0x1f, 0x0b, 0xc6, 0xb3, 0x7d, 0xf7, 0x04, 0x1a, 0x87, 0x83, 0x98,
+	0xe9, 0x67, 0x34, 0xa6, 0x5d, 0xa4, 0x99, 0xe0, 0xf6, 0x06, 0x2c, 0x8d, 0x50, 0xcc, 0x08, 0xd2,
+	0x42, 0x36, 0xad, 0xb6, 0xb5, 0xb5, 0x14, 0x94, 0x0b, 0xf6, 0x73, 0x58, 0x44, 0x89, 0x18, 0x72,
+	0xdd, 0x5c, 0x30, 0x5b, 0xfb, 0xde, 0xe9, 0x79, 0xab, 0xf2, 0xe3, 0xbc, 0xf5, 0xa0, 0xcb, 0x74,
+	0x6f, 0x18, 0x79, 0x58, 0x24, 0x7e, 0x5e, 0x33, 0xfb, 0xd9, 0x56, 0xa4, 0xef, 0xeb, 0xf7, 0x03,
+	0xaa, 0xbc, 0x0e, 0xd7, 0x41, 0x7e, 0xda, 0xbd, 0xb0, 0x60, 0x25, 0x2f, 0x4a, 0x0f, 0x72, 0x6f,
+	0x76, 0x1b, 0xea, 0x3d, 0xa1, 0x74, 0xf8, 0x41, 0x70, 0x1a, 0x32, 0x92, 0x57, 0x07, 0xb3, 0x76,
+	0x2c, 0x38, 0xed, 0x10, 0xfb, 0x18, 0x56, 0x09, 0x1d, 0x08, 0xc5, 0x74, 0x28, 0x29, 0x16, 0x92,
+	0x18, 0xd8, 0x7c, 0x4a, 0x1a, 0x39, 0x51, 0x90, 0xf2, 0x74, 0x88, 0xfd, 0x0a, 0x56, 0x95, 0xe9,
+	0x45, 0x48, 0x8a, 0x66, 0xa8, 0x66, 0xb5, 0x5d, 0xdd, 0xaa, 0xed, 0xb6, 0xbd, 0xa9, 0x76, 0x7b,
+	0x53, 0x5d, 0x0b, 0x56, 0xd4, 0xf5, 0x05, 0xe5, 0x7e, 0xb3, 0x60, 0xf9, 0x20, 0x46, 0x2c, 0x29,
+	0xec, 0x3d, 0x81, 0xb5, 0xa1, 0xa2, 0x32, 0x94, 0x94, 0xd0, 0x64, 0x60, 0x50, 0x13, 0x26, 0x32,
+	0xaf, 0xf7, 0x0c, 0x20, 0x28, 0xf6, 0x0b, 0x6d, 0x6b, 0x70, 0x1b, 0xf7, 0x10, 0xe3, 0x85, 0xdd,
+	0xe0, 0x56, 0xfa, 0xdd, 0x21, 0xf6, 0x1b, 0xa8, 0xd3, 0x81, 0xc0, 0xbd, 0x90, 0x0f, 0x93, 0x88,
+	0xca, 0x66, 0x75, 0xae, 0x6e, 0xd4, 0x52, 0x8e, 0xd7, 0x29, 0x85, 0xfb, 0xc5, 0x82, 0x95, 0x80,
+	0x32, 0x3e, 0xa2, 0x4a, 0x17, 0xea, 0x15, 0x34, 0x64, 0xbe, 0x16, 0xe6, 0x11, 0x30, 0x9a, 0x6b,
+	0xbb, 0x6b, 0x5e, 0xc6, 0xe8, 0x99, 0x90, 0x79, 0x79, 0xc8, 0xbc, 0x03, 0xc1, 0xf8, 0xbe, 0x6f,
+	0x54, 0x7c, 0xbd, 0x68, 0x3d, 0xfc, 0x07, 0x15, 0xe6, 0x40, 0x70, 0x67, 0x5c, 0xe2, 0x69, 0x5a,
+	0xe1, 0x46, 0x22, 0xaa, 0xd3, 0x89, 0x70, 0x7f, 0x59, 0x60, 0x1f, 0x71, 0x32, 0x7b, 0x94, 0xfe,
+	0x38, 0xee, 0x85, 0x79, 0xc7, 0x6d, 0xf7, 0x61, 0x3d, 0x1b, 0xc3, 0x90, 0x47, 0x82, 0x13, 0xc6,
+	0xbb, 0xe5, 0x70, 0xb3, 0x18, 0xcd, 0x3e, 0x94, 0xfb, 0x29, 0xe3, 0xd1, 0x98, 0x70, 0x9c, 0x06,
+	0xe5, 0x7e, 0xb6, 0xc0, 0x2e, 0x53, 0x32, 0x83, 0xe9, 0xbf, 0xab, 0x5c, 0xf8, 0xbf, 0x2a, 0x3f,
+	0x59, 0x50, 0x0b, 0x68, 0x84, 0x62, 0xc4, 0x31, 0xe3, 0x5d, 0x7b, 0x13, 0x96, 0x95, 0xc4, 0xe1,
+	0xf4, 0xed, 0x52, 0x57, 0x12, 0xbf, 0x2d, 0x2e, 0x98, 0x4d, 0x58, 0x26, 0x4a, 0x4f, 0x80, 0xb2,
+	0xb8, 0xd7, 0x89, 0xd2, 0x25, 0x68, 0x0f, 0xaa, 0x28, 0xd1, 0x73, 0x46, 0xdd, 0x1c, 0x75, 0x4f,
+	0x60, 0x75, 0x2c, 0x6d, 0x96, 0xd0, 0xec, 0x41, 0x5d, 0x96, 0x8e, 0xc6, 0x79, 0xd9, 0xb8, 0x91,
+	0x97, 0x09, 0xdb, 0xc1, 0xb5, 0x13, 0xfb, 0x2f, 0x4e, 0x2f, 0x1d, 0xeb, 0xec, 0xd2, 0xb1, 0x7e,
+	0x5e, 0x3a, 0xd6, 0xc7, 0x2b, 0xa7, 0x72, 0x76, 0xe5, 0x54, 0xbe, 0x5f, 0x39, 0x95, 0xe3, 0x9d,
+	0x09, 0xfd, 0x87, 0x29, 0xdf, 0xf6, 0x4b, 0x14, 0x29, 0x3f, 0x7f, 0x0a, 0x46, 0x8f, 0xfd, 0x77,
+	0xe5, 0x7b, 0x90, 0xda, 0x89, 0x16, 0xd3, 0x5b, 0xfc, 0xd1, 0xef, 0x00, 0x00, 0x00, 0xff, 0xff,
+	0x2c, 0x2a, 0x75, 0x98, 0x2f, 0x06, 0x00, 0x00,
 }
 
 func (m *SplitDelegation) Marshal() (dAtA []byte, err error) {
@@ -594,11 +566,16 @@ func (m *DelegateCallback) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 			dAtA[i] = 0x1a
 		}
 	}
-	if m.DepositRecordId != 0 {
-		i = encodeVarintCallbacks(dAtA, i, uint64(m.DepositRecordId))
-		i--
-		dAtA[i] = 0x10
+	{
+		size := m.DepositRecordId.Size()
+		i -= size
+		if _, err := m.DepositRecordId.MarshalTo(dAtA[i:]); err != nil {
+			return 0, err
+		}
+		i = encodeVarintCallbacks(dAtA, i, uint64(size))
 	}
+	i--
+	dAtA[i] = 0x12
 	if len(m.HostZoneId) > 0 {
 		i -= len(m.HostZoneId)
 		copy(dAtA[i:], m.HostZoneId)
@@ -629,11 +606,16 @@ func (m *ClaimCallback) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	_ = i
 	var l int
 	_ = l
-	if m.EpochNumber != 0 {
-		i = encodeVarintCallbacks(dAtA, i, uint64(m.EpochNumber))
-		i--
-		dAtA[i] = 0x18
+	{
+		size := m.EpochNumber.Size()
+		i -= size
+		if _, err := m.EpochNumber.MarshalTo(dAtA[i:]); err != nil {
+			return 0, err
+		}
+		i = encodeVarintCallbacks(dAtA, i, uint64(size))
 	}
+	i--
+	dAtA[i] = 0x1a
 	if len(m.ChainId) > 0 {
 		i -= len(m.ChainId)
 		copy(dAtA[i:], m.ChainId)
@@ -712,22 +694,18 @@ func (m *UndelegateCallback) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	var l int
 	_ = l
 	if len(m.EpochUnbondingRecordIds) > 0 {
-		dAtA3 := make([]byte, len(m.EpochUnbondingRecordIds)*10)
-		var j2 int
-		for _, num := range m.EpochUnbondingRecordIds {
-			for num >= 1<<7 {
-				dAtA3[j2] = uint8(uint64(num)&0x7f | 0x80)
-				num >>= 7
-				j2++
+		for iNdEx := len(m.EpochUnbondingRecordIds) - 1; iNdEx >= 0; iNdEx-- {
+			{
+				size := m.EpochUnbondingRecordIds[iNdEx].Size()
+				i -= size
+				if _, err := m.EpochUnbondingRecordIds[iNdEx].MarshalTo(dAtA[i:]); err != nil {
+					return 0, err
+				}
+				i = encodeVarintCallbacks(dAtA, i, uint64(size))
 			}
-			dAtA3[j2] = uint8(num)
-			j2++
+			i--
+			dAtA[i] = 0x1a
 		}
-		i -= j2
-		copy(dAtA[i:], dAtA3[:j2])
-		i = encodeVarintCallbacks(dAtA, i, uint64(j2))
-		i--
-		dAtA[i] = 0x1a
 	}
 	if len(m.SplitDelegations) > 0 {
 		for iNdEx := len(m.SplitDelegations) - 1; iNdEx >= 0; iNdEx-- {
@@ -774,22 +752,18 @@ func (m *RedemptionCallback) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	var l int
 	_ = l
 	if len(m.EpochUnbondingRecordIds) > 0 {
-		dAtA5 := make([]byte, len(m.EpochUnbondingRecordIds)*10)
-		var j4 int
-		for _, num := range m.EpochUnbondingRecordIds {
-			for num >= 1<<7 {
-				dAtA5[j4] = uint8(uint64(num)&0x7f | 0x80)
-				num >>= 7
-				j4++
+		for iNdEx := len(m.EpochUnbondingRecordIds) - 1; iNdEx >= 0; iNdEx-- {
+			{
+				size := m.EpochUnbondingRecordIds[iNdEx].Size()
+				i -= size
+				if _, err := m.EpochUnbondingRecordIds[iNdEx].MarshalTo(dAtA[i:]); err != nil {
+					return 0, err
+				}
+				i = encodeVarintCallbacks(dAtA, i, uint64(size))
 			}
-			dAtA5[j4] = uint8(num)
-			j4++
+			i--
+			dAtA[i] = 0x12
 		}
-		i -= j4
-		copy(dAtA[i:], dAtA5[:j4])
-		i = encodeVarintCallbacks(dAtA, i, uint64(j4))
-		i--
-		dAtA[i] = 0x12
 	}
 	if len(m.HostZoneId) > 0 {
 		i -= len(m.HostZoneId)
@@ -928,9 +902,8 @@ func (m *DelegateCallback) Size() (n int) {
 	if l > 0 {
 		n += 1 + l + sovCallbacks(uint64(l))
 	}
-	if m.DepositRecordId != 0 {
-		n += 1 + sovCallbacks(uint64(m.DepositRecordId))
-	}
+	l = m.DepositRecordId.Size()
+	n += 1 + l + sovCallbacks(uint64(l))
 	if len(m.SplitDelegations) > 0 {
 		for _, e := range m.SplitDelegations {
 			l = e.Size()
@@ -954,9 +927,8 @@ func (m *ClaimCallback) Size() (n int) {
 	if l > 0 {
 		n += 1 + l + sovCallbacks(uint64(l))
 	}
-	if m.EpochNumber != 0 {
-		n += 1 + sovCallbacks(uint64(m.EpochNumber))
-	}
+	l = m.EpochNumber.Size()
+	n += 1 + l + sovCallbacks(uint64(l))
 	return n
 }
 
@@ -992,11 +964,10 @@ func (m *UndelegateCallback) Size() (n int) {
 		}
 	}
 	if len(m.EpochUnbondingRecordIds) > 0 {
-		l = 0
 		for _, e := range m.EpochUnbondingRecordIds {
-			l += sovCallbacks(uint64(e))
+			l = e.Size()
+			n += 1 + l + sovCallbacks(uint64(l))
 		}
-		n += 1 + sovCallbacks(uint64(l)) + l
 	}
 	return n
 }
@@ -1012,11 +983,10 @@ func (m *RedemptionCallback) Size() (n int) {
 		n += 1 + l + sovCallbacks(uint64(l))
 	}
 	if len(m.EpochUnbondingRecordIds) > 0 {
-		l = 0
 		for _, e := range m.EpochUnbondingRecordIds {
-			l += sovCallbacks(uint64(e))
+			l = e.Size()
+			n += 1 + l + sovCallbacks(uint64(l))
 		}
-		n += 1 + sovCallbacks(uint64(l)) + l
 	}
 	return n
 }
@@ -1243,10 +1213,10 @@ func (m *DelegateCallback) Unmarshal(dAtA []byte) error {
 			m.HostZoneId = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		case 2:
-			if wireType != 0 {
+			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field DepositRecordId", wireType)
 			}
-			m.DepositRecordId = 0
+			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return ErrIntOverflowCallbacks
@@ -1256,11 +1226,26 @@ func (m *DelegateCallback) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				m.DepositRecordId |= uint64(b&0x7F) << shift
+				stringLen |= uint64(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthCallbacks
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthCallbacks
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if err := m.DepositRecordId.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
 		case 3:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field SplitDelegations", wireType)
@@ -1410,10 +1395,10 @@ func (m *ClaimCallback) Unmarshal(dAtA []byte) error {
 			m.ChainId = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		case 3:
-			if wireType != 0 {
+			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field EpochNumber", wireType)
 			}
-			m.EpochNumber = 0
+			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return ErrIntOverflowCallbacks
@@ -1423,11 +1408,26 @@ func (m *ClaimCallback) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				m.EpochNumber |= uint64(b&0x7F) << shift
+				stringLen |= uint64(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthCallbacks
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthCallbacks
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if err := m.EpochNumber.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
 			skippy, err := skipCallbacks(dAtA[iNdEx:])
@@ -1660,81 +1660,41 @@ func (m *UndelegateCallback) Unmarshal(dAtA []byte) error {
 			}
 			iNdEx = postIndex
 		case 3:
-			if wireType == 0 {
-				var v uint64
-				for shift := uint(0); ; shift += 7 {
-					if shift >= 64 {
-						return ErrIntOverflowCallbacks
-					}
-					if iNdEx >= l {
-						return io.ErrUnexpectedEOF
-					}
-					b := dAtA[iNdEx]
-					iNdEx++
-					v |= uint64(b&0x7F) << shift
-					if b < 0x80 {
-						break
-					}
-				}
-				m.EpochUnbondingRecordIds = append(m.EpochUnbondingRecordIds, v)
-			} else if wireType == 2 {
-				var packedLen int
-				for shift := uint(0); ; shift += 7 {
-					if shift >= 64 {
-						return ErrIntOverflowCallbacks
-					}
-					if iNdEx >= l {
-						return io.ErrUnexpectedEOF
-					}
-					b := dAtA[iNdEx]
-					iNdEx++
-					packedLen |= int(b&0x7F) << shift
-					if b < 0x80 {
-						break
-					}
-				}
-				if packedLen < 0 {
-					return ErrInvalidLengthCallbacks
-				}
-				postIndex := iNdEx + packedLen
-				if postIndex < 0 {
-					return ErrInvalidLengthCallbacks
-				}
-				if postIndex > l {
-					return io.ErrUnexpectedEOF
-				}
-				var elementCount int
-				var count int
-				for _, integer := range dAtA[iNdEx:postIndex] {
-					if integer < 128 {
-						count++
-					}
-				}
-				elementCount = count
-				if elementCount != 0 && len(m.EpochUnbondingRecordIds) == 0 {
-					m.EpochUnbondingRecordIds = make([]uint64, 0, elementCount)
-				}
-				for iNdEx < postIndex {
-					var v uint64
-					for shift := uint(0); ; shift += 7 {
-						if shift >= 64 {
-							return ErrIntOverflowCallbacks
-						}
-						if iNdEx >= l {
-							return io.ErrUnexpectedEOF
-						}
-						b := dAtA[iNdEx]
-						iNdEx++
-						v |= uint64(b&0x7F) << shift
-						if b < 0x80 {
-							break
-						}
-					}
-					m.EpochUnbondingRecordIds = append(m.EpochUnbondingRecordIds, v)
-				}
-			} else {
+			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field EpochUnbondingRecordIds", wireType)
 			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowCallbacks
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthCallbacks
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthCallbacks
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			var v github_com_cosmos_cosmos_sdk_types.Int
+			m.EpochUnbondingRecordIds = append(m.EpochUnbondingRecordIds, v)
+			if err := m.EpochUnbondingRecordIds[len(m.EpochUnbondingRecordIds)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
 			skippy, err := skipCallbacks(dAtA[iNdEx:])
@@ -1818,81 +1778,41 @@ func (m *RedemptionCallback) Unmarshal(dAtA []byte) error {
 			m.HostZoneId = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		case 2:
-			if wireType == 0 {
-				var v uint64
-				for shift := uint(0); ; shift += 7 {
-					if shift >= 64 {
-						return ErrIntOverflowCallbacks
-					}
-					if iNdEx >= l {
-						return io.ErrUnexpectedEOF
-					}
-					b := dAtA[iNdEx]
-					iNdEx++
-					v |= uint64(b&0x7F) << shift
-					if b < 0x80 {
-						break
-					}
-				}
-				m.EpochUnbondingRecordIds = append(m.EpochUnbondingRecordIds, v)
-			} else if wireType == 2 {
-				var packedLen int
-				for shift := uint(0); ; shift += 7 {
-					if shift >= 64 {
-						return ErrIntOverflowCallbacks
-					}
-					if iNdEx >= l {
-						return io.ErrUnexpectedEOF
-					}
-					b := dAtA[iNdEx]
-					iNdEx++
-					packedLen |= int(b&0x7F) << shift
-					if b < 0x80 {
-						break
-					}
-				}
-				if packedLen < 0 {
-					return ErrInvalidLengthCallbacks
-				}
-				postIndex := iNdEx + packedLen
-				if postIndex < 0 {
-					return ErrInvalidLengthCallbacks
-				}
-				if postIndex > l {
-					return io.ErrUnexpectedEOF
-				}
-				var elementCount int
-				var count int
-				for _, integer := range dAtA[iNdEx:postIndex] {
-					if integer < 128 {
-						count++
-					}
-				}
-				elementCount = count
-				if elementCount != 0 && len(m.EpochUnbondingRecordIds) == 0 {
-					m.EpochUnbondingRecordIds = make([]uint64, 0, elementCount)
-				}
-				for iNdEx < postIndex {
-					var v uint64
-					for shift := uint(0); ; shift += 7 {
-						if shift >= 64 {
-							return ErrIntOverflowCallbacks
-						}
-						if iNdEx >= l {
-							return io.ErrUnexpectedEOF
-						}
-						b := dAtA[iNdEx]
-						iNdEx++
-						v |= uint64(b&0x7F) << shift
-						if b < 0x80 {
-							break
-						}
-					}
-					m.EpochUnbondingRecordIds = append(m.EpochUnbondingRecordIds, v)
-				}
-			} else {
+			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field EpochUnbondingRecordIds", wireType)
 			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowCallbacks
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthCallbacks
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthCallbacks
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			var v github_com_cosmos_cosmos_sdk_types.Int
+			m.EpochUnbondingRecordIds = append(m.EpochUnbondingRecordIds, v)
+			if err := m.EpochUnbondingRecordIds[len(m.EpochUnbondingRecordIds)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
 			skippy, err := skipCallbacks(dAtA[iNdEx:])

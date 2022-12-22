@@ -17,7 +17,10 @@ message UserRedemptionRecord {
   ];
   string denom = 5;
   string host_zone_id = 6;
-  uint64 epoch_number = 7;
+  string epoch_number = 7 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
   bool claim_is_pending = 8;
 }
 
@@ -43,7 +46,10 @@ message NoData {}
 // this line is used by starport scaffolding # ibc/packet/proto/message
 
 message DepositRecord {
-  uint64 id = 1;
+  string id = 1 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
   string amount = 2 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
     (gogoproto.nullable) = false
@@ -65,7 +71,10 @@ message DepositRecord {
     WITHDRAWAL_ICA = 1;
   }
   Status status = 6;
-  uint64 deposit_epoch_number = 7;
+  string deposit_epoch_number = 7 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
   Source source = 8;
 
   reserved 5;
@@ -92,13 +101,19 @@ message HostZoneUnbonding {
   ];
   string denom = 3;
   string host_zone_id = 4;
-  uint64 unbonding_time = 5;
+  string unbonding_time = 5 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
   Status status = 6;
   repeated string user_redemption_records = 7;
 }
 
 message EpochUnbondingRecord {
-  uint64 epoch_number = 1;
+  string epoch_number = 1 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
   repeated HostZoneUnbonding host_zone_unbondings = 3;
   reserved 2;
 }
@@ -110,11 +125,17 @@ message GenesisState {
   string port_id = 2;
   repeated UserRedemptionRecord user_redemption_record_list = 3
       [ (gogoproto.nullable) = false ];
-  uint64 user_redemption_record_count = 4;
+  string user_redemption_record_count = 4 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
   repeated EpochUnbondingRecord epoch_unbonding_record_list = 5
       [ (gogoproto.nullable) = false ];
   repeated DepositRecord deposit_record_list = 7
       [ (gogoproto.nullable) = false ];
-  uint64 deposit_record_count = 8;
+  string deposit_record_count = 8 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
   // this line is used by starport scaffolding # genesis/proto/state
 }

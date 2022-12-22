@@ -15,7 +15,10 @@ message SplitDelegation {
 
 message DelegateCallback {
   string host_zone_id = 1;
-  uint64 deposit_record_id = 2;
+  string deposit_record_id = 2 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
   repeated SplitDelegation split_delegations = 3;
 }
 
@@ -24,7 +27,10 @@ message DelegateCallback {
 message ClaimCallback {
   string user_redemption_record_id = 1;
   string chain_id = 2;
-  uint64 epoch_number = 3;
+  string epoch_number = 3 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
 }
 
 // ---------------------- Reinvest Callback ---------------------- //
@@ -40,13 +46,19 @@ message ReinvestCallback {
 message UndelegateCallback {
   string host_zone_id = 1;
   repeated SplitDelegation split_delegations = 2;
-  repeated uint64 epoch_unbonding_record_ids = 3;
+  repeated string epoch_unbonding_record_ids = 3 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
 }
 
 // ---------------------- Redemption Callbacks ---------------------- //
 message RedemptionCallback {
   string host_zone_id = 1;
-  repeated uint64 epoch_unbonding_record_ids = 2;
+  repeated string epoch_unbonding_record_ids = 2 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
 }
 
 // ---------------- Validator Rebalance Callbacks ---------------------- //

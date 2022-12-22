@@ -17,7 +17,10 @@ message GenesisState {
   // list of zones that are registered by the protocol
   ICAAccount ica_account = 4;
   repeated HostZone host_zone_list = 5 [ (gogoproto.nullable) = false ];
-  uint64 host_zone_count = 6;
+  string host_zone_count = 6 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
   // stores a map from hostZone base denom to hostZone
   map<string, string> denom_to_host_zone = 9;
   repeated EpochTracker epoch_tracker_list = 10

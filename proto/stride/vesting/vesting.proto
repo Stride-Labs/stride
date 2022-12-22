@@ -29,20 +29,33 @@ message BaseVestingAccount {
     (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins",
     (gogoproto.moretags) = "yaml:\"delegated_vesting\""
   ];
-  int64 end_time = 5 [ (gogoproto.moretags) = "yaml:\"end_time\"" ];
+  string end_time = 5 [ 
+    (gogoproto.moretags) = "yaml:\"end_time\"",
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
 }
 
 // Period defines a length of time and amount of coins that will vest.
 message Period {
   option (gogoproto.goproto_stringer) = false;
 
-  int64 start_time = 1;
-  int64 length = 2;
+  string start_time = 1 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
+  string length = 2 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
   repeated cosmos.base.v1beta1.Coin amount = 3 [
     (gogoproto.nullable) = false,
     (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
   ];
-  int32 action_type = 4;
+  string action_type = 4 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
 }
 
 // StridePeriodicVestingAccount implements the VestingAccount interface. It

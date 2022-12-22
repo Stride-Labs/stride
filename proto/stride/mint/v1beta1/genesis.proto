@@ -15,6 +15,10 @@ message GenesisState {
   Params params = 2 [ (gogoproto.nullable) = false ];
 
   // current reduction period start epoch
-  int64 reduction_started_epoch = 3
-      [ (gogoproto.moretags) = "yaml:\"reduction_started_epoch\"" ];
+  string reduction_started_epoch = 3
+      [ 
+        (gogoproto.moretags) = "yaml:\"reduction_started_epoch\"", 
+        (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+        (gogoproto.nullable) = false
+      ];
 }

@@ -31,7 +31,11 @@ message MsgSubmitQueryResponse {
   bytes result = 3 [ (gogoproto.moretags) = "yaml:\"result\"" ];
   tendermint.crypto.ProofOps proof_ops = 4
       [ (gogoproto.moretags) = "yaml:\"proof_ops\"" ];
-  int64 height = 5 [ (gogoproto.moretags) = "yaml:\"height\"" ];
+  string height = 5 [ 
+    (gogoproto.moretags) = "yaml:\"height\"", 
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
   string from_address = 6 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
 }
 

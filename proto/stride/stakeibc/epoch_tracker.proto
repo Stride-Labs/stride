@@ -1,11 +1,22 @@
 syntax = "proto3";
 package stride.stakeibc;
 
+import "gogoproto/gogo.proto";
+
 option go_package = "github.com/Stride-Labs/stride/v4/x/stakeibc/types";
 
 message EpochTracker {
   string epoch_identifier = 1;
-  uint64 epoch_number = 2;
-  uint64 next_epoch_start_time = 3;
-  uint64 duration = 4;
+  string epoch_number = 2 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
+  string next_epoch_start_time = 3 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
+  string duration = 4 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
 }

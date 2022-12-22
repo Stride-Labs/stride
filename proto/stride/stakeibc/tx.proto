@@ -80,8 +80,12 @@ message MsgRegisterHostZone {
   string creator = 6;
   string transfer_channel_id = 10
       [ (gogoproto.moretags) = "yaml:\"transfer_channel_id\"" ];
-  uint64 unbonding_frequency = 11
-      [ (gogoproto.moretags) = "yaml:\"unbonding_frequency\"" ];
+  string unbonding_frequency = 11
+      [ 
+        (gogoproto.moretags) = "yaml:\"unbonding_frequency\"", 
+        (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+        (gogoproto.nullable) = false  
+      ];
 }
 
 // TODO(TEST-53): Remove this pre-launch (no need for clients to create /
@@ -92,7 +96,10 @@ message MsgClaimUndelegatedTokens {
   string creator = 1;
   // UserUnbondingRecords are keyed on {chain_id}.{epoch}.{sender}
   string host_zone_id = 2;
-  uint64 epoch = 3;
+  string epoch = 3 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
   string sender = 4;
 }
 
@@ -101,7 +108,10 @@ message MsgClaimUndelegatedTokensResponse {}
 message MsgRebalanceValidators {
   string creator = 1;
   string host_zone = 2;
-  uint64 num_rebalance = 3;
+  string num_rebalance = 3 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
 }
 
 message MsgRebalanceValidatorsResponse {}
@@ -111,8 +121,14 @@ message MsgAddValidator {
   string host_zone = 2;
   string name = 3;
   string address = 4 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
-  uint64 commission = 5;
-  uint64 weight = 6;
+  string commission = 5 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
+  string weight = 6 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
 }
 
 message MsgAddValidatorResponse {}
@@ -121,7 +137,10 @@ message MsgChangeValidatorWeight {
   string creator = 1;
   string host_zone = 2;
   string val_addr = 3 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
-  uint64 weight = 4;
+  string weight = 4 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
 }
 
 message MsgChangeValidatorWeightResponse {}

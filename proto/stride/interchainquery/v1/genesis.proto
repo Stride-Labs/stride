@@ -13,7 +13,10 @@ message Query {
   string query_type = 4;
   bytes request = 5;
   string callback_id = 8;
-  uint64 ttl = 9;
+  string ttl = 9 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
   bool request_sent = 11;
 }
 

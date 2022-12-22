@@ -63,8 +63,12 @@ message Params {
   string epoch_identifier = 3
       [ (gogoproto.moretags) = "yaml:\"epoch_identifier\"" ];
   // number of epochs take to reduce rewards
-  int64 reduction_period_in_epochs = 4
-      [ (gogoproto.moretags) = "yaml:\"reduction_period_in_epochs\"" ];
+  string reduction_period_in_epochs = 4
+      [ 
+        (gogoproto.moretags) = "yaml:\"reduction_period_in_epochs\"",
+        (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+        (gogoproto.nullable) = false
+       ];
   // reduction multiplier to execute on each period
   string reduction_factor = 5 [
     (gogoproto.moretags) = "yaml:\"reduction_factor\"",
@@ -76,7 +80,9 @@ message Params {
       [ (gogoproto.nullable) = false ];
 
   // start epoch to distribute minting rewards
-  int64 minting_rewards_distribution_start_epoch = 7
-      [ (gogoproto.moretags) =
-            "yaml:\"minting_rewards_distribution_start_epoch\"" ];
+  string minting_rewards_distribution_start_epoch = 7
+      [ (gogoproto.moretags) = "yaml:\"minting_rewards_distribution_start_epoch\"", 
+        (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+        (gogoproto.nullable) = false
+      ];
 }
