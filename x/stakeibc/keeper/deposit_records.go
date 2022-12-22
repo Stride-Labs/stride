@@ -34,13 +34,14 @@ func (k Keeper) CreateDepositRecordsForEpoch(ctx sdk.Context, epochNumber uint64
 }
 
 // Iterate each deposit record marked TRANSFER_QUEUE and IBC transfer tokens from the Stride controller account to the delegation ICAs on each host zone
-func (k Keeper) TransferExistingDepositsToHostZones(ctx sdk.Context, epochNumber uint64, depositRecords []recordstypes.DepositRecord) {
+func (k Keeper) TransferExistingDepositsToHostZones(ctx sdk.Context, epochNumber uint64, depositRecords []recordstypes.DepositRecord, hostZone types.HostZone) {
 	k.Logger(ctx).Info("Transfering deposit records...")
 
 	transferDepositRecords := utils.FilterDepositRecords(depositRecords, func(record recordstypes.DepositRecord) (condition bool) {
 		isTransferRecord := record.Status == recordstypes.DepositRecord_TRANSFER_QUEUE
 		isBeforeCurrentEpoch := record.DepositEpochNumber < epochNumber
-		return isTransferRecord && isBeforeCurrentEpoch
+		isBelongToHostZone := record.HostZoneId == hostZone.ChainId
+		return isTransferRecord && isBeforeCurrentEpoch && isBelongToHostZone
 	})
 
 	ibcTransferTimeoutNanos := k.GetParam(ctx, types.KeyIBCTransferTimeoutNanos)
@@ -53,12 +54,6 @@ func (k Keeper) TransferExistingDepositsToHostZones(ctx sdk.Context, epochNumber
 		if depositRecord.Amount.LTE(sdk.ZeroInt()) && depositRecord.DepositEpochNumber < epochNumber {
 			k.Logger(ctx).Info(utils.LogWithHostZone(depositRecord.HostZoneId, "Empty deposit record - Removing."))
 			k.RecordsKeeper.RemoveDepositRecord(ctx, depositRecord.Id)
-			continue
-		}
-
-		hostZone, hostZoneFound := k.GetHostZone(ctx, depositRecord.HostZoneId)
-		if !hostZoneFound {
-			k.Logger(ctx).Error(fmt.Sprintf("[TransferExistingDepositsToHostZones] Host zone not found for deposit record id %d", depositRecord.Id))
 			continue
 		}
 
@@ -96,13 +91,14 @@ func (k Keeper) TransferExistingDepositsToHostZones(ctx sdk.Context, epochNumber
 }
 
 // Iterate each deposit record marked DELEGATION_QUEUE and use the delegation ICA to delegate on the host zone
-func (k Keeper) StakeExistingDepositsOnHostZones(ctx sdk.Context, epochNumber uint64, depositRecords []recordstypes.DepositRecord) {
+func (k Keeper) StakeExistingDepositsOnHostZones(ctx sdk.Context, epochNumber uint64, depositRecords []recordstypes.DepositRecord, hostZone types.HostZone) {
 	k.Logger(ctx).Info("Staking deposit records...")
 
 	stakeDepositRecords := utils.FilterDepositRecords(depositRecords, func(record recordstypes.DepositRecord) (condition bool) {
 		isStakeRecord := record.Status == recordstypes.DepositRecord_DELEGATION_QUEUE
 		isBeforeCurrentEpoch := record.DepositEpochNumber < epochNumber
-		return isStakeRecord && isBeforeCurrentEpoch
+		isBelongToHostZone := record.HostZoneId == hostZone.ChainId
+		return isStakeRecord && isBeforeCurrentEpoch && isBelongToHostZone
 	})
 
 	if len(stakeDepositRecords) == 0 {
@@ -119,12 +115,6 @@ func (k Keeper) StakeExistingDepositsOnHostZones(ctx sdk.Context, epochNumber ui
 	for _, depositRecord := range stakeDepositRecords[:maxDepositRecordsToStake] {
 		k.Logger(ctx).Info(utils.LogWithHostZone(depositRecord.HostZoneId,
 			"Processing deposit record %d: %v%s", depositRecord.Id, depositRecord.Amount, depositRecord.Denom))
-
-		hostZone, hostZoneFound := k.GetHostZone(ctx, depositRecord.HostZoneId)
-		if !hostZoneFound {
-			k.Logger(ctx).Error(fmt.Sprintf("[StakeExistingDepositsOnHostZones] Host zone not found for deposit record {%d}", depositRecord.Id))
-			continue
-		}
 
 		delegateAccount := hostZone.DelegationAccount
 		if delegateAccount == nil || delegateAccount.Address == "" {

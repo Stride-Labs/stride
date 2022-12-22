@@ -79,7 +79,7 @@ func (s *KeeperTestSuite) TestUpdateRedemptionRatesSuccessful() {
 	s.Require().Equal(initialRedemptionRate, sdk.NewDec(1), "t0 rr")
 
 	records := tc.allRecords
-	s.App.StakeibcKeeper.UpdateRedemptionRates(s.Ctx, records)
+	s.App.StakeibcKeeper.UpdateRedemptionRates(s.Ctx, records, tc.hostZone)
 
 	hz, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, tc.hostZone.ChainId)
 	s.Require().True(found, "hz found")
@@ -106,7 +106,7 @@ func (s *KeeperTestSuite) TestUpdateRedemptionRatesRandomized() {
 	s.Require().Equal(initialRedemptionRate, sdk.NewDec(1), "t0 rr")
 
 	records := tc.allRecords
-	s.App.StakeibcKeeper.UpdateRedemptionRates(s.Ctx, records)
+	s.App.StakeibcKeeper.UpdateRedemptionRates(s.Ctx, records, tc.hostZone)
 
 	hz, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, tc.hostZone.ChainId)
 	s.Require().True(found, "hz found")
@@ -145,7 +145,7 @@ func (s *KeeperTestSuite) TestUpdateRedemptionRateZeroStAssets() {
 	s.Require().Equal(initialRedemptionRate, sdk.NewDec(1), "t0 rr")
 
 	records := tc.allRecords
-	s.App.StakeibcKeeper.UpdateRedemptionRates(s.Ctx, records)
+	s.App.StakeibcKeeper.UpdateRedemptionRates(s.Ctx, records, tc.hostZone)
 
 	hz, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, tc.hostZone.ChainId)
 	s.Require().True(found, "hz found")
@@ -168,7 +168,7 @@ func (s *KeeperTestSuite) TestUpdateRedemptionRateZeroNativeAssets() {
 	s.Require().Equal(initialRedemptionRate, sdk.NewDec(1), "t0 rr")
 
 	records := tc.allRecords
-	s.App.StakeibcKeeper.UpdateRedemptionRates(s.Ctx, records)
+	s.App.StakeibcKeeper.UpdateRedemptionRates(s.Ctx, records, tc.hostZone)
 
 	hz, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, tc.hostZone.ChainId)
 	s.Require().True(found, "hz found")
@@ -192,7 +192,7 @@ func (s *KeeperTestSuite) TestUpdateRedemptionRateNoModuleAccountRecords() {
 
 	// filter out the TRANSFER_QUEUE record from the records when updating the redemption rate
 	records := tc.allRecords[1:]
-	s.App.StakeibcKeeper.UpdateRedemptionRates(s.Ctx, records)
+	s.App.StakeibcKeeper.UpdateRedemptionRates(s.Ctx, records, tc.hostZone)
 
 	hz, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, tc.hostZone.ChainId)
 	s.Require().True(found, "hz found")
@@ -216,7 +216,7 @@ func (s *KeeperTestSuite) TestUpdateRedemptionRateNoStakeDepositRecords() {
 
 	// filter out the DELEGATION_QUEUE record from the records when updating the redemption rate
 	records := tc.allRecords[:1]
-	s.App.StakeibcKeeper.UpdateRedemptionRates(s.Ctx, records)
+	s.App.StakeibcKeeper.UpdateRedemptionRates(s.Ctx, records, tc.hostZone)
 
 	hz, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, tc.hostZone.ChainId)
 	s.Require().True(found, "hz found")
@@ -241,7 +241,7 @@ func (s *KeeperTestSuite) TestUpdateRedemptionRateNoStakedBal() {
 	s.Require().Equal(initialRedemptionRate, sdk.NewDec(1))
 
 	records := tc.allRecords
-	s.App.StakeibcKeeper.UpdateRedemptionRates(s.Ctx, records)
+	s.App.StakeibcKeeper.UpdateRedemptionRates(s.Ctx, records, tc.hostZone)
 
 	hz, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, tc.hostZone.ChainId)
 	s.Require().True(found, "hz found")
@@ -271,7 +271,7 @@ func (s *KeeperTestSuite) TestUpdateRedemptionRateRandominitialRedemptionRate() 
 	tc := s.SetupUpdateRedemptionRates(stakedBal, undelegatedBal, justDepositedBal, stSupply, initialRedemptionRate)
 
 	records := tc.allRecords
-	s.App.StakeibcKeeper.UpdateRedemptionRates(s.Ctx, records)
+	s.App.StakeibcKeeper.UpdateRedemptionRates(s.Ctx, records, tc.hostZone)
 
 	hz, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, tc.hostZone.ChainId)
 	s.Require().True(found, "hz found")

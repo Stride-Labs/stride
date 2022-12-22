@@ -13,6 +13,7 @@ import (
 	epochtypes "github.com/Stride-Labs/stride/v4/x/epochs/types"
 	icacallbackstypes "github.com/Stride-Labs/stride/v4/x/icacallbacks/types"
 	recordstypes "github.com/Stride-Labs/stride/v4/x/records/types"
+	"github.com/Stride-Labs/stride/v4/x/stakeibc/types"
 	stakeibctypes "github.com/Stride-Labs/stride/v4/x/stakeibc/types"
 )
 
@@ -121,7 +122,7 @@ func (s *KeeperTestSuite) GetInitialDepositRecords(currentEpoch uint64) TestDepo
 		},
 		{
 			Id:                 8,
-			Amount:            sdk.NewInt(8000),
+			Amount:             sdk.NewInt(8000),
 			Denom:              Atom,
 			HostZoneId:         HostChainId,
 			Status:             recordstypes.DepositRecord_DELEGATION_QUEUE,
@@ -292,7 +293,7 @@ func (s *KeeperTestSuite) TestCreateDepositRecordsForEpoch_Successful() {
 
 // Helper function to check the state after transferring deposit records
 // This assumes the last X transfers failed
-func (s *KeeperTestSuite) CheckStateAfterTransferringDepositRecords(tc DepositRecordsTestCase, numTransfersFailed int) {
+func (s *KeeperTestSuite) CheckStateAfterTransferringDepositRecords(tc DepositRecordsTestCase, numTransfersFailed int, hostZone types.HostZone) {
 	// Get tx seq number before transfer to confirm that it gets incremented
 	transferPortID := tc.TransferChannel.PortID
 	transferChannelID := tc.TransferChannel.ChannelID
@@ -300,7 +301,7 @@ func (s *KeeperTestSuite) CheckStateAfterTransferringDepositRecords(tc DepositRe
 	s.Require().True(found, "sequence number not found before transfer")
 
 	// Transfer deposit records
-	s.App.StakeibcKeeper.TransferExistingDepositsToHostZones(s.Ctx, tc.epochNumber, tc.initialDepositRecords.GetAllRecords())
+	s.App.StakeibcKeeper.TransferExistingDepositsToHostZones(s.Ctx, tc.epochNumber, tc.initialDepositRecords.GetAllRecords(), hostZone)
 
 	// Confirm tx sequence was incremented
 	numTransferAttempts := len(tc.initialDepositRecords.recordsToBeTransfered)
@@ -352,7 +353,7 @@ func (s *KeeperTestSuite) TestTransferDepositRecords_Successful() {
 	tc := s.SetupDepositRecords()
 
 	numFailures := 0
-	s.CheckStateAfterTransferringDepositRecords(tc, numFailures)
+	s.CheckStateAfterTransferringDepositRecords(tc, numFailures, tc.hostZone)
 }
 
 func (s *KeeperTestSuite) TestTransferDepositRecords_HostZoneNotFound() {
@@ -367,7 +368,7 @@ func (s *KeeperTestSuite) TestTransferDepositRecords_HostZoneNotFound() {
 	s.App.RecordsKeeper.SetDepositRecord(s.Ctx, badRecord)
 
 	numFailed := 1
-	s.CheckStateAfterTransferringDepositRecords(tc, numFailed)
+	s.CheckStateAfterTransferringDepositRecords(tc, numFailed, tc.hostZone)
 }
 
 func (s *KeeperTestSuite) TestTransferDepositRecords_NoDelegationAccount() {
@@ -378,7 +379,7 @@ func (s *KeeperTestSuite) TestTransferDepositRecords_NoDelegationAccount() {
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, badHostZone)
 
 	numFailed := len(tc.initialDepositRecords.recordsToBeTransfered)
-	s.CheckStateAfterTransferringDepositRecords(tc, numFailed)
+	s.CheckStateAfterTransferringDepositRecords(tc, numFailed, badHostZone)
 }
 
 func (s *KeeperTestSuite) TestTransferDepositRecords_NoDelegationAddress() {
@@ -389,12 +390,12 @@ func (s *KeeperTestSuite) TestTransferDepositRecords_NoDelegationAddress() {
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, badHostZone)
 
 	numFailed := len(tc.initialDepositRecords.recordsToBeTransfered)
-	s.CheckStateAfterTransferringDepositRecords(tc, numFailed)
+	s.CheckStateAfterTransferringDepositRecords(tc, numFailed, badHostZone)
 }
 
 // Helper function to check the state after staking deposit records
 // This assumes the last X delegations failed
-func (s *KeeperTestSuite) CheckStateAfterStakingDepositRecords(tc DepositRecordsTestCase, numDelegationsFailed int) {
+func (s *KeeperTestSuite) CheckStateAfterStakingDepositRecords(tc DepositRecordsTestCase, numDelegationsFailed int, hostZone types.HostZone) {
 	// Get tx seq number before delegation to confirm it incremented
 	delegationPortID := tc.DelegationChannel.PortID
 	delegationChannelID := tc.DelegationChannel.ChannelID
@@ -402,7 +403,7 @@ func (s *KeeperTestSuite) CheckStateAfterStakingDepositRecords(tc DepositRecords
 	s.Require().True(found, "sequence number not found before delegation")
 
 	// Stake deposit records
-	s.App.StakeibcKeeper.StakeExistingDepositsOnHostZones(s.Ctx, tc.epochNumber, tc.initialDepositRecords.GetAllRecords())
+	s.App.StakeibcKeeper.StakeExistingDepositsOnHostZones(s.Ctx, tc.epochNumber, tc.initialDepositRecords.GetAllRecords(), hostZone)
 
 	// Confirm tx sequence was incremented
 	numDelegationAttempts := len(tc.initialDepositRecords.recordsToBeStaked)
@@ -456,7 +457,7 @@ func (s *KeeperTestSuite) TestStakeDepositRecords_Successful() {
 	tc := s.SetupDepositRecords()
 
 	numFailures := 0
-	s.CheckStateAfterStakingDepositRecords(tc, numFailures)
+	s.CheckStateAfterStakingDepositRecords(tc, numFailures, tc.hostZone)
 }
 
 func (s *KeeperTestSuite) TestStakeDepositRecords_SuccessfulCapped() {
@@ -469,7 +470,7 @@ func (s *KeeperTestSuite) TestStakeDepositRecords_SuccessfulCapped() {
 
 	// The cap should cause the last record to not get processed
 	numFailures := 1
-	s.CheckStateAfterStakingDepositRecords(tc, numFailures)
+	s.CheckStateAfterStakingDepositRecords(tc, numFailures, tc.hostZone)
 }
 
 func (s *KeeperTestSuite) TestStakeDepositRecords_HostZoneNotFound() {
@@ -484,7 +485,7 @@ func (s *KeeperTestSuite) TestStakeDepositRecords_HostZoneNotFound() {
 	s.App.RecordsKeeper.SetDepositRecord(s.Ctx, badRecord)
 
 	numFailed := 1
-	s.CheckStateAfterStakingDepositRecords(tc, numFailed)
+	s.CheckStateAfterStakingDepositRecords(tc, numFailed, tc.hostZone)
 }
 
 func (s *KeeperTestSuite) TestStakeDepositRecords_NoDelegationAccount() {
@@ -495,7 +496,7 @@ func (s *KeeperTestSuite) TestStakeDepositRecords_NoDelegationAccount() {
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, badHostZone)
 
 	numFailed := len(tc.initialDepositRecords.recordsToBeStaked)
-	s.CheckStateAfterStakingDepositRecords(tc, numFailed)
+	s.CheckStateAfterStakingDepositRecords(tc, numFailed, badHostZone)
 }
 
 func (s *KeeperTestSuite) TestStakeDepositRecords_NoDelegationAddress() {
@@ -506,5 +507,5 @@ func (s *KeeperTestSuite) TestStakeDepositRecords_NoDelegationAddress() {
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, badHostZone)
 
 	numFailed := len(tc.initialDepositRecords.recordsToBeStaked)
-	s.CheckStateAfterStakingDepositRecords(tc, numFailed)
+	s.CheckStateAfterStakingDepositRecords(tc, numFailed, badHostZone)
 }

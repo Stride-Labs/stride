@@ -153,8 +153,17 @@ func (s *KeeperTestSuite) SetupSweepUnbondedTokens() SweepUnbondedTokensTestCase
 
 func (s *KeeperTestSuite) TestSweepUnbondedTokens_Successful() {
 	s.SetupSweepUnbondedTokens()
-	success, successfulSweeps, sweepAmounts, failedSweeps := s.App.StakeibcKeeper.SweepAllUnbondedTokens(s.Ctx)
-	s.Require().True(success, "sweep all tokens succeeds")
+	hostZones := s.App.StakeibcKeeper.GetAllHostZone(s.Ctx)
+	var successfulSweeps []string
+	var sweepAmounts []sdk.Int
+	var failedSweeps []string
+	for _, hostZone := range hostZones {
+		success, successfulSweeps_per_hz, sweepAmounts_per_hz, failedSweeps_per_hz := s.App.StakeibcKeeper.SweepAllUnbondedTokens(s.Ctx, hostZone)
+		s.Require().True(success, "sweep all tokens succeeds")
+		successfulSweeps = append(successfulSweeps, successfulSweeps_per_hz...)
+		sweepAmounts = append(sweepAmounts, sweepAmounts_per_hz...)
+		failedSweeps = append(failedSweeps, failedSweeps_per_hz...)
+	}
 	s.Require().Len(successfulSweeps, 2, "sweep all tokens succeeds for 2 host zones")
 	s.Require().Len(sweepAmounts, 2, "sweep all tokens succeeds for 2 host zones")
 	s.Require().Len(failedSweeps, 0, "sweep all tokens fails for no host zone")
@@ -171,8 +180,17 @@ func (s *KeeperTestSuite) TestSweepUnbondedTokens_HostZoneUnbondingMissing() {
 		}
 		s.App.RecordsKeeper.SetEpochUnbondingRecord(s.Ctx, epochUnbonding)
 	}
-	success, successfulSweeps, sweepAmounts, failedSweeps := s.App.StakeibcKeeper.SweepAllUnbondedTokens(s.Ctx)
-	s.Require().True(success, "sweep all tokens succeeded if osmo missing")
+	hostZones := s.App.StakeibcKeeper.GetAllHostZone(s.Ctx)
+	var successfulSweeps []string
+	var sweepAmounts []sdk.Int
+	var failedSweeps []string
+	for _, hostZone := range hostZones {
+		success, successfulSweeps_per_hz, sweepAmounts_per_hz, failedSweeps_per_hz := s.App.StakeibcKeeper.SweepAllUnbondedTokens(s.Ctx, hostZone)
+		s.Require().True(success, "sweep all tokens succeeded if osmo missing")
+		successfulSweeps = append(successfulSweeps, successfulSweeps_per_hz...)
+		sweepAmounts = append(sweepAmounts, sweepAmounts_per_hz...)
+		failedSweeps = append(failedSweeps, failedSweeps_per_hz...)
+	}
 	s.Require().Len(successfulSweeps, 2, "sweep all tokens succeeds for 2 host zones")
 	s.Require().Len(sweepAmounts, 2, "sweep all tokens succeeds for 2 host zone")
 	s.Require().Len(failedSweeps, 0, "sweep all tokens fails for 0 host zone")
@@ -184,7 +202,20 @@ func (s *KeeperTestSuite) TestSweepUnbondedTokens_RedemptionAccountMissing() {
 	hostZone, _ := s.App.StakeibcKeeper.GetHostZone(s.Ctx, "GAIA")
 	hostZone.RedemptionAccount = nil
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
-	success, successfulSweeps, sweepAmounts, failedSweeps := s.App.StakeibcKeeper.SweepAllUnbondedTokens(s.Ctx)
+	hostZones := s.App.StakeibcKeeper.GetAllHostZone(s.Ctx)
+	var success bool = true
+	var successfulSweeps []string
+	var sweepAmounts []sdk.Int
+	var failedSweeps []string
+	for _, hostzone := range hostZones {
+		success_per_hz, successfulSweeps_per_hz, sweepAmounts_per_hz, failedSweeps_per_hz := s.App.StakeibcKeeper.SweepAllUnbondedTokens(s.Ctx, hostzone)
+		if !success_per_hz {
+			success = false
+		}
+		successfulSweeps = append(successfulSweeps, successfulSweeps_per_hz...)
+		sweepAmounts = append(sweepAmounts, sweepAmounts_per_hz...)
+		failedSweeps = append(failedSweeps, failedSweeps_per_hz...)
+	}
 	s.Require().Equal(success, false, "sweep all tokens failed if osmo missing")
 	s.Require().Len(successfulSweeps, 1, "sweep all tokens succeeds for 1 host zone")
 	s.Require().Equal("OSMO", successfulSweeps[0], "sweep all tokens succeeds for osmo")
@@ -199,7 +230,20 @@ func (s *KeeperTestSuite) TestSweepUnbondedTokens_DelegationAccountAddressMissin
 	hostZone, _ := s.App.StakeibcKeeper.GetHostZone(s.Ctx, "OSMO")
 	hostZone.DelegationAccount.Address = ""
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
-	success, successfulSweeps, sweepAmounts, failedSweeps := s.App.StakeibcKeeper.SweepAllUnbondedTokens(s.Ctx)
+	hostZones := s.App.StakeibcKeeper.GetAllHostZone(s.Ctx)
+	var success bool = true
+	var successfulSweeps []string
+	var sweepAmounts []sdk.Int
+	var failedSweeps []string
+	for _, hostzone := range hostZones {
+		success_per_hz, successfulSweeps_per_hz, sweepAmounts_per_hz, failedSweeps_per_hz := s.App.StakeibcKeeper.SweepAllUnbondedTokens(s.Ctx, hostzone)
+		if !success_per_hz {
+			success = false
+		}
+		successfulSweeps = append(successfulSweeps, successfulSweeps_per_hz...)
+		sweepAmounts = append(sweepAmounts, sweepAmounts_per_hz...)
+		failedSweeps = append(failedSweeps, failedSweeps_per_hz...)
+	}
 	s.Require().False(success, "sweep all tokens failed if gaia missing")
 	s.Require().Len(successfulSweeps, 1, "sweep all tokens succeeds for 1 host zone")
 	s.Require().Equal("GAIA", successfulSweeps[0], "sweep all tokens succeeds for gaia")
