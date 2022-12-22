@@ -16,9 +16,6 @@ NUM_NODES=$(GET_VAR_VALUE   ${CHAIN}_NUM_NODES)
 NODE_PREFIX=$(GET_VAR_VALUE ${CHAIN}_NODE_PREFIX)
 VAL_PREFIX=$(GET_VAR_VALUE  ${CHAIN}_VAL_PREFIX)
 
-IFS=',' read -r -a VAL_MNEMONICS <<< "${VAL_MNEMONICS}"
-IFS=',' read -r -a RELAYER_MNEMONICS <<< "${RELAYER_MNEMONICS}"
-
 set_stride_genesis() {
     genesis_config=$1
 
@@ -47,7 +44,11 @@ set_host_genesis() {
 
     # Add interchain accounts to the genesis set
     jq "del(.app_state.interchain_accounts)" $genesis_config > json.tmp && mv json.tmp $genesis_config
-    interchain_accts=$(cat $SCRIPT_DIR/config/ica.json)
+    if [ "$CHAIN" = "EVMOS" ]; then
+        interchain_accts=$(cat $SCRIPT_DIR/config/evmos_ica.json)
+    else
+        interchain_accts=$(cat $SCRIPT_DIR/config/ica.json)
+    fi
     jq ".app_state += $interchain_accts" $genesis_config > json.tmp && mv json.tmp $genesis_config
 
     # Slightly harshen slashing parameters (if 5 blocks are missed, the validator will be slashed)
@@ -64,6 +65,15 @@ MAIN_NODE_ID=""
 MAIN_CONFIG=""
 MAIN_GENESIS=""
 echo "Initializing $CHAIN chain..."
+if [ "$CHAIN" = "EVMOS" ]; then
+    VAL_TOKENS=5000000000000000000000000
+    STAKE_TOKENS=5000000000000000000000
+    ADMIN_TOKENS=1000000000000000000000
+else
+    VAL_TOKENS=5000000000000
+    STAKE_TOKENS=5000000000
+    ADMIN_TOKENS=1000000000
+fi
 for (( i=1; i <= $NUM_NODES; i++ )); do
     # Node names will be of the form: "stride-node1"
     node_name="${NODE_PREFIX}${i}"

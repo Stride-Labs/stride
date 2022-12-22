@@ -19,12 +19,18 @@ for chain_id in ${HOST_CHAINS[@]}; do
 
     printf "STRIDE <> $chain_id - Adding relayer keys..."
     $relayer_exec rly keys restore stride $RELAYER_STRIDE_ACCT "$mnemonic" >> $relayer_logs 2>&1
-    $relayer_exec rly keys restore $chain_name $account_name "$mnemonic" >> $relayer_logs 2>&1
-    echo "Done"
+    echo $chain_id
+    if [[ "$chain_id" == "EVMOS" ]]; then
+        echo "EVMOS MATCH"
+        $relayer_exec rly keys restore $chain_name $account_name --coin-type 60 "$mnemonic" >> $relayer_logs # 2>&1
+    else
+        $relayer_exec rly keys restore $chain_name $account_name --coin-type 118 "$mnemonic" >> $relayer_logs # 2>&1
+    fi
+    echo "Done restoring relayer keys"
 
     printf "STRIDE <> $chain_id - Creating client, connection, and transfer channel..." | tee -a $relayer_logs
     $relayer_exec rly transact link stride-${chain_name} >> $relayer_logs 2>&1
-    echo "Done"
+    echo "Done creating client, connection, and transfer channel"
 
     $DOCKER_COMPOSE up -d relayer-${chain_name}
     $DOCKER_COMPOSE logs -f relayer-${chain_name} | sed -r -u "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2})?)?[mGK]//g" >> $relayer_logs 2>&1 &
