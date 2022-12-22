@@ -99,7 +99,7 @@ func (s *KeeperTestSuite) TestGetAllRateLimits() {
 }
 
 // Adds a rate limit object to the store in preparation for the check rate limit tests
-func (s *KeeperTestSuite) SetupCheckRateLimitAndUpdatedFlowTest() {
+func (s *KeeperTestSuite) SetupCheckRateLimitAndUpdateFlowTest() {
 	channelValue := sdk.NewInt(100)
 	maxPercentSend := sdk.NewInt(10)
 	maxPercentRecv := sdk.NewInt(10)
@@ -124,7 +124,7 @@ func (s *KeeperTestSuite) SetupCheckRateLimitAndUpdatedFlowTest() {
 
 // Helper function to check the rate limit across a series of transfers
 func (s *KeeperTestSuite) processCheckRateLimitAndUpdateFlowTestCase(tc checkRateLimitTestCase) {
-	s.SetupCheckRateLimitAndUpdatedFlowTest()
+	s.SetupCheckRateLimitAndUpdateFlowTest()
 
 	expectedInflow := sdk.NewInt(0)
 	expectedOutflow := sdk.NewInt(0)

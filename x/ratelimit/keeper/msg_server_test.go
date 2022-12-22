@@ -115,7 +115,7 @@ func (s *KeeperTestSuite) TestMsgServer_UpdateRateLimit() {
 	channelId := updateRateLimitMsg.ChannelId
 	channelValue := sdk.NewInt(100)
 
-	// Create channel and
+	// Create channel and channel value
 	s.createChannel(channelId)
 	s.createChannelValue(denom, channelValue)
 

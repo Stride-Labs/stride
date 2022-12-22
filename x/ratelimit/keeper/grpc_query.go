@@ -14,7 +14,7 @@ import (
 
 var _ types.QueryServer = Keeper{}
 
-// Query a all rate limits
+// Query all rate limits
 func (k Keeper) RateLimits(c context.Context, req *types.QueryRateLimitsRequest) (*types.QueryRateLimitsResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 	rateLimits := k.GetAllRateLimits(ctx)

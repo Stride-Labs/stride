@@ -434,8 +434,6 @@ func NewStrideApp(
 	ratelimitModule := ratelimitmodule.NewAppModule(appCodec, app.RatelimitKeeper)
 
 	// Create ICS4Wrapper middleware
-	rateLimitParams := app.GetSubspace(ratelimitmoduletypes.ModuleName)
-	rateLimitParams = rateLimitParams.WithKeyTable(ratelimitmoduletypes.ParamKeyTable())
 	rateLimitICS4Wrapper := ratelimitmodule.NewICS4Middleware(
 		app.IBCKeeper.ChannelKeeper,
 		app.RatelimitKeeper,
