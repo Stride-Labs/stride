@@ -1,6 +1,7 @@
 package keeper_test
 
 import (
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	_ "github.com/stretchr/testify/suite"
 
 	recordtypes "github.com/Stride-Labs/stride/v4/x/records/types"
@@ -33,12 +34,12 @@ func (s *KeeperTestSuite) SetupCleanupEpochUnbondingRecords() CleanupEpochUnbond
 			HostZoneUnbondings: []*recordtypes.HostZoneUnbonding{
 				{
 					HostZoneId:        HostChainId,
-					NativeTokenAmount: 1_000_000,
+					NativeTokenAmount: sdk.NewInt(1_000_000),
 					Status:            recordtypes.HostZoneUnbonding_CLAIMABLE,
 				},
 				{
 					HostZoneId:        OsmoChainId,
-					NativeTokenAmount: 1_000_000,
+					NativeTokenAmount: sdk.NewInt(1_000_000),
 					Status:            recordtypes.HostZoneUnbonding_EXIT_TRANSFER_QUEUE,
 				},
 			},
@@ -48,12 +49,12 @@ func (s *KeeperTestSuite) SetupCleanupEpochUnbondingRecords() CleanupEpochUnbond
 			HostZoneUnbondings: []*recordtypes.HostZoneUnbonding{
 				{
 					HostZoneId:        HostChainId,
-					NativeTokenAmount: 0,
+					NativeTokenAmount: sdk.ZeroInt(),
 					Status:            recordtypes.HostZoneUnbonding_UNBONDING_QUEUE,
 				},
 				{
 					HostZoneId:        OsmoChainId,
-					NativeTokenAmount: 1_000_000,
+					NativeTokenAmount: sdk.NewInt(1_000_000),
 					Status:            recordtypes.HostZoneUnbonding_CLAIMABLE,
 				},
 			},
@@ -63,12 +64,12 @@ func (s *KeeperTestSuite) SetupCleanupEpochUnbondingRecords() CleanupEpochUnbond
 			HostZoneUnbondings: []*recordtypes.HostZoneUnbonding{
 				{
 					HostZoneId:        HostChainId,
-					NativeTokenAmount: 0,
+					NativeTokenAmount: sdk.ZeroInt(),
 					Status:            recordtypes.HostZoneUnbonding_EXIT_TRANSFER_QUEUE,
 				},
 				{
 					HostZoneId:        OsmoChainId,
-					NativeTokenAmount: 0,
+					NativeTokenAmount: sdk.ZeroInt(),
 					Status:            recordtypes.HostZoneUnbonding_UNBONDING_QUEUE,
 				},
 			},
@@ -91,10 +92,11 @@ func (s *KeeperTestSuite) SetupCleanupEpochUnbondingRecords() CleanupEpochUnbond
 func (s *KeeperTestSuite) CleanupEpochUnbondingRecords_Successful() {
 	// successfully clean up epoch unbonding records
 	s.SetupGetHostZoneUnbondingMsgs(defaultUnbondingTestCase)
+	tc := defaultUnbondingTestCase
 	// clean up epoch unbonding record 0
 	success := s.App.StakeibcKeeper.CleanupEpochUnbondingRecords(s.Ctx, 0)
 	s.Require().True(success, "cleanup unbonding records returns true")
-	epochUnbondings := defaultUnbondingTestCase.epochUnbondingRecords
+	epochUnbondings := tc.epochUnbondingRecords
 	s.Require().Len(epochUnbondings, 1, "only one epoch unbonding record should be left")
 	epochUnbonding := epochUnbondings[0]
 	s.Require().Equal(1, epochUnbonding.EpochNumber, "correct unbonding record remains unprocessed")

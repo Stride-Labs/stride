@@ -2,7 +2,7 @@ syntax = "proto3";
 package stride.stakeibc;
 import "cosmos_proto/cosmos.proto";
 import "gogoproto/gogo.proto";
-option go_package = "github.com/Stride-Labs/stride/v3/x/stakeibc/types";
+option go_package = "github.com/Stride-Labs/stride/v4/x/stakeibc/types";
 
 message ValidatorExchangeRate {
   string internal_tokens_to_shares_rate = 1 [
@@ -24,7 +24,10 @@ message Validator {
 
   ValidatorStatus status = 3;
   uint64 commission_rate = 4;
-  uint64 delegation_amt = 5;
+  string delegation_amt = 5 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
   uint64 weight = 6;
   ValidatorExchangeRate internal_exchange_rate = 7;
 }
