@@ -205,8 +205,7 @@ func (k Keeper) UpdateHostZoneUnbondings(
 		stTokenAmount := hostZoneUnbonding.StTokenAmount
 		stTokenBurnAmount = stTokenBurnAmount.Add(stTokenAmount)
 
-		// Update the bonded status and time
-		hostZoneUnbonding.Status = recordstypes.HostZoneUnbonding_EXIT_TRANSFER_QUEUE
+		// Update the bonded time
 		hostZoneUnbonding.UnbondingTime = cast.ToUint64(latestCompletionTime.UnixNano())
 		updatedEpochUnbondingRecord, success := k.RecordsKeeper.AddHostZoneToEpochUnbondingRecord(ctx, epochUnbondingRecord.EpochNumber, chainId, hostZoneUnbonding)
 		if !success {

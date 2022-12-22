@@ -341,7 +341,6 @@ func (s *KeeperTestSuite) TestUpdateHostZoneUnbondings_Success() {
 	epochUnbondingRecord2, found = s.App.RecordsKeeper.GetEpochUnbondingRecord(s.Ctx, 2)
 	s.Require().True(found)
 	hzu1 := epochUnbondingRecord.HostZoneUnbondings[0]
-	s.Require().Equal(recordtypes.HostZoneUnbonding_EXIT_TRANSFER_QUEUE, hzu1.Status, "hzu1 status is EXIT_TRANSFER_QUEUE")
 	s.Require().Equal(completionTime.UnixNano(), int64(hzu1.UnbondingTime), "hzu1 completion time is set")
 
 	hzu2 := epochUnbondingRecord.HostZoneUnbondings[1]
