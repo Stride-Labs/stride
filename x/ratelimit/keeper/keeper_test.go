@@ -13,15 +13,13 @@ import (
 type KeeperTestSuite struct {
 	apptesting.AppTestHelper
 	QueryClient types.QueryClient
+	MsgServer   types.MsgServer
 }
 
 func (s *KeeperTestSuite) SetupTest() {
 	s.Setup()
 	s.QueryClient = types.NewQueryClient(s.QueryHelper)
-}
-
-func (s *KeeperTestSuite) GetMsgServer() types.MsgServer {
-	return keeper.NewMsgServerImpl(s.App.RatelimitKeeper)
+	s.MsgServer = keeper.NewMsgServerImpl(s.App.RatelimitKeeper)
 }
 
 func TestKeeperTestSuite(t *testing.T) {

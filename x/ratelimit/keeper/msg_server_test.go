@@ -54,7 +54,7 @@ func (s *KeeperTestSuite) createChannelValue(denom string, channelValue sdk.Int)
 
 // Helper function to add a rate limit with an optional error expectation
 func (s *KeeperTestSuite) addRateLimit(expectedErr *sdkerrors.Error) {
-	_, actualErr := s.GetMsgServer().AddRateLimit(sdk.WrapSDKContext(s.Ctx), &addRateLimitMsg)
+	_, actualErr := s.MsgServer.AddRateLimit(sdk.WrapSDKContext(s.Ctx), &addRateLimitMsg)
 
 	// If it should have been added successfully, confirm no error
 	// and confirm the rate limit was created
@@ -120,14 +120,14 @@ func (s *KeeperTestSuite) TestMsgServer_UpdateRateLimit() {
 	s.createChannelValue(denom, channelValue)
 
 	// Attempt to update a rate limit that does not exist
-	_, err := s.GetMsgServer().UpdateRateLimit(sdk.WrapSDKContext(s.Ctx), &updateRateLimitMsg)
+	_, err := s.MsgServer.UpdateRateLimit(sdk.WrapSDKContext(s.Ctx), &updateRateLimitMsg)
 	s.Require().Equal(err, types.ErrRateLimitKeyNotFound)
 
 	// Add a rate limit successfully
 	s.addRateLimitSuccessful()
 
 	// Update the rate limit successfully
-	_, err = s.GetMsgServer().UpdateRateLimit(sdk.WrapSDKContext(s.Ctx), &updateRateLimitMsg)
+	_, err = s.MsgServer.UpdateRateLimit(sdk.WrapSDKContext(s.Ctx), &updateRateLimitMsg)
 	s.Require().NoError(err)
 
 	// Check ratelimit quota is updated correctly
@@ -153,14 +153,14 @@ func (s *KeeperTestSuite) TestMsgServer_RemoveRateLimit() {
 	s.createChannelValue(denom, channelValue)
 
 	// Attempt to remove a rate limit that does not exist
-	_, err := s.GetMsgServer().RemoveRateLimit(sdk.WrapSDKContext(s.Ctx), &removeRateLimitMsg)
+	_, err := s.MsgServer.RemoveRateLimit(sdk.WrapSDKContext(s.Ctx), &removeRateLimitMsg)
 	s.Require().Equal(err, types.ErrRateLimitKeyNotFound)
 
 	// Add a rate limit successfully
 	s.addRateLimitSuccessful()
 
 	// Remove the rate limit successfully
-	_, err = s.GetMsgServer().RemoveRateLimit(sdk.WrapSDKContext(s.Ctx), &removeRateLimitMsg)
+	_, err = s.MsgServer.RemoveRateLimit(sdk.WrapSDKContext(s.Ctx), &removeRateLimitMsg)
 	s.Require().NoError(err)
 
 	// Confirm it was removed
@@ -181,14 +181,14 @@ func (s *KeeperTestSuite) TestMsgServer_ResetRateLimit() {
 	s.createChannelValue(denom, channelValue)
 
 	// Attempt to reset a rate limit that does not exist
-	_, err := s.GetMsgServer().ResetRateLimit(sdk.WrapSDKContext(s.Ctx), &resetRateLimitMsg)
+	_, err := s.MsgServer.ResetRateLimit(sdk.WrapSDKContext(s.Ctx), &resetRateLimitMsg)
 	s.Require().Equal(err, types.ErrRateLimitKeyNotFound)
 
 	// Add a rate limit successfully
 	s.addRateLimitSuccessful()
 
 	// Reset the rate limit successfully
-	_, err = s.GetMsgServer().ResetRateLimit(sdk.WrapSDKContext(s.Ctx), &resetRateLimitMsg)
+	_, err = s.MsgServer.ResetRateLimit(sdk.WrapSDKContext(s.Ctx), &resetRateLimitMsg)
 	s.Require().NoError(err)
 
 	// Check ratelimit quota is flow correctly
