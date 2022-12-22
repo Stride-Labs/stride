@@ -23,7 +23,7 @@ HOST_CHAINS=()
 if [[ "${ALL_HOST_CHAINS:-false}" == "true" ]]; then 
   HOST_CHAINS=(GAIA JUNO OSMO STARS)
 elif [[ "${#HOST_CHAINS[@]}" == "0" ]]; then 
-  HOST_CHAINS=()
+  HOST_CHAINS=(GAIA)
 fi
 
 # Sets up upgrade if {UPGRADE_NAME} is non-empty
@@ -201,7 +201,6 @@ RELAYER_GAIA_ACCT=rly2
 RELAYER_JUNO_ACCT=rly3
 RELAYER_OSMO_ACCT=rly4
 RELAYER_STARS_ACCT=rly5
-RELAYER_EVMOS_ACCT=rly6
 HOST_RELAYER_ACCTS=($RELAYER_GAIA_ACCT $RELAYER_JUNO_ACCT $RELAYER_OSMO_ACCT $RELAYER_STARS_ACCT)
 
 RELAYER_GAIA_MNEMONIC="fiction perfect rapid steel bundle giant blade grain eagle wing cannon fever must humble dance kitchen lazy episode museum faith off notable rate flavor"
