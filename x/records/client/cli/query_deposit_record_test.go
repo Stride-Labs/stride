@@ -11,6 +11,8 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	"github.com/Stride-Labs/stride/v4/testutil/network"
 	"github.com/Stride-Labs/stride/v4/testutil/nullify"
 	"github.com/Stride-Labs/stride/v4/x/records/client/cli"
@@ -25,7 +27,8 @@ func networkWithDepositRecordObjects(t *testing.T, n int) (*network.Network, []t
 
 	for i := 0; i < n; i++ {
 		depositRecord := types.DepositRecord{
-			Id: uint64(i),
+			Id:     uint64(i),
+			Amount: sdk.NewInt(0),
 		}
 		nullify.Fill(&depositRecord)
 		state.DepositRecordList = append(state.DepositRecordList, depositRecord)
