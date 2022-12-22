@@ -26,6 +26,7 @@ func GetQueryCmd() *cobra.Command {
 	cmd.AddCommand(
 		GetCmdQueryRateLimit(),
 		GetCmdQueryRateLimits(),
+		GetCmdQueryRateLimitsByChainId(),
 	)
 	return cmd
 }
@@ -68,7 +69,7 @@ func GetCmdQueryRateLimit() *cobra.Command {
 // GetCmdQueryRateLimits return all available rate limits.
 func GetCmdQueryRateLimits() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "rate-limits",
+		Use:   "list-rate-limits",
 		Short: "Query all rate limits",
 		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -80,6 +81,40 @@ func GetCmdQueryRateLimits() *cobra.Command {
 
 			req := &types.QueryRateLimitsRequest{}
 			res, err := queryClient.RateLimits(context.Background(), req)
+
+			if err != nil {
+				return err
+			}
+
+			return clientCtx.PrintObjectLegacy(res.RateLimits)
+		},
+	}
+
+	flags.AddQueryFlagsToCmd(cmd)
+
+	return cmd
+}
+
+// GetCmdQueryRateLimits return all rate limits that exist between Stride
+// and the specified ChainId
+func GetCmdQueryRateLimitsByChainId() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "show-rate-limits [chain-id]",
+		Short: "Query all rate limits with the given ChainID",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			chainId := args[0]
+
+			clientCtx, err := client.GetClientQueryContext(cmd)
+			if err != nil {
+				return err
+			}
+			queryClient := types.NewQueryClient(clientCtx)
+
+			req := &types.QueryRateLimitsByChainIdRequest{
+				ChainId: chainId,
+			}
+			res, err := queryClient.RateLimitsByChainId(context.Background(), req)
 
 			if err != nil {
 				return err

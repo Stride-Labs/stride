@@ -37,12 +37,14 @@ func (s *KeeperTestSuite) TestGetChannelValue() {
 	s.Require().Equal(expected, actual)
 }
 
+// Helper function to create 5 rate limit objects with various attributes
 func (s *KeeperTestSuite) createRateLimits() []types.RateLimit {
 	rateLimits := []types.RateLimit{}
 	for i := 1; i <= 5; i++ {
 		suffix := strconv.Itoa(i)
 		rateLimit := types.RateLimit{
 			Path: &types.Path{Denom: "denom-" + suffix, ChannelId: "channel-" + suffix},
+			Flow: &types.Flow{Inflow: sdk.NewInt(10), Outflow: sdk.NewInt(10)},
 		}
 
 		rateLimits = append(rateLimits, rateLimit)
@@ -75,6 +77,20 @@ func (s *KeeperTestSuite) TestRemoveRateLimit() {
 	s.Require().False(found, "the removed element should not have been found, but it was")
 }
 
+func (s *KeeperTestSuite) TestResetRateLimit() {
+	rateLimits := s.createRateLimits()
+
+	rateLimitToReset := rateLimits[0]
+	denomToRemove := rateLimitToReset.Path.Denom
+	channelIdToRemove := rateLimitToReset.Path.ChannelId
+
+	s.App.RatelimitKeeper.ResetRateLimit(s.Ctx, denomToRemove, channelIdToRemove)
+	rateLimit, found := s.App.RatelimitKeeper.GetRateLimit(s.Ctx, denomToRemove, channelIdToRemove)
+	s.Require().True(found, "element should have been found, but was not")
+	s.Require().Zero(rateLimit.Flow.Inflow.Int64(), "Inflow should have been reset to 0")
+	s.Require().Zero(rateLimit.Flow.Outflow.Int64(), "Outflow should have been reset to 0")
+}
+
 func (s *KeeperTestSuite) TestGetAllRateLimits() {
 	expectedRateLimits := s.createRateLimits()
 	actualRateLimits := s.App.RatelimitKeeper.GetAllRateLimits(s.Ctx)
@@ -82,8 +98,8 @@ func (s *KeeperTestSuite) TestGetAllRateLimits() {
 	s.Require().ElementsMatch(expectedRateLimits, actualRateLimits, "all rate limits")
 }
 
-func (s *KeeperTestSuite) SetupCheckRateLimitTest() {
-	// Add rate limit to store
+// Adds a rate limit object to the store in preparation for the check rate limit tests
+func (s *KeeperTestSuite) SetupCheckRateLimitAndUpdateFlowTest() {
 	channelValue := sdk.NewInt(100)
 	maxPercentSend := sdk.NewInt(10)
 	maxPercentRecv := sdk.NewInt(10)
@@ -106,8 +122,9 @@ func (s *KeeperTestSuite) SetupCheckRateLimitTest() {
 	})
 }
 
-func (s *KeeperTestSuite) ProcessCheckRateLimitTestCase(tc checkRateLimitTestCase) {
-	s.SetupCheckRateLimitTest()
+// Helper function to check the rate limit across a series of transfers
+func (s *KeeperTestSuite) processCheckRateLimitAndUpdateFlowTestCase(tc checkRateLimitTestCase) {
+	s.SetupCheckRateLimitAndUpdateFlowTest()
 
 	expectedInflow := sdk.NewInt(0)
 	expectedOutflow := sdk.NewInt(0)
@@ -137,7 +154,7 @@ func (s *KeeperTestSuite) ProcessCheckRateLimitTestCase(tc checkRateLimitTestCas
 	}
 }
 
-func (s *KeeperTestSuite) TestCheckRateLimit_UnilateralFlow() {
+func (s *KeeperTestSuite) TestCheckRateLimitAndUpdateFlow_UnidirectionalFlow() {
 	testCases := []checkRateLimitTestCase{
 		{
 			name: "send_under_threshold",
@@ -173,12 +190,12 @@ func (s *KeeperTestSuite) TestCheckRateLimit_UnilateralFlow() {
 
 	for _, tc := range testCases {
 		s.Run(tc.name, func() {
-			s.ProcessCheckRateLimitTestCase(tc)
+			s.processCheckRateLimitAndUpdateFlowTestCase(tc)
 		})
 	}
 }
 
-func (s *KeeperTestSuite) TestCheckRateLimit_BidirectionalFlow() {
+func (s *KeeperTestSuite) TestCheckRateLimitAndUpdatedFlow_BidirectionalFlow() {
 	testCases := []checkRateLimitTestCase{
 		{
 			name: "send_then_recv_under_threshold",
@@ -248,7 +265,7 @@ func (s *KeeperTestSuite) TestCheckRateLimit_BidirectionalFlow() {
 
 	for _, tc := range testCases {
 		s.Run(tc.name, func() {
-			s.ProcessCheckRateLimitTestCase(tc)
+			s.processCheckRateLimitAndUpdateFlowTestCase(tc)
 		})
 	}
 }

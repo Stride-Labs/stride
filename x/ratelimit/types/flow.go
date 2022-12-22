@@ -23,7 +23,7 @@ func (f *Flow) AddInflow(amount sdk.Int, quota Quota) error {
 
 	if quota.CheckExceedsQuota(PACKET_RECV, netInflow, f.ChannelValue) {
 		return sdkerrors.Wrapf(ErrQuotaExceeded,
-			"Inflow exceeds quota - Net Inflow: %d, Channel Value: %d, Threshold: %d%%",
+			"Inflow exceeds quota - Net Inflow: %v, Channel Value: %v, Threshold: %v%%",
 			netInflow, f.ChannelValue, quota.MaxPercentRecv)
 	}
 
@@ -38,7 +38,7 @@ func (f *Flow) AddOutflow(amount sdk.Int, quota Quota) error {
 
 	if quota.CheckExceedsQuota(PACKET_SEND, netOutflow, f.ChannelValue) {
 		return sdkerrors.Wrapf(ErrQuotaExceeded,
-			"Outflow exceeds quota - Net Outflow: %d, Channel Value: %d, Threshold: %d%%",
+			"Outflow exceeds quota - Net Outflow: %v, Channel Value: %v, Threshold: %v%%",
 			netOutflow, f.ChannelValue, quota.MaxPercentSend)
 	}
 

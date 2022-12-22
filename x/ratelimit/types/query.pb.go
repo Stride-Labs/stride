@@ -205,42 +205,137 @@ func (m *QueryRateLimitResponse) GetRateLimit() *RateLimit {
 	return nil
 }
 
+type QueryRateLimitsByChainIdRequest struct {
+	ChainId string `protobuf:"bytes,1,opt,name=chain_id,json=chainId,proto3" json:"chain_id,omitempty"`
+}
+
+func (m *QueryRateLimitsByChainIdRequest) Reset()         { *m = QueryRateLimitsByChainIdRequest{} }
+func (m *QueryRateLimitsByChainIdRequest) String() string { return proto.CompactTextString(m) }
+func (*QueryRateLimitsByChainIdRequest) ProtoMessage()    {}
+func (*QueryRateLimitsByChainIdRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_97a373ef8fcef03b, []int{4}
+}
+func (m *QueryRateLimitsByChainIdRequest) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *QueryRateLimitsByChainIdRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_QueryRateLimitsByChainIdRequest.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *QueryRateLimitsByChainIdRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryRateLimitsByChainIdRequest.Merge(m, src)
+}
+func (m *QueryRateLimitsByChainIdRequest) XXX_Size() int {
+	return m.Size()
+}
+func (m *QueryRateLimitsByChainIdRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryRateLimitsByChainIdRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_QueryRateLimitsByChainIdRequest proto.InternalMessageInfo
+
+func (m *QueryRateLimitsByChainIdRequest) GetChainId() string {
+	if m != nil {
+		return m.ChainId
+	}
+	return ""
+}
+
+type QueryRateLimitsByChainIdResponse struct {
+	RateLimits []RateLimit `protobuf:"bytes,1,rep,name=rate_limits,json=rateLimits,proto3" json:"rate_limits"`
+}
+
+func (m *QueryRateLimitsByChainIdResponse) Reset()         { *m = QueryRateLimitsByChainIdResponse{} }
+func (m *QueryRateLimitsByChainIdResponse) String() string { return proto.CompactTextString(m) }
+func (*QueryRateLimitsByChainIdResponse) ProtoMessage()    {}
+func (*QueryRateLimitsByChainIdResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_97a373ef8fcef03b, []int{5}
+}
+func (m *QueryRateLimitsByChainIdResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *QueryRateLimitsByChainIdResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_QueryRateLimitsByChainIdResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *QueryRateLimitsByChainIdResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryRateLimitsByChainIdResponse.Merge(m, src)
+}
+func (m *QueryRateLimitsByChainIdResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *QueryRateLimitsByChainIdResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryRateLimitsByChainIdResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_QueryRateLimitsByChainIdResponse proto.InternalMessageInfo
+
+func (m *QueryRateLimitsByChainIdResponse) GetRateLimits() []RateLimit {
+	if m != nil {
+		return m.RateLimits
+	}
+	return nil
+}
+
 func init() {
 	proto.RegisterType((*QueryRateLimitsRequest)(nil), "stride.ratelimit.QueryRateLimitsRequest")
 	proto.RegisterType((*QueryRateLimitsResponse)(nil), "stride.ratelimit.QueryRateLimitsResponse")
 	proto.RegisterType((*QueryRateLimitRequest)(nil), "stride.ratelimit.QueryRateLimitRequest")
 	proto.RegisterType((*QueryRateLimitResponse)(nil), "stride.ratelimit.QueryRateLimitResponse")
+	proto.RegisterType((*QueryRateLimitsByChainIdRequest)(nil), "stride.ratelimit.QueryRateLimitsByChainIdRequest")
+	proto.RegisterType((*QueryRateLimitsByChainIdResponse)(nil), "stride.ratelimit.QueryRateLimitsByChainIdResponse")
 }
 
 func init() { proto.RegisterFile("stride/ratelimit/query.proto", fileDescriptor_97a373ef8fcef03b) }
 
 var fileDescriptor_97a373ef8fcef03b = []byte{
-	// 392 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x8c, 0x92, 0xc1, 0x4e, 0xf2, 0x40,
-	0x14, 0x85, 0x3b, 0xfc, 0x3f, 0x26, 0x1d, 0x36, 0x66, 0x02, 0xd2, 0x20, 0x54, 0xd2, 0x8d, 0x25,
-	0xc6, 0x4e, 0x44, 0x57, 0x2e, 0xd9, 0x99, 0x74, 0x63, 0x75, 0x65, 0x62, 0x48, 0xa1, 0x93, 0xd2,
-	0x04, 0x3a, 0xa5, 0x33, 0x18, 0x09, 0x21, 0x31, 0x3e, 0x81, 0xc6, 0xbd, 0xcf, 0xc3, 0x92, 0xc4,
-	0x8d, 0x2b, 0x63, 0xc0, 0x07, 0x31, 0x9d, 0xd6, 0xa2, 0x40, 0xc4, 0xdd, 0xed, 0x9c, 0x7b, 0xcf,
-	0xf9, 0x3a, 0x77, 0x60, 0x99, 0xf1, 0xd0, 0x73, 0x08, 0x0e, 0x6d, 0x4e, 0xba, 0x5e, 0xcf, 0xe3,
-	0xb8, 0x3f, 0x20, 0xe1, 0xd0, 0x08, 0x42, 0xca, 0x29, 0xda, 0x8e, 0x55, 0x23, 0x55, 0x4b, 0xd5,
-	0x95, 0xfe, 0xb4, 0x8a, 0x67, 0x4a, 0x65, 0x97, 0x52, 0xb7, 0x4b, 0xb0, 0x1d, 0x78, 0xd8, 0xf6,
-	0x7d, 0xca, 0x6d, 0xee, 0x51, 0x9f, 0x25, 0x6a, 0xde, 0xa5, 0x2e, 0x15, 0x25, 0x8e, 0xaa, 0xf8,
-	0x54, 0x53, 0xe0, 0xce, 0x79, 0x14, 0x6b, 0xd9, 0x9c, 0x98, 0x91, 0x17, 0xb3, 0x48, 0x7f, 0x40,
-	0x18, 0xd7, 0xae, 0x61, 0x71, 0x45, 0x61, 0x01, 0xf5, 0x19, 0x41, 0x0d, 0x98, 0x8b, 0xb2, 0x9b,
-	0x22, 0x9c, 0x29, 0xa0, 0xfa, 0x4f, 0xcf, 0xd5, 0x77, 0x8d, 0x65, 0x64, 0x23, 0x1d, 0x6d, 0xfc,
-	0x9f, 0xbc, 0xed, 0x49, 0x16, 0x0c, 0x53, 0x2f, 0xcd, 0x84, 0x85, 0x9f, 0xf6, 0x49, 0x2e, 0xca,
-	0xc3, 0xac, 0x43, 0x7c, 0xda, 0x53, 0x40, 0x15, 0xe8, 0xb2, 0x15, 0x7f, 0xa0, 0x0a, 0x84, 0xed,
-	0x8e, 0xed, 0xfb, 0xa4, 0xdb, 0xf4, 0x1c, 0x25, 0x23, 0x24, 0x39, 0x39, 0x39, 0x73, 0xb4, 0xcb,
-	0xe5, 0xdf, 0x48, 0x59, 0x4f, 0x21, 0x5c, 0xb0, 0x0a, 0xcf, 0xdf, 0x51, 0x2d, 0x39, 0x85, 0xac,
-	0x3f, 0x67, 0x60, 0x56, 0xd8, 0xa2, 0x3b, 0x00, 0xe1, 0xe2, 0x22, 0x90, 0xbe, 0x6a, 0xb0, 0xfe,
-	0x16, 0x4b, 0xb5, 0x3f, 0x74, 0xc6, 0xa4, 0x5a, 0xe5, 0xfe, 0xe5, 0xe3, 0x29, 0x53, 0x44, 0x85,
-	0x75, 0x2b, 0x66, 0xe8, 0x11, 0x40, 0x39, 0x9d, 0x42, 0xfb, 0x9b, 0x7c, 0xbf, 0x00, 0xf4, 0xcd,
-	0x8d, 0x49, 0xfe, 0x91, 0xc8, 0x3f, 0x40, 0xb5, 0x75, 0xf9, 0x78, 0x24, 0xf6, 0x30, 0xc6, 0xa3,
-	0xc5, 0x1a, 0xc6, 0x0d, 0x73, 0x32, 0x53, 0xc1, 0x74, 0xa6, 0x82, 0xf7, 0x99, 0x0a, 0x1e, 0xe6,
-	0xaa, 0x34, 0x9d, 0xab, 0xd2, 0xeb, 0x5c, 0x95, 0xae, 0xea, 0xae, 0xc7, 0x3b, 0x83, 0x96, 0xd1,
-	0xa6, 0x3d, 0x7c, 0x21, 0x00, 0x0e, 0x4d, 0xbb, 0xc5, 0x70, 0xf2, 0x88, 0x6f, 0x4e, 0xf0, 0xed,
-	0x37, 0x73, 0x3e, 0x0c, 0x08, 0x6b, 0x6d, 0x89, 0x27, 0x79, 0xfc, 0x19, 0x00, 0x00, 0xff, 0xff,
-	0x45, 0x6b, 0xdd, 0xf9, 0x1a, 0x03, 0x00, 0x00,
+	// 469 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xac, 0x94, 0x41, 0x6f, 0xd3, 0x30,
+	0x14, 0xc7, 0xeb, 0x8d, 0x01, 0x7d, 0xbb, 0x20, 0xb3, 0xb1, 0x52, 0xb6, 0x2c, 0xf2, 0x85, 0x4c,
+	0x88, 0x58, 0x2b, 0x9c, 0x10, 0xa7, 0x72, 0x9a, 0xd4, 0x0b, 0x81, 0x13, 0x12, 0x9a, 0xdc, 0xc4,
+	0xa4, 0x96, 0x5a, 0x3b, 0x8b, 0x5d, 0x44, 0x35, 0x55, 0x42, 0x7c, 0x02, 0x10, 0xdf, 0x81, 0xaf,
+	0xc2, 0x8e, 0x93, 0xb8, 0x70, 0x42, 0xa8, 0xe5, 0x83, 0xa0, 0x38, 0x59, 0x0a, 0x69, 0xa0, 0x20,
+	0xed, 0xe6, 0xfa, 0xbd, 0xf7, 0xff, 0xff, 0xfc, 0xde, 0x6b, 0x60, 0x57, 0x9b, 0x54, 0x44, 0x9c,
+	0xa6, 0xcc, 0xf0, 0xa1, 0x18, 0x09, 0x43, 0x4f, 0xc6, 0x3c, 0x9d, 0xf8, 0x49, 0xaa, 0x8c, 0xc2,
+	0x37, 0xf2, 0xa8, 0x5f, 0x46, 0xdb, 0xee, 0x52, 0x7e, 0x79, 0xca, 0x6b, 0xda, 0xbb, 0xb1, 0x52,
+	0xf1, 0x90, 0x53, 0x96, 0x08, 0xca, 0xa4, 0x54, 0x86, 0x19, 0xa1, 0xa4, 0x2e, 0xa2, 0x5b, 0xb1,
+	0x8a, 0x95, 0x3d, 0xd2, 0xec, 0x94, 0xdf, 0x92, 0x16, 0xdc, 0x7a, 0x9a, 0xd9, 0x06, 0xcc, 0xf0,
+	0x5e, 0xa6, 0xa5, 0x03, 0x7e, 0x32, 0xe6, 0xda, 0x90, 0x97, 0xb0, 0xb3, 0x14, 0xd1, 0x89, 0x92,
+	0x9a, 0xe3, 0x2e, 0x6c, 0x66, 0xde, 0xc7, 0xd6, 0x5c, 0xb7, 0x90, 0xbb, 0xee, 0x6d, 0x76, 0xee,
+	0xf8, 0x55, 0x64, 0xbf, 0x2c, 0xed, 0x5e, 0x39, 0xfb, 0xb6, 0xdf, 0x08, 0x20, 0x2d, 0xb5, 0x48,
+	0x0f, 0xb6, 0x7f, 0x97, 0x2f, 0x7c, 0xf1, 0x16, 0x6c, 0x44, 0x5c, 0xaa, 0x51, 0x0b, 0xb9, 0xc8,
+	0x6b, 0x06, 0xf9, 0x0f, 0xbc, 0x07, 0x10, 0x0e, 0x98, 0x94, 0x7c, 0x78, 0x2c, 0xa2, 0xd6, 0x9a,
+	0x0d, 0x35, 0x8b, 0x9b, 0xa3, 0x88, 0x3c, 0xaf, 0x3e, 0xa3, 0x64, 0x7d, 0x04, 0xb0, 0x60, 0xb5,
+	0x9a, 0x7f, 0x47, 0x0d, 0x9a, 0x25, 0x24, 0x79, 0x0c, 0xfb, 0x95, 0x16, 0x74, 0x27, 0x4f, 0x06,
+	0x4c, 0xc8, 0xa3, 0xe8, 0x82, 0xf6, 0x36, 0x5c, 0x0f, 0xb3, 0x9b, 0x8c, 0x2a, 0x07, 0xbe, 0x16,
+	0xe6, 0x19, 0xe4, 0x15, 0xb8, 0x7f, 0xae, 0xbe, 0xbc, 0x4e, 0x76, 0x3e, 0xaf, 0xc3, 0x86, 0x35,
+	0xc2, 0x6f, 0x11, 0xc0, 0xc2, 0x0d, 0x7b, 0xcb, 0x3a, 0xf5, 0xb3, 0x6e, 0x1f, 0xfc, 0x43, 0x66,
+	0x4e, 0x4c, 0xf6, 0xde, 0x7d, 0xf9, 0xf1, 0x71, 0x6d, 0x07, 0x6f, 0xd7, 0x2d, 0xa2, 0xc6, 0x1f,
+	0x10, 0x34, 0xcb, 0x2a, 0x7c, 0x77, 0x95, 0xee, 0x05, 0x80, 0xb7, 0x3a, 0xb1, 0xf0, 0x3f, 0xb4,
+	0xfe, 0xf7, 0xf0, 0x41, 0x9d, 0x3f, 0x3d, 0xb5, 0xdb, 0x32, 0xa5, 0xa7, 0x8b, 0x65, 0x99, 0xe2,
+	0x4f, 0x08, 0x6e, 0xd6, 0x0c, 0x01, 0x1f, 0xae, 0x7c, 0x75, 0x75, 0xdc, 0xed, 0xce, 0xff, 0x94,
+	0x14, 0xc4, 0x9e, 0x25, 0x26, 0xd8, 0xad, 0xed, 0x98, 0x45, 0xb5, 0xfb, 0x33, 0xed, 0xf6, 0xce,
+	0x66, 0x0e, 0x3a, 0x9f, 0x39, 0xe8, 0xfb, 0xcc, 0x41, 0xef, 0xe7, 0x4e, 0xe3, 0x7c, 0xee, 0x34,
+	0xbe, 0xce, 0x9d, 0xc6, 0x8b, 0x4e, 0x2c, 0xcc, 0x60, 0xdc, 0xf7, 0x43, 0x35, 0xa2, 0xcf, 0x2c,
+	0xc1, 0xfd, 0x1e, 0xeb, 0x6b, 0x5a, 0x7c, 0x13, 0x5e, 0x3f, 0xa4, 0x6f, 0x7e, 0x51, 0x37, 0x93,
+	0x84, 0xeb, 0xfe, 0x55, 0xfb, 0x0f, 0x7f, 0xf0, 0x33, 0x00, 0x00, 0xff, 0xff, 0x4e, 0x53, 0x01,
+	0x22, 0x69, 0x04, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -257,6 +352,7 @@ const _ = grpc.SupportPackageIsVersion4
 type QueryClient interface {
 	RateLimits(ctx context.Context, in *QueryRateLimitsRequest, opts ...grpc.CallOption) (*QueryRateLimitsResponse, error)
 	RateLimit(ctx context.Context, in *QueryRateLimitRequest, opts ...grpc.CallOption) (*QueryRateLimitResponse, error)
+	RateLimitsByChainId(ctx context.Context, in *QueryRateLimitsByChainIdRequest, opts ...grpc.CallOption) (*QueryRateLimitsByChainIdResponse, error)
 }
 
 type queryClient struct {
@@ -285,10 +381,20 @@ func (c *queryClient) RateLimit(ctx context.Context, in *QueryRateLimitRequest, 
 	return out, nil
 }
 
+func (c *queryClient) RateLimitsByChainId(ctx context.Context, in *QueryRateLimitsByChainIdRequest, opts ...grpc.CallOption) (*QueryRateLimitsByChainIdResponse, error) {
+	out := new(QueryRateLimitsByChainIdResponse)
+	err := c.cc.Invoke(ctx, "/stride.ratelimit.Query/RateLimitsByChainId", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // QueryServer is the server API for Query service.
 type QueryServer interface {
 	RateLimits(context.Context, *QueryRateLimitsRequest) (*QueryRateLimitsResponse, error)
 	RateLimit(context.Context, *QueryRateLimitRequest) (*QueryRateLimitResponse, error)
+	RateLimitsByChainId(context.Context, *QueryRateLimitsByChainIdRequest) (*QueryRateLimitsByChainIdResponse, error)
 }
 
 // UnimplementedQueryServer can be embedded to have forward compatible implementations.
@@ -300,6 +406,9 @@ func (*UnimplementedQueryServer) RateLimits(ctx context.Context, req *QueryRateL
 }
 func (*UnimplementedQueryServer) RateLimit(ctx context.Context, req *QueryRateLimitRequest) (*QueryRateLimitResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RateLimit not implemented")
+}
+func (*UnimplementedQueryServer) RateLimitsByChainId(ctx context.Context, req *QueryRateLimitsByChainIdRequest) (*QueryRateLimitsByChainIdResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RateLimitsByChainId not implemented")
 }
 
 func RegisterQueryServer(s grpc1.Server, srv QueryServer) {
@@ -342,6 +451,24 @@ func _Query_RateLimit_Handler(srv interface{}, ctx context.Context, dec func(int
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Query_RateLimitsByChainId_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryRateLimitsByChainIdRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(QueryServer).RateLimitsByChainId(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/stride.ratelimit.Query/RateLimitsByChainId",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(QueryServer).RateLimitsByChainId(ctx, req.(*QueryRateLimitsByChainIdRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 var _Query_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "stride.ratelimit.Query",
 	HandlerType: (*QueryServer)(nil),
@@ -353,6 +480,10 @@ var _Query_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "RateLimit",
 			Handler:    _Query_RateLimit_Handler,
+		},
+		{
+			MethodName: "RateLimitsByChainId",
+			Handler:    _Query_RateLimitsByChainId_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
@@ -491,6 +622,73 @@ func (m *QueryRateLimitResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) 
 	return len(dAtA) - i, nil
 }
 
+func (m *QueryRateLimitsByChainIdRequest) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *QueryRateLimitsByChainIdRequest) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *QueryRateLimitsByChainIdRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.ChainId) > 0 {
+		i -= len(m.ChainId)
+		copy(dAtA[i:], m.ChainId)
+		i = encodeVarintQuery(dAtA, i, uint64(len(m.ChainId)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *QueryRateLimitsByChainIdResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *QueryRateLimitsByChainIdResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *QueryRateLimitsByChainIdResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.RateLimits) > 0 {
+		for iNdEx := len(m.RateLimits) - 1; iNdEx >= 0; iNdEx-- {
+			{
+				size, err := m.RateLimits[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				if err != nil {
+					return 0, err
+				}
+				i -= size
+				i = encodeVarintQuery(dAtA, i, uint64(size))
+			}
+			i--
+			dAtA[i] = 0xa
+		}
+	}
+	return len(dAtA) - i, nil
+}
+
 func encodeVarintQuery(dAtA []byte, offset int, v uint64) int {
 	offset -= sovQuery(v)
 	base := offset
@@ -552,6 +750,34 @@ func (m *QueryRateLimitResponse) Size() (n int) {
 	if m.RateLimit != nil {
 		l = m.RateLimit.Size()
 		n += 1 + l + sovQuery(uint64(l))
+	}
+	return n
+}
+
+func (m *QueryRateLimitsByChainIdRequest) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.ChainId)
+	if l > 0 {
+		n += 1 + l + sovQuery(uint64(l))
+	}
+	return n
+}
+
+func (m *QueryRateLimitsByChainIdResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if len(m.RateLimits) > 0 {
+		for _, e := range m.RateLimits {
+			l = e.Size()
+			n += 1 + l + sovQuery(uint64(l))
+		}
 	}
 	return n
 }
@@ -872,6 +1098,172 @@ func (m *QueryRateLimitResponse) Unmarshal(dAtA []byte) error {
 				m.RateLimit = &RateLimit{}
 			}
 			if err := m.RateLimit.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipQuery(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *QueryRateLimitsByChainIdRequest) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowQuery
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: QueryRateLimitsByChainIdRequest: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: QueryRateLimitsByChainIdRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ChainId", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.ChainId = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipQuery(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *QueryRateLimitsByChainIdResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowQuery
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: QueryRateLimitsByChainIdResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: QueryRateLimitsByChainIdResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field RateLimits", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.RateLimits = append(m.RateLimits, RateLimit{})
+			if err := m.RateLimits[len(m.RateLimits)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
