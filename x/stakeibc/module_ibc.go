@@ -122,6 +122,11 @@ func (im IBCModule) OnChanOpenAck(
 	}
 
 	im.keeper.SetHostZone(ctx, zoneInfo)
+
+	err = im.keeper.SetWithdrawalAddressOnHost(ctx, zoneInfo)
+	if err != nil {
+		ctx.Logger().Error(fmt.Sprintf("Unable to set withdrawal address on %s, err: %s", zoneInfo.ChainId, err))
+	}
 	return nil
 }
 

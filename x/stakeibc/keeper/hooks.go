@@ -44,9 +44,6 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochInfo epochstypes.EpochInf
 		k.CreateDepositRecordsForEpoch(ctx, epochNumber)
 		depositRecords := k.RecordsKeeper.GetAllDepositRecord(ctx)
 
-		// TODO: move this to an external function that anyone can call, so that we don't have to call it every epoch
-		k.SetWithdrawalAddress(ctx)
-
 		// Update the redemption rate
 		if epochNumber%redemptionRateInterval == 0 {
 			k.UpdateRedemptionRates(ctx, depositRecords)
@@ -117,18 +114,6 @@ func (k Keeper) UpdateEpochTracker(ctx sdk.Context, epochInfo epochstypes.EpochI
 	k.SetEpochTracker(ctx, epochTracker)
 
 	return epochNumber, nil
-}
-
-// Set the withdrawal account address for each host zone
-func (k Keeper) SetWithdrawalAddress(ctx sdk.Context) {
-	k.Logger(ctx).Info("Setting Withdrawal Addresses...")
-
-	for _, hostZone := range k.GetAllHostZone(ctx) {
-		err := k.SetWithdrawalAddressOnHost(ctx, hostZone)
-		if err != nil {
-			k.Logger(ctx).Error(fmt.Sprintf("Unable to set withdrawal address on %s, err: %s", hostZone.ChainId, err))
-		}
-	}
 }
 
 // Updates the redemption rate for each host zone
