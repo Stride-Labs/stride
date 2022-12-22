@@ -10,6 +10,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 
+	channelkeeper "github.com/cosmos/ibc-go/v3/modules/core/04-channel/keeper"
+
 	"github.com/Stride-Labs/stride/v4/x/ratelimit/types"
 )
 
@@ -19,7 +21,8 @@ type (
 		cdc        codec.BinaryCodec
 		paramstore paramtypes.Subspace
 
-		bankKeeper types.BankKeeper
+		bankKeeper    types.BankKeeper
+		channelKeeper channelkeeper.Keeper
 	}
 )
 
@@ -28,12 +31,14 @@ func NewKeeper(
 	key storetypes.StoreKey,
 	ps paramtypes.Subspace,
 	bankKeeper types.BankKeeper,
+	channelKeeper channelkeeper.Keeper,
 ) *Keeper {
 	return &Keeper{
-		cdc:        cdc,
-		storeKey:   key,
-		paramstore: ps,
-		bankKeeper: bankKeeper,
+		cdc:           cdc,
+		storeKey:      key,
+		paramstore:    ps,
+		bankKeeper:    bankKeeper,
+		channelKeeper: channelKeeper,
 	}
 }
 

@@ -6,6 +6,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/spf13/cobra"
 
 	clitestutil "github.com/cosmos/cosmos-sdk/testutil/cli"
 
@@ -18,6 +19,10 @@ import (
 	tmcli "github.com/tendermint/tendermint/libs/cli"
 
 	"github.com/Stride-Labs/stride/v4/x/ratelimit/client/cli"
+
+	channeltypes "github.com/cosmos/ibc-go/v3/modules/core/04-channel/types"
+	ibchost "github.com/cosmos/ibc-go/v3/modules/core/24-host"
+	ibctypes "github.com/cosmos/ibc-go/v3/modules/core/types"
 
 	"github.com/Stride-Labs/stride/v4/app"
 	"github.com/Stride-Labs/stride/v4/x/ratelimit/types"
@@ -56,15 +61,27 @@ var (
 	}
 )
 
-func (s *IntegrationTestSuite) SetupSuite() {
+func (s *IntegrationTestSuite) SetupTest() {
 	s.T().Log("setting up integration test suite")
 
 	s.cfg = network.DefaultConfig()
 
 	genState := app.ModuleBasics.DefaultGenesis(s.cfg.Codec)
+
+	// Use the default ratelimit genesis
 	ratelimitGenState := types.DefaultGenesis()
 	ratelimitGenStateBz := s.cfg.Codec.MustMarshalJSON(ratelimitGenState)
 	genState[types.ModuleName] = ratelimitGenStateBz
+
+	// Create a channel in the ibc genesis
+	rateLimitedChannel := channeltypes.IdentifiedChannel{PortId: "transfer", ChannelId: path.ChannelId}
+	channelGenState := channeltypes.DefaultGenesisState()
+	channelGenState.Channels = []channeltypes.IdentifiedChannel{rateLimitedChannel}
+
+	ibcGenState := ibctypes.DefaultGenesisState()
+	ibcGenState.ChannelGenesis = channelGenState
+	ibcGenStateBz := s.cfg.Codec.MustMarshalJSON(ibcGenState)
+	genState[ibchost.ModuleName] = ibcGenStateBz
 
 	s.cfg.GenesisState = genState
 	s.network = network.New(s.T(), s.cfg)
@@ -73,6 +90,16 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	s.Require().NoError(err)
 
 	s.val = s.network.Validators[0]
+}
+
+func (s *IntegrationTestSuite) executeTxAndCheckSuccessful(cmd *cobra.Command, args []string, description string) {
+	clientCtx := s.val.ClientCtx
+	out, err := clitestutil.ExecTestCLICmd(clientCtx, cmd, args)
+	s.Require().NoError(err)
+
+	var response sdk.TxResponse
+	s.Require().NoError(clientCtx.Codec.UnmarshalJSON(out.Bytes(), &response))
+	s.Require().Zero(response.Code, "%s tx code should be 0", description)
 }
 
 func (s *IntegrationTestSuite) addRateLimit() {
@@ -91,10 +118,7 @@ func (s *IntegrationTestSuite) addRateLimit() {
 	}
 
 	cmd := cli.CmdAddRateLimit()
-	clientCtx := s.val.ClientCtx
-
-	_, err := clitestutil.ExecTestCLICmd(clientCtx, cmd, args)
-	s.Require().NoError(err)
+	s.executeTxAndCheckSuccessful(cmd, args, "add rate limit")
 }
 
 func (s *IntegrationTestSuite) checkRateLimit(expectedQuota types.Quota, expectedFlow types.Flow) {
@@ -144,8 +168,7 @@ func (s *IntegrationTestSuite) TestCmdTxUpdateRateLimit() {
 	}
 
 	cmd := cli.CmdUpdateRateLimit()
-	_, err := clitestutil.ExecTestCLICmd(s.val.ClientCtx, cmd, updateArgs)
-	s.Require().NoError(err)
+	s.executeTxAndCheckSuccessful(cmd, updateArgs, "update rate limit")
 
 	// Check if ratelimit was updated properly
 	s.checkRateLimit(updatedQuota, initialFlow)
@@ -170,8 +193,7 @@ func (s *IntegrationTestSuite) TestCmdTxResetRateLimit() {
 
 	// Reset the rate limit
 	cmd := cli.CmdResetRateLimit()
-	_, err := clitestutil.ExecTestCLICmd(s.val.ClientCtx, cmd, resetArgs)
-	s.Require().NoError(err)
+	s.executeTxAndCheckSuccessful(cmd, resetArgs, "reset rate limit")
 
 	// Check if ratelimit was reset properly
 	s.checkRateLimit(initialQuota, initialFlow)
@@ -195,12 +217,11 @@ func (s *IntegrationTestSuite) TestCmdTxRemoveRateLimit() {
 	}
 
 	cmd := cli.CmdRemoveRateLimit()
-	_, err := clitestutil.ExecTestCLICmd(s.val.ClientCtx, cmd, removeArgs)
-	s.Require().NoError(err)
+	s.executeTxAndCheckSuccessful(cmd, removeArgs, "remove rate limit")
 
 	// Check if ratelimit was removed properly (get command should error)
 	cmd = cli.GetCmdQueryRateLimit()
-	_, err = clitestutil.ExecTestCLICmd(s.val.ClientCtx, cmd, []string{
+	_, err := clitestutil.ExecTestCLICmd(s.val.ClientCtx, cmd, []string{
 		path.Denom,
 		path.ChannelId,
 		fmt.Sprintf("--%s=json", tmcli.OutputFlag),

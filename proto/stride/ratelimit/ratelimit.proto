@@ -15,7 +15,6 @@ enum PacketDirection {
 message Path {
   string denom = 1;
   string channel_id = 2;
-  string chain_id = 3;
 }
 
 message Quota {
