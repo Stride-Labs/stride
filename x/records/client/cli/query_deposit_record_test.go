@@ -15,6 +15,8 @@ import (
 	"github.com/Stride-Labs/stride/v4/testutil/nullify"
 	"github.com/Stride-Labs/stride/v4/x/records/client/cli"
 	"github.com/Stride-Labs/stride/v4/x/records/types"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 func networkWithDepositRecordObjects(t *testing.T, n int) (*network.Network, []types.DepositRecord) {
@@ -25,7 +27,7 @@ func networkWithDepositRecordObjects(t *testing.T, n int) (*network.Network, []t
 
 	for i := 0; i < n; i++ {
 		depositRecord := types.DepositRecord{
-			Id: uint64(i),
+			Id: sdk.NewIntFromUint64(uint64(i)),
 		}
 		nullify.Fill(&depositRecord)
 		state.DepositRecordList = append(state.DepositRecordList, depositRecord)

@@ -8,6 +8,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/spf13/cobra"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	"github.com/Stride-Labs/stride/v4/x/records/types"
 )
 
@@ -60,7 +62,7 @@ func CmdShowEpochUnbondingRecord() *cobra.Command {
 			}
 
 			params := &types.QueryGetEpochUnbondingRecordRequest{
-				EpochNumber: epochNumber,
+				EpochNumber: sdk.NewIntFromUint64(epochNumber),
 			}
 
 			res, err := queryClient.EpochUnbondingRecord(context.Background(), params)

@@ -28,17 +28,17 @@ func (k Keeper) UserRedemptionRecordForUser(c context.Context, req *types.QueryA
 
 	// limit loop to 50 records for performance
 	var loopback uint64
-	loopback = req.Limit
+	loopback = req.Limit.Uint64()
 	if loopback > 50 {
 		loopback = 50
 	}
 	var i uint64
 	for i = 0; i < loopback; i++ {
-		if i > req.Day {
+		if i > req.Day.Uint64() {
 			// we have reached the end of the records
 			break
 		}
-		currentDay := req.Day - i
+		currentDay := req.Day.Uint64() - i
 		// query the user redemption record for the current day
 		userRedemptionRecord, found := k.GetUserRedemptionRecord(ctx, types.UserRedemptionRecordKeyFormatter(req.ChainId, currentDay, req.Address))
 		if !found {

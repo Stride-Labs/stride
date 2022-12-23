@@ -95,7 +95,7 @@ func (k Keeper) Transfer(ctx sdk.Context, msg *ibctypes.MsgTransfer, depositReco
 		CallbackKey:  icacallbackstypes.PacketID(msg.SourcePort, msg.SourceChannel, sequence),
 		PortId:       msg.SourcePort,
 		ChannelId:    msg.SourceChannel,
-		Sequence:     sequence,
+		Sequence:     sdk.NewIntFromUint64(sequence),
 		CallbackId:   TRANSFER,
 		CallbackArgs: marshalledCallbackArgs,
 	}

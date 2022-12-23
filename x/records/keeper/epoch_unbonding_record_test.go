@@ -15,21 +15,21 @@ import (
 func createNEpochUnbondingRecord(keeper *keeper.Keeper, ctx sdk.Context, n int) ([]types.EpochUnbondingRecord, map[string]types.HostZoneUnbonding) {
 	hostZoneUnbondingsList := []types.HostZoneUnbonding{
 		{
-			HostZoneId: "host-A",
-			Status:     types.HostZoneUnbonding_UNBONDING_QUEUE,
-			StTokenAmount: sdk.ZeroInt(),
+			HostZoneId:        "host-A",
+			Status:            types.HostZoneUnbonding_UNBONDING_QUEUE,
+			StTokenAmount:     sdk.ZeroInt(),
 			NativeTokenAmount: sdk.ZeroInt(),
 		},
 		{
-			HostZoneId: "host-B",
-			Status:     types.HostZoneUnbonding_UNBONDING_QUEUE,
-			StTokenAmount: sdk.ZeroInt(),
+			HostZoneId:        "host-B",
+			Status:            types.HostZoneUnbonding_UNBONDING_QUEUE,
+			StTokenAmount:     sdk.ZeroInt(),
 			NativeTokenAmount: sdk.ZeroInt(),
 		},
 		{
-			HostZoneId: "host-C",
-			Status:     types.HostZoneUnbonding_UNBONDING_QUEUE,
-			StTokenAmount: sdk.ZeroInt(),
+			HostZoneId:        "host-C",
+			Status:            types.HostZoneUnbonding_UNBONDING_QUEUE,
+			StTokenAmount:     sdk.ZeroInt(),
 			NativeTokenAmount: sdk.ZeroInt(),
 		},
 	}
@@ -40,7 +40,7 @@ func createNEpochUnbondingRecord(keeper *keeper.Keeper, ctx sdk.Context, n int) 
 
 	epochUnbondingRecords := make([]types.EpochUnbondingRecord, n)
 	for epochNumber, epochUnbondingRecord := range epochUnbondingRecords {
-		epochUnbondingRecord.EpochNumber = uint64(epochNumber)
+		epochUnbondingRecord.EpochNumber = sdk.NewIntFromUint64(uint64(epochNumber))
 
 		unbondingsCopy := make([]*types.HostZoneUnbonding, 3)
 		for i := range unbondingsCopy {
@@ -58,7 +58,7 @@ func TestEpochUnbondingRecordGet(t *testing.T) {
 	keeper, ctx := keepertest.RecordsKeeper(t)
 	items, _ := createNEpochUnbondingRecord(keeper, ctx, 10)
 	for _, item := range items {
-		got, found := keeper.GetEpochUnbondingRecord(ctx, item.EpochNumber)
+		got, found := keeper.GetEpochUnbondingRecord(ctx, item.EpochNumber.Uint64())
 		require.True(t, found)
 		require.Equal(t,
 			nullify.Fill(&item),
@@ -71,8 +71,8 @@ func TestEpochUnbondingRecordRemove(t *testing.T) {
 	keeper, ctx := keepertest.RecordsKeeper(t)
 	items, _ := createNEpochUnbondingRecord(keeper, ctx, 10)
 	for _, item := range items {
-		keeper.RemoveEpochUnbondingRecord(ctx, item.EpochNumber)
-		_, found := keeper.GetEpochUnbondingRecord(ctx, item.EpochNumber)
+		keeper.RemoveEpochUnbondingRecord(ctx, item.EpochNumber.Uint64())
+		_, found := keeper.GetEpochUnbondingRecord(ctx, item.EpochNumber.Uint64())
 		require.False(t, found)
 	}
 }
@@ -147,7 +147,7 @@ func TestSetHostZoneUnbondings(t *testing.T) {
 	expectedEpochUnbondingRecords := initialEpochUnbondingRecords
 	for _, epochUnbondingRecord := range expectedEpochUnbondingRecords {
 		for _, epochNumberToUpdate := range epochsToUpdate {
-			if epochUnbondingRecord.EpochNumber == epochNumberToUpdate {
+			if epochUnbondingRecord.EpochNumber.Equal(sdk.NewIntFromUint64(epochNumberToUpdate)) {
 				for i, hostUnbonding := range epochUnbondingRecord.HostZoneUnbondings {
 					if hostUnbonding.HostZoneId == hostIdToUpdate {
 						updatedHostZoneUnbonding := hostUnbonding

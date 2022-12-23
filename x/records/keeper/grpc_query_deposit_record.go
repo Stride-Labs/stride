@@ -46,7 +46,7 @@ func (k Keeper) DepositRecord(c context.Context, req *types.QueryGetDepositRecor
 	}
 
 	ctx := sdk.UnwrapSDKContext(c)
-	depositRecord, found := k.GetDepositRecord(ctx, req.Id)
+	depositRecord, found := k.GetDepositRecord(ctx, req.Id.Uint64())
 	if !found {
 		return nil, sdkerrors.ErrKeyNotFound
 	}

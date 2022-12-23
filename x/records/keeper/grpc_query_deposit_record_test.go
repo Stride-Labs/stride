@@ -20,7 +20,7 @@ import (
 func createNDepositRecord(keeper *keeper.Keeper, ctx sdk.Context, n int) []types.DepositRecord {
 	items := make([]types.DepositRecord, n)
 	for i := range items {
-		items[i].Id = uint64(i)
+		items[i].Id = sdk.NewIntFromUint64(uint64(i))
 		items[i].Amount = sdk.NewInt(int64(i))
 		keeper.AppendDepositRecord(ctx, items[i])
 	}
@@ -49,7 +49,7 @@ func TestDepositRecordQuerySingle(t *testing.T) {
 		},
 		{
 			desc:    "KeyNotFound",
-			request: &types.QueryGetDepositRecordRequest{Id: uint64(len(msgs))},
+			request: &types.QueryGetDepositRecordRequest{Id: sdk.NewIntFromUint64(uint64(len(msgs)))},
 			err:     sdkerrors.ErrKeyNotFound,
 		},
 		{

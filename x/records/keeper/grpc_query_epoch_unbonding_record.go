@@ -46,7 +46,7 @@ func (k Keeper) EpochUnbondingRecord(c context.Context, req *types.QueryGetEpoch
 	}
 
 	ctx := sdk.UnwrapSDKContext(c)
-	epochUnbondingRecord, found := k.GetEpochUnbondingRecord(ctx, req.EpochNumber)
+	epochUnbondingRecord, found := k.GetEpochUnbondingRecord(ctx, req.EpochNumber.Uint64())
 	if !found {
 		return nil, sdkerrors.ErrKeyNotFound
 	}

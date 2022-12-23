@@ -42,11 +42,11 @@ func (k Keeper) AppendDepositRecord(
 	count := k.GetDepositRecordCount(ctx)
 
 	// Set the ID of the appended value
-	depositRecord.Id = count
+	depositRecord.Id = sdk.NewIntFromUint64(count)
 
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.DepositRecordKey))
 	appendedValue := k.Cdc.MustMarshal(&depositRecord)
-	store.Set(GetDepositRecordIDBytes(depositRecord.Id), appendedValue)
+	store.Set(GetDepositRecordIDBytes(depositRecord.Id.Uint64()), appendedValue)
 
 	// Update depositRecord count
 	k.SetDepositRecordCount(ctx, count+1)
@@ -58,7 +58,7 @@ func (k Keeper) AppendDepositRecord(
 func (k Keeper) SetDepositRecord(ctx sdk.Context, depositRecord types.DepositRecord) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.DepositRecordKey))
 	b := k.Cdc.MustMarshal(&depositRecord)
-	store.Set(GetDepositRecordIDBytes(depositRecord.Id), b)
+	store.Set(GetDepositRecordIDBytes(depositRecord.Id.Uint64()), b)
 }
 
 // GetDepositRecord returns a depositRecord from its id
@@ -104,7 +104,7 @@ func GetDepositRecordIDBytes(id uint64) []byte {
 func (k Keeper) GetDepositRecordByEpochAndChain(ctx sdk.Context, epochNumber uint64, chainId string) (val *types.DepositRecord, found bool) {
 	records := k.GetAllDepositRecord(ctx)
 	for _, depositRecord := range records {
-		if depositRecord.DepositEpochNumber == epochNumber && depositRecord.HostZoneId == chainId {
+		if depositRecord.DepositEpochNumber.Equal(sdk.NewIntFromUint64(epochNumber)) && depositRecord.HostZoneId == chainId {
 			return &depositRecord, true
 		}
 	}

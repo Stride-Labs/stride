@@ -17,7 +17,7 @@ import (
 func (k Keeper) SetEpochUnbondingRecord(ctx sdk.Context, epochUnbondingRecord types.EpochUnbondingRecord) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.EpochUnbondingRecordKey))
 	b := k.Cdc.MustMarshal(&epochUnbondingRecord)
-	store.Set(GetEpochUnbondingRecordIDBytes(epochUnbondingRecord.EpochNumber), b)
+	store.Set(GetEpochUnbondingRecordIDBytes(epochUnbondingRecord.EpochNumber.Uint64()), b)
 }
 
 // GetEpochUnbondingRecord returns a epochUnbondingRecord from its id
@@ -64,7 +64,7 @@ func (k Keeper) GetAllPreviousEpochUnbondingRecords(ctx sdk.Context, epochNumber
 	for ; iterator.Valid(); iterator.Next() {
 		var val types.EpochUnbondingRecord
 		k.Cdc.MustUnmarshal(iterator.Value(), &val)
-		if val.EpochNumber < epochNumber {
+		if val.EpochNumber.LT(sdk.NewIntFromUint64(epochNumber)) {
 			list = append(list, val)
 		}
 	}

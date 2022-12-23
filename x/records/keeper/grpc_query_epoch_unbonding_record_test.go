@@ -37,7 +37,7 @@ func TestEpochUnbondingRecordQuerySingle(t *testing.T) {
 		},
 		{
 			desc:    "KeyNotFound",
-			request: &types.QueryGetEpochUnbondingRecordRequest{EpochNumber: uint64(len(msgs))},
+			request: &types.QueryGetEpochUnbondingRecordRequest{EpochNumber: sdk.NewIntFromUint64(uint64(len(msgs)))},
 			err:     sdkerrors.ErrKeyNotFound,
 		},
 		{

@@ -29,7 +29,7 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) 
 	}
 
 	// Set depositRecord count
-	k.SetDepositRecordCount(ctx, genState.DepositRecordCount)
+	k.SetDepositRecordCount(ctx, genState.DepositRecordCount.Uint64())
 }
 
 // ExportGenesis returns the capability module's exported genesis.
@@ -37,7 +37,7 @@ func ExportGenesis(ctx sdk.Context, k keeper.Keeper) *types.GenesisState {
 	genesis := types.DefaultGenesis()
 	genesis.Params = k.GetParams(ctx)
 	genesis.DepositRecordList = k.GetAllDepositRecord(ctx)
-	genesis.DepositRecordCount = k.GetDepositRecordCount(ctx)
+	genesis.DepositRecordCount = sdk.NewIntFromUint64(k.GetDepositRecordCount(ctx))
 
 	genesis.UserRedemptionRecordList = k.GetAllUserRedemptionRecord(ctx)
 	genesis.EpochUnbondingRecordList = k.GetAllEpochUnbondingRecord(ctx)

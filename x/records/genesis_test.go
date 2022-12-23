@@ -9,6 +9,8 @@ import (
 	"github.com/Stride-Labs/stride/v4/testutil/nullify"
 	"github.com/Stride-Labs/stride/v4/x/records"
 	"github.com/Stride-Labs/stride/v4/x/records/types"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 func TestGenesis(t *testing.T) {
@@ -23,25 +25,25 @@ func TestGenesis(t *testing.T) {
 				Id: "1",
 			},
 		},
-		UserRedemptionRecordCount: 2,
+		UserRedemptionRecordCount: sdk.NewInt(2),
 		EpochUnbondingRecordList: []types.EpochUnbondingRecord{
 			{
-				EpochNumber: 0,
+				EpochNumber: sdk.NewInt(0),
 			},
 			{
-				EpochNumber: 1,
+				EpochNumber: sdk.NewInt(1),
 			},
 		},
 		// this line is used by starport scaffolding # genesis/test/state
 		DepositRecordList: []types.DepositRecord{
 			{
-				Id: 0,
+				Id: sdk.NewInt(0),
 			},
 			{
-				Id: 1,
+				Id: sdk.NewInt(1),
 			},
 		},
-		DepositRecordCount: 2,
+		DepositRecordCount: sdk.NewInt(2),
 	}
 	k, ctx := keepertest.RecordsKeeper(t)
 	records.InitGenesis(ctx, *k, genesisState)
