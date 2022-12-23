@@ -523,8 +523,8 @@ func (k Keeper) ClaimCoinsForAction(ctx sdk.Context, addr sdk.AccAddress, action
 
 			periodLength := GetAirdropDurationForAction(action)
 			vestingAcc := vestingtypes.NewStridePeriodicVestingAccount(baseAccount.(*authtypes.BaseAccount), claimableAmount, []vestingtypes.Period{{
-				StartTime:  ctx.BlockTime().Unix(),
-				Length:     periodLength,
+				StartTime:  sdk.NewInt(ctx.BlockTime().Unix()),
+				Length:     sdk.NewInt(periodLength),
 				Amount:     claimableAmount,
 				ActionType: int32(action),
 			}})
@@ -533,8 +533,8 @@ func (k Keeper) ClaimCoinsForAction(ctx sdk.Context, addr sdk.AccAddress, action
 			// Grant a new vesting to the existing stride vesting account
 			periodLength := GetAirdropDurationForAction(action)
 			strideVestingAcc.AddNewGrant(vestingtypes.Period{
-				StartTime:  ctx.BlockTime().Unix(),
-				Length:     periodLength,
+				StartTime:  sdk.NewInt(ctx.BlockTime().Unix()),
+				Length:     sdk.NewInt(periodLength),
 				Amount:     claimableAmount,
 				ActionType: int32(action),
 			})
@@ -580,7 +580,7 @@ func (k Keeper) ClaimCoinsForAction(ctx sdk.Context, addr sdk.AccAddress, action
 }
 
 // CreateAirdropAndEpoch creates a new airdrop and epoch for that.
-func (k Keeper) CreateAirdropAndEpoch(ctx sdk.Context, distributor string, denom string, startTime uint64, duration uint64, identifier string) error {
+func (k Keeper) CreateAirdropAndEpoch(ctx sdk.Context, distributor string, denom string, startTime sdk.Int, duration sdk.Int, identifier string) error {
 	params, err := k.GetParams(ctx)
 	if err != nil {
 		panic(err)
@@ -594,10 +594,10 @@ func (k Keeper) CreateAirdropAndEpoch(ctx sdk.Context, distributor string, denom
 
 	airdrop := types.Airdrop{
 		AirdropIdentifier:  identifier,
-		AirdropDuration:    time.Duration(duration * uint64(time.Second)),
+		AirdropDuration:    time.Duration(duration.MulRaw(int64(time.Second)).Int64()),
 		ClaimDenom:         denom,
 		DistributorAddress: distributor,
-		AirdropStartTime:   time.Unix(int64(startTime), 0),
+		AirdropStartTime:   time.Unix(startTime.Int64(), 0),
 	}
 
 	params.Airdrops = append(params.Airdrops, &airdrop)
@@ -605,8 +605,8 @@ func (k Keeper) CreateAirdropAndEpoch(ctx sdk.Context, distributor string, denom
 		Identifier:              fmt.Sprintf("airdrop-%s", identifier),
 		StartTime:               airdrop.AirdropStartTime.Add(time.Minute),
 		Duration:                time.Hour * 24 * 30,
-		CurrentEpoch:            0,
-		CurrentEpochStartHeight: 0,
+		CurrentEpoch:            sdk.NewInt(0),
+		CurrentEpochStartHeight: sdk.NewInt(0),
 		CurrentEpochStartTime:   time.Time{},
 		EpochCountingStarted:    false,
 	})

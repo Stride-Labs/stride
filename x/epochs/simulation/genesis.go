@@ -9,6 +9,8 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/types/module"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	"github.com/Stride-Labs/stride/v4/x/epochs/types"
 )
 
@@ -19,8 +21,8 @@ func RandomizedGenState(simState *module.SimulationState) {
 			Identifier:              "day",
 			StartTime:               time.Time{},
 			Duration:                time.Hour * 24,
-			CurrentEpoch:            0,
-			CurrentEpochStartHeight: 0,
+			CurrentEpoch:            sdk.NewInt(0),
+			CurrentEpochStartHeight: sdk.NewInt(0),
 			CurrentEpochStartTime:   time.Time{},
 			EpochCountingStarted:    false,
 		},
@@ -28,8 +30,8 @@ func RandomizedGenState(simState *module.SimulationState) {
 			Identifier:              "hour",
 			StartTime:               time.Time{},
 			Duration:                time.Hour,
-			CurrentEpoch:            0,
-			CurrentEpochStartHeight: 0,
+			CurrentEpoch:            sdk.NewInt(0),
+			CurrentEpochStartHeight: sdk.NewInt(0),
 			CurrentEpochStartTime:   time.Time{},
 			EpochCountingStarted:    false,
 		},

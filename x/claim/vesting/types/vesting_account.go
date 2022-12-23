@@ -25,7 +25,7 @@ var (
 // NewBaseVestingAccount creates a new BaseVestingAccount object. It is the
 // callers responsibility to ensure the base account has sufficient funds with
 // regards to the original vesting amount.
-func NewBaseVestingAccount(baseAccount *authtypes.BaseAccount, originalVesting sdk.Coins, endTime int64) *BaseVestingAccount {
+func NewBaseVestingAccount(baseAccount *authtypes.BaseAccount, originalVesting sdk.Coins, endTime sdk.Int) *BaseVestingAccount {
 	return &BaseVestingAccount{
 		BaseAccount:      baseAccount,
 		OriginalVesting:  originalVesting,
@@ -140,7 +140,7 @@ func (bva BaseVestingAccount) GetDelegatedVesting() sdk.Coins {
 
 // GetEndTime returns a vesting account's end time
 func (bva BaseVestingAccount) GetEndTime() int64 {
-	return bva.EndTime
+	return bva.EndTime.Int64()
 }
 
 // Validate checks for errors on the account fields
@@ -186,7 +186,7 @@ func (bva BaseVestingAccount) MarshalYAML() (interface{}, error) {
 		OriginalVesting:  bva.OriginalVesting,
 		DelegatedFree:    bva.DelegatedFree,
 		DelegatedVesting: bva.DelegatedVesting,
-		EndTime:          bva.EndTime,
+		EndTime:          bva.EndTime.Int64(),
 	}
 	return marshalYaml(out)
 }
@@ -210,9 +210,9 @@ func NewStridePeriodicVestingAccount(baseAcc *authtypes.BaseAccount, originalVes
 		return &StridePeriodicVestingAccount{}
 	}
 
-	endTime := int64(0)
+	endTime := sdk.NewInt(0)
 	for _, p := range periods {
-		endTime = utils.Max64(endTime, p.StartTime+p.Length)
+		endTime = sdk.MaxInt(endTime, p.StartTime.Add(p.Length))
 	}
 
 	baseVestingAcc := &BaseVestingAccount{
@@ -231,7 +231,7 @@ func NewStridePeriodicVestingAccount(baseAcc *authtypes.BaseAccount, originalVes
 func (pva *StridePeriodicVestingAccount) AddNewGrant(grantedPeriod Period) {
 	// Starting time for new period must be greater than original starting time
 	pva.VestingPeriods = append(pva.VestingPeriods, grantedPeriod)
-	pva.EndTime = utils.Max64(pva.EndTime, grantedPeriod.Length+grantedPeriod.StartTime)
+	pva.EndTime = sdk.MaxInt(pva.EndTime, grantedPeriod.Length.Add(grantedPeriod.StartTime))
 	pva.OriginalVesting = pva.OriginalVesting.Add(grantedPeriod.Amount...)
 }
 
@@ -245,14 +245,14 @@ func (pva StridePeriodicVestingAccount) GetVestedCoins(blockTime time.Time) sdk.
 	// known.
 	if len(pva.VestingPeriods) == 0 {
 		return vestedCoins
-	} else if blockTime.Unix() <= pva.VestingPeriods[0].StartTime {
+	} else if blockTime.Unix() <= pva.VestingPeriods[0].StartTime.Int64() {
 		return vestedCoins
-	} else if blockTime.Unix() >= pva.EndTime {
+	} else if blockTime.Unix() >= pva.EndTime.Int64() {
 		return pva.OriginalVesting
 	}
 
 	for _, period := range pva.VestingPeriods {
-		vestedCoins = vestedCoins.Add(utils.GetVestedCoinsAt(blockTime.Unix(), period.StartTime, period.Length, period.Amount)...)
+		vestedCoins = vestedCoins.Add(utils.GetVestedCoinsAt(blockTime.Unix(), period.StartTime.Int64(), period.Length.Int64(), period.Amount)...)
 	}
 
 	return vestedCoins
@@ -280,7 +280,7 @@ func (pva *StridePeriodicVestingAccount) TrackDelegation(blockTime time.Time, ba
 // GetStartTime returns the time when vesting starts for a periodic vesting
 // account.
 func (pva StridePeriodicVestingAccount) GetStartTime() int64 {
-	return pva.VestingPeriods[0].StartTime
+	return pva.VestingPeriods[0].StartTime.Int64()
 }
 
 // GetVestingPeriods returns vesting periods associated with periodic vesting account.
@@ -296,7 +296,7 @@ func (pva StridePeriodicVestingAccount) Validate() error {
 	endTime := pva.VestingPeriods[0].StartTime
 	originalVesting := sdk.NewCoins()
 	for _, p := range pva.VestingPeriods {
-		endTime += p.Length
+		endTime = endTime.Add(p.Length)
 		originalVesting = originalVesting.Add(p.Amount...)
 	}
 	if endTime != pva.EndTime {
@@ -329,8 +329,8 @@ func (pva StridePeriodicVestingAccount) MarshalYAML() (interface{}, error) {
 		OriginalVesting:  pva.OriginalVesting,
 		DelegatedFree:    pva.DelegatedFree,
 		DelegatedVesting: pva.DelegatedVesting,
-		EndTime:          pva.EndTime,
-		StartTime:        pva.VestingPeriods[0].StartTime,
+		EndTime:          pva.EndTime.Int64(),
+		StartTime:        pva.VestingPeriods[0].StartTime.Int64(),
 		VestingPeriods:   pva.VestingPeriods,
 	}
 	return marshalYaml(out)

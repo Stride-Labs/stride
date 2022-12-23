@@ -24,7 +24,7 @@ func (k Keeper) BeginBlocker(ctx sdk.Context) {
 		epochEndTime := epochInfo.CurrentEpochStartTime.Add(epochInfo.Duration)
 		shouldEpochStart := ctx.BlockTime().After(epochEndTime) && !shouldInitialEpochStart && !epochInfo.StartTime.After(ctx.BlockTime())
 
-		epochInfo.CurrentEpochStartHeight = ctx.BlockHeight()
+		epochInfo.CurrentEpochStartHeight = sdk.NewInt(ctx.BlockHeight())
 
 		switch {
 		case shouldInitialEpochStart:
@@ -41,7 +41,7 @@ func (k Keeper) BeginBlocker(ctx sdk.Context) {
 			ctx.EventManager().EmitEvent(
 				sdk.NewEvent(
 					types.EventTypeEpochEnd,
-					sdk.NewAttribute(types.AttributeEpochNumber, strconv.FormatInt(epochInfo.CurrentEpoch, 10)),
+					sdk.NewAttribute(types.AttributeEpochNumber, strconv.FormatInt(epochInfo.CurrentEpoch.Int64(), 10)),
 				),
 			)
 			k.AfterEpochEnd(ctx, epochInfo)
@@ -57,7 +57,7 @@ func (k Keeper) BeginBlocker(ctx sdk.Context) {
 		ctx.EventManager().EmitEvent(
 			sdk.NewEvent(
 				types.EventTypeEpochStart,
-				sdk.NewAttribute(types.AttributeEpochNumber, strconv.FormatInt(epochInfo.CurrentEpoch, 10)),
+				sdk.NewAttribute(types.AttributeEpochNumber, strconv.FormatInt(epochInfo.CurrentEpoch.Int64(), 10)),
 				sdk.NewAttribute(types.AttributeEpochStartTime, strconv.FormatInt(epochInfo.CurrentEpochStartTime.Unix(), 10)),
 			),
 		)
@@ -68,13 +68,13 @@ func (k Keeper) BeginBlocker(ctx sdk.Context) {
 
 func startInitialEpoch(epochInfo types.EpochInfo) types.EpochInfo {
 	epochInfo.EpochCountingStarted = true
-	epochInfo.CurrentEpoch = 1
+	epochInfo.CurrentEpoch = sdk.NewInt(1)
 	epochInfo.CurrentEpochStartTime = epochInfo.StartTime
 	return epochInfo
 }
 
 func endEpoch(epochInfo types.EpochInfo) types.EpochInfo {
-	epochInfo.CurrentEpoch++
+	epochInfo.CurrentEpoch = epochInfo.CurrentEpoch.Add(sdk.NewInt(1))
 	epochInfo.CurrentEpochStartTime = epochInfo.CurrentEpochStartTime.Add(epochInfo.Duration)
 	return epochInfo
 }

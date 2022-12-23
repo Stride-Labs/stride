@@ -20,10 +20,10 @@ func (k Keeper) AfterEpochEnd(ctx sdk.Context, epochInfo epochstypes.EpochInfo) 
 
 	if epochIdentifier == params.EpochIdentifier {
 		// not distribute rewards if it's not time yet for rewards distribution
-		if epochNumber < params.MintingRewardsDistributionStartEpoch {
+		if epochNumber.LT(params.MintingRewardsDistributionStartEpoch) {
 			return
 		} else if epochNumber == params.MintingRewardsDistributionStartEpoch {
-			k.SetLastReductionEpochNum(ctx, epochNumber)
+			k.SetLastReductionEpochNum(ctx, epochNumber.Int64())
 		}
 		// fetch stored minter & params
 		minter := k.GetMinter(ctx)
@@ -32,11 +32,11 @@ func (k Keeper) AfterEpochEnd(ctx sdk.Context, epochInfo epochstypes.EpochInfo) 
 		// Check if we have hit an epoch where we update the inflation parameter.
 		// Since epochs only update based on BFT time data, it is safe to store the "reductioning period time"
 		// in terms of the number of epochs that have transpired.
-		if epochNumber >= k.GetParams(ctx).ReductionPeriodInEpochs+k.GetLastReductionEpochNum(ctx) {
+		if epochNumber.GTE(k.GetParams(ctx).ReductionPeriodInEpochs.Add(k.GetLastReductionEpochNum(ctx))) {
 			// reduction the reward per reduction period
 			minter.EpochProvisions = minter.NextEpochProvisions(params)
 			k.SetMinter(ctx, minter)
-			k.SetLastReductionEpochNum(ctx, epochNumber)
+			k.SetLastReductionEpochNum(ctx, epochNumber.Int64())
 		}
 
 		// mint coins, update supply

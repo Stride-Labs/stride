@@ -52,10 +52,7 @@ message Period {
     (gogoproto.nullable) = false,
     (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
   ];
-  string action_type = 4 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
-    (gogoproto.nullable) = false
-  ];
+  int32 action_type = 4;
 }
 
 // StridePeriodicVestingAccount implements the VestingAccount interface. It

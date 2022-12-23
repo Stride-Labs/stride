@@ -23,9 +23,9 @@ func TestGetVestedCoinsPeriodicVestingAcc(t *testing.T) {
 	now := tmtime.Now()
 	endTime := now.Add(24 * time.Hour)
 	periods := types.Periods{
-		types.Period{StartTime: now.Unix(), Length: int64(12 * 60 * 60), Amount: sdk.Coins{sdk.NewInt64Coin(feeDenom, 500), sdk.NewInt64Coin(stakeDenom, 50)}},
-		types.Period{StartTime: now.Unix() + int64(12*60*60), Length: int64(6 * 60 * 60), Amount: sdk.Coins{sdk.NewInt64Coin(feeDenom, 250), sdk.NewInt64Coin(stakeDenom, 25)}},
-		types.Period{StartTime: now.Unix() + int64(18*60*60), Length: int64(6 * 60 * 60), Amount: sdk.Coins{sdk.NewInt64Coin(feeDenom, 250), sdk.NewInt64Coin(stakeDenom, 25)}},
+		types.Period{StartTime: sdk.NewInt(now.Unix()), Length: sdk.NewInt(int64(12 * 60 * 60)), Amount: sdk.Coins{sdk.NewInt64Coin(feeDenom, 500), sdk.NewInt64Coin(stakeDenom, 50)}},
+		types.Period{StartTime: sdk.NewInt(now.Unix() + int64(12*60*60)), Length: sdk.NewInt(int64(6 * 60 * 60)), Amount: sdk.Coins{sdk.NewInt64Coin(feeDenom, 250), sdk.NewInt64Coin(stakeDenom, 25)}},
+		types.Period{StartTime: sdk.NewInt(now.Unix() + int64(18*60*60)), Length: sdk.NewInt(int64(6 * 60 * 60)), Amount: sdk.Coins{sdk.NewInt64Coin(feeDenom, 250), sdk.NewInt64Coin(stakeDenom, 25)}},
 	}
 
 	bacc, origCoins := initBaseAccount()
@@ -62,9 +62,9 @@ func TestGetVestingCoinsPeriodicVestingAcc(t *testing.T) {
 	now := tmtime.Now()
 	endTime := now.Add(24 * time.Hour)
 	periods := types.Periods{
-		types.Period{StartTime: now.Unix(), Length: int64(12 * 60 * 60), Amount: sdk.Coins{sdk.NewInt64Coin(feeDenom, 500), sdk.NewInt64Coin(stakeDenom, 50)}},
-		types.Period{StartTime: now.Unix() + int64(12*60*60), Length: int64(6 * 60 * 60), Amount: sdk.Coins{sdk.NewInt64Coin(feeDenom, 250), sdk.NewInt64Coin(stakeDenom, 25)}},
-		types.Period{StartTime: now.Unix() + int64(18*60*60), Length: int64(6 * 60 * 60), Amount: sdk.Coins{sdk.NewInt64Coin(feeDenom, 250), sdk.NewInt64Coin(stakeDenom, 25)}},
+		types.Period{StartTime: sdk.NewInt(now.Unix()), Length: sdk.NewInt(int64(12 * 60 * 60)), Amount: sdk.Coins{sdk.NewInt64Coin(feeDenom, 500), sdk.NewInt64Coin(stakeDenom, 50)}},
+		types.Period{StartTime: sdk.NewInt(now.Unix() + int64(12*60*60)), Length: sdk.NewInt(int64(6 * 60 * 60)), Amount: sdk.Coins{sdk.NewInt64Coin(feeDenom, 250), sdk.NewInt64Coin(stakeDenom, 25)}},
+		types.Period{StartTime: sdk.NewInt(now.Unix() + int64(18*60*60)), Length: sdk.NewInt(int64(6 * 60 * 60)), Amount: sdk.Coins{sdk.NewInt64Coin(feeDenom, 250), sdk.NewInt64Coin(stakeDenom, 25)}},
 	}
 
 	bacc, origCoins := initBaseAccount()
@@ -99,9 +99,9 @@ func TestSpendableCoinsPeriodicVestingAcc(t *testing.T) {
 	now := tmtime.Now()
 	endTime := now.Add(24 * time.Hour)
 	periods := types.Periods{
-		types.Period{StartTime: now.Unix(), Length: int64(12 * 60 * 60), Amount: sdk.Coins{sdk.NewInt64Coin(feeDenom, 500), sdk.NewInt64Coin(stakeDenom, 50)}},
-		types.Period{StartTime: now.Unix() + int64(12*60*60), Length: int64(6 * 60 * 60), Amount: sdk.Coins{sdk.NewInt64Coin(feeDenom, 250), sdk.NewInt64Coin(stakeDenom, 25)}},
-		types.Period{StartTime: now.Unix() + int64(15*60*60), Length: int64(6 * 60 * 60), Amount: sdk.Coins{sdk.NewInt64Coin(feeDenom, 250), sdk.NewInt64Coin(stakeDenom, 25)}},
+		types.Period{StartTime: sdk.NewInt(now.Unix()), Length: sdk.NewInt(int64(12 * 60 * 60)), Amount: sdk.Coins{sdk.NewInt64Coin(feeDenom, 500), sdk.NewInt64Coin(stakeDenom, 50)}},
+		types.Period{StartTime: sdk.NewInt(now.Unix() + int64(12*60*60)), Length: sdk.NewInt(int64(6 * 60 * 60)), Amount: sdk.Coins{sdk.NewInt64Coin(feeDenom, 250), sdk.NewInt64Coin(stakeDenom, 25)}},
+		types.Period{StartTime: sdk.NewInt(now.Unix() + int64(18*60*60)), Length: sdk.NewInt(int64(6 * 60 * 60)), Amount: sdk.Coins{sdk.NewInt64Coin(feeDenom, 250), sdk.NewInt64Coin(stakeDenom, 25)}},
 	}
 
 	bacc, origCoins := initBaseAccount()
@@ -130,9 +130,9 @@ func TestTrackDelegationPeriodicVestingAcc(t *testing.T) {
 	now := tmtime.Now()
 	endTime := now.Add(24 * time.Hour)
 	periods := types.Periods{
-		types.Period{StartTime: now.Unix(), Length: int64(12 * 60 * 60), Amount: sdk.Coins{sdk.NewInt64Coin(feeDenom, 500), sdk.NewInt64Coin(stakeDenom, 50)}},
-		types.Period{StartTime: now.Unix() + int64(12*60*60), Length: int64(6 * 60 * 60), Amount: sdk.Coins{sdk.NewInt64Coin(feeDenom, 250), sdk.NewInt64Coin(stakeDenom, 25)}},
-		types.Period{StartTime: now.Unix() + int64(18*60*60), Length: int64(6 * 60 * 60), Amount: sdk.Coins{sdk.NewInt64Coin(feeDenom, 250), sdk.NewInt64Coin(stakeDenom, 25)}},
+		types.Period{StartTime: sdk.NewInt(now.Unix()), Length: sdk.NewInt(int64(12 * 60 * 60)), Amount: sdk.Coins{sdk.NewInt64Coin(feeDenom, 500), sdk.NewInt64Coin(stakeDenom, 50)}},
+		types.Period{StartTime: sdk.NewInt(now.Unix() + int64(12*60*60)), Length: sdk.NewInt(int64(6 * 60 * 60)), Amount: sdk.Coins{sdk.NewInt64Coin(feeDenom, 250), sdk.NewInt64Coin(stakeDenom, 25)}},
+		types.Period{StartTime: sdk.NewInt(now.Unix() + int64(18*60*60)), Length: sdk.NewInt(int64(6 * 60 * 60)), Amount: sdk.Coins{sdk.NewInt64Coin(feeDenom, 250), sdk.NewInt64Coin(stakeDenom, 25)}},
 	}
 
 	bacc, origCoins := initBaseAccount()
@@ -186,9 +186,9 @@ func TestTrackUndelegationPeriodicVestingAcc(t *testing.T) {
 	now := tmtime.Now()
 	endTime := now.Add(24 * time.Hour)
 	periods := types.Periods{
-		types.Period{StartTime: now.Unix(), Length: int64(12 * 60 * 60), Amount: sdk.Coins{sdk.NewInt64Coin(feeDenom, 500), sdk.NewInt64Coin(stakeDenom, 50)}},
-		types.Period{StartTime: now.Unix() + int64(12*60*60), Length: int64(6 * 60 * 60), Amount: sdk.Coins{sdk.NewInt64Coin(feeDenom, 250), sdk.NewInt64Coin(stakeDenom, 25)}},
-		types.Period{StartTime: now.Unix() + int64(18*60*60), Length: int64(6 * 60 * 60), Amount: sdk.Coins{sdk.NewInt64Coin(feeDenom, 250), sdk.NewInt64Coin(stakeDenom, 25)}},
+		types.Period{StartTime: sdk.NewInt(now.Unix()), Length: sdk.NewInt(int64(12 * 60 * 60)), Amount: sdk.Coins{sdk.NewInt64Coin(feeDenom, 500), sdk.NewInt64Coin(stakeDenom, 50)}},
+		types.Period{StartTime: sdk.NewInt(now.Unix() + int64(12*60*60)), Length: sdk.NewInt(int64(6 * 60 * 60)), Amount: sdk.Coins{sdk.NewInt64Coin(feeDenom, 250), sdk.NewInt64Coin(stakeDenom, 25)}},
+		types.Period{StartTime: sdk.NewInt(now.Unix() + int64(18*60*60)), Length: sdk.NewInt(int64(6 * 60 * 60)), Amount: sdk.Coins{sdk.NewInt64Coin(feeDenom, 250), sdk.NewInt64Coin(stakeDenom, 25)}},
 	}
 
 	bacc, origCoins := initBaseAccount()
@@ -243,7 +243,7 @@ func TestTrackUndelegationPeriodicVestingAcc(t *testing.T) {
 func TestStridePeriodicVestingAccountMarshal(t *testing.T) {
 	baseAcc, coins := initBaseAccount()
 	now := tmtime.Now()
-	acc := types.NewStridePeriodicVestingAccount(baseAcc, coins, types.Periods{types.Period{now.Unix(), 3600, coins, 0}})
+	acc := types.NewStridePeriodicVestingAccount(baseAcc, coins, types.Periods{types.Period{sdk.NewInt(now.Unix()), sdk.NewInt(3600), coins, 0}})
 
 	bz, err := app.AccountKeeper.MarshalAccount(acc)
 	require.Nil(t, err)

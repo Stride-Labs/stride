@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"time"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	"github.com/Stride-Labs/stride/v4/x/epochs"
 	"github.com/Stride-Labs/stride/v4/x/epochs/types"
 )
@@ -111,8 +113,8 @@ func (suite *KeeperTestSuite) TestEpochInfoChangesBeginBlockerAndInitGenesis() {
 						Identifier:              "monthly",
 						StartTime:               time.Time{},
 						Duration:                time.Hour * 24 * 31,
-						CurrentEpoch:            0,
-						CurrentEpochStartHeight: ctx.BlockHeight(),
+						CurrentEpoch:            sdk.NewInt(0),
+						CurrentEpochStartHeight: sdk.NewInt(ctx.BlockHeight()),
 						CurrentEpochStartTime:   time.Time{},
 						EpochCountingStarted:    false,
 					},
@@ -153,8 +155,8 @@ func (suite *KeeperTestSuite) TestEpochStartingOneMonthAfterInitGenesis() {
 				Identifier:              "monthly",
 				StartTime:               now.Add(month),
 				Duration:                time.Hour * 24 * 30,
-				CurrentEpoch:            0,
-				CurrentEpochStartHeight: ctx.BlockHeight(),
+				CurrentEpoch:            sdk.NewInt(0),
+				CurrentEpochStartHeight: sdk.NewInt(ctx.BlockHeight()),
 				CurrentEpochStartTime:   time.Time{},
 				EpochCountingStarted:    false,
 			},

@@ -137,7 +137,7 @@ func (k Keeper) HasQueryExceededTtl(ctx sdk.Context, msg *types.MsgSubmitQueryRe
 		return false, err
 	}
 
-	if query.Ttl < currBlockTime {
+	if query.Ttl.Uint64() < currBlockTime {
 		errMsg := fmt.Sprintf("[ICQ Resp] aborting query callback due to ttl expiry! ttl is %d, time now %d for query of type %s with id %s, on chain %s",
 			query.Ttl, ctx.BlockTime().UnixNano(), query.QueryType, query.ChainId, msg.QueryId)
 		fmt.Println(errMsg)

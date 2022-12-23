@@ -3,6 +3,8 @@ package types
 import (
 	"errors"
 	"time"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 func NewGenesisState(epochs []EpochInfo) *GenesisState {
@@ -22,8 +24,8 @@ func DefaultGenesis() *GenesisState {
 			Identifier:              "week",
 			StartTime:               time.Time{},
 			Duration:                time.Hour * 24 * 7,
-			CurrentEpoch:            0,
-			CurrentEpochStartHeight: 0,
+			CurrentEpoch:            sdk.NewInt(0),
+			CurrentEpochStartHeight: sdk.NewInt(0),
 			CurrentEpochStartTime:   time.Time{},
 			EpochCountingStarted:    false,
 		},
@@ -31,8 +33,8 @@ func DefaultGenesis() *GenesisState {
 			Identifier:              DAY_EPOCH,
 			StartTime:               time.Time{},
 			Duration:                time.Hour * 24,
-			CurrentEpoch:            0,
-			CurrentEpochStartHeight: 0,
+			CurrentEpoch:            sdk.NewInt(0),
+			CurrentEpochStartHeight: sdk.NewInt(0),
 			CurrentEpochStartTime:   time.Time{},
 			EpochCountingStarted:    false,
 		},
@@ -40,8 +42,8 @@ func DefaultGenesis() *GenesisState {
 			Identifier:              STRIDE_EPOCH,
 			StartTime:               time.Time{},
 			Duration:                time.Hour * 6,
-			CurrentEpoch:            0,
-			CurrentEpochStartHeight: 0,
+			CurrentEpoch:            sdk.NewInt(0),
+			CurrentEpochStartHeight: sdk.NewInt(0),
 			CurrentEpochStartTime:   time.Time{},
 			EpochCountingStarted:    false,
 		},
@@ -49,8 +51,8 @@ func DefaultGenesis() *GenesisState {
 			Identifier:              MINT_EPOCH,
 			StartTime:               time.Time{},
 			Duration:                time.Minute * 60,
-			CurrentEpoch:            0,
-			CurrentEpochStartHeight: 0,
+			CurrentEpoch:            sdk.NewInt(0),
+			CurrentEpochStartHeight: sdk.NewInt(0),
 			CurrentEpochStartTime:   time.Time{},
 			EpochCountingStarted:    false,
 		},

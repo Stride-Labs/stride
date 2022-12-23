@@ -40,7 +40,7 @@ func CreateUpgradeHandler(
 		// total number of airdrop distributors must be equal to identifiers
 		if len(airdropDistributors) == len(airdropIdentifiers) {
 			for idx, airdropDistributor := range airdropDistributors {
-				err = ck.CreateAirdropAndEpoch(ctx, airdropDistributor, claimtypes.DefaultClaimDenom, uint64(ctx.BlockTime().Unix()), uint64(airdropDuration.Seconds()), airdropIdentifiers[idx])
+				err = ck.CreateAirdropAndEpoch(ctx, airdropDistributor, claimtypes.DefaultClaimDenom, sdk.NewInt(ctx.BlockTime().Unix()), sdk.NewIntFromUint64(uint64(airdropDuration.Seconds())), airdropIdentifiers[idx])
 				if err != nil {
 					return newVm, err
 				}

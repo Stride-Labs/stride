@@ -22,7 +22,7 @@ func InitGenesis(ctx sdk.Context, keeper keeper.Keeper, ak types.AccountKeeper, 
 	keeper.SetupNewModuleAccount(ctx, types.CommunitySecurityBudgetSubmoduleName, types.SubmoduleCommunityNamespaceKey)
 	keeper.SetupNewModuleAccount(ctx, types.CommunityUsageSubmoduleName, types.SubmoduleCommunityNamespaceKey)
 
-	keeper.SetLastReductionEpochNum(ctx, data.ReductionStartedEpoch)
+	keeper.SetLastReductionEpochNum(ctx, data.ReductionStartedEpoch.Int64())
 }
 
 // ExportGenesis returns a GenesisState for a given context and keeper.
@@ -30,5 +30,5 @@ func ExportGenesis(ctx sdk.Context, keeper keeper.Keeper) *types.GenesisState {
 	minter := keeper.GetMinter(ctx)
 	params := keeper.GetParams(ctx)
 	lastReductionEpoch := keeper.GetLastReductionEpochNum(ctx)
-	return types.NewGenesisState(minter, params, lastReductionEpoch)
+	return types.NewGenesisState(minter, params, lastReductionEpoch.Int64())
 }

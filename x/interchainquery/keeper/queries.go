@@ -22,7 +22,7 @@ func (k Keeper) NewQuery(ctx sdk.Context, module string, callbackId string, chai
 		QueryType:    queryType,
 		Request:      request,
 		CallbackId:   callbackId,
-		Ttl:          ttl,
+		Ttl:          sdk.NewIntFromUint64(ttl),
 		RequestSent:  false,
 	}
 }

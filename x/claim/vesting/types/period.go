@@ -15,7 +15,7 @@ type Periods []Period
 
 // Duration is converts the period Length from seconds to a time.Duration
 func (p Period) Duration() time.Duration {
-	return time.Duration(p.Length) * time.Second
+	return time.Duration(p.Length.Int64()) * time.Second
 }
 
 // String implements the fmt.Stringer interface
@@ -28,7 +28,7 @@ func (p Period) String() string {
 func (p Periods) TotalLength() int64 {
 	var total int64
 	for _, period := range p {
-		total += period.Length
+		total += period.Length.Int64()
 	}
 	return total
 }

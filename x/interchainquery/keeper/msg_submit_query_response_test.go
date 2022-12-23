@@ -46,7 +46,7 @@ func (s *KeeperTestSuite) SetupMsgSubmitQueryResponse() MsgSubmitQueryResponseTe
 		ConnectionId: s.TransferPath.EndpointA.ConnectionID,
 		QueryType:    types.BANK_STORE_QUERY_WITH_PROOF,
 		Request:      append(data, []byte(HostChainId)...),
-		Ttl:          uint64(12545592938) * uint64(1000000000), // set ttl to August 2050, mult by nano conversion factor
+		Ttl:          sdk.NewIntFromUint64(uint64(12545592938) * uint64(1000000000)), // set ttl to August 2050, mult by nano conversion factor
 	}
 
 	return MsgSubmitQueryResponseTestCase{
@@ -55,7 +55,7 @@ func (s *KeeperTestSuite) SetupMsgSubmitQueryResponse() MsgSubmitQueryResponseTe
 			QueryId:     expectedId,
 			Result:      result,
 			ProofOps:    &proofOps,
-			Height:      height,
+			Height:      sdk.NewInt(height),
 			FromAddress: fromAddress,
 		},
 		goCtx: goCtx,
@@ -92,7 +92,7 @@ func (s *KeeperTestSuite) TestMsgSubmitQueryResponse_UnknownId() {
 func (s *KeeperTestSuite) TestMsgSubmitQueryResponse_ExceededTtl() {
 	tc := s.SetupMsgSubmitQueryResponse()
 
-	tc.query.Ttl = uint64(1) // set ttl to be expired
+	tc.query.Ttl = sdk.NewIntFromUint64(1) // set ttl to be expired
 	s.App.InterchainqueryKeeper.SetQuery(s.Ctx, tc.query)
 	exceeded, err := s.App.InterchainqueryKeeper.HasQueryExceededTtl(s.Ctx, &tc.validMsg, tc.query)
 	s.Require().NoError(err)
@@ -102,7 +102,7 @@ func (s *KeeperTestSuite) TestMsgSubmitQueryResponse_ExceededTtl() {
 func (s *KeeperTestSuite) TestMsgSubmitQueryResponse_NotExceededTtl() {
 	tc := s.SetupMsgSubmitQueryResponse()
 
-	tc.query.Ttl = uint64(2545450064) * uint64(1000000000) // for test clarity, re-set ttl to August 2050, mult by nano conversion factor
+	tc.query.Ttl = sdk.NewIntFromUint64(uint64(2545450064) * uint64(1000000000)) // for test clarity, re-set ttl to August 2050, mult by nano conversion factor
 	s.App.InterchainqueryKeeper.SetQuery(s.Ctx, tc.query)
 	exceeded, err := s.App.InterchainqueryKeeper.HasQueryExceededTtl(s.Ctx, &tc.validMsg, tc.query)
 	s.Require().NoError(err)

@@ -77,14 +77,14 @@ func (k *Keeper) SetHooks(h types.MintHooks) *Keeper {
 }
 
 // GetLastReductionEpochNum returns last Reduction epoch number.
-func (k Keeper) GetLastReductionEpochNum(ctx sdk.Context) int64 {
+func (k Keeper) GetLastReductionEpochNum(ctx sdk.Context) sdk.Int {
 	store := ctx.KVStore(k.storeKey)
 	b := store.Get(types.LastReductionEpochKey)
 	if b == nil {
-		return 0
+		return sdk.NewInt(0)
 	}
 
-	return cast.ToInt64(sdk.BigEndianToUint64(b))
+	return sdk.NewInt(cast.ToInt64(sdk.BigEndianToUint64(b)))
 }
 
 // SetLastReductionEpochNum set last Reduction epoch number.

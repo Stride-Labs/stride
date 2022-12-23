@@ -5,6 +5,8 @@ import (
 
 	_ "github.com/stretchr/testify/suite"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	"github.com/Stride-Labs/stride/v4/x/epochs/types"
 )
 
@@ -16,7 +18,7 @@ func (suite *KeeperTestSuite) TestEpochLifeCycle() {
 		Identifier:            "monthly",
 		StartTime:             time.Time{},
 		Duration:              time.Hour * 24 * 30,
-		CurrentEpoch:          0,
+		CurrentEpoch:          sdk.NewInt(0),
 		CurrentEpochStartTime: time.Time{},
 		EpochCountingStarted:  false,
 	}

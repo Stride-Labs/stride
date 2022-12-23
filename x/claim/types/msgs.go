@@ -132,7 +132,7 @@ const TypeMsgCreateAirdrop = "create_airdrop"
 
 var _ sdk.Msg = &MsgCreateAirdrop{}
 
-func NewMsgCreateAirdrop(distributor string, identifier string, startTime uint64, duration uint64, denom string) *MsgCreateAirdrop {
+func NewMsgCreateAirdrop(distributor string, identifier string, startTime sdk.Int, duration sdk.Int, denom string) *MsgCreateAirdrop {
 	return &MsgCreateAirdrop{
 		Distributor: distributor,
 		Identifier:  identifier,
@@ -173,11 +173,11 @@ func (msg *MsgCreateAirdrop) ValidateBasic() error {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "airdrop identifier not set")
 	}
 
-	if msg.StartTime == 0 {
+	if msg.StartTime == sdk.NewInt(0) {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "airdrop start time not set")
 	}
 
-	if msg.Duration == 0 {
+	if msg.Duration == sdk.NewInt(0) {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "airdrop duration not set")
 	}
 	return nil
