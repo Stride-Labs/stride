@@ -10,10 +10,11 @@ import (
 	"github.com/Stride-Labs/stride/v4/x/ratelimit/types"
 )
 
-func TestMsgUpdateRateLimit(t *testing.T) {
+func TestGovUpdateRateLimit(t *testing.T) {
 	apptesting.SetupConfig()
-	validAddr, invalidAddr := apptesting.GenerateTestAddrs()
 
+	validTitle := "UpdateRateLimit"
+	validDescription := "Updating a rate limit"
 	validDenom := "denom"
 	validChannelId := "channel-0"
 	validMaxPercentSend := sdk.NewInt(10)
@@ -21,14 +22,15 @@ func TestMsgUpdateRateLimit(t *testing.T) {
 	validDurationHours := uint64(60)
 
 	tests := []struct {
-		name string
-		msg  types.MsgUpdateRateLimit
-		err  string
+		name     string
+		proposal types.UpdateRateLimitProposal
+		err      string
 	}{
 		{
-			name: "successful msg",
-			msg: types.MsgUpdateRateLimit{
-				Creator:        validAddr,
+			name: "successful proposal",
+			proposal: types.UpdateRateLimitProposal{
+				Title:          validTitle,
+				Description:    validDescription,
 				Denom:          validDenom,
 				ChannelId:      validChannelId,
 				MaxPercentSend: validMaxPercentSend,
@@ -37,21 +39,36 @@ func TestMsgUpdateRateLimit(t *testing.T) {
 			},
 		},
 		{
-			name: "invalid creator",
-			msg: types.MsgUpdateRateLimit{
-				Creator:        invalidAddr,
+			name: "invalid title",
+			proposal: types.UpdateRateLimitProposal{
+				Title:          "",
+				Description:    validDescription,
 				Denom:          validDenom,
 				ChannelId:      validChannelId,
 				MaxPercentSend: validMaxPercentSend,
 				MaxPercentRecv: validMaxPercentRecv,
 				DurationHours:  validDurationHours,
 			},
-			err: "invalid creator address",
+			err: "title cannot be blank",
+		},
+		{
+			name: "invalid description",
+			proposal: types.UpdateRateLimitProposal{
+				Title:          validDescription,
+				Description:    "",
+				Denom:          validDenom,
+				ChannelId:      validChannelId,
+				MaxPercentSend: validMaxPercentSend,
+				MaxPercentRecv: validMaxPercentRecv,
+				DurationHours:  validDurationHours,
+			},
+			err: "description cannot be blank",
 		},
 		{
 			name: "invalid denom",
-			msg: types.MsgUpdateRateLimit{
-				Creator:        validAddr,
+			proposal: types.UpdateRateLimitProposal{
+				Title:          validTitle,
+				Description:    validDescription,
 				Denom:          "",
 				ChannelId:      validChannelId,
 				MaxPercentSend: validMaxPercentSend,
@@ -62,8 +79,9 @@ func TestMsgUpdateRateLimit(t *testing.T) {
 		},
 		{
 			name: "invalid channel-id",
-			msg: types.MsgUpdateRateLimit{
-				Creator:        validAddr,
+			proposal: types.UpdateRateLimitProposal{
+				Title:          validTitle,
+				Description:    validDescription,
 				Denom:          validDenom,
 				ChannelId:      "channel-",
 				MaxPercentSend: validMaxPercentSend,
@@ -74,8 +92,9 @@ func TestMsgUpdateRateLimit(t *testing.T) {
 		},
 		{
 			name: "invalid send percent (lt 0)",
-			msg: types.MsgUpdateRateLimit{
-				Creator:        validAddr,
+			proposal: types.UpdateRateLimitProposal{
+				Title:          validTitle,
+				Description:    validDescription,
 				Denom:          validDenom,
 				ChannelId:      validChannelId,
 				MaxPercentSend: sdk.NewInt(-1),
@@ -86,8 +105,9 @@ func TestMsgUpdateRateLimit(t *testing.T) {
 		},
 		{
 			name: "invalid send percent (gt 100)",
-			msg: types.MsgUpdateRateLimit{
-				Creator:        validAddr,
+			proposal: types.UpdateRateLimitProposal{
+				Title:          validTitle,
+				Description:    validDescription,
 				Denom:          validDenom,
 				ChannelId:      validChannelId,
 				MaxPercentSend: sdk.NewInt(101),
@@ -98,8 +118,9 @@ func TestMsgUpdateRateLimit(t *testing.T) {
 		},
 		{
 			name: "invalid receive percent (lt 0)",
-			msg: types.MsgUpdateRateLimit{
-				Creator:        validAddr,
+			proposal: types.UpdateRateLimitProposal{
+				Title:          validTitle,
+				Description:    validDescription,
 				Denom:          validDenom,
 				ChannelId:      validChannelId,
 				MaxPercentSend: validMaxPercentSend,
@@ -110,8 +131,9 @@ func TestMsgUpdateRateLimit(t *testing.T) {
 		},
 		{
 			name: "invalid receive percent (gt 100)",
-			msg: types.MsgUpdateRateLimit{
-				Creator:        validAddr,
+			proposal: types.UpdateRateLimitProposal{
+				Title:          validTitle,
+				Description:    validDescription,
 				Denom:          validDenom,
 				ChannelId:      validChannelId,
 				MaxPercentSend: validMaxPercentSend,
@@ -122,8 +144,9 @@ func TestMsgUpdateRateLimit(t *testing.T) {
 		},
 		{
 			name: "invalid send and receive percent",
-			msg: types.MsgUpdateRateLimit{
-				Creator:        validAddr,
+			proposal: types.UpdateRateLimitProposal{
+				Title:          validTitle,
+				Description:    validDescription,
 				Denom:          validDenom,
 				ChannelId:      validChannelId,
 				MaxPercentSend: sdk.ZeroInt(),
@@ -134,8 +157,9 @@ func TestMsgUpdateRateLimit(t *testing.T) {
 		},
 		{
 			name: "invalid duration",
-			msg: types.MsgUpdateRateLimit{
-				Creator:        validAddr,
+			proposal: types.UpdateRateLimitProposal{
+				Title:          validTitle,
+				Description:    validDescription,
 				Denom:          validDenom,
 				ChannelId:      validChannelId,
 				MaxPercentSend: validMaxPercentSend,
@@ -149,21 +173,14 @@ func TestMsgUpdateRateLimit(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			if test.err == "" {
-				require.NoError(t, test.msg.ValidateBasic(), "test: %v", test.name)
-				require.Equal(t, test.msg.Route(), types.RouterKey)
-				require.Equal(t, test.msg.Type(), "update_rate_limit")
-
-				signers := test.msg.GetSigners()
-				require.Equal(t, len(signers), 1)
-				require.Equal(t, signers[0].String(), validAddr)
-
-				require.Equal(t, test.msg.Denom, validDenom, "denom")
-				require.Equal(t, test.msg.ChannelId, validChannelId, "channelId")
-				require.Equal(t, test.msg.MaxPercentSend, validMaxPercentSend, "maxPercentSend")
-				require.Equal(t, test.msg.MaxPercentRecv, validMaxPercentRecv, "maxPercentRecv")
-				require.Equal(t, test.msg.DurationHours, validDurationHours, "durationHours")
+				require.NoError(t, test.proposal.ValidateBasic(), "test: %v", test.name)
+				require.Equal(t, test.proposal.Denom, validDenom, "denom")
+				require.Equal(t, test.proposal.ChannelId, validChannelId, "channelId")
+				require.Equal(t, test.proposal.MaxPercentSend, validMaxPercentSend, "maxPercentSend")
+				require.Equal(t, test.proposal.MaxPercentRecv, validMaxPercentRecv, "maxPercentRecv")
+				require.Equal(t, test.proposal.DurationHours, validDurationHours, "durationHours")
 			} else {
-				require.ErrorContains(t, test.msg.ValidateBasic(), test.err, "test: %v", test.name)
+				require.ErrorContains(t, test.proposal.ValidateBasic(), test.err, "test: %v", test.name)
 			}
 		})
 	}
