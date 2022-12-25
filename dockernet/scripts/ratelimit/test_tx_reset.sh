@@ -54,11 +54,11 @@ test_tx_reset_atom_from_stride_to_gaia() {
     start_channel_value=$(get_channel_value $IBC_GAIA_CHANNEL_0_DENOM channel-0)
 
     # Transfer 2 times successfully
-    check_transfer_status STRIDE GAIA channel-0 channel-0 40000000 uatom $IBC_GAIA_CHANNEL_0_DENOM true
-    check_transfer_status STRIDE GAIA channel-0 channel-0 40000000 uatom $IBC_GAIA_CHANNEL_0_DENOM true
+    check_transfer_status STRIDE GAIA channel-0 channel-0 40000000 $IBC_GAIA_CHANNEL_0_DENOM $IBC_GAIA_CHANNEL_0_DENOM true
+    check_transfer_status STRIDE GAIA channel-0 channel-0 40000000 $IBC_GAIA_CHANNEL_0_DENOM $IBC_GAIA_CHANNEL_0_DENOM true
 
     # Attempt to transfer but should fail because it gets rate limited
-    check_transfer_status STRIDE GAIA channel-0 channel-0 40000000 uatom $IBC_GAIA_CHANNEL_0_DENOM false 
+    check_transfer_status STRIDE GAIA channel-0 channel-0 40000000 $IBC_GAIA_CHANNEL_0_DENOM $IBC_GAIA_CHANNEL_0_DENOM false 
 
     # Reset the rate limit manually
     printf "\n>>> Resetting rate limit...\n"
@@ -66,7 +66,7 @@ test_tx_reset_atom_from_stride_to_gaia() {
     sleep 3
 
     # Then successfully transfer after the reset 
-    check_transfer_status STRIDE GAIA channel-0 channel-0 40000000 uatom $IBC_GAIA_CHANNEL_0_DENOM true 
+    check_transfer_status STRIDE GAIA channel-0 channel-0 40000000 $IBC_GAIA_CHANNEL_0_DENOM $IBC_GAIA_CHANNEL_0_DENOM true 
 
     # Channel value should go down since the ibc denom will be burned
     wait_until_epoch_end

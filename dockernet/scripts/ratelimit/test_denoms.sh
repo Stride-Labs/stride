@@ -74,8 +74,8 @@ test_denom_ujuno() {
 __test_denom_send_packet_native_sttoken() { # send native
     # stujuno sent from Stride to Osmosis
     #   Expected Denom: stujuno
-    #   Expected Channel: channel-1
-    check_transfer_status STRIDE OSMO channel-2 channel-1 10000000 stujuno stujuno true
+    #   Expected Channel: channel-2
+    check_transfer_status STRIDE OSMO channel-2 channel-2 10000000 stujuno stujuno true
 }
 
 __test_denom_recieve_packet_native_sttoken() { # receive source native
@@ -107,6 +107,7 @@ __test_denom_receive_packet_sink_two_hops() {  # receive sink two hops
 
     printf "\n>>> Transferring ujuno from Juno to Osmosis\n"
     $JUNO_MAIN_CMD tx ibc-transfer transfer transfer channel-5 $(OSMO_ADDRESS) 10000000ujuno --from ${JUNO_VAL_PREFIX}1 -y | TRIM_TX
+    sleep 10
 
     # Then transfer from osmo to stride 
     check_transfer_status OSMO STRIDE channel-0 channel-2 10000000 $juno_on_osmo $traveler_juno_on_stride true

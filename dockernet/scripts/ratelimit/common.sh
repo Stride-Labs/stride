@@ -92,7 +92,7 @@ check_transfer_status() {
     if [[ "$src_chain" == "STRIDE" ]]; then
         transfer_description="from STRIDE to $dst_chain"
         flow_type="outflow"
-        transfer_delay=3
+        transfer_delay=4
     else 
         transfer_description="from $src_chain to STRIDE"
         flow_type="inflow"
@@ -163,14 +163,19 @@ add_rate_limits() {
     printf "$BLUE[ADDING RATE LIMITS]$NC\n"
     printf "$BLUE---------------------------------------------------------------------$NC\n"
 
+    # IBC Transfer
     echo "Transfering for channel value..."
     echo ">>> uatom"
     $GAIA_MAIN_CMD tx ibc-transfer transfer transfer channel-0 $(STRIDE_ADDRESS) ${INITIAL_CHANNEL_VALUE}uatom --from ${GAIA_VAL_PREFIX}1 -y | TRIM_TX
+    sleep 3
+
     echo ">>> ujuno"
     $JUNO_MAIN_CMD tx ibc-transfer transfer transfer channel-0 $(STRIDE_ADDRESS) ${INITIAL_CHANNEL_VALUE}ujuno --from ${JUNO_VAL_PREFIX}1 -y | TRIM_TX
+    sleep 3
+
     echo ">>> uosmo"
     $OSMO_MAIN_CMD tx ibc-transfer transfer transfer channel-0 $(STRIDE_ADDRESS) ${INITIAL_CHANNEL_VALUE}uosmo --from ${OSMO_VAL_PREFIX}1 -y | TRIM_TX
-    sleep 3
+    sleep 10
     
     echo ">>> traveler-ujuno"
     juno_on_osmo='ibc/448C1061CE97D86CC5E86374CD914870FB8EBA16C58661B5F1D3F46729A2422D'
@@ -179,10 +184,12 @@ add_rate_limits() {
     $OSMO_MAIN_CMD tx ibc-transfer transfer transfer channel-0 $(STRIDE_ADDRESS) ${INITIAL_CHANNEL_VALUE}${juno_on_osmo} --from ${OSMO_VAL_PREFIX}1 -y | TRIM_TX
     sleep 3
 
+    # Liquid Stake
     printf "\nLiquid staking juno...\n"
     $STRIDE_MAIN_CMD tx stakeibc liquid-stake ${INITIAL_CHANNEL_VALUE} ujuno --from ${STRIDE_VAL_PREFIX}1 -y | TRIM_TX
     sleep 5
 
+    # Add rate limits
     printf "\nAdding rate limits...\n"
     echo ">>> ustrd on Stride <> Osmo Channel:"
     $STRIDE_MAIN_CMD tx ratelimit add-rate-limit $STRD_DENOM               channel-2 10 10 1 --from ${STRIDE_VAL_PREFIX}1 -y | TRIM_TX
@@ -211,4 +218,12 @@ add_rate_limits() {
     echo ">>> traveler-ujuno on Stride <> Osmo Channel:"
     $STRIDE_MAIN_CMD tx ratelimit add-rate-limit $TRAVELER_JUNO            channel-2 10 10 1 --from ${STRIDE_VAL_PREFIX}1 -y | TRIM_TX
     sleep 3
+
+    # Confirm all rate limits were added
+    num_rate_limits=$($STRIDE_MAIN_CMD q ratelimit list-rate-limits | grep path | wc -l | xargs)
+    if [[ "$num_rate_limits" != "7" ]]; then 
+        echo "ERROR: Not all rate limits were added. Exiting."
+        exit 1
+    fi
 }
+

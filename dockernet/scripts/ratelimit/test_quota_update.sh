@@ -17,7 +17,7 @@ test_quota_update() {
     check_transfer_status OSMO STRIDE channel-0 channel-2 2 uosmo $IBC_OSMO_CHANNEL_2_DENOM false 
 
     # Transfer in the other direction so the channel value stays is unchanged
-    check_transfer_status STRIDE OSMO channel-2 channel-2 99999999 uosmo $IBC_OSMO_CHANNEL_2_DENOM true
+    check_transfer_status STRIDE OSMO channel-2 channel-2 99999999 $IBC_OSMO_CHANNEL_2_DENOM $IBC_OSMO_CHANNEL_2_DENOM true
 
     # Relax the send quota threshold (this will reset the flow)
     printf "\n>>> Updating rate limit...\n"

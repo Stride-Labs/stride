@@ -12,23 +12,23 @@ test_bidirectional() {
     start_channel_value=$(get_channel_value $IBC_GAIA_CHANNEL_0_DENOM channel-0)
 
     # Continuously transfer back and forth (the rate limit should never get hit)
-    check_transfer_status GAIA STRIDE channel-0 channel-0 40000000 uatom $IBC_GAIA_CHANNEL_0_DENOM true 
-    check_transfer_status STRIDE GAIA channel-0 channel-0 40000000 uatom $IBC_GAIA_CHANNEL_0_DENOM true
+    check_transfer_status GAIA STRIDE channel-0 channel-0 40000000 uatom                     $IBC_GAIA_CHANNEL_0_DENOM true 
+    check_transfer_status STRIDE GAIA channel-0 channel-0 40000000 $IBC_GAIA_CHANNEL_0_DENOM $IBC_GAIA_CHANNEL_0_DENOM true
 
-    check_transfer_status GAIA STRIDE channel-0 channel-0 40000000 uatom $IBC_GAIA_CHANNEL_0_DENOM true 
-    check_transfer_status STRIDE GAIA channel-0 channel-0 40000000 uatom $IBC_GAIA_CHANNEL_0_DENOM true
+    check_transfer_status GAIA STRIDE channel-0 channel-0 40000000 uatom                     $IBC_GAIA_CHANNEL_0_DENOM true 
+    check_transfer_status STRIDE GAIA channel-0 channel-0 40000000 $IBC_GAIA_CHANNEL_0_DENOM $IBC_GAIA_CHANNEL_0_DENOM true
 
-    check_transfer_status GAIA STRIDE channel-0 channel-0 40000000 uatom $IBC_GAIA_CHANNEL_0_DENOM true 
+    check_transfer_status GAIA STRIDE channel-0 channel-0 40000000 uatom                     $IBC_GAIA_CHANNEL_0_DENOM true 
 
     wait_until_epoch_end 
 
-    check_transfer_status STRIDE GAIA channel-0 channel-0 40000000 uatom $IBC_GAIA_CHANNEL_0_DENOM true
+    check_transfer_status STRIDE GAIA channel-0 channel-0 40000000 $IBC_GAIA_CHANNEL_0_DENOM $IBC_GAIA_CHANNEL_0_DENOM true
 
-    check_transfer_status GAIA STRIDE channel-0 channel-0 40000000 uatom $IBC_GAIA_CHANNEL_0_DENOM true 
-    check_transfer_status STRIDE GAIA channel-0 channel-0 40000000 uatom $IBC_GAIA_CHANNEL_0_DENOM true
+    check_transfer_status GAIA STRIDE channel-0 channel-0 40000000 uatom                     $IBC_GAIA_CHANNEL_0_DENOM true 
+    check_transfer_status STRIDE GAIA channel-0 channel-0 40000000 $IBC_GAIA_CHANNEL_0_DENOM $IBC_GAIA_CHANNEL_0_DENOM true
 
-    check_transfer_status GAIA STRIDE channel-0 channel-0 40000000 uatom $IBC_GAIA_CHANNEL_0_DENOM true 
-    check_transfer_status STRIDE GAIA channel-0 channel-0 40000000 uatom $IBC_GAIA_CHANNEL_0_DENOM true
+    check_transfer_status GAIA STRIDE channel-0 channel-0 40000000 uatom                     $IBC_GAIA_CHANNEL_0_DENOM true 
+    check_transfer_status STRIDE GAIA channel-0 channel-0 40000000 $IBC_GAIA_CHANNEL_0_DENOM $IBC_GAIA_CHANNEL_0_DENOM true
 
     # Wait for the channel value to reset
     wait_until_epoch_end
