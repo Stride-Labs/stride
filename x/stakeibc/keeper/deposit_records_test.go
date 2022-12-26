@@ -343,7 +343,7 @@ func (s *KeeperTestSuite) CheckStateAfterTransferringDepositRecords(tc DepositRe
 	s.Require().Equal(expectedNumDepositRecords, actualNumDepositRecords, "total deposit records")
 
 	for _, emptyRecord := range tc.initialDepositRecords.emptyRecords {
-		_, found := s.App.RecordsKeeper.GetDepositRecord(s.Ctx, emptyRecord.Id)
+		_, found := s.App.RecordsKeeper.GetDepositRecord(s.Ctx, emptyRecord.Id.Uint64())
 		s.Require().False(found, "empty deposit record (%d) should have been removed", emptyRecord.Id)
 	}
 }

@@ -5,6 +5,8 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	keepertest "github.com/Stride-Labs/stride/v4/testutil/keeper"
 	"github.com/Stride-Labs/stride/v4/testutil/nullify"
 	"github.com/Stride-Labs/stride/v4/x/stakeibc"
@@ -19,8 +21,11 @@ func TestGenesis(t *testing.T) {
 			Address: "78",
 		},
 		EpochTrackerList: []types.EpochTracker{
-			{EpochIdentifier: "stride_epoch"},
+			{
+				EpochIdentifier: "stride_epoch",
+			},
 		},
+		HostZoneCount: sdk.ZeroInt(),
 		// this line is used by starport scaffolding # genesis/test/state
 	}
 

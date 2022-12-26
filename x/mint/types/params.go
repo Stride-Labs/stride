@@ -140,12 +140,12 @@ func validateGenesisEpochProvisions(i interface{}) error {
 }
 
 func validateReductionPeriodInEpochs(i interface{}) error {
-	v, ok := i.(int64)
+	v, ok := i.(sdk.Int)
 	if !ok {
 		return fmt.Errorf("invalid parameter type: %T", i)
 	}
 
-	if v <= 0 {
+	if v.IsZero() && v.IsNegative() {
 		return fmt.Errorf("max validators must be positive: %d", v)
 	}
 
@@ -201,12 +201,12 @@ func validateDistributionProportions(i interface{}) error {
 }
 
 func validateMintingRewardsDistributionStartEpoch(i interface{}) error {
-	v, ok := i.(int64)
+	v, ok := i.(sdk.Int)
 	if !ok {
 		return fmt.Errorf("invalid parameter type: %T", i)
 	}
 
-	if v < 0 {
+	if v.IsNegative() {
 		return fmt.Errorf("start epoch must be non-negative")
 	}
 

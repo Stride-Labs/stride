@@ -274,12 +274,7 @@ func (k Keeper) IsRedemptionRateWithinSafetyBounds(ctx sdk.Context, zone types.H
 func (k Keeper) ConfirmValSetHasSpace(ctx sdk.Context, validators []*types.Validator) error {
 
 	// get max val parameter
-	maxNumVals, err := cast.ToIntE(k.GetParam(ctx, types.KeySafetyNumValidators))
-	if err != nil {
-		errMsg := fmt.Sprintf("Error getting safety max num validators | err: %s", err.Error())
-		k.Logger(ctx).Error(errMsg)
-		return sdkerrors.Wrap(types.ErrMaxNumValidators, errMsg)
-	}
+	maxNumVals := k.GetParam(ctx, types.KeySafetyNumValidators).Int64()
 
 	// count up the number of validators with non-zero weights
 	numNonzeroWgtValidators := 0
@@ -290,7 +285,7 @@ func (k Keeper) ConfirmValSetHasSpace(ctx sdk.Context, validators []*types.Valid
 	}
 
 	// check if the number of validators with non-zero weights is below than the max
-	if numNonzeroWgtValidators >= maxNumVals {
+	if int64(numNonzeroWgtValidators) >= maxNumVals {
 		errMsg := fmt.Sprintf("Attempting to add new validator but already reached max number of validators (%d)", maxNumVals)
 		k.Logger(ctx).Error(errMsg)
 		return sdkerrors.Wrap(types.ErrMaxNumValidators, errMsg)

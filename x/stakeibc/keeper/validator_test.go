@@ -14,7 +14,7 @@ import (
 )
 
 func createTestValidator(keeper *keeper.Keeper, ctx sdk.Context) types.Validator {
-	item := types.Validator{DelegationAmt: sdk.NewInt(1)}
+	item := types.Validator{DelegationAmt: sdk.NewInt(1), CommissionRate: sdk.ZeroInt(), Weight: sdk.ZeroInt()}
 	keeper.SetValidator(ctx, item)
 	return item
 }

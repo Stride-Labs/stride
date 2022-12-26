@@ -144,7 +144,7 @@ func (s *KeeperTestSuite) RestoreChannelAndVerifySuccess(msg stakeibc.MsgRestore
 
 func (s *KeeperTestSuite) VerifyDepositRecordsStatus(expectedDepositRecords []DepositRecordStatusUpdate, revert bool) {
 	for i, expectedDepositRecord := range expectedDepositRecords {
-		actualDepositRecord, found := s.App.RecordsKeeper.GetDepositRecord(s.Ctx, sdk.NewIntFromUint64(uint64(i)))
+		actualDepositRecord, found := s.App.RecordsKeeper.GetDepositRecord(s.Ctx, uint64(i))
 		s.Require().True(found, "deposit record found")
 
 		// Only revert records if the revert option is passed and the host zone matches

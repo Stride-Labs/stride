@@ -25,6 +25,7 @@ func createNEpochUnbondingRecord(keeper *keeper.Keeper, ctx sdk.Context, n int) 
 			Status:            types.HostZoneUnbonding_UNBONDING_QUEUE,
 			StTokenAmount:     sdk.ZeroInt(),
 			NativeTokenAmount: sdk.ZeroInt(),
+			UnbondingTime:     sdk.ZeroInt(),
 		},
 		{
 			HostZoneId:        "host-C",

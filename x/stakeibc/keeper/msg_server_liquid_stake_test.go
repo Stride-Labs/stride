@@ -229,7 +229,7 @@ func (s *KeeperTestSuite) TestLiquidStake_NoEpochTracker() {
 func (s *KeeperTestSuite) TestLiquidStake_NoDepositRecord() {
 	tc := s.SetupLiquidStake()
 	// Remove deposit record
-	s.App.RecordsKeeper.RemoveDepositRecord(s.Ctx, sdk.NewInt(1))
+	s.App.RecordsKeeper.RemoveDepositRecord(s.Ctx, 1)
 	_, err := s.GetMsgServer().LiquidStake(sdk.WrapSDKContext(s.Ctx), &tc.validMsg)
 
 	s.Require().EqualError(err, fmt.Sprintf("no deposit record for epoch (%d): not found", 1))

@@ -28,21 +28,21 @@ message DistributionProportions {
   // to be allocated to the community pool: growth.
   string community_pool_growth = 2 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
-    (gogoproto.moretags) = "yaml:\"community_pool\"",
+    (gogoproto.moretags) = "yaml:\"community_pool_growth\"",
     (gogoproto.nullable) = false
   ];
   // community_pool defines the proportion of the minted mint_denom that is
   // to be allocated to the community pool: security budget.
   string community_pool_security_budget = 3 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
-    (gogoproto.moretags) = "yaml:\"community_pool\"",
+    (gogoproto.moretags) = "yaml:\"community_pool_security_budget\"",
     (gogoproto.nullable) = false
   ];
   // strategic_reserve defines the proportion of the minted mint_denom that is
   // to be allocated to the pool: strategic reserve.
   string strategic_reserve = 4 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
-    (gogoproto.moretags) = "yaml:\"community_pool\"",
+    (gogoproto.moretags) = "yaml:\"stragetic_reserve\"",
     (gogoproto.nullable) = false
   ];
 }

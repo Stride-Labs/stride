@@ -2,6 +2,7 @@ package keeper_test
 
 import (
 	"context"
+	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/bech32"
@@ -69,6 +70,7 @@ func (s *KeeperTestSuite) TestMsgSubmitQueryResponse_WrongProof() {
 	s.App.InterchainqueryKeeper.SetQuery(s.Ctx, tc.query)
 
 	resp, err := s.GetMsgServer().SubmitQueryResponse(tc.goCtx, &tc.validMsg)
+	fmt.Println(err.Error())
 	s.Require().ErrorContains(err, "unable to verify membership proof: proof cannot be empty")
 	s.Require().Nil(resp)
 }

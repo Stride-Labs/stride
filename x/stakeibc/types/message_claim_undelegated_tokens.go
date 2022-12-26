@@ -55,5 +55,8 @@ func (msg *MsgClaimUndelegatedTokens) ValidateBasic() error {
 	if msg.HostZoneId == "" {
 		return sdkerrors.Wrapf(ErrRequiredFieldEmpty, "host zone id cannot be empty")
 	}
+	if !(msg.Epoch.LT(sdk.NewInt(1<<63 - 1))) {
+		return sdkerrors.Wrapf(ErrInvalidAmount, "epoch must be less than math.MaxInt64 %d", 1<<63-1)
+	}
 	return nil
 }

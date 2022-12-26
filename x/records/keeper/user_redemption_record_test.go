@@ -18,6 +18,7 @@ func createNUserRedemptionRecord(keeper *keeper.Keeper, ctx sdk.Context, n int) 
 	for i := range items {
 		items[i].Id = strconv.Itoa(i)
 		items[i].Amount = sdk.NewInt(int64(i))
+		items[i].EpochNumber = sdk.ZeroInt()
 		keeper.SetUserRedemptionRecord(ctx, items[i])
 	}
 	return items

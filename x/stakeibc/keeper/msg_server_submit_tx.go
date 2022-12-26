@@ -172,7 +172,7 @@ func (k Keeper) UpdateWithdrawalBalance(ctx sdk.Context, hostZone types.HostZone
 		// use "key" suffix to retrieve a proof alongside the query result
 		icqtypes.BANK_STORE_QUERY_WITH_PROOF,
 		append(data, []byte(hostZone.HostDenom)...),
-		ttl.Uint64(), // ttl
+		ttl, // ttl
 	)
 	if err != nil {
 		k.Logger(ctx).Error(fmt.Sprintf("Error querying for withdrawal balance, error: %s", err.Error()))
@@ -400,7 +400,7 @@ func (k Keeper) QueryValidatorExchangeRate(ctx sdk.Context, msg *types.MsgUpdate
 		// use "key" suffix to retrieve a proof alongside the query result
 		icqtypes.STAKING_STORE_QUERY_WITH_PROOF,
 		data,
-		ttl.Uint64(), // ttl
+		ttl, // ttl
 	)
 	if err != nil {
 		k.Logger(ctx).Error(fmt.Sprintf("Error querying for validator, error %s", err.Error()))
@@ -449,7 +449,7 @@ func (k Keeper) QueryDelegationsIcq(ctx sdk.Context, hostZone types.HostZone, va
 		// use "key" suffix to retrieve a proof alongside the query result
 		icqtypes.STAKING_STORE_QUERY_WITH_PROOF,
 		data,
-		ttl.Uint64(), // ttl
+		ttl, // ttl
 	)
 	if err != nil {
 		k.Logger(ctx).Error(fmt.Sprintf("Error querying for delegation, error : %s", err.Error()))

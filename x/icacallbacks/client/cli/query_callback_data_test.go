@@ -12,6 +12,8 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	"github.com/Stride-Labs/stride/v4/testutil/network"
 	"github.com/Stride-Labs/stride/v4/testutil/nullify"
 	"github.com/Stride-Labs/stride/v4/x/icacallbacks/client/cli"
@@ -30,6 +32,7 @@ func networkWithCallbackDataObjects(t *testing.T, n int) (*network.Network, []ty
 	for i := 0; i < n; i++ {
 		callbackData := types.CallbackData{
 			CallbackKey: strconv.Itoa(i),
+			Sequence:    sdk.ZeroInt(),
 		}
 		nullify.Fill(&callbackData)
 		state.CallbackDataList = append(state.CallbackDataList, callbackData)
@@ -86,6 +89,7 @@ func TestShowCallbackData(t *testing.T) {
 				var resp types.QueryGetCallbackDataResponse
 				require.NoError(t, net.Config.Codec.UnmarshalJSON(out.Bytes(), &resp))
 				require.NotNil(t, resp.CallbackData)
+				fmt.Println(resp.CallbackData.Sequence)
 				require.Equal(t,
 					nullify.Fill(&tc.obj),
 					nullify.Fill(&resp.CallbackData),

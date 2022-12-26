@@ -83,7 +83,7 @@ func (k Keeper) Transfer(ctx sdk.Context, msg *ibctypes.MsgTransfer, depositReco
 	sequence := msgTransferResponse.Sequence
 	// add callback data
 	transferCallback := types.TransferCallback{
-		DepositRecordId: depositRecord.Id,
+		DepositRecordId: depositRecord.Id.Uint64(),
 	}
 	k.Logger(ctx).Info(utils.LogWithHostZone(depositRecord.HostZoneId, "Marshalling TransferCallback args: %+v", transferCallback))
 	marshalledCallbackArgs, err := k.MarshalTransferCallbackArgs(ctx, transferCallback)

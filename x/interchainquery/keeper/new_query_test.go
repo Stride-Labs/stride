@@ -3,6 +3,8 @@ package keeper_test
 import (
 	_ "github.com/stretchr/testify/suite"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	icqtypes "github.com/Stride-Labs/stride/v4/x/interchainquery/types"
 )
 
@@ -13,7 +15,7 @@ type NewQueryTestCase struct {
 	connectionId string
 	queryType    string
 	request      []byte
-	ttl          uint64
+	ttl          sdk.Int
 }
 
 func (suite *KeeperTestSuite) SetupNewQuery() NewQueryTestCase {
@@ -33,7 +35,7 @@ func (suite *KeeperTestSuite) SetupNewQuery() NewQueryTestCase {
 	//	 e.g. for querying a validator, `data := stakingtypes.GetValidatorKey(valAddr)`
 	request := []byte{0x01, 0x02, 0x03}
 	// ttl is the expiry time of the query, in absolute units of time, unix nanos
-	ttl := uint64(0) // ttl
+	ttl := sdk.ZeroInt() // ttl
 
 	return NewQueryTestCase{
 		module:       module,

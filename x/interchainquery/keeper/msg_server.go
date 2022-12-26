@@ -45,10 +45,8 @@ func (k Keeper) VerifyKeyProof(ctx sdk.Context, msg *types.MsgSubmitQueryRespons
 		}
 		connection, _ := k.IBCKeeper.ConnectionKeeper.GetConnection(ctx, q.ConnectionId)
 
-		msgHeight, err := cast.ToUint64E(msg.Height)
-		if err != nil {
-			return err
-		}
+		msgHeight := msg.Height.Uint64()
+
 		height := clienttypes.NewHeight(clienttypes.ParseChainID(q.ChainId), msgHeight+1)
 		consensusState, found := k.IBCKeeper.ClientKeeper.GetClientConsensusState(ctx, connection.ClientId, height)
 		if !found {

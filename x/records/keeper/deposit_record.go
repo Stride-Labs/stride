@@ -62,9 +62,9 @@ func (k Keeper) SetDepositRecord(ctx sdk.Context, depositRecord types.DepositRec
 }
 
 // GetDepositRecord returns a depositRecord from its id
-func (k Keeper) GetDepositRecord(ctx sdk.Context, id sdk.Int) (val types.DepositRecord, found bool) {
+func (k Keeper) GetDepositRecord(ctx sdk.Context, id uint64) (val types.DepositRecord, found bool) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.DepositRecordKey))
-	b := store.Get(GetDepositRecordIDBytes(id.Uint64()))
+	b := store.Get(GetDepositRecordIDBytes(id))
 	if b == nil {
 		return val, false
 	}
@@ -73,9 +73,9 @@ func (k Keeper) GetDepositRecord(ctx sdk.Context, id sdk.Int) (val types.Deposit
 }
 
 // RemoveDepositRecord removes a depositRecord from the store
-func (k Keeper) RemoveDepositRecord(ctx sdk.Context, id sdk.Int) {
+func (k Keeper) RemoveDepositRecord(ctx sdk.Context, id uint64) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.DepositRecordKey))
-	store.Delete(GetDepositRecordIDBytes(id.Uint64()))
+	store.Delete(GetDepositRecordIDBytes(id))
 }
 
 // GetAllDepositRecord returns all depositRecord

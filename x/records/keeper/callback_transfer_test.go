@@ -42,7 +42,7 @@ func (s *KeeperTestSuite) SetupTransferCallback() TransferCallbackTestCase {
 	packet := channeltypes.Packet{Data: s.MarshalledICS20PacketData()}
 	ack := s.ICS20PacketAcknowledgement()
 	callbackArgs := types.TransferCallback{
-		DepositRecordId: depositRecord.Id,
+		DepositRecordId: depositRecord.Id.Uint64(),
 	}
 	args, err := s.App.RecordsKeeper.MarshalTransferCallbackArgs(s.Ctx, callbackArgs)
 	s.Require().NoError(err)

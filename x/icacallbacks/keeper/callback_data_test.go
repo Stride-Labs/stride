@@ -20,7 +20,7 @@ func createNCallbackData(keeper *keeper.Keeper, ctx sdk.Context, n int) []types.
 	items := make([]types.CallbackData, n)
 	for i := range items {
 		items[i].CallbackKey = strconv.Itoa(i)
-
+		items[i].Sequence = sdk.ZeroInt()
 		keeper.SetCallbackData(ctx, items[i])
 	}
 	return items

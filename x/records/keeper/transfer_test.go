@@ -49,9 +49,8 @@ func (s *KeeperTestSuite) TestTransfer_Successful() {
 
 	err := s.App.RecordsKeeper.Transfer(s.Ctx, &tc.transferMsg, tc.depositRecord)
 	s.Require().NoError(err)
-
 	// Confirm deposit record has been updated to TRANSFER_IN_PROGRESS
-	record, found := s.App.RecordsKeeper.GetDepositRecord(s.Ctx, tc.depositRecord.Id)
+	record, found := s.App.RecordsKeeper.GetDepositRecord(s.Ctx, tc.depositRecord.Id.Uint64())
 	s.Require().True(found)
 	s.Require().Equal(record.Status, recordtypes.DepositRecord_TRANSFER_IN_PROGRESS, "deposit record status should be TRANSFER_IN_PROGRESS")
 }

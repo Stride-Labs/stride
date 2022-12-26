@@ -46,7 +46,7 @@ func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 	return ctx.Logger().With("module", fmt.Sprintf("x/%s", types.ModuleName))
 }
 
-func (k *Keeper) MakeRequest(ctx sdk.Context, module string, callbackId string, chainId string, connectionId string, queryType string, request []byte, ttl uint64) error {
+func (k *Keeper) MakeRequest(ctx sdk.Context, module string, callbackId string, chainId string, connectionId string, queryType string, request []byte, ttl sdk.Int) error {
 	k.Logger(ctx).Info(utils.LogWithHostZone(chainId,
 		"Submitting ICQ Request - module=%s, callbackId=%s, connectionId=%s, queryType=%s, ttl=%d", module, callbackId, connectionId, queryType, ttl))
 

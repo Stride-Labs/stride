@@ -101,7 +101,7 @@ func TestSpendableCoinsPeriodicVestingAcc(t *testing.T) {
 	periods := types.Periods{
 		types.Period{StartTime: sdk.NewInt(now.Unix()), Length: sdk.NewInt(int64(12 * 60 * 60)), Amount: sdk.Coins{sdk.NewInt64Coin(feeDenom, 500), sdk.NewInt64Coin(stakeDenom, 50)}},
 		types.Period{StartTime: sdk.NewInt(now.Unix() + int64(12*60*60)), Length: sdk.NewInt(int64(6 * 60 * 60)), Amount: sdk.Coins{sdk.NewInt64Coin(feeDenom, 250), sdk.NewInt64Coin(stakeDenom, 25)}},
-		types.Period{StartTime: sdk.NewInt(now.Unix() + int64(18*60*60)), Length: sdk.NewInt(int64(6 * 60 * 60)), Amount: sdk.Coins{sdk.NewInt64Coin(feeDenom, 250), sdk.NewInt64Coin(stakeDenom, 25)}},
+		types.Period{StartTime: sdk.NewInt(now.Unix() + int64(15*60*60)), Length: sdk.NewInt(int64(6 * 60 * 60)), Amount: sdk.Coins{sdk.NewInt64Coin(feeDenom, 250), sdk.NewInt64Coin(stakeDenom, 25)}},
 	}
 
 	bacc, origCoins := initBaseAccount()

@@ -15,14 +15,16 @@ func (suite *KeeperTestSuite) TestEpochLifeCycle() {
 	ctx := suite.Ctx
 
 	epochInfo := types.EpochInfo{
-		Identifier:            "monthly",
-		StartTime:             time.Time{},
-		Duration:              time.Hour * 24 * 30,
-		CurrentEpoch:          sdk.ZeroInt(),
-		CurrentEpochStartTime: time.Time{},
-		EpochCountingStarted:  false,
+		Identifier:              "monthly",
+		StartTime:               time.Time{},
+		Duration:                time.Hour * 24 * 30,
+		CurrentEpoch:            sdk.ZeroInt(),
+		CurrentEpochStartTime:   time.Time{},
+		EpochCountingStarted:    false,
+		CurrentEpochStartHeight: sdk.ZeroInt(),
 	}
 	suite.App.EpochsKeeper.SetEpochInfo(ctx, epochInfo)
+
 	epochInfoSaved, _ := suite.App.EpochsKeeper.GetEpochInfo(ctx, "monthly")
 	suite.Require().Equal(epochInfo, epochInfoSaved)
 
