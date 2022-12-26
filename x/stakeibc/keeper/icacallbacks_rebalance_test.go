@@ -181,7 +181,7 @@ func (s *KeeperTestSuite) TestRebalanceCallback_WrongValidator() {
 	s.checkDelegationStateIfCallbackFailed()
 }
 
-func (s *KeeperTestSuite) TestRebalanceCallback_WrongHostzone() {
+func (s *KeeperTestSuite) TestRebalanceCallback_NotFoundHostzone() {
 	tc := s.SetupRebalanceCallback()
 
 	callbackArgs := types.RebalanceCallback{
@@ -208,7 +208,7 @@ func (s *KeeperTestSuite) TestRebalanceCallback_WrongHostzone() {
 
 }
 
-func (s *KeeperTestSuite) TestRebalanceCallback_FailedToGetTxMsgData() {
+func (s *KeeperTestSuite) TestRebalanceCallback_FailedToFetchTxMsgData() {
 	tc := s.SetupRebalanceCallback()
 	invalidArgs := tc.validArgs
 	// provide invalid Args
