@@ -134,7 +134,7 @@ func (k msgServer) RegisterHostZone(goCtx context.Context, msg *types.MsgRegiste
 		Status:            recordstypes.HostZoneUnbonding_UNBONDING_QUEUE,
 	}
 	//the only case for it to not being able to add it's when GetEpochUnbondingRecord return nil. Which is checked by the line above. so no need to check for err in the below line.
-	updatedEpochUnbondingRecord, _ := k.RecordsKeeper.AddHostZoneToEpochUnbondingRecord(ctx, epochUnbondingRecord.EpochNumber, chainId, hostZoneUnbonding) //adding
+	updatedEpochUnbondingRecord, _ := k.RecordsKeeper.AddHostZoneToEpochUnbondingRecord(ctx, epochUnbondingRecord.EpochNumber, chainId, hostZoneUnbonding)
 	k.RecordsKeeper.SetEpochUnbondingRecord(ctx, *updatedEpochUnbondingRecord)
 
 	// create an empty deposit record for the host zone
