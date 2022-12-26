@@ -14,6 +14,8 @@ import (
 	"github.com/Stride-Labs/stride/v4/testutil/network"
 	"github.com/Stride-Labs/stride/v4/x/stakeibc/client/cli"
 	"github.com/Stride-Labs/stride/v4/x/stakeibc/types"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // Prevent strconv unused error
@@ -51,7 +53,7 @@ func TestShowEpochTracker(t *testing.T) {
 			idEpochIdentifier: strideEpochId,
 
 			args: common,
-			obj:  types.EpochTracker{EpochIdentifier: strideEpochId, EpochNumber: 1},
+			obj:  types.EpochTracker{EpochIdentifier: strideEpochId, EpochNumber: sdk.NewInt(1)},
 		},
 		{
 			desc:              "not found",
@@ -91,10 +93,10 @@ func TestListEpochTracker(t *testing.T) {
 	out, err := clitestutil.ExecTestCLICmd(ctx, cli.CmdListEpochTracker(), []string{})
 
 	expected := []types.EpochTracker{
-		{EpochIdentifier: "day", EpochNumber: 1},
-		{EpochIdentifier: "mint", EpochNumber: 1},
-		{EpochIdentifier: "stride_epoch", EpochNumber: 1},
-		{EpochIdentifier: "week", EpochNumber: 1},
+		{EpochIdentifier: "day", EpochNumber: sdk.NewInt(1)},
+		{EpochIdentifier: "mint", EpochNumber: sdk.NewInt(1)},
+		{EpochIdentifier: "stride_epoch", EpochNumber: sdk.NewInt(1)},
+		{EpochIdentifier: "week", EpochNumber: sdk.NewInt(1)},
 	}
 	require.NoError(t, err)
 

@@ -28,7 +28,7 @@ func TestGenesis(t *testing.T) {
 		UserRedemptionRecordCount: sdk.NewInt(2),
 		EpochUnbondingRecordList: []types.EpochUnbondingRecord{
 			{
-				EpochNumber: sdk.NewInt(0),
+				EpochNumber: sdk.ZeroInt(),
 			},
 			{
 				EpochNumber: sdk.NewInt(1),
@@ -37,7 +37,7 @@ func TestGenesis(t *testing.T) {
 		// this line is used by starport scaffolding # genesis/test/state
 		DepositRecordList: []types.DepositRecord{
 			{
-				Id: sdk.NewInt(0),
+				Id: sdk.ZeroInt(),
 			},
 			{
 				Id: sdk.NewInt(1),

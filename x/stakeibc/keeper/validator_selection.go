@@ -12,8 +12,8 @@ import (
 
 // This function returns a map from Validator Address to how many extra tokens need to be given to that validator
 //
-//   positive implies extra tokens need to be given,
-//   negative impleis tokens need to be taken away
+//	positive implies extra tokens need to be given,
+//	negative impleis tokens need to be taken away
 func (k Keeper) GetValidatorDelegationAmtDifferences(ctx sdk.Context, hostZone types.HostZone) (map[string]sdk.Int, error) {
 	validators := hostZone.GetValidators()
 	delegationDelta := make(map[string]sdk.Int)
@@ -42,7 +42,7 @@ func (k Keeper) GetTargetValAmtsForHostZone(ctx sdk.Context, hostZone types.Host
 
 	// Sum the total weight across all validators
 	totalWeight := k.GetTotalValidatorWeight(hostZone)
-	if totalWeight == 0 {
+	if totalWeight.IsZero() {
 		k.Logger(ctx).Error(fmt.Sprintf("No non-zero validators found for host zone %s", hostZone.ChainId))
 		return nil, types.ErrNoValidatorWeights
 	}
@@ -56,7 +56,7 @@ func (k Keeper) GetTargetValAmtsForHostZone(ctx sdk.Context, hostZone types.Host
 	}
 
 	sort.SliceStable(validators, func(i, j int) bool { // Do not use `Slice` here, it is stochastic
-		return validators[i].Weight < validators[j].Weight
+		return validators[i].Weight.LT(validators[j].Weight)
 	})
 
 	// Assign each validator their portion of the delegation (and give any overflow to the last validator)
@@ -67,7 +67,7 @@ func (k Keeper) GetTargetValAmtsForHostZone(ctx sdk.Context, hostZone types.Host
 		if i == len(validators)-1 {
 			targetUnbondingsByValidator[validator.Address] = finalDelegation.Sub(totalAllocated)
 		} else {
-			delegateAmt := sdk.NewIntFromUint64(validator.Weight).Mul(finalDelegation).Quo(sdk.NewIntFromUint64(totalWeight))
+			delegateAmt := validator.Weight.Mul(finalDelegation).Quo(totalWeight)
 			totalAllocated = totalAllocated.Add(delegateAmt)
 			targetUnbondingsByValidator[validator.Address] = delegateAmt
 		}
@@ -85,11 +85,11 @@ func (k Keeper) GetTotalValidatorDelegations(hostZone types.HostZone) sdk.Int {
 	return total_delegation
 }
 
-func (k Keeper) GetTotalValidatorWeight(hostZone types.HostZone) uint64 {
+func (k Keeper) GetTotalValidatorWeight(hostZone types.HostZone) sdk.Int {
 	validators := hostZone.GetValidators()
-	total_weight := uint64(0)
+	total_weight := sdk.ZeroInt()
 	for _, validator := range validators {
-		total_weight += validator.Weight
+		total_weight = total_weight.Add(validator.Weight)
 	}
 	return total_weight
 }

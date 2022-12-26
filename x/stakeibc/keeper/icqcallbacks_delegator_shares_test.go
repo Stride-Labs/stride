@@ -30,7 +30,7 @@ type DelegatorSharesICQCallbackTestCase struct {
 	slashPercentage          sdk.Dec
 	expectedDelegationAmount sdk.Int
 	expectedSlashAmount      sdk.Int
-	expectedWeight           uint64
+	expectedWeight           sdk.Int
 }
 
 // Mocks the query response that's returned from an ICQ for the number of shares for a given validator/delegator pair
@@ -58,26 +58,26 @@ func (s *KeeperTestSuite) SetupDelegatorSharesICQCallback() DelegatorSharesICQCa
 	// 1000 tokens - 950 token = 50 tokens slashed
 	// 50 slash tokens / 1000 initial tokens = 5% slash
 	expectedTokensAfterSlash := sdk.NewInt(950)
-	expectedSlashAmount := tokensBeforeSlash.Sub(expectedTokensAfterSlash) 
+	expectedSlashAmount := tokensBeforeSlash.Sub(expectedTokensAfterSlash)
 	slashPercentage := sdk.MustNewDecFromStr("0.05")
-	weightBeforeSlash := uint64(20)
-	expectedWeightAfterSlash := uint64(19)
+	weightBeforeSlash := sdk.NewInt(20)
+	expectedWeightAfterSlash := sdk.NewInt(19)
 	stakedBal := sdk.NewInt(10_000)
 
 	s.Require().Equal(numShares, sdk.NewDecFromInt(expectedTokensAfterSlash.Mul(sdk.NewInt(2))), "tokens, shares, and exchange rate aligned")
 	s.Require().Equal(slashPercentage, sdk.NewDecFromInt(expectedSlashAmount).Quo(sdk.NewDecFromInt(tokensBeforeSlash)), "expected slash percentage")
-	s.Require().Equal(slashPercentage, sdk.NewDec(int64(weightBeforeSlash-expectedWeightAfterSlash)).Quo(sdk.NewDec(int64(weightBeforeSlash))), "weight reduction")
+	s.Require().Equal(slashPercentage, sdk.NewDec(weightBeforeSlash.Sub(expectedWeightAfterSlash).Int64()).Quo(sdk.NewDec(weightBeforeSlash.Int64())), "weight reduction")
 
-	currentEpoch := uint64(1)
+	currentEpoch := sdk.NewInt(1)
 	hostZone := stakeibctypes.HostZone{
 		ChainId:   HostChainId,
 		StakedBal: stakedBal,
 		Validators: []*stakeibctypes.Validator{
 			// This validator isn't being queried
 			{
-				Name:    "val1",
-				Address: "valoper1",
-				Weight:  1,
+				Name:          "val1",
+				Address:       "valoper1",
+				Weight:        sdk.NewInt(1),
 				DelegationAmt: sdk.ZeroInt(),
 			},
 			// This is the validator in question
@@ -98,8 +98,8 @@ func (s *KeeperTestSuite) SetupDelegatorSharesICQCallback() DelegatorSharesICQCa
 	strideEpochTracker := stakeibctypes.EpochTracker{
 		EpochIdentifier:    epochtypes.STRIDE_EPOCH,
 		EpochNumber:        currentEpoch,
-		Duration:           10_000_000_000,                                               // 10 second epochs
-		NextEpochStartTime: uint64(s.Coordinator.CurrentTime.UnixNano() + 1_000_000_000), // epoch ends in 1 second
+		Duration:           sdk.NewInt(10_000_000_000),                                                         // 10 second epochs
+		NextEpochStartTime: sdk.NewIntFromUint64(uint64(s.Coordinator.CurrentTime.UnixNano() + 1_000_000_000)), // epoch ends in 1 second
 	}
 
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
@@ -184,7 +184,7 @@ func (s *KeeperTestSuite) TestDelegatorSharesCallback_BufferWindowError() {
 
 	// update epoch tracker so that we're in the middle of an epoch
 	epochTracker := tc.initialState.strideEpochTracker
-	epochTracker.Duration = 0 // duration of 0 will make the epoch start time equal to the epoch end time
+	epochTracker.Duration = sdk.ZeroInt() // duration of 0 will make the epoch start time equal to the epoch end time
 
 	s.App.StakeibcKeeper.SetEpochTracker(s.Ctx, epochTracker)
 
@@ -200,8 +200,8 @@ func (s *KeeperTestSuite) TestDelegatorSharesCallback_OutsideBufferWindow() {
 
 	// update epoch tracker so that we're in the middle of an epoch
 	epochTracker := tc.initialState.strideEpochTracker
-	epochTracker.Duration = 10_000_000_000                                                         // 10 second epochs
-	epochTracker.NextEpochStartTime = uint64(s.Coordinator.CurrentTime.UnixNano() + 5_000_000_000) // epoch ends in 5 second
+	epochTracker.Duration = sdk.NewInt(10_000_000_000)                                                                   // 10 second epochs
+	epochTracker.NextEpochStartTime = sdk.NewIntFromUint64(uint64(s.Coordinator.CurrentTime.UnixNano() + 5_000_000_000)) // epoch ends in 5 second
 
 	s.App.StakeibcKeeper.SetEpochTracker(s.Ctx, epochTracker)
 
@@ -226,7 +226,7 @@ func (s *KeeperTestSuite) TestDelegatorSharesCallback_ExchangeRateNotFound() {
 
 	// Increment the epoch number so that we're in an epoch that has not queried the validator's exchange rate
 	epochTracker := tc.initialState.strideEpochTracker
-	epochTracker.EpochNumber += 1
+	epochTracker.EpochNumber = epochTracker.EpochNumber.Add(sdk.NewInt(1))
 	s.App.StakeibcKeeper.SetEpochTracker(s.Ctx, epochTracker)
 
 	err := stakeibckeeper.DelegatorSharesCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.callbackArgs, tc.validArgs.query)
@@ -271,7 +271,7 @@ func (s *KeeperTestSuite) TestDelegatorSharesCallback_WeightOverfow() {
 	// Update the validator weight to max int so it overflows when casted
 	hostZone := tc.initialState.hostZone
 	validator := hostZone.Validators[tc.valIndexQueried]
-	validator.Weight = math.MaxUint64
+	validator.Weight = sdk.NewIntFromUint64(math.MaxUint64)
 	hostZone.Validators[tc.valIndexQueried] = validator
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
 

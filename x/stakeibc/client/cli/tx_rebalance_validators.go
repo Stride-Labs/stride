@@ -9,6 +9,8 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/Stride-Labs/stride/v4/x/stakeibc/types"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 var _ = strconv.Itoa(0)
@@ -32,7 +34,7 @@ func CmdRebalanceValidators() *cobra.Command {
 			msg := types.NewMsgRebalanceValidators(
 				clientCtx.GetFromAddress().String(),
 				argHostZone,
-				argNumValidators,
+				sdk.NewIntFromUint64(argNumValidators),
 			)
 			if err := msg.ValidateBasic(); err != nil {
 				return err

@@ -19,17 +19,17 @@ import (
 
 type RegisterHostZoneTestCase struct {
 	validMsg                   stakeibctypes.MsgRegisterHostZone
-	epochUnbondingRecordNumber uint64
-	strideEpochNumber          uint64
-	unbondingFrequency         uint64
+	epochUnbondingRecordNumber sdk.Int
+	strideEpochNumber          sdk.Int
+	unbondingFrequency         sdk.Int
 	defaultRedemptionRate      sdk.Dec
 	atomHostZoneChainId        string
 }
 
 func (s *KeeperTestSuite) SetupRegisterHostZone() RegisterHostZoneTestCase {
-	epochUnbondingRecordNumber := uint64(3)
-	strideEpochNumber := uint64(4)
-	unbondingFrequency := uint64(3)
+	epochUnbondingRecordNumber := sdk.NewInt(3)
+	strideEpochNumber := sdk.NewInt(4)
+	unbondingFrequency := sdk.NewInt(3)
 	defaultRedemptionRate := sdk.NewDec(1)
 	atomHostZoneChainId := "GAIA"
 
@@ -140,7 +140,7 @@ func (s *KeeperTestSuite) TestRegisterHostZone_Success() {
 
 	// Confirm an empty deposit record was created
 	expectedDepositRecord := recordstypes.DepositRecord{
-		Id:                 uint64(0),
+		Id:                 sdk.ZeroInt(),
 		Amount:             sdk.ZeroInt(),
 		HostZoneId:         hostZone.ChainId,
 		Denom:              hostZone.HostDenom,

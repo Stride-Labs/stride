@@ -17,10 +17,10 @@ func DefaultGenesis() *GenesisState {
 		Params:                    DefaultParams(),
 		PortId:                    PortID,
 		UserRedemptionRecordList:  []UserRedemptionRecord{},
-		UserRedemptionRecordCount: sdk.NewInt(0),
+		UserRedemptionRecordCount: sdk.ZeroInt(),
 		EpochUnbondingRecordList:  []EpochUnbondingRecord{},
 		DepositRecordList:         []DepositRecord{},
-		DepositRecordCount:        sdk.NewInt(0),
+		DepositRecordCount:        sdk.ZeroInt(),
 		// this line is used by starport scaffolding # genesis/types/default
 	}
 }

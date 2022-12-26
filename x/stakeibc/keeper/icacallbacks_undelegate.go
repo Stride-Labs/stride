@@ -40,14 +40,15 @@ func (k Keeper) UnmarshalUndelegateCallbackArgs(ctx sdk.Context, undelegateCallb
 }
 
 // ICA Callback after undelegating
-//   If successful:
-//      * Updates epoch unbonding record status
-// 		* Records delegation changes on the host zone and validators,
-//      * Burns stTokens
-//   If timeout:
-//      * Does nothing
-//   If failure:
-//		* Reverts epoch unbonding record status
+//
+//	  If successful:
+//	     * Updates epoch unbonding record status
+//			* Records delegation changes on the host zone and validators,
+//	     * Burns stTokens
+//	  If timeout:
+//	     * Does nothing
+//	  If failure:
+//			* Reverts epoch unbonding record status
 func UndelegateCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ack *channeltypes.Acknowledgement, args []byte) error {
 	// Fetch callback args
 	undelegateCallback, err := k.UnmarshalUndelegateCallbackArgs(ctx, args)
@@ -178,8 +179,8 @@ func (k Keeper) GetLatestCompletionTime(ctx sdk.Context, txMsgData *sdk.TxMsgDat
 }
 
 // UpdateHostZoneUnbondings does two things:
-// 		1. Update the status and time of each hostZoneUnbonding on each epochUnbondingRecord
-// 		2. Return the number of stTokens that need to be burned
+//  1. Update the status and time of each hostZoneUnbonding on each epochUnbondingRecord
+//  2. Return the number of stTokens that need to be burned
 func (k Keeper) UpdateHostZoneUnbondings(
 	ctx sdk.Context,
 	latestCompletionTime time.Time,
@@ -207,7 +208,7 @@ func (k Keeper) UpdateHostZoneUnbondings(
 
 		// Update the bonded status and time
 		hostZoneUnbonding.Status = recordstypes.HostZoneUnbonding_EXIT_TRANSFER_QUEUE
-		hostZoneUnbonding.UnbondingTime = cast.ToUint64(latestCompletionTime.UnixNano())
+		hostZoneUnbonding.UnbondingTime = sdk.NewIntFromUint64(cast.ToUint64(latestCompletionTime.UnixNano()))
 		updatedEpochUnbondingRecord, success := k.RecordsKeeper.AddHostZoneToEpochUnbondingRecord(ctx, epochUnbondingRecord.EpochNumber, chainId, hostZoneUnbonding)
 		if !success {
 			k.Logger(ctx).Error(fmt.Sprintf("Failed to set host zone epoch unbonding record: epochNumber %d, chainId %s, hostZoneUnbonding %+v",

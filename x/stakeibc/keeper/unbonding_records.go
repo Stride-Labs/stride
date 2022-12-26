@@ -7,14 +7,13 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	"github.com/spf13/cast"
 
 	"github.com/Stride-Labs/stride/v4/utils"
 	recordstypes "github.com/Stride-Labs/stride/v4/x/records/types"
 	"github.com/Stride-Labs/stride/v4/x/stakeibc/types"
 )
 
-func (k Keeper) CreateEpochUnbondingRecord(ctx sdk.Context, epochNumber uint64) bool {
+func (k Keeper) CreateEpochUnbondingRecord(ctx sdk.Context, epochNumber sdk.Int) bool {
 	k.Logger(ctx).Info(fmt.Sprintf("Creating Epoch Unbonding Records for Epoch %d", epochNumber))
 
 	hostZoneUnbondings := []*recordstypes.HostZoneUnbonding{}
@@ -33,7 +32,7 @@ func (k Keeper) CreateEpochUnbondingRecord(ctx sdk.Context, epochNumber uint64) 
 	}
 
 	epochUnbondingRecord := recordstypes.EpochUnbondingRecord{
-		EpochNumber:        cast.ToUint64(epochNumber),
+		EpochNumber:        epochNumber,
 		HostZoneUnbondings: hostZoneUnbondings,
 	}
 	k.RecordsKeeper.SetEpochUnbondingRecord(ctx, epochUnbondingRecord)
@@ -41,12 +40,15 @@ func (k Keeper) CreateEpochUnbondingRecord(ctx sdk.Context, epochNumber uint64) 
 }
 
 // Build the undelegation messages for each validator by summing the total amount to unbond across epoch unbonding record,
-//   and then splitting the undelegation amount across validators
+//
+//	and then splitting the undelegation amount across validators
+//
 // returns (1) MsgUndelegate messages
-//         (2) Total Amount to unbond across all validators
-//         (3) Marshalled Callback Args
-//         (4) Relevant EpochUnbondingRecords that contain HostZoneUnbondings that are ready for unbonding
-func (k Keeper) GetHostZoneUnbondingMsgs(ctx sdk.Context, hostZone types.HostZone) (msgs []sdk.Msg, totalAmountToUnbond sdk.Int, marshalledCallbackArgs []byte, epochUnbondingRecordIds []uint64, err error) {
+//
+//	(2) Total Amount to unbond across all validators
+//	(3) Marshalled Callback Args
+//	(4) Relevant EpochUnbondingRecords that contain HostZoneUnbondings that are ready for unbonding
+func (k Keeper) GetHostZoneUnbondingMsgs(ctx sdk.Context, hostZone types.HostZone) (msgs []sdk.Msg, totalAmountToUnbond sdk.Int, marshalledCallbackArgs []byte, epochUnbondingRecordIds []sdk.Int, err error) {
 	k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId, "Preparing MsgUndelegates from the delegation account to each validator"))
 
 	// Iterate through every unbonding record and sum the total amount to unbond for the given host zone
@@ -60,7 +62,7 @@ func (k Keeper) GetHostZoneUnbondingMsgs(ctx sdk.Context, hostZone types.HostZon
 			epochUnbonding.EpochNumber, hostZoneRecord.Status, hostZoneRecord.NativeTokenAmount))
 
 		// We'll unbond all records that have status UNBONDING_QUEUE and have an amount g.t. zero
-		if hostZoneRecord.Status == recordstypes.HostZoneUnbonding_UNBONDING_QUEUE && hostZoneRecord.NativeTokenAmount.GT(sdk.ZeroInt()) {
+		if hostZoneRecord.Status == recordstypes.HostZoneUnbonding_UNBONDING_QUEUE && hostZoneRecord.NativeTokenAmount.IsPositive() {
 			totalAmountToUnbond = totalAmountToUnbond.Add(hostZoneRecord.NativeTokenAmount)
 			epochUnbondingRecordIds = append(epochUnbondingRecordIds, epochUnbonding.EpochNumber)
 			k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId, "  %v%s included in total unbonding", hostZoneRecord.NativeTokenAmount, hostZoneRecord.Denom))
@@ -101,7 +103,7 @@ func (k Keeper) GetHostZoneUnbondingMsgs(ctx sdk.Context, hostZone types.HostZon
 
 	// If there was overflow (i.e. there was at least one validator without sufficient delegations to cover their unbondings)
 	//  then reallocate across the other validators
-	if overflowAmount.GT(sdk.ZeroInt()) {
+	if overflowAmount.IsPositive() {
 		k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId,
 			"Expected validator undelegation amount on is greater than it's current delegations. Redistributing undelegations accordingly."))
 
@@ -110,7 +112,7 @@ func (k Keeper) GetHostZoneUnbondingMsgs(ctx sdk.Context, hostZone types.HostZon
 
 			// Check if we can unbond more from this validator
 			validatorUnbondExtraCapacity := validator.DelegationAmt.Sub(targetUnbondAmount)
-			if validatorUnbondExtraCapacity.GT(sdk.ZeroInt()) {
+			if validatorUnbondExtraCapacity.IsPositive() {
 
 				// If we can fully cover the unbonding, do so with this validator
 				if validatorUnbondExtraCapacity.GT(overflowAmount) {
@@ -127,7 +129,7 @@ func (k Keeper) GetHostZoneUnbondingMsgs(ctx sdk.Context, hostZone types.HostZon
 	}
 
 	// If after re-allocating, we still can't cover the overflow, something is very wrong
-	if overflowAmount.GT(sdk.ZeroInt()) {
+	if overflowAmount.IsPositive() {
 		errMsg := fmt.Sprintf("Could not unbond %v on Host Zone %s, unable to balance the unbond amount across validators",
 			totalAmountToUnbond, hostZone.ChainId)
 		k.Logger(ctx).Error(errMsg)
@@ -207,9 +209,10 @@ func (k Keeper) SubmitHostZoneUnbondingMsg(ctx sdk.Context, msgs []sdk.Msg, tota
 // this function iterates each host zone, and if it's the right time to
 // initiate an unbonding, it attempts to unbond all outstanding records
 // returns (1) did all chains succeed
-//		   (2) list of strings of successful unbondings
-//		   (3) list of strings of failed unbondings
-func (k Keeper) InitiateAllHostZoneUnbondings(ctx sdk.Context, dayNumber uint64) (success bool, successfulUnbondings []string, failedUnbondings []string) {
+//
+//	(2) list of strings of successful unbondings
+//	(3) list of strings of failed unbondings
+func (k Keeper) InitiateAllHostZoneUnbondings(ctx sdk.Context, dayNumber sdk.Int) (success bool, successfulUnbondings []string, failedUnbondings []string) {
 	k.Logger(ctx).Info(fmt.Sprintf("Initiating all host zone unbondings for epoch %d...", dayNumber))
 
 	success = true
@@ -217,7 +220,7 @@ func (k Keeper) InitiateAllHostZoneUnbondings(ctx sdk.Context, dayNumber uint64)
 	failedUnbondings = []string{}
 	for _, hostZone := range k.GetAllHostZone(ctx) {
 		// Confirm the unbonding is supposed to be triggered this epoch
-		if dayNumber%hostZone.UnbondingFrequency != 0 {
+		if !dayNumber.Mod(hostZone.UnbondingFrequency).IsZero() {
 			k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId,
 				"Host does not unbond this epoch (Unbonding Frequency: %d, Epoch: %d)", hostZone.UnbondingFrequency, dayNumber))
 			continue
@@ -261,7 +264,7 @@ func (k Keeper) InitiateAllHostZoneUnbondings(ctx sdk.Context, dayNumber uint64)
 }
 
 // Deletes any epoch unbonding records that have had all unbondings claimed
-func (k Keeper) CleanupEpochUnbondingRecords(ctx sdk.Context, epochNumber uint64) bool {
+func (k Keeper) CleanupEpochUnbondingRecords(ctx sdk.Context, epochNumber sdk.Int) bool {
 	k.Logger(ctx).Info("Cleaning Claimed Epoch Unbonding Records...")
 
 	for _, epochUnbondingRecord := range k.RecordsKeeper.GetAllEpochUnbondingRecord(ctx) {
@@ -293,7 +296,7 @@ func (k Keeper) SweepAllUnbondedTokensForHostZone(ctx sdk.Context, hostZone type
 
 	// Sum up all host zone unbonding records that have finished unbonding
 	totalAmtTransferToRedemptionAcct := sdk.ZeroInt()
-	epochUnbondingRecordIds := []uint64{}
+	epochUnbondingRecordIds := []sdk.Int{}
 	for _, epochUnbondingRecord := range epochUnbondingRecords {
 
 		// Get all the unbondings associated with the epoch + host zone pair
@@ -319,7 +322,7 @@ func (k Keeper) SweepAllUnbondedTokensForHostZone(ctx sdk.Context, hostZone type
 		//      2. the unbonding time is less than the current block time
 		//      3. the host zone is in the EXIT_TRANSFER_QUEUE state, meaning it's ready to be transferred
 		inTransferQueue := hostZoneUnbonding.Status == recordstypes.HostZoneUnbonding_EXIT_TRANSFER_QUEUE
-		validUnbondingTime := hostZoneUnbonding.UnbondingTime > 0 && hostZoneUnbonding.UnbondingTime < blockTime
+		validUnbondingTime := hostZoneUnbonding.UnbondingTime.IsPositive() && hostZoneUnbonding.UnbondingTime.LT(sdk.NewIntFromUint64(blockTime))
 		if inTransferQueue && validUnbondingTime {
 			k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId, "  %v%s included in sweep", hostZoneUnbonding.NativeTokenAmount, hostZoneUnbonding.Denom))
 
@@ -393,11 +396,12 @@ func (k Keeper) SweepAllUnbondedTokensForHostZone(ctx sdk.Context, hostZone type
 }
 
 // Sends all unbonded tokens to the redemption account
-//    returns:
-//       * success indicator if all chains succeeded
-//       * list of successful chains
-//       * list of tokens swept
-//       * list of failed chains
+//
+//	returns:
+//	   * success indicator if all chains succeeded
+//	   * list of successful chains
+//	   * list of tokens swept
+//	   * list of failed chains
 func (k Keeper) SweepAllUnbondedTokens(ctx sdk.Context) (success bool, successfulSweeps []string, sweepAmounts []sdk.Int, failedSweeps []string) {
 	// this function returns true if all chains succeeded, false otherwise
 	// it also returns a list of successful chains (arg 2), tokens swept (arg 3), and failed chains (arg 4)

@@ -136,7 +136,7 @@ func (s *KeeperTestSuite) TestUpdateRedemptionRateZeroStAssets() {
 	stakedBal := sdk.NewInt(5)
 	undelegatedBal := sdk.NewInt(3)
 	justDepositedBal := sdk.NewInt(3)
-	stSupply := sdk.NewInt(0)
+	stSupply := sdk.ZeroInt()
 
 	initialRedemptionRate := sdk.NewDec(1)
 	tc := s.SetupUpdateRedemptionRates(stakedBal, undelegatedBal, justDepositedBal, stSupply, initialRedemptionRate)
@@ -156,9 +156,9 @@ func (s *KeeperTestSuite) TestUpdateRedemptionRateZeroStAssets() {
 }
 
 func (s *KeeperTestSuite) TestUpdateRedemptionRateZeroNativeAssets() {
-	stakedBal := sdk.NewInt(0)
-	undelegatedBal := sdk.NewInt(0)
-	justDepositedBal := sdk.NewInt(0)
+	stakedBal := sdk.ZeroInt()
+	undelegatedBal := sdk.ZeroInt()
+	justDepositedBal := sdk.ZeroInt()
 	stSupply := sdk.NewInt(10)
 
 	initialRedemptionRate := sdk.NewDec(1)

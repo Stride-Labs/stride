@@ -68,7 +68,7 @@ func (k msgServer) RebalanceValidators(goCtx context.Context, msg *types.MsgReba
 	overweight_delta := sdk.NewDecFromInt(valDeltaList[overWeightIndex].deltaAmt).Quo(sdk.NewDecFromInt(total_delegation))
 	underweight_delta := sdk.NewDecFromInt(valDeltaList[underWeightIndex].deltaAmt).Quo(sdk.NewDecFromInt(total_delegation))
 	max_delta := sdk.MaxDec(overweight_delta, underweight_delta)
-	rebalanceThreshold := sdk.NewDec(int64(k.GetParam(ctx, types.KeyValidatorRebalancingThreshold))).Quo(sdk.NewDec(10000))
+	rebalanceThreshold := sdk.NewDec(k.GetParam(ctx, types.KeyValidatorRebalancingThreshold).Int64()).Quo(sdk.NewDec(10000))
 	if max_delta.LT(rebalanceThreshold) {
 		k.Logger(ctx).Error("Not enough validator disruption to rebalance")
 		return nil, types.ErrWeightsNotDifferent
@@ -96,7 +96,7 @@ func (k msgServer) RebalanceValidators(goCtx context.Context, msg *types.MsgReba
 			// if underWeightElem is negative, we're done rebalancing
 			break
 		}
-		if overWeightElem.deltaAmt.GT(sdk.ZeroInt()) {
+		if overWeightElem.deltaAmt.IsPositive() {
 			// if overWeightElem is positive, we're done rebalancing
 			break
 		}

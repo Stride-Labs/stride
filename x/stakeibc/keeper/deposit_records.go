@@ -16,7 +16,7 @@ import (
 )
 
 // Create a new deposit record for each host zone for the given epoch
-func (k Keeper) CreateDepositRecordsForEpoch(ctx sdk.Context, epochNumber uint64) {
+func (k Keeper) CreateDepositRecordsForEpoch(ctx sdk.Context, epochNumber sdk.Int) {
 	k.Logger(ctx).Info(fmt.Sprintf("Creating Deposit Records for Epoch %d", epochNumber))
 
 	for _, hostZone := range k.GetAllHostZone(ctx) {
@@ -34,12 +34,12 @@ func (k Keeper) CreateDepositRecordsForEpoch(ctx sdk.Context, epochNumber uint64
 }
 
 // Iterate each deposit record marked TRANSFER_QUEUE and IBC transfer tokens from the Stride controller account to the delegation ICAs on each host zone
-func (k Keeper) TransferExistingDepositsToHostZones(ctx sdk.Context, epochNumber uint64, depositRecords []recordstypes.DepositRecord) {
+func (k Keeper) TransferExistingDepositsToHostZones(ctx sdk.Context, epochNumber sdk.Int, depositRecords []recordstypes.DepositRecord) {
 	k.Logger(ctx).Info("Transfering deposit records...")
 
 	transferDepositRecords := utils.FilterDepositRecords(depositRecords, func(record recordstypes.DepositRecord) (condition bool) {
 		isTransferRecord := record.Status == recordstypes.DepositRecord_TRANSFER_QUEUE
-		isBeforeCurrentEpoch := record.DepositEpochNumber < epochNumber
+		isBeforeCurrentEpoch := record.DepositEpochNumber.LT(epochNumber)
 		return isTransferRecord && isBeforeCurrentEpoch
 	})
 
@@ -50,7 +50,7 @@ func (k Keeper) TransferExistingDepositsToHostZones(ctx sdk.Context, epochNumber
 			"Processing deposit record %d: %v%s", depositRecord.Id, depositRecord.Amount, depositRecord.Denom))
 
 		// if a TRANSFER_QUEUE record has 0 balance and was created in the previous epoch, it's safe to remove since it will never be updated or used
-		if depositRecord.Amount.LTE(sdk.ZeroInt()) && depositRecord.DepositEpochNumber < epochNumber {
+		if depositRecord.Amount.LTE(sdk.ZeroInt()) && depositRecord.DepositEpochNumber.LT(epochNumber) {
 			k.Logger(ctx).Info(utils.LogWithHostZone(depositRecord.HostZoneId, "Empty deposit record - Removing."))
 			k.RecordsKeeper.RemoveDepositRecord(ctx, depositRecord.Id)
 			continue
@@ -78,8 +78,8 @@ func (k Keeper) TransferExistingDepositsToHostZones(ctx sdk.Context, epochNumber
 		// if we onboard non-tendermint chains, we need to use the time on the host chain to
 		// calculate the timeout
 		// https://github.com/tendermint/tendermint/blob/v0.34.x/spec/consensus/bft-time.md
-		timeoutTimestamp := uint64(ctx.BlockTime().UnixNano()) + ibcTransferTimeoutNanos
-		msg := ibctypes.NewMsgTransfer(ibctransfertypes.PortID, hostZone.TransferChannelId, transferCoin, hostZoneModuleAddress, delegateAddress, clienttypes.Height{}, timeoutTimestamp)
+		timeoutTimestamp := sdk.NewIntFromUint64(uint64(ctx.BlockTime().UnixNano())).Add(ibcTransferTimeoutNanos)
+		msg := ibctypes.NewMsgTransfer(ibctransfertypes.PortID, hostZone.TransferChannelId, transferCoin, hostZoneModuleAddress, delegateAddress, clienttypes.Height{}, timeoutTimestamp.Uint64())
 		k.Logger(ctx).Info(utils.LogWithHostZone(depositRecord.HostZoneId, "Transfer Msg: %+v", msg))
 
 		// transfer the deposit record and update its status to TRANSFER_IN_PROGRESS
@@ -96,12 +96,12 @@ func (k Keeper) TransferExistingDepositsToHostZones(ctx sdk.Context, epochNumber
 }
 
 // Iterate each deposit record marked DELEGATION_QUEUE and use the delegation ICA to delegate on the host zone
-func (k Keeper) StakeExistingDepositsOnHostZones(ctx sdk.Context, epochNumber uint64, depositRecords []recordstypes.DepositRecord) {
+func (k Keeper) StakeExistingDepositsOnHostZones(ctx sdk.Context, epochNumber sdk.Int, depositRecords []recordstypes.DepositRecord) {
 	k.Logger(ctx).Info("Staking deposit records...")
 
 	stakeDepositRecords := utils.FilterDepositRecords(depositRecords, func(record recordstypes.DepositRecord) (condition bool) {
 		isStakeRecord := record.Status == recordstypes.DepositRecord_DELEGATION_QUEUE
-		isBeforeCurrentEpoch := record.DepositEpochNumber < epochNumber
+		isBeforeCurrentEpoch := record.DepositEpochNumber.LT(epochNumber)
 		return isStakeRecord && isBeforeCurrentEpoch
 	})
 

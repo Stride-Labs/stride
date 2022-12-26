@@ -17,8 +17,8 @@ func (k Keeper) SetParams(ctx sdk.Context, params types.Params) {
 	k.paramstore.SetParamSet(ctx, &params)
 }
 
-func (k *Keeper) GetParam(ctx sdk.Context, key []byte) uint64 {
-	var out uint64
+func (k *Keeper) GetParam(ctx sdk.Context, key []byte) sdk.Int {
+	var out sdk.Int
 	k.paramstore.Get(ctx, key, &out)
 	return out
 }

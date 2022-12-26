@@ -6,6 +6,8 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/Stride-Labs/stride/v4/x/records/types"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 func TestGenesisState_Validate(t *testing.T) {
@@ -25,13 +27,13 @@ func TestGenesisState_Validate(t *testing.T) {
 				PortId: types.PortID,
 				DepositRecordList: []types.DepositRecord{
 					{
-						Id: 0,
+						Id: sdk.ZeroInt(),
 					},
 					{
-						Id: 1,
+						Id: sdk.NewInt(1),
 					},
 				},
-				DepositRecordCount: 2,
+				DepositRecordCount: sdk.NewInt(2),
 				// this line is used by starport scaffolding # types/genesis/validField
 			},
 			valid: true,
@@ -41,10 +43,10 @@ func TestGenesisState_Validate(t *testing.T) {
 			genState: &types.GenesisState{
 				DepositRecordList: []types.DepositRecord{
 					{
-						Id: 0,
+						Id: sdk.ZeroInt(),
 					},
 					{
-						Id: 0,
+						Id: sdk.ZeroInt(),
 					},
 				},
 			},

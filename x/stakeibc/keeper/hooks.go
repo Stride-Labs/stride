@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/spf13/cast"
 
 	"github.com/Stride-Labs/stride/v4/utils"
 	epochstypes "github.com/Stride-Labs/stride/v4/x/epochs/types"
@@ -48,22 +47,22 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochInfo epochstypes.EpochInf
 		k.SetWithdrawalAddress(ctx)
 
 		// Update the redemption rate
-		if epochNumber%redemptionRateInterval == 0 {
+		if epochNumber.Mod(redemptionRateInterval).IsZero() {
 			k.UpdateRedemptionRates(ctx, depositRecords)
 		}
 
 		// Transfer deposited funds from the controller account to the delegation account on the host zone
-		if epochNumber%depositInterval == 0 {
+		if epochNumber.Mod(depositInterval).IsZero() {
 			k.TransferExistingDepositsToHostZones(ctx, epochNumber, depositRecords)
 		}
 
 		// Delegate tokens from the delegation account
-		if epochNumber%delegationInterval == 0 {
+		if epochNumber.Mod(delegationInterval).IsZero() {
 			k.StakeExistingDepositsOnHostZones(ctx, epochNumber, depositRecords)
 		}
 
 		// Reinvest staking rewards
-		if epochNumber%reinvestInterval == 0 { // allow a few blocks from UpdateUndelegatedBal to avoid conflicts
+		if epochNumber.Mod(reinvestInterval).IsZero() { // allow a few blocks from UpdateUndelegatedBal to avoid conflicts
 			k.ReinvestRewards(ctx)
 		}
 	}
@@ -92,21 +91,21 @@ func (h Hooks) AfterEpochEnd(ctx sdk.Context, epochInfo epochstypes.EpochInfo) {
 }
 
 // Update the epoch information in the stakeibc epoch tracker
-func (k Keeper) UpdateEpochTracker(ctx sdk.Context, epochInfo epochstypes.EpochInfo) (epochNumber uint64, err error) {
-	epochNumber, err = cast.ToUint64E(epochInfo.CurrentEpoch)
+func (k Keeper) UpdateEpochTracker(ctx sdk.Context, epochInfo epochstypes.EpochInfo) (epochNumber sdk.Int, err error) {
+	epochNumber = epochInfo.CurrentEpoch
 	if err != nil {
 		k.Logger(ctx).Error(fmt.Sprintf("Could not convert epoch number to uint64: %v", err))
-		return 0, err
+		return sdk.ZeroInt(), err
 	}
-	epochDurationNano, err := cast.ToUint64E(epochInfo.Duration.Nanoseconds())
+	epochDurationNano := sdk.NewInt(epochInfo.Duration.Nanoseconds())
 	if err != nil {
 		k.Logger(ctx).Error(fmt.Sprintf("Could not convert epoch duration to uint64: %v", err))
-		return 0, err
+		return sdk.ZeroInt(), err
 	}
-	nextEpochStartTime, err := cast.ToUint64E(epochInfo.CurrentEpochStartTime.Add(epochInfo.Duration).UnixNano())
+	nextEpochStartTime := sdk.NewInt(epochInfo.CurrentEpochStartTime.Add(epochInfo.Duration).UnixNano())
 	if err != nil {
 		k.Logger(ctx).Error(fmt.Sprintf("Could not convert epoch duration to uint64: %v", err))
-		return 0, err
+		return sdk.ZeroInt(), err
 	}
 	epochTracker := types.EpochTracker{
 		EpochIdentifier:    epochInfo.Identifier,
@@ -133,7 +132,8 @@ func (k Keeper) SetWithdrawalAddress(ctx sdk.Context) {
 
 // Updates the redemption rate for each host zone
 // The redemption rate equation is:
-//   (Unbonded Balance + Staked Balance + Module Account Balance) / (stToken Supply)
+//
+//	(Unbonded Balance + Staked Balance + Module Account Balance) / (stToken Supply)
 func (k Keeper) UpdateRedemptionRates(ctx sdk.Context, depositRecords []recordstypes.DepositRecord) {
 	k.Logger(ctx).Info("Updating Redemption Rates...")
 

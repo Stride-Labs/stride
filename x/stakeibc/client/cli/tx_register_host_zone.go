@@ -6,6 +6,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/spf13/cobra"
 
 	"github.com/Stride-Labs/stride/v4/x/stakeibc/types"
@@ -41,7 +42,7 @@ func CmdRegisterHostZone() *cobra.Command {
 				hostDenom,
 				ibcDenom,
 				channelId,
-				unbondingFrequency,
+				sdk.NewIntFromUint64(unbondingFrequency),
 			)
 
 			if err := msg.ValidateBasic(); err != nil {

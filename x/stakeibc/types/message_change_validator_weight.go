@@ -11,7 +11,7 @@ const TypeMsgChangeValidatorWeight = "change_validator_weight"
 
 var _ sdk.Msg = &MsgChangeValidatorWeight{}
 
-func NewMsgChangeValidatorWeight(creator string, hostZone string, address string, weight uint64) *MsgChangeValidatorWeight {
+func NewMsgChangeValidatorWeight(creator string, hostZone string, address string, weight sdk.Int) *MsgChangeValidatorWeight {
 	return &MsgChangeValidatorWeight{
 		Creator:  creator,
 		HostZone: hostZone,

@@ -9,8 +9,6 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/Stride-Labs/stride/v4/x/records/types"
-
-	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 func CmdListDepositRecord() *cobra.Command {
@@ -62,7 +60,7 @@ func CmdShowDepositRecord() *cobra.Command {
 			}
 
 			params := &types.QueryGetDepositRecordRequest{
-				Id: sdk.NewIntFromUint64(id),
+				Id: id,
 			}
 
 			res, err := queryClient.DepositRecord(context.Background(), params)

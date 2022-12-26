@@ -69,9 +69,9 @@ func DelegatorSharesCallback(k Keeper, ctx sdk.Context, args []byte, query icqty
 		k.Logger(ctx).Error("failed to find stride epoch")
 		return sdkerrors.Wrapf(sdkerrors.ErrNotFound, "no epoch number for epoch (%s)", epochtypes.STRIDE_EPOCH)
 	}
-	if validator.InternalExchangeRate.EpochNumber != strideEpochTracker.GetEpochNumber() {
+	if validator.InternalExchangeRate.EpochNumber != strideEpochTracker.EpochNumber {
 		errMsg := fmt.Sprintf("DelegationCallback: validator (%s) internal exchange rate has not been updated this epoch (epoch #%d)",
-			validator.Address, strideEpochTracker.GetEpochNumber())
+			validator.Address, strideEpochTracker.EpochNumber.Uint64())
 		k.Logger(ctx).Error(errMsg)
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, errMsg)
 	}
@@ -120,7 +120,7 @@ func DelegatorSharesCallback(k Keeper, ctx sdk.Context, args []byte, query icqty
 
 	// Update the host zone and validator to reflect the weight and delegation change
 	weightAdjustment := sdk.NewDecFromInt(validatorTokens).Quo(sdk.NewDecFromInt(validator.DelegationAmt))
-	validator.Weight = sdk.NewDec(int64(weight)).Mul(weightAdjustment).TruncateInt().Uint64()
+	validator.Weight = sdk.NewIntFromUint64(sdk.NewDec(weight).Mul(weightAdjustment).TruncateInt().Uint64())
 	validator.DelegationAmt = validator.DelegationAmt.Sub(slashAmount)
 
 	hostZone.StakedBal = hostZone.StakedBal.Sub(slashAmount)

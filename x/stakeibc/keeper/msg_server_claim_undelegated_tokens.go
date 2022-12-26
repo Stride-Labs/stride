@@ -18,7 +18,7 @@ type IcaTx struct {
 	ConnectionId string
 	Msgs         []sdk.Msg
 	Account      types.ICAAccount
-	Timeout      uint64
+	Timeout      sdk.Int
 }
 
 func (k msgServer) ClaimUndelegatedTokens(goCtx context.Context, msg *types.MsgClaimUndelegatedTokens) (*types.MsgClaimUndelegatedTokensResponse, error) {
@@ -123,7 +123,7 @@ func (k Keeper) GetRedemptionTransferMsg(ctx sdk.Context, userRedemptionRecord *
 	}
 	icaTimeOutNanos := k.GetParam(ctx, types.KeyICATimeoutNanos)
 	nextEpochStarttime := epochTracker.NextEpochStartTime
-	timeout := nextEpochStarttime + icaTimeOutNanos
+	timeout := nextEpochStarttime.Add(icaTimeOutNanos)
 
 	icaTx := IcaTx{
 		ConnectionId: hostZone.GetConnectionId(),

@@ -18,7 +18,7 @@ func (suite *KeeperTestSuite) TestEpochLifeCycle() {
 		Identifier:            "monthly",
 		StartTime:             time.Time{},
 		Duration:              time.Hour * 24 * 30,
-		CurrentEpoch:          sdk.NewInt(0),
+		CurrentEpoch:          sdk.ZeroInt(),
 		CurrentEpochStartTime: time.Time{},
 		EpochCountingStarted:  false,
 	}

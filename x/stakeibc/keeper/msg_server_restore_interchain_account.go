@@ -57,8 +57,8 @@ func (k msgServer) RestoreInterchainAccount(goCtx context.Context, msg *types.Ms
 
 		// revert epoch unbonding records for the closed ICA channel
 		epochUnbondingRecords := k.RecordsKeeper.GetAllEpochUnbondingRecord(ctx)
-		epochNumberForPendingUnbondingRecords := []uint64{}
-		epochNumberForPendingTransferRecords := []uint64{}
+		epochNumberForPendingUnbondingRecords := []sdk.Int{}
+		epochNumberForPendingTransferRecords := []sdk.Int{}
 		for _, epochUnbondingRecord := range epochUnbondingRecords {
 			// only revert records for the select host zone
 			hostZoneUnbonding, found := k.RecordsKeeper.GetHostZoneUnbondingByChainId(ctx, epochUnbondingRecord.EpochNumber, hostZone.ChainId)

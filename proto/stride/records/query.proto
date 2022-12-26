@@ -77,10 +77,7 @@ message QueryParamsResponse {
   Params params = 1 [ (gogoproto.nullable) = false ];
 }
 
-message QueryGetDepositRecordRequest { string id = 1 [
-  (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
-  (gogoproto.nullable) = false
-]; }
+message QueryGetDepositRecordRequest { uint64 id = 1; }
 
 message QueryGetDepositRecordResponse {
   DepositRecord deposit_record = 1 [ (gogoproto.nullable) = false ];
@@ -115,15 +112,9 @@ message QueryAllUserRedemptionRecordResponse {
 // Query UserRedemptionRecords by chainId / userId pair
 message QueryAllUserRedemptionRecordForUserRequest {
   string chain_id = 1;
-  string day = 2 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
-    (gogoproto.nullable) = false
-  ];
+  uint64 day = 2;
   string address = 3;
-  string limit = 4 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
-    (gogoproto.nullable) = false
-  ];
+  uint64 limit = 4;
   cosmos.base.query.v1beta1.PageRequest pagination = 5;
 }
 
@@ -133,10 +124,7 @@ message QueryAllUserRedemptionRecordForUserResponse {
   cosmos.base.query.v1beta1.PageResponse pagination = 2;
 }
 
-message QueryGetEpochUnbondingRecordRequest { string epoch_number = 1 [
-  (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
-  (gogoproto.nullable) = false
-]; }
+message QueryGetEpochUnbondingRecordRequest { uint64 epoch_number = 1; }
 
 message QueryGetEpochUnbondingRecordResponse {
   EpochUnbondingRecord epoch_unbonding_record = 1

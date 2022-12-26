@@ -1,13 +1,15 @@
 package cli
 
 import (
+	"fmt"
 	"strconv"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
-	"github.com/spf13/cast"
 	"github.com/spf13/cobra"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/Stride-Labs/stride/v4/x/stakeibc/types"
 )
@@ -21,9 +23,9 @@ func CmdClaimUndelegatedTokens() *cobra.Command {
 		Args:  cobra.ExactArgs(3),
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
 			argHostZone := args[0]
-			argEpoch, err := cast.ToUint64E(args[1])
-			if err != nil {
-				return err
+			argEpoch, ok := sdk.NewIntFromString(args[1])
+			if !ok {
+				return fmt.Errorf("Fail to parse arg to sdk.Int (%v)", args[1])
 			}
 			argSender := args[2]
 

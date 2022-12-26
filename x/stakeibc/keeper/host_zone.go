@@ -30,11 +30,11 @@ func (k Keeper) GetHostZoneCount(ctx sdk.Context) uint64 {
 }
 
 // SetHostZoneCount set the total number of hostZone
-func (k Keeper) SetHostZoneCount(ctx sdk.Context, count uint64) {
+func (k Keeper) SetHostZoneCount(ctx sdk.Context, count sdk.Int) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte{})
 	byteKey := types.KeyPrefix(types.HostZoneCountKey)
 	bz := make([]byte, 8)
-	binary.BigEndian.PutUint64(bz, count)
+	binary.BigEndian.PutUint64(bz, count.Uint64())
 	store.Set(byteKey, bz)
 }
 
@@ -138,7 +138,7 @@ func (k Keeper) AddValidatorToHostZone(ctx sdk.Context, msg *types.MsgAddValidat
 
 	// Check that we don't already have this validator
 	// Grab the minimum weight in the process (to assign to validator's added through governance)
-	var minWeight uint64 = math.MaxUint64
+	var minWeight sdk.Int = sdk.NewIntFromUint64(math.MaxUint64)
 	for _, validator := range hostZone.Validators {
 		if validator.Address == msg.Address {
 			errMsg := fmt.Sprintf("Validator address (%s) already exists on Host Zone (%s)", msg.Address, msg.HostZone)
@@ -151,7 +151,7 @@ func (k Keeper) AddValidatorToHostZone(ctx sdk.Context, msg *types.MsgAddValidat
 			return sdkerrors.Wrap(types.ErrValidatorAlreadyExists, errMsg)
 		}
 		// Store the min weight to assign to new validator added through governance (ignore zero-weight validators)
-		if validator.Weight < minWeight && validator.Weight > 0 {
+		if validator.Weight.LT(minWeight) && validator.Weight.IsPositive() {
 			minWeight = validator.Weight
 		}
 	}
@@ -188,7 +188,7 @@ func (k Keeper) RemoveValidatorFromHostZone(ctx sdk.Context, chainId string, val
 	}
 	for i, val := range hostZone.Validators {
 		if val.GetAddress() == validatorAddress {
-			if val.DelegationAmt.IsZero() && val.Weight == 0 {
+			if val.DelegationAmt.IsZero() && val.Weight.Equal(sdk.ZeroInt()) {
 				hostZone.Validators = append(hostZone.Validators[:i], hostZone.Validators[i+1:]...)
 				k.SetHostZone(ctx, hostZone)
 				return nil

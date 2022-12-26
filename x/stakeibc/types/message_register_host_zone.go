@@ -15,7 +15,7 @@ const TypeMsgRegisterHostZone = "register_host_zone"
 
 var _ sdk.Msg = &MsgRegisterHostZone{}
 
-func NewMsgRegisterHostZone(creator string, connectionId string, bech32prefix string, hostDenom string, ibcDenom string, transferChannelId string, unbondingFrequency uint64) *MsgRegisterHostZone {
+func NewMsgRegisterHostZone(creator string, connectionId string, bech32prefix string, hostDenom string, ibcDenom string, transferChannelId string, unbondingFrequency sdk.Int) *MsgRegisterHostZone {
 	return &MsgRegisterHostZone{
 		Creator:            creator,
 		ConnectionId:       connectionId,
@@ -99,7 +99,7 @@ func (msg *MsgRegisterHostZone) ValidateBasic() error {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "transfer channel id must begin with 'channel'")
 	}
 	// unbonding frequency must be positive nonzero
-	if msg.UnbondingFrequency < 1 {
+	if msg.UnbondingFrequency.LT(sdk.NewInt(1)) {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "unbonding frequency must be greater than zero")
 	}
 

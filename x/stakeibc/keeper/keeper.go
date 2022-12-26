@@ -230,36 +230,32 @@ func (k Keeper) IsWithinBufferWindow(ctx sdk.Context) (bool, error) {
 	return inWindow, nil
 }
 
-func (k Keeper) GetICATimeoutNanos(ctx sdk.Context, epochType string) (uint64, error) {
+func (k Keeper) GetICATimeoutNanos(ctx sdk.Context, epochType string) (sdk.Int, error) {
 	epochTracker, found := k.GetEpochTracker(ctx, epochType)
 	if !found {
 		k.Logger(ctx).Error(fmt.Sprintf("Failed to get epoch tracker for %s", epochType))
-		return 0, sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "Failed to get epoch tracker for %s", epochType)
+		return sdk.ZeroInt(), sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "Failed to get epoch tracker for %s", epochType)
 	}
 	// BUFFER by 5% of the epoch length
 	bufferSizeParam := k.GetParam(ctx, types.KeyBufferSize)
-	bufferSize := epochTracker.Duration / bufferSizeParam
+	bufferSize := epochTracker.Duration.Quo(bufferSizeParam)
 	// buffer size should not be negative or longer than the epoch duration
-	if bufferSize > epochTracker.Duration {
+	if bufferSize.GT(epochTracker.Duration) {
 		k.Logger(ctx).Error(fmt.Sprintf("Invalid buffer size %d", bufferSize))
-		return 0, sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "Invalid buffer size %d", bufferSize)
+		return sdk.ZeroInt(), sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "Invalid buffer size %d", bufferSize)
 	}
-	timeoutNanos := epochTracker.NextEpochStartTime - bufferSize
-	timeoutNanosUint64, err := cast.ToUint64E(timeoutNanos)
-	if err != nil {
-		k.Logger(ctx).Error(fmt.Sprintf("Failed to convert timeoutNanos to uint64, error: %s", err.Error()))
-		return 0, sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "Failed to convert timeoutNanos to uint64, error: %s", err.Error())
-	}
-	return timeoutNanosUint64, nil
+	timeoutNanos := epochTracker.NextEpochStartTime.Sub(bufferSize)
+
+	return timeoutNanos, nil
 }
 
 // safety check: ensure the redemption rate is NOT below our min safety threshold && NOT above our max safety threshold on host zone
 func (k Keeper) IsRedemptionRateWithinSafetyBounds(ctx sdk.Context, zone types.HostZone) (bool, error) {
 	minSafetyThresholdInt := k.GetParam(ctx, types.KeySafetyMinRedemptionRateThreshold)
-	minSafetyThreshold := sdk.NewDec(int64(minSafetyThresholdInt)).Quo(sdk.NewDec(100))
+	minSafetyThreshold := sdk.NewDec(minSafetyThresholdInt.Int64()).Quo(sdk.NewDec(100))
 
 	maxSafetyThresholdInt := k.GetParam(ctx, types.KeySafetyMaxRedemptionRateThreshold)
-	maxSafetyThreshold := sdk.NewDec(int64(maxSafetyThresholdInt)).Quo(sdk.NewDec(100))
+	maxSafetyThreshold := sdk.NewDec(maxSafetyThresholdInt.Int64()).Quo(sdk.NewDec(100))
 
 	redemptionRate := zone.RedemptionRate
 
@@ -288,7 +284,7 @@ func (k Keeper) ConfirmValSetHasSpace(ctx sdk.Context, validators []*types.Valid
 	// count up the number of validators with non-zero weights
 	numNonzeroWgtValidators := 0
 	for _, validator := range validators {
-		if validator.Weight > 0 {
+		if validator.Weight.IsPositive() {
 			numNonzeroWgtValidators++
 		}
 	}

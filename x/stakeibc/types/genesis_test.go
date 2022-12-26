@@ -3,6 +3,7 @@ package types_test
 import (
 	"testing"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
 	"github.com/Stride-Labs/stride/v4/x/stakeibc/types"
@@ -34,7 +35,7 @@ func TestGenesisState_Validate(t *testing.T) {
 						ChainId: "1",
 					},
 				},
-				HostZoneCount: 2,
+				HostZoneCount: sdk.NewInt(2),
 			},
 			valid: true,
 		},

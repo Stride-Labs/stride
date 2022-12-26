@@ -68,13 +68,13 @@ func (s *KeeperTestSuite) TestTransferCallback_Successful() {
 	s.Require().NoError(err)
 
 	// Confirm deposit record has been updated to DELEGATION_QUEUE
-	record, found := s.App.RecordsKeeper.GetDepositRecord(s.Ctx, initialState.callbackArgs.DepositRecordId.Uint64())
+	record, found := s.App.RecordsKeeper.GetDepositRecord(s.Ctx, initialState.callbackArgs.DepositRecordId)
 	s.Require().True(found)
 	s.Require().Equal(record.Status, recordtypes.DepositRecord_DELEGATION_QUEUE, "deposit record status should be DELEGATION_QUEUE")
 }
 
 func (s *KeeperTestSuite) checkTransferStateIfCallbackFailed(tc TransferCallbackTestCase) {
-	record, found := s.App.RecordsKeeper.GetDepositRecord(s.Ctx, tc.initialState.callbackArgs.DepositRecordId.Uint64())
+	record, found := s.App.RecordsKeeper.GetDepositRecord(s.Ctx, tc.initialState.callbackArgs.DepositRecordId)
 	s.Require().True(found)
 	s.Require().Equal(record.Status, recordtypes.DepositRecord_TRANSFER_QUEUE, "deposit record status should be TRANSFER_QUEUE")
 }
@@ -97,7 +97,7 @@ func (s *KeeperTestSuite) TestTransferCallback_TransferCallbackErrorOnHost() {
 
 	err := recordskeeper.TransferCallback(s.App.RecordsKeeper, s.Ctx, errorArgs.packet, &errorAck, errorArgs.args)
 	s.Require().NoError(err)
-	record, found := s.App.RecordsKeeper.GetDepositRecord(s.Ctx, tc.initialState.callbackArgs.DepositRecordId.Uint64())
+	record, found := s.App.RecordsKeeper.GetDepositRecord(s.Ctx, tc.initialState.callbackArgs.DepositRecordId)
 	s.Require().True(found)
 	s.Require().Equal(record.Status, types.DepositRecord_TRANSFER_QUEUE, "DepositRecord is put back in the TRANSFER_QUEUE after a failed transfer")
 	s.checkTransferStateIfCallbackFailed(tc)
@@ -114,7 +114,7 @@ func (s *KeeperTestSuite) TestTransferCallback_WrongCallbackArgs() {
 
 func (s *KeeperTestSuite) TestTransferCallback_DepositRecordNotFound() {
 	tc := s.SetupTransferCallback()
-	s.App.RecordsKeeper.RemoveDepositRecord(s.Ctx, tc.initialState.callbackArgs.DepositRecordId.Uint64())
+	s.App.RecordsKeeper.RemoveDepositRecord(s.Ctx, tc.initialState.callbackArgs.DepositRecordId)
 
 	err := recordskeeper.TransferCallback(s.App.RecordsKeeper, s.Ctx, tc.validArgs.packet, tc.validArgs.ack, tc.validArgs.args)
 	s.Require().EqualError(err, fmt.Sprintf("deposit record not found %d: unknown deposit record", tc.initialState.callbackArgs.DepositRecordId))

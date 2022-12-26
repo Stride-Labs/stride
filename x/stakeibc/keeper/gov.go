@@ -11,7 +11,7 @@ func (k Keeper) AddValidatorProposal(ctx sdk.Context, msg *types.AddValidatorPro
 		HostZone:   msg.HostZone,
 		Name:       msg.ValidatorName,
 		Address:    msg.ValidatorAddress,
-		Commission: 0, // TODO: Remove commission field from validator
+		Commission: sdk.ZeroInt(), // TODO: Remove commission field from validator
 	}
 	return k.AddValidatorToHostZone(ctx, addValMsg, true)
 }

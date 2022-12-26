@@ -40,7 +40,7 @@ func TransferCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ack
 		return sdkerrors.Wrapf(types.ErrUnmarshalFailure, "cannot unmarshal transfer callback args: %s", err.Error())
 	}
 	k.Logger(ctx).Info(fmt.Sprintf("TransferCallback %v", transferCallbackData))
-	depositRecord, found := k.GetDepositRecord(ctx, transferCallbackData.DepositRecordId.Uint64())
+	depositRecord, found := k.GetDepositRecord(ctx, transferCallbackData.DepositRecordId)
 	if !found {
 		k.Logger(ctx).Error(fmt.Sprintf("TransferCallback deposit record not found, packet %v", packet))
 		return sdkerrors.Wrapf(types.ErrUnknownDepositRecord, "deposit record not found %d", transferCallbackData.DepositRecordId)

@@ -79,7 +79,7 @@ func ValidatorExchangeRateCallback(k Keeper, ctx sdk.Context, args []byte, query
 	//    and the returned number of tokens will be equal to the internal exchange rate
 	validator.InternalExchangeRate = &types.ValidatorExchangeRate{
 		InternalTokensToSharesRate: queriedValidator.TokensFromShares(sdk.NewDec(1.0)),
-		EpochNumber:                strideEpochTracker.GetEpochNumber(),
+		EpochNumber:                strideEpochTracker.EpochNumber,
 	}
 	hostZone.Validators[valIndex] = &validator
 	k.SetHostZone(ctx, hostZone)

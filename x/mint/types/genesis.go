@@ -18,7 +18,7 @@ func DefaultGenesisState() *GenesisState {
 	return &GenesisState{
 		Minter:                DefaultInitialMinter(),
 		Params:                DefaultParams(),
-		ReductionStartedEpoch: sdk.NewInt(0),
+		ReductionStartedEpoch: sdk.ZeroInt(),
 	}
 }
 

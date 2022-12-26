@@ -31,7 +31,7 @@ func (s *KeeperTestSuite) SetupClaimUndelegatedTokens() ClaimUndelegatedTestCase
 	redemptionIcaOwner := "GAIA.REDEMPTION"
 	s.CreateICAChannel(redemptionIcaOwner)
 
-	epochNumber := uint64(1)
+	epochNumber := sdk.NewInt(1)
 	senderAddr := "stride_SENDER"
 	receiverAddr := "cosmos_RECEIVER"
 	redemptionAddr := s.IcaAddresses[redemptionIcaOwner]
@@ -62,7 +62,7 @@ func (s *KeeperTestSuite) SetupClaimUndelegatedTokens() ClaimUndelegatedTestCase
 	epochTracker := stakeibctypes.EpochTracker{
 		EpochIdentifier:    epochtypes.STRIDE_EPOCH,
 		EpochNumber:        epochNumber,
-		NextEpochStartTime: uint64(s.Coordinator.CurrentTime.UnixNano() + 30_000_000_000), // dictates timeouts
+		NextEpochStartTime: sdk.NewIntFromUint64(uint64(s.Coordinator.CurrentTime.UnixNano() + 30_000_000_000)), // dictates timeouts
 	}
 
 	hostZoneUnbonding1 := recordtypes.HostZoneUnbonding{
@@ -100,7 +100,7 @@ func (s *KeeperTestSuite) SetupClaimUndelegatedTokens() ClaimUndelegatedTestCase
 				Amount:      redemptionAmount,
 			}},
 			Account: redemptionAccount,
-			Timeout: uint64(stakeibctypes.DefaultICATimeoutNanos),
+			Timeout: sdk.NewIntFromUint64(stakeibctypes.DefaultICATimeoutNanos),
 		},
 	}
 }

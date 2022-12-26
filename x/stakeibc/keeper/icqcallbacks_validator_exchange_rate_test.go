@@ -52,7 +52,7 @@ func (s *KeeperTestSuite) SetupValidatorICQCallback() ValidatorICQCallbackTestCa
 	numTokens := int64(1000)
 	expectedExchangeRate := sdk.NewDec(1).Quo(sdk.NewDec(2)) // 0.5
 
-	currentEpoch := uint64(2)
+	currentEpoch := sdk.NewInt(2)
 	hostZone := stakeibctypes.HostZone{
 		ChainId:      HostChainId,
 		ConnectionId: ibctesting.FirstConnectionID,
@@ -81,8 +81,8 @@ func (s *KeeperTestSuite) SetupValidatorICQCallback() ValidatorICQCallbackTestCa
 	strideEpochTracker := stakeibctypes.EpochTracker{
 		EpochIdentifier:    epochtypes.STRIDE_EPOCH,
 		EpochNumber:        currentEpoch,
-		Duration:           10_000_000_000,                                               // 10 second epochs
-		NextEpochStartTime: uint64(s.Coordinator.CurrentTime.UnixNano() + 1_000_000_000), // epoch ends in 1 second
+		Duration:           sdk.NewInt(10_000_000_000),                                                         // 10 second epochs
+		NextEpochStartTime: sdk.NewIntFromUint64(uint64(s.Coordinator.CurrentTime.UnixNano() + 1_000_000_000)), // epoch ends in 1 second
 	}
 
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
@@ -147,7 +147,7 @@ func (s *KeeperTestSuite) TestValidatorExchangeRateCallback_BufferWindowError() 
 
 	// update epoch tracker so that we're in the middle of an epoch
 	epochTracker := tc.initialState.strideEpochTracker
-	epochTracker.Duration = 0 // duration of 0 will make the epoch start time equal to the epoch end time
+	epochTracker.Duration = sdk.ZeroInt() // duration of 0 will make the epoch start time equal to the epoch end time
 
 	s.App.StakeibcKeeper.SetEpochTracker(s.Ctx, epochTracker)
 
@@ -162,8 +162,8 @@ func (s *KeeperTestSuite) TestValidatorExchangeRateCallback_OutsideBufferWindow(
 
 	// update epoch tracker so that we're in the middle of an epoch
 	epochTracker := tc.initialState.strideEpochTracker
-	epochTracker.Duration = 10_000_000_000                                                         // 10 second epochs
-	epochTracker.NextEpochStartTime = uint64(s.Coordinator.CurrentTime.UnixNano() + 5_000_000_000) // epoch ends in 5 second
+	epochTracker.Duration = sdk.NewInt(10_000_000_000)                                                                   // 10 second epochs
+	epochTracker.NextEpochStartTime = sdk.NewIntFromUint64(uint64(s.Coordinator.CurrentTime.UnixNano() + 5_000_000_000)) // epoch ends in 5 second
 
 	s.App.StakeibcKeeper.SetEpochTracker(s.Ctx, epochTracker)
 

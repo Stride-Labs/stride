@@ -1,12 +1,13 @@
 package cli
 
 import (
+	"fmt"
 	"strconv"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
-	"github.com/spf13/cast"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/spf13/cobra"
 
 	"github.com/Stride-Labs/stride/v4/x/stakeibc/types"
@@ -22,9 +23,9 @@ func CmdChangeValidatorWeight() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
 			argHostZone := args[0]
 			argName := args[1]
-			argWeight, err := cast.ToUint64E(args[2])
-			if err != nil {
-				return err
+			argWeight, ok := sdk.NewIntFromString(args[2])
+			if !ok {
+				return fmt.Errorf("Fail to parse arg to sdk.Int (%v)", args[2])
 			}
 
 			clientCtx, err := client.GetClientTxContext(cmd)

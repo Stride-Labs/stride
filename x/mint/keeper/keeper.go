@@ -81,7 +81,7 @@ func (k Keeper) GetLastReductionEpochNum(ctx sdk.Context) sdk.Int {
 	store := ctx.KVStore(k.storeKey)
 	b := store.Get(types.LastReductionEpochKey)
 	if b == nil {
-		return sdk.NewInt(0)
+		return sdk.ZeroInt()
 	}
 
 	return sdk.NewInt(cast.ToInt64(sdk.BigEndianToUint64(b)))

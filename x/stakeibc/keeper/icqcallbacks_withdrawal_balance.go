@@ -72,7 +72,7 @@ func WithdrawalBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query icq
 	}
 
 	params := k.GetParams(ctx)
-	strideCommissionInt, err := cast.ToInt64E(params.GetStrideCommission())
+	strideCommissionInt, err := cast.ToInt64E(params.StrideCommission)
 	if err != nil {
 		return err
 	}

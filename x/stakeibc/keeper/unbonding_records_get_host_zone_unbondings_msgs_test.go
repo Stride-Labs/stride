@@ -16,8 +16,8 @@ type GetHostZoneUnbondingMsgsTestCase struct {
 	amtToUnbond           sdk.Int
 	epochUnbondingRecords []recordtypes.EpochUnbondingRecord
 	hostZone              stakeibc.HostZone
-	lightClientTime       uint64
-	totalWgt              uint64
+	lightClientTime       sdk.Int
+	totalWgt              sdk.Int
 	valNames              []string
 }
 
@@ -33,12 +33,12 @@ func (s *KeeperTestSuite) SetupGetHostZoneUnbondingMsgs() GetHostZoneUnbondingMs
 	amtToUnbond := sdk.NewInt(1_000_000)
 	amtVal1 := sdk.NewInt(1_000_000)
 	amtVal2 := sdk.NewInt(2_000_000)
-	wgtVal1 := uint64(1)
-	wgtVal2 := uint64(2)
-	totalWgt := uint64(5)
+	wgtVal1 := sdk.NewInt(1)
+	wgtVal2 := sdk.NewInt(2)
+	totalWgt := sdk.NewInt(5)
 	// 2022-08-12T19:51, a random time in the past
-	unbondingTime := uint64(1660348276)
-	lightClientTime := unbondingTime + 1
+	unbondingTime := sdk.NewInt(1660348276)
+	lightClientTime := unbondingTime.AddRaw(1)
 
 	//  define the host zone with stakedBal and validators with staked amounts
 	validators := []*stakeibc.Validator{
@@ -76,11 +76,11 @@ func (s *KeeperTestSuite) SetupGetHostZoneUnbondingMsgs() GetHostZoneUnbondingMs
 	// list of epoch unbonding records
 	epochUnbondingRecords := []recordtypes.EpochUnbondingRecord{
 		{
-			EpochNumber:        0,
+			EpochNumber:        sdk.ZeroInt(),
 			HostZoneUnbondings: []*recordtypes.HostZoneUnbonding{},
 		},
 		{
-			EpochNumber:        1,
+			EpochNumber:        sdk.NewInt(1),
 			HostZoneUnbondings: []*recordtypes.HostZoneUnbonding{},
 		},
 	}
@@ -129,13 +129,13 @@ func (s *KeeperTestSuite) TestGetHostZoneUnbondingMsgs_Successful() {
 	s.Require().Equal(len(tc.valNames), len(actualUnbondMsgs), "number of unbonding messages should be number of records to unbond")
 
 	s.Require().Equal(tc.amtToUnbond.Mul(sdk.NewInt(int64(len(tc.epochUnbondingRecords)))), actualAmtToUnbond, "total amount to unbond should match input amtToUnbond")
-	
-	totalWgt := sdk.NewDec(int64(tc.totalWgt))
+
+	totalWgt := sdk.NewDec(tc.totalWgt.Int64())
 	actualAmtToUnbondDec := sdk.NewDecFromInt(actualAmtToUnbond)
 	actualUnbondMsg1 := actualUnbondMsgs[0].String()
 	actualUnbondMsg2 := actualUnbondMsgs[1].String()
-	val1Fraction := sdk.NewDec(int64(tc.hostZone.Validators[0].Weight)).Quo(totalWgt)
-	val2Fraction := sdk.NewDec(int64(tc.hostZone.Validators[1].Weight)).Quo(totalWgt)
+	val1Fraction := sdk.NewDec(tc.hostZone.Validators[0].Weight.Int64()).Quo(totalWgt)
+	val2Fraction := sdk.NewDec(tc.hostZone.Validators[1].Weight.Int64()).Quo(totalWgt)
 	val1UnbondAmt := val1Fraction.Mul(actualAmtToUnbondDec).TruncateInt().String()
 	val2UnbondAmt := val2Fraction.Mul(actualAmtToUnbondDec).TruncateInt().String()
 
@@ -166,7 +166,7 @@ func (s *KeeperTestSuite) TestGetHostZoneUnbondingMsgs_NoEpochUnbondingRecords()
 
 	// iterate epoch unbonding records and delete them
 	for i := range tc.epochUnbondingRecords {
-		s.App.RecordsKeeper.RemoveEpochUnbondingRecord(s.Ctx, uint64(i))
+		s.App.RecordsKeeper.RemoveEpochUnbondingRecord(s.Ctx, sdk.NewIntFromUint64(uint64(i)))
 	}
 
 	s.Require().Equal(0, len(s.App.RecordsKeeper.GetAllEpochUnbondingRecord(s.Ctx)), "number of epoch unbonding records should be 0 after deletion")

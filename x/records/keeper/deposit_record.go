@@ -62,9 +62,9 @@ func (k Keeper) SetDepositRecord(ctx sdk.Context, depositRecord types.DepositRec
 }
 
 // GetDepositRecord returns a depositRecord from its id
-func (k Keeper) GetDepositRecord(ctx sdk.Context, id uint64) (val types.DepositRecord, found bool) {
+func (k Keeper) GetDepositRecord(ctx sdk.Context, id sdk.Int) (val types.DepositRecord, found bool) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.DepositRecordKey))
-	b := store.Get(GetDepositRecordIDBytes(id))
+	b := store.Get(GetDepositRecordIDBytes(id.Uint64()))
 	if b == nil {
 		return val, false
 	}
@@ -73,9 +73,9 @@ func (k Keeper) GetDepositRecord(ctx sdk.Context, id uint64) (val types.DepositR
 }
 
 // RemoveDepositRecord removes a depositRecord from the store
-func (k Keeper) RemoveDepositRecord(ctx sdk.Context, id uint64) {
+func (k Keeper) RemoveDepositRecord(ctx sdk.Context, id sdk.Int) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.DepositRecordKey))
-	store.Delete(GetDepositRecordIDBytes(id))
+	store.Delete(GetDepositRecordIDBytes(id.Uint64()))
 }
 
 // GetAllDepositRecord returns all depositRecord
@@ -101,10 +101,10 @@ func GetDepositRecordIDBytes(id uint64) []byte {
 	return bz
 }
 
-func (k Keeper) GetDepositRecordByEpochAndChain(ctx sdk.Context, epochNumber uint64, chainId string) (val *types.DepositRecord, found bool) {
+func (k Keeper) GetDepositRecordByEpochAndChain(ctx sdk.Context, epochNumber sdk.Int, chainId string) (val *types.DepositRecord, found bool) {
 	records := k.GetAllDepositRecord(ctx)
 	for _, depositRecord := range records {
-		if depositRecord.DepositEpochNumber.Equal(sdk.NewIntFromUint64(epochNumber)) && depositRecord.HostZoneId == chainId {
+		if depositRecord.DepositEpochNumber.Equal(epochNumber) && depositRecord.HostZoneId == chainId {
 			return &depositRecord, true
 		}
 	}

@@ -3,8 +3,6 @@ package keeper
 import (
 	"fmt"
 
-	"github.com/spf13/cast"
-
 	"github.com/Stride-Labs/stride/v4/utils"
 	"github.com/Stride-Labs/stride/v4/x/icacallbacks"
 	recordstypes "github.com/Stride-Labs/stride/v4/x/records/types"
@@ -39,12 +37,13 @@ func (k Keeper) UnmarshalDelegateCallbackArgs(ctx sdk.Context, delegateCallback 
 }
 
 // ICA Callback after delegating deposit records
-//   If successful:
-//      * Updates deposit record status and records delegation changes on the host zone and validators
-//   If timeout:
-//      * Does nothing
-//   If failure:
-//		* Reverts deposit record status
+//
+//	  If successful:
+//	     * Updates deposit record status and records delegation changes on the host zone and validators
+//	  If timeout:
+//	     * Does nothing
+//	  If failure:
+//			* Reverts deposit record status
 func DelegateCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ack *channeltypes.Acknowledgement, args []byte) error {
 	// Deserialize the callback args
 	delegateCallback, err := k.UnmarshalDelegateCallbackArgs(ctx, args)
@@ -103,7 +102,7 @@ func DelegateCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ack
 		k.SetHostZone(ctx, hostZone)
 	}
 
-	k.RecordsKeeper.RemoveDepositRecord(ctx, cast.ToUint64(recordId))
+	k.RecordsKeeper.RemoveDepositRecord(ctx, recordId)
 	k.Logger(ctx).Info(fmt.Sprintf("[DELEGATION] success on %s", chainId))
 	return nil
 }

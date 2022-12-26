@@ -13,7 +13,7 @@ const TypeMsgAddValidator = "add_validator"
 
 var _ sdk.Msg = &MsgAddValidator{}
 
-func NewMsgAddValidator(creator string, hostZone string, name string, address string, commission uint64, weight uint64) *MsgAddValidator {
+func NewMsgAddValidator(creator string, hostZone string, name string, address string, commission sdk.Int, weight sdk.Int) *MsgAddValidator {
 	return &MsgAddValidator{
 		Creator:    creator,
 		HostZone:   hostZone,
@@ -58,7 +58,7 @@ func (msg *MsgAddValidator) ValidateBasic() error {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "name is required")
 	}
 	// commission validation
-	if msg.Commission > 100 {
+	if msg.Commission.GT(sdk.NewInt(100)) {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "commission must be between 0 and 100")
 	}
 

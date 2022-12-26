@@ -11,7 +11,7 @@ const TypeMsgClaimUndelegatedTokens = "claim_undelegated_tokens"
 
 var _ sdk.Msg = &MsgClaimUndelegatedTokens{}
 
-func NewMsgClaimUndelegatedTokens(creator string, hostZone string, epoch uint64, sender string) *MsgClaimUndelegatedTokens {
+func NewMsgClaimUndelegatedTokens(creator string, hostZone string, epoch sdk.Int, sender string) *MsgClaimUndelegatedTokens {
 	return &MsgClaimUndelegatedTokens{
 		Creator:    creator,
 		HostZoneId: hostZone,
@@ -54,9 +54,6 @@ func (msg *MsgClaimUndelegatedTokens) ValidateBasic() error {
 	// validate host denom is not empty
 	if msg.HostZoneId == "" {
 		return sdkerrors.Wrapf(ErrRequiredFieldEmpty, "host zone id cannot be empty")
-	}
-	if !(msg.Epoch < (1<<63 - 1)) {
-		return sdkerrors.Wrapf(ErrInvalidAmount, "epoch must be less than math.MaxInt64 %d", 1<<63-1)
 	}
 	return nil
 }

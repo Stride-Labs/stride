@@ -14,7 +14,7 @@ import (
 type SweepUnbondedTokensTestCase struct {
 	epochUnbondingRecords []recordtypes.EpochUnbondingRecord
 	hostZones             []stakeibc.HostZone
-	lightClientTime       uint64
+	lightClientTime       sdk.Int
 }
 
 func (s *KeeperTestSuite) SetupSweepUnbondedTokens() SweepUnbondedTokensTestCase {
@@ -24,7 +24,7 @@ func (s *KeeperTestSuite) SetupSweepUnbondedTokens() SweepUnbondedTokensTestCase
 		{
 			Address:       "cosmos_VALIDATOR",
 			DelegationAmt: sdk.NewInt(5_000_000),
-			Weight:        uint64(10),
+			Weight:        sdk.NewInt(10),
 		},
 	}
 	gaiaDelegationAccount := stakeibc.ICAAccount{
@@ -39,7 +39,7 @@ func (s *KeeperTestSuite) SetupSweepUnbondedTokens() SweepUnbondedTokensTestCase
 		{
 			Address:       "osmo_VALIDATOR",
 			DelegationAmt: sdk.NewInt(5_000_000),
-			Weight:        uint64(10),
+			Weight:        sdk.NewInt(10),
 		},
 	}
 	osmoDelegationAccount := stakeibc.ICAAccount{
@@ -55,7 +55,7 @@ func (s *KeeperTestSuite) SetupSweepUnbondedTokens() SweepUnbondedTokensTestCase
 			ChainId:            HostChainId,
 			HostDenom:          Atom,
 			Bech32Prefix:       GaiaPrefix,
-			UnbondingFrequency: 3,
+			UnbondingFrequency: sdk.NewInt(3),
 			Validators:         gaiaValidators,
 			DelegationAccount:  &gaiaDelegationAccount,
 			RedemptionAccount:  &gaiaRedemptionAccount,
@@ -66,7 +66,7 @@ func (s *KeeperTestSuite) SetupSweepUnbondedTokens() SweepUnbondedTokensTestCase
 			ChainId:            OsmoChainId,
 			HostDenom:          Osmo,
 			Bech32Prefix:       OsmoPrefix,
-			UnbondingFrequency: 4,
+			UnbondingFrequency: sdk.NewInt(4),
 			Validators:         osmoValidators,
 			DelegationAccount:  &osmoDelegationAccount,
 			RedemptionAccount:  &osmoRedemptionAccount,
@@ -76,17 +76,17 @@ func (s *KeeperTestSuite) SetupSweepUnbondedTokens() SweepUnbondedTokensTestCase
 	}
 	dayEpochTracker := stakeibc.EpochTracker{
 		EpochIdentifier:    epochtypes.DAY_EPOCH,
-		EpochNumber:        1,
-		NextEpochStartTime: uint64(s.Coordinator.CurrentTime.UnixNano() + 30_000_000_000), // dictates timeouts
+		EpochNumber:        sdk.NewInt(1),
+		NextEpochStartTime: sdk.NewIntFromUint64(uint64(s.Coordinator.CurrentTime.UnixNano() + 30_000_000_000)), // dictates timeouts
 	}
 
 	// 2022-08-12T19:51, a random time in the past
-	unbondingTime := uint64(10)
-	lightClientTime := unbondingTime + 1
+	unbondingTime := sdk.NewInt(10)
+	lightClientTime := unbondingTime.AddRaw(1)
 	// list of epoch unbonding records
 	epochUnbondingRecords := []recordtypes.EpochUnbondingRecord{
 		{
-			EpochNumber: 0,
+			EpochNumber: sdk.ZeroInt(),
 			HostZoneUnbondings: []*recordtypes.HostZoneUnbonding{
 				{
 					HostZoneId:        HostChainId,
@@ -103,7 +103,7 @@ func (s *KeeperTestSuite) SetupSweepUnbondedTokens() SweepUnbondedTokensTestCase
 			},
 		},
 		{
-			EpochNumber: 1,
+			EpochNumber: sdk.NewInt(1),
 			HostZoneUnbondings: []*recordtypes.HostZoneUnbonding{
 				{
 					HostZoneId:        HostChainId,
@@ -120,7 +120,7 @@ func (s *KeeperTestSuite) SetupSweepUnbondedTokens() SweepUnbondedTokensTestCase
 			},
 		},
 		{
-			EpochNumber: 2,
+			EpochNumber: sdk.NewInt(2),
 			HostZoneUnbondings: []*recordtypes.HostZoneUnbonding{
 				{
 					HostZoneId:        HostChainId,

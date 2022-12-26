@@ -63,7 +63,7 @@ func (s *KeeperTestSuite) SetupRestoreInterchainAccount() RestoreInterchainAccou
 	}
 	for i, depositRecord := range depositRecords {
 		s.App.RecordsKeeper.SetDepositRecord(s.Ctx, recordtypes.DepositRecord{
-			Id:         uint64(i),
+			Id:         sdk.NewIntFromUint64(uint64(i)),
 			HostZoneId: depositRecord.chainId,
 			Status:     depositRecord.initialStatus,
 		})
@@ -94,7 +94,7 @@ func (s *KeeperTestSuite) SetupRestoreInterchainAccount() RestoreInterchainAccou
 	}
 	for i, hostZoneUnbonding := range hostZoneUnbondingRecords {
 		s.App.RecordsKeeper.SetEpochUnbondingRecord(s.Ctx, recordtypes.EpochUnbondingRecord{
-			EpochNumber: uint64(i),
+			EpochNumber: sdk.NewIntFromUint64(uint64(i)),
 			HostZoneUnbondings: []*recordtypes.HostZoneUnbonding{
 				// The first unbonding record will get reverted, the other one will not
 				{
@@ -144,7 +144,7 @@ func (s *KeeperTestSuite) RestoreChannelAndVerifySuccess(msg stakeibc.MsgRestore
 
 func (s *KeeperTestSuite) VerifyDepositRecordsStatus(expectedDepositRecords []DepositRecordStatusUpdate, revert bool) {
 	for i, expectedDepositRecord := range expectedDepositRecords {
-		actualDepositRecord, found := s.App.RecordsKeeper.GetDepositRecord(s.Ctx, uint64(i))
+		actualDepositRecord, found := s.App.RecordsKeeper.GetDepositRecord(s.Ctx, sdk.NewIntFromUint64(uint64(i)))
 		s.Require().True(found, "deposit record found")
 
 		// Only revert records if the revert option is passed and the host zone matches
@@ -158,7 +158,7 @@ func (s *KeeperTestSuite) VerifyDepositRecordsStatus(expectedDepositRecords []De
 
 func (s *KeeperTestSuite) VerifyHostZoneUnbondingStatus(expectedUnbondingRecords []HostZoneUnbondingStatusUpdate, revert bool) {
 	for i, expectedUnbonding := range expectedUnbondingRecords {
-		epochUnbondingRecord, found := s.App.RecordsKeeper.GetEpochUnbondingRecord(s.Ctx, uint64(i))
+		epochUnbondingRecord, found := s.App.RecordsKeeper.GetEpochUnbondingRecord(s.Ctx, sdk.NewIntFromUint64(uint64(i)))
 		s.Require().True(found, "epoch unbonding record found")
 
 		for _, actualUnbonding := range epochUnbondingRecord.HostZoneUnbondings {

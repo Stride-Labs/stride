@@ -24,8 +24,8 @@ func (s *KeeperTestSuite) SetupEpochElapsedShares(epochDurationSeconds float64, 
 
 	strideEpochTracker := stakeibctypes.EpochTracker{
 		EpochIdentifier:    epochtypes.STRIDE_EPOCH,
-		Duration:           uint64(epochDurationSeconds * ToNanoSeconds),
-		NextEpochStartTime: uint64(float64(s.Coordinator.CurrentTime.UnixNano()) + (nextStartTimeSeconds * ToNanoSeconds)),
+		Duration:           sdk.NewIntFromUint64(uint64(epochDurationSeconds * ToNanoSeconds)),
+		NextEpochStartTime: sdk.NewIntFromUint64(uint64(float64(s.Coordinator.CurrentTime.UnixNano()) + (nextStartTimeSeconds * ToNanoSeconds))),
 	}
 	s.App.StakeibcKeeper.SetEpochTracker(s.Ctx, strideEpochTracker)
 }

@@ -60,7 +60,7 @@ func DefaultParams() Params {
 			StrategicReserve:            sdk.MustNewDecFromStr("0.4205"),
 			CommunityPoolSecurityBudget: sdk.MustNewDecFromStr("0.1171"),
 		},
-		MintingRewardsDistributionStartEpoch: sdk.NewInt(0),
+		MintingRewardsDistributionStartEpoch: sdk.ZeroInt(),
 	}
 }
 

@@ -173,11 +173,11 @@ func (msg *MsgCreateAirdrop) ValidateBasic() error {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "airdrop identifier not set")
 	}
 
-	if msg.StartTime == sdk.NewInt(0) {
+	if msg.StartTime == sdk.ZeroInt() {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "airdrop start time not set")
 	}
 
-	if msg.Duration == sdk.NewInt(0) {
+	if msg.Duration == sdk.ZeroInt() {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "airdrop duration not set")
 	}
 	return nil

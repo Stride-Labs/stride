@@ -3,6 +3,7 @@ package types
 import (
 	fmt "fmt"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	"gopkg.in/yaml.v2"
 )
@@ -74,22 +75,22 @@ func NewParams(
 	safety_num_validators uint64,
 ) Params {
 	return Params{
-		DepositInterval:                  deposit_interval,
-		DelegateInterval:                 delegate_interval,
-		RewardsInterval:                  rewards_interval,
-		RedemptionRateInterval:           redemption_rate_interval,
-		StrideCommission:                 stride_commission,
-		ReinvestInterval:                 reinvest_interval,
-		ValidatorRebalancingThreshold:    validator_rebalancing_threshold,
-		IcaTimeoutNanos:                  ica_timeout_nanos,
-		BufferSize:                       buffer_size,
-		IbcTimeoutBlocks:                 ibc_timeout_blocks,
-		FeeTransferTimeoutNanos:          fee_transfer_timeout_nanos,
-		MaxStakeIcaCallsPerEpoch:         max_stake_ica_calls_per_epoch,
-		SafetyMinRedemptionRateThreshold: safety_min_redemption_rate_threshold,
-		SafetyMaxRedemptionRateThreshold: safety_max_redemption_rate_threshold,
-		IbcTransferTimeoutNanos:          ibc_transfer_timeout_nanos,
-		SafetyNumValidators:              safety_num_validators,
+		DepositInterval:                  sdk.NewIntFromUint64(deposit_interval),
+		DelegateInterval:                 sdk.NewIntFromUint64(delegate_interval),
+		RewardsInterval:                  sdk.NewIntFromUint64(rewards_interval),
+		RedemptionRateInterval:           sdk.NewIntFromUint64(redemption_rate_interval),
+		StrideCommission:                 sdk.NewIntFromUint64(stride_commission),
+		ReinvestInterval:                 sdk.NewIntFromUint64(reinvest_interval),
+		ValidatorRebalancingThreshold:    sdk.NewIntFromUint64(validator_rebalancing_threshold),
+		IcaTimeoutNanos:                  sdk.NewIntFromUint64(ica_timeout_nanos),
+		BufferSize:                       sdk.NewIntFromUint64(buffer_size),
+		IbcTimeoutBlocks:                 sdk.NewIntFromUint64(ibc_timeout_blocks),
+		FeeTransferTimeoutNanos:          sdk.NewIntFromUint64(fee_transfer_timeout_nanos),
+		MaxStakeIcaCallsPerEpoch:         sdk.NewIntFromUint64(max_stake_ica_calls_per_epoch),
+		SafetyMinRedemptionRateThreshold: sdk.NewIntFromUint64(safety_min_redemption_rate_threshold),
+		SafetyMaxRedemptionRateThreshold: sdk.NewIntFromUint64(safety_max_redemption_rate_threshold),
+		IbcTransferTimeoutNanos:          sdk.NewIntFromUint64(ibc_transfer_timeout_nanos),
+		SafetyNumValidators:              sdk.NewIntFromUint64(safety_num_validators),
 	}
 }
 
@@ -138,47 +139,47 @@ func (p *Params) ParamSetPairs() paramtypes.ParamSetPairs {
 }
 
 func isThreshold(i interface{}) error {
-	ival, ok := i.(uint64)
+	ival, ok := i.(sdk.Int)
 	if !ok {
 		return fmt.Errorf("parameter not accepted: %T", i)
 	}
 
-	if ival <= 0 {
+	if ival.IsZero() && ival.IsNegative() {
 		return fmt.Errorf("parameter must be positive: %d", ival)
 	}
-	if ival > 10000 {
+	if ival.GT(sdk.NewInt(10000)) {
 		return fmt.Errorf("parameter must be less than 10,000: %d", ival)
 	}
 	return nil
 }
 
 func validTimeoutNanos(i interface{}) error {
-	ival, ok := i.(uint64)
+	ival, ok := i.(sdk.Int)
 	if !ok {
 		return fmt.Errorf("parameter not accepted: %T", i)
 	}
 
-	tenMin := uint64(600000000000)
-	oneHour := uint64(600000000000 * 6)
+	tenMin := sdk.NewInt(600000000000)
+	oneHour := sdk.NewInt(600000000000 * 6)
 
-	if ival < tenMin {
+	if ival.LT(tenMin) {
 		return fmt.Errorf("parameter must be g.t. 600000000000ns: %d", ival)
 	}
-	if ival > oneHour {
+	if ival.GT(oneHour) {
 		return fmt.Errorf("parameter must be less than %dns: %d", oneHour, ival)
 	}
 	return nil
 }
 
 func validMaxRedemptionRateThreshold(i interface{}) error {
-	ival, ok := i.(uint64)
+	ival, ok := i.(sdk.Int)
 	if !ok {
 		return fmt.Errorf("parameter not accepted: %T", i)
 	}
 
-	maxVal := uint64(1000) // divide by 100, so 1000 => 10
+	maxVal := sdk.NewInt(1000) // divide by 100, so 1000 => 10
 
-	if ival > maxVal {
+	if ival.GT(maxVal) {
 		return fmt.Errorf("parameter must be l.t. 1000: %d", ival)
 	}
 
@@ -186,14 +187,14 @@ func validMaxRedemptionRateThreshold(i interface{}) error {
 }
 
 func validMinRedemptionRateThreshold(i interface{}) error {
-	ival, ok := i.(uint64)
+	ival, ok := i.(sdk.Int)
 	if !ok {
 		return fmt.Errorf("parameter not accepted: %T", i)
 	}
 
-	minVal := uint64(75) // divide by 100, so 75 => 0.75
+	minVal := sdk.NewInt(75) // divide by 100, so 75 => 0.75
 
-	if ival < minVal {
+	if ival.LT(minVal) {
 		return fmt.Errorf("parameter must be g.t. 75: %d", ival)
 	}
 
@@ -201,24 +202,24 @@ func validMinRedemptionRateThreshold(i interface{}) error {
 }
 
 func isPositive(i interface{}) error {
-	ival, ok := i.(uint64)
+	ival, ok := i.(sdk.Int)
 	if !ok {
 		return fmt.Errorf("parameter not accepted: %T", i)
 	}
 
-	if ival <= 0 {
+	if ival.IsNegative() && ival.IsZero() {
 		return fmt.Errorf("parameter must be positive: %d", ival)
 	}
 	return nil
 }
 
 func isCommission(i interface{}) error {
-	ival, ok := i.(uint64)
+	ival, ok := i.(sdk.Int)
 	if !ok {
 		return fmt.Errorf("commission not accepted: %T", i)
 	}
 
-	if ival > 100 {
+	if ival.GT(sdk.NewInt(100)) {
 		return fmt.Errorf("commission must be less than 100: %d", ival)
 	}
 	return nil

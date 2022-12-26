@@ -13,7 +13,7 @@ const TypeMsgRebalanceValidators = "rebalance_validators"
 
 var _ sdk.Msg = &MsgRebalanceValidators{}
 
-func NewMsgRebalanceValidators(creator string, hostZone string, numValidators uint64) *MsgRebalanceValidators {
+func NewMsgRebalanceValidators(creator string, hostZone string, numValidators sdk.Int) *MsgRebalanceValidators {
 	return &MsgRebalanceValidators{
 		Creator:      creator,
 		HostZone:     hostZone,
@@ -50,7 +50,7 @@ func (msg *MsgRebalanceValidators) ValidateBasic() error {
 	if err := utils.ValidateAdminAddress(msg.Creator); err != nil {
 		return err
 	}
-	if (msg.NumRebalance < 1) || (msg.NumRebalance > 10) {
+	if (msg.NumRebalance.LT(sdk.NewInt(1))) || (msg.NumRebalance.GT(sdk.NewInt(10))) {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, fmt.Sprintf("invalid number of validators to rebalance (%d)", msg.NumRebalance))
 	}
 	return nil

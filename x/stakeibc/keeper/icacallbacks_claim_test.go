@@ -15,7 +15,7 @@ import (
 
 type ClaimCallbackState struct {
 	callbackArgs    types.ClaimCallback
-	epochNumber     uint64
+	epochNumber     sdk.Int
 	decrementAmount sdk.Int
 	hzu1TokenAmount sdk.Int
 }
@@ -32,14 +32,14 @@ type ClaimCallbackTestCase struct {
 }
 
 func (s *KeeperTestSuite) SetupClaimCallback() ClaimCallbackTestCase {
-	epochNumber := uint64(1)
+	epochNumber := sdk.NewInt(1)
 	recordId1 := recordtypes.UserRedemptionRecordKeyFormatter(HostChainId, epochNumber, "sender")
 	userRedemptionRecord1 := recordtypes.UserRedemptionRecord{
 		Id: recordId1,
 		// after a user calls ClaimUndelegatedTokens, the record is set to claimIsPending = true
 		// to prevent double claims
 		ClaimIsPending: true,
-		Amount: sdk.ZeroInt(),
+		Amount:         sdk.ZeroInt(),
 	}
 	recordId2 := recordtypes.UserRedemptionRecordKeyFormatter(HostChainId, epochNumber, "other_sender")
 	userRedemptionRecord2 := recordtypes.UserRedemptionRecord{
@@ -83,7 +83,7 @@ func (s *KeeperTestSuite) SetupClaimCallback() ClaimCallbackTestCase {
 		HostZoneUnbondings: []*recordtypes.HostZoneUnbonding{&hostZoneUnbonding1, &hostZoneUnbonding2},
 	}
 	epochUnbondingRecord2 := recordtypes.EpochUnbondingRecord{
-		EpochNumber:        epochNumber + 1,
+		EpochNumber:        epochNumber.Add(sdk.NewInt(1)),
 		HostZoneUnbondings: []*recordtypes.HostZoneUnbonding{&hostZoneUnbonding3, &hostZoneUnbonding4},
 	}
 	s.App.RecordsKeeper.SetEpochUnbondingRecord(s.Ctx, epochUnbondingRecord1)
@@ -132,7 +132,7 @@ func (s *KeeperTestSuite) TestClaimCallback_Successful() {
 	// fetch the epoch unbonding record
 	epochUnbondingRecord1, found := s.App.RecordsKeeper.GetEpochUnbondingRecord(s.Ctx, tc.initialState.epochNumber)
 	s.Require().True(found, "epoch unbonding record found")
-	epochUnbondingRecord2, found := s.App.RecordsKeeper.GetEpochUnbondingRecord(s.Ctx, tc.initialState.epochNumber+1)
+	epochUnbondingRecord2, found := s.App.RecordsKeeper.GetEpochUnbondingRecord(s.Ctx, tc.initialState.epochNumber.Add(sdk.NewInt(1)))
 	s.Require().True(found, "epoch unbonding record found")
 
 	// fetch the hzus

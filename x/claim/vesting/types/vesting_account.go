@@ -210,7 +210,7 @@ func NewStridePeriodicVestingAccount(baseAcc *authtypes.BaseAccount, originalVes
 		return &StridePeriodicVestingAccount{}
 	}
 
-	endTime := sdk.NewInt(0)
+	endTime := sdk.ZeroInt()
 	for _, p := range periods {
 		endTime = sdk.MaxInt(endTime, p.StartTime.Add(p.Length))
 	}

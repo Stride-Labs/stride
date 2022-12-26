@@ -39,17 +39,17 @@ func TestDepositRecordQuerySingle(t *testing.T) {
 	}{
 		{
 			desc:     "First",
-			request:  &types.QueryGetDepositRecordRequest{Id: msgs[0].Id},
+			request:  &types.QueryGetDepositRecordRequest{Id: msgs[0].Id.Uint64()},
 			response: &types.QueryGetDepositRecordResponse{DepositRecord: msgs[0]},
 		},
 		{
 			desc:     "Second",
-			request:  &types.QueryGetDepositRecordRequest{Id: msgs[1].Id},
+			request:  &types.QueryGetDepositRecordRequest{Id: msgs[1].Id.Uint64()},
 			response: &types.QueryGetDepositRecordResponse{DepositRecord: msgs[1]},
 		},
 		{
 			desc:    "KeyNotFound",
-			request: &types.QueryGetDepositRecordRequest{Id: sdk.NewIntFromUint64(uint64(len(msgs)))},
+			request: &types.QueryGetDepositRecordRequest{Id: uint64(len(msgs))},
 			err:     sdkerrors.ErrKeyNotFound,
 		},
 		{

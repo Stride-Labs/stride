@@ -4,6 +4,7 @@ import (
 	"math"
 	"testing"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/stretchr/testify/require"
 
@@ -22,7 +23,7 @@ func TestMsgClaimUndelegatedTokens_ValidateBasic(t *testing.T) {
 				Creator:    sample.AccAddress(),
 				Sender:     sample.StrideAddress(),
 				HostZoneId: "GAIA",
-				Epoch:      uint64(1),
+				Epoch:      sdk.NewInt(1),
 			},
 		},
 		{
@@ -31,7 +32,7 @@ func TestMsgClaimUndelegatedTokens_ValidateBasic(t *testing.T) {
 				Creator:    "invalid_address",
 				Sender:     sample.StrideAddress(),
 				HostZoneId: "GAIA",
-				Epoch:      uint64(1),
+				Epoch:      sdk.NewInt(1),
 			},
 			err: sdkerrors.ErrInvalidAddress,
 		},
@@ -40,7 +41,7 @@ func TestMsgClaimUndelegatedTokens_ValidateBasic(t *testing.T) {
 			msg: MsgClaimUndelegatedTokens{
 				Creator: sample.AccAddress(),
 				Sender:  sample.StrideAddress(),
-				Epoch:   uint64(1),
+				Epoch:   sdk.NewInt(1),
 			},
 			err: ErrRequiredFieldEmpty,
 		},
@@ -50,7 +51,7 @@ func TestMsgClaimUndelegatedTokens_ValidateBasic(t *testing.T) {
 				Creator:    sample.AccAddress(),
 				Sender:     sample.StrideAddress(),
 				HostZoneId: "GAIA",
-				Epoch:      math.MaxUint64,
+				Epoch:      sdk.NewIntFromUint64(math.MaxUint64),
 			},
 			err: ErrInvalidAmount,
 		},

@@ -58,7 +58,7 @@ func TestEpochUnbondingRecordGet(t *testing.T) {
 	keeper, ctx := keepertest.RecordsKeeper(t)
 	items, _ := createNEpochUnbondingRecord(keeper, ctx, 10)
 	for _, item := range items {
-		got, found := keeper.GetEpochUnbondingRecord(ctx, item.EpochNumber.Uint64())
+		got, found := keeper.GetEpochUnbondingRecord(ctx, item.EpochNumber)
 		require.True(t, found)
 		require.Equal(t,
 			nullify.Fill(&item),
@@ -71,8 +71,8 @@ func TestEpochUnbondingRecordRemove(t *testing.T) {
 	keeper, ctx := keepertest.RecordsKeeper(t)
 	items, _ := createNEpochUnbondingRecord(keeper, ctx, 10)
 	for _, item := range items {
-		keeper.RemoveEpochUnbondingRecord(ctx, item.EpochNumber.Uint64())
-		_, found := keeper.GetEpochUnbondingRecord(ctx, item.EpochNumber.Uint64())
+		keeper.RemoveEpochUnbondingRecord(ctx, item.EpochNumber)
+		_, found := keeper.GetEpochUnbondingRecord(ctx, item.EpochNumber)
 		require.False(t, found)
 	}
 }
@@ -102,7 +102,7 @@ func TestGetHostZoneUnbondingByChainId(t *testing.T) {
 	_, hostZoneUnbondings := createNEpochUnbondingRecord(keeper, ctx, 10)
 
 	expectedHostZoneUnbonding := hostZoneUnbondings["host-B"]
-	actualHostZoneUnbonding, found := keeper.GetHostZoneUnbondingByChainId(ctx, 1, "host-B")
+	actualHostZoneUnbonding, found := keeper.GetHostZoneUnbondingByChainId(ctx, sdk.NewInt(1), "host-B")
 
 	require.True(t, found)
 	require.Equal(t,
@@ -115,8 +115,8 @@ func TestAddHostZoneToEpochUnbondingRecord(t *testing.T) {
 	keeper, ctx := keepertest.RecordsKeeper(t)
 	epochUnbondingRecords, _ := createNEpochUnbondingRecord(keeper, ctx, 3)
 
-	epochNumber := 0
-	initialEpochUnbondingRecord := epochUnbondingRecords[epochNumber]
+	epochNumber := sdk.ZeroInt()
+	initialEpochUnbondingRecord := epochUnbondingRecords[epochNumber.Int64()]
 
 	// Add new host zone to initial epoch unbonding records
 	newHostZone := types.HostZoneUnbonding{
@@ -126,7 +126,7 @@ func TestAddHostZoneToEpochUnbondingRecord(t *testing.T) {
 	expectedEpochUnbondingRecord := initialEpochUnbondingRecord
 	expectedEpochUnbondingRecord.HostZoneUnbondings = append(expectedEpochUnbondingRecord.HostZoneUnbondings, &newHostZone)
 
-	actualEpochUnbondingRecord, success := keeper.AddHostZoneToEpochUnbondingRecord(ctx, uint64(epochNumber), "host-D", &newHostZone)
+	actualEpochUnbondingRecord, success := keeper.AddHostZoneToEpochUnbondingRecord(ctx, epochNumber, "host-D", &newHostZone)
 
 	require.True(t, success)
 	require.Equal(t,
@@ -140,14 +140,14 @@ func TestSetHostZoneUnbondings(t *testing.T) {
 
 	initialEpochUnbondingRecords, _ := createNEpochUnbondingRecord(keeper, ctx, 4)
 
-	epochsToUpdate := []uint64{1, 3}
+	epochsToUpdate := []sdk.Int{sdk.NewInt(1), sdk.NewInt(3)}
 	hostIdToUpdate := "host-B"
 	newStatus := types.HostZoneUnbonding_UNBONDING_IN_PROGRESS
 
 	expectedEpochUnbondingRecords := initialEpochUnbondingRecords
 	for _, epochUnbondingRecord := range expectedEpochUnbondingRecords {
 		for _, epochNumberToUpdate := range epochsToUpdate {
-			if epochUnbondingRecord.EpochNumber.Equal(sdk.NewIntFromUint64(epochNumberToUpdate)) {
+			if epochUnbondingRecord.EpochNumber.Equal(epochNumberToUpdate) {
 				for i, hostUnbonding := range epochUnbondingRecord.HostZoneUnbondings {
 					if hostUnbonding.HostZoneId == hostIdToUpdate {
 						updatedHostZoneUnbonding := hostUnbonding

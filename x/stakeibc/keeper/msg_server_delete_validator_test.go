@@ -19,16 +19,16 @@ func (s *KeeperTestSuite) SetupDeleteValidator() DeleteValidatorTestCase {
 		{
 			Name:           "val1",
 			Address:        "stride_VAL1",
-			CommissionRate: 1,
-			Weight:         0,
+			CommissionRate: sdk.NewInt(1),
+			Weight:         sdk.ZeroInt(),
 			Status:         stakeibctypes.Validator_ACTIVE,
 			DelegationAmt:  sdk.ZeroInt(),
 		},
 		{
 			Name:           "val2",
 			Address:        "stride_VAL2",
-			CommissionRate: 2,
-			Weight:         0,
+			CommissionRate: sdk.NewInt(2),
+			Weight:         sdk.ZeroInt(),
 			Status:         stakeibctypes.Validator_ACTIVE,
 			DelegationAmt:  sdk.ZeroInt(),
 		},
@@ -127,7 +127,7 @@ func (s *KeeperTestSuite) TestDeleteValidator_NonZeroWeight() {
 
 	// Update val1 to have a non-zero weight
 	hostZone := tc.hostZone
-	hostZone.Validators[0].Weight = 1
+	hostZone.Validators[0].Weight = sdk.NewInt(1)
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
 
 	_, err := s.GetMsgServer().DeleteValidator(sdk.WrapSDKContext(s.Ctx), &tc.validMsgs[0])
