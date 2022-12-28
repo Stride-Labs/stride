@@ -47,6 +47,7 @@ func (k Keeper) GetAllEpochUnbondingRecord(ctx sdk.Context) (list []types.EpochU
 	for ; iterator.Valid(); iterator.Next() {
 		var val types.EpochUnbondingRecord
 		k.Cdc.MustUnmarshal(iterator.Value(), &val)
+		fmt.Println(val)
 		list = append(list, val)
 	}
 

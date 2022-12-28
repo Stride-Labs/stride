@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	"github.com/spf13/cast"
 	"github.com/tendermint/tendermint/libs/log"
 
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -176,31 +175,23 @@ func (k Keeper) GetStrideEpochElapsedShare(ctx sdk.Context) (sdk.Dec, error) {
 	}
 
 	// Get epoch start time, end time, and duration
-	epochDuration, err := cast.ToInt64E(epochTracker.Duration)
-	if err != nil {
-		errMsg := fmt.Sprintf("unable to convert epoch duration to int64, err: %s", err.Error())
-		k.Logger(ctx).Error(errMsg)
-		return sdk.ZeroDec(), sdkerrors.Wrapf(types.ErrIntCast, errMsg)
-	}
-	epochEndTime, err := cast.ToInt64E(epochTracker.NextEpochStartTime)
-	if err != nil {
-		errMsg := fmt.Sprintf("unable to convert next epoch start time to int64, err: %s", err.Error())
-		k.Logger(ctx).Error(errMsg)
-		return sdk.ZeroDec(), sdkerrors.Wrapf(types.ErrIntCast, errMsg)
-	}
-	epochStartTime := epochEndTime - epochDuration
+	epochDuration := epochTracker.Duration
+
+	epochEndTime := epochTracker.NextEpochStartTime
+
+	epochStartTime := epochEndTime.Sub(epochDuration)
 
 	// Confirm the current block time is inside the current epoch's start and end times
-	currBlockTime := ctx.BlockTime().UnixNano()
-	if currBlockTime < epochStartTime || currBlockTime > epochEndTime {
-		errMsg := fmt.Sprintf("current block time %d is not within current epoch (ending at %d)", currBlockTime, epochTracker.NextEpochStartTime)
+	currBlockTime := sdk.NewInt(ctx.BlockTime().UnixNano())
+	if currBlockTime.LT(epochStartTime) || currBlockTime.GT(epochEndTime) {
+		errMsg := fmt.Sprintf("current block time %s is not within current epoch (ending at %s)", currBlockTime.String(), epochTracker.NextEpochStartTime.String())
 		k.Logger(ctx).Error(errMsg)
 		return sdk.ZeroDec(), sdkerrors.Wrapf(types.ErrInvalidEpoch, errMsg)
 	}
 
 	// Get elapsed share
-	elapsedTime := currBlockTime - epochStartTime
-	elapsedShare := sdk.NewDec(elapsedTime).Quo(sdk.NewDec(epochDuration))
+	elapsedTime := currBlockTime.Sub(epochStartTime)
+	elapsedShare := sdk.NewDecFromBigInt(elapsedTime.BigInt()).Quo(sdk.NewDecFromBigInt(epochDuration.BigInt()))
 	if elapsedShare.LT(sdk.ZeroDec()) || elapsedShare.GT(sdk.OneDec()) {
 		errMsg := fmt.Sprintf("elapsed share (%s) for epoch is not between 0 and 1", elapsedShare)
 		k.Logger(ctx).Error(errMsg)
@@ -217,10 +208,7 @@ func (k Keeper) IsWithinBufferWindow(ctx sdk.Context) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	bufferSize, err := cast.ToInt64E(k.GetParam(ctx, types.KeyBufferSize))
-	if err != nil {
-		return false, err
-	}
+	bufferSize := k.GetParam(ctx, types.KeyBufferSize).Int64()
 	epochShareThresh := sdk.NewDec(1).Sub(sdk.NewDec(1).Quo(sdk.NewDec(bufferSize)))
 
 	inWindow := elapsedShareOfEpoch.GT(epochShareThresh)

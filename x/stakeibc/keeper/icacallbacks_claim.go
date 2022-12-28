@@ -11,11 +11,11 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	channeltypes "github.com/cosmos/ibc-go/v3/modules/core/04-channel/types"
-	"github.com/golang/protobuf/proto" //nolint:staticcheck
+	//nolint:staticcheck
 )
 
 func (k Keeper) MarshalClaimCallbackArgs(ctx sdk.Context, claimCallback types.ClaimCallback) ([]byte, error) {
-	out, err := proto.Marshal(&claimCallback)
+	out, err := k.cdc.Marshal(&claimCallback)
 	if err != nil {
 		k.Logger(ctx).Error(fmt.Sprintf("MarshalClaimCallbackArgs %v", err.Error()))
 		return nil, err
@@ -25,7 +25,7 @@ func (k Keeper) MarshalClaimCallbackArgs(ctx sdk.Context, claimCallback types.Cl
 
 func (k Keeper) UnmarshalClaimCallbackArgs(ctx sdk.Context, claimCallback []byte) (*types.ClaimCallback, error) {
 	unmarshalledDelegateCallback := types.ClaimCallback{}
-	if err := proto.Unmarshal(claimCallback, &unmarshalledDelegateCallback); err != nil {
+	if err := k.cdc.Unmarshal(claimCallback, &unmarshalledDelegateCallback); err != nil {
 		k.Logger(ctx).Error(fmt.Sprintf("UnmarshalClaimCallbackArgs %v", err.Error()))
 		return nil, err
 	}

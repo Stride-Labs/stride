@@ -1,9 +1,6 @@
 package keeper_test
 
 import (
-	"math"
-	"regexp"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	epochtypes "github.com/Stride-Labs/stride/v4/x/epochs/types"
@@ -73,40 +70,6 @@ func (s *KeeperTestSuite) TestEpochElapsedShare_Failed_EpochNotFound() {
 	// We skip the setup step her so an epoch tracker is never created
 	_, err := s.App.StakeibcKeeper.GetStrideEpochElapsedShare(s.Ctx)
 	s.Require().EqualError(err, "Failed to get epoch tracker for stride_epoch: not found")
-}
-
-func (s *KeeperTestSuite) TestEpochElapsedShare_Failed_DurationOverflow() {
-	// Set the duration to the max uint in the epoch tracker so that it overflows when casting to an int
-	maxDurationSeconds := float64(math.MaxUint64 / ToNanoSeconds)
-	s.SetupEpochElapsedShares(maxDurationSeconds, DefaultNextStartTimeSeconds)
-
-	_, err := s.App.StakeibcKeeper.GetStrideEpochElapsedShare(s.Ctx)
-
-	expectedErrMsg := `unable to convert epoch duration to int64, err: overflow: `
-	expectedErrMsg += `unable to cast \d+ of type uint64 to int64: unable to cast to safe cast int`
-	s.Require().Regexp(regexp.MustCompile(expectedErrMsg), err.Error())
-}
-
-func (s *KeeperTestSuite) TestEpochElapsedShare_Failed_NextStartTimeOverflow() {
-	// Set the next start time to the max uint in the epoch tracker so that it overflows when casting to an int
-	maxNextStartTimeSeconds := float64(math.MaxUint64 / ToNanoSeconds)
-	s.SetupEpochElapsedShares(DefaultEpochDurationSeconds, maxNextStartTimeSeconds)
-
-	_, err := s.App.StakeibcKeeper.GetStrideEpochElapsedShare(s.Ctx)
-	expectedErrMsg := `unable to convert next epoch start time to int64, err: overflow: `
-	expectedErrMsg += `unable to cast \d+ of type uint64 to int64: unable to cast to safe cast int`
-	s.Require().Regexp(regexp.MustCompile(expectedErrMsg), err.Error())
-}
-
-func (s *KeeperTestSuite) TestEpochElapsedShare_Failed_CurrentBlockTimeOverflow() {
-	// Set the current block time to the max uint so that it overflows when casting to an int
-	maxNextStartTimeSeconds := float64(math.MaxUint64 / ToNanoSeconds)
-	s.SetupEpochElapsedShares(DefaultEpochDurationSeconds, maxNextStartTimeSeconds)
-
-	_, err := s.App.StakeibcKeeper.GetStrideEpochElapsedShare(s.Ctx)
-	expectedErrMsg := `unable to convert next epoch start time to int64, err: overflow: `
-	expectedErrMsg += `unable to cast \d+ of type uint64 to int64: unable to cast to safe cast int`
-	s.Require().Regexp(regexp.MustCompile(expectedErrMsg), err.Error())
 }
 
 func (s *KeeperTestSuite) TestEpochElapsedShare_Failed_BlockTimeOutsideEpoch() {

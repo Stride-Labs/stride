@@ -325,7 +325,7 @@ func (s *KeeperTestSuite) CheckStateAfterTransferringDepositRecords(tc DepositRe
 		// Confirm callback args
 		callbackArgs, err := s.App.RecordsKeeper.UnmarshalTransferCallbackArgs(s.Ctx, callbackData.CallbackArgs)
 		s.Require().NoError(err, "unmarshalling callback args error for callback key (%s)", callbackKey)
-		s.Require().Equal(depositRecord.Id, callbackArgs.DepositRecordId, "deposit record ID in callback args (%s)", callbackKey)
+		s.Require().Equal(depositRecord.Id, sdk.NewIntFromUint64(callbackArgs.DepositRecordId), "deposit record ID in callback args (%s)", callbackKey)
 	}
 
 	// Confirm the module account balance decreased

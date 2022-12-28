@@ -193,7 +193,7 @@ func (k Keeper) RemoveValidatorFromHostZone(ctx sdk.Context, chainId string, val
 				k.SetHostZone(ctx, hostZone)
 				return nil
 			}
-			errMsg := fmt.Sprintf("Validator (%s) has non-zero delegation (%v) or weight (%d)", validatorAddress, val.DelegationAmt, val.Weight)
+			errMsg := fmt.Sprintf("Validator (%s) has non-zero delegation (%v) or weight (%d)", validatorAddress, val.DelegationAmt, val.Weight.Uint64())
 			k.Logger(ctx).Error(errMsg)
 			return errors.New(errMsg)
 		}

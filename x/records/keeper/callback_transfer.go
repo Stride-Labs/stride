@@ -24,7 +24,7 @@ func (k Keeper) MarshalTransferCallbackArgs(ctx sdk.Context, delegateCallback ty
 
 func (k Keeper) UnmarshalTransferCallbackArgs(ctx sdk.Context, delegateCallback []byte) (*types.TransferCallback, error) {
 	unmarshalledTransferCallback := types.TransferCallback{}
-	if err := proto.Unmarshal(delegateCallback, &unmarshalledTransferCallback); err != nil {
+	if err := k.Cdc.Unmarshal(delegateCallback, &unmarshalledTransferCallback); err != nil {
 		k.Logger(ctx).Error(fmt.Sprintf("UnmarshalTransferCallbackArgs %v", err.Error()))
 		return nil, err
 	}

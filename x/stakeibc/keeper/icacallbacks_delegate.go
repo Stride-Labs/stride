@@ -13,12 +13,12 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	channeltypes "github.com/cosmos/ibc-go/v3/modules/core/04-channel/types"
-	"github.com/golang/protobuf/proto" //nolint:staticcheck
+	//nolint:staticcheck
 )
 
 // Marshalls delegate callback arguments
 func (k Keeper) MarshalDelegateCallbackArgs(ctx sdk.Context, delegateCallback types.DelegateCallback) ([]byte, error) {
-	out, err := proto.Marshal(&delegateCallback)
+	out, err := k.cdc.Marshal(&delegateCallback)
 	if err != nil {
 		k.Logger(ctx).Error(fmt.Sprintf("MarshalDelegateCallbackArgs %v", err.Error()))
 		return nil, err
@@ -29,7 +29,7 @@ func (k Keeper) MarshalDelegateCallbackArgs(ctx sdk.Context, delegateCallback ty
 // Unmarshalls delegate callback arguments into a DelegateCallback struct
 func (k Keeper) UnmarshalDelegateCallbackArgs(ctx sdk.Context, delegateCallback []byte) (*types.DelegateCallback, error) {
 	unmarshalledDelegateCallback := types.DelegateCallback{}
-	if err := proto.Unmarshal(delegateCallback, &unmarshalledDelegateCallback); err != nil {
+	if err := k.cdc.Unmarshal(delegateCallback, &unmarshalledDelegateCallback); err != nil {
 		k.Logger(ctx).Error(fmt.Sprintf("UnmarshalDelegateCallbackArgs %v", err.Error()))
 		return nil, err
 	}

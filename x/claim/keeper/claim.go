@@ -312,7 +312,7 @@ func (k Keeper) SetClaimRecord(ctx sdk.Context, claimRecord types.ClaimRecord) e
 	store := ctx.KVStore(k.storeKey)
 	prefixStore := prefix.NewStore(store, append([]byte(types.ClaimRecordsStorePrefix), []byte(claimRecord.AirdropIdentifier)...))
 
-	bz, err := proto.Marshal(&claimRecord)
+	bz, err := k.cdc.Marshal(&claimRecord)
 	if err != nil {
 		return err
 	}

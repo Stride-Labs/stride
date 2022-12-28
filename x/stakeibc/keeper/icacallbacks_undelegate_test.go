@@ -1,6 +1,7 @@
 package keeper_test
 
 import (
+	"fmt"
 	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -77,9 +78,11 @@ func (s *KeeperTestSuite) SetupUndelegateCallback() UndelegateCallbackTestCase {
 
 	// Set up EpochUnbondingRecord, HostZoneUnbonding and token state
 	hostZoneUnbonding := recordtypes.HostZoneUnbonding{
-		HostZoneId:    HostChainId,
-		Status:        recordtypes.HostZoneUnbonding_UNBONDING_QUEUE,
-		StTokenAmount: balanceToUnstake,
+		HostZoneId:        HostChainId,
+		Status:            recordtypes.HostZoneUnbonding_UNBONDING_QUEUE,
+		StTokenAmount:     balanceToUnstake,
+		NativeTokenAmount: sdk.ZeroInt(),
+		UnbondingTime:     sdk.NewInt(1),
 	}
 	epochUnbondingRecord := recordtypes.EpochUnbondingRecord{
 		EpochNumber:        epochNumber,
@@ -109,6 +112,7 @@ func (s *KeeperTestSuite) SetupUndelegateCallback() UndelegateCallbackTestCase {
 		SplitDelegations:        []*types.SplitDelegation{&val1SplitDelegation, &val2SplitDelegation},
 		EpochUnbondingRecordIds: []sdk.Int{epochNumber},
 	}
+	fmt.Println("undelegateCallback", callbackArgs)
 	args, err := s.App.StakeibcKeeper.MarshalUndelegateCallbackArgs(s.Ctx, callbackArgs)
 	s.Require().NoError(err, "callback args unmarshalled")
 

@@ -163,6 +163,8 @@ func (s *KeeperTestSuite) TestGetHostZoneUnbondingMsgs_WrongChainId() {
 
 func (s *KeeperTestSuite) TestGetHostZoneUnbondingMsgs_NoEpochUnbondingRecords() {
 	tc := s.SetupGetHostZoneUnbondingMsgs()
+	res := s.App.RecordsKeeper.GetAllEpochUnbondingRecord(s.Ctx)
+	fmt.Println(res)
 
 	// iterate epoch unbonding records and delete them
 	for i := range tc.epochUnbondingRecords {

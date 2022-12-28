@@ -17,7 +17,7 @@ import (
 
 // Marshalls redemption callback arguments
 func (k Keeper) MarshalRedemptionCallbackArgs(ctx sdk.Context, redemptionCallback types.RedemptionCallback) ([]byte, error) {
-	out, err := proto.Marshal(&redemptionCallback)
+	out, err := k.cdc.Marshal(&redemptionCallback)
 	if err != nil {
 		k.Logger(ctx).Error(fmt.Sprintf("MarshalRedemptionCallbackArgs | %s", err.Error()))
 		return nil, err
@@ -36,12 +36,13 @@ func (k Keeper) UnmarshalRedemptionCallbackArgs(ctx sdk.Context, redemptionCallb
 }
 
 // ICA Callback after undelegating
-//   If successful:
-//      * Updates epoch unbonding record status
-//   If timeout:
-//      * Does nothing
-//   If failure:
-//		* Reverts epoch unbonding record status
+//
+//	  If successful:
+//	     * Updates epoch unbonding record status
+//	  If timeout:
+//	     * Does nothing
+//	  If failure:
+//			* Reverts epoch unbonding record status
 func RedemptionCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ack *channeltypes.Acknowledgement, args []byte) error {
 	// Fetch callback args
 	redemptionCallback, err := k.UnmarshalRedemptionCallbackArgs(ctx, args)

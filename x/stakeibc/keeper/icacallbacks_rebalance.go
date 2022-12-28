@@ -14,7 +14,7 @@ import (
 )
 
 func (k Keeper) MarshalRebalanceCallbackArgs(ctx sdk.Context, rebalanceCallback types.RebalanceCallback) ([]byte, error) {
-	out, err := proto.Marshal(&rebalanceCallback)
+	out, err := k.cdc.Marshal(&rebalanceCallback)
 	if err != nil {
 		k.Logger(ctx).Error(fmt.Sprintf("MarshalRebalanceCallbackArgs %v", err.Error()))
 		return nil, err

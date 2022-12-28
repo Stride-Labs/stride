@@ -2,10 +2,10 @@ package keeper
 
 import (
 	"fmt"
+	"math"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	"github.com/spf13/cast"
 
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
@@ -69,7 +69,7 @@ func DelegatorSharesCallback(k Keeper, ctx sdk.Context, args []byte, query icqty
 		k.Logger(ctx).Error("failed to find stride epoch")
 		return sdkerrors.Wrapf(sdkerrors.ErrNotFound, "no epoch number for epoch (%s)", epochtypes.STRIDE_EPOCH)
 	}
-	if validator.InternalExchangeRate.EpochNumber != strideEpochTracker.EpochNumber {
+	if !validator.InternalExchangeRate.EpochNumber.Equal(strideEpochTracker.EpochNumber) {
 		errMsg := fmt.Sprintf("DelegationCallback: validator (%s) internal exchange rate has not been updated this epoch (epoch #%d)",
 			validator.Address, strideEpochTracker.EpochNumber.Uint64())
 		k.Logger(ctx).Error(errMsg)
@@ -98,10 +98,10 @@ func DelegatorSharesCallback(k Keeper, ctx sdk.Context, args []byte, query icqty
 
 	// Get slash percentage
 	slashAmount := validator.DelegationAmt.Sub(validatorTokens)
-
-	weight, err := cast.ToInt64E(validator.Weight)
-	if err != nil {
-		errMsg := fmt.Sprintf("unable to convert validator weight to int64, err: %s", err.Error())
+	maxBound := sdk.NewInt(math.MaxInt64)
+	weight := validator.Weight
+	if weight.GTE(maxBound) {
+		errMsg := fmt.Sprintf("unable to convert validator weight to int64")
 		k.Logger(ctx).Error(errMsg)
 		return sdkerrors.Wrapf(types.ErrIntCast, errMsg)
 	}
@@ -120,7 +120,7 @@ func DelegatorSharesCallback(k Keeper, ctx sdk.Context, args []byte, query icqty
 
 	// Update the host zone and validator to reflect the weight and delegation change
 	weightAdjustment := sdk.NewDecFromInt(validatorTokens).Quo(sdk.NewDecFromInt(validator.DelegationAmt))
-	validator.Weight = sdk.NewIntFromUint64(sdk.NewDec(weight).Mul(weightAdjustment).TruncateInt().Uint64())
+	validator.Weight = sdk.NewIntFromUint64(sdk.NewDec(weight.Int64()).Mul(weightAdjustment).TruncateInt().Uint64())
 	validator.DelegationAmt = validator.DelegationAmt.Sub(slashAmount)
 
 	hostZone.StakedBal = hostZone.StakedBal.Sub(slashAmount)

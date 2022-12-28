@@ -9,3 +9,7 @@ import (
 func UserRedemptionRecordKeyFormatter(chainId string, epochNumber sdk.Int, sender string) string {
 	return fmt.Sprintf("%s.%d.%s", chainId, epochNumber, sender) // {chain_id}.{epoch}.{sender}
 }
+
+func UserRedemptionRecordKeyFormatterForErr(chainId string, epochNumber sdk.Int, sender string) string {
+	return fmt.Sprintf("%s.%d.%s", chainId, epochNumber.Int64(), sender) // {chain_id}.{epoch}.{sender}
+}

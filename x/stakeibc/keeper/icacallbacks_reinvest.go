@@ -16,7 +16,7 @@ import (
 )
 
 func (k Keeper) MarshalReinvestCallbackArgs(ctx sdk.Context, reinvestCallback types.ReinvestCallback) ([]byte, error) {
-	out, err := proto.Marshal(&reinvestCallback)
+	out, err := k.cdc.Marshal(&reinvestCallback)
 	if err != nil {
 		k.Logger(ctx).Error(fmt.Sprintf("MarshalReinvestCallbackArgs %v", err.Error()))
 		return nil, err

@@ -21,7 +21,9 @@ import (
 
 // Marshal undelegate callback args
 func (k Keeper) MarshalUndelegateCallbackArgs(ctx sdk.Context, undelegateCallback types.UndelegateCallback) ([]byte, error) {
-	out, err := proto.Marshal(&undelegateCallback)
+	out, err := k.cdc.Marshal(&undelegateCallback)
+	// out, err := proto.Marshal(&undelegateCallback)
+	fmt.Println(err)
 	if err != nil {
 		k.Logger(ctx).Error(fmt.Sprintf("MarshalUndelegateCallbackArgs | %s", err.Error()))
 		return nil, err
