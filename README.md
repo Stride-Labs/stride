@@ -78,6 +78,12 @@ To bring down the chain, execute:
 make stop-docker
 ```
 
+To test the chain with a mnemonic that has tokens (e.g. sending Stride transactions), you can use the VAL_MNEMONIC_1, which is
+```
+close soup mirror crew erode defy knock trigger gather eyebrow tent farm gym gloom base lemon sleep weekend rich forget diagram hurt prize fly
+```
+This mnemonic will have tokens on every chain running locally.
+
 ### Making changes to this repository
 
 #### Commits for scaffolded code

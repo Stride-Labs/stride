@@ -5,7 +5,7 @@ import "gogoproto/gogo.proto";
 import "google/protobuf/duration.proto";
 import "google/protobuf/timestamp.proto";
 
-option go_package = "github.com/Stride-Labs/stride/v3/x/claim/types";
+option go_package = "github.com/Stride-Labs/stride/v4/x/claim/types";
 
 // Params defines the claim module's parameters.
 message Params { repeated Airdrop airdrops = 1; }
@@ -31,5 +31,8 @@ message Airdrop {
   // airdrop distribution account
   string distributor_address = 5;
   // ustrd tokens claimed so far in the current period
-  int64 claimed_so_far = 6;
+  string claimed_so_far = 6 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
 }
