@@ -213,3 +213,18 @@ func (s *KeeperTestSuite) TestClaimUndelegatedTokens_HzuNotStatusTransferred() {
 	_, err := s.GetMsgServer().ClaimUndelegatedTokens(sdk.WrapSDKContext(s.Ctx), &tc.validMsg)
 	s.Require().EqualError(err, "unable to find claimable redemption record for msg: creator:\"stride_SENDER\" host_zone_id:\"GAIA\" epoch:1 sender:\"stride_SENDER\" , error User redemption record GAIA.1.stride_SENDER is not claimable, host zone unbonding has status: EXIT_TRANSFER_QUEUE, requires status CLAIMABLE: user redemption record error: record not found")
 }
+
+func (s *KeeperTestSuite) TestGetClaimableRedemptionRecord_HostZoneNotFound() {
+	tc := s.SetupClaimUndelegatedTokens()
+	// Change host zone in message
+	invalidMsg := tc.validMsg
+	invalidMsg.HostZoneId = "fake_host_zone"
+
+	badRedemptionRecordId := strings.Replace(tc.initialState.redemptionRecordId, "GAIA", "fake_host_zone", 1)
+	badRedemptionRecord := tc.initialState.redemptionRecord
+	badRedemptionRecord.Id = badRedemptionRecordId
+	s.App.RecordsKeeper.SetUserRedemptionRecord(s.Ctx, badRedemptionRecord)
+
+	_, err := s.App.StakeibcKeeper.GetClaimableRedemptionRecord(s.Ctx, &invalidMsg)
+	s.Require().EqualError(err, "Host zone unbonding record fake_host_zone.1.stride_SENDER not found on host zone fake_host_zone: user redemption record error")
+}
