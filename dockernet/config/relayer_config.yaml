@@ -74,6 +74,20 @@ chains:
       timeout: 20s
       output-format: json
       sign-mode: direct
+  terra:
+    type: cosmos
+    value:
+      key: rly6
+      chain-id: TERRA
+      rpc-addr: http://terra1:26657
+      account-prefix: terra
+      keyring-backend: test
+      gas-adjustment: 1.2
+      gas-prices: 0.01uterra
+      debug: false
+      timeout: 20s
+      output-format: json
+      sign-mode: direct
   # {new-host-zone}:
   #   type: cosmos
   #   value:
@@ -119,6 +133,14 @@ paths:
       chain-id: STRIDE
     dst:
       chain-id: STARS
+    src-channel-filter:
+      rule: ""
+      channel-list: []
+  stride-terra:
+    src:
+      chain-id: STRIDE
+    dst:
+      chain-id: TERRA
     src-channel-filter:
       rule: ""
       channel-list: []
