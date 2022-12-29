@@ -135,6 +135,34 @@ services:
     volumes:
       - ./state/stars5:/home/stars/.starsd
   # Fill in new host zone being tested here
+  terra1:
+      image: stridezone:terra
+      volumes:
+        - ./state/terra1:/home/terra/.terrad
+      ports:
+        - "26157:26657"
+        - "1267:1317"
+        - "9040:9090"
+  terra2:
+    image: stridezone:terra
+    volumes:
+      - ./state/terra2:/home/terra/.terrad
+
+  terra3:
+    image: stridezone:terra
+    volumes:
+      - ./state/terra3:/home/terra/.terrad
+
+  terra4:
+    image: stridezone:terra
+    volumes:
+      - ./state/terra4:/home/terra/.terrad
+
+  terra5:
+    image: stridezone:terra
+    volumes:
+      - ./state/terra5:/home/terra/.terrad
+
 
   hermes:
     image: stridezone:hermes
@@ -170,3 +198,10 @@ services:
       - ./state/relayer-stars:/home/relayer/.relayer
     restart: always
     command: [ "bash", "start.sh", "stride-stars" ]
+
+  relayer-terra:
+    image: stridezone:relayer
+    volumes:
+      - ./state/relayer-terra:/home/relayer/.relayer
+    restart: always
+    command: [ "bash", "start.sh", "stride-terra" ]
