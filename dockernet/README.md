@@ -78,7 +78,10 @@ HOST_RELAYER_ACCTS=(... $RELAYER_{CHAIN}_ACCT)
 # stride1muwz5er4wq7svxnh5dgn2tssm92je5dwthxl7q
 RELAYER_{CHAIN}_MNEMONIC="science depart where tell bus ski laptop follow child bronze rebel recall brief plug razor ship degree labor human series today embody fury harvest"
 # NOTE: Update the RELAYER_MNEMONICS variable directly!
-RELAYER_MNEMONICS=(...,"$RELAYER_{CHAIN}_MNEMONIC")
+RELAYER_MNEMONICS=(
+    ...
+    "$RELAYER_{CHAIN}_MNEMONIC"
+)
 
 # Add the {CHAIN_ID}_ADDRESS function
 ${CHAIN_ID}_ADDRESS() { 
