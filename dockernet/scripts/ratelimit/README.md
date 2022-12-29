@@ -5,4 +5,4 @@
 make start-docker-all && bash dockernet/scripts/ratelimit/run_all_tests.sh
 ```
 * Each test will print a checkmark or X depending on the status - if there are no X's, the tests passed.
-* THese tests will not work once the transactions become governance gated.
+* These tests will not work once the transactions become governance gated.

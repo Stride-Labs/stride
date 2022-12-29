@@ -41,9 +41,9 @@ test_denom_ustrd() {
     __test_denom_receive_packet_native_ustrd
 }
 
-#############################################
-# ujuno from Juno to Stride, the back to Juno
-#############################################
+##############################################
+# ujuno from Juno to Stride, then back to Juno
+##############################################
 __test_denom_receive_packet_non_native() { # recieve sink (one hop)
     # ujuno sent from Juno to Stride
     #   Expected Denom: ibc/EFF323CC632EC4F747C61BCE238A758EFDB7699C3226565F7C20DA06509D59A5
