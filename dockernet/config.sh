@@ -36,10 +36,12 @@ JUNO_DENOM='ujuno'
 OSMO_DENOM='uosmo'
 STRD_DENOM='ustrd'
 STARS_DENOM='ustars'
+TERRA_DENOM='uluna'
 STATOM_DENOM="stuatom"
 STJUNO_DENOM="stujuno"
 STOSMO_DENOM="stuosmo"
 STSTARS_DENOM="stustars"
+STTERRA_DENOM="stuluna"
 
 IBC_STRD_DENOM='ibc/FF6C2E86490C1C4FBBD24F55032831D2415B9D7882F85C3CC9C2401D79362BEA'  
 
@@ -172,6 +174,19 @@ STARS_RPC_PORT=26257
 STARS_MAIN_CMD="$STARS_CMD --home $SCRIPT_DIR/state/${STARS_NODE_PREFIX}1"
 STARS_RECEIVER_ADDRESS='stars15dywcmy6gzsc8wfefkrx0c9czlwvwrjenqthyq'
 
+# TERRA
+TERRA_CHAIN_ID=TERRA
+STARS_NODE_PREFIX=terra
+TERRA_NUM_NODES=1
+TERRA_CMD="$SCRIPT_DIR/../build/terrad"
+TERRA_VAL_PREFIX=sgval
+TERRA_REV_ACCT=sgrev1
+TERRA_ADDRESS_PREFIX=terra
+TERRA_DENOM=$TERRA_DENOM
+TERRA_RPC_PORT=26257
+TERRA_MAIN_CMD="$TERRA_CMD --home $SCRIPT_DIR/state/${TERRA_NODE_PREFIX}1"
+TERRA_RECEIVER_ADDRESS='terra15dywcmy6gzsc8wfefkrx0c9czlwvwrjenqthyq'
+
 
 # HERMES
 HERMES_CMD="$SCRIPT_DIR/../build/hermes/release/hermes --config $STATE/hermes/config.toml"
@@ -195,23 +210,33 @@ RELAYER_GAIA_EXEC="$DOCKER_COMPOSE run --rm relayer-gaia"
 RELAYER_JUNO_EXEC="$DOCKER_COMPOSE run --rm relayer-juno"
 RELAYER_OSMO_EXEC="$DOCKER_COMPOSE run --rm relayer-osmo"
 RELAYER_STARS_EXEC="$DOCKER_COMPOSE run --rm relayer-stars"
+RELAYER_TERRA_EXEC="$DOCKER_COMPOSE run --rm relayer-terra"
 
 RELAYER_STRIDE_ACCT=rly1
 RELAYER_GAIA_ACCT=rly2
 RELAYER_JUNO_ACCT=rly3
 RELAYER_OSMO_ACCT=rly4
 RELAYER_STARS_ACCT=rly5
-HOST_RELAYER_ACCTS=($RELAYER_GAIA_ACCT $RELAYER_JUNO_ACCT $RELAYER_OSMO_ACCT $RELAYER_STARS_ACCT)
+RELAYER_TERRA_ACCT=rly6
+HOST_RELAYER_ACCTS=(
+  $RELAYER_GAIA_ACCT
+  $RELAYER_JUNO_ACCT
+  $RELAYER_OSMO_ACCT
+  $RELAYER_STARS_ACCT
+  $RELAYER_TERRA_ACCT
+)
 
 RELAYER_GAIA_MNEMONIC="fiction perfect rapid steel bundle giant blade grain eagle wing cannon fever must humble dance kitchen lazy episode museum faith off notable rate flavor"
 RELAYER_JUNO_MNEMONIC="kiwi betray topple van vapor flag decorate cement crystal fee family clown cry story gain frost strong year blanket remain grass pig hen empower"
 RELAYER_OSMO_MNEMONIC="unaware wine ramp february bring trust leaf beyond fever inside option dilemma save know captain endless salute radio humble chicken property culture foil taxi"
 RELAYER_STARS_MNEMONIC="deposit dawn erosion talent old broom flip recipe pill hammer animal hill nice ten target metal gas shoe visual nephew soda harbor child simple"
+RELAYER_TERRA_MNEMONIC="deposit dawn erosion talent old broom flip recipe pill hammer animal hill nice ten target metal gas shoe visual nephew soda harbor child simple"
 RELAYER_MNEMONICS=(
   "$RELAYER_GAIA_MNEMONIC"
   "$RELAYER_JUNO_MNEMONIC"
   "$RELAYER_OSMO_MNEMONIC"
   "$RELAYER_STARS_MNEMONIC"
+  "$RELAYER_TERRA_MNEMONIC"
 )
 
 STRIDE_ADDRESS() { 
@@ -229,6 +254,10 @@ OSMO_ADDRESS() {
 STARS_ADDRESS() { 
   $STARS_MAIN_CMD keys show ${STARS_VAL_PREFIX}1 --keyring-backend test -a 
 }
+TERRA_ADDRESS() { 
+  $TERRA_MAIN_CMD keys show ${TERRA_VAL_PREFIX}1 --keyring-backend test -a 
+}
+
 
 CSLEEP() {
   for i in $(seq $1); do
