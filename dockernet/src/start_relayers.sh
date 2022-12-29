@@ -24,7 +24,7 @@ for chain_id in ${HOST_CHAINS[@]}; do
 
     printf "STRIDE <> $chain_id - Creating client, connection, and transfer channel..." | tee -a $relayer_logs
     $relayer_exec rly transact link stride-${chain_name} >> $relayer_logs 2>&1
-    echo "Done creating client, connection, and transfer channel"
+    echo "Done."
 
     $DOCKER_COMPOSE up -d relayer-${chain_name}
     $DOCKER_COMPOSE logs -f relayer-${chain_name} | sed -r -u "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2})?)?[mGK]//g" >> $relayer_logs 2>&1 &

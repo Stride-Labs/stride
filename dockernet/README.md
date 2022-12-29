@@ -99,7 +99,7 @@ chains:
     value:
       key: rly{N}
       chain-id: {CHAIN_ID}
-      rpc-addr: http://{node_prefix}1:26657
+      rpc-addr: http://{new-host-zone}1:26657
       account-prefix: {bech32_hrp_account_prefix}
       keyring-backend: test
       gas-adjustment: 1.2
