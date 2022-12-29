@@ -21,7 +21,7 @@ KEYS_LOGS=$SCRIPT_DIR/logs/keys.log
 HOST_CHAINS=() 
 
 if [[ "${ALL_HOST_CHAINS:-false}" == "true" ]]; then 
-  HOST_CHAINS=(GAIA JUNO OSMO STARS)
+  HOST_CHAINS=(GAIA TERRA)
 elif [[ "${#HOST_CHAINS[@]}" == "0" ]]; then 
   HOST_CHAINS=(GAIA)
 fi
