@@ -89,7 +89,7 @@ ${CHAIN_ID}_ADDRESS() {
 }
 
 ```
-* Add the IBC denom's for the host zone across each channel to `dockernet/config.sh` (e.g. `IBC_{HOST}_CHANNEL_{N}_DENOM)`). You can generate the variables by uncommenting `x/stakeibc/keeper/get_denom_traces_test.go` and running `make test-unit`. Add the output to `dockernet/config.sh`. Note: You have to run the test using the "run test" button in VSCode, or pass in the `-v` flag and run the tests using `go test -mod=readonly ./x/stakeibc/...`, for the output to show up.
+* Add the IBC denom's for the host zone across each channel to `dockernet/config.sh` (e.g. `IBC_{HOST}_CHANNEL_{N}_DENOM)`). You can generate the variables by uncommenting `x/stakeibc/keeper/get_denom_traces_test.go`, specifying the ChainID and denom, and running `make test-unit`. Add the output to `dockernet/config.sh`. Note: You have to run the test using the "run test" button in VSCode, or pass in the `-v` flag and run the tests using `go test -mod=readonly ./x/stakeibc/...`, for the output to show up.
 * Add a section to the `dockernet/config/relayer_config.yaml`
 ```
 chains:
