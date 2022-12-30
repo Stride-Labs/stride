@@ -1,7 +1,6 @@
 package apptesting
 
 import (
-	"fmt"
 	"strings"
 
 	ibctransfertypes "github.com/cosmos/ibc-go/v3/modules/apps/transfer/types"
@@ -122,8 +121,6 @@ func (s *AppTestHelper) SetupIBCChains(hostChainID string) {
 // Creates clients, connections, and a transfer channel between stride and a host chain
 func (s *AppTestHelper) CreateTransferChannel(hostChainID string) {
 	// If we have yet to create the host chain, do that here
-	res := s.App.RecordsKeeper.GetAllEpochUnbondingRecord(s.Ctx)
-	fmt.Println(res, "hello 69")
 	if !s.IbcEnabled {
 		s.SetupIBCChains(hostChainID)
 	}
@@ -135,8 +132,7 @@ func (s *AppTestHelper) CreateTransferChannel(hostChainID string) {
 	s.Coordinator.Setup(s.TransferPath)
 	// Replace stride and host apps with those from TestingApp
 	s.App = s.StrideChain.App.(*app.StrideApp)
-	res = s.App.RecordsKeeper.GetAllEpochUnbondingRecord(s.Ctx)
-	fmt.Println(res, "hello 71")
+
 	s.HostApp = s.HostChain.GetSimApp()
 	s.Ctx = s.StrideChain.GetContext()
 	// Finally confirm the channel was setup properly
