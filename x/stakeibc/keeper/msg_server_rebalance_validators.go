@@ -8,7 +8,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	stakingTypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	"github.com/spf13/cast"
 
 	"github.com/Stride-Labs/stride/v4/utils"
 	"github.com/Stride-Labs/stride/v4/x/stakeibc/types"
@@ -23,12 +22,12 @@ func (k msgServer) RebalanceValidators(goCtx context.Context, msg *types.MsgReba
 		k.Logger(ctx).Error(fmt.Sprintf("Host Zone not found %s", msg.HostZone))
 		return nil, types.ErrInvalidHostZone
 	}
-	maxNumRebalance := cast.ToInt(msg.NumRebalance)
-	if maxNumRebalance < 1 {
+	maxNumRebalance := msg.NumRebalance
+	if maxNumRebalance.LT(sdk.NewInt(1)) {
 		k.Logger(ctx).Error(fmt.Sprintf("Invalid number of validators to rebalance %d", maxNumRebalance))
 		return nil, types.ErrInvalidNumValidator
 	}
-	if maxNumRebalance > 4 {
+	if maxNumRebalance.GT(sdk.NewInt(4)) {
 		k.Logger(ctx).Error(fmt.Sprintf("Invalid number of validators to rebalance %d", maxNumRebalance))
 		return nil, types.ErrInvalidNumValidator
 	}
@@ -88,8 +87,8 @@ func (k msgServer) RebalanceValidators(goCtx context.Context, msg *types.MsgReba
 		HostZoneId:   hostZone.ChainId,
 		Rebalancings: []*types.Rebalancing{},
 	}
-
-	for i := 1; i <= maxNumRebalance; i++ {
+	index := 1
+	for maxNumRebalance.GTE(sdk.NewInt(int64(index))) {
 		underWeightElem := valDeltaList[underWeightIndex]
 		overWeightElem := valDeltaList[overWeightIndex]
 		if underWeightElem.deltaAmt.LT(sdk.ZeroInt()) {
@@ -148,6 +147,7 @@ func (k msgServer) RebalanceValidators(goCtx context.Context, msg *types.MsgReba
 			DstValidator: redelegateMsg.ValidatorDstAddress,
 			Amt:          redelegateMsg.Amount.Amount,
 		})
+		index += 1
 	}
 	// marshall the callback
 	marshalledCallbackArgs, err := k.MarshalRebalanceCallbackArgs(ctx, rebalanceCallback)

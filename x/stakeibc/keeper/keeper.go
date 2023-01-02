@@ -208,8 +208,12 @@ func (k Keeper) IsWithinBufferWindow(ctx sdk.Context) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	bufferSize := k.GetParam(ctx, types.KeyBufferSize).Int64()
-	epochShareThresh := sdk.NewDec(1).Sub(sdk.NewDec(1).Quo(sdk.NewDec(bufferSize)))
+	bufferSize := k.GetParam(ctx, types.KeyBufferSize)
+	bufferSizeSdkDec, err := sdk.NewDecFromStr(bufferSize.String())
+	if err != nil {
+		return false, fmt.Errorf("Cannot cast to sdk dec type")
+	}
+	epochShareThresh := sdk.NewDec(1).Sub(sdk.NewDec(1).Quo(bufferSizeSdkDec))
 
 	inWindow := elapsedShareOfEpoch.GT(epochShareThresh)
 	if !inWindow {

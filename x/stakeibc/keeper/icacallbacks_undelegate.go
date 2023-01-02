@@ -34,7 +34,7 @@ func (k Keeper) MarshalUndelegateCallbackArgs(ctx sdk.Context, undelegateCallbac
 // Unmarshalls undelegate callback arguments into a UndelegateCallback struct
 func (k Keeper) UnmarshalUndelegateCallbackArgs(ctx sdk.Context, undelegateCallback []byte) (types.UndelegateCallback, error) {
 	unmarshalledUndelegateCallback := types.UndelegateCallback{}
-	if err := proto.Unmarshal(undelegateCallback, &unmarshalledUndelegateCallback); err != nil {
+	if err := k.cdc.Unmarshal(undelegateCallback, &unmarshalledUndelegateCallback); err != nil {
 		k.Logger(ctx).Error(fmt.Sprintf("UnmarshalUndelegateCallbackArgs | %s", err.Error()))
 		return unmarshalledUndelegateCallback, err
 	}

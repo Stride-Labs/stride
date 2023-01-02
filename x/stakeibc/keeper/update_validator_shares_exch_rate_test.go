@@ -87,7 +87,7 @@ func (s *KeeperTestSuite) TestQueryValidatorExchangeRate_BeforeBufferWindow() {
 
 	// set the time to be 50% through the stride_epoch
 	strideEpochTracker := tc.strideEpochTracker
-	strideEpochTracker.NextEpochStartTime = sdk.NewIntFromUint64(uint64(s.Coordinator.CurrentTime.UnixNano())).Add(strideEpochTracker.Duration).Quo(sdk.NewInt(2)) // 50% through the epoch
+	strideEpochTracker.NextEpochStartTime = sdk.NewIntFromUint64(uint64(s.Coordinator.CurrentTime.UnixNano())).Add((strideEpochTracker.Duration).Quo(sdk.NewInt(2))) // 50% through the epoch
 	s.App.StakeibcKeeper.SetEpochTracker(s.Ctx, strideEpochTracker)
 
 	resp, err := s.App.StakeibcKeeper.QueryValidatorExchangeRate(s.Ctx, &tc.msg)

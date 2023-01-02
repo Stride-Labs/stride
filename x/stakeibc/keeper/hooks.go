@@ -93,8 +93,23 @@ func (h Hooks) AfterEpochEnd(ctx sdk.Context, epochInfo epochstypes.EpochInfo) {
 // Update the epoch information in the stakeibc epoch tracker
 func (k Keeper) UpdateEpochTracker(ctx sdk.Context, epochInfo epochstypes.EpochInfo) (epochNumber sdk.Int, err error) {
 	epochNumber = epochInfo.CurrentEpoch
+	if epochNumber.IsNegative() {
+		err := fmt.Errorf("Epoch number can not be negative")
+		k.Logger(ctx).Error(err.Error())
+		return sdk.ZeroInt(), err
+	}
 	epochDurationNano := sdk.NewInt(epochInfo.Duration.Nanoseconds())
+	if epochDurationNano.IsNegative() {
+		err := fmt.Errorf("Epoch duration can not be negative")
+		k.Logger(ctx).Error(err.Error())
+		return sdk.ZeroInt(), err
+	}
 	nextEpochStartTime := sdk.NewInt(epochInfo.CurrentEpochStartTime.Add(epochInfo.Duration).UnixNano())
+	if nextEpochStartTime.IsNegative() {
+		err := fmt.Errorf("Epoch next start time can not be negative")
+		k.Logger(ctx).Error(err.Error())
+		return sdk.ZeroInt(), err
+	}
 	epochTracker := types.EpochTracker{
 		EpochIdentifier:    epochInfo.Identifier,
 		EpochNumber:        epochNumber,

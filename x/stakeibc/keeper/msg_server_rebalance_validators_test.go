@@ -1,6 +1,8 @@
 package keeper_test
 
 import (
+	"fmt"
+
 	_ "github.com/stretchr/testify/suite"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -223,6 +225,7 @@ func (s *KeeperTestSuite) TestRebalanceValidators_InvalidAllValidatorsNoWeight()
 	hz, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, "GAIA")
 	s.Require().True(found, "host zone should exist")
 	validators := hz.GetValidators()
+	fmt.Println(validators)
 	for _, v := range validators {
 		v.Weight = sdk.ZeroInt()
 	}
