@@ -35,7 +35,6 @@ func (k Keeper) CreateEpochUnbondingRecord(ctx sdk.Context, epochNumber sdk.Int)
 		EpochNumber:        epochNumber,
 		HostZoneUnbondings: hostZoneUnbondings,
 	}
-	fmt.Println("hello", epochUnbondingRecord)
 	k.RecordsKeeper.SetEpochUnbondingRecord(ctx, epochUnbondingRecord)
 	return true
 }
