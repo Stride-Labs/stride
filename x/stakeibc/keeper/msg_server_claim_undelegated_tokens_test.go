@@ -35,7 +35,7 @@ func (s *KeeperTestSuite) SetupClaimUndelegatedTokens() ClaimUndelegatedTestCase
 	senderAddr := "stride_SENDER"
 	receiverAddr := "cosmos_RECEIVER"
 	redemptionAddr := s.IcaAddresses[redemptionIcaOwner]
-	redemptionRecordId := fmt.Sprintf("%s.%d.%s", HostChainId, epochNumber, senderAddr)
+	redemptionRecordId := fmt.Sprintf("%s.%s.%s", HostChainId, epochNumber.String(), senderAddr)
 
 	redemptionAccount := stakeibctypes.ICAAccount{
 		Address: redemptionAddr,

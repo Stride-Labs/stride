@@ -193,13 +193,13 @@ func (k Keeper) UpdateHostZoneUnbondings(
 	for _, epochNumber := range undelegateCallback.EpochUnbondingRecordIds {
 		epochUnbondingRecord, found := k.RecordsKeeper.GetEpochUnbondingRecord(ctx, epochNumber)
 		if !found {
-			errMsg := fmt.Sprintf("Unable to find epoch unbonding record for epoch: %d", epochNumber)
+			errMsg := fmt.Sprintf("Unable to find epoch unbonding record for epoch: %s", epochNumber.String())
 			k.Logger(ctx).Error(errMsg)
 			return sdk.ZeroInt(), sdkerrors.Wrapf(sdkerrors.ErrKeyNotFound, errMsg)
 		}
 		hostZoneUnbonding, found := k.RecordsKeeper.GetHostZoneUnbondingByChainId(ctx, epochUnbondingRecord.EpochNumber, chainId)
 		if !found {
-			errMsg := fmt.Sprintf("Host zone unbonding not found (%s) in epoch unbonding record: %d", chainId, epochNumber)
+			errMsg := fmt.Sprintf("Host zone unbonding not found (%s) in epoch unbonding record: %s", chainId, epochNumber.String())
 			k.Logger(ctx).Error(errMsg)
 			return sdk.ZeroInt(), sdkerrors.Wrapf(sdkerrors.ErrKeyNotFound, errMsg)
 		}
@@ -213,14 +213,14 @@ func (k Keeper) UpdateHostZoneUnbondings(
 		hostZoneUnbonding.UnbondingTime = sdk.NewIntFromUint64(cast.ToUint64(latestCompletionTime.UnixNano()))
 		updatedEpochUnbondingRecord, success := k.RecordsKeeper.AddHostZoneToEpochUnbondingRecord(ctx, epochUnbondingRecord.EpochNumber, chainId, hostZoneUnbonding)
 		if !success {
-			k.Logger(ctx).Error(fmt.Sprintf("Failed to set host zone epoch unbonding record: epochNumber %d, chainId %s, hostZoneUnbonding %+v",
-				epochUnbondingRecord.EpochNumber, chainId, hostZoneUnbonding))
+			k.Logger(ctx).Error(fmt.Sprintf("Failed to set host zone epoch unbonding record: epochNumber %s, chainId %s, hostZoneUnbonding %+v",
+				epochUnbondingRecord.EpochNumber.String(), chainId, hostZoneUnbonding))
 			return sdk.ZeroInt(), sdkerrors.Wrapf(types.ErrEpochNotFound, "couldn't set host zone epoch unbonding record. err: %s", err.Error())
 		}
 		k.RecordsKeeper.SetEpochUnbondingRecord(ctx, *updatedEpochUnbondingRecord)
 
 		k.Logger(ctx).Info(utils.LogCallbackWithHostZone(chainId, ICACallbackID_Undelegate,
-			"Epoch Unbonding Record: %d - Seting unbonding time to %s", epochNumber, latestCompletionTime.String()))
+			"Epoch Unbonding Record: %s - Seting unbonding time to %s", epochNumber.String(), latestCompletionTime.String()))
 	}
 	return stTokenBurnAmount, nil
 }

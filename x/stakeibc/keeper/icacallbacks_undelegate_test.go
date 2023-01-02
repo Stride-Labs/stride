@@ -82,7 +82,7 @@ func (s *KeeperTestSuite) SetupUndelegateCallback() UndelegateCallbackTestCase {
 		Status:            recordtypes.HostZoneUnbonding_UNBONDING_QUEUE,
 		StTokenAmount:     balanceToUnstake,
 		NativeTokenAmount: sdk.ZeroInt(),
-		UnbondingTime:     sdk.NewInt(1),
+		UnbondingTime:     sdk.ZeroInt(),
 	}
 	epochUnbondingRecord := recordtypes.EpochUnbondingRecord{
 		EpochNumber:        epochNumber,
