@@ -35,13 +35,13 @@ func (k Keeper) BeginBlocker(ctx sdk.Context) {
 
 			// Capitalize the epoch identifier for the logs
 			epochAlias := strings.ToUpper(strings.ReplaceAll(epochInfo.Identifier, "_epoch", ""))
-			logger.Info(utils.LogHeader("%s EPOCH %d", epochAlias, epochInfo.CurrentEpoch))
+			logger.Info(utils.LogHeader("%s EPOCH %s", epochAlias, epochInfo.CurrentEpoch.String()))
 			logger.Info(utils.LogHeader("Epoch Start Time: %s", epochInfo.CurrentEpochStartTime))
 
 			ctx.EventManager().EmitEvent(
 				sdk.NewEvent(
 					types.EventTypeEpochEnd,
-					sdk.NewAttribute(types.AttributeEpochNumber, strconv.FormatInt(epochInfo.CurrentEpoch.Int64(), 10)),
+					sdk.NewAttribute(types.AttributeEpochNumber, epochInfo.CurrentEpoch.String()),
 				),
 			)
 			k.AfterEpochEnd(ctx, epochInfo)
@@ -74,7 +74,7 @@ func startInitialEpoch(epochInfo types.EpochInfo) types.EpochInfo {
 }
 
 func endEpoch(epochInfo types.EpochInfo) types.EpochInfo {
-	epochInfo.CurrentEpoch = epochInfo.CurrentEpoch.Add(sdk.NewInt(1))
+	epochInfo.CurrentEpoch = epochInfo.CurrentEpoch.AddRaw(1)
 	epochInfo.CurrentEpochStartTime = epochInfo.CurrentEpochStartTime.Add(epochInfo.Duration)
 	return epochInfo
 }

@@ -93,20 +93,8 @@ func (h Hooks) AfterEpochEnd(ctx sdk.Context, epochInfo epochstypes.EpochInfo) {
 // Update the epoch information in the stakeibc epoch tracker
 func (k Keeper) UpdateEpochTracker(ctx sdk.Context, epochInfo epochstypes.EpochInfo) (epochNumber sdk.Int, err error) {
 	epochNumber = epochInfo.CurrentEpoch
-	if err != nil {
-		k.Logger(ctx).Error(fmt.Sprintf("Could not convert epoch number to uint64: %v", err))
-		return sdk.ZeroInt(), err
-	}
 	epochDurationNano := sdk.NewInt(epochInfo.Duration.Nanoseconds())
-	if err != nil {
-		k.Logger(ctx).Error(fmt.Sprintf("Could not convert epoch duration to uint64: %v", err))
-		return sdk.ZeroInt(), err
-	}
 	nextEpochStartTime := sdk.NewInt(epochInfo.CurrentEpochStartTime.Add(epochInfo.Duration).UnixNano())
-	if err != nil {
-		k.Logger(ctx).Error(fmt.Sprintf("Could not convert epoch duration to uint64: %v", err))
-		return sdk.ZeroInt(), err
-	}
 	epochTracker := types.EpochTracker{
 		EpochIdentifier:    epochInfo.Identifier,
 		EpochNumber:        epochNumber,

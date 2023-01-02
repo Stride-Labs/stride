@@ -15,6 +15,7 @@ import (
 
 // SetEpochUnbondingRecord set a specific epochUnbondingRecord in the store
 func (k Keeper) SetEpochUnbondingRecord(ctx sdk.Context, epochUnbondingRecord types.EpochUnbondingRecord) {
+	// panic("oh no")
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.EpochUnbondingRecordKey))
 	b := k.Cdc.MustMarshal(&epochUnbondingRecord)
 	store.Set(GetEpochUnbondingRecordIDBytes(epochUnbondingRecord.EpochNumber.Uint64()), b)
