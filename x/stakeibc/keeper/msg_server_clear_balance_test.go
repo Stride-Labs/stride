@@ -42,7 +42,7 @@ func (s *KeeperTestSuite) SetupClearBalance() ClearBalanceTestCase {
 		},
 	}
 
-	amount := uint64(1_000_000)
+	amount := sdk.NewInt(1_000_000)
 
 	user := Account{
 		acc: s.TestAccs[0],

@@ -19,16 +19,23 @@ import (
 	"github.com/tendermint/tendermint/libs/log"
 	tmtypes "github.com/tendermint/tendermint/types"
 	dbm "github.com/tendermint/tm-db"
+
+	cmdcfg "github.com/Stride-Labs/stride/v4/cmd/strided/config"
 )
 
 const Bech32Prefix = "stride"
 
 func init() {
+	SetupConfig()
+}
+
+func SetupConfig() {
 	config := sdk.GetConfig()
 	valoper := sdk.PrefixValidator + sdk.PrefixOperator
 	valoperpub := sdk.PrefixValidator + sdk.PrefixOperator + sdk.PrefixPublic
 	config.SetBech32PrefixForAccount(Bech32Prefix, Bech32Prefix+sdk.PrefixPublic)
 	config.SetBech32PrefixForValidator(Bech32Prefix+valoper, Bech32Prefix+valoperpub)
+	cmdcfg.SetAddressPrefixes(config)
 }
 
 // Initializes a new StrideApp without IBC functionality

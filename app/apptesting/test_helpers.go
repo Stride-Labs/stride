@@ -316,3 +316,16 @@ func (s *AppTestHelper) ConfirmUpgradeSucceededs(upgradeName string, upgradeHeig
 		s.App.BeginBlocker(contextAtUpgrade, beginBlockRequest)
 	})
 }
+
+// Generates a valid and invalid test address (used for non-keeper tests)
+func GenerateTestAddrs() (string, string) {
+	pk1 := ed25519.GenPrivKey().PubKey()
+	validAddr := sdk.AccAddress(pk1.Address()).String()
+	invalidAddr := sdk.AccAddress("invalid").String()
+	return validAddr, invalidAddr
+}
+
+// Modifies sdk config to have stride address prefixes (used for non-keeper tests)
+func SetupConfig() {
+	app.SetupConfig()
+}

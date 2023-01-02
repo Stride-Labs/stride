@@ -70,7 +70,7 @@ func ReinvestCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ack
 	epochNumber := strideEpochTracker.EpochNumber
 	// create a new record so that rewards are reinvested
 	record := recordstypes.DepositRecord{
-		Amount:             amount.Int64(),
+		Amount:             amount,
 		Denom:              denom,
 		HostZoneId:         reinvestCallback.HostZoneId,
 		Status:             recordstypes.DepositRecord_DELEGATION_QUEUE,

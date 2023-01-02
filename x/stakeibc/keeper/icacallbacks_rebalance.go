@@ -75,14 +75,14 @@ func RebalanceCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ac
 	for _, rebalancing := range rebalancings {
 		srcValidator := rebalancing.GetSrcValidator()
 		dstValidator := rebalancing.GetDstValidator()
-		amt := rebalancing.GetAmt()
+		amt := rebalancing.Amt
 		if _, valFound := valAddrMap[srcValidator]; valFound {
-			valAddrMap[srcValidator].DelegationAmt -= amt
+			valAddrMap[srcValidator].DelegationAmt = valAddrMap[srcValidator].DelegationAmt.Sub(amt)
 		} else {
 			return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "validator not found %s", srcValidator)
 		}
 		if _, valFound := valAddrMap[dstValidator]; valFound {
-			valAddrMap[dstValidator].DelegationAmt += amt
+			valAddrMap[dstValidator].DelegationAmt = valAddrMap[dstValidator].DelegationAmt.Add(amt)
 		} else {
 			return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "validator not found %s", dstValidator)
 		}

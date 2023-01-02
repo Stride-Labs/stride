@@ -42,15 +42,15 @@ func WithdrawalBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query icq
 	}
 
 	// Confirm the balance is greater than zero
-	if withdrawalBalanceCoin.Amount.Int64() <= 0 {
+	if withdrawalBalanceCoin.Amount.LTE(sdk.ZeroInt()) {
 		k.Logger(ctx).Info(fmt.Sprintf("WithdrawalBalanceCallback: no balance to transfer for zone: %s, accAddr: %v, coin: %v",
 			hostZone.ChainId, hostZone.WithdrawalAccount.GetAddress(), withdrawalBalanceCoin.String()))
 		return nil
 	}
 
 	// Sweep the withdrawal account balance, to the commission and the delegation accounts
-	k.Logger(ctx).Info(fmt.Sprintf("ICA Bank Sending %d%s from withdrawalAddr to delegationAddr.",
-		withdrawalBalanceCoin.Amount.Int64(), withdrawalBalanceCoin.Denom))
+	k.Logger(ctx).Info(fmt.Sprintf("ICA Bank Sending %v%s from withdrawalAddr to delegationAddr.",
+		withdrawalBalanceCoin.Amount, withdrawalBalanceCoin.Denom))
 
 	withdrawalAccount := hostZone.GetWithdrawalAccount()
 	if withdrawalAccount == nil {
@@ -92,7 +92,7 @@ func WithdrawalBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query icq
 
 	// TODO(TEST-112) safety check, balances should add to original amount
 	if (strideClaimFloored.Int64() + reinvestAmountCeil.Int64()) != withdrawalBalanceAmount.Int64() {
-		ctx.Logger().Error(fmt.Sprintf("Error with withdraw logic: %d, Fee portion: %d, reinvestPortion %d", withdrawalBalanceAmount.Int64(), strideClaimFloored.Int64(), reinvestAmountCeil.Int64()))
+		ctx.Logger().Error(fmt.Sprintf("Error with withdraw logic: %v, Fee portion: %v, reinvestPortion %v", withdrawalBalanceAmount, strideClaimFloored, reinvestAmountCeil))
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "Failed to subdivide rewards to feeAccount and delegationAccount")
 	}
 	strideCoin := sdk.NewCoin(withdrawalBalanceCoin.Denom, strideClaimFloored)

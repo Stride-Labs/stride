@@ -55,9 +55,9 @@ func (s *KeeperTestSuite) SetupClaimUndelegatedTokens() ClaimUndelegatedTestCase
 		Receiver:       receiverAddr,
 		Denom:          "uatom",
 		ClaimIsPending: false,
-		Amount:         1000,
+		Amount:         sdk.NewInt(1000),
 	}
-	redemptionAmount := sdk.NewCoins(sdk.NewInt64Coin(redemptionRecord.Denom, int64(redemptionRecord.Amount)))
+	redemptionAmount := sdk.NewCoins(sdk.NewCoin(redemptionRecord.Denom, sdk.NewInt(1000)))
 
 	epochTracker := stakeibctypes.EpochTracker{
 		EpochIdentifier:    epochtypes.STRIDE_EPOCH,
@@ -69,7 +69,7 @@ func (s *KeeperTestSuite) SetupClaimUndelegatedTokens() ClaimUndelegatedTestCase
 		HostZoneId:            HostChainId,
 		Status:                recordtypes.HostZoneUnbonding_CLAIMABLE,
 		UserRedemptionRecords: []string{redemptionRecordId},
-		NativeTokenAmount:     uint64(1_000_000),
+		NativeTokenAmount:     sdk.NewInt(1_000_000),
 	}
 	epochUnbondingRecord := recordtypes.EpochUnbondingRecord{
 		EpochNumber:        epochNumber,
@@ -194,6 +194,7 @@ func (s *KeeperTestSuite) TestClaimUndelegatedTokens_NoEpochTracker() {
 	_, err := s.GetMsgServer().ClaimUndelegatedTokens(sdk.WrapSDKContext(s.Ctx), &tc.validMsg)
 	expectedErr := "unable to build redemption transfer message: "
 	expectedErr += "Epoch tracker not found for epoch stride_epoch: epoch not found"
+	fmt.Println()
 	s.Require().EqualError(err, expectedErr)
 }
 

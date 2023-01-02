@@ -136,15 +136,16 @@ func (k msgServer) RegisterHostZone(goCtx context.Context, msg *types.MsgRegiste
 		return nil, sdkerrors.Wrapf(recordstypes.ErrEpochUnbondingRecordNotFound, errMsg)
 	}
 	hostZoneUnbonding := &recordstypes.HostZoneUnbonding{
-		NativeTokenAmount: 0,
-		StTokenAmount:     0,
+		NativeTokenAmount: sdk.ZeroInt(),
+		StTokenAmount:     sdk.ZeroInt(),
 		Denom:             zone.HostDenom,
 		HostZoneId:        zone.ChainId,
 		Status:            recordstypes.HostZoneUnbonding_UNBONDING_QUEUE,
 	}
 	updatedEpochUnbondingRecord, success := k.RecordsKeeper.AddHostZoneToEpochUnbondingRecord(ctx, epochUnbondingRecord.EpochNumber, chainId, hostZoneUnbonding)
 	if !success {
-		errMsg := fmt.Sprintf("Failed to set host zone epoch unbonding record: epochNumber %d, chainId %s, hostZoneUnbonding %v. Err: %s", epochUnbondingRecord.EpochNumber, chainId, hostZoneUnbonding, err.Error())
+		errMsg := fmt.Sprintf("Failed to set host zone epoch unbonding record: epochNumber %d, chainId %s, hostZoneUnbonding %v. Err: %s",
+			epochUnbondingRecord.EpochNumber, chainId, hostZoneUnbonding, err.Error())
 		k.Logger(ctx).Error(errMsg)
 		return nil, sdkerrors.Wrapf(types.ErrEpochNotFound, errMsg)
 	}
@@ -157,7 +158,7 @@ func (k msgServer) RegisterHostZone(goCtx context.Context, msg *types.MsgRegiste
 	}
 	depositRecord := recordstypes.DepositRecord{
 		Id:                 0,
-		Amount:             0,
+		Amount:             sdk.ZeroInt(),
 		Denom:              zone.HostDenom,
 		HostZoneId:         zone.ChainId,
 		Status:             recordstypes.DepositRecord_TRANSFER_QUEUE,

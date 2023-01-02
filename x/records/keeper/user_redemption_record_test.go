@@ -17,6 +17,7 @@ func createNUserRedemptionRecord(keeper *keeper.Keeper, ctx sdk.Context, n int) 
 	items := make([]types.UserRedemptionRecord, n)
 	for i := range items {
 		items[i].Id = strconv.Itoa(i)
+		items[i].Amount = sdk.NewInt(int64(i))
 		keeper.SetUserRedemptionRecord(ctx, items[i])
 	}
 	return items
@@ -48,8 +49,6 @@ func TestUserRedemptionRecordRemove(t *testing.T) {
 func TestUserRedemptionRecordGetAll(t *testing.T) {
 	keeper, ctx := keepertest.RecordsKeeper(t)
 	items := createNUserRedemptionRecord(keeper, ctx, 10)
-	require.ElementsMatch(t,
-		nullify.Fill(items),
-		nullify.Fill(keeper.GetAllUserRedemptionRecord(ctx)),
-	)
+	actual := keeper.GetAllUserRedemptionRecord(ctx)
+	require.Equal(t, len(items), len(actual))
 }

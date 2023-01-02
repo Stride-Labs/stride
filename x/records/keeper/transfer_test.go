@@ -18,7 +18,7 @@ type TransferTestCase struct {
 
 func (s *KeeperTestSuite) SetupTransfer() TransferTestCase {
 	s.CreateTransferChannel(chainId)
-	balanceToTransfer := int64(1_000_000)
+	balanceToTransfer := sdk.NewInt(1_000_000)
 	depositRecord := types.DepositRecord{
 		Id:                 1,
 		DepositEpochNumber: 1,
@@ -27,7 +27,7 @@ func (s *KeeperTestSuite) SetupTransfer() TransferTestCase {
 		Status:             types.DepositRecord_TRANSFER_QUEUE,
 	}
 	s.App.RecordsKeeper.SetDepositRecord(s.Ctx, depositRecord)
-	coin := sdk.NewCoin("tokens", sdk.NewInt(balanceToTransfer))
+	coin := sdk.NewCoin("tokens", balanceToTransfer)
 	s.FundAccount(s.TestAccs[0], coin)
 	transferMsg := ibctypes.MsgTransfer{
 		SourcePort:    "transfer",
