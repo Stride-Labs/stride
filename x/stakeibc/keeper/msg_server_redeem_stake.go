@@ -34,8 +34,7 @@ func (k msgServer) RedeemStake(goCtx context.Context, msg *types.MsgRedeemStake)
 	}
 	senderAddr := sender.String()
 	redemptionId := recordstypes.UserRedemptionRecordKeyFormatter(hostZone.ChainId, epochTracker.EpochNumber, senderAddr)
-	val, found := k.RecordsKeeper.GetUserRedemptionRecord(ctx, redemptionId)
-	fmt.Println(val)
+	_, found = k.RecordsKeeper.GetUserRedemptionRecord(ctx, redemptionId)
 	if found {
 		return nil, sdkerrors.Wrapf(recordstypes.ErrRedemptionAlreadyExists, "user already redeemed this epoch: %s", redemptionId)
 	}

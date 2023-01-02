@@ -12,7 +12,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	channeltypes "github.com/cosmos/ibc-go/v3/modules/core/04-channel/types"
-	"github.com/golang/protobuf/proto" //nolint:staticcheck
+	//nolint:staticcheck
 )
 
 // Marshalls redemption callback arguments
@@ -28,7 +28,7 @@ func (k Keeper) MarshalRedemptionCallbackArgs(ctx sdk.Context, redemptionCallbac
 // Unmarshalls redemption callback arguments into a RedemptionCallback struct
 func (k Keeper) UnmarshalRedemptionCallbackArgs(ctx sdk.Context, redemptionCallback []byte) (types.RedemptionCallback, error) {
 	unmarshalledRedemptionCallback := types.RedemptionCallback{}
-	if err := proto.Unmarshal(redemptionCallback, &unmarshalledRedemptionCallback); err != nil {
+	if err := k.cdc.Unmarshal(redemptionCallback, &unmarshalledRedemptionCallback); err != nil {
 		k.Logger(ctx).Error(fmt.Sprintf("UnmarshalRedemptionCallbackArgs | %s", err.Error()))
 		return unmarshalledRedemptionCallback, err
 	}

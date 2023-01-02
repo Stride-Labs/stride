@@ -167,7 +167,7 @@ func (s *KeeperTestSuite) TestRedemptionCallback_EpochUnbondingRecordNotFound() 
 	s.Require().NoError(err)
 	invalidArgs.args = args
 	err = stakeibckeeper.RedemptionCallback(s.App.StakeibcKeeper, s.Ctx, invalidArgs.packet, invalidArgs.ack, invalidArgs.args)
-	expectedErr := fmt.Sprintf("Error fetching host zone unbonding record for epoch: %d, host zone: GAIA: host zone not found", tc.initialState.epochNumber.Add(sdk.NewInt(1)))
+	expectedErr := fmt.Sprintf("Error fetching host zone unbonding record for epoch: %s, host zone: GAIA: host zone not found", tc.initialState.epochNumber.Add(sdk.NewInt(1)).String())
 	s.Require().EqualError(err, expectedErr)
 	s.checkRedemptionStateIfCallbackFailed(tc)
 }
@@ -181,6 +181,6 @@ func (s *KeeperTestSuite) TestRedemptionCallback_HostZoneUnbondingNotFound() {
 	epochUnbondingRecord.HostZoneUnbondings = []*recordtypes.HostZoneUnbonding{}
 	s.App.RecordsKeeper.SetEpochUnbondingRecord(s.Ctx, epochUnbondingRecord)
 	err := stakeibckeeper.RedemptionCallback(s.App.StakeibcKeeper, s.Ctx, valid.packet, valid.ack, valid.args)
-	s.Require().EqualError(err, fmt.Sprintf("Error fetching host zone unbonding record for epoch: %d, host zone: GAIA: host zone not found", tc.initialState.epochNumber))
+	s.Require().EqualError(err, fmt.Sprintf("Error fetching host zone unbonding record for epoch: %s, host zone: GAIA: host zone not found", tc.initialState.epochNumber.String()))
 	s.checkRedemptionStateIfCallbackFailed(tc)
 }

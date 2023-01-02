@@ -409,6 +409,8 @@ func (s *KeeperTestSuite) CheckStateAfterStakingDepositRecords(tc DepositRecords
 	numSuccessfulDelegations := uint64(numDelegationAttempts - numDelegationsFailed)
 
 	endSequence, found := s.App.IBCKeeper.ChannelKeeper.GetNextSequenceSend(s.Ctx, delegationPortID, delegationChannelID)
+	fmt.Println(startSequence + numSuccessfulDelegations)
+	fmt.Println(endSequence)
 	s.Require().True(found, "sequence number not found after delegation")
 	s.Require().Equal(startSequence+numSuccessfulDelegations, endSequence, "tx sequence number after delegation")
 

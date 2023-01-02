@@ -128,7 +128,7 @@ func (k Keeper) SetHostZoneUnbondings(ctx sdk.Context, chainId string, epochUnbo
 		// fetch the host zone unbonding
 		hostZoneUnbonding, found := k.GetHostZoneUnbondingByChainId(ctx, epochUnbondingRecordId, chainId)
 		if !found {
-			errMsg := fmt.Sprintf("Error fetching host zone unbonding record for epoch: %d, host zone: %s", epochUnbondingRecordId, chainId)
+			errMsg := fmt.Sprintf("Error fetching host zone unbonding record for epoch: %s, host zone: %s", epochUnbondingRecordId.String(), chainId)
 			k.Logger(ctx).Error(errMsg)
 			return sdkerrors.Wrapf(stakeibctypes.ErrHostZoneNotFound, errMsg)
 		}
