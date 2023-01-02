@@ -40,6 +40,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v4.0.3](https://github.com/Stride-Labs/stride/releases/tag/v4.0.3) - 2022-12-10
+1. Add list-pending-queries query to interchainquery module ([433dabc](https://github.com/Stride-Labs/stride/commit/433dabcc02c46d2ff038946fe2525a41b9e29b43)) 
+2. Updated docs ([a37a56d](https://github.com/Stride-Labs/stride/commit/a37a56d0f17ff54763d77f2864c35a0c8141bd09), [87f7e6d](https://github.com/Stride-Labs/stride/commit/87f7e6d1c620633dca2286f2136dc4c4c855164d), [c913955](https://github.com/Stride-Labs/stride/commit/c913955cfef4bd23c238235c7592fd926427aaef))
+3. Added Makefile commands to start dockernet with different host chains ([33cb844](https://github.com/Stride-Labs/stride/commit/33cb84438c3b605ae0e4a96ee2f73b6d7837b3d2))
+
+## [v4.0.2](https://github.com/Stride-Labs/stride/releases/tag/v4.0.0) - 2022-12-05
+1. Rebuild protos, fix v3 reference ((9d83474e7)[https://github.com/Stride-Labs/stride/commit/9d83474e741c4f79ba3a4132d10881362f28ab7e])
+
 ## [v4.0.0](https://github.com/Stride-Labs/stride/releases/tag/v4.0.0) - 2022-11-27
 ### On-Chain changes
 1. Dependency bumps ([384178b2c](https://github.com/Stride-Labs/stride/commit/384178b2cf98e9af0815ffaf3c29649f41784f3e)), ([0a2297ea](https://github.com/Stride-Labs/stride/commit/0a2297eabe287d38723ab8213d5256ce34d2bb2d)), ([802a1dee3](https://github.com/Stride-Labs/stride/commit/802a1dee380e02916f1e89a231d36365a026bb46)), ([f1d90c6a](https://github.com/Stride-Labs/stride/commit/f1d90c6aa50daf75d9608095cc39cbbbe3fac16c))

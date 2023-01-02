@@ -4,7 +4,7 @@ package stride.stakeibc;
 import "stride/stakeibc/ica_account.proto";
 // this line is used by starport scaffolding # proto/tx/import
 
-option go_package = "github.com/Stride-Labs/stride/v3/x/stakeibc/types";
+option go_package = "github.com/Stride-Labs/stride/v4/x/stakeibc/types";
 import "gogoproto/gogo.proto";
 import "cosmos_proto/cosmos.proto";
 
@@ -34,7 +34,10 @@ service Msg {
 
 message MsgLiquidStake {
   string creator = 1;
-  uint64 amount = 2;
+  string amount = 2 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
   // TODO(TEST-86): Update Denom -> HostDenom
   string host_denom = 3;
 }
@@ -44,7 +47,10 @@ message MsgLiquidStakeResponse {}
 message MsgClearBalance {
   string creator = 1;
   string chain_id = 2;
-  uint64 amount = 3;
+  string amount = 3 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
   string channel = 4;
 }
 
@@ -52,7 +58,10 @@ message MsgClearBalanceResponse {}
 
 message MsgRedeemStake {
   string creator = 1;
-  uint64 amount = 2;
+  string amount = 2 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
   string host_zone = 3;
   string receiver = 4;
 }

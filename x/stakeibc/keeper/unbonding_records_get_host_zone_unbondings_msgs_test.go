@@ -13,7 +13,7 @@ import (
 )
 
 type GetHostZoneUnbondingMsgsTestCase struct {
-	amtToUnbond           uint64
+	amtToUnbond           sdk.Int
 	epochUnbondingRecords []recordtypes.EpochUnbondingRecord
 	hostZone              stakeibc.HostZone
 	lightClientTime       uint64
@@ -30,9 +30,9 @@ func (s *KeeperTestSuite) SetupGetHostZoneUnbondingMsgs() GetHostZoneUnbondingMs
 	hostVal3Addr := "cosmos_VALIDATOR_3"
 	valNames := []string{hostVal1Addr, hostVal2Addr, hostVal3Addr}
 	delegationAddr := "cosmos_DELEGATION"
-	amtToUnbond := uint64(1_000_000)
-	amtVal1 := uint64(1_000_000)
-	amtVal2 := uint64(2_000_000)
+	amtToUnbond := sdk.NewInt(1_000_000)
+	amtVal1 := sdk.NewInt(1_000_000)
+	amtVal2 := sdk.NewInt(2_000_000)
 	wgtVal1 := uint64(1)
 	wgtVal2 := uint64(2)
 	totalWgt := uint64(5)
@@ -128,10 +128,10 @@ func (s *KeeperTestSuite) TestGetHostZoneUnbondingMsgs_Successful() {
 	// the number of unbonding messages should be (number of validators) * (records to unbond)
 	s.Require().Equal(len(tc.valNames), len(actualUnbondMsgs), "number of unbonding messages should be number of records to unbond")
 
-	s.Require().Equal(int64(tc.amtToUnbond)*int64(len(tc.epochUnbondingRecords)), int64(actualAmtToUnbond), "total amount to unbond should match input amtToUnbond")
-
+	s.Require().Equal(tc.amtToUnbond.Mul(sdk.NewInt(int64(len(tc.epochUnbondingRecords)))), actualAmtToUnbond, "total amount to unbond should match input amtToUnbond")
+	
 	totalWgt := sdk.NewDec(int64(tc.totalWgt))
-	actualAmtToUnbondDec := sdk.NewDec(int64(actualAmtToUnbond))
+	actualAmtToUnbondDec := sdk.NewDecFromInt(actualAmtToUnbond)
 	actualUnbondMsg1 := actualUnbondMsgs[0].String()
 	actualUnbondMsg2 := actualUnbondMsgs[1].String()
 	val1Fraction := sdk.NewDec(int64(tc.hostZone.Validators[0].Weight)).Quo(totalWgt)
@@ -158,7 +158,7 @@ func (s *KeeperTestSuite) TestGetHostZoneUnbondingMsgs_WrongChainId() {
 	// no messages should be sent
 	s.Require().Equal(0, len(msgs), "no messages should be sent")
 	// no value should be unbonded
-	s.Require().Equal(int64(0), int64(totalAmtToUnbond), "no value should be unbonded")
+	s.Require().Equal(sdk.ZeroInt(), totalAmtToUnbond, "no value should be unbonded")
 }
 
 func (s *KeeperTestSuite) TestGetHostZoneUnbondingMsgs_NoEpochUnbondingRecords() {
@@ -178,7 +178,7 @@ func (s *KeeperTestSuite) TestGetHostZoneUnbondingMsgs_NoEpochUnbondingRecords()
 	// no messages should be sent
 	s.Require().Equal(0, len(msgs), "no messages should be sent")
 	// no value should be unbonded
-	s.Require().Equal(int64(0), int64(totalAmtToUnbond), "no value should be unbonded")
+	s.Require().Equal(sdk.ZeroInt(), totalAmtToUnbond, "no value should be unbonded")
 }
 
 func (s *KeeperTestSuite) TestGetHostZoneUnbondingMsgs_UnbondingTooMuch() {
@@ -186,28 +186,28 @@ func (s *KeeperTestSuite) TestGetHostZoneUnbondingMsgs_UnbondingTooMuch() {
 
 	// iterate the validators and set all their delegated amounts to 0
 	for i := range tc.hostZone.Validators {
-		tc.hostZone.Validators[i].DelegationAmt = 0
+		tc.hostZone.Validators[i].DelegationAmt = sdk.ZeroInt()
 	}
 	// write the host zone with zero-delegation validators back to the store
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, tc.hostZone)
 
 	// TODO: check epoch unbonding record ids here
 	_, _, _, _, err := s.App.StakeibcKeeper.GetHostZoneUnbondingMsgs(s.Ctx, tc.hostZone)
-	s.Require().EqualError(err, fmt.Sprintf("Could not unbond %d on Host Zone %s, unable to balance the unbond amount across validators: not found", tc.amtToUnbond*uint64(len(tc.epochUnbondingRecords)), tc.hostZone.ChainId))
+	s.Require().EqualError(err, fmt.Sprintf("Could not unbond %v on Host Zone %s, unable to balance the unbond amount across validators: not found", tc.amtToUnbond.Mul(sdk.NewInt(int64(len(tc.epochUnbondingRecords)))), tc.hostZone.ChainId))
 }
 
 func (s *KeeperTestSuite) TestGetTargetValAmtsForHostZone_Success() {
 	tc := s.SetupGetHostZoneUnbondingMsgs()
 
 	// verify the total amount is expected
-	unbond := uint64(1_000_000)
+	unbond := sdk.NewInt(1_000_000)
 	totalAmt, err := s.App.StakeibcKeeper.GetTargetValAmtsForHostZone(s.Ctx, tc.hostZone, unbond)
 	s.Require().Nil(err)
 
 	// sum up totalAmt
-	actualAmount := uint64(0)
+	actualAmount := sdk.ZeroInt()
 	for _, amt := range totalAmt {
-		actualAmount += amt
+		actualAmount = actualAmount.Add(amt)
 	}
 	s.Require().Equal(unbond, actualAmount, "total amount unbonded matches input")
 

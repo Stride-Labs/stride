@@ -19,7 +19,7 @@ type Account struct {
 }
 
 type LiquidStakeState struct {
-	depositRecordAmount int64
+	depositRecordAmount sdk.Int
 	hostZone            types.HostZone
 }
 
@@ -31,8 +31,8 @@ type LiquidStakeTestCase struct {
 }
 
 func (s *KeeperTestSuite) SetupLiquidStake() LiquidStakeTestCase {
-	stakeAmount := uint64(1_000_000)
-	initialDepositAmount := int64(1_000_000)
+	stakeAmount := sdk.NewInt(1_000_000)
+	initialDepositAmount := sdk.NewInt(1_000_000)
 	user := Account{
 		acc:           s.TestAccs[0],
 		atomBalance:   sdk.NewInt64Coin(IbcAtom, 10_000_000),
@@ -94,7 +94,6 @@ func (s *KeeperTestSuite) TestLiquidStake_Successful() {
 	user := tc.user
 	zoneAccount := tc.zoneAccount
 	msg := tc.validMsg
-	stakeAmount := sdk.NewInt(int64(msg.Amount))
 	initialStAtomSupply := s.App.BankKeeper.GetSupply(s.Ctx, StAtom)
 
 	_, err := s.GetMsgServer().LiquidStake(sdk.WrapSDKContext(s.Ctx), &msg)
@@ -102,16 +101,16 @@ func (s *KeeperTestSuite) TestLiquidStake_Successful() {
 
 	// Confirm balances
 	// User IBC/UATOM balance should have DECREASED by the size of the stake
-	expectedUserAtomBalance := user.atomBalance.SubAmount(stakeAmount)
+	expectedUserAtomBalance := user.atomBalance.SubAmount(msg.Amount)
 	actualUserAtomBalance := s.App.BankKeeper.GetBalance(s.Ctx, user.acc, IbcAtom)
 	// zoneAccount IBC/UATOM balance should have INCREASED by the size of the stake
-	expectedzoneAccountAtomBalance := zoneAccount.atomBalance.AddAmount(stakeAmount)
+	expectedzoneAccountAtomBalance := zoneAccount.atomBalance.AddAmount(msg.Amount)
 	actualzoneAccountAtomBalance := s.App.BankKeeper.GetBalance(s.Ctx, zoneAccount.acc, IbcAtom)
 	// User STUATOM balance should have INCREASED by the size of the stake
-	expectedUserStAtomBalance := user.stAtomBalance.AddAmount(stakeAmount)
+	expectedUserStAtomBalance := user.stAtomBalance.AddAmount(msg.Amount)
 	actualUserStAtomBalance := s.App.BankKeeper.GetBalance(s.Ctx, user.acc, StAtom)
 	// Bank supply of STUATOM should have INCREASED by the size of the stake
-	expectedBankSupply := initialStAtomSupply.AddAmount(stakeAmount)
+	expectedBankSupply := initialStAtomSupply.AddAmount(msg.Amount)
 	actualBankSupply := s.App.BankKeeper.GetSupply(s.Ctx, StAtom)
 
 	s.CompareCoins(expectedUserStAtomBalance, actualUserStAtomBalance, "user stuatom balance")
@@ -123,7 +122,7 @@ func (s *KeeperTestSuite) TestLiquidStake_Successful() {
 	records := s.App.RecordsKeeper.GetAllDepositRecord(s.Ctx)
 	s.Require().Len(records, 1, "number of deposit records")
 
-	expectedDepositRecordAmount := tc.initialState.depositRecordAmount + stakeAmount.Int64()
+	expectedDepositRecordAmount := tc.initialState.depositRecordAmount.Add(msg.Amount)
 	actualDepositRecordAmount := records[0].Amount
 	s.Require().Equal(expectedDepositRecordAmount, actualDepositRecordAmount, "deposit record amount")
 }
@@ -137,7 +136,7 @@ func (s *KeeperTestSuite) TestLiquidStake_DifferentRedemptionRates() {
 	for i := -8; i <= 10; i += 2 {
 		redemptionDelta := sdk.NewDecWithPrec(1.0, 1).Quo(sdk.NewDec(10)).Mul(sdk.NewDec(int64(i))) // i = 2 => delta = 0.02
 		newRedemptionRate := sdk.NewDec(1.0).Add(redemptionDelta)
-		redemptionRateFloat := newRedemptionRate.MustFloat64()
+		redemptionRateFloat := newRedemptionRate
 
 		// Update rate in host zone
 		hz := tc.initialState.hostZone
@@ -145,13 +144,13 @@ func (s *KeeperTestSuite) TestLiquidStake_DifferentRedemptionRates() {
 		s.App.StakeibcKeeper.SetHostZone(s.Ctx, hz)
 
 		// Liquid stake for each balance and confirm stAtom minted
-		startingStAtomBalance := s.App.BankKeeper.GetBalance(s.Ctx, user.acc, StAtom).Amount.Int64()
+		startingStAtomBalance := s.App.BankKeeper.GetBalance(s.Ctx, user.acc, StAtom).Amount
 		_, err := s.GetMsgServer().LiquidStake(sdk.WrapSDKContext(s.Ctx), &msg)
 		s.Require().NoError(err)
-		endingStAtomBalance := s.App.BankKeeper.GetBalance(s.Ctx, user.acc, StAtom).Amount.Int64()
-		actualStAtomMinted := endingStAtomBalance - startingStAtomBalance
+		endingStAtomBalance := s.App.BankKeeper.GetBalance(s.Ctx, user.acc, StAtom).Amount
+		actualStAtomMinted := endingStAtomBalance.Sub(startingStAtomBalance)
 
-		expectedStAtomMinted := int64(float64(msg.Amount) / redemptionRateFloat)
+		expectedStAtomMinted := sdk.NewDecFromInt(msg.Amount).Quo(redemptionRateFloat).TruncateInt()
 		testDescription := fmt.Sprintf("st atom balance for redemption rate: %v", redemptionRateFloat)
 		s.Require().Equal(expectedStAtomMinted, actualStAtomMinted, testDescription)
 	}
@@ -188,7 +187,7 @@ func (s *KeeperTestSuite) TestLiquidStake_IbcCoinParseError() {
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, badHostZone)
 	_, err := s.GetMsgServer().LiquidStake(sdk.WrapSDKContext(s.Ctx), &tc.validMsg)
 
-	badCoin := fmt.Sprintf("%d%s", tc.validMsg.Amount, badHostZone.IbcDenom)
+	badCoin := fmt.Sprintf("%v%s", tc.validMsg.Amount, badHostZone.IbcDenom)
 	s.Require().EqualError(err, fmt.Sprintf("failed to parse coin (%s): invalid decimal coin expression: %s", badCoin, badCoin))
 }
 
@@ -210,11 +209,11 @@ func (s *KeeperTestSuite) TestLiquidStake_InsufficientBalance() {
 	tc := s.SetupLiquidStake()
 	// Set liquid stake amount to value greater than account balance
 	invalidMsg := tc.validMsg
-	balance := tc.user.atomBalance.Amount.Int64()
-	invalidMsg.Amount = uint64(balance + 1000)
+	balance := tc.user.atomBalance.Amount
+	invalidMsg.Amount = balance.Add(sdk.NewInt(1000))
 	_, err := s.GetMsgServer().LiquidStake(sdk.WrapSDKContext(s.Ctx), &invalidMsg)
 
-	expectedErr := fmt.Sprintf("balance is lower than staking amount. staking amount: %d, balance: %d: insufficient funds", balance+1000, balance)
+	expectedErr := fmt.Sprintf("balance is lower than staking amount. staking amount: %v, balance: %v: insufficient funds", balance.Add(sdk.NewInt(1000)), balance)
 	s.Require().EqualError(err, expectedErr)
 }
 

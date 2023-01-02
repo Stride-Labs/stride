@@ -2,7 +2,7 @@ syntax = "proto3";
 package stride.stakeibc;
 import "cosmos_proto/cosmos.proto";
 import "gogoproto/gogo.proto";
-option go_package = "github.com/Stride-Labs/stride/v3/x/stakeibc/types";
+option go_package = "github.com/Stride-Labs/stride/v4/x/stakeibc/types";
 
 message AddValidatorProposal {
   option (gogoproto.equal) = true;

@@ -4,8 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/spf13/cast"
-
 	recordstypes "github.com/Stride-Labs/stride/v4/x/records/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -109,14 +107,11 @@ func (k Keeper) GetRedemptionTransferMsg(ctx sdk.Context, userRedemptionRecord *
 	}
 
 	var msgs []sdk.Msg
-	rrAmt, err := cast.ToInt64E(userRedemptionRecord.Amount)
-	if err != nil {
-		return nil, sdkerrors.Wrap(types.ErrInvalidUserRedemptionRecord, err.Error())
-	}
+	rrAmt := userRedemptionRecord.Amount
 	msgs = append(msgs, &bankTypes.MsgSend{
 		FromAddress: redemptionAccount.Address,
 		ToAddress:   userRedemptionRecord.Receiver,
-		Amount:      sdk.NewCoins(sdk.NewInt64Coin(userRedemptionRecord.Denom, rrAmt)),
+		Amount:      sdk.NewCoins(sdk.NewCoin(userRedemptionRecord.Denom, rrAmt)),
 	})
 
 	// Give claims a 10 minute timeout
