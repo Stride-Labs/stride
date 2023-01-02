@@ -199,9 +199,6 @@ Where proposal.json contains:
     "description": "Proposal to remove rate limiting on...",
     "denom": "ustrd",
     "channel_id": "channel-0",
-    "max_percent_send": "10",
-	"max_percent_recv": "10",
-	"duration_hours": "24", 
     "deposit": "10000000ustrd"
 }
 `, version.AppName)),
@@ -260,9 +257,6 @@ Where proposal.json contains:
     "description": "Proposal to reset the rate limit...",
     "denom": "ustrd",
     "channel_id": "channel-0",
-    "max_percent_send": "10",
-	"max_percent_recv": "10",
-	"duration_hours": "24", 
     "deposit": "10000000ustrd"
 }
 `, version.AppName)),

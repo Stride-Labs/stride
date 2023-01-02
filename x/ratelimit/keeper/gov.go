@@ -18,7 +18,7 @@ func (k Keeper) GovAddRateLimit(ctx sdk.Context, p *types.AddRateLimitProposal) 
 	// Confirm the rate limit does not already exist
 	_, found := k.GetRateLimit(ctx, p.Denom, p.ChannelId)
 	if found {
-		return types.ErrRateLimitKeyAlreadyExists
+		return types.ErrRateLimitAlreadyExists
 	}
 
 	// Confirm the channel exists
@@ -57,7 +57,7 @@ func (k Keeper) GovUpdateRateLimit(ctx sdk.Context, p *types.UpdateRateLimitProp
 	// Confirm the rate limit exists
 	_, found := k.GetRateLimit(ctx, p.Denom, p.ChannelId)
 	if !found {
-		return types.ErrRateLimitKeyNotFound
+		return types.ErrRateLimitNotFound
 	}
 
 	// Update the rate limit object with the new quota information
@@ -90,7 +90,7 @@ func (k Keeper) GovUpdateRateLimit(ctx sdk.Context, p *types.UpdateRateLimitProp
 func (k Keeper) GovRemoveRateLimit(ctx sdk.Context, msg *types.RemoveRateLimitProposal) error {
 	_, found := k.GetRateLimit(ctx, msg.Denom, msg.ChannelId)
 	if !found {
-		return types.ErrRateLimitKeyNotFound
+		return types.ErrRateLimitNotFound
 	}
 
 	k.RemoveRateLimit(ctx, msg.Denom, msg.ChannelId)

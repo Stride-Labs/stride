@@ -103,7 +103,7 @@ func (s *KeeperTestSuite) TestMsgServer_AddRateLimit() {
 	s.addRateLimitSuccessful()
 
 	// Finally, try to add the same rate limit again - it should fail
-	s.addRateLimitWithError(types.ErrRateLimitKeyAlreadyExists)
+	s.addRateLimitWithError(types.ErrRateLimitAlreadyExists)
 }
 
 func (s *KeeperTestSuite) TestMsgServer_UpdateRateLimit() {
@@ -117,7 +117,7 @@ func (s *KeeperTestSuite) TestMsgServer_UpdateRateLimit() {
 
 	// Attempt to update a rate limit that does not exist
 	err := s.App.RatelimitKeeper.GovUpdateRateLimit(s.Ctx, &updateRateLimitMsg)
-	s.Require().Equal(err, types.ErrRateLimitKeyNotFound)
+	s.Require().Equal(err, types.ErrRateLimitNotFound)
 
 	// Add a rate limit successfully
 	s.addRateLimitSuccessful()
@@ -146,7 +146,7 @@ func (s *KeeperTestSuite) TestMsgServer_RemoveRateLimit() {
 
 	// Attempt to remove a rate limit that does not exist
 	err := s.App.RatelimitKeeper.GovRemoveRateLimit(s.Ctx, &removeRateLimitMsg)
-	s.Require().Equal(err, types.ErrRateLimitKeyNotFound)
+	s.Require().Equal(err, types.ErrRateLimitNotFound)
 
 	// Add a rate limit successfully
 	s.addRateLimitSuccessful()
@@ -170,7 +170,7 @@ func (s *KeeperTestSuite) TestMsgServer_ResetRateLimit() {
 
 	// Attempt to reset a rate limit that does not exist
 	err := s.App.RatelimitKeeper.GovResetRateLimit(s.Ctx, &resetRateLimitMsg)
-	s.Require().Equal(err, types.ErrRateLimitKeyNotFound)
+	s.Require().Equal(err, types.ErrRateLimitNotFound)
 
 	// Add a rate limit successfully
 	s.addRateLimitSuccessful()

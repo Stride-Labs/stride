@@ -12,17 +12,17 @@ test_remove_rate_limit() {
 
     # Remove the rate limit
     printf "\n>>> Removing rate limit...\n"
-    submit_proposal_and_vote remove_uatom.json
+    submit_proposal_and_vote remove-rate-limit remove_uatom.json
     sleep 30
 
-    # Then successfully transfer after the removal 
-    printf "\n>>> Transferring $start_gaia_balance uatom...\n"
-    $GAIA_MAIN_CMD tx ibc-transfer transfer transfer channel-0 $(STRIDE_ADDRESS) ${start_gaia_balance}uatom --from ${GAIA_VAL_PREFIX}1 -y | TRIM_TX
+    # Then successfully transfer a large amount the removal 
+    printf "\n>>> Transferring $INITIAL_CHANNEL_VALUE uatom...\n"
+    $GAIA_MAIN_CMD tx ibc-transfer transfer transfer channel-0 $(STRIDE_ADDRESS) ${INITIAL_CHANNEL_VALUE}uatom --from ${GAIA_VAL_PREFIX}1 -y | TRIM_TX
     sleep 15
 
     # Confirm balance was updated appropriately
     end_stride_balance=$(get_balance STRIDE $IBC_GAIA_CHANNEL_0_DENOM)
-    expected_stride_balance=$((start_stride_balance+start_gaia_balance))
+    expected_stride_balance=$((start_stride_balance+INITIAL_CHANNEL_VALUE))
 
     print_expectation $expected_stride_balance $end_stride_balance "Balance on Stride" 
 }

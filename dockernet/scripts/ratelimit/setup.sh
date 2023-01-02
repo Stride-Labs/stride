@@ -3,8 +3,7 @@ source ${CURRENT_DIR}/../../config.sh
 source ${CURRENT_DIR}/common.sh
 
 setup_juno_osmo_channel() {
-    printf "$BLUE[CREATING JUNO <> OSMO CHANNEL]$NC\n"
-    printf "$BLUE---------------------------------------------------------------------$NC\n"
+    print_header "CREATING JUNO <> OSMO CHANNEL"
 
     relayer_exec="$DOCKER_COMPOSE run --rm relayer-juno-osmo"
     path="juno-osmo"
@@ -37,8 +36,7 @@ setup_juno_osmo_channel() {
 }
 
 setup_channel_value() {
-    printf "$BLUE[INITIALIZING CHANNEL VALUE]$NC\n"
-    printf "$BLUE---------------------------------------------------------------------$NC\n"
+    print_header "INITIALIZING CHANNEL VALUE"
 
     # IBC Transfer
     echo "Transfering for channel value..."
@@ -46,7 +44,9 @@ setup_channel_value() {
     $GAIA_MAIN_CMD tx ibc-transfer transfer transfer channel-0 $(STRIDE_ADDRESS) ${INITIAL_CHANNEL_VALUE}uatom --from ${GAIA_VAL_PREFIX}1 -y | TRIM_TX
     sleep 3
 
-    echo ">>> ujuno"
+    echo ">>> ujuno" # second transfer is for stujuno
+    $JUNO_MAIN_CMD tx ibc-transfer transfer transfer channel-0 $(STRIDE_ADDRESS) ${INITIAL_CHANNEL_VALUE}ujuno --from ${JUNO_VAL_PREFIX}1 -y | TRIM_TX
+    sleep 3
     $JUNO_MAIN_CMD tx ibc-transfer transfer transfer channel-0 $(STRIDE_ADDRESS) ${INITIAL_CHANNEL_VALUE}ujuno --from ${JUNO_VAL_PREFIX}1 -y | TRIM_TX
     sleep 3
 
@@ -68,42 +68,41 @@ setup_channel_value() {
 }
 
 setup_rate_limits() {
-    printf "$BLUE[ADDING RATE LIMITS]$NC\n"
-    printf "$BLUE---------------------------------------------------------------------$NC\n"
+    print_header "ADDING RATE LIMITS"
         
     # ustrd channel-2
     echo "ustrd on Stride <> Osmo Channel:"
-    submit_proposal_and_vote add_ustrd.json
+    submit_proposal_and_vote add-rate-limit add_ustrd.json
     sleep 10
 
     # ibc/uatom channel-0
     echo "uatom on Stride <> Gaia Channel:"
-    submit_proposal_and_vote add_uatom.json
+    submit_proposal_and_vote add-rate-limit add_uatom.json
     sleep 10
 
     # ibc/ujuno channel-1
     echo "ujuno on Stride <> Juno Channel:"
-    submit_proposal_and_vote add_ujuno.json
+    submit_proposal_and_vote add-rate-limit add_ujuno.json
     sleep 10
 
     # ibc/uosmo channel-2
     echo "uosmo on Stride <> Osmo Channel:"
-    submit_proposal_and_vote add_uosmo.json
+    submit_proposal_and_vote add-rate-limit add_uosmo.json
     sleep 10
 
     # stujuno channel-2
     echo "stujuno on Stride <> Osmo Channel:"
-    submit_proposal_and_vote add_stujuno.json
+    submit_proposal_and_vote add-rate-limit add_stujuno.json
     sleep 10
 
     # traveler juno channel-1
     echo "traveler-ujuno on Stride <> Juno Channel:"
-    submit_proposal_and_vote add_traveler_ujuno_on_juno.json
+    submit_proposal_and_vote add-rate-limit add_traveler_ujuno_on_juno.json
     sleep 10
 
     echo "traveler-ujuno on Stride <> Osmo Channel:"
     # traveler juno channel-2
-    submit_proposal_and_vote add_traveler_ujuno_on_osmo.json
+    submit_proposal_and_vote add-rate-limit add_traveler_ujuno_on_osmo.json
     sleep 40
 
     # Confirm all rate limits were added
