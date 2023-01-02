@@ -49,11 +49,11 @@ func SimulateMsgChangeValidatorWeight(
 		
 		hostZone, found := k.GetHostZone(ctx, "GAIA")
 		if !found {
-			return simtypes.NoOpMsg(types.ModuleName, types.TypeMsgChangeValidatorWeight, "Hostzone with random validator not found" ), nil, nil
+			return simtypes.NoOpMsg(types.ModuleName, types.TypeMsgChangeValidatorWeight, "Hostzone with random validators not found" ), nil, nil
 		}
 
 		if len(hostZone.Validators) != 2 {
-			return simtypes.NoOpMsg(types.ModuleName, types.TypeMsgChangeValidatorWeight, "Wrong number of hostzone" ), nil, nil
+			return simtypes.NoOpMsg(types.ModuleName, types.TypeMsgChangeValidatorWeight, "Wrong number of hostzones" ), nil, nil
 		}
 
  		msg := &types.MsgChangeValidatorWeight{
