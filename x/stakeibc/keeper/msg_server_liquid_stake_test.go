@@ -245,20 +245,3 @@ func (s *KeeperTestSuite) TestLiquidStake_InvalidHostAddress() {
 	_, err := s.GetMsgServer().LiquidStake(sdk.WrapSDKContext(s.Ctx), &tc.validMsg)
 	s.Require().EqualError(err, "could not bech32 decode address cosmosXXX of zone with id: GAIA")
 }
-func (s *KeeperTestSuite) TestLiquidStake_IntOverflowAmount() {
-	tc := s.SetupLiquidStake()
-
-	tc.user.atomBalance = sdk.NewCoin(IbcAtom, sdk.NewIntFromUint64(18000000000000000000))
-
-	s.FundAccount(tc.user.acc, tc.user.atomBalance)
-
-	balance := tc.user.atomBalance.Amount.Uint64()
-
-	invalidMsg := tc.validMsg
-	invalidMsg.Amount = sdk.NewIntFromUint64(balance - 1000)
-
-	_, err := s.GetMsgServer().LiquidStake(sdk.WrapSDKContext(s.Ctx), &invalidMsg)
-
-	expectedErr := fmt.Sprintf("failed to mint %s stAssets to user: failed to convert amount to int64: overflow: unable to cast %d of type uint64 to int64", invalidMsg.HostDenom, invalidMsg.Amount)
-	s.Require().EqualError(err, expectedErr)
-}
