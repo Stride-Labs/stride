@@ -14,6 +14,33 @@ import (
 	// stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 )
 
+const (
+
+	OpWeightMsgAddValidator = "op_weight_msg_add_validator"
+	DefaultWeightMsgAddValidator int = 100
+
+	OpWeightMsgChangeValidatorWeight = "op_weight_msg_change_validator_weight"
+	DefaultWeightMsgChangeValidatorWeight int = 100
+
+	OpWeightMsgClaimUndelegatedTokens = "op_weight_msg_claim_undelegated_tokens"
+	DefaultWeightMsgClaimUndelegatedTokens int = 100
+
+	OpWeightMsgDeleteValidator = "op_weight_msg_delete_validator"
+	DefaultWeightMsgDeleteValidator int = 100
+
+	OpWeightMsgLiquidStake = "op_weight_msg_liquid_stake"
+	DefaultWeightMsgLiquidStake int = 100
+
+	OpWeightMsgRebalanceValidators = "op_weight_msg_rebalance_validators"
+	DefaultWeightMsgRebalanceValidators int = 100
+
+	OpWeightMsgRestoreInterchainAccount = "op_weight_msg_register_interchain_account"
+	DefaultWeightMsgRestoreInterchainAccount int = 100
+
+	OpWeightMsgUpdateValidatorSharesExchRate = "op_weight_msg_update_validator_shares_exch_rate"
+	DefaultWeightMsgUpdateValidatorSharesExchRate int = 100
+)
+
 
 // WeightedOperations returns all the operations from the module with their respective weights
 func WeightedOperations(appParams simtypes.AppParams, cdc codec.JSONCodec, ak types.AccountKeeper, bk types.BankKeeper, k keeper.Keeper) simulation.WeightedOperations {
