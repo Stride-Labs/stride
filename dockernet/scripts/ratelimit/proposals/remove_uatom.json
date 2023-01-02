@@ -1,0 +1,7 @@
+{
+    "title": "Remove uatom Rate Limit",
+    "description": "Proposal to disable rate limiting on uatom for Stride <> Gaia",
+    "denom": "uatom",
+    "channel_id": "channel-0",
+    "deposit": "10000000ustrd"
+}

@@ -21,8 +21,8 @@ test_quota_update() {
 
     # Relax the send quota threshold (this will reset the flow)
     printf "\n>>> Updating rate limit...\n"
-    $STRIDE_MAIN_CMD tx ratelimit update-rate-limit $IBC_OSMO_CHANNEL_2_DENOM channel-2 10 11 1 --from ${STRIDE_VAL_PREFIX}1 -y | TRIM_TX
-    sleep 3
+    submit_proposal_and_vote update_uosmo.json
+    sleep 30
 
     # Try the two transfers again, this time the second one should succeed
     check_transfer_status OSMO STRIDE channel-0 channel-2 99999999 uosmo $IBC_OSMO_CHANNEL_2_DENOM true

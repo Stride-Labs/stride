@@ -11,17 +11,16 @@ test_tx_reset_atom_from_gaia_to_stride() {
     start_stride_balance=$(get_balance STRIDE $IBC_GAIA_CHANNEL_0_DENOM)
     start_channel_value=$(get_channel_value $IBC_GAIA_CHANNEL_0_DENOM channel-0)
 
-    # Transfer 2 times successfully
-    check_transfer_status GAIA STRIDE channel-0 channel-0 40000000 uatom $IBC_GAIA_CHANNEL_0_DENOM true
-    check_transfer_status GAIA STRIDE channel-0 channel-0 40000000 uatom $IBC_GAIA_CHANNEL_0_DENOM true
+    # Transfer successfully
+    check_transfer_status GAIA STRIDE channel-0 channel-0 80000000 uatom $IBC_GAIA_CHANNEL_0_DENOM true
 
     # Attempt to transfer but should fail because it gets rate limited
     check_transfer_status GAIA STRIDE channel-0 channel-0 40000000 uatom $IBC_GAIA_CHANNEL_0_DENOM false 
 
     # Reset the rate limit manually
     printf "\n>>> Resetting rate limit...\n"
-    $STRIDE_MAIN_CMD tx ratelimit reset-rate-limit $IBC_GAIA_CHANNEL_0_DENOM channel-0 --from ${STRIDE_VAL_PREFIX}1 -y | TRIM_TX
-    sleep 3
+    submit_proposal_and_vote reset_uatom.json
+    sleep 30
 
     # Then successfully transfer after the reset 
     check_transfer_status GAIA STRIDE channel-0 channel-0 40000000 uatom $IBC_GAIA_CHANNEL_0_DENOM true 
@@ -53,17 +52,16 @@ test_tx_reset_atom_from_stride_to_gaia() {
     start_stride_balance=$(get_balance STRIDE $IBC_GAIA_CHANNEL_0_DENOM)
     start_channel_value=$(get_channel_value $IBC_GAIA_CHANNEL_0_DENOM channel-0)
 
-    # Transfer 2 times successfully
-    check_transfer_status STRIDE GAIA channel-0 channel-0 40000000 $IBC_GAIA_CHANNEL_0_DENOM $IBC_GAIA_CHANNEL_0_DENOM true
-    check_transfer_status STRIDE GAIA channel-0 channel-0 40000000 $IBC_GAIA_CHANNEL_0_DENOM $IBC_GAIA_CHANNEL_0_DENOM true
+    # Transfer successfully
+    check_transfer_status STRIDE GAIA channel-0 channel-0 80000000 $IBC_GAIA_CHANNEL_0_DENOM $IBC_GAIA_CHANNEL_0_DENOM true
 
     # Attempt to transfer but should fail because it gets rate limited
     check_transfer_status STRIDE GAIA channel-0 channel-0 40000000 $IBC_GAIA_CHANNEL_0_DENOM $IBC_GAIA_CHANNEL_0_DENOM false 
 
     # Reset the rate limit manually
     printf "\n>>> Resetting rate limit...\n"
-    $STRIDE_MAIN_CMD tx ratelimit reset-rate-limit $IBC_GAIA_CHANNEL_0_DENOM channel-0 --from ${STRIDE_VAL_PREFIX}1 -y | TRIM_TX
-    sleep 3
+    submit_proposal_and_vote reset_uatom.json
+    sleep 30
 
     # Then successfully transfer after the reset 
     check_transfer_status STRIDE GAIA channel-0 channel-0 40000000 $IBC_GAIA_CHANNEL_0_DENOM $IBC_GAIA_CHANNEL_0_DENOM true 

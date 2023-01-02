@@ -45,7 +45,7 @@ print_expectation() {
 
 wait_until_epoch_end() {
     seconds_til_epoch_start=$($STRIDE_MAIN_CMD q epochs seconds-remaining hour)
-    sleep_time=$((seconds_til_epoch_start+10))
+    sleep_time=$((seconds_til_epoch_start+5))
 
     echo ">>> Sleeping $sleep_time seconds until start of epoch..."
     sleep $sleep_time
@@ -72,6 +72,10 @@ get_balance() {
     address=$(${chain}_ADDRESS)
 
     $cmd q bank balances $address --denom $denom | grep amount | awk '{printf $2}' | tr -d '"'
+}
+
+get_last_proposal_id() {
+    $STRIDE_MAIN_CMD q gov proposals | grep proposal_id | tail -1 | awk '{printf $2}' | tr -d '"'
 }
 
 check_transfer_status() {
@@ -159,6 +163,23 @@ setup_juno_osmo_channel() {
     $DOCKER_COMPOSE logs -f relayer-${path} | sed -r -u "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2})?)?[mGK]//g" >> $relayer_logs 2>&1 &
 }
 
+submit_proposal_and_vote() {
+    proposal_file=$1
+
+    echo ">>> Submitting proposal for: $proposal_file"
+    $STRIDE_MAIN_CMD tx gov submit-proposal add-rate-limit ${CURRENT_DIR}/proposals/${proposal_file} --from ${STRIDE_VAL_PREFIX}1 -y | TRIM_TX
+    sleep 3
+
+    echo ">>> Voting on proposal"
+    proposal_id=$(get_last_proposal_id)
+    echo "ID: $proposal_id"
+    $STRIDE_MAIN_CMD tx gov vote $proposal_id yes --from ${STRIDE_VAL_PREFIX}1 -y | TRIM_TX
+    $STRIDE_MAIN_CMD tx gov vote $proposal_id yes --from ${STRIDE_VAL_PREFIX}2 -y | TRIM_TX
+    $STRIDE_MAIN_CMD tx gov vote $proposal_id yes --from ${STRIDE_VAL_PREFIX}3 -y | TRIM_TX
+
+    echo ""
+}
+
 add_rate_limits() {
     printf "$BLUE[ADDING RATE LIMITS]$NC\n"
     printf "$BLUE---------------------------------------------------------------------$NC\n"
@@ -191,33 +212,41 @@ add_rate_limits() {
 
     # Add rate limits
     printf "\nAdding rate limits...\n"
+        
+    # ustrd channel-2
     echo ">>> ustrd on Stride <> Osmo Channel:"
-    $STRIDE_MAIN_CMD tx ratelimit add-rate-limit $STRD_DENOM               channel-2 10 10 1 --from ${STRIDE_VAL_PREFIX}1 -y | TRIM_TX
+    submit_proposal_and_vote add_ustrd.json
     sleep 3
 
+    # ibc/uatom channel-0
     echo ">>> uatom on Stride <> Gaia Channel:"
-    $STRIDE_MAIN_CMD tx ratelimit add-rate-limit $IBC_GAIA_CHANNEL_0_DENOM channel-0 10 10 1 --from ${STRIDE_VAL_PREFIX}1 -y | TRIM_TX
+    submit_proposal_and_vote add_uatom.json
     sleep 3
 
+    # ibc/ujuno channel-1
     echo ">>> ujuno on Stride <> Juno Channel:"
-    $STRIDE_MAIN_CMD tx ratelimit add-rate-limit $IBC_JUNO_CHANNEL_1_DENOM channel-1 10 10 1 --from ${STRIDE_VAL_PREFIX}1 -y | TRIM_TX
+    submit_proposal_and_vote add_ujuno.json
     sleep 3
 
+    # ibc/uosmo channel-2
     echo ">>> uosmo on Stride <> Osmo Channel:"
-    $STRIDE_MAIN_CMD tx ratelimit add-rate-limit $IBC_OSMO_CHANNEL_2_DENOM channel-2 10 10 1 --from ${STRIDE_VAL_PREFIX}1 -y | TRIM_TX
+    submit_proposal_and_vote add_uosmo.json
     sleep 3
 
+    # stujuno channel-2
     echo ">>> stujuno on Stride <> Osmo Channel:"
-    $STRIDE_MAIN_CMD tx ratelimit add-rate-limit stujuno                   channel-2 10 10 1 --from ${STRIDE_VAL_PREFIX}1 -y | TRIM_TX
+    submit_proposal_and_vote add_stujuno.json
     sleep 3
 
+    # traveler juno channel-1
     echo ">>> traveler-ujuno on Stride <> Juno Channel:"
-    $STRIDE_MAIN_CMD tx ratelimit add-rate-limit $TRAVELER_JUNO            channel-1 10 10 1 --from ${STRIDE_VAL_PREFIX}1 -y | TRIM_TX
+    submit_proposal_and_vote add_traveler_ujuno_on_juno.json
     sleep 3
 
     echo ">>> traveler-ujuno on Stride <> Osmo Channel:"
-    $STRIDE_MAIN_CMD tx ratelimit add-rate-limit $TRAVELER_JUNO            channel-2 10 10 1 --from ${STRIDE_VAL_PREFIX}1 -y | TRIM_TX
-    sleep 3
+    # traveler juno channel-2
+    submit_proposal_and_vote add_traveler_ujuno_on_osmo.json
+    sleep 40
 
     # Confirm all rate limits were added
     num_rate_limits=$($STRIDE_MAIN_CMD q ratelimit list-rate-limits | grep path | wc -l | xargs)
@@ -226,4 +255,3 @@ add_rate_limits() {
         exit 1
     fi
 }
-

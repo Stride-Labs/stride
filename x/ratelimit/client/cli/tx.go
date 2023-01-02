@@ -1,11 +1,14 @@
 package cli
 
 import (
+	"fmt"
 	"os"
+	"strings"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	"github.com/cosmos/cosmos-sdk/codec"
+	"github.com/cosmos/cosmos-sdk/version"
 	"github.com/cosmos/gogoproto/proto"
 	"github.com/spf13/cobra"
 
@@ -33,15 +36,16 @@ func parseProposalFile(cdc codec.JSONCodec, proposalFile string, proposal proto.
 
 // Submits the governance proposal
 func submitProposal(clientCtx client.Context, cmd *cobra.Command, proposal govtypes.Content, deposit sdk.Coins) error {
+	// Confirm a valid deposit was submitted
 	strideDenom, err := sdk.GetBaseDenom()
 	if err != nil {
 		return err
 	}
-
 	if len(deposit) != 1 || deposit.GetDenomByIndex(0) != strideDenom {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidCoins, "Deposit token denom must be %s", strideDenom)
 	}
 
+	// Build and validate the proposal
 	from := clientCtx.GetFromAddress()
 	msg, err := govtypes.NewMsgSubmitProposal(proposal, deposit, from)
 	if err != nil {
@@ -50,6 +54,8 @@ func submitProposal(clientCtx client.Context, cmd *cobra.Command, proposal govty
 	if err := msg.ValidateBasic(); err != nil {
 		return err
 	}
+
+	// Finally, broadcast the proposal tx
 	return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
 }
 
@@ -58,7 +64,26 @@ func CmdAddRateLimitProposal() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "add-rate-limit [proposal-file]",
 		Short: "Submit a add-rate-limit proposal",
-		Args:  cobra.ExactArgs(1),
+		Long: strings.TrimSpace(
+			fmt.Sprintf(`Submit an add-rate-limit proposal along with an initial deposit.
+The proposal details must be supplied via a JSON file.
+
+Example:
+$ %s tx gov submit-proposal add-rate-limit <path/to/proposal.json> --from=<key_or_address>
+
+Where proposal.json contains:
+{
+	"title": "Add Rate Limit to ...",
+    "description": "Proposal to enable rate limiting on...",
+    "denom": "ustrd",
+    "channel_id": "channel-0",
+    "max_percent_send": "10",
+	"max_percent_recv": "10",
+	"duration_hours": "24", 
+    "deposit": "10000000ustrd"
+}
+`, version.AppName)),
+		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
 			proposalFile := args[0]
 
@@ -67,7 +92,7 @@ func CmdAddRateLimitProposal() *cobra.Command {
 				return err
 			}
 
-			var proposal types.ResetRateLimitProposal
+			var proposal types.AddRateLimitProposal
 			if err := parseProposalFile(clientCtx.Codec, proposalFile, &proposal); err != nil {
 				return err
 			}
@@ -100,7 +125,26 @@ func CmdUpdateRateLimitProposal() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "update-rate-limit [proposal-file]",
 		Short: "Submit a update-rate-limit proposal",
-		Args:  cobra.ExactArgs(1),
+		Long: strings.TrimSpace(
+			fmt.Sprintf(`Submit an update-rate-limit proposal along with an initial deposit.
+The proposal details must be supplied via a JSON file.
+
+Example:
+$ %s tx gov submit-proposal update-rate-limit <path/to/proposal.json> --from=<key_or_address>
+
+Where proposal.json contains:
+{
+	"title": "Update Rate Limit ...",
+    "description": "Proposal to update rate limit...",
+    "denom": "ustrd",
+    "channel_id": "channel-0",
+    "max_percent_send": "10",
+	"max_percent_recv": "20",
+	"duration_hours": "24", 
+    "deposit": "10000000ustrd"
+}
+`, version.AppName)),
+		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
 			proposalFile := args[0]
 
@@ -109,7 +153,7 @@ func CmdUpdateRateLimitProposal() *cobra.Command {
 				return err
 			}
 
-			var proposal types.ResetRateLimitProposal
+			var proposal types.UpdateRateLimitProposal
 			if err := parseProposalFile(clientCtx.Codec, proposalFile, &proposal); err != nil {
 				return err
 			}
@@ -142,7 +186,26 @@ func CmdRemoveRateLimitProposal() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "remove-rate-limit [proposal-file]",
 		Short: "Submit a remove-rate-limit proposal",
-		Args:  cobra.ExactArgs(1),
+		Long: strings.TrimSpace(
+			fmt.Sprintf(`Submit an remove-rate-limit proposal along with an initial deposit.
+The proposal details must be supplied via a JSON file.
+
+Example:
+$ %s tx gov submit-proposal remove-rate-limit <path/to/proposal.json> --from=<key_or_address>
+
+Where proposal.json contains:
+{
+	"title": "Remove Rate Limit ...",
+    "description": "Proposal to remove rate limiting on...",
+    "denom": "ustrd",
+    "channel_id": "channel-0",
+    "max_percent_send": "10",
+	"max_percent_recv": "10",
+	"duration_hours": "24", 
+    "deposit": "10000000ustrd"
+}
+`, version.AppName)),
+		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
 			proposalFile := args[0]
 
@@ -151,7 +214,7 @@ func CmdRemoveRateLimitProposal() *cobra.Command {
 				return err
 			}
 
-			var proposal types.ResetRateLimitProposal
+			var proposal types.RemoveRateLimitProposal
 			if err := parseProposalFile(clientCtx.Codec, proposalFile, &proposal); err != nil {
 				return err
 			}
@@ -184,7 +247,26 @@ func CmdResetRateLimitProposal() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "reset-rate-limit [proposal-file]",
 		Short: "Submit a reset-rate-limit proposal",
-		Args:  cobra.ExactArgs(1),
+		Long: strings.TrimSpace(
+			fmt.Sprintf(`Submit an reset-rate-limit proposal along with an initial deposit.
+The proposal details must be supplied via a JSON file.
+
+Example:
+$ %s tx gov submit-proposal reset-rate-limit <path/to/proposal.json> --from=<key_or_address>
+
+Where proposal.json contains:
+{
+	"title": "Reset Rate Limit ...",
+    "description": "Proposal to reset the rate limit...",
+    "denom": "ustrd",
+    "channel_id": "channel-0",
+    "max_percent_send": "10",
+	"max_percent_recv": "10",
+	"duration_hours": "24", 
+    "deposit": "10000000ustrd"
+}
+`, version.AppName)),
+		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
 			proposalFile := args[0]
 
