@@ -76,3 +76,65 @@ func (suite *KeeperTestSuite) TestBalanceStakeHostZoneInvariant() {
 		})
 	}
 }
+
+func (suite *KeeperTestSuite) TestValidatorWeightHostZoneInvariant() {
+	hostZone := types.HostZone{
+		ChainId: HostChainId,
+		Validators: []*stakeibctypes.Validator{
+			{
+				Name:           "val1",
+				Address:        "stride_VAL1",
+				CommissionRate: 1,
+				Weight:         100,
+				Status:         stakeibctypes.Validator_ACTIVE,
+				DelegationAmt:  sdk.NewInt(100),
+			},
+			{
+				Name:           "val2",
+				Address:        "stride_VAL2",
+				CommissionRate: 2,
+				Weight:         500,
+				Status:         stakeibctypes.Validator_ACTIVE,
+				DelegationAmt:  sdk.NewInt(500),
+			},
+			{
+				Name:           "val3",
+				Address:        "stride_VAL3",
+				CommissionRate: 1,
+				Weight:         0,
+				Status:         stakeibctypes.Validator_ACTIVE,
+				DelegationAmt:  sdk.NewInt(200),
+			},
+		},
+		StakedBal: sdk.NewInt(800),
+	}
+
+	testcases := []struct {
+		name         string
+		hostZone     types.HostZone
+		msg          *types.MsgChangeValidatorWeight
+		expectedStop bool
+	}{
+		{
+			name:     "happy case",
+			hostZone: hostZone,
+			msg: &types.MsgChangeValidatorWeight{
+				HostZone: hostZone.ChainId,
+				ValAddr:  "stride_VAL3",
+				Weight:   250,
+			},
+			expectedStop: false,
+		},
+	}
+
+	for _, tc := range testcases {
+		suite.Run(tc.name, func() {
+			suite.Setup()
+			suite.App.StakeibcKeeper.SetHostZone(suite.Ctx, tc.hostZone)
+			_, err := suite.GetMsgServer().ChangeValidatorWeight(sdk.WrapSDKContext(suite.Ctx), tc.msg)
+			suite.Require().NoError(err)
+			res, broken := suite.App.StakeibcKeeper.ValidatorWeightHostZoneInvariant()(suite.Ctx)
+			suite.Require().Equal(tc.expectedStop, broken, res)
+		})
+	}
+}
