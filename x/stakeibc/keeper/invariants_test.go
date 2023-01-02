@@ -121,7 +121,7 @@ func (suite *KeeperTestSuite) TestValidatorWeightHostZoneInvariant() {
 			msg: &types.MsgChangeValidatorWeight{
 				HostZone: hostZone.ChainId,
 				ValAddr:  "stride_VAL3",
-				Weight:   250,
+				Weight:   200,
 			},
 			expectedStop: false,
 		},
