@@ -101,7 +101,7 @@ func DelegatorSharesCallback(k Keeper, ctx sdk.Context, args []byte, query icqty
 	maxBound := sdk.NewInt(math.MaxInt64)
 	weight := validator.Weight
 	if weight.GTE(maxBound) {
-		errMsg := fmt.Sprintf("unable to convert validator weight to int64")
+		errMsg := "unable to convert validator weight to int64"
 		k.Logger(ctx).Error(errMsg)
 		return sdkerrors.Wrapf(types.ErrIntCast, errMsg)
 	}
