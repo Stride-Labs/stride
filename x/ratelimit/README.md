@@ -13,10 +13,13 @@ Each rate limit is defined by the following three components:
 1. **Path**: Defines the `ChannelId` and `Denom`
 2. **Quota**: Defines the rate limit time window (`DurationHours`) and the max threshold for inflows/outflows (`MaxPercRecv` and `MaxPercSend` respecitvely)
 3. **Flow**: Stores the current `Inflow`, `Outflow` and `ChannelValue`. Each time a quota expires, the inflow and outflow get reset to 0 and the channel value gets recalculated. Throughout the window, the inflow and outflow each increase monotonically. The net flow is used when determining if a transfer would exceed the quota. 
-    * For `Send` packets: <br>  <!-- \text{Exceeds Quota if:} \left(\frac{\text{Outflow} - \text{Inflow} + \text{Packet Amount}}{\text{ChannelValue}}\right) > \text{MaxPercSend} -->
-    <img src="https://latex.codecogs.com/svg.image?&space;&space;&space;&space;\text{Exceeds&space;Quota&space;if:}&space;\left(\frac{\text{Outflow}&space;-&space;\text{Inflow}&space;&plus;&space;\text{Packet&space;Amount}}{\text{ChannelValue}}\right)&space;>&space;\text{MaxPercSend}" title="https://latex.codecogs.com/svg.image? \text{Exceeds Quota if:} \left(\frac{\text{Outflow} - \text{Inflow} + \text{Packet Amount}}{\text{ChannelValue}}\right) > \text{MaxPercSend}" />
-    * For `Receive` packets: <br> <!-- \text{Exceeds Quota if:} \left(\frac{\text{Inflow} - \text{Outflow} + \text{Packet Amount}}{\text{ChannelValue}}\right) > \text{MaxPercRecv} -->
-    <img src="https://latex.codecogs.com/svg.image?\text{Exceeds&space;Quota&space;if:}&space;\left(\frac{\text{Inflow}&space;-&space;\text{Outflow}&space;&plus;&space;\text{Packet&space;Amount}}{\text{ChannelValue}}\right)&space;>&space;\text{MaxPercRecv}" title="https://latex.codecogs.com/svg.image?\text{Exceeds Quota if:} \left(\frac{\text{Inflow} - \text{Outflow} + \text{Packet Amount}}{\text{ChannelValue}}\right) > \text{MaxPercRecv}" />
+<!-- \text{Exceeds Quota if:} \left(\frac{\text{Outflow} - \text{Inflow} + \text{Packet Amount}}{\text{ChannelValue}}\right) > \text{MaxPercSend} -->
+* For `Send` packets: <br>  
+<img src="https://latex.codecogs.com/svg.image?&space;&space;&space;&space;\text{Exceeds&space;Quota&space;if:}&space;\left(\frac{\text{Outflow}&space;-&space;\text{Inflow}&space;&plus;&space;\text{Packet&space;Amount}}{\text{ChannelValue}}\right)&space;>&space;\text{MaxPercSend}" title="https://latex.codecogs.com/svg.image? \text{Exceeds Quota if:} \left(\frac{\text{Outflow} - \text{Inflow} + \text{Packet Amount}}{\text{ChannelValue}}\right) > \text{MaxPercSend}" />
+
+<!-- \text{Exceeds Quota if:} \left(\frac{\text{Inflow} - \text{Outflow} + \text{Packet Amount}}{\text{ChannelValue}}\right) > \text{MaxPercRecv} -->
+* For `Receive` packets: <br> 
+<img src="https://latex.codecogs.com/svg.image?\text{Exceeds&space;Quota&space;if:}&space;\left(\frac{\text{Inflow}&space;-&space;\text{Outflow}&space;&plus;&space;\text{Packet&space;Amount}}{\text{ChannelValue}}\right)&space;>&space;\text{MaxPercRecv}" title="https://latex.codecogs.com/svg.image?\text{Exceeds Quota if:} \left(\frac{\text{Inflow} - \text{Outflow} + \text{Packet Amount}}{\text{ChannelValue}}\right) > \text{MaxPercRecv}" />
 
 ## Example Walk-Through
 Using the example above, let's say we created a 24 hour rate limit on `ibc/D24B4564BCD51D3D02D9987D92571EAC5915676A9BD6D9B0C1D0254CB8A5EA34` (`ibc/uosmo`), `channel-5`, with a 10% send and receive threshold. 
