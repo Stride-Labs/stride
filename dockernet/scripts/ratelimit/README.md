@@ -1,8 +1,6 @@
 ## Rate Limit Integration Tests
 * **These tests are not intended to be run with normal CI, they were meant as a comprehensive sanity check before deploying the module and are redundant with the unit tests.** 
-* To setup the tests, modify the following in `config.sh`:
-  * Set `HOST_CHAINS` to `(GAIA JUNO OSMO)`
-  * Set `STRIDE_HOUR_EPOCH_DURATION` to `90s`
+* **WARNING**: `STRIDE_HOUR_EPOCH_DURATION` must be at least '90s' in `config.sh`
 * Start dockernet
 ```
 make start-docker

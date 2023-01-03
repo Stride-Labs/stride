@@ -111,4 +111,11 @@ setup_rate_limits() {
         echo "ERROR: Not all rate limits were added. Exiting."
         exit 1
     fi
+
+    # Confirm there are 4 rate limits on osmo (this is to test out the rate-limits-by-chain query)
+    num_rate_limits=$($STRIDE_MAIN_CMD q ratelimit show-rate-limits OSMO | grep path | wc -l | xargs)
+    if [[ "$num_rate_limits" != "4" ]]; then 
+        echo "ERROR: OSMO should have 4 rate limits (it had: $num_rate_limits)"
+        exit 1
+    fi
 }

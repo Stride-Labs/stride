@@ -55,13 +55,13 @@ get_flow_amount() {
     denom=$1
     channel=$2
     flow_type=$3
-    $STRIDE_MAIN_CMD q ratelimit list-rate-limits | grep $denom -B 6 | grep $channel -B 5 | grep $flow_type | awk '{printf $2}' | tr -d '"'
+    $STRIDE_MAIN_CMD q ratelimit rate-limit $denom $channel | grep $flow_type | awk '{printf $2}' | tr -d '"'
 }
 
 get_channel_value() {
     denom=$1
     channel=$2
-    $STRIDE_MAIN_CMD q ratelimit list-rate-limits | grep $denom -B 6 | grep $channel -B 5 | grep "channel_value" | awk '{printf $2}' | tr -d '"'
+    $STRIDE_MAIN_CMD q ratelimit rate-limit $denom $channel | grep "channel_value" | awk '{printf $2}' | tr -d '"'
 }
 
 get_balance() {
