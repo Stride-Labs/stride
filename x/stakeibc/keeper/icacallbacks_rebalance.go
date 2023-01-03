@@ -3,6 +3,7 @@ package keeper
 import (
 	"fmt"
 
+	"github.com/Stride-Labs/stride/v4/utils"
 	"github.com/Stride-Labs/stride/v4/x/icacallbacks"
 	icacallbackstypes "github.com/Stride-Labs/stride/v4/x/icacallbacks/types"
 	"github.com/Stride-Labs/stride/v4/x/stakeibc/types"
@@ -13,6 +14,7 @@ import (
 	"github.com/golang/protobuf/proto" //nolint:staticcheck
 )
 
+// Marshalls rebalance callback arguments
 func (k Keeper) MarshalRebalanceCallbackArgs(ctx sdk.Context, rebalanceCallback types.RebalanceCallback) ([]byte, error) {
 	out, err := proto.Marshal(&rebalanceCallback)
 	if err != nil {
@@ -22,6 +24,7 @@ func (k Keeper) MarshalRebalanceCallbackArgs(ctx sdk.Context, rebalanceCallback 
 	return out, nil
 }
 
+// Unmarshalls rebalance callback arguments into a RebalanceCallback struct
 func (k Keeper) UnmarshalRebalanceCallbackArgs(ctx sdk.Context, rebalanceCallback []byte) (*types.RebalanceCallback, error) {
 	unmarshalledRebalanceCallback := types.RebalanceCallback{}
 	if err := proto.Unmarshal(rebalanceCallback, &unmarshalledRebalanceCallback); err != nil {
@@ -31,63 +34,73 @@ func (k Keeper) UnmarshalRebalanceCallbackArgs(ctx sdk.Context, rebalanceCallbac
 	return &unmarshalledRebalanceCallback, nil
 }
 
+// ICA Callback after rebalance validators on a host zone
+//   If successful:
+//      * Updates relevant validator delegations on the host zone struct
+//   If timeout/failure:
+//      * Does nothing
 func RebalanceCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ack *channeltypes.Acknowledgement, args []byte) error {
-	k.Logger(ctx).Info("RebalanceCallback executing", "packet", packet)
-	if ack == nil {
-		// timeout
-		k.Logger(ctx).Error(fmt.Sprintf("RebalanceCallback timeout, ack is nil, packet %v", packet))
-		return nil
-	}
-
-	txMsgData, err := icacallbacks.GetTxMsgData(ctx, *ack, k.Logger(ctx))
-	if err != nil {
-		k.Logger(ctx).Error(fmt.Sprintf("failed to fetch txMsgData, packet %v", packet))
-		return sdkerrors.Wrap(icacallbackstypes.ErrTxMsgData, err.Error())
-	}
-
-	if len(txMsgData.Data) == 0 {
-		// failed transaction
-		k.Logger(ctx).Error(fmt.Sprintf("RebalanceCallback tx failed, ack is empty (ack error), packet %v", packet))
-		return nil
-	}
-
-	// deserialize the args
+	// Fetch callback args
 	rebalanceCallback, err := k.UnmarshalRebalanceCallbackArgs(ctx, args)
 	if err != nil {
-		errMsg := fmt.Sprintf("Unable to unmarshal rebalance callback args | %s", err.Error())
-		k.Logger(ctx).Error(errMsg)
-		return sdkerrors.Wrapf(types.ErrUnmarshalFailure, errMsg)
+		return sdkerrors.Wrapf(types.ErrUnmarshalFailure, fmt.Sprintf("Unable to unmarshal rebalance callback args, %s", err.Error()))
 	}
-	k.Logger(ctx).Info(fmt.Sprintf("RebalanceCallback %v", rebalanceCallback))
-	hostZone := rebalanceCallback.GetHostZoneId()
-	zone, found := k.GetHostZone(ctx, hostZone)
-	if !found {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "host zone not found %s", hostZone)
+	chainId := rebalanceCallback.HostZoneId
+	k.Logger(ctx).Info(utils.LogCallbackWithHostZone(chainId, ICACallbackID_Rebalance, "Starting rebalance callback"))
+
+	// Check for timeout (ack nil)
+	// No action is necessary on a timeout
+	if ack == nil {
+		k.Logger(ctx).Error(utils.LogCallbackWithHostZone(chainId, ICACallbackID_Rebalance,
+			"TIMEOUT (ack is nil), Packet: %+v", packet))
+		return nil
 	}
 
-	// update the host zone
-	rebalancings := rebalanceCallback.GetRebalancings()
-	// assemble a map from validatorAddress -> validator
-	valAddrMap := make(map[string]*types.Validator)
-	for _, val := range zone.GetValidators() {
-		valAddrMap[val.GetAddress()] = val
+	// Check for a failed transaction (ack error)
+	// No action is necessary on a failure
+	txMsgData, err := icacallbacks.GetTxMsgData(ctx, *ack, k.Logger(ctx))
+	if err != nil {
+		k.Logger(ctx).Error(fmt.Sprintf("RebalanceCallback failed to fetch txMsgData, packet %v", packet))
+		return sdkerrors.Wrap(icacallbackstypes.ErrTxMsgData, err.Error())
 	}
-	for _, rebalancing := range rebalancings {
-		srcValidator := rebalancing.GetSrcValidator()
-		dstValidator := rebalancing.GetDstValidator()
-		amt := rebalancing.Amt
+	if len(txMsgData.Data) == 0 {
+		k.Logger(ctx).Error(utils.LogCallbackWithHostZone(chainId, ICACallbackID_Rebalance,
+			"ICA TX FAILED (ack is empty / ack error), Packet: %+v", packet))
+		return nil
+	}
+
+	// Confirm the host zone exists
+	hostZone, found := k.GetHostZone(ctx, chainId)
+	if !found {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "host zone not found %s", chainId)
+	}
+
+	// Assemble a map from validatorAddress -> validator
+	valAddrMap := make(map[string]*types.Validator)
+	for _, val := range hostZone.Validators {
+		valAddrMap[val.Address] = val
+	}
+
+	// For each re-delegation transaction, update the relevant validators on the host zone
+	for _, rebalancing := range rebalanceCallback.Rebalancings {
+		srcValidator := rebalancing.SrcValidator
+		dstValidator := rebalancing.DstValidator
+
+		// Decrement the total delegation from the source validator
 		if _, valFound := valAddrMap[srcValidator]; valFound {
-			valAddrMap[srcValidator].DelegationAmt = valAddrMap[srcValidator].DelegationAmt.Sub(amt)
+			valAddrMap[srcValidator].DelegationAmt = valAddrMap[srcValidator].DelegationAmt.Sub(rebalancing.Amt)
 		} else {
 			return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "validator not found %s", srcValidator)
 		}
+
+		// Increment the total delegation for the destination validator
 		if _, valFound := valAddrMap[dstValidator]; valFound {
-			valAddrMap[dstValidator].DelegationAmt = valAddrMap[dstValidator].DelegationAmt.Add(amt)
+			valAddrMap[dstValidator].DelegationAmt = valAddrMap[dstValidator].DelegationAmt.Add(rebalancing.Amt)
 		} else {
 			return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "validator not found %s", dstValidator)
 		}
 	}
-	k.SetHostZone(ctx, zone)
+	k.SetHostZone(ctx, hostZone)
 
 	return nil
 }

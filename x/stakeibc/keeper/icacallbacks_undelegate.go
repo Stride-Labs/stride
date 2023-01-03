@@ -52,16 +52,14 @@ func UndelegateCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, a
 	// Fetch callback args
 	undelegateCallback, err := k.UnmarshalUndelegateCallbackArgs(ctx, args)
 	if err != nil {
-		errMsg := fmt.Sprintf("Unable to unmarshal undelegate callback args | %s", err.Error())
-		k.Logger(ctx).Error(errMsg)
-		return sdkerrors.Wrapf(types.ErrUnmarshalFailure, errMsg)
+		return sdkerrors.Wrapf(types.ErrUnmarshalFailure, fmt.Sprintf("Unable to undelegate claim callback args, %s", err.Error()))
 	}
 	chainId := undelegateCallback.HostZoneId
 	k.Logger(ctx).Info(utils.LogCallbackWithHostZone(chainId, ICACallbackID_Undelegate,
-		"Starting callback for Epoch Unbonding Records: %+v", undelegateCallback.EpochUnbondingRecordIds))
+		"Starting undelegate callback for Epoch Unbonding Records: %+v", undelegateCallback.EpochUnbondingRecordIds))
 
 	// Check for timeout (ack nil)
-	// No need to reset the unbonding record status since it will get revertted when the channel is restored
+	// No need to reset the unbonding record status since it will get reverted when the channel is restored
 	if ack == nil {
 		k.Logger(ctx).Error(utils.LogCallbackWithHostZone(chainId, ICACallbackID_Undelegate,
 			"TIMEOUT (ack is nil), Packet: %+v", packet))

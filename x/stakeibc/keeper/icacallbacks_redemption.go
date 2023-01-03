@@ -46,16 +46,14 @@ func RedemptionCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, a
 	// Fetch callback args
 	redemptionCallback, err := k.UnmarshalRedemptionCallbackArgs(ctx, args)
 	if err != nil {
-		errMsg := fmt.Sprintf("Unable to unmarshal redemption callback args | %s", err.Error())
-		k.Logger(ctx).Error(errMsg)
-		return sdkerrors.Wrapf(types.ErrUnmarshalFailure, errMsg)
+		return sdkerrors.Wrapf(types.ErrUnmarshalFailure, fmt.Sprintf("Unable to redemption claim callback args, %s", err.Error()))
 	}
 	chainId := redemptionCallback.HostZoneId
 	k.Logger(ctx).Info(utils.LogCallbackWithHostZone(chainId, ICACallbackID_Redemption,
-		"Starting callback for Epoch Unbonding Records: %+v", redemptionCallback.EpochUnbondingRecordIds))
+		"Starting redemption callback for Epoch Unbonding Records: %+v", redemptionCallback.EpochUnbondingRecordIds))
 
 	// Check for timeout (ack nil)
-	// No need to reset the unbonding record status since it will get revertted when the channel is restored
+	// No need to reset the unbonding record status since it will get reverted when the channel is restored
 	if ack == nil {
 		k.Logger(ctx).Error(utils.LogCallbackWithHostZone(chainId, ICACallbackID_Redemption,
 			"TIMEOUT (ack is nil), Packet: %+v", packet))
