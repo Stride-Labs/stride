@@ -46,7 +46,7 @@ func RedemptionCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, a
 	// Fetch callback args
 	redemptionCallback, err := k.UnmarshalRedemptionCallbackArgs(ctx, args)
 	if err != nil {
-		return sdkerrors.Wrapf(types.ErrUnmarshalFailure, fmt.Sprintf("Unable to redemption claim callback args, %s", err.Error()))
+		return sdkerrors.Wrapf(types.ErrUnmarshalFailure, fmt.Sprintf("Unable to unmarshal redemption callback args: %s", err.Error()))
 	}
 	chainId := redemptionCallback.HostZoneId
 	k.Logger(ctx).Info(utils.LogCallbackWithHostZone(chainId, ICACallbackID_Redemption,

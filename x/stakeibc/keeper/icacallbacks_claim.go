@@ -44,7 +44,7 @@ func ClaimCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ack *c
 	// Fetch callback args
 	claimCallback, err := k.UnmarshalClaimCallbackArgs(ctx, args)
 	if err != nil {
-		return sdkerrors.Wrapf(types.ErrUnmarshalFailure, fmt.Sprintf("Unable to unmarshal claim callback args, %s", err.Error()))
+		return sdkerrors.Wrapf(types.ErrUnmarshalFailure, fmt.Sprintf("Unable to unmarshal claim callback args: %s", err.Error()))
 	}
 	chainId := claimCallback.ChainId
 	k.Logger(ctx).Info(utils.LogCallbackWithHostZone(chainId, ICACallbackID_Claim,

@@ -52,7 +52,7 @@ func UndelegateCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, a
 	// Fetch callback args
 	undelegateCallback, err := k.UnmarshalUndelegateCallbackArgs(ctx, args)
 	if err != nil {
-		return sdkerrors.Wrapf(types.ErrUnmarshalFailure, fmt.Sprintf("Unable to undelegate claim callback args, %s", err.Error()))
+		return sdkerrors.Wrapf(types.ErrUnmarshalFailure, fmt.Sprintf("Unable to unmarshal undelegate callback args: %s", err.Error()))
 	}
 	chainId := undelegateCallback.HostZoneId
 	k.Logger(ctx).Info(utils.LogCallbackWithHostZone(chainId, ICACallbackID_Undelegate,

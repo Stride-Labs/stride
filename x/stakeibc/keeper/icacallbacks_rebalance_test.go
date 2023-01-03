@@ -128,7 +128,7 @@ func (s *KeeperTestSuite) TestRebalanceCallback_WrongCallbackArgs() {
 	invalidArgs := tc.validArgs
 
 	err := stakeibckeeper.RebalanceCallback(s.App.StakeibcKeeper, s.Ctx, invalidArgs.packet, invalidArgs.ack, []byte("random bytes"))
-	s.Require().EqualError(err, "Unable to unmarshal rebalance callback args | unexpected EOF: unable to unmarshal data structure")
+	s.Require().EqualError(err, "Unable to unmarshal rebalance callback args: unexpected EOF: unable to unmarshal data structure")
 	s.checkDelegationStateIfCallbackFailed()
 }
 
