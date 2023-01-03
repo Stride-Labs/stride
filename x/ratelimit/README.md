@@ -1,3 +1,8 @@
+---
+title: "RateLimit"
+excerpt: ""
+category: 6392913957c533007128548e
+---
 # RateLimit Module
 ## Overview
 This `ratelimit` module is a native golang implementation of Osmosis's CosmWasm [`ibc-rate-limit`](https://github.com/osmosis-labs/osmosis/tree/main/x/ibc-rate-limit) module. The module is meant as a safety control in the event of a bug or attack, and prevents massive inflows or outflows of IBC tokens to/from Stride in a short time frame. See [here](https://github.com/osmosis-labs/osmosis/tree/main/x/ibc-rate-limit#motivation) for an excellent summary by the Osmosis team on the motivation for rate limiting.
@@ -11,12 +16,12 @@ The module is implemented as IBC Middleware around the transfer module. The epoc
 ## Implementation
 Each rate limit is defined by the following three components:
 1. **Path**: Defines the `ChannelId` and `Denom`
-2. **Quota**: Defines the rate limit time window (`DurationHours`) and the max threshold for inflows/outflows (`MaxPercRecv` and `MaxPercSend` respectively)
+2. **Quota**: Defines the rate limit time window (`DurationHours`) and the max threshold for inflows/outflows (`MaxPercentRecv` and `MaxPercentSend` respectively)
 3. **Flow**: Stores the current `Inflow`, `Outflow` and `ChannelValue`. Each time a quota expires, the inflow and outflow get reset to 0 and the channel value gets recalculated. Throughout the window, the inflow and outflow each increase monotonically. The net flow is used when determining if a transfer would exceed the quota. 
     * For `Send` packets: 
-    $$\text{Exceeds Quota if:} \left(\frac{\text{Outflow} - \text{Inflow} + \text{Packet Amount}}{\text{ChannelValue}}\right) > \text{MaxPercSend}$$
+    $$\text{Exceeds Quota if:} \left(\frac{\text{Outflow} - \text{Inflow} + \text{Packet Amount}}{\text{ChannelValue}}\right) > \text{MaxPercentSend}$$
     * For `Receive` packets: 
-    $$\text{Exceeds Quota if:} \left(\frac{\text{Inflow} - \text{Outflow} + \text{Packet Amount}}{\text{ChannelValue}}\right) > \text{MaxPercRecv}$$
+    $$\text{Exceeds Quota if:} \left(\frac{\text{Inflow} - \text{Outflow} + \text{Packet Amount}}{\text{ChannelValue}}\right) > \text{MaxPercentRecv}$$
 
 ## Example Walk-Through
 Using the example above, let's say we created a 24 hour rate limit on `ibc/D24B4564BCD51D3D02D9987D92571EAC5915676A9BD6D9B0C1D0254CB8A5EA34` ("`ibc/uosmo`"), `channel-5`, with a 10% send and receive threshold. 
@@ -85,18 +90,97 @@ The denom that the rate limiter will use for a receive packet depends on whether
         * (1) Remove Prefix: `transfer/channel-Z/ujuno`
         * (2) Hash: `ibc/...`
 
-## Params
+## State
+```go
+RateLimit
+    Path
+        Denom string
+        ChannelId string
+    Quota
+        MaxPercentSend sdk.Int
+        MaxPercentRecv sdk.Int
+        DurationHours uint64
+    Flow
+        Inflow sdk.Int
+        Outflow sdk.Int
+        ChannelValue sdk.Int
+```
 
 ## Keeper functions
+```go
+// Stores a RateLimit object in the store
+SetRateLimit(rateLimit types.RateLimit)
 
-## State
+// Removes a RateLimit object from the store
+RemoveRateLimit(denom string, channelId string)
 
-## Queries
+// Reads a RateLimit object from the store
+GetRateLimit(denom string, channelId string)
 
+// Gets a list of all RateLimit objects
+GetAllRateLimits()
+
+// Resets the Inflow and Outflow of a RateLimit and re-calculates the ChannelValue
+ResetRateLimit(denom string, channelId string) 
+
+// Checks whether a packet will exceed a rate limit quota
+// If it does not exceed the quota, it updates the `Inflow` or `Outflow`
+// If it exceeds the quota, it returns an error
+CheckRateLimitAndUpdateFlow(direction types.PacketDirection, denom string, channelId string, amount sdk.Int)
+```
+
+## Middleware Functions
+```go
+SendRateLimitedPacket (ICS4Wrapper SendPacket)
+ReceiveRateLimitedPacket (IBCModule OnRecvPacket)
+```
 
 ## Transactions (via Governance)
+**AddRateLimit**: Adds a new rate limit
+* Fields:
+    * `channel_id`
+    * `denom`
+    * `duration_hours`
+    * `max_perc_send`
+    * `max_perc_recv`
+* Errors if:
+    * `ChannelValue` is 0 (meaning supply of the denom is 0)
+    * Rate limit already exists (as identified by the `channel_id` and `denom`)
+    * Channel does not exist
 
-- AddRateLimit
-- UpdateRateLimit
-- ResetRateLimit
-- RemoveRateLimit
+**UpdateRateLimit**: Updates a rate limit quota, and resets the rate limit
+* Fields:
+    * `channel_id`
+    * `denom`
+    * `duration_hours`
+    * `max_perc_send`
+    * `max_perc_recv`
+* Errors if: 
+    * Rate limit does not exist (as identified by the `channel_id` and `denom`)
+
+**ResetRateLimit**: Resets the `Inflow` and `Outflow` of a rate limit to 0, and re-calculates the `ChannelValue`
+* Fields:
+    * `channel_id`
+    * `denom`
+* Errors if: 
+    * Rate limit does not exist (as identified by the `channel_id` and `denom`)
+
+**RemoveRateLimit**: Removes the rate limit from the store
+* Fields:
+    * `channel_id`
+    * `denom`
+* Errors if: 
+    * Rate limit does not exist (as identified by the `channel_id` and `denom`)
+
+## Queries
+**QueryRateLimits**: Queries all rate limits
+* CLI: `strided q rate-imit list-rate-limits`
+* API: `/Stride-Labs/stride/ratelimit/ratelimits`
+
+**QueryRateLimit**: Queries a specific rate limit given a ChannelID and Denom
+* CLI: `strided q ratelimit rate-limit [denom] [channel-id]`
+* API: `/Stride-Labs/stride/ratelimit/ratelimit/{denom}/{channel_id}`
+
+**QueryRateLimitsByChainId**: Queries all rate limits associated with a given host chain
+* CLI: `strided q ratelimit rate-limits-by-chain [chain-id]`
+* API: `/Stride-Labs/stride/ratelimit/ratelimits/{chain_id}`
