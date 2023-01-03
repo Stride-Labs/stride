@@ -1,16 +1,33 @@
-package keeper_test
+package gov_test
 
 import (
+	"testing"
+
+	"github.com/stretchr/testify/suite"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
 	transfertypes "github.com/cosmos/ibc-go/v3/modules/apps/transfer/types"
 	channeltypes "github.com/cosmos/ibc-go/v3/modules/core/04-channel/types"
 
+	"github.com/Stride-Labs/stride/v4/app/apptesting"
 	minttypes "github.com/Stride-Labs/stride/v4/x/mint/types"
-
+	"github.com/Stride-Labs/stride/v4/x/ratelimit/keeper/gov"
 	"github.com/Stride-Labs/stride/v4/x/ratelimit/types"
 )
+
+type KeeperTestSuite struct {
+	apptesting.AppTestHelper
+}
+
+func (s *KeeperTestSuite) SetupTest() {
+	s.Setup()
+}
+
+func TestKeeperTestSuite(t *testing.T) {
+	suite.Run(t, new(KeeperTestSuite))
+}
 
 var (
 	addRateLimitMsg = types.AddRateLimitProposal{
@@ -57,14 +74,14 @@ func (s *KeeperTestSuite) createChannelValue(denom string, channelValue sdk.Int)
 
 // Helper function to add a rate limit with an optional error expectation
 func (s *KeeperTestSuite) addRateLimit(expectedErr *sdkerrors.Error) {
-	actualErr := s.App.RatelimitKeeper.GovAddRateLimit(s.Ctx, &addRateLimitMsg)
+	actualErr := gov.AddRateLimit(s.Ctx, s.App.RatelimitKeeper, s.App.IBCKeeper.ChannelKeeper, &addRateLimitMsg)
 
 	// If it should have been added successfully, confirm no error
 	// and confirm the rate limit was created
 	if expectedErr == nil {
 		s.Require().NoError(actualErr)
 
-		_, found := s.App.RatelimitKeeper.GetRateLimit(s.Ctx, denom, channelId)
+		_, found := s.App.RatelimitKeeper.GetRateLimit(s.Ctx, addRateLimitMsg.Denom, addRateLimitMsg.ChannelId)
 		s.Require().True(found)
 	} else {
 		// If it should have failed, check the error
@@ -116,14 +133,14 @@ func (s *KeeperTestSuite) TestMsgServer_UpdateRateLimit() {
 	s.createChannelValue(denom, channelValue)
 
 	// Attempt to update a rate limit that does not exist
-	err := s.App.RatelimitKeeper.GovUpdateRateLimit(s.Ctx, &updateRateLimitMsg)
+	err := gov.UpdateRateLimit(s.Ctx, s.App.RatelimitKeeper, &updateRateLimitMsg)
 	s.Require().Equal(err, types.ErrRateLimitNotFound)
 
 	// Add a rate limit successfully
 	s.addRateLimitSuccessful()
 
 	// Update the rate limit successfully
-	err = s.App.RatelimitKeeper.GovUpdateRateLimit(s.Ctx, &updateRateLimitMsg)
+	err = gov.UpdateRateLimit(s.Ctx, s.App.RatelimitKeeper, &updateRateLimitMsg)
 	s.Require().NoError(err)
 
 	// Check ratelimit quota is updated correctly
@@ -145,14 +162,14 @@ func (s *KeeperTestSuite) TestMsgServer_RemoveRateLimit() {
 	s.createChannelValue(denom, channelValue)
 
 	// Attempt to remove a rate limit that does not exist
-	err := s.App.RatelimitKeeper.GovRemoveRateLimit(s.Ctx, &removeRateLimitMsg)
+	err := gov.RemoveRateLimit(s.Ctx, s.App.RatelimitKeeper, &removeRateLimitMsg)
 	s.Require().Equal(err, types.ErrRateLimitNotFound)
 
 	// Add a rate limit successfully
 	s.addRateLimitSuccessful()
 
 	// Remove the rate limit successfully
-	err = s.App.RatelimitKeeper.GovRemoveRateLimit(s.Ctx, &removeRateLimitMsg)
+	err = gov.RemoveRateLimit(s.Ctx, s.App.RatelimitKeeper, &removeRateLimitMsg)
 	s.Require().NoError(err)
 
 	// Confirm it was removed
@@ -169,14 +186,14 @@ func (s *KeeperTestSuite) TestMsgServer_ResetRateLimit() {
 	s.createChannelValue(denom, channelValue)
 
 	// Attempt to reset a rate limit that does not exist
-	err := s.App.RatelimitKeeper.GovResetRateLimit(s.Ctx, &resetRateLimitMsg)
+	err := gov.ResetRateLimit(s.Ctx, s.App.RatelimitKeeper, &resetRateLimitMsg)
 	s.Require().Equal(err, types.ErrRateLimitNotFound)
 
 	// Add a rate limit successfully
 	s.addRateLimitSuccessful()
 
 	// Reset the rate limit successfully
-	err = s.App.RatelimitKeeper.GovResetRateLimit(s.Ctx, &resetRateLimitMsg)
+	err = gov.ResetRateLimit(s.Ctx, s.App.RatelimitKeeper, &resetRateLimitMsg)
 	s.Require().NoError(err)
 
 	// Check ratelimit quota is flow correctly

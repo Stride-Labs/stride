@@ -1,14 +1,16 @@
-package keeper
+package gov
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	transfertypes "github.com/cosmos/ibc-go/v3/modules/apps/transfer/types"
+	channelkeeper "github.com/cosmos/ibc-go/v3/modules/core/04-channel/keeper"
 
+	"github.com/Stride-Labs/stride/v4/x/ratelimit/keeper"
 	"github.com/Stride-Labs/stride/v4/x/ratelimit/types"
 )
 
 // Adds a new rate limit. Fails if the rate limit already exists or the channel value is 0
-func (k Keeper) GovAddRateLimit(ctx sdk.Context, p *types.AddRateLimitProposal) error {
+func AddRateLimit(ctx sdk.Context, k keeper.Keeper, channelKeeper channelkeeper.Keeper, p *types.AddRateLimitProposal) error {
 	// Confirm the channel value is not zero
 	channelValue := k.GetChannelValue(ctx, p.Denom)
 	if channelValue.IsZero() {
@@ -22,7 +24,7 @@ func (k Keeper) GovAddRateLimit(ctx sdk.Context, p *types.AddRateLimitProposal) 
 	}
 
 	// Confirm the channel exists
-	_, found = k.channelKeeper.GetChannel(ctx, transfertypes.PortID, p.ChannelId)
+	_, found = channelKeeper.GetChannel(ctx, transfertypes.PortID, p.ChannelId)
 	if !found {
 		return types.ErrChannelNotFound
 	}
@@ -53,7 +55,7 @@ func (k Keeper) GovAddRateLimit(ctx sdk.Context, p *types.AddRateLimitProposal) 
 }
 
 // Updates an existing rate limit. Fails if the rate limit doesn't exist
-func (k Keeper) GovUpdateRateLimit(ctx sdk.Context, p *types.UpdateRateLimitProposal) error {
+func UpdateRateLimit(ctx sdk.Context, k keeper.Keeper, p *types.UpdateRateLimitProposal) error {
 	// Confirm the rate limit exists
 	_, found := k.GetRateLimit(ctx, p.Denom, p.ChannelId)
 	if !found {
@@ -87,7 +89,7 @@ func (k Keeper) GovUpdateRateLimit(ctx sdk.Context, p *types.UpdateRateLimitProp
 }
 
 // Removes a rate limit. Fails if the rate limit doesn't exist
-func (k Keeper) GovRemoveRateLimit(ctx sdk.Context, msg *types.RemoveRateLimitProposal) error {
+func RemoveRateLimit(ctx sdk.Context, k keeper.Keeper, msg *types.RemoveRateLimitProposal) error {
 	_, found := k.GetRateLimit(ctx, msg.Denom, msg.ChannelId)
 	if !found {
 		return types.ErrRateLimitNotFound
@@ -98,10 +100,6 @@ func (k Keeper) GovRemoveRateLimit(ctx sdk.Context, msg *types.RemoveRateLimitPr
 }
 
 // Resets the flow on a rate limit. Fails if the rate limit doesn't exist
-func (k Keeper) GovResetRateLimit(ctx sdk.Context, msg *types.ResetRateLimitProposal) error {
-	err := k.ResetRateLimit(ctx, msg.Denom, msg.ChannelId)
-	if err != nil {
-		return err
-	}
-	return nil
+func ResetRateLimit(ctx sdk.Context, k keeper.Keeper, msg *types.ResetRateLimitProposal) error {
+	return k.ResetRateLimit(ctx, msg.Denom, msg.ChannelId)
 }
