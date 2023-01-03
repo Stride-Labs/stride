@@ -84,10 +84,10 @@ func WithdrawalBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query icq
 	strideClaimFloored := strideClaim.TruncateInt()
 
 	// back the reinvestment amount out of the total less the commission
-	reinvestAmountCeil := sdk.NewInt(withdrawalBalanceAmount.Int64()).Sub(strideClaimFloored)
+	reinvestAmountCeil := withdrawalBalanceAmount.Sub(strideClaimFloored)
 
 	// TODO(TEST-112) safety check, balances should add to original amount
-	if (strideClaimFloored.Int64() + reinvestAmountCeil.Int64()) != withdrawalBalanceAmount.Int64() {
+	if !strideClaimFloored.Add(reinvestAmountCeil).Equal(withdrawalBalanceAmount) {
 		ctx.Logger().Error(fmt.Sprintf("Error with withdraw logic: %v, Fee portion: %v, reinvestPortion %v", withdrawalBalanceAmount, strideClaimFloored, reinvestAmountCeil))
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "Failed to subdivide rewards to feeAccount and delegationAccount")
 	}
@@ -95,14 +95,14 @@ func WithdrawalBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query icq
 	reinvestCoin := sdk.NewCoin(withdrawalBalanceCoin.Denom, reinvestAmountCeil)
 
 	var msgs []sdk.Msg
-	if strideCoin.Amount.Int64() > 0 {
+	if strideCoin.Amount.IsPositive() {
 		msgs = append(msgs, &banktypes.MsgSend{
 			FromAddress: withdrawalAccount.GetAddress(),
 			ToAddress:   feeAccount.GetAddress(),
 			Amount:      sdk.NewCoins(strideCoin),
 		})
 	}
-	if reinvestCoin.Amount.Int64() > 0 {
+	if reinvestCoin.Amount.IsPositive() {
 		msgs = append(msgs, &banktypes.MsgSend{
 			FromAddress: withdrawalAccount.GetAddress(),
 			ToAddress:   delegationAccount.GetAddress(),

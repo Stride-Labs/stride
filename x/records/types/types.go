@@ -11,5 +11,5 @@ func UserRedemptionRecordKeyFormatter(chainId string, epochNumber sdk.Int, sende
 }
 
 func UserRedemptionRecordKeyFormatterForErr(chainId string, epochNumber sdk.Int, sender string) string {
-	return fmt.Sprintf("%s.%d.%s", chainId, epochNumber.Int64(), sender) // {chain_id}.{epoch}.{sender}
+	return fmt.Sprintf("%s.%s.%s", chainId, epochNumber.String(), sender) // {chain_id}.{epoch}.{sender}
 }

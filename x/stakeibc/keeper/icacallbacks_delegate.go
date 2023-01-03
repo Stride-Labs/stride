@@ -60,7 +60,7 @@ func DelegateCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ack
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "host zone not found %s", chainId)
 	}
 	recordId := delegateCallback.DepositRecordId
-	depositRecord, found := k.RecordsKeeper.GetDepositRecord(ctx, recordId.Uint64())
+	depositRecord, found := k.RecordsKeeper.GetDepositRecord(ctx, recordId)
 	if !found {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "deposit record not found %d", recordId)
 	}
@@ -102,7 +102,7 @@ func DelegateCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ack
 		k.SetHostZone(ctx, hostZone)
 	}
 
-	k.RecordsKeeper.RemoveDepositRecord(ctx, recordId.Uint64())
+	k.RecordsKeeper.RemoveDepositRecord(ctx, recordId)
 	k.Logger(ctx).Info(fmt.Sprintf("[DELEGATION] success on %s", chainId))
 	return nil
 }

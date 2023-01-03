@@ -153,12 +153,12 @@ func (k Keeper) DistributeMintedCoin(ctx sdk.Context, mintedCoin sdk.Coin) error
 	params := k.GetParams(ctx)
 	proportions := params.DistributionProportions
 
-	k.Logger(ctx).Info(fmt.Sprintf("Distributing minted x/mint rewards: %d coins...", mintedCoin.Amount.Int64()))
+	k.Logger(ctx).Info(fmt.Sprintf("Distributing minted x/mint rewards: %s coins...", mintedCoin.Amount.String()))
 
 	// allocate staking incentives into fee collector account to be moved to on next begin blocker by staking module
 	stakingIncentivesProportions := k.GetProportions(ctx, mintedCoin, proportions.Staking)
 	stakingIncentivesCoins := sdk.NewCoins(stakingIncentivesProportions)
-	k.Logger(ctx).Info(fmt.Sprintf("\t\t\t...staking rewards: %d to %s", stakingIncentivesProportions.Amount.Int64(), k.feeCollectorName))
+	k.Logger(ctx).Info(fmt.Sprintf("\t\t\t...staking rewards: %s to %s", stakingIncentivesProportions.Amount.String(), k.feeCollectorName))
 
 	// allocate pool allocation ratio to strategic reserve
 	strategicReserveAddress, err := sdk.AccAddressFromBech32(StrategicReserveAddress)
@@ -169,19 +169,19 @@ func (k Keeper) DistributeMintedCoin(ctx sdk.Context, mintedCoin sdk.Coin) error
 	}
 	strategicReserveProportion := k.GetProportions(ctx, mintedCoin, proportions.StrategicReserve)
 	strategicReserveCoins := sdk.NewCoins(strategicReserveProportion)
-	k.Logger(ctx).Info(fmt.Sprintf("\t\t\t...strategic reserve: %d to %s", strategicReserveProportion.Amount.Int64(), strategicReserveAddress))
+	k.Logger(ctx).Info(fmt.Sprintf("\t\t\t...strategic reserve: %s to %s", strategicReserveProportion.Amount.String(), strategicReserveAddress))
 
 	// allocate pool allocation ratio to community growth pool
 	communityPoolGrowthAddress := k.GetSubmoduleAddress(types.CommunityGrowthSubmoduleName, types.SubmoduleCommunityNamespaceKey)
 	communityPoolGrowthProportion := k.GetProportions(ctx, mintedCoin, proportions.CommunityPoolGrowth)
 	communityPoolGrowthCoins := sdk.NewCoins(communityPoolGrowthProportion)
-	k.Logger(ctx).Info(fmt.Sprintf("\t\t\t...community growth: %d to %s", communityPoolGrowthProportion.Amount.Int64(), communityPoolGrowthAddress))
+	k.Logger(ctx).Info(fmt.Sprintf("\t\t\t...community growth: %s to %s", communityPoolGrowthProportion.Amount.String(), communityPoolGrowthAddress))
 
 	// allocate pool allocation ratio to security budget pool
 	communityPoolSecurityBudgetAddress := k.GetSubmoduleAddress(types.CommunitySecurityBudgetSubmoduleName, types.SubmoduleCommunityNamespaceKey)
 	communityPoolSecurityBudgetProportion := k.GetProportions(ctx, mintedCoin, proportions.CommunityPoolSecurityBudget)
 	communityPoolSecurityBudgetCoins := sdk.NewCoins(communityPoolSecurityBudgetProportion)
-	k.Logger(ctx).Info(fmt.Sprintf("\t\t\t...community security budget: %d to %s", communityPoolSecurityBudgetProportion.Amount.Int64(), communityPoolSecurityBudgetAddress))
+	k.Logger(ctx).Info(fmt.Sprintf("\t\t\t...community security budget: %s to %s", communityPoolSecurityBudgetProportion.Amount.String(), communityPoolSecurityBudgetAddress))
 
 	// remaining tokens to the community growth pool (this should NEVER happen, barring rounding imprecision)
 	remainingCoins := sdk.NewCoins(mintedCoin).

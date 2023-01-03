@@ -70,8 +70,8 @@ func DelegatorSharesCallback(k Keeper, ctx sdk.Context, args []byte, query icqty
 		return sdkerrors.Wrapf(sdkerrors.ErrNotFound, "no epoch number for epoch (%s)", epochtypes.STRIDE_EPOCH)
 	}
 	if !validator.InternalExchangeRate.EpochNumber.Equal(strideEpochTracker.EpochNumber) {
-		errMsg := fmt.Sprintf("DelegationCallback: validator (%s) internal exchange rate has not been updated this epoch (epoch #%d)",
-			validator.Address, strideEpochTracker.EpochNumber.Uint64())
+		errMsg := fmt.Sprintf("DelegationCallback: validator (%s) internal exchange rate has not been updated this epoch (epoch #%s)",
+			validator.Address, strideEpochTracker.EpochNumber.String())
 		k.Logger(ctx).Error(errMsg)
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, errMsg)
 	}

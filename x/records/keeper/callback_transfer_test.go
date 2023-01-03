@@ -42,7 +42,7 @@ func (s *KeeperTestSuite) SetupTransferCallback() TransferCallbackTestCase {
 	packet := channeltypes.Packet{Data: s.MarshalledICS20PacketData()}
 	ack := s.ICS20PacketAcknowledgement()
 	callbackArgs := types.TransferCallback{
-		DepositRecordId: depositRecord.Id.Uint64(),
+		DepositRecordId: depositRecord.Id,
 	}
 	args, err := s.App.RecordsKeeper.MarshalTransferCallbackArgs(s.Ctx, callbackArgs)
 	s.Require().NoError(err)
@@ -117,7 +117,7 @@ func (s *KeeperTestSuite) TestTransferCallback_DepositRecordNotFound() {
 	s.App.RecordsKeeper.RemoveDepositRecord(s.Ctx, tc.initialState.callbackArgs.DepositRecordId)
 
 	err := recordskeeper.TransferCallback(s.App.RecordsKeeper, s.Ctx, tc.validArgs.packet, tc.validArgs.ack, tc.validArgs.args)
-	s.Require().EqualError(err, fmt.Sprintf("deposit record not found %d: unknown deposit record", tc.initialState.callbackArgs.DepositRecordId))
+	s.Require().EqualError(err, fmt.Sprintf("deposit record not found %s: unknown deposit record", tc.initialState.callbackArgs.DepositRecordId.String()))
 }
 
 func (s *KeeperTestSuite) TestTransferCallback_PacketUnmarshallingError() {

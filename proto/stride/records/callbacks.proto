@@ -7,5 +7,8 @@ option go_package = "github.com/Stride-Labs/stride/v4/x/records/types";
 
 // ---------------------- Transfer Callback ---------------------- //
 message TransferCallback { 
-    uint64 deposit_record_id = 1;
+    string deposit_record_id = 1 [
+        (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+        (gogoproto.nullable) = false
+      ];
 }

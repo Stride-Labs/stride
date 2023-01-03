@@ -63,10 +63,9 @@ func (k msgServer) ClaimUndelegatedTokens(goCtx context.Context, msg *types.MsgC
 func (k Keeper) GetClaimableRedemptionRecord(ctx sdk.Context, msg *types.MsgClaimUndelegatedTokens) (*recordstypes.UserRedemptionRecord, error) {
 	// grab the UserRedemptionRecord from the store
 	userRedemptionRecordKey := recordstypes.UserRedemptionRecordKeyFormatter(msg.HostZoneId, msg.Epoch, msg.Sender)
-	userRedemptionRecordId := recordstypes.UserRedemptionRecordKeyFormatterForErr(msg.HostZoneId, msg.Epoch, msg.Sender)
 	userRedemptionRecord, found := k.RecordsKeeper.GetUserRedemptionRecord(ctx, userRedemptionRecordKey)
 	if !found {
-		errMsg := fmt.Sprintf("User redemption record %s not found on host zone %s", userRedemptionRecordId, msg.HostZoneId)
+		errMsg := fmt.Sprintf("User redemption record %s not found on host zone %s", userRedemptionRecordKey, msg.HostZoneId)
 		k.Logger(ctx).Error(errMsg)
 		return nil, sdkerrors.Wrap(types.ErrInvalidUserRedemptionRecord, errMsg)
 	}
@@ -74,19 +73,19 @@ func (k Keeper) GetClaimableRedemptionRecord(ctx sdk.Context, msg *types.MsgClai
 	// check that the record is claimable
 	hostZoneUnbonding, found := k.RecordsKeeper.GetHostZoneUnbondingByChainId(ctx, userRedemptionRecord.EpochNumber, msg.HostZoneId)
 	if !found {
-		errMsg := fmt.Sprintf("Host zone unbonding record %s not found on host zone %s", userRedemptionRecordId, msg.HostZoneId)
+		errMsg := fmt.Sprintf("Host zone unbonding record %s not found on host zone %s", userRedemptionRecordKey, msg.HostZoneId)
 		k.Logger(ctx).Error(errMsg)
 		return nil, sdkerrors.Wrapf(types.ErrInvalidUserRedemptionRecord, errMsg)
 	}
 	// records associated with host zone unbondings are claimable after the host zone unbonding tokens have been CLAIMABLE to the redemption account
 	if hostZoneUnbonding.Status != recordstypes.HostZoneUnbonding_CLAIMABLE {
-		errMsg := fmt.Sprintf("User redemption record %s is not claimable, host zone unbonding has status: %s, requires status CLAIMABLE", userRedemptionRecordId, hostZoneUnbonding.Status)
+		errMsg := fmt.Sprintf("User redemption record %s is not claimable, host zone unbonding has status: %s, requires status CLAIMABLE", userRedemptionRecordKey, hostZoneUnbonding.Status)
 		k.Logger(ctx).Error(errMsg)
 		return nil, sdkerrors.Wrapf(types.ErrInvalidUserRedemptionRecord, errMsg)
 	}
 	// records that have claimIsPending set to True have already been claimed (and are pending an ack)
 	if userRedemptionRecord.ClaimIsPending {
-		errMsg := fmt.Sprintf("User redemption record %s is not claimable, pending ack", userRedemptionRecordId)
+		errMsg := fmt.Sprintf("User redemption record %s is not claimable, pending ack", userRedemptionRecordKey)
 		k.Logger(ctx).Error(errMsg)
 		return nil, sdkerrors.Wrapf(types.ErrInvalidUserRedemptionRecord, errMsg)
 	}

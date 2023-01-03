@@ -10,11 +10,10 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	channeltypes "github.com/cosmos/ibc-go/v3/modules/core/04-channel/types"
-	"github.com/golang/protobuf/proto" //nolint:staticcheck
 )
 
 func (k Keeper) MarshalTransferCallbackArgs(ctx sdk.Context, delegateCallback types.TransferCallback) ([]byte, error) {
-	out, err := proto.Marshal(&delegateCallback)
+	out, err := k.Cdc.Marshal(&delegateCallback)
 	if err != nil {
 		k.Logger(ctx).Error(fmt.Sprintf("MarshalTransferCallbackArgs %v", err.Error()))
 		return nil, err
@@ -43,7 +42,7 @@ func TransferCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ack
 	depositRecord, found := k.GetDepositRecord(ctx, transferCallbackData.DepositRecordId)
 	if !found {
 		k.Logger(ctx).Error(fmt.Sprintf("TransferCallback deposit record not found, packet %v", packet))
-		return sdkerrors.Wrapf(types.ErrUnknownDepositRecord, "deposit record not found %d", transferCallbackData.DepositRecordId)
+		return sdkerrors.Wrapf(types.ErrUnknownDepositRecord, "deposit record not found %s", transferCallbackData.DepositRecordId.String())
 	}
 
 	if ack == nil {

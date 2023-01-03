@@ -51,7 +51,7 @@ func (k Keeper) TransferExistingDepositsToHostZones(ctx sdk.Context, epochNumber
 		// if a TRANSFER_QUEUE record has 0 balance and was created in the previous epoch, it's safe to remove since it will never be updated or used
 		if depositRecord.Amount.LTE(sdk.ZeroInt()) && depositRecord.DepositEpochNumber.LT(epochNumber) {
 			k.Logger(ctx).Info(utils.LogWithHostZone(depositRecord.HostZoneId, "Empty deposit record - Removing."))
-			k.RecordsKeeper.RemoveDepositRecord(ctx, depositRecord.Id.Uint64())
+			k.RecordsKeeper.RemoveDepositRecord(ctx, depositRecord.Id)
 			continue
 		}
 
