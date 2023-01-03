@@ -47,7 +47,7 @@ func ClaimCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ack *c
 		return sdkerrors.Wrapf(types.ErrUnmarshalFailure, fmt.Sprintf("Unable to unmarshal claim callback args: %s", err.Error()))
 	}
 	chainId := claimCallback.ChainId
-	k.Logger(ctx).Info(utils.LogCallbackWithHostZone(chainId, ICACallbackID_Claim,
+	k.Logger(ctx).Info(utils.LogICACallbackWithHostZone(chainId, ICACallbackID_Claim,
 		"Starting claim callback for Redemption Record: %s", claimCallback.UserRedemptionRecordId))
 
 	// Grab the associated user redemption record
@@ -59,7 +59,7 @@ func ClaimCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ack *c
 	// Check for timeout (ack nil)
 	// If the ICA timed out, update the redemption record so the user can retry the claim
 	if ack == nil {
-		k.Logger(ctx).Error(utils.LogCallbackWithHostZone(chainId, ICACallbackID_Claim,
+		k.Logger(ctx).Error(utils.LogICACallbackWithHostZone(chainId, ICACallbackID_Claim,
 			"TIMEOUT (ack is nil), Packet: %+v", packet))
 
 		userRedemptionRecord.ClaimIsPending = false
@@ -75,7 +75,7 @@ func ClaimCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ack *c
 		return sdkerrors.Wrap(icacallbackstypes.ErrTxMsgData, err.Error())
 	}
 	if len(txMsgData.Data) == 0 {
-		k.Logger(ctx).Error(utils.LogCallbackWithHostZone(chainId, ICACallbackID_Claim,
+		k.Logger(ctx).Error(utils.LogICACallbackWithHostZone(chainId, ICACallbackID_Claim,
 			"ICA TX FAILED (ack is empty / ack error), Packet: %+v", packet))
 
 		// after an error, a user should be able to retry the claim
@@ -84,7 +84,7 @@ func ClaimCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ack *c
 		return nil
 	}
 
-	k.Logger(ctx).Info(utils.LogCallbackWithHostZone(chainId, ICACallbackID_Claim, "SUCCESS, Packet: %+v", packet))
+	k.Logger(ctx).Info(utils.LogICACallbackWithHostZone(chainId, ICACallbackID_Claim, "SUCCESS, Packet: %+v", packet))
 
 	// Upon success, remove the record and decrement the unbonded amount on the host zone unbonding record
 	k.RecordsKeeper.RemoveUserRedemptionRecord(ctx, claimCallback.GetUserRedemptionRecordId())

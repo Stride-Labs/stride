@@ -46,12 +46,12 @@ func RebalanceCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ac
 		return sdkerrors.Wrapf(types.ErrUnmarshalFailure, fmt.Sprintf("Unable to unmarshal rebalance callback args: %s", err.Error()))
 	}
 	chainId := rebalanceCallback.HostZoneId
-	k.Logger(ctx).Info(utils.LogCallbackWithHostZone(chainId, ICACallbackID_Rebalance, "Starting rebalance callback"))
+	k.Logger(ctx).Info(utils.LogICACallbackWithHostZone(chainId, ICACallbackID_Rebalance, "Starting rebalance callback"))
 
 	// Check for timeout (ack nil)
 	// No action is necessary on a timeout
 	if ack == nil {
-		k.Logger(ctx).Error(utils.LogCallbackWithHostZone(chainId, ICACallbackID_Rebalance,
+		k.Logger(ctx).Error(utils.LogICACallbackWithHostZone(chainId, ICACallbackID_Rebalance,
 			"TIMEOUT (ack is nil), Packet: %+v", packet))
 		return nil
 	}
@@ -64,10 +64,12 @@ func RebalanceCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ac
 		return sdkerrors.Wrap(icacallbackstypes.ErrTxMsgData, err.Error())
 	}
 	if len(txMsgData.Data) == 0 {
-		k.Logger(ctx).Error(utils.LogCallbackWithHostZone(chainId, ICACallbackID_Rebalance,
+		k.Logger(ctx).Error(utils.LogICACallbackWithHostZone(chainId, ICACallbackID_Rebalance,
 			"ICA TX FAILED (ack is empty / ack error), Packet: %+v", packet))
 		return nil
 	}
+
+	k.Logger(ctx).Info(utils.LogICACallbackWithHostZone(chainId, ICACallbackID_Rebalance, "SUCCESS, Packet: %+v", packet))
 
 	// Confirm the host zone exists
 	hostZone, found := k.GetHostZone(ctx, chainId)
