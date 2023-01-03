@@ -136,41 +136,29 @@ ReceiveRateLimitedPacket (IBCModule OnRecvPacket)
 ```
 
 ## Transactions (via Governance)
-**AddRateLimit**: Adds a new rate limit
-* Fields:
-    * `channel_id`
-    * `denom`
-    * `duration_hours`
-    * `max_perc_send`
-    * `max_perc_recv`
-* Errors if:
-    * `ChannelValue` is 0 (meaning supply of the denom is 0)
-    * Rate limit already exists (as identified by the `channel_id` and `denom`)
-    * Channel does not exist
+```go
+// Adds a new rate limit
+// Errors if:
+//   - `ChannelValue` is 0 (meaning supply of the denom is 0)
+//   - Rate limit already exists (as identified by the `channel_id` and `denom`)
+//   - Channel does not exist
+AddRateLimit(denom string, channelId string, durationHours uint64, maxPercentSend sdk.Int, maxPercentRecv sdk.Int) 
 
-**UpdateRateLimit**: Updates a rate limit quota, and resets the rate limit
-* Fields:
-    * `channel_id`
-    * `denom`
-    * `duration_hours`
-    * `max_perc_send`
-    * `max_perc_recv`
-* Errors if: 
-    * Rate limit does not exist (as identified by the `channel_id` and `denom`)
+// Updates a rate limit quota, and resets the rate limit
+// Errors if: 
+//   - Rate limit does not exist (as identified by the `channel_id` and `denom`)
+UpdateRateLimit(denom string, channelId string, durationHours uint64, maxPercentSend sdk.Int, maxPercentRecv sdk.Int)  
 
-**ResetRateLimit**: Resets the `Inflow` and `Outflow` of a rate limit to 0, and re-calculates the `ChannelValue`
-* Fields:
-    * `channel_id`
-    * `denom`
-* Errors if: 
-    * Rate limit does not exist (as identified by the `channel_id` and `denom`)
+// Resets the `Inflow` and `Outflow` of a rate limit to 0, and re-calculates the `ChannelValue`
+// Errors if: 
+//   - Rate limit does not exist (as identified by the `channel_id` and `denom`)
+ResetRateLimit(denom string, channelId string) 
 
-**RemoveRateLimit**: Removes the rate limit from the store
-* Fields:
-    * `channel_id`
-    * `denom`
-* Errors if: 
-    * Rate limit does not exist (as identified by the `channel_id` and `denom`)
+// Removes the rate limit from the store
+// Errors if: 
+//   - Rate limit does not exist (as identified by the `channel_id` and `denom`)
+RemoveRateLimit(denom string, channelId string)  
+```
 
 ## Queries
 ```go
