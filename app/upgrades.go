@@ -48,6 +48,10 @@ func (app *StrideApp) setupUpgradeHandlers() {
 			Added: []string{claimtypes.StoreKey},
 		}
 	}
+	// TODO: add ratelimit store key when module is added
+	// storeUpgrades = &storetypes.StoreUpgrades{
+	// 	Added: []string{ratelimittypes.StoreKey},
+	// }
 
 	if storeUpgrades != nil {
 		app.SetStoreLoader(upgradetypes.UpgradeStoreLoader(upgradeInfo.Height, storeUpgrades))
