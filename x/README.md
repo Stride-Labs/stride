@@ -13,6 +13,7 @@ category: 62c5c5ff03a5bf069004def2
 `interchainquery` - Issues queries between IBC chains, verifies state proof and executes callbacks.
 `epochs` - Makes on-chain timers which other modules can execute code during.
 `mint` - Controls token supply emissions, and what modules they are directed to.
+`ratelimit` - IBC middleware wrapping the transfer module, thottles large IBC transfers in the event of a bug/hack.
 
 ### Attribution
 
@@ -25,6 +26,7 @@ We use the following modules from [Osmosis](https://github.com/osmosis-labs/osmo
 ```
 x/epochs
 x/mint
+x/ratelimit
 ```
 
 We use the following module (marketed as public infra) from [Quicksilver](https://github.com/ingenuity-build/quicksilver) provided under [this License](https://github.com/ingenuity-build/quicksilver/blob/main/LICENSE):
