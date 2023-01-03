@@ -24,8 +24,8 @@ Using the example above, let's say we created a 24 hour rate limit on `ibc/D24B4
 2. If someone transferred `8uosmo` from `Osmosis -> Stride`, the `Inflow` would increment by 8
 3. If someone tried to transfer another `8uosmo` from `Osmosis -> Stride`, it would exceed the quota since `(8+8)/100 = 16%` (which is greater than 10%) and thus, the transfer would be rejected.
 4. If someone tried to transfer `12ibc/uosmo` from Stride -> Osmosis, the `Outflow` would increment by 12. Notice, even though 12 is greater than 10% the total channel value, the *net* outflow is only `4uatom` (since it's offset by the `8uatom` `Inflow`). As a result, this transaction would succeed.
-5. Now if the person in (3) attempted to retry their transfer of 8uosmo to Stride, the `Inflow` would increment by 8 and the transaction would succeed (with a net inflow of 4).
-6. Finally, at the end of the 24 hours, the `Inflow` and `Outflow` would get reset to 0 and the `ChannelValue` would be re-calculated, which in this example would lead to a new supply of 104 (since more `uosmo` was sent to Stride, and thus more `ibc/uosmo` was minted)
+5. Now if the person in (3) attempted to retry their transfer of`8uosmo` from `Osmosis -> Stride`, the `Inflow` would increment by 8 and the transaction would succeed (leaving a net inflow of 4).
+6. Finally, at the end of the 24 hours, the `Inflow` and `Outflow` would get reset to 0 and the `ChannelValue` would be re-calculated. In this example, the new channel value would be 104 (since more `uosmo` was sent to Stride, and thus more `ibc/uosmo` was minted)
 
 | Step |            Description           | Transfer Status | Inflow | Outflow | Net Inflow | Net Outflow | Channel Value |
 |:----:|:--------------------------------:|:---------------:|:------:|:-------:|:----------:|:-----------:|:-------------:|
@@ -43,19 +43,19 @@ We always want to refer to the channel ID and denom as they appear on Stride. Fo
 
 However, since the ratelimit module acts as middleware to the transfer module, the respective denoms need to be interpreted using the denom trace associated with each packet. There are a few scenarios at play here...
 
-#### Send Packets
+### Send Packets
 The denom that the rate limiter will use for a send packet depends on whether it was a native token (e.g. ustrd, stuatom, etc.) or non-native token (e.g. ibc/...)...
-##### Native vs Non-Native
+#### Native vs Non-Native
 * We can identify if the token is native or not by parsing the denom trace from the packet
     * If the token is **native**, it **will not** have a prefix (e.g. `ustrd`)
     * If the token is **non-native**, it **will** have a prefix (e.g. `transfer/channel-X/uosmo`)
-##### Determining the denom in the rate limit
+#### Determining the denom in the rate limit
 * For **native** tokens, return as is (e.g. `ustrd`)
 * For **non-native** tokens, take the ibc hash (e.g. hash `transfer/channel-X/uosmo` into `ibc/...`)
 
-#### Receive Packets
+### Receive Packets
 The denom that the rate limiter will use for a receive packet depends on whether it was a source or sink
-##### Source vs Sink
+#### Source vs Sink
 * **Source**: The packet is being received by a chain it was just sent from (i.e. the token has gone back and forth)
     * Ex1: `strd` is sent from Stride to Osmosis, and then back to Stride 
     * Ex2: `ujuno` is sent to Stride, then to Osmosis, then back to Stride 
@@ -63,23 +63,27 @@ The denom that the rate limiter will use for a receive packet depends on whether
 * **Sink**: The packet is being received by a chain that either created it or previous received it from somewhere else
     * Ex1: `uatom` is sent from Cosmoshub to Stride (`uatom` was created on Cosmoshub)
     * Ex2: `uatom` is sent from Cosmoshub to Osmosis then to Stride. Here the receiving chain (Stride) is not the same as the previous hop (Cosmoshub), so Stride is not acting as a source.
-##### Determining the denom in the rate limit
-* If the chain is acting as a *Sink*: Add on the Stride port and channel and hash it
-    * Ex1: `uosmo` sent from Osmosis to Stride. Packet Denom: `uosmo`
-        1. Add Prefix:  `transfer/channel-X/uosmo`
-        2. Hash:        `ibc/...`
+#### Determining the denom in the rate limit
+* If the chain is acting as a **Sink**: Add on the Stride port and channel and hash it
+    * Ex1: `uosmo` sent from Osmosis to Stride
+        * Packet Denom Trace: `uosmo`
+        * (1) Add Stride Channel as Prefix:  `transfer/channel-X/uosmo`
+        * (2) Hash: `ibc/...`
 
-    * Ex2: `ujuno` sent from Osmosis to Stride. PacketDenom: `transfer/channel-Y/ujuno` (where channel-Y is the Juno <> Osmosis channel)
-        1. Add Prefix:  `transfer/channel-X/transfer/channel-Y/ujuno`
-        2. Hash:        `ibc/...`
+    * Ex2: `ujuno` sent from Osmosis to Stride
+        * Packet Denom Trace: `transfer/channel-Y/ujuno` (where channel-Y is the Juno <> Osmosis channel)
+        * (1) Add Stride Channel as Prefix:  `transfer/channel-X/transfer/channel-Y/ujuno`
+        * (2) Hash: `ibc/...`
 
-* If the chain is acting as a *Source*: First, remove the prefix. Then if there is still a trace prefix, hash it
-    * Ex1: ustrd sent back to Stride from Osmosis, Packet Denom: `transfer/channel-X/ustrd`
-        1. Remove Prefix: `ustrd`
-        2. No trace remaining, leave as is: `ustrd`
-	* Ex2: juno was sent to Stride, then to Osmosis, then back to Stride. Packet Denom: `transfer/channel-X/transfer/channel-Z/ujuno`
-        1. Remove Prefix: `transfer/channel-Z/ujuno`
-        2. Hash:          `ibc/...`
+* If the chain is acting as a **Source**: First, remove the prefix. Then if there is still a trace prefix, hash it
+    * Ex1: `ustrd` sent back to Stride from Osmosis
+        * Packet Denom: `transfer/channel-X/ustrd`
+        * (1) Remove Prefix: `ustrd`
+        * (2) No trace remaining, leave as is: `ustrd`
+    * Ex2: juno was sent to Stride, then to Osmosis, then back to Stride
+        * Packet Denom: `transfer/channel-X/transfer/channel-Z/ujuno`
+        * (1) Remove Prefix: `transfer/channel-Z/ujuno`
+        * (2) Hash: `ibc/...`
 
 ## Params
 
