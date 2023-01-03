@@ -27,14 +27,12 @@ const (
 
 type KeeperTestSuite struct {
 	apptesting.AppTestHelper
+	MsgServer types.MsgServer
 }
 
 func (s *KeeperTestSuite) SetupTest() {
 	s.Setup()
-}
-
-func (s *KeeperTestSuite) GetMsgServer() types.MsgServer {
-	return keeper.NewMsgServerImpl(s.App.StakeibcKeeper)
+	s.MsgServer = keeper.NewMsgServerImpl(s.App.StakeibcKeeper)
 }
 
 func TestKeeperTestSuite(t *testing.T) {

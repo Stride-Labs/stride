@@ -20,6 +20,7 @@ type RebalanceValidatorsTestCase struct {
 }
 
 func (s *KeeperTestSuite) SetupRebalanceValidators() RebalanceValidatorsTestCase {
+	s.SetupTest()
 	// Setup IBC
 	delegationIcaOwner := "GAIA.DELEGATION"
 	delegationChannelId := s.CreateICAChannel(delegationIcaOwner)
@@ -137,7 +138,7 @@ func (s *KeeperTestSuite) TestRebalanceValidators_Successful() {
 		HostZone:     "GAIA",
 		NumRebalance: 2,
 	}
-	_, err := s.GetMsgServer().RebalanceValidators(sdk.WrapSDKContext(s.Ctx), &badMsg_rightWeights)
+	_, err := s.MsgServer.RebalanceValidators(sdk.WrapSDKContext(s.Ctx), &badMsg_rightWeights)
 	s.Require().NoError(err, "rebalancing with 2 validators should succeed")
 
 	// get stored callback data
@@ -170,7 +171,7 @@ func (s *KeeperTestSuite) TestRebalanceValidators_InvalidNumValidators() {
 		HostZone:     "GAIA",
 		NumRebalance: 0,
 	}
-	_, err := s.GetMsgServer().RebalanceValidators(sdk.WrapSDKContext(s.Ctx), &badMsg_tooFew)
+	_, err := s.MsgServer.RebalanceValidators(sdk.WrapSDKContext(s.Ctx), &badMsg_tooFew)
 	expectedErrMsg := "invalid number of validators"
 	s.Require().EqualError(err, expectedErrMsg, "rebalancing 0 validators should fail")
 
@@ -180,7 +181,7 @@ func (s *KeeperTestSuite) TestRebalanceValidators_InvalidNumValidators() {
 		HostZone:     "GAIA",
 		NumRebalance: 5,
 	}
-	_, err = s.GetMsgServer().RebalanceValidators(sdk.WrapSDKContext(s.Ctx), &badMsg_tooMany)
+	_, err = s.MsgServer.RebalanceValidators(sdk.WrapSDKContext(s.Ctx), &badMsg_tooMany)
 	s.Require().EqualError(err, expectedErrMsg, "rebalancing 5 validators should fail")
 }
 
@@ -193,7 +194,7 @@ func (s *KeeperTestSuite) TestRebalanceValidators_InvalidNoChange() {
 		HostZone:     "GAIA",
 		NumRebalance: 1,
 	}
-	_, err := s.GetMsgServer().RebalanceValidators(sdk.WrapSDKContext(s.Ctx), &badMsg_rightWeights)
+	_, err := s.MsgServer.RebalanceValidators(sdk.WrapSDKContext(s.Ctx), &badMsg_rightWeights)
 	expectedErrMsg := "validator weights haven't changed"
 	s.Require().EqualError(err, expectedErrMsg, "rebalancing with weights set properly should fail")
 }
@@ -212,7 +213,7 @@ func (s *KeeperTestSuite) TestRebalanceValidators_InvalidNoValidators() {
 		HostZone:     "GAIA",
 		NumRebalance: 2,
 	}
-	_, err := s.GetMsgServer().RebalanceValidators(sdk.WrapSDKContext(s.Ctx), &badMsg_noValidators)
+	_, err := s.MsgServer.RebalanceValidators(sdk.WrapSDKContext(s.Ctx), &badMsg_noValidators)
 	expectedErrMsg := "no non-zero validator weights"
 	s.Require().EqualError(err, expectedErrMsg, "rebalancing with no validators should fail")
 }
@@ -234,7 +235,7 @@ func (s *KeeperTestSuite) TestRebalanceValidators_InvalidAllValidatorsNoWeight()
 		HostZone:     "GAIA",
 		NumRebalance: 2,
 	}
-	_, err := s.GetMsgServer().RebalanceValidators(sdk.WrapSDKContext(s.Ctx), &badMsg_noValidators)
+	_, err := s.MsgServer.RebalanceValidators(sdk.WrapSDKContext(s.Ctx), &badMsg_noValidators)
 	expectedErrMsg := "no non-zero validator weights"
 	s.Require().EqualError(err, expectedErrMsg, "rebalancing with no validators should fail")
 }
@@ -256,7 +257,7 @@ func (s *KeeperTestSuite) TestRebalanceValidators_InvalidNotEnoughDiff() {
 		HostZone:     "GAIA",
 		NumRebalance: 2,
 	}
-	_, err := s.GetMsgServer().RebalanceValidators(sdk.WrapSDKContext(s.Ctx), &badMsg_noValidators)
+	_, err := s.MsgServer.RebalanceValidators(sdk.WrapSDKContext(s.Ctx), &badMsg_noValidators)
 	expectedErrMsg := "validator weights haven't changed"
 	s.Require().EqualError(err, expectedErrMsg, "rebalancing without sufficient change should fail")
 }

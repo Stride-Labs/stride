@@ -31,6 +31,7 @@ type RestoreInterchainAccountTestCase struct {
 }
 
 func (s *KeeperTestSuite) SetupRestoreInterchainAccount() RestoreInterchainAccountTestCase {
+	s.SetupTest()
 	s.CreateTransferChannel(HostChainId)
 
 	hostZone := stakeibc.HostZone{
@@ -124,7 +125,7 @@ func (s *KeeperTestSuite) SetupRestoreInterchainAccount() RestoreInterchainAccou
 
 func (s *KeeperTestSuite) RestoreChannelAndVerifySuccess(msg stakeibc.MsgRestoreInterchainAccount, portID string, channelID string) {
 	// Restore the channel
-	_, err := s.GetMsgServer().RestoreInterchainAccount(sdk.WrapSDKContext(s.Ctx), &msg)
+	_, err := s.MsgServer.RestoreInterchainAccount(sdk.WrapSDKContext(s.Ctx), &msg)
 	s.Require().NoError(err, "registered ica account successfully")
 
 	// Confirm channel was created
@@ -201,7 +202,7 @@ func (s *KeeperTestSuite) TestRestoreInterchainAccount_CannotRestoreNonExistentA
 	msg := tc.validMsg
 	msg.AccountType = stakeibc.ICAAccountType_WITHDRAWAL
 
-	_, err := s.GetMsgServer().RestoreInterchainAccount(sdk.WrapSDKContext(s.Ctx), &msg)
+	_, err := s.MsgServer.RestoreInterchainAccount(sdk.WrapSDKContext(s.Ctx), &msg)
 	expectedErrMSg := fmt.Sprintf("ICA controller account address not found: %s.WITHDRAWAL: invalid interchain account address",
 		tc.validMsg.ChainId)
 	s.Require().EqualError(err, expectedErrMSg, "registered ica account successfully")
@@ -212,7 +213,7 @@ func (s *KeeperTestSuite) TestRestoreInterchainAccount_FailsForIncorrectHostZone
 	msg := tc.validMsg
 	msg.ChainId = "incorrectchainid"
 
-	_, err := s.GetMsgServer().RestoreInterchainAccount(sdk.WrapSDKContext(s.Ctx), &msg)
+	_, err := s.MsgServer.RestoreInterchainAccount(sdk.WrapSDKContext(s.Ctx), &msg)
 	expectedErrMsg := "host zone not registered"
 	s.Require().EqualError(err, expectedErrMsg, "registered ica account fails for incorrect host zone")
 }
@@ -222,7 +223,7 @@ func (s *KeeperTestSuite) TestRestoreInterchainAccount_FailsIfAccountExists() {
 	s.CreateICAChannel("GAIA.DELEGATION")
 	msg := tc.validMsg
 
-	_, err := s.GetMsgServer().RestoreInterchainAccount(sdk.WrapSDKContext(s.Ctx), &msg)
+	_, err := s.MsgServer.RestoreInterchainAccount(sdk.WrapSDKContext(s.Ctx), &msg)
 	expectedErrMsg := fmt.Sprintf("existing active channel channel-1 for portID icacontroller-%s.DELEGATION on connection %s for owner %s.DELEGATION: active channel already set for this owner",
 		tc.validMsg.ChainId,
 		s.TransferPath.EndpointB.ConnectionID,
@@ -236,7 +237,7 @@ func (s *KeeperTestSuite) TestRestoreInterchainAccount_RevertDepositRecords_Fail
 	s.CreateICAChannel("GAIA.DELEGATION")
 	msg := tc.validMsg
 
-	_, err := s.GetMsgServer().RestoreInterchainAccount(sdk.WrapSDKContext(s.Ctx), &msg)
+	_, err := s.MsgServer.RestoreInterchainAccount(sdk.WrapSDKContext(s.Ctx), &msg)
 	expectedErrMsg := fmt.Sprintf("existing active channel channel-1 for portID icacontroller-%s.DELEGATION on connection %s for owner %s.DELEGATION: active channel already set for this owner",
 		tc.validMsg.ChainId,
 		s.TransferPath.EndpointB.ConnectionID,

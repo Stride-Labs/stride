@@ -23,6 +23,7 @@ type ClearBalanceTestCase struct {
 }
 
 func (s *KeeperTestSuite) SetupClearBalance() ClearBalanceTestCase {
+	s.SetupTest()
 	// fee account
 	feeAccountOwner := fmt.Sprintf("%s.%s", HostChainId, "FEE")
 	feeChannelID := s.CreateICAChannel(feeAccountOwner)
@@ -78,7 +79,7 @@ func (s *KeeperTestSuite) TestClearBalance_Successful() {
 	startSequence, found := s.App.IBCKeeper.ChannelKeeper.GetNextSequenceSend(s.Ctx, feePortId, feeChannelId)
 	s.Require().True(found, "sequence number not found before clear balance")
 
-	_, err := s.GetMsgServer().ClearBalance(sdk.WrapSDKContext(s.Ctx), &tc.validMsg)
+	_, err := s.MsgServer.ClearBalance(sdk.WrapSDKContext(s.Ctx), &tc.validMsg)
 	s.Require().NoError(err, "balance clears")
 
 	// Confirm the sequence number was incremented
@@ -91,7 +92,7 @@ func (s *KeeperTestSuite) TestClearBalance_HostChainMissing() {
 	tc := s.SetupClearBalance()
 	// remove the host zone
 	s.App.StakeibcKeeper.RemoveHostZone(s.Ctx, HostChainId)
-	_, err := s.GetMsgServer().ClearBalance(sdk.WrapSDKContext(s.Ctx), &tc.validMsg)
+	_, err := s.MsgServer.ClearBalance(sdk.WrapSDKContext(s.Ctx), &tc.validMsg)
 	s.Require().EqualError(err, "chainId: GAIA: host zone not registered")
 }
 
@@ -100,7 +101,7 @@ func (s *KeeperTestSuite) TestClearBalance_FeeAccountMissing() {
 	// no fee account
 	tc.initialState.hz.FeeAccount = nil
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, tc.initialState.hz)
-	_, err := s.GetMsgServer().ClearBalance(sdk.WrapSDKContext(s.Ctx), &tc.validMsg)
+	_, err := s.MsgServer.ClearBalance(sdk.WrapSDKContext(s.Ctx), &tc.validMsg)
 	s.Require().EqualError(err, "chainId: GAIA: fee account is not registered")
 }
 
@@ -109,6 +110,6 @@ func (s *KeeperTestSuite) TestClearBalance_ParseCoinError() {
 	// invalid denom
 	tc.initialState.hz.HostDenom = ":"
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, tc.initialState.hz)
-	_, err := s.GetMsgServer().ClearBalance(sdk.WrapSDKContext(s.Ctx), &tc.validMsg)
+	_, err := s.MsgServer.ClearBalance(sdk.WrapSDKContext(s.Ctx), &tc.validMsg)
 	s.Require().EqualError(err, "failed to parse coin (1000000:): invalid decimal coin expression: 1000000:")
 }
