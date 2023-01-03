@@ -142,22 +142,26 @@ ReceiveRateLimitedPacket (IBCModule OnRecvPacket)
 //   - `ChannelValue` is 0 (meaning supply of the denom is 0)
 //   - Rate limit already exists (as identified by the `channel_id` and `denom`)
 //   - Channel does not exist
-AddRateLimit(denom string, channelId string, durationHours uint64, maxPercentSend sdk.Int, maxPercentRecv sdk.Int) 
+AddRateLimit()
+{"denom": string, "channel_id": string, "duration_hours": string, "max_percent_send": string, "max_percent_recv": string}
 
 // Updates a rate limit quota, and resets the rate limit
 // Errors if: 
 //   - Rate limit does not exist (as identified by the `channel_id` and `denom`)
-UpdateRateLimit(denom string, channelId string, durationHours uint64, maxPercentSend sdk.Int, maxPercentRecv sdk.Int)  
+UpdateRateLimit()
+{"denom": string, "channel_id": string, "duration_hours": string, "max_percent_send": string, "max_percent_recv": string}
 
 // Resets the `Inflow` and `Outflow` of a rate limit to 0, and re-calculates the `ChannelValue`
 // Errors if: 
 //   - Rate limit does not exist (as identified by the `channel_id` and `denom`)
-ResetRateLimit(denom string, channelId string) 
+ResetRateLimit() 
+{"denom": string, "channel_id": string}
 
 // Removes the rate limit from the store
 // Errors if: 
 //   - Rate limit does not exist (as identified by the `channel_id` and `denom`)
-RemoveRateLimit(denom string, channelId string)  
+RemoveRateLimit()
+{"denom": string, "channel_id": string}
 ```
 
 ## Queries
