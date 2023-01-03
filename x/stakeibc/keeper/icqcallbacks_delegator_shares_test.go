@@ -66,7 +66,7 @@ func (s *KeeperTestSuite) SetupDelegatorSharesICQCallback() DelegatorSharesICQCa
 
 	s.Require().Equal(numShares, sdk.NewDecFromInt(expectedTokensAfterSlash.Mul(sdk.NewInt(2))), "tokens, shares, and exchange rate aligned")
 	s.Require().Equal(slashPercentage, sdk.NewDecFromInt(expectedSlashAmount).Quo(sdk.NewDecFromInt(tokensBeforeSlash)), "expected slash percentage")
-	s.Require().Equal(slashPercentage, sdk.NewDec(weightBeforeSlash.Sub(expectedWeightAfterSlash).Int64()).Quo(sdk.NewDec(weightBeforeSlash.Int64())), "weight reduction")
+	s.Require().Equal(slashPercentage, sdk.NewDecFromInt(weightBeforeSlash.Sub(expectedWeightAfterSlash)).Quo(sdk.NewDecFromInt(weightBeforeSlash)), "weight reduction")
 
 	currentEpoch := sdk.NewInt(1)
 	hostZone := stakeibctypes.HostZone{

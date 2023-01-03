@@ -191,7 +191,7 @@ func (k Keeper) GetStrideEpochElapsedShare(ctx sdk.Context) (sdk.Dec, error) {
 
 	// Get elapsed share
 	elapsedTime := currBlockTime.Sub(epochStartTime)
-	elapsedShare := sdk.NewDecFromBigInt(elapsedTime.BigInt()).Quo(sdk.NewDecFromBigInt(epochDuration.BigInt()))
+	elapsedShare := sdk.NewDecFromInt(elapsedTime).Quo(sdk.NewDecFromInt(epochDuration))
 	if elapsedShare.LT(sdk.ZeroDec()) || elapsedShare.GT(sdk.OneDec()) {
 		errMsg := fmt.Sprintf("elapsed share (%s) for epoch is not between 0 and 1", elapsedShare)
 		k.Logger(ctx).Error(errMsg)
@@ -244,10 +244,10 @@ func (k Keeper) GetICATimeoutNanos(ctx sdk.Context, epochType string) (sdk.Int, 
 // safety check: ensure the redemption rate is NOT below our min safety threshold && NOT above our max safety threshold on host zone
 func (k Keeper) IsRedemptionRateWithinSafetyBounds(ctx sdk.Context, zone types.HostZone) (bool, error) {
 	minSafetyThresholdInt := k.GetParam(ctx, types.KeySafetyMinRedemptionRateThreshold)
-	minSafetyThreshold := sdk.NewDec(minSafetyThresholdInt.Int64()).Quo(sdk.NewDec(100))
+	minSafetyThreshold := sdk.NewDecFromInt(minSafetyThresholdInt).Quo(sdk.NewDec(100))
 
 	maxSafetyThresholdInt := k.GetParam(ctx, types.KeySafetyMaxRedemptionRateThreshold)
-	maxSafetyThreshold := sdk.NewDec(maxSafetyThresholdInt.Int64()).Quo(sdk.NewDec(100))
+	maxSafetyThreshold := sdk.NewDecFromInt(maxSafetyThresholdInt).Quo(sdk.NewDec(100))
 
 	redemptionRate := zone.RedemptionRate
 

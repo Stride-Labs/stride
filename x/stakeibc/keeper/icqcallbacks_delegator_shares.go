@@ -120,7 +120,11 @@ func DelegatorSharesCallback(k Keeper, ctx sdk.Context, args []byte, query icqty
 
 	// Update the host zone and validator to reflect the weight and delegation change
 	weightAdjustment := sdk.NewDecFromInt(validatorTokens).Quo(sdk.NewDecFromInt(validator.DelegationAmt))
-	validator.Weight = sdk.NewIntFromUint64(sdk.NewDec(weight.Int64()).Mul(weightAdjustment).TruncateInt().Uint64())
+	updateWeight := sdk.NewDecFromInt(weight).Mul(weightAdjustment).TruncateInt()
+	if updateWeight.IsNegative() {
+		return fmt.Errorf("Invalid Weight %s Weight cannot be negative", updateWeight.String())
+	}
+	validator.Weight = updateWeight
 	validator.DelegationAmt = validator.DelegationAmt.Sub(slashAmount)
 
 	hostZone.StakedBal = hostZone.StakedBal.Sub(slashAmount)

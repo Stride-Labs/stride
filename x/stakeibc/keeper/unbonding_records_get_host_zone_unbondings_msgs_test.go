@@ -134,8 +134,8 @@ func (s *KeeperTestSuite) TestGetHostZoneUnbondingMsgs_Successful() {
 	actualAmtToUnbondDec := sdk.NewDecFromInt(actualAmtToUnbond)
 	actualUnbondMsg1 := actualUnbondMsgs[0].String()
 	actualUnbondMsg2 := actualUnbondMsgs[1].String()
-	val1Fraction := sdk.NewDec(tc.hostZone.Validators[0].Weight.Int64()).Quo(totalWgt)
-	val2Fraction := sdk.NewDec(tc.hostZone.Validators[1].Weight.Int64()).Quo(totalWgt)
+	val1Fraction := sdk.NewDecFromInt(tc.hostZone.Validators[0].Weight).Quo(totalWgt)
+	val2Fraction := sdk.NewDecFromInt(tc.hostZone.Validators[1].Weight).Quo(totalWgt)
 	val1UnbondAmt := val1Fraction.Mul(actualAmtToUnbondDec).TruncateInt().String()
 	val2UnbondAmt := val2Fraction.Mul(actualAmtToUnbondDec).TruncateInt().String()
 
