@@ -4,14 +4,14 @@ This `ratelimit` module is a native golang implementation of Osmosis's CosmWasm 
 
 Each rate limit is applied at a ChannelID + Denom granularity and is evaluated in evenly spaced fixed windows. For instance, a rate limit might be specified on `uosmo` (denominated as `ibc/D24B4564BCD51D3D02D9987D92571EAC5915676A9BD6D9B0C1D0254CB8A5EA34` on Stride), on the Stride <-> Osmosis transfer channel (`channel-5`), with a 24 hour window. 
 
-Each rate limit will also have a configurable threshold that dicates the max inflow/outflow along the channel. The threshold is represented as a percentage of the total value along the channel. The channel value is calculated by querying the total supply of the denom at the start of the time window, and it remains constant until the window expires. For instance, the rate limit described above might have a threshold of 10% for both inflow and outflow. If the total supply of `ibc/D24B4564BCD51D3D02D9987D92571EAC5915676A9BD6D9B0C1D0254CB8A5EA34` was 100, then any transfer that would cause a net inflow or outflow greater than 10 (i.e. greater than 10% the channel value) would be rejected. Once the time window expires, the net inflow and outflow are reset to 0 and the channel value is re-calculated.
+Each rate limit will also have a configurable threshold that dictates the max inflow/outflow along the channel. The threshold is represented as a percentage of the total value along the channel. The channel value is calculated by querying the total supply of the denom at the start of the time window, and it remains constant until the window expires. For instance, the rate limit described above might have a threshold of 10% for both inflow and outflow. If the total supply of `ibc/D24B4564BCD51D3D02D9987D92571EAC5915676A9BD6D9B0C1D0254CB8A5EA34` was 100, then any transfer that would cause a net inflow or outflow greater than 10 (i.e. greater than 10% the channel value) would be rejected. Once the time window expires, the net inflow and outflow are reset to 0 and the channel value is re-calculated.
 
 The module is implemented as IBC Middleware around the transfer module. The epoch's module is leveraged to determine when each rate limit window has expired (each window is denominated in hours). This means all rate limit windows with the same window duration will start and end at the same time.
 
 ## Implementation
 Each rate limit is defined by the following three components:
 1. **Path**: Defines the `ChannelId` and `Denom`
-2. **Quota**: Defines the rate limit time window (`DurationHours`) and the max threshold for inflows/outflows (`MaxPercRecv` and `MaxPercSend` respecitvely)
+2. **Quota**: Defines the rate limit time window (`DurationHours`) and the max threshold for inflows/outflows (`MaxPercRecv` and `MaxPercSend` respectively)
 3. **Flow**: Stores the current `Inflow`, `Outflow` and `ChannelValue`. Each time a quota expires, the inflow and outflow get reset to 0 and the channel value gets recalculated. Throughout the window, the inflow and outflow each increase monotonically. The net flow is used when determining if a transfer would exceed the quota. 
     * For `Send` packets: 
     $$\text{Exceeds Quota if:} \left(\frac{\text{Outflow} - \text{Inflow} + \text{Packet Amount}}{\text{ChannelValue}}\right) > \text{MaxPercSend}$$
@@ -19,11 +19,11 @@ Each rate limit is defined by the following three components:
     $$\text{Exceeds Quota if:} \left(\frac{\text{Inflow} - \text{Outflow} + \text{Packet Amount}}{\text{ChannelValue}}\right) > \text{MaxPercRecv}$$
 
 ## Example Walk-Through
-Using the example above, let's say we created a 24 hour rate limit on `ibc/D24B4564BCD51D3D02D9987D92571EAC5915676A9BD6D9B0C1D0254CB8A5EA34` (`ibc/uosmo`), `channel-5`, with a 10% send and receive threshold. 
-1. At the start of the window, the supply will be queried, let's say the total supply was 100
-2. If someone transferred `8uosmo` from Osmosis -> Stride, the `Inflow` would increment by 8
-3. If someone tried to transfer another `8uosmo` to Stride, the quota would be exceeded since `(8+8)/100 = 16%` (which is greater than 10%) and thus, the transfer would be rejected.
-4. If someone tried to transfer `12ibc/uosmo` from Stride -> Osmosis, the `Outflow` would increment by 12. Notice, even though 12 is greater than 10% the total channel value, the *net* outflow is only 4uatom (since it's offset by the 8uatom `Inflow`). As a result, this transaction would succeed.
+Using the example above, let's say we created a 24 hour rate limit on `ibc/D24B4564BCD51D3D02D9987D92571EAC5915676A9BD6D9B0C1D0254CB8A5EA34` ("`ibc/uosmo`"), `channel-5`, with a 10% send and receive threshold. 
+1. At the start of the window, the supply will be queried, to determine the channel value. Let's say the total supply was 100
+2. If someone transferred `8uosmo` from `Osmosis -> Stride`, the `Inflow` would increment by 8
+3. If someone tried to transfer another `8uosmo` from `Osmosis -> Stride`, it would exceed the quota since `(8+8)/100 = 16%` (which is greater than 10%) and thus, the transfer would be rejected.
+4. If someone tried to transfer `12ibc/uosmo` from Stride -> Osmosis, the `Outflow` would increment by 12. Notice, even though 12 is greater than 10% the total channel value, the *net* outflow is only `4uatom` (since it's offset by the `8uatom` `Inflow`). As a result, this transaction would succeed.
 5. Now if the person in (3) attempted to retry their transfer of 8uosmo to Stride, the `Inflow` would increment by 8 and the transaction would succeed (with a net inflow of 4).
 6. Finally, at the end of the 24 hours, the `Inflow` and `Outflow` would get reset to 0 and the `ChannelValue` would be re-calculated, which in this example would lead to a new supply of 104 (since more `uosmo` was sent to Stride, and thus more `ibc/uosmo` was minted)
 
@@ -41,19 +41,21 @@ Using the example above, let's say we created a 24 hour rate limit on `ibc/D24B4
 ## Denoms
 We always want to refer to the channel ID and denom as they appear on Stride. For instance, in the example above, we would store the rate limit with denom `ibc/D24B4564BCD51D3D02D9987D92571EAC5915676A9BD6D9B0C1D0254CB8A5EA34` and `channel-5`, instead of `uosmo` and `channel-326` (the ChannelID on Osmosis).
 
-However, since the ratelimit module acts as middleware to the transfer module, the respective denoms need to be interpretted using the denom trace associated with each packet. There are a few scenarios at play here: 
+However, since the ratelimit module acts as middleware to the transfer module, the respective denoms need to be interpreted using the denom trace associated with each packet. There are a few scenarios at play here...
 
-### Send Packets
+#### Send Packets
 The denom that the rate limiter will use for a send packet depends on whether it was a native token (e.g. ustrd, stuatom, etc.) or non-native token (e.g. ibc/...)...
+##### Native vs Non-Native
 * We can identify if the token is native or not by parsing the denom trace from the packet
     * If the token is **native**, it **will not** have a prefix (e.g. `ustrd`)
     * If the token is **non-native**, it **will** have a prefix (e.g. `transfer/channel-X/uosmo`)
-* To detemine the denom used in the rate limit:
-    * For **native** tokens, return as is (e.g. `ustrd`)
-    * For **non-native** tokens, take the ibc hash (e.g. hash `transfer/channel-X/uosmo` into `ibc/...`)
+##### Determining the denom in the rate limit
+* For **native** tokens, return as is (e.g. `ustrd`)
+* For **non-native** tokens, take the ibc hash (e.g. hash `transfer/channel-X/uosmo` into `ibc/...`)
 
-### Receive Packets
+#### Receive Packets
 The denom that the rate limiter will use for a receive packet depends on whether it was a source or sink
+##### Source vs Sink
 * **Source**: The packet is being received by a chain it was just sent from (i.e. the token has gone back and forth)
     * Ex1: `strd` is sent from Stride to Osmosis, and then back to Stride 
     * Ex2: `ujuno` is sent to Stride, then to Osmosis, then back to Stride 
@@ -61,26 +63,23 @@ The denom that the rate limiter will use for a receive packet depends on whether
 * **Sink**: The packet is being received by a chain that either created it or previous received it from somewhere else
     * Ex1: `uatom` is sent from Cosmoshub to Stride (`uatom` was created on Cosmoshub)
     * Ex2: `uatom` is sent from Cosmoshub to Osmosis then to Stride. Here the receiving chain (Stride) is not the same as the previous hop (Cosmoshub), so Stride is not acting as a source.
-* To determine the denom used in the rate limit:
-    * If the chain is acting as a *Sink*: Add on the Stride port and channel and hash it
-        * Ex1: `uosmo` sent from Osmosis to Stride
-            * Packet Denom:   uosmo
-            * -> Add Prefix:  transfer/channel-X/uosmo
-            * -> Hash:        ibc/...
+##### Determining the denom in the rate limit
+* If the chain is acting as a *Sink*: Add on the Stride port and channel and hash it
+    * Ex1: `uosmo` sent from Osmosis to Stride. Packet Denom: `uosmo`
+        1. Add Prefix:  `transfer/channel-X/uosmo`
+        2. Hash:        `ibc/...`
 
-        * Ex2: `ujuno` sent from Osmosis to Stride
-            * PacketDenom:    transfer/channel-Y/ujuno  (channel-Y is the Juno <> Osmosis channel)
-            * -> Add Prefix:  transfer/channel-X/transfer/channel-Y/ujuno
-            * -> Hash:        ibc/...
-    * If the chain is acting as a *Source*: First, remove the prefix. Then if there is still a denom trace, hash it
-        * Ex1: ustrd sent back to Stride from Osmosis
-            * Packet Denom:      transfer/channel-X/ustrd
-            * -> Remove Prefix:  ustrd
-            * -> Leave as is:    ustrd
-		* Ex2: juno was sent to Stride, then to Osmosis, then back to Stride
-            * Packet Denom:      transfer/channel-X/transfer/channel-Z/ujuno
-            * -> Remove Prefix:  transfer/channel-Z/ujuno
-            * -> Hash:           ibc/...
+    * Ex2: `ujuno` sent from Osmosis to Stride. PacketDenom: `transfer/channel-Y/ujuno` (where channel-Y is the Juno <> Osmosis channel)
+        1. Add Prefix:  `transfer/channel-X/transfer/channel-Y/ujuno`
+        2. Hash:        `ibc/...`
+
+* If the chain is acting as a *Source*: First, remove the prefix. Then if there is still a trace prefix, hash it
+    * Ex1: ustrd sent back to Stride from Osmosis, Packet Denom: `transfer/channel-X/ustrd`
+        1. Remove Prefix: `ustrd`
+        2. No trace remaining, leave as is: `ustrd`
+	* Ex2: juno was sent to Stride, then to Osmosis, then back to Stride. Packet Denom: `transfer/channel-X/transfer/channel-Z/ujuno`
+        1. Remove Prefix: `transfer/channel-Z/ujuno`
+        2. Hash:          `ibc/...`
 
 ## Params
 
