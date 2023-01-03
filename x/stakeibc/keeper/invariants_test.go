@@ -160,7 +160,7 @@ func (suite *KeeperTestSuite) TestRedemptionRateInvariant() {
 			expectedStop: false,
 		},
 		{
-			name: "unhappy case: RedemptionRate is higher than minSafetyThreshold",
+			name: "unhappy case: RedemptionRate is higher than maxSafetyThreshold",
 			hostZones: []types.HostZone{
 				{
 					ChainId:        HostChainId,
