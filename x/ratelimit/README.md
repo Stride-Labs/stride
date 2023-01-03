@@ -173,14 +173,25 @@ ReceiveRateLimitedPacket (IBCModule OnRecvPacket)
     * Rate limit does not exist (as identified by the `channel_id` and `denom`)
 
 ## Queries
-**QueryRateLimits**: Queries all rate limits
-* CLI: `strided q rate-imit list-rate-limits`
-* API: `/Stride-Labs/stride/ratelimit/ratelimits`
+```go
+// Queries all rate limits
+//   CLI: 
+//      strided q ratelimit list-rate-limits
+//   API: 
+//      /Stride-Labs/stride/ratelimit/ratelimits
+QueryRateLimits()
 
-**QueryRateLimit**: Queries a specific rate limit given a ChannelID and Denom
-* CLI: `strided q ratelimit rate-limit [denom] [channel-id]`
-* API: `/Stride-Labs/stride/ratelimit/ratelimit/{denom}/{channel_id}`
+// Queries a specific rate limit given a ChannelID and Denom
+//   CLI:
+//      strided q ratelimit rate-limit [denom] [channel-id]
+//   API:
+//      /Stride-Labs/stride/ratelimit/ratelimit/{denom}/{channel_id}
+QueryRateLimit(denom string, channelId string)
 
-**QueryRateLimitsByChainId**: Queries all rate limits associated with a given host chain
-* CLI: `strided q ratelimit rate-limits-by-chain [chain-id]`
-* API: `/Stride-Labs/stride/ratelimit/ratelimits/{chain_id}`
+// Queries all rate limits associated with a given host chain
+//   CLI: 
+//      strided q ratelimit rate-limits-by-chain [chain-id]
+//   API: 
+//      /Stride-Labs/stride/ratelimit/ratelimits/{chain_id}
+QueryRateLimitsByChainId(chainId string)
+```
