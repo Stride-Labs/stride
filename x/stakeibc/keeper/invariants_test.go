@@ -160,11 +160,25 @@ func (suite *KeeperTestSuite) TestRedemptionRateInvariant() {
 			expectedStop: false,
 		},
 		{
-			name: "unhappy case",
+			name: "unhappy case: RedemptionRate is higher than minSafetyThreshold",
 			hostZones: []types.HostZone{
 				{
 					ChainId:        HostChainId,
 					RedemptionRate: sdk.MustNewDecFromStr("1.9"),
+				},
+				{
+					ChainId:        OsmoChainId,
+					RedemptionRate: sdk.OneDec(),
+				},
+			},
+			expectedStop: true,
+		},
+		{
+			name: "unhappy case: RedemptionRate is smaller than minSafetyThreshold",
+			hostZones: []types.HostZone{
+				{
+					ChainId:        HostChainId,
+					RedemptionRate: sdk.MustNewDecFromStr("0.8"),
 				},
 				{
 					ChainId:        OsmoChainId,
