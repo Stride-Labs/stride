@@ -27,19 +27,16 @@ func WithdrawalBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query icq
 	chainId := query.ChainId
 	hostZone, found := k.GetHostZone(ctx, chainId)
 	if !found {
-		errMsg := fmt.Sprintf("no registered zone for queried chain ID (%s)", chainId)
-		k.Logger(ctx).Error(errMsg)
-		return sdkerrors.Wrapf(types.ErrHostZoneNotFound, errMsg)
+		return sdkerrors.Wrapf(types.ErrHostZoneNotFound, "no registered zone for queried chain ID (%s)", chainId)
 	}
 
-	// Unmarshal the CB args into a coin type
+	// Unmarshal the query response args into a coin type
 	withdrawalBalanceCoin := sdk.Coin{}
 	err := k.cdc.Unmarshal(args, &withdrawalBalanceCoin)
 	if err != nil {
-		errMsg := fmt.Sprintf("unable to unmarshal balance in callback args for zone: %s, err: %s", hostZone.ChainId, err.Error())
-		k.Logger(ctx).Error(errMsg)
-		return sdkerrors.Wrapf(types.ErrUnmarshalFailure, errMsg)
+		return sdkerrors.Wrapf(types.ErrUnmarshalFailure, "unable to unmarshal query response into Coin type: %s, err: %s", err.Error())
 	}
+	k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_WithdrawalBalance, "Query response - Coin: %+v", withdrawalBalanceCoin))
 
 	// Check if the coin is nil (which would indicate the account never had a balance)
 	if withdrawalBalanceCoin.IsNil() || withdrawalBalanceCoin.Amount.IsNil() {
@@ -59,22 +56,16 @@ func WithdrawalBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query icq
 
 	// Get the host zone's ICA accounts
 	withdrawalAccount := hostZone.WithdrawalAccount
-	if withdrawalAccount == nil {
-		errMsg := fmt.Sprintf("WithdrawalBalanceCallback: no withdrawal account found for zone: %s", hostZone.ChainId)
-		k.Logger(ctx).Error(errMsg)
-		return sdkerrors.Wrapf(types.ErrICAAccountNotFound, errMsg)
+	if withdrawalAccount == nil || withdrawalAccount.Address == "" {
+		return sdkerrors.Wrapf(types.ErrICAAccountNotFound, "no withdrawal account found for %s", chainId)
 	}
 	delegationAccount := hostZone.DelegationAccount
-	if delegationAccount == nil {
-		errMsg := fmt.Sprintf("WithdrawalBalanceCallback: no delegation account found for zone: %s", hostZone.ChainId)
-		k.Logger(ctx).Error(errMsg)
-		return sdkerrors.Wrapf(types.ErrICAAccountNotFound, errMsg)
+	if delegationAccount == nil || delegationAccount.Address == "" {
+		return sdkerrors.Wrapf(types.ErrICAAccountNotFound, "no delegation account found for %s", chainId)
 	}
 	feeAccount := hostZone.FeeAccount
-	if feeAccount == nil {
-		errMsg := fmt.Sprintf("WithdrawalBalanceCallback: no fee account found for zone: %s", hostZone.ChainId)
-		k.Logger(ctx).Error(errMsg)
-		return sdkerrors.Wrapf(types.ErrICAAccountNotFound, errMsg)
+	if feeAccount == nil || feeAccount.Address == "" {
+		return sdkerrors.Wrapf(types.ErrICAAccountNotFound, "no fee account found found for %s", chainId)
 	}
 
 	// Determine the stride commission rate to the relevant portion can be sent to the fee account
@@ -97,7 +88,7 @@ func WithdrawalBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query icq
 
 	// Safety check, balances should add to original amount
 	if !feeAmount.Add(reinvestAmount).Equal(withdrawalBalanceAmount) {
-		ctx.Logger().Error(fmt.Sprintf("Error with withdraw logic: %v, Fee Portion: %v, Reinvest Portion %v", withdrawalBalanceAmount, feeAmount, reinvestAmount))
+		k.Logger(ctx).Error(fmt.Sprintf("Error with withdraw logic: %v, Fee Portion: %v, Reinvest Portion %v", withdrawalBalanceAmount, feeAmount, reinvestAmount))
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "Failed to subdivide rewards to feeAccount and delegationAccount")
 	}
 
@@ -139,9 +130,7 @@ func WithdrawalBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query icq
 	// Send the transaction through SubmitTx
 	_, err = k.SubmitTxsStrideEpoch(ctx, hostZone.ConnectionId, msgs, *withdrawalAccount, ICACallbackID_Reinvest, marshalledCallbackArgs)
 	if err != nil {
-		errMsg := fmt.Sprintf("Failed to SubmitTxs for %s - %s, Messages: %v | err: %s", hostZone.ChainId, hostZone.ConnectionId, msgs, err.Error())
-		k.Logger(ctx).Error(errMsg)
-		return sdkerrors.Wrapf(types.ErrICATxFailed, errMsg)
+		return sdkerrors.Wrapf(types.ErrICATxFailed, "Failed to SubmitTxs, Messages: %v, err: %s", msgs, err.Error())
 	}
 
 	ctx.EventManager().EmitEvent(
