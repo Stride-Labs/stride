@@ -112,7 +112,7 @@ for (( i=1; i <= $NUM_NODES; i++ )); do
     echo "$val_mnemonic" | $cmd keys add $val_acct --recover --keyring-backend=test >> $KEYS_LOGS 2>&1
     val_addr=$($cmd keys show $val_acct --keyring-backend test -a | tr -cd '[:alnum:]._-')
     # Add this account to the current node
-    $cmd add-genesis-account ${val_addr} ${VAL_TOKENS}${DENOM}
+    $cmd add-genesis-account ${val_addr} ${VAL_TOKENS}${DENOM} 
 
     # actually set this account as a validator on the current node 
     $cmd gentx $val_acct ${STAKE_TOKENS}${DENOM} --chain-id $CHAIN_ID --keyring-backend test 
@@ -190,3 +190,5 @@ done
 # Cleanup from seds
 rm -rf ${MAIN_CONFIG}-E
 rm -rf ${MAIN_GENESIS}-E
+
+$MAIN_NODE_CMD validate-genesis

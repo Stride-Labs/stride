@@ -137,6 +137,7 @@ services:
 
   injective1:
     image: stridezone:injective
+    command: sleep 500
     volumes:
       - ./scripts/state/injective1:/home/injective/.injectived
     ports:

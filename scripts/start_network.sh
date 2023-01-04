@@ -45,6 +45,8 @@ for chain_id in STRIDE ${HOST_CHAINS[@]}; do
     sh ${SCRIPT_DIR}/init_chain.sh $chain_id
 done
 
+exit 0
+
 # Start the chain and create the transfer channels
 sh ${SCRIPT_DIR}/start_chain.sh STRIDE ${HOST_CHAINS[@]}
 sh ${SCRIPT_DIR}/init_relayers.sh STRIDE ${HOST_CHAINS[@]}
