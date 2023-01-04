@@ -3,6 +3,7 @@ package keeper_test
 import (
 	"fmt"
 
+	cosmosmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	channeltypes "github.com/cosmos/ibc-go/v5/modules/core/04-channel/types"
@@ -16,8 +17,8 @@ import (
 type ClaimCallbackState struct {
 	callbackArgs    types.ClaimCallback
 	epochNumber     uint64
-	decrementAmount sdk.Int
-	hzu1TokenAmount sdk.Int
+	decrementAmount cosmosmath.Int
+	hzu1TokenAmount cosmosmath.Int
 }
 
 type ClaimCallbackArgs struct {
@@ -39,7 +40,7 @@ func (s *KeeperTestSuite) SetupClaimCallback() ClaimCallbackTestCase {
 		// after a user calls ClaimUndelegatedTokens, the record is set to claimIsPending = true
 		// to prevent double claims
 		ClaimIsPending: true,
-		Amount: sdk.ZeroInt(),
+		Amount: cosmosmath.ZeroInt(),
 	}
 	recordId2 := recordtypes.UserRedemptionRecordKeyFormatter(HostChainId, epochNumber, "other_sender")
 	userRedemptionRecord2 := recordtypes.UserRedemptionRecord{
@@ -59,24 +60,24 @@ func (s *KeeperTestSuite) SetupClaimCallback() ClaimCallbackTestCase {
 		HostZoneId:            HostChainId,
 		Status:                recordtypes.HostZoneUnbonding_CLAIMABLE,
 		UserRedemptionRecords: []string{recordId1, recordId2},
-		NativeTokenAmount:     sdk.NewInt(1_000_000),
+		NativeTokenAmount:     cosmosmath.NewInt(1_000_000),
 	}
 	hostZoneUnbonding2 := recordtypes.HostZoneUnbonding{
 		HostZoneId:            "not_gaia",
 		Status:                recordtypes.HostZoneUnbonding_EXIT_TRANSFER_QUEUE,
 		UserRedemptionRecords: []string{recordId3},
-		NativeTokenAmount:     sdk.NewInt(1_000_000),
+		NativeTokenAmount:     cosmosmath.NewInt(1_000_000),
 	}
 	// some other hzus in the future
 	hostZoneUnbonding3 := recordtypes.HostZoneUnbonding{
 		HostZoneId:        "not_gaia",
 		Status:            recordtypes.HostZoneUnbonding_EXIT_TRANSFER_QUEUE,
-		NativeTokenAmount: sdk.NewInt(1_000_000),
+		NativeTokenAmount: cosmosmath.NewInt(1_000_000),
 	}
 	hostZoneUnbonding4 := recordtypes.HostZoneUnbonding{
 		HostZoneId:        HostChainId,
 		Status:            recordtypes.HostZoneUnbonding_EXIT_TRANSFER_QUEUE,
-		NativeTokenAmount: sdk.NewInt(1_000_000),
+		NativeTokenAmount: cosmosmath.NewInt(1_000_000),
 	}
 	epochUnbondingRecord1 := recordtypes.EpochUnbondingRecord{
 		EpochNumber:        epochNumber,

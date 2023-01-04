@@ -3,6 +3,7 @@ package keeper
 import (
 	"fmt"
 
+	cosmosmath "cosmossdk.io/math"
 	ibctransfertypes "github.com/cosmos/ibc-go/v5/modules/apps/transfer/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -23,7 +24,7 @@ func (k Keeper) CreateDepositRecordsForEpoch(ctx sdk.Context, epochNumber uint64
 		k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId, "Creating Deposit Record"))
 
 		depositRecord := recordstypes.DepositRecord{
-			Amount:             sdk.ZeroInt(),
+			Amount:             cosmosmath.ZeroInt(),
 			Denom:              hostZone.HostDenom,
 			HostZoneId:         hostZone.ChainId,
 			Status:             recordstypes.DepositRecord_TRANSFER_QUEUE,
@@ -50,7 +51,7 @@ func (k Keeper) TransferExistingDepositsToHostZones(ctx sdk.Context, epochNumber
 			"Processing deposit record %d: %v%s", depositRecord.Id, depositRecord.Amount, depositRecord.Denom))
 
 		// if a TRANSFER_QUEUE record has 0 balance and was created in the previous epoch, it's safe to remove since it will never be updated or used
-		if depositRecord.Amount.LTE(sdk.ZeroInt()) && depositRecord.DepositEpochNumber < epochNumber {
+		if depositRecord.Amount.LTE(cosmosmath.ZeroInt()) && depositRecord.DepositEpochNumber < epochNumber {
 			k.Logger(ctx).Info(utils.LogWithHostZone(depositRecord.HostZoneId, "Empty deposit record - Removing."))
 			k.RecordsKeeper.RemoveDepositRecord(ctx, depositRecord.Id)
 			continue

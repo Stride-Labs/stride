@@ -9,6 +9,7 @@ import (
 
 	"github.com/Stride-Labs/stride/v4/x/records/types"
 	recordtypes "github.com/Stride-Labs/stride/v4/x/records/types"
+	cosmosmath "cosmossdk.io/math"
 )
 
 type TransferTestCase struct {
@@ -18,7 +19,7 @@ type TransferTestCase struct {
 
 func (s *KeeperTestSuite) SetupTransfer() TransferTestCase {
 	s.CreateTransferChannel(chainId)
-	balanceToTransfer := sdk.NewInt(1_000_000)
+	balanceToTransfer := cosmosmath.NewInt(1_000_000)
 	depositRecord := types.DepositRecord{
 		Id:                 1,
 		DepositEpochNumber: 1,

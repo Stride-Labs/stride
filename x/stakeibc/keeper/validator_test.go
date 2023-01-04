@@ -3,6 +3,7 @@ package keeper_test
 import (
 	"testing"
 
+	cosmosmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
@@ -14,7 +15,7 @@ import (
 )
 
 func createTestValidator(keeper *keeper.Keeper, ctx sdk.Context) types.Validator {
-	item := types.Validator{DelegationAmt: sdk.NewInt(1)}
+	item := types.Validator{DelegationAmt: cosmosmath.NewInt(1)}
 	keeper.SetValidator(ctx, item)
 	return item
 }

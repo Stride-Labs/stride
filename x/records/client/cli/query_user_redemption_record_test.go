@@ -5,8 +5,6 @@ import (
 	"strconv"
 	"testing"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
-
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	clitestutil "github.com/cosmos/cosmos-sdk/testutil/cli"
 	"github.com/stretchr/testify/require"
@@ -18,6 +16,7 @@ import (
 	"github.com/Stride-Labs/stride/v4/testutil/nullify"
 	"github.com/Stride-Labs/stride/v4/x/records/client/cli"
 	"github.com/Stride-Labs/stride/v4/x/records/types"
+	cosmosmath "cosmossdk.io/math"
 )
 
 func networkWithUserRedemptionRecordObjects(t *testing.T, n int) (*network.Network, []types.UserRedemptionRecord) {
@@ -29,7 +28,7 @@ func networkWithUserRedemptionRecordObjects(t *testing.T, n int) (*network.Netwo
 	for i := 0; i < n; i++ {
 		userRedemptionRecord := types.UserRedemptionRecord{
 			Id: strconv.Itoa(i),
-			Amount: sdk.NewInt(int64(i)),
+			Amount: cosmosmath.NewInt(int64(i)),
 		}
 		nullify.Fill(&userRedemptionRecord)
 		state.UserRedemptionRecordList = append(state.UserRedemptionRecordList, userRedemptionRecord)

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	cosmosmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	_ "github.com/stretchr/testify/suite"
 
@@ -13,7 +14,7 @@ import (
 )
 
 type GetHostZoneUnbondingMsgsTestCase struct {
-	amtToUnbond           sdk.Int
+	amtToUnbond           cosmosmath.Int
 	epochUnbondingRecords []recordtypes.EpochUnbondingRecord
 	hostZone              stakeibc.HostZone
 	lightClientTime       uint64
@@ -30,9 +31,9 @@ func (s *KeeperTestSuite) SetupGetHostZoneUnbondingMsgs() GetHostZoneUnbondingMs
 	hostVal3Addr := "cosmos_VALIDATOR_3"
 	valNames := []string{hostVal1Addr, hostVal2Addr, hostVal3Addr}
 	delegationAddr := "cosmos_DELEGATION"
-	amtToUnbond := sdk.NewInt(1_000_000)
-	amtVal1 := sdk.NewInt(1_000_000)
-	amtVal2 := sdk.NewInt(2_000_000)
+	amtToUnbond := cosmosmath.NewInt(1_000_000)
+	amtVal1 := cosmosmath.NewInt(1_000_000)
+	amtVal2 := cosmosmath.NewInt(2_000_000)
 	wgtVal1 := uint64(1)
 	wgtVal2 := uint64(2)
 	totalWgt := uint64(5)
@@ -128,7 +129,7 @@ func (s *KeeperTestSuite) TestGetHostZoneUnbondingMsgs_Successful() {
 	// the number of unbonding messages should be (number of validators) * (records to unbond)
 	s.Require().Equal(len(tc.valNames), len(actualUnbondMsgs), "number of unbonding messages should be number of records to unbond")
 
-	s.Require().Equal(tc.amtToUnbond.Mul(sdk.NewInt(int64(len(tc.epochUnbondingRecords)))), actualAmtToUnbond, "total amount to unbond should match input amtToUnbond")
+	s.Require().Equal(tc.amtToUnbond.Mul(cosmosmath.NewInt(int64(len(tc.epochUnbondingRecords)))), actualAmtToUnbond, "total amount to unbond should match input amtToUnbond")
 	
 	totalWgt := sdk.NewDec(int64(tc.totalWgt))
 	actualAmtToUnbondDec := sdk.NewDecFromInt(actualAmtToUnbond)
@@ -158,7 +159,7 @@ func (s *KeeperTestSuite) TestGetHostZoneUnbondingMsgs_WrongChainId() {
 	// no messages should be sent
 	s.Require().Equal(0, len(msgs), "no messages should be sent")
 	// no value should be unbonded
-	s.Require().Equal(sdk.ZeroInt(), totalAmtToUnbond, "no value should be unbonded")
+	s.Require().Equal(cosmosmath.ZeroInt(), totalAmtToUnbond, "no value should be unbonded")
 }
 
 func (s *KeeperTestSuite) TestGetHostZoneUnbondingMsgs_NoEpochUnbondingRecords() {
@@ -178,7 +179,7 @@ func (s *KeeperTestSuite) TestGetHostZoneUnbondingMsgs_NoEpochUnbondingRecords()
 	// no messages should be sent
 	s.Require().Equal(0, len(msgs), "no messages should be sent")
 	// no value should be unbonded
-	s.Require().Equal(sdk.ZeroInt(), totalAmtToUnbond, "no value should be unbonded")
+	s.Require().Equal(cosmosmath.ZeroInt(), totalAmtToUnbond, "no value should be unbonded")
 }
 
 func (s *KeeperTestSuite) TestGetHostZoneUnbondingMsgs_UnbondingTooMuch() {
@@ -186,26 +187,26 @@ func (s *KeeperTestSuite) TestGetHostZoneUnbondingMsgs_UnbondingTooMuch() {
 
 	// iterate the validators and set all their delegated amounts to 0
 	for i := range tc.hostZone.Validators {
-		tc.hostZone.Validators[i].DelegationAmt = sdk.ZeroInt()
+		tc.hostZone.Validators[i].DelegationAmt = cosmosmath.ZeroInt()
 	}
 	// write the host zone with zero-delegation validators back to the store
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, tc.hostZone)
 
 	// TODO: check epoch unbonding record ids here
 	_, _, _, _, err := s.App.StakeibcKeeper.GetHostZoneUnbondingMsgs(s.Ctx, tc.hostZone)
-	s.Require().EqualError(err, fmt.Sprintf("Could not unbond %v on Host Zone %s, unable to balance the unbond amount across validators: not found", tc.amtToUnbond.Mul(sdk.NewInt(int64(len(tc.epochUnbondingRecords)))), tc.hostZone.ChainId))
+	s.Require().EqualError(err, fmt.Sprintf("Could not unbond %v on Host Zone %s, unable to balance the unbond amount across validators: not found", tc.amtToUnbond.Mul(cosmosmath.NewInt(int64(len(tc.epochUnbondingRecords)))), tc.hostZone.ChainId))
 }
 
 func (s *KeeperTestSuite) TestGetTargetValAmtsForHostZone_Success() {
 	tc := s.SetupGetHostZoneUnbondingMsgs()
 
 	// verify the total amount is expected
-	unbond := sdk.NewInt(1_000_000)
+	unbond := cosmosmath.NewInt(1_000_000)
 	totalAmt, err := s.App.StakeibcKeeper.GetTargetValAmtsForHostZone(s.Ctx, tc.hostZone, unbond)
 	s.Require().Nil(err)
 
 	// sum up totalAmt
-	actualAmount := sdk.ZeroInt()
+	actualAmount := cosmosmath.ZeroInt()
 	for _, amt := range totalAmt {
 		actualAmount = actualAmount.Add(amt)
 	}

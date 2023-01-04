@@ -1,6 +1,7 @@
 package keeper_test
 
 import (
+	cosmosmath "cosmossdk.io/math"
 	_ "github.com/stretchr/testify/suite"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -42,7 +43,7 @@ func (s *KeeperTestSuite) SetupRebalanceValidators() RebalanceValidatorsTestCase
 			CommissionRate: 1,
 			Weight:         100,
 			Status:         stakeibctypes.Validator_ACTIVE,
-			DelegationAmt:  sdk.NewInt(100),
+			DelegationAmt:  cosmosmath.NewInt(100),
 		},
 		{
 			Name:           "val2",
@@ -50,7 +51,7 @@ func (s *KeeperTestSuite) SetupRebalanceValidators() RebalanceValidatorsTestCase
 			CommissionRate: 2,
 			Weight:         500,
 			Status:         stakeibctypes.Validator_ACTIVE,
-			DelegationAmt:  sdk.NewInt(500),
+			DelegationAmt:  cosmosmath.NewInt(500),
 		},
 		{
 			Name:           "val3",
@@ -58,7 +59,7 @@ func (s *KeeperTestSuite) SetupRebalanceValidators() RebalanceValidatorsTestCase
 			CommissionRate: 2,
 			Weight:         200,
 			Status:         stakeibctypes.Validator_ACTIVE,
-			DelegationAmt:  sdk.NewInt(200),
+			DelegationAmt:  cosmosmath.NewInt(200),
 		},
 		{
 			Name:           "val4",
@@ -66,7 +67,7 @@ func (s *KeeperTestSuite) SetupRebalanceValidators() RebalanceValidatorsTestCase
 			CommissionRate: 2,
 			Weight:         400,
 			Status:         stakeibctypes.Validator_ACTIVE,
-			DelegationAmt:  sdk.NewInt(400),
+			DelegationAmt:  cosmosmath.NewInt(400),
 		},
 		{
 			Name:           "val5",
@@ -74,7 +75,7 @@ func (s *KeeperTestSuite) SetupRebalanceValidators() RebalanceValidatorsTestCase
 			CommissionRate: 2,
 			Weight:         400,
 			Status:         stakeibctypes.Validator_ACTIVE,
-			DelegationAmt:  sdk.NewInt(400),
+			DelegationAmt:  cosmosmath.NewInt(400),
 		},
 	}
 
@@ -82,7 +83,7 @@ func (s *KeeperTestSuite) SetupRebalanceValidators() RebalanceValidatorsTestCase
 	hostZone := stakeibctypes.HostZone{
 		ChainId:      "GAIA",
 		Validators:   initialValidators,
-		StakedBal:    sdk.NewInt(1000),
+		StakedBal:    cosmosmath.NewInt(1000),
 		ConnectionId: ibctesting.FirstConnectionID,
 		DelegationAccount: &stakeibctypes.ICAAccount{
 			Address: delegationAddr,
@@ -152,11 +153,11 @@ func (s *KeeperTestSuite) TestRebalanceValidators_Successful() {
 		// verify callback rebalance is what we want
 	s.Require().Equal(2, len(callbackArgs.Rebalancings), "callback should have 2 rebalancing")
 	firstRebal := callbackArgs.Rebalancings[0]
-	s.Require().Equal(sdk.NewInt(104), firstRebal.Amt, "first rebalance should rebalance 104 ATOM")
+	s.Require().Equal(cosmosmath.NewInt(104), firstRebal.Amt, "first rebalance should rebalance 104 ATOM")
 	s.Require().Equal("stride_VAL1", firstRebal.DstValidator, "first rebalance moves to val1")
 	s.Require().Equal("stride_VAL3", firstRebal.SrcValidator, "first rebalance takes from val3")
 	secondRebal := callbackArgs.Rebalancings[1]
-	s.Require().Equal(sdk.NewInt(13), secondRebal.Amt, "second rebalance should rebalance 13 ATOM")
+	s.Require().Equal(cosmosmath.NewInt(13), secondRebal.Amt, "second rebalance should rebalance 13 ATOM")
 	s.Require().Equal("stride_VAL1", secondRebal.DstValidator, "second rebalance moves to val1")
 	s.Require().Equal("stride_VAL4", secondRebal.SrcValidator, "second rebalance takes from val4")
 }

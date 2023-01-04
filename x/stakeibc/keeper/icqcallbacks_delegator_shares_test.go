@@ -2,6 +2,7 @@ package keeper_test
 
 import (
 	"math"
+	cosmosmath "cosmossdk.io/math"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
@@ -28,8 +29,8 @@ type DelegatorSharesICQCallbackTestCase struct {
 	validArgs                DelegatorSharesICQCallbackArgs
 	numShares                sdk.Dec
 	slashPercentage          sdk.Dec
-	expectedDelegationAmount sdk.Int
-	expectedSlashAmount      sdk.Int
+	expectedDelegationAmount cosmosmath.Int
+	expectedSlashAmount      cosmosmath.Int
 	expectedWeight           uint64
 }
 
@@ -50,21 +51,21 @@ func (s *KeeperTestSuite) SetupDelegatorSharesICQCallback() DelegatorSharesICQCa
 
 	valAddress := "valoper2"
 	valIndexQueried := 1
-	tokensBeforeSlash := sdk.NewInt(1000)
+	tokensBeforeSlash := cosmosmath.NewInt(1000)
 	internalExchangeRate := sdk.NewDec(1).Quo(sdk.NewDec(2)) // 0.5
 	numShares := sdk.NewDec(1900)
 
 	// 1900 shares * 0.5 exchange rate = 950 tokens
 	// 1000 tokens - 950 token = 50 tokens slashed
 	// 50 slash tokens / 1000 initial tokens = 5% slash
-	expectedTokensAfterSlash := sdk.NewInt(950)
-	expectedSlashAmount := tokensBeforeSlash.Sub(expectedTokensAfterSlash) 
+	expectedTokensAfterSlash := cosmosmath.NewInt(950)
+	expectedSlashAmount := tokensBeforeSlash.Sub(expectedTokensAfterSlash)
 	slashPercentage := sdk.MustNewDecFromStr("0.05")
 	weightBeforeSlash := uint64(20)
 	expectedWeightAfterSlash := uint64(19)
-	stakedBal := sdk.NewInt(10_000)
+	stakedBal := cosmosmath.NewInt(10_000)
 
-	s.Require().Equal(numShares, sdk.NewDecFromInt(expectedTokensAfterSlash.Mul(sdk.NewInt(2))), "tokens, shares, and exchange rate aligned")
+	s.Require().Equal(numShares, sdk.NewDecFromInt(expectedTokensAfterSlash.Mul(cosmosmath.NewInt(2))), "tokens, shares, and exchange rate aligned")
 	s.Require().Equal(slashPercentage, sdk.NewDecFromInt(expectedSlashAmount).Quo(sdk.NewDecFromInt(tokensBeforeSlash)), "expected slash percentage")
 	s.Require().Equal(slashPercentage, sdk.NewDec(int64(weightBeforeSlash-expectedWeightAfterSlash)).Quo(sdk.NewDec(int64(weightBeforeSlash))), "weight reduction")
 
@@ -75,10 +76,10 @@ func (s *KeeperTestSuite) SetupDelegatorSharesICQCallback() DelegatorSharesICQCa
 		Validators: []*stakeibctypes.Validator{
 			// This validator isn't being queried
 			{
-				Name:    "val1",
-				Address: "valoper1",
-				Weight:  1,
-				DelegationAmt: sdk.ZeroInt(),
+				Name:          "val1",
+				Address:       "valoper1",
+				Weight:        1,
+				DelegationAmt: cosmosmath.ZeroInt(),
 			},
 			// This is the validator in question
 			{

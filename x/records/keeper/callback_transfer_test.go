@@ -3,13 +3,13 @@ package keeper_test
 import (
 	"fmt"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	channeltypes "github.com/cosmos/ibc-go/v5/modules/core/04-channel/types"
 	_ "github.com/stretchr/testify/suite"
 
 	recordskeeper "github.com/Stride-Labs/stride/v4/x/records/keeper"
 	"github.com/Stride-Labs/stride/v4/x/records/types"
 	recordtypes "github.com/Stride-Labs/stride/v4/x/records/types"
+	cosmosmath "cosmossdk.io/math"
 )
 
 const chainId = "GAIA"
@@ -30,7 +30,7 @@ type TransferCallbackTestCase struct {
 }
 
 func (s *KeeperTestSuite) SetupTransferCallback() TransferCallbackTestCase {
-	balanceToStake := sdk.NewInt(1_000_000)
+	balanceToStake := cosmosmath.NewInt(1_000_000)
 	depositRecord := recordtypes.DepositRecord{
 		Id:                 1,
 		DepositEpochNumber: 1,

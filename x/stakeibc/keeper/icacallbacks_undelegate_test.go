@@ -9,6 +9,8 @@ import (
 	"github.com/gogo/protobuf/proto"
 	_ "github.com/stretchr/testify/suite"
 
+	cosmosmath "cosmossdk.io/math"
+
 	recordtypes "github.com/Stride-Labs/stride/v4/x/records/types"
 	stakeibckeeper "github.com/Stride-Labs/stride/v4/x/stakeibc/keeper"
 	"github.com/Stride-Labs/stride/v4/x/stakeibc/types"
@@ -16,13 +18,13 @@ import (
 )
 
 type UndelegateCallbackState struct {
-	stakedBal          sdk.Int
-	val1Bal            sdk.Int
-	val2Bal            sdk.Int
+	stakedBal          cosmosmath.Int
+	val1Bal            cosmosmath.Int
+	val2Bal            cosmosmath.Int
 	epochNumber        uint64
 	completionTime     time.Time
 	callbackArgs       types.UndelegateCallback
-	zoneAccountBalance sdk.Int
+	zoneAccountBalance cosmosmath.Int
 }
 
 type UndelegateCallbackArgs struct {
@@ -34,18 +36,18 @@ type UndelegateCallbackArgs struct {
 type UndelegateCallbackTestCase struct {
 	initialState           UndelegateCallbackState
 	validArgs              UndelegateCallbackArgs
-	val1UndelegationAmount sdk.Int
-	val2UndelegationAmount sdk.Int
-	balanceToUnstake       sdk.Int
+	val1UndelegationAmount cosmosmath.Int
+	val2UndelegationAmount cosmosmath.Int
+	balanceToUnstake       cosmosmath.Int
 }
 
 func (s *KeeperTestSuite) SetupUndelegateCallback() UndelegateCallbackTestCase {
 	// Set up host zone and validator state
-	stakedBal := sdk.NewInt(1_000_000)
-	val1Bal := sdk.NewInt(400_000)
+	stakedBal := cosmosmath.NewInt(1_000_000)
+	val1Bal := cosmosmath.NewInt(400_000)
 	val2Bal := stakedBal.Sub(val1Bal)
-	balanceToUnstake := sdk.NewInt(300_000)
-	val1UndelegationAmount := sdk.NewInt(120_000)
+	balanceToUnstake := cosmosmath.NewInt(300_000)
+	val1UndelegationAmount := cosmosmath.NewInt(120_000)
 	val2UndelegationAmount := balanceToUnstake.Sub(val1UndelegationAmount)
 	epochNumber := uint64(1)
 	val1 := types.Validator{
@@ -59,7 +61,7 @@ func (s *KeeperTestSuite) SetupUndelegateCallback() UndelegateCallbackTestCase {
 		DelegationAmt: val2Bal,
 	}
 	zoneAddress := types.NewZoneAddress(HostChainId)
-	zoneAccountBalance := balanceToUnstake.Add(sdk.NewInt(10))
+	zoneAccountBalance := balanceToUnstake.Add(cosmosmath.NewInt(10))
 	zoneAccount := Account{
 		acc:           zoneAddress,
 		stAtomBalance: sdk.NewCoin(StAtom, zoneAccountBalance), // Add a few extra tokens to make the test more robust
@@ -294,10 +296,10 @@ func (s *KeeperTestSuite) TestGetLatestCompletionTime_Failure() {
 
 // UpdateHostZoneUnbondings tests
 func (s *KeeperTestSuite) TestUpdateHostZoneUnbondings_Success() {
-	totalBalance := sdk.NewInt(1_500_000)
-	stAmtHzu1 := sdk.NewInt(600_000)
-	stAmtHzu2 := sdk.NewInt(700_000)
-	stAmtHzu3 := sdk.NewInt(200_000)
+	totalBalance := cosmosmath.NewInt(1_500_000)
+	stAmtHzu1 := cosmosmath.NewInt(600_000)
+	stAmtHzu2 := cosmosmath.NewInt(700_000)
+	stAmtHzu3 := cosmosmath.NewInt(200_000)
 	s.Require().Equal(totalBalance, stAmtHzu1.Add(stAmtHzu2).Add(stAmtHzu3), "total balance is correct")
 	// Set up EpochUnbondingRecord, HostZoneUnbonding and token state
 	hostZoneUnbonding1 := recordtypes.HostZoneUnbonding{
@@ -390,7 +392,7 @@ func (s *KeeperTestSuite) TestBurnTokens_Success() {
 	s.Require().NoError(err, "zoneAccount is valid")
 	s.Require().Equal(tc.initialState.zoneAccountBalance, s.App.BankKeeper.GetBalance(s.Ctx, zoneAccount, StAtom).Amount, "initial token balance is 300_010")
 
-	burnAmt := sdk.NewInt(123456)
+	burnAmt := cosmosmath.NewInt(123456)
 	err = s.App.StakeibcKeeper.BurnTokens(s.Ctx, hostZone, burnAmt)
 	s.Require().NoError(err)
 
@@ -405,7 +407,7 @@ func (s *KeeperTestSuite) TestBurnTokens_CouldNotParseCoin() {
 	s.Require().True(found, "host zone found")
 	hostZone.HostDenom = ","
 
-	burnAmt := sdk.NewInt(123456)
+	burnAmt := cosmosmath.NewInt(123456)
 	err := s.App.StakeibcKeeper.BurnTokens(s.Ctx, hostZone, burnAmt)
 	s.Require().EqualError(err, "could not parse burnCoin: 123456st,. err: invalid decimal coin expression: 123456st,: invalid coins")
 }
@@ -418,7 +420,7 @@ func (s *KeeperTestSuite) TestBurnTokens_CouldNotParseAddress() {
 	s.Require().True(found, "host zone found")
 	hostZone.Address = "invalid"
 
-	err := s.App.StakeibcKeeper.BurnTokens(s.Ctx, hostZone, sdk.NewInt(123456))
+	err := s.App.StakeibcKeeper.BurnTokens(s.Ctx, hostZone, cosmosmath.NewInt(123456))
 	s.Require().EqualError(err, "could not bech32 decode address invalid of zone with id: GAIA")
 }
 
@@ -430,6 +432,6 @@ func (s *KeeperTestSuite) TestBurnTokens_CouldNotSendCoinsFromAccountToModule() 
 	s.Require().True(found, "host zone found")
 	hostZone.HostDenom = "coinDNE"
 
-	err := s.App.StakeibcKeeper.BurnTokens(s.Ctx, hostZone, sdk.NewInt(123456))
+	err := s.App.StakeibcKeeper.BurnTokens(s.Ctx, hostZone, cosmosmath.NewInt(123456))
 	s.Require().EqualError(err, "could not send coins from account stride1755g4dkhpw73gz9h9nwhlcefc6sdf8kcmvcwrk4rxfrz8xpxxjms7savm8 to module stakeibc. err: 0stcoinDNE is smaller than 123456stcoinDNE: insufficient funds")
 }

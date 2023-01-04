@@ -1,6 +1,7 @@
 package keeper_test
 
 import (
+	cosmosmath "cosmossdk.io/math"
 	ibctesting "github.com/cosmos/ibc-go/v5/testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -32,7 +33,7 @@ type ValidatorICQCallbackTestCase struct {
 func (s *KeeperTestSuite) CreateValidatorQueryResponse(address string, tokens int64, shares int64) []byte {
 	validator := stakingtypes.Validator{
 		OperatorAddress: address,
-		Tokens:          sdk.NewInt(tokens),
+		Tokens:          cosmosmath.NewInt(tokens),
 		DelegatorShares: sdk.NewDec(shares),
 	}
 	validatorBz := s.App.RecordsKeeper.Cdc.MustMarshal(&validator)

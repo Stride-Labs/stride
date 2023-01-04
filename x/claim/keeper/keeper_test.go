@@ -13,6 +13,7 @@ import (
 	"github.com/Stride-Labs/stride/v4/app"
 	"github.com/Stride-Labs/stride/v4/x/claim/types"
 	minttypes "github.com/Stride-Labs/stride/v4/x/mint/types"
+	cosmosmath "cosmossdk.io/math"
 )
 
 type KeeperTestSuite struct {
@@ -49,19 +50,19 @@ func (suite *KeeperTestSuite) SetupTest() {
 	distributors["osmosis"] = addr3
 
 	// Mint coins to airdrop module
-	err := suite.app.BankKeeper.MintCoins(suite.ctx, minttypes.ModuleName, sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(300000000))))
+	err := suite.app.BankKeeper.MintCoins(suite.ctx, minttypes.ModuleName, sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, cosmosmath.NewInt(300000000))))
 	if err != nil {
 		panic(err)
 	}
-	err = suite.app.BankKeeper.SendCoinsFromModuleToAccount(suite.ctx, minttypes.ModuleName, addr1, sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(100000000))))
+	err = suite.app.BankKeeper.SendCoinsFromModuleToAccount(suite.ctx, minttypes.ModuleName, addr1, sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, cosmosmath.NewInt(100000000))))
 	if err != nil {
 		panic(err)
 	}
-	err = suite.app.BankKeeper.SendCoinsFromModuleToAccount(suite.ctx, minttypes.ModuleName, addr2, sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(100000000))))
+	err = suite.app.BankKeeper.SendCoinsFromModuleToAccount(suite.ctx, minttypes.ModuleName, addr2, sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, cosmosmath.NewInt(100000000))))
 	if err != nil {
 		panic(err)
 	}
-	err = suite.app.BankKeeper.SendCoinsFromModuleToAccount(suite.ctx, minttypes.ModuleName, addr3, sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(100000000))))
+	err = suite.app.BankKeeper.SendCoinsFromModuleToAccount(suite.ctx, minttypes.ModuleName, addr3, sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, cosmosmath.NewInt(100000000))))
 	if err != nil {
 		panic(err)
 	}

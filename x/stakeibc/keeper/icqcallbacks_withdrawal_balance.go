@@ -3,6 +3,7 @@ package keeper
 import (
 	"fmt"
 
+	cosmosmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
@@ -42,7 +43,7 @@ func WithdrawalBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query icq
 	}
 
 	// Confirm the balance is greater than zero
-	if withdrawalBalanceCoin.Amount.LTE(sdk.ZeroInt()) {
+	if withdrawalBalanceCoin.Amount.LTE(cosmosmath.ZeroInt()) {
 		k.Logger(ctx).Info(fmt.Sprintf("WithdrawalBalanceCallback: no balance to transfer for zone: %s, accAddr: %v, coin: %v",
 			hostZone.ChainId, hostZone.WithdrawalAccount.GetAddress(), withdrawalBalanceCoin.String()))
 		return nil
@@ -88,7 +89,7 @@ func WithdrawalBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query icq
 	strideClaimFloored := strideClaim.TruncateInt()
 
 	// back the reinvestment amount out of the total less the commission
-	reinvestAmountCeil := sdk.NewInt(withdrawalBalanceAmount.Int64()).Sub(strideClaimFloored)
+	reinvestAmountCeil := cosmosmath.NewInt(withdrawalBalanceAmount.Int64()).Sub(strideClaimFloored)
 
 	// TODO(TEST-112) safety check, balances should add to original amount
 	if (strideClaimFloored.Int64() + reinvestAmountCeil.Int64()) != withdrawalBalanceAmount.Int64() {

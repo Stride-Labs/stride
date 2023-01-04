@@ -10,27 +10,28 @@ import (
 	"github.com/Stride-Labs/stride/v4/testutil/nullify"
 	"github.com/Stride-Labs/stride/v4/x/records/keeper"
 	"github.com/Stride-Labs/stride/v4/x/records/types"
+	cosmosmath "cosmossdk.io/math"
 )
 
 func createNEpochUnbondingRecord(keeper *keeper.Keeper, ctx sdk.Context, n int) ([]types.EpochUnbondingRecord, map[string]types.HostZoneUnbonding) {
 	hostZoneUnbondingsList := []types.HostZoneUnbonding{
 		{
-			HostZoneId: "host-A",
-			Status:     types.HostZoneUnbonding_UNBONDING_QUEUE,
-			StTokenAmount: sdk.ZeroInt(),
-			NativeTokenAmount: sdk.ZeroInt(),
+			HostZoneId:        "host-A",
+			Status:            types.HostZoneUnbonding_UNBONDING_QUEUE,
+			StTokenAmount:     cosmosmath.ZeroInt(),
+			NativeTokenAmount: cosmosmath.ZeroInt(),
 		},
 		{
-			HostZoneId: "host-B",
-			Status:     types.HostZoneUnbonding_UNBONDING_QUEUE,
-			StTokenAmount: sdk.ZeroInt(),
-			NativeTokenAmount: sdk.ZeroInt(),
+			HostZoneId:        "host-B",
+			Status:            types.HostZoneUnbonding_UNBONDING_QUEUE,
+			StTokenAmount:     cosmosmath.ZeroInt(),
+			NativeTokenAmount: cosmosmath.ZeroInt(),
 		},
 		{
-			HostZoneId: "host-C",
-			Status:     types.HostZoneUnbonding_UNBONDING_QUEUE,
-			StTokenAmount: sdk.ZeroInt(),
-			NativeTokenAmount: sdk.ZeroInt(),
+			HostZoneId:        "host-C",
+			Status:            types.HostZoneUnbonding_UNBONDING_QUEUE,
+			StTokenAmount:     cosmosmath.ZeroInt(),
+			NativeTokenAmount: cosmosmath.ZeroInt(),
 		},
 	}
 	hostZoneUnbondingsMap := make(map[string]types.HostZoneUnbonding)

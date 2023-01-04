@@ -6,6 +6,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
+	cosmosmath "cosmossdk.io/math"
 
 	keepertest "github.com/Stride-Labs/stride/v4/testutil/keeper"
 	"github.com/Stride-Labs/stride/v4/testutil/nullify"
@@ -19,7 +20,7 @@ func createNHostZone(keeper *keeper.Keeper, ctx sdk.Context, n int) []types.Host
 		items[i].ChainId = strconv.Itoa(i)
 		items[i].RedemptionRate = sdk.NewDec(1)
 		items[i].LastRedemptionRate = sdk.NewDec(1)
-		items[i].StakedBal = sdk.ZeroInt()
+		items[i].StakedBal = cosmosmath.ZeroInt()
 		keeper.SetHostZone(ctx, items[i])
 	}
 	return items

@@ -1,6 +1,7 @@
 package keeper_test
 
 import (
+	cosmosmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	channeltypes "github.com/cosmos/ibc-go/v5/modules/core/04-channel/types"
@@ -15,7 +16,7 @@ import (
 )
 
 type ReinvestCallbackState struct {
-	reinvestAmt   sdk.Int
+	reinvestAmt   cosmosmath.Int
 	callbackArgs  types.ReinvestCallback
 	depositRecord recordtypes.DepositRecord
 }
@@ -32,7 +33,7 @@ type ReinvestCallbackTestCase struct {
 }
 
 func (s *KeeperTestSuite) SetupReinvestCallback() ReinvestCallbackTestCase {
-	reinvestAmt := sdk.NewInt(1_000)
+	reinvestAmt := cosmosmath.NewInt(1_000)
 
 	hostZone := stakeibc.HostZone{
 		ChainId:        HostChainId,

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	cosmosmath "cosmossdk.io/math"
 	"github.com/spf13/cast"
 
 	"github.com/Stride-Labs/stride/v4/utils"
@@ -185,20 +186,20 @@ func (k Keeper) UpdateHostZoneUnbondings(
 	latestCompletionTime time.Time,
 	chainId string,
 	undelegateCallback types.UndelegateCallback,
-) (stTokenBurnAmount sdk.Int, err error) {
-	stTokenBurnAmount = sdk.ZeroInt()
+) (stTokenBurnAmount cosmosmath.Int, err error) {
+	stTokenBurnAmount = cosmosmath.ZeroInt()
 	for _, epochNumber := range undelegateCallback.EpochUnbondingRecordIds {
 		epochUnbondingRecord, found := k.RecordsKeeper.GetEpochUnbondingRecord(ctx, epochNumber)
 		if !found {
 			errMsg := fmt.Sprintf("Unable to find epoch unbonding record for epoch: %d", epochNumber)
 			k.Logger(ctx).Error(errMsg)
-			return sdk.ZeroInt(), sdkerrors.Wrapf(sdkerrors.ErrKeyNotFound, errMsg)
+			return cosmosmath.ZeroInt(), sdkerrors.Wrapf(sdkerrors.ErrKeyNotFound, errMsg)
 		}
 		hostZoneUnbonding, found := k.RecordsKeeper.GetHostZoneUnbondingByChainId(ctx, epochUnbondingRecord.EpochNumber, chainId)
 		if !found {
 			errMsg := fmt.Sprintf("Host zone unbonding not found (%s) in epoch unbonding record: %d", chainId, epochNumber)
 			k.Logger(ctx).Error(errMsg)
-			return sdk.ZeroInt(), sdkerrors.Wrapf(sdkerrors.ErrKeyNotFound, errMsg)
+			return cosmosmath.ZeroInt(), sdkerrors.Wrapf(sdkerrors.ErrKeyNotFound, errMsg)
 		}
 
 		// Keep track of the stTokens that need to be burned
@@ -212,7 +213,7 @@ func (k Keeper) UpdateHostZoneUnbondings(
 		if !success {
 			k.Logger(ctx).Error(fmt.Sprintf("Failed to set host zone epoch unbonding record: epochNumber %d, chainId %s, hostZoneUnbonding %+v",
 				epochUnbondingRecord.EpochNumber, chainId, hostZoneUnbonding))
-			return sdk.ZeroInt(), sdkerrors.Wrapf(types.ErrEpochNotFound, "couldn't set host zone epoch unbonding record. err: %s", err.Error())
+			return cosmosmath.ZeroInt(), sdkerrors.Wrapf(types.ErrEpochNotFound, "couldn't set host zone epoch unbonding record. err: %s", err.Error())
 		}
 		k.RecordsKeeper.SetEpochUnbondingRecord(ctx, *updatedEpochUnbondingRecord)
 
@@ -223,7 +224,7 @@ func (k Keeper) UpdateHostZoneUnbondings(
 }
 
 // Burn stTokens after they've been unbonded
-func (k Keeper) BurnTokens(ctx sdk.Context, hostZone types.HostZone, stTokenBurnAmount sdk.Int) error {
+func (k Keeper) BurnTokens(ctx sdk.Context, hostZone types.HostZone, stTokenBurnAmount cosmosmath.Int) error {
 	// Build the coin from the stDenom on the host zone
 	stCoinDenom := types.StAssetDenomFromHostZoneDenom(hostZone.HostDenom)
 	stCoinString := stTokenBurnAmount.String() + stCoinDenom

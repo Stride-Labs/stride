@@ -30,6 +30,7 @@ import (
 	cmdcfg "github.com/Stride-Labs/stride/v4/cmd/strided/config"
 	"github.com/Stride-Labs/stride/v4/x/claim/types"
 	claimtypes "github.com/Stride-Labs/stride/v4/x/claim/types"
+	cosmosmath "cosmossdk.io/math"
 )
 
 var addr1 sdk.AccAddress
@@ -195,8 +196,8 @@ func (s *IntegrationTestSuite) TestCmdTxSetAirdropAllocations() {
 				strideclitestutil.DefaultFeeString(s.cfg),
 			},
 			[]sdk.Coins{
-				sdk.NewCoins(sdk.NewCoin(s.cfg.BondDenom, sdk.NewInt(77))),
-				sdk.NewCoins(sdk.NewCoin(s.cfg.BondDenom, sdk.NewInt(46))),
+				sdk.NewCoins(sdk.NewCoin(s.cfg.BondDenom, cosmosmath.NewInt(77))),
+				sdk.NewCoins(sdk.NewCoin(s.cfg.BondDenom, cosmosmath.NewInt(46))),
 			},
 		},
 	}

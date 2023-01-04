@@ -12,6 +12,7 @@ import (
 
 	"github.com/Stride-Labs/stride/v4/utils"
 	vestexported "github.com/Stride-Labs/stride/v4/x/claim/vesting/exported"
+	cosmosmath "cosmossdk.io/math"
 )
 
 // Compile-time type assertions
@@ -69,7 +70,7 @@ func (bva *BaseVestingAccount) TrackDelegation(balance, vestingCoins, amount sdk
 		// compute x and y per the specification, where:
 		// X := min(max(V - DV, 0), D)
 		// Y := D - X
-		x := sdk.MinInt(sdk.MaxInt(vestingAmt.Sub(delVestingAmt), sdk.ZeroInt()), coin.Amount)
+		x := sdk.MinInt(sdk.MaxInt(vestingAmt.Sub(delVestingAmt), cosmosmath.ZeroInt()), coin.Amount)
 		y := coin.Amount.Sub(x)
 
 		if !x.IsZero() {
