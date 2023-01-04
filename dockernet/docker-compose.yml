@@ -136,33 +136,32 @@ services:
       - ./state/stars5:/home/stars/.starsd
   # Fill in new host zone being tested here
   terra1:
-      image: stridezone:terra
-      volumes:
-        - ./state/terra1:/home/terra/.terrad
-      ports:
-        - "26157:26657"
-        - "1267:1317"
-        - "9040:9090"
+    image: stridezone:terra
+    volumes:
+      - ./state/terra1:/home/terra/.terra
+    ports:
+      - "26157:26657"
+      - "1267:1317"
+      - "9040:9090"
   terra2:
     image: stridezone:terra
     volumes:
-      - ./state/terra2:/home/terra/.terrad
+      - ./state/terra2:/home/terra/.terra
 
   terra3:
     image: stridezone:terra
     volumes:
-      - ./state/terra3:/home/terra/.terrad
+      - ./state/terra3:/home/terra/.terra
 
   terra4:
     image: stridezone:terra
     volumes:
-      - ./state/terra4:/home/terra/.terrad
+      - ./state/terra4:/home/terra/.terra
 
   terra5:
     image: stridezone:terra
     volumes:
-      - ./state/terra5:/home/terra/.terrad
-
+      - ./state/terra5:/home/terra/.terra
 
   hermes:
     image: stridezone:hermes

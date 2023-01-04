@@ -17,9 +17,14 @@ for chain_id in ${HOST_CHAINS[@]}; do
     mkdir -p $relayer_config
     cp ${SCRIPT_DIR}/config/relayer_config.yaml $relayer_config/config.yaml
 
+    coin_type=""
+    if [[ "$chain_id" == "TERRA" ]]; then
+        coin_type="--coin-type 330"
+    fi
+
     printf "STRIDE <> $chain_id - Adding relayer keys..."
     $relayer_exec rly keys restore stride $RELAYER_STRIDE_ACCT "$mnemonic" >> $relayer_logs 2>&1
-    $relayer_exec rly keys restore $chain_name $account_name "$mnemonic" >> $relayer_logs 2>&1
+    $relayer_exec rly keys restore $chain_name $account_name "$mnemonic" $coin_type >> $relayer_logs 2>&1
     echo "Done restoring relayer keys"
 
     printf "STRIDE <> $chain_id - Creating client, connection, and transfer channel..." | tee -a $relayer_logs

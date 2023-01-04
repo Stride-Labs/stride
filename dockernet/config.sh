@@ -183,13 +183,13 @@ STARS_RECEIVER_ADDRESS='stars15dywcmy6gzsc8wfefkrx0c9czlwvwrjenqthyq'
 TERRA_CHAIN_ID=TERRA
 TERRA_NODE_PREFIX=terra
 TERRA_NUM_NODES=1
-TERRA_CMD="$SCRIPT_DIR/../build/terrad"
-TERRA_VAL_PREFIX=sgval
-TERRA_REV_ACCT=sgrev1
+TERRA_CMD="$DOCKER_COMPOSE run --rm terra1 terrad"
+TERRA_VAL_PREFIX=tval
+TERRA_REV_ACCT=trev1
 TERRA_ADDRESS_PREFIX=terra
 TERRA_DENOM=$TERRA_DENOM
 TERRA_RPC_PORT=26257
-TERRA_MAIN_CMD="$TERRA_CMD --home $SCRIPT_DIR/state/${TERRA_NODE_PREFIX}1"
+TERRA_CMD="$DOCKER_COMPOSE run --rm terra1 terrad"
 TERRA_RECEIVER_ADDRESS='terra15dywcmy6gzsc8wfefkrx0c9czlwvwrjenqthyq'
 
 
@@ -235,7 +235,7 @@ RELAYER_GAIA_MNEMONIC="fiction perfect rapid steel bundle giant blade grain eagl
 RELAYER_JUNO_MNEMONIC="kiwi betray topple van vapor flag decorate cement crystal fee family clown cry story gain frost strong year blanket remain grass pig hen empower"
 RELAYER_OSMO_MNEMONIC="unaware wine ramp february bring trust leaf beyond fever inside option dilemma save know captain endless salute radio humble chicken property culture foil taxi"
 RELAYER_STARS_MNEMONIC="deposit dawn erosion talent old broom flip recipe pill hammer animal hill nice ten target metal gas shoe visual nephew soda harbor child simple"
-RELAYER_TERRA_MNEMONIC="deposit dawn erosion talent old broom flip recipe pill hammer animal hill nice ten target metal gas shoe visual nephew soda harbor child simple"
+RELAYER_TERRA_MNEMONIC="breeze exact spawn endless lobster curve curve forest traffic scale icon garbage estate question around mask spider island swift fragile gorilla wife save genuine"
 RELAYER_MNEMONICS=(
   "$RELAYER_GAIA_MNEMONIC"
   "$RELAYER_JUNO_MNEMONIC"
