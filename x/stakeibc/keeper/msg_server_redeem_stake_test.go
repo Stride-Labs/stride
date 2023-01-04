@@ -25,7 +25,6 @@ type RedeemStakeTestCase struct {
 }
 
 func (s *KeeperTestSuite) SetupRedeemStake() RedeemStakeTestCase {
-	// s.SetupTest()
 	redeemAmount := sdk.NewInt(1_000_000)
 	user := Account{
 		acc:           s.TestAccs[0],
