@@ -6,10 +6,10 @@ import (
 
 // x/ratelimit module sentinel errors
 var (
-	ErrRateLimitKeyAlreadyExists = sdkerrors.Register(ModuleName, 1,
+	ErrRateLimitAlreadyExists = sdkerrors.Register(ModuleName, 1,
 		"ratelimit key duplicated")
-	ErrRateLimitKeyNotFound = sdkerrors.Register(ModuleName, 2,
-		"ratelimit key not found")
+	ErrRateLimitNotFound = sdkerrors.Register(ModuleName, 2,
+		"rate limit not found")
 	ErrZeroChannelValue = sdkerrors.Register(ModuleName, 3,
 		"channel value is zero")
 	ErrQuotaExceeded = sdkerrors.Register(ModuleName, 4,

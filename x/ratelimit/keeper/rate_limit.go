@@ -56,7 +56,7 @@ func (k Keeper) CheckRateLimitAndUpdateFlow(ctx sdk.Context, direction types.Pac
 func (k Keeper) ResetRateLimit(ctx sdk.Context, denom string, channelId string) error {
 	rateLimit, found := k.GetRateLimit(ctx, denom, channelId)
 	if !found {
-		return types.ErrRateLimitKeyNotFound
+		return types.ErrRateLimitNotFound
 	}
 
 	flow := types.Flow{

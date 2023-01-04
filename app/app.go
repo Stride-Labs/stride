@@ -132,6 +132,7 @@ import (
 	stakeibcmoduletypes "github.com/Stride-Labs/stride/v4/x/stakeibc/types"
 
 	ratelimitmodule "github.com/Stride-Labs/stride/v4/x/ratelimit"
+	ratelimitclient "github.com/Stride-Labs/stride/v4/x/ratelimit/client"
 	ratelimitmodulekeeper "github.com/Stride-Labs/stride/v4/x/ratelimit/keeper"
 	ratelimitmoduletypes "github.com/Stride-Labs/stride/v4/x/ratelimit/types"
 	// this line is used by starport scaffolding # stargate/app/moduleImport
@@ -157,6 +158,10 @@ func getGovProposalHandlers() []govclient.ProposalHandler {
 		ibcclientclient.UpdateClientProposalHandler,
 		ibcclientclient.UpgradeProposalHandler,
 		stakeibcclient.AddValidatorProposalHandler,
+		ratelimitclient.AddRateLimitProposalHandler,
+		ratelimitclient.UpdateRateLimitProposalHandler,
+		ratelimitclient.RemoveRateLimitProposalHandler,
+		ratelimitclient.ResetRateLimitProposalHandler,
 		// this line is used by starport scaffolding # stargate/app/govProposalHandler
 	)
 
@@ -544,7 +549,8 @@ func NewStrideApp(
 		AddRoute(distrtypes.RouterKey, distr.NewCommunityPoolSpendProposalHandler(app.DistrKeeper)).
 		AddRoute(upgradetypes.RouterKey, upgrade.NewSoftwareUpgradeProposalHandler(app.UpgradeKeeper)).
 		AddRoute(ibcclienttypes.RouterKey, ibcclient.NewClientProposalHandler(app.IBCKeeper.ClientKeeper)).
-		AddRoute(stakeibcmoduletypes.RouterKey, stakeibcmodule.NewStakeibcProposalHandler(app.StakeibcKeeper))
+		AddRoute(stakeibcmoduletypes.RouterKey, stakeibcmodule.NewStakeibcProposalHandler(app.StakeibcKeeper)).
+		AddRoute(ratelimitmoduletypes.RouterKey, ratelimitmodule.NewRateLimitProposalHandler(app.RatelimitKeeper, app.IBCKeeper.ChannelKeeper))
 
 	app.GovKeeper = govkeeper.NewKeeper(
 		appCodec, keys[govtypes.StoreKey], app.GetSubspace(govtypes.ModuleName), app.AccountKeeper, app.BankKeeper,
