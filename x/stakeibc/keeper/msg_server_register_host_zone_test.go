@@ -14,6 +14,7 @@ import (
 	epochtypes "github.com/Stride-Labs/stride/v4/x/epochs/types"
 	recordstypes "github.com/Stride-Labs/stride/v4/x/records/types"
 	recordtypes "github.com/Stride-Labs/stride/v4/x/records/types"
+	stakeibckeeper "github.com/Stride-Labs/stride/v4/x/stakeibc/keeper"
 	stakeibctypes "github.com/Stride-Labs/stride/v4/x/stakeibc/types"
 )
 
@@ -27,7 +28,6 @@ type RegisterHostZoneTestCase struct {
 }
 
 func (s *KeeperTestSuite) SetupRegisterHostZone() RegisterHostZoneTestCase {
-	s.SetupTest()
 	epochUnbondingRecordNumber := uint64(3)
 	strideEpochNumber := uint64(4)
 	unbondingFrequency := uint64(3)
@@ -35,6 +35,7 @@ func (s *KeeperTestSuite) SetupRegisterHostZone() RegisterHostZoneTestCase {
 	atomHostZoneChainId := "GAIA"
 
 	s.CreateTransferChannel(HostChainId)
+	s.MsgServer = stakeibckeeper.NewMsgServerImpl(s.App.StakeibcKeeper)
 
 	s.App.StakeibcKeeper.SetEpochTracker(s.Ctx, stakeibctypes.EpochTracker{
 		EpochIdentifier: epochtypes.DAY_EPOCH,

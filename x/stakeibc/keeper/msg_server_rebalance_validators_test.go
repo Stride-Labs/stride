@@ -9,6 +9,7 @@ import (
 
 	epochtypes "github.com/Stride-Labs/stride/v4/x/epochs/types"
 	icacallbackstypes "github.com/Stride-Labs/stride/v4/x/icacallbacks/types"
+	stakeibckeeper "github.com/Stride-Labs/stride/v4/x/stakeibc/keeper"
 	stakeibctypes "github.com/Stride-Labs/stride/v4/x/stakeibc/types"
 )
 
@@ -20,10 +21,10 @@ type RebalanceValidatorsTestCase struct {
 }
 
 func (s *KeeperTestSuite) SetupRebalanceValidators() RebalanceValidatorsTestCase {
-	s.SetupTest()
 	// Setup IBC
 	delegationIcaOwner := "GAIA.DELEGATION"
 	delegationChannelId := s.CreateICAChannel(delegationIcaOwner)
+	s.MsgServer = stakeibckeeper.NewMsgServerImpl(s.App.StakeibcKeeper)
 	delegationAddr := s.IcaAddresses[delegationIcaOwner]
 
 	// setup epochs
@@ -150,7 +151,7 @@ func (s *KeeperTestSuite) TestRebalanceValidators_Successful() {
 	s.Require().NoError(err, "unmarshalling callback args error for callback key (%s)", callbackKey)
 	s.Require().Equal("GAIA", callbackArgs.HostZoneId, "callback host zone id should be GAIA")
 
-		// verify callback rebalance is what we want
+	// verify callback rebalance is what we want
 	s.Require().Equal(2, len(callbackArgs.Rebalancings), "callback should have 2 rebalancing")
 	firstRebal := callbackArgs.Rebalancings[0]
 	s.Require().Equal(sdk.NewInt(104), firstRebal.Amt, "first rebalance should rebalance 104 ATOM")

@@ -28,9 +28,9 @@ type ClaimUndelegatedTestCase struct {
 }
 
 func (s *KeeperTestSuite) SetupClaimUndelegatedTokens() ClaimUndelegatedTestCase {
-	s.SetupTest()
 	redemptionIcaOwner := "GAIA.REDEMPTION"
 	s.CreateICAChannel(redemptionIcaOwner)
+	s.MsgServer = stakeibckeeper.NewMsgServerImpl(s.App.StakeibcKeeper)
 
 	epochNumber := uint64(1)
 	senderAddr := "stride_SENDER"
@@ -111,7 +111,6 @@ func (s *KeeperTestSuite) TestClaimUndelegatedTokens_Successful() {
 	redemptionRecordId := tc.initialState.redemptionRecordId
 	expectedRedemptionRecord := tc.initialState.redemptionRecord
 
-	fmt.Printf("smt2")
 	_, err := s.MsgServer.ClaimUndelegatedTokens(sdk.WrapSDKContext(s.Ctx), &tc.validMsg)
 	s.Require().NoError(err, "claim undelegated tokens")
 

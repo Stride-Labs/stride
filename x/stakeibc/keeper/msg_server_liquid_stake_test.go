@@ -31,7 +31,6 @@ type LiquidStakeTestCase struct {
 }
 
 func (s *KeeperTestSuite) SetupLiquidStake() LiquidStakeTestCase {
-	s.SetupTest()
 	stakeAmount := sdk.NewInt(1_000_000)
 	initialDepositAmount := sdk.NewInt(1_000_000)
 	user := Account{

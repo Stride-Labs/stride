@@ -11,6 +11,7 @@ import (
 	channeltypes "github.com/cosmos/ibc-go/v3/modules/core/04-channel/types"
 
 	recordtypes "github.com/Stride-Labs/stride/v4/x/records/types"
+	stakeibckeeper "github.com/Stride-Labs/stride/v4/x/stakeibc/keeper"
 	stakeibc "github.com/Stride-Labs/stride/v4/x/stakeibc/types"
 )
 
@@ -31,8 +32,8 @@ type RestoreInterchainAccountTestCase struct {
 }
 
 func (s *KeeperTestSuite) SetupRestoreInterchainAccount() RestoreInterchainAccountTestCase {
-	s.SetupTest()
 	s.CreateTransferChannel(HostChainId)
+	s.MsgServer = stakeibckeeper.NewMsgServerImpl(s.App.StakeibcKeeper)
 
 	hostZone := stakeibc.HostZone{
 		ChainId:        HostChainId,

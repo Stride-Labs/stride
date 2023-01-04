@@ -8,6 +8,7 @@ import (
 	ibctesting "github.com/cosmos/ibc-go/v3/testing"
 	_ "github.com/stretchr/testify/suite"
 
+	stakeibckeeper "github.com/Stride-Labs/stride/v4/x/stakeibc/keeper"
 	"github.com/Stride-Labs/stride/v4/x/stakeibc/types"
 	stakeibctypes "github.com/Stride-Labs/stride/v4/x/stakeibc/types"
 )
@@ -23,10 +24,10 @@ type ClearBalanceTestCase struct {
 }
 
 func (s *KeeperTestSuite) SetupClearBalance() ClearBalanceTestCase {
-	s.SetupTest()
 	// fee account
 	feeAccountOwner := fmt.Sprintf("%s.%s", HostChainId, "FEE")
 	feeChannelID := s.CreateICAChannel(feeAccountOwner)
+	s.MsgServer = stakeibckeeper.NewMsgServerImpl(s.App.StakeibcKeeper)
 	feeAddress := s.IcaAddresses[feeAccountOwner]
 	// hz
 	zoneAddress := types.NewZoneAddress(HostChainId)

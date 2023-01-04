@@ -15,7 +15,6 @@ type DeleteValidatorTestCase struct {
 }
 
 func (s *KeeperTestSuite) SetupDeleteValidator() DeleteValidatorTestCase {
-	s.SetupTest()
 	initialValidators := []*stakeibctypes.Validator{
 		{
 			Name:           "val1",
