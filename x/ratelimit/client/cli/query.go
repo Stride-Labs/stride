@@ -95,11 +95,11 @@ func GetCmdQueryRateLimits() *cobra.Command {
 	return cmd
 }
 
-// GetCmdQueryRateLimits return all rate limits that exist between Stride
+// GetCmdQueryRateLimitsByChainId return all rate limits that exist between Stride
 // and the specified ChainId
 func GetCmdQueryRateLimitsByChainId() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "show-rate-limits [chain-id]",
+		Use:   "rate-limits-by-chain [chain-id]",
 		Short: "Query all rate limits with the given ChainID",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {

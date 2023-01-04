@@ -10,14 +10,16 @@ option go_package = "github.com/Stride-Labs/stride/v4/x/ratelimit/types";
 // Query defines the gRPC querier service.
 service Query {
   rpc RateLimits(QueryRateLimitsRequest) returns (QueryRateLimitsResponse) {
-    option (google.api.http).get = "/ratelimit/ratelimits";
+    option (google.api.http).get = "/Stride-Labs/stride/ratelimit/ratelimits";
   }
   rpc RateLimit(QueryRateLimitRequest) returns (QueryRateLimitResponse) {
-    option (google.api.http).get = "/ratelimit/ratelimit/{denom}/{channel_id}";
+    option (google.api.http).get =
+        "/Stride-Labs/stride/ratelimit/ratelimit/{denom}/{channel_id}";
   }
   rpc RateLimitsByChainId(QueryRateLimitsByChainIdRequest)
       returns (QueryRateLimitsByChainIdResponse) {
-    option (google.api.http).get = "/ratelimit/ratelimits/{chain_id}";
+    option (google.api.http).get =
+        "/Stride-Labs/stride/ratelimit/ratelimits/{chain_id}";
   }
 }
 
