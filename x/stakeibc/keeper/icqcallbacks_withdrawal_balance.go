@@ -34,7 +34,7 @@ func WithdrawalBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query icq
 	withdrawalBalanceCoin := sdk.Coin{}
 	err := k.cdc.Unmarshal(args, &withdrawalBalanceCoin)
 	if err != nil {
-		return sdkerrors.Wrapf(types.ErrUnmarshalFailure, "unable to unmarshal query response into Coin type: %s, err: %s", err.Error())
+		return sdkerrors.Wrapf(types.ErrUnmarshalFailure, "unable to unmarshal query response into Coin type, err: %s", err.Error())
 	}
 	k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_WithdrawalBalance, "Query response - Coin: %+v", withdrawalBalanceCoin))
 
@@ -49,8 +49,7 @@ func WithdrawalBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query icq
 	// Confirm the balance is greater than zero
 	if withdrawalBalanceCoin.Amount.LTE(sdkmath.ZeroInt()) {
 		k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_WithdrawalBalance,
-			"No balance to transfer for address: %v, coin: %v",
-			hostZone.ChainId, hostZone.WithdrawalAccount.GetAddress(), withdrawalBalanceCoin.String()))
+			"No balance to transfer for address: %v, coin: %v", hostZone.WithdrawalAccount.GetAddress(), withdrawalBalanceCoin.String()))
 		return nil
 	}
 
@@ -65,7 +64,7 @@ func WithdrawalBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query icq
 	}
 	feeAccount := hostZone.FeeAccount
 	if feeAccount == nil || feeAccount.Address == "" {
-		return sdkerrors.Wrapf(types.ErrICAAccountNotFound, "no fee account found found for %s", chainId)
+		return sdkerrors.Wrapf(types.ErrICAAccountNotFound, "no fee account found for %s", chainId)
 	}
 
 	// Determine the stride commission rate to the relevant portion can be sent to the fee account

@@ -246,7 +246,7 @@ func (s *KeeperTestSuite) TestQueryDelegationsIcq_MissingDelegationAddress() {
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, tc.hostZone)
 
 	err := s.App.StakeibcKeeper.QueryDelegationsIcq(s.Ctx, tc.hostZone, tc.valoperAddr)
-	s.Require().ErrorContains(err, "missing a delegation address")
+	s.Require().ErrorContains(err, "no delegation address found for")
 }
 
 func (s *KeeperTestSuite) TestQueryDelegationsIcq_MissingConnectionId() {

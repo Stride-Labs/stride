@@ -88,7 +88,7 @@ func ValidatorExchangeRateCallback(k Keeper, ctx sdk.Context, args []byte, query
 
 	// Armed with the exch rate, we can now query the (validator,delegator) delegation
 	if err := k.QueryDelegationsIcq(ctx, hostZone, queriedValidator.OperatorAddress); err != nil {
-		return sdkerrors.Wrapf(types.ErrICQFailed, "Failed to query delegations")
+		return sdkerrors.Wrapf(types.ErrICQFailed, "Failed to query delegations, err: %s", err.Error())
 	}
 
 	return nil

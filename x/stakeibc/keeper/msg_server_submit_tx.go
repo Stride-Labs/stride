@@ -42,8 +42,8 @@ func (k Keeper) DelegateOnHost(ctx sdk.Context, hostZone types.HostZone, amt sdk
 	}
 
 	// Fetch the relevant ICA
-	delegationIca := hostZone.DelegationAccount
-	if delegationIca == nil || delegationIca.Address == "" {
+	delegationAccount := hostZone.DelegationAccount
+	if delegationAccount == nil || delegationAccount.Address == "" {
 		k.Logger(ctx).Error(fmt.Sprintf("Zone %s is missing a delegation address!", hostZone.ChainId))
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "Invalid delegation account")
 	}
@@ -61,7 +61,7 @@ func (k Keeper) DelegateOnHost(ctx sdk.Context, hostZone types.HostZone, amt sdk
 		relativeAmount := sdk.NewCoin(amt.Denom, targetDelegatedAmts[validator.Address])
 		if relativeAmount.Amount.IsPositive() {
 			msgs = append(msgs, &stakingTypes.MsgDelegate{
-				DelegatorAddress: delegationIca.Address,
+				DelegatorAddress: delegationAccount.Address,
 				ValidatorAddress: validator.Address,
 				Amount:           relativeAmount,
 			})
@@ -86,7 +86,7 @@ func (k Keeper) DelegateOnHost(ctx sdk.Context, hostZone types.HostZone, amt sdk
 	}
 
 	// Send the transaction through SubmitTx
-	_, err = k.SubmitTxsStrideEpoch(ctx, connectionId, msgs, *delegationIca, ICACallbackID_Delegate, marshalledCallbackArgs)
+	_, err = k.SubmitTxsStrideEpoch(ctx, connectionId, msgs, *delegationAccount, ICACallbackID_Delegate, marshalledCallbackArgs)
 	if err != nil {
 		return sdkerrors.Wrapf(err, "Failed to SubmitTxs for connectionId %s on %s. Messages: %s", connectionId, hostZone.ChainId, msgs)
 	}
@@ -112,28 +112,27 @@ func (k Keeper) SetWithdrawalAddressOnHost(ctx sdk.Context, hostZone types.HostZ
 	}
 
 	// Fetch the relevant ICA
-	delegationIca := hostZone.DelegationAccount
-	if delegationIca == nil || delegationIca.Address == "" {
+	delegationAccount := hostZone.DelegationAccount
+	if delegationAccount == nil || delegationAccount.Address == "" {
 		k.Logger(ctx).Error(fmt.Sprintf("Zone %s is missing a delegation address!", hostZone.ChainId))
 		return nil
 	}
-	withdrawalIca := hostZone.WithdrawalAccount
-	if withdrawalIca == nil || withdrawalIca.Address == "" {
+	withdrawalAccount := hostZone.WithdrawalAccount
+	if withdrawalAccount == nil || withdrawalAccount.Address == "" {
 		k.Logger(ctx).Error(fmt.Sprintf("Zone %s is missing a withdrawal address!", hostZone.ChainId))
 		return nil
 	}
-	withdrawalIcaAddr := hostZone.WithdrawalAccount.Address
-
-	k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId, "Withdrawal Address: %s, Delegator Address: %s", withdrawalIcaAddr, delegationIca.Address))
+	k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId, "Withdrawal Address: %s, Delegator Address: %s",
+		withdrawalAccount.Address, delegationAccount.Address))
 
 	// Construct the ICA message
 	msgs := []sdk.Msg{
 		&distributiontypes.MsgSetWithdrawAddress{
-			DelegatorAddress: delegationIca.Address,
-			WithdrawAddress:  withdrawalIcaAddr,
+			DelegatorAddress: delegationAccount.Address,
+			WithdrawAddress:  withdrawalAccount.Address,
 		},
 	}
-	_, err = k.SubmitTxsStrideEpoch(ctx, connectionId, msgs, *delegationIca, "", nil)
+	_, err = k.SubmitTxsStrideEpoch(ctx, connectionId, msgs, *delegationAccount, "", nil)
 	if err != nil {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "Failed to SubmitTxs for %s, %s, %s", connectionId, hostZone.ChainId, msgs)
 	}
@@ -365,7 +364,7 @@ func (k Keeper) QueryValidatorExchangeRate(ctx sdk.Context, msg *types.MsgUpdate
 	// Ensure ICQ can be issued now! else fail the callback
 	withinBufferWindow, err := k.IsWithinBufferWindow(ctx)
 	if err != nil {
-		return nil, err
+		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "unable to determine if ICQ callback is inside buffer window, err: %s", err.Error())
 	} else if !withinBufferWindow {
 		return nil, sdkerrors.Wrapf(types.ErrOutsideIcqWindow, "outside the buffer time during which ICQs are allowed (%s)", msg.ChainId)
 	}
@@ -421,21 +420,21 @@ func (k Keeper) QueryDelegationsIcq(ctx sdk.Context, hostZone types.HostZone, va
 	// Ensure ICQ can be issued now! else fail the callback
 	valid, err := k.IsWithinBufferWindow(ctx)
 	if err != nil {
-		return err
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "unable to determine if ICQ callback is inside buffer window, err: %s", err.Error())
 	} else if !valid {
 		return sdkerrors.Wrapf(types.ErrOutsideIcqWindow, "outside the buffer time during which ICQs are allowed (%s)", hostZone.HostDenom)
 	}
 
 	// Get the validator and delegator encoded addresses to form the query request
-	delegationIca := hostZone.DelegationAccount
-	if delegationIca == nil || delegationIca.Address == "" {
+	delegationAccount := hostZone.DelegationAccount
+	if delegationAccount == nil || delegationAccount.Address == "" {
 		return sdkerrors.Wrapf(types.ErrICAAccountNotFound, "no delegation address found for %s", hostZone.ChainId)
 	}
 	_, validatorAddressBz, err := bech32.DecodeAndConvert(valoper)
 	if err != nil {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "invalid validator address, could not decode (%s)", err.Error())
 	}
-	_, delegatorAddressBz, err := bech32.DecodeAndConvert(delegationIca.Address)
+	_, delegatorAddressBz, err := bech32.DecodeAndConvert(delegationAccount.Address)
 	if err != nil {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "invalid delegator address, could not decode (%s)", err.Error())
 	}

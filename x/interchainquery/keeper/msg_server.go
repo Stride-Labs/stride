@@ -2,7 +2,6 @@ package keeper
 
 import (
 	"context"
-	"fmt"
 	"net/url"
 	"sort"
 	"strings"
@@ -41,7 +40,7 @@ func (k Keeper) VerifyKeyProof(ctx sdk.Context, msg *types.MsgSubmitQueryRespons
 
 	// If the query is a "key" proof query, verify the results are valid by checking the poof
 	if msg.ProofOps == nil {
-		return sdkerrors.Wrapf(types.ErrInvalidICQProof, fmt.Sprintf("Unable to validate proof. No proof submitted"))
+		return sdkerrors.Wrapf(types.ErrInvalidICQProof, "Unable to validate proof. No proof submitted")
 	}
 
 	// Get the client consensus state at the height 1 block above the message height
@@ -146,7 +145,8 @@ func (k msgServer) SubmitQueryResponse(goCtx context.Context, msg *types.MsgSubm
 	// Verify the response's proof, if one exists
 	err := k.VerifyKeyProof(ctx, msg, query)
 	if err != nil {
-		k.Logger(ctx).Error(utils.LogICQCallbackWithHostZone(query.ChainId, query.CallbackId, "QUERY PROOF VERIFICATION FAILED - QueryId: %s, Error: %s", query.Id))
+		k.Logger(ctx).Error(utils.LogICQCallbackWithHostZone(query.ChainId, query.CallbackId,
+			"QUERY PROOF VERIFICATION FAILED - QueryId: %s, Error: %s", query.Id, err.Error()))
 		return nil, err
 	}
 
@@ -159,14 +159,15 @@ func (k msgServer) SubmitQueryResponse(goCtx context.Context, msg *types.MsgSubm
 		return nil, err
 	}
 	if query.Ttl < currBlockTime {
-		k.Logger(ctx).Error(utils.LogICQCallbackWithHostZone(query.ChainId, query.CallbackId, "QUERY TIMEOUT - QueryId: %s, TTL: %d, BlockTime: %d",
-			query.Id, query.Ttl, ctx.BlockHeader().Time.UnixNano()))
+		k.Logger(ctx).Error(utils.LogICQCallbackWithHostZone(query.ChainId, query.CallbackId,
+			"QUERY TIMEOUT - QueryId: %s, TTL: %d, BlockTime: %d", query.Id, query.Ttl, ctx.BlockHeader().Time.UnixNano()))
 		return &types.MsgSubmitQueryResponseResponse{}, nil
 	}
 
 	// If the query is contentless, end
 	if len(msg.Result) == 0 {
-		k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(query.ChainId, query.CallbackId, "Query response is contentless - QueryId: %s", query.Id))
+		k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(query.ChainId, query.CallbackId,
+			"Query response is contentless - QueryId: %s", query.Id))
 		return &types.MsgSubmitQueryResponseResponse{}, nil
 	}
 

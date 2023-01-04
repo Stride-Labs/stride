@@ -18,7 +18,7 @@ KEYS_LOGS=$DOCKERNET_HOME/logs/keys.log
 # List of hosts enabled 
 #  `start-docker` defaults to just GAIA if HOST_CHAINS is empty
 # `start-docker-all` always runs all hosts
-HOST_CHAINS=() 
+HOST_CHAINS=(GAIA JUNO) 
 
 if [[ "${ALL_HOST_CHAINS:-false}" == "true" ]]; then 
   HOST_CHAINS=(GAIA JUNO OSMO STARS)

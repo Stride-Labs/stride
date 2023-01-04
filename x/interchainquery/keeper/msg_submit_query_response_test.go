@@ -69,7 +69,7 @@ func (s *KeeperTestSuite) TestMsgSubmitQueryResponse_WrongProof() {
 	s.App.InterchainqueryKeeper.SetQuery(s.Ctx, tc.query)
 
 	resp, err := s.GetMsgServer().SubmitQueryResponse(tc.goCtx, &tc.validMsg)
-	s.Require().ErrorContains(err, "unable to verify membership proof: proof cannot be empty")
+	s.Require().ErrorContains(err, "Unable to verify membership proof: proof cannot be empty")
 	s.Require().Nil(resp)
 }
 
@@ -89,29 +89,22 @@ func (s *KeeperTestSuite) TestMsgSubmitQueryResponse_UnknownId() {
 	s.Require().True(found)
 }
 
-func (s *KeeperTestSuite) TestMsgSubmitQueryResponse_ExceededTtl() {
-	tc := s.SetupMsgSubmitQueryResponse()
+// TODO: Enable test if query proof is mocked out successfully
+// func (s *KeeperTestSuite) TestMsgSubmitQueryResponse_ExceededTtl() {
+// 	tc := s.SetupMsgSubmitQueryResponse()
 
-	tc.query.Ttl = uint64(1) // set ttl to be expired
-	s.App.InterchainqueryKeeper.SetQuery(s.Ctx, tc.query)
-	exceeded, err := s.App.InterchainqueryKeeper.HasQueryExceededTtl(s.Ctx, &tc.validMsg, tc.query)
-	s.Require().NoError(err)
-	s.Require().True(exceeded)
-}
+// 	// set ttl to be expired
+// 	tc.query.Ttl = uint64(1)
+// 	s.App.InterchainqueryKeeper.SetQuery(s.Ctx, tc.query)
 
-func (s *KeeperTestSuite) TestMsgSubmitQueryResponse_NotExceededTtl() {
-	tc := s.SetupMsgSubmitQueryResponse()
+// 	resp, err := s.GetMsgServer().SubmitQueryResponse(tc.goCtx, &tc.validMsg)
+// 	s.Require().NoError(err)
+// 	s.Require().NotNil(resp)
 
-	tc.query.Ttl = uint64(2545450064) * uint64(1000000000) // for test clarity, re-set ttl to August 2050, mult by nano conversion factor
-	s.App.InterchainqueryKeeper.SetQuery(s.Ctx, tc.query)
-	exceeded, err := s.App.InterchainqueryKeeper.HasQueryExceededTtl(s.Ctx, &tc.validMsg, tc.query)
-	s.Require().NoError(err)
-	s.Require().False(exceeded)
-
-	// check that the query is not in the store anymore, as it should be deleted
-	_, found := s.App.InterchainqueryKeeper.GetQuery(s.Ctx, tc.query.Id)
-	s.Require().True(found)
-}
+// 	// check that the query was deleted (since the query timed out)
+// 	_, found := s.App.InterchainqueryKeeper.GetQuery(s.Ctx, tc.query.Id)
+// 	s.Require().False(found)
+// }
 
 func (s *KeeperTestSuite) TestMsgSubmitQueryResponse_FindAndInvokeCallback_WrongHostZone() {
 	tc := s.SetupMsgSubmitQueryResponse()

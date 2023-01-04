@@ -39,7 +39,7 @@ func DelegatorSharesCallback(k Keeper, ctx sdk.Context, args []byte, query icqty
 	queriedDelgation := stakingtypes.Delegation{}
 	err := k.cdc.Unmarshal(args, &queriedDelgation)
 	if err != nil {
-		return sdkerrors.Wrapf(types.ErrMarshalFailure, "unable to unmarshal query response into Delegation type: %s, err: %s", err.Error())
+		return sdkerrors.Wrapf(types.ErrMarshalFailure, "unable to unmarshal query response into Delegation type, err: %s", err.Error())
 	}
 	k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_Delegation, "Query response - Delegator: %s, Validator: %s, Shares: %v",
 		queriedDelgation.DelegatorAddress, queriedDelgation.ValidatorAddress, queriedDelgation.Shares))
@@ -117,7 +117,7 @@ func DelegatorSharesCallback(k Keeper, ctx sdk.Context, args []byte, query icqty
 	k.SetHostZone(ctx, hostZone)
 
 	k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_Delegation,
-		"Delegation updated to: %v", validator.Address, validator.DelegationAmt))
+		"Delegation updated to: %v", validator.DelegationAmt))
 
 	return nil
 }

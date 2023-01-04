@@ -1,6 +1,8 @@
 package keeper_test
 
 import (
+	"fmt"
+
 	sdkmath "cosmossdk.io/math"
 	ibctesting "github.com/cosmos/ibc-go/v5/testing"
 
@@ -27,6 +29,7 @@ type ValidatorICQCallbackTestCase struct {
 	initialState         ValidatorICQCallbackState
 	validArgs            ValidatorICQCallbackArgs
 	valIndexQueried      int
+	valIndexInvalid      int
 	expectedExchangeRate sdk.Dec
 }
 
@@ -44,8 +47,10 @@ func (s *KeeperTestSuite) SetupValidatorICQCallback() ValidatorICQCallbackTestCa
 	// We don't actually need a transfer channel for this test, but we do need to have IBC support for timeouts
 	s.CreateTransferChannel(HostChainId)
 
-	valAddress := "valoper1"
-	valIndexQueried := 0 // index in the validators array
+	// These must be valid addresses, otherwise the bech decoding will fail
+	valAddress := "cosmosvaloper1uk4ze0x4nvh4fk0xm4jdud58eqn4yxhrdt795p"
+	delegatorAddress := "cosmos1sy63lffevueudvvlvh2lf6s387xh9xq72n3fsy6n2gr5hm6u2szs2v0ujm"
+
 	// In this example, the validator has 2000 shares, originally had 2000 tokens,
 	// and now has 1000 tokens (after being slashed)
 	initialExchangeRate := sdk.NewDec(1)
@@ -58,7 +63,7 @@ func (s *KeeperTestSuite) SetupValidatorICQCallback() ValidatorICQCallbackTestCa
 		ChainId:      HostChainId,
 		ConnectionId: ibctesting.FirstConnectionID,
 		DelegationAccount: &stakeibctypes.ICAAccount{
-			Address: "cosmos_DELEGATION",
+			Address: delegatorAddress,
 			Target:  stakeibctypes.ICAAccountType_DELEGATION,
 		},
 		Validators: []*stakeibctypes.Validator{
@@ -73,10 +78,14 @@ func (s *KeeperTestSuite) SetupValidatorICQCallback() ValidatorICQCallbackTestCa
 			// This validator isn't being queried
 			{
 				Name:    "val2",
-				Address: "valoper2",
+				Address: "cosmos_invalid_address",
 			},
 		},
 	}
+
+	// index in the validators array
+	valIndexQueried := 0
+	valIndexInvalid := 1
 
 	// This will make the current time 90% through the epoch
 	strideEpochTracker := stakeibctypes.EpochTracker{
@@ -103,6 +112,7 @@ func (s *KeeperTestSuite) SetupValidatorICQCallback() ValidatorICQCallbackTestCa
 			callbackArgs: queryResponse,
 		},
 		valIndexQueried:      valIndexQueried,
+		valIndexInvalid:      valIndexInvalid,
 		expectedExchangeRate: expectedExchangeRate,
 	}
 }
@@ -138,7 +148,7 @@ func (s *KeeperTestSuite) TestValidatorExchangeRateCallback_InvalidCallbackArgs(
 	invalidArgs := []byte("random bytes")
 	err := stakeibckeeper.ValidatorExchangeRateCallback(s.App.StakeibcKeeper, s.Ctx, invalidArgs, tc.validArgs.query)
 
-	expectedErrMsg := "unable to unmarshal queriedValidator info for zone GAIA, "
+	expectedErrMsg := "unable to unmarshal query response into Validator type, "
 	expectedErrMsg += "err: unexpected EOF: unable to marshal data structure"
 	s.Require().EqualError(err, expectedErrMsg)
 }
@@ -185,9 +195,19 @@ func (s *KeeperTestSuite) TestValidatorExchangeRateCallback_ValidatorNotFound() 
 	tc := s.SetupValidatorICQCallback()
 
 	// Update the callback args to contain a validator address that doesn't exist
-	badCallbackArgs := s.CreateValidatorQueryResponse("fake_val", 0, 0)
+	badCallbackArgs := s.CreateValidatorQueryResponse("fake_val", 1, 1)
 	err := stakeibckeeper.ValidatorExchangeRateCallback(s.App.StakeibcKeeper, s.Ctx, badCallbackArgs, tc.validArgs.query)
 	s.Require().EqualError(err, "no registered validator for address (fake_val): validator not found")
+}
+
+func (s *KeeperTestSuite) TestValidatorExchangeRateCallback_InvalidValidatorAddress() {
+	tc := s.SetupValidatorICQCallback()
+
+	// Update callback arsg to contain a validator address that does exist, but is invalid
+	invalidAddress := tc.initialState.hostZone.Validators[tc.valIndexInvalid].Address
+	badCallbackArgs := s.CreateValidatorQueryResponse(invalidAddress, 1, 1)
+	err := stakeibckeeper.ValidatorExchangeRateCallback(s.App.StakeibcKeeper, s.Ctx, badCallbackArgs, tc.validArgs.query)
+	s.Require().ErrorContains(err, "Failed to query delegations, err: invalid validator address, could not decode")
 }
 
 func (s *KeeperTestSuite) TestValidatorExchangeRateCallback_DelegatorSharesZero() {
@@ -198,7 +218,8 @@ func (s *KeeperTestSuite) TestValidatorExchangeRateCallback_DelegatorSharesZero(
 	badCallbackArgs := s.CreateValidatorQueryResponse(valAddress, 1000, 0) // the 1000 is arbitrary, the zero here is what matters
 	err := stakeibckeeper.ValidatorExchangeRateCallback(s.App.StakeibcKeeper, s.Ctx, badCallbackArgs, tc.validArgs.query)
 
-	expectedErrMsg := "can't calculate validator internal exchange rate because delegation amount is 0 (validator: valoper1): division by zero"
+	expectedErrMsg := "can't calculate validator internal exchange rate because delegation amount is 0 "
+	expectedErrMsg += fmt.Sprintf("(validator: %s): division by zero", valAddress)
 	s.Require().EqualError(err, expectedErrMsg)
 }
 
@@ -212,7 +233,7 @@ func (s *KeeperTestSuite) TestValidatorExchangeRateCallback_DelegationQueryFaile
 
 	err := stakeibckeeper.ValidatorExchangeRateCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.callbackArgs, tc.validArgs.query)
 
-	expectedErrMsg := "ValidatorCallback: failed to query delegation, zone GAIA, err: Zone GAIA is missing a delegation address!: "
-	expectedErrMsg += "ICA acccount not found on host zone: failed to submit ICQ"
-	s.Require().EqualError(err, expectedErrMsg)
+	expectedErr := "Failed to query delegations, err: no delegation address found for GAIA: "
+	expectedErr += "ICA acccount not found on host zone: failed to submit ICQ"
+	s.Require().EqualError(err, expectedErr)
 }
