@@ -67,7 +67,6 @@ func (s *AppTestHelper) Setup() {
 	s.TestAccs = CreateRandomAccounts(3)
 	s.IbcEnabled = false
 	s.IcaAddresses = make(map[string]string)
-
 }
 
 // Mints coins directly to a module account
@@ -138,6 +137,7 @@ func (s *AppTestHelper) CreateTransferChannel(hostChainID string) {
 	s.App = s.StrideChain.App.(*app.StrideApp)
 	s.HostApp = s.HostChain.GetSimApp()
 	s.Ctx = s.StrideChain.GetContext()
+
 	// Finally confirm the channel was setup properly
 	s.Require().Equal(ibctesting.FirstClientID, s.TransferPath.EndpointA.ClientID, "stride clientID")
 	s.Require().Equal(ibctesting.FirstConnectionID, s.TransferPath.EndpointA.ConnectionID, "stride connectionID")
@@ -166,7 +166,6 @@ func (s *AppTestHelper) CreateICAChannel(owner string) string {
 	icaPath = CopyConnectionAndClientToPath(icaPath, s.TransferPath)
 
 	// Register the ICA and complete the handshake
-
 	s.RegisterInterchainAccount(icaPath.EndpointA, owner)
 
 	err := icaPath.EndpointB.ChanOpenTry()
@@ -179,6 +178,7 @@ func (s *AppTestHelper) CreateICAChannel(owner string) string {
 	s.Require().NoError(err, "ChanOpenConfirm error")
 
 	s.Ctx = s.StrideChain.GetContext()
+
 	// Confirm the ICA channel was created properly
 	portID := icaPath.EndpointA.ChannelConfig.PortID
 	channelID := icaPath.EndpointA.ChannelID

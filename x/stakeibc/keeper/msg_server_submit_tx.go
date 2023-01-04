@@ -141,28 +141,33 @@ func (k Keeper) SetWithdrawalAddressOnHost(ctx sdk.Context, hostZone types.HostZ
 	return nil
 }
 
-// Simple balance query helper using new ICQ module
+// Submits an ICQ for the withdrawal account balance
 func (k Keeper) UpdateWithdrawalBalance(ctx sdk.Context, hostZone types.HostZone) error {
 	k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId, "Submitting ICQ for withdrawal account balance"))
 
-	withdrawalIca := hostZone.WithdrawalAccount
-	if withdrawalIca == nil || withdrawalIca.Address == "" {
-		k.Logger(ctx).Error(fmt.Sprintf("Zone %s is missing a withdrawal address!", hostZone.ChainId))
+	// Get the withdrawal account address from the host zone
+	withdrawalAccount := hostZone.WithdrawalAccount
+	if withdrawalAccount == nil || withdrawalAccount.Address == "" {
+		return sdkerrors.Wrapf(types.ErrICAAccountNotFound, "no withdrawal account found for %s", hostZone.ChainId)
 	}
 
-	_, addr, _ := bech32.DecodeAndConvert(withdrawalIca.Address)
-	data := bankTypes.CreateAccountBalancesPrefix(addr)
-
-	// get ttl, the end of the ICA buffer window
-	epochType := epochstypes.STRIDE_EPOCH
-	ttl, err := k.GetICATimeoutNanos(ctx, epochType)
+	// Encode the withdrawal account address for the query request
+	// The query request consists of the withdrawal account address and denom
+	_, withdrawalAddressBz, err := bech32.DecodeAndConvert(withdrawalAccount.Address)
 	if err != nil {
-		errMsg := fmt.Sprintf("Failed to get ICA timeout nanos for epochType %s using param, error: %s", epochType, err.Error())
-		k.Logger(ctx).Error(errMsg)
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, errMsg)
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "invalid withdrawal account address, could not decode (%s)", err.Error())
+	}
+	queryData := append(bankTypes.CreateAccountBalancesPrefix(withdrawalAddressBz), []byte(hostZone.HostDenom)...)
+
+	// The query should timeout at the end of the ICA buffer window
+	ttl, err := k.GetICATimeoutNanos(ctx, epochstypes.STRIDE_EPOCH)
+	if err != nil {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest,
+			"Failed to get ICA timeout nanos for epochType %s using param, error: %s", epochstypes.STRIDE_EPOCH, err.Error())
 	}
 
-	err = k.InterchainQueryKeeper.MakeRequest(
+	// Submit the ICQ for the withdrawal account balance
+	if err := k.InterchainQueryKeeper.MakeRequest(
 		ctx,
 		types.ModuleName,
 		ICQCallbackID_WithdrawalBalance,
@@ -171,13 +176,13 @@ func (k Keeper) UpdateWithdrawalBalance(ctx sdk.Context, hostZone types.HostZone
 		// use "bank" store to access acct balances which live in the bank module
 		// use "key" suffix to retrieve a proof alongside the query result
 		icqtypes.BANK_STORE_QUERY_WITH_PROOF,
-		append(data, []byte(hostZone.HostDenom)...),
-		ttl, // ttl
-	)
-	if err != nil {
+		queryData,
+		ttl,
+	); err != nil {
 		k.Logger(ctx).Error(fmt.Sprintf("Error querying for withdrawal balance, error: %s", err.Error()))
 		return err
 	}
+
 	return nil
 }
 
@@ -353,21 +358,22 @@ func (k Keeper) GetLightClientTimeSafely(ctx sdk.Context, connectionID string) (
 	}
 }
 
-// query and update validator exchange rate
+// Submits an ICQ to get a validator's exchange rate
 func (k Keeper) QueryValidatorExchangeRate(ctx sdk.Context, msg *types.MsgUpdateValidatorSharesExchRate) (*types.MsgUpdateValidatorSharesExchRateResponse, error) {
-	// ensure ICQ can be issued now! else fail the callback
-	valid, err := k.IsWithinBufferWindow(ctx)
+	k.Logger(ctx).Info(utils.LogWithHostZone(msg.ChainId, "Submitting ICQ for validator exchange rate to %s", msg.Valoper))
+
+	// Ensure ICQ can be issued now! else fail the callback
+	withinBufferWindow, err := k.IsWithinBufferWindow(ctx)
 	if err != nil {
 		return nil, err
-	} else if !valid {
+	} else if !withinBufferWindow {
 		return nil, sdkerrors.Wrapf(types.ErrOutsideIcqWindow, "outside the buffer time during which ICQs are allowed (%s)", msg.ChainId)
 	}
 
+	// Confirm the host zone exists
 	hostZone, found := k.GetHostZone(ctx, msg.ChainId)
 	if !found {
-		errMsg := fmt.Sprintf("Host zone not found (%s)", msg.ChainId)
-		k.Logger(ctx).Error(errMsg)
-		return nil, sdkerrors.Wrapf(types.ErrInvalidHostZone, errMsg)
+		return nil, sdkerrors.Wrapf(types.ErrInvalidHostZone, "Host zone not found (%s)", msg.ChainId)
 	}
 
 	// check that the validator address matches the bech32 prefix of the hz
@@ -375,22 +381,21 @@ func (k Keeper) QueryValidatorExchangeRate(ctx sdk.Context, msg *types.MsgUpdate
 		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "validator operator address must match the host zone bech32 prefix")
 	}
 
-	_, valAddr, err := bech32.DecodeAndConvert(msg.Valoper)
+	// Encode the validator address to form the query request
+	_, validatorAddressBz, err := bech32.DecodeAndConvert(msg.Valoper)
 	if err != nil {
 		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "invalid validator operator address, could not decode (%s)", err.Error())
 	}
-	data := stakingtypes.GetValidatorKey(valAddr)
+	queryData := stakingtypes.GetValidatorKey(validatorAddressBz)
 
-	// get ttl
+	// The query should timeout at the start of the next epoch
 	ttl, err := k.GetStartTimeNextEpoch(ctx, epochstypes.STRIDE_EPOCH)
 	if err != nil {
-		errMsg := fmt.Sprintf("could not get start time for next epoch: %s", err.Error())
-		k.Logger(ctx).Error(errMsg)
-		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, errMsg)
+		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "could not get start time for next epoch: %s", err.Error())
 	}
 
-	k.Logger(ctx).Info(fmt.Sprintf("Querying validator %v, key %v, denom %v", msg.Valoper, icqtypes.STAKING_STORE_QUERY_WITH_PROOF, hostZone.ChainId))
-	err = k.InterchainQueryKeeper.MakeRequest(
+	// Submit validator exchange rate ICQ
+	if err := k.InterchainQueryKeeper.MakeRequest(
 		ctx,
 		types.ModuleName,
 		ICQCallbackID_Validator,
@@ -399,19 +404,21 @@ func (k Keeper) QueryValidatorExchangeRate(ctx sdk.Context, msg *types.MsgUpdate
 		// use "staking" store to access validator which lives in the staking module
 		// use "key" suffix to retrieve a proof alongside the query result
 		icqtypes.STAKING_STORE_QUERY_WITH_PROOF,
-		data,
-		ttl, // ttl
-	)
-	if err != nil {
-		k.Logger(ctx).Error(fmt.Sprintf("Error querying for validator, error %s", err.Error()))
+		queryData,
+		ttl,
+	); err != nil {
+		k.Logger(ctx).Error(fmt.Sprintf("Error submitting ICQ for validator exchange rate, error %s", err.Error()))
 		return nil, err
 	}
 	return &types.MsgUpdateValidatorSharesExchRateResponse{}, nil
 }
 
-// to icq delegation amounts, this fn is executed after validator exch rates are icq'd
+// Submits an ICQ to get a validator's delegations
+// This is called after the validator's exchange rate is determined
 func (k Keeper) QueryDelegationsIcq(ctx sdk.Context, hostZone types.HostZone, valoper string) error {
-	// ensure ICQ can be issued now! else fail the callback
+	k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId, "Submitting ICQ for delegations to %s", valoper))
+
+	// Ensure ICQ can be issued now! else fail the callback
 	valid, err := k.IsWithinBufferWindow(ctx)
 	if err != nil {
 		return err
@@ -419,27 +426,29 @@ func (k Keeper) QueryDelegationsIcq(ctx sdk.Context, hostZone types.HostZone, va
 		return sdkerrors.Wrapf(types.ErrOutsideIcqWindow, "outside the buffer time during which ICQs are allowed (%s)", hostZone.HostDenom)
 	}
 
-	delegationIca := hostZone.GetDelegationAccount()
-	if delegationIca == nil || delegationIca.GetAddress() == "" {
-		errMsg := fmt.Sprintf("Zone %s is missing a delegation address!", hostZone.ChainId)
-		k.Logger(ctx).Error(errMsg)
-		return sdkerrors.Wrapf(types.ErrICAAccountNotFound, errMsg)
+	// Get the validator and delegator encoded addresses to form the query request
+	delegationIca := hostZone.DelegationAccount
+	if delegationIca == nil || delegationIca.Address == "" {
+		return sdkerrors.Wrapf(types.ErrICAAccountNotFound, "no delegation address found for %s", hostZone.ChainId)
 	}
-	delegationAcctAddr := delegationIca.GetAddress()
-	_, valAddr, _ := bech32.DecodeAndConvert(valoper)
-	_, delAddr, _ := bech32.DecodeAndConvert(delegationAcctAddr)
-	data := stakingtypes.GetDelegationKey(delAddr, valAddr)
+	_, validatorAddressBz, err := bech32.DecodeAndConvert(valoper)
+	if err != nil {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "invalid validator address, could not decode (%s)", err.Error())
+	}
+	_, delegatorAddressBz, err := bech32.DecodeAndConvert(delegationIca.Address)
+	if err != nil {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "invalid delegator address, could not decode (%s)", err.Error())
+	}
+	queryData := stakingtypes.GetDelegationKey(delegatorAddressBz, validatorAddressBz)
 
-	// get ttl
+	// The query should timeout at the start of the next epoch
 	ttl, err := k.GetStartTimeNextEpoch(ctx, epochstypes.STRIDE_EPOCH)
 	if err != nil {
-		errMsg := fmt.Sprintf("could not get start time for next epoch: %s", err.Error())
-		k.Logger(ctx).Error(errMsg)
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, errMsg)
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "could not get start time for next epoch: %s", err.Error())
 	}
 
-	k.Logger(ctx).Info(fmt.Sprintf("Querying delegation for %s on %s", delegationAcctAddr, valoper))
-	err = k.InterchainQueryKeeper.MakeRequest(
+	// Submit delegator shares ICQ
+	if err := k.InterchainQueryKeeper.MakeRequest(
 		ctx,
 		types.ModuleName,
 		ICQCallbackID_Delegation,
@@ -448,12 +457,12 @@ func (k Keeper) QueryDelegationsIcq(ctx sdk.Context, hostZone types.HostZone, va
 		// use "staking" store to access delegation which lives in the staking module
 		// use "key" suffix to retrieve a proof alongside the query result
 		icqtypes.STAKING_STORE_QUERY_WITH_PROOF,
-		data,
-		ttl, // ttl
-	)
-	if err != nil {
-		k.Logger(ctx).Error(fmt.Sprintf("Error querying for delegation, error : %s", err.Error()))
+		queryData,
+		ttl,
+	); err != nil {
+		k.Logger(ctx).Error(fmt.Sprintf("Error submitting ICQ for delegation, error : %s", err.Error()))
 		return err
 	}
+
 	return nil
 }

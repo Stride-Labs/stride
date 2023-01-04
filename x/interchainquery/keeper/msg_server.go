@@ -18,8 +18,6 @@ import (
 	"github.com/Stride-Labs/stride/v4/x/interchainquery/types"
 )
 
-const ICQLogPrefix = "ICQ RESPONSE  | "
-
 type msgServer struct {
 	*Keeper
 }
@@ -83,14 +81,14 @@ func (k Keeper) VerifyKeyProof(ctx sdk.Context, msg *types.MsgSubmitQueryRespons
 		if err := merkleProof.VerifyMembership(tmClientState.ProofSpecs, consensusState.GetRoot(), path, msg.Result); err != nil {
 			return sdkerrors.Wrapf(types.ErrInvalidICQProof, "Unable to verify membership proof: %s", err.Error())
 		}
-		k.Logger(ctx).Info(utils.LogWithHostZone(query.ChainId, ICQLogPrefix+"Inclusion proof validated - CallbackId: %s, QueryId %s", query.CallbackId, query.Id))
+		k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(query.ChainId, query.CallbackId, "Inclusion proof validated - QueryId %s", query.Id))
 
 	} else {
 		// if we got a nil query response, verify non inclusion proof.
 		if err := merkleProof.VerifyNonMembership(tmClientState.ProofSpecs, consensusState.GetRoot(), path); err != nil {
 			return sdkerrors.Wrapf(types.ErrInvalidICQProof, "Unable to verify non-membership proof: %s", err.Error())
 		}
-		k.Logger(ctx).Info(utils.LogWithHostZone(query.ChainId, ICQLogPrefix+"Non-inclusion proof validated - CallbackId: %s, QueryId %s", query.CallbackId, query.Id))
+		k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(query.ChainId, query.CallbackId, "Non-inclusion proof validated - QueryId %s", query.Id))
 	}
 
 	return nil
@@ -127,7 +125,7 @@ func (k msgServer) SubmitQueryResponse(goCtx context.Context, msg *types.MsgSubm
 	// check if the response has an associated query stored on stride
 	query, found := k.GetQuery(ctx, msg.QueryId)
 	if !found {
-		k.Logger(ctx).Info(ICQLogPrefix + "Ignoring non-existent query response (note: duplicate responses are nonexistent)")
+		k.Logger(ctx).Info("ICQ RESPONSE  | Ignoring non-existent query response (note: duplicate responses are nonexistent)")
 		return &types.MsgSubmitQueryResponseResponse{}, nil // technically this is an error, but will cause the entire tx to fail if we have one 'bad' message, so we can just no-op here.
 	}
 
@@ -148,7 +146,7 @@ func (k msgServer) SubmitQueryResponse(goCtx context.Context, msg *types.MsgSubm
 	// Verify the response's proof, if one exists
 	err := k.VerifyKeyProof(ctx, msg, query)
 	if err != nil {
-		k.Logger(ctx).Error(utils.LogWithHostZone(query.ChainId, ICQLogPrefix+"QUERY PROOF VERIFICATION FAILED - QueryId: %s, Error: %s", msg.QueryId))
+		k.Logger(ctx).Error(utils.LogICQCallbackWithHostZone(query.ChainId, query.CallbackId, "QUERY PROOF VERIFICATION FAILED - QueryId: %s, Error: %s", query.Id))
 		return nil, err
 	}
 
@@ -161,22 +159,23 @@ func (k msgServer) SubmitQueryResponse(goCtx context.Context, msg *types.MsgSubm
 		return nil, err
 	}
 	if query.Ttl < currBlockTime {
-		k.Logger(ctx).Error(utils.LogWithHostZone(query.ChainId, ICQLogPrefix+"QUERY TIMEOUT - CallbackId: %s, QueryId: %s, TTL: %d, BlockTime: %d",
-			query.CallbackId, query.Id, query.Ttl, ctx.BlockHeader().Time.UnixNano()))
+		k.Logger(ctx).Error(utils.LogICQCallbackWithHostZone(query.ChainId, query.CallbackId, "QUERY TIMEOUT - QueryId: %s, TTL: %d, BlockTime: %d",
+			query.Id, query.Ttl, ctx.BlockHeader().Time.UnixNano()))
 		return &types.MsgSubmitQueryResponseResponse{}, nil
 	}
 
 	// If the query is contentless, end
 	if len(msg.Result) == 0 {
-		k.Logger(ctx).Info(utils.LogWithHostZone(query.ChainId, ICQLogPrefix+"Query response is contentless, CallbackId: %s, QueryId: %s", query.CallbackId, query.Id))
+		k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(query.ChainId, query.CallbackId, "Query response is contentless - QueryId: %s", query.Id))
 		return &types.MsgSubmitQueryResponseResponse{}, nil
 	}
 
 	// Call the query's associated callback function
 	err = k.InvokeCallback(ctx, msg, query)
 	if err != nil {
-		k.Logger(ctx).Error(utils.LogWithHostZone(query.ChainId, ICQLogPrefix+"Error invoking ICQ callback, error: %s, msg: %s, result: %v, type: %s, params: %v",
-			err.Error(), msg.QueryId, msg.Result, query.QueryType, query.Request))
+		k.Logger(ctx).Error(utils.LogICQCallbackWithHostZone(query.ChainId, query.CallbackId,
+			"Error invoking ICQ callback, error: %s, QueryId: %s, QueryType: %s, ConnectionId: %s, QueryRequest: %v, QueryReponse: %v",
+			err.Error(), msg.QueryId, query.QueryType, query.ConnectionId, query.Request, msg.Result))
 		return nil, err
 	}
 
