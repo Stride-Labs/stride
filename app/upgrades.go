@@ -48,10 +48,13 @@ func (app *StrideApp) setupUpgradeHandlers() {
 			Added: []string{claimtypes.StoreKey},
 		}
 	}
-	// TODO: add ratelimit store key when module is added
-	// storeUpgrades = &storetypes.StoreUpgrades{
-	// 	Added: []string{ratelimittypes.StoreKey},
-	// }
+	// TODO: RATE LIMIT UPGRADE
+	//  1. Add ratelimit store key when module is added
+	//     storeUpgrades = &storetypes.StoreUpgrades{
+	// 	     Added: []string{ratelimittypes.StoreKey},
+	//     }
+	//
+	// 2. Add hour epoch to store
 
 	if storeUpgrades != nil {
 		app.SetStoreLoader(upgradetypes.UpgradeStoreLoader(upgradeInfo.Height, storeUpgrades))
