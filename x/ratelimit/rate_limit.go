@@ -121,6 +121,7 @@ func SendRateLimitedPacket(ctx sdk.Context, keeper ratelimitkeeper.Keeper, packe
 	if err != nil {
 		return err
 	}
+
 	return nil
 }
 
@@ -149,5 +150,6 @@ func ReceiveRateLimitedPacket(ctx sdk.Context, keeper ratelimitkeeper.Keeper, pa
 	if err != nil {
 		return err
 	}
+
 	return nil
 }

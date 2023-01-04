@@ -2,200 +2,297 @@ package cli
 
 import (
 	"fmt"
-	"strconv"
+	"os"
+	"strings"
 
 	"github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
+	"github.com/cosmos/cosmos-sdk/codec"
+	"github.com/cosmos/cosmos-sdk/version"
+	"github.com/cosmos/gogoproto/proto"
 	"github.com/spf13/cobra"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	govcli "github.com/cosmos/cosmos-sdk/x/gov/client/cli"
+	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 
 	"github.com/Stride-Labs/stride/v4/x/ratelimit/types"
 )
 
-// GetTxCmd returns the transaction commands for this module
-func GetTxCmd() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:                        types.ModuleName,
-		Short:                      fmt.Sprintf("%s transactions subcommands", types.ModuleName),
-		DisableFlagParsing:         true,
-		SuggestionsMinimumDistance: 2,
-		RunE:                       client.ValidateCmd,
+// Parse the gov proposal file into a proto message
+func parseProposalFile(cdc codec.JSONCodec, proposalFile string, proposal proto.Message) error {
+	contents, err := os.ReadFile(proposalFile)
+	if err != nil {
+		return err
 	}
 
-	cmd.AddCommand(CmdAddRateLimit())
-	cmd.AddCommand(CmdUpdateRateLimit())
-	cmd.AddCommand(CmdRemoveRateLimit())
-	cmd.AddCommand(CmdResetRateLimit())
-	return cmd
+	if err = cdc.UnmarshalJSON(contents, proposal); err != nil {
+		return err
+	}
+
+	return nil
 }
 
-// Adds a new rate limit
-func CmdAddRateLimit() *cobra.Command {
+// Submits the governance proposal
+func submitProposal(clientCtx client.Context, cmd *cobra.Command, proposal govtypes.Content, deposit sdk.Coins) error {
+	// Confirm a valid deposit was submitted
+	strideDenom, err := sdk.GetBaseDenom()
+	if err != nil {
+		return err
+	}
+	if len(deposit) != 1 || deposit.GetDenomByIndex(0) != strideDenom {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidCoins, "Deposit token denom must be %s", strideDenom)
+	}
+
+	// Build and validate the proposal
+	from := clientCtx.GetFromAddress()
+	msg, err := govtypes.NewMsgSubmitProposal(proposal, deposit, from)
+	if err != nil {
+		return err
+	}
+	if err := msg.ValidateBasic(); err != nil {
+		return err
+	}
+
+	// Finally, broadcast the proposal tx
+	return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
+}
+
+// Adds a new rate limit proposal
+func CmdAddRateLimitProposal() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "add-rate-limit [denom] [channel-id] [max-percent-send] [max-percent-recv] [duration-hours]",
-		Short: "Broadcast message add-rate-limit",
-		Args:  cobra.ExactArgs(5),
+		Use:   "add-rate-limit [proposal-file]",
+		Short: "Submit a add-rate-limit proposal",
+		Long: strings.TrimSpace(
+			fmt.Sprintf(`Submit an add-rate-limit proposal along with an initial deposit.
+The proposal details must be supplied via a JSON file.
+
+Example:
+$ %s tx gov submit-proposal add-rate-limit <path/to/proposal.json> --from=<key_or_address>
+
+Where proposal.json contains:
+{
+	"title": "Add Rate Limit to ...",
+    "description": "Proposal to enable rate limiting on...",
+    "denom": "ustrd",
+    "channel_id": "channel-0",
+    "max_percent_send": "10",
+	"max_percent_recv": "10",
+	"duration_hours": "24", 
+    "deposit": "10000000ustrd"
+}
+`, version.AppName)),
+		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
-			denom := args[0]
-			channelId := args[1]
-
-			maxPercentSend, ok := sdk.NewIntFromString(args[2])
-			if !ok {
-				return sdkerrors.Wrap(sdkerrors.ErrInvalidType, "can not convert max-percent-send string to sdk.Int")
-			}
-
-			maxPercentRecv, ok := sdk.NewIntFromString(args[3])
-			if !ok {
-				return sdkerrors.Wrap(sdkerrors.ErrInvalidType, "can not convert max-percent-recv string to sdk.Int")
-			}
-
-			durationHours, err := strconv.ParseUint(args[4], 10, 64)
-			if err != nil {
-				return err
-			}
+			proposalFile := args[0]
 
 			clientCtx, err := client.GetClientTxContext(cmd)
 			if err != nil {
 				return err
 			}
-			msg := types.NewMsgAddRateLimit(
-				clientCtx.GetFromAddress().String(),
-				denom,
-				channelId,
-				maxPercentSend,
-				maxPercentRecv,
-				durationHours,
-			)
 
-			if err := msg.ValidateBasic(); err != nil {
+			var proposal types.AddRateLimitProposal
+			if err := parseProposalFile(clientCtx.Codec, proposalFile, &proposal); err != nil {
 				return err
 			}
 
-			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
+			depositFromFlags, err := cmd.Flags().GetString(govcli.FlagDeposit)
+			if err != nil {
+				return err
+			}
+
+			// if deposit from flags is not empty, it overrides the deposit from proposal
+			if depositFromFlags != "" {
+				proposal.Deposit = depositFromFlags
+			}
+			deposit, err := sdk.ParseCoinsNormalized(proposal.Deposit)
+			if err != nil {
+				return err
+			}
+
+			return submitProposal(clientCtx, cmd, &proposal, deposit)
 		},
 	}
 
-	flags.AddTxFlagsToCmd(cmd)
+	cmd.Flags().String(govcli.FlagDeposit, "", "deposit of proposal")
 
 	return cmd
 }
 
 // Update a rate limit
-func CmdUpdateRateLimit() *cobra.Command {
+func CmdUpdateRateLimitProposal() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "update-rate-limit [denom] [channel-id] [max-percent-send] [max-percet-recv] [duration-hours]",
-		Short: "Broadcast message update-rate-limit",
-		Args:  cobra.ExactArgs(5),
+		Use:   "update-rate-limit [proposal-file]",
+		Short: "Submit a update-rate-limit proposal",
+		Long: strings.TrimSpace(
+			fmt.Sprintf(`Submit an update-rate-limit proposal along with an initial deposit.
+The proposal details must be supplied via a JSON file.
+
+Example:
+$ %s tx gov submit-proposal update-rate-limit <path/to/proposal.json> --from=<key_or_address>
+
+Where proposal.json contains:
+{
+	"title": "Update Rate Limit ...",
+    "description": "Proposal to update rate limit...",
+    "denom": "ustrd",
+    "channel_id": "channel-0",
+    "max_percent_send": "10",
+	"max_percent_recv": "20",
+	"duration_hours": "24", 
+    "deposit": "10000000ustrd"
+}
+`, version.AppName)),
+		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
-			denom := args[0]
-			channelId := args[1]
-
-			maxPercentSend, ok := sdk.NewIntFromString(args[2])
-			if !ok {
-				return sdkerrors.Wrap(sdkerrors.ErrInvalidType, "can not convert max-percent-send string to sdk.Int")
-			}
-
-			maxPercentRecv, ok := sdk.NewIntFromString(args[3])
-			if !ok {
-				return sdkerrors.Wrap(sdkerrors.ErrInvalidType, "can not convert max-percent-recv string to sdk.Int")
-			}
-
-			durationHours, err := strconv.ParseUint(args[4], 10, 64)
-			if err != nil {
-				return err
-			}
+			proposalFile := args[0]
 
 			clientCtx, err := client.GetClientTxContext(cmd)
 			if err != nil {
 				return err
 			}
-			msg := types.NewMsgUpdateRateLimit(
-				clientCtx.GetFromAddress().String(),
-				denom,
-				channelId,
-				maxPercentSend,
-				maxPercentRecv,
-				durationHours,
-			)
 
-			if err := msg.ValidateBasic(); err != nil {
+			var proposal types.UpdateRateLimitProposal
+			if err := parseProposalFile(clientCtx.Codec, proposalFile, &proposal); err != nil {
 				return err
 			}
 
-			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
+			depositFromFlags, err := cmd.Flags().GetString(govcli.FlagDeposit)
+			if err != nil {
+				return err
+			}
+
+			// if deposit from flags is not empty, it overrides the deposit from proposal
+			if depositFromFlags != "" {
+				proposal.Deposit = depositFromFlags
+			}
+			deposit, err := sdk.ParseCoinsNormalized(proposal.Deposit)
+			if err != nil {
+				return err
+			}
+
+			return submitProposal(clientCtx, cmd, &proposal, deposit)
 		},
 	}
 
-	flags.AddTxFlagsToCmd(cmd)
+	cmd.Flags().String(govcli.FlagDeposit, "", "deposit of proposal")
 
 	return cmd
 }
 
 // Remove a rate limit
-func CmdRemoveRateLimit() *cobra.Command {
+func CmdRemoveRateLimitProposal() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "remove-rate-limit [denom] [channel-id]",
-		Short: "Broadcast message remove-rate-limit",
-		Args:  cobra.ExactArgs(2),
+		Use:   "remove-rate-limit [proposal-file]",
+		Short: "Submit a remove-rate-limit proposal",
+		Long: strings.TrimSpace(
+			fmt.Sprintf(`Submit an remove-rate-limit proposal along with an initial deposit.
+The proposal details must be supplied via a JSON file.
+
+Example:
+$ %s tx gov submit-proposal remove-rate-limit <path/to/proposal.json> --from=<key_or_address>
+
+Where proposal.json contains:
+{
+	"title": "Remove Rate Limit ...",
+    "description": "Proposal to remove rate limiting on...",
+    "denom": "ustrd",
+    "channel_id": "channel-0",
+    "deposit": "10000000ustrd"
+}
+`, version.AppName)),
+		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
-			denom := args[0]
-			channelId := args[1]
+			proposalFile := args[0]
 
 			clientCtx, err := client.GetClientTxContext(cmd)
 			if err != nil {
 				return err
 			}
-			msg := types.NewMsgRemoveRateLimit(
-				clientCtx.GetFromAddress().String(),
-				denom,
-				channelId,
-			)
 
-			if err := msg.ValidateBasic(); err != nil {
+			var proposal types.RemoveRateLimitProposal
+			if err := parseProposalFile(clientCtx.Codec, proposalFile, &proposal); err != nil {
 				return err
 			}
 
-			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
+			depositFromFlags, err := cmd.Flags().GetString(govcli.FlagDeposit)
+			if err != nil {
+				return err
+			}
+
+			// if deposit from flags is not empty, it overrides the deposit from proposal
+			if depositFromFlags != "" {
+				proposal.Deposit = depositFromFlags
+			}
+			deposit, err := sdk.ParseCoinsNormalized(proposal.Deposit)
+			if err != nil {
+				return err
+			}
+
+			return submitProposal(clientCtx, cmd, &proposal, deposit)
 		},
 	}
 
-	flags.AddTxFlagsToCmd(cmd)
+	cmd.Flags().String(govcli.FlagDeposit, "", "deposit of proposal")
 
 	return cmd
 }
 
 // Reset a rate limit
-func CmdResetRateLimit() *cobra.Command {
+func CmdResetRateLimitProposal() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "reset-rate-limit [denom] [channel-id]",
-		Short: "Broadcast message reset-rate-limit",
-		Args:  cobra.ExactArgs(2),
+		Use:   "reset-rate-limit [proposal-file]",
+		Short: "Submit a reset-rate-limit proposal",
+		Long: strings.TrimSpace(
+			fmt.Sprintf(`Submit an reset-rate-limit proposal along with an initial deposit.
+The proposal details must be supplied via a JSON file.
+
+Example:
+$ %s tx gov submit-proposal reset-rate-limit <path/to/proposal.json> --from=<key_or_address>
+
+Where proposal.json contains:
+{
+	"title": "Reset Rate Limit ...",
+    "description": "Proposal to reset the rate limit...",
+    "denom": "ustrd",
+    "channel_id": "channel-0",
+    "deposit": "10000000ustrd"
+}
+`, version.AppName)),
+		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
-			denom := args[0]
-			channelId := args[1]
+			proposalFile := args[0]
 
 			clientCtx, err := client.GetClientTxContext(cmd)
 			if err != nil {
 				return err
 			}
-			msg := types.NewMsgResetRateLimit(
-				clientCtx.GetFromAddress().String(),
-				denom,
-				channelId,
-			)
 
-			if err := msg.ValidateBasic(); err != nil {
+			var proposal types.ResetRateLimitProposal
+			if err := parseProposalFile(clientCtx.Codec, proposalFile, &proposal); err != nil {
 				return err
 			}
 
-			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
+			depositFromFlags, err := cmd.Flags().GetString(govcli.FlagDeposit)
+			if err != nil {
+				return err
+			}
+
+			// if deposit from flags is not empty, it overrides the deposit from proposal
+			if depositFromFlags != "" {
+				proposal.Deposit = depositFromFlags
+			}
+			deposit, err := sdk.ParseCoinsNormalized(proposal.Deposit)
+			if err != nil {
+				return err
+			}
+
+			return submitProposal(clientCtx, cmd, &proposal, deposit)
 		},
 	}
 
-	flags.AddTxFlagsToCmd(cmd)
+	cmd.Flags().String(govcli.FlagDeposit, "", "deposit of proposal")
 
 	return cmd
 }
