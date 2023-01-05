@@ -57,6 +57,10 @@ while getopts sgojhir{n} flag; do
 {CHAIN}_DENOM="{min_denom}"
 ST{CHAIN}_DENOM="st{min_denom}"
 
+# if the network uses a new coin type, add it to the top and reference it below
+# most chains will use either the cosmos coin type (118) or eth coin type (60)
+
+# add in the new chain's config section
 {CHAIN}_CHAIN_ID={NEW-HOST-ZONE}
 {CHAIN}_NODE_PREFIX={new-host-zone}
 {CHAIN}_NUM_NODES=3
@@ -65,6 +69,7 @@ ST{CHAIN}_DENOM="st{min_denom}"
 {CHAIN}_ADDRESS_PREFIX=stars
 {CHAIN}_REV_ACCT={n}rev1
 {CHAIN}_DENOM=${CHAIN}_DENOM
+{CHAIN}_COIN_TYPE=${TYPE}_COIN_TYPE
 {CHAIN}_RPC_PORT={the one included in the docker-compose above}
 {CHAIN}_MAIN_CMD="${CHAIN}_CMD --home $SCRIPT_DIR/state/${${CHAIN}_NODE_PREFIX}1"
 
