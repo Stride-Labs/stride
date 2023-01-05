@@ -8,7 +8,6 @@ import (
 
 	v2 "github.com/Stride-Labs/stride/v4/app/upgrades/v2"
 	v3 "github.com/Stride-Labs/stride/v4/app/upgrades/v3"
-	v4 "github.com/Stride-Labs/stride/v4/app/upgrades/v4"
 	claimtypes "github.com/Stride-Labs/stride/v4/x/claim/types"
 )
 
@@ -23,12 +22,6 @@ func (app *StrideApp) setupUpgradeHandlers() {
 	app.UpgradeKeeper.SetUpgradeHandler(
 		v3.UpgradeName,
 		v3.CreateUpgradeHandler(app.mm, app.configurator, app.ClaimKeeper),
-	)
-
-	// v4 upgrade handler
-	app.UpgradeKeeper.SetUpgradeHandler(
-		v4.UpgradeName,
-		v4.CreateUpgradeHandler(app.mm, app.configurator),
 	)
 
 	upgradeInfo, err := app.UpgradeKeeper.ReadUpgradeInfoFromDisk()
