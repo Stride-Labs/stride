@@ -133,9 +133,6 @@ replace (
 	// use cosmos-flavored protobufs
 	github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alpha.regen.1
 
-	// Use a specific version of ignite cli
-	github.com/ignite-hq/cli => github.com/ignite-hq/cli v0.21.0
-
 	// Use the go-keychain
 	github.com/keybase/go-keychain => github.com/99designs/go-keychain v0.0.0-20191008050251-8e49817e8af4
 
