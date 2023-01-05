@@ -10,7 +10,35 @@ import (
 	v3 "github.com/Stride-Labs/stride/v4/app/upgrades/v3"
 	v4 "github.com/Stride-Labs/stride/v4/app/upgrades/v4"
 	claimtypes "github.com/Stride-Labs/stride/v4/x/claim/types"
+
+	authzkeeper "github.com/cosmos/cosmos-sdk/x/authz/keeper"
+
+	"github.com/cosmos/cosmos-sdk/baseapp"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
+
+// AuthzHeightAdjustmentUpgradeStoreLoader is used to delete the authz store with the
+// wrong height and then re-add authz store with the right height
+func AuthzHeightAdjustmentUpgradeStoreLoader(upgradeHeight int64) baseapp.StoreLoader {
+	return func(ms sdk.CommitMultiStore) error {
+		if upgradeHeight == ms.LastCommitID().Version+1 {
+			err := ms.LoadLatestVersionAndUpgrade(&storetypes.StoreUpgrades{
+				Deleted: []string{authzkeeper.StoreKey},
+			})
+			if err != nil {
+				panic(err)
+			}
+			err = ms.LoadLatestVersionAndUpgrade(&storetypes.StoreUpgrades{
+				Added: []string{authzkeeper.StoreKey},
+			})
+			if err != nil {
+				panic(err)
+			}
+		}
+		// Otherwise load default store loader
+		return baseapp.DefaultStoreLoader(ms)
+	}
+}
 
 func (app *StrideApp) setupUpgradeHandlers() {
 	// v2 upgrade handler
@@ -31,6 +59,12 @@ func (app *StrideApp) setupUpgradeHandlers() {
 		v4.CreateUpgradeHandler(app.mm, app.configurator),
 	)
 
+	// v5 upgrade handler
+	app.UpgradeKeeper.SetUpgradeHandler(
+		"v5",
+		v4.CreateUpgradeHandler(app.mm, app.configurator),
+	)
+
 	upgradeInfo, err := app.UpgradeKeeper.ReadUpgradeInfoFromDisk()
 	if err != nil {
 		panic(fmt.Errorf("Failed to read upgrade info from disk: %w", err))
@@ -47,9 +81,11 @@ func (app *StrideApp) setupUpgradeHandlers() {
 		storeUpgrades = &storetypes.StoreUpgrades{
 			Added: []string{claimtypes.StoreKey},
 		}
+	case "v5":
+		app.SetStoreLoader(AuthzHeightAdjustmentUpgradeStoreLoader(upgradeInfo.Height))
 	}
 
-	if storeUpgrades != nil {
+	if (storeUpgrades != nil) && (upgradeInfo.Name != "v5") {
 		app.SetStoreLoader(upgradetypes.UpgradeStoreLoader(upgradeInfo.Height, storeUpgrades))
 	}
 }
