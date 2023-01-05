@@ -37,13 +37,13 @@ func GetQueryCmd() *cobra.Command {
 	return cmd
 }
 
-// GetCmdQueryRateLimit implements a command to query a specific rate limit
+// GetCmdQueryRateLimit implements a command to query rate limits by channel-id and denom
 func GetCmdQueryRateLimit() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "rate-limit [channel-id]",
-		Short: "Query a specific rate limit",
+		Short: "Query rate limits by channel-id and denom",
 		Long: strings.TrimSpace(
-			fmt.Sprintf(`Query all rate limits for a specific channel or a specific denom.
+			fmt.Sprintf(`Query rate limits by channel-id and denom.
 
 Example:
   $ %s query %s rate-limit [channel-id]
@@ -146,39 +146,6 @@ func GetCmdQueryRateLimitsByChainId() *cobra.Command {
 				ChainId: chainId,
 			}
 			res, err := queryClient.RateLimitsByChainId(context.Background(), req)
-
-			if err != nil {
-				return err
-			}
-
-			return clientCtx.PrintObjectLegacy(res.RateLimits)
-		},
-	}
-
-	flags.AddQueryFlagsToCmd(cmd)
-
-	return cmd
-}
-
-// GetCmdQueryRateLimitsByChannelId return all rate limits that exist on the specified channel
-func GetCmdQueryRateLimitsByChannelId() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "rate-limits-by-channel [channel-id]",
-		Short: "Query all rate limits with the given ChannelID",
-		Args:  cobra.ExactArgs(1),
-		RunE: func(cmd *cobra.Command, args []string) error {
-			channelId := args[0]
-
-			clientCtx, err := client.GetClientQueryContext(cmd)
-			if err != nil {
-				return err
-			}
-			queryClient := types.NewQueryClient(clientCtx)
-
-			req := &types.QueryRateLimitsByChannelIdRequest{
-				ChannelId: channelId,
-			}
-			res, err := queryClient.RateLimitsByChannelId(context.Background(), req)
 
 			if err != nil {
 				return err
