@@ -12,6 +12,8 @@ import (
 	"github.com/gogo/protobuf/proto"
 	"github.com/tendermint/tendermint/libs/log"
 
+	"github.com/Stride-Labs/stride/v4/x/icacallbacks/types"
+
 	"github.com/Stride-Labs/stride/v4/x/icacallbacks/keeper"
 )
 
@@ -92,7 +94,11 @@ func (im IBCModule) NegotiateAppVersion(
 }
 
 // GetTxMsgData returns the msgs from an ICA transaction and can be reused across authentication modules
-func GetTxMsgData(ctx sdk.Context, ack channeltypes.Acknowledgement, logger log.Logger) (*sdk.TxMsgData, error) {
+func GetTxMsgData(ctx sdk.Context, ack channeltypes.Acknowledgement, logger log.Logger) (*types.ICATxResponse, error) {
+	// if ack is nil, a timeout occurred
+	if &ack == nil {
+		return &types.ICATxResponse{Status: types.TIMEOUT}, nil
+	}
 	txMsgData := &sdk.TxMsgData{}
 	switch response := ack.Response.(type) {
 	case *channeltypes.Acknowledgement_Result:
@@ -104,11 +110,13 @@ func GetTxMsgData(ctx sdk.Context, ack channeltypes.Acknowledgement, logger log.
 			logger.Error(fmt.Sprintf("cannot unmarshal ICS-27 tx message data: %s", err.Error()))
 			return nil, sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "cannot unmarshal ICS-27 tx message data: %s", err.Error())
 		}
-		return txMsgData, nil
+		// NOTE: Is this safe to assume? According to the ics-27 spec, errors on host chains should be reflected in the acknowledgement type
+		// so Acknowledgement_Result should only be returned if the transaction was successful
+		// However, I recall seeing a case where the acknowledgement type was Acknowledgement_Result but the transaction failed
+		return &types.ICATxResponse{Status: types.SUCCESS, Data: *txMsgData}, nil
 	case *channeltypes.Acknowledgement_Error:
 		logger.Error(fmt.Sprintf("acknowledgement error: %s", response.Error))
-		return txMsgData, nil
-
+		return &types.ICATxResponse{Status: types.FAILURE}, nil
 	default:
 		return nil, sdkerrors.Wrapf(channeltypes.ErrInvalidAcknowledgement, "unsupported acknowledgement response field type %T", response)
 	}

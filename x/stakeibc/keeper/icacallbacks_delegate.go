@@ -66,22 +66,20 @@ func DelegateCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ack
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "deposit record not found %d", recordId)
 	}
 
-	// Check for timeout (ack nil)
-	// No need to reset the deposit record status since it will get revertted when the channel is restored
-	if ack == nil {
-		k.Logger(ctx).Error(utils.LogCallbackWithHostZone(chainId, ICACallbackID_Delegate,
-			"TIMEOUT (ack is nil), Packet: %+v", packet))
-		return nil
-	}
-
-	// Check for a failed transaction (ack error)
 	// Reset the deposit record status upon failure
-	txMsgData, err := icacallbacks.GetTxMsgData(ctx, *ack, k.Logger(ctx))
+	icaTxResponse, err := icacallbacks.GetTxMsgData(ctx, *ack, k.Logger(ctx))
 	if err != nil {
 		k.Logger(ctx).Error(fmt.Sprintf("failed to fetch txMsgData, packet %v", packet))
 		return sdkerrors.Wrap(icacallbackstypes.ErrTxMsgData, err.Error())
 	}
-	if len(txMsgData.MsgResponses) == 0 {
+
+	// No need to reset the deposit record status since it will get revertted when the channel is restored
+	if icaTxResponse.Status == icacallbackstypes.TIMEOUT {
+		k.Logger(ctx).Error(utils.LogCallbackWithHostZone(chainId, ICACallbackID_Delegate,
+			"TIMEOUT (ack is nil), Packet: %+v", packet))
+		return nil
+	}
+	if icaTxResponse.Status == icacallbackstypes.FAILURE {
 		k.Logger(ctx).Error(utils.LogCallbackWithHostZone(chainId, ICACallbackID_Delegate,
 			"ICA TX FAILED (ack is empty / ack error), Packet: %+v", packet))
 

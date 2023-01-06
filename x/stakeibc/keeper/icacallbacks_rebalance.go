@@ -33,19 +33,20 @@ func (k Keeper) UnmarshalRebalanceCallbackArgs(ctx sdk.Context, rebalanceCallbac
 
 func RebalanceCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ack *channeltypes.Acknowledgement, args []byte) error {
 	k.Logger(ctx).Info("RebalanceCallback executing", "packet", packet)
-	if ack == nil {
-		// timeout
-		k.Logger(ctx).Error(fmt.Sprintf("RebalanceCallback timeout, ack is nil, packet %v", packet))
-		return nil
-	}
 
-	txMsgData, err := icacallbacks.GetTxMsgData(ctx, *ack, k.Logger(ctx))
+	icaTxResponse, err := icacallbacks.GetTxMsgData(ctx, *ack, k.Logger(ctx))
 	if err != nil {
 		k.Logger(ctx).Error(fmt.Sprintf("failed to fetch txMsgData, packet %v", packet))
 		return sdkerrors.Wrap(icacallbackstypes.ErrTxMsgData, err.Error())
 	}
 
-	if len(txMsgData.MsgResponses) == 0 {
+	if icaTxResponse.Status == icacallbackstypes.TIMEOUT {
+		// timeout
+		k.Logger(ctx).Error(fmt.Sprintf("RebalanceCallback timeout, ack is nil, packet %v", packet))
+		return nil
+	}
+
+	if icaTxResponse.Status == icacallbackstypes.FAILURE {
 		// failed transaction
 		k.Logger(ctx).Error(fmt.Sprintf("RebalanceCallback tx failed, ack is empty (ack error), packet %v", packet))
 		return nil

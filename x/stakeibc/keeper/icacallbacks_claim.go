@@ -44,8 +44,14 @@ func ClaimCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ack *c
 		return sdkerrors.Wrapf(types.ErrRecordNotFound, "user redemption record not found %s", claimCallback.GetUserRedemptionRecordId())
 	}
 
+	icaTxResponse, err := icacallbacks.GetTxMsgData(ctx, *ack, k.Logger(ctx))
+	if err != nil {
+		k.Logger(ctx).Error(fmt.Sprintf("failed to unmarshal txMsgData, packet %v", packet))
+		return sdkerrors.Wrap(icacallbackstypes.ErrTxMsgData, err.Error())
+	}
+
 	// handle timeout
-	if ack == nil {
+	if icaTxResponse.Status == icacallbackstypes.TIMEOUT {
 		k.Logger(ctx).Error(fmt.Sprintf("ClaimCallback timeout, ack is nil, packet %v", packet))
 		// after a timeout, a user should be able to retry the claim
 		userRedemptionRecord.ClaimIsPending = false
@@ -53,15 +59,9 @@ func ClaimCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ack *c
 		return nil
 	}
 
-	txMsgData, err := icacallbacks.GetTxMsgData(ctx, *ack, k.Logger(ctx))
-	if err != nil {
-		k.Logger(ctx).Error(fmt.Sprintf("failed to unmarshal txMsgData, packet %v", packet))
-		return sdkerrors.Wrap(icacallbackstypes.ErrTxMsgData, err.Error())
-	}
-
-	k.Logger(ctx).Info("ClaimCallback executing", "packet", packet, "txMsgData", txMsgData, "args", args)
+	k.Logger(ctx).Info("ClaimCallback executing", "packet", packet, "txMsgData", &icaTxResponse.Data, "args", args)
 	// handle failed tx on host chain
-	if len(txMsgData.MsgResponses) == 0 {
+	if icaTxResponse.Status == icacallbackstypes.FAILURE {
 		k.Logger(ctx).Error(fmt.Sprintf("ClaimCallback failed, packet %v", packet))
 		// after an error, a user should be able to retry the claim
 		userRedemptionRecord.ClaimIsPending = false

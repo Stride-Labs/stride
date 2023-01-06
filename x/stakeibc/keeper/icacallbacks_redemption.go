@@ -54,22 +54,21 @@ func RedemptionCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, a
 	k.Logger(ctx).Info(utils.LogCallbackWithHostZone(chainId, ICACallbackID_Redemption,
 		"Starting callback for Epoch Unbonding Records: %+v", redemptionCallback.EpochUnbondingRecordIds))
 
-	// Check for timeout (ack nil)
+	// Reset the unbonding record status upon failure
+	icaTxResponse, err := icacallbacks.GetTxMsgData(ctx, *ack, k.Logger(ctx))
+	if err != nil {
+		k.Logger(ctx).Error(fmt.Sprintf("RedemptionCallback txMsgData could not be parsed, packet %v", packet))
+		return sdkerrors.Wrap(icacallbackstypes.ErrTxMsgData, err.Error())
+	}
+
 	// No need to reset the unbonding record status since it will get revertted when the channel is restored
-	if ack == nil {
+	if icaTxResponse.Status == icacallbackstypes.TIMEOUT {
 		k.Logger(ctx).Error(utils.LogCallbackWithHostZone(chainId, ICACallbackID_Redemption,
 			"TIMEOUT (ack is nil), Packet: %+v", packet))
 		return nil
 	}
 
-	// Check for a failed transaction (ack error)
-	// Reset the unbonding record status upon failure
-	txMsgData, err := icacallbacks.GetTxMsgData(ctx, *ack, k.Logger(ctx))
-	if err != nil {
-		k.Logger(ctx).Error(fmt.Sprintf("RedemptionCallback txMsgData could not be parsed, packet %v", packet))
-		return sdkerrors.Wrap(icacallbackstypes.ErrTxMsgData, err.Error())
-	}
-	if len(txMsgData.MsgResponses) == 0 {
+	if icaTxResponse.Status == icacallbackstypes.FAILURE {
 		k.Logger(ctx).Error(utils.LogCallbackWithHostZone(chainId, ICACallbackID_Redemption,
 			"ICA TX FAILED (ack is empty / ack error), Packet: %+v", packet))
 

@@ -61,22 +61,21 @@ func UndelegateCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, a
 	k.Logger(ctx).Info(utils.LogCallbackWithHostZone(chainId, ICACallbackID_Undelegate,
 		"Starting callback for Epoch Unbonding Records: %+v", undelegateCallback.EpochUnbondingRecordIds))
 
-	// Check for timeout (ack nil)
+	// Reset the unbonding record status upon failure
+	icaTxResponse, err := icacallbacks.GetTxMsgData(ctx, *ack, k.Logger(ctx))
+	if err != nil {
+		k.Logger(ctx).Error(fmt.Sprintf("UndelegateCallback failed to fetch txMsgData, packet %v", packet))
+		return sdkerrors.Wrap(icacallbackstypes.ErrTxMsgData, err.Error())
+	}
+	
 	// No need to reset the unbonding record status since it will get revertted when the channel is restored
-	if ack == nil {
+	if icaTxResponse.Status == icacallbackstypes.TIMEOUT {
 		k.Logger(ctx).Error(utils.LogCallbackWithHostZone(chainId, ICACallbackID_Undelegate,
 			"TIMEOUT (ack is nil), Packet: %+v", packet))
 		return nil
 	}
 
-	// Check for a failed transaction (ack error)
-	// Reset the unbonding record status upon failure
-	txMsgData, err := icacallbacks.GetTxMsgData(ctx, *ack, k.Logger(ctx))
-	if err != nil {
-		k.Logger(ctx).Error(fmt.Sprintf("UndelegateCallback failed to fetch txMsgData, packet %v", packet))
-		return sdkerrors.Wrap(icacallbackstypes.ErrTxMsgData, err.Error())
-	}
-	if len(txMsgData.MsgResponses) == 0 {
+	if icaTxResponse.Status == icacallbackstypes.FAILURE {
 		k.Logger(ctx).Error(utils.LogCallbackWithHostZone(chainId, ICACallbackID_Undelegate,
 			"ICA TX FAILED (ack is empty / ack error), Packet: %+v", packet))
 
@@ -102,7 +101,7 @@ func UndelegateCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, a
 	}
 
 	// Get the latest transaction completion time (to determine the unbonding time)
-	latestCompletionTime, err := k.GetLatestCompletionTime(ctx, txMsgData)
+	latestCompletionTime, err := k.GetLatestCompletionTime(ctx, &icaTxResponse.Data)
 	if err != nil {
 		k.Logger(ctx).Error(fmt.Sprintf("UndelegateCallback | %s", err.Error()))
 		return err
@@ -155,22 +154,44 @@ func (k Keeper) UpdateDelegationBalances(ctx sdk.Context, zone types.HostZone, u
 func (k Keeper) GetLatestCompletionTime(ctx sdk.Context, txMsgData *sdk.TxMsgData) (*time.Time, error) {
 	// Update the completion time using the latest completion time across each message within the transaction
 	latestCompletionTime := time.Time{}
-	for _, msgResponse := range txMsgData.MsgResponses {
-		var undelegateResponse stakingtypes.MsgUndelegateResponse
-		if msgResponse == nil {
-			return nil, sdkerrors.Wrap(types.ErrTxMsgDataInvalid, "msgResponseBytes or msgResponseBytes.Data is nil")
+	switch len(txMsgData.Data) {
+	case 0: // for SDK 0.46 and above
+		for _, msgResponse := range txMsgData.MsgResponses {
+			// unmarshall msgResponse and execute logic based on the response 
+			var undelegateResponse stakingtypes.MsgUndelegateResponse
+			if msgResponse == nil {
+				return nil, sdkerrors.Wrap(types.ErrTxMsgDataInvalid, "msgResponse is nil")
+			}
+			undelegateResponsebz := msgResponse.GetValue()
+			err := proto.Unmarshal(undelegateResponsebz, &undelegateResponse)
+			if err != nil {
+				errMsg := fmt.Sprintf("Unable to unmarshal undelegation tx response | %s", err)
+				k.Logger(ctx).Error(errMsg)
+				return nil, sdkerrors.Wrapf(types.ErrUnmarshalFailure, errMsg)
+			}
+			if undelegateResponse.CompletionTime.After(latestCompletionTime) {
+				latestCompletionTime = undelegateResponse.CompletionTime
+			}
 		}
-		undelegateResponsebz := msgResponse.GetValue()
-		err := proto.Unmarshal(undelegateResponsebz, &undelegateResponse)
-		if err != nil {
-			errMsg := fmt.Sprintf("Unable to unmarshal undelegation tx response | %s", err)
-			k.Logger(ctx).Error(errMsg)
-			return nil, sdkerrors.Wrapf(types.ErrUnmarshalFailure, errMsg)
-		}
-		if undelegateResponse.CompletionTime.After(latestCompletionTime) {
-			latestCompletionTime = undelegateResponse.CompletionTime
+	default: // for SDK 0.45 and below
+		for _, msgResponseBytes := range txMsgData.Data {
+			// unmarshall msgData and execute logic based on the response 
+			var undelegateResponse stakingtypes.MsgUndelegateResponse
+			if msgResponseBytes == nil || msgResponseBytes.Data == nil {
+				return nil, sdkerrors.Wrap(types.ErrTxMsgDataInvalid, "msgResponseBytes or msgResponseBytes.Data is nil")
+			}
+			err := proto.Unmarshal(msgResponseBytes.Data, &undelegateResponse)
+			if err != nil {
+				errMsg := fmt.Sprintf("Unable to unmarshal undelegation tx response | %s", err)
+				k.Logger(ctx).Error(errMsg)
+				return nil, sdkerrors.Wrapf(types.ErrUnmarshalFailure, errMsg)
+			}
+			if undelegateResponse.CompletionTime.After(latestCompletionTime) {
+				latestCompletionTime = undelegateResponse.CompletionTime
+			}
 		}
 	}
+
 	if latestCompletionTime.IsZero() {
 		errMsg := fmt.Sprintf("Invalid completion time (%s) from txMsg", latestCompletionTime.String())
 		k.Logger(ctx).Error(errMsg)

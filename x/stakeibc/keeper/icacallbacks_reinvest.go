@@ -35,19 +35,19 @@ func (k Keeper) UnmarshalReinvestCallbackArgs(ctx sdk.Context, reinvestCallback 
 
 func ReinvestCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ack *channeltypes.Acknowledgement, args []byte) error {
 	k.Logger(ctx).Info("ReinvestCallback executing", "packet", packet)
-	if ack == nil {
+	icaTxResponse, err := icacallbacks.GetTxMsgData(ctx, *ack, k.Logger(ctx))
+	if err != nil {
+		k.Logger(ctx).Error(fmt.Sprintf("failed to fetch txMsgData, packet %v", packet))
+		return sdkerrors.Wrap(icacallbackstypes.ErrTxMsgData, err.Error())
+	}
+	
+	if icaTxResponse.Status == icacallbackstypes.TIMEOUT {
 		// handle timeout
 		k.Logger(ctx).Error(fmt.Sprintf("ReinvestCallback timeout, ack is nil, packet %v", packet))
 		return nil
 	}
 
-	txMsgData, err := icacallbacks.GetTxMsgData(ctx, *ack, k.Logger(ctx))
-	if err != nil {
-		k.Logger(ctx).Error(fmt.Sprintf("failed to fetch txMsgData, packet %v", packet))
-		return sdkerrors.Wrap(icacallbackstypes.ErrTxMsgData, err.Error())
-	}
-
-	if len(txMsgData.MsgResponses) == 0 {
+	if icaTxResponse.Status == icacallbackstypes.FAILURE {
 		// handle tx failure
 		k.Logger(ctx).Error(fmt.Sprintf("ReinvestCallback tx failed, txMsgData is empty, ack error, packet %v", packet))
 		return nil
