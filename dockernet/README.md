@@ -130,7 +130,8 @@ paths:
 HOST_CHAINS=(GAIA {NEW-HOST-ZONE})
 ```
 * And that's it! Just start the network as normal, and make sure to rebuild the new host zone when running for the first time.  
-	```
+
+```
 make build-docker build=n
 make start-docker
 ```
