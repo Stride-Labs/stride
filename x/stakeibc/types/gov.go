@@ -12,7 +12,6 @@ const (
 
 func init() {
 	govtypes.RegisterProposalType(ProposalTypeAddValidator)
-	// govtypes.RegisterProposalTypeCodec(&AddValidatorProposal{}, "stakeibc/AddValidatorProposal")
 }
 
 var (

@@ -207,7 +207,6 @@ func (s *AppTestHelper) RegisterInterchainAccount(endpoint *ibctesting.Endpoint,
 	s.Require().NoError(err, "register interchain account error")
 
 	// Commit the state
-	// endpoint.Chain.App.Commit()
 	endpoint.Chain.NextBlock()
 
 	// Update the endpoint object to the newly created port + channel
