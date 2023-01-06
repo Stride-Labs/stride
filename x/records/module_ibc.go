@@ -60,7 +60,7 @@ func (im IBCModule) OnChanOpenInit(
 		channelID,
 		channelCap,
 		counterparty,
-		version, // note we only pass app version here
+		version,
 	)
 	return version, err
 }
@@ -87,7 +87,7 @@ func (im IBCModule) OnChanOpenTry(
 		channelID,
 		chanCap,
 		counterparty,
-		counterpartyVersion, // note we only pass counterparty app version here
+		counterpartyVersion,
 	)
 	if err != nil {
 		return "", err
