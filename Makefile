@@ -11,6 +11,9 @@ DOCKERNET_COMPOSE_FILE=$(DOCKERNET_HOME)/docker-compose.yml
 LOCALSTRIDE_HOME=./testutil/localstride
 LOCALNET_COMPOSE_FILE=$(LOCALSTRIDE_HOME)/localnet/docker-compose.yml
 STATE_EXPORT_COMPOSE_FILE=$(LOCALSTRIDE_HOME)/state-export/docker-compose.yml
+SIMAPP = ./app
+BINDIR ?= $(GOPATH)/bin
+CURRENT_DIR = $(shell pwd)
 
 # process build tags
 
@@ -49,6 +52,9 @@ whitespace :=
 whitespace += $(whitespace)
 comma := ,
 build_tags_comma_sep := $(subst $(whitespace),$(comma),$(build_tags))
+
+# The below include contains the tools and runsim targets.
+include scripts/Makefile
 
 # process linker flags
 
@@ -108,6 +114,14 @@ test-cover:
 
 test-integration-docker:
 	bash $(DOCKERNET_HOME)/tests/run_all_tests.sh
+
+test-sim-import-export: runsim
+	@echo "Running application import/export simulation. This may take several minutes..."
+	@$(BINDIR)/runsim -Jobs=4 -SimAppPkg=$(SIMAPP) -ExitOnFail 50 5 TestAppImportExport
+
+test-sim-multi-seed-short: runsim
+	@echo "Running short multi-seed application simulation. This may take awhile!"
+	@$(BINDIR)/runsim -Jobs=4 -SimAppPkg=$(SIMAPP) -ExitOnFail 50 10 TestFullAppSimulation
 
 ###############################################################################
 ###                                DockerNet                                ###
