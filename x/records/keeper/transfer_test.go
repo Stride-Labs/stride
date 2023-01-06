@@ -7,9 +7,10 @@ import (
 	ibctypes "github.com/cosmos/ibc-go/v5/modules/apps/transfer/types"
 	clienttypes "github.com/cosmos/ibc-go/v5/modules/core/02-client/types"
 
+	sdkmath "cosmossdk.io/math"
+
 	"github.com/Stride-Labs/stride/v4/x/records/types"
 	recordtypes "github.com/Stride-Labs/stride/v4/x/records/types"
-	cosmosmath "cosmossdk.io/math"
 )
 
 type TransferTestCase struct {
@@ -19,7 +20,7 @@ type TransferTestCase struct {
 
 func (s *KeeperTestSuite) SetupTransfer() TransferTestCase {
 	s.CreateTransferChannel(chainId)
-	balanceToTransfer := cosmosmath.NewInt(1_000_000)
+	balanceToTransfer := sdkmath.NewInt(1_000_000)
 	depositRecord := types.DepositRecord{
 		Id:                 1,
 		DepositEpochNumber: 1,

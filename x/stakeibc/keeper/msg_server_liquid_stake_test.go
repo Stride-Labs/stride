@@ -3,7 +3,7 @@ package keeper_test
 import (
 	"fmt"
 
-	cosmosmath "cosmossdk.io/math"
+	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	_ "github.com/stretchr/testify/suite"
 
@@ -19,7 +19,7 @@ type Account struct {
 }
 
 type LiquidStakeState struct {
-	depositRecordAmount cosmosmath.Int
+	depositRecordAmount sdkmath.Int
 	hostZone            stakeibctypes.HostZone
 }
 
@@ -31,8 +31,8 @@ type LiquidStakeTestCase struct {
 }
 
 func (s *KeeperTestSuite) SetupLiquidStake() LiquidStakeTestCase {
-	stakeAmount := cosmosmath.NewInt(1_000_000)
-	initialDepositAmount := cosmosmath.NewInt(1_000_000)
+	stakeAmount := sdkmath.NewInt(1_000_000)
+	initialDepositAmount := sdkmath.NewInt(1_000_000)
 	user := Account{
 		acc:           s.TestAccs[0],
 		atomBalance:   sdk.NewInt64Coin(IbcAtom, 10_000_000),
@@ -210,10 +210,10 @@ func (s *KeeperTestSuite) TestLiquidStake_InsufficientBalance() {
 	// Set liquid stake amount to value greater than account balance
 	invalidMsg := tc.validMsg
 	balance := tc.user.atomBalance.Amount
-	invalidMsg.Amount = balance.Add(cosmosmath.NewInt(1000))
+	invalidMsg.Amount = balance.Add(sdkmath.NewInt(1000))
 	_, err := s.GetMsgServer().LiquidStake(sdk.WrapSDKContext(s.Ctx), &invalidMsg)
 
-	expectedErr := fmt.Sprintf("balance is lower than staking amount. staking amount: %v, balance: %v: insufficient funds", balance.Add(cosmosmath.NewInt(1000)), balance)
+	expectedErr := fmt.Sprintf("balance is lower than staking amount. staking amount: %v, balance: %v: insufficient funds", balance.Add(sdkmath.NewInt(1000)), balance)
 	s.Require().EqualError(err, expectedErr)
 }
 

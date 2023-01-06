@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"testing"
 
-	cosmosmath "cosmossdk.io/math"
+	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
@@ -16,7 +16,7 @@ import (
 )
 
 func createTestDelegation(keeper *keeper.Keeper, ctx sdk.Context) types.Delegation {
-	item := types.Delegation{Amt: cosmosmath.NewInt(1)}
+	item := types.Delegation{Amt: sdkmath.NewInt(1)}
 	keeper.SetDelegation(ctx, item)
 	return item
 }

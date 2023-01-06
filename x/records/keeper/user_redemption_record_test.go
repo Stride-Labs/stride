@@ -7,18 +7,19 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
+	sdkmath "cosmossdk.io/math"
+
 	keepertest "github.com/Stride-Labs/stride/v4/testutil/keeper"
 	"github.com/Stride-Labs/stride/v4/testutil/nullify"
 	"github.com/Stride-Labs/stride/v4/x/records/keeper"
 	"github.com/Stride-Labs/stride/v4/x/records/types"
-	cosmosmath "cosmossdk.io/math"
 )
 
 func createNUserRedemptionRecord(keeper *keeper.Keeper, ctx sdk.Context, n int) []types.UserRedemptionRecord {
 	items := make([]types.UserRedemptionRecord, n)
 	for i := range items {
 		items[i].Id = strconv.Itoa(i)
-		items[i].Amount = cosmosmath.NewInt(int64(i))
+		items[i].Amount = sdkmath.NewInt(int64(i))
 		keeper.SetUserRedemptionRecord(ctx, items[i])
 	}
 	return items

@@ -1,16 +1,16 @@
 package types
 
 import (
+	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	cosmosmath "cosmossdk.io/math"
 )
 
 const TypeMsgRedeemStake = "redeem_stake"
 
 var _ sdk.Msg = &MsgRedeemStake{}
 
-func NewMsgRedeemStake(creator string, amount cosmosmath.Int, hostZone string, receiver string) *MsgRedeemStake {
+func NewMsgRedeemStake(creator string, amount sdkmath.Int, hostZone string, receiver string) *MsgRedeemStake {
 	return &MsgRedeemStake{
 		Creator:  creator,
 		Amount:   amount,
@@ -52,7 +52,7 @@ func (msg *MsgRedeemStake) ValidateBasic() error {
 		return sdkerrors.Wrapf(ErrRequiredFieldEmpty, "receiver cannot be empty")
 	}
 	// ensure amount is a nonzero positive integer
-	if msg.Amount.LTE(cosmosmath.ZeroInt()) {
+	if msg.Amount.LTE(sdkmath.ZeroInt()) {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "invalid amount (%v)", msg.Amount)
 	}
 	// validate host zone is not empty

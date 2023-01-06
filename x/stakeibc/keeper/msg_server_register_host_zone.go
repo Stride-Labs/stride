@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	cosmosmath "cosmossdk.io/math"
+	sdkmath "cosmossdk.io/math"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	icatypes "github.com/cosmos/ibc-go/v5/modules/apps/27-interchain-accounts/types"
 
@@ -137,8 +137,8 @@ func (k msgServer) RegisterHostZone(goCtx context.Context, msg *types.MsgRegiste
 		return nil, sdkerrors.Wrapf(recordstypes.ErrEpochUnbondingRecordNotFound, errMsg)
 	}
 	hostZoneUnbonding := &recordstypes.HostZoneUnbonding{
-		NativeTokenAmount: cosmosmath.ZeroInt(),
-		StTokenAmount:     cosmosmath.ZeroInt(),
+		NativeTokenAmount: sdkmath.ZeroInt(),
+		StTokenAmount:     sdkmath.ZeroInt(),
 		Denom:             zone.HostDenom,
 		HostZoneId:        zone.ChainId,
 		Status:            recordstypes.HostZoneUnbonding_UNBONDING_QUEUE,
@@ -159,7 +159,7 @@ func (k msgServer) RegisterHostZone(goCtx context.Context, msg *types.MsgRegiste
 	}
 	depositRecord := recordstypes.DepositRecord{
 		Id:                 0,
-		Amount:             cosmosmath.ZeroInt(),
+		Amount:             sdkmath.ZeroInt(),
 		Denom:              zone.HostDenom,
 		HostZoneId:         zone.ChainId,
 		Status:             recordstypes.DepositRecord_TRANSFER_QUEUE,

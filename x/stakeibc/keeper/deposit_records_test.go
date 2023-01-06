@@ -10,7 +10,7 @@ import (
 
 	icatypes "github.com/cosmos/ibc-go/v5/modules/apps/27-interchain-accounts/types"
 
-	cosmosmath "cosmossdk.io/math"
+	sdkmath "cosmossdk.io/math"
 
 	epochtypes "github.com/Stride-Labs/stride/v4/x/epochs/types"
 	icacallbackstypes "github.com/Stride-Labs/stride/v4/x/icacallbacks/types"
@@ -23,8 +23,8 @@ type TestDepositRecords struct {
 	recordsToBeTransfered []recordstypes.DepositRecord
 	recordsToBeStaked     []recordstypes.DepositRecord
 	recordsInCurrentEpoch []recordstypes.DepositRecord
-	transferAmount        cosmosmath.Int
-	stakeAmount           cosmosmath.Int
+	transferAmount        sdkmath.Int
+	stakeAmount           sdkmath.Int
 }
 
 func (r *TestDepositRecords) GetAllRecords() []recordstypes.DepositRecord {
@@ -56,7 +56,7 @@ func (s *KeeperTestSuite) GetInitialDepositRecords(currentEpoch uint64) TestDepo
 	emptyDepositRecords := []recordstypes.DepositRecord{
 		{
 			Id:                 1,
-			Amount:             cosmosmath.ZeroInt(),
+			Amount:             sdkmath.ZeroInt(),
 			Denom:              Atom,
 			HostZoneId:         HostChainId,
 			Status:             recordstypes.DepositRecord_TRANSFER_QUEUE,
@@ -64,7 +64,7 @@ func (s *KeeperTestSuite) GetInitialDepositRecords(currentEpoch uint64) TestDepo
 		},
 		{
 			Id:                 2,
-			Amount:             cosmosmath.ZeroInt(),
+			Amount:             sdkmath.ZeroInt(),
 			Denom:              Atom,
 			HostZoneId:         HostChainId,
 			Status:             recordstypes.DepositRecord_TRANSFER_QUEUE,
@@ -75,7 +75,7 @@ func (s *KeeperTestSuite) GetInitialDepositRecords(currentEpoch uint64) TestDepo
 	recordsToBeTransfered := []recordstypes.DepositRecord{
 		{
 			Id:                 3,
-			Amount:             cosmosmath.NewInt(3000),
+			Amount:             sdkmath.NewInt(3000),
 			Denom:              Atom,
 			HostZoneId:         HostChainId,
 			Status:             recordstypes.DepositRecord_TRANSFER_QUEUE,
@@ -83,19 +83,19 @@ func (s *KeeperTestSuite) GetInitialDepositRecords(currentEpoch uint64) TestDepo
 		},
 		{
 			Id:                 4,
-			Amount:             cosmosmath.NewInt(4000),
+			Amount:             sdkmath.NewInt(4000),
 			Denom:              Atom,
 			HostZoneId:         HostChainId,
 			Status:             recordstypes.DepositRecord_TRANSFER_QUEUE,
 			DepositEpochNumber: priorEpoch,
 		},
 	}
-	transferAmount := cosmosmath.NewInt(3000 + 4000)
+	transferAmount := sdkmath.NewInt(3000 + 4000)
 
 	recordsToBeStaked := []recordstypes.DepositRecord{
 		{
 			Id:                 5,
-			Amount:             cosmosmath.NewInt(5000),
+			Amount:             sdkmath.NewInt(5000),
 			Denom:              Atom,
 			HostZoneId:         HostChainId,
 			Status:             recordstypes.DepositRecord_DELEGATION_QUEUE,
@@ -103,19 +103,19 @@ func (s *KeeperTestSuite) GetInitialDepositRecords(currentEpoch uint64) TestDepo
 		},
 		{
 			Id:                 6,
-			Amount:             cosmosmath.NewInt(6000),
+			Amount:             sdkmath.NewInt(6000),
 			Denom:              Atom,
 			HostZoneId:         HostChainId,
 			Status:             recordstypes.DepositRecord_DELEGATION_QUEUE,
 			DepositEpochNumber: priorEpoch,
 		},
 	}
-	stakeAmount := cosmosmath.NewInt(5000 + 6000)
+	stakeAmount := sdkmath.NewInt(5000 + 6000)
 
 	recordsInCurrentEpoch := []recordstypes.DepositRecord{
 		{
 			Id:                 7,
-			Amount:             cosmosmath.NewInt(7000),
+			Amount:             sdkmath.NewInt(7000),
 			Denom:              Atom,
 			HostZoneId:         HostChainId,
 			Status:             recordstypes.DepositRecord_DELEGATION_QUEUE,
@@ -123,7 +123,7 @@ func (s *KeeperTestSuite) GetInitialDepositRecords(currentEpoch uint64) TestDepo
 		},
 		{
 			Id:                 8,
-			Amount:             cosmosmath.NewInt(8000),
+			Amount:             sdkmath.NewInt(8000),
 			Denom:              Atom,
 			HostZoneId:         HostChainId,
 			Status:             recordstypes.DepositRecord_DELEGATION_QUEUE,
@@ -150,7 +150,7 @@ func (s *KeeperTestSuite) SetupDepositRecords() DepositRecordsTestCase {
 	hostModuleAddress := stakeibctypes.NewZoneAddress(HostChainId)
 	s.App.TransferKeeper.SetDenomTrace(s.Ctx, ibcDenomTrace)
 
-	initialModuleAccountBalance := sdk.NewCoin(ibcDenomTrace.IBCDenom(), cosmosmath.NewInt(15_000))
+	initialModuleAccountBalance := sdk.NewCoin(ibcDenomTrace.IBCDenom(), sdkmath.NewInt(15_000))
 	s.FundAccount(hostModuleAddress, initialModuleAccountBalance)
 
 	validators := []*stakeibctypes.Validator{
@@ -237,7 +237,7 @@ func (s *KeeperTestSuite) TestCreateDepositRecordsForEpoch_Successful() {
 		// Epoch 1
 		{
 			Id:                 0,
-			Amount:             cosmosmath.ZeroInt(),
+			Amount:             sdkmath.ZeroInt(),
 			Denom:              "denom1",
 			HostZoneId:         "HOST1",
 			Status:             recordstypes.DepositRecord_TRANSFER_QUEUE,
@@ -245,7 +245,7 @@ func (s *KeeperTestSuite) TestCreateDepositRecordsForEpoch_Successful() {
 		},
 		{
 			Id:                 1,
-			Amount:             cosmosmath.ZeroInt(),
+			Amount:             sdkmath.ZeroInt(),
 			Denom:              "denom2",
 			HostZoneId:         "HOST2",
 			Status:             recordstypes.DepositRecord_TRANSFER_QUEUE,
@@ -253,7 +253,7 @@ func (s *KeeperTestSuite) TestCreateDepositRecordsForEpoch_Successful() {
 		},
 		{
 			Id:                 2,
-			Amount:             cosmosmath.ZeroInt(),
+			Amount:             sdkmath.ZeroInt(),
 			Denom:              "denom3",
 			HostZoneId:         "HOST3",
 			Status:             recordstypes.DepositRecord_TRANSFER_QUEUE,
@@ -262,7 +262,7 @@ func (s *KeeperTestSuite) TestCreateDepositRecordsForEpoch_Successful() {
 		// Epoch 2
 		{
 			Id:                 3,
-			Amount:             cosmosmath.ZeroInt(),
+			Amount:             sdkmath.ZeroInt(),
 			Denom:              "denom1",
 			HostZoneId:         "HOST1",
 			Status:             recordstypes.DepositRecord_TRANSFER_QUEUE,
@@ -270,7 +270,7 @@ func (s *KeeperTestSuite) TestCreateDepositRecordsForEpoch_Successful() {
 		},
 		{
 			Id:                 4,
-			Amount:             cosmosmath.ZeroInt(),
+			Amount:             sdkmath.ZeroInt(),
 			Denom:              "denom2",
 			HostZoneId:         "HOST2",
 			Status:             recordstypes.DepositRecord_TRANSFER_QUEUE,
@@ -278,7 +278,7 @@ func (s *KeeperTestSuite) TestCreateDepositRecordsForEpoch_Successful() {
 		},
 		{
 			Id:                 5,
-			Amount:             cosmosmath.ZeroInt(),
+			Amount:             sdkmath.ZeroInt(),
 			Denom:              "denom3",
 			HostZoneId:         "HOST3",
 			Status:             recordstypes.DepositRecord_TRANSFER_QUEUE,
@@ -331,7 +331,7 @@ func (s *KeeperTestSuite) CheckStateAfterTransferringDepositRecords(tc DepositRe
 	}
 
 	// Confirm the module account balance decreased
-	expectedTransferAmount := cosmosmath.NewInt(0)
+	expectedTransferAmount := sdkmath.NewInt(0)
 	for _, depositRecord := range recordsSuccessfullyTransferred {
 		expectedTransferAmount = expectedTransferAmount.Add(depositRecord.Amount)
 	}
@@ -437,8 +437,8 @@ func (s *KeeperTestSuite) CheckStateAfterStakingDepositRecords(tc DepositRecords
 		val2 := tc.hostZone.Validators[1]
 		totalWeight := val1.Weight + val2.Weight
 
-		val1Delegation := depositRecord.Amount.Mul(cosmosmath.NewIntFromUint64(val1.Weight)).Quo(cosmosmath.NewIntFromUint64(totalWeight))
-		val2Delegation := depositRecord.Amount.Mul(cosmosmath.NewIntFromUint64(val2.Weight)).Quo(cosmosmath.NewIntFromUint64(totalWeight))
+		val1Delegation := depositRecord.Amount.Mul(sdkmath.NewIntFromUint64(val1.Weight)).Quo(sdkmath.NewIntFromUint64(totalWeight))
+		val2Delegation := depositRecord.Amount.Mul(sdkmath.NewIntFromUint64(val2.Weight)).Quo(sdkmath.NewIntFromUint64(totalWeight))
 
 		expectedDelegations := []*stakeibctypes.SplitDelegation{
 			{Validator: val1.Address, Amount: val1Delegation},

@@ -1,7 +1,7 @@
 package keeper_test
 
 import (
-	cosmosmath "cosmossdk.io/math"
+	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	channeltypes "github.com/cosmos/ibc-go/v5/modules/core/04-channel/types"
@@ -41,12 +41,12 @@ func (s *KeeperTestSuite) SetupRebalanceCallback() RebalanceCallbackTestCase {
 			{
 				SrcValidator: "stride_VAL3",
 				DstValidator: "stride_VAL1",
-				Amt:          cosmosmath.NewInt(104),
+				Amt:          sdkmath.NewInt(104),
 			},
 			{
 				SrcValidator: "stride_VAL4",
 				DstValidator: "stride_VAL1",
-				Amt:          cosmosmath.NewInt(13),
+				Amt:          sdkmath.NewInt(13),
 			},
 		},
 	}
@@ -80,11 +80,11 @@ func (s *KeeperTestSuite) TestRebalanceCallback_Successful() {
 	validators := hz.GetValidators()
 	s.Require().Len(validators, 5, "host zone has 5 validators")
 
-	s.Require().Equal(cosmosmath.NewInt(217), validators[0].DelegationAmt, "validator 1 stake")
-	s.Require().Equal(cosmosmath.NewInt(500), validators[1].DelegationAmt, "validator 2 stake")
-	s.Require().Equal(cosmosmath.NewInt(96), validators[2].DelegationAmt, "validator 3 stake")
-	s.Require().Equal(cosmosmath.NewInt(387), validators[3].DelegationAmt, "validator 4 stake")
-	s.Require().Equal(cosmosmath.NewInt(400), validators[4].DelegationAmt, "validator 5 stake")
+	s.Require().Equal(sdkmath.NewInt(217), validators[0].DelegationAmt, "validator 1 stake")
+	s.Require().Equal(sdkmath.NewInt(500), validators[1].DelegationAmt, "validator 2 stake")
+	s.Require().Equal(sdkmath.NewInt(96), validators[2].DelegationAmt, "validator 3 stake")
+	s.Require().Equal(sdkmath.NewInt(387), validators[3].DelegationAmt, "validator 4 stake")
+	s.Require().Equal(sdkmath.NewInt(400), validators[4].DelegationAmt, "validator 5 stake")
 }
 
 func (s *KeeperTestSuite) checkDelegationStateIfCallbackFailed() {
@@ -94,11 +94,11 @@ func (s *KeeperTestSuite) checkDelegationStateIfCallbackFailed() {
 	validators := hz.GetValidators()
 	s.Require().Len(validators, 5, "host zone has 5 validators")
 
-	s.Require().Equal(cosmosmath.NewInt(100), validators[0].DelegationAmt, "validator 1 stake")
-	s.Require().Equal(cosmosmath.NewInt(500), validators[1].DelegationAmt, "validator 2 stake")
-	s.Require().Equal(cosmosmath.NewInt(200), validators[2].DelegationAmt, "validator 3 stake")
-	s.Require().Equal(cosmosmath.NewInt(400), validators[3].DelegationAmt, "validator 4 stake")
-	s.Require().Equal(cosmosmath.NewInt(400), validators[4].DelegationAmt, "validator 5 stake")
+	s.Require().Equal(sdkmath.NewInt(100), validators[0].DelegationAmt, "validator 1 stake")
+	s.Require().Equal(sdkmath.NewInt(500), validators[1].DelegationAmt, "validator 2 stake")
+	s.Require().Equal(sdkmath.NewInt(200), validators[2].DelegationAmt, "validator 3 stake")
+	s.Require().Equal(sdkmath.NewInt(400), validators[3].DelegationAmt, "validator 4 stake")
+	s.Require().Equal(sdkmath.NewInt(400), validators[4].DelegationAmt, "validator 5 stake")
 }
 
 func (s *KeeperTestSuite) TestRebalanceCallback_Timeout() {
@@ -142,12 +142,12 @@ func (s *KeeperTestSuite) TestRebalanceCallback_WrongValidator() {
 			{
 				SrcValidator: "stride_VAL3",
 				DstValidator: "stride_VAL1",
-				Amt:          cosmosmath.NewInt(104),
+				Amt:          sdkmath.NewInt(104),
 			},
 			{
 				SrcValidator: "stride_VAL4_WRONG",
 				DstValidator: "stride_VAL1",
-				Amt:          cosmosmath.NewInt(13),
+				Amt:          sdkmath.NewInt(13),
 			},
 		},
 	}
@@ -160,12 +160,12 @@ func (s *KeeperTestSuite) TestRebalanceCallback_WrongValidator() {
 			{
 				SrcValidator: "stride_VAL3",
 				DstValidator: "stride_VAL1_WRONG",
-				Amt:          cosmosmath.NewInt(104),
+				Amt:          sdkmath.NewInt(104),
 			},
 			{
 				SrcValidator: "stride_VAL4",
 				DstValidator: "stride_VAL1",
-				Amt:          cosmosmath.NewInt(13),
+				Amt:          sdkmath.NewInt(13),
 			},
 		},
 	}

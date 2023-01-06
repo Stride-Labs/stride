@@ -1,7 +1,7 @@
 package types
 
 import (
-	cosmosmath "cosmossdk.io/math"
+	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	channeltypes "github.com/cosmos/ibc-go/v5/modules/core/04-channel/types"
@@ -13,7 +13,7 @@ const TypeMsgClearBalance = "clear_balance"
 
 var _ sdk.Msg = &MsgClearBalance{}
 
-func NewMsgClearBalance(creator string, chainId string, amount cosmosmath.Int, channelId string) *MsgClearBalance {
+func NewMsgClearBalance(creator string, chainId string, amount sdkmath.Int, channelId string) *MsgClearBalance {
 	return &MsgClearBalance{
 		Creator: creator,
 		ChainId: chainId,
@@ -56,7 +56,7 @@ func (msg *MsgClearBalance) ValidateBasic() error {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "chainid is required")
 	}
 
-	if msg.Amount.LTE(cosmosmath.ZeroInt()) {
+	if msg.Amount.LTE(sdkmath.ZeroInt()) {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "amount must be greater than 0")
 	}
 	if isValid := channeltypes.IsValidChannelID(msg.Channel); !isValid {

@@ -1,7 +1,7 @@
 package keeper_test
 
 import (
-	cosmosmath "cosmossdk.io/math"
+	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingTypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	channeltypes "github.com/cosmos/ibc-go/v5/modules/core/04-channel/types"
@@ -14,12 +14,12 @@ import (
 )
 
 type DelegateCallbackState struct {
-	stakedBal      cosmosmath.Int
-	val1Bal        cosmosmath.Int
-	val2Bal        cosmosmath.Int
-	val1RelAmt     cosmosmath.Int
-	val2RelAmt     cosmosmath.Int
-	balanceToStake cosmosmath.Int
+	stakedBal      sdkmath.Int
+	val1Bal        sdkmath.Int
+	val2Bal        sdkmath.Int
+	val1RelAmt     sdkmath.Int
+	val2RelAmt     sdkmath.Int
+	balanceToStake sdkmath.Int
 	depositRecord  recordtypes.DepositRecord
 	callbackArgs   types.DelegateCallback
 }
@@ -36,12 +36,12 @@ type DelegateCallbackTestCase struct {
 }
 
 func (s *KeeperTestSuite) SetupDelegateCallback() DelegateCallbackTestCase {
-	stakedBal := cosmosmath.NewInt(1_000_000)
-	val1Bal := cosmosmath.NewInt(400_000)
+	stakedBal := sdkmath.NewInt(1_000_000)
+	val1Bal := sdkmath.NewInt(400_000)
 	val2Bal := stakedBal.Sub(val1Bal)
-	balanceToStake := cosmosmath.NewInt(300_000)
-	val1RelAmt := cosmosmath.NewInt(120_000)
-	val2RelAmt := cosmosmath.NewInt(180_000)
+	balanceToStake := sdkmath.NewInt(300_000)
+	val1RelAmt := sdkmath.NewInt(120_000)
+	val2RelAmt := sdkmath.NewInt(180_000)
 
 	val1 := types.Validator{
 		Name:          "val1",
@@ -197,7 +197,7 @@ func (s *KeeperTestSuite) TestDelegateCallback_MissingValidator() {
 	invalidArgs := tc.validArgs
 	badSplitDelegation := types.SplitDelegation{
 		Validator: "address_dne",
-		Amount:    cosmosmath.NewInt(1234),
+		Amount:    sdkmath.NewInt(1234),
 	}
 	callbackArgs := types.DelegateCallback{
 		HostZoneId:       HostChainId,
