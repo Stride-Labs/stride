@@ -81,7 +81,7 @@ func DelegateCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ack
 		k.Logger(ctx).Error(fmt.Sprintf("failed to fetch txMsgData, packet %v", packet))
 		return sdkerrors.Wrap(icacallbackstypes.ErrTxMsgData, err.Error())
 	}
-	if len(txMsgData.Data) == 0 {
+	if len(txMsgData.MsgResponses) == 0 {
 		k.Logger(ctx).Error(utils.LogCallbackWithHostZone(chainId, ICACallbackID_Delegate,
 			"ICA TX FAILED (ack is empty / ack error), Packet: %+v", packet))
 

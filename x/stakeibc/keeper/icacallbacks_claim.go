@@ -61,7 +61,7 @@ func ClaimCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ack *c
 
 	k.Logger(ctx).Info("ClaimCallback executing", "packet", packet, "txMsgData", txMsgData, "args", args)
 	// handle failed tx on host chain
-	if len(txMsgData.Data) == 0 {
+	if len(txMsgData.MsgResponses) == 0 {
 		k.Logger(ctx).Error(fmt.Sprintf("ClaimCallback failed, packet %v", packet))
 		// after an error, a user should be able to retry the claim
 		userRedemptionRecord.ClaimIsPending = false

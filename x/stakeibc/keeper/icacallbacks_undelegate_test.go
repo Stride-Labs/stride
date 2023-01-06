@@ -15,6 +15,7 @@ import (
 	stakeibckeeper "github.com/Stride-Labs/stride/v4/x/stakeibc/keeper"
 	"github.com/Stride-Labs/stride/v4/x/stakeibc/types"
 	stakeibc "github.com/Stride-Labs/stride/v4/x/stakeibc/types"
+	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 )
 
 type UndelegateCallbackState struct {
@@ -260,21 +261,14 @@ func (s *KeeperTestSuite) TestGetLatestCompletionTime_Success() {
 	// Construct TxMsgData
 	firstCompletionTime := time.Now().Add(time.Second * time.Duration(10))
 	secondCompletionTime := time.Now().Add(time.Second * time.Duration(20))
+	var err error
 	txMsgData := &sdk.TxMsgData{
-		Data: make([]*sdk.MsgData, 2), //nolint:staticcheck
+		MsgResponses: make([]*codectypes.Any, 2), //nolint:staticcheck
 	}
-	data, err := proto.Marshal(&stakingTypes.MsgUndelegateResponse{CompletionTime: firstCompletionTime})
+	txMsgData.MsgResponses[0], err = codectypes.NewAnyWithValue(&stakingTypes.MsgUndelegateResponse{CompletionTime: firstCompletionTime})
 	s.Require().NoError(err, "marshal error")
-	txMsgData.Data[0] = &sdk.MsgData{ //nolint:staticcheck
-		MsgType: sdk.MsgTypeURL(&stakingTypes.MsgUndelegate{}),
-		Data:    data,
-	}
-	data, err = proto.Marshal(&stakingTypes.MsgUndelegateResponse{CompletionTime: secondCompletionTime})
+	txMsgData.MsgResponses[1], err = codectypes.NewAnyWithValue(&stakingTypes.MsgUndelegateResponse{CompletionTime: secondCompletionTime})
 	s.Require().NoError(err, "marshal error")
-	txMsgData.Data[1] = &sdk.MsgData{ //nolint:staticcheck
-		MsgType: sdk.MsgTypeURL(&stakingTypes.MsgUndelegate{}),
-		Data:    data,
-	}
 	// Check that the second completion time (the later of the two) is returned
 	latestCompletionTime, err := s.App.StakeibcKeeper.GetLatestCompletionTime(s.Ctx, txMsgData)
 	s.Require().NoError(err, "get latest completion time succeeds")
@@ -284,7 +278,7 @@ func (s *KeeperTestSuite) TestGetLatestCompletionTime_Success() {
 func (s *KeeperTestSuite) TestGetLatestCompletionTime_Failure() {
 	_ = s.SetupUndelegateCallback()
 	txMsgData := &sdk.TxMsgData{
-		Data: make([]*sdk.MsgData, 2), //nolint:staticcheck
+		MsgResponses: make([]*codectypes.Any, 2), //nolint:staticcheck
 	}
 	_, err := s.App.StakeibcKeeper.GetLatestCompletionTime(s.Ctx, txMsgData)
 	s.Require().EqualError(err, "msgResponseBytes or msgResponseBytes.Data is nil: TxMsgData invalid")

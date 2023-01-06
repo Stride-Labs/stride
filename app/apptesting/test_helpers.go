@@ -19,6 +19,7 @@ import (
 	"github.com/stretchr/testify/suite"
 	"github.com/tendermint/tendermint/crypto/ed25519"
 	tmtypes "github.com/tendermint/tendermint/proto/tendermint/types"
+	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 
 	"github.com/Stride-Labs/stride/v4/app"
 )
@@ -255,23 +256,19 @@ func CopyConnectionAndClientToPath(path *ibctesting.Path, pathToCopy *ibctesting
 
 func (s *AppTestHelper) ICAPacketAcknowledgement(msgs []sdk.Msg, msgResponse *proto.Message) channeltypes.Acknowledgement {
 	txMsgData := &sdk.TxMsgData{
-		Data: make([]*sdk.MsgData, len(msgs)), //nolint:staticcheck
+		MsgResponses: make([]*codectypes.Any, len(msgs)), //nolint:staticcheck
 	}
-	for i, msg := range msgs {
-		var data []byte
+	for i, _ := range msgs {
+		var data *codectypes.Any
 		var err error
 		if msgResponse != nil {
-			// see: https://github.com/cosmos/cosmos-sdk/blob/1dee068932d32ba2a87ba67fc399ae96203ec76d/types/result.go#L246
-			data, err = proto.Marshal(*msgResponse)
+			data, err = codectypes.NewAnyWithValue(*msgResponse)
 			s.Require().NoError(err, "marshal error")
 		} else {
-			data = []byte("msg_response")
-		}
-		txMsgData.Data[i] = &sdk.MsgData{ //nolint:staticcheck
-			MsgType: sdk.MsgTypeURL(msg),
-			Data:    data,
+			data = &codectypes.Any{}
 		}
 
+		txMsgData.MsgResponses[i] = data
 	}
 	marshalledTxMsgData, err := proto.Marshal(txMsgData)
 	s.Require().NoError(err)

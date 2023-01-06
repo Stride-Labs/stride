@@ -47,7 +47,7 @@ func ReinvestCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ack
 		return sdkerrors.Wrap(icacallbackstypes.ErrTxMsgData, err.Error())
 	}
 
-	if len(txMsgData.Data) == 0 {
+	if len(txMsgData.MsgResponses) == 0 {
 		// handle tx failure
 		k.Logger(ctx).Error(fmt.Sprintf("ReinvestCallback tx failed, txMsgData is empty, ack error, packet %v", packet))
 		return nil

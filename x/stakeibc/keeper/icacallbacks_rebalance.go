@@ -45,7 +45,7 @@ func RebalanceCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ac
 		return sdkerrors.Wrap(icacallbackstypes.ErrTxMsgData, err.Error())
 	}
 
-	if len(txMsgData.Data) == 0 {
+	if len(txMsgData.MsgResponses) == 0 {
 		// failed transaction
 		k.Logger(ctx).Error(fmt.Sprintf("RebalanceCallback tx failed, ack is empty (ack error), packet %v", packet))
 		return nil

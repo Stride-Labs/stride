@@ -76,7 +76,7 @@ func UndelegateCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, a
 		k.Logger(ctx).Error(fmt.Sprintf("UndelegateCallback failed to fetch txMsgData, packet %v", packet))
 		return sdkerrors.Wrap(icacallbackstypes.ErrTxMsgData, err.Error())
 	}
-	if len(txMsgData.Data) == 0 {
+	if len(txMsgData.MsgResponses) == 0 {
 		k.Logger(ctx).Error(utils.LogCallbackWithHostZone(chainId, ICACallbackID_Undelegate,
 			"ICA TX FAILED (ack is empty / ack error), Packet: %+v", packet))
 
@@ -155,12 +155,13 @@ func (k Keeper) UpdateDelegationBalances(ctx sdk.Context, zone types.HostZone, u
 func (k Keeper) GetLatestCompletionTime(ctx sdk.Context, txMsgData *sdk.TxMsgData) (*time.Time, error) {
 	// Update the completion time using the latest completion time across each message within the transaction
 	latestCompletionTime := time.Time{}
-	for _, msgResponseBytes := range txMsgData.Data {
+	for _, msgResponse := range txMsgData.MsgResponses {
 		var undelegateResponse stakingtypes.MsgUndelegateResponse
-		if msgResponseBytes == nil || msgResponseBytes.Data == nil {
+		if msgResponse == nil {
 			return nil, sdkerrors.Wrap(types.ErrTxMsgDataInvalid, "msgResponseBytes or msgResponseBytes.Data is nil")
 		}
-		err := proto.Unmarshal(msgResponseBytes.Data, &undelegateResponse)
+		undelegateResponsebz := msgResponse.GetValue()
+		err := proto.Unmarshal(undelegateResponsebz, &undelegateResponse)
 		if err != nil {
 			errMsg := fmt.Sprintf("Unable to unmarshal undelegation tx response | %s", err)
 			k.Logger(ctx).Error(errMsg)
