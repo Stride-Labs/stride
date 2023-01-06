@@ -148,8 +148,6 @@ func (k Keeper) CallRegisteredICACallback(ctx sdk.Context, modulePacket channelt
 	} else {
 		k.Logger(ctx).Error(fmt.Sprintf("Callback %v has no associated callback", callbackData))
 	}
-	// QUESTION: Do we want to catch the case where the callback ID has not been registered?
-	// Maybe just as an info log if it's expected that some acks do not have an associated callback?
 
 	// remove the callback data
 	k.RemoveCallbackData(ctx, callbackDataKey)
