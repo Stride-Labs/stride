@@ -3,13 +3,19 @@ package cli
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/spf13/cobra"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
+	"github.com/cosmos/cosmos-sdk/version"
 
 	"github.com/Stride-Labs/stride/v4/x/ratelimit/types"
+)
+
+const (
+	FlagDenom = "denom"
 )
 
 // GetQueryCmd returns the cli query commands for this module.
@@ -25,27 +31,52 @@ func GetQueryCmd() *cobra.Command {
 
 	cmd.AddCommand(
 		GetCmdQueryRateLimit(),
-		GetCmdQueryRateLimits(),
+		GetCmdQueryAllRateLimits(),
 		GetCmdQueryRateLimitsByChainId(),
 	)
 	return cmd
 }
 
-// GetCmdQueryRateLimit implements a command to query a specific rate limit
+// GetCmdQueryRateLimit implements a command to query rate limits by channel-id and denom
 func GetCmdQueryRateLimit() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "rate-limit [denom] [channel-id]",
-		Short: "Query a specific rate limit",
-		Args:  cobra.ExactArgs(2),
+		Use:   "rate-limit [channel-id]",
+		Short: "Query rate limits by channel-id and denom",
+		Long: strings.TrimSpace(
+			fmt.Sprintf(`Query rate limits by channel-id and denom.
+
+Example:
+  $ %s query %s rate-limit [channel-id]
+  $ %s query %s rate-limit [channel-id] --denom=[denom]
+`,
+				version.AppName, types.ModuleName, version.AppName, types.ModuleName,
+			),
+		),
+		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			denom := args[0]
-			channelId := args[1]
+			channelId := args[0]
+			denom, err := cmd.Flags().GetString(FlagDenom)
+			if err != nil {
+				return err
+			}
 
 			clientCtx, err := client.GetClientQueryContext(cmd)
 			if err != nil {
 				return err
 			}
 			queryClient := types.NewQueryClient(clientCtx)
+
+			if denom == "" {
+				req := &types.QueryRateLimitsByChannelIdRequest{
+					ChannelId: channelId,
+				}
+				res, err := queryClient.RateLimitsByChannelId(context.Background(), req)
+				if err != nil {
+					return err
+				}
+
+				return clientCtx.PrintObjectLegacy(res.RateLimits)
+			}
 
 			req := &types.QueryRateLimitRequest{
 				Denom:     denom,
@@ -66,8 +97,8 @@ func GetCmdQueryRateLimit() *cobra.Command {
 	return cmd
 }
 
-// GetCmdQueryRateLimits return all available rate limits.
-func GetCmdQueryRateLimits() *cobra.Command {
+// GetCmdQueryAllRateLimits return all available rate limits.
+func GetCmdQueryAllRateLimits() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "list-rate-limits",
 		Short: "Query all rate limits",
@@ -79,8 +110,8 @@ func GetCmdQueryRateLimits() *cobra.Command {
 			}
 			queryClient := types.NewQueryClient(clientCtx)
 
-			req := &types.QueryRateLimitsRequest{}
-			res, err := queryClient.RateLimits(context.Background(), req)
+			req := &types.QueryAllRateLimitsRequest{}
+			res, err := queryClient.AllRateLimits(context.Background(), req)
 
 			if err != nil {
 				return err
