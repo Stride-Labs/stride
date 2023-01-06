@@ -263,7 +263,7 @@ func (s *KeeperTestSuite) TestGetLatestCompletionTime_Success() {
 	secondCompletionTime := time.Now().Add(time.Second * time.Duration(20))
 	var err error
 	txMsgData := &sdk.TxMsgData{
-		MsgResponses: make([]*codectypes.Any, 2), //nolint:staticcheck
+		MsgResponses: make([]*codectypes.Any, 2), 
 	}
 	txMsgData.MsgResponses[0], err = codectypes.NewAnyWithValue(&stakingTypes.MsgUndelegateResponse{CompletionTime: firstCompletionTime})
 	s.Require().NoError(err, "marshal error")
@@ -278,7 +278,7 @@ func (s *KeeperTestSuite) TestGetLatestCompletionTime_Success() {
 func (s *KeeperTestSuite) TestGetLatestCompletionTime_Failure() {
 	_ = s.SetupUndelegateCallback()
 	txMsgData := &sdk.TxMsgData{
-		MsgResponses: make([]*codectypes.Any, 2), //nolint:staticcheck
+		MsgResponses: make([]*codectypes.Any, 2),
 	}
 	_, err := s.App.StakeibcKeeper.GetLatestCompletionTime(s.Ctx, txMsgData)
 	s.Require().EqualError(err, "msgResponseBytes or msgResponseBytes.Data is nil: TxMsgData invalid")
