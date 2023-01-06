@@ -15,7 +15,8 @@ RUN apk add --update vim bash \
 
 COPY --from=stridezone:cosmovisor /opt/cosmos-sdk/cosmovisor/cosmovisor /usr/local/bin/cosmovisor
 COPY --from=stridezone:cosmovisor --chown=stride:stride /opt/build/strided1 ${COSMOVISOR_HOME}/genesis/bin/strided
-COPY --from=stridezone:stride --chown=stride:stride /usr/local/bin/strided ${COSMOVISOR_HOME}/upgrades/${UPGRADE_NAME}/bin/strided
+COPY --from=stridezone:cosmovisor --chown=stride:stride /opt/build/strided2 ${COSMOVISOR_HOME}/upgrades/v4/bin/strided
+COPY --from=stridezone:stride --chown=stride:stride /usr/local/bin/strided ${COSMOVISOR_HOME}/upgrades/v5/bin/strided
 
 USER stride
 WORKDIR /home/stride

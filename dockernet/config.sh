@@ -27,7 +27,8 @@ elif [[ "${#HOST_CHAINS[@]}" == "0" ]]; then
 fi
 
 # Sets up upgrade if {UPGRADE_NAME} is non-empty
-UPGRADE_NAME=""
+# CHANGE TO V5 after first upgrade
+UPGRADE_NAME="v4"
 UPGRADE_OLD_COMMIT_HASH=""
 
 # DENOMS
@@ -110,7 +111,11 @@ STRIDE_FEE_ADDRESS=stride1czvrk3jkvtj8m27kqsqu2yrkhw3h3ykwj3rxh6
 if [[ "$UPGRADE_NAME" == "" ]]; then 
   STRIDE_CMD="$SCRIPT_DIR/../build/strided"
 else
-  STRIDE_CMD="$UPGRADES/binaries/strided1"
+  if [[ "$UPGRADE_NAME" == "v4" ]]; then 
+    STRIDE_CMD="$UPGRADES/binaries/strided1"
+  elif [[ "$UPGRADE_NAME" == "v5" ]]; then 
+    STRIDE_CMD="$UPGRADES/binaries/strided2"
+  fi
 fi
 STRIDE_MAIN_CMD="$STRIDE_CMD --home $SCRIPT_DIR/state/${STRIDE_NODE_PREFIX}1"
 

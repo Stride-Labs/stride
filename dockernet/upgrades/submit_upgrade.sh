@@ -4,7 +4,13 @@ set -eu
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 source ${SCRIPT_DIR}/../config.sh
 
-UPGRADE_HEIGHT=250
+if [[ "$UPGRADE_NAME" == "v4" ]]; then
+    UPGRADE_HEIGHT=100
+    PROPOSAL_ID=1
+else
+    UPGRADE_HEIGHT=200
+    PROPOSAL_ID=2
+fi
 
 printf "PROPOSAL\n"
 $STRIDE_MAIN_CMD tx gov submit-proposal software-upgrade $UPGRADE_NAME \
@@ -17,25 +23,25 @@ $STRIDE_MAIN_CMD query gov proposals
 
 sleep 5 
 printf "\nDEPOSIT\n"
-$STRIDE_MAIN_CMD tx gov deposit 1 10000001ustrd --from val1 -y | TRIM_TX
+$STRIDE_MAIN_CMD tx gov deposit $PROPOSAL_ID 10000001ustrd --from val1 -y | TRIM_TX
 
 sleep 5
 printf "\nDEPOSIT CONFIRMATION\n"
-$STRIDE_MAIN_CMD query gov deposits 1
+$STRIDE_MAIN_CMD query gov deposits $PROPOSAL_ID
 
 sleep 5
 printf "\nVOTING\n"
-$STRIDE_MAIN_CMD tx gov vote 1 yes --from val1 -y | TRIM_TX
-$STRIDE_MAIN_CMD tx gov vote 1 yes --from val2 -y | TRIM_TX
-$STRIDE_MAIN_CMD tx gov vote 1 yes --from val3 -y | TRIM_TX
+$STRIDE_MAIN_CMD tx gov vote $PROPOSAL_ID yes --from val1 -y | TRIM_TX
+$STRIDE_MAIN_CMD tx gov vote $PROPOSAL_ID yes --from val2 -y | TRIM_TX
+$STRIDE_MAIN_CMD tx gov vote $PROPOSAL_ID yes --from val3 -y | TRIM_TX
 
 sleep 5
 printf "\nVOTE CONFIRMATION\n"
-$STRIDE_MAIN_CMD query gov tally 1
+$STRIDE_MAIN_CMD query gov tally $PROPOSAL_ID
 
 printf "\nPROPOSAL STATUS\n"
 while true; do
-    status=$($STRIDE_MAIN_CMD query gov proposal 1 | grep "status" | awk '{printf $2}')
+    status=$($STRIDE_MAIN_CMD query gov proposal $PROPOSAL_ID | grep "status" | awk '{printf $2}')
     if [[ "$status" == "PROPOSAL_STATUS_VOTING_PERIOD" ]]; then
         echo "Proposal still in progress..."
         sleep 5
