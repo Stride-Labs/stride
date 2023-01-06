@@ -13,7 +13,6 @@ LOCALNET_COMPOSE_FILE=$(LOCALSTRIDE_HOME)/localnet/docker-compose.yml
 STATE_EXPORT_COMPOSE_FILE=$(LOCALSTRIDE_HOME)/state-export/docker-compose.yml
 SIMAPP = ./app
 BINDIR ?= $(GOPATH)/bin
-CURRENT_DIR = $(shell pwd)
 
 # process build tags
 
