@@ -1,7 +1,6 @@
 package types
 
 import (
-	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	cosmosmath "cosmossdk.io/math"
@@ -11,7 +10,7 @@ const TypeMsgRedeemStake = "redeem_stake"
 
 var _ sdk.Msg = &MsgRedeemStake{}
 
-func NewMsgRedeemStake(creator string, amount math.Int, hostZone string, receiver string) *MsgRedeemStake {
+func NewMsgRedeemStake(creator string, amount cosmosmath.Int, hostZone string, receiver string) *MsgRedeemStake {
 	return &MsgRedeemStake{
 		Creator:  creator,
 		Amount:   amount,
