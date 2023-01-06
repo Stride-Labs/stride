@@ -11,6 +11,7 @@ import (
 	host "github.com/cosmos/ibc-go/v5/modules/core/24-host"
 	ibcexported "github.com/cosmos/ibc-go/v5/modules/core/exported"
 
+	"github.com/Stride-Labs/stride/v4/x/icacallbacks"
 	icacallbacktypes "github.com/Stride-Labs/stride/v4/x/icacallbacks/types"
 
 	"github.com/Stride-Labs/stride/v4/x/stakeibc/keeper"
@@ -136,14 +137,14 @@ func (im IBCModule) OnAcknowledgementPacket(
 	ackInfo := fmt.Sprintf("sequence #%d, from %s %s, to %s %s",
 		modulePacket.Sequence, modulePacket.SourceChannel, modulePacket.SourcePort, modulePacket.DestinationChannel, modulePacket.DestinationPort)
 
-	var ack channeltypes.Acknowledgement
-	err := channeltypes.SubModuleCdc.UnmarshalJSON(acknowledgement, &ack)
+	ackResponse, err := icacallbacks.UnpackAcknowledgementResponse(ctx, acknowledgement, im.keeper.Logger(ctx))
 	if err != nil {
-		errMsg := fmt.Sprintf("Unable to unmarshal ack from stakeibc OnAcknowledgePacket | Sequence %d, from %s %s, to %s %s",
-			modulePacket.Sequence, modulePacket.SourceChannel, modulePacket.SourcePort, modulePacket.DestinationChannel, modulePacket.DestinationPort)
+		errMsg := fmt.Sprintf("Unable to unpack message data from acknowledgement, Sequence %d, from %s %s, to %s %s: %s",
+			modulePacket.Sequence, modulePacket.SourceChannel, modulePacket.SourcePort, modulePacket.DestinationChannel, modulePacket.DestinationPort, err.Error())
 		im.keeper.Logger(ctx).Error(errMsg)
-		return sdkerrors.Wrapf(types.ErrMarshalFailure, errMsg)
+		return sdkerrors.Wrapf(icacallbacktypes.ErrInvalidAcknowledgement, errMsg)
 	}
+
 	im.keeper.Logger(ctx).Info(fmt.Sprintf("Acknowledgement was successfully unmarshalled: ackInfo: %s", ackInfo))
 	eventType := "ack"
 	ctx.EventManager().EmitEvent(
@@ -154,7 +155,7 @@ func (im IBCModule) OnAcknowledgementPacket(
 		),
 	)
 
-	err = im.keeper.ICACallbacksKeeper.CallRegisteredICACallback(ctx, modulePacket, &ack)
+	err = im.keeper.ICACallbacksKeeper.CallRegisteredICACallback(ctx, modulePacket, ackResponse)
 	if err != nil {
 		errMsg := fmt.Sprintf("Unable to call registered callback from stakeibc OnAcknowledgePacket | Sequence %d, from %s %s, to %s %s",
 			modulePacket.Sequence, modulePacket.SourceChannel, modulePacket.SourcePort, modulePacket.DestinationChannel, modulePacket.DestinationPort)

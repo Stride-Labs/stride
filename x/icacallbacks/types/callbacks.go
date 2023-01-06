@@ -9,6 +9,6 @@ import (
 type ICACallbackHandler interface {
 	AddICACallback(id string, fn interface{}) ICACallbackHandler
 	RegisterICACallbacks() ICACallbackHandler
-	CallICACallback(ctx sdk.Context, id string, packet channeltypes.Packet, ack *channeltypes.Acknowledgement, args []byte) error
+	CallICACallback(ctx sdk.Context, id string, packet channeltypes.Packet, ackResponse *ICATxResponse, args []byte) error
 	HasICACallback(id string) bool
 }

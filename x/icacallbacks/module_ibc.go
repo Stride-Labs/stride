@@ -6,6 +6,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
+	ibctransfertypes "github.com/cosmos/ibc-go/v5/modules/apps/transfer/types"
 	channeltypes "github.com/cosmos/ibc-go/v5/modules/core/04-channel/types"
 	porttypes "github.com/cosmos/ibc-go/v5/modules/core/05-port/types"
 	ibcexported "github.com/cosmos/ibc-go/v5/modules/core/exported"
@@ -93,30 +94,70 @@ func (im IBCModule) NegotiateAppVersion(
 	return proposedVersion, nil
 }
 
-// GetTxMsgData returns the msgs from an ICA transaction and can be reused across authentication modules
-func GetTxMsgData(ctx sdk.Context, ack channeltypes.Acknowledgement, logger log.Logger) (*types.ICATxResponse, error) {
+// UnpackAcknowledgementResponse returns the msgs from an ICA transaction and can be reused across authentication modules
+func UnpackAcknowledgementResponse(ctx sdk.Context, ack []byte, logger log.Logger) (*types.ICATxResponse, error) {
+	// NOTE: Is this safe to assume? According to the ics-27 spec, errors on host chains should be reflected in the acknowledgement type
+	// so Acknowledgement_Result should only be returned if the transaction was successful
+	// However, I recall seeing a case where the acknowledgement type was Acknowledgement_Result but the transaction failed
+	//
+	// -> If my memory's correct, I think a failure on the host could come back as either an AcknowledgementError
+	//    or it could be an AcknowledgementResult with data length 0
+	//    It's a little concering that the switch statement now just assumes the data length 0 means it's sdk 46
+	//
+	// It's also unclear to me whether this timeout case below is possible
+	// In any case, we should just test this thoughly with the following cases:
+	//   Success
+	//   Timeout
+	//   Error (with AckError - e.g. I can't remember exactly how we simulated this)
+	//   Error (without AckError - e.g. try to delegate to a validator that isn't there)
+	//
+	// Also lets think of a better name for this function
+
+	// Unmarshal the raw ack response
+	var acknowledgement channeltypes.Acknowledgement
+	if err := ibctransfertypes.ModuleCdc.UnmarshalJSON(ack, &acknowledgement); err != nil {
+		return nil, sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "cannot unmarshal ICS-20 transfer packet acknowledgement: %s", err.Error())
+	}
+
 	// if ack is nil, a timeout occurred
-	if &ack == nil {
+	if &acknowledgement == nil {
 		return &types.ICATxResponse{Status: types.TIMEOUT}, nil
 	}
-	txMsgData := &sdk.TxMsgData{}
-	switch response := ack.Response.(type) {
+
+	// The ack can come back as either AcknowledgementResult or AcknowledgementError
+	// If it comes back as AcknowledgementResult, the messages are encoded differently depending on the SDK version
+	switch response := acknowledgement.Response.(type) {
 	case *channeltypes.Acknowledgement_Result:
 		if len(response.Result) == 0 {
 			return nil, sdkerrors.Wrapf(channeltypes.ErrInvalidAcknowledgement, "acknowledgement result cannot be empty")
 		}
-		err := proto.Unmarshal(ack.GetResult(), txMsgData)
-		if err != nil {
-			logger.Error(fmt.Sprintf("cannot unmarshal ICS-27 tx message data: %s", err.Error()))
+
+		// Unmarshal the message data from within the ack
+		txMsgData := &sdk.TxMsgData{}
+		if err := proto.Unmarshal(acknowledgement.GetResult(), txMsgData); err != nil {
 			return nil, sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "cannot unmarshal ICS-27 tx message data: %s", err.Error())
 		}
-		// NOTE: Is this safe to assume? According to the ics-27 spec, errors on host chains should be reflected in the acknowledgement type
-		// so Acknowledgement_Result should only be returned if the transaction was successful
-		// However, I recall seeing a case where the acknowledgement type was Acknowledgement_Result but the transaction failed
-		return &types.ICATxResponse{Status: types.SUCCESS, Data: *txMsgData}, nil
+
+		// Unpack all the message responses based on the sdk version (determined from the length of txMsgData.Data)
+		switch len(txMsgData.Data) {
+		case 0:
+			// for SDK 0.46 and above
+			msgResponses := make([][]byte, len(txMsgData.Data))
+			for i, msgResponse := range txMsgData.MsgResponses {
+				msgResponses[i] = msgResponse.GetValue()
+			}
+			return &types.ICATxResponse{Status: types.SUCCESS, MsgResponses: msgResponses}, nil
+		default:
+			// for SDK 0.45 and below
+			var msgResponses = make([][]byte, len(txMsgData.Data))
+			for i, msgData := range txMsgData.Data {
+				msgResponses[i] = msgData.Data
+			}
+			return &types.ICATxResponse{Status: types.SUCCESS, MsgResponses: msgResponses}, nil
+		}
 	case *channeltypes.Acknowledgement_Error:
 		logger.Error(fmt.Sprintf("acknowledgement error: %s", response.Error))
-		return &types.ICATxResponse{Status: types.FAILURE}, nil
+		return &types.ICATxResponse{Status: types.FAILURE, Error: response.Error}, nil
 	default:
 		return nil, sdkerrors.Wrapf(channeltypes.ErrInvalidAcknowledgement, "unsupported acknowledgement response field type %T", response)
 	}

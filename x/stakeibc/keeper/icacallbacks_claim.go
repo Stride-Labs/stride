@@ -3,7 +3,6 @@ package keeper
 import (
 	"fmt"
 
-	"github.com/Stride-Labs/stride/v4/x/icacallbacks"
 	icacallbackstypes "github.com/Stride-Labs/stride/v4/x/icacallbacks/types"
 	recordstypes "github.com/Stride-Labs/stride/v4/x/records/types"
 	"github.com/Stride-Labs/stride/v4/x/stakeibc/types"
@@ -32,7 +31,7 @@ func (k Keeper) UnmarshalClaimCallbackArgs(ctx sdk.Context, claimCallback []byte
 	return &unmarshalledDelegateCallback, nil
 }
 
-func ClaimCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ack *channeltypes.Acknowledgement, args []byte) error {
+func ClaimCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, icaTxResponse *icacallbackstypes.ICATxResponse, args []byte) error {
 	// deserialize the args
 	claimCallback, err := k.UnmarshalClaimCallbackArgs(ctx, args)
 	if err != nil {
@@ -44,12 +43,6 @@ func ClaimCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ack *c
 		return sdkerrors.Wrapf(types.ErrRecordNotFound, "user redemption record not found %s", claimCallback.GetUserRedemptionRecordId())
 	}
 
-	icaTxResponse, err := icacallbacks.GetTxMsgData(ctx, *ack, k.Logger(ctx))
-	if err != nil {
-		k.Logger(ctx).Error(fmt.Sprintf("failed to unmarshal txMsgData, packet %v", packet))
-		return sdkerrors.Wrap(icacallbackstypes.ErrTxMsgData, err.Error())
-	}
-
 	// handle timeout
 	if icaTxResponse.Status == icacallbackstypes.TIMEOUT {
 		k.Logger(ctx).Error(fmt.Sprintf("ClaimCallback timeout, ack is nil, packet %v", packet))
@@ -59,10 +52,9 @@ func ClaimCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ack *c
 		return nil
 	}
 
-	k.Logger(ctx).Info("ClaimCallback executing", "packet", packet, "txMsgData", &icaTxResponse.Data, "args", args)
 	// handle failed tx on host chain
 	if icaTxResponse.Status == icacallbackstypes.FAILURE {
-		k.Logger(ctx).Error(fmt.Sprintf("ClaimCallback failed, packet %v", packet))
+		k.Logger(ctx).Error(fmt.Sprintf("ClaimCallback failed, packet %v, error: %s", packet, icaTxResponse.Error))
 		// after an error, a user should be able to retry the claim
 		userRedemptionRecord.ClaimIsPending = false
 		k.RecordsKeeper.SetUserRedemptionRecord(ctx, userRedemptionRecord)

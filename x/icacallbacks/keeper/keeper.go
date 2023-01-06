@@ -19,8 +19,8 @@ import (
 
 	channeltypes "github.com/cosmos/ibc-go/v5/modules/core/04-channel/types"
 
-	icacontrollerkeeper "github.com/cosmos/ibc-go/v5/modules/apps/27-interchain-accounts/controller/keeper"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
+	icacontrollerkeeper "github.com/cosmos/ibc-go/v5/modules/apps/27-interchain-accounts/controller/keeper"
 )
 
 type (
@@ -123,7 +123,7 @@ func (k Keeper) GetICACallbackHandlerFromPacket(ctx sdk.Context, modulePacket ch
 	return &callbackHandler, nil
 }
 
-func (k Keeper) CallRegisteredICACallback(ctx sdk.Context, modulePacket channeltypes.Packet, ack *channeltypes.Acknowledgement) error {
+func (k Keeper) CallRegisteredICACallback(ctx sdk.Context, modulePacket channeltypes.Packet, ackResponse *types.ICATxResponse) error {
 	callbackDataKey := types.PacketID(modulePacket.GetSourcePort(), modulePacket.GetSourceChannel(), modulePacket.Sequence)
 	callbackData, found := k.GetCallbackDataFromPacket(ctx, modulePacket, callbackDataKey)
 	if !found {
@@ -139,7 +139,7 @@ func (k Keeper) CallRegisteredICACallback(ctx sdk.Context, modulePacket channelt
 	if (*callbackHandler).HasICACallback(callbackData.CallbackId) {
 		k.Logger(ctx).Info(fmt.Sprintf("Calling callback for %s", callbackData.CallbackId))
 		// if acknowledgement is empty, then it is a timeout
-		err := (*callbackHandler).CallICACallback(ctx, callbackData.CallbackId, modulePacket, ack, callbackData.CallbackArgs)
+		err := (*callbackHandler).CallICACallback(ctx, callbackData.CallbackId, modulePacket, ackResponse, callbackData.CallbackArgs)
 		if err != nil {
 			errMsg := fmt.Sprintf("Error occured while calling ICACallback (%s) | err: %s", callbackData.CallbackId, err.Error())
 			k.Logger(ctx).Error(errMsg)

@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	epochtypes "github.com/Stride-Labs/stride/v4/x/epochs/types"
-	"github.com/Stride-Labs/stride/v4/x/icacallbacks"
 	icacallbackstypes "github.com/Stride-Labs/stride/v4/x/icacallbacks/types"
 	recordstypes "github.com/Stride-Labs/stride/v4/x/records/types"
 	"github.com/Stride-Labs/stride/v4/x/stakeibc/types"
@@ -33,14 +32,9 @@ func (k Keeper) UnmarshalReinvestCallbackArgs(ctx sdk.Context, reinvestCallback 
 	return &unmarshalledReinvestCallback, nil
 }
 
-func ReinvestCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ack *channeltypes.Acknowledgement, args []byte) error {
+func ReinvestCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, icaTxResponse *icacallbackstypes.ICATxResponse, args []byte) error {
 	k.Logger(ctx).Info("ReinvestCallback executing", "packet", packet)
-	icaTxResponse, err := icacallbacks.GetTxMsgData(ctx, *ack, k.Logger(ctx))
-	if err != nil {
-		k.Logger(ctx).Error(fmt.Sprintf("failed to fetch txMsgData, packet %v", packet))
-		return sdkerrors.Wrap(icacallbackstypes.ErrTxMsgData, err.Error())
-	}
-	
+
 	if icaTxResponse.Status == icacallbackstypes.TIMEOUT {
 		// handle timeout
 		k.Logger(ctx).Error(fmt.Sprintf("ReinvestCallback timeout, ack is nil, packet %v", packet))
@@ -49,7 +43,7 @@ func ReinvestCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ack
 
 	if icaTxResponse.Status == icacallbackstypes.FAILURE {
 		// handle tx failure
-		k.Logger(ctx).Error(fmt.Sprintf("ReinvestCallback tx failed, txMsgData is empty, ack error, packet %v", packet))
+		k.Logger(ctx).Error(fmt.Sprintf("ReinvestCallback tx failed, txMsgData is empty, ack error, packet %v, error: %s", packet, icaTxResponse.Error))
 		return nil
 	}
 

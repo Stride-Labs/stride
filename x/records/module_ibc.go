@@ -10,6 +10,7 @@ import (
 	channeltypes "github.com/cosmos/ibc-go/v5/modules/core/04-channel/types"
 	porttypes "github.com/cosmos/ibc-go/v5/modules/core/05-port/types"
 
+	icacallbacks "github.com/Stride-Labs/stride/v4/x/icacallbacks"
 	icacallbacktypes "github.com/Stride-Labs/stride/v4/x/icacallbacks/types"
 
 	"github.com/Stride-Labs/stride/v4/x/records/keeper"
@@ -166,29 +167,19 @@ func (im IBCModule) OnAcknowledgementPacket(
 	relayer sdk.AccAddress,
 ) error {
 	im.keeper.Logger(ctx).Info(fmt.Sprintf("[IBC-TRANSFER] OnAcknowledgementPacket  %v", packet))
-	// doCustomLogic(packet, ack)
-	// ICS-20 ack
-	var ack channeltypes.Acknowledgement
-	if err := ibctransfertypes.ModuleCdc.UnmarshalJSON(acknowledgement, &ack); err != nil {
-		im.keeper.Logger(ctx).Error(fmt.Sprintf("Error unmarshalling ack  %v", err.Error()))
-		return sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "cannot unmarshal ICS-20 transfer packet acknowledgement: %v", err)
-	}
 
-	// log the ack type
-	switch resp := ack.Response.(type) {
-	case *channeltypes.Acknowledgement_Result:
-		im.keeper.Logger(ctx).Info(fmt.Sprintf("\t [IBC-TRANSFER] Acknowledgement_Result {%s}", string(resp.Result)))
-	case *channeltypes.Acknowledgement_Error:
-		im.keeper.Logger(ctx).Error(fmt.Sprintf("\t [IBC-TRANSFER] Acknowledgement_Error {%s}", resp.Error))
-	default:
-		im.keeper.Logger(ctx).Error(fmt.Sprintf("\t [IBC-TRANSFER] Unrecognized ack for packet {%v}", packet))
+	ackResponse, err := icacallbacks.UnpackAcknowledgementResponse(ctx, acknowledgement, im.keeper.Logger(ctx))
+	if err != nil {
+		errMsg := fmt.Sprintf("Unable to unpack message data from acknowledgement, Sequence %d, from %s %s, to %s %s: %s",
+			packet.Sequence, packet.SourceChannel, packet.SourcePort, packet.DestinationChannel, packet.DestinationPort, err.Error())
+		im.keeper.Logger(ctx).Error(errMsg)
+		return sdkerrors.Wrapf(icacallbacktypes.ErrInvalidAcknowledgement, errMsg)
 	}
 
 	// Custom ack logic only applies to ibc transfers initiated from the `stakeibc` module account
 	// NOTE: if the `stakeibc` module account IBC transfers tokens for some other reason in the future,
 	// this will need to be updated
-	err := im.keeper.ICACallbacksKeeper.CallRegisteredICACallback(ctx, packet, &ack)
-	if err != nil {
+	if err := im.keeper.ICACallbacksKeeper.CallRegisteredICACallback(ctx, packet, ackResponse); err != nil {
 		errMsg := fmt.Sprintf("Unable to call registered callback from records OnAcknowledgePacket | Sequence %d, from %s %s, to %s %s | Error %s",
 			packet.Sequence, packet.SourceChannel, packet.SourcePort, packet.DestinationChannel, packet.DestinationPort, err.Error())
 		im.keeper.Logger(ctx).Error(errMsg)

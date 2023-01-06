@@ -3,7 +3,6 @@ package keeper
 import (
 	"fmt"
 
-	"github.com/Stride-Labs/stride/v4/x/icacallbacks"
 	icacallbackstypes "github.com/Stride-Labs/stride/v4/x/icacallbacks/types"
 	"github.com/Stride-Labs/stride/v4/x/stakeibc/types"
 
@@ -31,14 +30,8 @@ func (k Keeper) UnmarshalRebalanceCallbackArgs(ctx sdk.Context, rebalanceCallbac
 	return &unmarshalledRebalanceCallback, nil
 }
 
-func RebalanceCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ack *channeltypes.Acknowledgement, args []byte) error {
+func RebalanceCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, icaTxResponse *icacallbackstypes.ICATxResponse, args []byte) error {
 	k.Logger(ctx).Info("RebalanceCallback executing", "packet", packet)
-
-	icaTxResponse, err := icacallbacks.GetTxMsgData(ctx, *ack, k.Logger(ctx))
-	if err != nil {
-		k.Logger(ctx).Error(fmt.Sprintf("failed to fetch txMsgData, packet %v", packet))
-		return sdkerrors.Wrap(icacallbackstypes.ErrTxMsgData, err.Error())
-	}
 
 	if icaTxResponse.Status == icacallbackstypes.TIMEOUT {
 		// timeout
