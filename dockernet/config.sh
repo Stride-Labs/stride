@@ -1,19 +1,19 @@
 #!/bin/bash
 
 set -eu
-CONFIG_SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+DOCKERNET_HOME=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
-STATE=$CONFIG_SCRIPT_DIR/state
-LOGS=$CONFIG_SCRIPT_DIR/logs
-UPGRADES=$CONFIG_SCRIPT_DIR/upgrades
-SRC=$CONFIG_SCRIPT_DIR/src
+STATE=$DOCKERNET_HOME/state
+LOGS=$DOCKERNET_HOME/logs
+UPGRADES=$DOCKERNET_HOME/upgrades
+SRC=$DOCKERNET_HOME/src
 PEER_PORT=26656
-DOCKER_COMPOSE="docker-compose -f $CONFIG_SCRIPT_DIR/docker-compose.yml"
+DOCKER_COMPOSE="docker-compose -f $DOCKERNET_HOME/docker-compose.yml"
 
 # Logs
 STRIDE_LOGS=$LOGS/stride.log
-TX_LOGS=$CONFIG_SCRIPT_DIR/logs/tx.log
-KEYS_LOGS=$CONFIG_SCRIPT_DIR/logs/keys.log
+TX_LOGS=$DOCKERNET_HOME/logs/tx.log
+KEYS_LOGS=$DOCKERNET_HOME/logs/keys.log
 
 # List of hosts enabled 
 #  `start-docker` defaults to just GAIA if HOST_CHAINS is empty
@@ -120,71 +120,71 @@ STRIDE_FEE_ADDRESS=stride1czvrk3jkvtj8m27kqsqu2yrkhw3h3ykwj3rxh6
 
 # Binaries are contigent on whether we're doing an upgrade or not
 if [[ "$UPGRADE_NAME" == "" ]]; then 
-  STRIDE_CMD="$CONFIG_SCRIPT_DIR/../build/strided"
+  STRIDE_CMD="$DOCKERNET_HOME/../build/strided"
 else
   STRIDE_CMD="$UPGRADES/binaries/strided1"
 fi
-STRIDE_MAIN_CMD="$STRIDE_CMD --home $CONFIG_SCRIPT_DIR/state/${STRIDE_NODE_PREFIX}1"
+STRIDE_MAIN_CMD="$STRIDE_CMD --home $DOCKERNET_HOME/state/${STRIDE_NODE_PREFIX}1"
 
 # GAIA 
 GAIA_CHAIN_ID=GAIA
 GAIA_NODE_PREFIX=gaia
 GAIA_NUM_NODES=1
-GAIA_CMD="$CONFIG_SCRIPT_DIR/../build/gaiad"
+GAIA_CMD="$DOCKERNET_HOME/../build/gaiad"
 GAIA_VAL_PREFIX=gval
 GAIA_REV_ACCT=grev1
 GAIA_ADDRESS_PREFIX=cosmos
 GAIA_DENOM=$ATOM_DENOM
 GAIA_RPC_PORT=26557
 GAIA_COIN_TYPE=$COSMOS_COIN_TYPE
-GAIA_MAIN_CMD="$GAIA_CMD --home $CONFIG_SCRIPT_DIR/state/${GAIA_NODE_PREFIX}1"
+GAIA_MAIN_CMD="$GAIA_CMD --home $DOCKERNET_HOME/state/${GAIA_NODE_PREFIX}1"
 GAIA_RECEIVER_ADDRESS='cosmos1g6qdx6kdhpf000afvvpte7hp0vnpzapuyxp8uf'
 
 # JUNO 
 JUNO_CHAIN_ID=JUNO
 JUNO_NODE_PREFIX=juno
 JUNO_NUM_NODES=1
-JUNO_CMD="$CONFIG_SCRIPT_DIR/../build/junod"
+JUNO_CMD="$DOCKERNET_HOME/../build/junod"
 JUNO_VAL_PREFIX=jval
 JUNO_REV_ACCT=jrev1
 JUNO_ADDRESS_PREFIX=juno
 JUNO_DENOM=$JUNO_DENOM
 JUNO_RPC_PORT=26457
 JUNO_COIN_TYPE=$COSMOS_COIN_TYPE
-JUNO_MAIN_CMD="$JUNO_CMD --home $CONFIG_SCRIPT_DIR/state/${JUNO_NODE_PREFIX}1"
+JUNO_MAIN_CMD="$JUNO_CMD --home $DOCKERNET_HOME/state/${JUNO_NODE_PREFIX}1"
 JUNO_RECEIVER_ADDRESS='juno1sy0q0jpaw4t3hnf6k5wdd4384g0syzlp7rrtsg'
 
 # OSMO 
 OSMO_CHAIN_ID=OSMO
 OSMO_NODE_PREFIX=osmo
 OSMO_NUM_NODES=1
-OSMO_CMD="$CONFIG_SCRIPT_DIR/../build/osmosisd"
+OSMO_CMD="$DOCKERNET_HOME/../build/osmosisd"
 OSMO_VAL_PREFIX=oval
 OSMO_REV_ACCT=orev1
 OSMO_ADDRESS_PREFIX=osmo
 OSMO_DENOM=$OSMO_DENOM
 OSMO_RPC_PORT=26357
 OSMO_COIN_TYPE=$COSMOS_COIN_TYPE
-OSMO_MAIN_CMD="$OSMO_CMD --home $CONFIG_SCRIPT_DIR/state/${OSMO_NODE_PREFIX}1"
+OSMO_MAIN_CMD="$OSMO_CMD --home $DOCKERNET_HOME/state/${OSMO_NODE_PREFIX}1"
 OSMO_RECEIVER_ADDRESS='osmo1w6wdc2684g9h3xl8nhgwr282tcxx4kl06n4sjl'
 
 # STARS
 STARS_CHAIN_ID=STARS
 STARS_NODE_PREFIX=stars
 STARS_NUM_NODES=1
-STARS_CMD="$CONFIG_SCRIPT_DIR/../build/starsd"
+STARS_CMD="$DOCKERNET_HOME/../build/starsd"
 STARS_VAL_PREFIX=sgval
 STARS_REV_ACCT=sgrev1
 STARS_ADDRESS_PREFIX=stars
 STARS_DENOM=$STARS_DENOM
 STARS_RPC_PORT=26257
 STARS_COIN_TYPE=$COSMOS_COIN_TYPE
-STARS_MAIN_CMD="$STARS_CMD --home $CONFIG_SCRIPT_DIR/state/${STARS_NODE_PREFIX}1"
+STARS_MAIN_CMD="$STARS_CMD --home $DOCKERNET_HOME/state/${STARS_NODE_PREFIX}1"
 STARS_RECEIVER_ADDRESS='stars15dywcmy6gzsc8wfefkrx0c9czlwvwrjenqthyq'
 
 
 # HERMES
-HERMES_CMD="$CONFIG_SCRIPT_DIR/../build/hermes/release/hermes --config $STATE/hermes/config.toml"
+HERMES_CMD="$DOCKERNET_HOME/../build/hermes/release/hermes --config $STATE/hermes/config.toml"
 HERMES_EXEC="$DOCKER_COMPOSE run --rm hermes hermes"
 
 HERMES_STRIDE_ACCT=hrly1
@@ -200,7 +200,7 @@ HERMES_OSMO_MNEMONIC="lawn inside color february double myth depart invite mirac
 HERMES_STARS_MNEMONIC="inherit shallow bargain explain fence vocal fury perfect jeans figure festival abstract soldier entry bubble ketchup swim useless doctor thing imitate can shock coin"
 
 # RELAYER
-RELAYER_CMD="$CONFIG_SCRIPT_DIR/../build/relayer --home $STATE/relayer"
+RELAYER_CMD="$DOCKERNET_HOME/../build/relayer --home $STATE/relayer"
 RELAYER_GAIA_EXEC="$DOCKER_COMPOSE run --rm relayer-gaia"
 RELAYER_JUNO_EXEC="$DOCKER_COMPOSE run --rm relayer-juno"
 RELAYER_OSMO_EXEC="$DOCKER_COMPOSE run --rm relayer-osmo"

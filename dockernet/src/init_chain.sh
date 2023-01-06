@@ -6,7 +6,7 @@ SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 source $SCRIPT_DIR/../config.sh
 
 CHAIN="$1"
-KEYS_LOGS=$SCRIPT_DIR/logs/keys.log
+KEYS_LOGS=$DOCKERNET_HOME/logs/keys.log
 
 CHAIN_ID=$(GET_VAR_VALUE    ${CHAIN}_CHAIN_ID)
 CMD=$(GET_VAR_VALUE         ${CHAIN}_CMD)
@@ -44,7 +44,7 @@ set_host_genesis() {
 
     # Add interchain accounts to the genesis set
     jq "del(.app_state.interchain_accounts)" $genesis_config > json.tmp && mv json.tmp $genesis_config
-    interchain_accts=$(cat $SCRIPT_DIR/config/ica.json)
+    interchain_accts=$(cat $DOCKERNET_HOME/config/ica.json)
     jq ".app_state += $interchain_accts" $genesis_config > json.tmp && mv json.tmp $genesis_config
 
     # Slightly harshen slashing parameters (if 5 blocks are missed, the validator will be slashed)

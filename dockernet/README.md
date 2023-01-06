@@ -64,14 +64,14 @@ ST{CHAIN}_DENOM="st{min_denom}"
 {CHAIN}_CHAIN_ID={NEW-HOST-ZONE}
 {CHAIN}_NODE_PREFIX={new-host-zone}
 {CHAIN}_NUM_NODES=3
-{CHAIN}_CMD="$SCRIPT_DIR/../build/{new-host-zone}d"
+{CHAIN}_CMD="$DOCKERNET_HOME/../build/{new-host-zone}d"
 {CHAIN}_VAL_PREFIX={n}val
 {CHAIN}_ADDRESS_PREFIX=stars
 {CHAIN}_REV_ACCT={n}rev1
 {CHAIN}_DENOM=${CHAIN}_DENOM
 {CHAIN}_COIN_TYPE=${TYPE}_COIN_TYPE
 {CHAIN}_RPC_PORT={the one included in the docker-compose above}
-{CHAIN}_MAIN_CMD="${CHAIN}_CMD --home $SCRIPT_DIR/state/${${CHAIN}_NODE_PREFIX}1"
+{CHAIN}_MAIN_CMD="${CHAIN}_CMD --home $DOCKERNET_HOME/state/${${CHAIN}_NODE_PREFIX}1"
 
 # Add *below* the RELAYER section!
 RELAYER_{CHAIN}_EXEC="docker-compose run --rm relayer-{new-host-zone}"
