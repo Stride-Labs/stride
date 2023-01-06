@@ -258,7 +258,7 @@ func (s *AppTestHelper) ICAPacketAcknowledgement(msgs []sdk.Msg, msgResponse *pr
 	txMsgData := &sdk.TxMsgData{
 		MsgResponses: make([]*codectypes.Any, len(msgs)),
 	}
-	for i, _ := range msgs {
+	for i := range msgs {
 		var data *codectypes.Any
 		var err error
 		if msgResponse != nil {
