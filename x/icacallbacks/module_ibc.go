@@ -104,11 +104,6 @@ func UnpackAcknowledgementResponse(ctx sdk.Context, ack []byte, logger log.Logge
 		return nil, sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "cannot unmarshal ICS-20 transfer packet acknowledgement: %s", err.Error())
 	}
 
-	// if ack is nil, a timeout occurred
-	if &acknowledgement == nil {
-		return &types.ICATxResponse{Status: types.TIMEOUT}, nil
-	}
-
 	// The ack can come back as either AcknowledgementResult or AcknowledgementError
 	// If it comes back as AcknowledgementResult, the messages are encoded differently depending on the SDK version
 	switch response := acknowledgement.Response.(type) {

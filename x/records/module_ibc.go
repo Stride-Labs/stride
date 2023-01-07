@@ -168,7 +168,7 @@ func (im IBCModule) OnAcknowledgementPacket(
 ) error {
 	im.keeper.Logger(ctx).Info(fmt.Sprintf("[IBC-TRANSFER] OnAcknowledgementPacket  %v", packet))
 
-	ackResponse, err := icacallbacks.UnpackAcknowledgementResponse(ctx, acknowledgement, im.keeper.Logger(ctx))
+	icaTxResponse, err := icacallbacks.UnpackAcknowledgementResponse(ctx, acknowledgement, im.keeper.Logger(ctx))
 	if err != nil {
 		errMsg := fmt.Sprintf("Unable to unpack message data from acknowledgement, Sequence %d, from %s %s, to %s %s: %s",
 			packet.Sequence, packet.SourceChannel, packet.SourcePort, packet.DestinationChannel, packet.DestinationPort, err.Error())
@@ -179,7 +179,7 @@ func (im IBCModule) OnAcknowledgementPacket(
 	// Custom ack logic only applies to ibc transfers initiated from the `stakeibc` module account
 	// NOTE: if the `stakeibc` module account IBC transfers tokens for some other reason in the future,
 	// this will need to be updated
-	if err := im.keeper.ICACallbacksKeeper.CallRegisteredICACallback(ctx, packet, ackResponse); err != nil {
+	if err := im.keeper.ICACallbacksKeeper.CallRegisteredICACallback(ctx, packet, icaTxResponse); err != nil {
 		errMsg := fmt.Sprintf("Unable to call registered callback from records OnAcknowledgePacket | Sequence %d, from %s %s, to %s %s | Error %s",
 			packet.Sequence, packet.SourceChannel, packet.SourcePort, packet.DestinationChannel, packet.DestinationPort, err.Error())
 		im.keeper.Logger(ctx).Error(errMsg)
@@ -197,7 +197,8 @@ func (im IBCModule) OnTimeoutPacket(
 ) error {
 	// doCustomLogic(packet)
 	im.keeper.Logger(ctx).Error(fmt.Sprintf("[IBC-TRANSFER] OnTimeoutPacket  %v", packet))
-	err := im.keeper.ICACallbacksKeeper.CallRegisteredICACallback(ctx, packet, nil)
+	icaTxResponse := icacallbacktypes.ICATxResponse{Status: icacallbacktypes.TIMEOUT}
+	err := im.keeper.ICACallbacksKeeper.CallRegisteredICACallback(ctx, packet, &icaTxResponse)
 	if err != nil {
 		return err
 	}
