@@ -1,7 +1,5 @@
 package types
 
-// QUESTION: Should we add this as a proto?
-
 type ICATxResponseStatus int
 
 const (

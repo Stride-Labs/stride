@@ -96,22 +96,7 @@ func (im IBCModule) NegotiateAppVersion(
 
 // UnpackAcknowledgementResponse returns the msgs from an ICA transaction and can be reused across authentication modules
 func UnpackAcknowledgementResponse(ctx sdk.Context, ack []byte, logger log.Logger) (*types.ICATxResponse, error) {
-	// NOTE: Is this safe to assume? According to the ics-27 spec, errors on host chains should be reflected in the acknowledgement type
-	// so Acknowledgement_Result should only be returned if the transaction was successful
-	// However, I recall seeing a case where the acknowledgement type was Acknowledgement_Result but the transaction failed
-	//
-	// -> If my memory's correct, I think a failure on the host could come back as either an AcknowledgementError
-	//    or it could be an AcknowledgementResult with data length 0
-	//    It's a little concering that the switch statement now just assumes the data length 0 means it's sdk 46
-	//
-	// It's also unclear to me whether this timeout case below is possible
-	// In any case, we should just test this thoughly with the following cases:
-	//   Success
-	//   Timeout
-	//   Error (with AckError - e.g. I can't remember exactly how we simulated this)
-	//   Error (without AckError - e.g. try to delegate to a validator that isn't there)
-	//
-	// Also lets think of a better name for this function
+	// TODO: Add logging after ack branches are determined
 
 	// Unmarshal the raw ack response
 	var acknowledgement channeltypes.Acknowledgement
@@ -142,7 +127,7 @@ func UnpackAcknowledgementResponse(ctx sdk.Context, ack []byte, logger log.Logge
 		switch len(txMsgData.Data) {
 		case 0:
 			// for SDK 0.46 and above
-			msgResponses := make([][]byte, len(txMsgData.Data))
+			msgResponses := make([][]byte, len(txMsgData.MsgResponses))
 			for i, msgResponse := range txMsgData.MsgResponses {
 				msgResponses[i] = msgResponse.GetValue()
 			}
