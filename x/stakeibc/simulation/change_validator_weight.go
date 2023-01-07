@@ -10,6 +10,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/simulation"
 	"github.com/Stride-Labs/stride/v4/x/stakeibc/keeper"
 	"github.com/Stride-Labs/stride/v4/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v4/utils"
 )
 
 func SimulateMsgChangeValidatorWeight(
@@ -24,6 +25,10 @@ func SimulateMsgChangeValidatorWeight(
 		val2Account, _ := simtypes.RandomAcc(r, accs)
 		creatorAccount, _ := simtypes.RandomAcc(r, accs)
 		
+		err := utils.ValidateAdminAddress(string(creatorAccount.Address))
+		if err != nil {
+			return simtypes.NoOpMsg(types.ModuleName, types.TypeMsgChangeValidatorWeight, "Address of random account is not creator's address" ), nil, nil
+		}
 		hostZone := types.HostZone{
 			ChainId: "GAIA",
 			Validators: []*types.Validator{
