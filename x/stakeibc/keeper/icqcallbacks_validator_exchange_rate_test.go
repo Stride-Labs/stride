@@ -178,9 +178,8 @@ func (s *KeeperTestSuite) TestValidatorExchangeRateCallback_OutsideBufferWindow(
 
 	s.App.StakeibcKeeper.SetEpochTracker(s.Ctx, epochTracker)
 
-	// In this case, we should return success instead of error, but we should exit early before updating the validator's exchange rate
 	err := stakeibckeeper.ValidatorExchangeRateCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.callbackArgs, tc.validArgs.query)
-	s.Require().NoError(err, "validator exchange rate callback error")
+	s.Require().ErrorContains(err, "callback is outside ICQ window")
 
 	// Confirm validator's exchange rate did not update
 	hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, tc.initialState.hostZone.ChainId)

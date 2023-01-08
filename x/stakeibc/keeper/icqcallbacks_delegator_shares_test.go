@@ -209,7 +209,7 @@ func (s *KeeperTestSuite) TestDelegatorSharesCallback_OutsideBufferWindow() {
 
 	// In this case, we should return success instead of error, but we should exit early before updating the validator's state
 	err := stakeibckeeper.DelegatorSharesCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.callbackArgs, tc.validArgs.query)
-	s.Require().NoError(err, "delegator shares callback callback error")
+	s.Require().ErrorContains(err, "callback is outside ICQ window")
 
 	s.checkStateIfValidatorNotSlashed(tc)
 }
