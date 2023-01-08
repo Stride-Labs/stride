@@ -50,7 +50,6 @@ func DelegatorSharesCallback(k Keeper, ctx sdk.Context, args []byte, query icqty
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "unable to determine if ICQ callback is inside buffer window, err: %s", err.Error())
 	}
 	if !withinBufferWindow {
-		// QUESTION: Should this return an error?
 		return sdkerrors.Wrapf(types.ErrOutsideIcqWindow, "callback is outside ICQ window")
 	}
 
@@ -71,6 +70,7 @@ func DelegatorSharesCallback(k Keeper, ctx sdk.Context, args []byte, query icqty
 	}
 
 	// Calculate the number of tokens delegated (using the internal exchange rate)
+	// note: truncateInt per https://github.com/cosmos/cosmos-sdk/blob/cb31043d35bad90c4daa923bb109f38fd092feda/x/staking/types/validator.go#L431
 	delegatedTokens := queriedDelgation.Shares.Mul(validator.InternalExchangeRate.InternalTokensToSharesRate).TruncateInt()
 	k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_Delegation,
 		"Previous Delegation: %v, Current Delegation: %v", validator.DelegationAmt, delegatedTokens))

@@ -47,7 +47,6 @@ func ValidatorExchangeRateCallback(k Keeper, ctx sdk.Context, args []byte, query
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "unable to determine if ICQ callback is inside buffer window, err: %s", err.Error())
 	}
 	if !withinBufferWindow {
-		// QUESTION: Should this return an error?
 		return sdkerrors.Wrapf(types.ErrOutsideIcqWindow, "callback is outside ICQ window")
 	}
 
