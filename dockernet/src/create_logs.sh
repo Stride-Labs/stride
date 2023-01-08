@@ -6,7 +6,7 @@ SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &>/dev/null && pwd)
 
 source ${SCRIPT_DIR}/../config.sh
 
-LOGS_DIR=$SCRIPT_DIR/logs
+LOGS_DIR=$DOCKERNET_HOME/logs
 TEMP_LOGS_DIR=$LOGS_DIR/temp
 
 STATE_LOG=state.log
@@ -19,11 +19,12 @@ while true; do
     echo "STRIDE @ $($STRIDE_MAIN_CMD q tendermint-validator-set | head -n 1 | tr -dc '0-9') | $N_VALIDATORS_STRIDE VALS" >$TEMP_LOGS_DIR/$STATE_LOG
     echo "STRIDE @ $($STRIDE_MAIN_CMD q tendermint-validator-set | head -n 1 | tr -dc '0-9') | $N_VALIDATORS_STRIDE VALS" >$TEMP_LOGS_DIR/$BALANCES_LOG
 
-    for chain_id in ${HOST_CHAINS[@]}; do
-        HOST_MAIN_CMD=$(GET_VAR_VALUE ${chain_id}_MAIN_CMD)
+    for chain in ${HOST_CHAINS[@]}; do
+        HOST_MAIN_CMD=$(GET_VAR_VALUE ${chain}_MAIN_CMD)
+
         N_VALIDATORS_HOST=$($HOST_MAIN_CMD q tendermint-validator-set | grep -o address | wc -l | tr -dc '0-9')
-        echo "$chain_id   @ $($HOST_MAIN_CMD q tendermint-validator-set | head -n 1 | tr -dc '0-9') | $N_VALIDATORS_HOST VALS" >>$TEMP_LOGS_DIR/$STATE_LOG
-        echo "$chain_id   @ $($HOST_MAIN_CMD q tendermint-validator-set | head -n 1 | tr -dc '0-9') | $N_VALIDATORS_HOST VALS" >>$TEMP_LOGS_DIR/$BALANCES_LOG
+        echo "$chain   @ $($HOST_MAIN_CMD q tendermint-validator-set | head -n 1 | tr -dc '0-9') | $N_VALIDATORS_HOST VALS" >>$TEMP_LOGS_DIR/$STATE_LOG
+        echo "$chain   @ $($HOST_MAIN_CMD q tendermint-validator-set | head -n 1 | tr -dc '0-9') | $N_VALIDATORS_HOST VALS" >>$TEMP_LOGS_DIR/$BALANCES_LOG
     done
 
     printf '\n%s\n' "LIST-HOST-ZONES STRIDE" >>$TEMP_LOGS_DIR/$STATE_LOG
@@ -38,28 +39,29 @@ while true; do
     printf '\n%s\n' "BALANCES STRIDE" >>$TEMP_LOGS_DIR/$BALANCES_LOG
     $STRIDE_MAIN_CMD q bank balances $(STRIDE_ADDRESS) >>$TEMP_LOGS_DIR/$BALANCES_LOG
 
-    for chain_id in ${HOST_CHAINS[@]}; do
-        HOST_MAIN_CMD=$(GET_VAR_VALUE ${chain_id}_MAIN_CMD)
+    for chain in ${HOST_CHAINS[@]}; do
+        HOST_CHAIN_ID=$(GET_VAR_VALUE ${chain}_CHAIN_ID)
+        HOST_MAIN_CMD=$(GET_VAR_VALUE ${chain}_MAIN_CMD)
+        
+        DELEGATION_ICA_ADDR=$(GET_ICA_ADDR $HOST_CHAIN_ID delegation)
+        REDEMPTION_ICA_ADDR=$(GET_ICA_ADDR $HOST_CHAIN_ID redemption)
+        WITHDRAWAL_ICA_ADDR=$(GET_ICA_ADDR $HOST_CHAIN_ID withdrawal)
+        FEE_ICA_ADDR=$(GET_ICA_ADDR $HOST_CHAIN_ID fee)
 
-        DELEGATION_ICA_ADDR=$(GET_ICA_ADDR $chain_id delegation)
-        REDEMPTION_ICA_ADDR=$(GET_ICA_ADDR $chain_id redemption)
-        WITHDRAWAL_ICA_ADDR=$(GET_ICA_ADDR $chain_id withdrawal)
-        FEE_ICA_ADDR=$(GET_ICA_ADDR $chain_id fee)
+        printf '\n%s\n' "==========================  $chain  =============================" >>$TEMP_LOGS_DIR/$BALANCES_LOG
 
-        printf '\n%s\n' "==========================  $chain_id  =============================" >>$TEMP_LOGS_DIR/$BALANCES_LOG
-
-        printf '\n%s\n' "BALANCES $chain_id (DELEGATION ACCT)" >>$TEMP_LOGS_DIR/$BALANCES_LOG
+        printf '\n%s\n' "BALANCES $chain (DELEGATION ACCT)" >>$TEMP_LOGS_DIR/$BALANCES_LOG
         $HOST_MAIN_CMD q bank balances $DELEGATION_ICA_ADDR >>$TEMP_LOGS_DIR/$BALANCES_LOG
-        printf '\n%s\n' "DELEGATIONS $chain_id (DELEGATION ACCT)" >>$TEMP_LOGS_DIR/$BALANCES_LOG
+        printf '\n%s\n' "DELEGATIONS $chain (DELEGATION ACCT)" >>$TEMP_LOGS_DIR/$BALANCES_LOG
         $HOST_MAIN_CMD q staking delegations $DELEGATION_ICA_ADDR >>$TEMP_LOGS_DIR/$BALANCES_LOG
-        printf '\n%s\n' "UNBONDING-DELEGATIONS $chain_id (DELEGATION ACCT)" >>$TEMP_LOGS_DIR/$BALANCES_LOG
+        printf '\n%s\n' "UNBONDING-DELEGATIONS $chain (DELEGATION ACCT)" >>$TEMP_LOGS_DIR/$BALANCES_LOG
         $HOST_MAIN_CMD q staking unbonding-delegations $DELEGATION_ICA_ADDR >>$TEMP_LOGS_DIR/$BALANCES_LOG
 
-        printf '\n%s\n' "BALANCES $chain_id (REDEMPTION ACCT)" >>$TEMP_LOGS_DIR/$BALANCES_LOG
+        printf '\n%s\n' "BALANCES $chain (REDEMPTION ACCT)" >>$TEMP_LOGS_DIR/$BALANCES_LOG
         $HOST_MAIN_CMD q bank balances $REDEMPTION_ICA_ADDR >>$TEMP_LOGS_DIR/$BALANCES_LOG
-        printf '\n%s\n' "BALANCES $chain_id (FEE ACCT)" >>$TEMP_LOGS_DIR/$BALANCES_LOG
+        printf '\n%s\n' "BALANCES $chain (FEE ACCT)" >>$TEMP_LOGS_DIR/$BALANCES_LOG
         $HOST_MAIN_CMD q bank balances $FEE_ICA_ADDR >>$TEMP_LOGS_DIR/$BALANCES_LOG
-        printf '\n%s\n' "BALANCES $chain_id (WITHDRAWAL ACCT)" >>$TEMP_LOGS_DIR/$BALANCES_LOG
+        printf '\n%s\n' "BALANCES $chain (WITHDRAWAL ACCT)" >>$TEMP_LOGS_DIR/$BALANCES_LOG
         $HOST_MAIN_CMD q bank balances $WITHDRAWAL_ICA_ADDR >>$TEMP_LOGS_DIR/$BALANCES_LOG
     done
 

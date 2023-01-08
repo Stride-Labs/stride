@@ -44,8 +44,8 @@ build_local_and_docker() {
    return $docker_build_succeeded
 }
 
-ADMINS_FILE=${SCRIPT_DIR}/../utils/admins.go
-ADMINS_FILE_BACKUP=${SCRIPT_DIR}/../utils/admins.go.main
+ADMINS_FILE=${DOCKERNET_HOME}/../utils/admins.go
+ADMINS_FILE_BACKUP=${DOCKERNET_HOME}/../utils/admins.go.main
 
 replace_admin_address() {
    cp $ADMINS_FILE $ADMINS_FILE_BACKUP
@@ -58,7 +58,7 @@ revert_admin_address() {
 }
 
 # build docker images and local binaries
-while getopts sgojthr flag; do
+while getopts sgojthrn flag; do
    case "${flag}" in
       # For stride, we need to update the admin address to one that we have the seed phrase for
       s) replace_admin_address
@@ -73,6 +73,7 @@ while getopts sgojthr flag; do
       j) build_local_and_docker juno deps/juno ;;
       o) build_local_and_docker osmo deps/osmosis ;;
       t) build_local_and_docker stars deps/stargaze ;;
+      n) continue ;; # build_local_and_docker {new-host-zone} deps/{new-host-zone} ;;
       r) build_local_and_docker relayer deps/relayer ;;  
       h) echo "Building Hermes Docker... ";
          docker build --tag stridezone:hermes -f dockernet/dockerfiles/Dockerfile.hermes . ;
