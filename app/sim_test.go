@@ -34,8 +34,7 @@ import (
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 	dbm "github.com/tendermint/tm-db"
 
-	// "github.com/CosmWasm/wasmd/x/wasm"
-	stakeibctypes "github.com/Stride-Labs/stride/v4/x/stakeibc/types"
+ 	stakeibctypes "github.com/Stride-Labs/stride/v4/x/stakeibc/types"
 )
 
 // Get flags every time the simulator is run
@@ -99,7 +98,7 @@ func TestAppImportExport(t *testing.T) {
 		t,
 		os.Stdout,
 		app.BaseApp,
-		AppStateFn(app.AppCodec(), app.SimulationManager()),
+		AppStateFn(app.appCodec, app.SimulationManager()),
 		simtypes.RandomAccounts,
 		simapp.SimulationOperations(app, app.AppCodec(), config),
 		app.ModuleAccountAddrs(),
