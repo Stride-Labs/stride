@@ -20,6 +20,7 @@ require (
 	github.com/tendermint/tm-db v0.6.7
 	google.golang.org/genproto v0.0.0-20221118155620-16455021b5e6
 	google.golang.org/grpc v1.51.0
+	github.com/terra-money/alliance v0.0.1-beta1.v0.45-sdk
 	gopkg.in/yaml.v2 v2.4.0
 )
 
