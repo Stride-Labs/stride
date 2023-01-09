@@ -121,7 +121,7 @@ func (s *KeeperTestSuite) GetInitialDepositRecords(currentEpoch uint64) TestDepo
 		},
 		{
 			Id:                 8,
-			Amount:            sdk.NewInt(8000),
+			Amount:             sdk.NewInt(8000),
 			Denom:              Atom,
 			HostZoneId:         HostChainId,
 			Status:             recordstypes.DepositRecord_DELEGATION_QUEUE,
