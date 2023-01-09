@@ -32,7 +32,7 @@ func (k Keeper) UnmarshalTransferCallbackArgs(ctx sdk.Context, delegateCallback 
 	return &unmarshalledTransferCallback, nil
 }
 
-func TransferCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, icaTxResponse *icacallbackstypes.ICATxResponse, args []byte) error {
+func TransferCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ackResponse *icacallbackstypes.AcknowledgementResponse, args []byte) error {
 	k.Logger(ctx).Info("TransferCallback executing", "packet", packet)
 
 	// deserialize the args
@@ -47,7 +47,7 @@ func TransferCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ica
 		return sdkerrors.Wrapf(types.ErrUnknownDepositRecord, "deposit record not found %d", transferCallbackData.DepositRecordId)
 	}
 
-	if icaTxResponse.Status == icacallbackstypes.TIMEOUT {
+	if ackResponse.Status == icacallbackstypes.TIMEOUT {
 		// timeout
 		// put record back in the TRANSFER_QUEUE
 		depositRecord.Status = types.DepositRecord_TRANSFER_QUEUE
@@ -56,12 +56,12 @@ func TransferCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ica
 		return nil
 	}
 
-	if icaTxResponse.Status == icacallbackstypes.FAILURE {
+	if ackResponse.Status == icacallbackstypes.FAILURE {
 		// error on host chain
 		// put record back in the TRANSFER_QUEUE
 		depositRecord.Status = types.DepositRecord_TRANSFER_QUEUE
 		k.SetDepositRecord(ctx, depositRecord)
-		k.Logger(ctx).Error(fmt.Sprintf("Error  %s", icaTxResponse.Error))
+		k.Logger(ctx).Error(fmt.Sprintf("Error  %s", ackResponse.Error))
 		return nil
 	}
 

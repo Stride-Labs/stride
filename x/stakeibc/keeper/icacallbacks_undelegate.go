@@ -48,7 +48,7 @@ func (k Keeper) UnmarshalUndelegateCallbackArgs(ctx sdk.Context, undelegateCallb
 //      * Does nothing
 //   If failure:
 //		* Reverts epoch unbonding record status
-func UndelegateCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, icaTxResponse *icacallbackstypes.ICATxResponse, args []byte) error {
+func UndelegateCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ackResponse *icacallbackstypes.AcknowledgementResponse, args []byte) error {
 	// Fetch callback args
 	undelegateCallback, err := k.UnmarshalUndelegateCallbackArgs(ctx, args)
 	if err != nil {
@@ -61,16 +61,16 @@ func UndelegateCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, i
 		"Starting callback for Epoch Unbonding Records: %+v", undelegateCallback.EpochUnbondingRecordIds))
 
 	// No need to reset the unbonding record status since it will get revertted when the channel is restored
-	if icaTxResponse.Status == icacallbackstypes.TIMEOUT {
+	if ackResponse.Status == icacallbackstypes.TIMEOUT {
 		k.Logger(ctx).Error(utils.LogCallbackWithHostZone(chainId, ICACallbackID_Undelegate,
 			"TIMEOUT (ack is nil), Packet: %+v", packet))
 		return nil
 	}
 
 	// Reset the unbonding record status upon failure
-	if icaTxResponse.Status == icacallbackstypes.FAILURE {
+	if ackResponse.Status == icacallbackstypes.FAILURE {
 		k.Logger(ctx).Error(utils.LogCallbackWithHostZone(chainId, ICACallbackID_Undelegate,
-			"ICA TX FAILED (ack is empty / ack error), Packet: %+v, Error: %s", packet, icaTxResponse.Error))
+			"ICA TX FAILED (ack is empty / ack error), Packet: %+v, Error: %s", packet, ackResponse.Error))
 
 		// Reset unbondings record status
 		err = k.RecordsKeeper.SetHostZoneUnbondings(ctx, chainId, undelegateCallback.EpochUnbondingRecordIds, recordstypes.HostZoneUnbonding_UNBONDING_QUEUE)
@@ -94,7 +94,7 @@ func UndelegateCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, i
 	}
 
 	// Get the latest transaction completion time (to determine the unbonding time)
-	latestCompletionTime, err := k.GetLatestCompletionTime(ctx, icaTxResponse.MsgResponses)
+	latestCompletionTime, err := k.GetLatestCompletionTime(ctx, ackResponse.MsgResponses)
 	if err != nil {
 		k.Logger(ctx).Error(fmt.Sprintf("UndelegateCallback | %s", err.Error()))
 		return err

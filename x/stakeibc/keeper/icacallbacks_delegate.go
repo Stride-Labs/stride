@@ -44,7 +44,7 @@ func (k Keeper) UnmarshalDelegateCallbackArgs(ctx sdk.Context, delegateCallback 
 //      * Does nothing
 //   If failure:
 //		* Reverts deposit record status
-func DelegateCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, icaTxResponse *icacallbackstypes.ICATxResponse, args []byte) error {
+func DelegateCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ackResponse *icacallbackstypes.AcknowledgementResponse, args []byte) error {
 	// Deserialize the callback args
 	delegateCallback, err := k.UnmarshalDelegateCallbackArgs(ctx, args)
 	if err != nil {
@@ -66,14 +66,14 @@ func DelegateCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ica
 	}
 
 	// No need to reset the deposit record status since it will get revertted when the channel is restored
-	if icaTxResponse.Status == icacallbackstypes.TIMEOUT {
+	if ackResponse.Status == icacallbackstypes.TIMEOUT {
 		k.Logger(ctx).Error(utils.LogCallbackWithHostZone(chainId, ICACallbackID_Delegate,
 			"TIMEOUT (ack is nil), Packet: %+v", packet))
 		return nil
 	}
-	if icaTxResponse.Status == icacallbackstypes.FAILURE {
+	if ackResponse.Status == icacallbackstypes.FAILURE {
 		k.Logger(ctx).Error(utils.LogCallbackWithHostZone(chainId, ICACallbackID_Delegate,
-			"ICA TX FAILED (ack is empty / ack error), Packet: %+v, Error: %s", packet, icaTxResponse.Error))
+			"ICA TX FAILED (ack is empty / ack error), Packet: %+v, Error: %s", packet, ackResponse.Error))
 
 		// Reset deposit record status
 		depositRecord.Status = recordstypes.DepositRecord_DELEGATION_QUEUE

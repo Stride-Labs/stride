@@ -1,15 +1,15 @@
 package types
 
-type ICATxResponseStatus int
+type AcknowledgementResponseStatus int
 
 const (
-	SUCCESS ICATxResponseStatus = iota
+	SUCCESS AcknowledgementResponseStatus = iota
 	TIMEOUT
 	FAILURE
 )
 
-type ICATxResponse struct {
-	Status       ICATxResponseStatus
+type AcknowledgementResponse struct {
+	Status       AcknowledgementResponseStatus
 	MsgResponses [][]byte
 	Error        string
 }

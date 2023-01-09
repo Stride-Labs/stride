@@ -32,18 +32,18 @@ func (k Keeper) UnmarshalReinvestCallbackArgs(ctx sdk.Context, reinvestCallback 
 	return &unmarshalledReinvestCallback, nil
 }
 
-func ReinvestCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, icaTxResponse *icacallbackstypes.ICATxResponse, args []byte) error {
+func ReinvestCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ackResponse *icacallbackstypes.AcknowledgementResponse, args []byte) error {
 	k.Logger(ctx).Info("ReinvestCallback executing", "packet", packet)
 
-	if icaTxResponse.Status == icacallbackstypes.TIMEOUT {
+	if ackResponse.Status == icacallbackstypes.TIMEOUT {
 		// handle timeout
 		k.Logger(ctx).Error(fmt.Sprintf("ReinvestCallback timeout, ack is nil, packet %v", packet))
 		return nil
 	}
 
-	if icaTxResponse.Status == icacallbackstypes.FAILURE {
+	if ackResponse.Status == icacallbackstypes.FAILURE {
 		// handle tx failure
-		k.Logger(ctx).Error(fmt.Sprintf("ReinvestCallback tx failed, txMsgData is empty, ack error, packet %v, error: %s", packet, icaTxResponse.Error))
+		k.Logger(ctx).Error(fmt.Sprintf("ReinvestCallback tx failed, txMsgData is empty, ack error, packet %v, error: %s", packet, ackResponse.Error))
 		return nil
 	}
 

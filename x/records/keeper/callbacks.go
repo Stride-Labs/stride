@@ -10,7 +10,7 @@ import (
 const TRANSFER = "transfer"
 
 // ICACallbacks wrapper struct for stakeibc keeper
-type ICACallback func(Keeper, sdk.Context, channeltypes.Packet, *icacallbackstypes.ICATxResponse, []byte) error
+type ICACallback func(Keeper, sdk.Context, channeltypes.Packet, *icacallbackstypes.AcknowledgementResponse, []byte) error
 
 type ICACallbacks struct {
 	k            Keeper
@@ -23,8 +23,8 @@ func (k Keeper) ICACallbackHandler() ICACallbacks {
 	return ICACallbacks{k, make(map[string]ICACallback)}
 }
 
-func (c ICACallbacks) CallICACallback(ctx sdk.Context, id string, packet channeltypes.Packet, icaTxResponse *icacallbackstypes.ICATxResponse, args []byte) error {
-	return c.icacallbacks[id](c.k, ctx, packet, icaTxResponse, args)
+func (c ICACallbacks) CallICACallback(ctx sdk.Context, id string, packet channeltypes.Packet, ackResponse *icacallbackstypes.AcknowledgementResponse, args []byte) error {
+	return c.icacallbacks[id](c.k, ctx, packet, ackResponse, args)
 }
 
 func (c ICACallbacks) HasICACallback(id string) bool {

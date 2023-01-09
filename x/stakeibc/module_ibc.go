@@ -133,11 +133,9 @@ func (im IBCModule) OnAcknowledgementPacket(
 	acknowledgement []byte,
 	relayer sdk.AccAddress,
 ) error {
-	im.keeper.Logger(ctx).Info(fmt.Sprintf("OnAcknowledgementPacket: packet %v, relayer %v", modulePacket, relayer))
-	ackInfo := fmt.Sprintf("sequence #%d, from %s %s, to %s %s",
-		modulePacket.Sequence, modulePacket.SourceChannel, modulePacket.SourcePort, modulePacket.DestinationChannel, modulePacket.DestinationPort)
+	im.keeper.Logger(ctx).Info(fmt.Sprintf("OnAcknowledgementPacket (Stakeibc) - packet: %+v, relayer: %v", modulePacket, relayer))
 
-	icaTxResponse, err := icacallbacks.UnpackAcknowledgementResponse(ctx, acknowledgement, im.keeper.Logger(ctx))
+	ackResponse, err := icacallbacks.UnpackAcknowledgementResponse(ctx, im.keeper.Logger(ctx), acknowledgement, true)
 	if err != nil {
 		errMsg := fmt.Sprintf("Unable to unpack message data from acknowledgement, Sequence %d, from %s %s, to %s %s: %s",
 			modulePacket.Sequence, modulePacket.SourceChannel, modulePacket.SourcePort, modulePacket.DestinationChannel, modulePacket.DestinationPort, err.Error())
@@ -145,17 +143,20 @@ func (im IBCModule) OnAcknowledgementPacket(
 		return sdkerrors.Wrapf(icacallbacktypes.ErrInvalidAcknowledgement, errMsg)
 	}
 
+	ackInfo := fmt.Sprintf("sequence #%d, from %s %s, to %s %s",
+		modulePacket.Sequence, modulePacket.SourceChannel, modulePacket.SourcePort, modulePacket.DestinationChannel, modulePacket.DestinationPort)
 	im.keeper.Logger(ctx).Info(fmt.Sprintf("Acknowledgement was successfully unmarshalled: ackInfo: %s", ackInfo))
+
 	eventType := "ack"
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
 			eventType,
 			sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
-			sdk.NewAttribute(types.AttributeKeyAck, fmt.Sprintf("%v", ackInfo)),
+			sdk.NewAttribute(types.AttributeKeyAck, ackInfo),
 		),
 	)
 
-	err = im.keeper.ICACallbacksKeeper.CallRegisteredICACallback(ctx, modulePacket, icaTxResponse)
+	err = im.keeper.ICACallbacksKeeper.CallRegisteredICACallback(ctx, modulePacket, ackResponse)
 	if err != nil {
 		errMsg := fmt.Sprintf("Unable to call registered callback from stakeibc OnAcknowledgePacket | Sequence %d, from %s %s, to %s %s",
 			modulePacket.Sequence, modulePacket.SourceChannel, modulePacket.SourcePort, modulePacket.DestinationChannel, modulePacket.DestinationPort)
@@ -172,8 +173,8 @@ func (im IBCModule) OnTimeoutPacket(
 	relayer sdk.AccAddress,
 ) error {
 	im.keeper.Logger(ctx).Info(fmt.Sprintf("OnTimeoutPacket: packet %v, relayer %v", modulePacket, relayer))
-	icaTxResponse := icacallbacktypes.ICATxResponse{Status: icacallbacktypes.TIMEOUT}
-	err := im.keeper.ICACallbacksKeeper.CallRegisteredICACallback(ctx, modulePacket, &icaTxResponse)
+	ackResponse := icacallbacktypes.AcknowledgementResponse{Status: icacallbacktypes.TIMEOUT}
+	err := im.keeper.ICACallbacksKeeper.CallRegisteredICACallback(ctx, modulePacket, &ackResponse)
 	if err != nil {
 		return err
 	}

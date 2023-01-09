@@ -95,28 +95,40 @@ func (im IBCModule) NegotiateAppVersion(
 }
 
 // UnpackAcknowledgementResponse returns the msgs from an ICA transaction and can be reused across authentication modules
-func UnpackAcknowledgementResponse(ctx sdk.Context, ack []byte, logger log.Logger) (*types.ICATxResponse, error) {
+func UnpackAcknowledgementResponse(ctx sdk.Context, logger log.Logger, ack []byte, isICA bool) (*types.AcknowledgementResponse, error) {
 	// TODO: Add logging after ack branches are determined
+
+	fmt.Printf("ACK BYTES: %v\n", ack)
 
 	// Unmarshal the raw ack response
 	var acknowledgement channeltypes.Acknowledgement
 	if err := ibctransfertypes.ModuleCdc.UnmarshalJSON(ack, &acknowledgement); err != nil {
+		fmt.Println("CANNOT UNMARSHAL AS ACK")
 		return nil, sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "cannot unmarshal ICS-20 transfer packet acknowledgement: %s", err.Error())
 	}
+	fmt.Printf("ACK UNMARSHALLED: %+v\n", acknowledgement.Response)
 
 	// The ack can come back as either AcknowledgementResult or AcknowledgementError
 	// If it comes back as AcknowledgementResult, the messages are encoded differently depending on the SDK version
 	switch response := acknowledgement.Response.(type) {
 	case *channeltypes.Acknowledgement_Result:
+		fmt.Printf("ACK IN CASE ACK RESULT - Response: %+v, Result: %v\n", response, response.Result)
 		if len(response.Result) == 0 {
+			fmt.Println("RESULT IS EMPTY")
 			return nil, sdkerrors.Wrapf(channeltypes.ErrInvalidAcknowledgement, "acknowledgement result cannot be empty")
 		}
 
-		// Unmarshal the message data from within the ack
+		// If this is an ack from a non-ICA transaction (e.g. an IBC transfer), there is no need to decode the data field
+		if !isICA {
+			return &types.AcknowledgementResponse{Status: types.SUCCESS}, nil
+		}
+
+		// Otherwise, if this ack is from an ICA, unmarshal the message data from within the ack
 		txMsgData := &sdk.TxMsgData{}
 		if err := proto.Unmarshal(acknowledgement.GetResult(), txMsgData); err != nil {
 			return nil, sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "cannot unmarshal ICS-27 tx message data: %s", err.Error())
 		}
+		fmt.Printf("ACK TX MSG DATA: %+v\n", txMsgData)
 
 		// Unpack all the message responses based on the sdk version (determined from the length of txMsgData.Data)
 		switch len(txMsgData.Data) {
@@ -126,18 +138,19 @@ func UnpackAcknowledgementResponse(ctx sdk.Context, ack []byte, logger log.Logge
 			for i, msgResponse := range txMsgData.MsgResponses {
 				msgResponses[i] = msgResponse.GetValue()
 			}
-			return &types.ICATxResponse{Status: types.SUCCESS, MsgResponses: msgResponses}, nil
+			return &types.AcknowledgementResponse{Status: types.SUCCESS, MsgResponses: msgResponses}, nil
 		default:
 			// for SDK 0.45 and below
 			var msgResponses = make([][]byte, len(txMsgData.Data))
 			for i, msgData := range txMsgData.Data {
 				msgResponses[i] = msgData.Data
 			}
-			return &types.ICATxResponse{Status: types.SUCCESS, MsgResponses: msgResponses}, nil
+			return &types.AcknowledgementResponse{Status: types.SUCCESS, MsgResponses: msgResponses}, nil
 		}
 	case *channeltypes.Acknowledgement_Error:
+		fmt.Printf("ACK IN CASE ACK ERROR: %+v\n", response)
 		logger.Error(fmt.Sprintf("acknowledgement error: %s", response.Error))
-		return &types.ICATxResponse{Status: types.FAILURE, Error: response.Error}, nil
+		return &types.AcknowledgementResponse{Status: types.FAILURE, Error: response.Error}, nil
 	default:
 		return nil, sdkerrors.Wrapf(channeltypes.ErrInvalidAcknowledgement, "unsupported acknowledgement response field type %T", response)
 	}

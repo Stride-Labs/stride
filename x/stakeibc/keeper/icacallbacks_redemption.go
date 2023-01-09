@@ -41,7 +41,7 @@ func (k Keeper) UnmarshalRedemptionCallbackArgs(ctx sdk.Context, redemptionCallb
 //      * Does nothing
 //   If failure:
 //		* Reverts epoch unbonding record status
-func RedemptionCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, icaTxResponse *icacallbackstypes.ICATxResponse, args []byte) error {
+func RedemptionCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ackResponse *icacallbackstypes.AcknowledgementResponse, args []byte) error {
 	// Fetch callback args
 	redemptionCallback, err := k.UnmarshalRedemptionCallbackArgs(ctx, args)
 	if err != nil {
@@ -54,15 +54,15 @@ func RedemptionCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, i
 		"Starting callback for Epoch Unbonding Records: %+v", redemptionCallback.EpochUnbondingRecordIds))
 
 	// No need to reset the unbonding record status since it will get revertted when the channel is restored
-	if icaTxResponse.Status == icacallbackstypes.TIMEOUT {
+	if ackResponse.Status == icacallbackstypes.TIMEOUT {
 		k.Logger(ctx).Error(utils.LogCallbackWithHostZone(chainId, ICACallbackID_Redemption,
 			"TIMEOUT (ack is nil), Packet: %+v", packet))
 		return nil
 	}
 
-	if icaTxResponse.Status == icacallbackstypes.FAILURE {
+	if ackResponse.Status == icacallbackstypes.FAILURE {
 		k.Logger(ctx).Error(utils.LogCallbackWithHostZone(chainId, ICACallbackID_Redemption,
-			"ICA TX FAILED (ack is empty / ack error), Packet: %+v, Error: ", packet, icaTxResponse.Error))
+			"ICA TX FAILED (ack is empty / ack error), Packet: %+v, Error: ", packet, ackResponse.Error))
 
 		// Reset unbondings record status
 		err = k.RecordsKeeper.SetHostZoneUnbondings(ctx, chainId, redemptionCallback.EpochUnbondingRecordIds, recordstypes.HostZoneUnbonding_EXIT_TRANSFER_QUEUE)

@@ -123,7 +123,7 @@ func (k Keeper) GetICACallbackHandlerFromPacket(ctx sdk.Context, modulePacket ch
 	return &callbackHandler, nil
 }
 
-func (k Keeper) CallRegisteredICACallback(ctx sdk.Context, modulePacket channeltypes.Packet, ackResponse *types.ICATxResponse) error {
+func (k Keeper) CallRegisteredICACallback(ctx sdk.Context, modulePacket channeltypes.Packet, ackResponse *types.AcknowledgementResponse) error {
 	callbackDataKey := types.PacketID(modulePacket.GetSourcePort(), modulePacket.GetSourceChannel(), modulePacket.Sequence)
 	callbackData, found := k.GetCallbackDataFromPacket(ctx, modulePacket, callbackDataKey)
 	if !found {
