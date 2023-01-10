@@ -173,7 +173,7 @@ func (s *KeeperTestSuite) TestDelegateCallback_WrongCallbackArgs() {
 	invalidArgs := tc.validArgs
 
 	err := stakeibckeeper.DelegateCallback(s.App.StakeibcKeeper, s.Ctx, invalidArgs.packet, invalidArgs.ack, []byte("random bytes"))
-	s.Require().EqualError(err, "unexpected EOF")
+	s.Require().EqualError(err, "Unable to unmarshal delegate callback args: unexpected EOF: unable to unmarshal data structure")
 	s.checkDelegateStateIfCallbackFailed(tc)
 }
 

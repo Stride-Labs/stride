@@ -49,11 +49,11 @@ func DelegateCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ack
 	// Deserialize the callback args
 	delegateCallback, err := k.UnmarshalDelegateCallbackArgs(ctx, args)
 	if err != nil {
-		return err
+		return sdkerrors.Wrapf(types.ErrUnmarshalFailure, fmt.Sprintf("Unable to unmarshal delegate callback args: %s", err.Error()))
 	}
 	chainId := delegateCallback.HostZoneId
-	k.Logger(ctx).Info(utils.LogCallbackWithHostZone(chainId, ICACallbackID_Delegate,
-		"Starting callback for Deposit Record: %d", delegateCallback.DepositRecordId))
+	k.Logger(ctx).Info(utils.LogICACallbackWithHostZone(chainId, ICACallbackID_Delegate,
+		"Starting delegate callback for Deposit Record: %d", delegateCallback.DepositRecordId))
 
 	// Confirm chainId and deposit record Id exist
 	hostZone, found := k.GetHostZone(ctx, chainId)
@@ -67,9 +67,9 @@ func DelegateCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ack
 	}
 
 	// Check for timeout (ack nil)
-	// No need to reset the deposit record status since it will get revertted when the channel is restored
+	// No need to reset the deposit record status since it will get reverted when the channel is restored
 	if ack == nil {
-		k.Logger(ctx).Error(utils.LogCallbackWithHostZone(chainId, ICACallbackID_Delegate,
+		k.Logger(ctx).Error(utils.LogICACallbackWithHostZone(chainId, ICACallbackID_Delegate,
 			"TIMEOUT (ack is nil), Packet: %+v", packet))
 		return nil
 	}
@@ -82,7 +82,7 @@ func DelegateCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ack
 		return sdkerrors.Wrap(icacallbackstypes.ErrTxMsgData, err.Error())
 	}
 	if len(txMsgData.Data) == 0 {
-		k.Logger(ctx).Error(utils.LogCallbackWithHostZone(chainId, ICACallbackID_Delegate,
+		k.Logger(ctx).Error(utils.LogICACallbackWithHostZone(chainId, ICACallbackID_Delegate,
 			"ICA TX FAILED (ack is empty / ack error), Packet: %+v", packet))
 
 		// Reset deposit record status
@@ -91,7 +91,7 @@ func DelegateCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ack
 		return nil
 	}
 
-	k.Logger(ctx).Info(utils.LogCallbackWithHostZone(chainId, ICACallbackID_Delegate, "SUCCESS, Packet: %+v", packet))
+	k.Logger(ctx).Info(utils.LogICACallbackWithHostZone(chainId, ICACallbackID_Delegate, "SUCCESS, Packet: %+v", packet))
 
 	// Update delegations on the host zone
 	for _, splitDelegation := range delegateCallback.SplitDelegations {

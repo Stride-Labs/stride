@@ -137,7 +137,7 @@ func (s *KeeperTestSuite) TestReinvestCallback_WrongCallbackArgs() {
 	invalidArgs := tc.validArgs
 
 	err := stakeibckeeper.ReinvestCallback(s.App.StakeibcKeeper, s.Ctx, invalidArgs.packet, invalidArgs.ack, []byte("random bytes"))
-	s.Require().EqualError(err, "unexpected EOF")
+	s.Require().EqualError(err, "Unable to unmarshal reinvest callback args: unexpected EOF: unable to unmarshal data structure")
 	s.checkReinvestStateIfCallbackFailed(tc)
 }
 
