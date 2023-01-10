@@ -18,12 +18,12 @@ KEYS_LOGS=$DOCKERNET_HOME/logs/keys.log
 # List of hosts enabled 
 #  `start-docker` defaults to just GAIA if HOST_CHAINS is empty
 # `start-docker-all` always runs all hosts
-HOST_CHAINS=() 
+HOST_CHAINS=(GAIA EVMOS) 
 
 if [[ "${ALL_HOST_CHAINS:-false}" == "true" ]]; then 
   HOST_CHAINS=(GAIA JUNO OSMO STARS)
 elif [[ "${#HOST_CHAINS[@]}" == "0" ]]; then 
-  HOST_CHAINS=(GAIA)
+  HOST_CHAINS=(GAIA EVMOS)
 fi
 
 # Sets up upgrade if {UPGRADE_NAME} is non-empty
@@ -40,6 +40,8 @@ STATOM_DENOM="stuatom"
 STJUNO_DENOM="stujuno"
 STOSMO_DENOM="stuosmo"
 STSTARS_DENOM="stustars"
+EVMOS_DENOM="uevmos"
+STEVMOS_DENOM="stuevmos"
 
 IBC_STRD_DENOM='ibc/FF6C2E86490C1C4FBBD24F55032831D2415B9D7882F85C3CC9C2401D79362BEA'  
 
@@ -62,6 +64,11 @@ IBC_STARS_CHANNEL_0_DENOM='ibc/49BAE4CD2172833F14000627DA87ED8024AD46A38D6ED33F6
 IBC_STARS_CHANNEL_1_DENOM='ibc/9222203B0B37D076F07B3CAC716533C80E7C4239499B6306CD9921A15D308F12'
 IBC_STARS_CHANNEL_2_DENOM='ibc/C6469BA9DC791E65B3C1596CD2005941324C00659E2DF90D5E08D86B82E7E08B'
 IBC_STARS_CHANNEL_3_DENOM='ibc/482A30C07803B0455B1492BAF94EC3D600E862D52A814F25A34BCCAAA132FEE9'
+
+IBC_EVMOS_CHANNEL_0_DENOM='ibc/F2BA10AA33E0DDE136069BD02AC39413FD04D11DDDFB178B99B2420164333760'
+IBC_EVMOS_CHANNEL_1_DENOM='ibc/30BBB78A4C6497E076141E1CEB8D186819757C128D25B2F32D1FFDE715BB1326'
+IBC_EVMOS_CHANNEL_2_DENOM='ibc/B9D9785B3316446A1946060A993B72929311C9485E02F45D5EAFBACF086154DC'
+IBC_EVMOS_CHANNEL_3_DENOM='ibc/C6C44E42D0FF7805602DE3C32650E0A78D33BD40C5B784A43A7882EE5C411D2D'
 
 # COIN TYPES
 # Coin types can be found at https://github.com/satoshilabs/slips/blob/master/slip-0044.md
@@ -182,6 +189,21 @@ STARS_COIN_TYPE=$COSMOS_COIN_TYPE
 STARS_MAIN_CMD="$STARS_CMD --home $DOCKERNET_HOME/state/${STARS_NODE_PREFIX}1"
 STARS_RECEIVER_ADDRESS='stars15dywcmy6gzsc8wfefkrx0c9czlwvwrjenqthyq'
 
+# EVMOS
+EVMOS_CHAIN_ID=evmos_9001-2
+EVMOS_NODE_PREFIX=evmos
+EVMOS_NUM_NODES=1
+EVMOS_CMD="$SCRIPT_DIR/../build/evmosd"
+EVMOS_VAL_PREFIX=nval
+EVMOS_ADDRESS_PREFIX=evmos
+EVMOS_REV_ACCT=nrev1
+EVMOS_DENOM=$EVMOS_DENOM
+EVMOS_RPC_PORT=26157
+EVMOS_COIN_TYPE=$ETH_COIN_TYPE
+EVMOS_MAIN_CMD="$EVMOS_CMD --home $SCRIPT_DIR/state/${EVMOS_NODE_PREFIX}1"
+# TODO: update README
+EVMOS_RECEIVER_ADDRESS='evmos1w6wdc2684g9h3xl8nhgwr282tcxx4kl0q6q2xu'
+
 
 # HERMES
 HERMES_CMD="$DOCKERNET_HOME/../build/hermes/release/hermes --config $STATE/hermes/config.toml"
@@ -205,14 +227,17 @@ RELAYER_GAIA_EXEC="$DOCKER_COMPOSE run --rm relayer-gaia"
 RELAYER_JUNO_EXEC="$DOCKER_COMPOSE run --rm relayer-juno"
 RELAYER_OSMO_EXEC="$DOCKER_COMPOSE run --rm relayer-osmo"
 RELAYER_STARS_EXEC="$DOCKER_COMPOSE run --rm relayer-stars"
+RELAYER_EVMOS_EXEC="$DOCKER_COMPOSE run --rm relayer-evmos"
 
 RELAYER_STRIDE_ACCT=rly1
 RELAYER_GAIA_ACCT=rly2
 RELAYER_JUNO_ACCT=rly3
 RELAYER_OSMO_ACCT=rly4
 RELAYER_STARS_ACCT=rly5
-HOST_RELAYER_ACCTS=($RELAYER_GAIA_ACCT $RELAYER_JUNO_ACCT $RELAYER_OSMO_ACCT $RELAYER_STARS_ACCT)
+RELAYER_EVMOS_ACCT=rly6
+HOST_RELAYER_ACCTS=($RELAYER_GAIA_ACCT $RELAYER_JUNO_ACCT $RELAYER_OSMO_ACCT $RELAYER_STARS_ACCT $RELAYER_EVMOS_ACCT)
 
+RELAYER_EVMOS_MNEMONIC="science depart where tell bus ski laptop follow child bronze rebel recall brief plug razor ship degree labor human series today embody fury harvest"
 RELAYER_GAIA_MNEMONIC="fiction perfect rapid steel bundle giant blade grain eagle wing cannon fever must humble dance kitchen lazy episode museum faith off notable rate flavor"
 RELAYER_JUNO_MNEMONIC="kiwi betray topple van vapor flag decorate cement crystal fee family clown cry story gain frost strong year blanket remain grass pig hen empower"
 RELAYER_OSMO_MNEMONIC="unaware wine ramp february bring trust leaf beyond fever inside option dilemma save know captain endless salute radio humble chicken property culture foil taxi"
@@ -222,6 +247,10 @@ RELAYER_MNEMONICS=(
   "$RELAYER_JUNO_MNEMONIC"
   "$RELAYER_OSMO_MNEMONIC"
   "$RELAYER_STARS_MNEMONIC"
+<<<<<<< HEAD
+  "$RELAYER_EVMOS_MNEMONIC"
+=======
+>>>>>>> main
 )
 
 STRIDE_ADDRESS() { 
@@ -238,6 +267,9 @@ OSMO_ADDRESS() {
 }
 STARS_ADDRESS() { 
   $STARS_MAIN_CMD keys show ${STARS_VAL_PREFIX}1 --keyring-backend test -a 
+}
+EVMOS_ADDRESS() { 
+  $EVMOS_MAIN_CMD keys show ${EVMOS_VAL_PREFIX}1 --keyring-backend test -a 
 }
 
 CSLEEP() {

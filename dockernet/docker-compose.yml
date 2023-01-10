@@ -135,6 +135,36 @@ services:
     volumes:
       - ./state/stars5:/home/stars/.starsd
   # Fill in new host zone being tested here
+  evmos1:
+    image: stridezone:evmos
+    volumes:
+      - ./state/evmos1:/home/evmos/.evmosd
+    ports:
+  # drop this port by 100 (relative to the last host zone)
+      - "26157:26657"
+  # drop these by 10 (relative to the last host zone)
+      - "1267:1317"
+      - "9040:9090"
+
+  evmos2:
+    image: stridezone:evmos
+    volumes:
+      - ./state/evmos2:/home/evmos/.evmosd
+
+  evmos3:
+    image: stridezone:evmos
+    volumes:
+      - ./state/evmos2:/home/evmos/.evmosd
+
+  evmos4:
+    image: stridezone:evmos
+    volumes:
+      - ./state/evmos2:/home/evmos/.evmosd
+
+  evmos5:
+    image: stridezone:evmos
+    volumes:
+      - ./state/evmos5:/home/evmos/.evmosd
 
   hermes:
     image: stridezone:hermes
@@ -149,6 +179,13 @@ services:
       - ./state/relayer-gaia:/home/relayer/.relayer
     restart: always
     command: [ "bash", "start.sh", "stride-gaia" ]
+
+  relayer-evmos:
+    image: stridezone:relayer
+    volumes:
+      - ./state/relayer-evmos:/home/relayer/.relayer
+    restart: always
+    command: [ "bash", "start.sh", "stride-evmos" ]
 
   relayer-juno:
     image: stridezone:relayer
