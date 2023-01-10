@@ -24,7 +24,7 @@ func (k msgServer) RegisterHostZone(goCtx context.Context, msg *types.MsgRegiste
 	if !found {
 		errMsg := fmt.Sprintf("invalid connection id, %s not found", msg.ConnectionId)
 		k.Logger(ctx).Error(errMsg)
-		return nil, fmt.Errorf(errMsg)
+		return nil, sdkerrors.Wrapf(types.ErrFailedToRegisterHostZone, errMsg)
 	}
 	counterpartyConnection := connectionEnd.Counterparty
 

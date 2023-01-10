@@ -196,6 +196,19 @@ func (s *KeeperTestSuite) TestRestoreInterchainAccount_Success() {
 	s.VerifyHostZoneUnbondingStatus(tc.unbondingRecordStatusUpdate, true)
 }
 
+func (s *KeeperTestSuite) TestRestoreInterchainAccount_InvalidConnectionId() {
+	tc := s.SetupRestoreInterchainAccount()
+
+	// Update the connectionId on the host zone so that it doesn't exist
+	hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, tc.validMsg.ChainId)
+	s.Require().True(found)
+	hostZone.ConnectionId = "fake_connection"
+	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
+
+	_, err := s.GetMsgServer().RestoreInterchainAccount(sdk.WrapSDKContext(s.Ctx), &tc.validMsg)
+	s.Require().EqualError(err, "invalid connection id from host GAIA, fake_connection not found: invalid request")
+}
+
 func (s *KeeperTestSuite) TestRestoreInterchainAccount_CannotRestoreNonExistentAcct() {
 	tc := s.SetupRestoreInterchainAccount()
 	msg := tc.validMsg

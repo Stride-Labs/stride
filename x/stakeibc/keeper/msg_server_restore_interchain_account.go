@@ -25,9 +25,9 @@ func (k msgServer) RestoreInterchainAccount(goCtx context.Context, msg *types.Ms
 	// Get ConnectionEnd (for counterparty connection)
 	connectionEnd, found := k.IBCKeeper.ConnectionKeeper.GetConnection(ctx, hostZone.ConnectionId)
 	if !found {
-		errMsg := fmt.Sprintf("invalid connection id, %s not found", hostZone.ConnectionId)
+		errMsg := fmt.Sprintf("invalid connection id from host %s, %s not found", msg.ChainId, hostZone.ConnectionId)
 		k.Logger(ctx).Error(errMsg)
-		return nil, fmt.Errorf(errMsg)
+		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, errMsg)
 	}
 	counterpartyConnection := connectionEnd.Counterparty
 
