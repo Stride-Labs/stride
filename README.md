@@ -26,7 +26,7 @@ The fastest way to develop on Stride is local development mode.
 #### Set up local development mode 
 Install the required git submodule dependencies (various chains, relayers, bats). 
 ```
-git submodule update --init
+git submodule update --init --recursive
 ```
 
 Build executables, initialize state, and start the network with
