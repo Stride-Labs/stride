@@ -6,7 +6,7 @@
 	# Commit: 6e53d10622a943e13b339d82854aa205f276208d
 	# Branch: aidan/client_icq_patch
 	path = deps/relayer
-	url = https://github.com/Stride-Labs/relayer
+	url = https://github.com/Stride-Labs/relayer.git
 [submodule "deps/gaia"]
 	# Commit: 5b47714dd5607993a1a91f2b06a6d92cbb504721
 	path = deps/gaia
@@ -36,6 +36,6 @@
 
 # evmos
 [submodule "deps/evmos"]
-	# Commit: a4f8cd88e4391872b3557fe0966969790365934e
+	# Commit: f2180eb9bef3e957a0a327c4927dedfc93f9c80a
 	path = deps/evmos
 	url = https://github.com/Stride-Labs/evmos
