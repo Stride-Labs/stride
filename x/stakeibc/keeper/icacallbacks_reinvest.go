@@ -79,7 +79,6 @@ func ReinvestCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ack
 		k.Logger(ctx).Error("failed to find epoch")
 		return sdkerrors.Wrapf(types.ErrInvalidLengthEpochTracker, "no number for epoch (%s)", epochtypes.STRIDE_EPOCH)
 	}
-	currentStrideEpochNumber := strideEpochTracker.EpochNumber
 
 	// Create a new deposit record so that rewards are reinvested
 	record := recordstypes.DepositRecord{
@@ -88,7 +87,7 @@ func ReinvestCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ack
 		HostZoneId:         reinvestCallback.HostZoneId,
 		Status:             recordstypes.DepositRecord_DELEGATION_QUEUE,
 		Source:             recordstypes.DepositRecord_WITHDRAWAL_ICA,
-		DepositEpochNumber: currentStrideEpochNumber,
+		DepositEpochNumber: strideEpochTracker.EpochNumber,
 	}
 	k.RecordsKeeper.AppendDepositRecord(ctx, record)
 
