@@ -2,11 +2,13 @@ package apptesting
 
 import (
 	"strings"
+	"testing"
 
 	ibctransfertypes "github.com/cosmos/ibc-go/v5/modules/apps/transfer/types"
 	abci "github.com/tendermint/tendermint/abci/types"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
+	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
@@ -16,10 +18,10 @@ import (
 	ibctesting "github.com/cosmos/ibc-go/v5/testing"
 	"github.com/cosmos/ibc-go/v5/testing/simapp"
 	"github.com/gogo/protobuf/proto"
+	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 	"github.com/tendermint/tendermint/crypto/ed25519"
 	tmtypes "github.com/tendermint/tendermint/proto/tendermint/types"
-	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 
 	"github.com/Stride-Labs/stride/v4/app"
 )
@@ -254,24 +256,50 @@ func CopyConnectionAndClientToPath(path *ibctesting.Path, pathToCopy *ibctesting
 	return path
 }
 
-func (s *AppTestHelper) ICAPacketAcknowledgement(msgs []sdk.Msg, msgResponse *proto.Message) channeltypes.Acknowledgement {
+// Constructs an ICA Packet Acknowledgement compatible with ibc-go v5+
+func ICAPacketAcknowledgement(t *testing.T, msgType string, msgResponses []proto.Message) channeltypes.Acknowledgement {
 	txMsgData := &sdk.TxMsgData{
-		MsgResponses: make([]*codectypes.Any, len(msgs)),
+		MsgResponses: make([]*codectypes.Any, len(msgResponses)),
 	}
-	for i := range msgs {
-		var data *codectypes.Any
+	for i, msgResponse := range msgResponses {
+		var value []byte
 		var err error
 		if msgResponse != nil {
-			data, err = codectypes.NewAnyWithValue(*msgResponse)
-			s.Require().NoError(err, "marshal error")
-		} else {
-			data = &codectypes.Any{}
+			value, err = proto.Marshal(msgResponse)
+			require.NoError(t, err, "marshal error")
 		}
 
-		txMsgData.MsgResponses[i] = data
+		txMsgData.MsgResponses[i] = &codectypes.Any{
+			TypeUrl: msgType,
+			Value:   value,
+		}
 	}
 	marshalledTxMsgData, err := proto.Marshal(txMsgData)
-	s.Require().NoError(err)
+	require.NoError(t, err)
+	ack := channeltypes.NewResultAcknowledgement(marshalledTxMsgData)
+	return ack
+}
+
+// Constructs an legacy ICA Packet Acknowledgement compatible with ibc-go version v4 and lower
+func ICAPacketAcknowledgementLegacy(t *testing.T, msgType string, msgResponses []proto.Message) channeltypes.Acknowledgement {
+	txMsgData := &sdk.TxMsgData{
+		Data: make([]*sdk.MsgData, len(msgResponses)),
+	}
+	for i, msgResponse := range msgResponses {
+		var data []byte
+		var err error
+		if msgResponse != nil {
+			data, err = proto.Marshal(msgResponse)
+			require.NoError(t, err, "marshal error")
+		}
+
+		txMsgData.Data[i] = &sdk.MsgData{
+			MsgType: msgType,
+			Data:    data,
+		}
+	}
+	marshalledTxMsgData, err := proto.Marshal(txMsgData)
+	require.NoError(t, err)
 	ack := channeltypes.NewResultAcknowledgement(marshalledTxMsgData)
 	return ack
 }

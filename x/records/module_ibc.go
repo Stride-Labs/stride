@@ -197,7 +197,7 @@ func (im IBCModule) OnTimeoutPacket(
 ) error {
 	// doCustomLogic(packet)
 	im.keeper.Logger(ctx).Error(fmt.Sprintf("[IBC-TRANSFER] OnTimeoutPacket  %v", packet))
-	ackResponse := icacallbacktypes.AcknowledgementResponse{Status: icacallbacktypes.TIMEOUT}
+	ackResponse := icacallbacktypes.AcknowledgementResponse{Status: icacallbacktypes.AckResponseStatus_TIMEOUT}
 	err := im.keeper.ICACallbacksKeeper.CallRegisteredICACallback(ctx, packet, &ackResponse)
 	if err != nil {
 		return err

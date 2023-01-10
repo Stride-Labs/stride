@@ -44,7 +44,7 @@ func ClaimCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ackRes
 	}
 
 	// handle timeout
-	if ackResponse.Status == icacallbackstypes.TIMEOUT {
+	if ackResponse.Status == icacallbackstypes.AckResponseStatus_TIMEOUT {
 		k.Logger(ctx).Error(fmt.Sprintf("ClaimCallback timeout, ack is nil, packet %v", packet))
 		// after a timeout, a user should be able to retry the claim
 		userRedemptionRecord.ClaimIsPending = false
@@ -53,7 +53,7 @@ func ClaimCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ackRes
 	}
 
 	// handle failed tx on host chain
-	if ackResponse.Status == icacallbackstypes.FAILURE {
+	if ackResponse.Status == icacallbackstypes.AckResponseStatus_FAILURE {
 		k.Logger(ctx).Error(fmt.Sprintf("ClaimCallback failed, packet %v, error: %s", packet, ackResponse.Error))
 		// after an error, a user should be able to retry the claim
 		userRedemptionRecord.ClaimIsPending = false

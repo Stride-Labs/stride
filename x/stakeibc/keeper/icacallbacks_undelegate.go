@@ -61,14 +61,14 @@ func UndelegateCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, a
 		"Starting callback for Epoch Unbonding Records: %+v", undelegateCallback.EpochUnbondingRecordIds))
 
 	// No need to reset the unbonding record status since it will get revertted when the channel is restored
-	if ackResponse.Status == icacallbackstypes.TIMEOUT {
+	if ackResponse.Status == icacallbackstypes.AckResponseStatus_TIMEOUT {
 		k.Logger(ctx).Error(utils.LogCallbackWithHostZone(chainId, ICACallbackID_Undelegate,
 			"TIMEOUT (ack is nil), Packet: %+v", packet))
 		return nil
 	}
 
 	// Reset the unbonding record status upon failure
-	if ackResponse.Status == icacallbackstypes.FAILURE {
+	if ackResponse.Status == icacallbackstypes.AckResponseStatus_FAILURE {
 		k.Logger(ctx).Error(utils.LogCallbackWithHostZone(chainId, ICACallbackID_Undelegate,
 			"ICA TX FAILED (ack is empty / ack error), Packet: %+v, Error: %s", packet, ackResponse.Error))
 

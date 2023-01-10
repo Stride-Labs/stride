@@ -47,7 +47,7 @@ func TransferCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ack
 		return sdkerrors.Wrapf(types.ErrUnknownDepositRecord, "deposit record not found %d", transferCallbackData.DepositRecordId)
 	}
 
-	if ackResponse.Status == icacallbackstypes.TIMEOUT {
+	if ackResponse.Status == icacallbackstypes.AckResponseStatus_TIMEOUT {
 		// timeout
 		// put record back in the TRANSFER_QUEUE
 		depositRecord.Status = types.DepositRecord_TRANSFER_QUEUE
@@ -56,7 +56,7 @@ func TransferCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ack
 		return nil
 	}
 
-	if ackResponse.Status == icacallbackstypes.FAILURE {
+	if ackResponse.Status == icacallbackstypes.AckResponseStatus_FAILURE {
 		// error on host chain
 		// put record back in the TRANSFER_QUEUE
 		depositRecord.Status = types.DepositRecord_TRANSFER_QUEUE

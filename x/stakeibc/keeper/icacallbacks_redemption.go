@@ -54,13 +54,13 @@ func RedemptionCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, a
 		"Starting callback for Epoch Unbonding Records: %+v", redemptionCallback.EpochUnbondingRecordIds))
 
 	// No need to reset the unbonding record status since it will get revertted when the channel is restored
-	if ackResponse.Status == icacallbackstypes.TIMEOUT {
+	if ackResponse.Status == icacallbackstypes.AckResponseStatus_TIMEOUT {
 		k.Logger(ctx).Error(utils.LogCallbackWithHostZone(chainId, ICACallbackID_Redemption,
 			"TIMEOUT (ack is nil), Packet: %+v", packet))
 		return nil
 	}
 
-	if ackResponse.Status == icacallbackstypes.FAILURE {
+	if ackResponse.Status == icacallbackstypes.AckResponseStatus_FAILURE {
 		k.Logger(ctx).Error(utils.LogCallbackWithHostZone(chainId, ICACallbackID_Redemption,
 			"ICA TX FAILED (ack is empty / ack error), Packet: %+v, Error: ", packet, ackResponse.Error))
 

@@ -173,7 +173,7 @@ func (im IBCModule) OnTimeoutPacket(
 	relayer sdk.AccAddress,
 ) error {
 	im.keeper.Logger(ctx).Info(fmt.Sprintf("OnTimeoutPacket: packet %v, relayer %v", modulePacket, relayer))
-	ackResponse := icacallbacktypes.AcknowledgementResponse{Status: icacallbacktypes.TIMEOUT}
+	ackResponse := icacallbacktypes.AcknowledgementResponse{Status: icacallbacktypes.AckResponseStatus_TIMEOUT}
 	err := im.keeper.ICACallbacksKeeper.CallRegisteredICACallback(ctx, modulePacket, &ackResponse)
 	if err != nil {
 		return err

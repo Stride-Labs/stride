@@ -33,13 +33,13 @@ func (k Keeper) UnmarshalRebalanceCallbackArgs(ctx sdk.Context, rebalanceCallbac
 func RebalanceCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ackResponse *icacallbackstypes.AcknowledgementResponse, args []byte) error {
 	k.Logger(ctx).Info("RebalanceCallback executing", "packet", packet)
 
-	if ackResponse.Status == icacallbackstypes.TIMEOUT {
+	if ackResponse.Status == icacallbackstypes.AckResponseStatus_TIMEOUT {
 		// timeout
 		k.Logger(ctx).Error(fmt.Sprintf("RebalanceCallback timeout, ack is nil, packet %v", packet))
 		return nil
 	}
 
-	if ackResponse.Status == icacallbackstypes.FAILURE {
+	if ackResponse.Status == icacallbackstypes.AckResponseStatus_FAILURE {
 		// failed transaction
 		k.Logger(ctx).Error(fmt.Sprintf("RebalanceCallback tx failed, ack is empty (ack error), packet %v", packet))
 		return nil

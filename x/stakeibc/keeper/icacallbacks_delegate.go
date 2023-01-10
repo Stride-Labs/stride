@@ -66,12 +66,12 @@ func DelegateCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ack
 	}
 
 	// No need to reset the deposit record status since it will get revertted when the channel is restored
-	if ackResponse.Status == icacallbackstypes.TIMEOUT {
+	if ackResponse.Status == icacallbackstypes.AckResponseStatus_TIMEOUT {
 		k.Logger(ctx).Error(utils.LogCallbackWithHostZone(chainId, ICACallbackID_Delegate,
 			"TIMEOUT (ack is nil), Packet: %+v", packet))
 		return nil
 	}
-	if ackResponse.Status == icacallbackstypes.FAILURE {
+	if ackResponse.Status == icacallbackstypes.AckResponseStatus_FAILURE {
 		k.Logger(ctx).Error(utils.LogCallbackWithHostZone(chainId, ICACallbackID_Delegate,
 			"ICA TX FAILED (ack is empty / ack error), Packet: %+v, Error: %s", packet, ackResponse.Error))
 
