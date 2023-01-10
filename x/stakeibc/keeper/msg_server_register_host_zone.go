@@ -19,6 +19,15 @@ import (
 func (k msgServer) RegisterHostZone(goCtx context.Context, msg *types.MsgRegisterHostZone) (*types.MsgRegisterHostZoneResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
+	// Get ConnectionEnd (for counterparty connection)
+	connectionEnd, found := k.IBCKeeper.ConnectionKeeper.GetConnection(ctx, msg.ConnectionId)
+	if !found {
+		errMsg := fmt.Sprintf("invalid connection id, %s not found", msg.ConnectionId)
+		k.Logger(ctx).Error(errMsg)
+		return nil, fmt.Errorf(errMsg)
+	}
+	counterpartyConnection := connectionEnd.Counterparty
+
 	// Get chain id from connection
 	chainId, err := k.GetChainID(ctx, msg.ConnectionId)
 	if err != nil {
@@ -28,7 +37,7 @@ func (k msgServer) RegisterHostZone(goCtx context.Context, msg *types.MsgRegiste
 	}
 
 	// get zone
-	_, found := k.GetHostZone(ctx, chainId)
+	_, found = k.GetHostZone(ctx, chainId)
 	if found {
 		errMsg := fmt.Sprintf("invalid chain id, zone for %s already registered", chainId)
 		k.Logger(ctx).Error(errMsg)
@@ -86,7 +95,7 @@ func (k msgServer) RegisterHostZone(goCtx context.Context, msg *types.MsgRegiste
 	appVersion := string(icatypes.ModuleCdc.MustMarshalJSON(&icatypes.Metadata{
 		Version:                icatypes.Version,
 		ControllerConnectionId: zone.ConnectionId,
-		HostConnectionId:       zone.ConnectionId,
+		HostConnectionId:       counterpartyConnection.ConnectionId,
 		Encoding:               icatypes.EncodingProtobuf,
 		TxType:                 icatypes.TxTypeSDKMultiMsg,
 	}))

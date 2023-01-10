@@ -15,15 +15,24 @@ import (
 func (k msgServer) RestoreInterchainAccount(goCtx context.Context, msg *types.MsgRestoreInterchainAccount) (*types.MsgRestoreInterchainAccountResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
+	// Confirm host zone exists
 	hostZone, found := k.GetHostZone(ctx, msg.ChainId)
 	if !found {
 		k.Logger(ctx).Error(fmt.Sprintf("Host Zone not found: %s", msg.ChainId))
 		return nil, types.ErrInvalidHostZone
 	}
 
-	owner := types.FormatICAAccountOwner(msg.ChainId, msg.AccountType)
+	// Get ConnectionEnd (for counterparty connection)
+	connectionEnd, found := k.IBCKeeper.ConnectionKeeper.GetConnection(ctx, hostZone.ConnectionId)
+	if !found {
+		errMsg := fmt.Sprintf("invalid connection id, %s not found", hostZone.ConnectionId)
+		k.Logger(ctx).Error(errMsg)
+		return nil, fmt.Errorf(errMsg)
+	}
+	counterpartyConnection := connectionEnd.Counterparty
 
 	// only allow restoring an account if it already exists
+	owner := types.FormatICAAccountOwner(msg.ChainId, msg.AccountType)
 	portID, err := icatypes.NewControllerPortID(owner)
 	if err != nil {
 		errMsg := fmt.Sprintf("could not create portID for ICA controller account address: %s", owner)
@@ -40,7 +49,7 @@ func (k msgServer) RestoreInterchainAccount(goCtx context.Context, msg *types.Ms
 	appVersion := string(icatypes.ModuleCdc.MustMarshalJSON(&icatypes.Metadata{
 		Version:                icatypes.Version,
 		ControllerConnectionId: hostZone.ConnectionId,
-		HostConnectionId:       hostZone.ConnectionId,
+		HostConnectionId:       counterpartyConnection.ConnectionId,
 		Encoding:               icatypes.EncodingProtobuf,
 		TxType:                 icatypes.TxTypeSDKMultiMsg,
 	}))
