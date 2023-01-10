@@ -3,7 +3,7 @@ package types
 import (
 	"fmt"
 
-	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
+	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 )
 
 const (
@@ -12,7 +12,6 @@ const (
 
 func init() {
 	govtypes.RegisterProposalType(ProposalTypeAddValidator)
-	govtypes.RegisterProposalTypeCodec(&AddValidatorProposal{}, "stakeibc/AddValidatorProposal")
 }
 
 var (

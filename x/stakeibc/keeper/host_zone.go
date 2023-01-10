@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"math"
 
+	sdkmath "cosmossdk.io/math"
+
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -94,13 +96,13 @@ func (k Keeper) GetAllHostZone(ctx sdk.Context) (list []types.HostZone) {
 	return
 }
 
-func (k Keeper) AddDelegationToValidator(ctx sdk.Context, hostZone types.HostZone, validatorAddress string, amount sdk.Int, callbackId string) (success bool) {
+func (k Keeper) AddDelegationToValidator(ctx sdk.Context, hostZone types.HostZone, validatorAddress string, amount sdkmath.Int, callbackId string) (success bool) {
 	for _, validator := range hostZone.Validators {
 		if validator.Address == validatorAddress {
 			k.Logger(ctx).Info(utils.LogICACallbackWithHostZone(hostZone.ChainId, callbackId,
 				"  Validator %s, Current Delegation: %v, Delegation Change: %v", validator.Address, validator.DelegationAmt, amount))
 
-			if amount.GTE(sdk.ZeroInt()) {
+			if amount.GTE(sdkmath.ZeroInt()) {
 				validator.DelegationAmt = validator.DelegationAmt.Add(amount)
 				return true
 			}
@@ -168,7 +170,7 @@ func (k Keeper) AddValidatorToHostZone(ctx sdk.Context, msg *types.MsgAddValidat
 		Address:        msg.Address,
 		Status:         types.Validator_ACTIVE,
 		CommissionRate: msg.Commission,
-		DelegationAmt:  sdk.ZeroInt(),
+		DelegationAmt:  sdkmath.ZeroInt(),
 		Weight:         valWeight,
 	})
 

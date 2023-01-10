@@ -136,7 +136,7 @@ func AccAddressFromBech32(address string, bech32prefix string) (addr AccAddress,
 	return AccAddress(bz), nil
 }
 
-//==============================  AIRDROP UTILS  ================================
+// ==============================  AIRDROP UTILS  ================================
 // max64 returns the maximum of its inputs.
 func Max64(i, j int64) int64 {
 	if i > j {
@@ -172,7 +172,7 @@ func GetVestedCoinsAt(vAt int64, vStart int64, vLength int64, vCoins sdk.Coins) 
 	portion := sdk.NewDec(vAt - vStart).Quo(sdk.NewDec(vLength))
 
 	for _, ovc := range vCoins {
-		vestedAmt := ovc.Amount.ToDec().Mul(portion).RoundInt()
+		vestedAmt := sdk.NewDec(ovc.Amount.Int64()).Mul(portion).RoundInt()
 		vestedCoins = append(vestedCoins, sdk.NewCoin(ovc.Denom, vestedAmt))
 	}
 

@@ -6,7 +6,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	icatypes "github.com/cosmos/ibc-go/v3/modules/apps/27-interchain-accounts/types"
+	icatypes "github.com/cosmos/ibc-go/v5/modules/apps/27-interchain-accounts/types"
 
 	recordtypes "github.com/Stride-Labs/stride/v4/x/records/types"
 	"github.com/Stride-Labs/stride/v4/x/stakeibc/types"
@@ -37,7 +37,15 @@ func (k msgServer) RestoreInterchainAccount(goCtx context.Context, msg *types.Ms
 		return nil, sdkerrors.Wrapf(types.ErrInvalidInterchainAccountAddress, errMsg)
 	}
 
-	if err := k.ICAControllerKeeper.RegisterInterchainAccount(ctx, hostZone.ConnectionId, owner); err != nil {
+	appVersion := string(icatypes.ModuleCdc.MustMarshalJSON(&icatypes.Metadata{
+		Version:                icatypes.Version,
+		ControllerConnectionId: hostZone.ConnectionId,
+		HostConnectionId:       hostZone.ConnectionId,
+		Encoding:               icatypes.EncodingProtobuf,
+		TxType:                 icatypes.TxTypeSDKMultiMsg,
+	}))
+
+	if err := k.ICAControllerKeeper.RegisterInterchainAccount(ctx, hostZone.ConnectionId, owner, appVersion); err != nil {
 		k.Logger(ctx).Error(fmt.Sprintf("unable to register %s account : %s", msg.AccountType.String(), err))
 		return nil, err
 	}
