@@ -49,11 +49,11 @@ func TestParseTxMsgDataLegacy(t *testing.T) {
 	expectedMessages := [][]byte{{1}, {2, 2}, {3, 3}}
 
 	msgData := &sdk.TxMsgData{
-		Data: make([]*sdk.MsgData, len(expectedMessages)),
+		Data: make([]*sdk.MsgData, len(expectedMessages)), //nolint:staticcheck
 	}
 	for i, msgBytes := range expectedMessages {
 		typeUrl := "type" + strconv.Itoa(i)
-		msgData.Data[i] = &sdk.MsgData{
+		msgData.Data[i] = &sdk.MsgData{ //nolint:staticcheck
 			MsgType: typeUrl,
 			Data:    msgBytes,
 		}
