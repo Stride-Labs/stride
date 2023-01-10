@@ -25,6 +25,7 @@ func (k Keeper) GetEpochUnbondingRecord(ctx sdk.Context, epochNumber uint64) (va
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.EpochUnbondingRecordKey))
 	b := store.Get(GetEpochUnbondingRecordIDBytes(epochNumber))
 	if b == nil {
+		println("go to this")
 		return val, false
 	}
 	k.Cdc.MustUnmarshal(b, &val)
@@ -99,6 +100,7 @@ func (k Keeper) GetHostZoneUnbondingByChainId(ctx sdk.Context, epochNumber uint6
 	return &types.HostZoneUnbonding{}, false
 }
 
+// Adds a HostZoneUnbonding to an EpochUnbondingRecord
 func (k Keeper) AddHostZoneToEpochUnbondingRecord(ctx sdk.Context, epochNumber uint64, chainId string, hzu *types.HostZoneUnbonding) (val *types.EpochUnbondingRecord, success bool) {
 	epochUnbondingRecord, found := k.GetEpochUnbondingRecord(ctx, epochNumber)
 	if !found {
@@ -119,6 +121,7 @@ func (k Keeper) AddHostZoneToEpochUnbondingRecord(ctx sdk.Context, epochNumber u
 	return &epochUnbondingRecord, true
 }
 
+// Updates the status for a given host zone across relevant epoch unbonding record IDs
 func (k Keeper) SetHostZoneUnbondings(ctx sdk.Context, chainId string, epochUnbondingRecordIds []uint64, status types.HostZoneUnbonding_Status) error {
 	for _, epochUnbondingRecordId := range epochUnbondingRecordIds {
 		k.Logger(ctx).Info(fmt.Sprintf("Updating host zone unbondings on EpochUnbondingRecord %d to status %s", epochUnbondingRecordId, status.String()))
