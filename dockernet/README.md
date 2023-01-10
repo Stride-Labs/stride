@@ -125,13 +125,43 @@ paths:
       rule: ""
       channel-list: []
 ```
-* To enable the the new host zone, include it in the `HOST_CHAINS` array in `dockernet/config.sh`. **Note: You can only run up to 4 host zones at once. You can just run GAIA and the new host zone, for simplicity (see below).**
-```
-HOST_CHAINS=(GAIA {NEW-HOST-ZONE})
-```
-* And that's it! Just start the network as normal, and make sure to rebuild the new host zone when running for the first time.  
+* To enable the the new host zone, include it in the `HOST_CHAINS` array in `dockernet/config.sh`. **Note: You can only run up to 4 host zones at once. Since this wont be merged, for simplicity, you can just run GAIA and the new host zone in the default case (see below).**
+```bash
+HOST_CHAINS=()  
 
+if [[ "${ALL_HOST_CHAINS:-false}" == "true" ]]; then 
+  HOST_CHAINS=(GAIA JUNO OSMO {NEW-HOST-ZONE})      # add here (this controls the hosts in `make start-docker-all`)
+elif [[ "${#HOST_CHAINS[@]}" == "0" ]]; then 
+  HOST_CHAINS=(GAIA {NEW-HOST-ZONE})                # add here (this controls the hosts in `make start-docker`)
+fi
+```
+* Add the new host to the integration tests in `dockernet/tests/run_all_tests.sh`. When debugging, it's easiest to first test only the new host zone. You can comment out the existing chains and add the new host at the end. **Note: The transfer channel number will be 1 since it's the second host added (the first host is 0).** It should look something like:
+``` bash
+# CHAIN_NAME=GAIA TRANSFER_CHANNEL_NUMBER=0 $BATS $INTEGRATION_TEST_FILE
+# CHAIN_NAME=JUNO TRANSFER_CHANNEL_NUMBER=1 $BATS $INTEGRATION_TEST_FILE
+# CHAIN_NAME=OSMO TRANSFER_CHANNEL_NUMBER=2 $BATS $INTEGRATION_TEST_FILE
+CHAIN_NAME={NEW-HOST-ZONE} TRANSFER_CHANNEL_NUMBER=1 $BATS $INTEGRATION_TEST_FILE
+```
+* Start the network as normal. Make sure to rebuild the new host zone when running for the first time. You can view the logs in `dockernet/logs/{new-host-zone}.log` to ensure the network started successfully.
 ```
 make build-docker build=n
 make start-docker
 ```
+* After the chain is running, run the integration tests to confirm the new host zone is compatible with Stride
+```
+make test-integration-docker
+```
+* After the tests succeed, you can add back in the other hosts to the integration tests. **Note: The transfer channel for the new host will need to be updated from 1 to 3, since it is now the 4th host zone.**
+```
+CHAIN_NAME=GAIA TRANSFER_CHANNEL_NUMBER=0 $BATS $INTEGRATION_TEST_FILE
+CHAIN_NAME=JUNO TRANSFER_CHANNEL_NUMBER=1 $BATS $INTEGRATION_TEST_FILE
+CHAIN_NAME=OSMO TRANSFER_CHANNEL_NUMBER=2 $BATS $INTEGRATION_TEST_FILE
+CHAIN_NAME={NEW-HOST-ZONE} TRANSFER_CHANNEL_NUMBER=3 $BATS $INTEGRATION_TEST_FILE
+```
+* Finally, restart dockernet with all hosts, and confirm all integration tests pass 
+```
+make start-docker-all 
+make test-integration-docker
+```
+* If all tests pass, the host zone is good to go!
+
