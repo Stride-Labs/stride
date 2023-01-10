@@ -16,4 +16,5 @@ var (
 	ErrCallbackFailed          = sdkerrors.Register(ModuleName, 1504, "icacallback failed")
 	ErrCallbackDataNotFound    = sdkerrors.Register(ModuleName, 1505, "icacallback data not found")
 	ErrTxMsgData               = sdkerrors.Register(ModuleName, 1506, "txMsgData fetch failed")
+	ErrInvalidAcknowledgement  = sdkerrors.Register(ModuleName, 1507, "invalid acknowledgement")
 )

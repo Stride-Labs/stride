@@ -149,12 +149,12 @@ setup_file() {
 # check that tokens were transferred to host after liquid stake
 @test "[INTEGRATION-BASIC-$CHAIN_NAME] tokens were transferred to $HOST_CHAIN_ID after liquid staking" {
   # initial balance of delegation ICA
-  delegation_ica_balance_start=$($HOST_MAIN_CMD q bank balances $(GET_ICA_ADDR $HOST_CHAIN_ID delegation) --denom $HOST_DENOM | GETBAL)
-  WAIT_FOR_STRING $STRIDE_LOGS "\[IBC-TRANSFER\] success to $HOST_CHAIN_ID"
-  WAIT_FOR_BLOCK $STRIDE_LOGS 2
+  delegation_address=$(GET_ICA_ADDR $HOST_CHAIN_ID delegation)
+  delegation_ica_balance_start=$($HOST_MAIN_CMD q bank balances $delegation_address --denom $HOST_DENOM | GETBAL)
+  WAIT_FOR_BALANCE_CHANGE $CHAIN_NAME $delegation_address $HOST_DENOM 
 
   # get the new delegation ICA balance
-  delegation_ica_balance_end=$($HOST_MAIN_CMD q bank balances $(GET_ICA_ADDR $HOST_CHAIN_ID delegation) --denom $HOST_DENOM | GETBAL)
+  delegation_ica_balance_end=$($HOST_MAIN_CMD q bank balances $delegation_address --denom $HOST_DENOM | GETBAL)
   diff=$(($delegation_ica_balance_end - $delegation_ica_balance_start))
   assert_equal "$diff" $STAKE_AMOUNT
 }

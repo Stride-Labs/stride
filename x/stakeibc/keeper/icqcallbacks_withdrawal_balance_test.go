@@ -3,10 +3,11 @@ package keeper_test
 import (
 	"fmt"
 
+	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	ibctesting "github.com/cosmos/ibc-go/v3/testing"
+	ibctesting "github.com/cosmos/ibc-go/v5/testing"
 
-	icatypes "github.com/cosmos/ibc-go/v3/modules/apps/27-interchain-accounts/types"
+	icatypes "github.com/cosmos/ibc-go/v5/modules/apps/27-interchain-accounts/types"
 
 	epochtypes "github.com/Stride-Labs/stride/v4/x/epochs/types"
 	icacallbackstypes "github.com/Stride-Labs/stride/v4/x/icacallbacks/types"
@@ -35,7 +36,7 @@ type WithdrawalBalanceICQCallbackTestCase struct {
 // The response from the WithdrawalBalance ICQ is a serialized sdk.Coin containing
 // the address' balance. This function creates the serialized response
 func (s *KeeperTestSuite) CreateBalanceQueryResponse(amount int64, denom string) []byte {
-	coin := sdk.NewCoin(denom, sdk.NewInt(amount))
+	coin := sdk.NewCoin(denom, sdkmath.NewInt(amount))
 	coinBz := s.App.RecordsKeeper.Cdc.MustMarshal(&coin)
 	return coinBz
 }
@@ -79,7 +80,7 @@ func (s *KeeperTestSuite) SetupWithdrawalBalanceCallbackTest() WithdrawalBalance
 
 	withdrawalBalance := int64(1000)
 	commission := uint64(10)
-	expectedReinvestment := sdk.NewCoin(Atom, sdk.NewInt(int64(900)))
+	expectedReinvestment := sdk.NewCoin(Atom, sdkmath.NewInt(int64(900)))
 
 	params := s.App.StakeibcKeeper.GetParams(s.Ctx)
 	params.StrideCommission = uint64(commission)

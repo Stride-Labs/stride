@@ -3,7 +3,7 @@ package keeper
 import (
 	"fmt"
 
-	ibckeeper "github.com/cosmos/ibc-go/v3/modules/core/keeper"
+	ibckeeper "github.com/cosmos/ibc-go/v5/modules/core/keeper"
 	"github.com/tendermint/tendermint/libs/log"
 
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -11,12 +11,14 @@ import (
 	capabilitykeeper "github.com/cosmos/cosmos-sdk/x/capability/keeper"
 	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
-	ibctransferkeeper "github.com/cosmos/ibc-go/v3/modules/apps/transfer/keeper"
-	ibctypes "github.com/cosmos/ibc-go/v3/modules/apps/transfer/types"
+	ibctransferkeeper "github.com/cosmos/ibc-go/v5/modules/apps/transfer/keeper"
+	ibctypes "github.com/cosmos/ibc-go/v5/modules/apps/transfer/types"
 
 	"github.com/Stride-Labs/stride/v4/utils"
 	icacallbackskeeper "github.com/Stride-Labs/stride/v4/x/icacallbacks/keeper"
 	icacallbackstypes "github.com/Stride-Labs/stride/v4/x/icacallbacks/types"
+
+	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 
 	"github.com/Stride-Labs/stride/v4/x/records/types"
 )
@@ -25,8 +27,8 @@ type (
 	Keeper struct {
 		// *cosmosibckeeper.Keeper
 		Cdc                codec.BinaryCodec
-		storeKey           sdk.StoreKey
-		memKey             sdk.StoreKey
+		storeKey           storetypes.StoreKey
+		memKey             storetypes.StoreKey
 		paramstore         paramtypes.Subspace
 		scopedKeeper       capabilitykeeper.ScopedKeeper
 		AccountKeeper      types.AccountKeeper
@@ -39,7 +41,7 @@ type (
 func NewKeeper(
 	Cdc codec.BinaryCodec,
 	storeKey,
-	memKey sdk.StoreKey,
+	memKey storetypes.StoreKey,
 	ps paramtypes.Subspace,
 	scopedKeeper capabilitykeeper.ScopedKeeper,
 	AccountKeeper types.AccountKeeper,

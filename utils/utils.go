@@ -13,7 +13,10 @@ import (
 
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
+	channeltypes "github.com/cosmos/ibc-go/v5/modules/core/04-channel/types"
+
 	config "github.com/Stride-Labs/stride/v4/cmd/strided/config"
+	icacallbacktypes "github.com/Stride-Labs/stride/v4/x/icacallbacks/types"
 	recordstypes "github.com/Stride-Labs/stride/v4/x/records/types"
 )
 
@@ -136,7 +139,7 @@ func AccAddressFromBech32(address string, bech32prefix string) (addr AccAddress,
 	return AccAddress(bz), nil
 }
 
-//==============================  AIRDROP UTILS  ================================
+// ==============================  AIRDROP UTILS  ================================
 // max64 returns the maximum of its inputs.
 func Max64(i, j int64) int64 {
 	if i > j {
@@ -172,7 +175,7 @@ func GetVestedCoinsAt(vAt int64, vStart int64, vLength int64, vCoins sdk.Coins) 
 	portion := sdk.NewDec(vAt - vStart).Quo(sdk.NewDec(vLength))
 
 	for _, ovc := range vCoins {
-		vestedAmt := ovc.Amount.ToDec().Mul(portion).RoundInt()
+		vestedAmt := sdk.NewDec(ovc.Amount.Int64()).Mul(portion).RoundInt()
 		vestedCoins = append(vestedCoins, sdk.NewCoin(ovc.Denom, vestedAmt))
 	}
 
@@ -226,6 +229,22 @@ func logCallbackWithHostZone(chainId string, callbackId string, callbackType str
 //   | COSMOSHUB-4   |  DELEGATE ICACALLBACK  |  string
 func LogICACallbackWithHostZone(chainId string, callbackId string, s string, a ...any) string {
 	return logCallbackWithHostZone(chainId, callbackId, "ICACALLBACK", s, a...)
+}
+
+// Returns a log string with a chain Id and icacallback as a prefix, and status of the callback
+// Ex:
+//   | COSMOSHUB-4   |  DELEGATE ICACALLBACK  |  ICA SUCCESS, Packet: ...
+func LogICACallbackStatusWithHostZone(chainId string, callbackId string, status icacallbacktypes.AckResponseStatus, packet channeltypes.Packet) string {
+	var statusMsg string
+	switch status {
+	case icacallbacktypes.AckResponseStatus_SUCCESS:
+		statusMsg = "ICA SUCCESSFUL"
+	case icacallbacktypes.AckResponseStatus_TIMEOUT:
+		statusMsg = "ICA TIMEOUT"
+	default:
+		statusMsg = "ICA FAILED (ack error)"
+	}
+	return logCallbackWithHostZone(chainId, callbackId, "ICACALLBACK", "%s, Packet: %+v", statusMsg, packet)
 }
 
 // Returns a log string with a chain Id and icqcallback as a prefix
