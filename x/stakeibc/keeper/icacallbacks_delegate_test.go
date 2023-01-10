@@ -3,9 +3,10 @@ package keeper_test
 import (
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	stakingTypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	channeltypes "github.com/cosmos/ibc-go/v5/modules/core/04-channel/types"
 	_ "github.com/stretchr/testify/suite"
+
+	icacallbacktypes "github.com/Stride-Labs/stride/v4/x/icacallbacks/types"
 
 	recordtypes "github.com/Stride-Labs/stride/v4/x/records/types"
 	stakeibckeeper "github.com/Stride-Labs/stride/v4/x/stakeibc/keeper"
@@ -25,9 +26,9 @@ type DelegateCallbackState struct {
 }
 
 type DelegateCallbackArgs struct {
-	packet channeltypes.Packet
-	ack    *channeltypes.Acknowledgement
-	args   []byte
+	packet      channeltypes.Packet
+	ackResponse *icacallbacktypes.AcknowledgementResponse
+	args        []byte
 }
 
 type DelegateCallbackTestCase struct {
@@ -71,10 +72,11 @@ func (s *KeeperTestSuite) SetupDelegateCallback() DelegateCallbackTestCase {
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
 	s.App.RecordsKeeper.SetDepositRecord(s.Ctx, depositRecord)
 
+	// Mock the ack response
 	packet := channeltypes.Packet{}
-	var msgs []sdk.Msg
-	msgs = append(msgs, &stakingTypes.MsgDelegate{}, &stakingTypes.MsgDelegate{})
-	ack := s.ICAPacketAcknowledgement(msgs, nil)
+	ackResponse := icacallbacktypes.AcknowledgementResponse{Status: icacallbacktypes.AckResponseStatus_SUCCESS}
+
+	// Mock the callback args
 	val1SplitDelegation := types.SplitDelegation{
 		Validator: val1.Address,
 		Amount:    val1RelAmt,
@@ -88,7 +90,7 @@ func (s *KeeperTestSuite) SetupDelegateCallback() DelegateCallbackTestCase {
 		DepositRecordId:  depositRecord.Id,
 		SplitDelegations: []*types.SplitDelegation{&val1SplitDelegation, &val2SplitDelegation},
 	}
-	args, err := s.App.StakeibcKeeper.MarshalDelegateCallbackArgs(s.Ctx, callbackArgs)
+	callbackArgsBz, err := s.App.StakeibcKeeper.MarshalDelegateCallbackArgs(s.Ctx, callbackArgs)
 	s.Require().NoError(err)
 
 	return DelegateCallbackTestCase{
@@ -103,9 +105,9 @@ func (s *KeeperTestSuite) SetupDelegateCallback() DelegateCallbackTestCase {
 			val2RelAmt:     val2RelAmt,
 		},
 		validArgs: DelegateCallbackArgs{
-			packet: packet,
-			ack:    &ack,
-			args:   args,
+			packet:      packet,
+			ackResponse: &ackResponse,
+			args:        callbackArgsBz,
 		},
 	}
 }
@@ -115,7 +117,7 @@ func (s *KeeperTestSuite) TestDelegateCallback_Successful() {
 	initialState := tc.initialState
 	validArgs := tc.validArgs
 
-	err := stakeibckeeper.DelegateCallback(s.App.StakeibcKeeper, s.Ctx, validArgs.packet, validArgs.ack, validArgs.args)
+	err := stakeibckeeper.DelegateCallback(s.App.StakeibcKeeper, s.Ctx, validArgs.packet, validArgs.ackResponse, validArgs.args)
 	s.Require().NoError(err)
 
 	// Confirm stakedBal has increased
@@ -149,40 +151,46 @@ func (s *KeeperTestSuite) checkDelegateStateIfCallbackFailed(tc DelegateCallback
 
 func (s *KeeperTestSuite) TestDelegateCallback_DelegateCallbackTimeout() {
 	tc := s.SetupDelegateCallback()
+
+	// Update the ack response to indicate a timeout
 	invalidArgs := tc.validArgs
-	// a nil ack means the request timed out
-	invalidArgs.ack = nil
-	err := stakeibckeeper.DelegateCallback(s.App.StakeibcKeeper, s.Ctx, invalidArgs.packet, invalidArgs.ack, invalidArgs.args)
+	invalidArgs.ackResponse.Status = icacallbacktypes.AckResponseStatus_TIMEOUT
+
+	err := stakeibckeeper.DelegateCallback(s.App.StakeibcKeeper, s.Ctx, invalidArgs.packet, invalidArgs.ackResponse, invalidArgs.args)
 	s.Require().NoError(err)
 	s.checkDelegateStateIfCallbackFailed(tc)
 }
 
 func (s *KeeperTestSuite) TestDelegateCallback_DelegateCallbackErrorOnHost() {
 	tc := s.SetupDelegateCallback()
-	invalidArgs := tc.validArgs
-	// an error ack means the tx failed on the host
-	fullAck := channeltypes.Acknowledgement{Response: &channeltypes.Acknowledgement_Error{Error: "error"}}
-	invalidArgs.ack = &fullAck
 
-	err := stakeibckeeper.DelegateCallback(s.App.StakeibcKeeper, s.Ctx, invalidArgs.packet, invalidArgs.ack, invalidArgs.args)
+	// an error ack means the tx failed on the host
+	invalidArgs := tc.validArgs
+	invalidArgs.ackResponse.Status = icacallbacktypes.AckResponseStatus_FAILURE
+
+	err := stakeibckeeper.DelegateCallback(s.App.StakeibcKeeper, s.Ctx, invalidArgs.packet, invalidArgs.ackResponse, invalidArgs.args)
 	s.Require().NoError(err)
 	s.checkDelegateStateIfCallbackFailed(tc)
 }
 
 func (s *KeeperTestSuite) TestDelegateCallback_WrongCallbackArgs() {
 	tc := s.SetupDelegateCallback()
-	invalidArgs := tc.validArgs
 
-	err := stakeibckeeper.DelegateCallback(s.App.StakeibcKeeper, s.Ctx, invalidArgs.packet, invalidArgs.ack, []byte("random bytes"))
+	// random args should cause the callback to fail
+	invalidCallbackArgs := []byte("random bytes")
+
+	err := stakeibckeeper.DelegateCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.packet, tc.validArgs.ackResponse, invalidCallbackArgs)
 	s.Require().EqualError(err, "unexpected EOF")
 	s.checkDelegateStateIfCallbackFailed(tc)
 }
 
 func (s *KeeperTestSuite) TestDelegateCallback_HostNotFound() {
 	tc := s.SetupDelegateCallback()
-	invalidArgs := tc.validArgs
+
+	// Remove the host zone
 	s.App.StakeibcKeeper.RemoveHostZone(s.Ctx, HostChainId)
-	err := stakeibckeeper.DelegateCallback(s.App.StakeibcKeeper, s.Ctx, invalidArgs.packet, invalidArgs.ack, invalidArgs.args)
+
+	err := stakeibckeeper.DelegateCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.packet, tc.validArgs.ackResponse, tc.validArgs.args)
 	s.Require().EqualError(err, "host zone not found GAIA: invalid request")
 
 	// Confirm deposit record has NOT been removed
@@ -194,7 +202,8 @@ func (s *KeeperTestSuite) TestDelegateCallback_HostNotFound() {
 
 func (s *KeeperTestSuite) TestDelegateCallback_MissingValidator() {
 	tc := s.SetupDelegateCallback()
-	invalidArgs := tc.validArgs
+
+	// Update the callback args such that a validator is missing
 	badSplitDelegation := types.SplitDelegation{
 		Validator: "address_dne",
 		Amount:    sdkmath.NewInt(1234),
@@ -204,9 +213,10 @@ func (s *KeeperTestSuite) TestDelegateCallback_MissingValidator() {
 		DepositRecordId:  1,
 		SplitDelegations: []*types.SplitDelegation{&badSplitDelegation},
 	}
-	args, err := s.App.StakeibcKeeper.MarshalDelegateCallbackArgs(s.Ctx, callbackArgs)
+	invalidCallbackArgs, err := s.App.StakeibcKeeper.MarshalDelegateCallbackArgs(s.Ctx, callbackArgs)
 	s.Require().NoError(err)
-	err = stakeibckeeper.DelegateCallback(s.App.StakeibcKeeper, s.Ctx, invalidArgs.packet, invalidArgs.ack, args)
+
+	err = stakeibckeeper.DelegateCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.packet, tc.validArgs.ackResponse, invalidCallbackArgs)
 	s.Require().EqualError(err, "Failed to add delegation to validator: can't change delegation on validator")
 	s.checkDelegateStateIfCallbackFailed(tc)
 }

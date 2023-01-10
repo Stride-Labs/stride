@@ -4,11 +4,10 @@ import (
 	"fmt"
 
 	sdkmath "cosmossdk.io/math"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	channeltypes "github.com/cosmos/ibc-go/v5/modules/core/04-channel/types"
 	_ "github.com/stretchr/testify/suite"
 
+	icacallbacktypes "github.com/Stride-Labs/stride/v4/x/icacallbacks/types"
 	recordtypes "github.com/Stride-Labs/stride/v4/x/records/types"
 	stakeibckeeper "github.com/Stride-Labs/stride/v4/x/stakeibc/keeper"
 	"github.com/Stride-Labs/stride/v4/x/stakeibc/types"
@@ -22,9 +21,9 @@ type ClaimCallbackState struct {
 }
 
 type ClaimCallbackArgs struct {
-	packet channeltypes.Packet
-	ack    *channeltypes.Acknowledgement
-	args   []byte
+	packet      channeltypes.Packet
+	ackResponse *icacallbacktypes.AcknowledgementResponse
+	args        []byte
 }
 
 type ClaimCallbackTestCase struct {
@@ -90,16 +89,15 @@ func (s *KeeperTestSuite) SetupClaimCallback() ClaimCallbackTestCase {
 	s.App.RecordsKeeper.SetEpochUnbondingRecord(s.Ctx, epochUnbondingRecord1)
 	s.App.RecordsKeeper.SetEpochUnbondingRecord(s.Ctx, epochUnbondingRecord2)
 
+	// Mock ack response and callback args
 	packet := channeltypes.Packet{}
-	var msgs []sdk.Msg
-	msgs = append(msgs, &banktypes.MsgSend{})
-	ack := s.ICAPacketAcknowledgement(msgs, nil)
+	ackResponse := icacallbacktypes.AcknowledgementResponse{Status: icacallbacktypes.AckResponseStatus_SUCCESS}
 	callbackArgs := types.ClaimCallback{
 		UserRedemptionRecordId: recordId1,
 		ChainId:                HostChainId,
 		EpochNumber:            epochNumber,
 	}
-	args, err := s.App.StakeibcKeeper.MarshalClaimCallbackArgs(s.Ctx, callbackArgs)
+	callbackArgsBz, err := s.App.StakeibcKeeper.MarshalClaimCallbackArgs(s.Ctx, callbackArgs)
 	s.Require().NoError(err)
 
 	decrementAmount := userRedemptionRecord1.Amount
@@ -112,9 +110,9 @@ func (s *KeeperTestSuite) SetupClaimCallback() ClaimCallbackTestCase {
 			hzu1TokenAmount: hostZoneUnbonding1.NativeTokenAmount,
 		},
 		validArgs: ClaimCallbackArgs{
-			packet: packet,
-			ack:    &ack,
-			args:   args,
+			packet:      packet,
+			ackResponse: &ackResponse,
+			args:        callbackArgsBz,
 		},
 	}
 }
@@ -124,7 +122,7 @@ func (s *KeeperTestSuite) TestClaimCallback_Successful() {
 	initialState := tc.initialState
 	validArgs := tc.validArgs
 
-	err := stakeibckeeper.ClaimCallback(s.App.StakeibcKeeper, s.Ctx, validArgs.packet, validArgs.ack, validArgs.args)
+	err := stakeibckeeper.ClaimCallback(s.App.StakeibcKeeper, s.Ctx, validArgs.packet, validArgs.ackResponse, validArgs.args)
 	s.Require().NoError(err)
 
 	_, found := s.App.RecordsKeeper.GetUserRedemptionRecord(s.Ctx, initialState.callbackArgs.UserRedemptionRecordId)
@@ -162,38 +160,45 @@ func (s *KeeperTestSuite) checkClaimStateIfCallbackFailed(tc ClaimCallbackTestCa
 
 func (s *KeeperTestSuite) TestClaimCallback_ClaimCallbackTimeout() {
 	tc := s.SetupClaimCallback()
+
+	// Update the ack response to indicate a timeout
 	invalidArgs := tc.validArgs
-	invalidArgs.ack = nil
-	err := stakeibckeeper.ClaimCallback(s.App.StakeibcKeeper, s.Ctx, invalidArgs.packet, invalidArgs.ack, invalidArgs.args)
+	invalidArgs.ackResponse.Status = icacallbacktypes.AckResponseStatus_TIMEOUT
+
+	err := stakeibckeeper.ClaimCallback(s.App.StakeibcKeeper, s.Ctx, invalidArgs.packet, invalidArgs.ackResponse, invalidArgs.args)
 	s.Require().NoError(err, "timeout successfully proccessed")
 	s.checkClaimStateIfCallbackFailed(tc)
 }
 
 func (s *KeeperTestSuite) TestClaimCallback_ClaimCallbackErrorOnHost() {
 	tc := s.SetupClaimCallback()
-	invalidArgs := tc.validArgs
-	// an error ack means the tx failed on the host
-	fullAck := channeltypes.Acknowledgement{Response: &channeltypes.Acknowledgement_Error{Error: "error"}}
-	invalidArgs.ack = &fullAck
 
-	err := stakeibckeeper.ClaimCallback(s.App.StakeibcKeeper, s.Ctx, invalidArgs.packet, invalidArgs.ack, invalidArgs.args)
+	// an error ack means the tx failed on the host
+	invalidArgs := tc.validArgs
+	invalidArgs.ackResponse.Status = icacallbacktypes.AckResponseStatus_FAILURE
+
+	err := stakeibckeeper.ClaimCallback(s.App.StakeibcKeeper, s.Ctx, invalidArgs.packet, invalidArgs.ackResponse, invalidArgs.args)
 	s.Require().NoError(err, "error ack successfully proccessed")
 	s.checkClaimStateIfCallbackFailed(tc)
 }
 
 func (s *KeeperTestSuite) TestClaimCallback_WrongCallbackArgs() {
 	tc := s.SetupClaimCallback()
-	invalidArgs := tc.validArgs
 
-	err := stakeibckeeper.ClaimCallback(s.App.StakeibcKeeper, s.Ctx, invalidArgs.packet, invalidArgs.ack, []byte("random bytes"))
+	// random args should cause the callback to fail
+	invalidCallbackArgs := []byte("random bytes")
+
+	err := stakeibckeeper.ClaimCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.packet, tc.validArgs.ackResponse, invalidCallbackArgs)
 	s.Require().EqualError(err, "unexpected EOF")
 }
 
 func (s *KeeperTestSuite) TestClaimCallback_RecordNotFound() {
 	tc := s.SetupClaimCallback()
-	validArgs := tc.validArgs
+
+	// Remove the user redemption record from the state
 	s.App.RecordsKeeper.RemoveUserRedemptionRecord(s.Ctx, tc.initialState.callbackArgs.UserRedemptionRecordId)
-	err := stakeibckeeper.ClaimCallback(s.App.StakeibcKeeper, s.Ctx, validArgs.packet, validArgs.ack, validArgs.args)
+
+	err := stakeibckeeper.ClaimCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.packet, tc.validArgs.ackResponse, tc.validArgs.args)
 	s.Require().EqualError(err, fmt.Sprintf("user redemption record not found %s: record not found", tc.initialState.callbackArgs.UserRedemptionRecordId))
 }
 

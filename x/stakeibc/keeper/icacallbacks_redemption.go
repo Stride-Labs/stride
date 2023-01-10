@@ -62,7 +62,7 @@ func RedemptionCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, a
 
 	if ackResponse.Status == icacallbackstypes.AckResponseStatus_FAILURE {
 		k.Logger(ctx).Error(utils.LogCallbackWithHostZone(chainId, ICACallbackID_Redemption,
-			"ICA TX FAILED (ack is empty / ack error), Packet: %+v, Error: ", packet, ackResponse.Error))
+			"ICA TX FAILED (ack is empty / ack error), Packet: %+v, Error: %s", packet, ackResponse.Error))
 
 		// Reset unbondings record status
 		err = k.RecordsKeeper.SetHostZoneUnbondings(ctx, chainId, redemptionCallback.EpochUnbondingRecordIds, recordstypes.HostZoneUnbonding_EXIT_TRANSFER_QUEUE)

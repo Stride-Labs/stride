@@ -149,13 +149,11 @@ func (k Keeper) GetLatestCompletionTime(ctx sdk.Context, msgResponses [][]byte) 
 	latestCompletionTime := time.Time{}
 
 	for _, msgResponse := range msgResponses {
-		// unmarshall msgResponse and execute logic based on the response
+		// unmarshall the ack response into a MsgUndelegateResponse and grab the completion time
 		var undelegateResponse stakingtypes.MsgUndelegateResponse
 		err := proto.Unmarshal(msgResponse, &undelegateResponse)
 		if err != nil {
-			errMsg := fmt.Sprintf("Unable to unmarshal undelegation tx response | %s", err)
-			k.Logger(ctx).Error(errMsg)
-			return nil, sdkerrors.Wrapf(types.ErrUnmarshalFailure, errMsg)
+			return nil, sdkerrors.Wrapf(types.ErrUnmarshalFailure, "Unable to unmarshal undelegation tx response: %s", err.Error())
 		}
 		if undelegateResponse.CompletionTime.After(latestCompletionTime) {
 			latestCompletionTime = undelegateResponse.CompletionTime
@@ -163,9 +161,7 @@ func (k Keeper) GetLatestCompletionTime(ctx sdk.Context, msgResponses [][]byte) 
 	}
 
 	if latestCompletionTime.IsZero() {
-		errMsg := fmt.Sprintf("Invalid completion time (%s) from txMsg", latestCompletionTime.String())
-		k.Logger(ctx).Error(errMsg)
-		return nil, types.ErrInvalidPacketCompletionTime
+		return nil, sdkerrors.Wrapf(types.ErrInvalidPacketCompletionTime, "Invalid completion time (%s) from txMsg", latestCompletionTime.String())
 	}
 	return &latestCompletionTime, nil
 }
