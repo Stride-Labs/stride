@@ -33,3 +33,9 @@
 [submodule "dockernet/tests/bats/bats-support"]
 	path = dockernet/tests/bats/bats-support
 	url = https://github.com/bats-core/bats-support.git
+
+# evmos
+[submodule "deps/evmos"]
+	# Commit: a4f8cd88e4391872b3557fe0966969790365934e
+	path = deps/evmos
+	url = https://github.com/Stride-Labs/evmos
