@@ -23,15 +23,11 @@ func (suite *KeeperTestSuite) TestInterchainAccountFromAddress_Successful() {
 		Owner:        "GAIA.OWNER1",
 		ConnectionId: "connection-1",
 	}
-
 	portID, _ := icatypes.NewControllerPortID(request.Owner)
-
 	suite.App.StakeibcKeeper.ICAControllerKeeper.SetInterchainAccountAddress(suite.Ctx, request.ConnectionId, portID, address)
-
 	response, err := suite.App.StakeibcKeeper.InterchainAccountFromAddress(wctx, &request)
 
 	suite.Require().NoError(err)
-
 	suite.Require().Equal(types.NewQueryInterchainAccountResponse(address), response)
 
 }
@@ -42,10 +38,9 @@ func (suite *KeeperTestSuite) TestInterchainAccountFromAddress_NotFindAccount() 
 		Owner:        "",
 		ConnectionId: "connection-2",
 	}
-
 	_, err := suite.App.StakeibcKeeper.InterchainAccountFromAddress(wctx, &request)
-
 	err_TestCase := status.Errorf(codes.InvalidArgument, "could not find account: %s", "owner address cannot be empty: invalid account address")
+	
 	suite.Require().EqualError(err, err_TestCase.Error())
 }
 
@@ -56,11 +51,9 @@ func (suite *KeeperTestSuite) TestInterchainAccountFromAddress_NoAccountFoundFor
 		Owner:        "GAIA.OWNER3",
 		ConnectionId: "connection-3",
 	}
-
 	_, err := suite.App.StakeibcKeeper.InterchainAccountFromAddress(wctx, &request)
-
 	portID, _ := icatypes.NewControllerPortID(request.Owner)
-
 	err_TestCase := status.Errorf(codes.NotFound, "no account found for portID %s", portID)
+	
 	suite.Require().EqualError(err, err_TestCase.Error())
 }
