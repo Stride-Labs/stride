@@ -358,8 +358,8 @@ func overwriteFlagDefaults(c *cobra.Command, defaults map[string]string) {
 			}
 		}
 	}
-
-	for _, key := range utils.StringToStringMapKeys(defaults) {
+	// DO NOT REMOVE: StringToStringMapKeys fixes non-deterministic map iteration
+	for _, key := range utils.StringMapKeys(defaults) {
 		val := defaults[key]
 		set(c.Flags(), key, val)
 		set(c.PersistentFlags(), key, val)
