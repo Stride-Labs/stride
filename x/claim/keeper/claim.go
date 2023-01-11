@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	sdkmath "cosmossdk.io/math"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -384,7 +385,7 @@ func (k Keeper) GetClaimableAmountForAction(ctx sdk.Context, addr sdk.AccAddress
 
 	poolBal := distributorAccountBalance.AddAmount(airdrop.ClaimedSoFar)
 
-	claimableAmount := poolBal.Amount.ToDec().
+	claimableAmount := sdk.NewDec(poolBal.Amount.Int64()).
 		Mul(percentageForAction).
 		Mul(claimRecord.Weight).
 		Quo(totalWeight).RoundInt()
@@ -451,7 +452,7 @@ func (k Keeper) GetAirdropIdentifiersForUser(ctx sdk.Context, addr sdk.AccAddres
 	return identifiers
 }
 
-func (k Keeper) AfterClaim(ctx sdk.Context, airdropIdentifier string, claimAmount sdk.Int) error {
+func (k Keeper) AfterClaim(ctx sdk.Context, airdropIdentifier string, claimAmount sdkmath.Int) error {
 	// Increment ClaimedSoFar on the airdrop record
 	// fetch the airdrop
 	airdrop := k.GetAirdropByIdentifier(ctx, airdropIdentifier)
@@ -614,13 +615,13 @@ func (k Keeper) CreateAirdropAndEpoch(ctx sdk.Context, distributor string, denom
 }
 
 // IncrementClaimedSoFar increments ClaimedSoFar for a single airdrop
-func (k Keeper) IncrementClaimedSoFar(ctx sdk.Context, identifier string, amount sdk.Int) error {
+func (k Keeper) IncrementClaimedSoFar(ctx sdk.Context, identifier string, amount sdkmath.Int) error {
 	params, err := k.GetParams(ctx)
 	if err != nil {
 		panic(err)
 	}
 
-	if amount.LT(sdk.ZeroInt()) {
+	if amount.LT(sdkmath.ZeroInt()) {
 		return types.ErrInvalidAmount
 	}
 
@@ -644,7 +645,7 @@ func (k Keeper) ResetClaimedSoFar(ctx sdk.Context) error {
 
 	newAirdrops := []*types.Airdrop{}
 	for _, airdrop := range params.Airdrops {
-		airdrop.ClaimedSoFar = sdk.ZeroInt()
+		airdrop.ClaimedSoFar = sdkmath.ZeroInt()
 		newAirdrops = append(newAirdrops, airdrop)
 	}
 	params.Airdrops = newAirdrops

@@ -3,12 +3,12 @@ package keeper_test
 import (
 	"fmt"
 
+	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	_ "github.com/stretchr/testify/suite"
 
 	epochtypes "github.com/Stride-Labs/stride/v4/x/epochs/types"
 	recordtypes "github.com/Stride-Labs/stride/v4/x/records/types"
-	"github.com/Stride-Labs/stride/v4/x/stakeibc/types"
 	stakeibctypes "github.com/Stride-Labs/stride/v4/x/stakeibc/types"
 )
 
@@ -19,8 +19,8 @@ type Account struct {
 }
 
 type LiquidStakeState struct {
-	depositRecordAmount sdk.Int
-	hostZone            types.HostZone
+	depositRecordAmount sdkmath.Int
+	hostZone            stakeibctypes.HostZone
 }
 
 type LiquidStakeTestCase struct {
@@ -31,8 +31,8 @@ type LiquidStakeTestCase struct {
 }
 
 func (s *KeeperTestSuite) SetupLiquidStake() LiquidStakeTestCase {
-	stakeAmount := sdk.NewInt(1_000_000)
-	initialDepositAmount := sdk.NewInt(1_000_000)
+	stakeAmount := sdkmath.NewInt(1_000_000)
+	initialDepositAmount := sdkmath.NewInt(1_000_000)
 	user := Account{
 		acc:           s.TestAccs[0],
 		atomBalance:   sdk.NewInt64Coin(IbcAtom, 10_000_000),
@@ -40,7 +40,7 @@ func (s *KeeperTestSuite) SetupLiquidStake() LiquidStakeTestCase {
 	}
 	s.FundAccount(user.acc, user.atomBalance)
 
-	zoneAddress := types.NewZoneAddress(HostChainId)
+	zoneAddress := stakeibctypes.NewZoneAddress(HostChainId)
 
 	zoneAccount := Account{
 		acc:           zoneAddress,
@@ -183,7 +183,7 @@ func (s *KeeperTestSuite) TestLiquidStake_IbcCoinParseError() {
 	tc := s.SetupLiquidStake()
 	// Update hostzone with denom that can't be parsed
 	badHostZone := tc.initialState.hostZone
-	badHostZone.IbcDenom = "ibc.0atom"
+	badHostZone.IbcDenom = "ibc,0atom"
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, badHostZone)
 	_, err := s.GetMsgServer().LiquidStake(sdk.WrapSDKContext(s.Ctx), &tc.validMsg)
 
@@ -210,10 +210,10 @@ func (s *KeeperTestSuite) TestLiquidStake_InsufficientBalance() {
 	// Set liquid stake amount to value greater than account balance
 	invalidMsg := tc.validMsg
 	balance := tc.user.atomBalance.Amount
-	invalidMsg.Amount = balance.Add(sdk.NewInt(1000))
+	invalidMsg.Amount = balance.Add(sdkmath.NewInt(1000))
 	_, err := s.GetMsgServer().LiquidStake(sdk.WrapSDKContext(s.Ctx), &invalidMsg)
 
-	expectedErr := fmt.Sprintf("balance is lower than staking amount. staking amount: %v, balance: %v: insufficient funds", balance.Add(sdk.NewInt(1000)), balance)
+	expectedErr := fmt.Sprintf("balance is lower than staking amount. staking amount: %v, balance: %v: insufficient funds", balance.Add(sdkmath.NewInt(1000)), balance)
 	s.Require().EqualError(err, expectedErr)
 }
 

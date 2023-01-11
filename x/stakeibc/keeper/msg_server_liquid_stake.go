@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
@@ -93,7 +94,7 @@ func (k msgServer) LiquidStake(goCtx context.Context, msg *types.MsgLiquidStake)
 	return &types.MsgLiquidStakeResponse{}, nil
 }
 
-func (k msgServer) MintStAssetAndTransfer(ctx sdk.Context, sender sdk.AccAddress, amount sdk.Int, denom string) error {
+func (k msgServer) MintStAssetAndTransfer(ctx sdk.Context, sender sdk.AccAddress, amount sdkmath.Int, denom string) error {
 	stAssetDenom := types.StAssetDenomFromHostZoneDenom(denom)
 
 	// TODO(TEST-7): Add an exchange rate here! What object should we store the exchange rate on?
