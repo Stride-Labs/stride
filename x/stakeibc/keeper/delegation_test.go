@@ -1,7 +1,6 @@
 package keeper_test
 
 import (
-	"fmt"
 	"testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -24,8 +23,6 @@ func TestDelegationGet(t *testing.T) {
 	keeper, ctx := keepertest.StakeibcKeeper(t)
 	expected := createTestDelegation(keeper, ctx)
 	actual, found := keeper.GetDelegation(ctx)
-	fmt.Println("actual", actual)
-	fmt.Println("expected", expected)
 	require.True(t, found)
 
 	// We use (gogoproto.nullable) for Int so when encode an empty delegation,

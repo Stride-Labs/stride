@@ -1,19 +1,19 @@
 #!/bin/bash
 
 set -eu
-SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+DOCKERNET_HOME=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
-STATE=$SCRIPT_DIR/state
-LOGS=$SCRIPT_DIR/logs
-UPGRADES=$SCRIPT_DIR/upgrades
-SRC=$SCRIPT_DIR/src
+STATE=$DOCKERNET_HOME/state
+LOGS=$DOCKERNET_HOME/logs
+UPGRADES=$DOCKERNET_HOME/upgrades
+SRC=$DOCKERNET_HOME/src
 PEER_PORT=26656
-DOCKER_COMPOSE="docker-compose -f $SCRIPT_DIR/docker-compose.yml"
+DOCKER_COMPOSE="docker-compose -f $DOCKERNET_HOME/docker-compose.yml"
 
 # Logs
 STRIDE_LOGS=$LOGS/stride.log
-TX_LOGS=$SCRIPT_DIR/logs/tx.log
-KEYS_LOGS=$SCRIPT_DIR/logs/keys.log
+TX_LOGS=$DOCKERNET_HOME/logs/tx.log
+KEYS_LOGS=$DOCKERNET_HOME/logs/keys.log
 
 # List of hosts enabled 
 #  `start-docker` defaults to just GAIA if HOST_CHAINS is empty
@@ -63,6 +63,12 @@ IBC_STARS_CHANNEL_1_DENOM='ibc/9222203B0B37D076F07B3CAC716533C80E7C4239499B6306C
 IBC_STARS_CHANNEL_2_DENOM='ibc/C6469BA9DC791E65B3C1596CD2005941324C00659E2DF90D5E08D86B82E7E08B'
 IBC_STARS_CHANNEL_3_DENOM='ibc/482A30C07803B0455B1492BAF94EC3D600E862D52A814F25A34BCCAAA132FEE9'
 
+# COIN TYPES
+# Coin types can be found at https://github.com/satoshilabs/slips/blob/master/slip-0044.md
+COSMOS_COIN_TYPE=118
+ETH_COIN_TYPE=60
+TERRA_COIN_TYPE=330
+
 # INTEGRATION TEST IBC DENOM
 IBC_ATOM_DENOM=$IBC_GAIA_CHANNEL_0_DENOM
 IBC_JUNO_DENOM=$IBC_JUNO_CHANNEL_1_DENOM
@@ -91,7 +97,13 @@ VAL_MNEMONIC_2="turkey miss hurry unable embark hospital kangaroo nuclear outsid
 VAL_MNEMONIC_3="tenant neck ask season exist hill churn rice convince shock modify evidence armor track army street stay light program harvest now settle feed wheat"
 VAL_MNEMONIC_4="tail forward era width glory magnet knock shiver cup broken turkey upgrade cigar story agent lake transfer misery sustain fragile parrot also air document"
 VAL_MNEMONIC_5="crime lumber parrot enforce chimney turtle wing iron scissors jealous indicate peace empty game host protect juice submit motor cause second picture nuclear area"
-VAL_MNEMONICS=("$VAL_MNEMONIC_1","$VAL_MNEMONIC_2","$VAL_MNEMONIC_3","$VAL_MNEMONIC_4","$VAL_MNEMONIC_5")
+VAL_MNEMONICS=(
+    "$VAL_MNEMONIC_1"
+    "$VAL_MNEMONIC_2"
+    "$VAL_MNEMONIC_3"
+    "$VAL_MNEMONIC_4"
+    "$VAL_MNEMONIC_5"
+)
 REV_MNEMONIC="tonight bonus finish chaos orchard plastic view nurse salad regret pause awake link bacon process core talent whale million hope luggage sauce card weasel"
 
 # STRIDE 
@@ -108,66 +120,71 @@ STRIDE_FEE_ADDRESS=stride1czvrk3jkvtj8m27kqsqu2yrkhw3h3ykwj3rxh6
 
 # Binaries are contigent on whether we're doing an upgrade or not
 if [[ "$UPGRADE_NAME" == "" ]]; then 
-  STRIDE_CMD="$SCRIPT_DIR/../build/strided"
+  STRIDE_CMD="$DOCKERNET_HOME/../build/strided"
 else
   STRIDE_CMD="$UPGRADES/binaries/strided1"
 fi
-STRIDE_MAIN_CMD="$STRIDE_CMD --home $SCRIPT_DIR/state/${STRIDE_NODE_PREFIX}1"
+STRIDE_MAIN_CMD="$STRIDE_CMD --home $DOCKERNET_HOME/state/${STRIDE_NODE_PREFIX}1"
 
 # GAIA 
 GAIA_CHAIN_ID=GAIA
 GAIA_NODE_PREFIX=gaia
 GAIA_NUM_NODES=1
-GAIA_CMD="$SCRIPT_DIR/../build/gaiad"
+GAIA_CMD="$DOCKERNET_HOME/../build/gaiad"
 GAIA_VAL_PREFIX=gval
 GAIA_REV_ACCT=grev1
 GAIA_ADDRESS_PREFIX=cosmos
 GAIA_DENOM=$ATOM_DENOM
 GAIA_RPC_PORT=26557
-GAIA_MAIN_CMD="$GAIA_CMD --home $SCRIPT_DIR/state/${GAIA_NODE_PREFIX}1"
+GAIA_COIN_TYPE=$COSMOS_COIN_TYPE
+GAIA_MAIN_CMD="$GAIA_CMD --home $DOCKERNET_HOME/state/${GAIA_NODE_PREFIX}1"
 GAIA_RECEIVER_ADDRESS='cosmos1g6qdx6kdhpf000afvvpte7hp0vnpzapuyxp8uf'
 
 # JUNO 
 JUNO_CHAIN_ID=JUNO
 JUNO_NODE_PREFIX=juno
 JUNO_NUM_NODES=1
-JUNO_CMD="$SCRIPT_DIR/../build/junod"
+JUNO_CMD="$DOCKERNET_HOME/../build/junod"
 JUNO_VAL_PREFIX=jval
 JUNO_REV_ACCT=jrev1
 JUNO_ADDRESS_PREFIX=juno
 JUNO_DENOM=$JUNO_DENOM
 JUNO_RPC_PORT=26457
-JUNO_MAIN_CMD="$JUNO_CMD --home $SCRIPT_DIR/state/${JUNO_NODE_PREFIX}1"
+JUNO_COIN_TYPE=$COSMOS_COIN_TYPE
+JUNO_MAIN_CMD="$JUNO_CMD --home $DOCKERNET_HOME/state/${JUNO_NODE_PREFIX}1"
 JUNO_RECEIVER_ADDRESS='juno1sy0q0jpaw4t3hnf6k5wdd4384g0syzlp7rrtsg'
 
 # OSMO 
 OSMO_CHAIN_ID=OSMO
 OSMO_NODE_PREFIX=osmo
 OSMO_NUM_NODES=1
-OSMO_CMD="$SCRIPT_DIR/../build/osmosisd"
+OSMO_CMD="$DOCKERNET_HOME/../build/osmosisd"
 OSMO_VAL_PREFIX=oval
 OSMO_REV_ACCT=orev1
 OSMO_ADDRESS_PREFIX=osmo
 OSMO_DENOM=$OSMO_DENOM
 OSMO_RPC_PORT=26357
-OSMO_MAIN_CMD="$OSMO_CMD --home $SCRIPT_DIR/state/${OSMO_NODE_PREFIX}1"
+OSMO_COIN_TYPE=$COSMOS_COIN_TYPE
+OSMO_MAIN_CMD="$OSMO_CMD --home $DOCKERNET_HOME/state/${OSMO_NODE_PREFIX}1"
 OSMO_RECEIVER_ADDRESS='osmo1w6wdc2684g9h3xl8nhgwr282tcxx4kl06n4sjl'
 
 # STARS
 STARS_CHAIN_ID=STARS
 STARS_NODE_PREFIX=stars
 STARS_NUM_NODES=1
-STARS_CMD="$SCRIPT_DIR/../build/starsd"
+STARS_CMD="$DOCKERNET_HOME/../build/starsd"
 STARS_VAL_PREFIX=sgval
 STARS_REV_ACCT=sgrev1
 STARS_ADDRESS_PREFIX=stars
 STARS_DENOM=$STARS_DENOM
 STARS_RPC_PORT=26257
-STARS_MAIN_CMD="$STARS_CMD --home $SCRIPT_DIR/state/${STARS_NODE_PREFIX}1"
+STARS_COIN_TYPE=$COSMOS_COIN_TYPE
+STARS_MAIN_CMD="$STARS_CMD --home $DOCKERNET_HOME/state/${STARS_NODE_PREFIX}1"
 STARS_RECEIVER_ADDRESS='stars15dywcmy6gzsc8wfefkrx0c9czlwvwrjenqthyq'
 
+
 # HERMES
-HERMES_CMD="$SCRIPT_DIR/../build/hermes/release/hermes --config $STATE/hermes/config.toml"
+HERMES_CMD="$DOCKERNET_HOME/../build/hermes/release/hermes --config $STATE/hermes/config.toml"
 HERMES_EXEC="$DOCKER_COMPOSE run --rm hermes hermes"
 
 HERMES_STRIDE_ACCT=hrly1
@@ -183,7 +200,7 @@ HERMES_OSMO_MNEMONIC="lawn inside color february double myth depart invite mirac
 HERMES_STARS_MNEMONIC="inherit shallow bargain explain fence vocal fury perfect jeans figure festival abstract soldier entry bubble ketchup swim useless doctor thing imitate can shock coin"
 
 # RELAYER
-RELAYER_CMD="$SCRIPT_DIR/../build/relayer --home $STATE/relayer"
+RELAYER_CMD="$DOCKERNET_HOME/../build/relayer --home $STATE/relayer"
 RELAYER_GAIA_EXEC="$DOCKER_COMPOSE run --rm relayer-gaia"
 RELAYER_JUNO_EXEC="$DOCKER_COMPOSE run --rm relayer-juno"
 RELAYER_OSMO_EXEC="$DOCKER_COMPOSE run --rm relayer-osmo"
@@ -200,7 +217,12 @@ RELAYER_GAIA_MNEMONIC="fiction perfect rapid steel bundle giant blade grain eagl
 RELAYER_JUNO_MNEMONIC="kiwi betray topple van vapor flag decorate cement crystal fee family clown cry story gain frost strong year blanket remain grass pig hen empower"
 RELAYER_OSMO_MNEMONIC="unaware wine ramp february bring trust leaf beyond fever inside option dilemma save know captain endless salute radio humble chicken property culture foil taxi"
 RELAYER_STARS_MNEMONIC="deposit dawn erosion talent old broom flip recipe pill hammer animal hill nice ten target metal gas shoe visual nephew soda harbor child simple"
-RELAYER_MNEMONICS=("$RELAYER_GAIA_MNEMONIC","$RELAYER_JUNO_MNEMONIC","$RELAYER_OSMO_MNEMONIC","$RELAYER_STARS_MNEMONIC")
+RELAYER_MNEMONICS=(
+  "$RELAYER_GAIA_MNEMONIC"
+  "$RELAYER_JUNO_MNEMONIC"
+  "$RELAYER_OSMO_MNEMONIC"
+  "$RELAYER_STARS_MNEMONIC"
+)
 
 STRIDE_ADDRESS() { 
   $STRIDE_MAIN_CMD keys show ${STRIDE_VAL_PREFIX}1 --keyring-backend test -a 

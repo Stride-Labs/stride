@@ -36,3 +36,13 @@ func (suite *KeeperTestSuite) TestICAAccountQuery() {
 		}
 	}
 }
+
+func (suite *KeeperTestSuite) TestICAAccountQuery_NotFoundValidator() {
+	// No createTestICAAccount()
+	wctx := sdk.WrapSDKContext(suite.Ctx)
+	request := &types.QueryGetICAAccountRequest{}
+	_, err := suite.App.StakeibcKeeper.ICAAccount(wctx, request)
+
+	suite.Require().EqualError(err, "rpc error: code = NotFound desc = not found")
+
+}

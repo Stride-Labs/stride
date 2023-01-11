@@ -9,7 +9,6 @@ import (
 	epochtypes "github.com/Stride-Labs/stride/v4/x/epochs/types"
 	recordstypes "github.com/Stride-Labs/stride/v4/x/records/types"
 	"github.com/Stride-Labs/stride/v4/x/stakeibc/types"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
@@ -133,15 +132,9 @@ func (k msgServer) RegisterHostZone(goCtx context.Context, msg *types.MsgRegiste
 		HostZoneId:        zone.ChainId,
 		Status:            recordstypes.HostZoneUnbonding_UNBONDING_QUEUE,
 	}
-	updatedEpochUnbondingRecord, success := k.RecordsKeeper.AddHostZoneToEpochUnbondingRecord(ctx, epochUnbondingRecord.EpochNumber, chainId, hostZoneUnbonding)
-	if !success {
-		errMsg := fmt.Sprintf("Failed to set host zone epoch unbonding record: epochNumber %d, chainId %s, hostZoneUnbonding %v. Err: %s",
-			epochUnbondingRecord.EpochNumber, chainId, hostZoneUnbonding, err.Error())
-		k.Logger(ctx).Error(errMsg)
-		return nil, sdkerrors.Wrapf(types.ErrEpochNotFound, errMsg)
-	}
+	//the only case for it to not being able to add it's when GetEpochUnbondingRecord return nil. Which is checked by the line above. so no need to check for err in the below line.
+	updatedEpochUnbondingRecord, _ := k.RecordsKeeper.AddHostZoneToEpochUnbondingRecord(ctx, epochUnbondingRecord.EpochNumber, chainId, hostZoneUnbonding)
 	k.RecordsKeeper.SetEpochUnbondingRecord(ctx, *updatedEpochUnbondingRecord)
-
 	// create an empty deposit record for the host zone
 	strideEpochTracker, found := k.GetEpochTracker(ctx, epochtypes.STRIDE_EPOCH)
 	if !found {

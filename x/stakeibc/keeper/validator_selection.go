@@ -35,7 +35,7 @@ func (k Keeper) GetValidatorDelegationAmtDifferences(ctx sdk.Context, hostZone t
 // output key is ADDRESS not NAME
 func (k Keeper) GetTargetValAmtsForHostZone(ctx sdk.Context, hostZone types.HostZone, finalDelegation sdk.Int) (map[string]sdk.Int, error) {
 	// Confirm the expected delegation amount is greater than 0
-	if finalDelegation == sdk.ZeroInt() {
+	if finalDelegation.Equal(sdk.ZeroInt()) {
 		k.Logger(ctx).Error(fmt.Sprintf("Cannot calculate target delegation if final amount is 0 %s", hostZone.ChainId))
 		return nil, types.ErrNoValidatorWeights
 	}

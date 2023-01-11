@@ -8,7 +8,6 @@ import (
 
 	epochtypes "github.com/Stride-Labs/stride/v4/x/epochs/types"
 	recordtypes "github.com/Stride-Labs/stride/v4/x/records/types"
-	"github.com/Stride-Labs/stride/v4/x/stakeibc/types"
 	stakeibctypes "github.com/Stride-Labs/stride/v4/x/stakeibc/types"
 )
 
@@ -20,7 +19,7 @@ type Account struct {
 
 type LiquidStakeState struct {
 	depositRecordAmount sdk.Int
-	hostZone            types.HostZone
+	hostZone            stakeibctypes.HostZone
 }
 
 type LiquidStakeTestCase struct {
@@ -40,7 +39,7 @@ func (s *KeeperTestSuite) SetupLiquidStake() LiquidStakeTestCase {
 	}
 	s.FundAccount(user.acc, user.atomBalance)
 
-	zoneAddress := types.NewZoneAddress(HostChainId)
+	zoneAddress := stakeibctypes.NewZoneAddress(HostChainId)
 
 	zoneAccount := Account{
 		acc:           zoneAddress,
