@@ -205,6 +205,16 @@ func (k Keeper) RemoveValidatorFromHostZone(ctx sdk.Context, chainId string, val
 	return sdkerrors.Wrapf(types.ErrValidatorNotFound, errMsg)
 }
 
+// Get a validator and its index from a list of validators, by address
+func GetValidatorFromAddress(validators []*types.Validator, address string) (val types.Validator, index int64, found bool) {
+	for i, v := range validators {
+		if v.Address == address {
+			return *v, int64(i), true
+		}
+	}
+	return types.Validator{}, 0, false
+}
+
 // GetHostZoneFromIBCDenom returns a HostZone from a IBCDenom
 func (k Keeper) GetHostZoneFromIBCDenom(ctx sdk.Context, denom string) (*types.HostZone, error) {
 	var matchZone types.HostZone
