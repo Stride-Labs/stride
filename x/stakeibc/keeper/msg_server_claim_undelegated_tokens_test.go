@@ -8,11 +8,12 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	ibctesting "github.com/cosmos/ibc-go/v3/testing"
 	_ "github.com/stretchr/testify/suite"
-
+	"github.com/Stride-Labs/stride/v4/x/stakeibc/types"
 	epochtypes "github.com/Stride-Labs/stride/v4/x/epochs/types"
 	recordtypes "github.com/Stride-Labs/stride/v4/x/records/types"
 	stakeibckeeper "github.com/Stride-Labs/stride/v4/x/stakeibc/keeper"
 	stakeibctypes "github.com/Stride-Labs/stride/v4/x/stakeibc/types"
+	recordstypes "github.com/Stride-Labs/stride/v4/x/records/types"
 )
 
 type ClaimUndelegatedState struct {
@@ -225,6 +226,9 @@ func (s *KeeperTestSuite) TestGetClaimableRedemptionRecord_HostZoneNotFound() {
 	badRedemptionRecord.Id = badRedemptionRecordId
 	s.App.RecordsKeeper.SetUserRedemptionRecord(s.Ctx, badRedemptionRecord)
 
+	userRedemptionRecordKey := recordstypes.UserRedemptionRecordKeyFormatter(invalidMsg.HostZoneId, invalidMsg.Epoch, invalidMsg.Sender)
+	errMg := fmt.Sprintf("Host zone unbonding record %s not found on host zone %s: %s", userRedemptionRecordKey, invalidMsg.HostZoneId, types.ErrInvalidUserRedemptionRecord)
+	
 	_, err := s.App.StakeibcKeeper.GetClaimableRedemptionRecord(s.Ctx, &invalidMsg)
-	s.Require().EqualError(err, "Host zone unbonding record fake_host_zone.1.stride_SENDER not found on host zone fake_host_zone: user redemption record error")
+	s.Require().EqualError(err, errMg)
 }
