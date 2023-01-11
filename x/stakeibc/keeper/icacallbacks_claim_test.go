@@ -39,7 +39,7 @@ func (s *KeeperTestSuite) SetupClaimCallback() ClaimCallbackTestCase {
 		// after a user calls ClaimUndelegatedTokens, the record is set to claimIsPending = true
 		// to prevent double claims
 		ClaimIsPending: true,
-		Amount: sdk.ZeroInt(),
+		Amount:         sdk.ZeroInt(),
 	}
 	recordId2 := recordtypes.UserRedemptionRecordKeyFormatter(HostChainId, epochNumber, "other_sender")
 	userRedemptionRecord2 := recordtypes.UserRedemptionRecord{
@@ -185,7 +185,7 @@ func (s *KeeperTestSuite) TestClaimCallback_WrongCallbackArgs() {
 	invalidArgs := tc.validArgs
 
 	err := stakeibckeeper.ClaimCallback(s.App.StakeibcKeeper, s.Ctx, invalidArgs.packet, invalidArgs.ack, []byte("random bytes"))
-	s.Require().EqualError(err, "unexpected EOF")
+	s.Require().EqualError(err, "Unable to unmarshal claim callback args: unexpected EOF: unable to unmarshal data structure")
 }
 
 func (s *KeeperTestSuite) TestClaimCallback_RecordNotFound() {
@@ -218,7 +218,7 @@ func (s *KeeperTestSuite) TestDecrementHostZoneUnbonding_Success() {
 	s.Require().Equal(hzu1.NativeTokenAmount.Sub(userRedemptionRecord.Amount), hzu1.NativeTokenAmount, "hzu1 amount decremented")
 }
 
-func (s *KeeperTestSuite) TestDecrementHostZoneUnbonding_HzuNotFound() {
+func (s *KeeperTestSuite) TestDecrementHostZoneUnbonding_HostNotFound() {
 	tc := s.SetupClaimCallback()
 	initialState := tc.initialState
 
@@ -232,5 +232,28 @@ func (s *KeeperTestSuite) TestDecrementHostZoneUnbonding_HzuNotFound() {
 	s.Require().True(found, "record has been deleted")
 
 	err := s.App.StakeibcKeeper.DecrementHostZoneUnbonding(s.Ctx, userRedemptionRecord, tc.initialState.callbackArgs)
+	s.Require().EqualError(err, "host zone unbonding not found GAIA: record not found")
+}
+func (s *KeeperTestSuite) TestClaimCallback_FailedToUnmarshalTxMsgData() {
+	tc := s.SetupClaimCallback()
+	invalidArgs := tc.validArgs
+	fullAck := channeltypes.Acknowledgement{Response: &channeltypes.Acknowledgement_Result{Result: []byte("")}}
+	invalidArgs.ack = &fullAck
+	err := stakeibckeeper.ClaimCallback(s.App.StakeibcKeeper, s.Ctx, invalidArgs.packet, invalidArgs.ack, invalidArgs.args)
+	s.Require().EqualError(err, "acknowledgement result cannot be empty: invalid acknowledgement: txMsgData fetch failed")
+}
+func (s *KeeperTestSuite) TestClaimCallback_ClaimCallbackFailedDecrementHostZoneUnbonding() {
+	tc := s.SetupClaimCallback()
+	invalidArgs := tc.validArgs
+
+	epochUnbondingRecord, found := s.App.RecordsKeeper.GetEpochUnbondingRecord(s.Ctx, tc.initialState.epochNumber)
+
+	s.Require().True(found, "epoch unbonding record found")
+	epochUnbondingRecord.HostZoneUnbondings = []*recordtypes.HostZoneUnbonding{}
+	s.App.RecordsKeeper.SetEpochUnbondingRecord(s.Ctx, epochUnbondingRecord)
+
+	s.Require().True(found, "record has been deleted")
+
+	err := stakeibckeeper.ClaimCallback(s.App.StakeibcKeeper, s.Ctx, invalidArgs.packet, invalidArgs.ack, invalidArgs.args)
 	s.Require().EqualError(err, "host zone unbonding not found GAIA: record not found")
 }
