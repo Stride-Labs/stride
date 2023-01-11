@@ -20,7 +20,7 @@ NUM_VALS=$(GET_VAR_VALUE       ${CHAIN}_NUM_NODES)
 echo "$CHAIN - Registering host zone..."
 $STRIDE_MAIN_CMD tx stakeibc register-host-zone \
     $CONNECTION $HOST_DENOM $ADDRESS_PREFIX $IBC_DENOM $CHANNEL 1 \
-    --gas 1000000 --from $STRIDE_ADMIN_ACCT --home $SCRIPT_DIR/state/stride1 -y | TRIM_TX
+    --gas 1000000 --from $STRIDE_ADMIN_ACCT --home $DOCKERNET_HOME/state/stride1 -y | TRIM_TX
 sleep 10
 
 echo "$CHAIN - Registering validators..."

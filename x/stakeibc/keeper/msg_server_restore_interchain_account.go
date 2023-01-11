@@ -12,7 +12,6 @@ import (
 	"github.com/Stride-Labs/stride/v4/x/stakeibc/types"
 )
 
-// 6 function, 2 for verify record after exec, 4 for test (1 success, 3 for failure)
 func (k msgServer) RestoreInterchainAccount(goCtx context.Context, msg *types.MsgRestoreInterchainAccount) (*types.MsgRestoreInterchainAccountResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 

@@ -6,6 +6,7 @@ import (
 	channeltypes "github.com/cosmos/ibc-go/v3/modules/core/04-channel/types"
 	_ "github.com/stretchr/testify/suite"
 
+	icacallbackstypes "github.com/Stride-Labs/stride/v4/x/icacallbacks/types"
 	stakeibckeeper "github.com/Stride-Labs/stride/v4/x/stakeibc/keeper"
 	"github.com/Stride-Labs/stride/v4/x/stakeibc/types"
 	stakeibctypes "github.com/Stride-Labs/stride/v4/x/stakeibc/types"
@@ -40,12 +41,12 @@ func (s *KeeperTestSuite) SetupRebalanceCallback() RebalanceCallbackTestCase {
 			{
 				SrcValidator: "stride_VAL3",
 				DstValidator: "stride_VAL1",
-				Amt:          104,
+				Amt:          sdk.NewInt(104),
 			},
 			{
 				SrcValidator: "stride_VAL4",
 				DstValidator: "stride_VAL1",
-				Amt:          13,
+				Amt:          sdk.NewInt(13),
 			},
 		},
 	}
@@ -79,11 +80,11 @@ func (s *KeeperTestSuite) TestRebalanceCallback_Successful() {
 	validators := hz.GetValidators()
 	s.Require().Len(validators, 5, "host zone has 5 validators")
 
-	s.Require().Equal(217, int(validators[0].DelegationAmt), "validator 1 stake")
-	s.Require().Equal(500, int(validators[1].DelegationAmt), "validator 2 stake")
-	s.Require().Equal(96, int(validators[2].DelegationAmt), "validator 3 stake")
-	s.Require().Equal(387, int(validators[3].DelegationAmt), "validator 4 stake")
-	s.Require().Equal(400, int(validators[4].DelegationAmt), "validator 5 stake")
+	s.Require().Equal(sdk.NewInt(217), validators[0].DelegationAmt, "validator 1 stake")
+	s.Require().Equal(sdk.NewInt(500), validators[1].DelegationAmt, "validator 2 stake")
+	s.Require().Equal(sdk.NewInt(96), validators[2].DelegationAmt, "validator 3 stake")
+	s.Require().Equal(sdk.NewInt(387), validators[3].DelegationAmt, "validator 4 stake")
+	s.Require().Equal(sdk.NewInt(400), validators[4].DelegationAmt, "validator 5 stake")
 }
 
 func (s *KeeperTestSuite) checkDelegationStateIfCallbackFailed() {
@@ -93,11 +94,11 @@ func (s *KeeperTestSuite) checkDelegationStateIfCallbackFailed() {
 	validators := hz.GetValidators()
 	s.Require().Len(validators, 5, "host zone has 5 validators")
 
-	s.Require().Equal(100, int(validators[0].DelegationAmt), "validator 1 stake")
-	s.Require().Equal(500, int(validators[1].DelegationAmt), "validator 2 stake")
-	s.Require().Equal(200, int(validators[2].DelegationAmt), "validator 3 stake")
-	s.Require().Equal(400, int(validators[3].DelegationAmt), "validator 4 stake")
-	s.Require().Equal(400, int(validators[4].DelegationAmt), "validator 5 stake")
+	s.Require().Equal(sdk.NewInt(100), validators[0].DelegationAmt, "validator 1 stake")
+	s.Require().Equal(sdk.NewInt(500), validators[1].DelegationAmt, "validator 2 stake")
+	s.Require().Equal(sdk.NewInt(200), validators[2].DelegationAmt, "validator 3 stake")
+	s.Require().Equal(sdk.NewInt(400), validators[3].DelegationAmt, "validator 4 stake")
+	s.Require().Equal(sdk.NewInt(400), validators[4].DelegationAmt, "validator 5 stake")
 }
 
 func (s *KeeperTestSuite) TestRebalanceCallback_Timeout() {
@@ -128,7 +129,7 @@ func (s *KeeperTestSuite) TestRebalanceCallback_WrongCallbackArgs() {
 	invalidArgs := tc.validArgs
 
 	err := stakeibckeeper.RebalanceCallback(s.App.StakeibcKeeper, s.Ctx, invalidArgs.packet, invalidArgs.ack, []byte("random bytes"))
-	s.Require().EqualError(err, "Unable to unmarshal rebalance callback args | unexpected EOF: unable to unmarshal data structure")
+	s.Require().EqualError(err, "Unable to unmarshal rebalance callback args: unexpected EOF: unable to unmarshal data structure")
 	s.checkDelegationStateIfCallbackFailed()
 }
 
@@ -141,12 +142,12 @@ func (s *KeeperTestSuite) TestRebalanceCallback_WrongValidator() {
 			{
 				SrcValidator: "stride_VAL3",
 				DstValidator: "stride_VAL1",
-				Amt:          104,
+				Amt:          sdk.NewInt(104),
 			},
 			{
 				SrcValidator: "stride_VAL4_WRONG",
 				DstValidator: "stride_VAL1",
-				Amt:          13,
+				Amt:          sdk.NewInt(13),
 			},
 		},
 	}
@@ -159,12 +160,12 @@ func (s *KeeperTestSuite) TestRebalanceCallback_WrongValidator() {
 			{
 				SrcValidator: "stride_VAL3",
 				DstValidator: "stride_VAL1_WRONG",
-				Amt:          104,
+				Amt:          sdk.NewInt(104),
 			},
 			{
 				SrcValidator: "stride_VAL4",
 				DstValidator: "stride_VAL1",
-				Amt:          13,
+				Amt:          sdk.NewInt(13),
 			},
 		},
 	}
@@ -177,5 +178,43 @@ func (s *KeeperTestSuite) TestRebalanceCallback_WrongValidator() {
 
 	err = stakeibckeeper.RebalanceCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.packet, tc.validArgs.ack, invalidArgsTwo)
 	s.Require().EqualError(err, "validator not found stride_VAL1_WRONG: invalid request")
+	s.checkDelegationStateIfCallbackFailed()
+}
+
+func (s *KeeperTestSuite) TestRebalanceCallback_NotFoundHostzone() {
+	tc := s.SetupRebalanceCallback()
+
+	callbackArgs := types.RebalanceCallback{
+		HostZoneId: "superGaia",
+		Rebalancings: []*types.Rebalancing{
+			{
+				SrcValidator: "stride_VAL3",
+				DstValidator: "stride_VAL1",
+				Amt:          sdk.NewInt(104),
+			},
+			{
+				SrcValidator: "stride_VAL4_WRONG",
+				DstValidator: "stride_VAL1",
+				Amt:          sdk.NewInt(13),
+			},
+		},
+	}
+	invalidArgsOne, err := s.App.StakeibcKeeper.MarshalRebalanceCallbackArgs(s.Ctx, callbackArgs)
+	s.Require().NoError(err)
+
+	err = stakeibckeeper.RebalanceCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.packet, tc.validArgs.ack, invalidArgsOne)
+	s.Require().EqualError(err, "host zone not found superGaia: invalid request")
+	s.checkDelegationStateIfCallbackFailed()
+
+}
+
+func (s *KeeperTestSuite) TestRebalanceCallback_FailedToFetchTxMsgData() {
+	tc := s.SetupRebalanceCallback()
+	invalidArgs := tc.validArgs
+	// provide invalid Args
+	invalidArgs.ack.Response = nil
+
+	err := stakeibckeeper.RebalanceCallback(s.App.StakeibcKeeper, s.Ctx, invalidArgs.packet, invalidArgs.ack, invalidArgs.args)
+	s.Require().ErrorIs(err, icacallbackstypes.ErrTxMsgData, "txMsgData fetch should failed")
 	s.checkDelegationStateIfCallbackFailed()
 }
