@@ -1,16 +1,11 @@
 package icacallbacks
 
 import (
-	"fmt"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
-	channeltypes "github.com/cosmos/ibc-go/v3/modules/core/04-channel/types"
-	porttypes "github.com/cosmos/ibc-go/v3/modules/core/05-port/types"
-	ibcexported "github.com/cosmos/ibc-go/v3/modules/core/exported"
-	"github.com/gogo/protobuf/proto"
-	"github.com/tendermint/tendermint/libs/log"
+	channeltypes "github.com/cosmos/ibc-go/v5/modules/core/04-channel/types"
+	porttypes "github.com/cosmos/ibc-go/v5/modules/core/05-port/types"
+	ibcexported "github.com/cosmos/ibc-go/v5/modules/core/exported"
 
 	"github.com/Stride-Labs/stride/v4/x/icacallbacks/keeper"
 )
@@ -40,11 +35,12 @@ func (im IBCModule) OnChanOpenInit(
 	channelCap *capabilitytypes.Capability,
 	counterparty channeltypes.Counterparty,
 	version string,
-) error {
+) (string, error) {
 	// Note: The channel capability is claimed by the underlying app.
 	// call underlying app's OnChanOpenInit callback with the appVersion
-	return im.app.OnChanOpenInit(ctx, order, connectionHops, portID, channelID,
+	version, err := im.app.OnChanOpenInit(ctx, order, connectionHops, portID, channelID,
 		channelCap, counterparty, version)
+	return version, err
 }
 
 // OnChanOpenAck implements the IBCModule interface
@@ -88,29 +84,6 @@ func (im IBCModule) NegotiateAppVersion(
 	proposedVersion string,
 ) (version string, err error) {
 	return proposedVersion, nil
-}
-
-// GetTxMsgData returns the msgs from an ICA transaction and can be reused across authentication modules
-func GetTxMsgData(ctx sdk.Context, ack channeltypes.Acknowledgement, logger log.Logger) (*sdk.TxMsgData, error) {
-	txMsgData := &sdk.TxMsgData{}
-	switch response := ack.Response.(type) {
-	case *channeltypes.Acknowledgement_Result:
-		if len(response.Result) == 0 {
-			return nil, sdkerrors.Wrapf(channeltypes.ErrInvalidAcknowledgement, "acknowledgement result cannot be empty")
-		}
-		err := proto.Unmarshal(ack.GetResult(), txMsgData)
-		if err != nil {
-			logger.Error(fmt.Sprintf("cannot unmarshal ICS-27 tx message data: %s", err.Error()))
-			return nil, sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "cannot unmarshal ICS-27 tx message data: %s", err.Error())
-		}
-		return txMsgData, nil
-	case *channeltypes.Acknowledgement_Error:
-		logger.Error(fmt.Sprintf("acknowledgement error: %s", response.Error))
-		return txMsgData, nil
-
-	default:
-		return nil, sdkerrors.Wrapf(channeltypes.ErrInvalidAcknowledgement, "unsupported acknowledgement response field type %T", response)
-	}
 }
 
 // ###################################################################################

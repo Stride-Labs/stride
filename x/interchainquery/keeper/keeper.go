@@ -7,8 +7,10 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	ibckeeper "github.com/cosmos/ibc-go/v3/modules/core/keeper"
+	ibckeeper "github.com/cosmos/ibc-go/v5/modules/core/keeper"
 	"github.com/tendermint/tendermint/libs/log"
+
+	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 
 	"github.com/Stride-Labs/stride/v4/utils"
 	"github.com/Stride-Labs/stride/v4/x/interchainquery/types"
@@ -17,13 +19,13 @@ import (
 // Keeper of this module maintains collections of registered zones.
 type Keeper struct {
 	cdc       codec.Codec
-	storeKey  sdk.StoreKey
+	storeKey  storetypes.StoreKey
 	callbacks map[string]types.QueryCallbacks
 	IBCKeeper *ibckeeper.Keeper
 }
 
 // NewKeeper returns a new instance of zones Keeper
-func NewKeeper(cdc codec.Codec, storeKey sdk.StoreKey, ibckeeper *ibckeeper.Keeper) Keeper {
+func NewKeeper(cdc codec.Codec, storeKey storetypes.StoreKey, ibckeeper *ibckeeper.Keeper) Keeper {
 	return Keeper{
 		cdc:       cdc,
 		storeKey:  storeKey,
@@ -85,7 +87,7 @@ func (k *Keeper) MakeRequest(ctx sdk.Context, module string, callbackId string, 
 	// If the same query is re-requested, it will get replace in the store with an updated TTL
 	//  and the RequestSent bool reset to false
 	query := k.NewQuery(ctx, module, callbackId, chainId, connectionId, queryType, request, ttl)
-	k.SetQuery(ctx, query)
+	k.SetQuery(ctx, *query)
 
 	return nil
 }

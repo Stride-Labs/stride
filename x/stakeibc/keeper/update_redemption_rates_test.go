@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"math/rand"
 
+	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	_ "github.com/stretchr/testify/suite"
 
@@ -20,10 +21,10 @@ type UpdateRedemptionRatesTestCase struct {
 }
 
 func (s *KeeperTestSuite) SetupUpdateRedemptionRates(
-	stakedBal sdk.Int,
-	undelegatedBal sdk.Int,
-	justDepositedBal sdk.Int,
-	stSupply sdk.Int,
+	stakedBal sdkmath.Int,
+	undelegatedBal sdkmath.Int,
+	justDepositedBal sdkmath.Int,
+	stSupply sdkmath.Int,
 	initialRedemptionRate sdk.Dec,
 ) UpdateRedemptionRatesTestCase {
 	// add some deposit records with status STAKE
@@ -67,10 +68,10 @@ func (s *KeeperTestSuite) SetupUpdateRedemptionRates(
 }
 
 func (s *KeeperTestSuite) TestUpdateRedemptionRatesSuccessful() {
-	stakedBal := sdk.NewInt(5)
-	undelegatedBal := sdk.NewInt(3)
-	justDepositedBal := sdk.NewInt(3)
-	stSupply := sdk.NewInt(10)
+	stakedBal := sdkmath.NewInt(5)
+	undelegatedBal := sdkmath.NewInt(3)
+	justDepositedBal := sdkmath.NewInt(3)
+	stSupply := sdkmath.NewInt(10)
 
 	initialRedemptionRate := sdk.NewDec(1)
 	tc := s.SetupUpdateRedemptionRates(stakedBal, undelegatedBal, justDepositedBal, stSupply, initialRedemptionRate)
@@ -133,10 +134,10 @@ func (s *KeeperTestSuite) TestUpdateRedemptionRatesRandomized_MultipleRuns() {
 }
 
 func (s *KeeperTestSuite) TestUpdateRedemptionRateZeroStAssets() {
-	stakedBal := sdk.NewInt(5)
-	undelegatedBal := sdk.NewInt(3)
-	justDepositedBal := sdk.NewInt(3)
-	stSupply := sdk.NewInt(0)
+	stakedBal := sdkmath.NewInt(5)
+	undelegatedBal := sdkmath.NewInt(3)
+	justDepositedBal := sdkmath.NewInt(3)
+	stSupply := sdkmath.NewInt(0)
 
 	initialRedemptionRate := sdk.NewDec(1)
 	tc := s.SetupUpdateRedemptionRates(stakedBal, undelegatedBal, justDepositedBal, stSupply, initialRedemptionRate)
@@ -156,10 +157,10 @@ func (s *KeeperTestSuite) TestUpdateRedemptionRateZeroStAssets() {
 }
 
 func (s *KeeperTestSuite) TestUpdateRedemptionRateZeroNativeAssets() {
-	stakedBal := sdk.NewInt(0)
-	undelegatedBal := sdk.NewInt(0)
-	justDepositedBal := sdk.NewInt(0)
-	stSupply := sdk.NewInt(10)
+	stakedBal := sdkmath.NewInt(0)
+	undelegatedBal := sdkmath.NewInt(0)
+	justDepositedBal := sdkmath.NewInt(0)
+	stSupply := sdkmath.NewInt(10)
 
 	initialRedemptionRate := sdk.NewDec(1)
 	tc := s.SetupUpdateRedemptionRates(stakedBal, undelegatedBal, justDepositedBal, stSupply, initialRedemptionRate)
@@ -179,10 +180,10 @@ func (s *KeeperTestSuite) TestUpdateRedemptionRateZeroNativeAssets() {
 }
 
 func (s *KeeperTestSuite) TestUpdateRedemptionRateNoModuleAccountRecords() {
-	stakedBal := sdk.NewInt(5)
-	undelegatedBal := sdk.NewInt(3)
-	justDepositedBal := sdk.NewInt(3)
-	stSupply := sdk.NewInt(10)
+	stakedBal := sdkmath.NewInt(5)
+	undelegatedBal := sdkmath.NewInt(3)
+	justDepositedBal := sdkmath.NewInt(3)
+	stSupply := sdkmath.NewInt(10)
 	initialRedemptionRate := sdk.NewDec(1)
 
 	tc := s.SetupUpdateRedemptionRates(stakedBal, undelegatedBal, justDepositedBal, stSupply, initialRedemptionRate)
@@ -203,10 +204,10 @@ func (s *KeeperTestSuite) TestUpdateRedemptionRateNoModuleAccountRecords() {
 }
 
 func (s *KeeperTestSuite) TestUpdateRedemptionRateNoStakeDepositRecords() {
-	stakedBal := sdk.NewInt(5)
-	undelegatedBal := sdk.NewInt(3)
-	justDepositedBal := sdk.NewInt(3)
-	stSupply := sdk.NewInt(10)
+	stakedBal := sdkmath.NewInt(5)
+	undelegatedBal := sdkmath.NewInt(3)
+	justDepositedBal := sdkmath.NewInt(3)
+	stSupply := sdkmath.NewInt(10)
 	initialRedemptionRate := sdk.NewDec(1)
 
 	tc := s.SetupUpdateRedemptionRates(stakedBal, undelegatedBal, justDepositedBal, stSupply, initialRedemptionRate)
@@ -229,13 +230,13 @@ func (s *KeeperTestSuite) TestUpdateRedemptionRateNoStakeDepositRecords() {
 }
 
 func (s *KeeperTestSuite) TestUpdateRedemptionRateNoStakedBal() {
-	undelegatedBal := sdk.NewInt(3)
-	justDepositedBal := sdk.NewInt(3)
-	stSupply := sdk.NewInt(10)
+	undelegatedBal := sdkmath.NewInt(3)
+	justDepositedBal := sdkmath.NewInt(3)
+	stSupply := sdkmath.NewInt(10)
 	initialRedemptionRate := sdk.NewDec(1)
 
 	// SET HZ STAKED BAL TO 0
-	tc := s.SetupUpdateRedemptionRates(sdk.ZeroInt(), undelegatedBal, justDepositedBal, stSupply, initialRedemptionRate)
+	tc := s.SetupUpdateRedemptionRates(sdkmath.ZeroInt(), undelegatedBal, justDepositedBal, stSupply, initialRedemptionRate)
 
 	// sanity check on inputs (check redemptionRate at genesis is 1)
 	s.Require().Equal(initialRedemptionRate, sdk.NewDec(1))
@@ -252,10 +253,10 @@ func (s *KeeperTestSuite) TestUpdateRedemptionRateNoStakedBal() {
 }
 
 func (s *KeeperTestSuite) TestUpdateRedemptionRateRandominitialRedemptionRate() {
-	stakedBal := sdk.NewInt(5)
-	undelegatedBal := sdk.NewInt(3)
-	justDepositedBal := sdk.NewInt(3)
-	stSupply := sdk.NewInt(10)
+	stakedBal := sdkmath.NewInt(5)
+	undelegatedBal := sdkmath.NewInt(3)
+	justDepositedBal := sdkmath.NewInt(3)
+	stSupply := sdkmath.NewInt(10)
 
 	genRandUintBelowMax := func(MAX int) int64 {
 		MIN := int(1)
