@@ -1,29 +1,31 @@
 package keeper_test
 
 import (
+	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	channeltypes "github.com/cosmos/ibc-go/v3/modules/core/04-channel/types"
+	channeltypes "github.com/cosmos/ibc-go/v5/modules/core/04-channel/types"
 	_ "github.com/stretchr/testify/suite"
 
 	epochtypes "github.com/Stride-Labs/stride/v4/x/epochs/types"
 
+	icacallbacktypes "github.com/Stride-Labs/stride/v4/x/icacallbacks/types"
 	recordtypes "github.com/Stride-Labs/stride/v4/x/records/types"
 	stakeibckeeper "github.com/Stride-Labs/stride/v4/x/stakeibc/keeper"
+
 	"github.com/Stride-Labs/stride/v4/x/stakeibc/types"
 	stakeibc "github.com/Stride-Labs/stride/v4/x/stakeibc/types"
 )
 
 type ReinvestCallbackState struct {
-	reinvestAmt   sdk.Int
+	reinvestAmt   sdkmath.Int
 	callbackArgs  types.ReinvestCallback
 	depositRecord recordtypes.DepositRecord
 }
 
 type ReinvestCallbackArgs struct {
-	packet channeltypes.Packet
-	ack    *channeltypes.Acknowledgement
-	args   []byte
+	packet      channeltypes.Packet
+	ackResponse *icacallbacktypes.AcknowledgementResponse
+	args        []byte
 }
 
 type ReinvestCallbackTestCase struct {
@@ -32,7 +34,7 @@ type ReinvestCallbackTestCase struct {
 }
 
 func (s *KeeperTestSuite) SetupReinvestCallback() ReinvestCallbackTestCase {
-	reinvestAmt := sdk.NewInt(1_000)
+	reinvestAmt := sdkmath.NewInt(1_000)
 
 	hostZone := stakeibc.HostZone{
 		ChainId:        HostChainId,
@@ -56,9 +58,7 @@ func (s *KeeperTestSuite) SetupReinvestCallback() ReinvestCallbackTestCase {
 	s.App.StakeibcKeeper.SetEpochTracker(s.Ctx, epochTracker)
 
 	packet := channeltypes.Packet{}
-	var msgs []sdk.Msg
-	msgs = append(msgs, &banktypes.MsgSend{}, &banktypes.MsgSend{})
-	ack := s.ICAPacketAcknowledgement(msgs, nil)
+	ackResponse := icacallbacktypes.AcknowledgementResponse{Status: icacallbacktypes.AckResponseStatus_SUCCESS}
 	callbackArgs := types.ReinvestCallback{
 		HostZoneId:     HostChainId,
 		ReinvestAmount: sdk.NewCoin(Atom, reinvestAmt),
@@ -73,9 +73,9 @@ func (s *KeeperTestSuite) SetupReinvestCallback() ReinvestCallbackTestCase {
 			depositRecord: expectedNewDepositRecord,
 		},
 		validArgs: ReinvestCallbackArgs{
-			packet: packet,
-			ack:    &ack,
-			args:   args,
+			packet:      packet,
+			ackResponse: &ackResponse,
+			args:        args,
 		},
 	}
 }
@@ -86,7 +86,7 @@ func (s *KeeperTestSuite) TestReinvestCallback_Successful() {
 	expectedRecord := initialState.depositRecord
 	validArgs := tc.validArgs
 
-	err := stakeibckeeper.ReinvestCallback(s.App.StakeibcKeeper, s.Ctx, validArgs.packet, validArgs.ack, validArgs.args)
+	err := stakeibckeeper.ReinvestCallback(s.App.StakeibcKeeper, s.Ctx, validArgs.packet, validArgs.ackResponse, validArgs.args)
 	s.Require().NoError(err)
 
 	// Confirm deposit record has been added
@@ -111,23 +111,24 @@ func (s *KeeperTestSuite) checkReinvestStateIfCallbackFailed(tc ReinvestCallback
 
 func (s *KeeperTestSuite) TestReinvestCallback_ReinvestCallbackTimeout() {
 	tc := s.SetupReinvestCallback()
-	invalidArgs := tc.validArgs
-	// a nil ack means the request timed out
-	invalidArgs.ack = nil
 
-	err := stakeibckeeper.ReinvestCallback(s.App.StakeibcKeeper, s.Ctx, invalidArgs.packet, invalidArgs.ack, invalidArgs.args)
+	// Update the ack response to indicate a timeout
+	invalidArgs := tc.validArgs
+	invalidArgs.ackResponse.Status = icacallbacktypes.AckResponseStatus_TIMEOUT
+
+	err := stakeibckeeper.ReinvestCallback(s.App.StakeibcKeeper, s.Ctx, invalidArgs.packet, invalidArgs.ackResponse, invalidArgs.args)
 	s.Require().NoError(err)
 	s.checkReinvestStateIfCallbackFailed(tc)
 }
 
 func (s *KeeperTestSuite) TestReinvestCallback_ReinvestCallbackErrorOnHost() {
 	tc := s.SetupReinvestCallback()
-	invalidArgs := tc.validArgs
-	// an error ack means the tx failed on the host
-	fullAck := channeltypes.Acknowledgement{Response: &channeltypes.Acknowledgement_Error{Error: "error"}}
-	invalidArgs.ack = &fullAck
 
-	err := stakeibckeeper.ReinvestCallback(s.App.StakeibcKeeper, s.Ctx, invalidArgs.packet, invalidArgs.ack, invalidArgs.args)
+	// an error ack means the tx failed on the host
+	invalidArgs := tc.validArgs
+	invalidArgs.ackResponse.Status = icacallbacktypes.AckResponseStatus_FAILURE
+
+	err := stakeibckeeper.ReinvestCallback(s.App.StakeibcKeeper, s.Ctx, invalidArgs.packet, invalidArgs.ackResponse, invalidArgs.args)
 	s.Require().NoError(err)
 	s.checkReinvestStateIfCallbackFailed(tc)
 }
@@ -136,8 +137,11 @@ func (s *KeeperTestSuite) TestReinvestCallback_WrongCallbackArgs() {
 	tc := s.SetupReinvestCallback()
 	invalidArgs := tc.validArgs
 
-	err := stakeibckeeper.ReinvestCallback(s.App.StakeibcKeeper, s.Ctx, invalidArgs.packet, invalidArgs.ack, []byte("random bytes"))
-	s.Require().EqualError(err, "unexpected EOF")
+	// random args should cause the callback to fail
+	invalidCallbackArgs := []byte("random bytes")
+
+	err := stakeibckeeper.ReinvestCallback(s.App.StakeibcKeeper, s.Ctx, invalidArgs.packet, invalidArgs.ackResponse, invalidCallbackArgs)
+	s.Require().EqualError(err, "Unable to unmarshal reinvest callback args: unexpected EOF: unable to unmarshal data structure")
 	s.checkReinvestStateIfCallbackFailed(tc)
 }
 
@@ -148,7 +152,7 @@ func (s *KeeperTestSuite) TestReinvestCallback_MissingEpoch() {
 	// Remove epoch tracker
 	s.App.StakeibcKeeper.RemoveEpochTracker(s.Ctx, epochtypes.STRIDE_EPOCH)
 
-	err := stakeibckeeper.ReinvestCallback(s.App.StakeibcKeeper, s.Ctx, invalidArgs.packet, invalidArgs.ack, invalidArgs.args)
+	err := stakeibckeeper.ReinvestCallback(s.App.StakeibcKeeper, s.Ctx, invalidArgs.packet, invalidArgs.ackResponse, invalidArgs.args)
 	s.Require().ErrorContains(err, "no number for epoch (stride_epoch)")
 	s.checkReinvestStateIfCallbackFailed(tc)
 }

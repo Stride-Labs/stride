@@ -13,7 +13,10 @@ import (
 
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
+	channeltypes "github.com/cosmos/ibc-go/v5/modules/core/04-channel/types"
+
 	config "github.com/Stride-Labs/stride/v4/cmd/strided/config"
+	icacallbacktypes "github.com/Stride-Labs/stride/v4/x/icacallbacks/types"
 	recordstypes "github.com/Stride-Labs/stride/v4/x/records/types"
 )
 
@@ -45,12 +48,12 @@ func Min(a int, b int) int {
 }
 
 func StringMapKeys[V any](m map[string]V) []string {
-    keys := make([]string, 0, len(m))
-    for k := range m {
+	keys := make([]string, 0, len(m))
+	for k := range m {
 		keys = append(keys, k)
-    }
-    sort.Strings(keys)
-    return keys
+	}
+	sort.Strings(keys)
+	return keys
 }
 
 func Int32MapKeys[V any](m map[int32]V) []int32 {
@@ -61,7 +64,6 @@ func Int32MapKeys[V any](m map[int32]V) []int32 {
 	sort.Slice(keys, func(i, j int) bool { return keys[i] < keys[j] })
 	return keys
 }
-
 
 //==============================  ADDRESS VERIFICATION UTILS  ================================
 // ref: https://github.com/cosmos/cosmos-sdk/blob/b75c2ebcfab1a6b535723f1ac2889a2fc2509520/types/address.go#L177
@@ -137,7 +139,7 @@ func AccAddressFromBech32(address string, bech32prefix string) (addr AccAddress,
 	return AccAddress(bz), nil
 }
 
-//==============================  AIRDROP UTILS  ================================
+// ==============================  AIRDROP UTILS  ================================
 // max64 returns the maximum of its inputs.
 func Max64(i, j int64) int64 {
 	if i > j {
@@ -173,7 +175,7 @@ func GetVestedCoinsAt(vAt int64, vStart int64, vLength int64, vCoins sdk.Coins) 
 	portion := sdk.NewDec(vAt - vStart).Quo(sdk.NewDec(vLength))
 
 	for _, ovc := range vCoins {
-		vestedAmt := ovc.Amount.ToDec().Mul(portion).RoundInt()
+		vestedAmt := sdk.NewDec(ovc.Amount.Int64()).Mul(portion).RoundInt()
 		vestedCoins = append(vestedCoins, sdk.NewCoin(ovc.Denom, vestedAmt))
 	}
 
@@ -205,12 +207,51 @@ func ConvertAddressToStrideAddress(address string) string {
 	return bech32Addr
 }
 
-// Returns a log string with a tab and chainId as the prefix
+// Returns a log string with a chainId and tab as the prefix
 // Ex:
 //   | COSMOSHUB-4   |   string
 func LogWithHostZone(chainId string, s string, a ...any) string {
 	msg := fmt.Sprintf(s, a...)
 	return fmt.Sprintf("|   %-13s |  %s", strings.ToUpper(chainId), msg)
+}
+
+// Returns a log string with a chain Id and callback as a prefix
+// callbackType is either ICACALLBACK or ICQCALLBACK
+// Format:
+//   |   CHAIN-ID    |  {CALLBACK_ID} {CALLBACK_TYPE}  |  string
+func logCallbackWithHostZone(chainId string, callbackId string, callbackType string, s string, a ...any) string {
+	msg := fmt.Sprintf(s, a...)
+	return fmt.Sprintf("|   %-13s |  %s %s  |  %s", strings.ToUpper(chainId), strings.ToUpper(callbackId), callbackType, msg)
+}
+
+// Returns a log string with a chain Id and icacallback as a prefix
+// Ex:
+//   | COSMOSHUB-4   |  DELEGATE ICACALLBACK  |  string
+func LogICACallbackWithHostZone(chainId string, callbackId string, s string, a ...any) string {
+	return logCallbackWithHostZone(chainId, callbackId, "ICACALLBACK", s, a...)
+}
+
+// Returns a log string with a chain Id and icacallback as a prefix, and status of the callback
+// Ex:
+//   | COSMOSHUB-4   |  DELEGATE ICACALLBACK  |  ICA SUCCESS, Packet: ...
+func LogICACallbackStatusWithHostZone(chainId string, callbackId string, status icacallbacktypes.AckResponseStatus, packet channeltypes.Packet) string {
+	var statusMsg string
+	switch status {
+	case icacallbacktypes.AckResponseStatus_SUCCESS:
+		statusMsg = "ICA SUCCESSFUL"
+	case icacallbacktypes.AckResponseStatus_TIMEOUT:
+		statusMsg = "ICA TIMEOUT"
+	default:
+		statusMsg = "ICA FAILED (ack error)"
+	}
+	return logCallbackWithHostZone(chainId, callbackId, "ICACALLBACK", "%s, Packet: %+v", statusMsg, packet)
+}
+
+// Returns a log string with a chain Id and icqcallback as a prefix
+// Ex:
+//   | COSMOSHUB-4   |  WITHDRAWALBALANCE ICQCALLBACK  |  string
+func LogICQCallbackWithHostZone(chainId string, callbackId string, s string, a ...any) string {
+	return logCallbackWithHostZone(chainId, callbackId, "ICQCALLBACK", s, a...)
 }
 
 // Returns a log header string with a dash padding on either side

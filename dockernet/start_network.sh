@@ -17,7 +17,7 @@ if [[ "$UPGRADE_NAME" != "" ]]; then
     # Update binary #2 with the binary that was just compiled
     mkdir -p $UPGRADES/binaries
     rm -f $UPGRADES/binaries/strided2
-    cp $SCRIPT_DIR/../build/strided $UPGRADES/binaries/strided2
+    cp $DOCKERNET_HOME/../build/strided $UPGRADES/binaries/strided2
 
     # Build a cosmovisor image with the old binary and replace the stride docker image with a new one
     #  that has both binaries and is running cosmovisor
