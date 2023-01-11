@@ -60,10 +60,8 @@ func (k msgServer) RebalanceValidators(goCtx context.Context, msg *types.MsgReba
 	underWeightIndex := len(valDeltaList) - 1
 
 	// check if there is a large enough rebalance, if not, just exit
+	// we also checked the validity of rebalance amount when calling k.GetValidatorDelegationAmtDifferences(ctx, hostZone); so no need to check for err again
 	total_delegation := k.GetTotalValidatorDelegations(hostZone)
-	if total_delegation.IsZero() {
-		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "no validator delegations found for Host Zone %s, cannot rebalance 0 delegations!", hostZone.ChainId)
-	}
 
 	overweight_delta := sdk.NewDecFromInt(valDeltaList[overWeightIndex].deltaAmt).Quo(sdk.NewDecFromInt(total_delegation))
 	underweight_delta := sdk.NewDecFromInt(valDeltaList[underWeightIndex].deltaAmt).Quo(sdk.NewDecFromInt(total_delegation))

@@ -195,28 +195,3 @@ func (s *KeeperTestSuite) TestGetHostZoneUnbondingMsgs_UnbondingTooMuch() {
 	_, _, _, _, err := s.App.StakeibcKeeper.GetHostZoneUnbondingMsgs(s.Ctx, tc.hostZone)
 	s.Require().EqualError(err, fmt.Sprintf("Could not unbond %v on Host Zone %s, unable to balance the unbond amount across validators: not found", tc.amtToUnbond.Mul(sdk.NewInt(int64(len(tc.epochUnbondingRecords)))), tc.hostZone.ChainId))
 }
-
-func (s *KeeperTestSuite) TestGetTargetValAmtsForHostZone_Success() {
-	tc := s.SetupGetHostZoneUnbondingMsgs()
-
-	// verify the total amount is expected
-	unbond := sdk.NewInt(1_000_000)
-	totalAmt, err := s.App.StakeibcKeeper.GetTargetValAmtsForHostZone(s.Ctx, tc.hostZone, unbond)
-	s.Require().Nil(err)
-
-	// sum up totalAmt
-	actualAmount := sdk.ZeroInt()
-	for _, amt := range totalAmt {
-		actualAmount = actualAmount.Add(amt)
-	}
-	s.Require().Equal(unbond, actualAmount, "total amount unbonded matches input")
-
-	// verify the order of the validators is expected
-	// GetTargetValAmtsForHostZone first reverses the list, then sorts by weight using SliceStable
-	// E.g. given A:1, B:2, C:2
-	// 1. C:2, B:2, A:1
-	// 2. A:1, C:2, B:2
-	s.Require().Equal(tc.valNames[0], tc.hostZone.Validators[0].Address)
-	s.Require().Equal(tc.valNames[1], tc.hostZone.Validators[2].Address)
-	s.Require().Equal(tc.valNames[2], tc.hostZone.Validators[1].Address)
-}

@@ -3,10 +3,10 @@
 	path = deps/hermes
 	url = https://github.com/informalsystems/ibc-rs.git
 [submodule "deps/relayer"]
-	# Commit: 2c03c44f1e380a62b953a2f95efbd3be760c2b70
-	# Branch: andrew/client_icq
+	# Commit: 6e53d10622a943e13b339d82854aa205f276208d
+	# Branch: aidan/client_icq_patch
 	path = deps/relayer
-	url = https://github.com/cosmos/relayer.git
+	url = https://github.com/Stride-Labs/relayer
 [submodule "deps/gaia"]
 	# Commit: 5b47714dd5607993a1a91f2b06a6d92cbb504721
 	path = deps/gaia
@@ -23,6 +23,7 @@
 	# Commit: b0bea28fc695a2a5c567e56a37b289a5b75830cc
 	path = deps/stargaze
 	url = https://github.com/public-awesome/stargaze.git
+# bats
 [submodule "dockernet/tests/bats/bats-core"]
 	path = dockernet/tests/bats/bats-core
 	url = https://github.com/bats-core/bats-core.git

@@ -8,11 +8,12 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	ibctesting "github.com/cosmos/ibc-go/v3/testing"
 	_ "github.com/stretchr/testify/suite"
-
+	"github.com/Stride-Labs/stride/v4/x/stakeibc/types"
 	epochtypes "github.com/Stride-Labs/stride/v4/x/epochs/types"
 	recordtypes "github.com/Stride-Labs/stride/v4/x/records/types"
 	stakeibckeeper "github.com/Stride-Labs/stride/v4/x/stakeibc/keeper"
 	stakeibctypes "github.com/Stride-Labs/stride/v4/x/stakeibc/types"
+	recordstypes "github.com/Stride-Labs/stride/v4/x/records/types"
 )
 
 type ClaimUndelegatedState struct {
@@ -212,4 +213,22 @@ func (s *KeeperTestSuite) TestClaimUndelegatedTokens_HzuNotStatusTransferred() {
 
 	_, err := s.GetMsgServer().ClaimUndelegatedTokens(sdk.WrapSDKContext(s.Ctx), &tc.validMsg)
 	s.Require().EqualError(err, "unable to find claimable redemption record for msg: creator:\"stride_SENDER\" host_zone_id:\"GAIA\" epoch:1 sender:\"stride_SENDER\" , error User redemption record GAIA.1.stride_SENDER is not claimable, host zone unbonding has status: EXIT_TRANSFER_QUEUE, requires status CLAIMABLE: user redemption record error: record not found")
+}
+
+func (s *KeeperTestSuite) TestGetClaimableRedemptionRecord_HostZoneNotFound() {
+	tc := s.SetupClaimUndelegatedTokens()
+	// Change host zone in message
+	invalidMsg := tc.validMsg
+	invalidMsg.HostZoneId = "fake_host_zone"
+
+	badRedemptionRecordId := strings.Replace(tc.initialState.redemptionRecordId, "GAIA", "fake_host_zone", 1)
+	badRedemptionRecord := tc.initialState.redemptionRecord
+	badRedemptionRecord.Id = badRedemptionRecordId
+	s.App.RecordsKeeper.SetUserRedemptionRecord(s.Ctx, badRedemptionRecord)
+
+	userRedemptionRecordKey := recordstypes.UserRedemptionRecordKeyFormatter(invalidMsg.HostZoneId, invalidMsg.Epoch, invalidMsg.Sender)
+	errMg := fmt.Sprintf("Host zone unbonding record %s not found on host zone %s: %s", userRedemptionRecordKey, invalidMsg.HostZoneId, types.ErrInvalidUserRedemptionRecord)
+	
+	_, err := s.App.StakeibcKeeper.GetClaimableRedemptionRecord(s.Ctx, &invalidMsg)
+	s.Require().EqualError(err, errMg)
 }
