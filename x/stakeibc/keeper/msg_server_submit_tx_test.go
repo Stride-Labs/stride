@@ -135,7 +135,7 @@ func (s *KeeperTestSuite) TestDelegateOnHost_InvalidDelegationAccount() {
 	s.EqualError(err, error, "Hostzone's Delegation accounts has been changed so this should fail")
 }
 
-func (s *KeeperTestSuite) TestDelegationOnHost_ErrorOnValidators() {
+func (s *KeeperTestSuite) TestDelegationOnHost_ErrorGettingTargetDelegateAmtOnValidators() {
 	tc := s.SetupDelegationOnHost()
 	//change Hostzone's Validators to empty so error should be returnd
 	validators := []*stakeibctypes.Validator{}
