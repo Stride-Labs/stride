@@ -25,7 +25,6 @@ func (k Keeper) GetEpochUnbondingRecord(ctx sdk.Context, epochNumber uint64) (va
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.EpochUnbondingRecordKey))
 	b := store.Get(GetEpochUnbondingRecordIDBytes(epochNumber))
 	if b == nil {
-		println("go to this")
 		return val, false
 	}
 	k.Cdc.MustUnmarshal(b, &val)

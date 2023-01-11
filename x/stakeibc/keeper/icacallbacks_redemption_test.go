@@ -184,3 +184,31 @@ func (s *KeeperTestSuite) TestRedemptionCallback_HostZoneUnbondingNotFound() {
 	s.Require().EqualError(err, fmt.Sprintf("Error fetching host zone unbonding record for epoch: %d, host zone: GAIA: host zone not found", tc.initialState.epochNumber))
 	s.checkRedemptionStateIfCallbackFailed(tc)
 }
+func (s *KeeperTestSuite) TestRedemptionCallback_txMsgDataCouldNotBeParsed() {
+	tc := s.SetupRedemptionCallback()
+	valid := tc.validArgs
+	// remove the hzu from the epoch unbonding record
+	epochUnbondingRecord, found := s.App.RecordsKeeper.GetEpochUnbondingRecord(s.Ctx, tc.initialState.epochNumber)
+	s.Require().True(found)
+	epochUnbondingRecord.HostZoneUnbondings = []*recordtypes.HostZoneUnbonding{}
+	s.App.RecordsKeeper.SetEpochUnbondingRecord(s.Ctx, epochUnbondingRecord)
+	ack := channeltypes.Acknowledgement{Response: &channeltypes.Acknowledgement_Result{Result: []byte("")}}
+	err := stakeibckeeper.RedemptionCallback(s.App.StakeibcKeeper, s.Ctx, valid.packet, &ack, valid.args)
+	s.Require().EqualError(err, "acknowledgement result cannot be empty: invalid acknowledgement: txMsgData fetch failed")
+	s.checkRedemptionStateIfCallbackFailed(tc)
+}
+
+func (s *KeeperTestSuite) TestRedemptionCallback_HostZoneNotFound() {
+	tc := s.SetupRedemptionCallback()
+	valid := tc.validArgs
+	// remove the hzu from the epoch unbonding record
+	epochUnbondingRecord, found := s.App.RecordsKeeper.GetEpochUnbondingRecord(s.Ctx, tc.initialState.epochNumber)
+	s.Require().True(found)
+	epochUnbondingRecord.HostZoneUnbondings = []*recordtypes.HostZoneUnbonding{}
+	s.App.RecordsKeeper.SetEpochUnbondingRecord(s.Ctx, epochUnbondingRecord)
+
+	valid.args = []byte("")
+	err := stakeibckeeper.RedemptionCallback(s.App.StakeibcKeeper, s.Ctx, valid.packet, valid.ack, valid.args)
+	s.Require().EqualError(err, "Host zone not found: : key not found")
+	s.checkRedemptionStateIfCallbackFailed(tc)
+}
