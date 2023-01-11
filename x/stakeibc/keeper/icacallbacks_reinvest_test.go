@@ -8,6 +8,7 @@ import (
 
 	epochtypes "github.com/Stride-Labs/stride/v4/x/epochs/types"
 
+	icacallbackstypes "github.com/Stride-Labs/stride/v4/x/icacallbacks/types"
 	recordtypes "github.com/Stride-Labs/stride/v4/x/records/types"
 	stakeibckeeper "github.com/Stride-Labs/stride/v4/x/stakeibc/keeper"
 	"github.com/Stride-Labs/stride/v4/x/stakeibc/types"
@@ -137,7 +138,7 @@ func (s *KeeperTestSuite) TestReinvestCallback_WrongCallbackArgs() {
 	invalidArgs := tc.validArgs
 
 	err := stakeibckeeper.ReinvestCallback(s.App.StakeibcKeeper, s.Ctx, invalidArgs.packet, invalidArgs.ack, []byte("random bytes"))
-	s.Require().EqualError(err, "unexpected EOF")
+	s.Require().EqualError(err, "Unable to unmarshal reinvest callback args: unexpected EOF: unable to unmarshal data structure")
 	s.checkReinvestStateIfCallbackFailed(tc)
 }
 
@@ -150,5 +151,16 @@ func (s *KeeperTestSuite) TestReinvestCallback_MissingEpoch() {
 
 	err := stakeibckeeper.ReinvestCallback(s.App.StakeibcKeeper, s.Ctx, invalidArgs.packet, invalidArgs.ack, invalidArgs.args)
 	s.Require().ErrorContains(err, "no number for epoch (stride_epoch)")
+	s.checkReinvestStateIfCallbackFailed(tc)
+}
+
+func (s *KeeperTestSuite) TestReinvestCallback_FailedToGetTxMsgData() {
+	tc := s.SetupReinvestCallback()
+	invalidArgs := tc.validArgs
+	// provide invalid Args
+	invalidArgs.ack.Response = nil
+
+	err := stakeibckeeper.ReinvestCallback(s.App.StakeibcKeeper, s.Ctx, invalidArgs.packet, invalidArgs.ack, invalidArgs.args)
+	s.Require().ErrorIs(err, icacallbackstypes.ErrTxMsgData, "txMsgData fetch should failed")
 	s.checkReinvestStateIfCallbackFailed(tc)
 }

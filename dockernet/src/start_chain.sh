@@ -9,7 +9,7 @@ for chain_id in STRIDE ${HOST_CHAINS[@]}; do
     num_nodes=$(GET_VAR_VALUE ${chain_id}_NUM_NODES)
     node_prefix=$(GET_VAR_VALUE ${chain_id}_NODE_PREFIX)
 
-    log_file=$SCRIPT_DIR/logs/${node_prefix}.log
+    log_file=$DOCKERNET_HOME/logs/${node_prefix}.log
 
     echo "Starting $chain_id chain"
     nodes_names=$(i=1; while [ $i -le $num_nodes ]; do printf "%s " ${node_prefix}${i}; i=$(($i + 1)); done;)
@@ -22,7 +22,7 @@ for chain_id in STRIDE ${HOST_CHAINS[@]}; do
     printf "Waiting for $chain_id to start..."
 
     node_prefix=$(GET_VAR_VALUE ${chain_id}_NODE_PREFIX)
-    log_file=$SCRIPT_DIR/logs/${node_prefix}.log
+    log_file=$DOCKERNET_HOME/logs/${node_prefix}.log
 
     ( tail -f -n0 $log_file & ) | grep -q "finalizing commit of block"
     echo "Done"

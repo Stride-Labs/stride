@@ -20,3 +20,10 @@ func TestParamsQuery(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, &types.QueryParamsResponse{Params: params}, response)
 }
+func TestParamsQuery_InvalidRequest(t *testing.T) {
+	keeper, ctx := testkeeper.StakeibcKeeper(t)
+	wctx := sdk.WrapSDKContext(ctx)
+	
+	_, err := keeper.Params(wctx, nil)
+	require.EqualError(t, err, "rpc error: code = InvalidArgument desc = invalid request")
+}
