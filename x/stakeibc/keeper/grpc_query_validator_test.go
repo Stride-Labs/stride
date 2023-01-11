@@ -60,3 +60,12 @@ func TestValidatorQuery(t *testing.T) {
 		})
 	}
 }
+func TestValidatorQuery_NotFoundHostZone(t *testing.T) {
+	keeper, ctx := keepertest.StakeibcKeeper(t)
+	wctx := sdk.WrapSDKContext(ctx)
+	//Not SetHotZone
+	chainId := "GAIA"
+	request := &types.QueryGetValidatorsRequest{ChainId: chainId}
+	_, err := keeper.Validators(wctx, request)
+	require.EqualError(t, err, "key not found")
+}
