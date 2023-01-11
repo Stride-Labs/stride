@@ -263,6 +263,26 @@ WAIT_FOR_STRING() {
   ( tail -f -n0 $1 & ) | grep -q "$2"
 }
 
+WAIT_FOR_BALANCE_CHANGE() {
+  chain=$1
+  address=$2
+  denom=$3
+
+  max_blocks=30
+
+  main_cmd=$(GET_VAR_VALUE ${chain}_MAIN_CMD)
+  initial_balance=$($main_cmd q bank balances $address --denom $denom | grep amount)
+  for i in $(seq $max_blocks); do
+    new_balance=$($main_cmd q bank balances $address --denom $denom | grep amount)
+
+    if [[ "$new_balance" != "$initial_balance" ]]; then
+      break
+    fi
+
+    WAIT_FOR_BLOCK $STRIDE_LOGS 1
+  done
+}
+
 GET_VAL_ADDR() {
   chain=$1
   val_index=$2
