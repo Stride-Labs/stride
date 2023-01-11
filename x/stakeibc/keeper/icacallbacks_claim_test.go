@@ -39,7 +39,7 @@ func (s *KeeperTestSuite) SetupClaimCallback() ClaimCallbackTestCase {
 		// after a user calls ClaimUndelegatedTokens, the record is set to claimIsPending = true
 		// to prevent double claims
 		ClaimIsPending: true,
-		Amount: sdk.ZeroInt(),
+		Amount:         sdk.ZeroInt(),
 	}
 	recordId2 := recordtypes.UserRedemptionRecordKeyFormatter(HostChainId, epochNumber, "other_sender")
 	userRedemptionRecord2 := recordtypes.UserRedemptionRecord{
@@ -185,7 +185,7 @@ func (s *KeeperTestSuite) TestClaimCallback_WrongCallbackArgs() {
 	invalidArgs := tc.validArgs
 
 	err := stakeibckeeper.ClaimCallback(s.App.StakeibcKeeper, s.Ctx, invalidArgs.packet, invalidArgs.ack, []byte("random bytes"))
-	s.Require().EqualError(err, "unexpected EOF")
+	s.Require().EqualError(err, "Unable to unmarshal claim callback args: unexpected EOF: unable to unmarshal data structure")
 }
 
 func (s *KeeperTestSuite) TestClaimCallback_RecordNotFound() {

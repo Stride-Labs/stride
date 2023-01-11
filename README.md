@@ -26,7 +26,7 @@ The fastest way to develop on Stride is local development mode.
 #### Set up local development mode 
 Install the required git submodule dependencies (various chains, relayers, bats). 
 ```
-git submodule update --init
+git submodule update --init --recursive
 ```
 
 Build executables, initialize state, and start the network with
@@ -43,7 +43,7 @@ You can optionally pass build arguments to specify which binary to rebuild
 7. `h` This will re-build the Hermes binary
 
 Example: `make start-docker build=sg`, this will:
-- Rebuild the Stride and Gaia binarys
+- Rebuild the Stride and Gaia binaries
 - Start 1 Stride and 1 Gaia node in the docker
 - Start Relayers
 
@@ -97,7 +97,7 @@ On the backend, Stride permissionly stakes these tokens on the host chain and co
 
 <img src="https://drive.google.com/uc?id=11kJZE93BdhNjkaNig3DGYnTnuSNClP8Y" width="900">
 
-Users can always redeem from Stride. When they select "redeeem" on the Stride website, Stride will initiate unbonding on the host zone. Once the unbonding period elapses, the users will receive native tokens in their wallets. 
+Users can always redeem from Stride. When they select "redeem" on the Stride website, Stride will initiate unbonding on the host zone. Once the unbonding period elapses, the users will receive native tokens in their wallets. 
 
 <img src="https://drive.google.com/uc?id=1rtFiUwziiKjeUkJcJ9YuT1AN3JUtSVVr" width="900">
 
