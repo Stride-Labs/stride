@@ -21,9 +21,9 @@ KEYS_LOGS=$DOCKERNET_HOME/logs/keys.log
 HOST_CHAINS=() 
 
 if [[ "${ALL_HOST_CHAINS:-false}" == "true" ]]; then 
-  HOST_CHAINS=(GAIA JUNO OSMO STARS)
+  HOST_CHAINS=(GAIA JUNO OSMO STARS COMDEX)
 elif [[ "${#HOST_CHAINS[@]}" == "0" ]]; then 
-  HOST_CHAINS=(GAIA)
+  HOST_CHAINS=(GAIA COMDEX)
 fi
 
 # Sets up upgrade if {UPGRADE_NAME} is non-empty
@@ -36,6 +36,7 @@ JUNO_DENOM='ujuno'
 OSMO_DENOM='uosmo'
 STRD_DENOM='ustrd'
 STARS_DENOM='ustars'
+COMDEX_DENOM='ucmdx'
 STATOM_DENOM="stuatom"
 STJUNO_DENOM="stujuno"
 STOSMO_DENOM="stuosmo"
@@ -182,6 +183,19 @@ STARS_COIN_TYPE=$COSMOS_COIN_TYPE
 STARS_MAIN_CMD="$STARS_CMD --home $DOCKERNET_HOME/state/${STARS_NODE_PREFIX}1"
 STARS_RECEIVER_ADDRESS='stars15dywcmy6gzsc8wfefkrx0c9czlwvwrjenqthyq'
 
+# COMDEX
+COMDEX_CHAIN_ID=COMDEX
+COMDEX_NODE_PREFIX=comdex
+COMDEX_NUM_NODES=1
+COMDEX_CMD="$DOCKERNET_HOME/../build/comdex"
+COMDEX_VAL_PREFIX=cval
+COMDEX_ADDRESS_PREFIX=comdex
+COMDEX_REV_ACCT=crev1
+COMDEX_RPC_PORT=26157
+COMDEX_DENOM=$COMDEX_DENOM
+COMDEX_COIN_TYPE=$COSMOS_COIN_TYPE
+COMDEX_MAIN_CMD="$COMDEX_CMD --HOME $DOCKERNET_HOME/state/${COMDEX_NODE_PREFIX}1"
+
 
 # HERMES
 HERMES_CMD="$DOCKERNET_HOME/../build/hermes/release/hermes --config $STATE/hermes/config.toml"
@@ -205,23 +219,27 @@ RELAYER_GAIA_EXEC="$DOCKER_COMPOSE run --rm relayer-gaia"
 RELAYER_JUNO_EXEC="$DOCKER_COMPOSE run --rm relayer-juno"
 RELAYER_OSMO_EXEC="$DOCKER_COMPOSE run --rm relayer-osmo"
 RELAYER_STARS_EXEC="$DOCKER_COMPOSE run --rm relayer-stars"
+RELAYER_COMDEX_EXEC="$DOCKER_COMPOSE run --rm relayer-comdex"
 
 RELAYER_STRIDE_ACCT=rly1
 RELAYER_GAIA_ACCT=rly2
 RELAYER_JUNO_ACCT=rly3
 RELAYER_OSMO_ACCT=rly4
 RELAYER_STARS_ACCT=rly5
-HOST_RELAYER_ACCTS=($RELAYER_GAIA_ACCT $RELAYER_JUNO_ACCT $RELAYER_OSMO_ACCT $RELAYER_STARS_ACCT)
+RELAYER_COMDEX_ACCT=rly6
+HOST_RELAYER_ACCTS=($RELAYER_GAIA_ACCT $RELAYER_JUNO_ACCT $RELAYER_OSMO_ACCT $RELAYER_STARS_ACCT $RELAYER_COMDEX_ACCT)
 
 RELAYER_GAIA_MNEMONIC="fiction perfect rapid steel bundle giant blade grain eagle wing cannon fever must humble dance kitchen lazy episode museum faith off notable rate flavor"
 RELAYER_JUNO_MNEMONIC="kiwi betray topple van vapor flag decorate cement crystal fee family clown cry story gain frost strong year blanket remain grass pig hen empower"
 RELAYER_OSMO_MNEMONIC="unaware wine ramp february bring trust leaf beyond fever inside option dilemma save know captain endless salute radio humble chicken property culture foil taxi"
 RELAYER_STARS_MNEMONIC="deposit dawn erosion talent old broom flip recipe pill hammer animal hill nice ten target metal gas shoe visual nephew soda harbor child simple"
+RELAYER_COMDEX_MNEMONIC="melody pole entire finger cotton find damp they bleak merry tent mosquito pilot defy decade pizza senior rich eagle gate differ section job mass"
 RELAYER_MNEMONICS=(
   "$RELAYER_GAIA_MNEMONIC"
   "$RELAYER_JUNO_MNEMONIC"
   "$RELAYER_OSMO_MNEMONIC"
   "$RELAYER_STARS_MNEMONIC"
+  "$RELAYER_COMDEX_MNEMONIC"
 )
 
 STRIDE_ADDRESS() { 
@@ -238,6 +256,9 @@ OSMO_ADDRESS() {
 }
 STARS_ADDRESS() { 
   $STARS_MAIN_CMD keys show ${STARS_VAL_PREFIX}1 --keyring-backend test -a 
+}
+COMDEX_ADDRESS() {
+  $COMDEX_MAIN_CMD keys show ${COMDEX_VAL_PREFIX}1 --keyring-backend test -a
 }
 
 CSLEEP() {

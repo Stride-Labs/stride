@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -eu 
+set -eu
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 source ${SCRIPT_DIR}/config.sh
 
@@ -20,7 +20,7 @@ build_local_and_docker() {
    cd $cwd
 
    if [[ "$local_build_succeeded" == "0" ]]; then
-      echo "Done" 
+      echo "Done"
    else
       echo "Failed"
       return $local_build_succeeded
@@ -37,7 +37,7 @@ build_local_and_docker() {
    docker_build_succeeded=${PIPESTATUS[0]}
 
    if [[ "$docker_build_succeeded" == "0" ]]; then
-      echo "Done" 
+      echo "Done"
    else
       echo "Failed"
    fi
@@ -73,14 +73,15 @@ while getopts sgojthrn flag; do
       j) build_local_and_docker juno deps/juno ;;
       o) build_local_and_docker osmo deps/osmosis ;;
       t) build_local_and_docker stars deps/stargaze ;;
+      c) build_local_and_docker comdex deps/comdex ;;
       n) continue ;; # build_local_and_docker {new-host-zone} deps/{new-host-zone} ;;
-      r) build_local_and_docker relayer deps/relayer ;;  
+      r) build_local_and_docker relayer deps/relayer ;;
       h) echo "Building Hermes Docker... ";
          docker build --tag stridezone:hermes -f dockernet/dockerfiles/Dockerfile.hermes . ;
 
          printf '%s' "Building Hermes Locally... ";
-         cd deps/hermes; 
-         cargo build --release --target-dir $BUILDDIR/hermes; 
+         cd deps/hermes;
+         cargo build --release --target-dir $BUILDDIR/hermes;
          cd ../..
          echo "Done" ;;
    esac
