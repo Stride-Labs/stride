@@ -84,6 +84,7 @@ func (app *StrideApp) setupUpgradeHandlers() {
 ```
 
 ## Increment the Module's Consensus Version
+* The consensus version is different from the chain version - it is specific to each module and is incremented every time state is migrated
 ```go
 // x/{moduleName}/module.go
 func (AppModule) ConsensusVersion() uint64 { return 2 }
@@ -99,7 +100,7 @@ func CreateUpgradeHandler(
 	configurator module.Configurator,
 ) upgradetypes.UpgradeHandler {
 	return func(ctx sdk.Context, _ upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
-		vm[{moduleName}] = 2 // <- ADD THIS
+		vm[{moduleName}] = {new-consensus-version} // <- ADD THIS
 		return mm.RunMigrations(ctx, configurator, vm)
 	}
 }
@@ -114,7 +115,7 @@ package keeper
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-    {upgradeVersion} "github.com/Stride-Labs/stride/v3/x/records/migrations/{upgradeVersion}"
+    {new-concensus-version} "github.com/Stride-Labs/stride/v3/x/records/migrations/{new-concensus-version}"
 )
 
 type Migrator struct {
@@ -125,7 +126,7 @@ func NewMigrator(keeper Keeper) Migrator {
 	return Migrator{keeper: keeper}
 }
 
-func (m Migrator) Migrate1to2(ctx sdk.Context) error {
+func (m Migrator) Migrate{old-consensus-version}to{new-consensus-version}(ctx sdk.Context) error {
 	return {upgradeVersion}.MigrateStore(ctx)
 }
 ```
@@ -155,8 +156,8 @@ func (am AppModule) RegisterServices(cfg module.Configurator) {
 	types.RegisterQueryServer(cfg.QueryServer(), am.keeper)
 	migrator := keeper.NewMigrator(am.keeper)
 
-	if err := cfg.RegisterMigration(types.ModuleName, 1, migrator.Migrate1to2); err != nil {
-		panic(fmt.Errorf("failed to migrate %s to {upgradeVersion}: %w", types.ModuleName, err))
+	if err := cfg.RegisterMigration(types.ModuleName, {old-consensus-version}, migrator.Migrate{old-consensus-version}to{new-consensus-version}); err != nil {
+		panic(fmt.Errorf("failed to migrate %s to {new-consensus-version}: %w", types.ModuleName, err))
 	}
 }
 ```

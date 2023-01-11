@@ -11,8 +11,6 @@ import (
 	v4 "github.com/Stride-Labs/stride/v4/app/upgrades/v4"
 	v5 "github.com/Stride-Labs/stride/v4/app/upgrades/v5"
 	claimtypes "github.com/Stride-Labs/stride/v4/x/claim/types"
-	recordtypes "github.com/Stride-Labs/stride/v4/x/records/types"
-	stakeibctypes "github.com/Stride-Labs/stride/v4/x/stakeibc/types"
 )
 
 func (app *StrideApp) setupUpgradeHandlers() {
@@ -37,7 +35,10 @@ func (app *StrideApp) setupUpgradeHandlers() {
 	// v5 upgrade handler
 	app.UpgradeKeeper.SetUpgradeHandler(
 		v5.UpgradeName,
-		v5.CreateUpgradeHandler(app.mm, app.configurator, app.keys[claimtypes.StoreKey], app.keys[recordtypes.StoreKey], app.keys[stakeibctypes.StoreKey], app.appCodec),
+		v5.CreateUpgradeHandler(
+			app.mm,
+			app.configurator,
+		),
 	)
 
 	upgradeInfo, err := app.UpgradeKeeper.ReadUpgradeInfoFromDisk()
