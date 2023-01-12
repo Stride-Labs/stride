@@ -78,7 +78,6 @@ func (app *StrideApp) setupUpgradeHandlers() {
 		}
 	case "v5":
 		app.SetStoreLoader(AuthzHeightAdjustmentUpgradeStoreLoader(upgradeInfo.Height))
-		// get application context
 	}
 
 	if (storeUpgrades != nil) && (upgradeInfo.Name != "v5") {
