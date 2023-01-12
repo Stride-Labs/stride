@@ -54,8 +54,6 @@ func (ICAAccountType) EnumDescriptor() ([]byte, []int) {
 	return fileDescriptor_2976ae6e7f6ce824, []int{0}
 }
 
-// TODO(TEST-XX): Update these fields to be more useful (e.g. balances should be
-// coins, maybe store port name directly)
 type ICAAccount struct {
 	Address string         `protobuf:"bytes,1,opt,name=address,proto3" json:"address,omitempty"`
 	Target  ICAAccountType `protobuf:"varint,2,opt,name=target,proto3,enum=stride.stakeibc.ICAAccountType" json:"target,omitempty"`
