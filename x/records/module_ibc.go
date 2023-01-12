@@ -6,18 +6,17 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
-	ibctransfertypes "github.com/cosmos/ibc-go/v5/modules/apps/transfer/types"
-	channeltypes "github.com/cosmos/ibc-go/v5/modules/core/04-channel/types"
-	porttypes "github.com/cosmos/ibc-go/v5/modules/core/05-port/types"
+	ibctransfertypes "github.com/cosmos/ibc-go/v3/modules/apps/transfer/types"
+	channeltypes "github.com/cosmos/ibc-go/v3/modules/core/04-channel/types"
+	porttypes "github.com/cosmos/ibc-go/v3/modules/core/05-port/types"
 
-	icacallbacks "github.com/Stride-Labs/stride/v4/x/icacallbacks"
 	icacallbacktypes "github.com/Stride-Labs/stride/v4/x/icacallbacks/types"
 
 	"github.com/Stride-Labs/stride/v4/x/records/keeper"
 
 	// "google.golang.org/protobuf/proto" <-- this breaks tx parsing
 
-	ibcexported "github.com/cosmos/ibc-go/v5/modules/core/exported"
+	ibcexported "github.com/cosmos/ibc-go/v3/modules/core/exported"
 )
 
 // IBC MODULE IMPLEMENTATION
@@ -45,15 +44,16 @@ func (im IBCModule) OnChanOpenInit(
 	channelCap *capabilitytypes.Capability,
 	counterparty channeltypes.Counterparty,
 	version string,
-) (string, error) {
+) error {
 	// Note: The channel capability must be claimed by the authentication module in OnChanOpenInit otherwise the
 	// authentication module will not be able to send packets on the channel created for the associated interchain account.
 	// NOTE: unsure if we have to claim this here! CHECK ME
 	// if err := im.keeper.ClaimCapability(ctx, channelCap, host.ChannelCapabilityPath(portID, channelID)); err != nil {
 	// 	return err
 	// }
+	_, appVersion := channeltypes.SplitChannelVersion(version)
 	// doCustomLogic()
-	version, err := im.app.OnChanOpenInit(
+	return im.app.OnChanOpenInit(
 		ctx,
 		order,
 		connectionHops,
@@ -61,9 +61,8 @@ func (im IBCModule) OnChanOpenInit(
 		channelID,
 		channelCap,
 		counterparty,
-		version,
+		appVersion, // note we only pass app version here
 	)
-	return version, err
 }
 
 // OnChanOpenTry implements the IBCModule interface.
@@ -79,6 +78,8 @@ func (im IBCModule) OnChanOpenTry(
 ) (string, error) {
 	// doCustomLogic()
 	// core/04-channel/types contains a helper function to split middleware and underlying app version
+	_, cpAppVersion := channeltypes.SplitChannelVersion(counterpartyVersion)
+
 	// call the underlying applications OnChanOpenTry callback
 	version, err := im.app.OnChanOpenTry(
 		ctx,
@@ -88,13 +89,13 @@ func (im IBCModule) OnChanOpenTry(
 		channelID,
 		chanCap,
 		counterparty,
-		counterpartyVersion,
+		cpAppVersion, // note we only pass counterparty app version here
 	)
 	if err != nil {
 		return "", err
 	}
 	ctx.Logger().Info(fmt.Sprintf("IBC Chan Open Version %s: ", version))
-	ctx.Logger().Info(fmt.Sprintf("IBC Chan Open cpAppVersion %s: ", counterpartyVersion))
+	ctx.Logger().Info(fmt.Sprintf("IBC Chan Open cpAppVersion %s: ", cpAppVersion))
 	return version, nil
 }
 
@@ -166,20 +167,30 @@ func (im IBCModule) OnAcknowledgementPacket(
 	acknowledgement []byte,
 	relayer sdk.AccAddress,
 ) error {
-	im.keeper.Logger(ctx).Info(fmt.Sprintf("OnAcknowledgementPacket (Records) - packet: %+v, relayer: %v", packet, relayer))
+	im.keeper.Logger(ctx).Info(fmt.Sprintf("[IBC-TRANSFER] OnAcknowledgementPacket  %v", packet))
+	// doCustomLogic(packet, ack)
+	// ICS-20 ack
+	var ack channeltypes.Acknowledgement
+	if err := ibctransfertypes.ModuleCdc.UnmarshalJSON(acknowledgement, &ack); err != nil {
+		im.keeper.Logger(ctx).Error(fmt.Sprintf("Error unmarshalling ack  %v", err.Error()))
+		return sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "cannot unmarshal ICS-20 transfer packet acknowledgement: %v", err)
+	}
 
-	ackResponse, err := icacallbacks.UnpackAcknowledgementResponse(ctx, im.keeper.Logger(ctx), acknowledgement, false)
-	if err != nil {
-		errMsg := fmt.Sprintf("Unable to unpack message data from acknowledgement, Sequence %d, from %s %s, to %s %s: %s",
-			packet.Sequence, packet.SourceChannel, packet.SourcePort, packet.DestinationChannel, packet.DestinationPort, err.Error())
-		im.keeper.Logger(ctx).Error(errMsg)
-		return sdkerrors.Wrapf(icacallbacktypes.ErrInvalidAcknowledgement, errMsg)
+	// log the ack type
+	switch resp := ack.Response.(type) {
+	case *channeltypes.Acknowledgement_Result:
+		im.keeper.Logger(ctx).Info(fmt.Sprintf("\t [IBC-TRANSFER] Acknowledgement_Result {%s}", string(resp.Result)))
+	case *channeltypes.Acknowledgement_Error:
+		im.keeper.Logger(ctx).Error(fmt.Sprintf("\t [IBC-TRANSFER] Acknowledgement_Error {%s}", resp.Error))
+	default:
+		im.keeper.Logger(ctx).Error(fmt.Sprintf("\t [IBC-TRANSFER] Unrecognized ack for packet {%v}", packet))
 	}
 
 	// Custom ack logic only applies to ibc transfers initiated from the `stakeibc` module account
 	// NOTE: if the `stakeibc` module account IBC transfers tokens for some other reason in the future,
 	// this will need to be updated
-	if err := im.keeper.ICACallbacksKeeper.CallRegisteredICACallback(ctx, packet, ackResponse); err != nil {
+	err := im.keeper.ICACallbacksKeeper.CallRegisteredICACallback(ctx, packet, &ack)
+	if err != nil {
 		errMsg := fmt.Sprintf("Unable to call registered callback from records OnAcknowledgePacket | Sequence %d, from %s %s, to %s %s | Error %s",
 			packet.Sequence, packet.SourceChannel, packet.SourcePort, packet.DestinationChannel, packet.DestinationPort, err.Error())
 		im.keeper.Logger(ctx).Error(errMsg)
@@ -197,8 +208,7 @@ func (im IBCModule) OnTimeoutPacket(
 ) error {
 	// doCustomLogic(packet)
 	im.keeper.Logger(ctx).Error(fmt.Sprintf("[IBC-TRANSFER] OnTimeoutPacket  %v", packet))
-	ackResponse := icacallbacktypes.AcknowledgementResponse{Status: icacallbacktypes.AckResponseStatus_TIMEOUT}
-	err := im.keeper.ICACallbacksKeeper.CallRegisteredICACallback(ctx, packet, &ackResponse)
+	err := im.keeper.ICACallbacksKeeper.CallRegisteredICACallback(ctx, packet, nil)
 	if err != nil {
 		return err
 	}
@@ -243,8 +253,8 @@ func (am AppModule) OnChanOpenInit(
 	chanCap *capabilitytypes.Capability,
 	counterparty channeltypes.Counterparty,
 	version string,
-) (string, error) {
-	return "", sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "UNIMPLEMENTED")
+) error {
+	return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "UNIMPLEMENTED")
 }
 
 // OnChanOpenTry implements the IBCModule interface

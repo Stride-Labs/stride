@@ -4,13 +4,12 @@ import (
 	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	channeltypes "github.com/cosmos/ibc-go/v5/modules/core/04-channel/types"
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	channeltypes "github.com/cosmos/ibc-go/v3/modules/core/04-channel/types"
 	_ "github.com/stretchr/testify/suite"
 
-	icacallbacktypes "github.com/Stride-Labs/stride/v4/x/icacallbacks/types"
 	recordtypes "github.com/Stride-Labs/stride/v4/x/records/types"
 	stakeibckeeper "github.com/Stride-Labs/stride/v4/x/stakeibc/keeper"
-
 	"github.com/Stride-Labs/stride/v4/x/stakeibc/types"
 	stakeibc "github.com/Stride-Labs/stride/v4/x/stakeibc/types"
 )
@@ -22,9 +21,9 @@ type RedemptionCallbackState struct {
 }
 
 type RedemptionCallbackArgs struct {
-	packet      channeltypes.Packet
-	ackResponse *icacallbacktypes.AcknowledgementResponse
-	args        []byte
+	packet channeltypes.Packet
+	ack    *channeltypes.Acknowledgement
+	args   []byte
 }
 
 type RedemptionCallbackTestCase struct {
@@ -69,12 +68,14 @@ func (s *KeeperTestSuite) SetupRedemptionCallback() RedemptionCallbackTestCase {
 	s.App.RecordsKeeper.SetUserRedemptionRecord(s.Ctx, userRedemptionRecord2)
 
 	packet := channeltypes.Packet{}
-	ackResponse := icacallbacktypes.AcknowledgementResponse{Status: icacallbacktypes.AckResponseStatus_SUCCESS}
+	var msgs []sdk.Msg
+	msgs = append(msgs, &banktypes.MsgSend{})
+	ack := s.ICAPacketAcknowledgement(msgs, nil)
 	callbackArgs := types.RedemptionCallback{
 		HostZoneId:              HostChainId,
 		EpochUnbondingRecordIds: []uint64{epochNumber},
 	}
-	callbackArgsBz, err := s.App.StakeibcKeeper.MarshalRedemptionCallbackArgs(s.Ctx, callbackArgs)
+	args, err := s.App.StakeibcKeeper.MarshalRedemptionCallbackArgs(s.Ctx, callbackArgs)
 	s.Require().NoError(err)
 
 	return RedemptionCallbackTestCase{
@@ -84,9 +85,9 @@ func (s *KeeperTestSuite) SetupRedemptionCallback() RedemptionCallbackTestCase {
 			epochNumber:             epochNumber,
 		},
 		validArgs: RedemptionCallbackArgs{
-			packet:      packet,
-			ackResponse: &ackResponse,
-			args:        callbackArgsBz,
+			packet: packet,
+			ack:    &ack,
+			args:   args,
 		},
 	}
 }
@@ -96,7 +97,7 @@ func (s *KeeperTestSuite) TestRedemptionCallback_Successful() {
 	initialState := tc.initialState
 	validArgs := tc.validArgs
 
-	err := stakeibckeeper.RedemptionCallback(s.App.StakeibcKeeper, s.Ctx, validArgs.packet, validArgs.ackResponse, validArgs.args)
+	err := stakeibckeeper.RedemptionCallback(s.App.StakeibcKeeper, s.Ctx, validArgs.packet, validArgs.ack, validArgs.args)
 	s.Require().NoError(err, "redemption callback succeeded")
 
 	for _, epochNumber := range initialState.epochUnbondingNumbers {
@@ -127,24 +128,21 @@ func (s *KeeperTestSuite) checkRedemptionStateIfCallbackFailed(tc RedemptionCall
 
 func (s *KeeperTestSuite) TestRedemptionCallback_RedemptionCallbackTimeout() {
 	tc := s.SetupRedemptionCallback()
-
-	// Update the ack response to indicate a timeout
 	invalidArgs := tc.validArgs
-	invalidArgs.ackResponse.Status = icacallbacktypes.AckResponseStatus_TIMEOUT
-
-	err := stakeibckeeper.RedemptionCallback(s.App.StakeibcKeeper, s.Ctx, invalidArgs.packet, invalidArgs.ackResponse, invalidArgs.args)
+	// a nil ack means the request timed out
+	invalidArgs.ack = nil
+	err := stakeibckeeper.RedemptionCallback(s.App.StakeibcKeeper, s.Ctx, invalidArgs.packet, invalidArgs.ack, invalidArgs.args)
 	s.Require().NoError(err)
 	s.checkRedemptionStateIfCallbackFailed(tc)
 }
 
 func (s *KeeperTestSuite) TestRedemptionCallback_RedemptionCallbackErrorOnHost() {
 	tc := s.SetupRedemptionCallback()
-
-	// an error ack means the tx failed on the host
 	invalidArgs := tc.validArgs
-	invalidArgs.ackResponse.Status = icacallbacktypes.AckResponseStatus_FAILURE
-
-	err := stakeibckeeper.RedemptionCallback(s.App.StakeibcKeeper, s.Ctx, invalidArgs.packet, invalidArgs.ackResponse, invalidArgs.args)
+	// an error ack means the tx failed on the host
+	fullAck := channeltypes.Acknowledgement{Response: &channeltypes.Acknowledgement_Error{Error: "error"}}
+	invalidArgs.ack = &fullAck
+	err := stakeibckeeper.RedemptionCallback(s.App.StakeibcKeeper, s.Ctx, invalidArgs.packet, invalidArgs.ack, invalidArgs.args)
 	s.Require().NoError(err)
 	s.checkRedemptionStateIfCallbackFailed(tc)
 }
@@ -153,27 +151,22 @@ func (s *KeeperTestSuite) TestRedemptionCallback_WrongCallbackArgs() {
 	tc := s.SetupRedemptionCallback()
 	invalidArgs := tc.validArgs
 
-	// random args should cause the callback to fail
-	invalidCallbackArgs := []byte("random bytes")
-
-	err := stakeibckeeper.RedemptionCallback(s.App.StakeibcKeeper, s.Ctx, invalidArgs.packet, invalidArgs.ackResponse, invalidCallbackArgs)
-	s.Require().EqualError(err, "Unable to unmarshal redemption callback args: unexpected EOF: unable to unmarshal data structure")
+	err := stakeibckeeper.RedemptionCallback(s.App.StakeibcKeeper, s.Ctx, invalidArgs.packet, invalidArgs.ack, []byte("random bytes"))
+	s.Require().EqualError(err, "Unable to unmarshal redemption callback args | unexpected EOF: unable to unmarshal data structure")
 	s.checkRedemptionStateIfCallbackFailed(tc)
 }
 
 func (s *KeeperTestSuite) TestRedemptionCallback_EpochUnbondingRecordNotFound() {
 	tc := s.SetupRedemptionCallback()
-
-	// Update the callbacks args to have a different epoch number
-	// (So that epoch unbonding record is not found)
+	invalidArgs := tc.validArgs
 	callbackArgs := types.RedemptionCallback{
 		HostZoneId:              HostChainId,
 		EpochUnbondingRecordIds: []uint64{tc.initialState.epochNumber + 1},
 	}
-	invalidCallbackArgs, err := s.App.StakeibcKeeper.MarshalRedemptionCallbackArgs(s.Ctx, callbackArgs)
+	args, err := s.App.StakeibcKeeper.MarshalRedemptionCallbackArgs(s.Ctx, callbackArgs)
 	s.Require().NoError(err)
-
-	err = stakeibckeeper.RedemptionCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.packet, tc.validArgs.ackResponse, invalidCallbackArgs)
+	invalidArgs.args = args
+	err = stakeibckeeper.RedemptionCallback(s.App.StakeibcKeeper, s.Ctx, invalidArgs.packet, invalidArgs.ack, invalidArgs.args)
 	expectedErr := fmt.Sprintf("Error fetching host zone unbonding record for epoch: %d, host zone: GAIA: host zone not found", tc.initialState.epochNumber+1)
 	s.Require().EqualError(err, expectedErr)
 	s.checkRedemptionStateIfCallbackFailed(tc)
@@ -181,14 +174,13 @@ func (s *KeeperTestSuite) TestRedemptionCallback_EpochUnbondingRecordNotFound() 
 
 func (s *KeeperTestSuite) TestRedemptionCallback_HostZoneUnbondingNotFound() {
 	tc := s.SetupRedemptionCallback()
-
+	valid := tc.validArgs
 	// remove the hzu from the epoch unbonding record
 	epochUnbondingRecord, found := s.App.RecordsKeeper.GetEpochUnbondingRecord(s.Ctx, tc.initialState.epochNumber)
 	s.Require().True(found)
 	epochUnbondingRecord.HostZoneUnbondings = []*recordtypes.HostZoneUnbonding{}
 	s.App.RecordsKeeper.SetEpochUnbondingRecord(s.Ctx, epochUnbondingRecord)
-
-	err := stakeibckeeper.RedemptionCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.packet, tc.validArgs.ackResponse, tc.validArgs.args)
+	err := stakeibckeeper.RedemptionCallback(s.App.StakeibcKeeper, s.Ctx, valid.packet, valid.ack, valid.args)
 	s.Require().EqualError(err, fmt.Sprintf("Error fetching host zone unbonding record for epoch: %d, host zone: GAIA: host zone not found", tc.initialState.epochNumber))
 	s.checkRedemptionStateIfCallbackFailed(tc)
 }

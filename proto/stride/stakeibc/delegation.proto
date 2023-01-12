@@ -1,0 +1,16 @@
+syntax = "proto3";
+package stride.stakeibc;
+
+import "gogoproto/gogo.proto";
+import "stride/stakeibc/validator.proto";
+
+option go_package = "github.com/Stride-Labs/stride/v4/x/stakeibc/types";
+
+message Delegation {
+  string delegate_acct_address = 1;
+  Validator validator = 2;
+  string amt = 3 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
+}

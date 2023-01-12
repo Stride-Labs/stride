@@ -1,7 +1,6 @@
 package keeper_test
 
 import (
-	sdkmath "cosmossdk.io/math"
 	_ "github.com/stretchr/testify/suite"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -23,7 +22,7 @@ func (s *KeeperTestSuite) SetupDeleteValidator() DeleteValidatorTestCase {
 			CommissionRate: 1,
 			Weight:         0,
 			Status:         stakeibctypes.Validator_ACTIVE,
-			DelegationAmt:  sdkmath.ZeroInt(),
+			DelegationAmt:  sdk.ZeroInt(),
 		},
 		{
 			Name:           "val2",
@@ -31,7 +30,7 @@ func (s *KeeperTestSuite) SetupDeleteValidator() DeleteValidatorTestCase {
 			CommissionRate: 2,
 			Weight:         0,
 			Status:         stakeibctypes.Validator_ACTIVE,
-			DelegationAmt:  sdkmath.ZeroInt(),
+			DelegationAmt:  sdk.ZeroInt(),
 		},
 	}
 
@@ -113,7 +112,7 @@ func (s *KeeperTestSuite) TestDeleteValidator_NonZeroDelegation() {
 
 	// Update val1 to have a non-zero delegation
 	hostZone := tc.hostZone
-	hostZone.Validators[0].DelegationAmt = sdkmath.NewInt(1)
+	hostZone.Validators[0].DelegationAmt = sdk.NewInt(1)
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
 
 	_, err := s.GetMsgServer().DeleteValidator(sdk.WrapSDKContext(s.Ctx), &tc.validMsgs[0])

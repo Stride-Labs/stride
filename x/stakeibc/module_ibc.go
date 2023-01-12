@@ -6,12 +6,11 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
-	icatypes "github.com/cosmos/ibc-go/v5/modules/apps/27-interchain-accounts/types"
-	channeltypes "github.com/cosmos/ibc-go/v5/modules/core/04-channel/types"
-	host "github.com/cosmos/ibc-go/v5/modules/core/24-host"
-	ibcexported "github.com/cosmos/ibc-go/v5/modules/core/exported"
+	icatypes "github.com/cosmos/ibc-go/v3/modules/apps/27-interchain-accounts/types"
+	channeltypes "github.com/cosmos/ibc-go/v3/modules/core/04-channel/types"
+	host "github.com/cosmos/ibc-go/v3/modules/core/24-host"
+	ibcexported "github.com/cosmos/ibc-go/v3/modules/core/exported"
 
-	"github.com/Stride-Labs/stride/v4/x/icacallbacks"
 	icacallbacktypes "github.com/Stride-Labs/stride/v4/x/icacallbacks/types"
 
 	"github.com/Stride-Labs/stride/v4/x/stakeibc/keeper"
@@ -43,15 +42,15 @@ func (im IBCModule) OnChanOpenInit(
 	channelCap *capabilitytypes.Capability,
 	counterparty channeltypes.Counterparty,
 	version string,
-) (string, error) {
+) error {
 	im.keeper.Logger(ctx).Info(fmt.Sprintf("OnChanOpenAck: portID %s, channelID %s", portID, channelID))
 	// Note: The channel capability must be claimed by the authentication module in OnChanOpenInit otherwise the
 	// authentication module will not be able to send packets on the channel created for the associated interchain account.
 	if err := im.keeper.ClaimCapability(ctx, channelCap, host.ChannelCapabilityPath(portID, channelID)); err != nil {
-		return version, err
+		return err
 	}
 	im.keeper.Logger(ctx).Info(fmt.Sprintf("%s claimed the channel capability %v", types.ModuleName, channelCap))
-	return version, nil
+	return nil
 }
 
 // OnChanOpenAck implements the IBCModule interface
@@ -133,30 +132,29 @@ func (im IBCModule) OnAcknowledgementPacket(
 	acknowledgement []byte,
 	relayer sdk.AccAddress,
 ) error {
-	im.keeper.Logger(ctx).Info(fmt.Sprintf("OnAcknowledgementPacket (Stakeibc) - packet: %+v, relayer: %v", modulePacket, relayer))
-
-	ackResponse, err := icacallbacks.UnpackAcknowledgementResponse(ctx, im.keeper.Logger(ctx), acknowledgement, true)
-	if err != nil {
-		errMsg := fmt.Sprintf("Unable to unpack message data from acknowledgement, Sequence %d, from %s %s, to %s %s: %s",
-			modulePacket.Sequence, modulePacket.SourceChannel, modulePacket.SourcePort, modulePacket.DestinationChannel, modulePacket.DestinationPort, err.Error())
-		im.keeper.Logger(ctx).Error(errMsg)
-		return sdkerrors.Wrapf(icacallbacktypes.ErrInvalidAcknowledgement, errMsg)
-	}
-
+	im.keeper.Logger(ctx).Info(fmt.Sprintf("OnAcknowledgementPacket: packet %v, relayer %v", modulePacket, relayer))
 	ackInfo := fmt.Sprintf("sequence #%d, from %s %s, to %s %s",
 		modulePacket.Sequence, modulePacket.SourceChannel, modulePacket.SourcePort, modulePacket.DestinationChannel, modulePacket.DestinationPort)
-	im.keeper.Logger(ctx).Info(fmt.Sprintf("Acknowledgement was successfully unmarshalled: ackInfo: %s", ackInfo))
 
+	var ack channeltypes.Acknowledgement
+	err := channeltypes.SubModuleCdc.UnmarshalJSON(acknowledgement, &ack)
+	if err != nil {
+		errMsg := fmt.Sprintf("Unable to unmarshal ack from stakeibc OnAcknowledgePacket | Sequence %d, from %s %s, to %s %s",
+			modulePacket.Sequence, modulePacket.SourceChannel, modulePacket.SourcePort, modulePacket.DestinationChannel, modulePacket.DestinationPort)
+		im.keeper.Logger(ctx).Error(errMsg)
+		return sdkerrors.Wrapf(types.ErrMarshalFailure, errMsg)
+	}
+	im.keeper.Logger(ctx).Info(fmt.Sprintf("Acknowledgement was successfully unmarshalled: ackInfo: %s", ackInfo))
 	eventType := "ack"
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
 			eventType,
 			sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
-			sdk.NewAttribute(types.AttributeKeyAck, ackInfo),
+			sdk.NewAttribute(types.AttributeKeyAck, fmt.Sprintf("%v", ackInfo)),
 		),
 	)
 
-	err = im.keeper.ICACallbacksKeeper.CallRegisteredICACallback(ctx, modulePacket, ackResponse)
+	err = im.keeper.ICACallbacksKeeper.CallRegisteredICACallback(ctx, modulePacket, &ack)
 	if err != nil {
 		errMsg := fmt.Sprintf("Unable to call registered callback from stakeibc OnAcknowledgePacket | Sequence %d, from %s %s, to %s %s",
 			modulePacket.Sequence, modulePacket.SourceChannel, modulePacket.SourcePort, modulePacket.DestinationChannel, modulePacket.DestinationPort)
@@ -173,8 +171,7 @@ func (im IBCModule) OnTimeoutPacket(
 	relayer sdk.AccAddress,
 ) error {
 	im.keeper.Logger(ctx).Info(fmt.Sprintf("OnTimeoutPacket: packet %v, relayer %v", modulePacket, relayer))
-	ackResponse := icacallbacktypes.AcknowledgementResponse{Status: icacallbacktypes.AckResponseStatus_TIMEOUT}
-	err := im.keeper.ICACallbacksKeeper.CallRegisteredICACallback(ctx, modulePacket, &ackResponse)
+	err := im.keeper.ICACallbacksKeeper.CallRegisteredICACallback(ctx, modulePacket, nil)
 	if err != nil {
 		return err
 	}

@@ -5,13 +5,10 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingTypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	channeltypes "github.com/cosmos/ibc-go/v5/modules/core/04-channel/types"
+	channeltypes "github.com/cosmos/ibc-go/v3/modules/core/04-channel/types"
 	"github.com/gogo/protobuf/proto"
 	_ "github.com/stretchr/testify/suite"
 
-	sdkmath "cosmossdk.io/math"
-
-	icacallbacktypes "github.com/Stride-Labs/stride/v4/x/icacallbacks/types"
 	recordtypes "github.com/Stride-Labs/stride/v4/x/records/types"
 	stakeibckeeper "github.com/Stride-Labs/stride/v4/x/stakeibc/keeper"
 	"github.com/Stride-Labs/stride/v4/x/stakeibc/types"
@@ -19,36 +16,36 @@ import (
 )
 
 type UndelegateCallbackState struct {
-	stakedBal          sdkmath.Int
-	val1Bal            sdkmath.Int
-	val2Bal            sdkmath.Int
+	stakedBal          sdk.Int
+	val1Bal            sdk.Int
+	val2Bal            sdk.Int
 	epochNumber        uint64
 	completionTime     time.Time
 	callbackArgs       types.UndelegateCallback
-	zoneAccountBalance sdkmath.Int
+	zoneAccountBalance sdk.Int
 }
 
 type UndelegateCallbackArgs struct {
-	packet      channeltypes.Packet
-	ackResponse *icacallbacktypes.AcknowledgementResponse
-	args        []byte
+	packet channeltypes.Packet
+	ack    *channeltypes.Acknowledgement
+	args   []byte
 }
 
 type UndelegateCallbackTestCase struct {
 	initialState           UndelegateCallbackState
 	validArgs              UndelegateCallbackArgs
-	val1UndelegationAmount sdkmath.Int
-	val2UndelegationAmount sdkmath.Int
-	balanceToUnstake       sdkmath.Int
+	val1UndelegationAmount sdk.Int
+	val2UndelegationAmount sdk.Int
+	balanceToUnstake       sdk.Int
 }
 
 func (s *KeeperTestSuite) SetupUndelegateCallback() UndelegateCallbackTestCase {
 	// Set up host zone and validator state
-	stakedBal := sdkmath.NewInt(1_000_000)
-	val1Bal := sdkmath.NewInt(400_000)
+	stakedBal := sdk.NewInt(1_000_000)
+	val1Bal := sdk.NewInt(400_000)
 	val2Bal := stakedBal.Sub(val1Bal)
-	balanceToUnstake := sdkmath.NewInt(300_000)
-	val1UndelegationAmount := sdkmath.NewInt(120_000)
+	balanceToUnstake := sdk.NewInt(300_000)
+	val1UndelegationAmount := sdk.NewInt(120_000)
 	val2UndelegationAmount := balanceToUnstake.Sub(val1UndelegationAmount)
 	epochNumber := uint64(1)
 	val1 := types.Validator{
@@ -62,7 +59,7 @@ func (s *KeeperTestSuite) SetupUndelegateCallback() UndelegateCallbackTestCase {
 		DelegationAmt: val2Bal,
 	}
 	zoneAddress := types.NewZoneAddress(HostChainId)
-	zoneAccountBalance := balanceToUnstake.Add(sdkmath.NewInt(10))
+	zoneAccountBalance := balanceToUnstake.Add(sdk.NewInt(10))
 	zoneAccount := Account{
 		acc:           zoneAddress,
 		stAtomBalance: sdk.NewCoin(StAtom, zoneAccountBalance), // Add a few extra tokens to make the test more robust
@@ -89,23 +86,16 @@ func (s *KeeperTestSuite) SetupUndelegateCallback() UndelegateCallbackTestCase {
 		HostZoneUnbondings: []*recordtypes.HostZoneUnbonding{&hostZoneUnbonding},
 	}
 	s.App.RecordsKeeper.SetEpochUnbondingRecord(s.Ctx, epochUnbondingRecord)
-
 	// mint stTokens to the zone account, to be burned
 	s.FundAccount(zoneAccount.acc, zoneAccount.stAtomBalance)
 
-	// Mock ack response
 	packet := channeltypes.Packet{}
+	var msgs []sdk.Msg
+	msgs = append(msgs, &stakingTypes.MsgUndelegate{}, &stakingTypes.MsgUndelegate{})
 	completionTime := time.Now()
-	msgsUndelegateResponse := &stakingTypes.MsgUndelegateResponse{CompletionTime: completionTime}
-	msgsUndelegateResponseBz, err := proto.Marshal(msgsUndelegateResponse)
-	s.Require().NoError(err, "no error expected when marshalling undelegate response")
-
-	ackResponse := icacallbacktypes.AcknowledgementResponse{
-		Status:       icacallbacktypes.AckResponseStatus_SUCCESS,
-		MsgResponses: [][]byte{msgsUndelegateResponseBz},
-	}
-
-	// Mock callback args
+	msgUndelegateResponse := &stakingTypes.MsgUndelegateResponse{CompletionTime: completionTime}
+	protoMsgUndelegateResponse := proto.Message(msgUndelegateResponse)
+	ack := s.ICAPacketAcknowledgement(msgs, &protoMsgUndelegateResponse)
 	val1SplitDelegation := types.SplitDelegation{
 		Validator: val1.Address,
 		Amount:    val1UndelegationAmount,
@@ -119,7 +109,7 @@ func (s *KeeperTestSuite) SetupUndelegateCallback() UndelegateCallbackTestCase {
 		SplitDelegations:        []*types.SplitDelegation{&val1SplitDelegation, &val2SplitDelegation},
 		EpochUnbondingRecordIds: []uint64{epochNumber},
 	}
-	callbackArgsBz, err := s.App.StakeibcKeeper.MarshalUndelegateCallbackArgs(s.Ctx, callbackArgs)
+	args, err := s.App.StakeibcKeeper.MarshalUndelegateCallbackArgs(s.Ctx, callbackArgs)
 	s.Require().NoError(err, "callback args unmarshalled")
 
 	return UndelegateCallbackTestCase{
@@ -136,9 +126,9 @@ func (s *KeeperTestSuite) SetupUndelegateCallback() UndelegateCallbackTestCase {
 			zoneAccountBalance: zoneAccountBalance,
 		},
 		validArgs: UndelegateCallbackArgs{
-			packet:      packet,
-			ackResponse: &ackResponse,
-			args:        callbackArgsBz,
+			packet: packet,
+			ack:    &ack,
+			args:   args,
 		},
 	}
 }
@@ -149,7 +139,7 @@ func (s *KeeperTestSuite) TestUndelegateCallback_Successful() {
 	validArgs := tc.validArgs
 
 	// Callback
-	err := stakeibckeeper.UndelegateCallback(s.App.StakeibcKeeper, s.Ctx, validArgs.packet, validArgs.ackResponse, validArgs.args)
+	err := stakeibckeeper.UndelegateCallback(s.App.StakeibcKeeper, s.Ctx, validArgs.packet, validArgs.ack, validArgs.args)
 	s.Require().NoError(err, "undelegate callback succeeds")
 
 	// Check that stakedBal has decreased on the host zone
@@ -205,46 +195,40 @@ func (s *KeeperTestSuite) checkStateIfUndelegateCallbackFailed(tc UndelegateCall
 
 func (s *KeeperTestSuite) TestUndelegateCallback_UndelegateCallbackTimeout() {
 	tc := s.SetupUndelegateCallback()
-
-	// Update the ack response to indicate a timeout
 	invalidArgs := tc.validArgs
-	invalidArgs.ackResponse.Status = icacallbacktypes.AckResponseStatus_TIMEOUT
-
-	err := stakeibckeeper.UndelegateCallback(s.App.StakeibcKeeper, s.Ctx, invalidArgs.packet, invalidArgs.ackResponse, invalidArgs.args)
+	// a nil ack means the request timed out
+	invalidArgs.ack = nil
+	err := stakeibckeeper.UndelegateCallback(s.App.StakeibcKeeper, s.Ctx, invalidArgs.packet, invalidArgs.ack, invalidArgs.args)
 	s.Require().NoError(err, "undelegate callback succeeds on timeout")
 	s.checkStateIfUndelegateCallbackFailed(tc)
 }
 
 func (s *KeeperTestSuite) TestUndelegateCallback_UndelegateCallbackErrorOnHost() {
 	tc := s.SetupUndelegateCallback()
-
-	// an error ack means the tx failed on the host
 	invalidArgs := tc.validArgs
-	invalidArgs.ackResponse.Status = icacallbacktypes.AckResponseStatus_FAILURE
+	// an error ack means the tx failed on the host
+	fullAck := channeltypes.Acknowledgement{Response: &channeltypes.Acknowledgement_Error{Error: "error"}}
+	invalidArgs.ack = &fullAck
 
-	err := stakeibckeeper.UndelegateCallback(s.App.StakeibcKeeper, s.Ctx, invalidArgs.packet, invalidArgs.ackResponse, invalidArgs.args)
+	err := stakeibckeeper.UndelegateCallback(s.App.StakeibcKeeper, s.Ctx, invalidArgs.packet, invalidArgs.ack, invalidArgs.args)
 	s.Require().NoError(err, "undelegate callback succeeds with error on host")
 	s.checkStateIfUndelegateCallbackFailed(tc)
 }
 
 func (s *KeeperTestSuite) TestUndelegateCallback_WrongCallbackArgs() {
 	tc := s.SetupUndelegateCallback()
+	invalidArgs := tc.validArgs
 
-	// random args should cause the callback to fail
-	invalidCallbackArgs := []byte("random bytes")
-
-	err := stakeibckeeper.UndelegateCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.packet, tc.validArgs.ackResponse, invalidCallbackArgs)
-	s.Require().EqualError(err, "Unable to unmarshal undelegate callback args: unexpected EOF: unable to unmarshal data structure")
+	err := stakeibckeeper.UndelegateCallback(s.App.StakeibcKeeper, s.Ctx, invalidArgs.packet, invalidArgs.ack, []byte("random bytes"))
+	s.Require().EqualError(err, "Unable to unmarshal undelegate callback args | unexpected EOF: unable to unmarshal data structure")
 	s.checkStateIfUndelegateCallbackFailed(tc)
 }
 
 func (s *KeeperTestSuite) TestUndelegateCallback_HostNotFound() {
 	tc := s.SetupUndelegateCallback()
-
-	// remove the host zone from the store to trigger a host not found error
+	valid := tc.validArgs
 	s.App.StakeibcKeeper.RemoveHostZone(s.Ctx, HostChainId)
-
-	err := stakeibckeeper.UndelegateCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.packet, tc.validArgs.ackResponse, tc.validArgs.args)
+	err := stakeibckeeper.UndelegateCallback(s.App.StakeibcKeeper, s.Ctx, valid.packet, valid.ack, valid.args)
 	s.Require().EqualError(err, "Host zone not found: GAIA: key not found")
 }
 
@@ -270,51 +254,51 @@ func (s *KeeperTestSuite) TestUpdateDelegationBalances_Success() {
 
 // GetLatestCompletionTime tests
 func (s *KeeperTestSuite) TestGetLatestCompletionTime_Success() {
-	s.SetupUndelegateCallback()
-
+	_ = s.SetupUndelegateCallback()
 	// Construct TxMsgData
 	firstCompletionTime := time.Now().Add(time.Second * time.Duration(10))
 	secondCompletionTime := time.Now().Add(time.Second * time.Duration(20))
-
-	var err error
-	msgResponses := make([][]byte, 2)
-	msgResponses[0], err = proto.Marshal(&stakingTypes.MsgUndelegateResponse{CompletionTime: firstCompletionTime})
+	txMsgData := &sdk.TxMsgData{
+		Data: make([]*sdk.MsgData, 2),
+	}
+	data, err := proto.Marshal(&stakingTypes.MsgUndelegateResponse{CompletionTime: firstCompletionTime})
 	s.Require().NoError(err, "marshal error")
-	msgResponses[1], err = proto.Marshal(&stakingTypes.MsgUndelegateResponse{CompletionTime: secondCompletionTime})
+	txMsgData.Data[0] = &sdk.MsgData{
+		MsgType: sdk.MsgTypeURL(&stakingTypes.MsgUndelegate{}),
+		Data:    data,
+	}
+	data, err = proto.Marshal(&stakingTypes.MsgUndelegateResponse{CompletionTime: secondCompletionTime})
 	s.Require().NoError(err, "marshal error")
-
+	txMsgData.Data[1] = &sdk.MsgData{
+		MsgType: sdk.MsgTypeURL(&stakingTypes.MsgUndelegate{}),
+		Data:    data,
+	}
 	// Check that the second completion time (the later of the two) is returned
-	latestCompletionTime, err := s.App.StakeibcKeeper.GetLatestCompletionTime(s.Ctx, msgResponses)
+	latestCompletionTime, err := s.App.StakeibcKeeper.GetLatestCompletionTime(s.Ctx, txMsgData)
 	s.Require().NoError(err, "get latest completion time succeeds")
 	s.Require().Equal(secondCompletionTime.Unix(), latestCompletionTime.Unix(), "latest completion time is the second completion time")
 }
 
-func (s *KeeperTestSuite) TestGetLatestCompletionTime_UnmarshalFailure() {
-	s.SetupUndelegateCallback()
-
-	// Calling latest completion time with random message responses will provoke an unmarshal failure
-	msgResponses := [][]byte{{1}, {2}, {3}}
-	_, err := s.App.StakeibcKeeper.GetLatestCompletionTime(s.Ctx, msgResponses)
-	s.Require().ErrorContains(err, "Unable to unmarshal undelegation tx response")
-}
-
 func (s *KeeperTestSuite) TestGetLatestCompletionTime_Failure() {
-	s.SetupUndelegateCallback()
+	_ = s.SetupUndelegateCallback()
+	txMsgData := &sdk.TxMsgData{
+		Data: make([]*sdk.MsgData, 2),
+	}
+	_, err := s.App.StakeibcKeeper.GetLatestCompletionTime(s.Ctx, txMsgData)
+	s.Require().EqualError(err, "msgResponseBytes or msgResponseBytes.Data is nil: TxMsgData invalid")
 
-	// Calling latest completion time with an no msg responses will cause the completion time to be 0
-	msgResponses := [][]byte{}
-	_, err := s.App.StakeibcKeeper.GetLatestCompletionTime(s.Ctx, msgResponses)
-	s.Require().ErrorContains(err, "invalid packet completion time")
+	txMsgData = &sdk.TxMsgData{}
+	_, err = s.App.StakeibcKeeper.GetLatestCompletionTime(s.Ctx, txMsgData)
+	s.Require().EqualError(err, "invalid packet completion time")
 }
 
 // UpdateHostZoneUnbondings tests
 func (s *KeeperTestSuite) TestUpdateHostZoneUnbondings_Success() {
-	totalBalance := sdkmath.NewInt(1_500_000)
-	stAmtHzu1 := sdkmath.NewInt(600_000)
-	stAmtHzu2 := sdkmath.NewInt(700_000)
-	stAmtHzu3 := sdkmath.NewInt(200_000)
+	totalBalance := sdk.NewInt(1_500_000)
+	stAmtHzu1 := sdk.NewInt(600_000)
+	stAmtHzu2 := sdk.NewInt(700_000)
+	stAmtHzu3 := sdk.NewInt(200_000)
 	s.Require().Equal(totalBalance, stAmtHzu1.Add(stAmtHzu2).Add(stAmtHzu3), "total balance is correct")
-
 	// Set up EpochUnbondingRecord, HostZoneUnbonding and token state
 	hostZoneUnbonding1 := recordtypes.HostZoneUnbonding{
 		HostZoneId:    HostChainId,
@@ -331,9 +315,8 @@ func (s *KeeperTestSuite) TestUpdateHostZoneUnbondings_Success() {
 		Status:        recordtypes.HostZoneUnbonding_UNBONDING_QUEUE,
 		StTokenAmount: stAmtHzu3,
 	}
-
-	// Create two epoch unbonding records (status UNBONDING_QUEUE, completion time originally unset)
-	epochUnbondingRecord1 := recordtypes.EpochUnbondingRecord{
+	// Create two epoch unbonding records (status UNBONDING_QUEUE, completion time unset)
+	epochUnbondingRecord := recordtypes.EpochUnbondingRecord{
 		EpochNumber:        1,
 		HostZoneUnbondings: []*recordtypes.HostZoneUnbonding{&hostZoneUnbonding1, &hostZoneUnbonding2},
 	}
@@ -341,13 +324,11 @@ func (s *KeeperTestSuite) TestUpdateHostZoneUnbondings_Success() {
 		EpochNumber:        2,
 		HostZoneUnbondings: []*recordtypes.HostZoneUnbonding{&hostZoneUnbonding3},
 	}
-	s.App.RecordsKeeper.SetEpochUnbondingRecord(s.Ctx, epochUnbondingRecord1)
+	s.App.RecordsKeeper.SetEpochUnbondingRecord(s.Ctx, epochUnbondingRecord)
 	s.App.RecordsKeeper.SetEpochUnbondingRecord(s.Ctx, epochUnbondingRecord2)
 	callbackArgs := types.UndelegateCallback{
 		EpochUnbondingRecordIds: []uint64{1, 2},
 	}
-
-	// Update host zone unbonding record status and calculate how many stTokens to burn
 	completionTime := time.Now().Add(time.Second * time.Duration(10))
 	burnAmount, err := s.App.StakeibcKeeper.UpdateHostZoneUnbondings(s.Ctx, completionTime, HostChainId, callbackArgs)
 	s.Require().NoError(err)
@@ -355,16 +336,15 @@ func (s *KeeperTestSuite) TestUpdateHostZoneUnbondings_Success() {
 
 	// Verify that 2 hzus have status EXIT_TRANSFER_QUEUE, while the third has status UNBONDING_QUEUE
 	// Verify that 2 hzus have completion time set, while the third has no completion time
-	epochUnbondingRecord1, found := s.App.RecordsKeeper.GetEpochUnbondingRecord(s.Ctx, 1)
+	epochUnbondingRecord, found := s.App.RecordsKeeper.GetEpochUnbondingRecord(s.Ctx, 1)
 	s.Require().True(found)
 	epochUnbondingRecord2, found = s.App.RecordsKeeper.GetEpochUnbondingRecord(s.Ctx, 2)
 	s.Require().True(found)
-
-	hzu1 := epochUnbondingRecord1.HostZoneUnbondings[0]
+	hzu1 := epochUnbondingRecord.HostZoneUnbondings[0]
 	s.Require().Equal(recordtypes.HostZoneUnbonding_EXIT_TRANSFER_QUEUE, hzu1.Status, "hzu1 status is EXIT_TRANSFER_QUEUE")
 	s.Require().Equal(completionTime.UnixNano(), int64(hzu1.UnbondingTime), "hzu1 completion time is set")
 
-	hzu2 := epochUnbondingRecord1.HostZoneUnbondings[1]
+	hzu2 := epochUnbondingRecord.HostZoneUnbondings[1]
 	s.Require().Equal(recordtypes.HostZoneUnbonding_UNBONDING_QUEUE, hzu2.Status, "hzu2 status is UNBONDING_QUEUE")
 	s.Require().Equal(int64(0), int64(hzu2.UnbondingTime), "hzu2 completion time is NOT set")
 
@@ -410,7 +390,7 @@ func (s *KeeperTestSuite) TestBurnTokens_Success() {
 	s.Require().NoError(err, "zoneAccount is valid")
 	s.Require().Equal(tc.initialState.zoneAccountBalance, s.App.BankKeeper.GetBalance(s.Ctx, zoneAccount, StAtom).Amount, "initial token balance is 300_010")
 
-	burnAmt := sdkmath.NewInt(123456)
+	burnAmt := sdk.NewInt(123456)
 	err = s.App.StakeibcKeeper.BurnTokens(s.Ctx, hostZone, burnAmt)
 	s.Require().NoError(err)
 
@@ -423,11 +403,11 @@ func (s *KeeperTestSuite) TestBurnTokens_CouldNotParseCoin() {
 
 	hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, HostChainId)
 	s.Require().True(found, "host zone found")
-	hostZone.HostDenom = ","
+	hostZone.HostDenom = ":"
 
-	burnAmt := sdkmath.NewInt(123456)
+	burnAmt := sdk.NewInt(123456)
 	err := s.App.StakeibcKeeper.BurnTokens(s.Ctx, hostZone, burnAmt)
-	s.Require().EqualError(err, "could not parse burnCoin: 123456st,. err: invalid decimal coin expression: 123456st,: invalid coins")
+	s.Require().EqualError(err, "could not parse burnCoin: 123456st:. err: invalid decimal coin expression: 123456st:: invalid coins")
 }
 
 // Test failure case - could not decode address
@@ -438,7 +418,7 @@ func (s *KeeperTestSuite) TestBurnTokens_CouldNotParseAddress() {
 	s.Require().True(found, "host zone found")
 	hostZone.Address = "invalid"
 
-	err := s.App.StakeibcKeeper.BurnTokens(s.Ctx, hostZone, sdkmath.NewInt(123456))
+	err := s.App.StakeibcKeeper.BurnTokens(s.Ctx, hostZone, sdk.NewInt(123456))
 	s.Require().EqualError(err, "could not bech32 decode address invalid of zone with id: GAIA")
 }
 
@@ -450,6 +430,6 @@ func (s *KeeperTestSuite) TestBurnTokens_CouldNotSendCoinsFromAccountToModule() 
 	s.Require().True(found, "host zone found")
 	hostZone.HostDenom = "coinDNE"
 
-	err := s.App.StakeibcKeeper.BurnTokens(s.Ctx, hostZone, sdkmath.NewInt(123456))
+	err := s.App.StakeibcKeeper.BurnTokens(s.Ctx, hostZone, sdk.NewInt(123456))
 	s.Require().EqualError(err, "could not send coins from account stride1755g4dkhpw73gz9h9nwhlcefc6sdf8kcmvcwrk4rxfrz8xpxxjms7savm8 to module stakeibc. err: 0stcoinDNE is smaller than 123456stcoinDNE: insufficient funds")
 }

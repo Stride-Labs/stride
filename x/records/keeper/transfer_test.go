@@ -4,10 +4,8 @@ import (
 	_ "github.com/stretchr/testify/suite"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	ibctypes "github.com/cosmos/ibc-go/v5/modules/apps/transfer/types"
-	clienttypes "github.com/cosmos/ibc-go/v5/modules/core/02-client/types"
-
-	sdkmath "cosmossdk.io/math"
+	ibctypes "github.com/cosmos/ibc-go/v3/modules/apps/transfer/types"
+	clienttypes "github.com/cosmos/ibc-go/v3/modules/core/02-client/types"
 
 	"github.com/Stride-Labs/stride/v4/x/records/types"
 	recordtypes "github.com/Stride-Labs/stride/v4/x/records/types"
@@ -20,7 +18,7 @@ type TransferTestCase struct {
 
 func (s *KeeperTestSuite) SetupTransfer() TransferTestCase {
 	s.CreateTransferChannel(chainId)
-	balanceToTransfer := sdkmath.NewInt(1_000_000)
+	balanceToTransfer := sdk.NewInt(1_000_000)
 	depositRecord := types.DepositRecord{
 		Id:                 1,
 		DepositEpochNumber: 1,

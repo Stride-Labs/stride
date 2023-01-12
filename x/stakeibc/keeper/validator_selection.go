@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"sort"
 
-	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/Stride-Labs/stride/v4/utils"
@@ -15,9 +14,9 @@ import (
 //
 //   positive implies extra tokens need to be given,
 //   negative impleis tokens need to be taken away
-func (k Keeper) GetValidatorDelegationAmtDifferences(ctx sdk.Context, hostZone types.HostZone) (map[string]sdkmath.Int, error) {
+func (k Keeper) GetValidatorDelegationAmtDifferences(ctx sdk.Context, hostZone types.HostZone) (map[string]sdk.Int, error) {
 	validators := hostZone.GetValidators()
-	delegationDelta := make(map[string]sdkmath.Int)
+	delegationDelta := make(map[string]sdk.Int)
 	totalDelegatedAmt := k.GetTotalValidatorDelegations(hostZone)
 	targetDelegation, err := k.GetTargetValAmtsForHostZone(ctx, hostZone, totalDelegatedAmt)
 	if err != nil {
@@ -34,9 +33,9 @@ func (k Keeper) GetValidatorDelegationAmtDifferences(ctx sdk.Context, hostZone t
 // This will get the target validator delegation for the given hostZone
 // such that the total validator delegation is equal to the finalDelegation
 // output key is ADDRESS not NAME
-func (k Keeper) GetTargetValAmtsForHostZone(ctx sdk.Context, hostZone types.HostZone, finalDelegation sdkmath.Int) (map[string]sdkmath.Int, error) {
+func (k Keeper) GetTargetValAmtsForHostZone(ctx sdk.Context, hostZone types.HostZone, finalDelegation sdk.Int) (map[string]sdk.Int, error) {
 	// Confirm the expected delegation amount is greater than 0
-	if finalDelegation == sdkmath.ZeroInt() {
+	if finalDelegation == sdk.ZeroInt() {
 		k.Logger(ctx).Error(fmt.Sprintf("Cannot calculate target delegation if final amount is 0 %s", hostZone.ChainId))
 		return nil, types.ErrNoValidatorWeights
 	}
@@ -61,14 +60,14 @@ func (k Keeper) GetTargetValAmtsForHostZone(ctx sdk.Context, hostZone types.Host
 	})
 
 	// Assign each validator their portion of the delegation (and give any overflow to the last validator)
-	targetUnbondingsByValidator := make(map[string]sdkmath.Int)
-	totalAllocated := sdkmath.ZeroInt()
+	targetUnbondingsByValidator := make(map[string]sdk.Int)
+	totalAllocated := sdk.ZeroInt()
 	for i, validator := range validators {
 		// For the last element, we need to make sure that the totalAllocated is equal to the finalDelegation
 		if i == len(validators)-1 {
 			targetUnbondingsByValidator[validator.Address] = finalDelegation.Sub(totalAllocated)
 		} else {
-			delegateAmt := sdkmath.NewIntFromUint64(validator.Weight).Mul(finalDelegation).Quo(sdkmath.NewIntFromUint64(totalWeight))
+			delegateAmt := sdk.NewIntFromUint64(validator.Weight).Mul(finalDelegation).Quo(sdk.NewIntFromUint64(totalWeight))
 			totalAllocated = totalAllocated.Add(delegateAmt)
 			targetUnbondingsByValidator[validator.Address] = delegateAmt
 		}
@@ -77,9 +76,9 @@ func (k Keeper) GetTargetValAmtsForHostZone(ctx sdk.Context, hostZone types.Host
 	return targetUnbondingsByValidator, nil
 }
 
-func (k Keeper) GetTotalValidatorDelegations(hostZone types.HostZone) sdkmath.Int {
+func (k Keeper) GetTotalValidatorDelegations(hostZone types.HostZone) sdk.Int {
 	validators := hostZone.GetValidators()
-	total_delegation := sdkmath.ZeroInt()
+	total_delegation := sdk.ZeroInt()
 	for _, validator := range validators {
 		total_delegation = total_delegation.Add(validator.DelegationAmt)
 	}

@@ -8,7 +8,7 @@ import (
 )
 
 // Benchmarking :)
-// previously using math.Int operations:
+// previously using sdk.Int operations:
 // BenchmarkEpochProvision-4 5000000 220 ns/op
 //
 // using sdk.Dec operations: (current implementation)

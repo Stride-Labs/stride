@@ -4,10 +4,9 @@ import (
 	"fmt"
 	"strings"
 
-	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	ibctesting "github.com/cosmos/ibc-go/v5/testing"
+	ibctesting "github.com/cosmos/ibc-go/v3/testing"
 	_ "github.com/stretchr/testify/suite"
 
 	epochtypes "github.com/Stride-Labs/stride/v4/x/epochs/types"
@@ -56,9 +55,9 @@ func (s *KeeperTestSuite) SetupClaimUndelegatedTokens() ClaimUndelegatedTestCase
 		Receiver:       receiverAddr,
 		Denom:          "uatom",
 		ClaimIsPending: false,
-		Amount:         sdkmath.NewInt(1000),
+		Amount:         sdk.NewInt(1000),
 	}
-	redemptionAmount := sdk.NewCoins(sdk.NewCoin(redemptionRecord.Denom, sdkmath.NewInt(1000)))
+	redemptionAmount := sdk.NewCoins(sdk.NewCoin(redemptionRecord.Denom, sdk.NewInt(1000)))
 
 	epochTracker := stakeibctypes.EpochTracker{
 		EpochIdentifier:    epochtypes.STRIDE_EPOCH,
@@ -70,7 +69,7 @@ func (s *KeeperTestSuite) SetupClaimUndelegatedTokens() ClaimUndelegatedTestCase
 		HostZoneId:            HostChainId,
 		Status:                recordtypes.HostZoneUnbonding_CLAIMABLE,
 		UserRedemptionRecords: []string{redemptionRecordId},
-		NativeTokenAmount:     sdkmath.NewInt(1_000_000),
+		NativeTokenAmount:     sdk.NewInt(1_000_000),
 	}
 	epochUnbondingRecord := recordtypes.EpochUnbondingRecord{
 		EpochNumber:        epochNumber,

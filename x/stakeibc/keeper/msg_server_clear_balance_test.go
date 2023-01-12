@@ -3,10 +3,9 @@ package keeper_test
 import (
 	"fmt"
 
-	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	icatypes "github.com/cosmos/ibc-go/v5/modules/apps/27-interchain-accounts/types"
-	ibctesting "github.com/cosmos/ibc-go/v5/testing"
+	icatypes "github.com/cosmos/ibc-go/v3/modules/apps/27-interchain-accounts/types"
+	ibctesting "github.com/cosmos/ibc-go/v3/testing"
 	_ "github.com/stretchr/testify/suite"
 
 	"github.com/Stride-Labs/stride/v4/x/stakeibc/types"
@@ -43,7 +42,7 @@ func (s *KeeperTestSuite) SetupClearBalance() ClearBalanceTestCase {
 		},
 	}
 
-	amount := sdkmath.NewInt(1_000_000)
+	amount := sdk.NewInt(1_000_000)
 
 	user := Account{
 		acc: s.TestAccs[0],

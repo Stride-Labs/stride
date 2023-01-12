@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"sort"
 
-	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	stakingTypes "github.com/cosmos/cosmos-sdk/x/staking/types"
@@ -41,7 +40,7 @@ func (k msgServer) RebalanceValidators(goCtx context.Context, msg *types.MsgReba
 
 	// we convert the above map into a list of tuples
 	type valPair struct {
-		deltaAmt sdkmath.Int
+		deltaAmt sdk.Int
 		valAddr  string
 	}
 	valDeltaList := make([]valPair, 0)
@@ -93,11 +92,11 @@ func (k msgServer) RebalanceValidators(goCtx context.Context, msg *types.MsgReba
 	for i := 1; i <= maxNumRebalance; i++ {
 		underWeightElem := valDeltaList[underWeightIndex]
 		overWeightElem := valDeltaList[overWeightIndex]
-		if underWeightElem.deltaAmt.LT(sdkmath.ZeroInt()) {
+		if underWeightElem.deltaAmt.LT(sdk.ZeroInt()) {
 			// if underWeightElem is negative, we're done rebalancing
 			break
 		}
-		if overWeightElem.deltaAmt.GT(sdkmath.ZeroInt()) {
+		if overWeightElem.deltaAmt.GT(sdk.ZeroInt()) {
 			// if overWeightElem is positive, we're done rebalancing
 			break
 		}
@@ -114,7 +113,7 @@ func (k msgServer) RebalanceValidators(goCtx context.Context, msg *types.MsgReba
 				ValidatorDstAddress: underWeightElem.valAddr,
 				Amount:              sdk.NewCoin(hostZone.HostDenom, overWeightElem.deltaAmt.Abs())}
 			msgs = append(msgs, redelegateMsg)
-			overWeightElem.deltaAmt = sdkmath.ZeroInt()
+			overWeightElem.deltaAmt = sdk.ZeroInt()
 		} else if underWeightElem.deltaAmt.Abs().LT(overWeightElem.deltaAmt) {
 			// if the overweight element is more overweight than the underweight element
 			overWeightElem.deltaAmt = overWeightElem.deltaAmt.Add(underWeightElem.deltaAmt)
@@ -126,7 +125,7 @@ func (k msgServer) RebalanceValidators(goCtx context.Context, msg *types.MsgReba
 				ValidatorDstAddress: underWeightElem.valAddr,
 				Amount:              sdk.NewCoin(hostZone.HostDenom, underWeightElem.deltaAmt)}
 			msgs = append(msgs, redelegateMsg)
-			underWeightElem.deltaAmt = sdkmath.ZeroInt()
+			underWeightElem.deltaAmt = sdk.ZeroInt()
 		} else {
 			// if the two elements are equal, we increment both slices
 			underWeightIndex -= 1
@@ -138,8 +137,8 @@ func (k msgServer) RebalanceValidators(goCtx context.Context, msg *types.MsgReba
 				ValidatorDstAddress: underWeightElem.valAddr,
 				Amount:              sdk.NewCoin(hostZone.HostDenom, underWeightElem.deltaAmt)}
 			msgs = append(msgs, redelegateMsg)
-			overWeightElem.deltaAmt = sdkmath.ZeroInt()
-			underWeightElem.deltaAmt = sdkmath.ZeroInt()
+			overWeightElem.deltaAmt = sdk.ZeroInt()
+			underWeightElem.deltaAmt = sdk.ZeroInt()
 		}
 		// add the rebalancing to the callback
 		// lastMsg grabs rebalanceMsg from above (due to the type, it's hard to )

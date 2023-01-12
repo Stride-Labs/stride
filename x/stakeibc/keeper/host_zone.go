@@ -6,8 +6,6 @@ import (
 	"fmt"
 	"math"
 
-	sdkmath "cosmossdk.io/math"
-
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -96,13 +94,13 @@ func (k Keeper) GetAllHostZone(ctx sdk.Context) (list []types.HostZone) {
 	return
 }
 
-func (k Keeper) AddDelegationToValidator(ctx sdk.Context, hostZone types.HostZone, validatorAddress string, amount sdkmath.Int, callbackId string) (success bool) {
+func (k Keeper) AddDelegationToValidator(ctx sdk.Context, hostZone types.HostZone, validatorAddress string, amount sdk.Int, callbackId string) (success bool) {
 	for _, validator := range hostZone.Validators {
 		if validator.Address == validatorAddress {
-			k.Logger(ctx).Info(utils.LogICACallbackWithHostZone(hostZone.ChainId, callbackId,
+			k.Logger(ctx).Info(utils.LogCallbackWithHostZone(hostZone.ChainId, callbackId,
 				"  Validator %s, Current Delegation: %v, Delegation Change: %v", validator.Address, validator.DelegationAmt, amount))
 
-			if amount.GTE(sdkmath.ZeroInt()) {
+			if amount.GTE(sdk.ZeroInt()) {
 				validator.DelegationAmt = validator.DelegationAmt.Add(amount)
 				return true
 			}
@@ -170,7 +168,7 @@ func (k Keeper) AddValidatorToHostZone(ctx sdk.Context, msg *types.MsgAddValidat
 		Address:        msg.Address,
 		Status:         types.Validator_ACTIVE,
 		CommissionRate: msg.Commission,
-		DelegationAmt:  sdkmath.ZeroInt(),
+		DelegationAmt:  sdk.ZeroInt(),
 		Weight:         valWeight,
 	})
 
@@ -203,16 +201,6 @@ func (k Keeper) RemoveValidatorFromHostZone(ctx sdk.Context, chainId string, val
 	errMsg := fmt.Sprintf("Validator address (%s) not found on host zone (%s)", validatorAddress, chainId)
 	k.Logger(ctx).Error(errMsg)
 	return sdkerrors.Wrapf(types.ErrValidatorNotFound, errMsg)
-}
-
-// Get a validator and its index from a list of validators, by address
-func GetValidatorFromAddress(validators []*types.Validator, address string) (val types.Validator, index int64, found bool) {
-	for i, v := range validators {
-		if v.Address == address {
-			return *v, int64(i), true
-		}
-	}
-	return types.Validator{}, 0, false
 }
 
 // GetHostZoneFromIBCDenom returns a HostZone from a IBCDenom

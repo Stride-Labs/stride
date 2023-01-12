@@ -117,10 +117,7 @@ func (app *StrideApp) prepForZeroHeightGenesis(ctx sdk.Context, jailAllowedAddrs
 		feePool.CommunityPool = feePool.CommunityPool.Add(scraps...)
 		app.DistrKeeper.SetFeePool(ctx, feePool)
 
-		err := app.DistrKeeper.Hooks().AfterValidatorCreated(ctx, val.GetOperator())
-		if err != nil {
-			panic(err)
-		}
+		app.DistrKeeper.Hooks().AfterValidatorCreated(ctx, val.GetOperator())
 		return false
 	})
 
@@ -134,14 +131,8 @@ func (app *StrideApp) prepForZeroHeightGenesis(ctx sdk.Context, jailAllowedAddrs
 		if err != nil {
 			panic(err)
 		}
-		err = app.DistrKeeper.Hooks().BeforeDelegationCreated(ctx, delAddr, valAddr)
-		if err != nil {
-			panic(err)
-		}
-		err = app.DistrKeeper.Hooks().AfterDelegationModified(ctx, delAddr, valAddr)
-		if err != nil {
-			panic(err)
-		}
+		app.DistrKeeper.Hooks().BeforeDelegationCreated(ctx, delAddr, valAddr)
+		app.DistrKeeper.Hooks().AfterDelegationModified(ctx, delAddr, valAddr)
 	}
 
 	// reset context height
