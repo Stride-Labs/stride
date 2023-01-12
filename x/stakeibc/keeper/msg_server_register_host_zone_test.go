@@ -160,9 +160,7 @@ func (s *KeeperTestSuite) TestRegisterHostZone_InvalidConnectionId() {
 	msg.ConnectionId = "connection-10" // an invalid connection ID
 
 	_, err := s.GetMsgServer().RegisterHostZone(sdk.WrapSDKContext(s.Ctx), &msg)
-	expectedErrMsg := "unable to obtain chain id from connection connection-10, "
-	expectedErrMsg += "err: invalid connection id, connection-10 not found: failed to register host zone"
-	s.Require().EqualError(err, expectedErrMsg, "expected error when registering with an invalid connection id")
+	s.Require().EqualError(err, "invalid connection id, connection-10 not found: failed to register host zone")
 }
 
 func (s *KeeperTestSuite) TestRegisterHostZone_DuplicateConnectionIdInIBCState() {
