@@ -96,7 +96,7 @@ func DelegatorSharesCallback(k Keeper, ctx sdk.Context, args []byte, query icqty
 		validator.Address, queriedDelgation.DelegatorAddress, validator.DelegationAmt, delegatedTokens, slashAmount, slashPct))
 
 	// Abort if the slash was greater than the safety threshold
-	slashThreshold, err := cast.ToInt64E(k.GetParams(ctx).SafetyMaxSlashPercent)
+	slashThreshold, err := cast.ToInt64E(k.GetParam(ctx, types.KeySafetyMaxSlashPercent))
 	if err != nil {
 		return err
 	}

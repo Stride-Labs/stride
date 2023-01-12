@@ -116,6 +116,7 @@ func DefaultParams() Params {
 		DefaultSafetyMaxRedemptionRateThreshold,
 		DefaultIBCTransferTimeoutNanos,
 		DefaultSafetyNumValidators,
+		DefaultSafetyMaxSlashPercent,
 	)
 }
 
@@ -138,6 +139,7 @@ func (p *Params) ParamSetPairs() paramtypes.ParamSetPairs {
 		paramtypes.NewParamSetPair(KeySafetyMaxRedemptionRateThreshold, &p.SafetyMaxRedemptionRateThreshold, validMaxRedemptionRateThreshold),
 		paramtypes.NewParamSetPair(KeyIBCTransferTimeoutNanos, &p.IbcTransferTimeoutNanos, validTimeoutNanos),
 		paramtypes.NewParamSetPair(KeySafetyNumValidators, &p.SafetyNumValidators, isPositive),
+		paramtypes.NewParamSetPair(KeySafetyMaxSlashPercent, &p.SafetyMaxSlashPercent, validSlashPercent),
 	}
 }
 
@@ -199,6 +201,18 @@ func validMinRedemptionRateThreshold(i interface{}) error {
 
 	if ival < minVal {
 		return fmt.Errorf("parameter must be g.t. 75: %d", ival)
+	}
+
+	return nil
+}
+
+func validSlashPercent(i interface{}) error {
+	ival, ok := i.(uint64)
+	if !ok {
+		return fmt.Errorf("parameter not accepted: %T", i)
+	}
+	if ival > 100 {
+		return fmt.Errorf("parameter must be between 0 and 100: %d", ival)
 	}
 
 	return nil
