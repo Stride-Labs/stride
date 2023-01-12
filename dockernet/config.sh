@@ -27,8 +27,7 @@ elif [[ "${#HOST_CHAINS[@]}" == "0" ]]; then
 fi
 
 # Sets up upgrade if {UPGRADE_NAME} is non-empty
-# CHANGE TO V5 after first upgrade
-UPGRADE_NAME="v5"
+UPGRADE_NAME=""
 UPGRADE_OLD_COMMIT_HASH=""
 
 # DENOMS
