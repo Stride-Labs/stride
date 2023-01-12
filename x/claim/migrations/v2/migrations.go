@@ -9,18 +9,18 @@ import (
 	claimtypes "github.com/Stride-Labs/stride/v4/x/claim/types"
 )
 
-func migrateClaimParams(store sdk.KVStore, cdc codec.BinaryCodec) error {
+func migrateClaimParams(store sdk.KVStore, cdc codec.Codec) error {
 	// Deserialize with old data type
 	oldParamsBz := store.Get([]byte(claimtypes.ParamsKey))
 	var oldParams oldclaimtypes.Params
-	err := cdc.Unmarshal(oldParamsBz, &oldParams)
+	err := cdc.UnmarshalJSON(oldParamsBz, &oldParams)
 	if err != nil {
 		return err
 	}
 
 	// Convert and serialize using the new type
 	newParams := convertToNewClaimParams(oldParams)
-	newParamsBz, err := cdc.Marshal(&newParams)
+	newParamsBz, err := cdc.MarshalJSON(&newParams)
 	if err != nil {
 		return err
 	}
@@ -30,7 +30,7 @@ func migrateClaimParams(store sdk.KVStore, cdc codec.BinaryCodec) error {
 	return nil
 }
 
-func MigrateStore(ctx sdk.Context, storeKey storetypes.StoreKey, cdc codec.BinaryCodec) error {
+func MigrateStore(ctx sdk.Context, storeKey storetypes.StoreKey, cdc codec.Codec) error {
 	store := ctx.KVStore(storeKey)
 	return migrateClaimParams(store, cdc)
 }
