@@ -133,19 +133,6 @@ func (suite *UpgradeTestSuite) SetUpOldStore() {
 	// set up stakeibc module store
 	stakeIbcStore := suite.Ctx.KVStore(suite.App.GetKey(stakeibctypes.StoreKey))
 
-	// set old delegation
-	delegationStore := prefix.NewStore(stakeIbcStore, recordtypes.KeyPrefix(stakeibctypes.DelegationKey))
-	delegation := stakeibcv1types.Delegation{
-		DelegateAcctAddress: "test addr",
-		Amt: 1000000,
-		Validator: &stakeibcv1types.Validator{
-			DelegationAmt: uint64(1000000),
-		},
-	}
-	delegationBz, err := codec.Marshal(&delegation)
-	suite.Require().NoError(err)
-	delegationStore.Set([]byte{0}, delegationBz)
-
 	// set old hostzone
 	hostzoneStore := prefix.NewStore(stakeIbcStore, recordtypes.KeyPrefix(stakeibctypes.HostZoneKey))
 	hz := stakeibcv1types.HostZone{
@@ -166,17 +153,7 @@ func (suite *UpgradeTestSuite) SetUpOldStore() {
 	}
 	hzBz, err := codec.Marshal(&hz)
 	suite.Require().NoError(err)
-	hostzoneStore.Set([]byte(hz.ChainId), hzBz)
-
-	// set old validator
-	validatorStore := prefix.NewStore(stakeIbcStore, recordtypes.KeyPrefix(stakeibctypes.ValidatorKey))
-	validator := stakeibcv1types.Validator{
-		Address: "1",
-		DelegationAmt: uint64(10000000),
-	}
-	validatorBz, err := codec.Marshal(&validator)
-	suite.Require().NoError(err)
-	validatorStore.Set([]byte{0}, validatorBz)
+	hostzoneStore.Set([]byte(hz.ChainId), hzBz)	
 }
 
 func (suite *UpgradeTestSuite) CheckStoreMigration() {
