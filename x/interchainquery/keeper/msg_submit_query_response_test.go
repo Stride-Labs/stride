@@ -2,6 +2,7 @@ package keeper_test
 
 import (
 	"context"
+	"strings"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/bech32"
@@ -89,22 +90,24 @@ func (s *KeeperTestSuite) TestMsgSubmitQueryResponse_UnknownId() {
 	s.Require().True(found)
 }
 
-// TODO: Enable test if query proof is mocked out successfully
-// func (s *KeeperTestSuite) TestMsgSubmitQueryResponse_ExceededTtl() {
-// 	tc := s.SetupMsgSubmitQueryResponse()
+func (s *KeeperTestSuite) TestMsgSubmitQueryResponse_ExceededTtl() {
+	tc := s.SetupMsgSubmitQueryResponse()
 
-// 	// set ttl to be expired
-// 	tc.query.Ttl = uint64(1)
-// 	s.App.InterchainqueryKeeper.SetQuery(s.Ctx, tc.query)
+	// Remove key from the query type so to bypass the VerifyKeyProof function
+	tc.query.QueryType = strings.ReplaceAll(tc.query.QueryType, "key", "")
 
-// 	resp, err := s.GetMsgServer().SubmitQueryResponse(tc.goCtx, &tc.validMsg)
-// 	s.Require().NoError(err)
-// 	s.Require().NotNil(resp)
+	// set ttl to be expired
+	tc.query.Ttl = uint64(1)
+	s.App.InterchainqueryKeeper.SetQuery(s.Ctx, tc.query)
 
-// 	// check that the query was deleted (since the query timed out)
-// 	_, found := s.App.InterchainqueryKeeper.GetQuery(s.Ctx, tc.query.Id)
-// 	s.Require().False(found)
-// }
+	resp, err := s.GetMsgServer().SubmitQueryResponse(tc.goCtx, &tc.validMsg)
+	s.Require().NoError(err)
+	s.Require().NotNil(resp)
+
+	// check that the query was deleted (since the query timed out)
+	_, found := s.App.InterchainqueryKeeper.GetQuery(s.Ctx, tc.query.Id)
+	s.Require().False(found)
+}
 
 func (s *KeeperTestSuite) TestMsgSubmitQueryResponse_FindAndInvokeCallback_WrongHostZone() {
 	tc := s.SetupMsgSubmitQueryResponse()
