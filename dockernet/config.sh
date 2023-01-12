@@ -28,7 +28,7 @@ fi
 
 # Sets up upgrade if {UPGRADE_NAME} is non-empty
 # CHANGE TO V5 after first upgrade
-UPGRADE_NAME="v4"
+UPGRADE_NAME="v5"
 UPGRADE_OLD_COMMIT_HASH=""
 
 # DENOMS

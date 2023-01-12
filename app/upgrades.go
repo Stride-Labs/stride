@@ -9,6 +9,7 @@ import (
 	v2 "github.com/Stride-Labs/stride/v4/app/upgrades/v2"
 	v3 "github.com/Stride-Labs/stride/v4/app/upgrades/v3"
 	v4 "github.com/Stride-Labs/stride/v4/app/upgrades/v4"
+	v5 "github.com/Stride-Labs/stride/v4/app/upgrades/v5"
 	claimtypes "github.com/Stride-Labs/stride/v4/x/claim/types"
 
 	authzkeeper "github.com/cosmos/cosmos-sdk/x/authz/keeper"
@@ -24,12 +25,6 @@ func AuthzHeightAdjustmentUpgradeStoreLoader(upgradeHeight int64) baseapp.StoreL
 		if upgradeHeight == ms.LastCommitID().Version+1 {
 			err := ms.LoadLatestVersionAndUpgrade(&storetypes.StoreUpgrades{
 				Deleted: []string{authzkeeper.StoreKey},
-			})
-			if err != nil {
-				panic(err)
-			}
-			err = ms.LoadLatestVersionAndUpgrade(&storetypes.StoreUpgrades{
-				Added: []string{authzkeeper.StoreKey},
 			})
 			if err != nil {
 				panic(err)
@@ -61,8 +56,8 @@ func (app *StrideApp) setupUpgradeHandlers() {
 
 	// v5 upgrade handler
 	app.UpgradeKeeper.SetUpgradeHandler(
-		"v5",
-		v4.CreateUpgradeHandler(app.mm, app.configurator),
+		v5.UpgradeName,
+		v5.CreateUpgradeHandler(app.mm, app.configurator),
 	)
 
 	upgradeInfo, err := app.UpgradeKeeper.ReadUpgradeInfoFromDisk()
@@ -83,6 +78,7 @@ func (app *StrideApp) setupUpgradeHandlers() {
 		}
 	case "v5":
 		app.SetStoreLoader(AuthzHeightAdjustmentUpgradeStoreLoader(upgradeInfo.Height))
+		// get application context
 	}
 
 	if (storeUpgrades != nil) && (upgradeInfo.Name != "v5") {
