@@ -4,7 +4,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	ibctesting "github.com/cosmos/ibc-go/v3/testing"
 
-	epochtypes "github.com/Stride-Labs/stride/v4/x/epochs/types"
 	recordtypes "github.com/Stride-Labs/stride/v4/x/records/types"
 	stakeibc "github.com/Stride-Labs/stride/v4/x/stakeibc/types"
 )
@@ -120,136 +119,11 @@ func (s *KeeperTestSuite) TestSubmitHostZoneUnbondingMsg_ErrorSubmittingUnbondin
 }
 
 func (s *KeeperTestSuite) SetupSweepAllUnbondedTokensForHostZone() SweepUnbondedTokensTestCase {
-	s.CreateICAChannel("GAIA.DELEGATION")
-	//  define the host zone with stakedBal and validators with staked amounts
-	gaiaValidators := []*stakeibc.Validator{
-		{
-			Address:       "cosmos_VALIDATOR",
-			DelegationAmt: sdk.NewInt(5_000_000),
-			Weight:        uint64(10),
-		},
-	}
-	gaiaDelegationAccount := stakeibc.ICAAccount{
-		Address: "cosmos_DELEGATION",
-		Target:  stakeibc.ICAAccountType_DELEGATION,
-	}
-	gaiaRedemptionAccount := stakeibc.ICAAccount{
-		Address: "cosmos_REDEMPTION",
-		Target:  stakeibc.ICAAccountType_REDEMPTION,
-	}
-	osmoValidators := []*stakeibc.Validator{
-		{
-			Address:       "osmo_VALIDATOR",
-			DelegationAmt: sdk.NewInt(5_000_000),
-			Weight:        uint64(10),
-		},
-	}
-	osmoDelegationAccount := stakeibc.ICAAccount{
-		Address: "osmo_DELEGATION",
-		Target:  stakeibc.ICAAccountType_DELEGATION,
-	}
-	osmoRedemptionAccount := stakeibc.ICAAccount{
-		Address: "osmo_REDEMPTION",
-		Target:  stakeibc.ICAAccountType_REDEMPTION,
-	}
-	hostZones := []stakeibc.HostZone{
-		{
-			ChainId:            HostChainId,
-			HostDenom:          Atom,
-			Bech32Prefix:       GaiaPrefix,
-			UnbondingFrequency: 3,
-			Validators:         gaiaValidators,
-			DelegationAccount:  &gaiaDelegationAccount,
-			RedemptionAccount:  &gaiaRedemptionAccount,
-			StakedBal:          sdk.NewInt(5_000_000),
-			ConnectionId:       ibctesting.FirstConnectionID,
-		},
-		{
-			ChainId:            OsmoChainId,
-			HostDenom:          Osmo,
-			Bech32Prefix:       OsmoPrefix,
-			UnbondingFrequency: 4,
-			Validators:         osmoValidators,
-			DelegationAccount:  &osmoDelegationAccount,
-			RedemptionAccount:  &osmoRedemptionAccount,
-			StakedBal:          sdk.NewInt(5_000_000),
-			ConnectionId:       ibctesting.FirstConnectionID,
-		},
-	}
-	dayEpochTracker := stakeibc.EpochTracker{
-		EpochIdentifier:    epochtypes.DAY_EPOCH,
-		EpochNumber:        1,
-		NextEpochStartTime: uint64(s.Coordinator.CurrentTime.UnixNano() + 30_000_000_000), // dictates timeouts
-	}
-
-	// 2022-08-12T19:51, a random time in the past
-	unbondingTime := uint64(10)
-	lightClientTime := unbondingTime + 1
-	// list of epoch unbonding records
-	epochUnbondingRecords := []recordtypes.EpochUnbondingRecord{
-		{
-			EpochNumber: 0,
-			HostZoneUnbondings: []*recordtypes.HostZoneUnbonding{
-				{
-					HostZoneId:        HostChainId,
-					NativeTokenAmount: sdk.NewInt(1_000_000),
-					Status:            recordtypes.HostZoneUnbonding_UNBONDING_QUEUE,
-					UnbondingTime:     unbondingTime,
-				},
-				{
-					HostZoneId:        OsmoChainId,
-					NativeTokenAmount: sdk.NewInt(1_000_000),
-					Status:            recordtypes.HostZoneUnbonding_EXIT_TRANSFER_QUEUE,
-					UnbondingTime:     unbondingTime,
-				},
-			},
-		},
-		{
-			EpochNumber: 1,
-			HostZoneUnbondings: []*recordtypes.HostZoneUnbonding{
-				{
-					HostZoneId:        HostChainId,
-					NativeTokenAmount: sdk.NewInt(2_000_000),
-					Status:            recordtypes.HostZoneUnbonding_EXIT_TRANSFER_QUEUE,
-					UnbondingTime:     unbondingTime,
-				},
-				{
-					HostZoneId:        OsmoChainId,
-					NativeTokenAmount: sdk.NewInt(2_000_000),
-					Status:            recordtypes.HostZoneUnbonding_EXIT_TRANSFER_QUEUE,
-					UnbondingTime:     unbondingTime,
-				},
-			},
-		},
-		{
-			EpochNumber: 2,
-			HostZoneUnbondings: []*recordtypes.HostZoneUnbonding{
-				{
-					HostZoneId:        HostChainId,
-					NativeTokenAmount: sdk.NewInt(5_000_000),
-					Status:            recordtypes.HostZoneUnbonding_CLAIMABLE,
-				},
-				{
-					HostZoneId:        OsmoChainId,
-					NativeTokenAmount: sdk.NewInt(5_000_000),
-					Status:            recordtypes.HostZoneUnbonding_UNBONDING_QUEUE,
-				},
-			},
-		},
-	}
-	for _, epochUnbondingRecord := range epochUnbondingRecords {
-		s.App.RecordsKeeper.SetEpochUnbondingRecord(s.Ctx, epochUnbondingRecord)
-	}
-
-	for _, hostZone := range hostZones {
-		s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
-	}
-	s.App.StakeibcKeeper.SetEpochTracker(s.Ctx, dayEpochTracker)
-
+	tc := s.SetupSweepUnbondedTokens()
 	return SweepUnbondedTokensTestCase{
-		epochUnbondingRecords: epochUnbondingRecords,
-		hostZones:             hostZones,
-		lightClientTime:       lightClientTime,
+		epochUnbondingRecords: tc.epochUnbondingRecords,
+		hostZones:             tc.hostZones,
+		lightClientTime:       tc.lightClientTime,
 	}
 }
 
