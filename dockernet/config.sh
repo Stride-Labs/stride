@@ -123,11 +123,7 @@ STRIDE_FEE_ADDRESS=stride1czvrk3jkvtj8m27kqsqu2yrkhw3h3ykwj3rxh6
 if [[ "$UPGRADE_NAME" == "" ]]; then 
   STRIDE_CMD="$DOCKERNET_HOME/../build/strided"
 else
-  if [[ "$UPGRADE_NAME" == "v4" ]]; then 
-    STRIDE_CMD="$UPGRADES/binaries/strided1"
-  elif [[ "$UPGRADE_NAME" == "v5" ]]; then 
-    STRIDE_CMD="$UPGRADES/binaries/strided2"
-  fi
+  STRIDE_CMD="$UPGRADES/binaries/strided1"
 fi
 STRIDE_MAIN_CMD="$STRIDE_CMD --home $DOCKERNET_HOME/state/${STRIDE_NODE_PREFIX}1"
 

@@ -4,13 +4,9 @@ set -eu
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 source ${SCRIPT_DIR}/../config.sh
 
-if [[ "$UPGRADE_NAME" == "v4" ]]; then
-    UPGRADE_HEIGHT=100
-    PROPOSAL_ID=1
-else
-    UPGRADE_HEIGHT=200
-    PROPOSAL_ID=2
-fi
+UPGRADE_HEIGHT=250
+
+PROPOSAL_ID=1
 
 printf "PROPOSAL\n"
 $STRIDE_MAIN_CMD tx gov submit-proposal software-upgrade $UPGRADE_NAME \
