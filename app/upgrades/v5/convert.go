@@ -1,7 +1,9 @@
 package v5
 
 import (
+	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	claimtypes "github.com/Stride-Labs/stride/v4/x/claim/types"
 	claimv1types "github.com/Stride-Labs/stride/v4/x/claim/types/v1"
 	recordtypes "github.com/Stride-Labs/stride/v4/x/records/types"
@@ -111,5 +113,61 @@ func convertToNewValidator(oldProp stakeibcv1types.Validator) stakeibctypes.Vali
 		DelegationAmt: sdk.NewIntFromUint64(oldProp.DelegationAmt),
 		Weight: oldProp.Weight,
 		InternalExchangeRate: (*stakeibctypes.ValidatorExchangeRate)(oldProp.InternalExchangeRate),
+	}
+}
+
+func convertToNewSplitDelegation(oldProp stakeibcv1types.SplitDelegation) stakeibctypes.SplitDelegation {
+	return stakeibctypes.SplitDelegation{
+		Validator: oldProp.Validator,
+		Amount: math.NewIntFromUint64(oldProp.Amount),
+	}
+}
+
+func convertToNewDelegateCallback(oldProp stakeibcv1types.DelegateCallback) stakeibctypes.DelegateCallback {
+	var splitDelegations []*stakeibctypes.SplitDelegation
+
+	for _, sd := range(oldProp.SplitDelegations) {
+		newSd := convertToNewSplitDelegation(*sd)
+		splitDelegations = append(splitDelegations, &newSd)
+	}
+	return stakeibctypes.DelegateCallback{
+		HostZoneId: oldProp.HostZoneId,
+		DepositRecordId: oldProp.DepositRecordId,
+		SplitDelegations: splitDelegations,
+	}
+}
+
+func convertToNewUndelegateCallback(oldProp stakeibcv1types.UndelegateCallback) stakeibctypes.UndelegateCallback {
+	var splitDelegations []*stakeibctypes.SplitDelegation
+
+	for _, sd := range(oldProp.SplitDelegations) {
+		newSd := convertToNewSplitDelegation(*sd)
+		splitDelegations = append(splitDelegations, &newSd)
+	}
+	return stakeibctypes.UndelegateCallback{
+		HostZoneId: oldProp.HostZoneId,
+		EpochUnbondingRecordIds: oldProp.EpochUnbondingRecordIds,
+		SplitDelegations: splitDelegations,
+	}
+}
+
+func convertToNewRebalancing(oldProp stakeibcv1types.Rebalancing) stakeibctypes.Rebalancing {
+	return stakeibctypes.Rebalancing{
+		SrcValidator: oldProp.SrcValidator,
+		DstValidator: oldProp.DstValidator,
+		Amt: math.NewIntFromUint64(oldProp.Amt),
+	}
+}
+
+func convertToNewRebalanceCallback(oldProp stakeibcv1types.RebalanceCallback) stakeibctypes.RebalanceCallback {
+	var rebalancings []*stakeibctypes.Rebalancing
+
+	for _, rebalancing := range(oldProp.Rebalancings) {
+		newRebalancing := convertToNewRebalancing(*rebalancing)
+		rebalancings = append(rebalancings, &newRebalancing)
+	}
+	return stakeibctypes.RebalanceCallback{
+		HostZoneId: oldProp.HostZoneId,
+		Rebalancings: rebalancings,
 	}
 }

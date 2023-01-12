@@ -21,6 +21,7 @@ func CreateUpgradeHandler(
 	claimStoreKey storetypes.StoreKey,
 	recordStoreKey storetypes.StoreKey,
 	stakeibcStoreKey storetypes.StoreKey,
+	callbackStorekey storetypes.StoreKey,
 	cdc codec.Codec,
 ) upgradetypes.UpgradeHandler {
 	return func(ctx sdk.Context, _ upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
@@ -30,7 +31,7 @@ func CreateUpgradeHandler(
 		}
 
 		// migrate store
-		err = MigrateStore(ctx, claimStoreKey, recordStoreKey, stakeibcStoreKey, cdc)
+		err = MigrateStore(ctx, claimStoreKey, recordStoreKey, stakeibcStoreKey, callbackStorekey, cdc)
 		if err == nil {
 			return nil, err
 		}

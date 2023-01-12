@@ -17,6 +17,8 @@ import (
 	recordv1types "github.com/Stride-Labs/stride/v4/x/records/types/v1"
 	stakeibctypes "github.com/Stride-Labs/stride/v4/x/stakeibc/types"
 	stakeibcv1types "github.com/Stride-Labs/stride/v4/x/stakeibc/types/v1"
+	callbacktypes "github.com/Stride-Labs/stride/v4/x/icacallbacks/types"
+	// "github.com/golang/protobuf/proto" //nolint:staticcheck
 )
 
 const dummyUpgradeHeight = 5
@@ -153,7 +155,73 @@ func (suite *UpgradeTestSuite) SetUpOldStore() {
 	}
 	hzBz, err := codec.Marshal(&hz)
 	suite.Require().NoError(err)
-	hostzoneStore.Set([]byte(hz.ChainId), hzBz)	
+	hostzoneStore.Set([]byte(hz.ChainId), hzBz)
+	
+	// set up callback module store
+	callbackStore := prefix.NewStore(suite.Ctx.KVStore(suite.App.GetKey(callbacktypes.StoreKey)), callbacktypes.KeyPrefix(callbacktypes.CallbackDataKeyPrefix))
+
+	// set DelegationCallback
+	delegationCallBackArg := stakeibcv1types.DelegateCallback{
+		HostZoneId: "GAIA",
+		DepositRecordId: 1,
+		SplitDelegations: []*stakeibcv1types.SplitDelegation{
+			{
+				Validator: "test",
+				Amount: uint64(1000000),
+			},
+		},
+	}
+	delegationCallBackArgBz, _ := codec.Marshal(&delegationCallBackArg)
+	deleggationCallback := callbacktypes.CallbackData{
+		CallbackKey: "deleggationCallback",
+		CallbackArgs: delegationCallBackArgBz,
+	}
+	delegationCallbackBz := codec.MustMarshal(&deleggationCallback)
+	callbackStore.Set(callbacktypes.CallbackDataKey(
+		deleggationCallback.CallbackKey,
+	), delegationCallbackBz)
+
+	// set UndelegationCallback
+	undelegationCallBackArg := stakeibcv1types.UndelegateCallback{
+		HostZoneId: "GAIA",
+		EpochUnbondingRecordIds: []uint64{1},
+		SplitDelegations: []*stakeibcv1types.SplitDelegation{
+			{
+				Validator: "test",
+				Amount: uint64(1000000),
+			},
+		},
+	}
+	undelegationCallBackArgBz := codec.MustMarshal(&undelegationCallBackArg)
+	undeleggationCallback := callbacktypes.CallbackData{
+		CallbackKey: "undeleggationCallback",
+		CallbackArgs: undelegationCallBackArgBz,
+	}
+	undelegationCallbackBz := codec.MustMarshal(&undeleggationCallback)
+	callbackStore.Set(callbacktypes.CallbackDataKey(
+		undeleggationCallback.CallbackKey,
+	), undelegationCallbackBz)
+
+	// set RebalancingCallback
+	rebalanceCallBackArg := stakeibcv1types.RebalanceCallback{
+		HostZoneId: "GAIA",
+		Rebalancings: []*stakeibcv1types.Rebalancing{
+			{
+				SrcValidator: "src",
+				DstValidator: "dst",
+				Amt: uint64(1000000),
+			},
+		},
+	}
+	rebalanceCallBackArgBz := codec.MustMarshal(&rebalanceCallBackArg)
+	rebalanceCallback := callbacktypes.CallbackData{
+		CallbackKey: "rebalanceCallback",
+		CallbackArgs: rebalanceCallBackArgBz,
+	}
+	rebalanceCallbackBz := codec.MustMarshal(&rebalanceCallback)
+	callbackStore.Set(callbacktypes.CallbackDataKey(
+		rebalanceCallback.CallbackKey,
+	), rebalanceCallbackBz)
 }
 
 func (suite *UpgradeTestSuite) CheckStoreMigration() {
@@ -179,4 +247,22 @@ func (suite *UpgradeTestSuite) CheckStoreMigration() {
 	suite.Require().Equal(hz.StakedBal, sdk.NewInt(3000000))
 	suite.Require().Equal(hz.Validators[0].DelegationAmt, sdk.NewInt(1000000))
 	suite.Require().Equal(hz.BlacklistedValidators[0].DelegationAmt, sdk.NewInt(2000000))
+
+	delegationCallback, bool := suite.App.IcacallbacksKeeper.GetCallbackData(suite.Ctx, "deleggationCallback")
+	suite.Require().True(bool)
+	delegationCallbackArg, err := suite.App.StakeibcKeeper.UnmarshalDelegateCallbackArgs(suite.Ctx, delegationCallback.CallbackArgs)
+	suite.Require().NoError(err)
+	suite.Require().Equal(delegationCallbackArg.SplitDelegations[0].Amount, sdk.NewInt(1000000))
+
+	undelegationCallback, bool := suite.App.IcacallbacksKeeper.GetCallbackData(suite.Ctx, "undeleggationCallback")
+	suite.Require().True(bool)
+	undelegationCallbackArg, err := suite.App.StakeibcKeeper.UnmarshalUndelegateCallbackArgs(suite.Ctx, undelegationCallback.CallbackArgs)
+	suite.Require().NoError(err)
+	suite.Require().Equal(undelegationCallbackArg.SplitDelegations[0].Amount, sdk.NewInt(1000000))
+
+	rebalanceCallback, bool := suite.App.IcacallbacksKeeper.GetCallbackData(suite.Ctx, "rebalanceCallback")
+	suite.Require().True(bool)
+	rebalanceCallbackArg, err := suite.App.StakeibcKeeper.UnmarshalRebalanceCallbackArgs(suite.Ctx, rebalanceCallback.CallbackArgs)
+	suite.Require().NoError(err)
+	suite.Require().Equal(rebalanceCallbackArg.Rebalancings[0].Amt, sdk.NewInt(1000000))
 }

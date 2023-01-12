@@ -5,9 +5,11 @@ import (
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/golang/protobuf/proto" //nolint:staticcheck
 
 	claimtypes "github.com/Stride-Labs/stride/v4/x/claim/types"
 	claimv1types "github.com/Stride-Labs/stride/v4/x/claim/types/v1"
+	callbacktypes "github.com/Stride-Labs/stride/v4/x/icacallbacks/types"
 	recordtypes "github.com/Stride-Labs/stride/v4/x/records/types"
 	recordv1types "github.com/Stride-Labs/stride/v4/x/records/types/v1"
 	stakeibctypes "github.com/Stride-Labs/stride/v4/x/stakeibc/types"
@@ -135,7 +137,65 @@ func migrateHostZone(store sdk.KVStore, cdc codec.Codec) error {
 	return nil
 }
 
-func MigrateStore(ctx sdk.Context, claimStoreKey storetypes.StoreKey, recordStoreKey storetypes.StoreKey, stakeibcStoreKey storetypes.StoreKey, cdc codec.Codec) error {
+func migrateCallBack(store sdk.KVStore, cdc codec.Codec) error {
+	paramsStore := prefix.NewStore(store, []byte(callbacktypes.CallbackDataKeyPrefix))
+
+	iter := paramsStore.Iterator(nil, nil)
+	defer iter.Close()
+
+	for ; iter.Valid(); iter.Next() {
+		var oldProp callbacktypes.CallbackData
+		err := cdc.Unmarshal(iter.Value(), &oldProp)
+		if err != nil {
+			return err
+		}
+
+		// Migrate DelegateCallback
+		unmarshalledDelegateCallback := stakeibcv1types.DelegateCallback{}
+		if err := proto.Unmarshal(oldProp.CallbackArgs, &unmarshalledDelegateCallback); err == nil {
+			newCallbackArg := convertToNewDelegateCallback(unmarshalledDelegateCallback)
+			argBytes, err := proto.Marshal(&newCallbackArg)
+			if err != nil {
+				return err
+			}
+			oldProp.CallbackArgs = argBytes
+		}
+
+		// Migrate UnDelegateCallback
+		unmarshalledUndelegateCallback := stakeibcv1types.UndelegateCallback{}
+		if err := proto.Unmarshal(oldProp.CallbackArgs, &unmarshalledUndelegateCallback); err == nil {
+			newCallbackArg := convertToNewUndelegateCallback(unmarshalledUndelegateCallback)
+			argBytes, err := proto.Marshal(&newCallbackArg)
+			if err != nil {
+				return err
+			}
+			oldProp.CallbackArgs = argBytes
+		}
+
+		// Migrate RebalancingCallback
+		unmarshalledRebalanceCallback := stakeibcv1types.RebalanceCallback{}
+		if err := proto.Unmarshal(oldProp.CallbackArgs, &unmarshalledRebalanceCallback); err == nil {
+			newCallbackArg := convertToNewRebalanceCallback(unmarshalledRebalanceCallback)
+			argBytes, err := proto.Marshal(&newCallbackArg)
+			if err != nil {
+				return err
+			}
+			oldProp.CallbackArgs = argBytes
+		}
+
+		bz, err := cdc.Marshal(&oldProp)
+		if err != nil {
+			return err
+		}
+
+		// Set new value on store.
+		paramsStore.Set(iter.Key(), bz)
+	}
+	
+	return nil
+}
+
+func MigrateStore(ctx sdk.Context, claimStoreKey storetypes.StoreKey, recordStoreKey storetypes.StoreKey, stakeibcStoreKey storetypes.StoreKey, callbackStoreKey storetypes.StoreKey, cdc codec.Codec) error {
 	
 	// Migrate claim module store
 	claimStore := ctx.KVStore(claimStoreKey)
@@ -162,6 +222,13 @@ func MigrateStore(ctx sdk.Context, claimStoreKey storetypes.StoreKey, recordStor
 	// Migrate stakeibc module store
 	stakeibcStore := ctx.KVStore(stakeibcStoreKey)
 	err = migrateHostZone(stakeibcStore, cdc)
+	if err != nil {
+		return err
+	}
+
+	// Migrate icacallback module store
+	callbackStore := ctx.KVStore(callbackStoreKey)
+	err = migrateCallBack(callbackStore, cdc)
 	if err != nil {
 		return err
 	}
