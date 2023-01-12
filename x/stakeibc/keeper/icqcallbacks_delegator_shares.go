@@ -95,10 +95,12 @@ func DelegatorSharesCallback(k Keeper, ctx sdk.Context, args []byte, query icqty
 		"Validator was slashed! Validator: %s, Delegator: %s, Delegation in State: %v, Delegation from ICQ %v, Slash Amount: %v, Slash Pct: %v",
 		validator.Address, queriedDelgation.DelegatorAddress, validator.DelegationAmt, delegatedTokens, slashAmount, slashPct))
 
-	// Abort if the slash was greater than 10%
-	tenPercent := sdk.NewDec(10).Quo(sdk.NewDec(100))
-	if slashPct.GT(tenPercent) {
-		return sdkerrors.Wrapf(types.ErrSlashGtTenPct, "Validator slashed but ABORTING update, slash is greater than 0.10 (%v)", slashPct)
+	// Abort if the slash was greater than the safety threshold
+	stakeibcParams := k.GetParams(ctx)
+	slashThreshold := sdk.NewDec(stakeibcParams.SafetyMaxSlashPercent).Quo(sdk.NewDec(100))
+	if slashPct.GT(slashThreshold) {
+		return sdkerrors.Wrapf(types.ErrSlashExceedsSafetyThreshold,
+			"Validator slashed but ABORTING update, slash (%v) is greater than safety threshold (%v)", slashPct, slashThreshold)
 	}
 
 	// Update the validator weight and delegation reflect to reflect the slash
