@@ -10,13 +10,13 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	"github.com/Stride-Labs/stride/v4/app/apptesting"
+	oldclaimtypes "github.com/Stride-Labs/stride/v4/x/claim/migrations/v2/types"
 	claimtypes "github.com/Stride-Labs/stride/v4/x/claim/types"
-	claimv1types "github.com/Stride-Labs/stride/v4/x/claim/types/v1"
 	recordkeeper "github.com/Stride-Labs/stride/v4/x/records/keeper"
+	oldrecordtypes "github.com/Stride-Labs/stride/v4/x/records/migrations/v2/types"
 	recordtypes "github.com/Stride-Labs/stride/v4/x/records/types"
-	recordv1types "github.com/Stride-Labs/stride/v4/x/records/types/v1"
+	oldstakeibctypes "github.com/Stride-Labs/stride/v4/x/stakeibc/migrations/v2/types"
 	stakeibctypes "github.com/Stride-Labs/stride/v4/x/stakeibc/types"
-	stakeibcv1types "github.com/Stride-Labs/stride/v4/x/stakeibc/types/v1"
 )
 
 const dummyUpgradeHeight = 5
@@ -45,7 +45,7 @@ func (suite *UpgradeTestSuite) TestUpgrade() {
 			"Test that upgrade does not panic and store migrate successfully",
 			func() {
 				suite.Setup()
-				suite.SetUpOldStore()
+				suite.SetupOldStore()
 			},
 			func() {
 				suite.ConfirmUpgradeSucceededs("v5", dummyUpgradeHeight)
@@ -64,22 +64,22 @@ func (suite *UpgradeTestSuite) TestUpgrade() {
 	}
 }
 
-func (suite *UpgradeTestSuite) SetUpOldStore() {
-	codec := simapp.MakeTestEncodingConfig().Marshaler
+func (suite *UpgradeTestSuite) SetupOldStore() {
+	codec := simapp.MakeTestEncodingConfig().Codec
 
 	// set up claim store
 	claimStore := suite.Ctx.KVStore(suite.App.GetKey(claimtypes.StoreKey))
 
-	params := claimv1types.Params{
-		Airdrops: []*claimv1types.Airdrop{
+	params := oldclaimtypes.Params{
+		Airdrops: []*oldclaimtypes.Airdrop{
 			{
 				AirdropStartTime: time.Now(),
-				ClaimedSoFar: 1000000,
-				AirdropDuration: time.Hour,
+				ClaimedSoFar:     1000000,
+				AirdropDuration:  time.Hour,
 			},
 		},
 	}
-	paramsBz, err := codec.MarshalJSON(&params)
+	paramsBz, err := codec.Marshal(&params)
 	suite.Require().NoError(err)
 	claimStore.Set([]byte(claimtypes.ParamsKey), paramsBz)
 
@@ -88,14 +88,14 @@ func (suite *UpgradeTestSuite) SetUpOldStore() {
 
 	// set old deposit record
 	depositRecordStore := prefix.NewStore(recordStore, recordtypes.KeyPrefix(recordtypes.DepositRecordKey))
-	depositRecord := recordv1types.DepositRecord{
-		Id: uint64(1),
-		Amount: int64(1000000),
-		Denom: "ATOM",
-		HostZoneId: "GAIA",
+	depositRecord := oldrecordtypes.DepositRecord{
+		Id:                 uint64(1),
+		Amount:             int64(1000000),
+		Denom:              "ATOM",
+		HostZoneId:         "GAIA",
 		DepositEpochNumber: uint64(1),
-		Status: recordv1types.DepositRecord_DELEGATION_QUEUE,
-		Source: recordv1types.DepositRecord_STRIDE,
+		Status:             oldrecordtypes.DepositRecord_DELEGATION_QUEUE,
+		Source:             oldrecordtypes.DepositRecord_STRIDE,
 	}
 	depositBz, err := codec.Marshal(&depositRecord)
 	suite.Require().NoError(err)
@@ -103,10 +103,10 @@ func (suite *UpgradeTestSuite) SetUpOldStore() {
 
 	// set old user redemption record
 	userRedemptionRecordStore := prefix.NewStore(recordStore, recordtypes.KeyPrefix(recordtypes.UserRedemptionRecordKey))
-	userRedemptionRecord := recordv1types.UserRedemptionRecord{
-		Id: "1",
-		Amount: uint64(1000000),
-		Denom: "ATOM",
+	userRedemptionRecord := oldrecordtypes.UserRedemptionRecord{
+		Id:         "1",
+		Amount:     uint64(1000000),
+		Denom:      "ATOM",
 		HostZoneId: "GAIA",
 	}
 	userRedemptionBz, err := codec.Marshal(&userRedemptionRecord)
@@ -115,14 +115,14 @@ func (suite *UpgradeTestSuite) SetUpOldStore() {
 
 	// set old epoch unbongding record
 	epochUnbondingRecordStore := prefix.NewStore(recordStore, recordtypes.KeyPrefix(recordtypes.EpochUnbondingRecordKey))
-	epochUnbondingRecord := recordv1types.EpochUnbondingRecord{
+	epochUnbondingRecord := oldrecordtypes.EpochUnbondingRecord{
 		EpochNumber: 1,
-		HostZoneUnbondings: []*recordv1types.HostZoneUnbonding{
+		HostZoneUnbondings: []*oldrecordtypes.HostZoneUnbonding{
 			{
-				HostZoneId: "GAIA",
+				HostZoneId:        "GAIA",
 				NativeTokenAmount: uint64(1000000),
-				StTokenAmount: uint64(2000000),
-				Status: recordv1types.HostZoneUnbonding_CLAIMABLE,
+				StTokenAmount:     uint64(2000000),
+				Status:            oldrecordtypes.HostZoneUnbonding_CLAIMABLE,
 			},
 		},
 	}
@@ -133,50 +133,27 @@ func (suite *UpgradeTestSuite) SetUpOldStore() {
 	// set up stakeibc module store
 	stakeIbcStore := suite.Ctx.KVStore(suite.App.GetKey(stakeibctypes.StoreKey))
 
-	// set old delegation
-	delegationStore := prefix.NewStore(stakeIbcStore, recordtypes.KeyPrefix(stakeibctypes.DelegationKey))
-	delegation := stakeibcv1types.Delegation{
-		DelegateAcctAddress: "test addr",
-		Amt: 1000000,
-		Validator: &stakeibcv1types.Validator{
-			DelegationAmt: uint64(1000000),
-		},
-	}
-	delegationBz, err := codec.Marshal(&delegation)
-	suite.Require().NoError(err)
-	delegationStore.Set([]byte{0}, delegationBz)
-
 	// set old hostzone
 	hostzoneStore := prefix.NewStore(stakeIbcStore, recordtypes.KeyPrefix(stakeibctypes.HostZoneKey))
-	hz := stakeibcv1types.HostZone{
+	hz := oldstakeibctypes.HostZone{
 		ChainId: "GAIA",
-		Validators: []*stakeibcv1types.Validator{
+		Validators: []*oldstakeibctypes.Validator{
 			{
 				DelegationAmt: uint64(1000000),
 			},
 		},
-		BlacklistedValidators: []*stakeibcv1types.Validator{
+		BlacklistedValidators: []*oldstakeibctypes.Validator{
 			{
 				DelegationAmt: uint64(2000000),
 			},
 		},
-		StakedBal: uint64(3000000),
+		StakedBal:          uint64(3000000),
 		LastRedemptionRate: sdk.OneDec(),
-		RedemptionRate: sdk.OneDec(),
+		RedemptionRate:     sdk.OneDec(),
 	}
 	hzBz, err := codec.Marshal(&hz)
 	suite.Require().NoError(err)
 	hostzoneStore.Set([]byte(hz.ChainId), hzBz)
-
-	// set old validator
-	validatorStore := prefix.NewStore(stakeIbcStore, recordtypes.KeyPrefix(stakeibctypes.ValidatorKey))
-	validator := stakeibcv1types.Validator{
-		Address: "1",
-		DelegationAmt: uint64(10000000),
-	}
-	validatorBz, err := codec.Marshal(&validator)
-	suite.Require().NoError(err)
-	validatorStore.Set([]byte{0}, validatorBz)
 }
 
 func (suite *UpgradeTestSuite) CheckStoreMigration() {
@@ -197,18 +174,9 @@ func (suite *UpgradeTestSuite) CheckStoreMigration() {
 	suite.Require().Equal(epochUnbondingRecord.HostZoneUnbondings[0].StTokenAmount, sdk.NewInt(2000000))
 	suite.Require().Equal(epochUnbondingRecord.HostZoneUnbondings[0].NativeTokenAmount, sdk.NewInt(1000000))
 
-	delegation, bool := suite.App.StakeibcKeeper.GetDelegation(suite.Ctx)
-	suite.Require().True(bool)
-	suite.Require().Equal(delegation.Amt, sdk.NewInt(1000000))
-	suite.Require().Equal(delegation.Validator.DelegationAmt, sdk.NewInt(1000000))
-
 	hz, bool := suite.App.StakeibcKeeper.GetHostZone(suite.Ctx, "GAIA")
 	suite.Require().True(bool)
 	suite.Require().Equal(hz.StakedBal, sdk.NewInt(3000000))
 	suite.Require().Equal(hz.Validators[0].DelegationAmt, sdk.NewInt(1000000))
 	suite.Require().Equal(hz.BlacklistedValidators[0].DelegationAmt, sdk.NewInt(2000000))
-
-	validator, bool := suite.App.StakeibcKeeper.GetValidator(suite.Ctx)
-	suite.Require().True(bool)
-	suite.Require().Equal(validator.DelegationAmt, sdk.NewInt(10000000))
 }

@@ -109,8 +109,8 @@ func (m *ICAAccount) GetTarget() ICAAccountType {
 }
 
 func init() {
-	proto.RegisterEnum("stride.stakeibc.ICAAccountType", ICAAccountType_name, ICAAccountType_value)
-	proto.RegisterType((*ICAAccount)(nil), "stride.stakeibc.ICAAccount")
+	proto.RegisterEnum("stride.stakeibc.V2ICAAccountType", ICAAccountType_name, ICAAccountType_value)
+	proto.RegisterType((*ICAAccount)(nil), "stride.stakeibc.V2ICAAccount")
 }
 
 func init() { proto.RegisterFile("stride/stakeibc/ica_account.proto", fileDescriptor_2976ae6e7f6ce824) }

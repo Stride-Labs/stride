@@ -3,32 +3,32 @@ package v2
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	oldrecordtypes "github.com/Stride-Labs/stride/v4/x/records/migrations/v2/types"
-	recordtypes "github.com/Stride-Labs/stride/v4/x/records/types"
+	oldrecordstypes "github.com/Stride-Labs/stride/v4/x/records/migrations/v2/types"
+	recordstypes "github.com/Stride-Labs/stride/v4/x/records/types"
 )
 
-func convertToNewDepositRecord(oldDepositRecord oldrecordtypes.DepositRecord) recordtypes.DepositRecord {
-	return recordtypes.DepositRecord{
+func convertToNewDepositRecord(oldDepositRecord oldrecordstypes.DepositRecord) recordstypes.DepositRecord {
+	return recordstypes.DepositRecord{
 		Id:                 oldDepositRecord.Id,
 		Amount:             sdk.NewInt(oldDepositRecord.Amount),
 		Denom:              oldDepositRecord.Denom,
 		HostZoneId:         oldDepositRecord.HostZoneId,
-		Status:             recordtypes.DepositRecord_Status(oldDepositRecord.Status),
+		Status:             recordstypes.DepositRecord_Status(oldDepositRecord.Status),
 		DepositEpochNumber: oldDepositRecord.DepositEpochNumber,
-		Source:             recordtypes.DepositRecord_Source(oldDepositRecord.Source),
+		Source:             recordstypes.DepositRecord_Source(oldDepositRecord.Source),
 	}
 }
 
-func convertToNewEpochUnbondingRecord(oldEpochUnbondingRecord oldrecordtypes.EpochUnbondingRecord) recordtypes.EpochUnbondingRecord {
-	var epochUnbondingRecord recordtypes.EpochUnbondingRecord
+func convertToNewEpochUnbondingRecord(oldEpochUnbondingRecord oldrecordstypes.EpochUnbondingRecord) recordstypes.EpochUnbondingRecord {
+	var epochUnbondingRecord recordstypes.EpochUnbondingRecord
 	for _, hz := range oldEpochUnbondingRecord.HostZoneUnbondings {
-		newHz := recordtypes.HostZoneUnbonding{
+		newHz := recordstypes.HostZoneUnbonding{
 			StTokenAmount:         sdk.NewIntFromUint64(hz.StTokenAmount),
 			NativeTokenAmount:     sdk.NewIntFromUint64(hz.NativeTokenAmount),
 			Denom:                 hz.Denom,
 			HostZoneId:            hz.HostZoneId,
 			UnbondingTime:         hz.UnbondingTime,
-			Status:                recordtypes.HostZoneUnbonding_Status(hz.Status),
+			Status:                recordstypes.HostZoneUnbonding_Status(hz.Status),
 			UserRedemptionRecords: hz.UserRedemptionRecords,
 		}
 		epochUnbondingRecord.HostZoneUnbondings = append(epochUnbondingRecord.HostZoneUnbondings, &newHz)
@@ -36,8 +36,8 @@ func convertToNewEpochUnbondingRecord(oldEpochUnbondingRecord oldrecordtypes.Epo
 	return epochUnbondingRecord
 }
 
-func convertToNewUserRedemptionRecord(oldRedemptionRecord oldrecordtypes.UserRedemptionRecord) recordtypes.UserRedemptionRecord {
-	return recordtypes.UserRedemptionRecord{
+func convertToNewUserRedemptionRecord(oldRedemptionRecord oldrecordstypes.UserRedemptionRecord) recordstypes.UserRedemptionRecord {
+	return recordstypes.UserRedemptionRecord{
 		Id:             oldRedemptionRecord.Id,
 		Sender:         oldRedemptionRecord.Sender,
 		Receiver:       oldRedemptionRecord.Receiver,

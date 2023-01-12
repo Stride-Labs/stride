@@ -477,14 +477,14 @@ func (m *RebalanceCallback) GetRebalancings() []*Rebalancing {
 }
 
 func init() {
-	proto.RegisterType((*SplitDelegation)(nil), "stride.stakeibc.SplitDelegation")
-	proto.RegisterType((*DelegateCallback)(nil), "stride.stakeibc.DelegateCallback")
-	proto.RegisterType((*ClaimCallback)(nil), "stride.stakeibc.ClaimCallback")
-	proto.RegisterType((*ReinvestCallback)(nil), "stride.stakeibc.ReinvestCallback")
-	proto.RegisterType((*UndelegateCallback)(nil), "stride.stakeibc.UndelegateCallback")
-	proto.RegisterType((*RedemptionCallback)(nil), "stride.stakeibc.RedemptionCallback")
-	proto.RegisterType((*Rebalancing)(nil), "stride.stakeibc.Rebalancing")
-	proto.RegisterType((*RebalanceCallback)(nil), "stride.stakeibc.RebalanceCallback")
+	proto.RegisterType((*SplitDelegation)(nil), "stride.stakeibc.V2SplitDelegation")
+	proto.RegisterType((*DelegateCallback)(nil), "stride.stakeibc.V2DelegateCallback")
+	proto.RegisterType((*ClaimCallback)(nil), "stride.stakeibc.V2laimCallback")
+	proto.RegisterType((*ReinvestCallback)(nil), "stride.stakeibc.V2ReinvestCallback")
+	proto.RegisterType((*UndelegateCallback)(nil), "stride.stakeibc.V2UndelegateCallback")
+	proto.RegisterType((*RedemptionCallback)(nil), "stride.stakeibc.V2RedemptionCallback")
+	proto.RegisterType((*Rebalancing)(nil), "stride.stakeibc.V2Rebalancing")
+	proto.RegisterType((*RebalanceCallback)(nil), "stride.stakeibc.V2RebalanceCallback")
 }
 
 func init() { proto.RegisterFile("stride/stakeibc/callbacks.proto", fileDescriptor_f41c99b09b96a5ac) }

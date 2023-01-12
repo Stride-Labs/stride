@@ -698,17 +698,17 @@ func (m *GenesisState) GetDepositRecordCount() uint64 {
 }
 
 func init() {
-	proto.RegisterEnum("stride.records.DepositRecord_Status", DepositRecord_Status_name, DepositRecord_Status_value)
-	proto.RegisterEnum("stride.records.DepositRecord_Source", DepositRecord_Source_name, DepositRecord_Source_value)
-	proto.RegisterEnum("stride.records.HostZoneUnbonding_Status", HostZoneUnbonding_Status_name, HostZoneUnbonding_Status_value)
-	proto.RegisterType((*UserRedemptionRecord)(nil), "stride.records.UserRedemptionRecord")
-	proto.RegisterType((*Params)(nil), "stride.records.Params")
-	proto.RegisterType((*RecordsPacketData)(nil), "stride.records.RecordsPacketData")
-	proto.RegisterType((*NoData)(nil), "stride.records.NoData")
-	proto.RegisterType((*DepositRecord)(nil), "stride.records.DepositRecord")
-	proto.RegisterType((*HostZoneUnbonding)(nil), "stride.records.HostZoneUnbonding")
-	proto.RegisterType((*EpochUnbondingRecord)(nil), "stride.records.EpochUnbondingRecord")
-	proto.RegisterType((*GenesisState)(nil), "stride.records.GenesisState")
+	proto.RegisterEnum("stride.records.V2DepositRecord_Status", DepositRecord_Status_name, DepositRecord_Status_value)
+	proto.RegisterEnum("stride.records.V2DepositRecord_Source", DepositRecord_Source_name, DepositRecord_Source_value)
+	proto.RegisterEnum("stride.records.V2HostZoneUnbonding_Status", HostZoneUnbonding_Status_name, HostZoneUnbonding_Status_value)
+	proto.RegisterType((*UserRedemptionRecord)(nil), "stride.records.V2UserRedemptionRecord")
+	proto.RegisterType((*Params)(nil), "stride.records.V2Params")
+	proto.RegisterType((*RecordsPacketData)(nil), "stride.records.V2RecordsPacketData")
+	proto.RegisterType((*NoData)(nil), "stride.records.V2NoData")
+	proto.RegisterType((*DepositRecord)(nil), "stride.records.V2DepositRecord")
+	proto.RegisterType((*HostZoneUnbonding)(nil), "stride.records.V2HostZoneUnbonding")
+	proto.RegisterType((*EpochUnbondingRecord)(nil), "stride.records.V2EpochUnbondingRecord")
+	proto.RegisterType((*GenesisState)(nil), "stride.records.V2GenesisState")
 }
 
 func init() { proto.RegisterFile("stride/records/genesis.proto", fileDescriptor_98cfd0253c8b6797) }

@@ -16,5 +16,5 @@ enum ICAAccountType {
 // coins, maybe store port name directly)
 message ICAAccount {
   string address = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
-  ICAAccountType target = 3;
+  ICAAccountType target = 2;
 }

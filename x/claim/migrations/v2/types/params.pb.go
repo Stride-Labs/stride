@@ -162,8 +162,8 @@ func (m *Airdrop) GetClaimedSoFar() int64 {
 }
 
 func init() {
-	proto.RegisterType((*Params)(nil), "stride.claim.Params")
-	proto.RegisterType((*Airdrop)(nil), "stride.claim.Airdrop")
+	proto.RegisterType((*Params)(nil), "stride.claim.V2Params")
+	proto.RegisterType((*Airdrop)(nil), "stride.claim.V2Airdrop")
 }
 
 func init() { proto.RegisterFile("stride/claim/params.proto", fileDescriptor_dd7ac871d3875dc3) }

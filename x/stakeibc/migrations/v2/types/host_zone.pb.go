@@ -191,7 +191,7 @@ func (m *HostZone) GetAddress() string {
 }
 
 func init() {
-	proto.RegisterType((*HostZone)(nil), "stride.stakeibc.HostZone")
+	proto.RegisterType((*HostZone)(nil), "stride.stakeibc.V2HostZone")
 }
 
 func init() { proto.RegisterFile("stride/stakeibc/host_zone.proto", fileDescriptor_f81bf5b42c61245a) }

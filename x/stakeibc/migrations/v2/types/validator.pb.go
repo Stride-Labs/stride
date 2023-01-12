@@ -188,9 +188,9 @@ func (m *Validator) GetInternalExchangeRate() *ValidatorExchangeRate {
 }
 
 func init() {
-	proto.RegisterEnum("stride.stakeibc.Validator_ValidatorStatus", Validator_ValidatorStatus_name, Validator_ValidatorStatus_value)
-	proto.RegisterType((*ValidatorExchangeRate)(nil), "stride.stakeibc.ValidatorExchangeRate")
-	proto.RegisterType((*Validator)(nil), "stride.stakeibc.Validator")
+	proto.RegisterEnum("stride.stakeibc.V2Validator_ValidatorStatus", Validator_ValidatorStatus_name, Validator_ValidatorStatus_value)
+	proto.RegisterType((*ValidatorExchangeRate)(nil), "stride.stakeibc.V2ValidatorExchangeRate")
+	proto.RegisterType((*Validator)(nil), "stride.stakeibc.V2Validator")
 }
 
 func init() { proto.RegisterFile("stride/stakeibc/validator.proto", fileDescriptor_5d2f32e16bd6ab8f) }
