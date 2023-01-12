@@ -25,6 +25,27 @@ func convertToNewClaimParams(oldParams oldclaimtypes.Params) claimtypes.Params {
 	return newParams
 }
 
+func migrateClaimParams(store sdk.KVStore, cdc codec.Codec) error {
+	// Deserialize with old data type
+	oldParamsBz := store.Get([]byte(claimtypes.ParamsKey))
+	var oldParams oldclaimtypes.Params
+	err := cdc.Unmarshal(oldParamsBz, &oldParams)
+	if err != nil {
+		return err
+	}
+
+	// Convert and serialize using the new type
+	newParams := convertToNewClaimParams(oldParams)
+	newParamsBz, err := cdc.Marshal(&newParams)
+	if err != nil {
+		return err
+	}
+
+	// Store new type
+	store.Set([]byte(claimtypes.ParamsKey), newParamsBz)
+	return nil
+}
+
 func MigrateStore(ctx sdk.Context, storeKey storetypes.StoreKey, cdc codec.BinaryCodec) error {
 	return nil
 }
