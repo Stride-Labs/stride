@@ -1,7 +1,7 @@
 package v2
 
 import (
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkmath "cosmossdk.io/math"
 
 	oldstakeibctypes "github.com/Stride-Labs/stride/v4/x/stakeibc/migrations/v2/types"
 	stakeibctypes "github.com/Stride-Labs/stride/v4/x/stakeibc/types"
@@ -13,13 +13,13 @@ func convertToNewValidator(oldValidator oldstakeibctypes.Validator) stakeibctype
 		Address:              oldValidator.Address,
 		Status:               stakeibctypes.Validator_ValidatorStatus(oldValidator.Status),
 		CommissionRate:       oldValidator.CommissionRate,
-		DelegationAmt:        sdk.NewIntFromUint64(oldValidator.DelegationAmt),
+		DelegationAmt:        sdkmath.NewIntFromUint64(oldValidator.DelegationAmt),
 		Weight:               oldValidator.Weight,
 		InternalExchangeRate: (*stakeibctypes.ValidatorExchangeRate)(oldValidator.InternalExchangeRate),
 	}
 }
 
-func convertICAAccount(oldAccount oldstakeibctypes.ICAAccount) stakeibctypes.ICAAccount {
+func convertToNewICAAccount(oldAccount oldstakeibctypes.ICAAccount) stakeibctypes.ICAAccount {
 	return stakeibctypes.ICAAccount{Address: oldAccount.Address, Target: stakeibctypes.ICAAccountType(oldAccount.Target)}
 }
 
@@ -37,10 +37,10 @@ func convertToNewHostZone(oldHostZone oldstakeibctypes.HostZone) stakeibctypes.H
 		blacklistValidator = append(blacklistValidator, &newValidator)
 	}
 
-	newWithdrawalAccount := convertICAAccount(*oldHostZone.WithdrawalAccount)
-	newFeeAccount := convertICAAccount(*oldHostZone.FeeAccount)
-	newDelegationAccount := convertICAAccount(*oldHostZone.DelegationAccount)
-	newRedemptionAccount := convertICAAccount(*oldHostZone.RedemptionAccount)
+	newWithdrawalAccount := convertToNewICAAccount(*oldHostZone.WithdrawalAccount)
+	newFeeAccount := convertToNewICAAccount(*oldHostZone.FeeAccount)
+	newDelegationAccount := convertToNewICAAccount(*oldHostZone.DelegationAccount)
+	newRedemptionAccount := convertToNewICAAccount(*oldHostZone.RedemptionAccount)
 
 	return stakeibctypes.HostZone{
 		ChainId:               oldHostZone.ChainId,
@@ -58,7 +58,7 @@ func convertToNewHostZone(oldHostZone oldstakeibctypes.HostZone) stakeibctypes.H
 		LastRedemptionRate:    oldHostZone.LastRedemptionRate,
 		RedemptionRate:        oldHostZone.RedemptionRate,
 		UnbondingFrequency:    oldHostZone.UnbondingFrequency,
-		StakedBal:             sdk.NewIntFromUint64(oldHostZone.StakedBal),
+		StakedBal:             sdkmath.NewIntFromUint64(oldHostZone.StakedBal),
 		Address:               oldHostZone.Address,
 	}
 }
