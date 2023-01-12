@@ -101,6 +101,9 @@ lint:
 ###############################################################################
 
 test-unit:
+	@go test -mod=readonly ./x/... ./app/...
+
+test-unit-module:
 	@go test -mod=readonly ./x/$(module)/...
 
 test-cover:
