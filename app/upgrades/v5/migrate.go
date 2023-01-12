@@ -109,32 +109,6 @@ func migrateEpochUnbondingRecord(store sdk.KVStore, cdc codec.Codec) error {
 	return nil
 }
 
-func migrateDelegation(store sdk.KVStore, cdc codec.Codec) error {
-	paramsStore := prefix.NewStore(store, []byte(stakeibctypes.DelegationKey))
-
-	iter := paramsStore.Iterator(nil, nil)
-	defer iter.Close()
-
-	for ; iter.Valid(); iter.Next() {
-		var oldProp stakeibcv1types.Delegation
-		err := cdc.Unmarshal(iter.Value(), &oldProp)
-		if err != nil {
-			return err
-		}
-
-		newProp := convertToNewDelegation(oldProp)
-		bz, err := cdc.Marshal(&newProp)
-		if err != nil {
-			return err
-		}
-
-		// Set new value on store.
-		paramsStore.Set(iter.Key(), bz)
-	}
-	
-	return nil
-}
-
 func migrateHostZone(store sdk.KVStore, cdc codec.Codec) error {
 	paramsStore := prefix.NewStore(store, []byte(stakeibctypes.HostZoneKey))
 
@@ -149,32 +123,6 @@ func migrateHostZone(store sdk.KVStore, cdc codec.Codec) error {
 		}
 
 		newProp := convertToNewHostZone(oldProp)
-		bz, err := cdc.Marshal(&newProp)
-		if err != nil {
-			return err
-		}
-
-		// Set new value on store.
-		paramsStore.Set(iter.Key(), bz)
-	}
-	
-	return nil
-}
-
-func migrateValidator(store sdk.KVStore, cdc codec.Codec) error {
-	paramsStore := prefix.NewStore(store, []byte(stakeibctypes.ValidatorKey))
-
-	iter := paramsStore.Iterator(nil, nil)
-	defer iter.Close()
-
-	for ; iter.Valid(); iter.Next() {
-		var oldProp stakeibcv1types.Validator
-		err := cdc.Unmarshal(iter.Value(), &oldProp)
-		if err != nil {
-			return err
-		}
-
-		newProp := convertToNewValidator(oldProp)
 		bz, err := cdc.Marshal(&newProp)
 		if err != nil {
 			return err
@@ -213,15 +161,7 @@ func MigrateStore(ctx sdk.Context, claimStoreKey storetypes.StoreKey, recordStor
 
 	// Migrate stakeibc module store
 	stakeibcStore := ctx.KVStore(stakeibcStoreKey)
-	err = migrateDelegation(stakeibcStore, cdc)
-	if err != nil {
-		return err
-	}
 	err = migrateHostZone(stakeibcStore, cdc)
-	if err != nil {
-		return err
-	}
-	err = migrateValidator(stakeibcStore, cdc)
 	if err != nil {
 		return err
 	}

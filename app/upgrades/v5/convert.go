@@ -68,49 +68,17 @@ func convertToNewEpochUnbondingRecord(oldProp recordv1types.EpochUnbondingRecord
 	return epochUnbondingRecord
 }
 
-func convertToNewDelegation(oldProp stakeibcv1types.Delegation) stakeibctypes.Delegation {
-	return stakeibctypes.Delegation{
-		DelegateAcctAddress: oldProp.DelegateAcctAddress,
-		Validator: &stakeibctypes.Validator{
-			Name: oldProp.Validator.Name,
-			Address: oldProp.Validator.Address,
-			Status: stakeibctypes.Validator_ValidatorStatus(oldProp.Validator.Status),
-			CommissionRate: oldProp.Validator.CommissionRate,
-			DelegationAmt: sdk.NewIntFromUint64(oldProp.Validator.DelegationAmt),
-			Weight: oldProp.Validator.Weight,
-			InternalExchangeRate: (*stakeibctypes.ValidatorExchangeRate)(oldProp.Validator.InternalExchangeRate),
-		},
-		Amt: sdk.NewInt(oldProp.Amt),
-	}
-}
-
 func convertToNewHostZone(oldProp stakeibcv1types.HostZone) stakeibctypes.HostZone {
 	var validators []*stakeibctypes.Validator
 	var blacklistValidator []*stakeibctypes.Validator
 
 	for _, val := range(oldProp.Validators) {
-		newVal := stakeibctypes.Validator{
-			Name: val.Name,
-			Address: val.Address,
-			Status: stakeibctypes.Validator_ValidatorStatus(val.Status),
-			CommissionRate: val.CommissionRate,
-			DelegationAmt: sdk.NewIntFromUint64(val.DelegationAmt),
-			Weight: val.Weight,
-			InternalExchangeRate: (*stakeibctypes.ValidatorExchangeRate)(val.InternalExchangeRate),
-		}
+		newVal := convertToNewValidator(*val)
 		validators = append(validators, &newVal)
 	}
 
 	for _, val := range(oldProp.BlacklistedValidators) {
-		newVal := stakeibctypes.Validator{
-			Name: val.Name,
-			Address: val.Address,
-			Status: stakeibctypes.Validator_ValidatorStatus(val.Status),
-			CommissionRate: val.CommissionRate,
-			DelegationAmt: sdk.NewIntFromUint64(val.DelegationAmt),
-			Weight: val.Weight,
-			InternalExchangeRate: (*stakeibctypes.ValidatorExchangeRate)(val.InternalExchangeRate),
-		}
+		newVal := convertToNewValidator(*val)
 		blacklistValidator = append(blacklistValidator, &newVal)
 	}
 	return stakeibctypes.HostZone{

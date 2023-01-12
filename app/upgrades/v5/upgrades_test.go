@@ -65,7 +65,7 @@ func (suite *UpgradeTestSuite) TestUpgrade() {
 }
 
 func (suite *UpgradeTestSuite) SetUpOldStore() {
-	codec := simapp.MakeTestEncodingConfig().Marshaler
+	codec := simapp.MakeTestEncodingConfig().Codec
 
 	// set up claim store
 	claimStore := suite.Ctx.KVStore(suite.App.GetKey(claimtypes.StoreKey))
@@ -197,18 +197,9 @@ func (suite *UpgradeTestSuite) CheckStoreMigration() {
 	suite.Require().Equal(epochUnbondingRecord.HostZoneUnbondings[0].StTokenAmount, sdk.NewInt(2000000))
 	suite.Require().Equal(epochUnbondingRecord.HostZoneUnbondings[0].NativeTokenAmount, sdk.NewInt(1000000))
 
-	delegation, bool := suite.App.StakeibcKeeper.GetDelegation(suite.Ctx)
-	suite.Require().True(bool)
-	suite.Require().Equal(delegation.Amt, sdk.NewInt(1000000))
-	suite.Require().Equal(delegation.Validator.DelegationAmt, sdk.NewInt(1000000))
-
 	hz, bool := suite.App.StakeibcKeeper.GetHostZone(suite.Ctx, "GAIA")
 	suite.Require().True(bool)
 	suite.Require().Equal(hz.StakedBal, sdk.NewInt(3000000))
 	suite.Require().Equal(hz.Validators[0].DelegationAmt, sdk.NewInt(1000000))
 	suite.Require().Equal(hz.BlacklistedValidators[0].DelegationAmt, sdk.NewInt(2000000))
-
-	validator, bool := suite.App.StakeibcKeeper.GetValidator(suite.Ctx)
-	suite.Require().True(bool)
-	suite.Require().Equal(validator.DelegationAmt, sdk.NewInt(10000000))
 }
