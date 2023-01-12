@@ -6,7 +6,7 @@ SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 source $SCRIPT_DIR/../config.sh
 
 CHAIN="$1"
-KEYS_LOGS=$SCRIPT_DIR/logs/keys.log
+KEYS_LOGS=$DOCKERNET_HOME/logs/keys.log
 
 CHAIN_ID=$(GET_VAR_VALUE    ${CHAIN}_CHAIN_ID)
 CMD=$(GET_VAR_VALUE         ${CHAIN}_CMD)
@@ -15,9 +15,6 @@ RPC_PORT=$(GET_VAR_VALUE    ${CHAIN}_RPC_PORT)
 NUM_NODES=$(GET_VAR_VALUE   ${CHAIN}_NUM_NODES)
 NODE_PREFIX=$(GET_VAR_VALUE ${CHAIN}_NODE_PREFIX)
 VAL_PREFIX=$(GET_VAR_VALUE  ${CHAIN}_VAL_PREFIX)
-
-IFS=',' read -r -a VAL_MNEMONICS <<< "${VAL_MNEMONICS}"
-IFS=',' read -r -a RELAYER_MNEMONICS <<< "${RELAYER_MNEMONICS}"
 
 set_stride_genesis() {
     genesis_config=$1
@@ -47,7 +44,7 @@ set_host_genesis() {
 
     # Add interchain accounts to the genesis set
     jq "del(.app_state.interchain_accounts)" $genesis_config > json.tmp && mv json.tmp $genesis_config
-    interchain_accts=$(cat $SCRIPT_DIR/config/ica.json)
+    interchain_accts=$(cat $DOCKERNET_HOME/config/ica.json)
     jq ".app_state += $interchain_accts" $genesis_config > json.tmp && mv json.tmp $genesis_config
 
     # Slightly harshen slashing parameters (if 5 blocks are missed, the validator will be slashed)
@@ -72,7 +69,16 @@ for (( i=1; i <= $NUM_NODES; i++ )); do
 
     # Create a state directory for the current node and initialize the chain
     mkdir -p $STATE/$node_name
-    cmd="$CMD --home ${STATE}/$node_name"
+    
+    # If the chains commands are run only from docker, grab the command from the config
+    # Otherwise, if they're run locally, append the home directory
+    if [[ $CMD == docker-compose* ]]; then
+        cmd=$CMD
+    else
+        cmd="$CMD --home ${STATE}/$node_name"
+    fi
+
+    # Initialize the chain
     $cmd init $moniker --chain-id $CHAIN_ID --overwrite &> /dev/null
     chmod -R 777 $STATE/$node_name
 
@@ -106,7 +112,7 @@ for (( i=1; i <= $NUM_NODES; i++ )); do
     val_acct="${VAL_PREFIX}${i}"
     val_mnemonic="${VAL_MNEMONICS[((i-1))]}"
     echo "$val_mnemonic" | $cmd keys add $val_acct --recover --keyring-backend=test >> $KEYS_LOGS 2>&1
-    val_addr=$($cmd keys show $val_acct --keyring-backend test -a)
+    val_addr=$($cmd keys show $val_acct --keyring-backend test -a | tr -cd '[:alnum:]._-')
     # Add this account to the current node
     $cmd add-genesis-account ${val_addr} ${VAL_TOKENS}${DENOM}
     # actually set this account as a validator on the current node 
@@ -159,7 +165,7 @@ else
     RELAYER_MNEMONIC=$(GET_VAR_VALUE RELAYER_${CHAIN}_MNEMONIC)
 
     echo "$RELAYER_MNEMONIC" | $MAIN_NODE_CMD keys add $RELAYER_ACCT --recover --keyring-backend=test >> $KEYS_LOGS 2>&1
-    RELAYER_ADDRESS=$($MAIN_NODE_CMD keys show $RELAYER_ACCT --keyring-backend test -a)
+    RELAYER_ADDRESS=$($MAIN_NODE_CMD keys show $RELAYER_ACCT --keyring-backend test -a | tr -cd '[:alnum:]._-')
     $MAIN_NODE_CMD add-genesis-account ${RELAYER_ADDRESS} ${VAL_TOKENS}${DENOM}
 fi
 

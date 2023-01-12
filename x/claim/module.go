@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/gorilla/mux"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/spf13/cobra"
 
@@ -18,7 +17,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/module"
 
 	"github.com/Stride-Labs/stride/v4/x/claim/client/cli"
-	"github.com/Stride-Labs/stride/v4/x/claim/client/rest"
 	"github.com/Stride-Labs/stride/v4/x/claim/keeper"
 	"github.com/Stride-Labs/stride/v4/x/claim/types"
 )
@@ -66,11 +64,6 @@ func (AppModuleBasic) ValidateGenesis(cdc codec.JSONCodec, config client.TxEncod
 		return fmt.Errorf("failed to unmarshal %s genesis state: %w", types.ModuleName, err)
 	}
 	return genState.Validate()
-}
-
-// RegisterRESTRoutes registers the capability module's REST service handlers.
-func (AppModuleBasic) RegisterRESTRoutes(clientCtx client.Context, rtr *mux.Router) {
-	rest.RegisterRoutes(clientCtx, rtr)
 }
 
 // RegisterGRPCGatewayRoutes registers the gRPC Gateway routes for the module.
