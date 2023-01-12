@@ -92,8 +92,6 @@ for (( i=1; i <= $NUM_NODES; i++ )); do
     fi
 
     # Initialize the chain
-    echo $cmd
-    echo $moniker
     $cmd init $moniker --chain-id $CHAIN_ID --overwrite #&> /dev/null
     chmod -R 777 $STATE/$node_name
 
@@ -127,6 +125,8 @@ for (( i=1; i <= $NUM_NODES; i++ )); do
     val_acct="${VAL_PREFIX}${i}"
     val_mnemonic="${VAL_MNEMONICS[((i-1))]}"
     echo "$val_mnemonic" | $cmd keys add $val_acct --recover --keyring-backend=test >> $KEYS_LOGS #2>&1
+    echo $cmd
+    echo "MOOSE"
     val_addr=$($cmd keys show $val_acct --keyring-backend test -a | tr -cd '[:alnum:]._-')
     # Add this account to the current node
     $cmd add-genesis-account ${val_addr} ${VAL_TOKENS}${DENOM}
@@ -137,6 +137,13 @@ for (( i=1; i <= $NUM_NODES; i++ )); do
     rm -rf ${client_toml}-E
     rm -rf ${genesis_json}-E
     rm -rf ${app_toml}-E
+
+    # overwrite the app.toml if evmos
+    if [ "$CHAIN" = "EVMOS" ]; then
+        cp ${DOCKERNET_HOME}/src/app.toml ${STATE}/evmos1/config/app.toml
+    fi
+
+    
 
     if [ $i -eq $MAIN_ID ]; then
         MAIN_NODE_NAME=$node_name
