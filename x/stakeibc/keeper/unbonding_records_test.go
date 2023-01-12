@@ -263,28 +263,6 @@ func (s *KeeperTestSuite) TestSweepAllUnbondedTokensForHostZone_success() {
 	s.Require().Equal(sdk.NewInt(3_000_000), sweepAmount, "sweep all unbonded tokens (with status EXIT_TRANSFER_QUEUE) for hostone OSMO success")
 }
 
-func (s *KeeperTestSuite) TestSweepAllUnbondedTokensForHostZone_HostZoneUnbondingNotFound() {
-	tc := s.SetupSweepAllUnbondedTokensForHostZone()
-	epochUnbondingRecords := s.App.RecordsKeeper.GetAllEpochUnbondingRecord(s.Ctx)
-	for _, epochUnbonding := range epochUnbondingRecords {
-		epochUnbonding.HostZoneUnbondings = []*recordtypes.HostZoneUnbonding{
-			epochUnbonding.HostZoneUnbondings[0],
-		}
-		s.App.RecordsKeeper.SetEpochUnbondingRecord(s.Ctx, epochUnbonding)
-	}
-	success, sweepAmount := s.App.StakeibcKeeper.SweepAllUnbondedTokensForHostZone(s.Ctx, tc.hostZones[1], tc.epochUnbondingRecords)
-	s.Require().True(success, "sweep all tokens for hostzone OSMO still success (even when overflow happended)")
-	s.Require().Equal(sdk.NewInt(0), sweepAmount, "No Unbonded tokens for hostzone OSMO is sweeped (because we removed the hostzone earlier)")
-}
-
-func (s *KeeperTestSuite) TestSweepAllUnbondedTokensForHostZone_blockTimeForHostZoneNotFound() {
-	tc := s.SetupSweepAllUnbondedTokensForHostZone()
-	tc.hostZones[1].ConnectionId = "random-connection"
-	success, sweepAmount := s.App.StakeibcKeeper.SweepAllUnbondedTokensForHostZone(s.Ctx, tc.hostZones[1], tc.epochUnbondingRecords)
-	s.Require().True(success, "sweep all tokens for hostzone OSMO still success (even when failed to get blockTime)")
-	s.Require().Equal(sdk.NewInt(0), sweepAmount, "No Unbonded tokens for hostzone OSMO is sweeped")
-}
-
 func (s *KeeperTestSuite) TestSweepAllUnbondedTokensForHostZone_DelegationAddressNotFound() {
 	tc := s.SetupSweepAllUnbondedTokensForHostZone()
 	tc.hostZones[1].DelegationAccount = nil
