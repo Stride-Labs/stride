@@ -122,6 +122,11 @@ test-sim-multi-seed-short: runsim
 	@echo "Running short multi-seed application simulation. This may take awhile!"
 	@$(BINDIR)/runsim -Jobs=4 -SimAppPkg=$(SIMAPP) -ExitOnFail 50 10 TestFullAppSimulation
 
+test-sim-nondeterminism: runsim
+	@echo "Running non-determinism test..."
+	@go test $(TEST_FLAGS) -mod=readonly $(SIMAPP) -run TestAppStateDeterminism -Enabled=true \
+		-NumBlocks=100 -BlockSize=200 -Commit=true -Period=0 -v -timeout 24h
+
 ###############################################################################
 ###                                DockerNet                                ###
 ###############################################################################

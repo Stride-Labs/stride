@@ -2,6 +2,8 @@ package app
 
 import (
 	"encoding/json"
+	"fmt"
+	"math/rand"
 	"os"
 	"path/filepath"
 	"testing"
@@ -11,7 +13,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/simapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	_"github.com/cosmos/cosmos-sdk/types/kv"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
@@ -34,7 +35,9 @@ import (
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 	dbm "github.com/tendermint/tm-db"
 
- 	stakeibctypes "github.com/Stride-Labs/stride/v4/x/stakeibc/types"
+	"github.com/cosmos/cosmos-sdk/simapp/helpers"
+
+	stakeibctypes "github.com/Stride-Labs/stride/v4/x/stakeibc/types"
 )
 
 // Get flags every time the simulator is run
@@ -228,4 +231,74 @@ func AppStateFn(codec codec.Codec, manager *module.SimulationManager) simtypes.A
 		simapp.FlagGenesisTimeValue = time.Now().Unix()
 	}
 	return simapp.AppStateFn(codec, manager)
+}
+
+// TODO: Make another test for the fuzzer itself, which just has noOp txs
+// and doesn't depend on the application.
+func TestAppStateDeterminism(t *testing.T) {
+	if !simapp.FlagEnabledValue {
+		t.Skip("skipping application simulation")
+	}
+
+	config := simapp.NewConfigFromFlags()
+	config.InitialBlockHeight = 1
+	config.ExportParamsPath = ""
+	config.OnOperation = false
+	config.AllInvariants = false
+	config.ChainID = helpers.SimAppChainID
+
+	numSeeds := 3
+	numTimesToRunPerSeed := 5
+	appHashList := make([]json.RawMessage, numTimesToRunPerSeed)
+
+	for i := 0; i < numSeeds; i++ {
+		// nolint: gosec
+		config.Seed = rand.Int63()
+
+		for j := 0; j < numTimesToRunPerSeed; j++ {
+			var logger log.Logger
+			if simapp.FlagVerboseValue {
+				logger = log.TestingLogger()
+			} else {
+				logger = log.NewNopLogger()
+			}
+
+			db := dbm.NewMemDB()
+			encConf := MakeEncodingConfig()
+			app := NewStrideApp(logger, db, nil, true, map[int64]bool{}, simapp.DefaultNodeHome, 5, encConf, simapp.EmptyAppOptions{}, fauxMerkleModeOpt)
+			require.Equal(t, Name, app.Name())
+
+			fmt.Printf(
+				"running non-determinism simulation; seed %d: %d/%d, attempt: %d/%d\n",
+				config.Seed, i+1, numSeeds, j+1, numTimesToRunPerSeed,
+			)
+
+			_, _, err := simulation.SimulateFromSeed(
+				t,
+				os.Stdout,
+				app.BaseApp,
+				AppStateFn(app.AppCodec(), app.SimulationManager()),
+				simtypes.RandomAccounts, // Replace with own random account function if using keys other than secp256k1
+				simapp.SimulationOperations(app, app.AppCodec(), config),
+				app.ModuleAccountAddrs(),
+				config,
+				app.AppCodec(),
+			)
+			require.NoError(t, err)
+
+			if config.Commit {
+				simapp.PrintStats(db)
+			}
+
+			appHash := app.LastCommitID().Hash
+			appHashList[j] = appHash
+
+			if j != 0 {
+				require.Equal(
+					t, string(appHashList[0]), string(appHashList[j]),
+					"non-determinism in seed %d: %d/%d, attempt: %d/%d\n", config.Seed, i+1, numSeeds, j+1, numTimesToRunPerSeed,
+				)
+			}
+		}
+	}
 }
