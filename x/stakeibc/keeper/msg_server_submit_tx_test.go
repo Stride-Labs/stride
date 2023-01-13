@@ -219,34 +219,19 @@ func (s *KeeperTestSuite) TestSetWithdrawalAddressOnHost_FailedToGetICATimeoutNa
 }
 
 func (s *KeeperTestSuite) TestGetStartTimeNextEpoch_Success() {
-	// SetEpochTracker
+	tc := s.SetupSubmitTx()
 	epochIdentifier := epochtypes.STRIDE_EPOCH
-	epochTracker := stakeibctypes.EpochTracker{
-		EpochIdentifier:    epochIdentifier,
-		EpochNumber:        uint64(2),
-		NextEpochStartTime: uint64(time.Now().Unix()),
-		Duration:           uint64(2),
-	}
-	s.App.StakeibcKeeper.SetEpochTracker(s.Ctx, epochTracker)
 
 	epochReturn, err := s.App.StakeibcKeeper.GetStartTimeNextEpoch(s.Ctx, epochIdentifier)
 
 	s.Require().NoError(err)
 
-	s.Require().Equal(epochReturn, epochTracker.NextEpochStartTime)
+	s.Require().Equal(epochReturn, tc.epochTracker.NextEpochStartTime)
 
 }
 func (s *KeeperTestSuite) TestGetStartTimeNextEpoch_FailedToGetEpoch() {
-	// SetEpochTracker
-	epochIdentifier := epochtypes.STRIDE_EPOCH
-	epochTracker := stakeibctypes.EpochTracker{
-		EpochIdentifier:    epochIdentifier,
-		EpochNumber:        uint64(2),
-		NextEpochStartTime: uint64(time.Now().Unix()),
-		Duration:           uint64(2),
-	}
-	s.App.StakeibcKeeper.SetEpochTracker(s.Ctx, epochTracker)
-
+	s.SetupSubmitTx()
+	//finding "epoch_stride" which is not a defined epochIdentifier
 	_, err := s.App.StakeibcKeeper.GetStartTimeNextEpoch(s.Ctx, "epoch_stride")
 
 	s.Require().EqualError(err, fmt.Sprintf("Failed to get epoch tracker for %s: %s", "epoch_stride", "invalid request"))
