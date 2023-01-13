@@ -163,10 +163,11 @@ setup_file() {
 @test "[INTEGRATION-BASIC-$CHAIN_NAME] tokens on $CHAIN_NAME were staked" {
   # wait for another epoch to pass so that tokens are staked
   WAIT_FOR_STRING $STRIDE_LOGS "\[DELEGATION\] success on $HOST_CHAIN_ID"
-  WAIT_FOR_BLOCK $STRIDE_LOGS 2
+  WAIT_FOR_BLOCK $STRIDE_LOGS 4
 
   # check staked tokens
-  NEW_STAKE=$($HOST_MAIN_CMD q staking delegation $(GET_ICA_ADDR $HOST_CHAIN_ID delegation) $(GET_VAL_ADDR $HOST_CHAIN_ID 1) | GETSTAKE)
+  # TODO: MERGE THIS CHANGE TO MAIN
+  NEW_STAKE=$($HOST_MAIN_CMD q staking delegation $(GET_ICA_ADDR $HOST_CHAIN_ID delegation) $(GET_VAL_ADDR $CHAIN_NAME 1) | GETSTAKE)
   stake_diff=$(($NEW_STAKE > 0))
   assert_equal "$stake_diff" "1"
 }

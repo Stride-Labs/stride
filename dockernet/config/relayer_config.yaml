@@ -83,7 +83,7 @@ chains:
       account-prefix: evmos
       keyring-backend: test
       gas-adjustment: 1.2
-      gas-prices: 0.01uevmos
+      gas-prices: 0.01aevmos
       debug: false
       timeout: 20s
       output-format: json

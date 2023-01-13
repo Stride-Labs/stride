@@ -36,6 +36,11 @@ set_host_genesis() {
     jq '(.app_state.epochs.epochs[]? | select(.identifier=="week") ).duration = $epochLen' --arg epochLen $HOST_WEEK_EPOCH_DURATION $genesis_config > json.tmp && mv json.tmp $genesis_config
     jq '.app_state.staking.params.unbonding_time = $newVal' --arg newVal "$UNBONDING_TIME" $genesis_config > json.tmp && mv json.tmp $genesis_config
 
+    # change bond denom for evmos
+    jq '.app_state.evm.params.evm_denom = $newVal' --arg newVal "aevmos" $genesis_config > json.tmp && mv json.tmp $genesis_config
+    jq '.app_state.inflation.params.mint_denom = $newVal' --arg newVal "aevmos" $genesis_config > json.tmp && mv json.tmp $genesis_config
+
+
     # Set the mint start time to the genesis time if the chain configures inflation at the block level (e.g. stars)
     # also reduce the number of initial annual provisions so the inflation rate is not too high
     genesis_time=$(jq .genesis_time $genesis_config | tr -d '"')
@@ -92,7 +97,7 @@ for (( i=1; i <= $NUM_NODES; i++ )); do
     fi
 
     # Initialize the chain
-    $cmd init $moniker --chain-id $CHAIN_ID --overwrite #&> /dev/null
+    $cmd init $moniker --chain-id $CHAIN_ID --overwrite &> /dev/null
     chmod -R 777 $STATE/$node_name
 
     # Update node networking configuration 
@@ -124,14 +129,14 @@ for (( i=1; i <= $NUM_NODES; i++ )); do
     # add a validator account
     val_acct="${VAL_PREFIX}${i}"
     val_mnemonic="${VAL_MNEMONICS[((i-1))]}"
-    echo "$val_mnemonic" | $cmd keys add $val_acct --recover --keyring-backend=test >> $KEYS_LOGS #2>&1
+    echo "$val_mnemonic" | $cmd keys add $val_acct --recover --keyring-backend=test >> $KEYS_LOGS 2>&1
     echo $cmd
     echo "MOOSE"
     val_addr=$($cmd keys show $val_acct --keyring-backend test -a | tr -cd '[:alnum:]._-')
     # Add this account to the current node
     $cmd add-genesis-account ${val_addr} ${VAL_TOKENS}${DENOM}
     # actually set this account as a validator on the current node 
-    $cmd gentx $val_acct ${STAKE_TOKENS}${DENOM} --chain-id $CHAIN_ID --keyring-backend test #&> /dev/null
+    $cmd gentx $val_acct ${STAKE_TOKENS}${DENOM} --chain-id $CHAIN_ID --keyring-backend test &> /dev/null
 
     # Cleanup from seds
     rm -rf ${client_toml}-E
@@ -157,13 +162,13 @@ for (( i=1; i <= $NUM_NODES; i++ )); do
         cp ${STATE}/${node_name}/config/gentx/*.json ${STATE}/${MAIN_NODE_NAME}/config/gentx/
 
         # and add each validator's keys to the first state directory
-        echo "$val_mnemonic" | $MAIN_NODE_CMD keys add $val_acct --recover --keyring-backend=test #&> /dev/null
+        echo "$val_mnemonic" | $MAIN_NODE_CMD keys add $val_acct --recover --keyring-backend=test &> /dev/null
     fi
 done
 
 if [ "$CHAIN" == "STRIDE" ]; then 
     # add the stride admin account
-    echo "$STRIDE_ADMIN_MNEMONIC" | $MAIN_NODE_CMD keys add $STRIDE_ADMIN_ACCT --recover --keyring-backend=test >> $KEYS_LOGS #2>&1
+    echo "$STRIDE_ADMIN_MNEMONIC" | $MAIN_NODE_CMD keys add $STRIDE_ADMIN_ACCT --recover --keyring-backend=test >> $KEYS_LOGS 2>&1
     STRIDE_ADMIN_ADDRESS=$($MAIN_NODE_CMD keys show $STRIDE_ADMIN_ACCT --keyring-backend test -a)
     $MAIN_NODE_CMD add-genesis-account ${STRIDE_ADMIN_ADDRESS} ${ADMIN_TOKENS}${DENOM}
 
