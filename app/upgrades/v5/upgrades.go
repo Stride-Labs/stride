@@ -4,6 +4,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 
@@ -29,10 +30,22 @@ func CreateUpgradeHandler(
 ) upgradetypes.UpgradeHandler {
 	return func(ctx sdk.Context, _ upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
 		// The following modules need state migrations as a result of a change from uints to sdk.Ints
-		claimmigration.MigrateStore(ctx, claimStoreKey, cdc)
-		icacallbacksmigration.MigrateStore(ctx, icacallbackStorekey, cdc)
-		recordsmigration.MigrateStore(ctx, recordStoreKey, cdc)
-		stakeibcmigration.MigrateStore(ctx, stakeibcStoreKey, cdc)
+		//    - claim
+		//    - icacallbacks
+		//    - records
+		//    - stakeibc
+		if err := claimmigration.MigrateStore(ctx, claimStoreKey, cdc); err != nil {
+			return vm, sdkerrors.Wrapf(err, "unable to migrate claim store")
+		}
+		if err := icacallbacksmigration.MigrateStore(ctx, icacallbackStorekey, cdc); err != nil {
+			return vm, sdkerrors.Wrapf(err, "unable to migrate icacallbacks store")
+		}
+		if err := recordsmigration.MigrateStore(ctx, recordStoreKey, cdc); err != nil {
+			return vm, sdkerrors.Wrapf(err, "unable to migrate records store")
+		}
+		if err := stakeibcmigration.MigrateStore(ctx, stakeibcStoreKey, cdc); err != nil {
+			return vm, sdkerrors.Wrapf(err, "unable to migrate stakeibc store")
+		}
 
 		return mm.RunMigrations(ctx, configurator, vm)
 	}
