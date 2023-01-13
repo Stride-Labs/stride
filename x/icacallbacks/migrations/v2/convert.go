@@ -11,8 +11,9 @@ import (
 )
 
 const (
-	ICACallbackID_Delegate  = "delegate"
-	ICACallbackID_Rebalance = "rebalance"
+	ICACallbackID_Delegate   = "delegate"
+	ICACallbackID_Rebalance  = "rebalance"
+	ICACallbackID_Undelegate = "undelegate"
 )
 
 func convertDelegateCallback(oldDelegateCallback oldstakeibctypes.DelegateCallback) stakeibctypes.DelegateCallback {
@@ -29,6 +30,23 @@ func convertDelegateCallback(oldDelegateCallback oldstakeibctypes.DelegateCallba
 		HostZoneId:       oldDelegateCallback.HostZoneId,
 		DepositRecordId:  oldDelegateCallback.DepositRecordId,
 		SplitDelegations: newSplitDelegations,
+	}
+}
+
+func convertUndelegateCallback(oldUndelegateCallback oldstakeibctypes.UndelegateCallback) stakeibctypes.UndelegateCallback {
+	newSplitDelegations := []*stakeibctypes.SplitDelegation{}
+	for _, oldSplitDelegation := range oldUndelegateCallback.SplitDelegations {
+		newSplitDelegation := stakeibctypes.SplitDelegation{
+			Validator: oldSplitDelegation.Validator,
+			Amount:    sdkmath.NewIntFromUint64(oldSplitDelegation.Amount),
+		}
+		newSplitDelegations = append(newSplitDelegations, &newSplitDelegation)
+	}
+
+	return stakeibctypes.UndelegateCallback{
+		HostZoneId:              oldUndelegateCallback.HostZoneId,
+		SplitDelegations:        newSplitDelegations,
+		EpochUnbondingRecordIds: oldUndelegateCallback.EpochUnbondingRecordIds,
 	}
 }
 
@@ -68,6 +86,23 @@ func convertCallbackData(oldCallbackData icacallbacktypes.CallbackData) (icacall
 
 		// Update the CallbackData with the new args
 		newCallbackArgs = newDelegateCallbackBz
+
+	case ICACallbackID_Undelegate:
+		// Deserialize the callback args with the old UndelegateCallback type
+		oldUndelegateCallback := oldstakeibctypes.UndelegateCallback{}
+		if err := proto.Unmarshal(oldCallbackData.CallbackArgs, &oldUndelegateCallback); err != nil {
+			return icacallbacktypes.CallbackData{}, sdkerrors.Wrapf(stakeibctypes.ErrUnmarshalFailure, err.Error())
+		}
+
+		// Convert and serialize with the new UndelegateCallback type
+		newUndelegateCallback := convertUndelegateCallback(oldUndelegateCallback)
+		newUndelegateCallbackBz, err := proto.Marshal(&newUndelegateCallback)
+		if err != nil {
+			return icacallbacktypes.CallbackData{}, sdkerrors.Wrapf(stakeibctypes.ErrMarshalFailure, err.Error())
+		}
+
+		// Update the CallbackData with the new args
+		newCallbackArgs = newUndelegateCallbackBz
 
 	case ICACallbackID_Rebalance:
 		// Deserialize the callback args with the old RebalanceCallback type

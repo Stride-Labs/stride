@@ -45,6 +45,40 @@ func TestConvertDelegateCallback(t *testing.T) {
 	require.Equal(t, sdkmath.NewInt(2), newDelegateCallback.SplitDelegations[1].Amount, "validator 2 amount")
 }
 
+func TestConvertUndelegateCallback(t *testing.T) {
+	hostZoneId := "hz"
+	epochUnbondingIds := []uint64{1}
+	val1 := "val1"
+	val2 := "val2"
+
+	// Define old callback type and convert to new type
+	oldUndelegateCallback := oldstakeibctypes.UndelegateCallback{
+		HostZoneId: hostZoneId,
+		SplitDelegations: []*oldstakeibctypes.SplitDelegation{
+			{
+				Validator: val1,
+				Amount:    uint64(1),
+			},
+			{
+				Validator: val2,
+				Amount:    uint64(2),
+			},
+		},
+		EpochUnbondingRecordIds: epochUnbondingIds,
+	}
+	newUndelegateCallback := convertUndelegateCallback(oldUndelegateCallback)
+
+	// Check unchanged fields
+	require.Equal(t, hostZoneId, newUndelegateCallback.HostZoneId, "host zone id")
+	require.Equal(t, epochUnbondingIds[0], newUndelegateCallback.EpochUnbondingRecordIds[0], "epoch unbonding record id")
+	require.Equal(t, val1, newUndelegateCallback.SplitDelegations[0].Validator, "validator 1 address")
+	require.Equal(t, val2, newUndelegateCallback.SplitDelegations[1].Validator, "validator 2 address")
+
+	// Check update fields
+	require.Equal(t, sdkmath.NewInt(1), newUndelegateCallback.SplitDelegations[0].Amount, "validator 1 amount")
+	require.Equal(t, sdkmath.NewInt(2), newUndelegateCallback.SplitDelegations[1].Amount, "validator 2 amount")
+}
+
 func TestConvertRebalanceCallback(t *testing.T) {
 	hostZoneId := "hz1"
 	srcVal1 := "src_val1"
