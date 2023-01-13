@@ -32,11 +32,11 @@ UPGRADE_NAME=""
 UPGRADE_OLD_COMMIT_HASH=""
 
 # DENOMS
-ATOM_DENOM='uatom'
-JUNO_DENOM='ujuno'
-OSMO_DENOM='uosmo'
-STRD_DENOM='ustrd'
-STARS_DENOM='ustars'
+ATOM_DENOM="uatom"
+JUNO_DENOM="ujuno"
+OSMO_DENOM="uosmo"
+STRD_DENOM="ustrd"
+STARS_DENOM="ustars"
 STATOM_DENOM="stuatom"
 STJUNO_DENOM="stujuno"
 STOSMO_DENOM="stuosmo"
@@ -63,6 +63,11 @@ IBC_STARS_CHANNEL_0_DENOM='ibc/49BAE4CD2172833F14000627DA87ED8024AD46A38D6ED33F6
 IBC_STARS_CHANNEL_1_DENOM='ibc/9222203B0B37D076F07B3CAC716533C80E7C4239499B6306CD9921A15D308F12'
 IBC_STARS_CHANNEL_2_DENOM='ibc/C6469BA9DC791E65B3C1596CD2005941324C00659E2DF90D5E08D86B82E7E08B'
 IBC_STARS_CHANNEL_3_DENOM='ibc/482A30C07803B0455B1492BAF94EC3D600E862D52A814F25A34BCCAAA132FEE9'
+
+IBC_HOST_CHANNEL_0_DENOM='ibc/FF6C2E86490C1C4FBBD24F55032831D2415B9D7882F85C3CC9C2401D79362BEA'
+IBC_HOST_CHANNEL_1_DENOM='ibc/49D0858EB94005A4DB308330F2498999E03A23058AD08E27B0BD2917B2E0C7AC'
+IBC_HOST_CHANNEL_2_DENOM='ibc/64FA16099B90915C5A5DE0FE7AB4E52535D76EA2107DA68143B99B0BEB567791'
+IBC_HOST_CHANNEL_3_DENOM='ibc/F16E938B7C3940CEFE114DD43F80BAEBB0AB264F51D65DEFE387837915D0D44B'
 
 # COIN TYPES
 # Coin types can be found at https://github.com/satoshilabs/slips/blob/master/slip-0044.md
@@ -121,84 +126,81 @@ STRIDE_FEE_ADDRESS=stride1czvrk3jkvtj8m27kqsqu2yrkhw3h3ykwj3rxh6
 
 # Binaries are contigent on whether we're doing an upgrade or not
 if [[ "$UPGRADE_NAME" == "" ]]; then 
-  STRIDE_CMD="$DOCKERNET_HOME/../build/strided"
+  STRIDE_BINARY="$DOCKERNET_HOME/../build/strided"
 else
-  STRIDE_CMD="$UPGRADES/binaries/strided1"
+  STRIDE_BINARY="$UPGRADES/binaries/strided1"
 fi
-STRIDE_MAIN_CMD="$STRIDE_CMD --home $DOCKERNET_HOME/state/${STRIDE_NODE_PREFIX}1"
+STRIDE_MAIN_CMD="$STRIDE_BINARY --home $DOCKERNET_HOME/state/${STRIDE_NODE_PREFIX}1"
 
 # GAIA 
 GAIA_CHAIN_ID=GAIA
 GAIA_NODE_PREFIX=gaia
 GAIA_NUM_NODES=1
-GAIA_CMD="$DOCKERNET_HOME/../build/gaiad"
+GAIA_BINARY="$DOCKERNET_HOME/../build/gaiad"
 GAIA_VAL_PREFIX=gval
 GAIA_REV_ACCT=grev1
 GAIA_ADDRESS_PREFIX=cosmos
 GAIA_DENOM=$ATOM_DENOM
 GAIA_RPC_PORT=26557
 GAIA_COIN_TYPE=$COSMOS_COIN_TYPE
-GAIA_MAIN_CMD="$GAIA_CMD --home $DOCKERNET_HOME/state/${GAIA_NODE_PREFIX}1"
+GAIA_MAIN_CMD="$GAIA_BINARY --home $DOCKERNET_HOME/state/${GAIA_NODE_PREFIX}1"
 GAIA_RECEIVER_ADDRESS='cosmos1g6qdx6kdhpf000afvvpte7hp0vnpzapuyxp8uf'
 
 # JUNO 
 JUNO_CHAIN_ID=JUNO
 JUNO_NODE_PREFIX=juno
 JUNO_NUM_NODES=1
-JUNO_CMD="$DOCKERNET_HOME/../build/junod"
+JUNO_BINARY="$DOCKERNET_HOME/../build/junod"
 JUNO_VAL_PREFIX=jval
 JUNO_REV_ACCT=jrev1
 JUNO_ADDRESS_PREFIX=juno
 JUNO_DENOM=$JUNO_DENOM
 JUNO_RPC_PORT=26457
 JUNO_COIN_TYPE=$COSMOS_COIN_TYPE
-JUNO_MAIN_CMD="$JUNO_CMD --home $DOCKERNET_HOME/state/${JUNO_NODE_PREFIX}1"
+JUNO_MAIN_CMD="$JUNO_BINARY --home $DOCKERNET_HOME/state/${JUNO_NODE_PREFIX}1"
 JUNO_RECEIVER_ADDRESS='juno1sy0q0jpaw4t3hnf6k5wdd4384g0syzlp7rrtsg'
 
 # OSMO 
 OSMO_CHAIN_ID=OSMO
 OSMO_NODE_PREFIX=osmo
 OSMO_NUM_NODES=1
-OSMO_CMD="$DOCKERNET_HOME/../build/osmosisd"
+OSMO_BINARY="$DOCKERNET_HOME/../build/osmosisd"
 OSMO_VAL_PREFIX=oval
 OSMO_REV_ACCT=orev1
 OSMO_ADDRESS_PREFIX=osmo
 OSMO_DENOM=$OSMO_DENOM
 OSMO_RPC_PORT=26357
 OSMO_COIN_TYPE=$COSMOS_COIN_TYPE
-OSMO_MAIN_CMD="$OSMO_CMD --home $DOCKERNET_HOME/state/${OSMO_NODE_PREFIX}1"
+OSMO_MAIN_CMD="$OSMO_BINARY --home $DOCKERNET_HOME/state/${OSMO_NODE_PREFIX}1"
 OSMO_RECEIVER_ADDRESS='osmo1w6wdc2684g9h3xl8nhgwr282tcxx4kl06n4sjl'
 
 # STARS
 STARS_CHAIN_ID=STARS
 STARS_NODE_PREFIX=stars
 STARS_NUM_NODES=1
-STARS_CMD="$DOCKERNET_HOME/../build/starsd"
+STARS_BINARY="$DOCKERNET_HOME/../build/starsd"
 STARS_VAL_PREFIX=sgval
 STARS_REV_ACCT=sgrev1
 STARS_ADDRESS_PREFIX=stars
 STARS_DENOM=$STARS_DENOM
 STARS_RPC_PORT=26257
 STARS_COIN_TYPE=$COSMOS_COIN_TYPE
-STARS_MAIN_CMD="$STARS_CMD --home $DOCKERNET_HOME/state/${STARS_NODE_PREFIX}1"
+STARS_MAIN_CMD="$STARS_BINARY --home $DOCKERNET_HOME/state/${STARS_NODE_PREFIX}1"
 STARS_RECEIVER_ADDRESS='stars15dywcmy6gzsc8wfefkrx0c9czlwvwrjenqthyq'
 
-
-# HERMES
-HERMES_CMD="$DOCKERNET_HOME/../build/hermes/release/hermes --config $STATE/hermes/config.toml"
-HERMES_EXEC="$DOCKER_COMPOSE run --rm hermes hermes"
-
-HERMES_STRIDE_ACCT=hrly1
-HERMES_GAIA_ACCT=hrly2
-HERMES_JUNO_ACCT=hrly3
-HERMES_OSMO_ACCT=hrly4
-HERMES_STARS_ACCT=hrly5
-
-HERMES_STRIDE_MNEMONIC="alter old invest friend relief slot swear pioneer syrup economy vendor tray focus hedgehog artist legend antenna hair almost donkey spice protect sustain increase"
-HERMES_GAIA_MNEMONIC="resemble accident lake amateur physical jewel taxi nut demand magnet person blanket trip entire awkward fiber usual current index limb lady lady depart train"
-HERMES_JUNO_MNEMONIC="uphold decorate moon memory taste century work pride force genius width ripple myself year steel ivory type sweet tree ignore danger pudding owner discover"
-HERMES_OSMO_MNEMONIC="lawn inside color february double myth depart invite miracle nest silver spider spray recall theme loan exotic puzzle uncover dial young earn disagree fee"
-HERMES_STARS_MNEMONIC="inherit shallow bargain explain fence vocal fury perfect jeans figure festival abstract soldier entry bubble ketchup swim useless doctor thing imitate can shock coin"
+# HOST (Stride running as a host zone)
+HOST_CHAIN_ID=HOST
+HOST_NODE_PREFIX=host
+HOST_NUM_NODES=1
+HOST_BINARY="$DOCKERNET_HOME/../build/strided"
+HOST_VAL_PREFIX=hval
+HOST_ADDRESS_PREFIX=stride
+HOST_REV_ACCT=hrev1
+HOST_DENOM=$STRD_DENOM
+HOST_COIN_TYPE=$COSMOS_COIN_TYPE
+HOST_RPC_PORT=26157
+HOST_MAIN_CMD="$HOST_BINARY --home $DOCKERNET_HOME/state/${HOST_NODE_PREFIX}1"
+HOST_RECEIVER_ADDRESS='stride1trm75t8g83f26u4y8jfds7pms9l587a7q227k9'
 
 # RELAYER
 RELAYER_CMD="$DOCKERNET_HOME/../build/relayer --home $STATE/relayer"
@@ -206,23 +208,27 @@ RELAYER_GAIA_EXEC="$DOCKER_COMPOSE run --rm relayer-gaia"
 RELAYER_JUNO_EXEC="$DOCKER_COMPOSE run --rm relayer-juno"
 RELAYER_OSMO_EXEC="$DOCKER_COMPOSE run --rm relayer-osmo"
 RELAYER_STARS_EXEC="$DOCKER_COMPOSE run --rm relayer-stars"
+RELAYER_HOST_EXEC="$DOCKER_COMPOSE run --rm relayer-host"
 
 RELAYER_STRIDE_ACCT=rly1
 RELAYER_GAIA_ACCT=rly2
 RELAYER_JUNO_ACCT=rly3
 RELAYER_OSMO_ACCT=rly4
 RELAYER_STARS_ACCT=rly5
-HOST_RELAYER_ACCTS=($RELAYER_GAIA_ACCT $RELAYER_JUNO_ACCT $RELAYER_OSMO_ACCT $RELAYER_STARS_ACCT)
+RELAYER_HOST_ACCT=rly6
+RELAYER_ACCTS=($RELAYER_GAIA_ACCT $RELAYER_JUNO_ACCT $RELAYER_OSMO_ACCT $RELAYER_STARS_ACCT $RELAYER_HOST_ACCT)
 
 RELAYER_GAIA_MNEMONIC="fiction perfect rapid steel bundle giant blade grain eagle wing cannon fever must humble dance kitchen lazy episode museum faith off notable rate flavor"
 RELAYER_JUNO_MNEMONIC="kiwi betray topple van vapor flag decorate cement crystal fee family clown cry story gain frost strong year blanket remain grass pig hen empower"
 RELAYER_OSMO_MNEMONIC="unaware wine ramp february bring trust leaf beyond fever inside option dilemma save know captain endless salute radio humble chicken property culture foil taxi"
 RELAYER_STARS_MNEMONIC="deposit dawn erosion talent old broom flip recipe pill hammer animal hill nice ten target metal gas shoe visual nephew soda harbor child simple"
+RELAYER_HOST_MNEMONIC="renew umbrella teach spoon have razor knee sock divert inner nut between immense library inhale dog truly return run remain dune virus diamond clinic"
 RELAYER_MNEMONICS=(
   "$RELAYER_GAIA_MNEMONIC"
   "$RELAYER_JUNO_MNEMONIC"
   "$RELAYER_OSMO_MNEMONIC"
   "$RELAYER_STARS_MNEMONIC"
+  "$RELAYER_HOST_MNEMONIC"
 )
 
 STRIDE_ADDRESS() { 
@@ -239,6 +245,9 @@ OSMO_ADDRESS() {
 }
 STARS_ADDRESS() { 
   $STARS_MAIN_CMD keys show ${STARS_VAL_PREFIX}1 --keyring-backend test -a 
+}
+HOST_ADDRESS() { 
+  $HOST_MAIN_CMD keys show ${HOST_VAL_PREFIX}1 --keyring-backend test -a 
 }
 
 CSLEEP() {
