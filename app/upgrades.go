@@ -11,29 +11,7 @@ import (
 	v4 "github.com/Stride-Labs/stride/v4/app/upgrades/v4"
 	v5 "github.com/Stride-Labs/stride/v4/app/upgrades/v5"
 	claimtypes "github.com/Stride-Labs/stride/v4/x/claim/types"
-
-	authzkeeper "github.com/cosmos/cosmos-sdk/x/authz/keeper"
-
-	"github.com/cosmos/cosmos-sdk/baseapp"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 )
-
-// AuthzHeightAdjustmentUpgradeStoreLoader is used to delete the authz store with the
-// wrong height and then re-add authz store with the right height
-func AuthzHeightAdjustmentUpgradeStoreLoader(upgradeHeight int64) baseapp.StoreLoader {
-	return func(ms sdk.CommitMultiStore) error {
-		if upgradeHeight == ms.LastCommitID().Version+1 {
-			err := ms.LoadLatestVersionAndUpgrade(&storetypes.StoreUpgrades{
-				Deleted: []string{authzkeeper.StoreKey},
-			})
-			if err != nil {
-				panic(err)
-			}
-		}
-		// Otherwise load default store loader
-		return baseapp.DefaultStoreLoader(ms)
-	}
-}
 
 func (app *StrideApp) setupUpgradeHandlers() {
 	// v2 upgrade handler
@@ -77,10 +55,12 @@ func (app *StrideApp) setupUpgradeHandlers() {
 			Added: []string{claimtypes.StoreKey},
 		}
 	case "v5":
-		app.SetStoreLoader(AuthzHeightAdjustmentUpgradeStoreLoader(upgradeInfo.Height))
+		storeUpgrades = &storetypes.StoreUpgrades{
+			Deleted: []string{"authz"},
+		}
 	}
 
-	if (storeUpgrades != nil) && (upgradeInfo.Name != "v5") {
+	if storeUpgrades != nil {
 		app.SetStoreLoader(upgradetypes.UpgradeStoreLoader(upgradeInfo.Height, storeUpgrades))
 	}
 }
