@@ -291,7 +291,7 @@ func (s *KeeperTestSuite) TestDelegatorSharesCallback_SlashGtTenPercent() {
 	badCallbackArgs := s.CreateDelegatorSharesQueryResponse(valAddress, sdk.NewDec(1600))
 
 	err := stakeibckeeper.DelegatorSharesCallback(s.App.StakeibcKeeper, s.Ctx, badCallbackArgs, tc.validArgs.query)
-	expectedErrMsg := "Validator slashed but ABORTING update, slash is greater than 0.10 (0.200000000000000000): "
-	expectedErrMsg += "slash is greater than 10 percent"
+	expectedErrMsg := "Validator slashed but ABORTING update, slash (0.200000000000000000) is greater than safety threshold (0.100000000000000000): "
+	expectedErrMsg += "slash is greater than safety threshold"
 	s.Require().EqualError(err, expectedErrMsg)
 }

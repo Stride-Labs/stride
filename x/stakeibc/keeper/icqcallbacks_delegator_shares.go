@@ -103,7 +103,7 @@ func DelegatorSharesCallback(k Keeper, ctx sdk.Context, args []byte, query icqty
 	slashThresholdDecimal := sdk.NewDec(slashThreshold).Quo(sdk.NewDec(100))
 	if slashPct.GT(slashThresholdDecimal) {
 		return sdkerrors.Wrapf(types.ErrSlashExceedsSafetyThreshold,
-			"Validator slashed but ABORTING update, slash (%v) is greater than safety threshold (%v)", slashPct, slashThreshold)
+			"Validator slashed but ABORTING update, slash (%v) is greater than safety threshold (%v)", slashPct, slashThresholdDecimal)
 	}
 
 	// Update the validator weight and delegation reflect to reflect the slash
