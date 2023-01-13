@@ -3,7 +3,7 @@ package v4
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
-	authztypes "github.com/cosmos/cosmos-sdk/x/authz/types"
+	authz "github.com/cosmos/cosmos-sdk/x/authz"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 
 	interchainquerykeeper "github.com/Stride-Labs/stride/v4/x/interchainquery/keeper"
@@ -22,7 +22,7 @@ func CreateUpgradeHandler(
 ) upgradetypes.UpgradeHandler {
 	return func(ctx sdk.Context, _ upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
 		// Remove authz from store as it causes an issue with state sync
-		delete(vm, authztypes.ModuleName)
+		delete(vm, authz.ModuleName)
 
 		// Remove a stale query from the interchainquery store
 		// This query used an old query ID format and got stuck after the format was updated
