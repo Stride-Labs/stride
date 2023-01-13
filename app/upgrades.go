@@ -6,6 +6,8 @@ import (
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 
+	authztypes "github.com/cosmos/cosmos-sdk/x/authz/types"
+
 	v2 "github.com/Stride-Labs/stride/v4/app/upgrades/v2"
 	v3 "github.com/Stride-Labs/stride/v4/app/upgrades/v3"
 	v4 "github.com/Stride-Labs/stride/v4/app/upgrades/v4"
@@ -56,7 +58,7 @@ func (app *StrideApp) setupUpgradeHandlers() {
 		}
 	case "v5":
 		storeUpgrades = &storetypes.StoreUpgrades{
-			Deleted: []string{"authz"},
+			Deleted: []string{authztypes.ModuleName},
 		}
 	}
 
