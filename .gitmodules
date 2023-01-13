@@ -36,6 +36,6 @@
 
 # evmos
 [submodule "deps/evmos"]
-	# Commit: f2180eb9bef3e957a0a327c4927dedfc93f9c80a
+	# Commit: ec337e0357ae6b6727ad9092ac0ce3667df91319
 	path = deps/evmos
-	url = https://github.com/Stride-Labs/evmos
+	url = https://github.com/evmos/evmos
