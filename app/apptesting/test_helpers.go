@@ -318,12 +318,6 @@ func (s *AppTestHelper) MarshalledICS20PacketData() sdk.AccAddress {
 	return data.GetBytes()
 }
 
-func (s *AppTestHelper) ICS20PacketAcknowledgement() channeltypes.Acknowledgement {
-	// see: https://github.com/cosmos/ibc-go/blob/8de555db76d0320842dacaa32e5500e1fd55e667/modules/apps/transfer/keeper/relay.go#L151
-	ack := channeltypes.NewResultAcknowledgement(s.MarshalledICS20PacketData())
-	return ack
-}
-
 func (s *AppTestHelper) ConfirmUpgradeSucceededs(upgradeName string, upgradeHeight int64) {
 	s.Ctx = s.Ctx.WithBlockHeight(upgradeHeight - 1)
 	plan := upgradetypes.Plan{Name: upgradeName, Height: upgradeHeight}

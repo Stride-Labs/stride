@@ -41,6 +41,7 @@ func (app *StrideApp) setupUpgradeHandlers() {
 		v5.CreateUpgradeHandler(
 			app.mm,
 			app.configurator,
+			app.appCodec,
 			app.keys[claimtypes.StoreKey],
 			app.keys[icacallbacktypes.StoreKey],
 			app.keys[recordtypes.StoreKey],

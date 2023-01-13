@@ -19,8 +19,11 @@ func convertToNewValidator(oldValidator oldstakeibctypes.Validator) stakeibctype
 	}
 }
 
-func convertToNewICAAccount(oldAccount oldstakeibctypes.ICAAccount) stakeibctypes.ICAAccount {
-	return stakeibctypes.ICAAccount{Address: oldAccount.Address, Target: stakeibctypes.ICAAccountType(oldAccount.Target)}
+func convertToNewICAAccount(oldAccount *oldstakeibctypes.ICAAccount) *stakeibctypes.ICAAccount {
+	if oldAccount == nil {
+		return nil
+	}
+	return &stakeibctypes.ICAAccount{Address: oldAccount.Address, Target: stakeibctypes.ICAAccountType(oldAccount.Target)}
 }
 
 func convertToNewHostZone(oldHostZone oldstakeibctypes.HostZone) stakeibctypes.HostZone {
@@ -37,10 +40,10 @@ func convertToNewHostZone(oldHostZone oldstakeibctypes.HostZone) stakeibctypes.H
 		blacklistValidator = append(blacklistValidator, &newValidator)
 	}
 
-	newWithdrawalAccount := convertToNewICAAccount(*oldHostZone.WithdrawalAccount)
-	newFeeAccount := convertToNewICAAccount(*oldHostZone.FeeAccount)
-	newDelegationAccount := convertToNewICAAccount(*oldHostZone.DelegationAccount)
-	newRedemptionAccount := convertToNewICAAccount(*oldHostZone.RedemptionAccount)
+	newWithdrawalAccount := convertToNewICAAccount(oldHostZone.WithdrawalAccount)
+	newFeeAccount := convertToNewICAAccount(oldHostZone.FeeAccount)
+	newDelegationAccount := convertToNewICAAccount(oldHostZone.DelegationAccount)
+	newRedemptionAccount := convertToNewICAAccount(oldHostZone.RedemptionAccount)
 
 	return stakeibctypes.HostZone{
 		ChainId:               oldHostZone.ChainId,
@@ -49,10 +52,10 @@ func convertToNewHostZone(oldHostZone oldstakeibctypes.HostZone) stakeibctypes.H
 		TransferChannelId:     oldHostZone.TransferChannelId,
 		Validators:            validators,
 		BlacklistedValidators: blacklistValidator,
-		WithdrawalAccount:     &newWithdrawalAccount,
-		FeeAccount:            &newFeeAccount,
-		DelegationAccount:     &newDelegationAccount,
-		RedemptionAccount:     &newRedemptionAccount,
+		WithdrawalAccount:     newWithdrawalAccount,
+		FeeAccount:            newFeeAccount,
+		DelegationAccount:     newDelegationAccount,
+		RedemptionAccount:     newRedemptionAccount,
 		IbcDenom:              oldHostZone.IbcDenom,
 		HostDenom:             oldHostZone.HostDenom,
 		LastRedemptionRate:    oldHostZone.LastRedemptionRate,

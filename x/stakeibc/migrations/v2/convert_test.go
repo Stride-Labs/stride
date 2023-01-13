@@ -53,8 +53,13 @@ func TestConvertToNewValidator(t *testing.T) {
 func TestConvertToNewICAAccount(t *testing.T) {
 	oldAccount := oldstakeibctypes.ICAAccount{Address: "address", Target: oldstakeibctypes.ICAAccountType_FEE}
 	expectedNewAccount := stakeibctypes.ICAAccount{Address: "address", Target: stakeibctypes.ICAAccountType_FEE}
-	actualNewAccount := convertToNewICAAccount(oldAccount)
-	require.Equal(t, expectedNewAccount, actualNewAccount)
+	actualNewAccount := convertToNewICAAccount(&oldAccount)
+	require.Equal(t, expectedNewAccount, *actualNewAccount)
+}
+
+func TestConvertToNewICAAccount_Nil(t *testing.T) {
+	actualNewAccount := convertToNewICAAccount(nil)
+	require.Nil(t, actualNewAccount)
 }
 
 func TestConvertToNewHostZone(t *testing.T) {
