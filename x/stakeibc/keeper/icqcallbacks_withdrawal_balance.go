@@ -139,7 +139,7 @@ func WithdrawalBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query icq
 // Before SDK v46, the query response returned a sdk.Coin type. SDK v46 returns an int type
 // https://github.com/cosmos/cosmos-sdk/pull/9832
 func UnmarshalAmountFromBalanceQuery(cdc codec.BinaryCodec, queryResponseBz []byte) (amount sdkmath.Int, err error) {
-	// An nil response would indicate some sort of error
+	// An nil should not be possible, exit immediately if it occurs
 	if queryResponseBz == nil {
 		return sdkmath.Int{}, sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "query response is nil")
 	}
