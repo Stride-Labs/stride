@@ -36,6 +36,8 @@ func WithdrawalBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query icq
 	if err != nil {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "unable to determine balance from query response")
 	}
+	k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_WithdrawalBalance,
+		"Query response - Withdrawal Balance: %v %s", withdrawalBalanceAmount, hostZone.HostDenom))
 
 	// Confirm the balance is greater than zero
 	if withdrawalBalanceAmount.LTE(sdkmath.ZeroInt()) {
@@ -43,8 +45,6 @@ func WithdrawalBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query icq
 			"No balance to transfer for address: %v, balance: %v", hostZone.WithdrawalAccount.GetAddress(), withdrawalBalanceAmount))
 		return nil
 	}
-	k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_WithdrawalBalance,
-		"Query response - Withdrawal Balance: %v %s", withdrawalBalanceAmount, hostZone.HostDenom))
 
 	// Get the host zone's ICA accounts
 	withdrawalAccount := hostZone.WithdrawalAccount
