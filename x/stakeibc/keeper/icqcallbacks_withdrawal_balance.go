@@ -34,7 +34,7 @@ func WithdrawalBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query icq
 	// Unmarshal the query response args to determine the balance
 	withdrawalBalanceAmount, err := UnmarshalAmountFromBalanceQuery(k.cdc, args)
 	if err != nil {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "unable to determine balance from query response")
+		return sdkerrors.Wrap(err, "unable to determine balance from query response")
 	}
 	k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_WithdrawalBalance,
 		"Query response - Withdrawal Balance: %v %s", withdrawalBalanceAmount, hostZone.HostDenom))

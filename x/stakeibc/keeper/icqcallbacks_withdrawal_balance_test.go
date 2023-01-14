@@ -39,7 +39,7 @@ type WithdrawalBalanceICQCallbackTestCase struct {
 // the address' balance. This function creates the serialized response
 func (s *KeeperTestSuite) CreateBalanceQueryResponse(amount int64, denom string) []byte {
 	coin := sdk.NewCoin(denom, sdkmath.NewInt(amount))
-	coinBz := s.App.RecordsKeeper.Cdc.MustMarshal(&coin)
+	coinBz := s.App.AppCodec().MustMarshal(&coin)
 	return coinBz
 }
 
@@ -56,6 +56,7 @@ func (s *KeeperTestSuite) SetupWithdrawalBalanceCallbackTest() WithdrawalBalance
 
 	hostZone := stakeibctypes.HostZone{
 		ChainId:      HostChainId,
+		HostDenom:    Atom,
 		ConnectionId: ibctesting.FirstConnectionID,
 		DelegationAccount: &stakeibctypes.ICAAccount{
 			Address: delegationAddress,
@@ -201,9 +202,7 @@ func (s *KeeperTestSuite) TestWithdrawalBalanceCallback_InvalidArgs() {
 	invalidArgs := []byte("random bytes")
 	err := stakeibckeeper.WithdrawalBalanceCallback(s.App.StakeibcKeeper, s.Ctx, invalidArgs, tc.validArgs.query)
 
-	expectedErrMsg := "unable to unmarshal query response into Coin type, "
-	expectedErrMsg += "err: unexpected EOF: unable to unmarshal data structure"
-	s.Require().EqualError(err, expectedErrMsg)
+	s.Require().ErrorContains(err, "unable to determine balance from query response")
 }
 
 func (s *KeeperTestSuite) TestWithdrawalBalanceCallback_NoWithdrawalAccount() {
