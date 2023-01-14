@@ -257,9 +257,9 @@ func (s *KeeperTestSuite) TestWithdrawalBalanceCallback_FailedSubmitTx() {
 func TestUnmarshalAmountFromBalanceQuery(t *testing.T) {
 	type InputType int64
 	const (
-		rawBytes InputType = 0
-		coinType           = 1
-		intType            = 2
+		rawBytes InputType = iota
+		coinType
+		intType
 	)
 
 	testCases := []struct {
