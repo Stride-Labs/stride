@@ -227,7 +227,7 @@ func (k Keeper) IsWithinBufferWindow(ctx sdk.Context) (bool, error) {
 
 	inWindow := elapsedShareOfEpoch.GT(epochShareThresh)
 	if !inWindow {
-		k.Logger(ctx).Error(fmt.Sprintf("ICQCB: We're %d pct through the epoch, ICQ cutoff is %d", elapsedShareOfEpoch, epochShareThresh))
+		k.Logger(ctx).Error(fmt.Sprintf("Outside ICQ Callback Window. We're %d pct through the epoch, ICQ cutoff is %d", elapsedShareOfEpoch, epochShareThresh))
 	}
 	return inWindow, nil
 }
