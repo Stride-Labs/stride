@@ -44,7 +44,7 @@ func WithdrawalBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query icq
 		return nil
 	}
 	k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_WithdrawalBalance,
-		"Query response - Withdrawal Balance: %v", withdrawalBalanceAmount))
+		"Query response - Withdrawal Balance: %v %s", withdrawalBalanceAmount, hostZone.HostDenom))
 
 	// Get the host zone's ICA accounts
 	withdrawalAccount := hostZone.WithdrawalAccount
