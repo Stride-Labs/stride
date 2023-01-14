@@ -27,13 +27,16 @@ func WithdrawalBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query icq
 	}
 
 	// Unmarshal the CB args into a coin type
-	withdrawalBalanceCoin := sdk.Coin{}
-	err := k.cdc.Unmarshal(args, &withdrawalBalanceCoin)
+	withdrawalBalanceInt := sdk.Int{}
+	err := withdrawalBalanceInt.Unmarshal(args)
+	// err := k.cdc.Unmarshal(args, &withdrawalBalanceCoin)
 	if err != nil {
 		errMsg := fmt.Sprintf("unable to unmarshal balance in callback args for zone: %s, err: %s", hostZone.ChainId, err.Error())
 		k.Logger(ctx).Error(errMsg)
 		return sdkerrors.Wrapf(types.ErrMarshalFailure, errMsg)
 	}
+
+	withdrawalBalanceCoin := sdk.NewCoin(hostZone.HostDenom, withdrawalBalanceInt)
 
 	// Check if the coin is nil (which would indicate the account never had a balance)
 	if withdrawalBalanceCoin.IsNil() || withdrawalBalanceCoin.Amount.IsNil() {
