@@ -43,6 +43,8 @@ func WithdrawalBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query icq
 			"No balance to transfer for address: %v, balance: %v", hostZone.WithdrawalAccount.GetAddress(), withdrawalBalanceAmount))
 		return nil
 	}
+	k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_WithdrawalBalance,
+		"Query response - Withdrawal Balance: %v", withdrawalBalanceAmount))
 
 	// Get the host zone's ICA accounts
 	withdrawalAccount := hostZone.WithdrawalAccount
@@ -135,6 +137,7 @@ func WithdrawalBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query icq
 
 // Helper function to unmarshal a Balance query response across SDK versions
 // Before SDK v46, the query response returned a sdk.Coin type. SDK v46 returns an int type
+// https://github.com/cosmos/cosmos-sdk/pull/9832
 func UnmarshalAmountFromBalanceQuery(cdc codec.BinaryCodec, queryResponseBz []byte) (amount sdkmath.Int, err error) {
 	// An nil response would indicate some sort of error
 	if queryResponseBz == nil {
@@ -147,7 +150,8 @@ func UnmarshalAmountFromBalanceQuery(cdc codec.BinaryCodec, queryResponseBz []by
 	}
 
 	// First attempt to unmarshal as an Int (for SDK v46+)
-	// If it was successful, return the amount
+	// If the result was serialized as a `Coin` type, it should contain a string (representing the denom)
+	// which will cause the unmarshalling to throw an error
 	intError := amount.Unmarshal(queryResponseBz)
 	if intError == nil {
 		return amount, nil
