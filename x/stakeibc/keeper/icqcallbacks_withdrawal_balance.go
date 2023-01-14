@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	sdkmath "cosmossdk.io/math"
+	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
@@ -30,26 +31,18 @@ func WithdrawalBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query icq
 		return sdkerrors.Wrapf(types.ErrHostZoneNotFound, "no registered zone for queried chain ID (%s)", chainId)
 	}
 
-	// Unmarshal the query response args into a coin type
-	withdrawalBalanceCoin := sdk.Coin{}
-	err := k.cdc.Unmarshal(args, &withdrawalBalanceCoin)
+	// Unmarshal the query response args to determine the balance
+	withdrawalBalanceAmount, err := UnmarshalAmountFromBalanceQuery(k.cdc, args)
 	if err != nil {
-		return sdkerrors.Wrapf(types.ErrUnmarshalFailure, "unable to unmarshal query response into Coin type, err: %s", err.Error())
+		return sdkerrors.Wrap(err, "unable to determine balance from query response")
 	}
-	k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_WithdrawalBalance, "Query response - Coin: %+v", withdrawalBalanceCoin))
-
-	// Check if the coin is nil (which would indicate the account never had a balance)
-	if withdrawalBalanceCoin.IsNil() || withdrawalBalanceCoin.Amount.IsNil() {
-		k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_WithdrawalBalance,
-			"Balance query returned a nil coin for address %v, meaning the account has never had a balance on the host",
-			hostZone.WithdrawalAccount.GetAddress()))
-		return nil
-	}
+	k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_WithdrawalBalance,
+		"Query response - Withdrawal Balance: %v %s", withdrawalBalanceAmount, hostZone.HostDenom))
 
 	// Confirm the balance is greater than zero
-	if withdrawalBalanceCoin.Amount.LTE(sdkmath.ZeroInt()) {
+	if withdrawalBalanceAmount.LTE(sdkmath.ZeroInt()) {
 		k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_WithdrawalBalance,
-			"No balance to transfer for address: %v, coin: %v", hostZone.WithdrawalAccount.GetAddress(), withdrawalBalanceCoin.String()))
+			"No balance to transfer for address: %v, balance: %v", hostZone.WithdrawalAccount.GetAddress(), withdrawalBalanceAmount))
 		return nil
 	}
 
@@ -81,7 +74,6 @@ func WithdrawalBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query icq
 	}
 
 	// Split out the reinvestment amount from the fee amount
-	withdrawalBalanceAmount := withdrawalBalanceCoin.Amount
 	feeAmount := strideCommission.Mul(sdk.NewDecFromInt(withdrawalBalanceAmount)).TruncateInt()
 	reinvestAmount := withdrawalBalanceAmount.Sub(feeAmount)
 
@@ -92,8 +84,8 @@ func WithdrawalBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query icq
 	}
 
 	// Prepare MsgSends from the withdrawal account
-	feeCoin := sdk.NewCoin(withdrawalBalanceCoin.Denom, feeAmount)
-	reinvestCoin := sdk.NewCoin(withdrawalBalanceCoin.Denom, reinvestAmount)
+	feeCoin := sdk.NewCoin(hostZone.HostDenom, feeAmount)
+	reinvestCoin := sdk.NewCoin(hostZone.HostDenom, reinvestAmount)
 
 	var msgs []sdk.Msg
 	if feeCoin.Amount.GT(sdk.ZeroInt()) {
@@ -136,9 +128,44 @@ func WithdrawalBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query icq
 		sdk.NewEvent(
 			sdk.EventTypeMessage,
 			sdk.NewAttribute("hostZone", hostZone.ChainId),
-			sdk.NewAttribute("totalWithdrawalBalance", withdrawalBalanceCoin.Amount.String()),
+			sdk.NewAttribute("totalWithdrawalBalance", withdrawalBalanceAmount.String()),
 		),
 	)
 
 	return nil
+}
+
+// Helper function to unmarshal a Balance query response across SDK versions
+// Before SDK v46, the query response returned a sdk.Coin type. SDK v46 returns an int type
+// https://github.com/cosmos/cosmos-sdk/pull/9832
+func UnmarshalAmountFromBalanceQuery(cdc codec.BinaryCodec, queryResponseBz []byte) (amount sdkmath.Int, err error) {
+	// An nil should not be possible, exit immediately if it occurs
+	if queryResponseBz == nil {
+		return sdkmath.Int{}, sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "query response is nil")
+	}
+
+	// If the query response is empty, that means the account was never registed (and thus has a 0 balance)
+	if len(queryResponseBz) == 0 {
+		return sdkmath.ZeroInt(), nil
+	}
+
+	// First attempt to unmarshal as an Int (for SDK v46+)
+	// If the result was serialized as a `Coin` type, it should contain a string (representing the denom)
+	// which will cause the unmarshalling to throw an error
+	intError := amount.Unmarshal(queryResponseBz)
+	if intError == nil {
+		return amount, nil
+	}
+
+	// If the Int unmarshaling was unsuccessful, attempt again using a Coin type (for SDK v45 and below)
+	// If successful, return the amount field from the coin (if the coin is not nil)
+	var coin sdk.Coin
+	coinError := cdc.Unmarshal(queryResponseBz, &coin)
+	if coinError == nil {
+		return coin.Amount, nil
+	}
+
+	// If it failed unmarshaling with either data structure, return an error with the failure messages combined
+	return sdkmath.Int{}, sdkerrors.Wrapf(types.ErrUnmarshalFailure,
+		"unable to unmarshal balance query response %v as sdkmath.Int (err: %s) or sdk.Coin (err: %s)", queryResponseBz, intError.Error(), coinError.Error())
 }
