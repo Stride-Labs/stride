@@ -37,7 +37,7 @@ func (app *StrideApp) setupUpgradeHandlers() {
 	// v5 upgrade handler
 	app.UpgradeKeeper.SetUpgradeHandler(
 		v5.UpgradeName,
-		v5.CreateUpgradeHandler(app.mm, app.configurator, app.InterchainqueryKeeper),
+		v5.CreateUpgradeHandler(app.mm, app.configurator, app.InterchainqueryKeeper, app.StakeibcKeeper),
 	)
 
 	upgradeInfo, err := app.UpgradeKeeper.ReadUpgradeInfoFromDisk()

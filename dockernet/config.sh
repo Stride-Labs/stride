@@ -16,10 +16,11 @@ TX_LOGS=$DOCKERNET_HOME/logs/tx.log
 KEYS_LOGS=$DOCKERNET_HOME/logs/keys.log
 
 # List of hosts enabled 
-#  `start-docker` defaults to just GAIA if HOST_CHAINS is empty
-# `start-docker-all` always runs all hosts
 HOST_CHAINS=() 
 
+# If no host zones are specified above:
+#  `start-docker` defaults to just GAIA if HOST_CHAINS is empty
+#  `start-docker-all` always runs all hosts
 if [[ "${ALL_HOST_CHAINS:-false}" == "true" ]]; then 
   HOST_CHAINS=(GAIA JUNO OSMO STARS)
 elif [[ "${#HOST_CHAINS[@]}" == "0" ]]; then 

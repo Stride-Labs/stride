@@ -199,8 +199,8 @@ func (s *KeeperTestSuite) TestWithdrawalBalanceCallback_InvalidArgs() {
 	invalidArgs := []byte("random bytes")
 	err := stakeibckeeper.WithdrawalBalanceCallback(s.App.StakeibcKeeper, s.Ctx, invalidArgs, tc.validArgs.query)
 
-	expectedErrMsg := "unable to unmarshal balance in callback args for zone: GAIA, "
-	expectedErrMsg += "err: unexpected EOF: unable to marshal data structure"
+	expectedErrMsg := "unable to unmarshal query response into Coin type, "
+	expectedErrMsg += "err: unexpected EOF: unable to unmarshal data structure"
 	s.Require().EqualError(err, expectedErrMsg)
 }
 
@@ -213,9 +213,7 @@ func (s *KeeperTestSuite) TestWithdrawalBalanceCallback_NoWithdrawalAccount() {
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, badHostZone)
 
 	err := stakeibckeeper.WithdrawalBalanceCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.callbackArgs, tc.validArgs.query)
-	expectedErrMsg := "WithdrawalBalanceCallback: no withdrawal account found for zone: GAIA: "
-	expectedErrMsg += "ICA acccount not found on host zone"
-	s.Require().EqualError(err, expectedErrMsg)
+	s.Require().EqualError(err, "no withdrawal account found for GAIA: ICA acccount not found on host zone")
 }
 
 func (s *KeeperTestSuite) TestWithdrawalBalanceCallback_NoDelegationAccount() {
@@ -227,9 +225,7 @@ func (s *KeeperTestSuite) TestWithdrawalBalanceCallback_NoDelegationAccount() {
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, badHostZone)
 
 	err := stakeibckeeper.WithdrawalBalanceCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.callbackArgs, tc.validArgs.query)
-	expectedErrMsg := "WithdrawalBalanceCallback: no delegation account found for zone: GAIA: "
-	expectedErrMsg += "ICA acccount not found on host zone"
-	s.Require().EqualError(err, expectedErrMsg)
+	s.Require().EqualError(err, "no delegation account found for GAIA: ICA acccount not found on host zone")
 }
 
 func (s *KeeperTestSuite) TestWithdrawalBalanceCallback_NoFeeAccount() {
@@ -241,9 +237,7 @@ func (s *KeeperTestSuite) TestWithdrawalBalanceCallback_NoFeeAccount() {
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, badHostZone)
 
 	err := stakeibckeeper.WithdrawalBalanceCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.callbackArgs, tc.validArgs.query)
-	expectedErrMsg := "WithdrawalBalanceCallback: no fee account found for zone: GAIA: "
-	expectedErrMsg += "ICA acccount not found on host zone"
-	s.Require().EqualError(err, expectedErrMsg)
+	s.Require().EqualError(err, "no fee account found for GAIA: ICA acccount not found on host zone")
 }
 
 func (s *KeeperTestSuite) TestWithdrawalBalanceCallback_FailedSubmitTx() {
@@ -255,6 +249,6 @@ func (s *KeeperTestSuite) TestWithdrawalBalanceCallback_FailedSubmitTx() {
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, badHostZone)
 
 	err := stakeibckeeper.WithdrawalBalanceCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.callbackArgs, tc.validArgs.query)
-	s.Require().ErrorContains(err, "Failed to SubmitTxs for GAIA - connection-X")
+	s.Require().ErrorContains(err, "Failed to SubmitTxs")
 	s.Require().ErrorContains(err, "invalid connection id, connection-X not found")
 }
