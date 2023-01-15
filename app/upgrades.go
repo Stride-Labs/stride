@@ -6,6 +6,8 @@ import (
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 
+	authz "github.com/cosmos/cosmos-sdk/x/authz"
+
 	v2 "github.com/Stride-Labs/stride/v4/app/upgrades/v2"
 	v3 "github.com/Stride-Labs/stride/v4/app/upgrades/v3"
 	v4 "github.com/Stride-Labs/stride/v4/app/upgrades/v4"
@@ -42,6 +44,8 @@ func (app *StrideApp) setupUpgradeHandlers() {
 			app.mm,
 			app.configurator,
 			app.appCodec,
+			app.InterchainqueryKeeper,
+			app.StakeibcKeeper,
 			app.keys[claimtypes.StoreKey],
 			app.keys[icacallbacktypes.StoreKey],
 			app.keys[recordtypes.StoreKey],
@@ -64,6 +68,10 @@ func (app *StrideApp) setupUpgradeHandlers() {
 	case "v3":
 		storeUpgrades = &storetypes.StoreUpgrades{
 			Added: []string{claimtypes.StoreKey},
+		}
+	case "v5":
+		storeUpgrades = &storetypes.StoreUpgrades{
+			Deleted: []string{authz.ModuleName},
 		}
 	}
 
