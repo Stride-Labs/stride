@@ -13,9 +13,9 @@ import (
 )
 
 func migrateHostZone(store sdk.KVStore, cdc codec.BinaryCodec) error {
-	paramsStore := prefix.NewStore(store, []byte(stakeibctypes.HostZoneKey))
+	stakeibcStore := prefix.NewStore(store, []byte(stakeibctypes.HostZoneKey))
 
-	iterator := paramsStore.Iterator(nil, nil)
+	iterator := stakeibcStore.Iterator(nil, nil)
 	defer iterator.Close()
 
 	for ; iterator.Valid(); iterator.Next() {
@@ -34,7 +34,7 @@ func migrateHostZone(store sdk.KVStore, cdc codec.BinaryCodec) error {
 		}
 
 		// Store new type
-		paramsStore.Set(iterator.Key(), newHostZoneBz)
+		stakeibcStore.Set(iterator.Key(), newHostZoneBz)
 	}
 
 	return nil
