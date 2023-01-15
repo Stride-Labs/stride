@@ -90,6 +90,20 @@ chains:
       sign-mode: direct
       extra-codecs:
         - ethermint
+  host:
+    type: cosmos
+    value:
+      key: rly6
+      chain-id: HOST
+      rpc-addr: http://host1:26657
+      account-prefix: stride
+      keyring-backend: test
+      gas-adjustment: 1.2
+      gas-prices: 0.01uwalk
+      debug: false
+      timeout: 20s
+      output-format: json
+      sign-mode: direct
   # {new-host-zone}:
   #   type: cosmos
   #   value:
@@ -143,6 +157,11 @@ paths:
       chain-id: STRIDE
     dst:
       chain-id: evmos_9001-2
+  stride-host:
+    src:
+      chain-id: STRIDE
+    dst:
+      chain-id: HOST
     src-channel-filter:
       rule: ""
       channel-list: []
