@@ -15,14 +15,8 @@ STRIDE_LOGS=$LOGS/stride.log
 TX_LOGS=$DOCKERNET_HOME/logs/tx.log
 KEYS_LOGS=$DOCKERNET_HOME/logs/keys.log
 
-# List of hosts enabled 
-<<<<<<< HEAD
-#  `start-docker` defaults to just GAIA if HOST_CHAINS is empty
-# `start-docker-all` always runs all hosts
+# List of hosts enabled
 HOST_CHAINS=(EVMOS) 
-=======
-HOST_CHAINS=() 
->>>>>>> main
 
 # If no host zones are specified above:
 #  `start-docker` defaults to just GAIA if HOST_CHAINS is empty
