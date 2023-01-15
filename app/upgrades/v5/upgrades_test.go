@@ -14,9 +14,11 @@ import (
 	"github.com/Stride-Labs/stride/v4/app"
 
 	"github.com/Stride-Labs/stride/v4/app/apptesting"
+	upgradev5 "github.com/Stride-Labs/stride/v4/app/upgrades/v5"
 	oldclaimtypes "github.com/Stride-Labs/stride/v4/x/claim/migrations/v2/types"
 	claimtypes "github.com/Stride-Labs/stride/v4/x/claim/types"
 	icacallbacktypes "github.com/Stride-Labs/stride/v4/x/icacallbacks/types"
+	icqtypes "github.com/Stride-Labs/stride/v4/x/interchainquery/types"
 	recordkeeper "github.com/Stride-Labs/stride/v4/x/records/keeper"
 	oldrecordtypes "github.com/Stride-Labs/stride/v4/x/records/migrations/v2/types"
 	recordtypes "github.com/Stride-Labs/stride/v4/x/records/types"
@@ -39,27 +41,38 @@ func TestKeeperTestSuite(t *testing.T) {
 	suite.Run(t, new(UpgradeTestSuite))
 }
 
-func (suite *UpgradeTestSuite) TestUpgrade() {
-	suite.Setup()
+func (s *UpgradeTestSuite) TestUpgrade() {
+	s.Setup()
 
+	// Setup stores for migrated modules
 	codec := app.MakeEncodingConfig().Marshaler
-	checkClaimStoreAfterMigration := suite.SetupOldClaimStore(codec)
-	checkIcacallbackStoreAfterMigration := suite.SetupOldIcacallbackStore(codec)
-	checkRecordStoreAfterMigration := suite.SetupOldRecordStore(codec)
-	checkStakeibcStoreAfterMigration := suite.SetupOldStakeibcStore(codec)
+	checkClaimStoreAfterMigration := s.SetupOldClaimStore(codec)
+	checkIcacallbackStoreAfterMigration := s.SetupOldIcacallbackStore(codec)
+	checkRecordStoreAfterMigration := s.SetupOldRecordStore(codec)
+	checkStakeibcStoreAfterMigration := s.SetupOldStakeibcStore(codec)
 
-	suite.ConfirmUpgradeSucceededs("v5", dummyUpgradeHeight)
+	// Setup store for stale query and max slash percent param
+	checkStaleQueryRemoval := s.SetupRemoveStaleQuery()
+	checkMaxSlashParamAdded := s.SetupAddMaxSlashPercentParam()
 
+	// Run upgrade
+	s.ConfirmUpgradeSucceededs("v5", dummyUpgradeHeight)
+
+	// Confirm store migrations were successful
 	checkClaimStoreAfterMigration()
 	checkIcacallbackStoreAfterMigration()
 	checkRecordStoreAfterMigration()
 	checkStakeibcStoreAfterMigration()
+
+	// Confirm query was removed and max slash percent parameter was added
+	checkStaleQueryRemoval()
+	checkMaxSlashParamAdded()
 }
 
 // Sets up the old claim store and returns a callback function that can be used to verify
 // the store migration was successful
-func (suite *UpgradeTestSuite) SetupOldClaimStore(codec codec.Codec) func() {
-	claimStore := suite.Ctx.KVStore(suite.App.GetKey(claimtypes.StoreKey))
+func (s *UpgradeTestSuite) SetupOldClaimStore(codec codec.Codec) func() {
+	claimStore := s.Ctx.KVStore(s.App.GetKey(claimtypes.StoreKey))
 
 	airdropId := "id"
 	params := oldclaimtypes.Params{
@@ -72,22 +85,22 @@ func (suite *UpgradeTestSuite) SetupOldClaimStore(codec codec.Codec) func() {
 	}
 
 	paramsBz, err := codec.MarshalJSON(&params)
-	suite.Require().NoError(err)
+	s.Require().NoError(err)
 	claimStore.Set([]byte(claimtypes.ParamsKey), paramsBz)
 
 	// Callback to check claim store after migration
 	return func() {
-		claimParams, err := suite.App.ClaimKeeper.GetParams(suite.Ctx)
-		suite.Require().NoError(err, "no error expected when getting claims")
-		suite.Require().Equal(claimParams.Airdrops[0].AirdropIdentifier, airdropId, "airdrop identifier")
-		suite.Require().Equal(claimParams.Airdrops[0].ClaimedSoFar, sdkmath.NewInt(1000000), "claimed so far")
+		claimParams, err := s.App.ClaimKeeper.GetParams(s.Ctx)
+		s.Require().NoError(err, "no error expected when getting claims")
+		s.Require().Equal(claimParams.Airdrops[0].AirdropIdentifier, airdropId, "airdrop identifier")
+		s.Require().Equal(claimParams.Airdrops[0].ClaimedSoFar, sdkmath.NewInt(1000000), "claimed so far")
 	}
 }
 
 // Stores delegate callback args in the icacallback store and returns a function used to verify
 // the store was migrated successfully
 // The callback args should get migrated
-func (suite *UpgradeTestSuite) SetupOldDelegateCallback(codec codec.Codec, callbackDataStore sdk.KVStore) func() {
+func (s *UpgradeTestSuite) SetupOldDelegateCallback(codec codec.Codec, callbackDataStore sdk.KVStore) func() {
 	// Create the marshalled callback args
 	delegateValidator := "dval"
 	delegateCallback := oldstakeibctypes.DelegateCallback{
@@ -96,7 +109,7 @@ func (suite *UpgradeTestSuite) SetupOldDelegateCallback(codec codec.Codec, callb
 		},
 	}
 	delegateCallbackArgs, err := proto.Marshal(&delegateCallback)
-	suite.Require().NoError(err)
+	s.Require().NoError(err)
 
 	// Create the callback data (which has callback args as an attribute)
 	delegateKey := "delegate_key"
@@ -106,36 +119,36 @@ func (suite *UpgradeTestSuite) SetupOldDelegateCallback(codec codec.Codec, callb
 		CallbackArgs: delegateCallbackArgs,
 	}
 	delegateCallbackDataBz, err := codec.Marshal(&delegateCallbackData)
-	suite.Require().NoError(err)
+	s.Require().NoError(err)
 
 	// Store the callback data
 	callbackDataStore.Set(icacallbacktypes.CallbackDataKey(delegateKey), delegateCallbackDataBz)
 
 	// Check delegate callback args after the migration
 	return func() {
-		delegateCallbackData, found := suite.App.IcacallbacksKeeper.GetCallbackData(suite.Ctx, delegateKey)
-		suite.Require().True(found, "found delegate callback data")
+		delegateCallbackData, found := s.App.IcacallbacksKeeper.GetCallbackData(s.Ctx, delegateKey)
+		s.Require().True(found, "found delegate callback data")
 
 		var delegateCallback stakeibctypes.DelegateCallback
 		err := proto.Unmarshal(delegateCallbackData.CallbackArgs, &delegateCallback)
-		suite.Require().NoError(err, "unmarshaling delegate callback args should not error")
+		s.Require().NoError(err, "unmarshaling delegate callback args should not error")
 
-		suite.Require().Equal(delegateValidator, delegateCallback.SplitDelegations[0].Validator, "delegate callback validator")
-		suite.Require().Equal(sdkmath.NewInt(1000000), delegateCallback.SplitDelegations[0].Amount, "delegate callback amount")
+		s.Require().Equal(delegateValidator, delegateCallback.SplitDelegations[0].Validator, "delegate callback validator")
+		s.Require().Equal(sdkmath.NewInt(1000000), delegateCallback.SplitDelegations[0].Amount, "delegate callback amount")
 	}
 }
 
 // Stores undelegate callback args in the icacallback store and returns a function used to verify
 // the store was migrated successfully
 // The callback args should get migrated
-func (suite *UpgradeTestSuite) SetupOldUndelegateCallback(codec codec.Codec, callbackDataStore sdk.KVStore) func() {
+func (s *UpgradeTestSuite) SetupOldUndelegateCallback(codec codec.Codec, callbackDataStore sdk.KVStore) func() {
 	// Create the marshalled callback args
 	undelegateValidator := "uval"
 	undelegateCallback := oldstakeibctypes.UndelegateCallback{
 		SplitDelegations: []*oldstakeibctypes.SplitDelegation{{Validator: undelegateValidator, Amount: uint64(3000000)}},
 	}
 	undelegateCallbackArgs, err := proto.Marshal(&undelegateCallback)
-	suite.Require().NoError(err)
+	s.Require().NoError(err)
 
 	// Create the callback data (which has callback args as an attribute)
 	undelegateKey := "undelegate_key"
@@ -145,29 +158,29 @@ func (suite *UpgradeTestSuite) SetupOldUndelegateCallback(codec codec.Codec, cal
 		CallbackArgs: undelegateCallbackArgs,
 	}
 	undelegateCallbackDataBz, err := codec.Marshal(&undelegateCallbackData)
-	suite.Require().NoError(err)
+	s.Require().NoError(err)
 
 	// Store the callback data
 	callbackDataStore.Set(icacallbacktypes.CallbackDataKey(undelegateKey), undelegateCallbackDataBz)
 
 	// Check undelegate callback args after the migration
 	return func() {
-		undelegateCallbackData, found := suite.App.IcacallbacksKeeper.GetCallbackData(suite.Ctx, undelegateKey)
-		suite.Require().True(found, "found undelegate callback data")
+		undelegateCallbackData, found := s.App.IcacallbacksKeeper.GetCallbackData(s.Ctx, undelegateKey)
+		s.Require().True(found, "found undelegate callback data")
 
 		var undelegateCallback stakeibctypes.UndelegateCallback
 		err = proto.Unmarshal(undelegateCallbackData.CallbackArgs, &undelegateCallback)
-		suite.Require().NoError(err, "unmarshaling undelegate callback args should not error")
+		s.Require().NoError(err, "unmarshaling undelegate callback args should not error")
 
-		suite.Require().Equal(undelegateValidator, undelegateCallback.SplitDelegations[0].Validator, "undelegate callback validator")
-		suite.Require().Equal(sdkmath.NewInt(3000000), undelegateCallback.SplitDelegations[0].Amount, "undelegate callback amount")
+		s.Require().Equal(undelegateValidator, undelegateCallback.SplitDelegations[0].Validator, "undelegate callback validator")
+		s.Require().Equal(sdkmath.NewInt(3000000), undelegateCallback.SplitDelegations[0].Amount, "undelegate callback amount")
 	}
 }
 
 // Stores rebalance callback args in the icacallback store and returns a function used to verify
 // the store was migrated successfully
 // The callback args should get migrated
-func (suite *UpgradeTestSuite) SetupOldRebalanceCallback(codec codec.Codec, callbackDataStore sdk.KVStore) func() {
+func (s *UpgradeTestSuite) SetupOldRebalanceCallback(codec codec.Codec, callbackDataStore sdk.KVStore) func() {
 	// Create the marshalled callback args
 	rebalanceValidator := "rval"
 	rebalanceCallback := oldstakeibctypes.RebalanceCallback{
@@ -176,7 +189,7 @@ func (suite *UpgradeTestSuite) SetupOldRebalanceCallback(codec codec.Codec, call
 		},
 	}
 	rebalanceCallbackArgs, err := proto.Marshal(&rebalanceCallback)
-	suite.Require().NoError(err)
+	s.Require().NoError(err)
 
 	// Create the callback data (which has callback args as an attribute)
 	rebalanceKey := "rebalance_key"
@@ -186,29 +199,29 @@ func (suite *UpgradeTestSuite) SetupOldRebalanceCallback(codec codec.Codec, call
 		CallbackArgs: rebalanceCallbackArgs,
 	}
 	rebalanceCallbackDataBz, err := codec.Marshal(&rebalanceCallbackData)
-	suite.Require().NoError(err)
+	s.Require().NoError(err)
 
 	// Store the callback data
 	callbackDataStore.Set(icacallbacktypes.CallbackDataKey(rebalanceKey), rebalanceCallbackDataBz)
 
 	// Check rebalance callback args after the migration
 	return func() {
-		rebalanceCallbackData, found := suite.App.IcacallbacksKeeper.GetCallbackData(suite.Ctx, rebalanceKey)
-		suite.Require().True(found, "found rebalance callback data")
+		rebalanceCallbackData, found := s.App.IcacallbacksKeeper.GetCallbackData(s.Ctx, rebalanceKey)
+		s.Require().True(found, "found rebalance callback data")
 
 		var rebalanceCallback stakeibctypes.RebalanceCallback
 		err = proto.Unmarshal(rebalanceCallbackData.CallbackArgs, &rebalanceCallback)
-		suite.Require().NoError(err, "unmarshaling rebalance callback args should not error")
+		s.Require().NoError(err, "unmarshaling rebalance callback args should not error")
 
-		suite.Require().Equal(rebalanceValidator, rebalanceCallback.Rebalancings[0].SrcValidator, "rebalance callback validator")
-		suite.Require().Equal(sdkmath.NewInt(2000000), rebalanceCallback.Rebalancings[0].Amt, "rebalance callback amount")
+		s.Require().Equal(rebalanceValidator, rebalanceCallback.Rebalancings[0].SrcValidator, "rebalance callback validator")
+		s.Require().Equal(sdkmath.NewInt(2000000), rebalanceCallback.Rebalancings[0].Amt, "rebalance callback amount")
 	}
 }
 
 // Stores claim callback args in the icacallback store and returns a function used to verify
 // the store was migrated successfully
 // The callback args should NOT get migrated
-func (suite *UpgradeTestSuite) SetupOldClaimCallback(codec codec.Codec, callbackDataStore sdk.KVStore) func() {
+func (s *UpgradeTestSuite) SetupOldClaimCallback(codec codec.Codec, callbackDataStore sdk.KVStore) func() {
 	// Create the callback data for the claim callback
 	claimKey := "claim_key"
 	oldClaimCallbackData := icacallbacktypes.CallbackData{
@@ -217,7 +230,7 @@ func (suite *UpgradeTestSuite) SetupOldClaimCallback(codec codec.Codec, callback
 		CallbackArgs: []byte{1, 2, 3},
 	}
 	claimCallbackDataBz, err := codec.Marshal(&oldClaimCallbackData)
-	suite.Require().NoError(err)
+	s.Require().NoError(err)
 
 	// Store the callback data
 	callbackDataStore.Set(icacallbacktypes.CallbackDataKey(claimKey), claimCallbackDataBz)
@@ -225,22 +238,22 @@ func (suite *UpgradeTestSuite) SetupOldClaimCallback(codec codec.Codec, callback
 	// Check rebalance callback args after the migration
 	// The callback data should not have been modified
 	return func() {
-		newClaimCallbackData, found := suite.App.IcacallbacksKeeper.GetCallbackData(suite.Ctx, claimKey)
-		suite.Require().True(found, "found claim callback data")
-		suite.Require().Equal(oldClaimCallbackData, newClaimCallbackData, "claim callback data")
+		newClaimCallbackData, found := s.App.IcacallbacksKeeper.GetCallbackData(s.Ctx, claimKey)
+		s.Require().True(found, "found claim callback data")
+		s.Require().Equal(oldClaimCallbackData, newClaimCallbackData, "claim callback data")
 	}
 }
 
 // Sets up the old icacallbacks store and returns a callback function that can be used to verify
 // the store migration was successful
-func (suite *UpgradeTestSuite) SetupOldIcacallbackStore(codec codec.Codec) func() {
-	icacallbackStore := suite.Ctx.KVStore(suite.App.GetKey(icacallbacktypes.StoreKey))
+func (s *UpgradeTestSuite) SetupOldIcacallbackStore(codec codec.Codec) func() {
+	icacallbackStore := s.Ctx.KVStore(s.App.GetKey(icacallbacktypes.StoreKey))
 	callbackDataStore := prefix.NewStore(icacallbackStore, icacallbacktypes.KeyPrefix(icacallbacktypes.CallbackDataKeyPrefix))
 
-	checkDelegateCallbackAfterMigration := suite.SetupOldDelegateCallback(codec, callbackDataStore)
-	checkUndelegateCallbackAfterMigration := suite.SetupOldUndelegateCallback(codec, callbackDataStore)
-	checkRebalanceCallbackAfterMigration := suite.SetupOldRebalanceCallback(codec, callbackDataStore)
-	checkClaimCallbackAfterMigration := suite.SetupOldClaimCallback(codec, callbackDataStore)
+	checkDelegateCallbackAfterMigration := s.SetupOldDelegateCallback(codec, callbackDataStore)
+	checkUndelegateCallbackAfterMigration := s.SetupOldUndelegateCallback(codec, callbackDataStore)
+	checkRebalanceCallbackAfterMigration := s.SetupOldRebalanceCallback(codec, callbackDataStore)
+	checkClaimCallbackAfterMigration := s.SetupOldClaimCallback(codec, callbackDataStore)
 
 	// Callback to check store after migration
 	return func() {
@@ -253,8 +266,8 @@ func (suite *UpgradeTestSuite) SetupOldIcacallbackStore(codec codec.Codec) func(
 
 // Sets up the old records store and returns a callback function that can be used to verify
 // the store migration was successful
-func (suite *UpgradeTestSuite) SetupOldRecordStore(codec codec.Codec) func() {
-	recordStore := suite.Ctx.KVStore(suite.App.GetKey(recordtypes.StoreKey))
+func (s *UpgradeTestSuite) SetupOldRecordStore(codec codec.Codec) func() {
+	recordStore := s.Ctx.KVStore(s.App.GetKey(recordtypes.StoreKey))
 
 	// set old deposit record
 	depositRecordId := uint64(1)
@@ -265,7 +278,7 @@ func (suite *UpgradeTestSuite) SetupOldRecordStore(codec codec.Codec) func() {
 		Source: oldrecordtypes.DepositRecord_WITHDRAWAL_ICA,
 	}
 	depositBz, err := codec.Marshal(&depositRecord)
-	suite.Require().NoError(err)
+	s.Require().NoError(err)
 
 	depositRecordStore := prefix.NewStore(recordStore, recordtypes.KeyPrefix(recordtypes.DepositRecordKey))
 	depositRecordStore.Set(recordkeeper.GetDepositRecordIDBytes(depositRecord.Id), depositBz)
@@ -277,7 +290,7 @@ func (suite *UpgradeTestSuite) SetupOldRecordStore(codec codec.Codec) func() {
 		Amount: uint64(1000000),
 	}
 	userRedemptionBz, err := codec.Marshal(&userRedemptionRecord)
-	suite.Require().NoError(err)
+	s.Require().NoError(err)
 
 	userRedemptionRecordStore := prefix.NewStore(recordStore, recordtypes.KeyPrefix(recordtypes.UserRedemptionRecordKey))
 	userRedemptionRecordStore.Set([]byte(userRedemptionRecord.Id), userRedemptionBz)
@@ -297,36 +310,36 @@ func (suite *UpgradeTestSuite) SetupOldRecordStore(codec codec.Codec) func() {
 		},
 	}
 	epochUnbondingBz, err := codec.Marshal(&epochUnbondingRecord)
-	suite.Require().NoError(err)
+	s.Require().NoError(err)
 
 	epochUnbondingRecordStore := prefix.NewStore(recordStore, recordtypes.KeyPrefix(recordtypes.EpochUnbondingRecordKey))
 	epochUnbondingRecordStore.Set(recordkeeper.GetEpochUnbondingRecordIDBytes(epochUnbondingRecord.EpochNumber), epochUnbondingBz)
 
 	// Callback to check record store after migration
 	return func() {
-		depositRecord, found := suite.App.RecordsKeeper.GetDepositRecord(suite.Ctx, depositRecordId)
-		suite.Require().True(found, "deposit record found")
-		suite.Require().Equal(depositRecord.Id, depositRecordId, "deposit record id")
-		suite.Require().Equal(depositRecord.Amount, sdkmath.NewInt(1000000), "deposit record amount")
-		suite.Require().Equal(depositRecord.Status, recordtypes.DepositRecord_DELEGATION_QUEUE, "deposit record status")
-		suite.Require().Equal(depositRecord.Source, recordtypes.DepositRecord_WITHDRAWAL_ICA, "deposit record source")
+		depositRecord, found := s.App.RecordsKeeper.GetDepositRecord(s.Ctx, depositRecordId)
+		s.Require().True(found, "deposit record found")
+		s.Require().Equal(depositRecord.Id, depositRecordId, "deposit record id")
+		s.Require().Equal(depositRecord.Amount, sdkmath.NewInt(1000000), "deposit record amount")
+		s.Require().Equal(depositRecord.Status, recordtypes.DepositRecord_DELEGATION_QUEUE, "deposit record status")
+		s.Require().Equal(depositRecord.Source, recordtypes.DepositRecord_WITHDRAWAL_ICA, "deposit record source")
 
-		userRedemptionRecord, found := suite.App.RecordsKeeper.GetUserRedemptionRecord(suite.Ctx, userRedemptionRecordId)
-		suite.Require().True(found, "redemption record found")
-		suite.Require().Equal(userRedemptionRecord.Id, userRedemptionRecordId, "redemption record id")
-		suite.Require().Equal(userRedemptionRecord.Amount, sdkmath.NewInt(1000000), "redemption record amount")
+		userRedemptionRecord, found := s.App.RecordsKeeper.GetUserRedemptionRecord(s.Ctx, userRedemptionRecordId)
+		s.Require().True(found, "redemption record found")
+		s.Require().Equal(userRedemptionRecord.Id, userRedemptionRecordId, "redemption record id")
+		s.Require().Equal(userRedemptionRecord.Amount, sdkmath.NewInt(1000000), "redemption record amount")
 
-		epochUnbondingRecord, found := suite.App.RecordsKeeper.GetEpochUnbondingRecord(suite.Ctx, epochNumber)
-		suite.Require().True(found, "epoch unbonding record found")
-		suite.Require().Equal(epochUnbondingRecord.HostZoneUnbondings[0].HostZoneId, hostZoneId, "host zone unbonding host zone id")
-		suite.Require().Equal(epochUnbondingRecord.HostZoneUnbondings[0].NativeTokenAmount, sdkmath.NewInt(1000000), "host zone unbonding native token amount")
-		suite.Require().Equal(epochUnbondingRecord.HostZoneUnbondings[0].StTokenAmount, sdkmath.NewInt(2000000), "host zone unbonding sttoken amount")
-		suite.Require().Equal(epochUnbondingRecord.HostZoneUnbondings[0].Status, recordtypes.HostZoneUnbonding_CLAIMABLE, "host zone unbonding status")
+		epochUnbondingRecord, found := s.App.RecordsKeeper.GetEpochUnbondingRecord(s.Ctx, epochNumber)
+		s.Require().True(found, "epoch unbonding record found")
+		s.Require().Equal(epochUnbondingRecord.HostZoneUnbondings[0].HostZoneId, hostZoneId, "host zone unbonding host zone id")
+		s.Require().Equal(epochUnbondingRecord.HostZoneUnbondings[0].NativeTokenAmount, sdkmath.NewInt(1000000), "host zone unbonding native token amount")
+		s.Require().Equal(epochUnbondingRecord.HostZoneUnbondings[0].StTokenAmount, sdkmath.NewInt(2000000), "host zone unbonding sttoken amount")
+		s.Require().Equal(epochUnbondingRecord.HostZoneUnbondings[0].Status, recordtypes.HostZoneUnbonding_CLAIMABLE, "host zone unbonding status")
 	}
 }
 
-func (suite *UpgradeTestSuite) SetupOldStakeibcStore(codec codec.Codec) func() {
-	stakeibcStore := suite.Ctx.KVStore(suite.App.GetKey(stakeibctypes.StoreKey))
+func (s *UpgradeTestSuite) SetupOldStakeibcStore(codec codec.Codec) func() {
+	stakeibcStore := s.Ctx.KVStore(s.App.GetKey(stakeibctypes.StoreKey))
 
 	// set old hostzone
 	hostZoneId := "hz"
@@ -351,28 +364,65 @@ func (suite *UpgradeTestSuite) SetupOldStakeibcStore(codec codec.Codec) func() {
 		RedemptionRate:     sdk.OneDec(),
 	}
 	hostZoneBz, err := codec.Marshal(&hostZone)
-	suite.Require().NoError(err)
+	s.Require().NoError(err)
 
 	hostzoneStore := prefix.NewStore(stakeibcStore, stakeibctypes.KeyPrefix(stakeibctypes.HostZoneKey))
 	hostzoneStore.Set([]byte(hostZone.ChainId), hostZoneBz)
 
 	// Callback to check stakeibc store after migration
 	return func() {
-		hostZone, found := suite.App.StakeibcKeeper.GetHostZone(suite.Ctx, hostZoneId)
-		suite.Require().True(found, "host zone found")
-		suite.Require().Equal(hostZone.ChainId, hostZoneId, "host zone chain id")
+		hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, hostZoneId)
+		s.Require().True(found, "host zone found")
+		s.Require().Equal(hostZone.ChainId, hostZoneId, "host zone chain id")
 
-		suite.Require().Equal(hostZone.DelegationAccount.Address, delegationAddress, "delegation address")
-		suite.Require().Equal(hostZone.RedemptionAccount.Address, redemptionAddress, "redemption address")
+		s.Require().Equal(hostZone.DelegationAccount.Address, delegationAddress, "delegation address")
+		s.Require().Equal(hostZone.RedemptionAccount.Address, redemptionAddress, "redemption address")
 
-		suite.Require().Equal(hostZone.DelegationAccount.Target, stakeibctypes.ICAAccountType_DELEGATION, "delegation target")
-		suite.Require().Equal(hostZone.RedemptionAccount.Target, stakeibctypes.ICAAccountType_REDEMPTION, "redemption target")
+		s.Require().Equal(hostZone.DelegationAccount.Target, stakeibctypes.ICAAccountType_DELEGATION, "delegation target")
+		s.Require().Equal(hostZone.RedemptionAccount.Target, stakeibctypes.ICAAccountType_REDEMPTION, "redemption target")
 
-		suite.Require().Nil(hostZone.FeeAccount, "fee account")
-		suite.Require().Nil(hostZone.WithdrawalAccount, "withdrawal account")
+		s.Require().Nil(hostZone.FeeAccount, "fee account")
+		s.Require().Nil(hostZone.WithdrawalAccount, "withdrawal account")
 
-		suite.Require().Equal(hostZone.Validators[0].DelegationAmt, sdkmath.NewInt(1000000), "host zone validators delegation amount")
-		suite.Require().Equal(hostZone.BlacklistedValidators[0].DelegationAmt, sdkmath.NewInt(2000000), "host zone blacklisted validators delegation amount")
-		suite.Require().Equal(hostZone.StakedBal, sdkmath.NewInt(3000000), "host zone staked balance")
+		s.Require().Equal(hostZone.Validators[0].DelegationAmt, sdkmath.NewInt(1000000), "host zone validators delegation amount")
+		s.Require().Equal(hostZone.BlacklistedValidators[0].DelegationAmt, sdkmath.NewInt(2000000), "host zone blacklisted validators delegation amount")
+		s.Require().Equal(hostZone.StakedBal, sdkmath.NewInt(3000000), "host zone staked balance")
+	}
+}
+
+// Adds the stale query to the store and returns a callback to check
+// that it was successfully removed after the upgrade
+func (s *UpgradeTestSuite) SetupRemoveStaleQuery() func() {
+	// Add the stale query
+	s.App.InterchainqueryKeeper.SetQuery(s.Ctx, icqtypes.Query{Id: upgradev5.StaleQueryId})
+	query, found := s.App.InterchainqueryKeeper.GetQuery(s.Ctx, upgradev5.StaleQueryId)
+
+	// Confirm it was added successfully
+	s.Require().True(found, "stale query successfully added to store")
+	s.Require().Equal(upgradev5.StaleQueryId, query.Id, "query id")
+
+	// Callback to check that the query was successfully removed
+	return func() {
+		_, found := s.App.InterchainqueryKeeper.GetQuery(s.Ctx, upgradev5.StaleQueryId)
+		s.Require().False(found)
+	}
+}
+
+// Changes the SafetyMaxSlashPercent parameter to 0 and returns a callback to check
+// the the parameter was successfully updated back to it's default value after the upgrade
+func (s *UpgradeTestSuite) SetupAddMaxSlashPercentParam() func() {
+	// Set the max slash percent to 0
+	stakeibcParamStore := s.App.GetSubspace(stakeibctypes.ModuleName)
+	stakeibcParamStore.Set(s.Ctx, stakeibctypes.KeySafetyMaxSlashPercent, uint64(0))
+
+	// Confirm it was updated
+	maxSlashPercent := s.App.StakeibcKeeper.GetParam(s.Ctx, stakeibctypes.KeySafetyMaxSlashPercent)
+	s.Require().Equal(uint64(0), maxSlashPercent, "max slash percent should be 0")
+
+	// Callback to check that the parameter was added to the store
+	return func() {
+		// Confirm MaxSlashPercent was added with the default value
+		maxSlashPercent := s.App.StakeibcKeeper.GetParam(s.Ctx, stakeibctypes.KeySafetyMaxSlashPercent)
+		s.Require().Equal(stakeibctypes.DefaultSafetyMaxSlashPercent, maxSlashPercent, "max slash percent should be default")
 	}
 }
