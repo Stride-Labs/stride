@@ -77,7 +77,7 @@ chains:
   evmos:
     type: cosmos
     value:
-      key: rly6
+      key: rly7
       chain-id: evmos_9001-2
       rpc-addr: http://evmos1:26657
       account-prefix: evmos

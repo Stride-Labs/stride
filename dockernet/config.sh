@@ -249,7 +249,7 @@ RELAYER_OSMO_ACCT=rly4
 RELAYER_STARS_ACCT=rly5
 RELAYER_HOST_ACCT=rly6
 RELAYER_EVMOS_ACCT=rly7
-HOST_RELAYER_ACCTS=($RELAYER_GAIA_ACCT $RELAYER_JUNO_ACCT $RELAYER_OSMO_ACCT $RELAYER_STARS_ACCT $RELAYER_EVMOS_ACCT $RELAYER_HOST_ACCT)
+HOST_RELAYER_ACCTS=($RELAYER_GAIA_ACCT $RELAYER_JUNO_ACCT $RELAYER_OSMO_ACCT $RELAYER_STARS_ACCT $RELAYER_HOST_ACCT $RELAYER_EVMOS_ACCT)
 
 RELAYER_EVMOS_MNEMONIC="science depart where tell bus ski laptop follow child bronze rebel recall brief plug razor ship degree labor human series today embody fury harvest"
 RELAYER_GAIA_MNEMONIC="fiction perfect rapid steel bundle giant blade grain eagle wing cannon fever must humble dance kitchen lazy episode museum faith off notable rate flavor"
@@ -262,8 +262,8 @@ RELAYER_MNEMONICS=(
   "$RELAYER_JUNO_MNEMONIC"
   "$RELAYER_OSMO_MNEMONIC"
   "$RELAYER_STARS_MNEMONIC"
-  "$RELAYER_EVMOS_MNEMONIC"
   "$RELAYER_HOST_MNEMONIC"
+  "$RELAYER_EVMOS_MNEMONIC"
 )
 
 STRIDE_ADDRESS() { 
