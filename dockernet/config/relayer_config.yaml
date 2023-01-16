@@ -83,7 +83,7 @@ chains:
       account-prefix: terra
       keyring-backend: test
       gas-adjustment: 1.2
-      gas-prices: 0.01uterra
+      gas-prices: 0.01uluna
       debug: false
       timeout: 20s
       output-format: json

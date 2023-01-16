@@ -69,11 +69,8 @@ for (( i=1; i <= $NUM_NODES; i++ )); do
 
     # Create a state directory for the current node and initialize the chain
     mkdir -p $STATE/$node_name
-    if [[ "$CHAIN" == "TERRA" ]]; then
-        cmd=$CMD
-    else
-        cmd="$CMD --home ${STATE}/$node_name"
-    fi
+    cmd="$CMD --home ${STATE}/$node_name"
+    
     $cmd init $moniker --chain-id $CHAIN_ID --overwrite &> /dev/null
     chmod -R 777 $STATE/$node_name
 
