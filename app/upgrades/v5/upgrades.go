@@ -72,8 +72,14 @@ func CreateUpgradeHandler(
 			return vm, sdkerrors.Wrapf(err, "unable to migrate stakeibc store")
 		}
 
-		// Update "from" module version in map to current version to prevent migrator from
-		// re-running the above migrations
+		// `RunMigrations` (below) checks the old consensus version of each module (found in
+		// the store) and compares it against the updated consensus version in the binary
+		// If the old and new consensus versions are not the same, it attempts to call that
+		// module's migration function that must be registered ahead of time
+		//
+		// Since the migrations above were executed directly (instead of being registered
+		// and invoked through a Migrator), we need to set the module versions in the versionMap
+		// to the new version, to prevent RunMigrations from attempting to re-run each migrations
 		currentVersions := mm.GetVersionMap()
 		vm[claimtypes.ModuleName] = currentVersions[claimtypes.ModuleName]
 		vm[icacallbacktypes.ModuleName] = currentVersions[icacallbacktypes.ModuleName]
