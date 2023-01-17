@@ -208,6 +208,9 @@ localnet-state-export-start:
 localnet-state-export-startd:
 	@docker-compose -f $(STATE_EXPORT_COMPOSE_FILE) up -d
 
+localnet-state-export-upgrade:
+	bash $(LOCALSTRIDE_HOME)/state-export/scripts/submit_upgrade.sh 
+
 localnet-state-export-stop:
 	@docker-compose -f $(STATE_EXPORT_COMPOSE_FILE) down
 
