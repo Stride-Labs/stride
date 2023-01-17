@@ -34,8 +34,8 @@ elif [[ "${#HOST_CHAINS[@]}" == "0" ]]; then
 fi
 
 # Sets up upgrade if {UPGRADE_NAME} is non-empty
-UPGRADE_NAME=""
-UPGRADE_OLD_COMMIT_HASH=""
+UPGRADE_NAME="v5"
+UPGRADE_OLD_COMMIT_HASH="v4.0.3"
 
 # DENOMS
 ATOM_DENOM="uatom"
@@ -137,7 +137,11 @@ STRIDE_FEE_ADDRESS=stride1czvrk3jkvtj8m27kqsqu2yrkhw3h3ykwj3rxh6
 if [[ "$UPGRADE_NAME" == "" ]]; then 
   STRIDE_BINARY="$DOCKERNET_HOME/../build/strided"
 else
-  STRIDE_BINARY="$UPGRADES/binaries/strided1"
+  if [[ "${NEW_BINARY:-false}" == "false" ]]; then
+    STRIDE_BINARY="$UPGRADES/binaries/strided1"
+  else
+    STRIDE_BINARY="$UPGRADES/binaries/strided2"
+  fi
 fi
 STRIDE_MAIN_CMD="$STRIDE_BINARY --home $DOCKERNET_HOME/state/${STRIDE_NODE_PREFIX}1"
 
