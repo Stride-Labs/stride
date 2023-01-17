@@ -10,6 +10,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 
+	sdkmath "cosmossdk.io/math"
+
 	"github.com/Stride-Labs/stride/v4/utils"
 	vestexported "github.com/Stride-Labs/stride/v4/x/claim/vesting/exported"
 )
@@ -41,7 +43,7 @@ func NewBaseVestingAccount(baseAccount *authtypes.BaseAccount, originalVesting s
 //
 // CONTRACT: Delegated vesting coins and vestingCoins must be sorted.
 func (bva BaseVestingAccount) LockedCoinsFromVesting(vestingCoins sdk.Coins) sdk.Coins {
-	lockedCoins := vestingCoins.Sub(vestingCoins.Min(bva.DelegatedVesting))
+	lockedCoins := vestingCoins.Sub(vestingCoins.Min(bva.DelegatedVesting)...)
 	if lockedCoins == nil {
 		return sdk.Coins{}
 	}
@@ -69,7 +71,7 @@ func (bva *BaseVestingAccount) TrackDelegation(balance, vestingCoins, amount sdk
 		// compute x and y per the specification, where:
 		// X := min(max(V - DV, 0), D)
 		// Y := D - X
-		x := sdk.MinInt(sdk.MaxInt(vestingAmt.Sub(delVestingAmt), sdk.ZeroInt()), coin.Amount)
+		x := sdk.MinInt(sdk.MaxInt(vestingAmt.Sub(delVestingAmt), sdkmath.ZeroInt()), coin.Amount)
 		y := coin.Amount.Sub(x)
 
 		if !x.IsZero() {
@@ -111,12 +113,12 @@ func (bva *BaseVestingAccount) TrackUndelegation(amount sdk.Coins) {
 
 		if !x.IsZero() {
 			xCoin := sdk.NewCoin(coin.Denom, x)
-			bva.DelegatedFree = bva.DelegatedFree.Sub(sdk.Coins{xCoin})
+			bva.DelegatedFree = bva.DelegatedFree.Sub(sdk.Coins{xCoin}...)
 		}
 
 		if !y.IsZero() {
 			yCoin := sdk.NewCoin(coin.Denom, y)
-			bva.DelegatedVesting = bva.DelegatedVesting.Sub(sdk.Coins{yCoin})
+			bva.DelegatedVesting = bva.DelegatedVesting.Sub(sdk.Coins{yCoin}...)
 		}
 	}
 }
@@ -261,7 +263,7 @@ func (pva StridePeriodicVestingAccount) GetVestedCoins(blockTime time.Time) sdk.
 // GetVestingCoins returns the total number of vesting coins. If no coins are
 // vesting, nil is returned.
 func (pva StridePeriodicVestingAccount) GetVestingCoins(blockTime time.Time) sdk.Coins {
-	return pva.OriginalVesting.Sub(pva.GetVestedCoins(blockTime))
+	return pva.OriginalVesting.Sub(pva.GetVestedCoins(blockTime)...)
 }
 
 // LockedCoins returns the set of coins that are not spendable (i.e. locked),

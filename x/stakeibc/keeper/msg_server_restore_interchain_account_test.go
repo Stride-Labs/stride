@@ -4,11 +4,11 @@ import (
 	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	ibctesting "github.com/cosmos/ibc-go/v3/testing"
+	ibctesting "github.com/cosmos/ibc-go/v5/testing"
 	_ "github.com/stretchr/testify/suite"
 
-	icatypes "github.com/cosmos/ibc-go/v3/modules/apps/27-interchain-accounts/types"
-	channeltypes "github.com/cosmos/ibc-go/v3/modules/core/04-channel/types"
+	icatypes "github.com/cosmos/ibc-go/v5/modules/apps/27-interchain-accounts/types"
+	channeltypes "github.com/cosmos/ibc-go/v5/modules/core/04-channel/types"
 
 	recordtypes "github.com/Stride-Labs/stride/v4/x/records/types"
 	stakeibc "github.com/Stride-Labs/stride/v4/x/stakeibc/types"
@@ -194,6 +194,19 @@ func (s *KeeperTestSuite) TestRestoreInterchainAccount_Success() {
 	// Verify the record status' were reverted
 	s.VerifyDepositRecordsStatus(tc.depositRecordStatusUpdates, true)
 	s.VerifyHostZoneUnbondingStatus(tc.unbondingRecordStatusUpdate, true)
+}
+
+func (s *KeeperTestSuite) TestRestoreInterchainAccount_InvalidConnectionId() {
+	tc := s.SetupRestoreInterchainAccount()
+
+	// Update the connectionId on the host zone so that it doesn't exist
+	hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, tc.validMsg.ChainId)
+	s.Require().True(found)
+	hostZone.ConnectionId = "fake_connection"
+	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
+
+	_, err := s.GetMsgServer().RestoreInterchainAccount(sdk.WrapSDKContext(s.Ctx), &tc.validMsg)
+	s.Require().EqualError(err, "invalid connection id from host GAIA, fake_connection not found: invalid request")
 }
 
 func (s *KeeperTestSuite) TestRestoreInterchainAccount_CannotRestoreNonExistentAcct() {
