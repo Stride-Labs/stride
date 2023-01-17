@@ -126,6 +126,7 @@ STRIDE_CHAIN_ID=STRIDE
 STRIDE_NODE_PREFIX=stride
 STRIDE_NUM_NODES=3
 STRIDE_VAL_PREFIX=val
+STRIDE_ADDRESS_PREFIX=stride
 STRIDE_DENOM=$STRD_DENOM
 STRIDE_RPC_PORT=26657
 STRIDE_ADMIN_ACCT=admin
@@ -245,7 +246,9 @@ RELAYER_MNEMONICS=(
 )
 
 STRIDE_ADDRESS() { 
-  $STRIDE_MAIN_CMD keys show ${STRIDE_VAL_PREFIX}1 --keyring-backend test -a 
+  # After an upgrade, the keys query can sometimes print migration info, 
+  # so we need to filter by valid addresses using the prefix
+  $STRIDE_MAIN_CMD keys show ${STRIDE_VAL_PREFIX}1 --keyring-backend test -a | grep $STRIDE_ADDRESS_PREFIX
 }
 GAIA_ADDRESS() { 
   $GAIA_MAIN_CMD keys show ${GAIA_VAL_PREFIX}1 --keyring-backend test -a 
