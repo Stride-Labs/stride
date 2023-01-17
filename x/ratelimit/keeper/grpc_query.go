@@ -15,10 +15,10 @@ import (
 var _ types.QueryServer = Keeper{}
 
 // Query all rate limits
-func (k Keeper) RateLimits(c context.Context, req *types.QueryRateLimitsRequest) (*types.QueryRateLimitsResponse, error) {
+func (k Keeper) AllRateLimits(c context.Context, req *types.QueryAllRateLimitsRequest) (*types.QueryAllRateLimitsResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 	rateLimits := k.GetAllRateLimits(ctx)
-	return &types.QueryRateLimitsResponse{RateLimits: rateLimits}, nil
+	return &types.QueryAllRateLimitsResponse{RateLimits: rateLimits}, nil
 }
 
 // Query a rate limit by denom and channelId
@@ -31,7 +31,7 @@ func (k Keeper) RateLimit(c context.Context, req *types.QueryRateLimitRequest) (
 	return &types.QueryRateLimitResponse{RateLimit: &rateLimit}, nil
 }
 
-// Query all rate limits for a given channel
+// Query all rate limits for a given chain
 func (k Keeper) RateLimitsByChainId(c context.Context, req *types.QueryRateLimitsByChainIdRequest) (*types.QueryRateLimitsByChainIdResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 
@@ -55,4 +55,19 @@ func (k Keeper) RateLimitsByChainId(c context.Context, req *types.QueryRateLimit
 	}
 
 	return &types.QueryRateLimitsByChainIdResponse{RateLimits: rateLimits}, nil
+}
+
+// Query all rate limits for a given channel
+func (k Keeper) RateLimitsByChannelId(c context.Context, req *types.QueryRateLimitsByChannelIdRequest) (*types.QueryRateLimitsByChannelIdResponse, error) {
+	ctx := sdk.UnwrapSDKContext(c)
+
+	rateLimits := []types.RateLimit{}
+	for _, rateLimit := range k.GetAllRateLimits(ctx) {
+		// If the channel ID matches, add the rate limit to the returned list
+		if rateLimit.Path.ChannelId == req.ChannelId {
+			rateLimits = append(rateLimits, rateLimit)
+		}
+	}
+
+	return &types.QueryRateLimitsByChannelIdResponse{RateLimits: rateLimits}, nil
 }

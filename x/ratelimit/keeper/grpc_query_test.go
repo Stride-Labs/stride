@@ -46,9 +46,9 @@ func (s *KeeperTestSuite) setupQueryRateLimitTests() []types.RateLimit {
 	return rateLimits
 }
 
-func (s *KeeperTestSuite) TestQueryRateLimits() {
+func (s *KeeperTestSuite) TestQueryAllRateLimits() {
 	expectedRateLimits := s.setupQueryRateLimitTests()
-	queryResponse, err := s.QueryClient.RateLimits(context.Background(), &types.QueryRateLimitsRequest{})
+	queryResponse, err := s.QueryClient.AllRateLimits(context.Background(), &types.QueryAllRateLimitsRequest{})
 	s.Require().NoError(err)
 	s.Require().ElementsMatch(expectedRateLimits, queryResponse.RateLimits)
 }
@@ -73,6 +73,19 @@ func (s *KeeperTestSuite) TestQueryRateLimitsByChainId() {
 			ChainId: chainId,
 		})
 		s.Require().NoError(err, "no error expected when querying rate limit on chain: %s", chainId)
+		s.Require().Len(queryResponse.RateLimits, 1)
+		s.Require().Equal(expectedRateLimit, queryResponse.RateLimits[0])
+	}
+}
+
+func (s *KeeperTestSuite) TestQueryRateLimitsByChannelId() {
+	allRateLimits := s.setupQueryRateLimitTests()
+	for i, expectedRateLimit := range allRateLimits {
+		channelId := fmt.Sprintf("channel-%d", i)
+		queryResponse, err := s.QueryClient.RateLimitsByChannelId(context.Background(), &types.QueryRateLimitsByChannelIdRequest{
+			ChannelId: channelId,
+		})
+		s.Require().NoError(err, "no error expected when querying rate limit on channel: %s", channelId)
 		s.Require().Len(queryResponse.RateLimits, 1)
 		s.Require().Equal(expectedRateLimit, queryResponse.RateLimits[0])
 	}
