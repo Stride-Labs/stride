@@ -10,11 +10,12 @@ Stride is a blockchain ("zone") that provides liquidity for staked assets. Using
 
 **Stride** is built using Cosmos SDK and Tendermint. Stride allows users to liquid stake any IBC-compatible cosmos SDK native appchain token. Under the hood, Stride leverages the [Inter-Blockchain Communication protocol](https://ibc.cosmos.network/), [Interchain Accounts](https://blog.cosmos.network/interchain-accounts-take-cosmos-interoperability-to-the-next-level-39c9a8aad4ad) and [Interchain Queries](https://github.com/schnetzlerjoe/interchain-query-spec).
 
-
-
 ## How does Multichain Liquid Staking work?
 
 ![](https://drive.google.com/uc?id=1RuK2YeMH7O6P9-8ro_ybOg5n79ySwFjN)
+
+## Running a Mainnet Node
+If you want to setup your node for the Stride mainnet, find the relevant files and instructions [here](https://github.com/Stride-Labs/mainnet/blob/main/mainnet/README.md)
 
 ## Getting Started as a Developer
 ### Developing on Stride
