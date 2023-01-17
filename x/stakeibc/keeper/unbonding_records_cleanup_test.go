@@ -1,7 +1,7 @@
 package keeper_test
 
 import (
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkmath "cosmossdk.io/math"
 	_ "github.com/stretchr/testify/suite"
 
 	recordtypes "github.com/Stride-Labs/stride/v4/x/records/types"
@@ -34,12 +34,12 @@ func (s *KeeperTestSuite) SetupCleanupEpochUnbondingRecords() CleanupEpochUnbond
 			HostZoneUnbondings: []*recordtypes.HostZoneUnbonding{
 				{
 					HostZoneId:        HostChainId,
-					NativeTokenAmount: sdk.NewInt(1_000_000),
+					NativeTokenAmount: sdkmath.NewInt(1_000_000),
 					Status:            recordtypes.HostZoneUnbonding_CLAIMABLE,
 				},
 				{
 					HostZoneId:        OsmoChainId,
-					NativeTokenAmount: sdk.NewInt(1_000_000),
+					NativeTokenAmount: sdkmath.NewInt(1_000_000),
 					Status:            recordtypes.HostZoneUnbonding_EXIT_TRANSFER_QUEUE,
 				},
 			},
@@ -49,12 +49,12 @@ func (s *KeeperTestSuite) SetupCleanupEpochUnbondingRecords() CleanupEpochUnbond
 			HostZoneUnbondings: []*recordtypes.HostZoneUnbonding{
 				{
 					HostZoneId:        HostChainId,
-					NativeTokenAmount: sdk.ZeroInt(),
+					NativeTokenAmount: sdkmath.ZeroInt(),
 					Status:            recordtypes.HostZoneUnbonding_UNBONDING_QUEUE,
 				},
 				{
 					HostZoneId:        OsmoChainId,
-					NativeTokenAmount: sdk.NewInt(1_000_000),
+					NativeTokenAmount: sdkmath.NewInt(1_000_000),
 					Status:            recordtypes.HostZoneUnbonding_CLAIMABLE,
 				},
 			},
@@ -64,12 +64,12 @@ func (s *KeeperTestSuite) SetupCleanupEpochUnbondingRecords() CleanupEpochUnbond
 			HostZoneUnbondings: []*recordtypes.HostZoneUnbonding{
 				{
 					HostZoneId:        HostChainId,
-					NativeTokenAmount: sdk.ZeroInt(),
+					NativeTokenAmount: sdkmath.ZeroInt(),
 					Status:            recordtypes.HostZoneUnbonding_EXIT_TRANSFER_QUEUE,
 				},
 				{
 					HostZoneId:        OsmoChainId,
-					NativeTokenAmount: sdk.ZeroInt(),
+					NativeTokenAmount: sdkmath.ZeroInt(),
 					Status:            recordtypes.HostZoneUnbonding_UNBONDING_QUEUE,
 				},
 			},

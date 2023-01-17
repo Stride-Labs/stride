@@ -1,9 +1,11 @@
 package keeper_test
 
 import (
+	"fmt"
 	"strconv"
 	"testing"
 
+	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
@@ -19,7 +21,7 @@ func createNHostZone(keeper *keeper.Keeper, ctx sdk.Context, n int) []types.Host
 		items[i].ChainId = strconv.Itoa(i)
 		items[i].RedemptionRate = sdk.NewDec(1)
 		items[i].LastRedemptionRate = sdk.NewDec(1)
-		items[i].StakedBal = sdk.ZeroInt()
+		items[i].StakedBal = sdkmath.ZeroInt()
 		keeper.SetHostZone(ctx, items[i])
 	}
 	return items
@@ -55,4 +57,32 @@ func TestHostZoneGetAll(t *testing.T) {
 		nullify.Fill(items),
 		nullify.Fill(keeper.GetAllHostZone(ctx)),
 	)
+}
+
+func TestGetValidatorFromAddress(t *testing.T) {
+	numValidators := 3
+
+	// Create list of validators
+	addresses := []string{}
+	validators := []*types.Validator{}
+	for i := 1; i <= numValidators; i++ {
+		address := fmt.Sprintf("val-%d", i)
+
+		addresses = append(addresses, address)
+		validators = append(validators, &types.Validator{Address: address})
+	}
+
+	// For each validator that was just added, test GetValidatorFromAddress
+	for expectedIndex, address := range addresses {
+		expectedValidator := *validators[expectedIndex]
+		actualValidator, actualIndex, found := keeper.GetValidatorFromAddress(validators, address)
+
+		require.True(t, found)
+		require.Equal(t, expectedValidator, actualValidator)
+		require.Equal(t, int64(expectedIndex), actualIndex)
+	}
+
+	// Test GetValidatorFromAddress for an validator that doesn't exist
+	_, _, found := keeper.GetValidatorFromAddress(validators, "fake_validator")
+	require.False(t, found)
 }

@@ -6,6 +6,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
+	sdkmath "cosmossdk.io/math"
+
 	keepertest "github.com/Stride-Labs/stride/v4/testutil/keeper"
 	"github.com/Stride-Labs/stride/v4/testutil/nullify"
 	"github.com/Stride-Labs/stride/v4/x/records/keeper"
@@ -15,22 +17,22 @@ import (
 func createNEpochUnbondingRecord(keeper *keeper.Keeper, ctx sdk.Context, n int) ([]types.EpochUnbondingRecord, map[string]types.HostZoneUnbonding) {
 	hostZoneUnbondingsList := []types.HostZoneUnbonding{
 		{
-			HostZoneId: "host-A",
-			Status:     types.HostZoneUnbonding_UNBONDING_QUEUE,
-			StTokenAmount: sdk.ZeroInt(),
-			NativeTokenAmount: sdk.ZeroInt(),
+			HostZoneId:        "host-A",
+			Status:            types.HostZoneUnbonding_UNBONDING_QUEUE,
+			StTokenAmount:     sdkmath.ZeroInt(),
+			NativeTokenAmount: sdkmath.ZeroInt(),
 		},
 		{
-			HostZoneId: "host-B",
-			Status:     types.HostZoneUnbonding_UNBONDING_QUEUE,
-			StTokenAmount: sdk.ZeroInt(),
-			NativeTokenAmount: sdk.ZeroInt(),
+			HostZoneId:        "host-B",
+			Status:            types.HostZoneUnbonding_UNBONDING_QUEUE,
+			StTokenAmount:     sdkmath.ZeroInt(),
+			NativeTokenAmount: sdkmath.ZeroInt(),
 		},
 		{
-			HostZoneId: "host-C",
-			Status:     types.HostZoneUnbonding_UNBONDING_QUEUE,
-			StTokenAmount: sdk.ZeroInt(),
-			NativeTokenAmount: sdk.ZeroInt(),
+			HostZoneId:        "host-C",
+			Status:            types.HostZoneUnbonding_UNBONDING_QUEUE,
+			StTokenAmount:     sdkmath.ZeroInt(),
+			NativeTokenAmount: sdkmath.ZeroInt(),
 		},
 	}
 	hostZoneUnbondingsMap := make(map[string]types.HostZoneUnbonding)

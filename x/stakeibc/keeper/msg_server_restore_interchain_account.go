@@ -6,7 +6,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	icatypes "github.com/cosmos/ibc-go/v3/modules/apps/27-interchain-accounts/types"
+	icatypes "github.com/cosmos/ibc-go/v5/modules/apps/27-interchain-accounts/types"
 
 	recordtypes "github.com/Stride-Labs/stride/v4/x/records/types"
 	"github.com/Stride-Labs/stride/v4/x/stakeibc/types"
@@ -15,15 +15,24 @@ import (
 func (k msgServer) RestoreInterchainAccount(goCtx context.Context, msg *types.MsgRestoreInterchainAccount) (*types.MsgRestoreInterchainAccountResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
+	// Confirm host zone exists
 	hostZone, found := k.GetHostZone(ctx, msg.ChainId)
 	if !found {
 		k.Logger(ctx).Error(fmt.Sprintf("Host Zone not found: %s", msg.ChainId))
 		return nil, types.ErrInvalidHostZone
 	}
 
-	owner := types.FormatICAAccountOwner(msg.ChainId, msg.AccountType)
+	// Get ConnectionEnd (for counterparty connection)
+	connectionEnd, found := k.IBCKeeper.ConnectionKeeper.GetConnection(ctx, hostZone.ConnectionId)
+	if !found {
+		errMsg := fmt.Sprintf("invalid connection id from host %s, %s not found", msg.ChainId, hostZone.ConnectionId)
+		k.Logger(ctx).Error(errMsg)
+		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, errMsg)
+	}
+	counterpartyConnection := connectionEnd.Counterparty
 
 	// only allow restoring an account if it already exists
+	owner := types.FormatICAAccountOwner(msg.ChainId, msg.AccountType)
 	portID, err := icatypes.NewControllerPortID(owner)
 	if err != nil {
 		errMsg := fmt.Sprintf("could not create portID for ICA controller account address: %s", owner)
@@ -37,7 +46,15 @@ func (k msgServer) RestoreInterchainAccount(goCtx context.Context, msg *types.Ms
 		return nil, sdkerrors.Wrapf(types.ErrInvalidInterchainAccountAddress, errMsg)
 	}
 
-	if err := k.ICAControllerKeeper.RegisterInterchainAccount(ctx, hostZone.ConnectionId, owner); err != nil {
+	appVersion := string(icatypes.ModuleCdc.MustMarshalJSON(&icatypes.Metadata{
+		Version:                icatypes.Version,
+		ControllerConnectionId: hostZone.ConnectionId,
+		HostConnectionId:       counterpartyConnection.ConnectionId,
+		Encoding:               icatypes.EncodingProtobuf,
+		TxType:                 icatypes.TxTypeSDKMultiMsg,
+	}))
+
+	if err := k.ICAControllerKeeper.RegisterInterchainAccount(ctx, hostZone.ConnectionId, owner, appVersion); err != nil {
 		k.Logger(ctx).Error(fmt.Sprintf("unable to register %s account : %s", msg.AccountType.String(), err))
 		return nil, err
 	}
