@@ -74,6 +74,22 @@ chains:
       timeout: 20s
       output-format: json
       sign-mode: direct
+  injective:
+    type: cosmos
+    value:
+      key: rly6
+      chain-id: injective-1
+      rpc-addr: http://injective1:26657
+      account-prefix: inj
+      keyring-backend: test
+      gas-adjustment: 1.2
+      gas-prices: 0.01inj
+      debug: false
+      timeout: 20s
+      output-format: json
+      sign-mode: direct
+      extra-codecs:
+        - injective
   # {new-host-zone}:
   #   type: cosmos
   #   value:
@@ -119,6 +135,14 @@ paths:
       chain-id: STRIDE
     dst:
       chain-id: STARS
+    src-channel-filter:
+      rule: ""
+      channel-list: []
+  stride-injective:
+    src:
+      chain-id: STRIDE
+    dst:
+      chain-id: injective-1
     src-channel-filter:
       rule: ""
       channel-list: []

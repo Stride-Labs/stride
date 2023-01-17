@@ -11,7 +11,7 @@ for chain in ${HOST_CHAINS[@]}; do
     account_name=$(GET_VAR_VALUE RELAYER_${chain}_ACCT)
     mnemonic=$(GET_VAR_VALUE     RELAYER_${chain}_MNEMONIC)
     coin_type=$(GET_VAR_VALUE    ${chain}_COIN_TYPE)
-
+    
     relayer_logs=${LOGS}/relayer-${chain_name}.log
     relayer_config=$STATE/relayer-${chain_name}/config
 

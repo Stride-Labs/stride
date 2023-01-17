@@ -136,6 +136,15 @@ services:
       - ./state/stars5:/home/stars/.starsd
   # Fill in new host zone being tested here
 
+  injective1:
+    image: stridezone:injective
+    volumes:
+      - ./state/injective1:/home/injective/.injectived
+    ports:
+      - "26157:26657"
+      - "1267:1317"
+      - "9040:9090"
+
   hermes:
     image: stridezone:hermes
     volumes:
@@ -170,3 +179,10 @@ services:
       - ./state/relayer-stars:/home/relayer/.relayer
     restart: always
     command: [ "bash", "start.sh", "stride-stars" ]
+
+  relayer-injective:
+    image: stridezone:relayer
+    volumes:
+      - ./state/relayer-injective:/home/relayer/.relayer
+    restart: always
+    command: [ "bash", "start.sh", "stride-injective" ]

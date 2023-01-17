@@ -18,7 +18,7 @@ KEYS_LOGS=$SCRIPT_DIR/logs/keys.log
 # List of hosts enabled 
 #  `start-docker` defaults to just GAIA if HOST_CHAINS is empty
 # `start-docker-all` always runs all hosts
-HOST_CHAINS=() 
+HOST_CHAINS=(GAIA INJECTIVE) 
 
 if [[ "${ALL_HOST_CHAINS:-false}" == "true" ]]; then 
   HOST_CHAINS=(GAIA JUNO OSMO STARS)
@@ -36,10 +36,13 @@ JUNO_DENOM='ujuno'
 OSMO_DENOM='uosmo'
 STRD_DENOM='ustrd'
 STARS_DENOM='ustars'
+INJECTIVE_DENOM='inj'
 STATOM_DENOM="stuatom"
 STJUNO_DENOM="stujuno"
 STOSMO_DENOM="stuosmo"
 STSTARS_DENOM="stustars"
+STINJECTIVE_DENOM='stinj'
+
 
 IBC_STRD_DENOM='ibc/FF6C2E86490C1C4FBBD24F55032831D2415B9D7882F85C3CC9C2401D79362BEA'  
 
@@ -182,6 +185,19 @@ STARS_COIN_TYPE=$COSMOS_COIN_TYPE
 STARS_MAIN_CMD="$STARS_CMD --home $SCRIPT_DIR/state/${STARS_NODE_PREFIX}1"
 STARS_RECEIVER_ADDRESS='stars15dywcmy6gzsc8wfefkrx0c9czlwvwrjenqthyq'
 
+# INJECTIVE
+INJECTIVE_CHAIN_ID=injective-1
+INJECTIVE_NODE_PREFIX=injective
+INJECTIVE_NUM_NODES=1
+INJECTIVE_CMD="$DOCKER_COMPOSE run --rm injective1 injectived"
+INJECTIVE_VAL_PREFIX=injval
+INJECTIVE_ADDRESS_PREFIX=inj
+INJECTIVE_REV_ACCT=injrev1
+INJECTIVE_DENOM=$INJECTIVE_DENOM
+INJECTIVE_RPC_PORT=26157
+INJECTIVE_COIN_TYPE=$ETH_COIN_TYPE
+INJECTIVE_MAIN_CMD="$DOCKER_COMPOSE run --rm injective1 injectived"
+INJECTIVE_RECEIVER_ADDRESS='inj1m5lruu5xt8h3qkkuvm2g4nr7yc9sye083s28gg'
 
 # HERMES
 HERMES_CMD="$SCRIPT_DIR/../build/hermes/release/hermes --config $STATE/hermes/config.toml"
@@ -205,23 +221,27 @@ RELAYER_GAIA_EXEC="$DOCKER_COMPOSE run --rm relayer-gaia"
 RELAYER_JUNO_EXEC="$DOCKER_COMPOSE run --rm relayer-juno"
 RELAYER_OSMO_EXEC="$DOCKER_COMPOSE run --rm relayer-osmo"
 RELAYER_STARS_EXEC="$DOCKER_COMPOSE run --rm relayer-stars"
+RELAYER_INJECTIVE_EXEC="$DOCKER_COMPOSE run --rm relayer-injective"
 
 RELAYER_STRIDE_ACCT=rly1
 RELAYER_GAIA_ACCT=rly2
 RELAYER_JUNO_ACCT=rly3
 RELAYER_OSMO_ACCT=rly4
 RELAYER_STARS_ACCT=rly5
-HOST_RELAYER_ACCTS=($RELAYER_GAIA_ACCT $RELAYER_JUNO_ACCT $RELAYER_OSMO_ACCT $RELAYER_STARS_ACCT)
+RELAYER_INJECTIVE_ACCT=rly6
+HOST_RELAYER_ACCTS=($RELAYER_GAIA_ACCT $RELAYER_JUNO_ACCT $RELAYER_OSMO_ACCT $RELAYER_STARS_ACCT $RELAYER_INJECTIVE_ACCT)
 
 RELAYER_GAIA_MNEMONIC="fiction perfect rapid steel bundle giant blade grain eagle wing cannon fever must humble dance kitchen lazy episode museum faith off notable rate flavor"
 RELAYER_JUNO_MNEMONIC="kiwi betray topple van vapor flag decorate cement crystal fee family clown cry story gain frost strong year blanket remain grass pig hen empower"
 RELAYER_OSMO_MNEMONIC="unaware wine ramp february bring trust leaf beyond fever inside option dilemma save know captain endless salute radio humble chicken property culture foil taxi"
 RELAYER_STARS_MNEMONIC="deposit dawn erosion talent old broom flip recipe pill hammer animal hill nice ten target metal gas shoe visual nephew soda harbor child simple"
+RELAYER_INJECTIVE_MNEMONIC="science depart where tell bus ski laptop follow child bronze rebel recall brief plug razor ship degree labor human series today embody fury harvest"
 RELAYER_MNEMONICS=(
   "$RELAYER_GAIA_MNEMONIC"
   "$RELAYER_JUNO_MNEMONIC"
   "$RELAYER_OSMO_MNEMONIC"
   "$RELAYER_STARS_MNEMONIC"
+  "$RELAYER_INJECTIVE_MNEMONIC"
 )
 
 STRIDE_ADDRESS() { 
@@ -238,6 +258,9 @@ OSMO_ADDRESS() {
 }
 STARS_ADDRESS() { 
   $STARS_MAIN_CMD keys show ${STARS_VAL_PREFIX}1 --keyring-backend test -a 
+}
+INJECTIVE_ADDRESS() { 
+  $INJECTIVE_MAIN_CMD keys show ${INJECTIVE_VAL_PREFIX}1 --keyring-backend test -a | tr -cd '[:alnum:]._-'
 }
 
 CSLEEP() {

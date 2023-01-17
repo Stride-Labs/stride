@@ -73,7 +73,7 @@ while getopts sgojthrn flag; do
       j) build_local_and_docker juno deps/juno ;;
       o) build_local_and_docker osmo deps/osmosis ;;
       t) build_local_and_docker stars deps/stargaze ;;
-      n) continue ;; # build_local_and_docker {new-host-zone} deps/{new-host-zone} ;;
+      n) DOCKER_BUILDKIT=1 docker build --tag stridezone:injective -f dockernet/dockerfiles/Dockerfile.injective . ;; 
       r) build_local_and_docker relayer deps/relayer ;;  
       h) echo "Building Hermes Docker... ";
          docker build --tag stridezone:hermes -f dockernet/dockerfiles/Dockerfile.hermes . ;
