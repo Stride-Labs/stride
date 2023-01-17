@@ -145,6 +145,37 @@ services:
       - "1267:1317"
       - "9040:9090"
 
+  host1:
+    image: stridezone:stride
+    volumes:
+      - ./state/host1:/home/stride/.stride
+    ports:
+      - "26157:26657"
+      - "1267:1317"
+      - "9040:9090"
+
+  host2:
+    image: stridezone:stride
+    volumes:
+      - ./state/host2:/home/stride/.stride
+
+  host3:
+    image: stridezone:stride
+    volumes:
+      - ./state/host3:/home/stride/.stride
+
+  host4:
+    image: stridezone:stride
+    volumes:
+      - ./state/host4:/home/stride/.stride
+
+  host5:
+    image: stridezone:stride
+    volumes:
+      - ./state/host5:/home/stride/.stride
+
+  # Fill in new host zone being tested here
+
   hermes:
     image: stridezone:hermes
     volumes:
@@ -186,3 +217,10 @@ services:
       - ./state/relayer-injective:/home/relayer/.relayer
     restart: always
     command: [ "bash", "start.sh", "stride-injective" ]
+
+  relayer-host:
+    image: stridezone:relayer
+    volumes:
+      - ./state/relayer-host:/home/relayer/.relayer
+    restart: always
+    command: [ "bash", "start.sh", "stride-host" ]

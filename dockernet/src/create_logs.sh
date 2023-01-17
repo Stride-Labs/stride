@@ -6,7 +6,7 @@ SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &>/dev/null && pwd)
 
 source ${SCRIPT_DIR}/../config.sh
 
-LOGS_DIR=$SCRIPT_DIR/logs
+LOGS_DIR=$DOCKERNET_HOME/logs
 TEMP_LOGS_DIR=$LOGS_DIR/temp
 
 STATE_LOG=state.log

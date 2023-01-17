@@ -16,7 +16,7 @@ for chain in ${HOST_CHAINS[@]}; do
     relayer_config=$STATE/relayer-${chain_name}/config
 
     mkdir -p $relayer_config
-    cp ${SCRIPT_DIR}/config/relayer_config.yaml $relayer_config/config.yaml
+    cp ${DOCKERNET_HOME}/config/relayer_config.yaml $relayer_config/config.yaml
 
     printf "STRIDE <> $chain - Adding relayer keys..."
     $relayer_exec rly keys restore stride $RELAYER_STRIDE_ACCT "$mnemonic" >> $relayer_logs 2>&1

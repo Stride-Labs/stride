@@ -64,21 +64,22 @@ ST{CHAIN}_DENOM="st{min_denom}"
 {CHAIN}_CHAIN_ID={NEW-HOST-ZONE}
 {CHAIN}_NODE_PREFIX={new-host-zone}
 {CHAIN}_NUM_NODES=3
-{CHAIN}_CMD="$SCRIPT_DIR/../build/{new-host-zone}d"
+{CHAIN}_CMD="$DOCKERNET_HOME/../build/{new-host-zone}d"
 {CHAIN}_VAL_PREFIX={n}val
 {CHAIN}_ADDRESS_PREFIX=stars
 {CHAIN}_REV_ACCT={n}rev1
 {CHAIN}_DENOM=${CHAIN}_DENOM
 {CHAIN}_COIN_TYPE=${TYPE}_COIN_TYPE
 {CHAIN}_RPC_PORT={the one included in the docker-compose above}
-{CHAIN}_MAIN_CMD="${CHAIN}_CMD --home $SCRIPT_DIR/state/${${CHAIN}_NODE_PREFIX}1"
+{CHAIN}_MAIN_CMD="${CHAIN}_CMD --home $DOCKERNET_HOME/state/${${CHAIN}_NODE_PREFIX}1"
+{CHAIN}_RECEIVER_ADDRESS={any random address on the chain}
 
 # Add *below* the RELAYER section!
 RELAYER_{CHAIN}_EXEC="docker-compose run --rm relayer-{new-host-zone}"
 RELAYER_{CHAIN}_ACCT=rly{add one since the account from the last host zone}
 
-# NOTE: Update the HOST_RELAYER_ACCTS variable directly!
-HOST_RELAYER_ACCTS=(... $RELAYER_{CHAIN}_ACCT)
+# NOTE: Update the RELAYER_ACCTS variable directly!
+RELAYER_ACCTS=(... $RELAYER_{CHAIN}_ACCT)
 
 # stride1muwz5er4wq7svxnh5dgn2tssm92je5dwthxl7q
 RELAYER_{CHAIN}_MNEMONIC="science depart where tell bus ski laptop follow child bronze rebel recall brief plug razor ship degree labor human series today embody fury harvest"
@@ -125,12 +126,43 @@ paths:
       rule: ""
       channel-list: []
 ```
-* To enable the the new host zone, include it in the `HOST_CHAINS` array in `dockernet/config.sh`. **Note: You can only run up to 4 host zones at once. You can just run GAIA and the new host zone, for simplicity (see below).**
+* To enable the the new host zone, include it in the `HOST_CHAINS` array in `dockernet/config.sh`. **Note: You can only run up to 4 host zones at once. Since this wont be merged, for simplicity, you can just run GAIA and the new host zone in the default case (see below).**
+```bash
+HOST_CHAINS=()  
+
+if [[ "${ALL_HOST_CHAINS:-false}" == "true" ]]; then 
+  HOST_CHAINS=(GAIA JUNO OSMO {NEW-HOST-ZONE})      # add here (this controls the hosts in `make start-docker-all`)
+elif [[ "${#HOST_CHAINS[@]}" == "0" ]]; then 
+  HOST_CHAINS=(GAIA {NEW-HOST-ZONE})                # add here (this controls the hosts in `make start-docker`)
+fi
 ```
-HOST_CHAINS=(GAIA {NEW-HOST-ZONE})
+* Add the new host to the integration tests in `dockernet/tests/run_all_tests.sh`. When debugging, it's easiest to first test only the new host zone. You can comment out the existing chains and add the new host at the end. **Note: The transfer channel number will be 1 since it's the second host added (the first host is 0).** It should look something like:
+``` bash
+# CHAIN_NAME=GAIA TRANSFER_CHANNEL_NUMBER=0 $BATS $INTEGRATION_TEST_FILE
+# CHAIN_NAME=JUNO TRANSFER_CHANNEL_NUMBER=1 $BATS $INTEGRATION_TEST_FILE
+# CHAIN_NAME=OSMO TRANSFER_CHANNEL_NUMBER=2 $BATS $INTEGRATION_TEST_FILE
+CHAIN_NAME={NEW-HOST-ZONE} TRANSFER_CHANNEL_NUMBER=1 $BATS $INTEGRATION_TEST_FILE
 ```
-* And that's it! Just start the network as normal, and make sure to rebuild the new host zone when running for the first time.  
-	```
+* Start the network as normal. Make sure to rebuild the new host zone when running for the first time. You can view the logs in `dockernet/logs/{new-host-zone}.log` to ensure the network started successfully.
+```
 make build-docker build=n
 make start-docker
 ```
+* After the chain is running, run the integration tests to confirm the new host zone is compatible with Stride
+```
+make test-integration-docker
+```
+* After the tests succeed, you can add back in the other hosts to the integration tests. **Note: The transfer channel for the new host will need to be updated from 1 to 3, since it is now the 4th host zone.**
+```
+CHAIN_NAME=GAIA TRANSFER_CHANNEL_NUMBER=0 $BATS $INTEGRATION_TEST_FILE
+CHAIN_NAME=JUNO TRANSFER_CHANNEL_NUMBER=1 $BATS $INTEGRATION_TEST_FILE
+CHAIN_NAME=OSMO TRANSFER_CHANNEL_NUMBER=2 $BATS $INTEGRATION_TEST_FILE
+CHAIN_NAME={NEW-HOST-ZONE} TRANSFER_CHANNEL_NUMBER=3 $BATS $INTEGRATION_TEST_FILE
+```
+* Finally, restart dockernet with all hosts, and confirm all integration tests pass 
+```
+make start-docker-all 
+make test-integration-docker
+```
+* If all tests pass, the host zone is good to go!
+

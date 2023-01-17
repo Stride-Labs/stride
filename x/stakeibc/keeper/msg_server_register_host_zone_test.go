@@ -3,13 +3,14 @@ package keeper_test
 import (
 	"fmt"
 
+	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	ibctesting "github.com/cosmos/ibc-go/v3/testing"
+	ibctesting "github.com/cosmos/ibc-go/v5/testing"
 	_ "github.com/stretchr/testify/suite"
 
-	icatypes "github.com/cosmos/ibc-go/v3/modules/apps/27-interchain-accounts/types"
+	icatypes "github.com/cosmos/ibc-go/v5/modules/apps/27-interchain-accounts/types"
 
-	channeltypes "github.com/cosmos/ibc-go/v3/modules/core/04-channel/types"
+	channeltypes "github.com/cosmos/ibc-go/v5/modules/core/04-channel/types"
 
 	epochtypes "github.com/Stride-Labs/stride/v4/x/epochs/types"
 	recordstypes "github.com/Stride-Labs/stride/v4/x/records/types"
@@ -129,7 +130,7 @@ func (s *KeeperTestSuite) TestRegisterHostZone_Success() {
 	// Confirm host zone unbonding was added
 	hostZoneUnbonding := epochUnbondingRecord.HostZoneUnbondings[0]
 	s.Require().Equal(HostChainId, hostZoneUnbonding.HostZoneId, "host zone unbonding set for this host zone")
-	s.Require().Equal(sdk.ZeroInt(), hostZoneUnbonding.NativeTokenAmount, "host zone unbonding set to 0 tokens")
+	s.Require().Equal(sdkmath.ZeroInt(), hostZoneUnbonding.NativeTokenAmount, "host zone unbonding set to 0 tokens")
 	s.Require().Equal(recordstypes.HostZoneUnbonding_UNBONDING_QUEUE, hostZoneUnbonding.Status, "host zone unbonding set to bonded")
 
 	// Confirm a module account was created
@@ -141,7 +142,7 @@ func (s *KeeperTestSuite) TestRegisterHostZone_Success() {
 	// Confirm an empty deposit record was created
 	expectedDepositRecord := recordstypes.DepositRecord{
 		Id:                 uint64(0),
-		Amount:             sdk.ZeroInt(),
+		Amount:             sdkmath.ZeroInt(),
 		HostZoneId:         hostZone.ChainId,
 		Denom:              hostZone.HostDenom,
 		Status:             recordstypes.DepositRecord_TRANSFER_QUEUE,
@@ -159,9 +160,7 @@ func (s *KeeperTestSuite) TestRegisterHostZone_InvalidConnectionId() {
 	msg.ConnectionId = "connection-10" // an invalid connection ID
 
 	_, err := s.GetMsgServer().RegisterHostZone(sdk.WrapSDKContext(s.Ctx), &msg)
-	expectedErrMsg := "unable to obtain chain id from connection connection-10, "
-	expectedErrMsg += "err: invalid connection id, connection-10 not found: failed to register host zone"
-	s.Require().EqualError(err, expectedErrMsg, "expected error when registering with an invalid connection id")
+	s.Require().EqualError(err, "invalid connection id, connection-10 not found: failed to register host zone")
 }
 
 func (s *KeeperTestSuite) TestRegisterHostZone_DuplicateConnectionIdInIBCState() {
