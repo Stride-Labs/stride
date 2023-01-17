@@ -2,14 +2,22 @@
 echo "$HOT_WALLET_1_MNEMONIC" | HOST_BINARY keys add hot --recover --keyring-backend test 
 
 
-#### START RELAYERS
+#### START RELAYER
 # Create connections and channels
 DOCKER_COMPOSE run --rm relayer rly transact link stride-host 
 
-# (OR) If the go relayer isn't working, use hermes (you'll have to add the connections to the relayer config though in `STATE/relaye/config/config.yaml`)
+# Get channel ID created on the host
+build/strided --home STRIDE_HOME q ibc channel channels 
+transfer_channel=$(build/strided --home STRIDE_HOME q ibc channel channels | grep channel-0 -A 4 | grep counterparty -A 1 | grep channel | awk '{print $2}') && echo $transfer_channel
+
+# Start Go Relayer 
+DOCKER_COMPOSE up -d relayer
+DOCKER_COMPOSE logs -f relayer | sed -r -u "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2})?)?[mGK]//g" >> LOGS/relayer.log 2>&1 &
+
+# (OR) If the go relayer isn't working, use hermes (you'll have to add the connections to the relayer config in `STATE/relayer/config/config.yaml`)
 # DOCKER_COMPOSE run --rm hermes hermes create connection --a-chain HOST_CHAIN_ID --b-chain STRIDE_CHAIN_ID
 # DOCKER_COMPOSE run --rm hermes hermes create channel --a-chain STRIDE_CHAIN_ID --a-connection connection-0 --a-port transfer --b-port transfer
-
+#
 # Ensure Relayer Config is updated (`STATE/relayer/config/config.yaml`)
 #    paths:
 #     stride-host:
@@ -21,21 +29,13 @@ DOCKER_COMPOSE run --rm relayer rly transact link stride-host
 #         chain-id: cosmoshub-4
 #         client-id: {CLIENT-ID}
 #         connection-id: {CONNECTION-ID}
+#
+# # Start Hermes Relayer
+# DOCKER_COMPOSE up -d hermes
+# DOCKER_COMPOSE logs -f hermes | sed -r -u "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2})?)?[mGK]//g" >> LOGS/hermes.log 2>&1 &
 
-# Get channel ID created on the host
-build/strided --home STRIDE_HOME q ibc channel channels 
-transfer_channel=$(build/strided --home STRIDE_HOME q ibc channel channels | grep channel-0 -A 4 | grep counterparty -A 1 | grep channel | awk '{print $2}') && echo $transfer_channel
-
-# Start Hermes Relayer
-DOCKER_COMPOSE up -d hermes
-DOCKER_COMPOSE logs -f hermes | sed -r -u "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2})?)?[mGK]//g" >> LOGS/hermes.log 2>&1 &
-
-# Configure the Go Relayer to only run ICQ
-sed -i -E "s|rule: \"\"|rule: allowlist|g" STATE/relayer/config/config.yaml
-
-# Start Go Relayer (for ICQ)
-DOCKER_COMPOSE up -d relayer
-DOCKER_COMPOSE logs -f relayer | sed -r -u "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2})?)?[mGK]//g" >> LOGS/relayer.log 2>&1 &
+# # Configure the Go Relayer to only run ICQ
+# sed -i -E "s|rule: \"\"|rule: allowlist|g" STATE/relayer/config/config.yaml
 
 
 #### REGISTER HOST
@@ -56,6 +56,7 @@ build/strided --home STRIDE_HOME tx stakeibc add-validator HOST_CHAIN_ID HOST_VA
 
 # Confirm ICA channels were registered
 build/strided --home STRIDE_HOME q stakeibc list-host-zone
+
 
 #### FLOW
 ## Go Through Flow

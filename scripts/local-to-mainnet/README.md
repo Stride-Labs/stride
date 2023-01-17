@@ -12,14 +12,14 @@
 
 ## Start Stride Local
 * Build stride and the relayers
+```bash 
+make build-docker build=sr{n} # where n is the new host zone that was just added
 ```
-make build-docker build=srh
-```
-* Start a local stride and setup all the commands needed to test the flow
+* Start a local stride instance and setup all the commands needed to test the flow
 ```
 bash scripts/local-to-mainnet/start.sh
 ```
 
 ## Walk through Flow
-* Step through the commands in `commands.sh` one by one and copy them into the terminal
+* Step through the commands in `local-to-mainnet/commands.sh` one by one and copy them into the terminal
 * In the future, we can automate this more but since this interacts with mainnet, I think it's safer to run these manually for now
