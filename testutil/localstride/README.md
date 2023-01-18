@@ -91,7 +91,7 @@ This will create a file called `state_export.json` which is a snapshot of the cu
 
 ### Use the state export in LocalStride
 
-1. Copy the `state_export.json` to the `localstride/state_export` folder within the stride repo
+5. Copy the `state_export.json` to the `localstride/state_export` folder within the stride repo
 
 ```sh
 cp $HOME/state_export.json $HOME/stride/testutil/localstride/state_export/
@@ -120,7 +120,7 @@ The command:
 - Builds a local docker image with the latest changes
 - Cleans the `$HOME/.stride` folder
 
-3. Start LocalStride:
+8. Start LocalStride:
 
 ```bash
 make localnet-state-export-start
