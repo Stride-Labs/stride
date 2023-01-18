@@ -6,14 +6,15 @@
 * Ensure you have dockernet setup properly including all submodules up to date and the `STRIDE_ADMIN_MNEMONIC` enviornment variable set 
 * Fund three hot wallets and set the mnemonics as environment variables (`HOT_WALLET_1_MNEMONIC`, `HOT_WALLET_2_MNEMONIC`, `HOT_WALLET_3_MNEMONIC`)
     * They all must have a non-zero balance on the host
-    * Wallet #1 should have enough to fund each liquid stake
-    * Wallet #2 and Wallet #3 only need enough to relay on the host (~1 native token)
+    * Wallet #1 should have enough to fund each liquid stake (~5 native token per attempt)
+    * Wallet #2 only needs enough to create clients and connections (~0.20 native token)
+    * Wallet #3 only needs enough to relayer on the host (~0.50 native token)
 * Update the variables at the top of `start.sh`
 
 ## Start Stride Local
 * Build stride and the relayers
 ```bash 
-make build-docker build=sr{n} # where n is the new host zone that was just added
+make build-docker build=srh{n} # where n is the new host zone that was just added
 ```
 * Start a local stride instance and setup all the commands needed to test the flow
 ```
