@@ -32,7 +32,7 @@ var (
 )
 
 // Helper function to log the migrated modules consensus versions
-func logMigration(ctx sdk.Context, versionMap module.VersionMap, moduleName string) {
+func logModuleMigration(ctx sdk.Context, versionMap module.VersionMap, moduleName string) {
 	currentVersion := versionMap[moduleName]
 	ctx.Logger().Info(fmt.Sprintf("migrating module %s from version %d to version %d", moduleName, currentVersion-1, currentVersion))
 }
@@ -69,22 +69,22 @@ func CreateUpgradeHandler(
 		//    - icacallbacks
 		//    - records
 		//    - stakeibc
-		logMigration(ctx, currentVersions, claimtypes.ModuleName)
+		logModuleMigration(ctx, currentVersions, claimtypes.ModuleName)
 		if err := claimmigration.MigrateStore(ctx, claimStoreKey, cdc); err != nil {
 			return vm, sdkerrors.Wrapf(err, "unable to migrate claim store")
 		}
 
-		logMigration(ctx, currentVersions, icacallbacktypes.ModuleName)
+		logModuleMigration(ctx, currentVersions, icacallbacktypes.ModuleName)
 		if err := icacallbacksmigration.MigrateStore(ctx, icacallbackStorekey, cdc); err != nil {
 			return vm, sdkerrors.Wrapf(err, "unable to migrate icacallbacks store")
 		}
 
-		logMigration(ctx, currentVersions, recordtypes.ModuleName)
+		logModuleMigration(ctx, currentVersions, recordtypes.ModuleName)
 		if err := recordsmigration.MigrateStore(ctx, recordStoreKey, cdc); err != nil {
 			return vm, sdkerrors.Wrapf(err, "unable to migrate records store")
 		}
 
-		logMigration(ctx, currentVersions, stakeibctypes.ModuleName)
+		logModuleMigration(ctx, currentVersions, stakeibctypes.ModuleName)
 		if err := stakeibcmigration.MigrateStore(ctx, stakeibcStoreKey, cdc); err != nil {
 			return vm, sdkerrors.Wrapf(err, "unable to migrate stakeibc store")
 		}
