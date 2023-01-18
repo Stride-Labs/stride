@@ -3,6 +3,7 @@ package types
 import (
 	"strings"
 
+	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
@@ -11,7 +12,7 @@ const TypeMsgLiquidStake = "liquid_stake"
 
 var _ sdk.Msg = &MsgLiquidStake{}
 
-func NewMsgLiquidStake(creator string, amount sdk.Int, hostDenom string) *MsgLiquidStake {
+func NewMsgLiquidStake(creator string, amount sdkmath.Int, hostDenom string) *MsgLiquidStake {
 	return &MsgLiquidStake{
 		Creator:   creator,
 		Amount:    amount,
@@ -56,7 +57,7 @@ func (msg *MsgLiquidStake) ValidateBasic() error {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid creator address (%s)", err)
 	}
 	// validate amount is positive nonzero
-	if msg.Amount.LTE(sdk.ZeroInt()) {
+	if msg.Amount.LTE(sdkmath.ZeroInt()) {
 		return sdkerrors.Wrapf(ErrInvalidAmount, "amount liquid staked must be positive and nonzero")
 	}
 	// validate host denom is not empty

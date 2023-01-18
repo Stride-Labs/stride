@@ -2,7 +2,6 @@ package keeper_test
 
 import (
 	_ "github.com/stretchr/testify/suite"
-
 	icqtypes "github.com/Stride-Labs/stride/v4/x/interchainquery/types"
 )
 

@@ -4,7 +4,7 @@ import (
 	icacallbackstypes "github.com/Stride-Labs/stride/v4/x/icacallbacks/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	channeltypes "github.com/cosmos/ibc-go/v3/modules/core/04-channel/types"
+	channeltypes "github.com/cosmos/ibc-go/v5/modules/core/04-channel/types"
 )
 
 const (
@@ -17,7 +17,7 @@ const (
 )
 
 // ICACallbacks wrapper struct for stakeibc keeper
-type ICACallback func(Keeper, sdk.Context, channeltypes.Packet, *channeltypes.Acknowledgement, []byte) error
+type ICACallback func(Keeper, sdk.Context, channeltypes.Packet, *icacallbackstypes.AcknowledgementResponse, []byte) error
 
 type ICACallbacks struct {
 	k            Keeper
@@ -30,8 +30,8 @@ func (k Keeper) ICACallbackHandler() ICACallbacks {
 	return ICACallbacks{k, make(map[string]ICACallback)}
 }
 
-func (c ICACallbacks) CallICACallback(ctx sdk.Context, id string, packet channeltypes.Packet, ack *channeltypes.Acknowledgement, args []byte) error {
-	return c.icacallbacks[id](c.k, ctx, packet, ack, args)
+func (c ICACallbacks) CallICACallback(ctx sdk.Context, id string, packet channeltypes.Packet, ackResponse *icacallbackstypes.AcknowledgementResponse, args []byte) error {
+	return c.icacallbacks[id](c.k, ctx, packet, ackResponse, args)
 }
 
 func (c ICACallbacks) HasICACallback(id string) bool {

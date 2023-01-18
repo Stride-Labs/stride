@@ -44,8 +44,8 @@ build_local_and_docker() {
    return $docker_build_succeeded
 }
 
-ADMINS_FILE=${SCRIPT_DIR}/../utils/admins.go
-ADMINS_FILE_BACKUP=${SCRIPT_DIR}/../utils/admins.go.main
+ADMINS_FILE=${DOCKERNET_HOME}/../utils/admins.go
+ADMINS_FILE_BACKUP=${DOCKERNET_HOME}/../utils/admins.go.main
 
 replace_admin_address() {
    cp $ADMINS_FILE $ADMINS_FILE_BACKUP
