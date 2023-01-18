@@ -82,7 +82,7 @@ func (k Keeper) Transfer(ctx sdk.Context, msg *ibctypes.MsgTransfer, depositReco
 	if err != nil {
 		return err
 	}
-	sequence := msgTransferResponse.Sequence
+	sequence := msgTransferResponse.Sequence // TODO: Sequence has not yet been added
 	// add callback data
 	transferCallback := types.TransferCallback{
 		DepositRecordId: depositRecord.Id,

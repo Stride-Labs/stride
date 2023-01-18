@@ -33,6 +33,7 @@ require (
 	filippo.io/edwards25519 v1.0.0-rc.1 // indirect
 	github.com/99designs/keyring v1.2.1 // indirect
 	github.com/ChainSafe/go-schnorrkel v0.0.0-20200405005733-88cbf1b4c40d // indirect
+	github.com/CosmWasm/wasmvm v1.1.0 // indirect
 	github.com/Workiva/go-datastructures v1.0.53 // indirect
 	github.com/armon/go-metrics v0.4.0 // indirect
 	github.com/aws/aws-sdk-go v1.40.45 // indirect
@@ -163,6 +164,8 @@ replace (
 	// dragonberry replkace line per: https://github.com/cosmos/cosmos-sdk/releases/tag/v0.45.9
 	github.com/confio/ics23/go => github.com/cosmos/cosmos-sdk/ics23/go v0.8.0
 
+	github.com/cosmos/ibc-go/v5 => github.com/strangelove-ventures/ibc-go/v5 v5.0.0-20230111170110-58ba765efbc9
+
 	// use cosmos-flavored protobufs
 	github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alpha.regen.1
 
@@ -174,4 +177,5 @@ replace (
 
 	// use the version of grpc compatible with the regen networks protobufs.
 	google.golang.org/grpc => google.golang.org/grpc v1.50.1
+
 )
