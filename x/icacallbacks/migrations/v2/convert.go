@@ -3,7 +3,7 @@ package v2
 import (
 	sdkmath "cosmossdk.io/math"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	"github.com/golang/protobuf/proto"
+	"github.com/golang/protobuf/proto" //nolint:staticcheck
 
 	icacallbacktypes "github.com/Stride-Labs/stride/v4/x/icacallbacks/types"
 	oldstakeibctypes "github.com/Stride-Labs/stride/v4/x/stakeibc/migrations/v2/types"

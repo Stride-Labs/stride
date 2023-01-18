@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	sdkmath "cosmossdk.io/math"
-	"github.com/golang/protobuf/proto"
+	"github.com/golang/protobuf/proto" //nolint:staticcheck
 	"github.com/stretchr/testify/require"
 
 	icacallbacktypes "github.com/Stride-Labs/stride/v4/x/icacallbacks/types"
