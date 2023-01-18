@@ -51,7 +51,7 @@ $STRIDE_MAIN_CMD query gov tally $proposal_id
 
 printf "\nPROPOSAL STATUS\n"
 while true; do
-    status=$($STRIDE_MAIN_CMD query gov proposal 1 | grep "status" | awk '{printf $2}')
+    status=$($STRIDE_MAIN_CMD query gov proposal $proposal_id | grep "status" | awk '{printf $2}')
     if [[ "$status" == "PROPOSAL_STATUS_VOTING_PERIOD" ]]; then
         echo "Proposal still in progress..."
         sleep 5

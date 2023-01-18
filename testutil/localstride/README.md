@@ -189,7 +189,10 @@ If you are only running the validator for a short time (< 24 hours) you will not
 make localnet-state-export-upgrade upgrade_name={upgrade_name} upgrade_height={upgrade_height}
 #  Ex: make localnet-state-export-upgrade upgrade_name=v5 upgrade_height=1956500
 ```
-* Wait for the upgrade height and confirm the node crashed
+* Wait for the upgrade height and confirm the node crashed. Run the following to take down the container:
+```
+make localnet-state-export-stop
+```
 * Switch the repo back to the version we're upgrading to and re-build the stride image **without clearing the state**:
 ```bash
 git checkout main
