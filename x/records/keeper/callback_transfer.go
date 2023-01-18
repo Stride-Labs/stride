@@ -3,13 +3,14 @@ package keeper
 import (
 	"fmt"
 
-	ibctransfertypes "github.com/cosmos/ibc-go/v3/modules/apps/transfer/types"
+	ibctransfertypes "github.com/cosmos/ibc-go/v5/modules/apps/transfer/types"
 
+	icacallbackstypes "github.com/Stride-Labs/stride/v4/x/icacallbacks/types"
 	"github.com/Stride-Labs/stride/v4/x/records/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	channeltypes "github.com/cosmos/ibc-go/v3/modules/core/04-channel/types"
+	channeltypes "github.com/cosmos/ibc-go/v5/modules/core/04-channel/types"
 	"github.com/golang/protobuf/proto" //nolint:staticcheck
 )
 
@@ -31,7 +32,7 @@ func (k Keeper) UnmarshalTransferCallbackArgs(ctx sdk.Context, delegateCallback 
 	return &unmarshalledTransferCallback, nil
 }
 
-func TransferCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ack *channeltypes.Acknowledgement, args []byte) error {
+func TransferCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ackResponse *icacallbackstypes.AcknowledgementResponse, args []byte) error {
 	k.Logger(ctx).Info("TransferCallback executing", "packet", packet)
 
 	// deserialize the args
@@ -46,7 +47,7 @@ func TransferCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ack
 		return sdkerrors.Wrapf(types.ErrUnknownDepositRecord, "deposit record not found %d", transferCallbackData.DepositRecordId)
 	}
 
-	if ack == nil {
+	if ackResponse.Status == icacallbackstypes.AckResponseStatus_TIMEOUT {
 		// timeout
 		// put record back in the TRANSFER_QUEUE
 		depositRecord.Status = types.DepositRecord_TRANSFER_QUEUE
@@ -55,12 +56,12 @@ func TransferCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ack
 		return nil
 	}
 
-	if _, ok := ack.Response.(*channeltypes.Acknowledgement_Error); ok {
+	if ackResponse.Status == icacallbackstypes.AckResponseStatus_FAILURE {
 		// error on host chain
 		// put record back in the TRANSFER_QUEUE
 		depositRecord.Status = types.DepositRecord_TRANSFER_QUEUE
 		k.SetDepositRecord(ctx, depositRecord)
-		k.Logger(ctx).Error(fmt.Sprintf("Error  %s", ack.GetError()))
+		k.Logger(ctx).Error(fmt.Sprintf("Error  %s", ackResponse.Error))
 		return nil
 	}
 

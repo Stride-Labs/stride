@@ -101,6 +101,9 @@ lint:
 ###############################################################################
 
 test-unit:
+	@go test -mod=readonly ./x/... ./app/...
+
+test-unit-module:
 	@go test -mod=readonly ./x/$(module)/...
 
 test-cover:
@@ -133,6 +136,15 @@ stop-docker:
 	@pkill -f "/bin/bash.*create_logs.sh" | true
 	@pkill -f "tail .*.log" | true
 	docker-compose -f $(DOCKERNET_COMPOSE_FILE) down
+
+upgrade-init: 
+	PART=1 bash $(DOCKERNET_HOME)/tests/run_tests_upgrade.sh
+
+upgrade-submit: 
+	UPGRADE_HEIGHT=750 bash $(DOCKERNET_HOME)/upgrades/submit_upgrade.sh
+
+upgrade-validate:
+	PART=2 bash $(DOCKERNET_HOME)/tests/run_tests_upgrade.sh
 
 ###############################################################################
 ###                                Protobuf                                 ###

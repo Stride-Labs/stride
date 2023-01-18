@@ -3,7 +3,7 @@ package keeper_test
 import (
 	"fmt"
 
-	ibctesting "github.com/cosmos/ibc-go/v3/testing"
+	ibctesting "github.com/cosmos/ibc-go/v5/testing"
 	_ "github.com/stretchr/testify/suite"
 
 	epochtypes "github.com/Stride-Labs/stride/v4/x/epochs/types"
@@ -246,7 +246,7 @@ func (s *KeeperTestSuite) TestQueryDelegationsIcq_MissingDelegationAddress() {
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, tc.hostZone)
 
 	err := s.App.StakeibcKeeper.QueryDelegationsIcq(s.Ctx, tc.hostZone, tc.valoperAddr)
-	s.Require().ErrorContains(err, "missing a delegation address")
+	s.Require().ErrorContains(err, "no delegation address found for")
 }
 
 func (s *KeeperTestSuite) TestQueryDelegationsIcq_MissingConnectionId() {
