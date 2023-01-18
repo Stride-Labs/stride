@@ -14,5 +14,6 @@ enum ICAAccountType {
 
 message ICAAccount {
   string address = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
-  ICAAccountType target = 2;
+  ICAAccountType target = 3;
+  reserved 2;
 }
