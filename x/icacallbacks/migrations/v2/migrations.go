@@ -11,9 +11,9 @@ import (
 )
 
 func migrateCallbacks(store sdk.KVStore, cdc codec.BinaryCodec) error {
-	paramsStore := prefix.NewStore(store, []byte(icacallbacktypes.CallbackDataKeyPrefix))
+	icacallbackStore := prefix.NewStore(store, []byte(icacallbacktypes.CallbackDataKeyPrefix))
 
-	iter := paramsStore.Iterator(nil, nil)
+	iter := icacallbackStore.Iterator(nil, nil)
 	defer iter.Close()
 
 	for ; iter.Valid(); iter.Next() {
@@ -37,7 +37,7 @@ func migrateCallbacks(store sdk.KVStore, cdc codec.BinaryCodec) error {
 		}
 
 		// Set new value on store.
-		paramsStore.Set(iter.Key(), newCallbackDataBz)
+		icacallbackStore.Set(iter.Key(), newCallbackDataBz)
 	}
 
 	return nil

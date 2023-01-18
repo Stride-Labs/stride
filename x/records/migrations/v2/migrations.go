@@ -12,9 +12,9 @@ import (
 )
 
 func migrateDepositRecord(store sdk.KVStore, cdc codec.BinaryCodec) error {
-	paramsStore := prefix.NewStore(store, []byte(recordtypes.DepositRecordKey))
+	depositRecordStore := prefix.NewStore(store, []byte(recordtypes.DepositRecordKey))
 
-	iterator := paramsStore.Iterator(nil, nil)
+	iterator := depositRecordStore.Iterator(nil, nil)
 	defer iterator.Close()
 
 	for ; iterator.Valid(); iterator.Next() {
@@ -33,16 +33,16 @@ func migrateDepositRecord(store sdk.KVStore, cdc codec.BinaryCodec) error {
 		}
 
 		// Store the new type
-		paramsStore.Set(iterator.Key(), newDepositRecordBz)
+		depositRecordStore.Set(iterator.Key(), newDepositRecordBz)
 	}
 
 	return nil
 }
 
 func migrateUserRedemptionRecord(store sdk.KVStore, cdc codec.BinaryCodec) error {
-	paramsStore := prefix.NewStore(store, []byte(recordtypes.UserRedemptionRecordKey))
+	redemptionRecordStore := prefix.NewStore(store, []byte(recordtypes.UserRedemptionRecordKey))
 
-	iterator := paramsStore.Iterator(nil, nil)
+	iterator := redemptionRecordStore.Iterator(nil, nil)
 	defer iterator.Close()
 
 	for ; iterator.Valid(); iterator.Next() {
@@ -61,16 +61,16 @@ func migrateUserRedemptionRecord(store sdk.KVStore, cdc codec.BinaryCodec) error
 		}
 
 		// Store the new type
-		paramsStore.Set(iterator.Key(), newRedemptionRecordBz)
+		redemptionRecordStore.Set(iterator.Key(), newRedemptionRecordBz)
 	}
 
 	return nil
 }
 
 func migrateEpochUnbondingRecord(store sdk.KVStore, cdc codec.BinaryCodec) error {
-	paramsStore := prefix.NewStore(store, []byte(recordtypes.EpochUnbondingRecordKey))
+	epochUnbondingRecordStore := prefix.NewStore(store, []byte(recordtypes.EpochUnbondingRecordKey))
 
-	iterator := paramsStore.Iterator(nil, nil)
+	iterator := epochUnbondingRecordStore.Iterator(nil, nil)
 	defer iterator.Close()
 
 	for ; iterator.Valid(); iterator.Next() {
@@ -89,7 +89,7 @@ func migrateEpochUnbondingRecord(store sdk.KVStore, cdc codec.BinaryCodec) error
 		}
 
 		// Store the new type
-		paramsStore.Set(iterator.Key(), newEpochUnbondingRecordBz)
+		epochUnbondingRecordStore.Set(iterator.Key(), newEpochUnbondingRecordBz)
 	}
 
 	return nil
