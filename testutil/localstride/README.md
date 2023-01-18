@@ -201,8 +201,6 @@ make localnet-state-export-build
 * Finally, start the node back up with the updated binary
 ```bash
 make localnet-state-export-start
-# Or to run in detached mode:
-make localnet-state-export-startd
 ```
 * Check the localstride logs and confirm the upgrade succeeded
 
