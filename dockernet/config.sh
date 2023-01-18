@@ -34,8 +34,8 @@ elif [[ "${#HOST_CHAINS[@]}" == "0" ]]; then
 fi
 
 # Sets up upgrade if {UPGRADE_NAME} is non-empty
-UPGRADE_NAME="v5"
-UPGRADE_OLD_COMMIT_HASH="v4.0.3"
+UPGRADE_NAME=""
+UPGRADE_OLD_COMMIT_HASH=""
 
 # DENOMS
 ATOM_DENOM="uatom"
