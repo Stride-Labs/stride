@@ -318,26 +318,18 @@ func (s *AppTestHelper) MarshalledICS20PacketData() sdk.AccAddress {
 	return data.GetBytes()
 }
 
-func (s *AppTestHelper) ICS20PacketAcknowledgement() channeltypes.Acknowledgement {
-	// see: https://github.com/cosmos/ibc-go/blob/8de555db76d0320842dacaa32e5500e1fd55e667/modules/apps/transfer/keeper/relay.go#L151
-	ack := channeltypes.NewResultAcknowledgement(s.MarshalledICS20PacketData())
-	return ack
-}
-
 func (s *AppTestHelper) ConfirmUpgradeSucceededs(upgradeName string, upgradeHeight int64) {
-	contextBeforeUpgrade := s.Ctx.WithBlockHeight(upgradeHeight - 1)
-	contextAtUpgrade := s.Ctx.WithBlockHeight(upgradeHeight)
-
+	s.Ctx = s.Ctx.WithBlockHeight(upgradeHeight - 1)
 	plan := upgradetypes.Plan{Name: upgradeName, Height: upgradeHeight}
-	err := s.App.UpgradeKeeper.ScheduleUpgrade(contextBeforeUpgrade, plan)
+	err := s.App.UpgradeKeeper.ScheduleUpgrade(s.Ctx, plan)
 	s.Require().NoError(err)
-
-	_, exists := s.App.UpgradeKeeper.GetUpgradePlan(contextBeforeUpgrade)
+	_, exists := s.App.UpgradeKeeper.GetUpgradePlan(s.Ctx)
 	s.Require().True(exists)
 
+	s.Ctx = s.Ctx.WithBlockHeight(upgradeHeight)
 	s.Require().NotPanics(func() {
 		beginBlockRequest := abci.RequestBeginBlock{}
-		s.App.BeginBlocker(contextAtUpgrade, beginBlockRequest)
+		s.App.BeginBlocker(s.Ctx, beginBlockRequest)
 	})
 }
 
