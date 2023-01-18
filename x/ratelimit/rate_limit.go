@@ -41,10 +41,12 @@ func ParseDenomFromSendPacket(packet transfertypes.FungibleTokenPacketData) (den
 
 // Parse the denom from the Recv Packet that will be used by the rate limit module
 // The denom that the rate limiter will use for a RECEIVE packet depends on whether it was a source or sink
-// 		Source: The packet is being received by a chain it was just sent from (i.e. the token has gone back and forth)
-//              (e.g. strd is sent -> to osmosis -> and then back to stride)
-//      Sink:   The packet is being received by a chain that either created it or previous received it from somewhere else
-//              (e.g. atom is sent -> to stride) (e.g.2. atom is sent -> to osmosis -> which is then sent to stride)
+//      Sink:   The token moves forward, to a chain different than its previous hop
+//              The new port and channel are APPENDED to the denom trace.
+//              (e.g. A -> B, B is a sink) (e.g. A -> B -> C, C is a sink)
+// 		Source: The token moves backwards (i.e. revisits the last chain it was sent from)
+// 				The port and channel are REMOVED from the denom trace - undoing the last hop.
+//              (e.g. A -> B -> A, A is a source) (e.g. A -> B -> C -> B, B is a source)
 //
 //      If the chain is acting as a SINK:
 //      	We add on the Stride port and channel and hash it
@@ -99,9 +101,11 @@ func ParseDenomFromRecvPacket(packet channeltypes.Packet, packetData transfertyp
 
 // Middleware implementation for SendPacket with rate limiting
 func SendRateLimitedPacket(ctx sdk.Context, keeper ratelimitkeeper.Keeper, packet exported.PacketI) error {
-	// For a send packet, the channel on stride is the "Source" channel
-	//  This is because the Source and Desination are defined from the perspective of a packet recipient
-	//    i.e., when this packet lands on a the host chain, the "Source" will show the Stride Channel
+	// The Stride channelID should always be used as the key for the RateLimit object (not the counterparty channelID)
+	// For a SEND packet, the Stride channelID is the SOURCE channel
+	// This is because the Source and Desination are defined from the perspective of a packet recipient
+	// Meaning, when this packet lands on a the host chain, the "Source" will be the Stride Channel,
+	//   and the "Destination" will be the Host Channel
 	channelId := packet.GetSourceChannel()
 
 	// Parse the packet data
@@ -127,9 +131,11 @@ func SendRateLimitedPacket(ctx sdk.Context, keeper ratelimitkeeper.Keeper, packe
 
 // Middleware implementation for RecvPacket with rate limiting
 func ReceiveRateLimitedPacket(ctx sdk.Context, keeper ratelimitkeeper.Keeper, packet channeltypes.Packet) error {
-	// For a receive packet, the channel on stride is the "Destination" channel
-	// This is because the Source and Desination is defined from the perspective of a packet recipient
-	// Meaning, when this packet lands on a Stride, the "Destination" will show the Stride Channel
+	// The Stride channelID should always be used as the key for the RateLimit object (not the counterparty channelID)
+	// For a RECEIVE packet, the Stride channelID is the DESTINATION channel
+	// This is because the Source and Desination are defined from the perspective of a packet recipient
+	// Meaning, when this packet lands on a Stride, the "Source" will be the host zone's channel,
+	//  and the "Destination" will be the Stride Channel
 	channelId := packet.GetDestChannel()
 
 	// Parse the amount and denom from the packet

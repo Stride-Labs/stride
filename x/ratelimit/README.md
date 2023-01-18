@@ -5,11 +5,13 @@ category: 6392913957c533007128548e
 ---
 # RateLimit Module
 ## Overview
-This `ratelimit` module is a native golang implementation of Osmosis's CosmWasm [`ibc-rate-limit`](https://github.com/osmosis-labs/osmosis/tree/main/x/ibc-rate-limit) module. The module is meant as a safety control in the event of a bug or attack, and prevents massive inflows or outflows of IBC tokens to/from Stride in a short time frame. See [here](https://github.com/osmosis-labs/osmosis/tree/main/x/ibc-rate-limit#motivation) for an excellent summary by the Osmosis team on the motivation for rate limiting.
+This `ratelimit` module is a native golang implementation, inspired by Osmosis's CosmWasm [`ibc-rate-limit`](https://github.com/osmosis-labs/osmosis/tree/main/x/ibc-rate-limit) module. The module is meant as a safety control in the event of a bug, attack, or economic failure of an external zone. It prevents massive inflows or outflows of IBC tokens to/from Stride in a short time frame. See [here](https://github.com/osmosis-labs/osmosis/tree/main/x/ibc-rate-limit#motivation) for an excellent summary by the Osmosis team on the motivation for rate limiting.
 
 Each rate limit is applied at a ChannelID + Denom granularity and is evaluated in evenly spaced fixed windows. For instance, a rate limit might be specified on `uosmo` (denominated as `ibc/D24B4564BCD51D3D02D9987D92571EAC5915676A9BD6D9B0C1D0254CB8A5EA34` on Stride), on the Stride <-> Osmosis transfer channel (`channel-5`), with a 24 hour window. 
 
-Each rate limit will also have a configurable threshold that dictates the max inflow/outflow along the channel. The threshold is represented as a percentage of the total value along the channel. The channel value is calculated by querying the total supply of the denom at the start of the time window, and it remains constant until the window expires. For instance, the rate limit described above might have a threshold of 10% for both inflow and outflow. If the total supply of `ibc/D24B4564BCD51D3D02D9987D92571EAC5915676A9BD6D9B0C1D0254CB8A5EA34` was 100, then any transfer that would cause a net inflow or outflow greater than 10 (i.e. greater than 10% the channel value) would be rejected. Once the time window expires, the net inflow and outflow are reset to 0 and the channel value is re-calculated.
+Each rate limit will also have a configurable threshold that dictates the max inflow/outflow along the channel. The threshold is represented as a percentage of the total value along the channel. The channel value is calculated by querying the total supply of the denom at the start of the time window, and it remains constant until the window expires. For instance, the rate limit described above might have a threshold of 10% for both inflow and outflow. If the total supply of `ibc/D24B4564BCD51D3D02D9987D92571EAC5915676A9BD6D9B0C1D0254CB8A5EA34` was 100, then any transfer that would cause a net inflow or outflow greater than 10 (i.e. greater than 10% the channel value) would be rejected. Once the time window expires, the net inflow and outflow are reset to 0 and the channel value is re-calculated. 
+
+The *net* inflow and outflow is used (rather than the total inflow/outflow) to prevent DOS attacks where someone repeatedly sends the same token back and forth across the same channel, causing the rate limit to be reached.
 
 The module is implemented as IBC Middleware around the transfer module. The epoch's module is leveraged to determine when each rate limit window has expired (each window is denominated in hours). This means all rate limit windows with the same window duration will start and end at the same time.
 
@@ -59,15 +61,28 @@ The denom that the rate limiter will use for a send packet depends on whether it
 * For **non-native** tokens, take the ibc hash (e.g. hash `transfer/channel-X/uosmo` into `ibc/...`)
 
 ### Receive Packets
-The denom that the rate limiter will use for a receive packet depends on whether it was a source or sink
+The denom that the rate limiter will use for a receive packet depends on whether it was a source or sink.
+
 #### Source vs Sink
-* **Source**: The packet is being received by a chain it was just sent from (i.e. the token has gone back and forth)
-    * Ex1: `strd` is sent from Stride to Osmosis, and then back to Stride 
+As a token travels across IBC chains, its path is recorded in the denom trace. 
+
+* **Sink**: If the token moves **forward**, to a chain different than its previous hop, the destination chain acts as a **sink zone**, and the new port and channel are **appended** to the denom trace.
+    * Ex1: `uatom` is sent from Cosmoshub to Stride 
+      * Stride is the first destination for `uatom`, and acts as a sink zone
+      * The IBC denom becomes the hash of: `/{stride-port)/{stride-channel}/uatom`
+    * Ex2: `uatom` is sent from Cosmoshub to Osmosis then to Stride
+      * Here the receiving chain (Stride) is not the same as the previous hop (Cosmoshub), so Stride, once again, is acting as a sink zone
+      *  The IBC denom becomes the hash of: `/{stride-port)/{stride-channel}/{osmosis-port}/{osmosis-channel}/uatom`
+   
+* **Source**: If the token moves **backwards** (i.e. revisits the last chain it was sent from), the destination chain is acting as a **source zone**, and the port and channel are **removed** from the denom trace - undoing the last hop. Should a token reverse its course completely and head back along the same path to its native chain, the denom trace will unwind and reduce back down to the original base denom.
+    * Ex1: `ustrd` is sent from Stride to Osmosis, and then back to Stride 
+      * Here the trace reduces from `/{osmosis-port}/{osmosis-channel}/ustrd` to simply `ustrd`
     * Ex2: `ujuno` is sent to Stride, then to Osmosis, then back to Stride 
+      * Here the trace reduces from `/{osmosis-port}/{osmosis-channel}/{stride-port}/{stride-channel}/ujuno` to just `/{stride-port}/{stride-channel}/ujuno` (the Osmosis hop is removed)
     * Stride is the source in the examples above because the token went back and forth from Stride -> Osmosis -> Stride
-* **Sink**: The packet is being received by a chain that either created it or previous received it from somewhere else
-    * Ex1: `uatom` is sent from Cosmoshub to Stride (`uatom` was created on Cosmoshub)
-    * Ex2: `uatom` is sent from Cosmoshub to Osmosis then to Stride. Here the receiving chain (Stride) is not the same as the previous hop (Cosmoshub), so Stride is not acting as a source.
+
+For a more detailed explanation, see the[ ICS-20 ADR](https://github.com/cosmos/ibc-go/blob/main/docs/architecture/adr-001-coin-source-tracing.md#example) and [spec](https://github.com/cosmos/ibc/tree/main/spec/app/ics-020-fungible-token-transfer).
+
 #### Determining the denom in the rate limit
 * If the chain is acting as a **Sink**: Add on the Stride port and channel and hash it
     * Ex1: `uosmo` sent from Osmosis to Stride

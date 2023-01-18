@@ -611,17 +611,17 @@ func NewStrideApp(
 
 	// Stack two contains
 	// - IBC
-	// - ratelimit
 	// - records
+	// - ratelimit
 	// - transfer
 	// - base app
-	recordsStack := recordsmodule.NewIBCModule(app.RecordsKeeper, transferIBCModule)
-	ratelimitStack := ratelimitmodule.NewIBCModule(app.RatelimitKeeper, recordsStack)
+	ratelimitStack := ratelimitmodule.NewIBCModule(app.RatelimitKeeper, transferIBCModule)
+	recordsStack := recordsmodule.NewIBCModule(app.RecordsKeeper, ratelimitStack)
 
 	// Create static IBC router, add transfer route, then set and seal it
 	ibcRouter := ibcporttypes.NewRouter()
 	ibcRouter.
-		AddRoute(ibctransfertypes.ModuleName, ratelimitStack).
+		AddRoute(ibctransfertypes.ModuleName, recordsStack).
 		AddRoute(icacontrollertypes.SubModuleName, icamiddlewareStack).
 		AddRoute(icahosttypes.SubModuleName, icaHostIBCModule).
 		// Note, authentication module packets are routed to the top level of the middleware stack

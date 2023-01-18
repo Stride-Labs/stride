@@ -55,6 +55,7 @@ func (app *StrideApp) setupUpgradeHandlers() {
 	//     }
 	//
 	// 2. Add hour epoch to store
+	// 3. Add rate limits for existing denoms
 
 	if storeUpgrades != nil {
 		app.SetStoreLoader(upgradetypes.UpgradeStoreLoader(upgradeInfo.Height, storeUpgrades))
