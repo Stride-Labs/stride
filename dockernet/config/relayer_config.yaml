@@ -91,7 +91,7 @@ chains:
   terra:
     type: cosmos
     value:
-      key: rly67
+      key: rly7
       chain-id: TERRA
       rpc-addr: http://terra1:26657
       account-prefix: terra
