@@ -6,7 +6,6 @@ import "google/api/annotations.proto";
 import "cosmos/base/query/v1beta1/pagination.proto";
 import "stride/stakeibc/params.proto";
 import "stride/stakeibc/validator.proto";
-import "stride/stakeibc/ica_account.proto";
 import "stride/stakeibc/host_zone.proto";
 import "stride/stakeibc/epoch_tracker.proto";
 // this line is used by starport scaffolding # 1
@@ -24,11 +23,6 @@ service Query {
       returns (QueryGetValidatorsResponse) {
     option (google.api.http).get =
         "/Stride-Labs/stride/stakeibc/validators/{chain_id}";
-  }
-  // Queries a ICAAccount by index.
-  rpc ICAAccount(QueryGetICAAccountRequest)
-      returns (QueryGetICAAccountResponse) {
-    option (google.api.http).get = "/Stride-Labs/stride/stakeibc/ica_account";
   }
   // Queries a HostZone by id.
   rpc HostZone(QueryGetHostZoneRequest) returns (QueryGetHostZoneResponse) {
@@ -95,11 +89,6 @@ message QueryGetValidatorsRequest { string chain_id = 1; }
 
 message QueryGetValidatorsResponse { repeated Validator validators = 1; }
 
-message QueryGetICAAccountRequest {}
-
-message QueryGetICAAccountResponse {
-  ICAAccount ica_account = 1 [ (gogoproto.nullable) = false ];
-}
 message QueryGetHostZoneRequest { string chain_id = 1; }
 
 message QueryGetHostZoneResponse {
