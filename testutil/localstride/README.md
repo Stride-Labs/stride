@@ -141,14 +141,17 @@ You will then go through the genesis initialization process and hit the first bl
 
 During this process, you may see only p2p logs and no blocks. **This could be the case for the next 30 minutes**, but will eventually start hitting blocks.
 
-9. On your host machine, add this specific wallet which holds a large amount of stride funds
+9. The following account was added to your machine:
 
-```sh
-MNEMONIC="deer gaze swear marine one perfect hero twice turkey symbol mushroom hub escape accident prevent rifle horse arena secret endless panel equal rely payment"
-echo $MNEMONIC | strided keys add val --recover --keyring-backend test
+```bash
+Address: 
+stride1wal8dgs7whmykpdaz0chan2f54ynythkz0cazc
+
+Mnemonic: 
+deer gaze swear marine one perfect hero twice turkey symbol mushroom hub escape accident prevent rifle horse arena secret endless panel equal rely payment
 ```
 
-You now are running a validator with a majority of the voting power with the same state as mainnet state (at the time you took the snapshot)
+This account represents a validator that has the majority of voting power with the same state as mainnet state (at the time you took the snapshot)
 
 10. On your host machine, you can now query the state-exported testnet:
 
@@ -178,6 +181,28 @@ Note: At some point, all the validators (except yours) will get jailed at the sa
 
 When this happens, it may take a little bit of time to process. Once all validators are jailed, you will continue to hit blocks as you did before.
 If you are only running the validator for a short time (< 24 hours) you will not experience this.
+
+### Testing the upgrade
+* Once localstride starts churning blocks, you are ready to test the upgrade. Run the following to submit and vote on the upgrade:
+```bash 
+# Check the localstride logs to determine the current block and propose the upgrade at a height at least 100 blocks in the future
+make localnet-state-export-upgrade upgrade_name={upgrade_name} upgrade_height={upgrade_height}
+#  Ex: make localnet-state-export-upgrade upgrade_name=v5 upgrade_height=1956500
+```
+* Wait for the upgrade height and confirm the node crashed. Run the following to take down the container:
+```
+make localnet-state-export-stop
+```
+* Switch the repo back to the version we're upgrading to and re-build the stride image **without clearing the state**:
+```bash
+git checkout main
+make localnet-state-export-build
+```
+* Finally, start the node back up with the updated binary
+```bash
+make localnet-state-export-start
+```
+* Check the localstride logs and confirm the upgrade succeeded
 
 ## LocalStride Accounts
 

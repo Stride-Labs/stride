@@ -10,6 +10,7 @@ MNEMONIC="deer gaze swear marine one perfect hero twice turkey symbol mushroom h
 edit_genesis () {
 
     GENESIS=$CONFIG_FOLDER/genesis.json
+    CLIENT=$CONFIG_FOLDER/client.toml
 
     # Update staking module
     dasel put string -f $GENESIS '.app_state.staking.params.bond_denom' 'ustrd'
@@ -29,7 +30,6 @@ edit_genesis () {
     # Update mint module
     dasel put string -f $GENESIS '.app_state.mint.params.mint_denom' 'ustrd'
     dasel put string -f $GENESIS '.app_state.mint.params.epoch_identifier' 'mint'
-
 }
 
 add_genesis_accounts () {
@@ -58,6 +58,12 @@ edit_config () {
 
     # Expose the rpc
     dasel put string -f $CONFIG_FOLDER/config.toml '.rpc.laddr' "tcp://0.0.0.0:26657"
+
+    # Update the local client chain ID 
+    dasel put string -f $CONFIG_FOLDER/client.toml '.chain-id' 'localstride'
+
+    # Update the local client keyring backend
+    dasel put string -f $CONFIG_FOLDER/client.toml '.keyring-backend' 'test'
 }
 
 if [[ ! -d $CONFIG_FOLDER ]]

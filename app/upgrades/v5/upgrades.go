@@ -1,6 +1,8 @@
 package v5
 
 import (
+	"fmt"
+
 	"github.com/cosmos/cosmos-sdk/codec"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -29,6 +31,12 @@ var (
 	StaleQueryId = "60b8e09dc7a65938cd6e6e5728b8aa0ca3726ffbe5511946a4f08ced316174ab"
 )
 
+// Helper function to log the migrated modules consensus versions
+func logModuleMigration(ctx sdk.Context, versionMap module.VersionMap, moduleName string) {
+	currentVersion := versionMap[moduleName]
+	ctx.Logger().Info(fmt.Sprintf("migrating module %s from version %d to version %d", moduleName, currentVersion-1, currentVersion))
+}
+
 // CreateUpgradeHandler creates an SDK upgrade handler for v5
 func CreateUpgradeHandler(
 	mm *module.Manager,
@@ -42,6 +50,8 @@ func CreateUpgradeHandler(
 	stakeibcStoreKey storetypes.StoreKey,
 ) upgradetypes.UpgradeHandler {
 	return func(ctx sdk.Context, _ upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
+		currentVersions := mm.GetVersionMap()
+
 		// Remove authz from store as it causes an issue with state sync
 		delete(vm, authz.ModuleName)
 
@@ -59,15 +69,22 @@ func CreateUpgradeHandler(
 		//    - icacallbacks
 		//    - records
 		//    - stakeibc
+		logModuleMigration(ctx, currentVersions, claimtypes.ModuleName)
 		if err := claimmigration.MigrateStore(ctx, claimStoreKey, cdc); err != nil {
 			return vm, sdkerrors.Wrapf(err, "unable to migrate claim store")
 		}
+
+		logModuleMigration(ctx, currentVersions, icacallbacktypes.ModuleName)
 		if err := icacallbacksmigration.MigrateStore(ctx, icacallbackStorekey, cdc); err != nil {
 			return vm, sdkerrors.Wrapf(err, "unable to migrate icacallbacks store")
 		}
+
+		logModuleMigration(ctx, currentVersions, recordtypes.ModuleName)
 		if err := recordsmigration.MigrateStore(ctx, recordStoreKey, cdc); err != nil {
 			return vm, sdkerrors.Wrapf(err, "unable to migrate records store")
 		}
+
+		logModuleMigration(ctx, currentVersions, stakeibctypes.ModuleName)
 		if err := stakeibcmigration.MigrateStore(ctx, stakeibcStoreKey, cdc); err != nil {
 			return vm, sdkerrors.Wrapf(err, "unable to migrate stakeibc store")
 		}
@@ -80,7 +97,6 @@ func CreateUpgradeHandler(
 		// Since the migrations above were executed directly (instead of being registered
 		// and invoked through a Migrator), we need to set the module versions in the versionMap
 		// to the new version, to prevent RunMigrations from attempting to re-run each migrations
-		currentVersions := mm.GetVersionMap()
 		vm[claimtypes.ModuleName] = currentVersions[claimtypes.ModuleName]
 		vm[icacallbacktypes.ModuleName] = currentVersions[icacallbacktypes.ModuleName]
 		vm[recordtypes.ModuleName] = currentVersions[recordtypes.ModuleName]
