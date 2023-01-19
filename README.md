@@ -65,11 +65,11 @@ Add summary of the pull request here (*E.g. This pull request adds XYZ feature t
 ###### Unit tests
 
 To run unit tests for the whole project, execute:
-`make unit-test`
+`make test-unit`
 To run unit tests for a particular module (e.g. the stakeibc module), execute:
-`make unit-test path=stakeibc`
+`make test-unit path=stakeibc`
 To run unit tests for a particular package (e.g. the stakeibc module), execute:
-`make unit-test path=stakeibc/types`
+`make test-unit path=stakeibc/types`
 To inspect unit test coverage, execute:
 `make test-cover`
 
