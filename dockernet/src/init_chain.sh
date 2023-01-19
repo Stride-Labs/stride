@@ -120,8 +120,13 @@ for (( i=1; i <= $NUM_NODES; i++ )); do
     val_mnemonic="${VAL_MNEMONICS[((i-1))]}"
     echo "$val_mnemonic" | $cmd keys add $val_acct --recover --keyring-backend=test >> $KEYS_LOGS 2>&1
     val_addr=$($cmd keys show $val_acct --keyring-backend test -a | tr -cd '[:alnum:]._-')
+
     # Add this account to the current node
-    $cmd add-genesis-account ${val_addr} ${VAL_TOKENS}${DENOM}
+    if [[ "$CHAIN" == "INJECTIVE" ]]; then
+        $cmd add-genesis-account ${val_addr} ${VAL_TOKENS}${DENOM} --chain-id $CHAIN_ID
+    else
+        $cmd add-genesis-account ${val_addr} ${VAL_TOKENS}${DENOM} 
+    fi
     # actually set this account as a validator on the current node 
     $cmd gentx $val_acct ${STAKE_TOKENS}${DENOM} --chain-id $CHAIN_ID --keyring-backend test &> /dev/null
 
@@ -137,7 +142,11 @@ for (( i=1; i <= $NUM_NODES; i++ )); do
         MAIN_GENESIS=$genesis_json
     else
         # also add this account and it's genesis tx to the main node
-        $MAIN_CMD add-genesis-account ${val_addr} ${VAL_TOKENS}${DENOM}
+        if [[ "$CHAIN" == "INJECTIVE" ]]; then
+            $MAIN_CMD add-genesis-account ${val_addr} ${VAL_TOKENS}${DENOM} --chain-id $CHAIN_ID
+        else
+            $MAIN_CMD add-genesis-account ${val_addr} ${VAL_TOKENS}${DENOM} 
+        fi
         cp ${STATE}/${node_name}/config/gentx/*.json ${STATE}/${MAIN_NODE_NAME}/config/gentx/
 
         # and add each validator's keys to the first state directory
@@ -172,7 +181,11 @@ else
 
     echo "$RELAYER_MNEMONIC" | $MAIN_CMD keys add $RELAYER_ACCT --recover --keyring-backend=test >> $KEYS_LOGS 2>&1
     RELAYER_ADDRESS=$($MAIN_CMD keys show $RELAYER_ACCT --keyring-backend test -a | tr -cd '[:alnum:]._-')
-    $MAIN_CMD add-genesis-account ${RELAYER_ADDRESS} ${VAL_TOKENS}${DENOM}
+    if [[ "$CHAIN" == "INJECTIVE" ]]; then
+        $MAIN_CMD add-genesis-account ${RELAYER_ADDRESS} ${VAL_TOKENS}${DENOM} --chain-id $CHAIN_ID
+    else
+        $MAIN_CMD add-genesis-account ${RELAYER_ADDRESS} ${VAL_TOKENS}${DENOM} 
+    fi
 fi
 
 # now we process gentx txs on the main node

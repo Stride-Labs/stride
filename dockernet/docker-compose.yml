@@ -134,16 +134,6 @@ services:
     image: stridezone:stars
     volumes:
       - ./state/stars5:/home/stars/.starsd
-  # Fill in new host zone being tested here
-
-  injective1:
-    image: stridezone:injective
-    volumes:
-      - ./state/injective1:/home/injective/.injectived
-    ports:
-      - "26157:26657"
-      - "1267:1317"
-      - "9040:9090"
 
   host1:
     image: stridezone:stride
@@ -153,6 +143,16 @@ services:
       - "26157:26657"
       - "1267:1317"
       - "9040:9090"
+
+  # Fill in new host zone being tested here
+  injective1:
+    image: stridezone:injective
+    volumes:
+      - ./state/injective1:/home/injective/.injectived
+    ports:
+      - "26057:26657"
+      - "1257:1317"
+      - "9030:9090"
 
   host2:
     image: stridezone:stride
