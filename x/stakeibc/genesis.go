@@ -10,8 +10,11 @@ import (
 // InitGenesis initializes the capability module's state from a provided genesis
 // state.
 func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) {
-	for _, elem := range genState.HostZoneList {
-		k.SetHostZone(ctx, elem)
+	for _, hostZone := range genState.HostZoneList {
+		k.SetHostZone(ctx, hostZone)
+	}
+	for _, epochTracker := range genState.EpochTrackerList {
+		k.SetEpochTracker(ctx, epochTracker)
 	}
 
 	k.SetParams(ctx, genState.Params)
