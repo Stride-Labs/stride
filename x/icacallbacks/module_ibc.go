@@ -7,7 +7,7 @@ import (
 	porttypes "github.com/cosmos/ibc-go/v5/modules/core/05-port/types"
 	ibcexported "github.com/cosmos/ibc-go/v5/modules/core/exported"
 
-	"github.com/Stride-Labs/stride/v4/x/icacallbacks/keeper"
+	"github.com/Stride-Labs/stride/v5/x/icacallbacks/keeper"
 )
 
 // IBCModule implements the ICS26 interface for interchain accounts controller chains

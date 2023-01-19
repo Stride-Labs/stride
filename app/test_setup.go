@@ -20,7 +20,7 @@ import (
 	tmtypes "github.com/tendermint/tendermint/types"
 	dbm "github.com/tendermint/tm-db"
 
-	cmdcfg "github.com/Stride-Labs/stride/v4/cmd/strided/config"
+	cmdcfg "github.com/Stride-Labs/stride/v5/cmd/strided/config"
 )
 
 const Bech32Prefix = "stride"
