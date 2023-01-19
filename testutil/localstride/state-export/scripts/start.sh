@@ -30,6 +30,12 @@ edit_config () {
 
     # Expose the rpc
     dasel put string -f $CONFIG_FOLDER/config.toml '.rpc.laddr' "tcp://0.0.0.0:26657"
+
+    # Update the local client chain ID 
+    dasel put string -f $CONFIG_FOLDER/client.toml '.chain-id' 'localstride'
+
+    # Update the local client keyring backend
+    dasel put string -f $CONFIG_FOLDER/client.toml '.keyring-backend' 'test'
 }
 
 if [[ ! -d $CONFIG_FOLDER ]]
