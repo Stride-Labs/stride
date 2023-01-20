@@ -3,7 +3,7 @@ FROM rust:1.63-buster as builder
 RUN apt-get update \
     && adduser --system --home /home/injective --disabled-password --disabled-login injective -u 1000
 
-RUN wget https://github.com/InjectiveLabs/injective-chain-releases/releases/download/v1.9.0-1673970775/linux-amd64.zip \
+RUN wget https://github.com/InjectiveLabs/injective-chain-releases/releases/download/v1.9.0-1673640888/linux-amd64.zip \
     && unzip linux-amd64.zip \
     && mv peggo /usr/bin/ \
     && mv injectived /usr/bin/ \
