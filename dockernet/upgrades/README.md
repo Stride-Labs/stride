@@ -33,7 +33,7 @@ bash dockernet/upgrades/submit_upgrade.sh
 * **WARNING**: The integration tests may change between versions - the following only works if there were not breaking changes. If there are breaking changes, you can replace the GAIA and OSMO integration test files with those from the old version.
 * Start the network, run the integration tests on the old binary, and then propose and vote on the upgrade:
 ```
- make start-docker-all && make upgrade-init && make upgrade-submit
+make start-docker-all && make upgrade-init && make upgrade-submit
 ```
 * Once the integration tests pass and the upgrade has been proposed, wait for the upgrade to occur at block 750. Check the stride logs to confirm the upgrade passes successfully
 * Finally, run the remaining integration tests 

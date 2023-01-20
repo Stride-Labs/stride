@@ -23,9 +23,6 @@ func TestGenesisState_Validate(t *testing.T) {
 			desc: "valid genesis state",
 			genState: &types.GenesisState{
 				PortId: types.PortID,
-				IcaAccount: &types.ICAAccount{
-					Address: "79",
-				},
 				HostZoneList: []types.HostZone{
 					{
 						ChainId: "0",
@@ -34,7 +31,6 @@ func TestGenesisState_Validate(t *testing.T) {
 						ChainId: "1",
 					},
 				},
-				HostZoneCount: 2,
 			},
 			valid: true,
 		},
