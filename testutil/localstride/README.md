@@ -185,7 +185,7 @@ If you are only running the validator for a short time (< 24 hours) you will not
 ### Testing the upgrade
 * Once localstride starts churning blocks, you are ready to test the upgrade. Run the following to submit and vote on the upgrade:
 ```bash 
-# Check the localstride logs to determine the current block and propose the upgrade at a height at least 100 blocks in the future
+# Check the localstride logs to determine the current block and propose the upgrade at a height at least 75 blocks in the future
 make localnet-state-export-upgrade upgrade_name={upgrade_name} upgrade_height={upgrade_height}
 #  Ex: make localnet-state-export-upgrade upgrade_name=v5 upgrade_height=1956500
 ```

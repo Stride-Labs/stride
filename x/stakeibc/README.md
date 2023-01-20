@@ -97,8 +97,6 @@ Governance
 - `QueryParamsResponse`
 - `QueryGetValidatorsRequest`
 - `QueryGetValidatorsResponse`
-- `QueryGetICAAccountRequest`
-- `QueryGetICAAccountResponse`
 - `QueryGetHostZoneRequest`
 - `QueryGetHostZoneResponse`
 - `QueryAllHostZoneRequest`
