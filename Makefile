@@ -141,7 +141,7 @@ upgrade-init:
 	PART=1 bash $(DOCKERNET_HOME)/tests/run_tests_upgrade.sh
 
 upgrade-submit: 
-	UPGRADE_HEIGHT=750 bash $(DOCKERNET_HOME)/upgrades/submit_upgrade.sh
+	UPGRADE_HEIGHT=400 bash $(DOCKERNET_HOME)/upgrades/submit_upgrade.sh
 
 upgrade-validate:
 	PART=2 bash $(DOCKERNET_HOME)/tests/run_tests_upgrade.sh
