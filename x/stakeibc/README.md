@@ -91,22 +91,15 @@ Governance
 
 ## Queries
 
-- `QueryInterchainAccountFromAddressRequest`
-- `QueryInterchainAccountFromAddressResponse`
-- `QueryParamsRequest`
-- `QueryParamsResponse`
-- `QueryGetValidatorsRequest`
-- `QueryGetValidatorsResponse`
-- `QueryGetHostZoneRequest`
-- `QueryGetHostZoneResponse`
-- `QueryAllHostZoneRequest`
-- `QueryAllHostZoneResponse`
-- `QueryModuleAddressRequest`
-- `QueryModuleAddressResponse`
-- `QueryGetEpochTrackerRequest`
-- `QueryGetEpochTrackerResponse`
-- `QueryAllEpochTrackerRequest`
-- `QueryAllEpochTrackerResponse`
+- `QueryInterchainAccountFromAddress`
+- `QueryParams`
+- `QueryGetValidators`
+- `QueryGetHostZone`
+- `QueryAllHostZone`
+- `QueryModuleAddress`
+- `QueryGetEpochTracker`
+- `QueryAllEpochTracker`
+- `QueryGetNextPacketSequence`
 
 ## Events
 
