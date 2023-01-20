@@ -59,7 +59,13 @@ service Query {
     option (google.api.http).get = "/Stride-Labs/stride/stakeibc/epoch_tracker";
   }
 
-  // this line is used by starport scaffolding # 2
+  // Queries the next packet sequence for one for a given channel
+  rpc NextPacketSequence(QueryGetNextPacketSequenceRequest)
+      returns (QueryGetNextPacketSequenceResponse) {
+    option (google.api.http).get =
+        "/Stride-Labs/stride/stakeibc/next_packet_sequence/{channel_id}/"
+        "{port_id}";
+  }
 }
 
 // QueryInterchainAccountFromAddressRequest is the request type for the
@@ -119,3 +125,10 @@ message QueryAllEpochTrackerRequest {}
 message QueryAllEpochTrackerResponse {
   repeated EpochTracker epoch_tracker = 1 [ (gogoproto.nullable) = false ];
 }
+
+message QueryGetNextPacketSequenceRequest {
+  string channel_id = 1;
+  string port_id = 2;
+}
+
+message QueryGetNextPacketSequenceResponse { uint64 sequence = 1; }
