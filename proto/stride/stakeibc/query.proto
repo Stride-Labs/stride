@@ -114,13 +114,8 @@ message QueryGetEpochTrackerResponse {
   EpochTracker epoch_tracker = 1 [ (gogoproto.nullable) = false ];
 }
 
-message QueryAllEpochTrackerRequest {
-  cosmos.base.query.v1beta1.PageRequest pagination = 1;
-}
+message QueryAllEpochTrackerRequest {}
 
 message QueryAllEpochTrackerResponse {
   repeated EpochTracker epoch_tracker = 1 [ (gogoproto.nullable) = false ];
-  cosmos.base.query.v1beta1.PageResponse pagination = 2;
 }
-
-// this line is used by starport scaffolding # 3
