@@ -31,7 +31,6 @@ func TestGenesisState_Validate(t *testing.T) {
 						ChainId: "1",
 					},
 				},
-				HostZoneCount: 2,
 			},
 			valid: true,
 		},

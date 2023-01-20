@@ -47,8 +47,7 @@ func EpochTrackerKey(epochIdentifier string) []byte {
 
 const (
 	// Host zone keys prefix the HostZone structs
-	HostZoneKey      = "HostZone-value-"
-	HostZoneCountKey = "HostZone-count-"
+	HostZoneKey = "HostZone-value-"
 
 	// EpochTrackerKeyPrefix is the prefix to retrieve all EpochTracker
 	EpochTrackerKeyPrefix = "EpochTracker/value/"

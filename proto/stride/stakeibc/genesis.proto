@@ -15,9 +15,8 @@ message GenesisState {
   string port_id = 2;
   // list of zones that are registered by the protocol
   repeated HostZone host_zone_list = 5 [ (gogoproto.nullable) = false ];
-  uint64 host_zone_count = 6;
   repeated EpochTracker epoch_tracker_list = 10
       [ (gogoproto.nullable) = false ];
   // this line is used by starport scaffolding # genesis/proto/state
-  reserved 3, 4, 9, 11;
+  reserved 3, 4, 6, 9, 11;
 }
