@@ -12,6 +12,7 @@ import "cosmos_proto/cosmos.proto";
 service Msg {
   rpc LiquidStake(MsgLiquidStake) returns (MsgLiquidStakeResponse);
   rpc RedeemStake(MsgRedeemStake) returns (MsgRedeemStakeResponse);
+  rpc FastUnbond(MsgFastUnbond) returns (MsgFastUnbondResponse);
   // TODO(TEST-53): Remove this pre-launch (no need for clients to create /
   // interact with ICAs)
   rpc RegisterHostZone(MsgRegisterHostZone)
