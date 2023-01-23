@@ -7,7 +7,7 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 
-	channelkeeper "github.com/cosmos/ibc-go/v3/modules/core/04-channel/keeper"
+	channelkeeper "github.com/cosmos/ibc-go/v5/modules/core/04-channel/keeper"
 
 	"github.com/Stride-Labs/stride/v4/x/ratelimit/keeper"
 	"github.com/Stride-Labs/stride/v4/x/ratelimit/keeper/gov"

@@ -2,8 +2,8 @@ package gov
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	transfertypes "github.com/cosmos/ibc-go/v3/modules/apps/transfer/types"
-	channelkeeper "github.com/cosmos/ibc-go/v3/modules/core/04-channel/keeper"
+	transfertypes "github.com/cosmos/ibc-go/v5/modules/apps/transfer/types"
+	channelkeeper "github.com/cosmos/ibc-go/v5/modules/core/04-channel/keeper"
 
 	"github.com/Stride-Labs/stride/v4/x/ratelimit/keeper"
 	"github.com/Stride-Labs/stride/v4/x/ratelimit/types"
