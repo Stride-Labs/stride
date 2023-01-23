@@ -10,8 +10,8 @@ import (
 
 	"github.com/cosmos/ibc-go/v5/modules/core/exported"
 
-	ratelimitkeeper "github.com/Stride-Labs/stride/v4/x/ratelimit/keeper"
-	"github.com/Stride-Labs/stride/v4/x/ratelimit/types"
+	ratelimitkeeper "github.com/Stride-Labs/stride/v5/x/ratelimit/keeper"
+	"github.com/Stride-Labs/stride/v5/x/ratelimit/types"
 )
 
 // Parse the denom from the Send Packet that will be used by the rate limit module

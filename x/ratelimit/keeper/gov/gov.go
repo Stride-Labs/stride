@@ -5,8 +5,8 @@ import (
 	transfertypes "github.com/cosmos/ibc-go/v5/modules/apps/transfer/types"
 	channelkeeper "github.com/cosmos/ibc-go/v5/modules/core/04-channel/keeper"
 
-	"github.com/Stride-Labs/stride/v4/x/ratelimit/keeper"
-	"github.com/Stride-Labs/stride/v4/x/ratelimit/types"
+	"github.com/Stride-Labs/stride/v5/x/ratelimit/keeper"
+	"github.com/Stride-Labs/stride/v5/x/ratelimit/types"
 )
 
 // Adds a new rate limit. Fails if the rate limit already exists or the channel value is 0

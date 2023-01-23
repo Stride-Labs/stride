@@ -6,7 +6,7 @@ import (
 	porttypes "github.com/cosmos/ibc-go/v5/modules/core/05-port/types"
 	"github.com/cosmos/ibc-go/v5/modules/core/exported"
 
-	ratelimitkeeper "github.com/Stride-Labs/stride/v4/x/ratelimit/keeper"
+	ratelimitkeeper "github.com/Stride-Labs/stride/v5/x/ratelimit/keeper"
 )
 
 var (

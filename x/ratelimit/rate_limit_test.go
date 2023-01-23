@@ -13,9 +13,9 @@ import (
 
 	tmbytes "github.com/tendermint/tendermint/libs/bytes"
 
-	"github.com/Stride-Labs/stride/v4/app/apptesting"
-	ratelimit "github.com/Stride-Labs/stride/v4/x/ratelimit"
-	"github.com/Stride-Labs/stride/v4/x/ratelimit/types"
+	"github.com/Stride-Labs/stride/v5/app/apptesting"
+	ratelimit "github.com/Stride-Labs/stride/v5/x/ratelimit"
+	"github.com/Stride-Labs/stride/v5/x/ratelimit/types"
 )
 
 const (

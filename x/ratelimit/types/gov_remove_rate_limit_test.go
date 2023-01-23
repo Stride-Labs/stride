@@ -5,8 +5,8 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/Stride-Labs/stride/v4/app/apptesting"
-	"github.com/Stride-Labs/stride/v4/x/ratelimit/types"
+	"github.com/Stride-Labs/stride/v5/app/apptesting"
+	"github.com/Stride-Labs/stride/v5/x/ratelimit/types"
 )
 
 func TestGovRemoveRateLimit(t *testing.T) {

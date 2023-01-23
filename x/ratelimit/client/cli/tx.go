@@ -17,7 +17,7 @@ import (
 	govcli "github.com/cosmos/cosmos-sdk/x/gov/client/cli"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 
-	"github.com/Stride-Labs/stride/v4/x/ratelimit/types"
+	"github.com/Stride-Labs/stride/v5/x/ratelimit/types"
 )
 
 // Parse the gov proposal file into a proto message
