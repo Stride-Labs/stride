@@ -97,6 +97,9 @@ lint:
 ###############################################################################
 
 test-unit:
+	@go test -mod=readonly ./x/... ./app/...
+
+test-unit-path:
 	@go test -mod=readonly ./x/$(path)/...
 
 test-cover:
@@ -129,6 +132,15 @@ stop-docker:
 	@pkill -f "/bin/bash.*create_logs.sh" | true
 	@pkill -f "tail .*.log" | true
 	docker-compose -f $(DOCKERNET_COMPOSE_FILE) down
+
+upgrade-init:
+	PART=1 bash $(DOCKERNET_HOME)/tests/run_tests_upgrade.sh
+
+upgrade-submit:
+	UPGRADE_HEIGHT=400 bash $(DOCKERNET_HOME)/upgrades/submit_upgrade.sh
+
+upgrade-validate:
+	PART=2 bash $(DOCKERNET_HOME)/tests/run_tests_upgrade.sh
 
 ###############################################################################
 ###                                Protobuf                                 ###
@@ -191,6 +203,9 @@ localnet-state-export-start:
 
 localnet-state-export-startd:
 	@docker-compose -f $(STATE_EXPORT_COMPOSE_FILE) up -d
+
+localnet-state-export-upgrade:
+	bash $(LOCALSTRIDE_HOME)/state-export/scripts/submit_upgrade.sh
 
 localnet-state-export-stop:
 	@docker-compose -f $(STATE_EXPORT_COMPOSE_FILE) down
