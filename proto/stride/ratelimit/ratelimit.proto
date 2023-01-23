@@ -3,7 +3,7 @@ package stride.ratelimit;
 
 import "gogoproto/gogo.proto";
 
-option go_package = "github.com/Stride-Labs/stride/v4/x/ratelimit/types";
+option go_package = "github.com/Stride-Labs/stride/v5/x/ratelimit/types";
 
 enum PacketDirection {
   option (gogoproto.goproto_enum_prefix) = false;
