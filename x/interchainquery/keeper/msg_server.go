@@ -10,10 +10,10 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	clienttypes "github.com/cosmos/ibc-go/v5/modules/core/02-client/types"
 	commitmenttypes "github.com/cosmos/ibc-go/v5/modules/core/23-commitment/types"
-
-	exported "github.com/cosmos/ibc-go/v5/modules/core/exported"
+	"github.com/cosmos/ibc-go/v5/modules/core/exported"
 	tendermint "github.com/cosmos/ibc-go/v5/modules/light-clients/07-tendermint"
-
+	tmclienttypes "github.com/cosmos/ibc-go/v5/modules/light-clients/07-tendermint"
+	wasm "github.com/cosmos/ibc-go/v5/modules/light-clients/08-wasm"
 	"github.com/spf13/cast"
 
 	"github.com/Stride-Labs/stride/v5/utils"
@@ -58,57 +58,61 @@ func (k Keeper) VerifyKeyProof(ctx sdk.Context, msg *types.MsgSubmitQueryRespons
 	if !found {
 		return sdkerrors.Wrapf(types.ErrInvalidICQProof, "ConnectionId %s does not exist", query.ConnectionId)
 	}
+
 	clientState, found := k.IBCKeeper.ClientKeeper.GetClientState(ctx, connection.ClientId)
 	if !found {
 		return sdkerrors.Wrapf(types.ErrInvalidICQProof, "Unable to fetch client state for client %s", connection.ClientId)
 	}
 
-	// TODO
-	// Right now, all the original Tendermint logic (which was the only one) has been moved and updated to comply with
-	// the 02-client refactor.
-	// Before this being ready, we'd need to ensure that the `exported.Wasm` also works as expected.
-	clientType := clientState.ClientType()
-	switch clientType {
+	tmClientState, ok := clientState.(*tmclienttypes.ClientState)
+	if !ok {
+		return sdkerrors.Wrapf(types.ErrInvalidICQProof, "Client state is not tendermint")
+	}
+
+	consensusState, found := k.IBCKeeper.ClientKeeper.GetClientConsensusState(ctx, connection.ClientId, height)
+	if !found {
+		return sdkerrors.Wrapf(types.ErrInvalidICQProof, "Consensus state not found for client %s and height %d", connection.ClientId, height)
+	}
+
+	var stateRoot exported.Root
+
+	switch clientState.ClientType() {
 	case exported.Tendermint:
-		tmClientState, ok := clientState.(*tendermint.ClientState)
-		if !ok {
-			return sdkerrors.Wrapf(types.ErrInvalidICQProof, "Client state is not tendermint")
-		}
-
-		consensusState, found := k.IBCKeeper.ClientKeeper.GetClientConsensusState(ctx, connection.ClientId, height)
-		if !found {
-			return sdkerrors.Wrapf(types.ErrInvalidICQProof, "Consensus state not found for client %s and height %d", connection.ClientId, height)
-		}
-
 		tendermintConsensusState, ok := consensusState.(*tendermint.ConsensusState)
 		if !ok {
-			return sdkerrors.Wrapf(types.ErrInvalidICQProof, "Client state is not tendermint")
+			return sdkerrors.Wrapf(types.ErrInvalidConsensusState, "Error casting consensus state: %s", err.Error())
 		}
-
-		// Get the merkle path and merkle proof
-		path := commitmenttypes.NewMerklePath([]string{pathParts[1], url.PathEscape(string(query.Request))}...)
-		merkleProof, err := commitmenttypes.ConvertProofs(msg.ProofOps)
-		if err != nil {
-			return sdkerrors.Wrapf(types.ErrInvalidICQProof, "Error converting proofs: %s", err.Error())
-		}
-
-		// If we got a non-nil response, verify inclusion proof
-		if len(msg.Result) != 0 {
-			if err := merkleProof.VerifyMembership(tmClientState.ProofSpecs, tendermintConsensusState.GetRoot(), path, msg.Result); err != nil {
-				return sdkerrors.Wrapf(types.ErrInvalidICQProof, "Unable to verify membership proof: %s", err.Error())
-			}
-			k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(query.ChainId, query.CallbackId, "Inclusion proof validated - QueryId %s", query.Id))
-
-		} else {
-			// if we got a nil query response, verify non inclusion proof.
-			if err := merkleProof.VerifyNonMembership(tmClientState.ProofSpecs, tendermintConsensusState.GetRoot(), path); err != nil {
-				return sdkerrors.Wrapf(types.ErrInvalidICQProof, "Unable to verify non-membership proof: %s", err.Error())
-			}
-			k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(query.ChainId, query.CallbackId, "Non-inclusion proof validated - QueryId %s", query.Id))
-		}
-
+		stateRoot = tendermintConsensusState.GetRoot()
 	case exported.Wasm:
+		tendermintConsensusState, ok := consensusState.(*wasm.ConsensusState)
+		if !ok {
+			return sdkerrors.Wrapf(types.ErrInvalidConsensusState, "Error casting consensus state: %s", err.Error())
+		}
+		stateRoot = tendermintConsensusState.GetRoot()
+	default:
+		panic("not implemented")
+	}
 
+	// Get the merkle path and merkle proof
+	path := commitmenttypes.NewMerklePath([]string{pathParts[1], url.PathEscape(string(query.Request))}...)
+	merkleProof, err := commitmenttypes.ConvertProofs(msg.ProofOps)
+	if err != nil {
+		return sdkerrors.Wrapf(types.ErrInvalidICQProof, "Error converting proofs: %s", err.Error())
+	}
+
+	// If we got a non-nil response, verify inclusion proof
+	if len(msg.Result) != 0 {
+		if err := merkleProof.VerifyMembership(tmClientState.ProofSpecs, stateRoot, path, msg.Result); err != nil {
+			return sdkerrors.Wrapf(types.ErrInvalidICQProof, "Unable to verify membership proof: %s", err.Error())
+		}
+		k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(query.ChainId, query.CallbackId, "Inclusion proof validated - QueryId %s", query.Id))
+
+	} else {
+		// if we got a nil query response, verify non inclusion proof.
+		if err := merkleProof.VerifyNonMembership(tmClientState.ProofSpecs, stateRoot, path); err != nil {
+			return sdkerrors.Wrapf(types.ErrInvalidICQProof, "Unable to verify non-membership proof: %s", err.Error())
+		}
+		k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(query.ChainId, query.CallbackId, "Non-inclusion proof validated - QueryId %s", query.Id))
 	}
 
 	return nil
