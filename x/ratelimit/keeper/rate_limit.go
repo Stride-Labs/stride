@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	sdkmath "cosmossdk.io/math"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -15,12 +16,12 @@ func GetRateLimitItemKey(denom string, channelId string) []byte {
 
 // The total value on a given path (aka, the denominator in the percentage calculation)
 // is the total supply of the given denom
-func (k Keeper) GetChannelValue(ctx sdk.Context, denom string) sdk.Int {
+func (k Keeper) GetChannelValue(ctx sdk.Context, denom string) sdkmath.Int {
 	return k.bankKeeper.GetSupply(ctx, denom).Amount
 }
 
 // Adds an amount to the flow in either the SEND or RECV direction
-func (k Keeper) UpdateFlow(rateLimit types.RateLimit, direction types.PacketDirection, amount sdk.Int) error {
+func (k Keeper) UpdateFlow(rateLimit types.RateLimit, direction types.PacketDirection, amount sdkmath.Int) error {
 	switch direction {
 	case types.PACKET_SEND:
 		return rateLimit.Flow.AddOutflow(amount, *rateLimit.Quota)
@@ -33,7 +34,7 @@ func (k Keeper) UpdateFlow(rateLimit types.RateLimit, direction types.PacketDire
 
 // Checks whether the given packet will exceed the rate limit
 // Called by OnRecvPacket and OnSendPacket
-func (k Keeper) CheckRateLimitAndUpdateFlow(ctx sdk.Context, direction types.PacketDirection, denom string, channelId string, amount sdk.Int) error {
+func (k Keeper) CheckRateLimitAndUpdateFlow(ctx sdk.Context, direction types.PacketDirection, denom string, channelId string, amount sdkmath.Int) error {
 	// If there's no rate limit yet for this denom, no action is necessary
 	rateLimit, found := k.GetRateLimit(ctx, denom, channelId)
 	if !found {
@@ -60,8 +61,8 @@ func (k Keeper) ResetRateLimit(ctx sdk.Context, denom string, channelId string) 
 	}
 
 	flow := types.Flow{
-		Inflow:       sdk.ZeroInt(),
-		Outflow:      sdk.ZeroInt(),
+		Inflow:       sdkmath.ZeroInt(),
+		Outflow:      sdkmath.ZeroInt(),
 		ChannelValue: k.GetChannelValue(ctx, denom),
 	}
 	rateLimit.Flow = &flow

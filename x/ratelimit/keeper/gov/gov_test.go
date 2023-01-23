@@ -5,6 +5,7 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
+	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
@@ -34,8 +35,8 @@ var (
 		Title:          "AddRateLimit",
 		Denom:          "denom",
 		ChannelId:      "channel-0",
-		MaxPercentRecv: sdk.NewInt(10),
-		MaxPercentSend: sdk.NewInt(20),
+		MaxPercentRecv: sdkmath.NewInt(10),
+		MaxPercentSend: sdkmath.NewInt(20),
 		DurationHours:  30,
 	}
 
@@ -43,8 +44,8 @@ var (
 		Title:          "UpdateRateLimit",
 		Denom:          "denom",
 		ChannelId:      "channel-0",
-		MaxPercentRecv: sdk.NewInt(20),
-		MaxPercentSend: sdk.NewInt(30),
+		MaxPercentRecv: sdkmath.NewInt(20),
+		MaxPercentSend: sdkmath.NewInt(30),
 		DurationHours:  40,
 	}
 
@@ -67,7 +68,7 @@ func (s *KeeperTestSuite) createChannel(channelId string) {
 }
 
 // Helper function to mint tokens and create channel value to prevent a zero channel value error
-func (s *KeeperTestSuite) createChannelValue(denom string, channelValue sdk.Int) {
+func (s *KeeperTestSuite) createChannelValue(denom string, channelValue sdkmath.Int) {
 	err := s.App.BankKeeper.MintCoins(s.Ctx, minttypes.ModuleName, sdk.NewCoins(sdk.NewCoin(addRateLimitMsg.Denom, channelValue)))
 	s.Require().NoError(err)
 }
@@ -102,7 +103,7 @@ func (s *KeeperTestSuite) addRateLimitWithError(expectedErr *sdkerrors.Error) {
 func (s *KeeperTestSuite) TestMsgServer_AddRateLimit() {
 	denom := addRateLimitMsg.Denom
 	channelId := addRateLimitMsg.ChannelId
-	channelValue := sdk.NewInt(100)
+	channelValue := sdkmath.NewInt(100)
 
 	// First try to add a rate limit when there's no channel value, it will fail
 	s.addRateLimitWithError(types.ErrZeroChannelValue)
@@ -126,7 +127,7 @@ func (s *KeeperTestSuite) TestMsgServer_AddRateLimit() {
 func (s *KeeperTestSuite) TestMsgServer_UpdateRateLimit() {
 	denom := updateRateLimitMsg.Denom
 	channelId := updateRateLimitMsg.ChannelId
-	channelValue := sdk.NewInt(100)
+	channelValue := sdkmath.NewInt(100)
 
 	// Create channel and channel value
 	s.createChannel(channelId)
@@ -156,7 +157,7 @@ func (s *KeeperTestSuite) TestMsgServer_UpdateRateLimit() {
 func (s *KeeperTestSuite) TestMsgServer_RemoveRateLimit() {
 	denom := removeRateLimitMsg.Denom
 	channelId := removeRateLimitMsg.ChannelId
-	channelValue := sdk.NewInt(100)
+	channelValue := sdkmath.NewInt(100)
 
 	s.createChannel(channelId)
 	s.createChannelValue(denom, channelValue)
@@ -180,7 +181,7 @@ func (s *KeeperTestSuite) TestMsgServer_RemoveRateLimit() {
 func (s *KeeperTestSuite) TestMsgServer_ResetRateLimit() {
 	denom := resetRateLimitMsg.Denom
 	channelId := resetRateLimitMsg.ChannelId
-	channelValue := sdk.NewInt(100)
+	channelValue := sdkmath.NewInt(100)
 
 	s.createChannel(channelId)
 	s.createChannelValue(denom, channelValue)
@@ -200,8 +201,8 @@ func (s *KeeperTestSuite) TestMsgServer_ResetRateLimit() {
 	resetRateLimit, found := s.App.RatelimitKeeper.GetRateLimit(s.Ctx, denom, channelId)
 	s.Require().True(found)
 	s.Require().Equal(resetRateLimit.Flow, &types.Flow{
-		Inflow:       sdk.ZeroInt(),
-		Outflow:      sdk.ZeroInt(),
+		Inflow:       sdkmath.ZeroInt(),
+		Outflow:      sdkmath.ZeroInt(),
 		ChannelValue: channelValue,
 	})
 }

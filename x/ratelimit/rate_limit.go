@@ -116,7 +116,7 @@ func SendRateLimitedPacket(ctx sdk.Context, keeper ratelimitkeeper.Keeper, packe
 
 	amount, ok := sdk.NewIntFromString(packetData.Amount)
 	if !ok {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "Unable to cast packet amount to sdk.Int")
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "Unable to cast packet amount to sdkmath.Int")
 	}
 
 	denom := ParseDenomFromSendPacket(packetData)
@@ -146,7 +146,7 @@ func ReceiveRateLimitedPacket(ctx sdk.Context, keeper ratelimitkeeper.Keeper, pa
 
 	amount, ok := sdk.NewIntFromString(packetData.Amount)
 	if !ok {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "Unable to cast packet amount to sdk.Int")
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "Unable to cast packet amount to sdkmath.Int")
 	}
 
 	denom := ParseDenomFromRecvPacket(packet, packetData)

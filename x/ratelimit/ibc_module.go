@@ -32,7 +32,7 @@ func (im IBCModule) OnChanOpenInit(ctx sdk.Context,
 	channelCap *capabilitytypes.Capability,
 	counterparty channeltypes.Counterparty,
 	version string,
-) error {
+) (string, error) {
 	// Run custom logic here
 	return im.app.OnChanOpenInit(
 		ctx,

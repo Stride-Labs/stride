@@ -3,27 +3,27 @@ package types_test
 import (
 	"testing"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkmath "cosmossdk.io/math"
 	"github.com/stretchr/testify/require"
 
 	"github.com/Stride-Labs/stride/v5/x/ratelimit/types"
 )
 
 func TestCheckExceedsQuota(t *testing.T) {
-	totalValue := sdk.NewInt(100)
-	amountUnderThreshold := sdk.NewInt(5)
-	amountOverThreshold := sdk.NewInt(15)
+	totalValue := sdkmath.NewInt(100)
+	amountUnderThreshold := sdkmath.NewInt(5)
+	amountOverThreshold := sdkmath.NewInt(15)
 	quota := types.Quota{
-		MaxPercentRecv: sdk.NewInt(10),
-		MaxPercentSend: sdk.NewInt(10),
+		MaxPercentRecv: sdkmath.NewInt(10),
+		MaxPercentSend: sdkmath.NewInt(10),
 		DurationHours:  uint64(1),
 	}
 
 	tests := []struct {
 		name       string
 		direction  types.PacketDirection
-		amount     sdk.Int
-		totalValue sdk.Int
+		amount     sdkmath.Int
+		totalValue sdkmath.Int
 		exceeded   bool
 	}{
 		{
@@ -58,14 +58,14 @@ func TestCheckExceedsQuota(t *testing.T) {
 			name:       "zero channel value send",
 			direction:  types.PACKET_SEND,
 			amount:     amountOverThreshold,
-			totalValue: sdk.ZeroInt(),
+			totalValue: sdkmath.ZeroInt(),
 			exceeded:   false,
 		},
 		{
 			name:       "zero channel value recv",
 			direction:  types.PACKET_RECV,
 			amount:     amountOverThreshold,
-			totalValue: sdk.ZeroInt(),
+			totalValue: sdkmath.ZeroInt(),
 			exceeded:   false,
 		},
 	}

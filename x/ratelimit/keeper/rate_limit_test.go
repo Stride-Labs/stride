@@ -3,6 +3,7 @@ package keeper_test
 import (
 	"strconv"
 
+	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	minttypes "github.com/Stride-Labs/stride/v5/x/mint/types"
@@ -26,7 +27,7 @@ type checkRateLimitTestCase struct {
 }
 
 func (s *KeeperTestSuite) TestGetChannelValue() {
-	supply := sdk.NewInt(100)
+	supply := sdkmath.NewInt(100)
 
 	// Mint coins to increase the supply, which will increase the channel value
 	err := s.App.BankKeeper.MintCoins(s.Ctx, minttypes.ModuleName, sdk.NewCoins(sdk.NewCoin(denom, supply)))
@@ -44,7 +45,7 @@ func (s *KeeperTestSuite) createRateLimits() []types.RateLimit {
 		suffix := strconv.Itoa(i)
 		rateLimit := types.RateLimit{
 			Path: &types.Path{Denom: "denom-" + suffix, ChannelId: "channel-" + suffix},
-			Flow: &types.Flow{Inflow: sdk.NewInt(10), Outflow: sdk.NewInt(10)},
+			Flow: &types.Flow{Inflow: sdkmath.NewInt(10), Outflow: sdkmath.NewInt(10)},
 		}
 
 		rateLimits = append(rateLimits, rateLimit)
@@ -100,9 +101,9 @@ func (s *KeeperTestSuite) TestGetAllRateLimits() {
 
 // Adds a rate limit object to the store in preparation for the check rate limit tests
 func (s *KeeperTestSuite) SetupCheckRateLimitAndUpdateFlowTest() {
-	channelValue := sdk.NewInt(100)
-	maxPercentSend := sdk.NewInt(10)
-	maxPercentRecv := sdk.NewInt(10)
+	channelValue := sdkmath.NewInt(100)
+	maxPercentSend := sdkmath.NewInt(10)
+	maxPercentRecv := sdkmath.NewInt(10)
 
 	s.App.RatelimitKeeper.SetRateLimit(s.Ctx, types.RateLimit{
 		Path: &types.Path{
@@ -115,8 +116,8 @@ func (s *KeeperTestSuite) SetupCheckRateLimitAndUpdateFlowTest() {
 			DurationHours:  1,
 		},
 		Flow: &types.Flow{
-			Inflow:       sdk.ZeroInt(),
-			Outflow:      sdk.ZeroInt(),
+			Inflow:       sdkmath.ZeroInt(),
+			Outflow:      sdkmath.ZeroInt(),
 			ChannelValue: channelValue,
 		},
 	})
@@ -126,10 +127,10 @@ func (s *KeeperTestSuite) SetupCheckRateLimitAndUpdateFlowTest() {
 func (s *KeeperTestSuite) processCheckRateLimitAndUpdateFlowTestCase(tc checkRateLimitTestCase) {
 	s.SetupCheckRateLimitAndUpdateFlowTest()
 
-	expectedInflow := sdk.NewInt(0)
-	expectedOutflow := sdk.NewInt(0)
+	expectedInflow := sdkmath.NewInt(0)
+	expectedOutflow := sdkmath.NewInt(0)
 	for i, action := range tc.actions {
-		amount := sdk.NewInt(action.amount)
+		amount := sdkmath.NewInt(action.amount)
 		err := s.App.RatelimitKeeper.CheckRateLimitAndUpdateFlow(s.Ctx, action.direction, denom, channelId, amount)
 
 		if i == len(tc.actions)-1 && tc.expectedError != "" {

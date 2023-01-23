@@ -5,9 +5,9 @@ import (
 
 	"regexp"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkmath "cosmossdk.io/math"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
+	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 )
 
 const (
@@ -16,14 +16,13 @@ const (
 
 func init() {
 	govtypes.RegisterProposalType(ProposalTypeUpdateRateLimit)
-	govtypes.RegisterProposalTypeCodec(&UpdateRateLimitProposal{}, "stride.ratelimit.UpdateRateLimitProposal")
 }
 
 var (
 	_ govtypes.Content = &UpdateRateLimitProposal{}
 )
 
-func NewUpdateRateLimitProposal(title, description, denom, channelId string, maxPercentSend sdk.Int, maxPercentRecv sdk.Int, durationHours uint64) govtypes.Content {
+func NewUpdateRateLimitProposal(title, description, denom, channelId string, maxPercentSend sdkmath.Int, maxPercentRecv sdkmath.Int, durationHours uint64) govtypes.Content {
 	return &UpdateRateLimitProposal{
 		Title:          title,
 		Description:    description,
@@ -63,11 +62,11 @@ func (p *UpdateRateLimitProposal) ValidateBasic() error {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "invalid channel-id (%s), must be of the format 'channel-{N}'", p.ChannelId)
 	}
 
-	if p.MaxPercentSend.GT(sdk.NewInt(100)) || p.MaxPercentSend.LT(sdk.ZeroInt()) {
+	if p.MaxPercentSend.GT(sdkmath.NewInt(100)) || p.MaxPercentSend.LT(sdkmath.ZeroInt()) {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "max-percent-send percent must be between 0 and 100 (inclusively), Provided: %v", p.MaxPercentSend)
 	}
 
-	if p.MaxPercentRecv.GT(sdk.NewInt(100)) || p.MaxPercentRecv.LT(sdk.ZeroInt()) {
+	if p.MaxPercentRecv.GT(sdkmath.NewInt(100)) || p.MaxPercentRecv.LT(sdkmath.ZeroInt()) {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "max-percent-recv percent must be between 0 and 100 (inclusively), Provided: %v", p.MaxPercentRecv)
 	}
 

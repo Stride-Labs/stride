@@ -1,6 +1,7 @@
 package gov
 
 import (
+	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	transfertypes "github.com/cosmos/ibc-go/v5/modules/apps/transfer/types"
 	channelkeeper "github.com/cosmos/ibc-go/v5/modules/core/04-channel/keeper"
@@ -40,8 +41,8 @@ func AddRateLimit(ctx sdk.Context, k keeper.Keeper, channelKeeper channelkeeper.
 		DurationHours:  p.DurationHours,
 	}
 	flow := types.Flow{
-		Inflow:       sdk.ZeroInt(),
-		Outflow:      sdk.ZeroInt(),
+		Inflow:       sdkmath.ZeroInt(),
+		Outflow:      sdkmath.ZeroInt(),
 		ChannelValue: channelValue,
 	}
 
@@ -74,8 +75,8 @@ func UpdateRateLimit(ctx sdk.Context, k keeper.Keeper, p *types.UpdateRateLimitP
 		DurationHours:  p.DurationHours,
 	}
 	flow := types.Flow{
-		Inflow:       sdk.ZeroInt(),
-		Outflow:      sdk.ZeroInt(),
+		Inflow:       sdkmath.ZeroInt(),
+		Outflow:      sdkmath.ZeroInt(),
 		ChannelValue: k.GetChannelValue(ctx, p.Denom),
 	}
 

@@ -3,7 +3,7 @@ package keeper_test
 import (
 	"fmt"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkmath "cosmossdk.io/math"
 
 	epochstypes "github.com/Stride-Labs/stride/v5/x/epochs/types"
 	"github.com/Stride-Labs/stride/v5/x/ratelimit/types"
@@ -24,9 +24,9 @@ func (s *KeeperTestSuite) resetRateLimits(denom string, durations []uint64, nonZ
 				DurationHours: duration,
 			},
 			Flow: &types.Flow{
-				Inflow:       sdk.NewInt(nonZeroFlow),
-				Outflow:      sdk.NewInt(nonZeroFlow),
-				ChannelValue: sdk.NewInt(100),
+				Inflow:       sdkmath.NewInt(nonZeroFlow),
+				Outflow:      sdkmath.NewInt(nonZeroFlow),
+				ChannelValue: sdkmath.NewInt(100),
 			},
 		})
 	}

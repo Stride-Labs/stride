@@ -3,7 +3,7 @@ package types_test
 import (
 	"testing"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkmath "cosmossdk.io/math"
 	"github.com/stretchr/testify/require"
 
 	"github.com/Stride-Labs/stride/v5/app/apptesting"
@@ -17,8 +17,8 @@ func TestGovAddRateLimit(t *testing.T) {
 	validDescription := "Adding a rate limit"
 	validDenom := "denom"
 	validChannelId := "channel-0"
-	validMaxPercentSend := sdk.NewInt(10)
-	validMaxPercentRecv := sdk.NewInt(10)
+	validMaxPercentSend := sdkmath.NewInt(10)
+	validMaxPercentRecv := sdkmath.NewInt(10)
 	validDurationHours := uint64(60)
 
 	tests := []struct {
@@ -97,7 +97,7 @@ func TestGovAddRateLimit(t *testing.T) {
 				Description:    validDescription,
 				Denom:          validDenom,
 				ChannelId:      validChannelId,
-				MaxPercentSend: sdk.NewInt(-1),
+				MaxPercentSend: sdkmath.NewInt(-1),
 				MaxPercentRecv: validMaxPercentRecv,
 				DurationHours:  validDurationHours,
 			},
@@ -110,7 +110,7 @@ func TestGovAddRateLimit(t *testing.T) {
 				Description:    validDescription,
 				Denom:          validDenom,
 				ChannelId:      validChannelId,
-				MaxPercentSend: sdk.NewInt(101),
+				MaxPercentSend: sdkmath.NewInt(101),
 				MaxPercentRecv: validMaxPercentRecv,
 				DurationHours:  validDurationHours,
 			},
@@ -124,7 +124,7 @@ func TestGovAddRateLimit(t *testing.T) {
 				Denom:          validDenom,
 				ChannelId:      validChannelId,
 				MaxPercentSend: validMaxPercentSend,
-				MaxPercentRecv: sdk.NewInt(-1),
+				MaxPercentRecv: sdkmath.NewInt(-1),
 				DurationHours:  validDurationHours,
 			},
 			err: "percent must be between 0 and 100",
@@ -137,7 +137,7 @@ func TestGovAddRateLimit(t *testing.T) {
 				Denom:          validDenom,
 				ChannelId:      validChannelId,
 				MaxPercentSend: validMaxPercentSend,
-				MaxPercentRecv: sdk.NewInt(101),
+				MaxPercentRecv: sdkmath.NewInt(101),
 				DurationHours:  validDurationHours,
 			},
 			err: "percent must be between 0 and 100",
@@ -149,8 +149,8 @@ func TestGovAddRateLimit(t *testing.T) {
 				Description:    validDescription,
 				Denom:          validDenom,
 				ChannelId:      validChannelId,
-				MaxPercentSend: sdk.ZeroInt(),
-				MaxPercentRecv: sdk.ZeroInt(),
+				MaxPercentSend: sdkmath.ZeroInt(),
+				MaxPercentRecv: sdkmath.ZeroInt(),
 				DurationHours:  validDurationHours,
 			},
 			err: "either the max send or max receive threshold must be greater than 0",

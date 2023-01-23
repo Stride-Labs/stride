@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"testing"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkmath "cosmossdk.io/math"
 	transfertypes "github.com/cosmos/ibc-go/v5/modules/apps/transfer/types"
 	channeltypes "github.com/cosmos/ibc-go/v5/modules/core/04-channel/types"
 	"github.com/stretchr/testify/require"
@@ -150,16 +150,16 @@ func TestParseDenomFromRecvPacket(t *testing.T) {
 }
 
 func createRateLimitCloseToQuota(s apptesting.AppTestHelper, denom string, channelId string, direction types.PacketDirection) {
-	channelValue := sdk.NewInt(100)
-	threshold := sdk.NewInt(10)
+	channelValue := sdkmath.NewInt(100)
+	threshold := sdkmath.NewInt(10)
 
 	// Set inflow/outflow close to threshold, depending on which direction we're going in
-	inflow := sdk.ZeroInt()
-	outflow := sdk.ZeroInt()
+	inflow := sdkmath.ZeroInt()
+	outflow := sdkmath.ZeroInt()
 	if direction == types.PACKET_RECV {
-		inflow = sdk.NewInt(9)
+		inflow = sdkmath.NewInt(9)
 	} else {
-		outflow = sdk.NewInt(9)
+		outflow = sdkmath.NewInt(9)
 	}
 
 	// Store rate limit

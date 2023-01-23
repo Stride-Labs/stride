@@ -112,13 +112,13 @@ RateLimit
         Denom string
         ChannelId string
     Quota
-        MaxPercentSend sdk.Int
-        MaxPercentRecv sdk.Int
+        MaxPercentSend sdkmath.Int
+        MaxPercentRecv sdkmath.Int
         DurationHours uint64
     Flow
-        Inflow sdk.Int
-        Outflow sdk.Int
-        ChannelValue sdk.Int
+        Inflow sdkmath.Int
+        Outflow sdkmath.Int
+        ChannelValue sdkmath.Int
 ```
 
 ## Keeper functions
@@ -141,7 +141,7 @@ ResetRateLimit(denom string, channelId string)
 // Checks whether a packet will exceed a rate limit quota
 // If it does not exceed the quota, it updates the `Inflow` or `Outflow`
 // If it exceeds the quota, it returns an error
-CheckRateLimitAndUpdateFlow(direction types.PacketDirection, denom string, channelId string, amount sdk.Int)
+CheckRateLimitAndUpdateFlow(direction types.PacketDirection, denom string, channelId string, amount sdkmath.Int)
 ```
 
 ## Middleware Functions

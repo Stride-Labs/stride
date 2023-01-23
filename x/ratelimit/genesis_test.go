@@ -6,7 +6,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkmath "cosmossdk.io/math"
 
 	"github.com/Stride-Labs/stride/v5/app/apptesting"
 	"github.com/Stride-Labs/stride/v5/testutil/nullify"
@@ -20,8 +20,8 @@ func createRateLimits() []types.RateLimit {
 		suffix := strconv.Itoa(int(i))
 		rateLimit := types.RateLimit{
 			Path:  &types.Path{Denom: "denom-" + suffix, ChannelId: "channel-" + suffix},
-			Quota: &types.Quota{MaxPercentSend: sdk.NewInt(i), MaxPercentRecv: sdk.NewInt(i), DurationHours: uint64(i)},
-			Flow:  &types.Flow{Inflow: sdk.NewInt(i), Outflow: sdk.NewInt(i), ChannelValue: sdk.NewInt(i)},
+			Quota: &types.Quota{MaxPercentSend: sdkmath.NewInt(i), MaxPercentRecv: sdkmath.NewInt(i), DurationHours: uint64(i)},
+			Flow:  &types.Flow{Inflow: sdkmath.NewInt(i), Outflow: sdkmath.NewInt(i), ChannelValue: sdkmath.NewInt(i)},
 		}
 
 		rateLimits = append(rateLimits, rateLimit)
