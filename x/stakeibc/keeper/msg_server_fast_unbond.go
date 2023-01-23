@@ -27,6 +27,15 @@ func (k msgServer) FastUnbond(goCtx context.Context, msg *types.MsgFastUnbond) (
 		return nil, sdkerrors.Wrapf(types.ErrInvalidHostZone, "host zone is invalid: %s", msg.HostZone)
 	}
 
+	// get the coins to return, they need to be in the format {amount}{denom}
+	// is safe. The converse is not true.
+	ibcDenom := hostZone.GetIbcDenom()
+	coinString := msg.Amount.String() + ibcDenom
+	outCoin, err := sdk.ParseCoinNormalized(coinString)
+	if err != nil {
+		k.Logger(ctx).Error(fmt.Sprintf("failed to parse coin (%s)", coinString))
+		return nil, sdkerrors.Wrapf(err, "failed to parse coin (%s)", coinString)
+	}
 	// construct desired unstaking amount from host zone
 	stDenom := types.StAssetDenomFromHostZoneDenom(hostZone.HostDenom)
 	nativeAmount := sdk.NewDecFromInt(msg.Amount).Mul(hostZone.RedemptionRate).RoundInt()
@@ -43,7 +52,7 @@ func (k msgServer) FastUnbond(goCtx context.Context, msg *types.MsgFastUnbond) (
 	}
 
 	// TODO(TEST-112) bigint safety
-	coinString := nativeAmount.String() + stDenom
+	coinString = nativeAmount.String() + stDenom
 	inCoin, err := sdk.ParseCoinNormalized(coinString)
 	if err != nil {
 		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidCoins, "could not parse inCoin: %s. err: %s", coinString, err.Error())
@@ -82,19 +91,26 @@ func (k msgServer) FastUnbond(goCtx context.Context, msg *types.MsgFastUnbond) (
 		return nil, fmt.Errorf("could not bech32 decode address %s of zone with id: %s", hostZone.Address, hostZone.ChainId)
 	}
 	// Send that amount back to user
-	err = k.bankKeeper.SendCoins(ctx, bech32ZoneAddress, sender, sdk.NewCoins(inCoin))
+	err = k.bankKeeper.SendCoins(ctx, bech32ZoneAddress, sender, sdk.NewCoins(outCoin))
 	if err != nil {
-		k.Logger(ctx).Error("Failed to send sdk.NewCoins(inCoins) from account to module")
-		return nil, sdkerrors.Wrapf(types.ErrInsufficientFunds, "couldn't send %v derivative %s tokens from module account. err: %s", inCoin.Amount, inCoin.Denom, err.Error())
+		k.Logger(ctx).Error("Failed to send sdk.NewCoins(outCoins) from account to module")
+		return nil, sdkerrors.Wrapf(types.ErrInsufficientFunds, "couldn't send %v derivative %s tokens from module account. err: %s", outCoin.Amount, outCoin.Denom, err.Error())
 	}
 
-	// Escrow user's balance
-	redeemCoin := sdk.NewCoins(sdk.NewCoin(stDenom, msg.Amount))
-	err = k.bankKeeper.SendCoins(ctx, sender, bech32ZoneAddress, redeemCoin)
+	// Send tokens back to module to burn
+	stCoin := sdk.NewCoin(stDenom, msg.Amount)
+	err = k.bankKeeper.SendCoinsFromAccountToModule(ctx, sender, types.ModuleName, sdk.NewCoins(stCoin))
 	if err != nil {
-		k.Logger(ctx).Error("Failed to send sdk.NewCoins(inCoins) from account to module")
-		return nil, sdkerrors.Wrapf(types.ErrInsufficientFunds, "couldn't send %v derivative %s tokens to module account. err: %s", msg.Amount, hostZone.HostDenom, err.Error())
+		return nil, fmt.Errorf("could not send coins from account %s to module %s. err: %s", sender, types.ModuleName, err.Error())
 	}
+
+	// Finally burn the stTokens
+	err = k.bankKeeper.BurnCoins(ctx, types.ModuleName, sdk.NewCoins(stCoin))
+	if err != nil {
+		k.Logger(ctx).Error(fmt.Sprintf("Failed to burn stAssets upon successful unbonding %s", err.Error()))
+		return nil, sdkerrors.Wrapf(types.ErrInsufficientFunds, "couldn't burn %v%s tokens in module account. err: %s", msg.Amount, stDenom, err.Error())
+	}
+	k.Logger(ctx).Info(fmt.Sprintf("Total supply %s", k.bankKeeper.GetSupply(ctx, stDenom)))
 
 	k.Logger(ctx).Info(fmt.Sprintf("executed fast unbond: %s", msg.String()))
 	return &types.MsgFastUnbondResponse{}, nil

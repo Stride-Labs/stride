@@ -24,12 +24,12 @@ type FastUnbondTestCase struct {
 }
 
 func (s *KeeperTestSuite) SetupFastUnbond() FastUnbondTestCase {
-	stakeAmount := sdkmath.NewInt(1_000_000)
+	unbondAmount := sdkmath.NewInt(1_000_000)
 	initialDepositAmount := sdkmath.NewInt(1_000_000)
 	user := Account{
 		acc:           s.TestAccs[0],
-		atomBalance:   sdk.NewInt64Coin(IbcAtom, 1_000_000),
-		stAtomBalance: sdk.NewInt64Coin(StAtom, 1_000_000),
+		atomBalance:   sdk.NewInt64Coin(IbcAtom, 10_000_000),
+		stAtomBalance: sdk.NewInt64Coin(StAtom, 10_000_000),
 	}
 	s.FundAccount(user.acc, user.atomBalance)
 	s.FundAccount(user.acc, user.stAtomBalance)
@@ -50,7 +50,7 @@ func (s *KeeperTestSuite) SetupFastUnbond() FastUnbondTestCase {
 		IbcDenom:       IbcAtom,
 		RedemptionRate: sdk.NewDec(1.0),
 		Address:        zoneAddress.String(),
-		StakedBal:      stakeAmount,
+		StakedBal:      initialDepositAmount,
 	}
 
 	epochTracker := stakeibctypes.EpochTracker{
@@ -80,20 +80,38 @@ func (s *KeeperTestSuite) SetupFastUnbond() FastUnbondTestCase {
 		validMsg: stakeibctypes.MsgFastUnbond{
 			Creator:  user.acc.String(),
 			HostZone: HostChainId,
-			Amount:   stakeAmount,
+			Amount:   unbondAmount,
 		},
 	}
 }
 
 func (s *KeeperTestSuite) TestFastUnbond_Successful() {
 	tc := s.SetupFastUnbond()
+	user := tc.user
+	zoneAccount := tc.zoneAccount
+	initialStAtomSupply := s.App.BankKeeper.GetSupply(s.Ctx, StAtom)
 	msg := tc.validMsg
 
 	// Validate Fast Unbonding
 	_, err := s.GetMsgServer().FastUnbond(sdk.WrapSDKContext(s.Ctx), &msg)
 	s.Require().NoError(err)
 
-	// TODO: Check math
+	// User STUATOM balance should have DECREASED by the amount unbonded
+	expectedUserStAtomBalance := user.stAtomBalance.SubAmount(msg.Amount)
+	actualUserStAtomBalance := s.App.BankKeeper.GetBalance(s.Ctx, user.acc, StAtom)
+	s.CompareCoins(expectedUserStAtomBalance, actualUserStAtomBalance, "user stuatom balance")
+	// User IBC/UATOM balance should have INCREASED by the amount unbonded
+	expectedUserAtomBalance := user.atomBalance.AddAmount(msg.Amount)
+	actualUserAtomBalance := s.App.BankKeeper.GetBalance(s.Ctx, user.acc, IbcAtom)
+	s.CompareCoins(expectedUserAtomBalance, actualUserAtomBalance, "user ibc/uatom balance")
+	// zoneAccount IBC/UATOM balance should have DECREASED by the size of the stake
+	expectedzoneAccountAtomBalance := zoneAccount.atomBalance.SubAmount(msg.Amount)
+	actualzoneAccountAtomBalance := s.App.BankKeeper.GetBalance(s.Ctx, zoneAccount.acc, IbcAtom)
+	s.CompareCoins(expectedzoneAccountAtomBalance, actualzoneAccountAtomBalance, "zoneAccount ibc/uatom balance")
+	// Bank supply of STUATOM should have DECREASED by the size of the stake
+	expectedBankSupply := initialStAtomSupply.SubAmount(msg.Amount)
+	actualBankSupply := s.App.BankKeeper.GetSupply(s.Ctx, StAtom)
+	s.CompareCoins(expectedBankSupply, actualBankSupply, "bank stuatom supply")
 }
 
 func (s *KeeperTestSuite) TestFastUnbond_InvalidCreatorAddress() {
