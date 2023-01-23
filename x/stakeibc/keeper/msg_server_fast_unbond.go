@@ -3,12 +3,12 @@ package keeper
 import (
 	"context"
 	"fmt"
-	epochtypes "github.com/Stride-Labs/stride/v4/x/epochs/types"
+	epochtypes "github.com/Stride-Labs/stride/v5/x/epochs/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
-	"github.com/Stride-Labs/stride/v4/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v5/x/stakeibc/types"
 )
 
 func (k msgServer) FastUnbond(goCtx context.Context, msg *types.MsgFastUnbond) (*types.MsgFastUnbondResponse, error) {
