@@ -18,6 +18,7 @@ import (
 	cdctypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
+	wasm "github.com/cosmos/ibc-go/v5/modules/light-clients/08-wasm"
 
 	"github.com/Stride-Labs/stride/v5/x/stakeibc/client/cli"
 	"github.com/Stride-Labs/stride/v5/x/stakeibc/keeper"
@@ -58,6 +59,10 @@ func (AppModuleBasic) RegisterLegacyAminoCodec(cdc *codec.LegacyAmino) {
 
 // RegisterInterfaces registers the module's interface types
 func (a AppModuleBasic) RegisterInterfaces(reg cdctypes.InterfaceRegistry) {
+	reg.RegisterImplementations(
+		(*sdk.Msg)(nil),
+		&wasm.MsgPushNewWasmCode{},
+	)
 	types.RegisterInterfaces(reg)
 }
 
