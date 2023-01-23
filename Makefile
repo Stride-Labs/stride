@@ -115,7 +115,6 @@ test-integration-docker:
 
 build-docker: 
 	@bash $(DOCKERNET_HOME)/build.sh -${build} ${BUILDDIR}
-	
 start-docker: build-docker
 	@bash $(DOCKERNET_HOME)/start_network.sh 
 
@@ -123,16 +122,15 @@ start-docker-all: build-docker
 	@ALL_HOST_CHAINS=true bash $(DOCKERNET_HOME)/start_network.sh 
 
 clean-docker: 
-	@docker-compose -f $(DOCKERNET_COMPOSE_FILE) stop 
-	@docker-compose -f $(DOCKERNET_COMPOSE_FILE) down 
+	- docker-compose -f $(DOCKERNET_COMPOSE_FILE) stop
+	- docker-compose -f $(DOCKERNET_COMPOSE_FILE) down
 	rm -rf $(DOCKERNET_HOME)/state
 	docker image prune -a
-	
 stop-docker:
-	@pkill -f "docker-compose .*stride.* logs" | true
-	@pkill -f "/bin/bash.*create_logs.sh" | true
-	@pkill -f "tail .*.log" | true
-	docker-compose -f $(DOCKERNET_COMPOSE_FILE) down
+	- pkill -f "docker-compose .*stride.* logs" | true
+	- pkill -f "/bin/bash.*create_logs.sh" | true
+	- pkill -f "tail .*.log" | true
+	- docker-compose -f $(DOCKERNET_COMPOSE_FILE) down
 
 ###############################################################################
 ###                                Protobuf                                 ###

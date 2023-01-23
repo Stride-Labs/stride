@@ -91,6 +91,8 @@ IBC_STARS_DENOM=$IBC_STARS_CHANNEL_3_DENOM
 
 # CHAIN PARAMS
 BLOCK_TIME='1s'
+COMMIT_TIMEOUT='1s'
+DELTA_TIMEOUT='300ms'
 STRIDE_DAY_EPOCH_DURATION="100s"
 STRIDE_EPOCH_EPOCH_DURATION="40s"
 HOST_DAY_EPOCH_DURATION="60s"
@@ -133,6 +135,30 @@ STRIDE_ADMIN_ADDRESS=stride1u20df3trc2c2zdhm8qvh2hdjx9ewh00sv6eyy8
 STRIDE_ADMIN_MNEMONIC="tone cause tribe this switch near host damage idle fragile antique tail soda alien depth write wool they rapid unfold body scan pledge soft"
 STRIDE_FEE_ADDRESS=stride1czvrk3jkvtj8m27kqsqu2yrkhw3h3ykwj3rxh6
 
+# STRIDE test accounts. It's necessary to use stride address per chain
+
+STRIDE_TEST_ACCT1=tst_acct1
+STRIDE_TEST_ACCT2=tst_acct2
+STRIDE_TEST_ACCT3=tst_acct3
+STRIDE_TEST_ACCT4=tst_acct4
+STRIDE_TEST_ACCT5=tst_acct5
+STRIDE_TEST_ACCT6=tst_acct6
+TEST_ACCTS=($STRIDE_TEST_ACCT1 $STRIDE_TEST_ACCT2 $STRIDE_TEST_ACCT3 $STRIDE_TEST_ACCT4 $STRIDE_TEST_ACCT5 $STRIDE_TEST_ACCT6)
+
+TEST1_MNEMONIC="soft smoke mule august collect garden midnight hurdle level question giant clutch treat medal arrange panda rubber outside sound twin sniff target spice gentle"
+TEST2_MNEMONIC="taxi leaf penalty torch bus whale gossip slogan vast common science stage enrich prevent logic human salon clock car gorilla spell type square dinosaur"
+TEST3_MNEMONIC="gas clarify garbage find father evidence tone gain feature match excuse small delay clean bargain sail pyramid only security blade later final load salon"
+TEST4_MNEMONIC="seat salmon impact kiss exist vanish sing base divorce pony chronic volume shield there hazard eagle blouse muscle view client mushroom axis list just"
+TEST5_MNEMONIC="possible surge end sibling moon twist nice pride awake duty side cupboard hurry coil suspect moon rival mountain rocket aim cherry good tooth check"
+TEST6_MNEMONIC="venue dismiss leaf bundle learn park ivory record join dish illness able narrow banana snap random give fix race myself nose hope steak concert"
+TEST_ACCTS_MNEMONICS=(
+  "$TEST1_MNEMONIC"
+  "$TEST2_MNEMONIC"
+  "$TEST3_MNEMONIC"
+  "$TEST4_MNEMONIC"
+  "$TEST5_MNEMONIC"
+  "$TEST6_MNEMONIC"
+)
 # Binaries are contigent on whether we're doing an upgrade or not
 if [[ "$UPGRADE_NAME" == "" ]]; then 
   STRIDE_BINARY="$DOCKERNET_HOME/../build/strided"
@@ -242,6 +268,26 @@ RELAYER_MNEMONICS=(
 
 STRIDE_ADDRESS() { 
   $STRIDE_MAIN_CMD keys show ${STRIDE_VAL_PREFIX}1 --keyring-backend test -a 
+}
+STRIDE_TEST_ADDRESS(){
+  case $1 in
+    "GAIA") $STRIDE_MAIN_CMD keys show $STRIDE_TEST_ACCT1 --keyring-backend test -a
+    ;;
+    "JUNO") $STRIDE_MAIN_CMD keys show $STRIDE_TEST_ACCT2 --keyring-backend test -a
+    ;;
+    "OSMO") $STRIDE_MAIN_CMD keys show $STRIDE_TEST_ACCT3 --keyring-backend test -a
+    ;;
+  esac
+}
+STRIDE_TEST_ACCOUNT(){
+  case $1 in
+    "GAIA") echo $STRIDE_TEST_ACCT1
+    ;;
+    "JUNO") echo $STRIDE_TEST_ACCT2
+    ;;
+    "OSMO") echo $STRIDE_TEST_ACCT3
+    ;;
+  esac
 }
 GAIA_ADDRESS() { 
   $GAIA_MAIN_CMD keys show ${GAIA_VAL_PREFIX}1 --keyring-backend test -a 

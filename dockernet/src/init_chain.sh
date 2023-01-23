@@ -91,8 +91,21 @@ for (( i=1; i <= $NUM_NODES; i++ )); do
 
     sed -i -E "s|cors_allowed_origins = \[\]|cors_allowed_origins = [\"\*\"]|g" $config_toml
     sed -i -E "s|127.0.0.1|0.0.0.0|g" $config_toml
-    sed -i -E "s|timeout_commit = \"5s\"|timeout_commit = \"${BLOCK_TIME}\"|g" $config_toml
     sed -i -E "s|prometheus = false|prometheus = true|g" $config_toml
+
+    sed -i -E "s|send_rate = .*|send_rate = 20000000|g" $config_toml
+    sed -i -E "s|recv_rate = .*|recv_rate = 20000000|g" $config_toml
+    sed -i -E "s|flush_throttle_timeout = .*|flush_throttle_timeout = \"10ms\"|g" $config_toml
+    sed -i -E "s|max_packet_msg_payload_size = .*|max_packet_msg_payload_size = 10240|g" $config_toml
+
+    sed -i -E "s|^skip_timeout_commit = .*|skip_timeout_commit = \"true\"|g" $config_toml
+    sed -i -E "s|^timeout_commit = .*|timeout_commit = \"${COMMIT_TIMEOUT}\"|g" $config_toml
+    sed -i -E "s|^timeout_propose = .*|timeout_propose = \"${COMMIT_TIMEOUT}\"|g" $config_toml
+    sed -i -E "s|^timeout_prevote = .*|timeout_prevote = \"${COMMIT_TIMEOUT}\"|g" $config_toml
+    sed -i -E "s|^timeout_precommit = .*|timeout_precommit = \"${COMMIT_TIMEOUT}\"|g" $config_toml
+    sed -i -E "s|^timeout_propose_delta = .*|timeout_propose_delta = \"${DELTA_TIMEOUT}\"|g" $config_toml
+    sed -i -E "s|^timeout_prevote_delta = .*|timeout_prevote_delta = \"${DELTA_TIMEOUT}\"|g" $config_toml
+    sed -i -E "s|^timeout_precommit_delta = .*|timeout_precommit_delta = \"${DELTA_TIMEOUT}\"|g" $config_toml
 
     sed -i -E "s|minimum-gas-prices = \".*\"|minimum-gas-prices = \"0${DENOM}\"|g" $app_toml
     sed -i -E '/\[api\]/,/^enable = .*$/ s/^enable = .*$/enable = true/' $app_toml
@@ -145,6 +158,15 @@ if [ "$CHAIN" == "STRIDE" ]; then
     STRIDE_ADMIN_ADDRESS=$($MAIN_CMD keys show $STRIDE_ADMIN_ACCT --keyring-backend test -a)
     $MAIN_CMD add-genesis-account ${STRIDE_ADMIN_ADDRESS} ${ADMIN_TOKENS}${DENOM}
 
+    # add test accounts
+    for i in "${!TEST_ACCTS[@]}"; do
+        TEST_ACCT="${TEST_ACCTS[i]}"
+        TEST_MNEMONIC="${TEST_ACCTS_MNEMONICS[i]}"
+
+        echo "$TEST_MNEMONIC" | $MAIN_CMD keys add $TEST_ACCT --recover --keyring-backend=test >> $KEYS_LOGS 2>&1
+        TEST_ADDRESS=$($MAIN_CMD keys show $TEST_ACCT --keyring-backend test -a)
+        $MAIN_CMD add-genesis-account ${TEST_ADDRESS} ${VAL_TOKENS}${DENOM}
+    done
     # add relayer accounts
     for i in "${!RELAYER_ACCTS[@]}"; do
         RELAYER_ACCT="${RELAYER_ACCTS[i]}"
