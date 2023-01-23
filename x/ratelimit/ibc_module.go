@@ -11,6 +11,8 @@ import (
 	"github.com/cosmos/ibc-go/v5/modules/core/exported"
 )
 
+var _ porttypes.Middleware = &IBCModule{}
+
 type IBCModule struct {
 	app    porttypes.IBCModule
 	keeper keeper.Keeper
@@ -110,7 +112,7 @@ func (im IBCModule) OnRecvPacket(
 	relayer sdk.AccAddress,
 ) exported.Acknowledgement {
 	if err := ReceiveRateLimitedPacket(ctx, im.keeper, packet); err != nil {
-		return channeltypes.NewErrorAcknowledgement(err.Error())
+		return channeltypes.NewErrorAcknowledgement(err)
 	}
 	return im.app.OnRecvPacket(ctx, packet, relayer)
 }
@@ -155,4 +157,9 @@ func (im IBCModule) WriteAcknowledgement(
 	ack exported.Acknowledgement,
 ) error {
 	return nil
+}
+
+func (i IBCModule) GetAppVersion(ctx sdk.Context, portID, channelID string) (string, bool) {
+	// QUESTION: Not sure how to implement this - do we just create our own version like "ratelimit-1" ?
+	return "", true
 }

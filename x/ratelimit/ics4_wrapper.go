@@ -10,7 +10,6 @@ import (
 )
 
 var (
-	_ porttypes.Middleware  = &IBCModule{}
 	_ porttypes.ICS4Wrapper = &ICS4Wrapper{}
 )
 
@@ -35,4 +34,9 @@ func (i *ICS4Wrapper) SendPacket(ctx sdk.Context, chanCap *capabilitytypes.Capab
 
 func (i *ICS4Wrapper) WriteAcknowledgement(ctx sdk.Context, chanCap *capabilitytypes.Capability, packet exported.PacketI, ack exported.Acknowledgement) error {
 	return i.channel.WriteAcknowledgement(ctx, chanCap, packet, ack)
+}
+
+func (i *ICS4Wrapper) GetAppVersion(ctx sdk.Context, portID, channelID string) (string, bool) {
+	// QUESTION: Not sure how to implement this - do we just create our own version like "ratelimit-1" ?
+	return i.channel.GetAppVersion(ctx, portID, channelID)
 }
