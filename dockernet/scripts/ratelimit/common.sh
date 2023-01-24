@@ -75,7 +75,7 @@ get_balance() {
 }
 
 get_last_proposal_id() {
-    $STRIDE_MAIN_CMD q gov proposals | grep proposal_id | tail -1 | awk '{printf $2}' | tr -d '"'
+    $STRIDE_MAIN_CMD q gov proposals | grep " id:" | tail -1 | awk '{printf $2}' | tr -d '"'
 }
 
 check_transfer_status() {
@@ -137,7 +137,7 @@ submit_proposal_and_vote() {
     proposal_file=$2
 
     echo ">>> Submitting proposal for: $proposal_file"
-    $STRIDE_MAIN_CMD tx gov submit-proposal $proposal_type ${CURRENT_DIR}/proposals/${proposal_file} --from ${STRIDE_VAL_PREFIX}1 -y | TRIM_TX
+    $STRIDE_MAIN_CMD tx gov submit-legacy-proposal $proposal_type ${CURRENT_DIR}/proposals/${proposal_file} --from ${STRIDE_VAL_PREFIX}1 -y | TRIM_TX
     sleep 3
 
     proposal_id=$(get_last_proposal_id)

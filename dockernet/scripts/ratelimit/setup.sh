@@ -12,7 +12,7 @@ setup_juno_osmo_channel() {
     relayer_config=$STATE/relayer-${path}/config
 
     mkdir -p $relayer_config
-    cp ${SCRIPT_DIR}/config/relayer_config_juno_osmo.yaml $relayer_config/config.yaml
+    cp ${DOCKERNET_HOME}/config/relayer_config_juno_osmo.yaml $relayer_config/config.yaml
 
     printf "JUNO <> OSMO - Adding relayer keys..."
     RELAYER_JUNO_MNEMONIC="awkward remind blanket around naive senior sock pigeon portion umbrella edit scheme middle supreme agent indoor duty sock conduct market ethics exchange phrase mirror"

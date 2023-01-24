@@ -69,7 +69,7 @@ func CmdAddRateLimitProposal() *cobra.Command {
 The proposal details must be supplied via a JSON file.
 
 Example:
-$ %s tx gov submit-proposal add-rate-limit <path/to/proposal.json> --from=<key_or_address>
+$ %s tx gov submit-legacy-proposal add-rate-limit <path/to/proposal.json> --from=<key_or_address>
 
 Where proposal.json contains:
 {
@@ -130,7 +130,7 @@ func CmdUpdateRateLimitProposal() *cobra.Command {
 The proposal details must be supplied via a JSON file.
 
 Example:
-$ %s tx gov submit-proposal update-rate-limit <path/to/proposal.json> --from=<key_or_address>
+$ %s tx gov submit-legacy-proposal update-rate-limit <path/to/proposal.json> --from=<key_or_address>
 
 Where proposal.json contains:
 {
@@ -191,7 +191,7 @@ func CmdRemoveRateLimitProposal() *cobra.Command {
 The proposal details must be supplied via a JSON file.
 
 Example:
-$ %s tx gov submit-proposal remove-rate-limit <path/to/proposal.json> --from=<key_or_address>
+$ %s tx gov submit-legacy-proposal remove-rate-limit <path/to/proposal.json> --from=<key_or_address>
 
 Where proposal.json contains:
 {
@@ -249,7 +249,7 @@ func CmdResetRateLimitProposal() *cobra.Command {
 The proposal details must be supplied via a JSON file.
 
 Example:
-$ %s tx gov submit-proposal reset-rate-limit <path/to/proposal.json> --from=<key_or_address>
+$ %s tx gov submit-legacy-proposal reset-rate-limit <path/to/proposal.json> --from=<key_or_address>
 
 Where proposal.json contains:
 {
