@@ -92,6 +92,7 @@ Example:
 		},
 	}
 
+	cmd.Flags().String(FlagDenom, "", "The denom identifying a specific rate limit")
 	flags.AddQueryFlagsToCmd(cmd)
 
 	return cmd
