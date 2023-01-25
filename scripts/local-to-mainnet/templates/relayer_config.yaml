@@ -1,6 +1,6 @@
 global:
   api-listen-addr: :5183
-  timeout: 10s
+  timeout: 60s
   memo: ""
   light-cache-size: 20
 chains:

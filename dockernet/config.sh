@@ -135,6 +135,7 @@ STRIDE_CHAIN_ID=STRIDE
 STRIDE_NODE_PREFIX=stride
 STRIDE_NUM_NODES=3
 STRIDE_VAL_PREFIX=val
+STRIDE_ADDRESS_PREFIX=stride
 STRIDE_DENOM=$STRD_DENOM
 STRIDE_RPC_PORT=26657
 STRIDE_ADMIN_ACCT=admin
@@ -146,7 +147,11 @@ STRIDE_FEE_ADDRESS=stride1czvrk3jkvtj8m27kqsqu2yrkhw3h3ykwj3rxh6
 if [[ "$UPGRADE_NAME" == "" ]]; then 
   STRIDE_BINARY="$DOCKERNET_HOME/../build/strided"
 else
-  STRIDE_BINARY="$UPGRADES/binaries/strided1"
+  if [[ "${NEW_BINARY:-false}" == "false" ]]; then
+    STRIDE_BINARY="$UPGRADES/binaries/strided1"
+  else
+    STRIDE_BINARY="$UPGRADES/binaries/strided2"
+  fi
 fi
 STRIDE_MAIN_CMD="$STRIDE_BINARY --home $DOCKERNET_HOME/state/${STRIDE_NODE_PREFIX}1"
 
@@ -266,7 +271,9 @@ RELAYER_MNEMONICS=(
 )
 
 STRIDE_ADDRESS() { 
-  $STRIDE_MAIN_CMD keys show ${STRIDE_VAL_PREFIX}1 --keyring-backend test -a 
+  # After an upgrade, the keys query can sometimes print migration info, 
+  # so we need to filter by valid addresses using the prefix
+  $STRIDE_MAIN_CMD keys show ${STRIDE_VAL_PREFIX}1 --keyring-backend test -a | grep $STRIDE_ADDRESS_PREFIX
 }
 GAIA_ADDRESS() { 
   $GAIA_MAIN_CMD keys show ${GAIA_VAL_PREFIX}1 --keyring-backend test -a 
