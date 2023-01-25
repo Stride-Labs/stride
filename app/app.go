@@ -128,6 +128,10 @@ import (
 	stakeibcmodulekeeper "github.com/Stride-Labs/stride/v5/x/stakeibc/keeper"
 	stakeibcmoduletypes "github.com/Stride-Labs/stride/v5/x/stakeibc/types"
 
+	liquidgovmodule "github.com/Stride-Labs/stride/v5/x/liquidgov"
+	liquidgovmodulekeeper "github.com/Stride-Labs/stride/v5/x/liquidgov/keeper"
+	liquidgovmoduletypes "github.com/Stride-Labs/stride/v5/x/liquidgov/types"
+
 	// this line is used by starport scaffolding # stargate/app/moduleImport
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	ibcfeekeeper "github.com/cosmos/ibc-go/v5/modules/apps/29-fee/keeper"
@@ -195,6 +199,7 @@ var (
 		recordsmodule.AppModuleBasic{},
 		icacallbacksmodule.AppModuleBasic{},
 		claim.AppModuleBasic{},
+		liquidgovmodule.AppModuleBasic{},
 		// this line is used by starport scaffolding # stargate/app/moduleBasic
 	)
 
@@ -212,6 +217,7 @@ var (
 		claimtypes.ModuleName:           nil,
 		interchainquerytypes.ModuleName: nil,
 		icatypes.ModuleName:             nil,
+		liquidgovmoduletypes.ModuleName: {authtypes.Minter, authtypes.Burner, authtypes.Staking},
 		// this line is used by starport scaffolding # stargate/app/maccPerms
 	}
 )
@@ -284,6 +290,8 @@ type StrideApp struct {
 	ScopedIcacallbacksKeeper capabilitykeeper.ScopedKeeper
 	IcacallbacksKeeper       icacallbacksmodulekeeper.Keeper
 	ClaimKeeper              claimkeeper.Keeper
+
+	LiquidgovKeeper liquidgovmodulekeeper.Keeper
 	// this line is used by starport scaffolding # stargate/app/keeperDeclaration
 
 	mm           *module.Manager
@@ -326,6 +334,7 @@ func NewStrideApp(
 		recordsmoduletypes.StoreKey,
 		icacallbacksmoduletypes.StoreKey,
 		claimtypes.StoreKey,
+		liquidgovmoduletypes.StoreKey,
 		// this line is used by starport scaffolding # stargate/app/storeKey
 	)
 	tkeys := sdk.NewTransientStoreKeys(paramstypes.TStoreKey)
@@ -544,6 +553,17 @@ func NewStrideApp(
 		return nil
 	}
 
+	app.LiquidgovKeeper = *liquidgovmodulekeeper.NewKeeper(
+		appCodec,
+		keys[liquidgovmoduletypes.StoreKey],
+		keys[liquidgovmoduletypes.MemStoreKey],
+		app.GetSubspace(liquidgovmoduletypes.ModuleName),
+
+		app.AccountKeeper,
+		app.BankKeeper,
+	)
+	liquidgovModule := liquidgovmodule.NewAppModule(appCodec, app.LiquidgovKeeper, app.AccountKeeper, app.BankKeeper)
+
 	// this line is used by starport scaffolding # stargate/app/keeperDefinition
 	ibcFeeKeeper := ibcfeekeeper.NewKeeper(
 		appCodec, app.keys[ibcfeetypes.StoreKey], app.GetSubspace(ibcfeetypes.ModuleName),
@@ -631,6 +651,7 @@ func NewStrideApp(
 		icaModule,
 		recordsModule,
 		icacallbacksModule,
+		liquidgovModule,
 		// this line is used by starport scaffolding # stargate/app/appModule
 	)
 
@@ -665,6 +686,7 @@ func NewStrideApp(
 		recordsmoduletypes.ModuleName,
 		icacallbacksmoduletypes.ModuleName,
 		claimtypes.ModuleName,
+		liquidgovmoduletypes.ModuleName,
 		// this line is used by starport scaffolding # stargate/app/beginBlockers
 	)
 
@@ -695,6 +717,7 @@ func NewStrideApp(
 		recordsmoduletypes.ModuleName,
 		icacallbacksmoduletypes.ModuleName,
 		claimtypes.ModuleName,
+		liquidgovmoduletypes.ModuleName,
 		// this line is used by starport scaffolding # stargate/app/endBlockers
 	)
 
@@ -730,6 +753,7 @@ func NewStrideApp(
 		recordsmoduletypes.ModuleName,
 		icacallbacksmoduletypes.ModuleName,
 		claimtypes.ModuleName,
+		liquidgovmoduletypes.ModuleName,
 		// this line is used by starport scaffolding # stargate/app/initGenesis
 	)
 
@@ -754,12 +778,13 @@ func NewStrideApp(
 	// 	evidence.NewAppModule(app.EvidenceKeeper),
 	// 	ibc.NewAppModule(app.IBCKeeper),
 	// 	transferModule,
-	// 	// monitoringModule,
-	// 	stakeibcModule,
-	// 	epochsModule,
-	// 	interchainQueryModule,
-	// 	recordsModule,
+	// monitoringModule,
+	// stakeibcModule,
+	// epochsModule,
+	// interchainQueryModule,
+	// recordsModule,
 	// icacallbacksModule,
+	// liquidgovModule,
 	// this line is used by starport scaffolding # stargate/app/appModule
 	// )
 	// app.sm.RegisterStoreDecoders()
@@ -992,6 +1017,7 @@ func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino
 	paramsKeeper.Subspace(icahosttypes.SubModuleName)
 	paramsKeeper.Subspace(recordsmoduletypes.ModuleName)
 	paramsKeeper.Subspace(icacallbacksmoduletypes.ModuleName)
+	paramsKeeper.Subspace(liquidgovmoduletypes.ModuleName)
 	// this line is used by starport scaffolding # stargate/app/paramSubspace
 
 	paramsKeeper.Subspace(claimtypes.ModuleName)
