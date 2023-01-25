@@ -21,6 +21,7 @@ type (
 
 		bankKeeper    types.BankKeeper
 		channelKeeper types.ChannelKeeper
+		ICS4Wrapper   types.ICS4Wrapper
 	}
 )
 
@@ -30,6 +31,7 @@ func NewKeeper(
 	ps paramtypes.Subspace,
 	bankKeeper types.BankKeeper,
 	channelKeeper types.ChannelKeeper,
+	ics4Wrapper types.ICS4Wrapper,
 ) *Keeper {
 	return &Keeper{
 		cdc:           cdc,
@@ -37,6 +39,7 @@ func NewKeeper(
 		paramstore:    ps,
 		bankKeeper:    bankKeeper,
 		channelKeeper: channelKeeper,
+		ICS4Wrapper:   ics4Wrapper,
 	}
 }
 

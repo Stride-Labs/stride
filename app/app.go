@@ -294,7 +294,6 @@ type StrideApp struct {
 	IcacallbacksKeeper       icacallbacksmodulekeeper.Keeper
 	ScopedratelimitKeeper    capabilitykeeper.ScopedKeeper
 	RatelimitKeeper          ratelimitmodulekeeper.Keeper
-	RatelimitICS4Wrapper     *ratelimitmodule.ICS4Wrapper
 	ClaimKeeper              claimkeeper.Keeper
 	// this line is used by starport scaffolding # stargate/app/keeperDeclaration
 
@@ -427,20 +426,14 @@ func NewStrideApp(
 		app.GetSubspace(ratelimitmoduletypes.ModuleName),
 		app.BankKeeper,
 		app.IBCKeeper.ChannelKeeper,
+		app.IBCKeeper.ChannelKeeper, // ICS4Wrapper
 	)
 	ratelimitModule := ratelimitmodule.NewAppModule(appCodec, app.RatelimitKeeper)
-
-	// Create ICS4Wrapper middleware
-	rateLimitICS4Wrapper := ratelimitmodule.NewICS4Middleware(
-		app.IBCKeeper.ChannelKeeper,
-		app.RatelimitKeeper,
-	)
-	app.RatelimitICS4Wrapper = &rateLimitICS4Wrapper
 
 	// Create Transfer Keepers
 	app.TransferKeeper = ibctransferkeeper.NewKeeper(
 		appCodec, keys[ibctransfertypes.StoreKey], app.GetSubspace(ibctransfertypes.ModuleName),
-		app.RatelimitICS4Wrapper, app.IBCKeeper.ChannelKeeper, &app.IBCKeeper.PortKeeper,
+		app.IBCKeeper.ChannelKeeper, app.IBCKeeper.ChannelKeeper, &app.IBCKeeper.PortKeeper,
 		app.AccountKeeper, app.BankKeeper, scopedTransferKeeper,
 	)
 	transferModule := transfer.NewAppModule(app.TransferKeeper)
@@ -613,7 +606,7 @@ func NewStrideApp(
 	// - ratelimit
 	// - transfer
 	// - base app
-	ratelimitStack := ratelimitmodule.NewIBCModule(app.RatelimitKeeper, transferIBCModule)
+	ratelimitStack := ratelimitmodule.NewIBCMiddleware(app.RatelimitKeeper, transferIBCModule)
 	recordsStack := recordsmodule.NewIBCModule(app.RecordsKeeper, ratelimitStack)
 
 	// Create static IBC router, add transfer route, then set and seal it

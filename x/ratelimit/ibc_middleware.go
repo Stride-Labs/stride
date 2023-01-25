@@ -11,22 +11,22 @@ import (
 	"github.com/cosmos/ibc-go/v5/modules/core/exported"
 )
 
-var _ porttypes.Middleware = &IBCModule{}
+var _ porttypes.Middleware = &IBCMiddleware{}
 
-type IBCModule struct {
+type IBCMiddleware struct {
 	app    porttypes.IBCModule
 	keeper keeper.Keeper
 }
 
-func NewIBCModule(k keeper.Keeper, app porttypes.IBCModule) IBCModule {
-	return IBCModule{
+func NewIBCMiddleware(k keeper.Keeper, app porttypes.IBCModule) IBCMiddleware {
+	return IBCMiddleware{
 		app:    app,
 		keeper: k,
 	}
 }
 
-// OnChanOpenInit implements the IBCModule interface
-func (im IBCModule) OnChanOpenInit(ctx sdk.Context,
+// OnChanOpenInit implements the IBCMiddleware interface
+func (im IBCMiddleware) OnChanOpenInit(ctx sdk.Context,
 	order channeltypes.Order,
 	connectionHops []string,
 	portID string,
@@ -35,7 +35,6 @@ func (im IBCModule) OnChanOpenInit(ctx sdk.Context,
 	counterparty channeltypes.Counterparty,
 	version string,
 ) (string, error) {
-	// Run custom logic here
 	return im.app.OnChanOpenInit(
 		ctx,
 		order,
@@ -48,8 +47,8 @@ func (im IBCModule) OnChanOpenInit(ctx sdk.Context,
 	)
 }
 
-// OnChanOpenTry implements the IBCModule interface
-func (im IBCModule) OnChanOpenTry(
+// OnChanOpenTry implements the IBCMiddleware interface
+func (im IBCMiddleware) OnChanOpenTry(
 	ctx sdk.Context,
 	order channeltypes.Order,
 	connectionHops []string,
@@ -59,107 +58,108 @@ func (im IBCModule) OnChanOpenTry(
 	counterparty channeltypes.Counterparty,
 	counterpartyVersion string,
 ) (string, error) {
-	// Run custom logic here
 	return im.app.OnChanOpenTry(ctx, order, connectionHops, portID, channelID, channelCap, counterparty, counterpartyVersion)
 }
 
-// OnChanOpenAck implements the IBCModule interface
-func (im IBCModule) OnChanOpenAck(
+// OnChanOpenAck implements the IBCMiddleware interface
+func (im IBCMiddleware) OnChanOpenAck(
 	ctx sdk.Context,
 	portID,
 	channelID string,
 	counterpartyChannelID string,
 	counterpartyVersion string,
 ) error {
-	// Run custom logic here
 	return im.app.OnChanOpenAck(ctx, portID, channelID, counterpartyChannelID, counterpartyVersion)
 }
 
-// OnChanOpenConfirm implements the IBCModule interface
-func (im IBCModule) OnChanOpenConfirm(
+// OnChanOpenConfirm implements the IBCMiddleware interface
+func (im IBCMiddleware) OnChanOpenConfirm(
 	ctx sdk.Context,
 	portID,
 	channelID string,
 ) error {
-	// Run custom logic here
 	return im.app.OnChanOpenConfirm(ctx, portID, channelID)
 }
 
-// OnChanCloseInit implements the IBCModule interface
-func (im IBCModule) OnChanCloseInit(
+// OnChanCloseInit implements the IBCMiddleware interface
+func (im IBCMiddleware) OnChanCloseInit(
 	ctx sdk.Context,
 	portID,
 	channelID string,
 ) error {
-	// Run custom logic here
 	return im.app.OnChanCloseInit(ctx, portID, channelID)
 }
 
-// OnChanCloseConfirm implements the IBCModule interface
-func (im IBCModule) OnChanCloseConfirm(
+// OnChanCloseConfirm implements the IBCMiddleware interface
+func (im IBCMiddleware) OnChanCloseConfirm(
 	ctx sdk.Context,
 	portID,
 	channelID string,
 ) error {
-	// Run custom logic here
 	return im.app.OnChanCloseConfirm(ctx, portID, channelID)
 }
 
-// OnRecvPacket implements the IBCModule interface
-func (im IBCModule) OnRecvPacket(
+// OnRecvPacket implements the IBCMiddleware interface
+func (im IBCMiddleware) OnRecvPacket(
 	ctx sdk.Context,
 	packet channeltypes.Packet,
 	relayer sdk.AccAddress,
 ) exported.Acknowledgement {
+	// Check if the packet would cause the rate limit to be exceeded,
+	// and if so, return an ack error
 	if err := ReceiveRateLimitedPacket(ctx, im.keeper, packet); err != nil {
+		// QUESTION: Should the error ack instead be passed down to the base app?
+		// I'm assuming no because I don't think we need to do anything in the case of an error
+		// (as tokens should not have been minted yet at this point in the stack)
 		return channeltypes.NewErrorAcknowledgement(err)
 	}
 	return im.app.OnRecvPacket(ctx, packet, relayer)
 }
 
-// OnAcknowledgementPacket implements the IBCModule interface
-func (im IBCModule) OnAcknowledgementPacket(
+// OnAcknowledgementPacket implements the IBCMiddleware interface
+func (im IBCMiddleware) OnAcknowledgementPacket(
 	ctx sdk.Context,
 	packet channeltypes.Packet,
 	acknowledgement []byte,
 	relayer sdk.AccAddress,
 ) error {
-	// Run custom logic here
 	return im.app.OnAcknowledgementPacket(ctx, packet, acknowledgement, relayer)
 }
 
-// OnTimeoutPacket implements the IBCModule interface
-func (im IBCModule) OnTimeoutPacket(
+// OnTimeoutPacket implements the IBCMiddleware interface
+func (im IBCMiddleware) OnTimeoutPacket(
 	ctx sdk.Context,
 	packet channeltypes.Packet,
 	relayer sdk.AccAddress,
 ) error {
-	// Run custom logic here
 	return im.app.OnTimeoutPacket(ctx, packet, relayer)
 }
 
 // SendPacket implements the ICS4 Wrapper interface
-// This is implemented by the ratelimit ICS4Wrapper
-func (im IBCModule) SendPacket(
+// If the packet does not get rate limited, it passes the packet to the IBC Channel keeper
+func (im IBCMiddleware) SendPacket(
 	ctx sdk.Context,
 	chanCap *capabilitytypes.Capability,
 	packet exported.PacketI,
 ) error {
-	return nil
+	if err := SendRateLimitedPacket(ctx, im.keeper, packet); err != nil {
+		return err
+	}
+	return im.keeper.ICS4Wrapper.SendPacket(ctx, chanCap, packet)
 }
 
 // WriteAcknowledgement implements the ICS4 Wrapper interface
-// This is implemented by the ratelimit ICS4Wrapper
-func (im IBCModule) WriteAcknowledgement(
+// WriteAcknowledgement wraps the IBC ChannelKeeper's WriteAcknowledgement function
+func (im IBCMiddleware) WriteAcknowledgement(
 	ctx sdk.Context,
 	chanCap *capabilitytypes.Capability,
 	packet exported.PacketI,
 	ack exported.Acknowledgement,
 ) error {
-	return nil
+	return im.keeper.ICS4Wrapper.WriteAcknowledgement(ctx, chanCap, packet, ack)
 }
 
-func (i IBCModule) GetAppVersion(ctx sdk.Context, portID, channelID string) (string, bool) {
-	// QUESTION: Not sure how to implement this - do we just create our own version like "ratelimit-1" ?
-	return "", true
+// GetAppVersion returns the application version of the underlying application
+func (i IBCMiddleware) GetAppVersion(ctx sdk.Context, portID, channelID string) (string, bool) {
+	return i.keeper.ICS4Wrapper.GetAppVersion(ctx, portID, channelID)
 }
