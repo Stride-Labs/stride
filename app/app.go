@@ -6,6 +6,8 @@ import (
 	"path/filepath"
 
 	porttypes "github.com/cosmos/ibc-go/v5/modules/core/05-port/types"
+	tendermint "github.com/cosmos/ibc-go/v5/modules/light-clients/07-tendermint"
+	wasm "github.com/cosmos/ibc-go/v5/modules/light-clients/08-wasm"
 
 	"github.com/Stride-Labs/stride/v5/utils"
 
@@ -193,6 +195,8 @@ var (
 		recordsmodule.AppModuleBasic{},
 		icacallbacksmodule.AppModuleBasic{},
 		claim.AppModuleBasic{},
+		tendermint.AppModuleBasic{},
+		wasm.AppModuleBasic{},
 		// this line is used by starport scaffolding # stargate/app/moduleBasic
 	)
 
