@@ -143,3 +143,26 @@ func (k Keeper) SetHostZoneUnbondings(ctx sdk.Context, chainId string, epochUnbo
 	}
 	return nil
 }
+
+func (k Keeper) ResetEpochUnbondingRecordEpochNumbers(ctx sdk.Context) error {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.EpochUnbondingRecordKey))
+	iterator := sdk.KVStorePrefixIterator(store, []byte{})
+
+	defer iterator.Close()
+
+	for ; iterator.Valid(); iterator.Next() {
+		var epochUnbondingRecord types.EpochUnbondingRecord
+		err := k.Cdc.Unmarshal(iterator.Value(), &epochUnbondingRecord)
+		if err != nil {
+			return err
+		}
+
+		epochNumberBz := iterator.Key()
+		epochNumber := binary.BigEndian.Uint64(epochNumberBz)
+		epochUnbondingRecord.EpochNumber = epochNumber
+
+		k.SetEpochUnbondingRecord(ctx, epochUnbondingRecord)
+	}
+
+	return nil
+}

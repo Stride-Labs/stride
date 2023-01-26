@@ -33,7 +33,6 @@ func networkWithDepositRecordObjects(t *testing.T, n int) (*network.Network, []t
 	buf, err := cfg.Codec.MarshalJSON(&state)
 	require.NoError(t, err)
 	cfg.GenesisState[types.ModuleName] = buf
-	// fmt.Println(fmt.Sprintf("state.DepositRecordList: %v", state.DepositRecordList))
 	return network.New(t, cfg), state.DepositRecordList
 }
 
