@@ -31,7 +31,7 @@ func (k msgServer) ResetUnbondingRecordEpochNumbers(goCtx context.Context, msg *
 
 	// Validate each unbonding record
 	epochNumberMap := make(map[uint64]bool)
-	for _, epochUnbondingRecord := range initialEpochUnbondingRecords {
+	for _, epochUnbondingRecord := range finalEpochUnondingRecords {
 		// There should be no duplicate epoch numbers
 		if _, epochNumberAlreadyExists := epochNumberMap[epochUnbondingRecord.EpochNumber]; epochNumberAlreadyExists {
 			return nil, errors.New(fmt.Sprintf("%s: Duplicate EpochNumber exists", ErrorResettingUnbondingRecord))
