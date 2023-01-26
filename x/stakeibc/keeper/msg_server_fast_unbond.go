@@ -27,22 +27,6 @@ func (k msgServer) FastUnbond(goCtx context.Context, msg *types.MsgFastUnbond) (
 		return nil, sdkerrors.Wrapf(types.ErrInvalidHostZone, "host zone is invalid: %s", msg.HostZone)
 	}
 
-	// get the coins to return, they need to be in the format {amount}{denom}
-	ibcDenom := hostZone.GetIbcDenom()
-	coinString := msg.Amount.String() + ibcDenom
-	outCoin, err := sdk.ParseCoinNormalized(coinString)
-	if err != nil {
-		k.Logger(ctx).Error(fmt.Sprintf("failed to parse coin (%s)", coinString))
-		return nil, sdkerrors.Wrapf(err, "failed to parse coin (%s)", coinString)
-	}
-	// construct desired unstaking amount from host zone
-	stDenom := types.StAssetDenomFromHostZoneDenom(hostZone.HostDenom)
-	nativeAmount := sdk.NewDecFromInt(msg.Amount).Mul(hostZone.RedemptionRate).RoundInt()
-
-	if nativeAmount.GT(hostZone.StakedBal) {
-		return nil, sdkerrors.Wrapf(types.ErrInvalidAmount, "cannot unstake an amount g.t. staked balance on host zone: %v", msg.Amount)
-	}
-
 	// safety check: redemption rate must be within safety bounds
 	rateIsSafe, err := k.IsRedemptionRateWithinSafetyBounds(ctx, hostZone)
 	if !rateIsSafe || (err != nil) {
@@ -50,20 +34,31 @@ func (k msgServer) FastUnbond(goCtx context.Context, msg *types.MsgFastUnbond) (
 		return nil, sdkerrors.Wrapf(types.ErrRedemptionRateOutsideSafetyBounds, errMsg)
 	}
 
-	coinString = nativeAmount.String() + stDenom
-	inCoin, err := sdk.ParseCoinNormalized(coinString)
+	// get the coins to send, they need to be in the format {amount}{denom}
+	ibcDenom := hostZone.GetIbcDenom()
+	coinString := msg.Amount.String() + ibcDenom
+	nativeCoin, err := sdk.ParseCoinNormalized(coinString)
 	if err != nil {
-		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidCoins, "could not parse inCoin: %s. err: %s", coinString, err.Error())
+		k.Logger(ctx).Error(fmt.Sprintf("failed to parse coin (%s)", coinString))
+		return nil, sdkerrors.Wrapf(err, "failed to parse coin (%s)", coinString)
+	}
+
+	// construct desired unstaking amount from host zone
+	nativeAmount := sdk.NewDecFromInt(msg.Amount).Mul(hostZone.RedemptionRate).RoundInt()
+	// Redemption amount must not be greater than staked balance in that zone.
+	if nativeAmount.GT(hostZone.StakedBal) {
+		return nil, sdkerrors.Wrapf(types.ErrInvalidAmount, "cannot unstake an amount g.t. staked balance on host zone: %v", msg.Amount)
 	}
 	// safety checks on the coin
 	// 	- Redemption amount must be positive
 	if !nativeAmount.IsPositive() {
 		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidCoins, "amount must be greater than 0. found: %v", msg.Amount)
 	}
+
+	stDenom := types.StAssetDenomFromHostZoneDenom(hostZone.HostDenom)
 	// 	- Creator owns at least "amount" stAssets
 	balance := k.bankKeeper.GetBalance(ctx, sender, stDenom)
 	k.Logger(ctx).Info(fmt.Sprintf("Redemption issuer IBCDenom balance: %v%s", balance.Amount, balance.Denom))
-	k.Logger(ctx).Info(fmt.Sprintf("Redemption requested redemotion amount: %v%s", inCoin.Amount, inCoin.Denom))
 	if balance.Amount.LT(msg.Amount) {
 		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidCoins, "balance is lower than redemption amount. redemption amount: %v, balance %v: ", msg.Amount, balance.Amount)
 	}
@@ -88,10 +83,10 @@ func (k msgServer) FastUnbond(goCtx context.Context, msg *types.MsgFastUnbond) (
 		return nil, fmt.Errorf("could not bech32 decode address %s of zone with id: %s", hostZone.Address, hostZone.ChainId)
 	}
 	// Send that amount back to user
-	err = k.bankKeeper.SendCoins(ctx, bech32ZoneAddress, sender, sdk.NewCoins(outCoin))
+	err = k.bankKeeper.SendCoins(ctx, bech32ZoneAddress, sender, sdk.NewCoins(nativeCoin))
 	if err != nil {
-		k.Logger(ctx).Error("Failed to send sdk.NewCoins(outCoins) from account to module")
-		return nil, sdkerrors.Wrapf(types.ErrInsufficientFunds, "couldn't send %v derivative %s tokens from module account. err: %s", outCoin.Amount, outCoin.Denom, err.Error())
+		k.Logger(ctx).Error("Failed to send sdk.NewCoins(nativeCoin) back to user")
+		return nil, sdkerrors.Wrapf(types.ErrInsufficientFunds, "couldn't send %v derivative %s tokens from module account. err: %s", nativeCoin.Amount, nativeCoin.Denom, err.Error())
 	}
 
 	// Send tokens back to module to burn
