@@ -18,7 +18,7 @@ import (
 	cdctypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
-	wasm "github.com/cosmos/ibc-go/v5/modules/light-clients/08-wasm"
+	wasm "github.com/cosmos/ibc-go/v6/modules/light-clients/08-wasm"
 
 	"github.com/Stride-Labs/stride/v5/x/stakeibc/client/cli"
 	"github.com/Stride-Labs/stride/v5/x/stakeibc/keeper"

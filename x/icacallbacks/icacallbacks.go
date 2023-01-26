@@ -5,8 +5,8 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	ibctransfertypes "github.com/cosmos/ibc-go/v5/modules/apps/transfer/types"
-	channeltypes "github.com/cosmos/ibc-go/v5/modules/core/04-channel/types"
+	ibctransfertypes "github.com/cosmos/ibc-go/v6/modules/apps/transfer/types"
+	channeltypes "github.com/cosmos/ibc-go/v6/modules/core/04-channel/types"
 	"github.com/gogo/protobuf/proto"
 	"github.com/tendermint/tendermint/libs/log"
 
@@ -43,10 +43,13 @@ func ParseTxMsgData(acknowledgementResult []byte) ([][]byte, error) {
 }
 
 // UnpackAcknowledgementResponse unmarshals IBC Acknowledgements, determines the status of the acknowledgement (success or failure)
-//     and, if applicable, assembles the message responses
+//
+//	and, if applicable, assembles the message responses
+//
 // ICA transactions have associated messages responses. IBC transfer do not.
 // With ICA transactions, the schema of the response differs depending on the version of ibc-go used,
-//     however, this function unifies the format into a common response (a slice of byte arrays)
+//
+//	however, this function unifies the format into a common response (a slice of byte arrays)
 func UnpackAcknowledgementResponse(ctx sdk.Context, logger log.Logger, ack []byte, isICA bool) (*types.AcknowledgementResponse, error) {
 	// Unmarshal the raw ack response
 	var acknowledgement channeltypes.Acknowledgement

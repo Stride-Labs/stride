@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	"google.golang.org/protobuf/proto"
+
 	recordstypes "github.com/Stride-Labs/stride/v5/x/records/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -16,7 +18,7 @@ import (
 
 type IcaTx struct {
 	ConnectionId string
-	Msgs         []sdk.Msg
+	Msgs         []proto.Message
 	Account      types.ICAAccount
 	Timeout      uint64
 }

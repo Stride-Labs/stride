@@ -15,7 +15,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	channeltypes "github.com/cosmos/ibc-go/v5/modules/core/04-channel/types"
+	channeltypes "github.com/cosmos/ibc-go/v6/modules/core/04-channel/types"
 	"github.com/golang/protobuf/proto" //nolint:staticcheck
 )
 
@@ -40,14 +40,15 @@ func (k Keeper) UnmarshalUndelegateCallbackArgs(ctx sdk.Context, undelegateCallb
 }
 
 // ICA Callback after undelegating
-//   If successful:
-//      * Updates epoch unbonding record status
-// 		* Records delegation changes on the host zone and validators,
-//      * Burns stTokens
-//   If timeout:
-//      * Does nothing
-//   If failure:
-//		* Reverts epoch unbonding record status
+//
+//	  If successful:
+//	     * Updates epoch unbonding record status
+//			* Records delegation changes on the host zone and validators,
+//	     * Burns stTokens
+//	  If timeout:
+//	     * Does nothing
+//	  If failure:
+//			* Reverts epoch unbonding record status
 func UndelegateCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ackResponse *icacallbackstypes.AcknowledgementResponse, args []byte) error {
 	// Fetch callback args
 	undelegateCallback, err := k.UnmarshalUndelegateCallbackArgs(ctx, args)
@@ -168,8 +169,8 @@ func (k Keeper) GetLatestCompletionTime(ctx sdk.Context, msgResponses [][]byte) 
 }
 
 // UpdateHostZoneUnbondings does two things:
-// 		1. Update the status and time of each hostZoneUnbonding on each epochUnbondingRecord
-// 		2. Return the number of stTokens that need to be burned
+//  1. Update the status and time of each hostZoneUnbonding on each epochUnbondingRecord
+//  2. Return the number of stTokens that need to be burned
 func (k Keeper) UpdateHostZoneUnbondings(
 	ctx sdk.Context,
 	latestCompletionTime time.Time,
