@@ -3,7 +3,7 @@
 ###   ANY CHANGES WILL BE OVERWRITTEN.   ###
 ############################################
 #### SETUP HOT WALLET (Only needs to be run once)
-echo "$HOT_WALLET_1_MNEMONIC" | build/osmosisd keys add hot --recover --keyring-backend test 
+echo "$HOT_WALLET_1_MNEMONIC" | build/evmosd keys add hot --recover --keyring-backend test 
 
 
 #### START RELAYERS
@@ -11,8 +11,8 @@ echo "$HOT_WALLET_1_MNEMONIC" | build/osmosisd keys add hot --recover --keyring-
 docker-compose -f scripts/local-to-mainnet/docker-compose.yml run --rm relayer rly transact link stride-host 
 
 # (OR) If the go relayer isn't working, use hermes (you'll have to add the connections to the relayer config though in `scripts/state/relaye/config/config.yaml`)
-# docker-compose -f scripts/local-to-mainnet/docker-compose.yml run --rm hermes hermes create connection --a-chain osmosis-1 --b-chain local-test-1
-# docker-compose -f scripts/local-to-mainnet/docker-compose.yml run --rm hermes hermes create channel --a-chain local-test-1 --a-connection connection-0 --a-port transfer --b-port transfer
+# docker-compose -f scripts/local-to-mainnet/docker-compose.yml run --rm hermes hermes create connection --a-chain evmos_9000-4 --b-chain local-test-2
+# docker-compose -f scripts/local-to-mainnet/docker-compose.yml run --rm hermes hermes create channel --a-chain local-test-2 --a-connection connection-0 --a-port transfer --b-port transfer
 
 # Ensure Relayer Config is updated (`scripts/state/relayer/config/config.yaml`)
 #    paths:
@@ -44,7 +44,9 @@ docker-compose -f scripts/local-to-mainnet/docker-compose.yml logs -f relayer | 
 
 #### REGISTER HOST
 # IBC Transfer from HOST to stride (from relayer account)
-build/osmosisd tx ibc-transfer transfer transfer $transfer_channel stride1u20df3trc2c2zdhm8qvh2hdjx9ewh00sv6eyy8 4000000uosmo --from hot --chain-id osmosis-1 -y --keyring-backend test --node http://osmo-fleet-direct.main.stridenet.co:26657
+build/evmosd tx ibc-transfer transfer transfer $transfer_channel stride1u20df3trc2c2zdhm8qvh2hdjx9ewh00sv6eyy8 1000000000000000000atevmos --from hot --chain-id evmos_9000-4 -y --keyring-backend test --node https://tendermint.bd.evmos.dev:26657 --gas-prices 30000000000atevmos
+# build/evmosd q bank balances evmos1tvcz0p3fuywgjvsfah23232caaxdsf5vwaqehm --chain-id evmos_9000-4 --keyring-backend test --node https://tendermint.bd.evmos.dev:26657 
+build/evmosd q bank balances evmos18zzz7j4ygkh9tcxpv07zg85t9dt4f6ynlc5pajpjykazqne3slzqkqhmfz --chain-id evmos_9000-4 --keyring-backend test --node https://tendermint.bd.evmos.dev:26657 
 
 # Confirm funds were recieved on stride and get IBC denom
 build/strided --home s q bank balances stride1u20df3trc2c2zdhm8qvh2hdjx9ewh00sv6eyy8
@@ -52,11 +54,11 @@ build/strided --home s q bank balances stride1u20df3trc2c2zdhm8qvh2hdjx9ewh00sv6
 # Register host zone
 IBC_DENOM=$(build/strided --home s q bank balances stride1u20df3trc2c2zdhm8qvh2hdjx9ewh00sv6eyy8 | grep ibc | awk '{print $2}' | tr -d '"') && echo $IBC_DENOM
 build/strided --home s tx stakeibc register-host-zone \
-    connection-0 uosmo osmo $IBC_DENOM channel-0 1 \
-    --from admin --gas 1000000 -y
+    connection-0 atevmos evmos $IBC_DENOM channel-0 1 \
+    --from admin --gas 1000000 -y --chain-id local-test-2
 
 # Add validator
-build/strided --home s tx stakeibc add-validator osmosis-1 imperator osmovaloper1t8qckan2yrygq7kl9apwhzfalwzgc2429p8f0s 10 5 --chain-id local-test-1 --keyring-backend test --from admin -y
+build/strided --home s tx stakeibc add-validator evmos_9000-4 polkachu evmosvaloper1qvc6jej73armfs5fadn9lprx768f46d9wpd7d7 10 5 --chain-id local-test-2 --from admin -y
 
 # Confirm ICA channels were registered
 build/strided --home s q stakeibc list-host-zone
@@ -64,44 +66,44 @@ build/strided --home s q stakeibc list-host-zone
 #### FLOW
 ## Go Through Flow
 # Liquid stake (then wait and LS again)
-build/strided --home s tx stakeibc liquid-stake 1000000 uosmo --keyring-backend test --from admin -y --chain-id local-test-1 -y
+build/strided --home s tx stakeibc liquid-stake 400000000000000000 atevmos --from admin -y --chain-id local-test-2 -y
 
 # Confirm stTokens, StakedBal, and Redemption Rate
 build/strided --home s q bank balances stride1u20df3trc2c2zdhm8qvh2hdjx9ewh00sv6eyy8
 build/strided --home s q stakeibc list-host-zone
-
+build/strided --home s q stakeibc
 # Redeem
-build/strided --home s tx stakeibc redeem-stake 1000 osmosis-1 osmo1c37n9aywapx2v0s6vk2yedydkkhq65zz38jfnc --from admin --keyring-backend test --chain-id local-test-1 -y
+build/strided --home s tx stakeibc redeem-stake 1000 evmos_9000-4 evmos1tvcz0p3fuywgjvsfah23232caaxdsf5vwaqehm --from admin --chain-id local-test-2 -y
 
 # Confirm stTokens and StakedBal
 build/strided --home s q bank balances stride1u20df3trc2c2zdhm8qvh2hdjx9ewh00sv6eyy8
 build/strided --home s q stakeibc list-host-zone
 
 # Add another validator
-build/strided --home s tx stakeibc add-validator osmosis-1 notional osmovaloper1083svrca4t350mphfv9x45wq9asrs60c6rv0j5 10 5 --chain-id local-test-1 --keyring-backend test --from admin -y
+build/strided --home s tx stakeibc add-validator evmos_9000-4 alphabet evmosvaloper158wwas4v6fgcu2x3plg70s6u0fm0lle237kltr 10 5 --chain-id local-test-2 --keyring-backend test --from admin -y
 
 # Liquid stake and confirm the stake was split 50/50 between the validators
-build/strided --home s tx stakeibc liquid-stake 1000000 uosmo --keyring-backend test --from admin -y --chain-id local-test-1 -y
+build/strided --home s tx stakeibc liquid-stake 1000000 atevmos --keyring-backend test --from admin -y --chain-id local-test-2 -y
 
 # Change validator weights
-build/strided --home s tx stakeibc change-validator-weight osmosis-1 osmovaloper1t8qckan2yrygq7kl9apwhzfalwzgc2429p8f0s 1 --from admin -y
-build/strided --home s tx stakeibc change-validator-weight osmosis-1 osmovaloper1083svrca4t350mphfv9x45wq9asrs60c6rv0j5 49 --from admin -y
+build/strided --home s tx stakeibc change-validator-weight evmos_9000-4 evmosvaloper1qvc6jej73armfs5fadn9lprx768f46d9wpd7d7 1 --from admin -y
+build/strided --home s tx stakeibc change-validator-weight evmos_9000-4 evmosvaloper158wwas4v6fgcu2x3plg70s6u0fm0lle237kltr 49 --from admin -y
 
 # LS and confirm delegation aligned with new weights
-build/strided --home s tx stakeibc liquid-stake 1000000 uosmo --keyring-backend test --from admin -y --chain-id local-test-1 -y
+build/strided --home s tx stakeibc liquid-stake 1000000 atevmos --keyring-backend test --from admin -y --chain-id local-test-2 -y
 
 # Call rebalance to and confirm new delegations
-build/strided --home s tx stakeibc rebalance-validators osmosis-1 5 --from admin
+build/strided --home s tx stakeibc rebalance-validators evmos_9000-4 5 --from admin
 
 # Clear balances
 fee_address=$(build/strided --home s q stakeibc show-host-zone osmosis-1 | grep feeAccount -A 1 | grep address | awk '{print $2}') && echo $fee_address
 balance=$(build/osmosisd --home s q bank balances $fee_address | grep amount | awk '{print $3}' | tr -d '"') && echo $balance
-build/strided --home s tx stakeibc clear-balance osmosis-1 $balance $transfer_channel --from admin
+build/strided --home s tx stakeibc clear-balance evmos_9000-4 $balance $transfer_channel --from admin
 
 # Update delegations (just submit this query and confirm the ICQ callback displays in the stride logs)
 # Must be submitted in ICQ window
-build/strided --home s tx stakeibc update-delegation osmosis-1 osmovaloper1t8qckan2yrygq7kl9apwhzfalwzgc2429p8f0s --from admin -y
+build/strided --home s tx stakeibc update-delegation evmos_9000-4 evmosvaloper1qvc6jej73armfs5fadn9lprx768f46d9wpd7d7 --from admin -y
 
 #### MISC 
 # If a channel closes, restore it with:
-build/strided --home s tx stakeibc restore-interchain-account osmosis-1 {DELEGATION | WITHDRAWAL | FEE | REDEMPTION} --from admin
+build/strided --home s tx stakeibc restore-interchain-account evmos_9000-4 {DELEGATION | WITHDRAWAL | FEE | REDEMPTION} --from admin

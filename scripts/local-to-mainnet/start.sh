@@ -3,17 +3,18 @@
 set -eu 
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
-STRIDE_CHAIN_ID=local-test-1
-HOST_CHAIN_ID=osmosis-1
-HOST_ENDPOINT=osmo-fleet-direct.main.stridenet.co
-HOST_ACCOUNT_PREFIX=osmo
-HOST_DENOM=uosmo
-HOST_BINARY=build/osmosisd
-HOST_VAL_NAME_1=imperator
-HOST_VAL_ADDRESS_1=osmovaloper1t8qckan2yrygq7kl9apwhzfalwzgc2429p8f0s
-HOST_VAL_NAME_2=notional
-HOST_VAL_ADDRESS_2=osmovaloper1083svrca4t350mphfv9x45wq9asrs60c6rv0j5
-HOT_WALLET_ADDRESS=osmo1c37n9aywapx2v0s6vk2yedydkkhq65zz38jfnc
+STRIDE_CHAIN_ID=local-test-2
+HOST_CHAIN_ID=evmos_9000-4
+HOST_ENDPOINT=tendermint.bd.evmos.dev
+HOST_ACCOUNT_PREFIX=evmos
+HOST_DENOM=atevmos
+HOST_BINARY=build/evmosd
+HOST_VAL_NAME_1=polkachu
+HOST_VAL_ADDRESS_1=evmosvaloper1qvc6jej73armfs5fadn9lprx768f46d9wpd7d7
+HOST_VAL_NAME_2=alphabet
+HOST_VAL_ADDRESS_2=evmosvaloper158wwas4v6fgcu2x3plg70s6u0fm0lle237kltr
+HOT_WALLET_ADDRESS=evmos1tvcz0p3fuywgjvsfah23232caaxdsf5vwaqehm
+# age wolf raw merge paddle topple inquiry chicken gym increase glory surge
 
 STATE=$SCRIPT_DIR/../state
 LOGS=$SCRIPT_DIR/../logs
@@ -66,15 +67,20 @@ HERMES_CMD="$SCRIPT_DIR/../../build/hermes/release/hermes --config $STATE/hermes
 TMP_MNEMONICS=$STATE/mnemonic.txt 
 echo "$HERMES_STRIDE_MNEMONIC" > $TMP_MNEMONICS
 $HERMES_CMD keys add --key-name hrly1 --chain $STRIDE_CHAIN_ID --mnemonic-file $TMP_MNEMONICS --overwrite
-echo "$HOT_WALLET_2_MNEMONIC" > $TMP_MNEMONICS
+echo "$HOT_WALLET_1_MNEMONIC" > $TMP_MNEMONICS
 $HERMES_CMD keys add --key-name hrly2 --chain $HOST_CHAIN_ID --mnemonic-file $TMP_MNEMONICS --overwrite
 rm -f $TMP_MNEMONICS
+# echo "$HOT_WALLET_1_MNEMONIC" > tmp
+# build/hermes/release/hermes --config scripts/state/hermes/config.toml keys add --key-name hrly2 --chain evmos_9000-4 --mnemonic-file tmp --overwrite --hd-path "m/44'/118'/0'/0/0"
 
 echo "Adding Relayer keys"
 RELAYER_CMD="$SCRIPT_DIR/../../build/relayer --home $STATE/relayer"
-$RELAYER_CMD keys restore stride rly1 "$RELAYER_STRIDE_MNEMONIC" 
-$RELAYER_CMD keys restore host rly2 "$HOT_WALLET_3_MNEMONIC" 
-
+$RELAYER_CMD keys restore stride rly1 "$RELAYER_STRIDE_MNEMONIC"
+$RELAYER_CMD keys restore host rly2 "$HOT_WALLET_1_MNEMONIC" --coin-type 60
+# build/relayer --home scripts/state/relayer keys restore host rly2 "$HOT_WALLET_1_MNEMONIC" --coin-type 60
+# build/relayer --home relayertest keys restore stride rly1 "$RELAYER_STRIDE_MNEMONIC"
+# build/relayer --home scripts/state/relayer keys restore host rly2 "$HOT_WALLET_1_MNEMONIC" --coin-type 60
+# build/relayer --home scripts/state/relayer keys restore host rly2 "$HOT_WALLET_1_MNEMONIC"
 # Update commands template
 COMMANDS_FILE=${SCRIPT_DIR}/commands.sh
 cp ${SCRIPT_DIR}/templates/commands.sh $COMMANDS_FILE
