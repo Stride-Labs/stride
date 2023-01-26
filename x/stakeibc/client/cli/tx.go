@@ -35,7 +35,7 @@ func GetTxCmd() *cobra.Command {
 	cmd.AddCommand(CmdRestoreInterchainAccount())
 	cmd.AddCommand(CmdUpdateValidatorSharesExchRate())
 	cmd.AddCommand(CmdClearBalance())
-	// this line is used by starport scaffolding # 1
+	cmd.AddCommand(CmdResetEpochUnbondingRecordKeys())
 
 	return cmd
 }
