@@ -7,7 +7,7 @@ import (
 	"github.com/Stride-Labs/stride/v5/utils"
 )
 
-const TypeMsgResetUnbondingRecordEpochNumbers = "update_validator_shares_exch_rate"
+const TypeMsgResetUnbondingRecordEpochNumbers = "reset_unbonding_record_epoch_numbers"
 
 var _ sdk.Msg = &MsgResetUnbondingRecordEpochNumbers{}
 
