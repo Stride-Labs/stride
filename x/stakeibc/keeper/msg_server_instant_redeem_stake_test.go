@@ -10,20 +10,20 @@ import (
 	_ "github.com/stretchr/testify/suite"
 )
 
-type FastUnbondState struct {
+type InstantRedeemStakeState struct {
 	epochNumber         uint64
 	depositRecordAmount sdkmath.Int
 	hostZone            stakeibctypes.HostZone
 }
 
-type FastUnbondTestCase struct {
+type InstantRedeemStakeTestCase struct {
 	user         Account
 	zoneAccount  Account
-	initialState FastUnbondState
-	validMsg     stakeibctypes.MsgFastUnbond
+	initialState InstantRedeemStakeState
+	validMsg     stakeibctypes.MsgInstantRedeemStake
 }
 
-func (s *KeeperTestSuite) SetupFastUnbond() FastUnbondTestCase {
+func (s *KeeperTestSuite) SetupInstantRedeemStake() InstantRedeemStakeTestCase {
 	unbondAmount := sdkmath.NewInt(1_000_000)
 	initialDepositAmount := sdkmath.NewInt(1_000_000)
 	user := Account{
@@ -69,15 +69,15 @@ func (s *KeeperTestSuite) SetupFastUnbond() FastUnbondTestCase {
 	s.App.StakeibcKeeper.SetEpochTracker(s.Ctx, epochTracker)
 	s.App.RecordsKeeper.SetDepositRecord(s.Ctx, initialDepositRecord)
 
-	return FastUnbondTestCase{
+	return InstantRedeemStakeTestCase{
 		user:        user,
 		zoneAccount: zoneAccount,
-		initialState: FastUnbondState{
+		initialState: InstantRedeemStakeState{
 			epochNumber:         epochTracker.EpochNumber,
 			depositRecordAmount: initialDepositAmount,
 			hostZone:            hostZone,
 		},
-		validMsg: stakeibctypes.MsgFastUnbond{
+		validMsg: stakeibctypes.MsgInstantRedeemStake{
 			Creator:  user.acc.String(),
 			HostZone: HostChainId,
 			Amount:   unbondAmount,
@@ -85,15 +85,15 @@ func (s *KeeperTestSuite) SetupFastUnbond() FastUnbondTestCase {
 	}
 }
 
-func (s *KeeperTestSuite) TestFastUnbond_Successful() {
-	tc := s.SetupFastUnbond()
+func (s *KeeperTestSuite) TestInstantRedeemStake_Successful() {
+	tc := s.SetupInstantRedeemStake()
 	user := tc.user
 	zoneAccount := tc.zoneAccount
 	initialStAtomSupply := s.App.BankKeeper.GetSupply(s.Ctx, StAtom)
 	msg := tc.validMsg
 
 	// Validate Fast Unbonding
-	_, err := s.GetMsgServer().FastUnbond(sdk.WrapSDKContext(s.Ctx), &msg)
+	_, err := s.GetMsgServer().InstantRedeemStake(sdk.WrapSDKContext(s.Ctx), &msg)
 	s.Require().NoError(err)
 
 	// User STUATOM balance should have DECREASED by the amount unbonded
@@ -114,80 +114,80 @@ func (s *KeeperTestSuite) TestFastUnbond_Successful() {
 	s.CompareCoins(expectedBankSupply, actualBankSupply, "bank stuatom supply")
 }
 
-func (s *KeeperTestSuite) TestFastUnbond_InvalidCreatorAddress() {
-	tc := s.SetupFastUnbond()
+func (s *KeeperTestSuite) TestInstantRedeemStake_InvalidCreatorAddress() {
+	tc := s.SetupInstantRedeemStake()
 	invalidMsg := tc.validMsg
 
 	// cosmos instead of stride address
 	invalidMsg.Creator = "cosmos1g6qdx6kdhpf000afvvpte7hp0vnpzapuyxp8uf"
-	_, err := s.GetMsgServer().FastUnbond(sdk.WrapSDKContext(s.Ctx), &invalidMsg)
+	_, err := s.GetMsgServer().InstantRedeemStake(sdk.WrapSDKContext(s.Ctx), &invalidMsg)
 	s.Require().EqualError(err, fmt.Sprintf("creator address is invalid: %s. err: invalid Bech32 prefix; expected stride, got cosmos: invalid address", invalidMsg.Creator))
 
 	// invalid stride address
 	invalidMsg.Creator = "stride1g6qdx6kdhpf000afvvpte7hp0vnpzapuyxp8uf"
-	_, err = s.GetMsgServer().FastUnbond(sdk.WrapSDKContext(s.Ctx), &invalidMsg)
+	_, err = s.GetMsgServer().InstantRedeemStake(sdk.WrapSDKContext(s.Ctx), &invalidMsg)
 	s.Require().EqualError(err, fmt.Sprintf("creator address is invalid: %s. err: decoding bech32 failed: invalid checksum (expected 8dpmg9 got yxp8uf): invalid address", invalidMsg.Creator))
 
 	// empty address
 	invalidMsg.Creator = ""
-	_, err = s.GetMsgServer().FastUnbond(sdk.WrapSDKContext(s.Ctx), &invalidMsg)
+	_, err = s.GetMsgServer().InstantRedeemStake(sdk.WrapSDKContext(s.Ctx), &invalidMsg)
 	s.Require().EqualError(err, fmt.Sprintf("creator address is invalid: %s. err: empty address string is not allowed: invalid address", invalidMsg.Creator))
 
 	// wrong len address
 	invalidMsg.Creator = "stride1g6qdx6kdhpf000afvvpte7hp0vnpzapuyxp8ufabc"
-	_, err = s.GetMsgServer().FastUnbond(sdk.WrapSDKContext(s.Ctx), &invalidMsg)
+	_, err = s.GetMsgServer().InstantRedeemStake(sdk.WrapSDKContext(s.Ctx), &invalidMsg)
 	s.Require().EqualError(err, fmt.Sprintf("creator address is invalid: %s. err: decoding bech32 failed: invalid character not part of charset: 98: invalid address", invalidMsg.Creator))
 }
 
-func (s *KeeperTestSuite) TestFastUnbond_HostZoneNotFound() {
-	tc := s.SetupFastUnbond()
+func (s *KeeperTestSuite) TestInstantRedeemStake_HostZoneNotFound() {
+	tc := s.SetupInstantRedeemStake()
 
 	invalidMsg := tc.validMsg
 	invalidMsg.HostZone = "fake_host_zone"
-	_, err := s.GetMsgServer().FastUnbond(sdk.WrapSDKContext(s.Ctx), &invalidMsg)
+	_, err := s.GetMsgServer().InstantRedeemStake(sdk.WrapSDKContext(s.Ctx), &invalidMsg)
 
 	s.Require().EqualError(err, "host zone is invalid: fake_host_zone: host zone not registered")
 }
 
-func (s *KeeperTestSuite) TestFastUnbond_RateAboveMaxThreshold() {
-	tc := s.SetupFastUnbond()
+func (s *KeeperTestSuite) TestInstantRedeemStake_RateAboveMaxThreshold() {
+	tc := s.SetupInstantRedeemStake()
 
 	hz := tc.initialState.hostZone
 	hz.RedemptionRate = sdk.NewDec(100)
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hz)
 
-	_, err := s.GetMsgServer().FastUnbond(sdk.WrapSDKContext(s.Ctx), &tc.validMsg)
+	_, err := s.GetMsgServer().InstantRedeemStake(sdk.WrapSDKContext(s.Ctx), &tc.validMsg)
 	s.Require().Error(err)
 }
 
-func (s *KeeperTestSuite) TestFastUnbond_RedeemMoreThanStaked() {
-	tc := s.SetupFastUnbond()
+func (s *KeeperTestSuite) TestInstantRedeemStake_RedeemMoreThanStaked() {
+	tc := s.SetupInstantRedeemStake()
 
 	invalidMsg := tc.validMsg
 	invalidMsg.Amount = sdkmath.NewInt(1_000_000_000_000_000)
-	_, err := s.GetMsgServer().FastUnbond(sdk.WrapSDKContext(s.Ctx), &invalidMsg)
+	_, err := s.GetMsgServer().InstantRedeemStake(sdk.WrapSDKContext(s.Ctx), &invalidMsg)
 
 	s.Require().EqualError(err, fmt.Sprintf("cannot unstake an amount g.t. staked balance on host zone: %v: invalid amount", invalidMsg.Amount))
 }
 
-func (s *KeeperTestSuite) TestFastUnbond_NoEpochTrackerDay() {
-	tc := s.SetupFastUnbond()
+func (s *KeeperTestSuite) TestInstantRedeemStake_NoEpochTrackerDay() {
+	tc := s.SetupInstantRedeemStake()
 
 	invalidMsg := tc.validMsg
 	s.App.StakeibcKeeper.RemoveEpochTracker(s.Ctx, epochtypes.STRIDE_EPOCH)
-	_, err := s.GetMsgServer().FastUnbond(sdk.WrapSDKContext(s.Ctx), &invalidMsg)
+	_, err := s.GetMsgServer().InstantRedeemStake(sdk.WrapSDKContext(s.Ctx), &invalidMsg)
 
 	s.Require().EqualError(err, fmt.Sprintf("no epoch number for epoch (%s): not found", epochtypes.STRIDE_EPOCH))
 }
 
-func (s *KeeperTestSuite) TestFastUnbond_InvalidHostAddress() {
-	tc := s.SetupFastUnbond()
+func (s *KeeperTestSuite) TestInstantRedeemStake_InvalidHostAddress() {
+	tc := s.SetupInstantRedeemStake()
 
 	// Update hostzone with invalid address
 	badHostZone, _ := s.App.StakeibcKeeper.GetHostZone(s.Ctx, tc.validMsg.HostZone)
 	badHostZone.Address = "cosmosXXX"
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, badHostZone)
 
-	_, err := s.GetMsgServer().FastUnbond(sdk.WrapSDKContext(s.Ctx), &tc.validMsg)
+	_, err := s.GetMsgServer().InstantRedeemStake(sdk.WrapSDKContext(s.Ctx), &tc.validMsg)
 	s.Require().EqualError(err, "could not bech32 decode address cosmosXXX of zone with id: GAIA")
 }

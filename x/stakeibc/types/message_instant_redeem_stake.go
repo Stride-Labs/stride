@@ -6,27 +6,27 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
-const TypeMsgFastUnbond = "fast_unbond"
+const TypeMsgInstantRedeemStake = "fast_unbond"
 
-var _ sdk.Msg = &MsgFastUnbond{}
+var _ sdk.Msg = &MsgInstantRedeemStake{}
 
-func NewMsgFastUnbond(creator string, amount sdkmath.Int, hostZone string) *MsgFastUnbond {
-	return &MsgFastUnbond{
+func NewMsgInstantRedeemStake(creator string, amount sdkmath.Int, hostZone string) *MsgInstantRedeemStake {
+	return &MsgInstantRedeemStake{
 		Creator:  creator,
 		Amount:   amount,
 		HostZone: hostZone,
 	}
 }
 
-func (msg *MsgFastUnbond) Route() string {
+func (msg *MsgInstantRedeemStake) Route() string {
 	return RouterKey
 }
 
-func (msg *MsgFastUnbond) Type() string {
-	return TypeMsgFastUnbond
+func (msg *MsgInstantRedeemStake) Type() string {
+	return TypeMsgInstantRedeemStake
 }
 
-func (msg *MsgFastUnbond) GetSigners() []sdk.AccAddress {
+func (msg *MsgInstantRedeemStake) GetSigners() []sdk.AccAddress {
 	creator, err := sdk.AccAddressFromBech32(msg.Creator)
 	if err != nil {
 		panic(err)
@@ -34,12 +34,12 @@ func (msg *MsgFastUnbond) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{creator}
 }
 
-func (msg *MsgFastUnbond) GetSignBytes() []byte {
+func (msg *MsgInstantRedeemStake) GetSignBytes() []byte {
 	bz := ModuleCdc.MustMarshalJSON(msg)
 	return sdk.MustSortJSON(bz)
 }
 
-func (msg *MsgFastUnbond) ValidateBasic() error {
+func (msg *MsgInstantRedeemStake) ValidateBasic() error {
 	// check valid creator address
 	_, err := sdk.AccAddressFromBech32(msg.Creator)
 	if err != nil {

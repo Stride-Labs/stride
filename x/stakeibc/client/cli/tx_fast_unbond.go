@@ -15,10 +15,10 @@ import (
 
 var _ = strconv.Itoa(0)
 
-func CmdFastUnbond() *cobra.Command {
+func CmdInstantRedeemStake() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "fast-unbond [amount] [hostZoneID]",
-		Short: "Broadcast message fast-unbond",
+		Use:   "instant-redeem-stake [amount] [hostZoneID]",
+		Short: "Broadcast message instant-redeem-stake",
 		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			argAmount, found := sdk.NewIntFromString(args[0])
@@ -32,7 +32,7 @@ func CmdFastUnbond() *cobra.Command {
 				return err
 			}
 
-			msg := types.NewMsgFastUnbond(
+			msg := types.NewMsgInstantRedeemStake(
 				clientCtx.GetFromAddress().String(),
 				argAmount,
 				hostZoneID,

@@ -45,7 +45,7 @@ SafetyNumValidators (default uint64 = 35)
 
 - `LiquidStake()`
 - `RedeemStake()`
-- `FastUnbond()`
+- `InstantRedeemStake()`
 - `ClaimUndelegatedTokens()`
 - `RebalanceValidators()`
 - `AddValidator()`

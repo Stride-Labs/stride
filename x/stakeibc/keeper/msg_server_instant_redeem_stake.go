@@ -11,7 +11,7 @@ import (
 	"github.com/Stride-Labs/stride/v5/x/stakeibc/types"
 )
 
-func (k msgServer) FastUnbond(goCtx context.Context, msg *types.MsgFastUnbond) (*types.MsgFastUnbondResponse, error) {
+func (k msgServer) InstantRedeemStake(goCtx context.Context, msg *types.MsgInstantRedeemStake) (*types.MsgInstantRedeemStakeResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	k.Logger(ctx).Info(fmt.Sprintf("fast unbond: %s", msg.String()))
 
@@ -34,15 +34,6 @@ func (k msgServer) FastUnbond(goCtx context.Context, msg *types.MsgFastUnbond) (
 		return nil, sdkerrors.Wrapf(types.ErrRedemptionRateOutsideSafetyBounds, errMsg)
 	}
 
-	// get the coins to send, they need to be in the format {amount}{denom}
-	ibcDenom := hostZone.GetIbcDenom()
-	coinString := msg.Amount.String() + ibcDenom
-	nativeCoin, err := sdk.ParseCoinNormalized(coinString)
-	if err != nil {
-		k.Logger(ctx).Error(fmt.Sprintf("failed to parse coin (%s)", coinString))
-		return nil, sdkerrors.Wrapf(err, "failed to parse coin (%s)", coinString)
-	}
-
 	// construct desired unstaking amount from host zone
 	nativeAmount := sdk.NewDecFromInt(msg.Amount).Mul(hostZone.RedemptionRate).RoundInt()
 	// Redemption amount must not be greater than staked balance in that zone.
@@ -54,6 +45,10 @@ func (k msgServer) FastUnbond(goCtx context.Context, msg *types.MsgFastUnbond) (
 	if !nativeAmount.IsPositive() {
 		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidCoins, "amount must be greater than 0. found: %v", msg.Amount)
 	}
+
+	// get the native Ibc coin to return to user
+	ibcDenom := hostZone.GetIbcDenom()
+	nativeCoin := sdk.NewCoin(ibcDenom, nativeAmount)
 
 	stDenom := types.StAssetDenomFromHostZoneDenom(hostZone.HostDenom)
 	// 	- Creator owns at least "amount" stAssets
@@ -105,5 +100,5 @@ func (k msgServer) FastUnbond(goCtx context.Context, msg *types.MsgFastUnbond) (
 	k.Logger(ctx).Info(fmt.Sprintf("Total supply %s", k.bankKeeper.GetSupply(ctx, stDenom)))
 
 	k.Logger(ctx).Info(fmt.Sprintf("executed fast unbond: %s", msg.String()))
-	return &types.MsgFastUnbondResponse{}, nil
+	return &types.MsgInstantRedeemStakeResponse{}, nil
 }

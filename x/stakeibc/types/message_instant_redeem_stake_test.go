@@ -11,15 +11,15 @@ import (
 	"github.com/Stride-Labs/stride/v5/testutil/sample"
 )
 
-func TestMsgFastUnbond_ValidateBasic(t *testing.T) {
+func TestMsgInstantRedeemStake_ValidateBasic(t *testing.T) {
 	tests := []struct {
 		name string
-		msg  MsgFastUnbond
+		msg  MsgInstantRedeemStake
 		err  error
 	}{
 		{
 			name: "success",
-			msg: MsgFastUnbond{
+			msg: MsgInstantRedeemStake{
 				Creator:  sample.AccAddress(),
 				HostZone: "GAIA",
 				Amount:   sdkmath.NewInt(1),
@@ -27,7 +27,7 @@ func TestMsgFastUnbond_ValidateBasic(t *testing.T) {
 		},
 		{
 			name: "invalid creator",
-			msg: MsgFastUnbond{
+			msg: MsgInstantRedeemStake{
 				Creator:  "invalid_address",
 				HostZone: "GAIA",
 				Amount:   sdkmath.NewInt(1),
@@ -36,7 +36,7 @@ func TestMsgFastUnbond_ValidateBasic(t *testing.T) {
 		},
 		{
 			name: "no host zone",
-			msg: MsgFastUnbond{
+			msg: MsgInstantRedeemStake{
 				Creator: sample.AccAddress(),
 				Amount:  sdkmath.NewInt(1),
 			},
@@ -44,7 +44,7 @@ func TestMsgFastUnbond_ValidateBasic(t *testing.T) {
 		},
 		{
 			name: "zero amount",
-			msg: MsgFastUnbond{
+			msg: MsgInstantRedeemStake{
 				Creator:  sample.AccAddress(),
 				Amount:   sdkmath.ZeroInt(),
 				HostZone: "GAIA",
