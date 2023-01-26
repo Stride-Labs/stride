@@ -263,6 +263,7 @@ setup_file() {
         else
           ## Timeout, kill all other processes
           kill $(jobs -p)
+          break
       fi
   done
 

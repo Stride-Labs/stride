@@ -98,14 +98,14 @@ for (( i=1; i <= $NUM_NODES; i++ )); do
     sed -i -E "s|flush_throttle_timeout = .*|flush_throttle_timeout = \"10ms\"|g" $config_toml
     sed -i -E "s|max_packet_msg_payload_size = .*|max_packet_msg_payload_size = 10240|g" $config_toml
 
-    sed -i -E "s|^skip_timeout_commit = .*|skip_timeout_commit = \"true\"|g" $config_toml
+    ##sed -i -E "s|^skip_timeout_commit = .*|skip_timeout_commit = \"true\"|g" $config_toml
     sed -i -E "s|^timeout_commit = .*|timeout_commit = \"${COMMIT_TIMEOUT}\"|g" $config_toml
-    sed -i -E "s|^timeout_propose = .*|timeout_propose = \"${COMMIT_TIMEOUT}\"|g" $config_toml
-    sed -i -E "s|^timeout_prevote = .*|timeout_prevote = \"${COMMIT_TIMEOUT}\"|g" $config_toml
-    sed -i -E "s|^timeout_precommit = .*|timeout_precommit = \"${COMMIT_TIMEOUT}\"|g" $config_toml
-    sed -i -E "s|^timeout_propose_delta = .*|timeout_propose_delta = \"${DELTA_TIMEOUT}\"|g" $config_toml
-    sed -i -E "s|^timeout_prevote_delta = .*|timeout_prevote_delta = \"${DELTA_TIMEOUT}\"|g" $config_toml
-    sed -i -E "s|^timeout_precommit_delta = .*|timeout_precommit_delta = \"${DELTA_TIMEOUT}\"|g" $config_toml
+    #sed -i -E "s|^timeout_propose = .*|timeout_propose = \"${COMMIT_TIMEOUT}\"|g" $config_toml
+    #sed -i -E "s|^timeout_prevote = .*|timeout_prevote = \"${COMMIT_TIMEOUT}\"|g" $config_toml
+    #sed -i -E "s|^timeout_precommit = .*|timeout_precommit = \"${COMMIT_TIMEOUT}\"|g" $config_toml
+    #sed -i -E "s|^timeout_propose_delta = .*|timeout_propose_delta = \"${DELTA_TIMEOUT}\"|g" $config_toml
+    #sed -i -E "s|^timeout_prevote_delta = .*|timeout_prevote_delta = \"${DELTA_TIMEOUT}\"|g" $config_toml
+    #sed -i -E "s|^timeout_precommit_delta = .*|timeout_precommit_delta = \"${DELTA_TIMEOUT}\"|g" $config_toml
 
     sed -i -E "s|minimum-gas-prices = \".*\"|minimum-gas-prices = \"0${DENOM}\"|g" $app_toml
     sed -i -E '/\[api\]/,/^enable = .*$/ s/^enable = .*$/enable = true/' $app_toml
