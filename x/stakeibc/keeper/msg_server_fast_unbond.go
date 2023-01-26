@@ -28,7 +28,6 @@ func (k msgServer) FastUnbond(goCtx context.Context, msg *types.MsgFastUnbond) (
 	}
 
 	// get the coins to return, they need to be in the format {amount}{denom}
-	// is safe. The converse is not true.
 	ibcDenom := hostZone.GetIbcDenom()
 	coinString := msg.Amount.String() + ibcDenom
 	outCoin, err := sdk.ParseCoinNormalized(coinString)
@@ -51,7 +50,6 @@ func (k msgServer) FastUnbond(goCtx context.Context, msg *types.MsgFastUnbond) (
 		return nil, sdkerrors.Wrapf(types.ErrRedemptionRateOutsideSafetyBounds, errMsg)
 	}
 
-	// TODO(TEST-112) bigint safety
 	coinString = nativeAmount.String() + stDenom
 	inCoin, err := sdk.ParseCoinNormalized(coinString)
 	if err != nil {
@@ -76,7 +74,6 @@ func (k msgServer) FastUnbond(goCtx context.Context, msg *types.MsgFastUnbond) (
 		k.Logger(ctx).Error("failed to find stride epoch")
 		return nil, sdkerrors.Wrapf(sdkerrors.ErrNotFound, "no epoch number for epoch (%s)", epochtypes.STRIDE_EPOCH)
 	}
-	// Does this use too much gas?
 	depositRecord, found := k.RecordsKeeper.GetDepositRecordByEpochAndChain(ctx, epochTracker.EpochNumber, hostZone.ChainId)
 	if !found {
 		k.Logger(ctx).Error("failed to find deposit record")

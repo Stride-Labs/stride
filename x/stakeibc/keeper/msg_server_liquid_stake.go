@@ -29,7 +29,6 @@ func (k msgServer) LiquidStake(goCtx context.Context, msg *types.MsgLiquidStake)
 	// get the sender address
 	sender, _ := sdk.AccAddressFromBech32(msg.Creator)
 	// get the coins to send, they need to be in the format {amount}{denom}
-	// is safe. The converse is not true.
 	ibcDenom := hostZone.GetIbcDenom()
 	coinString := msg.Amount.String() + ibcDenom
 	inCoin, err := sdk.ParseCoinNormalized(coinString)
@@ -81,7 +80,6 @@ func (k msgServer) LiquidStake(goCtx context.Context, msg *types.MsgLiquidStake)
 		k.Logger(ctx).Error("failed to find stride epoch")
 		return nil, sdkerrors.Wrapf(sdkerrors.ErrNotFound, "no epoch number for epoch (%s)", epochtypes.STRIDE_EPOCH)
 	}
-	// Does this use too much gas?
 	depositRecord, found := k.RecordsKeeper.GetDepositRecordByEpochAndChain(ctx, strideEpochTracker.EpochNumber, hostZone.ChainId)
 	if !found {
 		k.Logger(ctx).Error("failed to find deposit record")
