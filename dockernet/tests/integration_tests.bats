@@ -29,6 +29,8 @@ setup_file() {
 
   HOST_VAL="$(GET_VAR_VALUE ${CHAIN_NAME}_VAL_PREFIX)1"
   STRIDE_VAL=${STRIDE_VAL_PREFIX}1
+  STRIDE_VAL2=${STRIDE_VAL_PREFIX}2
+  STRIDE_VAL3=${STRIDE_VAL_PREFIX}3
 
   STRIDE_TRANFER_CHANNEL="channel-${TRANSFER_CHANNEL_NUMBER}"
   HOST_TRANSFER_CHANNEL="channel-0"
@@ -36,6 +38,13 @@ setup_file() {
   TRANSFER_AMOUNT=500000
   STAKE_AMOUNT=100000
   REDEEM_AMOUNT=1000
+
+  ALLIANCE_STAKE_AMOUNT=10000
+  REWARD_WEIGHT=1
+  TAKE_RATE=0
+  REWARD_CHANGE_RATE=1
+  REWARD_CHANGE_INTERVAL=3600s
+  PROPOSAL_ID=1
 
   GETBAL() {
     head -n 1 | grep -o -E '[0-9]+' || "0"
@@ -168,6 +177,109 @@ setup_file() {
   NEW_STAKE=$($HOST_MAIN_CMD q staking delegation $(GET_ICA_ADDR $HOST_CHAIN_ID delegation) $(GET_VAL_ADDR $CHAIN_NAME 1) | GETSTAKE)
   stake_diff=$(($NEW_STAKE > 0))
   assert_equal "$stake_diff" "1"
+}
+
+@test "[INTEGRATION-BASIC-$CHAIN_NAME] submit a proposal for alliance asset registration" {
+  # submit proposal for asset registration
+  $STRIDE_MAIN_CMD tx gov submit-legacy-proposal create-alliance st$HOST_DENOM $REWARD_WEIGHT $TAKE_RATE $REWARD_CHANGE_RATE $REWARD_CHANGE_INTERVAL --from $STRIDE_VAL --keyring-backend test --chain-id $STRIDE_CHAIN_ID -y
+  WAIT_FOR_BLOCK $STRIDE_LOGS 2
+
+  # query proposal confirmation
+  $STRIDE_MAIN_CMD query gov proposals
+  WAIT_FOR_BLOCK $STRIDE_LOGS 2
+
+  # deposit
+  $STRIDE_MAIN_CMD tx gov deposit $PROPOSAL_ID 10000001ustrd --from $STRIDE_VAL --keyring-backend test --chain-id $STRIDE_CHAIN_ID -y
+  WAIT_FOR_BLOCK $STRIDE_LOGS 2
+
+  # deposit confirmation
+  $STRIDE_MAIN_CMD query gov proposals $PROPOSAL_ID
+  WAIT_FOR_BLOCK $STRIDE_LOGS 2
+
+  # voting
+  $STRIDE_MAIN_CMD tx gov vote $PROPOSAL_ID yes --from $STRIDE_VAL --keyring-backend test --chain-id $STRIDE_CHAIN_ID -y
+  $STRIDE_MAIN_CMD tx gov vote $PROPOSAL_ID yes --from $STRIDE_VAL2 --keyring-backend test --chain-id $STRIDE_CHAIN_ID -y
+  $STRIDE_MAIN_CMD tx gov vote $PROPOSAL_ID yes --from $STRIDE_VAL3 --keyring-backend test --chain-id $STRIDE_CHAIN_ID -y
+  
+  sleep 60
+
+  # vote confirmation
+  vote_status=$($STRIDE_MAIN_CMD query gov proposal $PROPOSAL_ID | grep "status" | awk '{printf $2}')
+  assert_equal "$vote_status" "PROPOSAL_STATUS_PASSED"
+}
+
+@test "[INTEGRATION-BASIC-$CHAIN_NAME] delegate, redelegate alliance assets" {
+  # delegate stTokens to val1
+  $STRIDE_MAIN_CMD tx alliance delegate stridevaloper1nnurja9zt97huqvsfuartetyjx63tc5zrj5x9f "$ALLIANCE_STAKE_AMOUNT"st$HOST_DENOM --from $STRIDE_VAL --keyring-backend test --chain-id $STRIDE_CHAIN_ID -y
+  WAIT_FOR_BLOCK $STRIDE_LOGS 4
+
+  # check delegation amount
+  delegated_amount=$($STRIDE_MAIN_CMD query alliance delegations | grep -Fiw 'amount' | grep -Eo '[+-]?[0-9]+([.][0-9]+)?')
+  assert_equal "$delegated_amount" $ALLIANCE_STAKE_AMOUNT
+  sleep 60
+
+  # check reward amount
+  reward_amount=$($STRIDE_MAIN_CMD query alliance rewards $(STRIDE_ADDRESS) stridevaloper1nnurja9zt97huqvsfuartetyjx63tc5zrj5x9f st$HOST_DENOM | grep -Fiw 'amount' | grep -Eo '[+-]?[0-9]+([.][0-9]+)?')
+  diff_positive=$(($reward_amount > 0))
+  assert_equal "$diff_positive" "1"
+
+  # redelegate half staked stTokens from val1 to val2
+  redelegation_amount=$(($ALLIANCE_STAKE_AMOUNT / 2))
+  $STRIDE_MAIN_CMD tx alliance redelegate stridevaloper1nnurja9zt97huqvsfuartetyjx63tc5zrj5x9f stridevaloper1uk4ze0x4nvh4fk0xm4jdud58eqn4yxhrgpwsqm "$redelegation_amount"st$HOST_DENOM --from $STRIDE_VAL --keyring-backend test --chain-id $STRIDE_CHAIN_ID -y --gas auto
+  WAIT_FOR_BLOCK $STRIDE_LOGS 2
+
+  # check redelegated amount
+  redelegated_amount=$($STRIDE_MAIN_CMD query alliance delegations --output json | jq '.delegations[1].balance.amount' | grep -Eo '[+-]?[0-9]+([.][0-9]+)?')
+  assert_equal $redelegation_amount $redelegated_amount
+  sleep 60
+
+  # check reward amount
+  reward_amount=$($STRIDE_MAIN_CMD query alliance rewards $(STRIDE_ADDRESS) stridevaloper1uk4ze0x4nvh4fk0xm4jdud58eqn4yxhrgpwsqm st$HOST_DENOM | grep -Fiw 'amount' | grep -Eo '[+-]?[0-9]+([.][0-9]+)?')
+  diff_positive=$(($reward_amount > 0))
+  assert_equal "$diff_positive" "1"
+}
+
+
+@test "[INTEGRATION-BASIC-$CHAIN_NAME] claim rewards, undelegate alliance assets" {
+  # undelegate stTokens from val2 (undelegating also claims rewards)
+  st_token_start_balance=$($STRIDE_MAIN_CMD q bank balances $(STRIDE_ADDRESS) --denom st$HOST_DENOM | GETBAL)
+  native_token_start_balance=$($STRIDE_MAIN_CMD q bank balances $(STRIDE_ADDRESS) --denom $STRD_DENOM | GETBAL)
+  undelegation_amount=$($STRIDE_MAIN_CMD query alliance delegations --output json | jq '.delegations[1].balance.amount' | grep -Eo '[+-]?[0-9]+([.][0-9]+)?')
+
+  $STRIDE_MAIN_CMD tx alliance undelegate stridevaloper1uk4ze0x4nvh4fk0xm4jdud58eqn4yxhrgpwsqm "$undelegation_amount"st$HOST_DENOM --from $STRIDE_VAL --keyring-backend test --chain-id $STRIDE_CHAIN_ID -y
+  sleep 130
+
+  st_token_end_balance=$($STRIDE_MAIN_CMD q bank balances $(STRIDE_ADDRESS) --denom st$HOST_DENOM | GETBAL)
+  native_token_end_balance=$($STRIDE_MAIN_CMD q bank balances $(STRIDE_ADDRESS) --denom $STRD_DENOM | GETBAL)
+
+  # get stToken and native token balance diffs
+  st_token_balance_diff=$(($st_token_end_balance - $st_token_start_balance))
+  native_token_balance_diff=$(($native_token_end_balance - $native_token_start_balance))
+  diff_positive=$(($native_token_balance_diff > 0))
+  assert_equal "$st_token_balance_diff" "$undelegation_amount"
+  assert_equal "$diff_positive" "1"
+
+  # claim rewards from val1
+  st_token_start_balance=$($STRIDE_MAIN_CMD q bank balances $(STRIDE_ADDRESS) --denom st$HOST_DENOM | GETBAL)
+  native_token_start_balance=$($STRIDE_MAIN_CMD q bank balances $(STRIDE_ADDRESS) --denom $STRD_DENOM | GETBAL)
+
+  $STRIDE_MAIN_CMD tx alliance claim-rewards stridevaloper1nnurja9zt97huqvsfuartetyjx63tc5zrj5x9f st$HOST_DENOM --from $STRIDE_VAL --keyring-backend test --chain-id $STRIDE_CHAIN_ID -y --gas auto
+  WAIT_FOR_BLOCK $STRIDE_LOGS 2
+
+  # undelegate stTokens from val1
+  undelegation_amount=$($STRIDE_MAIN_CMD query alliance delegations --output json | jq '.delegations[0].balance.amount' | grep -Eo '[+-]?[0-9]+([.][0-9]+)?')
+  $STRIDE_MAIN_CMD tx alliance undelegate stridevaloper1nnurja9zt97huqvsfuartetyjx63tc5zrj5x9f "$undelegation_amount"st$HOST_DENOM --from $STRIDE_VAL --keyring-backend test --chain-id $STRIDE_CHAIN_ID -y
+  sleep 130
+
+  st_token_end_balance=$($STRIDE_MAIN_CMD q bank balances $(STRIDE_ADDRESS) --denom st$HOST_DENOM | GETBAL)
+  native_token_end_balance=$($STRIDE_MAIN_CMD q bank balances $(STRIDE_ADDRESS) --denom $STRD_DENOM | GETBAL)
+
+  # get stToken and native token balance diffs
+  st_token_balance_diff=$(($st_token_end_balance - $st_token_start_balance))
+  native_token_balance_diff=$(($native_token_end_balance - $native_token_start_balance))
+  diff_positive=$(($native_token_balance_diff > 0))
+  assert_equal "$st_token_balance_diff" "$undelegation_amount"
+  assert_equal "$diff_positive" "1"
 }
 
 # check that redemptions and claims work
