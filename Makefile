@@ -178,7 +178,7 @@ proto-lint:
 ###############################################################################
 
 localnet-keys:
-	. $(LOCALSTRIDE_HOME)/localnet/add_keys.sh
+	. $(LOCALSTRIDE_HOME)/localnet/scripts/add_keys.sh
 
 localnet-init: localnet-clean localnet-build
 
