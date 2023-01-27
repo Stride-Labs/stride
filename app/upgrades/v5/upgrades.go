@@ -1,6 +1,8 @@
 package v5
 
 import (
+	"fmt"
+
 	"github.com/cosmos/cosmos-sdk/codec"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -9,16 +11,16 @@ import (
 	authz "github.com/cosmos/cosmos-sdk/x/authz"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 
-	claimmigration "github.com/Stride-Labs/stride/v4/x/claim/migrations/v2"
-	claimtypes "github.com/Stride-Labs/stride/v4/x/claim/types"
-	icacallbacksmigration "github.com/Stride-Labs/stride/v4/x/icacallbacks/migrations/v2"
-	icacallbacktypes "github.com/Stride-Labs/stride/v4/x/icacallbacks/types"
-	interchainquerykeeper "github.com/Stride-Labs/stride/v4/x/interchainquery/keeper"
-	recordsmigration "github.com/Stride-Labs/stride/v4/x/records/migrations/v2"
-	recordtypes "github.com/Stride-Labs/stride/v4/x/records/types"
-	stakeibckeeper "github.com/Stride-Labs/stride/v4/x/stakeibc/keeper"
-	stakeibcmigration "github.com/Stride-Labs/stride/v4/x/stakeibc/migrations/v2"
-	stakeibctypes "github.com/Stride-Labs/stride/v4/x/stakeibc/types"
+	claimmigration "github.com/Stride-Labs/stride/v5/x/claim/migrations/v2"
+	claimtypes "github.com/Stride-Labs/stride/v5/x/claim/types"
+	icacallbacksmigration "github.com/Stride-Labs/stride/v5/x/icacallbacks/migrations/v2"
+	icacallbacktypes "github.com/Stride-Labs/stride/v5/x/icacallbacks/types"
+	interchainquerykeeper "github.com/Stride-Labs/stride/v5/x/interchainquery/keeper"
+	recordsmigration "github.com/Stride-Labs/stride/v5/x/records/migrations/v2"
+	recordtypes "github.com/Stride-Labs/stride/v5/x/records/types"
+	stakeibckeeper "github.com/Stride-Labs/stride/v5/x/stakeibc/keeper"
+	stakeibcmigration "github.com/Stride-Labs/stride/v5/x/stakeibc/migrations/v2"
+	stakeibctypes "github.com/Stride-Labs/stride/v5/x/stakeibc/types"
 )
 
 // Note: ensure these values are properly set before running upgrade
@@ -28,6 +30,12 @@ var (
 	// This query used an old query ID format and got stuck after the format was updated
 	StaleQueryId = "60b8e09dc7a65938cd6e6e5728b8aa0ca3726ffbe5511946a4f08ced316174ab"
 )
+
+// Helper function to log the migrated modules consensus versions
+func logModuleMigration(ctx sdk.Context, versionMap module.VersionMap, moduleName string) {
+	currentVersion := versionMap[moduleName]
+	ctx.Logger().Info(fmt.Sprintf("migrating module %s from version %d to version %d", moduleName, currentVersion-1, currentVersion))
+}
 
 // CreateUpgradeHandler creates an SDK upgrade handler for v5
 func CreateUpgradeHandler(
@@ -42,6 +50,8 @@ func CreateUpgradeHandler(
 	stakeibcStoreKey storetypes.StoreKey,
 ) upgradetypes.UpgradeHandler {
 	return func(ctx sdk.Context, _ upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
+		currentVersions := mm.GetVersionMap()
+
 		// Remove authz from store as it causes an issue with state sync
 		delete(vm, authz.ModuleName)
 
@@ -59,15 +69,22 @@ func CreateUpgradeHandler(
 		//    - icacallbacks
 		//    - records
 		//    - stakeibc
+		logModuleMigration(ctx, currentVersions, claimtypes.ModuleName)
 		if err := claimmigration.MigrateStore(ctx, claimStoreKey, cdc); err != nil {
 			return vm, sdkerrors.Wrapf(err, "unable to migrate claim store")
 		}
+
+		logModuleMigration(ctx, currentVersions, icacallbacktypes.ModuleName)
 		if err := icacallbacksmigration.MigrateStore(ctx, icacallbackStorekey, cdc); err != nil {
 			return vm, sdkerrors.Wrapf(err, "unable to migrate icacallbacks store")
 		}
+
+		logModuleMigration(ctx, currentVersions, recordtypes.ModuleName)
 		if err := recordsmigration.MigrateStore(ctx, recordStoreKey, cdc); err != nil {
 			return vm, sdkerrors.Wrapf(err, "unable to migrate records store")
 		}
+
+		logModuleMigration(ctx, currentVersions, stakeibctypes.ModuleName)
 		if err := stakeibcmigration.MigrateStore(ctx, stakeibcStoreKey, cdc); err != nil {
 			return vm, sdkerrors.Wrapf(err, "unable to migrate stakeibc store")
 		}
@@ -80,7 +97,6 @@ func CreateUpgradeHandler(
 		// Since the migrations above were executed directly (instead of being registered
 		// and invoked through a Migrator), we need to set the module versions in the versionMap
 		// to the new version, to prevent RunMigrations from attempting to re-run each migrations
-		currentVersions := mm.GetVersionMap()
 		vm[claimtypes.ModuleName] = currentVersions[claimtypes.ModuleName]
 		vm[icacallbacktypes.ModuleName] = currentVersions[icacallbacktypes.ModuleName]
 		vm[recordtypes.ModuleName] = currentVersions[recordtypes.ModuleName]

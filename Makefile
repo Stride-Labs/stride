@@ -141,7 +141,7 @@ upgrade-init:
 	PART=1 bash $(DOCKERNET_HOME)/tests/run_tests_upgrade.sh
 
 upgrade-submit: 
-	UPGRADE_HEIGHT=750 bash $(DOCKERNET_HOME)/upgrades/submit_upgrade.sh
+	UPGRADE_HEIGHT=400 bash $(DOCKERNET_HOME)/upgrades/submit_upgrade.sh
 
 upgrade-validate:
 	PART=2 bash $(DOCKERNET_HOME)/tests/run_tests_upgrade.sh
@@ -207,6 +207,9 @@ localnet-state-export-start:
 
 localnet-state-export-startd:
 	@docker-compose -f $(STATE_EXPORT_COMPOSE_FILE) up -d
+
+localnet-state-export-upgrade:
+	bash $(LOCALSTRIDE_HOME)/state-export/scripts/submit_upgrade.sh 
 
 localnet-state-export-stop:
 	@docker-compose -f $(STATE_EXPORT_COMPOSE_FILE) down

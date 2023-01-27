@@ -40,6 +40,29 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v5.0.0](https://github.com/Stride-Labs/stride/releases/tag/v5.0.0) - 2023-01-19
+### On-Chain changes
+1. Added query for next send packet sequence number ([fec8b45](https://github.com/Stride-Labs/stride/commit/fec8b4570d9a4a85efd944a1b859cec72d1bf9ea))
+2. Added additional fields to InitGenesis and ExportGenesis in stakeibc ([ea5a9a4](https://github.com/Stride-Labs/stride/commit/ea5a9a4babbe958c6309fefedc30df4c21a03028))
+3. Incremented module version to v5 ([50eb2b4](https://github.com/Stride-Labs/stride/commit/50eb2b4ec541e94ccd46c02ea543ac9293094cef))
+4. Upgrade store migration ([f635c1a](https://github.com/Stride-Labs/stride/commit/f635c1a872c9947df52e6f3f8e3ad4741d5d91e2))
+5. Upgrade handler, remove Authz from store ([cd96f99](https://github.com/Stride-Labs/stride/commit/cd96f99c84ad2870528d55febad26dc05f82fa96))
+6. Upgraded to cosmos-sdk v0.46.7 and ibc-go v5.1.0 ([e55f6f2](https://github.com/Stride-Labs/stride/commit/e55f6f2f8644ebd754ce32d3ced85b1e6db984c3))
+7. Informal Systems audit fixes IF-STRIDE-STAKEIBC-ARITHMETIC ([1c0a4b8](https://github.com/Stride-Labs/stride/commit/1c0a4b8eb795c19b58ce06bbf194a52ec1df649b))
+8. Cleaned up epoch and callback logs ([d1938b9](https://github.com/Stride-Labs/stride/commit/d1938b9d381cdad627093b6b4adbf1e90ff5b9d0)), ([c5d137a](https://github.com/Stride-Labs/stride/commit/c5d137a32bc23a403f94ad37989c940da0715138)), ([ac45bc4](https://github.com/Stride-Labs/stride/commit/ac45bc4971aa3fbfaebc1be3e07aa71029616c98)), ([9a8b757](https://github.com/Stride-Labs/stride/commit/9a8b757eb3386997e8d589044b8acabde034410e))
+9. Misc minor refactoring / cleanup ([af53f06](https://github.com/Stride-Labs/stride/commit/af53f06e923f6b2a546f003d345476496e44ff6f)), ([edb90e9](https://github.com/Stride-Labs/stride/commit/edb90e98875564fc21f94f9216f6bdc75e599176)), ([78790b0](https://github.com/Stride-Labs/stride/commit/78790b06a37bd50ba2ae993c4cb0bacfcc7c9ebf)), ([29dc4f2](https://github.com/Stride-Labs/stride/commit/29dc4f2e5f61db38714f0464b4ee17221fba88e3)), ([f3f607a](https://github.com/Stride-Labs/stride/commit/f3f607af8861f29ff2580c4c7f8814aa61828573)), ([3c3c54b](https://github.com/Stride-Labs/stride/commit/3c3c54b9539b9055f848f98e036221173ff8f58e))
+10. Dependency bumps ([c1ff649](https://github.com/Stride-Labs/stride/commit/c1ff6495d01dcac519ee9643038c739b4265a4a1)), ([b06abe3](https://github.com/Stride-Labs/stride/commit/b06abe3ef6211bce1bbc1ee179866c24bad3dab5))
+
+### Off-Chain changes
+These changes do not affect any on-chain functionality, but have been implemented since `v4.0.3`.
+
+1. Localstride upgrade support ([50eb2b4](https://github.com/Stride-Labs/stride/commit/50eb2b4ec541e94ccd46c02ea543ac9293094cef))
+2. SetupConfig helper for unit tests ([4996b7b](https://github.com/Stride-Labs/stride/commit/4996b7b9549de7e2020b83e8e8559bfe28ec2a79))
+3. Updated docs ([6816961](https://github.com/Stride-Labs/stride/commit/68169611c12bc609b4ecaa99c50f0e2166986eb9)), ([f306089](https://github.com/Stride-Labs/stride/commit/f3060896fdebc1cc911976daf37245db815fef98)), ([8ee30c2](https://github.com/Stride-Labs/stride/commit/8ee30c2ebc8d6965211ae0cb11ae10852aa93a51)), ([6889888](https://github.com/Stride-Labs/stride/commit/6889888e4acb0ce1b27872664a0e6c734ed041b3)), ([abcba0f](https://github.com/Stride-Labs/stride/commit/abcba0f6a2fc6e485fdcd1049952f73ad9ea9865))
+4. Dockernet updates: improved docs, added v5 host zone, updated dependencies ([2a60eb5](https://github.com/Stride-Labs/stride/commit/2a60eb5222f5b17de0de28aa8e85ad9a257f7496)), ([e9351a2](https://github.com/Stride-Labs/stride/commit/e9351a2f5718e95c98b0fe1e329dda73be92beb8)), ([2e461a3](https://github.com/Stride-Labs/stride/commit/2e461a3fdc42de9f9007dfa8ec7f9b2ac8fa2dcb)), ([619f704](https://github.com/Stride-Labs/stride/commit/619f704c54bfdc8d3d77a280e8a325faf173ba9b)), ([39ad5b8](https://github.com/Stride-Labs/stride/commit/39ad5b887a922d385e04b3cbae24771ba3045fa3))
+5. CI updates ([1c0a4b8](https://github.com/Stride-Labs/stride/commit/78225e2d18d50592f0a40d853419ddc596ad64a5)), ([5f73659](https://github.com/Stride-Labs/stride/commit/5f7365992782224c21fdabec5ade71be88080000))
+
+
 ## [v4.0.3](https://github.com/Stride-Labs/stride/releases/tag/v4.0.3) - 2022-12-10
 1. Add list-pending-queries query to interchainquery module ([433dabc](https://github.com/Stride-Labs/stride/commit/433dabcc02c46d2ff038946fe2525a41b9e29b43)) 
 2. Updated docs ([a37a56d](https://github.com/Stride-Labs/stride/commit/a37a56d0f17ff54763d77f2864c35a0c8141bd09), [87f7e6d](https://github.com/Stride-Labs/stride/commit/87f7e6d1c620633dca2286f2136dc4c4c855164d), [c913955](https://github.com/Stride-Labs/stride/commit/c913955cfef4bd23c238235c7592fd926427aaef))

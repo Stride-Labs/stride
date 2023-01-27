@@ -7,22 +7,25 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/spf13/cobra"
 
-	"github.com/Stride-Labs/stride/v4/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v5/x/stakeibc/types"
 )
 
-func CmdShowICAAccount() *cobra.Command {
+func CmdNextPacketSequence() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "show-ica-account",
-		Short: "shows ICAAccount",
-		Args:  cobra.NoArgs,
+		Use:   "next-packet-sequence [channel-id] [port-id]",
+		Short: "returns the next packet sequence on a channel",
+		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx := client.GetClientContextFromCmd(cmd)
 
 			queryClient := types.NewQueryClient(clientCtx)
 
-			params := &types.QueryGetICAAccountRequest{}
+			channelId := args[0]
+			portId := args[1]
 
-			res, err := queryClient.ICAAccount(context.Background(), params)
+			params := &types.QueryGetNextPacketSequenceRequest{ChannelId: channelId, PortId: portId}
+
+			res, err := queryClient.NextPacketSequence(context.Background(), params)
 			if err != nil {
 				return err
 			}
