@@ -37,6 +37,7 @@ func NewKeeper(
 	stakeibcKeeper types.StakeibcKeeper,
 	accountKeeper types.AccountKeeper,
 	bankKeeper types.BankKeeper,
+	interchainQueryKeeper icqkeeper.Keeper,
 ) *Keeper {
 	// set KeyTable if it has not already been set
 	if !ps.HasKeyTable() {
@@ -49,9 +50,10 @@ func NewKeeper(
 		memKey:     memKey,
 		paramstore: ps,
 
-		stakeibcKeeper: stakeibcKeeper,
-		accountKeeper:  accountKeeper,
-		bankKeeper:     bankKeeper,
+		stakeibcKeeper:        stakeibcKeeper,
+		accountKeeper:         accountKeeper,
+		bankKeeper:            bankKeeper,
+		InterchainQueryKeeper: interchainQueryKeeper,
 	}
 }
 

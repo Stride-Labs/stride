@@ -534,6 +534,7 @@ func NewStrideApp(
 		app.StakeibcKeeper,
 		app.AccountKeeper,
 		app.BankKeeper,
+		app.InterchainqueryKeeper,
 	)
 	liquidgovModule := liquidgovmodule.NewAppModule(appCodec, app.LiquidgovKeeper, app.AccountKeeper, app.BankKeeper)
 
