@@ -3,8 +3,6 @@ package keeper
 import (
 	"testing"
 
-	"github.com/Stride-Labs/stride/v5/x/liquidgov/keeper"
-	"github.com/Stride-Labs/stride/v5/x/liquidgov/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/store"
@@ -15,6 +13,9 @@ import (
 	"github.com/tendermint/tendermint/libs/log"
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 	tmdb "github.com/tendermint/tm-db"
+
+	"github.com/Stride-Labs/stride/v5/x/liquidgov/keeper"
+	"github.com/Stride-Labs/stride/v5/x/liquidgov/types"
 )
 
 func LiquidgovKeeper(t testing.TB) (*keeper.Keeper, sdk.Context) {
@@ -37,12 +38,13 @@ func LiquidgovKeeper(t testing.TB) (*keeper.Keeper, sdk.Context) {
 		"LiquidgovParams",
 	)
 	k := keeper.NewKeeper(
-	    cdc,
-	    storeKey,
-	    memStoreKey,
-	    paramsSubspace, 
-        nil,
-        nil,
+		cdc,
+		storeKey,
+		memStoreKey,
+		paramsSubspace,
+		nil,
+		nil,
+		nil,
 	)
 
 	ctx := sdk.NewContext(stateStore, tmproto.Header{}, false, log.NewNopLogger())

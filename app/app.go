@@ -217,7 +217,7 @@ var (
 		claimtypes.ModuleName:           nil,
 		interchainquerytypes.ModuleName: nil,
 		icatypes.ModuleName:             nil,
-		liquidgovmoduletypes.ModuleName: {authtypes.Minter, authtypes.Burner, authtypes.Staking},
+		liquidgovmoduletypes.ModuleName: nil,
 		// this line is used by starport scaffolding # stargate/app/maccPerms
 	}
 )
@@ -525,8 +525,26 @@ func NewStrideApp(
 		&stakingKeeper, govRouter, app.MsgServiceRouter(), govtypes.DefaultConfig(),
 	)
 
+	app.LiquidgovKeeper = *liquidgovmodulekeeper.NewKeeper(
+		appCodec,
+		keys[liquidgovmoduletypes.StoreKey],
+		keys[liquidgovmoduletypes.MemStoreKey],
+		app.GetSubspace(liquidgovmoduletypes.ModuleName),
+
+		app.StakeibcKeeper,
+		app.AccountKeeper,
+		app.BankKeeper,
+	)
+	liquidgovModule := liquidgovmodule.NewAppModule(appCodec, app.LiquidgovKeeper, app.AccountKeeper, app.BankKeeper)
+
 	// Register ICQ callbacks
+	// stakeibc
 	err := app.InterchainqueryKeeper.SetCallbackHandler(stakeibcmoduletypes.ModuleName, app.StakeibcKeeper.ICQCallbackHandler())
+	if err != nil {
+		return nil
+	}
+	// liquidgov
+	err = app.InterchainqueryKeeper.SetCallbackHandler(liquidgovmoduletypes.ModuleName, app.LiquidgovKeeper.ICQCallbackHandler())
 	if err != nil {
 		return nil
 	}
@@ -536,6 +554,7 @@ func NewStrideApp(
 			app.StakeibcKeeper.Hooks(),
 			app.MintKeeper.Hooks(),
 			app.ClaimKeeper.Hooks(),
+			app.LiquidgovKeeper.Hooks(),
 		),
 	)
 	epochsModule := epochsmodule.NewAppModule(appCodec, app.EpochsKeeper)
@@ -552,17 +571,11 @@ func NewStrideApp(
 	if err != nil {
 		return nil
 	}
-
-	app.LiquidgovKeeper = *liquidgovmodulekeeper.NewKeeper(
-		appCodec,
-		keys[liquidgovmoduletypes.StoreKey],
-		keys[liquidgovmoduletypes.MemStoreKey],
-		app.GetSubspace(liquidgovmoduletypes.ModuleName),
-
-		app.AccountKeeper,
-		app.BankKeeper,
-	)
-	liquidgovModule := liquidgovmodule.NewAppModule(appCodec, app.LiquidgovKeeper, app.AccountKeeper, app.BankKeeper)
+	// liquidgov
+	// err = app.IcacallbacksKeeper.SetICACallbackHandler(liquidgovmoduletypes.ModuleName, app.LiquidgovKeeper.ICACallbackHandler())
+	// if err != nil {
+	// 	return nil
+	// }
 
 	// this line is used by starport scaffolding # stargate/app/keeperDefinition
 	ibcFeeKeeper := ibcfeekeeper.NewKeeper(
