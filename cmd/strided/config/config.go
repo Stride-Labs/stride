@@ -40,7 +40,7 @@ func SetupConfig() {
 
 	version.AppName = "stride"
 	version.Name = "strided"
-	version.Version = "v5.0.0"
+	version.Version = "v5.1.1"
 }
 
 // SetBech32Prefixes sets the global prefixes to be used when serializing addresses and public keys to Bech32 strings.
