@@ -8,9 +8,9 @@ import (
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
 	simappparams "github.com/cosmos/cosmos-sdk/simapp/params"
 	"github.com/cosmos/cosmos-sdk/x/simulation"
-	"github.com/Stride-Labs/stride/v4/x/stakeibc/keeper"
-	"github.com/Stride-Labs/stride/v4/x/stakeibc/types"
-	"github.com/Stride-Labs/stride/v4/utils"
+	"github.com/Stride-Labs/stride/v5/x/stakeibc/keeper"
+	"github.com/Stride-Labs/stride/v5/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v5/utils"
 )
 
 func SimulateMsgChangeValidatorWeight(

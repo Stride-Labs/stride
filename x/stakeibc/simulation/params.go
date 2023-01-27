@@ -8,7 +8,7 @@ import (
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
 	_ "github.com/cosmos/cosmos-sdk/x/simulation"
 
-	_ "github.com/Stride-Labs/stride/v4/x/stakeibc/types"
+	_ "github.com/Stride-Labs/stride/v5/x/stakeibc/types"
 )
 
 func ParamChanges(r *rand.Rand, cdc codec.Codec) []simtypes.ParamChange {

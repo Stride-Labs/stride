@@ -19,10 +19,10 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
-	"github.com/Stride-Labs/stride/v4/x/stakeibc/client/cli"
-	"github.com/Stride-Labs/stride/v4/x/stakeibc/keeper"
-	"github.com/Stride-Labs/stride/v4/x/stakeibc/types"
-	"github.com/Stride-Labs/stride/v4/x/stakeibc/simulation"
+	"github.com/Stride-Labs/stride/v5/x/stakeibc/client/cli"
+	"github.com/Stride-Labs/stride/v5/x/stakeibc/keeper"
+	"github.com/Stride-Labs/stride/v5/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v5/x/stakeibc/simulation"
 )
 
 var (
@@ -175,7 +175,7 @@ func (am AppModule) ExportGenesis(ctx sdk.Context, cdc codec.JSONCodec) json.Raw
 }
 
 // ConsensusVersion implements ConsensusVersion.
-func (AppModule) ConsensusVersion() uint64 { return 1 }
+func (AppModule) ConsensusVersion() uint64 { return 2 }
 
 // BeginBlock executes all ABCI BeginBlock logic respective to the capability module.
 func (am AppModule) BeginBlock(ctx sdk.Context, _ abci.RequestBeginBlock) {
@@ -192,7 +192,14 @@ func (am AppModule) EndBlock(_ sdk.Context, _ abci.RequestEndBlock) []abci.Valid
 
 // GenerateGenesisState creates a randomized GenState of the distribution module.
 func (AppModule) GenerateGenesisState(simState *module.SimulationState) {
-	// TODO
+	accs := make([]string, len(simState.Accounts))
+	for i, acc := range simState.Accounts {
+		accs[i] = acc.Address.String()
+	}
+	stakeibcGenesis := types.GenesisState{
+		Params: types.DefaultParams(),
+	}
+	simState.GenState[types.ModuleName] = simState.Cdc.MustMarshalJSON(&stakeibcGenesis)
 }
 
 // ProposalContents returns all the distribution content functions used to
