@@ -8,7 +8,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	// epochtypes "github.com/Stride-Labs/stride/v4/x/epochs/types"
-	"github.com/Stride-Labs/stride/v4/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v5/x/stakeibc/types"
 )
 
 // RegisterInvariants registers all governance invariants.
