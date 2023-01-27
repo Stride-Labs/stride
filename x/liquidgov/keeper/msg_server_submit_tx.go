@@ -21,14 +21,6 @@ import (
 func (k Keeper) MirrorProposals(ctx sdk.Context, hostZone stakeibctypes.HostZone) error {
 	k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId, "Submitting ICQ for proposals to %s", hostZone.ChainId))
 
-	// Ensure ICQ can be issued now! else fail the callback
-	valid, err := k.stakeibcKeeper.IsWithinBufferWindow(ctx)
-	if err != nil {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "unable to determine if ICQ callback is inside buffer window, err: %s", err.Error())
-	} else if !valid {
-		return sdkerrors.Wrapf(stakeibctypes.ErrOutsideIcqWindow, "outside the buffer time during which ICQs are allowed (%s)", hostZone.HostDenom)
-	}
-
 	endTime := ctx.BlockTime().AddDate(1, 0, 0) // TODO veryify range query works, then change logic to compare to latest proposal on stride
 
 	queryData := govtypes.ActiveProposalByTimeKey(endTime)
