@@ -11,11 +11,17 @@ import (
 	"github.com/Stride-Labs/stride/v5/x/stakeibc/types"
 )
 
+const (
+	balanceStakeHostZoneInvariantName = "balance-stake-hostzone"
+	validatorWeightHostZoneInvariantName = "validator-weight-hostzone"
+	redemptionRateInvariantName = "redemption-rate"
+)
+
 // RegisterInvariants registers all governance invariants.
 func RegisterInvariants(ir sdk.InvariantRegistry, k Keeper) {
-	ir.RegisterRoute(types.ModuleName, "balance-stake-hostzone-invariant", k.BalanceStakeHostZoneInvariant())
-	ir.RegisterRoute(types.ModuleName, "validator-weight-hostzone-invariant", k.ValidatorWeightHostZoneInvariant())
-	ir.RegisterRoute(types.ModuleName, "redemption-rate-invariant", k.RedemptionRateInvariant())
+	ir.RegisterRoute(types.ModuleName, balanceStakeHostZoneInvariantName, k.BalanceStakeHostZoneInvariant())
+	ir.RegisterRoute(types.ModuleName, validatorWeightHostZoneInvariantName, k.ValidatorWeightHostZoneInvariant())
+	ir.RegisterRoute(types.ModuleName, redemptionRateInvariantName, k.RedemptionRateInvariant())
 }
 
 // AllInvariants runs all invariants of the stakeibc module
