@@ -2,6 +2,7 @@ package keeper_test
 
 import (
 	"context"
+	"strings"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/bech32"
@@ -9,7 +10,7 @@ import (
 	_ "github.com/stretchr/testify/suite"
 	"github.com/tendermint/tendermint/proto/tendermint/crypto"
 
-	"github.com/Stride-Labs/stride/v4/x/interchainquery/types"
+	"github.com/Stride-Labs/stride/v5/x/interchainquery/types"
 )
 
 const (
@@ -69,7 +70,7 @@ func (s *KeeperTestSuite) TestMsgSubmitQueryResponse_WrongProof() {
 	s.App.InterchainqueryKeeper.SetQuery(s.Ctx, tc.query)
 
 	resp, err := s.GetMsgServer().SubmitQueryResponse(tc.goCtx, &tc.validMsg)
-	s.Require().ErrorContains(err, "unable to verify membership proof: proof cannot be empty")
+	s.Require().ErrorContains(err, "Unable to verify membership proof: proof cannot be empty")
 	s.Require().Nil(resp)
 }
 
@@ -92,25 +93,20 @@ func (s *KeeperTestSuite) TestMsgSubmitQueryResponse_UnknownId() {
 func (s *KeeperTestSuite) TestMsgSubmitQueryResponse_ExceededTtl() {
 	tc := s.SetupMsgSubmitQueryResponse()
 
-	tc.query.Ttl = uint64(1) // set ttl to be expired
+	// Remove key from the query type so to bypass the VerifyKeyProof function
+	tc.query.QueryType = strings.ReplaceAll(tc.query.QueryType, "key", "")
+
+	// set ttl to be expired
+	tc.query.Ttl = uint64(1)
 	s.App.InterchainqueryKeeper.SetQuery(s.Ctx, tc.query)
-	exceeded, err := s.App.InterchainqueryKeeper.HasQueryExceededTtl(s.Ctx, &tc.validMsg, tc.query)
+
+	resp, err := s.GetMsgServer().SubmitQueryResponse(tc.goCtx, &tc.validMsg)
 	s.Require().NoError(err)
-	s.Require().True(exceeded)
-}
+	s.Require().NotNil(resp)
 
-func (s *KeeperTestSuite) TestMsgSubmitQueryResponse_NotExceededTtl() {
-	tc := s.SetupMsgSubmitQueryResponse()
-
-	tc.query.Ttl = uint64(2545450064) * uint64(1000000000) // for test clarity, re-set ttl to August 2050, mult by nano conversion factor
-	s.App.InterchainqueryKeeper.SetQuery(s.Ctx, tc.query)
-	exceeded, err := s.App.InterchainqueryKeeper.HasQueryExceededTtl(s.Ctx, &tc.validMsg, tc.query)
-	s.Require().NoError(err)
-	s.Require().False(exceeded)
-
-	// check that the query is not in the store anymore, as it should be deleted
+	// check that the query was deleted (since the query timed out)
 	_, found := s.App.InterchainqueryKeeper.GetQuery(s.Ctx, tc.query.Id)
-	s.Require().True(found)
+	s.Require().False(found)
 }
 
 func (s *KeeperTestSuite) TestMsgSubmitQueryResponse_FindAndInvokeCallback_WrongHostZone() {

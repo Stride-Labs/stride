@@ -10,7 +10,7 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/spf13/cobra"
 
-	"github.com/Stride-Labs/stride/v4/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v5/x/stakeibc/types"
 )
 
 var _ = strconv.Itoa(0)
@@ -24,7 +24,7 @@ func CmdClearBalance() *cobra.Command {
 			argChainId := args[0]
 			argAmount, found := sdk.NewIntFromString(args[1])
 			if !found {
-				return  sdkerrors.Wrap(sdkerrors.ErrInvalidType, "can not convert string to int")
+				return sdkerrors.Wrap(sdkerrors.ErrInvalidType, "can not convert string to int")
 			}
 			argChannelId := args[2]
 

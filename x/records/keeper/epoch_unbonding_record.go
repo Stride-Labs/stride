@@ -8,9 +8,9 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
-	stakeibctypes "github.com/Stride-Labs/stride/v4/x/stakeibc/types"
+	stakeibctypes "github.com/Stride-Labs/stride/v5/x/stakeibc/types"
 
-	"github.com/Stride-Labs/stride/v4/x/records/types"
+	"github.com/Stride-Labs/stride/v5/x/records/types"
 )
 
 // SetEpochUnbondingRecord set a specific epochUnbondingRecord in the store
@@ -99,6 +99,7 @@ func (k Keeper) GetHostZoneUnbondingByChainId(ctx sdk.Context, epochNumber uint6
 	return &types.HostZoneUnbonding{}, false
 }
 
+// Adds a HostZoneUnbonding to an EpochUnbondingRecord
 func (k Keeper) AddHostZoneToEpochUnbondingRecord(ctx sdk.Context, epochNumber uint64, chainId string, hzu *types.HostZoneUnbonding) (val *types.EpochUnbondingRecord, success bool) {
 	epochUnbondingRecord, found := k.GetEpochUnbondingRecord(ctx, epochNumber)
 	if !found {
@@ -119,6 +120,7 @@ func (k Keeper) AddHostZoneToEpochUnbondingRecord(ctx sdk.Context, epochNumber u
 	return &epochUnbondingRecord, true
 }
 
+// Updates the status for a given host zone across relevant epoch unbonding record IDs
 func (k Keeper) SetHostZoneUnbondings(ctx sdk.Context, chainId string, epochUnbondingRecordIds []uint64, status types.HostZoneUnbonding_Status) error {
 	for _, epochUnbondingRecordId := range epochUnbondingRecordIds {
 		k.Logger(ctx).Info(fmt.Sprintf("Updating host zone unbondings on EpochUnbondingRecord %d to status %s", epochUnbondingRecordId, status.String()))

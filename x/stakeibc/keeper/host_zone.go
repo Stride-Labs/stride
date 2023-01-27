@@ -1,41 +1,19 @@
 package keeper
 
 import (
-	"encoding/binary"
 	"errors"
 	"fmt"
 	"math"
+
+	sdkmath "cosmossdk.io/math"
 
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
-	"github.com/Stride-Labs/stride/v4/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v5/utils"
+	"github.com/Stride-Labs/stride/v5/x/stakeibc/types"
 )
-
-// GetHostZoneCount get the total number of hostZone
-func (k Keeper) GetHostZoneCount(ctx sdk.Context) uint64 {
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte{})
-	byteKey := types.KeyPrefix(types.HostZoneCountKey)
-	bz := store.Get(byteKey)
-
-	// Count doesn't exist: no element
-	if bz == nil {
-		return 0
-	}
-
-	// Parse bytes
-	return binary.BigEndian.Uint64(bz)
-}
-
-// SetHostZoneCount set the total number of hostZone
-func (k Keeper) SetHostZoneCount(ctx sdk.Context, count uint64) {
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte{})
-	byteKey := types.KeyPrefix(types.HostZoneCountKey)
-	bz := make([]byte, 8)
-	binary.BigEndian.PutUint64(bz, count)
-	store.Set(byteKey, bz)
-}
 
 // SetHostZone set a specific hostZone in the store
 func (k Keeper) SetHostZone(ctx sdk.Context, hostZone types.HostZone) {
@@ -93,24 +71,26 @@ func (k Keeper) GetAllHostZone(ctx sdk.Context) (list []types.HostZone) {
 	return
 }
 
-func (k Keeper) AddDelegationToValidator(ctx sdk.Context, hostZone types.HostZone, validatorAddress string, amount sdk.Int) (success bool) {
+func (k Keeper) AddDelegationToValidator(ctx sdk.Context, hostZone types.HostZone, validatorAddress string, amount sdkmath.Int, callbackId string) (success bool) {
 	for _, validator := range hostZone.Validators {
 		if validator.Address == validatorAddress {
-			k.Logger(ctx).Info(fmt.Sprintf("Validator %s, Current Delegation: %v, Delegation Change: %v", validator.Address, validator.DelegationAmt, amount))
-			if amount.GTE(sdk.ZeroInt()) {
+			k.Logger(ctx).Info(utils.LogICACallbackWithHostZone(hostZone.ChainId, callbackId,
+				"  Validator %s, Current Delegation: %v, Delegation Change: %v", validator.Address, validator.DelegationAmt, amount))
+
+			if amount.GTE(sdkmath.ZeroInt()) {
 				validator.DelegationAmt = validator.DelegationAmt.Add(amount)
 				return true
-			} else {
-				absAmt := amount.Abs()
-				if absAmt.GT(validator.DelegationAmt) {
-					k.Logger(ctx).Error(fmt.Sprintf("Delegation amount %v is greater than validator %s delegation amount %v", absAmt, validatorAddress, validator.DelegationAmt))
-					return false
-				}
-				validator.DelegationAmt = validator.DelegationAmt.Sub(absAmt)
-				return true
 			}
+			absAmt := amount.Abs()
+			if absAmt.GT(validator.DelegationAmt) {
+				k.Logger(ctx).Error(fmt.Sprintf("Delegation amount %v is greater than validator %s delegation amount %v", absAmt, validatorAddress, validator.DelegationAmt))
+				return false
+			}
+			validator.DelegationAmt = validator.DelegationAmt.Sub(absAmt)
+			return true
 		}
 	}
+
 	k.Logger(ctx).Error(fmt.Sprintf("Could not find validator %s on host zone %s", validatorAddress, hostZone.ChainId))
 	return false
 }
@@ -165,7 +145,7 @@ func (k Keeper) AddValidatorToHostZone(ctx sdk.Context, msg *types.MsgAddValidat
 		Address:        msg.Address,
 		Status:         types.Validator_ACTIVE,
 		CommissionRate: msg.Commission,
-		DelegationAmt:  sdk.ZeroInt(),
+		DelegationAmt:  sdkmath.ZeroInt(),
 		Weight:         valWeight,
 	})
 
@@ -189,16 +169,25 @@ func (k Keeper) RemoveValidatorFromHostZone(ctx sdk.Context, chainId string, val
 				hostZone.Validators = append(hostZone.Validators[:i], hostZone.Validators[i+1:]...)
 				k.SetHostZone(ctx, hostZone)
 				return nil
-			} else {
-				errMsg := fmt.Sprintf("Validator (%s) has non-zero delegation (%v) or weight (%d)", validatorAddress, val.DelegationAmt, val.Weight)
-				k.Logger(ctx).Error(errMsg)
-				return errors.New(errMsg)
 			}
+			errMsg := fmt.Sprintf("Validator (%s) has non-zero delegation (%v) or weight (%d)", validatorAddress, val.DelegationAmt, val.Weight)
+			k.Logger(ctx).Error(errMsg)
+			return errors.New(errMsg)
 		}
 	}
 	errMsg := fmt.Sprintf("Validator address (%s) not found on host zone (%s)", validatorAddress, chainId)
 	k.Logger(ctx).Error(errMsg)
 	return sdkerrors.Wrapf(types.ErrValidatorNotFound, errMsg)
+}
+
+// Get a validator and its index from a list of validators, by address
+func GetValidatorFromAddress(validators []*types.Validator, address string) (val types.Validator, index int64, found bool) {
+	for i, v := range validators {
+		if v.Address == address {
+			return *v, int64(i), true
+		}
+	}
+	return types.Validator{}, 0, false
 }
 
 // GetHostZoneFromIBCDenom returns a HostZone from a IBCDenom
