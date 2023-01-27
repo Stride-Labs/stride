@@ -63,7 +63,7 @@ func (k msgServer) InstantRedeemStake(goCtx context.Context, msg *types.MsgInsta
 	// Find and subtract this amount from a deposit record if it is big enough
 	depositRecords := k.RecordsKeeper.GetAllDepositRecord(ctx)
 	pendingDepositRecords := utils.FilterDepositRecords(depositRecords, func(record recordstypes.DepositRecord) (condition bool) {
-		return record.Status == recordstypes.DepositRecord_TRANSFER_QUEUE
+		return record.Status == recordstypes.DepositRecord_TRANSFER_QUEUE && record.HostZoneId == hostZone.ChainId
 	})
 	totalPendingDeposits := utils.SumDepositRecords(pendingDepositRecords)
 	fmt.Printf("totalPendingDeposits = %v\n", totalPendingDeposits)
