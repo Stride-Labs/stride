@@ -134,7 +134,8 @@ func (k Keeper) SetWithdrawalAddress(ctx sdk.Context) {
 
 // Updates the redemption rate for each host zone
 // The redemption rate equation is:
-//   (Unbonded Balance + Staked Balance + Module Account Balance) / (stToken Supply)
+//
+//	(Unbonded Balance + Staked Balance + Module Account Balance) / (stToken Supply)
 func (k Keeper) UpdateRedemptionRates(ctx sdk.Context, depositRecords []recordstypes.DepositRecord) {
 	k.Logger(ctx).Info("Updating Redemption Rates...")
 
@@ -180,13 +181,7 @@ func (k Keeper) GetUndelegatedBalance(hostZone types.HostZone, depositRecords []
 		return ((record.Status == recordstypes.DepositRecord_DELEGATION_QUEUE || record.Status == recordstypes.DepositRecord_DELEGATION_IN_PROGRESS) && record.HostZoneId == hostZone.ChainId)
 	})
 
-	// sum the amounts of the deposit records
-	totalAmount := sdkmath.ZeroInt()
-	for _, depositRecord := range UndelegatedDepositRecords {
-		totalAmount = totalAmount.Add(depositRecord.Amount)
-	}
-
-	return totalAmount, nil
+	return utils.SumDepositRecords(UndelegatedDepositRecords), nil
 }
 
 func (k Keeper) GetModuleAccountBalance(hostZone types.HostZone, depositRecords []recordstypes.DepositRecord) (sdkmath.Int, error) {
@@ -195,13 +190,7 @@ func (k Keeper) GetModuleAccountBalance(hostZone types.HostZone, depositRecords 
 		return (record.Status == recordstypes.DepositRecord_TRANSFER_QUEUE || record.Status == recordstypes.DepositRecord_TRANSFER_IN_PROGRESS) && record.HostZoneId == hostZone.ChainId
 	})
 
-	// sum the amounts of the deposit records
-	totalAmount := sdkmath.ZeroInt()
-	for _, depositRecord := range ModuleAccountRecords {
-		totalAmount = totalAmount.Add(depositRecord.Amount)
-	}
-
-	return totalAmount, nil
+	return utils.SumDepositRecords(ModuleAccountRecords), nil
 }
 
 func (k Keeper) ReinvestRewards(ctx sdk.Context) {

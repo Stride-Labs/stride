@@ -85,6 +85,7 @@ func (s *KeeperTestSuite) SetupInstantRedeemStake() InstantRedeemStakeTestCase {
 	}
 }
 
+// TODO: Need to add tests for at least multiple deposit records, non 1.0 Redemption Rates, and probably some other basic scenarios.
 func (s *KeeperTestSuite) TestInstantRedeemStake_Successful() {
 	tc := s.SetupInstantRedeemStake()
 	user := tc.user
@@ -92,7 +93,7 @@ func (s *KeeperTestSuite) TestInstantRedeemStake_Successful() {
 	initialStAtomSupply := s.App.BankKeeper.GetSupply(s.Ctx, StAtom)
 	msg := tc.validMsg
 
-	// Validate Fast Unbonding
+	// Validate Instant Redeem Stake
 	_, err := s.GetMsgServer().InstantRedeemStake(sdk.WrapSDKContext(s.Ctx), &msg)
 	s.Require().NoError(err)
 
@@ -168,16 +169,6 @@ func (s *KeeperTestSuite) TestInstantRedeemStake_RedeemMoreThanStaked() {
 	_, err := s.GetMsgServer().InstantRedeemStake(sdk.WrapSDKContext(s.Ctx), &invalidMsg)
 
 	s.Require().EqualError(err, fmt.Sprintf("cannot unstake an amount g.t. staked balance on host zone: %v: invalid amount", invalidMsg.Amount))
-}
-
-func (s *KeeperTestSuite) TestInstantRedeemStake_NoEpochTrackerDay() {
-	tc := s.SetupInstantRedeemStake()
-
-	invalidMsg := tc.validMsg
-	s.App.StakeibcKeeper.RemoveEpochTracker(s.Ctx, epochtypes.STRIDE_EPOCH)
-	_, err := s.GetMsgServer().InstantRedeemStake(sdk.WrapSDKContext(s.Ctx), &invalidMsg)
-
-	s.Require().EqualError(err, fmt.Sprintf("no epoch number for epoch (%s): not found", epochtypes.STRIDE_EPOCH))
 }
 
 func (s *KeeperTestSuite) TestInstantRedeemStake_InvalidHostAddress() {

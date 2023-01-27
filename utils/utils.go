@@ -1,6 +1,7 @@
 package utils
 
 import (
+	sdkmath "cosmossdk.io/math"
 	"errors"
 	"fmt"
 	"sort"
@@ -27,6 +28,15 @@ func FilterDepositRecords(arr []recordstypes.DepositRecord, condition func(recor
 		}
 	}
 	return ret
+}
+
+func SumDepositRecords(arr []recordstypes.DepositRecord) sdkmath.Int {
+	// sum the amounts of the deposit records
+	totalAmount := sdkmath.ZeroInt()
+	for _, depositRecord := range arr {
+		totalAmount = totalAmount.Add(depositRecord.Amount)
+	}
+	return totalAmount
 }
 
 func Int64ToCoinString(amount int64, denom string) string {
@@ -209,7 +219,8 @@ func ConvertAddressToStrideAddress(address string) string {
 
 // Returns a log string with a chainId and tab as the prefix
 // Ex:
-//   | COSMOSHUB-4   |   string
+//
+//	| COSMOSHUB-4   |   string
 func LogWithHostZone(chainId string, s string, a ...any) string {
 	msg := fmt.Sprintf(s, a...)
 	return fmt.Sprintf("|   %-13s |  %s", strings.ToUpper(chainId), msg)
@@ -218,7 +229,8 @@ func LogWithHostZone(chainId string, s string, a ...any) string {
 // Returns a log string with a chain Id and callback as a prefix
 // callbackType is either ICACALLBACK or ICQCALLBACK
 // Format:
-//   |   CHAIN-ID    |  {CALLBACK_ID} {CALLBACK_TYPE}  |  string
+//
+//	|   CHAIN-ID    |  {CALLBACK_ID} {CALLBACK_TYPE}  |  string
 func logCallbackWithHostZone(chainId string, callbackId string, callbackType string, s string, a ...any) string {
 	msg := fmt.Sprintf(s, a...)
 	return fmt.Sprintf("|   %-13s |  %s %s  |  %s", strings.ToUpper(chainId), strings.ToUpper(callbackId), callbackType, msg)
@@ -226,14 +238,16 @@ func logCallbackWithHostZone(chainId string, callbackId string, callbackType str
 
 // Returns a log string with a chain Id and icacallback as a prefix
 // Ex:
-//   | COSMOSHUB-4   |  DELEGATE ICACALLBACK  |  string
+//
+//	| COSMOSHUB-4   |  DELEGATE ICACALLBACK  |  string
 func LogICACallbackWithHostZone(chainId string, callbackId string, s string, a ...any) string {
 	return logCallbackWithHostZone(chainId, callbackId, "ICACALLBACK", s, a...)
 }
 
 // Returns a log string with a chain Id and icacallback as a prefix, and status of the callback
 // Ex:
-//   | COSMOSHUB-4   |  DELEGATE ICACALLBACK  |  ICA SUCCESS, Packet: ...
+//
+//	| COSMOSHUB-4   |  DELEGATE ICACALLBACK  |  ICA SUCCESS, Packet: ...
 func LogICACallbackStatusWithHostZone(chainId string, callbackId string, status icacallbacktypes.AckResponseStatus, packet channeltypes.Packet) string {
 	var statusMsg string
 	switch status {
@@ -249,14 +263,16 @@ func LogICACallbackStatusWithHostZone(chainId string, callbackId string, status 
 
 // Returns a log string with a chain Id and icqcallback as a prefix
 // Ex:
-//   | COSMOSHUB-4   |  WITHDRAWALBALANCE ICQCALLBACK  |  string
+//
+//	| COSMOSHUB-4   |  WITHDRAWALBALANCE ICQCALLBACK  |  string
 func LogICQCallbackWithHostZone(chainId string, callbackId string, s string, a ...any) string {
 	return logCallbackWithHostZone(chainId, callbackId, "ICQCALLBACK", s, a...)
 }
 
 // Returns a log header string with a dash padding on either side
 // Ex:
-//  ------------------------------ string ------------------------------
+//
+//	------------------------------ string ------------------------------
 func LogHeader(s string, a ...any) string {
 	lineLength := 120
 	header := fmt.Sprintf(s, a...)

@@ -2,8 +2,10 @@ package keeper
 
 import (
 	"context"
+	sdkmath "cosmossdk.io/math"
 	"fmt"
-	epochtypes "github.com/Stride-Labs/stride/v5/x/epochs/types"
+	"github.com/Stride-Labs/stride/v5/utils"
+	recordstypes "github.com/Stride-Labs/stride/v5/x/records/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -59,20 +61,25 @@ func (k msgServer) InstantRedeemStake(goCtx context.Context, msg *types.MsgInsta
 	}
 
 	// Find and subtract this amount from a deposit record if it is big enough
-	epochTracker, found := k.GetEpochTracker(ctx, epochtypes.STRIDE_EPOCH)
-	if !found {
-		k.Logger(ctx).Error("failed to find stride epoch")
-		return nil, sdkerrors.Wrapf(sdkerrors.ErrNotFound, "no epoch number for epoch (%s)", epochtypes.STRIDE_EPOCH)
-	}
-	depositRecord, found := k.RecordsKeeper.GetDepositRecordByEpochAndChain(ctx, epochTracker.EpochNumber, hostZone.ChainId)
-	if !found {
-		k.Logger(ctx).Error("failed to find deposit record")
-		return nil, sdkerrors.Wrapf(sdkerrors.ErrNotFound, fmt.Sprintf("no deposit record for epoch (%d)", epochTracker.EpochNumber))
-	}
-	if nativeAmount.GT(depositRecord.Amount) {
+	depositRecords := k.RecordsKeeper.GetAllDepositRecord(ctx)
+	pendingDepositRecords := utils.FilterDepositRecords(depositRecords, func(record recordstypes.DepositRecord) (condition bool) {
+		return record.Status == recordstypes.DepositRecord_TRANSFER_QUEUE
+	})
+	totalPendingDeposits := utils.SumDepositRecords(pendingDepositRecords)
+	if nativeAmount.GT(totalPendingDeposits) {
 		return nil, sdkerrors.Wrapf(types.ErrInvalidAmount, "cannot fast unbond an amount %v g.t. pending deposit balance on host zone: %v", nativeAmount, msg.Amount)
 	}
-	depositRecord.Amount = depositRecord.Amount.Sub(nativeAmount)
+	// Subtract all of nativeAmount from one or more pending deposit records
+	x := nativeAmount
+	for _, depositRecord := range pendingDepositRecords {
+		if x.GTE(depositRecord.Amount) {
+			depositRecord.Amount = sdkmath.ZeroInt()
+			x.Sub(depositRecord.Amount)
+		} else {
+			depositRecord.Amount.Sub(x)
+		}
+	}
+	//depositRecord.Amount = depositRecord.Amount.Sub(nativeAmount)
 	bech32ZoneAddress, err := sdk.AccAddressFromBech32(hostZone.Address)
 	if err != nil {
 		return nil, fmt.Errorf("could not bech32 decode address %s of zone with id: %s", hostZone.Address, hostZone.ChainId)
