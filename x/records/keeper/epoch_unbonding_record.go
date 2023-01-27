@@ -161,8 +161,8 @@ func (k Keeper) ResetEpochUnbondingRecordEpochNumbers(ctx sdk.Context) error {
 		epochNumber := binary.BigEndian.Uint64(epochNumberBz)
 		epochUnbondingRecord.EpochNumber = epochNumber
 
-		ctx.Logger().Info("Updating EpochUnbondingRecord EpochNumber - Old Key: %v, New Key: %v, Epoch Number: %d",
-			epochNumberBz, GetEpochUnbondingRecordIDBytes(epochUnbondingRecord.EpochNumber), epochNumber)
+		ctx.Logger().Info(fmt.Sprintf("Updating EpochUnbondingRecord EpochNumber - Old Key: %v, New Key: %v, Epoch Number: %d",
+			epochNumberBz, GetEpochUnbondingRecordIDBytes(epochUnbondingRecord.EpochNumber), epochNumber))
 
 		k.SetEpochUnbondingRecord(ctx, epochUnbondingRecord)
 	}
