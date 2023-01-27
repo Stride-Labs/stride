@@ -25,7 +25,7 @@ type InstantRedeemStakeTestCase struct {
 
 func (s *KeeperTestSuite) SetupInstantRedeemStake() InstantRedeemStakeTestCase {
 	unbondAmount := sdkmath.NewInt(1_000_000)
-	initialDepositAmount := sdkmath.NewInt(1_000_000)
+	depositAmount := sdkmath.NewInt(500_000)
 	user := Account{
 		acc:           s.TestAccs[0],
 		atomBalance:   sdk.NewInt64Coin(IbcAtom, 10_000_000),
@@ -50,7 +50,7 @@ func (s *KeeperTestSuite) SetupInstantRedeemStake() InstantRedeemStakeTestCase {
 		IbcDenom:       IbcAtom,
 		RedemptionRate: sdk.NewDec(1.0),
 		Address:        zoneAddress.String(),
-		StakedBal:      initialDepositAmount,
+		StakedBal:      unbondAmount,
 	}
 
 	epochTracker := stakeibctypes.EpochTracker{
@@ -58,15 +58,23 @@ func (s *KeeperTestSuite) SetupInstantRedeemStake() InstantRedeemStakeTestCase {
 		EpochNumber:     1,
 	}
 
+	oldDepositRecord := recordtypes.DepositRecord{
+		Id:                 0,
+		DepositEpochNumber: 0,
+		HostZoneId:         "GAIA",
+		Amount:             depositAmount,
+	}
+
 	initialDepositRecord := recordtypes.DepositRecord{
 		Id:                 1,
 		DepositEpochNumber: 1,
 		HostZoneId:         "GAIA",
-		Amount:             initialDepositAmount,
+		Amount:             depositAmount,
 	}
 
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
 	s.App.StakeibcKeeper.SetEpochTracker(s.Ctx, epochTracker)
+	s.App.RecordsKeeper.SetDepositRecord(s.Ctx, oldDepositRecord)
 	s.App.RecordsKeeper.SetDepositRecord(s.Ctx, initialDepositRecord)
 
 	return InstantRedeemStakeTestCase{
@@ -74,7 +82,7 @@ func (s *KeeperTestSuite) SetupInstantRedeemStake() InstantRedeemStakeTestCase {
 		zoneAccount: zoneAccount,
 		initialState: InstantRedeemStakeState{
 			epochNumber:         epochTracker.EpochNumber,
-			depositRecordAmount: initialDepositAmount,
+			depositRecordAmount: depositAmount,
 			hostZone:            hostZone,
 		},
 		validMsg: stakeibctypes.MsgInstantRedeemStake{

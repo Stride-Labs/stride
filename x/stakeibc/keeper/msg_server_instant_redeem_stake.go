@@ -66,6 +66,7 @@ func (k msgServer) InstantRedeemStake(goCtx context.Context, msg *types.MsgInsta
 		return record.Status == recordstypes.DepositRecord_TRANSFER_QUEUE
 	})
 	totalPendingDeposits := utils.SumDepositRecords(pendingDepositRecords)
+	fmt.Printf("totalPendingDeposits = %v\n", totalPendingDeposits)
 	if nativeAmount.GT(totalPendingDeposits) {
 		return nil, sdkerrors.Wrapf(types.ErrInvalidAmount, "cannot fast unbond an amount %v g.t. pending deposit balance on host zone: %v", nativeAmount, msg.Amount)
 	}
