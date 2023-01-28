@@ -66,7 +66,6 @@ func (k msgServer) InstantRedeemStake(goCtx context.Context, msg *types.MsgInsta
 		return record.Status == recordstypes.DepositRecord_TRANSFER_QUEUE && record.HostZoneId == hostZone.ChainId
 	})
 	totalPendingDeposits := utils.SumDepositRecords(pendingDepositRecords)
-	fmt.Printf("totalPendingDeposits = %v\n", totalPendingDeposits)
 	if nativeAmount.GT(totalPendingDeposits) {
 		return nil, sdkerrors.Wrapf(types.ErrInvalidAmount, "cannot fast unbond an amount %v g.t. pending deposit balance on host zone: %v", nativeAmount, msg.Amount)
 	}
@@ -80,7 +79,6 @@ func (k msgServer) InstantRedeemStake(goCtx context.Context, msg *types.MsgInsta
 			depositRecord.Amount.Sub(x)
 		}
 	}
-	//depositRecord.Amount = depositRecord.Amount.Sub(nativeAmount)
 	bech32ZoneAddress, err := sdk.AccAddressFromBech32(hostZone.Address)
 	if err != nil {
 		return nil, fmt.Errorf("could not bech32 decode address %s of zone with id: %s", hostZone.Address, hostZone.ChainId)

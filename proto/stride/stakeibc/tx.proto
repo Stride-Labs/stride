@@ -30,7 +30,6 @@ service Msg {
   rpc UpdateValidatorSharesExchRate(MsgUpdateValidatorSharesExchRate)
       returns (MsgUpdateValidatorSharesExchRateResponse);
   rpc ClearBalance(MsgClearBalance) returns (MsgClearBalanceResponse);
-  // this line is used by starport scaffolding # proto/tx/rpc
 }
 
 message MsgLiquidStake {
@@ -161,5 +160,3 @@ message MsgUpdateValidatorSharesExchRate {
 }
 
 message MsgUpdateValidatorSharesExchRateResponse {}
-
-// this line is used by starport scaffolding # proto/tx/message
