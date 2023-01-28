@@ -4,13 +4,12 @@ import (
 	"context"
 	"fmt"
 
-	"google.golang.org/protobuf/proto"
-
 	recordstypes "github.com/Stride-Labs/stride/v5/x/records/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	bankTypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	proto "github.com/cosmos/gogoproto/proto"
 
 	epochstypes "github.com/Stride-Labs/stride/v5/x/epochs/types"
 	"github.com/Stride-Labs/stride/v5/x/stakeibc/types"
@@ -108,7 +107,7 @@ func (k Keeper) GetRedemptionTransferMsg(ctx sdk.Context, userRedemptionRecord *
 		return nil, sdkerrors.Wrap(types.ErrInvalidHostZone, errMsg)
 	}
 
-	var msgs []sdk.Msg
+	var msgs []proto.Message
 	rrAmt := userRedemptionRecord.Amount
 	msgs = append(msgs, &bankTypes.MsgSend{
 		FromAddress: redemptionAccount.Address,

@@ -9,6 +9,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	stakingTypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	proto "github.com/cosmos/gogoproto/proto"
 	"github.com/spf13/cast"
 
 	"github.com/Stride-Labs/stride/v5/utils"
@@ -75,7 +76,7 @@ func (k msgServer) RebalanceValidators(goCtx context.Context, msg *types.MsgReba
 		return nil, types.ErrWeightsNotDifferent
 	}
 
-	var msgs []sdk.Msg
+	var msgs []proto.Message
 	delegationIca := hostZone.GetDelegationAccount()
 	if delegationIca == nil || delegationIca.GetAddress() == "" {
 		k.Logger(ctx).Error(fmt.Sprintf("Zone %s is missing a delegation address!", hostZone.ChainId))
