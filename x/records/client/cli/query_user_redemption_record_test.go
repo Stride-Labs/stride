@@ -28,14 +28,9 @@ func networkWithUserRedemptionRecordObjects(t *testing.T, n int) (*network.Netwo
 
 	for i := 0; i < n; i++ {
 		userRedemptionRecord := types.UserRedemptionRecord{
-<<<<<<< HEAD
 			Id:          strconv.Itoa(i),
-			Amount:      sdk.NewInt(int64(i)),
-			EpochNumber: sdk.ZeroInt(),
-=======
-			Id:     strconv.Itoa(i),
-			Amount: sdkmath.NewInt(int64(i)),
->>>>>>> main
+			Amount:      sdkmath.NewInt(int64(i)),
+			EpochNumber: sdkmath.ZeroInt(),
 		}
 		nullify.Fill(&userRedemptionRecord)
 		state.UserRedemptionRecordList = append(state.UserRedemptionRecordList, userRedemptionRecord)

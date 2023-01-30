@@ -30,15 +30,9 @@ type DelegatorSharesICQCallbackTestCase struct {
 	validArgs                DelegatorSharesICQCallbackArgs
 	numShares                sdk.Dec
 	slashPercentage          sdk.Dec
-<<<<<<< HEAD
-	expectedDelegationAmount sdk.Int
-	expectedSlashAmount      sdk.Int
-	expectedWeight           sdk.Int
-=======
 	expectedDelegationAmount sdkmath.Int
 	expectedSlashAmount      sdkmath.Int
-	expectedWeight           uint64
->>>>>>> main
+	expectedWeight           sdkmath.Int
 }
 
 // Mocks the query response that's returned from an ICQ for the number of shares for a given validator/delegator pair
@@ -65,21 +59,12 @@ func (s *KeeperTestSuite) SetupDelegatorSharesICQCallback() DelegatorSharesICQCa
 	// 1900 shares * 0.5 exchange rate = 950 tokens
 	// 1000 tokens - 950 token = 50 tokens slashed
 	// 50 slash tokens / 1000 initial tokens = 5% slash
-<<<<<<< HEAD
-	expectedTokensAfterSlash := sdk.NewInt(950)
-	expectedSlashAmount := tokensBeforeSlash.Sub(expectedTokensAfterSlash)
-	slashPercentage := sdk.MustNewDecFromStr("0.05")
-	weightBeforeSlash := sdk.NewInt(20)
-	expectedWeightAfterSlash := sdk.NewInt(19)
-	stakedBal := sdk.NewInt(10_000)
-=======
 	expectedTokensAfterSlash := sdkmath.NewInt(950)
 	expectedSlashAmount := tokensBeforeSlash.Sub(expectedTokensAfterSlash)
 	slashPercentage := sdk.MustNewDecFromStr("0.05")
-	weightBeforeSlash := uint64(20)
-	expectedWeightAfterSlash := uint64(19)
+	weightBeforeSlash := sdkmath.NewInt(20)
+	expectedWeightAfterSlash := sdkmath.NewInt(19)
 	stakedBal := sdkmath.NewInt(10_000)
->>>>>>> main
 
 	s.Require().Equal(numShares, sdk.NewDecFromInt(expectedTokensAfterSlash.Mul(sdkmath.NewInt(2))), "tokens, shares, and exchange rate aligned")
 	s.Require().Equal(slashPercentage, sdk.NewDecFromInt(expectedSlashAmount).Quo(sdk.NewDecFromInt(tokensBeforeSlash)), "expected slash percentage")
@@ -94,13 +79,8 @@ func (s *KeeperTestSuite) SetupDelegatorSharesICQCallback() DelegatorSharesICQCa
 			{
 				Name:          "val1",
 				Address:       "valoper1",
-<<<<<<< HEAD
-				Weight:        sdk.NewInt(1),
-				DelegationAmt: sdk.ZeroInt(),
-=======
-				Weight:        1,
+				Weight:        sdkmath.NewInt(1),
 				DelegationAmt: sdkmath.ZeroInt(),
->>>>>>> main
 			},
 			// This is the validator in question
 			{

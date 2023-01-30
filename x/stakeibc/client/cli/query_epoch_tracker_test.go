@@ -11,17 +11,11 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-<<<<<<< HEAD
 	"github.com/Stride-Labs/stride/v5/testutil/network"
 	"github.com/Stride-Labs/stride/v5/x/stakeibc/client/cli"
 	"github.com/Stride-Labs/stride/v5/x/stakeibc/types"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
-=======
-	"github.com/Stride-Labs/stride/v5/testutil/network"
-	"github.com/Stride-Labs/stride/v5/x/stakeibc/client/cli"
-	"github.com/Stride-Labs/stride/v5/x/stakeibc/types"
->>>>>>> main
+	sdkmath "cosmossdk.io/math"
 )
 
 // Prevent strconv unused error
@@ -59,7 +53,7 @@ func TestShowEpochTracker(t *testing.T) {
 			idEpochIdentifier: strideEpochId,
 
 			args: common,
-			obj:  types.EpochTracker{EpochIdentifier: strideEpochId, EpochNumber: sdk.NewInt(1)},
+			obj:  types.EpochTracker{EpochIdentifier: strideEpochId, EpochNumber: sdkmath.NewInt(1)},
 		},
 		{
 			desc:              "not found",
@@ -99,10 +93,10 @@ func TestListEpochTracker(t *testing.T) {
 	out, err := clitestutil.ExecTestCLICmd(ctx, cli.CmdListEpochTracker(), []string{})
 
 	expected := []types.EpochTracker{
-		{EpochIdentifier: "day", EpochNumber: sdk.NewInt(1)},
-		{EpochIdentifier: "mint", EpochNumber: sdk.NewInt(1)},
-		{EpochIdentifier: "stride_epoch", EpochNumber: sdk.NewInt(1)},
-		{EpochIdentifier: "week", EpochNumber: sdk.NewInt(1)},
+		{EpochIdentifier: "day", EpochNumber: sdkmath.NewInt(1)},
+		{EpochIdentifier: "mint", EpochNumber: sdkmath.NewInt(1)},
+		{EpochIdentifier: "stride_epoch", EpochNumber: sdkmath.NewInt(1)},
+		{EpochIdentifier: "week", EpochNumber: sdkmath.NewInt(1)},
 	}
 	require.NoError(t, err)
 

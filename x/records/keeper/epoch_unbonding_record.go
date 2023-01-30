@@ -4,6 +4,7 @@ import (
 	"encoding/binary"
 	"fmt"
 
+	sdkmath "cosmossdk.io/math"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -22,7 +23,7 @@ func (k Keeper) SetEpochUnbondingRecord(ctx sdk.Context, epochUnbondingRecord ty
 }
 
 // GetEpochUnbondingRecord returns a epochUnbondingRecord from its id
-func (k Keeper) GetEpochUnbondingRecord(ctx sdk.Context, epochNumber sdk.Int) (val types.EpochUnbondingRecord, found bool) {
+func (k Keeper) GetEpochUnbondingRecord(ctx sdk.Context, epochNumber sdkmath.Int) (val types.EpochUnbondingRecord, found bool) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.EpochUnbondingRecordKey))
 	b := store.Get(GetEpochUnbondingRecordIDBytes(epochNumber.Uint64()))
 	if b == nil {
@@ -33,7 +34,7 @@ func (k Keeper) GetEpochUnbondingRecord(ctx sdk.Context, epochNumber sdk.Int) (v
 }
 
 // RemoveEpochUnbondingRecord removes a epochUnbondingRecord from the store
-func (k Keeper) RemoveEpochUnbondingRecord(ctx sdk.Context, epochNumber sdk.Int) {
+func (k Keeper) RemoveEpochUnbondingRecord(ctx sdk.Context, epochNumber sdkmath.Int) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.EpochUnbondingRecordKey))
 	store.Delete(GetEpochUnbondingRecordIDBytes(epochNumber.Uint64()))
 }
@@ -65,7 +66,7 @@ func (k Keeper) GetAllPreviousEpochUnbondingRecords(ctx sdk.Context, epochNumber
 	for ; iterator.Valid(); iterator.Next() {
 		var val types.EpochUnbondingRecord
 		k.Cdc.MustUnmarshal(iterator.Value(), &val)
-		if val.EpochNumber.LT(sdk.NewIntFromUint64(epochNumber)) {
+		if val.EpochNumber.LT(sdkmath.NewIntFromUint64(epochNumber)) {
 			list = append(list, val)
 		}
 	}
@@ -86,7 +87,7 @@ func GetEpochUnbondingRecordIDFromBytes(bz []byte) uint64 {
 }
 
 // GetEpochUnbondingRecordByEpoch returns a epochUnbondingRecord from its epochNumber
-func (k Keeper) GetHostZoneUnbondingByChainId(ctx sdk.Context, epochNumber sdk.Int, chainId string) (val *types.HostZoneUnbonding, found bool) {
+func (k Keeper) GetHostZoneUnbondingByChainId(ctx sdk.Context, epochNumber sdkmath.Int, chainId string) (val *types.HostZoneUnbonding, found bool) {
 	epochUnbondingRecord, found := k.GetEpochUnbondingRecord(ctx, epochNumber)
 	if !found {
 		return nil, false
@@ -101,7 +102,7 @@ func (k Keeper) GetHostZoneUnbondingByChainId(ctx sdk.Context, epochNumber sdk.I
 }
 
 // Adds a HostZoneUnbonding to an EpochUnbondingRecord
-func (k Keeper) AddHostZoneToEpochUnbondingRecord(ctx sdk.Context, epochNumber sdk.Int, chainId string, hzu *types.HostZoneUnbonding) (val *types.EpochUnbondingRecord, success bool) {
+func (k Keeper) AddHostZoneToEpochUnbondingRecord(ctx sdk.Context, epochNumber sdkmath.Int, chainId string, hzu *types.HostZoneUnbonding) (val *types.EpochUnbondingRecord, success bool) {
 	epochUnbondingRecord, found := k.GetEpochUnbondingRecord(ctx, epochNumber)
 	if !found {
 		return nil, false
@@ -122,7 +123,7 @@ func (k Keeper) AddHostZoneToEpochUnbondingRecord(ctx sdk.Context, epochNumber s
 }
 
 // Updates the status for a given host zone across relevant epoch unbonding record IDs
-func (k Keeper) SetHostZoneUnbondings(ctx sdk.Context, chainId string, epochUnbondingRecordIds []sdk.Int, status types.HostZoneUnbonding_Status) error {
+func (k Keeper) SetHostZoneUnbondings(ctx sdk.Context, chainId string, epochUnbondingRecordIds []sdkmath.Int, status types.HostZoneUnbonding_Status) error {
 	for _, epochUnbondingRecordId := range epochUnbondingRecordIds {
 		k.Logger(ctx).Info(fmt.Sprintf("Updating host zone unbondings on EpochUnbondingRecord %d to status %s", epochUnbondingRecordId, status.String()))
 		// fetch the host zone unbonding

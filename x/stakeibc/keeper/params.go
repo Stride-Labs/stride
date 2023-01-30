@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/Stride-Labs/stride/v5/x/stakeibc/types"
@@ -17,8 +18,8 @@ func (k Keeper) SetParams(ctx sdk.Context, params types.Params) {
 	k.paramstore.SetParamSet(ctx, &params)
 }
 
-func (k *Keeper) GetParam(ctx sdk.Context, key []byte) sdk.Int {
-	var out sdk.Int
+func (k *Keeper) GetParam(ctx sdk.Context, key []byte) sdkmath.Int {
+	var out sdkmath.Int
 	k.paramstore.Get(ctx, key, &out)
 	return out
 }

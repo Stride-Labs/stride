@@ -3,30 +3,16 @@ package keeper
 import (
 	"fmt"
 
-<<<<<<< HEAD
-	"github.com/Stride-Labs/stride/v5/utils"
-	"github.com/Stride-Labs/stride/v5/x/icacallbacks"
-	recordstypes "github.com/Stride-Labs/stride/v5/x/records/types"
-	"github.com/Stride-Labs/stride/v5/x/stakeibc/types"
-=======
-	"github.com/spf13/cast"
-
 	"github.com/Stride-Labs/stride/v5/utils"
 	recordstypes "github.com/Stride-Labs/stride/v5/x/records/types"
 	"github.com/Stride-Labs/stride/v5/x/stakeibc/types"
->>>>>>> main
 
 	icacallbackstypes "github.com/Stride-Labs/stride/v5/x/icacallbacks/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-<<<<<<< HEAD
-	channeltypes "github.com/cosmos/ibc-go/v3/modules/core/04-channel/types"
-	//nolint:staticcheck
-=======
 	channeltypes "github.com/cosmos/ibc-go/v5/modules/core/04-channel/types"
-	"github.com/golang/protobuf/proto" //nolint:staticcheck
->>>>>>> main
+	//nolint:staticcheck
 )
 
 // Marshalls delegate callback arguments
@@ -50,7 +36,6 @@ func (k Keeper) UnmarshalDelegateCallbackArgs(ctx sdk.Context, delegateCallback 
 }
 
 // ICA Callback after delegating deposit records
-<<<<<<< HEAD
 //
 //	  If successful:
 //	     * Updates deposit record status and records delegation changes on the host zone and validators
@@ -58,16 +43,7 @@ func (k Keeper) UnmarshalDelegateCallbackArgs(ctx sdk.Context, delegateCallback 
 //	     * Does nothing
 //	  If failure:
 //			* Reverts deposit record status
-func DelegateCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ack *channeltypes.Acknowledgement, args []byte) error {
-=======
-//   If successful:
-//      * Updates deposit record status and records delegation changes on the host zone and validators
-//   If timeout:
-//      * Does nothing
-//   If failure:
-//		* Reverts deposit record status
 func DelegateCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ackResponse *icacallbackstypes.AcknowledgementResponse, args []byte) error {
->>>>>>> main
 	// Deserialize the callback args
 	delegateCallback, err := k.UnmarshalDelegateCallbackArgs(ctx, args)
 	if err != nil {

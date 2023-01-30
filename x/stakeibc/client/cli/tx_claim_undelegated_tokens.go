@@ -9,13 +9,9 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	"github.com/spf13/cobra"
 
-<<<<<<< HEAD
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkmath "cosmossdk.io/math"
 
 	"github.com/Stride-Labs/stride/v5/x/stakeibc/types"
-=======
-	"github.com/Stride-Labs/stride/v5/x/stakeibc/types"
->>>>>>> main
 )
 
 var _ = strconv.Itoa(0)
@@ -27,9 +23,9 @@ func CmdClaimUndelegatedTokens() *cobra.Command {
 		Args:  cobra.ExactArgs(3),
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
 			argHostZone := args[0]
-			argEpoch, ok := sdk.NewIntFromString(args[1])
+			argEpoch, ok := sdkmath.NewIntFromString(args[1])
 			if !ok {
-				return fmt.Errorf("Fail to parse arg to sdk.Int (%v)", args[1])
+				return fmt.Errorf("Fail to parse arg to sdkmath.Int (%v)", args[1])
 			}
 			argSender := args[2]
 

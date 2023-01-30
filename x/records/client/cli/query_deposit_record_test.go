@@ -11,19 +11,12 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-<<<<<<< HEAD
 	"github.com/Stride-Labs/stride/v5/testutil/network"
 	"github.com/Stride-Labs/stride/v5/testutil/nullify"
 	"github.com/Stride-Labs/stride/v5/x/records/client/cli"
 	"github.com/Stride-Labs/stride/v5/x/records/types"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
-=======
-	"github.com/Stride-Labs/stride/v5/testutil/network"
-	"github.com/Stride-Labs/stride/v5/testutil/nullify"
-	"github.com/Stride-Labs/stride/v5/x/records/client/cli"
-	"github.com/Stride-Labs/stride/v5/x/records/types"
->>>>>>> main
+	sdkmath "cosmossdk.io/math"
 )
 
 func networkWithDepositRecordObjects(t *testing.T, n int) (*network.Network, []types.DepositRecord) {
@@ -34,7 +27,7 @@ func networkWithDepositRecordObjects(t *testing.T, n int) (*network.Network, []t
 
 	for i := 0; i < n; i++ {
 		depositRecord := types.DepositRecord{
-			Id: sdk.NewIntFromUint64(uint64(i)),
+			Id: sdkmath.NewIntFromUint64(uint64(i)),
 		}
 		nullify.Fill(&depositRecord)
 		state.DepositRecordList = append(state.DepositRecordList, depositRecord)

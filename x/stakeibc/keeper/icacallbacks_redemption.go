@@ -10,13 +10,8 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-<<<<<<< HEAD
-	channeltypes "github.com/cosmos/ibc-go/v3/modules/core/04-channel/types"
-	//nolint:staticcheck
-=======
 	channeltypes "github.com/cosmos/ibc-go/v5/modules/core/04-channel/types"
-	"github.com/golang/protobuf/proto" //nolint:staticcheck
->>>>>>> main
+	//nolint:staticcheck
 )
 
 // Marshalls redemption callback arguments
@@ -40,7 +35,6 @@ func (k Keeper) UnmarshalRedemptionCallbackArgs(ctx sdk.Context, redemptionCallb
 }
 
 // ICA Callback after undelegating
-<<<<<<< HEAD
 //
 //	  If successful:
 //	     * Updates epoch unbonding record status
@@ -48,16 +42,7 @@ func (k Keeper) UnmarshalRedemptionCallbackArgs(ctx sdk.Context, redemptionCallb
 //	     * Does nothing
 //	  If failure:
 //			* Reverts epoch unbonding record status
-func RedemptionCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ack *channeltypes.Acknowledgement, args []byte) error {
-=======
-//   If successful:
-//      * Updates epoch unbonding record status
-//   If timeout:
-//      * Does nothing
-//   If failure:
-//		* Reverts epoch unbonding record status
 func RedemptionCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ackResponse *icacallbackstypes.AcknowledgementResponse, args []byte) error {
->>>>>>> main
 	// Fetch callback args
 	redemptionCallback, err := k.UnmarshalRedemptionCallbackArgs(ctx, args)
 	if err != nil {

@@ -2,6 +2,7 @@ package keeper_test
 
 import (
 	sdkmath "cosmossdk.io/math"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	ibctesting "github.com/cosmos/ibc-go/v5/testing"
 	_ "github.com/stretchr/testify/suite"
 
@@ -14,7 +15,7 @@ import (
 type SweepUnbondedTokensTestCase struct {
 	epochUnbondingRecords []recordtypes.EpochUnbondingRecord
 	hostZones             []stakeibc.HostZone
-	lightClientTime       sdk.Int
+	lightClientTime       sdkmath.Int
 }
 
 func (s *KeeperTestSuite) SetupSweepUnbondedTokens() SweepUnbondedTokensTestCase {
@@ -23,13 +24,8 @@ func (s *KeeperTestSuite) SetupSweepUnbondedTokens() SweepUnbondedTokensTestCase
 	gaiaValidators := []*stakeibc.Validator{
 		{
 			Address:       "cosmos_VALIDATOR",
-<<<<<<< HEAD
-			DelegationAmt: sdk.NewInt(5_000_000),
-			Weight:        sdk.NewInt(10),
-=======
 			DelegationAmt: sdkmath.NewInt(5_000_000),
-			Weight:        uint64(10),
->>>>>>> main
+			Weight:        sdkmath.NewInt(10),
 		},
 	}
 	gaiaDelegationAccount := stakeibc.ICAAccount{
@@ -43,13 +39,8 @@ func (s *KeeperTestSuite) SetupSweepUnbondedTokens() SweepUnbondedTokensTestCase
 	osmoValidators := []*stakeibc.Validator{
 		{
 			Address:       "osmo_VALIDATOR",
-<<<<<<< HEAD
-			DelegationAmt: sdk.NewInt(5_000_000),
-			Weight:        sdk.NewInt(10),
-=======
 			DelegationAmt: sdkmath.NewInt(5_000_000),
-			Weight:        uint64(10),
->>>>>>> main
+			Weight:        sdkmath.NewInt(10),
 		},
 	}
 	osmoDelegationAccount := stakeibc.ICAAccount{

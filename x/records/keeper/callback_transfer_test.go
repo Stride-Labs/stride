@@ -3,6 +3,7 @@ package keeper_test
 import (
 	"fmt"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	channeltypes "github.com/cosmos/ibc-go/v5/modules/core/04-channel/types"
 	_ "github.com/stretchr/testify/suite"
 
@@ -128,13 +129,8 @@ func (s *KeeperTestSuite) TestTransferCallback_DepositRecordNotFound() {
 	// Remove deposit record from store
 	s.App.RecordsKeeper.RemoveDepositRecord(s.Ctx, tc.initialState.callbackArgs.DepositRecordId)
 
-<<<<<<< HEAD
-	err := recordskeeper.TransferCallback(s.App.RecordsKeeper, s.Ctx, tc.validArgs.packet, tc.validArgs.ack, tc.validArgs.args)
-	s.Require().EqualError(err, fmt.Sprintf("deposit record not found %s: unknown deposit record", tc.initialState.callbackArgs.DepositRecordId.String()))
-=======
 	err := recordskeeper.TransferCallback(s.App.RecordsKeeper, s.Ctx, tc.validArgs.packet, tc.validArgs.ackResponse, tc.validArgs.args)
-	s.Require().EqualError(err, fmt.Sprintf("deposit record not found %d: unknown deposit record", tc.initialState.callbackArgs.DepositRecordId))
->>>>>>> main
+	s.Require().EqualError(err, fmt.Sprintf("deposit record not found %s: unknown deposit record", tc.initialState.callbackArgs.DepositRecordId.String()))
 }
 
 func (s *KeeperTestSuite) TestTransferCallback_PacketUnmarshallingError() {

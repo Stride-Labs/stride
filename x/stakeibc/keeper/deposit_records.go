@@ -7,14 +7,9 @@ import (
 	ibctransfertypes "github.com/cosmos/ibc-go/v5/modules/apps/transfer/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-<<<<<<< HEAD
-	ibctypes "github.com/cosmos/ibc-go/v3/modules/apps/transfer/types"
-	clienttypes "github.com/cosmos/ibc-go/v3/modules/core/02-client/types"
-=======
+
 	ibctypes "github.com/cosmos/ibc-go/v5/modules/apps/transfer/types"
 	clienttypes "github.com/cosmos/ibc-go/v5/modules/core/02-client/types"
-	"github.com/spf13/cast"
->>>>>>> main
 
 	"github.com/Stride-Labs/stride/v5/utils"
 	recordstypes "github.com/Stride-Labs/stride/v5/x/records/types"
@@ -22,7 +17,7 @@ import (
 )
 
 // Create a new deposit record for each host zone for the given epoch
-func (k Keeper) CreateDepositRecordsForEpoch(ctx sdk.Context, epochNumber sdk.Int) {
+func (k Keeper) CreateDepositRecordsForEpoch(ctx sdk.Context, epochNumber sdkmath.Int) {
 	k.Logger(ctx).Info(fmt.Sprintf("Creating Deposit Records for Epoch %d", epochNumber))
 
 	for _, hostZone := range k.GetAllHostZone(ctx) {
@@ -40,7 +35,7 @@ func (k Keeper) CreateDepositRecordsForEpoch(ctx sdk.Context, epochNumber sdk.In
 }
 
 // Iterate each deposit record marked TRANSFER_QUEUE and IBC transfer tokens from the Stride controller account to the delegation ICAs on each host zone
-func (k Keeper) TransferExistingDepositsToHostZones(ctx sdk.Context, epochNumber sdk.Int, depositRecords []recordstypes.DepositRecord) {
+func (k Keeper) TransferExistingDepositsToHostZones(ctx sdk.Context, epochNumber sdkmath.Int, depositRecords []recordstypes.DepositRecord) {
 	k.Logger(ctx).Info("Transfering deposit records...")
 
 	transferDepositRecords := utils.FilterDepositRecords(depositRecords, func(record recordstypes.DepositRecord) (condition bool) {
@@ -56,11 +51,8 @@ func (k Keeper) TransferExistingDepositsToHostZones(ctx sdk.Context, epochNumber
 			"Processing deposit record %d: %v%s", depositRecord.Id, depositRecord.Amount, depositRecord.Denom))
 
 		// if a TRANSFER_QUEUE record has 0 balance and was created in the previous epoch, it's safe to remove since it will never be updated or used
-<<<<<<< HEAD
-		if depositRecord.Amount.LTE(sdk.ZeroInt()) && depositRecord.DepositEpochNumber.LT(epochNumber) {
-=======
-		if depositRecord.Amount.LTE(sdkmath.ZeroInt()) && depositRecord.DepositEpochNumber < epochNumber {
->>>>>>> main
+
+		if depositRecord.Amount.LTE(sdkmath.ZeroInt()) && depositRecord.DepositEpochNumber.LT(epochNumber) {
 			k.Logger(ctx).Info(utils.LogWithHostZone(depositRecord.HostZoneId, "Empty deposit record - Removing."))
 			k.RecordsKeeper.RemoveDepositRecord(ctx, depositRecord.Id)
 			continue
@@ -106,7 +98,7 @@ func (k Keeper) TransferExistingDepositsToHostZones(ctx sdk.Context, epochNumber
 }
 
 // Iterate each deposit record marked DELEGATION_QUEUE and use the delegation ICA to delegate on the host zone
-func (k Keeper) StakeExistingDepositsOnHostZones(ctx sdk.Context, epochNumber sdk.Int, depositRecords []recordstypes.DepositRecord) {
+func (k Keeper) StakeExistingDepositsOnHostZones(ctx sdk.Context, epochNumber sdkmath.Int, depositRecords []recordstypes.DepositRecord) {
 	k.Logger(ctx).Info("Staking deposit records...")
 
 	stakeDepositRecords := utils.FilterDepositRecords(depositRecords, func(record recordstypes.DepositRecord) (condition bool) {

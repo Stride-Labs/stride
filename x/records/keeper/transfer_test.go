@@ -22,8 +22,8 @@ func (s *KeeperTestSuite) SetupTransfer() TransferTestCase {
 	s.CreateTransferChannel(chainId)
 	balanceToTransfer := sdkmath.NewInt(1_000_000)
 	depositRecord := types.DepositRecord{
-		Id:                 sdk.NewInt(1),
-		DepositEpochNumber: sdk.NewInt(1),
+		Id:                 sdkmath.NewInt(1),
+		DepositEpochNumber: sdkmath.NewInt(1),
 		HostZoneId:         chainId,
 		Amount:             balanceToTransfer,
 		Status:             types.DepositRecord_TRANSFER_QUEUE,

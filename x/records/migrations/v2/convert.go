@@ -9,12 +9,12 @@ import (
 
 func convertToNewDepositRecord(oldDepositRecord oldrecordstypes.DepositRecord) recordstypes.DepositRecord {
 	return recordstypes.DepositRecord{
-		Id:                 oldDepositRecord.Id,
+		Id:                 sdkmath.NewIntFromUint64(oldDepositRecord.Id),
 		Amount:             sdkmath.NewInt(oldDepositRecord.Amount),
 		Denom:              oldDepositRecord.Denom,
 		HostZoneId:         oldDepositRecord.HostZoneId,
 		Status:             recordstypes.DepositRecord_Status(oldDepositRecord.Status),
-		DepositEpochNumber: oldDepositRecord.DepositEpochNumber,
+		DepositEpochNumber: sdkmath.NewIntFromUint64(oldDepositRecord.DepositEpochNumber),
 		Source:             recordstypes.DepositRecord_Source(oldDepositRecord.Source),
 	}
 }
@@ -25,7 +25,7 @@ func convertToNewHostZoneUnbonding(oldHostZoneUnbondings oldrecordstypes.HostZon
 		NativeTokenAmount:     sdkmath.NewIntFromUint64(oldHostZoneUnbondings.NativeTokenAmount),
 		Denom:                 oldHostZoneUnbondings.Denom,
 		HostZoneId:            oldHostZoneUnbondings.HostZoneId,
-		UnbondingTime:         oldHostZoneUnbondings.UnbondingTime,
+		UnbondingTime:         sdkmath.NewIntFromUint64(oldHostZoneUnbondings.UnbondingTime),
 		Status:                recordstypes.HostZoneUnbonding_Status(oldHostZoneUnbondings.Status),
 		UserRedemptionRecords: oldHostZoneUnbondings.UserRedemptionRecords,
 	}
@@ -48,7 +48,7 @@ func convertToNewUserRedemptionRecord(oldRedemptionRecord oldrecordstypes.UserRe
 		Amount:         sdkmath.NewIntFromUint64(oldRedemptionRecord.Amount),
 		Denom:          oldRedemptionRecord.Denom,
 		HostZoneId:     oldRedemptionRecord.HostZoneId,
-		EpochNumber:    oldRedemptionRecord.EpochNumber,
+		EpochNumber:    sdkmath.NewIntFromUint64(oldRedemptionRecord.EpochNumber),
 		ClaimIsPending: oldRedemptionRecord.ClaimIsPending,
 	}
 }

@@ -28,12 +28,12 @@ func TestConvertDepositRecord(t *testing.T) {
 		Source:             oldrecordstypes.DepositRecord_WITHDRAWAL_ICA,
 	}
 	expectedNewDepositRecord := recordstypes.DepositRecord{
-		Id:                 id,
+		Id:                 sdkmath.NewIntFromUint64(id),
 		Amount:             sdkmath.NewInt(1),
 		Denom:              denom,
 		HostZoneId:         hostZoneId,
 		Status:             recordstypes.DepositRecord_DELEGATION_QUEUE,
-		DepositEpochNumber: epochNumber,
+		DepositEpochNumber: sdkmath.NewIntFromUint64(epochNumber),
 		Source:             recordstypes.DepositRecord_WITHDRAWAL_ICA,
 	}
 
@@ -62,7 +62,7 @@ func TestConvertHostZoneUnbonding(t *testing.T) {
 		NativeTokenAmount:     sdkmath.NewInt(2),
 		Denom:                 denom,
 		HostZoneId:            hostZoneId,
-		UnbondingTime:         unbondingTime,
+		UnbondingTime:         sdkmath.NewIntFromUint64(unbondingTime),
 		Status:                recordstypes.HostZoneUnbonding_CLAIMABLE,
 		UserRedemptionRecords: userRedemptionRecords,
 	}
@@ -126,7 +126,7 @@ func TestConvertUserRedemptionRecord(t *testing.T) {
 		Amount:         sdkmath.NewInt(1),
 		Denom:          denom,
 		HostZoneId:     hostZoneId,
-		EpochNumber:    epochNumber,
+		EpochNumber:    sdkmath.NewIntFromUint64(epochNumber),
 		ClaimIsPending: claimIsPending,
 	}
 

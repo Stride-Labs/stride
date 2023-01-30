@@ -42,7 +42,6 @@ func (k Keeper) UnmarshalUndelegateCallbackArgs(ctx sdk.Context, undelegateCallb
 }
 
 // ICA Callback after undelegating
-<<<<<<< HEAD
 //
 //	  If successful:
 //	     * Updates epoch unbonding record status
@@ -52,18 +51,7 @@ func (k Keeper) UnmarshalUndelegateCallbackArgs(ctx sdk.Context, undelegateCallb
 //	     * Does nothing
 //	  If failure:
 //			* Reverts epoch unbonding record status
-func UndelegateCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ack *channeltypes.Acknowledgement, args []byte) error {
-=======
-//   If successful:
-//      * Updates epoch unbonding record status
-// 		* Records delegation changes on the host zone and validators,
-//      * Burns stTokens
-//   If timeout:
-//      * Does nothing
-//   If failure:
-//		* Reverts epoch unbonding record status
 func UndelegateCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ackResponse *icacallbackstypes.AcknowledgementResponse, args []byte) error {
->>>>>>> main
 	// Fetch callback args
 	undelegateCallback, err := k.UnmarshalUndelegateCallbackArgs(ctx, args)
 	if err != nil {
@@ -215,16 +203,6 @@ func (k Keeper) UpdateHostZoneUnbondings(
 		hostZoneUnbonding.UnbondingTime = sdk.NewIntFromUint64(cast.ToUint64(latestCompletionTime.UnixNano()))
 		updatedEpochUnbondingRecord, success := k.RecordsKeeper.AddHostZoneToEpochUnbondingRecord(ctx, epochUnbondingRecord.EpochNumber, chainId, hostZoneUnbonding)
 		if !success {
-<<<<<<< HEAD
-			k.Logger(ctx).Error(fmt.Sprintf("Failed to set host zone epoch unbonding record: epochNumber %s, chainId %s, hostZoneUnbonding %+v",
-				epochUnbondingRecord.EpochNumber.String(), chainId, hostZoneUnbonding))
-			return sdk.ZeroInt(), sdkerrors.Wrapf(types.ErrEpochNotFound, "couldn't set host zone epoch unbonding record. err: %s", err.Error())
-		}
-		k.RecordsKeeper.SetEpochUnbondingRecord(ctx, *updatedEpochUnbondingRecord)
-
-		k.Logger(ctx).Info(utils.LogCallbackWithHostZone(chainId, ICACallbackID_Undelegate,
-			"Epoch Unbonding Record: %s - Seting unbonding time to %s", epochNumber.String(), latestCompletionTime.String()))
-=======
 			k.Logger(ctx).Error(fmt.Sprintf("Failed to set host zone epoch unbonding record: epochNumber %d, chainId %s, hostZoneUnbonding %+v",
 				epochUnbondingRecord.EpochNumber, chainId, hostZoneUnbonding))
 			return sdkmath.ZeroInt(), sdkerrors.Wrapf(types.ErrEpochNotFound, "couldn't set host zone epoch unbonding record. err: %s", err.Error())
@@ -233,7 +211,6 @@ func (k Keeper) UpdateHostZoneUnbondings(
 
 		k.Logger(ctx).Info(utils.LogICACallbackWithHostZone(chainId, ICACallbackID_Undelegate,
 			"Epoch Unbonding Record: %d - Seting unbonding time to %s", epochNumber, latestCompletionTime.String()))
->>>>>>> main
 	}
 	return stTokenBurnAmount, nil
 }

@@ -3,12 +3,9 @@ package keeper_test
 import (
 	"fmt"
 
-<<<<<<< HEAD
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	ibctesting "github.com/cosmos/ibc-go/v3/testing"
-=======
+	sdkmath "cosmossdk.io/math"
+
 	ibctesting "github.com/cosmos/ibc-go/v5/testing"
->>>>>>> main
 	_ "github.com/stretchr/testify/suite"
 
 	epochtypes "github.com/Stride-Labs/stride/v5/x/epochs/types"
@@ -20,14 +17,14 @@ import (
 
 type QueryValidatorExchangeRateTestCase struct {
 	msg                types.MsgUpdateValidatorSharesExchRate
-	currentEpoch       sdk.Int
+	currentEpoch       sdkmath.Int
 	hostZone           types.HostZone
 	strideEpochTracker types.EpochTracker
 	dayEpochTracker    types.EpochTracker
 }
 
 func (s *KeeperTestSuite) SetupQueryValidatorExchangeRate() QueryValidatorExchangeRateTestCase {
-	currentEpoch := sdk.NewInt(1)
+	currentEpoch := sdkmath.NewInt(1)
 	valoperAddr := "cosmosvaloper133lfs9gcpxqj6er3kx605e3v9lqp2pg5syhvsz"
 
 	// set up IBC
@@ -47,8 +44,8 @@ func (s *KeeperTestSuite) SetupQueryValidatorExchangeRate() QueryValidatorExchan
 	strideEpochTracker := types.EpochTracker{
 		EpochIdentifier:    epochtypes.STRIDE_EPOCH,
 		EpochNumber:        currentEpoch,
-		Duration:           sdk.NewInt(10_000_000_000),                                                         // 10 second epochs
-		NextEpochStartTime: sdk.NewIntFromUint64(uint64(s.Coordinator.CurrentTime.UnixNano() + 1_000_000_000)), // epoch ends in 1 second
+		Duration:           sdkmath.NewInt(10_000_000_000),                                                         // 10 second epochs
+		NextEpochStartTime: sdkmath.NewIntFromUint64(uint64(s.Coordinator.CurrentTime.UnixNano() + 1_000_000_000)), // epoch ends in 1 second
 	}
 	s.App.StakeibcKeeper.SetEpochTracker(s.Ctx, strideEpochTracker)
 
@@ -56,8 +53,8 @@ func (s *KeeperTestSuite) SetupQueryValidatorExchangeRate() QueryValidatorExchan
 	dayEpochTracker := types.EpochTracker{
 		EpochIdentifier:    epochtypes.DAY_EPOCH,
 		EpochNumber:        currentEpoch,
-		Duration:           sdk.NewInt(40_000_000_000),                                                          // 40 second epochs
-		NextEpochStartTime: sdk.NewIntFromUint64(uint64(s.Coordinator.CurrentTime.UnixNano() + 20_000_000_000)), // day ends in 20 second
+		Duration:           sdkmath.NewInt(40_000_000_000),                                                          // 40 second epochs
+		NextEpochStartTime: sdkmath.NewIntFromUint64(uint64(s.Coordinator.CurrentTime.UnixNano() + 20_000_000_000)), // day ends in 20 second
 	}
 	s.App.StakeibcKeeper.SetEpochTracker(s.Ctx, dayEpochTracker)
 
@@ -91,7 +88,7 @@ func (s *KeeperTestSuite) TestQueryValidatorExchangeRate_BeforeBufferWindow() {
 
 	// set the time to be 50% through the stride_epoch
 	strideEpochTracker := tc.strideEpochTracker
-	strideEpochTracker.NextEpochStartTime = sdk.NewIntFromUint64(uint64(s.Coordinator.CurrentTime.UnixNano())).Add((strideEpochTracker.Duration).Quo(sdk.NewInt(2))) // 50% through the epoch
+	strideEpochTracker.NextEpochStartTime = sdkmath.NewIntFromUint64(uint64(s.Coordinator.CurrentTime.UnixNano())).Add((strideEpochTracker.Duration).Quo(sdkmath.NewInt(2))) // 50% through the epoch
 	s.App.StakeibcKeeper.SetEpochTracker(s.Ctx, strideEpochTracker)
 
 	resp, err := s.App.StakeibcKeeper.QueryValidatorExchangeRate(s.Ctx, &tc.msg)
@@ -157,7 +154,7 @@ type QueryDelegationsIcqTestCase struct {
 }
 
 func (s *KeeperTestSuite) SetupQueryDelegationsIcq() QueryDelegationsIcqTestCase {
-	currentEpoch := sdk.NewInt(1)
+	currentEpoch := sdkmath.NewInt(1)
 	valoperAddr := "cosmosvaloper133lfs9gcpxqj6er3kx605e3v9lqp2pg5syhvsz"
 
 	// set up IBC
@@ -182,8 +179,8 @@ func (s *KeeperTestSuite) SetupQueryDelegationsIcq() QueryDelegationsIcqTestCase
 	strideEpochTracker := types.EpochTracker{
 		EpochIdentifier:    epochtypes.STRIDE_EPOCH,
 		EpochNumber:        currentEpoch,
-		Duration:           sdk.NewInt(10_000_000_000),                                                         // 10 second epochs
-		NextEpochStartTime: sdk.NewIntFromUint64(uint64(s.Coordinator.CurrentTime.UnixNano() + 1_000_000_000)), // epoch ends in 1 second
+		Duration:           sdkmath.NewInt(10_000_000_000),                                                         // 10 second epochs
+		NextEpochStartTime: sdkmath.NewIntFromUint64(uint64(s.Coordinator.CurrentTime.UnixNano() + 1_000_000_000)), // epoch ends in 1 second
 	}
 	s.App.StakeibcKeeper.SetEpochTracker(s.Ctx, strideEpochTracker)
 
@@ -191,8 +188,8 @@ func (s *KeeperTestSuite) SetupQueryDelegationsIcq() QueryDelegationsIcqTestCase
 	dayEpochTracker := types.EpochTracker{
 		EpochIdentifier:    epochtypes.DAY_EPOCH,
 		EpochNumber:        currentEpoch,
-		Duration:           sdk.NewInt(40_000_000_000),                                                          // 40 second epochs
-		NextEpochStartTime: sdk.NewIntFromUint64(uint64(s.Coordinator.CurrentTime.UnixNano() + 20_000_000_000)), // day ends in 20 second
+		Duration:           sdkmath.NewInt(40_000_000_000),                                                          // 40 second epochs
+		NextEpochStartTime: sdkmath.NewIntFromUint64(uint64(s.Coordinator.CurrentTime.UnixNano() + 20_000_000_000)), // day ends in 20 second
 	}
 	s.App.StakeibcKeeper.SetEpochTracker(s.Ctx, dayEpochTracker)
 
@@ -237,7 +234,7 @@ func (s *KeeperTestSuite) TestQueryDelegationsIcq_BeforeBufferWindow() {
 
 	// set the time to be 50% through the stride_epoch
 	strideEpochTracker := tc.strideEpochTracker
-	strideEpochTracker.NextEpochStartTime = sdk.NewIntFromUint64(uint64(s.Coordinator.CurrentTime.UnixNano() + strideEpochTracker.Duration.Int64()/2)) // 50% through the epoch
+	strideEpochTracker.NextEpochStartTime = sdkmath.NewIntFromUint64(uint64(s.Coordinator.CurrentTime.UnixNano() + strideEpochTracker.Duration.Int64()/2)) // 50% through the epoch
 	s.App.StakeibcKeeper.SetEpochTracker(s.Ctx, strideEpochTracker)
 
 	err := s.App.StakeibcKeeper.QueryDelegationsIcq(s.Ctx, tc.hostZone, tc.valoperAddr)

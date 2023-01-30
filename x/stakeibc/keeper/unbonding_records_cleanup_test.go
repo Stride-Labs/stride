@@ -2,6 +2,7 @@ package keeper_test
 
 import (
 	sdkmath "cosmossdk.io/math"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	_ "github.com/stretchr/testify/suite"
 
 	recordtypes "github.com/Stride-Labs/stride/v5/x/records/types"
@@ -30,7 +31,7 @@ func (s *KeeperTestSuite) SetupCleanupEpochUnbondingRecords() CleanupEpochUnbond
 	// list of epoch unbonding records
 	epochUnbondingRecords := []recordtypes.EpochUnbondingRecord{
 		{
-			EpochNumber: sdk.ZeroInt(),
+			EpochNumber: sdkmath.ZeroInt(),
 			HostZoneUnbondings: []*recordtypes.HostZoneUnbonding{
 				{
 					HostZoneId:        HostChainId,

@@ -1,12 +1,6 @@
 package keeper
 
 import (
-<<<<<<< HEAD
-	"fmt"
-	"math"
-
-=======
->>>>>>> main
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
@@ -69,17 +63,9 @@ func DelegatorSharesCallback(k Keeper, ctx sdk.Context, args []byte, query icqty
 	if !found {
 		return sdkerrors.Wrapf(sdkerrors.ErrNotFound, "unable to get epoch tracker for epoch (%s)", epochtypes.STRIDE_EPOCH)
 	}
-<<<<<<< HEAD
-	if !validator.InternalExchangeRate.EpochNumber.Equal(strideEpochTracker.EpochNumber) {
-		errMsg := fmt.Sprintf("DelegationCallback: validator (%s) internal exchange rate has not been updated this epoch (epoch #%s)",
-			validator.Address, strideEpochTracker.EpochNumber.String())
-		k.Logger(ctx).Error(errMsg)
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, errMsg)
-=======
 	if validator.InternalExchangeRate.EpochNumber != strideEpochTracker.EpochNumber {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest,
-			"validator (%s) internal exchange rate has not been updated this epoch (epoch #%d)", validator.Address, strideEpochTracker.EpochNumber)
->>>>>>> main
+			"validator (%s) internal exchange rate has not been updated this epoch (epoch #%s)", validator.Address, strideEpochTracker.EpochNumber.String())
 	}
 
 	// Calculate the number of tokens delegated (using the internal exchange rate)
@@ -102,15 +88,6 @@ func DelegatorSharesCallback(k Keeper, ctx sdk.Context, args []byte, query icqty
 	// NOTE:  we assume any decrease in delegation amt that's not tracked via records is a slash
 
 	// Get slash percentage
-<<<<<<< HEAD
-	slashAmount := validator.DelegationAmt.Sub(validatorTokens)
-	maxBound := sdk.NewInt(math.MaxInt64)
-	weight := validator.Weight
-	if weight.GTE(maxBound) {
-		errMsg := "unable to convert validator weight to int64"
-		k.Logger(ctx).Error(errMsg)
-		return sdkerrors.Wrapf(types.ErrIntCast, errMsg)
-=======
 	slashAmount := validator.DelegationAmt.Sub(delegatedTokens)
 	slashPct := sdk.NewDecFromInt(slashAmount).Quo(sdk.NewDecFromInt(validator.DelegationAmt))
 	k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_Delegation,
@@ -118,47 +95,23 @@ func DelegatorSharesCallback(k Keeper, ctx sdk.Context, args []byte, query icqty
 		validator.Address, queriedDelgation.DelegatorAddress, validator.DelegationAmt, delegatedTokens, slashAmount, slashPct))
 
 	// Abort if the slash was greater than the safety threshold
-	slashThreshold, err := cast.ToInt64E(k.GetParam(ctx, types.KeySafetyMaxSlashPercent))
-	if err != nil {
-		return err
-	}
-	slashThresholdDecimal := sdk.NewDec(slashThreshold).Quo(sdk.NewDec(100))
+	slashThreshold := k.GetParam(ctx, types.KeySafetyMaxSlashPercent)
+
+	slashThresholdDecimal := sdk.MustNewDecFromStr(slashThreshold.String()).Quo(sdk.NewDec(100))
 	if slashPct.GT(slashThresholdDecimal) {
 		return sdkerrors.Wrapf(types.ErrSlashExceedsSafetyThreshold,
 			"Validator slashed but ABORTING update, slash (%v) is greater than safety threshold (%v)", slashPct, slashThresholdDecimal)
 	}
 
 	// Update the validator weight and delegation reflect to reflect the slash
-	weight, err := cast.ToInt64E(validator.Weight)
+	weight := validator.Weight
 	if err != nil {
 		return sdkerrors.Wrapf(types.ErrIntCast, "unable to convert validator weight to int64, err: %s", err.Error())
->>>>>>> main
 	}
-	weightAdjustment := sdk.NewDecFromInt(delegatedTokens).Quo(sdk.NewDecFromInt(validator.DelegationAmt))
+	weightAdjustment := sdk.MustNewDecFromStr(delegatedTokens.String()).Quo(sdk.NewDecFromInt(validator.DelegationAmt))
 
-<<<<<<< HEAD
-	slashPct := sdk.NewDecFromInt(slashAmount).Quo(sdk.NewDecFromInt(validator.DelegationAmt))
-	k.Logger(ctx).Info(fmt.Sprintf("ICQ'd Delegation Amount Mismatch, HostZone: %s, Validator: %s, Delegator: %s, Records Tokens: %v, Tokens from ICQ %v, Slash Amount: %v, Slash Pct: %v!",
-		hostZone.ChainId, validator.Address, queriedDelgation.DelegatorAddress, validator.DelegationAmt, validatorTokens, slashAmount, slashPct))
+	validator.Weight = sdk.MustNewDecFromStr(weight.String()).Mul(weightAdjustment).TruncateInt()
 
-	// Abort if the slash was greater than 10%
-	tenPercent := sdk.NewDec(10).Quo(sdk.NewDec(100))
-	if slashPct.GT(tenPercent) {
-		errMsg := fmt.Sprintf("DelegationCallback: Validator (%s) slashed but ABORTING update, slash is greater than 0.10 (%d)", validator.Address, slashPct)
-		k.Logger(ctx).Error(errMsg)
-		return sdkerrors.Wrapf(types.ErrSlashGtTenPct, errMsg)
-	}
-
-	// Update the host zone and validator to reflect the weight and delegation change
-	weightAdjustment := sdk.NewDecFromInt(validatorTokens).Quo(sdk.NewDecFromInt(validator.DelegationAmt))
-	updateWeight := sdk.NewDecFromInt(weight).Mul(weightAdjustment).TruncateInt()
-	if updateWeight.IsNegative() {
-		return fmt.Errorf("Invalid Weight %s Weight cannot be negative", updateWeight.String())
-	}
-	validator.Weight = updateWeight
-=======
-	validator.Weight = sdk.NewDec(weight).Mul(weightAdjustment).TruncateInt().Uint64()
->>>>>>> main
 	validator.DelegationAmt = validator.DelegationAmt.Sub(slashAmount)
 
 	// Update the validator on the host zone

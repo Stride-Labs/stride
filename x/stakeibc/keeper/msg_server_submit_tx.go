@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	sdkmath "cosmossdk.io/math"
 	"github.com/cosmos/cosmos-sdk/types/bech32"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/spf13/cast"
@@ -186,7 +187,7 @@ func (k Keeper) UpdateWithdrawalBalance(ctx sdk.Context, hostZone types.HostZone
 }
 
 // helper to get time at which next epoch begins, in unix nano units
-func (k Keeper) GetStartTimeNextEpoch(ctx sdk.Context, epochType string) (sdk.Int, error) {
+func (k Keeper) GetStartTimeNextEpoch(ctx sdk.Context, epochType string) (sdkmath.Int, error) {
 	epochTracker, found := k.GetEpochTracker(ctx, epochType)
 	if !found {
 		k.Logger(ctx).Error(fmt.Sprintf("Failed to get epoch tracker for %s", epochType))
@@ -252,7 +253,7 @@ func (k Keeper) SubmitTxs(
 	connectionId string,
 	msgs []sdk.Msg,
 	account types.ICAAccount,
-	timeoutTimestamp sdk.Int,
+	timeoutTimestamp sdkmath.Int,
 	callbackId string,
 	callbackArgs []byte,
 ) (uint64, error) {
@@ -302,7 +303,7 @@ func (k Keeper) SubmitTxs(
 			CallbackKey:  icacallbackstypes.PacketID(portID, channelID, sequence),
 			PortId:       portID,
 			ChannelId:    channelID,
-			Sequence:     sdk.NewIntFromUint64(sequence),
+			Sequence:     sdkmath.NewIntFromUint64(sequence),
 			CallbackId:   callbackId,
 			CallbackArgs: callbackArgs,
 		}

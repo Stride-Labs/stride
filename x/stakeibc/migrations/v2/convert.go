@@ -8,14 +8,18 @@ import (
 )
 
 func convertToNewValidator(oldValidator oldstakeibctypes.Validator) stakeibctypes.Validator {
+	newInternalExchangeRate := stakeibctypes.ValidatorExchangeRate{
+		InternalTokensToSharesRate: oldValidator.InternalExchangeRate.InternalTokensToSharesRate,
+		EpochNumber:                sdkmath.NewIntFromUint64(oldValidator.InternalExchangeRate.EpochNumber),
+	}
 	return stakeibctypes.Validator{
 		Name:                 oldValidator.Name,
 		Address:              oldValidator.Address,
 		Status:               stakeibctypes.Validator_ValidatorStatus(oldValidator.Status),
-		CommissionRate:       oldValidator.CommissionRate,
+		CommissionRate:       sdkmath.NewIntFromUint64(oldValidator.CommissionRate),
 		DelegationAmt:        sdkmath.NewIntFromUint64(oldValidator.DelegationAmt),
-		Weight:               oldValidator.Weight,
-		InternalExchangeRate: (*stakeibctypes.ValidatorExchangeRate)(oldValidator.InternalExchangeRate),
+		Weight:               sdkmath.NewIntFromUint64(oldValidator.Weight),
+		InternalExchangeRate: &newInternalExchangeRate,
 	}
 }
 
@@ -60,7 +64,7 @@ func convertToNewHostZone(oldHostZone oldstakeibctypes.HostZone) stakeibctypes.H
 		HostDenom:             oldHostZone.HostDenom,
 		LastRedemptionRate:    oldHostZone.LastRedemptionRate,
 		RedemptionRate:        oldHostZone.RedemptionRate,
-		UnbondingFrequency:    oldHostZone.UnbondingFrequency,
+		UnbondingFrequency:    sdkmath.NewIntFromUint64(oldHostZone.UnbondingFrequency),
 		StakedBal:             sdkmath.NewIntFromUint64(oldHostZone.StakedBal),
 		Address:               oldHostZone.Address,
 	}

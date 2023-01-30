@@ -3,6 +3,7 @@ package keeper
 import (
 	"fmt"
 
+	sdkmath "cosmossdk.io/math"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/tendermint/tendermint/libs/log"
 
@@ -224,7 +225,7 @@ func (k Keeper) IsWithinBufferWindow(ctx sdk.Context) (bool, error) {
 	return inWindow, nil
 }
 
-func (k Keeper) GetICATimeoutNanos(ctx sdk.Context, epochType string) (sdk.Int, error) {
+func (k Keeper) GetICATimeoutNanos(ctx sdk.Context, epochType string) (sdkmath.Int, error) {
 	epochTracker, found := k.GetEpochTracker(ctx, epochType)
 	if !found {
 		k.Logger(ctx).Error(fmt.Sprintf("Failed to get epoch tracker for %s", epochType))

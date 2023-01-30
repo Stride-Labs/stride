@@ -15,33 +15,6 @@ import (
 	"github.com/Stride-Labs/stride/v5/x/stakeibc/types"
 )
 
-<<<<<<< HEAD
-// GetHostZoneCount get the total number of hostZone
-func (k Keeper) GetHostZoneCount(ctx sdk.Context) uint64 {
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte{})
-	byteKey := types.KeyPrefix(types.HostZoneCountKey)
-	bz := store.Get(byteKey)
-
-	// Count doesn't exist: no element
-	if bz == nil {
-		return 0
-	}
-
-	// Parse bytes
-	return binary.BigEndian.Uint64(bz)
-}
-
-// SetHostZoneCount set the total number of hostZone
-func (k Keeper) SetHostZoneCount(ctx sdk.Context, count sdk.Int) {
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte{})
-	byteKey := types.KeyPrefix(types.HostZoneCountKey)
-	bz := make([]byte, 8)
-	binary.BigEndian.PutUint64(bz, count.Uint64())
-	store.Set(byteKey, bz)
-}
-
-=======
->>>>>>> main
 // SetHostZone set a specific hostZone in the store
 func (k Keeper) SetHostZone(ctx sdk.Context, hostZone types.HostZone) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.HostZoneKey))
@@ -142,7 +115,7 @@ func (k Keeper) AddValidatorToHostZone(ctx sdk.Context, msg *types.MsgAddValidat
 
 	// Check that we don't already have this validator
 	// Grab the minimum weight in the process (to assign to validator's added through governance)
-	var minWeight sdk.Int = sdk.NewIntFromUint64(math.MaxUint64)
+	var minWeight sdkmath.Int = sdkmath.NewIntFromUint64(math.MaxUint64)
 	for _, validator := range hostZone.Validators {
 		if validator.Address == msg.Address {
 			errMsg := fmt.Sprintf("Validator address (%s) already exists on Host Zone (%s)", msg.Address, msg.HostZone)

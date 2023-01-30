@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	sdkmath "cosmossdk.io/math"
+
 	recordstypes "github.com/Stride-Labs/stride/v5/x/records/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -18,7 +20,7 @@ type IcaTx struct {
 	ConnectionId string
 	Msgs         []sdk.Msg
 	Account      types.ICAAccount
-	Timeout      sdk.Int
+	Timeout      sdkmath.Int
 }
 
 func (k msgServer) ClaimUndelegatedTokens(goCtx context.Context, msg *types.MsgClaimUndelegatedTokens) (*types.MsgClaimUndelegatedTokensResponse, error) {

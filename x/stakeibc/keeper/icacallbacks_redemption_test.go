@@ -172,15 +172,9 @@ func (s *KeeperTestSuite) TestRedemptionCallback_EpochUnbondingRecordNotFound() 
 	}
 	invalidCallbackArgs, err := s.App.StakeibcKeeper.MarshalRedemptionCallbackArgs(s.Ctx, callbackArgs)
 	s.Require().NoError(err)
-<<<<<<< HEAD
-	invalidArgs.args = args
-	err = stakeibckeeper.RedemptionCallback(s.App.StakeibcKeeper, s.Ctx, invalidArgs.packet, invalidArgs.ack, invalidArgs.args)
-	expectedErr := fmt.Sprintf("Error fetching host zone unbonding record for epoch: %s, host zone: GAIA: host zone not found", tc.initialState.epochNumber.Add(sdk.NewInt(1)).String())
-=======
 
 	err = stakeibckeeper.RedemptionCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.packet, tc.validArgs.ackResponse, invalidCallbackArgs)
-	expectedErr := fmt.Sprintf("Error fetching host zone unbonding record for epoch: %d, host zone: GAIA: host zone not found", tc.initialState.epochNumber+1)
->>>>>>> main
+	expectedErr := fmt.Sprintf("Error fetching host zone unbonding record for epoch: %d, host zone: GAIA: host zone not found", tc.initialState.epochNumber.AddRaw(1))
 	s.Require().EqualError(err, expectedErr)
 	s.checkRedemptionStateIfCallbackFailed(tc)
 }
@@ -193,13 +187,8 @@ func (s *KeeperTestSuite) TestRedemptionCallback_HostZoneUnbondingNotFound() {
 	s.Require().True(found)
 	epochUnbondingRecord.HostZoneUnbondings = []*recordtypes.HostZoneUnbonding{}
 	s.App.RecordsKeeper.SetEpochUnbondingRecord(s.Ctx, epochUnbondingRecord)
-<<<<<<< HEAD
-	err := stakeibckeeper.RedemptionCallback(s.App.StakeibcKeeper, s.Ctx, valid.packet, valid.ack, valid.args)
-	s.Require().EqualError(err, fmt.Sprintf("Error fetching host zone unbonding record for epoch: %s, host zone: GAIA: host zone not found", tc.initialState.epochNumber.String()))
-=======
 
 	err := stakeibckeeper.RedemptionCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.packet, tc.validArgs.ackResponse, tc.validArgs.args)
 	s.Require().EqualError(err, fmt.Sprintf("Error fetching host zone unbonding record for epoch: %d, host zone: GAIA: host zone not found", tc.initialState.epochNumber))
->>>>>>> main
 	s.checkRedemptionStateIfCallbackFailed(tc)
 }

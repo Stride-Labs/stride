@@ -1,7 +1,6 @@
 package keeper_test
 
 import (
-	"fmt"
 	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -20,17 +19,10 @@ import (
 )
 
 type UndelegateCallbackState struct {
-<<<<<<< HEAD
-	stakedBal          sdk.Int
-	val1Bal            sdk.Int
-	val2Bal            sdk.Int
-	epochNumber        sdk.Int
-=======
 	stakedBal          sdkmath.Int
 	val1Bal            sdkmath.Int
 	val2Bal            sdkmath.Int
-	epochNumber        uint64
->>>>>>> main
+	epochNumber        sdkmath.Int
 	completionTime     time.Time
 	callbackArgs       types.UndelegateCallback
 	zoneAccountBalance sdkmath.Int
@@ -129,12 +121,7 @@ func (s *KeeperTestSuite) SetupUndelegateCallback() UndelegateCallbackTestCase {
 		SplitDelegations:        []*types.SplitDelegation{&val1SplitDelegation, &val2SplitDelegation},
 		EpochUnbondingRecordIds: []sdk.Int{epochNumber},
 	}
-<<<<<<< HEAD
-	fmt.Println("undelegateCallback", callbackArgs)
-	args, err := s.App.StakeibcKeeper.MarshalUndelegateCallbackArgs(s.Ctx, callbackArgs)
-=======
 	callbackArgsBz, err := s.App.StakeibcKeeper.MarshalUndelegateCallbackArgs(s.Ctx, callbackArgs)
->>>>>>> main
 	s.Require().NoError(err, "callback args unmarshalled")
 
 	return UndelegateCallbackTestCase{
@@ -346,26 +333,19 @@ func (s *KeeperTestSuite) TestUpdateHostZoneUnbondings_Success() {
 		Status:        recordtypes.HostZoneUnbonding_UNBONDING_QUEUE,
 		StTokenAmount: stAmtHzu3,
 	}
-<<<<<<< HEAD
 	// Create two epoch unbonding records (status UNBONDING_QUEUE, completion time unset)
-	epochUnbondingRecord := recordtypes.EpochUnbondingRecord{
-		EpochNumber:        sdk.NewInt(1),
-=======
-
-	// Create two epoch unbonding records (status UNBONDING_QUEUE, completion time originally unset)
 	epochUnbondingRecord1 := recordtypes.EpochUnbondingRecord{
-		EpochNumber:        1,
->>>>>>> main
+		EpochNumber:        sdkmath.NewInt(1),
 		HostZoneUnbondings: []*recordtypes.HostZoneUnbonding{&hostZoneUnbonding1, &hostZoneUnbonding2},
 	}
 	epochUnbondingRecord2 := recordtypes.EpochUnbondingRecord{
-		EpochNumber:        sdk.NewInt(2),
+		EpochNumber:        sdkmath.NewInt(2),
 		HostZoneUnbondings: []*recordtypes.HostZoneUnbonding{&hostZoneUnbonding3},
 	}
 	s.App.RecordsKeeper.SetEpochUnbondingRecord(s.Ctx, epochUnbondingRecord1)
 	s.App.RecordsKeeper.SetEpochUnbondingRecord(s.Ctx, epochUnbondingRecord2)
 	callbackArgs := types.UndelegateCallback{
-		EpochUnbondingRecordIds: []sdk.Int{sdk.NewInt(1), sdk.NewInt(2)},
+		EpochUnbondingRecordIds: []sdk.Int{sdkmath.NewInt(1), sdkmath.NewInt(2)},
 	}
 
 	// Update host zone unbonding record status and calculate how many stTokens to burn
@@ -376,13 +356,9 @@ func (s *KeeperTestSuite) TestUpdateHostZoneUnbondings_Success() {
 
 	// Verify that 2 hzus have status EXIT_TRANSFER_QUEUE, while the third has status UNBONDING_QUEUE
 	// Verify that 2 hzus have completion time set, while the third has no completion time
-<<<<<<< HEAD
-	epochUnbondingRecord, found := s.App.RecordsKeeper.GetEpochUnbondingRecord(s.Ctx, sdk.NewInt(1))
-=======
-	epochUnbondingRecord1, found := s.App.RecordsKeeper.GetEpochUnbondingRecord(s.Ctx, 1)
->>>>>>> main
+	epochUnbondingRecord1, found := s.App.RecordsKeeper.GetEpochUnbondingRecord(s.Ctx, sdkmath.NewInt(1))
 	s.Require().True(found)
-	epochUnbondingRecord2, found = s.App.RecordsKeeper.GetEpochUnbondingRecord(s.Ctx, sdk.NewInt(2))
+	epochUnbondingRecord2, found = s.App.RecordsKeeper.GetEpochUnbondingRecord(s.Ctx, sdkmath.NewInt(2))
 	s.Require().True(found)
 
 	hzu1 := epochUnbondingRecord1.HostZoneUnbondings[0]

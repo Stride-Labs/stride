@@ -22,14 +22,9 @@ import (
 func createNDepositRecord(keeper *keeper.Keeper, ctx sdk.Context, n int) []types.DepositRecord {
 	items := make([]types.DepositRecord, n)
 	for i := range items {
-<<<<<<< HEAD
 		items[i].Id = sdk.NewIntFromUint64(uint64(i))
-		items[i].Amount = sdk.NewInt(int64(i))
 		items[i].DepositEpochNumber = sdk.ZeroInt()
-=======
-		items[i].Id = uint64(i)
 		items[i].Amount = sdkmath.NewInt(int64(i))
->>>>>>> main
 		keeper.AppendDepositRecord(ctx, items[i])
 	}
 	return items

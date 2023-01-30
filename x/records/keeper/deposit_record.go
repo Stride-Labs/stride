@@ -3,6 +3,7 @@ package keeper
 import (
 	"encoding/binary"
 
+	sdkmath "cosmossdk.io/math"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -42,7 +43,7 @@ func (k Keeper) AppendDepositRecord(
 	count := k.GetDepositRecordCount(ctx)
 
 	// Set the ID of the appended value
-	depositRecord.Id = sdk.NewIntFromUint64(count)
+	depositRecord.Id = sdkmath.NewIntFromUint64(count)
 
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.DepositRecordKey))
 	appendedValue := k.Cdc.MustMarshal(&depositRecord)
@@ -62,7 +63,7 @@ func (k Keeper) SetDepositRecord(ctx sdk.Context, depositRecord types.DepositRec
 }
 
 // GetDepositRecord returns a depositRecord from its id
-func (k Keeper) GetDepositRecord(ctx sdk.Context, id sdk.Int) (val types.DepositRecord, found bool) {
+func (k Keeper) GetDepositRecord(ctx sdk.Context, id sdkmath.Int) (val types.DepositRecord, found bool) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.DepositRecordKey))
 	b := store.Get(GetDepositRecordIDBytes(id.Uint64()))
 	if b == nil {
@@ -73,7 +74,7 @@ func (k Keeper) GetDepositRecord(ctx sdk.Context, id sdk.Int) (val types.Deposit
 }
 
 // RemoveDepositRecord removes a depositRecord from the store
-func (k Keeper) RemoveDepositRecord(ctx sdk.Context, id sdk.Int) {
+func (k Keeper) RemoveDepositRecord(ctx sdk.Context, id sdkmath.Int) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.DepositRecordKey))
 	store.Delete(GetDepositRecordIDBytes(id.Uint64()))
 }
@@ -101,7 +102,7 @@ func GetDepositRecordIDBytes(id uint64) []byte {
 	return bz
 }
 
-func (k Keeper) GetDepositRecordByEpochAndChain(ctx sdk.Context, epochNumber sdk.Int, chainId string) (val *types.DepositRecord, found bool) {
+func (k Keeper) GetDepositRecordByEpochAndChain(ctx sdk.Context, epochNumber sdkmath.Int, chainId string) (val *types.DepositRecord, found bool) {
 	records := k.GetAllDepositRecord(ctx)
 	for _, depositRecord := range records {
 		if depositRecord.DepositEpochNumber.Equal(epochNumber) && depositRecord.HostZoneId == chainId {

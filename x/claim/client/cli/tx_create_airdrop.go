@@ -8,13 +8,9 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	"github.com/spf13/cobra"
 
-<<<<<<< HEAD
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkmath "cosmossdk.io/math"
 
 	"github.com/Stride-Labs/stride/v5/x/claim/types"
-=======
-	"github.com/Stride-Labs/stride/v5/x/claim/types"
->>>>>>> main
 )
 
 func CmdCreateAirdrop() *cobra.Command {
@@ -40,8 +36,8 @@ func CmdCreateAirdrop() *cobra.Command {
 			msg := types.NewMsgCreateAirdrop(
 				clientCtx.GetFromAddress().String(),
 				args[0],
-				sdk.NewInt(int64(argStartTime)),
-				sdk.NewInt(int64(argDuration)),
+				sdkmath.NewInt(int64(argStartTime)),
+				sdkmath.NewInt(int64(argDuration)),
 				args[3],
 			)
 

@@ -96,11 +96,7 @@ func (k msgServer) RebalanceValidators(goCtx context.Context, msg *types.MsgReba
 			// if underWeightElem is negative, we're done rebalancing
 			break
 		}
-<<<<<<< HEAD
 		if overWeightElem.deltaAmt.IsPositive() {
-=======
-		if overWeightElem.deltaAmt.GT(sdkmath.ZeroInt()) {
->>>>>>> main
 			// if overWeightElem is positive, we're done rebalancing
 			break
 		}

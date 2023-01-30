@@ -13,15 +13,9 @@ import (
 
 // This function returns a map from Validator Address to how many extra tokens need to be given to that validator
 //
-<<<<<<< HEAD
 //	positive implies extra tokens need to be given,
 //	negative impleis tokens need to be taken away
-func (k Keeper) GetValidatorDelegationAmtDifferences(ctx sdk.Context, hostZone types.HostZone) (map[string]sdk.Int, error) {
-=======
-//   positive implies extra tokens need to be given,
-//   negative impleis tokens need to be taken away
 func (k Keeper) GetValidatorDelegationAmtDifferences(ctx sdk.Context, hostZone types.HostZone) (map[string]sdkmath.Int, error) {
->>>>>>> main
 	validators := hostZone.GetValidators()
 	delegationDelta := make(map[string]sdkmath.Int)
 	totalDelegatedAmt := k.GetTotalValidatorDelegations(hostZone)
@@ -74,11 +68,7 @@ func (k Keeper) GetTargetValAmtsForHostZone(ctx sdk.Context, hostZone types.Host
 		if i == len(validators)-1 {
 			targetUnbondingsByValidator[validator.Address] = finalDelegation.Sub(totalAllocated)
 		} else {
-<<<<<<< HEAD
 			delegateAmt := validator.Weight.Mul(finalDelegation).Quo(totalWeight)
-=======
-			delegateAmt := sdkmath.NewIntFromUint64(validator.Weight).Mul(finalDelegation).Quo(sdkmath.NewIntFromUint64(totalWeight))
->>>>>>> main
 			totalAllocated = totalAllocated.Add(delegateAmt)
 			targetUnbondingsByValidator[validator.Address] = delegateAmt
 		}
@@ -96,7 +86,7 @@ func (k Keeper) GetTotalValidatorDelegations(hostZone types.HostZone) sdkmath.In
 	return total_delegation
 }
 
-func (k Keeper) GetTotalValidatorWeight(hostZone types.HostZone) sdk.Int {
+func (k Keeper) GetTotalValidatorWeight(hostZone types.HostZone) sdkmath.Int {
 	validators := hostZone.GetValidators()
 	total_weight := sdk.ZeroInt()
 	for _, validator := range validators {

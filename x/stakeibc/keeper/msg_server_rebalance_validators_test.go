@@ -1,12 +1,9 @@
 package keeper_test
 
 import (
-<<<<<<< HEAD
 	"fmt"
 
-=======
 	sdkmath "cosmossdk.io/math"
->>>>>>> main
 	_ "github.com/stretchr/testify/suite"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"

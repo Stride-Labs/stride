@@ -17,7 +17,9 @@ import (
 // WithdrawalBalanceCallback is a callback handler for WithdrawalBalance queries.
 // The query response will return the withdrawal account balance
 // If the balance is non-zero, ICA MsgSends are submitted to transfer from the withdrawal account
-//  to the delegation account (for reinvestment) and fee account (for commission)
+//
+//	to the delegation account (for reinvestment) and fee account (for commission)
+//
 // Note: for now, to get proofs in your ICQs, you need to query the entire store on the host zone! e.g. "store/bank/key"
 func WithdrawalBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query icqtypes.Query) error {
 	k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(query.ChainId, ICQCallbackID_WithdrawalBalance,
@@ -61,14 +63,7 @@ func WithdrawalBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query icq
 
 	// Determine the stride commission rate to the relevant portion can be sent to the fee account
 	params := k.GetParams(ctx)
-<<<<<<< HEAD
 	strideCommissionInt := params.StrideCommission
-=======
-	strideCommissionInt, err := cast.ToInt64E(params.StrideCommission)
-	if err != nil {
-		return err
-	}
->>>>>>> main
 
 	// check that stride commission is between 0 and 1
 	strideCommission := sdk.NewDecFromInt(strideCommissionInt).Quo(sdk.NewDec(100))
@@ -80,18 +75,9 @@ func WithdrawalBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query icq
 	feeAmount := strideCommission.Mul(sdk.NewDecFromInt(withdrawalBalanceAmount)).TruncateInt()
 	reinvestAmount := withdrawalBalanceAmount.Sub(feeAmount)
 
-<<<<<<< HEAD
-	// back the reinvestment amount out of the total less the commission
-	reinvestAmountCeil := withdrawalBalanceAmount.Sub(strideClaimFloored)
-
-	// TODO(TEST-112) safety check, balances should add to original amount
-	if !strideClaimFloored.Add(reinvestAmountCeil).Equal(withdrawalBalanceAmount) {
-		ctx.Logger().Error(fmt.Sprintf("Error with withdraw logic: %v, Fee portion: %v, reinvestPortion %v", withdrawalBalanceAmount, strideClaimFloored, reinvestAmountCeil))
-=======
 	// Safety check, balances should add to original amount
 	if !feeAmount.Add(reinvestAmount).Equal(withdrawalBalanceAmount) {
 		k.Logger(ctx).Error(fmt.Sprintf("Error with withdraw logic: %v, Fee Portion: %v, Reinvest Portion %v", withdrawalBalanceAmount, feeAmount, reinvestAmount))
->>>>>>> main
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "Failed to subdivide rewards to feeAccount and delegationAccount")
 	}
 
@@ -100,11 +86,8 @@ func WithdrawalBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query icq
 	reinvestCoin := sdk.NewCoin(hostZone.HostDenom, reinvestAmount)
 
 	var msgs []sdk.Msg
-<<<<<<< HEAD
-	if strideCoin.Amount.IsPositive() {
-=======
-	if feeCoin.Amount.GT(sdk.ZeroInt()) {
->>>>>>> main
+
+	if feeCoin.Amount.IsPositive() {
 		msgs = append(msgs, &banktypes.MsgSend{
 			FromAddress: withdrawalAccount.Address,
 			ToAddress:   feeAccount.Address,
@@ -113,11 +96,8 @@ func WithdrawalBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query icq
 		k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_WithdrawalBalance,
 			"Preparing MsgSends of %v from the withdrawal account to the fee account (for commission)", feeCoin.String()))
 	}
-<<<<<<< HEAD
+
 	if reinvestCoin.Amount.IsPositive() {
-=======
-	if reinvestCoin.Amount.GT(sdk.ZeroInt()) {
->>>>>>> main
 		msgs = append(msgs, &banktypes.MsgSend{
 			FromAddress: withdrawalAccount.Address,
 			ToAddress:   delegationAccount.Address,

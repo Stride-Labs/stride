@@ -46,7 +46,7 @@ type DepositRecordsTestCase struct {
 	initialModuleAccountBalance sdk.Coin
 	hostZone                    stakeibctypes.HostZone
 	hostModuleAddress           sdk.AccAddress
-	epochNumber                 sdk.Int
+	epochNumber                 sdkmath.Int
 	TransferChannel             Channel
 	DelegationChannel           Channel
 }
@@ -55,119 +55,79 @@ func (s *KeeperTestSuite) GetInitialDepositRecords(currentEpoch uint64) TestDepo
 	priorEpoch := currentEpoch - 1
 	emptyDepositRecords := []recordstypes.DepositRecord{
 		{
-<<<<<<< HEAD
-			Id:                 sdk.NewInt(1),
-			Amount:             sdk.ZeroInt(),
-=======
-			Id:                 1,
+			Id:                 sdkmath.NewInt(1),
 			Amount:             sdkmath.ZeroInt(),
->>>>>>> main
 			Denom:              Atom,
 			HostZoneId:         HostChainId,
 			Status:             recordstypes.DepositRecord_TRANSFER_QUEUE,
-			DepositEpochNumber: sdk.NewIntFromUint64(priorEpoch),
+			DepositEpochNumber: sdkmath.NewIntFromUint64(priorEpoch),
 		},
 		{
-<<<<<<< HEAD
-			Id:                 sdk.NewInt(2),
-			Amount:             sdk.ZeroInt(),
-=======
-			Id:                 2,
+			Id:                 sdkmath.NewInt(2),
 			Amount:             sdkmath.ZeroInt(),
->>>>>>> main
 			Denom:              Atom,
 			HostZoneId:         HostChainId,
 			Status:             recordstypes.DepositRecord_TRANSFER_QUEUE,
-			DepositEpochNumber: sdk.NewIntFromUint64(priorEpoch),
+			DepositEpochNumber: sdkmath.NewIntFromUint64(priorEpoch),
 		},
 	}
 
 	recordsToBeTransfered := []recordstypes.DepositRecord{
 		{
-<<<<<<< HEAD
-			Id:                 sdk.NewInt(3),
-			Amount:             sdk.NewInt(3000),
-=======
-			Id:                 3,
+			Id:                 sdkmath.NewInt(3),
 			Amount:             sdkmath.NewInt(3000),
->>>>>>> main
 			Denom:              Atom,
 			HostZoneId:         HostChainId,
 			Status:             recordstypes.DepositRecord_TRANSFER_QUEUE,
-			DepositEpochNumber: sdk.NewIntFromUint64(priorEpoch),
+			DepositEpochNumber: sdkmath.NewIntFromUint64(priorEpoch),
 		},
 		{
-<<<<<<< HEAD
-			Id:                 sdk.NewInt(4),
-			Amount:             sdk.NewInt(4000),
-=======
-			Id:                 4,
+			Id:                 sdkmath.NewInt(4),
 			Amount:             sdkmath.NewInt(4000),
->>>>>>> main
 			Denom:              Atom,
 			HostZoneId:         HostChainId,
 			Status:             recordstypes.DepositRecord_TRANSFER_QUEUE,
-			DepositEpochNumber: sdk.NewIntFromUint64(priorEpoch),
+			DepositEpochNumber: sdkmath.NewIntFromUint64(priorEpoch),
 		},
 	}
 	transferAmount := sdkmath.NewInt(3000 + 4000)
 
 	recordsToBeStaked := []recordstypes.DepositRecord{
 		{
-<<<<<<< HEAD
-			Id:                 sdk.NewInt(5),
-			Amount:             sdk.NewInt(5000),
-=======
-			Id:                 5,
+			Id:                 sdkmath.NewInt(5),
 			Amount:             sdkmath.NewInt(5000),
->>>>>>> main
 			Denom:              Atom,
 			HostZoneId:         HostChainId,
 			Status:             recordstypes.DepositRecord_DELEGATION_QUEUE,
-			DepositEpochNumber: sdk.NewIntFromUint64(priorEpoch),
+			DepositEpochNumber: sdkmath.NewIntFromUint64(priorEpoch),
 		},
 		{
-<<<<<<< HEAD
-			Id:                 sdk.NewInt(6),
-			Amount:             sdk.NewInt(6000),
-=======
-			Id:                 6,
+			Id:                 sdkmath.NewInt(6),
 			Amount:             sdkmath.NewInt(6000),
->>>>>>> main
 			Denom:              Atom,
 			HostZoneId:         HostChainId,
 			Status:             recordstypes.DepositRecord_DELEGATION_QUEUE,
-			DepositEpochNumber: sdk.NewIntFromUint64(priorEpoch),
+			DepositEpochNumber: sdkmath.NewIntFromUint64(priorEpoch),
 		},
 	}
 	stakeAmount := sdkmath.NewInt(5000 + 6000)
 
 	recordsInCurrentEpoch := []recordstypes.DepositRecord{
 		{
-<<<<<<< HEAD
-			Id:                 sdk.NewInt(7),
-			Amount:             sdk.NewInt(7000),
-=======
-			Id:                 7,
+			Id:                 sdkmath.NewInt(7),
 			Amount:             sdkmath.NewInt(7000),
->>>>>>> main
 			Denom:              Atom,
 			HostZoneId:         HostChainId,
 			Status:             recordstypes.DepositRecord_DELEGATION_QUEUE,
-			DepositEpochNumber: sdk.NewIntFromUint64(currentEpoch),
+			DepositEpochNumber: sdkmath.NewIntFromUint64(currentEpoch),
 		},
 		{
-<<<<<<< HEAD
-			Id:                 sdk.NewInt(8),
-			Amount:             sdk.NewInt(8000),
-=======
-			Id:                 8,
+			Id:                 sdkmath.NewInt(8),
 			Amount:             sdkmath.NewInt(8000),
->>>>>>> main
 			Denom:              Atom,
 			HostZoneId:         HostChainId,
 			Status:             recordstypes.DepositRecord_DELEGATION_QUEUE,
-			DepositEpochNumber: sdk.NewIntFromUint64(currentEpoch),
+			DepositEpochNumber: sdkmath.NewIntFromUint64(currentEpoch),
 		},
 	}
 
@@ -197,12 +157,12 @@ func (s *KeeperTestSuite) SetupDepositRecords() DepositRecordsTestCase {
 		{
 			Name:    "val1",
 			Address: "gaia_VAL1",
-			Weight:  sdk.NewInt(1),
+			Weight:  sdkmath.NewInt(1),
 		},
 		{
 			Name:    "val2",
 			Address: "gaia_VAL2",
-			Weight:  sdk.NewInt(4),
+			Weight:  sdkmath.NewInt(4),
 		},
 	}
 
@@ -220,8 +180,8 @@ func (s *KeeperTestSuite) SetupDepositRecords() DepositRecordsTestCase {
 	currentEpoch := uint64(2)
 	strideEpochTracker := stakeibctypes.EpochTracker{
 		EpochIdentifier:    epochtypes.STRIDE_EPOCH,
-		EpochNumber:        sdk.NewIntFromUint64(currentEpoch),
-		NextEpochStartTime: sdk.NewIntFromUint64(uint64(s.Coordinator.CurrentTime.UnixNano() + 30_000_000_000)), // dictates timeouts
+		EpochNumber:        sdkmath.NewIntFromUint64(currentEpoch),
+		NextEpochStartTime: sdkmath.NewIntFromUint64(uint64(s.Coordinator.CurrentTime.UnixNano() + 30_000_000_000)), // dictates timeouts
 	}
 
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
@@ -237,7 +197,7 @@ func (s *KeeperTestSuite) SetupDepositRecords() DepositRecordsTestCase {
 		initialModuleAccountBalance: initialModuleAccountBalance,
 		hostZone:                    hostZone,
 		hostModuleAddress:           hostModuleAddress,
-		epochNumber:                 sdk.NewIntFromUint64(currentEpoch),
+		epochNumber:                 sdkmath.NewIntFromUint64(currentEpoch),
 		TransferChannel: Channel{
 			PortID:    ibctesting.TransferPort,
 			ChannelID: ibctesting.FirstChannelID,
@@ -270,89 +230,59 @@ func (s *KeeperTestSuite) TestCreateDepositRecordsForEpoch_Successful() {
 	}
 
 	// Create depoist records for two epochs
-	s.App.StakeibcKeeper.CreateDepositRecordsForEpoch(s.Ctx, sdk.NewInt(1))
-	s.App.StakeibcKeeper.CreateDepositRecordsForEpoch(s.Ctx, sdk.NewInt(2))
+	s.App.StakeibcKeeper.CreateDepositRecordsForEpoch(s.Ctx, sdkmath.NewInt(1))
+	s.App.StakeibcKeeper.CreateDepositRecordsForEpoch(s.Ctx, sdkmath.NewInt(2))
 
 	expectedDepositRecords := []recordstypes.DepositRecord{
 		// Epoch 1
 		{
-<<<<<<< HEAD
-			Id:                 sdk.ZeroInt(),
-			Amount:             sdk.ZeroInt(),
-=======
-			Id:                 0,
+			Id:                 sdkmath.ZeroInt(),
 			Amount:             sdkmath.ZeroInt(),
->>>>>>> main
 			Denom:              "denom1",
 			HostZoneId:         "HOST1",
 			Status:             recordstypes.DepositRecord_TRANSFER_QUEUE,
-			DepositEpochNumber: sdk.NewInt(1),
+			DepositEpochNumber: sdkmath.NewInt(1),
 		},
 		{
-<<<<<<< HEAD
-			Id:                 sdk.NewInt(1),
-			Amount:             sdk.ZeroInt(),
-=======
-			Id:                 1,
+			Id:                 sdkmath.NewInt(1),
 			Amount:             sdkmath.ZeroInt(),
->>>>>>> main
 			Denom:              "denom2",
 			HostZoneId:         "HOST2",
 			Status:             recordstypes.DepositRecord_TRANSFER_QUEUE,
-			DepositEpochNumber: sdk.NewInt(1),
+			DepositEpochNumber: sdkmath.NewInt(1),
 		},
 		{
-<<<<<<< HEAD
-			Id:                 sdk.NewInt(2),
-			Amount:             sdk.ZeroInt(),
-=======
-			Id:                 2,
+			Id:                 sdkmath.NewInt(2),
 			Amount:             sdkmath.ZeroInt(),
->>>>>>> main
 			Denom:              "denom3",
 			HostZoneId:         "HOST3",
 			Status:             recordstypes.DepositRecord_TRANSFER_QUEUE,
-			DepositEpochNumber: sdk.NewInt(1),
+			DepositEpochNumber: sdkmath.NewInt(1),
 		},
 		// Epoch 2
 		{
-<<<<<<< HEAD
-			Id:                 sdk.NewInt(3),
-			Amount:             sdk.ZeroInt(),
-=======
-			Id:                 3,
+			Id:                 sdkmath.NewInt(3),
 			Amount:             sdkmath.ZeroInt(),
->>>>>>> main
 			Denom:              "denom1",
 			HostZoneId:         "HOST1",
 			Status:             recordstypes.DepositRecord_TRANSFER_QUEUE,
-			DepositEpochNumber: sdk.NewInt(2),
+			DepositEpochNumber: sdkmath.NewInt(2),
 		},
 		{
-<<<<<<< HEAD
-			Id:                 sdk.NewInt(4),
-			Amount:             sdk.ZeroInt(),
-=======
-			Id:                 4,
+			Id:                 sdkmath.NewInt(4),
 			Amount:             sdkmath.ZeroInt(),
->>>>>>> main
 			Denom:              "denom2",
 			HostZoneId:         "HOST2",
 			Status:             recordstypes.DepositRecord_TRANSFER_QUEUE,
-			DepositEpochNumber: sdk.NewInt(2),
+			DepositEpochNumber: sdkmath.NewInt(2),
 		},
 		{
-<<<<<<< HEAD
-			Id:                 sdk.NewInt(5),
-			Amount:             sdk.ZeroInt(),
-=======
-			Id:                 5,
+			Id:                 sdkmath.NewInt(5),
 			Amount:             sdkmath.ZeroInt(),
->>>>>>> main
 			Denom:              "denom3",
 			HostZoneId:         "HOST3",
 			Status:             recordstypes.DepositRecord_TRANSFER_QUEUE,
-			DepositEpochNumber: sdk.NewInt(2),
+			DepositEpochNumber: sdkmath.NewInt(2),
 		},
 	}
 
@@ -401,11 +331,7 @@ func (s *KeeperTestSuite) CheckStateAfterTransferringDepositRecords(tc DepositRe
 	}
 
 	// Confirm the module account balance decreased
-<<<<<<< HEAD
-	expectedTransferAmount := sdk.ZeroInt()
-=======
-	expectedTransferAmount := sdkmath.NewInt(0)
->>>>>>> main
+	expectedTransferAmount := sdkmath.ZeroInt()
 	for _, depositRecord := range recordsSuccessfullyTransferred {
 		expectedTransferAmount = expectedTransferAmount.Add(depositRecord.Amount)
 	}
@@ -511,13 +437,8 @@ func (s *KeeperTestSuite) CheckStateAfterStakingDepositRecords(tc DepositRecords
 		val2 := tc.hostZone.Validators[1]
 		totalWeight := val1.Weight.Add(val2.Weight)
 
-<<<<<<< HEAD
 		val1Delegation := depositRecord.Amount.Mul(val1.Weight).Quo(totalWeight)
 		val2Delegation := depositRecord.Amount.Mul(val2.Weight).Quo(totalWeight)
-=======
-		val1Delegation := depositRecord.Amount.Mul(sdkmath.NewIntFromUint64(val1.Weight)).Quo(sdkmath.NewIntFromUint64(totalWeight))
-		val2Delegation := depositRecord.Amount.Mul(sdkmath.NewIntFromUint64(val2.Weight)).Quo(sdkmath.NewIntFromUint64(totalWeight))
->>>>>>> main
 
 		expectedDelegations := []*stakeibctypes.SplitDelegation{
 			{Validator: val1.Address, Amount: val1Delegation},
@@ -545,7 +466,7 @@ func (s *KeeperTestSuite) TestStakeDepositRecords_SuccessfulCapped() {
 
 	// Set the cap on the number of deposit records processed to 1
 	params := s.App.StakeibcKeeper.GetParams(s.Ctx)
-	params.MaxStakeIcaCallsPerEpoch = sdk.NewInt(1)
+	params.MaxStakeIcaCallsPerEpoch = sdkmath.NewInt(1)
 	s.App.StakeibcKeeper.SetParams(s.Ctx, params)
 
 	// The cap should cause the last record to not get processed

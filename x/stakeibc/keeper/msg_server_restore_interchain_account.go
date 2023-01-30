@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	icatypes "github.com/cosmos/ibc-go/v5/modules/apps/27-interchain-accounts/types"
@@ -74,8 +75,8 @@ func (k msgServer) RestoreInterchainAccount(goCtx context.Context, msg *types.Ms
 
 		// revert epoch unbonding records for the closed ICA channel
 		epochUnbondingRecords := k.RecordsKeeper.GetAllEpochUnbondingRecord(ctx)
-		epochNumberForPendingUnbondingRecords := []sdk.Int{}
-		epochNumberForPendingTransferRecords := []sdk.Int{}
+		epochNumberForPendingUnbondingRecords := []sdkmath.Int{}
+		epochNumberForPendingTransferRecords := []sdkmath.Int{}
 		for _, epochUnbondingRecord := range epochUnbondingRecords {
 			// only revert records for the select host zone
 			hostZoneUnbonding, found := k.RecordsKeeper.GetHostZoneUnbondingByChainId(ctx, epochUnbondingRecord.EpochNumber, hostZone.ChainId)

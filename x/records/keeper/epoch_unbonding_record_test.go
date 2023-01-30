@@ -19,36 +19,20 @@ func createNEpochUnbondingRecord(keeper *keeper.Keeper, ctx sdk.Context, n int) 
 		{
 			HostZoneId:        "host-A",
 			Status:            types.HostZoneUnbonding_UNBONDING_QUEUE,
-<<<<<<< HEAD
-			StTokenAmount:     sdk.ZeroInt(),
-			NativeTokenAmount: sdk.ZeroInt(),
-=======
 			StTokenAmount:     sdkmath.ZeroInt(),
 			NativeTokenAmount: sdkmath.ZeroInt(),
->>>>>>> main
 		},
 		{
 			HostZoneId:        "host-B",
 			Status:            types.HostZoneUnbonding_UNBONDING_QUEUE,
-<<<<<<< HEAD
-			StTokenAmount:     sdk.ZeroInt(),
-			NativeTokenAmount: sdk.ZeroInt(),
-			UnbondingTime:     sdk.ZeroInt(),
-=======
 			StTokenAmount:     sdkmath.ZeroInt(),
 			NativeTokenAmount: sdkmath.ZeroInt(),
->>>>>>> main
 		},
 		{
 			HostZoneId:        "host-C",
 			Status:            types.HostZoneUnbonding_UNBONDING_QUEUE,
-<<<<<<< HEAD
-			StTokenAmount:     sdk.ZeroInt(),
-			NativeTokenAmount: sdk.ZeroInt(),
-=======
 			StTokenAmount:     sdkmath.ZeroInt(),
 			NativeTokenAmount: sdkmath.ZeroInt(),
->>>>>>> main
 		},
 	}
 	hostZoneUnbondingsMap := make(map[string]types.HostZoneUnbonding)

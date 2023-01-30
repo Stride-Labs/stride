@@ -92,7 +92,7 @@ func (h Hooks) AfterEpochEnd(ctx sdk.Context, epochInfo epochstypes.EpochInfo) {
 }
 
 // Update the epoch information in the stakeibc epoch tracker
-func (k Keeper) UpdateEpochTracker(ctx sdk.Context, epochInfo epochstypes.EpochInfo) (epochNumber sdk.Int, err error) {
+func (k Keeper) UpdateEpochTracker(ctx sdk.Context, epochInfo epochstypes.EpochInfo) (epochNumber sdkmath.Int, err error) {
 	epochNumber = epochInfo.CurrentEpoch
 	if epochNumber.IsNegative() {
 		err := fmt.Errorf("Epoch number can not be negative")

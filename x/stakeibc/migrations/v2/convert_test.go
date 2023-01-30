@@ -37,12 +37,12 @@ func TestConvertToNewValidator(t *testing.T) {
 		Name:           name,
 		Address:        address,
 		Status:         stakeibctypes.Validator_ACTIVE,
-		CommissionRate: commmissionRate,
+		CommissionRate: sdkmath.NewIntFromUint64(commmissionRate),
 		DelegationAmt:  sdkmath.NewInt(1),
-		Weight:         weight,
+		Weight:         sdkmath.NewIntFromUint64(weight),
 		InternalExchangeRate: &stakeibctypes.ValidatorExchangeRate{
 			InternalTokensToSharesRate: tokensToShares,
-			EpochNumber:                epochNumber,
+			EpochNumber:                sdkmath.NewIntFromUint64(epochNumber),
 		},
 	}
 
@@ -140,7 +140,7 @@ func TestConvertToNewHostZone(t *testing.T) {
 		HostDenom:          hostDenom,
 		RedemptionRate:     redemptionRate,
 		LastRedemptionRate: lastRedemptionRate,
-		UnbondingFrequency: unbondingFrequency,
+		UnbondingFrequency: sdkmath.NewIntFromUint64(unbondingFrequency),
 		StakedBal:          sdkmath.NewInt(3),
 		Address:            hostAddress,
 	}

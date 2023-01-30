@@ -13,15 +13,9 @@ import (
 )
 
 type RedeemStakeState struct {
-<<<<<<< HEAD
-	epochNumber                        sdk.Int
-	initialNativeEpochUnbondingAmount  sdk.Int
-	initialStTokenEpochUnbondingAmount sdk.Int
-=======
-	epochNumber                        uint64
+	epochNumber                        sdkmath.Int
 	initialNativeEpochUnbondingAmount  sdkmath.Int
 	initialStTokenEpochUnbondingAmount sdkmath.Int
->>>>>>> main
 }
 type RedeemStakeTestCase struct {
 	user         Account
@@ -63,11 +57,11 @@ func (s *KeeperTestSuite) SetupRedeemStake() RedeemStakeTestCase {
 
 	epochTrackerDay := stakeibctypes.EpochTracker{
 		EpochIdentifier: epochtypes.DAY_EPOCH,
-		EpochNumber:     sdk.NewInt(1),
+		EpochNumber:     sdkmath.NewInt(1),
 	}
 
 	epochUnbondingRecord := recordtypes.EpochUnbondingRecord{
-		EpochNumber:        sdk.NewInt(1),
+		EpochNumber:        sdkmath.NewInt(1),
 		HostZoneUnbondings: []*recordtypes.HostZoneUnbonding{},
 	}
 
@@ -265,7 +259,7 @@ func (s *KeeperTestSuite) TestRedeemStake_HostZoneNoUnbondings() {
 
 	invalidMsg := tc.validMsg
 	epochUnbondingRecord := recordtypes.EpochUnbondingRecord{
-		EpochNumber:        sdk.NewInt(1),
+		EpochNumber:        sdkmath.NewInt(1),
 		HostZoneUnbondings: []*recordtypes.HostZoneUnbonding{},
 	}
 	hostZoneUnbonding := &recordtypes.HostZoneUnbonding{

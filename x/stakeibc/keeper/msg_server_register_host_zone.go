@@ -167,13 +167,8 @@ func (k msgServer) RegisterHostZone(goCtx context.Context, msg *types.MsgRegiste
 		return nil, sdkerrors.Wrapf(types.ErrEpochNotFound, "epoch tracker (%s) not found", epochtypes.STRIDE_EPOCH)
 	}
 	depositRecord := recordstypes.DepositRecord{
-<<<<<<< HEAD
-		Id:                 sdk.ZeroInt(),
-		Amount:             sdk.ZeroInt(),
-=======
-		Id:                 0,
+		Id:                 sdkmath.ZeroInt(),
 		Amount:             sdkmath.ZeroInt(),
->>>>>>> main
 		Denom:              zone.HostDenom,
 		HostZoneId:         zone.ChainId,
 		Status:             recordstypes.DepositRecord_TRANSFER_QUEUE,

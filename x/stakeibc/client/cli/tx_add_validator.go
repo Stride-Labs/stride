@@ -8,13 +8,9 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	"github.com/spf13/cobra"
 
-<<<<<<< HEAD
 	"github.com/Stride-Labs/stride/v5/x/stakeibc/types"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
-=======
-	"github.com/Stride-Labs/stride/v5/x/stakeibc/types"
->>>>>>> main
+	sdkmath "cosmossdk.io/math"
 )
 
 func CmdAddValidator() *cobra.Command {
@@ -26,13 +22,13 @@ func CmdAddValidator() *cobra.Command {
 			argHostZone := args[0]
 			argName := args[1]
 			argAddress := args[2]
-			argCommission, ok := sdk.NewIntFromString(args[3])
+			argCommission, ok := sdkmath.NewIntFromString(args[3])
 			if !ok {
-				return fmt.Errorf("Fail to parse arg to sdk.Int (%v)", args[3])
+				return fmt.Errorf("Fail to parse arg to sdkmath.Int (%v)", args[3])
 			}
-			argWeight, ok := sdk.NewIntFromString(args[4])
+			argWeight, ok := sdkmath.NewIntFromString(args[4])
 			if !ok {
-				return fmt.Errorf("Fail to parse arg to sdk.Int (%v)", args[4])
+				return fmt.Errorf("Fail to parse arg to sdkmath.Int (%v)", args[4])
 			}
 
 			clientCtx, err := client.GetClientTxContext(cmd)

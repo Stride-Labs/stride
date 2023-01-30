@@ -31,23 +31,15 @@ func (s *KeeperTestSuite) SetupGetHostZoneUnbondingMsgs() GetHostZoneUnbondingMs
 	hostVal3Addr := "cosmos_VALIDATOR_3"
 	valNames := []string{hostVal1Addr, hostVal2Addr, hostVal3Addr}
 	delegationAddr := "cosmos_DELEGATION"
-<<<<<<< HEAD
-	amtToUnbond := sdk.NewInt(1_000_000)
-	amtVal1 := sdk.NewInt(1_000_000)
-	amtVal2 := sdk.NewInt(2_000_000)
-	wgtVal1 := sdk.NewInt(1)
-	wgtVal2 := sdk.NewInt(2)
-	totalWgt := sdk.NewInt(5)
-=======
+
 	amtToUnbond := sdkmath.NewInt(1_000_000)
 	amtVal1 := sdkmath.NewInt(1_000_000)
 	amtVal2 := sdkmath.NewInt(2_000_000)
-	wgtVal1 := uint64(1)
-	wgtVal2 := uint64(2)
-	totalWgt := uint64(5)
->>>>>>> main
+	wgtVal1 := sdkmath.NewInt(1)
+	wgtVal2 := sdkmath.NewInt(2)
+	totalWgt := sdkmath.NewInt(5)
 	// 2022-08-12T19:51, a random time in the past
-	unbondingTime := sdk.NewInt(1660348276)
+	unbondingTime := sdkmath.NewInt(1660348276)
 	lightClientTime := unbondingTime.AddRaw(1)
 
 	//  define the host zone with stakedBal and validators with staked amounts
@@ -86,11 +78,11 @@ func (s *KeeperTestSuite) SetupGetHostZoneUnbondingMsgs() GetHostZoneUnbondingMs
 	// list of epoch unbonding records
 	epochUnbondingRecords := []recordtypes.EpochUnbondingRecord{
 		{
-			EpochNumber:        sdk.ZeroInt(),
+			EpochNumber:        sdkmath.ZeroInt(),
 			HostZoneUnbondings: []*recordtypes.HostZoneUnbonding{},
 		},
 		{
-			EpochNumber:        sdk.NewInt(1),
+			EpochNumber:        sdkmath.NewInt(1),
 			HostZoneUnbondings: []*recordtypes.HostZoneUnbonding{},
 		},
 	}
@@ -138,15 +130,9 @@ func (s *KeeperTestSuite) TestGetHostZoneUnbondingMsgs_Successful() {
 	// the number of unbonding messages should be (number of validators) * (records to unbond)
 	s.Require().Equal(len(tc.valNames), len(actualUnbondMsgs), "number of unbonding messages should be number of records to unbond")
 
-<<<<<<< HEAD
-	s.Require().Equal(tc.amtToUnbond.Mul(sdk.NewInt(int64(len(tc.epochUnbondingRecords)))), actualAmtToUnbond, "total amount to unbond should match input amtToUnbond")
-
-	totalWgt := sdk.NewDec(tc.totalWgt.Int64())
-=======
 	s.Require().Equal(tc.amtToUnbond.Mul(sdkmath.NewInt(int64(len(tc.epochUnbondingRecords)))), actualAmtToUnbond, "total amount to unbond should match input amtToUnbond")
 
-	totalWgt := sdk.NewDec(int64(tc.totalWgt))
->>>>>>> main
+	totalWgt := sdk.NewDec(tc.totalWgt.Int64())
 	actualAmtToUnbondDec := sdk.NewDecFromInt(actualAmtToUnbond)
 	actualUnbondMsg1 := actualUnbondMsgs[0].String()
 	actualUnbondMsg2 := actualUnbondMsgs[1].String()

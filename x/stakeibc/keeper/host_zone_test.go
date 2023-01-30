@@ -21,12 +21,8 @@ func createNHostZone(keeper *keeper.Keeper, ctx sdk.Context, n int) []types.Host
 		items[i].ChainId = strconv.Itoa(i)
 		items[i].RedemptionRate = sdk.NewDec(1)
 		items[i].LastRedemptionRate = sdk.NewDec(1)
-<<<<<<< HEAD
-		items[i].StakedBal = sdk.ZeroInt()
-		items[i].UnbondingFrequency = sdk.ZeroInt()
-=======
 		items[i].StakedBal = sdkmath.ZeroInt()
->>>>>>> main
+		items[i].UnbondingFrequency = sdkmath.ZeroInt()
 		keeper.SetHostZone(ctx, items[i])
 	}
 	return items
