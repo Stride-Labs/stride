@@ -13,6 +13,7 @@ import (
 type InstantRedeemStakeState struct {
 	epochNumber         uint64
 	depositRecordAmount sdkmath.Int
+	initialAmount       sdkmath.Int
 	hostZone            stakeibctypes.HostZone
 }
 
@@ -26,10 +27,11 @@ type InstantRedeemStakeTestCase struct {
 func (s *KeeperTestSuite) SetupInstantRedeemStake() InstantRedeemStakeTestCase {
 	unbondAmount := sdkmath.NewInt(1_000_000)
 	depositAmount := sdkmath.NewInt(500_000)
+	initialAmount := sdkmath.NewInt(1_000_000)
 	user := Account{
 		acc:           s.TestAccs[0],
-		atomBalance:   sdk.NewInt64Coin(IbcAtom, 10_000_000),
-		stAtomBalance: sdk.NewInt64Coin(StAtom, 10_000_000),
+		atomBalance:   sdk.NewInt64Coin(IbcAtom, initialAmount.Int64()),
+		stAtomBalance: sdk.NewInt64Coin(StAtom, unbondAmount.Int64()),
 	}
 	s.FundAccount(user.acc, user.atomBalance)
 	s.FundAccount(user.acc, user.stAtomBalance)
@@ -63,6 +65,7 @@ func (s *KeeperTestSuite) SetupInstantRedeemStake() InstantRedeemStakeTestCase {
 		DepositEpochNumber: 0,
 		HostZoneId:         "GAIA",
 		Amount:             depositAmount,
+		Status:             recordtypes.DepositRecord_TRANSFER_QUEUE,
 	}
 
 	initialDepositRecord := recordtypes.DepositRecord{
@@ -70,6 +73,7 @@ func (s *KeeperTestSuite) SetupInstantRedeemStake() InstantRedeemStakeTestCase {
 		DepositEpochNumber: 1,
 		HostZoneId:         "GAIA",
 		Amount:             depositAmount,
+		Status:             recordtypes.DepositRecord_TRANSFER_QUEUE,
 	}
 
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
@@ -83,6 +87,7 @@ func (s *KeeperTestSuite) SetupInstantRedeemStake() InstantRedeemStakeTestCase {
 		initialState: InstantRedeemStakeState{
 			epochNumber:         epochTracker.EpochNumber,
 			depositRecordAmount: depositAmount,
+			initialAmount:       initialAmount,
 			hostZone:            hostZone,
 		},
 		validMsg: stakeibctypes.MsgInstantRedeemStake{
@@ -121,6 +126,10 @@ func (s *KeeperTestSuite) TestInstantRedeemStake_Successful() {
 	expectedBankSupply := initialStAtomSupply.SubAmount(msg.Amount)
 	actualBankSupply := s.App.BankKeeper.GetSupply(s.Ctx, StAtom)
 	s.CompareCoins(expectedBankSupply, actualBankSupply, "bank stuatom supply")
+
+	// Validate Instant Redeem Stake, subsequent call will not have funds.
+	_, err = s.GetMsgServer().InstantRedeemStake(sdk.WrapSDKContext(s.Ctx), &msg)
+	s.Require().EqualError(err, fmt.Sprintf("balance is lower than redemption amount. redemption amount: %v, balance %v: : invalid coins", msg.Amount, actualUserStAtomBalance.Amount))
 }
 
 func (s *KeeperTestSuite) TestInstantRedeemStake_InvalidCreatorAddress() {
@@ -176,7 +185,7 @@ func (s *KeeperTestSuite) TestInstantRedeemStake_RedeemMoreThanStaked() {
 	invalidMsg.Amount = sdkmath.NewInt(1_000_000_000_000_000)
 	_, err := s.GetMsgServer().InstantRedeemStake(sdk.WrapSDKContext(s.Ctx), &invalidMsg)
 
-	s.Require().EqualError(err, fmt.Sprintf("cannot unstake an amount g.t. staked balance on host zone: %v: invalid amount", invalidMsg.Amount))
+	s.Require().EqualError(err, fmt.Sprintf("balance is lower than redemption amount. redemption amount: %v, balance %v: : invalid coins", invalidMsg.Amount, tc.initialState.initialAmount))
 }
 
 func (s *KeeperTestSuite) TestInstantRedeemStake_InvalidHostAddress() {
