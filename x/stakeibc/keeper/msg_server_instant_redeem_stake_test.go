@@ -13,6 +13,7 @@ import (
 type InstantRedeemStakeState struct {
 	epochNumber         uint64
 	depositRecordAmount sdkmath.Int
+	initialAmount       sdkmath.Int
 	hostZone            stakeibctypes.HostZone
 }
 
@@ -26,9 +27,10 @@ type InstantRedeemStakeTestCase struct {
 func (s *KeeperTestSuite) SetupInstantRedeemStake() InstantRedeemStakeTestCase {
 	unbondAmount := sdkmath.NewInt(1_000_000)
 	depositAmount := sdkmath.NewInt(500_000)
+	initialAmount := sdkmath.NewInt(1_000_000)
 	user := Account{
 		acc:           s.TestAccs[0],
-		atomBalance:   sdk.NewInt64Coin(IbcAtom, 1_000_000),
+		atomBalance:   sdk.NewInt64Coin(IbcAtom, initialAmount.Int64()),
 		stAtomBalance: sdk.NewInt64Coin(StAtom, unbondAmount.Int64()),
 	}
 	s.FundAccount(user.acc, user.atomBalance)
@@ -85,6 +87,7 @@ func (s *KeeperTestSuite) SetupInstantRedeemStake() InstantRedeemStakeTestCase {
 		initialState: InstantRedeemStakeState{
 			epochNumber:         epochTracker.EpochNumber,
 			depositRecordAmount: depositAmount,
+			initialAmount:       initialAmount,
 			hostZone:            hostZone,
 		},
 		validMsg: stakeibctypes.MsgInstantRedeemStake{
@@ -182,7 +185,7 @@ func (s *KeeperTestSuite) TestInstantRedeemStake_RedeemMoreThanStaked() {
 	invalidMsg.Amount = sdkmath.NewInt(1_000_000_000_000_000)
 	_, err := s.GetMsgServer().InstantRedeemStake(sdk.WrapSDKContext(s.Ctx), &invalidMsg)
 
-	s.Require().EqualError(err, fmt.Sprintf("cannot unstake an amount g.t. staked balance on host zone: %v: invalid amount", invalidMsg.Amount))
+	s.Require().EqualError(err, fmt.Sprintf("balance is lower than redemption amount. redemption amount: %v, balance %v: : invalid coins", invalidMsg.Amount, tc.initialState.initialAmount))
 }
 
 func (s *KeeperTestSuite) TestInstantRedeemStake_InvalidHostAddress() {
