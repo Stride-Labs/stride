@@ -5,7 +5,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/Stride-Labs/stride/v4/x/records/types"
+	"github.com/Stride-Labs/stride/v5/x/records/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )

@@ -1,14 +1,14 @@
 package keeper_test
 
 import (
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	ibctesting "github.com/cosmos/ibc-go/v3/testing"
+	sdkmath "cosmossdk.io/math"
+	ibctesting "github.com/cosmos/ibc-go/v5/testing"
 	_ "github.com/stretchr/testify/suite"
 
-	recordtypes "github.com/Stride-Labs/stride/v4/x/records/types"
+	recordtypes "github.com/Stride-Labs/stride/v5/x/records/types"
 
-	epochtypes "github.com/Stride-Labs/stride/v4/x/epochs/types"
-	stakeibc "github.com/Stride-Labs/stride/v4/x/stakeibc/types"
+	epochtypes "github.com/Stride-Labs/stride/v5/x/epochs/types"
+	stakeibc "github.com/Stride-Labs/stride/v5/x/stakeibc/types"
 )
 
 type SweepUnbondedTokensTestCase struct {
@@ -23,8 +23,13 @@ func (s *KeeperTestSuite) SetupSweepUnbondedTokens() SweepUnbondedTokensTestCase
 	gaiaValidators := []*stakeibc.Validator{
 		{
 			Address:       "cosmos_VALIDATOR",
+<<<<<<< HEAD
 			DelegationAmt: sdk.NewInt(5_000_000),
 			Weight:        sdk.NewInt(10),
+=======
+			DelegationAmt: sdkmath.NewInt(5_000_000),
+			Weight:        uint64(10),
+>>>>>>> main
 		},
 	}
 	gaiaDelegationAccount := stakeibc.ICAAccount{
@@ -38,8 +43,13 @@ func (s *KeeperTestSuite) SetupSweepUnbondedTokens() SweepUnbondedTokensTestCase
 	osmoValidators := []*stakeibc.Validator{
 		{
 			Address:       "osmo_VALIDATOR",
+<<<<<<< HEAD
 			DelegationAmt: sdk.NewInt(5_000_000),
 			Weight:        sdk.NewInt(10),
+=======
+			DelegationAmt: sdkmath.NewInt(5_000_000),
+			Weight:        uint64(10),
+>>>>>>> main
 		},
 	}
 	osmoDelegationAccount := stakeibc.ICAAccount{
@@ -59,7 +69,7 @@ func (s *KeeperTestSuite) SetupSweepUnbondedTokens() SweepUnbondedTokensTestCase
 			Validators:         gaiaValidators,
 			DelegationAccount:  &gaiaDelegationAccount,
 			RedemptionAccount:  &gaiaRedemptionAccount,
-			StakedBal:          sdk.NewInt(5_000_000),
+			StakedBal:          sdkmath.NewInt(5_000_000),
 			ConnectionId:       ibctesting.FirstConnectionID,
 		},
 		{
@@ -70,7 +80,7 @@ func (s *KeeperTestSuite) SetupSweepUnbondedTokens() SweepUnbondedTokensTestCase
 			Validators:         osmoValidators,
 			DelegationAccount:  &osmoDelegationAccount,
 			RedemptionAccount:  &osmoRedemptionAccount,
-			StakedBal:          sdk.NewInt(5_000_000),
+			StakedBal:          sdkmath.NewInt(5_000_000),
 			ConnectionId:       ibctesting.FirstConnectionID,
 		},
 	}
@@ -90,13 +100,13 @@ func (s *KeeperTestSuite) SetupSweepUnbondedTokens() SweepUnbondedTokensTestCase
 			HostZoneUnbondings: []*recordtypes.HostZoneUnbonding{
 				{
 					HostZoneId:        HostChainId,
-					NativeTokenAmount: sdk.NewInt(1_000_000),
+					NativeTokenAmount: sdkmath.NewInt(1_000_000),
 					Status:            recordtypes.HostZoneUnbonding_UNBONDING_QUEUE,
 					UnbondingTime:     unbondingTime,
 				},
 				{
 					HostZoneId:        OsmoChainId,
-					NativeTokenAmount: sdk.NewInt(1_000_000),
+					NativeTokenAmount: sdkmath.NewInt(1_000_000),
 					Status:            recordtypes.HostZoneUnbonding_EXIT_TRANSFER_QUEUE,
 					UnbondingTime:     unbondingTime,
 				},
@@ -107,13 +117,13 @@ func (s *KeeperTestSuite) SetupSweepUnbondedTokens() SweepUnbondedTokensTestCase
 			HostZoneUnbondings: []*recordtypes.HostZoneUnbonding{
 				{
 					HostZoneId:        HostChainId,
-					NativeTokenAmount: sdk.NewInt(2_000_000),
+					NativeTokenAmount: sdkmath.NewInt(2_000_000),
 					Status:            recordtypes.HostZoneUnbonding_EXIT_TRANSFER_QUEUE,
 					UnbondingTime:     unbondingTime,
 				},
 				{
 					HostZoneId:        OsmoChainId,
-					NativeTokenAmount: sdk.NewInt(2_000_000),
+					NativeTokenAmount: sdkmath.NewInt(2_000_000),
 					Status:            recordtypes.HostZoneUnbonding_EXIT_TRANSFER_QUEUE,
 					UnbondingTime:     unbondingTime,
 				},
@@ -124,12 +134,12 @@ func (s *KeeperTestSuite) SetupSweepUnbondedTokens() SweepUnbondedTokensTestCase
 			HostZoneUnbondings: []*recordtypes.HostZoneUnbonding{
 				{
 					HostZoneId:        HostChainId,
-					NativeTokenAmount: sdk.NewInt(5_000_000),
+					NativeTokenAmount: sdkmath.NewInt(5_000_000),
 					Status:            recordtypes.HostZoneUnbonding_CLAIMABLE,
 				},
 				{
 					HostZoneId:        OsmoChainId,
-					NativeTokenAmount: sdk.NewInt(5_000_000),
+					NativeTokenAmount: sdkmath.NewInt(5_000_000),
 					Status:            recordtypes.HostZoneUnbonding_UNBONDING_QUEUE,
 				},
 			},
@@ -158,7 +168,7 @@ func (s *KeeperTestSuite) TestSweepUnbondedTokens_Successful() {
 	s.Require().Len(successfulSweeps, 2, "sweep all tokens succeeds for 2 host zones")
 	s.Require().Len(sweepAmounts, 2, "sweep all tokens succeeds for 2 host zones")
 	s.Require().Len(failedSweeps, 0, "sweep all tokens fails for no host zone")
-	s.Require().Equal([]sdk.Int{sdk.NewInt(2_000_000), sdk.NewInt(3_000_000)}, sweepAmounts, "correct amount of tokens swept for each host zone")
+	s.Require().Equal([]sdkmath.Int{sdkmath.NewInt(2_000_000), sdkmath.NewInt(3_000_000)}, sweepAmounts, "correct amount of tokens swept for each host zone")
 }
 
 func (s *KeeperTestSuite) TestSweepUnbondedTokens_HostZoneUnbondingMissing() {
@@ -176,7 +186,7 @@ func (s *KeeperTestSuite) TestSweepUnbondedTokens_HostZoneUnbondingMissing() {
 	s.Require().Len(successfulSweeps, 2, "sweep all tokens succeeds for 2 host zones")
 	s.Require().Len(sweepAmounts, 2, "sweep all tokens succeeds for 2 host zone")
 	s.Require().Len(failedSweeps, 0, "sweep all tokens fails for 0 host zone")
-	s.Require().Equal([]sdk.Int{sdk.NewInt(2_000_000), sdk.ZeroInt()}, sweepAmounts, "correct amount of tokens swept for each host zone")
+	s.Require().Equal([]sdkmath.Int{sdkmath.NewInt(2_000_000), sdkmath.ZeroInt()}, sweepAmounts, "correct amount of tokens swept for each host zone")
 }
 
 func (s *KeeperTestSuite) TestSweepUnbondedTokens_RedemptionAccountMissing() {
@@ -191,7 +201,7 @@ func (s *KeeperTestSuite) TestSweepUnbondedTokens_RedemptionAccountMissing() {
 	s.Require().Len(sweepAmounts, 1, "sweep all tokens succeeds for 1 host zone")
 	s.Require().Len(failedSweeps, 1, "sweep all tokens fails for 1 host zone")
 	s.Require().Equal("GAIA", failedSweeps[0], "sweep all tokens fails for gaia")
-	s.Require().Equal([]sdk.Int{sdk.NewInt(3_000_000)}, sweepAmounts, "correct amount of tokens swept for each host zone")
+	s.Require().Equal([]sdkmath.Int{sdkmath.NewInt(3_000_000)}, sweepAmounts, "correct amount of tokens swept for each host zone")
 }
 
 func (s *KeeperTestSuite) TestSweepUnbondedTokens_DelegationAccountAddressMissing() {
@@ -206,5 +216,5 @@ func (s *KeeperTestSuite) TestSweepUnbondedTokens_DelegationAccountAddressMissin
 	s.Require().Len(sweepAmounts, 1, "sweep all tokens succeeds for 1 host zone")
 	s.Require().Len(failedSweeps, 1, "sweep all tokens fails for 1 host zone")
 	s.Require().Equal("OSMO", failedSweeps[0], "sweep all tokens fails for osmo")
-	s.Require().Equal([]sdk.Int{sdk.NewInt(2_000_000)}, sweepAmounts, "correct amount of tokens swept for each host zone")
+	s.Require().Equal([]sdkmath.Int{sdkmath.NewInt(2_000_000)}, sweepAmounts, "correct amount of tokens swept for each host zone")
 }

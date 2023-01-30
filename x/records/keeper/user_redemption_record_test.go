@@ -7,18 +7,24 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
-	keepertest "github.com/Stride-Labs/stride/v4/testutil/keeper"
-	"github.com/Stride-Labs/stride/v4/testutil/nullify"
-	"github.com/Stride-Labs/stride/v4/x/records/keeper"
-	"github.com/Stride-Labs/stride/v4/x/records/types"
+	sdkmath "cosmossdk.io/math"
+
+	keepertest "github.com/Stride-Labs/stride/v5/testutil/keeper"
+	"github.com/Stride-Labs/stride/v5/testutil/nullify"
+	"github.com/Stride-Labs/stride/v5/x/records/keeper"
+	"github.com/Stride-Labs/stride/v5/x/records/types"
 )
 
 func createNUserRedemptionRecord(keeper *keeper.Keeper, ctx sdk.Context, n int) []types.UserRedemptionRecord {
 	items := make([]types.UserRedemptionRecord, n)
 	for i := range items {
 		items[i].Id = strconv.Itoa(i)
+<<<<<<< HEAD
 		items[i].Amount = sdk.NewInt(int64(i))
 		items[i].EpochNumber = sdk.ZeroInt()
+=======
+		items[i].Amount = sdkmath.NewInt(int64(i))
+>>>>>>> main
 		keeper.SetUserRedemptionRecord(ctx, items[i])
 	}
 	return items

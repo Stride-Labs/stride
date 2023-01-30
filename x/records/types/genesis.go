@@ -3,9 +3,9 @@ package types
 import (
 	"fmt"
 
-	host "github.com/cosmos/ibc-go/v3/modules/core/24-host"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	host "github.com/cosmos/ibc-go/v5/modules/core/24-host"
 )
 
 // DefaultIndex is the default capability global index

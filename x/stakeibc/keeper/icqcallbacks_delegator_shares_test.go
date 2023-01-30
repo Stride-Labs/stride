@@ -3,13 +3,15 @@ package keeper_test
 import (
 	"math"
 
+	sdkmath "cosmossdk.io/math"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
-	epochtypes "github.com/Stride-Labs/stride/v4/x/epochs/types"
-	icqtypes "github.com/Stride-Labs/stride/v4/x/interchainquery/types"
-	stakeibckeeper "github.com/Stride-Labs/stride/v4/x/stakeibc/keeper"
-	stakeibctypes "github.com/Stride-Labs/stride/v4/x/stakeibc/types"
+	epochtypes "github.com/Stride-Labs/stride/v5/x/epochs/types"
+	icqtypes "github.com/Stride-Labs/stride/v5/x/interchainquery/types"
+	stakeibckeeper "github.com/Stride-Labs/stride/v5/x/stakeibc/keeper"
+	stakeibctypes "github.com/Stride-Labs/stride/v5/x/stakeibc/types"
 )
 
 type DelegatorSharesICQCallbackState struct {
@@ -28,9 +30,15 @@ type DelegatorSharesICQCallbackTestCase struct {
 	validArgs                DelegatorSharesICQCallbackArgs
 	numShares                sdk.Dec
 	slashPercentage          sdk.Dec
+<<<<<<< HEAD
 	expectedDelegationAmount sdk.Int
 	expectedSlashAmount      sdk.Int
 	expectedWeight           sdk.Int
+=======
+	expectedDelegationAmount sdkmath.Int
+	expectedSlashAmount      sdkmath.Int
+	expectedWeight           uint64
+>>>>>>> main
 }
 
 // Mocks the query response that's returned from an ICQ for the number of shares for a given validator/delegator pair
@@ -50,21 +58,30 @@ func (s *KeeperTestSuite) SetupDelegatorSharesICQCallback() DelegatorSharesICQCa
 
 	valAddress := "valoper2"
 	valIndexQueried := 1
-	tokensBeforeSlash := sdk.NewInt(1000)
+	tokensBeforeSlash := sdkmath.NewInt(1000)
 	internalExchangeRate := sdk.NewDec(1).Quo(sdk.NewDec(2)) // 0.5
 	numShares := sdk.NewDec(1900)
 
 	// 1900 shares * 0.5 exchange rate = 950 tokens
 	// 1000 tokens - 950 token = 50 tokens slashed
 	// 50 slash tokens / 1000 initial tokens = 5% slash
+<<<<<<< HEAD
 	expectedTokensAfterSlash := sdk.NewInt(950)
 	expectedSlashAmount := tokensBeforeSlash.Sub(expectedTokensAfterSlash)
 	slashPercentage := sdk.MustNewDecFromStr("0.05")
 	weightBeforeSlash := sdk.NewInt(20)
 	expectedWeightAfterSlash := sdk.NewInt(19)
 	stakedBal := sdk.NewInt(10_000)
+=======
+	expectedTokensAfterSlash := sdkmath.NewInt(950)
+	expectedSlashAmount := tokensBeforeSlash.Sub(expectedTokensAfterSlash)
+	slashPercentage := sdk.MustNewDecFromStr("0.05")
+	weightBeforeSlash := uint64(20)
+	expectedWeightAfterSlash := uint64(19)
+	stakedBal := sdkmath.NewInt(10_000)
+>>>>>>> main
 
-	s.Require().Equal(numShares, sdk.NewDecFromInt(expectedTokensAfterSlash.Mul(sdk.NewInt(2))), "tokens, shares, and exchange rate aligned")
+	s.Require().Equal(numShares, sdk.NewDecFromInt(expectedTokensAfterSlash.Mul(sdkmath.NewInt(2))), "tokens, shares, and exchange rate aligned")
 	s.Require().Equal(slashPercentage, sdk.NewDecFromInt(expectedSlashAmount).Quo(sdk.NewDecFromInt(tokensBeforeSlash)), "expected slash percentage")
 	s.Require().Equal(slashPercentage, sdk.NewDecFromInt(weightBeforeSlash.Sub(expectedWeightAfterSlash)).Quo(sdk.NewDecFromInt(weightBeforeSlash)), "weight reduction")
 
@@ -77,8 +94,13 @@ func (s *KeeperTestSuite) SetupDelegatorSharesICQCallback() DelegatorSharesICQCa
 			{
 				Name:          "val1",
 				Address:       "valoper1",
+<<<<<<< HEAD
 				Weight:        sdk.NewInt(1),
 				DelegationAmt: sdk.ZeroInt(),
+=======
+				Weight:        1,
+				DelegationAmt: sdkmath.ZeroInt(),
+>>>>>>> main
 			},
 			// This is the validator in question
 			{
@@ -174,7 +196,7 @@ func (s *KeeperTestSuite) TestDelegatorSharesCallback_InvalidCallbackArgs() {
 	invalidArgs := []byte("random bytes")
 	err := stakeibckeeper.DelegatorSharesCallback(s.App.StakeibcKeeper, s.Ctx, invalidArgs, tc.validArgs.query)
 
-	expectedErrMsg := "unable to unmarshal queried delegation info for zone GAIA, "
+	expectedErrMsg := "unable to unmarshal query response into Delegation type, "
 	expectedErrMsg += "err: unexpected EOF: unable to marshal data structure"
 	s.Require().EqualError(err, expectedErrMsg)
 }
@@ -207,7 +229,7 @@ func (s *KeeperTestSuite) TestDelegatorSharesCallback_OutsideBufferWindow() {
 
 	// In this case, we should return success instead of error, but we should exit early before updating the validator's state
 	err := stakeibckeeper.DelegatorSharesCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.callbackArgs, tc.validArgs.query)
-	s.Require().NoError(err, "delegator shares callback callback error")
+	s.Require().ErrorContains(err, "callback is outside ICQ window")
 
 	s.checkStateIfValidatorNotSlashed(tc)
 }
@@ -230,7 +252,7 @@ func (s *KeeperTestSuite) TestDelegatorSharesCallback_ExchangeRateNotFound() {
 	s.App.StakeibcKeeper.SetEpochTracker(s.Ctx, epochTracker)
 
 	err := stakeibckeeper.DelegatorSharesCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.callbackArgs, tc.validArgs.query)
-	s.Require().EqualError(err, "DelegationCallback: validator (valoper2) internal exchange rate has not been updated this epoch (epoch #2): invalid request")
+	s.Require().EqualError(err, "validator (valoper2) internal exchange rate has not been updated this epoch (epoch #2): invalid request")
 }
 
 func (s *KeeperTestSuite) TestDelegatorSharesCallback_NoSlashOccurred() {
@@ -261,7 +283,7 @@ func (s *KeeperTestSuite) TestDelegatorSharesCallback_InvalidNumTokens() {
 	badCallbackArgs := s.CreateDelegatorSharesQueryResponse(valAddress, numShares)
 	err := stakeibckeeper.DelegatorSharesCallback(s.App.StakeibcKeeper, s.Ctx, badCallbackArgs, tc.validArgs.query)
 
-	expectedErrMsg := "DelegationCallback: Validator (valoper2) tokens returned from query is greater than the DelegationAmt: invalid request"
+	expectedErrMsg := "Validator (valoper2) tokens returned from query is greater than the DelegationAmt: invalid request"
 	s.Require().EqualError(err, expectedErrMsg)
 }
 
@@ -289,7 +311,7 @@ func (s *KeeperTestSuite) TestDelegatorSharesCallback_SlashGtTenPercent() {
 	badCallbackArgs := s.CreateDelegatorSharesQueryResponse(valAddress, sdk.NewDec(1600))
 
 	err := stakeibckeeper.DelegatorSharesCallback(s.App.StakeibcKeeper, s.Ctx, badCallbackArgs, tc.validArgs.query)
-	expectedErrMsg := "DelegationCallback: Validator (valoper2) slashed but ABORTING update, "
-	expectedErrMsg += "slash is greater than 0.10 (0.200000000000000000): slash is greater than 10 percent"
+	expectedErrMsg := "Validator slashed but ABORTING update, slash (0.200000000000000000) is greater than safety threshold (0.100000000000000000): "
+	expectedErrMsg += "slash is greater than safety threshold"
 	s.Require().EqualError(err, expectedErrMsg)
 }

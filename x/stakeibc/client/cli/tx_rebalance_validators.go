@@ -8,9 +8,13 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	"github.com/spf13/cobra"
 
-	"github.com/Stride-Labs/stride/v4/x/stakeibc/types"
+<<<<<<< HEAD
+	"github.com/Stride-Labs/stride/v5/x/stakeibc/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+=======
+	"github.com/Stride-Labs/stride/v5/x/stakeibc/types"
+>>>>>>> main
 )
 
 var _ = strconv.Itoa(0)

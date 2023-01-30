@@ -1,11 +1,12 @@
 package keeper_test
 
 import (
+	sdkmath "cosmossdk.io/math"
 	_ "github.com/stretchr/testify/suite"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	stakeibctypes "github.com/Stride-Labs/stride/v4/x/stakeibc/types"
+	stakeibctypes "github.com/Stride-Labs/stride/v5/x/stakeibc/types"
 )
 
 type AddValidatorTestCase struct {
@@ -54,7 +55,7 @@ func (s *KeeperTestSuite) SetupAddValidator() AddValidatorTestCase {
 			CommissionRate: sdk.NewInt(1),
 			Weight:         sdk.NewInt(1),
 			Status:         stakeibctypes.Validator_ACTIVE,
-			DelegationAmt:  sdk.ZeroInt(),
+			DelegationAmt:  sdkmath.ZeroInt(),
 		},
 		{
 			Name:           "val2",
@@ -62,7 +63,7 @@ func (s *KeeperTestSuite) SetupAddValidator() AddValidatorTestCase {
 			CommissionRate: sdk.NewInt(2),
 			Weight:         sdk.NewInt(2),
 			Status:         stakeibctypes.Validator_ACTIVE,
-			DelegationAmt:  sdk.ZeroInt(),
+			DelegationAmt:  sdkmath.ZeroInt(),
 		},
 		{
 			Name:           "val3",
@@ -70,7 +71,7 @@ func (s *KeeperTestSuite) SetupAddValidator() AddValidatorTestCase {
 			CommissionRate: sdk.NewInt(3),
 			Weight:         sdk.NewInt(3),
 			Status:         stakeibctypes.Validator_ACTIVE,
-			DelegationAmt:  sdk.ZeroInt(),
+			DelegationAmt:  sdkmath.ZeroInt(),
 		},
 	}
 

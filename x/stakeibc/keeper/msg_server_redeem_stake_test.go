@@ -3,18 +3,25 @@ package keeper_test
 import (
 	"fmt"
 
+	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	_ "github.com/stretchr/testify/suite"
 
-	epochtypes "github.com/Stride-Labs/stride/v4/x/epochs/types"
-	recordtypes "github.com/Stride-Labs/stride/v4/x/records/types"
-	stakeibctypes "github.com/Stride-Labs/stride/v4/x/stakeibc/types"
+	epochtypes "github.com/Stride-Labs/stride/v5/x/epochs/types"
+	recordtypes "github.com/Stride-Labs/stride/v5/x/records/types"
+	stakeibctypes "github.com/Stride-Labs/stride/v5/x/stakeibc/types"
 )
 
 type RedeemStakeState struct {
+<<<<<<< HEAD
 	epochNumber                        sdk.Int
 	initialNativeEpochUnbondingAmount  sdk.Int
 	initialStTokenEpochUnbondingAmount sdk.Int
+=======
+	epochNumber                        uint64
+	initialNativeEpochUnbondingAmount  sdkmath.Int
+	initialStTokenEpochUnbondingAmount sdkmath.Int
+>>>>>>> main
 }
 type RedeemStakeTestCase struct {
 	user         Account
@@ -25,7 +32,7 @@ type RedeemStakeTestCase struct {
 }
 
 func (s *KeeperTestSuite) SetupRedeemStake() RedeemStakeTestCase {
-	redeemAmount := sdk.NewInt(1_000_000)
+	redeemAmount := sdkmath.NewInt(1_000_000)
 	user := Account{
 		acc:           s.TestAccs[0],
 		atomBalance:   sdk.NewInt64Coin("ibc/uatom", 10_000_000),
@@ -50,7 +57,7 @@ func (s *KeeperTestSuite) SetupRedeemStake() RedeemStakeTestCase {
 		HostDenom:      "uatom",
 		Bech32Prefix:   "cosmos",
 		RedemptionRate: sdk.NewDec(1.0),
-		StakedBal:      sdk.NewInt(1234567890),
+		StakedBal:      sdkmath.NewInt(1234567890),
 		Address:        zoneAddress.String(),
 	}
 
@@ -65,7 +72,7 @@ func (s *KeeperTestSuite) SetupRedeemStake() RedeemStakeTestCase {
 	}
 
 	hostZoneUnbonding := &recordtypes.HostZoneUnbonding{
-		NativeTokenAmount: sdk.ZeroInt(),
+		NativeTokenAmount: sdkmath.ZeroInt(),
 		Denom:             "uatom",
 		HostZoneId:        HostChainId,
 		Status:            recordtypes.HostZoneUnbonding_UNBONDING_QUEUE,
@@ -82,8 +89,8 @@ func (s *KeeperTestSuite) SetupRedeemStake() RedeemStakeTestCase {
 		zoneAccount: zoneAccount,
 		initialState: RedeemStakeState{
 			epochNumber:                        epochTrackerDay.EpochNumber,
-			initialNativeEpochUnbondingAmount:  sdk.ZeroInt(),
-			initialStTokenEpochUnbondingAmount: sdk.ZeroInt(),
+			initialNativeEpochUnbondingAmount:  sdkmath.ZeroInt(),
+			initialStTokenEpochUnbondingAmount: sdkmath.ZeroInt(),
 		},
 		validMsg: stakeibctypes.MsgRedeemStake{
 			Creator:  user.acc.String(),
@@ -227,7 +234,7 @@ func (s *KeeperTestSuite) TestRedeemStake_RedeemMoreThanStaked() {
 	tc := s.SetupRedeemStake()
 
 	invalidMsg := tc.validMsg
-	invalidMsg.Amount = sdk.NewInt(1_000_000_000_000_000)
+	invalidMsg.Amount = sdkmath.NewInt(1_000_000_000_000_000)
 	_, err := s.GetMsgServer().RedeemStake(sdk.WrapSDKContext(s.Ctx), &invalidMsg)
 
 	s.Require().EqualError(err, fmt.Sprintf("cannot unstake an amount g.t. staked balance on host zone: %v: invalid amount", invalidMsg.Amount))
@@ -262,7 +269,7 @@ func (s *KeeperTestSuite) TestRedeemStake_HostZoneNoUnbondings() {
 		HostZoneUnbondings: []*recordtypes.HostZoneUnbonding{},
 	}
 	hostZoneUnbonding := &recordtypes.HostZoneUnbonding{
-		NativeTokenAmount: sdk.ZeroInt(),
+		NativeTokenAmount: sdkmath.ZeroInt(),
 		Denom:             "uatom",
 		HostZoneId:        "NOT_GAIA",
 	}

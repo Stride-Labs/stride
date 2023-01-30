@@ -12,26 +12,28 @@ import (
 	capabilitykeeper "github.com/cosmos/cosmos-sdk/x/capability/keeper"
 	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
 
-	icqkeeper "github.com/Stride-Labs/stride/v4/x/interchainquery/keeper"
-	"github.com/Stride-Labs/stride/v4/x/stakeibc/types"
+	icqkeeper "github.com/Stride-Labs/stride/v5/x/interchainquery/keeper"
+	"github.com/Stride-Labs/stride/v5/x/stakeibc/types"
 
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
-	icacontrollerkeeper "github.com/cosmos/ibc-go/v3/modules/apps/27-interchain-accounts/controller/keeper"
-	ibckeeper "github.com/cosmos/ibc-go/v3/modules/core/keeper"
-	ibctmtypes "github.com/cosmos/ibc-go/v3/modules/light-clients/07-tendermint/types"
+	icacontrollerkeeper "github.com/cosmos/ibc-go/v5/modules/apps/27-interchain-accounts/controller/keeper"
+	ibckeeper "github.com/cosmos/ibc-go/v5/modules/core/keeper"
+	ibctmtypes "github.com/cosmos/ibc-go/v5/modules/light-clients/07-tendermint/types"
 
-	epochstypes "github.com/Stride-Labs/stride/v4/x/epochs/types"
-	icacallbackskeeper "github.com/Stride-Labs/stride/v4/x/icacallbacks/keeper"
-	recordsmodulekeeper "github.com/Stride-Labs/stride/v4/x/records/keeper"
+	storetypes "github.com/cosmos/cosmos-sdk/store/types"
+
+	epochstypes "github.com/Stride-Labs/stride/v5/x/epochs/types"
+	icacallbackskeeper "github.com/Stride-Labs/stride/v5/x/icacallbacks/keeper"
+	recordsmodulekeeper "github.com/Stride-Labs/stride/v5/x/records/keeper"
 )
 
 type (
 	Keeper struct {
 		// *cosmosibckeeper.Keeper
 		cdc                   codec.BinaryCodec
-		storeKey              sdk.StoreKey
-		memKey                sdk.StoreKey
+		storeKey              storetypes.StoreKey
+		memKey                storetypes.StoreKey
 		paramstore            paramtypes.Subspace
 		ICAControllerKeeper   icacontrollerkeeper.Keeper
 		IBCKeeper             ibckeeper.Keeper
@@ -49,7 +51,7 @@ type (
 func NewKeeper(
 	cdc codec.BinaryCodec,
 	storeKey,
-	memKey sdk.StoreKey,
+	memKey storetypes.StoreKey,
 	ps paramtypes.Subspace,
 	// channelKeeper cosmosibckeeper.ChannelKeeper,
 	// portKeeper cosmosibckeeper.PortKeeper,
@@ -217,7 +219,7 @@ func (k Keeper) IsWithinBufferWindow(ctx sdk.Context) (bool, error) {
 
 	inWindow := elapsedShareOfEpoch.GT(epochShareThresh)
 	if !inWindow {
-		k.Logger(ctx).Error(fmt.Sprintf("ICQCB: We're %d pct through the epoch, ICQ cutoff is %d", elapsedShareOfEpoch, epochShareThresh))
+		k.Logger(ctx).Error(fmt.Sprintf("Outside ICQ Callback Window. We're %d pct through the epoch, ICQ cutoff is %d", elapsedShareOfEpoch, epochShareThresh))
 	}
 	return inWindow, nil
 }

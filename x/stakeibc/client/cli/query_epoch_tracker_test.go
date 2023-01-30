@@ -11,11 +11,17 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/Stride-Labs/stride/v4/testutil/network"
-	"github.com/Stride-Labs/stride/v4/x/stakeibc/client/cli"
-	"github.com/Stride-Labs/stride/v4/x/stakeibc/types"
+<<<<<<< HEAD
+	"github.com/Stride-Labs/stride/v5/testutil/network"
+	"github.com/Stride-Labs/stride/v5/x/stakeibc/client/cli"
+	"github.com/Stride-Labs/stride/v5/x/stakeibc/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+=======
+	"github.com/Stride-Labs/stride/v5/testutil/network"
+	"github.com/Stride-Labs/stride/v5/x/stakeibc/client/cli"
+	"github.com/Stride-Labs/stride/v5/x/stakeibc/types"
+>>>>>>> main
 )
 
 // Prevent strconv unused error

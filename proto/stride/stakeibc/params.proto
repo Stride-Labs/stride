@@ -3,7 +3,7 @@ package stride.stakeibc;
 
 import "gogoproto/gogo.proto";
 
-option go_package = "github.com/Stride-Labs/stride/v4/x/stakeibc/types";
+option go_package = "github.com/Stride-Labs/stride/v5/x/stakeibc/types";
 
 // Params defines the parameters for the module.
 // next id: 18
@@ -78,6 +78,10 @@ message Params {
     (gogoproto.nullable) = false
   ];
   string safety_num_validators = 17 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
+  string safety_max_slash_percent = 18 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
     (gogoproto.nullable) = false
   ];

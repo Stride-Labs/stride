@@ -1,13 +1,13 @@
 package keeper_test
 
 import (
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	ibctesting "github.com/cosmos/ibc-go/v3/testing"
+	sdkmath "cosmossdk.io/math"
+	ibctesting "github.com/cosmos/ibc-go/v5/testing"
 	_ "github.com/stretchr/testify/suite"
 
-	recordtypes "github.com/Stride-Labs/stride/v4/x/records/types"
+	recordtypes "github.com/Stride-Labs/stride/v5/x/records/types"
 
-	stakeibc "github.com/Stride-Labs/stride/v4/x/stakeibc/types"
+	stakeibc "github.com/Stride-Labs/stride/v5/x/stakeibc/types"
 )
 
 type InitiateAllHostZoneUnbondingsTestCase struct {
@@ -26,6 +26,7 @@ func (s *KeeperTestSuite) SetupInitiateAllHostZoneUnbondings() InitiateAllHostZo
 	gaiaValidators := []*stakeibc.Validator{
 		{
 			Address:       gaiaValAddr,
+<<<<<<< HEAD
 			DelegationAmt: sdk.NewInt(5_000_000),
 			Weight:        sdk.NewInt(10),
 		},
@@ -33,6 +34,15 @@ func (s *KeeperTestSuite) SetupInitiateAllHostZoneUnbondings() InitiateAllHostZo
 			Address:       gaiaValAddr + "2",
 			DelegationAmt: sdk.NewInt(3_000_000),
 			Weight:        sdk.NewInt(6),
+=======
+			DelegationAmt: sdkmath.NewInt(5_000_000),
+			Weight:        uint64(10),
+		},
+		{
+			Address:       gaiaValAddr + "2",
+			DelegationAmt: sdkmath.NewInt(3_000_000),
+			Weight:        uint64(6),
+>>>>>>> main
 		},
 	}
 	gaiaDelegationAccount := stakeibc.ICAAccount{
@@ -42,8 +52,13 @@ func (s *KeeperTestSuite) SetupInitiateAllHostZoneUnbondings() InitiateAllHostZo
 	osmoValidators := []*stakeibc.Validator{
 		{
 			Address:       osmoValAddr,
+<<<<<<< HEAD
 			DelegationAmt: sdk.NewInt(5_000_000),
 			Weight:        sdk.NewInt(10),
+=======
+			DelegationAmt: sdkmath.NewInt(5_000_000),
+			Weight:        uint64(10),
+>>>>>>> main
 		},
 	}
 	osmoDelegationAccount := stakeibc.ICAAccount{
@@ -58,7 +73,7 @@ func (s *KeeperTestSuite) SetupInitiateAllHostZoneUnbondings() InitiateAllHostZo
 			UnbondingFrequency: sdk.NewInt(3),
 			Validators:         gaiaValidators,
 			DelegationAccount:  &gaiaDelegationAccount,
-			StakedBal:          sdk.NewInt(5_000_000),
+			StakedBal:          sdkmath.NewInt(5_000_000),
 			ConnectionId:       ibctesting.FirstConnectionID,
 		},
 		{
@@ -68,7 +83,7 @@ func (s *KeeperTestSuite) SetupInitiateAllHostZoneUnbondings() InitiateAllHostZo
 			UnbondingFrequency: sdk.NewInt(4),
 			Validators:         osmoValidators,
 			DelegationAccount:  &osmoDelegationAccount,
-			StakedBal:          sdk.NewInt(5_000_000),
+			StakedBal:          sdkmath.NewInt(5_000_000),
 			ConnectionId:       ibctesting.FirstConnectionID,
 		},
 	}
@@ -76,15 +91,25 @@ func (s *KeeperTestSuite) SetupInitiateAllHostZoneUnbondings() InitiateAllHostZo
 	default_unbonding := []*recordtypes.HostZoneUnbonding{
 		{
 			HostZoneId:        HostChainId,
+<<<<<<< HEAD
 			StTokenAmount:     sdk.NewInt(1_900_000),
 			NativeTokenAmount: sdk.NewInt(2_000_000),
+=======
+			StTokenAmount:     sdkmath.NewInt(1_900_000),
+			NativeTokenAmount: sdkmath.NewInt(2_000_000),
+>>>>>>> main
 			Denom:             Atom,
 			Status:            recordtypes.HostZoneUnbonding_UNBONDING_QUEUE,
 		},
 		{
 			HostZoneId:        OsmoChainId,
+<<<<<<< HEAD
 			StTokenAmount:     sdk.NewInt(2_800_000),
 			NativeTokenAmount: sdk.NewInt(3),
+=======
+			StTokenAmount:     sdkmath.NewInt(2_800_000),
+			NativeTokenAmount: sdkmath.NewInt(3),
+>>>>>>> main
 			Denom:             Osmo,
 			Status:            recordtypes.HostZoneUnbonding_UNBONDING_QUEUE,
 		},
@@ -162,8 +187,13 @@ func (s *KeeperTestSuite) TestInitiateAllHostZoneUnbondings_Failed() {
 	hostZone.Validators = []*stakeibc.Validator{
 		{
 			Address:       "cosmos_VALIDATOR",
+<<<<<<< HEAD
 			DelegationAmt: sdk.NewInt(1_000_000),
 			Weight:        sdk.NewInt(10),
+=======
+			DelegationAmt: sdkmath.NewInt(1_000_000),
+			Weight:        uint64(10),
+>>>>>>> main
 		},
 	}
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
