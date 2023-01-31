@@ -151,9 +151,6 @@ func (im IBCModule) OnRecvPacket(
 	packet channeltypes.Packet,
 	relayer sdk.AccAddress,
 ) ibcexported.Acknowledgement {
-	wrapperAck := channeltypes.NewResultAcknowledgement([]byte{byte(1)})
-	// handle(wrapperAck)
-	_ = wrapperAck
 	// NOTE: acknowledgement will be written synchronously during IBC handler execution.
 	// doCustomLogic(packet)
 	return im.app.OnRecvPacket(ctx, packet, relayer)

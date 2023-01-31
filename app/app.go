@@ -83,7 +83,6 @@ import (
 	ibcclient "github.com/cosmos/ibc-go/v5/modules/core/02-client"
 	ibcclientclient "github.com/cosmos/ibc-go/v5/modules/core/02-client/client"
 	ibcclienttypes "github.com/cosmos/ibc-go/v5/modules/core/02-client/types"
-	ibcporttypes "github.com/cosmos/ibc-go/v5/modules/core/05-port/types"
 	ibchost "github.com/cosmos/ibc-go/v5/modules/core/24-host"
 	ibckeeper "github.com/cosmos/ibc-go/v5/modules/core/keeper"
 	ibctesting "github.com/cosmos/ibc-go/v5/testing"
@@ -426,15 +425,21 @@ func NewStrideApp(
 		app.GetSubspace(ratelimitmoduletypes.ModuleName),
 		app.BankKeeper,
 		app.IBCKeeper.ChannelKeeper,
+		// TODO: Implement ICS4Wrapper in Records and pass records keeper here
 		app.IBCKeeper.ChannelKeeper, // ICS4Wrapper
 	)
 	ratelimitModule := ratelimitmodule.NewAppModule(appCodec, app.RatelimitKeeper)
 
 	// Create Transfer Keepers
 	app.TransferKeeper = ibctransferkeeper.NewKeeper(
-		appCodec, keys[ibctransfertypes.StoreKey], app.GetSubspace(ibctransfertypes.ModuleName),
-		app.IBCKeeper.ChannelKeeper, app.IBCKeeper.ChannelKeeper, &app.IBCKeeper.PortKeeper,
-		app.AccountKeeper, app.BankKeeper, scopedTransferKeeper,
+		appCodec, keys[ibctransfertypes.StoreKey],
+		app.GetSubspace(ibctransfertypes.ModuleName),
+		app.RatelimitKeeper, // ICS4Wrapper
+		app.IBCKeeper.ChannelKeeper,
+		&app.IBCKeeper.PortKeeper,
+		app.AccountKeeper,
+		app.BankKeeper,
+		scopedTransferKeeper,
 	)
 	transferModule := transfer.NewAppModule(app.TransferKeeper)
 	transferIBCModule := transfer.NewIBCModule(app.TransferKeeper)
@@ -606,13 +611,14 @@ func NewStrideApp(
 	// - ratelimit
 	// - transfer
 	// - base app
-	ratelimitStack := ratelimitmodule.NewIBCMiddleware(app.RatelimitKeeper, transferIBCModule)
-	recordsStack := recordsmodule.NewIBCModule(app.RecordsKeeper, ratelimitStack)
+	var transferStack porttypes.IBCModule = transferIBCModule
+	transferStack = ratelimitmodule.NewIBCMiddleware(app.RatelimitKeeper, transferStack)
+	transferStack = recordsmodule.NewIBCModule(app.RecordsKeeper, transferStack)
 
 	// Create static IBC router, add transfer route, then set and seal it
-	ibcRouter := ibcporttypes.NewRouter()
+	ibcRouter := porttypes.NewRouter()
 	ibcRouter.
-		AddRoute(ibctransfertypes.ModuleName, recordsStack).
+		AddRoute(ibctransfertypes.ModuleName, transferStack).
 		AddRoute(icacontrollertypes.SubModuleName, icamiddlewareStack).
 		AddRoute(icahosttypes.SubModuleName, icaHostIBCModule).
 		// Note, authentication module packets are routed to the top level of the middleware stack

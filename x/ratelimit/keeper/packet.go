@@ -1,16 +1,15 @@
-package ratelimit
+package keeper
 
 import (
 	"encoding/json"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
 	transfertypes "github.com/cosmos/ibc-go/v5/modules/apps/transfer/types"
 	channeltypes "github.com/cosmos/ibc-go/v5/modules/core/04-channel/types"
+	ibcexported "github.com/cosmos/ibc-go/v5/modules/core/exported"
 
-	"github.com/cosmos/ibc-go/v5/modules/core/exported"
-
-	ratelimitkeeper "github.com/Stride-Labs/stride/v5/x/ratelimit/keeper"
 	"github.com/Stride-Labs/stride/v5/x/ratelimit/types"
 )
 
@@ -100,7 +99,7 @@ func ParseDenomFromRecvPacket(packet channeltypes.Packet, packetData transfertyp
 }
 
 // Middleware implementation for SendPacket with rate limiting
-func SendRateLimitedPacket(ctx sdk.Context, keeper ratelimitkeeper.Keeper, packet exported.PacketI) error {
+func (k Keeper) SendRateLimitedPacket(ctx sdk.Context, packet ibcexported.PacketI) error {
 	// The Stride channelID should always be used as the key for the RateLimit object (not the counterparty channelID)
 	// For a SEND packet, the Stride channelID is the SOURCE channel
 	// This is because the Source and Desination are defined from the perspective of a packet recipient
@@ -121,7 +120,7 @@ func SendRateLimitedPacket(ctx sdk.Context, keeper ratelimitkeeper.Keeper, packe
 
 	denom := ParseDenomFromSendPacket(packetData)
 
-	err := keeper.CheckRateLimitAndUpdateFlow(ctx, types.PACKET_SEND, denom, channelId, amount)
+	err := k.CheckRateLimitAndUpdateFlow(ctx, types.PACKET_SEND, denom, channelId, amount)
 	if err != nil {
 		return err
 	}
@@ -130,7 +129,7 @@ func SendRateLimitedPacket(ctx sdk.Context, keeper ratelimitkeeper.Keeper, packe
 }
 
 // Middleware implementation for RecvPacket with rate limiting
-func ReceiveRateLimitedPacket(ctx sdk.Context, keeper ratelimitkeeper.Keeper, packet channeltypes.Packet) error {
+func (k Keeper) ReceiveRateLimitedPacket(ctx sdk.Context, packet channeltypes.Packet) error {
 	// The Stride channelID should always be used as the key for the RateLimit object (not the counterparty channelID)
 	// For a RECEIVE packet, the Stride channelID is the DESTINATION channel
 	// This is because the Source and Desination are defined from the perspective of a packet recipient
@@ -152,10 +151,29 @@ func ReceiveRateLimitedPacket(ctx sdk.Context, keeper ratelimitkeeper.Keeper, pa
 	denom := ParseDenomFromRecvPacket(packet, packetData)
 
 	// Check whether the rate limit has been exceeded - and if it hasn't, send the packet
-	err := keeper.CheckRateLimitAndUpdateFlow(ctx, types.PACKET_RECV, denom, channelId, amount)
+	err := k.CheckRateLimitAndUpdateFlow(ctx, types.PACKET_RECV, denom, channelId, amount)
 	if err != nil {
 		return err
 	}
 
 	return nil
+}
+
+// SendPacket wraps IBC ChannelKeeper's SendPacket function
+// If the packet does not get rate limited, it passes the packet to the IBC Channel keeper
+func (k Keeper) SendPacket(ctx sdk.Context, chanCap *capabilitytypes.Capability, packet ibcexported.PacketI) error {
+	if err := k.SendRateLimitedPacket(ctx, packet); err != nil {
+		return err
+	}
+	return k.ics4Wrapper.SendPacket(ctx, chanCap, packet)
+}
+
+// WriteAcknowledgement wraps IBC ChannelKeeper's WriteAcknowledgement function
+func (k Keeper) WriteAcknowledgement(ctx sdk.Context, chanCap *capabilitytypes.Capability, packet ibcexported.PacketI, acknowledgement ibcexported.Acknowledgement) error {
+	return k.ics4Wrapper.WriteAcknowledgement(ctx, chanCap, packet, acknowledgement)
+}
+
+// GetAppVersion wraps IBC ChannelKeeper's GetAppVersion function
+func (k Keeper) GetAppVersion(ctx sdk.Context, portID, channelID string) (string, bool) {
+	return k.ics4Wrapper.GetAppVersion(ctx, portID, channelID)
 }

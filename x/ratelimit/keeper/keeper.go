@@ -21,7 +21,7 @@ type (
 
 		bankKeeper    types.BankKeeper
 		channelKeeper types.ChannelKeeper
-		ICS4Wrapper   types.ICS4Wrapper
+		ics4Wrapper   types.ICS4Wrapper
 	}
 )
 
@@ -39,7 +39,7 @@ func NewKeeper(
 		paramstore:    ps,
 		bankKeeper:    bankKeeper,
 		channelKeeper: channelKeeper,
-		ICS4Wrapper:   ics4Wrapper,
+		ics4Wrapper:   ics4Wrapper,
 	}
 }
 

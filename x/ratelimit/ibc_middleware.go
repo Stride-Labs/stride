@@ -107,12 +107,14 @@ func (im IBCMiddleware) OnRecvPacket(
 ) exported.Acknowledgement {
 	// Check if the packet would cause the rate limit to be exceeded,
 	// and if so, return an ack error
-	if err := ReceiveRateLimitedPacket(ctx, im.keeper, packet); err != nil {
+	if err := im.keeper.ReceiveRateLimitedPacket(ctx, packet); err != nil {
 		// QUESTION: Should the error ack instead be passed down to the base app?
 		// I'm assuming no because I don't think we need to do anything in the case of an error
 		// (as tokens should not have been minted yet at this point in the stack)
 		return channeltypes.NewErrorAcknowledgement(err)
 	}
+
+	// If the packet was not rate-limited, pass it down to the Transfer OnRecvPacket callback
 	return im.app.OnRecvPacket(ctx, packet, relayer)
 }
 
@@ -136,30 +138,26 @@ func (im IBCMiddleware) OnTimeoutPacket(
 }
 
 // SendPacket implements the ICS4 Wrapper interface
-// If the packet does not get rate limited, it passes the packet to the IBC Channel keeper
+// Rate-limited SendPacket found in RateLimit Keeper
 func (im IBCMiddleware) SendPacket(
 	ctx sdk.Context,
 	chanCap *capabilitytypes.Capability,
 	packet exported.PacketI,
 ) error {
-	if err := SendRateLimitedPacket(ctx, im.keeper, packet); err != nil {
-		return err
-	}
-	return im.keeper.ICS4Wrapper.SendPacket(ctx, chanCap, packet)
+	return im.keeper.SendPacket(ctx, chanCap, packet)
 }
 
 // WriteAcknowledgement implements the ICS4 Wrapper interface
-// WriteAcknowledgement wraps the IBC ChannelKeeper's WriteAcknowledgement function
 func (im IBCMiddleware) WriteAcknowledgement(
 	ctx sdk.Context,
 	chanCap *capabilitytypes.Capability,
 	packet exported.PacketI,
 	ack exported.Acknowledgement,
 ) error {
-	return im.keeper.ICS4Wrapper.WriteAcknowledgement(ctx, chanCap, packet, ack)
+	return im.keeper.WriteAcknowledgement(ctx, chanCap, packet, ack)
 }
 
 // GetAppVersion returns the application version of the underlying application
 func (i IBCMiddleware) GetAppVersion(ctx sdk.Context, portID, channelID string) (string, bool) {
-	return i.keeper.ICS4Wrapper.GetAppVersion(ctx, portID, channelID)
+	return i.keeper.GetAppVersion(ctx, portID, channelID)
 }
