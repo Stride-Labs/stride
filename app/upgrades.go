@@ -8,10 +8,13 @@ import (
 
 	authz "github.com/cosmos/cosmos-sdk/x/authz"
 
+	alliancetypes "github.com/terra-money/alliance/x/alliance/types"
+
 	v2 "github.com/Stride-Labs/stride/v5/app/upgrades/v2"
 	v3 "github.com/Stride-Labs/stride/v5/app/upgrades/v3"
 	v4 "github.com/Stride-Labs/stride/v5/app/upgrades/v4"
 	v5 "github.com/Stride-Labs/stride/v5/app/upgrades/v5"
+	v6 "github.com/Stride-Labs/stride/v5/app/upgrades/v6"
 	claimtypes "github.com/Stride-Labs/stride/v5/x/claim/types"
 	icacallbacktypes "github.com/Stride-Labs/stride/v5/x/icacallbacks/types"
 	recordtypes "github.com/Stride-Labs/stride/v5/x/records/types"
@@ -53,6 +56,12 @@ func (app *StrideApp) setupUpgradeHandlers() {
 		),
 	)
 
+	// v6 upgrade handler
+	app.UpgradeKeeper.SetUpgradeHandler(
+		v6.UpgradeName,
+		v6.CreateUpgradeHandler(app.mm, app.configurator),
+	)
+
 	upgradeInfo, err := app.UpgradeKeeper.ReadUpgradeInfoFromDisk()
 	if err != nil {
 		panic(fmt.Errorf("Failed to read upgrade info from disk: %w", err))
@@ -72,6 +81,10 @@ func (app *StrideApp) setupUpgradeHandlers() {
 	case "v5":
 		storeUpgrades = &storetypes.StoreUpgrades{
 			Deleted: []string{authz.ModuleName},
+		}
+	case "v6":
+		storeUpgrades = &storetypes.StoreUpgrades{
+			Added: []string{alliancetypes.ModuleName},
 		}
 	}
 
