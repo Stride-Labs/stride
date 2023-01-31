@@ -7,10 +7,10 @@ import "cosmos_proto/cosmos.proto";
 
 option go_package = "github.com/Stride-Labs/stride/v5/x/liquidgov/types";
 
-// Proposal defines the core field members of a liquid proposal.
-message Proposal {
-  cosmos.gov.v1.Proposal gov_proposal = 1 [(gogoproto.nullable) = false];
+// Vote defines the core field members of a liquid vote.
+message Vote {
+  cosmos.gov.v1.Vote gov_vote = 1 [(gogoproto.nullable) = false];
 
-  // host_zone_chain_id defines the host zone of the proposal
+  // host_zone_chain_id defines the host zone of the vote
 	string host_zone_chain_id = 2;
 }

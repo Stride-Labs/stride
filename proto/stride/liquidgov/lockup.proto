@@ -1,0 +1,62 @@
+syntax = "proto3";
+package stride.liquidgov;
+
+import "gogoproto/gogo.proto";
+import "cosmos_proto/cosmos.proto";
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/Stride-Labs/stride/v5/x/liquidgov/types";
+
+// Lockup defines a lockup for liquid voting.
+// A Lockup consists of an creator, amount, and denom.
+message Lockup {
+  option (gogoproto.equal)            = false;
+  option (gogoproto.goproto_getters)  = false;
+  option (gogoproto.goproto_stringer) = false;
+
+	// creator is the creator address of the lockup.
+  string creator = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+
+	// amount is the amount of locked assets.
+	string amount = 2 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
+	// denom is the denom of locked assets.
+	string denom = 3;
+
+}
+
+// UnlockingRecord defines tokens in unlock process.
+// An UnlockingRecord consists of an creator, amount, denom, and end time.
+message UnlockingRecord {
+  option (gogoproto.equal)            = false;
+  option (gogoproto.goproto_getters)  = false;
+  option (gogoproto.goproto_stringer) = false;
+
+	// creator is the creator address of the unlocking record.
+  string creator       = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+
+	// denom is the denom of unlocking assets.
+	string denom = 2;
+
+	// entries are the unbonding delegation entries.
+  repeated UnlockingRecordEntry entries = 3 [(gogoproto.nullable) = false];
+}
+
+// UnlockingRecordEntry defines an unlocking object with relevant metadata.
+message UnlockingRecordEntry {
+  option (gogoproto.equal)            = true;
+  option (gogoproto.goproto_stringer) = false;
+
+  // creation_height is the height which the unbonding took place.
+  int64 creation_height = 1;
+  // completion_time is the unix time for unbonding completion.
+  google.protobuf.Timestamp completion_time = 2 [(gogoproto.nullable) = false, (gogoproto.stdtime) = true];
+  // balance defines the tokens to receive at completion.
+  string balance = 3 [
+    (cosmos_proto.scalar)  = "cosmos.Int",
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable)   = false
+  ];
+}
