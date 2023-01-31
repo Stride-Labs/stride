@@ -94,10 +94,10 @@ func (s *KeeperTestSuite) TestUpdateRedemptionRatesRandomized() {
 	// run N tests, each with random inputs
 
 	MAX := "1_000_000_000"
-	stakedBal, _ := sdk.NewIntFromString(MAX)
-	undelegatedBal, _ := sdk.NewIntFromString(MAX)
-	justDepositedBal, _ := sdk.NewIntFromString(MAX)
-	stSupply, _ := sdk.NewIntFromString(MAX)
+	stakedBal, _ := sdkmath.NewIntFromString(MAX)
+	undelegatedBal, _ := sdkmath.NewIntFromString(MAX)
+	justDepositedBal, _ := sdkmath.NewIntFromString(MAX)
+	stSupply, _ := sdkmath.NewIntFromString(MAX)
 
 	// s.Require().ElementsMatch([]int{0, 0, 0, 0}, []int{int(stakedBal), int(undelegatedBal), int(justDepositedBal), int(stSupply)}) //
 	initialRedemptionRate := sdk.NewDec(1)

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	sdkmath "cosmossdk.io/math"
 	yaml "gopkg.in/yaml.v2"
 
 	epochtypes "github.com/Stride-Labs/stride/v5/x/epochs/types"
@@ -39,10 +40,10 @@ func NewParams(
 		MintDenom:                            mintDenom,
 		GenesisEpochProvisions:               genesisEpochProvisions,
 		EpochIdentifier:                      epochIdentifier,
-		ReductionPeriodInEpochs:              sdk.NewInt(reductionPeriodInEpochs),
+		ReductionPeriodInEpochs:              sdkmath.NewInt(reductionPeriodInEpochs),
 		ReductionFactor:                      ReductionFactor,
 		DistributionProportions:              distrProportions,
-		MintingRewardsDistributionStartEpoch: sdk.NewInt(mintingRewardsDistributionStartEpoch),
+		MintingRewardsDistributionStartEpoch: sdkmath.NewInt(mintingRewardsDistributionStartEpoch),
 	}
 }
 
@@ -52,7 +53,7 @@ func DefaultParams() Params {
 		MintDenom:               sdk.DefaultBondDenom,
 		GenesisEpochProvisions:  sdk.NewDec(2_500_000).Mul(sdk.NewDec(1_000_000)).Quo(sdk.NewDec(24 * 365)), // 2.5MST first year, broken into hours ~= 285ST / hour
 		EpochIdentifier:         "mint",                                                                     // 1 hour
-		ReductionPeriodInEpochs: sdk.NewInt(24 * 365),                                                       // 24hrs*365d = 8760
+		ReductionPeriodInEpochs: sdkmath.NewInt(24 * 365),                                                   // 24hrs*365d = 8760
 		ReductionFactor:         sdk.NewDec(1).QuoInt64(2),
 		DistributionProportions: DistributionProportions{
 			Staking:                     sdk.MustNewDecFromStr("0.2764"),
@@ -60,7 +61,7 @@ func DefaultParams() Params {
 			StrategicReserve:            sdk.MustNewDecFromStr("0.4205"),
 			CommunityPoolSecurityBudget: sdk.MustNewDecFromStr("0.1171"),
 		},
-		MintingRewardsDistributionStartEpoch: sdk.ZeroInt(),
+		MintingRewardsDistributionStartEpoch: sdkmath.ZeroInt(),
 	}
 }
 
@@ -140,7 +141,7 @@ func validateGenesisEpochProvisions(i interface{}) error {
 }
 
 func validateReductionPeriodInEpochs(i interface{}) error {
-	v, ok := i.(sdk.Int)
+	v, ok := i.(sdkmath.Int)
 	if !ok {
 		return fmt.Errorf("invalid parameter type: %T", i)
 	}
@@ -201,7 +202,7 @@ func validateDistributionProportions(i interface{}) error {
 }
 
 func validateMintingRewardsDistributionStartEpoch(i interface{}) error {
-	v, ok := i.(sdk.Int)
+	v, ok := i.(sdkmath.Int)
 	if !ok {
 		return fmt.Errorf("invalid parameter type: %T", i)
 	}

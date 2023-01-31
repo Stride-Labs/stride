@@ -524,8 +524,8 @@ func (k Keeper) ClaimCoinsForAction(ctx sdk.Context, addr sdk.AccAddress, action
 
 			periodLength := GetAirdropDurationForAction(action)
 			vestingAcc := vestingtypes.NewStridePeriodicVestingAccount(baseAccount.(*authtypes.BaseAccount), claimableAmount, []vestingtypes.Period{{
-				StartTime:  sdk.NewInt(ctx.BlockTime().Unix()),
-				Length:     sdk.NewInt(periodLength),
+				StartTime:  sdkmath.NewInt(ctx.BlockTime().Unix()),
+				Length:     sdkmath.NewInt(periodLength),
 				Amount:     claimableAmount,
 				ActionType: int32(action),
 			}})
@@ -534,8 +534,8 @@ func (k Keeper) ClaimCoinsForAction(ctx sdk.Context, addr sdk.AccAddress, action
 			// Grant a new vesting to the existing stride vesting account
 			periodLength := GetAirdropDurationForAction(action)
 			strideVestingAcc.AddNewGrant(vestingtypes.Period{
-				StartTime:  sdk.NewInt(ctx.BlockTime().Unix()),
-				Length:     sdk.NewInt(periodLength),
+				StartTime:  sdkmath.NewInt(ctx.BlockTime().Unix()),
+				Length:     sdkmath.NewInt(periodLength),
 				Amount:     claimableAmount,
 				ActionType: int32(action),
 			})
@@ -581,7 +581,7 @@ func (k Keeper) ClaimCoinsForAction(ctx sdk.Context, addr sdk.AccAddress, action
 }
 
 // CreateAirdropAndEpoch creates a new airdrop and epoch for that.
-func (k Keeper) CreateAirdropAndEpoch(ctx sdk.Context, distributor string, denom string, startTime sdk.Int, duration sdk.Int, identifier string) error {
+func (k Keeper) CreateAirdropAndEpoch(ctx sdk.Context, distributor string, denom string, startTime sdkmath.Int, duration sdkmath.Int, identifier string) error {
 	params, err := k.GetParams(ctx)
 	if err != nil {
 		panic(err)
@@ -606,8 +606,8 @@ func (k Keeper) CreateAirdropAndEpoch(ctx sdk.Context, distributor string, denom
 		Identifier:              fmt.Sprintf("airdrop-%s", identifier),
 		StartTime:               airdrop.AirdropStartTime.Add(time.Minute),
 		Duration:                time.Hour * 24 * 30,
-		CurrentEpoch:            sdk.ZeroInt(),
-		CurrentEpochStartHeight: sdk.ZeroInt(),
+		CurrentEpoch:            sdkmath.ZeroInt(),
+		CurrentEpochStartHeight: sdkmath.ZeroInt(),
 		CurrentEpochStartTime:   time.Time{},
 		EpochCountingStarted:    false,
 	})

@@ -5,6 +5,8 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
+	sdkmath "cosmossdk.io/math"
+
 	"github.com/Stride-Labs/stride/v5/x/epochs/keeper"
 	"github.com/Stride-Labs/stride/v5/x/epochs/types"
 )
@@ -27,7 +29,7 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) 
 			panic("current epoch start height should NOT be negative")
 		}
 
-		epoch.CurrentEpochStartHeight = sdk.NewInt(ctx.BlockHeight())
+		epoch.CurrentEpochStartHeight = sdkmath.NewInt(ctx.BlockHeight())
 
 		k.SetEpochInfo(ctx, epoch)
 	}

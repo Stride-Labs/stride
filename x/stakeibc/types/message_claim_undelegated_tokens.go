@@ -4,6 +4,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
+	sdkmath "cosmossdk.io/math"
+
 	"github.com/Stride-Labs/stride/v5/utils"
 )
 
@@ -11,7 +13,7 @@ const TypeMsgClaimUndelegatedTokens = "claim_undelegated_tokens"
 
 var _ sdk.Msg = &MsgClaimUndelegatedTokens{}
 
-func NewMsgClaimUndelegatedTokens(creator string, hostZone string, epoch sdk.Int, sender string) *MsgClaimUndelegatedTokens {
+func NewMsgClaimUndelegatedTokens(creator string, hostZone string, epoch sdkmath.Int, sender string) *MsgClaimUndelegatedTokens {
 	return &MsgClaimUndelegatedTokens{
 		Creator:    creator,
 		HostZoneId: hostZone,
@@ -55,7 +57,7 @@ func (msg *MsgClaimUndelegatedTokens) ValidateBasic() error {
 	if msg.HostZoneId == "" {
 		return sdkerrors.Wrapf(ErrRequiredFieldEmpty, "host zone id cannot be empty")
 	}
-	if !(msg.Epoch.LT(sdk.NewInt(1<<63 - 1))) {
+	if !(msg.Epoch.LT(sdkmath.NewInt(1<<63 - 1))) {
 		return sdkerrors.Wrapf(ErrInvalidAmount, "epoch must be less than math.MaxInt64 %d", 1<<63-1)
 	}
 	return nil

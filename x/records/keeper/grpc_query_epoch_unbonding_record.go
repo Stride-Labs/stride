@@ -3,6 +3,7 @@ package keeper
 import (
 	"context"
 
+	sdkmath "cosmossdk.io/math"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -46,7 +47,7 @@ func (k Keeper) EpochUnbondingRecord(c context.Context, req *types.QueryGetEpoch
 	}
 
 	ctx := sdk.UnwrapSDKContext(c)
-	epochUnbondingRecord, found := k.GetEpochUnbondingRecord(ctx, sdk.NewIntFromUint64(req.EpochNumber))
+	epochUnbondingRecord, found := k.GetEpochUnbondingRecord(ctx, sdkmath.NewIntFromUint64(req.EpochNumber))
 	if !found {
 		return nil, sdkerrors.ErrKeyNotFound
 	}

@@ -325,7 +325,7 @@ func (k Keeper) SweepAllUnbondedTokensForHostZone(ctx sdk.Context, hostZone type
 		//      2. the unbonding time is less than the current block time
 		//      3. the host zone is in the EXIT_TRANSFER_QUEUE state, meaning it's ready to be transferred
 		inTransferQueue := hostZoneUnbonding.Status == recordstypes.HostZoneUnbonding_EXIT_TRANSFER_QUEUE
-		validUnbondingTime := hostZoneUnbonding.UnbondingTime.IsPositive() && hostZoneUnbonding.UnbondingTime.LT(sdk.NewIntFromUint64(blockTime))
+		validUnbondingTime := hostZoneUnbonding.UnbondingTime.IsPositive() && hostZoneUnbonding.UnbondingTime.LT(sdkmath.NewIntFromUint64(blockTime))
 		if inTransferQueue && validUnbondingTime {
 			k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId, "  %v%s included in sweep", hostZoneUnbonding.NativeTokenAmount, hostZoneUnbonding.Denom))
 

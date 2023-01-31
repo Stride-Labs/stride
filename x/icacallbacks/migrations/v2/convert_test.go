@@ -36,7 +36,7 @@ func TestConvertDelegateCallback(t *testing.T) {
 
 	// Check unchanged fields
 	require.Equal(t, hostZoneId, newDelegateCallback.HostZoneId, "host zone id")
-	require.Equal(t, depositRecordId, newDelegateCallback.DepositRecordId, "deposit record id")
+	require.Equal(t, sdkmath.NewIntFromUint64(depositRecordId), newDelegateCallback.DepositRecordId, "deposit record id")
 	require.Equal(t, val1, newDelegateCallback.SplitDelegations[0].Validator, "validator 1 address")
 	require.Equal(t, val2, newDelegateCallback.SplitDelegations[1].Validator, "validator 2 address")
 
@@ -70,7 +70,7 @@ func TestConvertUndelegateCallback(t *testing.T) {
 
 	// Check unchanged fields
 	require.Equal(t, hostZoneId, newUndelegateCallback.HostZoneId, "host zone id")
-	require.Equal(t, epochUnbondingIds[0], newUndelegateCallback.EpochUnbondingRecordIds[0], "epoch unbonding record id")
+	require.Equal(t, sdkmath.NewIntFromUint64(epochUnbondingIds[0]), newUndelegateCallback.EpochUnbondingRecordIds[0], "epoch unbonding record id")
 	require.Equal(t, val1, newUndelegateCallback.SplitDelegations[0].Validator, "validator 1 address")
 	require.Equal(t, val2, newUndelegateCallback.SplitDelegations[1].Validator, "validator 2 address")
 

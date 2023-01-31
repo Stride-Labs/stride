@@ -63,8 +63,8 @@ func (s *KeeperTestSuite) SetupDelegateCallback() DelegateCallbackTestCase {
 		StakedBal:      stakedBal,
 	}
 	depositRecord := recordtypes.DepositRecord{
-		Id:                 sdk.NewInt(1),
-		DepositEpochNumber: sdk.NewInt(1),
+		Id:                 sdkmath.NewInt(1),
+		DepositEpochNumber: sdkmath.NewInt(1),
 		HostZoneId:         HostChainId,
 		Amount:             balanceToStake,
 		Status:             recordtypes.DepositRecord_DELEGATION_QUEUE,
@@ -210,7 +210,7 @@ func (s *KeeperTestSuite) TestDelegateCallback_MissingValidator() {
 	}
 	callbackArgs := types.DelegateCallback{
 		HostZoneId:       HostChainId,
-		DepositRecordId:  sdk.NewInt(1),
+		DepositRecordId:  sdkmath.NewInt(1),
 		SplitDelegations: []*types.SplitDelegation{&badSplitDelegation},
 	}
 	invalidCallbackArgs, err := s.App.StakeibcKeeper.MarshalDelegateCallbackArgs(s.Ctx, callbackArgs)

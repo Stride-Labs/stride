@@ -1,7 +1,7 @@
 package types
 
 import (
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkmath "cosmossdk.io/math"
 )
 
 // NewGenesisState creates a new GenesisState object.
@@ -9,7 +9,7 @@ func NewGenesisState(minter Minter, params Params, ReductionStartedEpoch int64) 
 	return &GenesisState{
 		Minter:                minter,
 		Params:                params,
-		ReductionStartedEpoch: sdk.NewInt(ReductionStartedEpoch),
+		ReductionStartedEpoch: sdkmath.NewInt(ReductionStartedEpoch),
 	}
 }
 
@@ -18,7 +18,7 @@ func DefaultGenesisState() *GenesisState {
 	return &GenesisState{
 		Minter:                DefaultInitialMinter(),
 		Params:                DefaultParams(),
-		ReductionStartedEpoch: sdk.ZeroInt(),
+		ReductionStartedEpoch: sdkmath.ZeroInt(),
 	}
 }
 

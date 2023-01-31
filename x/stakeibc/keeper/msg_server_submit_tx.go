@@ -191,7 +191,7 @@ func (k Keeper) GetStartTimeNextEpoch(ctx sdk.Context, epochType string) (sdkmat
 	epochTracker, found := k.GetEpochTracker(ctx, epochType)
 	if !found {
 		k.Logger(ctx).Error(fmt.Sprintf("Failed to get epoch tracker for %s", epochType))
-		return sdk.ZeroInt(), sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "Failed to get epoch tracker for %s", epochType)
+		return sdkmath.ZeroInt(), sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "Failed to get epoch tracker for %s", epochType)
 	}
 	return epochTracker.NextEpochStartTime, nil
 }

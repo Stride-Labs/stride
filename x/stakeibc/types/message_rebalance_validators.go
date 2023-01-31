@@ -6,6 +6,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
+	sdkmath "cosmossdk.io/math"
+
 	"github.com/Stride-Labs/stride/v5/utils"
 )
 
@@ -13,7 +15,7 @@ const TypeMsgRebalanceValidators = "rebalance_validators"
 
 var _ sdk.Msg = &MsgRebalanceValidators{}
 
-func NewMsgRebalanceValidators(creator string, hostZone string, numValidators sdk.Int) *MsgRebalanceValidators {
+func NewMsgRebalanceValidators(creator string, hostZone string, numValidators sdkmath.Int) *MsgRebalanceValidators {
 	return &MsgRebalanceValidators{
 		Creator:      creator,
 		HostZone:     hostZone,
@@ -50,7 +52,7 @@ func (msg *MsgRebalanceValidators) ValidateBasic() error {
 	if err := utils.ValidateAdminAddress(msg.Creator); err != nil {
 		return err
 	}
-	if (msg.NumRebalance.LT(sdk.NewInt(1))) || (msg.NumRebalance.GT(sdk.NewInt(10))) {
+	if (msg.NumRebalance.LT(sdkmath.NewInt(1))) || (msg.NumRebalance.GT(sdkmath.NewInt(10))) {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, fmt.Sprintf("invalid number of validators to rebalance (%d)", msg.NumRebalance))
 	}
 	return nil

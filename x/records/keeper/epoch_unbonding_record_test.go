@@ -21,18 +21,21 @@ func createNEpochUnbondingRecord(keeper *keeper.Keeper, ctx sdk.Context, n int) 
 			Status:            types.HostZoneUnbonding_UNBONDING_QUEUE,
 			StTokenAmount:     sdkmath.ZeroInt(),
 			NativeTokenAmount: sdkmath.ZeroInt(),
+			UnbondingTime:     sdkmath.ZeroInt(),
 		},
 		{
 			HostZoneId:        "host-B",
 			Status:            types.HostZoneUnbonding_UNBONDING_QUEUE,
 			StTokenAmount:     sdkmath.ZeroInt(),
 			NativeTokenAmount: sdkmath.ZeroInt(),
+			UnbondingTime:     sdkmath.ZeroInt(),
 		},
 		{
 			HostZoneId:        "host-C",
 			Status:            types.HostZoneUnbonding_UNBONDING_QUEUE,
 			StTokenAmount:     sdkmath.ZeroInt(),
 			NativeTokenAmount: sdkmath.ZeroInt(),
+			UnbondingTime:     sdkmath.ZeroInt(),
 		},
 	}
 	hostZoneUnbondingsMap := make(map[string]types.HostZoneUnbonding)
@@ -42,7 +45,7 @@ func createNEpochUnbondingRecord(keeper *keeper.Keeper, ctx sdk.Context, n int) 
 
 	epochUnbondingRecords := make([]types.EpochUnbondingRecord, n)
 	for epochNumber, epochUnbondingRecord := range epochUnbondingRecords {
-		epochUnbondingRecord.EpochNumber = sdk.NewIntFromUint64(uint64(epochNumber))
+		epochUnbondingRecord.EpochNumber = sdkmath.NewIntFromUint64(uint64(epochNumber))
 
 		unbondingsCopy := make([]*types.HostZoneUnbonding, 3)
 		for i := range unbondingsCopy {
@@ -104,7 +107,7 @@ func TestGetHostZoneUnbondingByChainId(t *testing.T) {
 	_, hostZoneUnbondings := createNEpochUnbondingRecord(keeper, ctx, 10)
 
 	expectedHostZoneUnbonding := hostZoneUnbondings["host-B"]
-	actualHostZoneUnbonding, found := keeper.GetHostZoneUnbondingByChainId(ctx, sdk.NewInt(1), "host-B")
+	actualHostZoneUnbonding, found := keeper.GetHostZoneUnbondingByChainId(ctx, sdkmath.NewInt(1), "host-B")
 
 	require.True(t, found)
 	require.Equal(t,
@@ -117,7 +120,7 @@ func TestAddHostZoneToEpochUnbondingRecord(t *testing.T) {
 	keeper, ctx := keepertest.RecordsKeeper(t)
 	epochUnbondingRecords, _ := createNEpochUnbondingRecord(keeper, ctx, 3)
 
-	epochNumber := sdk.ZeroInt()
+	epochNumber := sdkmath.ZeroInt()
 	initialEpochUnbondingRecord := epochUnbondingRecords[epochNumber.Int64()]
 
 	// Add new host zone to initial epoch unbonding records
@@ -142,7 +145,7 @@ func TestSetHostZoneUnbondings(t *testing.T) {
 
 	initialEpochUnbondingRecords, _ := createNEpochUnbondingRecord(keeper, ctx, 4)
 
-	epochsToUpdate := []sdk.Int{sdk.NewInt(1), sdk.NewInt(3)}
+	epochsToUpdate := []sdkmath.Int{sdkmath.NewInt(1), sdkmath.NewInt(3)}
 	hostIdToUpdate := "host-B"
 	newStatus := types.HostZoneUnbonding_UNBONDING_IN_PROGRESS
 

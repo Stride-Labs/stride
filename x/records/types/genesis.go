@@ -3,8 +3,7 @@ package types
 import (
 	"fmt"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
-
+	sdkmath "cosmossdk.io/math"
 	host "github.com/cosmos/ibc-go/v5/modules/core/24-host"
 )
 
@@ -17,15 +16,15 @@ func DefaultGenesis() *GenesisState {
 		Params:                    DefaultParams(),
 		PortId:                    PortID,
 		UserRedemptionRecordList:  []UserRedemptionRecord{},
-		UserRedemptionRecordCount: sdk.ZeroInt(),
+		UserRedemptionRecordCount: sdkmath.ZeroInt(),
 		EpochUnbondingRecordList:  []EpochUnbondingRecord{},
 		DepositRecordList:         []DepositRecord{},
-		DepositRecordCount:        sdk.ZeroInt(),
+		DepositRecordCount:        sdkmath.ZeroInt(),
 		// this line is used by starport scaffolding # genesis/types/default
 	}
 }
 
-func (gs GenesisState) GetDepositRecordCount() sdk.Int {
+func (gs GenesisState) GetDepositRecordCount() sdkmath.Int {
 	return gs.DepositRecordCount
 }
 

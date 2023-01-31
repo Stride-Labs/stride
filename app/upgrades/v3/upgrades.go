@@ -3,6 +3,7 @@ package v3
 import (
 	"time"
 
+	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
@@ -40,7 +41,7 @@ func CreateUpgradeHandler(
 		// total number of airdrop distributors must be equal to identifiers
 		if len(airdropDistributors) == len(airdropIdentifiers) {
 			for idx, airdropDistributor := range airdropDistributors {
-				err = ck.CreateAirdropAndEpoch(ctx, airdropDistributor, claimtypes.DefaultClaimDenom, sdk.NewInt(ctx.BlockTime().Unix()), sdk.NewIntFromUint64(uint64(airdropDuration.Seconds())), airdropIdentifiers[idx])
+				err = ck.CreateAirdropAndEpoch(ctx, airdropDistributor, claimtypes.DefaultClaimDenom, sdkmath.NewInt(ctx.BlockTime().Unix()), sdkmath.NewIntFromUint64(uint64(airdropDuration.Seconds())), airdropIdentifiers[idx])
 				if err != nil {
 					return newVm, err
 				}

@@ -45,7 +45,7 @@ func (k Keeper) VerifyKeyProof(ctx sdk.Context, msg *types.MsgSubmitQueryRespons
 	}
 
 	// Get the client consensus state at the height 1 block above the message height
-	msgHeight, err := cast.ToUint64E(msg.Height)
+	msgHeight, err := cast.ToUint64E(msg.Height.Uint64())
 	if err != nil {
 		return err
 	}
@@ -160,7 +160,7 @@ func (k msgServer) SubmitQueryResponse(goCtx context.Context, msg *types.MsgSubm
 	}
 	if query.Ttl.LT(sdkmath.NewIntFromUint64(currBlockTime)) {
 		k.Logger(ctx).Error(utils.LogICQCallbackWithHostZone(query.ChainId, query.CallbackId,
-			"QUERY TIMEOUT - QueryId: %s, TTL: %d, BlockTime: %d", query.Id, query.Ttl, ctx.BlockHeader().Time.UnixNano()))
+			"QUERY TIMEOUT - QueryId: %s, TTL: %s, BlockTime: %d", query.Id, query.Ttl.String(), ctx.BlockHeader().Time.UnixNano()))
 		return &types.MsgSubmitQueryResponseResponse{}, nil
 	}
 

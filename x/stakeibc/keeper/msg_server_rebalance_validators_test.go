@@ -29,11 +29,11 @@ func (s *KeeperTestSuite) SetupRebalanceValidators() RebalanceValidatorsTestCase
 	delegationAddr := s.IcaAddresses[delegationIcaOwner]
 
 	// setup epochs
-	epochNumber := sdk.NewInt(1)
+	epochNumber := sdkmath.NewInt(1)
 	epochTracker := stakeibctypes.EpochTracker{
 		EpochIdentifier:    epochtypes.STRIDE_EPOCH,
 		EpochNumber:        epochNumber,
-		NextEpochStartTime: sdk.NewIntFromUint64(uint64(s.Coordinator.CurrentTime.UnixNano() + 30_000_000_000)), // dictates timeouts
+		NextEpochStartTime: sdkmath.NewIntFromUint64(uint64(s.Coordinator.CurrentTime.UnixNano() + 30_000_000_000)), // dictates timeouts
 	}
 	s.App.StakeibcKeeper.SetEpochTracker(s.Ctx, epochTracker)
 
@@ -42,40 +42,40 @@ func (s *KeeperTestSuite) SetupRebalanceValidators() RebalanceValidatorsTestCase
 		{
 			Name:           "val1",
 			Address:        "stride_VAL1",
-			CommissionRate: sdk.NewInt(1),
-			Weight:         sdk.NewInt(100),
+			CommissionRate: sdkmath.NewInt(1),
+			Weight:         sdkmath.NewInt(100),
 			Status:         stakeibctypes.Validator_ACTIVE,
 			DelegationAmt:  sdkmath.NewInt(100),
 		},
 		{
 			Name:           "val2",
 			Address:        "stride_VAL2",
-			CommissionRate: sdk.NewInt(2),
-			Weight:         sdk.NewInt(500),
+			CommissionRate: sdkmath.NewInt(2),
+			Weight:         sdkmath.NewInt(500),
 			Status:         stakeibctypes.Validator_ACTIVE,
 			DelegationAmt:  sdkmath.NewInt(500),
 		},
 		{
 			Name:           "val3",
 			Address:        "stride_VAL3",
-			CommissionRate: sdk.NewInt(2),
-			Weight:         sdk.NewInt(200),
+			CommissionRate: sdkmath.NewInt(2),
+			Weight:         sdkmath.NewInt(200),
 			Status:         stakeibctypes.Validator_ACTIVE,
 			DelegationAmt:  sdkmath.NewInt(200),
 		},
 		{
 			Name:           "val4",
 			Address:        "stride_VAL4",
-			CommissionRate: sdk.NewInt(2),
-			Weight:         sdk.NewInt(400),
+			CommissionRate: sdkmath.NewInt(2),
+			Weight:         sdkmath.NewInt(400),
 			Status:         stakeibctypes.Validator_ACTIVE,
 			DelegationAmt:  sdkmath.NewInt(400),
 		},
 		{
 			Name:           "val5",
 			Address:        "stride_VAL5",
-			CommissionRate: sdk.NewInt(2),
-			Weight:         sdk.NewInt(400),
+			CommissionRate: sdkmath.NewInt(2),
+			Weight:         sdkmath.NewInt(400),
 			Status:         stakeibctypes.Validator_ACTIVE,
 			DelegationAmt:  sdkmath.NewInt(400),
 		},
@@ -100,12 +100,12 @@ func (s *KeeperTestSuite) SetupRebalanceValidators() RebalanceValidatorsTestCase
 		{
 			Creator:      "stride_ADDRESS",
 			HostZone:     "GAIA",
-			NumRebalance: sdk.NewInt(1),
+			NumRebalance: sdkmath.NewInt(1),
 		},
 		{
 			Creator:      "stride_ADDRESS",
 			HostZone:     "GAIA",
-			NumRebalance: sdk.NewInt(2),
+			NumRebalance: sdkmath.NewInt(2),
 		},
 	}
 
@@ -125,8 +125,8 @@ func (s *KeeperTestSuite) TestRebalanceValidators_Successful() {
 	validators := hz.GetValidators()
 	s.Require().Equal(5, len(validators), "host zone should have 5 validators")
 	// modify weight to 25
-	validators[0].Weight = sdk.NewInt(250)
-	validators[2].Weight = sdk.NewInt(100)
+	validators[0].Weight = sdkmath.NewInt(250)
+	validators[2].Weight = sdkmath.NewInt(100)
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hz)
 
 	// get sequence ID for callbacks
@@ -138,7 +138,7 @@ func (s *KeeperTestSuite) TestRebalanceValidators_Successful() {
 	badMsg_rightWeights := stakeibctypes.MsgRebalanceValidators{
 		Creator:      "stride_ADDRESS",
 		HostZone:     "GAIA",
-		NumRebalance: sdk.NewInt(2),
+		NumRebalance: sdkmath.NewInt(2),
 	}
 	_, err := s.GetMsgServer().RebalanceValidators(sdk.WrapSDKContext(s.Ctx), &badMsg_rightWeights)
 	s.Require().NoError(err, "rebalancing with 2 validators should succeed")
@@ -171,7 +171,7 @@ func (s *KeeperTestSuite) TestRebalanceValidators_InvalidNumValidators() {
 	badMsg_tooFew := stakeibctypes.MsgRebalanceValidators{
 		Creator:      "stride_ADDRESS",
 		HostZone:     "GAIA",
-		NumRebalance: sdk.ZeroInt(),
+		NumRebalance: sdkmath.ZeroInt(),
 	}
 	_, err := s.GetMsgServer().RebalanceValidators(sdk.WrapSDKContext(s.Ctx), &badMsg_tooFew)
 	expectedErrMsg := "invalid number of validators"
@@ -181,7 +181,7 @@ func (s *KeeperTestSuite) TestRebalanceValidators_InvalidNumValidators() {
 	badMsg_tooMany := stakeibctypes.MsgRebalanceValidators{
 		Creator:      "stride_ADDRESS",
 		HostZone:     "GAIA",
-		NumRebalance: sdk.NewInt(5),
+		NumRebalance: sdkmath.NewInt(5),
 	}
 	_, err = s.GetMsgServer().RebalanceValidators(sdk.WrapSDKContext(s.Ctx), &badMsg_tooMany)
 	s.Require().EqualError(err, expectedErrMsg, "rebalancing 5 validators should fail")
@@ -194,7 +194,7 @@ func (s *KeeperTestSuite) TestRebalanceValidators_InvalidNoChange() {
 	badMsg_rightWeights := stakeibctypes.MsgRebalanceValidators{
 		Creator:      "stride_ADDRESS",
 		HostZone:     "GAIA",
-		NumRebalance: sdk.NewInt(1),
+		NumRebalance: sdkmath.NewInt(1),
 	}
 	_, err := s.GetMsgServer().RebalanceValidators(sdk.WrapSDKContext(s.Ctx), &badMsg_rightWeights)
 	expectedErrMsg := "validator weights haven't changed"
@@ -213,7 +213,7 @@ func (s *KeeperTestSuite) TestRebalanceValidators_InvalidNoValidators() {
 	badMsg_noValidators := stakeibctypes.MsgRebalanceValidators{
 		Creator:      "stride_ADDRESS",
 		HostZone:     "GAIA",
-		NumRebalance: sdk.NewInt(2),
+		NumRebalance: sdkmath.NewInt(2),
 	}
 	_, err := s.GetMsgServer().RebalanceValidators(sdk.WrapSDKContext(s.Ctx), &badMsg_noValidators)
 	expectedErrMsg := "no non-zero validator weights"
@@ -228,7 +228,7 @@ func (s *KeeperTestSuite) TestRebalanceValidators_InvalidAllValidatorsNoWeight()
 	validators := hz.GetValidators()
 	fmt.Println(validators)
 	for _, v := range validators {
-		v.Weight = sdk.ZeroInt()
+		v.Weight = sdkmath.ZeroInt()
 	}
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hz)
 
@@ -236,7 +236,7 @@ func (s *KeeperTestSuite) TestRebalanceValidators_InvalidAllValidatorsNoWeight()
 	badMsg_noValidators := stakeibctypes.MsgRebalanceValidators{
 		Creator:      "stride_ADDRESS",
 		HostZone:     "GAIA",
-		NumRebalance: sdk.NewInt(2),
+		NumRebalance: sdkmath.NewInt(2),
 	}
 	_, err := s.GetMsgServer().RebalanceValidators(sdk.WrapSDKContext(s.Ctx), &badMsg_noValidators)
 	expectedErrMsg := "no non-zero validator weights"
@@ -251,14 +251,14 @@ func (s *KeeperTestSuite) TestRebalanceValidators_InvalidNotEnoughDiff() {
 	validators := hz.GetValidators()
 	s.Require().Equal(5, len(validators), "host zone should have 5 validators")
 	// modify weight to 25
-	validators[0].Weight = sdk.NewInt(101)
+	validators[0].Weight = sdkmath.NewInt(101)
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hz)
 
 	// Rebalance without enough difference should fail
 	badMsg_noValidators := stakeibctypes.MsgRebalanceValidators{
 		Creator:      "stride_ADDRESS",
 		HostZone:     "GAIA",
-		NumRebalance: sdk.NewInt(2),
+		NumRebalance: sdkmath.NewInt(2),
 	}
 	_, err := s.GetMsgServer().RebalanceValidators(sdk.WrapSDKContext(s.Ctx), &badMsg_noValidators)
 	expectedErrMsg := "validator weights haven't changed"

@@ -24,11 +24,11 @@ func (k msgServer) RebalanceValidators(goCtx context.Context, msg *types.MsgReba
 		return nil, types.ErrInvalidHostZone
 	}
 	maxNumRebalance := msg.NumRebalance
-	if maxNumRebalance.LT(sdk.NewInt(1)) {
+	if maxNumRebalance.LT(sdkmath.NewInt(1)) {
 		k.Logger(ctx).Error(fmt.Sprintf("Invalid number of validators to rebalance %d", maxNumRebalance))
 		return nil, types.ErrInvalidNumValidator
 	}
-	if maxNumRebalance.GT(sdk.NewInt(4)) {
+	if maxNumRebalance.GT(sdkmath.NewInt(4)) {
 		k.Logger(ctx).Error(fmt.Sprintf("Invalid number of validators to rebalance %d", maxNumRebalance))
 		return nil, types.ErrInvalidNumValidator
 	}
@@ -89,7 +89,7 @@ func (k msgServer) RebalanceValidators(goCtx context.Context, msg *types.MsgReba
 		Rebalancings: []*types.Rebalancing{},
 	}
 	index := 1
-	for maxNumRebalance.GTE(sdk.NewInt(int64(index))) {
+	for maxNumRebalance.GTE(sdkmath.NewInt(int64(index))) {
 		underWeightElem := valDeltaList[underWeightIndex]
 		overWeightElem := valDeltaList[overWeightIndex]
 		if underWeightElem.deltaAmt.LT(sdkmath.ZeroInt()) {

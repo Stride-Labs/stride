@@ -2,7 +2,6 @@ package keeper_test
 
 import (
 	sdkmath "cosmossdk.io/math"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	ibctesting "github.com/cosmos/ibc-go/v5/testing"
 	_ "github.com/stretchr/testify/suite"
 
@@ -56,7 +55,7 @@ func (s *KeeperTestSuite) SetupSweepUnbondedTokens() SweepUnbondedTokensTestCase
 			ChainId:            HostChainId,
 			HostDenom:          Atom,
 			Bech32Prefix:       GaiaPrefix,
-			UnbondingFrequency: sdk.NewInt(3),
+			UnbondingFrequency: sdkmath.NewInt(3),
 			Validators:         gaiaValidators,
 			DelegationAccount:  &gaiaDelegationAccount,
 			RedemptionAccount:  &gaiaRedemptionAccount,
@@ -67,7 +66,7 @@ func (s *KeeperTestSuite) SetupSweepUnbondedTokens() SweepUnbondedTokensTestCase
 			ChainId:            OsmoChainId,
 			HostDenom:          Osmo,
 			Bech32Prefix:       OsmoPrefix,
-			UnbondingFrequency: sdk.NewInt(4),
+			UnbondingFrequency: sdkmath.NewInt(4),
 			Validators:         osmoValidators,
 			DelegationAccount:  &osmoDelegationAccount,
 			RedemptionAccount:  &osmoRedemptionAccount,
@@ -77,17 +76,17 @@ func (s *KeeperTestSuite) SetupSweepUnbondedTokens() SweepUnbondedTokensTestCase
 	}
 	dayEpochTracker := stakeibc.EpochTracker{
 		EpochIdentifier:    epochtypes.DAY_EPOCH,
-		EpochNumber:        sdk.NewInt(1),
-		NextEpochStartTime: sdk.NewIntFromUint64(uint64(s.Coordinator.CurrentTime.UnixNano() + 30_000_000_000)), // dictates timeouts
+		EpochNumber:        sdkmath.NewInt(1),
+		NextEpochStartTime: sdkmath.NewIntFromUint64(uint64(s.Coordinator.CurrentTime.UnixNano() + 30_000_000_000)), // dictates timeouts
 	}
 
 	// 2022-08-12T19:51, a random time in the past
-	unbondingTime := sdk.NewInt(10)
+	unbondingTime := sdkmath.NewInt(10)
 	lightClientTime := unbondingTime.AddRaw(1)
 	// list of epoch unbonding records
 	epochUnbondingRecords := []recordtypes.EpochUnbondingRecord{
 		{
-			EpochNumber: sdk.ZeroInt(),
+			EpochNumber: sdkmath.ZeroInt(),
 			HostZoneUnbondings: []*recordtypes.HostZoneUnbonding{
 				{
 					HostZoneId:        HostChainId,
@@ -104,7 +103,7 @@ func (s *KeeperTestSuite) SetupSweepUnbondedTokens() SweepUnbondedTokensTestCase
 			},
 		},
 		{
-			EpochNumber: sdk.NewInt(1),
+			EpochNumber: sdkmath.NewInt(1),
 			HostZoneUnbondings: []*recordtypes.HostZoneUnbonding{
 				{
 					HostZoneId:        HostChainId,
@@ -121,7 +120,7 @@ func (s *KeeperTestSuite) SetupSweepUnbondedTokens() SweepUnbondedTokensTestCase
 			},
 		},
 		{
-			EpochNumber: sdk.NewInt(2),
+			EpochNumber: sdkmath.NewInt(2),
 			HostZoneUnbondings: []*recordtypes.HostZoneUnbonding{
 				{
 					HostZoneId:        HostChainId,

@@ -17,8 +17,8 @@ type GetHostZoneUnbondingMsgsTestCase struct {
 	amtToUnbond           sdkmath.Int
 	epochUnbondingRecords []recordtypes.EpochUnbondingRecord
 	hostZone              stakeibc.HostZone
-	lightClientTime       sdk.Int
-	totalWgt              sdk.Int
+	lightClientTime       sdkmath.Int
+	totalWgt              sdkmath.Int
 	valNames              []string
 }
 
@@ -168,7 +168,7 @@ func (s *KeeperTestSuite) TestGetHostZoneUnbondingMsgs_NoEpochUnbondingRecords()
 
 	// iterate epoch unbonding records and delete them
 	for i := range tc.epochUnbondingRecords {
-		s.App.RecordsKeeper.RemoveEpochUnbondingRecord(s.Ctx, sdk.NewIntFromUint64(uint64(i)))
+		s.App.RecordsKeeper.RemoveEpochUnbondingRecord(s.Ctx, sdkmath.NewIntFromUint64(uint64(i)))
 	}
 
 	s.Require().Equal(0, len(s.App.RecordsKeeper.GetAllEpochUnbondingRecord(s.Ctx)), "number of epoch unbonding records should be 0 after deletion")

@@ -4,6 +4,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
+	sdkmath "cosmossdk.io/math"
+
 	"github.com/Stride-Labs/stride/v5/utils"
 )
 
@@ -132,7 +134,7 @@ const TypeMsgCreateAirdrop = "create_airdrop"
 
 var _ sdk.Msg = &MsgCreateAirdrop{}
 
-func NewMsgCreateAirdrop(distributor string, identifier string, startTime sdk.Int, duration sdk.Int, denom string) *MsgCreateAirdrop {
+func NewMsgCreateAirdrop(distributor string, identifier string, startTime sdkmath.Int, duration sdkmath.Int, denom string) *MsgCreateAirdrop {
 	return &MsgCreateAirdrop{
 		Distributor: distributor,
 		Identifier:  identifier,
@@ -173,11 +175,11 @@ func (msg *MsgCreateAirdrop) ValidateBasic() error {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "airdrop identifier not set")
 	}
 
-	if msg.StartTime == sdk.ZeroInt() {
+	if msg.StartTime == sdkmath.ZeroInt() {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "airdrop start time not set")
 	}
 
-	if msg.Duration == sdk.ZeroInt() {
+	if msg.Duration == sdkmath.ZeroInt() {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "airdrop duration not set")
 	}
 	return nil

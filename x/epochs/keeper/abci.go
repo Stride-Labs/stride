@@ -9,6 +9,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/telemetry"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
+	sdkmath "cosmossdk.io/math"
+
 	"github.com/Stride-Labs/stride/v5/utils"
 	"github.com/Stride-Labs/stride/v5/x/epochs/types"
 )
@@ -24,7 +26,7 @@ func (k Keeper) BeginBlocker(ctx sdk.Context) {
 		epochEndTime := epochInfo.CurrentEpochStartTime.Add(epochInfo.Duration)
 		shouldEpochStart := ctx.BlockTime().After(epochEndTime) && !shouldInitialEpochStart && !epochInfo.StartTime.After(ctx.BlockTime())
 
-		epochInfo.CurrentEpochStartHeight = sdk.NewInt(ctx.BlockHeight())
+		epochInfo.CurrentEpochStartHeight = sdkmath.NewInt(ctx.BlockHeight())
 
 		switch {
 		case shouldInitialEpochStart:
@@ -68,7 +70,7 @@ func (k Keeper) BeginBlocker(ctx sdk.Context) {
 
 func startInitialEpoch(epochInfo types.EpochInfo) types.EpochInfo {
 	epochInfo.EpochCountingStarted = true
-	epochInfo.CurrentEpoch = sdk.NewInt(1)
+	epochInfo.CurrentEpoch = sdkmath.NewInt(1)
 	epochInfo.CurrentEpochStartTime = epochInfo.StartTime
 	return epochInfo
 }

@@ -3,6 +3,7 @@ package keeper
 import (
 	"context"
 
+	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"google.golang.org/grpc/codes"
@@ -40,7 +41,7 @@ func (k Keeper) UserRedemptionRecordForUser(c context.Context, req *types.QueryA
 		}
 		currentDay := req.Day - i
 		// query the user redemption record for the current day
-		userRedemptionRecord, found := k.GetUserRedemptionRecord(ctx, types.UserRedemptionRecordKeyFormatter(req.ChainId, sdk.NewIntFromUint64(currentDay), req.Address))
+		userRedemptionRecord, found := k.GetUserRedemptionRecord(ctx, types.UserRedemptionRecordKeyFormatter(req.ChainId, sdkmath.NewIntFromUint64(currentDay), req.Address))
 		if !found {
 			continue
 		}

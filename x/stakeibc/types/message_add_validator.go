@@ -6,6 +6,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
+	sdkmath "cosmossdk.io/math"
+
 	"github.com/Stride-Labs/stride/v5/utils"
 )
 
@@ -13,7 +15,7 @@ const TypeMsgAddValidator = "add_validator"
 
 var _ sdk.Msg = &MsgAddValidator{}
 
-func NewMsgAddValidator(creator string, hostZone string, name string, address string, commission sdk.Int, weight sdk.Int) *MsgAddValidator {
+func NewMsgAddValidator(creator string, hostZone string, name string, address string, commission sdkmath.Int, weight sdkmath.Int) *MsgAddValidator {
 	return &MsgAddValidator{
 		Creator:    creator,
 		HostZone:   hostZone,
@@ -58,7 +60,7 @@ func (msg *MsgAddValidator) ValidateBasic() error {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "name is required")
 	}
 	// commission validation
-	if msg.Commission.GT(sdk.NewInt(100)) {
+	if msg.Commission.GT(sdkmath.NewInt(100)) {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "commission must be between 0 and 100")
 	}
 

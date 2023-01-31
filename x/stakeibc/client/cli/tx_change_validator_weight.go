@@ -7,8 +7,9 @@ import (
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/spf13/cobra"
+
+	sdkmath "cosmossdk.io/math"
 
 	"github.com/Stride-Labs/stride/v5/x/stakeibc/types"
 )
@@ -23,9 +24,9 @@ func CmdChangeValidatorWeight() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
 			argHostZone := args[0]
 			argName := args[1]
-			argWeight, ok := sdk.NewIntFromString(args[2])
+			argWeight, ok := sdkmath.NewIntFromString(args[2])
 			if !ok {
-				return fmt.Errorf("Fail to parse arg to sdk.Int (%v)", args[2])
+				return fmt.Errorf("Fail to parse arg to sdkmath.Int (%v)", args[2])
 			}
 
 			clientCtx, err := client.GetClientTxContext(cmd)

@@ -6,11 +6,10 @@ import (
 
 	yaml "gopkg.in/yaml.v2"
 
+	sdkmath "cosmossdk.io/math"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-
-	sdkmath "cosmossdk.io/math"
 
 	"github.com/Stride-Labs/stride/v5/utils"
 	vestexported "github.com/Stride-Labs/stride/v5/x/claim/vesting/exported"
@@ -27,7 +26,7 @@ var (
 // NewBaseVestingAccount creates a new BaseVestingAccount object. It is the
 // callers responsibility to ensure the base account has sufficient funds with
 // regards to the original vesting amount.
-func NewBaseVestingAccount(baseAccount *authtypes.BaseAccount, originalVesting sdk.Coins, endTime sdk.Int) *BaseVestingAccount {
+func NewBaseVestingAccount(baseAccount *authtypes.BaseAccount, originalVesting sdk.Coins, endTime sdkmath.Int) *BaseVestingAccount {
 	return &BaseVestingAccount{
 		BaseAccount:      baseAccount,
 		OriginalVesting:  originalVesting,
@@ -212,7 +211,7 @@ func NewStridePeriodicVestingAccount(baseAcc *authtypes.BaseAccount, originalVes
 		return &StridePeriodicVestingAccount{}
 	}
 
-	endTime := sdk.ZeroInt()
+	endTime := sdkmath.ZeroInt()
 	for _, p := range periods {
 		endTime = sdk.MaxInt(endTime, p.StartTime.Add(p.Length))
 	}

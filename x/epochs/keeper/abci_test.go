@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkmath "cosmossdk.io/math"
 
 	"github.com/Stride-Labs/stride/v5/x/epochs"
 	"github.com/Stride-Labs/stride/v5/x/epochs/types"
@@ -17,16 +17,16 @@ func (suite *KeeperTestSuite) TestEpochInfoChangesBeginBlockerAndInitGenesis() {
 
 	testCases := []struct {
 		expCurrentEpochStartTime   time.Time
-		expCurrentEpochStartHeight sdk.Int
-		expCurrentEpoch            sdk.Int
+		expCurrentEpochStartHeight sdkmath.Int
+		expCurrentEpoch            sdkmath.Int
 		expInitialEpochStartTime   time.Time
 		fn                         func()
 	}{
 		{
 			// Only advance 2 seconds, do not increment epoch
-			expCurrentEpochStartHeight: sdk.NewInt(2),
+			expCurrentEpochStartHeight: sdkmath.NewInt(2),
 			expCurrentEpochStartTime:   now,
-			expCurrentEpoch:            sdk.NewInt(1),
+			expCurrentEpoch:            sdkmath.NewInt(1),
 			expInitialEpochStartTime:   now,
 			fn: func() {
 				ctx := suite.Ctx.WithBlockHeight(2).WithBlockTime(now.Add(time.Second))
@@ -35,9 +35,9 @@ func (suite *KeeperTestSuite) TestEpochInfoChangesBeginBlockerAndInitGenesis() {
 			},
 		},
 		{
-			expCurrentEpochStartHeight: sdk.NewInt(2),
+			expCurrentEpochStartHeight: sdkmath.NewInt(2),
 			expCurrentEpochStartTime:   now,
-			expCurrentEpoch:            sdk.NewInt(1),
+			expCurrentEpoch:            sdkmath.NewInt(1),
 			expInitialEpochStartTime:   now,
 			fn: func() {
 				ctx := suite.Ctx.WithBlockHeight(2).WithBlockTime(now.Add(time.Second))
@@ -49,9 +49,9 @@ func (suite *KeeperTestSuite) TestEpochInfoChangesBeginBlockerAndInitGenesis() {
 		},
 		// Test that incrementing _exactly_ 1 month increments the epoch count.
 		{
-			expCurrentEpochStartHeight: sdk.NewInt(3),
+			expCurrentEpochStartHeight: sdkmath.NewInt(3),
 			expCurrentEpochStartTime:   now.Add(time.Hour * 24 * 31),
-			expCurrentEpoch:            sdk.NewInt(2),
+			expCurrentEpoch:            sdkmath.NewInt(2),
 			expInitialEpochStartTime:   now,
 			fn: func() {
 				ctx := suite.Ctx.WithBlockHeight(2).WithBlockTime(now.Add(time.Second))
@@ -62,9 +62,9 @@ func (suite *KeeperTestSuite) TestEpochInfoChangesBeginBlockerAndInitGenesis() {
 			},
 		},
 		{
-			expCurrentEpochStartHeight: sdk.NewInt(3),
+			expCurrentEpochStartHeight: sdkmath.NewInt(3),
 			expCurrentEpochStartTime:   now.Add(time.Hour * 24 * 31),
-			expCurrentEpoch:            sdk.NewInt(2),
+			expCurrentEpoch:            sdkmath.NewInt(2),
 			expInitialEpochStartTime:   now,
 			fn: func() {
 				ctx := suite.Ctx.WithBlockHeight(2).WithBlockTime(now.Add(time.Second))
@@ -77,9 +77,9 @@ func (suite *KeeperTestSuite) TestEpochInfoChangesBeginBlockerAndInitGenesis() {
 			},
 		},
 		{
-			expCurrentEpochStartHeight: sdk.NewInt(3),
+			expCurrentEpochStartHeight: sdkmath.NewInt(3),
 			expCurrentEpochStartTime:   now.Add(time.Hour * 24 * 31),
-			expCurrentEpoch:            sdk.NewInt(2),
+			expCurrentEpoch:            sdkmath.NewInt(2),
 			expInitialEpochStartTime:   now,
 			fn: func() {
 				ctx := suite.Ctx.WithBlockHeight(2).WithBlockTime(now.Add(time.Second))
@@ -113,8 +113,8 @@ func (suite *KeeperTestSuite) TestEpochInfoChangesBeginBlockerAndInitGenesis() {
 						Identifier:              "monthly",
 						StartTime:               time.Time{},
 						Duration:                time.Hour * 24 * 31,
-						CurrentEpoch:            sdk.ZeroInt(),
-						CurrentEpochStartHeight: sdk.NewInt(ctx.BlockHeight()),
+						CurrentEpoch:            sdkmath.ZeroInt(),
+						CurrentEpochStartHeight: sdkmath.NewInt(ctx.BlockHeight()),
 						CurrentEpochStartTime:   time.Time{},
 						EpochCountingStarted:    false,
 					},
@@ -155,8 +155,8 @@ func (suite *KeeperTestSuite) TestEpochStartingOneMonthAfterInitGenesis() {
 				Identifier:              "monthly",
 				StartTime:               now.Add(month),
 				Duration:                time.Hour * 24 * 30,
-				CurrentEpoch:            sdk.ZeroInt(),
-				CurrentEpochStartHeight: sdk.NewInt(ctx.BlockHeight()),
+				CurrentEpoch:            sdkmath.ZeroInt(),
+				CurrentEpochStartHeight: sdkmath.NewInt(ctx.BlockHeight()),
 				CurrentEpochStartTime:   time.Time{},
 				EpochCountingStarted:    false,
 			},
@@ -165,7 +165,7 @@ func (suite *KeeperTestSuite) TestEpochStartingOneMonthAfterInitGenesis() {
 
 	// epoch not started yet
 	epochInfo, _ := suite.App.EpochsKeeper.GetEpochInfo(ctx, "monthly")
-	suite.Require().Equal(epochInfo.CurrentEpoch, sdk.ZeroInt())
+	suite.Require().Equal(epochInfo.CurrentEpoch, sdkmath.ZeroInt())
 	suite.Require().Equal(epochInfo.CurrentEpochStartHeight.Int64(), initialBlockHeight)
 	suite.Require().Equal(epochInfo.CurrentEpochStartTime, time.Time{})
 	suite.Require().Equal(epochInfo.EpochCountingStarted, false)
@@ -176,7 +176,7 @@ func (suite *KeeperTestSuite) TestEpochStartingOneMonthAfterInitGenesis() {
 
 	// epoch not started yet
 	epochInfo, _ = suite.App.EpochsKeeper.GetEpochInfo(ctx, "monthly")
-	suite.Require().Equal(epochInfo.CurrentEpoch, sdk.ZeroInt())
+	suite.Require().Equal(epochInfo.CurrentEpoch, sdkmath.ZeroInt())
 	suite.Require().Equal(epochInfo.CurrentEpochStartHeight.Int64(), initialBlockHeight)
 	suite.Require().Equal(epochInfo.CurrentEpochStartTime, time.Time{})
 	suite.Require().Equal(epochInfo.EpochCountingStarted, false)
@@ -187,7 +187,7 @@ func (suite *KeeperTestSuite) TestEpochStartingOneMonthAfterInitGenesis() {
 
 	// epoch started
 	epochInfo, _ = suite.App.EpochsKeeper.GetEpochInfo(ctx, "monthly")
-	suite.Require().Equal(epochInfo.CurrentEpoch, sdk.NewInt(1))
+	suite.Require().Equal(epochInfo.CurrentEpoch, sdkmath.NewInt(1))
 	suite.Require().Equal(epochInfo.CurrentEpochStartHeight.Int64(), ctx.BlockHeight())
 	suite.Require().Equal(epochInfo.CurrentEpochStartTime.UTC().String(), now.Add(month).UTC().String())
 	suite.Require().Equal(epochInfo.EpochCountingStarted, true)

@@ -3,6 +3,8 @@ package records
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
+	sdkmath "cosmossdk.io/math"
+
 	"github.com/Stride-Labs/stride/v5/x/records/keeper"
 	"github.com/Stride-Labs/stride/v5/x/records/types"
 )
@@ -37,7 +39,7 @@ func ExportGenesis(ctx sdk.Context, k keeper.Keeper) *types.GenesisState {
 	genesis := types.DefaultGenesis()
 	genesis.Params = k.GetParams(ctx)
 	genesis.DepositRecordList = k.GetAllDepositRecord(ctx)
-	genesis.DepositRecordCount = sdk.NewIntFromUint64(k.GetDepositRecordCount(ctx))
+	genesis.DepositRecordCount = sdkmath.NewIntFromUint64(k.GetDepositRecordCount(ctx))
 
 	genesis.UserRedemptionRecordList = k.GetAllUserRedemptionRecord(ctx)
 	genesis.EpochUnbondingRecordList = k.GetAllEpochUnbondingRecord(ctx)

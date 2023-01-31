@@ -165,7 +165,7 @@ func (k Keeper) RemoveValidatorFromHostZone(ctx sdk.Context, chainId string, val
 	}
 	for i, val := range hostZone.Validators {
 		if val.GetAddress() == validatorAddress {
-			if val.DelegationAmt.IsZero() && val.Weight.Equal(sdk.ZeroInt()) {
+			if val.DelegationAmt.IsZero() && val.Weight.Equal(sdkmath.ZeroInt()) {
 				hostZone.Validators = append(hostZone.Validators[:i], hostZone.Validators[i+1:]...)
 				k.SetHostZone(ctx, hostZone)
 				return nil

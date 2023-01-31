@@ -63,7 +63,7 @@ func DelegatorSharesCallback(k Keeper, ctx sdk.Context, args []byte, query icqty
 	if !found {
 		return sdkerrors.Wrapf(sdkerrors.ErrNotFound, "unable to get epoch tracker for epoch (%s)", epochtypes.STRIDE_EPOCH)
 	}
-	if validator.InternalExchangeRate.EpochNumber != strideEpochTracker.EpochNumber {
+	if !validator.InternalExchangeRate.EpochNumber.Equal(strideEpochTracker.EpochNumber) {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest,
 			"validator (%s) internal exchange rate has not been updated this epoch (epoch #%s)", validator.Address, strideEpochTracker.EpochNumber.String())
 	}
@@ -105,9 +105,7 @@ func DelegatorSharesCallback(k Keeper, ctx sdk.Context, args []byte, query icqty
 
 	// Update the validator weight and delegation reflect to reflect the slash
 	weight := validator.Weight
-	if err != nil {
-		return sdkerrors.Wrapf(types.ErrIntCast, "unable to convert validator weight to int64, err: %s", err.Error())
-	}
+
 	weightAdjustment := sdk.MustNewDecFromStr(delegatedTokens.String()).Quo(sdk.NewDecFromInt(validator.DelegationAmt))
 
 	validator.Weight = sdk.MustNewDecFromStr(weight.String()).Mul(weightAdjustment).TruncateInt()

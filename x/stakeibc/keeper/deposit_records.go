@@ -80,7 +80,7 @@ func (k Keeper) TransferExistingDepositsToHostZones(ctx sdk.Context, epochNumber
 		// if we onboard non-tendermint chains, we need to use the time on the host chain to
 		// calculate the timeout
 		// https://github.com/tendermint/tendermint/blob/v0.34.x/spec/consensus/bft-time.md
-		timeoutTimestamp := sdk.NewIntFromUint64(uint64(ctx.BlockTime().UnixNano())).Add(ibcTransferTimeoutNanos)
+		timeoutTimestamp := sdkmath.NewIntFromUint64(uint64(ctx.BlockTime().UnixNano())).Add(ibcTransferTimeoutNanos)
 		msg := ibctypes.NewMsgTransfer(ibctransfertypes.PortID, hostZone.TransferChannelId, transferCoin, hostZoneModuleAddress, delegateAddress, clienttypes.Height{}, timeoutTimestamp.Uint64())
 		k.Logger(ctx).Info(utils.LogWithHostZone(depositRecord.HostZoneId, "Transfer Msg: %+v", msg))
 

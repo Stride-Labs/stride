@@ -1,6 +1,7 @@
 package types
 
 import (
+	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
@@ -11,7 +12,7 @@ const TypeMsgChangeValidatorWeight = "change_validator_weight"
 
 var _ sdk.Msg = &MsgChangeValidatorWeight{}
 
-func NewMsgChangeValidatorWeight(creator string, hostZone string, address string, weight sdk.Int) *MsgChangeValidatorWeight {
+func NewMsgChangeValidatorWeight(creator string, hostZone string, address string, weight sdkmath.Int) *MsgChangeValidatorWeight {
 	return &MsgChangeValidatorWeight{
 		Creator:  creator,
 		HostZone: hostZone,

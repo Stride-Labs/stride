@@ -200,7 +200,7 @@ func (k Keeper) UpdateHostZoneUnbondings(
 
 		// Update the bonded status and time
 		hostZoneUnbonding.Status = recordstypes.HostZoneUnbonding_EXIT_TRANSFER_QUEUE
-		hostZoneUnbonding.UnbondingTime = sdk.NewIntFromUint64(cast.ToUint64(latestCompletionTime.UnixNano()))
+		hostZoneUnbonding.UnbondingTime = sdkmath.NewIntFromUint64(cast.ToUint64(latestCompletionTime.UnixNano()))
 		updatedEpochUnbondingRecord, success := k.RecordsKeeper.AddHostZoneToEpochUnbondingRecord(ctx, epochUnbondingRecord.EpochNumber, chainId, hostZoneUnbonding)
 		if !success {
 			k.Logger(ctx).Error(fmt.Sprintf("Failed to set host zone epoch unbonding record: epochNumber %d, chainId %s, hostZoneUnbonding %+v",

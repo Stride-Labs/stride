@@ -87,10 +87,28 @@ func TestConvertToNewHostZone(t *testing.T) {
 		Bech32Prefix:      bechPrefix,
 		TransferChannelId: channelId,
 		Validators: []*oldstakeibctypes.Validator{
-			{Address: valAddress, DelegationAmt: uint64(1)},
+			{
+				Address:        valAddress,
+				DelegationAmt:  uint64(1),
+				Weight:         uint64(0),
+				CommissionRate: uint64(0),
+				InternalExchangeRate: &oldstakeibctypes.ValidatorExchangeRate{
+					InternalTokensToSharesRate: sdk.ZeroDec(),
+					EpochNumber:                0,
+				},
+			},
 		},
 		BlacklistedValidators: []*oldstakeibctypes.Validator{
-			{Address: blacklistedValAddress, DelegationAmt: uint64(2)},
+			{
+				Address:        blacklistedValAddress,
+				DelegationAmt:  uint64(2),
+				Weight:         uint64(0),
+				CommissionRate: uint64(0),
+				InternalExchangeRate: &oldstakeibctypes.ValidatorExchangeRate{
+					InternalTokensToSharesRate: sdk.ZeroDec(),
+					EpochNumber:                0,
+				},
+			},
 		},
 		WithdrawalAccount: &oldstakeibctypes.ICAAccount{
 			Address: withdrawalAddress, Target: oldstakeibctypes.ICAAccountType_WITHDRAWAL,
@@ -119,10 +137,28 @@ func TestConvertToNewHostZone(t *testing.T) {
 		Bech32Prefix:      bechPrefix,
 		TransferChannelId: channelId,
 		Validators: []*stakeibctypes.Validator{
-			{Address: valAddress, DelegationAmt: sdkmath.NewInt(1)},
+			{
+				Address:        valAddress,
+				DelegationAmt:  sdkmath.NewInt(1),
+				CommissionRate: sdkmath.ZeroInt(),
+				Weight:         sdkmath.ZeroInt(),
+				InternalExchangeRate: &stakeibctypes.ValidatorExchangeRate{
+					InternalTokensToSharesRate: sdk.ZeroDec(),
+					EpochNumber:                sdkmath.ZeroInt(),
+				},
+			},
 		},
 		BlacklistedValidators: []*stakeibctypes.Validator{
-			{Address: blacklistedValAddress, DelegationAmt: sdkmath.NewInt(2)},
+			{
+				Address:        blacklistedValAddress,
+				DelegationAmt:  sdkmath.NewInt(2),
+				CommissionRate: sdkmath.ZeroInt(),
+				Weight:         sdkmath.ZeroInt(),
+				InternalExchangeRate: &stakeibctypes.ValidatorExchangeRate{
+					InternalTokensToSharesRate: sdk.ZeroDec(),
+					EpochNumber:                sdkmath.ZeroInt(),
+				},
+			},
 		},
 		WithdrawalAccount: &stakeibctypes.ICAAccount{
 			Address: withdrawalAddress, Target: stakeibctypes.ICAAccountType_WITHDRAWAL,

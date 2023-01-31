@@ -48,7 +48,7 @@ func (s *KeeperTestSuite) SetupMsgSubmitQueryResponse() MsgSubmitQueryResponseTe
 		ConnectionId: s.TransferPath.EndpointA.ConnectionID,
 		QueryType:    types.BANK_STORE_QUERY_WITH_PROOF,
 		Request:      append(data, []byte(HostChainId)...),
-		Ttl:          sdk.NewIntFromUint64(uint64(12545592938) * uint64(1000000000)), // set ttl to August 2050, mult by nano conversion factor
+		Ttl:          sdkmath.NewIntFromUint64(uint64(12545592938) * uint64(1000000000)), // set ttl to August 2050, mult by nano conversion factor
 	}
 
 	return MsgSubmitQueryResponseTestCase{
@@ -57,7 +57,7 @@ func (s *KeeperTestSuite) SetupMsgSubmitQueryResponse() MsgSubmitQueryResponseTe
 			QueryId:     expectedId,
 			Result:      result,
 			ProofOps:    &proofOps,
-			Height:      sdk.NewInt(height),
+			Height:      sdkmath.NewInt(height),
 			FromAddress: fromAddress,
 		},
 		goCtx: goCtx,

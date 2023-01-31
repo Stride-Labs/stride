@@ -88,7 +88,7 @@ func (k Keeper) GetTotalValidatorDelegations(hostZone types.HostZone) sdkmath.In
 
 func (k Keeper) GetTotalValidatorWeight(hostZone types.HostZone) sdkmath.Int {
 	validators := hostZone.GetValidators()
-	total_weight := sdk.ZeroInt()
+	total_weight := sdkmath.ZeroInt()
 	for _, validator := range validators {
 		total_weight = total_weight.Add(validator.Weight)
 	}

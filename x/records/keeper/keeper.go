@@ -3,6 +3,7 @@ package keeper
 import (
 	"fmt"
 
+	sdkmath "cosmossdk.io/math"
 	ibckeeper "github.com/cosmos/ibc-go/v5/modules/core/keeper"
 	"github.com/tendermint/tendermint/libs/log"
 
@@ -97,7 +98,7 @@ func (k Keeper) Transfer(ctx sdk.Context, msg *ibctypes.MsgTransfer, depositReco
 		CallbackKey:  icacallbackstypes.PacketID(msg.SourcePort, msg.SourceChannel, sequence),
 		PortId:       msg.SourcePort,
 		ChannelId:    msg.SourceChannel,
-		Sequence:     sdk.NewIntFromUint64(sequence),
+		Sequence:     sdkmath.NewIntFromUint64(sequence),
 		CallbackId:   TRANSFER,
 		CallbackArgs: marshalledCallbackArgs,
 	}

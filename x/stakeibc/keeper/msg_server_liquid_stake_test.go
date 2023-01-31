@@ -60,12 +60,12 @@ func (s *KeeperTestSuite) SetupLiquidStake() LiquidStakeTestCase {
 
 	epochTracker := stakeibctypes.EpochTracker{
 		EpochIdentifier: epochtypes.STRIDE_EPOCH,
-		EpochNumber:     sdk.NewInt(1),
+		EpochNumber:     sdkmath.NewInt(1),
 	}
 
 	initialDepositRecord := recordtypes.DepositRecord{
-		Id:                 sdk.NewInt(1),
-		DepositEpochNumber: sdk.NewInt(1),
+		Id:                 sdkmath.NewInt(1),
+		DepositEpochNumber: sdkmath.NewInt(1),
 		HostZoneId:         "GAIA",
 		Amount:             initialDepositAmount,
 	}
@@ -229,7 +229,7 @@ func (s *KeeperTestSuite) TestLiquidStake_NoEpochTracker() {
 func (s *KeeperTestSuite) TestLiquidStake_NoDepositRecord() {
 	tc := s.SetupLiquidStake()
 	// Remove deposit record
-	s.App.RecordsKeeper.RemoveDepositRecord(s.Ctx, sdk.NewInt(1))
+	s.App.RecordsKeeper.RemoveDepositRecord(s.Ctx, sdkmath.NewInt(1))
 	_, err := s.GetMsgServer().LiquidStake(sdk.WrapSDKContext(s.Ctx), &tc.validMsg)
 
 	s.Require().EqualError(err, fmt.Sprintf("no deposit record for epoch (%d): not found", 1))

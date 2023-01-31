@@ -3,6 +3,7 @@ package keeper_test
 import (
 	"time"
 
+	sdkmath "cosmossdk.io/math"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -126,8 +127,8 @@ func (suite *KeeperTestSuite) TestCreateAirdrop() {
 	_, err := msgServer.CreateAirdrop(sdk.WrapSDKContext(suite.ctx), &types.MsgCreateAirdrop{
 		Distributor: distributors[types.DefaultAirdropIdentifier].String(),
 		Identifier:  "stride-1",
-		StartTime:   sdk.NewInt(time.Now().Unix()),
-		Duration:    sdk.NewInt(int64(time.Hour)),
+		StartTime:   sdkmath.NewInt(time.Now().Unix()),
+		Duration:    sdkmath.NewInt(int64(time.Hour)),
 		Denom:       "stake",
 	})
 

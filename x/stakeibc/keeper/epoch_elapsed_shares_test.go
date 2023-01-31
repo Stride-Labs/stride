@@ -1,6 +1,7 @@
 package keeper_test
 
 import (
+	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	epochtypes "github.com/Stride-Labs/stride/v5/x/epochs/types"
@@ -21,8 +22,8 @@ func (s *KeeperTestSuite) SetupEpochElapsedShares(epochDurationSeconds float64, 
 
 	strideEpochTracker := stakeibctypes.EpochTracker{
 		EpochIdentifier:    epochtypes.STRIDE_EPOCH,
-		Duration:           sdk.NewIntFromUint64(uint64(epochDurationSeconds * ToNanoSeconds)),
-		NextEpochStartTime: sdk.NewIntFromUint64(uint64(float64(s.Coordinator.CurrentTime.UnixNano()) + (nextStartTimeSeconds * ToNanoSeconds))),
+		Duration:           sdkmath.NewIntFromUint64(uint64(epochDurationSeconds * ToNanoSeconds)),
+		NextEpochStartTime: sdkmath.NewIntFromUint64(uint64(float64(s.Coordinator.CurrentTime.UnixNano()) + (nextStartTimeSeconds * ToNanoSeconds))),
 	}
 	s.App.StakeibcKeeper.SetEpochTracker(s.Ctx, strideEpochTracker)
 }

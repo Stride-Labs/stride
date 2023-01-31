@@ -2,7 +2,6 @@ package keeper_test
 
 import (
 	sdkmath "cosmossdk.io/math"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	_ "github.com/stretchr/testify/suite"
 
 	recordtypes "github.com/Stride-Labs/stride/v5/x/records/types"
@@ -46,7 +45,7 @@ func (s *KeeperTestSuite) SetupCleanupEpochUnbondingRecords() CleanupEpochUnbond
 			},
 		},
 		{
-			EpochNumber: sdk.NewInt(1),
+			EpochNumber: sdkmath.NewInt(1),
 			HostZoneUnbondings: []*recordtypes.HostZoneUnbonding{
 				{
 					HostZoneId:        HostChainId,
@@ -61,7 +60,7 @@ func (s *KeeperTestSuite) SetupCleanupEpochUnbondingRecords() CleanupEpochUnbond
 			},
 		},
 		{
-			EpochNumber: sdk.NewInt(2),
+			EpochNumber: sdkmath.NewInt(2),
 			HostZoneUnbondings: []*recordtypes.HostZoneUnbonding{
 				{
 					HostZoneId:        HostChainId,
@@ -94,7 +93,7 @@ func (s *KeeperTestSuite) CleanupEpochUnbondingRecords_Successful() {
 	// successfully clean up epoch unbonding records
 	tc := s.SetupGetHostZoneUnbondingMsgs()
 	// clean up epoch unbonding record 0
-	success := s.App.StakeibcKeeper.CleanupEpochUnbondingRecords(s.Ctx, sdk.ZeroInt())
+	success := s.App.StakeibcKeeper.CleanupEpochUnbondingRecords(s.Ctx, sdkmath.ZeroInt())
 	s.Require().True(success, "cleanup unbonding records returns true")
 	epochUnbondings := tc.epochUnbondingRecords
 	s.Require().Len(epochUnbondings, 1, "only one epoch unbonding record should be left")

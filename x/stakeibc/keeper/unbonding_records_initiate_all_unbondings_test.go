@@ -2,7 +2,6 @@ package keeper_test
 
 import (
 	sdkmath "cosmossdk.io/math"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	ibctesting "github.com/cosmos/ibc-go/v5/testing"
 	_ "github.com/stretchr/testify/suite"
 
@@ -106,9 +105,9 @@ func (s *KeeperTestSuite) SetupInitiateAllHostZoneUnbondings() InitiateAllHostZo
 
 	s.App.StakeibcKeeper.SetEpochTracker(s.Ctx, stakeibc.EpochTracker{
 		EpochIdentifier:    "day",
-		EpochNumber:        sdk.NewInt(12),
-		NextEpochStartTime: sdk.NewInt(2661750006000000000), // arbitrary time in the future, year 2056 I believe
-		Duration:           sdk.NewInt(1000000000000),       // 16 min 40 sec
+		EpochNumber:        sdkmath.NewInt(12),
+		NextEpochStartTime: sdkmath.NewInt(2661750006000000000), // arbitrary time in the future, year 2056 I believe
+		Duration:           sdkmath.NewInt(1000000000000),       // 16 min 40 sec
 	})
 
 	return InitiateAllHostZoneUnbondingsTestCase{

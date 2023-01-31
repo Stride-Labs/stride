@@ -50,7 +50,7 @@ func (s *KeeperTestSuite) SetupUndelegateCallback() UndelegateCallbackTestCase {
 	balanceToUnstake := sdkmath.NewInt(300_000)
 	val1UndelegationAmount := sdkmath.NewInt(120_000)
 	val2UndelegationAmount := balanceToUnstake.Sub(val1UndelegationAmount)
-	epochNumber := sdk.NewInt(1)
+	epochNumber := sdkmath.NewInt(1)
 	val1 := types.Validator{
 		Name:          "val1",
 		Address:       "val1_address",
@@ -83,8 +83,8 @@ func (s *KeeperTestSuite) SetupUndelegateCallback() UndelegateCallbackTestCase {
 		HostZoneId:        HostChainId,
 		Status:            recordtypes.HostZoneUnbonding_UNBONDING_QUEUE,
 		StTokenAmount:     balanceToUnstake,
-		NativeTokenAmount: sdk.ZeroInt(),
-		UnbondingTime:     sdk.ZeroInt(),
+		NativeTokenAmount: sdkmath.ZeroInt(),
+		UnbondingTime:     sdkmath.ZeroInt(),
 	}
 	epochUnbondingRecord := recordtypes.EpochUnbondingRecord{
 		EpochNumber:        epochNumber,
@@ -119,7 +119,7 @@ func (s *KeeperTestSuite) SetupUndelegateCallback() UndelegateCallbackTestCase {
 	callbackArgs := types.UndelegateCallback{
 		HostZoneId:              HostChainId,
 		SplitDelegations:        []*types.SplitDelegation{&val1SplitDelegation, &val2SplitDelegation},
-		EpochUnbondingRecordIds: []sdk.Int{epochNumber},
+		EpochUnbondingRecordIds: []sdkmath.Int{epochNumber},
 	}
 	callbackArgsBz, err := s.App.StakeibcKeeper.MarshalUndelegateCallbackArgs(s.Ctx, callbackArgs)
 	s.Require().NoError(err, "callback args unmarshalled")
@@ -345,7 +345,7 @@ func (s *KeeperTestSuite) TestUpdateHostZoneUnbondings_Success() {
 	s.App.RecordsKeeper.SetEpochUnbondingRecord(s.Ctx, epochUnbondingRecord1)
 	s.App.RecordsKeeper.SetEpochUnbondingRecord(s.Ctx, epochUnbondingRecord2)
 	callbackArgs := types.UndelegateCallback{
-		EpochUnbondingRecordIds: []sdk.Int{sdkmath.NewInt(1), sdkmath.NewInt(2)},
+		EpochUnbondingRecordIds: []sdkmath.Int{sdkmath.NewInt(1), sdkmath.NewInt(2)},
 	}
 
 	// Update host zone unbonding record status and calculate how many stTokens to burn
@@ -377,7 +377,7 @@ func (s *KeeperTestSuite) TestUpdateHostZoneUnbondings_Success() {
 // Test failure case - epoch unbonding record DNE
 func (s *KeeperTestSuite) TestUpdateHostZoneUnbondings_EpochUnbondingRecordDNE() {
 	callbackArgs := types.UndelegateCallback{
-		EpochUnbondingRecordIds: []sdk.Int{sdk.NewInt(1)},
+		EpochUnbondingRecordIds: []sdkmath.Int{sdkmath.NewInt(1)},
 	}
 	completionTime := s.Ctx.BlockTime()
 	_, err := s.App.StakeibcKeeper.UpdateHostZoneUnbondings(s.Ctx, completionTime, HostChainId, callbackArgs)
@@ -387,13 +387,13 @@ func (s *KeeperTestSuite) TestUpdateHostZoneUnbondings_EpochUnbondingRecordDNE()
 // Test failure case - HostZoneUnbonding DNE
 func (s *KeeperTestSuite) TestUpdateHostZoneUnbondings_HostZoneUnbondingDNE() {
 	epochUnbondingRecord := recordtypes.EpochUnbondingRecord{
-		EpochNumber: sdk.NewInt(1),
+		EpochNumber: sdkmath.NewInt(1),
 		// No hzu!
 		HostZoneUnbondings: []*recordtypes.HostZoneUnbonding{},
 	}
 	s.App.RecordsKeeper.SetEpochUnbondingRecord(s.Ctx, epochUnbondingRecord)
 	callbackArgs := types.UndelegateCallback{
-		EpochUnbondingRecordIds: []sdk.Int{sdk.NewInt(1)},
+		EpochUnbondingRecordIds: []sdkmath.Int{sdkmath.NewInt(1)},
 	}
 	completionTime := s.Ctx.BlockTime()
 	_, err := s.App.StakeibcKeeper.UpdateHostZoneUnbondings(s.Ctx, completionTime, HostChainId, callbackArgs)

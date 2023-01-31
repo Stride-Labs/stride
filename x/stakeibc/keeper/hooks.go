@@ -97,19 +97,19 @@ func (k Keeper) UpdateEpochTracker(ctx sdk.Context, epochInfo epochstypes.EpochI
 	if epochNumber.IsNegative() {
 		err := fmt.Errorf("Epoch number can not be negative")
 		k.Logger(ctx).Error(err.Error())
-		return sdk.ZeroInt(), err
+		return sdkmath.ZeroInt(), err
 	}
-	epochDurationNano := sdk.NewInt(epochInfo.Duration.Nanoseconds())
+	epochDurationNano := sdkmath.NewInt(epochInfo.Duration.Nanoseconds())
 	if epochDurationNano.IsNegative() {
 		err := fmt.Errorf("Epoch duration can not be negative")
 		k.Logger(ctx).Error(err.Error())
-		return sdk.ZeroInt(), err
+		return sdkmath.ZeroInt(), err
 	}
-	nextEpochStartTime := sdk.NewInt(epochInfo.CurrentEpochStartTime.Add(epochInfo.Duration).UnixNano())
+	nextEpochStartTime := sdkmath.NewInt(epochInfo.CurrentEpochStartTime.Add(epochInfo.Duration).UnixNano())
 	if nextEpochStartTime.IsNegative() {
 		err := fmt.Errorf("Epoch next start time can not be negative")
 		k.Logger(ctx).Error(err.Error())
-		return sdk.ZeroInt(), err
+		return sdkmath.ZeroInt(), err
 	}
 	epochTracker := types.EpochTracker{
 		EpochIdentifier:    epochInfo.Identifier,

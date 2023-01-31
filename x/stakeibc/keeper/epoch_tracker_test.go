@@ -4,6 +4,7 @@ import (
 	"strconv"
 	"testing"
 
+	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
@@ -20,9 +21,9 @@ func createNEpochTracker(keeper *keeper.Keeper, ctx sdk.Context, n int) []types.
 	items := make([]types.EpochTracker, n)
 	for i := range items {
 		items[i].EpochIdentifier = strconv.Itoa(i)
-		items[i].EpochNumber = sdk.ZeroInt()
-		items[i].NextEpochStartTime = sdk.ZeroInt()
-		items[i].Duration = sdk.NewInt(1)
+		items[i].EpochNumber = sdkmath.ZeroInt()
+		items[i].NextEpochStartTime = sdkmath.ZeroInt()
+		items[i].Duration = sdkmath.NewInt(1)
 		keeper.SetEpochTracker(ctx, items[i])
 	}
 	return items

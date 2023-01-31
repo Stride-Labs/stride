@@ -3,6 +3,7 @@ package keeper_test
 import (
 	"fmt"
 
+	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	channeltypes "github.com/cosmos/ibc-go/v5/modules/core/04-channel/types"
 	_ "github.com/stretchr/testify/suite"
@@ -16,9 +17,9 @@ import (
 )
 
 type RedemptionCallbackState struct {
-	epochUnbondingNumbers   []sdk.Int
+	epochUnbondingNumbers   []sdkmath.Int
 	userRedemptionRecordIds []string
-	epochNumber             sdk.Int
+	epochNumber             sdkmath.Int
 }
 
 type RedemptionCallbackArgs struct {
@@ -33,7 +34,7 @@ type RedemptionCallbackTestCase struct {
 }
 
 func (s *KeeperTestSuite) SetupRedemptionCallback() RedemptionCallbackTestCase {
-	epochNumber := sdk.NewInt(1)
+	epochNumber := sdkmath.NewInt(1)
 
 	// individual userRedemptionRecords should be claimable, as long as the host zone unbonding allows for claims
 	recordId1 := recordtypes.UserRedemptionRecordKeyFormatter(HostChainId, epochNumber, "sender")
@@ -72,14 +73,14 @@ func (s *KeeperTestSuite) SetupRedemptionCallback() RedemptionCallbackTestCase {
 	ackResponse := icacallbacktypes.AcknowledgementResponse{Status: icacallbacktypes.AckResponseStatus_SUCCESS}
 	callbackArgs := types.RedemptionCallback{
 		HostZoneId:              HostChainId,
-		EpochUnbondingRecordIds: []sdk.Int{epochNumber},
+		EpochUnbondingRecordIds: []sdkmath.Int{epochNumber},
 	}
 	callbackArgsBz, err := s.App.StakeibcKeeper.MarshalRedemptionCallbackArgs(s.Ctx, callbackArgs)
 	s.Require().NoError(err)
 
 	return RedemptionCallbackTestCase{
 		initialState: RedemptionCallbackState{
-			epochUnbondingNumbers:   []sdk.Int{epochNumber},
+			epochUnbondingNumbers:   []sdkmath.Int{epochNumber},
 			userRedemptionRecordIds: []string{userRedemptionRecord1.Id, userRedemptionRecord2.Id},
 			epochNumber:             epochNumber,
 		},
@@ -168,13 +169,13 @@ func (s *KeeperTestSuite) TestRedemptionCallback_EpochUnbondingRecordNotFound() 
 	// (So that epoch unbonding record is not found)
 	callbackArgs := types.RedemptionCallback{
 		HostZoneId:              HostChainId,
-		EpochUnbondingRecordIds: []sdk.Int{tc.initialState.epochNumber.Add(sdk.NewInt(1))},
+		EpochUnbondingRecordIds: []sdkmath.Int{tc.initialState.epochNumber.Add(sdkmath.NewInt(1))},
 	}
 	invalidCallbackArgs, err := s.App.StakeibcKeeper.MarshalRedemptionCallbackArgs(s.Ctx, callbackArgs)
 	s.Require().NoError(err)
 
 	err = stakeibckeeper.RedemptionCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.packet, tc.validArgs.ackResponse, invalidCallbackArgs)
-	expectedErr := fmt.Sprintf("Error fetching host zone unbonding record for epoch: %d, host zone: GAIA: host zone not found", tc.initialState.epochNumber.AddRaw(1))
+	expectedErr := fmt.Sprintf("Error fetching host zone unbonding record for epoch: %s, host zone: GAIA: host zone not found", tc.initialState.epochNumber.AddRaw(1).String())
 	s.Require().EqualError(err, expectedErr)
 	s.checkRedemptionStateIfCallbackFailed(tc)
 }
@@ -189,6 +190,6 @@ func (s *KeeperTestSuite) TestRedemptionCallback_HostZoneUnbondingNotFound() {
 	s.App.RecordsKeeper.SetEpochUnbondingRecord(s.Ctx, epochUnbondingRecord)
 
 	err := stakeibckeeper.RedemptionCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.packet, tc.validArgs.ackResponse, tc.validArgs.args)
-	s.Require().EqualError(err, fmt.Sprintf("Error fetching host zone unbonding record for epoch: %d, host zone: GAIA: host zone not found", tc.initialState.epochNumber))
+	s.Require().EqualError(err, fmt.Sprintf("Error fetching host zone unbonding record for epoch: %s, host zone: GAIA: host zone not found", tc.initialState.epochNumber.String()))
 	s.checkRedemptionStateIfCallbackFailed(tc)
 }

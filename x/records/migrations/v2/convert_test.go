@@ -81,11 +81,13 @@ func TestConvertEpochUnbondingRecord(t *testing.T) {
 		oldEpochUnbondingRecord.HostZoneUnbondings = append(oldEpochUnbondingRecord.HostZoneUnbondings, &oldrecordstypes.HostZoneUnbonding{
 			StTokenAmount:     uint64(i),
 			NativeTokenAmount: uint64(i * 10),
+			UnbondingTime:     0,
 		})
 
 		expectedNewEpochUnbondingRecord.HostZoneUnbondings = append(expectedNewEpochUnbondingRecord.HostZoneUnbondings, &recordstypes.HostZoneUnbonding{
 			StTokenAmount:     sdkmath.NewInt(int64(i)),
 			NativeTokenAmount: sdkmath.NewInt(int64(i * 10)),
+			UnbondingTime:     sdkmath.ZeroInt(),
 		})
 	}
 

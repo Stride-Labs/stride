@@ -9,7 +9,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/types/module"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkmath "cosmossdk.io/math"
 
 	"github.com/Stride-Labs/stride/v5/x/epochs/types"
 )
@@ -21,8 +21,8 @@ func RandomizedGenState(simState *module.SimulationState) {
 			Identifier:              "day",
 			StartTime:               time.Time{},
 			Duration:                time.Hour * 24,
-			CurrentEpoch:            sdk.ZeroInt(),
-			CurrentEpochStartHeight: sdk.ZeroInt(),
+			CurrentEpoch:            sdkmath.ZeroInt(),
+			CurrentEpochStartHeight: sdkmath.ZeroInt(),
 			CurrentEpochStartTime:   time.Time{},
 			EpochCountingStarted:    false,
 		},
@@ -30,8 +30,8 @@ func RandomizedGenState(simState *module.SimulationState) {
 			Identifier:              "hour",
 			StartTime:               time.Time{},
 			Duration:                time.Hour,
-			CurrentEpoch:            sdk.ZeroInt(),
-			CurrentEpochStartHeight: sdk.ZeroInt(),
+			CurrentEpoch:            sdkmath.ZeroInt(),
+			CurrentEpochStartHeight: sdkmath.ZeroInt(),
 			CurrentEpochStartTime:   time.Time{},
 			EpochCountingStarted:    false,
 		},

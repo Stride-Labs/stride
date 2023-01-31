@@ -11,6 +11,7 @@ import (
 
 	"github.com/Stride-Labs/stride/v5/x/mint/types"
 
+	sdkmath "cosmossdk.io/math"
 	"github.com/cosmos/cosmos-sdk/codec"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -78,14 +79,14 @@ func (k *Keeper) SetHooks(h types.MintHooks) *Keeper {
 }
 
 // GetLastReductionEpochNum returns last Reduction epoch number.
-func (k Keeper) GetLastReductionEpochNum(ctx sdk.Context) sdk.Int {
+func (k Keeper) GetLastReductionEpochNum(ctx sdk.Context) sdkmath.Int {
 	store := ctx.KVStore(k.storeKey)
 	b := store.Get(types.LastReductionEpochKey)
 	if b == nil {
-		return sdk.ZeroInt()
+		return sdkmath.ZeroInt()
 	}
 
-	return sdk.NewInt(cast.ToInt64(sdk.BigEndianToUint64(b)))
+	return sdkmath.NewInt(cast.ToInt64(sdk.BigEndianToUint64(b)))
 }
 
 // SetLastReductionEpochNum set last Reduction epoch number.

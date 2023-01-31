@@ -10,7 +10,7 @@ import (
 	"github.com/Stride-Labs/stride/v5/x/records"
 	"github.com/Stride-Labs/stride/v5/x/records/types"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkmath "cosmossdk.io/math"
 )
 
 func TestGenesis(t *testing.T) {
@@ -25,25 +25,25 @@ func TestGenesis(t *testing.T) {
 				Id: "1",
 			},
 		},
-		UserRedemptionRecordCount: sdk.NewInt(2),
+		UserRedemptionRecordCount: sdkmath.NewInt(2),
 		EpochUnbondingRecordList: []types.EpochUnbondingRecord{
 			{
-				EpochNumber: sdk.ZeroInt(),
+				EpochNumber: sdkmath.ZeroInt(),
 			},
 			{
-				EpochNumber: sdk.NewInt(1),
+				EpochNumber: sdkmath.NewInt(1),
 			},
 		},
 		// this line is used by starport scaffolding # genesis/test/state
 		DepositRecordList: []types.DepositRecord{
 			{
-				Id: sdk.ZeroInt(),
+				Id: sdkmath.ZeroInt(),
 			},
 			{
-				Id: sdk.NewInt(1),
+				Id: sdkmath.NewInt(1),
 			},
 		},
-		DepositRecordCount: sdk.NewInt(2),
+		DepositRecordCount: sdkmath.NewInt(2),
 	}
 	k, ctx := keepertest.RecordsKeeper(t)
 	records.InitGenesis(ctx, *k, genesisState)

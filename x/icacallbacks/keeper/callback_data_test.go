@@ -7,6 +7,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
+	sdkmath "cosmossdk.io/math"
+
 	keepertest "github.com/Stride-Labs/stride/v5/testutil/keeper"
 	"github.com/Stride-Labs/stride/v5/testutil/nullify"
 	"github.com/Stride-Labs/stride/v5/x/icacallbacks/keeper"
@@ -20,7 +22,7 @@ func createNCallbackData(keeper *keeper.Keeper, ctx sdk.Context, n int) []types.
 	items := make([]types.CallbackData, n)
 	for i := range items {
 		items[i].CallbackKey = strconv.Itoa(i)
-		items[i].Sequence = sdk.ZeroInt()
+		items[i].Sequence = sdkmath.ZeroInt()
 		keeper.SetCallbackData(ctx, items[i])
 	}
 	return items

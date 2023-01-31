@@ -185,7 +185,7 @@ func (k Keeper) GetStrideEpochElapsedShare(ctx sdk.Context) (sdk.Dec, error) {
 	epochStartTime := epochEndTime.Sub(epochDuration)
 
 	// Confirm the current block time is inside the current epoch's start and end times
-	currBlockTime := sdk.NewInt(ctx.BlockTime().UnixNano())
+	currBlockTime := sdkmath.NewInt(ctx.BlockTime().UnixNano())
 	if currBlockTime.LT(epochStartTime) || currBlockTime.GT(epochEndTime) {
 		errMsg := fmt.Sprintf("current block time %s is not within current epoch (ending at %s)", currBlockTime.String(), epochTracker.NextEpochStartTime.String())
 		k.Logger(ctx).Error(errMsg)
@@ -229,7 +229,7 @@ func (k Keeper) GetICATimeoutNanos(ctx sdk.Context, epochType string) (sdkmath.I
 	epochTracker, found := k.GetEpochTracker(ctx, epochType)
 	if !found {
 		k.Logger(ctx).Error(fmt.Sprintf("Failed to get epoch tracker for %s", epochType))
-		return sdk.ZeroInt(), sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "Failed to get epoch tracker for %s", epochType)
+		return sdkmath.ZeroInt(), sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "Failed to get epoch tracker for %s", epochType)
 	}
 	// BUFFER by 5% of the epoch length
 	bufferSizeParam := k.GetParam(ctx, types.KeyBufferSize)
@@ -237,7 +237,7 @@ func (k Keeper) GetICATimeoutNanos(ctx sdk.Context, epochType string) (sdkmath.I
 	// buffer size should not be negative or longer than the epoch duration
 	if bufferSize.GT(epochTracker.Duration) {
 		k.Logger(ctx).Error(fmt.Sprintf("Invalid buffer size %d", bufferSize))
-		return sdk.ZeroInt(), sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "Invalid buffer size %d", bufferSize)
+		return sdkmath.ZeroInt(), sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "Invalid buffer size %d", bufferSize)
 	}
 	timeoutNanos := epochTracker.NextEpochStartTime.Sub(bufferSize)
 
@@ -272,7 +272,7 @@ func (k Keeper) ConfirmValSetHasSpace(ctx sdk.Context, validators []*types.Valid
 	maxNumVals := k.GetParam(ctx, types.KeySafetyNumValidators)
 
 	// count up the number of validators with non-zero weights
-	numNonzeroWgtValidators := sdk.ZeroInt()
+	numNonzeroWgtValidators := sdkmath.ZeroInt()
 	for _, validator := range validators {
 		if validator.Weight.IsPositive() {
 			numNonzeroWgtValidators = numNonzeroWgtValidators.AddRaw(1)

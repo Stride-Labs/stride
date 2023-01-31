@@ -8,6 +8,8 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	ibctransfertypes "github.com/cosmos/ibc-go/v5/modules/apps/transfer/types"
 
+	sdkmath "cosmossdk.io/math"
+
 	"github.com/Stride-Labs/stride/v5/utils"
 )
 
@@ -15,7 +17,7 @@ const TypeMsgRegisterHostZone = "register_host_zone"
 
 var _ sdk.Msg = &MsgRegisterHostZone{}
 
-func NewMsgRegisterHostZone(creator string, connectionId string, bech32prefix string, hostDenom string, ibcDenom string, transferChannelId string, unbondingFrequency sdk.Int) *MsgRegisterHostZone {
+func NewMsgRegisterHostZone(creator string, connectionId string, bech32prefix string, hostDenom string, ibcDenom string, transferChannelId string, unbondingFrequency sdkmath.Int) *MsgRegisterHostZone {
 	return &MsgRegisterHostZone{
 		Creator:            creator,
 		ConnectionId:       connectionId,
@@ -99,7 +101,7 @@ func (msg *MsgRegisterHostZone) ValidateBasic() error {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "transfer channel id must begin with 'channel'")
 	}
 	// unbonding frequency must be positive nonzero
-	if msg.UnbondingFrequency.LT(sdk.NewInt(1)) {
+	if msg.UnbondingFrequency.LT(sdkmath.NewInt(1)) {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "unbonding frequency must be greater than zero")
 	}
 

@@ -7,7 +7,7 @@ import (
 
 	"github.com/Stride-Labs/stride/v5/x/records/types"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkmath "cosmossdk.io/math"
 )
 
 func TestGenesisState_Validate(t *testing.T) {
@@ -27,13 +27,13 @@ func TestGenesisState_Validate(t *testing.T) {
 				PortId: types.PortID,
 				DepositRecordList: []types.DepositRecord{
 					{
-						Id: sdk.ZeroInt(),
+						Id: sdkmath.ZeroInt(),
 					},
 					{
-						Id: sdk.NewInt(1),
+						Id: sdkmath.NewInt(1),
 					},
 				},
-				DepositRecordCount: sdk.NewInt(2),
+				DepositRecordCount: sdkmath.NewInt(2),
 				// this line is used by starport scaffolding # types/genesis/validField
 			},
 			valid: true,
@@ -43,10 +43,10 @@ func TestGenesisState_Validate(t *testing.T) {
 			genState: &types.GenesisState{
 				DepositRecordList: []types.DepositRecord{
 					{
-						Id: sdk.ZeroInt(),
+						Id: sdkmath.ZeroInt(),
 					},
 					{
-						Id: sdk.ZeroInt(),
+						Id: sdkmath.ZeroInt(),
 					},
 				},
 			},

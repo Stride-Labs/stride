@@ -43,8 +43,8 @@ func (s *KeeperTestSuite) SetupReinvestCallback() ReinvestCallbackTestCase {
 		RedemptionRate: sdk.NewDec(1.0),
 	}
 	expectedNewDepositRecord := recordtypes.DepositRecord{
-		Id:                 sdk.ZeroInt(),
-		DepositEpochNumber: sdk.NewInt(1),
+		Id:                 sdkmath.ZeroInt(),
+		DepositEpochNumber: sdkmath.NewInt(1),
 		HostZoneId:         HostChainId,
 		Amount:             reinvestAmt,
 		Status:             recordtypes.DepositRecord_DELEGATION_QUEUE,
@@ -52,7 +52,7 @@ func (s *KeeperTestSuite) SetupReinvestCallback() ReinvestCallbackTestCase {
 	}
 	epochTracker := stakeibc.EpochTracker{
 		EpochIdentifier: epochtypes.STRIDE_EPOCH,
-		EpochNumber:     sdk.NewInt(1),
+		EpochNumber:     sdkmath.NewInt(1),
 	}
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
 	s.App.StakeibcKeeper.SetEpochTracker(s.Ctx, epochTracker)

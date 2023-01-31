@@ -12,7 +12,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkmath "cosmossdk.io/math"
 
 	"github.com/Stride-Labs/stride/v5/testutil/network"
 	"github.com/Stride-Labs/stride/v5/testutil/nullify"
@@ -32,7 +32,7 @@ func networkWithCallbackDataObjects(t *testing.T, n int) (*network.Network, []ty
 	for i := 0; i < n; i++ {
 		callbackData := types.CallbackData{
 			CallbackKey: strconv.Itoa(i),
-			Sequence:    sdk.ZeroInt(),
+			Sequence:    sdkmath.ZeroInt(),
 		}
 		nullify.Fill(&callbackData)
 		state.CallbackDataList = append(state.CallbackDataList, callbackData)

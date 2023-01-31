@@ -6,9 +6,10 @@ import (
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/spf13/cobra"
+
+	sdkmath "cosmossdk.io/math"
 
 	"github.com/Stride-Labs/stride/v5/x/stakeibc/types"
 )
@@ -22,7 +23,7 @@ func CmdClearBalance() *cobra.Command {
 		Args:  cobra.ExactArgs(3),
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
 			argChainId := args[0]
-			argAmount, found := sdk.NewIntFromString(args[1])
+			argAmount, found := sdkmath.NewIntFromString(args[1])
 			if !found {
 				return sdkerrors.Wrap(sdkerrors.ErrInvalidType, "can not convert string to int")
 			}

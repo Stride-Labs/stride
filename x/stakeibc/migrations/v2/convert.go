@@ -8,10 +8,13 @@ import (
 )
 
 func convertToNewValidator(oldValidator oldstakeibctypes.Validator) stakeibctypes.Validator {
-	newInternalExchangeRate := stakeibctypes.ValidatorExchangeRate{
-		InternalTokensToSharesRate: oldValidator.InternalExchangeRate.InternalTokensToSharesRate,
-		EpochNumber:                sdkmath.NewIntFromUint64(oldValidator.InternalExchangeRate.EpochNumber),
+	newInternalExchangeRate := stakeibctypes.ValidatorExchangeRate{}
+
+	if oldValidator.InternalExchangeRate != nil {
+		newInternalExchangeRate.InternalTokensToSharesRate = oldValidator.InternalExchangeRate.InternalTokensToSharesRate
+		newInternalExchangeRate.EpochNumber = sdkmath.NewIntFromUint64(oldValidator.InternalExchangeRate.EpochNumber)
 	}
+
 	return stakeibctypes.Validator{
 		Name:                 oldValidator.Name,
 		Address:              oldValidator.Address,
