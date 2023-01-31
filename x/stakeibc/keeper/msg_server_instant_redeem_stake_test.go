@@ -60,7 +60,7 @@ func (s *KeeperTestSuite) SetupInstantRedeemStake() InstantRedeemStakeTestCase {
 		EpochNumber:     1,
 	}
 
-	oldDepositRecord := recordtypes.DepositRecord{
+	depositRecord1 := recordtypes.DepositRecord{
 		Id:                 0,
 		DepositEpochNumber: 0,
 		HostZoneId:         "GAIA",
@@ -68,7 +68,7 @@ func (s *KeeperTestSuite) SetupInstantRedeemStake() InstantRedeemStakeTestCase {
 		Status:             recordtypes.DepositRecord_TRANSFER_QUEUE,
 	}
 
-	initialDepositRecord := recordtypes.DepositRecord{
+	depositRecord2 := recordtypes.DepositRecord{
 		Id:                 1,
 		DepositEpochNumber: 1,
 		HostZoneId:         "GAIA",
@@ -78,8 +78,8 @@ func (s *KeeperTestSuite) SetupInstantRedeemStake() InstantRedeemStakeTestCase {
 
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
 	s.App.StakeibcKeeper.SetEpochTracker(s.Ctx, epochTracker)
-	s.App.RecordsKeeper.SetDepositRecord(s.Ctx, oldDepositRecord)
-	s.App.RecordsKeeper.SetDepositRecord(s.Ctx, initialDepositRecord)
+	s.App.RecordsKeeper.SetDepositRecord(s.Ctx, depositRecord1)
+	s.App.RecordsKeeper.SetDepositRecord(s.Ctx, depositRecord2)
 
 	return InstantRedeemStakeTestCase{
 		user:        user,
