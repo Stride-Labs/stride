@@ -2,7 +2,6 @@ package cli_test
 
 import (
 	"fmt"
-	"strconv"
 	"testing"
 
 	clitestutil "github.com/cosmos/cosmos-sdk/testutil/cli"
@@ -15,9 +14,6 @@ import (
 	"github.com/Stride-Labs/stride/v5/x/stakeibc/client/cli"
 	"github.com/Stride-Labs/stride/v5/x/stakeibc/types"
 )
-
-// Prevent strconv unused error
-var _ = strconv.IntSize
 
 func networkWithEpochTracker(t *testing.T) *network.Network {
 	t.Helper()

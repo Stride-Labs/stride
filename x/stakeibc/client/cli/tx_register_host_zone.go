@@ -11,8 +11,6 @@ import (
 	"github.com/Stride-Labs/stride/v5/x/stakeibc/types"
 )
 
-var _ = strconv.Itoa(0)
-
 // TODO(TEST-53): Remove this pre-launch (no need for clients to create / interact with ICAs)
 func CmdRegisterHostZone() *cobra.Command {
 	cmd := &cobra.Command{

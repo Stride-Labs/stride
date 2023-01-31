@@ -11,8 +11,6 @@ import (
 	"github.com/Stride-Labs/stride/v5/x/stakeibc/types"
 )
 
-var _ = strconv.Itoa(0)
-
 func CmdRebalanceValidators() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "rebalance-validators [host-zone] [num-to-rebalance]",

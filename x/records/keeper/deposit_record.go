@@ -103,6 +103,7 @@ func GetDepositRecordIDBytes(id uint64) []byte {
 
 func (k Keeper) GetDepositRecordByEpochAndChain(ctx sdk.Context, epochNumber uint64, chainId string) (val *types.DepositRecord, found bool) {
 	records := k.GetAllDepositRecord(ctx)
+	// TODO: This assumes that the first one found is recordstypes.DepositRecord_TRANSFER_QUEUE.  Might be a bit safer if it actually checked.
 	for _, depositRecord := range records {
 		if depositRecord.DepositEpochNumber == epochNumber && depositRecord.HostZoneId == chainId {
 			return &depositRecord, true

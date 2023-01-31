@@ -6,13 +6,13 @@ category: 62c5c5ff03a5bf069004def2
 
 ## Stride Modules
 
-`stakeibc` - Manages minting and burning of stAssets, staking and unstaking of native assets across chains.
-`icacallbacks` - Callbacks for interchain accounts.
-`records` - IBC middleware wrapping the transfer module, does record keeping on IBC transfers and ICA calls
-`claim` - airdrop logic for Stride's rolling, task-based airdrop 
-`interchainquery` - Issues queries between IBC chains, verifies state proof and executes callbacks.
-`epochs` - Makes on-chain timers which other modules can execute code during.
-`mint` - Controls token supply emissions, and what modules they are directed to.
+- `stakeibc` - Manages minting and burning of stAssets, staking and unstaking of native assets across chains.
+- `icacallbacks` - Callbacks for interchain accounts.
+- `records` - IBC middleware wrapping the transfer module, does record keeping on IBC transfers and ICA calls
+- `claim` - airdrop logic for Stride's rolling, task-based airdrop 
+- `interchainquery` - Issues queries between IBC chains, verifies state proof and executes callbacks.
+- `epochs` - Makes on-chain timers which other modules can execute code during.
+- `mint` - Controls token supply emissions, and what modules they are directed to.
 
 ### Attribution
 

@@ -1,8 +1,6 @@
 package cli
 
 import (
-	"strconv"
-
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
@@ -12,8 +10,6 @@ import (
 
 	"github.com/Stride-Labs/stride/v5/x/stakeibc/types"
 )
-
-var _ = strconv.Itoa(0)
 
 func CmdClearBalance() *cobra.Command {
 	cmd := &cobra.Command{
