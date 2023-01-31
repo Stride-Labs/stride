@@ -78,8 +78,8 @@ func (s *KeeperTestSuite) SetupInstantRedeemStake() InstantRedeemStakeTestCase {
 
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
 	s.App.StakeibcKeeper.SetEpochTracker(s.Ctx, epochTracker)
-	s.App.RecordsKeeper.SetDepositRecord(s.Ctx, oldDepositRecord)
-	s.App.RecordsKeeper.SetDepositRecord(s.Ctx, initialDepositRecord)
+	s.App.RecordsKeeper.SetDepositRecord(s.Ctx, depositRecord1)
+	s.App.RecordsKeeper.SetDepositRecord(s.Ctx, depositRecord2)
 
 	return InstantRedeemStakeTestCase{
 		user:        user,
