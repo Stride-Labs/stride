@@ -28,7 +28,7 @@ const (
 const (
 	STAKING_STORE_QUERY_WITH_PROOF = "store/staking/key"
 	BANK_STORE_QUERY_WITH_PROOF    = "store/bank/key"
-	GOV_STORE_QUERY_WITH_PROOF     = "store/gov/key"
+	GOV_STORE_QUERY_KEY            = "store/gov/key"
 )
 
 var (

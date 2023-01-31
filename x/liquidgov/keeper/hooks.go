@@ -6,13 +6,10 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	epochstypes "github.com/Stride-Labs/stride/v5/x/epochs/types"
-	"github.com/Stride-Labs/stride/v5/x/liquidgov/types"
 )
 
 func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochInfo epochstypes.EpochInfo) {
 	if epochInfo.Identifier == epochstypes.STRIDE_EPOCH {
-		k.Logger(ctx).Info(fmt.Sprintf("%s RUNNING...", types.ModuleName)) // debugging
-
 		// on epoch update proposals
 		k.UpdateProposals(ctx)
 

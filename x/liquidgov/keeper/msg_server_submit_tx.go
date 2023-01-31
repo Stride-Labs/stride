@@ -2,18 +2,22 @@ package keeper
 
 import (
 	"fmt"
+	"strings"
 
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
 	"github.com/Stride-Labs/stride/v5/utils"
 
+	"github.com/cosmos/cosmos-sdk/codec"
+
 	epochstypes "github.com/Stride-Labs/stride/v5/x/epochs/types"
-	icqtypes "github.com/Stride-Labs/stride/v5/x/interchainquery/types"
 	stakeibctypes "github.com/Stride-Labs/stride/v5/x/stakeibc/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
+	v1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
+	v1beta1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 
 	"github.com/Stride-Labs/stride/v5/x/liquidgov/types"
 )
@@ -21,9 +25,10 @@ import (
 func (k Keeper) MirrorProposals(ctx sdk.Context, hostZone stakeibctypes.HostZone) error {
 	k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId, "Submitting ICQ for proposals to %s", hostZone.ChainId))
 
-	endTime := ctx.BlockTime().AddDate(1, 0, 0) // TODO veryify range query works, then change logic to compare to latest proposal on stride
-
-	queryData := govtypes.ActiveProposalByTimeKey(endTime)
+	// query custom proposals path
+	path := strings.Join([]string{"custom", govtypes.QuerierRoute, v1beta1.QueryProposals}, "/")
+	// query data 1 page, default limit, voting period, no owner, no depositor
+	queryData := codec.NewLegacyAmino().MustMarshalJSON(v1.NewQueryProposalsParams(1, 0, v1.StatusVotingPeriod, nil, nil))
 
 	// The query should timeout at the start of the next epoch
 	ttl, err := k.stakeibcKeeper.GetStartTimeNextEpoch(ctx, epochstypes.STRIDE_EPOCH)
@@ -39,7 +44,7 @@ func (k Keeper) MirrorProposals(ctx sdk.Context, hostZone stakeibctypes.HostZone
 		hostZone.ConnectionId,
 		// use "gov" store to access proposals which live in the gov module
 		// use "key" suffix to retrieve proposals by key
-		icqtypes.GOV_STORE_QUERY_WITH_PROOF,
+		path,
 		queryData,
 		ttl,
 	); err != nil {

@@ -4,10 +4,13 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
-	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
+	"github.com/cosmos/cosmos-sdk/codec"
+
+	govtypesv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
 
 	"github.com/Stride-Labs/stride/v5/utils"
 	icqtypes "github.com/Stride-Labs/stride/v5/x/interchainquery/types"
+	"github.com/Stride-Labs/stride/v5/x/liquidgov/types"
 	stakeibctypes "github.com/Stride-Labs/stride/v5/x/stakeibc/types"
 )
 
@@ -22,29 +25,27 @@ func MirrorProposalsCallback(k Keeper, ctx sdk.Context, args []byte, query icqty
 		return sdkerrors.Wrapf(stakeibctypes.ErrHostZoneNotFound, "no registered zone for queried chain ID (%s)", chainId)
 	}
 
-	// get bytes of last entry in range query
-	lastPropBytes := sdk.InclusiveEndBytes(args)
-	lastQueriedProposal := govtypes.Proposal{}
+	highestID, _ := k.GetProposalID(ctx, chainId)
 
-	// Unmarshal the last query response bytes into a Proposal struct
-	err := k.cdc.Unmarshal(lastPropBytes, &lastQueriedProposal)
-	if err != nil {
-		return sdkerrors.Wrapf(stakeibctypes.ErrMarshalFailure, "unable to unmarshal query response into Proposal type, err: %s", err.Error())
-	}
-	k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_MirrorProposals, "Query response - Proposal Id: %s, VotingStartTime: %v, VotingEndTime: %v",
-		lastQueriedProposal.Id, lastQueriedProposal.VotingStartTime, lastQueriedProposal.VotingEndTime))
+	var proposals govtypesv1.Proposals
+	codec.NewLegacyAmino().UnmarshalJSON(args, &proposals)
 
-	// // get most recent proposal id on Stride
-	// newestId := k.GetNewestProposal(ctx, hostzone)
-	// // if query response proposal ids > newest stride proposal
-	// // add to stride proposal store
-	// for _, proposal := range proposals {
-	// 	if proposal.id > newestId {
-	// 		// add stride specific proposal fields ie: hostzone
-
-	// 		// add proposal to stride store
-	// 		k.AddProposal(hostZone, proposal)
-	// 	}
+	// if err != nil {
+	// 	return sdkerrors.Wrapf(stakeibctypes.ErrMarshalFailure, "unable to unmarshal query response into Proposal type, err: %s", err.Error())
 	// }
+
+	for _, proposal := range proposals {
+		prop := *proposal
+		if prop.Id > highestID {
+			liquidProp := types.Proposal{HostZoneChainId: chainId, GovProposal: prop}
+			k.SetProposal(ctx, liquidProp)
+			k.SetProposalID(ctx, highestID+1, chainId)
+			k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_MirrorProposals,
+				"Added proposal #%d from host zone: %s VoteStartTime: %s VoteEndTime: %s", liquidProp.GovProposal.Id, liquidProp.HostZoneChainId, liquidProp.GovProposal.VotingStartTime, liquidProp.GovProposal.VotingEndTime))
+		}
+		k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_MirrorProposals, "Query response - Chain ID: %s Proposal ID: %d, VotingStartTime: %s, VotingEndTime: %s",
+			chainId, prop.Id, prop.VotingStartTime, prop.VotingEndTime))
+	}
+
 	return nil
 }
