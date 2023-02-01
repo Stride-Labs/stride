@@ -38,7 +38,7 @@ func (keeper Keeper) SetProposal(ctx sdk.Context, proposal types.Proposal) {
 	}
 
 	store := ctx.KVStore(keeper.storeKey)
-	store.Set(types.ProposalKey(proposal.GovProposal.Id, proposal.HostZoneChainId), bz)
+	store.Set(types.ProposalKey(proposal.GovProposal.ProposalId, proposal.HostZoneChainId), bz)
 }
 
 // DeleteProposal deletes a proposal from store.
@@ -60,7 +60,7 @@ func (keeper Keeper) DeleteProposal(ctx sdk.Context, proposalID uint64, chain_id
 	store.Delete(types.ProposalKey(proposalID, chain_id))
 }
 
-// GetProposalID gets the highest proposal ID
+// GetProposalID gets the highest ICQ'd proposal ID
 func (keeper Keeper) GetProposalID(ctx sdk.Context, chain_id string) (proposalID uint64, err error) {
 	store := ctx.KVStore(keeper.storeKey)
 	bz := store.Get(types.ProposalIDKey(chain_id))
