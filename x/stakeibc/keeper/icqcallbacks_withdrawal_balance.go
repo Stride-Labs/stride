@@ -6,7 +6,6 @@ import (
 	sdkmath "cosmossdk.io/math"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/spf13/cast"
 
@@ -18,7 +17,9 @@ import (
 // WithdrawalBalanceCallback is a callback handler for WithdrawalBalance queries.
 // The query response will return the withdrawal account balance
 // If the balance is non-zero, ICA MsgSends are submitted to transfer from the withdrawal account
-//  to the delegation account (for reinvestment) and fee account (for commission)
+//
+//	to the delegation account (for reinvestment) and fee account (for commission)
+//
 // Note: for now, to get proofs in your ICQs, you need to query the entire store on the host zone! e.g. "store/bank/key"
 func WithdrawalBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query icqtypes.Query) error {
 	k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(query.ChainId, ICQCallbackID_WithdrawalBalance,
@@ -28,13 +29,13 @@ func WithdrawalBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query icq
 	chainId := query.ChainId
 	hostZone, found := k.GetHostZone(ctx, chainId)
 	if !found {
-		return sdkerrors.Wrapf(types.ErrHostZoneNotFound, "no registered zone for queried chain ID (%s)", chainId)
+		return fmt.Errorf("no registered zone for queried chain ID (%s): %s", chainId, types.ErrHostZoneNotFound.Error())
 	}
 
 	// Unmarshal the query response args to determine the balance
 	withdrawalBalanceAmount, err := UnmarshalAmountFromBalanceQuery(k.cdc, args)
 	if err != nil {
-		return sdkerrors.Wrap(err, "unable to determine balance from query response")
+		return fmt.Errorf("unable to determine balance from query response: %s", err.Error())
 	}
 	k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_WithdrawalBalance,
 		"Query response - Withdrawal Balance: %v %s", withdrawalBalanceAmount, hostZone.HostDenom))
@@ -49,15 +50,15 @@ func WithdrawalBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query icq
 	// Get the host zone's ICA accounts
 	withdrawalAccount := hostZone.WithdrawalAccount
 	if withdrawalAccount == nil || withdrawalAccount.Address == "" {
-		return sdkerrors.Wrapf(types.ErrICAAccountNotFound, "no withdrawal account found for %s", chainId)
+		return fmt.Errorf("no withdrawal account found for %s: %s", chainId, types.ErrICAAccountNotFound.Error())
 	}
 	delegationAccount := hostZone.DelegationAccount
 	if delegationAccount == nil || delegationAccount.Address == "" {
-		return sdkerrors.Wrapf(types.ErrICAAccountNotFound, "no delegation account found for %s", chainId)
+		return fmt.Errorf("no delegation account found for %s: %s", chainId, types.ErrICAAccountNotFound.Error())
 	}
 	feeAccount := hostZone.FeeAccount
 	if feeAccount == nil || feeAccount.Address == "" {
-		return sdkerrors.Wrapf(types.ErrICAAccountNotFound, "no fee account found for %s", chainId)
+		return fmt.Errorf("no fee account found for %s: %s", chainId, types.ErrICAAccountNotFound.Error())
 	}
 
 	// Determine the stride commission rate to the relevant portion can be sent to the fee account
@@ -70,7 +71,7 @@ func WithdrawalBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query icq
 	// check that stride commission is between 0 and 1
 	strideCommission := sdk.NewDec(strideCommissionInt).Quo(sdk.NewDec(100))
 	if strideCommission.LT(sdk.ZeroDec()) || strideCommission.GT(sdk.OneDec()) {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "Aborting withdrawal balance callback -- Stride commission must be between 0 and 1!")
+		return fmt.Errorf("Aborting withdrawal balance callback -- Stride commission must be between 0 and 1!: %s", types.ErrInvalidRequest.Error())
 	}
 
 	// Split out the reinvestment amount from the fee amount
@@ -80,7 +81,7 @@ func WithdrawalBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query icq
 	// Safety check, balances should add to original amount
 	if !feeAmount.Add(reinvestAmount).Equal(withdrawalBalanceAmount) {
 		k.Logger(ctx).Error(fmt.Sprintf("Error with withdraw logic: %v, Fee Portion: %v, Reinvest Portion %v", withdrawalBalanceAmount, feeAmount, reinvestAmount))
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "Failed to subdivide rewards to feeAccount and delegationAccount")
+		return fmt.Errorf("Failed to subdivide rewards to feeAccount and delegationAccount: %s", types.ErrInvalidRequest.Error())
 	}
 
 	// Prepare MsgSends from the withdrawal account
@@ -121,7 +122,7 @@ func WithdrawalBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query icq
 	// Send the transaction through SubmitTx
 	_, err = k.SubmitTxsStrideEpoch(ctx, hostZone.ConnectionId, msgs, *withdrawalAccount, ICACallbackID_Reinvest, marshalledCallbackArgs)
 	if err != nil {
-		return sdkerrors.Wrapf(types.ErrICATxFailed, "Failed to SubmitTxs, Messages: %v, err: %s", msgs, err.Error())
+		return fmt.Errorf("Failed to SubmitTxs, Messages: %v, err: %s: %s", msgs, err.Error(), types.ErrICATxFailed.Error())
 	}
 
 	ctx.EventManager().EmitEvent(
@@ -141,7 +142,7 @@ func WithdrawalBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query icq
 func UnmarshalAmountFromBalanceQuery(cdc codec.BinaryCodec, queryResponseBz []byte) (amount sdkmath.Int, err error) {
 	// An nil should not be possible, exit immediately if it occurs
 	if queryResponseBz == nil {
-		return sdkmath.Int{}, sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "query response is nil")
+		return sdkmath.Int{}, fmt.Errorf("query response is nil: %s", types.ErrInvalidRequest.Error())
 	}
 
 	// If the query response is empty, that means the account was never registed (and thus has a 0 balance)
@@ -166,6 +167,5 @@ func UnmarshalAmountFromBalanceQuery(cdc codec.BinaryCodec, queryResponseBz []by
 	}
 
 	// If it failed unmarshaling with either data structure, return an error with the failure messages combined
-	return sdkmath.Int{}, sdkerrors.Wrapf(types.ErrUnmarshalFailure,
-		"unable to unmarshal balance query response %v as sdkmath.Int (err: %s) or sdk.Coin (err: %s)", queryResponseBz, intError.Error(), coinError.Error())
+	return sdkmath.Int{}, fmt.Errorf("unable to unmarshal balance query response %v as sdkmath.Int (err: %s) or sdk.Coin (err: %s): %s", queryResponseBz, intError.Error(), coinError.Error(), types.ErrUnmarshalFailure.Error())
 }

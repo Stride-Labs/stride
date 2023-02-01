@@ -1,13 +1,15 @@
 package stakeibc
 
 import (
+	"fmt"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 
 	"github.com/Stride-Labs/stride/v5/x/stakeibc/keeper"
 
 	"github.com/Stride-Labs/stride/v5/x/stakeibc/types"
+	stakeibctypes "github.com/Stride-Labs/stride/v5/x/stakeibc/types"
 )
 
 func NewStakeibcProposalHandler(k keeper.Keeper) govtypes.Handler {
@@ -17,7 +19,7 @@ func NewStakeibcProposalHandler(k keeper.Keeper) govtypes.Handler {
 			return handleAddValidatorProposal(ctx, k, c)
 
 		default:
-			return sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "unrecognized stakeibc proposal content type: %T", c)
+			return fmt.Errorf("unrecognized stakeibc proposal content type: %T: %s", c, stakeibctypes.ErrUnknownRequest.Error())
 		}
 	}
 }

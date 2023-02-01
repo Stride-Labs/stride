@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/types/query"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/codes"
@@ -17,6 +16,7 @@ import (
 
 	"github.com/Stride-Labs/stride/v5/x/records/keeper"
 	"github.com/Stride-Labs/stride/v5/x/records/types"
+	stakeibctypes "github.com/Stride-Labs/stride/v5/x/stakeibc/types"
 )
 
 func createNDepositRecord(keeper *keeper.Keeper, ctx sdk.Context, n int) []types.DepositRecord {
@@ -52,7 +52,7 @@ func TestDepositRecordQuerySingle(t *testing.T) {
 		{
 			desc:    "KeyNotFound",
 			request: &types.QueryGetDepositRecordRequest{Id: uint64(len(msgs))},
-			err:     sdkerrors.ErrKeyNotFound,
+			err:     stakeibctypes.ErrKeyNotFound,
 		},
 		{
 			desc: "InvalidRequest",
@@ -62,7 +62,7 @@ func TestDepositRecordQuerySingle(t *testing.T) {
 		t.Run(tc.desc, func(t *testing.T) {
 			response, err := keeper.DepositRecord(wctx, tc.request)
 			if tc.err != nil {
-				require.ErrorIs(t, err, tc.err)
+				require.ErrorAs(t, err, &tc.err)
 			} else {
 				require.NoError(t, err)
 				require.Equal(t,

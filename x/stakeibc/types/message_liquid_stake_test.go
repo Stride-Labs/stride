@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	sdkmath "cosmossdk.io/math"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/stretchr/testify/require"
 
 	"github.com/Stride-Labs/stride/v5/testutil/sample"
@@ -23,7 +22,7 @@ func TestMsgLiquidStake_ValidateBasic(t *testing.T) {
 				Amount:    sdkmath.NewInt(1),
 				HostDenom: "uatom",
 			},
-			err: sdkerrors.ErrInvalidAddress,
+			err: ErrInvalidAddress,
 		},
 		{
 			name: "invalid address: wrong chain's bech32prefix",
@@ -32,7 +31,7 @@ func TestMsgLiquidStake_ValidateBasic(t *testing.T) {
 				Amount:    sdkmath.NewInt(1),
 				HostDenom: "uatom",
 			},
-			err: sdkerrors.ErrInvalidAddress,
+			err: ErrInvalidAddress,
 		},
 		{
 			name: "valid inputs",
@@ -66,7 +65,7 @@ func TestMsgLiquidStake_ValidateBasic(t *testing.T) {
 			// check validatebasic()
 			err := tt.msg.ValidateBasic()
 			if tt.err != nil {
-				require.ErrorIs(t, err, tt.err)
+				require.ErrorAs(t, err, &tt.err)
 				return
 			}
 			require.NoError(t, err)

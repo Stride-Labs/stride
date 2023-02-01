@@ -1,9 +1,9 @@
 package keeper
 
 import (
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	"fmt"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
 	"github.com/Stride-Labs/stride/v5/utils"
@@ -29,14 +29,14 @@ func ValidatorExchangeRateCallback(k Keeper, ctx sdk.Context, args []byte, query
 	chainId := query.ChainId
 	hostZone, found := k.GetHostZone(ctx, query.ChainId)
 	if !found {
-		return sdkerrors.Wrapf(types.ErrHostZoneNotFound, "no registered zone for queried chain ID (%s)", chainId)
+		return fmt.Errorf("no registered zone for queried chain ID (%s): %s", chainId, types.ErrHostZoneNotFound.Error())
 	}
 
 	// Unmarshal the query response args into a Validator struct
 	queriedValidator := stakingtypes.Validator{}
 	err := k.cdc.Unmarshal(args, &queriedValidator)
 	if err != nil {
-		return sdkerrors.Wrapf(types.ErrMarshalFailure, "unable to unmarshal query response into Validator type, err: %s", err.Error())
+		return fmt.Errorf("unable to unmarshal query response into Validator type, err: %s: %s", err.Error(), types.ErrMarshalFailure.Error())
 	}
 	k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_Validator, "Query response - Validator: %s, Jailed: %v, Tokens: %v, Shares: %v",
 		queriedValidator.OperatorAddress, queriedValidator.Jailed, queriedValidator.Tokens, queriedValidator.DelegatorShares))
@@ -44,30 +44,29 @@ func ValidatorExchangeRateCallback(k Keeper, ctx sdk.Context, args []byte, query
 	// Ensure ICQ can be issued now, else fail the callback
 	withinBufferWindow, err := k.IsWithinBufferWindow(ctx)
 	if err != nil {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "unable to determine if ICQ callback is inside buffer window, err: %s", err.Error())
+		return fmt.Errorf("unable to determine if ICQ callback is inside buffer window, err: %s: %s", err.Error(), types.ErrInvalidRequest.Error())
 	}
 	if !withinBufferWindow {
-		return sdkerrors.Wrapf(types.ErrOutsideIcqWindow, "callback is outside ICQ window")
+		return fmt.Errorf("callback is outside ICQ window: %s", types.ErrOutsideIcqWindow.Error())
 	}
 
 	// Get the validator from the host zone
 	validator, valIndex, found := GetValidatorFromAddress(hostZone.Validators, queriedValidator.OperatorAddress)
 	if !found {
-		return sdkerrors.Wrapf(types.ErrValidatorNotFound, "no registered validator for address (%s)", queriedValidator.OperatorAddress)
+		return fmt.Errorf("no registered validator for address (%s): %s", queriedValidator.OperatorAddress, types.ErrValidatorNotFound.Error())
 	}
 
 	// Get the stride epoch number
 	strideEpochTracker, found := k.GetEpochTracker(ctx, epochtypes.STRIDE_EPOCH)
 	if !found {
 		k.Logger(ctx).Error("failed to find stride epoch")
-		return sdkerrors.Wrapf(sdkerrors.ErrNotFound, "no epoch number for epoch (%s)", epochtypes.STRIDE_EPOCH)
+		return fmt.Errorf("no epoch number for epoch (%s): %s", epochtypes.STRIDE_EPOCH, types.ErrNotFound.Error())
 	}
 
 	// If the validator's delegation shares is 0, we'll get a division by zero error when trying to get the exchange rate
 	//  because `validator.TokensFromShares` uses delegation shares in the denominator
 	if queriedValidator.DelegatorShares.IsZero() {
-		return sdkerrors.Wrapf(types.ErrDivisionByZero,
-			"can't calculate validator internal exchange rate because delegation amount is 0 (validator: %s)", validator.Address)
+		return fmt.Errorf("can't calculate validator internal exchange rate because delegation amount is 0 (validator: %s): %s", validator.Address, types.ErrDivisionByZero.Error())
 	}
 
 	// We want the validator's internal exchange rate which is held internally behind `validator.TokensFromShares`
@@ -87,7 +86,7 @@ func ValidatorExchangeRateCallback(k Keeper, ctx sdk.Context, args []byte, query
 
 	// Armed with the exch rate, we can now query the (validator,delegator) delegation
 	if err := k.QueryDelegationsIcq(ctx, hostZone, queriedValidator.OperatorAddress); err != nil {
-		return sdkerrors.Wrapf(types.ErrICQFailed, "Failed to query delegations, err: %s", err.Error())
+		return fmt.Errorf("Failed to query delegations, err: %s: %s", err.Error(), types.ErrICQFailed.Error())
 	}
 
 	return nil

@@ -12,7 +12,6 @@ import (
 	icacallbackstypes "github.com/Stride-Labs/stride/v5/x/icacallbacks/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	channeltypes "github.com/cosmos/ibc-go/v5/modules/core/04-channel/types"
 	"github.com/golang/protobuf/proto" //nolint:staticcheck
 )
@@ -38,17 +37,18 @@ func (k Keeper) UnmarshalDelegateCallbackArgs(ctx sdk.Context, delegateCallback 
 }
 
 // ICA Callback after delegating deposit records
-//   If successful:
-//      * Updates deposit record status and records delegation changes on the host zone and validators
-//   If timeout:
-//      * Does nothing
-//   If failure:
-//		* Reverts deposit record status
+//
+//	  If successful:
+//	     * Updates deposit record status and records delegation changes on the host zone and validators
+//	  If timeout:
+//	     * Does nothing
+//	  If failure:
+//			* Reverts deposit record status
 func DelegateCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ackResponse *icacallbackstypes.AcknowledgementResponse, args []byte) error {
 	// Deserialize the callback args
 	delegateCallback, err := k.UnmarshalDelegateCallbackArgs(ctx, args)
 	if err != nil {
-		return sdkerrors.Wrapf(types.ErrUnmarshalFailure, fmt.Sprintf("Unable to unmarshal delegate callback args: %s", err.Error()))
+		return fmt.Errorf("Unable to unmarshal delegate callback args: %s: %s", err.Error(), types.ErrUnmarshalFailure.Error())
 	}
 	chainId := delegateCallback.HostZoneId
 	k.Logger(ctx).Info(utils.LogICACallbackWithHostZone(chainId, ICACallbackID_Delegate,
@@ -57,12 +57,12 @@ func DelegateCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ack
 	// Confirm chainId and deposit record Id exist
 	hostZone, found := k.GetHostZone(ctx, chainId)
 	if !found {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "host zone not found %s", chainId)
+		return fmt.Errorf("host zone not found %s: invalid request", chainId)
 	}
 	recordId := delegateCallback.DepositRecordId
 	depositRecord, found := k.RecordsKeeper.GetDepositRecord(ctx, recordId)
 	if !found {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "deposit record not found %d", recordId)
+		return fmt.Errorf("deposit record not found %d: invalid request", recordId)
 	}
 
 	// Check for timeout (ack nil)
@@ -93,7 +93,7 @@ func DelegateCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ack
 		hostZone.StakedBal = hostZone.StakedBal.Add(splitDelegation.Amount)
 		success := k.AddDelegationToValidator(ctx, hostZone, splitDelegation.Validator, splitDelegation.Amount, ICACallbackID_Delegate)
 		if !success {
-			return sdkerrors.Wrapf(types.ErrValidatorDelegationChg, "Failed to add delegation to validator")
+			return fmt.Errorf("Failed to add delegation to validator: %s", types.ErrValidatorDelegationChg.Error())
 		}
 		k.SetHostZone(ctx, hostZone)
 	}

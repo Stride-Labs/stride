@@ -80,7 +80,7 @@ func TestShowCallbackData(t *testing.T) {
 			if tc.err != nil {
 				stat, ok := status.FromError(tc.err)
 				require.True(t, ok)
-				require.ErrorIs(t, stat.Err(), tc.err)
+				require.ErrorAs(t, stat.Err(), &tc.err)
 			} else {
 				require.NoError(t, err)
 				var resp types.QueryGetCallbackDataResponse

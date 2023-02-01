@@ -1,8 +1,9 @@
 package types
 
 import (
+	"fmt"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
 	"github.com/Stride-Labs/stride/v5/utils"
 )
@@ -45,40 +46,40 @@ func (msg *MsgSetAirdropAllocations) GetSignBytes() []byte {
 func (msg *MsgSetAirdropAllocations) ValidateBasic() error {
 	_, err := sdk.AccAddressFromBech32(msg.Allocator)
 	if err != nil {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid allocator address (%s)", err)
+		return fmt.Errorf("invalid allocator address (%s): invalid address", err)
 	}
 
 	if msg.AirdropIdentifier == "" {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "airdrop identifier not set")
+		return fmt.Errorf("airdrop identifier not set: invalid request")
 	}
 
 	if len(msg.Users) == 0 {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "empty users list")
+		return fmt.Errorf("empty users list: invalid request")
 	}
 
 	if len(msg.Weights) == 0 {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "empty weights list")
+		return fmt.Errorf("empty weights list: invalid request")
 	}
 
 	if len(msg.Users) != len(msg.Weights) {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "different length")
+		return fmt.Errorf("different length: invalid request")
 	}
 
 	for _, user := range msg.Users {
 		strideAddr := utils.ConvertAddressToStrideAddress(user)
 		if strideAddr == "" {
-			return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid bech32 address")
+			return fmt.Errorf("invalid bech32 address: invalid address")
 		}
 
 		_, err := sdk.AccAddressFromBech32(strideAddr)
 		if err != nil {
-			return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid user address (%s)", err)
+			return fmt.Errorf("invalid user address (%s): invalid address", err.Error())
 		}
 	}
 
 	for _, weight := range msg.Weights {
 		if weight.Equal(sdk.NewDec(0)) {
-			return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "invalid user weight")
+			return fmt.Errorf("invalid user weight: invalid request")
 		}
 	}
 
@@ -121,7 +122,7 @@ func (msg *MsgClaimFreeAmount) ValidateBasic() error {
 
 	_, err := sdk.AccAddressFromBech32(msg.User)
 	if err != nil {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid user address (%s)", err)
+		return fmt.Errorf("invalid user address (%s): invalid address", err.Error())
 	}
 
 	return nil
@@ -166,19 +167,19 @@ func (msg *MsgCreateAirdrop) GetSignBytes() []byte {
 func (msg *MsgCreateAirdrop) ValidateBasic() error {
 	_, err := sdk.AccAddressFromBech32(msg.Distributor)
 	if err != nil {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid distributor address (%s)", err)
+		return fmt.Errorf("invalid distributor address (%s): invalid address", err.Error())
 	}
 
 	if msg.Identifier == "" {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "airdrop identifier not set")
+		return fmt.Errorf("airdrop identifier not set: invalid request")
 	}
 
 	if msg.StartTime == 0 {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "airdrop start time not set")
+		return fmt.Errorf("airdrop start time not set: invalid request")
 	}
 
 	if msg.Duration == 0 {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "airdrop duration not set")
+		return fmt.Errorf("airdrop duration not set: invalid request")
 	}
 	return nil
 }
@@ -219,11 +220,11 @@ func (msg *MsgDeleteAirdrop) GetSignBytes() []byte {
 func (msg *MsgDeleteAirdrop) ValidateBasic() error {
 	_, err := sdk.AccAddressFromBech32(msg.Distributor)
 	if err != nil {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid distributor address (%s)", err)
+		return fmt.Errorf("invalid distributor address (%s): invalid address", err.Error())
 	}
 
 	if msg.Identifier == "" {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "airdrop identifier not set")
+		return fmt.Errorf("airdrop identifier not set: invalid request")
 	}
 	return nil
 }

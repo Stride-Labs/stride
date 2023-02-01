@@ -9,7 +9,6 @@ import (
 	"github.com/Stride-Labs/stride/v5/x/stakeibc/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	channeltypes "github.com/cosmos/ibc-go/v5/modules/core/04-channel/types"
 	"github.com/golang/protobuf/proto" //nolint:staticcheck
 )
@@ -35,17 +34,18 @@ func (k Keeper) UnmarshalRedemptionCallbackArgs(ctx sdk.Context, redemptionCallb
 }
 
 // ICA Callback after undelegating
-//   If successful:
-//      * Updates epoch unbonding record status
-//   If timeout:
-//      * Does nothing
-//   If failure:
-//		* Reverts epoch unbonding record status
+//
+//	  If successful:
+//	     * Updates epoch unbonding record status
+//	  If timeout:
+//	     * Does nothing
+//	  If failure:
+//			* Reverts epoch unbonding record status
 func RedemptionCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ackResponse *icacallbackstypes.AcknowledgementResponse, args []byte) error {
 	// Fetch callback args
 	redemptionCallback, err := k.UnmarshalRedemptionCallbackArgs(ctx, args)
 	if err != nil {
-		return sdkerrors.Wrapf(types.ErrUnmarshalFailure, fmt.Sprintf("Unable to unmarshal redemption callback args: %s", err.Error()))
+		return fmt.Errorf("Unable to unmarshal redemption callback args: %s: %s", err.Error(), types.ErrUnmarshalFailure.Error())
 	}
 	chainId := redemptionCallback.HostZoneId
 	k.Logger(ctx).Info(utils.LogICACallbackWithHostZone(chainId, ICACallbackID_Redemption,
@@ -79,7 +79,7 @@ func RedemptionCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, a
 	// Confirm host zone exists
 	_, found := k.GetHostZone(ctx, chainId)
 	if !found {
-		return sdkerrors.Wrapf(sdkerrors.ErrKeyNotFound, "Host zone not found: %s", chainId)
+		return fmt.Errorf("Host zone not found: %s: %s", chainId, types.ErrKeyNotFound.Error())
 	}
 
 	// Upon success, update the unbonding record status to CLAIMABLE

@@ -10,7 +10,6 @@ import (
 	"github.com/Stride-Labs/stride/v5/x/stakeibc/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	channeltypes "github.com/cosmos/ibc-go/v5/modules/core/04-channel/types"
 	"github.com/golang/protobuf/proto" //nolint:staticcheck
 )
@@ -36,15 +35,16 @@ func (k Keeper) UnmarshalReinvestCallbackArgs(ctx sdk.Context, reinvestCallback 
 }
 
 // ICA Callback after reinvestment
-//   If successful:
-//      * Creates a new DepositRecord with the reinvestment amount
-//   If timeout/failure:
-//      * Does nothing
+//
+//	If successful:
+//	   * Creates a new DepositRecord with the reinvestment amount
+//	If timeout/failure:
+//	   * Does nothing
 func ReinvestCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ackResponse *icacallbackstypes.AcknowledgementResponse, args []byte) error {
 	// Fetch callback args
 	reinvestCallback, err := k.UnmarshalReinvestCallbackArgs(ctx, args)
 	if err != nil {
-		return sdkerrors.Wrapf(types.ErrUnmarshalFailure, fmt.Sprintf("Unable to unmarshal reinvest callback args: %s", err.Error()))
+		return fmt.Errorf("Unable to unmarshal reinvest callback args: %s: %s", err.Error(), types.ErrUnmarshalFailure.Error())
 	}
 	chainId := reinvestCallback.HostZoneId
 	k.Logger(ctx).Info(utils.LogICACallbackWithHostZone(chainId, ICACallbackID_Reinvest, "Starting reinvest callback"))
@@ -72,7 +72,7 @@ func ReinvestCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ack
 	strideEpochTracker, found := k.GetEpochTracker(ctx, epochtypes.STRIDE_EPOCH)
 	if !found {
 		k.Logger(ctx).Error("failed to find epoch")
-		return sdkerrors.Wrapf(types.ErrInvalidLengthEpochTracker, "no number for epoch (%s)", epochtypes.STRIDE_EPOCH)
+		return fmt.Errorf("no number for epoch (%s): %s", epochtypes.STRIDE_EPOCH, types.ErrInvalidLengthEpochTracker.Error())
 	}
 
 	// Create a new deposit record so that rewards are reinvested

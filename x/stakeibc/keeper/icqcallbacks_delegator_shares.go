@@ -1,8 +1,9 @@
 package keeper
 
 import (
+	"fmt"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/spf13/cast"
 
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
@@ -32,14 +33,14 @@ func DelegatorSharesCallback(k Keeper, ctx sdk.Context, args []byte, query icqty
 	chainId := query.ChainId
 	hostZone, found := k.GetHostZone(ctx, chainId)
 	if !found {
-		return sdkerrors.Wrapf(types.ErrHostZoneNotFound, "no registered zone for queried chain ID (%s)", chainId)
+		return fmt.Errorf("no registered zone for queried chain ID (%s): %s", chainId, types.ErrHostZoneNotFound.Error())
 	}
 
 	// Unmarshal the query response which returns a delegation object for the delegator/validator pair
 	queriedDelgation := stakingtypes.Delegation{}
 	err := k.cdc.Unmarshal(args, &queriedDelgation)
 	if err != nil {
-		return sdkerrors.Wrapf(types.ErrMarshalFailure, "unable to unmarshal query response into Delegation type, err: %s", err.Error())
+		return fmt.Errorf("unable to unmarshal query response into Delegation type, err: %s: %s", err.Error(), types.ErrMarshalFailure.Error())
 	}
 	k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_Delegation, "Query response - Delegator: %s, Validator: %s, Shares: %v",
 		queriedDelgation.DelegatorAddress, queriedDelgation.ValidatorAddress, queriedDelgation.Shares))
@@ -47,26 +48,25 @@ func DelegatorSharesCallback(k Keeper, ctx sdk.Context, args []byte, query icqty
 	// Ensure ICQ can be issued now, else fail the callback
 	withinBufferWindow, err := k.IsWithinBufferWindow(ctx)
 	if err != nil {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "unable to determine if ICQ callback is inside buffer window, err: %s", err.Error())
+		return fmt.Errorf("unable to determine if ICQ callback is inside buffer window, err: %s: %s", err.Error(), types.ErrInvalidRequest.Error())
 	}
 	if !withinBufferWindow {
-		return sdkerrors.Wrapf(types.ErrOutsideIcqWindow, "callback is outside ICQ window")
+		return fmt.Errorf("callback is outside ICQ window: %s", types.ErrOutsideIcqWindow.Error())
 	}
 
 	// Grab the validator object from the hostZone using the address returned from the query
 	validator, valIndex, found := GetValidatorFromAddress(hostZone.Validators, queriedDelgation.ValidatorAddress)
 	if !found {
-		return sdkerrors.Wrapf(types.ErrValidatorNotFound, "no registered validator for address (%s)", queriedDelgation.ValidatorAddress)
+		return fmt.Errorf("no registered validator for address (%s): %s", queriedDelgation.ValidatorAddress, types.ErrValidatorNotFound.Error())
 	}
 
 	// Get the validator's internal exchange rate, aborting if it hasn't been updated this epoch
 	strideEpochTracker, found := k.GetEpochTracker(ctx, epochtypes.STRIDE_EPOCH)
 	if !found {
-		return sdkerrors.Wrapf(sdkerrors.ErrNotFound, "unable to get epoch tracker for epoch (%s)", epochtypes.STRIDE_EPOCH)
+		return fmt.Errorf("unable to get epoch tracker for epoch (%s): %s", epochtypes.STRIDE_EPOCH, types.ErrNotFound.Error())
 	}
 	if validator.InternalExchangeRate.EpochNumber != strideEpochTracker.EpochNumber {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest,
-			"validator (%s) internal exchange rate has not been updated this epoch (epoch #%d)", validator.Address, strideEpochTracker.EpochNumber)
+		return fmt.Errorf("validator (%s) internal exchange rate has not been updated this epoch (epoch #%d): %s", validator.Address, strideEpochTracker.EpochNumber, types.ErrInvalidRequest.Error())
 	}
 
 	// Calculate the number of tokens delegated (using the internal exchange rate)
@@ -81,7 +81,7 @@ func DelegatorSharesCallback(k Keeper, ctx sdk.Context, args []byte, query icqty
 		return nil
 	}
 	if delegatedTokens.GT(validator.DelegationAmt) {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "Validator (%s) tokens returned from query is greater than the DelegationAmt", validator.Address)
+		return fmt.Errorf("Validator (%s) tokens returned from query is greater than the DelegationAmt: %s", validator.Address, types.ErrInvalidRequest.Error())
 	}
 
 	// TODO(TESTS-171) add some safety checks here (e.g. we could query the slashing module to confirm the decr in tokens was due to slash)
@@ -102,14 +102,13 @@ func DelegatorSharesCallback(k Keeper, ctx sdk.Context, args []byte, query icqty
 	}
 	slashThresholdDecimal := sdk.NewDec(slashThreshold).Quo(sdk.NewDec(100))
 	if slashPct.GT(slashThresholdDecimal) {
-		return sdkerrors.Wrapf(types.ErrSlashExceedsSafetyThreshold,
-			"Validator slashed but ABORTING update, slash (%v) is greater than safety threshold (%v)", slashPct, slashThresholdDecimal)
+		return fmt.Errorf("Validator slashed but ABORTING update, slash (%v) is greater than safety threshold (%v): %s", slashPct, slashThresholdDecimal, types.ErrSlashExceedsSafetyThreshold.Error())
 	}
 
 	// Update the validator weight and delegation reflect to reflect the slash
 	weight, err := cast.ToInt64E(validator.Weight)
 	if err != nil {
-		return sdkerrors.Wrapf(types.ErrIntCast, "unable to convert validator weight to int64, err: %s", err.Error())
+		return fmt.Errorf("unable to convert validator weight to int64, err: %s: %s", err.Error(), types.ErrIntCast.Error())
 	}
 	weightAdjustment := sdk.NewDecFromInt(delegatedTokens).Quo(sdk.NewDecFromInt(validator.DelegationAmt))
 

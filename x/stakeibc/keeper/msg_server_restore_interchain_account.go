@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	icatypes "github.com/cosmos/ibc-go/v5/modules/apps/27-interchain-accounts/types"
 
 	recordtypes "github.com/Stride-Labs/stride/v5/x/records/types"
@@ -27,7 +26,7 @@ func (k msgServer) RestoreInterchainAccount(goCtx context.Context, msg *types.Ms
 	if !found {
 		errMsg := fmt.Sprintf("invalid connection id from host %s, %s not found", msg.ChainId, hostZone.ConnectionId)
 		k.Logger(ctx).Error(errMsg)
-		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, errMsg)
+		return nil, fmt.Errorf("%s: %s", errMsg, types.ErrInvalidRequest.Error())
 	}
 	counterpartyConnection := connectionEnd.Counterparty
 
@@ -43,7 +42,7 @@ func (k msgServer) RestoreInterchainAccount(goCtx context.Context, msg *types.Ms
 	if !exists {
 		errMsg := fmt.Sprintf("ICA controller account address not found: %s", owner)
 		k.Logger(ctx).Error(errMsg)
-		return nil, sdkerrors.Wrapf(types.ErrInvalidInterchainAccountAddress, errMsg)
+		return nil, fmt.Errorf("%s: %s", errMsg, types.ErrInvalidInterchainAccountAddress.Error())
 	}
 
 	appVersion := string(icatypes.ModuleCdc.MustMarshalJSON(&icatypes.Metadata{

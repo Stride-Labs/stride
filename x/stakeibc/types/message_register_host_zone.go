@@ -1,11 +1,11 @@
 package types
 
 import (
+	"fmt"
 	"strings"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/address"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	ibctransfertypes "github.com/cosmos/ibc-go/v5/modules/apps/transfer/types"
 
 	"github.com/Stride-Labs/stride/v5/utils"
@@ -52,7 +52,7 @@ func (msg *MsgRegisterHostZone) GetSignBytes() []byte {
 func (msg *MsgRegisterHostZone) ValidateBasic() error {
 	_, err := sdk.AccAddressFromBech32(msg.Creator)
 	if err != nil {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid creator address (%s)", err)
+		return fmt.Errorf("invalid creator address (%s): %s", err, ErrInvalidAddress.Error())
 	}
 	if err := utils.ValidateAdminAddress(msg.Creator); err != nil {
 		return err
@@ -60,7 +60,7 @@ func (msg *MsgRegisterHostZone) ValidateBasic() error {
 	// VALIDATE DENOMS
 	// host denom cannot be empty
 	if msg.HostDenom == "" {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "host denom cannot be empty")
+		return fmt.Errorf("host denom cannot be empty: %s", ErrInvalidRequest.Error())
 	}
 	// host denom must be a valid asset denom
 	if err := sdk.ValidateDenom(msg.HostDenom); err != nil {
@@ -69,10 +69,10 @@ func (msg *MsgRegisterHostZone) ValidateBasic() error {
 
 	// ibc denom cannot be empty and must begin with "ibc"
 	if msg.IbcDenom == "" {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "ibc denom cannot be empty")
+		return fmt.Errorf("ibc denom cannot be empty: %s", ErrInvalidRequest.Error())
 	}
 	if !strings.HasPrefix(msg.IbcDenom, "ibc") {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "ibc denom must begin with 'ibc'")
+		return fmt.Errorf("ibc denom must begin with 'ibc': %s", ErrInvalidRequest.Error())
 	}
 	// ibc denom must be valid
 	err = ibctransfertypes.ValidateIBCDenom(msg.IbcDenom)
@@ -81,26 +81,26 @@ func (msg *MsgRegisterHostZone) ValidateBasic() error {
 	}
 	// bech32 prefix must be non-empty (we validate it fully in msg_server)
 	if strings.TrimSpace(msg.Bech32Prefix) == "" {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "bech32 prefix must be non-empty")
+		return fmt.Errorf("bech32 prefix must be non-empty: %s", ErrInvalidRequest.Error())
 	}
 	// connection id cannot be empty and must begin with "connection"
 	if msg.ConnectionId == "" {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "connection id cannot be empty")
+		return fmt.Errorf("connection id cannot be empty: %s", ErrInvalidRequest.Error())
 	}
 	if !strings.HasPrefix(msg.ConnectionId, "connection") {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "connection id must begin with 'connection'")
+		return fmt.Errorf("connection id must begin with 'connection': %s", ErrInvalidRequest.Error())
 	}
 	// transfer channel id cannot be empty
 	if msg.TransferChannelId == "" {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "transfer channel id cannot be empty")
+		return fmt.Errorf("transfer channel id cannot be empty: %s", ErrInvalidRequest)
 	}
 	// transfer channel id must begin with "channel"
 	if !strings.HasPrefix(msg.TransferChannelId, "channel") {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "transfer channel id must begin with 'channel'")
+		return fmt.Errorf("transfer channel id must begin with 'channel': %s", ErrInvalidRequest)
 	}
 	// unbonding frequency must be positive nonzero
 	if msg.UnbondingFrequency < 1 {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "unbonding frequency must be greater than zero")
+		return fmt.Errorf("unbonding frequency must be greater than zero: %s", ErrInvalidRequest)
 	}
 
 	return nil

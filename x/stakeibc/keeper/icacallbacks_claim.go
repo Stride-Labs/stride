@@ -9,7 +9,6 @@ import (
 	"github.com/Stride-Labs/stride/v5/x/stakeibc/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	channeltypes "github.com/cosmos/ibc-go/v5/modules/core/04-channel/types"
 	"github.com/golang/protobuf/proto" //nolint:staticcheck
 )
@@ -35,15 +34,16 @@ func (k Keeper) UnmarshalClaimCallbackArgs(ctx sdk.Context, claimCallback []byte
 }
 
 // ICA Callback after claiming unbonded tokens
-//   If successful:
-//      * Removes the user redemption record
-//   If timeout/failure:
-//      * Reverts pending flag in the user redemption record so the claim can be re-tried
+//
+//	If successful:
+//	   * Removes the user redemption record
+//	If timeout/failure:
+//	   * Reverts pending flag in the user redemption record so the claim can be re-tried
 func ClaimCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ackResponse *icacallbackstypes.AcknowledgementResponse, args []byte) error {
 	// Fetch callback args
 	claimCallback, err := k.UnmarshalClaimCallbackArgs(ctx, args)
 	if err != nil {
-		return sdkerrors.Wrapf(types.ErrUnmarshalFailure, fmt.Sprintf("Unable to unmarshal claim callback args: %s", err.Error()))
+		return fmt.Errorf("Unable to unmarshal claim callback args: %s: %s", err.Error(), types.ErrUnmarshalFailure.Error())
 	}
 	chainId := claimCallback.ChainId
 	k.Logger(ctx).Info(utils.LogICACallbackWithHostZone(chainId, ICACallbackID_Claim,
@@ -52,7 +52,7 @@ func ClaimCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ackRes
 	// Grab the associated user redemption record
 	userRedemptionRecord, found := k.RecordsKeeper.GetUserRedemptionRecord(ctx, claimCallback.GetUserRedemptionRecordId())
 	if !found {
-		return sdkerrors.Wrapf(types.ErrRecordNotFound, "user redemption record not found %s", claimCallback.GetUserRedemptionRecordId())
+		return fmt.Errorf("user redemption record not found %s: %s", claimCallback.GetUserRedemptionRecordId(), types.ErrRecordNotFound.Error())
 	}
 
 	// Check for a timeout
@@ -98,7 +98,7 @@ func (k Keeper) DecrementHostZoneUnbonding(ctx sdk.Context, userRedemptionRecord
 	// fetch the hzu associated with the user unbonding record
 	hostZoneUnbonding, found := k.RecordsKeeper.GetHostZoneUnbondingByChainId(ctx, callbackArgs.EpochNumber, callbackArgs.ChainId)
 	if !found {
-		return sdkerrors.Wrapf(types.ErrRecordNotFound, "host zone unbonding not found %s", callbackArgs.ChainId)
+		return fmt.Errorf("host zone unbonding not found %s: %s", callbackArgs.ChainId, types.ErrRecordNotFound.Error())
 	}
 
 	// decrement the hzu by the amount claimed
@@ -107,7 +107,7 @@ func (k Keeper) DecrementHostZoneUnbonding(ctx sdk.Context, userRedemptionRecord
 	// save the updated hzu on the epoch unbonding record
 	epochUnbondingRecord, success := k.RecordsKeeper.AddHostZoneToEpochUnbondingRecord(ctx, callbackArgs.EpochNumber, callbackArgs.ChainId, hostZoneUnbonding)
 	if !success {
-		return sdkerrors.Wrapf(types.ErrRecordNotFound, "epoch unbonding record not found %s", callbackArgs.ChainId)
+		return fmt.Errorf("epoch unbonding record not found %s: %s", callbackArgs.ChainId, types.ErrRecordNotFound.Error())
 	}
 	k.RecordsKeeper.SetEpochUnbondingRecord(ctx, *epochUnbondingRecord)
 	return nil

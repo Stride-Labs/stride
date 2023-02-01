@@ -4,7 +4,6 @@ import (
 	"math"
 	"testing"
 
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/stretchr/testify/require"
 
 	"github.com/Stride-Labs/stride/v5/testutil/sample"
@@ -33,7 +32,7 @@ func TestMsgClaimUndelegatedTokens_ValidateBasic(t *testing.T) {
 				HostZoneId: "GAIA",
 				Epoch:      uint64(1),
 			},
-			err: sdkerrors.ErrInvalidAddress,
+			err: ErrInvalidAddress,
 		},
 		{
 			name: "no host zone",
@@ -59,7 +58,7 @@ func TestMsgClaimUndelegatedTokens_ValidateBasic(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			err := tt.msg.ValidateBasic()
 			if tt.err != nil {
-				require.ErrorIs(t, err, tt.err)
+				require.ErrorAs(t, err, &tt.err)
 				return
 			}
 			require.NoError(t, err)

@@ -3,8 +3,8 @@ package keeper_test
 import (
 	"testing"
 
+	stakeibctypes "github.com/Stride-Labs/stride/v5/x/stakeibc/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/types/query"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/codes"
@@ -38,7 +38,7 @@ func TestEpochUnbondingRecordQuerySingle(t *testing.T) {
 		{
 			desc:    "KeyNotFound",
 			request: &types.QueryGetEpochUnbondingRecordRequest{EpochNumber: uint64(len(msgs))},
-			err:     sdkerrors.ErrKeyNotFound,
+			err:     stakeibctypes.ErrKeyNotFound,
 		},
 		{
 			desc: "InvalidRequest",

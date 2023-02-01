@@ -57,7 +57,7 @@ func TestCallbackDataQuerySingle(t *testing.T) {
 		t.Run(tc.desc, func(t *testing.T) {
 			response, err := keeper.CallbackData(wctx, tc.request)
 			if tc.err != nil {
-				require.ErrorIs(t, err, tc.err)
+				require.ErrorAs(t, err, &tc.err)
 			} else {
 				require.NoError(t, err)
 				require.Equal(t,
@@ -121,6 +121,7 @@ func TestCallbackDataQueryPaginated(t *testing.T) {
 	})
 	t.Run("InvalidRequest", func(t *testing.T) {
 		_, err := keeper.CallbackDataAll(wctx, nil)
-		require.ErrorIs(t, err, status.Error(codes.InvalidArgument, "invalid request"))
+		target := status.Error(codes.InvalidArgument, "invalid request")
+		require.ErrorAs(t, err, &target)
 	})
 }

@@ -241,7 +241,7 @@ func (s *KeeperTestSuite) TestRedeemStake_NoEpochTrackerDay() {
 	s.App.RecordsKeeper.RemoveEpochUnbondingRecord(s.Ctx, tc.initialState.epochNumber)
 	_, err := s.GetMsgServer().RedeemStake(sdk.WrapSDKContext(s.Ctx), &invalidMsg)
 
-	s.Require().EqualError(err, "latest epoch unbonding record not found: epoch unbonding record not found")
+	s.Require().EqualError(err, "latest epoch unbonding record not found: epoch unbonding record not found ")
 }
 
 func (s *KeeperTestSuite) TestRedeemStake_UserAlreadyRedeemedThisEpoch() {

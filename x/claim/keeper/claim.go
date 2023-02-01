@@ -9,7 +9,6 @@ import (
 	sdkmath "cosmossdk.io/math"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	authvestingtypes "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
 	"github.com/gogo/protobuf/proto"
@@ -150,7 +149,7 @@ func (k Keeper) GetAirdropByIdentifier(ctx sdk.Context, airdropIdentifier string
 func (k Keeper) GetDistributorAccountBalance(ctx sdk.Context, airdropIdentifier string) (sdk.Coin, error) {
 	airdrop := k.GetAirdropByIdentifier(ctx, airdropIdentifier)
 	if airdrop == nil {
-		return sdk.Coin{}, sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid airdrop identifier: GetDistributorAccountBalance")
+		return sdk.Coin{}, fmt.Errorf("Invalid airdrop identifier: GetDistributorAccountBalance : invalid address")
 	}
 
 	addr, err := k.GetAirdropDistributor(ctx, airdropIdentifier)
@@ -331,7 +330,7 @@ func (k Keeper) SetClaimRecord(ctx sdk.Context, claimRecord types.ClaimRecord) e
 func (k Keeper) GetAirdropDistributor(ctx sdk.Context, airdropIdentifier string) (sdk.AccAddress, error) {
 	airdrop := k.GetAirdropByIdentifier(ctx, airdropIdentifier)
 	if airdrop == nil {
-		return sdk.AccAddress{}, sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid airdrop identifier: GetAirdropDistributor")
+		return sdk.AccAddress{}, fmt.Errorf("invalid airdrop identifier: GetAirdropDistributor: invalid address")
 	}
 	return sdk.AccAddressFromBech32(airdrop.DistributorAddress)
 }
@@ -340,7 +339,7 @@ func (k Keeper) GetAirdropDistributor(ctx sdk.Context, airdropIdentifier string)
 func (k Keeper) GetAirdropClaimDenom(ctx sdk.Context, airdropIdentifier string) (string, error) {
 	airdrop := k.GetAirdropByIdentifier(ctx, airdropIdentifier)
 	if airdrop == nil {
-		return "", sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "invalid airdrop identifier: GetAirdropClaimDenom")
+		return "", fmt.Errorf("invalid airdrop identifier: GetAirdropClaimDenom: invalid request")
 	}
 	return airdrop.ClaimDenom, nil
 }
@@ -457,7 +456,7 @@ func (k Keeper) AfterClaim(ctx sdk.Context, airdropIdentifier string, claimAmoun
 	// fetch the airdrop
 	airdrop := k.GetAirdropByIdentifier(ctx, airdropIdentifier)
 	if airdrop == nil {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "invalid airdrop identifier: AfterClaim")
+		return fmt.Errorf("invalid airdrop identifier: AfterClaim: invalid request")
 	}
 	// increment the claimed so far
 	err := k.IncrementClaimedSoFar(ctx, airdropIdentifier, claimAmount)
@@ -486,7 +485,7 @@ func (k Keeper) ClaimAllCoinsForAction(ctx sdk.Context, addr sdk.AccAddress, act
 func (k Keeper) ClaimCoinsForAction(ctx sdk.Context, addr sdk.AccAddress, action types.Action, airdropIdentifier string) (sdk.Coins, error) {
 	isPassed := k.IsInitialPeriodPassed(ctx, airdropIdentifier)
 	if airdropIdentifier == "" {
-		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "invalid airdrop identifier: ClaimCoinsForAction")
+		return nil, fmt.Errorf("invalid airdrop identifier: ClaimCoinsForAction: invalid request")
 	}
 
 	claimableAmount, err := k.GetClaimableAmountForAction(ctx, addr, action, airdropIdentifier, false)
@@ -519,7 +518,7 @@ func (k Keeper) ClaimCoinsForAction(ctx sdk.Context, addr sdk.AccAddress, action
 			// Convert user account into stride veting account.
 			baseAccount := k.accountKeeper.NewAccountWithAddress(ctx, addr)
 			if _, ok := baseAccount.(*authtypes.BaseAccount); !ok {
-				return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "invalid account type; expected: BaseAccount, got: %T", baseAccount)
+				return nil, fmt.Errorf("invalid account type; expected: BaseAccount, got: %T: invalid request", baseAccount)
 			}
 
 			periodLength := GetAirdropDurationForAction(action)
@@ -562,7 +561,7 @@ func (k Keeper) ClaimCoinsForAction(ctx sdk.Context, addr sdk.AccAddress, action
 
 	airdrop := k.GetAirdropByIdentifier(ctx, airdropIdentifier)
 	if airdrop == nil {
-		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "invalid airdrop identifier: ClaimCoinsForAction")
+		return nil, fmt.Errorf("invalid airdrop identifier: ClaimCoinsForAction: invalid request")
 	}
 	err = k.AfterClaim(ctx, airdropIdentifier, claimableAmount.AmountOf(airdrop.ClaimDenom))
 	if err != nil {

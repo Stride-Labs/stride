@@ -1,10 +1,11 @@
 package v2
 
 import (
+	"fmt"
+
 	"github.com/cosmos/cosmos-sdk/codec"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
 	oldclaimtypes "github.com/Stride-Labs/stride/v5/x/claim/migrations/v2/types"
 	claimtypes "github.com/Stride-Labs/stride/v5/x/claim/types"
@@ -16,14 +17,14 @@ func migrateClaimParams(store sdk.KVStore, cdc codec.Codec) error {
 	var oldParams oldclaimtypes.Params
 	err := cdc.UnmarshalJSON(oldParamsBz, &oldParams)
 	if err != nil {
-		return sdkerrors.Wrapf(err, "unable to unmarshal claims params using old data types")
+		return fmt.Errorf("unable to unmarshal claims params using old data types: %s", err.Error())
 	}
 
 	// Convert and serialize using the new type
 	newParams := convertToNewClaimParams(oldParams)
 	newParamsBz, err := cdc.MarshalJSON(&newParams)
 	if err != nil {
-		return sdkerrors.Wrapf(err, "unable to marshal claims params using new data types")
+		return fmt.Errorf("unable to marshal claims params using new data types: %s", err.Error())
 	}
 
 	// Store new type

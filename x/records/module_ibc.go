@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
 	ibctransfertypes "github.com/cosmos/ibc-go/v5/modules/apps/transfer/types"
 	channeltypes "github.com/cosmos/ibc-go/v5/modules/core/04-channel/types"
@@ -173,7 +172,7 @@ func (im IBCModule) OnAcknowledgementPacket(
 		errMsg := fmt.Sprintf("Unable to unpack message data from acknowledgement, Sequence %d, from %s %s, to %s %s: %s",
 			packet.Sequence, packet.SourceChannel, packet.SourcePort, packet.DestinationChannel, packet.DestinationPort, err.Error())
 		im.keeper.Logger(ctx).Error(errMsg)
-		return sdkerrors.Wrapf(icacallbacktypes.ErrInvalidAcknowledgement, errMsg)
+		return fmt.Errorf("%s: %s", errMsg, icacallbacktypes.ErrInvalidAcknowledgement.Error())
 	}
 
 	// Custom ack logic only applies to ibc transfers initiated from the `stakeibc` module account
@@ -183,7 +182,7 @@ func (im IBCModule) OnAcknowledgementPacket(
 		errMsg := fmt.Sprintf("Unable to call registered callback from records OnAcknowledgePacket | Sequence %d, from %s %s, to %s %s | Error %s",
 			packet.Sequence, packet.SourceChannel, packet.SourcePort, packet.DestinationChannel, packet.DestinationPort, err.Error())
 		im.keeper.Logger(ctx).Error(errMsg)
-		return sdkerrors.Wrapf(icacallbacktypes.ErrCallbackFailed, errMsg)
+		return fmt.Errorf("%s: %s", errMsg, icacallbacktypes.ErrCallbackFailed.Error())
 	}
 
 	return im.app.OnAcknowledgementPacket(ctx, packet, acknowledgement, relayer)
@@ -244,7 +243,7 @@ func (am AppModule) OnChanOpenInit(
 	counterparty channeltypes.Counterparty,
 	version string,
 ) (string, error) {
-	return "", sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "UNIMPLEMENTED")
+	return "", fmt.Errorf("UNIMPLEMENTED: invalid request")
 }
 
 // OnChanOpenTry implements the IBCModule interface
@@ -259,7 +258,7 @@ func (am AppModule) OnChanOpenTry(
 	version,
 	counterpartyVersion string,
 ) error {
-	return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "UNIMPLEMENTED")
+	return fmt.Errorf("UNIMPLEMENTED: invalid request")
 }
 
 // OnChanOpenAck implements the IBCModule interface
@@ -269,7 +268,7 @@ func (am AppModule) OnChanOpenAck(
 	channelID string,
 	counterpartyVersion string,
 ) error {
-	return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "UNIMPLEMENTED")
+	return fmt.Errorf("UNIMPLEMENTED: invalid request")
 }
 
 // OnChanOpenConfirm implements the IBCModule interface
@@ -278,7 +277,7 @@ func (am AppModule) OnChanOpenConfirm(
 	portID,
 	channelID string,
 ) error {
-	return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "UNIMPLEMENTED")
+	return fmt.Errorf("UNIMPLEMENTED: invalid request")
 }
 
 // OnChanCloseInit implements the IBCModule interface
@@ -288,7 +287,7 @@ func (am AppModule) OnChanCloseInit(
 	channelID string,
 ) error {
 	// Disallow user-initiated channel closing for channels
-	return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "user cannot close channel")
+	return fmt.Errorf("user cannot close channel: invalid request")
 }
 
 // OnChanCloseConfirm implements the IBCModule interface
@@ -297,7 +296,7 @@ func (am AppModule) OnChanCloseConfirm(
 	portID,
 	channelID string,
 ) error {
-	return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "UNIMPLEMENTED")
+	return fmt.Errorf("UNIMPLEMENTED: invalid request")
 }
 
 // OnRecvPacket implements the IBCModule interface
@@ -317,7 +316,7 @@ func (am AppModule) OnAcknowledgementPacket(
 	acknowledgement []byte,
 	relayer sdk.AccAddress,
 ) error {
-	return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "UNIMPLEMENTED")
+	return fmt.Errorf("UNIMPLEMENTED: invalid request")
 }
 
 // OnTimeoutPacket implements the IBCModule interface

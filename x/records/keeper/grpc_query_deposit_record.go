@@ -5,12 +5,12 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/types/query"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
 	"github.com/Stride-Labs/stride/v5/x/records/types"
+	stakeibctypes "github.com/Stride-Labs/stride/v5/x/stakeibc/types"
 )
 
 func (k Keeper) DepositRecordAll(c context.Context, req *types.QueryAllDepositRecordRequest) (*types.QueryAllDepositRecordResponse, error) {
@@ -48,7 +48,7 @@ func (k Keeper) DepositRecord(c context.Context, req *types.QueryGetDepositRecor
 	ctx := sdk.UnwrapSDKContext(c)
 	depositRecord, found := k.GetDepositRecord(ctx, req.Id)
 	if !found {
-		return nil, sdkerrors.ErrKeyNotFound
+		return nil, stakeibctypes.ErrKeyNotFound
 	}
 
 	return &types.QueryGetDepositRecordResponse{DepositRecord: depositRecord}, nil
