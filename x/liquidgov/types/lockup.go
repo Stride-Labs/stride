@@ -143,7 +143,8 @@ func UnmarshalUR(cdc codec.BinaryCodec, value []byte) (ur UnlockingRecord, err e
 func (ur UnlockingRecord) String() string {
 	out := fmt.Sprintf(`Unlocking Tokens for:
   Creator:                 %s
-	Entries:`, ur.Creator)
+	Denom:									 %s
+	Entries:`, ur.Creator, ur.Denom)
 	for i, entry := range ur.Entries {
 		out += fmt.Sprintf(`    Unlocking Record %d:
       Creation Height:           %v
