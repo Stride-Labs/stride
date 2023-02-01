@@ -110,3 +110,8 @@ func NewZoneAddress(chainId string) sdk.AccAddress {
 	key := append([]byte("zone"), []byte(chainId)...)
 	return address.Module(ModuleName, key)
 }
+
+func NewZoneLockupAddress(chainId string) sdk.AccAddress {
+	key := append([]byte("zonelockup"), []byte(chainId)...)
+	return address.Module(ModuleName, key)
+}

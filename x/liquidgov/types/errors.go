@@ -8,6 +8,6 @@ import (
 
 // x/liquidgov module sentinel errors
 var (
-	ErrSample = sdkerrors.Register(ModuleName, 1100, "sample error")
-	
+	ErrLockupNotFound        = sdkerrors.Register(ModuleName, 1601, "lockup not found")
+	ErrNotEnoughLockupTokens = sdkerrors.Register(ModuleName, 1602, "not enough lockup tokens")
 )

@@ -11,6 +11,7 @@ type StakeibcKeeper interface {
 	GetHostZone(ctx sdk.Context, chain_id string) (val stakeibctypes.HostZone, found bool)
 	GetStartTimeNextEpoch(ctx sdk.Context, epochType string) (uint64, error)
 	IsWithinBufferWindow(ctx sdk.Context) (bool, error)
+	GetHostZoneFromHostDenom(ctx sdk.Context, denom string) (*stakeibctypes.HostZone, error)
 }
 
 // AccountKeeper defines the expected account keeper used for simulations (noalias)
@@ -22,5 +23,9 @@ type AccountKeeper interface {
 // BankKeeper defines the expected interface needed to retrieve account balances.
 type BankKeeper interface {
 	SpendableCoins(ctx sdk.Context, addr sdk.AccAddress) sdk.Coins
+	SendCoinsFromAccountToModule(
+		ctx sdk.Context, senderAddr sdk.AccAddress, recipientModule string, amt sdk.Coins,
+	) error
+	GetBalance(ctx sdk.Context, addr sdk.AccAddress, denom string) sdk.Coin
 	// Methods imported from bank should be defined here
 }

@@ -47,5 +47,7 @@ func MirrorProposalsCallback(k Keeper, ctx sdk.Context, args []byte, query icqty
 			chainId, prop.Id, prop.VotingStartTime, prop.VotingEndTime))
 	}
 
+	// query host zone unbonding period
+
 	return nil
 }

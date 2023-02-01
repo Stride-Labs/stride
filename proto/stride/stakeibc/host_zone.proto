@@ -5,6 +5,7 @@ import "stride/stakeibc/validator.proto";
 import "stride/stakeibc/ica_account.proto";
 import "gogoproto/gogo.proto";
 import "cosmos_proto/cosmos.proto";
+import "google/protobuf/duration.proto";
 
 option go_package = "github.com/Stride-Labs/stride/v5/x/stakeibc/types";
 
@@ -44,5 +45,9 @@ message HostZone {
     (gogoproto.nullable) = false
   ];
   string address = 18 [ (gogoproto.moretags) = "yaml:\"address\"" ];
+  // TODO handle init in migrator
+  string lockup_address = 19 [ (gogoproto.moretags) = "yaml:\"address\"" ];
+  // unbonding_time is the time duration of unbonding.
+  google.protobuf.Duration unbonding_time = 20 [(gogoproto.nullable) = false, (gogoproto.stdduration) = true];
   reserved 15;
 }
