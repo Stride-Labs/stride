@@ -1024,13 +1024,13 @@ func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino
 	paramsKeeper.Subspace(ibchost.ModuleName)
 	// paramsKeeper.Subspace(monitoringptypes.ModuleName)
 	paramsKeeper.Subspace(stakeibcmoduletypes.ModuleName)
+	paramsKeeper.Subspace(liquidgovmoduletypes.ModuleName)
 	paramsKeeper.Subspace(epochsmoduletypes.ModuleName)
 	paramsKeeper.Subspace(interchainquerytypes.ModuleName)
 	paramsKeeper.Subspace(icacontrollertypes.SubModuleName)
 	paramsKeeper.Subspace(icahosttypes.SubModuleName)
 	paramsKeeper.Subspace(recordsmoduletypes.ModuleName)
 	paramsKeeper.Subspace(icacallbacksmoduletypes.ModuleName)
-	paramsKeeper.Subspace(liquidgovmoduletypes.ModuleName)
 	// this line is used by starport scaffolding # stargate/app/paramSubspace
 
 	paramsKeeper.Subspace(claimtypes.ModuleName)
