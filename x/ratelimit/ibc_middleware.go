@@ -108,9 +108,6 @@ func (im IBCMiddleware) OnRecvPacket(
 	// Check if the packet would cause the rate limit to be exceeded,
 	// and if so, return an ack error
 	if err := im.keeper.ReceiveRateLimitedPacket(ctx, packet); err != nil {
-		// QUESTION: Should the error ack instead be passed down to the base app?
-		// I'm assuming no because I don't think we need to do anything in the case of an error
-		// (as tokens should not have been minted yet at this point in the stack)
 		return channeltypes.NewErrorAcknowledgement(err)
 	}
 
