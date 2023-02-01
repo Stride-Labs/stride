@@ -6,18 +6,16 @@ SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 source $SCRIPT_DIR/../config.sh
 
 CHAIN="$1"
-KEYS_LOGS=$SCRIPT_DIR/logs/keys.log
+KEYS_LOGS=$DOCKERNET_HOME/logs/keys.log
 
 CHAIN_ID=$(GET_VAR_VALUE    ${CHAIN}_CHAIN_ID)
-CMD=$(GET_VAR_VALUE         ${CHAIN}_CMD)
+BINARY=$(GET_VAR_VALUE      ${CHAIN}_BINARY)
+MAIN_CMD=$(GET_VAR_VALUE    ${CHAIN}_MAIN_CMD)
 DENOM=$(GET_VAR_VALUE       ${CHAIN}_DENOM)
 RPC_PORT=$(GET_VAR_VALUE    ${CHAIN}_RPC_PORT)
 NUM_NODES=$(GET_VAR_VALUE   ${CHAIN}_NUM_NODES)
 NODE_PREFIX=$(GET_VAR_VALUE ${CHAIN}_NODE_PREFIX)
 VAL_PREFIX=$(GET_VAR_VALUE  ${CHAIN}_VAL_PREFIX)
-
-IFS=',' read -r -a VAL_MNEMONICS <<< "${VAL_MNEMONICS}"
-IFS=',' read -r -a RELAYER_MNEMONICS <<< "${RELAYER_MNEMONICS}"
 
 set_stride_genesis() {
     genesis_config=$1
@@ -37,6 +35,7 @@ set_host_genesis() {
     jq '(.app_state.epochs.epochs[]? | select(.identifier=="day") ).duration = $epochLen' --arg epochLen $HOST_DAY_EPOCH_DURATION $genesis_config > json.tmp && mv json.tmp $genesis_config
     jq '(.app_state.epochs.epochs[]? | select(.identifier=="hour") ).duration = $epochLen' --arg epochLen $HOST_HOUR_EPOCH_DURATION $genesis_config > json.tmp && mv json.tmp $genesis_config
     jq '(.app_state.epochs.epochs[]? | select(.identifier=="week") ).duration = $epochLen' --arg epochLen $HOST_WEEK_EPOCH_DURATION $genesis_config > json.tmp && mv json.tmp $genesis_config
+    jq '(.app_state.epochs.epochs[]? | select(.identifier=="mint") ).duration = $epochLen' --arg epochLen $HOST_MINT_EPOCH_DURATION $genesis_config > json.tmp && mv json.tmp $genesis_config
     jq '.app_state.staking.params.unbonding_time = $newVal' --arg newVal "$UNBONDING_TIME" $genesis_config > json.tmp && mv json.tmp $genesis_config
 
     # Set the mint start time to the genesis time if the chain configures inflation at the block level (e.g. stars)
@@ -47,19 +46,18 @@ set_host_genesis() {
 
     # Add interchain accounts to the genesis set
     jq "del(.app_state.interchain_accounts)" $genesis_config > json.tmp && mv json.tmp $genesis_config
-    interchain_accts=$(cat $SCRIPT_DIR/config/ica.json)
+    interchain_accts=$(cat $DOCKERNET_HOME/config/ica.json)
     jq ".app_state += $interchain_accts" $genesis_config > json.tmp && mv json.tmp $genesis_config
 
     # Slightly harshen slashing parameters (if 5 blocks are missed, the validator will be slashed)
     # This makes it easier to test updating weights after a host zone validator is slashed
     sed -i -E 's|"signed_blocks_window": "100"|"signed_blocks_window": "10"|g' $genesis_config
     sed -i -E 's|"downtime_jail_duration": "600s"|"downtime_jail_duration": "10s"|g' $genesis_config
-    sed -i -E 's|"slash_fraction_downtime": "0.010000000000000000"|"slash_fraction_downtime": "0.100000000000000000"|g' $genesis_config
+    sed -i -E 's|"slash_fraction_downtime": "0.010000000000000000"|"slash_fraction_downtime": "0.050000000000000000"|g' $genesis_config
 }
 
 MAIN_ID=1 # Node responsible for genesis and persistent_peers
 MAIN_NODE_NAME=""
-MAIN_NODE_CMD=""
 MAIN_NODE_ID=""
 MAIN_CONFIG=""
 MAIN_GENESIS=""
@@ -72,7 +70,16 @@ for (( i=1; i <= $NUM_NODES; i++ )); do
 
     # Create a state directory for the current node and initialize the chain
     mkdir -p $STATE/$node_name
-    cmd="$CMD --home ${STATE}/$node_name"
+    
+    # If the chains commands are run only from docker, grab the command from the config
+    # Otherwise, if they're run locally, append the home directory
+    if [[ $BINARY == docker-compose* ]]; then
+        cmd=$BINARY
+    else
+        cmd="$BINARY --home ${STATE}/$node_name"
+    fi
+
+    # Initialize the chain
     $cmd init $moniker --chain-id $CHAIN_ID --overwrite &> /dev/null
     chmod -R 777 $STATE/$node_name
 
@@ -90,7 +97,7 @@ for (( i=1; i <= $NUM_NODES; i++ )); do
     sed -i -E "s|minimum-gas-prices = \".*\"|minimum-gas-prices = \"0${DENOM}\"|g" $app_toml
     sed -i -E '/\[api\]/,/^enable = .*$/ s/^enable = .*$/enable = true/' $app_toml
     sed -i -E 's|unsafe-cors = .*|unsafe-cors = true|g' $app_toml
-    sed -i -E "s|snapshot-interval = 0|snapshot-interval = 100|g" $app_toml
+    sed -i -E "s|snapshot-interval = 0|snapshot-interval = 300|g" $app_toml
 
     sed -i -E "s|chain-id = \"\"|chain-id = \"${CHAIN_ID}\"|g" $client_toml
     sed -i -E "s|keyring-backend = \"os\"|keyring-backend = \"test\"|g" $client_toml
@@ -106,7 +113,7 @@ for (( i=1; i <= $NUM_NODES; i++ )); do
     val_acct="${VAL_PREFIX}${i}"
     val_mnemonic="${VAL_MNEMONICS[((i-1))]}"
     echo "$val_mnemonic" | $cmd keys add $val_acct --recover --keyring-backend=test >> $KEYS_LOGS 2>&1
-    val_addr=$($cmd keys show $val_acct --keyring-backend test -a)
+    val_addr=$($cmd keys show $val_acct --keyring-backend test -a | tr -cd '[:alnum:]._-')
     # Add this account to the current node
     $cmd add-genesis-account ${val_addr} ${VAL_TOKENS}${DENOM}
     # actually set this account as a validator on the current node 
@@ -119,52 +126,51 @@ for (( i=1; i <= $NUM_NODES; i++ )); do
 
     if [ $i -eq $MAIN_ID ]; then
         MAIN_NODE_NAME=$node_name
-        MAIN_NODE_CMD=$cmd
         MAIN_NODE_ID=$node_id
         MAIN_CONFIG=$config_toml
         MAIN_GENESIS=$genesis_json
     else
         # also add this account and it's genesis tx to the main node
-        $MAIN_NODE_CMD add-genesis-account ${val_addr} ${VAL_TOKENS}${DENOM}
+        $MAIN_CMD add-genesis-account ${val_addr} ${VAL_TOKENS}${DENOM}
         cp ${STATE}/${node_name}/config/gentx/*.json ${STATE}/${MAIN_NODE_NAME}/config/gentx/
 
         # and add each validator's keys to the first state directory
-        echo "$val_mnemonic" | $MAIN_NODE_CMD keys add $val_acct --recover --keyring-backend=test &> /dev/null
+        echo "$val_mnemonic" | $MAIN_CMD keys add $val_acct --recover --keyring-backend=test &> /dev/null
     fi
 done
 
 if [ "$CHAIN" == "STRIDE" ]; then 
     # add the stride admin account
-    echo "$STRIDE_ADMIN_MNEMONIC" | $MAIN_NODE_CMD keys add $STRIDE_ADMIN_ACCT --recover --keyring-backend=test >> $KEYS_LOGS 2>&1
-    STRIDE_ADMIN_ADDRESS=$($MAIN_NODE_CMD keys show $STRIDE_ADMIN_ACCT --keyring-backend test -a)
-    $MAIN_NODE_CMD add-genesis-account ${STRIDE_ADMIN_ADDRESS} ${ADMIN_TOKENS}${DENOM}
+    echo "$STRIDE_ADMIN_MNEMONIC" | $MAIN_CMD keys add $STRIDE_ADMIN_ACCT --recover --keyring-backend=test >> $KEYS_LOGS 2>&1
+    STRIDE_ADMIN_ADDRESS=$($MAIN_CMD keys show $STRIDE_ADMIN_ACCT --keyring-backend test -a)
+    $MAIN_CMD add-genesis-account ${STRIDE_ADMIN_ADDRESS} ${ADMIN_TOKENS}${DENOM}
 
     # add relayer accounts
-    for i in "${!HOST_RELAYER_ACCTS[@]}"; do
-        RELAYER_ACCT="${HOST_RELAYER_ACCTS[i]}"
+    for i in "${!RELAYER_ACCTS[@]}"; do
+        RELAYER_ACCT="${RELAYER_ACCTS[i]}"
         RELAYER_MNEMONIC="${RELAYER_MNEMONICS[i]}"
 
-        echo "$RELAYER_MNEMONIC" | $MAIN_NODE_CMD keys add $RELAYER_ACCT --recover --keyring-backend=test >> $KEYS_LOGS 2>&1
-        RELAYER_ADDRESS=$($MAIN_NODE_CMD keys show $RELAYER_ACCT --keyring-backend test -a)
-        $MAIN_NODE_CMD add-genesis-account ${RELAYER_ADDRESS} ${VAL_TOKENS}${DENOM}
+        echo "$RELAYER_MNEMONIC" | $MAIN_CMD keys add $RELAYER_ACCT --recover --keyring-backend=test >> $KEYS_LOGS 2>&1
+        RELAYER_ADDRESS=$($MAIN_CMD keys show $RELAYER_ACCT --keyring-backend test -a)
+        $MAIN_CMD add-genesis-account ${RELAYER_ADDRESS} ${VAL_TOKENS}${DENOM}
     done
 else 
     # add a revenue account
     REV_ACCT_VAR=${CHAIN}_REV_ACCT
     REV_ACCT=${!REV_ACCT_VAR}
-    echo $REV_MNEMONIC | $MAIN_NODE_CMD keys add $REV_ACCT --recover --keyring-backend=test >> $KEYS_LOGS 2>&1
+    echo $REV_MNEMONIC | $MAIN_CMD keys add $REV_ACCT --recover --keyring-backend=test >> $KEYS_LOGS 2>&1
 
     # add a relayer account
     RELAYER_ACCT=$(GET_VAR_VALUE     RELAYER_${CHAIN}_ACCT)
     RELAYER_MNEMONIC=$(GET_VAR_VALUE RELAYER_${CHAIN}_MNEMONIC)
 
-    echo "$RELAYER_MNEMONIC" | $MAIN_NODE_CMD keys add $RELAYER_ACCT --recover --keyring-backend=test >> $KEYS_LOGS 2>&1
-    RELAYER_ADDRESS=$($MAIN_NODE_CMD keys show $RELAYER_ACCT --keyring-backend test -a)
-    $MAIN_NODE_CMD add-genesis-account ${RELAYER_ADDRESS} ${VAL_TOKENS}${DENOM}
+    echo "$RELAYER_MNEMONIC" | $MAIN_CMD keys add $RELAYER_ACCT --recover --keyring-backend=test >> $KEYS_LOGS 2>&1
+    RELAYER_ADDRESS=$($MAIN_CMD keys show $RELAYER_ACCT --keyring-backend test -a | tr -cd '[:alnum:]._-')
+    $MAIN_CMD add-genesis-account ${RELAYER_ADDRESS} ${VAL_TOKENS}${DENOM}
 fi
 
 # now we process gentx txs on the main node
-$MAIN_NODE_CMD collect-gentxs &> /dev/null
+$MAIN_CMD collect-gentxs &> /dev/null
 
 # wipe out the persistent peers for the main node (these are incorrectly autogenerated for each validator during collect-gentxs)
 sed -i -E "s|persistent_peers = .*|persistent_peers = \"\"|g" $MAIN_CONFIG

@@ -2,25 +2,28 @@ package apptesting
 
 import (
 	"strings"
+	"testing"
 
-	ibctransfertypes "github.com/cosmos/ibc-go/v3/modules/apps/transfer/types"
+	ibctransfertypes "github.com/cosmos/ibc-go/v5/modules/apps/transfer/types"
 	abci "github.com/tendermint/tendermint/abci/types"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
+	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
-	icatypes "github.com/cosmos/ibc-go/v3/modules/apps/27-interchain-accounts/types"
-	transfertypes "github.com/cosmos/ibc-go/v3/modules/apps/transfer/types"
-	channeltypes "github.com/cosmos/ibc-go/v3/modules/core/04-channel/types"
-	ibctesting "github.com/cosmos/ibc-go/v3/testing"
-	"github.com/cosmos/ibc-go/v3/testing/simapp"
+	icatypes "github.com/cosmos/ibc-go/v5/modules/apps/27-interchain-accounts/types"
+	transfertypes "github.com/cosmos/ibc-go/v5/modules/apps/transfer/types"
+	channeltypes "github.com/cosmos/ibc-go/v5/modules/core/04-channel/types"
+	ibctesting "github.com/cosmos/ibc-go/v5/testing"
+	"github.com/cosmos/ibc-go/v5/testing/simapp"
 	"github.com/gogo/protobuf/proto"
+	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 	"github.com/tendermint/tendermint/crypto/ed25519"
 	tmtypes "github.com/tendermint/tendermint/proto/tendermint/types"
 
-	"github.com/Stride-Labs/stride/v4/app"
+	"github.com/Stride-Labs/stride/v5/app"
 )
 
 var (
@@ -64,7 +67,6 @@ func (s *AppTestHelper) Setup() {
 	s.TestAccs = CreateRandomAccounts(3)
 	s.IbcEnabled = false
 	s.IcaAddresses = make(map[string]string)
-
 }
 
 // Mints coins directly to a module account
@@ -135,6 +137,7 @@ func (s *AppTestHelper) CreateTransferChannel(hostChainID string) {
 	s.App = s.StrideChain.App.(*app.StrideApp)
 	s.HostApp = s.HostChain.GetSimApp()
 	s.Ctx = s.StrideChain.GetContext()
+
 	// Finally confirm the channel was setup properly
 	s.Require().Equal(ibctesting.FirstClientID, s.TransferPath.EndpointA.ClientID, "stride clientID")
 	s.Require().Equal(ibctesting.FirstConnectionID, s.TransferPath.EndpointA.ConnectionID, "stride connectionID")
@@ -163,7 +166,6 @@ func (s *AppTestHelper) CreateICAChannel(owner string) string {
 	icaPath = CopyConnectionAndClientToPath(icaPath, s.TransferPath)
 
 	// Register the ICA and complete the handshake
-
 	s.RegisterInterchainAccount(icaPath.EndpointA, owner)
 
 	err := icaPath.EndpointB.ChanOpenTry()
@@ -176,6 +178,7 @@ func (s *AppTestHelper) CreateICAChannel(owner string) string {
 	s.Require().NoError(err, "ChanOpenConfirm error")
 
 	s.Ctx = s.StrideChain.GetContext()
+
 	// Confirm the ICA channel was created properly
 	portID := icaPath.EndpointA.ChannelConfig.PortID
 	channelID := icaPath.EndpointA.ChannelID
@@ -203,11 +206,10 @@ func (s *AppTestHelper) RegisterInterchainAccount(endpoint *ibctesting.Endpoint,
 	// Get the next channel available and register the ICA
 	channelSequence := s.App.IBCKeeper.ChannelKeeper.GetNextChannelSequence(s.Ctx)
 
-	err = s.App.ICAControllerKeeper.RegisterInterchainAccount(s.Ctx, endpoint.ConnectionID, owner)
+	err = s.App.ICAControllerKeeper.RegisterInterchainAccount(s.Ctx, endpoint.ConnectionID, owner, TestIcaVersion)
 	s.Require().NoError(err, "register interchain account error")
 
 	// Commit the state
-	endpoint.Chain.App.Commit()
 	endpoint.Chain.NextBlock()
 
 	// Update the endpoint object to the newly created port + channel
@@ -254,28 +256,50 @@ func CopyConnectionAndClientToPath(path *ibctesting.Path, pathToCopy *ibctesting
 	return path
 }
 
-func (s *AppTestHelper) ICAPacketAcknowledgement(msgs []sdk.Msg, msgResponse *proto.Message) channeltypes.Acknowledgement {
+// Constructs an ICA Packet Acknowledgement compatible with ibc-go v5+
+func ICAPacketAcknowledgement(t *testing.T, msgType string, msgResponses []proto.Message) channeltypes.Acknowledgement {
 	txMsgData := &sdk.TxMsgData{
-		Data: make([]*sdk.MsgData, len(msgs)),
+		MsgResponses: make([]*codectypes.Any, len(msgResponses)),
 	}
-	for i, msg := range msgs {
+	for i, msgResponse := range msgResponses {
+		var value []byte
+		var err error
+		if msgResponse != nil {
+			value, err = proto.Marshal(msgResponse)
+			require.NoError(t, err, "marshal error")
+		}
+
+		txMsgData.MsgResponses[i] = &codectypes.Any{
+			TypeUrl: msgType,
+			Value:   value,
+		}
+	}
+	marshalledTxMsgData, err := proto.Marshal(txMsgData)
+	require.NoError(t, err)
+	ack := channeltypes.NewResultAcknowledgement(marshalledTxMsgData)
+	return ack
+}
+
+// Constructs an legacy ICA Packet Acknowledgement compatible with ibc-go version v4 and lower
+func ICAPacketAcknowledgementLegacy(t *testing.T, msgType string, msgResponses []proto.Message) channeltypes.Acknowledgement {
+	txMsgData := &sdk.TxMsgData{
+		Data: make([]*sdk.MsgData, len(msgResponses)), //nolint:staticcheck
+	}
+	for i, msgResponse := range msgResponses {
 		var data []byte
 		var err error
 		if msgResponse != nil {
-			// see: https://github.com/cosmos/cosmos-sdk/blob/1dee068932d32ba2a87ba67fc399ae96203ec76d/types/result.go#L246
-			data, err = proto.Marshal(*msgResponse)
-			s.Require().NoError(err, "marshal error")
-		} else {
-			data = []byte("msg_response")
-		}
-		txMsgData.Data[i] = &sdk.MsgData{
-			MsgType: sdk.MsgTypeURL(msg),
-			Data:    data,
+			data, err = proto.Marshal(msgResponse)
+			require.NoError(t, err, "marshal error")
 		}
 
+		txMsgData.Data[i] = &sdk.MsgData{ //nolint:staticcheck
+			MsgType: msgType,
+			Data:    data,
+		}
 	}
 	marshalledTxMsgData, err := proto.Marshal(txMsgData)
-	s.Require().NoError(err)
+	require.NoError(t, err)
 	ack := channeltypes.NewResultAcknowledgement(marshalledTxMsgData)
 	return ack
 }
@@ -294,26 +318,18 @@ func (s *AppTestHelper) MarshalledICS20PacketData() sdk.AccAddress {
 	return data.GetBytes()
 }
 
-func (s *AppTestHelper) ICS20PacketAcknowledgement() channeltypes.Acknowledgement {
-	// see: https://github.com/cosmos/ibc-go/blob/8de555db76d0320842dacaa32e5500e1fd55e667/modules/apps/transfer/keeper/relay.go#L151
-	ack := channeltypes.NewResultAcknowledgement(s.MarshalledICS20PacketData())
-	return ack
-}
-
 func (s *AppTestHelper) ConfirmUpgradeSucceededs(upgradeName string, upgradeHeight int64) {
-	contextBeforeUpgrade := s.Ctx.WithBlockHeight(upgradeHeight - 1)
-	contextAtUpgrade := s.Ctx.WithBlockHeight(upgradeHeight)
-
+	s.Ctx = s.Ctx.WithBlockHeight(upgradeHeight - 1)
 	plan := upgradetypes.Plan{Name: upgradeName, Height: upgradeHeight}
-	err := s.App.UpgradeKeeper.ScheduleUpgrade(contextBeforeUpgrade, plan)
+	err := s.App.UpgradeKeeper.ScheduleUpgrade(s.Ctx, plan)
 	s.Require().NoError(err)
-
-	_, exists := s.App.UpgradeKeeper.GetUpgradePlan(contextBeforeUpgrade)
+	_, exists := s.App.UpgradeKeeper.GetUpgradePlan(s.Ctx)
 	s.Require().True(exists)
 
+	s.Ctx = s.Ctx.WithBlockHeight(upgradeHeight)
 	s.Require().NotPanics(func() {
 		beginBlockRequest := abci.RequestBeginBlock{}
-		s.App.BeginBlocker(contextAtUpgrade, beginBlockRequest)
+		s.App.BeginBlocker(s.Ctx, beginBlockRequest)
 	})
 }
 

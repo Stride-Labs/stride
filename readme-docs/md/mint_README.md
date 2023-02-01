@@ -62,7 +62,7 @@ Calculate the provisions generated for each epoch based on current epoch provisi
 
 ```go
 func (m Minter) EpochProvision(params Params) sdk.Coin {
-    provisionAmt := m.EpochProvisions.QuoInt(sdk.NewInt(int64(params.EpochsPerYear)))
+    provisionAmt := m.EpochProvisions.QuoInt(sdkmath.NewInt(int64(params.EpochsPerYear)))
     return sdk.NewCoin(params.MintDenom, provisionAmt.TruncateInt())
 }
 ```
