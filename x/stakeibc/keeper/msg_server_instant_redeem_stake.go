@@ -15,7 +15,7 @@ import (
 
 func (k msgServer) InstantRedeemStake(goCtx context.Context, msg *types.MsgInstantRedeemStake) (*types.MsgInstantRedeemStakeResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
-	k.Logger(ctx).Info(fmt.Sprintf("fast unbond: %s", msg.String()))
+	k.Logger(ctx).Info(fmt.Sprintf("instant redeem stake: %s", msg.String()))
 
 	// get our addresses, make sure they're valid
 	sender, err := sdk.AccAddressFromBech32(msg.Creator)
@@ -63,16 +63,18 @@ func (k msgServer) InstantRedeemStake(goCtx context.Context, msg *types.MsgInsta
 	})
 	totalPendingDeposits := utils.SumDepositRecords(pendingDepositRecords)
 	if nativeAmount.GT(totalPendingDeposits) {
-		return nil, sdkerrors.Wrapf(types.ErrInvalidAmount, "cannot fast unbond an amount %v g.t. pending deposit balance on host zone: %v", nativeAmount, msg.Amount)
+		return nil, sdkerrors.Wrapf(types.ErrInvalidAmount, "cannot instant redeem stake an amount %v g.t. pending deposit balance on host zone: %v", nativeAmount, msg.Amount)
 	}
 	// Subtract all of nativeAmount from one or more pending deposit records
-	x := nativeAmount
+	nativeAmountRemaining := nativeAmount
 	for _, depositRecord := range pendingDepositRecords {
-		if x.GTE(depositRecord.Amount) {
-			x.Sub(depositRecord.Amount)
+		if nativeAmountRemaining.GTE(depositRecord.Amount) {
+			nativeAmountRemaining = nativeAmountRemaining.Sub(depositRecord.Amount)
 			depositRecord.Amount = sdkmath.ZeroInt()
+			k.RecordsKeeper.SetDepositRecord(ctx, depositRecord)
+
 		} else {
-			depositRecord.Amount.Sub(x)
+			depositRecord.Amount.Sub(nativeAmountRemaining)
 		}
 	}
 	bech32ZoneAddress, err := sdk.AccAddressFromBech32(hostZone.Address)

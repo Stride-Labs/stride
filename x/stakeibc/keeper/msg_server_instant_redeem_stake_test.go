@@ -3,6 +3,7 @@ package keeper_test
 import (
 	sdkmath "cosmossdk.io/math"
 	"fmt"
+	"github.com/Stride-Labs/stride/v5/utils"
 	recordtypes "github.com/Stride-Labs/stride/v5/x/records/types"
 	stakeibctypes "github.com/Stride-Labs/stride/v5/x/stakeibc/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -10,9 +11,8 @@ import (
 )
 
 type InstantRedeemStakeState struct {
-	depositRecordAmount sdkmath.Int
-	initialAmount       sdkmath.Int
-	hostZone            stakeibctypes.HostZone
+	initialAmount sdkmath.Int
+	hostZone      stakeibctypes.HostZone
 }
 
 type InstantRedeemStakeTestCase struct {
@@ -22,14 +22,13 @@ type InstantRedeemStakeTestCase struct {
 	validMsg     stakeibctypes.MsgInstantRedeemStake
 }
 
-func (s *KeeperTestSuite) SetupInstantRedeemStake() InstantRedeemStakeTestCase {
-	unbondAmount := sdkmath.NewInt(1_000_000)
-	depositAmount := sdkmath.NewInt(500_000)
+func (s *KeeperTestSuite) SetupInstantRedeemStakeParams(unbondAmount int64, depositAmounts []int64) InstantRedeemStakeTestCase {
+	unbondAmountInt := sdkmath.NewInt(unbondAmount)
 	initialAmount := sdkmath.NewInt(1_000_000)
 	user := Account{
 		acc:           s.TestAccs[0],
 		atomBalance:   sdk.NewInt64Coin(IbcAtom, initialAmount.Int64()),
-		stAtomBalance: sdk.NewInt64Coin(StAtom, unbondAmount.Int64()),
+		stAtomBalance: sdk.NewInt64Coin(StAtom, unbondAmount),
 	}
 	s.FundAccount(user.acc, user.atomBalance)
 	s.FundAccount(user.acc, user.stAtomBalance)
@@ -50,52 +49,58 @@ func (s *KeeperTestSuite) SetupInstantRedeemStake() InstantRedeemStakeTestCase {
 		IbcDenom:       IbcAtom,
 		RedemptionRate: sdk.NewDec(1.0),
 		Address:        zoneAddress.String(),
-		StakedBal:      unbondAmount,
+		StakedBal:      unbondAmountInt,
 	}
 
-	depositRecord1 := recordtypes.DepositRecord{
-		Id:                 0,
-		DepositEpochNumber: 0,
-		HostZoneId:         HostChainId,
-		Amount:             depositAmount,
-		Status:             recordtypes.DepositRecord_TRANSFER_QUEUE,
-	}
-
-	depositRecord2 := recordtypes.DepositRecord{
-		Id:                 1,
-		DepositEpochNumber: 1,
-		HostZoneId:         HostChainId,
-		Amount:             depositAmount,
-		Status:             recordtypes.DepositRecord_TRANSFER_QUEUE,
+	for i := 0; i < len(depositAmounts); i++ {
+		depositRecord := recordtypes.DepositRecord{
+			Id:                 uint64(i),
+			DepositEpochNumber: uint64(i),
+			HostZoneId:         HostChainId,
+			Amount:             sdkmath.NewInt(depositAmounts[i]),
+			Status:             recordtypes.DepositRecord_TRANSFER_QUEUE,
+		}
+		s.App.RecordsKeeper.SetDepositRecord(s.Ctx, depositRecord)
 	}
 
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
-	s.App.RecordsKeeper.SetDepositRecord(s.Ctx, depositRecord1)
-	s.App.RecordsKeeper.SetDepositRecord(s.Ctx, depositRecord2)
 
 	return InstantRedeemStakeTestCase{
 		user:        user,
 		zoneAccount: zoneAccount,
 		initialState: InstantRedeemStakeState{
-			depositRecordAmount: depositAmount,
-			initialAmount:       initialAmount,
-			hostZone:            hostZone,
+			initialAmount: initialAmount,
+			hostZone:      hostZone,
 		},
 		validMsg: stakeibctypes.MsgInstantRedeemStake{
 			Creator:  user.acc.String(),
 			HostZone: HostChainId,
-			Amount:   unbondAmount,
+			Amount:   unbondAmountInt,
 		},
 	}
 }
 
-// TODO: Need to add tests for at least multiple deposit records, non 1.0 Redemption Rates, and probably some other basic scenarios.
-func (s *KeeperTestSuite) TestInstantRedeemStake_Successful() {
-	tc := s.SetupInstantRedeemStake()
+func (s *KeeperTestSuite) SetupInstantRedeemStake() InstantRedeemStakeTestCase {
+	return s.SetupInstantRedeemStakeParams(int64(1_000_000), []int64{500_000, 500_000})
+}
+
+func (s *KeeperTestSuite) getPendingDepositTotal(chainId string) sdkmath.Int {
+	depositRecords := s.App.RecordsKeeper.GetAllDepositRecord(s.Ctx)
+	pendingDepositRecords := utils.FilterDepositRecords(depositRecords, func(record recordtypes.DepositRecord) (condition bool) {
+		return record.Status == recordtypes.DepositRecord_TRANSFER_QUEUE && record.HostZoneId == chainId
+	})
+	return utils.SumDepositRecords(pendingDepositRecords)
+}
+
+// TODO: Need to add tests non 1.0 Redemption Rates, and probably some other basic scenarios.
+func (s *KeeperTestSuite) InstantRedeemStake_SuccessfulParams(unbondAmount int64, depositAmounts []int64) {
+	tc := s.SetupInstantRedeemStakeParams(unbondAmount, depositAmounts)
 	user := tc.user
 	zoneAccount := tc.zoneAccount
 	initialStAtomSupply := s.App.BankKeeper.GetSupply(s.Ctx, StAtom)
 	msg := tc.validMsg
+	hostZone := tc.initialState.hostZone
+	initialPendingDeposits := s.getPendingDepositTotal(hostZone.ChainId)
 
 	// Validate Instant Redeem Stake
 	_, err := s.GetMsgServer().InstantRedeemStake(sdk.WrapSDKContext(s.Ctx), &msg)
@@ -117,10 +122,47 @@ func (s *KeeperTestSuite) TestInstantRedeemStake_Successful() {
 	expectedBankSupply := initialStAtomSupply.SubAmount(msg.Amount)
 	actualBankSupply := s.App.BankKeeper.GetSupply(s.Ctx, StAtom)
 	s.CompareCoins(expectedBankSupply, actualBankSupply, "bank stuatom supply")
+	// Total pending Deposit Record amounts should have DECREASED by the size of the stake
+	expectedPendingDeposits := initialPendingDeposits.Sub(msg.Amount)
+	actualPendingDeposits := s.getPendingDepositTotal(hostZone.ChainId)
+	s.Require().Equal(expectedPendingDeposits.Int64(), actualPendingDeposits.Int64(), fmt.Sprintf("unexpected pending deposits of %v, expected %v", actualPendingDeposits, expectedPendingDeposits))
 
 	// Validate Instant Redeem Stake, subsequent call will not have funds.
 	_, err = s.GetMsgServer().InstantRedeemStake(sdk.WrapSDKContext(s.Ctx), &msg)
 	s.Require().EqualError(err, fmt.Sprintf("balance is lower than redemption amount. redemption amount: %v, balance %v: : invalid coins", msg.Amount, actualUserStAtomBalance.Amount))
+}
+
+func (s *KeeperTestSuite) TestInstantRedeemStake_Successful1() {
+	s.InstantRedeemStake_SuccessfulParams(int64(1_000_000), []int64{500_000, 500_000})
+}
+
+func (s *KeeperTestSuite) TestInstantRedeemStake_Successful2() {
+	s.InstantRedeemStake_SuccessfulParams(int64(1_000_000), []int64{1_000_000})
+}
+
+func (s *KeeperTestSuite) TestInstantRedeemStake_Successful3() {
+	s.InstantRedeemStake_SuccessfulParams(int64(1_000_000), []int64{300_000, 500_000, 200_000})
+}
+
+func (s *KeeperTestSuite) TestInstantRedeemStake_RedeemJustMoreThanStaked() {
+	tc := s.SetupInstantRedeemStake()
+
+	invalidMsg := tc.validMsg
+	invalidMsg.Amount = sdkmath.NewInt(1_000_001)
+	_, err := s.GetMsgServer().InstantRedeemStake(sdk.WrapSDKContext(s.Ctx), &invalidMsg)
+
+	s.Require().EqualError(err, fmt.Sprintf("balance is lower than redemption amount. redemption amount: %v, balance %v: : invalid coins", invalidMsg.Amount, tc.initialState.initialAmount))
+}
+
+// It shouldn't be true ever that there are no deposit records, but just to be sure, and catch a different out of funds case
+func (s *KeeperTestSuite) TestInstantRedeemStake_RedeemWithNoDepositRecords() {
+	tc := s.SetupInstantRedeemStakeParams(int64(1_000_000), []int64{})
+
+	invalidMsg := tc.validMsg
+	invalidMsg.Amount = sdkmath.NewInt(1_000_000)
+	_, err := s.GetMsgServer().InstantRedeemStake(sdk.WrapSDKContext(s.Ctx), &invalidMsg)
+
+	s.Require().EqualError(err, fmt.Sprintf("cannot instant redeem stake an amount %v g.t. pending deposit balance on host zone: %v: invalid amount", invalidMsg.Amount, tc.initialState.initialAmount))
 }
 
 func (s *KeeperTestSuite) TestInstantRedeemStake_InvalidCreatorAddress() {
