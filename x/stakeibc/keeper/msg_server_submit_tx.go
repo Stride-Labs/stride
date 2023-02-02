@@ -6,6 +6,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/types/bech32"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	"github.com/gogo/protobuf/proto"
 	"github.com/spf13/cast"
 
 	"github.com/Stride-Labs/stride/v5/utils"
@@ -24,9 +25,9 @@ import (
 	icqtypes "github.com/Stride-Labs/stride/v5/x/interchainquery/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	icatypes "github.com/cosmos/ibc-go/v5/modules/apps/27-interchain-accounts/types"
-	channeltypes "github.com/cosmos/ibc-go/v5/modules/core/04-channel/types"
-	host "github.com/cosmos/ibc-go/v5/modules/core/24-host"
+	icatypes "github.com/cosmos/ibc-go/v6/modules/apps/27-interchain-accounts/types"
+	channeltypes "github.com/cosmos/ibc-go/v6/modules/core/04-channel/types"
+	host "github.com/cosmos/ibc-go/v6/modules/core/24-host"
 )
 
 func (k Keeper) DelegateOnHost(ctx sdk.Context, hostZone types.HostZone, amt sdk.Coin, depositRecord recordstypes.DepositRecord) error {
@@ -267,8 +268,10 @@ func (k Keeper) SubmitTxs(
 	}
 
 	k.Logger(ctx).Info(utils.LogWithHostZone(chainId, "  Submitting ICA Tx on %s, %s with TTL: %d", portID, connectionId, timeoutTimestamp))
+	protoMsgs := []proto.Message{}
 	for _, msg := range msgs {
 		k.Logger(ctx).Info(utils.LogWithHostZone(chainId, "    Msg: %+v", msg))
+		protoMsgs = append(protoMsgs, msg)
 	}
 
 	channelID, found := k.ICAControllerKeeper.GetActiveChannelID(ctx, connectionId, portID)
@@ -281,7 +284,7 @@ func (k Keeper) SubmitTxs(
 		return 0, sdkerrors.Wrap(channeltypes.ErrChannelCapabilityNotFound, "module does not own channel capability")
 	}
 
-	data, err := icatypes.SerializeCosmosTx(k.cdc, msgs)
+	data, err := icatypes.SerializeCosmosTx(k.cdc, protoMsgs)
 	if err != nil {
 		return 0, err
 	}

@@ -5,7 +5,7 @@ import (
 	"os"
 	"path/filepath"
 
-	porttypes "github.com/cosmos/ibc-go/v5/modules/core/05-port/types"
+	porttypes "github.com/cosmos/ibc-go/v6/modules/core/05-port/types"
 
 	"github.com/Stride-Labs/stride/v5/utils"
 
@@ -76,17 +76,17 @@ import (
 	upgradeclient "github.com/cosmos/cosmos-sdk/x/upgrade/client"
 	upgradekeeper "github.com/cosmos/cosmos-sdk/x/upgrade/keeper"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
-	"github.com/cosmos/ibc-go/v5/modules/apps/transfer"
-	ibctransferkeeper "github.com/cosmos/ibc-go/v5/modules/apps/transfer/keeper"
-	ibctransfertypes "github.com/cosmos/ibc-go/v5/modules/apps/transfer/types"
-	ibc "github.com/cosmos/ibc-go/v5/modules/core"
-	ibcclient "github.com/cosmos/ibc-go/v5/modules/core/02-client"
-	ibcclientclient "github.com/cosmos/ibc-go/v5/modules/core/02-client/client"
-	ibcclienttypes "github.com/cosmos/ibc-go/v5/modules/core/02-client/types"
-	ibcporttypes "github.com/cosmos/ibc-go/v5/modules/core/05-port/types"
-	ibchost "github.com/cosmos/ibc-go/v5/modules/core/24-host"
-	ibckeeper "github.com/cosmos/ibc-go/v5/modules/core/keeper"
-	ibctesting "github.com/cosmos/ibc-go/v5/testing"
+	"github.com/cosmos/ibc-go/v6/modules/apps/transfer"
+	ibctransferkeeper "github.com/cosmos/ibc-go/v6/modules/apps/transfer/keeper"
+	ibctransfertypes "github.com/cosmos/ibc-go/v6/modules/apps/transfer/types"
+	ibc "github.com/cosmos/ibc-go/v6/modules/core"
+	ibcclient "github.com/cosmos/ibc-go/v6/modules/core/02-client"
+	ibcclientclient "github.com/cosmos/ibc-go/v6/modules/core/02-client/client"
+	ibcclienttypes "github.com/cosmos/ibc-go/v6/modules/core/02-client/types"
+	ibcporttypes "github.com/cosmos/ibc-go/v6/modules/core/05-port/types"
+	ibchost "github.com/cosmos/ibc-go/v6/modules/core/24-host"
+	ibckeeper "github.com/cosmos/ibc-go/v6/modules/core/keeper"
+	ibctesting "github.com/cosmos/ibc-go/v6/testing"
 	"github.com/spf13/cast"
 	abci "github.com/tendermint/tendermint/abci/types"
 	tmjson "github.com/tendermint/tendermint/libs/json"
@@ -94,14 +94,14 @@ import (
 	tmos "github.com/tendermint/tendermint/libs/os"
 	dbm "github.com/tendermint/tm-db"
 
-	ica "github.com/cosmos/ibc-go/v5/modules/apps/27-interchain-accounts"
-	icacontroller "github.com/cosmos/ibc-go/v5/modules/apps/27-interchain-accounts/controller"
-	icacontrollerkeeper "github.com/cosmos/ibc-go/v5/modules/apps/27-interchain-accounts/controller/keeper"
-	icacontrollertypes "github.com/cosmos/ibc-go/v5/modules/apps/27-interchain-accounts/controller/types"
-	icahost "github.com/cosmos/ibc-go/v5/modules/apps/27-interchain-accounts/host"
-	icahostkeeper "github.com/cosmos/ibc-go/v5/modules/apps/27-interchain-accounts/host/keeper"
-	icahosttypes "github.com/cosmos/ibc-go/v5/modules/apps/27-interchain-accounts/host/types"
-	icatypes "github.com/cosmos/ibc-go/v5/modules/apps/27-interchain-accounts/types"
+	ica "github.com/cosmos/ibc-go/v6/modules/apps/27-interchain-accounts"
+	icacontroller "github.com/cosmos/ibc-go/v6/modules/apps/27-interchain-accounts/controller"
+	icacontrollerkeeper "github.com/cosmos/ibc-go/v6/modules/apps/27-interchain-accounts/controller/keeper"
+	icacontrollertypes "github.com/cosmos/ibc-go/v6/modules/apps/27-interchain-accounts/controller/types"
+	icahost "github.com/cosmos/ibc-go/v6/modules/apps/27-interchain-accounts/host"
+	icahostkeeper "github.com/cosmos/ibc-go/v6/modules/apps/27-interchain-accounts/host/keeper"
+	icahosttypes "github.com/cosmos/ibc-go/v6/modules/apps/27-interchain-accounts/host/types"
+	icatypes "github.com/cosmos/ibc-go/v6/modules/apps/27-interchain-accounts/types"
 
 	// monitoringp "github.com/tendermint/spn/x/monitoringp"
 	// monitoringpkeeper "github.com/tendermint/spn/x/monitoringp/keeper"
@@ -130,9 +130,9 @@ import (
 
 	// this line is used by starport scaffolding # stargate/app/moduleImport
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
-	ibcfeekeeper "github.com/cosmos/ibc-go/v5/modules/apps/29-fee/keeper"
-	ibcfeetypes "github.com/cosmos/ibc-go/v5/modules/apps/29-fee/types"
-	ibctestingtypes "github.com/cosmos/ibc-go/v5/testing/types"
+	ibcfeekeeper "github.com/cosmos/ibc-go/v6/modules/apps/29-fee/keeper"
+	ibcfeetypes "github.com/cosmos/ibc-go/v6/modules/apps/29-fee/types"
+	ibctestingtypes "github.com/cosmos/ibc-go/v6/testing/types"
 )
 
 const (
@@ -546,7 +546,7 @@ func NewStrideApp(
 
 	// this line is used by starport scaffolding # stargate/app/keeperDefinition
 	ibcFeeKeeper := ibcfeekeeper.NewKeeper(
-		appCodec, app.keys[ibcfeetypes.StoreKey], app.GetSubspace(ibcfeetypes.ModuleName),
+		appCodec, app.keys[ibcfeetypes.StoreKey],
 		app.IBCKeeper.ChannelKeeper, // may be replaced with IBC middleware
 		app.IBCKeeper.ChannelKeeper,
 		&app.IBCKeeper.PortKeeper, app.AccountKeeper, app.BankKeeper,

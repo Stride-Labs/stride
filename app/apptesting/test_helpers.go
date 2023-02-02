@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	ibctransfertypes "github.com/cosmos/ibc-go/v5/modules/apps/transfer/types"
+	ibctransfertypes "github.com/cosmos/ibc-go/v6/modules/apps/transfer/types"
 	abci "github.com/tendermint/tendermint/abci/types"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
@@ -12,11 +12,11 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
-	icatypes "github.com/cosmos/ibc-go/v5/modules/apps/27-interchain-accounts/types"
-	transfertypes "github.com/cosmos/ibc-go/v5/modules/apps/transfer/types"
-	channeltypes "github.com/cosmos/ibc-go/v5/modules/core/04-channel/types"
-	ibctesting "github.com/cosmos/ibc-go/v5/testing"
-	"github.com/cosmos/ibc-go/v5/testing/simapp"
+	icatypes "github.com/cosmos/ibc-go/v6/modules/apps/27-interchain-accounts/types"
+	transfertypes "github.com/cosmos/ibc-go/v6/modules/apps/transfer/types"
+	channeltypes "github.com/cosmos/ibc-go/v6/modules/core/04-channel/types"
+	ibctesting "github.com/cosmos/ibc-go/v6/testing"
+	"github.com/cosmos/ibc-go/v6/testing/simapp"
 	"github.com/gogo/protobuf/proto"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -206,7 +206,7 @@ func (s *AppTestHelper) RegisterInterchainAccount(endpoint *ibctesting.Endpoint,
 	// Get the next channel available and register the ICA
 	channelSequence := s.App.IBCKeeper.ChannelKeeper.GetNextChannelSequence(s.Ctx)
 
-	err = s.App.ICAControllerKeeper.RegisterInterchainAccount(s.Ctx, endpoint.ConnectionID, owner, TestIcaVersion)
+	err = s.App.ICAControllerKeeper.RegisterInterchainAccount(endpoint.Chain.GetContext(), endpoint.ConnectionID, owner, TestIcaVersion)
 	s.Require().NoError(err, "register interchain account error")
 
 	// Commit the state
@@ -232,8 +232,8 @@ func NewTransferPath(chainA *ibctesting.TestChain, chainB *ibctesting.TestChain)
 // Creates an ICA channel between two chains
 func NewIcaPath(chainA *ibctesting.TestChain, chainB *ibctesting.TestChain) *ibctesting.Path {
 	path := ibctesting.NewPath(chainA, chainB)
-	path.EndpointA.ChannelConfig.PortID = icatypes.PortID
-	path.EndpointB.ChannelConfig.PortID = icatypes.PortID
+	path.EndpointA.ChannelConfig.PortID = icatypes.HostPortID
+	path.EndpointB.ChannelConfig.PortID = icatypes.HostPortID
 	path.EndpointA.ChannelConfig.Order = channeltypes.ORDERED
 	path.EndpointB.ChannelConfig.Order = channeltypes.ORDERED
 	path.EndpointA.ChannelConfig.Version = TestIcaVersion
