@@ -47,8 +47,8 @@ func (s *KeeperTestSuite) SetupReinvestCallback() ReinvestCallbackTestCase {
 		DepositEpochNumber: 1,
 		HostZoneId:         HostChainId,
 		Amount:             reinvestAmt,
-		Status:             recordtypes.DepositRecord_DELEGATION_QUEUE,
-		Source:             recordtypes.DepositRecord_WITHDRAWAL_ICA,
+		Status:             recordtypes.DepositRecord_TRANSFER_QUEUE,
+		Source:             recordtypes.DepositRecord_STRIDE,
 	}
 	epochTracker := stakeibc.EpochTracker{
 		EpochIdentifier: epochtypes.STRIDE_EPOCH,
@@ -56,6 +56,16 @@ func (s *KeeperTestSuite) SetupReinvestCallback() ReinvestCallbackTestCase {
 	}
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
 	s.App.StakeibcKeeper.SetEpochTracker(s.Ctx, epochTracker)
+
+	initialDepositRecord := recordtypes.DepositRecord{
+		Id:                 0,
+		DepositEpochNumber: 1,
+		HostZoneId:         HostChainId,
+		Amount:             sdkmath.ZeroInt(),
+		Status:             recordtypes.DepositRecord_TRANSFER_QUEUE,
+		Source:             recordtypes.DepositRecord_STRIDE,
+	}
+	s.App.RecordsKeeper.SetDepositRecord(s.Ctx, initialDepositRecord)
 
 	packet := channeltypes.Packet{}
 	ackResponse := icacallbacktypes.AcknowledgementResponse{Status: icacallbacktypes.AckResponseStatus_SUCCESS}
@@ -104,9 +114,19 @@ func (s *KeeperTestSuite) TestReinvestCallback_Successful() {
 }
 
 func (s *KeeperTestSuite) checkReinvestStateIfCallbackFailed(tc ReinvestCallbackTestCase) {
-	// Confirm deposit record has not been added
+	// Confirm deposit record has not been added to
 	records := s.App.RecordsKeeper.GetAllDepositRecord(s.Ctx)
-	s.Require().Len(records, 0, "number of deposit records")
+	s.Require().Len(records, 1, "number of deposit records")
+	record := records[0]
+	expectedRecord := tc.initialState.depositRecord
+
+	// Confirm deposit record fields match those expected
+	s.Require().Equal(int64(expectedRecord.Id), int64(record.Id), "deposit record Id")
+	s.Require().Equal(int64(0), record.Amount.Int64(), "deposit record Amount")
+	s.Require().Equal(expectedRecord.HostZoneId, record.HostZoneId, "deposit record HostZoneId")
+	s.Require().Equal(expectedRecord.Status, record.Status, "deposit record Status")
+	s.Require().Equal(expectedRecord.Source, record.Source, "deposit record Source")
+	s.Require().Equal(int64(expectedRecord.DepositEpochNumber), int64(record.DepositEpochNumber), "deposit record DepositEpochNumber")
 }
 
 func (s *KeeperTestSuite) TestReinvestCallback_ReinvestCallbackTimeout() {

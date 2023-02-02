@@ -2,11 +2,9 @@ package keeper
 
 import (
 	"fmt"
-
 	"github.com/Stride-Labs/stride/v5/utils"
 	epochtypes "github.com/Stride-Labs/stride/v5/x/epochs/types"
 	icacallbackstypes "github.com/Stride-Labs/stride/v5/x/icacallbacks/types"
-	recordstypes "github.com/Stride-Labs/stride/v5/x/records/types"
 	"github.com/Stride-Labs/stride/v5/x/stakeibc/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -36,10 +34,11 @@ func (k Keeper) UnmarshalReinvestCallbackArgs(ctx sdk.Context, reinvestCallback 
 }
 
 // ICA Callback after reinvestment
-//   If successful:
-//      * Creates a new DepositRecord with the reinvestment amount
-//   If timeout/failure:
-//      * Does nothing
+//
+//	If successful:
+//	   * Creates a new DepositRecord with the reinvestment amount
+//	If timeout/failure:
+//	   * Does nothing
 func ReinvestCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ackResponse *icacallbackstypes.AcknowledgementResponse, args []byte) error {
 	// Fetch callback args
 	reinvestCallback, err := k.UnmarshalReinvestCallbackArgs(ctx, args)
@@ -68,6 +67,7 @@ func ReinvestCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ack
 	k.Logger(ctx).Info(utils.LogICACallbackStatusWithHostZone(chainId, ICACallbackID_Reinvest,
 		icacallbackstypes.AckResponseStatus_SUCCESS, packet))
 
+	// TODO: This isn't quite right.  We don't know yet that the funds have landed, and should do it in an IBC event response based upon recognizing this txn
 	// Get the current stride epoch number
 	strideEpochTracker, found := k.GetEpochTracker(ctx, epochtypes.STRIDE_EPOCH)
 	if !found {
@@ -75,16 +75,24 @@ func ReinvestCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ack
 		return sdkerrors.Wrapf(types.ErrInvalidLengthEpochTracker, "no number for epoch (%s)", epochtypes.STRIDE_EPOCH)
 	}
 
-	// Create a new deposit record so that rewards are reinvested
-	record := recordstypes.DepositRecord{
-		Amount:             reinvestCallback.ReinvestAmount.Amount,
-		Denom:              reinvestCallback.ReinvestAmount.Denom,
-		HostZoneId:         reinvestCallback.HostZoneId,
-		Status:             recordstypes.DepositRecord_DELEGATION_QUEUE,
-		Source:             recordstypes.DepositRecord_WITHDRAWAL_ICA,
-		DepositEpochNumber: strideEpochTracker.EpochNumber,
+	depositRecord, found := k.RecordsKeeper.GetDepositRecordByEpochAndChain(ctx, strideEpochTracker.EpochNumber, chainId)
+	if !found {
+		k.Logger(ctx).Error("failed to find deposit record")
+		return sdkerrors.Wrapf(sdkerrors.ErrNotFound, fmt.Sprintf("no deposit record for epoch (%d)", strideEpochTracker.EpochNumber))
 	}
-	k.RecordsKeeper.AppendDepositRecord(ctx, record)
+	depositRecord.Amount = depositRecord.Amount.Add(reinvestCallback.ReinvestAmount.Amount)
+	k.RecordsKeeper.SetDepositRecord(ctx, *depositRecord)
+	/*
+		// Create a new deposit record so that rewards are reinvested
+		record := recordstypes.DepositRecord{
+			Amount:             reinvestCallback.ReinvestAmount.Amount,
+			Denom:              reinvestCallback.ReinvestAmount.Denom,
+			HostZoneId:         reinvestCallback.HostZoneId,
+			Status:             recordstypes.DepositRecord_DELEGATION_QUEUE,
+			Source:             recordstypes.DepositRecord_WITHDRAWAL_ICA,
+			DepositEpochNumber: strideEpochTracker.EpochNumber,
+		}
+		k.RecordsKeeper.AppendDepositRecord(ctx, record) */
 
 	return nil
 }
