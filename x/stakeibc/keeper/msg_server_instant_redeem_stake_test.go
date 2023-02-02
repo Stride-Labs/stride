@@ -3,7 +3,6 @@ package keeper_test
 import (
 	sdkmath "cosmossdk.io/math"
 	"fmt"
-	epochtypes "github.com/Stride-Labs/stride/v5/x/epochs/types"
 	recordtypes "github.com/Stride-Labs/stride/v5/x/records/types"
 	stakeibctypes "github.com/Stride-Labs/stride/v5/x/stakeibc/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -11,7 +10,6 @@ import (
 )
 
 type InstantRedeemStakeState struct {
-	epochNumber         uint64
 	depositRecordAmount sdkmath.Int
 	initialAmount       sdkmath.Int
 	hostZone            stakeibctypes.HostZone
@@ -55,15 +53,10 @@ func (s *KeeperTestSuite) SetupInstantRedeemStake() InstantRedeemStakeTestCase {
 		StakedBal:      unbondAmount,
 	}
 
-	epochTracker := stakeibctypes.EpochTracker{
-		EpochIdentifier: epochtypes.STRIDE_EPOCH,
-		EpochNumber:     1,
-	}
-
 	depositRecord1 := recordtypes.DepositRecord{
 		Id:                 0,
 		DepositEpochNumber: 0,
-		HostZoneId:         "GAIA",
+		HostZoneId:         HostChainId,
 		Amount:             depositAmount,
 		Status:             recordtypes.DepositRecord_TRANSFER_QUEUE,
 	}
@@ -71,13 +64,12 @@ func (s *KeeperTestSuite) SetupInstantRedeemStake() InstantRedeemStakeTestCase {
 	depositRecord2 := recordtypes.DepositRecord{
 		Id:                 1,
 		DepositEpochNumber: 1,
-		HostZoneId:         "GAIA",
+		HostZoneId:         HostChainId,
 		Amount:             depositAmount,
 		Status:             recordtypes.DepositRecord_TRANSFER_QUEUE,
 	}
 
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
-	s.App.StakeibcKeeper.SetEpochTracker(s.Ctx, epochTracker)
 	s.App.RecordsKeeper.SetDepositRecord(s.Ctx, depositRecord1)
 	s.App.RecordsKeeper.SetDepositRecord(s.Ctx, depositRecord2)
 
@@ -85,7 +77,6 @@ func (s *KeeperTestSuite) SetupInstantRedeemStake() InstantRedeemStakeTestCase {
 		user:        user,
 		zoneAccount: zoneAccount,
 		initialState: InstantRedeemStakeState{
-			epochNumber:         epochTracker.EpochNumber,
 			depositRecordAmount: depositAmount,
 			initialAmount:       initialAmount,
 			hostZone:            hostZone,

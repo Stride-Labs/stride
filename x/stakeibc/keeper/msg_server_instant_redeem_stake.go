@@ -69,8 +69,8 @@ func (k msgServer) InstantRedeemStake(goCtx context.Context, msg *types.MsgInsta
 	x := nativeAmount
 	for _, depositRecord := range pendingDepositRecords {
 		if x.GTE(depositRecord.Amount) {
-			depositRecord.Amount = sdkmath.ZeroInt()
 			x.Sub(depositRecord.Amount)
+			depositRecord.Amount = sdkmath.ZeroInt()
 		} else {
 			depositRecord.Amount.Sub(x)
 		}
