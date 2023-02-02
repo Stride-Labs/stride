@@ -24,6 +24,9 @@ import (
 	epochstypes "github.com/Stride-Labs/stride/v5/x/epochs/types"
 	icqtypes "github.com/Stride-Labs/stride/v5/x/interchainquery/types"
 
+	icacontrollerkeeper "github.com/cosmos/ibc-go/v6/modules/apps/27-interchain-accounts/controller/keeper"
+	icacontrollertypes "github.com/cosmos/ibc-go/v6/modules/apps/27-interchain-accounts/controller/types"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	icatypes "github.com/cosmos/ibc-go/v6/modules/apps/27-interchain-accounts/types"
 	channeltypes "github.com/cosmos/ibc-go/v6/modules/core/04-channel/types"
@@ -279,7 +282,7 @@ func (k Keeper) SubmitTxs(
 		return 0, sdkerrors.Wrapf(icatypes.ErrActiveChannelNotFound, "failed to retrieve active channel for port %s", portID)
 	}
 
-	chanCap, found := k.scopedKeeper.GetCapability(ctx, host.ChannelCapabilityPath(portID, channelID))
+	_, found = k.scopedKeeper.GetCapability(ctx, host.ChannelCapabilityPath(portID, channelID))
 	if !found {
 		return 0, sdkerrors.Wrap(channeltypes.ErrChannelCapabilityNotFound, "module does not own channel capability")
 	}
@@ -294,7 +297,18 @@ func (k Keeper) SubmitTxs(
 		Data: data,
 	}
 
-	sequence, err := k.ICAControllerKeeper.SendTx(ctx, chanCap, connectionId, portID, packetData, timeoutTimestamp)
+	msg := icacontrollertypes.NewMsgSendTx(owner, connectionId, timeoutTimestamp, packetData)
+
+	msgServer := icacontrollerkeeper.NewMsgServerImpl(&k.ICAControllerKeeper)
+
+	res, err := msgServer.SendTx(ctx, msg)
+
+	if res != nil {
+		return 0, err
+	}
+
+	sequence := res.Sequence
+
 	if err != nil {
 		return 0, err
 	}
