@@ -6,9 +6,9 @@ import (
 	_ "github.com/stretchr/testify/suite"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	ibctesting "github.com/cosmos/ibc-go/v6/testing"
+	ibctesting "github.com/cosmos/ibc-go/v7/testing"
 
-	icatypes "github.com/cosmos/ibc-go/v6/modules/apps/27-interchain-accounts/types"
+	icatypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/types"
 
 	sdkmath "cosmossdk.io/math"
 
@@ -203,7 +203,7 @@ func (s *KeeperTestSuite) SetupDepositRecords() DepositRecordsTestCase {
 			ChannelID: ibctesting.FirstChannelID,
 		},
 		DelegationChannel: Channel{
-			PortID:    icatypes.ControllerPortPrefix + delegationAccountOwner,
+			PortID:    icatypes.PortKeyPrefix + delegationAccountOwner,
 			ChannelID: delegationChannelID,
 		},
 	}

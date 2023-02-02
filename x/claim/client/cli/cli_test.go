@@ -13,7 +13,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
 
 	clitestutil "github.com/cosmos/cosmos-sdk/testutil/cli"
-	banktestutil "github.com/cosmos/cosmos-sdk/x/bank/client/testutil"
+	banktestutil "github.com/cosmos/cosmos-sdk/x/bank/testutil"
 
 	strideclitestutil "github.com/Stride-Labs/stride/v5/testutil/cli"
 

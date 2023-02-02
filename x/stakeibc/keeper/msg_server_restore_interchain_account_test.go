@@ -4,11 +4,11 @@ import (
 	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	ibctesting "github.com/cosmos/ibc-go/v6/testing"
+	ibctesting "github.com/cosmos/ibc-go/v7/testing"
 	_ "github.com/stretchr/testify/suite"
 
-	icatypes "github.com/cosmos/ibc-go/v6/modules/apps/27-interchain-accounts/types"
-	channeltypes "github.com/cosmos/ibc-go/v6/modules/core/04-channel/types"
+	icatypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/types"
+	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 
 	recordtypes "github.com/Stride-Labs/stride/v5/x/records/types"
 	stakeibc "github.com/Stride-Labs/stride/v5/x/stakeibc/types"
@@ -176,7 +176,7 @@ func (s *KeeperTestSuite) TestRestoreInterchainAccount_Success() {
 	tc := s.SetupRestoreInterchainAccount()
 	owner := "GAIA.DELEGATION"
 	channelID := s.CreateICAChannel(owner)
-	portID := icatypes.ControllerPortPrefix + owner
+	portID := icatypes.PortKeyPrefix + owner
 
 	// Confirm there are two channels originally
 	channels := s.App.IBCKeeper.ChannelKeeper.GetAllChannels(s.Ctx)
@@ -267,7 +267,7 @@ func (s *KeeperTestSuite) TestRestoreInterchainAccount_NoRecordChange_Success() 
 	tc := s.SetupRestoreInterchainAccount()
 	owner := "GAIA.WITHDRAWAL"
 	channelID := s.CreateICAChannel(owner)
-	portID := icatypes.ControllerPortPrefix + owner
+	portID := icatypes.PortKeyPrefix + owner
 
 	// Confirm there are two channels originally
 	channels := s.App.IBCKeeper.ChannelKeeper.GetAllChannels(s.Ctx)

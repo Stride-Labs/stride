@@ -8,6 +8,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	proto "github.com/cosmos/gogoproto/proto"
 	"github.com/spf13/cast"
 
 	"github.com/Stride-Labs/stride/v5/utils"
@@ -18,7 +19,9 @@ import (
 // WithdrawalBalanceCallback is a callback handler for WithdrawalBalance queries.
 // The query response will return the withdrawal account balance
 // If the balance is non-zero, ICA MsgSends are submitted to transfer from the withdrawal account
-//  to the delegation account (for reinvestment) and fee account (for commission)
+//
+//	to the delegation account (for reinvestment) and fee account (for commission)
+//
 // Note: for now, to get proofs in your ICQs, you need to query the entire store on the host zone! e.g. "store/bank/key"
 func WithdrawalBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query icqtypes.Query) error {
 	k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(query.ChainId, ICQCallbackID_WithdrawalBalance,
@@ -87,7 +90,7 @@ func WithdrawalBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query icq
 	feeCoin := sdk.NewCoin(hostZone.HostDenom, feeAmount)
 	reinvestCoin := sdk.NewCoin(hostZone.HostDenom, reinvestAmount)
 
-	var msgs []sdk.Msg
+	var msgs []proto.Message
 	if feeCoin.Amount.GT(sdk.ZeroInt()) {
 		msgs = append(msgs, &banktypes.MsgSend{
 			FromAddress: withdrawalAccount.Address,
