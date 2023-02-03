@@ -280,9 +280,10 @@ type StrideApp struct {
 	ScopedICAControllerKeeper capabilitykeeper.ScopedKeeper
 	ScopedICAHostKeeper       capabilitykeeper.ScopedKeeper
 
-	ScopedStakeibcKeeper capabilitykeeper.ScopedKeeper
-	StakeibcKeeper       stakeibcmodulekeeper.Keeper
-	LiquidgovKeeper      liquidgovmodulekeeper.Keeper
+	ScopedStakeibcKeeper  capabilitykeeper.ScopedKeeper
+	StakeibcKeeper        stakeibcmodulekeeper.Keeper
+	ScopedLiquidgovKeeper capabilitykeeper.ScopedKeeper
+	LiquidgovKeeper       liquidgovmodulekeeper.Keeper
 
 	EpochsKeeper             epochsmodulekeeper.Keeper
 	InterchainqueryKeeper    interchainquerykeeper.Keeper
@@ -524,6 +525,8 @@ func NewStrideApp(
 		&stakingKeeper, govRouter, app.MsgServiceRouter(), govtypes.DefaultConfig(),
 	)
 
+	// scopedLiquidgovKeeper := app.CapabilityKeeper.ScopeToModule(liquidgovmoduletypes.ModuleName)
+	// app.ScopedLiquidgovKeeper = scopedLiquidgovKeeper
 	app.LiquidgovKeeper = *liquidgovmodulekeeper.NewKeeper(
 		appCodec,
 		keys[liquidgovmoduletypes.StoreKey],
@@ -535,8 +538,12 @@ func NewStrideApp(
 		app.BankKeeper,
 		app.InterchainqueryKeeper,
 		app.IcacallbacksKeeper,
+		app.ICAControllerKeeper,
+		scopedStakeibcKeeper,
+		*app.IBCKeeper,
 	)
 	liquidgovModule := liquidgovmodule.NewAppModule(appCodec, app.LiquidgovKeeper, app.AccountKeeper, app.BankKeeper)
+	// liquidgovIBCModule := liquidgovmodule.NewIBCModule(app.LiquidgovKeeper)
 
 	// Register ICQ callbacks
 	// stakeibc
@@ -607,6 +614,11 @@ func NewStrideApp(
 	icamiddlewareStack = icacontroller.NewIBCMiddleware(icamiddlewareStack, app.ICAControllerKeeper)
 	icaHostIBCModule := icahost.NewIBCModule(app.ICAHostKeeper)
 
+	// var icamiddlewareStack1 porttypes.IBCModule
+	// icamiddlewareStack1 = icacallbacksmodule.NewIBCModule(app.IcacallbacksKeeper, liquidgovIBCModule)
+	// icamiddlewareStack1 = icacontroller.NewIBCMiddleware(icamiddlewareStack1, app.ICAControllerKeeper)
+	liquidgovStack := liquidgovmodule.NewIBCModule(app.LiquidgovKeeper, stakeibcIBCModule)
+
 	// Stack two contains
 	// - IBC
 	// - records
@@ -621,6 +633,7 @@ func NewStrideApp(
 		AddRoute(icacontrollertypes.SubModuleName, icamiddlewareStack).
 		AddRoute(icahosttypes.SubModuleName, icaHostIBCModule).
 		// Note, authentication module packets are routed to the top level of the middleware stack
+		AddRoute(liquidgovmoduletypes.ModuleName, liquidgovStack).
 		AddRoute(stakeibcmoduletypes.ModuleName, icamiddlewareStack).
 		AddRoute(icacallbacksmoduletypes.ModuleName, icamiddlewareStack)
 	// this line is used by starport scaffolding # ibc/app/router

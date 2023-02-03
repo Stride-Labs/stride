@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	govtypesv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
+	govtypesv1beta1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 
 	epochstypes "github.com/Stride-Labs/stride/v5/x/epochs/types"
 )
@@ -46,40 +46,7 @@ func (h Hooks) AfterEpochEnd(ctx sdk.Context, epochInfo epochstypes.EpochInfo) {
 	h.k.AfterEpochEnd(ctx, epochInfo)
 }
 
-// // Update the epoch information in the stakeibc epoch tracker
-// func (k Keeper) UpdateEpochTracker(ctx sdk.Context, epochInfo epochstypes.EpochInfo) (epochNumber uint64, err error) {
-// 	epochNumber, err = cast.ToUint64E(epochInfo.CurrentEpoch)
-// 	if err != nil {
-// 		k.Logger(ctx).Error(fmt.Sprintf("Could not convert epoch number to uint64: %v", err))
-// 		return 0, err
-// 	}
-// 	epochDurationNano, err := cast.ToUint64E(epochInfo.Duration.Nanoseconds())
-// 	if err != nil {
-// 		k.Logger(ctx).Error(fmt.Sprintf("Could not convert epoch duration to uint64: %v", err))
-// 		return 0, err
-// 	}
-// 	nextEpochStartTime, err := cast.ToUint64E(epochInfo.CurrentEpochStartTime.Add(epochInfo.Duration).UnixNano())
-// 	if err != nil {
-// 		k.Logger(ctx).Error(fmt.Sprintf("Could not convert epoch duration to uint64: %v", err))
-// 		return 0, err
-// 	}
-// 	epochTracker := stakeibctypes.EpochTracker{
-// 		EpochIdentifier:    epochInfo.Identifier,
-// 		EpochNumber:        epochNumber,
-// 		Duration:           epochDurationNano,
-// 		NextEpochStartTime: nextEpochStartTime,
-// 	}
-// 	k.SetEpochTracker(ctx, epochTracker)
-
-// 	return epochNumber, nil
-// }
-
 func (k Keeper) UpdateProposals(ctx sdk.Context) {
-	// for _, hostZone := range k.GetAllHostZone(ctx) {
-	// 	// ICQ proposals
-	// 	k.MirrorProposals(ctx, hostzone)
-	// 	//
-	// }
 	hostZone, found := k.stakeibcKeeper.GetHostZone(ctx, "GAIA") // TODO remove hardcode
 	if !found {
 		k.Logger(ctx).Info(fmt.Sprintf("hostzone not found %s...", "GAIA"))
@@ -104,7 +71,7 @@ func (k Keeper) CastVotes(ctx sdk.Context, epochInfo epochstypes.EpochInfo) {
 			// tally votes
 			// vote := k.TallyVotes(ctx, proposal)
 			// TODO remove hardcode - weighted votes
-			vote := govtypesv1.NewVote(proposal.GovProposal.ProposalId, sdk.AccAddress(hostZone.DelegationAccount.Address), govtypesv1.NewNonSplitVoteOption(govtypesv1.OptionYes), "")
+			vote := govtypesv1beta1.NewVote(proposal.GovProposal.ProposalId, sdk.AccAddress(hostZone.DelegationAccount.Address), govtypesv1beta1.NewNonSplitVoteOption(govtypesv1beta1.OptionYes))
 			k.CastVoteOnHost(ctx, hostZone, vote) // submits vote ICA on host
 		}
 		// cast vote on host

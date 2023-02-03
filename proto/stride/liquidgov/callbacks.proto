@@ -2,12 +2,12 @@ syntax = "proto3";
 package stride.liquidgov;
  
 import "gogoproto/gogo.proto";
-import "cosmos/gov/v1/gov.proto";
+import "cosmos/gov/v1beta1/gov.proto";
 
 option go_package = "github.com/Stride-Labs/stride/v5/x/liquidgov/types";
 
 
 message CastVoteOnHostCallback {
   string host_zone_id = 1;
-  cosmos.gov.v1.Vote gov_vote = 2 [(gogoproto.nullable) = false];
+  cosmos.gov.v1beta1.Vote gov_vote = 2 [(gogoproto.nullable) = false];
 }

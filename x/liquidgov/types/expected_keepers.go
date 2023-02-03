@@ -14,6 +14,8 @@ type StakeibcKeeper interface {
 	GetHostZoneFromHostDenom(ctx sdk.Context, denom string) (*stakeibctypes.HostZone, error)
 	GetConnectionId(ctx sdk.Context, portId string) (string, error)
 	SubmitTxsStrideEpoch(ctx sdk.Context, connectionId string, msgs []sdk.Msg, account stakeibctypes.ICAAccount, callbackId string, callbackArgs []byte) (uint64, error)
+	GetICATimeoutNanos(ctx sdk.Context, epochType string) (uint64, error)
+	GetChainID(ctx sdk.Context, connectionID string) (string, error)
 }
 
 // AccountKeeper defines the expected account keeper used for simulations (noalias)

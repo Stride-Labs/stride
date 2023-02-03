@@ -53,7 +53,7 @@ func CastVoteOnHostCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packe
 	}
 
 	// Check for timeout (ack nil)
-	// No need to reset the deposit record status since it will get reverted when the channel is restored
+	// No need to reset the vote record status since it will get reverted when the channel is restored
 	if ackResponse.Status == icacallbackstypes.AckResponseStatus_TIMEOUT {
 		k.Logger(ctx).Error(utils.LogICACallbackStatusWithHostZone(chainId, ICACallbackID_CastVoteOnHost,
 			icacallbackstypes.AckResponseStatus_TIMEOUT, packet))
@@ -61,7 +61,7 @@ func CastVoteOnHostCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packe
 	}
 
 	// Check for a failed transaction (ack error)
-	// Reset the deposit record status upon failure
+	// Reset the vote record status upon failure
 	if ackResponse.Status == icacallbackstypes.AckResponseStatus_FAILURE {
 		k.Logger(ctx).Error(utils.LogICACallbackStatusWithHostZone(chainId, ICACallbackID_CastVoteOnHost,
 			icacallbackstypes.AckResponseStatus_FAILURE, packet))

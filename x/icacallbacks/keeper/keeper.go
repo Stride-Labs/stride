@@ -15,6 +15,7 @@ import (
 	ibckeeper "github.com/cosmos/ibc-go/v5/modules/core/keeper"
 
 	"github.com/Stride-Labs/stride/v5/x/icacallbacks/types"
+	liquidgovtypes "github.com/Stride-Labs/stride/v5/x/liquidgov/types"
 	recordstypes "github.com/Stride-Labs/stride/v5/x/records/types"
 
 	channeltypes "github.com/cosmos/ibc-go/v5/modules/core/04-channel/types"
@@ -104,7 +105,7 @@ func (k Keeper) GetCallbackDataFromPacket(ctx sdk.Context, modulePacket channelt
 	return &callbackData, true
 }
 
-func (k Keeper) GetICACallbackHandlerFromPacket(ctx sdk.Context, modulePacket channeltypes.Packet) (*types.ICACallbackHandler, error) {
+func (k Keeper) GetICACallbackHandlerFromPacket(ctx sdk.Context, modulePacket channeltypes.Packet, callbackId string) (*types.ICACallbackHandler, error) {
 	module, _, err := k.IBCKeeper.ChannelKeeper.LookupModuleByChannel(ctx, modulePacket.GetSourcePort(), modulePacket.GetSourceChannel())
 	if err != nil {
 		k.Logger(ctx).Error(fmt.Sprintf("error LookupModuleByChannel for portID: %s, channelID: %s, sequence: %d", modulePacket.GetSourcePort(), modulePacket.GetSourceChannel(), modulePacket.Sequence))
@@ -115,6 +116,11 @@ func (k Keeper) GetICACallbackHandlerFromPacket(ctx sdk.Context, modulePacket ch
 	if module == "transfer" {
 		module = recordstypes.ModuleName
 	}
+
+	if callbackId == "castvoteonhost" {
+		module = liquidgovtypes.ModuleName
+	}
+
 	// fetch the callback function
 	callbackHandler, err := k.GetICACallbackHandler(module)
 	if err != nil {
@@ -129,7 +135,8 @@ func (k Keeper) CallRegisteredICACallback(ctx sdk.Context, modulePacket channelt
 	if !found {
 		return nil
 	}
-	callbackHandler, err := k.GetICACallbackHandlerFromPacket(ctx, modulePacket)
+
+	callbackHandler, err := k.GetICACallbackHandlerFromPacket(ctx, modulePacket, callbackData.CallbackId)
 	if err != nil {
 		k.Logger(ctx).Error(fmt.Sprintf("GetICACallbackHandlerFromPacket %s", err.Error()))
 		return err

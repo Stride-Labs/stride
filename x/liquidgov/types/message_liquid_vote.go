@@ -4,7 +4,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
-	govtypesv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
+	govtypesv1beta1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 
 	stakeibctypes "github.com/Stride-Labs/stride/v5/x/stakeibc/types"
 )
@@ -17,7 +17,7 @@ var (
 	_ sdk.Msg = &MsgLiquidVote{}
 )
 
-func NewMsgLiquidVote(creator sdk.AccAddress, proposalID uint64, option govtypesv1.VoteOption, hostZoneChainId string) *MsgLiquidVote {
+func NewMsgLiquidVote(creator sdk.AccAddress, proposalID uint64, option govtypesv1beta1.VoteOption, hostZoneChainId string) *MsgLiquidVote {
 	return &MsgLiquidVote{creator.String(), proposalID, option, hostZoneChainId}
 }
 
@@ -48,7 +48,7 @@ func (msg *MsgLiquidVote) ValidateBasic() error {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid creator address (%s)", err)
 	}
 	// validate vote option
-	if !govtypesv1.ValidVoteOption(msg.VoteOption) {
+	if !govtypesv1beta1.ValidVoteOption(msg.VoteOption) {
 		return sdkerrors.Wrap(govtypes.ErrInvalidVote, msg.VoteOption.String())
 	}
 	// validate host denom is not empty
