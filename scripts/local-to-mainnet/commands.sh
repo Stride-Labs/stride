@@ -59,7 +59,7 @@ build/strided --home scripts/state/stride1 q stakeibc list-host-zone
 #### FLOW
 ## Go Through Flow
 # Liquid stake (then wait and LS again)
-build/strided --home scripts/state/stride1 tx stakeibc liquid-stake 1000000 uatom --keyring-backend test --from admin -y --chain-id local-test-1 -y
+build/strided --home scripts/state/stride1 tx stakeibc liquid-stake 1000000 uatom --keyring-backend test --from admin -y --chain-id local-test-1
 
 # Confirm stTokens, StakedBal, and Redemption Rate
 build/strided --home scripts/state/stride1 q bank balances stride1u20df3trc2c2zdhm8qvh2hdjx9ewh00sv6eyy8
@@ -76,14 +76,14 @@ build/strided --home scripts/state/stride1 q stakeibc list-host-zone
 build/strided --home scripts/state/stride1 tx stakeibc add-validator cosmoshub-4 notional cosmosvaloper1083svrca4t350mphfv9x45wq9asrs60cdmrflj 10 5 --chain-id local-test-1 --keyring-backend test --from admin -y
 
 # Liquid stake and confirm the stake was split 50/50 between the validators
-build/strided --home scripts/state/stride1 tx stakeibc liquid-stake 1000000 uatom --keyring-backend test --from admin -y --chain-id local-test-1 -y
+build/strided --home scripts/state/stride1 tx stakeibc liquid-stake 1000000 uatom --keyring-backend test --from admin -y --chain-id local-test-1
 
 # Change validator weights
 build/strided --home scripts/state/stride1 tx stakeibc change-validator-weight cosmoshub-4 cosmosvaloper1vvwtk805lxehwle9l4yudmq6mn0g32px9xtkhc 1 --from admin -y
 build/strided --home scripts/state/stride1 tx stakeibc change-validator-weight cosmoshub-4 cosmosvaloper1083svrca4t350mphfv9x45wq9asrs60cdmrflj 49 --from admin -y
 
 # LS and confirm delegation aligned with new weights
-build/strided --home scripts/state/stride1 tx stakeibc liquid-stake 1000000 uatom --keyring-backend test --from admin -y --chain-id local-test-1 -y
+build/strided --home scripts/state/stride1 tx stakeibc liquid-stake 1000000 uatom --keyring-backend test --from admin -y --chain-id local-test-1
 
 # Call rebalance to and confirm new delegations
 build/strided --home scripts/state/stride1 tx stakeibc rebalance-validators cosmoshub-4 5 --from admin

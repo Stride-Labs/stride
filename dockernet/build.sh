@@ -1,8 +1,8 @@
 #!/bin/bash
 
 set -eu 
-SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
-source ${SCRIPT_DIR}/config.sh
+DOCKERNET_HOME=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+source ${DOCKERNET_HOME}/config.sh
 
 BUILDDIR="$2"
 mkdir -p $BUILDDIR

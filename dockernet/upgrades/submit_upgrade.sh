@@ -9,8 +9,8 @@ UPGRADE_HEIGHT="${UPGRADE_HEIGHT:-250}"
 PROPOSAL_ID=1
 
 printf "PROPOSAL\n"
-$STRIDE_MAIN_CMD tx gov submit-proposal software-upgrade $UPGRADE_NAME \
-    --title $UPGRADE_NAME --description "version 2 description" \
+$STRIDE_MAIN_CMD tx gov submit-legacy-proposal software-upgrade $UPGRADE_NAME \
+    --title $UPGRADE_NAME --no-validate="true" --description "version 2 description" \
     --upgrade-height $UPGRADE_HEIGHT --from val1 -y | TRIM_TX
 
 sleep 5
