@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	sdkmath "cosmossdk.io/math"
 	"encoding/binary"
 
 	"github.com/cosmos/cosmos-sdk/store/prefix"
@@ -110,4 +111,22 @@ func (k Keeper) GetDepositRecordByEpochAndChain(ctx sdk.Context, epochNumber uin
 		}
 	}
 	return nil, false
+}
+
+func (k Keeper) FilterDepositRecords(arr []types.DepositRecord, condition func(types.DepositRecord) bool) (ret []types.DepositRecord) {
+	for _, elem := range arr {
+		if condition(elem) {
+			ret = append(ret, elem)
+		}
+	}
+	return ret
+}
+
+func (k Keeper) SumDepositRecords(arr []types.DepositRecord) sdkmath.Int {
+	// sum the amounts of the deposit records
+	totalAmount := sdkmath.ZeroInt()
+	for _, depositRecord := range arr {
+		totalAmount = totalAmount.Add(depositRecord.Amount)
+	}
+	return totalAmount
 }

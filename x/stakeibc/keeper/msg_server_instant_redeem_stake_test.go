@@ -3,7 +3,6 @@ package keeper_test
 import (
 	sdkmath "cosmossdk.io/math"
 	"fmt"
-	"github.com/Stride-Labs/stride/v5/utils"
 	recordtypes "github.com/Stride-Labs/stride/v5/x/records/types"
 	stakeibctypes "github.com/Stride-Labs/stride/v5/x/stakeibc/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -86,10 +85,10 @@ func (s *KeeperTestSuite) SetupInstantRedeemStake() InstantRedeemStakeTestCase {
 
 func (s *KeeperTestSuite) getPendingDepositTotal(chainId string) sdkmath.Int {
 	depositRecords := s.App.RecordsKeeper.GetAllDepositRecord(s.Ctx)
-	pendingDepositRecords := utils.FilterDepositRecords(depositRecords, func(record recordtypes.DepositRecord) (condition bool) {
+	pendingDepositRecords := s.App.RecordsKeeper.FilterDepositRecords(depositRecords, func(record recordtypes.DepositRecord) (condition bool) {
 		return record.Status == recordtypes.DepositRecord_TRANSFER_QUEUE && record.HostZoneId == chainId
 	})
-	return utils.SumDepositRecords(pendingDepositRecords)
+	return s.App.RecordsKeeper.SumDepositRecords(pendingDepositRecords)
 }
 
 // TODO: Need to add tests non 1.0 Redemption Rates, and probably some other basic scenarios.

@@ -38,7 +38,7 @@ func (k Keeper) CreateDepositRecordsForEpoch(ctx sdk.Context, epochNumber uint64
 func (k Keeper) TransferExistingDepositsToHostZones(ctx sdk.Context, epochNumber uint64, depositRecords []recordstypes.DepositRecord) {
 	k.Logger(ctx).Info("Transfering deposit records...")
 
-	transferDepositRecords := utils.FilterDepositRecords(depositRecords, func(record recordstypes.DepositRecord) (condition bool) {
+	transferDepositRecords := k.RecordsKeeper.FilterDepositRecords(depositRecords, func(record recordstypes.DepositRecord) (condition bool) {
 		isTransferRecord := record.Status == recordstypes.DepositRecord_TRANSFER_QUEUE
 		isBeforeCurrentEpoch := record.DepositEpochNumber < epochNumber
 		return isTransferRecord && isBeforeCurrentEpoch
@@ -100,7 +100,7 @@ func (k Keeper) TransferExistingDepositsToHostZones(ctx sdk.Context, epochNumber
 func (k Keeper) StakeExistingDepositsOnHostZones(ctx sdk.Context, epochNumber uint64, depositRecords []recordstypes.DepositRecord) {
 	k.Logger(ctx).Info("Staking deposit records...")
 
-	stakeDepositRecords := utils.FilterDepositRecords(depositRecords, func(record recordstypes.DepositRecord) (condition bool) {
+	stakeDepositRecords := k.RecordsKeeper.FilterDepositRecords(depositRecords, func(record recordstypes.DepositRecord) (condition bool) {
 		isStakeRecord := record.Status == recordstypes.DepositRecord_DELEGATION_QUEUE
 		isBeforeCurrentEpoch := record.DepositEpochNumber < epochNumber
 		return isStakeRecord && isBeforeCurrentEpoch

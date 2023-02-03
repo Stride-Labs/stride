@@ -4,7 +4,6 @@ import (
 	"context"
 	sdkmath "cosmossdk.io/math"
 	"fmt"
-	"github.com/Stride-Labs/stride/v5/utils"
 	recordstypes "github.com/Stride-Labs/stride/v5/x/records/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -58,10 +57,10 @@ func (k msgServer) InstantRedeemStake(goCtx context.Context, msg *types.MsgInsta
 
 	// Find and subtract this amount from a deposit record if it is big enough
 	depositRecords := k.RecordsKeeper.GetAllDepositRecord(ctx)
-	pendingDepositRecords := utils.FilterDepositRecords(depositRecords, func(record recordstypes.DepositRecord) (condition bool) {
+	pendingDepositRecords := k.RecordsKeeper.FilterDepositRecords(depositRecords, func(record recordstypes.DepositRecord) (condition bool) {
 		return record.Status == recordstypes.DepositRecord_TRANSFER_QUEUE && record.HostZoneId == hostZone.ChainId
 	})
-	totalPendingDeposits := utils.SumDepositRecords(pendingDepositRecords)
+	totalPendingDeposits := k.RecordsKeeper.SumDepositRecords(pendingDepositRecords)
 	if nativeAmount.GT(totalPendingDeposits) {
 		return nil, sdkerrors.Wrapf(types.ErrInvalidAmount, "cannot instant redeem stake an amount %v g.t. pending deposit balance on host zone: %v", nativeAmount, msg.Amount)
 	}

@@ -177,20 +177,20 @@ func (k Keeper) UpdateRedemptionRates(ctx sdk.Context, depositRecords []recordst
 
 func (k Keeper) GetUndelegatedBalance(hostZone types.HostZone, depositRecords []recordstypes.DepositRecord) (sdkmath.Int, error) {
 	// filter to only the deposit records for the host zone with status DELEGATION_QUEUE
-	UndelegatedDepositRecords := utils.FilterDepositRecords(depositRecords, func(record recordstypes.DepositRecord) (condition bool) {
+	UndelegatedDepositRecords := k.RecordsKeeper.FilterDepositRecords(depositRecords, func(record recordstypes.DepositRecord) (condition bool) {
 		return ((record.Status == recordstypes.DepositRecord_DELEGATION_QUEUE || record.Status == recordstypes.DepositRecord_DELEGATION_IN_PROGRESS) && record.HostZoneId == hostZone.ChainId)
 	})
 
-	return utils.SumDepositRecords(UndelegatedDepositRecords), nil
+	return k.RecordsKeeper.SumDepositRecords(UndelegatedDepositRecords), nil
 }
 
 func (k Keeper) GetModuleAccountBalance(hostZone types.HostZone, depositRecords []recordstypes.DepositRecord) (sdkmath.Int, error) {
 	// filter to only the deposit records for the host zone with status DELEGATION
-	ModuleAccountRecords := utils.FilterDepositRecords(depositRecords, func(record recordstypes.DepositRecord) (condition bool) {
+	ModuleAccountRecords := k.RecordsKeeper.FilterDepositRecords(depositRecords, func(record recordstypes.DepositRecord) (condition bool) {
 		return (record.Status == recordstypes.DepositRecord_TRANSFER_QUEUE || record.Status == recordstypes.DepositRecord_TRANSFER_IN_PROGRESS) && record.HostZoneId == hostZone.ChainId
 	})
 
-	return utils.SumDepositRecords(ModuleAccountRecords), nil
+	return k.RecordsKeeper.SumDepositRecords(ModuleAccountRecords), nil
 }
 
 func (k Keeper) ReinvestRewards(ctx sdk.Context) {
