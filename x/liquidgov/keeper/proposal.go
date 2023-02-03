@@ -38,24 +38,13 @@ func (keeper Keeper) SetProposal(ctx sdk.Context, proposal types.Proposal) {
 	}
 
 	store := ctx.KVStore(keeper.storeKey)
-	store.Set(types.ProposalKey(proposal.GovProposal.ProposalId, proposal.HostZoneChainId), bz)
+	store.Set(types.ProposalKey(proposal.GovProposal.ProposalId, proposal.HostZoneId), bz)
 }
 
 // DeleteProposal deletes a proposal from store.
 // Panics if the proposal doesn't exist.
 func (keeper Keeper) DeleteProposal(ctx sdk.Context, proposalID uint64, chain_id string) {
 	store := ctx.KVStore(keeper.storeKey)
-	// proposal, ok := keeper.GetProposal(ctx, proposalID, chain_id)
-	// if !ok {
-	// 	panic(fmt.Sprintf("couldn't find proposal with id#%d and chain_id %s", proposalID, chain_id))
-	// }
-
-	// if proposal.GovProposal.DepositEndTime != nil {
-	// 	keeper.RemoveFromInactiveProposalQueue(ctx, proposalID, *proposal.DepositEndTime)
-	// }
-	// if proposal.VotingEndTime != nil {
-	// 	keeper.RemoveFromActiveProposalQueue(ctx, proposalID, *proposal.VotingEndTime)
-	// }
 
 	store.Delete(types.ProposalKey(proposalID, chain_id))
 }
@@ -80,33 +69,33 @@ func (keeper Keeper) SetProposalID(ctx sdk.Context, proposalID uint64, chain_id 
 
 // IterateProposals iterates over the all the proposals and performs a callback function.
 // Panics when the iterator encounters a proposal which can't be unmarshaled.
-// func (keeper Keeper) IterateProposals(ctx sdk.Context, cb func(proposal types.Proposal) (stop bool)) {
-// 	store := ctx.KVStore(keeper.storeKey)
+func (keeper Keeper) IterateProposals(ctx sdk.Context, cb func(proposal types.Proposal) (stop bool)) {
+	store := ctx.KVStore(keeper.storeKey)
 
-// 	iterator := sdk.KVStorePrefixIterator(store, types.ProposalsKeyPrefix)
-// 	defer iterator.Close()
+	iterator := sdk.KVStorePrefixIterator(store, types.ProposalsKeyPrefix)
+	defer iterator.Close()
 
-// 	for ; iterator.Valid(); iterator.Next() {
-// 		var proposal types.Proposal
-// 		err := keeper.UnmarshalProposal(iterator.Value(), &proposal)
-// 		if err != nil {
-// 			panic(err)
-// 		}
+	for ; iterator.Valid(); iterator.Next() {
+		var proposal types.Proposal
+		err := keeper.UnmarshalProposal(iterator.Value(), &proposal)
+		if err != nil {
+			panic(err)
+		}
 
-// 		if cb(proposal) {
-// 			break
-// 		}
-// 	}
-// }
+		if cb(proposal) {
+			break
+		}
+	}
+}
 
-// // GetProposals returns all the proposals from store
-// func (keeper Keeper) GetProposals(ctx sdk.Context) (proposals types.Proposals) {
-// 	keeper.IterateProposals(ctx, func(proposal types.Proposal) bool {
-// 		proposals = append(proposals, &proposal)
-// 		return false
-// 	})
-// 	return
-// }
+// GetProposals returns all the proposals from store
+func (keeper Keeper) GetProposals(ctx sdk.Context) (proposals types.Proposals) {
+	keeper.IterateProposals(ctx, func(proposal types.Proposal) bool {
+		proposals = append(proposals, proposal)
+		return false
+	})
+	return
+}
 
 func (keeper Keeper) MarshalProposal(proposal types.Proposal) ([]byte, error) {
 	// bz, err := keeper.cdc.Marshal(&proposal)

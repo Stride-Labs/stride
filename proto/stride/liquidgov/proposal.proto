@@ -6,11 +6,13 @@ import "gogoproto/gogo.proto";
 import "cosmos_proto/cosmos.proto";
 
 option go_package = "github.com/Stride-Labs/stride/v5/x/liquidgov/types";
+option (gogoproto.goproto_stringer_all) = false;
+option (gogoproto.stringer_all)         = false;
 
 // Proposal defines the core field members of a liquid proposal.
 message Proposal {
   cosmos.gov.v1beta1.Proposal gov_proposal = 1 [(gogoproto.nullable) = false]; // TODO: need to handle multiple types
 
   // host_zone_chain_id defines the host zone of the proposal
-	string host_zone_chain_id = 2;
+	string host_zone_id = 2;
 }

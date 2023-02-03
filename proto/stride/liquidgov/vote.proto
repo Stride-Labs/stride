@@ -1,7 +1,7 @@
 syntax = "proto3";
 package stride.liquidgov;
 
-import "cosmos/gov/v1/gov.proto";
+import "cosmos/gov/v1beta1/gov.proto";
 import "gogoproto/gogo.proto";
 import "cosmos_proto/cosmos.proto";
 
@@ -9,8 +9,8 @@ option go_package = "github.com/Stride-Labs/stride/v5/x/liquidgov/types";
 
 // Vote defines the core field members of a liquid vote.
 message Vote {
-  cosmos.gov.v1.Vote gov_vote = 1 [(gogoproto.nullable) = false];
+  cosmos.gov.v1beta1.Vote gov_vote = 1 [(gogoproto.nullable) = false];
 
-  // host_zone_chain_id defines the host zone of the vote
-	string host_zone_chain_id = 2;
+  // host_zone_id defines the host zone of the vote
+	string host_zone_id = 2;
 }

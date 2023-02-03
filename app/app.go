@@ -193,13 +193,13 @@ var (
 		claimvesting.AppModuleBasic{},
 		// monitoringp.AppModuleBasic{},
 		stakeibcmodule.AppModuleBasic{},
+		liquidgovmodule.AppModuleBasic{},
 		epochsmodule.AppModuleBasic{},
 		interchainquery.AppModuleBasic{},
 		ica.AppModuleBasic{},
 		recordsmodule.AppModuleBasic{},
 		icacallbacksmodule.AppModuleBasic{},
 		claim.AppModuleBasic{},
-		liquidgovmodule.AppModuleBasic{},
 		// this line is used by starport scaffolding # stargate/app/moduleBasic
 	)
 
@@ -214,10 +214,10 @@ var (
 		govtypes.ModuleName:             {authtypes.Burner},
 		ibctransfertypes.ModuleName:     {authtypes.Minter, authtypes.Burner},
 		stakeibcmoduletypes.ModuleName:  {authtypes.Minter, authtypes.Burner, authtypes.Staking},
+		liquidgovmoduletypes.ModuleName: nil,
 		claimtypes.ModuleName:           nil,
 		interchainquerytypes.ModuleName: nil,
 		icatypes.ModuleName:             nil,
-		liquidgovmoduletypes.ModuleName: nil,
 		// this line is used by starport scaffolding # stargate/app/maccPerms
 	}
 )
@@ -282,6 +282,7 @@ type StrideApp struct {
 
 	ScopedStakeibcKeeper capabilitykeeper.ScopedKeeper
 	StakeibcKeeper       stakeibcmodulekeeper.Keeper
+	LiquidgovKeeper      liquidgovmodulekeeper.Keeper
 
 	EpochsKeeper             epochsmodulekeeper.Keeper
 	InterchainqueryKeeper    interchainquerykeeper.Keeper
@@ -290,7 +291,6 @@ type StrideApp struct {
 	ScopedIcacallbacksKeeper capabilitykeeper.ScopedKeeper
 	IcacallbacksKeeper       icacallbacksmodulekeeper.Keeper
 	ClaimKeeper              claimkeeper.Keeper
-	LiquidgovKeeper          liquidgovmodulekeeper.Keeper
 	// this line is used by starport scaffolding # stargate/app/keeperDeclaration
 
 	mm           *module.Manager
@@ -327,13 +327,13 @@ func NewStrideApp(
 		govtypes.StoreKey, paramstypes.StoreKey, ibchost.StoreKey, upgradetypes.StoreKey, feegrant.StoreKey,
 		evidencetypes.StoreKey, ibctransfertypes.StoreKey, capabilitytypes.StoreKey, // monitoringptypes.StoreKey,
 		stakeibcmoduletypes.StoreKey,
+		liquidgovmoduletypes.StoreKey,
 		epochsmoduletypes.StoreKey,
 		interchainquerytypes.StoreKey,
 		icacontrollertypes.StoreKey, icahosttypes.StoreKey,
 		recordsmoduletypes.StoreKey,
 		icacallbacksmoduletypes.StoreKey,
 		claimtypes.StoreKey,
-		liquidgovmoduletypes.StoreKey,
 		// this line is used by starport scaffolding # stargate/app/storeKey
 	)
 	tkeys := sdk.NewTransientStoreKeys(paramstypes.TStoreKey)
@@ -534,6 +534,7 @@ func NewStrideApp(
 		app.AccountKeeper,
 		app.BankKeeper,
 		app.InterchainqueryKeeper,
+		app.IcacallbacksKeeper,
 	)
 	liquidgovModule := liquidgovmodule.NewAppModule(appCodec, app.LiquidgovKeeper, app.AccountKeeper, app.BankKeeper)
 
@@ -572,10 +573,10 @@ func NewStrideApp(
 		return nil
 	}
 	// liquidgov
-	// err = app.IcacallbacksKeeper.SetICACallbackHandler(liquidgovmoduletypes.ModuleName, app.LiquidgovKeeper.ICACallbackHandler())
-	// if err != nil {
-	// 	return nil
-	// }
+	err = app.IcacallbacksKeeper.SetICACallbackHandler(liquidgovmoduletypes.ModuleName, app.LiquidgovKeeper.ICACallbackHandler())
+	if err != nil {
+		return nil
+	}
 
 	// this line is used by starport scaffolding # stargate/app/keeperDefinition
 	ibcFeeKeeper := ibcfeekeeper.NewKeeper(
@@ -659,12 +660,12 @@ func NewStrideApp(
 		transferModule,
 		// monitoringModule,
 		stakeibcModule,
+		liquidgovModule,
 		epochsModule,
 		interchainQueryModule,
 		icaModule,
 		recordsModule,
 		icacallbacksModule,
-		liquidgovModule,
 		// this line is used by starport scaffolding # stargate/app/appModule
 	)
 
@@ -694,12 +695,12 @@ func NewStrideApp(
 		// monitoringptypes.ModuleName,
 		icatypes.ModuleName,
 		stakeibcmoduletypes.ModuleName,
+		liquidgovmoduletypes.ModuleName,
 		epochsmoduletypes.ModuleName,
 		interchainquerytypes.ModuleName,
 		recordsmoduletypes.ModuleName,
 		icacallbacksmoduletypes.ModuleName,
 		claimtypes.ModuleName,
-		liquidgovmoduletypes.ModuleName,
 		// this line is used by starport scaffolding # stargate/app/beginBlockers
 	)
 
@@ -725,12 +726,12 @@ func NewStrideApp(
 		// monitoringptypes.ModuleName,
 		icatypes.ModuleName,
 		stakeibcmoduletypes.ModuleName,
+		liquidgovmoduletypes.ModuleName,
 		epochsmoduletypes.ModuleName,
 		interchainquerytypes.ModuleName,
 		recordsmoduletypes.ModuleName,
 		icacallbacksmoduletypes.ModuleName,
 		claimtypes.ModuleName,
-		liquidgovmoduletypes.ModuleName,
 		// this line is used by starport scaffolding # stargate/app/endBlockers
 	)
 
@@ -761,12 +762,12 @@ func NewStrideApp(
 		// monitoringptypes.ModuleName,
 		icatypes.ModuleName,
 		stakeibcmoduletypes.ModuleName,
+		liquidgovmoduletypes.ModuleName,
 		epochsmoduletypes.ModuleName,
 		interchainquerytypes.ModuleName,
 		recordsmoduletypes.ModuleName,
 		icacallbacksmoduletypes.ModuleName,
 		claimtypes.ModuleName,
-		liquidgovmoduletypes.ModuleName,
 		// this line is used by starport scaffolding # stargate/app/initGenesis
 	)
 
@@ -793,11 +794,11 @@ func NewStrideApp(
 	// 	transferModule,
 	// monitoringModule,
 	// stakeibcModule,
+	// liquidgovModule,
 	// epochsModule,
 	// interchainQueryModule,
 	// recordsModule,
 	// icacallbacksModule,
-	// liquidgovModule,
 	// this line is used by starport scaffolding # stargate/app/appModule
 	// )
 	// app.sm.RegisterStoreDecoders()

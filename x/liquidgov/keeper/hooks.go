@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	govtypesv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
 
 	epochstypes "github.com/Stride-Labs/stride/v5/x/epochs/types"
 )
@@ -13,8 +14,8 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochInfo epochstypes.EpochInf
 		// on epoch update proposals
 		k.UpdateProposals(ctx)
 
-		// 	// check for outstanding proposals in vote cast window and cast votes
-		// 	k.CastVotes(ctx, epochInfo)
+		// check for outstanding proposals in vote cast window and cast votes
+		k.CastVotes(ctx, epochInfo)
 
 		// // for every mature record
 		//
@@ -87,23 +88,30 @@ func (k Keeper) UpdateProposals(ctx sdk.Context) {
 	}
 }
 
-// func (k Keeper) CastVotes(ctx, epochInfo epochstypes.EpochInfo) {
-// 	// get param for cast window - may be hostzone specific?
-// 	window := k.GetCastWindowParam(ctx)
-// 	// for every proposal in each host zone check for cast window and cast votes
-// 	for _, hostZone := range k.GetAllHostZone(ctx) {
-// 		for _, proposal := range k.GetProposalsForHostZone(ctx, hostZone) {
-// 			// if proposal in cast window
-// 			if epochInfo.CurrentEpochStartTime + window > proposal.votingEndTime {
-// 				// tally votes
-// 				vote := k.TallyVotes(ctx, proposal)
+func (k Keeper) CastVotes(ctx sdk.Context, epochInfo epochstypes.EpochInfo) {
+	// get param for cast window - may be hostzone specific?
+	// window := k.GetCastWindowParam(ctx)
+	// for every proposal in each host zone check for cast window and cast votes
+	proposals := k.GetProposals(ctx)
+	for _, proposal := range proposals {
+		// if proposal in cast window
+		// if epochInfo.CurrentEpochStartTime + window > proposal.votingEndTime {
+		// TODO loop host zones
+		hostZone, found := k.stakeibcKeeper.GetHostZone(ctx, proposal.HostZoneId)
+		if !found {
+			k.Logger(ctx).Info(fmt.Sprintf("hostzone not found %s...", proposal.HostZoneId))
+		} else {
+			// tally votes
+			// vote := k.TallyVotes(ctx, proposal)
+			// TODO remove hardcode - weighted votes
+			vote := govtypesv1.NewVote(proposal.GovProposal.ProposalId, sdk.AccAddress(hostZone.DelegationAccount.Address), govtypesv1.NewNonSplitVoteOption(govtypesv1.OptionYes), "")
+			k.CastVoteOnHost(ctx, hostZone, vote) // submits vote ICA on host
+		}
+		// cast vote on host
+	}
+	// }
+}
 
-// 				// cast vote on host
-// 				k.CastVoteOnHost(ctx, hostZone, vote)	// submits vote ICA on host
-// 			}
-// 		}
-// 	}
-// }
 // function may also want to prune old proposals
 // that failed to cast votes past end of voting period
 

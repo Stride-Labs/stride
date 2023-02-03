@@ -52,7 +52,7 @@ func (msg *MsgLiquidVote) ValidateBasic() error {
 		return sdkerrors.Wrap(govtypes.ErrInvalidVote, msg.VoteOption.String())
 	}
 	// validate host denom is not empty
-	if msg.HostZoneChainId == "" {
+	if msg.HostZoneId == "" {
 		return sdkerrors.Wrapf(stakeibctypes.ErrRequiredFieldEmpty, "host zone chain id cannot be empty")
 	}
 

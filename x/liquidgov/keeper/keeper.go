@@ -9,6 +9,7 @@ import (
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	"github.com/tendermint/tendermint/libs/log"
 
+	icacallbackskeeper "github.com/Stride-Labs/stride/v5/x/icacallbacks/keeper"
 	icqkeeper "github.com/Stride-Labs/stride/v5/x/interchainquery/keeper"
 
 	"github.com/Stride-Labs/stride/v5/x/liquidgov/types"
@@ -25,6 +26,7 @@ type (
 		accountKeeper         types.AccountKeeper
 		bankKeeper            types.BankKeeper
 		InterchainQueryKeeper icqkeeper.Keeper
+		ICACallbacksKeeper    icacallbackskeeper.Keeper
 	}
 )
 
@@ -38,6 +40,7 @@ func NewKeeper(
 	accountKeeper types.AccountKeeper,
 	bankKeeper types.BankKeeper,
 	interchainQueryKeeper icqkeeper.Keeper,
+	ICACallbacksKeeper icacallbackskeeper.Keeper,
 ) *Keeper {
 	// set KeyTable if it has not already been set
 	if !ps.HasKeyTable() {
@@ -54,6 +57,7 @@ func NewKeeper(
 		accountKeeper:         accountKeeper,
 		bankKeeper:            bankKeeper,
 		InterchainQueryKeeper: interchainQueryKeeper,
+		ICACallbacksKeeper:    ICACallbacksKeeper,
 	}
 }
 

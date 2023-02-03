@@ -33,10 +33,10 @@ func MirrorProposalsCallback(k Keeper, ctx sdk.Context, args []byte, query icqty
 
 	if queriedProposal.ProposalId > highestID {
 		if queriedProposal.Status == govtypesv1beta1.StatusVotingPeriod {
-			liquidProp := types.Proposal{HostZoneChainId: chainId, GovProposal: queriedProposal}
+			liquidProp := types.Proposal{HostZoneId: chainId, GovProposal: queriedProposal}
 			k.SetProposal(ctx, liquidProp)
 			k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_MirrorProposals,
-				"Added proposal #%d from host zone: %s VoteStartTime: %s VoteEndTime: %s", liquidProp.GovProposal.ProposalId, liquidProp.HostZoneChainId, liquidProp.GovProposal.VotingStartTime, liquidProp.GovProposal.VotingEndTime))
+				"Added proposal #%d from host zone: %s VoteStartTime: %s VoteEndTime: %s", liquidProp.GovProposal.ProposalId, liquidProp.HostZoneId, liquidProp.GovProposal.VotingStartTime, liquidProp.GovProposal.VotingEndTime))
 		} else {
 			k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_MirrorProposals,
 				"Proposal #%d from host zone: %s not in voting period. Incrementing highest ID.", queriedProposal.ProposalId, chainId))
