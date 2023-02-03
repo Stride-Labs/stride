@@ -13,7 +13,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
 
 	clitestutil "github.com/cosmos/cosmos-sdk/testutil/cli"
-	banktestutil "github.com/cosmos/cosmos-sdk/x/bank/testutil"
 
 	strideclitestutil "github.com/Stride-Labs/stride/v5/testutil/cli"
 
@@ -91,12 +90,11 @@ func (s *IntegrationTestSuite) SetupSuite() {
 		info, _ := val.ClientCtx.Keyring.NewAccount("distributor"+strconv.Itoa(idx), distributorMnemonics[idx], keyring.DefaultBIP39Passphrase, sdk.FullFundraiserPath, hd.Secp256k1)
 		pubkey, _ := info.GetPubKey()
 		distributorAddr := sdk.AccAddress(pubkey.Address())
-		_, err = banktestutil.MsgSendExec(
+		_, err = clitestutil.MsgSendExec(
 			val.ClientCtx,
 			val.Address,
 			distributorAddr,
 			sdk.NewCoins(sdk.NewInt64Coin(s.cfg.BondDenom, 1020)), fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
-			fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
 			strideclitestutil.DefaultFeeString(s.cfg),
 		)
 		s.Require().NoError(err)
@@ -115,7 +113,6 @@ func (s *IntegrationTestSuite) SetupSuite() {
 		fmt.Sprintf("--%s=%s", flags.FlagFrom, distributorAddrs[0]),
 		// common args
 		fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
-		fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
 		strideclitestutil.DefaultFeeString(s.cfg),
 	})
 
@@ -193,7 +190,6 @@ func (s *IntegrationTestSuite) TestCmdTxSetAirdropAllocations() {
 				fmt.Sprintf("--%s=%s", flags.FlagFrom, distributorAddrs[0]),
 				// common args
 				fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
-				fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
 				strideclitestutil.DefaultFeeString(s.cfg),
 			},
 			[]sdk.Coins{
@@ -272,7 +268,6 @@ func (s *IntegrationTestSuite) TestCmdTxCreateAirdrop() {
 				fmt.Sprintf("--%s=%s", flags.FlagFrom, distributorAddrs[1]),
 				// common args
 				fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
-				fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
 				strideclitestutil.DefaultFeeString(s.cfg),
 			},
 			airdrop,
