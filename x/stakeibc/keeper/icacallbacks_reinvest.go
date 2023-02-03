@@ -80,19 +80,9 @@ func ReinvestCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ack
 		k.Logger(ctx).Error("failed to find deposit record")
 		return sdkerrors.Wrapf(sdkerrors.ErrNotFound, fmt.Sprintf("no deposit record for epoch (%d)", strideEpochTracker.EpochNumber))
 	}
+	// Find and add to existing deposit record.  It just sits here for Instant Redeem Stake until the next epoch where it goes to be reinvested.
 	depositRecord.Amount = depositRecord.Amount.Add(reinvestCallback.ReinvestAmount.Amount)
 	k.RecordsKeeper.SetDepositRecord(ctx, *depositRecord)
-	/*
-		// Create a new deposit record so that rewards are reinvested
-		record := recordstypes.DepositRecord{
-			Amount:             reinvestCallback.ReinvestAmount.Amount,
-			Denom:              reinvestCallback.ReinvestAmount.Denom,
-			HostZoneId:         reinvestCallback.HostZoneId,
-			Status:             recordstypes.DepositRecord_DELEGATION_QUEUE,
-			Source:             recordstypes.DepositRecord_WITHDRAWAL_ICA,
-			DepositEpochNumber: strideEpochTracker.EpochNumber,
-		}
-		k.RecordsKeeper.AppendDepositRecord(ctx, record) */
 
 	return nil
 }
