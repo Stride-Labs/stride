@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 
+	nodeservice "github.com/cosmos/cosmos-sdk/client/grpc/node"
 	authsims "github.com/cosmos/cosmos-sdk/x/auth/simulation"
 	porttypes "github.com/cosmos/ibc-go/v7/modules/core/05-port/types"
 	tendermint "github.com/cosmos/ibc-go/v7/modules/light-clients/07-tendermint"
@@ -365,14 +366,14 @@ func NewStrideApp(
 
 	// add keepers
 	app.AccountKeeper = authkeeper.NewAccountKeeper(
-		appCodec, keys[authtypes.StoreKey], authtypes.ProtoBaseAccount, maccPerms, AccountAddressPrefix, "authority", // TODO: Fix
+		appCodec, keys[authtypes.StoreKey], authtypes.ProtoBaseAccount, maccPerms, AccountAddressPrefix, authtypes.NewModuleAddress(govtypes.ModuleName).String(), // TODO: Fix
 	)
 
 	app.BankKeeper = bankkeeper.NewBaseKeeper(
-		appCodec, keys[banktypes.StoreKey], app.AccountKeeper, app.BlacklistedModuleAccountAddrs(), "authority", // TODO: Fix
+		appCodec, keys[banktypes.StoreKey], app.AccountKeeper, app.BlacklistedModuleAccountAddrs(), authtypes.NewModuleAddress(govtypes.ModuleName).String(), // TODO: Fix
 	)
 	app.StakingKeeper = *stakingkeeper.NewKeeper(
-		appCodec, keys[stakingtypes.StoreKey], app.AccountKeeper, app.BankKeeper, "authority", // TODO: Fix
+		appCodec, keys[stakingtypes.StoreKey], app.AccountKeeper, app.BankKeeper, authtypes.NewModuleAddress(govtypes.ModuleName).String(), // TODO: Fix
 	)
 	epochsKeeper := epochsmodulekeeper.NewKeeper(appCodec, keys[epochsmoduletypes.StoreKey])
 	app.MintKeeper = mintkeeper.NewKeeper(
@@ -380,10 +381,10 @@ func NewStrideApp(
 	)
 	app.DistrKeeper = distrkeeper.NewKeeper(
 		appCodec, keys[distrtypes.StoreKey], app.AccountKeeper, app.BankKeeper,
-		app.StakingKeeper, authtypes.FeeCollectorName, "authority", // TODO: Fix
+		app.StakingKeeper, authtypes.FeeCollectorName, authtypes.NewModuleAddress(govtypes.ModuleName).String(), // TODO: Fix
 	)
 	app.SlashingKeeper = slashingkeeper.NewKeeper(
-		appCodec, encodingConfig.Amino, keys[slashingtypes.StoreKey], app.StakingKeeper, "authority", // TODO: Fix
+		appCodec, encodingConfig.Amino, keys[slashingtypes.StoreKey], app.StakingKeeper, authtypes.NewModuleAddress(govtypes.ModuleName).String(), // TODO: Fix
 	)
 	app.CrisisKeeper = crisiskeeper.NewKeeper(appCodec, keys[crisistypes.StoreKey],
 		invCheckPeriod, app.BankKeeper, authtypes.FeeCollectorName, authtypes.NewModuleAddress(govtypes.ModuleName).String(), // TODO: fix
@@ -980,8 +981,9 @@ func (app *StrideApp) RegisterTendermintService(clientCtx client.Context) {
 }
 
 // RegisterNodeService registers the node gRPC Query service.
-func (app *StrideApp) RegisterNodeService(client.Context) {
+func (app *StrideApp) RegisterNodeService(clientCtx client.Context) {
 	// TODO: implement!
+	nodeservice.RegisterNodeService(clientCtx, app.GRPCQueryRouter())
 }
 
 // GetMaccPerms returns a copy of the module account permissions
