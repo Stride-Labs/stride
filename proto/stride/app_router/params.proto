@@ -10,6 +10,5 @@ option go_package = "github.com/Stride-Labs/stride/v4/x/app-router/types";
 message Params {
   option (gogoproto.goproto_stringer) = false;
   // optionally, turn off this module
-  // TODO: implement
   bool active = 1;
 }
