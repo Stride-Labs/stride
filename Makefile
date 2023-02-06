@@ -99,13 +99,8 @@ lint:
 test-unit:
 	@go test -mod=readonly ./x/... ./app/...
 
-<<<<<<< HEAD
 test-unit-path:
 	@go test -mod=readonly ./x/$(path)/...
-=======
-test-unit-module:
-	@go test -mod=readonly ./x/$(module)/...
->>>>>>> main
 
 test-cover:
 	@go test -mod=readonly -race -coverprofile=coverage.out -covermode=atomic ./x/$(path)/...
