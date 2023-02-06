@@ -48,4 +48,5 @@ var (
 	ErrNoValidatorAmts                   = sdkerrors.Register(ModuleName, 1538, "could not fetch validator amts")
 	ErrMaxNumValidators                  = sdkerrors.Register(ModuleName, 1539, "max number of validators reached")
 	ErrUndelegationAmount                = sdkerrors.Register(ModuleName, 1540, "Undelegation amount is greater than stakedBal")
+	ErrHaltedHostZone                    = sdkerrors.Register(ModuleName, 1541, "Halted host zone found")
 )

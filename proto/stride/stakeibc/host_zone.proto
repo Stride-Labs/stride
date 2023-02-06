@@ -44,5 +44,6 @@ message HostZone {
     (gogoproto.nullable) = false
   ];
   string address = 18 [ (gogoproto.moretags) = "yaml:\"address\"" ];
+  bool halted = 19;
   reserved 15;
 }
