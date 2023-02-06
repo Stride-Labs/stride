@@ -28,9 +28,9 @@ HOST_CHAINS=()
 #  - STARS
 #  - HOST (Stride chain enabled as a host zone)
 if [[ "${ALL_HOST_CHAINS:-false}" == "true" ]]; then 
-  HOST_CHAINS=(GAIA OSMO HOST)
+  HOST_CHAINS=(GAIA OSMO HOST SEI)
 elif [[ "${#HOST_CHAINS[@]}" == "0" ]]; then 
-  HOST_CHAINS=(GAIA)
+  HOST_CHAINS=(GAIA SEI)
 fi
 
 # Sets up upgrade if {UPGRADE_NAME} is non-empty
@@ -44,11 +44,13 @@ OSMO_DENOM="uosmo"
 STRD_DENOM="ustrd"
 STARS_DENOM="ustars"
 WALK_DENOM="uwalk"
+SEI_DENOM="usei"
 STATOM_DENOM="stuatom"
 STJUNO_DENOM="stujuno"
 STOSMO_DENOM="stuosmo"
 STSTARS_DENOM="stustars"
 STWALK_DENOM="stuwalk"
+STSEI_DENOM="stusei"
 
 IBC_STRD_DENOM='ibc/FF6C2E86490C1C4FBBD24F55032831D2415B9D7882F85C3CC9C2401D79362BEA'  
 
@@ -76,6 +78,11 @@ IBC_HOST_CHANNEL_0_DENOM='ibc/82DBA832457B89E1A344DA51761D92305F7581B7EA6C18D850
 IBC_HOST_CHANNEL_1_DENOM='ibc/FB7E2520A1ED6890E1632904A4ACA1B3D2883388F8E2B88F2D6A54AA15E4B49E'
 IBC_HOST_CHANNEL_2_DENOM='ibc/D664DC1D38648FC4C697D9E9CF2D26369318DFE668B31F81809383A8A88CFCF4'
 IBC_HOST_CHANNEL_3_DENOM='ibc/FD7AA7EB2C1D5D97A8693CCD71FFE3F5AFF12DB6756066E11E69873DE91A33EA'
+
+IBC_SEI_CHANNEL_0_DENOM='ibc/01B9269F2A4475FD7A303D5B15FDC2907CF76FBAC7272360B369CF5B2C06FBC4'
+IBC_SEI_CHANNEL_1_DENOM='ibc/348C1956DCD7FDABB3DABC93E30F398190FFC9EFE9C4004E955C9ACBEC6B8C5E'
+IBC_SEI_CHANNEL_2_DENOM='ibc/5923FBBDB637ED6E2D84E9E5A5D53C67243EB0830FA0C4472C0F2040E8C0A133'
+IBC_SEI_CHANNEL_3_DENOM='ibc/661DEFDAD158EF8842F7FDA61E554825EDCB4904FC7C65A8B1457458032DDD47'
 
 # COIN TYPES
 # Coin types can be found at https://github.com/satoshilabs/slips/blob/master/slip-0044.md
@@ -217,6 +224,19 @@ HOST_RPC_PORT=26157
 HOST_MAIN_CMD="$HOST_BINARY --home $DOCKERNET_HOME/state/${HOST_NODE_PREFIX}1"
 HOST_RECEIVER_ADDRESS='stride1trm75t8g83f26u4y8jfds7pms9l587a7q227k9'
 
+SEI_CHAIN_ID=SEI
+SEI_NODE_PREFIX=sei
+SEI_NUM_NODES=1
+SEI_BINARY="$DOCKERNET_HOME/../build/seid"
+SEI_VAL_PREFIX=sval
+SEI_REV_ACCT=srev1
+SEI_ADDRESS_PREFIX=sei
+SEI_DENOM=$SEI_DENOM
+SEI_COIN_TYPE=$COSMOS_COIN_TYPE
+SEI_RPC_PORT=26057
+SEI_MAIN_CMD="$SEI_BINARY --home $DOCKERNET_HOME/state/${SEI_NODE_PREFIX}1"
+SEI_RECEIVER_ADDRESS='sei1jnc47vx9uvfrnxcuvferzwjgzlrf2y0tv4ush6'
+
 # RELAYER
 RELAYER_CMD="$DOCKERNET_HOME/../build/relayer --home $STATE/relayer"
 RELAYER_GAIA_EXEC="$DOCKER_COMPOSE run --rm relayer-gaia"
@@ -231,19 +251,22 @@ RELAYER_JUNO_ACCT=rly3
 RELAYER_OSMO_ACCT=rly4
 RELAYER_STARS_ACCT=rly5
 RELAYER_HOST_ACCT=rly6
-RELAYER_ACCTS=($RELAYER_GAIA_ACCT $RELAYER_JUNO_ACCT $RELAYER_OSMO_ACCT $RELAYER_STARS_ACCT $RELAYER_HOST_ACCT)
+RELAYER_SEI_ACCT=rly7
+RELAYER_ACCTS=($RELAYER_GAIA_ACCT $RELAYER_JUNO_ACCT $RELAYER_OSMO_ACCT $RELAYER_STARS_ACCT $RELAYER_HOST_ACCT $RELAYER_SEI_ACCT)
 
 RELAYER_GAIA_MNEMONIC="fiction perfect rapid steel bundle giant blade grain eagle wing cannon fever must humble dance kitchen lazy episode museum faith off notable rate flavor"
 RELAYER_JUNO_MNEMONIC="kiwi betray topple van vapor flag decorate cement crystal fee family clown cry story gain frost strong year blanket remain grass pig hen empower"
 RELAYER_OSMO_MNEMONIC="unaware wine ramp february bring trust leaf beyond fever inside option dilemma save know captain endless salute radio humble chicken property culture foil taxi"
 RELAYER_STARS_MNEMONIC="deposit dawn erosion talent old broom flip recipe pill hammer animal hill nice ten target metal gas shoe visual nephew soda harbor child simple"
 RELAYER_HOST_MNEMONIC="renew umbrella teach spoon have razor knee sock divert inner nut between immense library inhale dog truly return run remain dune virus diamond clinic"
+RELAYER_SEI_MNEMONIC="breeze exact spawn endless lobster curve curve forest traffic scale icon garbage estate question around mask spider island swift fragile gorilla wife save genuine"
 RELAYER_MNEMONICS=(
   "$RELAYER_GAIA_MNEMONIC"
   "$RELAYER_JUNO_MNEMONIC"
   "$RELAYER_OSMO_MNEMONIC"
   "$RELAYER_STARS_MNEMONIC"
   "$RELAYER_HOST_MNEMONIC"
+  "$RELAYER_SEI_MNEMONIC"
 )
 
 STRIDE_ADDRESS() { 
@@ -265,6 +288,9 @@ STARS_ADDRESS() {
 }
 HOST_ADDRESS() { 
   $HOST_MAIN_CMD keys show ${HOST_VAL_PREFIX}1 --keyring-backend test -a 
+}
+SEI_ADDRESS() { 
+  $SEI_MAIN_CMD keys show ${SEI_VAL_PREFIX}1 --keyring-backend test -a 
 }
 
 CSLEEP() {

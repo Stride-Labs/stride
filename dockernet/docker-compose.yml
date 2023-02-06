@@ -172,6 +172,33 @@ services:
       - ./state/host5:/home/stride/.stride
 
   # Fill in new host zone being tested here
+  sei1:
+    image: stridezone:sei
+    volumes:
+      - ./state/sei1:/home/sei/.sei
+    ports:
+      - "26057:26657"
+      - "1257:1317"
+      - "9030:9090"
+  sei2:
+    image: stridezone:sei
+    volumes:
+      - ./state/sei2:/home/sei/.sei
+
+  sei3:
+    image: stridezone:sei
+    volumes:
+      - ./state/sei3:/home/sei/.sei
+
+  sei4:
+    image: stridezone:sei
+    volumes:
+      - ./state/sei4:/home/sei/.sei
+
+  sei5:
+    image: stridezone:sei
+    volumes:
+      - ./state/sei5:/home/sei/.sei
 
   hermes:
     image: stridezone:hermes
@@ -221,3 +248,10 @@ services:
       - ./state/relayer-juno-osmo:/home/relayer/.relayer
     restart: always
     command: [ "bash", "start.sh", "juno-osmo" ]
+    
+  relayer-sei:
+    image: stridezone:relayer
+    volumes:
+      - ./state/relayer-sei:/home/relayer/.relayer
+    restart: always
+    command: [ "bash", "start.sh", "stride-sei" ]

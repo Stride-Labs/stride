@@ -15,7 +15,12 @@ build_local_and_docker() {
    printf '%s' "Building $title Locally...  "
    cwd=$PWD
    cd $folder
-   GOBIN=$BUILDDIR go install -mod=readonly -trimpath ./... 2>&1 | grep -v -E "deprecated|keychain" | true
+   if [[ "$module" == "sei" ]]; then
+      GOBIN=$BUILDDIR make install-all -mod=readonly 2>&1 | grep -v -E "deprecated|keychain" | true
+   else
+      GOBIN=$BUILDDIR go install -mod=readonly -trimpath ./... 2>&1 | grep -v -E "deprecated|keychain" | true
+   fi
+
    local_build_succeeded=${PIPESTATUS[0]}
    cd $cwd
 
@@ -73,7 +78,7 @@ while getopts sgojthrn flag; do
       j) build_local_and_docker juno deps/juno ;;
       o) build_local_and_docker osmo deps/osmosis ;;
       t) build_local_and_docker stars deps/stargaze ;;
-      n) continue ;; # build_local_and_docker {new-host-zone} deps/{new-host-zone} ;;
+      n) build_local_and_docker sei deps/sei ;;
       r) build_local_and_docker relayer deps/relayer ;;  
       h) echo "Building Hermes Docker... ";
          docker build --tag stridezone:hermes -f dockernet/dockerfiles/Dockerfile.hermes . ;

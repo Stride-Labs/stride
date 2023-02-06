@@ -1,0 +1,33 @@
+FROM ubuntu:latest AS builder
+RUN apt-get update && \
+    apt-get install -y make git golang jq python3-dev curl vim wget clang libprotobuf-dev protobuf-compiler
+RUN mkdir -m777 /opt/rust /opt/cargo
+ENV RUSTUP_HOME=/opt/rust CARGO_HOME=/opt/cargo PATH=/opt/cargo/bin:$PATH
+RUN wget --https-only --secure-protocol=TLSv1_2 -O- https://sh.rustup.rs | sh /dev/stdin -y
+RUN rustup target add arm-unknown-linux-gnueabihf
+RUN printf '#!/bin/sh\nexport CARGO_HOME=/opt/cargo\nexec /bin/sh "$@"\n' >/usr/local/bin/sh
+RUN chmod +x /usr/local/bin/sh
+RUN rm -rf build/generated
+
+WORKDIR /opt/
+
+RUN git clone https://github.com/sei-protocol/sei-chain.git \
+    && cd sei-chain \
+    && git checkout 99c1a9e 
+
+WORKDIR /opt/sei-chain
+
+RUN LINK_STATICALLY=true make build-all
+
+FROM alpine:3.15
+COPY --from=builder /opt/sei-chain/build/seid /usr/local/bin/
+RUN apk add bash vim \
+    && addgroup -g 1000 sei-chain \
+    && adduser -S -h /home/sei-chain -D sei-chain -u 1000 -G sei-chain
+
+USER 1000
+WORKDIR /home/sei-chain
+
+EXPOSE 26657 26656 1317 9090
+
+CMD ["seid", "start"]
