@@ -8,8 +8,9 @@ import (
 	recordstypes "github.com/Stride-Labs/stride/v5/x/records/types"
 	"github.com/Stride-Labs/stride/v5/x/stakeibc/types"
 
+	sdkerrors "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	legacysdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 	"github.com/golang/protobuf/proto" //nolint:staticcheck
 )
@@ -80,7 +81,7 @@ func RedemptionCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, a
 	// Confirm host zone exists
 	_, found := k.GetHostZone(ctx, chainId)
 	if !found {
-		return sdkerrors.Wrapf(sdkerrors.ErrKeyNotFound, "Host zone not found: %s", chainId)
+		return sdkerrors.Wrapf(legacysdkerrors.ErrKeyNotFound, "Host zone not found: %s", chainId)
 	}
 
 	// Upon success, update the unbonding record status to CLAIMABLE

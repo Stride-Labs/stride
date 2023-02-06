@@ -4,9 +4,9 @@ import (
 	"encoding/binary"
 	"fmt"
 
+	sdkerrors "cosmossdk.io/errors"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
 	stakeibctypes "github.com/Stride-Labs/stride/v5/x/stakeibc/types"
 

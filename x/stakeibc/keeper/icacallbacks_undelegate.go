@@ -12,8 +12,9 @@ import (
 	recordstypes "github.com/Stride-Labs/stride/v5/x/records/types"
 	"github.com/Stride-Labs/stride/v5/x/stakeibc/types"
 
+	sdkerrors "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	legacysdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 	"github.com/golang/protobuf/proto" //nolint:staticcheck
@@ -87,7 +88,7 @@ func UndelegateCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, a
 	// Update delegation balances
 	hostZone, found := k.GetHostZone(ctx, undelegateCallback.HostZoneId)
 	if !found {
-		return sdkerrors.Wrapf(sdkerrors.ErrKeyNotFound, "Host zone not found: %s", undelegateCallback.HostZoneId)
+		return sdkerrors.Wrapf(legacysdkerrors.ErrKeyNotFound, "Host zone not found: %s", undelegateCallback.HostZoneId)
 	}
 	err = k.UpdateDelegationBalances(ctx, hostZone, undelegateCallback)
 	if err != nil {
@@ -183,13 +184,13 @@ func (k Keeper) UpdateHostZoneUnbondings(
 		if !found {
 			errMsg := fmt.Sprintf("Unable to find epoch unbonding record for epoch: %d", epochNumber)
 			k.Logger(ctx).Error(errMsg)
-			return sdkmath.ZeroInt(), sdkerrors.Wrapf(sdkerrors.ErrKeyNotFound, errMsg)
+			return sdkmath.ZeroInt(), sdkerrors.Wrapf(legacysdkerrors.ErrKeyNotFound, errMsg)
 		}
 		hostZoneUnbonding, found := k.RecordsKeeper.GetHostZoneUnbondingByChainId(ctx, epochUnbondingRecord.EpochNumber, chainId)
 		if !found {
 			errMsg := fmt.Sprintf("Host zone unbonding not found (%s) in epoch unbonding record: %d", chainId, epochNumber)
 			k.Logger(ctx).Error(errMsg)
-			return sdkmath.ZeroInt(), sdkerrors.Wrapf(sdkerrors.ErrKeyNotFound, errMsg)
+			return sdkmath.ZeroInt(), sdkerrors.Wrapf(legacysdkerrors.ErrKeyNotFound, errMsg)
 		}
 
 		// Keep track of the stTokens that need to be burned
@@ -220,7 +221,7 @@ func (k Keeper) BurnTokens(ctx sdk.Context, hostZone types.HostZone, stTokenBurn
 	stCoinString := stTokenBurnAmount.String() + stCoinDenom
 	stCoin, err := sdk.ParseCoinNormalized(stCoinString)
 	if err != nil {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidCoins, "could not parse burnCoin: %s. err: %s", stCoinString, err.Error())
+		return sdkerrors.Wrapf(legacysdkerrors.ErrInvalidCoins, "could not parse burnCoin: %s. err: %s", stCoinString, err.Error())
 	}
 
 	// Send the stTokens from the host zone module account to the stakeibc module account

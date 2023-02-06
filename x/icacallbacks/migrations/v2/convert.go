@@ -1,8 +1,8 @@
 package v2
 
 import (
+	sdkerrors "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/golang/protobuf/proto" //nolint:staticcheck
 
 	icacallbacktypes "github.com/Stride-Labs/stride/v5/x/icacallbacks/types"

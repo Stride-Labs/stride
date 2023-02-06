@@ -7,9 +7,10 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 
+	sdkerrors "cosmossdk.io/errors"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	legacysdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
 	"github.com/Stride-Labs/stride/v5/utils"
 	"github.com/Stride-Labs/stride/v5/x/stakeibc/types"
@@ -46,7 +47,7 @@ func (k Keeper) GetHostZoneFromHostDenom(ctx sdk.Context, denom string) (*types.
 	if matchZone.ChainId != "" {
 		return &matchZone, nil
 	}
-	return nil, sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "No HostZone for %s found", denom)
+	return nil, sdkerrors.Wrapf(legacysdkerrors.ErrUnknownRequest, "No HostZone for %s found", denom)
 }
 
 // RemoveHostZone removes a hostZone from the store
@@ -203,7 +204,7 @@ func (k Keeper) GetHostZoneFromIBCDenom(ctx sdk.Context, denom string) (*types.H
 	if matchZone.ChainId != "" {
 		return &matchZone, nil
 	}
-	return nil, sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "No HostZone for %s found", denom)
+	return nil, sdkerrors.Wrapf(legacysdkerrors.ErrUnknownRequest, "No HostZone for %s found", denom)
 }
 
 // IterateHostZones iterates zones

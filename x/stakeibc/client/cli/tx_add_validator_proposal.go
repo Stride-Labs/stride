@@ -7,10 +7,11 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/codec"
 
+	sdkerrors "cosmossdk.io/errors"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	legacysdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/version"
 	govcli "github.com/cosmos/cosmos-sdk/x/gov/client/cli"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
@@ -94,7 +95,7 @@ Where proposal.json contains:
 			}
 
 			if len(deposit) != 1 || deposit.GetDenomByIndex(0) != strideDenom {
-				return sdkerrors.Wrapf(sdkerrors.ErrInvalidCoins, "Deposit token denom must be %s", strideDenom)
+				return sdkerrors.Wrapf(legacysdkerrors.ErrInvalidCoins, "Deposit token denom must be %s", strideDenom)
 			}
 
 			msg, err := govtypes.NewMsgSubmitProposal(&proposal, deposit, from)

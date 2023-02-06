@@ -3,7 +3,8 @@ package keeper
 import (
 	"fmt"
 
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	sdkerrors "cosmossdk.io/errors"
+	legacysdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/spf13/cast"
 	"github.com/tendermint/tendermint/libs/log"
 
@@ -174,7 +175,7 @@ func (k Keeper) GetStrideEpochElapsedShare(ctx sdk.Context) (sdk.Dec, error) {
 	if !found {
 		errMsg := fmt.Sprintf("Failed to get epoch tracker for %s", epochstypes.STRIDE_EPOCH)
 		k.Logger(ctx).Error(errMsg)
-		return sdk.ZeroDec(), sdkerrors.Wrapf(sdkerrors.ErrNotFound, errMsg)
+		return sdk.ZeroDec(), sdkerrors.Wrapf(legacysdkerrors.ErrNotFound, errMsg)
 	}
 
 	// Get epoch start time, end time, and duration
@@ -236,7 +237,7 @@ func (k Keeper) GetICATimeoutNanos(ctx sdk.Context, epochType string) (uint64, e
 	epochTracker, found := k.GetEpochTracker(ctx, epochType)
 	if !found {
 		k.Logger(ctx).Error(fmt.Sprintf("Failed to get epoch tracker for %s", epochType))
-		return 0, sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "Failed to get epoch tracker for %s", epochType)
+		return 0, sdkerrors.Wrapf(legacysdkerrors.ErrInvalidRequest, "Failed to get epoch tracker for %s", epochType)
 	}
 	// BUFFER by 5% of the epoch length
 	bufferSizeParam := k.GetParam(ctx, types.KeyBufferSize)
@@ -244,13 +245,13 @@ func (k Keeper) GetICATimeoutNanos(ctx sdk.Context, epochType string) (uint64, e
 	// buffer size should not be negative or longer than the epoch duration
 	if bufferSize > epochTracker.Duration {
 		k.Logger(ctx).Error(fmt.Sprintf("Invalid buffer size %d", bufferSize))
-		return 0, sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "Invalid buffer size %d", bufferSize)
+		return 0, sdkerrors.Wrapf(legacysdkerrors.ErrInvalidRequest, "Invalid buffer size %d", bufferSize)
 	}
 	timeoutNanos := epochTracker.NextEpochStartTime - bufferSize
 	timeoutNanosUint64, err := cast.ToUint64E(timeoutNanos)
 	if err != nil {
 		k.Logger(ctx).Error(fmt.Sprintf("Failed to convert timeoutNanos to uint64, error: %s", err.Error()))
-		return 0, sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "Failed to convert timeoutNanos to uint64, error: %s", err.Error())
+		return 0, sdkerrors.Wrapf(legacysdkerrors.ErrInvalidRequest, "Failed to convert timeoutNanos to uint64, error: %s", err.Error())
 	}
 	return timeoutNanosUint64, nil
 }

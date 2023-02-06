@@ -3,10 +3,11 @@ package keeper
 import (
 	"fmt"
 
+	sdkerrors "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	legacysdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	proto "github.com/cosmos/gogoproto/proto"
 	"github.com/spf13/cast"
@@ -73,7 +74,7 @@ func WithdrawalBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query icq
 	// check that stride commission is between 0 and 1
 	strideCommission := sdk.NewDec(strideCommissionInt).Quo(sdk.NewDec(100))
 	if strideCommission.LT(sdk.ZeroDec()) || strideCommission.GT(sdk.OneDec()) {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "Aborting withdrawal balance callback -- Stride commission must be between 0 and 1!")
+		return sdkerrors.Wrap(legacysdkerrors.ErrInvalidRequest, "Aborting withdrawal balance callback -- Stride commission must be between 0 and 1!")
 	}
 
 	// Split out the reinvestment amount from the fee amount
@@ -83,7 +84,7 @@ func WithdrawalBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query icq
 	// Safety check, balances should add to original amount
 	if !feeAmount.Add(reinvestAmount).Equal(withdrawalBalanceAmount) {
 		k.Logger(ctx).Error(fmt.Sprintf("Error with withdraw logic: %v, Fee Portion: %v, Reinvest Portion %v", withdrawalBalanceAmount, feeAmount, reinvestAmount))
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "Failed to subdivide rewards to feeAccount and delegationAccount")
+		return sdkerrors.Wrap(legacysdkerrors.ErrInvalidRequest, "Failed to subdivide rewards to feeAccount and delegationAccount")
 	}
 
 	// Prepare MsgSends from the withdrawal account
@@ -144,7 +145,7 @@ func WithdrawalBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query icq
 func UnmarshalAmountFromBalanceQuery(cdc codec.BinaryCodec, queryResponseBz []byte) (amount sdkmath.Int, err error) {
 	// An nil should not be possible, exit immediately if it occurs
 	if queryResponseBz == nil {
-		return sdkmath.Int{}, sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "query response is nil")
+		return sdkmath.Int{}, sdkerrors.Wrapf(legacysdkerrors.ErrInvalidRequest, "query response is nil")
 	}
 
 	// If the query response is empty, that means the account was never registed (and thus has a 0 balance)

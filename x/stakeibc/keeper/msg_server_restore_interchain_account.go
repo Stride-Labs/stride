@@ -4,8 +4,9 @@ import (
 	"context"
 	"fmt"
 
+	sdkerrors "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	legacysdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	icatypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/types"
 
 	recordtypes "github.com/Stride-Labs/stride/v5/x/records/types"
@@ -27,7 +28,7 @@ func (k msgServer) RestoreInterchainAccount(goCtx context.Context, msg *types.Ms
 	if !found {
 		errMsg := fmt.Sprintf("invalid connection id from host %s, %s not found", msg.ChainId, hostZone.ConnectionId)
 		k.Logger(ctx).Error(errMsg)
-		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, errMsg)
+		return nil, sdkerrors.Wrapf(legacysdkerrors.ErrInvalidRequest, errMsg)
 	}
 	counterpartyConnection := connectionEnd.Counterparty
 

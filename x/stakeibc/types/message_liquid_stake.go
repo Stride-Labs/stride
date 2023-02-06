@@ -3,9 +3,10 @@ package types
 import (
 	"strings"
 
+	sdkerrors "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	legacysdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
 const TypeMsgLiquidStake = "liquid_stake"
@@ -54,7 +55,7 @@ func (msg *MsgLiquidStake) GetSignBytes() []byte {
 func (msg *MsgLiquidStake) ValidateBasic() error {
 	_, err := sdk.AccAddressFromBech32(msg.Creator)
 	if err != nil {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid creator address (%s)", err)
+		return sdkerrors.Wrapf(legacysdkerrors.ErrInvalidAddress, "invalid creator address (%s)", err)
 	}
 	// validate amount is positive nonzero
 	if msg.Amount.LTE(sdkmath.ZeroInt()) {

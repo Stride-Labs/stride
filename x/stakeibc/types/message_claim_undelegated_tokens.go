@@ -1,8 +1,9 @@
 package types
 
 import (
+	sdkerrors "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	legacysdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
 	"github.com/Stride-Labs/stride/v5/utils"
 )
@@ -44,12 +45,12 @@ func (msg *MsgClaimUndelegatedTokens) GetSignBytes() []byte {
 func (msg *MsgClaimUndelegatedTokens) ValidateBasic() error {
 	_, err := sdk.AccAddressFromBech32(msg.Creator)
 	if err != nil {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid creator address (%s)", err)
+		return sdkerrors.Wrapf(legacysdkerrors.ErrInvalidAddress, "invalid creator address (%s)", err)
 	}
 	// sender must be a valid stride address
 	_, err = utils.AccAddressFromBech32(msg.Sender, "stride")
 	if err != nil {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid sender address (%s)", err)
+		return sdkerrors.Wrapf(legacysdkerrors.ErrInvalidAddress, "invalid sender address (%s)", err)
 	}
 	// validate host denom is not empty
 	if msg.HostZoneId == "" {

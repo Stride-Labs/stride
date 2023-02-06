@@ -7,8 +7,9 @@ import (
 	recordstypes "github.com/Stride-Labs/stride/v5/x/records/types"
 	"github.com/Stride-Labs/stride/v5/x/stakeibc/types"
 
+	sdkerrors "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	legacysdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
 	"github.com/Stride-Labs/stride/v5/utils"
 )
@@ -20,7 +21,7 @@ func (k msgServer) RedeemStake(goCtx context.Context, msg *types.MsgRedeemStake)
 	// get our addresses, make sure they're valid
 	sender, err := sdk.AccAddressFromBech32(msg.Creator)
 	if err != nil {
-		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "creator address is invalid: %s. err: %s", msg.Creator, err.Error())
+		return nil, sdkerrors.Wrapf(legacysdkerrors.ErrInvalidAddress, "creator address is invalid: %s. err: %s", msg.Creator, err.Error())
 	}
 	// then make sure host zone is valid
 	hostZone, found := k.GetHostZone(ctx, msg.HostZone)
@@ -43,7 +44,7 @@ func (k msgServer) RedeemStake(goCtx context.Context, msg *types.MsgRedeemStake)
 	// TODO(TEST-112) do we need to check the hostZone before this check? Would need access to keeper
 	_, err = utils.AccAddressFromBech32(msg.Receiver, hostZone.Bech32Prefix)
 	if err != nil {
-		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid receiver address (%s)", err)
+		return nil, sdkerrors.Wrapf(legacysdkerrors.ErrInvalidAddress, "invalid receiver address (%s)", err)
 	}
 
 	// construct desired unstaking amount from host zone
@@ -65,19 +66,19 @@ func (k msgServer) RedeemStake(goCtx context.Context, msg *types.MsgRedeemStake)
 	coinString := nativeAmount.String() + stDenom
 	inCoin, err := sdk.ParseCoinNormalized(coinString)
 	if err != nil {
-		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidCoins, "could not parse inCoin: %s. err: %s", coinString, err.Error())
+		return nil, sdkerrors.Wrapf(legacysdkerrors.ErrInvalidCoins, "could not parse inCoin: %s. err: %s", coinString, err.Error())
 	}
 	// safety checks on the coin
 	// 	- Redemption amount must be positive
 	if !nativeAmount.IsPositive() {
-		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidCoins, "amount must be greater than 0. found: %v", msg.Amount)
+		return nil, sdkerrors.Wrapf(legacysdkerrors.ErrInvalidCoins, "amount must be greater than 0. found: %v", msg.Amount)
 	}
 	// 	- Creator owns at least "amount" stAssets
 	balance := k.bankKeeper.GetBalance(ctx, sender, stDenom)
 	k.Logger(ctx).Info(fmt.Sprintf("Redemption issuer IBCDenom balance: %v%s", balance.Amount, balance.Denom))
 	k.Logger(ctx).Info(fmt.Sprintf("Redemption requested redemotion amount: %v%s", inCoin.Amount, inCoin.Denom))
 	if balance.Amount.LT(msg.Amount) {
-		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidCoins, "balance is lower than redemption amount. redemption amount: %v, balance %v: ", msg.Amount, balance.Amount)
+		return nil, sdkerrors.Wrapf(legacysdkerrors.ErrInvalidCoins, "balance is lower than redemption amount. redemption amount: %v, balance %v: ", msg.Amount, balance.Amount)
 	}
 	// UNBONDING RECORD KEEPING
 	userRedemptionRecord := recordstypes.UserRedemptionRecord{

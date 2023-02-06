@@ -1,8 +1,9 @@
 package keeper
 
 import (
+	sdkerrors "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	legacysdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/spf13/cast"
 
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
@@ -47,7 +48,7 @@ func DelegatorSharesCallback(k Keeper, ctx sdk.Context, args []byte, query icqty
 	// Ensure ICQ can be issued now, else fail the callback
 	withinBufferWindow, err := k.IsWithinBufferWindow(ctx)
 	if err != nil {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "unable to determine if ICQ callback is inside buffer window, err: %s", err.Error())
+		return sdkerrors.Wrapf(legacysdkerrors.ErrInvalidRequest, "unable to determine if ICQ callback is inside buffer window, err: %s", err.Error())
 	}
 	if !withinBufferWindow {
 		return sdkerrors.Wrapf(types.ErrOutsideIcqWindow, "callback is outside ICQ window")
@@ -62,10 +63,10 @@ func DelegatorSharesCallback(k Keeper, ctx sdk.Context, args []byte, query icqty
 	// Get the validator's internal exchange rate, aborting if it hasn't been updated this epoch
 	strideEpochTracker, found := k.GetEpochTracker(ctx, epochtypes.STRIDE_EPOCH)
 	if !found {
-		return sdkerrors.Wrapf(sdkerrors.ErrNotFound, "unable to get epoch tracker for epoch (%s)", epochtypes.STRIDE_EPOCH)
+		return sdkerrors.Wrapf(legacysdkerrors.ErrNotFound, "unable to get epoch tracker for epoch (%s)", epochtypes.STRIDE_EPOCH)
 	}
 	if validator.InternalExchangeRate.EpochNumber != strideEpochTracker.EpochNumber {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest,
+		return sdkerrors.Wrapf(legacysdkerrors.ErrInvalidRequest,
 			"validator (%s) internal exchange rate has not been updated this epoch (epoch #%d)", validator.Address, strideEpochTracker.EpochNumber)
 	}
 
@@ -81,7 +82,7 @@ func DelegatorSharesCallback(k Keeper, ctx sdk.Context, args []byte, query icqty
 		return nil
 	}
 	if delegatedTokens.GT(validator.DelegationAmt) {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "Validator (%s) tokens returned from query is greater than the DelegationAmt", validator.Address)
+		return sdkerrors.Wrapf(legacysdkerrors.ErrInvalidRequest, "Validator (%s) tokens returned from query is greater than the DelegationAmt", validator.Address)
 	}
 
 	// TODO(TESTS-171) add some safety checks here (e.g. we could query the slashing module to confirm the decr in tokens was due to slash)
