@@ -99,8 +99,13 @@ lint:
 test-unit:
 	@go test -mod=readonly ./x/... ./app/...
 
+<<<<<<< HEAD
 test-unit-path:
 	@go test -mod=readonly ./x/$(path)/...
+=======
+test-unit-module:
+	@go test -mod=readonly ./x/$(module)/...
+>>>>>>> main
 
 test-cover:
 	@go test -mod=readonly -race -coverprofile=coverage.out -covermode=atomic ./x/$(path)/...
@@ -203,7 +208,11 @@ localnet-state-export-startd:
 	@docker-compose -f $(STATE_EXPORT_COMPOSE_FILE) up -d
 
 localnet-state-export-upgrade:
+<<<<<<< HEAD
 	bash $(LOCALSTRIDE_HOME)/state-export/scripts/submit_upgrade.sh
+=======
+	bash $(LOCALSTRIDE_HOME)/state-export/scripts/submit_upgrade.sh 
+>>>>>>> main
 
 localnet-state-export-stop:
 	@docker-compose -f $(STATE_EXPORT_COMPOSE_FILE) down
