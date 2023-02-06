@@ -3,14 +3,13 @@ package keeper
 import (
 	"fmt"
 
-	"github.com/Stride-Labs/stride/v4/utils"
-	"github.com/Stride-Labs/stride/v4/x/icacallbacks"
-	icacallbackstypes "github.com/Stride-Labs/stride/v4/x/icacallbacks/types"
-	"github.com/Stride-Labs/stride/v4/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v5/utils"
+	icacallbackstypes "github.com/Stride-Labs/stride/v5/x/icacallbacks/types"
+	"github.com/Stride-Labs/stride/v5/x/stakeibc/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	channeltypes "github.com/cosmos/ibc-go/v3/modules/core/04-channel/types"
+	channeltypes "github.com/cosmos/ibc-go/v5/modules/core/04-channel/types"
 	"github.com/golang/protobuf/proto" //nolint:staticcheck
 )
 
@@ -39,7 +38,7 @@ func (k Keeper) UnmarshalRebalanceCallbackArgs(ctx sdk.Context, rebalanceCallbac
 //      * Updates relevant validator delegations on the host zone struct
 //   If timeout/failure:
 //      * Does nothing
-func RebalanceCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ack *channeltypes.Acknowledgement, args []byte) error {
+func RebalanceCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ackResponse *icacallbackstypes.AcknowledgementResponse, args []byte) error {
 	// Fetch callback args
 	rebalanceCallback, err := k.UnmarshalRebalanceCallbackArgs(ctx, args)
 	if err != nil {
@@ -50,26 +49,22 @@ func RebalanceCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ac
 
 	// Check for timeout (ack nil)
 	// No action is necessary on a timeout
-	if ack == nil {
-		k.Logger(ctx).Error(utils.LogICACallbackWithHostZone(chainId, ICACallbackID_Rebalance,
-			"TIMEOUT (ack is nil), Packet: %+v", packet))
+	if ackResponse.Status == icacallbackstypes.AckResponseStatus_TIMEOUT {
+		k.Logger(ctx).Error(utils.LogICACallbackStatusWithHostZone(chainId, ICACallbackID_Rebalance,
+			icacallbackstypes.AckResponseStatus_TIMEOUT, packet))
 		return nil
 	}
 
 	// Check for a failed transaction (ack error)
 	// No action is necessary on a failure
-	txMsgData, err := icacallbacks.GetTxMsgData(ctx, *ack, k.Logger(ctx))
-	if err != nil {
-		k.Logger(ctx).Error(fmt.Sprintf("RebalanceCallback failed to fetch txMsgData, packet %v", packet))
-		return sdkerrors.Wrap(icacallbackstypes.ErrTxMsgData, err.Error())
-	}
-	if len(txMsgData.Data) == 0 {
-		k.Logger(ctx).Error(utils.LogICACallbackWithHostZone(chainId, ICACallbackID_Rebalance,
-			"ICA TX FAILED (ack is empty / ack error), Packet: %+v", packet))
+	if ackResponse.Status == icacallbackstypes.AckResponseStatus_FAILURE {
+		k.Logger(ctx).Error(utils.LogICACallbackStatusWithHostZone(chainId, ICACallbackID_Rebalance,
+			icacallbackstypes.AckResponseStatus_FAILURE, packet))
 		return nil
 	}
 
-	k.Logger(ctx).Info(utils.LogICACallbackWithHostZone(chainId, ICACallbackID_Rebalance, "SUCCESS, Packet: %+v", packet))
+	k.Logger(ctx).Info(utils.LogICACallbackStatusWithHostZone(chainId, ICACallbackID_Rebalance,
+		icacallbackstypes.AckResponseStatus_SUCCESS, packet))
 
 	// Confirm the host zone exists
 	hostZone, found := k.GetHostZone(ctx, chainId)

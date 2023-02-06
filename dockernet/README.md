@@ -72,13 +72,14 @@ ST{CHAIN}_DENOM="st{min_denom}"
 {CHAIN}_COIN_TYPE=${TYPE}_COIN_TYPE
 {CHAIN}_RPC_PORT={the one included in the docker-compose above}
 {CHAIN}_MAIN_CMD="${CHAIN}_CMD --home $DOCKERNET_HOME/state/${${CHAIN}_NODE_PREFIX}1"
+{CHAIN}_RECEIVER_ADDRESS={any random address on the chain}
 
 # Add *below* the RELAYER section!
 RELAYER_{CHAIN}_EXEC="docker-compose run --rm relayer-{new-host-zone}"
 RELAYER_{CHAIN}_ACCT=rly{add one since the account from the last host zone}
 
-# NOTE: Update the HOST_RELAYER_ACCTS variable directly!
-HOST_RELAYER_ACCTS=(... $RELAYER_{CHAIN}_ACCT)
+# NOTE: Update the RELAYER_ACCTS variable directly!
+RELAYER_ACCTS=(... $RELAYER_{CHAIN}_ACCT)
 
 # stride1muwz5er4wq7svxnh5dgn2tssm92je5dwthxl7q
 RELAYER_{CHAIN}_MNEMONIC="science depart where tell bus ski laptop follow child bronze rebel recall brief plug razor ship degree labor human series today embody fury harvest"

@@ -3,13 +3,14 @@ package keeper
 import (
 	"fmt"
 
+	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/spf13/cast"
 
-	"github.com/Stride-Labs/stride/v4/utils"
-	epochstypes "github.com/Stride-Labs/stride/v4/x/epochs/types"
-	recordstypes "github.com/Stride-Labs/stride/v4/x/records/types"
-	"github.com/Stride-Labs/stride/v4/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v5/utils"
+	epochstypes "github.com/Stride-Labs/stride/v5/x/epochs/types"
+	recordstypes "github.com/Stride-Labs/stride/v5/x/records/types"
+	"github.com/Stride-Labs/stride/v5/x/stakeibc/types"
 )
 
 func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochInfo epochstypes.EpochInfo) {
@@ -173,14 +174,14 @@ func (k Keeper) UpdateRedemptionRates(ctx sdk.Context, depositRecords []recordst
 	}
 }
 
-func (k Keeper) GetUndelegatedBalance(hostZone types.HostZone, depositRecords []recordstypes.DepositRecord) (sdk.Int, error) {
+func (k Keeper) GetUndelegatedBalance(hostZone types.HostZone, depositRecords []recordstypes.DepositRecord) (sdkmath.Int, error) {
 	// filter to only the deposit records for the host zone with status DELEGATION_QUEUE
 	UndelegatedDepositRecords := utils.FilterDepositRecords(depositRecords, func(record recordstypes.DepositRecord) (condition bool) {
 		return ((record.Status == recordstypes.DepositRecord_DELEGATION_QUEUE || record.Status == recordstypes.DepositRecord_DELEGATION_IN_PROGRESS) && record.HostZoneId == hostZone.ChainId)
 	})
 
 	// sum the amounts of the deposit records
-	totalAmount := sdk.ZeroInt()
+	totalAmount := sdkmath.ZeroInt()
 	for _, depositRecord := range UndelegatedDepositRecords {
 		totalAmount = totalAmount.Add(depositRecord.Amount)
 	}
@@ -188,14 +189,14 @@ func (k Keeper) GetUndelegatedBalance(hostZone types.HostZone, depositRecords []
 	return totalAmount, nil
 }
 
-func (k Keeper) GetModuleAccountBalance(hostZone types.HostZone, depositRecords []recordstypes.DepositRecord) (sdk.Int, error) {
+func (k Keeper) GetModuleAccountBalance(hostZone types.HostZone, depositRecords []recordstypes.DepositRecord) (sdkmath.Int, error) {
 	// filter to only the deposit records for the host zone with status DELEGATION
 	ModuleAccountRecords := utils.FilterDepositRecords(depositRecords, func(record recordstypes.DepositRecord) (condition bool) {
 		return (record.Status == recordstypes.DepositRecord_TRANSFER_QUEUE || record.Status == recordstypes.DepositRecord_TRANSFER_IN_PROGRESS) && record.HostZoneId == hostZone.ChainId
 	})
 
 	// sum the amounts of the deposit records
-	totalAmount := sdk.ZeroInt()
+	totalAmount := sdkmath.ZeroInt()
 	for _, depositRecord := range ModuleAccountRecords {
 		totalAmount = totalAmount.Add(depositRecord.Amount)
 	}
@@ -208,8 +209,8 @@ func (k Keeper) ReinvestRewards(ctx sdk.Context) {
 
 	for _, hostZone := range k.GetAllHostZone(ctx) {
 		// only process host zones once withdrawal accounts are registered
-		withdrawalIca := hostZone.WithdrawalAccount
-		if withdrawalIca == nil {
+		withdrawalAccount := hostZone.WithdrawalAccount
+		if withdrawalAccount == nil || withdrawalAccount.Address == "" {
 			k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId, "Withdrawal account not registered for host zone"))
 			continue
 		}

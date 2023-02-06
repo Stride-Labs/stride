@@ -3,15 +3,14 @@ package keeper
 import (
 	"fmt"
 
-	"github.com/Stride-Labs/stride/v4/utils"
-	"github.com/Stride-Labs/stride/v4/x/icacallbacks"
-	icacallbackstypes "github.com/Stride-Labs/stride/v4/x/icacallbacks/types"
-	recordstypes "github.com/Stride-Labs/stride/v4/x/records/types"
-	"github.com/Stride-Labs/stride/v4/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v5/utils"
+	icacallbackstypes "github.com/Stride-Labs/stride/v5/x/icacallbacks/types"
+	recordstypes "github.com/Stride-Labs/stride/v5/x/records/types"
+	"github.com/Stride-Labs/stride/v5/x/stakeibc/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	channeltypes "github.com/cosmos/ibc-go/v3/modules/core/04-channel/types"
+	channeltypes "github.com/cosmos/ibc-go/v5/modules/core/04-channel/types"
 	"github.com/golang/protobuf/proto" //nolint:staticcheck
 )
 
@@ -42,7 +41,7 @@ func (k Keeper) UnmarshalRedemptionCallbackArgs(ctx sdk.Context, redemptionCallb
 //      * Does nothing
 //   If failure:
 //		* Reverts epoch unbonding record status
-func RedemptionCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ack *channeltypes.Acknowledgement, args []byte) error {
+func RedemptionCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ackResponse *icacallbackstypes.AcknowledgementResponse, args []byte) error {
 	// Fetch callback args
 	redemptionCallback, err := k.UnmarshalRedemptionCallbackArgs(ctx, args)
 	if err != nil {
@@ -54,22 +53,17 @@ func RedemptionCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, a
 
 	// Check for timeout (ack nil)
 	// No need to reset the unbonding record status since it will get reverted when the channel is restored
-	if ack == nil {
-		k.Logger(ctx).Error(utils.LogICACallbackWithHostZone(chainId, ICACallbackID_Redemption,
-			"TIMEOUT (ack is nil), Packet: %+v", packet))
+	if ackResponse.Status == icacallbackstypes.AckResponseStatus_TIMEOUT {
+		k.Logger(ctx).Error(utils.LogICACallbackStatusWithHostZone(chainId, ICACallbackID_Redemption,
+			icacallbackstypes.AckResponseStatus_TIMEOUT, packet))
 		return nil
 	}
 
 	// Check for a failed transaction (ack error)
 	// Reset the unbonding record status upon failure
-	txMsgData, err := icacallbacks.GetTxMsgData(ctx, *ack, k.Logger(ctx))
-	if err != nil {
-		k.Logger(ctx).Error(fmt.Sprintf("RedemptionCallback txMsgData could not be parsed, packet %v", packet))
-		return sdkerrors.Wrap(icacallbackstypes.ErrTxMsgData, err.Error())
-	}
-	if len(txMsgData.Data) == 0 {
-		k.Logger(ctx).Error(utils.LogICACallbackWithHostZone(chainId, ICACallbackID_Redemption,
-			"ICA TX FAILED (ack is empty / ack error), Packet: %+v", packet))
+	if ackResponse.Status == icacallbackstypes.AckResponseStatus_FAILURE {
+		k.Logger(ctx).Error(utils.LogICACallbackStatusWithHostZone(chainId, ICACallbackID_Redemption,
+			icacallbackstypes.AckResponseStatus_FAILURE, packet))
 
 		// Reset unbondings record status
 		err = k.RecordsKeeper.SetHostZoneUnbondings(ctx, chainId, redemptionCallback.EpochUnbondingRecordIds, recordstypes.HostZoneUnbonding_EXIT_TRANSFER_QUEUE)
@@ -79,7 +73,8 @@ func RedemptionCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, a
 		return nil
 	}
 
-	k.Logger(ctx).Info(utils.LogICACallbackWithHostZone(chainId, ICACallbackID_Redemption, "SUCCESS, Packet: %+v", packet))
+	k.Logger(ctx).Info(utils.LogICACallbackStatusWithHostZone(chainId, ICACallbackID_Redemption,
+		icacallbackstypes.AckResponseStatus_SUCCESS, packet))
 
 	// Confirm host zone exists
 	_, found := k.GetHostZone(ctx, chainId)

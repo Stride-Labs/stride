@@ -2,10 +2,10 @@ package keeper_test
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	ibctesting "github.com/cosmos/ibc-go/v3/testing"
+	ibctesting "github.com/cosmos/ibc-go/v5/testing"
 
-	recordtypes "github.com/Stride-Labs/stride/v4/x/records/types"
-	stakeibc "github.com/Stride-Labs/stride/v4/x/stakeibc/types"
+	recordtypes "github.com/Stride-Labs/stride/v5/x/records/types"
+	stakeibc "github.com/Stride-Labs/stride/v5/x/stakeibc/types"
 )
 
 func (s *KeeperTestSuite) SetupSubmitHostZoneUnbondingMsg(hostZoneUnbonding recordtypes.HostZoneUnbonding) {

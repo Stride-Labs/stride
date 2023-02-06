@@ -3,15 +3,14 @@ package keeper
 import (
 	"fmt"
 
-	"github.com/Stride-Labs/stride/v4/utils"
-	"github.com/Stride-Labs/stride/v4/x/icacallbacks"
-	icacallbackstypes "github.com/Stride-Labs/stride/v4/x/icacallbacks/types"
-	recordstypes "github.com/Stride-Labs/stride/v4/x/records/types"
-	"github.com/Stride-Labs/stride/v4/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v5/utils"
+	icacallbackstypes "github.com/Stride-Labs/stride/v5/x/icacallbacks/types"
+	recordstypes "github.com/Stride-Labs/stride/v5/x/records/types"
+	"github.com/Stride-Labs/stride/v5/x/stakeibc/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	channeltypes "github.com/cosmos/ibc-go/v3/modules/core/04-channel/types"
+	channeltypes "github.com/cosmos/ibc-go/v5/modules/core/04-channel/types"
 	"github.com/golang/protobuf/proto" //nolint:staticcheck
 )
 
@@ -40,7 +39,7 @@ func (k Keeper) UnmarshalClaimCallbackArgs(ctx sdk.Context, claimCallback []byte
 //      * Removes the user redemption record
 //   If timeout/failure:
 //      * Reverts pending flag in the user redemption record so the claim can be re-tried
-func ClaimCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ack *channeltypes.Acknowledgement, args []byte) error {
+func ClaimCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ackResponse *icacallbackstypes.AcknowledgementResponse, args []byte) error {
 	// Fetch callback args
 	claimCallback, err := k.UnmarshalClaimCallbackArgs(ctx, args)
 	if err != nil {
@@ -56,11 +55,11 @@ func ClaimCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ack *c
 		return sdkerrors.Wrapf(types.ErrRecordNotFound, "user redemption record not found %s", claimCallback.GetUserRedemptionRecordId())
 	}
 
-	// Check for timeout (ack nil)
+	// Check for a timeout
 	// If the ICA timed out, update the redemption record so the user can retry the claim
-	if ack == nil {
-		k.Logger(ctx).Error(utils.LogICACallbackWithHostZone(chainId, ICACallbackID_Claim,
-			"TIMEOUT (ack is nil), Packet: %+v", packet))
+	if ackResponse.Status == icacallbackstypes.AckResponseStatus_TIMEOUT {
+		k.Logger(ctx).Error(utils.LogICACallbackStatusWithHostZone(chainId, ICACallbackID_Claim,
+			icacallbackstypes.AckResponseStatus_TIMEOUT, packet))
 
 		userRedemptionRecord.ClaimIsPending = false
 		k.RecordsKeeper.SetUserRedemptionRecord(ctx, userRedemptionRecord)
@@ -69,14 +68,9 @@ func ClaimCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ack *c
 
 	// Check for a failed transaction (ack error)
 	// Upon failure, update the redemption record to allow the user to retry the claim
-	txMsgData, err := icacallbacks.GetTxMsgData(ctx, *ack, k.Logger(ctx))
-	if err != nil {
-		k.Logger(ctx).Error(fmt.Sprintf("ClaimCallback txMsgData could not be parsed, packet %v", packet))
-		return sdkerrors.Wrap(icacallbackstypes.ErrTxMsgData, err.Error())
-	}
-	if len(txMsgData.Data) == 0 {
-		k.Logger(ctx).Error(utils.LogICACallbackWithHostZone(chainId, ICACallbackID_Claim,
-			"ICA TX FAILED (ack is empty / ack error), Packet: %+v", packet))
+	if ackResponse.Status == icacallbackstypes.AckResponseStatus_FAILURE {
+		k.Logger(ctx).Error(utils.LogICACallbackStatusWithHostZone(chainId, ICACallbackID_Claim,
+			icacallbackstypes.AckResponseStatus_FAILURE, packet))
 
 		// after an error, a user should be able to retry the claim
 		userRedemptionRecord.ClaimIsPending = false
@@ -84,7 +78,8 @@ func ClaimCallback(k Keeper, ctx sdk.Context, packet channeltypes.Packet, ack *c
 		return nil
 	}
 
-	k.Logger(ctx).Info(utils.LogICACallbackWithHostZone(chainId, ICACallbackID_Claim, "SUCCESS, Packet: %+v", packet))
+	k.Logger(ctx).Info(utils.LogICACallbackStatusWithHostZone(chainId, ICACallbackID_Claim,
+		icacallbackstypes.AckResponseStatus_SUCCESS, packet))
 
 	// Upon success, remove the record and decrement the unbonded amount on the host zone unbonding record
 	k.RecordsKeeper.RemoveUserRedemptionRecord(ctx, claimCallback.GetUserRedemptionRecordId())
