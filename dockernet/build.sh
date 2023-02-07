@@ -38,7 +38,12 @@ build_local_and_docker() {
       image=dockernet/dockerfiles/Dockerfile.$module
    fi
 
-   DOCKER_BUILDKIT=1 docker build --tag stridezone:$module -f $image . | true
+   if [[ "$module" == "sei" ]]; then
+      DOCKER_BUILDKIT=1 docker build --platform linux/x86_64 --tag stridezone:$module -f $image . | true
+   else
+      DOCKER_BUILDKIT=1 docker build --tag stridezone:$module -f $image . | true
+   fi
+   # DOCKER_BUILDKIT=1 docker build --tag stridezone:$module -f $image . | true
    docker_build_succeeded=${PIPESTATUS[0]}
 
    if [[ "$docker_build_succeeded" == "0" ]]; then
