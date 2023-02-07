@@ -265,6 +265,20 @@ func (s *KeeperTestSuite) TestRegisterHostZone_CannotFindDayEpochTracker() {
 	s.Require().EqualError(err, expectedErrMsg, "day epoch tracker not found")
 }
 
+func (s *KeeperTestSuite) TestRegisterHostZone_UnableToFindLatestEpochUnbondingRecord() {
+	tc := s.SetupRegisterHostZone()
+	msg := tc.validMsg
+
+	//setup another epoch tracker without SetepochUnbondingRecord
+	s.App.StakeibcKeeper.SetEpochTracker(s.Ctx, stakeibctypes.EpochTracker{
+		EpochIdentifier: epochtypes.DAY_EPOCH,
+		EpochNumber:     uint64(10),
+	})
+	_, err := s.GetMsgServer().RegisterHostZone(sdk.WrapSDKContext(s.Ctx), &msg)
+	s.Require().Error(err)
+	s.Require().EqualError(err, "unable to find latest epoch unbonding record: epoch unbonding record not found")
+}
+
 func (s *KeeperTestSuite) TestRegisterHostZone_CannotFindStrideEpochTracker() {
 	// tests for a failure if the epoch tracker cannot be found
 	tc := s.SetupRegisterHostZone()
