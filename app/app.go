@@ -332,6 +332,7 @@ func NewStrideApp(
 		recordsmoduletypes.StoreKey,
 		icacallbacksmoduletypes.StoreKey,
 		claimtypes.StoreKey,
+		crisistypes.StoreKey,
 		// this line is used by starport scaffolding # stargate/app/storeKey
 	)
 	tkeys := sdk.NewTransientStoreKeys(paramstypes.TStoreKey)
