@@ -21,6 +21,10 @@ import (
 
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	icacontrollerkeeper "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/controller/keeper"
+
+	clienttypes "github.com/cosmos/ibc-go/v7/modules/core/02-client/types"
+	porttypes "github.com/cosmos/ibc-go/v7/modules/core/05-port/types"
+	"github.com/cosmos/ibc-go/v7/modules/core/exported"
 )
 
 type (
@@ -33,6 +37,7 @@ type (
 		icacallbacks        map[string]types.ICACallbackHandler
 		IBCKeeper           ibckeeper.Keeper
 		ICAControllerKeeper icacontrollerkeeper.Keeper
+		ics4Wrapper         porttypes.ICS4Wrapper
 	}
 )
 
@@ -152,4 +157,36 @@ func (k Keeper) CallRegisteredICACallback(ctx sdk.Context, modulePacket channelt
 	// remove the callback data
 	k.RemoveCallbackData(ctx, callbackDataKey)
 	return nil
+}
+
+func (k Keeper) WriteAcknowledgement(ctx sdk.Context, channelCap *capabilitytypes.Capability, packet exported.PacketI, ack exported.Acknowledgement) error {
+	return k.ics4Wrapper.WriteAcknowledgement(ctx, channelCap, packet, ack)
+}
+
+func (k Keeper) GetAppVersion(ctx sdk.Context, portID, channelID string) (string, bool) {
+	return k.ics4Wrapper.GetAppVersion(ctx, portID, channelID)
+}
+
+func (k Keeper) SendPacket(
+	ctx sdk.Context,
+	channelCap *capabilitytypes.Capability,
+	sourcePort string,
+	sourceChannel string,
+	timeoutHeight clienttypes.Height,
+	timeoutTimestamp uint64,
+	data []byte,
+) (sequence uint64, err error) {
+	sequence, err = k.ics4Wrapper.SendPacket(
+		ctx,
+		channelCap,
+		sourcePort,
+		sourceChannel,
+		timeoutHeight,
+		timeoutTimestamp,
+		data,
+	)
+	if err != nil {
+		return 0, err
+	}
+	return sequence, nil
 }

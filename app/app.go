@@ -363,6 +363,10 @@ func NewStrideApp(
 	scopedTransferKeeper := app.CapabilityKeeper.ScopeToModule(ibctransfertypes.ModuleName)
 	scopedICAControllerKeeper := app.CapabilityKeeper.ScopeToModule(icacontrollertypes.SubModuleName)
 	scopedICAHostKeeper := app.CapabilityKeeper.ScopeToModule(icahosttypes.SubModuleName)
+	scopedStakeibcKeeper := app.CapabilityKeeper.ScopeToModule(stakeibcmoduletypes.ModuleName)
+	scopedIcacallbacksKeeper := app.CapabilityKeeper.ScopeToModule(icacallbacksmoduletypes.ModuleName)
+	scopedRecordsKeeper := app.CapabilityKeeper.ScopeToModule(recordsmoduletypes.ModuleName)
+	app.CapabilityKeeper.Seal()
 	// this line is used by starport scaffolding # stargate/app/scopedKeeper
 
 	// add keepers
@@ -454,7 +458,6 @@ func NewStrideApp(
 		scopedICAControllerKeeper, app.MsgServiceRouter(),
 	)
 
-	scopedIcacallbacksKeeper := app.CapabilityKeeper.ScopeToModule(icacallbacksmoduletypes.ModuleName)
 	app.ScopedIcacallbacksKeeper = scopedIcacallbacksKeeper
 	app.IcacallbacksKeeper = *icacallbacksmodulekeeper.NewKeeper(
 		appCodec,
@@ -469,7 +472,6 @@ func NewStrideApp(
 	app.InterchainqueryKeeper = interchainquerykeeper.NewKeeper(appCodec, keys[interchainquerytypes.StoreKey], app.IBCKeeper)
 	interchainQueryModule := interchainquery.NewAppModule(appCodec, app.InterchainqueryKeeper)
 
-	scopedRecordsKeeper := app.CapabilityKeeper.ScopeToModule(recordsmoduletypes.ModuleName)
 	app.ScopedRecordsKeeper = scopedRecordsKeeper
 	app.RecordsKeeper = *recordsmodulekeeper.NewKeeper(
 		appCodec,
@@ -484,7 +486,6 @@ func NewStrideApp(
 	)
 	recordsModule := recordsmodule.NewAppModule(appCodec, app.RecordsKeeper, app.AccountKeeper, app.BankKeeper)
 
-	scopedStakeibcKeeper := app.CapabilityKeeper.ScopeToModule(stakeibcmoduletypes.ModuleName)
 	app.ScopedStakeibcKeeper = scopedStakeibcKeeper
 	stakeibcKeeper := stakeibcmodulekeeper.NewKeeper(
 		appCodec,
@@ -571,7 +572,7 @@ func NewStrideApp(
 	// create IBC middleware stacks by combining middleware with base application
 	app.ICAHostKeeper = icahostkeeper.NewKeeper(
 		appCodec, keys[icahosttypes.StoreKey], app.GetSubspace(icahosttypes.SubModuleName),
-		app.IBCKeeper.ChannelKeeper, // TODO(blas): is this causing the tests to fail?
+		app.IcacallbacksKeeper, // TODO(blas): is this causing the tests to fail?
 		app.IBCKeeper.ChannelKeeper,
 		&app.IBCKeeper.PortKeeper,
 		app.AccountKeeper,

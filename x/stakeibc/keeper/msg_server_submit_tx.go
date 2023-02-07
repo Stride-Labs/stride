@@ -282,9 +282,9 @@ func (k Keeper) SubmitTxs(
 	if !found {
 		return 0, sdkerrors.Wrapf(icatypes.ErrActiveChannelNotFound, "failed to retrieve active channel for port %s", portID)
 	}
-
 	_, found = k.scopedKeeper.GetCapability(ctx, host.ChannelCapabilityPath(portID, channelID))
 	if !found {
+		fmt.Println(host.ChannelCapabilityPath(portID, channelID), "hello")
 		return 0, sdkerrors.Wrap(channeltypes.ErrChannelCapabilityNotFound, "module does not own channel capability")
 	}
 
