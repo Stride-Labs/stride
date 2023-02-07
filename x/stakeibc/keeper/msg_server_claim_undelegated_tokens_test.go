@@ -9,12 +9,13 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	ibctesting "github.com/cosmos/ibc-go/v5/testing"
 	_ "github.com/stretchr/testify/suite"
-	"github.com/Stride-Labs/stride/v5/x/stakeibc/types"
+
 	epochtypes "github.com/Stride-Labs/stride/v5/x/epochs/types"
+	recordstypes "github.com/Stride-Labs/stride/v5/x/records/types"
 	recordtypes "github.com/Stride-Labs/stride/v5/x/records/types"
 	stakeibckeeper "github.com/Stride-Labs/stride/v5/x/stakeibc/keeper"
+	"github.com/Stride-Labs/stride/v5/x/stakeibc/types"
 	stakeibctypes "github.com/Stride-Labs/stride/v5/x/stakeibc/types"
-	recordstypes "github.com/Stride-Labs/stride/v5/x/records/types"
 )
 
 type ClaimUndelegatedState struct {
@@ -216,6 +217,28 @@ func (s *KeeperTestSuite) TestClaimUndelegatedTokens_HzuNotStatusTransferred() {
 	s.Require().EqualError(err, "unable to find claimable redemption record for msg: creator:\"stride_SENDER\" host_zone_id:\"GAIA\" epoch:1 sender:\"stride_SENDER\" , error User redemption record GAIA.1.stride_SENDER is not claimable, host zone unbonding has status: EXIT_TRANSFER_QUEUE, requires status CLAIMABLE: user redemption record error: record not found")
 }
 
+func (s *KeeperTestSuite) TestGetClaimableRedemptionRecord_Successful() {
+	tc := s.SetupClaimUndelegatedTokens()
+	msg := tc.validMsg
+	userRedemptionRecord, err := s.App.StakeibcKeeper.GetClaimableRedemptionRecord(s.Ctx, &msg)
+	s.Require().NoError(err)
+	s.Require().Equal(userRedemptionRecord.Id, tc.initialState.redemptionRecordId)
+}
+
+func (s *KeeperTestSuite) TestGetClaimableRedemptionRecord_UserRedemptionRecordNotFound() {
+	tc := s.SetupClaimUndelegatedTokens()
+
+	//change HostZoneId in message
+	invalidMsg := tc.validMsg
+	invalidMsg.HostZoneId = "fake_host_zone"
+
+	userRedemptionRecordKey := recordstypes.UserRedemptionRecordKeyFormatter(invalidMsg.HostZoneId, invalidMsg.Epoch, invalidMsg.Sender)
+	errMg := fmt.Sprintf("User redemption record %s not found on host zone %s: user redemption record error", userRedemptionRecordKey, invalidMsg.HostZoneId)
+	
+	_, err := s.App.StakeibcKeeper.GetClaimableRedemptionRecord(s.Ctx, &invalidMsg)
+	s.Require().EqualError(err, errMg)
+}
+
 func (s *KeeperTestSuite) TestGetClaimableRedemptionRecord_HostZoneNotFound() {
 	tc := s.SetupClaimUndelegatedTokens()
 	// Change host zone in message
@@ -228,8 +251,37 @@ func (s *KeeperTestSuite) TestGetClaimableRedemptionRecord_HostZoneNotFound() {
 	s.App.RecordsKeeper.SetUserRedemptionRecord(s.Ctx, badRedemptionRecord)
 
 	userRedemptionRecordKey := recordstypes.UserRedemptionRecordKeyFormatter(invalidMsg.HostZoneId, invalidMsg.Epoch, invalidMsg.Sender)
-	errMg := fmt.Sprintf("Host zone unbonding record %s not found on host zone %s: %s", userRedemptionRecordKey, invalidMsg.HostZoneId, types.ErrInvalidUserRedemptionRecord)
+	errMsg := fmt.Sprintf("Host zone unbonding record %s not found on host zone %s: %s", userRedemptionRecordKey, invalidMsg.HostZoneId, types.ErrInvalidUserRedemptionRecord)
 	
 	_, err := s.App.StakeibcKeeper.GetClaimableRedemptionRecord(s.Ctx, &invalidMsg)
-	s.Require().EqualError(err, errMg)
+	s.Require().EqualError(err, errMsg)
+}
+
+func (s *KeeperTestSuite) TestGetClaimableRedemptionRecord_UserRedemptionRecordIsNotClaimable() {
+	tc := s.SetupClaimUndelegatedTokens()
+	//update status of HostZoneUnbonding
+	hostZoneUnbonding, found:= s.App.RecordsKeeper.GetHostZoneUnbondingByChainId(s.Ctx, tc.validMsg.Epoch, HostChainId)
+	s.Require().True(found)
+	hostZoneUnbonding.Status = recordstypes.HostZoneUnbonding_UNBONDING_QUEUE
+	pochUnbondingRecord := recordtypes.EpochUnbondingRecord{
+		EpochNumber:        tc.validMsg.Epoch,
+		HostZoneUnbondings: []*recordtypes.HostZoneUnbonding{hostZoneUnbonding},
+	}
+	s.App.RecordsKeeper.SetEpochUnbondingRecord(s.Ctx, pochUnbondingRecord)
+	errMsg := fmt.Sprintf("User redemption record %s is not claimable, host zone unbonding has status: %s, requires status CLAIMABLE: user redemption record error", tc.initialState.redemptionRecord.Id, hostZoneUnbonding.Status)
+	_, err := s.App.StakeibcKeeper.GetClaimableRedemptionRecord(s.Ctx, &tc.validMsg)
+	s.Require().EqualError(err, errMsg)
+}
+
+func (s *KeeperTestSuite) TestGetClaimableRedemptionRecord_ClaimIsPending() {
+	tc := s.SetupClaimUndelegatedTokens()
+	
+	// change ClaimIsPending of redemptionRecord to True
+	redemptionRecord := tc.initialState.redemptionRecord
+	redemptionRecord.ClaimIsPending = true
+	s.App.RecordsKeeper.SetUserRedemptionRecord(s.Ctx, redemptionRecord)
+
+	errMsg := fmt.Sprintf("User redemption record %s is not claimable, pending ack: user redemption record error", redemptionRecord.Id)
+		_, err := s.App.StakeibcKeeper.GetClaimableRedemptionRecord(s.Ctx, &tc.validMsg)
+	s.Require().EqualError(err, errMsg)
 }
