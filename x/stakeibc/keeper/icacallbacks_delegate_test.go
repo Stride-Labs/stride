@@ -200,6 +200,22 @@ func (s *KeeperTestSuite) TestDelegateCallback_HostNotFound() {
 	s.Require().Equal(recordtypes.DepositRecord_DELEGATION_QUEUE, record.Status, "deposit record status should not have changed")
 }
 
+func (s *KeeperTestSuite) TestDelegateCallback_RecordNotFound() {
+	tc := s.SetupDelegateCallback()
+	
+	callbackArgs := types.DelegateCallback{
+		HostZoneId: HostChainId,
+		DepositRecordId: 2,
+		SplitDelegations: tc.initialState.callbackArgs.SplitDelegations,
+	}
+	invalidArgs, err := s.App.StakeibcKeeper.MarshalDelegateCallbackArgs(s.Ctx, callbackArgs)
+	s.Require().NoError(err)
+
+	tc.validArgs.args = invalidArgs
+	err = stakeibckeeper.DelegateCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.packet, tc.validArgs.ackResponse, tc.validArgs.args)
+	s.Require().EqualError(err, "deposit record not found 2: invalid request")
+}
+
 func (s *KeeperTestSuite) TestDelegateCallback_MissingValidator() {
 	tc := s.SetupDelegateCallback()
 
