@@ -3,7 +3,7 @@ package stride.stakeibc;
 
 import "cosmos_proto/cosmos.proto";
 
-option go_package = "github.com/Stride-Labs/stride/v4/x/stakeibc/types";
+option go_package = "github.com/Stride-Labs/stride/v5/x/stakeibc/types";
 
 enum ICAAccountType {
   DELEGATION = 0;
@@ -12,9 +12,8 @@ enum ICAAccountType {
   REDEMPTION = 3;
 }
 
-// TODO(TEST-XX): Update these fields to be more useful (e.g. balances should be
-// coins, maybe store port name directly)
 message ICAAccount {
   string address = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
   ICAAccountType target = 3;
+  reserved 2;
 }

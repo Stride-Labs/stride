@@ -307,86 +307,6 @@ func (m *QueryGetValidatorsResponse) GetValidators() []*Validator {
 	return nil
 }
 
-type QueryGetICAAccountRequest struct {
-}
-
-func (m *QueryGetICAAccountRequest) Reset()         { *m = QueryGetICAAccountRequest{} }
-func (m *QueryGetICAAccountRequest) String() string { return proto.CompactTextString(m) }
-func (*QueryGetICAAccountRequest) ProtoMessage()    {}
-func (*QueryGetICAAccountRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_494b786fe66f2b80, []int{6}
-}
-func (m *QueryGetICAAccountRequest) XXX_Unmarshal(b []byte) error {
-	return m.Unmarshal(b)
-}
-func (m *QueryGetICAAccountRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	if deterministic {
-		return xxx_messageInfo_QueryGetICAAccountRequest.Marshal(b, m, deterministic)
-	} else {
-		b = b[:cap(b)]
-		n, err := m.MarshalToSizedBuffer(b)
-		if err != nil {
-			return nil, err
-		}
-		return b[:n], nil
-	}
-}
-func (m *QueryGetICAAccountRequest) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_QueryGetICAAccountRequest.Merge(m, src)
-}
-func (m *QueryGetICAAccountRequest) XXX_Size() int {
-	return m.Size()
-}
-func (m *QueryGetICAAccountRequest) XXX_DiscardUnknown() {
-	xxx_messageInfo_QueryGetICAAccountRequest.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_QueryGetICAAccountRequest proto.InternalMessageInfo
-
-type QueryGetICAAccountResponse struct {
-	IcaAccount ICAAccount `protobuf:"bytes,1,opt,name=ica_account,json=icaAccount,proto3" json:"ica_account"`
-}
-
-func (m *QueryGetICAAccountResponse) Reset()         { *m = QueryGetICAAccountResponse{} }
-func (m *QueryGetICAAccountResponse) String() string { return proto.CompactTextString(m) }
-func (*QueryGetICAAccountResponse) ProtoMessage()    {}
-func (*QueryGetICAAccountResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_494b786fe66f2b80, []int{7}
-}
-func (m *QueryGetICAAccountResponse) XXX_Unmarshal(b []byte) error {
-	return m.Unmarshal(b)
-}
-func (m *QueryGetICAAccountResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	if deterministic {
-		return xxx_messageInfo_QueryGetICAAccountResponse.Marshal(b, m, deterministic)
-	} else {
-		b = b[:cap(b)]
-		n, err := m.MarshalToSizedBuffer(b)
-		if err != nil {
-			return nil, err
-		}
-		return b[:n], nil
-	}
-}
-func (m *QueryGetICAAccountResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_QueryGetICAAccountResponse.Merge(m, src)
-}
-func (m *QueryGetICAAccountResponse) XXX_Size() int {
-	return m.Size()
-}
-func (m *QueryGetICAAccountResponse) XXX_DiscardUnknown() {
-	xxx_messageInfo_QueryGetICAAccountResponse.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_QueryGetICAAccountResponse proto.InternalMessageInfo
-
-func (m *QueryGetICAAccountResponse) GetIcaAccount() ICAAccount {
-	if m != nil {
-		return m.IcaAccount
-	}
-	return ICAAccount{}
-}
-
 type QueryGetHostZoneRequest struct {
 	ChainId string `protobuf:"bytes,1,opt,name=chain_id,json=chainId,proto3" json:"chain_id,omitempty"`
 }
@@ -395,7 +315,7 @@ func (m *QueryGetHostZoneRequest) Reset()         { *m = QueryGetHostZoneRequest
 func (m *QueryGetHostZoneRequest) String() string { return proto.CompactTextString(m) }
 func (*QueryGetHostZoneRequest) ProtoMessage()    {}
 func (*QueryGetHostZoneRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_494b786fe66f2b80, []int{8}
+	return fileDescriptor_494b786fe66f2b80, []int{6}
 }
 func (m *QueryGetHostZoneRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -439,7 +359,7 @@ func (m *QueryGetHostZoneResponse) Reset()         { *m = QueryGetHostZoneRespon
 func (m *QueryGetHostZoneResponse) String() string { return proto.CompactTextString(m) }
 func (*QueryGetHostZoneResponse) ProtoMessage()    {}
 func (*QueryGetHostZoneResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_494b786fe66f2b80, []int{9}
+	return fileDescriptor_494b786fe66f2b80, []int{7}
 }
 func (m *QueryGetHostZoneResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -483,7 +403,7 @@ func (m *QueryAllHostZoneRequest) Reset()         { *m = QueryAllHostZoneRequest
 func (m *QueryAllHostZoneRequest) String() string { return proto.CompactTextString(m) }
 func (*QueryAllHostZoneRequest) ProtoMessage()    {}
 func (*QueryAllHostZoneRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_494b786fe66f2b80, []int{10}
+	return fileDescriptor_494b786fe66f2b80, []int{8}
 }
 func (m *QueryAllHostZoneRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -528,7 +448,7 @@ func (m *QueryAllHostZoneResponse) Reset()         { *m = QueryAllHostZoneRespon
 func (m *QueryAllHostZoneResponse) String() string { return proto.CompactTextString(m) }
 func (*QueryAllHostZoneResponse) ProtoMessage()    {}
 func (*QueryAllHostZoneResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_494b786fe66f2b80, []int{11}
+	return fileDescriptor_494b786fe66f2b80, []int{9}
 }
 func (m *QueryAllHostZoneResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -579,7 +499,7 @@ func (m *QueryModuleAddressRequest) Reset()         { *m = QueryModuleAddressReq
 func (m *QueryModuleAddressRequest) String() string { return proto.CompactTextString(m) }
 func (*QueryModuleAddressRequest) ProtoMessage()    {}
 func (*QueryModuleAddressRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_494b786fe66f2b80, []int{12}
+	return fileDescriptor_494b786fe66f2b80, []int{10}
 }
 func (m *QueryModuleAddressRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -623,7 +543,7 @@ func (m *QueryModuleAddressResponse) Reset()         { *m = QueryModuleAddressRe
 func (m *QueryModuleAddressResponse) String() string { return proto.CompactTextString(m) }
 func (*QueryModuleAddressResponse) ProtoMessage()    {}
 func (*QueryModuleAddressResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_494b786fe66f2b80, []int{13}
+	return fileDescriptor_494b786fe66f2b80, []int{11}
 }
 func (m *QueryModuleAddressResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -667,7 +587,7 @@ func (m *QueryGetEpochTrackerRequest) Reset()         { *m = QueryGetEpochTracke
 func (m *QueryGetEpochTrackerRequest) String() string { return proto.CompactTextString(m) }
 func (*QueryGetEpochTrackerRequest) ProtoMessage()    {}
 func (*QueryGetEpochTrackerRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_494b786fe66f2b80, []int{14}
+	return fileDescriptor_494b786fe66f2b80, []int{12}
 }
 func (m *QueryGetEpochTrackerRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -711,7 +631,7 @@ func (m *QueryGetEpochTrackerResponse) Reset()         { *m = QueryGetEpochTrack
 func (m *QueryGetEpochTrackerResponse) String() string { return proto.CompactTextString(m) }
 func (*QueryGetEpochTrackerResponse) ProtoMessage()    {}
 func (*QueryGetEpochTrackerResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_494b786fe66f2b80, []int{15}
+	return fileDescriptor_494b786fe66f2b80, []int{13}
 }
 func (m *QueryGetEpochTrackerResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -748,14 +668,13 @@ func (m *QueryGetEpochTrackerResponse) GetEpochTracker() EpochTracker {
 }
 
 type QueryAllEpochTrackerRequest struct {
-	Pagination *query.PageRequest `protobuf:"bytes,1,opt,name=pagination,proto3" json:"pagination,omitempty"`
 }
 
 func (m *QueryAllEpochTrackerRequest) Reset()         { *m = QueryAllEpochTrackerRequest{} }
 func (m *QueryAllEpochTrackerRequest) String() string { return proto.CompactTextString(m) }
 func (*QueryAllEpochTrackerRequest) ProtoMessage()    {}
 func (*QueryAllEpochTrackerRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_494b786fe66f2b80, []int{16}
+	return fileDescriptor_494b786fe66f2b80, []int{14}
 }
 func (m *QueryAllEpochTrackerRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -784,23 +703,15 @@ func (m *QueryAllEpochTrackerRequest) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_QueryAllEpochTrackerRequest proto.InternalMessageInfo
 
-func (m *QueryAllEpochTrackerRequest) GetPagination() *query.PageRequest {
-	if m != nil {
-		return m.Pagination
-	}
-	return nil
-}
-
 type QueryAllEpochTrackerResponse struct {
-	EpochTracker []EpochTracker      `protobuf:"bytes,1,rep,name=epoch_tracker,json=epochTracker,proto3" json:"epoch_tracker"`
-	Pagination   *query.PageResponse `protobuf:"bytes,2,opt,name=pagination,proto3" json:"pagination,omitempty"`
+	EpochTracker []EpochTracker `protobuf:"bytes,1,rep,name=epoch_tracker,json=epochTracker,proto3" json:"epoch_tracker"`
 }
 
 func (m *QueryAllEpochTrackerResponse) Reset()         { *m = QueryAllEpochTrackerResponse{} }
 func (m *QueryAllEpochTrackerResponse) String() string { return proto.CompactTextString(m) }
 func (*QueryAllEpochTrackerResponse) ProtoMessage()    {}
 func (*QueryAllEpochTrackerResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_494b786fe66f2b80, []int{17}
+	return fileDescriptor_494b786fe66f2b80, []int{15}
 }
 func (m *QueryAllEpochTrackerResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -836,11 +747,100 @@ func (m *QueryAllEpochTrackerResponse) GetEpochTracker() []EpochTracker {
 	return nil
 }
 
-func (m *QueryAllEpochTrackerResponse) GetPagination() *query.PageResponse {
-	if m != nil {
-		return m.Pagination
+type QueryGetNextPacketSequenceRequest struct {
+	ChannelId string `protobuf:"bytes,1,opt,name=channel_id,json=channelId,proto3" json:"channel_id,omitempty"`
+	PortId    string `protobuf:"bytes,2,opt,name=port_id,json=portId,proto3" json:"port_id,omitempty"`
+}
+
+func (m *QueryGetNextPacketSequenceRequest) Reset()         { *m = QueryGetNextPacketSequenceRequest{} }
+func (m *QueryGetNextPacketSequenceRequest) String() string { return proto.CompactTextString(m) }
+func (*QueryGetNextPacketSequenceRequest) ProtoMessage()    {}
+func (*QueryGetNextPacketSequenceRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_494b786fe66f2b80, []int{16}
+}
+func (m *QueryGetNextPacketSequenceRequest) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *QueryGetNextPacketSequenceRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_QueryGetNextPacketSequenceRequest.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
 	}
-	return nil
+}
+func (m *QueryGetNextPacketSequenceRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryGetNextPacketSequenceRequest.Merge(m, src)
+}
+func (m *QueryGetNextPacketSequenceRequest) XXX_Size() int {
+	return m.Size()
+}
+func (m *QueryGetNextPacketSequenceRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryGetNextPacketSequenceRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_QueryGetNextPacketSequenceRequest proto.InternalMessageInfo
+
+func (m *QueryGetNextPacketSequenceRequest) GetChannelId() string {
+	if m != nil {
+		return m.ChannelId
+	}
+	return ""
+}
+
+func (m *QueryGetNextPacketSequenceRequest) GetPortId() string {
+	if m != nil {
+		return m.PortId
+	}
+	return ""
+}
+
+type QueryGetNextPacketSequenceResponse struct {
+	Sequence uint64 `protobuf:"varint,1,opt,name=sequence,proto3" json:"sequence,omitempty"`
+}
+
+func (m *QueryGetNextPacketSequenceResponse) Reset()         { *m = QueryGetNextPacketSequenceResponse{} }
+func (m *QueryGetNextPacketSequenceResponse) String() string { return proto.CompactTextString(m) }
+func (*QueryGetNextPacketSequenceResponse) ProtoMessage()    {}
+func (*QueryGetNextPacketSequenceResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_494b786fe66f2b80, []int{17}
+}
+func (m *QueryGetNextPacketSequenceResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *QueryGetNextPacketSequenceResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_QueryGetNextPacketSequenceResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *QueryGetNextPacketSequenceResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryGetNextPacketSequenceResponse.Merge(m, src)
+}
+func (m *QueryGetNextPacketSequenceResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *QueryGetNextPacketSequenceResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryGetNextPacketSequenceResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_QueryGetNextPacketSequenceResponse proto.InternalMessageInfo
+
+func (m *QueryGetNextPacketSequenceResponse) GetSequence() uint64 {
+	if m != nil {
+		return m.Sequence
+	}
+	return 0
 }
 
 func init() {
@@ -850,8 +850,6 @@ func init() {
 	proto.RegisterType((*QueryParamsResponse)(nil), "stride.stakeibc.QueryParamsResponse")
 	proto.RegisterType((*QueryGetValidatorsRequest)(nil), "stride.stakeibc.QueryGetValidatorsRequest")
 	proto.RegisterType((*QueryGetValidatorsResponse)(nil), "stride.stakeibc.QueryGetValidatorsResponse")
-	proto.RegisterType((*QueryGetICAAccountRequest)(nil), "stride.stakeibc.QueryGetICAAccountRequest")
-	proto.RegisterType((*QueryGetICAAccountResponse)(nil), "stride.stakeibc.QueryGetICAAccountResponse")
 	proto.RegisterType((*QueryGetHostZoneRequest)(nil), "stride.stakeibc.QueryGetHostZoneRequest")
 	proto.RegisterType((*QueryGetHostZoneResponse)(nil), "stride.stakeibc.QueryGetHostZoneResponse")
 	proto.RegisterType((*QueryAllHostZoneRequest)(nil), "stride.stakeibc.QueryAllHostZoneRequest")
@@ -862,77 +860,81 @@ func init() {
 	proto.RegisterType((*QueryGetEpochTrackerResponse)(nil), "stride.stakeibc.QueryGetEpochTrackerResponse")
 	proto.RegisterType((*QueryAllEpochTrackerRequest)(nil), "stride.stakeibc.QueryAllEpochTrackerRequest")
 	proto.RegisterType((*QueryAllEpochTrackerResponse)(nil), "stride.stakeibc.QueryAllEpochTrackerResponse")
+	proto.RegisterType((*QueryGetNextPacketSequenceRequest)(nil), "stride.stakeibc.QueryGetNextPacketSequenceRequest")
+	proto.RegisterType((*QueryGetNextPacketSequenceResponse)(nil), "stride.stakeibc.QueryGetNextPacketSequenceResponse")
 }
 
 func init() { proto.RegisterFile("stride/stakeibc/query.proto", fileDescriptor_494b786fe66f2b80) }
 
 var fileDescriptor_494b786fe66f2b80 = []byte{
-	// 1037 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xac, 0x97, 0x6f, 0x6f, 0xdb, 0x54,
-	0x14, 0xc6, 0xeb, 0xb6, 0x2b, 0xdd, 0x49, 0xab, 0xa2, 0x4b, 0xa5, 0xa5, 0x6e, 0x49, 0xd9, 0xdd,
-	0x18, 0x69, 0xe8, 0xec, 0x35, 0x2b, 0x48, 0xab, 0x98, 0x50, 0x82, 0xb6, 0x35, 0x62, 0x48, 0x23,
-	0x20, 0x84, 0xf6, 0x26, 0xdc, 0xd8, 0x97, 0xc4, 0x9a, 0xe3, 0x9b, 0xd9, 0x4e, 0xa1, 0x54, 0xd5,
-	0x24, 0x3e, 0xc1, 0x00, 0x21, 0x24, 0xde, 0x0d, 0xf1, 0x05, 0xe0, 0x53, 0xec, 0xe5, 0x24, 0xde,
-	0xf0, 0xaa, 0x42, 0x2d, 0x9f, 0x60, 0x9f, 0x00, 0xf9, 0xfa, 0x38, 0x71, 0xfc, 0x27, 0x64, 0xd3,
-	0xde, 0xd9, 0xbe, 0xe7, 0x9c, 0xe7, 0x77, 0xcf, 0x3d, 0x7e, 0xe2, 0xc0, 0xba, 0xe7, 0xbb, 0x96,
-	0xc9, 0x75, 0xcf, 0x67, 0x0f, 0xb8, 0xd5, 0x36, 0xf4, 0x87, 0x03, 0xee, 0x1e, 0x6a, 0x7d, 0x57,
-	0xf8, 0x82, 0xac, 0x84, 0x8b, 0x5a, 0xb4, 0xa8, 0xae, 0x76, 0x44, 0x47, 0xc8, 0x35, 0x3d, 0xb8,
-	0x0a, 0xc3, 0xd4, 0x8d, 0x8e, 0x10, 0x1d, 0x9b, 0xeb, 0xac, 0x6f, 0xe9, 0xcc, 0x71, 0x84, 0xcf,
-	0x7c, 0x4b, 0x38, 0x1e, 0xae, 0x56, 0x0c, 0xe1, 0xf5, 0x84, 0xa7, 0xb7, 0x99, 0xc7, 0xc3, 0xea,
-	0xfa, 0xc1, 0x4e, 0x9b, 0xfb, 0x6c, 0x47, 0xef, 0xb3, 0x8e, 0xe5, 0xc8, 0xe0, 0xa8, 0x52, 0x92,
-	0xa6, 0xcf, 0x5c, 0xd6, 0x8b, 0x2a, 0x6d, 0x26, 0x57, 0x0f, 0x98, 0x6d, 0x99, 0xcc, 0x17, 0x2e,
-	0x06, 0x5c, 0x4c, 0x06, 0x58, 0x06, 0x6b, 0x31, 0xc3, 0x10, 0x03, 0xc7, 0xcf, 0xab, 0xd1, 0x15,
-	0x9e, 0xdf, 0xfa, 0x4e, 0x38, 0x1c, 0x03, 0x2e, 0x25, 0x03, 0x78, 0x5f, 0x18, 0xdd, 0x96, 0xef,
-	0x32, 0xe3, 0x01, 0x47, 0x21, 0xfa, 0x08, 0xca, 0x9f, 0x06, 0x3b, 0x69, 0x38, 0x3e, 0x77, 0x8d,
-	0x2e, 0xb3, 0x9c, 0x5a, 0xa8, 0x72, 0xdb, 0x15, 0xbd, 0x9a, 0x69, 0xba, 0xdc, 0xf3, 0x9a, 0xfc,
-	0xe1, 0x80, 0x7b, 0x3e, 0x59, 0x85, 0x73, 0xe2, 0x1b, 0x87, 0xbb, 0x45, 0xe5, 0x2d, 0xa5, 0x7c,
-	0xbe, 0x19, 0xde, 0x90, 0x9b, 0xb0, 0x6c, 0x08, 0xc7, 0xe1, 0x46, 0xb0, 0xfb, 0x96, 0x65, 0x16,
-	0x67, 0x83, 0xd5, 0x7a, 0xf1, 0xf9, 0xc9, 0xe6, 0xea, 0x21, 0xeb, 0xd9, 0x7b, 0x74, 0x6c, 0x99,
-	0x36, 0x97, 0x46, 0xf7, 0x0d, 0x93, 0x3e, 0x56, 0x60, 0x6b, 0x0a, 0x02, 0xaf, 0x2f, 0x1c, 0x8f,
-	0x13, 0x03, 0x54, 0x6b, 0x18, 0x17, 0x35, 0xa4, 0xc5, 0xc2, 0xa8, 0x90, 0xab, 0xfe, 0xf6, 0xf3,
-	0x93, 0xcd, 0x8b, 0xa1, 0x72, 0x7e, 0x2c, 0x6d, 0x16, 0xad, 0xa4, 0x20, 0x8a, 0xd1, 0x55, 0x20,
-	0x92, 0xe8, 0x9e, 0x3c, 0x32, 0xdc, 0x3d, 0xbd, 0x0b, 0x6f, 0x8c, 0x3d, 0x45, 0xa2, 0xf7, 0x60,
-	0x21, 0x3c, 0x5a, 0xa9, 0x5e, 0xa8, 0x5e, 0xd0, 0x12, 0xa3, 0xa6, 0x85, 0x09, 0xf5, 0xf9, 0xa7,
-	0x27, 0x9b, 0x33, 0x4d, 0x0c, 0xa6, 0xef, 0xc3, 0x9a, 0xac, 0x76, 0x87, 0xfb, 0x5f, 0x44, 0x67,
-	0x3f, 0x6c, 0xf4, 0x1a, 0x2c, 0x86, 0xd0, 0x96, 0x89, 0xbd, 0x7e, 0x4d, 0xde, 0x37, 0x4c, 0xfa,
-	0x25, 0xa8, 0x59, 0x79, 0x08, 0xb3, 0x07, 0x30, 0x9c, 0xa4, 0x00, 0x68, 0xae, 0x5c, 0xa8, 0xaa,
-	0x29, 0xa0, 0x61, 0x62, 0x33, 0x16, 0x4d, 0xd7, 0x47, 0x44, 0x8d, 0x8f, 0x6a, 0xd8, 0x92, 0x68,
-	0xf3, 0x5f, 0x8d, 0x64, 0xe3, 0x8b, 0x28, 0x5b, 0x87, 0x42, 0x6c, 0x3e, 0xb1, 0x11, 0xeb, 0x29,
-	0xdd, 0x51, 0x26, 0x36, 0x03, 0x2c, 0x83, 0xe1, 0x13, 0xba, 0x0b, 0x17, 0x22, 0x85, 0x7d, 0xe1,
-	0xf9, 0xf7, 0x85, 0xc3, 0xa7, 0x6a, 0x47, 0x31, 0x9d, 0x85, 0x54, 0x1f, 0xc0, 0xf9, 0xe1, 0x2b,
-	0x81, 0x4c, 0x6b, 0x29, 0xa6, 0x28, 0x0b, 0x89, 0x16, 0xbb, 0x78, 0x4f, 0x19, 0xf2, 0xd4, 0x6c,
-	0x3b, 0xc9, 0x73, 0x1b, 0x60, 0xf4, 0xbe, 0x63, 0xe5, 0x2b, 0x5a, 0x68, 0x0e, 0x5a, 0x60, 0x0e,
-	0x5a, 0x68, 0x3d, 0x68, 0x0e, 0xda, 0x3d, 0xd6, 0x89, 0x72, 0x9b, 0xb1, 0x4c, 0xfa, 0x44, 0x41,
-	0xfa, 0x31, 0x8d, 0x6c, 0xfa, 0xb9, 0x17, 0xa2, 0x27, 0x77, 0xc6, 0x10, 0x67, 0x25, 0xe2, 0x3b,
-	0xff, 0x8b, 0x18, 0x4a, 0x8f, 0x31, 0xea, 0x38, 0x15, 0x9f, 0x08, 0x73, 0x60, 0xf3, 0x84, 0x21,
-	0x10, 0x98, 0x77, 0x58, 0x8f, 0xe3, 0xa1, 0xc8, 0x6b, 0x7a, 0x0d, 0x27, 0x25, 0x91, 0x80, 0xbb,
-	0x22, 0x30, 0x1f, 0xbc, 0x80, 0x51, 0x46, 0x70, 0x4d, 0xf7, 0x61, 0x3d, 0x3a, 0xc3, 0x5b, 0x81,
-	0x43, 0x7d, 0x1e, 0x1a, 0x54, 0x24, 0xb2, 0x05, 0xaf, 0x87, 0xc6, 0x65, 0x99, 0xdc, 0xf1, 0xad,
-	0xaf, 0xad, 0xa1, 0x01, 0xad, 0xc8, 0xe7, 0x8d, 0xe1, 0x63, 0xda, 0x85, 0x8d, 0xec, 0x4a, 0xa8,
-	0xbe, 0x0f, 0xcb, 0x63, 0x1e, 0x88, 0x67, 0xf7, 0x66, 0xaa, 0xaf, 0xf1, 0x6c, 0xec, 0xed, 0x12,
-	0x8f, 0x3d, 0xa3, 0x1c, 0x99, 0x6b, 0xb6, 0x9d, 0xc5, 0xfc, 0xaa, 0x26, 0xe4, 0x0f, 0x05, 0x77,
-	0x94, 0xd2, 0xc9, 0xdf, 0xd1, 0xdc, 0x4b, 0xed, 0xe8, 0x95, 0x4d, 0x4c, 0xf5, 0x87, 0x02, 0x9c,
-	0x93, 0xcc, 0xe4, 0x11, 0x2c, 0x84, 0xde, 0x47, 0x2e, 0xa5, 0x78, 0xd2, 0x06, 0xab, 0x5e, 0x9e,
-	0x1c, 0x14, 0x4a, 0xd1, 0xca, 0xf7, 0x7f, 0xfd, 0xfb, 0xd3, 0xec, 0x65, 0x42, 0xf5, 0xcf, 0x64,
-	0xb4, 0xcd, 0xda, 0x9e, 0x9e, 0xfd, 0x63, 0x4b, 0x9e, 0x28, 0x00, 0x23, 0x97, 0x24, 0x95, 0x6c,
-	0x81, 0x2c, 0x0b, 0x56, 0xdf, 0x9d, 0x2a, 0x16, 0x99, 0xf6, 0x24, 0xd3, 0x2e, 0xa9, 0x22, 0xd3,
-	0xd5, 0xbb, 0x59, 0x50, 0x23, 0xaf, 0xd5, 0x8f, 0x22, 0x3f, 0x3b, 0x26, 0xbf, 0x28, 0x00, 0x23,
-	0x63, 0x9c, 0xc0, 0x98, 0x32, 0xe5, 0x09, 0x8c, 0x69, 0x8f, 0xa6, 0xd7, 0x24, 0x63, 0x85, 0x94,
-	0x27, 0x32, 0xc6, 0x6c, 0x9c, 0xfc, 0xaa, 0xc0, 0x62, 0x64, 0x30, 0xa4, 0x9c, 0xab, 0x95, 0x70,
-	0x47, 0x75, 0x6b, 0x8a, 0x48, 0x64, 0xba, 0x21, 0x99, 0xae, 0x93, 0x9d, 0x89, 0x4c, 0x43, 0x1b,
-	0x8c, 0xb7, 0xed, 0x47, 0x05, 0x0a, 0x51, 0xbd, 0x9a, 0x6d, 0xe7, 0xf1, 0xa5, 0xdd, 0x3b, 0x8f,
-	0x2f, 0xc3, 0x83, 0xa9, 0x26, 0xf9, 0xca, 0xe4, 0xca, 0x74, 0x7c, 0xe4, 0x77, 0x05, 0x96, 0xc7,
-	0x7c, 0x2f, 0xef, 0x38, 0xb3, 0xdc, 0x34, 0xef, 0x38, 0x33, 0x8d, 0x74, 0xca, 0x91, 0xeb, 0xc9,
-	0xdc, 0xe8, 0x9b, 0x47, 0x3f, 0x0a, 0x1c, 0xfa, 0x98, 0xfc, 0xac, 0xc0, 0xc6, 0xa4, 0xaf, 0x2d,
-	0x72, 0x23, 0x9b, 0x64, 0x8a, 0x6f, 0x44, 0x75, 0xef, 0x65, 0x52, 0xd1, 0xcc, 0xfe, 0x54, 0x60,
-	0x29, 0xee, 0x53, 0x64, 0x3b, 0x77, 0x94, 0x32, 0x4c, 0x57, 0xbd, 0x3a, 0x65, 0x34, 0x76, 0xf0,
-	0x96, 0xec, 0xe0, 0x87, 0xe4, 0xe6, 0xc4, 0x0e, 0x8e, 0xb9, 0xab, 0x7e, 0x94, 0xfc, 0x25, 0x3a,
-	0x26, 0xbf, 0x29, 0xb0, 0x12, 0xaf, 0x1f, 0x0c, 0xe3, 0x76, 0xee, 0x88, 0xbd, 0x00, 0x77, 0x8e,
-	0xe5, 0xd3, 0xaa, 0xe4, 0xde, 0x26, 0x95, 0xe9, 0xb9, 0xeb, 0x1f, 0x3f, 0x3d, 0x2d, 0x29, 0xcf,
-	0x4e, 0x4b, 0xca, 0x3f, 0xa7, 0x25, 0xe5, 0xf1, 0x59, 0x69, 0xe6, 0xd9, 0x59, 0x69, 0xe6, 0xef,
-	0xb3, 0xd2, 0xcc, 0xfd, 0x9d, 0x8e, 0xe5, 0x77, 0x07, 0x6d, 0xcd, 0x10, 0xbd, 0xac, 0x7a, 0x07,
-	0xbb, 0xfa, 0xb7, 0xa3, 0xa2, 0xfe, 0x61, 0x9f, 0x7b, 0xed, 0x05, 0xf9, 0xcf, 0xe1, 0xfa, 0x7f,
-	0x01, 0x00, 0x00, 0xff, 0xff, 0xda, 0xd4, 0x7d, 0x6d, 0x71, 0x0d, 0x00, 0x00,
+	// 1067 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x9c, 0x96, 0xdd, 0x6e, 0x1b, 0x45,
+	0x14, 0xc7, 0xb3, 0x49, 0x9a, 0x26, 0x27, 0x89, 0x82, 0x86, 0x48, 0x71, 0xb6, 0x89, 0x43, 0xa7,
+	0xa5, 0x38, 0x21, 0xdd, 0x25, 0x4e, 0x8b, 0xd4, 0x88, 0x0a, 0x1c, 0xa9, 0x6d, 0x0c, 0x05, 0x05,
+	0x17, 0x21, 0x54, 0x2e, 0xac, 0xf1, 0xee, 0x60, 0xaf, 0xba, 0x9e, 0x71, 0x77, 0xc7, 0x21, 0x21,
+	0xb2, 0x2a, 0xf1, 0x04, 0x15, 0x88, 0x1b, 0xee, 0x8a, 0x78, 0x02, 0x9e, 0xa2, 0x5c, 0x51, 0x89,
+	0x1b, 0xae, 0x22, 0x94, 0xf0, 0x04, 0x7d, 0x02, 0xb4, 0xb3, 0xb3, 0x6b, 0x7b, 0xbd, 0xeb, 0x3a,
+	0xb9, 0xdb, 0x99, 0x39, 0x1f, 0xbf, 0x39, 0x33, 0xe7, 0x3f, 0x0b, 0x57, 0x7c, 0xe1, 0x39, 0x36,
+	0x35, 0x7d, 0x41, 0x9e, 0x50, 0xa7, 0x66, 0x99, 0x4f, 0xdb, 0xd4, 0x3b, 0x32, 0x5a, 0x1e, 0x17,
+	0x1c, 0x2d, 0x84, 0x8b, 0x46, 0xb4, 0xa8, 0x2f, 0xd6, 0x79, 0x9d, 0xcb, 0x35, 0x33, 0xf8, 0x0a,
+	0xcd, 0xf4, 0x95, 0x3a, 0xe7, 0x75, 0x97, 0x9a, 0xa4, 0xe5, 0x98, 0x84, 0x31, 0x2e, 0x88, 0x70,
+	0x38, 0xf3, 0xd5, 0xea, 0x86, 0xc5, 0xfd, 0x26, 0xf7, 0xcd, 0x1a, 0xf1, 0x69, 0x18, 0xdd, 0x3c,
+	0xd8, 0xaa, 0x51, 0x41, 0xb6, 0xcc, 0x16, 0xa9, 0x3b, 0x4c, 0x1a, 0x47, 0x91, 0x92, 0x34, 0x2d,
+	0xe2, 0x91, 0x66, 0x14, 0x69, 0x2d, 0xb9, 0x7a, 0x40, 0x5c, 0xc7, 0x26, 0x82, 0x7b, 0x59, 0x06,
+	0x0d, 0xee, 0x8b, 0xea, 0x0f, 0x9c, 0x51, 0x65, 0x70, 0x2d, 0x69, 0x40, 0x5b, 0xdc, 0x6a, 0x54,
+	0x85, 0x47, 0xac, 0x27, 0x54, 0x45, 0xc1, 0xcf, 0xa0, 0xf0, 0x65, 0x80, 0x59, 0x66, 0x82, 0x7a,
+	0x56, 0x83, 0x38, 0xac, 0x64, 0x59, 0xbc, 0xcd, 0xc4, 0x7d, 0x8f, 0x37, 0x4b, 0xb6, 0xed, 0x51,
+	0xdf, 0xaf, 0xd0, 0xa7, 0x6d, 0xea, 0x0b, 0xb4, 0x08, 0x97, 0xf8, 0xf7, 0x8c, 0x7a, 0x39, 0xed,
+	0x1d, 0xad, 0x30, 0x53, 0x09, 0x07, 0xe8, 0x2e, 0xcc, 0x5b, 0x9c, 0x31, 0x6a, 0x05, 0x5b, 0xab,
+	0x3a, 0x76, 0x6e, 0x3c, 0x58, 0xdd, 0xcd, 0xbd, 0x3e, 0x59, 0x5b, 0x3c, 0x22, 0x4d, 0x77, 0x07,
+	0xf7, 0x2d, 0xe3, 0xca, 0x5c, 0x77, 0x5c, 0xb6, 0xf1, 0x73, 0x0d, 0xd6, 0x47, 0x20, 0xf0, 0x5b,
+	0x9c, 0xf9, 0x14, 0x59, 0xa0, 0x3b, 0xb1, 0x5d, 0x95, 0x84, 0x86, 0x55, 0x12, 0x5a, 0x85, 0x5c,
+	0xbb, 0xef, 0xbe, 0x3e, 0x59, 0xbb, 0x1a, 0x66, 0xce, 0xb6, 0xc5, 0x95, 0x9c, 0x93, 0x4c, 0xa8,
+	0x92, 0xe1, 0x45, 0x40, 0x92, 0x68, 0x5f, 0x9e, 0x87, 0xda, 0x3d, 0x7e, 0x08, 0x6f, 0xf7, 0xcd,
+	0x2a, 0xa2, 0xdb, 0x30, 0x15, 0x9e, 0x9b, 0xcc, 0x3e, 0x5b, 0x5c, 0x32, 0x12, 0xf7, 0xc8, 0x08,
+	0x1d, 0x76, 0x27, 0x5f, 0x9e, 0xac, 0x8d, 0x55, 0x94, 0x31, 0xfe, 0x10, 0x96, 0x65, 0xb4, 0x07,
+	0x54, 0x7c, 0x1d, 0x1d, 0x6c, 0x5c, 0xe8, 0x65, 0x98, 0x0e, 0xa1, 0x1d, 0x5b, 0xd5, 0xfa, 0xb2,
+	0x1c, 0x97, 0x6d, 0xfc, 0x0d, 0xe8, 0x69, 0x7e, 0x0a, 0x66, 0x07, 0x20, 0xbe, 0x26, 0x01, 0xd0,
+	0x44, 0x61, 0xb6, 0xa8, 0x0f, 0x00, 0xc5, 0x8e, 0x95, 0x1e, 0x6b, 0x7c, 0x0b, 0x96, 0xa2, 0xc8,
+	0x7b, 0xdc, 0x17, 0x8f, 0x39, 0xa3, 0x23, 0xf1, 0xe4, 0x06, 0xbd, 0x14, 0xcd, 0x47, 0x30, 0x13,
+	0xdf, 0x49, 0x55, 0x9d, 0xe5, 0x01, 0x98, 0xc8, 0x4b, 0xd5, 0x67, 0xba, 0xa1, 0xc6, 0x98, 0x28,
+	0x9e, 0x92, 0xeb, 0x26, 0x79, 0xee, 0x03, 0x74, 0xbb, 0x49, 0x45, 0xbe, 0x61, 0x84, 0xad, 0x67,
+	0x04, 0xad, 0x67, 0x84, 0x8d, 0xad, 0x5a, 0xcf, 0xd8, 0x27, 0xf5, 0xc8, 0xb7, 0xd2, 0xe3, 0x89,
+	0x5f, 0x68, 0x8a, 0xbe, 0x2f, 0x47, 0x3a, 0xfd, 0xc4, 0xb9, 0xe8, 0xd1, 0x83, 0x3e, 0xc4, 0x71,
+	0x89, 0xf8, 0xde, 0x1b, 0x11, 0xc3, 0xd4, 0x7d, 0x8c, 0xa6, 0xba, 0x28, 0x9f, 0x73, 0xbb, 0xed,
+	0xd2, 0x44, 0x47, 0x22, 0x98, 0x64, 0xa4, 0x49, 0xd5, 0xa1, 0xc8, 0x6f, 0xfc, 0x81, 0xba, 0x21,
+	0x09, 0x07, 0xb5, 0x2b, 0x04, 0x93, 0x41, 0x07, 0x44, 0x1e, 0xc1, 0x37, 0xde, 0x83, 0x2b, 0xd1,
+	0x19, 0xde, 0x0b, 0x24, 0xe2, 0xab, 0x50, 0x21, 0xa2, 0x24, 0xeb, 0xf0, 0x56, 0xa8, 0x1c, 0x8e,
+	0x4d, 0x99, 0x70, 0xbe, 0x73, 0x62, 0x05, 0x58, 0x90, 0xf3, 0xe5, 0x78, 0x1a, 0x37, 0x60, 0x25,
+	0x3d, 0x92, 0xca, 0xbe, 0x07, 0xf3, 0x7d, 0x22, 0xa4, 0xce, 0x6e, 0x75, 0xa0, 0xae, 0xbd, 0xde,
+	0xaa, 0xb6, 0x73, 0xb4, 0x67, 0x0e, 0xaf, 0x2a, 0xe6, 0x92, 0xeb, 0xa6, 0x30, 0xc7, 0x20, 0x03,
+	0xcb, 0xd9, 0x20, 0x13, 0x17, 0x03, 0xf9, 0x16, 0xae, 0x46, 0x5b, 0xfe, 0x82, 0x1e, 0x8a, 0xfd,
+	0x60, 0x56, 0x3c, 0x0a, 0x30, 0x98, 0x15, 0x5f, 0xd8, 0x55, 0x00, 0xab, 0x41, 0x18, 0xa3, 0x6e,
+	0xb7, 0x85, 0x66, 0xd4, 0x4c, 0xd9, 0x46, 0x4b, 0x70, 0xb9, 0xc5, 0x3d, 0x11, 0x8b, 0x67, 0x65,
+	0x2a, 0x18, 0x96, 0x6d, 0xfc, 0x09, 0xe0, 0x61, 0xc1, 0xd5, 0x66, 0x74, 0x98, 0xf6, 0xd5, 0x9c,
+	0x8c, 0x3d, 0x59, 0x89, 0xc7, 0xc5, 0x3f, 0x67, 0xe1, 0x92, 0x0c, 0x81, 0x9e, 0xc1, 0x54, 0xa8,
+	0x44, 0xe8, 0xda, 0xc0, 0x2e, 0x07, 0xe5, 0x4e, 0xbf, 0x3e, 0xdc, 0x28, 0x4c, 0x8d, 0x37, 0x7e,
+	0xfc, 0xfb, 0xbf, 0x9f, 0xc7, 0xaf, 0x23, 0x6c, 0x3e, 0x92, 0xd6, 0x2e, 0xa9, 0xf9, 0x66, 0xfa,
+	0xbb, 0x86, 0x5e, 0x68, 0x00, 0x5d, 0xcd, 0x42, 0x1b, 0xe9, 0x09, 0xd2, 0x04, 0x51, 0x7f, 0x7f,
+	0x24, 0x5b, 0xc5, 0xb4, 0x23, 0x99, 0x6e, 0xa1, 0xa2, 0x62, 0xba, 0xf9, 0x30, 0x0d, 0xaa, 0xab,
+	0x7c, 0xe6, 0x71, 0x24, 0x6e, 0x1d, 0xf4, 0xab, 0x06, 0xd3, 0x51, 0x4f, 0xa3, 0x42, 0x66, 0xd6,
+	0x84, 0x20, 0xe9, 0xeb, 0x23, 0x58, 0x2a, 0xba, 0x3b, 0x92, 0x6e, 0x1b, 0x6d, 0x0d, 0xa5, 0x8b,
+	0x95, 0xa7, 0x17, 0xee, 0x27, 0x0d, 0x66, 0xa3, 0x78, 0x25, 0xd7, 0xcd, 0xe2, 0x1b, 0x14, 0xcc,
+	0x2c, 0xbe, 0x14, 0xd9, 0xc3, 0x86, 0xe4, 0x2b, 0xa0, 0x1b, 0xa3, 0xf1, 0xa1, 0xdf, 0x35, 0x98,
+	0xef, 0x93, 0x9a, 0xac, 0x83, 0x4d, 0x13, 0xb0, 0xac, 0x83, 0x4d, 0xd5, 0xae, 0x11, 0x0f, 0xb6,
+	0x29, 0x7d, 0xa3, 0x77, 0xde, 0x3c, 0x0e, 0x44, 0xb1, 0x83, 0x7e, 0xd1, 0x60, 0x65, 0xd8, 0x1f,
+	0x06, 0xba, 0x93, 0x4e, 0x32, 0xc2, 0x7f, 0x91, 0xbe, 0x73, 0x11, 0x57, 0xd5, 0xbb, 0x7f, 0x68,
+	0x30, 0xd7, 0xab, 0x31, 0x68, 0x33, 0xf3, 0x2a, 0xa5, 0xe8, 0x9c, 0x7e, 0x73, 0x44, 0x6b, 0x55,
+	0xc1, 0x7b, 0xb2, 0x82, 0x1f, 0xa3, 0xbb, 0x43, 0x2b, 0xd8, 0xa7, 0x8c, 0xe6, 0x71, 0x52, 0xfc,
+	0x3b, 0xe8, 0x37, 0x0d, 0x16, 0x7a, 0xe3, 0x07, 0x97, 0x71, 0x33, 0xf3, 0x8a, 0x9d, 0x83, 0x3b,
+	0x43, 0xae, 0x71, 0x51, 0x72, 0x6f, 0xa2, 0x8d, 0xd1, 0xb9, 0xd1, 0x5f, 0x1a, 0xa0, 0x41, 0xd1,
+	0x44, 0xc5, 0xcc, 0x8a, 0x65, 0xca, 0xb7, 0xbe, 0x7d, 0x2e, 0x1f, 0xc5, 0xbc, 0x2f, 0x99, 0x3f,
+	0x45, 0x7b, 0x43, 0x99, 0x19, 0x3d, 0x14, 0xd5, 0x96, 0x8c, 0x50, 0x8d, 0x44, 0x5b, 0xf6, 0xbc,
+	0x7a, 0x2c, 0x3a, 0xe6, 0xb1, 0x7a, 0x1a, 0x3a, 0xbb, 0x9f, 0xbd, 0x3c, 0xcd, 0x6b, 0xaf, 0x4e,
+	0xf3, 0xda, 0xbf, 0xa7, 0x79, 0xed, 0xf9, 0x59, 0x7e, 0xec, 0xd5, 0x59, 0x7e, 0xec, 0x9f, 0xb3,
+	0xfc, 0xd8, 0xe3, 0xad, 0xba, 0x23, 0x1a, 0xed, 0x9a, 0x61, 0xf1, 0x66, 0x5a, 0xb6, 0x83, 0xdb,
+	0xe6, 0x61, 0x37, 0xa5, 0x38, 0x6a, 0x51, 0xbf, 0x36, 0x25, 0xff, 0xff, 0xb7, 0xff, 0x0f, 0x00,
+	0x00, 0xff, 0xff, 0xcb, 0x72, 0xdc, 0x54, 0x14, 0x0d, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -951,8 +953,6 @@ type QueryClient interface {
 	Params(ctx context.Context, in *QueryParamsRequest, opts ...grpc.CallOption) (*QueryParamsResponse, error)
 	// Queries a Validator by host zone.
 	Validators(ctx context.Context, in *QueryGetValidatorsRequest, opts ...grpc.CallOption) (*QueryGetValidatorsResponse, error)
-	// Queries a ICAAccount by index.
-	ICAAccount(ctx context.Context, in *QueryGetICAAccountRequest, opts ...grpc.CallOption) (*QueryGetICAAccountResponse, error)
 	// Queries a HostZone by id.
 	HostZone(ctx context.Context, in *QueryGetHostZoneRequest, opts ...grpc.CallOption) (*QueryGetHostZoneResponse, error)
 	// Queries a list of HostZone items.
@@ -966,6 +966,8 @@ type QueryClient interface {
 	EpochTracker(ctx context.Context, in *QueryGetEpochTrackerRequest, opts ...grpc.CallOption) (*QueryGetEpochTrackerResponse, error)
 	// Queries a list of EpochTracker items.
 	EpochTrackerAll(ctx context.Context, in *QueryAllEpochTrackerRequest, opts ...grpc.CallOption) (*QueryAllEpochTrackerResponse, error)
+	// Queries the next packet sequence for one for a given channel
+	NextPacketSequence(ctx context.Context, in *QueryGetNextPacketSequenceRequest, opts ...grpc.CallOption) (*QueryGetNextPacketSequenceResponse, error)
 }
 
 type queryClient struct {
@@ -988,15 +990,6 @@ func (c *queryClient) Params(ctx context.Context, in *QueryParamsRequest, opts .
 func (c *queryClient) Validators(ctx context.Context, in *QueryGetValidatorsRequest, opts ...grpc.CallOption) (*QueryGetValidatorsResponse, error) {
 	out := new(QueryGetValidatorsResponse)
 	err := c.cc.Invoke(ctx, "/stride.stakeibc.Query/Validators", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *queryClient) ICAAccount(ctx context.Context, in *QueryGetICAAccountRequest, opts ...grpc.CallOption) (*QueryGetICAAccountResponse, error) {
-	out := new(QueryGetICAAccountResponse)
-	err := c.cc.Invoke(ctx, "/stride.stakeibc.Query/ICAAccount", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -1057,14 +1050,21 @@ func (c *queryClient) EpochTrackerAll(ctx context.Context, in *QueryAllEpochTrac
 	return out, nil
 }
 
+func (c *queryClient) NextPacketSequence(ctx context.Context, in *QueryGetNextPacketSequenceRequest, opts ...grpc.CallOption) (*QueryGetNextPacketSequenceResponse, error) {
+	out := new(QueryGetNextPacketSequenceResponse)
+	err := c.cc.Invoke(ctx, "/stride.stakeibc.Query/NextPacketSequence", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // QueryServer is the server API for Query service.
 type QueryServer interface {
 	// Parameters queries the parameters of the module.
 	Params(context.Context, *QueryParamsRequest) (*QueryParamsResponse, error)
 	// Queries a Validator by host zone.
 	Validators(context.Context, *QueryGetValidatorsRequest) (*QueryGetValidatorsResponse, error)
-	// Queries a ICAAccount by index.
-	ICAAccount(context.Context, *QueryGetICAAccountRequest) (*QueryGetICAAccountResponse, error)
 	// Queries a HostZone by id.
 	HostZone(context.Context, *QueryGetHostZoneRequest) (*QueryGetHostZoneResponse, error)
 	// Queries a list of HostZone items.
@@ -1078,6 +1078,8 @@ type QueryServer interface {
 	EpochTracker(context.Context, *QueryGetEpochTrackerRequest) (*QueryGetEpochTrackerResponse, error)
 	// Queries a list of EpochTracker items.
 	EpochTrackerAll(context.Context, *QueryAllEpochTrackerRequest) (*QueryAllEpochTrackerResponse, error)
+	// Queries the next packet sequence for one for a given channel
+	NextPacketSequence(context.Context, *QueryGetNextPacketSequenceRequest) (*QueryGetNextPacketSequenceResponse, error)
 }
 
 // UnimplementedQueryServer can be embedded to have forward compatible implementations.
@@ -1089,9 +1091,6 @@ func (*UnimplementedQueryServer) Params(ctx context.Context, req *QueryParamsReq
 }
 func (*UnimplementedQueryServer) Validators(ctx context.Context, req *QueryGetValidatorsRequest) (*QueryGetValidatorsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Validators not implemented")
-}
-func (*UnimplementedQueryServer) ICAAccount(ctx context.Context, req *QueryGetICAAccountRequest) (*QueryGetICAAccountResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ICAAccount not implemented")
 }
 func (*UnimplementedQueryServer) HostZone(ctx context.Context, req *QueryGetHostZoneRequest) (*QueryGetHostZoneResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method HostZone not implemented")
@@ -1110,6 +1109,9 @@ func (*UnimplementedQueryServer) EpochTracker(ctx context.Context, req *QueryGet
 }
 func (*UnimplementedQueryServer) EpochTrackerAll(ctx context.Context, req *QueryAllEpochTrackerRequest) (*QueryAllEpochTrackerResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method EpochTrackerAll not implemented")
+}
+func (*UnimplementedQueryServer) NextPacketSequence(ctx context.Context, req *QueryGetNextPacketSequenceRequest) (*QueryGetNextPacketSequenceResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method NextPacketSequence not implemented")
 }
 
 func RegisterQueryServer(s grpc1.Server, srv QueryServer) {
@@ -1148,24 +1150,6 @@ func _Query_Validators_Handler(srv interface{}, ctx context.Context, dec func(in
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(QueryServer).Validators(ctx, req.(*QueryGetValidatorsRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _Query_ICAAccount_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(QueryGetICAAccountRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(QueryServer).ICAAccount(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/stride.stakeibc.Query/ICAAccount",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(QueryServer).ICAAccount(ctx, req.(*QueryGetICAAccountRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -1278,6 +1262,24 @@ func _Query_EpochTrackerAll_Handler(srv interface{}, ctx context.Context, dec fu
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Query_NextPacketSequence_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryGetNextPacketSequenceRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(QueryServer).NextPacketSequence(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/stride.stakeibc.Query/NextPacketSequence",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(QueryServer).NextPacketSequence(ctx, req.(*QueryGetNextPacketSequenceRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 var _Query_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "stride.stakeibc.Query",
 	HandlerType: (*QueryServer)(nil),
@@ -1289,10 +1291,6 @@ var _Query_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Validators",
 			Handler:    _Query_Validators_Handler,
-		},
-		{
-			MethodName: "ICAAccount",
-			Handler:    _Query_ICAAccount_Handler,
 		},
 		{
 			MethodName: "HostZone",
@@ -1317,6 +1315,10 @@ var _Query_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "EpochTrackerAll",
 			Handler:    _Query_EpochTrackerAll_Handler,
+		},
+		{
+			MethodName: "NextPacketSequence",
+			Handler:    _Query_NextPacketSequence_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
@@ -1510,62 +1512,6 @@ func (m *QueryGetValidatorsResponse) MarshalToSizedBuffer(dAtA []byte) (int, err
 			dAtA[i] = 0xa
 		}
 	}
-	return len(dAtA) - i, nil
-}
-
-func (m *QueryGetICAAccountRequest) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalToSizedBuffer(dAtA[:size])
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *QueryGetICAAccountRequest) MarshalTo(dAtA []byte) (int, error) {
-	size := m.Size()
-	return m.MarshalToSizedBuffer(dAtA[:size])
-}
-
-func (m *QueryGetICAAccountRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
-	i := len(dAtA)
-	_ = i
-	var l int
-	_ = l
-	return len(dAtA) - i, nil
-}
-
-func (m *QueryGetICAAccountResponse) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalToSizedBuffer(dAtA[:size])
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *QueryGetICAAccountResponse) MarshalTo(dAtA []byte) (int, error) {
-	size := m.Size()
-	return m.MarshalToSizedBuffer(dAtA[:size])
-}
-
-func (m *QueryGetICAAccountResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
-	i := len(dAtA)
-	_ = i
-	var l int
-	_ = l
-	{
-		size, err := m.IcaAccount.MarshalToSizedBuffer(dAtA[:i])
-		if err != nil {
-			return 0, err
-		}
-		i -= size
-		i = encodeVarintQuery(dAtA, i, uint64(size))
-	}
-	i--
-	dAtA[i] = 0xa
 	return len(dAtA) - i, nil
 }
 
@@ -1859,18 +1805,6 @@ func (m *QueryAllEpochTrackerRequest) MarshalToSizedBuffer(dAtA []byte) (int, er
 	_ = i
 	var l int
 	_ = l
-	if m.Pagination != nil {
-		{
-			size, err := m.Pagination.MarshalToSizedBuffer(dAtA[:i])
-			if err != nil {
-				return 0, err
-			}
-			i -= size
-			i = encodeVarintQuery(dAtA, i, uint64(size))
-		}
-		i--
-		dAtA[i] = 0xa
-	}
 	return len(dAtA) - i, nil
 }
 
@@ -1894,18 +1828,6 @@ func (m *QueryAllEpochTrackerResponse) MarshalToSizedBuffer(dAtA []byte) (int, e
 	_ = i
 	var l int
 	_ = l
-	if m.Pagination != nil {
-		{
-			size, err := m.Pagination.MarshalToSizedBuffer(dAtA[:i])
-			if err != nil {
-				return 0, err
-			}
-			i -= size
-			i = encodeVarintQuery(dAtA, i, uint64(size))
-		}
-		i--
-		dAtA[i] = 0x12
-	}
 	if len(m.EpochTracker) > 0 {
 		for iNdEx := len(m.EpochTracker) - 1; iNdEx >= 0; iNdEx-- {
 			{
@@ -1919,6 +1841,71 @@ func (m *QueryAllEpochTrackerResponse) MarshalToSizedBuffer(dAtA []byte) (int, e
 			i--
 			dAtA[i] = 0xa
 		}
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *QueryGetNextPacketSequenceRequest) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *QueryGetNextPacketSequenceRequest) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *QueryGetNextPacketSequenceRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.PortId) > 0 {
+		i -= len(m.PortId)
+		copy(dAtA[i:], m.PortId)
+		i = encodeVarintQuery(dAtA, i, uint64(len(m.PortId)))
+		i--
+		dAtA[i] = 0x12
+	}
+	if len(m.ChannelId) > 0 {
+		i -= len(m.ChannelId)
+		copy(dAtA[i:], m.ChannelId)
+		i = encodeVarintQuery(dAtA, i, uint64(len(m.ChannelId)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *QueryGetNextPacketSequenceResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *QueryGetNextPacketSequenceResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *QueryGetNextPacketSequenceResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.Sequence != 0 {
+		i = encodeVarintQuery(dAtA, i, uint64(m.Sequence))
+		i--
+		dAtA[i] = 0x8
 	}
 	return len(dAtA) - i, nil
 }
@@ -2009,26 +1996,6 @@ func (m *QueryGetValidatorsResponse) Size() (n int) {
 			n += 1 + l + sovQuery(uint64(l))
 		}
 	}
-	return n
-}
-
-func (m *QueryGetICAAccountRequest) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	return n
-}
-
-func (m *QueryGetICAAccountResponse) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	l = m.IcaAccount.Size()
-	n += 1 + l + sovQuery(uint64(l))
 	return n
 }
 
@@ -2144,10 +2111,6 @@ func (m *QueryAllEpochTrackerRequest) Size() (n int) {
 	}
 	var l int
 	_ = l
-	if m.Pagination != nil {
-		l = m.Pagination.Size()
-		n += 1 + l + sovQuery(uint64(l))
-	}
 	return n
 }
 
@@ -2163,9 +2126,34 @@ func (m *QueryAllEpochTrackerResponse) Size() (n int) {
 			n += 1 + l + sovQuery(uint64(l))
 		}
 	}
-	if m.Pagination != nil {
-		l = m.Pagination.Size()
+	return n
+}
+
+func (m *QueryGetNextPacketSequenceRequest) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.ChannelId)
+	if l > 0 {
 		n += 1 + l + sovQuery(uint64(l))
+	}
+	l = len(m.PortId)
+	if l > 0 {
+		n += 1 + l + sovQuery(uint64(l))
+	}
+	return n
+}
+
+func (m *QueryGetNextPacketSequenceResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.Sequence != 0 {
+		n += 1 + sovQuery(uint64(m.Sequence))
 	}
 	return n
 }
@@ -2647,139 +2635,6 @@ func (m *QueryGetValidatorsResponse) Unmarshal(dAtA []byte) error {
 			}
 			m.Validators = append(m.Validators, &Validator{})
 			if err := m.Validators[len(m.Validators)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			iNdEx = postIndex
-		default:
-			iNdEx = preIndex
-			skippy, err := skipQuery(dAtA[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if (skippy < 0) || (iNdEx+skippy) < 0 {
-				return ErrInvalidLengthQuery
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
-func (m *QueryGetICAAccountRequest) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowQuery
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= uint64(b&0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: QueryGetICAAccountRequest: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: QueryGetICAAccountRequest: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		default:
-			iNdEx = preIndex
-			skippy, err := skipQuery(dAtA[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if (skippy < 0) || (iNdEx+skippy) < 0 {
-				return ErrInvalidLengthQuery
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
-func (m *QueryGetICAAccountResponse) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowQuery
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= uint64(b&0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: QueryGetICAAccountResponse: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: QueryGetICAAccountResponse: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		case 1:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field IcaAccount", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowQuery
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				msglen |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if msglen < 0 {
-				return ErrInvalidLengthQuery
-			}
-			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthQuery
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			if err := m.IcaAccount.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
@@ -3533,42 +3388,6 @@ func (m *QueryAllEpochTrackerRequest) Unmarshal(dAtA []byte) error {
 			return fmt.Errorf("proto: QueryAllEpochTrackerRequest: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
-		case 1:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Pagination", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowQuery
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				msglen |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if msglen < 0 {
-				return ErrInvalidLengthQuery
-			}
-			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthQuery
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			if m.Pagination == nil {
-				m.Pagination = &query.PageRequest{}
-			}
-			if err := m.Pagination.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
 			skippy, err := skipQuery(dAtA[iNdEx:])
@@ -3653,11 +3472,61 @@ func (m *QueryAllEpochTrackerResponse) Unmarshal(dAtA []byte) error {
 				return err
 			}
 			iNdEx = postIndex
-		case 2:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Pagination", wireType)
+		default:
+			iNdEx = preIndex
+			skippy, err := skipQuery(dAtA[iNdEx:])
+			if err != nil {
+				return err
 			}
-			var msglen int
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *QueryGetNextPacketSequenceRequest) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowQuery
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: QueryGetNextPacketSequenceRequest: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: QueryGetNextPacketSequenceRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ChannelId", wireType)
+			}
+			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return ErrIntOverflowQuery
@@ -3667,28 +3536,125 @@ func (m *QueryAllEpochTrackerResponse) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				msglen |= int(b&0x7F) << shift
+				stringLen |= uint64(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
-			if msglen < 0 {
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
 				return ErrInvalidLengthQuery
 			}
-			postIndex := iNdEx + msglen
+			postIndex := iNdEx + intStringLen
 			if postIndex < 0 {
 				return ErrInvalidLengthQuery
 			}
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			if m.Pagination == nil {
-				m.Pagination = &query.PageResponse{}
+			m.ChannelId = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field PortId", wireType)
 			}
-			if err := m.Pagination.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.PortId = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipQuery(dAtA[iNdEx:])
+			if err != nil {
 				return err
 			}
-			iNdEx = postIndex
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *QueryGetNextPacketSequenceResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowQuery
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: QueryGetNextPacketSequenceResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: QueryGetNextPacketSequenceResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Sequence", wireType)
+			}
+			m.Sequence = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.Sequence |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
 		default:
 			iNdEx = preIndex
 			skippy, err := skipQuery(dAtA[iNdEx:])

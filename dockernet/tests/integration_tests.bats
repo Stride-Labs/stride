@@ -17,7 +17,7 @@ setup_file() {
 
   # set allows us to export all variables in account_vars
   set -a
-  source dockernet/config.sh
+  NEW_BINARY="${NEW_BINARY:-false}" source dockernet/config.sh
 
   HOST_CHAIN_ID=$(GET_VAR_VALUE  ${CHAIN_NAME}_CHAIN_ID)
   HOST_DENOM=$(GET_VAR_VALUE     ${CHAIN_NAME}_DENOM)
