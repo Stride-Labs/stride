@@ -7,10 +7,18 @@ option go_package = "github.com/Stride-Labs/stride/v5/x/auction/types";
 // Msg defines the Msg service.
 service Msg {
   rpc ListAuctionPools (MsgListAuctionPools) returns (MsgListAuctionPoolsResponse);
+  rpc StartAuction     (MsgStartAuction    ) returns (MsgStartAuctionResponse    );
 }
 message MsgListAuctionPools {
   string creator = 1;
 }
 
 message MsgListAuctionPoolsResponse {}
+
+message MsgStartAuction {
+  string creator  = 1;
+  string poolName = 2;
+}
+
+message MsgStartAuctionResponse {}
 
