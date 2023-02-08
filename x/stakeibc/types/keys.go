@@ -24,6 +24,8 @@ const (
 
 	// fee account - F1
 	FeeAccount = "stride1czvrk3jkvtj8m27kqsqu2yrkhw3h3ykwj3rxh6"
+	// community pool account
+	CommunityPoolAccount = "stride1jv65s3grqf6v6jl3dp4t6c9t9rk99cd8y5yqan"
 )
 
 // PortKey defines the key to store the port ID in store
