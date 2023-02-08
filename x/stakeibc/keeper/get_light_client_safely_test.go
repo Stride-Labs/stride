@@ -1,8 +1,6 @@
 package keeper_test
 
 import (
-	"fmt"
-
 	_ "github.com/stretchr/testify/suite"
 )
 
