@@ -2,6 +2,7 @@ package keeper_test
 
 import (
 	"context"
+	"strings"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/bech32"
@@ -9,7 +10,7 @@ import (
 	_ "github.com/stretchr/testify/suite"
 	"github.com/tendermint/tendermint/proto/tendermint/crypto"
 
-	"github.com/Stride-Labs/stride/x/interchainquery/types"
+	"github.com/Stride-Labs/stride/v4/x/interchainquery/types"
 )
 
 const (
@@ -23,13 +24,12 @@ type MsgSubmitQueryResponseTestCase struct {
 }
 
 func (s *KeeperTestSuite) SetupMsgSubmitQueryResponse() MsgSubmitQueryResponseTestCase {
-
 	// set up IBC
 	s.CreateTransferChannel(HostChainId)
 
 	// define the query
-	goCtx := sdk.WrapSDKContext(s.Ctx())
-	h, err := s.App.StakeibcKeeper.GetLightClientHeightSafely(s.Ctx(), s.TransferPath.EndpointA.ConnectionID)
+	goCtx := sdk.WrapSDKContext(s.Ctx)
+	h, err := s.App.StakeibcKeeper.GetLightClientHeightSafely(s.Ctx, s.TransferPath.EndpointA.ConnectionID)
 	s.Require().NoError(err)
 	height := int64(h - 1) // start at the (LC height) - 1  height, which is the height the query executes at!
 	result := []byte("result-example")
@@ -42,15 +42,12 @@ func (s *KeeperTestSuite) SetupMsgSubmitQueryResponse() MsgSubmitQueryResponseTe
 	// save the query to Stride state, so it can be retrieved in the response
 	query := types.Query{
 		Id:           expectedId,
-		ConnectionId: s.TransferPath.EndpointA.ConnectionID,
+		CallbackId:   "withdrawalbalance",
 		ChainId:      HostChainId,
+		ConnectionId: s.TransferPath.EndpointA.ConnectionID,
 		QueryType:    types.BANK_STORE_QUERY_WITH_PROOF,
 		Request:      append(data, []byte(HostChainId)...),
-		Period:       sdk.NewInt(0),
-		LastHeight:   sdk.NewInt(height),
-		CallbackId:   "withdrawalbalance",
 		Ttl:          uint64(12545592938) * uint64(1000000000), // set ttl to August 2050, mult by nano conversion factor
-		Height:       height,
 	}
 
 	return MsgSubmitQueryResponseTestCase{
@@ -70,10 +67,10 @@ func (s *KeeperTestSuite) SetupMsgSubmitQueryResponse() MsgSubmitQueryResponseTe
 func (s *KeeperTestSuite) TestMsgSubmitQueryResponse_WrongProof() {
 	tc := s.SetupMsgSubmitQueryResponse()
 
-	s.App.InterchainqueryKeeper.SetQuery(s.Ctx(), tc.query)
+	s.App.InterchainqueryKeeper.SetQuery(s.Ctx, tc.query)
 
 	resp, err := s.GetMsgServer().SubmitQueryResponse(tc.goCtx, &tc.validMsg)
-	s.Require().ErrorContains(err, "unable to verify membership proof: proof cannot be empty")
+	s.Require().ErrorContains(err, "Unable to verify membership proof: proof cannot be empty")
 	s.Require().Nil(resp)
 }
 
@@ -81,7 +78,7 @@ func (s *KeeperTestSuite) TestMsgSubmitQueryResponse_UnknownId() {
 	tc := s.SetupMsgSubmitQueryResponse()
 
 	tc.query.Id = tc.query.Id + "INVALID_SUFFIX" // create an invalid query id
-	s.App.InterchainqueryKeeper.SetQuery(s.Ctx(), tc.query)
+	s.App.InterchainqueryKeeper.SetQuery(s.Ctx, tc.query)
 
 	resp, err := s.GetMsgServer().SubmitQueryResponse(tc.goCtx, &tc.validMsg)
 	s.Require().NoError(err)
@@ -89,44 +86,38 @@ func (s *KeeperTestSuite) TestMsgSubmitQueryResponse_UnknownId() {
 	s.Require().Equal(&types.MsgSubmitQueryResponseResponse{}, resp)
 
 	// check that the query is STILL in the store, as it should NOT be deleted because the query was not found
-	_, found := s.App.InterchainqueryKeeper.GetQuery(s.Ctx(), tc.query.Id)
+	_, found := s.App.InterchainqueryKeeper.GetQuery(s.Ctx, tc.query.Id)
 	s.Require().True(found)
 }
 
 func (s *KeeperTestSuite) TestMsgSubmitQueryResponse_ExceededTtl() {
 	tc := s.SetupMsgSubmitQueryResponse()
 
-	tc.query.Ttl = uint64(1) // set ttl to be expired
-	s.App.InterchainqueryKeeper.SetQuery(s.Ctx(), tc.query)
-	exceeded, err := s.App.InterchainqueryKeeper.HasQueryExceededTtl(s.Ctx(), &tc.validMsg, tc.query)
+	// Remove key from the query type so to bypass the VerifyKeyProof function
+	tc.query.QueryType = strings.ReplaceAll(tc.query.QueryType, "key", "")
+
+	// set ttl to be expired
+	tc.query.Ttl = uint64(1)
+	s.App.InterchainqueryKeeper.SetQuery(s.Ctx, tc.query)
+
+	resp, err := s.GetMsgServer().SubmitQueryResponse(tc.goCtx, &tc.validMsg)
 	s.Require().NoError(err)
-	s.Require().True(exceeded)
-}
+	s.Require().NotNil(resp)
 
-func (s *KeeperTestSuite) TestMsgSubmitQueryResponse_NotExceededTtl() {
-	tc := s.SetupMsgSubmitQueryResponse()
-
-	tc.query.Ttl = uint64(2545450064) * uint64(1000000000) // for test clarity, re-set ttl to August 2050, mult by nano conversion factor
-	s.App.InterchainqueryKeeper.SetQuery(s.Ctx(), tc.query)
-	exceeded, err := s.App.InterchainqueryKeeper.HasQueryExceededTtl(s.Ctx(), &tc.validMsg, tc.query)
-	s.Require().NoError(err)
-	s.Require().False(exceeded)
-
-	// check that the query is not in the store anymore, as it should be deleted
-	_, found := s.App.InterchainqueryKeeper.GetQuery(s.Ctx(), tc.query.Id)
-	s.Require().True(found)
+	// check that the query was deleted (since the query timed out)
+	_, found := s.App.InterchainqueryKeeper.GetQuery(s.Ctx, tc.query.Id)
+	s.Require().False(found)
 }
 
 func (s *KeeperTestSuite) TestMsgSubmitQueryResponse_FindAndInvokeCallback_WrongHostZone() {
 	tc := s.SetupMsgSubmitQueryResponse()
 
-	s.App.InterchainqueryKeeper.SetQuery(s.Ctx(), tc.query)
+	s.App.InterchainqueryKeeper.SetQuery(s.Ctx, tc.query)
 
 	// rather than testing by executing the callback in its entirety,
 	//   check by invoking it without a registered host zone and catching the appropriate error
-	err := s.App.InterchainqueryKeeper.InvokeCallback(s.Ctx(), &tc.validMsg, tc.query)
+	err := s.App.InterchainqueryKeeper.InvokeCallback(s.Ctx, &tc.validMsg, tc.query)
 	s.Require().ErrorContains(err, "no registered zone for queried chain ID", "callback was invoked")
-
 }
 
 // To write this test, we need to write data to Gaia, then get the proof for that data and check it using the LC
@@ -134,7 +125,7 @@ func (s *KeeperTestSuite) TestMsgSubmitQueryResponse_FindAndInvokeCallback_Wrong
 //     //   ...down the line, we may want to write tests here that verify the merkle check using proofs from tendermint's proof_test library, https://github.com/tendermint/tendermint/blob/75d51e18f740c7cbfb7d8b4d49182ee6c7f41982/crypto/merkle/proof_test.go
 // func (s *KeeperTestSuite) TestMsgSubmitQueryResponse_VerifyProofSuccess() {
 // 	tc := s.SetupMsgSubmitQueryResponse()
-// 	s.App.InterchainqueryKeeper.SetQuery(s.Ctx(), tc.query)
+// 	s.App.InterchainqueryKeeper.SetQuery(s.Ctx, tc.query)
 
 // 	// set the msgHeight to the light client's height (required to verify retured proofs)
 // 	clientHeight := s.HostChain.GetClientState(s.TransferPath.EndpointA.ClientID).GetLatestHeight().GetRevisionHeight()
@@ -155,6 +146,6 @@ func (s *KeeperTestSuite) TestMsgSubmitQueryResponse_FindAndInvokeCallback_Wrong
 // }
 
 // 	tc.validMsg.ProofOps = proofOps
-// 	err := s.App.InterchainqueryKeeper.VerifyKeyProof(s.Ctx(), &tc.validMsg, tc.query)
+// 	err := s.App.InterchainqueryKeeper.VerifyKeyProof(s.Ctx, &tc.validMsg, tc.query)
 // 	s.Require().NoError(err)
 // }

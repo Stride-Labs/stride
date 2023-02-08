@@ -1,0 +1,9 @@
+syntax = "proto3";
+package stride.stakeibc;
+
+option go_package = "github.com/Stride-Labs/stride/v4/x/stakeibc/types";
+
+message MinValidatorRequirements {
+  int32 commission_rate = 1;
+  int32 uptime = 2;
+}

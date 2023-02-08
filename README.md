@@ -8,42 +8,16 @@
 
 Stride is a blockchain ("zone") that provides liquidity for staked assets. Using Stride, you can earn *both* staking *and* DeFi yields across the Cosmos IBC ecosystem. Read our ["Meet Stride" blog post](https://stride.zone/blog/meet-stride) to learn more about why we built Stride. 
 
-**Stride** is built using Cosmos SDK and Tendermint and created with [Ignite](https://ignite.com/). Stride allows users to liquid stake any IBC-compatible cosmos SDK native appchain token. Under the hood, Stride leverages the [Inter-Blockchain Communication protocol](https://ibc.cosmos.network/), [Interchain Accounts](https://blog.cosmos.network/interchain-accounts-take-cosmos-interoperability-to-the-next-level-39c9a8aad4ad) and [Interchain Queries](https://github.com/schnetzlerjoe/interchain-query-spec).
-
-
+**Stride** is built using Cosmos SDK and Tendermint. Stride allows users to liquid stake any IBC-compatible cosmos SDK native appchain token. Under the hood, Stride leverages the [Inter-Blockchain Communication protocol](https://ibc.cosmos.network/), [Interchain Accounts](https://blog.cosmos.network/interchain-accounts-take-cosmos-interoperability-to-the-next-level-39c9a8aad4ad) and [Interchain Queries](https://github.com/schnetzlerjoe/interchain-query-spec).
 
 ## How does Multichain Liquid Staking work?
 
 ![](https://drive.google.com/uc?id=1RuK2YeMH7O6P9-8ro_ybOg5n79ySwFjN)
 
+## Running a Mainnet Node
+If you want to setup your node for the Stride mainnet, find the relevant files and instructions [here](https://github.com/Stride-Labs/mainnet/blob/main/mainnet/README.md)
+
 ## Getting Started as a Developer
-
-#### Installing Stride
-
-To install the latest version of Stride blockchain node binary, execute the following command on your machine:
-
-```
-git clone https://github.com/Stride-Labs/stride
-```
-
-Test your installation by navigating to the stride directory and executing: 
-
-```
-ignite chain serve
-```
-
-The `serve` command installs dependencies, builds, initializes, and starts your blockchain in development mode. You should see logs bring printed to your shell.
-
-If you have any issues with installation, please reach out to our team on [Discord](http://stride.zone/discord).
-
-You can learn more about the install process [here](https://github.com/allinbits/starport-installer) or reference these helpful resources:
-
-- [Starport](https://starport.com)
-- [Tutorials](https://docs.starport.com/guide)
-- [Starport docs](https://docs.starport.com)
-- [Cosmos SDK docs](https://docs.cosmos.network)
-- [Developer Chat](https://stride.zone/discord)
-
 ### Developing on Stride
 
 Developers who wish to develop on Stride can easily spin up 3 Stride nodes, 3 Gaia nodes, 1 Hermes relayer and 1 interchain-queries relayer. The Gaia nodes simulate the Cosmos Hub (Gaia) zone in local development node, and the relayers allow Stride zone to interact with that instance of Gaia.
@@ -51,52 +25,41 @@ Developers who wish to develop on Stride can easily spin up 3 Stride nodes, 3 Ga
 The fastest way to develop on Stride is local development mode.
 
 #### Set up local development mode 
-Install the required git submodule dependencies (gaia, hermes, interchain-queries). 
+Install the required git submodule dependencies (various chains, relayers, bats). 
 ```
-git submodule update --init
+git submodule update --init --recursive
 ```
 
 Build executables, initialize state, and start the network with
 ```
-make init-local build=sghi
+make start-docker build=sgjotr
 ```
 You can optionally pass build arguments to specify which binary to rebuild
 1. `s` This will re-build the Stride binary (default)
 2. `g` This will re-build the Gaia binary
-3. `h` This will re-build the Hermes binary
-4. `i` This will re-build the ICQ binary
+3. `j` This will re-build the Juno binary
+4. `o` This will re-build the Osmo binary
+5. `t` This will re-build the Stargaze binary
+6. `r` This will re-build the Go Relayer binary
+7. `h` This will re-build the Hermes binary
 
-Example: `make init-local build=sg`, this will:
-- Rebuild the Stride and Gaia binarys
-- Start 1 Stride and 1 Gaia node in the background
-- Start Hermes and ICQ Relayers
-
-You can optionally pass `cache=true` to restore the state from a backup instead of re-intializing it. 
+Example: `make start-docker build=sg`, this will:
+- Rebuild the Stride and Gaia binaries
+- Start 1 Stride and 1 Gaia node in the docker
+- Start Relayers
 
 To bring down the chain, execute:
 ```
-make stop
+make stop-docker
 ```
+
+To test the chain with a mnemonic that has tokens (e.g. sending Stride transactions), you can use the VAL_MNEMONIC_1, which is
+```
+close soup mirror crew erode defy knock trigger gather eyebrow tent farm gym gloom base lemon sleep weekend rich forget diagram hurt prize fly
+```
+This mnemonic will have tokens on every chain running locally.
 
 ### Making changes to this repository
-
-#### Commits for scaffolded code
-
-The easiest way to develop cosmos-sdk applications is by using the ignite cli to scaffold code. Ignite (developed by the core cosmos team at Tendermint) makes it possible to scaffold new chains, run relayers, build cosmos related proto files, add messages/queries, add new data structures and more. The drawback of creating thousands of lines of code using ignite is that it is difficult to discern which changes were made by the ignite cli and which changes were made manually by developers. To make it easier to review code written using ignite and to make it easier to retrace our steps if something breaks later, add a commit for each ignite command directly after executing it.
-
-For example, adding a new message type and updating the logic of that message would be two commits.
-```
-// add the new data type
->>> ignite scaffold list loan amount fee collateral deadline state borrower lender
->>> git add . && git commit -m 'ignite scaffold list loan amount fee collateral deadline state borrower lender'
-// make some updates to the keeper method in your code editor
->>> git add . && git commit -m 'update loan list keeper method'
-```
-
-An example of a PR using this strategy can be found [here](https://github.com/Stride-Labs/stride/pull/1). Notice, it's easy to differentiate between changes made by ignite and those made manually by reviewing commits. For example, in commit fd3e254bc0, it's easy to see that [a few lines were changes manually](https://github.com/Stride-Labs/stride/pull/1/commits/fd3e254bc0844fe65f5e98f12b366feef2a285f9) even though nearly ~300k LOC were scaffolded.
-
-#### Code review format
-Opening a pull request (PR) will automatically create Summary and Test plan fields in the description. In the summary, add a high-level summary of what the change entails. For pull requests that scaffold ignite code, include the ignite scaffold commands run.
 ###### Summary
 Add summary of the pull request here (*E.g. This pull request adds XYZ feature to the x/ABC module and associated unit tests.*)
 ###### Unit tests
@@ -135,7 +98,7 @@ On the backend, Stride permissionly stakes these tokens on the host chain and co
 
 <img src="https://drive.google.com/uc?id=11kJZE93BdhNjkaNig3DGYnTnuSNClP8Y" width="900">
 
-Users can always redeem from Stride. When they select "redeeem" on the Stride website, Stride will initiate unbonding on the host zone. Once the unbonding period elapses, the users will receive native tokens in their wallets. 
+Users can always redeem from Stride. When they select "redeem" on the Stride website, Stride will initiate unbonding on the host zone. Once the unbonding period elapses, the users will receive native tokens in their wallets. 
 
 <img src="https://drive.google.com/uc?id=1rtFiUwziiKjeUkJcJ9YuT1AN3JUtSVVr" width="900">
 

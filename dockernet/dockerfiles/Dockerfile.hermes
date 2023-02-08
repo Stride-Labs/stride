@@ -1,0 +1,22 @@
+FROM rust:1.63-buster as builder
+
+WORKDIR /opt
+
+RUN apt update && apt install git -y
+
+ENV COMMIT_HASH=fd92eb6d17342bc83003f2067d6a9cd8261f2884
+RUN git clone https://github.com/informalsystems/ibc-rs \
+    && cd ibc-rs \
+    && git checkout $COMMIT_HASH \
+    && cargo build --release
+
+FROM debian:bullseye-slim
+
+COPY --from=builder /opt/ibc-rs/target/release/hermes /usr/local/bin/hermes
+RUN apt-get update \
+    && adduser --system --home /home/hermes --disabled-password --disabled-login hermes -u 1000
+
+USER 1000
+WORKDIR /home/hermes
+
+CMD ["hermes", "start"]

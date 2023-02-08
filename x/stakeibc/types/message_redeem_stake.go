@@ -1,6 +1,7 @@
 package types
 
 import (
+	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
@@ -9,7 +10,7 @@ const TypeMsgRedeemStake = "redeem_stake"
 
 var _ sdk.Msg = &MsgRedeemStake{}
 
-func NewMsgRedeemStake(creator string, amount uint64, hostZone string, receiver string) *MsgRedeemStake {
+func NewMsgRedeemStake(creator string, amount sdkmath.Int, hostZone string, receiver string) *MsgRedeemStake {
 	return &MsgRedeemStake{
 		Creator:  creator,
 		Amount:   amount,
@@ -40,13 +41,23 @@ func (msg *MsgRedeemStake) GetSignBytes() []byte {
 }
 
 func (msg *MsgRedeemStake) ValidateBasic() error {
+	// check valid creator address
 	_, err := sdk.AccAddressFromBech32(msg.Creator)
 	if err != nil {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid creator address (%s)", err)
 	}
+	// validate host zone is not empty
+	// we check validity in the RedeemState function
+	if msg.Receiver == "" {
+		return sdkerrors.Wrapf(ErrRequiredFieldEmpty, "receiver cannot be empty")
+	}
 	// ensure amount is a nonzero positive integer
-	if msg.Amount <= 0 {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "invalid amount (%d)", msg.Amount)
+	if msg.Amount.LTE(sdkmath.ZeroInt()) {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "invalid amount (%v)", msg.Amount)
+	}
+	// validate host zone is not empty
+	if msg.HostZone == "" {
+		return sdkerrors.Wrapf(ErrRequiredFieldEmpty, "host zone cannot be empty")
 	}
 	return nil
 }

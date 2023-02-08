@@ -4,16 +4,14 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/spf13/cast"
-
-	recordstypes "github.com/Stride-Labs/stride/x/records/types"
+	recordstypes "github.com/Stride-Labs/stride/v4/x/records/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	bankTypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 
-	epochstypes "github.com/Stride-Labs/stride/x/epochs/types"
-	"github.com/Stride-Labs/stride/x/stakeibc/types"
+	epochstypes "github.com/Stride-Labs/stride/v4/x/epochs/types"
+	"github.com/Stride-Labs/stride/v4/x/stakeibc/types"
 )
 
 type IcaTx struct {
@@ -48,7 +46,7 @@ func (k msgServer) ClaimUndelegatedTokens(goCtx context.Context, msg *types.MsgC
 	if err != nil {
 		return nil, sdkerrors.Wrap(err, "unable to marshal claim callback args")
 	}
-	_, err = k.SubmitTxs(ctx, icaTx.ConnectionId, icaTx.Msgs, icaTx.Account, icaTx.Timeout, CLAIM, marshalledCallbackArgs)
+	_, err = k.SubmitTxs(ctx, icaTx.ConnectionId, icaTx.Msgs, icaTx.Account, icaTx.Timeout, ICACallbackID_Claim, marshalledCallbackArgs)
 	if err != nil {
 		k.Logger(ctx).Error(fmt.Sprintf("Submit tx error: %s", err.Error()))
 		return nil, sdkerrors.Wrap(err, "unable to submit ICA redemption tx")
@@ -78,9 +76,9 @@ func (k Keeper) GetClaimableRedemptionRecord(ctx sdk.Context, msg *types.MsgClai
 		k.Logger(ctx).Error(errMsg)
 		return nil, sdkerrors.Wrapf(types.ErrInvalidUserRedemptionRecord, errMsg)
 	}
-	// records associated with host zone unbondings are claimable after the host zone unbonding tokens have been transferred to the redemption account
-	if hostZoneUnbonding.Status != recordstypes.HostZoneUnbonding_TRANSFERRED {
-		errMsg := fmt.Sprintf("User redemption record %s is not claimable, host zone unbonding has status: %s, requires status TRANSFERRED", userRedemptionRecord.Id, hostZoneUnbonding.Status)
+	// records associated with host zone unbondings are claimable after the host zone unbonding tokens have been CLAIMABLE to the redemption account
+	if hostZoneUnbonding.Status != recordstypes.HostZoneUnbonding_CLAIMABLE {
+		errMsg := fmt.Sprintf("User redemption record %s is not claimable, host zone unbonding has status: %s, requires status CLAIMABLE", userRedemptionRecord.Id, hostZoneUnbonding.Status)
 		k.Logger(ctx).Error(errMsg)
 		return nil, sdkerrors.Wrapf(types.ErrInvalidUserRedemptionRecord, errMsg)
 	}
@@ -109,14 +107,11 @@ func (k Keeper) GetRedemptionTransferMsg(ctx sdk.Context, userRedemptionRecord *
 	}
 
 	var msgs []sdk.Msg
-	rrAmt, err := cast.ToInt64E(userRedemptionRecord.Amount)
-	if err != nil {
-		return nil, sdkerrors.Wrap(types.ErrInvalidUserRedemptionRecord, err.Error())
-	}
+	rrAmt := userRedemptionRecord.Amount
 	msgs = append(msgs, &bankTypes.MsgSend{
 		FromAddress: redemptionAccount.Address,
 		ToAddress:   userRedemptionRecord.Receiver,
-		Amount:      sdk.NewCoins(sdk.NewInt64Coin(userRedemptionRecord.Denom, rrAmt)),
+		Amount:      sdk.NewCoins(sdk.NewCoin(userRedemptionRecord.Denom, rrAmt)),
 	})
 
 	// Give claims a 10 minute timeout

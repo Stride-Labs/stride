@@ -6,7 +6,16 @@ import (
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 
-	v2 "github.com/Stride-Labs/stride/app/upgrades/v2"
+	authz "github.com/cosmos/cosmos-sdk/x/authz"
+
+	v2 "github.com/Stride-Labs/stride/v4/app/upgrades/v2"
+	v3 "github.com/Stride-Labs/stride/v4/app/upgrades/v3"
+	v4 "github.com/Stride-Labs/stride/v4/app/upgrades/v4"
+	v5 "github.com/Stride-Labs/stride/v4/app/upgrades/v5"
+	claimtypes "github.com/Stride-Labs/stride/v4/x/claim/types"
+	icacallbacktypes "github.com/Stride-Labs/stride/v4/x/icacallbacks/types"
+	recordtypes "github.com/Stride-Labs/stride/v4/x/records/types"
+	stakeibctypes "github.com/Stride-Labs/stride/v4/x/stakeibc/types"
 )
 
 func (app *StrideApp) setupUpgradeHandlers() {
@@ -14,6 +23,34 @@ func (app *StrideApp) setupUpgradeHandlers() {
 	app.UpgradeKeeper.SetUpgradeHandler(
 		v2.UpgradeName,
 		v2.CreateUpgradeHandler(app.mm, app.configurator),
+	)
+
+	// v3 upgrade handler
+	app.UpgradeKeeper.SetUpgradeHandler(
+		v3.UpgradeName,
+		v3.CreateUpgradeHandler(app.mm, app.configurator, app.ClaimKeeper),
+	)
+
+	// v4 upgrade handler
+	app.UpgradeKeeper.SetUpgradeHandler(
+		v4.UpgradeName,
+		v4.CreateUpgradeHandler(app.mm, app.configurator),
+	)
+
+	// v5 upgrade handler
+	app.UpgradeKeeper.SetUpgradeHandler(
+		v5.UpgradeName,
+		v5.CreateUpgradeHandler(
+			app.mm,
+			app.configurator,
+			app.appCodec,
+			app.InterchainqueryKeeper,
+			app.StakeibcKeeper,
+			app.keys[claimtypes.StoreKey],
+			app.keys[icacallbacktypes.StoreKey],
+			app.keys[recordtypes.StoreKey],
+			app.keys[stakeibctypes.StoreKey],
+		),
 	)
 
 	upgradeInfo, err := app.UpgradeKeeper.ReadUpgradeInfoFromDisk()
@@ -28,7 +65,14 @@ func (app *StrideApp) setupUpgradeHandlers() {
 	var storeUpgrades *storetypes.StoreUpgrades
 
 	switch upgradeInfo.Name {
-	// no store upgrades
+	case "v3":
+		storeUpgrades = &storetypes.StoreUpgrades{
+			Added: []string{claimtypes.StoreKey},
+		}
+	case "v5":
+		storeUpgrades = &storetypes.StoreUpgrades{
+			Deleted: []string{authz.ModuleName},
+		}
 	}
 
 	if storeUpgrades != nil {

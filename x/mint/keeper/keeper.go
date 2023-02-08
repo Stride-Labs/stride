@@ -9,18 +9,19 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 
-	"github.com/Stride-Labs/stride/x/mint/types"
+	"github.com/Stride-Labs/stride/v4/x/mint/types"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/address"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
+	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 )
 
 // Keeper of the mint store.
 type Keeper struct {
 	cdc              codec.BinaryCodec
-	storeKey         sdk.StoreKey
+	storeKey         storetypes.StoreKey
 	paramSpace       paramtypes.Subspace
 	accountKeeper    types.AccountKeeper
 	bankKeeper       types.BankKeeper
@@ -32,7 +33,7 @@ type Keeper struct {
 
 // NewKeeper creates a new mint Keeper instance.
 func NewKeeper(
-	cdc codec.BinaryCodec, key sdk.StoreKey, paramSpace paramtypes.Subspace,
+	cdc codec.BinaryCodec, key storetypes.StoreKey, paramSpace paramtypes.Subspace,
 	ak types.AccountKeeper, bk types.BankKeeper, dk types.DistrKeeper, epochKeeper types.EpochKeeper,
 	feeCollectorName string,
 ) Keeper {
@@ -140,13 +141,12 @@ func (k Keeper) MintCoins(ctx sdk.Context, newCoins sdk.Coins) error {
 
 // GetProportions gets the balance of the `MintedDenom` from minted coins and returns coins according to the `AllocationRatio`.
 func (k Keeper) GetProportions(ctx sdk.Context, mintedCoin sdk.Coin, ratio sdk.Dec) sdk.Coin {
-	return sdk.NewCoin(mintedCoin.Denom, mintedCoin.Amount.ToDec().Mul(ratio).TruncateInt())
+	return sdk.NewCoin(mintedCoin.Denom, sdk.NewDecFromInt(mintedCoin.Amount).Mul(ratio).TruncateInt())
 }
 
 const (
-	// TODO (set this!)
-	// strategic reserve address
-	StrategicReserveAddress = "stride1vytsydmkkmkndlrkeqkqad7zkx4gpgmn50vmjn"
+	// strategic reserve address F0
+	StrategicReserveAddress = "stride1alnn79kh0xka0r5h4h82uuaqfhpdmph6rvpf5f"
 )
 
 // DistributeMintedCoins implements distribution of minted coins from mint to external modules.
@@ -186,15 +186,15 @@ func (k Keeper) DistributeMintedCoin(ctx sdk.Context, mintedCoin sdk.Coin) error
 
 	// remaining tokens to the community growth pool (this should NEVER happen, barring rounding imprecision)
 	remainingCoins := sdk.NewCoins(mintedCoin).
-		Sub(stakingIncentivesCoins).
-		Sub(strategicReserveCoins).
-		Sub(communityPoolGrowthCoins).
-		Sub(communityPoolSecurityBudgetCoins)
+		Sub(stakingIncentivesCoins...).
+		Sub(strategicReserveCoins...).
+		Sub(communityPoolGrowthCoins...).
+		Sub(communityPoolSecurityBudgetCoins...)
 
 	// check: remaining coins should be less than 5% of minted coins
 	remainingBal := remainingCoins.AmountOf(sdk.DefaultBondDenom)
 	thresh := sdk.NewDec(5).Quo(sdk.NewDec(100))
-	if remainingBal.ToDec().Quo(mintedCoin.Amount.ToDec()).GT(thresh) {
+	if sdk.NewDecFromInt(remainingBal).Quo(sdk.NewDecFromInt(mintedCoin.Amount)).GT(thresh) {
 		errMsg := fmt.Sprintf("Failed to divvy up mint module rewards fully -- remaining coins should be LT 5pct of total, instead are %#v/%#v", remainingCoins, remainingBal)
 		k.Logger(ctx).Error(errMsg)
 		return sdkerrors.Wrapf(sdkerrors.ErrInsufficientFunds, errMsg)
@@ -230,7 +230,6 @@ func (k Keeper) DistributeMintedCoin(ctx sdk.Context, mintedCoin sdk.Coin) error
 
 // set up a new module account address
 func (k Keeper) SetupNewModuleAccount(ctx sdk.Context, submoduleName string, submoduleNamespace string) {
-
 	// create and save the module account to the account keeper
 	acctAddress := k.GetSubmoduleAddress(submoduleName, submoduleNamespace)
 	acc := k.accountKeeper.NewAccount(

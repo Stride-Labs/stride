@@ -1,0 +1,34 @@
+FROM golang:1.19-alpine3.15 AS builder
+
+WORKDIR /opt
+
+RUN apk add --update ca-certificates build-base git
+
+ENV COMMIT_HASH=b0bea28fc695a2a5c567e56a37b289a5b75830cc
+
+RUN git clone https://github.com/public-awesome/stargaze \
+    && cd stargaze \
+    && git checkout $COMMIT_HASH 
+
+WORKDIR /opt/stargaze
+
+ADD https://github.com/CosmWasm/wasmvm/releases/download/v1.0.0/libwasmvm_muslc.aarch64.a /lib/libwasmvm_muslc.aarch64.a
+ADD https://github.com/CosmWasm/wasmvm/releases/download/v1.0.0/libwasmvm_muslc.x86_64.a /lib/libwasmvm_muslc.x86_64.a
+RUN sha256sum /lib/libwasmvm_muslc.aarch64.a | grep 7d2239e9f25e96d0d4daba982ce92367aacf0cbd95d2facb8442268f2b1cc1fc
+RUN sha256sum /lib/libwasmvm_muslc.x86_64.a | grep f6282df732a13dec836cda1f399dd874b1e3163504dbd9607c6af915b2740479
+RUN cp /lib/libwasmvm_muslc.$(uname -m).a /lib/libwasmvm_muslc.a
+
+RUN LEDGER_ENABLED=false BUILD_TAGS=muslc LINK_STATICALLY=true make build
+
+FROM alpine:3.15
+COPY --from=builder /opt/stargaze/bin/starsd /usr/local/bin/
+RUN apk add --update bash vim ca-certificates \
+    && addgroup -g 1000 stars \
+    && adduser -S -h /home/stars -D stars -u 1000 -G stars
+
+USER 1000
+WORKDIR /home/stars
+
+EXPOSE 26657 26656 1317 9090
+
+CMD ["starsd", "start"]

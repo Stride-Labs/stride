@@ -9,10 +9,10 @@ import (
 	tmcli "github.com/tendermint/tendermint/libs/cli"
 	"google.golang.org/grpc/status"
 
-	"github.com/Stride-Labs/stride/testutil/network"
-	"github.com/Stride-Labs/stride/testutil/nullify"
-	"github.com/Stride-Labs/stride/x/stakeibc/client/cli"
-	"github.com/Stride-Labs/stride/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v4/testutil/network"
+	"github.com/Stride-Labs/stride/v4/testutil/nullify"
+	"github.com/Stride-Labs/stride/v4/x/stakeibc/client/cli"
+	"github.com/Stride-Labs/stride/v4/x/stakeibc/types"
 )
 
 func networkWithICAAccountObjects(t *testing.T) (*network.Network, types.ICAAccount) {
@@ -23,11 +23,11 @@ func networkWithICAAccountObjects(t *testing.T) (*network.Network, types.ICAAcco
 
 	iCAAccount := &types.ICAAccount{}
 	nullify.Fill(&iCAAccount)
-	state.ICAAccount = iCAAccount
+	state.IcaAccount = iCAAccount
 	buf, err := cfg.Codec.MarshalJSON(&state)
 	require.NoError(t, err)
 	cfg.GenesisState[types.ModuleName] = buf
-	return network.New(t, cfg), *state.ICAAccount
+	return network.New(t, cfg), *state.IcaAccount
 }
 
 func TestShowICAAccount(t *testing.T) {
@@ -62,10 +62,10 @@ func TestShowICAAccount(t *testing.T) {
 				require.NoError(t, err)
 				var resp types.QueryGetICAAccountResponse
 				require.NoError(t, net.Config.Codec.UnmarshalJSON(out.Bytes(), &resp))
-				require.NotNil(t, resp.ICAAccount)
+				require.NotNil(t, resp.IcaAccount)
 				require.Equal(t,
 					nullify.Fill(&tc.obj),
-					nullify.Fill(&resp.ICAAccount),
+					nullify.Fill(&resp.IcaAccount),
 				)
 			}
 		})

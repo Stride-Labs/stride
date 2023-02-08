@@ -5,12 +5,12 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/Stride-Labs/stride/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v4/x/stakeibc/types"
 )
 
-func (suite KeeperTestSuite) TestICAAccountQuery() {
+func (suite *KeeperTestSuite) TestICAAccountQuery() {
 	item := suite.createTestICAAccount()
-	wctx := sdk.WrapSDKContext(suite.Ctx())
+	wctx := sdk.WrapSDKContext(suite.Ctx)
 	for _, tc := range []struct {
 		desc     string
 		request  *types.QueryGetICAAccountRequest
@@ -20,7 +20,7 @@ func (suite KeeperTestSuite) TestICAAccountQuery() {
 		{
 			desc:     "First",
 			request:  &types.QueryGetICAAccountRequest{},
-			response: &types.QueryGetICAAccountResponse{ICAAccount: item},
+			response: &types.QueryGetICAAccountResponse{IcaAccount: item},
 		},
 		{
 			desc: "InvalidRequest",

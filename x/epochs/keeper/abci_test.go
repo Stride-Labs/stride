@@ -4,14 +4,12 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/Stride-Labs/stride/x/epochs"
-	"github.com/Stride-Labs/stride/x/epochs/types"
+	"github.com/Stride-Labs/stride/v4/x/epochs"
+	"github.com/Stride-Labs/stride/v4/x/epochs/types"
 )
 
 func (suite *KeeperTestSuite) TestEpochInfoChangesBeginBlockerAndInitGenesis() {
-	var (
-		epochInfo types.EpochInfo
-	)
+	var epochInfo types.EpochInfo
 
 	now := time.Now()
 
@@ -29,7 +27,7 @@ func (suite *KeeperTestSuite) TestEpochInfoChangesBeginBlockerAndInitGenesis() {
 			expCurrentEpoch:            1,
 			expInitialEpochStartTime:   now,
 			fn: func() {
-				ctx := suite.Ctx().WithBlockHeight(2).WithBlockTime(now.Add(time.Second))
+				ctx := suite.Ctx.WithBlockHeight(2).WithBlockTime(now.Add(time.Second))
 				suite.App.EpochsKeeper.BeginBlocker(ctx)
 				epochInfo, _ = suite.App.EpochsKeeper.GetEpochInfo(ctx, "monthly")
 			},
@@ -40,7 +38,7 @@ func (suite *KeeperTestSuite) TestEpochInfoChangesBeginBlockerAndInitGenesis() {
 			expCurrentEpoch:            1,
 			expInitialEpochStartTime:   now,
 			fn: func() {
-				ctx := suite.Ctx().WithBlockHeight(2).WithBlockTime(now.Add(time.Second))
+				ctx := suite.Ctx.WithBlockHeight(2).WithBlockTime(now.Add(time.Second))
 				suite.App.EpochsKeeper.BeginBlocker(ctx)
 				ctx = ctx.WithBlockHeight(3).WithBlockTime(now.Add(time.Hour * 24 * 31))
 				suite.App.EpochsKeeper.BeginBlocker(ctx)
@@ -54,7 +52,7 @@ func (suite *KeeperTestSuite) TestEpochInfoChangesBeginBlockerAndInitGenesis() {
 			expCurrentEpoch:            2,
 			expInitialEpochStartTime:   now,
 			fn: func() {
-				ctx := suite.Ctx().WithBlockHeight(2).WithBlockTime(now.Add(time.Second))
+				ctx := suite.Ctx.WithBlockHeight(2).WithBlockTime(now.Add(time.Second))
 				suite.App.EpochsKeeper.BeginBlocker(ctx)
 				ctx = ctx.WithBlockHeight(3).WithBlockTime(now.Add(time.Hour * 24 * 32))
 				suite.App.EpochsKeeper.BeginBlocker(ctx)
@@ -67,7 +65,7 @@ func (suite *KeeperTestSuite) TestEpochInfoChangesBeginBlockerAndInitGenesis() {
 			expCurrentEpoch:            2,
 			expInitialEpochStartTime:   now,
 			fn: func() {
-				ctx := suite.Ctx().WithBlockHeight(2).WithBlockTime(now.Add(time.Second))
+				ctx := suite.Ctx.WithBlockHeight(2).WithBlockTime(now.Add(time.Second))
 				suite.App.EpochsKeeper.BeginBlocker(ctx)
 				ctx = ctx.WithBlockHeight(3).WithBlockTime(now.Add(time.Hour * 24 * 32))
 				suite.App.EpochsKeeper.BeginBlocker(ctx)
@@ -82,7 +80,7 @@ func (suite *KeeperTestSuite) TestEpochInfoChangesBeginBlockerAndInitGenesis() {
 			expCurrentEpoch:            2,
 			expInitialEpochStartTime:   now,
 			fn: func() {
-				ctx := suite.Ctx().WithBlockHeight(2).WithBlockTime(now.Add(time.Second))
+				ctx := suite.Ctx.WithBlockHeight(2).WithBlockTime(now.Add(time.Second))
 				suite.App.EpochsKeeper.BeginBlocker(ctx)
 				ctx = ctx.WithBlockHeight(3).WithBlockTime(now.Add(time.Hour * 24 * 32))
 				suite.App.EpochsKeeper.BeginBlocker(ctx)
@@ -96,7 +94,7 @@ func (suite *KeeperTestSuite) TestEpochInfoChangesBeginBlockerAndInitGenesis() {
 	for i, tc := range testCases {
 		suite.Run(fmt.Sprintf("Case %d", i), func() {
 			suite.SetupTest() // reset
-			ctx := suite.Ctx()
+			ctx := suite.Ctx
 
 			// On init genesis, default epochs information is set
 			// To check init genesis again, should make it fresh status
@@ -135,7 +133,7 @@ func (suite *KeeperTestSuite) TestEpochInfoChangesBeginBlockerAndInitGenesis() {
 }
 
 func (suite *KeeperTestSuite) TestEpochStartingOneMonthAfterInitGenesis() {
-	ctx := suite.Ctx()
+	ctx := suite.Ctx
 	// On init genesis, default epochs information is set
 	// To check init genesis again, should make it fresh status
 	epochInfos := suite.App.EpochsKeeper.AllEpochInfos(ctx)

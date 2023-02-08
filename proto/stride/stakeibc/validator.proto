@@ -1,0 +1,33 @@
+syntax = "proto3";
+package stride.stakeibc;
+import "cosmos_proto/cosmos.proto";
+import "gogoproto/gogo.proto";
+option go_package = "github.com/Stride-Labs/stride/v4/x/stakeibc/types";
+
+message ValidatorExchangeRate {
+  string internal_tokens_to_shares_rate = 1 [
+    (cosmos_proto.scalar) = "cosmos.Dec",
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+  uint64 epoch_number = 2;
+}
+
+message Validator {
+  string name = 1;
+  string address = 2 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+
+  enum ValidatorStatus {
+    ACTIVE = 0;
+    INACTIVE = 1;
+  }
+
+  ValidatorStatus status = 3;
+  uint64 commission_rate = 4;
+  string delegation_amt = 5 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
+  uint64 weight = 6;
+  ValidatorExchangeRate internal_exchange_rate = 7;
+}

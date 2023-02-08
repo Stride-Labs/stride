@@ -1,0 +1,120 @@
+syntax = "proto3";
+package stride.records;
+
+import "gogoproto/gogo.proto";
+
+// this line is used by starport scaffolding # genesis/proto/import
+
+option go_package = "github.com/Stride-Labs/stride/v4/x/records/types";
+
+message UserRedemptionRecord {
+  string id = 1; // {chain_id}.{epoch}.{sender}
+  string sender = 2;
+  string receiver = 3;
+  string amount = 4 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
+  string denom = 5;
+  string host_zone_id = 6;
+  uint64 epoch_number = 7;
+  bool claim_is_pending = 8;
+}
+
+// Msg defines the Msg service.
+service Msg {
+  // this line is used by starport scaffolding # proto/tx/rpc
+}
+
+// this line is used by starport scaffolding # proto/tx/message
+
+// Params defines the parameters for the module.
+message Params { option (gogoproto.goproto_stringer) = false; }
+
+message RecordsPacketData {
+  oneof packet {
+    NoData no_data = 1;
+    // this line is used by starport scaffolding # ibc/packet/proto/field
+  }
+}
+
+message NoData {}
+
+// this line is used by starport scaffolding # ibc/packet/proto/message
+
+message DepositRecord {
+  uint64 id = 1;
+  string amount = 2 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
+  string denom = 3;
+  string host_zone_id = 4;
+  enum Status {
+    // in transfer queue to be sent to the delegation ICA
+    TRANSFER_QUEUE = 0;
+    // transfer in progress (IBC packet sent, ack not received)
+    TRANSFER_IN_PROGRESS = 2;
+    // in staking queue on delegation ICA
+    DELEGATION_QUEUE = 1;
+    // staking in progress (ICA packet sent, ack not received)
+    DELEGATION_IN_PROGRESS = 3;
+  }
+  enum Source {
+    STRIDE = 0;
+    WITHDRAWAL_ICA = 1;
+  }
+  Status status = 6;
+  uint64 deposit_epoch_number = 7;
+  Source source = 8;
+
+  reserved 5;
+}
+
+message HostZoneUnbonding {
+  enum Status {
+    // tokens bonded on delegate account
+    UNBONDING_QUEUE = 0;
+    UNBONDING_IN_PROGRESS = 3;
+    // unbonding completed on delegate account
+    EXIT_TRANSFER_QUEUE = 1;
+    EXIT_TRANSFER_IN_PROGRESS = 4;
+    // transfer success
+    CLAIMABLE = 2;
+  }
+  string st_token_amount = 1 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
+  string native_token_amount = 2 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
+  string denom = 3;
+  string host_zone_id = 4;
+  uint64 unbonding_time = 5;
+  Status status = 6;
+  repeated string user_redemption_records = 7;
+}
+
+message EpochUnbondingRecord {
+  uint64 epoch_number = 1;
+  repeated HostZoneUnbonding host_zone_unbondings = 3;
+  reserved 2;
+}
+
+// GenesisState defines the recordπs module's genesis state.
+// next id: 9
+message GenesisState {
+  Params params = 1 [ (gogoproto.nullable) = false ];
+  string port_id = 2;
+  repeated UserRedemptionRecord user_redemption_record_list = 3
+      [ (gogoproto.nullable) = false ];
+  uint64 user_redemption_record_count = 4;
+  repeated EpochUnbondingRecord epoch_unbonding_record_list = 5
+      [ (gogoproto.nullable) = false ];
+  repeated DepositRecord deposit_record_list = 7
+      [ (gogoproto.nullable) = false ];
+  uint64 deposit_record_count = 8;
+  // this line is used by starport scaffolding # genesis/proto/state
+}

@@ -10,7 +10,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/Stride-Labs/stride/x/records/types"
+	"github.com/Stride-Labs/stride/v4/x/records/types"
 )
 
 func (k Keeper) EpochUnbondingRecordAll(c context.Context, req *types.QueryAllEpochUnbondingRecordRequest) (*types.QueryAllEpochUnbondingRecordResponse, error) {
@@ -33,7 +33,6 @@ func (k Keeper) EpochUnbondingRecordAll(c context.Context, req *types.QueryAllEp
 		epochUnbondingRecords = append(epochUnbondingRecords, epochUnbondingRecord)
 		return nil
 	})
-
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}

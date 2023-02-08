@@ -5,7 +5,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/Stride-Labs/stride/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v4/x/stakeibc/types"
 )
 
 func TestGenesisState_Validate(t *testing.T) {
@@ -23,7 +23,7 @@ func TestGenesisState_Validate(t *testing.T) {
 			desc: "valid genesis state",
 			genState: &types.GenesisState{
 				PortId: types.PortID,
-				ICAAccount: &types.ICAAccount{
+				IcaAccount: &types.ICAAccount{
 					Address: "79",
 				},
 				HostZoneList: []types.HostZone{

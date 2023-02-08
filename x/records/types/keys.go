@@ -23,10 +23,8 @@ const (
 	PortID = "records"
 )
 
-var (
-	// PortKey defines the key to store the port ID in store
-	PortKey = KeyPrefix("records-port-")
-)
+// PortKey defines the key to store the port ID in store
+var PortKey = KeyPrefix("records-port-")
 
 func KeyPrefix(p string) []byte {
 	return []byte(p)

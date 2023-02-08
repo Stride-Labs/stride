@@ -4,7 +4,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
-	"github.com/Stride-Labs/stride/utils"
+	"github.com/Stride-Labs/stride/v4/utils"
 )
 
 const TypeMsgClaimUndelegatedTokens = "claim_undelegated_tokens"
@@ -50,6 +50,13 @@ func (msg *MsgClaimUndelegatedTokens) ValidateBasic() error {
 	_, err = utils.AccAddressFromBech32(msg.Sender, "stride")
 	if err != nil {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid sender address (%s)", err)
+	}
+	// validate host denom is not empty
+	if msg.HostZoneId == "" {
+		return sdkerrors.Wrapf(ErrRequiredFieldEmpty, "host zone id cannot be empty")
+	}
+	if !(msg.Epoch < (1<<63 - 1)) {
+		return sdkerrors.Wrapf(ErrInvalidAmount, "epoch must be less than math.MaxInt64 %d", 1<<63-1)
 	}
 	return nil
 }

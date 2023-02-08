@@ -3,12 +3,13 @@ package keeper
 import (
 	"context"
 
-	"github.com/Stride-Labs/stride/x/stakeibc/types"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+
+	"github.com/Stride-Labs/stride/v4/x/stakeibc/types"
 )
 
 func (k Keeper) EpochTrackerAll(c context.Context, req *types.QueryAllEpochTrackerRequest) (*types.QueryAllEpochTrackerResponse, error) {
@@ -31,7 +32,6 @@ func (k Keeper) EpochTrackerAll(c context.Context, req *types.QueryAllEpochTrack
 		epochTrackers = append(epochTrackers, epochTracker)
 		return nil
 	})
-
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}

@@ -1,0 +1,153 @@
+syntax = "proto3";
+package stride.stakeibc;
+
+import "stride/stakeibc/ica_account.proto";
+// this line is used by starport scaffolding # proto/tx/import
+
+option go_package = "github.com/Stride-Labs/stride/v4/x/stakeibc/types";
+import "gogoproto/gogo.proto";
+import "cosmos_proto/cosmos.proto";
+
+// Msg defines the Msg service.
+service Msg {
+  rpc LiquidStake(MsgLiquidStake) returns (MsgLiquidStakeResponse);
+  rpc RedeemStake(MsgRedeemStake) returns (MsgRedeemStakeResponse);
+  // TODO(TEST-53): Remove this pre-launch (no need for clients to create /
+  // interact with ICAs)
+  rpc RegisterHostZone(MsgRegisterHostZone)
+      returns (MsgRegisterHostZoneResponse);
+  rpc ClaimUndelegatedTokens(MsgClaimUndelegatedTokens)
+      returns (MsgClaimUndelegatedTokensResponse);
+  rpc RebalanceValidators(MsgRebalanceValidators)
+      returns (MsgRebalanceValidatorsResponse);
+  rpc AddValidator(MsgAddValidator) returns (MsgAddValidatorResponse);
+  rpc ChangeValidatorWeight(MsgChangeValidatorWeight)
+      returns (MsgChangeValidatorWeightResponse);
+  rpc DeleteValidator(MsgDeleteValidator) returns (MsgDeleteValidatorResponse);
+  rpc RestoreInterchainAccount(MsgRestoreInterchainAccount)
+      returns (MsgRestoreInterchainAccountResponse);
+  rpc UpdateValidatorSharesExchRate(MsgUpdateValidatorSharesExchRate)
+      returns (MsgUpdateValidatorSharesExchRateResponse);
+  rpc ClearBalance(MsgClearBalance) returns (MsgClearBalanceResponse);
+  // this line is used by starport scaffolding # proto/tx/rpc
+}
+
+message MsgLiquidStake {
+  string creator = 1;
+  string amount = 2 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
+  // TODO(TEST-86): Update Denom -> HostDenom
+  string host_denom = 3;
+}
+
+message MsgLiquidStakeResponse {}
+
+message MsgClearBalance {
+  string creator = 1;
+  string chain_id = 2;
+  string amount = 3 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
+  string channel = 4;
+}
+
+message MsgClearBalanceResponse {}
+
+message MsgRedeemStake {
+  string creator = 1;
+  string amount = 2 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
+  string host_zone = 3;
+  string receiver = 4;
+}
+
+message MsgRedeemStakeResponse {}
+
+// next: 13
+message MsgRegisterHostZone {
+  option (gogoproto.equal) = false;
+  option (gogoproto.goproto_getters) = false;
+
+  string connection_id = 2 [ (gogoproto.moretags) = "yaml:\"connection_id\"" ];
+  string bech32prefix = 12;
+  string host_denom = 4 [ (gogoproto.moretags) = "yaml:\"host_denom\"" ];
+  string ibc_denom = 5 [ (gogoproto.moretags) = "yaml:\"ibc_denom\"" ];
+  string creator = 6;
+  string transfer_channel_id = 10
+      [ (gogoproto.moretags) = "yaml:\"transfer_channel_id\"" ];
+  uint64 unbonding_frequency = 11
+      [ (gogoproto.moretags) = "yaml:\"unbonding_frequency\"" ];
+}
+
+// TODO(TEST-53): Remove this pre-launch (no need for clients to create /
+// interact with ICAs)
+message MsgRegisterHostZoneResponse {}
+
+message MsgClaimUndelegatedTokens {
+  string creator = 1;
+  // UserUnbondingRecords are keyed on {chain_id}.{epoch}.{sender}
+  string host_zone_id = 2;
+  uint64 epoch = 3;
+  string sender = 4;
+}
+
+message MsgClaimUndelegatedTokensResponse {}
+
+message MsgRebalanceValidators {
+  string creator = 1;
+  string host_zone = 2;
+  uint64 num_rebalance = 3;
+}
+
+message MsgRebalanceValidatorsResponse {}
+
+message MsgAddValidator {
+  string creator = 1;
+  string host_zone = 2;
+  string name = 3;
+  string address = 4 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+  uint64 commission = 5;
+  uint64 weight = 6;
+}
+
+message MsgAddValidatorResponse {}
+
+message MsgChangeValidatorWeight {
+  string creator = 1;
+  string host_zone = 2;
+  string val_addr = 3 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+  uint64 weight = 4;
+}
+
+message MsgChangeValidatorWeightResponse {}
+
+message MsgDeleteValidator {
+  string creator = 1;
+  string host_zone = 2;
+  string val_addr = 3 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+}
+
+message MsgDeleteValidatorResponse {}
+
+message MsgRestoreInterchainAccount {
+  string creator = 1;
+  string chain_id = 2;
+  ICAAccountType account_type = 3;
+}
+
+message MsgRestoreInterchainAccountResponse {}
+
+message MsgUpdateValidatorSharesExchRate {
+  string creator = 1;
+  string chain_id = 2;
+  string valoper = 3;
+}
+
+message MsgUpdateValidatorSharesExchRateResponse {}
+
+// this line is used by starport scaffolding # proto/tx/message

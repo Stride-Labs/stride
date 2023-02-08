@@ -1,26 +1,24 @@
 package utils
 
 import (
+	"errors"
 	"fmt"
 	"sort"
 	"strconv"
-
-	"errors"
 	"strings"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/address"
 	"github.com/cosmos/cosmos-sdk/types/bech32"
 
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
-	recordstypes "github.com/Stride-Labs/stride/x/records/types"
-)
+	channeltypes "github.com/cosmos/ibc-go/v5/modules/core/04-channel/types"
 
-var ADMINS = map[string]bool{
-	"stride1u20df3trc2c2zdhm8qvh2hdjx9ewh00sv6eyy8": true, // stride localnet
-	"stride159atdlc3ksl50g0659w5tq42wwer334ajl7xnq": true, // stride testnet
-	"stride10d07y265gmmuvt4z0w9aw880jnsr700jefnezl": true, // gov module
-}
+	config "github.com/Stride-Labs/stride/v4/cmd/strided/config"
+	icacallbacktypes "github.com/Stride-Labs/stride/v4/x/icacallbacks/types"
+	recordstypes "github.com/Stride-Labs/stride/v4/x/records/types"
+)
 
 func FilterDepositRecords(arr []recordstypes.DepositRecord, condition func(recordstypes.DepositRecord) bool) (ret []recordstypes.DepositRecord) {
 	for _, elem := range arr {
@@ -36,7 +34,7 @@ func Int64ToCoinString(amount int64, denom string) string {
 }
 
 func ValidateAdminAddress(address string) error {
-	if !ADMINS[address] {
+	if !Admins[address] {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, fmt.Sprintf("invalid creator address (%s)", address))
 	}
 	return nil
@@ -49,7 +47,7 @@ func Min(a int, b int) int {
 	return b
 }
 
-func HostZoneUnbondingKeys(m map[string]*recordstypes.HostZoneUnbonding) []string {
+func StringMapKeys[V any](m map[string]V) []string {
 	keys := make([]string, 0, len(m))
 	for k := range m {
 		keys = append(keys, k)
@@ -58,30 +56,12 @@ func HostZoneUnbondingKeys(m map[string]*recordstypes.HostZoneUnbonding) []strin
 	return keys
 }
 
-func StringToIntMapKeys(m map[string]int64) []string {
-	keys := make([]string, 0, len(m))
+func Int32MapKeys[V any](m map[int32]V) []int32 {
+	keys := make([]int32, 0, len(m))
 	for k := range m {
 		keys = append(keys, k)
 	}
-	sort.Strings(keys)
-	return keys
-}
-
-func StringToStringMapKeys(m map[string]string) []string {
-	keys := make([]string, 0, len(m))
-	for k := range m {
-		keys = append(keys, k)
-	}
-	sort.Strings(keys)
-	return keys
-}
-
-func StringToStringSliceMapKeys(m map[string][]string) []string {
-	keys := make([]string, 0, len(m))
-	for k := range m {
-		keys = append(keys, k)
-	}
-	sort.Strings(keys)
+	sort.Slice(keys, func(i, j int) bool { return keys[i] < keys[j] })
 	return keys
 }
 
@@ -159,6 +139,49 @@ func AccAddressFromBech32(address string, bech32prefix string) (addr AccAddress,
 	return AccAddress(bz), nil
 }
 
+// ==============================  AIRDROP UTILS  ================================
+// max64 returns the maximum of its inputs.
+func Max64(i, j int64) int64 {
+	if i > j {
+		return i
+	}
+	return j
+}
+
+// Min64 returns the minimum of its inputs.
+func Min64(i, j int64) int64 {
+	if i < j {
+		return i
+	}
+	return j
+}
+
+// Compute coin amount for specific period using linear vesting calculation algorithm.
+func GetVestedCoinsAt(vAt int64, vStart int64, vLength int64, vCoins sdk.Coins) sdk.Coins {
+	var vestedCoins sdk.Coins
+
+	if vAt < 0 || vStart < 0 || vLength < 0 {
+		return sdk.Coins{}
+	}
+
+	vEnd := vStart + vLength
+	if vAt <= vStart {
+		return sdk.Coins{}
+	} else if vAt >= vEnd {
+		return vCoins
+	}
+
+	// calculate the vesting scalar
+	portion := sdk.NewDec(vAt - vStart).Quo(sdk.NewDec(vLength))
+
+	for _, ovc := range vCoins {
+		vestedAmt := sdk.NewDec(ovc.Amount.Int64()).Mul(portion).RoundInt()
+		vestedCoins = append(vestedCoins, sdk.NewCoin(ovc.Denom, vestedAmt))
+	}
+
+	return vestedCoins
+}
+
 // check string array inclusion
 func ContainsString(s []string, e string) bool {
 	for _, a := range s {
@@ -167,4 +190,76 @@ func ContainsString(s []string, e string) bool {
 		}
 	}
 	return false
+}
+
+// Convert any bech32 to stride address
+func ConvertAddressToStrideAddress(address string) string {
+	_, bz, err := bech32.DecodeAndConvert(address)
+	if err != nil {
+		return ""
+	}
+
+	bech32Addr, err := bech32.ConvertAndEncode(config.Bech32PrefixAccAddr, bz)
+	if err != nil {
+		return ""
+	}
+
+	return bech32Addr
+}
+
+// Returns a log string with a chainId and tab as the prefix
+// Ex:
+//   | COSMOSHUB-4   |   string
+func LogWithHostZone(chainId string, s string, a ...any) string {
+	msg := fmt.Sprintf(s, a...)
+	return fmt.Sprintf("|   %-13s |  %s", strings.ToUpper(chainId), msg)
+}
+
+// Returns a log string with a chain Id and callback as a prefix
+// callbackType is either ICACALLBACK or ICQCALLBACK
+// Format:
+//   |   CHAIN-ID    |  {CALLBACK_ID} {CALLBACK_TYPE}  |  string
+func logCallbackWithHostZone(chainId string, callbackId string, callbackType string, s string, a ...any) string {
+	msg := fmt.Sprintf(s, a...)
+	return fmt.Sprintf("|   %-13s |  %s %s  |  %s", strings.ToUpper(chainId), strings.ToUpper(callbackId), callbackType, msg)
+}
+
+// Returns a log string with a chain Id and icacallback as a prefix
+// Ex:
+//   | COSMOSHUB-4   |  DELEGATE ICACALLBACK  |  string
+func LogICACallbackWithHostZone(chainId string, callbackId string, s string, a ...any) string {
+	return logCallbackWithHostZone(chainId, callbackId, "ICACALLBACK", s, a...)
+}
+
+// Returns a log string with a chain Id and icacallback as a prefix, and status of the callback
+// Ex:
+//   | COSMOSHUB-4   |  DELEGATE ICACALLBACK  |  ICA SUCCESS, Packet: ...
+func LogICACallbackStatusWithHostZone(chainId string, callbackId string, status icacallbacktypes.AckResponseStatus, packet channeltypes.Packet) string {
+	var statusMsg string
+	switch status {
+	case icacallbacktypes.AckResponseStatus_SUCCESS:
+		statusMsg = "ICA SUCCESSFUL"
+	case icacallbacktypes.AckResponseStatus_TIMEOUT:
+		statusMsg = "ICA TIMEOUT"
+	default:
+		statusMsg = "ICA FAILED (ack error)"
+	}
+	return logCallbackWithHostZone(chainId, callbackId, "ICACALLBACK", "%s, Packet: %+v", statusMsg, packet)
+}
+
+// Returns a log string with a chain Id and icqcallback as a prefix
+// Ex:
+//   | COSMOSHUB-4   |  WITHDRAWALBALANCE ICQCALLBACK  |  string
+func LogICQCallbackWithHostZone(chainId string, callbackId string, s string, a ...any) string {
+	return logCallbackWithHostZone(chainId, callbackId, "ICQCALLBACK", s, a...)
+}
+
+// Returns a log header string with a dash padding on either side
+// Ex:
+//  ------------------------------ string ------------------------------
+func LogHeader(s string, a ...any) string {
+	lineLength := 120
+	header := fmt.Sprintf(s, a...)
+	pad := strings.Repeat("-", (lineLength-len(header))/2)
+	return fmt.Sprintf("%s %s %s", pad, header, pad)
 }

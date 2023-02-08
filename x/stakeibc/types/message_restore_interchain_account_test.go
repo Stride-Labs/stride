@@ -3,9 +3,10 @@ package types
 import (
 	"testing"
 
-	"github.com/Stride-Labs/stride/testutil/sample"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/stretchr/testify/require"
+
+	"github.com/Stride-Labs/stride/v4/testutil/sample"
 )
 
 func TestMsgRestoreInterchainAccount_ValidateBasic(t *testing.T) {

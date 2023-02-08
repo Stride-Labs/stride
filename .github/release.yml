@@ -1,0 +1,11 @@
+<Release Title>
+
+# 🔨 Build from source
+```
+git clone https://github.com/Stride-Labs/stride
+cd stride && git checkout v1.0.0
+make build
+```
+
+# ⚡️ Download binaries
+Binaries for linux amd64 and arm64 are available below.

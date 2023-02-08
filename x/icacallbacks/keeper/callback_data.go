@@ -1,9 +1,10 @@
 package keeper
 
 import (
-	"github.com/Stride-Labs/stride/x/icacallbacks/types"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	"github.com/Stride-Labs/stride/v4/x/icacallbacks/types"
 )
 
 // SetCallbackData set a specific callbackData in the store from its index
@@ -19,7 +20,6 @@ func (k Keeper) SetCallbackData(ctx sdk.Context, callbackData types.CallbackData
 func (k Keeper) GetCallbackData(
 	ctx sdk.Context,
 	callbackKey string,
-
 ) (val types.CallbackData, found bool) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.CallbackDataKeyPrefix))
 
@@ -38,7 +38,6 @@ func (k Keeper) GetCallbackData(
 func (k Keeper) RemoveCallbackData(
 	ctx sdk.Context,
 	callbackKey string,
-
 ) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.CallbackDataKeyPrefix))
 	store.Delete(types.CallbackDataKey(
