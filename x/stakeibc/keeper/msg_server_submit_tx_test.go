@@ -188,7 +188,13 @@ func (s *KeeperTestSuite) TestDelegateOnHost_FailedToGetICATimeoutNanos() {
 	s.Require().Error(err)
 }
 
-func (s *KeeperTestSuite) TestDelegateOnHost_NoWithdrawalAccountFound() {
+func (s *KeeperTestSuite) TestUpdateWithdrawalBalance_successful() {
+	tc := s.SetupSubmitTx()
+	err := s.App.StakeibcKeeper.UpdateWithdrawalBalance(s.Ctx, tc.hostZone)
+	s.Require().NoError(err)
+}
+
+func (s *KeeperTestSuite) TestUpdateWithdrawalBalance_NoWithdrawalAccountFound() {
 	tc := s.SetupSubmitTx_emptyStrideEpoch()
 	tc.hostZone.WithdrawalAccount.Address = ""
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, tc.hostZone)
@@ -197,7 +203,7 @@ func (s *KeeperTestSuite) TestDelegateOnHost_NoWithdrawalAccountFound() {
 	s.EqualError(err, expectedErr)
 }
 
-func (s *KeeperTestSuite) TestDelegateOnHost_InvalidWithdrawalAccountAddress() {
+func (s *KeeperTestSuite) TestUpdateWithdrawalBalance_InvalidWithdrawalAccountAddress() {
 	tc := s.SetupSubmitTx_emptyStrideEpoch()
 	tc.hostZone.WithdrawalAccount.Address = "sTrIdE"
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, tc.hostZone)
@@ -205,12 +211,6 @@ func (s *KeeperTestSuite) TestDelegateOnHost_InvalidWithdrawalAccountAddress() {
 	expectedErr := fmt.Sprintf("invalid withdrawal account address, could not decode (decoding bech32 failed: invalid bech32 string length %s): invalid request", fmt.Sprint(len(tc.hostZone.WithdrawalAccount.Address)))
 	s.Require().Error(err)
 	s.EqualError(err, expectedErr)
-}
-
-func (s *KeeperTestSuite) TestUpdateWithdrawalBalance_successful() {
-	tc := s.SetupSubmitTx()
-	err := s.App.StakeibcKeeper.UpdateWithdrawalBalance(s.Ctx, tc.hostZone)
-	s.Require().NoError(err)
 }
 
 func (s *KeeperTestSuite) TestUpdateWithdrawalBalance_FailedToGetICATimeoutNanos() {
