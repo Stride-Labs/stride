@@ -117,3 +117,38 @@ func (s *KeeperTestSuite) TestSubmitHostZoneUnbondingMsg_ErrorSubmittingUnbondin
 	err = s.App.StakeibcKeeper.SubmitHostZoneUnbondingMsg(s.Ctx, msgs, totalAmtToUnbond, marshalledCallbackArgs, hostZone)
 	s.Require().Error(err)
 }
+
+func (s *KeeperTestSuite) SetupSweepAllUnbondedTokensForHostZone() SweepUnbondedTokensTestCase {
+	tc := s.SetupSweepUnbondedTokens()
+	return SweepUnbondedTokensTestCase{
+		epochUnbondingRecords: tc.epochUnbondingRecords,
+		hostZones:             tc.hostZones,
+		lightClientTime:       tc.lightClientTime,
+	}
+}
+
+func (s *KeeperTestSuite) TestSweepAllUnbondedTokensForHostZone_success() {
+	tc := s.SetupSweepAllUnbondedTokensForHostZone()
+	success, sweepAmount := s.App.StakeibcKeeper.SweepAllUnbondedTokensForHostZone(s.Ctx, tc.hostZones[0], tc.epochUnbondingRecords)
+	s.Require().True(success, "sweep all tokens for hostzone GAIA success")
+	s.Require().Equal(sdk.NewInt(2_000_000), sweepAmount, "sweep all unbonded tokens (with status EXIT_TRANSFER_QUEUE) for hostone GAIA success")
+	success, sweepAmount = s.App.StakeibcKeeper.SweepAllUnbondedTokensForHostZone(s.Ctx, tc.hostZones[1], tc.epochUnbondingRecords)
+	s.Require().True(success, "sweep all tokens for hostzone OSMO success")
+	s.Require().Equal(sdk.NewInt(3_000_000), sweepAmount, "sweep all unbonded tokens (with status EXIT_TRANSFER_QUEUE) for hostone OSMO success")
+}
+
+func (s *KeeperTestSuite) TestSweepAllUnbondedTokensForHostZone_DelegationAddressNotFound() {
+	tc := s.SetupSweepAllUnbondedTokensForHostZone()
+	tc.hostZones[1].DelegationAccount = nil
+	success, sweepAmount := s.App.StakeibcKeeper.SweepAllUnbondedTokensForHostZone(s.Ctx, tc.hostZones[1], tc.epochUnbondingRecords)
+	s.Require().False(success, "sweep all tokens for hostzone OSMO fail (when delegationAccount not found)")
+	s.Require().Equal(sdk.NewInt(0), sweepAmount, "No Unbonded tokens for hostzone OSMO is sweeped")
+}
+
+func (s *KeeperTestSuite) TestSweepAllUnbondedTokensForHostZone_RedemptionAddressNotFound() {
+	tc := s.SetupSweepAllUnbondedTokensForHostZone()
+	tc.hostZones[1].RedemptionAccount = nil
+	success, sweepAmount := s.App.StakeibcKeeper.SweepAllUnbondedTokensForHostZone(s.Ctx, tc.hostZones[1], tc.epochUnbondingRecords)
+	s.Require().False(success, "sweep all tokens for hostzone OSMO fail (when redemptionAccount not found)")
+	s.Require().Equal(sdk.NewInt(0), sweepAmount, "No Unbonded tokens for hostzone OSMO is sweeped")
+}
