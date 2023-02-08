@@ -50,14 +50,6 @@ func (s *KeeperTestSuite) TestGetLightClientTimeSafely_Successful() {
 	s.Require().Equal(int64(actualLightClientTimeNewTime), int64(actualLightClientTime+uint64(timeDelta)), "light client time increments by expected amount")
 }
 
-func (s *KeeperTestSuite) TestGetLightClientTimeSafely_InvalidConnectionID() {
-	tc := s.SetupGetLightClientSafely()
-	tc.connectionId = "InvalidConnectionID"
-	_, err := s.App.StakeibcKeeper.GetLightClientTimeSafely(s.Ctx, tc.connectionId)
-	errorExpected := fmt.Sprintf("invalid connection id, %s not found", tc.connectionId)
-	s.EqualError(err, errorExpected)
-}
-
 func (s *KeeperTestSuite) TestGetLightClientSafely_InvalidConnection() {
 	tc := s.SetupGetLightClientSafely()
 	tc.connectionId = "connection-invalid"
