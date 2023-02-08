@@ -153,9 +153,26 @@ func (am AppModule) ExportGenesis(ctx sdk.Context, cdc codec.JSONCodec) json.Raw
 func (AppModule) ConsensusVersion() uint64 { return 1 }
 
 // BeginBlock contains the logic that is automatically triggered at the beginning of each block
-func (am AppModule) BeginBlock(_ sdk.Context, _ abci.RequestBeginBlock) {}
+// In this case we need to check if it is the lastBlock (or revealBlock) for any auctions
+func (am AppModule) BeginBlock(ctx sdk.Context, _ abci.RequestBeginBlock) {
+	k := am.keeper
+	now := ctx.BlockHeight()
+	pools := k.GetAllAuctionPool(ctx)
+	for _, pool := range pools {
+		if pool.lastBlock == now {
+			// call to the resolver function which loads bids and determines which bidders get which amounts
+			// pass the AppModule to the resolver because it needs am.bankKeeper to take and send coins
+			return
+		}
+	}
+}
 
 // EndBlock contains the logic that is automatically triggered at the end of each block
 func (am AppModule) EndBlock(_ sdk.Context, _ abci.RequestEndBlock) []abci.ValidatorUpdate {
+	k := am.keeper
+	pools := k.GetAllAuctionPool(ctx)
+	for _, pool := range pools {
+		// TODO: check how many coins are in pool.poolAddress and update it if it has changed
+	}
 	return []abci.ValidatorUpdate{}
 }
