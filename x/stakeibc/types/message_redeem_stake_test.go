@@ -6,9 +6,10 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/stretchr/testify/require"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkmath "cosmossdk.io/math"
 
-	"github.com/Stride-Labs/stride/v4/testutil/sample"
+	"github.com/Stride-Labs/stride/v5/testutil/sample"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 func TestMsgRedeemStake_ValidateBasic(t *testing.T) {
@@ -23,7 +24,7 @@ func TestMsgRedeemStake_ValidateBasic(t *testing.T) {
 				Creator:  sample.AccAddress(),
 				HostZone: "GAIA",
 				Receiver: sample.AccAddress(),
-				Amount:   sdk.NewInt(1),
+				Amount:   sdkmath.NewInt(1),
 			},
 		},
 		{
@@ -32,7 +33,7 @@ func TestMsgRedeemStake_ValidateBasic(t *testing.T) {
 				Creator:  "invalid_address",
 				HostZone: "GAIA",
 				Receiver: sample.AccAddress(),
-				Amount:   sdk.NewInt(1),
+				Amount:   sdkmath.NewInt(1),
 			},
 			err: sdkerrors.ErrInvalidAddress,
 		},
@@ -41,7 +42,7 @@ func TestMsgRedeemStake_ValidateBasic(t *testing.T) {
 			msg: MsgRedeemStake{
 				Creator:  sample.AccAddress(),
 				Receiver: sample.AccAddress(),
-				Amount:   sdk.NewInt(1),
+				Amount:   sdkmath.NewInt(1),
 			},
 			err: ErrRequiredFieldEmpty,
 		},
@@ -50,7 +51,7 @@ func TestMsgRedeemStake_ValidateBasic(t *testing.T) {
 			msg: MsgRedeemStake{
 				Creator:  sample.AccAddress(),
 				HostZone: "GAIA",
-				Amount:   sdk.NewInt(1),
+				Amount:   sdkmath.NewInt(1),
 			},
 			err: ErrRequiredFieldEmpty,
 		},

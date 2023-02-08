@@ -10,9 +10,9 @@ import (
 	"google.golang.org/grpc/status"
 
 	// testkeeper "github.com/Stride-Labs/stride/v4/testutil/keeper"
-	icatypes "github.com/cosmos/ibc-go/v3/modules/apps/27-interchain-accounts/types"
+	icatypes "github.com/cosmos/ibc-go/v5/modules/apps/27-interchain-accounts/types"
 
-	"github.com/Stride-Labs/stride/v4/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v5/x/stakeibc/types"
 )
 
 func (suite *KeeperTestSuite) TestInterchainAccountFromAddress_Successful() {

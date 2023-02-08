@@ -6,13 +6,13 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	distributiontypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
-	ibctesting "github.com/cosmos/ibc-go/v3/testing"
+	ibctesting "github.com/cosmos/ibc-go/v5/testing"
 	_ "github.com/stretchr/testify/suite"
 
-	epochtypes "github.com/Stride-Labs/stride/v4/x/epochs/types"
-	recordstypes "github.com/Stride-Labs/stride/v4/x/records/types"
-	"github.com/Stride-Labs/stride/v4/x/stakeibc/types"
-	stakeibctypes "github.com/Stride-Labs/stride/v4/x/stakeibc/types"
+	epochtypes "github.com/Stride-Labs/stride/v5/x/epochs/types"
+	recordstypes "github.com/Stride-Labs/stride/v5/x/records/types"
+	"github.com/Stride-Labs/stride/v5/x/stakeibc/types"
+	stakeibctypes "github.com/Stride-Labs/stride/v5/x/stakeibc/types"
 
 	_ "github.com/stretchr/testify/suite"
 )
@@ -26,16 +26,16 @@ type SubmitTxTestcase struct {
 }
 
 func (s *KeeperTestSuite) SetupSubmitTx_emptyStrideEpoch() SubmitTxTestcase {
-	//Set Deposit Records of type Delegate
 	stakedBal := sdk.NewInt(5_000)
-	AddressDelegateAccount := "1"
-	DelegateAccount := &types.ICAAccount{Address: AddressDelegateAccount, Target: types.ICAAccountType_DELEGATION}
-	AddressWithdrawalAccount := "stride_ADDRESS"
-	WithdrawalAccount := &types.ICAAccount{Address: AddressWithdrawalAccount, Target: types.ICAAccountType_WITHDRAWAL}
+	//Set Deposit Records of type Delegate
 	delegationAccountOwner := fmt.Sprintf("%s.%s", HostChainId, "DELEGATION")
-	withdrawalAccountOwner := fmt.Sprintf("%s.%s", HostChainId, "WITHDRAWAL")
 	s.CreateICAChannel(delegationAccountOwner)
+	delegationAddress := s.IcaAddresses[delegationAccountOwner]
+
+	withdrawalAccountOwner := fmt.Sprintf("%s.%s", HostChainId, "WITHDRAWAL")
 	s.CreateICAChannel(withdrawalAccountOwner)
+	withdrawalAddress := s.IcaAddresses[withdrawalAccountOwner]
+
 	DepositRecordDelegate := []recordstypes.DepositRecord{
 		{
 			Id:         1,
@@ -77,15 +77,21 @@ func (s *KeeperTestSuite) SetupSubmitTx_emptyStrideEpoch() SubmitTxTestcase {
 	}
 
 	hostZone := stakeibctypes.HostZone{
-		ChainId:           HostChainId,
-		HostDenom:         Atom,
-		IbcDenom:          IbcAtom,
-		RedemptionRate:    sdk.NewDec(1.0),
-		StakedBal:         stakedBal,
-		Validators:        validators,
-		DelegationAccount: DelegateAccount,
-		WithdrawalAccount: WithdrawalAccount,
-		ConnectionId:      ibctesting.FirstConnectionID,
+		ChainId:        HostChainId,
+		HostDenom:      Atom,
+		IbcDenom:       IbcAtom,
+		RedemptionRate: sdk.NewDec(1.0),
+		StakedBal:      stakedBal,
+		Validators:     validators,
+		DelegationAccount: &stakeibctypes.ICAAccount{
+			Address: delegationAddress,
+			Target:  stakeibctypes.ICAAccountType_DELEGATION,
+		},
+		WithdrawalAccount: &stakeibctypes.ICAAccount{
+			Address: withdrawalAddress,
+			Target:  stakeibctypes.ICAAccountType_WITHDRAWAL,
+		},
+		ConnectionId: ibctesting.FirstConnectionID,
 	}
 
 	delegationIca := hostZone.DelegationAccount
@@ -176,6 +182,12 @@ func (s *KeeperTestSuite) TestDelegateOnHost_ErrorGettingTargetDelegateAmtOnVali
 	s.EqualError(err, error, "Hostzone's Validators has been cleared so this should fail")
 }
 
+func (s *KeeperTestSuite) TestDelegateOnHost_FailedToGetICATimeoutNanos() {
+	tc := s.SetupSubmitTx_emptyStrideEpoch()
+	err := s.App.StakeibcKeeper.DelegateOnHost(s.Ctx, tc.hostZone, tc.amt, tc.depositRecord[0])
+	s.Require().Error(err)
+}
+
 func (s *KeeperTestSuite) TestUpdateWithdrawalBalance_successful() {
 	tc := s.SetupSubmitTx()
 	err := s.App.StakeibcKeeper.UpdateWithdrawalBalance(s.Ctx, tc.hostZone)
@@ -213,7 +225,7 @@ func (s *KeeperTestSuite) TestSetWithdrawalAddressOnHost_FailedToGetICATimeoutNa
 	tc := s.SetupSubmitTx_emptyStrideEpoch()
 
 	err := s.App.StakeibcKeeper.SetWithdrawalAddressOnHost(s.Ctx, tc.hostZone)
-	expectedErr := "Failed to SubmitTxs for connection-0, GAIA, [delegator_address:\"1\" withdraw_address:\"stride_ADDRESS\" ]: "
+	expectedErr := fmt.Sprintf("Failed to SubmitTxs for %s, %s, [%s]: ", tc.hostZone.ConnectionId, tc.hostZone.ChainId, tc.msgs[0])
 	expectedErr += "invalid request"
 	s.EqualError(err, expectedErr, "Hostzone is set without Stride Epoch so it should fail")
 }

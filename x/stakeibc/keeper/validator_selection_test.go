@@ -1,26 +1,27 @@
 package keeper_test
 
 import (
+	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	_ "github.com/stretchr/testify/suite"
 
 	"fmt"
 
-	stakeibc "github.com/Stride-Labs/stride/v4/x/stakeibc/types"
+	stakeibc "github.com/Stride-Labs/stride/v5/x/stakeibc/types"
 
-	"github.com/Stride-Labs/stride/v4/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v5/x/stakeibc/types"
 )
 
 func (s *KeeperTestSuite) TestGetTargetValAmtsForHostZone_Success() {
 	tc := s.SetupGetHostZoneUnbondingMsgs()
 
 	// verify the total amount is expected
-	unbond := sdk.NewInt(1_000_000)
+	unbond := sdkmath.NewInt(1_000_000)
 	totalAmt, err := s.App.StakeibcKeeper.GetTargetValAmtsForHostZone(s.Ctx, tc.hostZone, unbond)
 	s.Require().Nil(err)
 
 	// sum up totalAmt
-	actualAmount := sdk.ZeroInt()
+	actualAmount := sdkmath.ZeroInt()
 	for _, amt := range totalAmt {
 		actualAmount = actualAmount.Add(amt)
 	}
@@ -28,12 +29,13 @@ func (s *KeeperTestSuite) TestGetTargetValAmtsForHostZone_Success() {
 
 	// verify the order of the validators is expected
 	// GetTargetValAmtsForHostZone first reverses the list, then sorts by weight using SliceStable
-	// E.g. given A:1, B:2, C:2
-	// 1. C:2, B:2, A:1
-	// 2. A:1, C:2, B:2
-	s.Require().Equal(tc.valNames[0], tc.hostZone.Validators[0].Address)
-	s.Require().Equal(tc.valNames[1], tc.hostZone.Validators[2].Address)
-	s.Require().Equal(tc.valNames[2], tc.hostZone.Validators[1].Address)
+	// E.g. given A:1, B:2, C:2, D:0
+	// 1. D:0, C:2, B:2, A:1
+	// 2. D:0, A:1, C:2, B:2
+	s.Require().Equal(tc.valNames[3], tc.hostZone.Validators[0].Address)
+	s.Require().Equal(tc.valNames[0], tc.hostZone.Validators[1].Address)
+	s.Require().Equal(tc.valNames[2], tc.hostZone.Validators[2].Address)
+	s.Require().Equal(tc.valNames[1], tc.hostZone.Validators[3].Address)
 }
 
 func (s *KeeperTestSuite) TestGetTargetValAmtsForHostZone_InvalidAmountOfDelegation() {
