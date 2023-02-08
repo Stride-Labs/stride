@@ -1,26 +1,58 @@
 syntax = "proto3";
+
 package stride.v5.auction;
 
 import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
 import "cosmos/base/query/v1beta1/pagination.proto";
 import "stride/auction/params.proto";
+import "stride/auction/auction_pool.proto";
 
 option go_package = "github.com/Stride-Labs/stride/v5/x/auction/types";
 
 // Query defines the gRPC querier service.
 service Query {
+  
   // Parameters queries the parameters of the module.
-  rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
+  rpc Params (QueryParamsRequest) returns (QueryParamsResponse) {
     option (google.api.http).get = "/stride/v5/auction/params";
+  
+  }
+  
+  // Queries a list of AuctionPool items.
+  rpc AuctionPool    (QueryGetAuctionPoolRequest) returns (QueryGetAuctionPoolResponse) {
+    option (google.api.http).get = "/stride/v5/auction/auction_pool/{id}";
+  
+  }
+  rpc AuctionPoolAll (QueryAllAuctionPoolRequest) returns (QueryAllAuctionPoolResponse) {
+    option (google.api.http).get = "/stride/v5/auction/auction_pool";
+  
   }
 }
-
 // QueryParamsRequest is request type for the Query/Params RPC method.
 message QueryParamsRequest {}
 
 // QueryParamsResponse is response type for the Query/Params RPC method.
 message QueryParamsResponse {
+  
   // params holds all the parameters of this module.
   Params params = 1 [(gogoproto.nullable) = false];
 }
+
+message QueryGetAuctionPoolRequest {
+  uint64 id = 1;
+}
+
+message QueryGetAuctionPoolResponse {
+  AuctionPool AuctionPool = 1 [(gogoproto.nullable) = false];
+}
+
+message QueryAllAuctionPoolRequest {
+  cosmos.base.query.v1beta1.PageRequest pagination = 1;
+}
+
+message QueryAllAuctionPoolResponse {
+  repeated AuctionPool                            AuctionPool = 1 [(gogoproto.nullable) = false];
+           cosmos.base.query.v1beta1.PageResponse pagination  = 2;
+}
+

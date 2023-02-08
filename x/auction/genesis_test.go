@@ -14,7 +14,16 @@ func TestGenesis(t *testing.T) {
 	genesisState := types.GenesisState{
 		Params:	types.DefaultParams(),
 		
-		// this line is used by starport scaffolding # genesis/test/state
+		AuctionPoolList: []types.AuctionPool{
+		{
+			Id: 0,
+		},
+		{
+			Id: 1,
+		},
+	},
+	AuctionPoolCount: 2,
+	// this line is used by starport scaffolding # genesis/test/state
 	}
 
 	k, ctx := keepertest.AuctionKeeper(t)
@@ -27,5 +36,7 @@ func TestGenesis(t *testing.T) {
 
 	
 
-	// this line is used by starport scaffolding # genesis/test/assert
+	require.ElementsMatch(t, genesisState.AuctionPoolList, got.AuctionPoolList)
+require.Equal(t, genesisState.AuctionPoolCount, got.AuctionPoolCount)
+// this line is used by starport scaffolding # genesis/test/assert
 }
