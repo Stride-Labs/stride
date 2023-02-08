@@ -8,6 +8,20 @@ import (
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 )
 
+// StartNewAuction updates the relevant auctionPool in the store to have start and end blocks running now
+func (k Keeper) StartNewAuction(ctx sdk.Context, auctionPool types.AuctionPool, auctionDuration uint64) {
+	store :=  prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.AuctionPoolKey))
+	now := ctx.BlockHeight()
+	if auctionPool.lastBlock < now {
+		auctionPool.firstBlock = now
+		auctionPool.lastBlock = now + auctionDuration
+		// TODO: check the amount of coin in the address of this pool and update that 
+		// TODO: also take in an auction type and if it is sealed, then also update the revealBlock
+		updated := k.cdc.MustMarshal(&auctionPool)
+		store.Set(GetAuctionPoolIDBytes(auctionPool.Id), updated)
+	}
+}
+
 // GetAuctionPoolCount get the total number of auctionPool
 func (k Keeper) GetAuctionPoolCount(ctx sdk.Context) uint64 {
 	store :=  prefix.NewStore(ctx.KVStore(k.storeKey), []byte{})

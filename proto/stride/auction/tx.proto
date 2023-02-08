@@ -13,7 +13,9 @@ message MsgListAuctionPools {
   string creator = 1;
 }
 
-message MsgListAuctionPoolsResponse {}
+message MsgListAuctionPoolsResponse {
+  repeated types.AuctionPool pools = 1
+}
 
 message MsgStartAuction {
   string creator  = 1;
