@@ -51,7 +51,7 @@ func (s *KeeperTestSuite) SetupWithdrawalBalanceCallbackTest() WithdrawalBalance
 	withdrawalAccountOwner := fmt.Sprintf("%s.%s", HostChainId, "WITHDRAWAL")
 	withdrawalChannelId := s.CreateICAChannel(withdrawalAccountOwner)
 	withdrawalAddress := s.IcaAddresses[withdrawalAccountOwner]
-
+	println("check address: ", withdrawalAddress)
 	feeAddress := "cosmos_FEE"
 
 	hostZone := stakeibctypes.HostZone{
