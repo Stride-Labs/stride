@@ -129,9 +129,10 @@ import (
 	stakeibcmoduletypes "github.com/Stride-Labs/stride/v5/x/stakeibc/types"
 
 	auctionmodule "github.com/Stride-Labs/stride/v5/x/auction"
-		auctionmodulekeeper "github.com/Stride-Labs/stride/v5/x/auction/keeper"
-		auctionmoduletypes "github.com/Stride-Labs/stride/v5/x/auction/types"
-// this line is used by starport scaffolding # stargate/app/moduleImport
+	auctionmodulekeeper "github.com/Stride-Labs/stride/v5/x/auction/keeper"
+	auctionmoduletypes "github.com/Stride-Labs/stride/v5/x/auction/types"
+
+	// this line is used by starport scaffolding # stargate/app/moduleImport
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	ibcfeekeeper "github.com/cosmos/ibc-go/v5/modules/apps/29-fee/keeper"
 	ibcfeetypes "github.com/cosmos/ibc-go/v5/modules/apps/29-fee/types"
@@ -199,7 +200,7 @@ var (
 		icacallbacksmodule.AppModuleBasic{},
 		claim.AppModuleBasic{},
 		auctionmodule.AppModuleBasic{},
-// this line is used by starport scaffolding # stargate/app/moduleBasic
+		// this line is used by starport scaffolding # stargate/app/moduleBasic
 	)
 
 	// module account permissions
@@ -216,8 +217,8 @@ var (
 		claimtypes.ModuleName:           nil,
 		interchainquerytypes.ModuleName: nil,
 		icatypes.ModuleName:             nil,
-		auctionmoduletypes.ModuleName: {authtypes.Minter, authtypes.Burner, authtypes.Staking},
-// this line is used by starport scaffolding # stargate/app/maccPerms
+		auctionmoduletypes.ModuleName:   {authtypes.Minter, authtypes.Burner, authtypes.Staking},
+		// this line is used by starport scaffolding # stargate/app/maccPerms
 	}
 )
 
@@ -289,9 +290,9 @@ type StrideApp struct {
 	ScopedIcacallbacksKeeper capabilitykeeper.ScopedKeeper
 	IcacallbacksKeeper       icacallbacksmodulekeeper.Keeper
 	ClaimKeeper              claimkeeper.Keeper
-	
-		AuctionKeeper auctionmodulekeeper.Keeper
-// this line is used by starport scaffolding # stargate/app/keeperDeclaration
+
+	AuctionKeeper auctionmodulekeeper.Keeper
+	// this line is used by starport scaffolding # stargate/app/keeperDeclaration
 
 	mm           *module.Manager
 	sm           *module.SimulationManager
@@ -334,7 +335,7 @@ func NewStrideApp(
 		icacallbacksmoduletypes.StoreKey,
 		claimtypes.StoreKey,
 		auctionmoduletypes.StoreKey,
-// this line is used by starport scaffolding # stargate/app/storeKey
+		// this line is used by starport scaffolding # stargate/app/storeKey
 	)
 	tkeys := sdk.NewTransientStoreKeys(paramstypes.TStoreKey)
 	memKeys := sdk.NewMemoryStoreKeys(capabilitytypes.MemStoreKey)
@@ -552,18 +553,17 @@ func NewStrideApp(
 		return nil
 	}
 
-	
-		app.AuctionKeeper = *auctionmodulekeeper.NewKeeper(
-			appCodec,
-			keys[auctionmoduletypes.StoreKey],
-			keys[auctionmoduletypes.MemStoreKey],
-			app.GetSubspace(auctionmoduletypes.ModuleName),
-			
-			app.BankKeeper,
-)
-		auctionModule := auctionmodule.NewAppModule(appCodec, app.AuctionKeeper, app.AccountKeeper, app.BankKeeper)
+	app.AuctionKeeper = *auctionmodulekeeper.NewKeeper(
+		appCodec,
+		keys[auctionmoduletypes.StoreKey],
+		keys[auctionmoduletypes.MemStoreKey],
+		app.GetSubspace(auctionmoduletypes.ModuleName),
 
-		// this line is used by starport scaffolding # stargate/app/keeperDefinition
+		app.BankKeeper,
+	)
+	auctionModule := auctionmodule.NewAppModule(appCodec, app.AuctionKeeper, app.AccountKeeper, app.BankKeeper)
+
+	// this line is used by starport scaffolding # stargate/app/keeperDefinition
 	ibcFeeKeeper := ibcfeekeeper.NewKeeper(
 		appCodec, app.keys[ibcfeetypes.StoreKey], app.GetSubspace(ibcfeetypes.ModuleName),
 		app.IBCKeeper.ChannelKeeper, // may be replaced with IBC middleware
@@ -651,7 +651,7 @@ func NewStrideApp(
 		recordsModule,
 		icacallbacksModule,
 		auctionModule,
-// this line is used by starport scaffolding # stargate/app/appModule
+		// this line is used by starport scaffolding # stargate/app/appModule
 	)
 
 	// During begin block slashing happens after distr.BeginBlocker so that
@@ -686,7 +686,7 @@ func NewStrideApp(
 		icacallbacksmoduletypes.ModuleName,
 		claimtypes.ModuleName,
 		auctionmoduletypes.ModuleName,
-// this line is used by starport scaffolding # stargate/app/beginBlockers
+		// this line is used by starport scaffolding # stargate/app/beginBlockers
 	)
 
 	app.mm.SetOrderEndBlockers(
@@ -717,7 +717,7 @@ func NewStrideApp(
 		icacallbacksmoduletypes.ModuleName,
 		claimtypes.ModuleName,
 		auctionmoduletypes.ModuleName,
-// this line is used by starport scaffolding # stargate/app/endBlockers
+		// this line is used by starport scaffolding # stargate/app/endBlockers
 	)
 
 	// NOTE: The genutils module must occur after staking so that pools are
@@ -753,7 +753,7 @@ func NewStrideApp(
 		icacallbacksmoduletypes.ModuleName,
 		claimtypes.ModuleName,
 		auctionmoduletypes.ModuleName,
-// this line is used by starport scaffolding # stargate/app/initGenesis
+		// this line is used by starport scaffolding # stargate/app/initGenesis
 	)
 
 	app.mm.RegisterInvariants(&app.CrisisKeeper)
@@ -783,8 +783,8 @@ func NewStrideApp(
 	// 	interchainQueryModule,
 	// 	recordsModule,
 	// icacallbacksModule,
-	auctionModule,
-// this line is used by starport scaffolding # stargate/app/appModule
+	// auctionModule,
+	// this line is used by starport scaffolding # stargate/app/appModule
 	// )
 	// app.sm.RegisterStoreDecoders()
 
@@ -1017,7 +1017,7 @@ func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino
 	paramsKeeper.Subspace(recordsmoduletypes.ModuleName)
 	paramsKeeper.Subspace(icacallbacksmoduletypes.ModuleName)
 	paramsKeeper.Subspace(auctionmoduletypes.ModuleName)
-// this line is used by starport scaffolding # stargate/app/paramSubspace
+	// this line is used by starport scaffolding # stargate/app/paramSubspace
 
 	paramsKeeper.Subspace(claimtypes.ModuleName)
 	return paramsKeeper

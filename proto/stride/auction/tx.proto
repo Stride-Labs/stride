@@ -1,26 +1,19 @@
 syntax = "proto3";
 
-package stride.v5.auction;
+package stride.auction;
+
+import "stride/auction/auction_pool.proto";
 
 option go_package = "github.com/Stride-Labs/stride/v5/x/auction/types";
 
 // Msg defines the Msg service.
 service Msg {
-  rpc ListAuctionPools (MsgListAuctionPools) returns (MsgListAuctionPoolsResponse);
-  rpc StartAuction     (MsgStartAuction    ) returns (MsgStartAuctionResponse    );
-}
-message MsgListAuctionPools {
-  string creator = 1;
-}
-
-message MsgListAuctionPoolsResponse {
-  repeated types.AuctionPool pools = 1
+  rpc StartAuction(MsgStartAuction) returns (MsgStartAuctionResponse);
 }
 
 message MsgStartAuction {
-  string creator  = 1;
+  string creator = 1;
   string poolName = 2;
 }
 
 message MsgStartAuctionResponse {}
-

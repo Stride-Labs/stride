@@ -3,15 +3,16 @@ package auction
 import (
 	"math/rand"
 
-	"github.com/Stride-Labs/stride/v5/testutil/sample"
-	auctionsimulation "github.com/Stride-Labs/stride/v5/x/auction/simulation"
-	"github.com/Stride-Labs/stride/v5/x/auction/types"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	simappparams "github.com/cosmos/cosmos-sdk/simapp/params"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
 	"github.com/cosmos/cosmos-sdk/x/simulation"
+
+	"github.com/Stride-Labs/stride/v5/testutil/sample"
+	auctionsimulation "github.com/Stride-Labs/stride/v5/x/auction/simulation"
+	"github.com/Stride-Labs/stride/v5/x/auction/types"
 )
 
 // avoid unused import issue
@@ -24,7 +25,7 @@ var (
 )
 
 const (
-    opWeightMsgListAuctionPools = "op_weight_msg_list_auction_pools"
+	opWeightMsgListAuctionPools = "op_weight_msg_list_auction_pools"
 	// TODO: Determine the simulation weight value
 	defaultWeightMsgListAuctionPools int = 100
 
@@ -42,7 +43,7 @@ func (AppModule) GenerateGenesisState(simState *module.SimulationState) {
 		accs[i] = acc.Address.String()
 	}
 	auctionGenesis := types.GenesisState{
-		Params:	types.DefaultParams(),
+		Params: types.DefaultParams(),
 		// this line is used by starport scaffolding # simapp/module/genesisState
 	}
 	simState.GenState[types.ModuleName] = simState.Cdc.MustMarshalJSON(&auctionGenesis)
@@ -55,9 +56,8 @@ func (AppModule) ProposalContents(_ module.SimulationState) []simtypes.WeightedP
 
 // RandomizedParams creates randomized  param changes for the simulator
 func (am AppModule) RandomizedParams(_ *rand.Rand) []simtypes.ParamChange {
-	
-	return []simtypes.ParamChange{
-	}
+
+	return []simtypes.ParamChange{}
 }
 
 // RegisterStoreDecoder registers a decoder
@@ -73,10 +73,6 @@ func (am AppModule) WeightedOperations(simState module.SimulationState) []simtyp
 			weightMsgListAuctionPools = defaultWeightMsgListAuctionPools
 		},
 	)
-	operations = append(operations, simulation.NewWeightedOperation(
-		weightMsgListAuctionPools,
-		auctionsimulation.SimulateMsgListAuctionPools(am.accountKeeper, am.bankKeeper, am.keeper),
-	))
 
 	var weightMsgStartAuction int
 	simState.AppParams.GetOrGenerate(simState.Cdc, opWeightMsgStartAuction, &weightMsgStartAuction, nil,

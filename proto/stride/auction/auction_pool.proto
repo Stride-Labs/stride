@@ -1,17 +1,17 @@
 syntax = "proto3";
-package stride.v5.auction;
+
+package stride.auction;
 
 option go_package = "github.com/Stride-Labs/stride/v5/x/auction/types";
 
 message AuctionPool {
   uint64 id = 1;
-  string poolName = 2; 
-  string poolAddress = 3; 
-  uint64 availableSupply = 4; 
-  string auctionType = 5; 
-  uint64 minimumBid = 6; 
-  uint64 firstBlock = 7; 
-  uint64 lastBlock = 8; 
-  uint64 revealBlock = 9; 
-  
+  string poolName = 2;
+  string poolAddress = 3;
+  uint64 availableSupply = 4;
+  string auctionType = 5;
+  uint64 minimumBid = 6;
+  uint64 firstBlock = 7;
+  uint64 lastBlock = 8;
+  uint64 revealBlock = 9;
 }

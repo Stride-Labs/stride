@@ -3,19 +3,21 @@ package keeper
 import (
 	"encoding/binary"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/Stride-Labs/stride/v5/x/auction/types"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/spf13/cast"
+
+	"github.com/Stride-Labs/stride/v5/x/auction/types"
 )
 
 // StartNewAuction updates the relevant auctionPool in the store to have start and end blocks running now
 func (k Keeper) StartNewAuction(ctx sdk.Context, auctionPool types.AuctionPool, auctionDuration uint64) {
-	store :=  prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.AuctionPoolKey))
-	now := ctx.BlockHeight()
-	if auctionPool.lastBlock < now {
-		auctionPool.firstBlock = now
-		auctionPool.lastBlock = now + auctionDuration
-		// TODO: check the amount of coin in the address of this pool and update that 
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.AuctionPoolKey))
+	now := cast.ToUint64(ctx.BlockHeight())
+	if auctionPool.GetLastBlock() < now {
+		auctionPool.FirstBlock = now
+		auctionPool.LastBlock = now + auctionDuration
+		// TODO: check the amount of coin in the address of this pool and update that
 		// TODO: also take in an auction type and if it is sealed, then also update the revealBlock
 		updated := k.cdc.MustMarshal(&auctionPool)
 		store.Set(GetAuctionPoolIDBytes(auctionPool.Id), updated)
@@ -24,7 +26,7 @@ func (k Keeper) StartNewAuction(ctx sdk.Context, auctionPool types.AuctionPool, 
 
 // GetAuctionPoolCount get the total number of auctionPool
 func (k Keeper) GetAuctionPoolCount(ctx sdk.Context) uint64 {
-	store :=  prefix.NewStore(ctx.KVStore(k.storeKey), []byte{})
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte{})
 	byteKey := types.KeyPrefix(types.AuctionPoolCountKey)
 	bz := store.Get(byteKey)
 
@@ -38,8 +40,8 @@ func (k Keeper) GetAuctionPoolCount(ctx sdk.Context) uint64 {
 }
 
 // SetAuctionPoolCount set the total number of auctionPool
-func (k Keeper) SetAuctionPoolCount(ctx sdk.Context, count uint64)  {
-	store :=  prefix.NewStore(ctx.KVStore(k.storeKey), []byte{})
+func (k Keeper) SetAuctionPoolCount(ctx sdk.Context, count uint64) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte{})
 	byteKey := types.KeyPrefix(types.AuctionPoolCountKey)
 	bz := make([]byte, 8)
 	binary.BigEndian.PutUint64(bz, count)
@@ -48,28 +50,28 @@ func (k Keeper) SetAuctionPoolCount(ctx sdk.Context, count uint64)  {
 
 // AppendAuctionPool appends a auctionPool in the store with a new id and update the count
 func (k Keeper) AppendAuctionPool(
-    ctx sdk.Context,
-    auctionPool types.AuctionPool,
+	ctx sdk.Context,
+	auctionPool types.AuctionPool,
 ) uint64 {
 	// Create the auctionPool
-    count := k.GetAuctionPoolCount(ctx)
+	count := k.GetAuctionPoolCount(ctx)
 
-    // Set the ID of the appended value
-    auctionPool.Id = count
+	// Set the ID of the appended value
+	auctionPool.Id = count
 
-    store :=  prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.AuctionPoolKey))
-    appendedValue := k.cdc.MustMarshal(&auctionPool)
-    store.Set(GetAuctionPoolIDBytes(auctionPool.Id), appendedValue)
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.AuctionPoolKey))
+	appendedValue := k.cdc.MustMarshal(&auctionPool)
+	store.Set(GetAuctionPoolIDBytes(auctionPool.Id), appendedValue)
 
-    // Update auctionPool count
-    k.SetAuctionPoolCount(ctx, count+1)
+	// Update auctionPool count
+	k.SetAuctionPoolCount(ctx, count+1)
 
-    return count
+	return count
 }
 
 // SetAuctionPool set a specific auctionPool in the store
 func (k Keeper) SetAuctionPool(ctx sdk.Context, auctionPool types.AuctionPool) {
-	store :=  prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.AuctionPoolKey))
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.AuctionPoolKey))
 	b := k.cdc.MustMarshal(&auctionPool)
 	store.Set(GetAuctionPoolIDBytes(auctionPool.Id), b)
 }
@@ -93,7 +95,7 @@ func (k Keeper) RemoveAuctionPool(ctx sdk.Context, id uint64) {
 
 // GetAllAuctionPool returns all auctionPool
 func (k Keeper) GetAllAuctionPool(ctx sdk.Context) (list []types.AuctionPool) {
-    store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.AuctionPoolKey))
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.AuctionPoolKey))
 	iterator := sdk.KVStorePrefixIterator(store, []byte{})
 
 	defer iterator.Close()
@@ -101,10 +103,10 @@ func (k Keeper) GetAllAuctionPool(ctx sdk.Context) (list []types.AuctionPool) {
 	for ; iterator.Valid(); iterator.Next() {
 		var val types.AuctionPool
 		k.cdc.MustUnmarshal(iterator.Value(), &val)
-        list = append(list, val)
+		list = append(list, val)
 	}
 
-    return
+	return
 }
 
 // GetAuctionPoolIDBytes returns the byte representation of the ID
