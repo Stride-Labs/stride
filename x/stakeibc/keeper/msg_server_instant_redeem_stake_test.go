@@ -140,7 +140,11 @@ func (s *KeeperTestSuite) TestInstantRedeemStake_Successful2() {
 }
 
 func (s *KeeperTestSuite) TestInstantRedeemStake_Successful3() {
-	s.InstantRedeemStake_SuccessfulParams(int64(1_000_000), []int64{300_000, 500_000, 200_000})
+	s.InstantRedeemStake_SuccessfulParams(int64(1_000_000), []int64{300_000, 500_000, 200_000, 100_000})
+}
+
+func (s *KeeperTestSuite) TestInstantRedeemStake_Successful4() {
+	s.InstantRedeemStake_SuccessfulParams(int64(750_000), []int64{500_000, 500_000})
 }
 
 func (s *KeeperTestSuite) TestInstantRedeemStake_RedeemJustMoreThanStaked() {

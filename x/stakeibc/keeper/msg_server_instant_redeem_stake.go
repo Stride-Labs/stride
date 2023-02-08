@@ -88,11 +88,12 @@ func (k msgServer) InstantRedeemStake(goCtx context.Context, msg *types.MsgInsta
 		if nativeAmountRemaining.GTE(depositRecord.Amount) {
 			nativeAmountRemaining = nativeAmountRemaining.Sub(depositRecord.Amount)
 			depositRecord.Amount = sdkmath.ZeroInt()
-			k.RecordsKeeper.SetDepositRecord(ctx, depositRecord)
 
 		} else {
-			depositRecord.Amount.Sub(nativeAmountRemaining)
+			depositRecord.Amount = depositRecord.Amount.Sub(nativeAmountRemaining)
+			nativeAmountRemaining = sdkmath.ZeroInt()
 		}
+		k.RecordsKeeper.SetDepositRecord(ctx, depositRecord)
 	}
 	bech32ZoneAddress, err := sdk.AccAddressFromBech32(hostZone.Address)
 	if err != nil {
