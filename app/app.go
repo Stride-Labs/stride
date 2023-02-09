@@ -465,6 +465,7 @@ func NewStrideApp(
 		keys[icacallbacksmoduletypes.MemStoreKey],
 		app.GetSubspace(icacallbacksmoduletypes.ModuleName),
 		scopedIcacallbacksKeeper,
+		scopedIBCKeeper,
 		*app.IBCKeeper,
 		app.ICAControllerKeeper,
 	)
@@ -479,6 +480,7 @@ func NewStrideApp(
 		keys[recordsmoduletypes.MemStoreKey],
 		app.GetSubspace(recordsmoduletypes.ModuleName),
 		scopedRecordsKeeper,
+		scopedIBCKeeper,
 		app.AccountKeeper,
 		app.TransferKeeper,
 		*app.IBCKeeper,
@@ -499,6 +501,7 @@ func NewStrideApp(
 		app.ICAControllerKeeper,
 		*app.IBCKeeper,
 		scopedStakeibcKeeper,
+		scopedIBCKeeper,
 		app.InterchainqueryKeeper,
 		app.RecordsKeeper,
 		app.StakingKeeper,

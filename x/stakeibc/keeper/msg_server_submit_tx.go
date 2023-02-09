@@ -284,7 +284,6 @@ func (k Keeper) SubmitTxs(
 	}
 	_, found = k.scopedKeeper.GetCapability(ctx, host.ChannelCapabilityPath(portID, channelID))
 	if !found {
-		fmt.Println(host.ChannelCapabilityPath(portID, channelID), "hello")
 		return 0, sdkerrors.Wrap(channeltypes.ErrChannelCapabilityNotFound, "module does not own channel capability")
 	}
 

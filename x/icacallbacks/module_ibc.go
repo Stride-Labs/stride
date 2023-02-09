@@ -5,6 +5,7 @@ import (
 	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 	porttypes "github.com/cosmos/ibc-go/v7/modules/core/05-port/types"
+	host "github.com/cosmos/ibc-go/v7/modules/core/24-host"
 	ibcexported "github.com/cosmos/ibc-go/v7/modules/core/exported"
 
 	"github.com/Stride-Labs/stride/v5/x/icacallbacks/keeper"
@@ -36,6 +37,12 @@ func (im IBCModule) OnChanOpenInit(
 	counterparty channeltypes.Counterparty,
 	version string,
 ) (string, error) {
+	if channelCap == nil {
+		path := host.ChannelCapabilityPath(portID, channelID)
+		chanCap, _ := im.keeper.IBCScopperKeeper.GetCapability(ctx, path)
+
+		channelCap = chanCap
+	}
 	// Note: The channel capability is claimed by the underlying app.
 	// call underlying app's OnChanOpenInit callback with the appVersion
 	version, err := im.app.OnChanOpenInit(ctx, order, connectionHops, portID, channelID,

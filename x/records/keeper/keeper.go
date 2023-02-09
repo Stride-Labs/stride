@@ -35,6 +35,7 @@ type (
 		TransferKeeper     ibctransferkeeper.Keeper
 		IBCKeeper          ibckeeper.Keeper
 		ICACallbacksKeeper icacallbackskeeper.Keeper
+		IBCScopperKeeper   capabilitykeeper.ScopedKeeper
 	}
 )
 
@@ -44,6 +45,7 @@ func NewKeeper(
 	memKey storetypes.StoreKey,
 	ps paramtypes.Subspace,
 	scopedKeeper capabilitykeeper.ScopedKeeper,
+	IBCScopperKeeper capabilitykeeper.ScopedKeeper,
 	AccountKeeper types.AccountKeeper,
 	TransferKeeper ibctransferkeeper.Keeper,
 	ibcKeeper ibckeeper.Keeper,
@@ -60,6 +62,7 @@ func NewKeeper(
 		memKey:             memKey,
 		paramstore:         ps,
 		scopedKeeper:       scopedKeeper,
+		IBCScopperKeeper:   IBCScopperKeeper,
 		AccountKeeper:      AccountKeeper,
 		TransferKeeper:     TransferKeeper,
 		IBCKeeper:          ibcKeeper,
