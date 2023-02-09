@@ -1,25 +1,33 @@
-FROM ubuntu:latest AS builder
-RUN apt-get update && \
-    apt-get install -y make bash vim git golang jq python3-dev curl vim wget clang libprotobuf-dev protobuf-compiler
-RUN mkdir -m777 /opt/rust /opt/cargo
-ENV RUSTUP_HOME=/opt/rust CARGO_HOME=/opt/cargo PATH=/opt/cargo/bin:$PATH
-RUN wget --https-only --secure-protocol=TLSv1_2 -O- https://sh.rustup.rs | sh /dev/stdin -y
-RUN rustup target add arm-unknown-linux-gnueabihf
-RUN printf '#!/bin/sh\nexport CARGO_HOME=/opt/cargo\nexec /bin/sh "$@"\n' >/usr/local/bin/sh
-RUN chmod +x /usr/local/bin/sh
-RUN rm -rf build/generated
+FROM golang:1.19-alpine3.15 AS builder
 
 WORKDIR /opt/
 
+RUN set -eux; apk add --no-cache ca-certificates build-base; apk add git linux-headers
+
+ENV COMMIT_HASH=5f3f795fc612c796a83726a0bbb46658586ca8fe
+
 RUN git clone https://github.com/sei-protocol/sei-chain.git \
     && cd sei-chain \
-    && git checkout 99c1a9e 
+    && git checkout ${COMMIT_HASH} 
 
 WORKDIR /opt/sei-chain
 
-RUN make build-all
-RUN cp /opt/sei-chain/build/seid /usr/local/bin/
+# Cosmwasm - download correct libwasmvm version and verify checksum
+RUN WASMVM_VERSION=$(go list -m github.com/CosmWasm/wasmvm | cut -d ' ' -f 2) \
+    && wget https://github.com/CosmWasm/wasmvm/releases/download/$WASMVM_VERSION/libwasmvm_muslc.$(uname -m).a \
+    -O /lib/libwasmvm_muslc.a \
+    && wget https://github.com/CosmWasm/wasmvm/releases/download/v1.0.0/checksums.txt -O /tmp/checksums.txt \
+    && sha256sum /lib/libwasmvm_muslc.a | grep $(cat /tmp/checksums.txt | grep $(uname -m) | cut -d ' ' -f 1)
 
+RUN BUILD_TAGS=muslc LINK_STATICALLY=true make build
+
+FROM alpine:3.15
+COPY --from=builder /opt/sei-chain/build/seid /usr/local/bin/
+RUN apk add bash vim \
+    && addgroup -g 1000 sei \
+    && adduser -S -h /home/sei -D sei -u 1000 -G sei
+
+USER 1000
 WORKDIR /home/sei
 
 EXPOSE 26657 26656 1317 9090

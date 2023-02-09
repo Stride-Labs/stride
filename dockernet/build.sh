@@ -15,11 +15,7 @@ build_local_and_docker() {
    printf '%s' "Building $title Locally...  "
    cwd=$PWD
    cd $folder
-   if [[ "$module" == "sei" ]]; then
-      GOBIN=$BUILDDIR make install-all -mod=readonly 2>&1 | grep -v -E "deprecated|keychain" | true
-   else
-      GOBIN=$BUILDDIR go install -mod=readonly -trimpath ./... 2>&1 | grep -v -E "deprecated|keychain" | true
-   fi
+   GOBIN=$BUILDDIR go install -mod=readonly -trimpath ./... 2>&1 | grep -v -E "deprecated|keychain" | true
 
    local_build_succeeded=${PIPESTATUS[0]}
    cd $cwd
@@ -38,12 +34,7 @@ build_local_and_docker() {
       image=dockernet/dockerfiles/Dockerfile.$module
    fi
 
-   if [[ "$module" == "sei" ]]; then
-      DOCKER_BUILDKIT=1 docker build --platform linux/x86_64 --tag stridezone:$module -f $image . | true
-   else
-      DOCKER_BUILDKIT=1 docker build --tag stridezone:$module -f $image . | true
-   fi
-   # DOCKER_BUILDKIT=1 docker build --tag stridezone:$module -f $image . | true
+   DOCKER_BUILDKIT=1 docker build --tag stridezone:$module -f $image . | true
    docker_build_succeeded=${PIPESTATUS[0]}
 
    if [[ "$docker_build_succeeded" == "0" ]]; then

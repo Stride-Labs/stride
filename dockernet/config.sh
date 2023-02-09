@@ -30,7 +30,7 @@ HOST_CHAINS=()
 if [[ "${ALL_HOST_CHAINS:-false}" == "true" ]]; then 
   HOST_CHAINS=(GAIA OSMO HOST SEI)
 elif [[ "${#HOST_CHAINS[@]}" == "0" ]]; then 
-  HOST_CHAINS=(GAIA SEI)
+  HOST_CHAINS=(SEI)
 fi
 
 # Sets up upgrade if {UPGRADE_NAME} is non-empty
@@ -244,6 +244,7 @@ RELAYER_JUNO_EXEC="$DOCKER_COMPOSE run --rm relayer-juno"
 RELAYER_OSMO_EXEC="$DOCKER_COMPOSE run --rm relayer-osmo"
 RELAYER_STARS_EXEC="$DOCKER_COMPOSE run --rm relayer-stars"
 RELAYER_HOST_EXEC="$DOCKER_COMPOSE run --rm relayer-host"
+RELAYER_SEI_EXEC="$DOCKER_COMPOSE run --rm relayer-sei"
 
 RELAYER_STRIDE_ACCT=rly1
 RELAYER_GAIA_ACCT=rly2

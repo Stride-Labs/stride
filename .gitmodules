@@ -33,6 +33,6 @@
 	path = dockernet/tests/bats/bats-support
 	url = https://github.com/bats-core/bats-support.git
 [submodule "deps/sei"]
-	# Commit: 99c1a9eee02b7283ff32d56ab99e7205d059403c
+	# Commit: 5f3f795fc612c796a83726a0bbb46658586ca8fe
 	path = deps/sei
 	url = https://github.com/sei-protocol/sei-chain.git
