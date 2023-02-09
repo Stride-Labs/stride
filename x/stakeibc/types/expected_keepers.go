@@ -4,6 +4,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+
+	ratelimittypes "github.com/Stride-Labs/stride/v5/x/ratelimit/types"
 )
 
 // AccountKeeper defines the expected account keeper used for simulations (noalias)
@@ -33,4 +35,8 @@ type BankKeeper interface {
 // StakeIBCHooks event hooks for stakeibc
 type StakeIBCHooks interface {
 	AfterLiquidStake(ctx sdk.Context, addr sdk.AccAddress) // Must be called after liquid stake is completed
+}
+
+type RatelimitKeeper interface {
+	SetRateLimit(ctx sdk.Context, rateLimit ratelimittypes.RateLimit)
 }
