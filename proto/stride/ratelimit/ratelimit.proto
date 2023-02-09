@@ -1,0 +1,51 @@
+syntax = "proto3";
+package stride.ratelimit;
+
+import "gogoproto/gogo.proto";
+
+option go_package = "github.com/Stride-Labs/stride/v5/x/ratelimit/types";
+
+enum PacketDirection {
+  option (gogoproto.goproto_enum_prefix) = false;
+
+  PACKET_SEND = 0;
+  PACKET_RECV = 1;
+}
+
+message Path {
+  string denom = 1;
+  string channel_id = 2;
+}
+
+message Quota {
+  string max_percent_send = 1 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
+  string max_percent_recv = 2 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
+  uint64 duration_hours = 3;
+}
+
+message Flow {
+  string inflow = 1 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
+  string outflow = 2 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
+  string channel_value = 3 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
+}
+
+message RateLimit {
+  Path path = 1;
+  Quota quota = 2;
+  Flow flow = 3;
+}

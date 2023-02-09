@@ -48,7 +48,7 @@ func CmdAddValidatorProposal() *cobra.Command {
 The proposal details must be supplied via a JSON file.
 
 Example:
-$ %s tx gov submit-proposal add-validator <path/to/proposal.json> --from=<key_or_address>
+$ %s tx gov submit-legacy-proposal add-validator <path/to/proposal.json> --from=<key_or_address>
 
 Where proposal.json contains:
 {

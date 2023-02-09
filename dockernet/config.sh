@@ -16,7 +16,7 @@ TX_LOGS=$DOCKERNET_HOME/logs/tx.log
 KEYS_LOGS=$DOCKERNET_HOME/logs/keys.log
 
 # List of hosts enabled 
-HOST_CHAINS=() 
+HOST_CHAINS=(GAIA JUNO OSMO) 
 
 # If no host zones are specified above:
 #  `start-docker` defaults to just GAIA if HOST_CHAINS is empty
@@ -91,6 +91,7 @@ IBC_STARS_DENOM=$IBC_STARS_CHANNEL_3_DENOM
 
 # CHAIN PARAMS
 BLOCK_TIME='1s'
+STRIDE_HOUR_EPOCH_DURATION="90s"
 STRIDE_DAY_EPOCH_DURATION="100s"
 STRIDE_EPOCH_EPOCH_DURATION="40s"
 HOST_DAY_EPOCH_DURATION="60s"

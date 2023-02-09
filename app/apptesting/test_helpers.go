@@ -69,6 +69,15 @@ func (s *AppTestHelper) Setup() {
 	s.IcaAddresses = make(map[string]string)
 }
 
+// Instantiates an TestHelper without the test suite
+// This is for testing scenarios where we simply need the setup function to run,
+// and need access to the TestHelper attributes and keepers (e.g. genesis tests)
+func SetupSuitelessTestHelper() AppTestHelper {
+	s := AppTestHelper{}
+	s.Setup()
+	return s
+}
+
 // Mints coins directly to a module account
 func (s *AppTestHelper) FundModuleAccount(moduleName string, amount sdk.Coin) {
 	err := s.App.BankKeeper.MintCoins(s.Ctx, moduleName, sdk.NewCoins(amount))
