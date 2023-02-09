@@ -12,7 +12,6 @@ import (
 type CleanupEpochUnbondingRecordsTestCase struct {
 	epochUnbondingRecords []recordtypes.EpochUnbondingRecord
 	hostZones             []stakeibc.HostZone
-	removedEpochNumber    uint64
 }
 
 func (s *KeeperTestSuite) SetupCleanupEpochUnbondingRecords() CleanupEpochUnbondingRecordsTestCase {
